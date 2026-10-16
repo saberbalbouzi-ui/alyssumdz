@@ -12,10 +12,10 @@ const Pack3D = (() => {
   const CAPFIN = [["gloss", "لامع"], ["matte", "مطفي"], ["metal", "معدن"]];
   const SIZES = [["1080×1080 — منشور مربع", 1080, 1080], ["1080×1350 — منشور 4:5", 1080, 1350], ["1080×1920 — ستوري/ريلز", 1080, 1920], ["1600×900 — بانر عريض", 1600, 900], ["2000×2000 — صورة المتجر عالية", 2000, 2000], ["1200×628 — إعلان رابط", 1200, 628]];
   const K = "alyssum_p3_cfg";
-  const DEF = { type: "bottle", body: "#f3f5f1", cap: "#ffffff", bodyFin: "gloss", capFin: "gloss", liquid: "#d89b2b", fill: 0.78, bgMode: "linear", bg1: "#e8eeff", bg2: "#c9d6f6", yaw: -0.55, pitch: 0.1, tilt: 0, zoom: 1, auto: false, shadow: true, wrap: "fit", lsize: 1, lpos: 0, lrot: 0, both: true, size: 0, fmt: "png", q: 92, transparent: false, useQuick: true, ql: { name: "ALYSSUM", sub: "Natural care", vol: "50 ml", c1: "#2f8f4e", c2: "#f3f9f1", ink: "#173f35" } };
+  const DEF = { type: "bottle", body: "#f3f5f1", cap: "#ffffff", bodyFin: "gloss", capFin: "gloss", liquid: "#d89b2b", fill: 0.78, bgMode: "linear", bg1: "#e8eeff", bg2: "#c9d6f6", yaw: -0.55, pitch: 0.1, tilt: 0, zoom: 1, auto: false, shadow: true, wrap: "fit", lsize: 1, lpos: 0, lrot: 0, both: true, size: 0, fmt: "png", q: 92, transparent: false, fold: 1, boxFin: "gloss", useQuick: true, ql: { name: "ALYSSUM", sub: "Natural care", vol: "50 ml", c1: "#2f8f4e", c2: "#f3f9f1", ink: "#173f35" } };
   const S = JSON.parse(JSON.stringify(DEF)); try { const o = JSON.parse(localStorage.getItem(K) || "{}"); Object.assign(S, o); S.ql = Object.assign({}, DEF.ql, o.ql || {}); } catch (e) { }
   const save = () => { try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { } };
-  let T = null, R = null, scene = null, cam = null, root = null, packG = null, shadowM = null, envTex = null, raf = 0, dirty = true, opened = false, stage = null, art = null, orig = null, sizeInfo = { r: 3, c: null };
+  let BOX = null, foldNodes = null, T = null, R = null, scene = null, cam = null, root = null, packG = null, shadowM = null, envTex = null, raf = 0, dirty = true, opened = false, stage = null, art = null, orig = null, sizeInfo = { r: 3, c: null };
   const mats = {};
   async function loadThree() { if (T) return T; const url = new URL("assets/js/vendor/three.module.min.js", document.baseURI).href; T = await import(url); return T; }
   const hex = c => new T.Color(c);
@@ -86,7 +86,7 @@ const Pack3D = (() => {
   function disposeGroup(g) { g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); } }); }
   function build() {
     if (packG) { root.remove(packG); disposeGroup(packG); }
-    packG = new T.Group(); const sp = spec(S.type), bodyFinal = S.type === "box" && S.bodyFin === "glass" ? "gloss" : S.bodyFin;
+    packG = new T.Group(); if (S.type === "dbox" && BOX) { buildFold(); return; } const sp = spec(S.type), bodyFinal = S.type === "box" && S.bodyFin === "glass" ? "gloss" : S.bodyFin;
     const bodyM = finMat(bodyFinal, S.body), capM = finMat(S.capFin, S.cap); mats.body = bodyM; mats.cap = capM;
     const cv = labelCanvas(), aspect = cv.width / cv.height;
     if (sp.box) {
@@ -114,13 +114,52 @@ const Pack3D = (() => {
     const bb = new T.Box3().setFromObject(packG), c = new T.Vector3(); bb.getCenter(c); packG.position.sub(c); sizeInfo.c = c; sizeInfo.r = bb.getBoundingSphere(new T.Sphere()).radius; sizeInfo.bottom = bb.min.y - c.y;
     root.add(packG); view(); dirty = true;
   }
+
+  /* ═══ علبة Box Designer: ألواح مفصّلة تُطوى من القالب المسطّح إلى العلبة المغلقة ═══ */
+  function boxMat(cv, flap) {
+    const gl = S.boxFin === "gloss" ? 0.55 : S.boxFin === "soft" ? 0.05 : 0.2, rg = S.boxFin === "gloss" ? 0.32 : S.boxFin === "soft" ? 0.85 : 0.6;
+    return flap ? new T.MeshPhysicalMaterial({ color: hex(flap), roughness: rg, clearcoat: gl, clearcoatRoughness: 0.25, envMapIntensity: 0.8, side: T.DoubleSide })
+      : new T.MeshPhysicalMaterial({ map: artTexture(cv), roughness: rg, clearcoat: gl, clearcoatRoughness: 0.2, envMapIntensity: 0.85 });
+  }
+  function buildFold() {
+    const B = BOX, k = 3.4 / Math.max(B.W, B.H, B.D), W = B.W * k, H = B.H * k, D = B.D * k, Tk = B.T * k, Gk = B.G * k, th = Math.max(0.012, 0.5 * k), dd = D * 0.8, cc = Math.min(dd * 0.45, D * 0.4);
+    const paper = new T.MeshStandardMaterial({ color: 0xf1ece0, roughness: 0.9 }), edge = new T.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.9 });
+    const panel = (w, h, cv, flap) => { const g = new T.BoxGeometry(w, h, th), top = boxMat(cv, flap); return new T.Mesh(g, [edge, edge, edge, edge, top, paper]); };
+    const dust = () => { const sh = new T.Shape(); sh.moveTo(-D * 0.49, 0); sh.lineTo(-D * 0.49, dd - cc); sh.lineTo(-D * 0.49 + cc, dd); sh.lineTo(D * 0.49, dd); sh.lineTo(D * 0.49, 0); sh.closePath(); const g = new T.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false }); g.translate(0, 0, -th / 2); return new T.Mesh(g, [boxMat(null, B.flap), edge]); };
+    const F = B.faces, N = {};
+    const hold = (parent, x, y) => { const g = new T.Group(); g.position.set(x, y, 0); parent.add(g); return g; };
+    const fr = new T.Group(); const mF = panel(W, H, F.front); fr.add(mF);
+    const pL = hold(fr, -W / 2, 0), mL = panel(D, H, F.left); mL.position.x = -D / 2; pL.add(mL);
+    const pB = hold(pL, -D, 0), mB = panel(W, H, F.back); mB.position.x = -W / 2; pB.add(mB);
+    const pG = hold(pB, -W, 0), mG = new T.Mesh(new T.BoxGeometry(Gk, H * 0.94, th), [edge, edge, edge, edge, paper, paper]); mG.position.x = -Gk / 2; pG.add(mG);
+    const pR = hold(fr, W / 2, 0), mR = panel(D, H, F.right); mR.position.x = D / 2; pR.add(mR);
+    const pT = hold(fr, 0, H / 2), mT = panel(W, D, F.top); mT.position.y = D / 2; pT.add(mT);
+    const pTk = hold(pT, 0, D), mTk = panel(W * 0.98, Tk, null, B.flap); mTk.position.y = Tk / 2; pTk.add(mTk);
+    const pBt = hold(fr, 0, -H / 2), mBt = panel(W, D, F.bottom); mBt.position.y = -D / 2; pBt.add(mBt);
+    const pBk = hold(pBt, 0, -D), mBk = panel(W * 0.98, Tk, null, B.flap); mBk.position.y = -Tk / 2; pBk.add(mBk);
+    const dTL = hold(pL, -D / 2, H / 2), dBL = hold(pL, -D / 2, -H / 2), dTR = hold(pR, D / 2, H / 2), dBR = hold(pR, D / 2, -H / 2);
+    [dTL, dTR].forEach(g => g.add(dust())); [dBL, dBR].forEach(g => { const m = dust(); m.scale.y = -1; g.add(m); });
+    packG.add(fr); foldNodes = { pL, pB, pG, pR, pT, pTk, pBt, pBk, dTL, dTR, dBL, dBR, H, D };
+    root.add(packG); applyFold(S.fold);
+  }
+  const ease = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+  function applyFold(t) {
+    if (!foldNodes || !packG) return; const n = foldNodes, q = Math.PI / 2, s = ease(t / 0.5), tb = ease((t - 0.3) / 0.45), fl = ease((t - 0.7) / 0.3);
+    n.pL.rotation.y = -q * s; n.pB.rotation.y = -q * s; n.pG.rotation.y = -q * s; n.pR.rotation.y = q * s;
+    n.pT.rotation.x = -q * tb; n.pBt.rotation.x = q * tb; n.pTk.rotation.x = -q * fl; n.pBk.rotation.x = q * fl;
+    n.dTL.rotation.x = -q * fl; n.dTR.rotation.x = -q * fl; n.dBL.rotation.x = q * fl; n.dBR.rotation.x = q * fl;
+    packG.position.set(0, 0, 0); packG.updateMatrixWorld(true); const bb = new T.Box3().setFromObject(packG), c = new T.Vector3(); bb.getCenter(c); packG.position.sub(c);
+    sizeInfo = { r: bb.getBoundingSphere(new T.Sphere()).radius, c, bottom: bb.min.y - c.y, shY: bb.min.y - c.y - 0.01 }; view(); dirty = true;
+  }
+  let foldRaf = 0;
+  function foldTo(to) { cancelAnimationFrame(foldRaf); const from = S.fold, t0 = performance.now(), dur = 1700 * Math.abs(to - from) + 200; const step = now => { const u = Math.min(1, (now - t0) / dur); S.fold = from + (to - from) * u; applyFold(S.fold); sync("fold"); if (u < 1) foldRaf = requestAnimationFrame(step); else save(); }; foldRaf = requestAnimationFrame(step); }
   function recolor() { if (!mats.body) return; build(); }
   /* الكاميرا والعرض */
   function view() {
     if (!R || !root) return; root.rotation.set(S.pitch, S.yaw, S.tilt, "ZXY");
     const asp = R.domElement.clientWidth / Math.max(1, R.domElement.clientHeight) || 1, vf = cam.fov * Math.PI / 180, hf = 2 * Math.atan(Math.tan(vf / 2) * asp), need = sizeInfo.r * 1.14 / Math.sin(Math.min(vf, hf) / 2);
     cam.aspect = asp; cam.position.set(0, 0, need / S.zoom); cam.near = need / 20; cam.far = need * 6; cam.lookAt(0, 0, 0); cam.updateProjectionMatrix();
-    if (shadowM) { shadowM.visible = !!S.shadow; const s = sizeInfo.r * 2.3; shadowM.scale.set(s, s, 1); shadowM.position.set(0, sizeInfo.bottom * 1.0 - 0.02, 0); shadowM.rotation.set(-Math.PI / 2, 0, 0); shadowM.position.y = -sizeInfo.r * 0.98; }
+    if (shadowM) { shadowM.visible = !!S.shadow && !(S.type === "dbox" && S.fold < 0.6); const s = sizeInfo.r * 2.3; shadowM.scale.set(s, s, 1); shadowM.position.set(0, sizeInfo.bottom * 1.0 - 0.02, 0); shadowM.rotation.set(-Math.PI / 2, 0, 0); shadowM.position.y = sizeInfo.shY != null ? sizeInfo.shY : -sizeInfo.r * 0.98; }
     paintBg(); dirty = true;
   }
   function bgCss() { if (S.bgMode === "none") return "transparent"; if (S.bgMode === "solid") return S.bg1; if (S.bgMode === "radial") return "radial-gradient(circle at 50% 42%," + S.bg1 + "," + S.bg2 + ")"; return "linear-gradient(180deg," + S.bg1 + "," + S.bg2 + ")"; }
@@ -163,7 +202,7 @@ const Pack3D = (() => {
   const dims = () => { const s = SIZES[Math.max(0, Math.min(SIZES.length - 1, +S.size || 0))]; return [s[1], s[2]]; };
   function dl(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
   const msg = (t, bad) => { const e = $("p3-msg"); if (e) { e.textContent = t || ""; e.style.color = bad ? "#ffb4b4" : "#c6fe17"; } };
-  const stamp = () => S.type + "-3d";
+  const stamp = () => S.type === "dbox" ? "custom-box-3d" : S.type + "-3d";
   async function exportOne() { try { msg("جارٍ التصدير…"); const [w, h] = dims(), cv = renderTo(w, h, S.transparent); const b = await blobOf(cv, S.fmt, S.q); if (S.fmt === "webp" && b.type !== "image/webp") throw new Error("متصفحك لا يدعم WebP — اختر PNG"); dl(b, stamp() + "." + S.fmt); msg("✅ تم التنزيل"); } catch (e) { msg("⚠️ " + e.message, true); } }
   async function exportSet(frames, names) {
     try {
@@ -197,7 +236,21 @@ const Pack3D = (() => {
   const sel = (k, label, opts, cur) => '<label class="f">' + label + '</label><select data-k="' + k + '">' + opts.map(o => '<option value="' + o[0] + '"' + (String(cur == null ? S[k] : cur) === String(o[0]) ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select>";
   const rng = (k, label, mn, mx, st, val) => '<label class="f">' + label + '</label><input data-k="' + k + '" type="range" min="' + mn + '" max="' + mx + '" step="' + st + '" value="' + val + '">';
   const deg = v => Math.round(v * 180 / Math.PI);
+  function tail() {
+    return '<h4>③ العرض والخلفية</h4>' + sel("bgMode", "الخلفية", [["linear", "تدرّج عمودي"], ["radial", "تدرّج دائري"], ["solid", "لون واحد"], ["none", "شفافة"]]) + '<div class="r2"><div>' + ctl("bg1", "اللون الأول", "color") + "</div><div>" + ctl("bg2", "اللون الثاني", "color") + "</div></div>" +
+      rng("yaw", "التدوير (°)", 0, 360, 1, ((deg(S.yaw) % 360) + 360) % 360) + rng("pitch", "الإمالة الأمامية (°)", -50, 50, 1, deg(S.pitch)) + rng("tilt", "ميل جانبي (°)", -60, 60, 1, deg(S.tilt)) + rng("zoom", "التقريب", 0.5, 2.4, 0.01, S.zoom) +
+      '<div class="r2"><label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="auto"' + (S.auto ? " checked" : "") + '> دوران تلقائي</label><label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="shadow"' + (S.shadow ? " checked" : "") + '> ظل تحت العبوة</label></div>' +
+      '<div class="p3-b"><button type="button" class="o" data-view="front">أمامي</button><button type="button" class="o" data-view="q">¾</button><button type="button" class="o" data-view="side">جانبي</button><button type="button" class="o" data-view="back">خلفي</button><button type="button" class="o" data-view="tilt">مائل</button></div>' +
+      '<h4>④ التصدير</h4>' + sel("size", "المقاس", SIZES.map((s, i) => [i, s[0]])) + '<div class="r2"><div>' + sel("fmt", "الصيغة", [["png", "PNG"], ["webp", "WebP"]]) + "</div><div>" + ctl("q", "جودة WebP", "number", 'min="40" max="100"') + '</div></div><label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="transparent"' + (S.transparent ? " checked" : "") + '> خلفية شفافة في الصورة المصدَّرة</label>' +
+      '<div class="p3-b"><button type="button" data-ex="one">⬇ تصدير الصورة</button><button type="button" class="o" data-ex="angles">4 زوايا (ZIP)</button><button type="button" class="o" data-ex="r12">360° — 12 إطاراً</button><button type="button" class="o" data-ex="r24">360° — 24 إطاراً</button></div><p class="m">اسحب على المجسّم لتدويره، وبالعجلة للتقريب، ونقرتان لإعادة الضبط. جرّب الخلفية الشفافة للصق الصورة فوق تصاميمك.</p>';
+  }
+  function boxPanel() {
+    return '<h4>① العلبة المصمَّمة (Box Designer)</h4><p class="m">الأبعاد ' + Math.round(BOX.W) + '×' + Math.round(BOX.H) + '×' + Math.round(BOX.D) + ' مم. تُطوى وجوه القالب تلقائياً لتشكّل العلبة بتصميمك ونصوصك ومواضعها.</p>' + rng("fold", "طيّ / فتح القالب", 0, 1, 0.01, S.fold) +
+      '<div class="p3-b"><button type="button" data-act="foldplay">▶ حركة الطيّ</button><button type="button" class="o" data-act="unfold">فتح القالب</button><button type="button" class="o" data-act="foldclose">إغلاق العلبة</button><button type="button" class="o" data-act="backbd">↩ Box Designer</button></div>' +
+      sel("boxFin", "طلاء الورق", [["gloss", "لامع"], ["matte", "مطفي"], ["soft", "ورق ناعم"]]) + tail();
+  }
   function panel() {
+    if (S.type === "dbox" && BOX) return boxPanel();
     const q = S.ql, glass = S.bodyFin === "glass";
     return '<h4>① العبوة والملصق</h4><div class="types">' + TYPES.map(t => '<button type="button" data-type="' + t[0] + '" class="' + (S.type === t[0] ? "on" : "o") + '">' + t[1] + "</button>").join("") + '</div>' +
       '<label class="f">صورة الملصق / تصميم العبوة</label><label class="p3-up" for="p3-art">⬆ ارفع تصميمك (PNG/WebP/JPG — يُفضَّل بخلفية شفافة أو بنسبة الملصق)<input id="p3-art" type="file" accept="image/*" hidden></label>' +
@@ -208,37 +261,34 @@ const Pack3D = (() => {
       (S.type === "box" ? '<label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="both"' + (S.both ? " checked" : "") + '> نفس التصميم على الوجه الخلفي</label>' : "") +
       '<h4>② الألوان والخامة</h4><div class="r2"><div>' + ctl("body", "لون العبوة", "color") + '</div><div>' + ctl("cap", "لون الغطاء", "color") + "</div><div>" + sel("bodyFin", "خامة العبوة", FIN) + "</div><div>" + sel("capFin", "خامة الغطاء", CAPFIN) + "</div></div>" +
       (glass && S.type !== "box" ? '<div class="r2"><div>' + ctl("liquid", "لون السائل", "color") + "</div><div>" + rng("fill", "مستوى السائل", 0.1, 1, 0.01, S.fill) + "</div></div>" : "") +
-      '<h4>③ العرض والخلفية</h4>' + sel("bgMode", "الخلفية", [["linear", "تدرّج عمودي"], ["radial", "تدرّج دائري"], ["solid", "لون واحد"], ["none", "شفافة"]]) + '<div class="r2"><div>' + ctl("bg1", "اللون الأول", "color") + "</div><div>" + ctl("bg2", "اللون الثاني", "color") + "</div></div>" +
-      rng("yaw", "التدوير (°)", 0, 360, 1, ((deg(S.yaw) % 360) + 360) % 360) + rng("pitch", "الإمالة الأمامية (°)", -50, 50, 1, deg(S.pitch)) + rng("tilt", "ميل جانبي (°)", -60, 60, 1, deg(S.tilt)) + rng("zoom", "التقريب", 0.5, 2.4, 0.01, S.zoom) +
-      '<div class="r2"><label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="auto"' + (S.auto ? " checked" : "") + '> دوران تلقائي</label><label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="shadow"' + (S.shadow ? " checked" : "") + '> ظل تحت العبوة</label></div>' +
-      '<div class="p3-b"><button type="button" class="o" data-view="front">أمامي</button><button type="button" class="o" data-view="q">¾</button><button type="button" class="o" data-view="side">جانبي</button><button type="button" class="o" data-view="back">خلفي</button><button type="button" class="o" data-view="tilt">مائل</button></div>' +
-      '<h4>④ التصدير</h4>' + sel("size", "المقاس", SIZES.map((s, i) => [i, s[0]])) + '<div class="r2"><div>' + sel("fmt", "الصيغة", [["png", "PNG"], ["webp", "WebP"]]) + "</div><div>" + ctl("q", "جودة WebP", "number", 'min="40" max="100"') + '</div></div><label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="transparent"' + (S.transparent ? " checked" : "") + '> خلفية شفافة في الصورة المصدَّرة</label>' +
-      '<div class="p3-b"><button type="button" data-ex="one">⬇ تصدير الصورة</button><button type="button" class="o" data-ex="angles">4 زوايا (ZIP)</button><button type="button" class="o" data-ex="r12">360° — 12 إطاراً</button><button type="button" class="o" data-ex="r24">360° — 24 إطاراً</button></div><p class="m">اسحب على المجسّم لتدويره، وبالعجلة للتقريب، ونقرتان لإعادة الضبط. جرّب الخلفية الشفافة للصق الصورة فوق تصاميمك.</p>';
+      tail();
   }
   const GEO_KEYS = ["wrap", "lsize", "lpos", "lrot", "both"], MAT_KEYS = ["body", "cap", "bodyFin", "capFin", "liquid", "fill"];
   function ui() { const side = $("p3-side"); if (!side) return; side.innerHTML = panel(); wire(); }
   function wire() {
     const side = $("p3-side");
-    side.querySelectorAll("[data-k]").forEach(e => { const h = () => { const k = e.dataset.k; let v = e.type === "checkbox" ? e.checked : e.type === "range" || e.type === "number" ? +e.value : e.value; if (k === "yaw" || k === "pitch" || k === "tilt") v = v * Math.PI / 180; S[k] = v; save(); if (GEO_KEYS.includes(k) || MAT_KEYS.includes(k)) { build(); if (k === "bodyFin") ui(); } else if (k === "bgMode") { paintBg(); dirty = true; } else view(); }; e.oninput = h; e.onchange = h; });
+    side.querySelectorAll("[data-k]").forEach(e => { const h = () => { const k = e.dataset.k; let v = e.type === "checkbox" ? e.checked : e.type === "range" || e.type === "number" ? +e.value : e.value; if (k === "yaw" || k === "pitch" || k === "tilt") v = v * Math.PI / 180; S[k] = v; save(); if (k === "fold") { applyFold(S.fold); } else if (k === "boxFin") { build(); } else if (GEO_KEYS.includes(k) || MAT_KEYS.includes(k)) { build(); if (k === "bodyFin") ui(); } else if (k === "bgMode") { paintBg(); dirty = true; } else view(); }; e.oninput = h; e.onchange = h; });
     side.querySelectorAll("[data-q]").forEach(e => { e.oninput = () => { S.ql[e.dataset.q] = e.value; save(); clearTimeout(wire.t); wire.t = setTimeout(() => { if (S.useQuick) build(); }, 120); }; });
     side.querySelectorAll("[data-type]").forEach(b => b.onclick = () => { S.type = b.dataset.type; if (S.type === "glass" && S.bodyFin === "gloss") S.bodyFin = "glass"; if (S.type !== "glass" && S.bodyFin === "glass" && S.type !== "jar" && S.type !== "bottle") S.bodyFin = "gloss"; save(); ui(); build(); });
     side.querySelectorAll("[data-view]").forEach(b => b.onclick = () => { const v = b.dataset.view; const P = { front: [0, 0.06, 0], q: [-0.6, 0.12, 0], side: [-Math.PI / 2, 0.06, 0], back: [Math.PI, 0.06, 0], tilt: [-0.55, 0.1, -0.5] }[v]; S.yaw = P[0]; S.pitch = P[1]; S.tilt = P[2]; save(); ui(); view(); });
     side.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { const v = b.dataset.ex; if (v === "one") exportOne(); else if (v === "angles") exportAngles(); else export360(v === "r12" ? 12 : 24); });
-    side.querySelectorAll("[data-act]").forEach(b => b.onclick = () => { const a = b.dataset.act; if (a === "quick") { S.useQuick = true; ui(); build(); } else if (a === "art") { S.useQuick = false; ui(); build(); } else if (a === "origlabel") useOrigAsLabel(); else if (a === "prod") prodList(); });
+    side.querySelectorAll("[data-act]").forEach(b => b.onclick = () => { const a = b.dataset.act; if (a === "quick") { S.useQuick = true; ui(); build(); } else if (a === "art") { S.useQuick = false; ui(); build(); } else if (a === "origlabel") useOrigAsLabel(); else if (a === "prod") prodList(); else if (a === "foldplay") { S.fold = 0; applyFold(0); foldTo(1); } else if (a === "unfold") foldTo(0); else if (a === "foldclose") foldTo(1); else if (a === "backbd") close(); });
     const fa = $("p3-art"); if (fa) fa.onchange = () => fa.files[0] && setArt(fa.files[0]); const fo = $("p3-orig"); if (fo) fo.onchange = () => fo.files[0] && setOrig(fo.files[0]);
   }
   function prodList() {
     const box = $("p3-prod"); const ps = (typeof Admin !== "undefined" && Admin.products) || []; box.innerHTML = '<select id="p3-ps"><option value="">— اختر منتجاً —</option>' + ps.filter(p => p.cover).map(p => '<option value="' + esc(p.cover) + '">' + esc(p.title || p.slug) + "</option>").join("") + "</select>";
     $("p3-ps").onchange = e => { if (e.target.value) setArt(new URL(e.target.value, document.baseURI).href); };
   }
-  function close() { opened = false; cancelAnimationFrame(raf); raf = 0; if (R) { try { R.dispose(); R.forceContextLoss(); } catch (e) { } R = null; } if (packG) { disposeGroup(packG); packG = null; } scene = null; const b = $("p3-bg"); if (b) b.remove(); stage = null; }
-  async function open() {
-    close(); const bg = document.createElement("div"); bg.id = "p3-bg"; if (!$("p3-css")) { const st = document.createElement("style"); st.id = "p3-css"; st.textContent = CSS; document.head.appendChild(st); }
+  function close() { opened = false; cancelAnimationFrame(foldRaf); foldNodes = null; if (S.type === "dbox") { S.type = S.prevType || "bottle"; save(); } cancelAnimationFrame(raf); raf = 0; if (R) { try { R.dispose(); R.forceContextLoss(); } catch (e) { } R = null; } if (packG) { disposeGroup(packG); packG = null; } scene = null; const b = $("p3-bg"); if (b) b.remove(); stage = null; }
+  async function open() { BOX = null; if (S.type === "dbox") S.type = S.prevType || "bottle"; return openDlg(); }
+  async function openBox(m) { BOX = m; if (S.type !== "dbox") S.prevType = S.type; S.type = "dbox"; S.fold = 1; S.auto = false; return openDlg(); }
+  async function openDlg() {
+    close(); if (BOX && S.type !== "dbox") { S.prevType = S.type; S.type = "dbox"; } const bg = document.createElement("div"); bg.id = "p3-bg"; if (!$("p3-css")) { const st = document.createElement("style"); st.id = "p3-css"; st.textContent = CSS; document.head.appendChild(st); }
     bg.innerHTML = '<div id="p3" role="dialog" aria-label="Alyssum 3D Pack Studio"><div class="p3-h"><b>🧊 Alyssum 3D Pack Studio</b><small>ركّب ملصقك على عبوة ثلاثية الأبعاد وصدّر صوراً احترافية</small><button type="button" class="o p3-x" id="p3-x">إغلاق</button></div><div class="p3-m"><div class="p3-st" id="p3-st"><span class="p3-3d">3D</span><span class="p3-hint">اسحب للتدوير • العجلة للتقريب • نقرتان لإعادة الضبط</span></div><div class="p3-side" id="p3-side"></div></div><div class="p3-f" id="p3-msg">جارٍ تحميل المحرّك ثلاثي الأبعاد…</div></div>';
     document.body.appendChild(bg); opened = true; stage = $("p3-st"); $("p3-x").onclick = close; bg.addEventListener("mousedown", e => { if (e.target === bg) close(); });
     document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", k); } });
     try { const hasGL = (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; } })(); if (!hasGL) throw new Error("متصفحك أو جهازك لا يدعم WebGL المطلوب للعرض ثلاثي الأبعاد"); await init(stage); if (!opened) return; bindStage(stage); ui(); msg("جاهز — ارفع ملصقك أو عدّل الملصق السريع"); } catch (e) { msg("⚠️ " + e.message, true); }
   }
-  return { open, close, TYPES, FIN, SIZES, S, _t: { spec: type => { return spec(type); }, build, renderTo, get ready() { return !!R; }, setArt, quickLabel, pickColors, view, loadThree, blobOf } };
+  return { open, openBox, close, TYPES, FIN, SIZES, S, _t: { artCanvas: () => art, applyFold, foldTo, spec: type => { return spec(type); }, build, renderTo, get ready() { return !!R; }, setArt, quickLabel, pickColors, view, loadThree, blobOf } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = Pack3D;
