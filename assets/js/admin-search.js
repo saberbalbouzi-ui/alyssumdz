@@ -49,7 +49,7 @@ const AdminSearch = (() => {
   }
   function tabs() {
     return [...document.querySelectorAll(".nav-btn")].map(b => {
-      const full = (b.textContent || "").replace(/\s+/g, " ").trim(); if (!full || b.classList.contains("nav-work")) return null;
+      const full = (b.textContent || "").replace(/\s+/g, " ").trim(); if (!full || b.classList.contains("nav-work") || b.getAttribute("data-app") === "imggen") return null;
       /* العنوان من <b> وحده (النصوص المتجاورة بلا فاصل كانت تلتصق: «العملاءشرائح العملاء…»)؛ والشرح يدخل في المطابقة فقط */
       const bb = b.querySelector(".nav-txt b, b"), t = bb ? [...bb.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join("").replace(/\s+/g, " ").trim() || full : full, sm = b.querySelector("small"), n = norm(t + " " + (sm ? sm.textContent : ""));
       if (b.dataset.app === "ask" || t === "اسألني") return null;      // «اسألني» ليست قسماً: لا تظهر في نتائج البحث (v1.89.121)
