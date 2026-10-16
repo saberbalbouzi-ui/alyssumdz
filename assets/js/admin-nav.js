@@ -577,6 +577,30 @@ const AdminNav = (() => {
     loadOff();
     try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
+  /* روابط عميقة من صفحات دليل الأدوات (saas/guide): admin.html#tool=<id> — أدوات القوائم المستقلة تُفتح مباشرة، وأدوات المحرّر تفتح مطوّر الصفحات على تبويب «تعديل الصورة» (ومنشئ الشعار والصورة من وصف تفتح نافذتها) */
+  const DEEP_TAB = { gen: "imggen", batch: "imgtools", catalog: "imgtools" };
+  const DEEP_NAME = { bg: "نزع الخلفية", scene: "مشهد ذكي للمنتج", st: "استوديو المنتج", vd: "فيديو من الصورة", pshoot: "تصوير المنتج بالذكاء", fashion: "استوديو أزياء ذكي", tryon: "تجربة افتراضية", txt2img: "صورة من وصف نصي", mk: "ماسك", pz: "بازل", cap: "التقاط العناصر", rt: "لمسات وتصحيح", ff: "حواف ناعمة", fr: "إطار وهوية", bl: "دمج صور", cl: "كولاج", xp: "توسيع الخلفية بالذكاء", resize: "تغيير المقاس والتوسيع", sl: "أساليب تصوير ذكية", ai: "تعديل بالوصف", erase: "ممحاة ذكية", up: "تحسين الجودة", brand: "الهوية البصرية", recolor: "تلوين الملابس", logo: "منشئ الشعار", ast: "مكتبة الأصول", stk: "ملصقات" };
+  async function deepTool(id) {
+    id = String(id || (/[#&]tool=([a-z0-9]+)/i.exec(location.hash) || [])[1] || "").toLowerCase(); if (!id || !(DEEP_TAB[id] || DEEP_NAME[id])) return false;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { }
+    if (DEEP_TAB[id]) { try { Admin.tab(DEEP_TAB[id]); } catch (e) { } return true; }
+    if (typeof PBAdmin === "undefined" || typeof PBApp === "undefined") return false;
+    try { Admin.tab("builder"); } catch (e) { }
+    const open = () => !!(PBApp.E && PBApp.E.page && document.getElementById("pb-app") && document.getElementById("pb-app").classList.contains("on"));
+    if (!open()) { try { PBAdmin.newPage({ title: "تجربة " + DEEP_NAME[id] }); } catch (e) { } await new Promise(r => setTimeout(r, 1600)); }
+    if (!open()) return false;
+    if (PBApp.E.ltab !== (id === "ast" ? "ast" : id === "stk" ? "stk" : "img")) PBApp.ltoggle(id === "ast" ? "ast" : id === "stk" ? "stk" : "img");
+    await new Promise(r => setTimeout(r, 300));
+    if (id === "logo" && typeof PBBrand !== "undefined") PBBrand.openLogo(); else if (id === "txt2img" && typeof PBAI !== "undefined") PBAI.openTx();
+    else if (id !== "ast" && id !== "stk") toast("ارفع أو حدّد صورة في الصفحة ثم اختر «" + DEEP_NAME[id] + "» من تبويب «تعديل الصورة»");
+    return true;
+  }
+  function deepBoot() {
+    if (!/[#&]tool=/.test(location.hash)) return; let n = 0;
+    const t = setInterval(() => { n++; if (typeof Admin !== "undefined" && Admin.products && Admin.products.length >= 0 && document.getElementById("app") && !document.getElementById("app").hidden && typeof PBAdmin !== "undefined") { clearInterval(t); deepTool(); } else if (n > 60) clearInterval(t); }, 500);
+  }
+  window.addEventListener("hashchange", () => { if (/[#&]tool=/.test(location.hash)) deepTool(); });
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", deepBoot) : deepBoot();
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { deepTool, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

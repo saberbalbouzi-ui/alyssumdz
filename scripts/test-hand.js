@@ -1262,7 +1262,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const g = out.getContext("2d"), edge = g.getImageData(2, 100, 1, 1).data, band = g.getImageData(10, out.height - 6, 1, 1).data;
     const ni = document.querySelector('#pbbr [data-brk="name"]'); ni.value = "متجري"; ni.dispatchEvent(new Event("input", { bubbles: true }));
     const cb = document.querySelector('#pbbr [data-bro="txt"]'); cb.checked = true; cb.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 900));
-    return { head, cols, font, name, logo, edgeRed: edge[0] > 200 && edge[1] < 60, bandRed: band[0] > 200 && band[1] < 60, saved: /متجري/.test(localStorage.getItem("alyssum_brand_kit") || ""), live: !!(PBApp.liveOn && PBApp.liveOn()) };
+    return { head, cols, font, name, logo, edgeRed: edge[0] > 200 && edge[1] < 60, bandRed: band[0] > 200 && band[1] < 60, saved: /متجري/.test((localStorage.getItem(Object.keys(localStorage).find(k => /brand_kit$/.test(k)) || "x") || "")), live: !!(PBApp.liveOn && PBApp.liveOn()) };
   });
   ok("الهوية البصرية: لوحة بخمسة ألوان وخط واسم وشعار", /الهوية البصرية/.test(br.head) && br.cols === 5 && br.font && br.name && br.logo, br);
   ok("الهوية البصرية: الحدّ والشريط يُرسمان بألوان العلامة، والإعدادات تُحفظ وتظهر معاينة حيّة", br.edgeRed && br.bandRed && br.saved && br.live, br);
@@ -1337,9 +1337,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     document.querySelector('[data-imgx="logo"]').click(); await new Promise(r => setTimeout(r, 400)); const modal = !!document.getElementById("pbx-logo");
     document.getElementById("pblg-n").value = "عسل الجبل"; document.querySelector('#pbx-logo [data-lg="badge"]').click(); await new Promise(r => setTimeout(r, 900));
     const img = document.querySelector("#pblg-o img"), shown = !!img && img.src.startsWith("data:image/png");
-    document.querySelector('#pbx-logo [data-lg="save"]').click(); await new Promise(r => setTimeout(r, 400)); const saved = (localStorage.getItem("alyssum_brand_logo") || "").startsWith("data:image/png");
+    document.querySelector('#pbx-logo [data-lg="save"]').click(); await new Promise(r => setTimeout(r, 400)); const saved = (localStorage.getItem(Object.keys(localStorage).find(k => /brand_logo$/.test(k)) || "x") || "").startsWith("data:image/png");
     const T = PBBrand._t, cv = T.logoCanvas("عسل الجبل", T.load(), "mono", "light"), d = cv.getContext("2d").getImageData(400, 400, 1, 1).data, calls = []; const old = ImgGen.edit; ImgGen.edit = async o => { calls.push({ t: !!o.textOnly, p: o.prompt }); const c = document.createElement("canvas"); c.width = 50; c.height = 50; c.getContext("2d").fillRect(0, 0, 50, 50); return { canvas: c, blob: null }; };
-    document.getElementById("pblg-k").value = "عسل طبيعي"; document.querySelector('#pbx-logo [data-lg="ai"]').click(); await new Promise(r => setTimeout(r, 700)); ImgGen.edit = old; document.getElementById("pbx-logo").remove(); localStorage.removeItem("alyssum_brand_logo");
+    document.getElementById("pblg-k").value = "عسل طبيعي"; document.querySelector('#pbx-logo [data-lg="ai"]').click(); await new Promise(r => setTimeout(r, 700)); ImgGen.edit = old; document.getElementById("pbx-logo").remove(); Object.keys(localStorage).filter(k => /brand_logo$/.test(k)).forEach(k => localStorage.removeItem(k));
     return { modal, shown, saved, mono: cv.width === 800 && cv.height === 800 && d[3] === 255, ai: calls.length === 1 && calls[0].t && /LOGO/.test(calls[0].p) && /عسل الجبل/.test(calls[0].p) && /عسل طبيعي/.test(calls[0].p), styles: T.LSTYLES.length };
   });
   ok("منشئ الشعار: يفتح من الصف ويولّد شعاراً نصياً مجانياً ويعتمده، والذكي يرسل وصفاً بلا صورة مرجعية", lg.modal && lg.shown && lg.saved && lg.mono && lg.ai && lg.styles === 4, lg);
@@ -1357,6 +1357,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { ok1, n: calls.length, noConf: calls.slice(0, 2).every(x => x.conf === false), askedCost: /الإجمالية/.test(asked) && /2 صورة/.test(asked), noText, recolor: /navy blue/.test(pr), capped, modes: B.AI_MODES.length };
   });
   ok("دفعة الصور بخطوة ذكاء: صورتان تُعالجان بموافقة تكلفة واحدة، والوصف الفارغ والحدّ 250 يمنعان التنفيذ", bt.ok1 === 2 && bt.n >= 2 && bt.noConf && bt.askedCost && bt.noText && bt.recolor && bt.capped && bt.modes === 8, bt);
+  // ── روابط عميقة من دليل الأدوات ──
+  const dp = await p.evaluate(async () => {
+    const bad = await AdminNav.deepTool("zzz"); location.hash = "#tool=gen"; const good = await AdminNav.deepTool(); const cleared = !/tool=/.test(location.hash);
+    const tab = !!document.getElementById("tab-imggen") && document.getElementById("tab-imggen").classList.contains("on");
+    return { bad, good, cleared, tab: tab || good };
+  });
+  ok("روابط الدليل العميقة: معرّف مجهول يُرفض، و#tool=gen يفتح مولّد الصور ويُنظَّف العنوان", dp.bad === false && dp.good === true && dp.cleared, dp);
   // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);
