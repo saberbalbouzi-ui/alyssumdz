@@ -32,7 +32,6 @@ const AdminNav = (() => {
     voice: { n: "الوكيل الناطق", d: "واجهة بديلة للوكيل: أفاتار ناطق يقرأ الصفحة ويقنع الزبون ويشير إلى «اطلب الآن»، بصوت احترافي أو ملفات صوت جاهزة.", how: ["اضغط زر «أفتح» في «أين تجده ؟» واختر الواجهة (محادثة نصية أو أفاتار ناطق).", "أدخل مفتاح الصوت (اختياري) ومعرّف الصوت.", "ولّد ملفات الصوت الجاهزة لكل صفحة ليسمعها الزبائن بلا مفتاح."], where: "الأفاتار على موقعك + قسم الوكيل الناطق", work: "voice", off: "يعود الموقع إلى المحادثة النصية دائماً." },
     ask: { n: "اسألني", d: "مساعد اللوحة: اكتب سؤالك عن أي أداة أو إعداد فيجيبك فوراً بلا إنترنت ولا مفتاح.", how: ["اضغط زر «اسألني» أعلى اللوحة.", "اكتب سؤالك أو اختر اقتراحاً.", "اضغط «اذهب إلى القسم» ليفتح لك المكان المقصود."], where: "زر «اسألني» أعلى اللوحة", work: "ask", off: "يختفي زر «اسألني» من اللوحة." },
     floaters: { custom: true, n: "الأيقونات العائمة", d: "أزرار تواصل تطفو فوق صفحات موقعك: واتساب، واتصال هاتفي، وماسنجر. لكل أداة إعداداتها: تفعيلها أو تعطيلها، مكانها على الشاشة، شكلها ولونها، وطريقة ظهورها (حركة، تأخير، بعد تمرير، حسب الجهاز والصفحة).", how: ["فعّل الأداة التي تريدها من مفتاحها.", "اضبط الرقم (أو صفحة فيسبوك) ومكان الأيقونة وشكلها وطريقة ظهورها.", "اضغط «حفظ الأيقونات العائمة» فتظهر على موقعك خلال دقيقة."], where: "إعدادات الأيقونات في هذه الصفحة نفسها (أعلاها)", work: "floaters", off: "تختفي كل الأيقونات العائمة من موقعك." },
-    tools: { catalog: true, n: "كل الأدوات", d: "كل أدوات الصور والتصميم في مكان واحد: لكل أداة صفحة تعريف ودليل استعمال على المنصة، ومنها يفتحك رابط «جرّبها الآن» على الأداة داخل المحرّر.", how: ["ابحث عن الأداة أو تصفّح المجموعات.", "اضغط «صفحة التعريف» لترى ما تفعله الأداة وأمثلتها، أو «دليل الاستعمال» للخطوات.", "اضغط «افتح في المحرّر» ليفتح مطوّر الصفحات على الأداة مباشرة."], where: "إعدادات التطبيقات ← كل الأدوات", off: "لا يمكن تعطيل هذه الصفحة." },
     cloner: { n: "ناسخ القوالب", d: "ينسخ تصميم أي موقع (برابطه أو بلقطة شاشة) إلى عناصر قابلة للتعديل في مطوّر الصفحات: صور ونصوص وأزرار وسلايدرات وتأثيرات.", how: ["اضغط زر «أفتح» في «أين تجده ؟» واكتب رابط الموقع ثم «فتح».", "اسحب الحد السفلي لتحدّد ما يُنسخ.", "اضغط «انسخ» ويظهر الناتج في مطوّر الصفحات."], where: "زر «نسخ قالب» داخل مطوّر الصفحات", work: "cloner", off: "يختفي زر «نسخ قالب» ويُمنع فتح الناسخ." }
   };
   /* قائمة أدوات الصور: كل أداة باسمها وإعداداتها (تُحفظ في هذا المتصفح وتقرؤها الأدوات عند التشغيل) */
@@ -507,20 +506,6 @@ const AdminNav = (() => {
   }
   function toggle(id, on) { on ? OFF.delete(id) : OFF.add(id); applyOff(); saveOff(); renderApp(id); }
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  /* ══ كل الأدوات: كتالوج assets/data/tools-catalog.json (يولّده scripts/gen-tool-pages.py) — صفحة التعريف ← الدليل ← فتح الأداة في المحرّر ══ */
-  const CAT = { data: null, busy: false, q: "" };
-  const catBase = () => String((typeof CONFIG !== "undefined" && CONFIG.TOOLS_PAGES) || (CAT.data && CAT.data.base) || "").replace(/\/*$/, "/");
-  function catLoad() { if (CAT.data || CAT.busy) return; CAT.busy = true; fetch("assets/data/tools-catalog.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.tools) { CAT.data = j; const b = $("app-cfg-body"); if (b && b.dataset.app === "tools") renderApp("tools"); } }).catch(() => { }).finally(() => { CAT.busy = false; }); }
-  const catNorm = t => String(t || "").replace(/[\u064B-\u065F]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").toLowerCase();
-  function catList() {
-    const d = CAT.data; if (!d) return '<div class="hint">جارٍ تحميل قائمة الأدوات…</div>';
-    const q = catNorm(CAT.q), list = d.tools.filter(t => !q || catNorm(t.name + " " + t.tag + " " + t.g).includes(q)), gs = []; list.forEach(t => { if (!gs.includes(t.g)) gs.push(t.g); });
-    if (!list.length) return '<div class="hint">لا توجد أداة بهذا الاسم.</div>';
-    return gs.map(g => `<div class="ap-sec"><b>${esc(g)}</b><div class="tc-grid">${list.filter(t => t.g === g).map(t => `<div class="tc-card" data-tool="${esc(t.id)}"><div class="tc-h">${t.ic ? `<img src="assets/img/tools/ic/${esc(t.ic)}.webp" alt="" loading="lazy">` : `<i class="tc-l">${esc(t.name.charAt(0))}</i>`}<span><b>${esc(t.name)}</b><small>${esc(t.tag)}</small></span></div><div class="tc-m"><em class="${t.needs === "free" ? "free" : "api"}">${t.needs === "free" ? "مجانية" : "Alyssum API"}</em></div><div class="tc-b">${t.landing ? `<button type="button" class="small gray" onclick="AdminNav.toolPage('${esc(t.id)}','landing')">صفحة التعريف</button>` : ""}<button type="button" class="small gray" onclick="AdminNav.toolPage('${esc(t.id)}','guide')">دليل الاستعمال</button><button type="button" class="small" onclick="AdminNav.toolGo('${esc(t.id)}')">افتح في المحرّر</button></div></div>`).join("")}</div></div>`).join("");
-  }
-  function catHtml() { catLoad(); return `<div class="ap-sec"><b>${esc(APPS.tools.n)}</b><div class="hint" style="margin:0 0 .5rem">${esc(APPS.tools.d)}</div><input id="tc-q" type="search" placeholder="ابحث عن أداة…" value="${esc(CAT.q)}" oninput="AdminNav.toolSearch(this.value)" style="width:100%"></div><div id="tc-list">${catList()}</div>`; }
-  function toolSearch(v) { CAT.q = v; const l = $("tc-list"); if (l) l.innerHTML = catList(); }
-  function toolPage(id, kind) { const t = CAT.data && CAT.data.tools.find(x => x.id === id); if (!t) return; const path = kind === "landing" ? t.landing : t.guide; if (!path) return; window.open(catBase() + (kind === "landing" ? path : path), "_blank", "noopener"); }
   function toolGo(id) { try { deepTool(id).then(ok => { if (ok === false) toast("تعذّر فتح هذه الأداة من هنا — افتح مطوّر الصفحات ثم تبويب «تعديل الصورة»"); }); } catch (e) { toast("تعذّر فتح الأداة"); } }
   function renderApp(id) { renderApp0(id); const A = APPS[id], box = $("app-cfg-body"); if (A && A.custom && box && typeof AdminFloat !== "undefined") { const h = document.createElement("div"); h.className = "ap-sec"; h.style.cssText = "padding:0;border:0;background:none"; const hd = box.querySelector(".ap-h"); if (hd) hd.after(h); else box.prepend(h); AdminFloat.mount(h); } }
   function renderApp0(id) {
@@ -528,7 +513,6 @@ const AdminNav = (() => {
     const cur = (typeof AdminUpdate !== "undefined" && AdminUpdate.current) || "", lat = (typeof AdminUpdate !== "undefined" && AdminUpdate.latest) || "", newer = lat && cur && lat !== cur && lat.split(".").map(Number).join() > cur.split(".").map(Number).join();
     const o = off(id);
     const tabsH = A.tools ? `<div class="ap-tabs"><button type="button" class="${AT.tab === "info" ? "on" : ""}" onclick="AdminNav.setAppTab('info','${id}')">التعريف والتفعيل</button><button type="button" class="${AT.tab === "tools" ? "on" : ""}" onclick="AdminNav.setAppTab('tools','${id}')">قائمة الأدوات</button></div>` : "";
-    if (A.catalog) { box.innerHTML = `<div class="ap-h"><h3>${esc(A.n)}</h3></div>${catHtml()}`; return; }
     box.innerHTML = `<div class="ap-h"><h3>${esc(A.n)}</h3><span class="ap-s ${o ? "off" : "on"}">${o ? "معطّل" : "مفعّل"}</span><label class="sw" title="${o ? "تفعيل" : "تعطيل"} التطبيق"><input type="checkbox" ${o ? "" : "checked"} onchange="AdminNav.toggle('${id}',this.checked)"><i></i></label></div>${tabsH}${A.tools && AT.tab === "tools" ? `<div class="ap-sec">${toolsHtml()}</div>` : `
 <div class="ap-sec"><b>التعريف</b><div>${esc(A.d)}</div></div>
 <div class="ap-sec"><b>كيف يعمل</b><ol>${A.how.map(x => "<li>" + esc(x) + "</li>").join("")}</ol></div>
@@ -543,7 +527,7 @@ const AdminNav = (() => {
   const WK = { builder: ["builder", "builder"], smart: ["smart", "pbgen"], imgtools: ["imgtools", "imgtools"], imggen: ["imggen", "imggen"], agent: ["agent", "agent"], voice: ["agent", "agent"] };
   function work(id) {
     if (!APPS[id]) return; if (off(id)) return toast("التطبيق معطّل — فعّله من إعداداته");
-    if (id === "ask") return ask(); if (id === "cloner") return clone(); if (id === "tools") { renderApp(id); return; }
+    if (id === "ask") return ask(); if (id === "cloner") return clone();
     if (id === "floaters") { AT.tab = "info"; renderApp(id); const h = $("fl-host"); if (h) setTimeout(() => h.scrollIntoView({ behavior: "smooth", block: "start" }), 80); return; }
     const w = WK[id], b = w && workBtn(w[0]); if (!b) return;
     try { if (id === "voice") { VOICE = true; Admin.tab("agent", b); agentView("voice"); const c = $("av-card"); if (c) setTimeout(() => c.scrollIntoView({ behavior: "smooth", block: "start" }), 60); } else Admin.tab(w[1], b); } catch (e) { } VOICE = false;
@@ -619,5 +603,5 @@ const AdminNav = (() => {
   window.addEventListener("hashchange", () => { if (/[#&]tool=/.test(location.hash)) deepTool(); });
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", deepBoot) : deepBoot();
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { deepTool, toolPage, toolGo, toolSearch, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
+  return { deepTool, toolGo, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, apply, off };
 })();

@@ -71,12 +71,21 @@ footer{background:#040c08;color:var(--mu);padding:1.6rem 0;font-size:.88rem}foot
 @media(max-width:900px){.hero .w,.steps{grid-template-columns:1fr}.feat{grid-template-columns:1fr 1fr}.tools{grid-template-columns:1fr 1fr}.sect{grid-template-columns:repeat(3,1fr)}.top nav{display:none}}
 @media(max-width:520px){.ex{grid-template-columns:1fr}.feat{grid-template-columns:1fr}.sect{grid-template-columns:1fr 1fr}.btn.lg{width:100%;justify-content:center}.top .btn.ghost{display:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
-</style>
+/* gal-css *//* معرض كل الصور + عارض مكبّر + وضع التضمين داخل لوحة التحكم (?embed=1) */
+.gal{columns:4 250px;column-gap:1rem;max-width:1180px;margin:0 auto}
+.gal figure{break-inside:avoid;margin:0 0 1rem;background:#fff;border:1px solid #e3e9e3;border-radius:16px;overflow:hidden;box-shadow:0 8px 20px rgba(16,36,27,.07);cursor:zoom-in;transition:transform .2s}
+.gal figure:hover{transform:translateY(-3px)}.gal img{display:block;width:100%;height:auto;background:#eef2ee}.gal figcaption{padding:.5rem .8rem;font-weight:700;font-size:.85rem;color:var(--ltm)}
+h2 .cnt{font-size:.9rem;font-weight:600;color:var(--ltm)}.tipsg{max-width:900px;margin:0 auto}
+#lbx{position:fixed;inset:0;z-index:99;background:rgba(4,12,8,.92);display:none;align-items:center;justify-content:center;padding:1.2rem;cursor:zoom-out}#lbx.on{display:flex}
+#lbx img{max-width:96vw;max-height:88vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)}#lbx b{position:absolute;bottom:1.2rem;left:0;right:0;text-align:center;color:#fff;font-weight:700}
+html.emb .top,html.emb footer,html.emb .site{display:none!important}html.emb .hero{padding-top:1.4rem}
+@media(max-width:700px){.gal{columns:2 150px}}
+/* /gal-css */</style>
 </head>
 <body>
 <header class="top"><div class="w">
   <a class="brand" href="#"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7l8 4 8-4z"/><path d="m4 12 8 4 8-4"/><path d="m4 17 8 4 8-4"/></svg></i><span data-brand>المنصة</span></a>
-  <nav><a href="#tools">الأدوات</a><a href="#how">كيف تعمل</a><a href="#faq">الأسئلة الشائعة</a><a href="../../guide/bg.html">دليل الاستعمال</a></nav>
+  <nav><a href="#tools">الأدوات</a><a href="#how">كيف تعمل</a><a href="#faq">الأسئلة الشائعة</a></nav>
   <span class="sp"></span>
   <a class="btn ghost" data-open="bg" href="../../../admin.html#tool=bg">تسجيل الدخول</a>
   <a class="btn" data-open="bg" href="../../../admin.html#tool=bg">ابدأ مجاناً</a>
@@ -122,7 +131,7 @@ footer{background:#040c08;color:var(--mu);padding:1.6rem 0;font-size:.88rem}foot
   <p class="fig">الصور أعلاه توضيحية لشكل الناتج ولا تمثل نتيجة مضمونة لكل صورة.</p>
 </div></section>
 
-<section class="band dk" id="how"><div class="w">
+<!--gal--><section class="band alt" id="gallery"><div class="w"><h2>معرض الصور <small class="cnt">(12 صورة)</small></h2><p class="sub">كل صور الأداة في مكان واحد — اضغط أي صورة لتكبيرها. الصور توضيحية لأنواع النتائج ولا تمثل نتيجة مضمونة.</p><div class="gal"><figure><img src="../../../assets/remove_webp_and_template/images/ai-step.webp" width="195" height="140" loading="lazy" alt="ذكاء خطوة"><figcaption>ذكاء خطوة</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/bag.webp" width="140" height="105" loading="lazy" alt="حقيبة"><figcaption>حقيبة</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/camera.webp" width="170" height="130" loading="lazy" alt="كاميرا"><figcaption>كاميرا</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/chair.webp" width="140" height="105" loading="lazy" alt="كرسي"><figcaption>كرسي</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/cream.webp" width="305" height="200" loading="lazy" alt="كريم"><figcaption>كريم</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/fashion.webp" width="160" height="95" loading="lazy" alt="أزياء"><figcaption>أزياء</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/headphones.webp" width="145" height="105" loading="lazy" alt="سماعات"><figcaption>سماعات</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/hero-perfume.webp" width="365" height="310" loading="lazy" alt="الواجهة الرئيسية عطر"><figcaption>الواجهة الرئيسية عطر</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/model.webp" width="160" height="95" loading="lazy" alt="عارض"><figcaption>عارض</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/product-studio.webp" width="160" height="95" loading="lazy" alt="منتج استوديو"><figcaption>منتج استوديو</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/shoe.webp" width="370" height="255" loading="lazy" alt="حذاء"><figcaption>حذاء</figcaption></figure><figure><img src="../../../assets/remove_webp_and_template/images/upload-step.webp" width="190" height="140" loading="lazy" alt="رفع خطوة"><figcaption>رفع خطوة</figcaption></figure></div></div></section><!--/gal--><section class="band dk" id="how"><div class="w">
   <h2>ثلاث خطوات بسيطة</h2><p class="sub">احصل على نتيجة احترافية في أقل من دقيقة.</p>
   <div class="steps">
     <div class="st"><h3><b>1</b>ارفع صورتك</h3><p>اسحب صورة المنتج وأفلتها أو اخترها من جهازك.</p><div class="vis"><img src="img/upload.webp" width="181" height="100" alt="رفع صورة المنتج" loading="lazy"></div></div>
@@ -171,7 +180,7 @@ footer{background:#040c08;color:var(--mu);padding:1.6rem 0;font-size:.88rem}foot
   <div class="site"><label for="site-in">موقعك (لتفتح الأداة في لوحة تحكمك):</label><input id="site-in" placeholder="https://موقعك.com" dir="ltr"><span id="site-st"></span></div>
 </div></section>
 
-<footer><div class="w"><span>© <span data-brand>المنصة</span></span><span><a href="../../guide/bg.html">دليل نزع الخلفية</a><a href="../../guide/index.html">كل الأدوات</a></span></div></footer>
+<footer><div class="w"><span>© <span data-brand>المنصة</span></span></div></footer>
 
 <script>
 (function(){
@@ -183,5 +192,5 @@ paint();
 fetch('../../brand.json').then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&j.name)document.querySelectorAll('[data-brand]').forEach(function(n){n.textContent=j.name})}).catch(function(){});
 })();
 </script>
-</body>
+<script src="../landing.js"></script></body>
 </html>
