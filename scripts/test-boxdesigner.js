@@ -14,6 +14,18 @@ const BD = require("../assets/js/box-designer.js");
   ok("كل نقاط القص داخل حدود القالب", g.cut.every(p => p[0] >= -1e-9 && p[1] >= -1e-9 && p[0] <= g.tw - 2 * g.M + 1e-9 && p[1] <= g.th - 2 * g.M + 1e-9));
   ok("لسان الإدخال التلقائي بين 12 و28 مم", g.T >= 12 && g.T <= 28);
   const g2 = BD.geom({ W: 45, H: 125, D: 45, glue: 10, bleed: 0, tuck: 20 }); ok("لسان إدخال مخصص وبلا نزف", g2.T === 20 && g2.B === 0 && g2.M === 5); }
+/* ═══ علبة هدية (Gift Box) نقية ═══ */
+{ const g = BD.geom({ style: "gift", W: 60, H: 110, D: 35, glue: 12, bleed: 3, tuck: 0, thumb: 0 }), f = id => g.faces.find(x => x.id === id);
+  ok("هدية: عرض القالب = 2×الارتفاع + العرض", Math.abs(g.tw - (2 * 110 + 60 + 2 * g.M)) < 1e-9, g.tw);
+  ok("هدية: ارتفاع القالب = لسان + 2×العمق + 2×الارتفاع", Math.abs(g.th - (g.T + 2 * 35 + 2 * 110 + 2 * g.M)) < 1e-9, g.th);
+  ok("هدية: ستة وجوه وأبعاد الصور قبل الدوران صحيحة", g.faces.length === 6 && f("front").lw === 60 && f("front").lh === 110 && f("left").lw === 35 && f("left").lh === 110 && f("top").lw === 60 && f("top").lh === 35);
+  ok("هدية: الجانبان مدوَّران 90° والأمامي 180° والخلفي بلا دوران", f("left").rot === 90 && f("right").rot === 270 && f("front").rot === 180 && f("back").rot === 0);
+  ok("هدية: الوجوه متجاورة (الخلفي فوق الأرضية والأمامي تحتها والجانبان على جانبيها)", Math.abs(f("back").y + f("back").h - f("bottom").y) < 1e-9 && Math.abs(f("bottom").y + f("bottom").h - f("front").y) < 1e-9 && Math.abs(f("right").x + f("right").w - f("bottom").x) < 1e-9 && Math.abs(f("bottom").x + f("bottom").w - f("left").x) < 1e-9);
+  ok("هدية: أربعة أجنحة لصق وستة خطوط ثني", g.glues.length === 4 && g.creases.length === 6);
+  ok("هدية: كل نقاط القص داخل حدود القالب", g.cut.every(p => p[0] >= -1e-9 && p[1] >= -1e-9 && p[0] <= g.tw - 2 * g.M + 1e-9 && p[1] <= g.th - 2 * g.M + 1e-9));
+  ok("هدية: فتحة الإبهام تلقائية وتقع داخل عرض الأمامي", g.dia > 8 && g.dia <= 28 + 1e-9);
+  const ys = g.cut.filter(p => Math.abs(p[1] - (g.th - 2 * g.M)) > 1e-6 && p[1] > g.th - 2 * g.M - g.dia / 2 - 1e-6 && p[0] > 110 && p[0] < 170).length; ok("هدية: نقاط قوس الفتحة داخل القص", ys >= 10, ys);
+  ok("هدية: قطر الفتحة المخصص", BD.geom({ style: "gift", W: 60, H: 110, D: 35, glue: 12, bleed: 3, thumb: 20 }).dia === 20); }
 /* ═══ الواجهة ═══ */
 const { chromium } = require("playwright");
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json" };
@@ -73,6 +85,22 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   d = await grab('#p3 [data-ex="one"]'); ok("3D: تصدير صورة للعلبة المطوية", d.buf.slice(1, 4).toString() === "PNG");
   await p.click('#p3 [data-act="backbd"]'); await p.waitForTimeout(300);
   ok("العودة إلى Box Designer تُبقيه مفتوحاً ونوع 3D يُستعاد", await p.evaluate(() => !!document.getElementById("bx-bg") && !document.getElementById("p3-bg") && Pack3D.S.type !== "dbox"));
+  /* ═══ علبة هدية: واجهة + تصدير + طيّ 3D ═══ */
+  await p.evaluate(() => { BoxDesigner.S.style = "gift"; BoxDesigner.close(); BoxDesigner.open(); }); await p.waitForTimeout(500);
+  ok("هدية: حقل قطر فتحة الإبهام ظاهر وزر النوع مفعّل", await p.evaluate(() => !!document.querySelector('[data-k="thumb"]') && document.querySelector('[data-style="gift"]').className === "on"));
+  const gg2 = await p.evaluate(() => BoxDesigner.geom());
+  d = await grab('[data-ex="svg"]'); const gsvg = d.buf.toString();
+  ok("هدية SVG: طبقات القص والثني واللصق (4 أجنحة) والوجوه المدوَّرة", /id="cut-line"/.test(gsvg) && /id="crease-line"/.test(gsvg) && (gsvg.match(/<path d="[^"]*" fill="url\(#glue-hatch\)"/g) || []).length === 4 && (gsvg.match(/transform="rotate\(/g) || []).length >= 5 && /giftbox-/.test(d.name), d.name);
+  d = await grab('[data-ex="pdf"]'); fs.writeFileSync(path.join(out, "gift.pdf"), d.buf); let gi = ""; try { gi = cp.execSync("pdfinfo " + path.join(out, "gift.pdf"), { encoding: "utf8" }); } catch (e) { gi = "ERR"; }
+  const gp = gi.match(/Page size:\s+([\d.]+) x ([\d.]+)/); ok("هدية PDF: صفحة واحدة بالأبعاد الحقيقية", /Pages:\s+1/.test(gi) && gp && Math.abs(gp[1] / 72 * 25.4 - gg2.tw) < 0.6 && Math.abs(gp[2] / 72 * 25.4 - gg2.th) < 0.6, gi.slice(0, 200));
+  try { cp.execSync("pdftoppm -r 40 -png " + path.join(out, "gift.pdf") + " " + path.join(out, "gift")); ok("هدية: pdftoppm يرسم الـPDF", true); } catch (e) { ok("هدية: pdftoppm يرسم الـPDF", false, e.message); }
+  if (shots) await p.screenshot({ path: path.join(shots, "bx-gift-net.png") });
+  await p.click('[data-act="to3d"]'); await p.waitForSelector("#p3 canvas", { timeout: 30000 }); await p.waitForFunction(() => Pack3D._t.ready, null, { timeout: 30000 }); await p.waitForTimeout(900);
+  ok("هدية 3D: العلبة المطوية مرسومة", (await stat()) > 12 && await p.evaluate(() => Pack3D.S.type === "dbox"));
+  if (shots) await p.screenshot({ path: path.join(shots, "bx-gift-closed.png") });
+  await p.evaluate(() => { Pack3D.S.yaw = 0; Pack3D._t.view(); });
+  for (const [t, n] of [[0, "flat"], [0.5, "mid"], [0.9, "late"]]) { await p.evaluate(v => Pack3D._t.applyFold(v), t); await p.waitForTimeout(250); ok("هدية 3D: الطي عند " + t + " يرسم", (await stat()) > 8); if (shots) await p.screenshot({ path: path.join(shots, "bx-gift-" + n + ".png") }); }
+  await p.click('#p3 [data-act="backbd"]'); await p.waitForTimeout(300);
   ok("لا أخطاء صفحة", errs.length === 0, errs);
   await browser.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(2); });

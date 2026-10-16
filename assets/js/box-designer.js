@@ -1,5 +1,5 @@
 /* Alyssum Box Designer — قالب علبة طباعة (خطوط قص وثني وألسنة لصق ونزف) من هوية الملصق، تصدير SVG/PDF/PNG/WebP بأبعاد حقيقية، وإرسال إلى 3D Pack Studio.
-   العلبة المدعومة: علبة بغطاء إدخال (Tuck End) بأبعاد W×H×D مم. التصميم يُوزَّع على ستة وجوه ويمكن تعديل كل وجه على حدة. */
+   العلب المدعومة: علبة بغطاء إدخال (Tuck End) وعلبة هدية قطعة واحدة (Gift Box: غطاء بلسان وفتحة إبهام وأجنحة لصق) بأبعاد W×H×D مم. التصميم يُوزَّع على ستة وجوه ويمكن تعديل كل وجه على حدة. */
 const BoxDesigner = (() => {
   "use strict";
   const K = "alyssum_bx_cfg";
@@ -12,7 +12,7 @@ const BoxDesigner = (() => {
   const FLAGS = [["brand", "اسم العلامة"], ["sub", "الوصف القصير"], ["vol", "الحجم"], ["logo", "الشعار"], ["pattern", "النمط"], ["art", "صورة الملصق"], ["desc", "نص تفصيلي"], ["barcode", "باركود"]];
   const SH = (brand, sub, vol, logo, pattern, art, desc, barcode) => ({ brand, sub, vol, logo, pattern, art, desc, barcode });
   const DEFSHOW = { front: SH(1, 1, 1, 1, 1, 0, 0, 0), back: SH(1, 0, 1, 1, 0, 0, 1, 1), left: SH(1, 1, 1, 0, 1, 0, 0, 0), right: SH(1, 1, 1, 0, 1, 0, 0, 0), top: SH(1, 0, 0, 1, 1, 0, 0, 0), bottom: SH(1, 0, 1, 0, 0, 0, 1, 0) };
-  const DEF = { type: "rect", W: 60, H: 110, D: 35, tuck: 0, glue: 12, bleed: 3, dpi: 300, guides: true, fmt: "png", q: 92, face: "front", id: { name: "ALYSSUM", sub: "Natural care", vol: "50 ml", bg: "#173f35", fg: "#f6f1e4", accent: "#c6fe17", font: "sans", pattern: "leaves", desc: "منتج طبيعي مختار بعناية.\nالمكوّنات: أضف مكوّنات المنتج هنا.\nيُحفظ بعيداً عن أشعة الشمس والحرارة.", code: "613000000001" }, faces: {} };
+  const DEF = { style: "tuck", thumb: 0, type: "rect", W: 60, H: 110, D: 35, tuck: 0, glue: 12, bleed: 3, dpi: 300, guides: true, fmt: "png", q: 92, face: "front", id: { name: "ALYSSUM", sub: "Natural care", vol: "50 ml", bg: "#173f35", fg: "#f6f1e4", accent: "#c6fe17", font: "sans", pattern: "leaves", desc: "منتج طبيعي مختار بعناية.\nالمكوّنات: أضف مكوّنات المنتج هنا.\nيُحفظ بعيداً عن أشعة الشمس والحرارة.", code: "613000000001" }, faces: {} };
   const clone = o => JSON.parse(JSON.stringify(o));
   const S = clone(DEF);
   let logo = null, art = null, opened = false, pvT = 0, pvMeta = null;
@@ -24,7 +24,8 @@ const BoxDesigner = (() => {
 
   /* ═══ الهندسة (مم) — دالة نقية تُستعمل في المعاينة والتصدير والاختبار ═══ */
   function geom(s) {
-    s = s || S; const W = num(s.W, 10, 400, 60), H = num(s.H, 10, 400, 110), D = num(s.D, 8, 300, 35), G = num(s.glue, 6, 30, 12), B = num(s.bleed, 0, 10, 3);
+    s = s || S; if (s.style === "gift") return giftGeom(s);
+    const W = num(s.W, 10, 400, 60), H = num(s.H, 10, 400, 110), D = num(s.D, 8, 300, 35), G = num(s.glue, 6, 30, 12), B = num(s.bleed, 0, 10, 3);
     const T = s.tuck > 0 ? num(s.tuck, 6, 80, 20) : Math.min(28, Math.max(12, D * 0.85)), dd = D * 0.8, cc = Math.min(dd * 0.45, D * 0.4), gc = Math.min(G * 0.9, H * 0.15), M = B + 5;
     const xg1 = G, xb1 = G + W, xf0 = xb1 + D, xf1 = xf0 + W, xr1 = xf1 + D, yTp = T, yF0 = T + D, yF1 = yF0 + H, yB1 = yF1 + D, yK1 = yB1 + T;
     const ext = (l, t, r, b) => ({ l: l ? B : 0, t: t ? B : 0, r: r ? B : 0, b: b ? B : 0 });
@@ -40,7 +41,32 @@ const BoxDesigner = (() => {
     const cut = [[xf0, 0, 2.5], [xf1, 0, 2.5], [xf1, yTp], [xf1, yF0 - dd], [xr1 - cc, yF0 - dd], [xr1, yF0 - dd + cc], [xr1, yF1 + dd - cc], [xr1 - cc, yF1 + dd], [xf1, yF1 + dd], [xf1, yB1], [xf1, yK1, 2.5], [xf0, yK1, 2.5], [xf0, yB1], [xf0, yF1 + dd],
       [xb1 + cc, yF1 + dd], [xb1, yF1 + dd - cc], [xb1, yF1], [xg1, yF1], [0, yF1 - gc], [0, yF0 + gc], [xg1, yF0], [xb1, yF0], [xb1, yF0 - dd + cc], [xb1 + cc, yF0 - dd], [xf0, yF0 - dd]];
     const creases = [[xg1, yF0, xg1, yF1], [xb1, yF0, xb1, yF1], [xf0, yF0, xf0, yF1], [xf1, yF0, xf1, yF1], [xb1, yF0, xr1, yF0], [xb1, yF1, xr1, yF1], [xf0, yTp, xf1, yTp], [xf0, yB1, xf1, yB1]];
-    return { W, H, D, T, G, B, M, dd, tw: xr1 + 2 * M, th: yK1 + 2 * M, faces, flaps, glue, cut, creases, xr1, yK1 };
+    return { style: "tuck", W, H, D, T, G, B, M, dd, tw: xr1 + 2 * M, th: yK1 + 2 * M, faces, flaps, glue, glues: [glue], cut, creases, xr1, yK1 };
+  }
+  /* علبة هدية بقطعة واحدة: الأرضية في الوسط، الخلفي فوقها ثم الغطاء ثم لسان الإدخال، والأمامي (بفتحة الإبهام) تحتها، والجانبان بأجنحة لصق.
+     rot = دوران صورة الوجه (° مع عقارب الساعة) لوضعه على القالب؛ lw/lh أبعاد الوجه الفعلية قبل الدوران. */
+  function giftGeom(s) {
+    const W = num(s.W, 10, 400, 60), H = num(s.H, 10, 400, 110), D = num(s.D, 8, 300, 35), B = num(s.bleed, 0, 10, 3), M = B + 5;
+    const T = s.tuck > 0 ? num(s.tuck, 6, 80, 20) : Math.min(28, Math.max(12, D * 0.7)), Gf = Math.min(num(s.glue, 6, 30, 12), D * 0.8, H * 0.4);
+    const dia = Math.min(s.thumb > 0 ? num(s.thumb, 8, 120, 24) : Math.min(W * 0.4, 28), W * 0.7, H * 0.8), r = dia / 2;
+    const yb0 = T + D + H, yb1 = yb0 + D, yf1 = yb1 + H, tw = 2 * H + W, xR = H + W, cx = H + W / 2, g8 = 0.8 * Gf;
+    const ext = (l, t, rr, b) => ({ l: l ? B : 0, t: t ? B : 0, r: rr ? B : 0, b: b ? B : 0 });
+    const fc = (id, x, y, w, h, rot, e) => ({ id, x, y, w, h, rot, lw: rot % 180 ? h : w, lh: rot % 180 ? w : h, ext: e });
+    const faces = [fc("back", H, T + D, W, H, 0, ext(1, 0, 1, 0)), fc("top", H, T, W, D, 180, ext(1, 0, 1, 0)), fc("bottom", H, yb0, W, D, 180, ext(0, 0, 0, 0)), fc("front", H, yb1, W, H, 180, ext(1, 0, 1, 1)),
+      fc("right", 0, yb0, H, D, 270, ext(1, 0, 0, 0)), fc("left", xR, yb0, H, D, 90, ext(0, 0, 1, 0))];
+    const flaps = [{ id: "tuck", pts: [[H, T, 0], [H, 0, 2.5], [xR, 0, 2.5], [xR, T, 0]] }];
+    const glues = [[[H, yb0], [H - 1.5, yb0 - Gf], [g8, yb0 - Gf], [0, yb0]], [[H, yb1], [H - 1.5, yb1 + Gf], [g8, yb1 + Gf], [0, yb1]], [[xR, yb0], [xR + 1.5, yb0 - Gf], [tw - g8, yb0 - Gf], [tw, yb0]], [[xR, yb1], [xR + 1.5, yb1 + Gf], [tw - g8, yb1 + Gf], [tw, yb1]]];
+    const arc = []; for (let i = 0; i <= 18; i++) { const a = Math.PI * i / 18; arc.push([cx + r * Math.cos(a), yf1 - r * Math.sin(a)]); }
+    const cut = [[H, T], [H, 0, 2.5], [xR, 0, 2.5], [xR, T], [xR, yb0], [xR + 1.5, yb0 - Gf], [tw - g8, yb0 - Gf], [tw, yb0], [tw, yb1], [tw - g8, yb1 + Gf], [xR + 1.5, yb1 + Gf], [xR, yb1], [xR, yf1]].concat(arc, [[H, yf1], [H, yb1], [H - 1.5, yb1 + Gf], [g8, yb1 + Gf], [0, yb1], [0, yb0], [g8, yb0 - Gf], [H - 1.5, yb0 - Gf], [H, yb0]]);
+    const creases = [[H, T, xR, T], [H, T + D, xR, T + D], [0, yb0, tw, yb0], [0, yb1, tw, yb1], [H, yb0, H, yb1], [xR, yb0, xR, yb1]];
+    return { style: "gift", W, H, D, T, G: Gf, B, M, dia, tw: tw + 2 * M, th: yf1 + 2 * M, faces, flaps, glue: glues[0], glues, cut, creases };
+  }
+  /* تحويل هوامش النزف من إطار القالب إلى إطار صورة الوجه الأصلية حسب دورانه */
+  const logExt = (e, rot) => rot === 180 ? { l: e.r, r: e.l, t: e.b, b: e.t } : rot === 90 ? { t: e.r, r: e.b, b: e.l, l: e.t } : rot === 270 ? { t: e.l, l: e.b, b: e.r, r: e.t } : e;
+  /* وجه مرسوم جاهز للوضع على القالب: الصورة الأصلية + مركزها وأبعادها (مم) في إطار القالب */
+  function faceDraw(f, ppm, G) {
+    const rot = f.rot || 0, e = f.ext, cv = faceCanvas(f.id, ppm, logExt(e, rot), G), nw = f.w + e.l + e.r, nh = f.h + e.t + e.b;
+    return { cv, rot, cx: f.x - e.l + nw / 2, cy: f.y - e.t + nh / 2, lw: rot % 180 ? nh : nw, lh: rot % 180 ? nw : nh };
   }
   /* مسار مغلق بزوايا مدوّرة اختيارية (النقطة الثالثة = نصف القطر) */
   function pathOf(ctx, pts, fx) {
@@ -59,7 +85,7 @@ const BoxDesigner = (() => {
   /* ═══ رسم الوجوه ═══ */
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(2, Math.round(w)); c.height = Math.max(2, Math.round(h)); return c; };
   const isAr = t => /[؀-ۿ]/.test(t || "");
-  const faceDims = (G, k) => { const f = G.faces.find(x => x.id === k); return [f.w, f.h]; };
+  const faceDims = (G, k) => { const f = G.faces.find(x => x.id === k); return [f.lw || f.w, f.lh || f.h]; };
   function fitPx(c, str, maxW, size, wt, font) { c.font = wt + " " + size + "px " + font; const w = c.measureText(str).width; return w > maxW ? size * maxW / w : size; }
   function wrap(c, str, maxW) { const out = []; String(str || "").split("\n").forEach(par => { const words = par.split(/\s+/).filter(Boolean); let line = ""; words.forEach(w => { const t = line ? line + " " + w : w; if (c.measureText(t).width > maxW && line) { out.push(line); line = w; } else line = t; }); out.push(line); }); return out; }
   function cover(c, im, x, y, w, h) { const k = Math.max(w / im.width, h / im.height), dw = im.width * k, dh = im.height * k; c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); c.drawImage(im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); c.restore(); }
@@ -125,11 +151,11 @@ const BoxDesigner = (() => {
     o = o || {}; const G = geom(), cv = mk(G.tw * ppm, G.th * ppm), c = cv.getContext("2d"), fx = (v, isY) => (v + G.M) * ppm, bgc = S.faces.front.bg || S.id.bg;
     c.fillStyle = "#fff"; c.fillRect(0, 0, cv.width, cv.height);
     G.flaps.forEach(f => { pathOf(c, f.pts, fx); c.fillStyle = bgc; c.strokeStyle = bgc; c.lineJoin = "round"; c.lineWidth = 2 * G.B * ppm; c.fill(); if (G.B) c.stroke(); });
-    pathOf(c, G.glue, fx); c.fillStyle = "#f4f0e6"; c.fill();
-    G.faces.forEach(f => { const cvf = faceCanvas(f.id, ppm, f.ext, G); c.drawImage(cvf, fx(f.x - f.ext.l), fx(f.y - f.ext.t), cvf.width, cvf.height); });
+    G.glues.forEach(g => { pathOf(c, g, fx); c.fillStyle = "#f4f0e6"; c.fill(); });
+    G.faces.forEach(f => { const d = faceDraw(f, ppm, G); c.save(); c.translate(fx(d.cx), fx(d.cy)); c.rotate(d.rot * Math.PI / 180); c.drawImage(d.cv, -d.cv.width / 2, -d.cv.height / 2); c.restore(); });
     if (o.guides) {
       if (G.B) { const t = mk(cv.width, cv.height), tc = t.getContext("2d"); pathOf(tc, G.cut, fx); tc.lineJoin = "round"; tc.lineWidth = 2 * G.B * ppm; tc.strokeStyle = "#16a34a"; tc.stroke(); tc.globalCompositeOperation = "destination-out"; pathOf(tc, G.cut, fx); tc.fillStyle = "#000"; tc.fill(); c.save(); c.globalAlpha = 0.25; c.drawImage(t, 0, 0); c.restore(); }
-      c.save(); pathOf(c, G.glue, fx); c.clip(); c.strokeStyle = "rgba(60,50,30,.55)"; c.lineWidth = Math.max(1, 0.12 * ppm); for (let i = -G.H; i < G.G + G.H; i += 1.8) { c.beginPath(); c.moveTo(fx(i), fx(0)); c.lineTo(fx(i + G.H), fx(G.H * 4)); c.stroke(); } c.restore();
+      G.glues.forEach(g => { c.save(); pathOf(c, g, fx); c.clip(); c.strokeStyle = "rgba(60,50,30,.55)"; c.lineWidth = Math.max(1, 0.12 * ppm); c.beginPath(); for (let i = -G.th; i < G.tw; i += 1.8) { c.moveTo(fx(i), fx(0)); c.lineTo(fx(i + G.th), fx(G.th)); } c.stroke(); c.restore(); });
       c.save(); c.setLineDash([3 * ppm, 2 * ppm]); c.strokeStyle = "#0ea5e9"; c.lineWidth = Math.max(1.2, 0.22 * ppm); G.creases.forEach(l => { c.beginPath(); c.moveTo(fx(l[0]), fx(l[1])); c.lineTo(fx(l[2]), fx(l[3])); c.stroke(); }); c.restore();
       pathOf(c, G.cut, fx); c.strokeStyle = "#e11d48"; c.lineWidth = Math.max(1.4, 0.28 * ppm); c.lineJoin = "round"; c.stroke();
       if (o.labels) { c.save(); c.font = "700 " + Math.max(9, 2.2 * ppm) + "px Arial"; c.textAlign = "left"; c.textBaseline = "top"; c.fillStyle = "rgba(255,255,255,.9)"; c.strokeStyle = "rgba(0,0,0,.65)"; c.lineWidth = 3; const lab = { front: "الأمامي", back: "الخلفي", left: "الأيسر", right: "الأيمن", top: "العلوي", bottom: "السفلي" }; G.faces.forEach(f => { const t = lab[f.id] + " " + Math.round(f.w) + "×" + Math.round(f.h); c.strokeText(t, fx(f.x) + 4, fx(f.y) + 4); c.fillText(t, fx(f.x) + 4, fx(f.y) + 4); }); c.restore(); }
@@ -139,19 +165,19 @@ const BoxDesigner = (() => {
   /* ═══ التصدير ═══ */
   const blobOf = (cv, type, q) => new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error("تعذّر إنشاء الملف")), type, q));
   const dlBlob = (blob, name) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); };
-  const stamp = () => "box-" + Math.round(S.W) + "x" + Math.round(S.H) + "x" + Math.round(S.D) + "mm";
+  const stamp = () => (S.style === "gift" ? "giftbox-" : "box-") + Math.round(S.W) + "x" + Math.round(S.H) + "x" + Math.round(S.D) + "mm";
   const capPpm = (G, dpi) => { let ppm = num(dpi, 72, 600, 300) / 25.4; const mp = G.tw * G.th * ppm * ppm; if (mp > 60e6) ppm *= Math.sqrt(60e6 / mp); return ppm; };
   async function svgString(guides) {
     const G = geom(), ppm = capPpm(G, Math.min(S.dpi, 300)), bgc = S.faces.front.bg || S.id.bg, f3 = v => (+v).toFixed(3), fx = v => v + G.M;
     let s = '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + f3(G.tw) + 'mm" height="' + f3(G.th) + 'mm" viewBox="0 0 ' + f3(G.tw) + " " + f3(G.th) + '">\n<title>Alyssum Box Designer — ' + esc(S.id.name) + " " + Math.round(G.W) + "×" + Math.round(G.H) + "×" + Math.round(G.D) + ' mm</title>\n<rect width="100%" height="100%" fill="#fff"/>\n';
     s += '<defs><pattern id="glue-hatch" width="1.8" height="1.8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="1.8" stroke="#6b5d3a" stroke-width="0.12"/></pattern><mask id="outside" maskUnits="userSpaceOnUse" x="0" y="0" width="' + f3(G.tw) + '" height="' + f3(G.th) + '"><rect width="100%" height="100%" fill="#fff"/><path d="' + svgPath(G.cut, fx) + '" fill="#000"/></mask></defs>\n';
     s += '<g id="artwork-flaps">' + G.flaps.map(f => '<path d="' + svgPath(f.pts, fx) + '" fill="' + bgc + '" stroke="' + bgc + '" stroke-width="' + f3(2 * G.B) + '" stroke-linejoin="round"/>').join("") + "</g>\n";
-    s += '<g id="glue-tab"><path d="' + svgPath(G.glue, fx) + '" fill="#f4f0e6"/></g>\n<g id="artwork-faces">';
-    for (const f of G.faces) { const cv = faceCanvas(f.id, ppm, f.ext, G); s += '<image id="face-' + f.id + '" x="' + f3(fx(f.x - f.ext.l)) + '" y="' + f3(fx(f.y - f.ext.t)) + '" width="' + f3(f.w + f.ext.l + f.ext.r) + '" height="' + f3(f.h + f.ext.t + f.ext.b) + '" preserveAspectRatio="none" xlink:href="' + cv.toDataURL("image/png") + '"/>'; await new Promise(r => setTimeout(r, 0)); }
+    s += '<g id="glue-tab">' + G.glues.map(g => '<path d="' + svgPath(g, fx) + '" fill="#f4f0e6"/>').join("") + '</g>\n<g id="artwork-faces">';
+    for (const f of G.faces) { const d = faceDraw(f, ppm, G); s += '<image id="face-' + f.id + '" x="' + f3(fx(d.cx - d.lw / 2)) + '" y="' + f3(fx(d.cy - d.lh / 2)) + '" width="' + f3(d.lw) + '" height="' + f3(d.lh) + '"' + (d.rot ? ' transform="rotate(' + d.rot + " " + f3(fx(d.cx)) + " " + f3(fx(d.cy)) + ')"' : "") + ' preserveAspectRatio="none" xlink:href="' + d.cv.toDataURL("image/png") + '"/>'; await new Promise(r => setTimeout(r, 0)); }
     s += "</g>\n";
     if (guides) {
       if (G.B) s += '<g id="bleed-guide"><path d="' + svgPath(G.cut, fx) + '" fill="none" stroke="#16a34a" stroke-opacity="0.45" stroke-width="' + f3(2 * G.B) + '" stroke-linejoin="round" mask="url(#outside)"/></g>\n';
-      s += '<g id="glue-area"><path d="' + svgPath(G.glue, fx) + '" fill="url(#glue-hatch)"/></g>\n';
+      s += '<g id="glue-area">' + G.glues.map(g => '<path d="' + svgPath(g, fx) + '" fill="url(#glue-hatch)"/>').join("") + "</g>\n";
       s += '<g id="crease-line" fill="none" stroke="#0ea5e9" stroke-width="0.25" stroke-dasharray="3 2">' + G.creases.map(l => '<line x1="' + f3(fx(l[0])) + '" y1="' + f3(fx(l[1])) + '" x2="' + f3(fx(l[2])) + '" y2="' + f3(fx(l[3])) + '"/>').join("") + "</g>\n";
       s += '<g id="cut-line"><path d="' + svgPath(G.cut, fx) + '" fill="none" stroke="#e11d48" stroke-width="0.3" stroke-linejoin="round"/></g>\n';
     }
@@ -163,7 +189,7 @@ const BoxDesigner = (() => {
     const poly = pts => { const n = pts.length; let d = ""; for (let i = 0; i < n; i++) { const p = pts[i], a = pts[(i + n - 1) % n], b = pts[(i + 1) % n], r = p[2] || 0; if (!r) { d += X(p[0]) + " " + Y(p[1]) + (i ? " l\n" : " m\n"); continue; } const v1 = [a[0] - p[0], a[1] - p[1]], v2 = [b[0] - p[0], b[1] - p[1]], l1 = Math.hypot(...v1), l2 = Math.hypot(...v2), kk = Math.min(r, l1 / 2, l2 / 2), s = [p[0] + v1[0] / l1 * kk, p[1] + v1[1] / l1 * kk], e = [p[0] + v2[0] / l2 * kk, p[1] + v2[1] / l2 * kk]; d += X(s[0]) + " " + Y(s[1]) + (i ? " l\n" : " m\n"); const c1 = [s[0] + (p[0] - s[0]) * 2 / 3, s[1] + (p[1] - s[1]) * 2 / 3], c2 = [e[0] + (p[0] - e[0]) * 2 / 3, e[1] + (p[1] - e[1]) * 2 / 3]; d += X(c1[0]) + " " + Y(c1[1]) + " " + X(c2[0]) + " " + Y(c2[1]) + " " + X(e[0]) + " " + Y(e[1]) + " c\n"; } return d + "h\n"; };
     let ct = "q\n" + f2(pw) + " 0 0 " + f2(ph) + " 0 0 cm\n/Im0 Do\nQ\n";
     if (guides) {
-      ct += "q\n" + poly(G.glue) + "W n\n0.24 0.2 0.12 RG 0.12 w\n"; for (let i = -G.H; i < G.G + G.H; i += 1.8) ct += X(i) + " " + Y(0) + " m " + X(i + G.H) + " " + Y(G.H * 4) + " l S\n"; ct += "Q\n";
+      G.glues.forEach(g => { ct += "q\n" + poly(g) + "W n\n0.24 0.2 0.12 RG 0.12 w\n"; for (let i = -G.th; i < G.tw; i += 1.8) ct += X(i) + " " + Y(0) + " m " + X(i + G.th) + " " + Y(G.th) + " l S\n"; ct += "Q\n"; });
       ct += "q\n0.055 0.647 0.914 RG 0.7 w [8.5 5.7] 0 d\n" + G.creases.map(l => X(l[0]) + " " + Y(l[1]) + " m " + X(l[2]) + " " + Y(l[3]) + " l S\n").join("") + "Q\n";
       ct += "q\n0.882 0.114 0.282 RG 0.85 w 1 j\n" + poly(G.cut) + "S\nQ\n";
     }
@@ -191,7 +217,7 @@ const BoxDesigner = (() => {
   /* ═══ إرسال إلى 3D Pack Studio ═══ */
   function model3d() {
     const G = geom(), ppm = Math.min(14, 1600 / Math.max(G.W, G.H, G.D)), faces = {}; FACES.forEach(([k]) => { faces[k] = faceCanvas(k, ppm, null, G); });
-    return { W: G.W, H: G.H, D: G.D, T: G.T, G: G.G, flap: S.faces.front.bg || S.id.bg, faces };
+    return { style: G.style, rots: Object.fromEntries(G.faces.map(f => [f.id, f.rot || 0])), dia: G.dia || 0, W: G.W, H: G.H, D: G.D, T: G.T, G: G.G, flap: S.faces.front.bg || S.id.bg, faces };
   }
   async function to3d() {
     if (typeof Pack3D === "undefined" || !Pack3D.openBox) { msg("⚠️ 3D Pack Studio غير متاح", true); return; }
@@ -202,9 +228,9 @@ const BoxDesigner = (() => {
   const field = (a, b, label, type, extra) => '<div><label class="f">' + label + '</label><input ' + a + '="' + b + '" type="' + type + '" ' + (extra || "") + "></div>";
   function panel() {
     const id = S.id, F = S.faces[S.face], opt = (arr, cur) => arr.map(o => '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + ">" + o[1] + "</option>").join("");
-    return '<h4>① شكل العلبة والأبعاد</h4><div class="chips">' + PRESETS.map(p => '<button type="button" data-pre="' + p[0] + '" class="' + (S.type === p[0] ? "on" : "o") + '">' + p[1] + "</button>").join("") + '</div>' +
+    return '<h4>① شكل العلبة والأبعاد</h4><div class="chips">' + [["tuck", "علبة بغطاء إدخال"], ["gift", "علبة هدية (قطعة واحدة)"]].map(p => '<button type="button" data-style="' + p[0] + '" class="' + (S.style === p[0] ? "on" : "o") + '">' + p[1] + "</button>").join("") + '</div><div class="chips">' + PRESETS.map(p => '<button type="button" data-pre="' + p[0] + '" class="' + (S.type === p[0] ? "on" : "o") + '">' + p[1] + "</button>").join("") + '</div>' +
       '<div class="r3"><div><label class="f">العرض مم</label><input data-k="W" type="number" min="10" max="400" step="1"></div><div><label class="f">الارتفاع مم</label><input data-k="H" type="number" min="10" max="400" step="1"></div><div><label class="f">العمق مم</label><input data-k="D" type="number" min="8" max="300" step="1"></div></div>' +
-      '<div class="r3"><div><label class="f">لسان الإدخال</label><input data-k="tuck" type="number" min="0" max="80" step="1" placeholder="تلقائي"></div><div><label class="f">لسان اللصق</label><input data-k="glue" type="number" min="6" max="30" step="1"></div><div><label class="f">النزف مم</label><input data-k="bleed" type="number" min="0" max="10" step="0.5"></div></div>' +
+      '<div class="r3"><div><label class="f">لسان الإدخال</label><input data-k="tuck" type="number" min="0" max="80" step="1" placeholder="تلقائي"></div><div><label class="f">' + (S.style === "gift" ? "جناح اللصق" : "لسان اللصق") + '</label><input data-k="glue" type="number" min="6" max="30" step="1"></div><div><label class="f">النزف مم</label><input data-k="bleed" type="number" min="0" max="10" step="0.5"></div></div>' + (S.style === "gift" ? '<div class="r2"><div><label class="f">قطر فتحة الإبهام مم</label><input data-k="thumb" type="number" min="0" max="120" step="1" placeholder="تلقائي"></div><div></div></div>' : "") +
       '<h4>② هوية العلبة (من الملصق)</h4><div class="bx-b" style="margin-top:0"><button type="button" class="o" data-act="fromPack">هوية ملصق 3D Pack Studio</button><button type="button" class="o" data-act="fromBrand">الهوية البصرية للعلامة</button></div>' +
       '<div class="r2">' + field("data-id", "name", "اسم العلامة", "text") + field("data-id", "sub", "الوصف القصير", "text") + field("data-id", "vol", "الحجم", "text") + field("data-id", "code", "رقم الباركود", "text") + "</div>" +
       '<div class="r3">' + field("data-id", "bg", "الخلفية", "color") + field("data-id", "fg", "لون النص", "color") + field("data-id", "accent", "لون مميّز", "color") + "</div>" +
@@ -223,7 +249,7 @@ const BoxDesigner = (() => {
   }
   function fillValues() {
     const side = $("bx-side"); if (!side) return;
-    side.querySelectorAll("[data-k]").forEach(e => { if (e.type === "checkbox") e.checked = !!S[e.dataset.k]; else if (e.tagName !== "SELECT") e.value = S[e.dataset.k] || (e.dataset.k === "tuck" ? "" : S[e.dataset.k]); });
+    side.querySelectorAll("[data-k]").forEach(e => { if (e.type === "checkbox") e.checked = !!S[e.dataset.k]; else if (e.tagName !== "SELECT") e.value = S[e.dataset.k] || (e.dataset.k === "tuck" || e.dataset.k === "thumb" ? "" : S[e.dataset.k]); });
     side.querySelectorAll("[data-id]").forEach(e => { if (e.tagName !== "SELECT") e.value = S.id[e.dataset.id]; });
     const ta = side.querySelector('[data-fk="text"]'); if (ta) ta.value = S.faces[S.face].text || "";
   }
@@ -240,7 +266,8 @@ const BoxDesigner = (() => {
   function wire() {
     const side = $("bx-side"); fillValues();
     side.querySelectorAll("[data-pre]").forEach(b => b.onclick = () => setPreset(b.dataset.pre));
-    side.querySelectorAll("[data-k]").forEach(e => { const h = () => { const k = e.dataset.k; let v = e.type === "checkbox" ? e.checked : e.value; if (["W", "H", "D", "tuck", "glue", "bleed", "dpi", "q"].includes(k)) { v = k === "tuck" && v === "" ? 0 : parseFloat(v); if (!isFinite(v)) return; } S[k] = v; if (["W", "H", "D"].includes(k)) S.type = "custom"; save(); if (["W", "H", "D"].includes(k)) side.querySelectorAll("[data-pre]").forEach(b => b.className = b.dataset.pre === "custom" ? "on" : "o"); schedule(); }; e.oninput = h; e.onchange = h; });
+    side.querySelectorAll("[data-style]").forEach(b => b.onclick = () => { S.style = b.dataset.style; save(); ui(); schedule(); });
+    side.querySelectorAll("[data-k]").forEach(e => { const h = () => { const k = e.dataset.k; let v = e.type === "checkbox" ? e.checked : e.value; if (["W", "H", "D", "tuck", "thumb", "glue", "bleed", "dpi", "q"].includes(k)) { v = (k === "tuck" || k === "thumb") && v === "" ? 0 : parseFloat(v); if (!isFinite(v)) return; } S[k] = v; if (["W", "H", "D"].includes(k)) S.type = "custom"; save(); if (["W", "H", "D"].includes(k)) side.querySelectorAll("[data-pre]").forEach(b => b.className = b.dataset.pre === "custom" ? "on" : "o"); schedule(); }; e.oninput = h; e.onchange = h; });
     side.querySelectorAll("[data-id]").forEach(e => { const h = () => { S.id[e.dataset.id] = e.value; save(); schedule(); }; e.oninput = h; e.onchange = h; });
     side.querySelectorAll("[data-face]").forEach(b => b.onclick = () => { S.face = b.dataset.face; save(); ui(); schedule(); });
     side.querySelectorAll("[data-fs]").forEach(e => e.onchange = () => { S.faces[S.face].show[e.dataset.fs] = e.checked ? 1 : 0; save(); schedule(); });
@@ -275,6 +302,6 @@ const BoxDesigner = (() => {
     document.addEventListener("keydown", function k(e) { if (e.key === "Escape" && $("bx-bg") && !$("p3-bg")) { close(); document.removeEventListener("keydown", k); } });
     ui(); preview(); window.addEventListener("resize", schedule);
   }
-  return { open, close, S, PRESETS, FACES, geom, _t: { faceCanvas, sheetCanvas, svgString, pdfBlob, model3d, setArt: c => { art = c; }, setLogo: c => { logo = c; }, preview } };
+  return { open, close, S, PRESETS, FACES, geom, _t: { logExt, faceCanvas, sheetCanvas, svgString, pdfBlob, model3d, setArt: c => { art = c; }, setLogo: c => { logo = c; }, preview } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = BoxDesigner;
