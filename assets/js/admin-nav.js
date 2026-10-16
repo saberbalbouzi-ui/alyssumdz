@@ -501,8 +501,8 @@ const AdminNav = (() => {
   async function saveOff() {
     try { localStorage.setItem("admin_apps_off", JSON.stringify([...OFF])); } catch (e) { }
     const g = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (!g || !g.token) return toast("حُفظ في هذا المتصفح (اربط النشر لينعكس على موقعك)");
-    try { const b64 = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, off: [...OFF] }, null, 2)))), res = await GH.putFile("assets/data/apps.json", b64, appSha, "تفعيل/تعطيل التطبيقات من لوحة التحكم"); appSha = res && res.content ? res.content.sha : appSha; toast("تم الحفظ — ينعكس على الموقع خلال دقيقة تقريباً"); }
-    catch (e) { toast("تعذّر حفظ إعداد التطبيقات: " + e.message); }
+    try { const b64 = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, off: [...OFF] }, null, 2)))), res = await GH.putFile("assets/data/apps.json", b64, appSha, "تفعيل/تعطيل الإضافات من لوحة التحكم"); appSha = res && res.content ? res.content.sha : appSha; toast("تم الحفظ — ينعكس على الموقع خلال دقيقة تقريباً"); }
+    catch (e) { toast("تعذّر حفظ إعداد الإضافات: " + e.message); }
   }
   function toggle(id, on) { on ? OFF.delete(id) : OFF.add(id); applyOff(); saveOff(); renderApp(id); }
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -513,7 +513,7 @@ const AdminNav = (() => {
     const cur = (typeof AdminUpdate !== "undefined" && AdminUpdate.current) || "", lat = (typeof AdminUpdate !== "undefined" && AdminUpdate.latest) || "", newer = lat && cur && lat !== cur && lat.split(".").map(Number).join() > cur.split(".").map(Number).join();
     const o = off(id);
     const tabsH = A.tools ? `<div class="ap-tabs"><button type="button" class="${AT.tab === "info" ? "on" : ""}" onclick="AdminNav.setAppTab('info','${id}')">التعريف والتفعيل</button><button type="button" class="${AT.tab === "tools" ? "on" : ""}" onclick="AdminNav.setAppTab('tools','${id}')">قائمة الأدوات</button></div>` : "";
-    box.innerHTML = `<div class="ap-h"><h3>${esc(A.n)}</h3><span class="ap-s ${o ? "off" : "on"}">${o ? "معطّل" : "مفعّل"}</span><label class="sw" title="${o ? "تفعيل" : "تعطيل"} التطبيق"><input type="checkbox" ${o ? "" : "checked"} onchange="AdminNav.toggle('${id}',this.checked)"><i></i></label></div>${tabsH}${A.tools && AT.tab === "tools" ? `<div class="ap-sec">${toolsHtml()}</div>` : `
+    box.innerHTML = `<div class="ap-h"><h3>${esc(A.n)}</h3><span class="ap-s ${o ? "off" : "on"}">${o ? "معطّل" : "مفعّل"}</span><label class="sw" title="${o ? "تفعيل" : "تعطيل"} الإضافة"><input type="checkbox" ${o ? "" : "checked"} onchange="AdminNav.toggle('${id}',this.checked)"><i></i></label></div>${tabsH}${A.tools && AT.tab === "tools" ? `<div class="ap-sec">${toolsHtml()}</div>` : `
 <div class="ap-sec"><b>التعريف</b><div>${esc(A.d)}</div></div>
 <div class="ap-sec"><b>كيف يعمل</b><ol>${A.how.map(x => "<li>" + esc(x) + "</li>").join("")}</ol></div>
 <div class="ap-sec"><b>أين تجده ؟</b><div>${esc(A.where)}</div><div class="action-bar" style="margin-top:.5rem"><button class="small" onclick="AdminNav.work('${id}')" ${o ? "disabled" : ""}>أفتح ${esc(A.n)}</button></div><div class="hint">التطبيق يبقى يعمل في مكانه المعتاد؛ هذه الصفحة للتعريف والإعداد فقط.</div></div>
@@ -526,7 +526,7 @@ const AdminNav = (() => {
   function workBtn(w) { return [...document.querySelectorAll(".side-nav .nav-btn.nav-work")].find(b => b.dataset.work === w); }
   const WK = { builder: ["builder", "builder"], smart: ["smart", "pbgen"], imgtools: ["imgtools", "imgtools"], imggen: ["imggen", "imggen"], agent: ["agent", "agent"], voice: ["agent", "agent"] };
   function work(id) {
-    if (!APPS[id]) return; if (off(id)) return toast("التطبيق معطّل — فعّله من إعداداته");
+    if (!APPS[id]) return; if (off(id)) return toast("الإضافة معطّلة — فعّلها من إعداداتها");
     if (id === "ask") return ask(); if (id === "cloner") return clone();
     if (id === "floaters") { AT.tab = "info"; renderApp(id); const h = $("fl-host"); if (h) setTimeout(() => h.scrollIntoView({ behavior: "smooth", block: "start" }), 80); return; }
     const w = WK[id], b = w && workBtn(w[0]); if (!b) return;
@@ -534,8 +534,8 @@ const AdminNav = (() => {
     const mi = document.querySelector('.side-nav .nav-btn[data-app="' + id + '"]'); if (mi) { document.querySelectorAll(".nav-btn.on").forEach(x => x.classList.remove("on")); mi.classList.add("on"); }
   }
   let VOICE = false;
-  function ask(go) { if (off("ask")) return toast("اسألني معطّل من إعدادات التطبيقات"); try { AdminHelp.show ? AdminHelp.show() : AdminHelp.toggle(); } catch (e) { toast("المساعد غير متاح"); } }
-  function clone(go) { if (off("cloner")) return toast("ناسخ القوالب معطّل من إعدادات التطبيقات"); try { if (typeof PBClone === "undefined") throw 0; PBClone.open(); } catch (e) { toast("ناسخ القوالب غير متاح في هذه النسخة"); } }
+  function ask(go) { if (off("ask")) return toast("اسألني معطّل من إعدادات الإضافات"); try { AdminHelp.show ? AdminHelp.show() : AdminHelp.toggle(); } catch (e) { toast("المساعد غير متاح"); } }
+  function clone(go) { if (off("cloner")) return toast("ناسخ القوالب معطّل من إعدادات الإضافات"); try { if (typeof PBClone === "undefined") throw 0; PBClone.open(); } catch (e) { toast("ناسخ القوالب غير متاح في هذه النسخة"); } }
   function openBuilder() { const b = workBtn("builder"); if (b) Admin.tab("builder", b); }
   /* ── أدوات تعديل الصور (مستقلة عن المطوّر): نزع الخلفية بالذكاء المحلي، ضغط وتحويل WebP ── */
   const IT = { cv: null, res: null, name: "image", busy: false };
@@ -576,7 +576,7 @@ const AdminNav = (() => {
     }
     agentView("agent");
     loadOff();
-    try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب تطبيقات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
+    try { if (typeof PBApp !== "undefined" && !PBApp.__g) { const o = PBApp.open; PBApp.__g = 1; PBApp.open = function () { if (off("builder")) { toast("مطوّر الصفحات معطّل من تبويب إضافات"); return; } return o.apply(this, arguments); }; } } catch (e) { }
   }
   /* روابط عميقة من صفحات دليل الأدوات (saas/guide): admin.html#tool=<id> — أدوات القوائم المستقلة تُفتح مباشرة، وأدوات المحرّر تفتح مطوّر الصفحات على تبويب «تعديل الصورة» (ومنشئ الشعار والصورة من وصف تفتح نافذتها) */
   const DEEP_TAB = { gen: "imggen", batch: "imgtools", catalog: "imgtools" };
