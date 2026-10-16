@@ -1358,12 +1358,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("دفعة الصور بخطوة ذكاء: صورتان تُعالجان بموافقة تكلفة واحدة، والوصف الفارغ والحدّ 250 يمنعان التنفيذ", bt.ok1 === 2 && bt.n >= 2 && bt.noConf && bt.askedCost && bt.noText && bt.recolor && bt.capped && bt.modes === 8, bt);
   // ── روابط عميقة من دليل الأدوات ──
-  const dp = await p.evaluate(async () => {
+  const dpl = await p.evaluate(async () => {
     const bad = await AdminNav.deepTool("zzz"); location.hash = "#tool=gen"; const good = await AdminNav.deepTool(); const cleared = !/tool=/.test(location.hash);
     const tab = !!document.getElementById("tab-imggen") && document.getElementById("tab-imggen").classList.contains("on");
     return { bad, good, cleared, tab: tab || good };
   });
-  ok("روابط الدليل العميقة: معرّف مجهول يُرفض، و#tool=gen يفتح مولّد الصور ويُنظَّف العنوان", dp.bad === false && dp.good === true && dp.cleared, dp);
+  ok("روابط الدليل العميقة: معرّف مجهول يُرفض، و#tool=gen يفتح مولّد الصور ويُنظَّف العنوان", dpl.bad === false && dpl.good === true && dpl.cleared, dpl);
   // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);
