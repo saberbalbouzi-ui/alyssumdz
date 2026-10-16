@@ -494,3 +494,4 @@ html.glass .pbx-tr small{color:rgba(255,255,255,.72)!important}
 
 html.glass .pbx-tr i.ic{background:transparent!important}
 html.glass .pbx-tt.ic{padding:.35rem!important}
+html.glass .tc-card{background:var(--g-sheen),rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}html.glass .tc-card:hover{border-color:rgba(var(--g-mint-rgb),.5)}html.glass .tc-m em.free{color:var(--g-mint);border-color:var(--g-mint)}

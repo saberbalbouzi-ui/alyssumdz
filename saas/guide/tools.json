@@ -22,7 +22,8 @@
     "st",
     "scene"
    ],
-   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+   "landing": "landing/remove-background/"
   },
   {
    "id": "scene",

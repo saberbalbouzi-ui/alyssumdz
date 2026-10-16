@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>أداة نزع الخلفية بالذكاء — صور منتجات احترافية في ثوانٍ</title>
+<meta name="description" content="أزل خلفية صور منتجاتك بنقرة واحدة واحصل على صورة شفافة بحواف دقيقة، جاهزة لمتجرك وإعلاناتك. مجانية وتعمل داخل متصفحك.">
+<meta property="og:title" content="أداة نزع الخلفية بالذكاء">
+<meta property="og:description" content="صورة شفافة بحواف دقيقة بنقرة واحدة، مجاناً داخل متصفحك.">
+<style>
+:root{--bg:#06120d;--bg2:#0b1d15;--sf:rgba(255,255,255,.06);--ln:rgba(255,255,255,.14);--tx:#f3f8f4;--mu:#b8c9be;--ac:#c6fe17;--ac-rgb:198,254,23;--g:#173f35;--lt:#f6f8f5;--ltx:#10241b;--ltm:#5a6b61}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.8 'Cairo','Segoe UI',Tahoma,sans-serif}
+a{color:inherit}img{max-width:100%;display:block}
+.w{max-width:1120px;margin:0 auto;padding:0 16px}
+/* الشريط العلوي */
+.top{position:sticky;top:0;z-index:20;background:rgba(6,18,13,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--ln)}
+.top .w{display:flex;align-items:center;gap:1rem;height:64px}
+.brand{display:flex;align-items:center;gap:.5rem;font-weight:900;font-size:1.15rem;text-decoration:none}
+.brand i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(var(--ac-rgb),.35),rgba(var(--ac-rgb),.08));border:1px solid rgba(var(--ac-rgb),.55)}
+.brand svg{width:18px;height:18px;stroke:var(--ac);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.top nav{display:flex;gap:1.3rem;margin-inline-start:1rem;font-size:.92rem;color:var(--mu)}.top nav a{text-decoration:none}.top nav a:hover{color:#fff}
+.top .sp{flex:1}
+/* أزرار زجاجية منتفخة بنص أبيض */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.72rem 1.5rem;border-radius:14px;font:inherit;font-weight:800;text-decoration:none;color:#fff;cursor:pointer;border:1px solid rgba(var(--ac-rgb),.6);background:linear-gradient(180deg,rgba(var(--ac-rgb),.34),rgba(var(--ac-rgb),.12));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 10px rgba(0,0,0,.28),0 6px 18px rgba(0,0,0,.28);backdrop-filter:blur(8px);transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(var(--ac-rgb),.5),rgba(var(--ac-rgb),.2))}
+.btn.ghost{border-color:var(--ln);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05))}
+.band:not(.dk) .btn{border-color:rgba(23,63,53,.9);background:linear-gradient(180deg,rgba(44,107,28,.92),rgba(23,63,53,.96));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -6px 10px rgba(0,0,0,.25),0 6px 16px rgba(16,36,27,.25)}
+.band:not(.dk) .btn:hover{background:linear-gradient(180deg,rgba(60,140,36,.95),rgba(23,63,53,.96))}
+.btn.lg{padding:.95rem 2.2rem;font-size:1.12rem}.btn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* الهيرو */
+.hero{background:radial-gradient(900px 480px at 15% 20%,rgba(var(--ac-rgb),.14),transparent 60%),radial-gradient(800px 500px at 90% 0,#134a36,transparent 60%),var(--bg);padding:3.2rem 0 3.6rem}
+.hero .w{display:grid;grid-template-columns:1.05fr 1fr;gap:2.4rem;align-items:center}
+.pill{display:inline-flex;gap:.4rem;align-items:center;font-size:.82rem;font-weight:800;color:var(--ac);border:1px solid rgba(var(--ac-rgb),.45);border-radius:999px;padding:.2rem .9rem;background:rgba(var(--ac-rgb),.08)}
+h1{margin:.8rem 0 .4rem;font-size:clamp(2rem,5vw,3.2rem);line-height:1.25;font-weight:900}h1 em{font-style:normal;color:var(--ac);display:block}
+.lead{color:var(--mu);font-size:1.08rem;max-width:34rem}
+.cta{display:flex;gap:.7rem;flex-wrap:wrap;margin:1.4rem 0 .4rem}.note{color:var(--mu);font-size:.85rem}
+.checks{display:flex;gap:1.4rem;flex-wrap:wrap;margin-top:1.4rem;color:var(--mu);font-size:.92rem}.checks span{display:flex;gap:.4rem;align-items:center}.checks svg{width:18px;height:18px;stroke:var(--ac);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.shot{position:relative;border-radius:26px;padding:10px;background:linear-gradient(160deg,rgba(var(--ac-rgb),.35),rgba(255,255,255,.05));box-shadow:0 30px 70px rgba(0,0,0,.5)}
+.shot img{border-radius:18px;width:100%;height:auto;aspect-ratio:358/294;object-fit:cover}
+/* أقسام فاتحة */
+.band{padding:3.6rem 0;background:var(--lt);color:var(--ltx)}.band.alt{background:#fff}.band.dk{background:var(--bg2);color:var(--tx)}
+.band h2{font-size:clamp(1.5rem,3.4vw,2.2rem);margin:.2rem 0;text-align:center;line-height:1.35}.sub{text-align:center;color:var(--ltm);margin:0 auto 2rem;max-width:36rem}.dk .sub{color:var(--mu)}
+.feat{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.feat div{display:flex;gap:.8rem;align-items:flex-start;background:#fff;border:1px solid #e3e9e3;border-radius:16px;padding:1rem}
+.feat i,.ico{flex:none;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#eaf7d0;border:1px solid #cfe99a}
+.feat svg,.ico svg{width:22px;height:22px;stroke:#2c6b1c;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.feat b{display:block}.feat small{color:var(--ltm)}
+.ex{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;max-width:860px;margin:0 auto}
+.ex figure{margin:0;background:#fff;border:1px solid #e3e9e3;border-radius:18px;overflow:hidden;box-shadow:0 10px 24px rgba(16,36,27,.08)}
+.ex img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;background:#eef2ee}.ex figcaption{padding:.7rem .9rem;font-weight:800;font-size:.95rem}.ex small{display:block;color:var(--ltm);font-weight:500}
+.wide{max-width:640px;margin:2.4rem auto 0;text-align:center}.wide h3{font-size:1.6rem;margin:.2rem 0}.wide ul{list-style:none;padding:0;margin:1rem auto 1.4rem;display:grid;gap:.4rem;color:var(--ltm);width:fit-content;text-align:start}.wide li:before{content:"✓";color:#2c8a14;font-weight:900;margin-inline-end:.5rem}
+.fig{font-size:.78rem;color:var(--ltm);text-align:center;margin-top:1.2rem}
+/* الخطوات */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.st{background:var(--sf);border:1px solid var(--ln);border-radius:20px;padding:1.2rem}.st h3{margin:0 0 .2rem;display:flex;gap:.6rem;align-items:center;font-size:1.15rem}
+.st h3 b{width:2rem;height:2rem;border-radius:50%;display:grid;place-items:center;background:var(--g);border:1.5px solid var(--ac);color:var(--ac)}.st p{margin:.2rem 0 .9rem;color:var(--mu);font-size:.92rem}
+.st .vis{border-radius:14px;background:#0a1914;border:1px solid var(--ln);min-height:150px;display:grid;place-items:center;overflow:hidden}.st .vis img{width:100%;height:150px;object-fit:cover}
+.bar{width:78%;height:12px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}.bar i{display:block;height:100%;width:72%;background:linear-gradient(90deg,#4ade80,var(--ac));border-radius:99px}
+.fmt{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}.fmt span{padding:.3rem .9rem;border-radius:10px;font-weight:900;font-size:.85rem;background:rgba(255,255,255,.1);border:1px solid var(--ln)}
+/* الأدوات */
+.tools{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem}
+.tc{background:#fff;border:1px solid #e3e9e3;border-radius:18px;overflow:hidden;text-decoration:none;color:var(--ltx);transition:transform .15s,box-shadow .15s}.tc:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(16,36,27,.14)}
+.tc img{width:100%;aspect-ratio:1/1;object-fit:contain;background:#061810}.tc div{padding:.7rem .8rem}.tc b{display:block;font-size:.95rem}.tc small{color:var(--ltm);font-size:.8rem;line-height:1.5;display:block}
+/* القطاعات */
+.sect{display:grid;grid-template-columns:repeat(6,1fr);gap:.8rem}.sect div{background:#fff;border:1px solid #e3e9e3;border-radius:16px;padding:1rem .6rem;text-align:center;font-weight:800;font-size:.9rem}.sect .ico{margin:0 auto .5rem}.sect small{display:block;color:var(--ltm);font-weight:500;font-size:.76rem}
+/* الأسئلة */
+.faq{max-width:760px;margin:0 auto;display:grid;gap:.6rem}.faq details{background:#fff;border:1px solid #e3e9e3;border-radius:14px;padding:.8rem 1.1rem}.faq summary{cursor:pointer;font-weight:800}.faq p{margin:.5rem 0 0;color:var(--ltm)}
+/* دعوة أخيرة */
+.fin{background:radial-gradient(700px 360px at 80% 0,rgba(var(--ac-rgb),.18),transparent 60%),#0a1c14;text-align:center;padding:3.6rem 0}.fin h2{font-size:clamp(1.6rem,4vw,2.4rem);margin:0 0 .4rem}.fin p{color:var(--mu);margin:0 0 1.4rem}
+.site{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:1.4rem;color:var(--mu);font-size:.85rem}.site input{min-width:230px;padding:.45rem .7rem;border-radius:10px;border:1px solid var(--ln);background:rgba(0,0,0,.3);color:var(--tx);font:inherit;direction:ltr}
+footer{background:#040c08;color:var(--mu);padding:1.6rem 0;font-size:.88rem}footer .w{display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between}footer a{text-decoration:none;margin-inline-end:1rem}footer a:hover{color:#fff}
+@media(max-width:900px){.hero .w,.steps{grid-template-columns:1fr}.feat{grid-template-columns:1fr 1fr}.tools{grid-template-columns:1fr 1fr}.sect{grid-template-columns:repeat(3,1fr)}.top nav{display:none}}
+@media(max-width:520px){.ex{grid-template-columns:1fr}.feat{grid-template-columns:1fr}.sect{grid-template-columns:1fr 1fr}.btn.lg{width:100%;justify-content:center}.top .btn.ghost{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="w">
+  <a class="brand" href="#"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7l8 4 8-4z"/><path d="m4 12 8 4 8-4"/><path d="m4 17 8 4 8-4"/></svg></i><span data-brand>المنصة</span></a>
+  <nav><a href="#tools">الأدوات</a><a href="#how">كيف تعمل</a><a href="#faq">الأسئلة الشائعة</a><a href="../../guide/bg.html">دليل الاستعمال</a></nav>
+  <span class="sp"></span>
+  <a class="btn ghost" data-open="bg" href="../../../admin.html#tool=bg">تسجيل الدخول</a>
+  <a class="btn" data-open="bg" href="../../../admin.html#tool=bg">ابدأ مجاناً</a>
+</div></header>
+
+<section class="hero"><div class="w">
+  <div>
+    <span class="pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.7L18.5 9l-4.7 1.8L12 15.5l-1.8-4.7L5.5 9l4.7-1.3z"/></svg> نزع الخلفية بالذكاء</span>
+    <h1>أزل خلفية صور منتجاتك <em>في ثوانٍ</em></h1>
+    <p class="lead">احصل على صورة شفافة بحواف دقيقة، أو ضع منتجك على خلفية جاهزة، لمتجرك وإعلاناتك. تعمل الأداة داخل متصفحك دون أي خبرة في التصميم.</p>
+    <div class="cta"><a class="btn lg" data-open="bg" href="../../../admin.html#tool=bg">جرّبها الآن <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a><a class="btn ghost lg" href="#how">كيف تعمل؟</a></div>
+    <div class="note">مجانية — لا حاجة لأي مفتاح أو بطاقة</div>
+    <div class="checks">
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>بدون خبرة</span>
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>نتائج فورية</span>
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>دقة عالية</span>
+    </div>
+  </div>
+  <div class="shot"><img src="img/perfume.webp" width="358" height="294" alt="مثال توضيحي: عطر قبل نزع الخلفية وبعده"></div>
+</div></section>
+
+<section class="band"><div class="w">
+  <div class="feat">
+    <div><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 19 5M14 5h5v5M5 9V5h4"/></svg></i><span><b>واحدة بنقرة</b><small>تُزال الخلفية تلقائياً بلا أي ضبط</small></span></div>
+    <div><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M8 12h8"/></svg></i><span><b>دقة احترافية</b><small>حواف نظيفة حتى لأدق التفاصيل</small></span></div>
+    <div><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m3 15 5-5 4 4 3-3 6 6"/></svg></i><span><b>خلفيات متنوعة</b><small>شفافة أو ألوان أو مشاهد جاهزة</small></span></div>
+    <div><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></svg></i><span><b>لكل أنواع المنتجات</b><small>ملابس، أحذية، أثاث، إلكترونيات…</small></span></div>
+  </div>
+</div></section>
+
+<section class="band alt"><div class="w">
+  <h2>أمثلة قبل وبعد</h2><p class="sub">شاهد كيف تتحول الصورة إلى صورة منتج بخلفية شفافة جاهزة للبيع.</p>
+  <div class="ex">
+    <figure><img src="img/perfume.webp" width="358" height="294" loading="lazy" alt="عطر قبل نزع الخلفية وبعده"><figcaption>عطور وتجميل<small>زجاج وانعكاسات محفوظة بلا هالة</small></figcaption></figure>
+    <figure><img src="img/shoe.webp" width="360" height="229" loading="lazy" alt="حذاء رياضي قبل نزع الخلفية وبعده"><figcaption>أحذية وملابس<small>خلفية شفافة نظيفة وظل طبيعي</small></figcaption></figure>
+  </div>
+  <div class="wide">
+    <div><span class="pill" style="color:#2c6b1c;border-color:#b6dc78;background:#eaf7d0">أداة نزع الخلفية</span><h3>إزالة الخلفية بنقرة واحدة</h3>
+      <p style="color:var(--ltm)">تعمل الأداة بنماذج مفتوحة داخل متصفحك، فتجرّب أكثر من طريقة تلقائياً وتختار الأنسب لصورتك.</p>
+      <ul><li>تدعم المنتجات والأشخاص والحيوانات</li><li>نتائج دقيقة مع التفاصيل الدقيقة</li><li>خلفية شفافة أو لون موحّد أو مشهد جاهز</li><li>تنزيل بصيغ PNG وJPG وWEBP</li></ul>
+      <a class="btn lg" data-open="bg" href="../../../admin.html#tool=bg">جرّب أداة نزع الخلفية الآن</a></div>
+  </div>
+  <p class="fig">الصور أعلاه توضيحية لشكل الناتج ولا تمثل نتيجة مضمونة لكل صورة.</p>
+</div></section>
+
+<section class="band dk" id="how"><div class="w">
+  <h2>ثلاث خطوات بسيطة</h2><p class="sub">احصل على نتيجة احترافية في أقل من دقيقة.</p>
+  <div class="steps">
+    <div class="st"><h3><b>1</b>ارفع صورتك</h3><p>اسحب صورة المنتج وأفلتها أو اخترها من جهازك.</p><div class="vis"><img src="img/upload.webp" width="181" height="100" alt="رفع صورة المنتج" loading="lazy"></div></div>
+    <div class="st"><h3><b>2</b>اترك الذكاء يعمل</h3><p>تتم المعالجة تلقائياً وتُعرض النتيجة مباشرة على الصورة.</p><div class="vis"><div class="bar" role="img" aria-label="شريط تقدم المعالجة"><i></i></div></div></div>
+    <div class="st"><h3><b>3</b>احفظ النتيجة</h3><p>اضغط «تنفيذ» لتستبدل الصورة، أو أكمل بتركيب خلفية وظل.</p><div class="vis"><div class="fmt"><span>PNG</span><span>JPG</span><span>WEBP</span></div></div></div>
+  </div>
+</div></section>
+
+<section class="band" id="tools"><div class="w">
+  <h2>أكثر من نزع الخلفية</h2><p class="sub">أدوات إضافية في المحرر نفسه لتحسين صور منتجاتك.</p>
+  <div class="tools">
+    <a class="tc" data-open="scene" href="../../../admin.html#tool=scene"><img src="../../../assets/img/tools/ic/06-mise-en-scene-produit.webp" width="204" height="211" loading="lazy" alt=""><div><b>مشهد ذكي للمنتج</b><small>ضع منتجك في مشهد استخدام واقعي</small></div></a>
+    <a class="tc" data-open="pshoot" href="../../../admin.html#tool=pshoot"><img src="../../../assets/img/tools/ic/03-photographie-produit-ia.webp" width="200" height="211" loading="lazy" alt=""><div><b>تصوير المنتج بالذكاء</b><small>عدة مشاهد احترافية دفعة واحدة</small></div></a>
+    <a class="tc" data-open="resize" href="../../../admin.html#tool=resize"><img src="../../../assets/img/tools/ic/08-redimensionner-agrandir.webp" width="266" height="224" loading="lazy" alt=""><div><b>تغيير المقاس والتوسيع</b><small>لأي منصة أو اتجاه</small></div></a>
+    <a class="tc" data-open="recolor" href="../../../admin.html#tool=recolor"><img src="../../../assets/img/tools/ic/10-recolorer-vetements.webp" width="277" height="224" loading="lazy" alt=""><div><b>تلوين الملابس</b><small>ألوان متعددة من صورة واحدة</small></div></a>
+    <a class="tc" data-open="erase" href="../../../admin.html#tool=erase"><img src="../../../assets/img/tools/ic/09-supprimer-des-objets.webp" width="278" height="224" loading="lazy" alt=""><div><b>ممحاة ذكية</b><small>امسح أي عنصر غير مرغوب</small></div></a>
+  </div>
+</div></section>
+
+<section class="band alt"><div class="w">
+  <h2>مناسبة لجميع أنواع المنتجات</h2><p class="sub">سواء كنت تبيع في متجر إلكتروني أو على وسائل التواصل.</p>
+  <div class="sect">
+    <div><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v3H9zM8 6h8l1 5v10H7V11z"/></svg></span>العطور والتجميل</div>
+    <div><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/></svg></span>الملابس والأزياء</div>
+    <div><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17h18v-3c-4 0-6-3-9-3s-5 3-9 3z"/><path d="M3 17v2h18v-2"/></svg></span>الأحذية والحقائب</div>
+    <div><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 11V8a3 3 0 0 1 6 0v3M4 11h12v6H4zM6 17v3M14 17v3"/></svg></span>الأثاث والديكور</div>
+    <div><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg></span>الإلكترونيات</div>
+    <div><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v3l2 3v11H6V9l2-3z"/></svg></span>الأغذية الطبيعية</div>
+  </div>
+</div></section>
+
+<section class="band" id="faq"><div class="w">
+  <h2>أسئلة شائعة</h2><p class="sub">إجابات سريعة عن أكثر ما يُسأل.</p>
+  <div class="faq">
+    <details><summary>هل الأداة مجانية؟</summary><p>نعم، نزع الخلفية يعمل داخل متصفحك بلا مفتاح ولا اشتراك. أما الأدوات التي تولّد صوراً بالذكاء فتحتاج مفتاح الخدمة وتظهر تكلفتها قبل كل تنفيذ.</p></details>
+    <details><summary>ما صيغ الصور المدعومة؟</summary><p>يمكنك رفع صور JPG وPNG وWEBP، وتنزيل الناتج بصيغة PNG أو JPG أو WEBP.</p></details>
+    <details><summary>هل يمكن استخدام الصور لأغراض تجارية؟</summary><p>نعم، الصور صورك أنت وتبقى ملكاً لك، ويمكنك استعمالها في متجرك وإعلاناتك.</p></details>
+    <details><summary>هل تعمل الأداة مع الصور المعقّدة؟</summary><p>تجرّب الأداة أكثر من طريقة تلقائياً. الخلفيات المتجانسة تعطي أدق حواف، وإن لم ترضك النتيجة اضغط «طريقة أخرى».</p></details>
+    <details><summary>هل توجد حدود على عدد الصور؟</summary><p>لا حدود على نزع الخلفية داخل المتصفح. ولمعالجة عدد كبير دفعة واحدة استعمل أداة «معالجة الدفعات».</p></details>
+  </div>
+</div></section>
+
+<section class="fin"><div class="w">
+  <h2>ابدأ الآن واجعل صور منتجاتك أكثر احترافية</h2><p>جرّب نزع الخلفية مجاناً واحصل على صورة جاهزة في ثوانٍ.</p>
+  <a class="btn lg" data-open="bg" href="../../../admin.html#tool=bg">جرّبها الآن</a>
+  <div class="site"><label for="site-in">موقعك (لتفتح الأداة في لوحة تحكمك):</label><input id="site-in" placeholder="https://موقعك.com" dir="ltr"><span id="site-st"></span></div>
+</div></section>
+
+<footer><div class="w"><span>© <span data-brand>المنصة</span></span><span><a href="../../guide/bg.html">دليل نزع الخلفية</a><a href="../../guide/index.html">كل الأدوات</a></span></div></footer>
+
+<script>
+(function(){
+var K='platform_tool_site',i=document.getElementById('site-in'),st=document.getElementById('site-st');
+function base(){try{return(localStorage.getItem(K)||'').replace(/\/+$/,'')}catch(e){return''}}
+function paint(){var b=base();document.querySelectorAll('a[data-open]').forEach(function(a){a.href=(b?b+'/admin.html':'../../../admin.html')+'#tool='+a.dataset.open});if(st)st.textContent=b?'يفتح في '+b:''}
+if(i){i.value=base();i.addEventListener('change',function(){var v=i.value.trim();if(v&&!/^https?:\/\//.test(v))v='https://'+v;try{v?localStorage.setItem(K,v):localStorage.removeItem(K)}catch(e){}i.value=v;paint()})}
+paint();
+fetch('../../brand.json').then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&j.name)document.querySelectorAll('[data-brand]').forEach(function(n){n.textContent=j.name})}).catch(function(){});
+})();
+</script>
+</body>
+</html>

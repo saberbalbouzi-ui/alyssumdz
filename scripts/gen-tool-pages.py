@@ -25,7 +25,7 @@ ul.tp{margin:0;padding:0 1.2rem}.rel,.grid{display:grid;grid-template-columns:re
 .card b{display:block}.card small{color:var(--mu)}.site{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;background:var(--sf);border:1px dashed var(--ln);border-radius:14px;padding:.6rem .9rem;margin-top:1.6rem;font-size:.88rem}
 .site input{flex:1;min-width:200px;padding:.45rem .7rem;border-radius:10px;border:1px solid var(--ln);background:rgba(0,0,0,.3);color:var(--tx);font:inherit;direction:ltr}
 @media(max-width:640px){.hero{grid-template-columns:1fr;text-align:center}.hero img,.ph{margin:0 auto}}"""
-JS = """(function(){var K='alyssum_guide_site',i=document.getElementById('site-in');function base(){try{return(localStorage.getItem(K)||'').replace(/\\/+$/,'')}catch(e){return''}}
+JS = """(function(){var K='platform_tool_site',i=document.getElementById('site-in');function base(){try{return(localStorage.getItem(K)||'').replace(/\\/+$/,'')}catch(e){return''}}
 function paint(){var b=base();document.querySelectorAll('a[data-open]').forEach(function(a){a.href=(b?b+'/admin.html':a.dataset.rel)+'#tool='+a.dataset.open})}
 if(i){i.value=base();i.addEventListener('change',function(){var v=i.value.trim();if(v&&!/^https?:\\/\\//.test(v))v='https://'+v;try{v?localStorage.setItem(K,v):localStorage.removeItem(K)}catch(e){}i.value=v;paint()})}paint()})();"""
 def head(title, desc, rel):
@@ -41,7 +41,7 @@ for t in data:
     rel = "../../"
     p = head(t["name"] + " — دليل الأداة", t["tag"] + ". " + t["what"][:120], rel)
     p += f'<div class="nav"><a href="index.html">← كل الأدوات</a><span>{E(t["g"])}</span></div>'
-    p += f'<div class="hero">{img(t, rel)}<div><h1>{E(t["name"])}</h1><p class="tag">{E(t["tag"])}</p><span class="badge {t["needs"]}">{E(t["needsText"])}</span><div><a class="btn" data-open="{t["id"]}" data-rel="{rel}admin.html" href="{rel}admin.html#tool={t["id"]}">افتح الأداة ↗</a><a class="btn sec" href="#how">طريقة الاستعمال</a></div></div></div>'
+    p += f'<div class="hero">{img(t, rel)}<div><h1>{E(t["name"])}</h1><p class="tag">{E(t["tag"])}</p><span class="badge {t["needs"]}">{E(t["needsText"])}</span><div><a class="btn" data-open="{t["id"]}" data-rel="{rel}admin.html" href="{rel}admin.html#tool={t["id"]}">افتح الأداة ↗</a><a class="btn sec" href="#how">طريقة الاستعمال</a>' + (f'<a class="btn sec" href="../{t["landing"]}">صفحة التعريف بالأداة</a>' if t.get("landing") else "") + '</div></div></div>'
     p += f'<section><h2>ما هذه الأداة؟</h2><p>{E(t["what"])}</p></section>'
     p += '<section id="how"><h2>طريقة الاستعمال</h2><ol class="st">' + "".join(f"<li><span>{E(s)}</span></li>" for s in t["steps"]) + "</ol></section>"
     if t["tips"]: p += "<section><h2>نصائح</h2><ul class=\"tp\">" + "".join(f"<li>{E(x)}</li>" for x in t["tips"]) + "</ul></section>"
@@ -59,4 +59,8 @@ for g in groups:
     p += f'<section><h2>{E(g)}</h2><div class="grid">' + "".join(f'<a class="card" href="{t["id"]}.html"><b>{E(t["name"])}</b><small>{E(t["tag"])}</small><div><span class="badge {t["needs"]}">{"مجانية" if t["needs"]=="free" else "Alyssum API"}</span></div></a>' for t in data if t["g"] == g) + "</div></section>"
 p += foot("")
 (d / "index.html").write_text(p, encoding="utf-8")
+# فهرس الأدوات للوحة (إعدادات ← التطبيقات ← كل الأدوات): معرّف، مجموعة، اسم، سطر تعريف، متطلب، أيقونة، صفحة الدليل وصفحة التعريف
+ti = json.loads((root / "assets" / "data" / "tool-titles.json").read_text(encoding="utf-8"))["tools"]
+cat = [{"id": t["id"], "g": t["g"], "name": t["name"], "tag": t["tag"], "needs": t["needs"], "ic": (ti.get(t["id"]) or ti.get("xp" if t["id"] == "resize" else "", {})).get("icon", ""), "guide": f'guide/{t["id"]}.html', "landing": t.get("landing", "")} for t in data]
+(root / "assets" / "data" / "tools-catalog.json").write_text(json.dumps({"base": "https://alyssumdz.com/saas/", "tools": cat}, ensure_ascii=False, indent=1), encoding="utf-8")
 print("pages:", len(data) + 1)
