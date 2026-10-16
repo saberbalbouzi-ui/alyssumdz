@@ -55,3 +55,9 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 - v1.89.273: حزمة أداة جديدة = `prep-pack-images.py <slug>` (قصّ الشرائح الدخيلة + رفع الدقة إلى `saas/landing/<slug>/gal/`) ثم `gen-landing.py`؛ لا تقصّ بقايا الأسهم بعتبة بيضاء.
 - v1.89.275: نزع الخلفية: متجانسة ← محلي، معقدة + مفتاح ← `key` (allowKey من `live` فقط)؛ الالتقاط بالمفتاح `keyCapture` (مستطيل + طلبان بموافقة واحدة)؛ لا تُمرّر `allowKey` من مسارات الدفعات. تدقيق الأدوات الـ15 وما بقي منه في CLAUDE.md.
 - **Pixabay مدمج (v1.89.277):** دالة Supabase `pixabay-proxy` (`platform/supabase/functions/pixabay-proxy`، Verify JWT مطفأ، سرّ `PIXABAY_KEY` في الخادم لا في المستودع) تنفّذ `op:"search"` و`op:"dl"` (مقصور على نطاقات pixabay.com، ≤14MB) لمدير مسجَّل فقط؛ `PBAssets` يفضّلها (بحث + تنزيل مباشر بلا CORS) ويعود لمفتاح `alyssum_pixabay_key`/`CONFIG.PIXABAY_KEY` إن غابت (404/503/401). تدوير المفتاح: `POST /v1/projects/<ref>/secrets` باسم `PIXABAY_KEY`. اختبار: test-assets (25).
+
+## v1.89.284 — إضافات (مقارنة بفوتوروم)
+- **فيديو بالذكاء منفصل عن التحريك المجاني:** `ImgGen.video` + `PBVGen` (`scripts/pagebuilder-vgen.js`، تبويب `vg`)؛ «تحريك الصورة» = `PBVideo` (`vd`) مجاني بلا ذكاء. صفحتا تعريف: `saas/landing/ai-video/` و`video-maker/`. النموذج/السعر/المدة قابلة للضبط (`alyssum_vg_*`) وغير مثبَّتة؛ اختبار `scripts/test-vgen.js`.
+- **تقييم صفحة المنتج:** `assets/js/admin-pagerater.js` (`PageRater.score` نقية)؛ يقيس أبعاد الصور فقط ولا يحكم على الإضاءة/الحدّة؛ اتساق العلامة لمنتجات المتجر فقط.
+- **استوديو الأزياء:** هيئة العارض + عارضون محفوظون (`alyssum_fa_models`) + إطلالة بعدة قطع؛ قاعدة الاحتشام ثابتة (امرأة بخمار، وجه ويدان فقط). المشهد الذكي = `PBAI.stage()` يخرج خيارين.
+- **أيقونة بالذكاء** في منشئ الشعار (`iconPrompt`). **«جرّب عليك» للزبائن:** `tryon-shopper.js` + وحدة المنصة `tryon.js` (الصور لا تُخزَّن؛ حصة يومية؛ تفعيل بمفتاح عام `tryon:render`).

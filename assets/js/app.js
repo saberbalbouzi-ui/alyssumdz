@@ -2065,4 +2065,6 @@ const PhoneDZ = {
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=1'; s.async=true; document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} }); document.head.appendChild(s); }catch(e){} })();
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
+/* «جرّب عليك» لمنتجات الأزياء (يعمل فقط إن ضُبط PLATFORM_TRYON_KEY ومنتج فيه tryon:true) */
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/tryon-shopper.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/digital-checkout.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();

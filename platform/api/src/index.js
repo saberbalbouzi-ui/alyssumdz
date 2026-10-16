@@ -9,6 +9,7 @@ import { sheets } from "./modules/sheets.js";
 import { ab } from "./modules/ab.js";
 import { ai } from "./modules/ai.js";
 import { carts } from "./modules/carts.js";
+import { tryon } from "./modules/tryon.js";
 import { payments } from "./modules/payments.js";
 import { sms } from "./modules/sms.js";
 import { commerce } from "./modules/commerce.js";
@@ -21,7 +22,7 @@ import { appstore } from "./modules/appstore.js";
 import { marketplace } from "./modules/marketplace.js";
 import { Vault } from "./crypto.js";
 
-const MODULES = [adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, payments, sms, commerce, sources, ads, adsOauth, wallet, agency, appstore, marketplace];
+const MODULES = [adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, tryon, payments, sms, commerce, sources, ads, adsOauth, wallet, agency, appstore, marketplace];
 const build = (env) => createPlatform({ d1: env.DB, secret: env.PLATFORM_SECRET, adminToken: env.ADMIN_TOKEN || "", vault: env.APP_ENCRYPTION_KEY || env.APP_ENCRYPTION_KEYS ? Vault.fromEnv(env) : null, files: env.FILES || null, baseUrl: env.PUBLIC_URL || "", config: { META_APP_ID: env.META_APP_ID || "", META_APP_SECRET: env.META_APP_SECRET || "", META_SCOPES: env.META_SCOPES || "", META_API_VERSION: env.META_API_VERSION || "", CHARGILY_SECRET_KEY: env.CHARGILY_SECRET_KEY || "", CHARGILY_WEBHOOK_SECRET: env.CHARGILY_WEBHOOK_SECRET || "", CHARGILY_MODE: env.CHARGILY_MODE || "test" },
   modules: [platformModule([...new Set(MODULES.flatMap((m) => m.providers ?? []))]), ...MODULES] });
 export default {

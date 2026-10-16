@@ -50,6 +50,11 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("حذف العارض المحفوظ", ui.after === 0);
   /* المشهد الذكي بخيارين */
   ok("PBAI.stage: يضبط مشهدين (على طاولة، في اليد)", await T(() => { const ids = PBAI.stage(); return ids.length === 2 && PBAI.state.ps.length === 2; }));
+  /* أيقونة بالذكاء */
+  const p2 = await b.newPage(); await p2.route("https://t.test/**", r => r.fulfill({ contentType: "text/html", body: "<!doctype html><html><body></body></html>" })); await p2.goto("https://t.test/"); await p2.addScriptTag({ content: fs.readFileSync(path.join(__dirname, "pagebuilder-more.js"), "utf8") });
+  const T2 = fn => p2.evaluate(fn);
+  ok("الأيقونة: تعليمات بلا نص وبألوان الهوية ونمط", await T2(() => { const t = PBBrand._t.iconPrompt("عبوة عسل", "line", { colors: ["#111111", "#c8a24b", "#fbf8f2"] }); return /SINGLE APP\/WEB ICON/.test(t) && /monoline/.test(t) && /#111111, #c8a24b/.test(t) && /No text/.test(t) && /عبوة عسل/.test(t); }));
+  ok("الأيقونة: 4 أنماط وافتراضي مسطح", await T2(() => PBBrand._t.ICON_STYLES.length === 4 && /flat vector/.test(PBBrand._t.iconPrompt("x", "؟", null))));
   ok("بلا أخطاء JS", errs.length === 0, errs);
   console.log(fails ? "فشل " + fails + " من " + total : "نجح " + total + " من " + total);
   await b.close(); process.exit(fails ? 1 : 0);

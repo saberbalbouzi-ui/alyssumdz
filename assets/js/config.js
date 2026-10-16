@@ -15,6 +15,7 @@ const CONFIG = {
   /* منصة API: التقاط السلال المتروكة (مفتاح عام بنطاق cart:capture وحده، ومقيّد بأصول الموقع في المنصة) */
   PLATFORM_URL: "https://api.alyssumhub.fyi",
   PLATFORM_ORDER_KEY: "pk_pub_34633912b717dfb4d18b006a86c859720f3157e2",
+  PLATFORM_TRYON_KEY: "",   /* مفتاح عام بنطاق tryon:render لتفعيل «جرّب عليك» في صفحة المنتج (يتطلب ضبط تكامل tryon في المنصة) */
   PLATFORM_CART_KEY: "pk_pub_90e24ae20d7981de4c264669320ccfd23199ad75",
   API_URL: "https://script.google.com/macros/s/AKfycbx8hfWsiB4UCn9u0Z7ySDZYVwvNXTAZMqoc-6SXFDi38m7EFGHr-eGPficx10gepj2C/exec",
   /* ملاحظة أمنية: حُذف ADMIN_KEY من هذا الملف العلني (لم يكن مستعملاً في الكود). المفتاح الذي كان هنا يجب اعتباره مكشوفاً:
