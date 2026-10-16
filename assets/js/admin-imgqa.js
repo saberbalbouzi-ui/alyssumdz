@@ -72,6 +72,23 @@ const AdminImgQA = (() => {
     for (let i = 0; i < picks.length; i++) { const r = picks[i]; say("⏳ معالجة " + (i + 1) + " / " + picks.length + " — " + r.title); try { const src = await loadCanvas(urlOf(r.cover)), out = await restyle(src, S.opt), blob = await new Promise(x => out.toBlob(x, "image/webp", .92)); S.prev[r.slug] = { blob, url: URL.createObjectURL(blob), w: out.width, h: out.height }; } catch (e) { S.prev[r.slug] = { err: e.message || String(e) }; } await new Promise(r => setTimeout(r, 0)); draw(); }
     S.busy = false; say("✅ جاهزة للمعاينة — راجع «قبل/بعد» ثم اعتمد"); draw();
   }
+  /* تهيئة مشهد ذكي (AI Product Staging) لأغلفة المحدّد دفعة واحدة: موافقة واحدة على التكلفة الإجمالية، والنتيجة تدخل نفس مسار المعاينة والاعتماد */
+  async function applyStage() {
+    const picks = S.rows.filter(r => S.sel[r.slug] && !r.err); if (!picks.length || S.busy) { say("حدّد منتجاً واحداً على الأقل"); return; }
+    if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { say("المولّد الذكي غير متاح"); return; }
+    const sh = PBAI._t.SHOTS[S.scene || 0] || PBAI._t.SHOTS[0], e = ImgGen.estimate ? ImgGen.estimate() : null;
+    if (e && e.left < picks.length * e.cost) { say("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); return; }
+    if (e && !confirm("تهيئة مشهد ذكي «" + sh[1] + "» لـ" + picks.length + " منتج\nالتكلفة التقريبية الإجمالية: " + e.fmt(picks.length * e.cost) + "\nمتابعة؟")) return;
+    S.busy = true; S.prev = {}; let bad = "";
+    for (let i = 0; i < picks.length; i++) {
+      const r = picks[i]; say("⏳ مشهد " + (i + 1) + " / " + picks.length + " — " + r.title);
+      try { const src = await loadCanvas(urlOf(r.cover)), k = Math.min(1, 1600 / Math.max(src.width, src.height)), c = document.createElement("canvas"); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k); c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+        const blobIn = await new Promise(x => c.toBlob(x, "image/png")), o = await ImgGen.edit({ blob: blobIn, prompt: PBAI._t.shotPrompt(sh[2], "", sh[3]), W: c.width, H: c.height, title: "مشهد ذكي — " + r.title, confirm: e ? false : undefined });
+        if (!o) break; S.prev[r.slug] = { blob: o.blob, url: URL.createObjectURL(o.blob), w: c.width, h: c.height };
+      } catch (x) { S.prev[r.slug] = { err: x.message || "تعذّر التوليد" }; if (x && (x.code === "NOKEY" || x.code === "OFF")) { bad = x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد الذكي معطّل من الإعدادات"; break; } }
+    }
+    S.busy = false; say(bad || "✅ جاهزة للمعاينة — راجع «قبل/بعد» ثم اعتمد"); draw();
+  }
   async function commit() {
     const ok = Object.entries(S.prev).filter(([, v]) => v && v.blob); if (!ok.length || S.busy) return; if (!confirm("استبدال أغلفة " + ok.length + " منتج بالنسخ الموحّدة؟ تبقى الأغلفة القديمة ضمن صور المنتج.")) return; S.busy = true; let n = 0; const A = Admin;
     try {
@@ -90,18 +107,18 @@ const AdminImgQA = (() => {
 <div class="hint">افحص أغلفة منتجاتك: كل ملاحظة تأتي بحلّها. ثم وحّد شكل الكتالوج كله بنقرة: ينزع الخلفية ويحسّن اللون ويركّب نمط «استوديو المنتج» المحفوظ (الآن: خلفية ${esc(st.bg || "white")} — ظل ${esc(st.shadow || "contact")} — مقاس ${sz}). غيّر النمط من استوديو المنتج في المطوّر.</div>
 <div class="action-bar" style="margin-top:.5rem"><button class="small green" id="iq-scan" ${S.busy ? "disabled" : ""}>🔍 افحص جودة الأغلفة</button>
 <label class="small" style="display:inline-flex;gap:.3rem;align-items:center"><input type="checkbox" id="iq-bg" ${S.opt.removeBg ? "checked" : ""}> نزع الخلفية</label><label class="small" style="display:inline-flex;gap:.3rem;align-items:center"><input type="checkbox" id="iq-en" ${S.opt.enhance ? "checked" : ""}> تحسين تلقائي</label>
-<button class="small gold" id="iq-apply" ${S.rows.length && !S.busy ? "" : "disabled"}>▶ طبّق نمط المتجر على المحدّد</button><button class="small" id="iq-commit" ${Object.values(S.prev).some(v => v && v.blob) && !S.busy ? "" : "disabled"}>✔ اعتمد وانشر الأغلفة الجديدة</button></div>
+<button class="small gold" id="iq-apply" ${S.rows.length && !S.busy ? "" : "disabled"}>▶ طبّق نمط المتجر على المحدّد</button><select id="iq-scene" class="small">${(typeof PBAI !== "undefined" ? PBAI._t.SHOTS : []).map((x, i) => `<option value="${i}"${(S.scene || 0) === i ? " selected" : ""}>${esc(x[1])}</option>`).join("")}</select><button class="small gold" id="iq-stage" ${S.rows.length && !S.busy ? "" : "disabled"}>🎬 مشهد ذكي للمحدّد</button><button class="small" id="iq-commit" ${Object.values(S.prev).some(v => v && v.blob) && !S.busy ? "" : "disabled"}>✔ اعتمد وانشر الأغلفة الجديدة</button></div>
 <div id="iq-st" class="hint" style="min-height:1.3em">${esc(S.msg)}</div>${S.rows.length ? `<div style="overflow:auto"><table><thead><tr><th><input type="checkbox" id="iq-all"></th><th>المنتج</th><th>الحالي</th><th>الملاحظات والحلول</th><th>بعد النمط</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
     wire();
   }
   function wire() {
     const on = (id, fn) => { const e = $(id); if (e) e.onclick = fn; };
-    on("iq-scan", scan); on("iq-apply", applyStyle); on("iq-commit", commit);
+    on("iq-scan", scan); on("iq-apply", applyStyle); on("iq-stage", applyStage); { const sc = $("iq-scene"); if (sc) sc.onchange = () => { S.scene = +sc.value; }; } on("iq-commit", commit);
     const b = $("iq-bg"), e = $("iq-en"); if (b) b.onchange = () => { S.opt.removeBg = b.checked; }; if (e) e.onchange = () => { S.opt.enhance = e.checked; };
     const a = $("iq-all"); if (a) a.onchange = () => { S.rows.forEach(r => { S.sel[r.slug] = a.checked; }); draw(); };
     document.querySelectorAll("#iq-card [data-iq-sel]").forEach(x => x.onchange = () => { S.sel[x.dataset.iqSel] = x.checked; });
   }
   function init() { if (!$("tab-imgtools")) return setTimeout(init, 300); draw(); }
   if (typeof document !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0); }
-  return { scan, applyStyle, commit, draw, restyle, S, _t: { metrics, sharpness, verdict, standard, ISSUES } };
+  return { scan, applyStyle, applyStage, commit, draw, restyle, S, _t: { metrics, sharpness, verdict, standard, ISSUES } };
 })();

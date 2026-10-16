@@ -337,11 +337,12 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
     if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
     if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
-    if (!o || !o.blob || !o.prompt) throw new Error("الصورة والتعليمات مطلوبتان");
+    if (!o || (!o.blob && !o.textOnly) || !o.prompt) throw new Error("الصورة والتعليمات مطلوبتان");
+    if (o.textOnly && fal) throw new Error("التوليد من وصف نصي فقط متاح مع الاتصال الأول (أ) — بدّل الاتصال من إعدادات مولّد الصور");
     const W = Math.max(64, Math.round(o.W)), H = Math.max(64, Math.round(o.H)), est = fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) throw new Error("بلغتَ حدّ الإنفاق (" + money(est) + " مطلوب) — ارفعه من إعدادات مولّد الصور");
     if (o.confirm !== false && !confirm((o.title || "تعديل ذكي للصورة") + " بتكلفة تقريبية " + money(est) + "\nالمقاس الناتج: " + W + "×" + H + "\nمتابعة؟")) return null;
-    const ar = nearAr(W, H), small = await shrink(o.blob, 1600), d = await b64(small), parts = [{ text: o.prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }];
+    const ar = nearAr(W, H), small = o.blob ? await shrink(o.blob, 1600) : null, d = small ? await b64(small) : "", parts = o.blob ? [{ text: o.prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }] : [{ text: o.prompt }];
     for (const x of (o.extra || []).slice(0, 2)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(x, 1200)) } });
     const out = fal ? await callFal(key, o.prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, parts, ar);
     const cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
