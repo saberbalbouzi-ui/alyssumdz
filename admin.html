@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.274">
+<meta name="admin-version" content="1.89.275">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1666,12 +1666,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.274"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.274"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.274"></script>
+<script src="assets/js/ctl-help.js?v=1.89.275"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.275"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.275"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.274"></script>
+<script src="assets/js/admin-nav.js?v=1.89.275"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1683,7 +1683,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.247"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.274"></script>
+<script src="assets/js/admin-update.js?v=1.89.275"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -11678,7 +11678,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to" || t === "ps" || t === "rc" || t === "v3") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
-    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
+    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة: الخلفية الملونة المتجانسة والعنصر المعزول تُنزع داخل متصفحك مجاناً بلا ذكاء، والخلفية المعقدة تُنزع بالذكاء عبر مفتاح Alyssum API (تظهر التكلفة وتُطلب موافقتك قبل التنفيذ) وإلا تُجرَّب الطريقة المحلية.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
     return `<div class="pbx-pz"><p>يفصل العناصر الكاملة في الصورة (أشخاص، منتجات…) كصور شفافة منفصلة ويضعها في الصفحة.</p><button type="button" class="pbx-small pz-go" data-q="smart-magic">${ico("cutout", 16)} التقاط العناصر</button></div>`;
   }
   function epPlace(p) {
@@ -11714,7 +11714,8 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   const upPanel = () => `<div class="pbx-pz"><p>حسّن جودة الصورة داخل متصفحك: تكبير بحدّة محسوبة، وتقليل الضجيج، وتحسين تلقائي للألوان والتباين. لا يخترع تفاصيل جديدة، فالأنسب للصور المنخفضة قليلاً لا الضبابية جداً.</p><label class="ep-l">مقدار التكبير<select data-upk="scale">${UP_OPTS.map(([v, n]) => `<option value="${v}"${UP.scale === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="ep-l">الحدّة (${UP.sharp})<input type="range" min="0" max="100" value="${UP.sharp}" data-upk="sharp"></label><label class="ep-l">تقليل الضجيج (${UP.dn})<input type="range" min="0" max="100" value="${UP.dn}" data-upk="dn"></label><label class="ep-l">تحسين تلقائي للألوان (${UP.auto}%)<input type="range" min="0" max="100" value="${UP.auto}" data-upk="auto"></label><button type="button" class="pbx-small pz-go" data-upx="go">${ico("t_magic", 16)} تنفيذ</button></div>`;
   async function upGo(inf) {
     if (typeof ImgUpscale === "undefined") { toast("أداة تحسين الجودة غير متاحة"); return; }
-    try {
+    if (UP.busy) return; if (UP.scale === "1" && !UP.dn && !UP.auto) { toast("اختر تكبيراً أو فعّل «تقليل الضجيج» أو «تحسين الألوان» ثم نفّذ"); return; }
+    UP.busy = true; try {
       toast("⏳ جارٍ تحسين الجودة…"); let blob = await (await fetch(localize(String(inf.set.src)))).blob();
       if ((UP.dn || UP.auto) && typeof PBRetouch !== "undefined" && PBRetouch._t) {
         const im = await createImageBitmap(blob), cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; cv.getContext("2d").drawImage(im, 0, 0);
@@ -11727,7 +11728,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       if (r.same) { toast("الصورة بهذا المقاس أو أكبر منه أصلاً (أو بلغت السقف الأقصى)"); return; }
       const path = await uploadBlob(r.blob, "up-" + Date.now().toString(36), { max: 8192, q: .92 });
       if (path) { inf.set.src = path; delete inf.set.crop; E.nextLabel = "تحسين جودة الصورة"; afterEdit(); toast("✅ " + r.from.join("×") + " ← " + r.w + "×" + r.h + (r.capped ? " (حدّ أقصى)" : "")); }
-    } catch (e) { toast("⚠️ " + (e && e.message || e)); }
+    } catch (e) { toast("⚠️ " + (e && e.message || e)); } finally { UP.busy = false; }
   }
   /* صفوف إضافية في قوائم «إنشاء/تعديل/أتمتة»: تنقّل لأدوات موجودة أو أدوات قيد التطوير */
   function goAdmin(tab) {
@@ -14462,7 +14463,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   function bindSeg(sh, repaint) { sh.host.querySelectorAll("#pbs-seg button").forEach(b => b.onclick = () => { sh.S.mode = b.dataset.m; sh.S.onMode && sh.S.onMode(); sh.host.querySelectorAll("#pbs-seg button").forEach(x => { const on = x === b; x.classList.toggle("on", on); x.style.background = on ? "#fff" : "transparent"; x.style.boxShadow = on ? "0 1px 4px rgba(0,0,0,.15)" : "none"; }); sh.$("pbs-hint").textContent = sh.S.mode === "all" ? sh.S.hintAll : sh.S.hintOne; repaint(); }); }
   /* أثناء التحليل: الصورة ظاهرة وخط مضيء يمسحها ذهاباً وإياباً حتى ينتهي المسح ← يعيد دالة الإيقاف */
   function scanFx(sh, cv) {
-    if (!document.getElementById("pbs-scan-css4")) { const st = document.createElement("style"); st.id = "pbs-scan-css4"; st.textContent = "@keyframes pbsScan{0%{top:0}100%{top:calc(100% - 3px)}}@keyframes pbsTint{0%,100%{opacity:.7}50%{opacity:1}}#pbs-tint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(34,197,94,.26),rgba(16,185,129,.2));animation:pbsTint 2.2s ease-in-out infinite}#pbs-scanline{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#22c55e 8%,#d9ffe6 50%,#22c55e 92%,transparent);box-shadow:0 0 14px 4px rgba(74,222,128,.75),0 0 34px 10px rgba(34,197,94,.4);animation:pbsScan 1.7s ease-in-out infinite alternate;pointer-events:none}"; document.head.appendChild(st); }
+    if (!document.getElementById("pbs-scan-css4")) { const st = document.createElement("style"); st.id = "pbs-scan-css4"; st.textContent = "@keyframes pbsScan{0%{top:0}100%{top:calc(100% - 3px)}}@keyframes pbsTint{0%,100%{opacity:.7}50%{opacity:1}}#pbs-tint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(34,197,94,.26),rgba(16,185,129,.2));animation:pbsTint 2.2s ease-in-out infinite}#pbs-scanline{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#22c55e 8%,#d9ffe6 50%,#22c55e 92%,transparent);box-shadow:0 0 14px 4px rgba(74,222,128,.75),0 0 34px 10px rgba(34,197,94,.4);animation:pbsScan 1.1s ease-in-out infinite alternate;pointer-events:none}"; document.head.appendChild(st); }
     const stage = sh.$("pbs-stage"); stage.innerHTML = ""; const { vw, vh } = viewSize(sh, cv.width, cv.height), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const tint = document.createElement("div"); tint.id = "pbs-tint"; stage.appendChild(tint); const ln = document.createElement("div"); ln.id = "pbs-scanline"; stage.appendChild(ln); sh.$("pbs-load").style.display = "flex"; sh.$("pbs-go").disabled = true; sh.$("pbs-go").textContent = "⏳ جارِ المسح…";
     return () => { stage.innerHTML = ""; };
@@ -14530,12 +14531,47 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   }
   const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
   function capCanvas(cv, max) { const m = Math.max(cv.width, cv.height); if (m <= max) return cv; const r = max / m, c = document.createElement("canvas"); c.width = Math.round(cv.width * r); c.height = Math.round(cv.height * r); c.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, c.width, c.height); return c; }
+  /* التقاط العنصر بالمفتاح مباشرة (Alyssum API): ارسم مستطيلاً حول العنصر ← (1) يُعزل العنصر على خلفية مسطّحة ويُنزع لونها (2) تُرمَّم الخلفية مكانه
+     والمنطقة خارج المستطيل تبقى من الأصل بالبكسل. طلبان بموافقة تكلفة واحدة. تتفاوت التفاصيل الدقيقة والموضع قليلاً لأن الصورة تُولَّد؛ وللتراجع Ctrl+Z. */
+  const keyReady = () => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok && !!ImgGen.edit && !!ImgGen.estimate && !(window.ImgCfg && ImgCfg.get("capture", "engine", "auto") === "local"); } catch (e) { return false; } };
+  const alphaBox = c => { const W = c.width, H = c.height, d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return x1 < 0 ? null : { x0, y0, x1: x1 + 1, y1: y1 + 1 }; };
+  const keyPick = (sh, cv) => pickZone(sh, cv, { point: true });      // مفتاح متوفر: نقر على العنصر أو مستطيل
+  async function keyCapture(sh, cv, inf, w, Z0, pt) {
+    const $ = sh.$, W = cv.width, H = cv.height; let [zx0, zy0, zx1, zy1] = Z0 || [0, 0, W, H], zw = zx1 - zx0, zh = zy1 - zy0; const est = ImgGen.estimate(), mk = (a, b) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(a)); c.height = Math.max(1, Math.round(b)); return c; };
+    const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
+    if (!confirm("التقاط العنصر بالذكاء (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — بتكلفة تقريبية " + est.fmt(est.cost * 2) + ".\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
+    $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ عزل العنصر بالذكاء…";
+    try {
+      const crop = mk(zw, zh), cg = crop.getContext("2d"); cg.drawImage(cv, zx0, zy0, zw, zh, 0, 0, zw, zh);
+      if (pt) { const r = Math.max(10, Math.round(Math.max(W, H) / 45)); cg.lineWidth = Math.max(3, Math.round(r / 4)); cg.strokeStyle = "#ff0000"; cg.fillStyle = "#ff0000"; cg.beginPath(); cg.arc(pt[0], pt[1], r, 0, 7); cg.stroke(); cg.beginPath(); cg.arc(pt[0], pt[1], Math.max(3, r / 4), 0, 7); cg.fill(); }      // علامة النقرة: حلقة ونقطة حمراء
+      const hex = await ImgGen.pickKey(await toBlob(crop));
+      const r1 = await ImgGen.edit({ blob: await toBlob(crop), W: zw, H: zh, fmt: "png", confirm: false, title: "عزل العنصر", prompt: (pt ? "In this photo, keep ONLY the single object that is marked by the small red circle and dot (the object under the marker) and replace everything else, including the red marker, with one perfectly flat uniform solid color " : "In this photo, keep ONLY the single main object that fills the frame and replace everything else (the whole background) with one perfectly flat uniform solid color ") + hex + " (no gradient, no shadow, no reflection, no floor line). Keep the object exactly as it is: same shape, proportions, colors, labels and sharp edges; do not crop or redraw any part. No text, no watermark." });
+      if (!r1) throw new Error("أُلغي التنفيذ"); if (sh.S.closed) return;
+      $("pbs-load").textContent = "✂️ نزع لون الخلفية…"; const cut = await PBBgRemove.autoCut(r1.canvas, { methods: ["classic"] }), bb = alphaBox(cut.canvas);
+      if (!bb || bb.x1 - bb.x0 < 8 || bb.y1 - bb.y0 < 8) throw new Error("لم يُعزل العنصر — جرّب مستطيلاً أضيق حول العنصر نفسه");
+      if (pt) { const m = Math.max(bb.x1 - bb.x0, bb.y1 - bb.y0) * .1; zx0 = Math.max(0, Math.floor(bb.x0 - m)); zy0 = Math.max(0, Math.floor(bb.y0 - m)); zx1 = Math.min(W, Math.ceil(bb.x1 + m)); zy1 = Math.min(H, Math.ceil(bb.y1 + m)); zw = zx1 - zx0; zh = zy1 - zy0; }      // بعد النقر: منطقة الترميم = حدود العنصر المعزول + هامش
+      const el = mk(bb.x1 - bb.x0, bb.y1 - bb.y0); el.getContext("2d").drawImage(cut.canvas, bb.x0, bb.y0, el.width, el.height, 0, 0, el.width, el.height);
+      $("pbs-load").textContent = "⏳ ترميم الخلفية مكان العنصر بالذكاء…";
+      const framed = mk(W, H), fg = framed.getContext("2d"); fg.drawImage(cv, 0, 0); fg.lineWidth = Math.max(3, Math.round(Math.max(W, H) / 300)); fg.strokeStyle = "#ff0000"; fg.strokeRect(zx0, zy0, zw, zh);
+      const r2 = await ImgGen.edit({ blob: await toBlob(framed), W, H, fmt: "png", confirm: false, title: "ترميم الخلفية", prompt: "Remove the object that is inside the thin red rectangle and fill the empty area with a natural continuation of the surrounding background (same lighting, texture and perspective). Also remove the red rectangle itself. Do not change anything outside the rectangle. No text, no watermark." });
+      if (!r2) throw new Error("أُلغي التنفيذ"); if (sh.S.closed) return;
+      const base = mk(W, H), bg = base.getContext("2d"); bg.drawImage(cv, 0, 0);      // الأصل أولاً ثم الناتج داخل المستطيل فقط بحافة مُنعَّمة (لا يتغيّر بكسل خارجه)
+      const ins = Math.max(4, Math.round(Math.max(zw, zh) * .012)), ix = zx0 + ins, iy = zy0 + ins, iw = zw - 2 * ins, ih = zh - 2 * ins, patch = mk(iw, ih), pg = patch.getContext("2d"); pg.drawImage(r2.canvas, ix, iy, iw, ih, 0, 0, iw, ih);
+      pg.globalCompositeOperation = "destination-in"; const f = Math.max(3, Math.round(Math.min(iw, ih) * .03)); const gm = mk(iw, ih), gc = gm.getContext("2d"); gc.fillStyle = "#fff"; gc.filter = "blur(" + f / 2 + "px)"; gc.fillRect(f, f, iw - 2 * f, ih - 2 * f); pg.drawImage(gm, 0, 0); bg.drawImage(patch, ix, iy);
+      $("pbs-load").textContent = "⏳ رفع الصور…"; const stamp = Date.now().toString(36);
+      const basePath = await A().uploadBlob(await toBlob(base), "bg-" + stamp, { max: 3200, q: .95 }), elPath = await A().uploadBlob(await toBlob(el), "el-" + stamp + "-0", { max: 2400, q: .92 });
+      const ox = pt ? 0 : zx0, oy = pt ? 0 : zy0, els = [{ x0: ox + bb.x0, y0: oy + bb.y0, x1: ox + bb.x1, y1: oy + bb.y1, area: el.width * el.height, front: null, label: "عنصر ملتقط" }];
+      applyElements(inf, w, W, H, els, [elPath], basePath); sh.close();
+      alert("✅ التُقط العنصر كصورة مستقلة قابلة للتحريك، ورُمِّمت الخلفية مكانه بالذكاء (Alyssum API).\nراجع النتيجة؛ للتراجع اضغط Ctrl+Z.");
+    } catch (e) { console.error(e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : (e.message || e)); }
+  }
   async function captureElements() {
     const t = target(); if (t.err) return alert(t.err);
     const inf = t.inf, w = inf.node, sh = shell("التقاط العناصر", "عنصر", "كل العناصر", HINT_EL1, HINT_EL2), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
     const lite = LITE(); cv = capCanvas(cv, lite ? 1280 : 2200);
     await new Promise(r => setTimeout(r, 40)); let Z = null;
+    if (keyReady()) { const z0 = await keyPick(sh, cv); if (sh.S.closed) return; if (z0 && z0.pt) return keyCapture(sh, cv, inf, w, null, z0.pt); if (z0) return keyCapture(sh, cv, inf, w, z0); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ تحليل الصورة كاملة بالنماذج المحلية…"; }      // مفتاح متوفر: مستطيل ← التقاط بالذكاء مباشرة؛ «تحليل كاملة» ← الطريقة المحلية
     /* التحليل يبدأ مباشرة بلا خطوة وسيطة؛ لتحليل منطقة أدق يوجد زر «✏️ منطقة أخرى» بعد ظهور النتائج */
     if (lite && sh.setCollapsed) sh.setCollapsed(true);
     const stopScan = scanFx(sh, cv);
@@ -14548,12 +14584,12 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     stopScan(); return elementsBasic(sh, cv, inf, w, note);
   }
   /* الخطوة الأولى: الصورة كاملة + «حلّل الصورة كاملة» أو ارسم مستطيلاً حول العنصر (منطقة) ← [x0,y0,x1,y1] أو null */
-  function pickZone(sh, cv) {
+  function pickZone(sh, cv, opt) {
     const $ = sh.$, W = cv.width, H = cv.height; $("pbs-load").style.display = "none"; $("pbs-seg").style.display = "none";
-    $("pbs-hint").innerHTML = "<b>✏️ منطقة (أدق):</b> ارسم بالسحب مستطيلاً حول العنصر الذي تريد التقاطه، فتُحلَّل تلك المنطقة وحدها بدقة أعلى.<br>أو حلّل الصورة كاملة.";
+    $("pbs-hint").innerHTML = "" + (opt && opt.point ? "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق للعناصر المتلاصقة).<br>وإن أردت التحليل المحلي المجاني لكل عناصر الصورة اضغط «تحليل الصورة كاملة»." : "<b>✏️ منطقة (أدق):</b> ارسم بالسحب مستطيلاً حول العنصر الذي تريد التقاطه، فتُحلَّل تلك المنطقة وحدها بدقة أعلى.<br>أو حلّل الصورة كاملة.");
     $("pbs-go").disabled = false; $("pbs-go").textContent = "تحليل الصورة كاملة";
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
-    const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:crosshair"; stage.appendChild(ov);
+    const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:" + (opt && opt.point ? "pointer" : "crosshair"); stage.appendChild(ov);
     return new Promise(res => {
       let d = null; const pos = e => { const r = ov.getBoundingClientRect(); return [Math.max(0, Math.min(vw, e.clientX - r.left)), Math.max(0, Math.min(vh, e.clientY - r.top))]; };
       const draw = (a, b) => { const g = ov.getContext("2d"); g.clearRect(0, 0, vw, vh); if (!a) return; const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]); g.fillStyle = "rgba(15,15,20,.45)"; g.fillRect(0, 0, vw, vh); g.clearRect(x, y, w, h); g.setLineDash([6, 4]); g.strokeStyle = "#0d9488"; g.lineWidth = 2.5; g.strokeRect(x, y, w, h); };
@@ -14562,7 +14598,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       ov.onpointerdown = e => { try { ov.setPointerCapture(e.pointerId); } catch (er) { } d = { a: pos(e) }; e.preventDefault(); };
       ov.onpointermove = e => { if (!d) return; d.b = pos(e); draw(d.a, d.b); };
       ov.onpointercancel = () => { d = null; draw(null); };
-      ov.onpointerup = () => { if (!d) return; const a = d.a, b = d.b || a; d = null; if (Math.abs(b[0] - a[0]) < 12 || Math.abs(b[1] - a[1]) < 12) return draw(null);
+      ov.onpointerup = () => { if (!d) return; const a = d.a, b = d.b || a; d = null; if (opt && opt.point && Math.abs(b[0] - a[0]) < 8 && Math.abs(b[1] - a[1]) < 8) return done({ pt: [a[0] / k, a[1] / k] }); if (Math.abs(b[0] - a[0]) < 12 || Math.abs(b[1] - a[1]) < 12) return draw(null);
         const x0 = Math.min(a[0], b[0]) / k, y0 = Math.min(a[1], b[1]) / k, x1 = Math.max(a[0], b[0]) / k, y1 = Math.max(a[1], b[1]) / k, m = Math.max(x1 - x0, y1 - y0) * .06;      // هامش صغير حول العنصر
         done([Math.max(0, Math.floor(x0 - m)), Math.max(0, Math.floor(y0 - m)), Math.min(W, Math.ceil(x1 + m)), Math.min(H, Math.ceil(y1 + m))]); };
       $("pbs-go").onclick = () => done(null); const c0 = sh.close; sh.close = () => { c0(); res(null); };
@@ -15635,7 +15671,20 @@ const PBBgRemove = (function () {
     if (pers.length && AIVision.depth && !o.noDepth) { try { const fz = await depthFuse(cv, out, S, pers, lite, step, pDep); mark("عمق"); if (fz) { o.depthUsed = "نعم"; return fz; } o.depthUsed = "رُفض"; } catch (e) { console.warn("depth", e); o.depthUsed = "فشل"; } }      // العمق تحسين: أي فشل ← النتيجة السابقة
     return out;
   }
-  const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
+  /* خلفية معقدة + مفتاح Alyssum API: يُطلب من الخدمة وضع المنتج على خلفية مسطّحة بلون بعيد عن ألوانه ثم يُنزع اللون محلياً بدقة.
+     تتفاوت التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد؛ وتُطلب موافقة التكلفة قبل كل تنفيذ (يمرّ بـImgGen.edit). */
+  const keyOK = () => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok && !!ImgGen.edit; } catch (e) { return false; } };
+  async function keyCut(srcC, o) {
+    if (!keyOK()) throw new Error("NOKEY");
+    const W = srcC.width, H = srcC.height, k = Math.min(1, 1600 / Math.max(W, H)), w = Math.round(W * k), h = Math.round(H * k);
+    const blob = await new Promise(x => scaledCanvas(srcC, w, h).toBlob(x, "image/png")), hex = await ImgGen.pickKey(blob);
+    const prompt = "Edit this product photo: replace the ENTIRE background with one perfectly flat, uniform solid color " + hex + " (no gradient, no shadow, no reflection, no texture, no floor line). Keep the main subject exactly as it is: same shape, proportions, colors, labels, details and sharp edges; do not crop, add, remove or redraw any part of it. No text, no watermark.";
+    const r = await ImgGen.edit({ blob, prompt, W: w, H: h, title: "نزع الخلفية بالذكاء (للخلفيات المعقدة)", fmt: "png" });
+    if (!r) { const e = new Error("أُلغي التنفيذ بالذكاء — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
+    if (o && o.onStep) o.onStep("✂️ نزع لون الخلفية من نتيجة الذكاء…");
+    return classicCut(r.canvas, Object.assign({}, o, { onStep: null }));
+  }
+  const METHODS = { key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   /* خلفية استوديو متجانسة من الحواف (أبيض/رمادي/لون واحد)؟ عندها الفصل اللوني أدقّ من نماذج الكشف (التي قد تلتقط جزءاً من المنتج فقط) */
   function uniformBg(srcC) {
@@ -15643,7 +15692,7 @@ const PBBgRemove = (function () {
   }
   async function autoCut(srcC, o) {
     o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
-    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), order = o.methods || (cfgM === "classic" ? ["classic"] : aiOK() ? (uniformBg(srcC) ? ["classic", "ai"] : ["ai", "classic"]) : ["classic"]); let err = null, last = null; const tried = [];
+    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), kOK = !!o.allowKey && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
     for (const m of order) {
       try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
@@ -15706,9 +15755,9 @@ const PBBgRemove = (function () {
     const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
-      const all = aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"], i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
+      const all = (keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
-      const r = await autoCut(LV.src, { methods, onStep: m => chip(m, true) }); LV.res = r;
+      const r = await autoCut(LV.src, { methods, allowKey: true, onStep: m => chip(m, true) }); LV.res = r;
       await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)");
     } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
   }
@@ -16239,7 +16288,6 @@ const PBAI = (() => {
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const MAXD = 2048;
 
-  try { const d = localStorage.getItem(PLS); if (d) { const im = new Image(); im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0); S.person = { c, w: c.width, h: c.height }; S.remember = true; }; im.src = d; } } catch (e) { }
   const keepPerson = () => { try { if (S.remember && S.person) { const c = S.person.c, k = Math.min(1, 1000 / Math.max(c.width, c.height)), t = mk(c.width * k, c.height * k); t.getContext("2d").drawImage(c, 0, 0, t.width, t.height); localStorage.setItem(PLS, t.toDataURL("image/jpeg", .85)); } else localStorage.removeItem(PLS); } catch (e) { } };
   /* ── نقية ── */
   const RATIOS = [["1:1", 1], ["4:5", .8], ["9:16", 9 / 16], ["16:9", 16 / 9], ["3:2", 1.5], ["2:3", 2 / 3], ["21:9", 21 / 9]];
@@ -16275,6 +16323,7 @@ const PBAI = (() => {
   /* ── حالة اللوحات ── */
   const PLS = "pbx_tryon_person";      // صورة الشخص تُحفظ على هذا الجهاز فقط وبموافقة صريحة («تذكّر صورتي»)
   const S = { rc: { item: "", sel: ["red", "navy"], custom: "#3366cc", useCustom: false }, ps: [0, 1, 2], v3: { n: 8, frames: null }, person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same" }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  try { const d = localStorage.getItem(PLS); if (d) { const im = new Image(); im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0); S.person = { c, w: c.width, h: c.height }; S.remember = true; }; im.src = d; } } catch (e) { }
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
   /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
   const SHOTS = [["studio", "استوديو أبيض نظيف", "a clean seamless white studio with soft shadows"], ["marble", "رخام فاخر", "a luxurious white marble surface with soft gold accents and gentle window light"], ["nature", "أعشاب وطبيعة", "a natural setting with fresh green leaves and herbs, soft morning sunlight"], ["wood", "خشب ريفي دافئ", "a warm rustic wooden table with soft golden-hour light"], ["kitchen", "مطبخ عصري", "a bright modern kitchen counter with blurred background"], ["spa", "حمام وسبا", "a calm spa bathroom setting with towels, stones and soft steam"], ["gift", "هدية وتغليف", "a festive gift flat-lay with ribbons and tasteful wrapping paper"], ["beach", "صيف وشاطئ", "a sunny summer beach setting with sand and soft bokeh sea"], ["lantern", "أجواء رمضانية دافئة", "a warm festive evening mood with soft lantern light and elegant dark background"], ["neon", "نيون ليلي", "a dark stylish background with colorful neon rim lighting and reflections"], ["splash", "انتعاش وماء", "a fresh dynamic scene with water droplets and splashes, cool bright light"], ["pop", "لون صارخ بسيط", "a bold minimal solid color backdrop that contrasts with the product, hard shadow, pop-art feel"],
@@ -16700,7 +16749,8 @@ const PBVideo = (() => {
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
   function still() { const cv = $("pbvd-pv"); if (!cv || !S.src) return; const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 280 / Math.max(W, H)); cv.width = Math.round(W * k); cv.height = Math.round(H * k); { const g0 = cv.getContext("2d"); frameAt(g0, S.src, cv.width, cv.height, 0, S.fx, S.bg); overlay(g0, cv.width, cv.height, .9, S); } }
   function play(ms) { cancelAnimationFrame(S.raf); const cv = $("pbvd-pv"); if (!cv || !S.src) return; const g = cv.getContext("2d"), t0 = performance.now(), dur = (ms || S.dur * 1000); const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, cv.width, cv.height, t, S.fx, S.bg); overlay(g, cv.width, cv.height, t, S); if (t < 1) S.raf = requestAnimationFrame(step); }; S.raf = requestAnimationFrame(step); }
-  async function make() {
+  async function make() { if (S.busy) return; try { return await make0(); } finally { S.busy = false; } }      // يُحرَّر القفل حتى لو فشل التسجيل
+  async function make0() {
     if (S.busy || !S.src || !supported()) return; const mime = pickMime(); if (!mime) { say("لا يدعم المتصفح تسجيل الفيديو"); return; }
     S.busy = true; const [W, H] = S.size.split("x").map(Number), c = mk(W, H), g = c.getContext("2d"), stream = c.captureStream(30), rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4e6 }), chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     const done = new Promise(r => { rec.onstop = r; }); rec.start(200); const t0 = performance.now(), dur = S.dur * 1000; frameAt(g, S.src, W, H, 0, S.fx, S.bg); overlay(g, W, H, 0, S);
@@ -16853,7 +16903,7 @@ const PBBrand = (() => {
       const k = t.dataset.bro; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : /^(bcol|bgc|tcol)$/.test(k) ? +t.value : t.value; draw();
     };
     root.addEventListener("input", upd); root.addEventListener("change", upd);
-    const lf = $("pbbr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { if (String(r.result).length < 600000) localStorage.setItem(LSL, String(r.result)); } catch (e) { } rerender(); }; im.src = String(r.result); }; r.readAsDataURL(f); };
+    const lf = $("pbbr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { let keep = String(r.result); if (keep.length >= 600000) { const kk = Math.min(1, 700 / Math.max(im.naturalWidth, im.naturalHeight)), cc = mk(im.naturalWidth * kk, im.naturalHeight * kk); cc.getContext("2d").drawImage(im, 0, 0, cc.width, cc.height); keep = cc.toDataURL("image/png"); } if (keep.length < 600000) localStorage.setItem(LSL, keep); else say("⚠️ الشعار كبير جداً ولم يُحفظ للجلسات القادمة — صغّره وأعد رفعه"); } catch (e) { } rerender(); }; im.src = String(r.result); }; r.readAsDataURL(f); };
     root.addEventListener("click", async e => {
       const t = e.target.closest("[data-brb]"); if (!t) return; const k = t.dataset.brb;
       if (k === "site") { say("⏳ جارٍ الاستيراد…"); if (await fromSite()) rerender(); else say("تعذّر قراءة ألوان الموقع"); }
@@ -16871,7 +16921,9 @@ const PBBrand = (() => {
   /* منشئ الشعار: ① شعار نصي مجاني (مونوغرام + اسم بألوان وخط الهوية) على Canvas ② شعار بالذكاء (Alyssum API) من وصف؛ الناتج يُحفظ شعاراً للعلامة ويمكن إضافته للصفحة */
   const LSTYLES = [["badge", "شارة دائرية"], ["round", "مستطيل مدوّر"], ["plain", "نص بخط تحتي"], ["mono", "مونوغرام فقط"]];
   function logoCanvas(name, kit, style, scheme) {
-    const W = 800, H = style === "mono" ? 800 : style === "plain" ? 360 : 500, c = mk(W, H), g = c.getContext("2d"), col = i => hex(kit.colors[i]), dark = scheme === "dark", bg = dark ? col(0) : "transparent", fg = dark ? col(2) : col(0), ac = col(1), ff = "'" + (kit.font || "Cairo") + "','Cairo',sans-serif";
+    const darkBg = scheme === "dark" ? kit.colors[0] : null; if (darkBg) { const cs = kit.colors.slice(); cs[0] = kit.colors[2]; cs[2] = kit.colors[0]; kit = Object.assign({}, kit, { colors: cs }); }      // «خلفية بلون العلامة»: تُعكس ألوان الرمز والنص فوق خلفية بلون العلامة
+    const W = 800, H = style === "mono" ? 800 : style === "plain" ? 360 : 500, c = mk(W, H), g = c.getContext("2d"), col = i => hex(kit.colors[i]), ac = col(1), ff = "'" + (kit.font || "Cairo") + "','Cairo',sans-serif";
+    if (darkBg) { g.fillStyle = hex(darkBg); g.fillRect(0, 0, W, H); }
     const words = String(name || "").trim().split(/\s+/).filter(Boolean), ini = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "A").slice(0, 2)).toUpperCase();
     g.direction = "rtl"; g.textAlign = "center"; g.textBaseline = "middle";
     if (style === "mono") { g.fillStyle = col(0); g.beginPath(); g.arc(W / 2, H / 2, 340, 0, 7); g.fill(); g.lineWidth = 14; g.strokeStyle = ac; g.beginPath(); g.arc(W / 2, H / 2, 314, 0, 7); g.stroke(); g.fillStyle = col(2); g.font = "900 300px " + ff; g.fillText(ini, W / 2, H / 2 + 10); return c; }

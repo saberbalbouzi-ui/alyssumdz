@@ -203,7 +203,7 @@ const ImgGen = (() => {
 <div class="action-bar"><button type="button" class="small" id="ig-go" onclick="ImgGen.generate()">✨ توليد صورة ذكية</button><button type="button" class="small gold" id="ig-go2" onclick="ImgGen.generate('editor')">🧩 إنشاء الصورة في المطوّر</button>${m === "ad" ? `<button type="button" class="small gray" onclick="ImgGen.blank()" title="يفتح المطوّر بصفحة فارغة بمقاس المنصة لتصمّم عليها بلا توليد">لوحة فارغة بهذا المقاس</button>` : ""}<span class="hint" id="ig-est"></span></div>
 <div class="hint" id="ig-msg"></div>
 <div id="ig-res" class="ig-res"></div>`;
-    paintPrev(); estimate();
+    paintPrev(); paintEst();
   }
   function settingsHtml() {
     const fal = cfg.provider() === "fal";
@@ -223,7 +223,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const p = $("ig-prev"); if (!p) return; if (!S.srcBlob) return;
     const u = URL.createObjectURL(S.srcBlob); p.innerHTML = `<img src="${u}" alt=""><small>${esc(S.srcName || "")}</small>`;
   }
-  function estimate() {
+  function paintEst() {
     const el = $("ig-est"); if (!el) return; const m = cfg.model(), pr = cfg.provider() === "fal" ? cfg.falPrice() : m === "auto" ? PRICE[PREF[0]] : priceOf(m), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     el.textContent = "التكلفة التقريبية: " + money(pr) + " للصورة" + (isFinite(left) ? " · المتبقي من حدّك " + money(Math.max(0, left)) : "");
   }
@@ -299,7 +299,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
       }
       S.res = cv; S.lastModel = out.model; S.resName = (name || "image").slice(0, 40); S.meta = { W, H, id: fs.id, label: fs.label, bgMode, bgColor, textMode: tmode, text: txt, lang: $("ig-lang") ? $("ig-lang").value : "ar", name };
       LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
-      showRes(cv, W, H); msg.textContent = "✅ تمّ بنموذج " + out.model + " — " + W + "×" + H + "px" + (bgMode !== "scene" ? " · PNG" : "") + note; const cb = document.querySelector(".ig-cost"); if (cb) cb.outerHTML = costBar(); estimate();
+      showRes(cv, W, H); msg.textContent = "✅ تمّ بنموذج " + out.model + " — " + W + "×" + H + "px" + (bgMode !== "scene" ? " · PNG" : "") + note; const cb = document.querySelector(".ig-cost"); if (cb) cb.outerHTML = costBar(); paintEst();
       if (after === "editor") { S.busy = false; await ((S.mode === "ad" || (tmode === "builder" && txt)) ? openAd() : toEditor("current")); }
     } catch (e) { msg.textContent = "❌ " + e.message; } finally { S.busy = false; ["ig-go", "ig-go2"].forEach(i => { const g = $(i); if (g) g.disabled = false; }); }
   }
@@ -535,8 +535,8 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     bgm(v) { LS.set("alyssum_ig_bgm", v); const b = $("ig-bgcbox"); if (b) b.style.display = v === "solid" ? "flex" : "none"; }, bgc(v) { LS.set("alyssum_ig_bgc", v); }, lang(v) { LS.set("alyssum_ig_lang", v); },
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) LS.set(FALKEY, k.trim()); toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) LS.set(KEY, k); toast("حُفظ المفتاح في هذا المتصفح"); }, test,
-    set(k, v) { LS.set("alyssum_ig_" + k, String(v)); estimate(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
-    sizes: () => SIZES, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    set(k, v) { LS.set("alyssum_ig_" + k, String(v)); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

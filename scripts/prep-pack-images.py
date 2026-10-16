@@ -2,7 +2,8 @@
 """يجهّز صور حزم الأدوات قبل بناء الصفحات: (1) يقصّ الهوامش البيضاء وشرائح الصور المجاورة المقتطعة بالخطأ
 (أعمدة/صفوف بيضاء فاصلة)، (2) يقصّ حواف الزوايا المدوّرة، (3) يرفع الدقة بتكبير Lanczos تدريجي + حدّة + تباين لطيف
 (بلا ذكاء اصطناعي ولا اختراع تفاصيل). المصدر assets/<pack>/images لا يُعدَّل؛ الناتج saas/landing/<slug>/gal/.
-الاستعمال: python3 scripts/prep-pack-images.py [slug ...]  (بلا وسائط = كل الحزم في PACKS)"""
+الاستعمال: python3 scripts/prep-pack-images.py [--sr] [slug ...]  (--sr: تكبير فائق بنموذج Real-ESRGAN؛ بطيء على المعالج ≈ 20ث للصورة الصغيرة)
+مثال:  (بلا وسائط = كل الحزم في PACKS)"""
 import sys, pathlib, re
 from PIL import Image
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
@@ -69,17 +70,28 @@ def trim(im):
     if im.width > 40 and im.height > 40: im = im.crop((t, t, im.width - t, im.height - t))
     return im
 
-def run(slug, pack, min_w=1000, max_w=1800):
+def upscale(im, min_w, max_w, sr):
+    """--sr: تكبير فائق الدقة Real-ESRGAN ×4 (scripts/sr-lib.py) ثم تصغير Lanczos إلى الهدف؛ وإلا Lanczos تدريجي."""
+    if not sr or im.width >= min_w: return enh.enhance(im, min_w, max_w)[0]
+    spec2 = importlib.util.spec_from_file_location("srl", root / "scripts" / "sr-lib.py"); m = importlib.util.module_from_spec(spec2); spec2.loader.exec_module(m)
+    o = m.sr4(im); w = min(max_w, max(min_w, im.width * 4)); h = round(o.height * w / o.width)
+    return o.resize((w, h), Image.LANCZOS)
+
+def run(slug, pack, min_w=1000, max_w=1800, sr=False):
     src = root / "assets" / pack / "images"; dst = root / "saas" / "landing" / slug / "gal"
     dst.mkdir(parents=True, exist_ok=True)
     for old in dst.glob("*.webp"): old.unlink()
     n = 0
     for f in sorted(src.glob("*.webp")):
         im = trim(Image.open(f).convert("RGB"))
-        im, _ = enh.enhance(im, min_w, max_w)
+        cache = pathlib.Path("/tmp/sr_cache") / slug / f.name
+        if sr and cache.exists(): im = Image.open(cache).convert("RGB")
+        else:
+            im = upscale(im, min_w, max_w, sr)
+            if sr: cache.parent.mkdir(parents=True, exist_ok=True); im.save(cache, "WEBP", quality=95, method=4)
         im.save(dst / f.name, "WEBP", quality=86, method=6); n += 1
     print(slug, n)
 
 if __name__ == "__main__":
-    P = packs(); sel = sys.argv[1:] or list(P)
-    for s in sel: run(s, P[s])
+    P = packs(); a = [x for x in sys.argv[1:] if not x.startswith("--")]; sr = "--sr" in sys.argv; sel = a or list(P)
+    for s in sel: run(s, P[s], sr=sr)
