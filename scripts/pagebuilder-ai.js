@@ -199,7 +199,7 @@ const PBAI = (() => {
         const p = frame ? plan(base.width, base.height, { dirs: { l: x.l / g.w * 100, r: x.r / g.w * 100, t: x.t / g.h * 100, b: x.b / g.h * 100 } }) : plan(base.width, base.height, { ratio: o.ratio, anchor: o.anchor });
         if (!p.grow) { say(frame ? "الإطار لم يخرج عن الصورة — اسحب مقبضاً إلى الخارج" : "النسبة المطلوبة لا تحتاج توسيعاً — اختر نسبة مختلفة أو اسحب الإطار"); S.busy = false; return; }
         if (kind === "xlocal") {      // تغيير مقاس مجاني: هوامش بامتداد مموّه (padded) ثم مقاس المنصة بالبكسل إن اختير
-          const pad = padded(base, p), tz = !frame && o.sz ? o.sz : null, k = tz ? Math.min(1, 2048 / Math.max(tz.w, tz.h)) : 1, out = tz ? mk(tz.w * k, tz.h * k) : pad;
+          const pad = padded(base, p), tz = o.sz && Math.abs(p.W / p.H - o.sz.w / o.sz.h) < .012 * (o.sz.w / o.sz.h) ? o.sz : null, k = tz ? Math.min(1, 2048 / Math.max(tz.w, tz.h)) : 1, out = tz ? mk(tz.w * k, tz.h * k) : pad;
           if (tz) out.getContext("2d").drawImage(pad, 0, 0, out.width, out.height); S.resP = p; S.frame = frame; showRes([out], "الحجم الناتج " + out.width + "×" + out.height + " — بلا ذكاء ولا تكلفة"); say("✅ جاهز — راجع النتيجة ثم طبّق"); S.busy = false; return;
         }
         const G = typeof ImgGen !== "undefined" ? ImgGen : null, e = G && G.estimate ? G.estimate() : null;
