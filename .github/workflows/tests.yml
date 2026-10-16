@@ -51,6 +51,7 @@ jobs:
         with: { node-version: '22' }
       - name: بوابة الشحن (Worker + D1)
         run: |
+          node scripts/test-toolpages.js
           node --no-warnings saas/gateway/test/gateway.test.mjs
           node --no-warnings saas/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
