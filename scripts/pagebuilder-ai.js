@@ -8,6 +8,8 @@ const PBAI = (() => {
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const MAXD = 2048;
 
+  try { const d = localStorage.getItem(PLS); if (d) { const im = new Image(); im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0); S.person = { c, w: c.width, h: c.height }; S.remember = true; }; im.src = d; } } catch (e) { }
+  const keepPerson = () => { try { if (S.remember && S.person) { const c = S.person.c, k = Math.min(1, 1000 / Math.max(c.width, c.height)), t = mk(c.width * k, c.height * k); t.getContext("2d").drawImage(c, 0, 0, t.width, t.height); localStorage.setItem(PLS, t.toDataURL("image/jpeg", .85)); } else localStorage.removeItem(PLS); } catch (e) { } };
   /* ── نقية ── */
   const RATIOS = [["1:1", 1], ["4:5", .8], ["9:16", 9 / 16], ["16:9", 16 / 9], ["3:2", 1.5], ["2:3", 2 / 3], ["21:9", 21 / 9]];
   const ANCH = [["center", "الوسط", .5, .5], ["left", "يسار", 0, .5], ["right", "يمين", 1, .5], ["top", "أعلى", .5, 0], ["bottom", "أسفل", .5, 1]];
@@ -40,11 +42,14 @@ const PBAI = (() => {
     + "Keep the product's exact shape, proportions, label artwork, packaging text and logos unchanged unless the instruction explicitly says otherwise. Keep the same framing and composition, photorealistic result, natural lighting, no watermark, no added text unless requested, no borders. Output the edited image.";
 
   /* ── حالة اللوحات ── */
-  const S = { person: null, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same" }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const PLS = "pbx_tryon_person";      // صورة الشخص تُحفظ على هذا الجهاز فقط وبموافقة صريحة («تذكّر صورتي»)
+  const S = { ps: [0, 1, 2], person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same" }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
   /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
-  const SHOTS = [["studio", "استوديو أبيض نظيف", "a clean seamless white studio with soft shadows"], ["marble", "رخام فاخر", "a luxurious white marble surface with soft gold accents and gentle window light"], ["nature", "أعشاب وطبيعة", "a natural setting with fresh green leaves and herbs, soft morning sunlight"], ["wood", "خشب ريفي دافئ", "a warm rustic wooden table with soft golden-hour light"], ["kitchen", "مطبخ عصري", "a bright modern kitchen counter with blurred background"], ["spa", "حمام وسبا", "a calm spa bathroom setting with towels, stones and soft steam"], ["gift", "هدية وتغليف", "a festive gift flat-lay with ribbons and tasteful wrapping paper"], ["beach", "صيف وشاطئ", "a sunny summer beach setting with sand and soft bokeh sea"], ["lantern", "أجواء رمضانية دافئة", "a warm festive evening mood with soft lantern light and elegant dark background"], ["neon", "نيون ليلي", "a dark stylish background with colorful neon rim lighting and reflections"], ["splash", "انتعاش وماء", "a fresh dynamic scene with water droplets and splashes, cool bright light"], ["pop", "لون صارخ بسيط", "a bold minimal solid color backdrop that contrasts with the product, hard shadow, pop-art feel"]];
-  const shotPrompt = (desc, extra) => "RE-SHOOT THIS PRODUCT PHOTO. Keep the product exactly as it is — same shape, proportions, label artwork, packaging text, logos and colors — and place it in this scene: " + desc + ". " + (extra ? "Extra direction: " + extra + ". " : "") + "Photorealistic commercial photography, natural contact shadows and reflections, same camera angle, product centered and fully visible, no people, no extra text, no watermark. Output the new image.";
+  const SHOTS = [["studio", "استوديو أبيض نظيف", "a clean seamless white studio with soft shadows"], ["marble", "رخام فاخر", "a luxurious white marble surface with soft gold accents and gentle window light"], ["nature", "أعشاب وطبيعة", "a natural setting with fresh green leaves and herbs, soft morning sunlight"], ["wood", "خشب ريفي دافئ", "a warm rustic wooden table with soft golden-hour light"], ["kitchen", "مطبخ عصري", "a bright modern kitchen counter with blurred background"], ["spa", "حمام وسبا", "a calm spa bathroom setting with towels, stones and soft steam"], ["gift", "هدية وتغليف", "a festive gift flat-lay with ribbons and tasteful wrapping paper"], ["beach", "صيف وشاطئ", "a sunny summer beach setting with sand and soft bokeh sea"], ["lantern", "أجواء رمضانية دافئة", "a warm festive evening mood with soft lantern light and elegant dark background"], ["neon", "نيون ليلي", "a dark stylish background with colorful neon rim lighting and reflections"], ["splash", "انتعاش وماء", "a fresh dynamic scene with water droplets and splashes, cool bright light"], ["pop", "لون صارخ بسيط", "a bold minimal solid color backdrop that contrasts with the product, hard shadow, pop-art feel"],
+    /* مشاهد الاستخدام اليومي (Product Staging): العنصر الرابع true = يظهر إنسان (يد/جسم بلا وجه) بلباس محتشم */
+    ["hand", "في اليد", "the product held naturally in one hand, only the hand and forearm visible with a long sleeve covering the arm, softly blurred everyday background, natural window light", true], ["table", "على طاولة بجو يومي", "the product placed on a wooden cafe table among a few tasteful everyday props (a cup, a notebook, a plant), softly blurred background, natural daylight", true], ["worn", "ملبوس أو محمول", "the product being worn or carried naturally by a person shown from the neck down WITHOUT showing the face, wearing plain modest full-coverage clothing (long sleeves, long trousers or skirt, a loose top), natural everyday setting, softly blurred background", true], ["desk", "مكتب وعمل", "the product on a tidy modern work desk next to a laptop and a notebook, soft morning light, shallow depth of field", true], ["gifting", "تسليم كهدية", "the product being offered as a gift in two hands (only hands and long-sleeved forearms visible), warm soft background with ribbon details", true]];
+  const shotPrompt = (desc, extra, life) => "RE-SHOOT THIS PRODUCT PHOTO. Keep the product exactly as it is — same shape, proportions, label artwork, packaging text, logos and colors — and place it in this scene: " + desc + ". " + (extra ? "Extra direction: " + extra + ". " : "") + "Photorealistic commercial photography, natural contact shadows and reflections, same camera angle, product centered and fully visible, " + (life ? "if a person appears show no face and no bare skin other than the hands (and the covering must be modest), " : "no people, ") + "no extra text, no watermark. Output the new image.";
   /* استوديو الأزياء الذكي: صورة قطعة ملابس ← عارض افتراضي | مانيكان غير مرئي | تصوير مسطح | إزالة تجاعيد. القواعد: القطعة كما هي تماماً، بلا وجه حقيقي افتراضياً، ولا جلد مكشوف خارج الوجه واليدين، والمرأة بخمار ولباس محتشم */
   const FA_MODES = [["model", "عارض افتراضي", "ألبس القطعة على عارض"], ["ghost", "مانيكان غير مرئي", "القطعة بشكل ثلاثي الأبعاد بلا عارض"], ["flat", "تصوير مسطح", "القطعة مفرودة على خلفية نظيفة"], ["wrinkle", "إزالة التجاعيد", "كوي رقمي للقطعة"]];
   const FA_WHO = [["mannequin", "مانيكان بلا وجه"], ["man", "رجل"], ["woman", "امرأة محجبة بلباس محتشم"]];
@@ -69,13 +74,54 @@ const PBAI = (() => {
     + "STRICT RULES: keep the person's face, identity, skin tone, hair or hijab, body shape, pose, hands and the background EXACTLY as in Image 1; only the clothing changes. Replace only the clothing area the garment covers (" + ({ top: "upper body", bottom: "lower body", full: "full outfit / dress", auto: "whatever part of the body the garment is made for" }[o && o.part] || "whatever part of the body the garment is made for") + "). "
     + "Keep the garment EXACTLY as in Image 2: same cut, length, sleeves, collar, fabric, color, patterns, prints, buttons and logos — fit it naturally to the person's body with realistic drape, folds, shadows and perspective. "
     + "Do not expose any more skin than the original photo shows: no nudity, no tighter or more revealing result than the garment itself. No watermark, no added text, no borders. Output the final image at the same framing as Image 1.";
+  /* صورة من وصف نصي (بلا صورة مرجعية): نافذة مستقلة تضيف الناتج للصفحة أو تحفظه في المكتبة */
+  const TX_SIZES = [["1:1", 1, 1], ["4:5", 4, 5], ["9:16", 9, 16], ["16:9", 16, 9]];
+  const TX_IDEAS = ["عبوة منتج على طاولة رخامية بإضاءة ناعمة", "خلفية خضراء من أوراق نباتية للإعلانات", "مشهد رمضاني دافئ بفوانيس ونجوم", "نمط هندسي إسلامي أنيق بألوان هادئة"];
+  const textPrompt = (d, ratio) => "GENERATE A NEW IMAGE from this description: " + String(d).trim() + ". Photorealistic, professional commercial quality, balanced composition suited to " + ratio + " framing, natural lighting. No text, no letters, no logos, no watermark, no borders. If people appear they must be fully and modestly dressed (women with a hijab and full-coverage clothing), with no bare skin except face and hands. Output only the image.";
+  const T = { res: null, busy: false };
+  function openTx() {
+    if (!A().E || !A().E.page) return; const old = $("pbx-tx"); if (old) old.remove();
+    const bg = document.createElement("div"); bg.id = "pbx-tx"; bg.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem");
+    bg.innerHTML = `<div style="background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(198,254,23,.35);border-radius:16px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:1rem" dir="rtl"><b>✨ صورة من وصف نصي</b><p class="ep-n">اكتب ما تريد رؤيته ويُولَّد صورة جديدة بالذكاء الاصطناعي (Alyssum API) بعد حساب التكلفة وموافقتك.</p>${stateBar()}
+<textarea id="pbtx-t" rows="4" style="width:100%;box-sizing:border-box" placeholder="مثال: عبوة كريم على طاولة رخامية مع أوراق خضراء وإضاءة صباحية"></textarea>
+<div class="pbrt-row" style="margin:.3rem 0">${TX_IDEAS.map((x, i) => `<button type="button" class="pbx-small" data-txi="${i}">${esc(x)}</button>`).join("")}</div>
+<div class="rt-g"><label>المقاس <select id="pbtx-r" class="pbx-small">${TX_SIZES.map(x => `<option value="${x[0]}">${x[0]}</option>`).join("")}</select></label></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-txb="go">✨ ولّد الصورة</button><button type="button" class="pbx-small" data-txb="close">إغلاق</button></div>
+<div id="pbtx-m" class="ep-n" style="min-height:1.3em"></div><div id="pbtx-o"></div></div>`;
+    document.body.appendChild(bg); T.res = null;
+    const m = t => { const e = $("pbtx-m"); if (e) e.textContent = t; };
+    bg.addEventListener("click", async e => {
+      if (e.target === bg) { bg.remove(); return; }
+      const ib = e.target.closest("[data-txi]"); if (ib) { $("pbtx-t").value = TX_IDEAS[+ib.dataset.txi]; return; }
+      const b = e.target.closest("[data-txb]"); if (!b) return; const k = b.dataset.txb;
+      if (k === "close") { bg.remove(); return; }
+      if (k === "go") {
+        if (T.busy) return; const d = $("pbtx-t").value.trim(); if (!d) { m("اكتب وصف الصورة أولاً"); return; }
+        const sz = TX_SIZES.find(x => x[0] === $("pbtx-r").value) || TX_SIZES[0], mx = 1536, W = sz[1] >= sz[2] ? mx : Math.round(mx * sz[1] / sz[2]), H = sz[1] >= sz[2] ? Math.round(mx * sz[2] / sz[1]) : mx;
+        T.busy = true; m("⏳ جارٍ التوليد…");
+        try {
+          if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("مولّد الصور غير متاح");
+          const r = await ImgGen.edit({ textOnly: true, prompt: textPrompt(d, sz[0]), W, H, title: "صورة من وصف نصي" }); if (!r) { m(""); T.busy = false; return; }
+          T.res = r; $("pbtx-o").innerHTML = `<div style="margin:.4rem 0;border-radius:8px;overflow:hidden"><img src="${r.canvas.toDataURL("image/webp", .85)}" alt="" style="max-width:100%;display:block;margin:auto"></div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-txb="add">＋ أضفها للصفحة</button><button type="button" class="pbx-small" data-txb="go">↻ ولّد غيرها</button></div>`; m("✅ تمّ التوليد");
+        } catch (x) { m(errText(x)); }
+        T.busy = false;
+      } else if (k === "add" && T.res) {
+        try { m("⏳ جارٍ الرفع…"); const path = await A().uploadBlob(T.res.blob, "tx-" + Date.now().toString(36), { max: 4096, q: .93 }); if (path && typeof PB !== "undefined") { A().insertSections([PB.mkS([PB.mkC([PB.mkW("image", { src: path, alt: "", hauto: true, fit: "cover" })])], { pad: { d: [20, 20, 20, 20], m: [14, 12, 14, 12] } })], "صورة من وصف نصي"); bg.remove(); } } catch (x) { m("⚠️ " + (x.message || x)); }
+      }
+    });
+  }
   const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُحسب التكلفة وتُطلب موافقتك قبل كل توليد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   function panel(kind) {
     const o = S.opt;
+    if (kind === "ps") return `<div class="pbx-pz" id="pbai"><p>جلسة تصوير كاملة لمنتجك: اختر حتى <b>3 مشاهد</b> ويُصوَّر المنتج في كلٍّ منها بالذكاء الاصطناعي مع حفظ شكله وملصقاته، ثم تختار الأفضل. موافقة واحدة على التكلفة الإجمالية.</p>${stateBar()}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem">${SHOTS.map((x, i) => `<label style="border:1.5px solid rgba(128,128,128,.35);border-radius:8px;padding:.35rem .4rem;font-size:.78rem;cursor:pointer"><input type="checkbox" data-psk="${i}"${S.ps.includes(i) ? " checked" : ""}> ${x[1]}</label>`).join("")}</div>
+<div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
+<button type="button" class="pbx-small pz-go" data-ai="pshoot">📸 ابدأ الجلسة</button>
+<div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     if (kind === "to") return `<div class="pbx-pz" id="pbai"><p>اختر صورة القطعة في الصفحة، ثم ارفع <b>صورة شخص واحدة</b> لترى القطعة عليه. تبقى ملامحه وجسمه ووضعيته وخلفيته كما هي ويتغير اللباس فقط.</p>${stateBar()}
-<div class="rt-g"><label class="pbx-small" style="cursor:pointer;display:block;text-align:center">📷 ارفع صورة الشخص<input type="file" accept="image/*" id="pbai-tp" style="display:none"></label><div class="ep-n" id="pbai-tpn">${S.person ? "✔ صورة الشخص جاهزة (" + S.person.w + "×" + S.person.h + ")" : "لم تُرفع صورة بعد"}</div><label>جزء الجسم <select id="pbai-tpart" class="pbx-small">${[["auto", "تلقائي"], ["top", "علوي"], ["bottom", "سفلي"], ["full", "إطلالة كاملة / فستان"]].map(x => `<option value="${x[0]}"${S.tpart === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label></div>
+<div class="rt-g"><label class="pbx-small" style="cursor:pointer;display:block;text-align:center">📷 ارفع صورة الشخص<input type="file" accept="image/*" id="pbai-tp" style="display:none"></label><div class="ep-n" id="pbai-tpn">${S.person ? "✔ صورة الشخص جاهزة (" + S.person.w + "×" + S.person.h + ") — تبقى لكل قطعة تجرّبها بعدها" : "لم تُرفع صورة بعد"}</div><label><input type="checkbox" id="pbai-trem" ${S.remember ? "checked" : ""}> تذكّر صورتي على هذا الجهاز</label>${S.person ? '<button type="button" class="pbx-small" data-ai="tpdel">🗑 احذف صورتي</button>' : ""}<label>جزء الجسم <select id="pbai-tpart" class="pbx-small">${[["auto", "تلقائي"], ["top", "علوي"], ["bottom", "سفلي"], ["full", "إطلالة كاملة / فستان"]].map(x => `<option value="${x[0]}"${S.tpart === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label></div>
 <button type="button" class="pbx-small pz-go" data-ai="tryon">✨ جرّب القطعة عليه</button>
-<div class="ep-n">صورة الشخص تُعالج لحظياً ولا تُحفظ في المتجر. استعمل صوراً لك أو لمن وافق على ذلك.</div>
+<div class="ep-n">صورة الشخص لا تُحفظ في المتجر؛ تبقى في المتصفح فقط إن فعّلت «تذكّر صورتي» ويمكن حذفها في أي وقت. استعمل صوراً لك أو لمن وافق على ذلك.</div>
 <div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     if (kind === "fa") { const f = S.fa, sel = (id, list, v) => `<select id="${id}" class="pbx-small">${list.map(x => `<option value="${x[0]}"${v === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select>`;
       return `<div class="pbx-pz" id="pbai"><p>ارفع صورة قطعة ملابس واحصل على صورة احترافية: على عارض افتراضي، أو بمانيكان غير مرئي، أو مفرودة، أو بعد إزالة التجاعيد. تبقى القطعة كما هي بقصّتها وألوانها ونقوشها.</p>${stateBar()}
@@ -103,6 +149,7 @@ const PBAI = (() => {
   const readForm = () => {
     const o = S.opt, v = id => ($(id) || {}).value; if ($("pbai-r")) o.ratio = +v("pbai-r") || o.ratio; if ($("pbai-a")) o.anchor = v("pbai-a") || o.anchor;
     if ($("pbai-tpart")) S.tpart = v("pbai-tpart");
+    if ($("pbai-trem")) { const r = $("pbai-trem").checked; if (r !== S.remember) { S.remember = r; keepPerson(); } }
     if ($("pbai-fw")) S.fa = { who: v("pbai-fw"), pose: v("pbai-fp"), bg: v("pbai-fb"), ratio: v("pbai-fr") };
     if ($("pbai-hint")) o.hint = v("pbai-hint") || ""; if ($("pbai-text")) o.text = v("pbai-text") || "";
   };
@@ -110,7 +157,7 @@ const PBAI = (() => {
   function showRes(list, note) {
     const r = $("pbai-res"); if (!r) return; list = Array.isArray(list) ? list : [list]; S.vars = list; S.res = list[0]; const many = list.length > 1;
     const card = (cv, i) => `<label style="display:block;cursor:pointer;border:2px solid ${i === 0 ? "#7c3aed" : "transparent"};border-radius:8px;padding:2px" data-vc="${i}"><div style="border-radius:6px;overflow:hidden;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px"><img src="${cv.toDataURL("image/webp", .85)}" alt="" style="max-width:100%;display:block;margin:auto"></div>${many ? `<div style="text-align:center;font-size:.8rem;margin-top:.2rem"><input type="radio" name="pbai-v" value="${i}"${i === 0 ? " checked" : ""}> الخيار ${i + 1}</div>` : ""}</label>`;
-    if (S.kind !== "xp") { r.innerHTML = note ? '<div class="ep-n">' + esc(note) + '</div>' : ""; A().liveCanvas(S.id, S.res, { tab: S.kind, apply: () => apply({ node: { id: S.id } }), cancel: () => { S.res = null; S.vars = null; const r2 = $("pbai-res"); if (r2) r2.innerHTML = ""; say(""); } }); return; }      // النتيجة تظهر مباشرة على الصورة بـ«تنفيذ/إلغاء»
+    if (S.kind !== "xp" && S.kind !== "ps") { r.innerHTML = note ? '<div class="ep-n">' + esc(note) + '</div>' : ""; A().liveCanvas(S.id, S.res, { tab: S.kind, apply: () => apply({ node: { id: S.id } }), cancel: () => { S.res = null; S.vars = null; const r2 = $("pbai-res"); if (r2) r2.innerHTML = ""; say(""); } }); return; }      // النتيجة تظهر مباشرة على الصورة بـ«تنفيذ/إلغاء»
     r.innerHTML = `<div style="display:grid;grid-template-columns:${many ? "1fr 1fr" : "1fr"};gap:.4rem;margin:.4rem 0">${list.map(card).join("")}</div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="apply">✔ تطبيق ${many ? "الخيار المحدّد" : "على الصورة"}</button><button type="button" class="pbx-small" data-ai="discard">تجاهل</button></div>${note ? '<div class="ep-n">' + esc(note) + '</div>' : ""}`;
   }
   const pickVar = i => { if (!S.vars || !S.vars[i]) return; S.res = S.vars[i]; document.querySelectorAll("#pbai-res [data-vc]").forEach(e => { e.style.borderColor = +e.dataset.vc === i ? "#7c3aed" : "transparent"; }); };
@@ -143,6 +190,15 @@ const PBAI = (() => {
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => restore(r.value.canvas, base, p));
         if (!ok.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         S.resP = p; S.frame = frame; showRes(ok, "الحجم الناتج " + p.W + "×" + p.H + " — الصورة الأصلية محفوظة كما هي" + (ok.length < 2 ? " (نجح خيار واحد فقط)" : "") + ". اختر الأفضل ثم طبّقه."); say("✅ جاهز — اختر أحد الخيارين");
+      } else if (kind === "pshoot") {
+        const idx = S.ps.filter(i => SHOTS[i]).slice(0, 3); if (!idx.length) { say("اختر مشهداً واحداً على الأقل"); S.busy = false; return; }
+        const e = ImgGen.estimate ? ImgGen.estimate() : null;
+        if (e) { if (e.left < idx.length * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("تصوير المنتج بالذكاء الاصطناعي — " + idx.length + " مشاهد\nالتكلفة التقريبية: " + e.fmt(idx.length * e.cost) + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        const blob = await blobOf(src, "image/png"); say("⏳ جارٍ تصوير " + idx.length + " مشاهد…");
+        const rs = await Promise.allSettled(idx.map(i => ImgGen.edit({ blob, prompt: shotPrompt(SHOTS[i][2], S.opt.hint.trim(), SHOTS[i][3]), W: src.width, H: src.height, title: "تصوير المنتج — " + SHOTS[i][1], confirm: e ? false : undefined })));
+        const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => r.value.canvas);
+        if (!ok.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
+        showRes(ok, "نجح " + ok.length + " من " + idx.length + " — اختر الأفضل ثم طبّقه."); say("✅ جاهز — اختر أحد الخيارات");
       } else if (kind === "tryon") {
         if (!S.person) { say("ارفع صورة الشخص أولاً"); S.busy = false; return; }
         const pc = S.person.c, k1 = Math.min(1, 1600 / Math.max(pc.width, pc.height)), W = Math.round(pc.width * k1), H = Math.round(pc.height * k1);
@@ -155,7 +211,7 @@ const PBAI = (() => {
         showRes(r.canvas, m[1] + " — " + W + "×" + H); say("✅ تمّ — راجع النتيجة ثم طبّقها");
       } else if (kind === "shot") {
         const sh = SHOTS[S.shotI]; if (!sh) { S.busy = false; return; }
-        const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: shotPrompt(sh[2], S.opt.hint.trim()), W: src.width, H: src.height, title: "إعادة تصوير المنتج — " + sh[1] }); if (!r) { say(""); S.busy = false; return; }
+        const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), prompt: shotPrompt(sh[2], S.opt.hint.trim(), sh[3]), W: src.width, H: src.height, title: "إعادة تصوير المنتج — " + sh[1] }); if (!r) { say(""); S.busy = false; return; }
         showRes(r.canvas, "أسلوب: " + sh[1]); say("✅ تمّ — راجع النتيجة ثم طبّقها");
       } else {
         const text = S.opt.text.trim(); if (!text) { say("اكتب التعليمات أولاً أو اختر اقتراحاً"); S.busy = false; return; }
@@ -167,24 +223,25 @@ const PBAI = (() => {
   }
   async function apply(inf) {
     if (!S.res || S.busy) return; S.busy = true; say("⏳ جارٍ الرفع…");
-    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().liveClear(false); if (S.kind === "xp" && S.frame && A().xpApply) A().xpApply(q.node.id); S.frame = false; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : S.kind === "fa" ? "استوديو أزياء ذكي" : S.kind === "to" ? "تجربة افتراضية" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
+    try { const blob = await blobOf(S.res), path = await A().uploadBlob(blob, "ai-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id || inf.node.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().liveClear(false); if (S.kind === "xp" && S.frame && A().xpApply) A().xpApply(q.node.id); S.frame = false; A().E.nextLabel = S.kind === "xp" ? "توسيع خلفية الصورة" : S.kind === "sl" ? "أسلوب تصوير ذكي" : S.kind === "fa" ? "استوديو أزياء ذكي" : S.kind === "to" ? "تجربة افتراضية" : S.kind === "ps" ? "تصوير المنتج بالذكاء" : "تعديل ذكي للصورة"; S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; A().commitAfter(q.node.id); say("✅ طُبّق على الصورة"); } }
     catch (e) { say("⚠️ " + (e.message || e)); }
     S.busy = false;
   }
   function mount(host, inf, kind) {
     S.kind = kind; if (S.id !== inf.node.id) { S.res = null; S.msg = ""; } S.id = inf.node.id;
     const root = host.querySelector("#pbai"); if (!root) return;
-    root.addEventListener("change", e => { readForm(); if (e.target.name === "pbai-v") pickVar(+e.target.value); else if (e.target.id === "pbai-r" || e.target.id === "pbai-a") frameFromRatio(); });
+    root.addEventListener("change", e => { if (e.target.dataset.psk != null) { const i = +e.target.dataset.psk; S.ps = S.ps.filter(x => x !== i); if (e.target.checked) { S.ps.push(i); if (S.ps.length > 3) { const first = S.ps.shift(); const b = root.querySelector('[data-psk="' + first + '"]'); if (b) b.checked = false; } } return; } readForm(); if (e.target.name === "pbai-v") pickVar(+e.target.value); else if (e.target.id === "pbai-r" || e.target.id === "pbai-a") frameFromRatio(); });
     xpChanged();
-    const tp = $("pbai-tp"); if (tp) tp.onchange = () => { const f = tp.files[0]; if (!f) return; const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 2000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); S.person = { c, w: c.width, h: c.height }; const n = $("pbai-tpn"); if (n) n.textContent = "✔ صورة الشخص جاهزة (" + c.width + "×" + c.height + ")"; }; im.onerror = () => say("تعذّر قراءة الصورة"); im.src = u; };
+    const tp = $("pbai-tp"); if (tp) tp.onchange = () => { const f = tp.files[0]; if (!f) return; const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 2000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); S.person = { c, w: c.width, h: c.height }; keepPerson(); const n = $("pbai-tpn"); if (n) n.textContent = "✔ صورة الشخص جاهزة (" + c.width + "×" + c.height + ")"; }; im.onerror = () => say("تعذّر قراءة الصورة"); im.src = u; };
     root.addEventListener("input", readForm);
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
-      if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
+      if (k === "pshoot") run("pshoot", inf); else if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
+      else if (k === "tpdel") { S.person = null; S.remember = false; keepPerson(); const n = $("pbai-tpn"); if (n) n.textContent = "حُذفت صورتك"; t.remove(); }
       else if (k === "discard") { S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; say(""); }
       else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
     });
   }
-  const reset = () => { S.person = null; S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
-  return { panel, mount, reset, xpChanged, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt } };
+  const reset = () => { S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
+  return { panel, mount, openTx, reset, xpChanged, state: S, _t: { plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson } };
 })();

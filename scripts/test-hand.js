@@ -1279,6 +1279,34 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("تجربة افتراضية: الصف مفعّل (بلا «قريباً») ويفتح لوحة برفع صورة الشخص", /تجربة افتراضية/.test(to.head) && to.file && !to.soon, to);
   ok("تجربة افتراضية: بلا صورة شخص يُطلب رفعها، ومعها يُرسل الشخص والقطعة معاً بمقاس صورة الشخص ويظهر الناتج مباشرة", /ارفع صورة الشخص/.test(to.noPerson) && to.calls.length === 1 && to.calls[0].extra === 1 && to.calls[0].W === 100 && to.calls[0].H === 150 && to.keep && to.live, to);
+  // ── تصوير المنتج بالذكاء + صورة من وصف + استمرار صورة الشخص + مشاهد الاستخدام اليومي ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-imgx="pshoot"]').click()); await p.waitForTimeout(700);
+  const ps = await p.evaluate(async () => {
+    const head = (document.querySelector("#pbx-ep .ep-h") || {}).textContent || "", soon = !!document.querySelector('[data-imgx="pshoot"] .tt-b2'), boxes = document.querySelectorAll("#pbx-ep [data-psk]").length;
+    const calls = []; const old = ImgGen.edit, oc = window.confirm; window.confirm = () => true; ImgGen.edit = async o => { calls.push({ p: o.prompt, conf: o.confirm }); const c = document.createElement("canvas"); c.width = 50; c.height = 50; c.getContext("2d").fillStyle = "#c63"; c.getContext("2d").fillRect(0, 0, 50, 50); return { canvas: c, blob: await new Promise(r => c.toBlob(r)) }; };
+    document.querySelector('#pbx-ep [data-ai="pshoot"]').click(); await new Promise(r => setTimeout(r, 1800)); const cards = document.querySelectorAll("#pbai-res [data-vc]").length;
+    const life = PBAI._t.shotPrompt("x", "", true), plain = PBAI._t.shotPrompt("x", "", false), lifeShots = PBAI._t.SHOTS.filter(x => x[3]).map(x => x[0]);
+    ImgGen.edit = old; window.confirm = oc;
+    return { head, soon, boxes, calls: calls.length, cards, life: /no face/.test(life) && !/no people/.test(life), plain: /no people/.test(plain), lifeShots };
+  });
+  ok("تصوير المنتج بالذكاء: الصف مفعّل ويعرض مشاهد للاختيار ويُنتج خيارات متعددة بموافقة واحدة", /تصوير المنتج بالذكاء/.test(ps.head) && !ps.soon && ps.boxes >= 15 && ps.calls === 3 && ps.cards === 3, ps);
+  ok("مشاهد الاستخدام اليومي (يد/طاولة/ملبوس/مكتب/هدية) محتشمة بلا وجه، والمشاهد العادية بلا أشخاص", ps.life && ps.plain && ["hand", "table", "worn", "desk", "gifting"].every(k => ps.lifeShots.includes(k)), ps);
+  const tx = await p.evaluate(async () => {
+    const row = !!document.querySelector('[data-imgx="txt2img"]'); document.querySelector('[data-imgx="txt2img"]').click(); await new Promise(r => setTimeout(r, 400)); const m = !!document.getElementById("pbx-tx");
+    const calls = []; const old = ImgGen.edit; ImgGen.edit = async o => { calls.push({ t: !!o.textOnly, blob: !!o.blob, W: o.W, H: o.H, p: o.prompt }); const c = document.createElement("canvas"); c.width = 64; c.height = 64; c.getContext("2d").fillRect(0, 0, 64, 64); return { canvas: c, blob: await new Promise(r => c.toBlob(r)) }; };
+    document.getElementById("pbtx-t").value = "كوب شاي على طاولة"; document.getElementById("pbtx-r").value = "9:16"; document.querySelector('#pbx-tx [data-txb="go"]').click(); await new Promise(r => setTimeout(r, 900));
+    const added = !!document.querySelector('#pbx-tx [data-txb="add"]'); ImgGen.edit = old; document.getElementById("pbx-tx").remove();
+    return { row, m, added, calls };
+  });
+  ok("صورة من وصف نصي: الصف يفتح نافذة، والتوليد بلا صورة مرجعية وبمقاس 9:16 مع زر الإضافة للصفحة", tx.row && tx.m && tx.added && tx.calls.length === 1 && tx.calls[0].t && !tx.calls[0].blob && tx.calls[0].H > tx.calls[0].W, tx);
+  const pp = await p.evaluate(async () => {
+    const pc = document.createElement("canvas"); pc.width = 40; pc.height = 60; pc.getContext("2d").fillRect(0, 0, 40, 60); PBAI.state.person = { c: pc, w: 40, h: 60 }; PBAI.state.remember = true; PBAI._t.keepPerson();
+    const saved = (localStorage.getItem("pbx_tryon_person") || "").startsWith("data:image"); PBAI.reset(); const kept = !!PBAI.state.person;
+    PBAI.state.remember = false; PBAI._t.keepPerson(); const removed = !localStorage.getItem("pbx_tryon_person"); PBAI.state.person = null;
+    return { saved, kept, removed };
+  });
+  ok("تجربة افتراضية: صورة الشخص تبقى بين القطع (حتى بعد إغلاق الأداة) وتُحفظ فقط عند «تذكّر صورتي» وتُحذف بإلغائه", pp.saved && pp.kept && pp.removed, pp);
   // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);
