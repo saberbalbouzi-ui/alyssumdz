@@ -101,7 +101,7 @@ const AdminImgBatch = (() => {
       if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { status("المولّد الذكي غير متاح"); return; }
       if (!aiPrompt(c)) { status("اكتب وصف التعديل أولاً"); return; }
       if (S.files.length > AI_MAX) { status("الحدّ الأقصى للدفعة الذكية " + AI_MAX + " صورة — احذف الزائد"); return; }
-      const e = ImgGen.estimate ? ImgGen.estimate() : null; if (e) { if (e.left < S.files.length * e.cost) { status("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); return; } if (!confirm("خطوة ذكاء اصطناعي لـ" + S.files.length + " صورة\nالتكلفة التقريبية الإجمالية: " + e.fmt(S.files.length * e.cost) + "\nمتابعة؟")) return; }
+      const e = ImgGen.estimate ? ImgGen.estimate() : null; if (e) { if (!(e.can ? e.can(S.files.length) : e.left >= (S.files.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); status("رصيد Alyssum API لا يكفي لهذه الدفعة — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); return; } if (!confirm("خطوة ذكاء اصطناعي لـ" + S.files.length + " صورة\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) return; }
     }
     S.busy = true; S.out = []; status("⏳ 0 / " + S.files.length);
     for (let i = 0; i < S.files.length; i++) {

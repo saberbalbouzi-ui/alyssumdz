@@ -42,7 +42,7 @@ const PBAI = (() => {
 
   /* ── حالة اللوحات ── */
   const PLS = "pbx_tryon_person";      // صورة الشخص تُحفظ على هذا الجهاز فقط وبموافقة صريحة («تذكّر صورتي»)
-  const S = { rc: { item: "", sel: ["red", "navy"], custom: "#3366cc", useCustom: false }, ps: [0, 1, 2], v3: { n: 8, frames: null }, person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same", age: "any", body: "any", tone: "any", model: "", outfit: [] }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
+  const S = { rc: { item: "", sel: ["red", "navy"], custom: "#3366cc", useCustom: false }, ps: [0, 1, 2], v3: { n: 8, frames: null }, person: null, remember: false, tpart: "auto", shotI: 0, kind: "", id: "", src: "", srcC: null, res: null, resP: null, busy: false, msg: "", fa: { who: "mannequin", pose: "stand", bg: "white", ratio: "same", age: "any", body: "any", tone: "any", model: "", outfit: [], res: 0 }, opt: { mode: "ratio", ratio: 1, anchor: "center", l: 20, r: 20, t: 0, b: 0, hint: "", text: "" } };
   try { const d = localStorage.getItem(PLS); if (d) { const im = new Image(); im.onload = () => { const c = mk(im.naturalWidth, im.naturalHeight); c.getContext("2d").drawImage(im, 0, 0); S.person = { c, w: c.width, h: c.height }; S.remember = true; }; im.src = d; } } catch (e) { }
   const PRESETS = [["🎨 غيّر لون المنتج", "غيّر لون المنتج إلى اللون: "], ["💡 إضاءة استوديو", "حسّن الإضاءة لتصبح إضاءة استوديو احترافية ناعمة مع ظلال طبيعية"], ["🖼️ خلفية جديدة", "استبدل الخلفية بخلفية: "], ["🧹 إزالة عنصر", "أزل من الصورة العنصر التالي وأكمل الخلفية بشكل طبيعي: "], ["✨ لمسة إعلان", "اجعل الصورة بأسلوب إعلاني فاخر مع إضاءة سينمائية وانعكاسات خفيفة"], ["🌿 أجواء طبيعية", "ضع المنتج في أجواء طبيعية دافئة بين نباتات وإضاءة صباحية"]];
   /* أساليب التصوير الذكية (AI Shot List): كل أسلوب = مشهد/إضاءة جاهزة يُعاد فيها تصوير المنتج مع حفظ شكله وملصقاته */
@@ -127,7 +127,7 @@ const PBAI = (() => {
   const recolorPrompt = (item, color) => "RECOLOR THE PRODUCT in this photo: change ONLY the color of " + (String(item || "").trim() ? "the " + String(item).trim() : "the main garment or product") + " to " + color + ". "
     + "Preserve the exact fabric/material texture, weave, stitching, folds, wrinkles, highlights, natural shading and shadows so the new color looks photographed, not painted over — do not flatten it with a flat overlay. "
     + "Keep everything else exactly the same: shape, proportions, patterns/prints/logos (only recolor them if they are part of the base color), background, lighting, framing and any person's skin, face and hair. No watermark, no added text. Output the edited image.";
-  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُحسب التكلفة وتُطلب موافقتك قبل كل توليد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
+  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُطلب موافقتك قبل كل توليد، وتصلك تنبيهات عند اقتراب نفاد الرصيد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   const outfitPool = () => (typeof PBCollage !== "undefined" && PBCollage.poolOf ? PBCollage.poolOf(S.src || "") : []).filter(u => u && u !== S.src).slice(0, 20);
   function modelsHtml(f) {
     const ms = loadModels();
@@ -163,6 +163,7 @@ const PBAI = (() => {
       return `<div class="pbx-pz" id="pbai"><p>ارفع صورة قطعة ملابس واحصل على صورة احترافية: على عارض افتراضي، أو بمانيكان غير مرئي، أو مفرودة، أو بعد إزالة التجاعيد. تبقى القطعة كما هي بقصّتها وألوانها ونقوشها.</p>${stateBar()}
 <div class="rt-g"><label>العارض ${sel("pbai-fw", FA_WHO, f.who)}</label><label>الوضعية ${sel("pbai-fp", FA_POSE, f.pose)}</label><label>الخلفية ${sel("pbai-fb", FA_BG, f.bg)}</label><label>المقاس <select id="pbai-fr" class="pbx-small"><option value="same"${f.ratio === "same" ? " selected" : ""}>نفس مقاس الصورة</option><option value="4:5"${f.ratio === "4:5" ? " selected" : ""}>4:5 (متجر)</option><option value="1:1"${f.ratio === "1:1" ? " selected" : ""}>1:1</option><option value="9:16"${f.ratio === "9:16" ? " selected" : ""}>9:16 (ستوري)</option></select></label></div>
 <div class="rt-g"><label>العمر ${sel("pbai-fage", FA_AGE, f.age)}</label><label>البنية ${sel("pbai-fbody", FA_BODY, f.body)}</label><label>لون البشرة ${sel("pbai-ftone", FA_TONE, f.tone)}</label></div>
+<div class="rt-g"><label>دقة الناتج <select id="pbai-fres" class="pbx-small"><option value="0"${f.res === 0 ? " selected" : ""}>عادية</option><option value="2048"${f.res === 2048 ? " selected" : ""}>2K (2048px)</option><option value="4096"${f.res === 4096 ? " selected" : ""}>4K (4096px)</option></select></label></div>
 <div class="ep-n" id="pbai-fmods">${modelsHtml(f)}</div>
 <div class="ep-n"><b>إطلالة بعدة قطع</b> (اختياري، حتى ${loadModels().some(m => m.id === f.model) ? 1 : 2} قطع إضافية من صور الصفحة)</div>
 <div id="pbai-fpool" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:80px;overflow:auto">${outfitPool().map((u, i) => `<img src="${esc(A().localize(u))}" data-ai="outfit" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${f.outfit.includes(u) ? "3px solid #7c3aed" : "none"}">`).join("") || '<span class="ep-n">لا صور أخرى في الصفحة</span>'}</div>
@@ -203,7 +204,7 @@ const PBAI = (() => {
     if ($("pbai-rci")) { S.rc.item = v("pbai-rci"); S.rc.custom = v("pbai-rcc"); S.rc.useCustom = $("pbai-rcu").checked; }
     if ($("pbai-tpart")) S.tpart = v("pbai-tpart");
     if ($("pbai-trem")) { const r = $("pbai-trem").checked; if (r !== S.remember) { S.remember = r; keepPerson(); } }
-    if ($("pbai-fw")) S.fa = Object.assign({}, S.fa, { who: v("pbai-fw"), pose: v("pbai-fp"), bg: v("pbai-fb"), ratio: v("pbai-fr"), age: v("pbai-fage") || "any", body: v("pbai-fbody") || "any", tone: v("pbai-ftone") || "any" });
+    if ($("pbai-fw")) S.fa = Object.assign({}, S.fa, { who: v("pbai-fw"), pose: v("pbai-fp"), bg: v("pbai-fb"), ratio: v("pbai-fr"), age: v("pbai-fage") || "any", body: v("pbai-fbody") || "any", tone: v("pbai-ftone") || "any", res: +v("pbai-fres") || 0 });
     if ($("pbai-sz")) { const z = v("pbai-sz"); if (z) { const [zw, zh] = z.split("x").map(Number); o.sz = { w: zw, h: zh }; } }
     if ($("pbai-v3n")) S.v3.n = +v("pbai-v3n") || 8;
     if ($("pbai-hint")) o.hint = v("pbai-hint") || ""; if ($("pbai-text")) o.text = v("pbai-text") || "";
@@ -246,7 +247,7 @@ const PBAI = (() => {
           if (tz) out.getContext("2d").drawImage(pad, 0, 0, out.width, out.height); S.resP = p; S.frame = frame; showRes([out], "الحجم الناتج " + out.width + "×" + out.height + " — بلا ذكاء ولا تكلفة"); say("✅ جاهز — راجع النتيجة ثم طبّق"); S.busy = false; return;
         }
         const G = typeof ImgGen !== "undefined" ? ImgGen : null, e = G && G.estimate ? G.estimate() : null;
-        if (e) { if (e.left < 2 * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("توسيع الصورة بالذكاء الاصطناعي — خياران لتختار بينهما\nالتكلفة التقريبية: " + e.fmt(2 * e.cost) + " (" + e.fmt(e.cost) + " لكل خيار)\nالمقاس الناتج: " + p.W + "×" + p.H + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(2) : e.left >= (2) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("توسيع الصورة بالذكاء الاصطناعي — خياران لتختار بينهما\nسيستهلك من رصيد Alyssum API.\nالمقاس الناتج: " + p.W + "×" + p.H + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const pad = padded(base, p), blob = await blobOf(pad, "image/png"); say("⏳ يُنشئ الذكاء خيارين…");
         const rs = await Promise.allSettled([0, 1].map(v => ImgGen.edit({ blob, prompt: expandPrompt(o.hint.trim(), v), W: p.W, H: p.H, title: "توسيع الصورة بالذكاء الاصطناعي", confirm: e ? false : undefined })));
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => restore(r.value.canvas, base, p));
@@ -256,7 +257,7 @@ const PBAI = (() => {
         const r = S.rc, names = r.sel.map(k => (RC_COLORS.find(x => x[0] === k) || [])[3]).filter(Boolean).slice(0, 4); if (r.useCustom && names.length < 4) names.push("the exact color " + r.custom);
         if (!names.length) { say("اختر لوناً واحداً على الأقل"); S.busy = false; return; }
         const e = ImgGen.estimate ? ImgGen.estimate() : null;
-        if (e) { if (e.left < names.length * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("تلوين بالذكاء الاصطناعي — " + names.length + " ألوان\nالتكلفة التقريبية: " + e.fmt(names.length * e.cost) + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(names.length) : e.left >= (names.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("تلوين بالذكاء الاصطناعي — " + names.length + " ألوان\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const blob = await blobOf(src, "image/png"); say("⏳ جارٍ توليد " + names.length + " ألوان…");
         const rs = await Promise.allSettled(names.map(n => ImgGen.edit({ blob, prompt: recolorPrompt(r.item, n), W: src.width, H: src.height, title: "تلوين — " + n, confirm: e ? false : undefined })));
         const ok = rs.filter(x => x.status === "fulfilled" && x.value).map(x => x.value.canvas);
@@ -265,7 +266,7 @@ const PBAI = (() => {
       } else if (kind === "pshoot") {
         const idx = S.ps.filter(i => SHOTS[i]).slice(0, 3); if (!idx.length) { say("اختر مشهداً واحداً على الأقل"); S.busy = false; return; }
         const e = ImgGen.estimate ? ImgGen.estimate() : null;
-        if (e) { if (e.left < idx.length * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("تصوير المنتج بالذكاء الاصطناعي — " + idx.length + " مشاهد\nالتكلفة التقريبية: " + e.fmt(idx.length * e.cost) + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(idx.length) : e.left >= (idx.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("تصوير المنتج بالذكاء الاصطناعي — " + idx.length + " مشاهد\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const blob = await blobOf(src, "image/png"); say("⏳ جارٍ تصوير " + idx.length + " مشاهد…");
         const rs = await Promise.allSettled(idx.map(i => ImgGen.edit({ blob, prompt: shotPrompt(SHOTS[i][2], S.opt.hint.trim(), SHOTS[i][3]), W: src.width, H: src.height, title: "تصوير المنتج — " + SHOTS[i][1], confirm: e ? false : undefined })));
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => r.value.canvas);
@@ -273,7 +274,7 @@ const PBAI = (() => {
         showRes(ok, "نجح " + ok.length + " من " + idx.length + " — اختر الأفضل ثم طبّقه."); say("✅ جاهز — اختر أحد الخيارات");
       } else if (kind === "v360") {
         const n = S.v3.n, e = ImgGen.estimate ? ImgGen.estimate() : null, need = n - 1;
-        if (e) { if (e.left < need * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("عرض 360° بالذكاء الاصطناعي — " + need + " إطاراً جديداً\nالتكلفة التقريبية: " + e.fmt(need * e.cost) + "\nيُنفَّذ إطاراً بعد إطار ويمكن أن يستغرق دقائق. متابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(need) : e.left >= (need) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("عرض 360° بالذكاء الاصطناعي — " + need + " إطاراً جديداً\nسيستهلك من رصيد Alyssum API.\nيُنفَّذ إطاراً بعد إطار ويمكن أن يستغرق دقائق. متابعة؟")) { say(""); S.busy = false; return; } }
         const blob0 = await polish(await blobOf(src, "image/png"), 1024), frames = [src], rs = $("pbai-res");
         for (let i = 1; i < n; i++) {
           say("⏳ الإطار " + (i + 1) + " من " + n + "…");
@@ -294,7 +295,11 @@ const PBAI = (() => {
         for (const u of f.outfit.slice(0, nOut)) extra.push(await (await fetch(A().localize(String(u)))).blob());
         if (mdl) extra.push(await (await fetch(mdl.img)).blob());
         say("⏳ يعمل الاستوديو…"); const r = await ImgGen.edit({ blob: await blobOf(src, "image/png"), extra: extra.length ? extra : undefined, prompt: fashionPrompt(S.faMode, Object.assign({}, f, { ref: !!mdl, outfit: nOut })), W, H, title: "استوديو أزياء ذكي — " + m[1] }); if (!r) { say(""); S.busy = false; return; }
-        showRes(r.canvas, m[1] + " — " + W + "×" + H); say("✅ تمّ — راجع النتيجة ثم طبّقها");
+        if (f.res && typeof ImgUpscale !== "undefined" && Math.max(r.canvas.width, r.canvas.height) < f.res) {
+          say("⏳ رفع الدقة إلى " + (f.res >= 4096 ? "4K" : "2K") + "…");
+          try { const up = await ImgUpscale.run(await blobOf(r.canvas, "image/png"), { scale: f.res / Math.max(r.canvas.width, r.canvas.height), sharp: 35, fmt: "png" }), im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(up.blob); }), cv = mk(im.naturalWidth, im.naturalHeight); cv.getContext("2d").drawImage(im, 0, 0); r.canvas = cv; } catch (x) { say("تعذّر رفع الدقة — ستحصل على الدقة العادية"); }
+        }
+        showRes(r.canvas, m[1] + " — " + r.canvas.width + "×" + r.canvas.height); say("✅ تمّ — راجع النتيجة ثم طبّقها");
         if (S.faMode === "model" && f.who !== "mannequin") { const rr = $("pbai-res"); if (rr) rr.insertAdjacentHTML("beforeend", '<div class="pbrt-row"><button type="button" class="pbx-small" data-ai="savemodel">💾 احفظ هذا العارض لاستعماله مع قطع أخرى</button></div>'); }
       } else if (kind === "shot") {
         const sh = SHOTS[S.shotI]; if (!sh) { S.busy = false; return; }

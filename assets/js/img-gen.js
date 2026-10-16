@@ -30,7 +30,34 @@ const ImgGen = (() => {
     budget: () => Number(LS.get("alyssum_ig_budget", "3")) || 0, spent: () => Number(LS.get("alyssum_ig_spent", "0")) || 0, count: () => Number(LS.get("alyssum_ig_count", "0")) || 0,
     model: () => LS.get("alyssum_ig_model", "auto"), provider: () => LS.get("alyssum_ig_provider", "gemini") === "fal" ? "fal" : "gemini", falModel: () => (LS.get("alyssum_ig_falmodel", "") || "fal-ai/nano-banana/edit").trim(), falPrice: () => Number(LS.get("alyssum_ig_falprice", "0.04")) || 0.04, lang: () => LS.get("alyssum_ig_lang", "ar"), fmt: () => LS.get("alyssum_ig_fmt", "webp")
   };
-  const money = n => "$" + (Math.round(n * 1000) / 1000).toFixed(3);
+  const money = n => "$" + (Math.round(n * 1000) / 1000).toFixed(3);          // داخلي فقط: لا تُعرض قيم الاستهلاك للمستخدم
+  /* رصيد Alyssum API: لا تُعرض قيم الاستهلاك ولا التكلفة؛ تُعرض حالة الرصيد فقط (كافٍ / على وشك النفاد / نفد) ونسبة المتبقي،
+     ويصل إشعار تلقائي (تنبيه في اللوحة + إشعار المتصفح إن أُذن) مرة عند الاقتراب من النفاد (≤20%) ومرة عند النفاد، ويُمسح بتجديد الرصيد أو رفع السقف. */
+  const AIA = "alyssum_ai_alert", AIOUT = "alyssum_ai_out", LOWFRAC = 0.2;
+  const unitCost = () => cfg.provider() === "fal" ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model()));
+  const credit = {
+    state() { if (LS.get(AIOUT, "0") === "1") return "out"; const b = cfg.budget(); if (!b) return "ok"; const left = b - cfg.spent(); if (left < unitCost()) return "out"; return left <= b * LOWFRAC ? "low" : "ok"; },
+    pct() { const b = cfg.budget(); return b ? Math.max(0, Math.min(100, Math.round((b - cfg.spent()) / b * 100))) : null; },
+    last() { try { return JSON.parse(LS.get(AIA, "null")) || null; } catch (e) { return null; } },
+    msg(s, p) { return s === "out" ? "⛔ نفد رصيد Alyssum API — تتوقف أدوات الذكاء حتى تجديد الرصيد" : "⚠️ رصيد Alyssum API على وشك النفاد" + (p != null ? " (متبقٍ نحو " + p + "٪)" : ""); },
+    note() {
+      const s = credit.state(), prev = (credit.last() || {}).state || "";
+      if (s === "ok") { if (prev) LS.set(AIA, "null"); return s; }
+      if (prev === s) return s;
+      LS.set(AIA, JSON.stringify({ state: s, at: Date.now() })); const p = credit.pct(), m = credit.msg(s, p);
+      toast(m); try { window.dispatchEvent(new CustomEvent("alyssum:ai-credit", { detail: { state: s, pct: p } })); } catch (e) { }
+      try { if (typeof Notification !== "undefined" && Notification.permission === "granted") new Notification("Alyssum API", { body: m }); } catch (e) { }
+      return s;
+    },
+    flagOut() { LS.set(AIOUT, "1"); credit.note(); },
+    renew() { LS.set(AIOUT, "0"); credit.note(); },
+  };
+  /* رفض الخدمة بسبب الرصيد/الحصة عند المزوّد (لا قيمة تُعرض): يعلَّم الرصيد منتهياً فيصل الإشعار */
+  /* يطلب إذن إشعارات المتصفح مرة بعد حفظ المفتاح كي يصل التنبيه حتى والتبويب في الخلفية */
+  const askNotify = () => { try { if (typeof Notification !== "undefined" && Notification.permission === "default") Notification.requestPermission(); } catch (e) { } };
+  const billingHit = (status, text) => status === 402 || ((status === 403 || status === 429) && /quota|exhaust|insufficient|balance|billing|credit|limit exceeded|locked/i.test(String(text || "")));
+  const useMsg = (title, detail) => title + " — سيستهلك من رصيد Alyssum API." + (detail ? "\n" + detail : "") + "\nمتابعة؟";
+  const lowMsg = "رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور";
   const LANGS = { ar: ["العربية", "Arabic (right-to-left, perfectly shaped connected letters)"], fr: ["الفرنسية", "French"], en: ["الإنجليزية", "English"] };
 
   /* ───────── التعليمات (instruction) لكل نوع ─────────
@@ -132,7 +159,7 @@ const ImgGen = (() => {
         const bin = atob(d.data), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         return { blob: new Blob([arr], { type: d.mimeType || d.mime_type || "image/png" }), model: m };
       }
-      const em = (j.error && j.error.message) || "", reason = ((((j.error || {}).details || [])[0]) || {}).reason; last = new Error(gerr(r.status, em, reason)); last.status = r.status;
+      const em = (j.error && j.error.message) || "", reason = ((((j.error || {}).details || [])[0]) || {}).reason; last = new Error(gerr(r.status, em, reason)); last.status = r.status; if (billingHit(r.status, em + " " + reason)) credit.flagOut();
       if (r.status === 404 || [500, 502, 503, 504].includes(r.status)) continue; throw last;
     }
     throw last || new Error("تعذّر توليد الصورة");
@@ -143,6 +170,7 @@ const ImgGen = (() => {
     if (/kontext/i.test(m)) { body.image_url = dataUrl; body.aspect_ratio = ar; delete body.num_images; }
     const r = await fetch("https://fal.run/" + m, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Key " + key }, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
+    if (!r.ok && billingHit(r.status, JSON.stringify(j))) credit.flagOut();
     if (!r.ok) { const d = j.detail; const e = new Error("Alyssum API (ب) " + r.status + ": " + (typeof d === "string" ? d : Array.isArray(d) && d[0] ? (d[0].msg || JSON.stringify(d[0])) : (j.message || "خطأ")) + (r.status === 401 || r.status === 403 ? " — تحقق من المفتاح" : "")); e.status = r.status; throw e; }
     const u = (((j.images || [])[0]) || j.image || {}).url; if (!u) throw new Error("لم يُرجع fal صورة — لم تُحتسب تكلفة غالباً.");
     const img = await fetch(u); if (!img.ok) throw new Error("تعذّر تنزيل الصورة الناتجة من fal");
@@ -160,8 +188,8 @@ const ImgGen = (() => {
   const coverOf = p => p && (p.cover || (p.images && p.images[0])) || "";
   function sizeOptions(sel) { return SIZES.map(g => `<optgroup label="${esc(g[0])}">${g[1].map(s => `<option value="${s[0]}"${s[0] === sel ? " selected" : ""}>${esc(s[1])}</option>`).join("")}</optgroup>`).join(""); }
   function costBar() {
-    const b = cfg.budget(), sp = cfg.spent(), left = Math.max(0, b - sp);
-    return `<div class="ig-cost"><span>المصروف: <b>${money(sp)}</b> (${cfg.count()} صورة)</span><span>حدّ الإنفاق: <b>${b ? money(b) : "بلا حدّ"}</b></span><span>المتبقي: <b>${b ? money(left) : "—"}</b></span></div>`;
+    const st = credit.state(), p = credit.pct(), lbl = st === "out" ? "نفد" : st === "low" ? "على وشك النفاد" : "كافٍ";
+    return `<div class="ig-cost"><span>رصيد Alyssum API: <b style="color:${st === "out" ? "#fca5a5" : st === "low" ? "#fcd34d" : "#86efac"}">${lbl}</b>${p != null ? ` (${p}٪)` : ""}</span><span>${cfg.count()} عملية</span></div>`;
   }
   function render() {
     const box = $("ig-body"); if (!box) return; const t = S.tab, m = S.mode;
@@ -212,8 +240,8 @@ const ImgGen = (() => {
 ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span><input id="ig-fkey" type="password" autocomplete="off" placeholder="key_id:key_secret" value="${esc(LS.get(FALKEY, ""))}" onchange="ImgGen.saveFalKey()"></div><div class="tl-r"><span>معرّف النموذج</span><input dir="ltr" value="${esc(cfg.falModel())}" placeholder="fal-ai/nano-banana/edit" onchange="ImgGen.set('falmodel',this.value.trim())"></div><div class="tl-r"><span>تكلفة الصورة التقريبية (دولار)</span><input type="number" step="0.005" min="0" value="${cfg.falPrice()}" onchange="ImgGen.set('falprice',this.value)"></div><div class="hint">احصل على المفتاح من لوحة مزوّد هذا المسار. النماذج المقترحة: <code>fal-ai/nano-banana/edit</code> (افتراضي) أو <code>fal-ai/flux-pro/kontext</code>. السعر يدوي لأن التسعير يختلف حسب النموذج؛ راجع الرصيد الفعلي في لوحة المزوّد. إن حجب المتصفح الطلب فأخبرنا لنضيف وسيطاً.</div>` : ""}</div></div>
 <div class="ap-sec"${fal ? ' style="display:none"' : ""}><b>مفتاح Alyssum API (المسار أ)</b><div class="hint">يُحفظ في هذا المتصفح فقط. احصل عليه من لوحة مزوّد الخدمة (مشروع جديد بلا قيود)، ونماذج الصور تتطلب تفعيل الفوترة بحدّ إنفاق صغير. المفتاح نفسه يعمل لتوليد النصوص في السوشيال.</div>
 <div class="tl-s"><input id="ig-key" type="password" autocomplete="off" placeholder="AIza…" value="${esc(LS.get(KEY, ""))}" onchange="ImgGen.saveKey()"><div class="action-bar"><button type="button" class="small" onclick="ImgGen.test()">اختبار المفتاح</button></div><div class="hint" id="ig-tmsg"></div></div></div>
-<div class="ap-sec"><b>التكلفة</b><div class="tl-s">
-<div class="tl-r"><span>حدّ الإنفاق (دولار) — يتوقف التوليد عند بلوغه (0 = بلا حدّ)</span><input type="number" step="0.5" min="0" value="${cfg.budget()}" onchange="ImgGen.set('budget',this.value)"></div>
+<div class="ap-sec"><b>رصيد الاستعمال</b><div class="tl-s">
+<div class="tl-r"><span>سقف الاستعمال — يتوقف التوليد عند بلوغه (0 = بلا حدّ)، وتصلك تنبيهات عند الاقتراب من النفاد وعند النفاد</span><input type="number" step="0.5" min="0" value="${cfg.budget()}" onchange="ImgGen.set('budget',this.value)"></div>
 <div class="tl-r"><span>النموذج</span><select onchange="ImgGen.set('model',this.value)"><option value="auto"${cfg.model() === "auto" ? " selected" : ""}>تلقائي — الأرخص أولاً (≈ $0.039 للصورة)</option>${PREF.map(m => `<option value="${m}"${cfg.model() === m ? " selected" : ""}>${MLBL[m] || m} (≈ ${money(priceOf(m))})</option>`).join("")}</select></div>
 <div class="tl-r"><span>صيغة الحفظ في المكتبة</span><select onchange="ImgGen.set('fmt',this.value)"><option value="webp"${cfg.fmt() === "webp" ? " selected" : ""}>WebP (أخف)</option><option value="png"${cfg.fmt() === "png" ? " selected" : ""}>PNG</option></select></div>
 <div class="action-bar"><button type="button" class="small gray" onclick="ImgGen.resetSpent()">تصفير عدّاد المصروف</button></div>
@@ -224,8 +252,8 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const u = URL.createObjectURL(S.srcBlob); p.innerHTML = `<img src="${u}" alt=""><small>${esc(S.srcName || "")}</small>`;
   }
   function paintEst() {
-    const el = $("ig-est"); if (!el) return; const m = cfg.model(), pr = cfg.provider() === "fal" ? cfg.falPrice() : m === "auto" ? PRICE[PREF[0]] : priceOf(m), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
-    el.textContent = "التكلفة التقريبية: " + money(pr) + " للصورة" + (isFinite(left) ? " · المتبقي من حدّك " + money(Math.max(0, left)) : "");
+    const el = $("ig-est"); if (!el) return; const st = credit.state(), p = credit.pct();
+    el.textContent = st === "out" ? "⛔ نفد رصيد Alyssum API" : st === "low" ? "⚠️ رصيد Alyssum API على وشك النفاد" + (p != null ? " (متبقٍ " + p + "٪)" : "") : "يستهلك من رصيد Alyssum API" + (p != null ? " · المتبقي " + p + "٪" : "");
   }
   async function loadFrom(slug) {
     const p = prods().find(x => x.slug === slug); S.prod = slug || null; if (!p) { S.srcBlob = null; render(); return; }
@@ -283,8 +311,8 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const txt = tmode !== "none" ? ($("ig-txt").value || "").trim() : ""; if (tmode !== "none" && !txt) { msg.textContent = "❌ اكتب النص المطلوب أو ألغِ خيارات الإضافة"; return; }
     readForm();
     const models = cfg.model(), est = fal ? cfg.falPrice() : models === "auto" ? PRICE[PREF[0]] : priceOf(models), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
-    if (cfg.budget() && left < est) { msg.textContent = "⛔ بلغتَ حدّ الإنفاق (" + money(cfg.budget()) + ") — ارفعه من الإعدادات أو صفّر العدّاد."; return; }
-    if (!confirm("توليد صورة واحدة بتكلفة تقريبية " + money(est) + "\nالمقاس: " + W + "×" + H + " — " + (S.mode === "product" ? "صورة منتج" : "صورة إشهارية") + "\nمتابعة؟")) return;
+    if (cfg.budget() && left < est) { msg.textContent = "⛔ " + lowMsg; credit.note(); return; }
+    if (!confirm(useMsg("توليد صورة واحدة", "المقاس: " + W + "×" + H + " — " + (S.mode === "product" ? "صورة منتج" : "صورة إشهارية")))) return;
     S.busy = true; $("ig-go").disabled = true; if ($("ig-go2")) $("ig-go2").disabled = true; msg.textContent = "⏳ جارِ التوليد (قد يستغرق 10–40 ثانية)…";
     try {
       if (bgMode === "transp") bgColor = await pickKey(S.srcBlob);
@@ -298,7 +326,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
         catch (e) { note = " — ⚠️ تعذّرت إزالة الخلفية تلقائياً (" + (e.message || e) + ") فاستعمل «نزع الخلفية» من الأدوات"; }
       }
       S.res = cv; S.lastModel = out.model; S.resName = (name || "image").slice(0, 40); S.meta = { W, H, id: fs.id, label: fs.label, bgMode, bgColor, textMode: tmode, text: txt, lang: $("ig-lang") ? $("ig-lang").value : "ar", name };
-      LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
+      LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
       showRes(cv, W, H); msg.textContent = "✅ تمّ بنموذج " + out.model + " — " + W + "×" + H + "px" + (bgMode !== "scene" ? " · PNG" : "") + note; const cb = document.querySelector(".ig-cost"); if (cb) cb.outerHTML = costBar(); paintEst();
       if (after === "editor") { S.busy = false; await ((S.mode === "ad" || (tmode === "builder" && txt)) ? openAd() : toEditor("current")); }
     } catch (e) { msg.textContent = "❌ " + e.message; } finally { S.busy = false; ["ig-go", "ig-go2"].forEach(i => { const g = $(i); if (g) g.disabled = false; }); }
@@ -316,12 +344,12 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
     if (!o || !o.blob) throw new Error("اختر صورة المنتج المرجعية أولاً");
     const est = fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
-    if (cfg.budget() && left < est) throw new Error("بلغتَ حدّ الإنفاق (" + money(cfg.budget()) + ") — ارفعه من إعدادات مولّد الصور");
-    if (o.confirm !== false && !confirm("توليد صورة واحدة بتكلفة تقريبية " + money(est) + "\nالمقاس: " + o.W + "×" + o.H + "\nمتابعة؟")) return null;
+    if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
+    if (o.confirm !== false && !confirm(useMsg("توليد صورة واحدة", "المقاس: " + o.W + "×" + o.H))) return null;
     const ar = nearAr(o.W, o.H), prompt = buildPrompt({ mode: "ad", name: o.name || "", desc: o.desc || "", goal: o.goal || "", text: "", textMode: "none", lang: "ar", w: o.W, h: o.H, ar, platform: o.label || "" });
     const small = await shrink(o.blob, 1400), d = await b64(small);
     const out = fal ? await callFal(key, prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, [{ text: prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }], ar);
-    const cv = await fit(out.blob, o.W, o.H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
+    const cv = await fit(out.blob, o.W, o.H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob: await blobOf(cv, "webp"), model: out.model, cost: est };
   }
   /* هل الخدمة الذكية جاهزة؟ يستعملها محرّر الصور لإظهار الحالة بلا استدعاء: {ok, off, nokey} */
@@ -332,7 +360,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
   /* تعديل صورة بتعليمات حرّة (توسيع الخلفية، تعديل بالوصف…) بنفس خدمة التوليد وضوابط التكلفة: o = {blob, prompt, W, H, confirm, extra: [blob…]} ← {blob, model, cost} أو null إن ألغى المستخدم.
      المقاس الناتج W×H (قصّ cover)؛ يرمي بالرمز OFF/NOKEY كما quick. */
   /* تقدير تكلفة طلب واحد والمتبقي من الحدّ (لأدوات تُرسل أكثر من طلب بموافقة واحدة) */
-  function estimate() { const fal = cfg.provider() === "fal"; return { cost: fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left: cfg.budget() ? cfg.budget() - cfg.spent() : Infinity, fmt: money }; }
+  function estimate() { const fal = cfg.provider() === "fal"; return { cost: fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left: cfg.budget() ? cfg.budget() - cfg.spent() : Infinity, fmt: () => "", can: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * unitCost() }; }
   async function edit(o) {
     const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
     if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
@@ -340,12 +368,12 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     if (!o || (!o.blob && !o.textOnly) || !o.prompt) throw new Error("الصورة والتعليمات مطلوبتان");
     if (o.textOnly && fal) throw new Error("التوليد من وصف نصي فقط متاح مع الاتصال الأول (أ) — بدّل الاتصال من إعدادات مولّد الصور");
     const W = Math.max(64, Math.round(o.W)), H = Math.max(64, Math.round(o.H)), est = fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
-    if (cfg.budget() && left < est) throw new Error("بلغتَ حدّ الإنفاق (" + money(est) + " مطلوب) — ارفعه من إعدادات مولّد الصور");
-    if (o.confirm !== false && !confirm((o.title || "تعديل ذكي للصورة") + " بتكلفة تقريبية " + money(est) + "\nالمقاس الناتج: " + W + "×" + H + "\nمتابعة؟")) return null;
+    if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
+    if (o.confirm !== false && !confirm(useMsg(o.title || "تعديل ذكي للصورة", "المقاس الناتج: " + W + "×" + H))) return null;
     const ar = nearAr(W, H), small = o.blob ? await shrink(o.blob, 1600) : null, d = small ? await b64(small) : "", parts = o.blob ? [{ text: o.prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }] : [{ text: o.prompt }];
     for (const x of (o.extra || []).slice(0, 2)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(x, 1200)) } });
     const out = fal ? await callFal(key, o.prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, parts, ar);
-    const cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1));
+    const cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob: await blobOf(cv, o.fmt === "png" ? "png" : "webp"), canvas: cv, model: out.model, cost: est };
   }
   /* ───────── توليد فيديو بالذكاء من صورة (1–4) ووصف أو قالب — عبر خدمة فيديو خارجية بمفتاح الاتصال الثاني (fal) ─────────
@@ -355,6 +383,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
   const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = (LS.get(FALKEY, "") || "").trim(); return { ok: !!key && !off, off, nokey: !key, price: vcfg.price(), model: vcfg.model() }; };
   function videoBody(o, urls) {
     const body = { prompt: String(o.prompt || "").trim(), aspect_ratio: o.ratio || "9:16", duration: String(o.dur || vcfg.dur()) };
+    if (o.audio) { body.generate_audio = true; if (o.script) body.audio_script = String(o.script).slice(0, 1500); if (o.lang) body.audio_language = o.lang; if (o.voice) body.voice = o.voice; if (o.seed) body.seed = o.seed; }
     if (urls.length === 1) body.image_url = urls[0]; else if (urls.length > 1) { body.image_url = urls[0]; body.image_urls = urls; }
     return body;
   }
@@ -365,12 +394,13 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     if (!o || !o.prompt || !String(o.prompt).trim()) throw new Error("اكتب وصف الفيديو أو اختر قالباً");
     const imgs = (o.images || []).filter(Boolean).slice(0, 4); if (!imgs.length) throw new Error("حدّد صورة منتج واحدة على الأقل");
     const est = vcfg.price(), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
-    if (cfg.budget() && left < est) throw new Error("بلغتَ حدّ الإنفاق (" + money(est) + " مطلوب) — ارفعه من إعدادات مولّد الصور");
-    if (o.confirm !== false && !confirm((o.title || "توليد فيديو بالذكاء") + " بتكلفة تقريبية " + money(est) + "\nالنسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق. متابعة؟")) return null;
+    if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
+    if (o.confirm !== false && !confirm(useMsg(o.title || "توليد فيديو بالذكاء", "النسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق."))) return null;
     const key = LS.get(FALKEY, "").trim(), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
     const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
     say("إرسال الطلب إلى خدمة الفيديو…");
     const r = await fetch("https://queue.fal.run/" + m, { method: "POST", headers: H, body: JSON.stringify(videoBody(o, urls)) }), j = await r.json().catch(() => ({}));
+    if (!r.ok && billingHit(r.status, JSON.stringify(j))) credit.flagOut();
     if (!r.ok) { const d = j.detail; throw new Error("Alyssum API (فيديو) " + r.status + ": " + (typeof d === "string" ? d : Array.isArray(d) && d[0] ? (d[0].msg || JSON.stringify(d[0])) : (j.message || "خطأ")) + (r.status === 401 || r.status === 403 ? " — تحقق من المفتاح" : "")); }
     const sUrl = j.status_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id + "/status"), rUrl = j.response_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id);
     if (!j.request_id && !j.status_url && !j.video) throw new Error("لم تُرجع الخدمة رقم طلب — لم تُحتسب تكلفة غالباً.");
@@ -386,8 +416,30 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     }
     const u = ((res.video || (res.data && res.data.video) || {}).url); if (!u) throw new Error("لم تُرجع الخدمة فيديو — لم تُحتسب تكلفة غالباً.");
     const vr = await fetch(u); if (!vr.ok) throw new Error("تعذّر تنزيل الفيديو الناتج"); const blob = await vr.blob();
-    LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1));
+    LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob, type: blob.type || "video/mp4", cost: est, model: "fal:" + m };
+  }
+  /* نص/رؤية بالذكاء (Alyssum API): تعليمات نصية + صور اختيارية ← نص (أو JSON مُحلَّل عند o.json). يُحتسب في الرصيد بوحدة صغيرة وتسري عليه تنبيهات الرصيد. o = {prompt, blobs:[], json:boolean} */
+  const TEXT_UNIT = 0.003;
+  async function text(o) {
+    if (LS.get("alyssum_ai_text", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
+    const key = (LS.get(KEY, "") || "").trim(); if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
+    if (!o || !String(o.prompt || "").trim()) throw new Error("التعليمات مطلوبة");
+    if (cfg.budget() && cfg.budget() - cfg.spent() < TEXT_UNIT) { credit.note(); throw new Error(lowMsg); }
+    const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, 1024)) } });
+    let last = null;
+    for (const m of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: 3072 }, o.json ? { responseMimeType: "application/json" } : {}) }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) {
+        const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x => x.text || "").join("").trim(); if (!t) { last = new Error("ردّ فارغ"); continue; }
+        LS.set("alyssum_ig_spent", String(cfg.spent() + TEXT_UNIT)); LS.set(AIOUT, "0"); credit.note();
+        if (!o.json) return t.replace(/^```[a-z]*\n?|```$/g, "").trim();
+        try { return JSON.parse(t.replace(/^```[a-z]*\n?|```$/g, "").trim()); } catch (e) { last = new Error("ناتج غير صالح"); continue; }
+      }
+      const em = (j.error && j.error.message) || ""; if (billingHit(r.status, em)) credit.flagOut(); last = new Error("Alyssum API (نص) " + r.status + (em ? ": " + em.slice(0, 120) : "")); if (![404, 500, 502, 503, 504].includes(r.status)) break;
+    }
+    throw last || new Error("تعذّر الحصول على ردّ");
   }
   async function toLibrary(quiet) {
     if (!S.res) return null; const blob = await blobOf(S.res, fmtNow());
@@ -574,10 +626,10 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     cus() { LS.set("alyssum_ig_w", $("ig-w").value); LS.set("alyssum_ig_h", $("ig-h").value); api.size("custom"); },
     txtm(v) { LS.set("alyssum_ig_txtm", v); $("ig-txtbox").style.display = v === "none" ? "none" : "block"; }, tog, txtEdited() { S.txtDirty = true; },
     bgm(v) { LS.set("alyssum_ig_bgm", v); const b = $("ig-bgcbox"); if (b) b.style.display = v === "solid" ? "flex" : "none"; }, bgc(v) { LS.set("alyssum_ig_bgc", v); }, lang(v) { LS.set("alyssum_ig_lang", v); },
-    saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) LS.set(FALKEY, k.trim()); toast("حُفظ المفتاح في هذا المتصفح"); },
-    saveKey() { const k = getKey(); if (k) LS.set(KEY, k); toast("حُفظ المفتاح في هذا المتصفح"); }, test,
-    set(k, v) { LS.set("alyssum_ig_" + k, String(v)); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) { LS.set(FALKEY, k.trim()); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
+    saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
+    set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, credit, text, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

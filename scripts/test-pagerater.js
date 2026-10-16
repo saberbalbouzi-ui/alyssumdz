@@ -25,6 +25,15 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("fromHtml: العنوان من h1 منظّفاً", h.title === "حقيبة جلد فاخرة", h.title);
   ok("fromHtml: يستبعد الشعار والصور الصغيرة وdata ويقرأ og وlazy وsrcset", JSON.stringify(h.urls.sort()) === JSON.stringify(["https://shop.test/a.jpg", "https://shop.test/b.webp", "https://shop.test/c-2.jpg", "https://shop.test/og.jpg"]), h.urls);
   ok("fromHtml: كشف الفيديو ونص الصفحة بلا سكربت", h.video && h.has);
+  /* درجة الإدراج + تصدير Shopify */
+  const ls = await T(() => { const full = { slug: "a", title: "عسل", cover: "assets/honey-sidr-500g.webp", images: ["assets/honey-1.webp", "assets/honey-2.webp", "assets/honey-3.webp", "assets/honey-4.webp"], desc: "عسل سدر طبيعي مكوّنات 100% عسل. حجم العبوة 500 غرام. طريقة الاستعمال ملعقة صباحاً. ".repeat(4), seoTitle: "عسل سدر جبلي طبيعي أصلي", seoDesc: "عسل سدر طبيعي أصلي من جبال الجزائر بجودة عالية وتوصيل لكل الولايات وعبوات مختلفة", keywords: "عسل, سدر, طبيعي", cat: "honey", price: 3000, old: 3500, video: "v.mp4" }; const weak = { slug: "b", title: "x", cover: "assets/1790674002315.webp", images: [], desc: "قصير", price: 100 }; return { f: PageRater.listing(full), w: PageRater.listing(weak), all: PageRater.listingAll([full, weak, { slug: "c", active: false }]).map(x => x.slug) }; });
+  ok("درجة الإدراج: منتج مكتمل = 100", ls.f.score === 100 && ls.f.todo.length === 0, [ls.f.score, ls.f.todo.map(x => x.id)]);
+  ok("درجة الإدراج: منتج ضعيف منخفض مع التالي الأهم (الوصف/الصور)", ls.w.score < 35 && ["imgs", "desc"].includes(ls.w.todo[0].id) && ls.w.todo.some(x => x.id === "names"), [ls.w.score, ls.w.todo.map(x => x.id)]);
+  ok("الترتيب: الأضعف أولاً ويتجاهل غير النشط", ls.all.join() === "b,a", ls.all);
+  const cs = await T(() => PageRater.shopifyCsv([{ slug: "honey", title: 'عسل "سدر"', desc: "وصف\nسطرين <b>", cat: "honey", tags: ["best", "sale"], price: 3000, old: 3500, stock: 5, cover: "assets/c.webp", images: ["assets/c.webp", "assets/d.webp", "https://cdn.x/e.png"] }, { slug: "off", title: "x", active: false }], "https://shop.example/"));
+  const lines = cs.replace(/^\uFEFF/, "").split("\r\n");
+  ok("CSV Shopify: ترويسة ومنتج نشط فقط وبصيغة ملفات متتالية للصور", lines.length === 4 && /^"Handle","Title"/.test(lines[0]) && lines[1].startsWith('"honey","عسل ""سدر"""') && /"https:\/\/shop\.example\/assets\/c\.webp","1","active"$/.test(lines[1]) && /,"https:\/\/shop\.example\/assets\/d\.webp","2",""$/.test(lines[2]) && /"https:\/\/cdn\.x\/e\.png","3",""$/.test(lines[3]), lines.slice(1));
+  ok("CSV Shopify: لا أسطر داخل الحقول ولا HTML خام", !/<b>/.test(cs) && lines[1].includes("&lt;b>") && cs.startsWith("\uFEFF"));
   /* واجهة: منتج من المتجر بصور data URI حقيقية */
   const ui = await T(async () => {
     const mk = (c, a) => { const cv = document.createElement("canvas"); cv.width = 900; cv.height = 900; const g = cv.getContext("2d"); if (c) { g.fillStyle = c; g.fillRect(0, 0, 900, 900); } return cv.toDataURL("image/png"); };

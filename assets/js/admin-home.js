@@ -137,6 +137,7 @@ const AdminHome = (() => {
     let ag = null; try { if (typeof AdminAgency !== "undefined") { ag = AdminAgency.alerts(); AdminAgency.warm(); } } catch (e) { }
     let dg = null; try { if (typeof AdminDigital !== "undefined") { dg = AdminDigital.alerts(); AdminDigital.warm(); } } catch (e) { }
     let mk = null; try { if (typeof AdminMarketplace !== "undefined") { mk = AdminMarketplace.alerts(); AdminMarketplace.warm(); } } catch (e) { }
+    let aic = null; try { if (typeof ImgGen !== "undefined" && ImgGen.credit) { const st = ImgGen.credit.state(); if (st !== "ok") aic = { st, p: ImgGen.credit.pct() }; } } catch (e) { }
     let adLow = []; try { adLow = a.adStockAlerts ? a.adStockAlerts(5) : []; } catch (e) { }
     let dgHint = 0; try { if (typeof AdminKind !== "undefined" && AdminKind.kind() === "physical" && typeof AdminStores !== "undefined" && AdminStores.kind() !== "digital") dgHint = (a.products || []).filter(p => p && p.digital && p.active !== false).length; } catch (e) { }
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
@@ -167,6 +168,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <button type="button" class="${mg.length ? "w" : "ok"}" data-go="merge"><b>${num(mg.length)}</b><span>طلب مرتبط (عرض بعد الشراء) ينتظر الدمج</span></button>
 ${ag ? `<button type="button" class="${ag.ready ? "w" : "ok"}" data-go="agency"><b>${num(ag.ready)}</b><span>حساب إعلاني جاهز — استلم رابط الدعوة</span></button>
 <button type="button" class="${ag.late ? "w" : "ok"}" data-go="agency"><b>${num(ag.late)}</b><span>طلب خدمة تسويق تأخر عن مهلة التسليم</span></button>` : ""}
+${aic ? `<button type="button" class="w" data-go="aicredit"><b>${aic.st === "out" ? "نفد" : "قارب"}</b><span>${aic.st === "out" ? "رصيد Alyssum API نفد — تتوقف أدوات الذكاء حتى تجديده" : "رصيد Alyssum API على وشك النفاد" + (aic.p != null ? " (متبقٍ " + aic.p + "٪)" : "")}</span></button>` : ""}
 ${dgHint ? `<button type="button" class="w" data-go="kinddg"><b>${num(dgHint)}</b><span>منتج رقمي في متجر مادي — أنشئ متجراً رقمياً (بلا توصيل) لها</span></button>` : ""}
 ${dg ? `<button type="button" class="${dg.proofs ? "w" : "ok"}" data-go="digital"><b>${num(dg.proofs)}</b><span>إثبات دفع رقمي ينتظر موافقتك</span></button>
 <button type="button" class="${dg.low + dg.out + dg.short ? "w" : "ok"}" data-go="digital" title="${(dg.lowSkus || []).join(" | ").replace(/"/g, "")}"><b>${num(dg.low + dg.out + dg.short)}</b><span>منتج رقمي مخزون مفاتيحه ${dg.out ? "نفد" : "منخفض"}${dg.short ? " (وطلبات تنتظر مفاتيح)" : ""}</span></button>` : ""}
@@ -205,6 +207,7 @@ ${mk && (mk.to_ship || mk.rej) ? `<button type="button" class="w" data-go="marke
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
     if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }
+    if (w === "aicredit") { try { a.tab("imggen"); if (typeof ImgGen !== "undefined" && ImgGen.tab) ImgGen.tab("set"); } catch (e) { } return; }
     if (w === "kinddg") { try { AdminStores.newKind("digital"); } catch (e) { } return; }
     if (w === "ads") { a.tab("finance", btn("finance")); try { a.finView("prod"); const x = a.adStockAlerts(5)[0]; if (x) a.finOpen(x.c.slug, 2); } catch (e) { } return; }
     const b = btn(w); if (b) a.tab(w, b);
@@ -223,6 +226,7 @@ ${mk && (mk.to_ship || mk.rej) ? `<button type="button" class="w" data-go="marke
     const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); return r; };
     if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); } }
   }
+  window.addEventListener("alyssum:ai-credit", () => refreshSoft());
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   return { render, open, S, refreshSoft, realSt };
 })();

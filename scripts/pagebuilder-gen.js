@@ -236,7 +236,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   function gemTrack(j, model) {
     const u = (j && j.usageMetadata) || {}, tk = Number(u.promptTokenCount) || 0; _usage.tokens += tk; _usage.calls++; const pr = GEM_PRICE[model]; if (pr) _usage.cost += tk / 1e6 * pr; showCost();
   }
-  function showCost() { const el = typeof document !== "undefined" && document.getElementById("gen-cost"); if (el) el.textContent = _usage.calls ? "استهلاك Alyssum API: " + _usage.calls + " طلب · " + _usage.tokens.toLocaleString("en") + " رمز إدخال · ≈ $" + _usage.cost.toFixed(4) + " (مدخلات)" : ""; }
+  function showCost() { const el = typeof document !== "undefined" && document.getElementById("gen-cost"); if (el) el.textContent = _usage.calls ? "استعمال Alyssum API: " + _usage.calls + " طلب" : ""; }
   /* اختبار المفتاح: يعرض النماذج المتاحة ويجرّب طلباً صغيراً ويفسّر الخطأ */
   async function testKey() {
     const msg = $("gen-automsg"), key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();

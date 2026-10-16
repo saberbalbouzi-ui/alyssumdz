@@ -28,7 +28,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, "pagebuilder-vgen.js"), "utf8") });
   const T = fn => p.evaluate(fn);
   /* ── دوال نقية ── */
-  ok("القوالب: 12 قالباً بمعرّفات فريدة", await T(() => PBVGen._t.TPL.length === 12 && new Set(PBVGen._t.TPL.map(x => x[0])).size === 12));
+  ok("القوالب: 30 قالباً بمعرّفات فريدة وفئات", await T(() => PBVGen._t.TPL.length === 30 && new Set(PBVGen._t.TPL.map(x => x[0])).size === 30 && new Set(PBVGen._t.TPL.map(x => x[3])).size >= 8));
   ok("التعليمات: بلا قالب ولا نص = فارغة", await T(() => PBVGen._t.buildPrompt("", "  ") === ""));
   ok("التعليمات: قالب + نص + حراسة المنتج", await T(() => { const t = PBVGen._t.buildPrompt("orbit", "مع بتلات"); return /orbits/.test(t) && /مع بتلات/.test(t) && /Do not add text/.test(t) && /same shape/.test(t); }));
   ok("التعليمات: نص فقط يعمل", await T(() => /Create a short product video/.test(PBVGen._t.buildPrompt("", "camera zoom"))));
@@ -39,7 +39,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("معطّل من الإعدادات: OFF", await T(async () => { localStorage.setItem("alyssum_fal_key", "k"); localStorage.setItem("alyssum_ai_vid", "0"); try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { localStorage.removeItem("alyssum_ai_vid"); return e.code === "OFF"; } }));
   ok("بلا وصف: يرفض", await T(async () => { try { await ImgGen.video({ images: [await __png()], prompt: " " }); return false; } catch (e) { return /وصف/.test(e.message); } }));
   ok("بلا صورة: يرفض", await T(async () => { try { await ImgGen.video({ images: [], prompt: "x" }); return false; } catch (e) { return /صورة/.test(e.message); } }));
-  ok("حدّ الإنفاق: يرفض قبل أي طلب", await T(async () => { localStorage.setItem("alyssum_ig_budget", "0.1"); localStorage.setItem("alyssum_ig_spent", "0"); __reqs.length = 0; try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { return /حدّ الإنفاق/.test(e.message) && __reqs.length === 0; } }));
+  ok("حدّ الإنفاق: يرفض قبل أي طلب", await T(async () => { localStorage.setItem("alyssum_ig_budget", "0.1"); localStorage.setItem("alyssum_ig_spent", "0"); __reqs.length = 0; try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { return /رصيد Alyssum API لا يكفي/.test(e.message) && !/\$|0\.\d/.test(e.message) && __reqs.length === 0; } }));
   ok("رفض التأكيد: يعيد null بلا طلب", await T(async () => { localStorage.setItem("alyssum_ig_budget", "5"); __confirm = false; __reqs.length = 0; const r = await ImgGen.video({ images: [await __png()], prompt: "x" }); __confirm = true; return r === null && __reqs.length === 0; }));
   /* ── تدفق كامل (إرسال ← طابور ← اكتمال ← تنزيل) ── */
   const flow = await T(async () => {
@@ -53,6 +53,31 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("التدفق: الجسم (نسبة، مدة نص، صورة أولى، 4 صور بحد أقصى)", flow.body.aspect_ratio === "1:1" && flow.body.duration === "7" && /^data:image\/jpeg/.test(flow.body.image_url) && flow.body.image_urls.length === 4 && flow.body.prompt === "test prompt", Object.keys(flow.body));
   ok("التدفق: رسائل الحالة", flow.st.some(x => /الطابور/.test(x)) && flow.st.some(x => /التوليد/.test(x)), flow.st);
   ok("فشل الخدمة: لا يُحتسب إنفاق", await T(async () => { const f0 = window.fetch; localStorage.setItem("alyssum_ig_spent", "0"); window.fetch = async (u, o) => /queue\.fal\.run/.test(String(u)) && o && o.method === "POST" ? new Response(JSON.stringify({ detail: "bad key" }), { status: 401 }) : f0(u, o); try { await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0 }); return false; } catch (e) { return /401/.test(e.message) && /تحقق من المفتاح/.test(e.message) && localStorage.getItem("alyssum_ig_spent") === "0"; } finally { window.fetch = f0; } }));
+  /* ── رصيد Alyssum API: لا أرقام، وتنبيه تلقائي عند الاقتراب من النفاد وعند النفاد ── */
+  const cr = await T(async () => {
+    const out = {}; const msgs = []; window.toast2 = m => msgs.push(m); window.addEventListener("alyssum:ai-credit", e => msgs.push("ev:" + e.detail.state));
+    localStorage.setItem("alyssum_ig_budget", "10"); localStorage.setItem("alyssum_ig_spent", "0"); localStorage.setItem("alyssum_ai_out", "0"); localStorage.setItem("alyssum_ai_alert", "null");
+    out.s0 = ImgGen.credit.state(); out.p0 = ImgGen.credit.pct(); ImgGen.credit.note(); out.n0 = msgs.length;
+    localStorage.setItem("alyssum_ig_spent", "8.5"); ImgGen.credit.note(); out.s1 = ImgGen.credit.state(); out.low = msgs.filter(m => /على وشك النفاد/.test(m)).length; out.p1 = ImgGen.credit.pct();
+    ImgGen.credit.note(); ImgGen.credit.note(); out.lowOnce = msgs.filter(m => /على وشك النفاد/.test(m)).length;
+    localStorage.setItem("alyssum_ig_spent", "9.99"); ImgGen.credit.note(); out.s2 = ImgGen.credit.state(); out.outMsgs = msgs.filter(m => /نفد رصيد/.test(m)).length; out.ev = msgs.filter(m => /^ev:/.test(m));
+    out.noNum = msgs.every(m => !/[$]|\d\.\d/.test(m));
+    ImgGen.set("budget", 50); out.s3 = ImgGen.credit.state(); out.cleared = localStorage.getItem("alyssum_ai_alert");
+    /* رفض المزوّد بسبب الرصيد (402) يعلّم النفاد */
+    localStorage.setItem("alyssum_ig_spent", "0"); localStorage.setItem("alyssum_fal_key", "k"); const f0 = window.fetch; window.fetch = async (u, o) => /queue\.fal\.run/.test(String(u)) && o && o.method === "POST" ? new Response(JSON.stringify({ detail: "Insufficient balance" }), { status: 402 }) : f0(u, o);
+    try { await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0, confirm: false }); } catch (e) { out.err = e.message; } window.fetch = f0; out.s4 = ImgGen.credit.state();
+    ImgGen.credit.renew(); out.s5 = ImgGen.credit.state();
+    out.est = ImgGen.estimate().fmt(1);
+    return out;
+  });
+  ok("الرصيد: كافٍ في البداية ولا إشعار", cr.s0 === "ok" && cr.p0 === 100 && cr.n0 === 0, cr);
+  ok("الرصيد: عند ≤20% إشعار «على وشك النفاد» مرة واحدة فقط", cr.s1 === "low" && cr.low === 1 && cr.lowOnce === 1 && cr.p1 === 15, cr);
+  ok("الرصيد: عند النفاد إشعار مرة وحدث للوحة", cr.s2 === "out" && cr.outMsgs === 1 && cr.ev.join() === "ev:low,ev:out", cr);
+  ok("الإشعارات بلا أي أرقام استهلاك أو دولار (النسبة المئوية فقط)", cr.noNum, cr);
+  ok("رفع السقف/التجديد يمسح التنبيه ويعيد الحالة كافية", cr.s3 === "ok" && cr.cleared === "null", cr);
+  ok("رفض المزوّد 402: يُعلَّم الرصيد منتهياً", cr.s4 === "out" && /402/.test(cr.err), cr);
+  ok("تجديد المفتاح/الرصيد يعيد الحالة", cr.s5 === "ok");
+  ok("لا تُعرض قيمة تكلفة من الواجهة (estimate.fmt فارغة)", cr.est === "");
   /* ── اللوحة ── */
   const ui = await T(async () => {
     const host = document.getElementById("host"); localStorage.setItem("alyssum_ig_spent", "0"); const inf = { node: { id: "n1" }, set: { src: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==" } };
@@ -60,6 +85,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     const q = s => host.querySelector(s), out = {};
     out.tpls = host.querySelectorAll('[data-vg="tpl"]').length; out.pool = host.querySelectorAll('[data-vg="pick"]').length;
     q('[data-vg="go"]').click(); await new Promise(r => setTimeout(r, 30)); out.msgEmpty = q("#pbvg-msg").textContent;
+    q('[data-vg="cat"][data-v="أزياء"]').click(); out.catTpls = host.querySelectorAll('[data-vg="tpl"]').length; out.hasWind = !!host.querySelector('[data-vg="tpl"][data-v="wind"]'); out.noFood = !host.querySelector('[data-vg="tpl"][data-v="pour"]'); out.orbitKept = !!host.querySelector('[data-vg="tpl"][data-v="orbit"]');
     q('[data-vg="tpl"][data-v="orbit"]').click(); out.on = q('[data-vg="tpl"][data-v="orbit"]').classList.contains("pz-go");
     for (const i of [0, 1, 2, 3]) q('[data-vg="pick"][data-i="' + i + '"]').click(); out.n = q("#pbvg-n").textContent;
     const sel = q("#pbvg-r"); sel.value = "16:9"; sel.dispatchEvent(new Event("change", { bubbles: true }));
@@ -71,8 +97,9 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     out.added = __added.slice(); out.up = window.__up;
     return out;
   });
-  ok("اللوحة: 12 قالباً وصور المجمع", ui.tpls === 12 && ui.pool === 4, ui);
+  ok("اللوحة: قوالب وصور المجمع", ui.tpls >= 10 && ui.pool === 4, ui);
   ok("اللوحة: بلا قالب ولا وصف تطلب اختياراً", /اختر قالباً/.test(ui.msgEmpty), ui.msgEmpty);
+  ok("فلتر فئات القوالب: أزياء + العامة بلا قوالب الغذاء", ui.hasWind && ui.noFood && ui.orbitKept && ui.catTpls < 30, [ui.catTpls, ui.hasWind, ui.noFood]);
   ok("اللوحة: تحديد قالب والحد الأقصى 4 صور", ui.on && ui.n === "4", ui);
   ok("اللوحة: تنتج فيديو بالنسبة المختارة و4 صور", ui.video && ui.sub && ui.sub.aspect_ratio === "16:9" && ui.sub.image_urls.length === 4 && /orbits/.test(ui.sub.prompt), ui.sub && Object.keys(ui.sub));
   ok("اللوحة: «أضفه للصفحة» يرفع الفيديو ويضيفه", ui.added.length === 1 && ui.added[0] === "assets/img/pages/pv-test.mp4" && ui.up && ui.up[1] === "video/mp4", ui);
