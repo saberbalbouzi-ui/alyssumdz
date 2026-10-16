@@ -120,7 +120,8 @@
     "txt2img",
     "pshoot"
    ],
-   "needsText": "تحتاج مفتاح Alyssum API (تُحسب التكلفة وتُطلب موافقتك قبل كل تنفيذ)"
+   "needsText": "تحتاج مفتاح Alyssum API (تُحسب التكلفة وتُطلب موافقتك قبل كل تنفيذ)",
+   "landing": "landing/image-generator/"
   },
   {
    "id": "pshoot",
@@ -144,7 +145,8 @@
     "sl",
     "batch"
    ],
-   "needsText": "تحتاج مفتاح Alyssum API (تُحسب التكلفة وتُطلب موافقتك قبل كل تنفيذ)"
+   "needsText": "تحتاج مفتاح Alyssum API (تُحسب التكلفة وتُطلب موافقتك قبل كل تنفيذ)",
+   "landing": "landing/product-photography/"
   },
   {
    "id": "fashion",
@@ -168,7 +170,8 @@
     "tryon",
     "recolor"
    ],
-   "needsText": "تحتاج مفتاح Alyssum API (تُحسب التكلفة وتُطلب موافقتك قبل كل تنفيذ)"
+   "needsText": "تحتاج مفتاح Alyssum API (تُحسب التكلفة وتُطلب موافقتك قبل كل تنفيذ)",
+   "landing": "landing/virtual-model/"
   },
   {
    "id": "tryon",
