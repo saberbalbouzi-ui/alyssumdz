@@ -64,9 +64,9 @@ const PBCollage = (() => {
 const PBFrame = (() => {
   const A = () => PBApp, $ = id => document.getElementById(id);
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
-  const LSK = "pbx_brand_logo";
+  const LSK = "alyssum_brand_logo";      // يتزامن مع حسابك عبر PrivSync (s_brand_logo)
   const S = { id: "", base: null, o: { border: 0, bcolor: "#ffffff", radius: 0, pad: 0, bg: "#ffffff", card: false, shadow: 0, logo: false, lpos: "br", lsize: 16, lop: 90 }, logo: null, msg: "", busy: false };
-  try { const d = localStorage.getItem(LSK); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  try { let d = localStorage.getItem(LSK); if (!d) { d = localStorage.getItem("pbx_brand_logo"); if (d) localStorage.setItem(LSK, d); } if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
   /* نقية: إطار (هامش بخلفية + حدّ + زوايا مدوّرة + ظل بطاقة) وختم شعار؛ تُرجع قماشاً جديداً أكبر قليلاً عند وجود هامش/ظل */
   function frame(src, o, logo) {
     const w = src.width, h = src.height, m = Math.min(w, h), pad = Math.round(m * (o.pad || 0) / 100), bw = Math.round(m * (o.border || 0) / 100), sh = Math.round(m * (o.shadow || 0) / 100), rad = Math.round(m * (o.radius || 0) / 100), ext = sh * 2 + (sh ? Math.round(sh * .3) : 0);
@@ -233,13 +233,13 @@ const PBBrand = (() => {
   const A = () => PBApp, $ = id => document.getElementById(id);
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const LSK = "pbx_brand_kit", LSL = "pbx_brand_logo";
+  const LSK = "alyssum_brand_kit", LSL = "alyssum_brand_logo";      // تتزامن بين أجهزتك عبر PrivSync (s_brand_kit / s_brand_logo)
   const SLOTS = ["الأساسي", "الثانوي", "الخلفية", "النص", "التمييز"];
   const DEF = { colors: ["#173f35", "#c8a24b", "#fbf8f2", "#1c2420", "#d64545"], font: "Cairo", name: "" };
   const S = { id: "", base: null, kit: null, logo: null, msg: "", busy: false, site: false, o: { border: 0, bcol: 1, pad: 0, bgc: 2, radius: 0, logo: false, lpos: "br", lsize: 16, lop: 90, txt: false, tpos: "bc", tsize: 6, tcol: 2, band: true } };
-  const load = () => { if (S.kit) return S.kit; let k = null; try { k = JSON.parse(localStorage.getItem(LSK) || "null"); } catch (e) { } S.kit = Object.assign({}, DEF, k && typeof k === "object" ? k : {}); if (!Array.isArray(S.kit.colors) || S.kit.colors.length < 5) S.kit.colors = DEF.colors.slice(); return S.kit; };
+  const load = () => { if (S.kit) return S.kit; let k = null; try { const raw = localStorage.getItem(LSK) || localStorage.getItem("pbx_brand_kit"); k = JSON.parse(raw || "null"); } catch (e) { } S.kit = Object.assign({}, DEF, k && typeof k === "object" ? k : {}); if (!Array.isArray(S.kit.colors) || S.kit.colors.length < 5) S.kit.colors = DEF.colors.slice(); return S.kit; };
   const save = () => { try { localStorage.setItem(LSK, JSON.stringify(S.kit)); } catch (e) { } };
-  try { const d = localStorage.getItem(LSL); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  try { const d = localStorage.getItem(LSL) || localStorage.getItem("pbx_brand_logo"); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
   const hex = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : "#000000";
   const FONTS = () => (typeof PB !== "undefined" && PB.FONT_FAMS ? PB.FONT_FAMS.filter(x => !x[3]) : []).map(([n, w, l]) => [n, l === n ? n : l + " (" + n + ")"]);
   async function loadFont(name) {
@@ -301,7 +301,7 @@ const PBBrand = (() => {
   }
   async function mount(host, inf) {
     load(); const id = inf.node.id;
-    if (!S.site && !localStorage.getItem(LSK)) { S.site = true; if (await fromSite()) { host.innerHTML = panel(); } }
+    if (!S.site && !localStorage.getItem(LSK) && !localStorage.getItem("pbx_brand_kit")) { S.site = true; if (await fromSite()) { host.innerHTML = panel(); } }
     if (S.id !== id || !S.base) { S.id = id; try { S.base = await loadImg(inf.set.src); } catch (e) { say("⚠️ " + e.message); return; } }
     const root = host.querySelector("#pbbr"); if (!root) return; draw();
     const rerender = () => { host.innerHTML = panel(); mount(host, inf); };
@@ -326,5 +326,43 @@ const PBBrand = (() => {
       if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "الهوية البصرية"; S.base = out; reset(); A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ"); }
     } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
   }
-  return { panel, mount, apply, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS } };
+  /* منشئ الشعار: ① شعار نصي مجاني (مونوغرام + اسم بألوان وخط الهوية) على Canvas ② شعار بالذكاء (Alyssum API) من وصف؛ الناتج يُحفظ شعاراً للعلامة ويمكن إضافته للصفحة */
+  const LSTYLES = [["badge", "شارة دائرية"], ["round", "مستطيل مدوّر"], ["plain", "نص بخط تحتي"], ["mono", "مونوغرام فقط"]];
+  function logoCanvas(name, kit, style, scheme) {
+    const W = 800, H = style === "mono" ? 800 : style === "plain" ? 360 : 500, c = mk(W, H), g = c.getContext("2d"), col = i => hex(kit.colors[i]), dark = scheme === "dark", bg = dark ? col(0) : "transparent", fg = dark ? col(2) : col(0), ac = col(1), ff = "'" + (kit.font || "Cairo") + "','Cairo',sans-serif";
+    const words = String(name || "").trim().split(/\s+/).filter(Boolean), ini = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "A").slice(0, 2)).toUpperCase();
+    g.direction = "rtl"; g.textAlign = "center"; g.textBaseline = "middle";
+    if (style === "mono") { g.fillStyle = col(0); g.beginPath(); g.arc(W / 2, H / 2, 340, 0, 7); g.fill(); g.lineWidth = 14; g.strokeStyle = ac; g.beginPath(); g.arc(W / 2, H / 2, 314, 0, 7); g.stroke(); g.fillStyle = col(2); g.font = "900 300px " + ff; g.fillText(ini, W / 2, H / 2 + 10); return c; }
+    if (style === "badge") { g.fillStyle = col(0); g.beginPath(); g.arc(150, H / 2, 120, 0, 7); g.fill(); g.lineWidth = 8; g.strokeStyle = ac; g.beginPath(); g.arc(150, H / 2, 104, 0, 7); g.stroke(); g.fillStyle = col(2); g.font = "900 110px " + ff; g.fillText(ini, 150, H / 2 + 6); g.fillStyle = col(0); g.textAlign = "left"; g.direction = "ltr"; g.font = "800 84px " + ff; g.fillText(name || "", 300, H / 2, W - 320); return c; }
+    if (style === "round") { g.fillStyle = col(0); if (g.roundRect) { g.beginPath(); g.roundRect(20, 100, W - 40, 300, 60); g.fill(); } else g.fillRect(20, 100, W - 40, 300); g.fillStyle = ac; g.fillRect(W / 2 - 60, 330, 120, 8); g.fillStyle = col(2); g.font = "900 110px " + ff; g.fillText(name || "", W / 2, 230, W - 120); return c; }
+    g.fillStyle = col(0); g.font = "900 130px " + ff; g.fillText(name || "", W / 2, 140, W - 60); g.fillStyle = ac; g.fillRect(W / 2 - 130, 250, 260, 10); return c;
+  }
+  const logoPrompt = (name, kind, kit, style) => "DESIGN A BRAND LOGO for a business named \"" + String(name).trim() + "\"" + (kind ? " (" + String(kind).trim() + ")" : "") + ". Style: " + style + ". Use mainly these brand colors: " + kit.colors.slice(0, 3).map(hex).join(", ") + ". Flat vector-style logo, centered on a plain solid white background, simple memorable shape, clean edges, high contrast, readable at small sizes. Include the business name as clean, correctly spelled text only if it is short. No mockups, no photos, no gradients on the background, no watermark. Output only the logo image.";
+  function openLogo() {
+    if (!A().E || !A().E.page) return; const old = $("pbx-logo"); if (old) old.remove(); const kit = load();
+    const bg = document.createElement("div"); bg.id = "pbx-logo"; bg.setAttribute("style", "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:1rem");
+    bg.innerHTML = `<div style="background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(198,254,23,.35);border-radius:16px;max-width:540px;width:100%;max-height:92vh;overflow:auto;padding:1rem" dir="rtl"><b>🏷️ منشئ الشعار</b><p class="ep-n">يستعمل ألوان وخط هويتك البصرية. اختر شعاراً نصياً مجانياً، أو ولّد شعاراً بالذكاء الاصطناعي من وصف.</p>
+<div class="rt-g"><label>اسم العلامة <input type="text" id="pblg-n" value="${esc(kit.name)}" style="width:100%" placeholder="اسم متجرك"></label><label>المجال (للذكاء) <input type="text" id="pblg-k" style="width:100%" placeholder="مثال: عسل طبيعي وأعشاب"></label></div>
+<div class="ep-n"><b>① شعار نصي مجاني</b></div><div class="pbrt-row">${LSTYLES.map(x => `<button type="button" class="pbx-small" data-lg="${x[0]}">${x[1]}</button>`).join("")}<label class="pbx-small"><input type="checkbox" id="pblg-d"> خلفية بلون العلامة</label></div>
+<div class="ep-n"><b>② شعار بالذكاء الاصطناعي (Alyssum API)</b></div><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-lg="ai">✨ ولّد شعاراً</button></div>
+<div id="pblg-m" class="ep-n" style="min-height:1.3em"></div><div id="pblg-o" style="margin:.4rem 0;text-align:center;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/16px 16px;border-radius:8px;min-height:60px"></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-lg="save">✔ اعتمده شعاراً للعلامة</button><button type="button" class="pbx-small" data-lg="add">＋ أضفه للصفحة</button><button type="button" class="pbx-small" data-lg="close">إغلاق</button></div></div>`;
+    document.body.appendChild(bg); const R = { cv: null }, m = t => { const e = $("pblg-m"); if (e) e.textContent = t; };
+    const show = cv => { R.cv = cv; const o = $("pblg-o"); o.innerHTML = ""; const im = new Image(); im.src = cv.toDataURL("image/png"); im.style.cssText = "max-width:100%;max-height:220px"; o.appendChild(im); };
+    bg.addEventListener("click", async e => {
+      if (e.target === bg) { bg.remove(); return; } const b = e.target.closest("[data-lg]"); if (!b) return; const k = b.dataset.lg, name = ($("pblg-n").value || "").trim();
+      if (k === "close") { bg.remove(); return; }
+      if (["badge", "round", "plain", "mono"].includes(k)) { if (!name) { m("اكتب اسم العلامة أولاً"); return; } kit.name = name; save(); await loadFont(kit.font); show(logoCanvas(name, kit, k, $("pblg-d").checked ? "dark" : "light")); m("✅ جاهز — اعتمده أو غيّر النمط"); }
+      else if (k === "ai") {
+        if (!name) { m("اكتب اسم العلامة أولاً"); return; } if (typeof ImgGen === "undefined" || !ImgGen.edit) { m("مولّد الصور غير متاح"); return; }
+        try { m("⏳ جارٍ التوليد…"); const r = await ImgGen.edit({ textOnly: true, prompt: logoPrompt(name, $("pblg-k").value, kit, "modern, professional and minimal"), W: 1024, H: 1024, title: "منشئ الشعار" }); if (!r) { m(""); return; } show(r.canvas); m("✅ تمّ — راجع الشعار ثم اعتمده"); }
+        catch (x) { m(x && x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : x && x.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : "⚠️ " + (x.message || x)); }
+      } else if (k === "save" && R.cv) {
+        try { const d = R.cv.toDataURL("image/png"); if (d.length < 900000) localStorage.setItem(LSL, d); const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; kit.name = name || kit.name; save(); m("✅ اعتُمد شعاراً للعلامة — يظهر في «الهوية البصرية» و«إطار وهوية»"); } catch (x) { m("⚠️ تعذّر الحفظ: " + (x.message || x)); }
+      } else if (k === "add" && R.cv) {
+        try { m("⏳ جارٍ الرفع…"); const blob = await new Promise(r => R.cv.toBlob(r, "image/png")), path = await A().uploadBlob(blob, "logo-" + Date.now().toString(36), { max: 2048, q: .95 }); if (path && typeof PB !== "undefined") { A().insertSections([PB.mkS([PB.mkC([PB.mkW("image", { src: path, alt: kit.name || "", hauto: true })])], { pad: { d: [20, 20, 20, 20], m: [14, 12, 14, 12] } })], "شعار"); bg.remove(); } } catch (x) { m("⚠️ " + (x.message || x)); }
+      }
+    });
+  }
+  return { panel, mount, apply, openLogo, reset: () => { S.id = ""; S.base = null; S.msg = ""; }, state: S, _t: { render, load, DEF, SLOTS, logoCanvas, logoPrompt, LSTYLES } };
 })();

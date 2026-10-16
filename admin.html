@@ -1787,7 +1787,7 @@ const Priv = {
    تبقى كما هي في localStorage، وكل كتابة تُدفع أيضاً إلى التخزين الخاص بالمدير (Priv)، وعند فتح اللوحة يُجلب الأحدث من الخادم أولاً. */
 const PrivSync = {
   KEYS: { alyssum_delivery_cfg:"s_delivery_cfg", alyssum_custom_delivery:"s_delivery_custom", alyssum_delivery_price_source:"s_delivery_src",
-          alyssum_blacklist:"s_blacklist", alyssum_bl_rule:"s_bl_rule", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw", alyssum_repeat_sent:"s_repeat_sent", alyssum_mw_cache:"s_mw_cache", alyssum_order_edits:"s_order_edits", alyssum_auto_send:"s_auto_send", alyssum_auto_del:"s_auto_del" },
+          alyssum_blacklist:"s_blacklist", alyssum_bl_rule:"s_bl_rule", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw", alyssum_repeat_sent:"s_repeat_sent", alyssum_mw_cache:"s_mw_cache", alyssum_order_edits:"s_order_edits", alyssum_brand_kit:"s_brand_kit", alyssum_brand_logo:"s_brand_logo", alyssum_auto_send:"s_auto_send", alyssum_auto_del:"s_auto_del" },
   _raw: localStorage.setItem.bind(localStorage), _t: {}, ready: false,
   hook(){
     const self = this;

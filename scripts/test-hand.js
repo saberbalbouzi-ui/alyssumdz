@@ -1219,10 +1219,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.ltoggle("img"); await new Promise(r => setTimeout(r, 300)); const pane = document.getElementById("pbx-lpane");
     const heads = [...pane.querySelectorAll(".pbx-cat")].map(x => x.textContent.trim()).slice(0, 3), rows = [...pane.querySelectorAll("[data-imgx]")].map(x => x.dataset.imgx), cards = pane.querySelectorAll(".pbx-tt.card").length;
     const soon = pane.querySelector('[data-imgx="logo"] .tt-b2') ? 1 : 0; const toasts = []; 
-    pane.querySelector('[data-imgx="logo"]').click(); await new Promise(r => setTimeout(r, 100)); const msg = (document.getElementById("pbx-msg") || {}).textContent || "";
-    PBApp.ltoggle("img"); return { heads, rows, cards, soon, msg };
+    const msg = "قيد التطوير"; const anySoon = pane.querySelectorAll(".pbx-tr .tt-b2").length;
+    PBApp.ltoggle("img"); return { heads, rows, cards, soon: anySoon, msg };
   });
-  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 16 && tm.soon === 1 && /قيد التطوير/.test(tm.msg), tm);
+  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 16 && tm.soon === 0, tm);
   // ── مكتبة الأصول (Pixabay/Iconify) داخل المطوّر الحقيقي ──
   const as = await p.evaluate(async () => {
     const real = window.fetch, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 2h2"/></svg>';
@@ -1262,7 +1262,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const g = out.getContext("2d"), edge = g.getImageData(2, 100, 1, 1).data, band = g.getImageData(10, out.height - 6, 1, 1).data;
     const ni = document.querySelector('#pbbr [data-brk="name"]'); ni.value = "متجري"; ni.dispatchEvent(new Event("input", { bubbles: true }));
     const cb = document.querySelector('#pbbr [data-bro="txt"]'); cb.checked = true; cb.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 900));
-    return { head, cols, font, name, logo, edgeRed: edge[0] > 200 && edge[1] < 60, bandRed: band[0] > 200 && band[1] < 60, saved: /متجري/.test(localStorage.getItem("pbx_brand_kit") || ""), live: !!(PBApp.liveOn && PBApp.liveOn()) };
+    return { head, cols, font, name, logo, edgeRed: edge[0] > 200 && edge[1] < 60, bandRed: band[0] > 200 && band[1] < 60, saved: /متجري/.test(localStorage.getItem("alyssum_brand_kit") || ""), live: !!(PBApp.liveOn && PBApp.liveOn()) };
   });
   ok("الهوية البصرية: لوحة بخمسة ألوان وخط واسم وشعار", /الهوية البصرية/.test(br.head) && br.cols === 5 && br.font && br.name && br.logo, br);
   ok("الهوية البصرية: الحدّ والشريط يُرسمان بألوان العلامة، والإعدادات تُحفظ وتظهر معاينة حيّة", br.edgeRed && br.bandRed && br.saved && br.live, br);
@@ -1331,6 +1331,18 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { head, boxes, calls: calls.length, cards, keep: calls.every(x => /ONLY the color/.test(x) && /not painted/.test(x) && /الفستان|the الفستان/.test(x)), red: /deep red/.test(calls[0] || "") && /navy blue/.test(calls[1] || "") };
   });
   ok("تلوين بالذكاء: الصف يفتح لوحة ألوان متعددة ويولّد لونين بموافقة واحدة مع حفظ النسيج", /تلوين/.test(rcT.head) && rcT.boxes === 10 && rcT.calls === 2 && rcT.cards === 2 && rcT.keep && rcT.red, rcT);
+  // ── منشئ الشعار (مجاني + بالذكاء) ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  const lg = await p.evaluate(async () => {
+    document.querySelector('[data-imgx="logo"]').click(); await new Promise(r => setTimeout(r, 400)); const modal = !!document.getElementById("pbx-logo");
+    document.getElementById("pblg-n").value = "عسل الجبل"; document.querySelector('#pbx-logo [data-lg="badge"]').click(); await new Promise(r => setTimeout(r, 900));
+    const img = document.querySelector("#pblg-o img"), shown = !!img && img.src.startsWith("data:image/png");
+    document.querySelector('#pbx-logo [data-lg="save"]').click(); await new Promise(r => setTimeout(r, 400)); const saved = (localStorage.getItem("alyssum_brand_logo") || "").startsWith("data:image/png");
+    const T = PBBrand._t, cv = T.logoCanvas("عسل الجبل", T.load(), "mono", "light"), d = cv.getContext("2d").getImageData(400, 400, 1, 1).data, calls = []; const old = ImgGen.edit; ImgGen.edit = async o => { calls.push({ t: !!o.textOnly, p: o.prompt }); const c = document.createElement("canvas"); c.width = 50; c.height = 50; c.getContext("2d").fillRect(0, 0, 50, 50); return { canvas: c, blob: null }; };
+    document.getElementById("pblg-k").value = "عسل طبيعي"; document.querySelector('#pbx-logo [data-lg="ai"]').click(); await new Promise(r => setTimeout(r, 700)); ImgGen.edit = old; document.getElementById("pbx-logo").remove(); localStorage.removeItem("alyssum_brand_logo");
+    return { modal, shown, saved, mono: cv.width === 800 && cv.height === 800 && d[3] === 255, ai: calls.length === 1 && calls[0].t && /LOGO/.test(calls[0].p) && /عسل الجبل/.test(calls[0].p) && /عسل طبيعي/.test(calls[0].p), styles: T.LSTYLES.length };
+  });
+  ok("منشئ الشعار: يفتح من الصف ويولّد شعاراً نصياً مجانياً ويعتمده، والذكي يرسل وصفاً بلا صورة مرجعية", lg.modal && lg.shown && lg.saved && lg.mono && lg.ai && lg.styles === 4, lg);
   // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);
