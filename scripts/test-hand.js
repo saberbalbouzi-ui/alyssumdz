@@ -1240,7 +1240,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     window.fetch = real; PBApp.ltoggle("ast");
     return { tabBtn, root, noKey, icons: !!it, added };
   });
-  ok("مكتبة الأصول: التبويب موجود ويطلب مفتاح Pixabay عند غيابه", as.tabBtn && as.root && as.noKey, as);
+  ok("مكتبة الأصول: التبويب موجود ولا يطلب مفتاحاً (الوسيط مدمج)", as.tabBtn && as.root && !as.noKey, as);
   ok("مكتبة الأصول: النقر على أيقونة يحفظها SVG ويضيفها عنصر صورة", as.icons && as.added, as);
   await p.screenshot({ path: "/tmp/stk-ui.png" });
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);

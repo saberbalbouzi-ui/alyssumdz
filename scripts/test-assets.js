@@ -47,7 +47,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   await p.fill("#ast-key", "12345678-abcdef0123456789abcdef012"); await p.fill("#ast-q", "honey"); await p.click("[data-ast-key]");
   await p.waitForSelector(".ast-grid .ast-i");
   t("key saved + results", await p.evaluate(() => localStorage.getItem("alyssum_pixabay_key") && document.querySelectorAll(".ast-grid .ast-i").length === 3));
-  t("search sent key+q", await p.evaluate(() => fetchLog.some(x => /pixabay\.com\/api\/\?/.test(x) && /key=12345678/.test(x))));
+  t("search sent key+q", await p.evaluate(() => fetchLog.some(x => /pixabay\.com\/api\/(videos\/)?\?/.test(x) && /key=12345678/.test(x))));
   t("pagination shown", await p.evaluate(() => /صفحة 1 من 3/.test(document.getElementById("ast-out").textContent)));
 
   /* فلاتر */
@@ -77,6 +77,43 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("icons all licenses when unchecked", await p.evaluate(() => [...document.querySelectorAll(".ast-grid.ic .ast-i")].some(e => e.title === "solar:cart-bold")));
   await p.evaluate(() => { calls.length = 0; }); await p.click('.ast-grid.ic .ast-i'); await p.waitForFunction(() => calls.some(c => c[0] === "addImg"));
   t("icon saved as svg + added", await p.evaluate(() => calls[0][0] === "svg" && calls.some(c => c[0] === "addImg" && /\.svg$/.test(c[1]))));
+
+
+  /* وضع الوسيط: بلا مفتاح شخصي، البحث والتنزيل عبر دالة المنصة */
+  await p.evaluate(() => {
+    localStorage.removeItem("alyssum_pixabay_key"); window.pxLog = [];
+    window.API = { sb: { url: x => "https://sb.local" + x, token: async () => "jwt", headers: t => ({ Authorization: "Bearer " + t, "Content-Type": "application/json" }) } };
+    const old = window.fetch;
+    window.fetch = async (u, o) => {
+      u = String(u); if (!u.startsWith("https://sb.local/functions/v1/pixabay-proxy")) return old(u, o);
+      const b = JSON.parse(o.body); pxLog.push(b);
+      if (b.op === "search") return new Response(JSON.stringify({ totalHits: 2, hits: [1, 2].map(i => ({ id: 70 + i, tags: "x", user: "u", previewURL: "https://cdn.pixabay.com/p.jpg", webformatURL: "https://cdn.pixabay.com/w.jpg", largeImageURL: "https://pixabay.com/get/px" + i + ".jpg", imageWidth: 1, imageHeight: 1 })) }), { status: 200 });
+      return new Response(new Blob([new Uint8Array(300)], { type: "image/jpeg" }));
+    };
+  });
+  await p.evaluate(() => { PBAssets._px.on = null; PBAssets._S.tab = "img"; PBAssets._S.res = null; PBAssets._S.err = ""; });
+  await draw(); await p.fill("#ast-q", "miel"); await p.click("[data-ast-go]"); await p.waitForSelector(".ast-grid .ast-i");
+  t("proxy: no key prompt + results", await p.evaluate(() => !document.querySelector("#ast-key") && document.querySelectorAll(".ast-grid .ast-i").length === 2));
+  t("proxy: search body has no key", await p.evaluate(() => pxLog[0].op === "search" && pxLog[0].query.q === "miel" && !("key" in pxLog[0].query)));
+  await p.evaluate(() => { calls.length = 0; fetchLog.length = 0; }); await p.click('[data-ast-take="0"]'); await p.waitForFunction(() => calls.some(c => c[0] === "addImg"));
+  t("proxy: direct download via proxy, no browser fetch to pixabay", await p.evaluate(() => pxLog.some(x => x.op === "dl" && /px1/.test(x.url)) && !fetchLog.some(x => /pixabay\.com\/get/.test(x)) && calls[0][1] === "px-71"));
+  /* استكشاف على نمط قوائم Pixabay */
+  await p.evaluate(() => { PBAssets._S.tab = "img"; });
+  await draw();
+  t("explore: chips + external links", await p.evaluate(() => document.querySelectorAll("[data-ast-pre]").length === 8 && document.querySelectorAll("[data-ast-qs]").length === 15 && [...document.querySelectorAll("a.ast-ch")].length === 10 && [...document.querySelectorAll("a.ast-ch")].every(a => a.target === "_blank" && /^https:\/\/pixabay\.com\//.test(a.href))));
+  await p.evaluate(() => { pxLog.length = 0; }); await p.click('[data-ast-pre="vector"]'); await p.waitForFunction(() => pxLog.length > 0);
+  t("explore: vectors preset", await p.evaluate(() => pxLog[0].query.image_type === "vector" && !pxLog[0].query.q));
+  await p.evaluate(() => { pxLog.length = 0; }); await p.click('[data-ast-qs="Halloween"]'); await p.waitForFunction(() => pxLog.length > 0);
+  t("explore: trending query", await p.evaluate(() => pxLog[0].query.q === "Halloween" && document.getElementById("ast-q").value === "Halloween"));
+  await p.evaluate(() => { pxLog.length = 0; }); await p.click('[data-ast-pre="editors"]'); await p.waitForFunction(() => pxLog.length > 0);
+  t("explore: editors choice", await p.evaluate(() => pxLog[0].query.editors_choice === "true"));
+  await p.evaluate(() => { pxLog.length = 0; }); await p.click('[data-ast-pre="video"]'); await p.waitForFunction(() => pxLog.length > 0);
+  t("explore: video preset", await p.evaluate(() => pxLog[0].kind === "videos"));
+
+  /* الدالة غير منشورة (404) ← يعود للمفتاح الشخصي */
+  await p.evaluate(() => { const o = window.fetch; window.fetch = async (u, x) => String(u).includes("pixabay-proxy") ? new Response("{}", { status: 404 }) : o(u, x); PBAssets._px.on = null; localStorage.setItem("alyssum_pixabay_key", "12345678-abcdef0123456789abcdef012"); fetchLog.length = 0; });
+  await p.fill("#ast-q", "cire"); await p.click("[data-ast-go]"); await p.waitForTimeout(300);
+  t("proxy 404 falls back to own key", await p.evaluate(() => PBAssets._px.on === false && fetchLog.some(x => /pixabay\.com\/api\/(videos\/)?\?/.test(x) && /key=12345678/.test(x))));
 
   /* مفتاح مرفوض */
   await p.evaluate(() => localStorage.setItem("alyssum_pixabay_key", "bad")); await p.click('[data-ast-tab="img"]'); await p.fill("#ast-q", "x"); await p.click("[data-ast-go]"); await p.waitForTimeout(300);

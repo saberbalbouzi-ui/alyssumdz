@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.275">
+<meta name="admin-version" content="1.89.277">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1666,12 +1666,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.275"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.275"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.275"></script>
+<script src="assets/js/ctl-help.js?v=1.89.277"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.277"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.277"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.275"></script>
+<script src="assets/js/admin-nav.js?v=1.89.277"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1683,7 +1683,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.247"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.275"></script>
+<script src="assets/js/admin-update.js?v=1.89.277"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -17033,10 +17033,30 @@ const PBAssets = (() => {
   const COLORS = { red: "أحمر", orange: "برتقالي", yellow: "أصفر", green: "أخضر", turquoise: "فيروزي", blue: "أزرق", lilac: "بنفسجي", pink: "وردي", white: "أبيض", gray: "رمادي", black: "أسود", brown: "بني", transparent: "شفاف", grayscale: "تدرّج رمادي" };
   const OK_LIC = /^(MIT|Apache-2\.0|ISC|CC0-1\.0|Unlicense|0BSD|BSD-[23]-Clause)$/;      // تراخيص لا تفرض نسب المصدر ولا تمنع الاستعمال التجاري
   const SETS = ["tabler", "lucide", "mdi", "ph", "bi", "carbon", "heroicons", "fluent-emoji-flat", "noto", "twemoji", "streamline-emojis", "material-symbols"];
+  /* استكشاف سريع بنمط قوائم Pixabay: الإعدادات تُطبَّق على البحث نفسه (ما يدعمه واجهة Pixabay البرمجية: صور/رسوم/متجهات/فيديو/اختيار المحررين/الأشهر والأحدث) */
+  const MEDIA = [["photo", "صور", { tab: "img", type: "photo" }], ["illus", "رسوم", { tab: "img", type: "illustration" }], ["vector", "متجهات", { tab: "img", type: "vector" }], ["video", "فيديو", { tab: "vid" }]];
+  const DISC = [["editors", "اختيار المحررين", { ed: true, order: "popular" }], ["popimg", "صور شائعة", { tab: "img", ed: false, order: "popular", type: "all" }], ["popvid", "فيديو شائع", { tab: "vid", ed: false, order: "popular" }], ["latest", "الأحدث", { order: "latest", ed: false }]];
+  const TREND = ["Halloween", "Fall", "Wallpaper", "Nature", "Travel"];
+  const POPQ = ["fond blanc", "miel", "cosmétique", "huile", "emballage", "livraison", "ramadan", "soldes", "family", "business"];
+  /* أقسام موجودة على موقع Pixabay لكن واجهته البرمجية لا تتيحها: روابط تفتح الموقع في تبويب جديد (لا تنزيل مباشر منها) */
+  const EXT = [["الموسيقى", "https://pixabay.com/music/"], ["المؤثرات الصوتية", "https://pixabay.com/sound-effects/"], ["نماذج 3D", "https://pixabay.com/3d-models/"], ["GIF", "https://pixabay.com/gifs/"], ["مجموعات منتقاة", "https://pixabay.com/collections/"], ["راديو Pixabay", "https://pixabay.com/radio/"], ["المسابقات", "https://pixabay.com/contests/"], ["المبدعون", "https://pixabay.com/creators/"], ["المدوّنة", "https://pixabay.com/blog/"], ["المنتدى", "https://pixabay.com/forum/"]];
   const D = { tab: "img", q: "", type: "all", ori: "", cat: "", color: "", ed: false, min: "", order: "popular", safe: true, lang: "fr", vtype: "all", iq: "", set: "", okOnly: true, icolor: "#173f35", page: 1 };
   const S = Object.assign({}, D, (() => { try { return JSON.parse(localStorage.getItem(LSS) || "{}"); } catch (e) { return {}; } })(), { res: null, busy: false, err: "", total: 0, lic: null, sets: null, ibusy: "" });
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const key = () => { try { return localStorage.getItem(LSK) || ""; } catch (e) { return ""; } };
+  const key = () => { try { return localStorage.getItem(LSK) || (typeof CONFIG !== "undefined" && CONFIG.PIXABAY_KEY) || ""; } catch (e) { return ""; } };
+  /* وسيط المنصة: مفتاح Pixabay سرّ في الخادم والتنزيل يمرّ به (لا CORS). يتعطّل تلقائياً إن لم تُنشر الدالة فيعود المفتاح الشخصي. */
+  const PX_ST = { on: null };
+  const proxyOk = () => PX_ST.on !== false && typeof API !== "undefined" && !!(API.sb && API.sb.url && API.sb.token && API.sb.headers);
+  async function viaProxy(body) {
+    if (!proxyOk()) return null;
+    try {
+      const t = await API.sb.token(); if (!t) return null;
+      const r = await fetch(API.sb.url("/functions/v1/pixabay-proxy"), { method: "POST", headers: API.sb.headers(t), body: JSON.stringify(body) });
+      if ([401, 403, 404, 503].includes(r.status)) { PX_ST.on = false; return null; }
+      PX_ST.on = true; return r;
+    } catch (e) { return null; }
+  }
+  const canSearch = () => !!key() || proxyOk();
   const keep = () => { try { const o = {}; Object.keys(D).forEach(k => { if (k !== "page") o[k] = S[k]; }); localStorage.setItem(LSS, JSON.stringify(o)); } catch (e) { } };
   const toast = m => { try { if (typeof PBApp !== "undefined" && PBApp.toast) return PBApp.toast(m); } catch (e) { } };
 
@@ -17066,10 +17086,17 @@ const PBAssets = (() => {
   /* ===== الشبكة ===== */
   async function search() {
     if (S.tab === "ico") return iconSearch();
-    if (!key()) { S.err = "nokey"; S.res = null; return; }
+    if (!canSearch()) { S.err = "nokey"; S.res = null; return; }
     S.busy = true; S.err = ""; draw();
     try {
-      const r = await fetch(pixUrl(S));
+      let r = null;
+      if (proxyOk()) {
+        const q = {}; new URL(pixUrl(S, "x")).searchParams.forEach((v, k) => { if (k !== "key") q[k] = v; });
+        r = await viaProxy({ op: "search", kind: S.tab === "vid" ? "videos" : "images", query: q });
+        if (r && r.status === 429) throw new Error("تجاوزتَ حدّ الطلبات (100 في الدقيقة) — انتظر قليلاً ثم أعد المحاولة");
+        if (r && !r.ok) r = null;
+      }
+      if (!r) { if (!key()) throw new Error("خدمة المكتبة غير متاحة الآن — حاول لاحقاً"); r = await fetch(pixUrl(S)); }
       if (r.status === 429) throw new Error("تجاوزتَ حدّ الطلبات (100 في الدقيقة) — انتظر قليلاً ثم أعد المحاولة");
       if (r.status === 400 || r.status === 401 || r.status === 403) throw new Error("مفتاح Pixabay مرفوض — تأكد من نسخه كاملاً");
       if (!r.ok) throw new Error("تعذّر الاتصال (" + r.status + ")");
@@ -17090,6 +17117,9 @@ const PBAssets = (() => {
   }
   async function blobOf(urls) {      // يجرّب الروابط بالترتيب (الدقة العالية ثم المتوسطة) — بعض الخوادم لا تفتح CORS للأصلية
     let last = null;
+    if (proxyOk()) for (const u of urls.filter(Boolean)) {
+      const r = await viaProxy({ op: "dl", url: u }); if (r && r.ok) return await r.blob(); if (PX_ST.on === false) break;
+    }
     for (const u of urls.filter(Boolean)) { try { const r = await fetch(u); if (r.ok) return await r.blob(); last = new Error("HTTP " + r.status); } catch (e) { last = e; } }
     throw last || new Error("تعذّر التنزيل");
   }
@@ -17130,12 +17160,22 @@ const PBAssets = (() => {
 #ast-root .ast-i{position:relative;border:1.5px solid #ece5d3;border-radius:12px;background:#fff;overflow:hidden;cursor:pointer;padding:0;aspect-ratio:1;display:flex;align-items:center;justify-content:center;transition:transform .15s,border-color .15s}#ast-root .ast-i:hover{transform:translateY(-2px);border-color:#0d9488}
 #ast-root .ast-i img,#ast-root .ast-i video{width:100%;height:100%;object-fit:cover;pointer-events:none}#ast-root .ast-grid.ic .ast-i img{object-fit:contain;padding:.35rem}#ast-root .ast-i.busy{opacity:.45}
 #ast-root .ast-i span{position:absolute;inset-inline:0;bottom:0;font-size:.6rem;font-weight:800;color:#fff;background:linear-gradient(0deg,rgba(0,0,0,.65),transparent);padding:.5rem .3rem .15rem;text-align:center}
-#ast-root .ast-n{font-size:.72rem;color:#6b6556;line-height:1.7;margin:.4rem 0}#ast-root .ast-n a{color:#0d9488;font-weight:800}#ast-root .ast-w{background:#fff7e6;border:1px solid #f0d9a8;border-radius:10px;padding:.5rem .6rem;color:#7a5a12}`;
+#ast-root .ast-ex{margin-bottom:.5rem}#ast-root .ast-ex summary{cursor:pointer;font-weight:800;color:#173f35;margin-bottom:.3rem}#ast-root .ast-g{display:flex;flex-wrap:wrap;gap:.25rem;align-items:center;margin:.3rem 0}#ast-root .ast-g b{font-size:.7rem;color:#6b6556;width:100%}#ast-root .ast-ch{font:inherit;font-size:.7rem;font-weight:800;padding:.22rem .55rem;border-radius:999px;cursor:pointer;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.28);background:linear-gradient(180deg,rgba(23,63,53,.75),rgba(23,63,53,.55));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 4px rgba(0,0,0,.18);transition:transform .15s,background .15s}#ast-root .ast-ch:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(80,200,120,.6),rgba(30,120,70,.5))}#ast-root .ast-n{font-size:.72rem;color:#6b6556;line-height:1.7;margin:.4rem 0}#ast-root .ast-n a{color:#0d9488;font-weight:800}#ast-root .ast-w{background:#fff7e6;border:1px solid #f0d9a8;border-radius:10px;padding:.5rem .6rem;color:#7a5a12}`;
     document.head.appendChild(st);
   };
   const opt = (o, cur, all) => (all != null ? `<option value="">${all}</option>` : "") + Object.keys(o).map(k => `<option value="${k}"${cur === k ? " selected" : ""}>${o[k]}</option>`).join("");
   function pane() {
     css(); return `<div id="ast-root"></div>`;
+  }
+  function explore() {
+    const ch = (n, a, v) => `<button type="button" class="ast-ch" ${a}="${esc(v)}">${esc(n)}</button>`;
+    return `<details class="ast-ex" open><summary>استكشف</summary>
+<div class="ast-g"><b>الوسائط</b>${MEDIA.map(m => ch(m[1], "data-ast-pre", m[0])).join("")}</div>
+<div class="ast-g"><b>اكتشف</b>${DISC.map(m => ch(m[1], "data-ast-pre", m[0])).join("")}</div>
+<div class="ast-g"><b>رائج</b>${TREND.map(q => ch(q, "data-ast-qs", q)).join("")}</div>
+<div class="ast-g"><b>عمليات بحث شائعة</b>${POPQ.map(q => ch(q, "data-ast-qs", q)).join("")}</div>
+<div class="ast-g"><b>على موقع Pixabay</b>${EXT.map(e => `<a class="ast-ch" href="${esc(e[1])}" target="_blank" rel="noopener">${esc(e[0])} ↗</a>`).join("")}</div>
+<p class="ast-n">الأقسام ذات السهم تُفتح في موقع Pixabay (واجهته البرمجية لا تتيح الموسيقى والمؤثرات وGIF ونماذج 3D فلا تنزيل مباشر منها).</p></details>`;
   }
   function form() {
     const seg = `<div class="ast-seg">${[["img", "صور ورسوم"], ["vid", "فيديو"], ["ico", "أيقونات"]].map(([k, n]) => `<button type="button" data-ast-tab="${k}" class="${S.tab === k ? "on" : ""}">${n}</button>`).join("")}</div>`;
@@ -17147,7 +17187,7 @@ const PBAssets = (() => {
 <div class="ast-f"><label class="ast-c" style="margin:0">لون <input type="color" id="ast-ic" value="${esc(S.icolor)}" style="width:44px;padding:0;height:28px;margin:0"></label><button type="button" class="ast-b go" data-ast-go="1">بحث</button></div>` + (lic ? `<p class="ast-n">رخصة المجموعة: <a href="${esc(lic.url || "#")}" target="_blank" rel="noopener">${esc(lic.title || lic.spdx || "")}</a></p>` : "");
     }
     const vid = S.tab === "vid";
-    return seg + `<input type="search" id="ast-q" placeholder="ابحث: honey, cosmetics, fond blanc…" value="${esc(S.q)}" autocomplete="off">
+    return seg + explore() + `<input type="search" id="ast-q" placeholder="ابحث: honey, cosmetics, fond blanc…" value="${esc(S.q)}" autocomplete="off">
 <div class="ast-f">${vid ? `<select id="ast-vtype"><option value="all">كل الأنواع</option><option value="film"${S.vtype === "film" ? " selected" : ""}>مقاطع حقيقية</option><option value="animation"${S.vtype === "animation" ? " selected" : ""}>رسوم متحركة</option></select>`
       : `<select id="ast-type">${opt({ all: "كل الأنواع", photo: "صور", illustration: "رسوم", vector: "متجهات" }, S.type)}</select><select id="ast-ori">${opt({ horizontal: "أفقي", vertical: "عمودي" }, S.ori, "كل الاتجاهات")}</select>`}
 <select id="ast-cat">${opt(CATS, S.cat, "كل التصنيفات")}</select>${vid ? "" : `<select id="ast-col">${opt(COLORS, S.color, "كل الألوان")}</select>`}
@@ -17192,7 +17232,9 @@ const PBAssets = (() => {
     };
     const run = () => { read(); S.page = 1; search(); };
     root.addEventListener("click", e => {
-      const t = e.target.closest("[data-ast-tab]"); if (t) { read(); S.tab = t.dataset.astTab; S.res = null; S.err = ""; S.page = 1; keep(); root.querySelector("#ast-form").dataset.sig = ""; draw(); if (S.tab !== "ico" && !key()) { S.err = "nokey"; draw(); } return; }
+      const t = e.target.closest("[data-ast-tab]"); if (t) { read(); S.tab = t.dataset.astTab; S.res = null; S.err = ""; S.page = 1; keep(); root.querySelector("#ast-form").dataset.sig = ""; draw(); if (S.tab !== "ico" && !canSearch()) { S.err = "nokey"; draw(); } return; }
+      const pre = e.target.closest("[data-ast-pre]"); if (pre) { const d = (MEDIA.concat(DISC).find(x => x[0] === pre.dataset.astPre) || [])[2]; if (d) { read(); if (S.tab === "ico") S.tab = "img"; Object.assign(S, { q: "" }, d); keep(); root.querySelector("#ast-form").dataset.sig = ""; root.querySelector("#ast-form").innerHTML = ""; S.page = 1; return search(); } }
+      const qs = e.target.closest("[data-ast-qs]"); if (qs) { read(); if (S.tab === "ico") S.tab = "img"; S.q = qs.dataset.astQs; keep(); root.querySelector("#ast-form").dataset.sig = ""; root.querySelector("#ast-form").innerHTML = ""; S.page = 1; return search(); }
       if (e.target.closest("[data-ast-go]")) return run();
       const k = e.target.closest("[data-ast-key]"); if (k) { const v = (root.querySelector("#ast-key").value || "").trim(); if (!/^[0-9]{5,}-[0-9a-f]{10,}$/i.test(v)) { toast("❌ شكل المفتاح غير صحيح"); return; } try { localStorage.setItem(LSK, v); } catch (x) { } S.err = ""; toast("✅ حُفظ المفتاح"); return run(); }
       const pg = e.target.closest("[data-ast-pg]"); if (pg && !pg.disabled) { S.page = Math.max(1, S.page + Number(pg.dataset.astPg)); return search(); }
@@ -17202,9 +17244,9 @@ const PBAssets = (() => {
     root.addEventListener("change", e => { if (e.target.id && /^ast-/.test(e.target.id) && e.target.id !== "ast-key" && e.target.id !== "ast-q" && e.target.id !== "ast-iq") { read(); if (S.tab === "ico" && /ast-(set|ok)/.test(e.target.id)) root.querySelector("#ast-form").dataset.sig = ""; if (S.res) { S.page = 1; search(); } else draw(); } });
     if (!S.sets && !S.lic) { S.lic = {}; fetch(IC + "collections?prefixes=" + SETS.join(",")).then(r => r.json()).then(j => { S.lic = j || {}; draw(); }).catch(() => { }); }
     root.querySelector("#ast-form") || draw();
-    if (S.tab !== "ico" && !key()) S.err = "nokey"; draw();
+    if (S.tab !== "ico" && !canSearch()) S.err = "nokey"; draw();
   }
-  return { pane, bind, pixUrl, iconUrl, iconSvgUrl, licOk, pickVideo, search, take, key, _S: S, OK_LIC };
+  return { pane, bind, pixUrl, iconUrl, iconSvgUrl, licOk, pickVideo, search, take, key, _S: S, OK_LIC, _px: PX_ST, EXT };
 })();
 
 /* ═════════════════════════════════════════════════════════════════
