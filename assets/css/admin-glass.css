@@ -491,3 +491,6 @@ html.glass .pbx-tr{background:rgba(255,255,255,.06)!important;border-color:rgba(
 html.glass .pbx-tr:hover{background:rgba(255,255,255,.12)!important;border-color:var(--g-mint)!important}
 html.glass .pbx-tr i{background:rgba(255,255,255,.1)!important;color:var(--g-mint)}
 html.glass .pbx-tr small{color:rgba(255,255,255,.72)!important}
+
+html.glass .pbx-tr i.ic{background:transparent!important}
+html.glass .pbx-tt.ic{padding:.35rem!important}

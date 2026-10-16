@@ -1,0 +1,193 @@
+{
+ "_doc": "عناوين وأوصاف أيقونات أدوات الصور كنصوص مستقلة عن الصور (قابلة للترجمة). أضف لغة جديدة بإضافة مفتاحها في t وd لكل أداة. الصور في assets/realistic_tool_icons_svg بلا أي كتابة.",
+ "langs": [
+  "ar",
+  "fr",
+  "en"
+ ],
+ "default": "ar",
+ "tools": {
+  "bg": {
+   "icon": "01-suppression-de-fond",
+   "t": {
+    "ar": "نزع الخلفية",
+    "fr": "Suppression de fond",
+    "en": "Remove background"
+   },
+   "d": {
+    "ar": "أزل خلفية الصورة بنقرة",
+    "fr": "Retirez le fond d'une image en un clic",
+    "en": "Remove an image background in one click"
+   }
+  },
+  "gen": {
+   "icon": "02-generateur-d-images",
+   "t": {
+    "ar": "مولّد الصور",
+    "fr": "Générateur d'images",
+    "en": "Image generator"
+   },
+   "d": {
+    "ar": "ولّد مشاهد ومنتجات بالذكاء",
+    "fr": "Générez des scènes et produits avec l'IA",
+    "en": "Generate scenes and products with AI"
+   }
+  },
+  "pshoot": {
+   "icon": "03-photographie-produit-ia",
+   "t": {
+    "ar": "تصوير المنتج بالذكاء",
+    "fr": "Photographie produit IA",
+    "en": "AI product photography"
+   },
+   "d": {
+    "ar": "عدة مشاهد احترافية دفعة واحدة",
+    "fr": "Plusieurs mises en scène pro en une fois",
+    "en": "Several pro scenes in one go"
+   }
+  },
+  "fashion": {
+   "icon": "04-modele-virtuel",
+   "t": {
+    "ar": "استوديو أزياء ذكي",
+    "fr": "Modèle virtuel",
+    "en": "Virtual model"
+   },
+   "d": {
+    "ar": "عارض افتراضي ومانيكان غير مرئي",
+    "fr": "Mannequin virtuel ou invisible",
+    "en": "Virtual model and ghost mannequin"
+   }
+  },
+  "tryon": {
+   "icon": "05-essayage-virtuel",
+   "t": {
+    "ar": "تجربة افتراضية",
+    "fr": "Essayage virtuel",
+    "en": "Virtual try-on"
+   },
+   "d": {
+    "ar": "شاهد القطعة على جسمك",
+    "fr": "Voyez la pièce sur vous",
+    "en": "See the item on yourself"
+   }
+  },
+  "scene": {
+   "icon": "06-mise-en-scene-produit",
+   "t": {
+    "ar": "مشهد ذكي للمنتج",
+    "fr": "Mise en scène produit",
+    "en": "Product staging"
+   },
+   "d": {
+    "ar": "ضع منتجك في مشهد استخدام واقعي",
+    "fr": "Placez le produit dans une scène réaliste",
+    "en": "Place your product in a realistic scene"
+   }
+  },
+  "vd": {
+   "icon": "07-generateur-de-video",
+   "t": {
+    "ar": "فيديو من الصورة",
+    "fr": "Générateur de vidéo",
+    "en": "Video from image"
+   },
+   "d": {
+    "ar": "حوّل الصورة إلى فيديو قصير",
+    "fr": "Transformez l'image en courte vidéo",
+    "en": "Turn an image into a short video"
+   }
+  },
+  "xp": {
+   "icon": "08-redimensionner-agrandir",
+   "t": {
+    "ar": "توسيع الخلفية بالذكاء",
+    "fr": "Redimensionner et agrandir",
+    "en": "Resize & expand"
+   },
+   "d": {
+    "ar": "وسّع الصورة لأي منصة أو مقاس",
+    "fr": "Étendez l'image pour toute plateforme",
+    "en": "Expand the image for any platform"
+   }
+  },
+  "erase": {
+   "icon": "09-supprimer-des-objets",
+   "t": {
+    "ar": "ممحاة ذكية بالفرشاة",
+    "fr": "Supprimer des objets",
+    "en": "Remove objects"
+   },
+   "d": {
+    "ar": "امسح أي عنصر غير مرغوب بفرشاة",
+    "fr": "Effacez un objet indésirable au pinceau",
+    "en": "Brush away unwanted objects"
+   }
+  },
+  "recolor": {
+   "icon": "10-recolorer-vetements",
+   "t": {
+    "ar": "تلوين الملابس",
+    "fr": "Recolorer des vêtements",
+    "en": "Recolor clothing"
+   },
+   "d": {
+    "ar": "ألوان متعددة من صورة واحدة",
+    "fr": "Plusieurs couleurs depuis une photo",
+    "en": "Several colors from one photo"
+   }
+  },
+  "brand": {
+   "icon": "11-identite-visuelle",
+   "t": {
+    "ar": "الهوية البصرية",
+    "fr": "Identité visuelle",
+    "en": "Brand kit"
+   },
+   "d": {
+    "ar": "الخطوط والألوان والشعار",
+    "fr": "Polices, couleurs et logo",
+    "en": "Fonts, colors and logo"
+   }
+  },
+  "logo": {
+   "icon": "12-createur-de-logo",
+   "t": {
+    "ar": "منشئ الشعار",
+    "fr": "Créateur de logo",
+    "en": "Logo maker"
+   },
+   "d": {
+    "ar": "شعار مجاني أو بالذكاء بألوان علامتك",
+    "fr": "Logo gratuit ou par IA aux couleurs de votre marque",
+    "en": "Free or AI logo in your brand colors"
+   }
+  },
+  "batch": {
+   "icon": "13-traitement-par-lots",
+   "t": {
+    "ar": "معالجة الدفعات",
+    "fr": "Traitement par lots",
+    "en": "Batch processing"
+   },
+   "d": {
+    "ar": "عدّل آلاف الصور دفعة واحدة",
+    "fr": "Modifiez des milliers d'images d'un coup",
+    "en": "Edit thousands of images at once"
+   }
+  },
+  "catalog": {
+   "icon": "14-catalogue-de-produits",
+   "t": {
+    "ar": "كتالوج المنتجات",
+    "fr": "Catalogue de produits",
+    "en": "Product catalog"
+   },
+   "d": {
+    "ar": "افحص وحدّث أغلفة كل متجرك",
+    "fr": "Vérifiez et mettez à jour tout votre catalogue",
+    "en": "Check and update your whole catalog"
+   }
+  }
+ }
+}

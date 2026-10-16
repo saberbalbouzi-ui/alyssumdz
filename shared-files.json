@@ -296,6 +296,7 @@
     "assets/data/stickers.json",
     "assets/img/stickers/**",
     "assets/img/tools/**",
+    "assets/data/tool-titles.json",
     "assets/js/hub.js",
     "assets/js/admin-stockcheck.js",
     "assets/js/admin-orderedit.js",

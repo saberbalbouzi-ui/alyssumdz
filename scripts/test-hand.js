@@ -224,7 +224,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const tabs = [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt), pane = document.getElementById("pbx-lpane"), imgs = [...pane.querySelectorAll(".pbx-tt img")];
     await new Promise(r => setTimeout(r, 600)); const o = { second: tabs[1], tabOn: document.querySelector('.pbx-tabs [data-lt="img"]').classList.contains("on"), tools: pane.querySelectorAll("[data-imgt]").length, sub: pane.querySelectorAll("[data-imgs]").length, sm: pane.querySelectorAll("[data-imgm]").length, loaded: imgs.filter(i => i.naturalWidth > 0).length, imgsN: imgs.length };
     const t0 = pane.querySelector(".pbx-tt"), im0 = t0.querySelector("img"), sp0 = t0.querySelector("span"), gs = getComputedStyle(pane.querySelector(".pbx-ttg"));
-    o.ar = getComputedStyle(im0).aspectRatio; o.cols = gs.gridTemplateColumns; o.square = /^280\s*\/\s*325$/.test(o.ar); o.nameBelow = !sp0 && t0.classList.contains("card"); o.twoCols = o.cols.trim().split(/\s+/).length === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
+    o.ar = getComputedStyle(im0).aspectRatio; o.cols = gs.gridTemplateColumns; o.square = /^1\s*\/\s*1$/.test(o.ar); o.nameBelow = !!sp0 && sp0.textContent.trim().length > 2 && t0.classList.contains("ic"); o.twoCols = o.cols.trim().split(/\s+/).length === 2; o.noReady = !/الصورة المحدّدة جاهزة/.test(pane.textContent);
     o.tabsHidden = getComputedStyle(document.querySelector("#pbx-ep .pbst-tabs")).display === "none"; o.hasEpTabs = !!document.querySelector("#pbx-ep .ep-tabs");
     pane.querySelector('[data-imgs="txt"]').click(); await new Promise(r => setTimeout(r, 700)); o.head = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.visPane = [...document.querySelectorAll("#pbst .pbst-pane")].filter(x => !x.hidden).map(x => x.dataset.stp).join(",");
     pane.querySelector('[data-imgt="pz"]').click(); await new Promise(r => setTimeout(r, 400)); o.pzHead = document.querySelector("#pbx-ep .ep-h").textContent.trim(); o.subGone = !pane.querySelector("[data-imgs]");
@@ -232,7 +232,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.ltoggle("img"); document.querySelector('#pbx-lpane [data-imgt="st"]').click(); await new Promise(r => setTimeout(r, 600)); return o;
   });
   ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 11 أداة + 5 ذكية في شبكة واحدة وبطاقات حقيقية محمّلة", it.second === "img" && it.tabOn && it.tools === 11 && it.sub === 5 && it.sm === 5 && it.imgsN >= 16 && it.loaded === it.imgsN, it);
-  ok("تعديل الصورة: بطاقات كاملة بنسبة موحّدة (العنوان داخل الصورة) عمودان، وعبارة «الصورة المحدّدة جاهزة» محذوفة", it.square && it.nameBelow && it.twoCols && it.noReady, it);
+  ok("تعديل الصورة: أيقونات بنسبة موحّدة وعنوانها نص HTML تحتها (لا كتابة داخل الصورة) عمودان، وعبارة «الصورة المحدّدة جاهزة» محذوفة", it.square && it.nameBelow && it.twoCols && it.noReady, it);
   ok("تعديل الصورة: اسم الأداة والإعدادات في الشريط الأيمن (بلا شريط تبويبات داخلي)، وأدوات الاستوديو تُفتح من القائمة اليسرى", it.tabsHidden && !it.hasEpTabs && /استوديو المنتج/.test(it.head) && /ملصقات/.test(it.head) && it.visPane === "txt" && /بازل/.test(it.pzHead) && it.subGone, it);
   ok("تعديل الصورة: فتح تبويب آخر يغلق لوحة الأداة (كل تبويب يغلق الذي قبله)", it.closedByTab, it);
   const cx = await p.evaluate(async () => {
@@ -1217,12 +1217,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   // ── تبويب «تعديل الصورة»: ثلاث قوائم (إنشاء/تعديل/أتمتة) + أداة التكبير ──
   const tm = await p.evaluate(async () => {
     PBApp.ltoggle("img"); await new Promise(r => setTimeout(r, 300)); const pane = document.getElementById("pbx-lpane");
-    const heads = [...pane.querySelectorAll(".pbx-cat")].map(x => x.textContent.trim()).slice(0, 3), rows = [...pane.querySelectorAll("[data-imgx]")].map(x => x.dataset.imgx), cards = pane.querySelectorAll(".pbx-tt.card").length;
+    const heads = [...pane.querySelectorAll(".pbx-cat")].map(x => x.textContent.trim()).slice(0, 3), rows = [...pane.querySelectorAll("[data-imgx]")].map(x => x.dataset.imgx), cards = pane.querySelectorAll(".pbx-tt.card").length, ics = pane.querySelectorAll(".pbx-tt.ic").length;
     const soon = pane.querySelector('[data-imgx="logo"] .tt-b2') ? 1 : 0; const toasts = []; 
     const msg = "قيد التطوير"; const anySoon = pane.querySelectorAll(".pbx-tr .tt-b2").length;
-    PBApp.ltoggle("img"); return { heads, rows, cards, soon: anySoon, msg };
+    PBApp.ltoggle("img"); return { heads, rows, cards, ics, soon: anySoon, msg };
   });
-  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 16 && tm.soon === 0, tm);
+  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 11 && tm.ics === 5 && tm.soon === 0, tm);
   // ── مكتبة الأصول (Pixabay/Iconify) داخل المطوّر الحقيقي ──
   const as = await p.evaluate(async () => {
     const real = window.fetch, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 2h2"/></svg>';
@@ -1749,10 +1749,20 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const lyT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; window.confirm = () => true; PBAdmin.mkPage("تخطيط"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(500); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
     const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = im;
-    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 280 / 325) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 5 && pane.querySelectorAll(".pbx-cat").length >= 3;
+    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 1) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 5 && pane.querySelectorAll(".pbx-cat").length >= 3;
     R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(); await w(400); return R;
   });
-  ok("تبويب «تعديل الصورة» (تخطيط فعلي): بطاقات ≥90px بنسبة 280:325 والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
+  ok("تبويب «تعديل الصورة» (تخطيط فعلي): أيقونات ≥90px مربعة والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
+  const icn = await p.evaluate(async () => {
+    const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBAdmin.mkPage("أيقونات"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(900);
+    const pane = document.getElementById("pbx-lpane"), tile = pane.querySelector('[data-imgt="bg"]'), row = pane.querySelector('[data-imgx="brand"]');
+    R.tileTitle = tile && tile.querySelector("span") && tile.querySelector("span").textContent.trim(); R.rowTitle = row && row.querySelector("b") && row.querySelector("b").textContent.trim(); R.rowIc = !!(row && row.querySelector("i.ic img.tt-ic"));
+    R.imgs = [...pane.querySelectorAll("img.tt-ic")].filter(i => i.naturalWidth > 0).length; R.imgsN = pane.querySelectorAll("img.tt-ic").length;
+    const j = await (await fetch("assets/data/tool-titles.json")).json(); R.langs = Object.values(j.tools).every(t => ["ar", "fr", "en"].every(l => t.t[l] && t.d[l])); R.n = Object.keys(j.tools).length;
+    ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.setItem(k, "fr")); PBApp.ltoggle("add"); await w(150); PBApp.ltoggle("img"); await w(500);
+    R.fr = pane.querySelector('[data-imgt="bg"] span').textContent.trim(); ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.removeItem(k)); PBApp.close(); await w(300); return R;
+  });
+  ok("أيقونات الأدوات: كل الصور تُحمَّل، والعناوين نصوص HTML من ملف الترجمة (عربي افتراضي وفرنسي عند ضبط اللغة)", icn.imgs >= 10 && icn.imgs === icn.imgsN && icn.tileTitle === "نزع الخلفية" && icn.rowTitle === "الهوية البصرية" && icn.rowIc && icn.langs && icn.n === 14 && icn.fr === "Suppression de fond", icn);
   // ── تبويب «أدوات ذكية» محذوف من القائمة اليسرى (أدواته داخل «تعديل الصورة») ──
   const nsT = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; PBAdmin.mkPage("بلا ذكية"); await w(1500); const R = { smart: !!document.querySelector('.pbx-tabs [data-lt="smart"]'), img: !!document.querySelector('.pbx-tabs [data-lt="img"]'), tabs: [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt).join(",") }; PBApp.close(); await w(400); return R; });
   ok("القائمة اليسرى: لا تبويب «أدوات ذكية» (موجودة داخل «تعديل الصورة»)", !nsT.smart && nsT.img, nsT);

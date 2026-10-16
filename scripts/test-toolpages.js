@@ -11,6 +11,9 @@ const bad = ids.filter(i => { const h = fs.readFileSync(path.join(d, i + ".html"
 ok("كل صفحة فيها رابط فتح الأداة العميق وقسم الاستعمال وعنوان", !bad.length, bad);
 const idx = fs.readFileSync(path.join(d, "index.html"), "utf8"); ok("الفهرس يربط كل الأدوات", ids.every(i => idx.includes('href="' + i + '.html"')));
 const imgs = tools.filter(t => t.img).filter(t => !fs.existsSync(path.join(__dirname, "../assets/img/tools", t.img + ".webp"))); ok("صور البطاقات موجودة", !imgs.length, imgs.map(t => t.img));
+const icd = path.join(__dirname, "../assets/realistic_tool_icons_svg"), tt = JSON.parse(fs.readFileSync(path.join(__dirname, "../assets/data/tool-titles.json"), "utf8")).tools, icFiles = fs.readdirSync(icd).filter(f => /\.svg$/.test(f));
+ok("14 أيقونة SVG بلا أي عنصر نصي ولا <title> (العناوين خارج الصورة)", icFiles.length === 14 && icFiles.every(f => { const h = fs.readFileSync(path.join(icd, f), "utf8"); return !/<text|<tspan|<title/.test(h) && /aria-hidden="true"/.test(h) && (h.match(/<image /g) || []).length === 1; }), icFiles);
+ok("ملف العناوين المترجمة يغطي الأيقونات الـ14 بالعربية والفرنسية والإنجليزية (عنوان ووصف) ولكل أيقونة نسخة webp", Object.keys(tt).length === 14 && Object.values(tt).every(t => ["ar", "fr", "en"].every(l => t.t[l] && t.d[l]) && fs.existsSync(path.join(icd, t.icon + ".svg")) && fs.existsSync(path.join(__dirname, "../assets/img/tools/ic", t.icon + ".webp"))), Object.keys(tt));
 const esc = tools.some(t => /<|>/.test(t.name + t.tag + t.what)); ok("لا وسوم HTML في النصوص", !esc);
 const nav = fs.readFileSync(path.join(__dirname, "../assets/js/admin-nav.js"), "utf8"), m = /const DEEP_NAME = \{([^}]*)\}/.exec(nav), tabs = /const DEEP_TAB = \{([^}]*)\}/.exec(nav);
 const handled = new Set([...(m ? m[1].matchAll(/(\w+):/g) : [])].map(x => x[1]).concat([...(tabs ? tabs[1].matchAll(/(\w+):/g) : [])].map(x => x[1])));
