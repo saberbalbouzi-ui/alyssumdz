@@ -3,7 +3,7 @@
 const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
 const root = path.join(__dirname, ".."); let fails = 0;
 const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x).slice(0, 300)); } else console.log("✓", n); };
-const ts = fs.readFileSync(path.join(root, "supabase/functions/supplier-proxy/index.ts"), "utf8");
+const ts = fs.readFileSync(path.join(root, "platform/supabase/functions/supplier-proxy/index.ts"), "utf8");
 const AL = [...ts.matchAll(/\["(GET|POST|PUT|PATCH|DELETE)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]), al = (m, p) => AL.some(([x, re]) => x === m && re.test(p));
 ok("الوسيط يسمح بمسارات المورّد", /path === "\/v1\/marketplace\/apply"/.test(ts) && al("GET", "/v1/marketplace/profile") && al("POST", "/v1/marketplace/products") && al("PATCH", "/v1/marketplace/products/4") && al("POST", "/v1/marketplace/images") && al("POST", "/v1/marketplace/orders/4/status") && al("POST", "/v1/wallet/deposits"));
 ok("الوسيط يمنع الإدارة والمحافظ الأخرى", !al("POST", "/admin/marketplace/sellers/1/approve") && !al("PUT", "/admin/marketplace/tenants/1/kind") && !al("POST", "/v1/wallet/chargily-webhook") && !al("POST", "/v1/marketplace/imports") && !al("DELETE", "/v1/marketplace/products/4") && !al("POST", "/v1/events"));

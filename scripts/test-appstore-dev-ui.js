@@ -1,4 +1,4 @@
-/* واجهة «بوابة المطوّر» في لوحة التاجر على متصفح حقيقي بوسيط مُحاكى (الخادم مختبَر في saas/platform/test/appstore.test.mjs):
+/* واجهة «بوابة المطوّر» في لوحة التاجر على متصفح حقيقي بوسيط مُحاكى (الخادم مختبَر في platform/api/test/appstore.test.mjs):
    NODE_PATH=/opt/node-tools/node_modules node scripts/test-appstore-dev-ui.js */
 const http = require("http"), fs = require("fs"), path = require("path"); const { chromium } = require("playwright");
 const root = path.join(__dirname, ".."); let fails = 0;

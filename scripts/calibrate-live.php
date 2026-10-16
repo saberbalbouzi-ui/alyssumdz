@@ -6,7 +6,7 @@ declare(strict_types=1);
      CAL_CARRIER=dhd CAL_CRED='{"token":"…"}' php scripts/calibrate-live.php   (أي شركة أخرى)
    اختياري: CAL_SAVE=/مسار/خارج/المستودع/profile.json لحفظ الملف الكامل (يحوي بلديات الشركة لا مفاتيحك).
    الزمن: ≈ 2–4 دقائق (احتراماً لحدود المعدّل). */
-require __DIR__ . '/../php-edition/shipping/src/autoload.php';
+require __DIR__ . '/../platform/php-edition/shipping/src/autoload.php';
 
 use Alyssum\Shipping\{Calibrator, OurGeo, ShippingFactory};
 

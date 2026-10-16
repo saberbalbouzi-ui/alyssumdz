@@ -1,4 +1,4 @@
-/* السحابة (Supabase) — المرحلة 2. الوصول بمفتاح خاص بالمحرر عبر دوال RPC (supabase/editor.sql)، والصور في Storage.
+/* السحابة (Supabase) — المرحلة 2. الوصول بمفتاح خاص بالمحرر عبر دوال RPC (platform/supabase/editor.sql)، والصور في Storage.
    لا يُرسل شيء إلى الشبكة أثناء التحرير؛ الحفظ السحابي صريح (زر) أو دوري لمشروع مفتوح فقط. */
 (function () {
   const Ed = window.Ed; const SS = k => { try { return sessionStorage.getItem(k); } catch (e) { return null; } }, LSg = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -13,7 +13,7 @@
       if (!this.enabled()) throw new Error("Supabase غير مضبوط في config.js");
       let r; try { r = await fetch(this.conf().url + "/rest/v1/rpc/" + fn, { method: "POST", headers: this.headers(true), body: JSON.stringify({ p: Object.assign({ key: this.getKey() }, p || {}) }) }); } catch (e) { throw new Error("تعذّر الاتصال بالإنترنت"); }
       const j = await r.json().catch(() => null);
-      if (!r.ok) { const m = String((j && (j.message || j.hint)) || r.status); if (/forbidden/.test(m)) { throw Object.assign(new Error("مفتاح المحرر غير صحيح"), { auth: true }); } if (r.status === 404 || /Could not find the function/.test(m)) throw new Error("دوال المحرر غير مثبّتة: شغّل supabase/editor.sql في Supabase"); throw new Error(m); }
+      if (!r.ok) { const m = String((j && (j.message || j.hint)) || r.status); if (/forbidden/.test(m)) { throw Object.assign(new Error("مفتاح المحرر غير صحيح"), { auth: true }); } if (r.status === 404 || /Could not find the function/.test(m)) throw new Error("دوال المحرر غير مثبّتة: شغّل platform/supabase/editor.sql في Supabase"); throw new Error(m); }
       return j;
     },
     /* يضمن وجود مفتاح صالح (يسأل عنه مرة واحدة ويتحقق) */

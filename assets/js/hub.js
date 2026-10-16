@@ -1,7 +1,7 @@
 /* النشر التلقائي (Hub) — v1.89.77. المدير يدخل ببريده وكلمة مروره فقط ولا يُدخل أي رمز نشر في المتصفح:
    (1) يمرّر هذا الملف كل طلبات النشر الصادرة نحو واجهة المستودع إلى دالة `hub` على الخادم (بجلسته)، فتنفّذها بالرمز المحفوظ مشفَّراً هناك؛
    (2) `Hub.dialog()` يربط الرمز مرة واحدة ثم يمسحه من المتصفح. يعمل فقط حين يُضبط `CONFIG.HUB_SITE` (معرّف المتجر)؛ وإلا لا يمسّ شيئاً.
-   الخادم: supabase/functions/hub/index.ts + supabase/hub.sql. الاختبار: node scripts/test-hub.js */
+   الخادم: platform/supabase/functions/hub/index.ts + platform/supabase/hub.sql. الاختبار: node scripts/test-hub.js */
 (function () {
   const LSK = "alyssum_gh_cfg", RX = /^https:\/\/api\.github\.com\/repos\/([^\/]+)\/([^\/]+)\/(.*)$/;
   const cfg = () => (typeof CONFIG !== "undefined" ? CONFIG : {});

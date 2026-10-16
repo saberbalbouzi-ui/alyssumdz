@@ -1,4 +1,4 @@
-/* واجهة «مركز المتاجر» على متصفح حقيقي بوسيط مُحاكى (الخادم مختبَر في saas/platform/test/sources.test.mjs):
+/* واجهة «مركز المتاجر» على متصفح حقيقي بوسيط مُحاكى (الخادم مختبَر في platform/api/test/sources.test.mjs):
    NODE_PATH=/opt/node-tools/node_modules node scripts/test-sources-ui.js
    يغطي: البطاقات والأرقام، المرشّحات، ربط متجر (الأسرار لا تُخزَّن)، التعديل، الإيقاف/الحذف، النقل إلى «طلباتي» عبر نافذة الطلب اليدوي، وتعطّل الخدمة. */
 const http = require("http"), fs = require("fs"), path = require("path");

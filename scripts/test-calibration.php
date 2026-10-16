@@ -3,7 +3,7 @@ declare(strict_types=1);
 /* اختبار «المعايرة عند أول ربط»: مع أول مفاتيح يلتقط النظام حساب الشركة (بلدياتها/مكاتبها/تعريفتها/حالات طرودها) ويبني ملف تصحيح يُطبَّق قبل أول إرسال حقيقي.
    المحاكيات (scripts/lib/carrier-sims.php) تعرض كتالوجاً بتهجئة الشركة المخالفة لكتالوجنا عمداً.
      php scripts/test-calibration.php      (كود خروج 1 عند أي إخفاق) */
-require __DIR__ . '/../php-edition/shipping/src/autoload.php';
+require __DIR__ . '/../platform/php-edition/shipping/src/autoload.php';
 require __DIR__ . '/lib/carrier-sims.php';
 
 use Alyssum\Shipping\{Calibrator, CalibrationService, ConnectionRepository, CredentialVault, OurGeo, Parcel, ShippingFactory, ShippingService, Status, WebhookProcessor};
@@ -26,7 +26,7 @@ $theirs = [
 ];
 $pause = static function (int $ms): void {};
 $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$pdo->exec(file_get_contents(__DIR__ . '/../php-edition/shipping/schema.sqlite.sql'));
+$pdo->exec(file_get_contents(__DIR__ . '/../platform/php-edition/shipping/schema.sqlite.sql'));
 $repo = new ConnectionRepository($pdo, new CredentialVault(['k1' => random_bytes(32)], 'k1'));
 
 function par(array $o = []): Parcel

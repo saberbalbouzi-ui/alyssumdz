@@ -1,4 +1,4 @@
-/* واجهة «المحفظة» على متصفح حقيقي بوسيط مُحاكى (الخادم والدفتر مختبَران في saas/platform/test/wallet.test.mjs):
+/* واجهة «المحفظة» على متصفح حقيقي بوسيط مُحاكى (الخادم والدفتر مختبَران في platform/api/test/wallet.test.mjs):
    NODE_PATH=/opt/node-tools/node_modules node scripts/test-wallet-ui.js */
 const http = require("http"), fs = require("fs"), path = require("path");
 const { chromium } = require("playwright");

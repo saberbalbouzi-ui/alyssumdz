@@ -3,12 +3,12 @@
 const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
 const root = path.join(__dirname, ".."); let fails = 0;
 const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x).slice(0, 300)); } else console.log("✓", n); };
-const ts = fs.readFileSync(path.join(root, "supabase/functions/platform-admin/index.ts"), "utf8");
+const ts = fs.readFileSync(path.join(root, "platform/supabase/functions/platform-admin/index.ts"), "utf8");
 const ALLOW = [...ts.matchAll(/\["(GET|POST|PUT|PATCH)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]);
 const allowed = (m, p) => ALLOW.some(([x, re]) => x === m && re.test(p));
 ok("السماح: كتالوج وطلبات وشريك", allowed("GET", "/admin/agency/services") && allowed("POST", "/admin/agency/services") && allowed("PUT", "/admin/agency/services/3") && allowed("GET", "/admin/agency/orders?status=pending") && allowed("GET", "/admin/agency/orders?status=pending&after=40") && allowed("PATCH", "/admin/agency/orders/9") && allowed("POST", "/admin/agency/orders/9/resend") && allowed("GET", "/admin/agency/partner") && allowed("PUT", "/admin/agency/partner"));
 ok("السماح يرفض الخبيث", !allowed("DELETE", "/admin/agency/orders/9") && !allowed("GET", "/admin/agency/orders?status=a;drop") && !allowed("PATCH", "/admin/agency/orders/x") && !allowed("GET", "/admin/agency/../tenants") && !allowed("GET", "/admin/tenants"));
-const px = fs.readFileSync(path.join(root, "supabase/functions/platform-proxy/index.ts"), "utf8");
+const px = fs.readFileSync(path.join(root, "platform/supabase/functions/platform-proxy/index.ts"), "utf8");
 const PA = [...px.matchAll(/\["(GET|POST|PUT|PATCH|DELETE)", (\/\^.*?\/)\]/g)].map(m => [m[1], eval(m[2])]), pal = (m, p) => PA.some(([x, re]) => x === m && re.test(p));
 ok("وسيط التاجر: الخدمات والطلبات والشراء فقط", pal("GET", "/v1/agency/services") && pal("GET", "/v1/agency/orders") && pal("GET", "/v1/agency/orders/12") && pal("POST", "/v1/agency/orders") && !pal("POST", "/v1/agency/partner/callback") && !pal("GET", "/admin/agency/orders") && !pal("PATCH", "/v1/agency/orders/1"));
 

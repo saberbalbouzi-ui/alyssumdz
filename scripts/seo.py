@@ -57,7 +57,7 @@ live = [p for p in products if p.get("active", True) and p["slug"] != "test" and
 
 # ── روابط نظيفة بلا /p و/lp: نسخة حقيقية من كل صفحة في جذر الموقع (alyssumdz.com/<slug>/) تُولَّد هنا ──
 REDIRECT_MARK, MIRROR_MARK = "<!--seo-redirect-->", "<!--seo-mirror-->"
-RESERVED = {"p", "lp", "assets", "admin", "api", "supabase", "scripts", "releases", "php-edition", "sales", "dist", "apps-script", "blog", "policy", "editor", "extension", "docs", "saas", "node_modules", "cart", "shop", "account", "index"}
+RESERVED = {"p", "lp", "assets", "admin", "api", "supabase", "scripts", "releases", "platform", "php-edition", "sales", "dist", "apps-script", "blog", "policy", "editor", "extension", "docs", "saas", "node_modules", "cart", "shop", "account", "index"}
 SLUG_OK = re.compile(r"[a-z0-9][a-z0-9_-]*")
 def managed_dir(name):
     d = ROOT / name; t = d / "index.html"

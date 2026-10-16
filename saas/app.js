@@ -1,5 +1,5 @@
 /* لوحة مزوّد منصة أليسوم: طلبات الدعم والإنشاء، المواقع، الزبائن، التحليلات، وإشعارات مباشرة.
-   الأمان: الدخول بحساب Auth، والقراءة/الكتابة محكومة بـRLS لمدير المنصة فقط (saas/schema.sql). */
+   الأمان: الدخول بحساب Auth، والقراءة/الكتابة محكومة بـRLS لمدير المنصة فقط (platform/sql/schema.sql). */
 (() => {
   "use strict";
   const C = window.SAAS_CFG || {}, $ = id => document.getElementById(id);
@@ -368,7 +368,7 @@
   const dchip = iso => { const d = dleft(iso); if (d == null) return '<span class="mut">بلا إغلاق</span>'; return pill(d <= 1 ? "urgent" : d <= 7 ? "high" : "active", d <= 0 ? "منتهٍ" : "بعد " + d + " يوم") + ' <span class="sm mut">' + fmt(iso).split("،")[0] + '</span>'; };
   const num = v => (v == null || v === "" ? null : Math.max(0, Math.round(Number(v))));
   const infin = v => (v == null ? "∞" : v);
-  const v2off = () => '<div class="card"><h3>يلزم تحديث قاعدة البيانات</h3><p class="mut">شغّل الملف <span class="ltr">saas/schema.sql</span> من جديد في SQL Editor (آمن للتكرار) لتفعيل الاشتراكات وAPI والإشعارات الصادرة.</p></div>';
+  const v2off = () => '<div class="card"><h3>يلزم تحديث قاعدة البيانات</h3><p class="mut">شغّل الملف <span class="ltr">platform/sql/schema.sql</span> من جديد في SQL Editor (آمن للتكرار) لتفعيل الاشتراكات وAPI والإشعارات الصادرة.</p></div>';
   async function loadExtra() {
     const R = await Promise.all([sb.from("saas_plans").select("*").order("sort"), sb.from("saas_settings").select("*"), sb.from("saas_outbox").select("*").order("id", { ascending: false }).limit(300), sb.rpc("saas_deadlines"), sb.rpc("saas_stats2"), sb.rpc("saas_ai_summary")]);
     const [pl, se, ob, dl, s2, ai] = R; S.v2 = !(pl.error || se.error || ob.error); if (!S.v2) return;
@@ -442,7 +442,7 @@
       '<div class="card">' + (L.length ? L.map(x => '<div class="tk" style="cursor:default;margin-bottom:8px"><div class="s">' + esc(x.subject || NK[x.kind] || x.kind) + '</div><div class="m">' + pill(x.status === "sent" ? "resolved" : x.status === "failed" ? "urgent" : "open", OST[x.status]) + pill("none", CHN[x.channel]) + pill("none", NK[x.kind] || x.kind) + '<span class="ltr">' + esc(x.to_addr) + '</span><span>' + esc(siteName(x.site_id)) + '</span><span>' + ago(x.created_at) + '</span></div><div class="sm mut" style="white-space:pre-wrap;margin:.4rem 0">' + esc(x.body) + '</div>' + (x.error ? '<div class="sm" style="color:#fca5a5">' + esc(x.error) + '</div>' : "") +
         '<div class="act" style="margin:.3rem 0 0">' + (x.status !== "sent" ? (x.channel === "whatsapp" ? '<a class="btn s" target="_blank" rel="noopener" data-a="obsent" data-v="' + x.id + '" href="https://wa.me/' + esc(x.to_addr) + '?text=' + encodeURIComponent(x.body) + '">فتح واتساب وتعليم «أُرسل»</a>' : '<a class="btn s" data-a="obsent" data-v="' + x.id + '" href="mailto:' + esc(x.to_addr) + '?subject=' + encodeURIComponent(x.subject) + '&body=' + encodeURIComponent(x.body) + '">فتح البريد وتعليم «أُرسل»</a>') + ' <button class="btn g s" data-a="obskip" data-v="' + x.id + '">تجاهل</button>' : "") + (x.status === "failed" ? ' <button class="btn o s" data-a="obretry" data-v="' + x.id + '">إعادة المحاولة</button>' : "") + ' <button class="btn r s" data-a="obdel" data-v="' + x.id + '">حذف</button></div></div>').join("") : '<div class="empty">لا إشعارات في هذه القائمة</div>') + '</div>' +
       '<div class="card" style="margin-top:12px"><h3>نصوص الرسائل</h3><p class="mut sm" style="margin:0 0 .4rem">العناصر المتاحة: <span class="ltr">{name} {site} {days} {date} {url} {reason} {plan}</span></p><div class="fr"><div><label class="f">الرسالة</label><select id="tpk">' + opts(NK, tk) + '</select></div></div><label class="f">العنوان (للبريد)</label><input id="tps" value="' + esc(t.subject) + '"><label class="f">النص</label><textarea id="tpb" rows="6">' + esc(t.body) + '</textarea><div class="act"><button class="btn" data-a="savetpl">حفظ النص</button></div></div>' +
-      '<div class="card" style="margin-top:12px"><h3>الإرسال التلقائي</h3><p class="mut sm" style="margin:0">زر «إرسال تلقائي» يستدعي الدالة <span class="ltr">saas-notify</span> (بريد عبر Resend وواتساب عبر Cloud API) بعد نشرها وضبط أسرارها (<span class="ltr">saas/functions/saas-notify/index.ts</span>). قبل ذلك أرسل الرسائل بنقرة من الأزرار أعلاه: يفتح واتساب/البريد برسالة جاهزة.</p></div>';
+      '<div class="card" style="margin-top:12px"><h3>الإرسال التلقائي</h3><p class="mut sm" style="margin:0">زر «إرسال تلقائي» يستدعي الدالة <span class="ltr">saas-notify</span> (بريد عبر Resend وواتساب عبر Cloud API) بعد نشرها وضبط أسرارها (<span class="ltr">platform/functions/saas-notify/index.ts</span>). قبل ذلك أرسل الرسائل بنقرة من الأزرار أعلاه: يفتح واتساب/البريد برسالة جاهزة.</p></div>';
   }
   async function obSet(id, patch) { const r = await sb.from("saas_outbox").update(patch).eq("id", id); if (r.error) toast("تعذّر التحديث", r.error.message, true); await load(); }
   async function autoSend() {

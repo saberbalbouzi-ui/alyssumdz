@@ -3,8 +3,8 @@ declare(strict_types=1);
 /* لقطة ذهبية لسلوك محوّلات PHP أمام المحاكيات الصارمة: كل خطوة تسجّل الطلبات الصادرة (وجهة/معاملات/ترويسات/جسم) والردود والنتيجة.
    تُستعمل لهدفين: (1) اختبار PHP يتحقق أن اللقطة المحفوظة حديثة؛ (2) اختبار بوابة Cloudflare JS يعيد تشغيل المحوّلات JS على الردود نفسها
    ويشترط أن تكون طلباتها ونتائجها مطابقة بالحرف — فنجاح ياليدين يعني نجاح الباقي بالصيغة نفسها في النسختين.
-   php scripts/gen-carrier-golden.php   (يكتب saas/gateway/test/carrier-golden.json) */
-require_once __DIR__ . '/../../php-edition/shipping/src/autoload.php';
+   php scripts/gen-carrier-golden.php   (يكتب platform/gateway/test/carrier-golden.json) */
+require_once __DIR__ . '/../../platform/php-edition/shipping/src/autoload.php';
 require_once __DIR__ . '/carrier-sims.php';
 
 use Alyssum\Shipping\{Calibrator, OurGeo, Parcel, ShippingFactory, StatusMapper};
@@ -24,7 +24,7 @@ final class RecSim implements HttpClient
 
 function carrier_golden(): array
 {
-    $dict = json_decode((string)file_get_contents(__DIR__ . '/../../php-edition/shipping/data/status-dict.json'), true);
+    $dict = json_decode((string)file_get_contents(__DIR__ . '/../../platform/php-edition/shipping/data/status-dict.json'), true);
     $cfg = [
         'yalidine'  => ['sim' => fn() => new YalidineSim(), 'good' => ['apiId' => 'AID', 'apiToken' => 'TOK'], 'bad' => ['apiId' => 'AID', 'apiToken' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'yalidine'],
         'dhd'       => ['sim' => fn() => new EcotrackSim(), 'good' => ['token' => 'TOK'], 'bad' => ['token' => 'NOPE'], 'deskKey' => 'desk_code', 'deskVal' => '16000', 'fam' => 'ecotrack'],

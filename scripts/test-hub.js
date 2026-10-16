@@ -1,4 +1,4 @@
-/* اختبار النشر التلقائي (Hub): الدالة على الخادم (supabase/functions/hub/index.ts) بمحاكاة Supabase وGitHub، والعميل (assets/js/hub.js).
+/* اختبار النشر التلقائي (Hub): الدالة على الخادم (platform/supabase/functions/hub/index.ts) بمحاكاة Supabase وGitHub، والعميل (assets/js/hub.js).
      node scripts/test-hub.js */
 const fs = require("fs"), path = require("path"), vm = require("vm");
 const root = path.join(__dirname, "..");
@@ -6,7 +6,7 @@ let fails = 0, total = 0;
 const ok = (n, c, x) => { total++; if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x)); } else console.log("✓", n); };
 
 /* ── الخادم ── */
-const SRC = fs.readFileSync(path.join(root, "supabase/functions/hub/index.ts"), "utf8");
+const SRC = fs.readFileSync(path.join(root, "platform/supabase/functions/hub/index.ts"), "utf8");
 const TK = "ghp_" + "a1B2c3D4e5F6g7H8i9J0k1L2m3N4";
 const users = { t_owner: { email: "Owner@x.com", email_confirmed_at: "1" }, t_editor: { email: "ed@x.com", email_confirmed_at: "1" }, t_stranger: { email: "who@x.com", email_confirmed_at: "1" }, t_unconf: { email: "owner@x.com" } };
 const roles = { "owner@x.com": "owner", "ed@x.com": "editor" };

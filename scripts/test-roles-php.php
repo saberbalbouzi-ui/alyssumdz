@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
-/* اختبار الأدوار والمصادقة الثنائية وسجلّ النشاط في نسخة الاستضافة (php-edition/api/index.php) بخادم PHP حقيقي — بلا شبكة خارجية.
+/* اختبار الأدوار والمصادقة الثنائية وسجلّ النشاط في نسخة الاستضافة (platform/php-edition/api/index.php) بخادم PHP حقيقي — بلا شبكة خارجية.
      php scripts/test-roles-php.php */
 $total = 0; $fails = 0;
 function ok(string $n, bool $c, mixed $x = null): void { global $total, $fails; $total++; if (!$c) { $fails++; echo "✗ $n " . ($x === null ? '' : json_encode($x, JSON_UNESCAPED_UNICODE)) . "\n"; } }
 
 /* ── الدوال النقية (TOTP/Base32/رموز الطوارئ) تُستخرج من المصدر نفسه وتُختبر بمتجهات RFC 6238 ── */
-$src = (string)file_get_contents(__DIR__ . '/../php-edition/api/index.php');
+$src = (string)file_get_contents(__DIR__ . '/../platform/php-edition/api/index.php');
 $a = strpos($src, 'function b32enc('); $b = strpos($src, 'function ownerMfa(');
 if ($a === false || $b === false) { echo "✗ تعذّر استخراج دوال TOTP\n"; exit(1); }
 eval(substr($src, $a, $b - $a));
@@ -26,7 +26,7 @@ ok('mfa_check: منع إعادة الاستعمال لنفس الخطوة', mfa_
 
 /* ── خادم PHP حقيقي ── */
 $root = sys_get_temp_dir() . '/rolesrv_' . bin2hex(random_bytes(4)); mkdir("$root/api", 0777, true);
-copy(__DIR__ . '/../php-edition/api/index.php', "$root/api/index.php");
+copy(__DIR__ . '/../platform/php-edition/api/index.php', "$root/api/index.php");
 file_put_contents("$root/api/config.php", "<?php return ['admin_hash' => " . var_export(password_hash('ownerpw', PASSWORD_DEFAULT), true) . ", 'max_upload_mb' => 8];");
 $port = random_int(20000, 40000);
 $p = proc_open(['php', '-S', "127.0.0.1:$port", '-t', $root], [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes);

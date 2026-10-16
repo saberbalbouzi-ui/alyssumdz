@@ -40,7 +40,7 @@ if a.update:
         # تحديث يدوي: يحمل أيضاً ملفات إعداد المحدِّث لتفعيل التحديث عن بُعد في المواقع القديمة (لا تدخل القناة البعيدة)
         for rel in ("api/update-config.php", "api/update-key.pem"):
             if (tmp / rel).exists(): shutil.copy2(tmp / rel, OUT / rel)
-        upd = (ROOT / "php-edition/update.php").read_text(encoding="utf-8").replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
+        upd = (ROOT / "platform/php-edition/update.php").read_text(encoding="utf-8").replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
         (OUT / "update.php").write_text(upd, encoding="utf-8")
     shutil.rmtree(tmp)
     ver = json.loads((OUT / "version.json").read_text())["version"]
@@ -64,13 +64,13 @@ if OUT.exists():
     shutil.rmtree(OUT)
 OUT.mkdir(parents=True)
 
-def cp(rel):
-    s = ROOT / rel; d = OUT / rel
+def cp(rel, dest=None):
+    s = ROOT / rel; d = OUT / (dest or rel)
     d.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(s, d) if s.is_dir() else shutil.copy2(s, d)
 
-for rel in ["admin.html", "assets/css", "assets/js", "assets/data", "supabase", "p/_template", "assets/img/placeholder", "assets/img/stickers", "assets/img/tools", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", "assets/ext"]:
-    cp(rel)
+for rel in ["admin.html", "assets/css", "assets/js", "assets/data", ("platform/supabase", "supabase"), "p/_template", "assets/img/placeholder", "assets/img/stickers", "assets/img/tools", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", "assets/ext"]:
+    cp(*rel) if isinstance(rel, tuple) else cp(rel)
 
 vals = {"SITE_NAME": a.name, "SITE_EN": a.name, "WA": a.wa, "YEAR": str(datetime.date.today().year)}
 fill = lambda t: re.sub(r"\{\{([A-Z_]+)\}\}", lambda m: vals.get(m.group(1), m.group(0)), t)
@@ -185,17 +185,17 @@ if a.target == "php":
     shutil.rmtree(OUT / "supabase", ignore_errors=True)
     shutil.rmtree(OUT / "scripts", ignore_errors=True)          # أدوات البائع (Python) لا تلزم الزبون، وتمنع استيراد Hostinger للأرشيف
     (OUT / "scripts/setup-supabase.sh").unlink(missing_ok=True)
-    shutil.copytree(ROOT / "php-edition/api", OUT / "api")
+    shutil.copytree(ROOT / "platform/php-edition/api", OUT / "api")
     # وحدة تجميع شركات التوصيل: المصدر + الربط + مخطط SQLite فقط (بلا webhook/bootstrap/README/data المستقلة)
-    _sh = OUT / "api/shipping"; shutil.copytree(ROOT / "php-edition/shipping/src", _sh / "src")
-    for _f in ("integration.php", "schema.sqlite.sql"): shutil.copy2(ROOT / "php-edition/shipping" / _f, _sh / _f)
-    (_sh / "data").mkdir(exist_ok=True); shutil.copy2(ROOT / "php-edition/shipping/data/status-dict.json", _sh / "data/status-dict.json")   # قواميس الحالات (StatusMapper)
-    shutil.copy2(ROOT / "php-edition/shipping/data/geo.json", _sh / "data/geo.json")   # كتالوجنا للولايات/البلديات (المعايرة عند أول ربط)
+    _sh = OUT / "api/shipping"; shutil.copytree(ROOT / "platform/php-edition/shipping/src", _sh / "src")
+    for _f in ("integration.php", "schema.sqlite.sql"): shutil.copy2(ROOT / "platform/php-edition/shipping" / _f, _sh / _f)
+    (_sh / "data").mkdir(exist_ok=True); shutil.copy2(ROOT / "platform/php-edition/shipping/data/status-dict.json", _sh / "data/status-dict.json")   # قواميس الحالات (StatusMapper)
+    shutil.copy2(ROOT / "platform/php-edition/shipping/data/geo.json", _sh / "data/geo.json")   # كتالوجنا للولايات/البلديات (المعايرة عند أول ربط)
     (_sh / ".htaccess").write_text("<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\nOrder allow,deny\nDeny from all\n</IfModule>\n", encoding="utf-8")
     code = "-".join(secrets.token_hex(2).upper() for _ in range(4))
     import subprocess
     h = subprocess.check_output(["php", "-r", "echo password_hash($argv[1], PASSWORD_DEFAULT);", code], text=True)
-    ins = (ROOT / "php-edition/install.php").read_text(encoding="utf-8").replace("__INSTALL_CODE_HASH__", h).replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
+    ins = (ROOT / "platform/php-edition/install.php").read_text(encoding="utf-8").replace("__INSTALL_CODE_HASH__", h).replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
     (OUT / "install.php").write_text(ins, encoding="utf-8")
     (OUT / "api/update-config.php").write_text("<?php\nreturn " + "['channel' => " + json.dumps(a.channel) + "];\n", encoding="utf-8")
     pk = ROOT / a.pubkey

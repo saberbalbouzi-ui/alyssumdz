@@ -115,7 +115,7 @@ const SA = ctx.ShipAgg; (async () => {
     ok("المعايرة: تجمّع الحالة المجهولة من موقعين وتهرب HTML", /<b>yalidine<\/b>/.test(root.innerHTML) && !/<b>en cours<\/b>/.test(root.innerHTML) && /&lt;b&gt;en cours/.test(root.innerHTML) && /<td>2<\/td><td>3<\/td>/.test(root.innerHTML), root.innerHTML.slice(0, 900));
     ok("المعايرة: المشكلة الأخرى مجمّعة بعد توحيد الأرقام (موقعان)", /مثل: Zeralda/.test(root.innerHTML) && /<td>2<\/td><td>2<\/td>/.test(root.innerHTML));
     ok("المعايرة: اقتراح «retour» = مرتجع", c3.window.SaasCalib.suggest("Retour en cours") === "returned" && c3.window.SaasCalib.suggest("Tentative échouée") === "failed_attempt" && c3.window.SaasCalib.suggest("xyz") === "");
-    { const { normText } = await import("../saas/gateway/src/status.js"); const samples = ["Retour <b>en cours</b> (12)", "Tentative échouée", "Pas encore expédié", "En préparation [2]", "Livré - paiement_ok", "  Œuvre  Ça  ", "وصل  للمركز", "Sortie_en-livraison (3)"];
+    { const { normText } = await import("../platform/gateway/src/status.js"); const samples = ["Retour <b>en cours</b> (12)", "Tentative échouée", "Pas encore expédié", "En préparation [2]", "Livré - paiement_ok", "  Œuvre  Ça  ", "وصل  للمركز", "Sortie_en-livraison (3)"];
       ok("تطبيع لوحة المزوّد = تطبيع البوابة/PHP حرفياً", samples.every((x) => c3.window.SaasCalib.norm(x) === normText(x)), samples.map((x) => [c3.window.SaasCalib.norm(x), normText(x)])); }
     await root.onclick({ target: { closest: () => ({ dataset: { cb: "fix", i: "0" } }) } });
     const fx = rpcs.find((r) => r[0] === "saas_fix_set");

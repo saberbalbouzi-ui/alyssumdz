@@ -26,4 +26,4 @@ jobs:
           [[ "$SITE_WA" =~ ^[0-9]{8,15}$ ]] || { echo "رقم واتساب غير صالح"; exit 1; }
           [ -n "$SUPABASE_SERVICE_KEY" ] || { echo "السرّ SUPABASE_SERVICE_KEY غير مضبوط"; exit 1; }
           python3 scripts/make-template.py --target php --out dist/site --name "$SITE_NAME" --wa "$SITE_WA"
-          python3 saas/tools/publish-site.py dist/site "$SITE_ID" --prune
+          python3 platform/tools/publish-site.py dist/site "$SITE_ID" --prune
