@@ -625,7 +625,8 @@
    "rel": [
     "brand"
    ],
-   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+   "landing": "landing/logo-maker/"
   },
   {
    "id": "batch",
@@ -649,7 +650,8 @@
     "catalog",
     "up"
    ],
-   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+   "landing": "landing/batch-processing/"
   },
   {
    "id": "catalog",
@@ -672,7 +674,8 @@
     "batch",
     "st"
    ],
-   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+   "landing": "landing/product-catalog/"
   },
   {
    "id": "ast",

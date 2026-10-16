@@ -49,3 +49,5 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 تسع صفحات: نزع الخلفية (يدوية) + ثماني مولَّدة من `scripts/gen-landing.py` (image-generator، virtual-model، product-photography، virtual-tryon، video-maker، product-scenes، quality-resize، object-eraser). حزمة صور جديدة = انسخ المنتقى إلى `saas/landing/<slug>/img/` (بلا نص مطبوع، بلا نساء بلا خمار)، شغّل `enhance-images.py`، أضف قاموساً لـPAGES وحقل `landing` في tools.json ثم `gen-tool-pages.py`.
 (v1.89.269) لا صفحات دليل ولا تطبيق «كل الأدوات»: صفحة كل أداة هي صفحة التعريف وتعرض كل صور حزمتها (`PACKS` في gen-landing.py)، و«ستوديو ديزاين» يضمّنها بإطار `?embed=1`.
 
+
+- v1.89.271: صفحات التعريف كلها (14، ومنها remove-background) تُولَّد من `PAGES` في gen-landing.py؛ `CAP[slug]` = عناوين عربية بحسب ترتيب الصور حين لا يطابق اسم الملف محتواها. حزمة نزع الخلفية القديمة `remove_webp_and_template` حُذفت وحلّت محلها `alyssum_suppression_de_fond_webp`.
