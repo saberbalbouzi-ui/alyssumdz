@@ -56,6 +56,7 @@
     "assets/js/admin-digital.js",
     "assets/js/admin-marketplace.js",
     "assets/js/admin-kind.js",
+    "assets/js/admin-edition.js",
     "assets/js/digital-checkout.js",
     "assets/js/admin-roles.js",
     "assets/js/admin-platform-sync.js",
