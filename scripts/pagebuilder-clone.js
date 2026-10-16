@@ -510,7 +510,7 @@ const PBClone = (function () {
     } finally { f.remove(); }
   }
   async function deliver(page) {      // الوجهة: قسم داخل الصفحة الحالية (الافتراضي) أو صفحة جديدة
-    const hasPg = !!(A().E && A().E.page), dest = hasPg ? ((document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec") : "new";      // بلا صفحة مفتوحة في المطوّر (فتح الناسخ من تبويب «تطبيقات») تُفتح الصفحة الجديدة تلقائياً
+    const hasPg = !!(A().E && A().E.page), dest = hasPg ? ((document.querySelector('input[name="cl-dest"]:checked') || {}).value || "sec") : "new";      // بلا صفحة مفتوحة في المطوّر (فتح الناسخ من تبويب «إضافات») تُفتح الصفحة الجديدة تلقائياً
     if (dest === "sec") { finishFx(); await sleep(900); const sec = page.sections[0]; if (page.bg && !/^#f{6}$/i.test(page.bg)) page.sections.forEach(x => { x.set.bg = page.bg; }); close(); A().insertSections(page.sections, "نسخ قالب"); return true; }
     return openInEditor(page);
   }
@@ -693,7 +693,7 @@ const PBClone = (function () {
   const ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 012-2h10"/></svg>';
   function close() { const m = $("pbx-clone"); if (m) m.remove(); S.frame = null; S.img = null; S.runId = ""; clearInterval(EXT.t); }
   function open() {
-    if (document.documentElement.classList.contains("app-off-cloner")) { toast("ناسخ القوالب معطّل من تبويب تطبيقات"); return; }
+    if (document.documentElement.classList.contains("app-off-cloner")) { toast("ناسخ القوالب معطّل من تبويب إضافات"); return; }
     css(); if ($("pbx-clone")) return; S.tab = "url"; S.frame = null; S.img = null; S.url = ""; const m = document.createElement("div"); m.id = "pbx-clone";
     m.innerHTML = `<div class="cl-box"><div class="cl-h"><b>${ICON} نسخ قالب</b><small>افتح موقعاً برابطه أو صورة، حدّد الحد السفلي بسحب الحافة، ثم «انسخ»: يتحوّل المحتوى إلى عناصر قابلة للتعديل</small><button type="button" data-cl="x" title="إغلاق">✕</button></div>
 <div class="cl-tabs"><button type="button" class="on" data-cltab="url">رابط موقع</button><button type="button" data-cltab="img">صورة (لقطة شاشة)</button></div>

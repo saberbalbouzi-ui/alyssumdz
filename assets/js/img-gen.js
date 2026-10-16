@@ -619,7 +619,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     try { const n = await listModels(key); el.textContent = n.length ? "✅ المفتاح يعمل — " + n.length + " نموذج صور متاح" : "⚠️ المفتاح يعمل لكن لا يظهر نموذج صور — قد يلزم تفعيل الفوترة"; } catch (e) { el.textContent = "❌ " + e.message; }
   }
   const api = {
-    open() { if (document.documentElement.classList.contains("app-off-imggen")) { const b = $("ig-body"); if (b) b.innerHTML = "<div class=\"hint\">مولّد الصور معطّل من إعدادات التطبيقات.</div>"; return; } render(); },
+    open() { if (document.documentElement.classList.contains("app-off-imggen")) { const b = $("ig-body"); if (b) b.innerHTML = "<div class=\"hint\">مولّد الصور معطّل من إعدادات الإضافات.</div>"; return; } render(); },
     tab(t) { S.tab = t; render(); }, mode(m) { S.mode = m; S.res = null; render(); },
     file(inp) { const f = inp.files && inp.files[0]; if (!f) return; S.srcBlob = f; S.srcName = f.name; S.prod = null; const g = $("ig-gal"); if (g) g.innerHTML = ""; paintPrev(); const n = $("ig-name"); if (n && !n.value) n.value = f.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " "); },
     pickProd: loadFrom, useImg, size(id) { LS.set("alyssum_ig_size_" + S.mode, id); const s = sizeOf(id); $("ig-cus").style.display = id === "custom" ? "flex" : "none"; const w = id === "custom" ? Number($("ig-w").value) : s.w, h = id === "custom" ? Number($("ig-h").value) : s.h; $("ig-sz").textContent = w + "×" + h + "px — النسبة المُرسلة للنموذج " + nearAr(w, h) + " ثم تُقصّ بدقة"; },

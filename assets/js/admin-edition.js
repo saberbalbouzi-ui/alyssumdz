@@ -54,10 +54,16 @@ const AdminEdition = (() => {
   /* بطاقة الاختيار داخل «إعدادات الموقع» */
   function cardHtml(sel) {
     return '<div class="card"><h3>نسخة لوحة الإدارة</h3><div class="hint">اختر اللوحة المناسبة لنشاطك. يغيّر هذا ما يظهر في لوحة التحكم هذه فقط، ويمكنك الرجوع إلى «إيكومرس برو» في أي وقت من هنا.</div>' +
-      '<div style="display:grid;gap:.5rem;margin-top:.5rem">' + EDS.map(e => '<label style="display:flex;gap:.6rem;align-items:flex-start;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:.6rem .8rem;cursor:pointer"><input type="radio" name="stp-edition" value="' + e[0] + '"' + (sel === e[0] ? " checked" : "") + ' style="width:auto;margin-top:.3rem"><span><b>' + esc(e[1]) + '</b><br><small>' + esc(e[2]) + '</small></span></label>').join("") + '</div></div>';
+      '<div style="display:grid;gap:.5rem;margin-top:.5rem">' + EDS.map(e => '<label style="display:flex;gap:.6rem;align-items:flex-start;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:.6rem .8rem;cursor:pointer"><input type="radio" name="stp-edition" onchange="AdminEdition.set(this.value)" value="' + e[0] + '"' + (sel === e[0] ? " checked" : "") + ' style="width:auto;margin-top:.3rem"><span><b>' + esc(e[1]) + '</b><br><small>' + esc(e[2]) + '</small></span></label>').join("") + '</div></div>';
+  }
+  /* اختيار فوري: يُحفظ في إعدادات الموقع ويسري على اللوحة حالاً */
+  function set(v) {
+    if (!EDS.some(x => x[0] === v)) return; const S = typeof AdminStores !== "undefined" ? AdminStores : null; if (!S || !S.patch) return;
+    Promise.resolve(S.patch({ edition: v })).then(() => { apply(); try { toast("تم تفعيل نسخة «" + EDS.find(x => x[0] === v)[1] + "»"); } catch (e) { } if (v === "design") land(); }).catch(() => { apply(); });
+    apply();
   }
   const picked = () => { const r = document.querySelector('input[name="stp-edition"]:checked'); return r ? r.value : null; };
   function init() { guard(); apply(); const t = setInterval(() => { guard(); apply(); }, 1500); setTimeout(() => clearInterval(t), 12000); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
-  return { edition, allows, keepBtn, apply, landing, land, cardHtml, picked, EDS, KEEP_DESIGN, mark, guard };
+  return { set, edition, allows, keepBtn, apply, landing, land, cardHtml, picked, EDS, KEEP_DESIGN, mark, guard };
 })();
