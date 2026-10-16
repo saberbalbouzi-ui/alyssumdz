@@ -201,6 +201,19 @@
         "fr": "Créez un QR code ou un code-barres et téléchargez-le en PNG ou WebP",
         "en": "Create a QR or barcode and download it as PNG or WebP"
       }
+    },
+    "pack3d": {
+      "icon": "16-pack-3d",
+      "t": {
+        "ar": "Alyssum 3D Pack Studio",
+        "fr": "Alyssum 3D Pack Studio",
+        "en": "Alyssum 3D Pack Studio"
+      },
+      "d": {
+        "ar": "ركّب ملصقك على عبوة ثلاثية الأبعاد وصدّر صوراً احترافية",
+        "fr": "Appliquez votre étiquette sur un packaging 3D et exportez des visuels pro",
+        "en": "Apply your label to a 3D pack and export pro visuals"
+      }
     }
   }
 }
