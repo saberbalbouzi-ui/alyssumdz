@@ -1,0 +1,48 @@
+{
+  "colors": {
+    "bg": "#06130e",
+    "bg2": "#0b2018",
+    "accent": "#c6fe17",
+    "deep": "#173f35",
+    "green": "#22c55e",
+    "green2": "#4ade80",
+    "text": "#f3f8f4",
+    "muted": "#b8c9be",
+    "lightBg": "#f6f8f5",
+    "lightText": "#10241b",
+    "lightMuted": "#5a6b61",
+    "white": "#ffffff",
+    "amber": "#f59e0b",
+    "rose": "#fb7185",
+    "blue": "#38bdf8"
+  },
+  "font": {
+    "family": "Cairo",
+    "weights": [
+      400,
+      700,
+      800,
+      900
+    ],
+    "fallback": "Segoe UI, Tahoma, sans-serif",
+    "google": "https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap"
+  },
+  "radius": {
+    "sm": 12,
+    "md": 16,
+    "lg": 24
+  },
+  "buttons": {
+    "rule": "زجاج شفاف منتفخ بنص أبيض دائماً؛ لا ألوان صلبة",
+    "primary": "ليموني/أخضر زجاجي",
+    "alert": "برتقالي زجاجي",
+    "danger": "أحمر زجاجي",
+    "hover": "تلوين أقوى + translateY(-2px)"
+  },
+  "rules": [
+    "لا إيموجي في الواجهة",
+    "الليموني نصاً على الأبيض ممنوع",
+    "لا نص داخل الصور",
+    "اتجاه RTL افتراضي"
+  ]
+}

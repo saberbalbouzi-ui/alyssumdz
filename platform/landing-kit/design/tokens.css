@@ -1,0 +1,22 @@
+/* رموز هوية المنصة — انسخها كما هي ولا تغيّر القيم */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap');
+:root{
+  --bg:#06130e;            /* خلفية داكنة أساسية */
+  --bg2:#0b2018;           /* خلفية أقسام داكنة ثانوية */
+  --surface:rgba(255,255,255,.06);   /* بطاقة زجاجية */
+  --line:rgba(255,255,255,.14);      /* حدود */
+  --tx:#f3f8f4;           /* نص على الداكن */
+  --mu:#b8c9be;           /* نص ثانوي على الداكن */
+  --ac:#c6fe17;           /* الليموني — للتمييز على الداكن فقط */
+  --ac-rgb:198,254,23;
+  --deep:#173f35;         /* الأخضر العميق */
+  --green:#22c55e;--green2:#4ade80;
+  --lt:#f6f8f5;--lt2:#ffffff;       /* أقسام فاتحة */
+  --ltx:#10241b;--ltm:#5a6b61;      /* نص على الفاتح */
+  --amber:#f59e0b;--rose:#fb7185;--blue:#38bdf8; /* ألوان الحالات */
+  --r-sm:12px;--r-md:16px;--r-lg:24px;
+  --font:'Cairo','Segoe UI',Tahoma,sans-serif;
+}
+/* زر زجاجي شفاف منتفخ بنص أبيض — القاعدة الثابتة */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.72rem 1.5rem;border-radius:14px;font:inherit;font-weight:800;text-decoration:none;color:#fff;cursor:pointer;border:1px solid rgba(var(--ac-rgb),.6);background:linear-gradient(180deg,rgba(var(--ac-rgb),.34),rgba(var(--ac-rgb),.12));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 10px rgba(0,0,0,.28),0 6px 18px rgba(0,0,0,.28);backdrop-filter:blur(8px);transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(var(--ac-rgb),.5),rgba(var(--ac-rgb),.2))}
