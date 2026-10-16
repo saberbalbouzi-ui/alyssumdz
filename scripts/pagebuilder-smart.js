@@ -152,7 +152,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   async function keyCapture(sh, cv, inf, w, Z0, pt) {
     const $ = sh.$, W = cv.width, H = cv.height; let [zx0, zy0, zx1, zy1] = Z0 || [0, 0, W, H], zw = zx1 - zx0, zh = zy1 - zy0; const est = ImgGen.estimate(), mk = (a, b) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(a)); c.height = Math.max(1, Math.round(b)); return c; };
     const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
-    if (!confirm("التقاط العنصر بالذكاء (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — بتكلفة تقريبية " + est.fmt(est.cost * 2) + ".\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
+    if (!confirm("التقاط العنصر بالذكاء (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — سيستهلك من رصيد Alyssum API.\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
     $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ عزل العنصر بالذكاء…";
     try {
       const crop = mk(zw, zh), cg = crop.getContext("2d"); cg.drawImage(cv, zx0, zy0, zw, zh, 0, 0, zw, zh);

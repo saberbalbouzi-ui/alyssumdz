@@ -77,8 +77,8 @@ const AdminImgQA = (() => {
     const picks = S.rows.filter(r => S.sel[r.slug] && !r.err); if (!picks.length || S.busy) { say("حدّد منتجاً واحداً على الأقل"); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { say("المولّد الذكي غير متاح"); return; }
     const sh = PBAI._t.SHOTS[S.scene || 0] || PBAI._t.SHOTS[0], e = ImgGen.estimate ? ImgGen.estimate() : null;
-    if (e && e.left < picks.length * e.cost) { say("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); return; }
-    if (e && !confirm("تهيئة مشهد ذكي «" + sh[1] + "» لـ" + picks.length + " منتج\nالتكلفة التقريبية الإجمالية: " + e.fmt(picks.length * e.cost) + "\nمتابعة؟")) return;
+    if (e && !(e.can ? e.can(picks.length) : e.left >= (picks.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); say("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); return; }
+    if (e && !confirm("تهيئة مشهد ذكي «" + sh[1] + "» لـ" + picks.length + " منتج\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) return;
     S.busy = true; S.prev = {}; let bad = "";
     for (let i = 0; i < picks.length; i++) {
       const r = picks[i]; say("⏳ مشهد " + (i + 1) + " / " + picks.length + " — " + r.title);

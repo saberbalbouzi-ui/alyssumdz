@@ -13788,7 +13788,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   function gemTrack(j, model) {
     const u = (j && j.usageMetadata) || {}, tk = Number(u.promptTokenCount) || 0; _usage.tokens += tk; _usage.calls++; const pr = GEM_PRICE[model]; if (pr) _usage.cost += tk / 1e6 * pr; showCost();
   }
-  function showCost() { const el = typeof document !== "undefined" && document.getElementById("gen-cost"); if (el) el.textContent = _usage.calls ? "استهلاك Alyssum API: " + _usage.calls + " طلب · " + _usage.tokens.toLocaleString("en") + " رمز إدخال · ≈ $" + _usage.cost.toFixed(4) + " (مدخلات)" : ""; }
+  function showCost() { const el = typeof document !== "undefined" && document.getElementById("gen-cost"); if (el) el.textContent = _usage.calls ? "استعمال Alyssum API: " + _usage.calls + " طلب" : ""; }
   /* اختبار المفتاح: يعرض النماذج المتاحة ويجرّب طلباً صغيراً ويفسّر الخطأ */
   async function testKey() {
     const msg = $("gen-automsg"), key = ($("gen-gkey1").value || "").trim() || (function () { try { return localStorage.getItem("alyssum_gp_gkey") || ""; } catch (e) { return ""; } })();
@@ -14547,7 +14547,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   async function keyCapture(sh, cv, inf, w, Z0, pt) {
     const $ = sh.$, W = cv.width, H = cv.height; let [zx0, zy0, zx1, zy1] = Z0 || [0, 0, W, H], zw = zx1 - zx0, zh = zy1 - zy0; const est = ImgGen.estimate(), mk = (a, b) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(a)); c.height = Math.max(1, Math.round(b)); return c; };
     const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
-    if (!confirm("التقاط العنصر بالذكاء (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — بتكلفة تقريبية " + est.fmt(est.cost * 2) + ".\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
+    if (!confirm("التقاط العنصر بالذكاء (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — سيستهلك من رصيد Alyssum API.\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
     $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ عزل العنصر بالذكاء…";
     try {
       const crop = mk(zw, zh), cg = crop.getContext("2d"); cg.drawImage(cv, zx0, zy0, zw, zh, 0, 0, zw, zh);
@@ -16415,7 +16415,7 @@ const PBAI = (() => {
   const recolorPrompt = (item, color) => "RECOLOR THE PRODUCT in this photo: change ONLY the color of " + (String(item || "").trim() ? "the " + String(item).trim() : "the main garment or product") + " to " + color + ". "
     + "Preserve the exact fabric/material texture, weave, stitching, folds, wrinkles, highlights, natural shading and shadows so the new color looks photographed, not painted over — do not flatten it with a flat overlay. "
     + "Keep everything else exactly the same: shape, proportions, patterns/prints/logos (only recolor them if they are part of the base color), background, lighting, framing and any person's skin, face and hair. No watermark, no added text. Output the edited image.";
-  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُحسب التكلفة وتُطلب موافقتك قبل كل توليد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
+  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُطلب موافقتك قبل كل توليد، وتصلك تنبيهات عند اقتراب نفاد الرصيد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   const outfitPool = () => (typeof PBCollage !== "undefined" && PBCollage.poolOf ? PBCollage.poolOf(S.src || "") : []).filter(u => u && u !== S.src).slice(0, 20);
   function modelsHtml(f) {
     const ms = loadModels();
@@ -16534,7 +16534,7 @@ const PBAI = (() => {
           if (tz) out.getContext("2d").drawImage(pad, 0, 0, out.width, out.height); S.resP = p; S.frame = frame; showRes([out], "الحجم الناتج " + out.width + "×" + out.height + " — بلا ذكاء ولا تكلفة"); say("✅ جاهز — راجع النتيجة ثم طبّق"); S.busy = false; return;
         }
         const G = typeof ImgGen !== "undefined" ? ImgGen : null, e = G && G.estimate ? G.estimate() : null;
-        if (e) { if (e.left < 2 * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("توسيع الصورة بالذكاء الاصطناعي — خياران لتختار بينهما\nالتكلفة التقريبية: " + e.fmt(2 * e.cost) + " (" + e.fmt(e.cost) + " لكل خيار)\nالمقاس الناتج: " + p.W + "×" + p.H + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(2) : e.left >= (2) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("توسيع الصورة بالذكاء الاصطناعي — خياران لتختار بينهما\nسيستهلك من رصيد Alyssum API.\nالمقاس الناتج: " + p.W + "×" + p.H + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const pad = padded(base, p), blob = await blobOf(pad, "image/png"); say("⏳ يُنشئ الذكاء خيارين…");
         const rs = await Promise.allSettled([0, 1].map(v => ImgGen.edit({ blob, prompt: expandPrompt(o.hint.trim(), v), W: p.W, H: p.H, title: "توسيع الصورة بالذكاء الاصطناعي", confirm: e ? false : undefined })));
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => restore(r.value.canvas, base, p));
@@ -16544,7 +16544,7 @@ const PBAI = (() => {
         const r = S.rc, names = r.sel.map(k => (RC_COLORS.find(x => x[0] === k) || [])[3]).filter(Boolean).slice(0, 4); if (r.useCustom && names.length < 4) names.push("the exact color " + r.custom);
         if (!names.length) { say("اختر لوناً واحداً على الأقل"); S.busy = false; return; }
         const e = ImgGen.estimate ? ImgGen.estimate() : null;
-        if (e) { if (e.left < names.length * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("تلوين بالذكاء الاصطناعي — " + names.length + " ألوان\nالتكلفة التقريبية: " + e.fmt(names.length * e.cost) + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(names.length) : e.left >= (names.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("تلوين بالذكاء الاصطناعي — " + names.length + " ألوان\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const blob = await blobOf(src, "image/png"); say("⏳ جارٍ توليد " + names.length + " ألوان…");
         const rs = await Promise.allSettled(names.map(n => ImgGen.edit({ blob, prompt: recolorPrompt(r.item, n), W: src.width, H: src.height, title: "تلوين — " + n, confirm: e ? false : undefined })));
         const ok = rs.filter(x => x.status === "fulfilled" && x.value).map(x => x.value.canvas);
@@ -16553,7 +16553,7 @@ const PBAI = (() => {
       } else if (kind === "pshoot") {
         const idx = S.ps.filter(i => SHOTS[i]).slice(0, 3); if (!idx.length) { say("اختر مشهداً واحداً على الأقل"); S.busy = false; return; }
         const e = ImgGen.estimate ? ImgGen.estimate() : null;
-        if (e) { if (e.left < idx.length * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("تصوير المنتج بالذكاء الاصطناعي — " + idx.length + " مشاهد\nالتكلفة التقريبية: " + e.fmt(idx.length * e.cost) + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(idx.length) : e.left >= (idx.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("تصوير المنتج بالذكاء الاصطناعي — " + idx.length + " مشاهد\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const blob = await blobOf(src, "image/png"); say("⏳ جارٍ تصوير " + idx.length + " مشاهد…");
         const rs = await Promise.allSettled(idx.map(i => ImgGen.edit({ blob, prompt: shotPrompt(SHOTS[i][2], S.opt.hint.trim(), SHOTS[i][3]), W: src.width, H: src.height, title: "تصوير المنتج — " + SHOTS[i][1], confirm: e ? false : undefined })));
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => r.value.canvas);
@@ -16561,7 +16561,7 @@ const PBAI = (() => {
         showRes(ok, "نجح " + ok.length + " من " + idx.length + " — اختر الأفضل ثم طبّقه."); say("✅ جاهز — اختر أحد الخيارات");
       } else if (kind === "v360") {
         const n = S.v3.n, e = ImgGen.estimate ? ImgGen.estimate() : null, need = n - 1;
-        if (e) { if (e.left < need * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("عرض 360° بالذكاء الاصطناعي — " + need + " إطاراً جديداً\nالتكلفة التقريبية: " + e.fmt(need * e.cost) + "\nيُنفَّذ إطاراً بعد إطار ويمكن أن يستغرق دقائق. متابعة؟")) { say(""); S.busy = false; return; } }
+        if (e) { if (!(e.can ? e.can(need) : e.left >= (need) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }; if (!confirm("عرض 360° بالذكاء الاصطناعي — " + need + " إطاراً جديداً\nسيستهلك من رصيد Alyssum API.\nيُنفَّذ إطاراً بعد إطار ويمكن أن يستغرق دقائق. متابعة؟")) { say(""); S.busy = false; return; } }
         const blob0 = await polish(await blobOf(src, "image/png"), 1024), frames = [src], rs = $("pbai-res");
         for (let i = 1; i < n; i++) {
           say("⏳ الإطار " + (i + 1) + " من " + n + "…");
@@ -17048,7 +17048,7 @@ const PBVGen = (() => {
 <div id="pbvg-pool" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:96px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-vg="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(u) ? "3px solid #7c3aed" : "none"}">`).join("") || '<span class="ep-n">لا صور أخرى في الصفحة</span>'}</div>
 <div class="pbrt-row"><select id="pbvg-r" class="pbx-small">${RATIOS.map(([k, t]) => `<option value="${k}"${S.ratio === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
 <div class="rt-g"><label>المدة (ثانية) <b id="pbvg-dv">${S.dur}</b><input type="range" id="pbvg-d" min="3" max="10" value="${S.dur}"></label></div>
-<div class="ep-n" id="pbvg-cost">${rdy.ok ? "التكلفة التقريبية للفيديو: $" + (Math.round(rdy.price * 100) / 100).toFixed(2) + " — تُعرض وتُؤكَّد قبل التنفيذ" : "تحتاج مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور"}</div>
+<div class="ep-n" id="pbvg-cost">${rdy.ok ? "يستهلك من رصيد Alyssum API — تُطلب موافقتك قبل التنفيذ" : "تحتاج مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور"}</div>
 <div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vg="go">🎬 أنشئ الفيديو بالذكاء</button></div>
 <div id="pbvg-out"></div><div id="pbvg-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
   }
