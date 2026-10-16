@@ -4,6 +4,7 @@
 ثم أضف حقل landing في saas/guide/tools.json وشغّل scripts/gen-tool-pages.py. كل النصوص هنا عربية HTML (لا كتابة داخل الصور)، والاسم من saas/brand.json."""
 import html, pathlib
 from PIL import Image
+import re
 E = html.escape
 root = pathlib.Path(__file__).resolve().parent.parent
 L = root / "saas" / "landing"
@@ -23,6 +24,41 @@ ICONS = {
  "bolt": '<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
 }
 def svg(k): return f'<svg viewBox="0 0 24 24" aria-hidden="true">{ICONS[k]}</svg>'
+
+# ── معرض كل صور حزمة الأداة (assets/<pack>) ──
+PACKS = {"image-generator":"alyssum_generateur_images_webp","virtual-model":"alyssum_modele_virtuel_webp","product-photography":"alyssum_photographie_produit_webp",
+ "virtual-tryon":"alyssum_essayage_virtuel_webp","video-maker":"alyssum_generateur_video_webp","product-scenes":"alyssum_mise_en_scene_produit_webp",
+ "quality-resize":"alyssum_redimensionner_agrandir_webp","object-eraser":"alyssum_supprimer_des_objets_webp","remove-background":"remove_webp_and_template"}
+TOK = {"hero":"الواجهة الرئيسية","before":"قبل","after":"بعد","avantages":"المزايا","etapes":"خطوات الاستخدام","faq":"الأسئلة الشائعة","prompt":"وصف","exemple":"مثال","exemples":"أمثلة","multi":"متعددة","produits":"المنتجات","produit":"المنتج",
+ "styles":"أنماط","style":"نمط","variations":"تنويعات","variation":"تنويعات","formats":"مقاسات المنصات","scene":"مشهد","scenes":"مشاهد","alimentaire":"أغذية","vetement":"ملابس","vetements":"ملابس","chaussure":"أحذية","sac":"حقائب","sacs":"حقائب","cosmetique":"تجميل","cosmetics":"تجميل",
+ "meuble":"أثاث","meubles":"أثاث","electronique":"إلكترونيات","parfum":"عطور","generateur":"مولّد","images":"الصور","image":"صورة","modele":"عارض","modeles":"عارضون","femme":"نسائي","homme":"رجالي","enfant":"أطفال","enfants":"أطفال","professionnel":"مهني","sport":"رياضي",
+ "hijab":"محتشم","mannequin":"مانيكان","invisible":"غير مرئي","vues":"زوايا","vue":"عرض","multiples":"متعددة","types":"أنواع","fonds":"خلفيات","fond":"خلفية","et":"و","zoom":"تقريب","details":"تفاصيل","detail":"تفاصيل","templates":"قوالب","couleurs":"ألوان","360":"360°","eclairage":"إضاءة","studio":"استوديو",
+ "photographie":"تصوير","virtuel":"افتراضي","essayage":"تجربة","comparaison":"مقارنة","avant":"قبل","apres":"بعد","accessoires":"إكسسوارات","visage":"الوجه","chaussures":"أحذية","sacs":"حقائب","bijoux":"مجوهرات","montres":"ساعات","lunettes":"نظارات","foulards":"فولارات","categories":"فئات","angles":"زوايا","de":"","des":"","du":"",
+ "tissus":"أقمشة","tissu":"قماش","video":"فيديو","portrait":"بورتريه","travel":"سفر","handbag":"حقيبة","sneakers":"أحذية رياضية","furniture":"أثاث","headphones":"سماعات","mountain":"جبال","landscape":"منظر طبيعي","tropical":"استوائي","beach":"شاطئ","architecture":"عمارة","house":"منزل","living":"معيشة","room":"غرفة","food":"طعام",
+ "sports":"رياضة","car":"سيارة","runner":"عدّاء","action":"حركة","child":"طفل","running":"يركض","dog":"كلب","underwater":"تحت الماء","robot":"روبوت","scifi":"خيال علمي","fantasy":"خيال","castle":"قلعة","space":"فضاء","editor":"محرّر","workspace":"مساحة عمل","motion":"حركة","splash":"رذاذ","storyboard":"لوحة قصصية","ui":"واجهة",
+ "fauteuil":"كرسي","baskets":"أحذية رياضية","casque":"سماعة","audio":"صوت","miel":"عسل","deco":"ديكور","vases":"مزهريات","montre":"ساعة","epicerie":"بقالة","huiles":"زيوت","epices":"توابل","redimensionnement":"تغيير المقاس","recadrage":"قص","oiseau":"طائر","plumage":"ريش","chat":"قطة","oeil":"عين","paysage":"منظر","montagne":"جبل",
+ "agrandir":"تكبير","agrandissement":"تكبير","agrandi":"مكبّر","interieur":"داخلي","fleur":"زهرة","petales":"بتلات","bijou":"مجوهرات","mode":"أزياء","plage":"شاطئ","eau":"ماء","sable":"رمل","supprimer":"إزالة","dechets":"نفايات","passant":"عابر","terrasse":"شرفة","objets":"عناصر","branche":"غصن","tour":"برج","eiffel":"إيفل","personnes":"أشخاص","fraises":"فراولة","element":"عنصر",
+ "fils":"أسلاك","cables":"كابلات","insecte":"حشرة","voiture":"سيارة","cone":"مخروط","salon":"صالون","lac":"بحيرة","bateau":"قارب","bague":"خاتم","debris":"بقايا","pyramides":"أهرامات","foule":"حشد","distractions":"مشتتات","bag":"حقيبة","chair":"كرسي","fashion":"أزياء","shoe":"حذاء","model":"عارض","upload":"رفع","step":"خطوة","ai":"ذكاء","camera":"كاميرا","cream":"كريم","perfume":"عطر","product":"منتج","website":"موقع","landing":"صفحة هبوط","arabic":"عربي","template":"قالب"}
+def caption(fn):
+    base = re.sub(r"\.\w+$", "", fn); base = re.sub(r"^\d+[_-]", "", base)
+    toks = [t for t in re.split(r"[_\-\s]+", base.lower()) if t]
+    ar = [TOK.get(t, "") for t in toks]; ar = [a for a in ar if a]
+    c = " ".join(ar).replace("قبل بعد", "قبل وبعد") if ar else "مثال توضيحي"
+    return c
+def pack_images(slug):
+    pk = PACKS.get(slug); 
+    if not pk: return []
+    d = root / "assets" / pk; d = d / "images" if (d / "images").is_dir() else d
+    return d, sorted(f for f in d.iterdir() if f.suffix.lower() == ".webp" and not f.name.startswith("template"))
+def gallery(slug, title="معرض الصور", sub="كل صور الأداة في مكان واحد — اضغط أي صورة لتكبيرها. الصور توضيحية لأنواع النتائج ولا تمثل نتيجة مضمونة."):
+    r = pack_images(slug)
+    if not r: return ""
+    d, fs = r; rel = "../../../" + d.relative_to(root).as_posix()
+    figs = []
+    for f in fs:
+        w, h = Image.open(f).size; c = caption(f.name)
+        figs.append(f'<figure><img src="{rel}/{f.name}" width="{w}" height="{h}" loading="lazy" alt="{E(c)}"><figcaption>{E(c)}</figcaption></figure>')
+    return f'<!--gal--><section class="band alt" id="gallery"><div class="w"><h2>{E(title)} <small class="cnt">({len(fs)} صورة)</small></h2><p class="sub">{E(sub)}</p><div class="gal">{"".join(figs)}</div></div></section><!--/gal-->'
 
 PAGES = [
  dict(
@@ -166,6 +202,12 @@ PAGES += [
  ),
 ]
 
+import json
+TOOLS = {t["id"]: t for t in json.loads((root / "saas" / "guide" / "tools.json").read_text(encoding="utf-8"))["tools"]}
+def tips_band(p):
+    t = TOOLS.get(p["tool"], {}); tp = t.get("tips") or []
+    if not tp: return ""
+    return f'<section class="band" id="tips"><div class="w"><h2>نصائح للحصول على أفضل نتيجة</h2><p class="sub">{E(t.get("needsText",""))}</p><div class="feat tipsg">' + "".join(f"<div><i>{svg('check')}</i><span><b>{E(x)}</b></span></div>" for x in tp) + "</div></div></section>"
 def page(p):
     if not p.get("hero_wh"):
         p["hero_wh"] = Image.open(L / p["slug"] / "img" / p["hero"]).size
@@ -178,7 +220,7 @@ def page(p):
 <link rel="stylesheet" href="../landing.css"></head>
 <body>
 <header class="top"><div class="w"><a class="brand" href="#"><i>{svg("layers")}</i><span data-brand>المنصة</span></a>
-<nav><a href="#how">كيف تعمل</a><a href="#options">الخيارات</a><a href="#faq">الأسئلة الشائعة</a><a href="../../guide/{p["guide"]}.html">دليل الاستعمال</a></nav><span class="sp"></span>
+<nav><a href="#gallery">المعرض</a><a href="#how">كيف تعمل</a><a href="#options">الخيارات</a><a href="#faq">الأسئلة الشائعة</a></nav><span class="sp"></span>
 <a class="btn" {ad}>ابدأ مجاناً</a></div></header>
 <section class="hero"><div class="w"><div><span class="pill">{svg("spark").replace("<svg","<svg width='14' height='14'",1)} {E(p["pill"])}</span>
 <h1>{E(p["h1"])} <em>{E(p["em"])}</em></h1><p class="lead">{E(p["lead"])}</p>
@@ -186,21 +228,36 @@ def page(p):
 <div class="checks">{"".join(f"<span>{svg('check')}{E(c)}</span>" for c in p["checks"])}</div></div>
 <div class="shot"><img src="img/{p["hero"]}" width="{p["hero_wh"][0]}" height="{p["hero_wh"][1]}" alt="{E(p["hero_alt"])}"></div></div></section>
 <section class="band"><div class="w"><div class="feat">{"".join(f"<div><i>{svg(i)}</i><span><b>{E(a)}</b><small>{E(b)}</small></span></div>" for i,a,b in p["feats"])}</div></div></section>
-<section class="band alt"><div class="w"><h2>{E(p["ex_title"])}</h2><p class="sub">{E(p["ex_sub"])}</p>
-<div class="ex {p["ex_cls"]}">{"".join(f'<figure><img src="img/{i}" loading="lazy" alt="{E(a)}"><figcaption>{E(a)}<small>{E(b)}</small></figcaption></figure>' for i,a,b in p["ex"])}</div>
-<div class="wide"><div><h3>{E(p["wide"][0])}</h3><p style="color:var(--ltm)">{E(p["wide"][1])}</p><ul>{"".join(f"<li>{E(x)}</li>" for x in p["wide"][2])}</ul><a class="btn lg" {ad}>{E(p["wide"][3])}</a></div></div>
-<p class="fig">الصور في هذه الصفحة توضيحية لأنواع النتائج، ولا تمثل نتيجة مضمونة لكل صورة.</p></div></section>
+{gallery(p["slug"], p["ex_title"], p["ex_sub"])}
+<section class="band"><div class="w"><div class="wide"><div><h3>{E(p["wide"][0])}</h3><p style="color:var(--ltm)">{E(p["wide"][1])}</p><ul>{"".join(f"<li>{E(x)}</li>" for x in p["wide"][2])}</ul><a class="btn lg" {ad}>{E(p["wide"][3])}</a></div></div></div></section>
 <section class="band dk" id="how"><div class="w"><h2>ثلاث خطوات بسيطة</h2><p class="sub">من الصورة إلى النتيجة في دقائق.</p>
 <div class="steps">{"".join(f'<div class="st"><div class="stp"><span class="ico">{svg(i)}</span></div><h3><b>{n}</b>{E(a)}</h3><p>{E(b)}</p></div>' for n,(i,a,b) in enumerate(p["steps"],1))}</div></div></section>
 <section class="band" id="options"><div class="w"><h2>{E(p["opts_title"])}</h2><p class="sub">{E(p["opts_sub"])}</p><div class="chips">{"".join(f"<span>{E(x)}</span>" for x in p["opts"])}</div></div></section>
-<section class="band alt" id="faq"><div class="w"><h2>أسئلة شائعة</h2><p class="sub">إجابات سريعة عن أكثر ما يُسأل.</p><div class="faq">{"".join(f"<details><summary>{E(q)}</summary><p>{E(a)}</p></details>" for q,a in p["faq"])}</div></div></section>
+{tips_band(p)}<section class="band alt" id="faq"><div class="w"><h2>أسئلة شائعة</h2><p class="sub">إجابات سريعة عن أكثر ما يُسأل.</p><div class="faq">{"".join(f"<details><summary>{E(q)}</summary><p>{E(a)}</p></details>" for q,a in p["faq"])}</div></div></section>
 <section class="fin"><div class="w"><h2>{E(p["fin"])}</h2><p>{E(p["fin_p"])}</p><a class="btn lg" {ad}>{E(p["cta"])}</a>
 <div class="site"><label for="site-in">موقعك (لتفتح الأداة في لوحة تحكمك):</label><input id="site-in" placeholder="https://موقعك.com" dir="ltr"><span id="site-st"></span></div></div></section>
-<footer><div class="w"><span>© <span data-brand>المنصة</span></span><span><a href="../../guide/{p["guide"]}.html">دليل الاستعمال</a><a href="../../guide/index.html">كل الأدوات</a></span></div></footer>
+<footer><div class="w"><span>© <span data-brand>المنصة</span></span></div></footer>
 <script src="../landing.js"></script></body></html>''')
     return "".join(o)
 
 for p in PAGES:
     d = L / p["slug"]; d.mkdir(parents=True, exist_ok=True)
     (d / "index.html").write_text(page(p), encoding="utf-8")
+# صفحة نزع الخلفية اليدوية: أضف معرض كل صور الحزمة وأزل روابط الدليل
+rb = L / "remove-background" / "index.html"; h = rb.read_text(encoding="utf-8")
+h = re.sub(r"<!--gal-->.*?<!--/gal-->", "", h, flags=re.S)
+h = h.replace('<section class="band dk" id="how">', gallery("remove-background") + '<section class="band dk" id="how">', 1)
+h = re.sub(r'<a href="\.\./\.\./guide/bg\.html">دليل الاستعمال</a>', "", h)
+h = re.sub(r'<span><a href="\.\./\.\./guide/bg\.html">.*?</span>', "", h, flags=re.S)
+css = (L / "landing.css").read_text(encoding="utf-8"); css = css[css.index("/* معرض كل الصور"):]
+h = re.sub(r"/\* gal-css \*/.*?/\* /gal-css \*/", "", h, flags=re.S)
+h = h.replace("</style>", "/* gal-css */" + css + "/* /gal-css */</style>", 1)
+if "../landing.js" not in h: h = h.replace("</body>", '<script src="../landing.js"></script></body>', 1)
+rb.write_text(h, encoding="utf-8")
+# تنظيف: صور img/ غير المستعملة في الصفحات المولَّدة
+for p in PAGES:
+    d = L / p["slug"] / "img"; hh = (L / p["slug"] / "index.html").read_text(encoding="utf-8")
+    if d.is_dir():
+        for f in d.iterdir():
+            if f.is_file() and ("img/" + f.name) not in hh: f.unlink()
 print("landing pages:", len(PAGES))
