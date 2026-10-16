@@ -1320,6 +1320,17 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تغيير المقاس والتوسيع: الصف يفتح لوحة فيها قياسات المنصات وزر «بلا ذكاء»، ويُنتج 1080×1920 مجاناً", /توسيع/.test(rz.head) && rz.opts > 15 && rz.btn && rz.cards === 1 && rz.w === 1080 && rz.h === 1920, rz);
   const vt = await p.evaluate(() => { const T = PBVideo._t, c = document.createElement("canvas"); c.width = 360; c.height = 640; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 360, 640); T.overlay(g, 360, 640, .9, { title: "عسل طبيعي", price: "2500 دج", cta: "اطلب الآن", style: "bottom" }); const d = g.getImageData(180, 640 * .8 - 14, 1, 1).data; return { n: T.VTPL.length, painted: d[0] < 100 || d[1] < 120, ids: T.VTPL.map(x => x[0]).join() }; });
   ok("قوالب الفيديو: ستة قوالب والعنوان يُرسم على شريط بلون الهوية", vt.n === 6 && vt.painted, vt);
+  // ── تلوين بالذكاء (ألوان متعددة بموافقة واحدة) ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-imgx="recolor"]').click()); await p.waitForTimeout(800);
+  const rcT = await p.evaluate(async () => {
+    const head = (document.querySelector("#pbx-ep .ep-h") || {}).textContent || "", boxes = document.querySelectorAll("#pbx-ep [data-rck]").length;
+    const calls = []; const old = ImgGen.edit, oc = window.confirm; window.confirm = () => true; ImgGen.edit = async o => { calls.push(o.prompt); const c = document.createElement("canvas"); c.width = 40; c.height = 40; c.getContext("2d").fillRect(0, 0, 40, 40); return { canvas: c, blob: await new Promise(r => c.toBlob(r)) }; };
+    document.getElementById("pbai-rci").value = "الفستان"; document.querySelector('#pbx-ep [data-ai="recolor"]').click(); await new Promise(r => setTimeout(r, 1800));
+    const cards = document.querySelectorAll("#pbai-res [data-vc]").length; ImgGen.edit = old; window.confirm = oc;
+    return { head, boxes, calls: calls.length, cards, keep: calls.every(x => /ONLY the color/.test(x) && /not painted/.test(x) && /الفستان|the الفستان/.test(x)), red: /deep red/.test(calls[0] || "") && /navy blue/.test(calls[1] || "") };
+  });
+  ok("تلوين بالذكاء: الصف يفتح لوحة ألوان متعددة ويولّد لونين بموافقة واحدة مع حفظ النسيج", /تلوين/.test(rcT.head) && rcT.boxes === 10 && rcT.calls === 2 && rcT.cards === 2 && rcT.keep && rcT.red, rcT);
   // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);
