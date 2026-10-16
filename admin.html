@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.258">
+<meta name="admin-version" content="1.89.259">
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1663,12 +1663,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.258"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.258"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.258"></script>
+<script src="assets/js/ctl-help.js?v=1.89.259"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.259"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.259"></script>
 <script src="assets/js/img-gen.js?v=1.89.0"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.258"></script>
+<script src="assets/js/admin-nav.js?v=1.89.259"></script>
 <script src="assets/js/admin-coname.js?v=1.89.56"></script>
 <script src="assets/js/admin-tplsite.js?v=1.89.56"></script>
 <script src="assets/js/admin-theme.js?v=1.89.22"></script>
@@ -1680,7 +1680,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stores.js?v=1.89.247"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=1.89.26"></script>
-<script src="assets/js/admin-update.js?v=1.89.258"></script>
+<script src="assets/js/admin-update.js?v=1.89.259"></script>
 <script src="assets/js/admin-search.js?v=1.56.0"></script>
 <script src="assets/js/admin-hand.js?v=1.89.63"></script>
 <script src="assets/js/admin-voice.js?v=1.89.66"></script>
@@ -11726,6 +11726,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "gen") return goAdmin("imggen");
     if (k === "batch" || k === "catalog") return goAdmin("imgtools");
     if (k === "up") return imgPick("up");
+    if (k === "resize") return imgPick("xp");
     if (k === "fashion" || k === "model") return imgPick("fa");
     if (k === "tryon") return imgPick("to");
     if (k === "pshoot") return imgPick("ps");
@@ -11734,7 +11735,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (k === "brand") return imgPick("br");
     toast("هذه الأداة قيد التطوير وستظهر هنا فور جاهزيتها");
   }
-  const ROW_IC = { txt2img: '<path d="M4 6h10M4 11h7"/><rect x="13" y="10" width="8" height="10" rx="1.5"/><path d="M19 3v4M17 5h4"/>', brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
+  const ROW_IC = { resize: '<rect x="4" y="4" width="10" height="10" rx="1"/><path d="M14 20h6v-6M20 20l-7-7"/>', txt2img: '<path d="M4 6h10M4 11h7"/><rect x="13" y="10" width="8" height="10" rx="1.5"/><path d="M19 3v4M17 5h4"/>', brand: '<circle cx="8" cy="8" r="4"/><circle cx="16" cy="8" r="4" opacity=".6"/><circle cx="12" cy="15" r="4" opacity=".4"/><path d="M4 21h6M7 17v4"/>', fashion: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/><path d="M19 3v4M17 5h4"/>', gen: '<rect x="3" y="3" width="14" height="14" rx="2"/><path d="m3 14 4-4 5 5"/><path d="M19 3v4M17 5h4"/>', pshoot: '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>', model: '<circle cx="12" cy="7" r="3.5"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7"/><path d="M19 3v4M17 5h4"/>', tryon: '<path d="M8 3 4 6l2 3 2-1v12h8V8l2 1 2-3-4-3-2 2h-4z"/>', up: '<rect x="3" y="3" width="8" height="8" rx="1"/><path d="M14 10 21 3M15 3h6v6"/><rect x="3" y="14" width="7" height="7" rx="1" opacity=".5"/>', recolor: '<path d="M12 3 5 11a7 7 0 0 0 10 10l6-6z"/><path d="M19 3v4M17 5h4"/>', logo: '<circle cx="12" cy="12" r="9"/><path d="M15 9.5a4 4 0 1 0 0 5"/>', batch: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/><path d="m3 17 9 5 9-5" opacity=".5"/>', catalog: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="8" cy="8" r="1.5"/>' };
   const rowBtn = (k, n, d, soon) => `<button type="button" class="pbx-tr" data-imgx="${k}" title="${esc(n)}"><i><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ROW_IC[k] || ""}</svg></i><span><b>${esc(n)}</b><small>${esc(d)}</small></span>${soon ? '<em class="tt-b2">قريباً</em>' : ""}</button>`;
   function imgPane() {
     const inf = epInf(), open = !!$("pbx-ep"), cur = open ? (E.ept || "") : "", st = typeof PBStudio !== "undefined" ? PBStudio.tab() : "";
@@ -11742,7 +11743,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const grp = (title, keys, rows) => `<div class="pbx-cat">${title}</div><div class="pbx-ttg">${keys.map(k => { const t = IMG_TOOLS.find(x => x[0] === k); if (t) return tile(`data-imgt="${t[0]}"`, t[1], t[2], cur === t[0]); const m = IMG_SM.find(x => x[0] === k); return m ? tile(`data-imgm="${m[0]}"`, m[1], m[2], false, m[3] ? "" : "قريباً") : ""; }).join("")}</div>${rows ? `<div class="pbx-trs">${rows}</div>` : ""}`;
     return `${inf ? "" : '<div class="pbx-tn">حدّد صورة في الصفحة ثم اختر الأداة</div>'}`
       + grp("إنشاء", ["bg", "scene", "st", "vd"], rowBtn("gen", "مولّد الصور", "ولّد مشاهد ومنتجات بالذكاء") + rowBtn("pshoot", "تصوير المنتج بالذكاء", "عدة مشاهد احترافية دفعة واحدة") + rowBtn("txt2img", "صورة من وصف نصي", "اكتب فكرتك وتُولَّد صورة") + rowBtn("fashion", "استوديو أزياء ذكي", "عارض افتراضي ومانيكان غير مرئي") + rowBtn("tryon", "تجربة افتراضية", "شاهد القطعة على جسمك"))
-      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "غيّر لون العنصر بالنقر") + rowBtn("logo", "منشئ الشعار", "ولّد عناصر هوية العلامة", 1))
+      + grp("تعديل", ["mk", "pz", "cap", "rt", "ff", "fr", "bl", "cl", "xp", "sl", "ai", "erase"], rowBtn("resize", "تغيير المقاس والتوسيع", "أي منصة أو اتجاه، بلا إعادة تصوير") + rowBtn("up", "تحسين الجودة", "تكبير وحدّة وتقليل ضجيج") + rowBtn("brand", "الهوية البصرية", "الخطوط والألوان والشعار") + rowBtn("recolor", "تلوين الملابس", "غيّر لون العنصر بالنقر") + rowBtn("logo", "منشئ الشعار", "ولّد عناصر هوية العلامة", 1))
       + `<div class="pbx-cat">أتمتة وتوسّع</div><div class="pbx-trs">${rowBtn("batch", "معالجة الدفعات", "عدّل آلاف الصور دفعة واحدة") + rowBtn("catalog", "كتالوج المنتجات", "افحص وحدّث أغلفة كل متجرك")}</div>`
       + (cur === "st" ? `<div class="pbx-cat">أدوات استوديو المنتج</div><div class="pbx-ttg">${IMG_ST.map(([k, n, im]) => `<button type="button" class="pbx-tt${st === k ? " on" : ""}" data-imgs="${k}" title="${esc(n)}"><img src="assets/img/tools/${im}.webp" alt="" draggable="false"><span>${esc(n)}</span></button>`).join("")}</div>` : "")
       + `<p class="pbx-tn" style="margin-top:.5rem">الأدوات الذكية (توسيع، مشهد، أساليب، تعديل بالوصف، ممحاة) تحتاج مفتاح Alyssum API من إعدادات مولّد الصور، وتُحسب تكلفتها قبل كل تنفيذ.</p>`;
@@ -16339,11 +16340,12 @@ const PBAI = (() => {
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem">${SHOTS.map((x, i) => `<button type="button" class="pbx-small" data-ai="shot" data-i="${i}" style="padding:.5rem .3rem;white-space:normal">${x[1]}</button>`).join("")}</div>
 <div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
 <div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
-    if (kind === "xp") return `<div class="pbx-pz" id="pbai"><p>وسّع الصورة بالذكاء الاصطناعي: <b>اسحب مقابض الإطار البنفسجي حول الصورة إلى الخارج</b> حتى المكان الذي تريده (الصورة تبقى في مكانها)، ثم يُنشئ الذكاء امتداداً للصورة الأم ويعطيك <b>خيارين</b> لتختار بينهما.</p>${stateBar()}
+    if (kind === "xp") return `<div class="pbx-pz" id="pbai"><p>غيّر مقاس الصورة أو اتجاهها (مربع، طولي، عريض) <b>بالتوسيع الذكي</b> الذي يملأ المساحة الجديدة بما يطابق الأصل، أو <b>بلا ذكاء</b> بملء الهوامش بامتداد مموّه مجاني. للتوسيع الذكي: <b>اسحب مقابض الإطار البنفسجي حول الصورة إلى الخارج</b> حتى المكان الذي تريده (الصورة تبقى في مكانها)، ثم يُنشئ الذكاء امتداداً للصورة الأم ويعطيك <b>خيارين</b> لتختار بينهما.</p>${stateBar()}
 <div class="rt-g"><label>أو اضبط الإطار حسب نسبة <select id="pbai-r" class="pbx-small">${RATIOS.map(([n, v]) => `<option value="${v}"${Math.abs(o.ratio - v) < .001 ? " selected" : ""}>${n}</option>`).join("")}</select></label><label>موضع الأصل <select id="pbai-a" class="pbx-small">${ANCH.map(a => `<option value="${a[0]}"${o.anchor === a[0] ? " selected" : ""}>${a[1]}</option>`).join("")}</select></label></div>
+<div class="rt-g"><label>أو مقاس جاهز لمنصة <select id="pbai-sz" class="pbx-small"><option value="">— اختر —</option>${(typeof ImgGen !== "undefined" && ImgGen.sizes ? ImgGen.sizes() : []).map(g => `<optgroup label="${esc(g[0])}">${g[1].filter(x => x[0] !== "custom").map(x => `<option value="${x[2]}x${x[3]}"${o.sz && o.sz.w === x[2] && o.sz.h === x[3] ? " selected" : ""}>${esc(x[1])}</option>`).join("")}</optgroup>`).join("")}</select></label></div>
 <div class="ep-n" id="pbai-xi" style="min-height:1.3em"></div>
 <div class="rt-g"><label>وصف المشهد في المنطقة الجديدة (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: امتداد طاولة خشبية وضوء دافئ">${esc(o.hint)}</textarea></label></div>
-<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="expand">✨ أنشئ خيارين</button><button type="button" class="pbx-small" data-ai="xreset">↺ إعادة الإطار</button></div><div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="expand">✨ توسيع ذكي (خياران)</button><button type="button" class="pbx-small" data-ai="xlocal">↔ تغيير المقاس بلا ذكاء</button><button type="button" class="pbx-small" data-ai="xreset">↺ إعادة الإطار</button></div><div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     return `<div class="pbx-pz" id="pbai"><p>اكتب بالعربية ما تريد تغييره في الصورة، ويعدّلها الذكاء الاصطناعي مع الحفاظ على المنتج وملصقاته.</p>${stateBar()}
 <div class="pbrt-row">${PRESETS.map((p, i) => `<button type="button" class="pbx-small" data-ai="preset" data-i="${i}">${p[0]}</button>`).join("")}</div>
 <div class="rt-g"><label>التعليمات<textarea id="pbai-text" rows="4" style="width:100%" placeholder="مثال: غيّر لون الغطاء إلى الذهبي وأضف ظلاً ناعماً تحت المنتج">${esc(o.text)}</textarea></label></div>
@@ -16357,6 +16359,7 @@ const PBAI = (() => {
     if ($("pbai-tpart")) S.tpart = v("pbai-tpart");
     if ($("pbai-trem")) { const r = $("pbai-trem").checked; if (r !== S.remember) { S.remember = r; keepPerson(); } }
     if ($("pbai-fw")) S.fa = { who: v("pbai-fw"), pose: v("pbai-fp"), bg: v("pbai-fb"), ratio: v("pbai-fr") };
+    if ($("pbai-sz")) { const z = v("pbai-sz"); if (z) { const [zw, zh] = z.split("x").map(Number); o.sz = { w: zw, h: zh }; } }
     if ($("pbai-hint")) o.hint = v("pbai-hint") || ""; if ($("pbai-text")) o.text = v("pbai-text") || "";
   };
   const errText = e => e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل هذه الأداة" : e && e.code === "OFF" ? "التوليد الذكي للصور معطّل من الإعدادات" : "⚠️ " + (e && e.message || e);
@@ -16383,12 +16386,16 @@ const PBAI = (() => {
     try {
       if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("مولّد الصور غير متاح");
       say("⏳ جارٍ تجهيز الصورة…"); const src0 = await loadImg(inf.set.src), k0 = Math.min(1, 1600 / Math.max(src0.width, src0.height)), src = k0 < 1 ? (() => { const c = mk(src0.width * k0, src0.height * k0); c.getContext("2d").drawImage(src0, 0, 0, c.width, c.height); return c; })() : src0;
-      if (kind === "expand") {
+      if (kind === "expand" || kind === "xlocal") {
         const o = S.opt, x = A().xpGet && A().xpGet(), g = A().xpGeom ? A().xpGeom(S.id) : null, frame = !!(x && g && x.id === S.id && (x.l + x.r + x.t + x.b) > 0);
         let base = src;      // الإطار الظاهر قد تكون نسبته غير نسبة الملف (قصّ cover): نقصّ الأصل لنسبة الإطار كي تنطبق الإضافات على ما يراه المستخدم
         if (frame) { const fa = g.w / g.h, ia = src.width / src.height; if (Math.abs(ia - fa) > .02 * fa) { const cw = ia > fa ? src.height * fa : src.width, ch = ia > fa ? src.height : src.width / fa, c = mk(cw, ch); c.getContext("2d").drawImage(src, (src.width - cw) / 2, (src.height - ch) / 2, cw, ch, 0, 0, cw, ch); base = c; } }
         const p = frame ? plan(base.width, base.height, { dirs: { l: x.l / g.w * 100, r: x.r / g.w * 100, t: x.t / g.h * 100, b: x.b / g.h * 100 } }) : plan(base.width, base.height, { ratio: o.ratio, anchor: o.anchor });
         if (!p.grow) { say(frame ? "الإطار لم يخرج عن الصورة — اسحب مقبضاً إلى الخارج" : "النسبة المطلوبة لا تحتاج توسيعاً — اختر نسبة مختلفة أو اسحب الإطار"); S.busy = false; return; }
+        if (kind === "xlocal") {      // تغيير مقاس مجاني: هوامش بامتداد مموّه (padded) ثم مقاس المنصة بالبكسل إن اختير
+          const pad = padded(base, p), tz = !frame && o.sz ? o.sz : null, k = tz ? Math.min(1, 2048 / Math.max(tz.w, tz.h)) : 1, out = tz ? mk(tz.w * k, tz.h * k) : pad;
+          if (tz) out.getContext("2d").drawImage(pad, 0, 0, out.width, out.height); S.resP = p; S.frame = frame; showRes([out], "الحجم الناتج " + out.width + "×" + out.height + " — بلا ذكاء ولا تكلفة"); say("✅ جاهز — راجع النتيجة ثم طبّق"); S.busy = false; return;
+        }
         const G = typeof ImgGen !== "undefined" ? ImgGen : null, e = G && G.estimate ? G.estimate() : null;
         if (e) { if (e.left < 2 * e.cost) throw new Error("بلغتَ حدّ الإنفاق — ارفعه من إعدادات مولّد الصور"); if (!confirm("توسيع الصورة بالذكاء الاصطناعي — خياران لتختار بينهما\nالتكلفة التقريبية: " + e.fmt(2 * e.cost) + " (" + e.fmt(e.cost) + " لكل خيار)\nالمقاس الناتج: " + p.W + "×" + p.H + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const pad = padded(base, p), blob = await blobOf(pad, "image/png"); say("⏳ يُنشئ الذكاء خيارين…");
@@ -16436,13 +16443,13 @@ const PBAI = (() => {
   function mount(host, inf, kind) {
     S.kind = kind; if (S.id !== inf.node.id) { S.res = null; S.msg = ""; } S.id = inf.node.id;
     const root = host.querySelector("#pbai"); if (!root) return;
-    root.addEventListener("change", e => { if (e.target.dataset.psk != null) { const i = +e.target.dataset.psk; S.ps = S.ps.filter(x => x !== i); if (e.target.checked) { S.ps.push(i); if (S.ps.length > 3) { const first = S.ps.shift(); const b = root.querySelector('[data-psk="' + first + '"]'); if (b) b.checked = false; } } return; } readForm(); if (e.target.name === "pbai-v") pickVar(+e.target.value); else if (e.target.id === "pbai-r" || e.target.id === "pbai-a") frameFromRatio(); });
+    root.addEventListener("change", e => { if (e.target.dataset.psk != null) { const i = +e.target.dataset.psk; S.ps = S.ps.filter(x => x !== i); if (e.target.checked) { S.ps.push(i); if (S.ps.length > 3) { const first = S.ps.shift(); const b = root.querySelector('[data-psk="' + first + '"]'); if (b) b.checked = false; } } return; } readForm(); if (e.target.name === "pbai-v") pickVar(+e.target.value); else if (e.target.id === "pbai-r" || e.target.id === "pbai-a") { S.opt.sz = null; const zz = $("pbai-sz"); if (zz) zz.value = ""; frameFromRatio(); } else if (e.target.id === "pbai-sz") { if (S.opt.sz) { S.opt.ratio = S.opt.sz.w / S.opt.sz.h; frameFromRatio(); } } });
     xpChanged();
     const tp = $("pbai-tp"); if (tp) tp.onchange = () => { const f = tp.files[0]; if (!f) return; const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 2000 / Math.max(im.naturalWidth, im.naturalHeight)), c = mk(im.naturalWidth * k, im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); S.person = { c, w: c.width, h: c.height }; keepPerson(); const n = $("pbai-tpn"); if (n) n.textContent = "✔ صورة الشخص جاهزة (" + c.width + "×" + c.height + ")"; }; im.onerror = () => say("تعذّر قراءة الصورة"); im.src = u; };
     root.addEventListener("input", readForm);
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-ai]"); if (!t) return; const k = t.dataset.ai;
-      if (k === "pshoot") run("pshoot", inf); else if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
+      if (k === "pshoot") run("pshoot", inf); else if (k === "tryon") run("tryon", inf); else if (k === "fashion") { S.faMode = t.dataset.m; run("fashion", inf); } else if (k === "shot") { S.shotI = +t.dataset.i; run("shot", inf); } else if (k === "expand") run("expand", inf); else if (k === "xlocal") run("xlocal", inf); else if (k === "edit") run("edit", inf); else if (k === "apply") apply(inf); else if (k === "xreset") { A().xpSet && A().xpSet({ l: 0, r: 0, t: 0, b: 0 }); }
       else if (k === "tpdel") { S.person = null; S.remember = false; keepPerson(); const n = $("pbai-tpn"); if (n) n.textContent = "حُذفت صورتك"; t.remove(); }
       else if (k === "discard") { S.res = null; const r = $("pbai-res"); if (r) r.innerHTML = ""; say(""); }
       else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
@@ -16580,11 +16587,28 @@ const PBVideo = (() => {
     if (fx === "pl") ox = mx * (1 - 2 * e); else if (fx === "pr") ox = -mx * (1 - 2 * e); else if (fx === "pu") oy = my * (1 - 2 * e); else if (fx === "pd") oy = -my * (1 - 2 * e);
     g.fillStyle = bg || "#000"; g.fillRect(0, 0, W, H); g.drawImage(src, (W - dw) / 2 + ox, (H - dh) / 2 + oy, dw, dh);
   }
-  const S = { id: "", src: null, fx: "zin", size: "720x720", dur: 5, bg: "#000000", busy: false, url: "", mime: "", msg: "", raf: 0 };
+  /* قوالب فيديو للتجارة الإلكترونية: حركة + مقاس + مدة + خلفية + نمط العنوان. العنوان والسعر وزر الدعوة تُرسم على كل إطار بألوان الهوية البصرية وخطها (PBBrand) */
+  const VTPL = [["story", "ستوري إعلان", "zin", "720x1280", 6, "#0b1d17", "bottom"], ["sale", "عرض خصم", "pulse", "720x900", 5, "#173f35", "badge"], ["lux", "فاخر هادئ", "zout", "720x900", 6, "#111111", "bottom"], ["reels", "ريلز ديناميكي", "pl", "720x1280", 5, "#0b1d17", "top"], ["wide", "واجهة عريضة", "pr", "1280x720", 5, "#ffffff", "bottom"], ["post", "منشور مربع", "pd", "720x720", 5, "#fbf8f2", "bottom"]];
+  /* نقية: تُرسم فوق الإطار t∈[0,1] (العنوان يظهر تدريجياً بعد 12% والسعر والدعوة بعد 40%) */
+  function overlay(g, W, H, t, o) {
+    if (!o || (!o.title && !o.price && !o.cta)) return; const kit = (typeof PBBrand !== "undefined" ? PBBrand._t.load() : { colors: ["#173f35", "#c8a24b", "#fbf8f2", "#1c2420", "#d64545"], font: "Cairo" }), ff = "'" + (kit.font || "Cairo") + "','Cairo',sans-serif", u = Math.min(W, H) / 100, ease = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+    const aT = ease((t - .12) / .18), aP = ease((t - .4) / .2), place = o.style || "bottom"; g.save(); g.direction = "rtl"; g.textAlign = "center"; g.textBaseline = "middle";
+    const band = (y, h, a) => { g.globalAlpha = .86 * a; g.fillStyle = kit.colors[0]; g.fillRect(0, y, W, h); g.globalAlpha = a; };
+    const ty = place === "top" ? H * .1 : H * .8, off = (1 - aT) * 18 * u;
+    if (o.title) { const fs = Math.round(u * 6.2); g.font = "800 " + fs + "px " + ff; if (place !== "badge") band(ty - fs * 1.1 + off, fs * 2.2, aT); else g.globalAlpha = aT; g.fillStyle = kit.colors[2]; g.fillText(o.title, W / 2, ty + off, W * .9); }
+    if (o.price && aP > 0) { const fs = Math.round(u * 5.4), r = place === "badge" ? u * 13 : 0; g.font = "900 " + fs + "px " + ff; g.globalAlpha = aP;
+      if (place === "badge") { const cx = W * .82, cy = H * .17 + (1 - aP) * -20 * u; g.fillStyle = kit.colors[4]; g.beginPath(); g.arc(cx, cy, r * aP, 0, 7); g.fill(); g.fillStyle = "#fff"; g.fillText(o.price, cx, cy, r * 1.7); }
+      else { const py = place === "top" ? H * .2 : H * .9, w = Math.min(W * .5, g.measureText(o.price).width + fs * 2); g.fillStyle = kit.colors[1]; g.beginPath(); g.roundRect ? g.roundRect(W / 2 - w / 2, py - fs, w, fs * 2, fs) : g.rect(W / 2 - w / 2, py - fs, w, fs * 2); g.fill(); g.fillStyle = kit.colors[0]; g.fillText(o.price, W / 2, py, w); } }
+    if (o.cta && t > .7) { const a = ease((t - .7) / .15), fs = Math.round(u * 4); g.font = "800 " + fs + "px " + ff; g.globalAlpha = a; g.fillStyle = kit.colors[2]; g.fillText(o.cta, W / 2, place === "top" ? H * .93 : H * .96 - (place === "bottom" && o.price ? 0 : 0), W * .9); }
+    g.restore();
+  }
+  const S = { tpl: "", title: "", price: "", cta: "", id: "", src: null, fx: "zin", size: "720x720", dur: 5, bg: "#000000", busy: false, url: "", mime: "", msg: "", raf: 0 };
   const supported = () => typeof MediaRecorder !== "undefined" && !!HTMLCanvasElement.prototype.captureStream;
   const pickMime = () => ["video/mp4;codecs=avc1", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || "";
   function panel() {
-    return `<div class="pbx-pz" id="pbvd"><p>حوّل الصورة إلى فيديو قصير بحركة ناعمة (Ken Burns) للإعلانات والستوريز — محلياً بلا خادم. ${supported() ? "" : "<b style='color:#b45309'>متصفحك لا يدعم التسجيل من اللوحة.</b>"}</p>
+    return `<div class="pbx-pz" id="pbvd"><p>حوّل الصورة إلى فيديو قصير بحركة ناعمة (Ken Burns) للإعلانات والستوريز — محلياً بلا خادم، بقوالب وعنوان وسعر وزر دعوة بألوان وخط هويتك البصرية. (توليد فيديو واقعي بالذكاء الاصطناعي غير متوفر بعد.) ${supported() ? "" : "<b style='color:#b45309'>متصفحك لا يدعم التسجيل من اللوحة.</b>"}</p>
+<div class="ep-n"><b>قوالب جاهزة للتجارة الإلكترونية</b></div><div class="pbrt-row">${VTPL.map(x => `<button type="button" class="pbx-small${S.tpl === x[0] ? " pz-go" : ""}" data-vt="${x[0]}">${x[1]}</button>`).join("")}</div>
+<div class="rt-g"><label>العنوان <input type="text" data-vtx="title" value="${(S.title || "").replace(/"/g, "&quot;")}" placeholder="مثال: عسل طبيعي 100%" style="width:100%"></label><label>السعر / العرض <input type="text" data-vtx="price" value="${(S.price || "").replace(/"/g, "&quot;")}" placeholder="مثال: 2500 دج" style="width:100%"></label><label>زر الدعوة <input type="text" data-vtx="cta" value="${(S.cta || "").replace(/"/g, "&quot;")}" placeholder="مثال: اطلب الآن" style="width:100%"></label></div>
 <div class="pbrt-row"><select id="pbvd-f" class="pbx-small">${EFFECTS.map(([k, t]) => `<option value="${k}"${S.fx === k ? " selected" : ""}>${t}</option>`).join("")}</select><select id="pbvd-s" class="pbx-small">${SIZES.map(([k, t]) => `<option value="${k}"${S.size === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
 <div class="rt-g"><label>المدة (ثانية) <b id="pbvd-dv">${S.dur}</b><input type="range" id="pbvd-d" min="2" max="12" value="${S.dur}"></label><label>لون الخلفية <input type="color" id="pbvd-b" value="${S.bg}"></label></div>
 <div style="text-align:center;margin:.4rem 0"><canvas id="pbvd-pv" style="max-width:100%;border-radius:6px;border:1px solid rgba(128,128,128,.3)"></canvas></div>
@@ -16593,13 +16617,13 @@ const PBVideo = (() => {
   }
   const say = t => { S.msg = t; const e = $("pbvd-msg"); if (e) e.textContent = t; };
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
-  function still() { const cv = $("pbvd-pv"); if (!cv || !S.src) return; const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 280 / Math.max(W, H)); cv.width = Math.round(W * k); cv.height = Math.round(H * k); frameAt(cv.getContext("2d"), S.src, cv.width, cv.height, 0, S.fx, S.bg); }
-  function play(ms) { cancelAnimationFrame(S.raf); const cv = $("pbvd-pv"); if (!cv || !S.src) return; const g = cv.getContext("2d"), t0 = performance.now(), dur = (ms || S.dur * 1000); const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, cv.width, cv.height, t, S.fx, S.bg); if (t < 1) S.raf = requestAnimationFrame(step); }; S.raf = requestAnimationFrame(step); }
+  function still() { const cv = $("pbvd-pv"); if (!cv || !S.src) return; const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 280 / Math.max(W, H)); cv.width = Math.round(W * k); cv.height = Math.round(H * k); { const g0 = cv.getContext("2d"); frameAt(g0, S.src, cv.width, cv.height, 0, S.fx, S.bg); overlay(g0, cv.width, cv.height, .9, S); } }
+  function play(ms) { cancelAnimationFrame(S.raf); const cv = $("pbvd-pv"); if (!cv || !S.src) return; const g = cv.getContext("2d"), t0 = performance.now(), dur = (ms || S.dur * 1000); const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, cv.width, cv.height, t, S.fx, S.bg); overlay(g, cv.width, cv.height, t, S); if (t < 1) S.raf = requestAnimationFrame(step); }; S.raf = requestAnimationFrame(step); }
   async function make() {
     if (S.busy || !S.src || !supported()) return; const mime = pickMime(); if (!mime) { say("لا يدعم المتصفح تسجيل الفيديو"); return; }
     S.busy = true; const [W, H] = S.size.split("x").map(Number), c = mk(W, H), g = c.getContext("2d"), stream = c.captureStream(30), rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4e6 }), chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
-    const done = new Promise(r => { rec.onstop = r; }); rec.start(200); const t0 = performance.now(), dur = S.dur * 1000; frameAt(g, S.src, W, H, 0, S.fx, S.bg);
-    await new Promise(res => { const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, W, H, t, S.fx, S.bg); say("⏳ تسجيل " + Math.round(t * 100) + "%"); if (t < 1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); });
+    const done = new Promise(r => { rec.onstop = r; }); rec.start(200); const t0 = performance.now(), dur = S.dur * 1000; frameAt(g, S.src, W, H, 0, S.fx, S.bg); overlay(g, W, H, 0, S);
+    await new Promise(res => { const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, W, H, t, S.fx, S.bg); overlay(g, W, H, t, S); say("⏳ تسجيل " + Math.round(t * 100) + "%"); if (t < 1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); });
     rec.stop(); await done; const blob = new Blob(chunks, { type: mime.split(";")[0] }); if (S.url) URL.revokeObjectURL(S.url); S.url = URL.createObjectURL(blob); S.mime = mime;
     const ext = /mp4/.test(mime) ? "mp4" : "webm", out = $("pbvd-out"); if (out) out.innerHTML = `<video src="${S.url}" controls loop muted playsinline style="max-width:100%;border-radius:6px"></video><div class="pbrt-row"><a class="pbx-small pz-go" href="${S.url}" download="alyssum-video.${ext}" style="text-decoration:none;display:inline-block">⬇ تنزيل الفيديو (${(blob.size / 1048576).toFixed(1)}MB)</a></div>`;
     say("✅ جاهز — يمكنك رفعه من «فيديو» في عناصر الصفحة"); S.busy = false; return blob;
@@ -16609,9 +16633,10 @@ const PBVideo = (() => {
     const root = host.querySelector("#pbvd"); if (!root) return; still();
     root.addEventListener("change", e => { const t = e.target; if (t.id === "pbvd-f") { S.fx = t.value; still(); play(1600); } else if (t.id === "pbvd-s") { S.size = t.value; still(); } else if (t.id === "pbvd-b") { S.bg = t.value; still(); } });
     root.addEventListener("input", e => { if (e.target.id === "pbvd-d") { S.dur = +e.target.value; const v = $("pbvd-dv"); if (v) v.textContent = S.dur; } });
-    root.addEventListener("click", e => { const t = e.target.closest("[data-vd]"); if (!t) return; if (t.dataset.vd === "play") play(1800); else if (t.dataset.vd === "make") make(); });
+    root.addEventListener("input", e => { const k = e.target.dataset && e.target.dataset.vtx; if (k) { S[k] = e.target.value; still(); } });
+    root.addEventListener("click", e => { const q = e.target.closest("[data-vt]"); if (q) { const x = VTPL.find(z => z[0] === q.dataset.vt); if (x) { S.tpl = x[0]; S.fx = x[2]; S.size = x[3]; S.dur = x[4]; S.bg = x[5]; S.style = x[6]; host.innerHTML = panel(); mount(host, inf); play(1800); } return; } const t = e.target.closest("[data-vd]"); if (!t) return; if (t.dataset.vd === "play") play(1800); else if (t.dataset.vd === "make") make(); });
   }
-  return { panel, mount, reset: () => { cancelAnimationFrame(S.raf); S.id = ""; S.src = null; S.msg = ""; }, state: S, make, supported, _t: { frameAt, EFFECTS } };
+  return { panel, mount, reset: () => { cancelAnimationFrame(S.raf); S.id = ""; S.src = null; S.msg = ""; }, state: S, make, supported, _t: { frameAt, EFFECTS, overlay, VTPL } };
 })();
 
 /* «دمج صورة داخل صورة»: صورة صغيرة تُدمج في الكبيرة بحواف ناعمة (Contour fondu: مربع/دائرة + تمويه غاوسي) مع التحكم بالموضع (سحب على المعاينة) والحجم والشفافية وأسلوب المزج. */

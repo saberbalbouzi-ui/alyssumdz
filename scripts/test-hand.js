@@ -192,7 +192,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     ok("أداة «" + k + "»: تفتح لوحتها", await p.evaluate(([r, t]) => { const e = document.getElementById(r); return !!e && new RegExp(t).test(e.textContent); }, [root, txt.source]));
   }
   await p.evaluate(() => document.querySelector('[data-imgm="sl"]').click()); await p.waitForTimeout(600);
-  ok("أساليب التصوير الذكية: اثنا عشر أسلوباً", await p.evaluate(() => document.querySelectorAll('#pbai [data-ai="shot"]').length === 12));
+  ok("أساليب التصوير الذكية: 12 أسلوباً + 5 مشاهد استخدام يومي", await p.evaluate(() => document.querySelectorAll('#pbai [data-ai="shot"]').length === 17));
   await p.evaluate(() => { localStorage.removeItem("alyssum_gp_gkey"); localStorage.removeItem("store_gp_gkey"); localStorage.removeItem("alyssum_ig_model"); localStorage.removeItem("store_ig_model"); });
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
   // ── منع سماع المساعد لنفسه ──
@@ -1307,6 +1307,19 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return { saved, kept, removed };
   });
   ok("تجربة افتراضية: صورة الشخص تبقى بين القطع (حتى بعد إغلاق الأداة) وتُحفظ فقط عند «تذكّر صورتي» وتُحذف بإلغائه", pp.saved && pp.kept && pp.removed, pp);
+  // ── تغيير المقاس والتوسيع (بلا ذكاء) + قياسات المنصات + قوالب الفيديو ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-imgx="resize"]').click()); await p.waitForTimeout(800);
+  const rz = await p.evaluate(async () => {
+    const head = (document.querySelector("#pbx-ep .ep-h") || {}).textContent || "", opts = document.querySelectorAll("#pbx-ep #pbai-sz option").length, btn = !!document.querySelector('#pbx-ep [data-ai="xlocal"]');
+    const sel = document.querySelector("#pbx-ep #pbai-sz"); sel.value = "1080x1920"; sel.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 300));
+    document.querySelector('#pbx-ep [data-ai="xlocal"]').click(); await new Promise(r => setTimeout(r, 1500));
+    const img = document.querySelector("#pbai-res img"), cards = document.querySelectorAll("#pbai-res [data-vc]").length;
+    return { head, opts, btn, cards, w: img ? img.naturalWidth : 0, h: img ? img.naturalHeight : 0, msg: (document.querySelector("#pbai-msg") || {}).textContent };
+  });
+  ok("تغيير المقاس والتوسيع: الصف يفتح لوحة فيها قياسات المنصات وزر «بلا ذكاء»، ويُنتج 1080×1920 مجاناً", /توسيع/.test(rz.head) && rz.opts > 15 && rz.btn && rz.cards === 1 && rz.w === 1080 && rz.h === 1920, rz);
+  const vt = await p.evaluate(() => { const T = PBVideo._t, c = document.createElement("canvas"); c.width = 360; c.height = 640; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 360, 640); T.overlay(g, 360, 640, .9, { title: "عسل طبيعي", price: "2500 دج", cta: "اطلب الآن", style: "bottom" }); const d = g.getImageData(180, 640 * .8 - 14, 1, 1).data; return { n: T.VTPL.length, painted: d[0] < 100 || d[1] < 120, ids: T.VTPL.map(x => x[0]).join() }; });
+  ok("قوالب الفيديو: ستة قوالب والعنوان يُرسم على شريط بلون الهوية", vt.n === 6 && vt.painted, vt);
   // ── استوديو الأزياء الذكي (محاكاة ImgGen.edit) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-imgx="fashion"]').click()); await p.waitForTimeout(600);
