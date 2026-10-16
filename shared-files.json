@@ -49,6 +49,7 @@
     "assets/js/admin-experts.js",
     "assets/js/admin-sources.js",
     "assets/js/admin-wallet.js",
+    "assets/js/admin-studio.js",
     "assets/js/admin-agency.js",
     "assets/js/admin-appstore.js",
     "assets/js/admin-appdev.js",

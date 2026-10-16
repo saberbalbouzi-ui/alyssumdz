@@ -41,3 +41,10 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 - عنصر `view360` (إطارات `imgs` + سكربت `.pb-v360`) وأداة `PBAI` kind `v3` (ذكاء بالتتابع بموافقة واحدة، أو رفع صور قرص دوّار). أداة جديدة تنتج صوراً: مرّرها بـ`PBAI._t.polish` قبل الرفع، ولا تحسّن ألوان كل إطار على حدة في تسلسل دوران.
 - `python3 scripts/enhance-images.py <مجلد> --min-w 700` لتحسين صور صفحات التعريف؛ لا يخترع تفاصيل فاطلب الأصل عالي الدقة.
 - صور النساء بلا حجاب في `saas/landing/virtual-model` مؤقتة بأمر صاحب المتجر؛ لا تُستعمل في مخرجات الأدوات.
+
+## ستوديو ديزاين (v1.89.267)
+تبويب `studio` (`assets/js/admin-studio.js`) يعرض كل الأدوات من `assets/data/tools-catalog.json` وصفحة مستقلة لكل أداة (`#studio=<id>`). أداة جديدة = مدخل في `saas/guide/tools.json` ثم `python3 scripts/gen-tool-pages.py` (يملأ what/steps/tips/rel في الكتالوج) فتظهر تلقائياً.
+
+## صفحات التعريف (v1.89.268)
+تسع صفحات: نزع الخلفية (يدوية) + ثماني مولَّدة من `scripts/gen-landing.py` (image-generator، virtual-model، product-photography، virtual-tryon، video-maker، product-scenes، quality-resize، object-eraser). حزمة صور جديدة = انسخ المنتقى إلى `saas/landing/<slug>/img/` (بلا نص مطبوع، بلا نساء بلا خمار)، شغّل `enhance-images.py`، أضف قاموساً لـPAGES وحقل `landing` في tools.json ثم `gen-tool-pages.py`.
+
