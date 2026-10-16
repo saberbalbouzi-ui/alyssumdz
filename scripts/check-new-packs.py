@@ -4,7 +4,7 @@
 import re, pathlib
 root = pathlib.Path(__file__).resolve().parent.parent
 src = (root / "scripts" / "gen-landing.py").read_text(encoding="utf-8")
-known = set(re.findall(r'"([a-z_]+_webp|remove_webp_and_template)"', src))
+known = set(re.findall(r'"([a-z_]+_webp)"', src))
 new = []
 for d in sorted((root / "assets").iterdir()):
     if not d.is_dir() or d.name in known: continue
