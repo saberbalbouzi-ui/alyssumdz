@@ -78,6 +78,41 @@ const PageRater = (() => {
     const html = await fetchPage(u), pg = fromHtml(html, u); if (!pg.images.length && !pg.title) throw new Error("لم أجد محتوى منتج في هذه الصفحة (قد تُبنى بالجافاسكربت). جرّب رابط صفحة المنتج نفسه.");
     const dims = await dimsOf(pg.images, 8); return Object.assign(score(pg, dims, null), { page: pg });
   }
+  /* درجة الإدراج (Listing Score) لكل منتج في المتجر: تقدّم بنسبة مئوية وما يُحسَّن تالياً — فحص محلي سريع بلا تحميل صور */
+  const GENERIC_NAME = /^(img|image|dsc|photo|screenshot|whatsapp|\d+|[a-f0-9-]{12,})[\s_.-]*\d*\.(webp|jpg|jpeg|png)$/i;
+  const fileOf = u => String(u || "").split("?")[0].split("/").pop();
+  function listing(p) {
+    const imgs = [p.cover].concat(p.images || []).filter((u, i, a) => u && a.indexOf(u) === i), words = String(p.desc || "").split(/\s+/).filter(Boolean).length;
+    const items = [
+      ["cover", "صورة غلاف", 10, !!p.cover || imgs.length > 0, "أضف صورة غلاف واضحة"],
+      ["imgs", "3 صور فأكثر", 15, imgs.length >= 3, "أضف زوايا أخرى (قريبة وبالاستعمال) حتى 3 صور على الأقل"],
+      ["imgs6", "5 صور فأكثر", 5, imgs.length >= 5, "5 صور أو أكثر تزيد الثقة"],
+      ["names", "أسماء ملفات وصفية", 8, imgs.length > 0 && imgs.filter(u => GENERIC_NAME.test(fileOf(u))).length / imgs.length < .5, "أعد تسمية الصور بأسماء وصفية (مثل: عسل-سدر-500غ.webp) لتحسين الظهور في البحث"],
+      ["desc", "وصف 40 كلمة فأكثر", 15, words >= 40, "اكتب وصفاً أوفى: المكوّنات، المقاس، الاستعمال"],
+      ["info", "مكوّنات/مقاس/استعمال في الوصف", 10, INFO.filter(i => i[2].test(p.desc || "")).length >= 2, "اذكر المكوّنات أو المقاس وطريقة الاستعمال في الوصف"],
+      ["seoTitle", "عنوان SEO", 7, !!(p.seoTitle && p.seoTitle.length >= 20), "أضف عنوان SEO من 20 حرفاً فأكثر"],
+      ["seoDesc", "وصف SEO", 7, !!(p.seoDesc && p.seoDesc.length >= 70), "أضف وصف SEO من 70 حرفاً فأكثر"],
+      ["kw", "كلمات مفتاحية", 5, !!(p.keywords && String(p.keywords).split(/[,،]/).filter(x => x.trim()).length >= 3), "أضف 3 كلمات مفتاحية على الأقل"],
+      ["cat", "تصنيف", 5, !!p.cat, "اختر تصنيفاً للمنتج"],
+      ["price", "سعر", 5, +p.price > 0, "حدّد السعر"],
+      ["offers", "عروض الكمية أو سعر قبل التخفيض", 4, !!((p.offers || []).length > 1 || +p.old > +p.price), "أضف عروض كميات أو سعراً قديماً"],
+      ["video", "فيديو", 4, !!(p.video || p.videoUrl), "أضف فيديو قصيراً (من «مولّد الفيديو»)"]
+    ];
+    const total = items.reduce((a, i) => a + i[2], 0), got = items.reduce((a, i) => a + (i[3] ? i[2] : 0), 0), todo = items.filter(i => !i[3]).sort((a, b) => b[2] - a[2]);
+    return { slug: p.slug, title: p.title, score: Math.round(got / total * 100), todo: todo.map(i => ({ id: i[0], label: i[1], tip: i[4], w: i[2] })) };
+  }
+  const listingAll = prods => (prods || []).filter(p => p && p.active !== false).map(listing).sort((a, b) => a.score - b.score);
+  /* تصدير الكتالوج بصيغة CSV لـShopify (Handle, Title, Body, Vendor, Type, Tags, Variant Price, Compare At, Image Src/Position, Status) — الصور بروابط مطلقة */
+  function shopifyCsv(prods, base) {
+    const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""').replace(/\r?\n/g, " ") + '"', abs = u => /^https?:/.test(u) ? u : String(base || "").replace(/\/+$/, "") + "/" + String(u || "").replace(/^\/+/, "");
+    const head = ["Handle", "Title", "Body (HTML)", "Vendor", "Type", "Tags", "Published", "Variant Price", "Variant Compare At Price", "Variant Inventory Qty", "Image Src", "Image Position", "Status"], rows = [head.map(q).join(",")];
+    for (const p of (prods || []).filter(x => x && x.active !== false)) {
+      const imgs = [p.cover].concat(p.images || []).filter((u, i, a) => u && a.indexOf(u) === i).map(abs), t = (p.tags || []).join(", "), first = [p.slug, p.title, "<p>" + String(p.desc || "").replace(/</g, "&lt;") + "</p>", "", p.cat || "", t, "true", p.price || 0, +p.old > +p.price ? p.old : "", p.stock == null || p.stock === "" ? "" : p.stock, imgs[0] || "", imgs[0] ? 1 : "", "active"];
+      rows.push(first.map(q).join(","));
+      imgs.slice(1).forEach((u, i) => rows.push([p.slug, "", "", "", "", "", "", "", "", "", u, i + 2, ""].map(q).join(",")));
+    }
+    return "\uFEFF" + rows.join("\r\n");
+  }
   const S = { res: null, busy: false, msg: "", mode: "store", slug: "", url: "" };
   function ensure() { const tab = $("tab-imgtools"); if (!tab) return null; let c = $("pr-card"); if (!c) { c = document.createElement("div"); c.id = "pr-card"; c.className = "card"; tab.appendChild(c); } return c; }
   const colr = s => s == null ? "#9aa" : s >= 8 ? "#86efac" : s >= 5 ? "#fcd34d" : "#fca5a5";
@@ -88,9 +123,14 @@ const PageRater = (() => {
 <div class="pr-row"><label><input type="radio" name="pr-m" value="store"${S.mode === "store" ? " checked" : ""}> منتج من متجري</label><label><input type="radio" name="pr-m" value="url"${S.mode === "url" ? " checked" : ""}> رابط صفحة</label></div>
 <div class="pr-row">${S.mode === "store" ? `<select id="pr-p" style="min-width:220px">${prods.map(p => `<option value="${esc(p.slug)}"${p.slug === S.slug ? " selected" : ""}>${esc(p.title)}</option>`).join("")}</select>` : `<input id="pr-u" type="url" dir="ltr" placeholder="https://example.com/products/..." value="${esc(S.url)}" style="min-width:280px;flex:1">`}<button type="button" class="btn-add" id="pr-go"${S.busy ? " disabled" : ""}>${S.busy ? "⏳ جارٍ الفحص…" : "قيّم الصفحة"}</button></div>
 <div id="pr-msg" class="hint">${esc(S.msg)}</div>
+<div class="pr-row"><button type="button" class="btn-add" id="pr-all">📊 درجة الإدراج لكل منتجات المتجر</button><button type="button" class="btn-add" id="pr-csv">⬇ تصدير الكتالوج لـShopify (CSV)</button></div>
+${S.all ? `<div class="pr-cat"><b>درجة الإدراج</b> — الأضعف أولاً (اضغط منتجاً لتعديله)<div style="max-height:320px;overflow:auto;margin-top:.4rem">${S.all.map(x => `<div style="display:grid;grid-template-columns:44px 1fr;gap:8px;padding:.35rem 0;border-top:1px solid rgba(255,255,255,.08);cursor:pointer" data-edit="${esc(x.slug)}"><b class="pr-s" style="font-size:1rem;color:${colr(x.score / 10)}">${x.score}%</b><span>${esc(x.title)}<br><small>${x.todo.length ? "التالي: " + esc(x.todo[0].tip) : "مكتمل"}</small></span></div>`).join("")}</div></div>` : ""}
 ${r ? `<div class="pr-cat"><span class="pr-s" style="color:${colr(r.total / 10)}">${r.total}/100</span> <b>الدرجة الإجمالية</b>${r.first ? ` — ابدأ بـ«${esc((r.cats.find(x => x.id === r.first) || {}).name)}»` : " — صفحتك في وضع جيد"}</div>
 ${r.cats.map(k => `<div class="pr-cat" data-cat="${k.id}"><div><b>${esc(k.name)}</b> <span class="pr-s" style="color:${colr(k.score)}">${k.score == null ? "—" : k.score + "/10"}</span> <small>${esc(k.band)}</small></div><ul>${k.findings.map(x => `<li>${esc(x)}</li>`).join("")}</ul>${k.fix ? `<div class="pr-row"><button type="button" class="btn-add" data-fix="${k.fix.tool}">${esc(k.fix.label)}</button></div>` : ""}</div>`).join("")}` : ""}`;
     c.querySelectorAll('input[name="pr-m"]').forEach(i => i.onchange = () => { S.mode = i.value; S.res = null; S.msg = ""; draw(); });
+    const al = $("pr-all"); if (al) al.onclick = () => { S.all = listingAll((typeof Admin !== "undefined" && Admin.products) || []); draw(); };
+    const cv = $("pr-csv"); if (cv) cv.onclick = () => { const base = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.domain) ? "https://" + CONFIG.SITE.domain : location.origin, b = new Blob([shopifyCsv((typeof Admin !== "undefined" && Admin.products) || [], base)], { type: "text/csv;charset=utf-8" }), a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "products-shopify.csv"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    c.querySelectorAll("[data-edit]").forEach(d => d.onclick = () => { try { Admin.editProduct(d.dataset.edit); } catch (e) { } });
     const g = $("pr-go"); if (g) g.onclick = run; c.querySelectorAll("[data-fix]").forEach(b => b.onclick = () => fix(b.dataset.fix));
   }
   async function run() {
@@ -103,5 +143,5 @@ ${r.cats.map(k => `<div class="pr-cat" data-cat="${k.id}"><div><b>${esc(k.name)}
   }
   function init() { if (!$("tab-imgtools")) return setTimeout(init, 300); draw(); const a = typeof Admin !== "undefined" ? Admin : null; if (a && !a.__prWrapped && a.tab) { a.__prWrapped = true; const o = a.tab.bind(a); a.tab = function (t) { const r = o.apply(a, arguments); if (t === "imgtools") draw(); return r; }; } }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
-  return { score, fromProduct, fromHtml, rateProduct, rateUrl, draw, S, INFO };
+  return { score, fromProduct, fromHtml, rateProduct, rateUrl, draw, S, INFO, listing, listingAll, shopifyCsv };
 })();

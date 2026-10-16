@@ -79,6 +79,7 @@ jobs:
       - run: NODE_PATH=$PWD/node_modules node scripts/test-kind.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-assets.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-vgen.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-vad.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-pagerater.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-fashion.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js

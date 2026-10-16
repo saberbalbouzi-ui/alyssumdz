@@ -383,6 +383,7 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
   const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = (LS.get(FALKEY, "") || "").trim(); return { ok: !!key && !off, off, nokey: !key, price: vcfg.price(), model: vcfg.model() }; };
   function videoBody(o, urls) {
     const body = { prompt: String(o.prompt || "").trim(), aspect_ratio: o.ratio || "9:16", duration: String(o.dur || vcfg.dur()) };
+    if (o.audio) { body.generate_audio = true; if (o.script) body.audio_script = String(o.script).slice(0, 1500); if (o.lang) body.audio_language = o.lang; if (o.voice) body.voice = o.voice; if (o.seed) body.seed = o.seed; }
     if (urls.length === 1) body.image_url = urls[0]; else if (urls.length > 1) { body.image_url = urls[0]; body.image_urls = urls; }
     return body;
   }
@@ -417,6 +418,28 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     const vr = await fetch(u); if (!vr.ok) throw new Error("تعذّر تنزيل الفيديو الناتج"); const blob = await vr.blob();
     LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob, type: blob.type || "video/mp4", cost: est, model: "fal:" + m };
+  }
+  /* نص/رؤية بالذكاء (Alyssum API): تعليمات نصية + صور اختيارية ← نص (أو JSON مُحلَّل عند o.json). يُحتسب في الرصيد بوحدة صغيرة وتسري عليه تنبيهات الرصيد. o = {prompt, blobs:[], json:boolean} */
+  const TEXT_UNIT = 0.003;
+  async function text(o) {
+    if (LS.get("alyssum_ai_text", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
+    const key = (LS.get(KEY, "") || "").trim(); if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
+    if (!o || !String(o.prompt || "").trim()) throw new Error("التعليمات مطلوبة");
+    if (cfg.budget() && cfg.budget() - cfg.spent() < TEXT_UNIT) { credit.note(); throw new Error(lowMsg); }
+    const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, 1024)) } });
+    let last = null;
+    for (const m of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: 3072 }, o.json ? { responseMimeType: "application/json" } : {}) }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) {
+        const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x => x.text || "").join("").trim(); if (!t) { last = new Error("ردّ فارغ"); continue; }
+        LS.set("alyssum_ig_spent", String(cfg.spent() + TEXT_UNIT)); LS.set(AIOUT, "0"); credit.note();
+        if (!o.json) return t.replace(/^```[a-z]*\n?|```$/g, "").trim();
+        try { return JSON.parse(t.replace(/^```[a-z]*\n?|```$/g, "").trim()); } catch (e) { last = new Error("ناتج غير صالح"); continue; }
+      }
+      const em = (j.error && j.error.message) || ""; if (billingHit(r.status, em)) credit.flagOut(); last = new Error("Alyssum API (نص) " + r.status + (em ? ": " + em.slice(0, 120) : "")); if (![404, 500, 502, 503, 504].includes(r.status)) break;
+    }
+    throw last || new Error("تعذّر الحصول على ردّ");
   }
   async function toLibrary(quiet) {
     if (!S.res) return null; const blob = await blobOf(S.res, fmtNow());
@@ -606,7 +629,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) { LS.set(FALKEY, k.trim()); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, credit, openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, credit, text, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;
