@@ -192,6 +192,7 @@ for cls, attrs, inner in re.findall(r'<button class="nav-btn([^"]*)"([^>]*)>(.*?
     desc = re.sub(r"<[^>]+>", "", s.group(1)).strip() if s else ""
     mods.setdefault(GRP.get(g.group(1), g.group(1)), []).append({"name": name, "description": desc})
 json.dump({"groups": [{"group": k, "modules": v} for k, v in mods.items()]}, open(os.path.join(root, "content", "panel-modules.json"), "w", encoding="utf8"), ensure_ascii=False, indent=1)
+shutil.copy(os.path.join(KIT, "PROMPT_FOR_CHATGPT.txt"), os.path.join(root, "PROMPT_FOR_CHATGPT.txt"))
 shutil.copy(os.path.join(KIT, "content", "audiences.json"), os.path.join(root, "content", "audiences.json"))
 
 # README مع جدول الأدوات

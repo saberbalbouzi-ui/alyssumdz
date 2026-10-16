@@ -10,6 +10,7 @@
 
 ```
 landing-kit/
+├─ PROMPT_FOR_CHATGPT.txt     ← الأمر الجاهز: الصقه في ChatGPT بعد رفع هذا الملف
 ├─ README.md                  ← هذا الملف (المرجع الكامل)
 ├─ template/                  ← قالب انطلاق جاهز للعرض (index.html + styles.css + script.js) يطبّق الهوية؛ طوّره ولا تبدأ من الصفر. للمعاينة: شغّل `python3 -m http.server` من مجلد الحزمة وافتح `/template/index.html` (السكربت يقرأ ../content/*.json)
 ├─ design/
