@@ -19,6 +19,8 @@
   "currencyCode": "DZD",
   "maintenance": false,
   "maintMsg": "",
+  "kind": "",
+  "kindAsk": false,
   "deletion": null,
   "domain": {
     "mode": "request",
@@ -27,5 +29,6 @@
     "at": "2026-10-10T00:10:57.026Z",
     "requests": []
   },
-  "updatedAt": "2026-10-11T13:00:12.557Z"
+  "updatedAt": "2026-10-16T20:30:54.389Z",
+  "edition": "basic"
 }
