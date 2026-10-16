@@ -312,7 +312,8 @@
    "rel": [
     "bg"
    ],
-   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+   "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+   "landing": "landing/object-capture/"
   },
   {
    "id": "rt",
