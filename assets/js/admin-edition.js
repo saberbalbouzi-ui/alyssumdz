@@ -29,7 +29,7 @@ const AdminEdition = (() => {
   }
   function css() {
     if ($("ed-css")) return; const st = document.createElement("style"); st.id = "ed-css";
-    st.textContent = 'html.ed-basic .nav-btn.ed-x{display:none!important}html.ed-design .nav-btn.ed-x{display:none!important}html.ed-design #nav-groups{display:none!important}html.ed-design .side-nav[data-g] .nav-btn.ed-keep:not(.nav-work):not(.nav-hid){display:flex!important}' +
+    st.textContent = 'html.ed-basic .pbx-tabs button[data-lt=img],html.ed-basic .pbx-tabs button[data-lt=stk],html.ed-basic .pbx-tabs button[data-lt=ast],html.ed-basic .pbx-tabs button[data-lt=pub],html.ed-basic [data-qb=edit],html.ed-basic #pbx-ep,html.ed-basic #pbx-epf,html.ed-basic #pbx-adsz,html.ed-basic #pbx-adx,html.ed-basic .card:has(>#pb-modes),html.ed-basic #pbnp [data-np=size]{display:none!important}html.ed-basic .nav-btn.ed-x{display:none!important}html.ed-design .nav-btn.ed-x{display:none!important}html.ed-design #nav-groups{display:none!important}html.ed-design .side-nav[data-g] .nav-btn.ed-keep:not(.nav-work):not(.nav-hid){display:flex!important}' +
       '.ed-badge{display:inline-block;margin-inline-start:.4rem;padding:.1rem .55rem;border-radius:999px;font-size:.72rem;font-weight:800;background:rgba(var(--g-mint-rgb,198,254,23),.2);border:1px solid rgba(var(--g-mint-rgb,198,254,23),.45)}';
     document.head.appendChild(st);
   }
