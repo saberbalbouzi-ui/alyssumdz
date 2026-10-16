@@ -35,7 +35,7 @@
    "needs": "ai",
    "ic": "06-mise-en-scene-produit",
    "guide": "guide/scene.html",
-   "landing": "",
+   "landing": "landing/product-scenes/",
    "what": "يُعيد تصوير منتجك بالذكاء الاصطناعي داخل مشهد مناسب مع حفظ شكله وملصقاته.",
    "steps": [
     "حدّد صورة المنتج في الصفحة.",
@@ -88,7 +88,7 @@
    "needs": "free",
    "ic": "07-generateur-de-video",
    "guide": "guide/vd.html",
-   "landing": "",
+   "landing": "landing/video-maker/",
    "what": "يحوّل الصورة إلى فيديو بحركة ناعمة مع قوالب للتجارة الإلكترونية (ستوري، ريلز، عرض خصم…) وعنوان وسعر وزر دعوة بألوان علامتك.",
    "steps": [
     "حدّد الصورة وافتح «فيديو من الصورة».",
@@ -219,7 +219,7 @@
    "needs": "ai",
    "ic": "05-essayage-virtuel",
    "guide": "guide/tryon.html",
-   "landing": "",
+   "landing": "landing/virtual-tryon/",
    "what": "ارفع صورة شخص ليرتدي القطعة المحددة في الصفحة مع بقاء ملامحه وخلفيته. صورة الشخص تبقى لكل قطعة تجرّبها بعدها.",
    "steps": [
     "حدّد صورة القطعة في الصفحة.",
@@ -557,7 +557,7 @@
    "needs": "free",
    "ic": "09-supprimer-des-objets",
    "guide": "guide/erase.html",
-   "landing": "",
+   "landing": "landing/object-eraser/",
    "what": "ارسم فوق ما تريد إزالته ويُملأ المكان بالخلفية تلقائياً — محلياً بلا مفتاح.",
    "steps": [
     "حدّد الصورة وانقر «ممحاة ذكية».",
@@ -580,7 +580,7 @@
    "needs": "free",
    "ic": "",
    "guide": "guide/up.html",
-   "landing": "",
+   "landing": "landing/quality-resize/",
    "what": "يكبّر الصورة ×2/×3/×4 أو لعرض ثابت بحدّة محسوبة، مع تقليل الضجيج وتحسين تلقائي للألوان — محلياً.",
    "steps": [
     "حدّد الصورة وافتح «تحسين الجودة».",

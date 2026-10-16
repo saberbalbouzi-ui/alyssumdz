@@ -44,3 +44,7 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 
 ## ستوديو ديزاين (v1.89.267)
 تبويب `studio` (`assets/js/admin-studio.js`) يعرض كل الأدوات من `assets/data/tools-catalog.json` وصفحة مستقلة لكل أداة (`#studio=<id>`). أداة جديدة = مدخل في `saas/guide/tools.json` ثم `python3 scripts/gen-tool-pages.py` (يملأ what/steps/tips/rel في الكتالوج) فتظهر تلقائياً.
+
+## صفحات التعريف (v1.89.268)
+تسع صفحات: نزع الخلفية (يدوية) + ثماني مولَّدة من `scripts/gen-landing.py` (image-generator، virtual-model، product-photography، virtual-tryon، video-maker، product-scenes، quality-resize، object-eraser). حزمة صور جديدة = انسخ المنتقى إلى `saas/landing/<slug>/img/` (بلا نص مطبوع، بلا نساء بلا خمار)، شغّل `enhance-images.py`، أضف قاموساً لـPAGES وحقل `landing` في tools.json ثم `gen-tool-pages.py`.
+
