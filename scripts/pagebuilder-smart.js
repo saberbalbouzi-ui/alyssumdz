@@ -144,12 +144,44 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   }
   const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
   function capCanvas(cv, max) { const m = Math.max(cv.width, cv.height); if (m <= max) return cv; const r = max / m, c = document.createElement("canvas"); c.width = Math.round(cv.width * r); c.height = Math.round(cv.height * r); c.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, c.width, c.height); return c; }
+  /* التقاط العنصر بالمفتاح مباشرة (Alyssum API): ارسم مستطيلاً حول العنصر ← (1) يُعزل العنصر على خلفية مسطّحة ويُنزع لونها (2) تُرمَّم الخلفية مكانه
+     والمنطقة خارج المستطيل تبقى من الأصل بالبكسل. طلبان بموافقة تكلفة واحدة. تتفاوت التفاصيل الدقيقة والموضع قليلاً لأن الصورة تُولَّد؛ وللتراجع Ctrl+Z. */
+  const keyReady = () => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok && !!ImgGen.edit && !!ImgGen.estimate && !(window.ImgCfg && ImgCfg.get("capture", "engine", "auto") === "local"); } catch (e) { return false; } };
+  const alphaBox = c => { const W = c.width, H = c.height, d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return x1 < 0 ? null : { x0, y0, x1: x1 + 1, y1: y1 + 1 }; };
+  async function keyCapture(sh, cv, inf, w, Z0) {
+    const $ = sh.$, W = cv.width, H = cv.height, [zx0, zy0, zx1, zy1] = Z0, zw = zx1 - zx0, zh = zy1 - zy0, est = ImgGen.estimate(), mk = (a, b) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(a)); c.height = Math.max(1, Math.round(b)); return c; };
+    const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
+    if (!confirm("التقاط العنصر بالذكاء (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — بتكلفة تقريبية " + est.fmt(est.cost * 2) + ".\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
+    $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ عزل العنصر بالذكاء…";
+    try {
+      const crop = mk(zw, zh); crop.getContext("2d").drawImage(cv, zx0, zy0, zw, zh, 0, 0, zw, zh);
+      const hex = await ImgGen.pickKey(await toBlob(crop));
+      const r1 = await ImgGen.edit({ blob: await toBlob(crop), W: zw, H: zh, fmt: "png", confirm: false, title: "عزل العنصر", prompt: "In this photo, keep ONLY the single main object that fills the frame and replace everything else (the whole background) with one perfectly flat uniform solid color " + hex + " (no gradient, no shadow, no reflection, no floor line). Keep the object exactly as it is: same shape, proportions, colors, labels and sharp edges; do not crop or redraw any part. No text, no watermark." });
+      if (!r1) throw new Error("أُلغي التنفيذ"); if (sh.S.closed) return;
+      $("pbs-load").textContent = "✂️ نزع لون الخلفية…"; const cut = await PBBgRemove.autoCut(r1.canvas, { methods: ["classic"] }), bb = alphaBox(cut.canvas);
+      if (!bb || bb.x1 - bb.x0 < 8 || bb.y1 - bb.y0 < 8) throw new Error("لم يُعزل العنصر — جرّب مستطيلاً أضيق حول العنصر نفسه");
+      const el = mk(bb.x1 - bb.x0, bb.y1 - bb.y0); el.getContext("2d").drawImage(cut.canvas, bb.x0, bb.y0, el.width, el.height, 0, 0, el.width, el.height);
+      $("pbs-load").textContent = "⏳ ترميم الخلفية مكان العنصر بالذكاء…";
+      const framed = mk(W, H), fg = framed.getContext("2d"); fg.drawImage(cv, 0, 0); fg.lineWidth = Math.max(3, Math.round(Math.max(W, H) / 300)); fg.strokeStyle = "#ff0000"; fg.strokeRect(zx0, zy0, zw, zh);
+      const r2 = await ImgGen.edit({ blob: await toBlob(framed), W, H, fmt: "png", confirm: false, title: "ترميم الخلفية", prompt: "Remove the object that is inside the thin red rectangle and fill the empty area with a natural continuation of the surrounding background (same lighting, texture and perspective). Also remove the red rectangle itself. Do not change anything outside the rectangle. No text, no watermark." });
+      if (!r2) throw new Error("أُلغي التنفيذ"); if (sh.S.closed) return;
+      const base = mk(W, H), bg = base.getContext("2d"); bg.drawImage(cv, 0, 0);      // الأصل أولاً ثم الناتج داخل المستطيل فقط بحافة مُنعَّمة (لا يتغيّر بكسل خارجه)
+      const ins = Math.max(4, Math.round(Math.max(zw, zh) * .012)), ix = zx0 + ins, iy = zy0 + ins, iw = zw - 2 * ins, ih = zh - 2 * ins, patch = mk(iw, ih), pg = patch.getContext("2d"); pg.drawImage(r2.canvas, ix, iy, iw, ih, 0, 0, iw, ih);
+      pg.globalCompositeOperation = "destination-in"; const f = Math.max(3, Math.round(Math.min(iw, ih) * .03)); const gm = mk(iw, ih), gc = gm.getContext("2d"); gc.fillStyle = "#fff"; gc.filter = "blur(" + f / 2 + "px)"; gc.fillRect(f, f, iw - 2 * f, ih - 2 * f); pg.drawImage(gm, 0, 0); bg.drawImage(patch, ix, iy);
+      $("pbs-load").textContent = "⏳ رفع الصور…"; const stamp = Date.now().toString(36);
+      const basePath = await A().uploadBlob(await toBlob(base), "bg-" + stamp, { max: 3200, q: .95 }), elPath = await A().uploadBlob(await toBlob(el), "el-" + stamp + "-0", { max: 2400, q: .92 });
+      const els = [{ x0: zx0 + bb.x0, y0: zy0 + bb.y0, x1: zx0 + bb.x1, y1: zy0 + bb.y1, area: el.width * el.height, front: null, label: "عنصر ملتقط" }];
+      applyElements(inf, w, W, H, els, [elPath], basePath); sh.close();
+      alert("✅ التُقط العنصر كصورة مستقلة قابلة للتحريك، ورُمِّمت الخلفية مكانه بالذكاء (Alyssum API).\nراجع النتيجة؛ للتراجع اضغط Ctrl+Z.");
+    } catch (e) { console.error(e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : (e.message || e)); }
+  }
   async function captureElements() {
     const t = target(); if (t.err) return alert(t.err);
     const inf = t.inf, w = inf.node, sh = shell("التقاط العناصر", "عنصر", "كل العناصر", HINT_EL1, HINT_EL2), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
     const lite = LITE(); cv = capCanvas(cv, lite ? 1280 : 2200);
     await new Promise(r => setTimeout(r, 40)); let Z = null;
+    if (keyReady()) { const z0 = await pickZone(sh, cv); if (sh.S.closed) return; if (z0) return keyCapture(sh, cv, inf, w, z0); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ تحليل الصورة كاملة بالنماذج المحلية…"; }      // مفتاح متوفر: مستطيل ← التقاط بالذكاء مباشرة؛ «تحليل كاملة» ← الطريقة المحلية
     /* التحليل يبدأ مباشرة بلا خطوة وسيطة؛ لتحليل منطقة أدق يوجد زر «✏️ منطقة أخرى» بعد ظهور النتائج */
     if (lite && sh.setCollapsed) sh.setCollapsed(true);
     const stopScan = scanFx(sh, cv);

@@ -145,6 +145,21 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("دمج: أسلوب Multiply يعتّم (أحمر × أزرق = أسود)", bl.mul[0] < 10 && bl.mul[2] < 10, bl.mul);
   ok("دمج: الموضع x,y يحرّك الصورة الصغيرة", bl.moved[0][0] > 240 && bl.moved[1][2] === 255, bl.moved);
   ok("دمج (اللوحة): تعرض صور الصفحة، تعرض النتيجة مباشرة بعد الاختيار، وتنفّذ فترفع وتثبّت التعديل", bl.pool === 1 && bl.enabled && bl.size === 60 && bl.up === 1 && bl.commit[0] === "b1", bl);
+  /* ── نزع الخلفية: متجانسة ← محلي بلا ذكاء؛ معقدة + مفتاح ← بالذكاء (محاكاة الخدمة) ── */
+  await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, "pagebuilder-bgremove.js"), "utf8") });
+  const bgk = await p.evaluate(async () => {
+    const mkc = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    const prod = (g, bgf) => { bgf(g); g.fillStyle = "#c0392b"; g.fillRect(70, 60, 60, 80); };
+    const uni = mkc(200, 200); prod(uni.getContext("2d"), g => { g.fillStyle = "#e8e8e8"; g.fillRect(0, 0, 200, 200); });
+    const cx = mkc(200, 200); prod(cx.getContext("2d"), g => { for (let y = 0; y < 200; y += 10) for (let x = 0; x < 200; x += 10) { g.fillStyle = "hsl(" + ((x * 7 + y * 13) % 360) + ",60%," + (30 + (x + y) % 40) + "%)"; g.fillRect(x, y, 10, 10); } });
+    let calls = 0; window.ImgGen = { ready: () => ({ ok: true }), pickKey: async () => "#00D26A", estimate: () => ({ cost: .04, fmt: n => "$" + n }), edit: async o => { calls++; const c = mkc(o.W, o.H), g = c.getContext("2d"); g.fillStyle = "#00D26A"; g.fillRect(0, 0, o.W, o.H); g.fillStyle = "#c0392b"; g.fillRect(o.W * .35, o.H * .3, o.W * .3, o.H * .4); return { canvas: c, blob: null }; } };
+    const r1 = await PBBgRemove.autoCut(uni, { allowKey: true }), c1 = calls, r2 = await PBBgRemove.autoCut(cx, { allowKey: true }), c2 = calls, r3 = await PBBgRemove.autoCut(cx, {}), c3 = calls;
+    const a = (c, x, y) => c.getContext("2d").getImageData(x, y, 1, 1).data[3];
+    return { m1: r1.method, c1, m2: r2.method, c2, c3, bgA: a(r2.canvas, 5, 5), fgA: a(r2.canvas, 100, 100), m3: r3.method };
+  });
+  ok("نزع الخلفية: متجانسة ← محلي (classic) بلا أي طلب ذكاء", bgk.m1 === "classic" && bgk.c1 === 0, bgk);
+  ok("نزع الخلفية: معقدة + مفتاح ← طريقة key بطلب ذكاء واحد، والخلفية شفافة والمنتج معتم", bgk.m2 === "key" && bgk.c2 === 1 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
+  ok("نزع الخلفية: بلا allowKey (دفعات/استوديو) لا يُستدعى الذكاء المدفوع", bgk.c3 === 1, bgk);
   ok("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `\n✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);
 })();

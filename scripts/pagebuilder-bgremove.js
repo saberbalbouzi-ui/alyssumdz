@@ -284,7 +284,20 @@ const PBBgRemove = (function () {
     if (pers.length && AIVision.depth && !o.noDepth) { try { const fz = await depthFuse(cv, out, S, pers, lite, step, pDep); mark("عمق"); if (fz) { o.depthUsed = "نعم"; return fz; } o.depthUsed = "رُفض"; } catch (e) { console.warn("depth", e); o.depthUsed = "فشل"; } }      // العمق تحسين: أي فشل ← النتيجة السابقة
     return out;
   }
-  const METHODS = { ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
+  /* خلفية معقدة + مفتاح Alyssum API: يُطلب من الخدمة وضع المنتج على خلفية مسطّحة بلون بعيد عن ألوانه ثم يُنزع اللون محلياً بدقة.
+     تتفاوت التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد؛ وتُطلب موافقة التكلفة قبل كل تنفيذ (يمرّ بـImgGen.edit). */
+  const keyOK = () => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok && !!ImgGen.edit; } catch (e) { return false; } };
+  async function keyCut(srcC, o) {
+    if (!keyOK()) throw new Error("NOKEY");
+    const W = srcC.width, H = srcC.height, k = Math.min(1, 1600 / Math.max(W, H)), w = Math.round(W * k), h = Math.round(H * k);
+    const blob = await new Promise(x => scaledCanvas(srcC, w, h).toBlob(x, "image/png")), hex = await ImgGen.pickKey(blob);
+    const prompt = "Edit this product photo: replace the ENTIRE background with one perfectly flat, uniform solid color " + hex + " (no gradient, no shadow, no reflection, no texture, no floor line). Keep the main subject exactly as it is: same shape, proportions, colors, labels, details and sharp edges; do not crop, add, remove or redraw any part of it. No text, no watermark.";
+    const r = await ImgGen.edit({ blob, prompt, W: w, H: h, title: "نزع الخلفية بالذكاء (للخلفيات المعقدة)", fmt: "png" });
+    if (!r) { const e = new Error("أُلغي التنفيذ بالذكاء — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
+    if (o && o.onStep) o.onStep("✂️ نزع لون الخلفية من نتيجة الذكاء…");
+    return classicCut(r.canvas, Object.assign({}, o, { onStep: null }));
+  }
+  const METHODS = { key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   /* خلفية استوديو متجانسة من الحواف (أبيض/رمادي/لون واحد)؟ عندها الفصل اللوني أدقّ من نماذج الكشف (التي قد تلتقط جزءاً من المنتج فقط) */
   function uniformBg(srcC) {
@@ -292,7 +305,7 @@ const PBBgRemove = (function () {
   }
   async function autoCut(srcC, o) {
     o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
-    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), order = o.methods || (cfgM === "classic" ? ["classic"] : aiOK() ? (uniformBg(srcC) ? ["classic", "ai"] : ["ai", "classic"]) : ["classic"]); let err = null, last = null; const tried = [];
+    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), kOK = !!o.allowKey && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
     for (const m of order) {
       try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
@@ -355,9 +368,9 @@ const PBBgRemove = (function () {
     const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
-      const all = aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"], i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
+      const all = (keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
-      const r = await autoCut(LV.src, { methods, onStep: m => chip(m, true) }); LV.res = r;
+      const r = await autoCut(LV.src, { methods, allowKey: true, onStep: m => chip(m, true) }); LV.res = r;
       await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)");
     } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
   }

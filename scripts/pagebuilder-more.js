@@ -158,7 +158,8 @@ const PBVideo = (() => {
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); });
   function still() { const cv = $("pbvd-pv"); if (!cv || !S.src) return; const [W, H] = S.size.split("x").map(Number), k = Math.min(1, 280 / Math.max(W, H)); cv.width = Math.round(W * k); cv.height = Math.round(H * k); { const g0 = cv.getContext("2d"); frameAt(g0, S.src, cv.width, cv.height, 0, S.fx, S.bg); overlay(g0, cv.width, cv.height, .9, S); } }
   function play(ms) { cancelAnimationFrame(S.raf); const cv = $("pbvd-pv"); if (!cv || !S.src) return; const g = cv.getContext("2d"), t0 = performance.now(), dur = (ms || S.dur * 1000); const step = n => { const t = Math.min(1, (n - t0) / dur); frameAt(g, S.src, cv.width, cv.height, t, S.fx, S.bg); overlay(g, cv.width, cv.height, t, S); if (t < 1) S.raf = requestAnimationFrame(step); }; S.raf = requestAnimationFrame(step); }
-  async function make() {
+  async function make() { if (S.busy) return; try { return await make0(); } finally { S.busy = false; } }      // يُحرَّر القفل حتى لو فشل التسجيل
+  async function make0() {
     if (S.busy || !S.src || !supported()) return; const mime = pickMime(); if (!mime) { say("لا يدعم المتصفح تسجيل الفيديو"); return; }
     S.busy = true; const [W, H] = S.size.split("x").map(Number), c = mk(W, H), g = c.getContext("2d"), stream = c.captureStream(30), rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4e6 }), chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
     const done = new Promise(r => { rec.onstop = r; }); rec.start(200); const t0 = performance.now(), dur = S.dur * 1000; frameAt(g, S.src, W, H, 0, S.fx, S.bg); overlay(g, W, H, 0, S);
@@ -311,7 +312,7 @@ const PBBrand = (() => {
       const k = t.dataset.bro; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : /^(bcol|bgc|tcol)$/.test(k) ? +t.value : t.value; draw();
     };
     root.addEventListener("input", upd); root.addEventListener("change", upd);
-    const lf = $("pbbr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { if (String(r.result).length < 600000) localStorage.setItem(LSL, String(r.result)); } catch (e) { } rerender(); }; im.src = String(r.result); }; r.readAsDataURL(f); };
+    const lf = $("pbbr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { let keep = String(r.result); if (keep.length >= 600000) { const kk = Math.min(1, 700 / Math.max(im.naturalWidth, im.naturalHeight)), cc = mk(im.naturalWidth * kk, im.naturalHeight * kk); cc.getContext("2d").drawImage(im, 0, 0, cc.width, cc.height); keep = cc.toDataURL("image/png"); } if (keep.length < 600000) localStorage.setItem(LSL, keep); else say("⚠️ الشعار كبير جداً ولم يُحفظ للجلسات القادمة — صغّره وأعد رفعه"); } catch (e) { } rerender(); }; im.src = String(r.result); }; r.readAsDataURL(f); };
     root.addEventListener("click", async e => {
       const t = e.target.closest("[data-brb]"); if (!t) return; const k = t.dataset.brb;
       if (k === "site") { say("⏳ جارٍ الاستيراد…"); if (await fromSite()) rerender(); else say("تعذّر قراءة ألوان الموقع"); }
@@ -329,7 +330,9 @@ const PBBrand = (() => {
   /* منشئ الشعار: ① شعار نصي مجاني (مونوغرام + اسم بألوان وخط الهوية) على Canvas ② شعار بالذكاء (Alyssum API) من وصف؛ الناتج يُحفظ شعاراً للعلامة ويمكن إضافته للصفحة */
   const LSTYLES = [["badge", "شارة دائرية"], ["round", "مستطيل مدوّر"], ["plain", "نص بخط تحتي"], ["mono", "مونوغرام فقط"]];
   function logoCanvas(name, kit, style, scheme) {
-    const W = 800, H = style === "mono" ? 800 : style === "plain" ? 360 : 500, c = mk(W, H), g = c.getContext("2d"), col = i => hex(kit.colors[i]), dark = scheme === "dark", bg = dark ? col(0) : "transparent", fg = dark ? col(2) : col(0), ac = col(1), ff = "'" + (kit.font || "Cairo") + "','Cairo',sans-serif";
+    const darkBg = scheme === "dark" ? kit.colors[0] : null; if (darkBg) { const cs = kit.colors.slice(); cs[0] = kit.colors[2]; cs[2] = kit.colors[0]; kit = Object.assign({}, kit, { colors: cs }); }      // «خلفية بلون العلامة»: تُعكس ألوان الرمز والنص فوق خلفية بلون العلامة
+    const W = 800, H = style === "mono" ? 800 : style === "plain" ? 360 : 500, c = mk(W, H), g = c.getContext("2d"), col = i => hex(kit.colors[i]), ac = col(1), ff = "'" + (kit.font || "Cairo") + "','Cairo',sans-serif";
+    if (darkBg) { g.fillStyle = hex(darkBg); g.fillRect(0, 0, W, H); }
     const words = String(name || "").trim().split(/\s+/).filter(Boolean), ini = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "A").slice(0, 2)).toUpperCase();
     g.direction = "rtl"; g.textAlign = "center"; g.textBaseline = "middle";
     if (style === "mono") { g.fillStyle = col(0); g.beginPath(); g.arc(W / 2, H / 2, 340, 0, 7); g.fill(); g.lineWidth = 14; g.strokeStyle = ac; g.beginPath(); g.arc(W / 2, H / 2, 314, 0, 7); g.stroke(); g.fillStyle = col(2); g.font = "900 300px " + ff; g.fillText(ini, W / 2, H / 2 + 10); return c; }

@@ -85,10 +85,12 @@ const AdminImgBatch = (() => {
   const uniq = (name, used) => { let n = name, i = 2; while (used.has(n)) n = name.replace(/(\.[^.]+)$/, "-" + (i++) + "$1"); used.add(n); return n; };
 
   function addFiles(list) {
+    if (S.busy) { status("⏳ انتظر انتهاء المعالجة الجارية قبل إضافة صور"); return; }
     [...list].filter(f => /^image\//.test(f.type) || /\.(png|jpe?g|webp|gif|avif)$/i.test(f.name || "")).forEach(f => S.files.push({ name: (f.name || "image").replace(/\.[^.]+$/, ""), src: URL.createObjectURL(f), size: f.size }));
     S.out = []; draw();
   }
   async function addProduct(slug) {
+    if (S.busy) { status("⏳ انتظر انتهاء المعالجة الجارية قبل إضافة صور"); return; }
     const a = typeof Admin !== "undefined" ? Admin : null, p = a && (a.products || []).find(x => x.slug === slug); if (!p) return;
     const list = [p.cover].concat(p.images || []).filter(Boolean).filter((v, i, ar) => ar.indexOf(v) === i);
     list.forEach((u, i) => S.files.push({ name: slug + "-" + (i + 1), src: (typeof REL !== "undefined" ? REL : "") + u, size: 0 })); S.out = []; draw();
@@ -150,7 +152,7 @@ ${g.wm !== "none" ? `<label>الحجم ${g.wmSize}%<input id="ib-wms" type="rang
     const g = S.cfg, on = (id, ev, fn) => { const e = $(id); if (e) e[ev] = fn; };
     on("ib-files", "onchange", e => { addFiles(e.target.files); });
     on("ib-prod", "onchange", e => { if (e.target.value) addProduct(e.target.value); });
-    on("ib-clear", "onclick", () => { S.files = []; S.out = []; draw(); });
+    on("ib-clear", "onclick", () => { if (S.busy) return; S.files = []; S.out = []; draw(); });
     const bind = (id, k, num, redraw) => on(id, "onchange", e => { g[k] = num ? +e.target.value : e.target.value; save(); S.out = []; if (redraw) draw(); });
     bind("ib-preset", "preset", false, true); bind("ib-w", "w", true); bind("ib-h", "h", true); bind("ib-maxw", "maxw", true); bind("ib-fit", "fit", false, true); bind("ib-bg", "bg", false); bind("ib-fmt", "fmt", false, true);
     bind("ib-wm", "wm", false, true); bind("ib-ai", "ai", false, true); bind("ib-aisc", "aiScene", true); bind("ib-aiwho", "aiWho", false); bind("ib-aicol", "aiColor", false); bind("ib-aitx", "aiText", false); bind("ib-wmt", "wmText", false); bind("ib-wmc", "wmColor", false);

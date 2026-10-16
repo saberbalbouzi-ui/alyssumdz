@@ -1317,7 +1317,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to" || t === "ps" || t === "rc" || t === "v3") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
-    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة وبلا إعدادات — داخل متصفحك، بلا API ولا اشتراك.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
+    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة: الخلفية الملونة المتجانسة والعنصر المعزول تُنزع داخل متصفحك مجاناً بلا ذكاء، والخلفية المعقدة تُنزع بالذكاء عبر مفتاح Alyssum API (تظهر التكلفة وتُطلب موافقتك قبل التنفيذ) وإلا تُجرَّب الطريقة المحلية.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small" data-bgr="again" title="تجربة خوارزمية بديلة على الصورة نفسها">🔁 طريقة أخرى</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
     return `<div class="pbx-pz"><p>يفصل العناصر الكاملة في الصورة (أشخاص، منتجات…) كصور شفافة منفصلة ويضعها في الصفحة.</p><button type="button" class="pbx-small pz-go" data-q="smart-magic">${ico("cutout", 16)} التقاط العناصر</button></div>`;
   }
   function epPlace(p) {
@@ -1353,7 +1353,8 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   const upPanel = () => `<div class="pbx-pz"><p>حسّن جودة الصورة داخل متصفحك: تكبير بحدّة محسوبة، وتقليل الضجيج، وتحسين تلقائي للألوان والتباين. لا يخترع تفاصيل جديدة، فالأنسب للصور المنخفضة قليلاً لا الضبابية جداً.</p><label class="ep-l">مقدار التكبير<select data-upk="scale">${UP_OPTS.map(([v, n]) => `<option value="${v}"${UP.scale === v ? " selected" : ""}>${n}</option>`).join("")}</select></label><label class="ep-l">الحدّة (${UP.sharp})<input type="range" min="0" max="100" value="${UP.sharp}" data-upk="sharp"></label><label class="ep-l">تقليل الضجيج (${UP.dn})<input type="range" min="0" max="100" value="${UP.dn}" data-upk="dn"></label><label class="ep-l">تحسين تلقائي للألوان (${UP.auto}%)<input type="range" min="0" max="100" value="${UP.auto}" data-upk="auto"></label><button type="button" class="pbx-small pz-go" data-upx="go">${ico("t_magic", 16)} تنفيذ</button></div>`;
   async function upGo(inf) {
     if (typeof ImgUpscale === "undefined") { toast("أداة تحسين الجودة غير متاحة"); return; }
-    try {
+    if (UP.busy) return; if (UP.scale === "1" && !UP.dn && !UP.auto) { toast("اختر تكبيراً أو فعّل «تقليل الضجيج» أو «تحسين الألوان» ثم نفّذ"); return; }
+    UP.busy = true; try {
       toast("⏳ جارٍ تحسين الجودة…"); let blob = await (await fetch(localize(String(inf.set.src)))).blob();
       if ((UP.dn || UP.auto) && typeof PBRetouch !== "undefined" && PBRetouch._t) {
         const im = await createImageBitmap(blob), cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; cv.getContext("2d").drawImage(im, 0, 0);
@@ -1366,7 +1367,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       if (r.same) { toast("الصورة بهذا المقاس أو أكبر منه أصلاً (أو بلغت السقف الأقصى)"); return; }
       const path = await uploadBlob(r.blob, "up-" + Date.now().toString(36), { max: 8192, q: .92 });
       if (path) { inf.set.src = path; delete inf.set.crop; E.nextLabel = "تحسين جودة الصورة"; afterEdit(); toast("✅ " + r.from.join("×") + " ← " + r.w + "×" + r.h + (r.capped ? " (حدّ أقصى)" : "")); }
-    } catch (e) { toast("⚠️ " + (e && e.message || e)); }
+    } catch (e) { toast("⚠️ " + (e && e.message || e)); } finally { UP.busy = false; }
   }
   /* صفوف إضافية في قوائم «إنشاء/تعديل/أتمتة»: تنقّل لأدوات موجودة أو أدوات قيد التطوير */
   function goAdmin(tab) {

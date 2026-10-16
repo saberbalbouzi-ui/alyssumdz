@@ -65,7 +65,7 @@ const AdminImgQA = (() => {
     if (S.busy) return; S.busy = true; S.rows = []; S.prev = {}; const list = prods(), ms = [];
     for (let i = 0; i < list.length; i++) { const p = list[i]; say("⏳ فحص " + (i + 1) + " / " + list.length); try { const c = await loadCanvas(urlOf(p.cover)); ms.push({ p, c, m: metrics(c) }); } catch (e) { ms.push({ p, err: e.message }); } await new Promise(r => setTimeout(r, 0)); }
     const std = standard(ms.map(x => x.m)); S.std = std; S.rows = ms.map(x => ({ slug: x.p.slug, title: x.p.title, cover: x.p.cover, err: x.err, m: x.m, issues: x.m ? verdict(x.m, std) : [] })); S.sel = {}; S.rows.forEach(r => { if (r.issues.some(i => ISSUES[i][2] === "restyle" || ISSUES[i][2] === "enhance")) S.sel[r.slug] = true; });
-    S.busy = false; say("✅ فُحصت " + list.length + " صورة — " + S.rows.filter(r => r.issues.length).length + " تحتاج انتباهاً"); draw();
+    const nc = ((typeof Admin !== "undefined" && Admin.products) || []).filter(p => p && !p.cover).map(p => p.title || p.slug); S.noCover = nc; S.busy = false; say("✅ فُحصت " + list.length + " صورة — " + S.rows.filter(r => r.issues.length).length + " تحتاج انتباهاً" + (nc.length ? " · " + nc.length + " منتج بلا صورة غلاف: " + nc.slice(0, 6).join("، ") + (nc.length > 6 ? "…" : "") : "")); draw();
   }
   async function applyStyle() {
     const picks = S.rows.filter(r => S.sel[r.slug] && !r.err); if (!picks.length || S.busy) { say("حدّد منتجاً واحداً على الأقل"); return; } S.busy = true; S.prev = {};
