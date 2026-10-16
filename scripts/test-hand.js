@@ -1292,6 +1292,40 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   });
   ok("تصوير المنتج بالذكاء: الصف مفعّل ويعرض مشاهد للاختيار ويُنتج خيارات متعددة بموافقة واحدة", /تصوير المنتج بالذكاء/.test(ps.head) && !ps.soon && ps.boxes >= 15 && ps.calls === 3 && ps.cards === 3, ps);
   ok("مشاهد الاستخدام اليومي (يد/طاولة/ملبوس/مكتب/هدية) محتشمة بلا وجه، والمشاهد العادية بلا أشخاص", ps.life && ps.plain && ["hand", "table", "worn", "desk", "gifting"].every(k => ps.lifeShots.includes(k)), ps);
+  // ── عرض 360°: عنصر الصفحة + أداة الذكاء (محاكاة) + رفع صور حقيقية + تحسين الجودة ──
+  await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('[data-imgx="view360"]').click()); await p.waitForTimeout(700);
+  const v3 = await p.evaluate(async () => {
+    const head = (document.querySelector("#pbx-ep .ep-h") || {}).textContent || "", row = !!document.querySelector('[data-imgx="view360"]'), soon = !!document.querySelector('[data-imgx="view360"] .tt-b2'), file = !!document.querySelector("#pbx-ep #pbai-v3f");
+    document.querySelector("#pbai-v3n").value = "6"; document.querySelector("#pbai-v3n").dispatchEvent(new Event("change", { bubbles: true }));
+    const calls = [], old = ImgGen.edit, oc = window.confirm, ou = PBApp.uploadBlob, paths = []; window.confirm = () => true;
+    ImgGen.edit = async o => { calls.push({ extra: (o.extra || []).length, p: o.prompt, conf: o.confirm }); const c = document.createElement("canvas"); c.width = 50; c.height = 50; c.getContext("2d").fillStyle = "#c63"; c.getContext("2d").fillRect(0, 0, 50, 50); return { canvas: c }; };
+    PBApp.uploadBlob = async (b, n) => { const pth = "assets/img/pages/" + n + ".webp"; paths.push({ pth, big: b.size > 0 }); return pth; };
+    const before = JSON.stringify(PBApp.E.page.sections).length;
+    document.querySelector('#pbx-ep [data-ai="v360"]').click(); await new Promise(r => setTimeout(r, 2500)); const thumbs = document.querySelectorAll("#pbai-res img").length;
+    document.querySelector('#pbx-ep [data-ai="v360add"]').click(); await new Promise(r => setTimeout(r, 2500));
+    const js = JSON.stringify(PBApp.E.page.sections), has = /"type":"view360"/.test(js), m = js.match(/"imgs":"([^"]*v360[^"]*)"/), lines = m ? m[1].split("\\n").length : 0;
+    ImgGen.edit = old; window.confirm = oc; PBApp.uploadBlob = ou;
+    const T = PBAI._t.v360Prompt(90, 2, 8, "x");
+    // polish: صورة صغيرة تُكبَّر وصورة كبيرة تبقى كما هي
+    const mkB = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = "#789"; x.fillRect(0, 0, w, h); return new Promise(r => c.toBlob(r, "image/png")); };
+    const dim = async b => { const u = URL.createObjectURL(b), i = new Image(); await new Promise(r => { i.onload = r; i.src = u; }); return [i.naturalWidth, i.naturalHeight]; };
+    const small = await dim(await PBAI._t.polish(await mkB(300, 200), 1280)), big = await dim(await PBAI._t.polish(await mkB(1400, 900), 1280));
+    return { head, row, soon, file, calls: calls.length, ex: calls.map(c => c.extra).join(), nc: calls.every(c => c.conf === false || c.conf === undefined), thumbs, has, lines, up: paths.length, T: /90 degrees/.test(T) && /SAME product/.test(T) && /No people/.test(T), small, big };
+  });
+  ok("عرض 360°: الصف مفعّل ويفتح لوحة فيها رفع الصور الحقيقية", /360/.test(v3.head) && v3.row && !v3.soon && v3.file, v3);
+  ok("عرض 360° بالذكاء: 6 إطارات = 5 توليدات بموافقة واحدة (الأول الأصل)، ثم تُرفع ويُضاف عنصر view360 بـ6 أسطر", v3.calls === 5 && v3.thumbs === 6 && v3.has && v3.lines === 6 && v3.up === 6 && v3.T, v3);
+  ok("تحسين الجودة قبل الاستعمال: الصورة الصغيرة تُكبَّر (≥1280) والكبيرة تبقى كما هي", v3.small[0] >= 1280 && v3.big[0] === 1400, v3);
+  const vr = await (async () => {
+    const html = await p.evaluate(() => { const pg = JSON.parse(PBApp.pageJson()); const cl = PB.mkS([PB.mkC([PB.mkW("view360", { imgs: "a.png\nb.png\nc.png\nd.png", v360a: 0 })])]); pg.sections = [cl]; return PB.fullHtml(pg, { base: "./", site: {}, products: [], meta: { tabs: [], cats: {} } }); });
+    const q = await p.context().newPage(); await q.setViewportSize({ width: 800, height: 700 }); await q.setContent(html); await q.waitForTimeout(600);
+    const r = await q.evaluate(async () => { const b = document.querySelector(".pb-v360"); if (!b) return { none: true }; const n = b.querySelectorAll("img").length, idx = () => Array.from(b.querySelectorAll("img")).findIndex(i => i.classList.contains("on")), r0 = b.getBoundingClientRect(), i0 = idx(); return { n, i0, w: r0.width, h: r0.height, hint: /360/.test((b.querySelector(".pb-v360-h") || {}).textContent || "") }; });
+    const bb = await q.$(".pb-v360").then(e => e.boundingBox()); await q.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await q.mouse.down(); await q.mouse.move(bb.x + bb.width / 2 + 30, bb.y + bb.height / 2, { steps: 5 });
+    const i1 = await q.evaluate(() => Array.from(document.querySelectorAll(".pb-v360 img")).findIndex(i => i.classList.contains("on")));
+    await q.mouse.move(bb.x + bb.width / 2 - 100, bb.y + bb.height / 2, { steps: 6 }); const i2 = await q.evaluate(() => Array.from(document.querySelectorAll(".pb-v360 img")).findIndex(i => i.classList.contains("on"))); await q.mouse.up();
+    const used = await q.evaluate(() => document.querySelector(".pb-v360").classList.contains("used")); await q.close(); return Object.assign(r, { i1, i2, used });
+  })();
+  ok("عنصر عرض 360° في الصفحة: 4 إطارات، السحب يبدّل الإطار في الاتجاهين ويُخفي التلميح", vr.n === 4 && vr.i0 === 0 && vr.i1 !== 0 && vr.i2 !== vr.i1 && vr.used && vr.hint && vr.w > 100, vr);
   const tx = await p.evaluate(async () => {
     const row = !!document.querySelector('[data-imgx="txt2img"]'); document.querySelector('[data-imgx="txt2img"]').click(); await new Promise(r => setTimeout(r, 400)); const m = !!document.getElementById("pbx-tx");
     const calls = []; const old = ImgGen.edit; ImgGen.edit = async o => { calls.push({ t: !!o.textOnly, blob: !!o.blob, W: o.W, H: o.H, p: o.prompt }); const c = document.createElement("canvas"); c.width = 64; c.height = 64; c.getContext("2d").fillRect(0, 0, 64, 64); return { canvas: c, blob: await new Promise(r => c.toBlob(r)) }; };
