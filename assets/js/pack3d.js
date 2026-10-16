@@ -122,7 +122,34 @@ const Pack3D = (() => {
     return flap ? new T.MeshPhysicalMaterial({ color: hex(flap), roughness: rg, clearcoat: gl, clearcoatRoughness: 0.25, envMapIntensity: 0.8, side: T.DoubleSide })
       : new T.MeshPhysicalMaterial({ map: artTexture(cv), roughness: rg, clearcoat: gl, clearcoatRoughness: 0.2, envMapIntensity: 0.85 });
   }
+  const rotCv = (cv, rot) => { if (!rot) return cv; const sw = rot % 180, o = document.createElement("canvas"); o.width = sw ? cv.height : cv.width; o.height = sw ? cv.width : cv.height; const x = o.getContext("2d"); x.translate(o.width / 2, o.height / 2); x.rotate(rot * Math.PI / 180); x.drawImage(cv, -cv.width / 2, -cv.height / 2); return o; };
+  /* علبة هدية بقطعة واحدة: الأرضية جذر، الخلفي يطوى منها ثم الغطاء ثم اللسان، والأمامي بفتحة إبهام، والجانبان بأجنحة لصق */
+  function buildGift() {
+    const B = BOX, k = 3.4 / Math.max(B.W, B.H, B.D), W = B.W * k, H = B.H * k, D = B.D * k, Tk = B.T * k, Gk = B.G * k, th = Math.max(0.012, 0.5 * k), r = (B.dia || 0) * k / 2;
+    const paper = new T.MeshStandardMaterial({ color: 0xf1ece0, roughness: 0.9, side: T.DoubleSide }), edge = new T.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.9 });
+    const panel = (w, h, cv, flap) => new T.Mesh(new T.BoxGeometry(w, h, th), [edge, edge, edge, edge, boxMat(cv, flap), paper]);
+    const hold = (parent, x, y) => { const g = new T.Group(); g.position.set(x, y, 0); parent.add(g); return g; };
+    const F = {}; Object.keys(B.faces).forEach(id => { F[id] = rotCv(B.faces[id], (B.rots || {})[id] || 0); });
+    const fm = (() => { /* الأمامي: لوح بفتحة إبهام (قطع نصف دائري من حافته الحرة y=-H/2) */
+      const g = new T.Group(), sh = new T.Shape(); sh.moveTo(-W / 2, -H / 2 + 0); sh.lineTo(-r, -H / 2); if (r > 0) for (let i = 0; i <= 24; i++) { const a = Math.PI - Math.PI * i / 24; sh.lineTo(r * Math.cos(a), -H / 2 + r * Math.sin(a)); } sh.lineTo(r, -H / 2); sh.lineTo(W / 2, -H / 2); sh.lineTo(W / 2, H / 2); sh.lineTo(-W / 2, H / 2); sh.closePath();
+      const body = new T.Mesh((() => { const e = new T.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false }); e.translate(0, 0, -th / 2); return e; })(), [paper, edge]); g.add(body);
+      const tx = artTexture(F.front); tx.repeat.set(1 / W, 1 / H); tx.offset.set(0.5, 0.5); tx.wrapS = tx.wrapT = T.ClampToEdgeWrapping;
+      const art = new T.Mesh(new T.ShapeGeometry(sh), new T.MeshPhysicalMaterial({ map: tx, roughness: S.boxFin === "gloss" ? 0.32 : S.boxFin === "soft" ? 0.85 : 0.6, clearcoat: S.boxFin === "gloss" ? 0.55 : S.boxFin === "soft" ? 0.05 : 0.2, clearcoatRoughness: 0.25, envMapIntensity: 0.85 })); art.position.z = th / 2 + 0.0008; g.add(art); return g;
+    })();
+    const bt = new T.Group(); bt.add(panel(W, D, F.bottom));
+    const pBack = hold(bt, 0, D / 2), mBack = panel(W, H, F.back); mBack.position.y = H / 2; pBack.add(mBack);
+    const pLid = hold(pBack, 0, H), mLid = panel(W, D, F.top); mLid.position.y = D / 2; pLid.add(mLid);
+    const pTuck = hold(pLid, 0, D - th * 1.6), mTk = panel(W * 0.96, Tk, null, B.flap); mTk.position.y = Tk / 2; pTuck.add(mTk);
+    const pFront = hold(bt, 0, -D / 2); fm.position.y = -H / 2; pFront.add(fm);
+    const pSR = hold(bt, -W / 2, 0), mSR = panel(H, D, F.right); mSR.position.x = -H / 2; pSR.add(mSR);
+    const pSL = hold(bt, W / 2, 0), mSL = panel(H, D, F.left); mSL.position.x = H / 2; pSL.add(mSL);
+    const gf = (par, sx, up) => { const g = hold(par, sx * H / 2, up * (D / 2 - th * 1.6)), m = panel(H * 0.94, Gk, null, B.flap); m.position.y = up * Gk / 2; g.add(m); return g; };
+    const gTR = gf(pSR, -1, 1), gBR = gf(pSR, -1, -1), gTL = gf(pSL, 1, 1), gBL = gf(pSL, 1, -1);
+    packG.add(bt); foldNodes = { gift: true, bt, pBack, pLid, pTuck, pFront, pSR, pSL, gTR, gBR, gTL, gBL };
+    root.add(packG); applyFold(S.fold);
+  }
   function buildFold() {
+    if (BOX && BOX.style === "gift") return buildGift();
     const B = BOX, k = 3.4 / Math.max(B.W, B.H, B.D), W = B.W * k, H = B.H * k, D = B.D * k, Tk = B.T * k, Gk = B.G * k, th = Math.max(0.012, 0.5 * k), dd = D * 0.8, cc = Math.min(dd * 0.45, D * 0.4);
     const paper = new T.MeshStandardMaterial({ color: 0xf1ece0, roughness: 0.9 }), edge = new T.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.9 });
     const panel = (w, h, cv, flap) => { const g = new T.BoxGeometry(w, h, th), top = boxMat(cv, flap); return new T.Mesh(g, [edge, edge, edge, edge, top, paper]); };
@@ -146,9 +173,13 @@ const Pack3D = (() => {
   const ease = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
   function applyFold(t) {
     if (!foldNodes || !packG) return; const n = foldNodes, q = Math.PI / 2, s = ease(t / 0.5), tb = ease((t - 0.3) / 0.45), fl = ease((t - 0.7) / 0.3);
+    if (n.gift) {
+      const gl = ease((t - 0.3) / 0.25), ld = ease((t - 0.5) / 0.3), tk = ease((t - 0.78) / 0.22); n.pBack.rotation.x = -q * s; n.pFront.rotation.x = q * s; n.pSR.rotation.y = -q * s; n.pSL.rotation.y = q * s;
+      n.gTR.rotation.x = -q * gl; n.gTL.rotation.x = -q * gl; n.gBR.rotation.x = q * gl; n.gBL.rotation.x = q * gl; n.pLid.rotation.x = -q * ld; n.pTuck.rotation.x = -q * tk; packG.quaternion.setFromAxisAngle(new T.Vector3(0, 1, -1).normalize(), Math.PI * s);
+    } else {
     n.pL.rotation.y = -q * s; n.pB.rotation.y = -q * s; n.pG.rotation.y = -q * s; n.pR.rotation.y = q * s;
     n.pT.rotation.x = -q * tb; n.pBt.rotation.x = q * tb; n.pTk.rotation.x = -q * fl; n.pBk.rotation.x = q * fl;
-    n.dTL.rotation.x = -q * fl; n.dTR.rotation.x = -q * fl; n.dBL.rotation.x = q * fl; n.dBR.rotation.x = q * fl;
+    n.dTL.rotation.x = -q * fl; n.dTR.rotation.x = -q * fl; n.dBL.rotation.x = q * fl; n.dBR.rotation.x = q * fl; }
     packG.position.set(0, 0, 0); packG.updateMatrixWorld(true); const bb = new T.Box3().setFromObject(packG), c = new T.Vector3(); bb.getCenter(c); packG.position.sub(c);
     sizeInfo = { r: bb.getBoundingSphere(new T.Sphere()).radius, c, bottom: bb.min.y - c.y, shY: bb.min.y - c.y - 0.01 }; view(); dirty = true;
   }
