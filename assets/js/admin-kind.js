@@ -23,7 +23,7 @@ const AdminKind = (() => {
     document.head.appendChild(st);
   }
   function mark() { document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z0-9]+)'/.exec(b.getAttribute("onclick") || ""); if (m && PHYS.includes(m[1])) b.classList.add("kind-phys"); }); }
-  function apply() { css(); mark(); document.documentElement.classList.toggle("kind-digital", kind() === "digital"); heroDraw(); }
+  function apply() { try { if (typeof AdminEdition !== "undefined") AdminEdition.apply(); } catch (e) { } css(); mark(); document.documentElement.classList.toggle("kind-digital", kind() === "digital"); heroDraw(); }
   /* بطاقة الرئيسية الرقمية أعلى تبويب المنتجات الرقمية */
   function heroDraw() {
     const t = $("tab-digital"); if (!t) return; let h = $("kd-hero");
