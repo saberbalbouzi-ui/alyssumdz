@@ -13,14 +13,14 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1500, height: 920 } }), p = await ctx.newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message)); p.on("console", m => { if (m.type() === "error" && !/fonts\.g|ERR_|net::|Failed to load resource/.test(m.text())) errs.push(m.text()); });
   await p.goto(base + "/__blank"); await p.evaluate(() => { localStorage.clear(); });
-  await load(p, "/assets/js/admin-imgbatch.js").catch(() => { }); await load(p, "/assets/js/mockup-studio.js");
+  await load(p, "/assets/js/admin-imgbatch.js").catch(() => { }); await load(p, "/assets/js/mockup-studio.js"); await load(p, "/assets/js/mockup-models.js");
   ok("المحرّك three المحلي موجود (لا CDN)", fs.existsSync(path.join(root, "assets/js/vendor/three.module.min.js")));
   const info = await p.evaluate(() => ({ n: MockupStudio.MODELS.length, cats: [...new Set(MockupStudio.MODELS.map(m => m.cat))], ids: MockupStudio.MODELS.map(m => m.id) }));
   ok("مكتبة النماذج: 24 نموذجاً أو أكثر في خمس فئات", info.n >= 24 && info.cats.length >= 5, info);
   ok("لكل نموذج: ألوان ومناطق طباعة وبناء", await p.evaluate(() => MockupStudio.MODELS.every(m => m.colors.length >= 3 && m.areas.length >= 1 && typeof m.build === "function" && m.areas.every(a => a.id && a.n && a.ar > 0))));
   /* ═══ المعرض ═══ */
   await p.evaluate(() => MockupStudio.open()); await p.waitForSelector("#mk .mk-card", { timeout: 30000 });
-  ok("المعرض: بطاقة لكل نموذج وفئات وبحث", await p.evaluate(() => document.querySelectorAll("#mk .mk-card").length === MockupStudio.MODELS.length && document.querySelectorAll("#mk #mk-cats [data-cat]").length === 6 && !!document.querySelector("#mk #mk-q")));
+  ok("المعرض: بطاقة لكل نموذج وفئات وبحث", await p.evaluate(() => document.querySelectorAll("#mk .mk-card").length === MockupStudio.MODELS.length && document.querySelectorAll("#mk #mk-cats [data-cat]").length === 8 && !!document.querySelector("#mk #mk-q")));
   await p.waitForFunction(() => document.querySelectorAll("#mk .mk-th img").length >= 6, null, { timeout: 120000 });
   ok("المصغّرات تُولَّد تدريجياً من العرض الثلاثي الأبعاد الحقيقي", await p.evaluate(() => [...document.querySelectorAll("#mk .mk-th img")].every(i => /^data:image\/(webp|png)/.test(i.src))));
   if (shots) await p.screenshot({ path: path.join(shots, "mk-gallery.png") });
@@ -91,6 +91,32 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   ok("حذف مشروع من القائمة", await p.evaluate(async () => (await MockupStudio._t.mineList(true)).length === 1));
   await p.keyboard.press("Escape"); await p.waitForTimeout(250); ok("Esc من «مشاريعي» يعود للمعرض", await p.evaluate(() => !!document.querySelector("#mk-cats [data-cat]") && !!document.querySelector("#mk .mk-grid")));
   await p.click('#mk .mk-card[data-m]'); await p.waitForSelector("#mk .mk-side");
+  /* ═══ النماذج الواقعية الموسَّعة (31): موادّ حسب الدور + أبعاد + زجاج منكسر ═══ */
+  ok("31 نموذجاً واقعياً موسَّعاً (بادئة r-) بموادّ وأبعاد", await p.evaluate(() => { const r = MockupStudio.MODELS.filter(m => m.id.startsWith("r-")); return r.length === 31 && r.every(m => m.roles && m.params.length >= 1 && m.matList.length >= 14); }));
+  await p.evaluate(() => MockupStudio._t.openEditor("r-serum")); await p.waitForSelector('#mk-side [data-rp="body"]', { timeout: 20000 });
+  const ru = await p.evaluate(() => ({ roles: document.querySelectorAll("#mk-side [data-rp]").length, cols: document.querySelectorAll("#mk-side [data-rc]").length, params: document.querySelectorAll("#mk-side [data-pa]").length, glass: MockupStudio._t.CUR.glass, noFin: !document.querySelector('#mk-side [data-k="finish"]') }));
+  ok("لوحة المواد: دور لكل جزء (مادة + لون) وأبعاد، والزجاج مفعّل", ru.roles === 4 && ru.cols === 4 && ru.params === 2 && ru.glass && ru.noFin, ru);
+  await p.evaluate(() => { const e = document.querySelector('#mk-side [data-pa="h"]'); e.value = 16; e.dispatchEvent(new Event("input")); const r = document.querySelector('#mk-side [data-rp="body"]'); r.value = "depoli"; r.dispatchEvent(new Event("change")); const c = document.querySelector('#mk-side [data-rc="cap"]'); c.value = "#aa2222"; c.dispatchEvent(new Event("input")); const l = document.querySelector('#mk-side [data-ron="liquid"]'); l.checked = false; l.dispatchEvent(new Event("change")); });
+  await p.waitForTimeout(500);
+  const ch = await p.evaluate(() => { const T = MockupStudio._t, s = T.CUR.s; let liq = false; T.CUR && 0; return { h: s.P.h, p: s.roles.body.p, c: s.roles.cap.c, on: s.roles.liquid.on, lbl: document.querySelector('[data-pv="h"]').textContent }; });
+  ok("تغيير الارتفاع والمادة ولون الغطاء وإخفاء السائل يُطبَّق على الحالة", ch.h === 16 && ch.p === "depoli" && ch.c === "#aa2222" && ch.on === false && ch.lbl === "16.0", ch);
+  const px = await p.evaluate(async () => { const T = MockupStudio._t, a = T.renderTo(300, 300, false), b = T.renderTo(300, 300, true), g = c => { const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 20) n++; return [n, d[3], d[(150 * 300 + 150) * 4 + 3]]; }; return { opaque: g(a), tr: g(b) }; });
+  ok("تصدير غير شفاف: خلفية كاملة؛ وشفاف: ركن شفاف والمنتج ظاهر (زجاج احتياطي)", px.opaque[1] === 255 && px.tr[1] === 0 && px.tr[2] > 20 && px.tr[0] > 3000 && px.tr[0] < 80000, px);
+  ok("بعد التصدير الشفاف يعود الزجاج المنكسر (لا تعلق وضعية الاحتياط)", await p.evaluate(() => MockupStudio._t.CUR.glass === true && MockupStudio._t.CUR.m.id === "r-serum"));
+  await p.evaluate(() => { const T = MockupStudio._t; T.CUR.s.a.label.q.name = "MON SÉRUM"; T.refreshArea("label"); });
+  const pr = await p.evaluate(async () => { const T = MockupStudio._t; document.querySelector("#mk-pn").value = "مشروع واقعي"; const id = await T.saveProject(true); const l = await T.mineList(true); return { id: !!id, n: l.length }; });
+  await p.evaluate(async () => { const T = MockupStudio._t; const l = await T.mineList(true); T.CUR.s.P.h = 9; T.CUR.s.roles.body.p = "verre"; await T.openProject(l[0].id); });
+  await p.waitForTimeout(600);
+  const rr = await p.evaluate(() => { const T = MockupStudio._t, s = T.CUR.s; return { m: T.CUR.m.id, h: s.P.h, p: s.roles.body.p, c: s.roles.cap.c, nm: s.a.label.q.name }; });
+  ok("المشروع الواقعي يحفظ الأبعاد والمواد والألوان ونص التصميم ويستعيدها", pr.id && rr.m === "r-serum" && rr.h === 16 && rr.p === "depoli" && rr.c === "#aa2222" && rr.nm === "MON SÉRUM", [pr, rr]);
+  await p.evaluate(async () => { const T = MockupStudio._t; const l = await T.mineList(true); await T.delProject(l[0].id); });
+  await p.evaluate(() => MockupStudio._t.openEditor("r-box-ship")); await p.waitForSelector('#mk-side [data-pa="w"]', { timeout: 20000 });
+  ok("صندوق الشحن الكرافت: منزلق فتح الغطاء وأبعاد ثلاثة", await p.evaluate(() => !!document.querySelector('#mk-side [data-k="open"]') && document.querySelectorAll("#mk-side [data-pa]").length === 3));
+  await p.evaluate(() => { const e = document.querySelector('#mk-side [data-k="open"]'); e.value = 1; e.dispatchEvent(new Event("input")); }); await p.waitForTimeout(200);
+  ok("فتح الغطاء يعمل لصندوق الشحن الواقعي", await p.evaluate(() => MockupStudio._t.CUR.s.open === 1));
+  await p.evaluate(() => MockupStudio._t.openEditor("r-card")); await p.waitForSelector("#mk-side [data-pa]", { timeout: 20000 });
+  await p.evaluate(() => MockupStudio._t.openEditor("r-bowl")); await p.waitForSelector("#mk-side [data-rp]", { timeout: 20000 });
+  ok("الوعاء السيراميك بلا قسم طباعة (لا ملصق له)", await p.evaluate(() => !document.querySelector("#mk-side [data-src]")));
   /* الإغلاق */
   await p.keyboard.press("Escape"); await p.waitForTimeout(250); ok("Esc من المحرّر يعود للمعرض", await p.evaluate(() => !!document.querySelector("#mk .mk-grid") && !document.querySelector("#mk .mk-side")));
   await p.keyboard.press("Escape"); await p.waitForTimeout(250); ok("Esc من المعرض يغلق الاستوديو ويحرّر الموارد", await p.evaluate(() => !document.getElementById("mk-bg") && MockupStudio._t.R === null));
