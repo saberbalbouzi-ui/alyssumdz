@@ -95,7 +95,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   ok("إضافة طبقة نص على قارورة", (await nl()) === l0 + 1);
   await p.evaluate(() => document.querySelector('#bs .acc[data-acc="mat"] button').click()); await p.waitForTimeout(250);
   ok("لوحة المواد حسب الدور (زجاج/محتوى/غطاء…) بقوائم مواد", await p.evaluate(() => document.querySelectorAll("#bs .rrole select").length >= 3));
-  const c0 = await p.evaluate(() => BoxStudio.inst.state.real.color); await p.evaluate(() => document.querySelectorAll("#bs .acc[data-acc=mat] .sw .swb")[1].click()); await p.waitForTimeout(500);
+  const c0 = await p.evaluate(() => BoxStudio.inst.state.real.color); await p.evaluate(() => document.querySelectorAll("#bs .acc[data-acc=mat] .sw .csb")[1].click()); await p.waitForTimeout(500);
   ok("تغيير لون الجسم يعيد البناء ويحفظ في الحالة", await p.evaluate(c => BoxStudio.inst.state.real.color !== c, c0) && (await px()) > 12);
   await p.evaluate(() => { const sel = document.querySelector("#bs .rrole select"); sel.value = "depoli"; sel.dispatchEvent(new Event("change")); }); await p.waitForTimeout(500);
   ok("تغيير مادة الجزء يعمل", await p.evaluate(() => BoxStudio.inst.state.real.roles.body.p === "depoli"));
