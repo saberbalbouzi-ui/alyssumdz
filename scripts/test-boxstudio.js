@@ -95,6 +95,14 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   ok("إضافة طبقة نص على قارورة", (await nl()) === l0 + 1);
   await p.evaluate(() => document.querySelector('#bs .acc[data-acc="mat"] button').click()); await p.waitForTimeout(250);
   ok("لوحة المواد حسب الدور (زجاج/محتوى/غطاء…) بقوائم مواد", await p.evaluate(() => document.querySelectorAll("#bs .rrole select").length >= 3));
+  { const cb = await p.$eval("#bs #gl", e => { const r = e.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+    await p.mouse.click(cb[0], cb[1]); await p.waitForTimeout(500);
+    ok("النقر على النموذج يفتح قائمة «رفع صورك» و«حجم مخصص»", await p.evaluate(() => [...document.querySelectorAll("#bs .ctxm .it")].map(b => b.textContent.trim()).join("|") === "رفع صورك|حجم مخصص"));
+    await p.click("#bs .ctxm [data-a=size]"); await p.waitForTimeout(400);
+    ok("نافذة الحجم المخصص: mm/in وثلاث خانات، والخانة المركَّزة تُلوَّن بالبنفسجي على النموذج", await p.evaluate(() => document.querySelectorAll("#bs .szp input").length === 3 && document.querySelectorAll("#bs .szp .u button").length === 2 && !!document.querySelector("#bs .szp label.hi") && !!document.querySelector("#bs .dl.hi")));
+    const d0 = await p.evaluate(() => BoxStudio.inst.state.dims.H);
+    await p.fill("#bs .szp input[data-k=H]", String(d0 + 20)); await p.click("#bs .szp .go"); await p.waitForTimeout(900);
+    ok("تطبيق الحجم المخصص يغيّر الارتفاع فعلاً ويُغلق النافذة", await p.evaluate(d0 => Math.abs(BoxStudio.inst.state.dims.H - (d0 + 20)) <= 1 && !document.querySelector("#bs .ctxm"), d0)); }
   const c0 = await p.evaluate(() => BoxStudio.inst.state.real.color); await p.evaluate(() => document.querySelectorAll("#bs .acc[data-acc=mat] .sw .csb")[1].click()); await p.waitForTimeout(500);
   ok("تغيير لون الجسم يعيد البناء ويحفظ في الحالة", await p.evaluate(c => BoxStudio.inst.state.real.color !== c, c0) && (await px()) > 12);
   await p.evaluate(() => { const sel = document.querySelector("#bs .rrole select"); sel.value = "depoli"; sel.dispatchEvent(new Event("change")); }); await p.waitForTimeout(500);
@@ -137,6 +145,14 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   await p.click('#bs .tab[data-tab="bg"]'); await p.waitForTimeout(300);
   ok("وضع 2D: خيارات ظل المنتج (نعومة/قوة/إزاحة) في تبويب الخلفية", await p.evaluate(() => /نعومة الظل/.test(document.querySelector("#bs #shHost").innerText) && /إزاحة أفقية/.test(document.querySelector("#bs #shHost").innerText)));
   await p.click('#bs .tab[data-tab="edit"]'); await p.waitForTimeout(200);
+  await p.click("#bs #addText"); await p.waitForTimeout(500);
+  ok("وضع 2D: الملصق يُضاف في وسط المنتج بمقابض تحكم (تحريك/تكبير/تدوير)", await p.evaluate(() => { const x = document.querySelector("#bs .xf"), L = BoxStudio.inst.state.faces.front.layers.slice(-1)[0]; return !!x && getComputedStyle(x).display === "block" && x.querySelectorAll("i").length === 5 && L.x === .5 && L.y === .5; }));
+  { const se = await (await p.$("#bs .xf i[data-h=se]")).boundingBox(), s0 = await p.evaluate(() => BoxStudio.inst.state.faces.front.layers.slice(-1)[0].size);
+    await p.mouse.move(se.x + 7, se.y + 7); await p.mouse.down(); await p.mouse.move(se.x + 70, se.y + 60, { steps: 4 }); await p.mouse.up();
+    ok("مقبض الزاوية يكبّر الملصق", await p.evaluate(s0 => BoxStudio.inst.state.faces.front.layers.slice(-1)[0].size > s0, s0));
+    const rt = await (await p.$("#bs .xf i[data-h=rot]")).boundingBox();
+    await p.mouse.move(rt.x + 8, rt.y + 8); await p.mouse.down(); await p.mouse.move(rt.x + 90, rt.y + 40, { steps: 4 }); await p.mouse.up();
+    ok("مقبض التدوير يدوّر الملصق", await p.evaluate(() => Math.abs(BoxStudio.inst.state.faces.front.layers.slice(-1)[0].rot) > 5)); }
   ok("رفع صورة المنتج 2D ينشئ لوحاً بوجه واحد قابل للملصقات داخل شفافيته", await p.evaluate(() => { const I = BoxStudio.inst; return I.state.model === "custom3d" && Object.keys(I.FC).join() === "front" && I.FC.front.clip === true && I.FC.front.decal === true; }));
   const px2 = async (x, y) => p.evaluate(([x, y]) => { const f = BoxStudio.inst.FC.front; return Array.from(f.ctx.getImageData(Math.round(x * f.cw), Math.round(y * f.ch), 1, 1).data); }, [x, y]);
   const q0 = await px2(.5, .5), q1 = await px2(.01, .01); ok("مركز المنتج معتم وزاويته شفافة", q0[3] === 255 && q1[3] === 0, [q0, q1]);
