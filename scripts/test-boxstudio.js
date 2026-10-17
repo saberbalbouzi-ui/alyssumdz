@@ -22,7 +22,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   ok("الاستوديو يفتح: شريط علوي وقضيب أقسام ولوحة ومسرح ثلاثي الأبعاد", await p.evaluate(() => !!document.querySelector("#bs .top .brand") && document.querySelectorAll("#bs .rail .tab").length === 7 && !!document.querySelector("#bs .panel") && BoxStudio.inst.THREE_OK));
   ok("العلبة البريدية الافتراضية مرسومة", (await px()) > 12);
   if (shots) await p.screenshot({ path: path.join(shots, "bs-open.png") });
-  const nm = await p.evaluate(() => Object.keys(BoxStudio.inst.MODELS).length); ok("مكتبة النماذج: 60 نموذجاً أو أكثر (مع قوالب القص الـ23)", nm >= 60, nm);
+  const nm = await p.evaluate(() => Object.keys(BoxStudio.inst.MODELS).length); ok("مكتبة النماذج: الواقعية فقط (35 معروضاً) بلا ملابس ولا قديمة، وقوالب القص الـ23 مخفية للتحويل فقط", nm >= 58 && await p.evaluate(() => { const M = BoxStudio.inst.MODELS, v = Object.entries(M).filter(([k, m]) => !m.hidden); return v.length === 35 && v.every(([k, m]) => m.real) && !v.some(([k]) => /tee|polo|hoodie|cap|tote|ringer|oversize/.test(k)) && Object.values(M).filter(m => m.prof).every(m => m.hidden); }), nm);
   /* ═══ تحرير: نص وصورة وتراجع ═══ */
   const nL = () => p.evaluate(() => (BoxStudio.inst.state.faces[BoxStudio.inst.state.sel.face] || { layers: [] }).layers.length);
   const n0 = await nL(); await p.click("#bs #addText"); await p.waitForTimeout(200); ok("إضافة طبقة نص إلى الوجه المحدّد", (await nL()) === n0 + 1);
@@ -36,7 +36,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   await p.evaluate(() => { BoxStudio.inst.state.open = 0; BoxStudio.inst.applyOpen(); });
   /* نموذج آخر */
   await p.click('#bs .tab[data-tab="models"]'); await p.waitForTimeout(300);
-  const cats = await p.evaluate(() => [...document.querySelectorAll("#bs #cats button")].map(b => b.textContent.trim())); ok("فئات النماذج تشمل «قوالب القص»", cats.some(c => /قوالب القص/.test(c)), cats);
+  const cats = await p.evaluate(() => [...document.querySelectorAll("#bs #cats button")].map(b => b.textContent.trim())); ok("فئات النماذج لا تشمل «قوالب القص» ولا «ملابس»", !cats.some(c => /قوالب القص|ملابس/.test(c)), cats);
   await p.evaluate(() => { const b = [...document.querySelectorAll("#bs #cats button")].find(x => /زجاجات/.test(x.textContent)); b.click(); }); await p.waitForTimeout(200);
   await p.evaluate(() => { const c = [...document.querySelectorAll("#bs #mc .card")].find(x => /نبيذ/.test(x.textContent)); c.click(); }); await p.waitForTimeout(900);
   ok("اختيار «زجاجة نبيذ» يبدّل النموذج ويرسمه", await p.evaluate(() => BoxStudio.inst.state.model === "mk_r_wine") && (await px()) > 12);
@@ -86,7 +86,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   await p.evaluate(() => BoxStudio.open()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(1200); ok("إعادة الفتح تعمل بعد الإغلاق", (await px()) > 12 && await p.evaluate(() => document.querySelectorAll("#bs-bg").length === 1));
   /* ═══ النماذج الواقعية داخل الاستوديو (v1.89.306) ═══ */
   const pick = async name => { await p.evaluate(async nm => { document.querySelector('#bs .tab[data-tab="models"]').click(); await new Promise(r => setTimeout(r, 80)); const all = [...document.querySelectorAll("#bs #cats button")].find(b => /الكل/.test(b.textContent)); if (all) all.click(); await new Promise(r => setTimeout(r, 80)); const m = BoxStudio.inst.MODELS[nm]; [...document.querySelectorAll("#bs #mc .card")].find(x => x.textContent.includes(m.name)).click(); }, name); await p.waitForTimeout(1500); };
-  ok("42 نموذجاً واقعياً مسجَّلاً وبدائل القديمة محذوفة", await p.evaluate(() => { const M = BoxStudio.inst.MODELS, k = Object.keys(M); return k.filter(x => /^mk_/.test(x)).length === 42 && !M.water && !M.tee && !M.soda && !M.standup && !!M.beer && !!M.mailer; }));
+  ok("35 نموذجاً واقعياً مسجَّلاً والقديمة والملابس محذوفة", await p.evaluate(() => { const M = BoxStudio.inst.MODELS, k = Object.keys(M); return k.filter(x => /^mk_/.test(x)).length === 35 && !M.water && !M.tee && !M.soda && !M.standup && !M.beer && !M.mk_tee && !M.mk_hoodie && !!M.mailer && M.mailer.hidden; }));
   await p.evaluate(() => BoxStudio.open()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(1200);
   await pick("mk_r_serum");
   ok("قارورة قطّارة واقعية: وجه «الملصق» وطبقات نص افتراضية وأبعاد حقيقية", await p.evaluate(() => { const I = BoxStudio.inst; return I.state.model === "mk_r_serum" && Object.keys(I.FC).join() === "label" && I.state.faces.label.layers.length >= 1 && I.state.dims.H > 80 && I.state.dims.H < 250; }) && (await px()) > 12);
@@ -107,8 +107,6 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   await p.click("#bs #exportBtn"); await p.waitForTimeout(200); await p.evaluate(() => { document.querySelector("#bs #exBg").value = "alpha"; document.querySelector("#bs #exRes").value = "1"; });
   d = await grab(() => p.click("#bs #exGo")); ok("تصدير PNG شفاف لنموذج زجاجي", d.buf.slice(1, 4).toString() === "PNG" && d.buf.length > 3000, d.name);
   await p.evaluate(() => document.querySelectorAll("#bs .bgb")[0].click()); await p.waitForTimeout(600);
-  await pick("mk_tee");
-  ok("قميص: وجها «أمام/خلف» بطباعة شفافة (decal) وملصقات قابلة للإضافة", await p.evaluate(() => { const F = BoxStudio.inst.FC; return Object.keys(F).sort().join() === "back,front" && F.front.decal === true; }) && (await px()) > 12);
   await pick("mk_r_box_ship");
   ok("صندوق شحن واقعي: قابل للفتح وبوجوه طباعة", await p.evaluate(() => BoxStudio.inst.openable() && Object.keys(BoxStudio.inst.FC).length >= 1));
   await p.evaluate(() => { BoxStudio.inst.state.open = 1; BoxStudio.inst.applyOpen(); }); await p.waitForTimeout(300); ok("الصندوق المفتوح يُرسم", (await px()) > 12);
