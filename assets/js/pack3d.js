@@ -15,7 +15,7 @@ const Pack3D = (() => {
   const DEF = { type: "bottle", body: "#f3f5f1", cap: "#ffffff", bodyFin: "gloss", capFin: "gloss", liquid: "#d89b2b", fill: 0.78, bgMode: "linear", bg1: "#e8eeff", bg2: "#c9d6f6", yaw: -0.55, pitch: 0.1, tilt: 0, zoom: 1, auto: false, shadow: true, wrap: "fit", lsize: 1, lpos: 0, lrot: 0, both: true, size: 0, fmt: "png", q: 92, transparent: false, fold: 1, boxFin: "gloss", useQuick: true, ql: { name: "ALYSSUM", sub: "Natural care", vol: "50 ml", c1: "#2f8f4e", c2: "#f3f9f1", ink: "#173f35" } };
   const S = JSON.parse(JSON.stringify(DEF)); try { const o = JSON.parse(localStorage.getItem(K) || "{}"); Object.assign(S, o); S.ql = Object.assign({}, DEF.ql, o.ql || {}); } catch (e) { }
   const save = () => { try { localStorage.setItem(K, JSON.stringify(S)); } catch (e) { } };
-  let photo = null, BOX = null, foldNodes = null, T = null, R = null, scene = null, cam = null, root = null, packG = null, shadowM = null, envTex = null, raf = 0, dirty = true, opened = false, stage = null, art = null, orig = null, sizeInfo = { r: 3, c: null };
+  let escH = null, photo = null, BOX = null, foldNodes = null, T = null, R = null, scene = null, cam = null, root = null, packG = null, shadowM = null, envTex = null, raf = 0, dirty = true, opened = false, stage = null, art = null, orig = null, sizeInfo = { r: 3, c: null };
   const mats = {};
   async function loadThree() { if (T) return T; const url = new URL("assets/js/vendor/three.module.min.js", document.baseURI).href; T = await import(url); return T; }
   const hex = c => new T.Color(c);
@@ -149,6 +149,7 @@ const Pack3D = (() => {
     root.add(packG); applyFold(S.fold);
   }
   function buildFold() {
+    if (BOX && BOX.n) return BOX.n.mode === "net" ? buildNet() : buildSolid();
     if (BOX && BOX.style === "gift") return buildGift();
     const B = BOX, k = 3.4 / Math.max(B.W, B.H, B.D), W = B.W * k, H = B.H * k, D = B.D * k, Tk = B.T * k, Gk = B.G * k, th = Math.max(0.012, 0.5 * k), dd = D * 0.8, cc = Math.min(dd * 0.45, D * 0.4);
     const paper = new T.MeshStandardMaterial({ color: 0xf1ece0, roughness: 0.9 }), edge = new T.MeshStandardMaterial({ color: 0xe8e2d4, roughness: 0.9 });
@@ -170,17 +171,58 @@ const Pack3D = (() => {
     packG.add(fr); foldNodes = { pL, pB, pG, pR, pT, pTk, pBt, pBk, dTL, dTR, dBL, dBR, H, D };
     root.add(packG); applyFold(S.fold);
   }
+
+  /* ═══ قالب عام (مكتبة قوالب العلب): وجوه مفصّلة تُطوى حول حواف الثني، أو مجسّم صلب للأشكال الدائرية ═══ */
+  function netTex(B, bw, bh) {
+    const W = 2048, cv = document.createElement("canvas"); cv.width = W; cv.height = Math.max(64, Math.min(4096, Math.round(W * bh / bw))); const x = cv.getContext("2d");
+    x.fillStyle = B.color || "#f1ece0"; x.fillRect(0, 0, cv.width, cv.height);
+    if (B.art) { const a = B.art, sc = Math.max(cv.width / a.width, cv.height / a.height), dw = a.width * sc, dh = a.height * sc; x.drawImage(a, (cv.width - dw) / 2, (cv.height - dh) / 2, dw, dh); }
+    return cv;
+  }
+  /* مجموعة three لعلبة من نتيجة BoxProfiles.net3d: قالب مطويّ (وجوه مفصّلة) أو مجسّم صلب؛ يستعملها الستوديو والمعاينة الحيّة داخل نافذة القوالب */
+  function boxGroup(TT, B, o) {
+    o = o || {}; const fin = o.fin || "gloss", gl = fin === "gloss" ? 0.55 : fin === "soft" ? 0.05 : 0.2, rg = fin === "gloss" ? 0.32 : fin === "soft" ? 0.85 : 0.6, net = B.n, G = new TT.Group();
+    const tex = o.tex || (c => { const t = new TT.CanvasTexture(c); t.colorSpace = TT.SRGBColorSpace; t.anisotropy = 4; return t; });
+    if (net.mode === "net") {
+      const bb = net.bb, bw = bb.maxx - bb.minx, bh = bb.maxy - bb.miny, size = Math.max(bw, bh), th = Math.max(0.5, size / 260);
+      const tx = tex(netTex(B, bw, bh)); tx.repeat.set(1 / bw, 1 / bh); tx.offset.set(-bb.minx / bw, -bb.miny / bh); tx.wrapS = tx.wrapT = TT.ClampToEdgeWrapping;
+      const print = new TT.MeshPhysicalMaterial({ map: tx, roughness: rg, clearcoat: gl, clearcoatRoughness: 0.25, envMapIntensity: 0.85 }), paper = new TT.MeshStandardMaterial({ color: 0xf1ece0, roughness: 0.9 }), edge = new TT.MeshStandardMaterial({ color: 0xe2dccc, roughness: 0.9 });
+      const line = new TT.LineBasicMaterial({ color: 0x1a1a1a, transparent: true, opacity: 0.32 }), groups = [];
+      net.faces.forEach(f => {
+        const g = new TT.Group(), pts = f.poly.filter((q, i, a) => { const w = a[(i + a.length - 1) % a.length]; return Math.hypot(q[0] - w[0], q[1] - w[1]) > 1e-3; }), sh = new TT.Shape(pts.map(q => new TT.Vector2(q[0], q[1])));
+        const eg = new TT.ExtrudeGeometry(sh, { depth: th, bevelEnabled: false }); eg.translate(0, 0, -th); g.add(new TT.Mesh(eg, [paper, edge]));
+        const pm = new TT.Mesh(new TT.ShapeGeometry(sh), print); pm.position.z = size * 0.0006; g.add(pm);
+        g.add(new TT.LineLoop(new TT.BufferGeometry().setFromPoints(pts.map(q => new TT.Vector3(q[0], q[1], size * 0.0012))), line));
+        g.matrixAutoUpdate = false; groups.push(g); G.add(g);
+      });
+      const cb = B.bounds(net, 1); G.scale.setScalar(3.4 / Math.max(cb.size[0], cb.size[1], cb.size[2], 1)); if (net.stand) G.rotation.x = Math.PI / 2; /* هرم/صينية: القاعدة على الأرض */
+      return { g: G, apply: t => { const mats = B.fold(net, t); groups.forEach((g, i) => { g.matrix.fromArray(mats[i]); g.matrixWorldNeedsUpdate = true; }); } };
+    }
+    const so = net.solid, mat = new TT.MeshPhysicalMaterial({ color: new TT.Color(B.color || "#f1ece0"), roughness: rg, clearcoat: gl, clearcoatRoughness: 0.25, envMapIntensity: 0.85, side: TT.DoubleSide }), grp = new TT.Group(); let lid = null;
+    if (so.kind === "frustum") grp.add(new TT.Mesh(new TT.CylinderGeometry(so.rt, so.rb, so.H, 96, 1, true), mat));
+    else {
+      const v2 = pts => pts.map(q => new TT.Vector2(q[0], q[1])), cup = (out, inn, h, plateAt) => {
+        const sh = new TT.Shape(v2(out)); sh.holes.push(new TT.Path(v2(inn))); const g = new TT.Group(), w = new TT.Mesh(new TT.ExtrudeGeometry(sh, { depth: h, bevelEnabled: false }), mat), pl = new TT.Mesh(new TT.ExtrudeGeometry(new TT.Shape(v2(out)), { depth: so.T, bevelEnabled: false }), mat); pl.position.z = plateAt; g.add(w); g.add(pl); return g; };
+      grp.add(cup(so.outline, so.inner, so.H, 0)); lid = cup(so.lo, so.loInner, so.LID, so.LID - so.T); grp.add(lid); grp.rotation.x = -Math.PI / 2;
+    }
+    G.add(grp); const bb0 = new TT.Box3().setFromObject(G), sz = new TT.Vector3(); bb0.getSize(sz); G.scale.setScalar(3.4 / Math.max(sz.x, sz.y, sz.z, 1));
+    const base = so.H - (so.LID || 0), lift = (so.H || 1) * 1.15;
+    return { g: G, apply: t => { if (lid) lid.position.z = base + (1 - ease(t)) * lift; } };
+  }
+  function buildNet() { const bg = boxGroup(T, BOX, { fin: S.boxFin, tex: artTexture }); packG.add(bg.g); foldNodes = { net: true, bg }; root.add(packG); applyFold(S.fold); }
+  const buildSolid = buildNet;
   const ease = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
   function applyFold(t) {
     if (!foldNodes || !packG) return; const n = foldNodes, q = Math.PI / 2, s = ease(t / 0.5), tb = ease((t - 0.3) / 0.45), fl = ease((t - 0.7) / 0.3);
-    if (n.gift) {
+    if (n.net) n.bg.apply(t);
+    else if (n.gift) {
       const gl = ease((t - 0.3) / 0.25), ld = ease((t - 0.5) / 0.3), tk = ease((t - 0.78) / 0.22); n.pBack.rotation.x = -q * s; n.pFront.rotation.x = q * s; n.pSR.rotation.y = -q * s; n.pSL.rotation.y = q * s;
       n.gTR.rotation.x = -q * gl; n.gTL.rotation.x = -q * gl; n.gBR.rotation.x = q * gl; n.gBL.rotation.x = q * gl; n.pLid.rotation.x = -q * ld; n.pTuck.rotation.x = -q * tk; packG.quaternion.setFromAxisAngle(new T.Vector3(0, 1, -1).normalize(), Math.PI * s);
     } else {
     n.pL.rotation.y = -q * s; n.pB.rotation.y = -q * s; n.pG.rotation.y = -q * s; n.pR.rotation.y = q * s;
     n.pT.rotation.x = -q * tb; n.pBt.rotation.x = q * tb; n.pTk.rotation.x = -q * fl; n.pBk.rotation.x = q * fl;
     n.dTL.rotation.x = -q * fl; n.dTR.rotation.x = -q * fl; n.dBL.rotation.x = q * fl; n.dBR.rotation.x = q * fl; }
-    packG.position.set(0, 0, 0); packG.updateMatrixWorld(true); const bb = new T.Box3().setFromObject(packG), c = new T.Vector3(); bb.getCenter(c); packG.position.sub(c);
+    root.rotation.set(0, 0, 0); root.updateMatrixWorld(true); packG.position.set(0, 0, 0); packG.updateMatrixWorld(true); const bb = new T.Box3().setFromObject(packG), c = new T.Vector3(); bb.getCenter(c); packG.position.sub(c);
     sizeInfo = { r: bb.getBoundingSphere(new T.Sphere()).radius, c, bottom: bb.min.y - c.y, shY: bb.min.y - c.y - 0.01 }; view(); dirty = true;
   }
   let foldRaf = 0;
@@ -341,7 +383,17 @@ const Pack3D = (() => {
       '<h4>④ التصدير</h4>' + sel("size", "المقاس", SIZES.map((s, i) => [i, s[0]])) + '<div class="r2"><div>' + sel("fmt", "الصيغة", [["png", "PNG"], ["webp", "WebP"]]) + "</div><div>" + ctl("q", "جودة WebP", "number", 'min="40" max="100"') + '</div></div><label style="display:flex;gap:.4rem;align-items:center;margin-top:.4rem"><input type="checkbox" data-k="transparent"' + (S.transparent ? " checked" : "") + '> خلفية شفافة في الصورة المصدَّرة</label>' +
       '<div class="p3-b"><button type="button" data-ex="one">⬇ تصدير الصورة</button><button type="button" class="o" data-ex="angles">4 زوايا (ZIP)</button><button type="button" class="o" data-ex="r12">360° — 12 إطاراً</button><button type="button" class="o" data-ex="r24">360° — 24 إطاراً</button><button type="button" data-ex="studio" style="flex:1 1 100%">🎨 إرسال الزوايا إلى ستوديو ديزاين</button></div><p class="m">اسحب على المجسّم لتدويره، وبالعجلة للتقريب، ونقرتان لإعادة الضبط. جرّب الخلفية الشفافة للصق الصورة فوق تصاميمك.</p>';
   }
+  function netPanel() {
+    const N = BOX.n, solid = N.mode === "solid", prism = solid && N.solid.kind === "prism", cb = !solid ? BOX.bounds(N, 1) : null;
+    const dim = solid ? (prism ? Math.round(Math.max(...N.solid.outline.map(q => q[0])) - Math.min(...N.solid.outline.map(q => q[0]))) + "×" + Math.round(Math.max(...N.solid.outline.map(q => q[1])) - Math.min(...N.solid.outline.map(q => q[1]))) + "×" + Math.round(N.solid.H) : Math.round(N.solid.rb * 2) + "×" + Math.round(N.solid.H)) : cb.size.map(v => Math.round(v)).join("×");
+    return '<h4>① ' + esc(N.name) + '</h4><p class="m">' + (solid ? "مجسّم يمثّل العلبة المغلقة (الجسم والغطاء)؛ القالب المسطّح يُقصّ ويُطوى بالشكل نفسه." : "تُطوى وجوه القالب المسطّح تلقائياً حول خطوط الثني لتشكّل العلبة المغلقة.") + ' الأبعاد التقريبية ' + dim + ' مم.' + (N.dropped ? " (أجنحة اللصق المنفصلة لا تظهر في العرض.)" : "") + (N.rule === "milk" || N.key === "bag" ? " ⚠️ هذا القالب تقريبي في العرض ثلاثي الأبعاد: جوانبه المطوية تُطوى بزاوية قائمة فقط." : "") + "</p>" +
+      (!solid || prism ? rng("fold", solid ? "فتح / إغلاق الغطاء" : "طيّ / فتح القالب", 0, 1, 0.01, S.fold) + '<div class="p3-b"><button type="button" data-act="foldplay">▶ ' + (solid ? "حركة الإغلاق" : "حركة الطيّ") + '</button><button type="button" class="o" data-act="unfold">' + (solid ? "رفع الغطاء" : "فتح القالب") + '</button><button type="button" class="o" data-act="foldclose">إغلاق العلبة</button></div>' : "") +
+      '<h4>② اللون والتصميم</h4><div class="r2"><div><label class="f">لون الورق</label><input type="color" data-bc value="' + esc(BOX.color || "#f1ece0") + '"></div><div></div></div>' +
+      (!solid ? '<label class="f">تصميم يُطبع على القالب المسطّح (يُمدّ على كامل الورقة)</label><label class="p3-up" for="p3-bart">' + (BOX.art ? "✔ تم رفع التصميم — استبدله" : "⬆ ارفع صورة التصميم") + '<input id="p3-bart" type="file" accept="image/*" hidden></label>' + (BOX.art ? '<div class="p3-b"><button type="button" class="o" data-act="bartclear">إزالة التصميم</button></div>' : "") : "") +
+      '<div class="p3-b"><button type="button" class="o" data-act="backbd">↩ العودة إلى قوالب العلب</button></div>' + sel("boxFin", "طلاء الورق", [["gloss", "لامع"], ["matte", "مطفي"], ["soft", "ورق ناعم"]]) + tail();
+  }
   function boxPanel() {
+    if (BOX.n) return netPanel();
     return '<h4>① العلبة المصمَّمة (Box Designer)</h4><p class="m">الأبعاد ' + Math.round(BOX.W) + '×' + Math.round(BOX.H) + '×' + Math.round(BOX.D) + ' مم. تُطوى وجوه القالب تلقائياً لتشكّل العلبة بتصميمك ونصوصك ومواضعها.</p>' + rng("fold", "طيّ / فتح القالب", 0, 1, 0.01, S.fold) +
       '<div class="p3-b"><button type="button" data-act="foldplay">▶ حركة الطيّ</button><button type="button" class="o" data-act="unfold">فتح القالب</button><button type="button" class="o" data-act="foldclose">إغلاق العلبة</button><button type="button" class="o" data-act="backbd">↩ Box Designer</button></div>' +
       sel("boxFin", "طلاء الورق", [["gloss", "لامع"], ["matte", "مطفي"], ["soft", "ورق ناعم"]]) + tail();
@@ -370,23 +422,25 @@ const Pack3D = (() => {
     side.querySelectorAll("[data-type]").forEach(b => b.onclick = () => { S.type = b.dataset.type; if (S.type === "glass" && S.bodyFin === "gloss") S.bodyFin = "glass"; if (S.type !== "glass" && S.bodyFin === "glass" && S.type !== "jar" && S.type !== "bottle") S.bodyFin = "gloss"; save(); ui(); build(); });
     side.querySelectorAll("[data-view]").forEach(b => b.onclick = () => { const v = b.dataset.view; const P = { front: [0, 0.06, 0], q: [-0.6, 0.12, 0], side: [-Math.PI / 2, 0.06, 0], back: [Math.PI, 0.06, 0], tilt: [-0.55, 0.1, -0.5] }[v]; S.yaw = P[0]; S.pitch = P[1]; S.tilt = P[2]; save(); ui(); view(); });
     side.querySelectorAll("[data-ex]").forEach(b => b.onclick = () => { const v = b.dataset.ex; if (v === "studio") sendToStudio(); else if (v === "one") exportOne(); else if (v === "angles") exportAngles(); else export360(v === "r12" ? 12 : 24); });
-    side.querySelectorAll("[data-act]").forEach(b => b.onclick = () => { const a = b.dataset.act; if (a === "quick") { S.useQuick = true; ui(); build(); } else if (a === "art") { S.useQuick = false; ui(); build(); } else if (a === "origlabel") useOrigAsLabel(); else if (a === "prod") prodList(); else if (a === "foldplay") { S.fold = 0; applyFold(0); foldTo(1); } else if (a === "unfold") foldTo(0); else if (a === "foldclose") foldTo(1); else if (a === "backbd") close(); });
+    side.querySelectorAll("[data-act]").forEach(b => b.onclick = () => { const a = b.dataset.act; if (a === "quick") { S.useQuick = true; ui(); build(); } else if (a === "art") { S.useQuick = false; ui(); build(); } else if (a === "origlabel") useOrigAsLabel(); else if (a === "prod") prodList(); else if (a === "foldplay") { S.fold = 0; applyFold(0); foldTo(1); } else if (a === "unfold") foldTo(0); else if (a === "foldclose") foldTo(1); else if (a === "backbd") close(); else if (a === "bartclear") { BOX.art = null; ui(); build(); } });
+    const bc = side.querySelector("[data-bc]"); if (bc) bc.oninput = () => { BOX.color = bc.value; build(); };
+    const ba = $("p3-bart"); if (ba) ba.onchange = () => { const f = ba.files[0]; if (!f) return; const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 2400 / Math.max(im.width, im.height)), cv = document.createElement("canvas"); cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k); cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(u); BOX.art = cv; ui(); build(); }; im.onerror = () => msg("تعذّر قراءة الصورة", true); im.src = u; };
     const fph = $("p3-photo"); if (fph) fph.onchange = () => fph.files[0] && setPhoto(fph.files[0]); const fa = $("p3-art"); if (fa) fa.onchange = () => fa.files[0] && setArt(fa.files[0]); const fo = $("p3-orig"); if (fo) fo.onchange = () => fo.files[0] && setOrig(fo.files[0]);
   }
   function prodList() {
     const box = $("p3-prod"); const ps = (typeof Admin !== "undefined" && Admin.products) || []; box.innerHTML = '<select id="p3-ps"><option value="">— اختر منتجاً —</option>' + ps.filter(p => p.cover).map(p => '<option value="' + esc(p.cover) + '">' + esc(p.title || p.slug) + "</option>").join("") + "</select>";
     $("p3-ps").onchange = e => { if (e.target.value) setArt(new URL(e.target.value, document.baseURI).href); };
   }
-  function close() { opened = false; cancelAnimationFrame(foldRaf); foldNodes = null; if (S.type === "dbox") { S.type = S.prevType || "bottle"; save(); } cancelAnimationFrame(raf); raf = 0; if (R) { try { R.dispose(); R.forceContextLoss(); } catch (e) { } R = null; } if (packG) { disposeGroup(packG); packG = null; } scene = null; const b = $("p3-bg"); if (b) b.remove(); stage = null; }
+  function close() { opened = false; if (escH) { document.removeEventListener("keydown", escH); escH = null; } cancelAnimationFrame(foldRaf); foldNodes = null; if (S.type === "dbox") { S.type = S.prevType || "bottle"; save(); } cancelAnimationFrame(raf); raf = 0; if (R) { try { R.dispose(); R.forceContextLoss(); } catch (e) { } R = null; } if (packG) { disposeGroup(packG); packG = null; } scene = null; const b = $("p3-bg"); if (b) b.remove(); stage = null; }
   async function open() { BOX = null; if (S.type === "dbox") S.type = S.prevType || "bottle"; return openDlg(); }
-  async function openBox(m) { BOX = m; if (S.type !== "dbox") S.prevType = S.type; S.type = "dbox"; S.fold = 1; S.auto = false; return openDlg(); }
+  async function openBox(m) { BOX = m; if (S.type !== "dbox") S.prevType = S.type; S.type = "dbox"; S.fold = 1; S.auto = false; const r = await openDlg(); if (m && m.n && m.n.mode === "net" && R && packG) { S.fold = 0; applyFold(0); sync("fold"); setTimeout(() => { if (opened) foldTo(1); }, 500); } return r; }
   async function openDlg() {
     close(); if (BOX && S.type !== "dbox") { S.prevType = S.type; S.type = "dbox"; } const bg = document.createElement("div"); bg.id = "p3-bg"; if (!$("p3-css")) { const st = document.createElement("style"); st.id = "p3-css"; st.textContent = CSS; document.head.appendChild(st); }
     bg.innerHTML = '<div id="p3" role="dialog" aria-label="Alyssum 3D Pack Studio"><div class="p3-h"><b>🧊 Alyssum 3D Pack Studio</b><small>ركّب ملصقك على عبوة ثلاثية الأبعاد وصدّر صوراً احترافية</small><button type="button" class="o p3-x" id="p3-x">إغلاق</button></div><div class="p3-m"><div class="p3-st" id="p3-st"><span class="p3-3d">3D</span><span class="p3-hint">اسحب للتدوير • العجلة للتقريب • نقرتان لإعادة الضبط</span></div><div class="p3-side" id="p3-side"></div></div><div class="p3-f" id="p3-msg">جارٍ تحميل المحرّك ثلاثي الأبعاد…</div></div>';
     document.body.appendChild(bg); opened = true; stage = $("p3-st"); $("p3-x").onclick = close; bg.addEventListener("mousedown", e => { if (e.target === bg) close(); });
-    document.addEventListener("keydown", function k(e) { if (e.key === "Escape") { close(); document.removeEventListener("keydown", k); } });
+    escH = e => { if (e.key === "Escape") close(); }; document.addEventListener("keydown", escH);
     try { const hasGL = (() => { try { const c = document.createElement("canvas"); return !!(c.getContext("webgl2") || c.getContext("webgl")); } catch (e) { return false; } })(); if (!hasGL) throw new Error("متصفحك أو جهازك لا يدعم WebGL المطلوب للعرض ثلاثي الأبعاد"); await init(stage); if (!opened) return; bindStage(stage); ui(); msg("جاهز — ارفع ملصقك أو عدّل الملصق السريع"); } catch (e) { msg("⚠️ " + e.message, true); }
   }
-  return { open, openBox, close, TYPES, FIN, SIZES, S, _t: { setPhotoFromImage, hasPhoto: () => !!photo, sendToStudio, artCanvas: () => art, applyFold, foldTo, spec: type => { return spec(type); }, build, renderTo, get ready() { return !!R; }, setArt, quickLabel, pickColors, view, loadThree, blobOf } };
+  return { open, openBox, close, TYPES, FIN, SIZES, S, _t: { boxGroup, setPhotoFromImage, hasPhoto: () => !!photo, sendToStudio, artCanvas: () => art, applyFold, foldTo, spec: type => { return spec(type); }, build, renderTo, get ready() { return !!R; }, setArt, quickLabel, pickColors, view, loadThree, blobOf } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = Pack3D;
