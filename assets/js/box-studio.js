@@ -1992,6 +1992,7 @@ function renderEdit(){
    '<div class="layers" id="layerList"></div><div id="layerEd"></div>'+
    accHtml('mat', X.isReal() ? 'المواد والألوان' : 'الخامة والتشطيب', MODELS[state.model].custom ? 'من صور المجسّم' : X.isReal() ? realSummary() : mi.name+' · '+FINISH[state.finish].name)+
    accHtml('dims','الأبعاد', d.L+' × '+d.W+' × '+d.H+' مم')+
+   accHtml('shd','الظل', X.is2D() ? (state.sh2d.on ? 'ظل المنتج' : 'بلا ظل') : (state.shadow ? 'ظاهر · '+Math.round(state.shadowStrength/.7*100)+'%' : 'مخفي'))+
    '<p class="hint" style="margin-top:14px">النموذج: <span dir="ltr">'+m.code+'</span> · '+m.name+'</p>';
   buildFaceChips(); buildLayerList(); buildEditor();
   bindAcc();
@@ -2010,7 +2011,7 @@ function accHtml(id,label,val){
 function bindAcc(){
   $$('.acc',P).forEach(a=>{
     const id = a.dataset.acc, body = $('.body',a);
-    const fill = ()=>{ body.innerHTML = ''; (id==='mat' ? buildMatBody : buildDimsBody)(body); };
+    const fill = ()=>{ body.innerHTML = ''; (id==='mat' ? buildMatBody : id==='shd' ? buildShadow : buildDimsBody)(body); };
     if(openAcc[id]) fill();
     $('button',a).onclick = ()=>{ openAcc[id] = !openAcc[id]; a.classList.toggle('open', openAcc[id]); if(openAcc[id]) fill(); };
   });
@@ -2346,6 +2347,9 @@ function renderBg(){
   $('#bgUp').onclick = ()=>$('#fBg').click();
   $('#bgRm').onclick = ()=>{ state.bg.imgId = null; X.applyBg(); commit(); renderBg(); };
   const sh = $('#shHost');
+  buildShadow(sh);
+}
+function buildShadow(sh){
   const tg = el('<label class="fld wide"><span>إظهار الظل</span><input type="checkbox" id="shOn" style="width:20px;height:20px;accent-color:var(--accent)"></label>'); tg.children[1].checked = state.shadow;
   tg.children[1].onchange = e=>{ state.shadow = e.target.checked; X.applyLights(); syncBar(); commit(); }; sh.appendChild(tg);
   if(X.is2D()){
