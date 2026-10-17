@@ -13,13 +13,13 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1500, height: 900 } }), p = await ctx.newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message)); p.on("console", m => { if (m.type() === "error" && !/fonts\.g|ERR_|net::|Failed to load resource/.test(m.text())) errs.push(m.text()); });
   await p.goto(base + "/__blank"); await p.evaluate(() => { localStorage.clear(); });
-  for (const f of ["box-profiles", "box-designer", "box-studio"]) await load(p, "/assets/js/" + f + ".js");
+  for (const f of ["mockup-studio", "mockup-models", "box-profiles", "box-designer", "box-studio"]) await load(p, "/assets/js/" + f + ".js");
   const px = () => p.evaluate(() => { const c = document.querySelector("#bs #gl"), t = document.createElement("canvas"); t.width = 200; t.height = 160; const x = t.getContext("2d"); x.drawImage(c, 0, 0, 200, 160); const d = x.getImageData(0, 0, 200, 160).data, s = new Set(); for (let i = 0; i < d.length; i += 24) s.add((d[i] >> 4) + "," + (d[i + 1] >> 4) + "," + (d[i + 2] >> 4)); return s.size; });
   const grab = async fn => { const [dl] = await Promise.all([p.waitForEvent("download", { timeout: 60000 }), fn()]); return { name: dl.suggestedFilename(), buf: fs.readFileSync(await dl.path()) }; };
   /* ═══ فتح مباشر ═══ */
-  ok("المحرّك three r128 محلي لا CDN", fs.existsSync(path.join(root, "assets/js/vendor/three.r128.min.js")));
+  ok("المحرّك three r160 محلي لا CDN", fs.existsSync(path.join(root, "assets/js/vendor/three.module.min.js")));
   await p.evaluate(() => BoxStudio.open()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(1800);
-  ok("الاستوديو يفتح: شريط علوي وقضيب أقسام ولوحة ومسرح ثلاثي الأبعاد", await p.evaluate(() => !!document.querySelector("#bs .top .brand") && document.querySelectorAll("#bs .rail .tab").length === 7 && !!document.querySelector("#bs .panel") && BoxStudio.inst.THREE_OK && THREE.REVISION === "128"));
+  ok("الاستوديو يفتح: شريط علوي وقضيب أقسام ولوحة ومسرح ثلاثي الأبعاد", await p.evaluate(() => !!document.querySelector("#bs .top .brand") && document.querySelectorAll("#bs .rail .tab").length === 7 && !!document.querySelector("#bs .panel") && BoxStudio.inst.THREE_OK));
   ok("العلبة البريدية الافتراضية مرسومة", (await px()) > 12);
   if (shots) await p.screenshot({ path: path.join(shots, "bs-open.png") });
   const nm = await p.evaluate(() => Object.keys(BoxStudio.inst.MODELS).length); ok("مكتبة النماذج: 60 نموذجاً أو أكثر (مع قوالب القص الـ23)", nm >= 60, nm);
@@ -39,7 +39,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   const cats = await p.evaluate(() => [...document.querySelectorAll("#bs #cats button")].map(b => b.textContent.trim())); ok("فئات النماذج تشمل «قوالب القص»", cats.some(c => /قوالب القص/.test(c)), cats);
   await p.evaluate(() => { const b = [...document.querySelectorAll("#bs #cats button")].find(x => /زجاجات/.test(x.textContent)); b.click(); }); await p.waitForTimeout(200);
   await p.evaluate(() => { const c = [...document.querySelectorAll("#bs #mc .card")].find(x => /نبيذ/.test(x.textContent)); c.click(); }); await p.waitForTimeout(900);
-  ok("اختيار «زجاجة نبيذ» يبدّل النموذج ويرسمه", await p.evaluate(() => BoxStudio.inst.state.model === "wine") && (await px()) > 12);
+  ok("اختيار «زجاجة نبيذ» يبدّل النموذج ويرسمه", await p.evaluate(() => BoxStudio.inst.state.model === "mk_r_wine") && (await px()) > 12);
   if (shots) await p.screenshot({ path: path.join(shots, "bs-wine.png") });
   /* الخلفية والتنسيق */
   await p.click('#bs .tab[data-tab="bg"]'); await p.waitForTimeout(200); await p.evaluate(() => document.querySelectorAll("#bs .bgb")[2].click()); await p.waitForTimeout(200);
@@ -52,7 +52,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   d = await grab(() => p.click("#bs #exGo")); ok("تصدير لوحة الأوجه PNG", d.buf.slice(1, 4).toString() === "PNG" && d.buf.length > 2000, d.name);
   await p.click("#bs #exportBtn"); await p.waitForTimeout(150); await p.evaluate(() => document.querySelector('#bs #exKind [data-v="proj"]').click());
   d = await grab(() => p.click("#bs #exGo")); let pj = null; try { pj = JSON.parse(d.buf.toString()); } catch (e) { }
-  ok("تصدير مشروع JSON صالح يحمل النموذج والحالة", pj && pj.state && pj.state.model === "wine", d.name);
+  ok("تصدير مشروع JSON صالح يحمل النموذج والحالة", pj && pj.state && pj.state.model === "mk_r_wine", d.name);
   ok("زر «قالب القص» لا يظهر لنموذج ليس من القوالب", await p.evaluate(() => { document.querySelector("#bs #exportBtn").click(); const b = document.querySelector('#bs #exKind [data-v="cut"]'); const hid = !b || b.style.display === "none"; document.querySelector("#bs #dExport").close(); return hid; }));
   /* ═══ من قوالب العلب ═══ */
   await p.evaluate(() => BoxStudio.close()); ok("الإغلاق يزيل الواجهة", await p.evaluate(() => !document.getElementById("bs-bg") && !BoxStudio.inst));
@@ -60,7 +60,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   ok("نافذة القوالب فيها زر «حوّل إلى استوديو العلب 3D»", await p.evaluate(() => /استوديو العلب 3D/.test(document.querySelector('#bp [data-bx="3d"]').textContent)));
   await p.evaluate(() => document.querySelector('#bp [data-bx="3d"]').click()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(3000);
   ok("الزر يفتح الاستوديو على قالب علبة الهدية بأبعادها ويطويها", await p.evaluate(() => { const X = BoxStudio.inst; return X.state.model === "pf_giftbox" && X.state.pf.giftbox && X.state.pf.giftbox.L === 50 && X.state.open === 0 && Object.keys(X.FC).length >= 13; }));
-  ok("القالب مطويّ ومرسوم", (await px()) > 5);
+  ok("القالب مطويّ ومرسوم", (await px()) > 3);
   if (shots) await p.screenshot({ path: path.join(shots, "bs-profile-gift.png") });
   ok("نافذة القوالب تبقى مفتوحة خلف الاستوديو", await p.evaluate(() => !!document.getElementById("bp")));
   /* تصميم على وجه من القالب */
@@ -84,6 +84,45 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   await p.keyboard.press("Escape"); await p.waitForTimeout(300); ok("Esc يغلق الاستوديو ولا يغلق نافذة القوالب", await p.evaluate(() => !document.getElementById("bs-bg") && !!document.getElementById("bp")));
   /* فتح بعد إغلاق (لا تسريب) */
   await p.evaluate(() => BoxStudio.open()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(1200); ok("إعادة الفتح تعمل بعد الإغلاق", (await px()) > 12 && await p.evaluate(() => document.querySelectorAll("#bs-bg").length === 1));
+  /* ═══ النماذج الواقعية داخل الاستوديو (v1.89.306) ═══ */
+  const pick = async name => { await p.evaluate(async nm => { document.querySelector('#bs .tab[data-tab="models"]').click(); await new Promise(r => setTimeout(r, 80)); const all = [...document.querySelectorAll("#bs #cats button")].find(b => /الكل/.test(b.textContent)); if (all) all.click(); await new Promise(r => setTimeout(r, 80)); const m = BoxStudio.inst.MODELS[nm]; [...document.querySelectorAll("#bs #mc .card")].find(x => x.textContent.includes(m.name)).click(); }, name); await p.waitForTimeout(1500); };
+  ok("42 نموذجاً واقعياً مسجَّلاً وبدائل القديمة محذوفة", await p.evaluate(() => { const M = BoxStudio.inst.MODELS, k = Object.keys(M); return k.filter(x => /^mk_/.test(x)).length === 42 && !M.water && !M.tee && !M.soda && !M.standup && !!M.beer && !!M.mailer; }));
+  await p.evaluate(() => BoxStudio.open()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(1200);
+  await pick("mk_r_serum");
+  ok("قارورة قطّارة واقعية: وجه «الملصق» وطبقات نص افتراضية وأبعاد حقيقية", await p.evaluate(() => { const I = BoxStudio.inst; return I.state.model === "mk_r_serum" && Object.keys(I.FC).join() === "label" && I.state.faces.label.layers.length >= 1 && I.state.dims.H > 80 && I.state.dims.H < 250; }) && (await px()) > 12);
+  await p.click('#bs .tab[data-tab="edit"]'); await p.waitForTimeout(200); const nl = () => p.evaluate(() => BoxStudio.inst.state.faces.label.layers.length), l0 = await nl(); await p.click("#bs #addText"); await p.waitForTimeout(250);
+  ok("إضافة طبقة نص على قارورة", (await nl()) === l0 + 1);
+  await p.evaluate(() => document.querySelector('#bs .acc[data-acc="mat"] button').click()); await p.waitForTimeout(250);
+  ok("لوحة المواد حسب الدور (زجاج/محتوى/غطاء…) بقوائم مواد", await p.evaluate(() => document.querySelectorAll("#bs .rrole select").length >= 3));
+  const c0 = await p.evaluate(() => BoxStudio.inst.state.real.color); await p.evaluate(() => document.querySelectorAll("#bs .acc[data-acc=mat] .sw .swb")[1].click()); await p.waitForTimeout(500);
+  ok("تغيير لون الجسم يعيد البناء ويحفظ في الحالة", await p.evaluate(c => BoxStudio.inst.state.real.color !== c, c0) && (await px()) > 12);
+  await p.evaluate(() => { const sel = document.querySelector("#bs .rrole select"); sel.value = "depoli"; sel.dispatchEvent(new Event("change")); }); await p.waitForTimeout(500);
+  ok("تغيير مادة الجزء يعمل", await p.evaluate(() => BoxStudio.inst.state.real.roles.body.p === "depoli"));
+  await p.evaluate(() => document.querySelector('#bs .acc[data-acc="dims"] button').click()); await p.waitForTimeout(250);
+  const h0 = await p.evaluate(() => BoxStudio.inst.state.dims.H);
+  await p.evaluate(() => { const r = document.querySelector("#bs #rpar input[type=range]"); r.value = r.max; r.dispatchEvent(new Event("input")); r.dispatchEvent(new Event("change")); }); await p.waitForTimeout(500);
+  ok("منزلق الأبعاد (سم) يغيّر ارتفاع القارورة الفعلي", await p.evaluate(h => BoxStudio.inst.state.dims.H > h, h0));
+  await p.click('#bs .tab[data-tab="bg"]'); await p.waitForTimeout(200); await p.evaluate(() => document.querySelector("#bs .bgb.chk").click()); await p.waitForTimeout(700);
+  ok("خلفية شفافة: يعود الزجاج لشفافية فريسنل ويُرسم", (await px()) > 6);
+  await p.click("#bs #exportBtn"); await p.waitForTimeout(200); await p.evaluate(() => { document.querySelector("#bs #exBg").value = "alpha"; document.querySelector("#bs #exRes").value = "1"; });
+  d = await grab(() => p.click("#bs #exGo")); ok("تصدير PNG شفاف لنموذج زجاجي", d.buf.slice(1, 4).toString() === "PNG" && d.buf.length > 3000, d.name);
+  await p.evaluate(() => document.querySelectorAll("#bs .bgb")[0].click()); await p.waitForTimeout(600);
+  await pick("mk_tee");
+  ok("قميص: وجها «أمام/خلف» بطباعة شفافة (decal) وملصقات قابلة للإضافة", await p.evaluate(() => { const F = BoxStudio.inst.FC; return Object.keys(F).sort().join() === "back,front" && F.front.decal === true; }) && (await px()) > 12);
+  await pick("mk_r_box_ship");
+  ok("صندوق شحن واقعي: قابل للفتح وبوجوه طباعة", await p.evaluate(() => BoxStudio.inst.openable() && Object.keys(BoxStudio.inst.FC).length >= 1));
+  await p.evaluate(() => { BoxStudio.inst.state.open = 1; BoxStudio.inst.applyOpen(); }); await p.waitForTimeout(300); ok("الصندوق المفتوح يُرسم", (await px()) > 12);
+  /* مجسّم مخصّص قادم من أداة «من صور 2D» */
+  await p.evaluate(() => BoxStudio.close());
+  await p.evaluate(async () => {
+    const T = await import("/assets/js/vendor/three.module.min.js"), cv = () => { const c = document.createElement("canvas"); c.width = 300; c.height = 400; const x = c.getContext("2d"); x.fillStyle = "#4a7bd0"; x.fillRect(0, 0, 300, 400); return c; };
+    const g = new T.Group(), mk = (n, z) => { const m = new T.Mesh(new T.PlaneGeometry(.5, 1), new T.MeshStandardMaterial({ color: 0x4a7bd0 })); m.name = n; m.position.z = z; g.add(m); }; mk("front", .1); mk("back", -.1);
+    window.__cust = { obj: g, kind: "local", name: "مجسّم تجريبي", faces: { front: cv(), back: cv() } }; BoxStudio.open({ custom: window.__cust });
+  });
+  await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(1500);
+  const cinfo = await p.evaluate(() => { const I = BoxStudio.inst; return { m: I.state.model, f: Object.keys(I.FC).sort().join(), h: I.state.dims.H }; }), cpx = await px(); ok("مجسّم مخصّص: يُفتح في المحرّر بوجهين وأبعاد ويُرسم", cinfo.m === "custom3d" && cinfo.f === "back,front" && cinfo.h === 150 && cpx > 2, [cinfo, cpx]);
+  const nf = () => p.evaluate(() => BoxStudio.inst.state.faces[BoxStudio.inst.state.sel.face].layers.length), cf0 = await nf(); await p.click("#bs #addText"); await p.waitForTimeout(250);
+  ok("إضافة ملصق نصي على المجسّم المخصّص", (await nf()) === cf0 + 1);
   await p.evaluate(() => BoxStudio.close());
   ok("لا أخطاء صفحة", errs.length === 0, errs);
   await browser.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);

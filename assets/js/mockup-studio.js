@@ -45,7 +45,7 @@ const MockupStudio = (() => {
   const grainBump = () => texOnce("grB", () => { const S = 256, c = canv(S, S), x = c.getContext("2d"), im = x.createImageData(S, S); for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) { const h = hash(i, j) * 0.7 + fbm(i / 6, j / 6) * 0.3, k = (j * S + i) * 4; im.data[k] = im.data[k + 1] = im.data[k + 2] = h * 255; im.data[k + 3] = 255; } x.putImageData(im, 0, 0); return toTex(heightToNormal(c, 0.8), { srgb: false, rep: [10, 10] }); });
 
   /* ═══ إضاءة وبيئة استوديو ═══ */
-  function makeEnv() {
+  function makeEnv(rr) {
     const e = new T.Scene(); e.background = new T.Color(0.07, 0.075, 0.085);
     const panel = (w, h, x, y, z, rx, ry, i, col) => { const m = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ color: new T.Color(col[0] * i, col[1] * i, col[2] * i), side: T.DoubleSide })); m.position.set(x, y, z); m.rotation.set(rx, ry, 0); e.add(m); };
     panel(16, 7, 0, 10, 0, Math.PI / 2, 0, 6, [1, 1, 1]);
@@ -54,7 +54,7 @@ const MockupStudio = (() => {
     panel(14, 3.5, 0, 3, -10, 0, 0, 3, [1, 1, 1]);
     panel(2.2, 10, 3, 3, 10, 0, Math.PI, 2.2, [1, 1, 1]);
     panel(20, 20, 0, -8, 0, Math.PI / 2, 0, 1.05, [0.88, 0.88, 0.88]);
-    const pm = new T.PMREMGenerator(R), t = pm.fromScene(e, 0.03).texture; pm.dispose(); return t;
+    const pm = new T.PMREMGenerator(rr || R), t = pm.fromScene(e, 0.03).texture; pm.dispose(); return t;
   }
   const blobTex = () => { const c = canv(256, 256), x = c.getContext("2d"), g = x.createRadialGradient(128, 128, 4, 128, 128, 126); g.addColorStop(0, "rgba(0,0,0,.55)"); g.addColorStop(0.5, "rgba(0,0,0,.2)"); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(0, 0, 256, 256); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; };
 
@@ -97,6 +97,7 @@ const MockupStudio = (() => {
     o = o || {}; const ad = CUR.m.areas.find(a => a.id === aid), F = FIN[CUR.s.finish] || FIN.gloss, dec = !!ad.decal;
     const m = new T.MeshPhysicalMaterial({ roughness: o.rough != null ? o.rough : Math.max(0.3, F.r), clearcoat: o.cc != null ? o.cc : F.cc * 0.5, clearcoatRoughness: o.ccr != null ? o.ccr : 0.2, envMapIntensity: o.env || 0.9, transparent: dec, alphaTest: dec ? 0.01 : 0, depthWrite: !dec, side: o.side || T.FrontSide, polygonOffset: dec || !!o.off, polygonOffsetFactor: dec || o.off ? -4 : 0, polygonOffsetUnits: dec || o.off ? -4 : 0 });
     if (o.fabric) { m.roughness = 0.9; m.clearcoat = 0; m.sheen = 0.6; m.sheenRoughness = 0.6; const nm = fabricNormal().clone(); if (o.nrep) nm.repeat.set(o.nrep[0], o.nrep[1]); nm.needsUpdate = true; m.normalMap = nm; m.normalScale = new T.Vector2(0.35, 0.35); }
+    if (CUR.host) { m.userData.areaKey = aid; m.map = CUR.host.tex(aid, (CUR.ar && CUR.ar[aid]) || ad.ar || 1, ad); if (CUR.host.mat) CUR.host.mat(aid, m); return m; }
     (AM[aid] = AM[aid] || []).push(m); if (TEXS["a_" + aid]) m.map = TEXS["a_" + aid]; return m;
   }
   const baseOf = ad => ad.base === "color" ? CUR.s.color : ad.base === "color2" ? CUR.s.color2 : ad.base === "label" ? CUR.s.a[ad.id].q.c2 : (ad.base && ad.base[0] === "#" ? ad.base : null);
@@ -768,7 +769,7 @@ const MockupStudio = (() => {
     m.areas.forEach(a => refreshArea(a.id)); placeModel(); view.yaw = opts.yaw != null ? opts.yaw : (m.view ? m.view.yaw : -0.55); view.pitch = opts.pitch != null ? opts.pitch : (m.view ? m.view.pitch : 0.16); view.zoom = opts.zoom || 1; layout(); applyBg(); dirty = true; return CUR;
   }
   /* خلفية المشهد كنسيج: تلزم ليرى الزجاج المنكسر خلفيةً حقيقية بدل الشفافية */
-  const xmitOn = () => !GF && CFG.bg !== "none";
+  const xmitOn = () => (CUR && CUR.host) ? !!CUR.host.xmit : (!GF && CFG.bg !== "none");
   function bgTex(w, h) { const c = canv(Math.max(64, Math.min(1024, Math.round(w))), Math.max(64, Math.min(1024, Math.round(h)))); bgPaint(c.getContext("2d"), c.width, c.height); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; }
   function applyBg() {
     if (!scene) return; const want = !!(CUR && CUR.m.roles && xmitOn() && CUR.glass); if (scene.background && scene.background.dispose) scene.background.dispose(); scene.background = want ? bgTex(R.domElement.clientWidth || 600, R.domElement.clientHeight || 500) : null; dirty = true;
@@ -827,8 +828,22 @@ const MockupStudio = (() => {
     const url = typeof src === "string" ? src : URL.createObjectURL(src); try { const im = await loadImg(url), k = Math.min(1, 2400 / Math.max(im.width, im.height)), c = canv(Math.round(im.width * k), Math.round(im.height * k)); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); const st = CUR.s.a[aid]; st.img = c; st.src = "img"; st.sc = 1; st.x = 0; st.y = 0; st.rot = 0; refreshArea(aid); markDirty(); } finally { if (typeof src !== "string") URL.revokeObjectURL(url); }
   }
   async function shot(id, w, h, o) { o = o || {}; if (!R) await initRenderer(); const m = MODELS.find(x => x.id === id); if (!m) throw new Error("no model " + id); const st = newState(m); if (o.color) st.color = o.color; if (o.color2) st.color2 = o.color2; if (o.finish) st.finish = o.finish; if (o.P && st.P) Object.assign(st.P, o.P); if (o.roles && st.roles) Object.keys(o.roles).forEach(k => Object.assign(st.roles[k], o.roles[k])); if (o.open != null) st.open = o.open; GF = !!o.transparent; try { loadModel(m, st, o); return renderTo(w || 700, h || 700, !!o.transparent, o.yawOff || 0).toDataURL("image/png"); } finally { GF = false; } }
+  /* ═══ وضع المضيف: استوديو العلب 3D يبني النماذج الواقعية في مشهده ويكتب عليها طبقاته ═══ */
+  async function hostInit() { await loadThree(); return T; }
+  function hostBuild(m, st, host, q) {
+    if (!T) throw new Error("المحرّك غير جاهز"); const prev = CUR, pg = GF; GF = !host.xmit;
+    CUR = { m, s: st, q: q || "hi", ar: {}, glass: false, host };
+    try { const b = m.build(); return { g: b.g, pose: b.pose || null, glass: !!CUR.glass }; } finally { CUR = prev; GF = pg; }
+  }
+  async function hostThumb(id, color) {
+    if (!R) await initRenderer(); const m = MODELS.find(x => x.id === id); if (!m) return ""; const c = color || m.colors[0], k = tkey(m, c);
+    if (THUMBS[k]) return THUMBS[k];
+    const pg = GF; GF = true;
+    try { const st = newState(m); st.color = c; loadModel(m, st, { q: "lo" }); const cv = renderTo(360, 360, true), url = cv.toDataURL("image/webp", 0.82); THUMBS[k] = url.startsWith("data:image/webp") ? url : cv.toDataURL("image/png"); saveThumbs(); return THUMBS[k]; } catch (e) { return ""; } finally { GF = pg; }
+  }
+  const host = { init: hostInit, build: hostBuild, thumb: hostThumb, thumbOf: m => THUMBS[tkey(m, m.colors[0])] || "", makeEnv, newState, MODELS, CATS, FIN_LIST, baseOf: (ad, s) => { const p = CUR; CUR = { m: { areas: [ad] }, s, ar: {} }; try { return baseOf(ad); } finally { CUR = p; } }, get T() { return T; } };
   const X = { get T() { return T; }, get CUR() { return CUR; }, def, areaMat, glassM, kraftNormal, grainBump, fabricNormal, texOnce, canv, shade, mix, clamp, fbm, hash, xmit: xmitOn, QD };
   function extend(fn) { fn(X); }
-  return { extend, open, close, MODELS, SIZES, CFG, CATS, _t: { saveProject, openProject, delProject, mineList, renderMine, get PROJ() { return PROJ; }, markDirty, store, openEditor, renderGallery, ui, thumbLoop, THUMBS, STATES, get VIEW() { return VIEW; }, exportOne, blobOf, initRenderer, loadModel, rebuild, renderTo, newState, setPose, shot, refreshArea, composeArea, quickArt, setAreaImage, get CUR() { return CUR; }, get R() { return R; }, view } };
+  return { extend, open, close, host, MODELS, SIZES, CFG, CATS, _t: { saveProject, openProject, delProject, mineList, renderMine, get PROJ() { return PROJ; }, markDirty, store, openEditor, renderGallery, ui, thumbLoop, THUMBS, STATES, get VIEW() { return VIEW; }, exportOne, blobOf, initRenderer, loadModel, rebuild, renderTo, newState, setPose, shot, refreshArea, composeArea, quickArt, setAreaImage, get CUR() { return CUR; }, get R() { return R; }, view } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = MockupStudio;

@@ -1,6 +1,6 @@
 /* استوديو العلب 3D (Alyssum Box Studio) — استوديو ثلاثي الأبعاد للعلب والعبوات: 60+ نموذجاً (علب مطوية، زجاجات، علب معدنية، أكياس، أكواب، ملابس، مطبوعات، أجهزة)،
    خامات وتشطيبات، طبقات (صور ونصوص وأنماط) على كل وجه بالنقر والسحب، فتح وإغلاق، تنسيقات مشاهد متعددة، خلفيات، فيديو دوران، وتصدير صور فائقة الدقة ولوحة أوجه ومشروع.
-   مبني على ملف «استوديو العلب» الذي أرسله صاحب المتجر (النسخة الأصلية تعمل بـ three.js r128 فنسختها محلية في assets/js/vendor/three.r128.min.js وتُحمَّل كسولاً عند الفتح). */
+   مبني على ملف «استوديو العلب» الذي أرسله صاحب المتجر (كان يعمل بـ three.js r128 وصار يعمل بنسخة r160 المحلية نفسها التي يستعملها محرّك النماذج الواقعية MockupStudio.host فيشتركان في مشهد واحد). */
 const BoxStudio = (() => {
   "use strict";
   const CSS = String.raw`#bs{
@@ -100,6 +100,11 @@ const BoxStudio = (() => {
 #bs .card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:13px}
 #bs .card svg.ico{width:78px;height:62px;color:var(--ink)}
 #bs .card small{color:var(--muted);font-size:11.5px;direction:ltr}
+#bs .card .rl{width:96px;height:84px;display:grid;place-items:center;color:var(--muted)}
+#bs .card .rl img{max-width:100%;max-height:100%;object-fit:contain}
+#bs .rrole{display:grid;grid-template-columns:1fr 1.3fr 34px;gap:6px;align-items:center;margin-top:8px;font-size:12.5px}
+#bs .rrole select{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);padding:0 6px;font-size:12px;min-width:0}
+#bs .rrole input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:none}
 #bs .cats{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
 #bs .cats button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 11px;height:30px;font-size:12.5px;white-space:nowrap}
 #bs .cats button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -262,8 +267,10 @@ const BoxStudio = (() => {
   let inst = null, root = null, onCloseCb = null;
   const $id = id => document.getElementById(id);
   function loadScript(src, id) { return new Promise((res, rej) => { const old = $id(id); if (old && old.dataset.ok) return res(); const s = document.createElement("script"); s.id = id; s.src = new URL(src, document.baseURI).href; s.onload = () => { s.dataset.ok = "1"; res(); }; s.onerror = () => rej(new Error("تعذّر تحميل المحرّك ثلاثي الأبعاد")); document.head.appendChild(s); }); }
-  async function ensureThree() { if (window.THREE && window.THREE.REVISION === "128") return; await loadScript("assets/js/vendor/three.r128.min.js", "bs-three"); }
+  let T160 = null;
+  async function ensureThree() { if (T160) return T160; T160 = await import(new URL("assets/js/vendor/three.module.min.js", document.baseURI).href); if (typeof MockupStudio !== "undefined" && MockupStudio.host) { try { await MockupStudio.host.init(); } catch (e) { } } return T160; }
   function create(R, host) {
+const THREE = T160;
 const offs = []; let alive = true;
 const X = (function(){
 'use strict';
@@ -763,6 +770,23 @@ function buildProfileSolid(def, n){
 /* default accent colours for older models */
 Object.keys(MODELS).forEach(k=>{ if(!MODELS[k].acc && MODELS[k].base && MODELS[MODELS[k].base].acc) MODELS[k].acc = MODELS[MODELS[k].base].acc; });
 
+/* ───────────── النماذج الواقعية (محرّك الموكاب): تحلّ محل المكافئ القديم وتحمل طبقات الملصقات ───────────── */
+const MK = (typeof MockupStudio !== 'undefined' && MockupStudio.host && MockupStudio.host.MODELS.length) ? MockupStudio.host : null;
+const REAL_IDS = ['flip','shampoo','tub','mug','tee','ringer','oversize','polo','hoodie','cap','tote'];
+const REAL_CAT = {jar:'jars',cream:'jars',tub:'jars',tube:'tubes',stick:'tubes',can:'cans','can-slim':'cans',bowl:'cups',mug:'cups',doypack:'bags',sachet:'bags',bag:'bags','bag-gift':'bags',tote:'bags',book:'prints',card:'prints',phone:'devices'};
+const REAL_CAT2 = {box:'boxes',bottle:'bottles',pouch:'bags',apparel:'clothes',cup:'cups',misc:'other',acc:'cups'};
+const REAL_H = {flip:130,shampoo:190,tub:150,mug:95,tee:720,ringer:720,oversize:760,polo:720,hoodie:780,cap:105,tote:600};
+const REPLACED = ['water','wine','dropper','spray','shampoo','cream','soda','slim','energy','cup','mug','tub','squeeze','paste','lip','honey','spice','standup','coffee','sachet','tote','tee','hoodie','cap','phone','book','card'];
+if(MK){
+  const old = Object.entries(MODELS); old.forEach(([k])=>delete MODELS[k]);
+  MK.MODELS.forEach(m=>{
+    if(!(/^r-/.test(m.id) || REAL_IDS.includes(m.id))) return;
+    const id0 = m.id.replace(/^r-/,'');
+    MODELS['mk_'+m.id.replace(/-/g,'_')] = {cat:REAL_CAT[id0] || REAL_CAT2[m.cat] || 'other', name:m.n, code:'MK-'+id0.toUpperCase().slice(0,9), real:m.id, tag:m.tag||'', dims:{L:100,W:100,H:100}, flap:.2, openMax:100, t:1, mat:'white', mats:[], open0:m.open0||0, hmm:REAL_H[m.id], faces:()=>[]};
+  });
+  old.forEach(([k,v])=>{ if(!REPLACED.includes(k)) MODELS[k] = v; });
+}
+
 const MATS = {
   kraft:{name:'كرتون مضلّع (كرافت)',color:'#b88d5c',rough:.95,flute:true},
   kraftw:{name:'كرافت فاتح',color:'#d6c7ad',rough:.92,flute:true},
@@ -823,7 +847,7 @@ const state = {
   material:'kraft', matColor:'#2f6f9f', finish:'matte', open:0,
   faces:{}, bg:{kind:'radial',c1:'#dedcd8',c2:'#a9a8a4',imgId:null}, layout:'single',
   shadow:true, shadowStrength:.3, ortho:false, dimsOn:false, light:1, env:.8, autoRotate:false,
-  sel:{face:'top',layer:null}, pins:[], accents:{}, pf:{}
+  sel:{face:'top',layer:null}, pins:[], accents:{}, pf:{}, real:null, cH:150
 };
 const IMG = new Map();           // id -> {src:canvas, w, h, name}
 const hooks = { select(){}, changed(){}, layers(){}, thumb(){}, tool(){}, pinAdd(){}, open(){}, toast(){} };
@@ -875,7 +899,7 @@ function ensureFaces(){
       f = FC[d.key] = {key:d.key, canvas, ctx:canvas.getContext('2d')};
       canvas.width = cw; canvas.height = ch;
       f.tex = new THREE.CanvasTexture(canvas);
-      f.tex.encoding = THREE.sRGBEncoding;
+      f.tex.colorSpace = THREE.SRGBColorSpace;
       f.tex.anisotropy = rendererMaxAniso;
       f.bump = new THREE.CanvasTexture(bumpFine);
       f.mat = new THREE.MeshPhysicalMaterial({map:f.tex, roughness:.9, metalness:0, bumpScale:.8});
@@ -921,7 +945,7 @@ function buildEdgeMat(){
   if(m.flute){ x.strokeStyle = shade(m.color,-.32); x.lineWidth = 2; for(let i=0;i<64;i+=8){ x.beginPath(); x.moveTo(i,0); x.lineTo(i,64); x.stroke(); } x.fillStyle=shade(m.color,.1); for(let i=4;i<64;i+=8) x.fillRect(i-1,0,2,64); }
   if(!edgeMat){ edgeMat = new THREE.MeshStandardMaterial({roughness:1}); }
   if(edgeMat.map) edgeMat.map.dispose();
-  edgeMat.map = new THREE.CanvasTexture(c); edgeMat.map.encoding = THREE.sRGBEncoding; edgeMat.needsUpdate = true;
+  edgeMat.map = new THREE.CanvasTexture(c); edgeMat.map.colorSpace = THREE.SRGBColorSpace; edgeMat.needsUpdate = true;
 }
 
 /* — drawing layers — */
@@ -969,11 +993,12 @@ function drawFace(k){
   const f = FC[k]; if(!f) return;
   const {ctx,cw,ch} = f, m = matInfo();
   ctx.setTransform(1,0,0,1,0,0); ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
-  ctx.fillStyle = f.fill || (f.inner ? shade(m.color,.08) : m.color); ctx.fillRect(0,0,cw,ch);
+  if(f.decal) ctx.clearRect(0,0,cw,ch); else { ctx.fillStyle = f.fill || (f.inner ? shade(m.color,.08) : m.color); ctx.fillRect(0,0,cw,ch); }
+  if(f.baseImg) ctx.drawImage(f.baseImg,0,0,cw,ch);
   if(f.pre) f.pre(ctx,cw,ch,m);
   ((state.faces[k] && state.faces[k].layers) || []).forEach(L=>drawLayer(ctx,L,cw,ch));
   if(f.post) f.post(ctx,cw,ch,m);
-  if(!f.fill){ ctx.globalCompositeOperation='multiply'; ctx.fillStyle = ctx.createPattern(grainCanvas,'repeat'); ctx.fillRect(0,0,cw,ch); ctx.globalCompositeOperation='source-over'; }
+  if(!f.fill && !f.decal && !f.real){ ctx.globalCompositeOperation='multiply'; ctx.fillStyle = ctx.createPattern(grainCanvas,'repeat'); ctx.fillRect(0,0,cw,ch); ctx.globalCompositeOperation='source-over'; }
   f.tex.needsUpdate = true; dirty = true; hooks.thumb(k);
 }
 const redrawAll = () => Object.keys(FC).forEach(drawFace);
@@ -987,18 +1012,18 @@ const cm = {theta:.55, phi:1.12, radius:6.5, target:null, fov:30};
 function initThree(){
   renderer = new THREE.WebGLRenderer({canvas:canvasEl, antialias:true, alpha:true, preserveDrawingBuffer:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
-  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   rendererMaxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   scene = new THREE.Scene();
   camP = new THREE.PerspectiveCamera(cm.fov, 1.6, .1, 200);
   camO = new THREE.OrthographicCamera(-1,1,1,-1,-50,200);
   cm.target = new THREE.Vector3(0,.4,0);
-  hemi = new THREE.HemisphereLight(0xffffff, 0x8a8782, .62); scene.add(hemi);
-  keyLight = new THREE.DirectionalLight(0xffffff, .9); keyLight.position.set(3.5,7,4.5); keyLight.castShadow = true;
+  hemi = new THREE.HemisphereLight(0xffffff, 0x8a8782, .62*Math.PI); scene.add(hemi);
+  keyLight = new THREE.DirectionalLight(0xffffff, .9*Math.PI); keyLight.position.set(3.5,7,4.5); keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(2048,2048); keyLight.shadow.bias = -.0004; keyLight.shadow.normalBias = .06;
   scene.add(keyLight, keyLight.target);
-  fillLight = new THREE.DirectionalLight(0xffffff, .3); fillLight.position.set(-5,2.5,-3); scene.add(fillLight);
+  fillLight = new THREE.DirectionalLight(0xffffff, .3*Math.PI); fillLight.position.set(-5,2.5,-3); scene.add(fillLight);
   floor = new THREE.Mesh(new THREE.PlaneGeometry(80,80), new THREE.ShadowMaterial({opacity:state.shadowStrength}));
   floor.rotation.x = -Math.PI/2; floor.position.y = -.001; floor.receiveShadow = true; scene.add(floor);
   root = new THREE.Group(); scene.add(root);
@@ -1009,7 +1034,7 @@ function initThree(){
     const lm = new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.DoubleSide});
     [[0,9,0,8,8,Math.PI/2,0],[9,3,0,6,6,0,Math.PI/2],[-9,3,2,6,6,0,Math.PI/2],[0,3,-9,7,5,0,0]].forEach(a=>{
       const p = new THREE.Mesh(new THREE.PlaneGeometry(a[3],a[4]), lm); p.position.set(a[0],a[1],a[2]); p.rotation.set(a[5],a[6],0); es.add(p); });
-    scene.environment = pm.fromScene(es, .04).texture; pm.dispose();
+    scene.environment = envBox = pm.fromScene(es, .04).texture; pm.dispose();
   }catch(e){ console.warn('env map skipped', e); }
   cam = camP;
   applyLights();
@@ -1017,7 +1042,8 @@ function initThree(){
   const ro = new ResizeObserver(resize); ro.observe(stage); offs.push(()=>ro.disconnect()); resize();
 }
 function applyLights(){
-  hemi.intensity = .46*state.light; keyLight.intensity = .72*state.light; fillLight.intensity = .22*state.light;
+  if(isEng()){ hemi.intensity = .34*state.light; keyLight.intensity = .85*state.light; fillLight.intensity = .1*state.light; }
+  else{ hemi.intensity = .46*state.light*Math.PI; keyLight.intensity = .72*state.light*Math.PI; fillLight.intensity = .22*state.light*Math.PI; }
   floor.material.opacity = state.shadowStrength; floor.visible = state.shadow; keyLight.castShadow = state.shadow;
   Object.values(FC).forEach(f=>{ f.mat.envMapIntensity = state.env; });
   dirty = true;
@@ -1219,7 +1245,7 @@ function pageEdgeMat(){
   if(pageEdge) return pageEdge;
   const c = document.createElement('canvas'); c.width = 8; c.height = 128; const x = c.getContext('2d');
   x.fillStyle = '#f3f0e8'; x.fillRect(0,0,8,128); x.fillStyle = 'rgba(0,0,0,.14)'; for(let i=0;i<128;i+=3) x.fillRect(0,i,8,1);
-  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return pageEdge = new THREE.MeshStandardMaterial({map:t, roughness:.95});
 }
 function buildBook(d, def){
@@ -1332,7 +1358,136 @@ function buildCap(d, def){
   return {group:g, noOpen:true, update:()=>{}};
 }
 
+/* ───────────── النماذج الواقعية: بناء + أوجه الطباعة ───────────── */
+const isReal = () => { const m = MODELS[state.model]; return !!(m && m.real); };
+const isEng = () => { const m = MODELS[state.model]; return !!(m && (m.real || m.custom)); };
+const realModel = def => MK.MODELS.find(x=>x.id===def.real);
+let realSeen = new Set(), realGlass = false, realFr = false, realXmit = true, realMats = [], envBox = null, envReal = null;
+function ensureReal(def){
+  const m = realModel(def); let r = state.real;
+  if(!r || r.id !== def.real){
+    const s = MK.newState(m); r = state.real = {id:def.real, color:s.color, color2:s.color2, finish:s.finish, roles:null, P:null};
+    if(s.roles){ r.roles = {}; Object.keys(s.roles).forEach(k=>{ r.roles[k] = {...s.roles[k]}; }); }
+    if(s.P) r.P = {...s.P};
+  }
+  return r;
+}
+function realState(def){
+  const m = realModel(def), r = ensureReal(def), s = MK.newState(m);
+  s.color = r.color; s.color2 = r.color2; s.finish = r.finish; s.open = state.open;
+  if(r.roles && s.roles) Object.keys(r.roles).forEach(k=>{ if(s.roles[k]) Object.assign(s.roles[k], r.roles[k]); });
+  if(r.P && s.P) Object.assign(s.P, r.P);
+  return s;
+}
+function seedFace(aid, ad, base, col){
+  if(state.faces[aid]) return;
+  const hx = base || (/^#[0-9a-f]{6}$/i.test(col) ? col : null), q = ad.q || {}, ls = [], lum = hx ? (parseInt(hx.slice(1,3),16)*.299 + parseInt(hx.slice(3,5),16)*.587 + parseInt(hx.slice(5,7),16)*.114)/255 : .3;
+  const ink = (!q.ink || q.ink==='auto') ? (lum > .55 ? '#15181c' : '#ffffff') : q.ink, nm = String(q.name || '').toUpperCase();
+  if(nm) ls.push(mkText(nm, {size:ad.decal ? 9 : 11, y:ad.decal ? .45 : .42, color:ink, weight:800, op:1}));
+  if(q.sub) ls.push(mkText(q.sub, {size:4.2, y:ad.decal ? .56 : .55, color:ink, weight:500, op:.85}));
+  state.faces[aid] = {layers:ls};
+}
+function faceRec(aid, w, h){
+  realSeen.add(aid);
+  const sc = Math.min(MAXTEX/Math.max(w,h), 10), cw = Math.max(64, Math.round(w*sc)), ch = Math.max(64, Math.round(h*sc));
+  let f = FC[aid];
+  if(!f){
+    const canvas = document.createElement('canvas'); canvas.width = cw; canvas.height = ch;
+    f = FC[aid] = {key:aid, canvas, ctx:canvas.getContext('2d')};
+    f.tex = new THREE.CanvasTexture(canvas); f.tex.colorSpace = THREE.SRGBColorSpace; f.tex.anisotropy = rendererMaxAniso;
+    f.mat = new THREE.MeshPhysicalMaterial({roughness:.9});
+  } else if(f.canvas.width !== cw || f.canvas.height !== ch){ f.canvas.width = cw; f.canvas.height = ch; f.tex.dispose(); }
+  Object.assign(f, {key:aid, w, h, cw, ch, inner:false, real:true});
+  if(!f.rmats) f.rmats = [];
+  f.tex.wrapS = f.tex.wrapT = THREE.ClampToEdgeWrapping; f.tex.repeat.set(1,1); f.tex.offset.set(0,0);
+  return f;
+}
+function realTex(aid, ar, ad, s){
+  ar = clamp(ar || 1, .12, 8);
+  const w = ar >= 1 ? 240 : 240*ar, h = ar >= 1 ? 240/ar : 240;
+  let base = null; try{ base = MK.baseOf(ad, s); }catch(e){}
+  if(base && !/^#[0-9a-f]{6}$/i.test(base)) base = null;
+  if(!ad.decal && !base) base = '#ffffff';
+  const f = faceRec(aid, w, h);
+  Object.assign(f, {label:ad.n, fill:base, decal:!!ad.decal, baseImg:null});
+  seedFace(aid, ad, base, s.color);
+  return f.tex;
+}
+function buildReal(d, def){
+  const m = realModel(def), s = realState(def);
+  realXmit = state.bg.kind !== 'alpha' && !realFr;
+  const host = {xmit:realXmit, tex:(aid,ar,ad)=>realTex(aid,ar,ad,s), mat:(aid,mt)=>{ const f = FC[aid]; if(f) f.rmats.push(mt); }};
+  const b = MK.build(m, s, host, 'hi');
+  realGlass = realGlass || b.glass;
+  const g = new THREE.Group(); g.add(b.g);
+  if(b.pose) b.pose(0);
+  if(def.hmm){ g.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(g), hh = bb.max.y - bb.min.y; if(hh > 0) b.g.scale.multiplyScalar(def.hmm*S/hh); }
+  g.updateMatrixWorld(true);
+  const bb0 = new THREE.Box3().setFromObject(g), c = bb0.getCenter(new THREE.Vector3()), sz = bb0.getSize(new THREE.Vector3());
+  g.position.set(-c.x, -bb0.min.y, -c.z);
+  d.L = Math.max(1, Math.round(sz.x/S)); d.W = Math.max(1, Math.round(sz.z/S)); d.H = Math.max(1, Math.round(sz.y/S));
+  const out = new THREE.Group(); out.add(g);
+  out.traverse(o=>{
+    if(!o.isMesh) return; o.receiveShadow = true;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach((mt,i)=>{ if(!mt) return; realMats.push(mt); if(mt.userData && mt.userData.areaKey) (o.userData.keys = o.userData.keys || {})[i] = mt.userData.areaKey; });
+  });
+  return {group:out, noOpen:!b.pose, update:o=>{ if(b.pose) b.pose(o); }};
+}
+let CUSTOM = null;
+function setCustom(c){
+  CUSTOM = c;
+  MODELS.custom3d = {cat:'custom', name:c.name || 'مجسّم من الأدوات', code:'3D-CUSTOM', custom:true, dims:{L:100,W:100,H:150}, flap:.2, openMax:100, t:1, mat:'white', mats:[], open0:0, faces:()=>[]};
+  if(!CATS.find(x=>x.k==='custom')) CATS.splice(1,0,{k:'custom',n:'من الأدوات'});
+}
+function buildCustom(d, def){
+  const g = CUSTOM.obj.clone(true), out = new THREE.Group(), inner = new THREE.Group();
+  inner.add(g); out.add(inner);
+  const fc = CUSTOM.faces || null, lab = {front:'الواجهة', back:'الخلف'};
+  g.traverse(o=>{
+    if(!o.isMesh) return; o.castShadow = true; o.receiveShadow = true;
+    if(fc && fc[o.name]){
+      const cv = fc[o.name], ar = clamp(cv.width/cv.height, .12, 8), f = faceRec(o.name, ar >= 1 ? 240 : 240*ar, ar >= 1 ? 240/ar : 240);
+      Object.assign(f, {label:lab[o.name] || o.name, fill:null, decal:true, baseImg:cv});
+      const mt = new THREE.MeshStandardMaterial({map:f.tex, roughness:.55, metalness:.02, side:THREE.DoubleSide}); f.rmats.push(mt); realMats.push(mt); o.material = mt; o.userData.keys = {0:o.name};
+    }
+  });
+  g.updateMatrixWorld(true);
+  let bb = new THREE.Box3().setFromObject(g), hh = bb.max.y - bb.min.y;
+  if(hh > 0) g.scale.multiplyScalar((state.cH || 150)*S/hh);
+  g.updateMatrixWorld(true); bb = new THREE.Box3().setFromObject(g);
+  const c = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3());
+  g.position.set(-c.x, -bb.min.y, -c.z);
+  d.L = Math.max(1, Math.round(sz.x/S)); d.W = Math.max(1, Math.round(sz.z/S)); d.H = Math.max(1, Math.round(sz.y/S));
+  return {group:out, noOpen:true, update:()=>{}};
+}
+function realBegin(){ realSeen = new Set(); realGlass = false; Object.values(FC).forEach(f=>{ f.rmats = []; }); }
+function realEnd(){
+  Object.keys(FC).forEach(k=>{ if(!realSeen.has(k)){ FC[k].tex.dispose(); FC[k].mat.dispose(); delete FC[k]; } });
+  Object.keys(FC).forEach(drawFace);
+  useEnv(); keyLight.shadow.normalBias = .02; applyBgTex();
+}
+function useEnv(){
+  if(!scene) return;
+  if(isEng()){ if(!envReal){ try{ envReal = MK.makeEnv(renderer); }catch(e){ envReal = envBox; } } scene.environment = envReal; }
+  else scene.environment = envBox;
+  applyLights();
+}
+function applyBgTex(w, h){
+  if(!scene) return;
+  if(scene.background && scene.background.dispose) scene.background.dispose();
+  scene.background = null;
+  if(isEng() && realGlass && realXmit){
+    w = w || stage.clientWidth || 800; h = h || stage.clientHeight || 600;
+    const c = document.createElement('canvas'); c.width = Math.max(64, Math.min(1024, Math.round(w))); c.height = Math.max(64, Math.min(1024, Math.round(h)));
+    drawBG(c.getContext('2d'), c.width, c.height);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; scene.background = t;
+  }
+  dirty = true;
+}
+
 function builderFor(def, key){
+  if(def.real) return buildReal;
+  if(def.custom) return buildCustom;
   if(def.prof) return buildProfile; if(def.lathe) return buildLathe; if(def.slab) return buildSlab; if(def.laptop) return buildLaptop; if(def.book) return buildBook;
   if(def.pouch) return buildPouch; if(def.gable) return buildGable; if(def.solid) return buildSolid; if(def.jerry) return buildJerry; if(def.capm) return buildCap;
   return BUILDERS[def.base || key];
@@ -1347,17 +1502,21 @@ function disposeTree(o){ o.traverse(c=>{ if(c.geometry) c.geometry.dispose(); })
 function rebuild(fit){
   if(!THREE_OK) return;
   while(root.children.length){ const c = root.children[0]; root.remove(c); disposeTree(c); }
+  realMats.forEach(mt=>{ try{ mt.dispose(); }catch(e){} }); realMats = [];
   anims.length = 0;
   if(accModel !== state.model){ Object.keys(ACC).forEach(k=>{ ACC[k].dispose(); delete ACC[k]; }); accModel = state.model; }
-  ensureFaces();
-  const d = state.dims, u = Math.max(d.L,d.W)*S, lay = LAYOUTS[state.layout];
+  const rl = isEng();
+  if(rl) realBegin(); else ensureFaces();
+  const d = state.dims, lay = LAYOUTS[state.layout]; let u = Math.max(d.L,d.W)*S;
   lay.items.forEach(it=>{
     const def = MODELS[state.model], inst = builderFor(def, state.model)(d, def), g = inst.group;
+    u = Math.max(d.L,d.W)*S;
     const wrap = new THREE.Group(); wrap.add(g);
     wrap.position.set((it.x||0)*u, it.y==='H' ? d.H*S : (it.y||0), (it.z||0)*u);
     wrap.rotation.y = it.ry||0; const sc = it.sc||1; wrap.scale.setScalar(sc);
     root.add(wrap); anims.push({update:inst.update, it, noOpen:!!inst.noOpen});
   });
+  if(rl) realEnd(); else { useEnv(); keyLight.shadow.normalBias = .06; applyBgTex(); }
   applyOpen();
   const sh = Math.max(4, u*3.2); const sc = keyLight.shadow.camera;
   sc.left = -sh; sc.right = sh; sc.top = sh; sc.bottom = -sh; sc.near = .5; sc.far = 40; sc.updateProjectionMatrix();
@@ -1397,7 +1556,7 @@ let pulse = null;
 function render(){
   if(pulse){
     const a = Math.max(0, 1-(performance.now()-pulse.t0)/700), f = FC[pulse.key];
-    if(f) f.mat.emissive.setRGB(.05*a,.55*a,.5*a);
+    if(f) (f.rmats && f.rmats.length ? f.rmats : [f.mat]).forEach(mt=>{ if(mt.emissive) mt.emissive.setRGB(.05*a,.55*a,.5*a); });
     if(a<=0){ pulse = null; } else dirty = true;
   }
   updateCam(); renderer.render(scene, cam);
@@ -1416,7 +1575,11 @@ function bgCss(){
   if(b.kind==='linear') return 'linear-gradient(180deg,'+b.c1+','+b.c2+')';
   return 'radial-gradient(ellipse at 50% 38%,'+b.c1+' 0%,'+b.c2+' 100%)';
 }
-function applyBg(){ stage.style.background = bgCss() || ''; stage.classList.toggle('chk', state.bg.kind==='alpha'); dirty = true; }
+function applyBg(){
+  stage.style.background = bgCss() || ''; stage.classList.toggle('chk', state.bg.kind==='alpha');
+  if(isEng() && realGlass && !realFr && (state.bg.kind !== 'alpha') !== realXmit){ rebuild(false); return; }
+  applyBgTex(); dirty = true;
+}
 function drawBG(ctx,w,h){
   const b = state.bg;
   if(b.imgId && IMG.get(b.imgId)){ const im = IMG.get(b.imgId), s = Math.max(w/im.w,h/im.h); ctx.drawImage(im.src,(w-im.w*s)/2,(h-im.h*s)/2,im.w*s,im.h*s); return; }
@@ -1427,9 +1590,15 @@ function drawBG(ctx,w,h){
   ctx.fillRect(0,0,w,h);
 }
 function renderComposite(outW, outH, transparent){
+  const needFr = transparent && isEng() && realGlass && realXmit;
+  if(needFr){ realFr = true; rebuild(false); }
+  try{ return renderComposite0(outW, outH, transparent); } finally { if(needFr){ realFr = false; rebuild(false); } }
+}
+function renderComposite0(outW, outH, transparent){
   const w = stage.clientWidth, h = stage.clientHeight;
   const oc = document.createElement('canvas'); oc.width = outW; oc.height = outH; const x = oc.getContext('2d');
   if(!transparent) drawBG(x,outW,outH);
+  if(isEng() && scene.background) applyBgTex(outW,outH);
   const pr = renderer.getPixelRatio();
   renderer.setPixelRatio(1); renderer.setSize(outW,outH,false);
   camP.aspect = outW/outH; camP.updateProjectionMatrix();
@@ -1437,6 +1606,7 @@ function renderComposite(outW, outH, transparent){
   x.drawImage(canvasEl,0,0,outW,outH);
   renderer.setPixelRatio(pr); renderer.setSize(w,h,false);
   camP.aspect = w/h; camP.updateProjectionMatrix(); dirty = true;
+  if(isEng()) applyBgTex();
   return oc;
 }
 
@@ -1543,7 +1713,7 @@ function loop(now){
 function renderNow(){ dirty = false; render(); updateOverlay(); }
 return {renderNow,drawLayer,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
   drawFace,redrawAll,ensureFaces,applyMaterialProps,applyLights,rebuild,fitCamera,applyOpen,animateOpen,applyBg,bgCss,drawBG,renderComposite,
-  CATS,BOXMATS,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,
+  CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,
   get tool(){return tool}, set tool(v){tool = v; hooks.tool(v);},
   get dirty(){return dirty}, set dirty(v){dirty = v},
   get recording(){return recording}, set recording(v){recording = v},
@@ -1563,7 +1733,7 @@ if(!X.THREE_OK){ P.innerHTML = '<h2>تعذّر تحميل المكتبة ثلا�
 
 /* ───────────── history ───────────── */
 const hist = {stack:[], i:-1};
-const snapObj = () => ({model:state.model,dims:state.dims,t:state.t,flap:state.flap,openMax:state.openMax,material:state.material,matColor:state.matColor,finish:state.finish,open:state.open,faces:state.faces,bg:state.bg,layout:state.layout,shadow:state.shadow,shadowStrength:state.shadowStrength,ortho:state.ortho,dimsOn:state.dimsOn,light:state.light,env:state.env,accents:state.accents,pf:state.pf});
+const snapObj = () => ({model:state.model,dims:state.dims,t:state.t,flap:state.flap,openMax:state.openMax,material:state.material,matColor:state.matColor,finish:state.finish,open:state.open,faces:state.faces,bg:state.bg,layout:state.layout,shadow:state.shadow,shadowStrength:state.shadowStrength,ortho:state.ortho,dimsOn:state.dimsOn,light:state.light,env:state.env,accents:state.accents,pf:state.pf,real:state.real,cH:state.cH});
 const snap = () => JSON.stringify(snapObj());
 function commit(){
   const s = snap(); if(hist.stack[hist.i] === s) return;
@@ -1571,7 +1741,8 @@ function commit(){
   hist.i = hist.stack.length-1; syncTools();
 }
 function restore(s){
-  const o = JSON.parse(s); Object.assign(state, {accents:{}}, o);
+  const o = JSON.parse(s); Object.assign(state, {accents:{}, real:null}, o);
+  if(!MODELS[state.model]){ state.model = 'mailer'; state.dims = {...MODELS.mailer.dims}; state.faces = {}; state.real = null; }
   if(!FC[state.sel.face]) { /* faces re-evaluated after rebuild */ }
   X.applyBg(); X.applyLights(); X.rebuild(false);
   if(!FC[state.sel.face]) X.selectFace(Object.keys(FC)[0]);
@@ -1672,6 +1843,8 @@ function slabIcon(def){
 }
 function modelIcon(m){
   const def = MODELS[m], st = 'stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"', fo = o=>'fill="currentColor" fill-opacity="'+o+'" '+st;
+  if(def.custom) return '<div class="ico rl">'+ico('cube')+'</div>';
+  if(def.real){ const rm = X.realModel(def), u = rm ? X.MK.thumbOf(rm) : ''; return '<div class="ico rl" data-rm="'+def.real+'"'+(u?' data-ok="1"':'')+'>'+(u ? '<img alt="" src="'+u+'">' : ico('cube')) + '</div>'; }
   const wrap = s=>'<svg class="ico" viewBox="0 0 80 64" aria-hidden="true">'+s+'</svg>';
   if(def.prof && typeof BoxProfiles !== 'undefined' && BoxProfiles.thumb) return '<div class="ico" style="width:78px;height:62px;display:grid">'+BoxProfiles.thumb(def.prof).replace('<svg ','<svg style="width:100%;height:100%;background:#fff;border-radius:6px" ')+'</div>';
   if(def.lathe) return latheIcon(def);
@@ -1716,7 +1889,7 @@ function renderEdit(){
    '<h3>الأوجه · انقر على العلبة أو اختر وجهاً</h3><div class="chips" id="faceChips"></div>'+
    '<h3 id="layersH"></h3><div class="row" style="margin-bottom:8px"><button class="btn sm" id="addText">'+ico('text')+' نص</button><button class="btn sm" id="addPat">'+ico('pattern')+' نمط</button><button class="btn sm" id="addImg">'+ico('image')+' صورة</button></div>'+
    '<div class="layers" id="layerList"></div><div id="layerEd"></div>'+
-   accHtml('mat','الخامة والتشطيب', mi.name+' · '+FINISH[state.finish].name)+
+   accHtml('mat', X.isReal() ? 'المواد والألوان' : 'الخامة والتشطيب', MODELS[state.model].custom ? 'من صور المجسّم' : X.isReal() ? realSummary() : mi.name+' · '+FINISH[state.finish].name)+
    accHtml('dims','الأبعاد', d.L+' × '+d.W+' × '+d.H+' مم')+
    '<p class="hint" style="margin-top:14px">النموذج: <span dir="ltr">'+m.code+'</span> · '+m.name+'</p>';
   buildFaceChips(); buildLayerList(); buildEditor();
@@ -1744,11 +1917,13 @@ function bindAcc(){
 function updateAccValues(){
   const mi = X.matInfo(), d = state.dims;
   const a1 = $('.acc[data-acc="mat"] b',P), a2 = $('.acc[data-acc="dims"] b',P);
-  if(a1) a1.textContent = mi.name+' · '+FINISH[state.finish].name;
+  if(a1) a1.textContent = MODELS[state.model].custom ? 'من صور المجسّم' : X.isReal() ? realSummary() : mi.name+' · '+FINISH[state.finish].name;
   if(a2) a2.textContent = d.L+' × '+d.W+' × '+d.H+' مم';
 }
 /* — materials & part colours — */
 function buildMatBody(b){
+  if(MODELS[state.model].custom){ b.innerHTML = '<p class="hint" style="margin:0">ألوان هذا المجسّم من صوره الأصلية؛ أضف الملصقات والنصوص من الطبقات.</p>'; return; }
+  if(X.isReal()) return buildRealMat(b);
   const def = MODELS[state.model], list = def.mats || X.BOXMATS, acc = X.accDefs(), accKeys = Object.keys(acc);
   b.innerHTML = '<div class="sw" id="swG"></div><div id="cust"></div>'+(accKeys.length ? '<h3 style="margin-top:14px">ألوان الأجزاء</h3><div id="accs"></div>' : '')+'<h3 style="margin-top:14px">التشطيب</h3><div class="seg" id="finSeg"></div>';
   const g = $('#swG',b); let custI = null;
@@ -1796,6 +1971,8 @@ function buildProfDims(b){
     i.addEventListener('change', ()=>{ X.fitCamera(true); commit(); }); $('#pfd',b).appendChild(w); });
 }
 function buildDimsBody(b){
+  if(MODELS[state.model].custom) return buildCustomDims(b);
+  if(MODELS[state.model].real) return buildRealDims(b);
   if(MODELS[state.model].prof) return buildProfDims(b);
   const def = MODELS[state.model], tube = !!(def.round || def.rot), lb = dimLabels(def);
   b.innerHTML = '<div class="dims"><label>'+lb.L+'<input type="number" step="any" id="dL" min="'+dimMin('L')+'" max="900" value="'+state.dims.L+'"></label><label>'+lb.W+'<input type="number" step="any" id="dW" min="'+dimMin('W')+'" max="900" value="'+state.dims.W+'"'+(tube?' disabled':'')+'></label><label>'+lb.H+'<input type="number" step="any" id="dH" min="'+dimMin('H')+'" max="900" value="'+state.dims.H+'"></label></div>'+
@@ -1806,11 +1983,71 @@ function buildDimsBody(b){
   (SIZE_PRESETS[state.model] || autoPresets()).forEach(p=>{ const bt = el('<button type="button" title="'+p[1]+'">'+p[0]+'</button>'); bt.onclick = ()=>{ state.dims = {L:p[2][0],W:p[2][1],H:p[2][2]}; X.rebuild(true); commit(); buildDimsBody(b); updateAccValues(); }; sg.appendChild(bt); });
 }
 
+
+/* — النماذج الواقعية: المواد حسب الدور + الأبعاد بالمقاييس الأصلية — */
+function realSummary(){
+  const def = MODELS[state.model], m = X.realModel(def), r = state.real; if(!m) return '';
+  const main = m.main || 'body', ml = m.matList || [];
+  if(r && r.roles && r.roles[main]){ const o = ml.find(x=>x[0]===r.roles[main].p); return (o ? o[1] : 'مواد')+' · '+(m.roles[main].n || 'الجسم'); }
+  return 'لون وتشطيب';
+}
+let _rt = 0;
+function realChanged(commitNow){ X.rebuild(false); updateAccValues(); clearTimeout(_rt); _rt = setTimeout(commit, commitNow ? 0 : 350); }
+function buildRealMat(b){
+  const def = MODELS[state.model], m = X.realModel(def), r = X.ensureReal(def); if(!m) return;
+  const main = m.main || 'body', ml = m.matList || [], names = {body:'الجسم',cap:'الغطاء',liquid:'المحتوى',accent:'التفاصيل',inside:'الداخل',pump:'المضخّة'};
+  const sw = (cols, cur, onPick)=>{
+    const w = el('<div class="sw"></div>');
+    cols.forEach(c=>{ const bt = el('<button type="button" class="swb" aria-pressed="'+(c.toLowerCase()===String(cur).toLowerCase())+'" style="padding:0;width:30px;height:30px"><i style="background:'+c+';width:100%;height:100%;display:block;border-radius:inherit"></i></button>'); bt.title = c; bt.onclick = ()=>onPick(c, true); w.appendChild(bt); });
+    const pk = el('<input type="color" value="'+(/^#[0-9a-f]{6}$/i.test(cur) ? cur : '#ffffff')+'" title="لون مخصص" style="width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:none">');
+    pk.addEventListener('input', ()=>onPick(pk.value, false)); pk.addEventListener('change', ()=>commit()); w.appendChild(pk); return w;
+  };
+  b.innerHTML = '';
+  const t1 = el('<h3 style="margin-top:0">لون '+esc((m.roles && m.roles[main] && m.roles[main].n) || names[main])+'</h3>'); b.appendChild(t1);
+  b.appendChild(sw(m.colors || [], r.color, (c, fin)=>{ r.color = c; realChanged(fin); if(fin) buildRealMat(b); }));
+  if(m.roles && r.roles){
+    const g = el('<div></div>'); b.appendChild(g);
+    Object.keys(m.roles).forEach(k=>{
+      if(k === main && false) return;
+      const d = m.roles[k], rr = r.roles[k], col = k === main ? r.color : rr.c;
+      const row = el('<div class="rrole"><span>'+esc(d.n || names[k] || k)+'</span><select>'+ml.map(o=>'<option value="'+o[0]+'"'+(o[0]===rr.p ? ' selected' : '')+'>'+esc(o[1])+'</option>').join('')+'</select><input type="color" value="'+(/^#[0-9a-f]{6}$/i.test(col) ? col : '#ffffff')+'"></div>');
+      row.querySelector('select').onchange = e=>{ rr.p = e.target.value; realChanged(true); updateAccValues(); };
+      const ci = row.querySelector('input');
+      ci.addEventListener('input', ()=>{ if(k === main) r.color = ci.value; else rr.c = ci.value; realChanged(false); });
+      ci.addEventListener('change', ()=>commit());
+      g.appendChild(row);
+      if(k === 'liquid'){ const lt = el('<label class="opt" style="margin-top:4px"><span>إظهار المحتوى</span><input type="checkbox"'+(rr.on !== false ? ' checked' : '')+'></label>'); lt.querySelector('input').onchange = e=>{ rr.on = e.target.checked; realChanged(true); }; g.appendChild(lt); }
+    });
+  } else {
+    if(m.c2){ b.appendChild(el('<h3>'+esc(m.c2.n || 'اللون الثاني')+'</h3>')); b.appendChild(sw(m.c2.colors || [], r.color2, (c, fin)=>{ r.color2 = c; realChanged(fin); if(fin) buildRealMat(b); })); }
+    if(m.cat !== 'apparel'){
+      b.appendChild(el('<h3 style="margin-top:14px">التشطيب</h3>'));
+      const fs = el('<div class="seg"></div>'); b.appendChild(fs);
+      (X.MK.FIN_LIST || []).forEach(([k, n])=>{ const bt = el('<button type="button" aria-pressed="'+(r.finish===k)+'">'+n+'</button>'); bt.onclick = ()=>{ r.finish = k; realChanged(true); buildRealMat(b); }; fs.appendChild(bt); });
+    }
+  }
+}
+function buildCustomDims(b){
+  const d = state.dims;
+  b.innerHTML = '<p class="hint" style="margin:0 0 8px">الأبعاد: <b dir="ltr">'+d.L+' × '+d.W+' × '+d.H+' مم</b></p><div id="rpar"></div>';
+  $('#rpar', b).appendChild(slider('الارتفاع (مم)', 20, 600, 1, state.cH || 150, v=>Math.round(v), v=>{ state.cH = +v; X.rebuild(false); updateAccValues(); const hb = $('b[dir=ltr]', b); if(hb) hb.textContent = state.dims.L+' × '+state.dims.W+' × '+state.dims.H+' مم'; }, ()=>{ X.fitCamera(true); commit(); }));
+}
+function buildRealDims(b){
+  const def = MODELS[state.model], m = X.realModel(def), r = X.ensureReal(def), d = state.dims;
+  b.innerHTML = '<p class="hint" style="margin:0 0 8px">الأبعاد الفعلية للنموذج: <b dir="ltr">'+d.L+' × '+d.W+' × '+d.H+' مم</b></p><div id="rpar"></div>';
+  const host = $('#rpar', b);
+  if(!(m.params || []).length){ host.innerHTML = '<p class="hint">هذا النموذج بقياس ثابت.</p>'; return; }
+  m.params.forEach(p=>{
+    const w = slider(p.l+' (سم)', p.min, p.max, p.step, r.P[p.k], v=>(+v).toFixed(1), v=>{ r.P[p.k] = +v; X.rebuild(false); updateAccValues(); const hb = $('b[dir=ltr]', b); if(hb) hb.textContent = state.dims.L+' × '+state.dims.W+' × '+state.dims.H+' مم'; }, ()=>{ X.fitCamera(true); commit(); });
+    host.appendChild(w);
+  });
+}
+
 /* faces + layers */
 function buildFaceChips(){
   const g = $('#faceChips'); if(!g) return; g.innerHTML = '';
   Object.values(FC).forEach(f=>{
-    const b = el('<button type="button" class="chip" aria-pressed="'+(state.sel.face===f.key)+'"><canvas data-k="'+f.key+'" width="76" height="60"></canvas><span>'+f.label+'<small>'+Math.round(f.w)+' × '+Math.round(f.h)+' مم</small></span></button>');
+    const b = el('<button type="button" class="chip" aria-pressed="'+(state.sel.face===f.key)+'"><canvas data-k="'+f.key+'" width="76" height="60"></canvas><span>'+f.label+(f.real ? '' : '<small>'+Math.round(f.w)+' × '+Math.round(f.h)+' مم</small>')+'</span></button>');
     b.onclick = ()=>X.selectFace(f.key,true); g.appendChild(b); hooks.thumb(f.key);
   });
 }
@@ -1917,15 +2154,16 @@ function selectModel(k){
   const m = MODELS[k]; if(state.model === k) return;
   const prev = MODELS[state.model], box = m.mats === X.BOXMATS;
   state.model = k; state.dims = {...m.dims}; state.flap = m.flap; state.open = m.open0 || 0; state.openMax = m.openMax || 115;
-  state.t = m.t || 2.5; state.accents = {};
-  if(box){ if(!X.BOXMATS.includes(state.material)) state.material = m.mat || 'kraft'; }
+  state.t = m.t || 2.5; state.accents = {}; state.real = null;
+  state.cH = 150; if(m.real || m.custom) state.material = 'white';
+  else if(box){ if(!X.BOXMATS.includes(state.material)) state.material = m.mat || 'kraft'; }
   else state.material = m.mat || 'plW';
-  if(prev.cat !== m.cat){ state.faces = {}; state.sel.layer = null; }
+  if(prev.cat !== m.cat || !!prev.real !== !!m.real || m.custom){ state.faces = {}; state.sel.layer = null; }
   syncBar(); X.rebuild(true);
   if(!FC[state.sel.face]) X.selectFace(Object.keys(FC)[0]);
   syncBar(); commit(); renderModels(); toast('تم اختيار: '+m.name);
 }
-function dimText(m){ if(m.prof) return 'قالب قص · '+[m.dims.L,m.dims.W,m.dims.H].filter(Boolean).join('×')+' mm'; return m.rot ? 'Ø'+m.dims.L+' × '+m.dims.H+' mm' : m.dims.L+'×'+m.dims.W+'×'+m.dims.H+' mm'; }
+function dimText(m){ if(m.custom) return 'مجسّم من الأدوات'; if(m.real) return 'نموذج واقعي'+(m.tag ? ' · '+m.tag : ''); if(m.prof) return 'قالب قص · '+[m.dims.L,m.dims.W,m.dims.H].filter(Boolean).join('×')+' mm'; return m.rot ? 'Ø'+m.dims.L+' × '+m.dims.H+' mm' : m.dims.L+'×'+m.dims.W+'×'+m.dims.H+' mm'; }
 function renderModels(){
   const cats = X.CATS, counts = {};
   Object.values(MODELS).forEach(m=>{ counts[m.cat] = (counts[m.cat]||0)+1; });
@@ -1943,6 +2181,17 @@ function renderModels(){
     c.onclick = ()=>selectModel(k); g.appendChild(c);
   });
   const cur = g.querySelector('[aria-pressed="true"]'); if(cur && cur.scrollIntoView) cur.scrollIntoView({block:'nearest'});
+  realThumbs();
+}
+let _thTok = 0;
+async function realThumbs(){
+  if(!X.MK) return; const tok = ++_thTok;
+  for(const box of $$('.rl[data-rm]:not([data-ok])')){
+    if(tok !== _thTok || curTab !== 'models') break;
+    let url = ''; try{ url = await X.MK.thumb(box.dataset.rm); }catch(e){}
+    if(url && box.isConnected){ box.innerHTML = '<img alt="" src="'+url+'">'; box.dataset.ok = '1'; }
+    await new Promise(r=>setTimeout(r, 20));
+  }
 }
 
 
@@ -2258,6 +2507,9 @@ X.rebuild(true);
 X.selectFace('top');
 X.applyBg(); syncBar(); X.tool = 'select';
 showTab('edit');
+const co = host.opts && host.opts.custom;
+if(co){ X.setCustom(co); selectModel('custom3d'); X.fitCamera(); showTab('edit'); }
+else if(host.opts && host.opts.model && MODELS[host.opts.model]){ selectModel(host.opts.model); X.fitCamera(); showTab('edit'); }
 const po = host.opts && host.opts.profile;
 if(po && MODELS['pf_'+po.key]){
   const k = 'pf_'+po.key, m = MODELS[k]; state.model = k; state.dims = {...m.dims}; state.flap = m.flap; state.open = 1; state.openMax = 115; state.t = m.t || 1; state.accents = {}; state.material = 'kraft'; state.faces = {};

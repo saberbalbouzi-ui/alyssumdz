@@ -1,29 +1,29 @@
-/* استوديو 3D — أداة واحدة بتبويبين: نماذج واقعية (MockupStudio) والعلب والقوالب (BoxStudio).
-   غلاف رقيق: شريط تبويبات ثابت أعلى الشاشة، والتبديل يغلق الاستوديو الحالي ويفتح الآخر. */
+/* استوديو 3D — المحرّر الرئيسي (BoxStudio: نماذج واقعية وعلب + طبقات الملصقات) وتبويبان يغذّيانه: قوالب القص (تُحوَّل إلى علبة 3D) و«من صور 2D» (يُفتح المجسّم المنتَج فيه).
+   غلاف رقيق: شريط تبويبات ثابت أعلى الشاشة، والتبديل يغلق الأداة الحالية ويفتح الأخرى. */
 const Studio3D = (() => {
   "use strict";
   let tab = null, sw = false, bar = null;
   const CSS = "#s3d-bar{position:fixed;top:0;left:0;right:0;height:46px;z-index:2147483600;display:flex;align-items:center;gap:.5rem;padding:0 .8rem;direction:rtl;background:rgba(9,24,18,.99);border-bottom:1px solid rgba(var(--g-mint-rgb,198,254,23),.35);color:#fff;font:600 14px system-ui,'IBM Plex Sans Arabic',sans-serif}" +
     "#s3d-bar b{margin-inline-end:.6rem;font-size:15px}#s3d-bar button{cursor:pointer;color:#fff;font:inherit;padding:.38rem 1rem;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 6px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.25);backdrop-filter:blur(6px);transition:transform .15s,background .15s}" +
     "#s3d-bar button:hover{transform:translateY(-2px);background:rgba(var(--g-mint-rgb,198,254,23),.28)}#s3d-bar button.on{background:rgba(var(--g-mint-rgb,198,254,23),.36);border-color:rgba(var(--g-mint-rgb,198,254,23),.7)}#s3d-bar .sp{flex:1}#s3d-bar .x{background:rgba(239,68,68,.3)}" +
-    "body.s3d-on #mk-bg,body.s3d-on #bs-bg,body.s3d-on #bp-bg,body.s3d-on #i3-bg{top:46px!important}";
+    "body.s3d-on #bs-bg,body.s3d-on #bp-bg,body.s3d-on #i3-bg{top:46px!important}";
   function cleanup() { if (sw) return; if (bar) bar.remove(); bar = null; tab = null; document.body.classList.remove("s3d-on"); }
   function paint() { if (!bar) return; bar.querySelectorAll("[data-t]").forEach(b => b.classList.toggle("on", b.dataset.t === tab)); }
   function ensure() {
     if (!document.getElementById("s3d-css")) { const st = document.createElement("style"); st.id = "s3d-css"; st.textContent = CSS; document.head.appendChild(st); }
     if (bar && bar.isConnected) return; bar = document.createElement("div"); bar.id = "s3d-bar";
-    bar.innerHTML = '<b>🧊 استوديو 3D</b><button type="button" data-t="mock">🧢 نماذج واقعية</button><button type="button" data-t="box">📦 العلب</button><button type="button" data-t="cut">📐 قوالب القص والطباعة</button><button type="button" data-t="img">🖼️ من صور 2D</button><span class="sp"></span><button type="button" class="x" data-t="x">إغلاق</button>';
+    bar.innerHTML = '<b>🧊 استوديو 3D</b><button type="button" data-t="box">🧊 المحرّر · نماذج وملصقات</button><button type="button" data-t="cut">📐 قوالب القص والطباعة</button><button type="button" data-t="img">🖼️ من صور 2D</button><span class="sp"></span><button type="button" class="x" data-t="x">إغلاق</button>';
     bar.addEventListener("click", e => { const b = e.target.closest("[data-t]"); if (!b) return; if (b.dataset.t === "x") close(); else if (b.dataset.t !== tab) { if (tab === "box" && !confirm("التبديل يغلق العلبة الحالية. هل صدّرت مشروعك أو حفظته؟ متابعة؟")) return; show(b.dataset.t); } });
     document.body.appendChild(bar); document.body.classList.add("s3d-on");
   }
   async function show(t, o) {
-    o = o || {}; const M = { mock: typeof MockupStudio !== "undefined" ? MockupStudio : null, box: typeof BoxStudio !== "undefined" ? BoxStudio : null, cut: typeof BoxProfiles !== "undefined" ? BoxProfiles : null, img: typeof Img3D !== "undefined" ? Img3D : null };
+    o = o || {}; const M = { box: typeof BoxStudio !== "undefined" ? BoxStudio : null, cut: typeof BoxProfiles !== "undefined" ? BoxProfiles : null, img: typeof Img3D !== "undefined" ? Img3D : null };
     if (!M[t]) return null; ensure(); sw = true; tab = t; paint(); let r = null;
     try { Object.keys(M).forEach(k => { if (k !== t && M[k]) { try { M[k].close(); } catch (e) { } } }); r = await M[t].open(Object.assign({}, o, { onClose: cleanup })); }
     finally { sw = false; }
     return r;
   }
-  function close() { sw = false; try { if (typeof MockupStudio !== "undefined") MockupStudio.close(); } catch (e) { } try { if (typeof BoxStudio !== "undefined") BoxStudio.close(); } catch (e) { } try { if (typeof BoxProfiles !== "undefined") BoxProfiles.close(); } catch (e) { } try { if (typeof Img3D !== "undefined") Img3D.close(); } catch (e) { } cleanup(); }
-  return { open: o => { o = o || {}; const t = o.profile ? "box" : (o.tab === "box" || o.tab === "cut" || o.tab === "img" ? o.tab : "mock"); return show(t, o); }, close, get tab() { return tab; } };
+  function close() { sw = false; try { if (typeof BoxStudio !== "undefined") BoxStudio.close(); } catch (e) { } try { if (typeof BoxProfiles !== "undefined") BoxProfiles.close(); } catch (e) { } try { if (typeof Img3D !== "undefined") Img3D.close(); } catch (e) { } cleanup(); }
+  return { open: o => { o = o || {}; const t = o.tab === "cut" || o.tab === "img" ? o.tab : "box"; return show(t, o); }, close, get tab() { return tab; } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = Studio3D;

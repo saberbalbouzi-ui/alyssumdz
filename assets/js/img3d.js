@@ -370,7 +370,11 @@ const Img3D = (() => {
   async function exportAs(kind) {
     if (!S.model) return; const nm = "alyssum-3d";
     try {
-      if (kind === "png") dl(await toBlob(snap(1600, 1600, S.bg === "none"), "image/png"), nm + ".png");
+      if (kind === "studio") {
+        const tx = S.model.stats && S.model.stats.textures, custom = { obj: S.model.obj, kind: S.model.kind, name: "مجسّم من صور 2D", faces: tx ? { front: tx.front, back: tx.back } : null };
+        if (typeof Studio3D !== "undefined") await Studio3D.open({ tab: "box", custom }); else if (typeof BoxStudio !== "undefined") await BoxStudio.open({ custom });
+      }
+      else if (kind === "png") dl(await toBlob(snap(1600, 1600, S.bg === "none"), "image/png"), nm + ".png");
       else if (kind === "webp") dl(await toBlob(snap(1600, 1600, S.bg === "none"), "image/webp", 0.92), nm + ".webp");
       else if (kind === "glb") { const b = S.model.kind === "api" && S.model.stats && S.model.stats.glb ? S.model.stats.glb : await toGLB(T, S.model.obj); dl(b, nm + ".glb"); }
       else if (kind === "zip") {
@@ -412,7 +416,7 @@ const Img3D = (() => {
       '<button type="button" class="go" id="i3-go">ابنِ المجسّم</button><div class="i3-conf" title="ثقة التجميع المحلي"><i></i></div><div class="i3-msg" id="i3-msg">أضف الصورة الأمامية ثم اضغط «ابنِ المجسّم».</div>' +
       '<div class="i3-api"><b>إن لم تنجح النتيجة</b><span>يبني Alyssum API المجسّم من صورك مباشرة (يحتاج رصيداً ومفتاح اتصال).</span><div id="i3-keyrow" style="display:none"><input id="i3-key" type="password" placeholder="مفتاح الاتصال" autocomplete="off"></div><button type="button" id="i3-api">🌐 بناء عبر Alyssum API</button></div>' +
       '<h5>③ العرض والتنزيل</h5><div class="i3-row"><label>الخلفية</label><select id="i3-bgm" style="flex:1"><option value="light">فاتحة</option><option value="white">بيضاء</option><option value="warm">دافئة</option><option value="dark">داكنة</option><option value="none">شفافة (للتنزيل)</option></select></div>' +
-      '<div class="i3-row"><label><input type="checkbox" id="i3-auto" checked> دوران تلقائي</label></div><div class="i3-row"><button type="button" data-ex="png" disabled>صورة PNG</button><button type="button" data-ex="webp" disabled>WebP</button><button type="button" data-ex="zip" disabled>360° ZIP</button><button type="button" data-ex="glb" disabled>GLB</button></div></div>' +
+      '<div class="i3-row"><label><input type="checkbox" id="i3-auto" checked> دوران تلقائي</label></div><div class="i3-row"><button type="button" data-ex="png" disabled>صورة PNG</button><button type="button" data-ex="webp" disabled>WebP</button><button type="button" data-ex="zip" disabled>360° ZIP</button><button type="button" data-ex="glb" disabled>GLB</button></div><div class="i3-row"><button type="button" data-ex="studio" disabled style="flex:1 1 100%">🧊 افتح المجسّم في المحرّر لإضافة الملصقات والنصوص</button></div></div>' +
       '<div class="i3-stage" id="i3-stage"><div class="i3-hint">اسحب للتدوير · العجلة للتقريب · نقرتان لإعادة الضبط</div></div></div></div>';
     document.body.appendChild(bg); opened = true; $("i3-x").onclick = close; bg.addEventListener("mousedown", e => { if (e.target === bg) close(); }); $("i3-stage").style.background = bgCss();
     wire($("i3")); escH = e => { if (e.key === "Escape") close(); }; document.addEventListener("keydown", escH);
