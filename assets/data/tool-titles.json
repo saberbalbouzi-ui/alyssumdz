@@ -227,6 +227,19 @@
         "fr": "Gabarit d'impression de la boîte (coupe, pli, fond perdu) depuis votre étiquette",
         "en": "Print-ready box dieline (cut, fold, bleed) from your label identity"
       }
+    },
+    "boxstudio": {
+      "icon": "16-pack-3d",
+      "t": {
+        "ar": "استوديو العلب 3D",
+        "fr": "Studio de boîtes 3D",
+        "en": "3D Box Studio"
+      },
+      "d": {
+        "ar": "أكثر من 60 علبة وعبوة ثلاثية الأبعاد بتصميمك على كل وجه وتصدير فائق",
+        "fr": "60+ boîtes et emballages 3D avec votre design sur chaque face et export ultra",
+        "en": "60+ 3D boxes and packs with your design on every face and ultra export"
+      }
     }
   }
 }

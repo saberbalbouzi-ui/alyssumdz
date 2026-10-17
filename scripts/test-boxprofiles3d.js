@@ -13,9 +13,9 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } }), p = await ctx.newPage(), errs = [];
   p.on("pageerror", e => errs.push(e.message)); p.on("console", m => { if (m.type() === "error") errs.push(m.text()); });
   await p.goto(base + "/__blank"); await p.evaluate(() => { window.toast = () => { }; localStorage.clear(); });
-  for (const f of ["admin-imgbatch", "barcode-tool", "pack3d", "box-designer", "box-profiles"]) await load(p, "/assets/js/" + f + ".js");
+  for (const f of ["admin-imgbatch", "barcode-tool", "pack3d", "box-designer", "box-profiles", "box-studio"]) await load(p, "/assets/js/" + f + ".js");
   const stat = () => p.evaluate(() => { const c = document.querySelector("#p3 canvas"), t = document.createElement("canvas"); t.width = 200; t.height = 200; const x = t.getContext("2d"); x.drawImage(c, 0, 0, 200, 200); const d = x.getImageData(0, 0, 200, 200).data, s = new Set(); for (let i = 0; i < d.length; i += 40) s.add((d[i] >> 4) + "," + (d[i + 1] >> 4) + "," + (d[i + 2] >> 4)); return s.size; });
-  const open3d = async k => { await p.evaluate(k => { BoxProfiles.close(); BoxProfiles.S.cur = k; BoxProfiles.open(); }, k); await p.waitForTimeout(150); await p.click('[data-bx="3d"]'); await p.waitForSelector("#p3 canvas", { timeout: 30000 }); await p.waitForFunction(() => Pack3D._t.ready, null, { timeout: 30000 }); await p.waitForTimeout(300); };
+  const open3d = async k => { await p.evaluate(k => { BoxProfiles.close(); BoxProfiles.S.cur = k; BoxProfiles.open(); }, k); await p.waitForTimeout(150); await p.evaluate(() => BoxProfiles.to3dPack()); await p.waitForSelector("#p3 canvas", { timeout: 30000 }); await p.waitForFunction(() => Pack3D._t.ready, null, { timeout: 30000 }); await p.waitForTimeout(300); };
   /* Box Designer صار يفتح المكتبة */
   await p.evaluate(() => BoxDesigner.open()); await p.waitForTimeout(150);
   ok("Box Designer يفتح مكتبة القوالب (23 نموذجاً + خياران بتصميم) بدل المحرّر القديم", await p.evaluate(() => !!document.getElementById("bp") && !document.getElementById("bx") && document.querySelectorAll("#bp-model option").length === 25));
