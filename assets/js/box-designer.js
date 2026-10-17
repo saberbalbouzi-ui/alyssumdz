@@ -281,7 +281,7 @@ const BoxDesigner = (() => {
     if (a === "resetFace") { S.faces[S.face] = { bg: "", fg: "", text: "", show: clone(DEFSHOW[S.face]) }; save(); ui(); schedule(); }
     else if (a === "useArt") { if (!art) { msg("ارفع تصميم الملصق أولاً", true); return; } const s = S.faces.front.show; s.art = 1; s.brand = 0; s.sub = 0; s.vol = 0; save(); ui(); schedule(); }
     else if (a === "fromPack") fromPack(); else if (a === "fromBrand") fromBrand(); else if (a === "to3d") to3d();
-    else if (a === "profiles") { if (typeof BoxProfiles === "undefined") msg("مكتبة القوالب غير محمّلة في هذه النسخة", true); else BoxProfiles.open(); }
+    else if (a === "profiles") { if (typeof BoxProfiles === "undefined") msg("مكتبة القوالب غير محمّلة في هذه النسخة", true); else { close(); BoxProfiles.open(); } }
   }
   function fromPack() {
     if (typeof Pack3D === "undefined") { msg("3D Pack Studio غير متاح", true); return; } const q = Pack3D.S.ql || {}; S.id.name = q.name || S.id.name; S.id.sub = q.sub || S.id.sub; S.id.vol = q.vol || S.id.vol; if (q.c2) S.id.bg = q.c2; if (q.ink) S.id.fg = q.ink; if (q.c1) S.id.accent = q.c1;
@@ -303,6 +303,9 @@ const BoxDesigner = (() => {
     document.addEventListener("keydown", function k(e) { if (e.key === "Escape" && $("bx-bg") && !$("p3-bg") && !$("bp-bg")) { close(); document.removeEventListener("keydown", k); } });
     ui(); preview(); window.addEventListener("resize", schedule);
   }
-  return { open, close, S, PRESETS, FACES, geom, _t: { logExt, faceCanvas, sheetCanvas, svgString, pdfBlob, model3d, setArt: c => { art = c; }, setLogo: c => { logo = c; }, preview } };
+  /* الواجهة الرئيسية لأداة «Box Designer» صارت مكتبة القوالب (BoxProfiles)؛ محرّر التصميم على الوجوه (إدخال/هدية) يبقى عبر openArt */
+  function openArt(st) { if (st === "tuck" || st === "gift") { S.style = st; save(); } open(); }
+  function openMain() { if (typeof BoxProfiles !== "undefined" && BoxProfiles.open) BoxProfiles.open(); else open(); }
+  return { open: openMain, openArt, openLegacy: open, close, S, PRESETS, FACES, geom, _t: { logExt, faceCanvas, sheetCanvas, svgString, pdfBlob, model3d, setArt: c => { art = c; }, setLogo: c => { logo = c; }, preview } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = BoxDesigner;

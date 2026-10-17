@@ -38,7 +38,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   p.on("pageerror", e => errs.push(e.message)); p.on("console", m => { if (m.type() === "error") errs.push(m.text()); });
   await p.goto(base + "/__blank"); await p.evaluate(() => { window.toast = () => { }; localStorage.clear(); });
   for (const f of ["admin-imgbatch", "barcode-tool", "pack3d", "box-designer"]) await load(p, "/assets/js/" + f + ".js");
-  await p.evaluate(() => BoxDesigner.open()); await p.waitForSelector("#bx-st canvas");
+  await p.evaluate(() => BoxDesigner.openArt()); await p.waitForSelector("#bx-st canvas");
   ok("الحوار يفتح ويعرض القالب", await p.evaluate(() => { const c = document.querySelector("#bx-st canvas"); return c.width > 400 && /مم/.test(document.getElementById("bx-info").textContent); }));
   if (shots) await p.screenshot({ path: path.join(shots, "bx-1.png") });
   /* تعديل الأبعاد يغيّر القالب */
@@ -86,7 +86,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   await p.click('#p3 [data-act="backbd"]'); await p.waitForTimeout(300);
   ok("العودة إلى Box Designer تُبقيه مفتوحاً ونوع 3D يُستعاد", await p.evaluate(() => !!document.getElementById("bx-bg") && !document.getElementById("p3-bg") && Pack3D.S.type !== "dbox"));
   /* ═══ علبة هدية: واجهة + تصدير + طيّ 3D ═══ */
-  await p.evaluate(() => { BoxDesigner.S.style = "gift"; BoxDesigner.close(); BoxDesigner.open(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => { BoxDesigner.S.style = "gift"; BoxDesigner.close(); BoxDesigner.openArt("gift"); }); await p.waitForTimeout(500);
   ok("هدية: حقل قطر فتحة الإبهام ظاهر وزر النوع مفعّل", await p.evaluate(() => !!document.querySelector('[data-k="thumb"]') && document.querySelector('[data-style="gift"]').className === "on"));
   const gg2 = await p.evaluate(() => BoxDesigner.geom());
   d = await grab('[data-ex="svg"]'); const gsvg = d.buf.toString();

@@ -110,8 +110,10 @@ function shell(outline,h,glue,ang){
   for(let i=1;i<n;i++)fold.push([[xs[i],0],[xs[i],h]]);
   return {g:{cut,fold},w:P+glue,h:h+glue};
 }
+let LAST=null; /* وصف المجسّم الصلب لآخر نموذج دائري/مخروطي (يستعمله العرض ثلاثي الأبعاد) */
 function roundBox(outline,p){
   const {H,LID,CLEAR,GLUE,ANG}=p,gl=clamp(GLUE,3,H/2);
+  {const lo0=offsetPoly(outline,CLEAR);LAST={kind:'prism',outline:outline.map(q=>[q[0],q[1]]),lo:lo0,inner:offsetPoly(outline,-0.6),loInner:offsetPoly(lo0,-0.6),H:p.H,LID:p.LID,T:0.6};}
   const body=shell(outline,H,gl,ANG),lo=offsetPoly(outline,CLEAR),lid=shell(lo,LID,gl,ANG);
   const place=(poly,x,y)=>{const b=bbox(poly);return{cut:[poly.map(([px,py])=>[px-b.a+x,py-b.b+y]).concat([[poly[0][0]-b.a+x,poly[0][1]-b.b+y]])],fold:[],w:b.c-b.a,h:b.d-b.b};};
   const g2=12+body.h,yc=g2+lid.h+12;
@@ -143,6 +145,7 @@ function sliceM(p){const a=p.ALPHA*D2R,n=Math.max(2,Math.ceil(p.ALPHA/8)),pts=[[
 
 function coneM(p){
   const rb=Math.max(p.TOP,p.BOTTOM)/2,rs=Math.min(p.TOP,p.BOTTOM)/2,dr=rb-rs,gl=p.GLUE;
+  LAST={kind:'frustum',rt:p.TOP/2,rb:p.BOTTOM/2,H:p.H};
   if(dr<.01){const P=Math.PI*2*rb;return{cut:[[[0,0],[P,0],[P,p.H],[0,p.H],[0,0]],tabPoly([P,0],[P,p.H],gl,p.ANGLEGLUE,-1)],fold:[]};}
   const s=Math.hypot(p.H,dr),Ro=s*rb/dr,Ri=Ro-s,phi=2*Math.PI*rb/Ro,n=Math.max(16,Math.ceil(phi/(Math.PI/60)));
   const outer=arc(0,0,Ro,-phi/2,phi/2,1,n),inner=Ri>.01?arc(0,0,Ri,phi/2,-phi/2,1,n):[[0,0]];
@@ -306,12 +309,119 @@ const MODELS={
   /* يبني القالب لنموذج وقيم (مم): يطبّق الحدود الدنيا ويقيّد السماكة ثم يحسب الصفحة */
   function build(key, vals, o) {
     const m = MODELS[key]; if (!m) throw new Error("نموذج غير معروف"); o = o || {}; const p = Object.assign({}, S.vals[key], vals || {}); for (const k in m.min) p[k] = Math.max(+p[k] || 0, m.min[k]);
-    if (p.T !== undefined) p.T = clamp(+p.T || 0, 0, 3); const g = m.fn(p), bb = bounds(g), dw = bb.c - bb.a, dh = bb.d - bb.b, mg = Math.max(0, o.margin == null ? S.margin : +o.margin || 0);
+    if (p.T !== undefined) p.T = clamp(+p.T || 0, 0, 3); LAST = null; const g = m.fn(p), solid = LAST, bb = bounds(g), dw = bb.c - bb.a, dh = bb.d - bb.b, mg = Math.max(0, o.margin == null ? S.margin : +o.margin || 0);
     let pw = dw + 2 * mg, ph = dh + 2 * mg, fit = true; const pv = o.page || S.page, or = o.orient || S.orient;
     if (pv !== "fit") { [pw, ph] = pv.split("x").map(Number); if (or === "l" && pw < ph) [pw, ph] = [ph, pw]; if (or === "p" && pw > ph) [pw, ph] = [ph, pw]; fit = dw + 2 * mg <= pw && dh + 2 * mg <= ph; }
     const dims = ["L", "W", "H", "D", "A", "B", "C", "TOP", "BOTTOM"].filter(k => p[k] !== undefined).slice(0, 3).map(k => f3(p[k])).join("×");
-    return { g, bb, p, dw, dh, pw, ph, mg, fit, ox: mg - bb.a, oy: mg - bb.b, label: m.name + " " + dims + " (mm)", model: m };
+    return { g, bb, p, dw, dh, pw, ph, mg, fit, ox: mg - bb.a, oy: mg - bb.b, label: m.name + " " + dims + " (mm)", model: m, solid };
   }
+
+  /* ===== العرض ثلاثي الأبعاد: تفكيك القالب المسطّح إلى وجوه ومفاصل ثم طيّه =====
+     الوجوه = المناطق المغلقة التي تحدّها خطوط القص والثني معاً (رسم مستوٍ مجزّأ)، والمفصل = حافة ثني مشتركة بين وجهين.
+     كل وجه يُطوى حول مفصله نحو الداخل (خلف الورقة) بزاوية: 90° افتراضياً، وصيغ خاصة للأهرامات والصواني المائلة والظرف.
+     النماذج الدائرية/المضلّعة/المخروطية تُعرض كمجسّم صلب (جسم + غطاء) لأن طيّها المتصل لا يُحسب بدقة. */
+  const D3 = { giftbox: "rect", cardbox: "rect", matchbox: "rect", boxlid: "rect", shallowbox: "rect", nestable: "draft", mailer: "rect", envelope: "flat", milkcarton: "milk", cuboid: "rect", bag: "rect", pyramid: "pyr", polypyr: "pyr" };
+  function netFaces(g) {
+    const TOL = 0.02, key = p => Math.round(p[0] / TOL) + "," + Math.round(p[1] / TOL), segs = [];
+    const add = (a, b, t) => { if (Math.hypot(a[0] - b[0], a[1] - b[1]) > TOL) segs.push({ a: [a[0], a[1]], b: [b[0], b[1]], t }); };
+    g.cut.forEach(l => { for (let i = 0; i < l.length - 1; i++) add(l[i], l[i + 1], 0); });
+    g.fold.forEach(l => { for (let i = 0; i < l.length - 1; i++) add(l[i], l[i + 1], 1); });
+    const cuts = segs.map(() => [0, 1]), L = segs.map(s => Math.hypot(s.b[0] - s.a[0], s.b[1] - s.a[1]));
+    const cross = (s1, s2) => { const [x1, y1] = s1.a, [x2, y2] = s1.b, [x3, y3] = s2.a, [x4, y4] = s2.b, d = (x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3); if (Math.abs(d) < 1e-12) return null; return [((x3 - x1) * (y4 - y3) - (y3 - y1) * (x4 - x3)) / d, ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) / d]; };
+    const proj = (s, Ls, p) => { const dx = s.b[0] - s.a[0], dy = s.b[1] - s.a[1], t = ((p[0] - s.a[0]) * dx + (p[1] - s.a[1]) * dy) / (Ls * Ls), q = [s.a[0] + dx * t, s.a[1] + dy * t]; return Math.hypot(q[0] - p[0], q[1] - p[1]) < TOL ? t : null; };
+    for (let i = 0; i < segs.length; i++) for (let j = i + 1; j < segs.length; j++) {
+      const r = cross(segs[i], segs[j]);
+      if (r) { const ei = TOL / L[i], ej = TOL / L[j]; if (r[0] > -ei && r[0] < 1 + ei && r[1] > -ej && r[1] < 1 + ej) { if (r[0] > ei && r[0] < 1 - ei) cuts[i].push(r[0]); if (r[1] > ej && r[1] < 1 - ej) cuts[j].push(r[1]); } }
+      else [[i, j], [j, i]].forEach(([a, b]) => { [segs[b].a, segs[b].b].forEach(p => { const t = proj(segs[a], L[a], p); if (t != null && t > TOL / L[a] && t < 1 - TOL / L[a]) cuts[a].push(t); }); });
+    }
+    const V = new Map(), edges = new Map(), vid = p => { const k = key(p); if (!V.has(k)) V.set(k, { id: V.size, p: [p[0], p[1]] }); return V.get(k).id; };
+    segs.forEach((s, i) => { const ts = [...new Set(cuts[i].map(t => +t.toFixed(6)))].sort((a, b) => a - b); for (let k = 0; k < ts.length - 1; k++) {
+      const u = vid([s.a[0] + (s.b[0] - s.a[0]) * ts[k], s.a[1] + (s.b[1] - s.a[1]) * ts[k]]), v = vid([s.a[0] + (s.b[0] - s.a[0]) * ts[k + 1], s.a[1] + (s.b[1] - s.a[1]) * ts[k + 1]]); if (u === v) continue;
+      const ek = Math.min(u, v) + "-" + Math.max(u, v), e = edges.get(ek); if (e) e.t = Math.max(e.t, s.t); else edges.set(ek, { u: Math.min(u, v), v: Math.max(u, v), t: s.t }); } });
+    const verts = []; V.forEach(x => { verts[x.id] = x.p; });
+    const adj = verts.map(() => new Set()); edges.forEach(e => { adj[e.u].add(e.v); adj[e.v].add(e.u); });
+    for (let ch = true; ch;) { ch = false; edges.forEach((e, k) => { if (adj[e.u].size < 2 || adj[e.v].size < 2) { edges.delete(k); adj[e.u].delete(e.v); adj[e.v].delete(e.u); ch = true; } }); }
+    const ang = (a, b) => Math.atan2(verts[b][1] - verts[a][1], verts[b][0] - verts[a][0]), nb = verts.map((p, i) => [...adj[i]].sort((a, b) => ang(i, a) - ang(i, b)));
+    const used = new Set(), out = [], dk = (u, v) => u + ">" + v;
+    for (const e of edges.values()) for (const [u0, v0] of [[e.u, e.v], [e.v, e.u]]) {
+      if (used.has(dk(u0, v0))) continue; const loop = []; let u = u0, v = v0, gd = 0;
+      while (!used.has(dk(u, v)) && gd++ < 20000) { used.add(dk(u, v)); loop.push([u, v]); const l = nb[v], w = l[(l.indexOf(u) - 1 + l.length) % l.length]; u = v; v = w; }
+      if (u === u0 && v === v0 && loop.length >= 3) { let a = 0; loop.forEach(([x, y]) => { a += verts[x][0] * verts[y][1] - verts[y][0] * verts[x][1]; }); out.push({ loop, area: a / 2 }); }
+    }
+    return { verts, edges, faces: out.filter(f => f.area > 0.5), ek: (u, v) => Math.min(u, v) + "-" + Math.max(u, v) };
+  }
+  /* مصفوفات 4×4 عمودية الترتيب (مثل three.js) */
+  const mI = () => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const mMul = (a, b) => { const o = new Array(16).fill(0); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) { let s = 0; for (let k = 0; k < 4; k++) s += a[k * 4 + r] * b[c * 4 + k]; o[c * 4 + r] = s; } return o; };
+  const mT = (x, y, z) => { const m = mI(); m[12] = x; m[13] = y; m[14] = z; return m; };
+  const mR = (ax, th) => { const [x, y, z] = ax, c = Math.cos(th), s = Math.sin(th), t = 1 - c; return [t * x * x + c, t * x * y + s * z, t * x * z - s * y, 0, t * x * y - s * z, t * y * y + c, t * y * z + s * x, 0, t * x * z + s * y, t * y * z - s * x, t * z * z + c, 0, 0, 0, 0, 1]; };
+  const mP = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * (p[2] || 0) + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * (p[2] || 0) + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * (p[2] || 0) + m[14]];
+  const ease3 = x => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+  const centroid = pts => { const n = pts.length; return [pts.reduce((a, q) => a + q[0], 0) / n, pts.reduce((a, q) => a + q[1], 0) / n]; };
+  /* يبني بيانات العرض ثلاثي الأبعاد لنموذج: {mode:"net", faces, comps, bb} للمطويّ، أو {mode:"solid", solid, ...} للدائري/المخروطي */
+  function net3d(key, vals, o) {
+    const r = build(key, vals, o), m = MODELS[key], out = { key, name: m.name, p: r.p, label: r.label, dims: { w: r.dw, h: r.dh } };
+    if (r.solid) return Object.assign(out, { mode: "solid", solid: r.solid });
+    const nf = netFaces(r.g), F = nf.faces.map(f => ({ loop: f.loop, area: f.area, poly: f.loop.map(([u]) => nf.verts[u]) }));
+    if (!F.length) throw new Error("تعذّر استخراج وجوه القالب");
+    const owner = new Map(); F.forEach((f, i) => f.loop.forEach(([u, v]) => owner.set(u + ">" + v, i)));
+    const hin = new Map();
+    F.forEach((f, i) => f.loop.forEach(([u, v]) => { const e = nf.edges.get(nf.ek(u, v)); if (!e || e.t !== 1) return; const j = owner.get(v + ">" + u); if (j == null || j === i) return; const k = Math.min(i, j) + "-" + Math.max(i, j); (hin.get(k) || hin.set(k, { a: Math.min(i, j), b: Math.max(i, j), pts: [] }).get(k)).pts.push(nf.verts[u], nf.verts[v]); }));
+    const nbr = F.map(() => []); hin.forEach(h => { nbr[h.a].push(h); nbr[h.b].push(h); });
+    const endpoints = pts => { let best = [pts[0], pts[1]], bd = -1; for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) { const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]); if (d > bd) { bd = d; best = [pts[i], pts[j]]; } } return best; };
+    const seen = new Array(F.length).fill(false), comps = [], order0 = F.map((f, i) => i).sort((a, b) => F[b].area - F[a].area);
+    for (const rt of order0) {
+      if (seen[rt]) continue; seen[rt] = true; F[rt].parent = -1; F[rt].depth = 0; const q = [rt], ids = [rt];
+      while (q.length) { const i = q.shift(); for (const h of nbr[i]) { const j = h.a === i ? h.b : h.a; if (seen[j]) continue; seen[j] = true; F[j].parent = i; F[j].depth = F[i].depth + 1; F[j].hinge = endpoints(h.pts); q.push(j); ids.push(j); } }
+      comps.push({ root: rt, ids, area: ids.reduce((a, i) => a + F[i].area, 0) });
+    }
+    const big = Math.max(...comps.map(c => c.area)), keep = comps.filter(c => c.ids.length > 2 || c.area > 0.15 * big);
+    const dropped = comps.filter(c => !keep.includes(c)).reduce((a, c) => a + c.ids.length, 0);
+    /* زوايا الطيّ (راديان) */
+    const P = r.p, rule = D3[key] || "rect", dist = (pt, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1; return ((pt[0] - a[0]) * dy - (pt[1] - a[1]) * dx) / l; };
+    const rtOf = i => { let k = i; while (F[k].parent >= 0) k = F[k].parent; return k; };
+    const simp = pts => pts.filter((q, i) => { const a = pts[(i + pts.length - 1) % pts.length], b = pts[(i + 1) % pts.length]; return Math.abs((q[0] - a[0]) * (b[1] - q[1]) - (q[1] - a[1]) * (b[0] - q[0])) > 0.05; });
+    const angleOf = i => {
+      const f = F[i], par = F[f.parent], [a, b] = f.hinge, base = Math.PI / 2;
+      if (rule === "flat") return 175 * D2R;
+      if (rule === "draft" && f.parent === rtOf(i) && P.DRAFT !== undefined) return Math.atan2(P.H, P.DRAFT);
+      if (rule === "pyr") {
+        const apex = pt => Math.hypot(pt[0], pt[1]) < 0.5;
+        if (key === "polypyr" && (apex(a) || apex(b))) { const N = Math.round(clamp(P.N, 3, 30)), ap = P.D / 2 * Math.cos(Math.PI / N), c = (P.H * P.H * Math.cos(2 * Math.PI / N) + ap * ap) / (P.H * P.H + ap * ap); return Math.acos(clamp(c, -1, 1)); }
+        const flat = f.area >= par.area ? f : par, child = flat === f ? par : f, cen = centroid(flat.poly), ap = Math.abs(dist(cen, a, b)); let s = 0; child.poly.forEach(q => { s = Math.max(s, Math.abs(dist(q, a, b))); });
+        return Math.acos(clamp(-ap / Math.max(s, 1e-6), -1, 1));
+      }
+      return base;
+    };
+    const idx = new Map(), faces = []; keep.forEach(c => c.ids.forEach(i => { idx.set(i, faces.length); faces.push(i); }));
+    const res = faces.map(i => { const f = F[i], cn = centroid(f.poly), o2 = { id: idx.get(i), poly: f.poly.map(q => [q[0], -q[1]]), area: f.area, parent: f.parent < 0 ? -1 : idx.get(f.parent), depth: f.depth, comp: keep.findIndex(c => c.ids.includes(i)) };
+      if (f.parent >= 0) { const [a, b] = f.hinge; o2.p = [a[0], -a[1]]; o2.q = [b[0], -b[1]]; o2.ang = angleOf(i); const d = [b[0] - a[0], -(b[1] - a[1])], dl = Math.hypot(d[0], d[1]) || 1; let n = [-d[1] / dl, d[0] / dl]; const cc = [cn[0], -cn[1]]; if ((cc[0] - o2.p[0]) * n[0] + (cc[1] - o2.p[1]) * n[1] < 0) n = [-n[0], -n[1]]; o2.n = n; }
+      return o2; });
+    let minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9; res.forEach(f => f.poly.forEach(([x, y]) => { minx = Math.min(minx, x); maxx = Math.max(maxx, x); miny = Math.min(miny, y); maxy = Math.max(maxy, y); }));
+    Object.assign(out, { mode: "net", faces: res, comps: keep.map(c => ({ root: idx.get(c.root), ids: c.ids.map(i => idx.get(i)) })), dropped, bb: { minx, miny, maxx, maxy }, maxDepth: Math.max(...res.map(f => f.depth)), rule, stand: rule === "pyr", offs: null });
+    /* قطعتان أو أكثر (غلاف ودرج، قاعدة وغطاء): تُصفّ بجانب بعضها عند الإغلاق وتبقى في أماكنها على القالب المسطّح */
+    if (out.comps.length > 1) {
+      const mats = fold3d(out, 1), cb = out.comps.map(c => { const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9]; c.ids.forEach(i => out.faces[i].poly.forEach(q => { const w = mP(mats[i], [q[0], q[1], 0]); for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], w[k]); mx[k] = Math.max(mx[k], w[k]); } })); return { mn, mx }; });
+      const gap = 0.12 * Math.max(...cb.map(b => Math.max(b.mx[0] - b.mn[0], b.mx[1] - b.mn[1]))); let cx = 0; out.offs = cb.map(b => { const o = [cx - b.mn[0], -b.mn[1], 0]; cx += b.mx[0] - b.mn[0] + gap; return o; });
+    }
+    { const cb2 = netBounds(out, 1).size; out.stand = out.stand || cb2[2] < 0.45 * Math.min(cb2[0], cb2[1]); } /* قاعدة عريضة قليلة العمق (صينية/ظرف/هرم): تُوضع على قاعدتها */
+    return out;
+  }
+  /* مصفوفة كل وجه عند تقدّم الطيّ t∈[0,1]؛ الأعمق يتأخر قليلاً (تتابع طبيعي). الطيّ نحو الداخل (خلف الورقة): المحور z×n */
+  function fold3d(net, t) {
+    const mats = new Array(net.faces.length), md = Math.max(1, net.maxDepth), st = 0.12, span = Math.max(0.4, 1 - st * (md - 1));
+    net.faces.map((f, i) => i).sort((a, b) => net.faces[a].depth - net.faces[b].depth).forEach(i => { const f = net.faces[i]; if (f.parent < 0) { mats[i] = mI(); return; }
+      const local = ease3((t - st * (f.depth - 1)) / span), axis = [-f.n[1], f.n[0], 0];
+      mats[i] = mMul(mats[f.parent], mMul(mT(f.p[0], f.p[1], 0), mMul(mR(axis, f.ang * local), mT(-f.p[0], -f.p[1], 0)))); });
+    if (net.offs) net.faces.forEach((f, i) => { const o = net.offs[f.comp]; if (o) mats[i] = mMul(mT(o[0] * t, o[1] * t, o[2] * t), mats[i]); });
+    return mats;
+  }
+  function netBounds(net, t) {
+    const mats = fold3d(net, t), mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9];
+    net.faces.forEach((f, i) => f.poly.forEach(q => { const w = mP(mats[i], [q[0], q[1], 0]); for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], w[k]); mx[k] = Math.max(mx[k], w[k]); } }));
+    return { min: mn, max: mx, size: [mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]] };
+  }
+
   function svg(key, vals, o) {
     o = o || {}; const r = build(key, vals, o), perf = o.perf == null ? S.perf : o.perf, pl = Math.max(1, +(o.perfLen == null ? S.perfLen : o.perfLen) || 5), path = l => "M" + l.map(([x, y]) => f3(x + r.ox) + " " + f3(y + r.oy)).join(" L");
     const s = '<svg xmlns="http://www.w3.org/2000/svg" width="' + f3(r.pw) + 'mm" height="' + f3(r.ph) + 'mm" viewBox="0 0 ' + f3(r.pw) + " " + f3(r.ph) + '"><title>' + esc(r.label) + "</title>" +
@@ -343,21 +453,78 @@ const MODELS={
 
   /* ===== الواجهة ===== */
   const $ = id => document.getElementById(id);
-  const CSS = "#bp-bg{position:fixed;inset:0;z-index:2147482500;background:rgba(5,12,9,.8);display:flex;align-items:center;justify-content:center;padding:10px;direction:rtl;font-family:inherit}#bp{background:rgba(9,24,18,.985);color:#eaf7ee;border:1px solid rgba(198,254,23,.28);border-radius:16px;width:min(1240px,98vw);height:min(92vh,880px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.55)}#bp .bp-h{display:flex;gap:.6rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.1)}#bp .bp-h b{flex:1}#bp .bp-h small{opacity:.7}#bp .bp-m{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:0;flex:1;min-height:0}@media(max-width:860px){#bp .bp-m{grid-template-columns:1fr;overflow:auto}}#bp .bp-side{overflow:auto;padding:.8rem 1rem;display:grid;gap:.6rem;align-content:start;border-inline-end:1px solid rgba(255,255,255,.1)}#bp .bp-pv{overflow:auto;padding:.8rem;display:grid;gap:.5rem;align-content:start}#bp .bp-sheet{background:#fff;border-radius:10px;padding:10px;background-image:linear-gradient(#e6ebe8 1px,transparent 1px),linear-gradient(90deg,#e6ebe8 1px,transparent 1px);background-size:20px 20px}#bp .bp-sheet svg{display:block;width:100%;height:auto;max-height:68vh;background:#fff}#bp label{font-size:.78rem;opacity:.9}#bp input,#bp select{width:100%;background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:.4rem .5rem;font:inherit}#bp select option,#bp select optgroup{background:#0b1d15;color:#fff}#bp .bp-g{display:grid;grid-template-columns:1fr 96px;gap:.35rem .6rem;align-items:center}#bp .bp-r{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center}#bp .bp-r label{display:flex;gap:.3rem;align-items:center}#bp .bp-r input{width:auto}#bp h5{margin:.2rem 0 0;font-size:.72rem;letter-spacing:.06em;opacity:.65}#bp p.d{margin:0;font-size:.8rem;opacity:.8;line-height:1.6}#bp .bp-b{display:flex;gap:.45rem;flex-wrap:wrap}#bp button{cursor:pointer;color:#fff;font:inherit;font-weight:700;border-radius:12px;padding:.5rem .9rem;border:1px solid rgba(198,254,23,.45);background:linear-gradient(180deg,rgba(198,254,23,.34),rgba(198,254,23,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.25);backdrop-filter:blur(6px);transition:transform .15s}#bp button:hover{transform:translateY(-2px)}#bp button.o{border-color:rgba(255,255,255,.25);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05))}#bp .bp-i{font:12px ui-monospace,Menlo,monospace;opacity:.75;direction:ltr;text-align:left}#bp .bp-w{color:#fbbf24}#bp .bp-lg{display:flex;gap:1rem;font-size:.75rem;opacity:.85;flex-wrap:wrap}#bp .bp-lg i{display:inline-block;width:22px;border-top:2.5px solid;vertical-align:middle;margin-inline-end:.35rem}#bp-msg{padding:.4rem 1rem;font-size:.8rem;min-height:1.6em;border-top:1px solid rgba(255,255,255,.1)}";
+  const CSS = "#bp-bg{position:fixed;inset:0;z-index:2147482500;background:rgba(5,12,9,.8);display:flex;align-items:center;justify-content:center;padding:10px;direction:rtl;font-family:inherit}#bp{background:rgba(9,24,18,.985);color:#eaf7ee;border:1px solid rgba(198,254,23,.28);border-radius:16px;width:min(1560px,98vw);height:min(92vh,880px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.55)}#bp .bp-h{display:flex;gap:.6rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.1)}#bp .bp-h b{flex:1}#bp .bp-h small{opacity:.7}#bp .bp-m{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:0;flex:1;min-height:0}@media(max-width:860px){#bp .bp-m{grid-template-columns:1fr;overflow:auto}}#bp .bp-side{overflow:auto;padding:.8rem 1rem;display:grid;gap:.6rem;align-content:start;border-inline-end:1px solid rgba(255,255,255,.1)}#bp .bp-pv{overflow:auto;padding:.8rem;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.8rem;align-content:start}@media(max-width:1280px){#bp .bp-pv{grid-template-columns:1fr}}#bp .bp-pc{display:grid;gap:.5rem;align-content:start;min-width:0}#bp .bp-gal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem;height:250px;min-height:250px;overflow:auto;padding:2px;align-content:start;grid-auto-rows:min-content}#bp .bp-gal h6{grid-column:1/-1;margin:.3rem 0 0;font-size:.7rem;opacity:.6;font-weight:700}#bp button.bp-card{padding:.25rem;border-radius:10px;display:grid;gap:.15rem;justify-items:center;font-size:.66rem;line-height:1.2;font-weight:600;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);box-shadow:none}#bp button.bp-card.on{border-color:#c6fe17;background:rgba(198,254,23,.18)}#bp button.bp-card svg{width:100%;height:46px;background:#fff;border-radius:6px}#bp .bp-3d{position:relative;height:min(52vh,440px);border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#eef2ff,#c9d5f6);touch-action:none}#bp .bp-3d canvas{width:100%;height:100%;display:block;cursor:grab}#bp .bp-3d .bp-3h{position:absolute;inset-inline-start:10px;top:8px;font:800 1.1rem serif;color:rgba(80,90,130,.45);pointer-events:none}#bp .bp-3d .bp-3m{position:absolute;inset:0;display:grid;place-items:center;color:#334;font-size:.85rem;text-align:center;padding:1rem}#bp .bp-3c{display:grid;grid-template-columns:auto 1fr auto auto;gap:.5rem;align-items:center}#bp .bp-3c input[type=color]{width:38px;height:30px;padding:1px}#bp .bp-3c input[type=range]{padding:0}#bp .bp-inv{border:1.5px dashed rgba(198,254,23,.5);border-radius:12px;padding:.6rem .7rem;display:grid;gap:.4rem;background:rgba(198,254,23,.06)}#bp .bp-inv p{margin:0;font-size:.78rem;line-height:1.6;opacity:.9}#bp .bp-sheet{background:#fff;border-radius:10px;padding:10px;background-image:linear-gradient(#e6ebe8 1px,transparent 1px),linear-gradient(90deg,#e6ebe8 1px,transparent 1px);background-size:20px 20px}#bp .bp-sheet svg{display:block;width:100%;height:auto;max-height:68vh;background:#fff}#bp label{font-size:.78rem;opacity:.9}#bp input,#bp select{width:100%;background:rgba(255,255,255,.07);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:.4rem .5rem;font:inherit}#bp select option,#bp select optgroup{background:#0b1d15;color:#fff}#bp .bp-g{display:grid;grid-template-columns:1fr 96px;gap:.35rem .6rem;align-items:center}#bp .bp-r{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center}#bp .bp-r label{display:flex;gap:.3rem;align-items:center}#bp .bp-r input{width:auto}#bp h5{margin:.2rem 0 0;font-size:.72rem;letter-spacing:.06em;opacity:.65}#bp p.d{margin:0;font-size:.8rem;opacity:.8;line-height:1.6}#bp .bp-b{display:flex;gap:.45rem;flex-wrap:wrap}#bp button{cursor:pointer;color:#fff;font:inherit;font-weight:700;border-radius:12px;padding:.5rem .9rem;border:1px solid rgba(198,254,23,.45);background:linear-gradient(180deg,rgba(198,254,23,.34),rgba(198,254,23,.14));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.25);backdrop-filter:blur(6px);transition:transform .15s}#bp button:hover{transform:translateY(-2px)}#bp button.o{border-color:rgba(255,255,255,.25);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05))}#bp .bp-i{font:12px ui-monospace,Menlo,monospace;opacity:.75;direction:ltr;text-align:left}#bp .bp-w{color:#fbbf24}#bp .bp-lg{display:flex;gap:1rem;font-size:.75rem;opacity:.85;flex-wrap:wrap}#bp .bp-lg i{display:inline-block;width:22px;border-top:2.5px solid;vertical-align:middle;margin-inline-end:.35rem}#bp-msg{padding:.4rem 1rem;font-size:.8rem;min-height:1.6em;border-top:1px solid rgba(255,255,255,.1)}";
   let opened = false;
   const msg = (t, bad) => { const e = $("bp-msg"); if (e) { e.textContent = t || ""; e.style.color = bad ? "#ffb4b4" : "#c6fe17"; } };
   function groups() { const g = {}; for (const k in MODELS) (g[MODELS[k].grp] = g[MODELS[k].grp] || []).push(k); return g; }
   function fields() {
-    const m = MODELS[S.cur]; $("bp-desc").textContent = m.desc; const h = $("bp-fields"); h.innerHTML = "";
+    const m = MODELS[S.cur]; $("bp-desc").textContent = m.desc; const dn = $("bp-3dn"); if (dn) { const r = D3[S.cur]; dn.textContent = !r ? "العرض ثلاثي الأبعاد: مجسّم يمثّل العلبة المغلقة (جسم وغطاء قابل للرفع) لأن شكلها منحنٍ/متعدد الأوجه." : r === "milk" ? "العرض ثلاثي الأبعاد: تقريبي — الأسقف المائلة والجوانب المطوية تُطوى بزاوية قائمة فقط." : "العرض ثلاثي الأبعاد: تُطوى وجوه هذا القالب تلقائياً حول خطوط الثني ويمكنك رفع تصميمك عليه."; } const h = $("bp-fields"); h.innerHTML = "";
     m.params.forEach(([id, label, , isLen]) => { const l = document.createElement("label"); l.textContent = label; l.htmlFor = "bpf_" + id; const i = document.createElement("input"); i.type = "number"; i.id = "bpf_" + id; i.step = "any"; i.min = "0"; i.value = f3(isLen ? S.vals[S.cur][id] / UN[S.unit] : S.vals[S.cur][id]); i.oninput = () => { const v = parseFloat(i.value); if (isFinite(v)) { S.vals[S.cur][id] = isLen ? v * UN[S.unit] : v; save(); render(); } }; h.append(l, i); });
   }
   function render() {
     if (!$("bp-out")) return; try { const s = svg(S.cur); $("bp-out").innerHTML = s.text.replace(/width="[^"]*mm" height="[^"]*mm"/, "").replace('stroke="#0088c4"', 'stroke="#0088c4" vector-effect="non-scaling-stroke"').replace(/<text[^>]*>.*?<\/text>/, ""); const r = s.info;
-      $("bp-info").innerHTML = "الرسم " + f3(r.dw) + " × " + f3(r.dh) + " مم · الصفحة " + f3(r.pw) + " × " + f3(r.ph) + " مم" + (r.fit ? "" : ' <span class="bp-w">· يتجاوز الصفحة</span>'); } catch (e) { msg("⚠️ " + (e.message || e), true); }
+      $("bp-info").innerHTML = "الرسم " + f3(r.dw) + " × " + f3(r.dh) + " مم · الصفحة " + f3(r.pw) + " × " + f3(r.ph) + " مم" + (r.fit ? "" : ' <span class="bp-w">· يتجاوز الصفحة</span>'); v3sched(false); } catch (e) { msg("⚠️ " + (e.message || e), true); }
   }
+
+  /* ===== معرض النماذج: مصغّرة قص وثني لكل شكل بقيمه الافتراضية ===== */
+  const THUMB = {};
+  function thumb(k) {
+    if (THUMB[k]) return THUMB[k]; const m = MODELS[k], vals = {}; m.params.forEach(([id, , v]) => { vals[id] = v; });
+    try { const r = build(k, vals, { margin: 2, page: "fit" }), sw = f3(Math.max(r.pw, r.ph) / 110), path = l => "M" + l.map(([x, y]) => f3(x + r.ox) + " " + f3(y + r.oy)).join("L");
+      return THUMB[k] = '<svg viewBox="0 0 ' + f3(r.pw) + " " + f3(r.ph) + '" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g fill="none" stroke="#0088c4" stroke-width="' + sw + '">' + r.g.fold.map(l => '<path d="' + path(l) + '"/>').join("") + '</g><g fill="none" stroke="#d4006e" stroke-width="' + sw + '" stroke-linejoin="round">' + r.g.cut.map(l => '<path d="' + path(l) + '"/>').join("") + "</g></svg>"; } catch (e) { return ""; }
+  }
+  function drawGallery() {
+    const h = $("bp-gal"); if (!h) return; const G = groups(); h.innerHTML = Object.keys(G).map(g => "<h6>" + g + "</h6>" + G[g].map(k => '<button type="button" class="bp-card' + (k === S.cur ? " on" : "") + '" data-m="' + k + '" title="' + esc(MODELS[k].name) + '">' + thumb(k) + "<span>" + esc(MODELS[k].name) + "</span></button>").join("")).join("");
+  }
+  function setModel(k) { if (!MODELS[k]) return; S.cur = k; const sel = $("bp-model"); if (sel) sel.value = k; fields(); save(); render(); document.querySelectorAll("#bp-gal .bp-card").forEach(b => b.classList.toggle("on", b.dataset.m === k)); v3sched(true); }
+
+  /* ===== معاينة 3D مباشرة بجانب القالب (تستعمل مجموعة three نفسها التي يبنيها ستوديو 3D) ===== */
+  /* يحتفظ بلون الورق والتصميم المرفوع بين المعاينة المباشرة وستوديو 3D */
+  const M3 = { color: "#f1ece0", art: null };
+  const V = { T: null, R: null, scene: null, cam: null, root: null, bg: null, yaw: -0.7, pitch: 0.3, zoom: 1, t: 1, raf: 0, dirty: true, anim: 0, timer: 0, rad: 4, radc: 4, ro: null, n: null };
+  const v3msg = t => { const e = $("bp-3m"); if (e) { e.textContent = t || ""; e.style.display = t ? "" : "none"; } };
+  function v3size() { const h = $("bp-3d"); if (!V.R || !h) return; const w = Math.max(40, h.clientWidth), ht = Math.max(40, h.clientHeight); V.R.setSize(w, ht, false); V.cam.aspect = w / ht; V.cam.updateProjectionMatrix(); V.dirty = true; }
+  async function v3init() {
+    const host = $("bp-3d"); if (!host) return false; if (V.R) return true;
+    if (typeof Pack3D === "undefined" || !Pack3D._t || !Pack3D._t.boxGroup) { v3msg("المعاينة المباشرة غير متاحة في هذه النسخة"); return false; }
+    try {
+      const T = await Pack3D._t.loadThree(); if (!$("bp-3d")) return false; if (V.R) return true; V.T = T;
+      V.R = new T.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); V.R.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); V.R.outputColorSpace = T.SRGBColorSpace; V.R.setClearColor(0x000000, 0);
+      host.appendChild(V.R.domElement); V.scene = new T.Scene(); V.cam = new T.PerspectiveCamera(28, 1, 0.1, 300); V.root = new T.Group(); V.scene.add(V.root);
+      V.scene.add(new T.HemisphereLight(0xffffff, 0x8899aa, 1.1)); const d1 = new T.DirectionalLight(0xffffff, 1.4); d1.position.set(3, 5, 4); V.scene.add(d1); const d2 = new T.DirectionalLight(0xffffff, 0.55); d2.position.set(-4, 1, -3); V.scene.add(d2);
+      const cv = V.R.domElement; let drag = null;
+      cv.addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; try { cv.setPointerCapture(e.pointerId); } catch (x) { } cv.style.cursor = "grabbing"; });
+      cv.addEventListener("pointermove", e => { if (!drag) return; V.yaw += (e.clientX - drag[0]) * 0.01; V.pitch = Math.max(-1.3, Math.min(1.3, V.pitch + (e.clientY - drag[1]) * 0.01)); drag = [e.clientX, e.clientY]; V.dirty = true; });
+      const up = () => { drag = null; cv.style.cursor = "grab"; }; cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
+      cv.addEventListener("wheel", e => { e.preventDefault(); V.zoom = Math.max(0.5, Math.min(3, V.zoom * Math.exp(-e.deltaY * 0.001))); V.dirty = true; }, { passive: false });
+      cv.addEventListener("dblclick", () => { V.yaw = -0.7; V.pitch = 0.3; V.zoom = 1; V.dirty = true; });
+      if (window.ResizeObserver) { V.ro = new ResizeObserver(v3size); V.ro.observe(host); }
+      v3size(); v3loop(); return true;
+    } catch (e) { V.R = null; v3msg("متصفحك أو جهازك لا يدعم WebGL المطلوب للمعاينة المباشرة — استعمل زر ستوديو 3D"); return false; }
+  }
+  function v3loop() {
+    if (!V.R || !$("bp-3d")) { V.raf = 0; return; }
+    if (V.dirty || Math.abs(V.radc - V.rad) > 0.003) { V.radc += (V.rad - V.radc) * 0.18; V.root.rotation.set(V.pitch, V.yaw, 0, "XYZ"); V.cam.position.set(0, 0, V.radc * 4 / V.zoom); V.cam.near = 0.1; V.cam.far = V.radc * 20; V.cam.lookAt(0, 0, 0); V.cam.updateProjectionMatrix(); V.R.render(V.scene, V.cam); V.dirty = Math.abs(V.radc - V.rad) > 0.003; }
+    V.raf = requestAnimationFrame(v3loop);
+  }
+  function v3apply(t) {
+    if (!V.bg || !V.T) return; V.t = t; V.bg.apply(t); const T = V.T, keep = V.root.rotation.clone(); V.root.rotation.set(0, 0, 0); V.bg.g.position.set(0, 0, 0); V.root.updateMatrixWorld(true);
+    const bb = new T.Box3().setFromObject(V.bg.g), c = new T.Vector3(); bb.getCenter(c); V.bg.g.position.sub(c); V.rad = Math.max(1, bb.getBoundingSphere(new T.Sphere()).radius); V.root.rotation.copy(keep); V.dirty = true;
+    const sl = $("bp-fold"); if (sl && +sl.value !== t) sl.value = t;
+  }
+  function v3dispose() { if (!V.bg) return; V.root.remove(V.bg.g); V.bg.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) { const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); } }); V.bg = null; }
+  function v3play() { cancelAnimationFrame(V.anim); const t0 = performance.now(), dur = 1300, step = now => { const u = Math.min(1, (now - t0) / dur); v3apply(u); if (u < 1 && V.bg) V.anim = requestAnimationFrame(step); }; v3apply(0); V.anim = requestAnimationFrame(step); }
+  async function v3update(play) {
+    if (!(await v3init())) return; let n; try { n = net3d(S.cur); } catch (e) { v3msg("تعذّر بناء المعاينة: " + (e.message || e)); return; }
+    Object.assign(M3, { style: "net3d", n, fold: fold3d, bounds: netBounds, W: n.dims.w, H: n.dims.h, D: 0 }); v3dispose(); V.n = n; V.bg = Pack3D._t.boxGroup(V.T, M3, { fin: "matte" }); V.root.add(V.bg.g); v3msg("");
+    const frus = n.mode === "solid" && n.solid.kind === "frustum", sl = $("bp-fold"), fl = $("bp-foldl"), ar = $("bp-art"); if (sl) { sl.style.visibility = frus ? "hidden" : "visible"; } if (fl) fl.textContent = frus ? "" : n.mode === "solid" ? "الغطاء" : "طيّ"; if (ar && ar.parentNode) ar.parentNode.style.display = n.mode === "net" ? "" : "none";
+    if (play && !frus) v3play(); else v3apply(frus ? 1 : V.t);
+  }
+  function v3sched(play) { clearTimeout(V.timer); V.timer = setTimeout(() => v3update(play), play ? 30 : 160); }
+  function v3close() { clearTimeout(V.timer); cancelAnimationFrame(V.anim); cancelAnimationFrame(V.raf); V.raf = 0; if (V.ro) { V.ro.disconnect(); V.ro = null; } v3dispose(); if (V.R) { try { V.R.dispose(); V.R.forceContextLoss(); } catch (e) { } V.R = null; } V.scene = null; V.root = null; }
   function panelHtml() {
     const G = groups(), opt = (arr, cur) => arr.map(o => '<option value="' + o[0] + '"' + (o[0] === cur ? " selected" : "") + ">" + o[1] + "</option>").join("");
-    return '<div><label for="bp-model">النموذج (' + Object.keys(MODELS).length + ")</label><select id=\"bp-model\">" + Object.keys(G).map(g => '<optgroup label="' + g + '">' + G[g].map(k => '<option value="' + k + '"' + (k === S.cur ? " selected" : "") + ">" + MODELS[k].name + "</option>").join("") + "</optgroup>").join("") + "</select></div>" +
+    return '<h5>كل النماذج (' + Object.keys(MODELS).length + ') — اضغط لاختيار الشكل</h5><div class="bp-gal" id="bp-gal"></div><div><label for="bp-model">النموذج (' + Object.keys(MODELS).length + ")</label><select id=\"bp-model\">" + Object.keys(G).map(g => '<optgroup label="' + g + '">' + G[g].map(k => '<option value="' + k + '"' + (k === S.cur ? " selected" : "") + ">" + MODELS[k].name + "</option>").join("") + "</optgroup>").join("") + '<optgroup label="بتصميم وملصق على الوجوه (Box Designer)"><option value="art:tuck">علبة بغطاء إدخال — بتصميمك</option><option value="art:gift">علبة هدية قطعة واحدة — بتصميمك</option></optgroup></select></div>' +
       '<p class="d" id="bp-desc"></p><h5>الأبعاد</h5><div class="bp-r">' + Object.keys(UN).map(u => '<label><input type="radio" name="bp-u" value="' + u + '"' + (S.unit === u ? " checked" : "") + "> " + UL[u] + "</label>").join("") + '</div><div class="bp-g" id="bp-fields"></div>' +
       '<h5>الصفحة</h5><div class="bp-g"><label for="bp-page">مقاس الصفحة</label><select id="bp-page">' + opt(PAGES, S.page) + '</select><label for="bp-or">الاتجاه</label><select id="bp-or">' + opt([["p", "طولي"], ["l", "عرضي"]], S.orient) + '</select><label for="bp-mg">الهامش (مم)</label><input id="bp-mg" type="number" min="0" step="1" value="' + S.margin + '"></div>' +
       '<div class="bp-r"><label><input type="checkbox" id="bp-perf"' + (S.perf ? " checked" : "") + '> طيّ منقّط</label><label for="bp-pl">الطول</label><input id="bp-pl" type="number" min="1" step="0.5" value="' + S.perfLen + '" style="width:70px"></div>' +
@@ -365,18 +532,31 @@ const MODELS={
   }
   function wire() {
     const side = $("bp-side");
-    side.addEventListener("change", e => { const t = e.target; if (t.id === "bp-model") { S.cur = t.value; fields(); save(); render(); } else if (t.name === "bp-u") { S.unit = t.value; fields(); save(); } else if (t.id === "bp-page") { S.page = t.value; save(); render(); } else if (t.id === "bp-or") { S.orient = t.value; save(); render(); } });
+    side.addEventListener("change", e => { const t = e.target; if (t.id === "bp-model") { if (/^art:/.test(t.value)) { const st = t.value.slice(4); t.value = S.cur; if (typeof BoxDesigner !== "undefined" && BoxDesigner.openArt) { close(); BoxDesigner.openArt(st); } else msg("محرّر العلب بتصميمك غير محمّل في هذه النسخة", true); return; } setModel(t.value); } else if (t.name === "bp-u") { S.unit = t.value; fields(); save(); } else if (t.id === "bp-page") { S.page = t.value; save(); render(); } else if (t.id === "bp-or") { S.orient = t.value; save(); render(); } });
     side.addEventListener("input", e => { const t = e.target; if (t.id === "bp-mg") { S.margin = Math.max(0, parseFloat(t.value) || 0); save(); render(); } else if (t.id === "bp-perf") { S.perf = t.checked; save(); render(); } else if (t.id === "bp-pl") { S.perfLen = Math.max(1, parseFloat(t.value) || 5); save(); render(); } });
-    $("bp").addEventListener("click", async e => { const b = e.target.closest("[data-bx]"); if (!b) return; const k = b.dataset.bx; try { msg("⏳ جارٍ التجهيز…"); if (k === "svg") dl(new Blob([svg(S.cur).text], { type: "image/svg+xml" }), stamp() + ".svg"); else if (k === "pdf") dl(pdf(S.cur), stamp() + ".pdf"); else if (k === "dxf") dl(new Blob([dxf(S.cur)], { type: "application/dxf" }), stamp() + ".dxf"); else dl(await png(S.cur), stamp() + ".png"); msg("✅ تم التصدير بأبعاد حقيقية بالمليمتر"); } catch (x) { msg("⚠️ " + (x.message || x), true); } });
+    $("bp").addEventListener("click", async e => { const b = e.target.closest("[data-bx]"); if (!b) return; const k = b.dataset.bx; if (k === "3d") { to3d(); return; } try { msg("⏳ جارٍ التجهيز…"); if (k === "svg") dl(new Blob([svg(S.cur).text], { type: "image/svg+xml" }), stamp() + ".svg"); else if (k === "pdf") dl(pdf(S.cur), stamp() + ".pdf"); else if (k === "dxf") dl(new Blob([dxf(S.cur)], { type: "application/dxf" }), stamp() + ".dxf"); else dl(await png(S.cur), stamp() + ".png"); msg("✅ تم التصدير بأبعاد حقيقية بالمليمتر"); } catch (x) { msg("⚠️ " + (x.message || x), true); } });
   }
-  function close() { opened = false; const b = $("bp-bg"); if (b) b.remove(); }
+  async function to3d() {
+    if (typeof Pack3D === "undefined" || !Pack3D.openBox) { msg("⚠️ ستوديو 3D غير متاح في هذه النسخة", true); return; }
+    try { msg("⏳ جارٍ بناء المجسّم…"); await new Promise(r => setTimeout(r, 20)); const n = net3d(S.cur); Object.assign(M3, { style: "net3d", n, fold: fold3d, bounds: netBounds, W: n.dims.w, H: n.dims.h, D: 0 }); await Pack3D.openBox(M3); msg(""); }
+    catch (e) { msg("⚠️ " + (e.message || e), true); }
+  }
+  let escH = null;
+  function close() { opened = false; v3close(); window.removeEventListener("resize", v3size); if (escH) { document.removeEventListener("keydown", escH); escH = null; } const b = $("bp-bg"); if (b) b.remove(); }
   function open() {
     close(); if (!$("bp-css")) { const st = document.createElement("style"); st.id = "bp-css"; st.textContent = CSS; document.head.appendChild(st); }
-    const bg = document.createElement("div"); bg.id = "bp-bg"; bg.innerHTML = '<div id="bp" role="dialog" aria-label="قوالب العلب الجاهزة"><div class="bp-h"><b>📐 قوالب العلب الجاهزة (' + Object.keys(MODELS).length + ' نموذجاً)</b><small>قص وثني بأبعاد حقيقية — SVG وPDF وDXF</small><button type="button" class="o" id="bp-x">إغلاق</button></div><div class="bp-m"><div class="bp-side" id="bp-side">' + panelHtml() + '</div><div class="bp-pv"><div class="bp-sheet"><div id="bp-out"></div></div><div class="bp-lg"><span><i style="border-color:#d4006e"></i>قص</span><span><i style="border-color:#0088c4"></i>ثني</span><span class="bp-i" id="bp-info"></span></div><div class="bp-b"><button type="button" data-bx="svg">⬇ SVG</button><button type="button" data-bx="pdf">⬇ PDF</button><button type="button" class="o" data-bx="dxf">⬇ DXF</button><button type="button" class="o" data-bx="png">⬇ PNG</button></div></div></div><div id="bp-msg"></div></div>';
+    const bg = document.createElement("div"); bg.id = "bp-bg"; bg.innerHTML = '<div id="bp" role="dialog" aria-label="قوالب العلب الجاهزة"><div class="bp-h"><b>📐 قوالب العلب الجاهزة (' + Object.keys(MODELS).length + ' نموذجاً)</b><small>قص وثني بأبعاد حقيقية — SVG وPDF وDXF</small><button type="button" class="o" id="bp-x">إغلاق</button></div><div class="bp-m"><div class="bp-side" id="bp-side">' + panelHtml() + '</div><div class="bp-pv"><div class="bp-pc"><h5>① قالب القص والثني (2D)</h5><div class="bp-sheet"><div id="bp-out"></div></div><div class="bp-lg"><span><i style="border-color:#d4006e"></i>قص</span><span><i style="border-color:#0088c4"></i>ثني</span><span class="bp-i" id="bp-info"></span></div><div class="bp-b"><button type="button" data-bx="svg">⬇ SVG</button><button type="button" data-bx="pdf">⬇ PDF</button><button type="button" class="o" data-bx="dxf">⬇ DXF</button><button type="button" class="o" data-bx="png">⬇ PNG</button></div></div><div class="bp-pc"><h5>② العلبة مطويّة (3D مباشر)</h5><div class="bp-3d" id="bp-3d"><span class="bp-3h">3D</span><div class="bp-3m" id="bp-3m">جارٍ تجهيز المعاينة…</div></div><div class="bp-3c"><label for="bp-fold" id="bp-foldl">طيّ</label><input id="bp-fold" type="range" min="0" max="1" step="0.01" value="1"><input id="bp-col" type="color" value="#f1ece0" title="لون الورق"><label class="bp-up" title="تصميم يُطبع على القالب"><input id="bp-art" type="file" accept="image/*" hidden><span class="o" style="cursor:pointer;padding:.3rem .5rem;border:1px solid rgba(255,255,255,.25);border-radius:10px;font-size:.74rem">🖼 تصميم</span></label></div><p class="d" id="bp-3dn"></p><div class="bp-inv"><p>أعجبك الشكل؟ حوّله إلى <b>ستوديو 3D</b> الكامل: زوايا وإضاءة وخلفيات وتصدير صور للمتجر والإعلانات.</p><button type="button" data-bx="3d">🧊 حوّل إلى ستوديو 3D</button></div></div></div></div><div id="bp-msg"></div></div>';
     document.body.appendChild(bg); opened = true; $("bp-x").onclick = close; bg.addEventListener("mousedown", e => { if (e.target === bg) close(); });
-    document.addEventListener("keydown", function k(e) { if (e.key === "Escape" && $("bp-bg")) { close(); document.removeEventListener("keydown", k); } });
-    fields(); wire(); render();
+    escH = e => { if (e.key === "Escape" && $("bp-bg") && !$("p3-bg")) close(); }; document.addEventListener("keydown", escH);
+    fields(); wire(); drawGallery(); wireLive(); render(); v3sched(true);
   }
-  return { open, close, MODELS, S, build, svg, dxf, pdf, png, groups };
+  function wireLive() {
+    const gal = $("bp-gal"); if (gal) gal.addEventListener("click", e => { const b = e.target.closest("[data-m]"); if (b) setModel(b.dataset.m); });
+    const sl = $("bp-fold"); if (sl) sl.addEventListener("input", () => { cancelAnimationFrame(V.anim); v3apply(+sl.value); });
+    const col = $("bp-col"); if (col) { col.value = M3.color; col.addEventListener("input", () => { M3.color = col.value; v3sched(false); }); }
+    const ar = $("bp-art"); if (ar) ar.addEventListener("change", () => { const f = ar.files[0]; if (!f) return; const u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const k = Math.min(1, 2400 / Math.max(im.width, im.height)), cv = document.createElement("canvas"); cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k); cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(u); M3.art = cv; v3sched(false); }; im.onerror = () => msg("⚠️ تعذّر قراءة الصورة", true); im.src = u; });
+    window.addEventListener("resize", v3size);
+  }
+  return { open, close, MODELS, S, build, svg, dxf, pdf, png, groups, net3d, fold3d, netBounds, D3, to3d, M3 };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = BoxProfiles;

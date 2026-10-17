@@ -11,6 +11,28 @@ const GOLD = {"giftbox":[150,234.5,12,10,117],"cardbox":[195,189,18,10,169],"mat
   ok("هندسة كل النماذج (الأبعاد وعدد خطوط القص والثني والنقاط) تطابق صفحة المصدر", bad.length === 0, bad.slice(0, 3));
   ok("كل الإحداثيات أعداد منتهية", keys.every(k => { const r = BP.build(k); return [...r.g.cut, ...r.g.fold].every(l => l.every(p => isFinite(p[0]) && isFinite(p[1]))); }));
   ok("كل الأسماء والأوصاف وعناوين الحقول بالعربية بلا فرنسية", keys.every(k => { const m = BP.MODELS[k]; return /[؀-ۿ]/.test(m.name) && /[؀-ۿ]/.test(m.desc) && m.params.every(p => /[؀-ۿABC]/.test(p[1])) && !/[éèêàç]/i.test(m.name + m.desc + m.params.map(p => p[1]).join()); }));
+  /* ── العرض ثلاثي الأبعاد: تفكيك القالب إلى وجوه ومفاصل وطيّه ── */
+  const near = (a, b, t) => Math.abs(a - b) <= t, sz = (k, t) => BP.netBounds(BP.net3d(k), t).size;
+  { const nets = keys.map(k => BP.net3d(k)), nn = nets.filter(n => n.mode === "net"), ss = nets.filter(n => n.mode === "solid");
+    ok("3D: كل النماذج الـ23 تُحوَّل (13 قالباً مطوياً و10 مجسّمات صلبة)", nets.length === 23 && nn.length === 13 && ss.length === 10, [nn.length, ss.length]);
+    ok("3D: كل مصفوفات الطيّ منتهية عند 0 و0.5 و1", nn.every(n => [0, 0.5, 1].every(t => BP.fold3d(n, t).every(m => m.every(isFinite)))));
+    ok("3D: القالب المسطّح (t=0) بلا ارتفاع", nn.every(n => BP.netBounds(n, 0).size[2] < 1e-6)); }
+  { const g = sz("giftbox", 1); ok("3D: علبة الهدية المغلقة = الطول×الارتفاع×العرض (50×60×40)", near(g[0], 50, 0.5) && near(g[1], 60, 0.5) && near(g[2], 40, 0.5), g);
+    const c = sz("cardbox", 1); ok("3D: علبة الأوراق المغلقة 60×90×30", near(c[0], 60, 0.5) && near(c[1], 90, 0.5) && near(c[2], 30, 0.5), c);
+    const sh = sz("shallowbox", 1); ok("3D: العلبة قليلة العمق 150×100×20", near(sh[0], 150, 0.5) && near(sh[1], 100, 0.5) && near(sh[2], 20, 0.5), sh);
+    const ns = BP.net3d("nestable"); ok("3D: الصينية المائلة بزاوية جدار أقل من 90° وعمقها الارتفاع المعطى", ns.faces.some(f => f.ang && f.ang < Math.PI / 2 - 0.01) && near(sz("nestable", 1)[2], 74, 0.6), sz("nestable", 1));
+    const ml = BP.net3d("matchbox"); ok("3D: علبة الكبريت قطعتان تُصفّان جنباً إلى جنب بلا تداخل", ml.comps.length === 2 && ml.offs && ml.offs.length === 2); }
+  { const n = BP.net3d("pyramid"), M = BP.fold3d(n, 1), apex = [];
+    n.faces.forEach((f, i) => { if (f.parent < 0) return; let best = null, bd = -1; f.poly.forEach(q => { const d = Math.abs((q[0] - f.p[0]) * f.n[0] + (q[1] - f.p[1]) * f.n[1]); if (d > bd) { bd = d; best = q; } }); const w = [M[i][0] * best[0] + M[i][4] * best[1] + M[i][12], M[i][1] * best[0] + M[i][5] * best[1] + M[i][13], M[i][2] * best[0] + M[i][6] * best[1] + M[i][14]]; apex.push(w); });
+    const dmax = Math.max(...apex.flatMap(a => apex.map(b => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]))));
+    ok("3D: الهرم — قمم المثلثات الأربعة تلتقي في نقطة واحدة (خطأ < 0.5 مم) وارتفاعه 73.5", n.faces.length === 5 && apex.length === 4 && dmax < 0.5 && near(Math.abs(apex[0][2]), 73.5, 0.5), [dmax, apex[0]]); }
+  { const n = BP.net3d("polypyr"), M = BP.fold3d(n, 1), pt = [];
+    n.faces.forEach((f, i) => f.poly.forEach(q => { if (Math.hypot(q[0], q[1]) < 1e-6) pt.push([M[i][0] * q[0] + M[i][4] * q[1] + M[i][12], M[i][1] * q[0] + M[i][5] * q[1] + M[i][13], M[i][2] * q[0] + M[i][6] * q[1] + M[i][14]]); }));
+    const dmax = Math.max(...pt.flatMap(a => pt.map(b => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]))));
+    ok("3D: الهرم متعدد الأضلاع — رأس المروحة يتطابق في كل المثلثات السبعة (خطأ < 1 مم)", pt.length >= 7 && dmax < 1, [pt.length, dmax]); }
+  { const r = BP.net3d("round", { D: 80, H: 60, LID: 30 }), c = BP.net3d("cone", { TOP: 40, BOTTOM: 100, H: 120 });
+    ok("3D: العلبة الدائرية مجسّم بجسم وغطاء بمحيطين داخليين أصغر", r.mode === "solid" && r.solid.kind === "prism" && r.solid.H === 60 && r.solid.LID === 30 && r.solid.inner.length === r.solid.outline.length);
+    ok("3D: المخروط المقطوع مجسّم بنصفَي القطرين والارتفاع", c.mode === "solid" && c.solid.kind === "frustum" && c.solid.rt === 20 && c.solid.rb === 50 && c.solid.H === 120); }
   const big = BP.build("giftbox", { L: 100, W: 80, H: 120 }), small = BP.build("giftbox");
   ok("تغيير الأبعاد يكبّر القالب", big.dw > small.dw && big.dh > small.dh);
   const lo = BP.build("giftbox", { L: 1, W: 1, H: 1 }); ok("الحدود الدنيا تُطبَّق (لا قالب منهار)", lo.dw > 0 && lo.p.L === 15 && lo.p.H === 10);
@@ -32,7 +54,7 @@ const GOLD = {"giftbox":[150,234.5,12,10,117],"cardbox":[195,189,18,10,169],"mat
     const f = document.getElementById("bpf_L"); const i0 = document.getElementById("bp-info").textContent; f.value = "200"; f.dispatchEvent(new Event("input", { bubbles: true })); await w(100); R.infoChanged = i0 !== document.getElementById("bp-info").textContent;
     const u = document.querySelector('input[name="bp-u"][value="cm"]'); u.checked = true; u.dispatchEvent(new Event("change", { bubbles: true })); await w(60); R.cm = document.getElementById("bpf_L").value;
     const pg = document.getElementById("bp-page"); pg.value = "210x297"; pg.dispatchEvent(new Event("change", { bubbles: true })); await w(60); R.warn = /يتجاوز الصفحة/.test(document.getElementById("bp-info").innerHTML); return R; });
-  ok("الواجهة: نافذة بمجموعاتها الثلاث و23 خياراً ومعاينة SVG", ui.dlg && ui.opts === 23 && ui.grp === 3 && ui.svg && ui.paths > 5, ui);
+  ok("الواجهة: نافذة بمجموعاتها الثلاث + مجموعة «بتصميمك» و23+2 خياراً ومعاينة SVG", ui.dlg && ui.opts === 25 && ui.grp === 4 && ui.svg && ui.paths > 5, ui);
   ok("الواجهة: تبديل النموذج يغيّر الوصف والرسم وحقوله", /قلب/.test(ui.heartDesc) && ui.heartPaths > 20 && ui.fields >= 4, ui);
   ok("الواجهة: تعديل حقل يحدّث المعاينة، والوحدة سم تقسم على 10، وتنبيه تجاوز الصفحة", ui.infoChanged && ui.cm === "20" && ui.warn, ui);
   const dls = {}; for (const k of ["svg", "pdf", "dxf", "png"]) { const [d] = await Promise.all([p.waitForEvent("download", { timeout: 8000 }), p.click('[data-bx="' + k + '"]')]); const fp = path.join(tmp, "d." + k); await d.saveAs(fp); dls[k] = [d.suggestedFilename(), fs.statSync(fp).size]; }
