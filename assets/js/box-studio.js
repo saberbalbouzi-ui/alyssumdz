@@ -260,6 +260,7 @@ const BoxStudio = (() => {
   </dialog>
 
   <input type="file" id="fImg" accept="image/*" hidden>
+  <input type="file" id="fProd" accept="image/png,image/webp,image/*" hidden>
   <input type="file" id="fBg" accept="image/*" hidden>
   <input type="file" id="fProj" accept=".json,application/json" hidden>
   <div class="toast" id="toast" role="status"></div>
@@ -699,7 +700,16 @@ function profNet(def){ const vals = profVals(def), k = def.prof+JSON.stringify(v
 function profFaces(def){
   const n = profNet(def);
   if(n.mode==='net'){
-    const out = n.faces.map((f,i)=>{ const b = polyBox(f.poly); return {key:'f'+i, label:'وجه '+(i+1), w:Math.max(b.w,2), h:Math.max(b.h,2)}; });
+    const mats = BP().fold3d(n, 1), seenL = {}, out = [];
+    n.faces.forEach((f,i)=>{
+      if(f.main === false) return;
+      const b = polyBox(f.poly), m = mats[i]; let nx = m[8], ny = m[9], nz = m[10];
+      if(n.stand){ const t = ny; ny = -nz; nz = t; }
+      const ax = Math.abs(nx), ay = Math.abs(ny), az = Math.abs(nz);
+      let lb = ay >= ax && ay >= az ? (ny > 0 ? 'الوجه العلوي' : 'وجه القاع') : ax >= az ? (nx > 0 ? 'الجانب الأيمن' : 'الجانب الأيسر') : (nz > 0 ? 'الوجه الأمامي' : 'الوجه الخلفي');
+      seenL[lb] = (seenL[lb]||0) + 1; if(seenL[lb] > 1) lb += ' ' + seenL[lb];
+      out.push({key:'f'+i, label:lb, w:Math.max(b.w,2), h:Math.max(b.h,2)});
+    });
     out.push({key:'inside', label:'داخل العلبة', w:100, h:100, inner:1}); return out;
   }
   const so = n.solid;
@@ -723,10 +733,18 @@ function buildProfileNet(def, n){
     const em = new THREE.Mesh(eg, [FC.inside.mat, edgeMat]); em.castShadow = em.receiveShadow = true;
     const b = polyBox(pts), pg = new THREE.ShapeGeometry(shape), pp = pg.attributes.position, uv = pg.attributes.uv;
     for(let j=0;j<pp.count;j++) uv.setXY(j, (pp.getX(j)-b.x0)/Math.max(b.w,1e-6), (pp.getY(j)-b.y0)/Math.max(b.h,1e-6));
-    const pm = new THREE.Mesh(pg, FC['f'+i].mat); pm.position.z = eps; pm.userData.keys = {0:'f'+i}; pm.receiveShadow = true;
+    const isMain = f.main !== false, pm = new THREE.Mesh(pg, isMain ? FC['f'+i].mat : FC.inside.mat); pm.position.z = eps; if(isMain) pm.userData.keys = {0:'f'+i}; pm.receiveShadow = true;
     const fg = new THREE.Group(); fg.add(em, pm); fg.matrixAutoUpdate = false; ng.add(fg); fgs.push(fg);
   });
-  const upd = o=>{ const mats = BP().fold3d(n, 1-clamp(o,0,1)); fgs.forEach((fg,i)=>{ fg.matrix.fromArray(mats[i]); fg.matrixWorldNeedsUpdate = true; }); };
+  /* الألسنة والأجنحة (غير الرئيسية) تُطوى تحت الوجوه الرئيسية: تُزاح للداخل عكس ناظمها الخارجي بسماكة الورق × عمق تداخلها */
+  const upd = o=>{
+    const t = 1-clamp(o,0,1), mats = BP().fold3d(n, t), k = t*t*(3-2*t);
+    fgs.forEach((fg,i)=>{
+      const m = mats[i].slice(), f = n.faces[i];
+      if(f.main === false && k > 0){ const d = (th*1.08 + eps)*Math.max(1,f.rank||1)*k; m[12] -= m[8]*d; m[13] -= m[9]*d; m[14] -= m[10]*d; }
+      fg.matrix.fromArray(m); fg.matrixWorldNeedsUpdate = true;
+    });
+  };
   upd(0); g.updateMatrixWorld(true);
   const bb = new THREE.Box3().setFromObject(g); g.position.set(-(bb.min.x+bb.max.x)/2, -bb.min.y, -(bb.min.z+bb.max.z)/2);
   state.dims = {L:Math.round((bb.max.x-bb.min.x)/S), W:Math.round((bb.max.z-bb.min.z)/S), H:Math.round((bb.max.y-bb.min.y)/S)};
@@ -971,9 +989,35 @@ function drawPattern(ctx, L, cw, ch){
   else if(L.kind==='chevron'){ for(let j=-n;j<=n;j++){ ctx.beginPath(); for(let i=-n;i<=n;i++){ const px=i*u*1.2, py=j*u*1.4+(i&1?u*.5:0); i===-n?ctx.moveTo(px,py):ctx.lineTo(px,py);} ctx.stroke(); } }
   ctx.restore();
 }
-function drawLayer(ctx, L, cw, ch){
-  if(L.hidden) return;
-  ctx.save(); ctx.globalAlpha = L.op==null ? 1 : L.op;
+/* أنماط التداخل بين الطبقة والمنتج (Photoshop): الأصلية من الكانفاس والخطية بمعالجة بكسلية */
+const BLENDS = [['normal','عادي — Normal'],['multiply','Produit — ضرب'],['screen','Écran — شاشة'],['overlay','Incrustation — تراكب'],['soft-light','Lumière tamisée — ضوء ناعم'],['hard-light','Lumière crue — ضوء حاد'],['color-dodge','Densité couleur + — تفتيح اللون'],['color-burn','Densité couleur − — حرق اللون'],['linear-burn','Densité linéaire − — حرق خطي'],['lighter','Plus — إضافة (تفتيح خطي)'],['linear-light','Lumière linéaire — ضوء خطي'],['vivid-light','Lumière vive — ضوء حيّ'],['pin-light','Lumière ponctuelle — ضوء نقطي'],['darken','Obscurcir — أغمق'],['lighten','Éclaircir — أفتح'],['difference','Différence — فرق'],['exclusion','Exclusion — استبعاد'],['hue','Teinte — تدرّج اللون'],['saturation','Saturation — إشباع'],['color','Couleur — لون'],['luminosity','Luminosité — سطوع']];
+const CB = {
+  'linear-burn':(a,b)=>a+b-1,
+  'linear-light':(a,b)=>a+2*b-1,
+  'vivid-light':(a,b)=> b<.5 ? (b<=0 ? 0 : 1-Math.min(1,(1-a)/(2*b))) : (b>=1 ? 1 : Math.min(1,a/(2*(1-b)))),
+  'pin-light':(a,b)=> b<.5 ? Math.min(a,2*b) : Math.max(a,2*b-1)
+};
+let blendTmp = null;
+function blendCustom(ctx, L, cw, ch, op, mode){
+  const cv = ctx.canvas, w = cv.width, h = cv.height;
+  if(!blendTmp) blendTmp = document.createElement('canvas');
+  if(blendTmp.width !== w || blendTmp.height !== h){ blendTmp.width = w; blendTmp.height = h; }
+  const tc = blendTmp.getContext('2d'); tc.setTransform(1,0,0,1,0,0); tc.globalCompositeOperation = 'source-over'; tc.globalAlpha = 1; tc.clearRect(0,0,w,h);
+  paintLayer(tc, L, cw, ch);
+  const d = ctx.getImageData(0,0,w,h), sd = tc.getImageData(0,0,w,h).data, D = d.data, fn = CB[mode];
+  for(let i=0;i<D.length;i+=4){
+    const sa = sd[i+3]/255*op; if(sa <= 0) continue;
+    const da = D[i+3]/255, oa = sa + da*(1-sa);
+    for(let c=0;c<3;c++){
+      const a = D[i+c]/255, b = sd[i+c]/255, bl = Math.max(0,Math.min(1,fn(a,b))), mixed = da*bl + (1-da)*b;
+      D[i+c] = Math.round(255*(sa*mixed + da*(1-sa)*a)/oa);
+    }
+    D[i+3] = Math.round(255*oa);
+  }
+  ctx.putImageData(d,0,0);
+}
+function paintLayer(ctx, L, cw, ch){
+  ctx.save();
   if(L.type==='pattern') drawPattern(ctx,L,cw,ch);
   else{
     ctx.translate(L.x*cw, L.y*ch); ctx.rotate(rad(L.rot));
@@ -990,6 +1034,14 @@ function drawLayer(ctx, L, cw, ch){
   }
   ctx.restore();
 }
+function drawLayer(ctx, L, cw, ch){
+  if(L.hidden) return;
+  const op = L.op==null ? 1 : L.op, bm = L.blend || 'normal';
+  if(CB[bm]){ blendCustom(ctx, L, cw, ch, op, bm); return; }
+  ctx.save(); ctx.globalAlpha = op; if(bm !== 'normal') ctx.globalCompositeOperation = bm;
+  paintLayer(ctx, L, cw, ch);
+  ctx.restore();
+}
 function drawFace(k){
   const f = FC[k]; if(!f) return;
   const {ctx,cw,ch} = f, m = matInfo();
@@ -999,6 +1051,7 @@ function drawFace(k){
   if(f.pre) f.pre(ctx,cw,ch,m);
   ((state.faces[k] && state.faces[k].layers) || []).forEach(L=>drawLayer(ctx,L,cw,ch));
   if(f.post) f.post(ctx,cw,ch,m);
+  if(f.clip && f.baseImg){ ctx.globalCompositeOperation='destination-in'; ctx.drawImage(f.baseImg,0,0,cw,ch); ctx.globalCompositeOperation='source-over'; }
   if(!f.fill && !f.decal && !f.real){ ctx.globalCompositeOperation='multiply'; ctx.fillStyle = ctx.createPattern(grainCanvas,'repeat'); ctx.fillRect(0,0,cw,ch); ctx.globalCompositeOperation='source-over'; }
   f.tex.needsUpdate = true; dirty = true; hooks.thumb(k);
 }
@@ -1448,8 +1501,8 @@ function buildCustom(d, def){
     if(!o.isMesh) return; o.castShadow = true; o.receiveShadow = true;
     if(fc && fc[o.name]){
       const cv = fc[o.name], ar = clamp(cv.width/cv.height, .12, 8), f = faceRec(o.name, ar >= 1 ? 240 : 240*ar, ar >= 1 ? 240/ar : 240);
-      Object.assign(f, {label:lab[o.name] || o.name, fill:null, decal:true, baseImg:cv});
-      const mt = new THREE.MeshStandardMaterial({map:f.tex, roughness:.55, metalness:.02, side:THREE.DoubleSide}); f.rmats.push(mt); realMats.push(mt); o.material = mt; o.userData.keys = {0:o.name};
+      Object.assign(f, {label:lab[o.name] || o.name, fill:null, decal:true, baseImg:cv, clip:CUSTOM.kind==='2d'});
+      const mt = new THREE.MeshStandardMaterial({map:f.tex, roughness:.55, metalness:.02, side:THREE.DoubleSide, transparent:CUSTOM.kind==='2d', alphaTest:CUSTOM.kind==='2d' ? .04 : 0}); f.rmats.push(mt); realMats.push(mt); o.material = mt; o.userData.keys = {0:o.name};
     }
   });
   g.updateMatrixWorld(true);
@@ -1712,7 +1765,7 @@ function loop(now){
 }
 
 function renderNow(){ dirty = false; render(); updateOverlay(); }
-return {renderNow,drawLayer,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
+return {renderNow,drawLayer,BLENDS,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
   drawFace,redrawAll,ensureFaces,applyMaterialProps,applyLights,rebuild,fitCamera,applyOpen,animateOpen,applyBg,bgCss,drawBG,renderComposite,
   CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,
   get tool(){return tool}, set tool(v){tool = v; hooks.tool(v);},
@@ -1723,7 +1776,7 @@ return {renderNow,drawLayer,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOU
 })();
 (function(){
 'use strict';
-const {$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,cm} = X;
+const {BLENDS,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,cm} = X;
 const P = $('#panel');
 const toastEl = $('#toast'); let toastT;
 const toast = m => { toastEl.textContent = m; toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>toastEl.classList.remove('show'), 2400); };
@@ -2118,6 +2171,7 @@ function buildEditor(){
   }
   if(L.type!=='pattern'){ S('x','الموضع أفقياً',-.2,1.2,.005,pct); S('y','الموضع رأسياً',-.2,1.2,.005,pct); }
   S('rot','التدوير',-180,180,1,v=>v+'°'); S('op','الشفافية',0,1,.01,pct);
+  { const bw = el('<label class="opt"><span>التداخل مع المنتج</span><select aria-label="نمط التداخل"></select></label>'), bs = bw.querySelector('select'); BLENDS.forEach(([k,n])=>bs.appendChild(el('<option value="'+k+'">'+n+'</option>'))); bs.value = L.blend || 'normal'; bs.addEventListener('change',()=>{ L.blend = bs.value; redraw(); commit(); }); box.appendChild(bw); }
   if(L.type!=='pattern') box.appendChild(el('<p class="hint" style="margin:0">لتحريك الطبقة مباشرة على العلبة استخدم أداة النقل في الشريط الجانبي.</p>'));
 }
 hooks.layers = live => { const L = X.activeLayer(); if(!L) return; ['x','y'].forEach(k=>{ if(edRefs[k]) edRefs[k].set(L[k]); }); };
@@ -2148,6 +2202,20 @@ $('#fImg').addEventListener('change', e=>{ const f = e.target.files[0]; e.target
 X.stage.addEventListener('dragover', e=>e.preventDefault());
 X.stage.addEventListener('drop', e=>{ e.preventDefault(); const f = e.dataTransfer.files[0]; if(!f) return; const p = X.pick(e); addImageFile(f, p ? p.key : null); });
 
+/* صورة منتج 2D (PNG/WebP بخلفية شفافة): تصير لوحاً قائماً تُطبَّق عليه الملصقات وتتداخل مع المنتج داخل شفافيته */
+function hasAlpha(cv){ try{ const d = cv.getContext('2d').getImageData(0,0,cv.width,cv.height).data, st = Math.max(4,Math.floor(d.length/4/20000))*4; for(let i=3;i<d.length;i+=st) if(d[i] < 250) return true; }catch(e){} return false; }
+async function addProduct2D(file){
+  if(!file || !file.type.startsWith('image/')){ toast('اختر صورة PNG أو WebP'); return; }
+  try{
+    const id = await loadImageFile(file), im = IMG.get(id), cv = im.src, ar = clamp(cv.width/cv.height, .1, 10);
+    const g = new THREE.Group(), m = new THREE.Mesh(new THREE.PlaneGeometry(ar,1)); m.name = 'front'; g.add(m);
+    X.setCustom({obj:g, kind:'2d', name:'صورة منتج 2D', faces:{front:cv}});
+    state.model = 'mailer'; selectModel('custom3d'); state.cH = 220; X.rebuild(true); X.fitCamera(); showTab('edit');
+    toast(hasAlpha(cv) ? 'تم تحميل صورة المنتج — أضف الملصقات فوقها' : 'الصورة بلا شفافية: الأفضل PNG أو WebP بخلفية شفافة');
+  }catch(e){ toast('تعذّر قراءة الصورة'); }
+}
+$('#fProd').addEventListener('change', e=>{ const f = e.target.files[0]; e.target.value = ''; if(f) addProduct2D(f); });
+
 /* ───────────── MODELS tab ───────────── */
 /* — models tab with categories — */
 let modelCat = 'all';
@@ -2169,7 +2237,8 @@ function dimText(m){ if(m.custom) return 'مجسّم من الأدوات'; if(m.
 function renderModels(){
   const cats = X.CATS, counts = {};
   Object.values(MODELS).forEach(m=>{ if(!m.hidden) counts[m.cat] = (counts[m.cat]||0)+1; });
-  P.innerHTML = '<h2>النماذج</h2><p class="hint" style="margin:-6px 0 12px">اختر فئة ثم نموذجًا. تبقى التصاميم عند التبديل بين نماذج الفئة نفسها.</p><div class="cats" id="cats" role="group" aria-label="فئات النماذج"></div><div class="cards" id="mc"></div>';
+  P.innerHTML = '<h2>النماذج</h2><p class="hint" style="margin:-6px 0 12px">اختر فئة ثم نموذجًا. تبقى التصاميم عند التبديل بين نماذج الفئة نفسها.</p><div class="up2d" style="margin:0 0 12px;padding:10px;border:1px dashed var(--line);border-radius:14px;display:flex;flex-direction:column;gap:6px"><button class="btn primary" id="up2d" type="button">'+ico('upload')+' تحميل صورة منتج 2D</button><p class="hint" style="margin:0">PNG أو WebP بخلفية شفافة؛ بعد التحميل تُطبَّق عليها الملصقات والصور وتتداخل مع المنتج.</p></div><div class="cats" id="cats" role="group" aria-label="فئات النماذج"></div><div class="cards" id="mc"></div>';
+  $('#up2d').onclick = ()=>$('#fProd').click();
   const cg = $('#cats');
   cats.forEach(c=>{
     const n = c.k==='all' ? Object.values(MODELS).filter(m=>!m.hidden).length : (counts[c.k]||0); if(!n) return;

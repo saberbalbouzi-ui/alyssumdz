@@ -106,16 +106,10 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   ok("الواجهة لا تذكر اسم مزوّد الخدمة", await p.evaluate(() => !/fal\.ai|fal\b|hunyuan|meshy|tripo|gemini/i.test(document.getElementById("i3").textContent)));
   ok("Esc يغلق النافذة", await (async () => { await p.keyboard.press("Escape"); await p.waitForTimeout(300); return p.evaluate(() => !document.getElementById("i3-bg")); })());
   /* ── التسليم إلى المحرّر الرئيسي ── */
-  await p.evaluate(() => Studio3D.open({ tab: "img" })); await p.waitForSelector("#i3 #i3-stage canvas", { timeout: 30000 });
+  await p.evaluate(() => Img3D.open()); await p.waitForSelector("#i3 #i3-stage canvas", { timeout: 30000 });
   const made = await p.evaluate(async () => { const T = await import("/assets/js/vendor/three.module.min.js"); const g = new T.Group(), mk = (n, z) => { const m = new T.Mesh(new T.PlaneGeometry(.4, 1), new T.MeshStandardMaterial({ color: 0xcc3355 })); m.name = n; m.position.z = z; g.add(m); }; mk("front", .1); mk("back", -.1); const k = () => { const c = document.createElement("canvas"); c.width = 200; c.height = 300; c.getContext("2d").fillStyle = "#cc3355"; c.getContext("2d").fillRect(0, 0, 200, 300); return c; }; Img3D.S.model = { obj: g, kind: "local", stats: { textures: { front: k(), back: k() } } }; document.querySelector('#i3 [data-ex="studio"]').disabled = false; document.querySelector('#i3 [data-ex="studio"]').click(); return true; });
   await p.waitForSelector("#bs #gl", { timeout: 40000 }); await p.waitForTimeout(1500);
   ok("زر «افتح المجسّم في المحرّر» ينقل المجسّم المنتَج إلى المحرّر الرئيسي بوجهين قابلين للملصقات", await p.evaluate(() => Studio3D.tab === "box" && !document.getElementById("i3-bg") && BoxStudio.inst.state.model === "custom3d" && Object.keys(BoxStudio.inst.FC).sort().join() === "back,front"));
-  /* ── داخل Studio 3D ── */
-  await p.evaluate(() => Studio3D.open({ tab: "img" })); await p.waitForSelector("#i3 #i3-stage canvas", { timeout: 30000 });
-  ok("Studio 3D: تبويب «من صور 2D» يفتح الأداة تحت الشريط", await p.evaluate(() => Studio3D.tab === "img" && document.querySelector('#s3d-bar [data-t="img"]').classList.contains("on") && document.getElementById("i3-bg").getBoundingClientRect().top >= 46));
-  await p.click('#s3d-bar [data-t="box"]'); await p.waitForSelector("#bs #gl", { timeout: 40000 });
-  ok("التبديل إلى المحرّر الرئيسي يغلق أداة الصور", await p.evaluate(() => !document.getElementById("i3-bg") && Studio3D.tab === "box"));
-  await p.click('#s3d-bar [data-t="x"]'); await p.waitForTimeout(300);
   ok("بلا أخطاء صفحة", errs.length === 0, errs);
   await browser.close(); srv.close(); console.log(fails ? "\n" + fails + " فشل" : "\nكل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })();

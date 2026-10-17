@@ -59,7 +59,8 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   await p.evaluate(() => { BoxProfiles.S.cur = "giftbox"; BoxProfiles.open(); }); await p.waitForTimeout(400);
   ok("نافذة القوالب فيها زر «حوّل إلى استوديو العلب 3D»", await p.evaluate(() => /استوديو العلب 3D/.test(document.querySelector('#bp [data-bx="3d"]').textContent)));
   await p.evaluate(() => document.querySelector('#bp [data-bx="3d"]').click()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(3000);
-  ok("الزر يفتح الاستوديو على قالب علبة الهدية بأبعادها ويطويها", await p.evaluate(() => { const X = BoxStudio.inst; return X.state.model === "pf_giftbox" && X.state.pf.giftbox && X.state.pf.giftbox.L === 50 && X.state.open === 0 && Object.keys(X.FC).length >= 13; }));
+  ok("الزر يفتح الاستوديو على قالب علبة الهدية بأبعادها ويطويها", await p.evaluate(() => { const X = BoxStudio.inst; return X.state.model === "pf_giftbox" && X.state.pf.giftbox && X.state.pf.giftbox.L === 50 && X.state.open === 0 && Object.keys(X.FC).length >= 7; }));
+  ok("علبة الهدية من القوالب: 6 وجوه رئيسية فقط للملصقات (+الداخل) لا 13", await p.evaluate(() => { const k = Object.keys(BoxStudio.inst.FC).filter(x => /^f\d+$/.test(x)); return k.length === 6 && !!BoxStudio.inst.FC.inside; }));
   ok("القالب مطويّ ومرسوم", (await px()) > 3);
   if (shots) await p.screenshot({ path: path.join(shots, "bs-profile-gift.png") });
   ok("نافذة القوالب تبقى مفتوحة خلف الاستوديو", await p.evaluate(() => !!document.getElementById("bp")));
@@ -121,6 +122,25 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   const cinfo = await p.evaluate(() => { const I = BoxStudio.inst; return { m: I.state.model, f: Object.keys(I.FC).sort().join(), h: I.state.dims.H }; }), cpx = await px(); ok("مجسّم مخصّص: يُفتح في المحرّر بوجهين وأبعاد ويُرسم", cinfo.m === "custom3d" && cinfo.f === "back,front" && cinfo.h === 150 && cpx > 2, [cinfo, cpx]);
   const nf = () => p.evaluate(() => BoxStudio.inst.state.faces[BoxStudio.inst.state.sel.face].layers.length), cf0 = await nf(); await p.click("#bs #addText"); await p.waitForTimeout(250);
   ok("إضافة ملصق نصي على المجسّم المخصّص", (await nf()) === cf0 + 1);
+  await p.evaluate(() => BoxStudio.close());
+  /* ═══ صورة منتج 2D شفافة + أنماط التداخل ═══ */
+  await p.evaluate(() => BoxStudio.open()); await p.waitForSelector("#bs #gl", { timeout: 25000 }); await p.waitForTimeout(1200);
+  await p.click('#bs .tab[data-tab="models"]'); await p.waitForTimeout(250);
+  ok("زر «تحميل صورة منتج 2D» ظاهر في قسم النماذج", await p.evaluate(() => !!document.querySelector("#bs #up2d")));
+  const png = await p.evaluate(async () => { const c = document.createElement("canvas"); c.width = 400; c.height = 300; const x = c.getContext("2d"); x.fillStyle = "#2040e0"; x.beginPath(); x.ellipse(200, 150, 150, 100, 0, 0, 7); x.fill(); const b = await new Promise(r => c.toBlob(r, "image/png")); return Array.from(new Uint8Array(await b.arrayBuffer())); });
+  await p.setInputFiles("#bs #fProd", { name: "prod.png", mimeType: "image/png", buffer: Buffer.from(png) }); await p.waitForTimeout(1500);
+  ok("رفع صورة المنتج 2D ينشئ لوحاً بوجه واحد قابل للملصقات داخل شفافيته", await p.evaluate(() => { const I = BoxStudio.inst; return I.state.model === "custom3d" && Object.keys(I.FC).join() === "front" && I.FC.front.clip === true && I.FC.front.decal === true; }));
+  const px2 = async (x, y) => p.evaluate(([x, y]) => { const f = BoxStudio.inst.FC.front; return Array.from(f.ctx.getImageData(Math.round(x * f.cw), Math.round(y * f.ch), 1, 1).data); }, [x, y]);
+  const q0 = await px2(.5, .5), q1 = await px2(.01, .01); ok("مركز المنتج معتم وزاويته شفافة", q0[3] === 255 && q1[3] === 0, [q0, q1]);
+  const blend = async mode => { await p.evaluate(m => { const I = BoxStudio.inst, st = I.state; st.faces.front = {layers:[I.mkPattern("solid", {c1:"#ff0000", blend:m})]}; I.drawFace("front"); }, mode); return px2(.5, .5); };
+  const cn = await blend("normal"), cm = await blend("multiply"), cp = await blend("lighter"), cl = await blend("linear-light");
+  ok("عادي: الطبقة الحمراء تغطي المنتج", cn[0] > 240 && cn[2] < 15, cn);
+  ok("Produit (multiply): أزرق × أحمر ≈ أسود", cm[0] < 45 && cm[1] < 15 && cm[2] < 15, cm);
+  ok("Plus (lighter): أزرق + أحمر = بنفسجي", cp[0] > 200 && cp[2] > 200, cp);
+  ok("Lumière linéaire: A+2B−1 يعطي أحمر صرفاً", cl[0] > 240 && cl[1] < 20 && cl[2] < 20, cl);
+  ok("التداخل لا يلوّن خارج شفافية المنتج", (await px2(.01, .01))[3] === 0);
+  await p.click('#bs .tab[data-tab="edit"]'); await p.waitForTimeout(250);
+  ok("قائمة «التداخل مع المنتج» تظهر في إعدادات الطبقة بكل الأنماط", await p.evaluate(() => { const I = BoxStudio.inst; I.state.sel.layer = I.state.faces.front.layers[0].id; I.state.sel.face = "front"; document.querySelector("#bs .tab[data-tab=\"edit\"]").click(); return true; }) && await p.evaluate(() => new Promise(r => setTimeout(() => { const sel = [...document.querySelectorAll("#bs #layerEd select")].find(s => [...s.options].some(o => o.value === "linear-light")); r(!!sel && sel.options.length >= 20); }, 300))));
   await p.evaluate(() => BoxStudio.close());
   ok("لا أخطاء صفحة", errs.length === 0, errs);
   await browser.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
