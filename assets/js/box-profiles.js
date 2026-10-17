@@ -539,7 +539,7 @@ const MODELS={
   /* الدعوة الرئيسية: يفتح «استوديو العلب 3D» بالقالب الحالي (أبعاده ولون الورق) */
   async function to3d() {
     if (typeof BoxStudio === "undefined" || !BoxStudio.open) return to3dPack();
-    try { msg("⏳ جارٍ فتح الاستوديو…"); await BoxStudio.open({ profile: { key: S.cur, vals: Object.assign({}, S.vals[S.cur]), color: M3.color } }); msg(""); }
+    try { msg("⏳ جارٍ فتح الاستوديو…"); await (typeof Studio3D !== "undefined" ? Studio3D : BoxStudio).open(Object.assign({ tab: "box" }, { profile: { key: S.cur, vals: Object.assign({}, S.vals[S.cur]), color: M3.color } })); msg(""); }
     catch (e) { msg("⚠️ " + (e.message || e), true); }
   }
   async function to3dPack() {
@@ -548,9 +548,10 @@ const MODELS={
     catch (e) { msg("⚠️ " + (e.message || e), true); }
   }
   let escH = null;
-  function close() { opened = false; v3close(); window.removeEventListener("resize", v3size); if (escH) { document.removeEventListener("keydown", escH); escH = null; } const b = $("bp-bg"); if (b) b.remove(); }
-  function open() {
-    close(); if (!$("bp-css")) { const st = document.createElement("style"); st.id = "bp-css"; st.textContent = CSS; document.head.appendChild(st); }
+  function close() { opened = false; v3close(); window.removeEventListener("resize", v3size); if (escH) { document.removeEventListener("keydown", escH); escH = null; } const b = $("bp-bg"); if (b) b.remove(); const cb = onCloseCb; onCloseCb = null; if (cb) { try { cb(); } catch (e) { } } }
+  let onCloseCb = null;
+  function open(o) {
+    close(); onCloseCb = (o && o.onClose) || null; if (!$("bp-css")) { const st = document.createElement("style"); st.id = "bp-css"; st.textContent = CSS; document.head.appendChild(st); }
     const bg = document.createElement("div"); bg.id = "bp-bg"; bg.innerHTML = '<div id="bp" role="dialog" aria-label="قوالب العلب الجاهزة"><div class="bp-h"><b>📐 قوالب العلب الجاهزة (' + Object.keys(MODELS).length + ' نموذجاً)</b><small>قص وثني بأبعاد حقيقية — SVG وPDF وDXF</small><button type="button" class="o" id="bp-x">إغلاق</button></div><div class="bp-m"><div class="bp-side" id="bp-side">' + panelHtml() + '</div><div class="bp-pv"><div class="bp-pc"><h5>① قالب القص والثني (2D)</h5><div class="bp-sheet"><div id="bp-out"></div></div><div class="bp-lg"><span><i style="border-color:#d4006e"></i>قص</span><span><i style="border-color:#0088c4"></i>ثني</span><span class="bp-i" id="bp-info"></span></div><div class="bp-b"><button type="button" data-bx="svg">⬇ SVG</button><button type="button" data-bx="pdf">⬇ PDF</button><button type="button" class="o" data-bx="dxf">⬇ DXF</button><button type="button" class="o" data-bx="png">⬇ PNG</button></div></div><div class="bp-pc"><h5>② العلبة مطويّة (3D مباشر)</h5><div class="bp-3d" id="bp-3d"><span class="bp-3h">3D</span><div class="bp-3m" id="bp-3m">جارٍ تجهيز المعاينة…</div></div><div class="bp-3c"><label for="bp-fold" id="bp-foldl">طيّ</label><input id="bp-fold" type="range" min="0" max="1" step="0.01" value="1"><input id="bp-col" type="color" value="#f1ece0" title="لون الورق"><label class="bp-up" title="تصميم يُطبع على القالب"><input id="bp-art" type="file" accept="image/*" hidden><span class="o" style="cursor:pointer;padding:.3rem .5rem;border:1px solid rgba(255,255,255,.25);border-radius:10px;font-size:.74rem">🖼 تصميم</span></label></div><p class="d" id="bp-3dn"></p><div class="bp-inv"><p>أعجبك الشكل؟ حوّله إلى <b>استوديو العلب 3D</b>: ضع صورك ونصوصك على كل وجه، غيّر الخامة والتشطيب، وصدّر صوراً بدقة 4K وفيديو دوران ولوحة أوجه للمطبعة.</p><button type="button" data-bx="3d">🧊 حوّل إلى استوديو العلب 3D</button></div></div></div></div><div id="bp-msg"></div></div>';
     document.body.appendChild(bg); opened = true; $("bp-x").onclick = close; bg.addEventListener("mousedown", e => { if (e.target === bg) close(); });
     escH = e => { if (e.key === "Escape" && $("bp-bg") && !$("p3-bg") && !$("bs-bg")) close(); }; document.addEventListener("keydown", escH);

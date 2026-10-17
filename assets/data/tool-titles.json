@@ -202,56 +202,17 @@
         "en": "Create a QR or barcode and download it as PNG or WebP"
       }
     },
-    "pack3d": {
-      "icon": "16-pack-3d",
-      "t": {
-        "ar": "Alyssum 3D Pack Studio",
-        "fr": "Alyssum 3D Pack Studio",
-        "en": "Alyssum 3D Pack Studio"
-      },
-      "d": {
-        "ar": "ركّب ملصقك على عبوة ثلاثية الأبعاد وصدّر صوراً احترافية",
-        "fr": "Appliquez votre étiquette sur un packaging 3D et exportez des visuels pro",
-        "en": "Apply your label to a 3D pack and export pro visuals"
-      }
-    },
-    "boxdesigner": {
-      "icon": "17-box-designer",
-      "t": {
-        "ar": "Alyssum Box Designer",
-        "fr": "Alyssum Box Designer",
-        "en": "Alyssum Box Designer"
-      },
-      "d": {
-        "ar": "قالب طباعة العلبة بخطوط القص والثني والنزف من هوية الملصق",
-        "fr": "Gabarit d'impression de la boîte (coupe, pli, fond perdu) depuis votre étiquette",
-        "en": "Print-ready box dieline (cut, fold, bleed) from your label identity"
-      }
-    },
-    "boxstudio": {
-      "icon": "16-pack-3d",
-      "t": {
-        "ar": "استوديو العلب 3D",
-        "fr": "Studio de boîtes 3D",
-        "en": "3D Box Studio"
-      },
-      "d": {
-        "ar": "أكثر من 60 علبة وعبوة ثلاثية الأبعاد بتصميمك على كل وجه وتصدير فائق",
-        "fr": "60+ boîtes et emballages 3D avec votre design sur chaque face et export ultra",
-        "en": "60+ 3D boxes and packs with your design on every face and ultra export"
-      }
-    },
-    "mockup": {
+    "studio3d": {
       "icon": "18-mockup-studio",
       "t": {
-        "ar": "استوديو الموكاب 3D",
-        "fr": "Studio de mockups 3D",
-        "en": "3D Mockup Studio"
+        "ar": "استوديو 3D",
+        "fr": "Studio 3D",
+        "en": "3D Studio"
       },
       "d": {
-        "ar": "نماذج واقعية: علب، قوارير، أكياس، قمصان، هودي، قبعات وحقائب — ركّب شعارك وصدّر",
-        "fr": "Maquettes réalistes : boîtes, flacons, pochettes, t-shirts, hoodies, casquettes et sacs — ajoutez votre logo et exportez",
-        "en": "Realistic mockups: boxes, bottles, pouches, tees, hoodies, caps and totes — add your logo and export"
+        "ar": "نماذج واقعية وعلب وقوالب قص ثلاثية الأبعاد: مواد وألوان وتصميمك على كل وجه، وتصدير فائق",
+        "fr": "Maquettes réalistes, boîtes et gabarits 3D : matières, couleurs, votre design sur chaque face, export ultra",
+        "en": "Realistic mockups, boxes and dielines in 3D: materials, colors, your design on every face, ultra export"
       }
     }
   }

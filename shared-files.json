@@ -71,6 +71,7 @@
     "assets/js/box-studio.js",
     "assets/js/mockup-studio.js",
     "assets/js/mockup-models.js",
+    "assets/js/studio3d.js",
     "assets/js/vendor/three.module.min.js",
     "assets/js/vendor/three.r128.min.js",
     "assets/js/vendor/three.LICENSE.txt",

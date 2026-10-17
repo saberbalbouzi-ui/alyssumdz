@@ -305,7 +305,7 @@ const BoxDesigner = (() => {
   }
   /* الواجهة الرئيسية لأداة «Box Designer» صارت مكتبة القوالب (BoxProfiles)؛ محرّر التصميم على الوجوه (إدخال/هدية) يبقى عبر openArt */
   function openArt(st) { if (st === "tuck" || st === "gift") { S.style = st; save(); } open(); }
-  function openMain() { if (typeof BoxProfiles !== "undefined" && BoxProfiles.open) BoxProfiles.open(); else open(); }
+  function openMain() { if (typeof Studio3D !== "undefined") { Studio3D.open({ tab: "cut" }); return; } if (typeof BoxProfiles !== "undefined" && BoxProfiles.open) BoxProfiles.open(); else open(); }
   return { open: openMain, openArt, openLegacy: open, close, S, PRESETS, FACES, geom, _t: { logExt, faceCanvas, sheetCanvas, svgString, pdfBlob, model3d, setArt: c => { art = c; }, setLogo: c => { logo = c; }, preview } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = BoxDesigner;
