@@ -139,6 +139,27 @@ const BoxStudio = (() => {
 #bs .stage canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #bs #overlay{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 #bs .dl{position:absolute;transform:translate(-50%,-50%);background:rgba(20,24,23,.82);color:#fff;padding:2px 8px;border-radius:99px;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#bs .xf{position:absolute;display:none;border:1.5px dashed var(--accent);pointer-events:auto;cursor:move;touch-action:none;box-sizing:border-box}
+#bs .xf i{position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.45);box-sizing:border-box}
+#bs .xf i[data-h=nw]{left:-8px;top:-8px;cursor:nwse-resize}#bs .xf i[data-h=ne]{right:-8px;top:-8px;cursor:nesw-resize}#bs .xf i[data-h=sw]{left:-8px;bottom:-8px;cursor:nesw-resize}#bs .xf i[data-h=se]{right:-8px;bottom:-8px;cursor:nwse-resize}
+#bs .xf i[data-h=rot]{left:50%;top:-36px;margin-left:-8px;width:16px;height:16px;cursor:grab;background:var(--accent)}
+#bs .xf:before{content:"";position:absolute;left:50%;top:-30px;height:30px;border-left:1.5px solid var(--accent)}
+#bs .ctxm{position:absolute;pointer-events:auto;z-index:6;min-width:200px;padding:6px;border-radius:14px;background:rgba(10,26,19,.97);border:1px solid rgba(255,255,255,.2);box-shadow:0 12px 32px rgba(0,0,0,.5);backdrop-filter:blur(8px);direction:rtl;color:#fff}
+#bs .ctxm .it{display:flex;gap:10px;align-items:center;width:100%;padding:10px 12px;border:0;background:none;color:#fff;border-radius:10px;cursor:pointer;font-weight:600;font-size:13.5px;text-align:start}
+#bs .ctxm .it:hover{background:rgba(var(--g-mint-rgb,198,254,23),.16)}
+#bs .ctxm .it svg{width:18px;height:18px;flex:none}
+#bs .szp{padding:6px 8px 8px;min-width:250px}
+#bs .szp h4{margin:2px 0 8px;font-size:14px}
+#bs .szp .u{display:inline-flex;margin-bottom:10px;gap:0;border-radius:9px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
+#bs .szp .u button{padding:3px 14px;border:0;background:none;color:#fff;cursor:pointer;font-size:12px}
+#bs .szp .u button[aria-pressed=true]{background:rgba(var(--g-mint-rgb,198,254,23),.35);font-weight:700}
+#bs .szp .f3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+#bs .szp label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;padding:5px;border-radius:10px;border:1px solid transparent}
+#bs .szp label.hi{background:rgba(139,92,246,.22);border-color:#8b5cf6}
+#bs .szp input{width:100%;height:34px;text-align:center;border-radius:9px}
+#bs .szp .go{width:100%}
+#bs .szp .go:disabled{opacity:.4;cursor:default}
+#bs .dl.hi{color:#a78bfa;font-weight:700}
 #bs .pin{position:absolute;transform:translate(-50%,-100%);pointer-events:auto;width:28px;height:28px;border-radius:50% 50% 50% 4px;border:2px solid #fff;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700;display:grid;place-items:center;box-shadow:0 3px 10px rgba(0,0,0,.3)}
 #bs .pop{position:absolute;pointer-events:auto;width:230px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px;display:flex;flex-direction:column;gap:8px;z-index:5}
 #bs .tools{position:absolute;inset-inline-end:14px;top:14px;background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column;gap:2px}
@@ -880,11 +901,11 @@ const state = {
   model:'mailer', dims:{L:315,W:202,H:62}, t:2.5, flap:.9, openMax:115,
   material:'kraft', matColor:'#2f6f9f', finish:'matte', open:0,
   faces:{}, bg:{kind:'radial',c1:'#dedcd8',c2:'#a9a8a4',imgId:null}, layout:'single',
-  shadow:true, shadowStrength:.3, sh2d:{on:true,blur:.35,op:.4,dx:.04,dy:-.05}, ortho:false, dimsOn:false, light:1, env:.8, autoRotate:false,
+  shadow:true, shadowStrength:.3, sh2d:{on:true,blur:.45,op:.55,dx:.05,dy:-.06}, ortho:false, dimsOn:false, light:1, env:.8, autoRotate:false,
   sel:{face:'top',layer:null}, pins:[], accents:{}, pf:{}, real:null, cH:150
 };
 const IMG = new Map();           // id -> {src:canvas, w, h, name}
-const hooks = { select(){}, changed(){}, layers(){}, thumb(){}, tool(){}, pinAdd(){}, open(){}, toast(){} };
+const hooks = { menu(){}, select(){}, changed(){}, layers(){}, thumb(){}, tool(){}, pinAdd(){}, open(){}, toast(){} };
 
 function mkText(text, o){ return Object.assign({id:nid(),type:'text',text,size:9,color:'#3a2a1a',font:FONTS[0].css,weight:700,x:.5,y:.5,rot:0,op:.9}, o||{}); }
 function mkPattern(kind, o){ return Object.assign({id:nid(),type:'pattern',kind,c1:'#e9d9bd',c2:'#8c5a2b',scale:1,rot:0,op:1}, o||{}); }
@@ -1492,6 +1513,7 @@ function buildReal(d, def){
   if(b.pose) b.pose(0);
   if(def.hmm){ g.updateMatrixWorld(true); const bb = new THREE.Box3().setFromObject(g), hh = bb.max.y - bb.min.y; if(hh > 0) b.g.scale.multiplyScalar(def.hmm*S/hh); }
   g.updateMatrixWorld(true);
+  { const T = state.real && state.real.T; if(T){ const n = new THREE.Box3().setFromObject(g).getSize(new THREE.Vector3()); if(n.x>0 && n.y>0 && n.z>0){ b.g.scale.set(b.g.scale.x*T.L*S/n.x, b.g.scale.y*T.H*S/n.y, b.g.scale.z*T.W*S/n.z); g.updateMatrixWorld(true); } } }
   const bb0 = new THREE.Box3().setFromObject(g), c = bb0.getCenter(new THREE.Vector3()), sz = bb0.getSize(new THREE.Vector3());
   g.position.set(-c.x, -bb0.min.y, -c.z);
   d.L = Math.max(1, Math.round(sz.x/S)); d.W = Math.max(1, Math.round(sz.z/S)); d.H = Math.max(1, Math.round(sz.y/S));
@@ -1531,7 +1553,12 @@ function buildCustom(d, def){
   if(CUSTOM.kind === '2d' && fc && fc.front && state.sh2d && state.sh2d.on){
     const sp = state.sh2d, cv = fc.front, k = Math.min(1, 512/Math.max(cv.width, cv.height)), w0 = Math.max(2, Math.round(cv.width*k)), h0 = Math.max(2, Math.round(cv.height*k)), pad = Math.round(Math.max(w0, h0)*.3);
     const a = document.createElement('canvas'); a.width = w0; a.height = h0; const ax = a.getContext('2d'); ax.drawImage(cv,0,0,w0,h0); ax.globalCompositeOperation = 'source-in'; ax.fillStyle = '#000'; ax.fillRect(0,0,w0,h0);
-    const b = document.createElement('canvas'); b.width = w0+pad*2; b.height = h0+pad*2; const bx = b.getContext('2d'); bx.filter = 'blur('+Math.round(sp.blur*pad*.5)+'px)'; bx.drawImage(a,pad,pad);
+    const b = document.createElement('canvas'); b.width = w0+pad*2; b.height = h0+pad*2; const bx = b.getContext('2d'), rb = Math.max(1,Math.round(sp.blur*pad*.5)); bx.filter = 'blur('+rb+'px)'; bx.drawImage(a,pad,pad);
+    if(bx.filter !== 'blur('+rb+'px)'){ /* no ctx.filter (Safari): blur by down/up-sampling */
+      bx.filter = 'none'; bx.clearRect(0,0,b.width,b.height); let src = document.createElement('canvas'); src.width = b.width; src.height = b.height; src.getContext('2d').drawImage(a,pad,pad);
+      for(let i=0;i<3;i++){ const f2 = Math.max(1,rb/3), t = document.createElement('canvas'); t.width = Math.max(2,Math.round(b.width/f2/2)); t.height = Math.max(2,Math.round(b.height/f2/2)); const tc = t.getContext('2d'); tc.imageSmoothingQuality = 'high'; tc.drawImage(src,0,0,t.width,t.height); const u = document.createElement('canvas'); u.width = b.width; u.height = b.height; const uc = u.getContext('2d'); uc.imageSmoothingQuality = 'high'; uc.drawImage(t,0,0,u.width,u.height); src = u; }
+      bx.drawImage(src,0,0);
+    }
     const tx = new THREE.CanvasTexture(b); tx.colorSpace = THREE.SRGBColorSpace;
     const ar = cv.width/cv.height, ph = 1+2*pad/h0, pw = ar*(1+2*pad/w0);
     const sm = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), new THREE.MeshBasicMaterial({map:tx, transparent:true, opacity:sp.op, depthWrite:false}));
@@ -1635,20 +1662,21 @@ function fitCamera(keepAngles){
 }
 
 /* — dimension annotations — */
-const dimLabels = [];
+const dimLabels = []; let dimHi = null;
+function setDimHi(k){ dimHi = k; buildDims(); dirty = true; updateOverlay(); }
 function buildDims(){
   while(dimGroup.children.length){ const c = dimGroup.children[0]; dimGroup.remove(c); c.geometry.dispose(); }
   dimLabels.forEach(l=>l.el.remove()); dimLabels.length = 0;
-  if(!state.dimsOn || state.layout!=='single') return;
+  if((!state.dimsOn && !dimHi) || state.layout!=='single') return;
   const {L,W,H} = state.dims, g = 14, t = state.t;
-  const mat = new THREE.LineBasicMaterial({color:0x111111});
+  const mats = {n:new THREE.LineBasicMaterial({color:0x111111}), hi:new THREE.LineBasicMaterial({color:0x8b5cf6})}; let mat = mats.n;
   const line = (a,b)=>{ const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...a).multiplyScalar(S), new THREE.Vector3(...b).multiplyScalar(S)]); dimGroup.add(new THREE.Line(geo,mat)); };
   const tick = (p,dir)=>line([p[0]-dir[0],p[1]-dir[1],p[2]-dir[2]],[p[0]+dir[0],p[1]+dir[1],p[2]+dir[2]]);
-  const A = [[-L/2,0,W/2+g],[L/2,0,W/2+g]]; line(A[0],A[1]); tick(A[0],[0,0,5]); tick(A[1],[0,0,5]);
-  const B = [[L/2+g,0,-W/2],[L/2+g,0,W/2]]; line(B[0],B[1]); tick(B[0],[5,0,0]); tick(B[1],[5,0,0]);
-  const C = [[L/2+g,0,W/2+g],[L/2+g,H,W/2+g]]; line(C[0],C[1]); tick(C[0],[5,0,5]); tick(C[1],[5,0,5]);
-  const mk = (txt,p)=>{ const el = document.createElement('div'); el.className = 'dl'; el.textContent = txt; $('#overlay').appendChild(el); dimLabels.push({el,p:new THREE.Vector3(...p).multiplyScalar(S)}); };
-  mk('الطول '+L+' مم',[0,0,W/2+g+9]); mk('العرض '+W+' مم',[L/2+g+9,0,0]); mk('الارتفاع '+H+' مم',[L/2+g+9,H/2,W/2+g+9]);
+  mat = dimHi==='L' ? mats.hi : mats.n; const A = [[-L/2,0,W/2+g],[L/2,0,W/2+g]]; line(A[0],A[1]); tick(A[0],[0,0,5]); tick(A[1],[0,0,5]);
+  mat = dimHi==='W' ? mats.hi : mats.n; const B = [[L/2+g,0,-W/2],[L/2+g,0,W/2]]; line(B[0],B[1]); tick(B[0],[5,0,0]); tick(B[1],[5,0,0]);
+  mat = dimHi==='H' ? mats.hi : mats.n; const C = [[L/2+g,0,W/2+g],[L/2+g,H,W/2+g]]; line(C[0],C[1]); tick(C[0],[5,0,5]); tick(C[1],[5,0,5]);
+  const mk = (txt,p,hk)=>{ const el = document.createElement('div'); el.className = 'dl'+(hk && hk===dimHi ? ' hi' : ''); el.textContent = txt; $('#overlay').appendChild(el); dimLabels.push({el,p:new THREE.Vector3(...p).multiplyScalar(S)}); };
+  mk('الطول '+L+' مم',[0,0,W/2+g+9],'L'); mk('العرض '+W+' مم',[L/2+g+9,0,0],'W'); mk('الارتفاع '+H+' مم',[L/2+g+9,H/2,W/2+g+9],'H');
 }
 
 /* — render, overlays, export — */
@@ -1661,10 +1689,51 @@ function render(){
   }
   updateCam(); renderer.render(scene, cam);
 }
+/* — 2D transform handles (move / scale / rotate the active layer) — */
+let xfEl = null, xfDrag = null;
+const xfCtx = document.createElement('canvas').getContext('2d');
+function xfLayer(){ if(!is2D() || state.sel.face!=='front') return null; const L = activeLayer(); return L && !L.hidden && L.type!=='pattern' ? L : null; }
+function xfPlane(){
+  let m = null; root.traverse(o=>{ if(!m && o.isMesh && o.userData.keys && o.userData.keys[0]==='front') m = o; });
+  if(!m) return null; m.updateWorldMatrix(true,false);
+  const bb = new THREE.Box3().setFromObject(m), W = stage.clientWidth, H = stage.clientHeight, v = new THREE.Vector3(), z = (bb.min.z+bb.max.z)/2;
+  const pr = (x,y)=>{ v.set(x,y,z).project(cam); return [(v.x+1)/2*W,(1-v.y)/2*H]; };
+  const a = pr(bb.min.x,bb.max.y), b = pr(bb.max.x,bb.min.y); return {x:a[0],y:a[1],w:b[0]-a[0],h:b[1]-a[1]};
+}
+function xfSize(L,f){
+  if(L.type==='image'){ const im = IMG.get(L.imgId); if(!im) return null; const s = Math.max(f.cw/im.w, f.ch/im.h)*L.scale; return {w:im.w*s, h:im.h*s}; }
+  const px = L.size/100*f.ch; xfCtx.font = (L.weight||700)+' '+px+'px '+L.font;
+  const lines = String(L.text).split('\n'); let w = 0; lines.forEach(l=>{ w = Math.max(w, xfCtx.measureText(l).width); });
+  return {w:w+px*.3, h:lines.length*px*1.3};
+}
+function updateXf(){
+  const L = xfLayer(), f = FC.front, P = L && f && xfPlane(), B = P && xfSize(L,f);
+  if(!B || !(P.w>2)){ if(xfEl) xfEl.style.display = 'none'; return; }
+  if(!xfEl){
+    xfEl = document.createElement('div'); xfEl.className = 'xf'; xfEl.innerHTML = '<i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i><i data-h="rot" title="تدوير"></i>';
+    $('#overlay').appendChild(xfEl);
+    xfEl.addEventListener('pointerdown', e=>{
+      const Lc = xfLayer(), Pc = xfPlane(); if(!Lc || !Pc) return; e.preventDefault(); e.stopPropagation(); xfEl.setPointerCapture(e.pointerId);
+      const r = xfEl.getBoundingClientRect(), c = {x:r.left+r.width/2, y:r.top+r.height/2};
+      xfDrag = {h:e.target.dataset.h||'move', L:Lc, P:Pc, sx:e.clientX, sy:e.clientY, x0:Lc.x, y0:Lc.y, r0:Lc.rot||0, s0:Lc.type==='image' ? Lc.scale : Lc.size, d0:Math.max(8,Math.hypot(e.clientX-c.x,e.clientY-c.y)), a0:Math.atan2(e.clientY-c.y,e.clientX-c.x), c, moved:false};
+    });
+    xfEl.addEventListener('pointermove', e=>{
+      const d = xfDrag; if(!d) return; d.moved = true; const L2 = d.L;
+      if(d.h==='move'){ L2.x = clamp(d.x0+(e.clientX-d.sx)/d.P.w,-.2,1.2); L2.y = clamp(d.y0+(e.clientY-d.sy)/d.P.h,-.2,1.2); }
+      else if(d.h==='rot'){ let a = d.r0+(Math.atan2(e.clientY-d.c.y,e.clientX-d.c.x)-d.a0)*180/Math.PI; if(e.shiftKey) a = Math.round(a/15)*15; L2.rot = Math.round(((a+180)%360+360)%360-180); }
+      else{ const k = Math.hypot(e.clientX-d.c.x,e.clientY-d.c.y)/d.d0; if(L2.type==='image') L2.scale = clamp(d.s0*k,.02,6); else L2.size = clamp(d.s0*k,1,80); }
+      drawFace('front'); hooks.layers(true);
+    });
+    const end = ()=>{ const d = xfDrag; xfDrag = null; if(d && d.moved) hooks.changed(); };
+    xfEl.addEventListener('pointerup', end); xfEl.addEventListener('pointercancel', end);
+  }
+  const k = P.w/f.cw, w = B.w*k+10, h = B.h*k+10;
+  Object.assign(xfEl.style, {display:'block', left:(P.x+L.x*P.w)+'px', top:(P.y+L.y*P.h)+'px', width:w+'px', height:h+'px', transform:'translate(-50%,-50%) rotate('+(L.rot||0)+'deg)'});
+}
 function updateOverlay(){
   const w = stage.clientWidth, h = stage.clientHeight, v = new THREE.Vector3();
   const place = (el,p)=>{ v.copy(p).project(cam); const vis = v.z<1; el.style.display = vis?'':'none'; el.style.left = ((v.x+1)/2*w)+'px'; el.style.top = ((1-v.y)/2*h)+'px'; };
-  dimLabels.forEach(l=>place(l.el,l.p));
+  dimLabels.forEach(l=>place(l.el,l.p)); updateXf();
   state.pins.forEach(p=>{ if(p.el) place(p.el, new THREE.Vector3(...p.pos)); if(p.pop && p.pop.isConnected){ const x=parseFloat(p.el.style.left), y=parseFloat(p.el.style.top); p.pop.style.left = clamp(x-115,6,w-236)+'px'; p.pop.style.top = clamp(y+8,6,h-170)+'px'; } });
 }
 function bgCss(){
@@ -1725,6 +1794,7 @@ function pick(e, wantKey){
   }
   return null;
 }
+function hitAny(e){ rc.setFromCamera(ndc(e), cam); return rc.intersectObjects(root.children, true).some(h=>h.object.isMesh && h.object.visible && h.object.name!=='sh2d'); }
 function uvToFace(h,key){
   const f = FC[key]; if(!f || !h.uv) return null;
   const x = (((h.uv.x*f.tex.repeat.x + f.tex.offset.x) % 1) + 1) % 1;
@@ -1775,7 +1845,7 @@ function endPtr(e){
   if(di.mode==='layer' && di.moved) hooks.changed();
   else if(!di.moved && e.type==='pointerup' && e.button===0 && di.mode!=='pinch'){
     if(tool==='comment'){ const p = pick(e); if(p){ hooks.pinAdd(p.hit.point); } }
-    else{ const p = pick(e); if(p){ selectFace(p.key, true); } }
+    else{ const p = pick(e); if(p){ selectFace(p.key, true); hooks.menu(e, p); } else hooks.menu(hitAny(e) ? e : null); }
   }
 }
 canvasEl.addEventListener('pointerup', endPtr); canvasEl.addEventListener('pointercancel', endPtr);
@@ -1814,7 +1884,7 @@ function loop(now){
 function renderNow(){ dirty = false; render(); updateOverlay(); }
 return {is2D,renderNow,drawLayer,BLENDS,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
   drawFace,redrawAll,ensureFaces,applyMaterialProps,applyLights,rebuild,fitCamera,applyOpen,animateOpen,applyBg,bgCss,drawBG,renderComposite,
-  CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,
+  CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,setDimHi,
   get tool(){return tool}, set tool(v){tool = v; hooks.tool(v);},
   get dirty(){return dirty}, set dirty(v){dirty = v},
   get recording(){return recording}, set recording(v){recording = v},
@@ -2129,6 +2199,48 @@ function buildRealMat(b){
     }
   }
 }
+/* — click-on-model menu: upload images / custom size (Pacdora-style) — */
+let ctxEl = null;
+function closeCtx(){ if(ctxEl){ ctxEl.remove(); ctxEl = null; } X.setDimHi(null); }
+const sizable = () => { const d = MODELS[state.model]; return !(d.custom || d.prof); };
+function ctxPlace(cx, cy){
+  const r = X.stage.getBoundingClientRect(), w = ctxEl.offsetWidth || 220, h = ctxEl.offsetHeight || 100;
+  ctxEl.style.left = clamp(cx-r.left-w/2, 8, Math.max(8, r.width-w-8))+'px'; ctxEl.style.top = clamp(cy-r.top+12, 8, Math.max(8, r.height-h-8))+'px';
+}
+function showCtx(e){
+  closeCtx(); if(!e || X.is2D() || e.__noctx) return;
+  ctxEl = el('<div class="ctxm" role="menu"><button type="button" class="it" data-a="up">'+ico('upload')+'<span>رفع صورك</span></button>'+(sizable() ? '<button type="button" class="it" data-a="size">'+ico('edit')+'<span>حجم مخصص</span></button>' : '')+'</div>');
+  $('#overlay').appendChild(ctxEl); const px = e.clientX, py = e.clientY; ctxPlace(px,py);
+  ctxEl.addEventListener('pointerdown', ev=>ev.stopPropagation());
+  ctxEl.addEventListener('click', ev=>{
+    const b = ev.target.closest('[data-a]'); if(!b) return;
+    if(b.dataset.a==='up'){ closeCtx(); $('#fImg').click(); }
+    else showSizePop(px,py);
+  });
+}
+function showSizePop(px,py){
+  const def = MODELS[state.model], tube = !!(def.round || def.rot), d0 = {...state.dims}; let unit = 'mm';
+  const cv = (v,u)=>u==='in' ? Math.round(v/25.4*100)/100 : Math.round(v*10)/10, toMm = (v,u)=>u==='in' ? v*25.4 : v;
+  ctxEl.innerHTML = '<div class="szp"><h4>حجم مخصص</h4><div class="u"><button type="button" data-u="mm" aria-pressed="true">mm</button><button type="button" data-u="in" aria-pressed="false">in</button></div>'+
+    '<div class="f3">'+[['L','الطول'],['W','العرض'],['H','الارتفاع']].map(([k,n])=>'<label data-k="'+k+'"><span>'+n+'</span><input type="number" step="any" min="1" data-k="'+k+'"'+(tube&&k==='W'?' disabled':'')+'></label>').join('')+'</div><button type="button" class="btn primary go" disabled>تطبيق</button></div>';
+  const ins = $$('input',ctxEl), go = $('.go',ctxEl), lbs = $$('label',ctxEl);
+  const fill = ()=>ins.forEach(i=>{ i.value = cv(d0[i.dataset.k],unit); });
+  const hi = k=>{ X.setDimHi(k); lbs.forEach(l=>l.classList.toggle('hi', l.dataset.k===k)); };
+  const changed = ()=>ins.some(i=>i.value!=='' && Math.abs(toMm(+i.value,unit)-d0[i.dataset.k])>.05);
+  fill(); ctxPlace(px,py);
+  ins.forEach(i=>{ i.addEventListener('focus',()=>{ hi(i.dataset.k); i.select(); }); i.addEventListener('input',()=>{ go.disabled = !changed(); if(tube && i.dataset.k==='L'){ const w = ins.find(x=>x.dataset.k==='W'); if(w) w.value = i.value; } }); i.addEventListener('keydown',ev=>{ if(ev.key==='Enter' && !go.disabled) go.click(); if(ev.key==='Escape'){ ev.stopPropagation(); closeCtx(); } }); });
+  $$('.u button',ctxEl).forEach(b=>b.onclick = ()=>{ const was = unit; unit = b.dataset.u; ins.forEach(i=>{ if(i.value!=='') d0 && (i.value = cv(toMm(+i.value,was),unit)); }); $$('.u button',ctxEl).forEach(x=>x.setAttribute('aria-pressed', x===b)); go.disabled = !changed(); });
+  go.onclick = ()=>{
+    const v = {}; ins.forEach(i=>{ const n = toMm(+i.value,unit); v[i.dataset.k] = isFinite(n) && n>0 ? clamp(dimRound(n), 5, 900) : d0[i.dataset.k]; });
+    if(tube) v.W = v.L;
+    if(X.isReal()){ const r = X.ensureReal(def); r.T = {L:v.L, W:v.W, H:v.H}; }
+    else state.dims = {L:v.L, W:v.W, H:v.H};
+    X.rebuild(true); X.fitCamera(true); updateAccValues(); const bd = $('.acc[data-acc="dims"].open .body',P); if(bd) buildDimsBody(bd); commit(); closeCtx();
+  };
+  hi('L'); setTimeout(()=>ins[0].focus(),30);
+}
+hooks.menu = e=>{ if(!e) closeCtx(); else showCtx(e); };
+{ const cl = ev=>{ if(ctxEl && !ctxEl.contains(ev.target)) closeCtx(); }; document.addEventListener('pointerdown', cl, true); offs.push(()=>document.removeEventListener('pointerdown', cl, true)); }
 function buildCustomDims(b){
   const d = state.dims;
   b.innerHTML = '<p class="hint" style="margin:0 0 8px">الأبعاد: <b dir="ltr">'+d.L+' × '+d.W+' × '+d.H+' مم</b></p><div id="rpar"></div>';
@@ -2140,7 +2252,7 @@ function buildRealDims(b){
   const host = $('#rpar', b);
   if(!(m.params || []).length){ host.innerHTML = '<p class="hint">هذا النموذج بقياس ثابت.</p>'; return; }
   m.params.forEach(p=>{
-    const w = slider(p.l+' (سم)', p.min, p.max, p.step, r.P[p.k], v=>(+v).toFixed(1), v=>{ r.P[p.k] = +v; X.rebuild(false); updateAccValues(); const hb = $('b[dir=ltr]', b); if(hb) hb.textContent = state.dims.L+' × '+state.dims.W+' × '+state.dims.H+' مم'; }, ()=>{ X.fitCamera(true); commit(); });
+    const w = slider(p.l+' (سم)', p.min, p.max, p.step, r.P[p.k], v=>(+v).toFixed(1), v=>{ r.P[p.k] = +v; r.T = null; X.rebuild(false); updateAccValues(); const hb = $('b[dir=ltr]', b); if(hb) hb.textContent = state.dims.L+' × '+state.dims.W+' × '+state.dims.H+' مم'; }, ()=>{ X.fitCamera(true); commit(); });
     host.appendChild(w);
   });
 }
@@ -2222,7 +2334,7 @@ function buildEditor(){
   { const bw = el('<label class="opt"><span>التداخل مع المنتج</span><select aria-label="نمط التداخل"></select></label>'), bs = bw.querySelector('select'); BLENDS.forEach(([k,n])=>bs.appendChild(el('<option value="'+k+'">'+n+'</option>'))); bs.value = L.blend || 'normal'; bs.addEventListener('change',()=>{ L.blend = bs.value; redraw(); commit(); }); box.appendChild(bw); }
   if(L.type!=='pattern') box.appendChild(el('<p class="hint" style="margin:0">لتحريك الطبقة مباشرة على العلبة استخدم أداة النقل في الشريط الجانبي.</p>'));
 }
-hooks.layers = live => { const L = X.activeLayer(); if(!L) return; ['x','y'].forEach(k=>{ if(edRefs[k]) edRefs[k].set(L[k]); }); };
+hooks.layers = live => { const L = X.activeLayer(); if(!L) return; ['x','y','scale','size','rot'].forEach(k=>{ if(edRefs[k]) edRefs[k].set(L[k]); }); };
 
 /* image upload */
 async function loadImageFile(file){
@@ -2240,7 +2352,7 @@ async function addImageFile(file, faceKey){
   try{
     const id = await loadImageFile(file), all = ($('#upTarget')||{}).value==='all' && !faceKey, last = {};
     const keys = all ? Object.values(FC).filter(f=>!f.inner).map(f=>f.key) : [faceKey || state.sel.face];
-    keys.forEach(k=>{ const L = mkImage(id); (state.faces[k] || (state.faces[k] = {layers:[]})).layers.push(L); last[k] = L.id; X.drawFace(k); });
+    keys.forEach(k=>{ const L = mkImage(id, X.is2D() ? {scale:.4} : null); (state.faces[k] || (state.faces[k] = {layers:[]})).layers.push(L); last[k] = L.id; X.drawFace(k); });
     if(faceKey) state.sel.face = faceKey;
     const ls = curLayers(); state.sel.layer = last[state.sel.face] || (ls.length ? ls[ls.length-1].id : null);
     commit(); refreshAll(); toast(all ? 'تم تطبيق الصورة على كل الأوجه' : 'تمت إضافة الصورة إلى '+FC[state.sel.face].label);
