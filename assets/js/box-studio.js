@@ -103,9 +103,23 @@ const BoxStudio = (() => {
 #bs .card small{color:var(--muted);font-size:11.5px;direction:ltr}
 #bs .card .rl{width:96px;height:84px;display:grid;place-items:center;color:var(--muted)}
 #bs .card .rl img{max-width:100%;max-height:100%;object-fit:contain}
-#bs .rrole{display:grid;grid-template-columns:1fr 1.3fr 34px;gap:6px;align-items:center;margin-top:8px;font-size:12.5px}
-#bs .rrole select{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);padding:0 6px;font-size:12px;min-width:0}
-#bs .rrole input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:none}
+#bs .rrole{display:grid;grid-template-columns:64px minmax(0,1fr) 34px;gap:10px;align-items:center;margin-top:10px;font-size:12.5px}
+#bs .rrole>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#bs .rrole select{height:34px;border:1px solid rgba(255,255,255,.22);border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 4px rgba(0,0,0,.22);color:var(--ink);padding:0 10px;font-size:12px;min-width:0;backdrop-filter:blur(6px);transition:transform .15s,border-color .15s}
+#bs .rrole select:hover{transform:translateY(-2px);border-color:var(--accent)}
+#bs .rrole input[type=color],#bs .cpk input[type=color]{-webkit-appearance:none;appearance:none;width:34px;height:34px;padding:0;border:2px solid rgba(255,255,255,.32);border-radius:50%;background:none;cursor:pointer;overflow:hidden;box-shadow:inset 0 2px 3px rgba(255,255,255,.35),inset 0 -3px 5px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.3);transition:transform .15s}
+#bs .rrole input[type=color]:hover{transform:translateY(-2px)}
+#bs .rrole input[type=color]::-webkit-color-swatch-wrapper,#bs .cpk input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+#bs .rrole input[type=color]::-webkit-color-swatch,#bs .cpk input[type=color]::-webkit-color-swatch{border:none;border-radius:50%}
+#bs .rrole input[type=color]::-moz-color-swatch{border:none;border-radius:50%}
+#bs .sw.cs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px}
+#bs .csb{width:32px;height:32px;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.28);cursor:pointer;position:relative;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 5px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.3);transition:transform .15s,border-color .15s}
+#bs .csb i{position:absolute;inset:0;border-radius:50%;display:block}
+#bs .csb:hover{transform:translateY(-2px)}
+#bs .csb[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--g-mint-rgb,198,254,23),.35),inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 5px rgba(0,0,0,.3)}
+#bs .cpk{position:relative;width:34px;height:34px;border-radius:50%;background:conic-gradient(#f43f5e,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#f43f5e);box-shadow:inset 0 2px 3px rgba(255,255,255,.4),0 2px 6px rgba(0,0,0,.3);display:inline-block;transition:transform .15s}
+#bs .cpk:hover{transform:translateY(-2px)}
+#bs .cpk input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 #bs .cats{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
 #bs .cats button{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:0 11px;height:30px;font-size:12.5px;white-space:nowrap}
 #bs .cats button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
@@ -2084,10 +2098,10 @@ function buildRealMat(b){
   const def = MODELS[state.model], m = X.realModel(def), r = X.ensureReal(def); if(!m) return;
   const main = m.main || 'body', ml = m.matList || [], names = {body:'الجسم',cap:'الغطاء',liquid:'المحتوى',accent:'التفاصيل',inside:'الداخل',pump:'المضخّة'};
   const sw = (cols, cur, onPick)=>{
-    const w = el('<div class="sw"></div>');
-    cols.forEach(c=>{ const bt = el('<button type="button" class="swb" aria-pressed="'+(c.toLowerCase()===String(cur).toLowerCase())+'" style="padding:0;width:30px;height:30px"><i style="background:'+c+';width:100%;height:100%;display:block;border-radius:inherit"></i></button>'); bt.title = c; bt.onclick = ()=>onPick(c, true); w.appendChild(bt); });
-    const pk = el('<input type="color" value="'+(/^#[0-9a-f]{6}$/i.test(cur) ? cur : '#ffffff')+'" title="لون مخصص" style="width:34px;height:30px;padding:0;border:1px solid var(--line);border-radius:8px;background:none">');
-    pk.addEventListener('input', ()=>onPick(pk.value, false)); pk.addEventListener('change', ()=>commit()); w.appendChild(pk); return w;
+    const w = el('<div class="sw cs"></div>');
+    cols.forEach(c=>{ const bt = el('<button type="button" class="csb" aria-pressed="'+(c.toLowerCase()===String(cur).toLowerCase())+'"><i style="background:'+c+'"></i></button>'); bt.title = c; bt.onclick = ()=>onPick(c, true); w.appendChild(bt); });
+    const cw = el('<label class="cpk" title="لون مخصص"><input type="color" value="'+(/^#[0-9a-f]{6}$/i.test(cur) ? cur : '#ffffff')+'"></label>'), pk = cw.querySelector('input');
+    pk.addEventListener('input', ()=>onPick(pk.value, false)); pk.addEventListener('change', ()=>commit()); w.appendChild(cw); return w;
   };
   b.innerHTML = '';
   const t1 = el('<h3 style="margin-top:0">لون '+esc((m.roles && m.roles[main] && m.roles[main].n) || names[main])+'</h3>'); b.appendChild(t1);
