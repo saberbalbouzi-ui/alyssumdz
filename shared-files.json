@@ -69,6 +69,7 @@
     "assets/js/box-designer.js",
     "assets/js/box-profiles.js",
     "assets/js/box-studio.js",
+    "assets/js/mockup-studio.js",
     "assets/js/vendor/three.module.min.js",
     "assets/js/vendor/three.r128.min.js",
     "assets/js/vendor/three.LICENSE.txt",
