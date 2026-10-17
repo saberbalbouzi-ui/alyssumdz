@@ -772,7 +772,7 @@ Object.keys(MODELS).forEach(k=>{ if(!MODELS[k].acc && MODELS[k].base && MODELS[M
 
 /* ───────────── النماذج الواقعية (محرّك الموكاب): تحلّ محل المكافئ القديم وتحمل طبقات الملصقات ───────────── */
 const MK = (typeof MockupStudio !== 'undefined' && MockupStudio.host && MockupStudio.host.MODELS.length) ? MockupStudio.host : null;
-const REAL_IDS = ['flip','shampoo','tub','mug','tee','ringer','oversize','polo','hoodie','cap','tote'];
+const REAL_IDS = ['flip','shampoo','tub','mug'];
 const REAL_CAT = {jar:'jars',cream:'jars',tub:'jars',tube:'tubes',stick:'tubes',can:'cans','can-slim':'cans',bowl:'cups',mug:'cups',doypack:'bags',sachet:'bags',bag:'bags','bag-gift':'bags',tote:'bags',book:'prints',card:'prints',phone:'devices'};
 const REAL_CAT2 = {box:'boxes',bottle:'bottles',pouch:'bags',apparel:'clothes',cup:'cups',misc:'other',acc:'cups'};
 const REAL_H = {flip:130,shampoo:190,tub:150,mug:95,tee:720,ringer:720,oversize:760,polo:720,hoodie:780,cap:105,tote:600};
@@ -780,11 +780,12 @@ const REPLACED = ['water','wine','dropper','spray','shampoo','cream','soda','sli
 if(MK){
   const old = Object.entries(MODELS); old.forEach(([k])=>delete MODELS[k]);
   MK.MODELS.forEach(m=>{
-    if(!(/^r-/.test(m.id) || REAL_IDS.includes(m.id))) return;
+    if(m.cat === 'apparel' || !(/^r-/.test(m.id) || REAL_IDS.includes(m.id))) return;
     const id0 = m.id.replace(/^r-/,'');
     MODELS['mk_'+m.id.replace(/-/g,'_')] = {cat:REAL_CAT[id0] || REAL_CAT2[m.cat] || 'other', name:m.n, code:'MK-'+id0.toUpperCase().slice(0,9), real:m.id, tag:m.tag||'', dims:{L:100,W:100,H:100}, flap:.2, openMax:100, t:1, mat:'white', mats:[], open0:m.open0||0, hmm:REAL_H[m.id], faces:()=>[]};
   });
-  old.forEach(([k,v])=>{ if(!REPLACED.includes(k)) MODELS[k] = v; });
+  /* بلا نماذج قديمة ولا ملابس ولا قوالب قص في القائمة: الواقعية فقط؛ قوالب القص (pf_) و«mailer» مخفية داخلياً (التحويل من تبويب القوالب ومشاريع قديمة) */
+  old.forEach(([k,v])=>{ if(v.prof){ v.hidden = true; MODELS[k] = v; } else if(k === 'mailer'){ v.hidden = true; MODELS[k] = v; } });
 }
 
 const MATS = {
@@ -2161,22 +2162,23 @@ function selectModel(k){
   if(prev.cat !== m.cat || !!prev.real !== !!m.real || m.custom){ state.faces = {}; state.sel.layer = null; }
   syncBar(); X.rebuild(true);
   if(!FC[state.sel.face]) X.selectFace(Object.keys(FC)[0]);
-  syncBar(); commit(); renderModels(); toast('تم اختيار: '+m.name);
+  syncBar(); commit(); renderModels(); if(!_quietSel) toast('تم اختيار: '+m.name);
 }
+let _quietSel = false;
 function dimText(m){ if(m.custom) return 'مجسّم من الأدوات'; if(m.real) return 'نموذج واقعي'+(m.tag ? ' · '+m.tag : ''); if(m.prof) return 'قالب قص · '+[m.dims.L,m.dims.W,m.dims.H].filter(Boolean).join('×')+' mm'; return m.rot ? 'Ø'+m.dims.L+' × '+m.dims.H+' mm' : m.dims.L+'×'+m.dims.W+'×'+m.dims.H+' mm'; }
 function renderModels(){
   const cats = X.CATS, counts = {};
-  Object.values(MODELS).forEach(m=>{ counts[m.cat] = (counts[m.cat]||0)+1; });
+  Object.values(MODELS).forEach(m=>{ if(!m.hidden) counts[m.cat] = (counts[m.cat]||0)+1; });
   P.innerHTML = '<h2>النماذج</h2><p class="hint" style="margin:-6px 0 12px">اختر فئة ثم نموذجًا. تبقى التصاميم عند التبديل بين نماذج الفئة نفسها.</p><div class="cats" id="cats" role="group" aria-label="فئات النماذج"></div><div class="cards" id="mc"></div>';
   const cg = $('#cats');
   cats.forEach(c=>{
-    const n = c.k==='all' ? Object.keys(MODELS).length : (counts[c.k]||0); if(!n) return;
+    const n = c.k==='all' ? Object.values(MODELS).filter(m=>!m.hidden).length : (counts[c.k]||0); if(!n) return;
     const b = el('<button type="button" aria-pressed="'+(modelCat===c.k)+'">'+c.n+' <small style="opacity:.7">'+n+'</small></button>');
     b.onclick = ()=>{ modelCat = c.k; renderModels(); }; cg.appendChild(b);
   });
   const g = $('#mc');
   Object.entries(MODELS).forEach(([k,m])=>{
-    if(modelCat!=='all' && m.cat!==modelCat) return;
+    if(m.hidden || (modelCat!=='all' && m.cat!==modelCat)) return;
     const c = el('<button type="button" class="card" aria-pressed="'+(state.model===k)+'">'+modelIcon(k)+'<b style="font-weight:600">'+m.name+'</b><small>'+dimText(m)+'</small></button>');
     c.onclick = ()=>selectModel(k); g.appendChild(c);
   });
@@ -2511,6 +2513,7 @@ const co = host.opts && host.opts.custom;
 if(co){ X.setCustom(co); selectModel('custom3d'); X.fitCamera(); showTab('edit'); }
 else if(host.opts && host.opts.model && MODELS[host.opts.model]){ selectModel(host.opts.model); X.fitCamera(); showTab('edit'); }
 const po = host.opts && host.opts.profile;
+if(!co && !po && X.MK && MODELS.mailer && MODELS.mailer.hidden && !(host.opts && host.opts.model && MODELS[host.opts.model]) && MODELS.mk_r_box_ship){ _quietSel = true; selectModel('mk_r_box_ship'); _quietSel = false; X.fitCamera(); showTab('edit'); }
 if(po && MODELS['pf_'+po.key]){
   const k = 'pf_'+po.key, m = MODELS[k]; state.model = k; state.dims = {...m.dims}; state.flap = m.flap; state.open = 1; state.openMax = 115; state.t = m.t || 1; state.accents = {}; state.material = 'kraft'; state.faces = {};
   state.pf[po.key] = Object.assign({}, po.vals || {}); if(po.color && /^#[0-9a-f]{6}$/i.test(po.color) && po.color.toLowerCase() !== '#f1ece0'){ state.material = 'custom'; state.matColor = po.color; }
