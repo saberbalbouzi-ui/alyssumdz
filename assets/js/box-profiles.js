@@ -404,6 +404,11 @@ const MODELS={
       const mats = fold3d(out, 1), cb = out.comps.map(c => { const mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9]; c.ids.forEach(i => out.faces[i].poly.forEach(q => { const w = mP(mats[i], [q[0], q[1], 0]); for (let k = 0; k < 3; k++) { mn[k] = Math.min(mn[k], w[k]); mx[k] = Math.max(mx[k], w[k]); } })); return { mn, mx }; });
       const gap = 0.12 * Math.max(...cb.map(b => Math.max(b.mx[0] - b.mn[0], b.mx[1] - b.mn[1]))); let cx = 0; out.offs = cb.map(b => { const o = [cx - b.mn[0], -b.mn[1], 0]; cx += b.mx[0] - b.mn[0] + gap; return o; });
     }
+    /* الوجوه الرئيسية (6 للعلبة المتصلة، 5 لكل قطعة إن تعددت) تحمل التصميم؛ الباقي ألسنة وأجنحة تُطوى تحتها (rank = عمق التداخل تحت الوجه الرئيسي) */
+    { const many = out.comps.length > 1, K = many ? 5 : 6, allMain = rule === "pyr" || rule === "flat" || res.length <= 6;
+      res.forEach(f => { f.main = true; f.rank = 0; });
+      if (!allMain) out.comps.forEach(c => { c.ids.slice().sort((a, b) => res[b].area - res[a].area).slice(K).forEach(i => { res[i].main = false; }); });
+      const rk = i => { const f = res[i]; if (f.main || f.parent < 0) return 0; return 1 + rk(f.parent); }; res.forEach((f, i) => { f.rank = f.main ? 0 : Math.max(1, rk(i)); }); out.nMain = res.filter(f => f.main).length; }
     { const cb2 = netBounds(out, 1).size; out.stand = out.stand || cb2[2] < 0.45 * Math.min(cb2[0], cb2[1]); } /* قاعدة عريضة قليلة العمق (صينية/ظرف/هرم): تُوضع على قاعدتها */
     return out;
   }
