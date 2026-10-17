@@ -196,7 +196,8 @@ const Pack3D = (() => {
         g.matrixAutoUpdate = false; groups.push(g); G.add(g);
       });
       const cb = B.bounds(net, 1); G.scale.setScalar(3.4 / Math.max(cb.size[0], cb.size[1], cb.size[2], 1)); if (net.stand) G.rotation.x = Math.PI / 2; /* هرم/صينية: القاعدة على الأرض */
-      return { g: G, apply: t => { const mats = B.fold(net, t); groups.forEach((g, i) => { g.matrix.fromArray(mats[i]); g.matrixWorldNeedsUpdate = true; }); } };
+      /* الألسنة والأجنحة (غير الرئيسية) تستقر تحت الوجوه الرئيسية: إزاحة للداخل عكس ناظمها بسماكة الورق × عمق تداخلها */
+      return { g: G, apply: t => { const mats = B.fold(net, t), k = Math.max(0, Math.min(1, t)), kk = k * k * (3 - 2 * k); groups.forEach((g, i) => { const m = mats[i].slice(), f = net.faces[i]; if (f.main === false && kk > 0) { const d = (th * 1.08 + size * 0.0013) * Math.max(1, f.rank || 1) * kk; m[12] -= m[8] * d; m[13] -= m[9] * d; m[14] -= m[10] * d; } g.matrix.fromArray(m); g.matrixWorldNeedsUpdate = true; }); } };
     }
     const so = net.solid, mat = new TT.MeshPhysicalMaterial({ color: new TT.Color(B.color || "#f1ece0"), roughness: rg, clearcoat: gl, clearcoatRoughness: 0.25, envMapIntensity: 0.85, side: TT.DoubleSide }), grp = new TT.Group(); let lid = null;
     if (so.kind === "frustum") grp.add(new TT.Mesh(new TT.CylinderGeometry(so.rt, so.rb, so.H, 96, 1, true), mat));

@@ -129,6 +129,14 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
   ok("زر «تحميل صورة منتج 2D» ظاهر في قسم النماذج", await p.evaluate(() => !!document.querySelector("#bs #up2d")));
   const png = await p.evaluate(async () => { const c = document.createElement("canvas"); c.width = 400; c.height = 300; const x = c.getContext("2d"); x.fillStyle = "#2040e0"; x.beginPath(); x.ellipse(200, 150, 150, 100, 0, 0, 7); x.fill(); const b = await new Promise(r => c.toBlob(r, "image/png")); return Array.from(new Uint8Array(await b.arrayBuffer())); });
   await p.setInputFiles("#bs #fProd", { name: "prod.png", mimeType: "image/png", buffer: Buffer.from(png) }); await p.waitForTimeout(1500);
+  ok("وضع 2D: الواجهة تصير 2D فقط (التنسيق/الفيديو/شريط الفتح مخفية)", await p.evaluate(() => { const R = document.querySelector("#bs"), hid = s => getComputedStyle(document.querySelector(s)).display === "none"; return R.classList.contains("d2") && hid('#bs .tab[data-tab="layout"]') && hid('#bs .tab[data-tab="video"]') && hid("#bs #bOrtho") && hid("#bs .bar .open"); }));
+  const cb = await p.evaluate(() => { const r = BoxStudio.inst.canvasEl.getBoundingClientRect(); return { x: r.left, y: r.top }; }), cam0 = await p.evaluate(() => [BoxStudio.inst.cm.theta, BoxStudio.inst.cm.phi]);
+  await p.mouse.move(cb.x + 40, cb.y + 40); await p.mouse.down(); await p.mouse.move(cb.x + 160, cb.y + 120, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(150);
+  ok("وضع 2D: الدوران معطّل والعرض أمامي", await p.evaluate(c0 => { const X = BoxStudio.inst; return X.is2D() && Math.abs(X.cm.theta - c0[0]) < 1e-6 && Math.abs(X.cm.phi - c0[1]) < 1e-6 && Math.abs(X.cm.theta) < 1e-6 && X.cm.phi > 1.5; }, cam0));
+  ok("وضع 2D: لوح ظل المنتج موجود", await p.evaluate(() => !!BoxStudio.inst.state.sh2d.on));
+  await p.click('#bs .tab[data-tab="bg"]'); await p.waitForTimeout(300);
+  ok("وضع 2D: خيارات ظل المنتج (نعومة/قوة/إزاحة) في تبويب الخلفية", await p.evaluate(() => /نعومة الظل/.test(document.querySelector("#bs #shHost").innerText) && /إزاحة أفقية/.test(document.querySelector("#bs #shHost").innerText)));
+  await p.click('#bs .tab[data-tab="edit"]'); await p.waitForTimeout(200);
   ok("رفع صورة المنتج 2D ينشئ لوحاً بوجه واحد قابل للملصقات داخل شفافيته", await p.evaluate(() => { const I = BoxStudio.inst; return I.state.model === "custom3d" && Object.keys(I.FC).join() === "front" && I.FC.front.clip === true && I.FC.front.decal === true; }));
   const px2 = async (x, y) => p.evaluate(([x, y]) => { const f = BoxStudio.inst.FC.front; return Array.from(f.ctx.getImageData(Math.round(x * f.cw), Math.round(y * f.ch), 1, 1).data); }, [x, y]);
   const q0 = await px2(.5, .5), q1 = await px2(.01, .01); ok("مركز المنتج معتم وزاويته شفافة", q0[3] === 255 && q1[3] === 0, [q0, q1]);
