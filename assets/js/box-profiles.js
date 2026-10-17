@@ -412,11 +412,11 @@ const MODELS={
     { const cb2 = netBounds(out, 1).size; out.stand = out.stand || cb2[2] < 0.45 * Math.min(cb2[0], cb2[1]); } /* قاعدة عريضة قليلة العمق (صينية/ظرف/هرم): تُوضع على قاعدتها */
     return out;
   }
-  /* مصفوفة كل وجه عند تقدّم الطيّ t∈[0,1]؛ الأعمق يتأخر قليلاً (تتابع طبيعي). الطيّ نحو الداخل (خلف الورقة): المحور z×n */
+  /* مصفوفة كل وجه عند تقدّم الطيّ t∈[0,1]؛ الأعمق (الألسنة والأجنحة) يُطوى أولاً للداخل ثم تُغلق الجدران عليه. الطيّ نحو الداخل (خلف الورقة): المحور z×n */
   function fold3d(net, t) {
     const mats = new Array(net.faces.length), md = Math.max(1, net.maxDepth), st = 0.12, span = Math.max(0.4, 1 - st * (md - 1));
     net.faces.map((f, i) => i).sort((a, b) => net.faces[a].depth - net.faces[b].depth).forEach(i => { const f = net.faces[i]; if (f.parent < 0) { mats[i] = mI(); return; }
-      const local = ease3((t - st * (f.depth - 1)) / span), axis = [-f.n[1], f.n[0], 0];
+      const local = ease3((t - st * (md - f.depth)) / span), axis = [-f.n[1], f.n[0], 0];
       mats[i] = mMul(mats[f.parent], mMul(mT(f.p[0], f.p[1], 0), mMul(mR(axis, f.ang * local), mT(-f.p[0], -f.p[1], 0)))); });
     if (net.offs) net.faces.forEach((f, i) => { const o = net.offs[f.comp]; if (o) mats[i] = mMul(mT(o[0] * t, o[1] * t, o[2] * t), mats[i]); });
     return mats;

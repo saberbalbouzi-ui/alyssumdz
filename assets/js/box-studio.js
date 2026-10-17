@@ -27,6 +27,7 @@ const BoxStudio = (() => {
 #bs :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #bs .app{height:100%;display:flex;flex-direction:column}
 #bs svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#bs.d2 .tab[data-tab="layout"],#bs.d2 .tab[data-tab="video"],#bs.d2 .tab[data-tab="presets"],#bs.d2 .bar .open,#bs.d2 #bOrtho,#bs.d2 #bDims,#bs.d2 .bar .vsep{display:none!important}
 #bs .top{position:relative;height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
 #bs .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:21px;letter-spacing:.01em;white-space:nowrap}
 #bs .brand .mark{width:34px;height:34px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
@@ -865,7 +866,7 @@ const state = {
   model:'mailer', dims:{L:315,W:202,H:62}, t:2.5, flap:.9, openMax:115,
   material:'kraft', matColor:'#2f6f9f', finish:'matte', open:0,
   faces:{}, bg:{kind:'radial',c1:'#dedcd8',c2:'#a9a8a4',imgId:null}, layout:'single',
-  shadow:true, shadowStrength:.3, ortho:false, dimsOn:false, light:1, env:.8, autoRotate:false,
+  shadow:true, shadowStrength:.3, sh2d:{on:true,blur:.35,op:.4,dx:.04,dy:-.05}, ortho:false, dimsOn:false, light:1, env:.8, autoRotate:false,
   sel:{face:'top',layer:null}, pins:[], accents:{}, pf:{}, real:null, cH:150
 };
 const IMG = new Map();           // id -> {src:canvas, w, h, name}
@@ -1098,7 +1099,7 @@ function initThree(){
 function applyLights(){
   if(isEng()){ hemi.intensity = .34*state.light; keyLight.intensity = .85*state.light; fillLight.intensity = .1*state.light; }
   else{ hemi.intensity = .46*state.light*Math.PI; keyLight.intensity = .72*state.light*Math.PI; fillLight.intensity = .22*state.light*Math.PI; }
-  floor.material.opacity = state.shadowStrength; floor.visible = state.shadow; keyLight.castShadow = state.shadow;
+  floor.material.opacity = state.shadowStrength; floor.visible = state.shadow && !is2D(); keyLight.castShadow = state.shadow && !is2D();
   Object.values(FC).forEach(f=>{ f.mat.envMapIntensity = state.env; });
   dirty = true;
 }
@@ -1488,6 +1489,7 @@ function buildReal(d, def){
   return {group:out, noOpen:!b.pose, update:o=>{ if(b.pose) b.pose(o); }};
 }
 let CUSTOM = null;
+const is2D = () => state.model === 'custom3d' && !!CUSTOM && CUSTOM.kind === '2d';
 function setCustom(c){
   CUSTOM = c;
   MODELS.custom3d = {cat:'custom', name:c.name || 'مجسّم من الأدوات', code:'3D-CUSTOM', custom:true, dims:{L:100,W:100,H:150}, flap:.2, openMax:100, t:1, mat:'white', mats:[], open0:0, faces:()=>[]};
@@ -1512,6 +1514,15 @@ function buildCustom(d, def){
   const c = bb.getCenter(new THREE.Vector3()), sz = bb.getSize(new THREE.Vector3());
   g.position.set(-c.x, -bb.min.y, -c.z);
   d.L = Math.max(1, Math.round(sz.x/S)); d.W = Math.max(1, Math.round(sz.z/S)); d.H = Math.max(1, Math.round(sz.y/S));
+  if(CUSTOM.kind === '2d' && fc && fc.front && state.sh2d && state.sh2d.on){
+    const sp = state.sh2d, cv = fc.front, k = Math.min(1, 512/Math.max(cv.width, cv.height)), w0 = Math.max(2, Math.round(cv.width*k)), h0 = Math.max(2, Math.round(cv.height*k)), pad = Math.round(Math.max(w0, h0)*.3);
+    const a = document.createElement('canvas'); a.width = w0; a.height = h0; const ax = a.getContext('2d'); ax.drawImage(cv,0,0,w0,h0); ax.globalCompositeOperation = 'source-in'; ax.fillStyle = '#000'; ax.fillRect(0,0,w0,h0);
+    const b = document.createElement('canvas'); b.width = w0+pad*2; b.height = h0+pad*2; const bx = b.getContext('2d'); bx.filter = 'blur('+Math.round(sp.blur*pad*.5)+'px)'; bx.drawImage(a,pad,pad);
+    const tx = new THREE.CanvasTexture(b); tx.colorSpace = THREE.SRGBColorSpace;
+    const ar = cv.width/cv.height, ph = 1+2*pad/h0, pw = ar*(1+2*pad/w0);
+    const sm = new THREE.Mesh(new THREE.PlaneGeometry(pw, ph), new THREE.MeshBasicMaterial({map:tx, transparent:true, opacity:sp.op, depthWrite:false}));
+    sm.position.set(sp.dx, sp.dy, -.004); sm.renderOrder = -1; sm.name = 'sh2d'; g.add(sm);
+  }
   return {group:out, noOpen:true, update:()=>{}};
 }
 function realBegin(){ realSeen = new Set(); realGlass = false; Object.values(FC).forEach(f=>{ f.rmats = []; }); }
@@ -1568,15 +1579,36 @@ function rebuild(fit){
     const wrap = new THREE.Group(); wrap.add(g);
     wrap.position.set((it.x||0)*u, it.y==='H' ? d.H*S : (it.y||0), (it.z||0)*u);
     wrap.rotation.y = it.ry||0; const sc = it.sc||1; wrap.scale.setScalar(sc);
-    root.add(wrap); anims.push({update:inst.update, it, noOpen:!!inst.noOpen});
+    root.add(wrap); anims.push({update:inst.update, it, noOpen:!!inst.noOpen, wrap});
   });
+  spaceLayout(lay, u);
   if(rl) realEnd(); else { useEnv(); keyLight.shadow.normalBias = .06; applyBgTex(); }
   applyOpen();
   const sh = Math.max(4, u*3.2); const sc = keyLight.shadow.camera;
   sc.left = -sh; sc.right = sh; sc.top = sh; sc.bottom = -sh; sc.near = .5; sc.far = 40; sc.updateProjectionMatrix();
   buildDims();
+  R.classList.toggle('d2', is2D());
   if(fit) fitCamera();
   dirty = true;
+}
+/* تباعد العلب في التنسيقات المتعددة: لكل علبة نصف قطر بصمتها الفعلية (مفتوحة الغطاء إن كانت تُفتح) فلا تتداخل مهما اختلف الحجم أو الدوران */
+function spaceLayout(lay, u){
+  const k = state.layout; if(!(k==='duo'||k==='trio'||k==='fan') || anims.length < 2) return;
+  const rad_ = a=>{
+    const w = a.wrap, ry = w.rotation.y; w.rotation.y = 0;
+    let r = 0; const meas = ()=>{ w.updateMatrixWorld(true); const b = new THREE.Box3().setFromObject(w); const sx = b.max.x-b.min.x, sz = b.max.z-b.min.z; r = Math.max(r, Math.hypot(sx, sz)/2); };
+    meas(); if(!a.noOpen && a.it.open){ try{ a.update(1); meas(); a.update(0); }catch(e){} }
+    w.rotation.y = ry; return r;
+  };
+  const R = anims.map(rad_), gap = .12*u, mid = k==='duo' ? 0 : 1;
+  const place = (i, x, z)=>{ anims[i].wrap.position.x = x; anims[i].wrap.position.z = z; };
+  if(k==='duo'){
+    const D = R[0]+R[1]+gap; place(0, -D/2, 0); place(1, D/2, .1*u);
+  }else{
+    const c = mid, l = 0, r = 2, zf = (k==='fan' ? .1 : .12)*u;
+    const dl = R[c]+R[l]+gap, dr = R[c]+R[r]+gap;
+    place(c, 0, 0); place(l, -Math.sqrt(Math.max(dl*dl - zf*zf, 0)), zf); place(r, Math.sqrt(Math.max(dr*dr - zf*zf, 0)), zf);
+  }
 }
 function fitCamera(keepAngles){
   const keep = state.open; state.open = Math.max(MODELS[state.model].prof ? .4 : .75, keep); applyOpen();
@@ -1584,7 +1616,7 @@ function fitCamera(keepAngles){
   state.open = keep; applyOpen();
   cm.target.copy(box.getCenter(new THREE.Vector3())); cm.target.y = Math.max(cm.target.y*.97, .05);
   cm.radius = sp.radius * (stage.clientWidth/stage.clientHeight < 1 ? 6.3 : 4.5);
-  if(!keepAngles){ cm.theta = .5; cm.phi = 1.1; }
+  if(is2D()){ cm.theta = 0; cm.phi = Math.PI/2; cm.radius = sp.radius*3.2; } else if(!keepAngles){ cm.theta = .5; cm.phi = 1.1; }
   keyLight.target.position.set(0,0,0); dirty = true;
 }
 
@@ -1719,7 +1751,7 @@ canvasEl.addEventListener('pointermove', e=>{
     return;
   }
   if(dragInfo.mode==='pan') panCam(dx,dy);
-  else{ cm.theta -= dx*.008; cm.phi = clamp(cm.phi-dy*.008, .06, Math.PI/2+.25); dirty = true; }
+  else if(!is2D()){ cm.theta -= dx*.008; cm.phi = clamp(cm.phi-dy*.008, .06, Math.PI/2+.25); dirty = true; }
 });
 function endPtr(e){
   if(!ptrs.has(e.pointerId)) return;
@@ -1742,6 +1774,7 @@ function selectFace(key, flash){
   hooks.select();
 }
 function setView(name){
+  if(is2D()) return;
   const v = {front:[0,1.32],side:[Math.PI/2,1.3],back:[Math.PI,1.32],top:[0,.08],three:[.55,1.1]}[name]; if(!v) return;
   const t0 = {th:cm.theta, ph:cm.phi}; tween(500,p=>{ cm.theta = t0.th+(v[0]-t0.th)*p; cm.phi = t0.ph+(v[1]-t0.ph)*p; });
 }
@@ -1760,12 +1793,12 @@ function loop(now){
   requestAnimationFrame(loop);
   const dt = Math.min(.05,(now-last)/1000); last = now;
   for(let i=tweens.length-1;i>=0;i--){ const tw = tweens[i], p = clamp((now-tw.t0)/tw.ms,0,1); tw.fn(ease(p)); dirty = true; if(p>=1){ tweens.splice(i,1); tw.done && tw.done(); } }
-  if(state.autoRotate && !recording){ cm.theta += dt*.45; dirty = true; }
+  if(state.autoRotate && !recording && !is2D()){ cm.theta += dt*.45; dirty = true; }
   if(dirty && renderer){ dirty = false; render(); updateOverlay(); }
 }
 
 function renderNow(){ dirty = false; render(); updateOverlay(); }
-return {renderNow,drawLayer,BLENDS,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
+return {is2D,renderNow,drawLayer,BLENDS,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
   drawFace,redrawAll,ensureFaces,applyMaterialProps,applyLights,rebuild,fitCamera,applyOpen,animateOpen,applyBg,bgCss,drawBG,renderComposite,
   CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,
   get tool(){return tool}, set tool(v){tool = v; hooks.tool(v);},
@@ -1787,7 +1820,7 @@ if(!X.THREE_OK){ P.innerHTML = '<h2>تعذّر تحميل المكتبة ثلا�
 
 /* ───────────── history ───────────── */
 const hist = {stack:[], i:-1};
-const snapObj = () => ({model:state.model,dims:state.dims,t:state.t,flap:state.flap,openMax:state.openMax,material:state.material,matColor:state.matColor,finish:state.finish,open:state.open,faces:state.faces,bg:state.bg,layout:state.layout,shadow:state.shadow,shadowStrength:state.shadowStrength,ortho:state.ortho,dimsOn:state.dimsOn,light:state.light,env:state.env,accents:state.accents,pf:state.pf,real:state.real,cH:state.cH});
+const snapObj = () => ({model:state.model,dims:state.dims,t:state.t,flap:state.flap,openMax:state.openMax,material:state.material,matColor:state.matColor,finish:state.finish,open:state.open,faces:state.faces,bg:state.bg,layout:state.layout,shadow:state.shadow,shadowStrength:state.shadowStrength,ortho:state.ortho,dimsOn:state.dimsOn,light:state.light,env:state.env,accents:state.accents,pf:state.pf,real:state.real,cH:state.cH,sh2d:state.sh2d});
 const snap = () => JSON.stringify(snapObj());
 function commit(){
   const s = snap(); if(hist.stack[hist.i] === s) return;
@@ -2301,6 +2334,18 @@ function renderBg(){
   const sh = $('#shHost');
   const tg = el('<label class="fld wide"><span>إظهار الظل</span><input type="checkbox" id="shOn" style="width:20px;height:20px;accent-color:var(--accent)"></label>'); tg.children[1].checked = state.shadow;
   tg.children[1].onchange = e=>{ state.shadow = e.target.checked; X.applyLights(); syncBar(); commit(); }; sh.appendChild(tg);
+  if(X.is2D()){
+    sh.innerHTML = '';
+    const sp = state.sh2d, upd = ()=>{ X.rebuild(false); };
+    const on = el('<label class="fld wide"><span>ظل المنتج</span><input type="checkbox" style="width:20px;height:20px;accent-color:var(--accent)"></label>'); on.children[1].checked = sp.on; on.children[1].onchange = e=>{ sp.on = e.target.checked; upd(); commit(); renderBg(); }; sh.appendChild(on);
+    if(sp.on){
+      sh.appendChild(slider('نعومة الظل',0,1,.01,sp.blur,pct,v=>{ sp.blur = +v; upd(); }));
+      sh.appendChild(slider('قوة الظل',0,1,.01,sp.op,pct,v=>{ sp.op = +v; upd(); }));
+      sh.appendChild(slider('إزاحة أفقية',-.2,.2,.005,sp.dx,v=>Math.round(v*100)+'%',v=>{ sp.dx = +v; upd(); }));
+      sh.appendChild(slider('إزاحة رأسية',-.2,.2,.005,sp.dy,v=>Math.round(v*100)+'%',v=>{ sp.dy = +v; upd(); }));
+    }
+    return;
+  }
   sh.appendChild(slider('قوة الظل',0,.7,.01,state.shadowStrength,pct,v=>{ state.shadowStrength = v; X.applyLights(); }));
 }
 $('#fBg').addEventListener('change', async e=>{
