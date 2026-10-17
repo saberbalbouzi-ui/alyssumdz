@@ -1,0 +1,43 @@
+/* اختبار «استوديو 3D» الموحّد (Studio3D): شريط التبويبات، الفتح على نماذج الموكاب، التبديل للعلب والقوالب وبالعكس، الإغلاق، ملف قالب القص عبر Studio3D.
+   NODE_PATH=/opt/node-tools/node_modules node scripts/test-studio3d.js */
+const http = require("http"), fs = require("fs"), path = require("path");
+const root = path.join(__dirname, ".."), shots = process.argv[2] || ""; let fails = 0;
+const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x).slice(0, 300)); } else console.log("✓", n); };
+const { chromium } = require("playwright");
+const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".json": "application/json", ".webp": "image/webp" };
+const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u === "/__blank") { r.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }); return r.end("<!doctype html><meta charset=utf-8><body></body>"); } const f = path.join(root, decodeURIComponent(u)); if (!fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); } r.writeHead(200, { "Content-Type": MIME[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(r); });
+const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.createElement("script"); e.src = s; e.onload = r; document.body.appendChild(e); }), src);
+(async () => {
+  await new Promise(r => srv.listen(0, "127.0.0.1", r)); const base = "http://127.0.0.1:" + srv.address().port;
+  const browser = await chromium.launch({ args: ["--use-angle=swiftshader", "--use-gl=angle", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-webgl"] });
+  const ctx = await browser.newContext({ viewport: { width: 1500, height: 920 } }), p = await ctx.newPage(), errs = [];
+  p.on("pageerror", e => errs.push(e.message)); p.on("console", m => { if (m.type() === "error" && !/fonts\.g|ERR_|net::|Failed to load resource/.test(m.text())) errs.push(m.text()); });
+  await p.goto(base + "/__blank"); await p.evaluate(() => { localStorage.clear(); window.confirm = () => true; });
+  for (const f of ["mockup-studio", "mockup-models", "box-studio", "box-profiles", "box-designer", "studio3d"]) await load(p, "/assets/js/" + f + ".js");
+  await p.evaluate(() => Studio3D.open()); await p.waitForSelector("#mk .mk-card", { timeout: 40000 });
+  ok("يفتح على «نماذج واقعية» مع شريط التبويبات", await p.evaluate(() => Studio3D.tab === "mock" && !!document.querySelector("#s3d-bar") && document.querySelector('#s3d-bar [data-t="mock"]').classList.contains("on") && document.body.classList.contains("s3d-on")));
+  ok("الشريط لا يغطي رأس الاستوديو (الاستوديو تحته)", await p.evaluate(() => document.querySelector("#mk-bg").getBoundingClientRect().top >= 46));
+  await p.click('#s3d-bar [data-t="box"]'); await p.waitForSelector("#bs", { timeout: 40000 }); await p.waitForTimeout(1200);
+  ok("التبديل إلى «العلب والقوالب»: يُغلق الموكاب ويفتح BoxStudio", await p.evaluate(() => Studio3D.tab === "box" && !document.querySelector("#mk-bg") && !!document.querySelector("#bs") && document.querySelector('#s3d-bar [data-t="box"]').classList.contains("on") && !!document.querySelector("#s3d-bar")));
+  ok("استوديو العلب تحت الشريط", await p.evaluate(() => document.querySelector("#bs-bg").getBoundingClientRect().top >= 46));
+  await p.click('#s3d-bar [data-t="mock"]'); await p.waitForSelector("#mk .mk-card", { timeout: 40000 });
+  ok("الرجوع إلى «نماذج واقعية» يعمل", await p.evaluate(() => Studio3D.tab === "mock" && !document.querySelector("#bs-bg") && !!document.querySelector("#mk")));
+  await p.click("#mk-x"); await p.waitForTimeout(300);
+  ok("إغلاق زر الموكاب الداخلي يزيل الشريط كله", await p.evaluate(() => !document.querySelector("#s3d-bar") && !document.querySelector("#mk-bg") && !document.body.classList.contains("s3d-on") && Studio3D.tab === null));
+  await p.evaluate(() => Studio3D.open({ tab: "box" })); await p.waitForSelector("#bs", { timeout: 40000 });
+  ok("الفتح المباشر على تبويب العلب", await p.evaluate(() => Studio3D.tab === "box" && !!document.querySelector("#bs")));
+  await p.click('#s3d-bar [data-t="x"]'); await p.waitForTimeout(300);
+  ok("زر إغلاق الشريط يغلق كل شيء", await p.evaluate(() => !document.querySelector("#s3d-bar") && !document.querySelector("#bs-bg") && !document.querySelector("#mk-bg")));
+  await p.evaluate(() => Studio3D.open({ tab: "box" })); await p.waitForSelector("#bs", { timeout: 40000 }); await p.keyboard.press("Escape"); await p.waitForTimeout(400);
+  ok("Esc في استوديو العلب يزيل الشريط أيضاً", await p.evaluate(() => !document.querySelector("#s3d-bar") && !document.querySelector("#bs-bg")));
+  await p.evaluate(() => BoxDesigner.open()); await p.waitForSelector("#bp", { timeout: 40000 }); await p.waitForTimeout(500);
+  ok("Box Designer صار تبويب «قوالب القص» داخل استوديو 3D", await p.evaluate(() => Studio3D.tab === "cut" && !!document.querySelector("#bp-bg") && document.querySelector('#s3d-bar [data-t="cut"]').classList.contains("on") && document.querySelector("#bp-bg").getBoundingClientRect().top >= 46));
+  await p.click('#s3d-bar [data-t="box"]'); await p.waitForSelector("#bs", { timeout: 40000 });
+  ok("من القوالب إلى العلب: يُغلق القوالب ويفتح العلب", await p.evaluate(() => Studio3D.tab === "box" && !document.querySelector("#bp-bg") && !!document.querySelector("#bs")));
+  await p.click('#s3d-bar [data-t="cut"]'); await p.waitForSelector("#bp", { timeout: 40000 }); await p.waitForTimeout(800);
+  await p.evaluate(() => BoxProfiles.to3d()); await p.waitForSelector("#bs", { timeout: 40000 }); await p.waitForTimeout(800);
+  ok("«حوّل إلى ستوديو 3D» من القوالب ينتقل لتبويب العلب بالقالب", await p.evaluate(() => Studio3D.tab === "box" && !document.querySelector("#bp-bg") && !!document.querySelector("#bs") && !!document.querySelector("#s3d-bar")));
+  await p.click('#s3d-bar [data-t="x"]'); await p.waitForTimeout(300);
+  ok("بلا أخطاء صفحة", errs.length === 0, errs);
+  await browser.close(); srv.close(); console.log(fails ? "\n" + fails + " فشل" : "\nكل الفحوص نجحت"); process.exit(fails ? 1 : 0);
+})();
