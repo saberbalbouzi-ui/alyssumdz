@@ -240,6 +240,19 @@
         "fr": "60+ boîtes et emballages 3D avec votre design sur chaque face et export ultra",
         "en": "60+ 3D boxes and packs with your design on every face and ultra export"
       }
+    },
+    "mockup": {
+      "icon": "18-mockup-studio",
+      "t": {
+        "ar": "استوديو الموكاب 3D",
+        "fr": "Studio de mockups 3D",
+        "en": "3D Mockup Studio"
+      },
+      "d": {
+        "ar": "نماذج واقعية: علب، قوارير، أكياس، قمصان، هودي، قبعات وحقائب — ركّب شعارك وصدّر",
+        "fr": "Maquettes réalistes : boîtes, flacons, pochettes, t-shirts, hoodies, casquettes et sacs — ajoutez votre logo et exportez",
+        "en": "Realistic mockups: boxes, bottles, pouches, tees, hoodies, caps and totes — add your logo and export"
+      }
     }
   }
 }
