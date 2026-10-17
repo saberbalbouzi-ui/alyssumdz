@@ -419,6 +419,48 @@ ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span>
     LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob, type: blob.type || "video/mp4", cost: est, model: "fal:" + m };
   }
+  /* ───────── تحويل صور 2D (1–3) إلى مجسّم 3D (GLB) عبر الخدمة الخارجية — بديل حين لا يكفي التجميع المحلي (img3d.js)
+     نفس ضوابط التكلفة: تأكيد، حدّ إنفاق، لا إعادة محاولة. النموذج والسعر قابلان للضبط (alyssum_i3d_model / alyssum_i3d_price) لأن مواصفات الخدمة غير مثبَّتة.
+     o = {front, side, back, onStatus, confirm} (Blobs) ← {blob (GLB), cost} أو null */
+  const icfg = { model: () => (LS.get("alyssum_i3d_model", "") || "fal-ai/hunyuan3d/v2/multi-view").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_i3d_price", "0.4")) || 0.4 };
+  const model3dReady = () => { const off = LS.get("alyssum_ai_3d", "1") === "0", key = (LS.get(FALKEY, "") || "").trim(); return { ok: !!key && !off, off, nokey: !key, price: icfg.price(), model: icfg.model() }; };
+  function glbUrl(j) {
+    const seen = []; (function walk(v) { if (!v || seen.length > 40) return; if (typeof v === "string") { if (/^https?:\/\/.+\.(glb|gltf)(\?|$)/i.test(v)) seen.push(v); return; } if (typeof v === "object") for (const k in v) walk(v[k]); })(j);
+    const o = (j.model_mesh || j.model_glb || j.glb || j.mesh || (j.data && (j.data.model_mesh || j.data.glb)) || {}); return (o && o.url) || seen[0] || "";
+  }
+  async function model3d(o) {
+    const st = model3dReady();
+    if (st.off) { const e = new Error("OFF"); e.code = "OFF"; throw e; }
+    if (st.nokey) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
+    const views = [["front", o && o.front], ["side", o && o.side], ["back", o && o.back]].filter(v => v[1]); if (!views.length) throw new Error("حدّد صورة واحدة على الأقل");
+    const est = icfg.price(), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
+    if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
+    if (o.confirm !== false && !confirm(useMsg(o.title || "تحويل الصور إلى مجسّم 3D", "صور: " + views.length + "\nقد يستغرق التوليد دقائق."))) return null;
+    const key = LS.get(FALKEY, "").trim(), m = icfg.model(), urls = {}; for (const [k, b] of views) urls[k] = "data:image/jpeg;base64," + await b64(await shrink(b, 1536));
+    const body = { image_url: urls.front || urls.side || urls.back, input_image_url: urls.front || urls.side || urls.back, image_urls: Object.values(urls) };
+    if (urls.front) body.front_image_url = urls.front; if (urls.side) { body.left_image_url = urls.side; body.side_image_url = urls.side; } if (urls.back) body.back_image_url = urls.back;
+    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
+    say("إرسال الصور إلى خدمة المجسّمات…");
+    const r = await fetch("https://queue.fal.run/" + m, { method: "POST", headers: H, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
+    if (!r.ok && billingHit(r.status, JSON.stringify(j))) credit.flagOut();
+    if (!r.ok) { const d = j.detail; throw new Error("Alyssum API (3D) " + r.status + ": " + (typeof d === "string" ? d : Array.isArray(d) && d[0] ? (d[0].msg || JSON.stringify(d[0])) : (j.message || "خطأ")) + (r.status === 401 || r.status === 403 ? " — تحقق من المفتاح" : "")); }
+    const sUrl = j.status_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id + "/status"), rUrl = j.response_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id);
+    if (!j.request_id && !j.status_url && !glbUrl(j)) throw new Error("لم تُرجع الخدمة رقم طلب — لم تُحتسب تكلفة غالباً.");
+    let res = glbUrl(j) ? j : null; const t0 = Date.now(), gap = o.pollMs == null ? 4000 : o.pollMs, max = o.maxMs || 8 * 60 * 1000;
+    while (!res) {
+      if (Date.now() - t0 > max) throw new Error("استغرق التوليد أكثر من المتوقع — راجع حسابك لاحقاً قبل إعادة المحاولة كي لا تتكرر التكلفة.");
+      if (gap) await new Promise(x => setTimeout(x, gap));
+      const sr = await fetch(sUrl, { headers: H }), sj = await sr.json().catch(() => ({}));
+      if (!sr.ok) throw new Error("تعذّر قراءة حالة المجسّم (" + sr.status + ")");
+      const stt = String(sj.status || "").toUpperCase(); say(stt === "IN_QUEUE" ? "في الطابور" + (sj.queue_position != null ? " (" + sj.queue_position + ")" : "") + "…" : "جارٍ بناء المجسّم…");
+      if (stt === "COMPLETED") { const rr = await fetch(rUrl, { headers: H }), rj = await rr.json().catch(() => ({})); if (!rr.ok) throw new Error("تعذّر جلب نتيجة المجسّم (" + rr.status + ")"); res = rj; }
+      else if (stt === "FAILED" || stt === "ERROR" || sj.error) throw new Error("فشل التوليد: " + (sj.error || sj.detail || "رفضت الخدمة الطلب") + " — لم تُحتسب تكلفة غالباً.");
+    }
+    const u = glbUrl(res); if (!u) throw new Error("لم تُرجع الخدمة ملف مجسّم — لم تُحتسب تكلفة غالباً.");
+    const gr = await fetch(u); if (!gr.ok) throw new Error("تعذّر تنزيل المجسّم الناتج"); const blob = await gr.blob();
+    LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
+    return { blob, cost: est, model: "fal:" + m };
+  }
   /* نص/رؤية بالذكاء (Alyssum API): تعليمات نصية + صور اختيارية ← نص (أو JSON مُحلَّل عند o.json). يُحتسب في الرصيد بوحدة صغيرة وتسري عليه تنبيهات الرصيد. o = {prompt, blobs:[], json:boolean} */
   const TEXT_UNIT = 0.003;
   async function text(o) {
@@ -629,7 +671,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) { LS.set(FALKEY, k.trim()); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, credit, text, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, model3d, model3dReady, credit, text, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;
