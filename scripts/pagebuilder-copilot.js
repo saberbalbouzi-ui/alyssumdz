@@ -108,6 +108,22 @@ const PBCopilot = (() => {
     const secs = sp.toSections(r, { merge: false, product: "", products: [] }); return { sec: secs[0], pending: secs.pending || [], height: r.sections[0].height };
   }
   const tagFx = w => { (w.set.fxs || []).forEach(f => { f.ai = 1; }); };
+  /* ───────────── الاستمرارية البصرية: ألوان حواف الأقسام وتدرّج الصفحة الموحّد ───────────── */
+  const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+  const rgbOf = c => { const m = HEX.exec(String(c || "").trim()); if (!m) return null; let h = m[1]; if (h.length === 3) h = h.replace(/./g, "$&$&"); const n = parseInt(h, 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+  const hexOf = r => "#" + r.map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+  function colorAt(stops, p) { const L = stops.slice().sort((a, b) => a.p - b.p); if (p <= L[0].p) return rgbOf(L[0].c); if (p >= L[L.length - 1].p) return rgbOf(L[L.length - 1].c); for (let i = 1; i < L.length; i++) if (p <= L[i].p) { const a = L[i - 1], b = L[i], t = (p - a.p) / Math.max(1e-6, b.p - a.p), A = rgbOf(a.c), B = rgbOf(b.c); return A.map((v, k) => v + (B[k] - v) * t); } }
+  /* لون أعلى/أسفل القسم كما يراه الزائر (null = غير معروف: صورة خلفية أو لون غير سداسي) */
+  function edgeOf(sec, page) { const s = sec.set || {}; if (s.bgImg) return null;
+    if (s.gr && Array.isArray(s.gr.s) && s.gr.s.length >= 2 && s.gr.s.every(x => rgbOf(x.c))) { const a = Number(s.gr.a), rev = a === 0 || a === 360; if ((s.gr.t || "linear") === "linear" && (a === 180 || rev)) { const t = colorAt(s.gr.s, 0), b = colorAt(s.gr.s, 100); return rev ? { top: b, bottom: t } : { top: t, bottom: b }; } const t = colorAt(s.gr.s, 0), b = colorAt(s.gr.s, 100); return { top: t, bottom: b }; }
+    const c = rgbOf(s.bg) || (!s.bg && rgbOf(page && page.bg)); return c ? { top: c, bottom: c } : null; }
+  const cdist = (a, b) => (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])) / 3;
+  const CONT_MAX = 16;      // أكبر فرق لوني مقبول عند حدّ قسمين (متوسط القنوات 0..255)
+  function contBreaks(page, secIds) { const L = page.sections || [], out = [];
+    for (let i = 0; i + 1 < L.length; i++) { const A = L[i], B = L[i + 1]; if (!(secIds.includes(A.id) || secIds.includes(B.id))) continue; const ea = edgeOf(A, page), eb = edgeOf(B, page); if (!ea || !eb) continue; const d = cdist(ea.bottom, eb.top); if (d > CONT_MAX) out.push({ above: A.id, below: B.id, from: hexOf(ea.bottom), to: hexOf(eb.top), delta: Math.round(d) }); } return out; }
+  /* لوحات صندوقية: مستطيل معتم كبير بزوايا أو حدّ يعطي مظهر بطاقة مفصولة (تحذير فقط) */
+  function panelWarns(page, secIds) { const out = []; (page.sections || []).forEach(sec => { if (!secIds.includes(sec.id)) return; const dw = secDw(sec), mh = secMh(sec); if (!dw || !mh) return; (sec.free || []).forEach(w => { if (w.type !== "shape") return; const s = w.set || {}, d = k => Number(s[k] && s[k].d) || 0, ww = d("fwd"), hh = d("fh"), op = s.op == null ? 1 : Number(s.op); if (ww >= 60 && hh >= mh * .4 && op >= .85 && rgbOf(s.fill) && (Number(s.rx) > 0 || d("rad") > 0 || (s.stroke && Number(s.sw) > 0))) out.push({ code: "boxed_panel", msg: "لوحة صندوقية معتمة قد تبدو كقسم منفصل: " + w.id }); }); }); return out; }
+
   const growTo = (sec, y, h) => { const need = Math.round(y + h + 40); if (secMh(sec) < need && sec.set.mh) { sec.set.mh = Object.assign({}, sec.set.mh, { d: need }); return true; } return false; };
 
   /* ───────────── مخططات الأوامر: check نقي (بلا صفحة) + run (على نسخة العمل) ───────────── */
@@ -184,6 +200,16 @@ const PBCopilot = (() => {
         ["anim", "animDur", "animDelay", "ianim", "ianimDur", "ianimAmt"].forEach(k => { delete w.set[k]; }); ["anim", "animDur", "animDelay", "ianim", "ianimDur", "ianimAmt"].forEach(k => { if (fr.set[k] != null) w.set[k] = fr.set[k]; });
         const keep = (w.set.fxs || []).filter(f => !f.ai), add = (fr.set.fxs || []).filter(f => /ظل|مستمر|حركة|توهج|طفو|نبض|لمعة|دوران|اهتزاز|تحويم|تكبير|ميل|Ken|sweep|float|pulse|glow|shadow/i.test(f.n || "") || f.tpl && /@keyframes|box-shadow|drop-shadow|text-shadow|:hover/.test(f.tpl)); add.forEach(f => { f.ai = 1; });
         const all = keep.concat(add); if (all.length) w.set.fxs = all; else delete w.set.fxs; C.touch(w.id); return { id: w.id, fx: add.length }; } },
+    "page.background": {
+      check(a) { const st = Array.isArray(a.stops) ? a.stops : []; if (st.length < 2 || st.length > 6) throw new CmdError("bad_args", "stops: من 2 إلى 6 ألوان"); const stops = st.map(x => { if (!isObj(x) || !HEX.test(String(x.c || "").trim())) throw new CmdError("bad_color", "لون التدرّج يجب أن يكون #rgb أو #rrggbb"); return { c: String(x.c).trim().toLowerCase(), p: num(x.p, 0, 100, 0) }; });
+        const secs = a.sections == null ? null : (Array.isArray(a.sections) && a.sections.length && a.sections.length <= 12 ? a.sections.map(sref) : (() => { throw new CmdError("bad_args", "sections: قائمة أقسام متتالية"); })()); return { stops, sections: secs }; },
+      async run(C, a) { const L = C.work.sections, ids = a.sections ? a.sections.map(r => findSec(C.work, r, C.run).id) : C.run.touchedSec.filter(id => L.some(s => s.id === id)); const sel = L.filter(s => ids.includes(s.id)); if (!sel.length) throw new CmdError("no_section", "لا أقسام لتطبيق الخلفية");
+        const idx = sel.map(s => L.indexOf(s)).sort((x, y) => x - y); if (idx.some((v, i) => i && v !== idx[i - 1] + 1)) throw new CmdError("bad_args", "الأقسام يجب أن تكون متتالية");
+        sel.sort((x, y) => L.indexOf(x) - L.indexOf(y)); sel.forEach(sec => { if ((sec.cols || []).some(c => (c.widgets || []).some(w => PROTECTED.has(w.type)))) throw new CmdError("protected_layer", "قسم فيه عنصر محمي لا تُعدَّل خلفيته"); });
+        const hs = sel.map(sec => secMh(sec) || 700), H = hs.reduce((p, q) => p + q, 0); let y = 0;
+        sel.forEach((sec, i) => { const y0 = y / H * 100, y1 = (y + hs[i]) / H * 100; y += hs[i]; const inner = a.stops.filter(x => x.p > y0 + .5 && x.p < y1 - .5); const pts = [y0].concat(inner.map(x => x.p), [y1]);
+          const s = pts.map(pp => ({ c: hexOf(colorAt(a.stops, pp)), p: Math.round((pp - y0) / Math.max(1e-6, y1 - y0) * 1000) / 10 })); sec.set.gr = { t: "linear", a: 180, s }; sec.set.bg = s[0].c; delete sec.set.bgImg; C.touchSec(sec.id); });
+        return { sections: sel.length }; } },
     "image.generate": {
       internalOk: true,
       check(a) { const o = { ref: wref(a.ref), cutout: !!a.cutout }; if (a.prompt != null) o.prompt = str(a.prompt, 400); return o; },
@@ -255,7 +281,7 @@ const PBCopilot = (() => {
 
   /* ───────────── ملخص الصفحة لنموذج اللغة (لا يتضمن بيانات حسّاسة) ───────────── */
   function outline(page) {
-    return { title: page.title || "", sections: (page.sections || []).map(sec => { const dw = secDw(sec) || 1; return { id: sec.id, key: (sec.set && sec.set.aiKey) || "", name: (sec.set && sec.set.cid) || "", height: secMh(sec), layers: (sec.free || []).map(w => { const s = w.set || {}, d = k => (s[k] && s[k].d); return { id: w.id, key: s.aiKey || "", type: w.type, protected: PROTECTED.has(w.type), text: str((s.text || String(s.html || "").replace(/<[^>]*>/g, " ")), 80).trim(), x: Math.round((d("fx") || 0) / 100 * dw), y: Math.round(d("fy") || 0), w: Math.round((d("fwd") || 0) / 100 * dw), h: Math.round(d("fh") || 0), z: s.zi || 0, src: s.src ? "set" : (s.aiPrompt ? "pending" : "") }; }) }; }) };
+    return { title: page.title || "", sections: (page.sections || []).map(sec => { const dw = secDw(sec) || 1; return { id: sec.id, key: (sec.set && sec.set.aiKey) || "", name: (sec.set && sec.set.cid) || "", height: secMh(sec), edge: (() => { const e = edgeOf(sec, page); return e ? { top: hexOf(e.top), bottom: hexOf(e.bottom) } : null; })(), layers: (sec.free || []).map(w => { const s = w.set || {}, d = k => (s[k] && s[k].d); return { id: w.id, key: s.aiKey || "", type: w.type, protected: PROTECTED.has(w.type), text: str((s.text || String(s.html || "").replace(/<[^>]*>/g, " ")), 80).trim(), x: Math.round((d("fx") || 0) / 100 * dw), y: Math.round(d("fy") || 0), w: Math.round((d("fwd") || 0) / 100 * dw), h: Math.round(d("fh") || 0), z: s.zi || 0, src: s.src ? "set" : (s.aiPrompt ? "pending" : "") }; }) }; }) };
   }
 
   /* ───────────── سجل التشغيل والتنفيذ ───────────── */
@@ -309,6 +335,8 @@ const PBCopilot = (() => {
     const changed = diff(live, work), allowed = new Set(run.touched.map(x => "w:" + x).concat(run.touchedSec.map(x => "s:" + x), ["p:meta"]));
     const out = changed.filter(k => !allowed.has(k)); if (out.length) throw new CmdError("scope_violation", "تغيّر ما لم تذكره الأوامر: " + out.slice(0, 4).join("، "), { keys: out });
     const bad = allWidgets(work).filter(x => x.free && ["fx", "fy", "fwd", "fh"].some(k => !x.w.set[k] || !Number.isFinite(Number(x.w.set[k].d)))); if (bad.length) throw new CmdError("layer_geometry", "عناصر بإحداثيات غير صالحة", { ids: bad.slice(0, 4).map(x => x.w.id) });
+    const brk = run.allowBreaks ? [] : contBreaks(work, run.touchedSec); if (brk.length) throw new CmdError("continuity_break", "حدّ لوني ظاهر بين أقسام متجاورة (يجب لون واحد أو تدرّج متصل): " + brk.slice(0, 3).map(b => b.from + "→" + b.to).join("، "), { breaks: brk });
+    run.warnings = (run.warnings || []).concat(panelWarns(work, run.touchedSec).map(w => w.msg));
     if (!changed.length) return { changed: 0 };
     if (e.hist && e.hist[e.hi] !== JSON.stringify(live)) PBApp.commitAfter();      // نثبّت الحالة السابقة كي يعيدها التراجع بالضبط
     e.page = work; e.nextLabel = run.label; PBApp.commitAfter(); return { changed: changed.length };
@@ -318,10 +346,10 @@ const PBCopilot = (() => {
     const e = ED(), live = livePage(); if (hash(JSON.stringify(live)) !== run.baseHash && !run.force) throw new CmdError("base_changed", "الصفحة المفتوحة تغيّرت منذ بدء هذا التشغيل");
     const work = run.work ? JSON.parse(run.work) : clone(live); run.status = "running"; A.store.save(run);
     try { await execute(run, work, A); } catch (err) { if (err && err.interrupt) throw err; run.status = "failed"; run.error = { code: err.code || "error", msg: str(err.message, 200) }; A.store.save(run); throw err; }
-    let res; try { res = commit(run, work); } catch (err) { run.status = "rolled_back"; run.error = { code: err.code || "error", msg: str(err.message, 200) }; A.store.save(run); return summary(run, false, err); }
+    let res; try { res = commit(run, work); } catch (err) { run.status = "rolled_back"; run.error = { code: err.code || "error", msg: str(err.message, 200), breaks: err.breaks }; A.store.save(run); return summary(run, false, err); }
     run.status = run.errors.length ? "done_with_errors" : "done"; run.work = ""; A.store.save(run); return summary(run, true, null, res);
   }
-  const summary = (run, ok, err, res) => ({ ok, runId: run.id, status: run.status, changed: res ? res.changed : 0, errors: run.errors.slice(), error: err ? { code: err.code, msg: err.message } : null, counts: { llm: run.counts.llm, img: run.counts.img }, touched: run.touched.slice(), assets: Object.assign({}, run.assets) });
+  const summary = (run, ok, err, res) => ({ ok, runId: run.id, status: run.status, changed: res ? res.changed : 0, errors: run.errors.slice(), error: err ? { code: err.code, msg: err.message, breaks: err.breaks } : null, counts: { llm: run.counts.llm, img: run.counts.img }, warnings: (run.warnings || []).slice(), touched: run.touched.slice(), assets: Object.assign({}, run.assets) });
 
   /* ───────────── الواجهة ───────────── */
   async function plan(o, kind) {
@@ -335,7 +363,7 @@ const PBCopilot = (() => {
       else { bump(run, "llm", A.limits); const g = await A.guard.charge("llm", { runId: run.id }); if (g && g.ok === false) throw new CmdError("guard_denied", "رفض الخادم"); env = await A.llm.edit({ instruction: o.instruction, facts: F, tokens: Object.keys(factTable(F)), outline: out }); }
       const v = validateEnvelope(env, F, { kind, maxOps: A.limits.ops, allowStructure: !!o.allowStructure });
       if (!v.ok) { run.status = "rejected"; run.errors = v.errors; A.store.save(run); return { ok: false, runId: run.id, status: "rejected", errors: v.errors, changed: 0 }; }
-      run.ops = v.ops; run.strict = !!o.strict; A.store.save(run);
+      run.ops = v.ops; run.strict = !!o.strict; run.allowBreaks = !!o.allowBreaks; A.store.save(run);
     } catch (e) { if (e && e.interrupt) throw e; run.status = "failed"; run.error = { code: e.code || "error", msg: str(e.message, 200) }; A.store.save(run); return { ok: false, runId: run.id, status: "failed", errors: [], error: run.error, changed: 0 }; }
     try { return await drive(run, A); } catch (e) { if (e && e.interrupt) throw e; return { ok: false, runId: run.id, status: run.status, errors: run.errors.slice(), error: { code: e.code || "error", msg: e.message }, changed: 0 }; }
   }
@@ -346,6 +374,6 @@ const PBCopilot = (() => {
     if (!r.ops.length) throw new CmdError("run_not_ready", "لا أوامر محفوظة لهذا التشغيل (انقطع قبل التخطيط)");
     if (o && o.force) r.force = true; try { return await drive(r, A); } catch (e) { if (e && e.interrupt) throw e; return { ok: false, runId: r.id, status: r.status, errors: r.errors.slice(), error: { code: e.code || "error", msg: e.message }, changed: 0 }; }
   }
-  return { V, run, edit, resume, validateEnvelope, normFacts, factTable, fillTokens, checkCommercial, outline, diff, CmdError, Interrupt, stores: { ls: lsStore, mem: memStore }, OPS: Object.keys(OPS), PROTECTED: [...PROTECTED], LAYER_TYPES, DEF_LIMITS, _t: { hash, viaSpec, findW, findSec, snapIndex } };
+  return { V, run, edit, resume, validateEnvelope, normFacts, factTable, fillTokens, checkCommercial, outline, diff, CmdError, Interrupt, stores: { ls: lsStore, mem: memStore }, OPS: Object.keys(OPS), PROTECTED: [...PROTECTED], LAYER_TYPES, DEF_LIMITS, _t: { edgeOf, contBreaks, hexOf, hash, viaSpec, findW, findSec, snapIndex } };
 })();
 if (typeof window !== "undefined") window.PBCopilot = PBCopilot;

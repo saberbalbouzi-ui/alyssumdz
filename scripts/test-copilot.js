@@ -13,8 +13,9 @@ window.__T = (() => {
   const png = () => new Promise(r => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d"); x.fillStyle = "#c8a24b"; x.fillRect(0, 0, 64, 64); c.toBlob(r, "image/png"); });
   /* غلاف أوامر لتصميم قسم عرض كامل: يستعمل رموز {{...}} فقط للأسعار */
   const designOps = () => ({ v: 1, ops: [
-    { id: "o1", op: "section.add", args: { name: "offer", as: "offer", height: 760, after: "@first", bg: "#fff8e6" } },
-    { id: "o2", op: "layer.add", args: { section: "$offer", as: "bg", layer: { type: "shape", shape: "rect", x: 40, y: 40, w: 848, h: 680, fill: "#f5e3b0", radius: 40, z: 1 } } },
+    { id: "o1", op: "section.add", args: { name: "offer", as: "offer", height: 760, after: "@first" } },
+    { id: "o1b", op: "page.background", args: { sections: ["$offer"], stops: [{ c: "#F8F4E9", p: 0 }, { c: "#F8F4E9", p: 60 }, { c: "#102B4C", p: 100 }] } },
+    { id: "o2", op: "layer.add", args: { section: "$offer", as: "bg", layer: { type: "shape", shape: "ellipse", x: 120, y: 60, w: 688, h: 560, fill: "#f5e3b0", opacity: 0.45, blur: 30, z: 1 } } },
     { id: "o3", op: "layer.add", args: { section: "$offer", as: "title", layer: { type: "heading", tag: "h2", text: "عرض {{product}} الخاص", x: 80, y: 80, w: 768, h: 90, z: 5, font: { size: 54, weight: "900", color: "#3b2a05", align: "center" }, effects: [{ type: "fadeUp", delay: 0.1 }] } } },
     { id: "o4", op: "layer.add", args: { section: "$offer", as: "price", layer: { type: "text", text: "السعر: {{price}}", x: 80, y: 200, w: 768, h: 70, z: 5, font: { size: 44, weight: "800", color: "#1b5e20", align: "center" } } } },
     { id: "o5", op: "layer.add", args: { section: "$offer", as: "old", layer: { type: "text", text: "بدل {{old_price}} — وفّر {{save}} ({{save_pct}})", x: 80, y: 280, w: 768, h: 50, z: 5, font: { size: 26, weight: "600", color: "#7a6a3a", align: "center" } } } },
@@ -94,7 +95,7 @@ window.__T = (() => {
   ok(has(rej.noops, "bad_envelope") && has(rej.notobj, "bad_envelope"), "غلاف فارغ أو غير كائن مرفوض"); ok(has(rej.many, "too_many_ops"), "تجاوز سقف عدد الأوامر مرفوض");
   ok(has(rej.dupid, "bad_op_id"), "معرّف أمر مكرر مرفوض"); ok(has(rej.editStruct, "structural_in_edit"), "التعديل التدريجي لا يقبل أوامر بنيوية");
   ok(has(rej.badpatch, "bad_patch_key"), "حقل غير مسموح في layer.update مرفوض"); ok(has(rej.badeff, "bad_effect"), "حركة غير معرّفة مرفوضة"); ok(has(rej.manyDel, "too_many_deletes"), "حذف جماعي في تعديل تدريجي مرفوض");
-  ok(rej.valid === true, "غلاف التصميم الشرعي (13 أمراً) يجتاز التحقق"); ok(rej.mixed.ok === false && rej.mixed.codes.includes("forbidden_op"), "أمر ممنوع واحد يُسقط الغلاف كله", rej.mixed);
+  ok(rej.valid === true, "غلاف التصميم الشرعي (14 أمراً) يجتاز التحقق"); ok(rej.mixed.ok === false && rej.mixed.codes.includes("forbidden_op"), "أمر ممنوع واحد يُسقط الغلاف كله", rej.mixed);
 
   /* ── 2) شروط ما قبل التشغيل ── */
   const pre = await ev(async () => {
@@ -248,6 +249,43 @@ window.__T = (() => {
   ok(Ed.inv.status === "rejected" && Ed.inv.codes.includes("price_unapproved") && Ed.inv.same, "تعديل بسعر غير مقدَّم (500 دج) مرفوض بلا أثر", Ed.inv);
   ok(Ed.struct.status === "rejected" && Ed.struct.same, "أمر بنيوي في تعديل تدريجي مرفوض بلا أثر", Ed.struct);
   ok(Ed.base.status === "rolled_back" && Ed.base.code === "base_changed" && Ed.base.titleKept && Ed.base.textUntouched, "تغيّر الصفحة أثناء تشغيل الذكاء الاصطناعي ← لا يُعتمد شيء (base_changed)", Ed.base);
+
+  /* ── 7ب) الاستمرارية البصرية: لون واحد/تدرّج متصل بين الأقسام بلا حدود ظاهرة ── */
+  const Ct = await ev(async () => {
+    const R = {}; const F = PBCopilot.normFacts(__T.FACTS);
+    R.rgba = PBCopilot.validateEnvelope({ v: 1, ops: [{ op: "page.background", args: { stops: [{ c: "rgba(0,0,0,.5)", p: 0 }, { c: "#fff", p: 100 }] } }] }, F, {}).errors.map(e => e.code);
+    R.one = PBCopilot.validateEnvelope({ v: 1, ops: [{ op: "page.background", args: { stops: [{ c: "#fff", p: 0 }] } }] }, F, {}).errors.map(e => e.code);
+    /* نجاح: حواف متصلة */
+    const E = await __T.open(); const A = __T.mkAdapters(); const ok1 = await PBCopilot.run({ goal: "g", facts: __T.FACTS, adapters: A });
+    const S = PBCopilot._t, pg = E.page, e0 = S.edgeOf(pg.sections[0], pg), e1 = S.edgeOf(pg.sections[1], pg), e2 = S.edgeOf(pg.sections[2], pg), d = (a, b) => (Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])) / 3;
+    R.ok = { status: ok1.status, warnings: ok1.warnings, top: d(e0.bottom, e1.top), bot: d(e1.bottom, e2.top), gr: pg.sections[1].set.gr, breaks: S.contBreaks(pg, [pg.sections[1].id]).length };
+    R.outlineEdge = PBCopilot.outline(pg).sections[1].edge;
+    /* لون قسم مختلف بلا تدرّج ← حدّ ظاهر ← يُرفض الاعتماد كله */
+    const mkBad = fn => { const o = __T.designOps(); fn(o.ops); return o; };
+    const tryRun = async (env, extra) => { const E2 = await __T.open(), b = PBApp.pageJson(), h = E2.hist.length; const r = await PBCopilot.run(Object.assign({ goal: "g", facts: __T.FACTS, adapters: __T.mkAdapters({ llm: { plan: async () => ({}), ops: async () => env } }) }, extra || {})); return { status: r.status, code: r.error && r.error.code, breaks: r.error && r.error.breaks, same: PBApp.pageJson() === b, h: E2.hist.length - h, n: __T.widgets(E2.page).length }; };
+    R.badBg = await tryRun(mkBad(o => { o.splice(1, 1); o[0].args.bg = "#fff8e6"; }));
+    R.noBg = await tryRun(mkBad(o => { o.splice(1, 1); }));
+    R.allow = await tryRun(mkBad(o => { o.splice(1, 1); o[0].args.bg = "#fff8e6"; }), { allowBreaks: true });
+    /* تدرّج لا يبدأ من لون جاره ← حدّ ظاهر */
+    R.offStart = await tryRun(mkBad(o => { o[1].args.stops = [{ c: "#2e7d32", p: 0 }, { c: "#102B4C", p: 100 }]; }));
+    /* قسم الطلب (عنصر محمي) لا تُعدَّل خلفيته */
+    const E3 = await __T.open(); const ordId = E3.page.sections[1].id; const r3 = await PBCopilot.run({ goal: "g", facts: __T.FACTS, adapters: __T.mkAdapters({ llm: { plan: async () => ({}), ops: async () => ({ v: 1, ops: [{ id: "b1", op: "page.background", args: { sections: [ordId], stops: [{ c: "#ffffff", p: 0 }, { c: "#000000", p: 100 }] } }] }) } }) });
+    R.prot = { codes: r3.errors.map(e => e.code), status: r3.status };
+    /* لوحة صندوقية معتمة ← تحذير */
+    const o4 = __T.designOps(); o4.ops[2].args.layer = { type: "shape", shape: "rect", x: 40, y: 40, w: 848, h: 680, fill: "#f5e3b0", radius: 40, z: 1 };
+    await __T.open(); const r4 = await PBCopilot.run({ goal: "g", facts: __T.FACTS, adapters: __T.mkAdapters({ llm: { plan: async () => ({}), ops: async () => o4 } }) }); R.panel = { status: r4.status, w: r4.warnings };
+    return R;
+  });
+  ok(Ct.rgba.includes("bad_color") && Ct.one.includes("bad_args"), "page.background يرفض ألواناً غير سداسية وتدرّجاً بلون واحد");
+  ok(Ct.ok.status === "done" && Ct.ok.breaks === 0 && Ct.ok.top <= 16 && Ct.ok.bot <= 16, "القسم الجديد يتصل لونياً بجاره الأعلى والأسفل بلا حدّ ظاهر (فرق " + Ct.ok.top.toFixed(1) + " و" + Ct.ok.bot.toFixed(1) + " من 255)", Ct.ok);
+  ok(Ct.ok.gr && Ct.ok.gr.t === "linear" && Ct.ok.gr.a === 180 && Ct.ok.gr.s.length >= 3, "الخلفية تدرّج خطي متصل (شريحة من تدرّج الصفحة الموحّد)", Ct.ok.gr);
+  ok(Ct.outlineEdge && /^#f8f4e9$/i.test(Ct.outlineEdge.top) && /^#102b4c$/i.test(Ct.outlineEdge.bottom), "ملخّص الصفحة للنموذج يعرض لون حافتي كل قسم ليبني تدرّجه منهما", Ct.outlineEdge);
+  ok(Ct.badBg.status === "rolled_back" && Ct.badBg.code === "continuity_break" && Ct.badBg.same && Ct.badBg.h === 0, "قسم بلون مختلف عن جيرانه يُرفض اعتماده كله (continuity_break) والصفحة كما هي", Ct.badBg);
+  ok(Ct.noBg.code === "continuity_break" && Ct.noBg.same, "قسم بلا خلفية فوق حدّ لوني موجود (أبيض/أزرق داكن) يُرفض أيضاً", Ct.noBg);
+  ok(Ct.offStart.code === "continuity_break" && Ct.offStart.same, "تدرّج لا يبدأ من لون جاره يُرفض", Ct.offStart);
+  ok(Ct.allow.status === "done" && Ct.allow.h === 1, "الخيار الصريح allowBreaks يسمح بالحدّ عند الحاجة", Ct.allow);
+  ok(Ct.prot.codes.includes("protected_layer"), "لا تُعدَّل خلفية قسم فيه عنصر محمي (نموذج الطلب)", Ct.prot);
+  ok(Ct.panel.w.some(m => /لوحة صندوقية/.test(m)), "مستطيل معتم كبير بزوايا يُنبَّه إليه كلوحة صندوقية", Ct.panel);
 
   /* ── 8) المحرر الحالي لم يُمسّ ── */
   const git = require("child_process").execSync("git status --short", { cwd: ROOT }).toString();
