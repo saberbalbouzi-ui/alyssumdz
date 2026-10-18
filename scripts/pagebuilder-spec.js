@@ -52,10 +52,12 @@ const PBSpec = (() => {
     if (o.type === "text" || o.type === "heading") {
       const f = L.font && typeof L.font === "object" ? L.font : {};
       o.text = str(L.text, 3000); o.font = { size: num(f.size, 8, 300, o.type === "heading" ? 48 : 22), weight: ["300", "400", "500", "600", "700", "800", "900"].includes(String(f.weight)) ? String(f.weight) : (o.type === "heading" ? "900" : "600"), color: col(f.color, "#1a1a1a"), align: ["right", "left", "center", "justify"].includes(f.align) ? f.align : "center", lineHeight: num(f.lineHeight, .8, 3, o.type === "heading" ? 1.3 : 1.8), letterSpacing: num(f.letterSpacing, -5, 30, 0), family: str(f.family, 40).replace(/[^\w \-]/g, "") };
-      o.tag = ["h1", "h2", "h3", "h4", "p", "div"].includes(L.tag) ? L.tag : "h2";
+      o.tag = ["h1", "h2", "h3", "h4", "p", "div"].includes(L.tag) ? L.tag : "h2"; if (L.autoH) o.autoH = true;
       if (!o.text.trim()) { warn.push(where + ": نص فارغ — تُجوهلت"); return null; }
     } else if (o.type === "image") {
       o.src = imgRef(str(L.src, 600).trim()); o.alt = str(L.alt || L.prompt, 200); o.prompt = str(L.prompt, 500); o.fit = ["cover", "contain", "fill"].includes(L.fit) ? L.fit : "cover";
+      if (L.crop && typeof L.crop === "object") o.crop = { x: num(L.crop.x, -500, 500, 0), y: num(L.crop.y, -500, 500, 0), w: num(L.crop.w, 10, 1000, 100), h: num(L.crop.h, 10, 1000, 100) };
+      if (L.fade && typeof L.fade === "object") o.fade = { t: num(L.fade.t, 0, 60, 0), b: num(L.fade.b, 0, 60, 0), l: num(L.fade.l, 0, 60, 0), r: num(L.fade.r, 0, 60, 0) };
       o.cutout = !!L.cutout; o.brightness = num(L.brightness, 40, 180, 100); o.contrast = num(L.contrast, 40, 200, 100); o.saturate = num(L.saturate, 0, 250, 100);
     } else if (o.type === "shape") {
       o.shape = SHAPES.includes(L.shape) ? L.shape : "rect"; o.fill = col(L.fill, "#c8a24b"); o.stroke = col(L.stroke, ""); o.strokeW = num(L.strokeW, 0, 40, 0);
@@ -66,7 +68,7 @@ const PBSpec = (() => {
       o.src = vidSrc(L.src); o.poster = imgRef(str(L.poster, 600).trim()); o.autoplay = !!L.autoplay; o.alt = str(L.alt, 200);
       if (!o.src) { warn.push(where + ": فيديو بلا رابط صالح (https أو mp4/webm) — تُجوهلت"); return null; }
     } else if (o.type === "icon") {
-      o.icon = ICONS.includes(L.icon) ? L.icon : "sparkle"; o.color = col(L.color, "#2e7d32"); o.size = num(L.size, 12, 400, 56); o.title = str(L.title, 80); o.text = str(L.text, 200);
+      o.icon = ICONS.includes(L.icon) || /^img:assets\/img\/icons\/[\w.-]+\.svg$/.test(String(L.icon || "")) ? L.icon : "sparkle"; o.color = col(L.color, "#2e7d32"); o.size = num(L.size, 12, 400, 56); o.title = str(L.title, 80); o.text = str(L.text, 200);
     }
     if (o.x + o.w < 0 || o.x > dw || o.y > secH + 200) warn.push(where + ": الطبقة خارج حدود القسم");
     return o;
@@ -79,7 +81,7 @@ const PBSpec = (() => {
     opts = opts || {};
     const warn = []; let spec = raw;
     if (typeof spec === "string") { try { spec = JSON.parse(spec.replace(/^[\s\S]*?(\{[\s\S]*\})[\s\S]*$/, "$1")); } catch (e) { return { ok: false, error: "ليس JSON صالحاً: " + e.message, warn }; } }
-    if (typeof PBLayers !== "undefined" && PBLayers.is(spec)) { try { const cv = PBLayers.convert(spec, { assets: opts.layerAssets, product: opts.product, z: opts.layerZ }); (cv.notes || []).forEach(n => warn.push("استيراد الطبقات: " + n)); spec = cv; } catch (e) { return { ok: false, error: e.message, warn }; } }   // صيغة alyssum-design-layers (ChatGPT) ← تُحوَّل إلى الصيغة الأصلية
+    if (typeof PBLayers !== "undefined" && PBLayers.is(spec)) { try { const cv = PBLayers.convert(spec, { assets: opts.layerAssets, product: opts.product, z: opts.layerZ, geo: opts.layerGeo, fs: opts.layerFs, fade: opts.layerFade, crop: opts.layerCrop }); (cv.notes || []).forEach(n => warn.push("استيراد الطبقات: " + n)); spec = cv; } catch (e) { return { ok: false, error: e.message, warn }; } }   // صيغة alyssum-design-layers (ChatGPT) ← تُحوَّل إلى الصيغة الأصلية
     if (!spec || typeof spec !== "object" || !Array.isArray(spec.sections) || !spec.sections.length) return { ok: false, error: "لا توجد أقسام (sections) في التصميم", warn };
     const pg = spec.page && typeof spec.page === "object" ? spec.page : {}; const dw = Math.round(num(pg.width, 600, 1920, 1080));
     const out = { format: FORMAT, page: { title: str(pg.title, 120) || "صفحة جديدة", width: dw, bg: col(pg.bg, "#ffffff"), lang: ["ar", "fr", "en"].includes(pg.lang) ? pg.lang : "ar", product: str(pg.product, 80).replace(/[^\w-]/g, "") }, assets: {}, sections: [] };
@@ -237,9 +239,9 @@ const PBSpec = (() => {
       if (L.font.family) { const f = (P.FONT_FAMS || []).find(x => x[0].toLowerCase() === L.font.family.toLowerCase()); if (f) t.ff = "'" + f[0] + "','Cairo',sans-serif"; }
       if (L.type === "heading") Object.assign(w.set, t, { text: L.text.replace(/\*\*/g, ""), tag: L.tag === "p" || L.tag === "div" ? L.tag : L.tag });
       else Object.assign(w.set, t, { html: "<p>" + html + "</p>" });
-      if (L.h) w.set.hauto = false;
+      if (L.h && !L.autoH) w.set.hauto = false;
     } else if (L.type === "image") {
-      free("image", L.h || Math.round(L.w * .75)); w.set.hauto = false; Object.assign(w.set, { src: resolveImg(L, ctx), alt: L.alt, fit: L.fit }); if (L.cutout && !w.set.src) w.set.__cutout = true; const am = /^asset:([\w-]+)$/.exec(L.src || ""), ap = am && (ctx.assets || {})[am[1]]; let pr = L.prompt || (ap && ap.prompt) || "";
+      free("image", L.h || Math.round(L.w * .75)); w.set.hauto = false; Object.assign(w.set, { src: resolveImg(L, ctx), alt: L.alt, fit: L.fit }); if (L.cutout && !w.set.src) w.set.__cutout = true; if (L.crop) w.set.crop = L.crop; const am = /^asset:([\w-]+)$/.exec(L.src || ""), ap = am && (ctx.assets || {})[am[1]]; let pr = L.prompt || (ap && ap.prompt) || "";
       if (!w.set.src && !pr) pr = L.alt || ((ctx.title || "") + " — صورة تسويقية للمنتج").trim();   /* صورة بلا مصدر ولا وصف: نُنشئ وصفاً من النص البديل ليولَّدها الزر */
       if (pr && !w.set.src) w.set.aiPrompt = pr; if (L.cutout) w.set.aiCut = true;
       if (L.brightness !== 100) w.set.ibri = L.brightness; if (L.contrast !== 100) w.set.icon = L.contrast; if (L.saturate !== 100) w.set.isat = L.saturate;
@@ -252,8 +254,8 @@ const PBSpec = (() => {
       free("button", L.h || 64); Object.assign(w.set, { text: L.text, link: L.link, bgc: L.bg, color: L.color, fs: { d: L.size }, fw: L.weight, brad: { d: L.radius || 40 }, al: { d: "center" } });
       if (L.gradient) w.set.bgr = gradObj(L.gradient); if (L.effects.some(e => e.type === "shine")) w.set.fxShine = true;
     } else if (L.type === "icon") {
-      free("iconbox", L.h || L.size + 40); Object.assign(w.set, { icon: "ic:" + L.icon, title: L.title, text: L.text, isz: { d: L.size } });
-      w.set.fxs = [fxItem("لون الأيقونة", "selector .pb-ibi{color:[[c]]}", { c: ["اللون", "text", L.color] }), fxItem("محاذاة", "selector{text-align:center}", {})];
+      free("iconbox", L.h || L.size + 40); Object.assign(w.set, { icon: /^img:/.test(L.icon) ? L.icon : "ic:" + L.icon, title: L.title, text: L.text, isz: { d: L.size } });
+      w.set.fxs = [fxItem("لون الأيقونة", "selector .pb-ibi{color:[[c]]}", { c: ["اللون", "text", L.color] }), fxItem("محاذاة", "selector{text-align:center}" + (L.title || L.text ? "" : "selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}"), {})];
     } else if (L.type === "video") {
       const h = L.h || Math.round(L.w * 9 / 16), r = L.w / Math.max(1, h), ratio = [["16/9", 16 / 9], ["4/3", 4 / 3], ["1/1", 1], ["9/16", 9 / 16]].sort((a, b) => Math.abs(a[1] - r) - Math.abs(b[1] - r))[0][0];
       free("video", h); Object.assign(w.set, { url: L.src, poster: resolveImg({ src: L.poster }, ctx), vauto: !!L.autoplay, ratio });
@@ -273,6 +275,7 @@ const PBSpec = (() => {
     else if (L.blur) { (w.set.fxs = w.set.fxs || []).push(fxItem("تمويه", "selector{filter:blur(calc(" + U + "*[[b]]))}", { b: ["التمويه", "num", L.blur] })); }
     if (L.blend) (w.set.fxs = w.set.fxs || []).push(fxItem("نمط المزج", "selector{mix-blend-mode:" + L.blend + "}", {}));
     const fx = w.set.fxs = w.set.fxs || []; const sh = shadowFx(L); if (sh) fx.push(sh);
+    if (L.type === "image" && L.fade && (L.fade.t || L.fade.b || L.fade.l || L.fade.r)) { const m = "linear-gradient(to bottom,transparent 0,#000 [[t]]%,#000 calc(100% - [[b]]%),transparent 100%),linear-gradient(to right,transparent 0,#000 [[l]]%,#000 calc(100% - [[r]]%),transparent 100%)"; fx.push(fxItem("تلاشي حواف الصورة", "selector " + (L.crop ? ".pb-cropbox" : ".pb-im") + "{-webkit-mask-image:" + m + ";mask-image:" + m + ";-webkit-mask-composite:source-in;mask-composite:intersect}", { t: ["أعلى %", "num", L.fade.t], b: ["أسفل %", "num", L.fade.b], l: ["يسار %", "num", L.fade.l], r: ["يمين %", "num", L.fade.r] })); }
     if ((sh || L.effects.some(e => CONT.includes(e.type))) && !(L.type === "image" && L.radius)) fx.push(fxItem("السماح بالظل والحركة خارج الإطار", "selector{overflow:visible!important}", {}));
     let ent = false; L.effects.forEach(e => {
       if (ENTR.includes(e.type)) { if (!ent) { w.set.anim = e.type; w.set.animDur = e.duration; w.set.animDelay = e.delay; ent = true; } return; }

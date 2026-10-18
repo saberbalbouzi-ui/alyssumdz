@@ -10,7 +10,7 @@
  "css": "",
  "sections": [
   {
-   "id": "6bfd2ro",
+   "id": "1u2v3mt",
    "set": {
     "layout": "boxed",
     "cw": {
@@ -57,17 +57,17 @@
    },
    "cols": [
     {
-     "id": "1uc7gox",
+     "id": "1si72nd",
      "set": {},
      "widgets": []
     }
    ],
    "free": [
     {
-     "id": "hk66c3b",
+     "id": "n3t1lsg",
      "type": "image",
      "set": {
-      "src": "",
+      "src": "assets/img/pages/mf-garden.webp",
       "alt": "Garden background",
       "fit": "cover",
       "fx": {
@@ -84,13 +84,12 @@
       },
       "zi": 0,
       "hauto": false,
-      "aiPrompt": "Soft-focus sunlit green garden background, bright central area for text, no text or products",
       "locked": true,
       "cls": ""
      }
     },
     {
-     "id": "37095ws",
+     "id": "n96xyhm",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -137,7 +136,7 @@
      }
     },
     {
-     "id": "upicoxr",
+     "id": "4eot6mn",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-flower.webp",
@@ -158,11 +157,11 @@
       "zi": 10,
       "hauto": false,
       "cls": "",
-      "grp": "g0na86wc"
+      "grp": "gzj8b55o"
      }
     },
     {
-     "id": "pac75is",
+     "id": "gaeanz5",
      "type": "text",
      "set": {
       "html": "<p>ALYSSUM</p>",
@@ -193,11 +192,11 @@
       "ff": "'Playfair Display','Cairo',sans-serif",
       "hauto": false,
       "cls": "",
-      "grp": "g0na86wc"
+      "grp": "gzj8b55o"
      }
     },
     {
-     "id": "wzbx88q",
+     "id": "y4rl7yg",
      "type": "text",
      "set": {
       "html": "<p>Herbal Science</p>",
@@ -228,17 +227,17 @@
       "ff": "'Montserrat','Cairo',sans-serif",
       "hauto": false,
       "cls": "",
-      "grp": "g0na86wc"
+      "grp": "gzj8b55o"
      }
     },
     {
-     "id": "r8rmxob",
+     "id": "fwndn8w",
      "type": "heading",
      "set": {
       "text": "MEMORY FOCUS",
       "tag": "h2",
       "fs": {
-       "d": 43
+       "d": 45
       },
       "fw": "800",
       "ta": {
@@ -254,7 +253,7 @@
        "d": 43.6
       },
       "fh": {
-       "d": 60
+       "d": 62
       },
       "zi": 20,
       "color": "#15569A",
@@ -262,12 +261,11 @@
        "d": 1.15
       },
       "ff": "'Montserrat','Cairo',sans-serif",
-      "hauto": false,
       "cls": ""
      }
     },
     {
-     "id": "agit8zs",
+     "id": "ob5o2v6",
      "type": "text",
      "set": {
       "html": "<p>مكمل غذائي طبيعي</p>",
@@ -300,13 +298,13 @@
      }
     },
     {
-     "id": "4tdbr3n",
+     "id": "wt9ditt",
      "type": "heading",
      "set": {
       "text": "عسل التركيز",
       "tag": "h1",
       "fs": {
-       "d": 62
+       "d": 63
       },
       "fw": "800",
       "ta": {
@@ -322,24 +320,23 @@
        "d": 51.2
       },
       "fh": {
-       "d": 82
+       "d": 83
       },
       "zi": 22,
       "color": "#2162A6",
       "lh": {
        "d": 1.15
       },
-      "hauto": false,
       "cls": ""
      }
     },
     {
-     "id": "7mwnwvt",
+     "id": "68rt8lz",
      "type": "text",
      "set": {
       "html": "<p>و تنشيط الذاكرة</p>",
       "fs": {
-       "d": 52
+       "d": 59
       },
       "lh": {
        "d": 1.15
@@ -357,84 +354,16 @@
        "d": 49
       },
       "fh": {
-       "d": 70
+       "d": 78
       },
       "zi": 23,
       "fw": "800",
       "color": "#C18B00",
-      "hauto": false,
       "cls": ""
      }
     },
     {
-     "id": "fn6minw",
-     "type": "shape",
-     "set": {
-      "shape": "rect",
-      "fill": "#1D5D9F",
-      "outline": false,
-      "stroke": "",
-      "sw": 0,
-      "dash": "",
-      "rx": 50,
-      "keep": false,
-      "flip": "",
-      "al": {
-       "d": "center"
-      },
-      "fx": {
-       "d": 36.3
-      },
-      "fy": {
-       "d": 482
-      },
-      "fwd": {
-       "d": 27.2
-      },
-      "fh": {
-       "d": 48
-      },
-      "zi": 24,
-      "cls": "",
-      "grp": "gq773obt"
-     }
-    },
-    {
-     "id": "uwdn09h",
-     "type": "text",
-     "set": {
-      "html": "<p>من 4 إلى 18 سنة</p>",
-      "fs": {
-       "d": 29
-      },
-      "lh": {
-       "d": 1.15
-      },
-      "ta": {
-       "d": "center"
-      },
-      "fx": {
-       "d": 37.2
-      },
-      "fy": {
-       "d": 486
-      },
-      "fwd": {
-       "d": 25.4
-      },
-      "fh": {
-       "d": 44
-      },
-      "zi": 25,
-      "fw": "700",
-      "color": "#FFFFFF",
-      "hauto": false,
-      "cls": "",
-      "grp": "gq773obt"
-     }
-    },
-    {
-     "id": "xts3kt5",
+     "id": "8n9lzcc",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-kids.webp",
@@ -454,11 +383,47 @@
       },
       "zi": 29,
       "hauto": false,
+      "crop": {
+       "x": 0,
+       "y": -30,
+       "w": 100,
+       "h": 254
+      },
+      "fxs": [
+       {
+        "id": "uk8lluk",
+        "n": "تلاشي حواف الصورة",
+        "on": true,
+        "tpl": "selector .pb-cropbox{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 [[t]]%,#000 calc(100% - [[b]]%),transparent 100%),linear-gradient(to right,transparent 0,#000 [[l]]%,#000 calc(100% - [[r]]%),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 [[t]]%,#000 calc(100% - [[b]]%),transparent 100%),linear-gradient(to right,transparent 0,#000 [[l]]%,#000 calc(100% - [[r]]%),transparent 100%);-webkit-mask-composite:source-in;mask-composite:intersect}",
+        "p": {
+         "t": {
+          "l": "أعلى %",
+          "t": "num",
+          "v": 12
+         },
+         "b": {
+          "l": "أسفل %",
+          "t": "num",
+          "v": 22
+         },
+         "l": {
+          "l": "يسار %",
+          "t": "num",
+          "v": 0
+         },
+         "r": {
+          "l": "يمين %",
+          "t": "num",
+          "v": 0
+         }
+        }
+       }
+      ],
       "cls": ""
      }
     },
     {
-     "id": "3git9b3",
+     "id": "5r872jg",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -487,11 +452,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "gm7usnvy"
+      "grp": "gofcqnce"
      }
     },
     {
-     "id": "20z46fv",
+     "id": "ce99vp3",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -520,11 +485,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "g78v5u8a"
+      "grp": "g2nlix32"
      }
     },
     {
-     "id": "1uxa9hs",
+     "id": "engpmx7",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -553,11 +518,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "gpnfcwly"
+      "grp": "gjuoe9au"
      }
     },
     {
-     "id": "oi6x53y",
+     "id": "4xws7mo",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -586,11 +551,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "gt95ql7u"
+      "grp": "gb9rewtj"
      }
     },
     {
-     "id": "ke7p0ae",
+     "id": "7depesk",
      "type": "iconbox",
      "set": {
       "icon": "ic:brain",
@@ -619,7 +584,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "6xzsb7e",
+        "id": "3btj8h3",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -632,22 +597,22 @@
         }
        },
        {
-        "id": "gf15w7y",
+        "id": "hocg8l8",
         "n": "محاذاة",
         "on": true,
-        "tpl": "selector{text-align:center}",
+        "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
         "p": {}
        }
       ],
       "cls": "",
-      "grp": "gm7usnvy"
+      "grp": "gofcqnce"
      }
     },
     {
-     "id": "kwttzt4",
+     "id": "bnhat72",
      "type": "iconbox",
      "set": {
-      "icon": "ic:award",
+      "icon": "img:assets/img/icons/mf-book-open.svg",
       "title": "",
       "text": "",
       "al": {
@@ -673,7 +638,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "mu5s86t",
+        "id": "b4nobsy",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -686,19 +651,19 @@
         }
        },
        {
-        "id": "n7ysvdy",
+        "id": "1xgixy3",
         "n": "محاذاة",
         "on": true,
-        "tpl": "selector{text-align:center}",
+        "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
         "p": {}
        }
       ],
       "cls": "",
-      "grp": "g78v5u8a"
+      "grp": "g2nlix32"
      }
     },
     {
-     "id": "ixekbvi",
+     "id": "p9qlza3",
      "type": "iconbox",
      "set": {
       "icon": "ic:leaf",
@@ -727,7 +692,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "yo92kl6",
+        "id": "6waiuik",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -740,19 +705,19 @@
         }
        },
        {
-        "id": "4j3fgox",
+        "id": "zzl3w5n",
         "n": "محاذاة",
         "on": true,
-        "tpl": "selector{text-align:center}",
+        "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
         "p": {}
        }
       ],
       "cls": "",
-      "grp": "gpnfcwly"
+      "grp": "gjuoe9au"
      }
     },
     {
-     "id": "u8an6y3",
+     "id": "viutacu",
      "type": "iconbox",
      "set": {
       "icon": "ic:shield-check",
@@ -781,7 +746,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "67kgd7l",
+        "id": "3clu3m1",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -794,19 +759,19 @@
         }
        },
        {
-        "id": "oz7cg8e",
+        "id": "c6kfsjo",
         "n": "محاذاة",
         "on": true,
-        "tpl": "selector{text-align:center}",
+        "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
         "p": {}
        }
       ],
       "cls": "",
-      "grp": "gt95ql7u"
+      "grp": "gb9rewtj"
      }
     },
     {
-     "id": "5j588pz",
+     "id": "ljh0aro",
      "type": "text",
      "set": {
       "html": "<p>يدعم التركيز<br>والانتباه</p>",
@@ -836,11 +801,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gm7usnvy"
+      "grp": "gofcqnce"
      }
     },
     {
-     "id": "sn76lu9",
+     "id": "cdle20n",
      "type": "text",
      "set": {
       "html": "<p>يساعد<br>في التعلم</p>",
@@ -870,11 +835,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "g78v5u8a"
+      "grp": "g2nlix32"
      }
     },
     {
-     "id": "5xfsqtf",
+     "id": "cuh44ts",
      "type": "text",
      "set": {
       "html": "<p>مكونات<br>طبيعية</p>",
@@ -904,11 +869,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gpnfcwly"
+      "grp": "gjuoe9au"
      }
     },
     {
-     "id": "aepr2do",
+     "id": "itu5ipj",
      "type": "text",
      "set": {
       "html": "<p>مناسب للأطفال<br>والمراهقين</p>",
@@ -938,38 +903,35 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gt95ql7u"
+      "grp": "gb9rewtj"
      }
     },
     {
-     "id": "kuo7o4t",
+     "id": "hutyrrx",
      "type": "image",
      "set": {
-      "src": "",
+      "src": "assets/img/pages/mf-dipper.webp",
       "alt": "Honey dipper",
       "fit": "contain",
       "fx": {
-       "d": 75.4
+       "d": 74.4
       },
       "fy": {
        "d": 0
       },
       "fwd": {
-       "d": 23.5
+       "d": 25.6
       },
       "fh": {
-       "d": 283
+       "d": 202
       },
       "zi": 35,
       "hauto": false,
-      "__cutout": true,
-      "aiPrompt": "Honey dipper with dripping honey, transparent background",
-      "aiCut": true,
       "cls": ""
      }
     },
     {
-     "id": "cvptj71",
+     "id": "47q2rd7",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1002,7 +964,7 @@
       },
       "fxs": [
        {
-        "id": "jh2gtqr",
+        "id": "lir4vhw",
         "n": "ظل الشكل",
         "on": true,
         "tpl": "selector .pb-svg{filter:drop-shadow(calc(var(--u,1px)*[[x]]) calc(var(--u,1px)*[[y]]) calc(var(--u,1px)*[[b]]) [[c]])}",
@@ -1030,7 +992,7 @@
         }
        },
        {
-        "id": "i3mdk29",
+        "id": "kvl1tq2",
         "n": "السماح بالظل والحركة خارج الإطار",
         "on": true,
         "tpl": "selector{overflow:visible!important}",
@@ -1038,11 +1000,11 @@
        }
       ],
       "cls": "",
-      "grp": "gc2deepc"
+      "grp": "g25mj2i5"
      }
     },
     {
-     "id": "opduxo2",
+     "id": "52x6qbr",
      "type": "text",
      "set": {
       "html": "<p>عناية طبيعية<br>لمستقبل الأفضل<br>لأطفالنا</p>",
@@ -1075,11 +1037,78 @@
        "d": -7
       },
       "cls": "",
-      "grp": "gc2deepc"
+      "grp": "g25mj2i5"
      }
     },
     {
-     "id": "x4u6mbc",
+     "id": "88j7v68",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#1D5D9F",
+      "outline": false,
+      "stroke": "",
+      "sw": 0,
+      "dash": "",
+      "rx": 50,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 36.3
+      },
+      "fy": {
+       "d": 482
+      },
+      "fwd": {
+       "d": 27.2
+      },
+      "fh": {
+       "d": 48
+      },
+      "zi": 41,
+      "cls": "",
+      "grp": "gsl6xyu2"
+     }
+    },
+    {
+     "id": "ooz2b8m",
+     "type": "text",
+     "set": {
+      "html": "<p>من 4 إلى 18 سنة</p>",
+      "fs": {
+       "d": 29
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 37.2
+      },
+      "fy": {
+       "d": 486
+      },
+      "fwd": {
+       "d": 25.4
+      },
+      "fh": {
+       "d": 44
+      },
+      "zi": 42,
+      "fw": "700",
+      "color": "#FFFFFF",
+      "hauto": false,
+      "cls": "",
+      "grp": "gsl6xyu2"
+     }
+    },
+    {
+     "id": "wrhf70a",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-jar.webp",
@@ -1103,7 +1132,7 @@
      }
     },
     {
-     "id": "96lnnjl",
+     "id": "gjrt3hy",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-jar.webp",
@@ -1127,10 +1156,10 @@
      }
     },
     {
-     "id": "ifuxm4o",
+     "id": "4spfzzu",
      "type": "image",
      "set": {
-      "src": "assets/img/pages/mf-jar.webp",
+      "src": "assets/img/pages/mf-placeholder-160g.svg",
       "alt": "160g gift bottle",
       "fit": "contain",
       "fx": {
@@ -1151,7 +1180,7 @@
      }
     },
     {
-     "id": "vi5i1t5",
+     "id": "oujj5pp",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1183,11 +1212,11 @@
       "ht": true,
       "hd": true,
       "cls": "",
-      "grp": "glyg27t0"
+      "grp": "gw451utg"
      }
     },
     {
-     "id": "tfwnfje",
+     "id": "1fermdv",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -1203,10 +1232,10 @@
        "d": "center"
       },
       "fx": {
-       "d": 83.6
+       "d": 85.3
       },
       "fy": {
-       "d": 828
+       "d": 790
       },
       "fwd": {
        "d": 13.3
@@ -1216,11 +1245,11 @@
       },
       "zi": 61,
       "cls": "",
-      "grp": "glyg27t0"
+      "grp": "gw451utg"
      }
     },
     {
-     "id": "pdbxmxt",
+     "id": "p9oez4k",
      "type": "text",
      "set": {
       "html": "<p>هدية<br>مجانية</p>",
@@ -1234,10 +1263,10 @@
        "d": "center"
       },
       "fx": {
-       "d": 85
+       "d": 86.7
       },
       "fy": {
-       "d": 847
+       "d": 809
       },
       "fwd": {
        "d": 10.6
@@ -1250,38 +1279,35 @@
       "color": "#FFFFFF",
       "hauto": false,
       "cls": "",
-      "grp": "glyg27t0"
+      "grp": "gw451utg"
      }
     },
     {
-     "id": "1enjxgu",
+     "id": "o1q62lh",
      "type": "image",
      "set": {
-      "src": "",
+      "src": "assets/img/pages/mf-honeycomb.webp",
       "alt": "Honeycomb foreground",
       "fit": "contain",
       "fx": {
        "d": 0
       },
       "fy": {
-       "d": 1015
+       "d": 950
       },
       "fwd": {
-       "d": 23.9
+       "d": 16.2
       },
       "fh": {
-       "d": 162
+       "d": 211
       },
       "zi": 65,
       "hauto": false,
-      "__cutout": true,
-      "aiPrompt": "Small golden honeycomb with honey, transparent background",
-      "aiCut": true,
       "cls": ""
      }
     },
     {
-     "id": "szno14r",
+     "id": "m2dq2mm",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1310,11 +1336,11 @@
       },
       "zi": 72,
       "cls": "",
-      "grp": "g4h1nz74"
+      "grp": "g4qit9wj"
      }
     },
     {
-     "id": "e7lmrgp",
+     "id": "mm3q0re",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1346,11 +1372,11 @@
        "d": -3
       },
       "cls": "",
-      "grp": "gouqimbm"
+      "grp": "gj1xmq2c"
      }
     },
     {
-     "id": "i297eic",
+     "id": "scjlhko",
      "type": "text",
      "set": {
       "html": "<p>زوج قوارير 250 غ<br>+ قارورة 160 غ هدية</p>",
@@ -1380,11 +1406,11 @@
       "color": "#FFFFFF",
       "hauto": false,
       "cls": "",
-      "grp": "g4h1nz74"
+      "grp": "g4qit9wj"
      }
     },
     {
-     "id": "bxzbj7b",
+     "id": "gstm4q9",
      "type": "text",
      "set": {
       "html": "<p>عرض التوفير</p>",
@@ -1414,11 +1440,11 @@
       "color": "#9E1510",
       "hauto": false,
       "cls": "",
-      "grp": "gouqimbm"
+      "grp": "gj1xmq2c"
      }
     },
     {
-     "id": "lpbbj49",
+     "id": "ce4owgp",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1447,11 +1473,11 @@
       },
       "zi": 74,
       "cls": "",
-      "grp": "g4h1nz74"
+      "grp": "g4qit9wj"
      }
     },
     {
-     "id": "zjqovgf",
+     "id": "3ylao4l",
      "type": "text",
      "set": {
       "html": "<p>3200 دج</p>",
@@ -1474,18 +1500,17 @@
        "d": 38
       },
       "fh": {
-       "d": 110
+       "d": 97
       },
       "zi": 75,
       "fw": "900",
       "color": "#C51A13",
-      "hauto": false,
       "cls": "",
-      "grp": "g4h1nz74"
+      "grp": "g4qit9wj"
      }
     },
     {
-     "id": "vqv09b4",
+     "id": "bg25jax",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1514,11 +1539,11 @@
       },
       "zi": 80,
       "cls": "",
-      "grp": "g650wbk5"
+      "grp": "g7mkau19"
      }
     },
     {
-     "id": "kz2qzoe",
+     "id": "ccawad1",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-jar.webp",
@@ -1539,11 +1564,11 @@
       "zi": 81,
       "hauto": false,
       "cls": "",
-      "grp": "g650wbk5"
+      "grp": "g7mkau19"
      }
     },
     {
-     "id": "xuwbyj2",
+     "id": "4ud4xda",
      "type": "text",
      "set": {
       "html": "<p>قارورة واحدة 250 غ</p>",
@@ -1573,11 +1598,11 @@
       "color": "#174D84",
       "hauto": false,
       "cls": "",
-      "grp": "g650wbk5"
+      "grp": "g7mkau19"
      }
     },
     {
-     "id": "vxqfwkv",
+     "id": "4z311g7",
      "type": "text",
      "set": {
       "html": "<p>1800 دج</p>",
@@ -1607,11 +1632,11 @@
       "color": "#174D84",
       "hauto": false,
       "cls": "",
-      "grp": "g650wbk5"
+      "grp": "g7mkau19"
      }
     },
     {
-     "id": "3dta9mm",
+     "id": "ae4pc17",
      "type": "iconbox",
      "set": {
       "icon": "ic:truck",
@@ -1640,7 +1665,7 @@
       "zi": 84,
       "fxs": [
        {
-        "id": "0ayzfki",
+        "id": "szro18z",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -1653,19 +1678,19 @@
         }
        },
        {
-        "id": "4aish0p",
+        "id": "qbq6kfj",
         "n": "محاذاة",
         "on": true,
-        "tpl": "selector{text-align:center}",
+        "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
         "p": {}
        }
       ],
       "cls": "",
-      "grp": "gs0168oz"
+      "grp": "giyjj2yk"
      }
     },
     {
-     "id": "7boh7pf",
+     "id": "uyuue6x",
      "type": "text",
      "set": {
       "html": "<p>التوصيل متوفر<br>حسب الولاية</p>",
@@ -1695,11 +1720,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gs0168oz"
+      "grp": "giyjj2yk"
      }
     },
     {
-     "id": "1oxzvss",
+     "id": "uq0zm1h",
      "type": "image",
      "set": {
       "src": "assets/img/icons/mf-messenger.svg",
@@ -1720,11 +1745,11 @@
       "zi": 86,
       "hauto": false,
       "cls": "",
-      "grp": "gc55avk9"
+      "grp": "g4j3j8gx"
      }
     },
     {
-     "id": "5xczyp3",
+     "id": "vj78djd",
      "type": "text",
      "set": {
       "html": "<p>راسلنا الآن على<br>Messenger</p>",
@@ -1754,11 +1779,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gc55avk9"
+      "grp": "g4j3j8gx"
      }
     },
     {
-     "id": "whs8ff3",
+     "id": "2qlpp2b",
      "type": "text",
      "set": {
       "html": "<p>للطلب ومعرفة تفاصيل التوصيل</p>",
@@ -1788,7 +1813,7 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gc55avk9"
+      "grp": "g4j3j8gx"
      }
     }
    ]
@@ -1797,20 +1822,20 @@
  "specMeta": {
   "format": "alyssum-design/1",
   "v": 1,
-  "at": 1792356523520,
+  "at": 1792357520851,
   "plan": null,
   "assets": {
    "bg_garden": {
-    "src": "",
-    "prompt": "Soft-focus sunlit green garden background, bright central area for text, no text or products"
+    "src": "assets/img/pages/mf-garden.webp",
+    "prompt": ""
    },
    "alyssum_flower_logo": {
     "src": "assets/img/pages/mf-flower.webp",
     "prompt": ""
    },
    "honey_dipper": {
-    "src": "",
-    "prompt": "Honey dipper with dripping honey, transparent background"
+    "src": "assets/img/pages/mf-dipper.webp",
+    "prompt": ""
    },
    "children_studying": {
     "src": "assets/img/pages/mf-kids.webp",
@@ -1821,12 +1846,12 @@
     "prompt": ""
    },
    "jar_160g": {
-    "src": "assets/img/pages/mf-jar.webp",
+    "src": "assets/img/pages/mf-placeholder-160g.svg",
     "prompt": ""
    },
    "honeycomb": {
-    "src": "",
-    "prompt": "Small golden honeycomb with honey, transparent background"
+    "src": "assets/img/pages/mf-honeycomb.webp",
+    "prompt": ""
    },
    "messenger_icon": {
     "src": "assets/img/icons/mf-messenger.svg",
@@ -1838,8 +1863,12 @@
  },
  "live": false,
  "media": [
+  "assets/img/pages/mf-garden.webp",
   "assets/img/pages/mf-jar.webp",
+  "assets/img/pages/mf-placeholder-160g.svg",
   "assets/img/pages/mf-kids.webp",
-  "assets/img/pages/mf-flower.webp"
+  "assets/img/pages/mf-flower.webp",
+  "assets/img/pages/mf-dipper.webp",
+  "assets/img/pages/mf-honeycomb.webp"
  ]
 }
