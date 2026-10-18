@@ -61,7 +61,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-fw{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.25)}
 .pbx-fw iframe{border:0;width:100%;height:100%;display:block;background:#fff}
 #pbx-ovl{position:absolute;inset:0;pointer-events:none;overflow:visible}
-#pb-app.pbx-ad .pbx-sbar{display:none!important}
+#pb-app.pbx-ad .pbx-sbar,#pb-app.pbx-long .pbx-sbar,#pb-app.pbx-long .pbx-thumbs{display:none!important}
 .adp{margin-bottom:.9rem}.adp .adp-wh{display:grid;grid-template-columns:1fr auto 1fr;gap:.4rem;align-items:center;margin:.4rem 0}.adp .adp-ck{display:flex;gap:.4rem;align-items:center;font-weight:600;margin:.3rem 0}.adp select,.adp input[type=number]{width:100%}.adp input[type=range]{width:100%}
 #pbx-bgp{position:fixed;z-index:10006;width:244px;background:rgba(9,24,18,.985);border:1px solid rgba(var(--g-mint-rgb,198,254,23),.4);border-radius:14px;padding:.6rem;box-shadow:0 16px 40px rgba(0,0,0,.55);color:#fff;font-family:inherit;direction:rtl}#pbx-bgp .bgp-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;font-size:.85rem}#pbx-bgp .bgp-x{background:transparent;border:0;color:#fff;cursor:pointer;font-size:.9rem}#pbx-bgp .bgp-sw{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-bottom:.55rem}#pbx-bgp .bgp-sw button{aspect-ratio:1;border-radius:8px;border:1.5px solid rgba(255,255,255,.35);cursor:pointer;padding:0}#pbx-bgp .bgp-sw button:hover{transform:translateY(-2px);border-color:#fff}#pbx-bgp .bgp-r{display:flex;gap:6px;align-items:center}#pbx-bgp input[type=color]{width:42px;height:34px;padding:0;border:1.5px solid rgba(255,255,255,.35);border-radius:8px;background:transparent;cursor:pointer}#pbx-bgp input[type=text]{flex:1;min-width:0;height:34px;border-radius:8px;border:1.5px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;padding:0 .5rem;font-family:monospace;font-size:.8rem}#pbx-bgp .bgp-b{display:inline-flex;align-items:center;gap:4px;height:34px;padding:0 .6rem;border-radius:10px;border:1px solid rgba(var(--g-mint-rgb,198,254,23),.45);background:linear-gradient(180deg,rgba(var(--g-mint-rgb,198,254,23),.34),rgba(var(--g-mint-rgb,198,254,23),.12));color:#fff;font-weight:800;font-size:.78rem;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -4px 8px rgba(0,0,0,.2);backdrop-filter:blur(6px)}#pbx-bgp .bgp-b:hover{transform:translateY(-2px)}#pbx-bgp .bgp-b svg{width:16px;height:16px}#pbx-bgp .bgp-n{margin-top:.5rem;font-size:.7rem;color:rgba(255,255,255,.7)}
 .pbx-box{position:absolute;border:2px solid #2d6cdf;pointer-events:none;box-sizing:border-box}
@@ -722,7 +722,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
     const ad = $("pbx-add2"); if (ad) ad.style.width = (w * s) + "px";
     st.style.overflowX = (E.zoom || 1) <= 1.001 ? "hidden" : "";      // الزوم 100% = ملاءمة العرض بلا شريط سحب أفقي؛ يظهر الشريط فقط عند التكبير
-    drawThumbs(true); placeQbar(); const zv = $("pbx-zv"); if (zv) zv.textContent = Math.round((isAd ? s : (E.zoom || 1)) * 100) + "%";   // صفحات الويب: النسبة المعروضة نسبة إلى الملاءمة (100% = الأصلي)
+    $("pb-app").classList.toggle("pbx-long", isLong()); drawThumbs(true); placeQbar(); const zv = $("pbx-zv"); if (zv) zv.textContent = Math.round((isAd ? s : (E.zoom || 1)) * 100) + "%";   // صفحات الويب: النسبة المعروضة نسبة إلى الملاءمة (100% = الأصلي)
   }
   const renderCanvasHeight = () => fitStage();
 
@@ -835,6 +835,12 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     else { setR(inf.set, "w", E.dev, 100); if (inf.node.type === "image") inf.set.fit = "cover"; }
     afterEdit();
   }
+  /* بعرض الصفحة: العرض 100% ويكبر الارتفاع بالنسبة نفسها فتبقى نسبة الصورة (وقصّها) كما هي */
+  function fitWidth(inf) {
+    if (inf.free) { ensureMobile(inf.sec); const fw = Number(eff(inf.set, "fwd", E.dev)) || 100, fh = Number(eff(inf.set, "fh", E.dev)) || 0, k = 100 / Math.max(5, fw); setR(inf.set, "fx", E.dev, 0); setR(inf.set, "fwd", E.dev, 100); if (fh && !inf.set.hauto) setR(inf.set, "fh", E.dev, Math.round(fh * k)); if (E.dev !== "d") ["fx", "fwd", "fh"].forEach(q => { if (own(inf.set, q, "d") === undefined) setR(inf.set, q, "d", eff(inf.set, q, E.dev)); }); growCanvas(inf.sec); }
+    else setR(inf.set, "w", E.dev, 100);
+    E.nextLabel = "بعرض الصفحة"; afterEdit();
+  }
   function asBackground(inf) {
     if (inf.node.type !== "image" || !inf.set.src) return; const sec = inf.sec;
     sec.set.bgOrig = { node: clone(inf.node), colId: inf.col ? inf.col.id : null, free: !!inf.free, idx: inf.idx };      // لإرجاع الصورة إلى أصلها لاحقاً
@@ -865,7 +871,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
       ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
-      img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)],
+      img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], img ? ["↔", "بعرض الصفحة (بنسبة الصورة)", () => fitWidth(inf)] : null,
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
       img && canvas && !EDB() ? "-" : null, img && canvas && !EDB() ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null,
       typeof PBMask !== "undefined" && canvas && !EDB() && PBMask.can(inf) ? "-" : null,
@@ -932,7 +938,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       ["➕", "إضافة قسم", () => addSecAfter(sec), "Ctrl+Shift+Enter"], ["⧉", "تكرار القسم", () => dupSec(sec)],
       has ? ["🗑", "حذف الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); ["bgImg", "bgSize", "bgPos", "bgOrig"].forEach(k => delete set[k]); E.nextLabel = "حذف الخلفية"; afterEdit(); }, "Del", 1, 0, lk] : null, "-",
       has ? [lk ? "🔓" : "🔒", lk ? "فتح قفل الخلفية" : "قفل الخلفية", () => { if (lk) delete set.bgLocked; else set.bgLocked = true; afterEdit(); toast(lk ? "🔓 فُتحت الخلفية" : "🔒 الخلفية مقفلة"); }] : null,
-      canvas ? ["✂", "قصّ الصفحة عند آخر عنصر", () => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", E.dev)) || 0) + hOf(w))) + 40; setR(set, "mh", E.dev, Math.max(100, Math.round(need))); E.nextLabel = "قصّ الصفحة"; afterEdit(); toast("✂ قُصّت الصفحة عند آخر عنصر"); }] : null,
+      canvas ? ["✂", "قصّ الصفحة عند آخر عنصر", () => { trimLong(sec); toast("✂ قُصّت الصفحة عند آخر عنصر"); }] : null,
       canvas ? ["↕", "تغيير حجم الصفحة (الارتفاع)", () => { const v = Number(prompt("ارتفاع الصفحة بالبكسل:", Number(eff(set, "mh", E.dev)) || 520)); if (v >= 100) { setR(set, "mh", E.dev, Math.round(v)); afterEdit(); } }] : null,
       ["#", "الدلائل", null, "", 0, [[E.nogrid ? "▦" : "▧", E.nogrid ? "إظهار الشبكة" : "إخفاء الشبكة", () => setGrid(!!E.nogrid)], ["🧲", E.snap ? "إيقاف الالتصاق" : "تفعيل الالتصاق", toggleSnap]]],
       has ? ["⛓", "فصل الصورة عن الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); restoreBackground(sec); }, "", 0, 0, lk] : null].filter(Boolean);
@@ -986,7 +992,11 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
 
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
+  /* صفحة طويلة: قسم قماش واحد = الصفحة نفسها (لا قسم ولا فواصل ولا شريط أقسام) */
+  function isLong() { const P = E.page, s0 = P && !P.ad && P.sections && P.sections.length === 1 && P.sections[0]; return !!(s0 && s0.set && s0.set.kind === "canvas" && !s0.set.tight); }
+  function trimLong(sec) { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", E.dev)) || 0) + hOf(w))) + 40; setR(sec.set, "mh", E.dev, Math.max(100, Math.round(need))); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
   function select(id) {
+    if (id && isLong()) { const q1 = find(id); if (q1 && q1.kind !== "widget") id = null; }
     if (id && E.page && E.page.ad) { const q0 = find(id); if (q0 && q0.kind !== "widget") id = null; }      // «إنشاء صور»: الخلفية ليست قسماً — لا تحديد للقسم ولا إعدادات له
     if (id && !E.keepPimg) closePageImages();      // النقر على عنصر في الصفحة يخفي نافذة تحميل الصورة فتظهر الإعدادات
     if (typeof PBMask !== "undefined" && PBMask.pending() && PBMask.pending() !== id) PBMask.cancel();      // معاينة ماسك غير مؤكَّدة تُلغى عند تحديد عنصر آخر
@@ -2763,6 +2773,13 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const el = $("pbx-insp"); if (!el) return; if (multiOn()) { multiPanel(el); return; } const inf = selInfo(), newSel = E.inspSel !== E.sel; E.inspSel = E.sel; if (newSel) setTimeout(() => { el.scrollTop = 0; }, 0);      // التحوّل لعنصر آخر: الإعدادات من أعلى القائمة، واسم العنصر ثابت أعلاها
     const adM = !!(E.page && E.page.ad);
     if (!inf && adM) { adPagePanel(el); return; }
+    if (!inf && isLong()) {
+      const sec = E.page.sections[0], H = Math.round(Number(eff(sec.set, "mh", E.dev)) || 520);
+      el.innerHTML = `<div class="pbx-ih">📄 الصفحة الطويلة</div><div class="field adp"><label>↕ ارتفاع الصفحة (px)</label><div class="adp-wh"><input type="number" id="lp-h" min="100" max="30000" value="${H}"></div><button type="button" id="lp-set" class="pbx-small">تطبيق الارتفاع</button><button type="button" id="lp-trim" class="pbx-small">✂ قصّ عند آخر عنصر</button></div><p style="color:#888;font-size:.78rem;line-height:1.8">صفحة واحدة متصلة بلا أقسام: ضع العناصر أينما شئت وتطول الصفحة تلقائياً. اقصّها عند النهاية بالزر أعلاه أو بالزر الأيمن على الخلفية.</p>`;
+      el.querySelector("#lp-set").onclick = () => { const v = Math.round(+el.querySelector("#lp-h").value); if (!(v >= 100 && v <= 30000)) return toast("الارتفاع بين 100 و30000"); setR(sec.set, "mh", E.dev, v); E.nextLabel = "ارتفاع الصفحة"; afterEdit(); };
+      el.querySelector("#lp-trim").onclick = () => { trimLong(sec); toast("✂ قُصّت الصفحة عند آخر عنصر"); };
+      return;
+    }
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${E.page && E.page.ad ? "انقر على أي عنصر في الصفحة لتعديل إعداداته. للخلفية: زر الفأرة الأيمن على الخلفية ← «إضافة لون الخلفية»." : FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
     const lbl = inf.kind === "widget" ? ico(inf.node.type, 18) + " " + WIDGETS[inf.node.type].label : inf.kind === "column" ? ico("column", 18) + " عمود" : ico("section", 18) + " قسم";
     if (E.tab === "f" && !hasFx(inf) || (E.page && E.page.ad)) E.tab = "c";
