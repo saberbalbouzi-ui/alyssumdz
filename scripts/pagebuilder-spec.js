@@ -107,7 +107,22 @@ const PBSpec = (() => {
 
   /* ───────────── إصلاح آلي بقواعد هندسية (لا يعتمد على إحداثيات النموذج وحدها) ───────────── */
   const BOXED = ["text", "heading", "button", "icon", "price", "offers"];
+  /* قياس حقيقي في المتصفح: النموذج يخمّن ارتفاع/عرض النص فيتداخل العنوان الملتفّ مع الفقرة؛ نقيس بالخط نفسه ونصحّح h وw */
+  let _mz = null;
+  function measure(l) {
+    if (typeof document === "undefined" || !document.body || (!l.font && l.type !== "button")) return null;
+    try {
+      if (!_mz) { _mz = document.createElement("div"); _mz.setAttribute("aria-hidden", "true"); _mz.style.cssText = "position:absolute;left:-99999px;top:0;visibility:hidden;pointer-events:none;direction:rtl;white-space:normal;word-break:normal;overflow-wrap:break-word"; document.body.appendChild(_mz); }
+      const fo = l.font || {}, ff = "'" + (fo.family || "Cairo") + "','Cairo',sans-serif", plain = l.text.replace(/\*\*/g, "");
+      if (l.type === "button") {
+        _mz.style.cssText += ";width:auto;white-space:nowrap;font:" + (fo.weight || 800) + " " + l.size + "px " + ff + ";line-height:1.2"; _mz.textContent = plain; return { tw: Math.ceil(_mz.getBoundingClientRect().width), th: Math.ceil(_mz.getBoundingClientRect().height) };
+      }
+      _mz.style.cssText += ";white-space:normal;width:" + l.w + "px;font:" + (l.font.weight || 400) + " " + l.font.size + "px " + ff + ";line-height:" + l.font.lineHeight + ";letter-spacing:" + (l.font.letterSpacing || 0) + "px"; _mz.innerText = plain;
+      return { th: Math.ceil(_mz.getBoundingClientRect().height) };
+    } catch (e) { return null; }
+  }
   function estH(l) {
+    if (l.type === "heading" || l.type === "text") { const m = l._m || (l._m = measure(l)); if (m && m.th) { const h = m.th + 10; if (!l.h || l.h < h) l.h = h; return l.h; } }
     if (l.h) return l.h; if (l.type === "button") return 64; if (l.type === "icon") return l.size + 60; if (l.type === "price") return 80; if (l.type === "offers") return 200;
     const per = Math.max(1, l.w / (l.font.size * .45)); let n = 0; l.text.replace(/\*\*/g, "").split("\n").forEach(t => { n += Math.max(1, Math.ceil(t.length / per)); });
     return Math.ceil(n * l.font.size * l.font.lineHeight) + 8;
@@ -123,6 +138,7 @@ const PBSpec = (() => {
         if (l.x + l.w > dw) { l.x = Math.max(0, dw - l.w); fx.push(tag + ": أُرجع " + nm + " داخل الحدّ الأيمن"); }
         if (l.y < 0) { l.y = 0; fx.push(tag + ": أُنزل " + nm + " داخل أعلى القسم"); }
         if (l.font && l.font.size < minPx) { fx.push(tag + ": رُفع خط " + nm + " من " + l.font.size + " إلى " + minPx + " ليُقرأ على الجوال"); l.font.size = minPx; }
+        if (l.type === "button") { const m = measure(l); if (m && m.tw) { const need = m.tw + Math.round(l.size * 1.4); if (l.w < need) { fx.push(tag + ": وُسِّع الزر «" + l.text.slice(0, 14) + "» من " + l.w + " إلى " + need + " كي لا يلتفّ النص"); l.w = Math.min(dw, need); if (l.x + l.w > dw) l.x = Math.max(0, dw - l.w); } if (!l.h || l.h < m.th + 16) l.h = m.th + 16; } }
         if (l.type === "button" && l.size < minPx) { fx.push(tag + ": رُفع خط الزر «" + l.text.slice(0, 14) + "» إلى " + minPx); l.size = minPx; }
       });
       /* تداخل: الأدنى يُنزَل تحت الأعلى */
@@ -136,6 +152,7 @@ const PBSpec = (() => {
       const need = Math.ceil(L.reduce((m, l) => Math.max(m, l.y + estH(l)), 0) + 40);
       if (need > S.height) { fx.push(tag + ": كُبّر ارتفاع القسم من " + S.height + " إلى " + need + " ليتّسع للمحتوى"); S.height = Math.min(8000, need); }
     });
+    spec.sections.forEach(S => S.layers.forEach(l => { delete l._m; }));
     return fx.slice(0, 60);
   }
 
