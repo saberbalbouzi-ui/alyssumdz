@@ -153,8 +153,25 @@ const PBSpec = (() => {
         const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x), oy = Math.min(a.y + ah, b.y + bh) - Math.max(a.y, b.y);
         if (ox > 12 && oy > 12) w.push(tag + ": تداخل بين نصين («" + a.text.slice(0, 14) + "…» و«" + b.text.slice(0, 14) + "…»)");
       }
+      /* بيانات مخترعة: الأسعار والخصومات والادّعاءات العلاجية يجب أن تأتي من المنتج لا من النص */
+      S.layers.filter(l => l.text || l.title).forEach(l => {
+        const tx = [l.text, l.title].filter(Boolean).join(" ");
+        if (/\d[\d\s.,]*\s*(دج|دينار|د\.ج|DA|DZD|€|\$)/i.test(tx) || /(خصم|تخفيض|تخفيضات|promo|remise|-)\s*\d+\s*%|\d+\s*%\s*(خصم|تخفيض|off)/i.test(tx)) w.push(tag + ": نص «" + tx.slice(0, 22) + "…» يكتب سعراً/خصماً يدوياً — استعمل طبقة price/offers من بيانات المنتج");
+        if (/(يعالج|يشفي|يُشفي|علاج|دواء|شفاء|guérit|guerison|traite la|cures?\b|treats?\b)/i.test(tx)) w.push(tag + ": ادّعاء علاجي محتمل في «" + tx.slice(0, 22) + "…» — راجعه قبل النشر");
+      });
+      if (S.layers.some(l => (l.type === "price" || l.type === "offers")) && !spec.page.product) w.push(tag + ": طبقة سعر/عروض بلا منتج مرتبط — اختر منتجاً وإلا تظهر فارغة");
+      /* تسلسل بصري: العنوان أكبر من النص، وفراغات كبيرة */
+      const hd = S.layers.filter(l => l.type === "heading"), body = S.layers.filter(l => l.type === "text");
+      if (hd.length && body.length && Math.max.apply(null, hd.map(l => l.font.size)) <= Math.max.apply(null, body.map(l => l.font.size))) w.push(tag + ": العنوان ليس أكبر من النص — التسلسل البصري ضعيف");
+      const bx = S.layers.filter(l => BOXED.includes(l.type) && !l.rot).sort((a, b) => a.y - b.y); let maxB = 0;
+      bx.forEach(l => { if (l.y - maxB > 260 && maxB > 0) w.push(tag + ": فراغ رأسي كبير (" + Math.round(l.y - maxB) + "px) قبل «" + (l.text || l.type).toString().slice(0, 14) + "»"); maxB = Math.max(maxB, l.y + estH(l)); });
+      if (bx.length && S.height - maxB > 320) w.push(tag + ": مساحة فارغة كبيرة أسفل القسم (" + Math.round(S.height - maxB) + "px)");
       S.layers.forEach(l => { if (l.type === "image" && !l.src) w.push(tag + ": صورة بلا مصدر" + (l.prompt ? " — وصفها: " + l.prompt.slice(0, 40) : "")); });
     });
+    /* اتساق الخطوط على مستوى الصفحة */
+    const T = spec.sections.reduce((a, S) => a.concat(S.layers.filter(l => l.font)), []), sizes = new Set(T.map(l => Math.round(l.font.size / 4) * 4)), fams = new Set(T.map(l => l.font.family).filter(Boolean));
+    if (sizes.size > 8) w.push("أحجام خطوط كثيرة (" + sizes.size + ") — وحّدها في سلّم من 4–6 أحجام");
+    if (fams.size > 2) w.push("أكثر من خطّين مختلفين (" + fams.size + ") — الأفضل خط للعناوين وآخر للنص");
     return w.slice(0, 40);
   }
 

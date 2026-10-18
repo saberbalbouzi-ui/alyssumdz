@@ -184,6 +184,36 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("إلغاء أثناء التوليد يوقف الباقي", ck.r5.cancelled === true && ck.n5 === 1, ck);
   t("سجلّ التوليد يُسجَّل لكل أصل", ck.log >= 5, ck.log);
 
+
+  /* ١٠) فحص بيانات مخترعة وجودة التصميم */
+  const ln = await p.evaluate(() => {
+    const L = (txt, extra) => Object.assign({ type: "text", text: txt, x: 60, y: 60, w: 600, font: { size: 40 } }, extra || {});
+    const r = PBSpec.validate({ page: { title: "t", width: 1080 }, sections: [
+      { height: 1200, layers: [L("عسل بسعر 2500 دج فقط"), L("خصم 50% اليوم", { y: 200 }), L("يعالج السكري نهائياً", { y: 340 }), { type: "price", x: 60, y: 460, w: 400 },
+        { type: "heading", text: "عنوان", x: 60, y: 900, w: 600, font: { size: 30, family: "Cairo" } }, L("نص أكبر من العنوان", { y: 980, font: { size: 44, family: "Tajawal" } }), L("خط ثالث", { y: 1060, font: { size: 40, family: "Almarai" } })] }] });
+    const ok = PBSpec.validate(PBSpec.SAMPLE);
+    return { w: r.warn, okPrice: ok.warn.filter(x => /سعراً|علاجي/.test(x)).length };
+  });
+  t("يكشف سعراً مكتوباً يدوياً", ln.w.some(x => /سعراً\/خصماً/.test(x) && x.includes("2500")), ln.w);
+  t("يكشف خصماً بنسبة مكتوباً يدوياً", ln.w.filter(x => /سعراً\/خصماً/.test(x)).length >= 2, ln.w);
+  t("يكشف ادّعاءً علاجياً", ln.w.some(x => /علاجي/.test(x)), ln.w);
+  t("طبقة سعر بلا منتج مرتبط تُنبَّه", ln.w.some(x => /بلا منتج مرتبط/.test(x)), ln.w);
+  t("العنوان الأصغر من النص يُنبَّه", ln.w.some(x => /التسلسل البصري/.test(x)), ln.w);
+  t("فراغ رأسي كبير يُنبَّه", ln.w.some(x => /فراغ رأسي|مساحة فارغة/.test(x)), ln.w);
+  t("أكثر من خطّين يُنبَّه", ln.w.some(x => /أكثر من خطّين/.test(x)), ln.w);
+  t("النموذج الجاهز لا يثير تنبيهات الأسعار والادّعاءات", ln.okPrice === 0, ln);
+
+  /* ١١) الصفحة المنشورة: السعر والعرض من بيانات المنتج لا من النموذج، ونموذج الطلب حيّ */
+  const pubInfo = await p.evaluate(() => {
+    const r = PBSpec.validate({ page: { title: "p", width: 1080, product: "tarkiz" }, sections: [{ name: "offers", height: 420, layers: [{ type: "price", x: 60, y: 40, w: 600, h: 90 }, { type: "offers", x: 60, y: 160, w: 900, h: 220 }] }, { kind: "order", title: "اطلب" }] });
+    const pg = PBSpec.toPage(r, {}); const prod = (typeof PRODUCTS !== "undefined" ? PRODUCTS : Admin.products).find(x => x.slug === "tarkiz");
+    return { html: PB.fullHtml(pg, Object.assign({ base: "/" }, PBApp.siteCtx(), { products: typeof PRODUCTS !== "undefined" ? PRODUCTS : [] })), price: prod && prod.price, offers: prod && prod.offers };
+  });
+  const q2 = await b.newPage({ viewport: { width: 1080, height: 900 } }); await q2.setContent(pubInfo.html.replace("<head>", '<head><base href="http://localhost:8765/">'), { waitUntil: "load" }); await q2.waitForTimeout(2500);
+  const pub = await q2.evaluate(() => ({ txt: document.body.innerText, form: !!document.querySelector("iframe[src*='embed'],iframe[src*='p/tarkiz'],.pb-ofraw iframe"), ifr: [...document.querySelectorAll("iframe")].map(f => f.src) }));
+  t("المنشورة: السعر الحقيقي من بيانات المنتج", pubInfo.price && pub.txt.replace(/\s|,/g, "").includes(String(pubInfo.price)), { price: pubInfo.price, txt: pub.txt.slice(0, 200) });
+  t("المنشورة: نموذج الطلب الحقيقي للمنتج (iframe المنتج)", pub.ifr.some(u => /p\/tarkiz\//.test(u)), pub.ifr);
+  await q2.close();
   console.log(errs.length ? "أخطاء صفحة: " + errs.join(" | ") : "");
   t("بلا أخطاء JS", errs.length === 0, errs);
   console.log(bad ? "فشل " + bad + " / " + (ok + bad) : "كل الفحوص نجحت (" + ok + ")"); await b.close(); process.exit(bad ? 1 : 0);
