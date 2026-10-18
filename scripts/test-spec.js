@@ -214,6 +214,16 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("المنشورة: السعر الحقيقي من بيانات المنتج", pubInfo.price && pub.txt.replace(/\s|,/g, "").includes(String(pubInfo.price)), { price: pubInfo.price, txt: pub.txt.slice(0, 200) });
   t("المنشورة: نموذج الطلب الحقيقي للمنتج (iframe المنتج)", pub.ifr.some(u => /p\/tarkiz\//.test(u)), pub.ifr);
   await q2.close();
+  /* ١٢) تحويل عكسي: صفحة المطوّر ← JSON بطبقات (يُرجع نفس المواضع ولا يعدّل الصفحة) */
+  const revRes = await p.evaluate(() => {
+    const o = PBSpec.validate(PBSpec.SAMPLE), secs = PBSpec.toSections(o, {}), arr = secs.sections || secs, before = JSON.stringify(arr), r = PBSpec.fromPage({ title: "t", sections: arr });
+    const a = o.sections[0].layers.find(l => l.type === "heading"), b = r.spec.sections[0].layers.find(l => l.type === "heading");
+    return { ok: r.ok, same: JSON.stringify(arr) === before, a: [a.x, a.y, a.w, a.text, a.font.size], b: b && [b.x, b.y, b.w, b.text, b.font.size], order: r.spec.sections.some(s => s.kind === "order"), skipped: r.skipped };
+  });
+  t("عكسي: JSON صالح", revRes.ok, revRes);
+  t("عكسي: الصفحة لم تتغيّر", revRes.same);
+  t("عكسي: موضع العنوان ونصه وحجمه محفوظة", JSON.stringify(revRes.a) === JSON.stringify(revRes.b), revRes);
+  t("عكسي: قسم الطلب يُعرَف", revRes.order, revRes);
   console.log(errs.length ? "أخطاء صفحة: " + errs.join(" | ") : "");
   t("بلا أخطاء JS", errs.length === 0, errs);
   console.log(bad ? "فشل " + bad + " / " + (ok + bad) : "كل الفحوص نجحت (" + ok + ")"); await b.close(); process.exit(bad ? 1 : 0);

@@ -491,6 +491,45 @@ ${JSON.stringify(SAMPLE)}
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: "application/json" })); a.download = (P.slug || "design") + ".project.json"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); return true;
   }
 
+  /* ───────────── تحويل عكسي: صفحة المطوّر ← JSON بطبقات (alyssum-design/1) دون المساس بالصفحة ─────────────
+     يعمل على عناصر الأقسام الحرّة (قماش `scaled`: ناتج «صفحة هبوط ذكية» وتصميم الطبقات والنسخ)؛ ما سواها يُسجَّل في skipped. */
+  function fromPage(P) {
+    P = P || (typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page); if (!P) return null;
+    const num2 = (v, d) => { const n = Number(v && typeof v === "object" ? v.d : v); return isFinite(n) ? n : d; }, skipped = {};
+    const strip = h => String(h || "").replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|h[1-6]|li)>/gi, "\n").replace(/<(b|strong)>(.*?)<\/\1>/gi, "**$2**").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\n{2,}/g, "\n").trim();
+    const fam = ff => { const m = /^\s*['"]?([^'",]+)/.exec(String(ff || "")); return m ? m[1].trim() : ""; };
+    const spec = { format: FORMAT, page: { title: P.title || P.name || "تصميم", width: 0, bg: P.bg || "#ffffff", lang: "ar", product: "" }, assets: {}, sections: [] };
+    (P.sections || []).forEach((sec, si) => {
+      const st = sec.set || {}, free = sec.free || [], dw = num2(st.dw, 0) || num2(st.cw, 0) || 1100, H = Math.max(60, Math.round(num2(st.mh, 600)));
+      if (!spec.page.width) spec.page.width = dw;
+      const S = { name: "s" + (si + 1), height: H, bg: st.bg || "", layers: [] }; if (st.bgImg) S.bgImage = st.bgImg;
+      if (free.concat((sec.cols || []).reduce((a, c) => a.concat((c && c.widgets) || []), [])).some(w => w.type === "orderorig")) { spec.sections.push({ kind: "order", name: "order", height: 700, title: "", note: "" }); return; }
+      const nonFree = (sec.cols || []).reduce((n, c) => n + ((c && c.widgets) || []).length, 0); if (nonFree) skipped["قسم " + (si + 1) + ": " + nonFree + " عنصراً غير حرّ"] = 1;
+      free.forEach(w => {
+        const e = w.set || {}, L = { x: Math.round(num2(e.fx, 0) / 100 * dw), y: Math.round(num2(e.fy, 0)), w: Math.round(num2(e.fwd, 30) / 100 * dw), h: Math.round(num2(e.fh, 0)) || undefined, z: Math.round(num2(e.zi, 1)) || 1 };
+        if (num2(e.rot, 0)) L.rot = num2(e.rot, 0); if (e.op != null && e.op !== "" && Number(e.op) < 1) L.opacity = Number(e.op); if (e.hd && e.ht && e.hm) L.hidden = true; if (e.locked) L.locked = true;
+        const font = () => ({ size: Math.round(num2(e.fs, 28)), weight: Number(e.fw) || 400, color: e.color || "#222222", align: num2(e.ta, "right"), lineHeight: num2(e.lh, 1.4), family: fam(e.ff) || undefined });
+        if (w.type === "heading" || w.type === "text") { Object.assign(L, { type: w.type, text: strip(w.type === "heading" ? e.text : e.html), font: font() }); if (w.type === "heading") L.tag = e.tag || "h2"; if (!L.text) return; }
+        else if (w.type === "image") { Object.assign(L, { type: "image", src: e.src || "", alt: e.alt || "", fit: e.fit || "cover" }); if (e.aiPrompt) L.prompt = e.aiPrompt; if (e.aiCut) L.cutout = true; }
+        else if (w.type === "button") Object.assign(L, { type: "button", text: e.text || "", link: e.link || "#order", bg: e.bgc || "#2e7d32", color: e.color || "#ffffff", size: Math.round(num2(e.fs, 28)), radius: Math.round(num2(e.brad, 40)) });
+        else if (w.type === "shape") Object.assign(L, { type: "shape", shape: e.shape || "rect", fill: e.fill || "#cccccc" });
+        else if (w.type === "pprice") L.type = "price"; else if (w.type === "poffers") L.type = "offers";
+        else if (w.type === "iconbox") Object.assign(L, { type: "icon", icon: String(e.icon || "ic:star").replace(/^ic:/, ""), size: Math.round(num2(e.isz, 48)), title: e.title || "", text: e.text || "" });
+        else if (w.type === "video") Object.assign(L, { type: "video", src: e.url || "" });
+        else { skipped["عنصر «" + w.type + "» (قسم " + (si + 1) + ")"] = 1; return; }
+        if (e.anim) L.effects = [{ type: e.anim, delay: Number(e.animDelay) || 0, duration: Number(e.animDur) || .6 }];
+        if (L.h === undefined) delete L.h; S.layers.push(L);
+      });
+      if (S.layers.length || !nonFree) spec.sections.push(S);
+    });
+    if (!spec.page.width) spec.page.width = 1100;
+    const v = validate(spec); return { spec, skipped: Object.keys(skipped), ok: !!v.ok, count: v.count, error: v.ok ? "" : v.error };
+  }
+  function exportLayered(P) {
+    const r = fromPage(P); if (!r) return null; if (!r.ok) return r;
+    const data = JSON.stringify(r.spec, null, 1), a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: "application/json" })); a.download = ((P && P.slug) || (typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page && PBApp.E.page.slug) || "design") + ".layers.json"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); r.json = data; return r;
+  }
+
   /* ───────────── الواجهة ───────────── */
   const S = { raw: "", res: null };
   function prods() { return (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) || []; }
@@ -516,6 +555,7 @@ ${JSON.stringify(SAMPLE)}
 <button data-sp="imgs" style="${btn};background:rgba(255,255,255,.1)" title="يولّد الصور الفارغة في الصفحة المفتوحة (ما سبق توليده بنفس الوصف يُؤخذ من الكاش بلا استهلاك)">🖼️ توليد الصور الفارغة</button>
 <button data-sp="stop" id="sp-stop" style="${btn};background:rgba(220,60,60,.3);display:none">⛔ إلغاء</button>
 <button data-sp="dl" style="${btn};background:rgba(255,255,255,.1)" title="ينزّل الصفحة المفتوحة في المطوّر كملف مشروع JSON كامل (عناصر وطبقات وتأثيرات)">⬇ تنزيل المشروع (JSON)</button>
+<button data-sp="tolayers" style="${btn};background:rgba(255,255,255,.1)" title="يحوّل الصفحة المفتوحة في المطوّر (مثلاً ناتج «صفحة هبوط ذكية») إلى JSON بطبقات دون تغيير الصفحة نفسها">📤 تحويل الصفحة المفتوحة إلى JSON بطبقات</button>
 <button data-sp="sample" style="${btn};background:rgba(255,255,255,.1)">تجربة بنموذج جاهز</button>
 <label style="${btn};background:rgba(255,255,255,.1)">📁 رفع ملف JSON<input id="sp-file" type="file" accept=".json,application/json,text/plain" hidden></label></div>
 <label style="font-size:.8rem">② ألصق ناتج الذكاء الاصطناعي (JSON) هنا</label>
@@ -544,6 +584,7 @@ ${JSON.stringify(SAMPLE)}
       else if (a === "sample") { $q("sp-json").value = JSON.stringify(SAMPLE, null, 2); check(); }
       else if (a === "check") check();
       else if (a === "stop") { cancel(); say("… جارٍ الإلغاء"); }
+      else if (a === "tolayers") { const r = exportLayered(); if (!r) say("افتح صفحة في المطوّر أولاً.", true); else if (!r.ok) say("❌ " + esc(r.error || "تعذّر التحويل"), true); else { $q("sp-json").value = r.json; check(); say(`✅ حُوّلت الصفحة إلى <b>${r.count.sections}</b> قسماً و<b>${r.count.layers}</b> طبقة ونُزّل الملف؛ الصفحة نفسها لم تتغيّر.` + (r.skipped.length ? `<div style="margin-top:6px;opacity:.85">ما لم يُحوَّل (${r.skipped.length}): ${r.skipped.slice(0, 6).map(esc).join("، ")}</div>` : "")); } }
       else if (a === "dl") { say(downloadProject() ? "✅ نُزّل ملف المشروع." : "افتح صفحة في المطوّر أولاً.", !PBApp.E.page); }
       else if (a === "gen") { b.disabled = true; $q("sp-stop").style.display = ""; say("⏳ جارٍ توليد التصميم…"); try { const j = await generate(opts()); $q("sp-json").value = JSON.stringify(j, null, 2); check(); } catch (er) { say(er.code === "CANCEL" ? "أُلغي." : "❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد — استعمل «نسخ البرومبت» يدوياً" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message + " — لم يضِع شيء، يمكنك إعادة المحاولة"), er.code !== "CANCEL"); } b.disabled = false; $q("sp-stop").style.display = "none"; }
       else if (a === "imgs") { b.disabled = true; $q("sp-stop").style.display = ""; try { const r = await fillImages({ say: m => say(m), dw: (S.res && S.res.page.width) || 1080 }); say(r.cancelled ? `أُلغي (اكتمل ${r.done} من ${r.total}).` : r.total ? `✅ جاهزة ${r.done} من ${r.total} صورة` + (r.cached ? ` (منها ${r.cached} من الكاش)` : "") + (r.failed ? ` — تعذّرت ${r.failed}${r.error ? ": " + esc(r.error) : ""}` : "") : "لا توجد صور فارغة في الصفحة المفتوحة.", !!r.failed && !r.done); } catch (er) { say("❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message), true); } b.disabled = false; $q("sp-stop").style.display = "none"; }
@@ -564,5 +605,5 @@ ${JSON.stringify(SAMPLE)}
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, generate, fillImages, emptyImages, open, autofix, planPrompt, cleanPlan, cancel, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, autofix, planPrompt, cleanPlan, cancel, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
 })();

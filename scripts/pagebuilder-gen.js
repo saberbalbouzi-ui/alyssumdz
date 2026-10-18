@@ -490,7 +490,7 @@ COMPOSITION & ART DIRECTION (MANDATORY — premium editorial advertising look, N
   <div id="gen-prev" style="margin:.6rem 0"></div>
   </div>
   <label class="hint" style="margin:.6rem 0 0;display:flex;gap:.4rem;align-items:center"><input type="checkbox" id="gen-conv" checked style="width:auto"> فكّك النصوص إلى طبقات قابلة للتعديل (تُمسح من الصورة بالممحاة وتُعاد كنص حقيقي) — يلزم مفتاح Alyssum API للدقة بالعربية</label>
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.4rem"><button class="small gold" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 إلى المحرر مباشرة</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:.4rem"><label class="hint" style="margin:0;display:inline-flex;gap:.3rem;align-items:center"><input type="checkbox" id="gen-layers"> نزّل أيضاً نسخة JSON بطبقات (دون تغيير الصفحة)</label><button class="small gold" type="button" id="gen-go" onclick="PBGen.run()" disabled>🚀 إلى المحرر مباشرة</button><small id="gen-msg" style="color:var(--green);font-weight:700"></small></div>
   </div>
   <div class="gen-step" data-s="3" style="display:none">
   <b>③ التحويل إلى صفحة قابلة للتعديل</b>
@@ -834,7 +834,9 @@ Before rendering, internally verify every text element: no duplicated sentences,
       const page = await convert({ dw: 1100, canvas: S.canvas, cuts: S.cuts, regions: CONV() ? S.regions : [], intended: extractIntended($("gen-intended").value), rbKey: rb, eraseOrig: !!CONV() && $("gen-erase-orig").checked, engine: $("gen-engine").value, gkey: gk, langName: L.name, ocr: !!CONV() && $("gen-ocr").checked, inpaint: true, gemOpt: geminiOpt(), tess: L.tess, title: $("gen-title").value.trim() || "صفحة هبوط", upload, onProgress: t => { msg.textContent = t; } });
       page.css = (page.css || "") + edgeGradient(S.canvas);        // خلفية الصفحة تمتد بنفس تدرّج حواف الصورة فلا تظهر هوامش بيضاء
       page.slug = ($("gen-title").value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "lp-" + Date.now().toString(36).slice(-4);
-      const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + (CONV() ? st.ok + " نصاً صار قابلاً للتعديل" : "الأقسام جاهزة") + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Alyssum API أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; PBApp.open(page, "", true);
+      const st = page._stats || { ok: 0, kept: 0 }; delete page._stats; msg.textContent = "✅ تم — " + (CONV() ? st.ok + " نصاً صار قابلاً للتعديل" : "الأقسام جاهزة") + (st.kept ? "، و" + st.kept + " نصاً بقي مرسوماً في الصورة (خلفيته معقدة — استعمل محرك Alyssum API أو أعد توليد الصورة بخلفية أبسط)" : "") + " — جارِ فتح المحرر"; let lay = null; try { if ($("gen-layers") && $("gen-layers").checked && typeof PBSpec !== "undefined" && PBSpec.exportLayered) lay = PBSpec.exportLayered(JSON.parse(JSON.stringify(page))); } catch (e) { }
+      if (lay && lay.ok) msg.textContent += " — نُزّلت نسخة JSON بطبقات (" + lay.count.layers + " طبقة)";
+      PBApp.open(page, "", true);
     } catch (e) { console.error(e); msg.textContent = "❌ " + e.message; }
     btn.disabled = false;
   }
