@@ -27,7 +27,7 @@ const load = (p, src) => p.evaluate((s) => new Promise((r) => { const e = docume
   await p.waitForFunction(() => document.documentElement.classList.contains("ed-design"), null, { timeout: 8000 });
   ok("صنف ed-design من store.json", true);
   ok("الحالة design", await p.evaluate(() => AdminEdition.edition() === "design"));
-  ok("بطاقة الإعدادات: 3 خيارات", await p.evaluate(() => { AdminStores.render(); return document.querySelectorAll('input[name="stp-edition"]').length === 3 && document.querySelector('input[name="stp-edition"][value="design"]').checked; }));
+  ok("بطاقة الإعدادات: 4 خيارات", await p.evaluate(() => { AdminStores.render(); return document.querySelectorAll('input[name="stp-edition"]').length === 4 && document.querySelector('input[name="stp-edition"][value="design"]').checked; }));
   ok("الحفظ يضع edition", await p.evaluate(() => { document.querySelector('input[name="stp-edition"][value="basic"]').click(); return AdminEdition.picked() === "basic"; }));
   ok("الاختيار الفوري يطبّق النسخة", await p.evaluate(async () => { AdminEdition.set("basic"); await new Promise(r => setTimeout(r, 300)); return AdminEdition.edition() === "basic" && document.documentElement.classList.contains("ed-basic") && !document.documentElement.classList.contains("ed-design"); }));
   ok("البطاقة أول عنصر في الصفحة (ظاهرة دون فتح موقع)", await p.evaluate(() => { AdminStores.render(); const f = document.querySelector("#stores-app .stp").firstElementChild; return !!f.querySelector('input[name="stp-edition"]'); }));

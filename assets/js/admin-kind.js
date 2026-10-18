@@ -6,7 +6,7 @@ const AdminKind = (() => {
   const PHYS = ["shipped", "callcenter", "pack", "dispatch", "delivery", "fees", "returns", "inventory", "sources", "blacklist", "market"];
   const D = () => (typeof AdminStores !== "undefined" && AdminStores.data && AdminStores.data()) || {};
   const owner = () => { try { const m = AdminRoles.state && AdminRoles.state.me; return !m || m.owner !== false; } catch (e) { return true; } };
-  const kind = () => (D().kind === "digital" ? "digital" : "physical");
+  const kind = () => (D().kind === "digital" || D().edition === "digital" ? "digital" : "physical");
   const landing = () => (kind() === "digital" && owner() ? "digital" : "home");
   function css() {
     if ($("kd-css")) return; const st = document.createElement("style"); st.id = "kd-css";

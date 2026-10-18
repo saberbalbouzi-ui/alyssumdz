@@ -34,9 +34,14 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("ديزاين: كل زر مُبقى ظاهر وكل زر محجوب مخفي فعلاً ومجموعات القائمة مخفية", dz.shownVisible && dz.hiddenAll && dz.groups === "none", dz);
   ok("ديزاين: الحارس يحوّل orders/home/finance إلى مطوّر الصفحات ويسمح builder وstudio", await T(() => { const r = []; for (const t of ["orders", "home", "finance", "builder", "studio"]) { __tabs.length = 0; Admin.tab(t); r.push(__tabs.join()); } return r.join("|") === "builder|builder|builder|builder|studio"; }));
   ok("ديزاين: الصفحة المقصودة عند الفتح = مطوّر الصفحات", await T(() => AdminEdition.landing() === "builder"));
+  /* ديجيتال */
+  await T(() => { window.__d = { edition: "digital" }; AdminEdition.apply(); });
+  ok("ديجيتال: يحجب التوصيل والمادي ويُبقي المنتجات الرقمية والطلبات والستوديو", await T(() => ["shipped", "dispatch", "delivery", "fees", "returns", "inventory", "pack", "callcenter"].every(t => !AdminEdition.allows("digital", t)) && ["digital", "orders", "products", "finance", "studio", "builder", "home"].every(t => AdminEdition.allows("digital", t)) && document.documentElement.classList.contains("ed-digital")));
+  ok("ديجيتال: الحارس يحوّل shipped إلى digital", await T(() => { __tabs.length = 0; Admin.tab("shipped"); const a = __tabs.join(); __tabs.length = 0; Admin.tab("orders"); return a === "digital" && __tabs.join() === "orders"; }));
+  ok("ديجيتال: الصفحة المقصودة = digital", await T(() => AdminEdition.landing() === "digital"));
   /* البطاقة */
   const card = await T(() => { const d = document.createElement("div"); d.innerHTML = AdminEdition.cardHtml("basic"); document.getElementById("stage").appendChild(d); return { n: d.querySelectorAll('input[name="stp-edition"]').length, checked: AdminEdition.picked(), txt: d.textContent }; });
-  ok("بطاقة الإعدادات: ثلاثة خيارات والمحدّد الحالي", card.n === 3 && card.checked === "basic" && /إيكومرس برو/.test(card.txt) && /إيكومرس بازيك/.test(card.txt) && /إنفوغراف ديزاين/.test(card.txt), card);
+  ok("بطاقة الإعدادات: أربعة خيارات والمحدّد الحالي", card.n === 4 && card.checked === "basic" && /إيكومرس برو/.test(card.txt) && /إيكومرس بازيك/.test(card.txt) && /إنفوغراف ديزاين/.test(card.txt), card);
   /* العودة لبرو */
   await T(() => { window.__d = { edition: "pro" }; AdminEdition.apply(); });
   ok("الرجوع إلى برو يعيد كل شيء", await T(() => !document.documentElement.classList.contains("ed-design") && !document.documentElement.classList.contains("ed-basic") && [...document.querySelectorAll(".side-nav .nav-btn.ed-x")].length === 0));
