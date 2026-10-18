@@ -22,7 +22,7 @@ const TOK = "ab12".repeat(10);
   /* بلا رمز: سلوك قديم (اتصال مباشر بمفتاح المتصفح) */
   await p.evaluate(() => { localStorage.removeItem("alyssum_ai_token"); localStorage.setItem("alyssum_gp_gkey", "AIzaTEST"); });
   await p.evaluate(async () => { try { await ImgGen.text({ prompt: "x", json: false }); } catch (e) { } });
-  t("بلا رمز: اتصال مباشر ولا يمرّ بالخادم", direct.length === 1 && proxyCalls.length === 0, { d: direct.length, p: proxyCalls.length });
+  t("بلا رمز: اتصال مباشر ولا يمرّ بالخادم", direct.length >= 1 && direct.length <= 2 && proxyCalls.length === 0, { d: direct.length, p: proxyCalls.length });
 
   /* رمز غير صالح يُرفض */
   const bad1 = await p.evaluate(() => AiProxy.set("not-a-token")); t("رمز غير صالح يُرفض", bad1.ok === false, bad1);

@@ -8,7 +8,7 @@ const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GKEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const list = (v: string | undefined, d: string) => (v ?? d).split(",").map((s) => s.trim()).filter(Boolean);
 const MODELS: Record<string, string[]> = {
-  text: list(Deno.env.get("AI_TEXT_MODELS"), "gemini-2.5-flash,gemini-2.5-flash-lite"),
+  text: list(Deno.env.get("AI_TEXT_MODELS"), "gemini-3.8-flash,gemini-2.5-flash,gemini-2.5-flash-lite"),
   image: list(Deno.env.get("AI_IMAGE_MODELS"), "gemini-2.5-flash-image"),
 };
 const CFG_KEYS = ["temperature", "responseMimeType", "responseModalities", "imageConfig", "maxOutputTokens", "topP"];
