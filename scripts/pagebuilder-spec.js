@@ -288,10 +288,30 @@ const PBSpec = (() => {
     m = /^asset:([\w-]+)$/.exec(s); if (m) { const a = (ctx.assets || {})[m[1]]; return a && a.src ? a.src : ""; }
     return imgSrc(s);
   }
+  /* دمج الأقسام المتتالية في «صفحة طويلة» واحدة: خلفية كل قسم تصير طبقة شكل/صورة بعرض الصفحة، وتُزاح طبقاته بارتفاع ما قبله؛
+     فلا تبقى فواصل أقسام ويُقصّ طول الصفحة من حافتها السفلية. قسم «الطلب» يبقى مستقلاً (نموذج حقيقي). */
+  function mergeRuns(spec) {
+    const dw = spec.page.width, out = []; let run = [];
+    const flush = () => {
+      if (run.length <= 1) { run.forEach(S => out.push(S)); run = []; return; }
+      const M = { kind: "canvas", name: "page", height: 0, bg: "", gradient: null, bgImage: "", bgDark: 0, title: "", note: "", layers: [] };
+      run.forEach((S, si) => {
+        const off = M.height, H = S.height, add = (L, z, id) => { const c = cleanLayer(L, dw, H, [], ""); if (!c) return; c.y += off; c.z = z; if (id) c.name = id; M.layers.push(c); };
+        if (S.bg || S.gradient) add({ type: "shape", shape: "rect", x: 0, y: 0, w: dw, h: H, fill: S.bg || "#ffffff", gradient: S.gradient || undefined, locked: true }, 1, "خلفية " + (S.name || (si + 1)));
+        if (S.bgImage) add({ type: "image", src: S.bgImage, x: 0, y: 0, w: dw, h: H, fit: "cover", locked: true }, 1, "صورة خلفية");
+        if (S.bgDark) add({ type: "shape", shape: "rect", x: 0, y: 0, w: dw, h: H, fill: "#000000", opacity: S.bgDark, locked: true }, 2);
+        S.layers.forEach(L => { const c = Object.assign({}, L, { y: L.y + off, z: (L.z || 0) + 30 }); if (c.group) c.group = "s" + si + "_" + c.group; M.layers.push(c); });
+        M.height += H;
+      });
+      out.push(M); run = [];
+    };
+    spec.sections.forEach(S => { if (S.kind === "order") { flush(); out.push(S); } else run.push(S); });
+    flush(); return out;
+  }
   function toSections(spec, ctx) {
     const P = pb(); ctx = Object.assign({ products: (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) }, ctx || {});
     ctx.product = ctx.product || spec.page.product || ""; ctx.assets = spec.assets; ctx.title = ctx.title || spec.page.title || ""; const dw = spec.page.width, out = [], pending = [];
-    spec.sections.forEach(S => {
+    (ctx.merge === false ? spec.sections : mergeRuns(spec)).forEach(S => {
       const bgImg = (() => { const m = /^asset:([\w-]+)$/.exec(S.bgImage || ""); const a = m && spec.assets[m[1]]; return a ? a.src : imgSrc(S.bgImage); })();
       const base = { bg: S.bg || undefined, bgImg: bgImg || undefined, bgDark: S.bgDark || undefined, gr: gradObj(S.gradient) || undefined, cls: "" };
       Object.keys(base).forEach(k => base[k] === undefined && delete base[k]);
@@ -436,16 +456,30 @@ ${JSON.stringify(SAMPLE)}
   };
   const costLog = e => { const l = lsGet(LK, []); l.push(Object.assign({ t: Date.now() }, e)); lsSet(LK, l.slice(-200)); };
   const headOk = async path => { try { const r = await fetch(path, { method: "HEAD", cache: "no-store" }); return r.ok; } catch (_) { return true; } };
+  /* المنتج المرجعي للصفحة المفتوحة: المنتج المربوط بها (غلافه) وإلا أول صورة حقيقية فيها — فلا تُولَّد صور عامة لا علاقة لها بالمنتج */
+  const fetchBlob = async src => { try { const r = await fetch(/^(https?:|data:|blob:)/.test(src) ? src : String(src).replace(/^\/+/, ""), { cache: "force-cache" }); return r.ok ? await r.blob() : null; } catch (_) { return null; } };
+  async function productRef(P) {
+    const ps = (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []);
+    let slug = P.product || (P.specMeta && P.specMeta.product) || ""; const widgets = []; (P.sections || []).forEach(sec => (sec.free || []).forEach(w => widgets.push(w)));
+    if (!slug) { const wp = widgets.find(w => w.set && w.set.prod && w.set.prod !== "__page"); slug = wp ? wp.set.prod : ""; }
+    const p = ps.find(x => x.slug === slug) || null; let src = p ? (p.cover || (p.images || [])[0] || "") : "";
+    if (!src) { const w = widgets.find(x => x.type === "image" && x.set && x.set.src && !/\/icons\//.test(x.set.src)); src = w ? w.set.src : ""; }
+    const blob = src ? await fetchBlob(src) : null;
+    const title = (p && p.title) || P.title || P.name || "", desc = String((p && (p.desc || p.description || p.short)) || (P.specMeta && P.specMeta.plan && P.specMeta.plan.concept) || "").replace(/\s+/g, " ").slice(0, 320);
+    return { blob, title, desc, slug, key: (slug || "") + ":" + (blob ? blob.size : 0) };
+  }
+  const NOREF = /ingredient|texture|pattern|background|backdrop|leaf|leaves|flower|pollen|honeycomb|herb|abstract|gradient|spice|seed|مكوّن|مكون|خلفية|ملمس|نمط|عشب|أوراق/i;
   async function fillImages(o) {
     o = o || {}; const list = emptyImages(), say = o.say || (() => { }); if (!list.length) return { done: 0, failed: 0, total: 0, cached: 0 };
     if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("أداة التوليد غير متاحة");
     const rd = ImgGen.ready(); if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
     const exists = o.exists || headOk, run = RUN = { cancelled: false }; const plan = [];
+    const PR = o.ref === false ? { blob: null, title: "", desc: "", key: "" } : await productRef((typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page) || {});
     try {
       for (const w of list) {
         const fw = w.set.fwd && w.set.fwd.d, fh = w.set.fh && w.set.fh.d, dw = w.__dw || o.dw || 1080, W0 = Math.max(200, (Number(fw) || 40) / 100 * dw), H0 = Math.max(200, Number(fh) || W0), k = Math.min(1, 1400 / Math.max(W0, H0));
-        const desc = String(w.set.aiPrompt || w.set.alt).slice(0, 400), cut = !!(w.set.__cutout || w.set.aiCut), W = Math.round(W0 * k), H = Math.round(H0 * k), key = assetKey(desc, W, H, cut);
-        const hit = cache.get(key); plan.push({ w, desc, cut, W, H, key, hit: hit && (await exists(hit)) ? hit : "" });
+        const desc = String(w.set.aiPrompt || w.set.alt).slice(0, 400), cut = !!(w.set.__cutout || w.set.aiCut), W = Math.round(W0 * k), H = Math.round(H0 * k), useRef = !!PR.blob && !NOREF.test(desc), key = assetKey(desc + "|" + PR.key + (useRef ? "|R" : ""), W, H, cut);
+        const hit = cache.get(key); plan.push({ w, desc, cut, W, H, key, useRef, hit: hit && (await exists(hit)) ? hit : "" });
       }
       const need = plan.filter(x => !x.hit).length;
       if (need && o.confirm !== false && !confirm("سيُولَّد " + need + " صورة بتقنية Alyssum API وتُستهلك من رصيدك (بلا أي كتابة داخل الصور)" + (plan.length > need ? " — و" + (plan.length - need) + " أخرى جاهزة من الكاش بلا استهلاك" : "") + ". المتابعة؟")) return { done: 0, failed: 0, total: list.length, cancelled: true, cached: 0 };
@@ -459,7 +493,12 @@ ${JSON.stringify(SAMPLE)}
         while (!ok && tries < 2 && !run.cancelled) {
           tries++;
           try {
-            const r = await race(ImgGen.edit({ textOnly: true, prompt: IMG_RULES + it.desc + (it.cut ? ". Isolated on a plain flat light-gray (#e6e6e6) background, no cast shadow on the background." : ""), W: it.W, H: it.H, confirm: false, title: "صورة للتصميم" }), o.timeout || 150000);
+            const ctxTxt = PR.title ? " The marketing page is for this specific product: \"" + PR.title + "\"" + (PR.desc ? " — " + PR.desc : "") + ". Everything in the image must clearly relate to this product; do not draw unrelated generic objects (wallets, offices, laptops, stock-photo scenes)." : "";
+            const cutTxt = it.cut ? " Isolated on a plain flat light-gray (#e6e6e6) background, no cast shadow on the background." : "";
+            const prompt = it.useRef
+              ? "The attached image is the REAL product photo. Create a professional marketing image that features exactly this product: keep its shape, packaging, colors, label and proportions unchanged and never replace it with another object." + ctxTxt + " Scene to create: " + it.desc + ". Photorealistic, soft studio lighting, high detail. ABSOLUTELY no added text, letters, numbers, logos or watermarks; no people (hands only if needed; never an uncovered woman)." + cutTxt
+              : IMG_RULES + it.desc + "." + ctxTxt + cutTxt;
+            const r = await race(ImgGen.edit(it.useRef ? { blob: PR.blob, prompt, W: it.W, H: it.H, confirm: false, title: "صورة للتصميم" } : { textOnly: true, prompt, W: it.W, H: it.H, confirm: false, title: "صورة للتصميم" }), o.timeout || 150000);
             if (run.cancelled) break;
             if (!r || !r.blob || r.blob.size < 1500) throw new Error("صورة غير صالحة من الخدمة");
             let blob = r.blob;
