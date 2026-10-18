@@ -466,14 +466,15 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   const TEXT_UNIT = 0.003;
   /* نماذج النص المتاحة لهذا المفتاح: آخر نموذج نجح ثم الأحدث من قائمة الحساب (flash قبل lite) ثم احتياطي؛ الأسماء الثابتة تتقادم فلا نعتمد عليها وحدها */
   async function textModels(key) {
-    const out = [], add = n => { if (n && !out.includes(n)) out.push(n); }; add(LS.get("alyssum_ig_tmodel", ""));
+    const out = [], add = n => { if (n && !out.includes(n)) out.push(n); }; add(LS.get("alyssum_ig_tmodel", "")); textModels.seen = "";
     try {
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": key } }), j = await r.json().catch(() => ({}));
       if (r.ok) {
         const ver = n => { const m = /gemini-(\d+(?:\.\d+)?)/.exec(n); return m ? parseFloat(m[1]) : 0; }, rank = n => (/pro/.test(n) ? 20 : /lite/.test(n) ? 10 : /flash/.test(n) ? 0 : 30) + (/preview|exp/.test(n) ? 3 : 0);
         (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent")).map(m => String(m.name).replace(/^models\//, ""))
           .filter(n => /^gemini-/.test(n) && !/image|tts|embed|live|audio|vision|robot|computer|learnlm|imagen|veo|thinking|latest/.test(n))
-          .sort((x, y) => rank(x) - rank(y) || ver(y) - ver(x)).slice(0, 3).forEach(add);
+          .sort((x, y) => rank(x) - rank(y) || ver(y) - ver(x)).slice(0, 4).forEach(add);
+        textModels.seen = (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes("generateContent")).map(m => String(m.name).replace(/^models\//, "")).slice(0, 12).join(", ");
       }
     } catch (e) { }
     ["gemini-flash-latest", "gemini-3.8-flash", "gemini-2.5-flash"].forEach(add); return out;
@@ -485,7 +486,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (cfg.budget() && cfg.budget() - cfg.spent() < TEXT_UNIT) { credit.note(); throw new Error(lowMsg); }
     const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, 1024)) } });
     let last = null; const tried = new Set(), queue = await textModels(key);
-    for (let qi = 0; qi < queue.length && tried.size < 5; qi++) {
+    for (let qi = 0; qi < queue.length && tried.size < 8; qi++) {
       const m = queue[qi]; if (tried.has(m)) continue; tried.add(m);
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: 3072 }, o.json ? { responseMimeType: "application/json" } : {}) }) });
       const j = await r.json().catch(() => ({}));
@@ -497,6 +498,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
       }
       const em = (j.error && j.error.message) || ""; if (billingHit(r.status, em)) credit.flagOut(); last = new Error("Alyssum API (نص) [" + m + "] " + r.status + (em ? ": " + em.slice(0, 200) : "")); if (r.status === 404) { const sg = /models\/(gemini-[a-z0-9.\-]*[a-z0-9])/g; let mm; while ((mm = sg.exec(em))) if (!tried.has(mm[1])) queue.splice(qi + 1, 0, mm[1]); } if (![404, 500, 502, 503, 504].includes(r.status)) break;
     }
+    if (last && tried.size > 1) last = new Error(last.message + " — جُرّبت: " + [...tried].join(", ") + (textModels.seen ? " | المتاحة لمفتاحك: " + textModels.seen : ""));
     throw last || new Error("تعذّر الحصول على ردّ");
   }
   async function toLibrary(quiet) {
