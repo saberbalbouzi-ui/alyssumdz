@@ -1311,7 +1311,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.uploadBlob = async (b, n) => { const pth = "assets/img/pages/" + n + ".webp"; paths.push({ pth, big: b.size > 0 }); return pth; };
     const before = JSON.stringify(PBApp.E.page.sections).length;
     document.querySelector('#pbx-ep [data-ai="v360"]').click(); await new Promise(r => setTimeout(r, 2500)); const thumbs = document.querySelectorAll("#pbai-res img").length;
-    document.querySelector('#pbx-ep [data-ai="v360add"]').click(); await new Promise(r => setTimeout(r, 2500));
+    document.querySelector('#pbx-ep [data-ai="v360add"]').click(); for (let i = 0; i < 40 && !/"type":"view360"/.test(JSON.stringify(PBApp.E.page.sections)); i++) await new Promise(r => setTimeout(r, 400));
     const js = JSON.stringify(PBApp.E.page.sections), has = /"type":"view360"/.test(js), m = js.match(/"imgs":"([^"]*v360[^"]*)"/), lines = m ? m[1].split("\\n").length : 0;
     ImgGen.edit = old; window.confirm = oc; PBApp.uploadBlob = ou;
     const T = PBAI._t.v360Prompt(90, 2, 8, "x");
