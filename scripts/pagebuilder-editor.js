@@ -835,6 +835,12 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     else { setR(inf.set, "w", E.dev, 100); if (inf.node.type === "image") inf.set.fit = "cover"; }
     afterEdit();
   }
+  /* بعرض الصفحة: العرض 100% ويكبر الارتفاع بالنسبة نفسها فتبقى نسبة الصورة (وقصّها) كما هي */
+  function fitWidth(inf) {
+    if (inf.free) { ensureMobile(inf.sec); const fw = Number(eff(inf.set, "fwd", E.dev)) || 100, fh = Number(eff(inf.set, "fh", E.dev)) || 0, k = 100 / Math.max(5, fw); setR(inf.set, "fx", E.dev, 0); setR(inf.set, "fwd", E.dev, 100); if (fh && !inf.set.hauto) setR(inf.set, "fh", E.dev, Math.round(fh * k)); if (E.dev !== "d") ["fx", "fwd", "fh"].forEach(q => { if (own(inf.set, q, "d") === undefined) setR(inf.set, q, "d", eff(inf.set, q, E.dev)); }); growCanvas(inf.sec); }
+    else setR(inf.set, "w", E.dev, 100);
+    E.nextLabel = "بعرض الصفحة"; afterEdit();
+  }
   function asBackground(inf) {
     if (inf.node.type !== "image" || !inf.set.src) return; const sec = inf.sec;
     sec.set.bgOrig = { node: clone(inf.node), colId: inf.col ? inf.col.id : null, free: !!inf.free, idx: inf.idx };      // لإرجاع الصورة إلى أصلها لاحقاً
@@ -865,7 +871,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
       ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
-      img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)],
+      img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], img ? ["↔", "بعرض الصفحة (بنسبة الصورة)", () => fitWidth(inf)] : null,
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
       img && canvas && !EDB() ? "-" : null, img && canvas && !EDB() ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null,
       typeof PBMask !== "undefined" && canvas && !EDB() && PBMask.can(inf) ? "-" : null,

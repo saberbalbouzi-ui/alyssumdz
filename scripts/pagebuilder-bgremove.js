@@ -359,7 +359,7 @@ const PBBgRemove = (function () {
         if (asCopy) { const c = PB.mkFree("image", 0, 0, (Number(q.node.set.zi) || 1) + 1); Object.assign(c.set, JSON.parse(JSON.stringify(q.node.set)), { src: path, crop: q.node.set.crop ? JSON.parse(JSON.stringify(q.node.set.crop)) : undefined, clip: undefined, clipEO: undefined, clipMode: undefined, pz: undefined, pzh: undefined, pzo: undefined, zi: (Number(q.node.set.zi) || 1) + 1 });
           ["d", "m"].forEach(dev => { const fx = Number(PB.eff(q.node.set, "fx", dev)), fy = Number(PB.eff(q.node.set, "fy", dev)), fw = Number(PB.eff(q.node.set, "fwd", dev)), fh = Number(PB.eff(q.node.set, "fh", dev)); if (![fx, fy, fw, fh].every(Number.isFinite)) return; const right = fx + fw + 2 + fw <= 100; PB.setR(c.set, "fx", dev, right ? +(fx + fw + 2).toFixed(2) : fx); PB.setR(c.set, "fy", dev, right ? fy : +(fy + fh + 16).toFixed(2)); PB.setR(c.set, "fwd", dev, fw); PB.setR(c.set, "fh", dev, fh); });
           q.list.splice(q.idx + 1, 0, c); A().E.nextLabel = "نزع الخلفية (نسخة)"; A().E.sel = c.id; A().renderCanvas(); A().commitAfter(c.id); }
-        else { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "نزع الخلفية"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); }
+        else { q.node.set.src = path; A().E.nextLabel = "نزع الخلفية";      /* القصّ نسبي لنفس أبعاد الصورة فيبقى كما هو (حذفه كان يُظهر الصورة كاملة فيصغر المنتج داخل الإطار) */ A().E.sel = id; A().renderCanvas(); A().commitAfter(id); }
         close(); } catch (e) { msg("⚠️ " + e.message); $("bg-save").disabled = $("bg-again").disabled = false; console.error(e); } S.busy = false;
     };
     $("bg-save").onclick = () => save(false);
@@ -375,7 +375,7 @@ const PBBgRemove = (function () {
   async function lvApply() {
     const r = LV.res; if (!r || LV.busy) return; LV.busy = true;
     try { const blob = await new Promise(x => r.canvas.toBlob(x, "image/png")); chip("⏳ رفع الصورة…", true); const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(LV.id); if (!q) throw new Error("لم يعد العنصر موجوداً");
-      q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "نزع الخلفية"; LV.res = null; LV.path = ""; A().liveClear(false); A().commitAfter(LV.id); chip("✅ نُفِّذ نزع الخلفية"); }
+      q.node.set.src = path; A().E.nextLabel = "نزع الخلفية";      /* القصّ نسبي لنفس أبعاد الصورة فيبقى كما هو (حذفه كان يُظهر الصورة كاملة فيصغر المنتج داخل الإطار) */ LV.res = null; LV.path = ""; A().liveClear(false); A().commitAfter(LV.id); chip("✅ نُفِّذ نزع الخلفية"); }
     catch (e) { chip("⚠️ " + (e.message || e)); } LV.busy = false;
   }
   async function live(inf, again) {
