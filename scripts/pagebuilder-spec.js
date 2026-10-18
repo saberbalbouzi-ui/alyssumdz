@@ -238,7 +238,9 @@ const PBSpec = (() => {
       else Object.assign(w.set, t, { html: "<p>" + html + "</p>" });
       if (L.h) w.set.hauto = false;
     } else if (L.type === "image") {
-      free("image", L.h || Math.round(L.w * .75)); w.set.hauto = false; Object.assign(w.set, { src: resolveImg(L, ctx), alt: L.alt, fit: L.fit }); if (L.cutout && !w.set.src) w.set.__cutout = true; if (L.prompt) w.set.aiPrompt = L.prompt; if (L.cutout) w.set.aiCut = true;
+      free("image", L.h || Math.round(L.w * .75)); w.set.hauto = false; Object.assign(w.set, { src: resolveImg(L, ctx), alt: L.alt, fit: L.fit }); if (L.cutout && !w.set.src) w.set.__cutout = true; const am = /^asset:([\w-]+)$/.exec(L.src || ""), ap = am && (ctx.assets || {})[am[1]]; let pr = L.prompt || (ap && ap.prompt) || "";
+      if (!w.set.src && !pr) pr = L.alt || ((ctx.title || "") + " — صورة تسويقية للمنتج").trim();   /* صورة بلا مصدر ولا وصف: نُنشئ وصفاً من النص البديل ليولَّدها الزر */
+      if (pr && !w.set.src) w.set.aiPrompt = pr; if (L.cutout) w.set.aiCut = true;
       if (L.brightness !== 100) w.set.ibri = L.brightness; if (L.contrast !== 100) w.set.icon = L.contrast; if (L.saturate !== 100) w.set.isat = L.saturate;
     } else if (L.type === "shape") {
       free("shape", L.h || L.w); w.set.keep = false; Object.assign(w.set, { shape: L.shape, fill: L.fill });
@@ -288,7 +290,7 @@ const PBSpec = (() => {
   }
   function toSections(spec, ctx) {
     const P = pb(); ctx = Object.assign({ products: (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) }, ctx || {});
-    ctx.product = ctx.product || spec.page.product || ""; ctx.assets = spec.assets; const dw = spec.page.width, out = [], pending = [];
+    ctx.product = ctx.product || spec.page.product || ""; ctx.assets = spec.assets; ctx.title = ctx.title || spec.page.title || ""; const dw = spec.page.width, out = [], pending = [];
     spec.sections.forEach(S => {
       const bgImg = (() => { const m = /^asset:([\w-]+)$/.exec(S.bgImage || ""); const a = m && spec.assets[m[1]]; return a ? a.src : imgSrc(S.bgImage); })();
       const base = { bg: S.bg || undefined, bgImg: bgImg || undefined, bgDark: S.bgDark || undefined, gr: gradObj(S.gradient) || undefined, cls: "" };
