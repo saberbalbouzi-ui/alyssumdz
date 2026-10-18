@@ -13,7 +13,7 @@ const AdminEdition = (() => {
     ["design", "إنفوغراف ديزاين", "مطوّر الصفحات و«ستوديو ديزاين» فقط للمصممين: بلا متجر ولا طلبات ولا شحن ولا إضافاته."]
   ];
   /* الأقسام المسموحة في نسخة المصمّم (Admin.tab) — الباقي محجوب. أقسام العمل الخفية لأدوات الصور تبقى لأن المطوّر يفتحها (دفعات/كتالوج) */
-  const KEEP_DESIGN = ["builder", "studio", "store", "admtheme", "team", "imgtools", "imggen", "appcfg", "agent"];
+  const KEEP_DESIGN = ["builder", "studio", "store", "admtheme", "team", "imgtools", "imggen", "appcfg", "agent", "pbgen"];
   const BASIC_HIDE = ["studio", "imggen"];      // مولّد الصور جزء من «ستوديو ديزاين»
   /* أقسام التوصيل والمادي المحجوبة في نسخة الديجيتال (مطابقة لـAdminKind.PHYS) */
   const PHYS = ["shipped", "callcenter", "pack", "dispatch", "delivery", "fees", "returns", "inventory", "sources", "blacklist", "market"];
@@ -28,7 +28,7 @@ const AdminEdition = (() => {
     if (ed === "pro") return true;
     if (ed === "digital") return !(t && PHYS.includes(t[1]));
     if (ed === "basic") return !((t && BASIC_HIDE.includes(t[1])) || (a && BASIC_HIDE.includes(a[1])));
-    if (t) return KEEP_DESIGN.includes(t[1]) && !["imgtools", "imggen", "appcfg", "agent"].includes(t[1]);
+    if (t) return KEEP_DESIGN.includes(t[1]) && !["imgtools", "imggen", "appcfg", "agent", "pbgen"].includes(t[1]);
     if (a) return a[1] === "builder";
     return false;
   }
