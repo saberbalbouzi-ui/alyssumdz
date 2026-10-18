@@ -932,6 +932,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       ["➕", "إضافة قسم", () => addSecAfter(sec), "Ctrl+Shift+Enter"], ["⧉", "تكرار القسم", () => dupSec(sec)],
       has ? ["🗑", "حذف الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); ["bgImg", "bgSize", "bgPos", "bgOrig"].forEach(k => delete set[k]); E.nextLabel = "حذف الخلفية"; afterEdit(); }, "Del", 1, 0, lk] : null, "-",
       has ? [lk ? "🔓" : "🔒", lk ? "فتح قفل الخلفية" : "قفل الخلفية", () => { if (lk) delete set.bgLocked; else set.bgLocked = true; afterEdit(); toast(lk ? "🔓 فُتحت الخلفية" : "🔒 الخلفية مقفلة"); }] : null,
+      canvas ? ["✂", "قصّ الصفحة عند آخر عنصر", () => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", E.dev)) || 0) + hOf(w))) + 40; setR(set, "mh", E.dev, Math.max(100, Math.round(need))); E.nextLabel = "قصّ الصفحة"; afterEdit(); toast("✂ قُصّت الصفحة عند آخر عنصر"); }] : null,
       canvas ? ["↕", "تغيير حجم الصفحة (الارتفاع)", () => { const v = Number(prompt("ارتفاع الصفحة بالبكسل:", Number(eff(set, "mh", E.dev)) || 520)); if (v >= 100) { setR(set, "mh", E.dev, Math.round(v)); afterEdit(); } }] : null,
       ["#", "الدلائل", null, "", 0, [[E.nogrid ? "▦" : "▧", E.nogrid ? "إظهار الشبكة" : "إخفاء الشبكة", () => setGrid(!!E.nogrid)], ["🧲", E.snap ? "إيقاف الالتصاق" : "تفعيل الالتصاق", toggleSnap]]],
       has ? ["⛓", "فصل الصورة عن الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); restoreBackground(sec); }, "", 0, 0, lk] : null].filter(Boolean);
@@ -3171,7 +3172,7 @@ ${this.quickImg(this.q.cover)}
     $("np-name").focus(); $("np-name").select();
   },
   mkPage(t) {
-    const p = PB.newPage(t, ""); p.slug = ""; PBApp.E.slugTouched = false; if (PBApp.FREE_ONLY) p.sections = [PB.TPLS.canvas.f()];
+    const p = PB.newPage(t, ""); p.slug = ""; PBApp.E.slugTouched = false; if (PBApp.FREE_ONLY) { const cv = PB.TPLS.canvas.f(); cv.set.mh = { d: 3600, t: 3600, m: 3600 }; p.sections = [cv]; }      // صفحة طويلة بقسم واحد بلا فواصل؛ تُقصّ عند النهاية بزر الفأرة الأيمن ← قصّ الصفحة
     p.slug = (t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4);
     PBApp.open(p, "", true);
   },
