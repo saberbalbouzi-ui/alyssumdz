@@ -26,3 +26,6 @@ description: إنشاء وتعديل قوالب المتجر والصفحات ف
 
 ## فخاخ
 `::before/::after` للقسم محجوزان للتأثيرات (لا تجمع blobs مع wave). أسماء `@keyframes` بادئتها `k`. لا تضع `%` داخل نص يُنسَّق بـ`%` بلا `%%`. اللون الفاتح يأتي من `set.bg` لا CSS. لا هوامش سالبة جانبية على الجوال.
+
+## تصميم بطبقات يخرجه الذكاء (PBSpec، v1.89.326)
+`scripts/pagebuilder-spec.js`: JSON بصيغة `alyssum-design/1` (أقسام ← طبقات text/heading/image/shape/button/icon/price/offers بمواضع بالبكسل المرجعي + shadow + effects) ← `validate` (تنظيف غير موثوق: ألوان/أرقام/روابط/مصادر صور) ← `toSections` (قسم قماش `scaled` وعناصر حرة `fx/fy/fwd/fh`، الظلال والتأثيرات في `set.fxs`) ← المطوّر. `PBSpec.prompt()` يبني تعليمات لأي نموذج. أي طبقة/تأثير جديد = أضفه في `cleanLayer` و`layerToWidget`/`effectFx` ثم `DOC` ثم `node scripts/test-spec.js`. فخاخ: `al` لا يعمل للعنصر الحر (استعمل fx `text-align`)، ومغلّف `.pb-fit` يقصّ الظل (`overflow:visible!important` عبر fx).

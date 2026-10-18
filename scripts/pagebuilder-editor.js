@@ -327,7 +327,7 @@ body{overflow-x:hidden;margin:0}`;
   function closeFloating() {
     try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
-    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-ip", "pbs-modal", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
   function close() {
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
