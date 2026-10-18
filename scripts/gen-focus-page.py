@@ -29,6 +29,25 @@ def IB(icon, title, text="", tc="#1a1a1a", xc="#555", isz=40, icc="#2e7d32", **x
     return W("iconbox", **s)
 def IMG(path, alt, rad=18, **x):
     s = dict(src=path, alt=alt, fit="cover", hauto=True, rad=dm(rad)); s.update(x); return W("image", **s)
+
+# ═════════ تأثيرات إضافية (عناصر set.fxs قابلة للتعديل من المطوّر + حركات الظهور) ═════════
+def FX(name, tpl, **p):
+    return {"id": uid(), "n": name, "on": True, "tpl": tpl, "p": {k: {"l": l, "t": t, "v": v} for k, (l, t, v) in p.items()}}
+def fx_pulse(k, rgb="46,125,50"):
+    return FX("نبض حلقي للزر", "selector .pb-btn{animation:%sPu [[d]]s infinite}@keyframes %sPu{0%%{box-shadow:0 0 0 0 rgba([[rgb]],.5)}70%%{box-shadow:0 0 0 18px rgba([[rgb]],0)}100%%{box-shadow:0 0 0 0 rgba([[rgb]],0)}}" % (k, k), rgb=("اللون RGB", "text", rgb), d=("الدورة ثانية", "num", 2.2))
+def fx_shine(k):
+    return FX("لمعة تعبر الزر", "selector .pb-btn{position:relative;overflow:hidden}selector .pb-btn::after{content:\"\";position:absolute;top:0;left:-70%%;width:45%%;height:100%%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-22deg);animation:%sSh [[d]]s ease-in-out infinite}@keyframes %sSh{0%%,55%%{left:-70%%}100%%{left:140%%}}" % (k, k), d=("زمن الدورة ثانية", "num", 3.4))
+def fx_float(k, sel="img", amp=10, dur=5):
+    return FX("طفو هادئ", "selector %s{animation:%sFl [[d]]s ease-in-out infinite}@keyframes %sFl{50%%{transform:translateY(-[[a]]px)}}" % (sel, k, k), a=("المسافة px", "num", amp), d=("الدورة ثانية", "num", dur))
+def fx_zoom(sel="img", z=1.06):
+    return FX("تكبير بالمرور", "selector %s{transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s}selector %s:hover{transform:scale([[z]]);box-shadow:0 18px 40px rgba(20,60,30,.28)}" % (sel, sel), z=("نسبة التكبير", "num", z))
+def fx_lift(sel="img"):
+    return FX("رفع بالمرور", "selector %s{transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s}selector %s:hover{transform:translateY(-8px);box-shadow:0 22px 44px rgba(0,0,0,.22)}" % (sel, sel))
+def fx_icon(k):
+    return FX("طفو الأيقونة", "selector .pb-ibi{display:inline-block;animation:%sIf [[d]]s ease-in-out infinite}@keyframes %sIf{50%%{transform:translateY(-6px) rotate(-5deg)}}" % (k, k), d=("الدورة ثانية", "num", 3.6))
+def fx_grad(k, c1, c2, c3):
+    return FX("نص بتدرّج متحرك", "selector .pb-t{background:linear-gradient(90deg,[[c1]],[[c2]],[[c3]],[[c1]]);background-size:260%% 100%%;-webkit-background-clip:text;background-clip:text;color:transparent!important;-webkit-text-fill-color:transparent;animation:%sGt [[d]]s linear infinite}@keyframes %sGt{to{background-position:260%% 0}}" % (k, k), c1=("اللون 1", "text", c1), c2=("اللون 2", "text", c2), c3=("اللون 3", "text", c3), d=("الدورة ثانية", "num", 7))
+
 GREEN, BLUE, GOLD, RED = "#2e7d32", "#1b4a8a", "#c8920a", "#c62828"
 P = "assets/img/tarkiz/"
 
@@ -95,6 +114,27 @@ secs.append(S([C([H("مستقبل أفضل لأطفالنا", 34, 24, "#ffffff",
                C([T("ملاحظة: هذا المنتج مكمّل غذائي طبيعي وليس دواءً، ولا يُغني عن استشارة الطبيب أو الصيدلي، خصوصاً للأطفال ومن يتناولون علاجاً. النتائج تختلف من شخص لآخر.", 14, 13, "#fde68a", fw="600", bg="rgba(0,0,0,.22)", rad=dm(12), pad=dm([10, 16, 10, 16])),
                   W("orderorig", prod="tarkiz", auto=True)], w=dm(100))],
               grad1="#1b5e20", grad2="#2e7d32", gradAng=160, cid="order", pad=dm([44, 20, 56, 20], [28, 12, 36, 12])))
+
+
+# ═════════ تطبيق التأثيرات ═════════
+def add_fx(w, *f): w["set"]["fxs"] = list(w["set"].get("fxs", [])) + list(f)
+def each(n, fn):
+    for c in n.get("cols", []):
+        fn(c, "col"); each(c, fn)
+    for w in n.get("widgets", []): fn(w, "w")
+ANIMS = ["fadeUp", "zoomIn", "fadeUp", "slideStart"]
+for si, sec in enumerate(secs):
+    for ci, col in enumerate(sec["cols"]):
+        for w in col["widgets"]:
+            t = w["type"]; st = w["set"]
+            if t == "orderorig" or (t == "text" and "ملاحظة" in st.get("html", "")): continue
+            d = round(min(ci, 5) * .1, 2)
+            st["anim"] = "zoomIn" if (si == 0 and t == "image") else "fadeUp"; st["animDur"] = .75; st["animDelay"] = d
+            if t == "button": add_fx(w, fx_pulse("fkb%d" % si, "198,40,40" if st.get("bgc") == RED else "46,125,50"), fx_shine("fks%d" % si))
+            elif t == "iconbox": add_fx(w, fx_icon("fki%d_%d" % (si, ci)))
+            elif t == "image":
+                if si == 0: add_fx(w, fx_float("fkh", "img", 9, 5.5))
+                else: add_fx(w, fx_zoom("img", 1.05) if si in (3, 5) else fx_lift("img"))
 
 path = os.path.join(ROOT, "assets/pages/01.json"); old = json.load(open(path, encoding="utf-8"))
 old.update({"title": "عسل التركيز وتنشيط الذاكرة", "desc": "عسل طبيعي بمكوّنات نباتية لدعم التركيز والنشاط الذهني لدى الأطفال من 4 إلى 18 سنة. الدفع عند الاستلام والتوصيل حسب الولاية.",
