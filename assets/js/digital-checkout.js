@@ -127,7 +127,7 @@
         var lines = order.items.map(function (x) { return Object.assign({}, x); });
         return PFOrder.send(order, ref, lines, { email: email, pay: method }).then(function (r) {
           if (btn) btn.disabled = false;
-          if (!r || !r.ok) return say("تعذّر ربط الدفع بطلبك، تواصل مع المتجر عبر واتساب (رقم طلبك: " + ref + ")");
+          if (!r || !r.ok) return say(r && r.msg ? r.msg + " (رقم طلبك: " + ref + ")" : "تعذّر ربط الدفع بطلبك، تواصل مع المتجر عبر واتساب (رقم طلبك: " + ref + ")");
           var rec = { ref: ref, method: method, total: o.total, email: email, name: order.name, at: Date.now() };
           if (method === "chargily") {
             keep(rec); return call("/v1/payments/pay", { order_id: ref, method: "edahabia", locale: "ar", return_url: location.origin + location.pathname }).then(function (p) {

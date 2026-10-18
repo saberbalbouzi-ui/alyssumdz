@@ -1,5 +1,5 @@
 import { HttpError, ok } from "../core.js";
-import { hmacHex, parseProof, randHex, safeEq, safeHttpsUrl } from "../util.js";
+import { hmacHex, parseProof, randHex, safeEq, safeHttpsUrl, strictCfg } from "../util.js";
 
 const MANUAL_METHODS = ["baridimob", "ccp"];
 export { parseProof };
@@ -61,6 +61,7 @@ export const payments = {
       const b = req.json(), oid = String(b.order_id ?? "").slice(0, 80), method = String(b.method ?? ""); if (!/^[A-Za-z0-9._:-]{6,80}$/.test(oid) || !MANUAL_METHODS.includes(method)) throw new HttpError(400, "validation_error", "order_id/method غير صالحين");
       const proof = parseProof(b.proof); if (!proof) throw new HttpError(400, "validation_error", "الإثبات صورة JPEG/PNG/WebP أقل من ~170KB");
       const ex = await expect(req.tenant.id, oid); if (!ex) throw new HttpError(404, "order_not_found", "الطلب غير موجود أو لا ينتظر دفعاً");
+      if (strictCfg(req.tenant.settings).reject && ex.verified !== 2) throw new HttpError(409, "amount_unverified", "تعذّر التحقق من مبلغ هذا الطلب في الخادم، تواصل مع المتجر");     // التحقق الصارم: لا إثبات إلا لمبلغ حسبه الخادم
       if (await paidAlready(req.tenant.id, oid)) throw new HttpError(409, "already_paid", "الطلب مدفوع سابقاً");
       if ((await db.val("SELECT COUNT(*) FROM pay_manual WHERE tenant_id=? AND order_id=?", req.tenant.id, oid)) >= 4) throw new HttpError(429, "too_many_proofs", "تجاوزت عدد المحاولات، تواصل مع المتجر");
       await db.run("UPDATE pay_manual SET state='superseded' WHERE tenant_id=? AND order_id=? AND state='pending'", req.tenant.id, oid);
@@ -75,7 +76,7 @@ export const payments = {
       let ru; try { ru = new URL(String(b.return_url ?? "")); } catch { throw new HttpError(400, "validation_error", "return_url غير صالح"); }
       if (ru.protocol !== "https:" || !(req.tenant.settings.origins ?? []).includes(ru.origin)) throw new HttpError(400, "validation_error", "return_url يجب أن يكون من أصول موقعك");
       if (req.mode !== "live") return ok({ id: "sandbox", status: "pending", checkout_url: "https://pay.chargily.dz/test/sandbox/pay", sandbox: true }, 201);
-      const ex = await expect(req.tenant.id, oid); if (!ex || !ex.verified) throw new HttpError(404, "order_not_found", "الطلب غير موجود أو لم يُتحقق منه، تواصل مع المتجر");
+      const ex = await expect(req.tenant.id, oid); if (!ex || !ex.verified || (strictCfg(req.tenant.settings).reject && ex.verified !== 2)) throw new HttpError(404, "order_not_found", "الطلب غير موجود أو لم يُتحقق منه، تواصل مع المتجر");
       if (await paidAlready(req.tenant.id, oid)) throw new HttpError(409, "already_paid", "الطلب مدفوع سابقاً");
       const u = (st) => { const x = new URL(ru.href); x.searchParams.set("pay", st); x.searchParams.set("order", oid); return x.href; };
       return createCheckout(ctx, req.tenant, { orderId: oid, amount: ex.amount, method, locale, success_url: u("ok"), failure_url: u("fail") });
@@ -134,7 +135,9 @@ export const payments = {
     /** يسجّل المبلغ الموثَّق للطلبات غير الدفع-عند-الاستلام: أساس المسار العام للدفع الإلكتروني ولموافقة التاجر اليدوية */
     "order.created": async (e, ctx) => {
       const d = e.data ?? {}, oid = String(d.order_id ?? "").slice(0, 80), amount = Math.round(+d.total), pay = d.pay; if (!oid || !["baridimob", "ccp", "chargily"].includes(pay) || !Number.isSafeInteger(amount) || amount < 1 || amount > 10_000_000) return;
-      await ctx.db.run("INSERT OR IGNORE INTO pay_expect (tenant_id,order_id,amount,method,verified,created_at) VALUES (?,?,?,?,?,?)", e.tenantId, oid, amount, pay, d.verified === true ? 1 : 0, ctx.nowS());
+      /* verified: 0 غير متحقَّق، 1 تحقق مخفَّف (وضع المراقبة)، 2 مجموع حسبه الخادم نفسه (توقيع HMAC لا يستطيع تزويره عميل أو تاجر عبر /v1/events) */
+      const lvl = typeof d.ts === "string" && safeEq(d.ts, await hmacHex(ctx.secret, `trust:${e.tenantId}:${oid}:${amount}`)) ? 2 : d.verified === true ? 1 : 0;
+      await ctx.db.run("INSERT OR IGNORE INTO pay_expect (tenant_id,order_id,amount,method,verified,created_at) VALUES (?,?,?,?,?,?)", e.tenantId, oid, amount, pay, lvl, ctx.nowS());
     },
   },
 };

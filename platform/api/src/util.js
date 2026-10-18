@@ -34,3 +34,12 @@ export function parseProof(v) {
   const ok = m[1] === "jpeg" ? head.startsWith("\xff\xd8\xff") : m[1] === "png" ? head.startsWith("\x89PNG") : head.startsWith("RIFF") && head.slice(8, 12) === "WEBP";
   return ok ? String(v) : null;
 }
+
+/** إعداد التحقق الصارم لمستأجر (settings.strict). الافتراضي: مطفأ تماماً (السلوك القديم كما هو).
+ *  on: تشغيل الحساب الخادمي؛ shadow (افتراضي true): يسجّل القرار المتوقع فقط ولا يرفض أبداً؛ shadow:false = رفض فعلي (يلزم قرار منفصل)؛
+ *  pay (افتراضي true): الدفع المسبق ضمن النطاق؛ slugs: منتجات يُفرض عليها النطاق نفسه (فارغة افتراضياً)؛ grace_min: مهلة السعر القديم بعد تغييره (1–60 دقيقة). */
+export const strictCfg = (s) => {
+  const x = s?.strict; if (!x || x.on !== true) return { on: false, shadow: true, reject: false, pay: false, slugs: [], grace_min: 10 };
+  const g = Math.min(60, Math.max(1, Math.round(+x.grace_min) || 10));
+  return { on: true, shadow: x.shadow !== false, reject: x.shadow === false, pay: x.pay !== false, slugs: Array.isArray(x.slugs) ? x.slugs.filter((v) => typeof v === "string" && v.length > 0 && v.length <= 80).slice(0, 200) : [], grace_min: g };
+};

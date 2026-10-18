@@ -81,3 +81,7 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 2. سجّل البادئة في `OWN` داخل `test/boundaries.test.mjs` وأدرج الوحدة في `MODS` (وسجّلها في `src/index.js`).
 3. أحداثها: صدّرها بـ`ctx.emit` وأضفها للكتالوج أعلاه؛ أي حدث خارجي جديد يُضاف إلى `EXTERNAL` مع تبرير.
 4. اختبار الوحدة نفسها + تشغيل `boundaries.test.mjs`.
+
+
+## ملحق: التحقق الصارم من الأسعار
+`commerce` يملك `cm_meta` و`cm_price_hist` و`cm_calc` (بادئة `cm_` ضمن خريطة الملكية). `payments` لا يقرأ جداول `commerce`؛ يتلقى مستوى الثقة في حدث `order.created` (توقيع HMAC بسرّ المنصة). التفاصيل والتفعيل والرجوع: `platform/docs/strict-pricing.md`.

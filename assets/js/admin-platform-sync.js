@@ -24,7 +24,7 @@ const PlatformSync = (() => {
   function catalogPayload() {
     const a = typeof Admin !== "undefined" ? Admin : null; if (!a || !Array.isArray(a.products)) return null;
     const lab = (p, v) => { try { return typeof variationLabel === "function" ? variationLabel(p, v) : ""; } catch (e) { return ""; } };
-    return { replace: true, products: a.products.filter(p => p && p.slug).map(p => ({ slug: p.slug, title: p.title, price: Math.round(+p.price || 0), stock: p.stock == null ? null : p.stock, active: p.active !== false, cat: p.cat || "", freeShip: !!p.freeShip,
+    return { replace: true, products: a.products.filter(p => p && p.slug).map(p => ({ slug: p.slug, title: p.title, price: Math.round(+p.price || 0), stock: p.stock == null ? null : p.stock, active: p.active !== false, cat: p.cat || "", freeShip: !!p.freeShip, digital: !!p.digital,
       offers: (p.offers || []).map(o => ({ qty: o.qty, price: o.price, free: o.free || 0 })), variations: (p.variations || []).map(v => ({ id: v.id, price: Math.round(+v.price || 0), stock: v.stock == null ? null : v.stock, active: v.active !== false, label: lab(p, v) })) })) };
   }
   async function syncCatalog() {
