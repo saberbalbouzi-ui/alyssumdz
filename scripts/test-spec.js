@@ -70,6 +70,24 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   /* تحريك عنصر وحفظ إعدادات */
   const moved = await p.evaluate(() => { const P = PBApp.E.page, w = P.sections[0].free[2]; w.set.fx.d = 10; PBApp.renderCanvas(); return w.set.fx.d; });
   t("تعديل موضع عنصر ممكن", moved === 10);
+  /* ٤) توليد صور الطبقات الفارغة (ImgGen مُحاكى) */
+  const gi = await p.evaluate(async () => {
+    const spec = PBSpec.validate({ page: { title: "t", width: 1080 }, sections: [{ height: 600, layers: [
+      { type: "image", prompt: "a glass jar of golden honey on a wooden table with honeycomb", x: 100, y: 50, w: 500, h: 500, cutout: false },
+      { type: "image", prompt: "x", x: 0, y: 0, w: 100, h: 100 }, { type: "image", src: "assets/img/tpl/generic-honey.webp", x: 0, y: 0, w: 100, h: 100 }] }] });
+    const pg = PBSpec.toPage(spec, {}); PBApp.open(pg, "", true); await new Promise(r => setTimeout(r, 800));
+    const calls = []; const oe = ImgGen.edit, orr = ImgGen.ready, ou = PBApp.uploadBlob;
+    ImgGen.ready = () => ({ ok: true }); ImgGen.edit = async o => { calls.push(o); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; return { blob: await new Promise(r => c.toBlob(r, "image/webp")), canvas: c }; };
+    PBApp.uploadBlob = async (b, n) => "assets/img/pages/" + n + ".webp";
+    const before = PBSpec.emptyImages().length; const r = await PBSpec.fillImages({ confirm: false });
+    const widgets = PBApp.E.page.sections[0].free.filter(w => w.type === "image");
+    ImgGen.edit = oe; ImgGen.ready = orr; PBApp.uploadBlob = ou;
+    return { before, r, n: calls.length, noText: /no text/i.test(calls[0].prompt), textOnly: calls[0].textOnly, W: calls[0].W, H: calls[0].H, srcs: widgets.map(w => w.set.src), after: PBSpec.emptyImages().length };
+  });
+  t("صور فارغة بوصف كافٍ فقط (1 من 3)", gi.before === 1, gi);
+  t("توليد صورة واحدة بتعليمات بلا كتابة ومن وصف نصي", gi.r.done === 1 && gi.n === 1 && gi.noText && gi.textOnly === true, gi);
+  t("المقاس يتبع الطبقة", gi.W === 500 && gi.H === 500, gi);
+  t("المسار يُوضع في عنصر الصورة", /^assets\/img\/pages\/spec-/.test(gi.srcs[0]) && gi.after === 0, gi);
   console.log(errs.length ? "أخطاء صفحة: " + errs.join(" | ") : "");
   t("بلا أخطاء JS", errs.length === 0, errs);
   console.log(bad ? "فشل " + bad + " / " + (ok + bad) : "كل الفحوص نجحت (" + ok + ")"); await b.close(); process.exit(bad ? 1 : 0);

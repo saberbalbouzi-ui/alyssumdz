@@ -53,7 +53,7 @@ const PBSpec = (() => {
       if (!o.text.trim()) { warn.push(where + ": نص فارغ — تُجوهلت"); return null; }
     } else if (o.type === "image") {
       o.src = (v => /^(product:(cover|img(:\d+)?)|asset:[\w-]+)$/.test(v) ? v : imgSrc(v))(str(L.src, 600).trim()); o.alt = str(L.alt || L.prompt, 200); o.prompt = str(L.prompt, 500); o.fit = ["cover", "contain", "fill"].includes(L.fit) ? L.fit : "cover";
-      o.brightness = num(L.brightness, 40, 180, 100); o.contrast = num(L.contrast, 40, 200, 100); o.saturate = num(L.saturate, 0, 250, 100);
+      o.cutout = !!L.cutout; o.brightness = num(L.brightness, 40, 180, 100); o.contrast = num(L.contrast, 40, 200, 100); o.saturate = num(L.saturate, 0, 250, 100);
     } else if (o.type === "shape") {
       o.shape = SHAPES.includes(L.shape) ? L.shape : "rect"; o.fill = col(L.fill, "#c8a24b"); o.stroke = col(L.stroke, ""); o.strokeW = num(L.strokeW, 0, 40, 0);
     } else if (o.type === "button") {
@@ -152,7 +152,7 @@ const PBSpec = (() => {
       else Object.assign(w.set, t, { html: "<p>" + html + "</p>" });
       if (L.h) w.set.hauto = false;
     } else if (L.type === "image") {
-      free("image", L.h || Math.round(L.w * .75)); w.set.hauto = false; Object.assign(w.set, { src: resolveImg(L, ctx), alt: L.alt, fit: L.fit });
+      free("image", L.h || Math.round(L.w * .75)); w.set.hauto = false; Object.assign(w.set, { src: resolveImg(L, ctx), alt: L.alt, fit: L.fit }); if (L.cutout && !w.set.src) w.set.__cutout = true;
       if (L.brightness !== 100) w.set.ibri = L.brightness; if (L.contrast !== 100) w.set.icon = L.contrast; if (L.saturate !== 100) w.set.isat = L.saturate;
     } else if (L.type === "shape") {
       free("shape", L.h || L.w); w.set.keep = false; Object.assign(w.set, { shape: L.shape, fill: L.fill });
@@ -247,7 +247,7 @@ const PBSpec = (() => {
   {"kind":"order","title":"اطلب الآن","note":"تنبيه قصير"}]}
 أنواع الطبقات (type) وحقولها — كل الإحداثيات بالبكسل على عرض الصفحة المرجعي (width)، x من اليسار وy من أعلى القسم، z الأكبر أمام:
 - heading/text: text (\\n لسطر جديد، **غامق**)، x,y,w (و h اختياري)، font:{size,weight,color,align:right|center|left,lineHeight,letterSpacing,family}، tag للعنوان (h1|h2|h3)
-- image: src ("product:cover" أو "product:img:N" أو "asset:اسم")، x,y,w,h، fit:cover|contain، radius، brightness/contrast/saturate
+- image: src ("product:cover" أو "product:img:N" أو "asset:اسم") — أو بلا src مع prompt (وصف بالإنجليزية بلا أي كتابة) فتُولَّد الصورة تلقائياً؛ cutout:true لعنصر معزول على خلفية شفافة (منتج/مكوّن)؛ x,y,w,h، fit:cover|contain، radius، brightness/contrast/saturate
 - shape: shape (${SHAPES.join("|")})، x,y,w,h، fill أو gradient، stroke,strokeW، radius (للمستطيل)، blur (زجاج)
 - button: text, link ("#order")، x,y,w,h، bg، color، radius، font:{size}
 - icon: icon (${ICONS.join("|")})، color، size، title، text، x,y,w
@@ -289,6 +289,37 @@ ${JSON.stringify(SAMPLE)}
     const r = await ImgGen.text({ prompt: prompt(o), json: true, temp: .8 }); return r;
   }
 
+  /* ───────────── توليد صور الطبقات الفارغة (Alyssum API) في الصفحة المفتوحة ───────────── */
+  const IMG_RULES = "Photorealistic professional e-commerce marketing image. ABSOLUTELY no text, letters, numbers, logos, watermarks, labels or UI elements anywhere. No people; if hands are needed show only hands; never an uncovered woman. Clean composition, soft studio lighting, high detail. Subject: ";
+  function emptyImages() {
+    const P = typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page; if (!P) return []; const out = [];
+    (P.sections || []).forEach(sec => (sec.free || []).forEach(w => { if (w.type === "image" && !w.set.src && w.set.alt && String(w.set.alt).trim().length > 8) { w.__dw = Number(sec.set && sec.set.dw) || 1080; out.push(w); } }));
+    return out;
+  }
+  async function fillImages(o) {
+    o = o || {}; const list = emptyImages(), say = o.say || (() => { }); if (!list.length) return { done: 0, failed: 0, total: 0 };
+    if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("أداة التوليد غير متاحة");
+    const rd = ImgGen.ready(); if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
+    if (o.confirm !== false && !confirm("سيُولَّد " + list.length + " صورة بتقنية Alyssum API وتُستهلك من رصيدك (بلا أي كتابة داخل الصور). المتابعة؟")) return { done: 0, failed: 0, total: list.length, cancelled: true };
+    let done = 0, failed = 0, lastErr = "";
+    for (let i = 0; i < list.length; i++) {
+      const w = list[i], fw = w.set.fwd && w.set.fwd.d, fh = w.set.fh && w.set.fh.d, dw = w.__dw || o.dw || 1080, W0 = Math.max(200, (Number(fw) || 40) / 100 * dw), H0 = Math.max(200, Number(fh) || W0), k = Math.min(1, 1400 / Math.max(W0, H0));
+      say("⏳ توليد الصورة " + (i + 1) + " من " + list.length + "…");
+      try {
+        const cut = !!w.set.__cutout;
+        const r = await ImgGen.edit({ textOnly: true, prompt: IMG_RULES + String(w.set.alt).slice(0, 400) + (cut ? ". Isolated on a plain flat light-gray (#e6e6e6) background, no cast shadow on the background." : ""), W: Math.round(W0 * k), H: Math.round(H0 * k), confirm: false, title: "صورة للتصميم" });
+        if (!r) { failed++; continue; }
+        let blob = r.blob;
+        if (cut && typeof PBBgRemove !== "undefined" && r.canvas) { try { const c = await PBBgRemove.autoCut(r.canvas, { methods: ["classic"] }); if (c && c.canvas) blob = await new Promise(res => c.canvas.toBlob(res, "image/png")); } catch (_) { } }
+        const path = await PBApp.uploadBlob(blob, "spec-" + Date.now().toString(36) + i); w.set.src = path; delete w.set.__cutout; delete w.__dw; done++;
+        if (PBApp.renderCanvas) PBApp.renderCanvas();
+      } catch (e) { failed++; lastErr = e.message || String(e); if (e.code === "NOKEY" || e.code === "OFF" || /رصيد|credit|quota|limit/i.test(lastErr)) break; }
+    }
+    return { done, failed, total: list.length, error: lastErr };
+  }
+
+  const emptyImages_ = pg => (pg.sections || []).some(sec => (sec.free || []).some(w => w.type === "image" && !w.set.src && w.set.alt));
+
   /* ───────────── الواجهة ───────────── */
   const S = { raw: "", res: null };
   function prods() { return (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) || []; }
@@ -307,6 +338,8 @@ ${JSON.stringify(SAMPLE)}
 <div style="display:flex;flex-wrap:wrap;gap:8px;margin:.8rem 0">
 <button data-sp="copy" style="${btn};background:rgba(198,254,23,.18)">① نسخ البرومبت (ألصقه في ChatGPT/Claude)</button>
 <button data-sp="gen" style="${btn};background:rgba(198,254,23,.18)">✨ توليد مباشر (Alyssum API)</button>
+<button data-sp="full" style="${btn};background:rgba(198,254,23,.28)" title="يولّد التصميم ثم الصور ويفتحه جاهزاً">🚀 توليد كامل (التصميم + الصور)</button>
+<button data-sp="imgs" style="${btn};background:rgba(255,255,255,.1)" title="يولّد الصور الفارغة في الصفحة المفتوحة">🖼️ توليد الصور الفارغة</button>
 <button data-sp="sample" style="${btn};background:rgba(255,255,255,.1)">تجربة بنموذج جاهز</button>
 <label style="${btn};background:rgba(255,255,255,.1)">📁 رفع ملف JSON<input id="sp-file" type="file" accept=".json,application/json,text/plain" hidden></label></div>
 <label style="font-size:.8rem">② ألصق ناتج الذكاء الاصطناعي (JSON) هنا</label>
@@ -332,13 +365,23 @@ ${JSON.stringify(SAMPLE)}
       else if (a === "sample") { $q("sp-json").value = JSON.stringify(SAMPLE, null, 2); check(); }
       else if (a === "check") check();
       else if (a === "gen") { b.disabled = true; say("⏳ جارٍ توليد التصميم…"); try { const j = await generate(opts()); $q("sp-json").value = JSON.stringify(j, null, 2); check(); } catch (er) { say("❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد — استعمل «نسخ البرومبت» يدوياً" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message), true); } b.disabled = false; }
+      else if (a === "imgs") { b.disabled = true; try { const r = await fillImages({ say: m => say(m), dw: (S.res && S.res.page.width) || 1080 }); say(r.cancelled ? "أُلغي." : r.total ? `✅ وُلّدت ${r.done} من ${r.total} صورة` + (r.failed ? ` — تعذّرت ${r.failed}${r.error ? ": " + esc(r.error) : ""}` : "") : "لا توجد صور فارغة في الصفحة المفتوحة.", !!r.failed && !r.done); } catch (er) { say("❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message), true); } b.disabled = false; }
+      else if (a === "full") {
+        b.disabled = true; say("⏳ جارٍ توليد التصميم…");
+        try {
+          const j = await generate(opts()); $q("sp-json").value = JSON.stringify(j, null, 2); const r = check(); if (!r) { b.disabled = false; return; }
+          const pg = toPage(r, { product: r.page.product }); pg.slug = (r.page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4);
+          const dw = r.page.width; bg.remove(); PBApp.open(pg, "", true);
+          if (emptyImages_(pg)) { await new Promise(rs => setTimeout(rs, 700)); try { const f = await fillImages({ dw, say: m => PBApp.toast && PBApp.toast(m), confirm: true }); PBApp.toast && PBApp.toast(f.cancelled ? "تُركت الصور فارغة" : `🖼️ وُلّدت ${f.done} من ${f.total} صورة` + (f.failed ? ` (تعذّرت ${f.failed})` : "")); } catch (er) { PBApp.toast && PBApp.toast("⚠ " + (er.code === "NOKEY" ? "لا مفتاح للصور" : er.message)); } }
+        } catch (er) { say("❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد — استعمل «نسخ البرومبت» يدوياً" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message), true); b.disabled = false; }
+      }
       else if (a === "new" || a === "ins") {
         const r = S.res || check(); if (!r) return; const ctx = { product: r.page.product };
-        if (a === "new") { const pg = toPage(r, ctx); pg.slug = (r.page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4); bg.remove(); PBApp.open(pg, "", true); if (pg.pending && pg.pending.length) setTimeout(() => { try { alert("ملاحظة: " + pg.pending.length + " صورة بلا مصدر — انقر مرتين على كل صورة فارغة لرفعها أو توليدها. أوصافها محفوظة في النص البديل."); } catch (_) { } }, 400); }
+        if (a === "new") { const pg = toPage(r, ctx); pg.slug = (r.page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4); bg.remove(); PBApp.open(pg, "", true); if (pg.pending && pg.pending.length) setTimeout(() => { try { PBApp.toast && PBApp.toast(pg.pending.length + " صورة فارغة — زر «🧩 تصميم بطبقات» ← «🖼️ توليد الصور الفارغة» يولّدها تلقائياً"); } catch (_) { } }, 400); }
         else { const secs = toSections(r, ctx); bg.remove(); PBApp.insertSections(secs, "تصميم بطبقات"); }
       }
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, generate, open, TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, generate, fillImages, emptyImages, open, TYPES, ENTR, CONT, SHAPES, ICONS };
 })();
