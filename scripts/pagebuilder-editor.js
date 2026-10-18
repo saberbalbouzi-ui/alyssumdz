@@ -716,12 +716,13 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const w = DEVW[E.dev];
     const h = FREE_ONLY ? Math.max(200, root ? root.offsetHeight : 0) : Math.max(500, (root ? root.offsetHeight : 0) + 40);      // بلا أقسام عادية: لا شريط أبيض تحت آخر قسم
     /* «تصميم بمقاس»: تظهر الصفحة كاملة (العرض والارتفاع معاً) داخل مجال الرؤية مهما كان مقاسها، والتكبير/التصغير نسبة إليها؛ لا شريط فارغ أعلاها ولا فراغ تحتها */
-    const pad = isAd ? 16 : 0, fit = isAd ? Math.min(Math.max(120, st.clientWidth - 2 * pad) / w, Math.max(120, st.clientHeight - 64 - 2 * pad) / h) : Math.min(1, Math.max(300, st.clientWidth - gut - 36) / w), s = fit * (E.zoom || 1); E.scale = s;
+    const pad = isAd ? 16 : 0, fit = isAd ? Math.min(Math.max(120, st.clientWidth - 2 * pad) / w, Math.max(120, st.clientHeight - 64 - 2 * pad) / h) : Math.min(1, Math.max(300, st.clientWidth - gut - 40) / w), s = fit * (E.zoom || 1); E.scale = s;
     sc.style.margin = isAd ? Math.max(pad, Math.round((st.clientHeight - 64 - h * s) / 2)) + "px auto" : "";
     fw.style.width = w + "px"; fw.style.height = h + "px"; fw.style.transform = `scale(${s})`; frame.style.height = h + "px";
     sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
     const ad = $("pbx-add2"); if (ad) ad.style.width = (w * s) + "px";
-    drawThumbs(true); placeQbar(); const zv = $("pbx-zv"); if (zv) zv.textContent = Math.round(s * 100) + "%";
+    st.style.overflowX = (E.zoom || 1) <= 1.001 ? "hidden" : "";      // الزوم 100% = ملاءمة العرض بلا شريط سحب أفقي؛ يظهر الشريط فقط عند التكبير
+    drawThumbs(true); placeQbar(); const zv = $("pbx-zv"); if (zv) zv.textContent = Math.round((isAd ? s : (E.zoom || 1)) * 100) + "%";   // صفحات الويب: النسبة المعروضة نسبة إلى الملاءمة (100% = الأصلي)
   }
   const renderCanvasHeight = () => fitStage();
 

@@ -247,6 +247,14 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("الطبقات فوق الخلفيات", mg.h1z > 5, mg);
   t("توليد بمرجع صورة المنتج للمشهد", mg.calls.length === 2 && mg.calls.some(c => c.ref && !c.textOnly && /REAL product/.test(c.prompt) && /عسل التركيز/.test(c.prompt)), mg.calls);
   t("المكوّنات/الخلفيات بلا مرجع لكن بسياق المنتج", mg.calls.some(c => !c.ref && c.textOnly && /عسل التركيز/.test(c.prompt)), mg.calls);
+  /* ١٤) الزوم الأصلي 100% بلا شريط سحب أفقي */
+  const zm = await p.evaluate(async () => {
+    PBApp.open(PBSpec.toPage(PBSpec.validate(PBSpec.SAMPLE), {}), "", true); await new Promise(r => setTimeout(r, 900));
+    const st = document.getElementById("pbx-stage"), zv = document.getElementById("pbx-zv").textContent;
+    return { zv, sw: st.scrollWidth, cw: st.clientWidth, ox: getComputedStyle(st).overflowX, scale: PBApp.E.scale };
+  });
+  t("الزوم الابتدائي 100%", zm.zv === "100%", zm);
+  t("بلا شريط سحب أفقي", zm.sw <= zm.cw + 1 && zm.ox === "hidden", zm);
   console.log(errs.length ? "أخطاء صفحة: " + errs.join(" | ") : "");
   t("بلا أخطاء JS", errs.length === 0, errs);
   console.log(bad ? "فشل " + bad + " / " + (ok + bad) : "كل الفحوص نجحت (" + ok + ")"); await b.close(); process.exit(bad ? 1 : 0);
