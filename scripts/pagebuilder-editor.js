@@ -999,7 +999,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
   /* صفحة طويلة: قسم قماش واحد = الصفحة نفسها (لا قسم ولا فواصل ولا شريط أقسام) */
   function isLong() { const P = E.page, s0 = P && !P.ad && P.sections && P.sections.length === 1 && P.sections[0]; return !!(s0 && s0.set && s0.set.kind === "canvas" && !s0.set.tight); }
-  function trimLong(sec) { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", E.dev)) || 0) + hOf(w))) + 40; setR(sec.set, "mh", E.dev, Math.max(100, Math.round(need))); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
+  function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))) + 40; setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
   function select(id) {
     if (id && isLong()) { const q1 = find(id); if (q1 && q1.kind !== "widget") id = null; }
     if (id && E.page && E.page.ad) { const q0 = find(id); if (q0 && q0.kind !== "widget") id = null; }      // «إنشاء صور»: الخلفية ليست قسماً — لا تحديد للقسم ولا إعدادات له
@@ -1998,9 +1998,11 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     bg.onclick = e => { if (e.target === bg || (e.target.dataset && e.target.dataset.ar === "x")) return bg.remove(); if (e.target.dataset && e.target.dataset.ar === "go") { const w = +q("pbar-w").value, h = +q("pbar-h").value, o = sel.selectedOptions[0], sc = bg.querySelector('input[name="pbar-m"]:checked').value === "scale"; if (!(w >= 50 && w <= 6000 && h >= 50 && h <= 6000)) { toast("المقاس بين 50 و6000 بكسل"); return; } adResize(w, h, sc, o && o.value !== "custom" ? o.textContent : "", o ? o.value : "custom"); bg.remove(); } };
   }
   /* بلا أقسام: القماش يكبر تلقائياً ليتسع لأسفل عنصر حر (لا مقبض لتحجيم القسم) */
+  /* ارتفاع عنصر حر: الفعلي المقيس للنص/العنوان بارتفاع تلقائي (للجهاز الحالي فقط) وإلا fh المحفوظ */
+  function freeH(sec, w, dev) { if (dev === E.dev && ["text", "heading"].includes(w.type) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; }
   function growCanvas(sec) {
     if (!FREE_ONLY || sec.set.kind !== "canvas" || E.page.ad) return; const dev = E.dev;      // لوحة التصميم بمقاس ثابت: لا تكبر مع العناصر
-    const hOf = w => { if (["text", "heading"].includes(w.type) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; };
+    const hOf = w => freeH(sec, w, dev);
     const tight = !!sec.set.tight, need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))) + (tight ? 0 : 40), cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
     if (tight ? Math.abs(need - cur) > 0.5 : need > cur) setR(sec.set, "mh", dev, Math.round(need));
   }
