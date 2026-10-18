@@ -10,7 +10,7 @@
  "css": "",
  "sections": [
   {
-   "id": "zplz1qx",
+   "id": "0wf17uj",
    "set": {
     "layout": "boxed",
     "cw": {
@@ -57,14 +57,14 @@
    },
    "cols": [
     {
-     "id": "15vaypr",
+     "id": "fpln5uh",
      "set": {},
      "widgets": []
     }
    ],
    "free": [
     {
-     "id": "vvl5vo8",
+     "id": "hhdtekw",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-garden.webp",
@@ -89,7 +89,7 @@
      }
     },
     {
-     "id": "2yesyab",
+     "id": "6dspkie",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -136,7 +136,7 @@
      }
     },
     {
-     "id": "vbz711y",
+     "id": "aonraex",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-flower.webp",
@@ -157,11 +157,11 @@
       "zi": 10,
       "hauto": false,
       "cls": "",
-      "grp": "grmczapa"
+      "grp": "gkzsp5s9"
      }
     },
     {
-     "id": "zdt5qn9",
+     "id": "cufsv4p",
      "type": "text",
      "set": {
       "html": "<p>ALYSSUM</p>",
@@ -192,11 +192,11 @@
       "ff": "'Playfair Display','Cairo',sans-serif",
       "hauto": false,
       "cls": "",
-      "grp": "grmczapa"
+      "grp": "gkzsp5s9"
      }
     },
     {
-     "id": "tno9mun",
+     "id": "jz9ufki",
      "type": "text",
      "set": {
       "html": "<p>Herbal Science</p>",
@@ -227,11 +227,11 @@
       "ff": "'Montserrat','Cairo',sans-serif",
       "hauto": false,
       "cls": "",
-      "grp": "grmczapa"
+      "grp": "gkzsp5s9"
      }
     },
     {
-     "id": "acmwroh",
+     "id": "l8hjq3c",
      "type": "heading",
      "set": {
       "text": "MEMORY FOCUS",
@@ -265,7 +265,7 @@
      }
     },
     {
-     "id": "wdxjdfm",
+     "id": "3dznpub",
      "type": "text",
      "set": {
       "html": "<p>مكمل غذائي طبيعي</p>",
@@ -298,7 +298,7 @@
      }
     },
     {
-     "id": "59lt26b",
+     "id": "s7ktr7j",
      "type": "heading",
      "set": {
       "text": "عسل التركيز",
@@ -331,7 +331,7 @@
      }
     },
     {
-     "id": "shs5f73",
+     "id": "5bs5bou",
      "type": "text",
      "set": {
       "html": "<p>و تنشيط الذاكرة</p>",
@@ -363,7 +363,7 @@
      }
     },
     {
-     "id": "tob10rm",
+     "id": "cnr5byd",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-kids.webp",
@@ -391,7 +391,7 @@
       },
       "fxs": [
        {
-        "id": "b6u63up",
+        "id": "frr5pqp",
         "n": "تلاشي حواف الصورة",
         "on": true,
         "tpl": "selector .pb-cropbox{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 [[t]]%,#000 calc(100% - [[b]]%),transparent 100%),linear-gradient(to right,transparent 0,#000 [[l]]%,#000 calc(100% - [[r]]%),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 [[t]]%,#000 calc(100% - [[b]]%),transparent 100%),linear-gradient(to right,transparent 0,#000 [[l]]%,#000 calc(100% - [[r]]%),transparent 100%);-webkit-mask-composite:source-in;mask-composite:intersect}",
@@ -423,7 +423,7 @@
      }
     },
     {
-     "id": "uf7qcyw",
+     "id": "6uftg4v",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -452,11 +452,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "g6q5v4br"
+      "grp": "g99o5c4x"
      }
     },
     {
-     "id": "ejvtaeh",
+     "id": "4900by5",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -485,11 +485,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "gdb2khmb"
+      "grp": "gv172qnw"
      }
     },
     {
-     "id": "lekb2y7",
+     "id": "qugkedr",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -518,11 +518,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "g1dxiy4i"
+      "grp": "gaumlffd"
      }
     },
     {
-     "id": "uhhj324",
+     "id": "vjad3ir",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -551,11 +551,11 @@
       },
       "zi": 30,
       "cls": "",
-      "grp": "gdhzpas9"
+      "grp": "gj2289pl"
      }
     },
     {
-     "id": "petv2m0",
+     "id": "20bq03q",
      "type": "iconbox",
      "set": {
       "icon": "ic:brain",
@@ -584,7 +584,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "i7c408v",
+        "id": "inc4x85",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -597,7 +597,7 @@
         }
        },
        {
-        "id": "z95cwv8",
+        "id": "9kvq317",
         "n": "محاذاة",
         "on": true,
         "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
@@ -605,11 +605,11 @@
        }
       ],
       "cls": "",
-      "grp": "g6q5v4br"
+      "grp": "g99o5c4x"
      }
     },
     {
-     "id": "9ryjbfn",
+     "id": "db4sopc",
      "type": "iconbox",
      "set": {
       "icon": "img:assets/img/icons/mf-book-open.svg",
@@ -638,7 +638,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "kwdyf50",
+        "id": "uqalg9t",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -651,7 +651,7 @@
         }
        },
        {
-        "id": "6rnqxuj",
+        "id": "9okegky",
         "n": "محاذاة",
         "on": true,
         "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
@@ -659,11 +659,11 @@
        }
       ],
       "cls": "",
-      "grp": "gdb2khmb"
+      "grp": "gv172qnw"
      }
     },
     {
-     "id": "ltzaxuk",
+     "id": "z48dg1t",
      "type": "iconbox",
      "set": {
       "icon": "ic:leaf",
@@ -692,7 +692,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "wpqlscm",
+        "id": "gntoc79",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -705,7 +705,7 @@
         }
        },
        {
-        "id": "o5xak9a",
+        "id": "3v7t7ou",
         "n": "محاذاة",
         "on": true,
         "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
@@ -713,11 +713,11 @@
        }
       ],
       "cls": "",
-      "grp": "g1dxiy4i"
+      "grp": "gaumlffd"
      }
     },
     {
-     "id": "nbo7yc3",
+     "id": "hmhsvda",
      "type": "iconbox",
      "set": {
       "icon": "ic:shield-check",
@@ -746,7 +746,7 @@
       "zi": 31,
       "fxs": [
        {
-        "id": "n6i5yai",
+        "id": "743wfdg",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -759,7 +759,7 @@
         }
        },
        {
-        "id": "gs8vc46",
+        "id": "zwwwtsb",
         "n": "محاذاة",
         "on": true,
         "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
@@ -767,11 +767,11 @@
        }
       ],
       "cls": "",
-      "grp": "gdhzpas9"
+      "grp": "gj2289pl"
      }
     },
     {
-     "id": "chz8970",
+     "id": "vs69ibs",
      "type": "text",
      "set": {
       "html": "<p>يدعم التركيز<br>والانتباه</p>",
@@ -801,11 +801,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "g6q5v4br"
+      "grp": "g99o5c4x"
      }
     },
     {
-     "id": "esmo7qx",
+     "id": "31e0i5q",
      "type": "text",
      "set": {
       "html": "<p>يساعد<br>في التعلم</p>",
@@ -835,11 +835,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gdb2khmb"
+      "grp": "gv172qnw"
      }
     },
     {
-     "id": "mjt85u5",
+     "id": "ukmr27z",
      "type": "text",
      "set": {
       "html": "<p>مكونات<br>طبيعية</p>",
@@ -869,11 +869,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "g1dxiy4i"
+      "grp": "gaumlffd"
      }
     },
     {
-     "id": "zc17t20",
+     "id": "wzl7k9e",
      "type": "text",
      "set": {
       "html": "<p>مناسب للأطفال<br>والمراهقين</p>",
@@ -903,11 +903,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gdhzpas9"
+      "grp": "gj2289pl"
      }
     },
     {
-     "id": "4qq5ngm",
+     "id": "yax4guc",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-dipper.webp",
@@ -931,7 +931,7 @@
      }
     },
     {
-     "id": "xtxsbto",
+     "id": "0fewya1",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -964,7 +964,7 @@
       },
       "fxs": [
        {
-        "id": "w8fyhro",
+        "id": "rh27s2l",
         "n": "ظل الشكل",
         "on": true,
         "tpl": "selector .pb-svg{filter:drop-shadow(calc(var(--u,1px)*[[x]]) calc(var(--u,1px)*[[y]]) calc(var(--u,1px)*[[b]]) [[c]])}",
@@ -992,7 +992,7 @@
         }
        },
        {
-        "id": "4hjhxrn",
+        "id": "zcqsni1",
         "n": "السماح بالظل والحركة خارج الإطار",
         "on": true,
         "tpl": "selector{overflow:visible!important}",
@@ -1000,11 +1000,11 @@
        }
       ],
       "cls": "",
-      "grp": "gg71gydw"
+      "grp": "gd586lx7"
      }
     },
     {
-     "id": "jcc2150",
+     "id": "j5rwwez",
      "type": "text",
      "set": {
       "html": "<p>عناية طبيعية<br>لمستقبل الأفضل<br>لأطفالنا</p>",
@@ -1037,11 +1037,11 @@
        "d": -7
       },
       "cls": "",
-      "grp": "gg71gydw"
+      "grp": "gd586lx7"
      }
     },
     {
-     "id": "hnlol09",
+     "id": "i6sp79c",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1070,11 +1070,11 @@
       },
       "zi": 41,
       "cls": "",
-      "grp": "grevjzkx"
+      "grp": "gx12rvw0"
      }
     },
     {
-     "id": "36cwoza",
+     "id": "ej8v95c",
      "type": "text",
      "set": {
       "html": "<p>من 4 إلى 18 سنة</p>",
@@ -1104,11 +1104,11 @@
       "color": "#FFFFFF",
       "hauto": false,
       "cls": "",
-      "grp": "grevjzkx"
+      "grp": "gx12rvw0"
      }
     },
     {
-     "id": "8h41deq",
+     "id": "ctf3fqv",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-honeycomb.webp",
@@ -1132,7 +1132,7 @@
      }
     },
     {
-     "id": "rn36qh2",
+     "id": "cw0nckv",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-jar-250g.webp",
@@ -1156,7 +1156,7 @@
      }
     },
     {
-     "id": "77ffkne",
+     "id": "m8afj33",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-jar-250g.webp",
@@ -1180,7 +1180,7 @@
      }
     },
     {
-     "id": "3shz3yx",
+     "id": "2evejsl",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-bottle-160g.webp",
@@ -1204,7 +1204,7 @@
      }
     },
     {
-     "id": "ysegufl",
+     "id": "o0cio5i",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1236,11 +1236,11 @@
       "ht": true,
       "hd": true,
       "cls": "",
-      "grp": "g90166le"
+      "grp": "g2s21l57"
      }
     },
     {
-     "id": "s7eojtc",
+     "id": "wiigug3",
      "type": "shape",
      "set": {
       "shape": "ellipse",
@@ -1269,11 +1269,11 @@
       },
       "zi": 61,
       "cls": "",
-      "grp": "g90166le"
+      "grp": "g2s21l57"
      }
     },
     {
-     "id": "0cgf46a",
+     "id": "sh6plcd",
      "type": "text",
      "set": {
       "html": "<p>هدية<br>مجانية</p>",
@@ -1303,11 +1303,11 @@
       "color": "#FFFFFF",
       "hauto": false,
       "cls": "",
-      "grp": "g90166le"
+      "grp": "g2s21l57"
      }
     },
     {
-     "id": "2dhs50g",
+     "id": "44hvhzp",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1336,11 +1336,11 @@
       },
       "zi": 72,
       "cls": "",
-      "grp": "g8xh6qxa"
+      "grp": "gehz3x9q"
      }
     },
     {
-     "id": "9fl1ny4",
+     "id": "t13bzd2",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1372,11 +1372,11 @@
        "d": -3
       },
       "cls": "",
-      "grp": "g04fdhe6"
+      "grp": "gshed8ql"
      }
     },
     {
-     "id": "buds1ls",
+     "id": "rpqli2v",
      "type": "text",
      "set": {
       "html": "<p>زوج قوارير 250 غ<br>+ قارورة 160 غ هدية</p>",
@@ -1406,11 +1406,11 @@
       "color": "#FFFFFF",
       "hauto": false,
       "cls": "",
-      "grp": "g8xh6qxa"
+      "grp": "gehz3x9q"
      }
     },
     {
-     "id": "92l574i",
+     "id": "osc7i9h",
      "type": "text",
      "set": {
       "html": "<p>عرض التوفير</p>",
@@ -1440,11 +1440,11 @@
       "color": "#9E1510",
       "hauto": false,
       "cls": "",
-      "grp": "g04fdhe6"
+      "grp": "gshed8ql"
      }
     },
     {
-     "id": "l7h3p0v",
+     "id": "d3p64lh",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1473,23 +1473,14 @@
       },
       "zi": 74,
       "cls": "",
-      "grp": "g8xh6qxa"
+      "grp": "gehz3x9q"
      }
     },
     {
-     "id": "waaueqd",
-     "type": "text",
+     "id": "5ry6x6v",
+     "type": "html",
      "set": {
-      "html": "<p>3200 دج</p>",
-      "fs": {
-       "d": 75
-      },
-      "lh": {
-       "d": 1.15
-      },
-      "ta": {
-       "d": "center"
-      },
+      "code": "<div class=\"mf-offer\" style=\"font-weight:900;line-height:1.15;text-align:center;color:#C51A13;font-size:calc(var(--u,1px)*75)\"><span id=\"mf-offer-price\" data-slug=\"tarkiz\">3 200 دج</span></div><script>(function(){function go(){var P=window.PRODUCTS;if(!P){if(window.__mfd)return;window.__mfd=1;var s=document.createElement(\"script\");s.src=\"/assets/js/data.js\";s.onload=go;document.head.appendChild(s);return}var p=P.filter(function(x){return x.slug===\"tarkiz\"})[0];if(!p)return;var f=function(n){return Number(n).toLocaleString(\"fr-DZ\")+\" دج\"},a=document.getElementById(\"pprice\"),e=document.getElementById(\"mf-offer-price\"),o=(p.offers||[]).filter(function(x){return x.free>0})[0];if(a)a.textContent=f(p.price);if(e&&o)e.textContent=f(o.price)}document.readyState===\"complete\"?go():addEventListener(\"load\",go)})()</script>",
       "fx": {
        "d": 53.3
       },
@@ -1503,14 +1494,12 @@
        "d": 97
       },
       "zi": 75,
-      "fw": "900",
-      "color": "#C51A13",
-      "cls": "",
-      "grp": "g8xh6qxa"
+      "grp": "gehz3x9q",
+      "cls": ""
      }
     },
     {
-     "id": "j8enphb",
+     "id": "kxm3ldg",
      "type": "shape",
      "set": {
       "shape": "rect",
@@ -1539,11 +1528,11 @@
       },
       "zi": 80,
       "cls": "",
-      "grp": "g0nzaqhi"
+      "grp": "g14v4dyc"
      }
     },
     {
-     "id": "11rawfx",
+     "id": "xqnhs5o",
      "type": "image",
      "set": {
       "src": "assets/img/pages/mf-jar-250g.webp",
@@ -1564,16 +1553,16 @@
       "zi": 81,
       "hauto": false,
       "cls": "",
-      "grp": "g0nzaqhi"
+      "grp": "g14v4dyc"
      }
     },
     {
-     "id": "8p1atlq",
+     "id": "sz1rvy9",
      "type": "text",
      "set": {
       "html": "<p>قارورة واحدة 250 غ</p>",
       "fs": {
-       "d": 22
+       "d": 24
       },
       "lh": {
        "d": 1.15
@@ -1598,23 +1587,30 @@
       "color": "#174D84",
       "hauto": false,
       "cls": "",
-      "grp": "g0nzaqhi"
+      "grp": "g14v4dyc"
      }
     },
     {
-     "id": "wvv7nns",
-     "type": "text",
+     "id": "hhidwwk",
+     "type": "pprice",
      "set": {
-      "html": "<p>1800 دج</p>",
+      "prod": "tarkiz",
+      "psrc": "",
+      "shold": false,
+      "shsave": false,
+      "pst": "وفّر",
+      "cnow": "3,900 دج",
+      "cold": "4,900 دج",
+      "csave": "وفّر 20%",
+      "pc": "#174D84",
       "fs": {
        "d": 46
       },
-      "lh": {
-       "d": 1.15
-      },
       "ta": {
-       "d": "center"
+       "d": "start"
       },
+      "pjc": "center",
+      "pgp": 0,
       "fx": {
        "d": 21.6
       },
@@ -1628,15 +1624,12 @@
        "d": 63
       },
       "zi": 83,
-      "fw": "900",
-      "color": "#174D84",
-      "hauto": false,
-      "cls": "",
-      "grp": "g0nzaqhi"
+      "grp": "g14v4dyc",
+      "cls": ""
      }
     },
     {
-     "id": "nov3r3m",
+     "id": "g2cws7x",
      "type": "iconbox",
      "set": {
       "icon": "ic:truck",
@@ -1665,7 +1658,7 @@
       "zi": 84,
       "fxs": [
        {
-        "id": "3pxy9d7",
+        "id": "1szg7wd",
         "n": "لون الأيقونة",
         "on": true,
         "tpl": "selector .pb-ibi{color:[[c]]}",
@@ -1678,7 +1671,7 @@
         }
        },
        {
-        "id": "jvzw8qq",
+        "id": "2fm2jxn",
         "n": "محاذاة",
         "on": true,
         "tpl": "selector{text-align:center}selector .pb-ib{padding:0}selector .pb-ibi{margin:0;line-height:1}",
@@ -1686,16 +1679,16 @@
        }
       ],
       "cls": "",
-      "grp": "g9mfgr1i"
+      "grp": "gssmbmc9"
      }
     },
     {
-     "id": "snphog8",
+     "id": "s5kml2n",
      "type": "text",
      "set": {
       "html": "<p>التوصيل متوفر<br>حسب الولاية</p>",
       "fs": {
-       "d": 21
+       "d": 22
       },
       "lh": {
        "d": 1.25
@@ -1720,11 +1713,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "g9mfgr1i"
+      "grp": "gssmbmc9"
      }
     },
     {
-     "id": "1l1f2vl",
+     "id": "t2m9mok",
      "type": "image",
      "set": {
       "src": "assets/img/icons/mf-messenger.svg",
@@ -1745,16 +1738,16 @@
       "zi": 86,
       "hauto": false,
       "cls": "",
-      "grp": "gkhzvtbd"
+      "grp": "gh4260fn"
      }
     },
     {
-     "id": "auf396s",
+     "id": "d2ubtrb",
      "type": "text",
      "set": {
       "html": "<p>راسلنا الآن على<br>Messenger</p>",
       "fs": {
-       "d": 25
+       "d": 27
       },
       "lh": {
        "d": 1.25
@@ -1779,11 +1772,11 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gkhzvtbd"
+      "grp": "gh4260fn"
      }
     },
     {
-     "id": "n5h5lz5",
+     "id": "kn8eciq",
      "type": "text",
      "set": {
       "html": "<p>للطلب ومعرفة تفاصيل التوصيل</p>",
@@ -1813,8 +1806,147 @@
       "color": "#102B4C",
       "hauto": false,
       "cls": "",
-      "grp": "gkhzvtbd"
+      "grp": "gh4260fn"
      }
+    },
+    {
+     "id": "ojqzflw",
+     "type": "button",
+     "set": {
+      "text": "",
+      "kind": "link",
+      "link": "https://m.me/",
+      "bgc": "#157a55",
+      "color": "#ffffff",
+      "hbg": "transparent",
+      "fs": {
+       "d": 18
+      },
+      "fw": "800",
+      "brad": {
+       "d": 14
+      },
+      "bpad": {
+       "d": [
+        0,
+        0,
+        0,
+        0
+       ]
+      },
+      "al": {
+       "d": "center"
+      },
+      "newTab": true,
+      "bgHide": true,
+      "bdw": 0,
+      "full": true,
+      "fx": {
+       "d": 66.6
+      },
+      "fy": {
+       "d": 1447
+      },
+      "fwd": {
+       "d": 31.1
+      },
+      "fh": {
+       "d": 97
+      },
+      "zi": 90,
+      "grp": "gh4260fn",
+      "cls": "",
+      "hauto": false,
+      "fxs": [
+       {
+        "id": "omn98bq",
+        "n": "منطقة الضغط تملأ العنصر",
+        "on": true,
+        "tpl": "selector .pb-btn{display:block;width:100%;height:100%;min-height:44px;padding:0!important;border-radius:14px}",
+        "p": {}
+       }
+      ],
+      "alt": "فتح محادثة Messenger"
+     }
+    }
+   ]
+  },
+  {
+   "id": "8cbt4bw",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1000
+    },
+    "pad": {
+     "d": [
+      50,
+      20,
+      50,
+      20
+     ],
+     "m": [
+      30,
+      12,
+      30,
+      12
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "bg": "#102B4C",
+    "cid": "order"
+   },
+   "cols": [
+    {
+     "id": "n1tp9qb",
+     "set": {},
+     "widgets": [
+      {
+       "id": "tu9cfxk",
+       "type": "heading",
+       "set": {
+        "text": "اطلب الآن",
+        "tag": "h2",
+        "fs": {
+         "d": 38,
+         "m": 28
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "color": "#ffffff"
+       }
+      },
+      {
+       "id": "tnerlfm",
+       "type": "text",
+       "set": {
+        "html": "<p>مكمّل غذائي — ليس دواءً ولا يغني عن استشارة الطبيب.</p>",
+        "fs": {
+         "d": 16,
+         "m": 15
+        },
+        "lh": {
+         "d": 1.8
+        },
+        "ta": {
+         "d": "center"
+        },
+        "color": "#DCE8F5"
+       }
+      },
+      {
+       "id": "0lgukz4",
+       "type": "orderorig",
+       "set": {
+        "prod": "tarkiz",
+        "auto": true
+       }
+      }
+     ]
     }
    ]
   }
@@ -1822,7 +1954,7 @@
  "specMeta": {
   "format": "alyssum-design/1",
   "v": 1,
-  "at": 1792358652941,
+  "at": 1792359642970,
   "plan": null,
   "assets": {
    "bg_garden": {
@@ -1862,6 +1994,7 @@
   "product": ""
  },
  "live": false,
+ "product": "tarkiz",
  "media": [
   "assets/img/pages/mf-garden.webp",
   "assets/img/pages/mf-jar-250g.webp",
