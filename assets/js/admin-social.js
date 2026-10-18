@@ -339,7 +339,7 @@ ${!aiOn("text") ? '<div class="sm-box"><b>✨ توليد النص الذكي م�
       "RULES: never claim to cure, treat or heal any disease and never promise medical results; do not invent testimonials, statistics, awards, or stock numbers; no competitor mentions; short paragraphs and a few fitting emojis; keep within " + (o.channels.includes("ig") ? "2200" : "5000") + " characters; add 5-8 relevant hashtags at the end.",
       o.extra ? "EXTRA INSTRUCTIONS FROM THE OWNER: " + o.extra : "", o.draft ? "REWRITE AND EXPAND THIS DRAFT (keep its facts, improve persuasion, structure and length):\n" + o.draft : "", "Output ONLY the post text, no explanations."].filter(Boolean).join("\n");
     let last = null;
-    for (const m of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+    for (const m of await (typeof ImgGen !== "undefined" && ImgGen.textModels ? ImgGen.textModels(apiKey()) : Promise.resolve(["gemini-3.8-flash", "gemini-2.5-flash"]))) {
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: .9, maxOutputTokens: 2048 } }) });
       const j = await r.json().catch(() => ({}));
       if (r.ok) { const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x => x.text || "").join("").trim(); if (t) return t.replace(/^```[a-z]*\n?|```$/g, "").trim(); last = new Error("ردّ فارغ"); continue; }
