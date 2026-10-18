@@ -849,9 +849,14 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* إرجاع خلفية القسم إلى صورة عادية في مكانها الأصلي */
   function restoreBackground(sec) {
     const o = sec.set.bgOrig;
-    if (o && o.node) { const w = o.node; if (o.free) sec.free.splice(Math.min(o.idx, sec.free.length), 0, w); else { const col = sec.cols.find(c => c.id === o.colId) || sec.cols[0]; col.widgets.splice(Math.min(o.idx, col.widgets.length), 0, w); } E.sel = w.id; }
+    if (sec.set.kind === "canvas" && sec.set.bgImg) {      // تبقى الصورة في مكانها وبمقاسها كما تظهر خلفية (تملأ القسم) كصورة حرّة، فلا تعود صغيرة
+      const w = o && o.node ? o.node : PB.mkFree("image", 0, 0, 1), mh = sec.set.mh || {}, H = n => Math.round(Number(mh[n]) || 0);
+      Object.assign(w.set, { src: sec.set.bgImg, fx: { d: 0 }, fy: { d: 0 }, fwd: { d: 100 }, fh: { d: H("d") || 520 }, fit: sec.set.bgSize === "contain" ? "contain" : "cover", hauto: false, zi: 1 });
+      delete w.set.crop; delete w.set.w; delete w.set.mh; if (H("t")) w.set.fh.t = H("t"); if (H("m")) w.set.fh.m = H("m");
+      (sec.free = sec.free || []).forEach(q => { if ((Number(q.set.zi) || 0) < 2) q.set.zi = 2; }); sec.free.unshift(w); E.sel = w.id;
+    } else if (o && o.node) { const w = o.node; if (o.free) sec.free.splice(Math.min(o.idx, sec.free.length), 0, w); else { const col = sec.cols.find(c => c.id === o.colId) || sec.cols[0]; col.widgets.splice(Math.min(o.idx, col.widgets.length), 0, w); } E.sel = w.id; }
     else if (sec.set.bgImg) { const w = PB.mkW("image", { src: sec.set.bgImg }); sec.cols[0].widgets.push(w); E.sel = w.id; }
-    delete sec.set.bgImg; delete sec.set.bgSize; delete sec.set.bgPos; delete sec.set.bgOrig; afterEdit(E.sel); toast("↩ رجعت الصورة إلى مكانها كصورة عادية");
+    delete sec.set.bgImg; delete sec.set.bgSize; delete sec.set.bgPos; delete sec.set.bgOrig; afterEdit(E.sel); toast("↩ فُصلت الصورة عن الخلفية وبقيت في مكانها");
   }
   function showCtx(e) {
     if (e.target.closest && e.target.closest("[contenteditable=true]")) { hideCtx(); return; }      // أثناء تحرير نص: تظهر قائمة المتصفح الأصلية (نسخ/قص/لصق للنص المحدَّد) لا قائمة العنصر
