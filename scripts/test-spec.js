@@ -75,9 +75,10 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
     const spec = PBSpec.validate({ page: { title: "t", width: 1080 }, sections: [{ height: 600, layers: [
       { type: "image", prompt: "a glass jar of golden honey on a wooden table with honeycomb", x: 100, y: 50, w: 500, h: 500, cutout: false },
       { type: "image", prompt: "x", x: 0, y: 0, w: 100, h: 100 }, { type: "image", src: "assets/img/tpl/generic-honey.webp", x: 0, y: 0, w: 100, h: 100 }] }] });
+    try { localStorage.removeItem("alyssum_spec_assets"); } catch (_) { }
     const pg = PBSpec.toPage(spec, {}); PBApp.open(pg, "", true); await new Promise(r => setTimeout(r, 800));
     const calls = []; const oe = ImgGen.edit, orr = ImgGen.ready, ou = PBApp.uploadBlob;
-    ImgGen.ready = () => ({ ok: true }); ImgGen.edit = async o => { calls.push(o); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; return { blob: await new Promise(r => c.toBlob(r, "image/webp")), canvas: c }; };
+    ImgGen.ready = () => ({ ok: true }); ImgGen.edit = async o => { calls.push(o); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d"); for (let i = 0; i < 400; i++) { g.fillStyle = "rgb(" + (i * 7 % 255) + "," + (i * 13 % 255) + "," + (i * 29 % 255) + ")"; g.fillRect(i % 20 * 25, Math.floor(i / 20) * 25, 25, 25); } return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c }; };
     PBApp.uploadBlob = async (b, n) => "assets/img/pages/" + n + ".webp";
     const before = PBSpec.emptyImages().length; const r = await PBSpec.fillImages({ confirm: false });
     const widgets = PBApp.E.page.sections[0].free.filter(w => w.type === "image");
@@ -88,6 +89,101 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("توليد صورة واحدة بتعليمات بلا كتابة ومن وصف نصي", gi.r.done === 1 && gi.n === 1 && gi.noText && gi.textOnly === true, gi);
   t("المقاس يتبع الطبقة", gi.W === 500 && gi.H === 500, gi);
   t("المسار يُوضع في عنصر الصورة", /^assets\/img\/pages\/spec-/.test(gi.srcs[0]) && gi.after === 0, gi);
+
+  /* ٥) مرحلتان: خطة ثم مخطط (ImgGen.text مُحاكى) */
+  const tp = await p.evaluate(async () => {
+    const ot = ImgGen.text, calls = [];
+    ImgGen.text = async o => { calls.push(o.prompt); if (calls.length === 1) return { concept: "فاخر", tone: "دافئ", palette: { primary: "#1e5e20", accent: "javascript:1", bg: "#fff" }, sections: [{ name: "hero", goal: "جذب", layout: "صورة يمين" }], assets: [{ name: "jar", prompt: "honey jar", cutout: true }] }; return JSON.parse(JSON.stringify(PBSpec.SAMPLE)); };
+    const r = await PBSpec.generate({ name: "عسل", colors: "#1e5e20" }); const two = { n: calls.length, hasPlan: calls[1].includes("خطة التصميم المعتمدة") && calls[1].includes("#1e5e20"), colors: calls[0].includes("ألوان العلامة"), plan: r.plan };
+    const v = PBSpec.validate(r);
+    let n2 = 0; ImgGen.text = async o => { n2++; if (n2 === 1) throw new Error("boom"); return JSON.parse(JSON.stringify(PBSpec.SAMPLE)); };
+    const r2 = await PBSpec.generate({ name: "x" });
+    let nk = ""; ImgGen.text = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; try { await PBSpec.generate({}); } catch (e) { nk = e.code; }
+    ImgGen.text = ot; return { two, keepPlan: !!(v.plan && v.plan.palette.primary === "#1e5e20" && !v.plan.palette.accent), fallback: n2 === 2 && !r2.plan, nk };
+  });
+  t("مرحلتان: خطة ثم مخطط يحمل الخطة", tp.two.n === 2 && tp.two.hasPlan && tp.two.colors, tp.two);
+  t("الخطة تُنظَّف (لون خطر يسقط) وتُحفظ في المخطط", tp.keepPlan, tp);
+  t("فشل الخطة لا يوقف التوليد (احتياط خطوة واحدة)", tp.fallback, tp);
+  t("غياب المفتاح يُبلَّغ بوضوح", tp.nk === "NOKEY", tp);
+
+  /* ٦) إصلاح آلي هندسي */
+  const af = await p.evaluate(() => {
+    const r = PBSpec.validate({ page: { title: "t", width: 1080 }, sections: [{ name: "s", height: 300, layers: [
+      { type: "heading", text: "عنوان طويل جداً للاختبار", x: 900, y: 20, w: 400, font: { size: 40 } },
+      { type: "text", text: "نص صغير جداً", x: 60, y: 140, w: 500, font: { size: 14 } },
+      { type: "text", text: "نص يتداخل مع الذي قبله تماماً", x: 60, y: 150, w: 500, font: { size: 40 } },
+      { type: "button", text: "اطلب", x: 60, y: 500, w: 300, h: 70, font: { size: 20 } }] }] });
+    const L = r.sections[0].layers; return { fixes: r.fixes, L: L.map(l => ({ x: l.x, y: l.y, w: l.w, fs: l.font ? l.font.size : l.size })), H: r.sections[0].height, warnSmall: r.warn.filter(x => /صغيراً|تداخل/.test(x)).length };
+  });
+  t("إصلاح: ضمن الحدود (x+w ≤ 1080)", af.L[0].x + af.L[0].w <= 1080 && af.L[0].x >= 0, af);
+  t("إصلاح: خط صغير يُرفع لما يُقرأ على الجوال", af.L[1].fs >= 31 && af.L[3].fs >= 31, af);
+  t("إصلاح: التداخل يُزال (النص الثاني نزل)", af.L[2].y > 150 + 20, af);
+  t("إصلاح: ارتفاع القسم يتّسع للمحتوى", af.H >= af.L[3].y + 70, af);
+  t("إصلاح: سجلّ الإصلاحات ولا ملاحظات متبقية", af.fixes.length >= 4 && af.warnSmall === 0, af);
+  t("إصلاح معطَّل بخيار fix:false", await p.evaluate(() => PBSpec.validate({ page: { width: 1080 }, sections: [{ height: 100, layers: [{ type: "text", text: "ab", x: 900, y: 0, w: 400 }] }] }, { fix: false }).fixes.length === 0));
+
+  /* ٧) فيديو + تجميع + قفل/إخفاء + specMeta */
+  const vg = await p.evaluate(async () => {
+    const r = PBSpec.validate({ page: { title: "v", width: 1080, product: "tarkiz" }, assets: { a: { src: "assets/img/tpl/generic-honey.webp" } }, sections: [{ height: 800, layers: [
+      { type: "video", src: "https://example.com/a.mp4", poster: "asset:a", autoplay: true, x: 60, y: 40, w: 640, h: 360 },
+      { type: "video", src: "javascript:alert(1)", x: 0, y: 0, w: 100 },
+      { type: "video", src: "https://example.com/b.webm", x: 60, y: 420, w: 640, h: 360 },
+      { type: "shape", x: 800, y: 40, w: 200, h: 200, group: "card<b>1" }, { type: "text", text: "داخل المجموعة", x: 800, y: 260, w: 220, group: "card<b>1", locked: true },
+      { type: "text", text: "مخفي على الأجهزة", x: 800, y: 400, w: 220, hidden: true }] }, { height: 300, layers: [{ type: "shape", x: 0, y: 0, w: 100, h: 100, group: "card<b>1" }] }] });
+    const pg = PBSpec.toPage(r, {}); const f0 = pg.sections[0].free, f1 = pg.sections[1].free;
+    const html = PB.fullHtml(pg, Object.assign({ base: "/" }, PBApp.siteCtx()));
+    return { n: f0.length, types: f0.map(w => w.type), v0: f0[0].set, v2: f0[1].set, g: [f0[2].set.grp, f0[3].set.grp, f1[0].set.grp], gid: r.sections[0].layers[3].group, lock: f0[3].set.locked, hid: [f0[4].set.hd, f0[4].set.ht, f0[4].set.hm], meta: pg.specMeta && pg.specMeta.format, rt: JSON.parse(JSON.stringify(pg)).specMeta.assets.a.src, lz: /<video[^>]*data-lz="https:\/\/example\.com\/a\.mp4"[^>]*preload="none"/.test(html) && !/<video[^>]*data-lz[^>]*\ssrc=/.test(html), plain: /<video[^>]*src="https:\/\/example\.com\/b\.webm"[^>]*controls[^>]*preload="none"/.test(html) || /<video[^>]*controls[^>]*src="https:\/\/example\.com\/b\.webm"/.test(html), poster: /poster="\/?assets\/img\/tpl\/generic-honey\.webp"/.test(html), js: /video\[data-lz\]/.test(html) };
+  });
+  t("فيديو: رابط خطر يسقط وطبقتان صالحتان", vg.n === 5 && vg.types[0] === "video" && vg.types[1] === "video", vg);
+  t("فيديو: مصدر وغلاف وتشغيل تلقائي", vg.v0.url === "https://example.com/a.mp4" && /generic-honey/.test(vg.v0.poster) && vg.v0.vauto === true && vg.v2.vauto === false, vg);
+  t("فيديو: تحميل كسول (بلا src قبل الظهور) وpreload=none", vg.lz && vg.poster && vg.js, vg);
+  t("فيديو: غير الآلي مع أدوات تحكم وpreload=none", vg.plain, vg);
+  t("تجميع: نفس المجموعة نفس set.grp ومعرّف نظيف", vg.g[0] && vg.g[0] === vg.g[1] && vg.g[2] !== vg.g[0] && vg.gid === "card" + "b1", vg);
+  t("قفل وإخفاء الأجهزة", vg.lock === true && vg.hid.every(x => x === true), vg);
+  t("specMeta محفوظة وتبقى بعد JSON", vg.meta === "alyssum-design/1" && /generic-honey/.test(vg.rt), vg);
+
+  /* ٨) حفظ وإعادة فتح: العناصر تبقى منفصلة وقابلة للتعديل */
+  const rt = await p.evaluate(async () => {
+    const spec = PBSpec.validate(PBSpec.SAMPLE); spec.page.product = "tarkiz"; const pg = PBSpec.toPage(spec, {}); PBApp.open(pg, "", true); await new Promise(r => setTimeout(r, 1000));
+    const saved = JSON.parse(JSON.stringify(PBApp.E.page)); PBApp.close && PBApp.close(true); await new Promise(r => setTimeout(r, 400));
+    PBApp.open(saved, "", true); await new Promise(r => setTimeout(r, 1000));
+    const P = PBApp.E.page, free = P.sections[0].free, h1 = free.find(w => w.type === "heading"), img = free.find(w => w.type === "image"), shp = free.find(w => w.type === "shape"), btn = free.find(w => w.type === "button");
+    h1.set.text = "عنوان معدّل"; img.set.fx.d = 5; img.set.fwd.d = 30; shp.set.fill = "#ff0000"; const z0 = btn.set.zi; btn.set.zi = 99; PBApp.renderCanvas(); await new Promise(r => setTimeout(r, 500));
+    const d = document.getElementById("pbx-frame").contentDocument, txt = d.body.innerText;
+    const rd = P.sections[0].free.map(w => w.type);
+    return { flat: P.sections[0].free.length, rd, txt: txt.includes("عنوان معدّل") && !txt.includes("عسل طبيعي\nبنكهة"), meta: !!P.specMeta, red: !!d.querySelector('[fill="#ff0000"],[style*="rgb(255, 0, 0)"],[style*="#ff0000"]') || /ff0000/i.test(d.documentElement.innerHTML), z: btn.set.zi, secs: P.sections.length, otherText: txt.includes("اطلب الآن") };
+  });
+  t("إعادة الفتح: كل الطبقات عناصر منفصلة (5)", rt.flat === 5 && rt.secs === 3, rt);
+  t("تعديل العنوان وحده يتحدّث والباقي كما هو", rt.txt && rt.otherText, rt);
+  t("تغيير لون شكل وترتيب الطبقة وتحريك الصورة", rt.red && rt.z === 99, rt);
+  t("specMeta تبقى بعد الحفظ/الفتح", rt.meta, rt);
+
+  /* ٩) كاش الأصول، إلغاء، إعادة محاولة محدودة، فشل صورة لا يضيّع الباقي */
+  const ck = await p.evaluate(async () => {
+    const mkPage = async prompts => { const spec = PBSpec.validate({ page: { title: "t", width: 1080 }, sections: [{ height: 900, layers: prompts.map((pr, i) => ({ type: "image", prompt: pr, x: 50, y: 50 + i * 420, w: 400, h: 400 })) }] }); PBApp.open(PBSpec.toPage(spec, {}), "", true); await new Promise(r => setTimeout(r, 700)); };
+    const oe = ImgGen.edit, orr = ImgGen.ready, ou = PBApp.uploadBlob; ImgGen.ready = () => ({ ok: true }); PBApp.uploadBlob = async (b, n) => "assets/img/pages/" + n + ".png";
+    const noisy = async o => { const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d"); for (let i = 0; i < 400; i++) { g.fillStyle = "rgb(" + (i * 7 % 255) + "," + (i * 13 % 255) + "," + (i * 29 % 255) + ")"; g.fillRect(i % 20 * 25, Math.floor(i / 20) * 25, 25, 25); } return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c }; };
+    localStorage.removeItem("alyssum_spec_assets"); localStorage.removeItem("alyssum_spec_costlog"); const out = {};
+    let calls = 0; ImgGen.edit = async o => { calls++; return noisy(o); };
+    await mkPage(["golden honey jar on wooden table", "fresh green herbs and leaves"]); out.r1 = await PBSpec.fillImages({ confirm: false, exists: () => true }); out.c1 = calls;
+    await mkPage(["golden honey jar on wooden table", "fresh green herbs and leaves"]); calls = 0; out.r2 = await PBSpec.fillImages({ confirm: false, exists: () => true }); out.c2 = calls;
+    out.stale = (await (async () => { await mkPage(["golden honey jar on wooden table"]); calls = 0; const r = await PBSpec.fillImages({ confirm: false, exists: () => false }); return { calls, done: r.done }; })());
+    /* إعادة محاولة: يفشل أول طلب ثم ينجح */
+    localStorage.removeItem("alyssum_spec_assets"); await mkPage(["a brand new product shot on marble"]); let n = 0; ImgGen.edit = async o => { n++; if (n === 1) throw new Error("خطأ شبكة"); return noisy(o); }; out.r3 = await PBSpec.fillImages({ confirm: false, exists: () => true }); out.n3 = n;
+    /* فشل صورة واحدة (مرّتان) لا يضيّع الأخرى */
+    localStorage.removeItem("alyssum_spec_assets"); await mkPage(["first image that always fails", "second image that works fine"]); n = 0; ImgGen.edit = async o => { n++; if (/always fails/.test(o.prompt)) throw new Error("فشل دائم"); return noisy(o); }; out.r4 = await PBSpec.fillImages({ confirm: false, exists: () => true }); out.n4 = n; out.srcs4 = PBApp.E.page.sections[0].free.map(w => !!w.set.src);
+    /* إلغاء أثناء التوليد */
+    localStorage.removeItem("alyssum_spec_assets"); await mkPage(["cancel test one image here", "cancel test two image here"]); n = 0; ImgGen.edit = async o => { n++; if (n === 1) setTimeout(() => PBSpec.cancel(), 20); await new Promise(r => setTimeout(r, 120)); return noisy(o); }; out.r5 = await PBSpec.fillImages({ confirm: false, exists: () => true }); out.n5 = n;
+    out.log = PBSpec.costLog().length; ImgGen.edit = oe; ImgGen.ready = orr; PBApp.uploadBlob = ou; return out;
+  });
+  t("كاش: المرة الأولى تولّد صورتين", ck.r1.done === 2 && ck.c1 === 2 && ck.r1.cached === 0, ck);
+  t("كاش: نفس الوصف لا يُولَّد ثانية (0 استدعاء)", ck.r2.done === 2 && ck.c2 === 0 && ck.r2.cached === 2, ck);
+  t("كاش: ملف محذوف يُعاد توليده", ck.stale.calls === 1 && ck.stale.done === 1, ck.stale);
+  t("إعادة محاولة واحدة بعد فشل مؤقت", ck.r3.done === 1 && ck.n3 === 2, ck);
+  t("فشل صورة بعد محاولتين لا يضيّع الأخرى", ck.r4.done === 1 && ck.r4.failed === 1 && ck.n4 === 3 && ck.srcs4[0] === false && ck.srcs4[1] === true, ck);
+  t("إلغاء أثناء التوليد يوقف الباقي", ck.r5.cancelled === true && ck.n5 === 1, ck);
+  t("سجلّ التوليد يُسجَّل لكل أصل", ck.log >= 5, ck.log);
+
   console.log(errs.length ? "أخطاء صفحة: " + errs.join(" | ") : "");
   t("بلا أخطاء JS", errs.length === 0, errs);
   console.log(bad ? "فشل " + bad + " / " + (ok + bad) : "كل الفحوص نجحت (" + ok + ")"); await b.close(); process.exit(bad ? 1 : 0);
