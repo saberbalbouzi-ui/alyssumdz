@@ -55,7 +55,7 @@ jobs:
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts tryon payments sms commerce commerce-strict sources ads adsoauth wallet agency appstore logistics digital-vault boundaries; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet agency appstore logistics digital-vault boundaries; do node --no-warnings platform/api/test/$t.test.mjs; done
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
