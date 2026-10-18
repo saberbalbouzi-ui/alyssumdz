@@ -79,6 +79,7 @@ const PBSpec = (() => {
     opts = opts || {};
     const warn = []; let spec = raw;
     if (typeof spec === "string") { try { spec = JSON.parse(spec.replace(/^[\s\S]*?(\{[\s\S]*\})[\s\S]*$/, "$1")); } catch (e) { return { ok: false, error: "ليس JSON صالحاً: " + e.message, warn }; } }
+    if (typeof PBLayers !== "undefined" && PBLayers.is(spec)) { try { const cv = PBLayers.convert(spec, { assets: opts.layerAssets, product: opts.product, z: opts.layerZ }); (cv.notes || []).forEach(n => warn.push("استيراد الطبقات: " + n)); spec = cv; } catch (e) { return { ok: false, error: e.message, warn }; } }   // صيغة alyssum-design-layers (ChatGPT) ← تُحوَّل إلى الصيغة الأصلية
     if (!spec || typeof spec !== "object" || !Array.isArray(spec.sections) || !spec.sections.length) return { ok: false, error: "لا توجد أقسام (sections) في التصميم", warn };
     const pg = spec.page && typeof spec.page === "object" ? spec.page : {}; const dw = Math.round(num(pg.width, 600, 1920, 1080));
     const out = { format: FORMAT, page: { title: str(pg.title, 120) || "صفحة جديدة", width: dw, bg: col(pg.bg, "#ffffff"), lang: ["ar", "fr", "en"].includes(pg.lang) ? pg.lang : "ar", product: str(pg.product, 80).replace(/[^\w-]/g, "") }, assets: {}, sections: [] };

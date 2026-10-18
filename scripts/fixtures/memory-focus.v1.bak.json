@@ -1,0 +1,1845 @@
+{
+ "v": 1,
+ "title": "ALYSSUM MEMORY FOCUS — Offre promotionnelle",
+ "slug": "memory-focus",
+ "desc": "",
+ "bg": "#F8F4E9",
+ "ff": "",
+ "header": false,
+ "footer": false,
+ "css": "",
+ "sections": [
+  {
+   "id": "6bfd2ro",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 928
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    },
+    "gap": {
+     "d": 20
+    },
+    "kind": "canvas",
+    "mh": {
+     "d": 1600
+    },
+    "bg": "#F8F4E9",
+    "gr": {
+     "t": "linear",
+     "a": 180,
+     "s": [
+      {
+       "c": "#E9F3DD",
+       "p": 0
+      },
+      {
+       "c": "#F8F4E9",
+       "p": 55
+      },
+      {
+       "c": "#F8F4E9",
+       "p": 100
+      }
+     ]
+    },
+    "cls": "",
+    "scaled": true,
+    "dw": 928,
+    "cid": "poster"
+   },
+   "cols": [
+    {
+     "id": "1uc7gox",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "hk66c3b",
+     "type": "image",
+     "set": {
+      "src": "",
+      "alt": "Garden background",
+      "fit": "cover",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 1600
+      },
+      "zi": 0,
+      "hauto": false,
+      "aiPrompt": "Soft-focus sunlit green garden background, bright central area for text, no text or products",
+      "locked": true,
+      "cls": ""
+     }
+    },
+    {
+     "id": "37095ws",
+     "type": "shape",
+     "set": {
+      "shape": "ellipse",
+      "fill": "#FFFFFF",
+      "outline": false,
+      "stroke": "",
+      "sw": 0,
+      "dash": "",
+      "rx": 0,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 16.2
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 70
+      },
+      "fh": {
+       "d": 680
+      },
+      "zi": 1,
+      "fgr": {
+       "t": "radial",
+       "a": 180,
+       "s": [
+        {
+         "c": "#FFFFFF",
+         "p": 0
+        },
+        {
+         "c": "#FFFFFF00",
+         "p": 100
+        }
+       ]
+      },
+      "op": 0.78,
+      "cls": ""
+     }
+    },
+    {
+     "id": "upicoxr",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/mf-flower.webp",
+      "alt": "ALYSSUM flower mark",
+      "fit": "contain",
+      "fx": {
+       "d": 45.7
+      },
+      "fy": {
+       "d": 14
+      },
+      "fwd": {
+       "d": 8.4
+      },
+      "fh": {
+       "d": 72
+      },
+      "zi": 10,
+      "hauto": false,
+      "cls": "",
+      "grp": "g0na86wc"
+     }
+    },
+    {
+     "id": "pac75is",
+     "type": "text",
+     "set": {
+      "html": "<p>ALYSSUM</p>",
+      "fs": {
+       "d": 47
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 29.1
+      },
+      "fy": {
+       "d": 91
+      },
+      "fwd": {
+       "d": 42
+      },
+      "fh": {
+       "d": 65
+      },
+      "zi": 11,
+      "fw": "600",
+      "color": "#111111",
+      "ff": "'Playfair Display','Cairo',sans-serif",
+      "hauto": false,
+      "cls": "",
+      "grp": "g0na86wc"
+     }
+    },
+    {
+     "id": "wzbx88q",
+     "type": "text",
+     "set": {
+      "html": "<p>Herbal Science</p>",
+      "fs": {
+       "d": 27
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 32.3
+      },
+      "fy": {
+       "d": 143
+      },
+      "fwd": {
+       "d": 35.6
+      },
+      "fh": {
+       "d": 42
+      },
+      "zi": 12,
+      "fw": "500",
+      "color": "#111111",
+      "ff": "'Montserrat','Cairo',sans-serif",
+      "hauto": false,
+      "cls": "",
+      "grp": "g0na86wc"
+     }
+    },
+    {
+     "id": "r8rmxob",
+     "type": "heading",
+     "set": {
+      "text": "MEMORY FOCUS",
+      "tag": "h2",
+      "fs": {
+       "d": 43
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 28.6
+      },
+      "fy": {
+       "d": 181
+      },
+      "fwd": {
+       "d": 43.6
+      },
+      "fh": {
+       "d": 60
+      },
+      "zi": 20,
+      "color": "#15569A",
+      "lh": {
+       "d": 1.15
+      },
+      "ff": "'Montserrat','Cairo',sans-serif",
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "agit8zs",
+     "type": "text",
+     "set": {
+      "html": "<p>مكمل غذائي طبيعي</p>",
+      "fs": {
+       "d": 30
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 32.3
+      },
+      "fy": {
+       "d": 292
+      },
+      "fwd": {
+       "d": 35.6
+      },
+      "fh": {
+       "d": 45
+      },
+      "zi": 21,
+      "fw": "700",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "4tdbr3n",
+     "type": "heading",
+     "set": {
+      "text": "عسل التركيز",
+      "tag": "h1",
+      "fs": {
+       "d": 62
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 24.8
+      },
+      "fy": {
+       "d": 332
+      },
+      "fwd": {
+       "d": 51.2
+      },
+      "fh": {
+       "d": 82
+      },
+      "zi": 22,
+      "color": "#2162A6",
+      "lh": {
+       "d": 1.15
+      },
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "7mwnwvt",
+     "type": "text",
+     "set": {
+      "html": "<p>و تنشيط الذاكرة</p>",
+      "fs": {
+       "d": 52
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 26.4
+      },
+      "fy": {
+       "d": 399
+      },
+      "fwd": {
+       "d": 49
+      },
+      "fh": {
+       "d": 70
+      },
+      "zi": 23,
+      "fw": "800",
+      "color": "#C18B00",
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "fn6minw",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#1D5D9F",
+      "outline": false,
+      "stroke": "",
+      "sw": 0,
+      "dash": "",
+      "rx": 50,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 36.3
+      },
+      "fy": {
+       "d": 482
+      },
+      "fwd": {
+       "d": 27.2
+      },
+      "fh": {
+       "d": 48
+      },
+      "zi": 24,
+      "cls": "",
+      "grp": "gq773obt"
+     }
+    },
+    {
+     "id": "uwdn09h",
+     "type": "text",
+     "set": {
+      "html": "<p>من 4 إلى 18 سنة</p>",
+      "fs": {
+       "d": 29
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 37.2
+      },
+      "fy": {
+       "d": 486
+      },
+      "fwd": {
+       "d": 25.4
+      },
+      "fh": {
+       "d": 44
+      },
+      "zi": 25,
+      "fw": "700",
+      "color": "#FFFFFF",
+      "hauto": false,
+      "cls": "",
+      "grp": "gq773obt"
+     }
+    },
+    {
+     "id": "xts3kt5",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/mf-kids.webp",
+      "alt": "Children studying",
+      "fit": "cover",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 465
+      },
+      "fwd": {
+       "d": 100
+      },
+      "fh": {
+       "d": 365
+      },
+      "zi": 29,
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "3git9b3",
+     "type": "shape",
+     "set": {
+      "shape": "ellipse",
+      "fill": "#FFFFFF",
+      "outline": false,
+      "stroke": "#E0AE2D",
+      "sw": 3,
+      "dash": "",
+      "rx": 0,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 5.1
+      },
+      "fy": {
+       "d": 60
+      },
+      "fwd": {
+       "d": 10.9
+      },
+      "fh": {
+       "d": 101
+      },
+      "zi": 30,
+      "cls": "",
+      "grp": "gm7usnvy"
+     }
+    },
+    {
+     "id": "20z46fv",
+     "type": "shape",
+     "set": {
+      "shape": "ellipse",
+      "fill": "#FFFFFF",
+      "outline": false,
+      "stroke": "#E0AE2D",
+      "sw": 3,
+      "dash": "",
+      "rx": 0,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 5.1
+      },
+      "fy": {
+       "d": 234
+      },
+      "fwd": {
+       "d": 10.9
+      },
+      "fh": {
+       "d": 101
+      },
+      "zi": 30,
+      "cls": "",
+      "grp": "g78v5u8a"
+     }
+    },
+    {
+     "id": "1uxa9hs",
+     "type": "shape",
+     "set": {
+      "shape": "ellipse",
+      "fill": "#FFFFFF",
+      "outline": false,
+      "stroke": "#E0AE2D",
+      "sw": 3,
+      "dash": "",
+      "rx": 0,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 5.1
+      },
+      "fy": {
+       "d": 409
+      },
+      "fwd": {
+       "d": 10.9
+      },
+      "fh": {
+       "d": 101
+      },
+      "zi": 30,
+      "cls": "",
+      "grp": "gpnfcwly"
+     }
+    },
+    {
+     "id": "oi6x53y",
+     "type": "shape",
+     "set": {
+      "shape": "ellipse",
+      "fill": "#FFFFFF",
+      "outline": false,
+      "stroke": "#E0AE2D",
+      "sw": 3,
+      "dash": "",
+      "rx": 0,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 5.1
+      },
+      "fy": {
+       "d": 584
+      },
+      "fwd": {
+       "d": 10.9
+      },
+      "fh": {
+       "d": 101
+      },
+      "zi": 30,
+      "cls": "",
+      "grp": "gt95ql7u"
+     }
+    },
+    {
+     "id": "ke7p0ae",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:brain",
+      "title": "",
+      "text": "",
+      "al": {
+       "d": "center"
+      },
+      "isz": {
+       "d": 58
+      },
+      "tc": "#173F35",
+      "xc": "#555555",
+      "fx": {
+       "d": 7.4
+      },
+      "fy": {
+       "d": 79
+      },
+      "fwd": {
+       "d": 6.3
+      },
+      "fh": {
+       "d": 58
+      },
+      "zi": 31,
+      "fxs": [
+       {
+        "id": "6xzsb7e",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#C99413"
+         }
+        }
+       },
+       {
+        "id": "gf15w7y",
+        "n": "محاذاة",
+        "on": true,
+        "tpl": "selector{text-align:center}",
+        "p": {}
+       }
+      ],
+      "cls": "",
+      "grp": "gm7usnvy"
+     }
+    },
+    {
+     "id": "kwttzt4",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:award",
+      "title": "",
+      "text": "",
+      "al": {
+       "d": "center"
+      },
+      "isz": {
+       "d": 59
+      },
+      "tc": "#173F35",
+      "xc": "#555555",
+      "fx": {
+       "d": 7.2
+      },
+      "fy": {
+       "d": 254
+      },
+      "fwd": {
+       "d": 6.7
+      },
+      "fh": {
+       "d": 59
+      },
+      "zi": 31,
+      "fxs": [
+       {
+        "id": "mu5s86t",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#C99413"
+         }
+        }
+       },
+       {
+        "id": "n7ysvdy",
+        "n": "محاذاة",
+        "on": true,
+        "tpl": "selector{text-align:center}",
+        "p": {}
+       }
+      ],
+      "cls": "",
+      "grp": "g78v5u8a"
+     }
+    },
+    {
+     "id": "ixekbvi",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:leaf",
+      "title": "",
+      "text": "",
+      "al": {
+       "d": "center"
+      },
+      "isz": {
+       "d": 60
+      },
+      "tc": "#173F35",
+      "xc": "#555555",
+      "fx": {
+       "d": 7.3
+      },
+      "fy": {
+       "d": 429
+      },
+      "fwd": {
+       "d": 6.5
+      },
+      "fh": {
+       "d": 60
+      },
+      "zi": 31,
+      "fxs": [
+       {
+        "id": "yo92kl6",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#C99413"
+         }
+        }
+       },
+       {
+        "id": "4j3fgox",
+        "n": "محاذاة",
+        "on": true,
+        "tpl": "selector{text-align:center}",
+        "p": {}
+       }
+      ],
+      "cls": "",
+      "grp": "gpnfcwly"
+     }
+    },
+    {
+     "id": "u8an6y3",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:shield-check",
+      "title": "",
+      "text": "",
+      "al": {
+       "d": "center"
+      },
+      "isz": {
+       "d": 60
+      },
+      "tc": "#173F35",
+      "xc": "#555555",
+      "fx": {
+       "d": 7.3
+      },
+      "fy": {
+       "d": 605
+      },
+      "fwd": {
+       "d": 6.5
+      },
+      "fh": {
+       "d": 60
+      },
+      "zi": 31,
+      "fxs": [
+       {
+        "id": "67kgd7l",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#C99413"
+         }
+        }
+       },
+       {
+        "id": "oz7cg8e",
+        "n": "محاذاة",
+        "on": true,
+        "tpl": "selector{text-align:center}",
+        "p": {}
+       }
+      ],
+      "cls": "",
+      "grp": "gt95ql7u"
+     }
+    },
+    {
+     "id": "5j588pz",
+     "type": "text",
+     "set": {
+      "html": "<p>يدعم التركيز<br>والانتباه</p>",
+      "fs": {
+       "d": 20
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 3.2
+      },
+      "fy": {
+       "d": 163
+      },
+      "fwd": {
+       "d": 14.5
+      },
+      "fh": {
+       "d": 60
+      },
+      "zi": 32,
+      "fw": "700",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": "",
+      "grp": "gm7usnvy"
+     }
+    },
+    {
+     "id": "sn76lu9",
+     "type": "text",
+     "set": {
+      "html": "<p>يساعد<br>في التعلم</p>",
+      "fs": {
+       "d": 20
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 3.2
+      },
+      "fy": {
+       "d": 337
+      },
+      "fwd": {
+       "d": 14.5
+      },
+      "fh": {
+       "d": 60
+      },
+      "zi": 32,
+      "fw": "700",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": "",
+      "grp": "g78v5u8a"
+     }
+    },
+    {
+     "id": "5xfsqtf",
+     "type": "text",
+     "set": {
+      "html": "<p>مكونات<br>طبيعية</p>",
+      "fs": {
+       "d": 20
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 3.2
+      },
+      "fy": {
+       "d": 512
+      },
+      "fwd": {
+       "d": 14.5
+      },
+      "fh": {
+       "d": 60
+      },
+      "zi": 32,
+      "fw": "700",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": "",
+      "grp": "gpnfcwly"
+     }
+    },
+    {
+     "id": "aepr2do",
+     "type": "text",
+     "set": {
+      "html": "<p>مناسب للأطفال<br>والمراهقين</p>",
+      "fs": {
+       "d": 19
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 2.4
+      },
+      "fy": {
+       "d": 687
+      },
+      "fwd": {
+       "d": 16.2
+      },
+      "fh": {
+       "d": 58
+      },
+      "zi": 32,
+      "fw": "700",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": "",
+      "grp": "gt95ql7u"
+     }
+    },
+    {
+     "id": "kuo7o4t",
+     "type": "image",
+     "set": {
+      "src": "",
+      "alt": "Honey dipper",
+      "fit": "contain",
+      "fx": {
+       "d": 75.4
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 23.5
+      },
+      "fh": {
+       "d": 283
+      },
+      "zi": 35,
+      "hauto": false,
+      "__cutout": true,
+      "aiPrompt": "Honey dipper with dripping honey, transparent background",
+      "aiCut": true,
+      "cls": ""
+     }
+    },
+    {
+     "id": "cvptj71",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#F8E8B6",
+      "outline": false,
+      "stroke": "",
+      "sw": 0,
+      "dash": "",
+      "rx": 5,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 76.5
+      },
+      "fy": {
+       "d": 292
+      },
+      "fwd": {
+       "d": 20.5
+      },
+      "fh": {
+       "d": 170
+      },
+      "zi": 36,
+      "rot": {
+       "d": -7
+      },
+      "fxs": [
+       {
+        "id": "jh2gtqr",
+        "n": "ظل الشكل",
+        "on": true,
+        "tpl": "selector .pb-svg{filter:drop-shadow(calc(var(--u,1px)*[[x]]) calc(var(--u,1px)*[[y]]) calc(var(--u,1px)*[[b]]) [[c]])}",
+        "p": {
+         "x": {
+          "l": "إزاحة أفقية",
+          "t": "num",
+          "v": 0
+         },
+         "y": {
+          "l": "إزاحة رأسية",
+          "t": "num",
+          "v": 6
+         },
+         "b": {
+          "l": "التمويه",
+          "t": "num",
+          "v": 14
+         },
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "rgba(0,0,0,.18)"
+         }
+        }
+       },
+       {
+        "id": "i3mdk29",
+        "n": "السماح بالظل والحركة خارج الإطار",
+        "on": true,
+        "tpl": "selector{overflow:visible!important}",
+        "p": {}
+       }
+      ],
+      "cls": "",
+      "grp": "gc2deepc"
+     }
+    },
+    {
+     "id": "opduxo2",
+     "type": "text",
+     "set": {
+      "html": "<p>عناية طبيعية<br>لمستقبل الأفضل<br>لأطفالنا</p>",
+      "fs": {
+       "d": 28
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 78
+      },
+      "fy": {
+       "d": 317
+      },
+      "fwd": {
+       "d": 17.8
+      },
+      "fh": {
+       "d": 118
+      },
+      "zi": 37,
+      "fw": "600",
+      "color": "#111111",
+      "hauto": false,
+      "rot": {
+       "d": -7
+      },
+      "cls": "",
+      "grp": "gc2deepc"
+     }
+    },
+    {
+     "id": "x4u6mbc",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/mf-jar.webp",
+      "alt": "250g jar left",
+      "fit": "contain",
+      "fx": {
+       "d": 9.8
+      },
+      "fy": {
+       "d": 741
+      },
+      "fwd": {
+       "d": 31.5
+      },
+      "fh": {
+       "d": 420
+      },
+      "zi": 50,
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "96lnnjl",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/mf-jar.webp",
+      "alt": "250g jar center",
+      "fit": "contain",
+      "fx": {
+       "d": 40.6
+      },
+      "fy": {
+       "d": 742
+      },
+      "fwd": {
+       "d": 31.5
+      },
+      "fh": {
+       "d": 420
+      },
+      "zi": 51,
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "ifuxm4o",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/mf-jar.webp",
+      "alt": "160g gift bottle",
+      "fit": "contain",
+      "fx": {
+       "d": 70.5
+      },
+      "fy": {
+       "d": 725
+      },
+      "fwd": {
+       "d": 18.4
+      },
+      "fh": {
+       "d": 410
+      },
+      "zi": 52,
+      "hauto": false,
+      "cls": ""
+     }
+    },
+    {
+     "id": "vi5i1t5",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#C90C18",
+      "outline": false,
+      "stroke": "",
+      "sw": 0,
+      "dash": "",
+      "rx": 14,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 69.2
+      },
+      "fy": {
+       "d": 814
+      },
+      "fwd": {
+       "d": 16.6
+      },
+      "fh": {
+       "d": 72
+      },
+      "zi": 60,
+      "hm": true,
+      "ht": true,
+      "hd": true,
+      "cls": "",
+      "grp": "glyg27t0"
+     }
+    },
+    {
+     "id": "tfwnfje",
+     "type": "shape",
+     "set": {
+      "shape": "ellipse",
+      "fill": "#D10B19",
+      "outline": false,
+      "stroke": "#E8B33C",
+      "sw": 4,
+      "dash": "",
+      "rx": 0,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 83.6
+      },
+      "fy": {
+       "d": 828
+      },
+      "fwd": {
+       "d": 13.3
+      },
+      "fh": {
+       "d": 123
+      },
+      "zi": 61,
+      "cls": "",
+      "grp": "glyg27t0"
+     }
+    },
+    {
+     "id": "pdbxmxt",
+     "type": "text",
+     "set": {
+      "html": "<p>هدية<br>مجانية</p>",
+      "fs": {
+       "d": 29
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 85
+      },
+      "fy": {
+       "d": 847
+      },
+      "fwd": {
+       "d": 10.6
+      },
+      "fh": {
+       "d": 83
+      },
+      "zi": 62,
+      "fw": "800",
+      "color": "#FFFFFF",
+      "hauto": false,
+      "cls": "",
+      "grp": "glyg27t0"
+     }
+    },
+    {
+     "id": "1enjxgu",
+     "type": "image",
+     "set": {
+      "src": "",
+      "alt": "Honeycomb foreground",
+      "fit": "contain",
+      "fx": {
+       "d": 0
+      },
+      "fy": {
+       "d": 1015
+      },
+      "fwd": {
+       "d": 23.9
+      },
+      "fh": {
+       "d": 162
+      },
+      "zi": 65,
+      "hauto": false,
+      "__cutout": true,
+      "aiPrompt": "Small golden honeycomb with honey, transparent background",
+      "aiCut": true,
+      "cls": ""
+     }
+    },
+    {
+     "id": "szno14r",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#C90916",
+      "outline": false,
+      "stroke": "",
+      "sw": 0,
+      "dash": "",
+      "rx": 25,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 7.8
+      },
+      "fy": {
+       "d": 1255
+      },
+      "fwd": {
+       "d": 88.8
+      },
+      "fh": {
+       "d": 178
+      },
+      "zi": 72,
+      "cls": "",
+      "grp": "g4h1nz74"
+     }
+    },
+    {
+     "id": "e7lmrgp",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#F6D34E",
+      "outline": false,
+      "stroke": "",
+      "sw": 0,
+      "dash": "",
+      "rx": 50,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 7.3
+      },
+      "fy": {
+       "d": 1208
+      },
+      "fwd": {
+       "d": 36.9
+      },
+      "fh": {
+       "d": 86
+      },
+      "zi": 73,
+      "rot": {
+       "d": -3
+      },
+      "cls": "",
+      "grp": "gouqimbm"
+     }
+    },
+    {
+     "id": "i297eic",
+     "type": "text",
+     "set": {
+      "html": "<p>زوج قوارير 250 غ<br>+ قارورة 160 غ هدية</p>",
+      "fs": {
+       "d": 34
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 12.1
+      },
+      "fy": {
+       "d": 1305
+      },
+      "fwd": {
+       "d": 35.6
+      },
+      "fh": {
+       "d": 98
+      },
+      "zi": 73,
+      "fw": "800",
+      "color": "#FFFFFF",
+      "hauto": false,
+      "cls": "",
+      "grp": "g4h1nz74"
+     }
+    },
+    {
+     "id": "bxzbj7b",
+     "type": "text",
+     "set": {
+      "html": "<p>عرض التوفير</p>",
+      "fs": {
+       "d": 48
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 10.3
+      },
+      "fy": {
+       "d": 1218
+      },
+      "fwd": {
+       "d": 31
+      },
+      "fh": {
+       "d": 67
+      },
+      "zi": 74,
+      "fw": "900",
+      "color": "#9E1510",
+      "hauto": false,
+      "cls": "",
+      "grp": "gouqimbm"
+     }
+    },
+    {
+     "id": "lpbbj49",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#FFE7A1",
+      "outline": false,
+      "stroke": "#F5C44E",
+      "sw": 4,
+      "dash": "",
+      "rx": 46,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 50.4
+      },
+      "fy": {
+       "d": 1274
+      },
+      "fwd": {
+       "d": 43.6
+      },
+      "fh": {
+       "d": 140
+      },
+      "zi": 74,
+      "cls": "",
+      "grp": "g4h1nz74"
+     }
+    },
+    {
+     "id": "zjqovgf",
+     "type": "text",
+     "set": {
+      "html": "<p>3200 دج</p>",
+      "fs": {
+       "d": 75
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 53.3
+      },
+      "fy": {
+       "d": 1290
+      },
+      "fwd": {
+       "d": 38
+      },
+      "fh": {
+       "d": 110
+      },
+      "zi": 75,
+      "fw": "900",
+      "color": "#C51A13",
+      "hauto": false,
+      "cls": "",
+      "grp": "g4h1nz74"
+     }
+    },
+    {
+     "id": "vqv09b4",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#FFFFFF",
+      "outline": false,
+      "stroke": "#52749B",
+      "sw": 2,
+      "dash": "",
+      "rx": 23,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 8.9
+      },
+      "fy": {
+       "d": 1450
+      },
+      "fwd": {
+       "d": 36.1
+      },
+      "fh": {
+       "d": 128
+      },
+      "zi": 80,
+      "cls": "",
+      "grp": "g650wbk5"
+     }
+    },
+    {
+     "id": "kz2qzoe",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/mf-jar.webp",
+      "alt": "Single jar thumbnail",
+      "fit": "contain",
+      "fx": {
+       "d": 10.7
+      },
+      "fy": {
+       "d": 1461
+      },
+      "fwd": {
+       "d": 8.9
+      },
+      "fh": {
+       "d": 108
+      },
+      "zi": 81,
+      "hauto": false,
+      "cls": "",
+      "grp": "g650wbk5"
+     }
+    },
+    {
+     "id": "xuwbyj2",
+     "type": "text",
+     "set": {
+      "html": "<p>قارورة واحدة 250 غ</p>",
+      "fs": {
+       "d": 22
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 20.3
+      },
+      "fy": {
+       "d": 1464
+      },
+      "fwd": {
+       "d": 23.7
+      },
+      "fh": {
+       "d": 36
+      },
+      "zi": 82,
+      "fw": "700",
+      "color": "#174D84",
+      "hauto": false,
+      "cls": "",
+      "grp": "g650wbk5"
+     }
+    },
+    {
+     "id": "vxqfwkv",
+     "type": "text",
+     "set": {
+      "html": "<p>1800 دج</p>",
+      "fs": {
+       "d": 46
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 21.6
+      },
+      "fy": {
+       "d": 1495
+      },
+      "fwd": {
+       "d": 21.6
+      },
+      "fh": {
+       "d": 63
+      },
+      "zi": 83,
+      "fw": "900",
+      "color": "#174D84",
+      "hauto": false,
+      "cls": "",
+      "grp": "g650wbk5"
+     }
+    },
+    {
+     "id": "3dta9mm",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:truck",
+      "title": "",
+      "text": "",
+      "al": {
+       "d": "center"
+      },
+      "isz": {
+       "d": 52
+      },
+      "tc": "#173F35",
+      "xc": "#555555",
+      "fx": {
+       "d": 50.9
+      },
+      "fy": {
+       "d": 1462
+      },
+      "fwd": {
+       "d": 7.4
+      },
+      "fh": {
+       "d": 52
+      },
+      "zi": 84,
+      "fxs": [
+       {
+        "id": "0ayzfki",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#152B45"
+         }
+        }
+       },
+       {
+        "id": "4aish0p",
+        "n": "محاذاة",
+        "on": true,
+        "tpl": "selector{text-align:center}",
+        "p": {}
+       }
+      ],
+      "cls": "",
+      "grp": "gs0168oz"
+     }
+    },
+    {
+     "id": "7boh7pf",
+     "type": "text",
+     "set": {
+      "html": "<p>التوصيل متوفر<br>حسب الولاية</p>",
+      "fs": {
+       "d": 21
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 47.3
+      },
+      "fy": {
+       "d": 1511
+      },
+      "fwd": {
+       "d": 14.7
+      },
+      "fh": {
+       "d": 89
+      },
+      "zi": 85,
+      "fw": "700",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": "",
+      "grp": "gs0168oz"
+     }
+    },
+    {
+     "id": "1oxzvss",
+     "type": "image",
+     "set": {
+      "src": "assets/img/icons/mf-messenger.svg",
+      "alt": "Messenger logo",
+      "fit": "contain",
+      "fx": {
+       "d": 67.8
+      },
+      "fy": {
+       "d": 1458
+      },
+      "fwd": {
+       "d": 6.7
+      },
+      "fh": {
+       "d": 62
+      },
+      "zi": 86,
+      "hauto": false,
+      "cls": "",
+      "grp": "gc55avk9"
+     }
+    },
+    {
+     "id": "5xczyp3",
+     "type": "text",
+     "set": {
+      "html": "<p>راسلنا الآن على<br>Messenger</p>",
+      "fs": {
+       "d": 25
+      },
+      "lh": {
+       "d": 1.25
+      },
+      "ta": {
+       "d": "right"
+      },
+      "fx": {
+       "d": 74.7
+      },
+      "fy": {
+       "d": 1457
+      },
+      "fwd": {
+       "d": 21.8
+      },
+      "fh": {
+       "d": 73
+      },
+      "zi": 87,
+      "fw": "800",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": "",
+      "grp": "gc55avk9"
+     }
+    },
+    {
+     "id": "whs8ff3",
+     "type": "text",
+     "set": {
+      "html": "<p>للطلب ومعرفة تفاصيل التوصيل</p>",
+      "fs": {
+       "d": 17
+      },
+      "lh": {
+       "d": 1.15
+      },
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 67.2
+      },
+      "fy": {
+       "d": 1521
+      },
+      "fwd": {
+       "d": 29.4
+      },
+      "fh": {
+       "d": 31
+      },
+      "zi": 88,
+      "fw": "600",
+      "color": "#102B4C",
+      "hauto": false,
+      "cls": "",
+      "grp": "gc55avk9"
+     }
+    }
+   ]
+  }
+ ],
+ "specMeta": {
+  "format": "alyssum-design/1",
+  "v": 1,
+  "at": 1792356523520,
+  "plan": null,
+  "assets": {
+   "bg_garden": {
+    "src": "",
+    "prompt": "Soft-focus sunlit green garden background, bright central area for text, no text or products"
+   },
+   "alyssum_flower_logo": {
+    "src": "assets/img/pages/mf-flower.webp",
+    "prompt": ""
+   },
+   "honey_dipper": {
+    "src": "",
+    "prompt": "Honey dipper with dripping honey, transparent background"
+   },
+   "children_studying": {
+    "src": "assets/img/pages/mf-kids.webp",
+    "prompt": ""
+   },
+   "jar_250g": {
+    "src": "assets/img/pages/mf-jar.webp",
+    "prompt": ""
+   },
+   "jar_160g": {
+    "src": "assets/img/pages/mf-jar.webp",
+    "prompt": ""
+   },
+   "honeycomb": {
+    "src": "",
+    "prompt": "Small golden honeycomb with honey, transparent background"
+   },
+   "messenger_icon": {
+    "src": "assets/img/icons/mf-messenger.svg",
+    "prompt": ""
+   }
+  },
+  "fixes": [],
+  "product": ""
+ },
+ "live": false,
+ "media": [
+  "assets/img/pages/mf-jar.webp",
+  "assets/img/pages/mf-kids.webp",
+  "assets/img/pages/mf-flower.webp"
+ ]
+}
