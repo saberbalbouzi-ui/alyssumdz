@@ -56,12 +56,12 @@ const TMP = path.join(ROOT, "lp/_mftest"); let n = 0; const ok = (c, m) => { if 
   ok(d.imgs.length >= 9 && d.imgs.every(i => i.ok), "التصدير: كل الصور (" + d.imgs.length + ") تُحمَّل بلا مفقود" + (d.imgs.filter(i => !i.ok).length ? " — " + d.imgs.filter(i => !i.ok).map(i => i.s).join(",") : ""));
   ok(d.w <= 928 && d.h === 1600, "التصدير: لا تمرير أفقي والارتفاع 1600 (" + d.w + "×" + d.h + ")");
   /* ── 5) ترتيب الطبقات ── */
-  const lay = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/memory-focus-layers.json"), "utf8")).layers; const Z = { "kids-01": 29, "age-01": 41, "age-02": 42, "offer-01": 73, "offer-02": 74 };
+  const lay = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/memory-focus-layers.json"), "utf8")).layers; const Z = { "kids-01": 29, "age-01": 41, "age-02": 42, "offer-01": 73, "offer-02": 74, "honey-02": 48 };
   const zi = id => { const L = lay.find(l => l.id === id); return Z[id] != null ? Z[id] : L.zIndex; };
   ok(zi("kids-01") < zi("benefit-02") && zi("kids-01") < zi("benefit-11") && zi("age-02") > zi("kids-01") && zi("age-01") < zi("age-02"), "الأطفال تحت أيقونات الفوائد وشارة العمر فوق صورتهم");
   ok(zi("offer-01") > zi("offer-03") && zi("gift-02") < zi("gift-03") && zi("gift-02") > zi("products-03"), "لافتة العرض فوق اللوحة، وشارة الهدية فوق القارورة ونصها فوقها");
-  const g = (a, bb) => !(a.x + a.width <= bb.x || bb.x + bb.width <= a.x || a.y + a.height <= bb.y || bb.y + bb.height <= a.y); const GEO = { "gift-02": { x: 792, y: 790 } };
-  const A = Object.assign({}, lay.find(l => l.id === "gift-02"), GEO["gift-02"]), BT = lay.find(l => l.id === "products-03"), over = Math.max(0, Math.min(A.x + A.width, BT.x + BT.width) - Math.max(A.x, BT.x));
+  const g = (a, bb) => !(a.x + a.width <= bb.x || bb.x + bb.width <= a.x || a.y + a.height <= bb.y || bb.y + bb.height <= a.y); const GEO = { "gift-02": { x: 802, y: 800 } }, BOT = { x: 665, width: 148 };
+  const A = Object.assign({}, lay.find(l => l.id === "gift-02"), GEO["gift-02"]), BT = Object.assign({}, lay.find(l => l.id === "products-03"), BOT), over = Math.max(0, Math.min(A.x + A.width, BT.x + BT.width) - Math.max(A.x, BT.x));
   ok(over / BT.width < .2, "شارة الهدية تغطي أقل من 20٪ من عرض القارورة (" + Math.round(over / BT.width * 100) + "٪)");
   const pg2 = JSON.parse(fs.readFileSync(path.join(ROOT, "assets/pages/memory-focus.json"), "utf8")), rib = pg2.sections[0].free.filter(w => w.type === "shape" && w.set.hd && w.set.ht && w.set.hm);
   ok(rib.length === 1, "الشريط الأحمر مخفي (يغطي المنتج) وقابل للإظهار من لوحة الطبقات");

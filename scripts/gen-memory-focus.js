@@ -5,11 +5,12 @@
 const { chromium } = require("playwright"); const fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, ".."), src = process.argv[2] || path.join(__dirname, "fixtures/memory-focus-layers.json"), slug = process.argv[3] || "memory-focus";
 /* أصول المكتبة الفعلية المرتبطة (الباقي يبقى بوصفه ليُولَّد/يُستبدل).
-   mf-garden/dipper/honeycomb مشتقة من صور المكتبة الموجودة (قص/تمويه/غسل بلون الصفحة بلا ذكاء اصطناعي)؛ قارورة 160 غ لا صورة صحيحة لها في المكتبة فبقي عنصر نائب واضح للمراجعة (mf-placeholder-160g.svg) ولا تُستبدل بصورة جرة 250 غ */
+   mf-garden/dipper/honeycomb مشتقة من صور المكتبة الموجودة (قص/تمويه/غسل بلون الصفحة بلا ذكاء اصطناعي)؛
+   mf-jar-250g وmf-bottle-160g صورتا المنتج الحقيقيتان (ALYSSUM MEMORY FOCUS(2).png / مشروب-التركيز(1).png) بعد قصّ الهوامش الشفافة فقط (دون مساس بألوانهما أو ملصقهما) */
 const ASSETS = {
   bg_garden: { src: "assets/img/pages/mf-garden.webp" },
-  jar_250g: { src: "assets/img/pages/mf-jar.webp" },
-  jar_160g: { src: "assets/img/pages/mf-placeholder-160g.svg" },
+  jar_250g: { src: "assets/img/pages/mf-jar-250g.webp" },
+  jar_160g: { src: "assets/img/pages/mf-bottle-160g.webp" },
   children_studying: { src: "assets/img/pages/mf-kids.webp" },
   alyssum_flower_logo: { src: "assets/img/pages/mf-flower.webp" },
   honey_dipper: { src: "assets/img/pages/mf-dipper.webp" },
@@ -17,9 +18,12 @@ const ASSETS = {
   messenger_icon: { src: "assets/img/icons/mf-messenger.svg" }
 };
 /* ترتيب طبقات صُحّح يدوياً: صورة الأطفال تحت الفوائد، ولافتة «عرض التوفير» فوق اللوحة الحمراء */
-const Z = { "kids-01": 29, "age-01": 41, "age-02": 42, "offer-01": 73, "offer-02": 74 };
+const Z = { "kids-01": 29, "age-01": 41, "age-02": 42, "offer-01": 73, "offer-02": 74, "honey-02": 48 };
 /* مواضع صُحّحت: الملعقة والشمع بنسبة صورتيهما الفعليتين، وشارة الهدية لا تغطي القارورة */
-const GEO = { "honey-01": { x: 690, y: 0, w: 238, h: 202 }, "honey-02": { x: 0, y: 950, w: 150, h: 211 }, "gift-02": { x: 792, y: 790 }, "gift-03": { x: 805, y: 809 } };
+const GEO = { "honey-01": { x: 690, y: 0, w: 238, h: 202 }, "honey-02": { x: 0, y: 950, w: 150, h: 211 },
+  /* صف العبوات: جرتا 250 غ (نسبة الصورة المقصوصة .776) وقارورة 160 غ بجانبهما بقاعدة واحدة عند y≈1161؛ شارة الهدية تغطي أقل من 10٪ من عرض القارورة */
+  "products-01": { x: 80, y: 800, w: 280, h: 361 }, "products-02": { x: 365, y: 800, w: 280, h: 361 }, "products-03": { x: 665, y: 770, w: 148, h: 391 },
+  "gift-02": { x: 802, y: 800 }, "gift-03": { x: 815, y: 819 } };
 /* أحجام العناوين الثلاثة (أقصى ما يتسع عرضاً وارتفاعاً دون قصّ، وبارتفاع تلقائي فتبقى قابلة للتعديل) */
 const FS = { "title-01": 45, "title-03": 63, "title-04": 59 };
 /* تلاشي حواف صورة الأطفال (بديل «قناع lower-middle»: أعلى 12٪ وأسفل 22٪؛ تأثير قابل للتعديل من لوحة التأثيرات) */

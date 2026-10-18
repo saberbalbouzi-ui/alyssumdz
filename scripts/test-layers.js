@@ -3,7 +3,7 @@
 const fs = require("fs"), path = require("path"), assert = require("assert"); const { chromium } = require("playwright");
 const ROOT = path.join(__dirname, ".."), doc = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/memory-focus-layers.json"), "utf8"));
 const PBLayers = require("./pagebuilder-layers.js"); let n = 0; const ok = (c, m) => { assert(c, m); n++; };
-const spec = PBLayers.convert(doc, { assets: { jar_250g: { src: "assets/img/pages/mf-jar.webp" } }, z: { "kids-01": 29 } });
+const spec = PBLayers.convert(doc, { assets: { jar_250g: { src: "assets/img/pages/mf-jar-250g.webp" } }, z: { "kids-01": 29 } });
 ok(PBLayers.is(doc) && !PBLayers.is({}), "كشف الصيغة");
 ok(spec.format === "alyssum-design/1" && spec.page.width === 928 && spec.sections[0].height === 1600, "الأبعاد");
 ok(spec.sections[0].layers.length === 49, "49 طبقة");
@@ -14,7 +14,7 @@ ok(by("benefit-05").icon === "img:assets/img/icons/mf-book-open.svg" && fs.exist
 ok(by("title-03").h === 0 && by("title-04").h === 0, "العناوين بارتفاع تلقائي");
 ok(by("gift-01").hidden === true, "الشريط المرفوض مخفي");
 ok(by("kids-01").z === 29, "تجاوز الترتيب");
-ok(by("products-01").src === "asset:jar_250g" && spec.assets.jar_250g.src === "assets/img/pages/mf-jar.webp", "ربط أصل فعلي");
+ok(by("products-01").src === "asset:jar_250g" && spec.assets.jar_250g.src === "assets/img/pages/mf-jar-250g.webp", "ربط أصل فعلي");
 ok(!spec.assets.bg_garden.src && /garden/i.test(spec.assets.bg_garden.prompt), "أصل بلا ملف يحمل وصفه");
 ok(by("benefit-02").group === "benefit1" && by("benefit-12").group === "benefit4" && by("offer-02").group === "offerhead", "المجموعات");
 ok(spec.notes.length > 5, "ملاحظات الاستيراد");
