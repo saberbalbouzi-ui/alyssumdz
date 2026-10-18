@@ -29,7 +29,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
 
   /* ٢) النموذج الجاهز: تحويل وعرض ومطابقة المواضع */
   const info = await p.evaluate(() => {
-    const spec = PBSpec.validate(PBSpec.SAMPLE); spec.page.product = "tarkiz"; const pg = PBSpec.toPage(spec, {});
+    const spec = PBSpec.validate(PBSpec.SAMPLE); spec.page.product = "tarkiz"; const pg = PBSpec.toPage(spec, { merge: false });
     const html = PB.fullHtml(pg, Object.assign({ base: "/" }, PBApp.siteCtx()));
     return { warn: spec.warn, n: pg.sections.length, free: pg.sections.map(s => (s.free || []).length), html, types: pg.sections[0].free.map(w => w.type), fxs: pg.sections[0].free.map(w => (w.set.fxs || []).length) };
   });
@@ -64,7 +64,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("واجهة: زر الفتح مفعّل", !(await p.$eval("#sp-new", e => e.disabled)));
   await p.click('[data-sp="new"]'); await p.waitForTimeout(1800);
   const ed = await p.evaluate(() => ({ on: document.getElementById("pb-app").classList.contains("on"), n: PBApp.E.page && PBApp.E.page.sections.length, fr: !!document.getElementById("pbx-frame") }));
-  t("المطوّر يفتح الصفحة بالأقسام", ed.on && ed.n === 3, ed);
+  t("المطوّر يفتح الصفحة بالأقسام", ed.on && ed.n === 2, ed);
   const sel = await p.evaluate(async () => { const fr = document.getElementById("pbx-frame"), d = fr.contentDocument; return { w: d.querySelectorAll("[data-pb]").length }; });
   t("عناصر منفصلة قابلة للتحديد في الإطار", sel.w >= 8, sel);
   /* تحريك عنصر وحفظ إعدادات */
@@ -80,7 +80,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
     const calls = []; const oe = ImgGen.edit, orr = ImgGen.ready, ou = PBApp.uploadBlob;
     ImgGen.ready = () => ({ ok: true }); ImgGen.edit = async o => { calls.push(o); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d"); for (let i = 0; i < 400; i++) { g.fillStyle = "rgb(" + (i * 7 % 255) + "," + (i * 13 % 255) + "," + (i * 29 % 255) + ")"; g.fillRect(i % 20 * 25, Math.floor(i / 20) * 25, 25, 25); } return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c }; };
     PBApp.uploadBlob = async (b, n) => "assets/img/pages/" + n + ".webp";
-    const before = PBSpec.emptyImages().length; const r = await PBSpec.fillImages({ confirm: false });
+    const before = PBSpec.emptyImages().length; const r = await PBSpec.fillImages({ confirm: false, ref: false });
     const widgets = PBApp.E.page.sections[0].free.filter(w => w.type === "image");
     ImgGen.edit = oe; ImgGen.ready = orr; PBApp.uploadBlob = ou;
     return { before, r, n: calls.length, noText: /no text/i.test(calls[0].prompt), textOnly: calls[0].textOnly, W: calls[0].W, H: calls[0].H, srcs: widgets.map(w => w.set.src), after: PBSpec.emptyImages().length };
@@ -130,7 +130,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
       { type: "video", src: "https://example.com/b.webm", x: 60, y: 420, w: 640, h: 360 },
       { type: "shape", x: 800, y: 40, w: 200, h: 200, group: "card<b>1" }, { type: "text", text: "داخل المجموعة", x: 800, y: 260, w: 220, group: "card<b>1", locked: true },
       { type: "text", text: "مخفي على الأجهزة", x: 800, y: 400, w: 220, hidden: true }] }, { height: 300, layers: [{ type: "shape", x: 0, y: 0, w: 100, h: 100, group: "card<b>1" }] }] });
-    const pg = PBSpec.toPage(r, {}); const f0 = pg.sections[0].free, f1 = pg.sections[1].free;
+    const pg = PBSpec.toPage(r, { merge: false }); const f0 = pg.sections[0].free, f1 = pg.sections[1].free;
     const html = PB.fullHtml(pg, Object.assign({ base: "/" }, PBApp.siteCtx()));
     return { n: f0.length, types: f0.map(w => w.type), v0: f0[0].set, v2: f0[1].set, g: [f0[2].set.grp, f0[3].set.grp, f1[0].set.grp], gid: r.sections[0].layers[3].group, lock: f0[3].set.locked, hid: [f0[4].set.hd, f0[4].set.ht, f0[4].set.hm], meta: pg.specMeta && pg.specMeta.format, rt: JSON.parse(JSON.stringify(pg)).specMeta.assets.a.src, lz: /<video[^>]*data-lz="https:\/\/example\.com\/a\.mp4"[^>]*preload="none"/.test(html) && !/<video[^>]*data-lz[^>]*\ssrc=/.test(html), plain: /<video[^>]*src="https:\/\/example\.com\/b\.webm"[^>]*controls[^>]*preload="none"/.test(html) || /<video[^>]*controls[^>]*src="https:\/\/example\.com\/b\.webm"/.test(html), poster: /poster="\/?assets\/img\/tpl\/generic-honey\.webp"/.test(html), js: /video\[data-lz\]/.test(html) };
   });
@@ -144,7 +144,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
 
   /* ٨) حفظ وإعادة فتح: العناصر تبقى منفصلة وقابلة للتعديل */
   const rt = await p.evaluate(async () => {
-    const spec = PBSpec.validate(PBSpec.SAMPLE); spec.page.product = "tarkiz"; const pg = PBSpec.toPage(spec, {}); PBApp.open(pg, "", true); await new Promise(r => setTimeout(r, 1000));
+    const spec = PBSpec.validate(PBSpec.SAMPLE); spec.page.product = "tarkiz"; const pg = PBSpec.toPage(spec, { merge: false }); PBApp.open(pg, "", true); await new Promise(r => setTimeout(r, 1000));
     const saved = JSON.parse(JSON.stringify(PBApp.E.page)); PBApp.close && PBApp.close(true); await new Promise(r => setTimeout(r, 400));
     PBApp.open(saved, "", true); await new Promise(r => setTimeout(r, 1000));
     const P = PBApp.E.page, free = P.sections[0].free, h1 = free.find(w => w.type === "heading"), img = free.find(w => w.type === "image"), shp = free.find(w => w.type === "shape"), btn = free.find(w => w.type === "button");
@@ -224,6 +224,29 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("عكسي: الصفحة لم تتغيّر", revRes.same);
   t("عكسي: موضع العنوان ونصه وحجمه محفوظة", JSON.stringify(revRes.a) === JSON.stringify(revRes.b), revRes);
   t("عكسي: قسم الطلب يُعرَف", revRes.order, revRes);
+  /* ١٣) صفحة طويلة واحدة بلا أقسام + صور بمرجع المنتج */
+  const mg = await p.evaluate(async () => {
+    const r = PBSpec.validate(PBSpec.SAMPLE), pg = PBSpec.toPage(r, {}), cv = pg.sections[0], f = cv.free;
+    const hero = r.sections[0], ben = r.sections[1], bgBen = f.find(w => w.type === "shape" && w.set.locked && Number(w.set.fy.d) >= hero.height - 1);
+    const iconY = f.filter(w => w.type === "iconbox").map(w => Number(w.set.fy.d)), srcIconY = ben.layers.filter(l => l.type === "icon").map(l => l.y + hero.height);
+    const out = { n: pg.sections.length, mh: Number(cv.set.mh.d), H: hero.height + ben.height, kinds: pg.sections.map(s => s.set && s.set.cid || "?"), bgBen: !!bgBen, iconY, srcIconY, h1z: f.find(w => w.type === "heading").set.zi };
+    /* مرجع المنتج: الصورة الحقيقية في الصفحة تُرسل مع الطلب ويُذكر اسم المنتج */
+    const spec = PBSpec.validate({ page: { title: "عسل التركيز", width: 1080 }, sections: [{ height: 900, layers: [{ type: "image", src: "assets/img/tpl/generic-honey.webp", x: 50, y: 50, w: 300, h: 300 }, { type: "image", prompt: "the jar on a rustic wooden table with morning light", x: 50, y: 400, w: 400, h: 400 }, { type: "image", prompt: "fresh green herbs and leaves texture", x: 500, y: 400, w: 400, h: 400 }] }] });
+    try { localStorage.removeItem("alyssum_spec_assets"); } catch (_) { }
+    PBApp.open(PBSpec.toPage(spec, {}), "", true); await new Promise(r => setTimeout(r, 700));
+    const calls = [], oe = ImgGen.edit, orr = ImgGen.ready, ou = PBApp.uploadBlob;
+    ImgGen.ready = () => ({ ok: true }); ImgGen.edit = async o => { calls.push({ ref: !!o.blob, textOnly: !!o.textOnly, prompt: o.prompt }); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d"); for (let i = 0; i < 400; i++) { g.fillStyle = "rgb(" + (i * 7 % 255) + "," + (i * 13 % 255) + "," + (i * 29 % 255) + ")"; g.fillRect(i % 20 * 25, Math.floor(i / 20) * 25, 25, 25); } return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c }; };
+    PBApp.uploadBlob = async (b, n) => "assets/img/pages/" + n + ".webp";
+    const fr = await PBSpec.fillImages({ confirm: false, exists: () => true }); ImgGen.edit = oe; ImgGen.ready = orr; PBApp.uploadBlob = ou;
+    out.calls = calls; out.fr = fr; return out;
+  });
+  t("صفحة طويلة: قسم قماش واحد + قسم الطلب", mg.n === 2, mg);
+  t("ارتفاع القسم = مجموع الأقسام", mg.mh === mg.H, mg);
+  t("طبقات القسم الثاني أُزيحت بارتفاع الأول", JSON.stringify(mg.iconY) === JSON.stringify(mg.srcIconY), mg);
+  t("خلفية كل قسم صارت طبقة شكل مقفلة", mg.bgBen, mg);
+  t("الطبقات فوق الخلفيات", mg.h1z > 5, mg);
+  t("توليد بمرجع صورة المنتج للمشهد", mg.calls.length === 2 && mg.calls.some(c => c.ref && !c.textOnly && /REAL product/.test(c.prompt) && /عسل التركيز/.test(c.prompt)), mg.calls);
+  t("المكوّنات/الخلفيات بلا مرجع لكن بسياق المنتج", mg.calls.some(c => !c.ref && c.textOnly && /عسل التركيز/.test(c.prompt)), mg.calls);
   console.log(errs.length ? "أخطاء صفحة: " + errs.join(" | ") : "");
   t("بلا أخطاء JS", errs.length === 0, errs);
   console.log(bad ? "فشل " + bad + " / " + (ok + bad) : "كل الفحوص نجحت (" + ok + ")"); await b.close(); process.exit(bad ? 1 : 0);
