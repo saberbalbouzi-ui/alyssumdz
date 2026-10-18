@@ -43,6 +43,14 @@ def fx_zoom(sel="img", z=1.06):
     return FX("تكبير بالمرور", "selector %s{transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s}selector %s:hover{transform:scale([[z]]);box-shadow:0 18px 40px rgba(20,60,30,.28)}" % (sel, sel), z=("نسبة التكبير", "num", z))
 def fx_lift(sel="img"):
     return FX("رفع بالمرور", "selector %s{transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s}selector %s:hover{transform:translateY(-8px);box-shadow:0 22px 44px rgba(0,0,0,.22)}" % (sel, sel))
+def fx_sweep(k):
+    return FX("لمعة تعبر الصورة", "selector{position:relative}selector::after{content:\"\";position:absolute;top:0;left:-80%%;width:45%%;height:100%%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-22deg);animation:%sSw [[d]]s ease-in-out infinite}@keyframes %sSw{0%%,60%%{left:-80%%}100%%{left:150%%}}" % (k, k), d=("زمن الدورة ثانية", "num", 5))
+def fx_kb(k, z=1.1, d=9):
+    return FX("تكبير سينمائي بطيء", "selector img{animation:%sKb [[d]]s ease-in-out infinite alternate}@keyframes %sKb{from{transform:scale(1)}to{transform:scale([[z]])}}" % (k, k), z=("نسبة التكبير", "num", z), d=("الدورة ثانية", "num", d))
+def fx_tilt(sel="img"):
+    return FX("ميلان وتكبير بالمرور", "selector %s{transition:transform .4s cubic-bezier(.2,.8,.2,1),filter .4s}selector %s:hover{transform:scale(1.1) rotate(-3deg);filter:saturate(1.25) drop-shadow(0 10px 18px rgba(0,0,0,.25))}" % (sel, sel))
+def fx_hue(k):
+    return FX("نبض سطوع وتشبّع", "selector img{animation:%sHu [[d]]s ease-in-out infinite}@keyframes %sHu{50%%{filter:brightness(1.08) saturate(1.2)}}" % (k, k), d=("الدورة ثانية", "num", 4))
 def fx_icon(k):
     return FX("طفو الأيقونة", "selector .pb-ibi{display:inline-block;animation:%sIf [[d]]s ease-in-out infinite}@keyframes %sIf{50%%{transform:translateY(-6px) rotate(-5deg)}}" % (k, k), d=("الدورة ثانية", "num", 3.6))
 def fx_grad(k, c1, c2, c3):
@@ -133,8 +141,12 @@ for si, sec in enumerate(secs):
             if t == "button": add_fx(w, fx_pulse("fkb%d" % si, "198,40,40" if st.get("bgc") == RED else "46,125,50"), fx_shine("fks%d" % si))
             elif t == "iconbox": add_fx(w, fx_icon("fki%d_%d" % (si, ci)))
             elif t == "image":
-                if si == 0: add_fx(w, fx_float("fkh", "img", 9, 5.5))
-                else: add_fx(w, fx_zoom("img", 1.05) if si in (3, 5) else fx_lift("img"))
+                if si == 0: add_fx(w, fx_float("fkh", "img", 9, 5.5), fx_hue("fkhu"), fx_sweep("fksw0"))
+                elif si == 2: add_fx(w, fx_kb("fkb2_%d" % ci, 1.12, 8 + ci), fx_sweep("fksw2_%d" % ci), fx_lift("img"))
+                elif si == 3: add_fx(w, fx_kb("fkb3", 1.08, 10), fx_sweep("fksw3"), fx_zoom("img", 1.04))
+                elif si == 4: add_fx(w, fx_tilt("img"), fx_hue("fkhu4_%d" % ci))
+                elif si == 5: add_fx(w, fx_float("fkh5", "img", 8, 5), fx_sweep("fksw5"), fx_hue("fkhu5"))
+                else: add_fx(w, fx_lift("img"), fx_sweep("fksw%d_%d" % (si, ci)))
 
 path = os.path.join(ROOT, "assets/pages/01.json"); old = json.load(open(path, encoding="utf-8"))
 old.update({"title": "عسل التركيز وتنشيط الذاكرة", "desc": "عسل طبيعي بمكوّنات نباتية لدعم التركيز والنشاط الذهني لدى الأطفال من 4 إلى 18 سنة. الدفع عند الاستلام والتوصيل حسب الولاية.",
