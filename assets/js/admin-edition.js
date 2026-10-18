@@ -44,7 +44,7 @@ const AdminEdition = (() => {
   }
   function apply() {
     css(); const ed = edition(), h = document.documentElement;
-    h.classList.toggle("ed-basic", ed === "basic"); h.classList.toggle("ed-design", ed === "design"); h.classList.toggle("ed-digital", ed === "digital"); mark(); try { if (typeof AdminKind !== "undefined") AdminKind.apply(); } catch (e) { }
+    h.classList.toggle("ed-basic", ed === "basic"); h.classList.toggle("ed-design", ed === "design"); h.classList.toggle("ed-digital", ed === "digital"); h.classList.toggle("kind-digital", ed === "digital" || D().kind === "digital"); mark();
     /* في نسخة المصمّم: إن كان القسم الحالي محجوباً ننتقل إلى مطوّر الصفحات */
     try { const on = document.querySelector(".nav-btn.on"), cur = on && (/Admin\.tab\('([a-z0-9]+)'/.exec(on.getAttribute("onclick") || "") || [])[1]; if (cur && !allows(ed, cur)) land(); } catch (e) { }
   }
@@ -64,7 +64,7 @@ const AdminEdition = (() => {
   /* اختيار فوري: يُحفظ في إعدادات الموقع ويسري على اللوحة حالاً */
   function set(v) {
     if (!EDS.some(x => x[0] === v)) return; const S = typeof AdminStores !== "undefined" ? AdminStores : null; if (!S || !S.patch) return;
-    Promise.resolve(S.patch({ edition: v })).then(() => { apply(); try { if (document.getElementById("rl") && typeof AdminRoles !== "undefined") AdminRoles.render(); } catch (e) { } try { toast("تم تفعيل نسخة «" + EDS.find(x => x[0] === v)[1] + "»"); } catch (e) { } if (v === "design" || v === "digital") land(); }).catch(() => { apply(); });
+    Promise.resolve(S.patch({ edition: v })).then(() => { apply(); try { if (document.getElementById("rl") && typeof AdminRoles !== "undefined") AdminRoles.render(); } catch (e) { } try { if (typeof AdminKind !== "undefined") AdminKind.apply(); } catch (e) { } try { toast("تم تفعيل نسخة «" + EDS.find(x => x[0] === v)[1] + "»"); } catch (e) { } if (v === "design" || v === "digital") land(); }).catch(() => { apply(); });
     apply();
   }
   const picked = () => { const r = document.querySelector('input[name="stp-edition"]:checked'); return r ? r.value : null; };
