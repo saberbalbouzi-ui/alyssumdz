@@ -55,6 +55,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       return { aw: a.wilaya, awid: a.__coWid, nw: na.ok && na.ord.wilaya, asked, bw: b.wilaya, bwid: b.__coWid, bn: nb.ok && nb.ord.wilaya }; });
     ok("ولاية جديدة تعدّها الشركة قائمة بذاتها: تُرسل باسمها وبلدياتها من رقمها", nw.aw === "Barika" && nw.awid === 60 && nw.nw === "Barika" && nw.asked[0] === 60, nw);
     ok("ولاية جديدة لا تعرفها الشركة: تعود للولاية الأم", nw.bw === "Batna" && !nw.bwid && nw.bn === "Batna", nw); }
+  { const yf = await p.evaluate(async () => { /* طرد مقنَّع بلا وسم تتبع في أي طلب: يُربط بالطلب الوحيد المطابق، ويُنزَّل البوردرو PDF */
+      const mk = ph => ph[0] + "*".repeat(ph.length - 3) + ph.slice(-2), keep = Admin.orders, o = { id: "F1", date: new Date().toISOString(), name: "عمر العلي", phone: "0550123456", wilaya: "Batna", commune: "Barika", dtype: "home", items: "x ×1 = 1800", subtotal: 1800, fee: 600, total: 2400, status: "confirmee", note: "", extra: {} };
+      Admin.orders = [o]; AdminYd.set([{ tracking: "yal-TEST1", name: "ع** ا****", phone: mk("0550123456"), wilaya: "Batna", commune: "Barika", status: "En préparation", date: new Date().toISOString(), price: 1800 }], 1, false);
+      const txt = (document.getElementById("yd-card") || {}).textContent || "";
+      const rec = [], oc = HTMLAnchorElement.prototype.click, of = window.fetch, wo = window.open; HTMLAnchorElement.prototype.click = function () { rec.push(this.download); };
+      window.fetch = async () => ({ ok: true, status: 200, blob: async () => new Blob(["%PDF-1.4"], { type: "application/pdf" }) }); const d1 = await Admin.dlPdf("https://example.com/l.pdf", "bordereau-yal-TEST1");
+      let opened = ""; window.fetch = async () => { throw new TypeError("cors"); }; window.open = u => { opened = u; return null; }; const d2 = await Admin.dlPdf("https://example.com/l.pdf", "x");
+      window.fetch = of; window.open = wo; HTMLAnchorElement.prototype.click = oc; AdminYd.set([], 0, false); Admin.orders = keep; return { linked: txt.includes("عمر العلي") && txt.includes("0550123456"), d1, rec, d2, opened }; });
+    ok("طرد مقنَّع بلا تتبع في الطلب يُربط بالطلب المطابق ويظهر اسمه وهاتفه الحقيقيان", yf.linked, yf);
+    ok("تنزيل البوردرو PDF: ملف باسم الطرد، واحتياط فتح الرابط عند منع CORS", yf.d1 === true && yf.rec[0] === "bordereau-yal-TEST1.pdf" && yf.d2 === false && yf.opened === "https://example.com/l.pdf", yf); }
   { const wk = await p.evaluate(async () => { /* بريكة (ولاية 60) تظهر مع بلديات باتنة، واختيارها يحوّل الولاية إليها */
       ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), w = bg.querySelector("#mo-wil"), c = bg.querySelector("#mo-com");
       w.value = "Batna"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 150));
