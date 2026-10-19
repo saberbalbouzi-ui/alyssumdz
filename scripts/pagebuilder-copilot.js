@@ -139,6 +139,7 @@ const PBCopilot = (() => {
     if (!isObj(L)) return L; if (LAYER_TYPES.includes(L.type)) return L;
     const alias = String(L.type || L.kind || L.layer_type || L.layerType || L.element || L.widget || L.t || "").toLowerCase().trim(), m = { title: "heading", headline: "heading", h1: "heading", h2: "heading", h3: "heading", paragraph: "text", p: "text", label: "text", img: "image", picture: "image", photo: "image", rect: "shape", ellipse: "shape", circle: "shape", btn: "button", cta: "button" };
     let t = LAYER_TYPES.includes(alias) ? alias : m[alias] || "";
+    if (!t && alias) return L;                                  // نوع صريح غير مسموح (html/price/iframe…) يبقى مرفوضاً
     if (!t) { const fs = Number(L.font && L.font.size) || Number(L.size) || 0;
       if (L.src != null || L.prompt != null || L.cutout != null) t = "image"; else if (L.icon != null && L.text == null) t = "icon"; else if (L.link != null && L.text != null) t = "button"; else if (L.text != null) t = (L.tag || fs >= 40) ? "heading" : "text"; else if (L.shape != null || L.fill != null || L.gradient != null) t = "shape"; }
     return t ? Object.assign({}, L, { type: t }) : L;
