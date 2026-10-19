@@ -9,14 +9,15 @@ window.ManualOrder = (function () {
   function parseLines(text) {
     return String(text || "").split(/\n/).map(l => { const m = l.match(/^(.+?)\s*×\s*(\d+)\s*=\s*(\d+)/); if (!m) return null; const q = Math.max(1, Number(m[2]) || 1); return { title: m[1].trim(), qty: q, price: Math.round((Number(m[3]) || 0) / q) }; }).filter(Boolean);
   }
-  function calc(lines, fee, disc) { const sub = (lines || []).reduce((a, l) => a + num(l.qty) * num(l.price), 0), d = Math.min(num(disc), sub); return { sub, disc: d, fee: num(fee), total: Math.max(0, sub - d) + num(fee) }; }
-  const textOf = lines => lines.map(l => l.title + " ×" + l.qty + " = " + num(l.qty) * num(l.price) + " DA").join("\n");
+  const amtOf = l => l.amt != null ? num(l.amt) : num(l.qty) * num(l.price);
+  function calc(lines, fee, disc) { const sub = (lines || []).reduce((a, l) => a + amtOf(l), 0), d = Math.min(num(disc), sub); return { sub, disc: d, fee: num(fee), total: Math.max(0, sub - d) + num(fee) }; }
+  const textOf = lines => lines.map(l => l.title + " ×" + l.qty + " = " + amtOf(l) + " DA").join("\n");
   /* خيارات المنتجات: بسيط، وكل تنويعة فعّالة لمتغيّر */
   function prodOpts() {
     const ad = A(), out = []; ((ad && ad.products) || []).filter(p => p.slug !== "test" && p.active !== false).forEach(p => {
       const t = p.type;
       if (t === "variable") (p.variations || []).filter(v => v && v.active !== false).forEach(v => { const lb = ((p.attributes || []).filter(a => a.variation && v.attrs && v.attrs[a.name] != null).map(a => a.name + ": " + v.attrs[a.name]).join(" / ")); out.push({ slug: p.slug, title: (p.bord || p.title) + (lb ? " — " + lb : ""), name: p.title + (lb ? " — " + lb : ""), price: num(v.price) }); });
-      else if (t !== "grouped") out.push({ slug: p.slug, title: p.bord || p.title, name: p.title, price: num(p.price) });
+      else if (t !== "grouped") out.push({ slug: p.slug, title: p.bord || p.title, name: p.title, price: num(p.price), offers: (p.offers || []).filter(o => o && num(o.qty) > 0 && num(o.price) > 0) });
     });
     return out;
   }
@@ -25,6 +26,8 @@ window.ManualOrder = (function () {
     try { const k = ad.activeCompanyKey && ad.activeCompanyKey(), cfg = (k && ad.deliveryCfg && ad.deliveryCfg[k]) || {}, want = ad.normName ? ad.normName(cfg.fromWilayaName || "Alger") : String(cfg.fromWilayaName || "alger").toLowerCase(); const w = W().find(x => !x.par && (ad.normName ? ad.normName(x.name) : String(x.name).toLowerCase()) === want); return w ? w.name : ""; } catch (e) { return ""; }
   }
   function fromOpts(ad) { const d = fromDef(ad); return W().filter(x => !x.par).slice().sort((a, b) => a.id - b.id).map(w => `<option value="${esc(w.name)}"${w.name === d ? " selected" : ""}>${w.id} — ${esc(w.name)}${w.name === d ? " (الافتراضية)" : ""}</option>`).join(""); }
+  const offLabel = o => (num(o.free) > 0 ? (num(o.qty) - num(o.free)) + " + " + num(o.free) + " مجاناً" : num(o.qty) + (num(o.qty) === 1 ? " قطعة" : " قطع")) + " — " + num(o.price).toLocaleString("fr-DZ") + " دج";
+  function offerIdx(l, ofs) { if (l.offer != null && ofs[l.offer]) return l.offer; return ofs.findIndex(o => num(o.qty) === num(l.qty) && Math.abs(amtOf(l) - num(o.price)) <= 1); }
   function open(opt) {
     const ad = A(); if (!ad) return; opt = opt || {}; const mode = opt.mode || "new", src = opt.order || null;
     if (mode === "edit" && (!src || src.status !== "nouvelle" || (ad.trackingOf && ad.trackingOf(src)))) { toast("التعديل الكامل متاح للطلب الجديد غير المسجَّل لدى الشركة فقط — للمؤكَّد استعمل «✏️ تعديل»"); return; }
@@ -69,9 +72,10 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     }
     function drawLines() {
       const th = 'style="text-align:right;padding:.2rem"';
-      $("mo-lines").innerHTML = `<table style="width:100%;border-collapse:collapse;min-width:520px"><tr><th ${th}>المنتج</th><th ${th}>الكمية</th><th ${th}>سعر العلبة (دج)</th><th ${th}>المجموع</th><th></th></tr>` + lines.map((l, i) => {
-        const known = P.some(p => p.title === l.title && p.slug === l.slug);
-        return `<tr data-i="${i}"><td style="padding:.2rem"><select data-f="sel"><option value="">اختر المنتج…</option>${P.map((p, k) => `<option value="${k}"${known && p.title === l.title ? " selected" : ""}>${esc(p.name || p.title)}${p.name && p.name !== p.title ? " ← " + esc(p.title) : ""}</option>`).join("")}<option value="x"${!known && l.title ? " selected" : ""}>✎ منتج آخر…</option></select>${!known && l.title !== "" || l.__x ? `<input data-f="title" value="${esc(l.title)}" placeholder="اسم المنتج" style="margin-top:.2rem">` : ""}</td><td style="padding:.2rem"><input data-f="qty" type="number" min="1" step="1" value="${l.qty}" style="max-width:80px"></td><td style="padding:.2rem"><input data-f="price" type="number" min="0" step="50" value="${l.price}" style="max-width:110px"></td><td style="padding:.2rem"><b>${(num(l.qty) * num(l.price)).toLocaleString("fr-DZ")}</b></td><td style="padding:.2rem"><button type="button" class="small warn" data-f="del">🗑</button></td></tr>`;
+      $("mo-lines").innerHTML = `<style>@media(max-width:640px){#mo-lines table{min-width:0!important}#mo-lines tr:first-child{display:none}#mo-lines tr[data-i]{display:grid;grid-template-columns:1fr 1fr;gap:.25rem .5rem;border:1px solid rgba(255,255,255,.18);border-radius:12px;padding:.5rem;margin-bottom:.5rem}#mo-lines tr[data-i]>td{display:block;padding:.1rem!important}#mo-lines tr[data-i]>td:first-child{grid-column:1/-1}#mo-lines input,#mo-lines select{max-width:none!important;width:100%}}</style><table style="width:100%;border-collapse:collapse;min-width:520px"><tr><th ${th}>المنتج</th><th ${th}>الكمية</th><th ${th}>سعر العلبة (دج)</th><th ${th}>المجموع</th><th></th></tr>` + lines.map((l, i) => {
+        const known = P.some(p => p.title === l.title && p.slug === l.slug), po = known ? P.find(p => p.title === l.title && p.slug === l.slug) : null, ofs = (po && po.offers) || [], oi = offerIdx(l, ofs);
+        const offSel = ofs.length ? `<select data-f="offer" style="margin-top:.2rem"><option value=""${oi < 0 ? " selected" : ""}>بدون عرض — سعر عادي</option>${ofs.map((o, k) => `<option value="${k}"${k === oi ? " selected" : ""}>${esc(offLabel(o))}</option>`).join("")}</select>` : "";
+        return `<tr data-i="${i}"><td style="padding:.2rem"><select data-f="sel"><option value="">اختر المنتج…</option>${P.map((p, k) => `<option value="${k}"${known && p.title === l.title ? " selected" : ""}>${esc(p.name || p.title)}${p.name && p.name !== p.title ? " ← " + esc(p.title) : ""}</option>`).join("")}<option value="x"${!known && l.title ? " selected" : ""}>✎ منتج آخر…</option></select>${!known && l.title !== "" || l.__x ? `<input data-f="title" value="${esc(l.title)}" placeholder="اسم المنتج" style="margin-top:.2rem">` : ""}${offSel}</td><td style="padding:.2rem"><input data-f="qty" type="number" min="1" step="1" value="${l.qty}" style="max-width:80px"></td><td style="padding:.2rem"><input data-f="price" type="number" min="0" step="50" value="${l.price}" style="max-width:110px"></td><td style="padding:.2rem"><b>${amtOf(l).toLocaleString("fr-DZ")}</b></td><td style="padding:.2rem"><button type="button" class="small warn" data-f="del">🗑</button></td></tr>`;
       }).join("") + "</table>";
     }
     fillCom(); fillDesk(); drawLines(); total(); if (!src) autoFee();
@@ -80,8 +84,10 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     bg.querySelectorAll('input[name="mo-dt"]').forEach(r => r.onchange = () => { fillDesk($("mo-desk").value); autoFee(); });
     $("mo-com").onchange = () => { WilKids.pick($("mo-wil"), $("mo-com")); fillDesk(""); autoFee(); }; if ($("mo-from")) $("mo-from").onchange = () => autoFee(); $("mo-fee").oninput = total; $("mo-disc").oninput = total;
     $("mo-add").onclick = () => { lines.push({ slug: "", title: "", qty: 1, price: 0 }); drawLines(); total(); };
-    $("mo-lines").addEventListener("input", e => { const tr = e.target.closest("tr[data-i]"); if (!tr) return; const l = lines[+tr.dataset.i], f = e.target.dataset.f; if (f === "qty") l.qty = Math.max(1, num(e.target.value)); else if (f === "price") l.price = num(e.target.value); else if (f === "title") l.title = e.target.value; else return; tr.querySelector("b").textContent = (num(l.qty) * num(l.price)).toLocaleString("fr-DZ"); total(); });
-    $("mo-lines").addEventListener("change", e => { const tr = e.target.closest("tr[data-i]"); if (!tr || e.target.dataset.f !== "sel") return; const l = lines[+tr.dataset.i], v = e.target.value; if (v === "x") { l.slug = ""; l.__x = true; l.title = l.title || ""; } else if (v === "") { l.slug = ""; l.title = ""; l.price = 0; delete l.__x; } else { const p = P[+v]; l.slug = p.slug; l.title = p.title; l.price = p.price; delete l.__x; } drawLines(); total(); });
+    $("mo-lines").addEventListener("input", e => { const tr = e.target.closest("tr[data-i]"); if (!tr) return; const l = lines[+tr.dataset.i], f = e.target.dataset.f; if (f === "qty") { l.qty = Math.max(1, num(e.target.value)); delete l.amt; delete l.offer; } else if (f === "price") { l.price = num(e.target.value); delete l.amt; delete l.offer; } else if (f === "title") l.title = e.target.value; else return; tr.querySelector("b").textContent = amtOf(l).toLocaleString("fr-DZ"); total(); });
+    $("mo-lines").addEventListener("change", e => { const tr = e.target.closest("tr[data-i]"); if (!tr) return; const l = lines[+tr.dataset.i], v = e.target.value;
+      if (e.target.dataset.f === "offer") { const pr = P.find(p => p.title === l.title && p.slug === l.slug), o = pr && pr.offers[+v]; if (v === "" || !o) { l.qty = 1; l.price = pr ? pr.price : l.price; delete l.amt; delete l.offer; } else { l.qty = num(o.qty); l.amt = num(o.price); l.price = Math.round(num(o.price) / num(o.qty)); l.offer = +v; l.free = num(o.free); } drawLines(); total(); return; }
+      if (e.target.dataset.f !== "sel") return; delete l.amt; delete l.offer; delete l.free; l.qty = 1; if (v === "x") { l.slug = ""; l.__x = true; l.title = l.title || ""; } else if (v === "") { l.slug = ""; l.title = ""; l.price = 0; delete l.__x; } else { const p = P[+v]; l.slug = p.slug; l.title = p.title; l.price = p.price; delete l.__x; } drawLines(); total(); });
     $("mo-lines").addEventListener("click", e => { const b = e.target.closest('[data-f="del"]'); if (!b) return; const i = +b.closest("tr").dataset.i; lines.splice(i, 1); if (!lines.length) lines.push({ slug: "", title: "", qty: 1, price: 0 }); drawLines(); total(); });
     const close = () => bg.remove(); $("mo-x").onclick = close; $("mo-no").onclick = close; bg.addEventListener("click", e => { if (e.target === bg) close(); });
     $("mo-save").onclick = async () => {
@@ -89,7 +95,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       if (name.length < 2) { toast("⚠️ أدخل اسم الزبون"); return; } if (phone.length < 6 || phone.length > 20) { toast("⚠️ رقم الهاتف غير صحيح"); return; } if (!items.length) { toast("⚠️ أضف منتجاً واحداً على الأقل"); return; }
       const dtp = dt(), desk = dtp === "stop" ? $("mo-desk").value : ""; if (dtp === "stop" && !desk) { toast("⚠️ اختر مكتب Stop Desk"); return; }
       const c = calc(items, $("mo-fee").value, $("mo-disc").value), b = $("mo-save"); b.disabled = true; const lab = b.textContent; b.textContent = "جارٍ الحفظ…";
-      const clean = items.map(l => ({ slug: l.slug || "", title: String(l.title).trim().slice(0, 160), qty: num(l.qty), price: num(l.price) })), txt = textOf(clean);
+      const clean = items.map(l => ({ slug: l.slug || "", title: String(l.title).trim().slice(0, 160), qty: num(l.qty), price: num(l.price) })), txt = textOf(items.map(l => ({ title: String(l.title).trim().slice(0, 160), qty: num(l.qty), price: num(l.price), amt: amtOf(l) }))), offTxt = items.filter(l => l.offer != null || num(l.free) > 0).map(l => "عرض " + l.qty + " قطع" + (num(l.free) > 0 ? " (" + (l.qty - l.free) + " + " + l.free + " مجاناً)" : "") + " بسعر " + amtOf(l)).join(" ؛ ");
       try {
         if (mode === "edit") {
           const fdb = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, subtotal: c.sub, discount: c.disc, fee: c.fee, total: c.total, items: clean, items_text: txt };
@@ -101,7 +107,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
           close(); ad.renderStats(); ad.renderOrders(); try { ad.openOrderPreview(ad.orders.indexOf(src)); } catch (e) { }
           toast(saved ? "✅ حُفظ تعديل الطلب" : "✅ حُفظ التعديل في اللوحة"); return;
         }
-        const extra = { "✍️ طلب يدوي": "نعم" }; { const fe = $("mo-from"); if (fe && fe.value && fe.value !== fromDef(ad)) extra["📍 ولاية الانطلاق"] = fe.value; } if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
+        const extra = { "✍️ طلب يدوي": "نعم" }; if (offTxt) extra["🎁 العرض"] = offTxt; { const fe = $("mo-from"); if (fe && fe.value && fe.value !== fromDef(ad)) extra["📍 ولاية الانطلاق"] = fe.value; } if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
         const order = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, items: clean, subtotal: c.sub, fee: c.fee, total: c.total, coupon: "", discount: c.disc, extra, note: $("mo-note").value.trim() };
         const r = await API.addOrder(order);
         if (!r || !r.ok) { b.disabled = false; b.textContent = lab; toast("❌ تعذّر حفظ الطلب — تحقق من الاتصال وصلاحية الدخول"); return; }
