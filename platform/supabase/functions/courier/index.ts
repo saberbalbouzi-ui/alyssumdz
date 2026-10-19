@@ -26,6 +26,12 @@ Deno.serve(async (req) => {
   for (const [k, v] of Object.entries((b.headers ?? {}) as Record<string, unknown>)) if (/^[A-Za-z0-9-]{1,40}$/.test(k) && !/[\r\n]/.test(String(v))) headers[k] = String(v);
   try {
     const r = await fetch(u.toString(), { method, headers, body: method === "GET" || method === "DELETE" ? undefined : (b.body == null ? undefined : String(b.body)), redirect: "manual", signal: AbortSignal.timeout(25000) });
+    if (b.binary) {                                   // ملفات ثنائية (PDF بوردرو): تُعاد base64 حتى 8MB
+      const buf = new Uint8Array(await r.arrayBuffer());
+      if (buf.length > 8 * 1024 * 1024) return json({ error: "too_large" }, 413);
+      let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+      return json({ ok: true, status: r.status, ct: r.headers.get("content-type") ?? "", b64: btoa(bin) });
+    }
     return json({ ok: true, status: r.status, body: (await r.text()).slice(0, 200000) });
   } catch (e) { return json({ error: "upstream_failed", detail: String(e).slice(0, 120) }, 502); }
 });
