@@ -66,8 +66,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     ok("طرد مقنَّع بلا تتبع في الطلب يُربط بالطلب المطابق ويظهر اسمه وهاتفه الحقيقيان", yf.linked, yf);
     ok("تنزيل البوردرو PDF: ملف باسم الطرد، واحتياط فتح الرابط عند منع CORS", yf.d1 === true && yf.rec[0] === "bordereau-yal-TEST1.pdf" && yf.d2 === false && yf.opened === "https://example.com/l.pdf", yf); }
   { const bk = await p.evaluate(async () => { /* الطباعة المجمّعة: 4 بوردرو في ورقة A4 (2×2) + بطاقات تنزيل الأصلية بلا iframe */
-      const mk = k => ({ id: "B" + k, name: "زبون " + k, phone: "05501234" + (10 + k), wilaya: "Batna", commune: "Barika", dtype: k === 2 ? "stop" : "home", desk: k === 2 ? "مكتب باتنة" : "", items: "منتج ×1 = 1800", total: 2400, status: "confirmee" });
-      const list = []; for (let k = 0; k < 5; k++) { const o = mk(k); Admin.cacheLabel(o.id, "https://yalidine.app/p/B" + k + ".pdf"); list.push({ o, t: { company: "yalidine", tracking: "yal-B" + k } }); }
+      const mk = k => ({ id: "ZBK" + k, name: "زبون " + k, phone: "05501234" + (10 + k), wilaya: "Batna", commune: "Barika", dtype: k === 2 ? "stop" : "home", desk: k === 2 ? "مكتب باتنة" : "", items: "منتج ×1 = 1800", total: 2400, status: "confirmee" });
+      const list = []; for (let k = 0; k < 5; k++) { const o = mk(k); Admin.cacheLabel(o.id, "https://yalidine.app/p/ZBK" + k + ".pdf"); list.push({ o, t: { company: "yalidine", tracking: "yal-B" + k } }); }
       let html = ""; const w = { document: { open() { html = ""; }, write(t) { html += t; }, close() { } }, closed: false };
       await Admin.printBordereaux(list, w);
       return { sheets: (html.match(/class="sheet"/g) || []).length, cells: (html.match(/class="lb"/g) || []).length, frames: (html.match(/<iframe/g) || []).length, dl: (html.match(/class="dl"/g) || []).length, stop: /مكتب باتنة/.test(html), bar: /تنزيل كل الأصلية/.test(html), svg: /<svg/.test(html) }; });
