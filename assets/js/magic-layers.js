@@ -451,6 +451,182 @@ const MagicLayers = (() => {
   }
 
   /* ═══════════════ الواجهة ═══════════════ */
+  /* ═══════════════ صفحة هبوط كاملة بطبقات ═══════════════
+     نفس برومبت «تصميم بطبقات» (PBSpec: خطة ثم طبقات بنصوصها وأسعارها وقسم الطلب) لكن صور الصفحة كلها تُرسم في لوحة أصول واحدة
+     على خلفية بيضاء (شبكة خلايا متساوية) ثم تُقصّ بمكوّنات متصلة وتُوزَّع على الطبقات الفارغة — بدل طلب توليد لكل صورة. */
+  const SHEET_MAX = 12, SHEET_W = 1536, SHEET_H = 1024;
+  function gridFor(n) { return n <= 2 ? { cols: 2, rows: 1 } : n <= 4 ? { cols: 2, rows: 2 } : n <= 6 ? { cols: 3, rows: 2 } : n <= 8 ? { cols: 4, rows: 2 } : { cols: 4, rows: 3 }; }
+  function sheetPrompt(items, g, ctx) {
+    const lines = items.map((a, i) => "Cell " + (i + 1) + " (row " + (Math.floor(i / g.cols) + 1) + ", column " + (i % g.cols + 1) + ") " + (a.cut ? "[ISOLATED]" : "[SCENE]") + ": " + a.prompt).join("\n");
+    return "Create ONE image: an asset sheet — a perfectly regular grid of " + g.cols + " columns × " + g.rows + " rows of EQUAL cells, filled left-to-right, top row first, on a PURE FLAT WHITE background (#FFFFFF). Each cell holds exactly one separate asset, centered, occupying about 70-80% of the cell, with at least 12% empty white margin on every side so assets never touch each other or the cell borders. No grid lines, no borders, no frames, no labels, no numbers, no captions, no text or letters anywhere, no logos or watermarks, no people (hands only if required; never an uncovered woman). Photorealistic, professional e-commerce marketing quality, consistent soft studio lighting" + (ctx ? ", everything consistent with this product: " + ctx : "") + ". Unused cells stay empty white.\n" + lines + "\n[ISOLATED] = a single object with clean edges, NO background and NO ground shadow. [SCENE] = a full rectangular picture (texture / background / scene) that fills a clean rectangle inside its cell.";
+  }
+  /* مكوّنات متصلة لكل ما ليس أبيض (مع تمدّد صغير يلصق أجزاء العنصر الواحد) ← صناديق [x0,y0,x1,y1,area] بالبكسل */
+  function findBlobs(cv, o) {
+    o = o || {}; const k = Math.min(1, 480 / Math.max(cv.width, cv.height)), w = Math.max(1, Math.round(cv.width * k)), h = Math.max(1, Math.round(cv.height * k)), r = o.dil == null ? 2 : o.dil;
+    const t = mk(w, h), g = t.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h), dm = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) { const q = i * 4; m[i] = d[q + 3] > 20 && (d[q] < 236 || d[q + 1] < 236 || d[q + 2] < 236) ? 1 : 0; }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (m[y * w + x]) for (let dy = -r; dy <= r; dy++) { const yy = y + dy; if (yy < 0 || yy >= h) continue; for (let dx = -r; dx <= r; dx++) { const xx = x + dx; if (xx >= 0 && xx < w) dm[yy * w + xx] = 1; } }
+    const seen = new Uint8Array(w * h), out = [], st = [];
+    for (let i0 = 0; i0 < w * h; i0++) {
+      if (!dm[i0] || seen[i0]) continue; let x0 = w, y0 = h, x1 = -1, y1 = -1, area = 0; st.length = 0; st.push(i0); seen[i0] = 1;
+      while (st.length) {
+        const i = st.pop(), x = i % w, y = (i / w) | 0;
+        if (m[i]) { area++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x > 0 && dm[i - 1] && !seen[i - 1]) { seen[i - 1] = 1; st.push(i - 1); }
+        if (x < w - 1 && dm[i + 1] && !seen[i + 1]) { seen[i + 1] = 1; st.push(i + 1); }
+        if (y > 0 && dm[i - w] && !seen[i - w]) { seen[i - w] = 1; st.push(i - w); }
+        if (y < h - 1 && dm[i + w] && !seen[i + w]) { seen[i + w] = 1; st.push(i + w); }
+      }
+      if (x1 < 0 || area < 20 || (x1 - x0) < 5 || (y1 - y0) < 5) continue;
+      out.push([Math.floor(x0 / k), Math.floor(y0 / k), Math.min(cv.width, Math.ceil((x1 + 1) / k)), Math.min(cv.height, Math.ceil((y1 + 1) / k)), area / (k * k)]);
+    }
+    return out;
+  }
+  /* توزيع الصناديق على الخلايا: الخلية = الموضع الهندسي (مركز الصندوق)؛ إن تجاهل النموذج الشبكة يُوزَّع بترتيب القراءة */
+  function assignCells(blobs, g, W, H, n) {
+    const cw = W / g.cols, ch = H / g.rows, out = Array(n).fill(null);
+    blobs.forEach(b => {
+      const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2, i = Math.min(g.rows - 1, Math.floor(cy / ch)) * g.cols + Math.min(g.cols - 1, Math.floor(cx / cw));
+      if (i >= n) return; out[i] = out[i] ? [Math.min(out[i][0], b[0]), Math.min(out[i][1], b[1]), Math.max(out[i][2], b[2]), Math.max(out[i][3], b[3])] : [b[0], b[1], b[2], b[3]];
+    });
+    if (out.filter(Boolean).length < Math.ceil(n / 2) && blobs.length >= n) {
+      const big = blobs.slice().sort((a, b) => b[4] - a[4]).slice(0, n).sort((a, b) => (a[1] + a[3]) - (b[1] + b[3])), res = [];
+      for (let i = 0; i < big.length; i += g.cols) big.slice(i, i + g.cols).sort((a, b) => (a[0] + a[2]) - (b[0] + b[2])).forEach(b => res.push([b[0], b[1], b[2], b[3]]));
+      return Array.from({ length: n }, (_, i) => res[i] || null);
+    }
+    return out;
+  }
+  /* إزالة الأبيض المتصل بحواف القصاصة فقط (الأبيض داخل العنصر يبقى) + تنعيم حافة */
+  function cutWhite(c) {
+    const w = c.width, h = c.height, g = c.getContext("2d", { willReadFrequently: true }), im = g.getImageData(0, 0, w, h), px = im.data, bgm = new Uint8Array(w * h), st = [];
+    const wh = i => px[i * 4 + 3] < 12 || (px[i * 4] >= 238 && px[i * 4 + 1] >= 238 && px[i * 4 + 2] >= 238);
+    const push = i => { if (!bgm[i] && wh(i)) { bgm[i] = 1; st.push(i); } };
+    for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); } for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+    while (st.length) { const i = st.pop(), x = i % w, y = (i / w) | 0; if (x > 0) push(i - 1); if (x < w - 1) push(i + 1); if (y > 0) push(i - w); if (y < h - 1) push(i + w); }
+    for (let i = 0; i < w * h; i++) {
+      if (bgm[i]) { px[i * 4 + 3] = 0; continue; }
+      const x = i % w, y = (i / w) | 0;
+      if ((x > 0 && bgm[i - 1]) || (x < w - 1 && bgm[i + 1]) || (y > 0 && bgm[i - w]) || (y < h - 1 && bgm[i + w])) { const mn = Math.min(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]); if (mn > 205) px[i * 4 + 3] = Math.round(px[i * 4 + 3] * Math.max(.2, (255 - mn) / 50)); }
+    }
+    g.putImageData(im, 0, 0); return c;
+  }
+  const normKey = (p, cut) => String(p || "").trim().toLowerCase().replace(/\s+/g, " ") + "|" + (cut ? 1 : 0);
+  /* الصور الفارغة في صفحة: مجمَّعة بالوصف (نفس الوصف = أصل واحد) */
+  function emptyAssets(pg) {
+    const map = new Map();
+    (pg.sections || []).forEach(sec => (sec.free || []).forEach(w => {
+      if (w.type !== "image" || w.set.src) return; const pr = String(w.set.aiPrompt || w.set.alt || "").trim(); if (pr.length < 8) return;
+      const cut = !!(w.set.__cutout || w.set.aiCut), key = normKey(pr, cut); let a = map.get(key); if (!a) { a = { key, prompt: pr.slice(0, 300), cut, ws: [] }; map.set(key, a); } a.ws.push(w);
+    }));
+    return [...map.values()];
+  }
+  async function toDataUrl(blob, max) {
+    const bm = await createImageBitmap(blob), k = Math.min(1, max / Math.max(bm.width, bm.height)), c = mk(bm.width * k, bm.height * k); c.getContext("2d").drawImage(bm, 0, 0, c.width, c.height);
+    let u = c.toDataURL("image/webp", .86); if (!/^data:image\/webp/.test(u)) u = c.toDataURL("image/jpeg", .88); return u;
+  }
+  const withTimeout = (p, ms) => new Promise((res, rej) => { const t = setTimeout(() => rej(Object.assign(new Error("انتهت مهلة الطلب"), { code: "TIMEOUT" })), ms); p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); }); });
+  const walkRepl = (o, from, to) => { if (!o || typeof o !== "object") return; for (const k in o) { const v = o[k]; if (v === from) o[k] = to; else if (v && typeof v === "object") walkRepl(v, from, to); } };
+  function landExtra(o, hasPhoto) {
+    const real = hasPhoto ? 'صورة المنتج الحقيقية (المرفقة معك) تُستعمل كما هي بـ src:"asset:product_photo" — لا تضع لها prompt ولا تُولّدها.' : (o.product ? 'صورة المنتج الحقيقية تُستعمل كما هي بـ src:"product:cover" — لا تولّدها.' : "");
+    return "وضع «لوحة الأصول»: " + real + " كل صورة أخرى تُعرَّف بـ prompt إنجليزي قصير ومحدد وبلا أي نص أو شعار، واستعمل أقل عدد ممكن من الصور المختلفة (حتى 12 في الصفحة كلها، وأعد استعمال نفس الأصل بدل تكرار الوصف)؛ وسترسمها كلها دفعة واحدة في لوحة أصول واحدة ثم تُقصّ. اجعل cutout:true للعنصر المعزول (مكوّن، عنصر، منتج مكمّل) وبدونه للخلفيات والمشاهد والنقوش.";
+  }
+  async function landing(o) {
+    o = o || {}; const say = o.say || (() => { });
+    if (typeof PBSpec === "undefined" || typeof PBApp === "undefined" || typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("المطوّر غير متاح");
+    const rd = ImgGen.ready ? ImgGen.ready() : { ok: hasKey() }; if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
+    S.run = { cancelled: false }; const run = S.run; let photoUrl = "";
+    try {
+      if (o.photoBlob) photoUrl = await toDataUrl(o.photoBlob, 1100);
+      say("١/٤ تصميم الصفحة بنفس برومبت المطوّر الذكي (خطة ثم طبقات)…", "", true);
+      const spec = await PBSpec.generate({ name: o.name, desc: o.desc, goal: o.goal, lang: o.lang || "ar", type: o.type || "landing", colors: o.colors, style: o.style, width: 1080, height: 1080, offers: o.offers, extra: landExtra(o, !!photoUrl), blobs: o.photoBlob ? [o.photoBlob] : [], say: m => say(m, "", true) });
+      chk();
+      if (photoUrl) { spec.assets = spec.assets || {}; spec.assets.product_photo = { src: photoUrl }; }
+      const r = PBSpec.validate(spec); if (!r.ok) throw new Error(r.error);
+      if (o.product) r.page.product = o.product;
+      const pg = PBSpec.toPage(r, { product: r.page.product });
+      pg.slug = (r.page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4);
+      /* لوحات الأصول */
+      const assets = emptyAssets(pg), ctx = ((o.name || "") + (o.desc ? " — " + String(o.desc).slice(0, 160) : "")).trim(), chunks = [];
+      for (let i = 0; i < assets.length; i += SHEET_MAX) chunks.push(assets.slice(i, i + SHEET_MAX));
+      let got = 0;
+      for (let ci = 0; ci < chunks.length; ci++) {
+        chk(); const items = chunks[ci], g = gridFor(items.length);
+        say("٢/٤ رسم لوحة الأصول " + (ci + 1) + " من " + chunks.length + " (" + items.length + " أصل في طلب واحد)…", "", true);
+        let sheet = null;
+        for (let tr = 0; tr < 2 && !sheet; tr++) {
+          try { const res = await withTimeout(ImgGen.edit({ textOnly: true, prompt: sheetPrompt(items, g, ctx), W: SHEET_W, H: SHEET_H, confirm: false, title: "لوحة أصول" }), o.timeout || 200000); chk(); if (res && res.blob && res.blob.size > 3000) sheet = res; }
+          catch (e) { if (e.code === "NOKEY" || e.code === "OFF" || e.name === "AbortError" || /رصيد|credit|quota|limit/i.test(e.message || "")) throw e; }
+        }
+        if (!sheet) continue;
+        say("٣/٤ قصّ الأصول من اللوحة…", "", true);
+        let cv = sheet.canvas; if (!cv) { const bm = await createImageBitmap(sheet.blob); cv = mk(bm.width, bm.height); cv.getContext("2d").drawImage(bm, 0, 0); }
+        const cells = assignCells(findBlobs(cv), g, cv.width, cv.height, items.length);
+        for (let i = 0; i < items.length; i++) {
+          const b = cells[i]; if (!b) continue; const pad = Math.round(Math.max(cv.width, cv.height) * .004), x0 = Math.max(0, b[0] - pad), y0 = Math.max(0, b[1] - pad), x1 = Math.min(cv.width, b[2] + pad), y1 = Math.min(cv.height, b[3] + pad);
+          const c = mk(x1 - x0, y1 - y0); c.getContext("2d").drawImage(cv, x0, y0, x1 - x0, y1 - y0, 0, 0, c.width, c.height);
+          items[i].blob = await toBlob(items[i].cut ? cutWhite(c) : c, "image/png"); got++;
+        }
+      }
+      chk();
+      return { page: pg, assets, spec: r, photoUrl, total: assets.length, got };
+    } finally { if (S.run === run) S.run = null; }
+  }
+  /* فتح الصفحة في المطوّر ورفع الأصول المقصوصة وتركيبها على الطبقات الفارغة */
+  async function landingOpen(res, o) {
+    o = o || {}; const say = o.say || (() => { }), pg = res.page;
+    PBApp.open(pg, "", true);
+    let t = 0; while (t++ < 40 && !(PBApp.E && PBApp.E.page && document.getElementById("pb-app") && document.getElementById("pb-app").classList.contains("on"))) await sleep(200);
+    await sleep(500); const P = PBApp.E && PBApp.E.page; if (!P) throw new Error("تعذّر فتح المطوّر");
+    let ok = 0;
+    if (res.photoUrl && o.photoBlob) { try { const path = await PBApp.uploadBlob(o.photoBlob, "mlphoto", { max: 2400, q: .9 }); walkRepl(P, res.photoUrl, path); } catch (e) { console.warn("ml photo", e); } }
+    const byKey = new Map(emptyAssets(P).map(a => [a.key, a]));
+    for (let i = 0; i < res.assets.length; i++) {
+      const a = res.assets[i]; if (!a.blob) continue; const live = byKey.get(a.key); if (!live) continue;
+      say("٤/٤ رفع الأصل " + (i + 1) + " من " + res.assets.length + "…");
+      try { const path = await PBApp.uploadBlob(a.blob, "mla" + Date.now().toString(36) + i, { max: 2400, q: .9 }); live.ws.forEach(w => { w.set.src = path; delete w.set.__cutout; delete w.set.aiPrompt; delete w.set.aiCut; delete w.__dw; }); ok++; if (PBApp.renderCanvas) PBApp.renderCanvas(); } catch (e) { console.warn("ml asset", e); }
+    }
+    if (PBApp.renderCanvas) PBApp.renderCanvas(); try { P.dirty = true; PBApp.E.dirty = true; } catch (e) { }
+    return { placed: ok, total: res.assets.length, left: emptyAssets(P).reduce((n, a) => n + a.ws.length, 0) };
+  }
+  const prodsList = () => (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) || [];
+  function readLand() {
+    const v = id => { const e = $(id); return e ? e.value : ""; }, ps = prodsList(), p = ps.find(x => x.slug === v("ml-lprod"));
+    const L = { product: v("ml-lprod"), name: v("ml-lname").trim() || (p ? p.title : ""), desc: v("ml-ldesc").trim() || (p && (p.desc || p.description) || ""), goal: v("ml-lgoal").trim(), colors: v("ml-lcol").trim(), lang: v("ml-llang") || "ar", type: v("ml-ltype") || "landing" };
+    L.offers = p && p.offers ? p.offers.map(x => x.qty + " قطع = " + x.price + " دج" + (x.free ? " (منها " + x.free + " هدية)" : "")).join("، ") : "";
+    O.land = { product: L.product, name: v("ml-lname"), desc: v("ml-ldesc"), goal: L.goal, colors: L.colors, lang: L.lang, type: L.type }; saveO(); return L;
+  }
+  function uiL(busy) { const g = $("ml-land-go"), c = $("ml-lcancel"); if (g) g.disabled = !!busy; if (c) c.hidden = !busy; }
+  async function runLanding() {
+    if (S.busy) return; const L = readLand();
+    if (!L.name) { say("اختر منتجاً أو اكتب اسمه أولاً.", "err"); return; }
+    if (!hasKey()) { say("يلزم مفتاح Alyssum API لهذا الوضع (اضبطه من «تصميم بطبقات» أو إعدادات مولّد الصور).", "err"); return; }
+    if (!confirm("سيُنشأ تصميم الصفحة ثم تُرسم أصولها في لوحة (أو أكثر) بتقنية Alyssum API وتُستهلك من رصيدك (بلا أي كتابة داخل الصور). المتابعة؟")) return;
+    S.busy = true; uiL(true);
+    try {
+      const photo = S.lphoto || null, res = await landing(Object.assign({}, L, { photoBlob: photo, say }));
+      say("تم التصميم — جارٍ فتح الصفحة…", "", true);
+      close(true); const f = await landingOpen(res, { photoBlob: photo, say: m => toast(m) });
+      toast("✅ صفحة هبوط من " + res.page.sections.length + " قسماً: رُكّبت " + f.placed + " من " + f.total + " أصل" + (f.left ? " — بقيت " + f.left + " صورة فارغة (زر «🧩 تصميم بطبقات» ← «🖼️ توليد الصور الفارغة» يكملها)" : ""));
+    } catch (e) {
+      S.busy = false; uiL(false); say(e.name === "AbortError" ? "أُلغيت العملية." : e.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد." : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return;
+    }
+    S.busy = false;
+  }
+  function landHtml() {
+    const ps = prodsList(), L = O.land || {}, sel = (v, a) => v === a ? " selected" : "";
+    return '<div class="ml-card" data-m="land"><h4>1. المنتج</h4><label class="f" for="ml-lprod">منتج المتجر</label><select id="ml-lprod"><option value="">— بلا ربط بمنتج —</option>' + ps.map(p => '<option value="' + esc(p.slug) + '"' + (L.product === p.slug ? " selected" : "") + ">" + esc(p.title) + "</option>").join("") + '</select>' +
+      '<label class="f" for="ml-lname">اسم المنتج (إن لم تختر منتجاً)</label><input id="ml-lname" value="' + esc(L.name || "") + '"><label class="f" for="ml-ldesc">وصف المنتج</label><textarea id="ml-ldesc" placeholder="ما هو، لمن، أبرز فوائده">' + esc(L.desc || "") + '</textarea>' +
+      '<label class="f" for="ml-lphoto">صورة المنتج الحقيقية (اختياري — تُستعمل كما هي ولا تُولَّد)</label><input type="file" id="ml-lphoto" accept="image/*"><div class="ml-hint" id="ml-lphotost">بلا صورة: يُستعمل غلاف المنتج المختار.</div></div>' +
+      '<div class="ml-card" data-m="land"><h4>2. التصميم</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="f" for="ml-llang">اللغة</label><select id="ml-llang"><option value="ar"' + sel(L.lang, "ar") + '>العربية</option><option value="fr"' + sel(L.lang, "fr") + '>الفرنسية</option><option value="en"' + sel(L.lang, "en") + '>الإنجليزية</option></select></div><div><label class="f" for="ml-ltype">النوع</label><select id="ml-ltype"><option value="landing"' + sel(L.type, "landing") + '>صفحة هبوط كاملة</option><option value="banner"' + sel(L.type, "banner") + '>بنر / إعلان</option></select></div></div>' +
+      '<label class="f" for="ml-lcol">ألوان العلامة (اختياري)</label><input id="ml-lcol" value="' + esc(L.colors || "") + '" placeholder="مثال: #1e5e20 و #c8a24b"><label class="f" for="ml-lgoal">الجمهور والأسلوب (اختياري)</label><input id="ml-lgoal" value="' + esc(L.goal || "") + '" placeholder="مثال: أمهات الأطفال — أسلوب فاخر بألوان خضراء وذهبية">' +
+      '<div style="margin-top:12px;display:grid;gap:8px"><button class="b g w" id="ml-land-go" type="button">🚀 أنشئ صفحة هبوط كاملة بطبقات</button><button class="b o w" id="ml-lcancel" type="button" hidden>إلغاء</button></div>' +
+      '<div class="ml-hint">يصمّم الذكاء الاصطناعي الصفحة بنفس برومبت المطوّر الذكي (أقسام ونصوص وأسعار حقيقية وقسم طلب)، ثم تُرسم كل صورها في لوحة أصول واحدة وتُقصّ وتُوزَّع على الطبقات. ما لم يُقصّ بدقة يبقى فارغاً ويُكمل بزر «توليد الصور الفارغة».</div></div>';
+  }
+  function setMode(m) {
+    O.mode = m === "land" ? "land" : "ext"; saveO(); document.querySelectorAll("#ml-bg [data-m]").forEach(e => { e.style.display = e.dataset.m === O.mode ? "" : "none"; });
+    document.querySelectorAll("#ml-bg [data-mt]").forEach(e => e.classList.toggle("on", e.dataset.mt === O.mode));
+    const em = $("ml-empty"); if (em && !S.src) em.innerHTML = O.mode === "land" ? "املأ بيانات المنتج ثم اضغط «أنشئ صفحة هبوط كاملة بطبقات».<br>ستُفتح الصفحة في المطوّر." : "ارفع صورة ثم اضغط «استخرج كل العناصر».<br>ستظهر الطبقات هنا.";
+  }
   const CSS = '#ml-bg{position:fixed;inset:0;z-index:2147483000;background:rgba(3,10,7,.94);color:#fff;display:flex;flex-direction:column;direction:rtl;font:14px/1.5 Cairo,system-ui,sans-serif}#ml-bg *{box-sizing:border-box}' +
     '#ml-top{display:flex;align-items:center;gap:.7rem;padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.12);background:rgba(9,24,18,.98)}#ml-top h3{margin:0;font-size:1.05rem}#ml-top small{color:rgba(255,255,255,.7)}#ml-top .sp{flex:1}' +
     '#ml-main{flex:1;min-height:0;display:grid;grid-template-columns:320px minmax(0,1fr) 340px;gap:12px;padding:12px}@media(max-width:1000px){#ml-main{grid-template-columns:1fr;overflow:auto}}' +
@@ -469,7 +645,7 @@ const MagicLayers = (() => {
     '#ml-layers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:58vh;overflow:auto}.ml-row{display:grid;grid-template-columns:48px 1fr;gap:8px;padding:6px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.05);cursor:pointer}.ml-row.sel{border-color:#5da0ff;box-shadow:0 0 0 1px #5da0ff inset}.ml-row.off{opacity:.5}' +
     '.ml-th{width:48px;height:48px;border-radius:6px;background:conic-gradient(#2a2f2c 25%,#383e3a 0 50%,#2a2f2c 0 75%,#383e3a 0) 0 0/10px 10px}.ml-meta{min-width:0}.ml-nm{width:100%;padding:2px 6px!important;font-size:.82rem;background:transparent!important;border-color:transparent!important}.ml-nm:hover,.ml-nm:focus{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.2)!important}' +
     '.ml-btns{display:flex;gap:3px;align-items:center;margin-top:3px}.ml-btns input[type=range]{flex:1;min-width:36px;accent-color:var(--g-mint,#c6fe17)}.ml-ib{padding:3px;line-height:0;border-radius:6px;background:transparent;border:1px solid transparent;color:rgba(255,255,255,.65);cursor:pointer}.ml-ib:hover{color:#fff;border-color:rgba(255,255,255,.25)}.ml-ib.on{color:var(--g-mint,#c6fe17)}.ml-ib svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}' +
-    '.ml-tag{color:rgba(255,255,255,.5);font-size:.68rem}.ml-none{color:rgba(255,255,255,.6);text-align:center;padding:14px;font-size:.82rem}.ml-exp{display:grid;gap:8px;margin-top:10px}';
+    '.ml-tag{color:rgba(255,255,255,.5);font-size:.68rem}.ml-none{color:rgba(255,255,255,.6);text-align:center;padding:14px;font-size:.82rem}.ml-exp{display:grid;gap:8px;margin-top:10px}.ml-modes{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}.ml-modes button{padding:.55rem .4rem;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:800 .82rem inherit;font-family:inherit;cursor:pointer;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 6px rgba(0,0,0,.18)}.ml-modes button.on{background:rgba(198,254,23,.25);border-color:rgba(198,254,23,.55)}';
   const cssOnce = () => { if ($("ml-css")) return; const st = document.createElement("style"); st.id = "ml-css"; st.textContent = CSS; document.head.appendChild(st); };
   function readOpts() {
     const v = (id, d) => { const e = $(id); return e ? e.value : d; }, c = id => { const e = $(id); return e ? !!e.checked : true; };
@@ -489,15 +665,15 @@ const MagicLayers = (() => {
   }
   function optsHtml() {
     const sel = (v, a) => v === a ? " selected" : "";
-    return '<div class="ml-card"><h4>1. الصورة</h4><div id="ml-drop" tabindex="0" role="button"><div id="ml-dropin">اسحب صورة هنا، أو اضغط للاختيار، أو الصقها (Ctrl+V)</div></div><input type="file" id="ml-file" accept="image/*" hidden></div>' +
-      '<div class="ml-card"><h4>2. الاستخراج</h4>' +
+    return '<div class="ml-modes"><button type="button" data-mt="ext">🪄 تفكيك صورة</button><button type="button" data-mt="land">🚀 صفحة هبوط كاملة</button></div>' + landHtml() + '<div class="ml-card" data-m="ext"><h4>1. الصورة</h4><div id="ml-drop" tabindex="0" role="button"><div id="ml-dropin">اسحب صورة هنا، أو اضغط للاختيار، أو الصقها (Ctrl+V)</div></div><input type="file" id="ml-file" accept="image/*" hidden></div>' +
+      '<div class="ml-card" data-m="ext"><h4>2. الاستخراج</h4>' +
       '<div class="ml-chk"><input type="checkbox" id="ml-api"' + (O.api ? " checked" : "") + '><label for="ml-api" style="margin:0">Alyssum API: يعدّد كل العناصر (يحتاج مفتاحاً)</label></div>' +
       '<div class="ml-chk"><input type="checkbox" id="ml-local"' + (O.local ? " checked" : "") + '><label for="ml-local" style="margin:0">كشف وأقنعة محلية (SAM) — مجاني، يُحمَّل نموذج مرة واحدة</label></div>' +
       '<div class="ml-chk"><input type="checkbox" id="ml-rt"' + (O.realText ? " checked" : "") + '><label for="ml-rt" style="margin:0">تحويل النصوص إلى نص حقيقي قابل للتعديل (ويُمسح النص من الخلفية)</label></div>\n      <label class="f" for="ml-cover">مستوى الشمول</label><select id="ml-cover"><option value="fast"' + sel(O.cover, "fast") + '>سريع — مرور واحد ومتبقٍ</option><option value="dense"' + sel(O.cover, "dense") + '>شامل — تجزئة 2×2 ومرورا متبقٍ</option><option value="max"' + sel(O.cover, "max") + '>أقصى — تجزئة 3×3 وثلاثة مرورات (للخلفيات المعقّدة)</option></select>' +
       '<div class="row2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="f" for="ml-max">أقصى عدد للعناصر</label><input type="number" id="ml-max" min="10" max="200" value="' + O.max + '"></div><div><label class="f" for="ml-bgm">الخلفية</label><select id="ml-bgm"><option value="auto"' + sel(O.bg, "auto") + '>تلقائي</option><option value="orig"' + sel(O.bg, "orig") + '>الصورة الأصلية</option><option value="local"' + sel(O.bg, "local") + '>ترميم محلي</option><option value="api"' + sel(O.bg, "api") + '>ترميم Alyssum API</option></select></div></div>' +
       '<label class="f" for="ml-ctx">وصف الصورة (اختياري)</label><textarea id="ml-ctx" placeholder="مثال: إعلان بقارورة ونصوص وزخارف على خلفية مزدحمة">' + esc(O.ctx) + '</textarea>' +
-      '<div style="margin-top:12px;display:grid;gap:8px"><button class="b g w" id="ml-go" type="button" disabled>🪄 استخرج كل العناصر</button><button class="b o w" id="ml-cancel" type="button" hidden>إلغاء</button></div><div id="ml-st" role="status"></div>' +
-      '<div class="ml-hint">الشامل والأقصى يرسلان عدة طلبات (الصورة كاملة + مربعات + المتبقي) ليلتقطا العناصر الصغيرة والنصوص حتى على خلفية مزدحمة. القص الدقيق بـSAM المحلي إن كان متاحاً، وإلا بمضلّع من Alyssum API.</div></div>';
+      '<div style="margin-top:12px;display:grid;gap:8px"><button class="b g w" id="ml-go" type="button" disabled>🪄 استخرج كل العناصر</button><button class="b o w" id="ml-cancel" type="button" hidden>إلغاء</button></div>' +
+      '<div class="ml-hint">الشامل والأقصى يرسلان عدة طلبات (الصورة كاملة + مربعات + المتبقي) ليلتقطا العناصر الصغيرة والنصوص حتى على خلفية مزدحمة. القص الدقيق بـSAM المحلي إن كان متاحاً، وإلا بمضلّع من Alyssum API.</div></div>' + '<div id="ml-st" role="status"></div>';
   }
   function open(init) {
     cssOnce(); close(true); S.open = true;
@@ -519,6 +695,11 @@ const MagicLayers = (() => {
     $("ml-zip").onclick = exportZip; $("ml-png").onclick = async () => download(await toBlob(composite()), "magic-layers.png"); $("ml-send").onclick = sendToBuilder;
     const sz = $("ml-sizer"); sz.addEventListener("pointerdown", onDown); sz.addEventListener("pointermove", onMove); sz.addEventListener("pointerup", onUp); sz.addEventListener("pointercancel", onUp);
     ["ml-api", "ml-local", "ml-rt", "ml-cover", "ml-max", "ml-bgm", "ml-ctx"].forEach(id => { const e = $(id); if (e) e.addEventListener("change", readOpts); });
+    document.querySelectorAll("#ml-bg [data-mt]").forEach(e => e.addEventListener("click", () => setMode(e.dataset.mt)));
+    ["ml-lprod", "ml-lname", "ml-ldesc", "ml-llang", "ml-ltype", "ml-lcol", "ml-lgoal"].forEach(id => { const e = $(id); if (e) e.addEventListener("change", readLand); });
+    $("ml-land-go").onclick = runLanding; $("ml-lcancel").onclick = () => { if (S.run) S.run.cancelled = true; };
+    $("ml-lphoto").onchange = e => { const f = e.target.files[0]; S.lphoto = f && f.type.startsWith("image/") ? f : null; const t = $("ml-lphotost"); if (t) t.textContent = S.lphoto ? "ستُستعمل صورتك كما هي: " + S.lphoto.name : "بلا صورة: يُستعمل غلاف المنتج المختار."; };
+    setMode(O.mode || "ext"); uiL(S.busy);
     window.addEventListener("keydown", onKey); window.addEventListener("resize", fit); window.addEventListener("paste", onPaste);
     /* إعادة بناء المسرح من الحالة المحفوظة (عند إعادة الفتح) */
     if (S.src) { setStage(S.W, S.H); $("ml-empty").style.display = "none"; const keep = S.layers; S.layers = []; keep.forEach(l => { const st = $("ml-stage"); l.canvas.className = "ml-layer"; st.insertBefore(l.canvas, $("ml-selbox")); S.layers.push(l); }); layout(); renderList(); updateButtons(); const di = $("ml-dropin"); if (di && S.blob) { di.innerHTML = ""; const im = new Image(); im.src = URL.createObjectURL(S.blob); di.appendChild(im); } ui(S.busy); }
@@ -530,6 +711,6 @@ const MagicLayers = (() => {
     const b = $("ml-bg"); if (b) b.remove(); window.removeEventListener("keydown", onKey); window.removeEventListener("resize", fit); window.removeEventListener("paste", onPaste);
     if (!quiet && S.run) S.run.cancelled = true; S.open = false;
   }
-  return { open, close, S, O, _t: { textProps, tilesFor, parseItems, norm, dedupe, iou, polyMask, keyOut, makeZip, crc32, detectApi, layerFromApi, generate, loadSource, composite, DETECT, COVER, listed } };
+  return { open, close, S, O, _t: { textProps, tilesFor, parseItems, norm, dedupe, iou, polyMask, keyOut, makeZip, crc32, detectApi, layerFromApi, generate, loadSource, composite, DETECT, COVER, listed, landing, landingOpen, gridFor, sheetPrompt, findBlobs, assignCells, cutWhite, emptyAssets, landExtra, setMode, runLanding } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = MagicLayers;

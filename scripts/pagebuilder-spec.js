@@ -397,7 +397,7 @@ ${o.type === "banner" ? "النوع: بنر/إعلان بقسم واحد" : "ا�
 {"concept":"فكرة التصميم في جملتين","tone":"نبرة الكلام","palette":{"primary":"#hex","secondary":"#hex","accent":"#hex","bg":"#hex","text":"#hex"},
  "sections":[{"name":"hero","goal":"هدف القسم","layout":"وصف التخطيط والعناصر"}],
  "assets":[{"name":"اسم_قصير","prompt":"وصف إنجليزي لصورة بلا أي كتابة أو شعارات","cutout":true}]}
-قواعد: الصور المطلوبة منفصلة وبلا نصوص ولا أسعار ولا أزرار؛ منتج العميل الحقيقي يُستعمل كما هو (لا يُولَّد)؛ لا آراء ولا ادّعاءات علاجية مخترعة؛ لا نساء بلا خمار.`;
+قواعد: الصور المطلوبة منفصلة وبلا نصوص ولا أسعار ولا أزرار؛ منتج العميل الحقيقي يُستعمل كما هو (لا يُولَّد)؛ لا آراء ولا ادّعاءات علاجية مخترعة؛ لا نساء بلا خمار.${o.extra ? "\n" + o.extra : ""}`;
   }
   function prompt(o, plan) {
     o = o || {}; const L = { ar: "العربية (RTL)", fr: "الفرنسية", en: "الإنجليزية" }[o.lang] || "العربية (RTL)";
@@ -415,6 +415,7 @@ ${plan ? "\nخطة التصميم المعتمدة (التزم بألوانها 
 مثال مصغّر على الصيغة (مثال فقط — لا تنسخ محتواه):
 ${JSON.stringify(SAMPLE)}
 
+${o.extra ? o.extra + "\n" : ""}
 أخرج الآن JSON واحداً فقط.`;
   }
 
@@ -429,12 +430,12 @@ ${JSON.stringify(SAMPLE)}
     try {
       if (o.plan !== false) {
         say("⏳ ١/٢ خطة التصميم (ألوان، أقسام، أصول)…");
-        try { const pr = await race(ImgGen.text({ prompt: planPrompt(o), json: true, temp: .7 }), 120000); if (pr && typeof pr === "object") plan = cleanPlan(pr); }
+        try { const pr = await race(ImgGen.text({ prompt: planPrompt(o), json: true, temp: .7, blobs: o.blobs }), 120000); if (pr && typeof pr === "object") plan = cleanPlan(pr); }
         catch (e) { if (e.code === "NOKEY" || e.code === "OFF") throw e; }
       }
       if (run.cancelled) throw aborted();
       say(plan ? "⏳ ٢/٢ تحويل الخطة إلى طبقات…" : "⏳ جارٍ توليد التصميم…");
-      const r = await race(ImgGen.text({ prompt: prompt(o, plan), json: true, temp: .8 }), 180000);
+      const r = await race(ImgGen.text({ prompt: prompt(o, plan), json: true, temp: .8, blobs: o.blobs }), 180000);
       if (run.cancelled) throw aborted();
       if (plan && r && typeof r === "object" && !r.plan) r.plan = plan; return r;
     } finally { if (RUN === run) RUN = null; }
@@ -648,5 +649,5 @@ ${JSON.stringify(SAMPLE)}
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, autofix, planPrompt, cleanPlan, cancel, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
 })();
