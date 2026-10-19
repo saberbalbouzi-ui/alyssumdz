@@ -67,6 +67,31 @@ HARD RULES
       store: opts.store || undefined, hooks: opts.hooks || {}, limits: opts.limits
     };
   }
-  return { create, removeBgLocal, imageOf, aspectOf, planPrompt, opsPrompt, editPrompt, SYSTEM, safeId };
+
+  /* ───────────── وضع التجريب: المفتاح في المتصفح (ImgGen) — للتجارب فقط ─────────────
+     يستعمل آلية ImgGen القائمة كما هي (المفتاح في localStorage alyssum_gp_gkey، سقف الإنفاق alyssum_ig_budget، اختيار النموذج، قصّ الصورة للمقاس).
+     الحدود هنا على جهاز المستخدم فقط (سقوف التشغيل داخل PBCopilot + ميزانية ImgGen) — ليست حماية خادمية، ولا تُستعمل خارج التجارب.
+     عند ضبط رمز AiProxy يمرّ نفس النداء تلقائياً عبر الخادم (AiProxy يلفّ fetch). */
+  function createBrowser(opts) {
+    opts = opts || {}; const IG = () => { if (typeof ImgGen === "undefined") throw err("adapter_missing", "ImgGen غير محمّل"); return ImgGen; };
+    const toErr = (e, ctl) => { if (e && e.code && /^(cancelled|timeout)$/.test(e.code)) return e; if (ctl.user) return err("cancelled", "أُلغي الطلب", { cancelled: true }); if (ctl.timedOut) return err("timeout", "انتهت مهلة النموذج", { retryable: true });
+      const m = String(e && e.message || e), c = e && e.code; if (c === "NOKEY") return err("nokey", "لا يوجد مفتاح — الصقه في إعدادات مولّد الصور", { limit: true }); if (c === "OFF") return err("off", "التوليد الذكي معطّل في الإعدادات", { limit: true });
+      if (/سقف|رصيد|budget|نفد|انتهى/i.test(m)) return err("budget", m, { limit: true }); if (/\b(401|402|403)\b/.test(m)) return err("auth", m, { limit: true }); return err(c || "model_error", m, { retryable: true }); };
+    const guarded = async (fn, ms) => { const ctl = { user: false, timedOut: false }, ac = new AbortController(); let tm, off;
+      const stop = new Promise((_, rej) => { tm = setTimeout(() => { ctl.timedOut = true; ac.abort(); rej(err("timeout", "انتهت مهلة النموذج", { retryable: true })); }, ms || opts.timeoutMs || 90000);
+        if (opts.signal) { const f = () => { ctl.user = true; ac.abort(); rej(err("cancelled", "أُلغي الطلب", { cancelled: true })); }; if (opts.signal.aborted) f(); else { opts.signal.addEventListener("abort", f, { once: true }); off = () => opts.signal.removeEventListener("abort", f); } } });
+      try { return await Promise.race([fn(ac.signal), stop]); } catch (e) { throw toErr(e, ctl); } finally { clearTimeout(tm); if (off) off(); stop.catch(() => { }); } };
+    const text = (stage, prompt, needOps) => guarded(async signal => {
+      const j = await IG().text({ prompt, json: true, temp: stage === "plan" ? 0.6 : 0.35, maxTokens: stage === "plan" ? 4096 : 14000, signal });
+      if (!j || typeof j !== "object" || Array.isArray(j)) throw err("invalid_output", "مخرجات غير مفهومة"); if (needOps && !Array.isArray(j.ops)) throw err("invalid_output", "الغلاف بلا ops"); return j; });
+    return {
+      llm: { plan: x => text("plan", planPrompt(x), false), ops: x => text("ops", opsPrompt(x), true), edit: x => text("edit", editPrompt(x), true) },
+      img: { generate: g => guarded(async () => { const r = await IG().edit({ textOnly: true, confirm: false, prompt: g.prompt, W: g.W, H: g.H, fmt: "png", title: "Copilot" }); if (!r || !r.blob) throw err("invalid_output", "لا صورة في الردّ"); return { blob: r.blob }; }, 150000) },
+      removeBg: opts.removeBg || removeBgLocal, upload: opts.upload || undefined,
+      guard: { trial: true, charge: async () => { const rd = IG().ready(); if (!rd.ok) return { ok: false, reason: rd.nokey ? "nokey" : "off" }; if (!IG().estimate().can(1)) return { ok: false, reason: "budget" }; return { ok: true }; } },
+      store: opts.store || undefined, hooks: opts.hooks || {}, limits: opts.limits
+    };
+  }
+  return { create, createBrowser, removeBgLocal, imageOf, aspectOf, planPrompt, opsPrompt, editPrompt, SYSTEM, safeId };
 })();
 if (typeof window !== "undefined") window.PBCopilotReal = PBCopilotReal;

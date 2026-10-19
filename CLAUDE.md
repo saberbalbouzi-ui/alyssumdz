@@ -314,6 +314,8 @@
 
 **Copilot م2 (بيئة التطوير فقط، غير منشور):** `platform/docs/copilot-phase2.md` — حدود دائمة في `platform/sql/copilot-ai-limits.sql` (`saas_ai_charge2/refund2`، اختبار متزامن `scripts/test-copilot-limits.sh`)، وضع `run/req` في الدالة `ai` مع تحقق مخرجات خادمي وإلغاء/مهلة/استرداد، `AiProxy.call`، و`scripts/pagebuilder-copilot-real.js`. اختبارات: `test-copilot-fn.mjs` (42)، `test-copilot.js` (76)، `test-copilot-real.js` (56). **لم يُجرَّب مع Gemini الحقيقي ولا طُبّق SQL/نُشرت الدالة؛ يلزم من المالك ضبط `GEMINI_API_KEY` في أسرار التطوير.** الاستمرارية البصرية: `page.background` (شرائح تدرّج موحّد) و`continuity_break` يرفض اعتماد قسم بحدّ لوني ظاهر.
 
+**Copilot — وضع التجريب (مفتاح المتصفح):** `admin.html?copilot=1` يحمّل `pagebuilder-copilot(-real|-ui).js` (سطر مُحمِّل واحد في admin.html، لا شيء بدونه) وزر ✨ Copilot؛ `createBrowser()` يستعمل ImgGen؛ `page.media` مستثناة من بصمة الصفحة. اختبار `scripts/test-copilot-trial.js` (23). التفاصيل في `platform/docs/copilot-phase2.md`.
+
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 

@@ -23,6 +23,8 @@ const PBCopilot = (() => {
   /* ───────────── أدوات ───────────── */
   const isObj = v => !!v && typeof v === "object" && !Array.isArray(v);
   const clone = o => JSON.parse(JSON.stringify(o));
+  /* بصمة الصفحة بلا قائمة الوسائط: رفع الصور أثناء التشغيل (PBApp.uploadBlob) يضيف إلى page.media في الصفحة الحيّة وهذا ليس تغييراً من المستخدم */
+  const baseJson = p => { const c = Object.assign({}, p); delete c.media; return JSON.stringify(c); };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const num = (v, a, b, d) => { v = Number(v); return Number.isFinite(v) ? Math.max(a, Math.min(b, v)) : d; };
   const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); return (h >>> 0).toString(36) + ":" + s.length; };
@@ -331,7 +333,7 @@ const PBCopilot = (() => {
 
   function commit(run, work) {
     const e = ED(); const live = e.page;
-    if (hash(JSON.stringify(live)) !== run.baseHash) throw new CmdError("base_changed", "تغيّرت الصفحة أثناء التشغيل — لم يُعتمد شيء");
+    if (hash(baseJson(live)) !== run.baseHash) throw new CmdError("base_changed", "تغيّرت الصفحة أثناء التشغيل — لم يُعتمد شيء");
     /* فحص ما بعد التنفيذ */
     const changed = diff(live, work), allowed = new Set(run.touched.map(x => "w:" + x).concat(run.touchedSec.map(x => "s:" + x), ["p:meta"]));
     const out = changed.filter(k => !allowed.has(k)); if (out.length) throw new CmdError("scope_violation", "تغيّر ما لم تذكره الأوامر: " + out.slice(0, 4).join("، "), { keys: out });
@@ -339,12 +341,15 @@ const PBCopilot = (() => {
     const brk = run.allowBreaks ? [] : contBreaks(work, run.touchedSec); if (brk.length) throw new CmdError("continuity_break", "حدّ لوني ظاهر بين أقسام متجاورة (يجب لون واحد أو تدرّج متصل): " + brk.slice(0, 3).map(b => b.from + "→" + b.to).join("، "), { breaks: brk });
     run.warnings = (run.warnings || []).concat(panelWarns(work, run.touchedSec).map(w => w.msg));
     if (!changed.length) return { changed: 0 };
+    /* الوسائط: ما رُفع أثناء التشغيل يبقى في قائمة الصفحة بعد الاعتماد، لكن حالة التراجع تعود بقائمة البداية بالضبط */
+    const curMedia = Array.isArray(live.media) ? live.media.slice() : [], baseMedia = run.baseMedia ? JSON.parse(run.baseMedia) : curMedia; if (curMedia.length || baseMedia.length || "media" in live) live.media = baseMedia;
     if (e.hist && e.hist[e.hi] !== JSON.stringify(live)) PBApp.commitAfter();      // نثبّت الحالة السابقة كي يعيدها التراجع بالضبط
+    const merged = baseMedia.slice(); curMedia.concat(Array.isArray(work.media) ? work.media : []).forEach(m => { if (!merged.some(x => JSON.stringify(x) === JSON.stringify(m))) merged.push(m); }); if (merged.length || "media" in work) work.media = merged;
     e.page = work; e.nextLabel = run.label; PBApp.commitAfter(); return { changed: changed.length };
   }
 
   async function drive(run, A) {
-    const e = ED(), live = livePage(); if (hash(JSON.stringify(live)) !== run.baseHash && !run.force) throw new CmdError("base_changed", "الصفحة المفتوحة تغيّرت منذ بدء هذا التشغيل");
+    const e = ED(), live = livePage(); if (hash(baseJson(live)) !== run.baseHash && !run.force) throw new CmdError("base_changed", "الصفحة المفتوحة تغيّرت منذ بدء هذا التشغيل");
     const work = run.work ? JSON.parse(run.work) : clone(live); run.status = "running"; A.store.save(run);
     try { await execute(run, work, A); } catch (err) { if (isStop(err)) throw err; run.status = "failed"; run.error = { code: err.code || "error", msg: str(err.message, 200) }; A.store.save(run); throw err; }
     let res; try { res = commit(run, work); } catch (err) { run.status = "rolled_back"; run.error = { code: err.code || "error", msg: str(err.message, 200), breaks: err.breaks }; A.store.save(run); return summary(run, false, err); }
@@ -354,7 +359,7 @@ const PBCopilot = (() => {
 
   /* ───────────── الواجهة ───────────── */
   async function plan(o, kind) {
-    const A = normAdapters(o.adapters), F = normFacts(o.facts), live = livePage(), run = newRun(Object.assign({}, o, { kind }), F, hash(JSON.stringify(live)));
+    const A = normAdapters(o.adapters), F = normFacts(o.facts), live = livePage(), run = newRun(Object.assign({}, o, { kind }), F, hash(baseJson(live))); run.baseMedia = JSON.stringify(live.media || []);
     run.limits = A.limits; A.store.save(run);
     try {
       if (!A.llm) throw new CmdError("adapter_missing", "محوّل نموذج اللغة غير متاح");

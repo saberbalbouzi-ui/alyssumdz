@@ -255,9 +255,13 @@ const HELPERS = require("./lib/copilot-test-helpers.js");
   ok(Ct.panel.w.some(m => /لوحة صندوقية/.test(m)), "مستطيل معتم كبير بزوايا يُنبَّه إليه كلوحة صندوقية", Ct.panel);
 
   /* ── 8) المحرر الحالي لم يُمسّ ── */
-  const git = require("child_process").execSync("git status --short", { cwd: ROOT }).toString();
-  const touched = git.split("\n").map(l => l.slice(3).trim()).filter(Boolean), guarded = touched.filter(f => (/^scripts\/pagebuilder[\w-]*\.js$/.test(f) && !/pagebuilder-copilot(-real)?\.js$/.test(f)) || f === "admin.html" || f === "scripts/build-admin-pb.py" || /^assets\/pages\//.test(f));
-  ok(guarded.length === 0, "المحرر وPBSpec وadmin.html وصفحات assets/pages لم تُمسّ (pagebuilder.js/pagebuilder-editor.js/… كما هي)", guarded);
+  const cp = require("child_process"), git = cp.execSync("git status --short", { cwd: ROOT }).toString();
+  const touched = git.split("\n").map(l => l.slice(3).trim()).filter(Boolean), guarded = touched.filter(f => (/^scripts\/pagebuilder[\w-]*\.js$/.test(f) && !/pagebuilder-copilot(-real|-ui)?\.js$/.test(f)) || f === "scripts/build-admin-pb.py" || /^assets\/pages\//.test(f));
+  ok(guarded.length === 0, "المحرر وPBSpec وصفحات assets/pages لم تُمسّ (pagebuilder.js/pagebuilder-editor.js/… كما هي)", guarded);
+  /* admin.html: مسموح فقط بسطر المُحمِّل الاختياري الوحيد (لا يعمل إلا مع ?copilot=1) */
+  const dh = cp.execSync("git diff HEAD -U0 -- admin.html", { cwd: ROOT }).toString().split("\n").filter(l => /^[+-]/.test(l) && !/^(\+\+\+|---)/.test(l));
+  const base = cp.execSync("git diff 5c95854 HEAD --stat -- admin.html", { cwd: ROOT }).toString();
+  ok(dh.every(l => /^\+/.test(l) && /alyssum_copilot/.test(l)) , "تغيير admin.html (إن وُجد) = سطر المُحمِّل الاختياري فقط بلا حذف أي سطر", dh.slice(0, 3));
   ok(!errs.length, "لا أخطاء JavaScript في الصفحة", errs.slice(0, 3));
 
   await b.close();
