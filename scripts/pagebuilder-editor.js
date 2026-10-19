@@ -91,7 +91,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
 .pbx-h.d-ne{top:-7px;right:-7px;cursor:nesw-resize}.pbx-h.d-nw{top:-7px;left:-7px;cursor:nwse-resize}.pbx-h.d-se{bottom:-7px;right:-7px;cursor:nwse-resize}.pbx-h.d-sw{bottom:-7px;left:-7px;cursor:nesw-resize}
-.pbx-pend{position:absolute;height:4px;border-top:2px dashed #8b3dff;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
+.pbx-pgend{position:absolute;height:0;border:0!important;border-top:2px solid #8b3dff!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
 .pbx-guide{position:absolute;background:repeating-linear-gradient(var(--gd,180deg),#e91e63 0 6px,transparent 6px 10px);pointer-events:none;z-index:4}
 .pbx-bar input[type=color]{width:26px;height:22px;padding:0;border:0;border-radius:4px;background:none;cursor:pointer;vertical-align:middle}.pbx-bar button.on{outline:2px solid #fff}
 .pbx-gb{border:1.5px dashed #cdbfa0;border-radius:10px;padding:.6rem;margin-bottom:.6rem;background:#fff}.pbx-gb input{width:64px;border:1.5px solid #e0d9c8;border-radius:8px;padding:.3rem;font-family:inherit}
@@ -1207,7 +1207,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   function drawPageEnd(ovl) {
     if (!isLong() || !fdoc || !root) return; const sec = E.page.sections[0], el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, y = o.oy + (r.top + r.height) * s, x0 = o.ox + r.left * s, w = r.width * s;
-    const ln = document.createElement("div"); ln.className = "pbx-pend"; ln.style.cssText = `left:${x0}px;top:${y - 2}px;width:${w}px`;
+    const ln = document.createElement("div"); ln.className = "pbx-pgend"; ln.style.cssText = `left:${x0}px;top:${y - 1}px;width:${w}px`;
     const hd = document.createElement("div"); hd.className = "pbx-pend-h"; hd.title = "اسحب للأعلى لتقصير الصفحة أو للأسفل لتطويلها (يلتصق بأسفل آخر عنصر)"; hd.innerHTML = "↕ نهاية الصفحة"; ln.appendChild(hd); ovl.appendChild(ln);
     hd.onmousedown = e => {
       e.preventDefault(); e.stopPropagation(); const dev = E.dev, mh0 = Number(eff(sec.set, "mh", dev)) || r.height, k = mh0 / (r.height || 1), top = r.top, tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
