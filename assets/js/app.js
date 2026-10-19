@@ -1198,7 +1198,7 @@ function initProduct(slug){
       items: orderItems().concat(bumpSel ? [{ slug: bumpSel.slug, title: bumpSel.title, qty: bumpSel.qty, price: bumpSel.price }] : []),
       subtotal: state.offer.price + bumpPrice, fee, total,
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
-      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title, "🆔 قاعدة العرض": bumpSel.rule.id } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
+      extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, (state.offer.qty > 1 || state.offer.free) ? { "🎁 العرض": "عرض " + state.offer.qty + " قطع" + (state.offer.free ? " (" + (state.offer.qty - state.offer.free) + " + " + state.offer.free + " مجاناً)" : "") + " بسعر " + fmt(state.offer.price) } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title, "🆔 قاعدة العرض": bumpSel.rule.id } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, Attrib),
     };
     const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(p.mpId){       // منتج سوق التوريد: لا يُقبل الطلب إلا إن حجز المورّد عمولته وكميته (فحص متزامن عند المنصة)
