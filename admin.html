@@ -8787,7 +8787,7 @@ const Admin = {
       row("التوصيل", o.dtype==="stop" ? "مكتب Stop Desk" + (o.desk ? " — " + esc(o.desk) : "") : "إلى المنزل") +
       row("المنتجات", esc(this.itemsDisplay(o)).replace(/\n/g,"<br>")) +
       S(()=>window.AdminUpsell ? AdminUpsell.previewRow(o) : "") +
-      S(()=>{ const pc = this.priceCheck(o); return pc.ok ? "" : row("⚠️ تدقيق السعر", '<span style="color:#fca5a5">' + pc.msgs.map(esc).join("<br>") + "</span>"); })() +
+      S(()=>{ const pc = this.priceCheck(o); return pc.ok ? "" : row("⚠️ تدقيق السعر", '<span style="color:#fca5a5">' + pc.msgs.map(esc).join("<br>") + "</span>"); }) +
       row("سعر المنتجات", n(o.subtotal)) + row("التوصيل (سعر)", Number(o.fee) ? n(o.fee) + (bd ? '<div style="font-size:.8rem;color:#8a8f8c;margin-top:.15rem">تفصيل: ' + n(bd[0]) + ' (سعر الولاية) + ' + n(bd[1]) + ' (إضافة البلدية)</div>' : "") : "مجاني") +
       (Number(o.discount) ? row("الخصم", "-" + n(o.discount) + (o.coupon ? " (" + esc(o.coupon) + ")" : "")) : "") +
       row("الإجمالي", '<b style="color:var(--green)">' + n(o.total) + '</b>') +
@@ -8799,8 +8799,8 @@ const Admin = {
       (at || cm ? row("نتيجة الاتصال", (at ? "📞 محاولة " + at : "") + (cm === "later" ? (this.callDue(o) ? " 📅 مؤجَّل إلى " + this.callDue(o) : " ⏰ أعد الاتصال لاحقاً") : cm === "wrong" ? " 📵 رقم خاطئ" : "")) : "") +
       (t ? row("التتبع", '<b dir="ltr">' + esc(t.tracking) + '</b>') : "") +
       (t && this.coNoOf(o) ? row("رقم الطلب عند الشركة", '<b dir="ltr">' + esc(this.coNoOf(o)) + '</b>') : "") +
-      S(()=>{ const af = this.addrFix(o); return af ? row("🏠 عنوان معدَّل", af.applied ? "✔ طُبّق على الطلب" + (af.text ? " — " + esc(af.text) : "") : '<b style="color:#fb923c">⏳ دوّنته المؤكِّدة فقط — عدّل العنوان في الطلب ثم أرسله</b>' + (af.text ? "<br>" + esc(af.text) : "")) : ""; })() +
-      S(()=>{ const cr = this.cancelReasonOf(o), L = window.AdminRoles && AdminRoles.CANCEL_REASONS; return cr ? row("سبب الإلغاء", esc((L && L[cr]) || cr)) : ""; })() +
+      S(()=>{ const af = this.addrFix(o); return af ? row("🏠 عنوان معدَّل", af.applied ? "✔ طُبّق على الطلب" + (af.text ? " — " + esc(af.text) : "") : '<b style="color:#fb923c">⏳ دوّنته المؤكِّدة فقط — عدّل العنوان في الطلب ثم أرسله</b>' + (af.text ? "<br>" + esc(af.text) : "")) : ""; }) +
+      S(()=>{ const cr = this.cancelReasonOf(o), L = window.AdminRoles && AdminRoles.CANCEL_REASONS; return cr ? row("سبب الإلغاء", esc((L && L[cr]) || cr)) : ""; }) +
       (note ? row("ملاحظة", esc(note)) : "") +
       ex.map(([k,v])=>row(esc(k), /^https:\/\/(maps\.google\.com|www\.openstreetmap\.org)\//.test(String(v)) ? '<a href="' + esc(v) + '" target="_blank" rel="noopener">📍 فتح على الخريطة</a>' : esc(typeof v === "object" ? JSON.stringify(v) : v))).join("") + '</table>';
     const a = document.getElementById("ord-prev-a"), close = "document.getElementById('ord-prev-bg').classList.remove('open')";
