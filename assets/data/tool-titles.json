@@ -214,6 +214,19 @@
         "fr": "Boîtes et emballages 3D",
         "en": "3D boxes and packs"
       }
+    },
+    "magiclayers": {
+      "icon": "19-magic-layers",
+      "t": {
+        "ar": "Magic Layers — تفكيك الصورة إلى طبقات",
+        "fr": "Magic Layers — décomposer une image en calques",
+        "en": "Magic Layers — split an image into layers"
+      },
+      "d": {
+        "ar": "حوّل أي صورة إلى طبقات مستقلة: عناصر ونصوص حقيقية على خلفية",
+        "fr": "Transformez une image en calques indépendants : éléments et vrais textes sur un fond",
+        "en": "Turn any image into independent layers: elements and real text over a background"
+      }
     }
   }
 }
