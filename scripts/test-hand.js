@@ -1901,7 +1901,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("ربط Facebook: انتهاء الربط يعرض «إعادة الربط» برتقالياً، وقرب الانتهاء يحذّر بالأيام", foT.expired && foT.warn, foT);
   // ═══ جوال: دائرة خضراء تقع فوق الهدف ═══
   { const nw = await p.evaluate(async () => { /* ولاية جديدة (بركة 60): تُرسل باسمها إن عدّتها الشركة ولاية، وإلا بالأم باتنة */
-      const SV = { cw: Admin.companyWilayas, cc: Admin.companyCommunes }; const co = { wilayasRequest: true }, cfg = {}, o = { id: "NW1", wilaya: "Barika", commune: "Barika" };
+      const SV = { cw: Admin.companyWilayas, cc: Admin.companyCommunes }; const co = { wilayasRequest: true, communesRequest: true }, cfg = {}, o = { id: "NW1", wilaya: "Barika", commune: "Barika" };
       Admin.companyWilayas = async () => ({ 5: { name: "Batna", ok: true }, 60: { name: "Barika", ok: true } });
       const a = await Admin.coOrderFor(co, cfg, o), asked = []; Admin.companyCommunes = async (c, g, id) => { asked.push(id); return { names: ["Barika", "Ouled Slimane"], nd: [] }; };
       const na = await Admin.normForCompany(co, cfg, a);
