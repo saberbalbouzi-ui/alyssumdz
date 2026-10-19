@@ -55,6 +55,20 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       return { aw: a.wilaya, awid: a.__coWid, nw: na.ok && na.ord.wilaya, asked, bw: b.wilaya, bwid: b.__coWid, bn: nb.ok && nb.ord.wilaya }; });
     ok("ولاية جديدة تعدّها الشركة قائمة بذاتها: تُرسل باسمها وبلدياتها من رقمها", nw.aw === "Barika" && nw.awid === 60 && nw.nw === "Barika" && nw.asked[0] === 60, nw);
     ok("ولاية جديدة لا تعرفها الشركة: تعود للولاية الأم", nw.bw === "Batna" && !nw.bwid && nw.bn === "Batna", nw); }
+  { const wk = await p.evaluate(async () => { /* بريكة (ولاية 60) تظهر مع بلديات باتنة، واختيارها يحوّل الولاية إليها */
+      ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), w = bg.querySelector("#mo-wil"), c = bg.querySelector("#mo-com");
+      w.value = "Batna"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 150));
+      const has = Array.from(c.options).some(o => o.value === "Barika" && o.dataset.w === "Barika"), own = Array.from(c.options).filter(o => !o.dataset.w).length;
+      c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 200));
+      const r = { has, own, wil: w.value, com: c.value, still: Array.from(c.options).some(o => o.value === "Barika") }; bg.remove(); return r; });
+    ok("بلدية بريكة تظهر مع بلديات باتنة وتحوّل الولاية عند اختيارها", wk.has && wk.own > 10 && wk.wil === "Barika" && wk.com === "Barika" && wk.still, wk); }
+  { const sp = await p.context().newPage(); await sp.goto(base + "/index.html"); await sp.waitForTimeout(800);
+    const sk = await sp.evaluate(() => { const slug = PRODUCTS.find(x => x.active !== false).slug; return slug; }); await sp.goto(base + "/p/" + sk + "/"); await sp.waitForTimeout(1500);
+    const st = await sp.evaluate(async () => { const w = document.getElementById("wilaya"), c = document.getElementById("commune"); if (!w || !c) return { none: true };
+      w.value = "5"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
+      const has = Array.from(c.options).some(o => o.value === "Barika" && o.dataset.w == "60"); c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
+      return { has, wil: w.value, com: c.value, kept: Array.from(c.options).some(o => o.value === "Barika") }; });
+    ok("المتجر: بريكة تظهر مع بلديات باتنة وتحوّل الولاية إلى 60", st.has && st.wil === "60" && st.com === "Barika" && st.kept, st); await sp.close(); }
   await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; window.__sodReal = Admin.sendOrderToDelivery; });
   // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
   await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);

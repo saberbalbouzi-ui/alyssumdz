@@ -162,8 +162,8 @@ ${csLine(o)}<div class="ccm-it">${esc(a.itemsDisplay(o))}</div>${window.AdminUps
 <div class="field"><label>ملاحظة العنوان (حيّ، معلم قريب…)</label><input id="cca-n" maxlength="120" placeholder="مثال: حي 5 جويلية، بجانب المسجد"></div>
 <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button type="button" class="small green" id="cca-ok">✅ أكّد الطلب</button><button type="button" class="small warn" id="cca-no">إلغاء</button></div></div>`;
     document.body.appendChild(bg); const q = id => bg.querySelector("#" + id), dt = () => (bg.querySelector('input[name="cca-t"]:checked') || {}).value || "home";
-    const fillC = keep => { const w = wOf(q("cca-w").value), l = (w && w.communes) || [], cur = keep == null ? o.commune : keep; q("cca-c").innerHTML = (cur && !l.includes(cur) ? `<option value="${esc(cur)}">${esc(cur)}</option>` : "") + l.map(c => `<option value="${esc(c)}"${c === cur ? " selected" : ""}>${esc(c)}</option>`).join(""); };
-    fillC(); q("cca-w").onchange = () => fillC(""); const close = () => bg.remove(); q("cca-no").onclick = close; bg.addEventListener("click", e => { if (e.target === bg) close(); });
+    const fillC = keep => { const w = wOf(q("cca-w").value), cur = keep == null ? o.commune : keep; q("cca-c").innerHTML = WilKids.html(w, cur); };
+    fillC(); q("cca-w").onchange = () => fillC(""); q("cca-c").onchange = () => WilKids.pick(q("cca-w"), q("cca-c")); const close = () => bg.remove(); q("cca-no").onclick = close; bg.addEventListener("click", e => { if (e.target === bg) close(); });
     q("cca-ok").onclick = async () => {
       const f = { wilaya: q("cca-w").value, commune: q("cca-c").value, dtype: dt() }, note = q("cca-n").value.trim(), txt = [f.wilaya, f.commune, f.dtype === "stop" ? "مكتب" : "منزل", note].filter(Boolean).join(" / ");
       const idx = a.orders.findIndex(x => x.id === o.id); if (idx < 0) { close(); return render(); }

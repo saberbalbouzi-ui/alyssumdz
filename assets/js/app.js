@@ -64,6 +64,22 @@ function shipRadios(name, w, commune){
   if(cur && cur.disabled){ const alt = rs.find(r=>!r.disabled); if(alt){ alt.checked = true; alt.dispatchEvent(new Event("change")); } }
 }
 function shipOptLabel(w, c){ return (w && w.xc && w.xc[c] === "all") ? c + " (غير متاح)" : c; }
+/* بلديات الولايات الجديدة 59–69 تظهر أيضاً مع بلديات ولايتها الأم (بريكة مع باتنة)؛ اختيار إحداها يحوّل الولاية إلى الجديدة تلقائياً */
+function commOpts(w){
+  const out = ((w && w.communes) || []).map(c=>({ c, w, kid:false }));
+  if(w && !w.par && typeof WILAYAS !== "undefined") WILAYAS.filter(k=>k.par === w.id).forEach(k=>(k.communes || []).forEach(c=>{ if(!out.some(x=>x.c === c)) out.push({ c, w:k, kid:true }); }));
+  return out;
+}
+function fillCommuneSel(sel, w){
+  sel.innerHTML = '<option value="">— اختر البلدية —</option>';
+  commOpts(w).forEach(x=>{ const o = document.createElement("option"); o.value = x.c; o.textContent = shipOptLabel(x.w, x.c) + (x.kid ? " — ولاية " + x.w.name : ""); if(x.kid) o.dataset.w = x.w.id; if(x.w.xc && x.w.xc[x.c] === "all") o.disabled = true; sel.appendChild(o); });
+}
+/* إن كانت البلدية المختارة تابعة لولاية جديدة: بدّل قائمة الولاية إليها وأعد ملء بلدياتها وأبقِ البلدية محدّدة */
+function kidSwitch(wsel, csel){
+  const op = csel.selectedOptions && csel.selectedOptions[0], kid = op && op.dataset.w ? WILAYAS.find(x=>x.id == op.dataset.w) : null;
+  if(!kid) return null;
+  const c = csel.value; wsel.value = kid.id; fillCommuneSel(csel, kid); csel.value = c; return kid;
+}
 function lowStockNote(p){ const stock = Number(p && p.stock); return Number.isFinite(stock) && stock > 0 && stock <= 5 ? "بقي " + stock + " فقط" : ""; }
 
 /* ── أنواع المنتجات: فردي (simple) | متغيّر (variable: سمات + تنويعات بسعر/مخزون/صورة لكل تنويع) | مجمّع (grouped: عدة منتجات فردية في صفحة واحدة) ── */
@@ -1036,10 +1052,7 @@ function initProduct(slug){
   }
   function setCommunes(w){
     if(!communeSel) return;
-    communeSel.innerHTML = '<option value="">— اختر البلدية —</option>';
-    (w && w.communes ? w.communes : []).forEach(c=>{
-      const o = document.createElement("option"); o.value = c; o.textContent = shipOptLabel(w, c); if(w && w.xc && w.xc[c] === "all") o.disabled = true; communeSel.appendChild(o);
-    });
+    fillCommuneSel(communeSel, w);
   }
   // مكاتب Stop Desk الحقيقية من Yalidine — تُرشَّح حسب البلدية المختارة
   function setDesks(w){
@@ -1081,7 +1094,7 @@ function initProduct(slug){
     sel.appendChild(o);
   });
   sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); setDesks(state.wilaya); update() };
-  if(communeSel) communeSel.onchange = ()=>{ setDesks(state.wilaya); update() };
+  if(communeSel) communeSel.onchange = ()=>{ const k = kidSwitch(sel, communeSel); if(k) state.wilaya = k; setDesks(state.wilaya); update() };
   document.querySelectorAll('input[name="dtype"]').forEach(r=>r.onchange=()=>{ state.dtype=r.value; setDesks(state.wilaya); update() });
   if(deskSel) deskSel.onchange = ()=>{ state.desk = deskSel.value; };
 
@@ -1428,7 +1441,7 @@ function fillCartWilayas(){
     cSel.id = "ccommune"; cSel.setAttribute("aria-label", "البلدية");
     cSel.innerHTML = '<option value="">— اختر البلدية —</option>';
     cInp.replaceWith(cSel);
-    cSel.onchange = ()=>{ updateCartStop(); Cart.render(); };
+    cSel.onchange = ()=>{ kidSwitch(sel, cSel); updateCartStop(); Cart.render(); };
   }
   // تعطيل خيار Stop Desk إذا لا يوجد مكتب في البلدية المختارة
   function updateCartStop(){
@@ -1459,9 +1472,7 @@ function fillCartWilayas(){
   });
   sel.onchange = ()=>{
     if(cSel){
-      cSel.innerHTML = '<option value="">— اختر البلدية —</option>';
-      const w = WILAYAS.find(x=>x.id==sel.value);
-      (w&&w.communes?w.communes:[]).forEach(c=>{ const o=document.createElement("option"); o.value=c; o.textContent=shipOptLabel(w,c); if(w.xc && w.xc[c]==="all") o.disabled = true; cSel.appendChild(o); });
+      fillCommuneSel(cSel, WILAYAS.find(x=>x.id==sel.value));
     }
     updateCartStop();
     Cart.render();
