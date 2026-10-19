@@ -65,6 +65,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       window.fetch = of; window.open = wo; HTMLAnchorElement.prototype.click = oc; AdminYd.set([], 0, false); Admin.orders = keep; return { linked: txt.includes("عمر العلي") && txt.includes("0550123456"), d1, rec, d2, opened }; });
     ok("طرد مقنَّع بلا تتبع في الطلب يُربط بالطلب المطابق ويظهر اسمه وهاتفه الحقيقيان", yf.linked, yf);
     ok("تنزيل البوردرو PDF: ملف باسم الطرد، واحتياط فتح الرابط عند منع CORS", yf.d1 === true && yf.rec[0] === "bordereau-yal-TEST1.pdf" && yf.d2 === false && yf.opened === "https://example.com/l.pdf", yf); }
+  { const bk = await p.evaluate(async () => { /* الطباعة المجمّعة: 4 بوردرو في ورقة A4 (2×2) + بطاقات تنزيل الأصلية بلا iframe */
+      const mk = k => ({ id: "B" + k, name: "زبون " + k, phone: "05501234" + (10 + k), wilaya: "Batna", commune: "Barika", dtype: k === 2 ? "stop" : "home", desk: k === 2 ? "مكتب باتنة" : "", items: "منتج ×1 = 1800", total: 2400, status: "confirmee" });
+      const list = []; for (let k = 0; k < 5; k++) { const o = mk(k); Admin.cacheLabel(o.id, "https://yalidine.app/p/B" + k + ".pdf"); list.push({ o, t: { company: "yalidine", tracking: "yal-B" + k } }); }
+      let html = ""; const w = { document: { open() { html = ""; }, write(t) { html += t; }, close() { } }, closed: false };
+      await Admin.printBordereaux(list, w);
+      return { sheets: (html.match(/class="sheet"/g) || []).length, cells: (html.match(/class="lb"/g) || []).length, frames: (html.match(/<iframe/g) || []).length, dl: (html.match(/class="dl"/g) || []).length, stop: /مكتب باتنة/.test(html), bar: /تنزيل كل الأصلية/.test(html), svg: /<svg/.test(html) }; });
+    ok("طباعة البوردرو الجماعية: 4 في ورقة A4 (5 طرود ← ورقتان) وبطاقات تنزيل PDF الأصلية بلا iframe", bk.sheets === 2 && bk.cells === 5 && bk.frames === 0 && bk.dl === 5 && bk.stop && bk.bar && bk.svg, bk); }
   { const wk = await p.evaluate(async () => { /* بريكة (ولاية 60) تظهر مع بلديات باتنة، واختيارها يحوّل الولاية إليها */
       ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), w = bg.querySelector("#mo-wil"), c = bg.querySelector("#mo-com");
       w.value = "Batna"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 150));
@@ -1208,7 +1215,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     let html = ""; window.open = () => ({ document: { open() { }, write(h) { html = h; }, close() { } }, close() { } });
     Admin.renderShipped(); const label = document.getElementById("ship-bord-btn").textContent; Admin.printBordereaux(); await wait(1500);
     Admin.courierFetch = cf0; window.open = wo0;
-    return { label, nreq: reqs.length, html: html.length > 500, has1: html.includes("yal-111"), has2: html.includes("yal-222"), has3: html.includes("yal-333"), printBtn: /طباعة الكل/.test(html), frames: (html.match(/<iframe/g) || []).length };
+    return { label, nreq: reqs.length, html: html.length > 500, has1: html.includes("yal-111"), has2: html.includes("yal-222"), has3: html.includes("yal-333"), printBtn: /طباعة 4 في ورقة/.test(html), frames: (html.match(/class="dl"/g) || []).length };
   });
   ok("بوردرو المسجلة: يطبع الطرود قيد التجهيز فقط (2) ويجلب بوردرو كل طرد ويعرضها في صفحة واحدة للطباعة", /\(2\)/.test(bd.label) && bd.nreq === 2 && bd.html && bd.has1 && bd.has2 && !bd.has3 && bd.printBtn && bd.frames === 2, bd);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
@@ -1586,7 +1593,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const r = { keys, ui: !!document.querySelector('#dp [data-dp="run"]') && /بانتظار الإرسال:\s*3/.test(document.getElementById("dispatch-content").textContent) };
     await AdminDispatch.runAll(); await wait(300);
     r.sentTo = sentTo; r.fetches = fetches;
-    r.page = { iframes: (html.match(/<iframe/g) || []).length, waybills: (html.match(/class="waybill"/g) || []).length, svg: /<svg/.test(html), grouped: html.indexOf("Yalidine") >= 0 || html.indexOf("ياليدين") >= 0 };
+    r.page = { iframes: (html.match(/class="dl"/g) || []).length, waybills: (html.match(/class="lb"/g) || []).length, svg: /<svg/.test(html), grouped: html.indexOf("Yalidine") >= 0 || html.indexOf("ياليدين") >= 0 };
     // محطة المسح
     const trk = id => Admin.trackingOf(Admin.orders.find(o => o.id === id)).tracking;
     AdminDispatch._S.scan = {}; AdminDispatch.onScan(trk("P0001")); const s1 = AdminDispatch._S.last.st; AdminDispatch.onScan(" " + trk("P0001").toLowerCase() + " "); const s2 = AdminDispatch._S.last.st; AdminDispatch.onScan("NOPE-12345"); const s3 = AdminDispatch._S.last.st;
@@ -1596,7 +1603,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     return r;
   });
   ok("التوجيه: الشرق ← ZR، الجنوب ← ياليدين، والوسط (بلا قاعدة) ← الافتراضية", dp.keys.join() === "zrexpress,yalidine,yalidine" && dp.ui, dp);
-  ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) ووصل بباركود لشركة بلا بوردرو", dp.sentTo.join() === "P0001:zrexpress,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 1 && dp.page.svg, dp);
+  ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) ووصل بباركود لشركة بلا بوردرو", dp.sentTo.join() === "P0001:zrexpress,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 3 && dp.page.svg, dp);
   ok("محطة المسح: مسح جديد ثم مكرّر (يتجاهل حالة الأحرف والمسافات) ثم مجهول، والعدّاد وكشف التسليم لما مُسح فقط", dp.scan.s1 === "ok" && dp.scan.s2 === "dup" && dp.scan.s3 === "unknown" && dp.scan.count === 2 && dp.scan.txt && dp.manifest.has, dp);
   // ── إعادة التوجيه التلقائي عند رفض الشركة ──
   const fbt = await p.evaluate(async () => {
