@@ -45,6 +45,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
 
   // ═══ حاسوب ═══
   let { p, errs } = await open({ viewport: { width: 1280, height: 800 } });
+  { const nw = await p.evaluate(async () => { /* ولاية جديدة (بركة 60): تُرسل باسمها إن عدّتها الشركة ولاية، وإلا بالأم باتنة */
+      const SV = { cw: Admin.companyWilayas, cc: Admin.companyCommunes }; const co = { wilayasRequest: true, communesRequest: true }, cfg = {}, o = { id: "NW1", wilaya: "Barika", commune: "Barika" };
+      Admin.companyWilayas = async () => ({ 5: { name: "Batna", ok: true }, 60: { name: "Barika", ok: true } });
+      const a = await Admin.coOrderFor(co, cfg, o), asked = []; Admin.companyCommunes = async (c, g, id) => { asked.push(id); return { names: ["Barika", "Ouled Slimane"], nd: [] }; };
+      const na = await Admin.normForCompany(co, cfg, a);
+      Admin.companyWilayas = async () => ({ 5: { name: "Batna", ok: true } }); const b = await Admin.coOrderFor(co, cfg, o), nb = await Admin.normForCompany({ wilayasRequest: true }, cfg, b);
+      Admin.companyWilayas = SV.cw; Admin.companyCommunes = SV.cc;
+      return { aw: a.wilaya, awid: a.__coWid, nw: na.ok && na.ord.wilaya, asked, bw: b.wilaya, bwid: b.__coWid, bn: nb.ok && nb.ord.wilaya }; });
+    ok("ولاية جديدة تعدّها الشركة قائمة بذاتها: تُرسل باسمها وبلدياتها من رقمها", nw.aw === "Barika" && nw.awid === 60 && nw.nw === "Barika" && nw.asked[0] === 60, nw);
+    ok("ولاية جديدة لا تعرفها الشركة: تعود للولاية الأم", nw.bw === "Batna" && !nw.bwid && nw.bn === "Batna", nw); }
   await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; window.__sodReal = Admin.sendOrderToDelivery; });
   // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
   await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);
@@ -1900,16 +1910,6 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("ربط Facebook: الحساب بالدولار يطلب سعر الصرف والدينار لا، ويُربط ثم يزامن ويُعلَّم «مربوط»", foT.rows === 2 && foT.fxField && foT.noFx && /"account_id":"664829409857812"/.test(foT.link) && /"fx":245/.test(foT.link) && foT.synced && foT.mark, foT);
   ok("ربط Facebook: انتهاء الربط يعرض «إعادة الربط» برتقالياً، وقرب الانتهاء يحذّر بالأيام", foT.expired && foT.warn, foT);
   // ═══ جوال: دائرة خضراء تقع فوق الهدف ═══
-  { const nw = await p.evaluate(async () => { /* ولاية جديدة (بركة 60): تُرسل باسمها إن عدّتها الشركة ولاية، وإلا بالأم باتنة */
-      const SV = { cw: Admin.companyWilayas, cc: Admin.companyCommunes }; const co = { wilayasRequest: true, communesRequest: true }, cfg = {}, o = { id: "NW1", wilaya: "Barika", commune: "Barika" };
-      Admin.companyWilayas = async () => ({ 5: { name: "Batna", ok: true }, 60: { name: "Barika", ok: true } });
-      const a = await Admin.coOrderFor(co, cfg, o), asked = []; Admin.companyCommunes = async (c, g, id) => { asked.push(id); return { names: ["Barika", "Ouled Slimane"], nd: [] }; };
-      const na = await Admin.normForCompany(co, cfg, a);
-      Admin.companyWilayas = async () => ({ 5: { name: "Batna", ok: true } }); const b = await Admin.coOrderFor(co, cfg, o), nb = await Admin.normForCompany({ wilayasRequest: true }, cfg, b);
-      Admin.companyWilayas = SV.cw; Admin.companyCommunes = SV.cc;
-      return { aw: a.wilaya, awid: a.__coWid, nw: na.ok && na.ord.wilaya, asked, bw: b.wilaya, bwid: b.__coWid, bn: nb.ok && nb.ord.wilaya }; });
-    ok("ولاية جديدة تعدّها الشركة قائمة بذاتها: تُرسل باسمها وبلدياتها من رقمها", nw.aw === "Barika" && nw.awid === 60 && nw.nw === "Barika" && nw.asked[0] === 60, nw);
-    ok("ولاية جديدة لا تعرفها الشركة: تعود للولاية الأم", nw.bw === "Batna" && !nw.bwid && nw.bn === "Batna", nw); }
   ({ p, errs } = await open({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }));
   await p.evaluate(() => localStorage.setItem("store_voice_enrolled", "1"));
   ok("وضع اللمس يفعّل الدائرة", await p.evaluate(() => AdminHand.touchMode()));
