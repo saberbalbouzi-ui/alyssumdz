@@ -45,7 +45,7 @@ final class YalidineAdapter extends AbstractAdapter
             'address' => $p->address !== '' ? $p->address : $p->commune . '، ' . $p->wilayaName(),
             'to_commune_name' => $communeName, 'to_wilaya_name' => WilayaCatalog::name($p->legacyWilaya()),   // الجديدة تُرسَل باسم الأم
             'product_list' => $p->productsText(), 'price' => $price, 'do_insurance' => true, 'declared_value' => $price,
-            'freeshipping' => $p->shippingFee <= 0, 'is_stopdesk' => $p->stopDesk, 'has_exchange' => false, 'can_open' => $p->canOpen,
+            'freeshipping' => $p->shippingFee <= 0, 'is_stopdesk' => $p->stopDesk, 'has_exchange' => false, 'opening_decision' => $p->canOpen ? 'accept' : 'reject',
         ];
         if ($p->stopDesk) { $body['stopdesk_id'] = $p->deskId; }
         $r = $this->send('POST', self::BASE . '/v1/parcels/', $this->h(true), [$body]);

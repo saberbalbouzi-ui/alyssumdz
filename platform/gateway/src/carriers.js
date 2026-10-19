@@ -127,7 +127,7 @@ class Yalidine extends Adapter {
     const from = this.cred.fromWilaya || "Alger";   // الاسم؛ الطبقة العليا تحوّل الرقم إلى اسم
     const body = { order_id: p.orderRef, from_wilaya_name: from, firstname: first, familyname: family, contact_phone: p.localPhone(), address: p.address || `${p.commune}، ${p.wilayaName}`,
       to_commune_name: pc.name ?? p.commune, to_wilaya_name: p.legacyName, product_list: p.productsText(), price, do_insurance: true, declared_value: price, freeshipping: p.shippingFee <= 0,
-      is_stopdesk: p.stopDesk, has_exchange: false, can_open: p.canOpen };
+      is_stopdesk: p.stopDesk, has_exchange: false, opening_decision: p.canOpen ? "accept" : "reject" };
     if (p.stopDesk) body.stopdesk_id = +p.deskId;
     const r = await this.send("POST", Yalidine.BASE + "/v1/parcels/", this.h(true), [body]); const j = r.json() ?? {};
     const row = j[p.orderRef] ?? (Array.isArray(j.data) ? j.data[0] : null) ?? {}; const trk = String(row.tracking ?? "");

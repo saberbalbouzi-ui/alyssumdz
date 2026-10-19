@@ -81,7 +81,7 @@ $r = $y->createParcel($parcel); [$m, $u, $hd] = $h->last(); $b = $h->body()[0];
 ok('ياليدين: الإرسال والتتبع والبوليصة', $r->ok && $r->tracking === 'yal-7788' && $r->labelUrl === 'https://yalidine.app/label/yal-7788');
 ok('ياليدين: الرابط والترويسات', $m === 'POST' && $u === 'https://api.yalidine.app/v1/parcels/' && $hd['X-API-ID'] === 'AID' && $hd['X-API-TOKEN'] === 'ATK');
 ok('ياليدين: السعر بلا التوصيل والهاتف المحلي والاسم', $b['price'] === 3800 && $b['contact_phone'] === '0550123456' && $b['firstname'] === 'Karim' && $b['familyname'] === 'Benali' && $b['to_wilaya_name'] === 'Alger');
-ok('ياليدين: التوصيل المدفوع ليس freeshipping', $b['freeshipping'] === false && $b['can_open'] === true);
+ok('ياليدين: التوصيل المدفوع ليس freeshipping', $b['freeshipping'] === false && $b['opening_decision'] === 'accept');
 $new = new Parcel('N1', 'A B', '0770000000', 59, 'Aflou', 'x', 1000);   // ولاية جديدة (59 Aflou ← الأم 3 Laghouat)
 $h->reply(200, ['N1' => ['success' => true, 'tracking' => 'yal-1']]); $y->createParcel($new);
 ok('ياليدين: الولاية الجديدة تُرسَل باسم الأم', $h->body()[0]['to_wilaya_name'] === 'Laghouat');
