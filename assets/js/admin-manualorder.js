@@ -46,7 +46,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     document.body.appendChild(bg);
     if (opt.hint) { const h = bg.querySelector(".hint"); if (h) h.textContent = String(opt.hint).slice(0, 300); }       // نص إرشادي مخصّص (مثلاً عند النقل من مركز المتاجر)
     const $ = id => bg.querySelector("#" + id), dt = () => (bg.querySelector('input[name="mo-dt"]:checked') || {}).value || "home";
-    function fillCom(keep) { const w = wOf($("mo-wil").value), list = (w && w.communes) || [], cur = keep == null ? (src && src.commune) : keep; $("mo-com").innerHTML = (list.includes(cur) || !cur ? "" : `<option value="${esc(cur)}">${esc(cur)}</option>`) + list.map(c => `<option value="${esc(c)}"${c === cur ? " selected" : ""}>${esc(c)}</option>`).join(""); }
+    function fillCom(keep) { const w = wOf($("mo-wil").value), cur = keep == null ? (src && src.commune) : keep; $("mo-com").innerHTML = WilKids.html(w, cur); }
     function fillDesk(keep) {
       const w = ad.wCo ? ad.wCo($("mo-wil").value) : wOf($("mo-wil").value), com = $("mo-com").value, ds = ad.desksIn ? ad.desksIn(w, com) : ((w && w.desks) || []), cur = keep == null ? (src && src.desk) : keep, has = ds.length > 0;
       $("mo-desk").innerHTML = (has ? "" : `<option value="">${com ? "لا يوجد مكتب Stop Desk في بلدية " + esc(com) : "لا توجد مكاتب معروفة لهذه الولاية"}</option>`) + (has && cur && !ds.some(d => d.name === cur) ? "" : "") + ds.map(d => `<option value="${esc(d.name)}"${d.name === cur ? " selected" : ""}>${esc(d.name)}${d.commune ? " — " + esc(d.commune) : ""}</option>`).join("");
@@ -78,7 +78,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     $("mo-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); };
     if (ad.shipSupLoad) ad.shipSupLoad().then(() => { if (!src && document.body.contains(bg)) autoFee(); });
     bg.querySelectorAll('input[name="mo-dt"]').forEach(r => r.onchange = () => { fillDesk($("mo-desk").value); autoFee(); });
-    $("mo-com").onchange = () => { fillDesk(""); autoFee(); }; if ($("mo-from")) $("mo-from").onchange = () => autoFee(); $("mo-fee").oninput = total; $("mo-disc").oninput = total;
+    $("mo-com").onchange = () => { WilKids.pick($("mo-wil"), $("mo-com")); fillDesk(""); autoFee(); }; if ($("mo-from")) $("mo-from").onchange = () => autoFee(); $("mo-fee").oninput = total; $("mo-disc").oninput = total;
     $("mo-add").onclick = () => { lines.push({ slug: "", title: "", qty: 1, price: 0 }); drawLines(); total(); };
     $("mo-lines").addEventListener("input", e => { const tr = e.target.closest("tr[data-i]"); if (!tr) return; const l = lines[+tr.dataset.i], f = e.target.dataset.f; if (f === "qty") l.qty = Math.max(1, num(e.target.value)); else if (f === "price") l.price = num(e.target.value); else if (f === "title") l.title = e.target.value; else return; tr.querySelector("b").textContent = (num(l.qty) * num(l.price)).toLocaleString("fr-DZ"); total(); });
     $("mo-lines").addEventListener("change", e => { const tr = e.target.closest("tr[data-i]"); if (!tr || e.target.dataset.f !== "sel") return; const l = lines[+tr.dataset.i], v = e.target.value; if (v === "x") { l.slug = ""; l.__x = true; l.title = l.title || ""; } else if (v === "") { l.slug = ""; l.title = ""; l.price = 0; delete l.__x; } else { const p = P[+v]; l.slug = p.slug; l.title = p.title; l.price = p.price; delete l.__x; } drawLines(); total(); });

@@ -317,6 +317,7 @@
     "assets/js/ai-proxy.js",
     "assets/js/admin-stockcheck.js",
     "assets/js/admin-orderedit.js",
+    "assets/js/admin-wilkids.js",
     "assets/js/admin-manualorder.js"
   ],
   "local": {

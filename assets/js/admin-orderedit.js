@@ -38,8 +38,8 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
     const $ = id => bg.querySelector("#" + id), dt = () => (bg.querySelector('input[name="oe-dt"]:checked') || {}).value || "home";
     const free0 = num(o.fee) === 0;
     function fillCom(keep) {
-      const w = wOf($("oe-wil").value), list = (w && w.communes) || [], cur = keep == null ? o.commune : keep;
-      $("oe-com").innerHTML = (list.includes(cur) || !cur ? "" : `<option value="${esc(cur)}">${esc(cur)}</option>`) + list.map(c => `<option value="${esc(c)}"${c === cur ? " selected" : ""}>${esc(c)}</option>`).join("");
+      const w = wOf($("oe-wil").value), cur = keep == null ? o.commune : keep;
+      $("oe-com").innerHTML = WilKids.html(w, cur);
     }
     function fillDesk(keep) {
       const w = ad.wCo ? ad.wCo($("oe-wil").value) : wOf($("oe-wil").value), com = $("oe-com").value, ds = ad.desksIn ? ad.desksIn(w, com) : ((w && w.desks) || []), cur = keep == null ? o.desk : keep, has = ds.length > 0;
@@ -65,7 +65,7 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
     }
     const total = () => { $("oe-tot").textContent = Math.max(0, sub - disc + num($("oe-fee").value)).toLocaleString("fr-DZ") + " دج"; };
     fillCom(); fillDesk(); total();
-    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); }; $("oe-com").onchange = () => { fillDesk(""); autoFee(); }; if ($("oe-from")) $("oe-from").onchange = () => autoFee();
+    $("oe-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); }; $("oe-com").onchange = () => { WilKids.pick($("oe-wil"), $("oe-com")); fillDesk(""); autoFee(); }; if ($("oe-from")) $("oe-from").onchange = () => autoFee();
     if (ad.shipSupLoad) ad.shipSupLoad().then(() => { if (document.body.contains(bg)) autoFee(); });
     bg.querySelectorAll('input[name="oe-dt"]').forEach(r => r.onchange = () => { fillDesk($("oe-desk").value); autoFee(); });
     $("oe-fee").oninput = total;
