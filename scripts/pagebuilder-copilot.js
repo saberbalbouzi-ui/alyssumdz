@@ -17,6 +17,7 @@ const PBCopilot = (() => {
   const V = 1, MAX_JSON = 250000, MAX_OPS = 120;
   const DEF_LIMITS = { llm: 6, img: 8, retries: 1, ops: MAX_OPS };
   class CmdError extends Error { constructor(code, msg, extra) { super(msg || code); this.code = code; if (extra) Object.assign(this, extra); } }
+  const isStop = e => !!(e && (e.interrupt || e.cancelled));      // انقطاع/إلغاء من المستخدم: يُحفظ التشغيل ويمكن استئنافه ولا يُعدّ فشلاً
   class Interrupt extends Error { constructor(msg) { super(msg || "interrupt"); this.interrupt = true; } }
 
   /* ───────────── أدوات ───────────── */
@@ -306,10 +307,10 @@ const PBCopilot = (() => {
         const g = await A.guard.charge("image", { runId: run.id }); if (!g || g.ok === false) throw new CmdError("guard_denied", "رفض الخادم التوليد: " + str(g && g.reason, 80));
         run.counts.img++; run.counts.tries[key] = (run.counts.tries[key] || 0) + 1; C.persist();      // يُحتسب قبل الاستدعاء: الانقطاع لا يمنح محاولات مجانية
         try {
-          const r = await A.img.generate({ prompt: IMG_RULES + desc, W, H, cutout: cut, runId: run.id, key }); if (!r || !r.blob || (r.blob.size != null && r.blob.size < 100)) throw new Error("صورة غير صالحة");
+          const r = await A.img.generate({ prompt: IMG_RULES + desc, W, H, cutout: cut, runId: run.id, key, attempt: run.counts.tries[key] }); if (!r || !r.blob || (r.blob.size != null && r.blob.size < 100)) throw new Error("صورة غير صالحة");
           let blob = r.blob; if (cut && A.removeBg) blob = await A.removeBg(blob);
           const path = await A.upload(blob, "copilot-" + key); if (!path || typeof path !== "string") throw new Error("تعذّر الرفع"); run.assets[key] = path; C.persist(); s.src = path; C.touch(w.id); return { id: w.id, path };
-        } catch (e) { if (e && e.interrupt) throw e; lastErr = e; }
+        } catch (e) { if (isStop(e)) throw e; if (e && e.limit) throw new CmdError("guard_denied", "رفض الخادم التوليد (" + str(e.code, 40) + "): " + str(e.message, 100)); lastErr = e; }
       }
       throw new CmdError("image_failed", "فشل توليد الصورة: " + str(lastErr && lastErr.message, 120));
     };
@@ -322,8 +323,8 @@ const PBCopilot = (() => {
       const op = queue[i++]; if (run.done[op.id]) { continue; }
       if (A.hooks.beforeOp) await A.hooks.beforeOp(op, run);
       const def = OPS[op.op], C = makeCtx(run, work, A, op); let res;
-      try { res = await def.run(C, op.args, op); run.done[op.id] = Object.assign({ ok: true }, res && { id: res.id, cached: res.cached, noop: res.noop }); (res && res.gen || []).forEach(g => { if (!queue.some(q => q.id === g.id)) queue.push(g); }); }
-      catch (e) { if (e && e.interrupt) { C.persist(); throw e; } const code = e.code || "error"; run.done[op.id] = { ok: false, code, msg: str(e.message, 200) }; run.errors.push({ op: op.id, code, msg: str(e.message, 200) }); if (def.critical || (run.strict)) { run.status = "failed"; C.persist(); throw new CmdError("run_aborted", "توقف التشغيل عند الأمر " + op.id + ": " + e.message, { op: op.id, cause: code }); } }
+      try { res = await def.run(C, op.args, op); if (A.hooks.afterOp) await A.hooks.afterOp(op, work, run); run.done[op.id] = Object.assign({ ok: true }, res && { id: res.id, cached: res.cached, noop: res.noop }); (res && res.gen || []).forEach(g => { if (!queue.some(q => q.id === g.id)) queue.push(g); }); }
+      catch (e) { if (isStop(e)) { C.persist(); throw e; } const code = e.code || "error"; run.done[op.id] = { ok: false, code, msg: str(e.message, 200) }; run.errors.push({ op: op.id, code, msg: str(e.message, 200) }); if (def.critical || run.strict || code === "protected_layer") {      /* المساس بعنصر محمي يُسقط التشغيل كله لا هذا الأمر وحده */ run.status = "failed"; C.persist(); throw new CmdError("run_aborted", "توقف التشغيل عند الأمر " + op.id + ": " + e.message, { op: op.id, cause: code }); } }
       C.persist();
     }
   }
@@ -345,7 +346,7 @@ const PBCopilot = (() => {
   async function drive(run, A) {
     const e = ED(), live = livePage(); if (hash(JSON.stringify(live)) !== run.baseHash && !run.force) throw new CmdError("base_changed", "الصفحة المفتوحة تغيّرت منذ بدء هذا التشغيل");
     const work = run.work ? JSON.parse(run.work) : clone(live); run.status = "running"; A.store.save(run);
-    try { await execute(run, work, A); } catch (err) { if (err && err.interrupt) throw err; run.status = "failed"; run.error = { code: err.code || "error", msg: str(err.message, 200) }; A.store.save(run); throw err; }
+    try { await execute(run, work, A); } catch (err) { if (isStop(err)) throw err; run.status = "failed"; run.error = { code: err.code || "error", msg: str(err.message, 200) }; A.store.save(run); throw err; }
     let res; try { res = commit(run, work); } catch (err) { run.status = "rolled_back"; run.error = { code: err.code || "error", msg: str(err.message, 200), breaks: err.breaks }; A.store.save(run); return summary(run, false, err); }
     run.status = run.errors.length ? "done_with_errors" : "done"; run.work = ""; A.store.save(run); return summary(run, true, null, res);
   }
@@ -358,21 +359,21 @@ const PBCopilot = (() => {
     try {
       if (!A.llm) throw new CmdError("adapter_missing", "محوّل نموذج اللغة غير متاح");
       const out = outline(live); let env;
-      if (kind === "design") { bump(run, "llm", A.limits); const g1 = await A.guard.charge("llm", { runId: run.id }); if (g1 && g1.ok === false) throw new CmdError("guard_denied", "رفض الخادم"); const pl = await A.llm.plan({ goal: o.goal, facts: F, tokens: Object.keys(factTable(F)), outline: out }); run.plan = isObj(pl) ? pl : null; A.store.save(run);
-        bump(run, "llm", A.limits); const g2 = await A.guard.charge("llm", { runId: run.id }); if (g2 && g2.ok === false) throw new CmdError("guard_denied", "رفض الخادم"); env = await A.llm.ops({ goal: o.goal, plan: run.plan, facts: F, tokens: Object.keys(factTable(F)), outline: out }); }
-      else { bump(run, "llm", A.limits); const g = await A.guard.charge("llm", { runId: run.id }); if (g && g.ok === false) throw new CmdError("guard_denied", "رفض الخادم"); env = await A.llm.edit({ instruction: o.instruction, facts: F, tokens: Object.keys(factTable(F)), outline: out }); }
+      if (kind === "design") { bump(run, "llm", A.limits); const g1 = await A.guard.charge("llm", { runId: run.id }); if (g1 && g1.ok === false) throw new CmdError("guard_denied", "رفض الخادم"); const pl = await A.llm.plan({ runId: run.id, goal: o.goal, facts: F, tokens: Object.keys(factTable(F)), outline: out }); run.plan = isObj(pl) ? pl : null; A.store.save(run);
+        bump(run, "llm", A.limits); const g2 = await A.guard.charge("llm", { runId: run.id }); if (g2 && g2.ok === false) throw new CmdError("guard_denied", "رفض الخادم"); env = await A.llm.ops({ runId: run.id, goal: o.goal, plan: run.plan, facts: F, tokens: Object.keys(factTable(F)), outline: out }); }
+      else { bump(run, "llm", A.limits); const g = await A.guard.charge("llm", { runId: run.id }); if (g && g.ok === false) throw new CmdError("guard_denied", "رفض الخادم"); env = await A.llm.edit({ runId: run.id, instruction: o.instruction, facts: F, tokens: Object.keys(factTable(F)), outline: out }); }
       const v = validateEnvelope(env, F, { kind, maxOps: A.limits.ops, allowStructure: !!o.allowStructure });
       if (!v.ok) { run.status = "rejected"; run.errors = v.errors; A.store.save(run); return { ok: false, runId: run.id, status: "rejected", errors: v.errors, changed: 0 }; }
       run.ops = v.ops; run.strict = !!o.strict; run.allowBreaks = !!o.allowBreaks; A.store.save(run);
-    } catch (e) { if (e && e.interrupt) throw e; run.status = "failed"; run.error = { code: e.code || "error", msg: str(e.message, 200) }; A.store.save(run); return { ok: false, runId: run.id, status: "failed", errors: [], error: run.error, changed: 0 }; }
-    try { return await drive(run, A); } catch (e) { if (e && e.interrupt) throw e; return { ok: false, runId: run.id, status: run.status, errors: run.errors.slice(), error: { code: e.code || "error", msg: e.message }, changed: 0 }; }
+    } catch (e) { if (isStop(e)) throw e; run.status = "failed"; run.error = { code: e.code || "error", msg: str(e.message, 200) }; A.store.save(run); return { ok: false, runId: run.id, status: "failed", errors: [], error: run.error, changed: 0 }; }
+    try { return await drive(run, A); } catch (e) { if (isStop(e)) throw e; return { ok: false, runId: run.id, status: run.status, errors: run.errors.slice(), error: { code: e.code || "error", msg: e.message }, changed: 0 }; }
   }
   const run = o => plan(o, "design"), edit = o => plan(o, "edit");
   async function resume(id, o) {
     const A = normAdapters(o && o.adapters), r = A.store.load(id); if (!r) throw new CmdError("run_not_found", "تشغيل غير موجود");
     if (["done", "done_with_errors", "rolled_back", "rejected"].includes(r.status)) return { ok: r.status.startsWith("done"), runId: r.id, status: r.status, already: true, errors: r.errors || [] };
     if (!r.ops.length) throw new CmdError("run_not_ready", "لا أوامر محفوظة لهذا التشغيل (انقطع قبل التخطيط)");
-    if (o && o.force) r.force = true; try { return await drive(r, A); } catch (e) { if (e && e.interrupt) throw e; return { ok: false, runId: r.id, status: r.status, errors: r.errors.slice(), error: { code: e.code || "error", msg: e.message }, changed: 0 }; }
+    if (o && o.force) r.force = true; try { return await drive(r, A); } catch (e) { if (isStop(e)) throw e; return { ok: false, runId: r.id, status: r.status, errors: r.errors.slice(), error: { code: e.code || "error", msg: e.message }, changed: 0 }; }
   }
   return { V, run, edit, resume, validateEnvelope, normFacts, factTable, fillTokens, checkCommercial, outline, diff, CmdError, Interrupt, stores: { ls: lsStore, mem: memStore }, OPS: Object.keys(OPS), PROTECTED: [...PROTECTED], LAYER_TYPES, DEF_LIMITS, _t: { edgeOf, contBreaks, hexOf, hash, viaSpec, findW, findSec, snapIndex } };
 })();

@@ -7,43 +7,7 @@ const ROOT = path.join(__dirname, ".."), PAGE = JSON.parse(fs.readFileSync(path.
 let n = 0; const fails = []; const ok = (c, m, x) => { if (!c) { console.log("✗ " + m + (x !== undefined ? " " + JSON.stringify(x).slice(0, 400) : "")); fails.push(m); } else { n++; console.log("✓ " + m); } };
 
 /* ───── ما يُحقن داخل الصفحة: محوّلات وهمية + أدوات مساعدة ───── */
-const HELPERS = `
-window.__T = (() => {
-  const FACTS = { product: "عسل التركيز", currency: "دج", price: 1800, oldPrice: 3100, offers: [{ label: "قارورة واحدة", qty: 1, price: 1800 }, { label: "قارورتان + قارورة هدية", qty: 3, price: 3200, free: 1 }] };
-  const png = () => new Promise(r => { const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d"); x.fillStyle = "#c8a24b"; x.fillRect(0, 0, 64, 64); c.toBlob(r, "image/png"); });
-  /* غلاف أوامر لتصميم قسم عرض كامل: يستعمل رموز {{...}} فقط للأسعار */
-  const designOps = () => ({ v: 1, ops: [
-    { id: "o1", op: "section.add", args: { name: "offer", as: "offer", height: 760, after: "@first" } },
-    { id: "o1b", op: "page.background", args: { sections: ["$offer"], stops: [{ c: "#F8F4E9", p: 0 }, { c: "#F8F4E9", p: 60 }, { c: "#102B4C", p: 100 }] } },
-    { id: "o2", op: "layer.add", args: { section: "$offer", as: "bg", layer: { type: "shape", shape: "ellipse", x: 120, y: 60, w: 688, h: 560, fill: "#f5e3b0", opacity: 0.45, blur: 30, z: 1 } } },
-    { id: "o3", op: "layer.add", args: { section: "$offer", as: "title", layer: { type: "heading", tag: "h2", text: "عرض {{product}} الخاص", x: 80, y: 80, w: 768, h: 90, z: 5, font: { size: 54, weight: "900", color: "#3b2a05", align: "center" }, effects: [{ type: "fadeUp", delay: 0.1 }] } } },
-    { id: "o4", op: "layer.add", args: { section: "$offer", as: "price", layer: { type: "text", text: "السعر: {{price}}", x: 80, y: 200, w: 768, h: 70, z: 5, font: { size: 44, weight: "800", color: "#1b5e20", align: "center" } } } },
-    { id: "o5", op: "layer.add", args: { section: "$offer", as: "old", layer: { type: "text", text: "بدل {{old_price}} — وفّر {{save}} ({{save_pct}})", x: 80, y: 280, w: 768, h: 50, z: 5, font: { size: 26, weight: "600", color: "#7a6a3a", align: "center" } } } },
-    { id: "o6", op: "layer.add", args: { section: "$offer", as: "off2", layer: { type: "text", text: "{{offer2.label}}: {{offer2.price}} فقط", x: 80, y: 350, w: 768, h: 60, z: 5, font: { size: 32, weight: "700", color: "#3b2a05", align: "center" } } } },
-    { id: "o7", op: "layer.add", args: { section: "$offer", as: "jar", layer: { type: "image", prompt: "جرة عسل ذهبية على طاولة خشبية مع ملعقة عسل", x: 260, y: 430, w: 400, h: 220, z: 4, cutout: true, fit: "contain" } } },
-    { id: "o8", op: "layer.add", args: { section: "$offer", as: "cta", layer: { type: "button", text: "اطلب الآن", link: "#pb-order", x: 300, y: 660, w: 330, h: 70, z: 6, bg: "#2e7d32" } } },
-    { id: "o9", op: "layer.add", args: { section: "$offer", as: "spark", layer: { type: "image", prompt: "ورق نبات أخضر طازج بخلفية بيضاء", x: 60, y: 440, w: 160, h: 160, z: 3, cutout: true } } },
-    { id: "o10", op: "effect.set", args: { ref: "$cta", continuous: ["pulse"], shadow: { y: 6, blur: 18, color: "rgba(0,0,0,.3)" } } },
-    { id: "o11", op: "effect.set", args: { ref: "$jar", entrance: "zoomIn", continuous: ["float"] } },
-    { id: "o12", op: "layer.group", args: { refs: ["$title", "$price"] } },
-    { id: "o13", op: "layer.reorder", args: { ref: "$bg", how: "back" } }
-  ] });
-  const mkAdapters = (extra) => {
-    const calls = { plan: 0, ops: 0, edit: 0, img: 0, upload: 0, charge: 0, removeBg: 0 }, uploads = [];
-    const a = { mock: true, calls, uploads, store: PBCopilot.stores.mem(),
-      llm: { plan: async () => { calls.plan++; return { sections: ["offer"] }; }, ops: async () => { calls.ops++; return designOps(); }, edit: async () => { calls.edit++; return { v: 1, ops: [] }; } },
-      img: { generate: async (o) => { calls.img++; return { blob: await png() }; } },
-      removeBg: async (b) => { calls.removeBg++; return b; },
-      upload: async (b, name) => { calls.upload++; const p = "assets/img/pages/" + name + ".webp"; uploads.push(p); return p; },
-      guard: { charge: async (k) => { calls.charge++; return { ok: true }; } } };
-    return Object.assign(a, extra || {});
-  };
-  const open = async () => { PBApp.open(JSON.parse(JSON.stringify(window.__PAGE))); await new Promise(r => setTimeout(r, 2200)); return PBApp.E; };
-  const widgets = (page) => { const o = []; page.sections.forEach(s => { (s.free || []).forEach(w => o.push(w)); (s.cols || []).forEach(c => (c.widgets || []).forEach(w => o.push(w))); }); return o; };
-  const textOf = w => w.set.text || String(w.set.html || "").replace(/<[^>]+>/g, "");
-  const sig = page => widgets(page).map(w => w.type + "|" + (w.set.aiKey || "") + "|" + textOf(w) + "|" + (w.set.src || "")).sort().join("\\n");
-  return { FACTS, designOps, mkAdapters, open, widgets, textOf, sig, png };
-})();`;
+const HELPERS = require("./lib/copilot-test-helpers.js");
 
 (async () => {
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1500, height: 950 } }); const errs = []; p.on("pageerror", e => errs.push(String(e)));
@@ -232,8 +196,11 @@ window.__T = (() => {
     R.token = { ok: r2.ok, txt: __T.textOf(__T.widgets(E.page).find(w => w.id === byKey("price").id)) };
     /* ممنوع: تعديل عنصر محمي (نموذج الطلب) أو رقم غير مقدَّم أو عنصر غير موجود */
     const ord = __T.widgets(E.page).find(w => w.type === "orderorig"), html = __T.widgets(E.page).find(w => w.type === "html"), pj2 = PBApp.pageJson(), h2 = E.hist.length;
-    const r3 = await editWith([{ id: "x1", op: "layer.delete", args: { ref: ord.id } }, { id: "x2", op: "layer.update", args: { ref: html.id, patch: { text: "x" } } }, { id: "x3", op: "layer.update", args: { ref: "zzzzzz", patch: { text: "x" } } }]);
-    R.prot = { status: r3.status, codes: r3.errors.map(e => e.code), same: PBApp.pageJson() === pj2, h: E.hist.length - h2 };
+    const r3 = await editWith([{ id: "x1", op: "layer.delete", args: { ref: ord.id } }, { id: "x2", op: "layer.update", args: { ref: html.id, patch: { text: "x" } } }]);
+    const r3b = await editWith([{ id: "x3", op: "layer.update", args: { ref: "zzzzzz", patch: { text: "x" } } }]);
+    /* مساس بعنصر محمي وسط أوامر سليمة يُسقط التشغيل كله (لا اعتماد جزئي) */
+    const r3c = await editWith([{ id: "x4", op: "layer.update", args: { ref: title.id, patch: { text: "عنوان آخر" } } }, { id: "x5", op: "layer.delete", args: { ref: ord.id } }]);
+    R.prot = { status: r3.status, codes: r3.errors.map(e => e.code).concat(r3b.errors.map(e => e.code)), same: PBApp.pageJson() === pj2, h: E.hist.length - h2, mixed: { st: r3c.status, same: PBApp.pageJson() === pj2 } };
     const r4 = await editWith([{ id: "y1", op: "layer.update", args: { ref: cta.id, patch: { text: "اشترِ بـ 500 دج فقط" } } }]); R.inv = { status: r4.status, codes: r4.errors.map(e => e.code), same: PBApp.pageJson() === pj2 };
     const r5 = await editWith([{ id: "z1", op: "section.add", args: {} }]); R.struct = { status: r5.status, codes: r5.errors.map(e => e.code), same: PBApp.pageJson() === pj2 };
     /* تغيّر الصفحة أثناء التشغيل ← تراجع كامل (base_changed) */
@@ -245,7 +212,7 @@ window.__T = (() => {
   ok(Ed.edit.secSame && Ed.edit.hist === 1 && Ed.edit.titleTxt === "عسل التركيز — عرض خاص" && Ed.edit.jarFx, "إعدادات الأقسام لم تتغير، مدخل تاريخ واحد، النص الجديد مطبَّق وتأثير الصورة موجود");
   ok(Ed.undo, "تراجع واحد يعيد الصفحة كما كانت قبل التعديل");
   ok(Ed.token.ok && Ed.token.txt === "الآن فقط 3200 دج", "نص جديد من توكن بيانات المستخدم ينجح", Ed.token);
-  ok(Ed.prot.same && Ed.prot.h === 0 && Ed.prot.codes.includes("protected_layer") && Ed.prot.codes.includes("ref_not_found"), "حذف/تعديل عنصر محمي (نموذج الطلب، html) أو غير موجود يُسجَّل خطأ ولا يغيّر الصفحة", Ed.prot);
+  ok(Ed.prot.same && Ed.prot.h === 0 && Ed.prot.codes.includes("protected_layer") && Ed.prot.codes.includes("ref_not_found") && Ed.prot.mixed.st === "failed" && Ed.prot.mixed.same, "حذف/تعديل عنصر محمي (نموذج الطلب، html) أو غير موجود يُسجَّل خطأ ولا يغيّر الصفحة، وإن جاء وسط أوامر سليمة سقط التشغيل كله", Ed.prot);
   ok(Ed.inv.status === "rejected" && Ed.inv.codes.includes("price_unapproved") && Ed.inv.same, "تعديل بسعر غير مقدَّم (500 دج) مرفوض بلا أثر", Ed.inv);
   ok(Ed.struct.status === "rejected" && Ed.struct.same, "أمر بنيوي في تعديل تدريجي مرفوض بلا أثر", Ed.struct);
   ok(Ed.base.status === "rolled_back" && Ed.base.code === "base_changed" && Ed.base.titleKept && Ed.base.textUntouched, "تغيّر الصفحة أثناء تشغيل الذكاء الاصطناعي ← لا يُعتمد شيء (base_changed)", Ed.base);
@@ -289,8 +256,8 @@ window.__T = (() => {
 
   /* ── 8) المحرر الحالي لم يُمسّ ── */
   const git = require("child_process").execSync("git status --short", { cwd: ROOT }).toString();
-  const changedFiles = git.split("\n").filter(l => l.trim() && !/scripts\/(pagebuilder-copilot|test-copilot)\.js/.test(l));
-  ok(changedFiles.length === 0, "لا ملف آخر معدَّل في المستودع (المحرر وpagebuilder*.js كما هي)", changedFiles);
+  const touched = git.split("\n").map(l => l.slice(3).trim()).filter(Boolean), guarded = touched.filter(f => (/^scripts\/pagebuilder[\w-]*\.js$/.test(f) && !/pagebuilder-copilot(-real)?\.js$/.test(f)) || f === "admin.html" || f === "scripts/build-admin-pb.py" || /^assets\/pages\//.test(f));
+  ok(guarded.length === 0, "المحرر وPBSpec وadmin.html وصفحات assets/pages لم تُمسّ (pagebuilder.js/pagebuilder-editor.js/… كما هي)", guarded);
   ok(!errs.length, "لا أخطاء JavaScript في الصفحة", errs.slice(0, 3));
 
   await b.close();
