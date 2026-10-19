@@ -233,7 +233,7 @@ const AdminYd = (() => {
       const w = W.find(x => x.name === g("w")), d = stop && w ? (a.wCo(w.name).desks || []).find(x => String(x.id) === g("d")) : null;
       if (stop && !d) { msg("اختر مكتب Stop Desk لهذه الولاية"); return; }
       msg("⏳ جارِ مطابقة الولاية والبلدية مع قوائم الشركة…");
-      try { nz = await a.normForCompany(co, cfg, a.coOrder({ id: r.tracking, name: "", wilaya: g("w"), commune: g("c"), dtype: stop ? "stop" : "home", desk: d ? d.name : "" })); } catch (e) { msg("تعذّر التحقق من القوائم: " + (e.message || e)); return; }
+      try { nz = await a.normForCompany(co, cfg, (a.coOrderFor ? await a.coOrderFor(co, cfg, { id: r.tracking, name: "", wilaya: g("w"), commune: g("c"), dtype: stop ? "stop" : "home", desk: d ? d.name : "" }) : a.coOrder({ id: r.tracking, name: "", wilaya: g("w"), commune: g("c"), dtype: stop ? "stop" : "home", desk: d ? d.name : "" }))); } catch (e) { msg("تعذّر التحقق من القوائم: " + (e.message || e)); return; }
       if (!nz.ok) { msg("❌ " + nz.msg); return; }
       f.to_wilaya_name = nz.ord.wilaya; f.to_commune_name = nz.ord.commune; f.is_stopdesk = stop; if (stop) f.stopdesk_id = nz.ord.__deskId;
     }
