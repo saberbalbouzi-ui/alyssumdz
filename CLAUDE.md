@@ -326,6 +326,7 @@
 
 **Copilot — وضع التجريب (مفتاح المتصفح):** `admin.html?copilot=1` يحمّل `pagebuilder-copilot(-real|-ui).js` (سطر مُحمِّل واحد في admin.html، لا شيء بدونه) وزر ✨ Copilot؛ `createBrowser()` يستعمل ImgGen؛ `page.media` مستثناة من بصمة الصفحة. اختبار `scripts/test-copilot-trial.js` (23). التفاصيل في `platform/docs/copilot-phase2.md`.
 
+**v1.89.360 — البوردرو الأصلي: قصّ ربع الصفحة:** ملف ياليدين PDF هو ورقة A4 والبوردرو في ربعها العلوي الأيسر فقط (3 أرباع فارغة)، فكان التجميع يصغّر الورقة كلها داخل الخانة فلا يتجمّع 4 في الورقة؛ صار `mergePdf4` يقصّ (`embedPages` بـ`boundingBox`) إلى الربع العلوي الأيسر لكل صفحة عرضها ≥500 وارتفاعها ≥700pt ويترك الأصغر كما هو. دالة Supabase `courier` (نسخة 13) نُشرت بدعم `binary`/`b64` بإذن صاحب المتجر. فحصان في test-hand (A4 ×4 ← ورقة، ×5 ← ورقتان) ومعاينة بصرية. **لم يُجرَّب على ملفات ياليدين الحقيقية بعد.**
 ## نقل الموقع / البيع
 - هوية الموقع (الاسم، النطاق، واتساب، انستغرام، مستودع GitHub) في `CONFIG.SITE` داخل `assets/js/config.js`؛ لا تكتبها نصّاً في JS جديد. خطوات النقل في `HANDOVER.md`، وأدوات `scripts/rebrand.py` و`scripts/setup-supabase.sh`.
 

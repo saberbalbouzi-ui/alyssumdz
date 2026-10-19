@@ -83,12 +83,16 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       let href = "", html = ""; const w = { document: { open() { html = ""; }, write(t) { html += t; }, close() { } }, location: { set href(v) { href = v; } }, closed: false };
       const r = {}; await Admin.printBordereaux(list, w); r.href = /^blob:/.test(href);
       if (r.href) { const u8 = new Uint8Array(await (await fetch(href)).arrayBuffer()), d = await P.PDFDocument.load(u8); r.pages = d.getPageCount(); const sz = d.getPage(0).getSize(); r.a4 = Math.round(sz.width) === 595 && Math.round(sz.height) === 842; }
+      // ملف ياليدين الحقيقي A4 والبوردرو في ربعه الأيسر العلوي ← يُقصّ إليه فتتّسع 4 بوردروات في ورقة
+      { const a4 = async k => { const d = await P.PDFDocument.create(), pg = d.addPage([595.28, 841.89]); pg.drawText("TL" + k, { x: 40, y: 780, size: 20 }); pg.drawText("BR" + k, { x: 400, y: 100, size: 20 }); return d.save(); };
+        const m4 = await Admin.mergePdf4([await a4(1), await a4(2), await a4(3), await a4(4)]); r.a4src = m4.sheets === 1 && m4.labels === 4;
+        const m5 = await Admin.mergePdf4([await a4(1), await a4(2), await a4(3), await a4(4), await a4(5)]); r.a4src5 = m5.sheets === 2; }
       // ملف فاشل ← صفحة بها رابط المجمّع وتنبيه
       Admin.cacheLabel("ZMG9", "https://yalidine.app/p/NOPE.pdf"); const l2 = list.slice(0, 2).concat([{ o: mk(9), t: { company: "yalidine", tracking: "yal-MG9" } }]); href = ""; html = ""; await Admin.printBordereaux(l2, w);
       r.partial = href === "" && /bordereaux\.pdf/.test(html) && /تعذّر تجميع/.test(html);
       Admin.courierFetch = async () => ({ ok: false, status: 500, text: "" }); html = ""; href = ""; await Admin.printBordereaux(list.slice(0, 2), w); r.none = href === "" && /تعذّر تجميع البوردرو الأصلي/.test(html) && /class="sheet"/.test(html);
       Admin.courierFetch = cf0; Admin.pdfBytes = async () => null; return r; });
-    ok("البوردرو الأصلي: 5 ملفات PDF تُجمَّع 4 في ورقة A4 (ورقتان) ويُفتح الملف المجمّع، مع حالات الفشل الجزئي والكلي", mg.href && mg.pages === 2 && mg.a4 && mg.partial && mg.none, mg); }
+    ok("البوردرو الأصلي: 5 ملفات PDF تُجمَّع 4 في ورقة A4 (ورقتان) ويُفتح الملف المجمّع، مع حالات الفشل الجزئي والكلي", mg.href && mg.pages === 2 && mg.a4 && mg.partial && mg.none && mg.a4src && mg.a4src5, mg); }
   { const wk = await p.evaluate(async () => { /* بريكة (ولاية 60) تظهر مع بلديات باتنة، واختيارها يحوّل الولاية إليها */
       ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), w = bg.querySelector("#mo-wil"), c = bg.querySelector("#mo-com");
       w.value = "Batna"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 150));
