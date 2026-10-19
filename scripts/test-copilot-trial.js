@@ -37,7 +37,7 @@ const FAKE = "AIzaSyFAKE_TEST_KEY_0123456789abcdefghij", sleep = ms => new Promi
   await p.click("#pbcp-fab"); await p.waitForTimeout(300);
   ok(await p.evaluate(() => !!document.getElementById("pbcp-key") && !document.getElementById("pbcp").hidden), "بلا مفتاح: تظهر خانة المفتاح التجريبي");
   await p.fill("#pbcp-key", FAKE); await p.click("#pbcp-savekey"); await p.waitForTimeout(300);
-  ok(await p.evaluate(k => localStorage.getItem("alyssum_gp_gkey") === k && !document.getElementById("pbcp-key"), FAKE), "حفظ المفتاح يخزّنه في آلية ImgGen القائمة فقط ويخفي الخانة");
+  ok(await p.evaluate(k => localStorage.getItem("alyssum_gp_gkey") === k && !!document.querySelector("#pbcp details"), FAKE), "حفظ المفتاح يخزّنه في آلية ImgGen القائمة فقط ويبقى تغييره متاحاً");
   await p.click("#pbcp-fill"); await p.waitForTimeout(300);
   const filled = await p.evaluate(() => ({ prod: pbcp_v("pbcp-prod"), price: pbcp_v("pbcp-price"), old: pbcp_v("pbcp-old"), offers: [0, 1].map(i => pbcp_v("pbcp-op" + i)) }));
   ok(filled.price === "1800" && filled.old === "3100" && filled.offers.join() === "1800,3200", "«املأ من منتج الصفحة» ينسخ السعر والعروض من بيانات المنتج (قابلة للتعديل)", filled);

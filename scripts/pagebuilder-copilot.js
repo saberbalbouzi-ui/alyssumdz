@@ -78,8 +78,9 @@ const PBCopilot = (() => {
   }
 
   /* ───────────── مراجع العناصر والأقسام ───────────── */
-  const OPID = /^[\w.~-]{1,48}$/, WID = /^[\w-]{3,40}$/, SYM = /^\$[A-Za-z][\w]{0,29}$/;
-  const wref = r => { if (typeof r !== "string" || !(WID.test(r) || SYM.test(r))) throw new CmdError("bad_ref", "مرجع عنصر غير صالح"); return r; };
+  const OPID = /^[\w.~-]{1,48}$/, WID = /^[\w-]{1,40}$/, SYM = /^\$[\w-]{1,30}$/;
+  const keyOf = r => String(r).replace(/^\$/, "").replace(/[^\w]/g, "");        // نفس تنظيف as: الشرطة وغيرها تُحذف
+  const wref = r => { if (typeof r !== "string" || !(WID.test(r) || SYM.test(r))) throw new CmdError("bad_ref", "مرجع عنصر غير صالح: " + JSON.stringify(r === undefined ? null : r).slice(0, 60) + " (المطلوب معرّف العنصر أو $الاسم المعطى في as)"); return r; };
   const sref = r => { if (r === "@first" || r === "@last") return r; return wref(r); };
   const PROTECTED = new Set(["orderorig", "shdr", "sbar", "sfoot", "html", "code", "herow", "shopcats", "products", "slider", "gallery", "pgal"]);
   const LAYER_TYPES = ["text", "heading", "image", "shape", "button", "icon"];
@@ -94,13 +95,15 @@ const PBCopilot = (() => {
   function findSec(page, ref, run) {
     const L = page.sections || []; if (!L.length) throw new CmdError("no_section", "لا أقسام");
     if (ref === "@first") return L[0]; if (ref === "@last") return L[L.length - 1];
-    if (SYM.test(ref)) { const k = ref.slice(1), id = run && run.ids && run.ids["s:" + k]; const hit = L.find(s => s.id === id || (s.set && s.set.aiKey === k)); if (hit) return hit; throw new CmdError("ref_not_found", "قسم غير موجود: " + ref); }
-    const hit = L.find(s => s.id === ref); if (!hit) throw new CmdError("ref_not_found", "قسم غير موجود: " + ref); return hit;
+    const byKey = () => { const k = keyOf(ref), id = run && run.ids && run.ids["s:" + k]; return L.find(s => s.id === id || (s.set && s.set.aiKey === k)); };
+    if (SYM.test(ref)) { const hit = byKey(); if (hit) return hit; throw new CmdError("ref_not_found", "قسم غير موجود: " + ref); }
+    const hit = L.find(s => s.id === ref) || byKey(); if (!hit) throw new CmdError("ref_not_found", "قسم غير موجود: " + ref); return hit;
   }
   function findW(page, ref, run) {
     const all = allWidgets(page);
-    if (SYM.test(ref)) { const k = ref.slice(1), id = run && run.ids && run.ids["w:" + k]; const hit = all.find(x => x.w.id === id || (x.w.set && x.w.set.aiKey === k)); if (hit) return hit; throw new CmdError("ref_not_found", "عنصر غير موجود: " + ref); }
-    const hit = all.find(x => x.w.id === ref); if (!hit) throw new CmdError("ref_not_found", "عنصر غير موجود: " + ref); return hit;
+    const byKey = () => { const k = keyOf(ref), id = run && run.ids && run.ids["w:" + k]; return all.find(x => x.w.id === id || (x.w.set && x.w.set.aiKey === k)); };
+    if (SYM.test(ref)) { const hit = byKey(); if (hit) return hit; throw new CmdError("ref_not_found", "عنصر غير موجود: " + ref); }
+    const hit = all.find(x => x.w.id === ref) || byKey(); if (!hit) throw new CmdError("ref_not_found", "عنصر غير موجود: " + ref); return hit;
   }
 
   /* ───────────── بناء عناصر عبر PBSpec (لا منطق رسم ثانٍ) ───────────── */
@@ -152,7 +155,7 @@ const PBCopilot = (() => {
       async run(C, a) { const dw = C.dw(), r = viaSpec([], dw, a.height, C.F, { bg: a.bg, gradient: a.gradient }); const sec = r.sec; sec.set.aiKey = a.as || undefined; if (!sec.set.aiKey) delete sec.set.aiKey; if (a.name) sec.set.cid = a.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30) || undefined; if (!sec.set.cid) delete sec.set.cid;
         const L = C.work.sections, ref = a.after, i = ref === "@first" ? 1 : ref === "@last" ? L.length : L.indexOf(findSec(C.work, ref, C.run)) + 1; L.splice(i, 0, sec); C.touchSec(sec.id); if (a.as) C.run.ids["s:" + a.as] = sec.id; return { id: sec.id }; } },
     "layer.add": {
-      check(a, F) { const o = { section: sref(a.section), layer: checkLayer(a.layer, F), as: a.as == null ? "" : String(a.as).replace(/[^\w]/g, "").slice(0, 30) }; return o; },
+      check(a, F) { const o = { section: a.section == null ? "@last" : sref(a.section), layer: checkLayer(a.layer, F), as: a.as == null ? "" : String(a.as).replace(/[^\w]/g, "").slice(0, 30) }; return o; },
       async run(C, a, op) { const sec = findSec(C.work, a.section, C.run); if (!(sec.set && sec.set.kind === "canvas" && secDw(sec))) throw new CmdError("section_unsupported", "القسم ليس قسم قماش متناسباً (scaled)");
         if (a.as && C.run.ids["w:" + a.as] && findWOpt(C.work, C.run.ids["w:" + a.as])) throw new CmdError("duplicate_as", "الاسم $" + a.as + " مستعمل");
         const dw = secDw(sec), r = viaSpec([a.layer], dw, Math.max(secMh(sec), (a.layer.y || 0) + (a.layer.h || 400) + 40), C.F), w = r.sec.free[0]; tagFx(w); if (a.as) w.set.aiKey = a.as;
