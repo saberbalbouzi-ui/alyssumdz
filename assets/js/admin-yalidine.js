@@ -38,7 +38,22 @@ const AdminYd = (() => {
   function save() { try { localStorage.setItem(KEY, JSON.stringify({ rows: S.rows, total: S.total, partial: S.partial, at: S.at })); } catch (e) { } }
   function restore() { try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j && Array.isArray(j.rows)) { S.rows = j.rows; S.total = j.total || j.rows.length; S.partial = !!j.partial; S.at = j.at || 0; } } catch (e) { } }
   function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); try { window.AdminHome && AdminHome.refreshSoft && AdminHome.refreshSoft(); } catch (e) { } }
-  function trackMap() { const a = A(), m = {}; if (a && a.orders) { a.orders.forEach(o => { const t = a.trackingOf(o); if (t) m[t.tracking || t] = o; }); Object.keys(REG).forEach(tr => { if (!m[tr]) { const o = a.orders.find(x => x.id === REG[tr].id); if (o) m[tr] = o; } }); } return m; }
+  /* هاتف/اسم مقنَّع (نجوم) مقابل نصّ حقيقي: نفس الطول والأحرف الظاهرة متطابقة */
+  function mmPhone(mk, pl) { const a = String(mk || "").replace(/\s/g, ""), b = String(pl || "").replace(/\D/g, ""); if (!/\*/.test(a) || a.length < 8 || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== "*" && a[i] !== b[i]) return false; return true; }
+  function mmName(mk, pl) { const A1 = String(mk || "").split(/\s+/).filter(w => /[^*.\-]/.test(w)), B1 = String(pl || "").trim().split(/\s+/); if (!A1.length) return true; if (A1.length > B1.length) return false; return A1.every(w => B1.some(x => norm(x)[0] === norm(w)[0] && (!/\*/.test(w) || x.length >= w.length - 1))); }
+  /* طرد جديد بلا وسم تتبع في أي طلب (أُرسل من نافذة أخرى أو ضاع الوسم): نربطه بالطلب الوحيد الذي يطابق هاتفه المقنَّع واسمه وولايته */
+  let FZ = { k: "", m: {} };
+  function fuzzyLinks(a, m) {
+    const k = S.rows.length + ":" + a.orders.length + ":" + Object.keys(m).length; if (FZ.k === k) return FZ.m;
+    const out = {}, free = a.orders.filter(o => !a.trackingOf(o) && ["nouvelle", "confirmee", "expediee"].includes(o.status));
+    S.rows.forEach(r => {
+      if (m[r.tracking] || !masked(r.phone) || !free.length) return;
+      const c = free.filter(o => mmPhone(r.phone, o.phone) && mmName(r.name, o.name) && (!r.wilaya || !o.wilaya || norm(o.wilaya) === norm(r.wilaya) || norm(a.coOrder ? a.coOrder(o).wilaya : o.wilaya) === norm(r.wilaya)));
+      if (c.length === 1) out[r.tracking] = c[0];
+    });
+    FZ = { k, m: out }; return out;
+  }
+  function trackMap() { const a = A(), m = {}; if (a && a.orders) { a.orders.forEach(o => { const t = a.trackingOf(o); if (t) m[t.tracking || t] = o; }); Object.keys(REG).forEach(tr => { if (!m[tr]) { const o = a.orders.find(x => x.id === REG[tr].id); if (o) m[tr] = o; } }); try { const f = fuzzyLinks(a, m); Object.keys(f).forEach(tr => { if (!m[tr]) m[tr] = f[tr]; }); } catch (e) { } } return m; }
   function counts() { const c = {}; S.rows.forEach(r => { const k = r.status || "—"; c[k] = (c[k] || 0) + 1; }); return c; }
   /* طرود مكرّرة: الاسم والهاتف والوجهة والسعر نفسها خلال 3 أيام (نتيجة إرسال الطلب مرتين) ← {تتبع: عدد المجموعة} */
   function dupMap() {
