@@ -91,6 +91,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
 .pbx-h.d-ne{top:-7px;right:-7px;cursor:nesw-resize}.pbx-h.d-nw{top:-7px;left:-7px;cursor:nwse-resize}.pbx-h.d-se{bottom:-7px;right:-7px;cursor:nwse-resize}.pbx-h.d-sw{bottom:-7px;left:-7px;cursor:nesw-resize}
+.pbx-pend{position:absolute;height:4px;border-top:2px dashed #8b3dff;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
 .pbx-guide{position:absolute;background:repeating-linear-gradient(var(--gd,180deg),#e91e63 0 6px,transparent 6px 10px);pointer-events:none;z-index:4}
 .pbx-bar input[type=color]{width:26px;height:22px;padding:0;border:0;border-radius:4px;background:none;cursor:pointer;vertical-align:middle}.pbx-bar button.on{outline:2px solid #fff}
 .pbx-gb{border:1.5px dashed #cdbfa0;border-radius:10px;padding:.6rem;margin-bottom:.6rem;background:#fff}.pbx-gb input{width:64px;border:1.5px solid #e0d9c8;border-radius:8px;padding:.3rem;font-family:inherit}
@@ -999,7 +1000,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
   /* صفحة طويلة: قسم قماش واحد = الصفحة نفسها (لا قسم ولا فواصل ولا شريط أقسام) */
   function isLong() { const P = E.page, s0 = P && !P.ad && P.sections && P.sections.length === 1 && P.sections[0]; return !!(s0 && s0.set && s0.set.kind === "canvas" && !s0.set.tight); }
-  function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))) + 40; setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
+  function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
   function select(id) {
     if (id && isLong()) { const q1 = find(id); if (q1 && q1.kind !== "widget") id = null; }
     if (id && E.page && E.page.ad) { const q0 = find(id); if (q0 && q0.kind !== "widget") id = null; }      // «إنشاء صور»: الخلفية ليست قسماً — لا تحديد للقسم ولا إعدادات له
@@ -1104,6 +1105,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
     if (E.mwp && E.mwp.id !== E.sel) { mwRestore(); toast("↩ أُلغيت مسوّدة الكتابة السحرية"); setTimeout(() => { renderCanvas(); renderInspector(); }, 0); }      // تغيير التحديد قبل الإدراج = إلغاء
     try { drawSecBar(ovl); markThumbs(); } catch (x) { console.warn(x); }
+    try { drawPageEnd(ovl); } catch (x) { console.warn(x); }
     if (E.covered && E.covered.size && fdoc) { const o0 = ovlOrigin(); E.covered.forEach(id => { const el = fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return; const r = layoutRect(el), d = document.createElement("div"); d.className = "pbx-cov"; d.style.cssText = `left:${o0.ox + r.left * o0.s}px;top:${o0.oy + r.top * o0.s}px;width:${r.width * o0.s}px;height:${r.height * o0.s}px`; ovl.appendChild(d); }); }
     if (E.marqEl) ovl.appendChild(E.marqEl);
     if (!E.sel || !fdoc || !root) return; const inf = find(E.sel); if (!inf) return;
@@ -1201,6 +1203,23 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     eyeoff: SVG('<path d="M2 12s3.6-7 10-7c2 0 3.8.7 5.3 1.7M22 12s-3.6 7-10 7c-2 0-3.8-.7-5.3-1.7"/><path d="M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/>'), add: SVG('<rect x="4" y="4" width="16" height="16" rx="3" stroke-dasharray="0"/><path d="M12 8v8M8 12h8"/>')
   };
   const actSec = () => E.page.sections.find(x => x.id === E.hs) || E.page.sections[0];
+  /* خط نهاية الصفحة الطويلة: يُسحب للأعلى لتقصيرها (يلتصق بأسفل آخر عنصر) وللأسفل لتطويلها */
+  function drawPageEnd(ovl) {
+    if (!isLong() || !fdoc || !root) return; const sec = E.page.sections[0], el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return;
+    const r = layoutRect(el), o = ovlOrigin(), s = o.s, y = o.oy + (r.top + r.height) * s, x0 = o.ox + r.left * s, w = r.width * s;
+    const ln = document.createElement("div"); ln.className = "pbx-pend"; ln.style.cssText = `left:${x0}px;top:${y - 2}px;width:${w}px`;
+    const hd = document.createElement("div"); hd.className = "pbx-pend-h"; hd.title = "اسحب للأعلى لتقصير الصفحة أو للأسفل لتطويلها (يلتصق بأسفل آخر عنصر)"; hd.innerHTML = "↕ نهاية الصفحة"; ln.appendChild(hd); ovl.appendChild(ln);
+    hd.onmousedown = e => {
+      e.preventDefault(); e.stopPropagation(); const dev = E.dev, mh0 = Number(eff(sec.set, "mh", dev)) || r.height, k = mh0 / (r.height || 1), top = r.top, tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
+      const mv = (dx, dy, ev) => {
+        let h = r.height + dy; const eb = Math.max(0, ...Array.from(fdoc.querySelectorAll('[data-kind="widget"]')).map(q => { const b = layoutRect(q); return b.top + b.height - top; }));
+        if (h < eb + 10) h = eb;      // لا يقصّ عنصراً: يتوقف عند حافة آخر عنصر بالضبط
+        const H = Math.max(100, Math.round(h * k)); setR(sec.set, "mh", dev, H); tip.textContent = H + "px"; renderCanvas(); positionOverlay();
+        const st = $("pbx-ovl").getBoundingClientRect(); $("pbx-ovl").appendChild(tip); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
+      };
+      dragTrack(e, "ns-resize", mv, () => { E.nextLabel = "ضبط طول الصفحة"; afterEdit(); });
+    };
+  }
   function drawSecBar(ovl) {
     if (E.page && E.page.ad) return;
     const sec = actSec(); if (!sec || !fdoc || !root) return; const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return;
@@ -2003,8 +2022,8 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   function growCanvas(sec) {
     if (!FREE_ONLY || sec.set.kind !== "canvas" || E.page.ad) return; const dev = E.dev;      // لوحة التصميم بمقاس ثابت: لا تكبر مع العناصر
     const hOf = w => freeH(sec, w, dev);
-    const tight = !!sec.set.tight, need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))) + (tight ? 0 : 40), cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
-    if (tight ? Math.abs(need - cur) > 0.5 : need > cur) setR(sec.set, "mh", dev, Math.round(need));
+    const tight = !!sec.set.tight, bot = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))), need = tight ? bot : bot + 40, cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
+    if (tight ? Math.abs(need - cur) > 0.5 : bot > cur + 0.5) setR(sec.set, "mh", dev, Math.round(need));      // الصفحة الطويلة تكبر فقط حين يتجاوز عنصر حدّها السفلي (فلا يعيد التكبير ما قصّه المستخدم)
   }
   const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
   /* لوحة «إنشاء صور»: صورة مضافة أو مستبدلة تُوضع في الوسط بحيث يطابق جانبها الأطول الصفحة (طولها للصورة الطولية، عرضها للعريضة) دون قصّ؛ الصفحة المربعة + صورة مستطيلة = طول الصورة بطول الصفحة */
