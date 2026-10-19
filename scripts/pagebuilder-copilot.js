@@ -134,7 +134,17 @@ const PBCopilot = (() => {
 
   /* ───────────── مخططات الأوامر: check نقي (بلا صفحة) + run (على نسخة العمل) ───────────── */
   const PATCH_KEYS = { text: "s", color: "c", size: "n", weight: "w", align: "a", fill: "c", bg: "c", link: "l", src: "i", alt: "s", fit: "f", prompt: "s", x: "n", y: "n", w: "n", h: "n", z: "n", rot: "n", opacity: "n", radius: "n", hidden: "b", locked: "b", title: "s", icon: "s" };
+  /* النموذج قد ينسى حقل type أو يسمّيه kind/layer_type: نستنتجه من الحقول بدل رفض الأمر */
+  function inferType(L) {
+    if (!isObj(L)) return L; if (LAYER_TYPES.includes(L.type)) return L;
+    const alias = String(L.type || L.kind || L.layer_type || L.layerType || L.element || L.widget || L.t || "").toLowerCase().trim(), m = { title: "heading", headline: "heading", h1: "heading", h2: "heading", h3: "heading", paragraph: "text", p: "text", label: "text", img: "image", picture: "image", photo: "image", rect: "shape", ellipse: "shape", circle: "shape", btn: "button", cta: "button" };
+    let t = LAYER_TYPES.includes(alias) ? alias : m[alias] || "";
+    if (!t) { const fs = Number(L.font && L.font.size) || Number(L.size) || 0;
+      if (L.src != null || L.prompt != null || L.cutout != null) t = "image"; else if (L.icon != null && L.text == null) t = "icon"; else if (L.link != null && L.text != null) t = "button"; else if (L.text != null) t = (L.tag || fs >= 40) ? "heading" : "text"; else if (L.shape != null || L.fill != null || L.gradient != null) t = "shape"; }
+    return t ? Object.assign({}, L, { type: t }) : L;
+  }
   function checkLayer(L, F) {
+    L = inferType(L);
     if (!isObj(L) || !LAYER_TYPES.includes(L.type)) throw new CmdError("type_not_allowed", "نوع طبقة غير مسموح: " + str(L && L.type, 20) + " (المسموح: " + LAYER_TYPES.join("، ") + ")");
     const o = clone(L);
     ["text", "title", "alt"].forEach(k => { if (o[k] != null) o[k] = cleanText(o[k], F, k === "text" ? 3000 : 200); });
@@ -228,7 +238,7 @@ const PBCopilot = (() => {
     "page.applySpec": {
       structural: true, critical: true,
       check(a, F) { if (!isObj(a.spec)) throw new CmdError("bad_args", "spec مطلوب"); const spec = clone(a.spec); scan(spec);
-        (Array.isArray(spec.sections) ? spec.sections : []).forEach(sec => { if (!isObj(sec)) return; ["title", "note"].forEach(k => { if (sec[k] != null) sec[k] = cleanText(sec[k], F, 500); }); (Array.isArray(sec.layers) ? sec.layers : []).forEach(L => { if (isObj(L) && !LAYER_TYPES.includes(L.type)) throw new CmdError("type_not_allowed", "نوع طبقة غير مسموح في spec: " + str(L.type, 20)); if (isObj(L)) Object.assign(L, checkLayer(L, F)); }); });
+        (Array.isArray(spec.sections) ? spec.sections : []).forEach(sec => { if (!isObj(sec)) return; ["title", "note"].forEach(k => { if (sec[k] != null) sec[k] = cleanText(sec[k], F, 500); }); (Array.isArray(sec.layers) ? sec.layers : []).forEach((L, li) => { if (isObj(L) && !LAYER_TYPES.includes(L.type)) { L = sec.layers[li] = inferType(L); } if (isObj(L) && !LAYER_TYPES.includes(L.type)) throw new CmdError("type_not_allowed", "نوع طبقة غير مسموح في spec: " + str(L.type, 20)); if (isObj(L)) Object.assign(L, checkLayer(L, F)); }); });
         if (isObj(spec.page)) { spec.page.product = ""; } const mode = a.mode === "append" ? "append" : "replace"; return { spec, mode }; },
       async run(C, a) { const sp = S(), r = sp.validate(a.spec); if (!r.ok) throw new CmdError("spec_invalid", r.error); const secs = sp.toSections(r, { products: [], product: "" }); const gen = [];
         const old = C.work.sections.filter(s => !(s.cols || []).some(c => (c.widgets || []).some(w => PROTECTED.has(w.type)))); if (a.mode === "replace" && C.work.sections.length !== old.length) throw new CmdError("protected_layer", "الصفحة فيها عناصر محمية؛ استعمل mode=append");

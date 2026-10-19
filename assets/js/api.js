@@ -209,6 +209,7 @@ const API = {
     async token() {
       const s = this.session(); if (!s) return null;
       if (Date.now() < s.expires_at) return s.access_token;
+      if (this._freeze) return s.access_token;                      // أثناء تحديث اللوحة: لا تجديد يضيع ردّه عند إعادة التحميل (رمز التجديد يُستعمل مرة واحدة)
       if (this._rp) return this._rp;
       this._rp = (async () => {
         try {
@@ -224,6 +225,8 @@ const API = {
       })();
       return this._rp;
     },
+    /* يفرض تجديد الجلسة الآن (رمز جديد كامل المدة) — يُستعمل قبل إعادة تحميل اللوحة وعند رفض الهوية برمز قديم */
+    async renew() { const s = this.session(); if (!s) return null; try { localStorage.setItem("alyssum_sb_session", JSON.stringify(Object.assign({}, s, { expires_at: 0 }))); } catch (e) {} this._freeze = false; return this.token(); },
     async adminFetch(path, opts) {
       const t = await this.token(); if (!t) return null;
       try { const o = opts || {}; const r = await fetch(this.url(path), Object.assign({}, o, { headers: Object.assign(this.headers(t), o.headers || {}) })); if (!r.ok) return null; const txt = await r.text(); return txt ? JSON.parse(txt) : {}; } catch (e) { return null; }
