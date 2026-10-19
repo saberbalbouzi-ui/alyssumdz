@@ -27,8 +27,9 @@ HARD RULES
 6. Never touch protected layers (order form, html, header, footer) and never publish, save or modify products.
 7. Reply with JSON only. No markdown, no commentary.`;
 
+  const NOREF = /ingredient|texture|pattern|background|backdrop|leaf|leaves|flower|pollen|honeycomb|herb|abstract|gradient|spice|seed|مكوّن|مكون|خلفية|ملمس|نمط|عشب|أوراق/i;
   const J = o => JSON.stringify(o);
-  const factsText = f => J({ product: f.product, currency: f.currency, hasPrice: f.price != null, hasOldPrice: f.oldPrice != null, offers: (f.offers || []).map(o => ({ n: o.n, label: o.label, qty: o.qty, free: o.free })) });
+  const factsText = f => J({ product: f.product, description: f.desc || undefined, currency: f.currency, hasPrice: f.price != null, hasOldPrice: f.oldPrice != null, offers: (f.offers || []).map(o => ({ n: o.n, label: o.label, qty: o.qty, free: o.free })) });
   const planPrompt = x => `${SYSTEM}\n\nTASK: create a DESIGN PLAN (JSON object, no ops yet) for: ${clamp(x.goal, 400)}\nFACTS (numbers are available only through tokens): ${factsText(x.facts)}\nTOKENS: ${J(x.tokens)}\nPAGE OUTLINE: ${J(x.outline)}\nReturn {"palette":{"bg":"#...","accent":"#...","text":"#..."},"flow":["hero","problem","benefits","product","offer","cta"],"copy":{"headline":"...","sub":"...","benefits":["..."],"cta":"..."},"assets":[{"key":"jar","prompt":"...","cutout":true}],"edges":{"top":"#rrggbb","bottom":"#rrggbb"}}`;
   const opsPrompt = x => `${SYSTEM}\n\nTASK: build the page now from the approved plan. GOAL: ${clamp(x.goal, 400)}\nPLAN: ${J(x.plan || {})}\nFACTS: ${factsText(x.facts)}\nTOKENS: ${J(x.tokens)}\nPAGE OUTLINE (use the edge colours so your background joins its neighbours without a visible seam): ${J(x.outline)}\nReturn the ops JSON.`;
   const editPrompt = x => `${SYSTEM}\n\nTASK: INCREMENTAL EDIT — change ONLY what the instruction needs, touching the fewest layers; reference existing layers by their real ids from the outline; do not add sections.\nINSTRUCTION: ${clamp(x.instruction, 600)}\nFACTS: ${factsText(x.facts)}\nTOKENS: ${J(x.tokens)}\nPAGE OUTLINE: ${J(x.outline)}\nReturn the ops JSON.`;
@@ -86,7 +87,10 @@ HARD RULES
       if (!j || typeof j !== "object" || Array.isArray(j)) throw err("invalid_output", "مخرجات غير مفهومة"); if (needOps && !Array.isArray(j.ops)) throw err("invalid_output", "الغلاف بلا ops"); return j; });
     return {
       llm: { plan: x => text("plan", planPrompt(x), false), ops: x => text("ops", opsPrompt(x), true), edit: x => text("edit", editPrompt(x), true) },
-      img: { generate: g => guarded(async () => { const r = await IG().edit({ textOnly: true, confirm: false, prompt: g.prompt, W: g.W, H: g.H, fmt: "png", title: "Copilot" }); if (!r || !r.blob) throw err("invalid_output", "لا صورة في الردّ"); return { blob: r.blob }; }, 150000) },
+      img: { generate: g => guarded(async () => {
+        /* صورة المنتج المرجعية (من القائمة أو المرفوعة): تُرسل مع الطلب لكل صورة تخص المنتج نفسه (عبوة/جرة/قارورة)، لا للخلفيات والمكوّنات */
+        const ref = typeof opts.ref === "function" && !NOREF.test(g.prompt || "") ? await Promise.resolve(opts.ref()).catch(() => null) : null;
+        const r = await IG().edit(ref ? { blob: ref, confirm: false, prompt: "Use the attached photo as the exact product reference (keep its shape, colours and label unchanged). " + g.prompt, W: g.W, H: g.H, fmt: "png", title: "Copilot" } : { textOnly: true, confirm: false, prompt: g.prompt, W: g.W, H: g.H, fmt: "png", title: "Copilot" }); if (!r || !r.blob) throw err("invalid_output", "لا صورة في الردّ"); return { blob: r.blob }; }, 150000) },
       removeBg: opts.removeBg || removeBgLocal, upload: opts.upload || undefined,
       guard: { trial: true, charge: async () => { const rd = IG().ready(); if (!rd.ok) return { ok: false, reason: rd.nokey ? "nokey" : "off" }; if (!IG().estimate().can(1)) return { ok: false, reason: "budget" }; return { ok: true }; } },
       store: opts.store || undefined, hooks: opts.hooks || {}, limits: opts.limits

@@ -42,7 +42,7 @@ const PBCopilot = (() => {
   const money = v => { if (v == null || v === "") return null; const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 && n <= 10000000 ? n : null; };
   function normFacts(f) {
     if (!isObj(f)) throw new CmdError("facts_required", "يلزم أن يقدّم المستخدم السعر والعروض قبل إنشاء الصفحة");
-    const out = { currency: str(f.currency, 12).trim() || "دج", product: str(f.product || f.productName, 120).trim(), price: money(f.price), oldPrice: money(f.oldPrice != null ? f.oldPrice : f.old), offers: [] };
+    const out = { currency: str(f.currency, 12).trim() || "دج", product: str(f.product || f.productName, 120).trim(), desc: str(f.desc || f.description, 700).replace(/\s+/g, " ").trim(), price: money(f.price), oldPrice: money(f.oldPrice != null ? f.oldPrice : f.old), offers: [] };
     (Array.isArray(f.offers) ? f.offers : []).slice(0, 8).forEach((o, i) => { if (!isObj(o)) return; const price = money(o.price); if (price == null) return; out.offers.push({ n: out.offers.length + 1, label: str(o.label, 80).trim(), qty: money(o.qty), price, free: money(o.free) || 0 }); });
     if (out.price == null && !out.offers.length) throw new CmdError("facts_required", "يلزم سعر واحد أو عرض واحد على الأقل في بيانات المنتج");
     return out;
