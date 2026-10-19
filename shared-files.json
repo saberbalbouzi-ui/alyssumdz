@@ -74,6 +74,8 @@
     "assets/js/img3d.js",
     "assets/js/studio3d.js",
     "assets/js/vendor/three.module.min.js",
+    "assets/js/vendor/pdf-lib.min.js",
+    "assets/js/vendor/pdf-lib.LICENSE.txt",
     "assets/js/vendor/three.LICENSE.txt",
     "assets/js/admin-imgqa.js",
     "assets/js/tryon-shopper.js",

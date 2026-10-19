@@ -967,11 +967,12 @@ switch ($route) {
         foreach ((array)($b['headers'] ?? []) as $k => $v) { if (is_string($k) && preg_match('/^[A-Za-z0-9-]{1,40}$/', $k) && !preg_match("/[\r\n]/", (string)$v)) $hdr[] = "$k: $v"; }
         if (!function_exists('curl_init')) out(500, ['error' => 'curl_missing']);
         $ch = curl_init($url);
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_TIMEOUT => 25, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_MAXFILESIZE => 2097152,
+        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_TIMEOUT => 25, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_MAXFILESIZE => !empty($b['binary']) ? 8388608 : 2097152,
             CURLOPT_USERAGENT => 'store-courier', CURLOPT_CUSTOMREQUEST => $m, CURLOPT_HTTPHEADER => $hdr, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2]);
         if ($m !== 'GET' && isset($b['body'])) curl_setopt($ch, CURLOPT_POSTFIELDS, (string)$b['body']);
         $resp = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE); curl_close($ch);
         if ($resp === false) out(502, ['error' => 'upstream_failed']);
+        if (!empty($b['binary'])) out(200, ['ok' => true, 'status' => $code, 'b64' => base64_encode((string)$resp)]);      // ملفات ثنائية (PDF بوردرو)
         out(200, ['ok' => true, 'status' => $code, 'body' => substr((string)$resp, 0, 200000)]);
 
     case 'file':

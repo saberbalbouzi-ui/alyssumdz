@@ -45,6 +45,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
 
   // ═══ حاسوب ═══
   let { p, errs } = await open({ viewport: { width: 1280, height: 800 } });
+  await p.evaluate(() => { Admin.__realPdfBytes = Admin.pdfBytes; Admin.pdfBytes = async () => null; });    // اختبارات الطباعة القديمة بلا جلب ملفات (يُستعاد في اختباري التجميع والتنزيل)
   { const nw = await p.evaluate(async () => { /* ولاية جديدة (بركة 60): تُرسل باسمها إن عدّتها الشركة ولاية، وإلا بالأم باتنة */
       const SV = { cw: Admin.companyWilayas, cc: Admin.companyCommunes }; const co = { wilayasRequest: true, communesRequest: true }, cfg = {}, o = { id: "NW1", wilaya: "Barika", commune: "Barika" };
       Admin.companyWilayas = async () => ({ 5: { name: "Batna", ok: true }, 60: { name: "Barika", ok: true } });
@@ -56,13 +57,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     ok("ولاية جديدة تعدّها الشركة قائمة بذاتها: تُرسل باسمها وبلدياتها من رقمها", nw.aw === "Barika" && nw.awid === 60 && nw.nw === "Barika" && nw.asked[0] === 60, nw);
     ok("ولاية جديدة لا تعرفها الشركة: تعود للولاية الأم", nw.bw === "Batna" && !nw.bwid && nw.bn === "Batna", nw); }
   { const yf = await p.evaluate(async () => { /* طرد مقنَّع بلا وسم تتبع في أي طلب: يُربط بالطلب الوحيد المطابق، ويُنزَّل البوردرو PDF */
-      const mk = ph => ph[0] + "*".repeat(ph.length - 3) + ph.slice(-2), keep = Admin.orders, o = { id: "F1", date: new Date().toISOString(), name: "عمر العلي", phone: "0550123456", wilaya: "Batna", commune: "Barika", dtype: "home", items: "x ×1 = 1800", subtotal: 1800, fee: 600, total: 2400, status: "confirmee", note: "", extra: {} };
+      Admin.pdfBytes = Admin.__realPdfBytes; const mk = ph => ph[0] + "*".repeat(ph.length - 3) + ph.slice(-2), keep = Admin.orders, o = { id: "F1", date: new Date().toISOString(), name: "عمر العلي", phone: "0550123456", wilaya: "Batna", commune: "Barika", dtype: "home", items: "x ×1 = 1800", subtotal: 1800, fee: 600, total: 2400, status: "confirmee", note: "", extra: {} };
       Admin.orders = [o]; AdminYd.set([{ tracking: "yal-TEST1", name: "ع** ا****", phone: mk("0550123456"), wilaya: "Batna", commune: "Barika", status: "En préparation", date: new Date().toISOString(), price: 1800 }], 1, false);
       const txt = (document.getElementById("yd-card") || {}).textContent || "";
       const rec = [], oc = HTMLAnchorElement.prototype.click, of = window.fetch, wo = window.open; HTMLAnchorElement.prototype.click = function () { rec.push(this.download); };
-      window.fetch = async () => ({ ok: true, status: 200, blob: async () => new Blob(["%PDF-1.4"], { type: "application/pdf" }) }); const d1 = await Admin.dlPdf("https://example.com/l.pdf", "bordereau-yal-TEST1");
+      const cf0 = Admin.courierFetch; Admin.courierFetch = async () => { throw new Error("no relay"); }; window.fetch = async () => ({ ok: true, status: 200, arrayBuffer: async () => new TextEncoder().encode("%PDF-1.4 " + "x".repeat(300)).buffer }); const d1 = await Admin.dlPdf("https://example.com/l.pdf", "bordereau-yal-TEST1");
       let opened = ""; window.fetch = async () => { throw new TypeError("cors"); }; window.open = u => { opened = u; return null; }; const d2 = await Admin.dlPdf("https://example.com/l.pdf", "x");
-      window.fetch = of; window.open = wo; HTMLAnchorElement.prototype.click = oc; AdminYd.set([], 0, false); Admin.orders = keep; return { linked: txt.includes("عمر العلي") && txt.includes("0550123456"), d1, rec, d2, opened }; });
+      window.fetch = of; window.open = wo; Admin.courierFetch = cf0; Admin.pdfBytes = async () => null; HTMLAnchorElement.prototype.click = oc; AdminYd.set([], 0, false); Admin.orders = keep; return { linked: txt.includes("عمر العلي") && txt.includes("0550123456"), d1, rec, d2, opened }; });
     ok("طرد مقنَّع بلا تتبع في الطلب يُربط بالطلب المطابق ويظهر اسمه وهاتفه الحقيقيان", yf.linked, yf);
     ok("تنزيل البوردرو PDF: ملف باسم الطرد، واحتياط فتح الرابط عند منع CORS", yf.d1 === true && yf.rec[0] === "bordereau-yal-TEST1.pdf" && yf.d2 === false && yf.opened === "https://example.com/l.pdf", yf); }
   { const bk = await p.evaluate(async () => { /* الطباعة المجمّعة: 4 بوردرو في ورقة A4 (2×2) + بطاقات تنزيل الأصلية بلا iframe */
@@ -72,6 +73,22 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       await Admin.printBordereaux(list, w);
       return { sheets: (html.match(/class="sheet"/g) || []).length, cells: (html.match(/class="lb"/g) || []).length, frames: (html.match(/<iframe/g) || []).length, dl: (html.match(/class="dl"/g) || []).length, stop: /مكتب باتنة/.test(html), bar: /تنزيل كل الأصلية/.test(html), svg: /<svg/.test(html) }; });
     ok("طباعة البوردرو الجماعية: 4 في ورقة A4 (5 طرود ← ورقتان) وبطاقات تنزيل PDF الأصلية بلا iframe", bk.sheets === 2 && bk.cells === 5 && bk.frames === 0 && bk.dl === 5 && bk.stop && bk.bar && bk.svg, bk); }
+  { const mg = await p.evaluate(async () => { /* البوردرو الأصلي: 5 ملفات PDF (A6) تُجمَّع 4 في ورقة A4 ← ورقتان، وملف واحد فاشل يُعرض صفحة بالرابط */
+      Admin.pdfBytes = Admin.__realPdfBytes; const P = await Admin.loadPdfLib(), mkPdf = async k => { const d = await P.PDFDocument.create(), pg = d.addPage([298, 420]); pg.drawText("LABEL " + k, { x: 20, y: 200, size: 20 }); return d.save(); };
+      const b64 = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+      const files = {}; for (let k = 0; k < 5; k++) files["https://yalidine.app/p/MG" + k + ".pdf"] = b64(await mkPdf(k));
+      const cf0 = Admin.courierFetch; let calls = 0; Admin.courierFetch = async rq => { calls++; if (files[rq.url] && rq.binary) return { ok: true, status: 200, text: "", b64: files[rq.url] }; return { ok: false, status: 404, text: "" }; };
+      const mk = k => ({ id: "ZMG" + k, name: "زبون " + k, phone: "0550000000", wilaya: "Batna", commune: "Barika", dtype: "home", items: "x", total: 2400, status: "confirmee" });
+      const list = []; for (let k = 0; k < 5; k++) { const o = mk(k); Admin.cacheLabel(o.id, "https://yalidine.app/p/MG" + k + ".pdf"); list.push({ o, t: { company: "yalidine", tracking: "yal-MG" + k } }); }
+      let href = "", html = ""; const w = { document: { open() { html = ""; }, write(t) { html += t; }, close() { } }, location: { set href(v) { href = v; } }, closed: false };
+      const r = {}; await Admin.printBordereaux(list, w); r.href = /^blob:/.test(href);
+      if (r.href) { const u8 = new Uint8Array(await (await fetch(href)).arrayBuffer()), d = await P.PDFDocument.load(u8); r.pages = d.getPageCount(); const sz = d.getPage(0).getSize(); r.a4 = Math.round(sz.width) === 595 && Math.round(sz.height) === 842; }
+      // ملف فاشل ← صفحة بها رابط المجمّع وتنبيه
+      Admin.cacheLabel("ZMG9", "https://yalidine.app/p/NOPE.pdf"); const l2 = list.slice(0, 2).concat([{ o: mk(9), t: { company: "yalidine", tracking: "yal-MG9" } }]); href = ""; html = ""; await Admin.printBordereaux(l2, w);
+      r.partial = href === "" && /bordereaux\.pdf/.test(html) && /تعذّر تجميع/.test(html);
+      Admin.courierFetch = async () => ({ ok: false, status: 500, text: "" }); html = ""; href = ""; await Admin.printBordereaux(list.slice(0, 2), w); r.none = href === "" && /تعذّر تجميع البوردرو الأصلي/.test(html) && /class="sheet"/.test(html);
+      Admin.courierFetch = cf0; Admin.pdfBytes = async () => null; return r; });
+    ok("البوردرو الأصلي: 5 ملفات PDF تُجمَّع 4 في ورقة A4 (ورقتان) ويُفتح الملف المجمّع، مع حالات الفشل الجزئي والكلي", mg.href && mg.pages === 2 && mg.a4 && mg.partial && mg.none, mg); }
   { const wk = await p.evaluate(async () => { /* بريكة (ولاية 60) تظهر مع بلديات باتنة، واختيارها يحوّل الولاية إليها */
       ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), w = bg.querySelector("#mo-wil"), c = bg.querySelector("#mo-com");
       w.value = "Batna"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 150));
