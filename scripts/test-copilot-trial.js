@@ -26,7 +26,10 @@ const FAKE = "AIzaSyFAKE_TEST_KEY_0123456789abcdefghij", sleep = ms => new Promi
   const setKey = k => p.evaluate(k => { if (k) localStorage.setItem("alyssum_gp_gkey", k); else localStorage.removeItem("alyssum_gp_gkey"); localStorage.removeItem("alyssum_ai_token"); localStorage.setItem("alyssum_ig_budget", "5"); localStorage.setItem("alyssum_ig_spent", "0"); localStorage.removeItem("alyssum_ig_out"); }, k);
   const loaded = await p.evaluate(() => ({ cp: typeof PBCopilot, real: typeof PBCopilotReal, ui: typeof PBCopilotUI, fab: !!document.getElementById("pbcp-fab"), ctor: typeof PBCopilotReal.createBrowser }));
   ok(loaded.cp === "object" && loaded.real === "object" && loaded.ui === "object" && loaded.fab && loaded.ctor === "function", "?copilot=1 يحمّل الوحدات الثلاث ويظهر زر ✨ Copilot", loaded);
-  const plain = await (async () => { const p2 = await ctx.newPage(); await p2.goto("http://localhost:8765/admin.html"); await p2.waitForTimeout(1500); const r = await p2.evaluate(() => ({ cp: typeof PBCopilot, fab: !!document.getElementById("pbcp-fab") })); await p2.close(); return r; })();
+  const plain = await (async () => { const c2 = await b.newContext(), p2 = await c2.newPage(); await p2.goto("http://localhost:8765/admin.html"); await p2.waitForTimeout(1500); const r = await p2.evaluate(() => ({ cp: typeof PBCopilot, fab: !!document.getElementById("pbcp-fab") })); await c2.close(); return r; })();
+  const kept = await (async () => { const p3 = await ctx.newPage(); await p3.goto("http://localhost:8765/admin.html"); await p3.waitForTimeout(1800); const r = await p3.evaluate(() => ({ cp: typeof PBCopilot, fab: !!document.getElementById("pbcp-fab") })); await p3.goto("http://localhost:8765/admin.html?copilot=0"); await p3.waitForTimeout(1500); const off = await p3.evaluate(() => ({ cp: typeof PBCopilot, ls: localStorage.getItem("alyssum_copilot") })); await p3.close(); return { r, off }; })();
+  ok(kept.r.cp === "object" && kept.r.fab, "بعد ?copilot=1 مرة واحدة يبقى Copilot ظاهراً دون الوسيط (للهاتف)", kept);
+  ok(kept.off.cp === "undefined" && kept.off.ls === null, "?copilot=0 يطفئه ويمسح الحفظ", kept);
   ok(plain.cp === "undefined" && !plain.fab, "بلا ?copilot=1 لا يُحمَّل شيء (المحرر كما هو)", plain);
 
   /* ───── واجهة المستخدم: مفتاح → ملء من المنتج → تشغيل → تراجع ───── */
