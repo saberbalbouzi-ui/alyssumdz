@@ -495,3 +495,18 @@ html.glass .pbx-tr small{color:rgba(255,255,255,.72)!important}
 html.glass .pbx-tr i.ic{background:transparent!important}
 html.glass .pbx-tt.ic{padding:.35rem!important}
 html.glass .tc-card{background:var(--g-sheen),rgba(255,255,255,.03);border-color:rgba(255,255,255,.14)}html.glass .tc-card:hover{border-color:rgba(var(--g-mint-rgb),.5)}html.glass .tc-m em.free{color:var(--g-mint);border-color:var(--g-mint)}
+
+/* v1.89.381: لوحة «العنصر المحدد» (#pbed) كانت بيضاء بنص زجاجي فاتح فلا يُقرأ؛ سطح داكن معتم ونصوص وحقول مقروءة + خانة كود HTML */
+html.glass #pbed{background:rgba(9,24,18,.985)!important;border-color:rgba(var(--g-mint-rgb),.55)!important;color:#fff}
+html.glass #pbed .pe-h b,html.glass #pbed .pe-k{color:#fff}
+html.glass #pbed .pe-l,html.glass #pbed .pe-f>span{color:var(--g-mint)!important}
+html.glass #pbed .pe-l input,html.glass #pbed .pe-l textarea,html.glass #pbed .pe-l select{background:rgba(255,255,255,.08)!important;color:#fff!important;border-color:rgba(255,255,255,.22)!important}
+html.glass #pbed .pe-l select option{background:#0b1f18;color:#fff}
+html.glass #pbed .pe-c input{background:transparent!important;border-color:rgba(255,255,255,.3)!important}
+html.glass #pbed .pe-c button,html.glass #pbed .pe-r button{color:#fff!important;background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.22)!important}
+html.glass #pbed .pe-r button.red{color:#ff9a92!important}
+html.glass #pbed .pe-c i,html.glass #pbed .pe-n{color:rgba(255,255,255,.72)!important}
+html.glass #pbed .pe-mob{background:rgba(var(--g-amber-rgb),.18)!important;color:#fff}
+html.glass #pbed .pe-h code{color:var(--g-mint)!important;background:rgba(255,255,255,.08)!important}
+html.glass #pbx-insp textarea.pbx-code{font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.55;color:#e8fff0!important;background:rgba(0,0,0,.35)!important;border-color:rgba(var(--g-mint-rgb),.4)!important;tab-size:2;white-space:pre}
+html.glass #pbx-insp .pbx-hint2{font-size:.72rem;color:rgba(255,255,255,.75);margin-top:.3rem;line-height:1.6}
