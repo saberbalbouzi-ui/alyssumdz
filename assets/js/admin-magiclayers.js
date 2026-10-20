@@ -14,6 +14,47 @@ const MagicLayersV25 = (() => {
     document.removeEventListener("keydown", onKey, true);
     bg.remove(); bg = null; document.body.classList.remove("ml25-on");
   }
+  const esc = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const say = m => { try { if (typeof Admin !== "undefined" && Admin.toast) return Admin.toast(m); } catch (e) { } try { alert(m); } catch (e) { } };
+  /* زر «أرسل إلى المطوّر» داخل الأداة: لوحة بمقاس الصورة، كل طبقة عنصر حر بموضعها وحجمها؛ النصوص تبقى نصوصاً قابلة للتعديل */
+  async function sendToBuilder(d) {
+    const W = Math.round(d.W), H = Math.round(d.H), layers = (d.layers || []).slice(0, 200);
+    if (!layers.length || !(W > 0) || !(H > 0)) return;
+    if (typeof ImgGen === "undefined" || !ImgGen.openSized || typeof PBApp === "undefined" || typeof PB === "undefined") { say("المطوّر غير متاح."); return; }
+    if (layers.length > 120 && !confirm("أكثر من 120 طبقة ستُرفع إلى موقعك كصور مستقلة. المتابعة؟")) return;
+    close();
+    ImgGen.openSized({ W, H, id: "custom", label: "Magic Layers " + W + "×" + H, name: "طبقات", textMode: "none", lang: "ar" });
+    let t = 0; while (t++ < 40 && !(PBApp.E && PBApp.E.page && PBApp.E.page.ad && document.getElementById("pb-app") && document.getElementById("pb-app").classList.contains("on"))) await sleep(200);
+    const page = PBApp.E && PBApp.E.page; if (!page || !page.ad) { say("تعذّر فتح لوحة المطوّر"); return; }
+    const sec = page.sections[0]; sec.free = sec.free || []; let z = 1, ok = 0, texts = 0;
+    const pos = l => ({ fx: { d: Math.round(l.x / W * 1000) / 10 }, fy: { d: Math.round(l.y) }, fwd: { d: Math.round(l.w / W * 1000) / 10 }, fh: { d: Math.max(4, Math.round(l.h)) } });
+    for (let i = 0; i < layers.length; i++) {
+      const l = layers[i];
+      try {
+        if (l.type === "text" && l.text) {
+          const tp = l.text, pad = Math.ceil(tp.size * .12), one = String(tp.content).indexOf("\n") < 0;
+          const q = { x: l.x + pad, y: l.y + pad, w: Math.max(10, l.w - pad * 2), h: Math.max(8, l.h - pad * 2) }, w = PB.mkFree(one ? "heading" : "text", 0, 0, z++);
+          const base = { fs: { d: Math.round(tp.size * 10) / 10 }, fw: String(tp.weight || 700), color: tp.color, ta: { d: tp.align || "center" }, lh: { d: tp.lh || 1.2 }, tdir: tp.dir, hauto: false };
+          if (tp.font) base.ff = "'" + String(tp.font).replace(/['"]/g, "") + "','Cairo',sans-serif";
+          if (one) Object.assign(w.set, base, pos(q), { text: String(tp.content), tag: "div" }); else Object.assign(w.set, base, pos(q), { html: "<p>" + String(tp.content).split(/\n/).map(esc).join("<br>") + "</p>" });
+          if (l.opacity < 1) w.set.op = Math.round(l.opacity * 100) / 100; sec.free.push(w); ok++; texts++; continue;
+        }
+        if (!l.blob) continue;
+        const path = await PBApp.uploadBlob(l.blob, "ml" + (i + 1), { max: 4000, q: .9 }), w = PB.mkFree("image", 0, 0, z++);
+        Object.assign(w.set, { src: path, alt: l.name || "", fit: "fill", hauto: false }, pos(l));
+        if (l.opacity < 1) w.set.op = Math.round(l.opacity * 100) / 100;
+        sec.free.push(w); ok++; if (i % 4 === 3) PBApp.renderCanvas();
+      } catch (e) { console.warn("ml upload", e); }
+    }
+    PBApp.renderCanvas(); try { PBApp.E.dirty = true; } catch (e) { }
+    say("✅ أُرسلت " + ok + " طبقة إلى المطوّر (" + texts + " نص قابل للتعديل والباقي صور حرة) — عدّلها ثم «حفظ ونشر» أو «تصدير الصورة»");
+  }
+  window.addEventListener("message", e => {
+    if (!bg || e.origin !== location.origin) return;
+    const fr = bg.querySelector("iframe"); if (!fr || e.source !== fr.contentWindow) return;
+    if (e.data && e.data.mlSend) sendToBuilder(e.data);
+  });
   function open() {
     if (bg) return;
     prefill();
@@ -29,5 +70,5 @@ const MagicLayersV25 = (() => {
     onKey = e => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
     document.addEventListener("keydown", onKey, true);
   }
-  return { open, close, isOpen: () => !!bg };
+  return { open, close, _send: sendToBuilder, isOpen: () => !!bg };
 })();

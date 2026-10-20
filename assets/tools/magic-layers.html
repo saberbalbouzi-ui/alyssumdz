@@ -291,6 +291,7 @@
         <button class="primary" id="zip" disabled>Télécharger le ZIP (calques PNG + manifeste)</button>
         <button class="wide" id="svg" disabled>Télécharger en SVG (textes modifiables)</button>
         <button class="wide" id="png" disabled>Télécharger l'image composée (PNG)</button>
+        <button class="primary" id="toDev" disabled hidden>Envoyer au développeur (éditeur de pages)</button>
       </div>
       <div class="hint">Chaque calque du ZIP est exporté à la taille de la page, à sa position actuelle : il se superpose exactement dans Photoshop, Figma, Photopea ou Canva.</div>
     </div>
@@ -406,7 +407,7 @@ function layout(){
 }
 function updateButtons(){
   const has = S.layers.length > 0;
-  $('zip').disabled = !has; $('png').disabled = !has; $('svg').disabled = !has;
+  $('zip').disabled = !has; $('png').disabled = !has; $('svg').disabled = !has; $('toDev').disabled = !has;
 }
 
 /* ---------- sélection / interactions ---------- */
@@ -2292,6 +2293,24 @@ $('zip').addEventListener('click', async () => {
   files.push({ name:'composition.png', data:new Uint8Array(await (await toBlob(composite())).arrayBuffer()) });
   files.push({ name:'manifest.json', data:new TextEncoder().encode(JSON.stringify(manifest, null, 2)) });
   download(makeZip(files), 'magic-layers.zip');
+});
+
+/* Envoi vers le développeur de la plateforme (disponible seulement quand l'outil est ouvert dans le panneau) :
+   chaque calque visible part avec sa position, sa taille, son opacité ; les textes restent des textes modifiables. */
+if (window.parent !== window){ $('toDev').hidden = false; }
+$('toDev').addEventListener('click', async () => {
+  const btn = $('toDev'); btn.disabled = true;
+  try {
+    const out = [];
+    for (const l of S.layers){
+      if (!l.visible) continue;
+      const e = { type:l.type || 'image', name:l.name, x:l.x, y:l.y, w:l.w, h:l.h, opacity:l.opacity };
+      if (l.type === 'text') e.text = { content:l.text, font:l.font, size:l.size, weight:l.weight, color:l.color, align:l.align, dir:l.dir, lh:l.lh };
+      else e.blob = await toBlob(l.canvas);
+      out.push(e);
+    }
+    window.parent.postMessage({ mlSend:1, W:S.W, H:S.H, layers:out }, location.origin);
+  } finally { btn.disabled = !S.layers.length; }
 });
 
 /* ---------- init ---------- */
