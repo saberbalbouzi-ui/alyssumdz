@@ -594,7 +594,7 @@ const AdminNav = (() => {
     try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { }
     if (id === "studio3d") { if (typeof Studio3D === "undefined") return false; Studio3D.open({ tab: id0 === "boxdesigner" ? "cut" : id0 === "boxstudio" ? "box" : "mock" }); return true; }
     if (id === "barcode") { if (typeof BarcodeTool === "undefined") return false; BarcodeTool.open(); return true; }
-    if (id === "magiclayers") { if (typeof MagicLayers === "undefined") return false; MagicLayers.open(); return true; }
+    if (id === "magiclayers") { if (typeof MagicLayersV25 === "undefined") return false; MagicLayersV25.open(); return true; }
     if (DEEP_TAB[id]) { try { Admin.tab(DEEP_TAB[id]); } catch (e) { } return true; }
     if (typeof PBAdmin === "undefined" || typeof PBApp === "undefined") return false;
     try { Admin.tab("builder"); } catch (e) { }

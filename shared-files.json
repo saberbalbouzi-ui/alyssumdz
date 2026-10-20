@@ -66,6 +66,8 @@
     "assets/js/admin-imgbatch.js",
     "assets/js/barcode-tool.js",
     "assets/js/magic-layers.js",
+    "assets/js/admin-magiclayers.js",
+    "assets/tools/magic-layers.html",
     "assets/js/pack3d.js",
     "assets/js/box-designer.js",
     "assets/js/box-profiles.js",
