@@ -282,7 +282,7 @@ body{overflow-x:hidden;margin:0}`;
     document.body.appendChild(d);
     frame = $("pbx-frame");
     const gridOn = () => { try { return localStorage.getItem("pbx_grid") === "1"; } catch (e) { return false; } };      // الافتراضي: صفحة بيضاء بلا شبكة، والشبكة اختيارية
-    const FRAMEDOC = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style></head><body class="pb-page pb-edit${gridOn() ? "" : " pbx-nogrid"}"><div id="pbr"></div></body></html>`;
+    const FRAMEDOC = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style><script>addEventListener("message",function(e){var d=e.data;if(!d||typeof d.pbH!=="number")return;var f=document.querySelectorAll(".pb-raw-fr iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){var h=Math.max(60,Math.min(6000,Math.ceil(d.pbH)));if(f[i].style.height!==h+"px"){f[i].style.height=h+"px";try{parent.postMessage({pbFrH:1},"*")}catch(x){}}}}});<\/script></head><body class="pb-page pb-edit${gridOn() ? "" : " pbx-nogrid"}"><div id="pbr"></div></body></html>`;
     frame.srcdoc = FRAMEDOC;
     frame.addEventListener("load", () => { let off = false; try { off = frame.contentWindow.location.href !== "about:srcdoc"; } catch (x) { off = true; } if (off) { frame.srcdoc = FRAMEDOC; return; }      // حماية: إن انتقل الإطار إلى صفحة أخرى يُعاد إلى إطار المحرر تلقائياً
       fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
@@ -570,6 +570,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     fitStage(); positionOverlay(); thumbsSoon(); liveBars(); runFx();
   }
   /* التأثيرات الحيّة داخل المحرّر: نشغّل سكربت FX_JS في إطار الصفحة بعد كل رسم (الحالة تُحفظ بين الرسمين: الشريحة الحالية وفتح الأكورديون) */
+  window.addEventListener("message", ev => { if (ev.data && ev.data.pbFrH) { try { positionOverlay(); } catch (x) { } } });
   function runFx() {
     try { const w = fdoc && fdoc.defaultView; if (!w) return; if (!E.fx) { (w.__pbfxC || []).forEach(f => { try { f(); } catch (e) { } }); if (w.__pbfxC) w.__pbfxC.length = 0; fdoc.body.classList.remove("pb-fx"); return; } w.__pbEd = true; fdoc.body.classList.add("pb-fx"); w.eval(PB.FX_JS); } catch (e) { console.warn("fx", e); }
   }
