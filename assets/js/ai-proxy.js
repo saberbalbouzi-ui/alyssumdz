@@ -48,23 +48,5 @@ window.AiProxy = (() => {
   /* بطاقة الإعدادات: حقل الرمز + الحالة */
   const html = () => `<div class="ap-sec"><b>رمز الموقع (Alyssum API)</b><div class="hint">إن وفّر لك المزوّد رمزاً لموقعك فألصقه هنا ولا تحتاج مفتاحاً: يمرّ التوليد عبر خادم المنصة ويُخصم من رصيد موقعك.</div><div class="tl-s"><input id="ig-tok" dir="ltr" type="password" autocomplete="off" placeholder="رمز الموقع" value="${esc(token())}" onchange="AiProxy.saveFromUi()"><div class="hint" id="ig-tokmsg">${on() ? "✅ مُفعَّل — التوليد عبر خادم المنصة" + (S.left != null ? " (المتبقي: " + S.left + ")" : "") : "غير مُفعَّل"}</div></div></div>`;
   function saveFromUi() { const el = document.getElementById("ig-tok"), r = set(el ? el.value : ""), m = document.getElementById("ig-tokmsg"); if (m) m.textContent = r.ok ? (r.cleared ? "أُلغي الرمز — يعود التوليد لمفتاح المتصفح" : "✅ حُفظ الرمز") : r.error; return r; }
-
-  /* نداء مباشر بوضع Copilot (حدود دائمة على الخادم): { kind, parts, cfg, run, req, key, validate, timeoutMs, signal } ← { ok, data, parsed, left, spent, cap } أو يرمي AiError.
-     المهلة والإلغاء يقطعان الاتصال فيلغي الخادم الطلب لدى Google ويستردّ الخصم (مرة واحدة). لا يظهر أي مفتاح Gemini هنا أبداً؛ الرمز هو رمز الموقع فقط. */
-  class AiError extends Error { constructor(code, msg, o) { super(msg || code); this.code = code; Object.assign(this, o || {}); } }
-  const LIMITS = ["run_llm_limit", "run_img_limit", "run_tries_limit", "daily_cap", "no_credits", "expired", "suspended", "duplicate_request", "unknown_token", "rate_limited"];
-  async function call(o) {
-    o = o || {}; if (!on()) throw new AiError("no_token", "رمز الموقع غير مضبوط — ألصقه في إعدادات الذكاء الاصطناعي", { limit: true });
-    const ctl = new AbortController(), ms = Math.max(2000, Math.min(110000, Number(o.timeoutMs) || 70000)); let timedOut = false, userCancel = false;
-    const tm = setTimeout(() => { timedOut = true; ctl.abort(); }, ms), onAbort = () => { userCancel = true; ctl.abort(); };
-    if (o.signal) { if (o.signal.aborted) { clearTimeout(tm); throw new AiError("cancelled", "أُلغي الطلب", { cancelled: true }); } o.signal.addEventListener("abort", onAbort, { once: true }); }
-    try {
-      let r; try { r = await orig(url(), { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal, body: JSON.stringify({ token: token(), kind: o.kind, parts: o.parts, cfg: o.cfg || {}, run: o.run, req: o.req, key: o.key == null ? undefined : o.key, validate: o.validate, timeout_s: Math.max(1, Math.floor(ms / 1000) - 3) }) }); }
-      catch (e) { if (userCancel) throw new AiError("cancelled", "أُلغي الطلب", { cancelled: true }); if (timedOut) throw new AiError("timeout", "انتهت مهلة الذكاء الاصطناعي", { retryable: true }); throw new AiError("network", "تعذّر الاتصال بخدمة الذكاء", { retryable: true }); }
-      const j = await r.json().catch(() => ({}));
-      if (r.ok && j.ok) { S.left = j.left == null ? null : j.left; return j; }
-      const code = j.error || ("http_" + r.status); throw new AiError(code, j.message || "تعذّر الذكاء الاصطناعي (" + r.status + ")", { status: r.status, limit: LIMITS.includes(code), retryable: r.status >= 500 || code === "invalid_output", why: j.why });
-    } finally { clearTimeout(tm); if (o.signal) o.signal.removeEventListener("abort", onAbort); }
-  }
-  return { on, token, set, html, saveFromUi, state: S, url, call, AiError };
+  return { on, token, set, html, saveFromUi, state: S, url };
 })();
