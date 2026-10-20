@@ -373,8 +373,10 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (o.confirm !== false && !confirm(useMsg(o.title || "تعديل ذكي للصورة", "المقاس الناتج: " + W + "×" + H))) return null;
     const ar = nearAr(W, H), small = o.blob ? await shrink(o.blob, 1600) : null, d = small ? await b64(small) : "", parts = o.blob ? [{ text: o.prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }] : [{ text: o.prompt }];
     for (const x of (o.extra || []).slice(0, 2)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(x, 1200)) } });
-    const out = fal ? await callFal(key, o.prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, parts, ar);
-    const cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
+    let out;
+    if (o.ar && !fal) { try { out = await callModel(key, parts, o.ar); } catch (e) { if (e.status !== 400 && !/\[400|aspect|ratio|size|invalid.argument/i.test(String(e.message))) throw e; out = await callModel(key, parts, ar); } }   // نسبة مخصصة (مثل 1:4 للصفحات الطويلة) ثم تراجع للأقرب المدعومة
+    else out = fal ? await callFal(key, o.prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, parts, ar);
+    let cv; if (o.noFit) { const bm = await createImageBitmap(out.blob); cv = document.createElement("canvas"); cv.width = bm.width; cv.height = bm.height; cv.getContext("2d").drawImage(bm, 0, 0); } else cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob: await blobOf(cv, o.fmt === "png" ? "png" : "webp"), canvas: cv, model: out.model, cost: est };
   }
   /* ───────── توليد فيديو بالذكاء من صورة (1–4) ووصف أو قالب — عبر خدمة فيديو خارجية بمفتاح الاتصال الثاني (fal) ─────────

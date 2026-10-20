@@ -41,7 +41,7 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
       return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c };
     };
     let n = 0; PBApp.uploadBlob = async (blob, name) => "assets/img/pages/" + name + "-" + (++n) + ".webp";
-    MagicLayers.open(); MagicLayers._t.setMode("land");
+    MagicLayers.open(); MagicLayers._t.setMode("land"); document.getElementById("ml-lmethod").value = "layers";
     document.getElementById("ml-lname").value = "Honey Test"; document.getElementById("ml-ldesc").value = "عسل طبيعي"; document.getElementById("ml-lcol").value = "#1e5e20";
     const modeVis = { land: getComputedStyle(document.querySelector('[data-m="land"]')).display !== "none", ext: getComputedStyle(document.querySelector('[data-m="ext"]')).display !== "none" };
     document.getElementById("ml-land-go").click();
@@ -72,6 +72,22 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
     return { h: MagicLayers.S.src && MagicLayers.S.src.height, ext: getComputedStyle(document.querySelector('[data-m="ext"]')).display !== "none" };
   });
   ok("زر المنشئ الذكي يحمّل الصفحة الطويلة ويحوّل لوضع التفكيك", pb.h === 2000 && pb.ext, pb);
+  /* ٥) الطريقة الافتراضية «مثل المنشئ الذكي»: برومبت المنشئ ← صفحة طويلة 1:4 ← تحميلها في وضع التفكيك */
+  const ctx3 = await b.newContext({ viewport: { width: 1500, height: 950 } }), p3 = await ctx3.newPage(); p3.on("pageerror", e => errs.push(e.message)); p3.on("dialog", d => d.accept()); await p3.goto("http://localhost:8765/admin.html"); await p3.waitForTimeout(2500);
+  const im = await p3.evaluate(async () => {
+    localStorage.setItem("alyssum_gp_gkey", "x"); ImgGen.ready = () => ({ ok: true }); const calls = { text: [], edit: [] };
+    ImgGen.text = async o => { calls.text.push({ p: o.prompt, blobs: (o.blobs || []).length }); if (calls.text.length === 1) return "النص التسويقي...\n```\nAct as a world-class Mobile E-commerce Designer. " + "Generate an ultra-long vertical infographic landing page IMAGE with huge bold Arabic text. ".repeat(6) + '"عسل التركيز" "اطلب الآن"\n```'; return "[]"; };
+    ImgGen.edit = async o => { calls.edit.push({ ar: o.ar, noFit: o.noFit, blob: !!o.blob, p: o.prompt.slice(0, 40) }); const c = document.createElement("canvas"); c.width = 1024; c.height = 4096; const g = c.getContext("2d"); g.fillStyle = "#1c3f8f"; g.fillRect(0, 0, 1024, 4096); g.fillStyle = "#f08a00"; g.fillRect(200, 300, 600, 300); return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c }; };
+    const pc = document.createElement("canvas"); pc.width = 300; pc.height = 300; pc.getContext("2d").fillRect(0, 0, 300, 300);
+    MagicLayers.open(); MagicLayers._t.setMode("land"); MagicLayers.S.lphoto = await new Promise(r => pc.toBlob(r, "image/png"));
+    document.getElementById("ml-lname").value = "عسل التركيز"; document.getElementById("ml-lprice").value = "1800"; document.getElementById("ml-lcol").value = "ازرق و برتقالي"; document.getElementById("ml-local").checked = false;
+    const def = document.getElementById("ml-lmethod").value; document.getElementById("ml-land-go").click();
+    for (let i = 0; i < 100 && !(MagicLayers.S.src && calls.text.length >= 2); i++) await new Promise(r => setTimeout(r, 150));
+    return { def, calls, h: MagicLayers.S.src && MagicLayers.S.src.height, ext: getComputedStyle(document.querySelector('[data-m="ext"]')).display !== "none", price: /1800/.test(calls.text[0].p), colors: /ازرق و برتقالي/.test(calls.text[0].p) };
+  });
+  ok("الطريقة الافتراضية = صفحة مرسومة مثل المنشئ الذكي", im.def === "image", im);
+  ok("برومبت المنشئ يصل بالسعر والألوان وصورة المنتج", im.price && im.colors && im.calls.text[0].blobs === 1, im);
+  ok("الرسم بنسبة 1:4 بلا قصّ مع صورة المنتج مرجعاً، والصفحة تُحمَّل في وضع التفكيك", im.calls.edit.length === 1 && im.calls.edit[0].ar === "1:4" && im.calls.edit[0].noFit && im.calls.edit[0].blob && im.h === 4096 && im.ext, im);
   ok("لا أخطاء JS", errs.length === 0, errs);
   await b.close(); console.log(fails ? "FAILED " + fails : "ALL OK"); process.exit(fails ? 1 : 0);
 })();

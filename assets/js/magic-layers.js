@@ -606,15 +606,45 @@ const MagicLayers = (() => {
   const prodsList = () => (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) || [];
   function readLand() {
     const v = id => { const e = $(id); return e ? e.value : ""; }, ps = prodsList(), p = ps.find(x => x.slug === v("ml-lprod"));
-    const L = { product: v("ml-lprod"), name: v("ml-lname").trim() || (p ? p.title : ""), desc: v("ml-ldesc").trim() || (p && (p.desc || p.description) || ""), goal: v("ml-lgoal").trim(), colors: v("ml-lcol").trim(), lang: v("ml-llang") || "ar", type: v("ml-ltype") || "landing" };
+    const L = { product: v("ml-lprod"), name: v("ml-lname").trim() || (p ? p.title : ""), desc: v("ml-ldesc").trim() || (p && (p.desc || p.description) || ""), goal: v("ml-lgoal").trim(), colors: v("ml-lcol").trim(), lang: v("ml-llang") || "ar", type: v("ml-ltype") || "landing", method: v("ml-lmethod") || "image", price: v("ml-lprice").trim() || (p && p.price ? String(p.price) : "") };
     L.offers = p && p.offers ? p.offers.map(x => x.qty + " قطع = " + x.price + " دج" + (x.free ? " (منها " + x.free + " هدية)" : "")).join("، ") : "";
-    O.land = { product: L.product, name: v("ml-lname"), desc: v("ml-ldesc"), goal: L.goal, colors: L.colors, lang: L.lang, type: L.type }; saveO(); return L;
+    O.land = { product: L.product, name: v("ml-lname"), desc: v("ml-ldesc"), goal: L.goal, colors: L.colors, lang: L.lang, type: L.type, method: L.method, price: v("ml-lprice") }; saveO(); return L;
   }
   function uiL(busy) { const g = $("ml-land-go"), c = $("ml-lcancel"); if (g) g.disabled = !!busy; if (c) c.hidden = !busy; }
+  async function fetchBlobL(src) { try { const r = await fetch(/^(https?:|data:|blob:)/.test(src) ? src : String(src).replace(/^\/+/, ""), { cache: "force-cache" }); return r.ok ? await r.blob() : null; } catch (e) { return null; } }
+  /* الطريقة الأولى «مثل المنشئ الذكي»: برومبت المنشئ نفسه (نصوص تسويقية + برومبت تصميم) ← صفحة طويلة مرسومة بنصوصها ← تفكيك إلى طبقات */
+  async function landingImage(L) {
+    if (typeof PBGen === "undefined" || !PBGen.buildPrompt) throw new Error("المنشئ الذكي غير متاح");
+    const rd = ImgGen.ready ? ImgGen.ready() : { ok: hasKey() }; if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
+    let photo = S.lphoto || null; if (!photo) { const p = prodsList().find(x => x.slug === L.product), src = p && (p.cover || (p.images || [])[0]); if (src) photo = await fetchBlobL(src); }
+    if (!photo) throw new Error("ارفع صورة المنتج أو اختر منتجاً له غلاف");
+    const meta = PBGen.buildPrompt({ lang: L.lang, offer: "single", name: L.name, desc: L.desc, price: L.price ? L.price + (/[a-zA-Z\u0600-\u06FF]/.test(L.price) ? "" : " دج") : "", colors: L.colors, aud: L.goal, tpl: "11" });
+    say("١/٣ كتابة النصوص التسويقية وبرومبت التصميم…", "", true);
+    const t = await withTimeout(ImgGen.text({ prompt: meta, blobs: [photo], temp: .7 }), 150000); chk();
+    const blocks = [...String(t).matchAll(/```[a-z]*\n([\s\S]*?)```/g)].map(m => m[1].trim()).sort((a, b) => b.length - a.length); let prompt = blocks[0];
+    if (!prompt) { const i = String(t).indexOf("Act as a world-class"); prompt = i >= 0 ? String(t).slice(i) : String(t); }
+    if (prompt.length < 300) throw new Error("لم يُنتج النموذج برومبت تصميم صالحاً — أعد المحاولة");
+    say("٢/٣ رسم الصفحة الطويلة كاملة بنصوصها (قد يستغرق دقيقة أو أكثر)…", "", true);
+    const r = await withTimeout(ImgGen.edit({ blob: photo, prompt, W: 1024, H: 4096, ar: "1:4", noFit: true, confirm: false, title: "صفحة هبوط كاملة" }), 360000); chk();
+    if (!r || !r.blob) throw new Error("لم تُرجع الخدمة صورة");
+    return { blob: r.blob, prompt };
+  }
+  async function runLandingImage(L) {
+    if (!confirm("سيُكتب نص الصفحة وبرومبتها (طلب نصي) ثم تُرسم صفحة طويلة كاملة بتقنية Alyssum API وتُستهلك من رصيدك، ثم تُفكَّك إلى صور ونصوص حقيقية قابلة للتعديل (طلبات إضافية للتفكيك). المتابعة؟")) return;
+    S.busy = true; uiL(true); S.run = { cancelled: false };
+    let r;
+    try { r = await landingImage(L); }
+    catch (e) { S.busy = false; S.run = null; uiL(false); say(e.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد." : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return; }
+    S.busy = false; S.run = null; uiL(false);
+    setMode("ext"); await loadSource(r.blob); say("تم رسم الصفحة — جارٍ تفكيكها إلى طبقات…", "", true);
+    await generate();
+    toast("✅ الصفحة مفكَّكة — راجع الطبقات ثم اضغط «أرسل إلى المطوّر»");
+  }
   async function runLanding() {
     if (S.busy) return; const L = readLand();
     if (!L.name) { say("اختر منتجاً أو اكتب اسمه أولاً.", "err"); return; }
     if (!hasKey()) { say("يلزم مفتاح Alyssum API لهذا الوضع (اضبطه من «تصميم بطبقات» أو إعدادات مولّد الصور).", "err"); return; }
+    if (L.method !== "layers") return runLandingImage(L);
     const noProd = !L.product;
     if (!confirm((noProd ? "⚠ لم تختر منتجاً من المتجر: لن تظهر أسعار المتجر وعروضه ولن يعمل نموذج الطلب الحقيقي (تُترك أقسام السعر والطلب خارج التصميم). اختر منتجاً أولاً للحصول على صفحة كاملة.\n\n" : "") + "سيُنشأ تصميم الصفحة ثم تُرسم أصولها في لوحة (أو أكثر) بتقنية Alyssum API وتُستهلك من رصيدك، وما لم يُقصّ منها يُولَّد وحده (بلا أي كتابة داخل الصور). المتابعة؟")) return;
     S.busy = true; uiL(true);
@@ -632,8 +662,8 @@ const MagicLayers = (() => {
     const ps = prodsList(), L = O.land || {}, sel = (v, a) => v === a ? " selected" : "";
     return '<div class="ml-card" data-m="land"><h4>1. المنتج</h4><label class="f" for="ml-lprod">منتج المتجر</label><select id="ml-lprod"><option value="">— بلا ربط بمنتج —</option>' + ps.map(p => '<option value="' + esc(p.slug) + '"' + (L.product === p.slug ? " selected" : "") + ">" + esc(p.title) + "</option>").join("") + '</select>' +
       '<label class="f" for="ml-lname">اسم المنتج (إن لم تختر منتجاً)</label><input id="ml-lname" value="' + esc(L.name || "") + '"><label class="f" for="ml-ldesc">وصف المنتج</label><textarea id="ml-ldesc" placeholder="ما هو، لمن، أبرز فوائده">' + esc(L.desc || "") + '</textarea>' +
-      '<label class="f" for="ml-lphoto">صورة المنتج الحقيقية (اختياري — تُستعمل كما هي ولا تُولَّد)</label><input type="file" id="ml-lphoto" accept="image/*"><div class="ml-hint" id="ml-lphotost">بلا صورة: يُستعمل غلاف المنتج المختار.</div></div>' +
-      '<div class="ml-card" data-m="land"><h4>2. التصميم</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="f" for="ml-llang">اللغة</label><select id="ml-llang"><option value="ar"' + sel(L.lang, "ar") + '>العربية</option><option value="fr"' + sel(L.lang, "fr") + '>الفرنسية</option><option value="en"' + sel(L.lang, "en") + '>الإنجليزية</option></select></div><div><label class="f" for="ml-ltype">النوع</label><select id="ml-ltype"><option value="landing"' + sel(L.type, "landing") + '>صفحة هبوط كاملة</option><option value="banner"' + sel(L.type, "banner") + '>بنر / إعلان</option></select></div></div>' +
+      '<label class="f" for="ml-lprice">السعر (يظهر في الصفحة كما هو)</label><input id="ml-lprice" value="' + esc(L.price || "") + '" placeholder="مثال: 1800"><label class="f" for="ml-lphoto">صورة المنتج الحقيقية (اختياري — تُستعمل كما هي ولا تُولَّد)</label><input type="file" id="ml-lphoto" accept="image/*"><div class="ml-hint" id="ml-lphotost">بلا صورة: يُستعمل غلاف المنتج المختار.</div></div>' +
+      '<div class="ml-card" data-m="land"><h4>2. التصميم</h4><label class="f" for="ml-lmethod">الطريقة</label><select id="ml-lmethod"><option value="image"' + sel(L.method || "image", "image") + '>صفحة طويلة مرسومة كاملة مثل المنشئ الذكي ثم تفكيكها إلى طبقات (الأفضل شكلاً)</option><option value="layers"' + sel(L.method, "layers") + '>تخطيط بالكود (نصوص وأسعار حقيقية) + صور مرسومة</option></select><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="f" for="ml-llang">اللغة</label><select id="ml-llang"><option value="ar"' + sel(L.lang, "ar") + '>العربية</option><option value="fr"' + sel(L.lang, "fr") + '>الفرنسية</option><option value="en"' + sel(L.lang, "en") + '>الإنجليزية</option></select></div><div><label class="f" for="ml-ltype">النوع</label><select id="ml-ltype"><option value="landing"' + sel(L.type, "landing") + '>صفحة هبوط كاملة</option><option value="banner"' + sel(L.type, "banner") + '>بنر / إعلان</option></select></div></div>' +
       '<label class="f" for="ml-lcol">ألوان العلامة (اختياري)</label><input id="ml-lcol" value="' + esc(L.colors || "") + '" placeholder="مثال: #1e5e20 و #c8a24b"><label class="f" for="ml-lgoal">الجمهور والأسلوب (اختياري)</label><input id="ml-lgoal" value="' + esc(L.goal || "") + '" placeholder="مثال: أمهات الأطفال — أسلوب فاخر بألوان خضراء وذهبية">' +
       '<div style="margin-top:12px;display:grid;gap:8px"><button class="b g w" id="ml-land-go" type="button">🚀 أنشئ صفحة هبوط كاملة بطبقات</button><button class="b o w" id="ml-lcancel" type="button" hidden>إلغاء</button></div>' +
       '<button class="b w" type="button" data-pbgen="1" style="margin-top:8px">📄 أريدها مثل المنشئ الذكي: فكّك آخر صفحة منه إلى طبقات</button><div class="ml-hint">للحصول على نفس جودة صفحة «صفحة هبوط ذكية» (صورة طويلة مرسومة كاملة): ولّدها من هناك أولاً ثم اضغط الزر أعلاه — تُفكَّك إلى عناصر ونصوص حقيقية.</div><div class="ml-hint">يصمّم الذكاء الاصطناعي الصفحة بنفس برومبت المطوّر الذكي (أقسام ونصوص وأسعار حقيقية وقسم طلب)، ثم تُرسم كل صورها في لوحة أصول واحدة وتُقصّ وتُوزَّع على الطبقات. ما لم يُقصّ بدقة يبقى فارغاً ويُكمل بزر «توليد الصور الفارغة».</div></div>';
