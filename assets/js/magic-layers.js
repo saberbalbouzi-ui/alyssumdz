@@ -510,6 +510,7 @@ const MagicLayers = (() => {
     }
     g.putImageData(im, 0, 0); return c;
   }
+  function opaqueRatio(c) { const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) n++; return n / (d.length / 4 || 1); }
   const normKey = (p, cut) => String(p || "").trim().toLowerCase().replace(/\s+/g, " ") + "|" + (cut ? 1 : 0);
   /* الصور الفارغة في صفحة: مجمَّعة بالوصف (نفس الوصف = أصل واحد) */
   function emptyAssets(pg) {
@@ -528,7 +529,8 @@ const MagicLayers = (() => {
   const walkRepl = (o, from, to) => { if (!o || typeof o !== "object") return; for (const k in o) { const v = o[k]; if (v === from) o[k] = to; else if (v && typeof v === "object") walkRepl(v, from, to); } };
   function landExtra(o, hasPhoto) {
     const real = hasPhoto ? 'صورة المنتج الحقيقية (المرفقة معك) تُستعمل كما هي بـ src:"asset:product_photo" — لا تضع لها prompt ولا تُولّدها.' : (o.product ? 'صورة المنتج الحقيقية تُستعمل كما هي بـ src:"product:cover" — لا تولّدها.' : "");
-    return "وضع «لوحة الأصول»: " + real + " كل صورة أخرى تُعرَّف بـ prompt إنجليزي قصير ومحدد وبلا أي نص أو شعار، واستعمل أقل عدد ممكن من الصور المختلفة (حتى 12 في الصفحة كلها، وأعد استعمال نفس الأصل بدل تكرار الوصف)؛ وسترسمها كلها دفعة واحدة في لوحة أصول واحدة ثم تُقصّ. اجعل cutout:true للعنصر المعزول (مكوّن، عنصر، منتج مكمّل) وبدونه للخلفيات والمشاهد والنقوش.";
+    const noP = !o.product ? " لا يوجد منتج مربوط بالمتجر: لا تضع طبقات price ولا offers ولا قسم kind:order، واكتب أي سعر أو عرض في الوصف فقط إن وُجد في بيانات المنتج، وأنهِ الصفحة بزر دعوة للتواصل." : "";
+    return "وضع «لوحة الأصول»: " + real + noP + " كل صورة أخرى تُعرَّف بـ prompt إنجليزي قصير ومحدد وبلا أي نص أو شعار، واستعمل أقل عدد ممكن من الصور المختلفة (حتى 12 في الصفحة كلها، وأعد استعمال نفس الأصل بدل تكرار الوصف)؛ وسترسمها كلها دفعة واحدة في لوحة أصول واحدة ثم تُقصّ. اجعل cutout:true للعنصر المعزول (مكوّن، عنصر، منتج مكمّل) وبدونه للخلفيات والمشاهد والنقوش.";
   }
   async function landing(o) {
     o = o || {}; const say = o.say || (() => { });
@@ -563,8 +565,12 @@ const MagicLayers = (() => {
         const cells = assignCells(findBlobs(cv), g, cv.width, cv.height, items.length);
         for (let i = 0; i < items.length; i++) {
           const b = cells[i]; if (!b) continue; const pad = Math.round(Math.max(cv.width, cv.height) * .004), x0 = Math.max(0, b[0] - pad), y0 = Math.max(0, b[1] - pad), x1 = Math.min(cv.width, b[2] + pad), y1 = Math.min(cv.height, b[3] + pad);
+          const cellA = (cv.width / g.cols) * (cv.height / g.rows), cropA = (x1 - x0) * (y1 - y0);
+          if (cropA < cellA * .03 || cropA > cellA * 1.6) continue;   // قصّ صغير جداً (شظية) أو يلتهم عدة خلايا ← يُرفض ويُرسم هذا الأصل وحده لاحقاً
           const c = mk(x1 - x0, y1 - y0); c.getContext("2d").drawImage(cv, x0, y0, x1 - x0, y1 - y0, 0, 0, c.width, c.height);
-          items[i].blob = await toBlob(items[i].cut ? cutWhite(c) : c, "image/png"); got++;
+          const outC = items[i].cut ? cutWhite(c) : c;
+          if (items[i].cut && opaqueRatio(outC) < .06) continue;   // القصّ مسح الأصل تقريباً
+          items[i].blob = await toBlob(outC, "image/png"); got++;
         }
       }
       chk();
@@ -586,7 +592,16 @@ const MagicLayers = (() => {
       try { const path = await PBApp.uploadBlob(a.blob, "mla" + Date.now().toString(36) + i, { max: 2400, q: .9 }); live.ws.forEach(w => { w.set.src = path; delete w.set.__cutout; delete w.set.aiPrompt; delete w.set.aiCut; delete w.__dw; }); ok++; if (PBApp.renderCanvas) PBApp.renderCanvas(); } catch (e) { console.warn("ml asset", e); }
     }
     if (PBApp.renderCanvas) PBApp.renderCanvas(); try { P.dirty = true; PBApp.E.dirty = true; } catch (e) { }
-    return { placed: ok, total: res.assets.length, left: emptyAssets(P).reduce((n, a) => n + a.ws.length, 0) };
+    const cnt = () => emptyAssets(P).reduce((n, a) => n + a.ws.length, 0); let filled = 0;
+    /* ما لم يُقصّ من اللوحة (النموذج تجاهل الشبكة أو فشل القصّ) يُولَّد كل أصل وحده بدل ترك مربع فارغ */
+    if (cnt() && o.fallback !== false && typeof PBSpec !== "undefined" && PBSpec.fillImages) {
+      const groups = emptyAssets(P).filter(a => a.ws.length > 1), stash = [];
+      groups.forEach(a => a.ws.slice(1).forEach(w => { stash.push({ w, ap: w.set.aiPrompt, alt: w.set.alt }); delete w.set.aiPrompt; w.set.alt = ""; }));   // نفس الأصل يُولَّد مرة واحدة فقط ثم يُنسخ
+      try { say("٤/٤ توليد الأصول التي لم تُقصّ من اللوحة (" + groups.length + "+)…"); const before = cnt(); await PBSpec.fillImages({ dw: 1080, confirm: false, say: m => say(m) }); filled = before - cnt(); } catch (e) { console.warn("ml fallback", e); }
+      groups.forEach(a => { const lead = a.ws[0]; a.ws.slice(1).forEach(w => { const s = stash.find(x => x.w === w); if (lead.set.src) { w.set.src = lead.set.src; delete w.set.__cutout; delete w.set.aiCut; delete w.__dw; } if (s && !w.set.src) { w.set.aiPrompt = s.ap; w.set.alt = s.alt; } else if (s) { delete w.set.aiPrompt; } }); });
+      if (PBApp.renderCanvas) PBApp.renderCanvas(); try { P.dirty = true; PBApp.E.dirty = true; } catch (e) { }
+    }
+    return { placed: ok, filled, total: res.assets.length, left: cnt() };
   }
   const prodsList = () => (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) || [];
   function readLand() {
@@ -600,13 +615,14 @@ const MagicLayers = (() => {
     if (S.busy) return; const L = readLand();
     if (!L.name) { say("اختر منتجاً أو اكتب اسمه أولاً.", "err"); return; }
     if (!hasKey()) { say("يلزم مفتاح Alyssum API لهذا الوضع (اضبطه من «تصميم بطبقات» أو إعدادات مولّد الصور).", "err"); return; }
-    if (!confirm("سيُنشأ تصميم الصفحة ثم تُرسم أصولها في لوحة (أو أكثر) بتقنية Alyssum API وتُستهلك من رصيدك (بلا أي كتابة داخل الصور). المتابعة؟")) return;
+    const noProd = !L.product;
+    if (!confirm((noProd ? "⚠ لم تختر منتجاً من المتجر: لن تظهر أسعار المتجر وعروضه ولن يعمل نموذج الطلب الحقيقي (تُترك أقسام السعر والطلب خارج التصميم). اختر منتجاً أولاً للحصول على صفحة كاملة.\n\n" : "") + "سيُنشأ تصميم الصفحة ثم تُرسم أصولها في لوحة (أو أكثر) بتقنية Alyssum API وتُستهلك من رصيدك، وما لم يُقصّ منها يُولَّد وحده (بلا أي كتابة داخل الصور). المتابعة؟")) return;
     S.busy = true; uiL(true);
     try {
       const photo = S.lphoto || null, res = await landing(Object.assign({}, L, { photoBlob: photo, say }));
       say("تم التصميم — جارٍ فتح الصفحة…", "", true);
       close(true); const f = await landingOpen(res, { photoBlob: photo, say: m => toast(m) });
-      toast("✅ صفحة هبوط من " + res.page.sections.length + " قسماً: رُكّبت " + f.placed + " من " + f.total + " أصل" + (f.left ? " — بقيت " + f.left + " صورة فارغة (زر «🧩 تصميم بطبقات» ← «🖼️ توليد الصور الفارغة» يكملها)" : ""));
+      toast("✅ صفحة هبوط من " + res.page.sections.length + " قسماً: رُكّبت " + f.placed + " من " + f.total + " أصل من اللوحة" + (f.filled ? " + " + f.filled + " صورة وُلّدت منفردة" : "") + (f.left ?" — بقيت " + f.left + " صورة فارغة (زر «🧩 تصميم بطبقات» ← «🖼️ توليد الصور الفارغة» يكملها)" : ""));
     } catch (e) {
       S.busy = false; uiL(false); say(e.name === "AbortError" ? "أُلغيت العملية." : e.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد." : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return;
     }

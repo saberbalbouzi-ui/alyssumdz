@@ -25,7 +25,7 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
   ok("برومبت اللوحة: شبكة + خلفية بيضاء + نوع الأصل", /2 columns × 1 rows/.test(pure.p) && /WHITE/.test(pure.p) && /ISOLATED/.test(pure.p) && /SCENE/.test(pure.p), pure.p);
 
   /* ٢) الخط الكامل: نموذج نصي مُحاكى + ImgGen.edit يرسم لوحة أصول بحسب البرومبت */
-  const res = await p.evaluate(async () => {
+  const runLand = (pg, skip) => pg.evaluate(async skip => {
     const calls = { text: [], edit: [] }; localStorage.setItem("alyssum_gp_gkey", "x");
     ImgGen.ready = () => ({ ok: true });
     const spec = { format: PBSpec.FORMAT, page: { title: "Test Landing", width: 1080, bg: "#ffffff", lang: "ar", product: "" }, assets: { jar: { prompt: "a honey jar on a wooden table", cutout: true }, leaf: { prompt: "green olive leaf, single", cutout: true }, field: { prompt: "soft sunrise meadow background" } },
@@ -34,8 +34,10 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
         { kind: "order", title: "اطلب الآن" }] };
     ImgGen.text = async o => { calls.text.push({ p: o.prompt, blobs: (o.blobs || []).length }); if (calls.text.length === 1) return { concept: "x", tone: "y", palette: { primary: "#1e5e20", accent: "#c8a24b", bg: "#fff", text: "#222", secondary: "#eee" }, sections: [{ name: "hero", goal: "g", layout: "l" }], assets: [{ name: "jar", prompt: "a honey jar", cutout: true }] }; return JSON.parse(JSON.stringify(spec)); };
     ImgGen.edit = async o => {
-      calls.edit.push({ p: o.prompt, W: o.W, H: o.H }); const m = /grid of (\d+) columns × (\d+) rows/.exec(o.prompt), cols = +m[1], rows = +m[2], c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, o.W, o.H);
-      const cw = o.W / cols, ch = o.H / rows; [...o.prompt.matchAll(/Cell (\d+) \(row \d+, column \d+\) \[(ISOLATED|SCENE)\]/g)].forEach(mm => { const i = +mm[1] - 1, x = (i % cols) * cw, y = Math.floor(i / cols) * ch; g.fillStyle = mm[2] === "SCENE" ? "#6a9" : "#c40"; if (mm[2] === "SCENE") g.fillRect(x + cw * .12, y + ch * .12, cw * .76, ch * .76); else { g.beginPath(); g.arc(x + cw / 2, y + ch / 2, Math.min(cw, ch) * .32, 0, 7); g.fill(); } });
+      calls.edit.push({ p: o.prompt, W: o.W, H: o.H }); const m = /grid of (\d+) columns × (\d+) rows/.exec(o.prompt), c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const g = c.getContext("2d");
+      if (!m) { for (let k = 0; k < 400; k++) { g.fillStyle = "hsl(" + (k * 37 % 360) + ",70%,50%)"; g.fillRect((k * 53) % o.W, (k * 91) % o.H, 40 + k % 60, 40 + k % 50); } return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c }; }   // طلب منفرد (احتياطي)
+      const cols = +m[1], rows = +m[2]; g.fillStyle = "#fff"; g.fillRect(0, 0, o.W, o.H);
+      const cw = o.W / cols, ch = o.H / rows; [...o.prompt.matchAll(/Cell (\d+) \(row \d+, column \d+\) \[(ISOLATED|SCENE)\]/g)].forEach(mm => { if (skip && mm[1] === "2") return; const i = +mm[1] - 1, x = (i % cols) * cw, y = Math.floor(i / cols) * ch; g.fillStyle = mm[2] === "SCENE" ? "#6a9" : "#c40"; if (mm[2] === "SCENE") g.fillRect(x + cw * .12, y + ch * .12, cw * .76, ch * .76); else { g.beginPath(); g.arc(x + cw / 2, y + ch / 2, Math.min(cw, ch) * .32, 0, 7); g.fill(); } });
       return { blob: await new Promise(r => c.toBlob(r, "image/png")), canvas: c };
     };
     let n = 0; PBApp.uploadBlob = async (blob, name) => "assets/img/pages/" + name + "-" + (++n) + ".webp";
@@ -47,13 +49,19 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
     await new Promise(r => setTimeout(r, 2500));
     const P = PBApp.E.page, ws = []; P.sections.forEach(s => (s.free || []).forEach(w => ws.push(w))); const imgs = ws.filter(w => w.type === "image");
     return { modeVis, calls: { text: calls.text.map(c => ({ n: c.p.length, hasExtra: /وضع «لوحة الأصول»/.test(c.p), hasDoc: /alyssum-design/.test(c.p) })), edit: calls.edit.length, sheet: calls.edit[0] && calls.edit[0].p.slice(0, 160), W: calls.edit[0] && calls.edit[0].W }, secs: P.sections.length, imgs: imgs.length, filled: imgs.filter(w => /^assets\/img\/pages\/mla/.test(w.set.src)).length, empty: imgs.filter(w => !w.set.src).length, order: P.sections.some(s => (s.free || []).some(w => w.type === "orderorig")), head: ws.some(w => w.type === "heading" && /عنوان حقيقي/.test(w.set.text || w.set.html || "")), uploads: n };
-  });
+  }, skip);
+  const res = await runLand(p, false);
   ok("وضع «صفحة هبوط» يخفي بطاقات التفكيك ويُظهر نموذجه", res.modeVis.land && !res.modeVis.ext, res.modeVis);
   ok("مرحلتا برومبت المطوّر الذكي (خطة + طبقات) والتعليمة الإضافية في كلتيهما", res.calls.text.length === 2 && res.calls.text.every(c => c.hasExtra) && res.calls.text[1].hasDoc, res.calls);
   ok("طلب صور واحد فقط (لوحة أصول واحدة) بمقاس 1536×1024", res.calls.edit === 1 && res.calls.W === 1536 && /3 columns|2 columns/.test(res.calls.sheet || ""), res.calls);
   ok("الصفحة فُتحت في المطوّر بأقسامها (هيرو + مزايا + طلب) والعنوان نصّ حقيقي", res.secs >= 1 && res.head, res);
   ok("كل الصور الفارغة رُكّبت من اللوحة وبقي نموذج الطلب الحقيقي", res.imgs >= 3 && res.filled === res.imgs && res.empty === 0, res);
   ok("رُفعت 3 أصول فريدة فقط (الورقة تتكرر ولا تُرفع مرتين)", res.uploads === 3, res.uploads);
+  /* ٣) النموذج أهمل خلية في اللوحة ← لا مربع فارغ: يُولَّد الأصل المفقود وحده */
+  const p2 = await ctx.newPage(); p2.on("pageerror", e => errs.push(e.message)); p2.on("dialog", d => d.accept()); await p2.goto("http://localhost:8765/admin.html"); await p2.waitForTimeout(2500);
+  const r2 = await runLand(p2, true);
+  ok("خلية مهملة: طلبان (لوحة + أصل منفرد) ولا صور فارغة", r2.calls.edit === 2 && r2.imgs >= 3 && r2.empty === 0, r2);
+  ok("خلية مهملة: كل الصور لها مصدر بعد الاحتياط", r2.imgs > 0 && r2.uploads >= 3, r2);
   ok("لا أخطاء JS", errs.length === 0, errs);
   await b.close(); console.log(fails ? "FAILED " + fails : "ALL OK"); process.exit(fails ? 1 : 0);
 })();
