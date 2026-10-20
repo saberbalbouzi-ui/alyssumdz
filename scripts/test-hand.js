@@ -438,6 +438,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       set("mo-ps", "zones"); r.zn = bg.querySelector("#mo-fee").value; set("mo-ps", "co"); r.back = bg.querySelector("#mo-fee").value;
       bg.remove(); A.ydFees = f0; A.deliveryCfg.yalidine = c0; A._supPub = s0; return r; });
     ok("طلب يدوي: خيار مصدر السعر (أسعار الشركة المفعّلة الافتراضية ⟷ أسعار المناطق): عين السمار 750+50 = 800 ثم المناطق 800 ثم العودة", ps.has && ps.co === "800" && /750/.test(ps.coNote) && /\+50/.test(ps.coNote) && ps.zn === "800" && ps.back === "800", ps); }
+  { const ql = await p.evaluate(async () => { ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 500)); const bg = document.getElementById("mo-bg"), r = {};
+      const sel = bg.querySelector('select[data-f="sel"]'); sel.value = sel.options[1].value; sel.dispatchEvent(new Event("change", { bubbles: true }));
+      const of = bg.querySelector('select[data-f="offer"]'); of.value = "2"; of.dispatchEvent(new Event("change", { bubbles: true })); r.offerLine = bg.querySelector("tr[data-i] b").textContent;
+      const q = bg.querySelector('input[data-f="qty"]'); q.value = "1"; q.dispatchEvent(new Event("input", { bubbles: true }));
+      r.offerSel = bg.querySelector('select[data-f="offer"]').value; r.price = bg.querySelector('input[data-f="price"]').value; r.line = bg.querySelector("tr[data-i] b").textContent; bg.remove(); return r; });
+    ok("طلب يدوي: تعديل الكمية بعد اختيار عرض يلغي العرض ويعيد سعر العلبة العادي (لا سعر الوحدة المقرَّب)", /4/.test(ql.offerLine) && ql.offerSel === "" && /2/.test(ql.price) && ql.line.replace(/\s/g, "") === ql.price, ql); }
   { const kf = await p.evaluate(async () => { const A = Admin, r = {}, cf = A.courierFetch, fc = A.fetchCommuneFees, cfg0 = A.deliveryCfg.yalidine, ks0 = A._keyState.yalidine; let calls = []; A.deliveryCfg.yalidine = Object.assign({}, cfg0 || {}, { apiId: "1", apiToken: "2", enabled: true }); A._keyState.yalidine = { ok: false };
       A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ total_data: 3 }) }); A.fetchCommuneFees = async o => { calls.push(o); };
       await A.checkCompanyKeys("yalidine", { explain: true }); r.a = calls.length === 1 && calls[0].force === true; await A.checkCompanyKeys("yalidine", {}); r.b = calls.length === 1;
