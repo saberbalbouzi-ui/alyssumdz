@@ -41,10 +41,10 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
     window.__truth = truth; window.__calls = []; let tileN = 0, textN = 0;
     const toRaw = (t, tile) => { const o = { box_2d: [Math.round((t.box[1] - tile.y) / tile.h * 1000), Math.round((t.box[0] - tile.x) / tile.w * 1000), Math.round((t.box[3] - tile.y) / tile.h * 1000), Math.round((t.box[2] - tile.x) / tile.w * 1000)], label: t.label, kind: t.kind };
       if (t.kind !== "text") { const [a, b, c, d] = o.box_2d; o.mask = [[b, a], [d, a], [d, c], [b, c]]; } return o; };
-    const TILES = (n => { const T = MagicLayers._t.tilesFor(W, H, n); return T; })(2);
+    const TILES = (n => { const T = MagicLayers._t.objTiles(W, H, n); return T; })(2);
     ImgGen.text = async o => {
       const pr = o.prompt, isTile = /zoomed crop/.test(pr), resid = /ALREADY FOUND/.test(pr); let rows;
-      if (/EXACT text you read/.test(pr)) { const B = MagicLayers._t.bandsFor(W, H), bl = B[textN++ % Math.max(1, B.length)]; rows = truth.filter(t => { if (t.kind !== "text") return false; const cx = (t.box[0] + t.box[2]) / 2, cy = (t.box[1] + t.box[3]) / 2; return cx > bl.x && cx < bl.x + bl.w && cy > bl.y && cy < bl.y + bl.h; }).map(t => toRaw(t, bl)); window.__calls.push("text"); }
+      if (/Read ALL the text visible/.test(pr)) { const B = MagicLayers._t.bandsFor(W, H), bl = B[textN++ % Math.max(1, B.length)]; rows = truth.filter(t => { if (t.kind !== "text") return false; const cx = (t.box[0] + t.box[2]) / 2, cy = (t.box[1] + t.box[3]) / 2; return cx > bl.x && cx < bl.x + bl.w && cy > bl.y && cy < bl.y + bl.h; }).map(t => toRaw(t, bl)); window.__calls.push("text"); }
       else if (isTile) { const tl = TILES[tileN++ % TILES.length]; rows = truth.filter(t => { const cx = (t.box[0] + t.box[2]) / 2, cy = (t.box[1] + t.box[3]) / 2; return cx > tl.x + 8 && cx < tl.x + tl.w - 8 && cy > tl.y + 8 && cy < tl.y + tl.h - 8; }).map(t => toRaw(t, tl)); window.__calls.push("tile"); }
       else if (resid) { const listed = (pr.match(/"/g) || []).length; rows = truth.slice(0).reverse().slice(0, 12).map(t => toRaw(t, { x: 0, y: 0, w: W, h: H })); window.__calls.push("resid"); }
       else { rows = truth.slice(0, 20).map(t => toRaw(t, { x: 0, y: 0, w: W, h: H })); window.__calls.push("full"); }

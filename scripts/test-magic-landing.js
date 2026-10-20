@@ -92,8 +92,19 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
   ok("تأكيد واحد فقط (لا تأكيد ثانٍ عند التفكيك)", dlg3 === 1, dlg3);
   ok("نص المنشئ الصحيح يُمرَّر لخطوة التفكيك لتصحيح الحروف", im.calls.text.slice(1).some(c => /INTENDED CORRECT/.test(c.p)), im.calls.text.map(c => c.p.slice(0, 40)));
   ok("الصفحة فُكِّكت فعلاً إلى طبقات", im.layers > 1, im.layers);
-  ok("مرور نصوص مخصّص بأشرطة للصفحة الطويلة (4 أشرطة بنسبة قريبة من المربع)", im.bands === 4 && im.calls.text.filter(c => /EXACT text you read/.test(c.p)).length === 4, { b: im.bands, n: im.calls.text.filter(c => /EXACT text you read/.test(c.p)).length });
+  ok("مرور نصوص مخصّص بأشرطة للصفحة الطويلة (4 أشرطة بنسبة قريبة من المربع)", im.bands === 4 && im.calls.text.filter(c => /Read ALL the text visible/.test(c.p)).length === 4, { b: im.bands, n: im.calls.text.filter(c => /Read ALL the text visible/.test(c.p)).length });
   ok("النصوص تصير طبقات نصية حقيقية", im.textLayers >= 1, im.textLayers);
+  /* ٦) حدّ الاستخدام في منتصف الكشف: تبقى النتائج الجزئية ولا يظهر نجاح كاذب */
+  const ctx4 = await b.newContext({ viewport: { width: 1500, height: 950 } }), p4 = await ctx4.newPage(); p4.on("pageerror", e => errs.push(e.message)); p4.on("dialog", d => d.accept()); await p4.goto("http://localhost:8765/admin.html?v=" + Date.now()); await p4.waitForFunction(() => typeof MagicLayers !== "undefined" && typeof ImgGen !== "undefined", null, { timeout: 20000 });
+  const lim = await p4.evaluate(async () => {
+    localStorage.setItem("alyssum_gp_gkey", "x"); ImgGen.ready = () => ({ ok: true }); let n = 0;
+    ImgGen.text = async o => { n++; if (n === 1) return JSON.stringify([{ box_2d: [100, 100, 200, 900], label: "اطلب الآن", kind: "text" }, { box_2d: [300, 200, 500, 800], label: "برطمان", kind: "object" }]); throw new Error("Quota exceeded for metric"); };
+    const c = document.createElement("canvas"); c.width = 1024; c.height = 4096; const g = c.getContext("2d"); g.fillStyle = "#1c3f8f"; g.fillRect(0, 0, 1024, 4096); g.fillStyle = "#f08a00"; g.fillRect(200, 300, 600, 300);
+    MagicLayers.open(); document.getElementById("ml-local").checked = false; await MagicLayers._t.loadSource(await new Promise(r => c.toBlob(r, "image/png")));
+    await MagicLayers._t.generate({ confirmed: true });
+    return { layers: MagicLayers.S.layers.length, calls: n, st: document.getElementById("ml-st").textContent };
+  });
+  ok("حدّ الاستخدام: النتائج الجزئية محفوظة والكشف يتوقف مبكراً مع رسالة", lim.layers > 1 && lim.calls <= 3 && /جزئية/.test(lim.st), lim);
   ok("لا أخطاء JS", errs.length === 0, errs);
   await b.close(); console.log(fails ? "FAILED " + fails : "ALL OK"); process.exit(fails ? 1 : 0);
 })();
