@@ -297,7 +297,14 @@ const PBBgRemove = (function () {
     if (o && o.onStep) o.onStep("✂️ نزع لون الخلفية من نتيجة الذكاء…");
     return classicCut(r.canvas, Object.assign({}, o, { onStep: null }));
   }
-  const METHODS = { key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
+  /* نزع الخلفية بالـAPI بدقة عالية (وحدة AIBgCut المستقلة): الذكاء يحدّد الموضوع وقناعه التقريبي، والحواف تُصقل محلياً من بكسلات صورتك الأصلية (بلا إعادة توليد) */
+  const segOK = () => { try { return !!window.AIBgCut && AIBgCut.ready(); } catch (e) { return false; } };
+  async function apiCut(srcC, o) {
+    if (!segOK()) throw new Error("NOKEY");
+    if (!(o && o.noConfirm) && !confirm("نزع الخلفية بالذكاء (Alyssum API): يحدّد الذكاء الموضوع ثم تُصقل حوافه بدقة من بكسلات صورتك الأصلية.\nسيستهلك من رصيد Alyssum API. متابعة؟ (إلغاء = الطريقة المحلية)")) { const e = new Error("أُلغي التنفيذ بالذكاء — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
+    const c = await AIBgCut.subject(srcC, { onStep: o && o.onStep }); if (o) o.diagBase = "api " + (c._via || ""); return c;
+  }
+  const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   /* خلفية استوديو متجانسة من الحواف (أبيض/رمادي/لون واحد)؟ عندها الفصل اللوني أدقّ من نماذج الكشف (التي قد تلتقط جزءاً من المنتج فقط) */
   function uniformBg(srcC) {
@@ -320,7 +327,7 @@ const PBBgRemove = (function () {
   }
   async function autoCut(srcC, o) {
     o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
-    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), kOK = !!o.allowKey && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
+    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), sOK = !!o.allowKey && segOK(), kOK = !!o.allowKey && !sOK && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : sOK ? (aiOK() ? ["seg", "ai", "classic"] : ["seg", "classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
     for (const m of order) {
       try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
@@ -346,13 +353,13 @@ const PBBgRemove = (function () {
     const show = (c, bgOnly) => { cv.width = c ? c.width : srcC.width; cv.height = c ? c.height : srcC.height; cg.clearRect(0, 0, cv.width, cv.height); cg.drawImage(c || srcC, 0, 0, cv.width, cv.height); };
     const run = async methods => {
       if (S.busy) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
-      try { const oo = { methods, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diagBase ? oo.diagBase + " · عمق: " + (oo.depthUsed || "—") + " · ثوانٍ: " + (oo.timing || "") : ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
+      try { const oo = { methods, allowKey: true, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diagBase ? oo.diagBase + " · عمق: " + (oo.depthUsed || "—") + " · ثوانٍ: " + (oo.timing || "") : ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
         msg("✅ تمّ. إن لم تعجبك النتيجة اضغط «إعادة» لتجربة طريقة أخرى."); $("bg-dg").textContent = r.method + (r.diag ? " · " + r.diag : "");
         $("bg-save").disabled = $("bg-again").disabled = false; }
       catch (e) { if (!S.closed) { $("bg-ln").style.display = "none"; const er = e && e.message || e; if (S.res) { show(S.res.canvas); msg("⚠️ فشلت هذه الطريقة (" + er + ") — عدتُ للنتيجة السابقة."); } else { msg("⚠️ " + er); S.res = null; }
         $("bg-again").disabled = false; $("bg-save").disabled = !S.res; } console.error(e); } S.busy = false;
     };
-    $("bg-again").onclick = () => { const all = aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"], i = all.indexOf(S.res ? S.res.method : "classic"); run([all[(i + 1) % all.length]]); };
+    $("bg-again").onclick = () => { const all = (segOK() ? ["seg"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(S.res ? S.res.method : "classic"); run([all[(i + 1) % all.length]]); };
     const save = async asCopy => {
       if (S.busy || !S.res) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true;
       try { const blob = await new Promise(r => S.res.canvas.toBlob(r, "image/png")); msg("⏳ رفع الصورة…"); const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
@@ -383,7 +390,7 @@ const PBBgRemove = (function () {
     const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
-      const all = (keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
+      const all = (segOK() ? ["seg"] : keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
       const r = await autoCut(LV.src, { methods, allowKey: true, onStep: m => chip(m, true) }); LV.res = r;
       await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); { let cf = ""; try { const q = confidence(r.canvas); cf = " · ثقة تقديرية " + Math.round(q.score * 100) + "%" + (q.notes.length ? " (" + q.notes[0] + ")" : ""); } catch (e) { } chip("✅ تمّ" + cf + " — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)"); }

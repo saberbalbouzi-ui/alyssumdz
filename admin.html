@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.395">
+<meta name="admin-version" content="1.89.396">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#c6fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},12000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -1675,91 +1675,93 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.395"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.395"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.395"></script>
-<script src="assets/js/img-gen.js?v=1.89.395"></script>
+<script src="assets/js/ctl-help.js?v=1.89.396"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.396"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.396"></script>
+<script src="assets/js/img-gen.js?v=1.89.396"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.395"></script>
-<script src="assets/js/admin-coname.js?v=1.89.395"></script>
-<script src="assets/js/admin-tplsite.js?v=1.89.395"></script>
-<script src="assets/js/admin-theme.js?v=1.89.395"></script>
-<script src="assets/js/saas-client.js?v=1.89.395"></script>
-<script src="assets/js/hub.js?v=1.89.395"></script>
-<script src="assets/js/ai-proxy.js?v=1.89.395"></script>
-<script src="assets/js/admin-stockcheck.js?v=1.89.395"></script>
-<script src="assets/js/admin-orderedit.js?v=1.89.395"></script>
-<script src="assets/js/admin-wilkids.js?v=1.89.395"></script>
-<script src="assets/js/admin-manualorder.js?v=1.89.395"></script>
-<script src="assets/js/admin-stores.js?v=1.89.395"></script>
+<script src="assets/js/admin-nav.js?v=1.89.396"></script>
+<script src="assets/js/admin-coname.js?v=1.89.396"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.396"></script>
+<script src="assets/js/admin-theme.js?v=1.89.396"></script>
+<script src="assets/js/saas-client.js?v=1.89.396"></script>
+<script src="assets/js/hub.js?v=1.89.396"></script>
+<script src="assets/js/ai-proxy.js?v=1.89.396"></script>
+<script src="assets/js/admin-stockcheck.js?v=1.89.396"></script>
+<script src="assets/js/admin-orderedit.js?v=1.89.396"></script>
+<script src="assets/js/admin-wilkids.js?v=1.89.396"></script>
+<script src="assets/js/admin-manualorder.js?v=1.89.396"></script>
+<script src="assets/js/admin-stores.js?v=1.89.396"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
-<script src="assets/js/admin-float.js?v=1.89.395"></script>
-<script src="assets/js/admin-update.js?v=1.89.395"></script>
-<script src="assets/js/admin-search.js?v=1.89.395"></script>
-<script src="assets/js/admin-hand.js?v=1.89.395"></script>
-<script src="assets/js/admin-voice.js?v=1.89.395"></script>
-<script src="assets/js/admin-inventory.js?v=1.89.395"></script>
-<script src="assets/js/admin-social.js?v=1.89.395"></script>
-<script src="assets/js/admin-zones.js?v=1.89.395"></script>
-<script src="assets/js/admin-zones-io.js?v=1.89.395"></script>
-<script src="assets/js/admin-yalidine.js?v=1.89.395"></script>
-<script src="assets/js/admin-shoppages.js?v=1.89.395"></script>
-<script src="assets/js/admin-home.js?v=1.89.395"></script>
-<script src="assets/js/admin-tablesel.js?v=1.89.395"></script>
-<script src="assets/js/admin-orders-plus.js?v=1.89.395"></script>
-<script src="assets/js/admin-keys.js?v=1.89.395"></script>
-<script src="assets/js/admin-customers.js?v=1.89.395"></script>
-<script src="assets/js/admin-bulk-products.js?v=1.89.395"></script>
-<script src="assets/js/admin-reports.js?v=1.89.395"></script>
-<script src="assets/js/admin-audit.js?v=1.89.395"></script>
-<script src="assets/js/admin-returns.js?v=1.89.395"></script>
-<script src="assets/js/admin-payments.js?v=1.89.395"></script>
-<script src="assets/js/seo-box.js?v=1.89.395"></script>
-<script src="assets/js/admin-seo.js?v=1.89.395"></script>
-<script src="assets/js/admin-blog.js?v=1.89.395"></script>
-<script src="assets/js/admin-upsell.js?v=1.89.395"></script>
-<script src="assets/js/admin-pack.js?v=1.89.395"></script>
-<script src="assets/js/admin-insights.js?v=1.89.395"></script>
-<script src="assets/js/admin-confirm-svc.js?v=1.89.395"></script>
-<script src="assets/js/admin-carts.js?v=1.89.395"></script>
-<script src="assets/js/admin-paylink.js?v=1.89.395"></script>
-<script src="assets/js/admin-platform-sync.js?v=1.89.395"></script>
-<script src="assets/js/admin-callcenter.js?v=1.89.395"></script>
-<script src="assets/js/admin-callsync.js?v=1.89.395"></script>
-<script src="assets/js/admin-dispatch.js?v=1.89.395"></script>
-<script src="assets/js/admin-profit.js?v=1.89.395"></script>
-<script src="assets/js/admin-wallet.js?v=1.89.395"></script>
-<script src="assets/js/admin-studio.js?v=1.89.395"></script>
-<script src="assets/js/admin-agency.js?v=1.89.395"></script>
-<script src="assets/js/admin-digital.js?v=1.89.395"></script>
-<script src="assets/js/admin-marketplace.js?v=1.89.395"></script>
-<script src="assets/js/admin-edition.js?v=1.89.395"></script>
-<script src="assets/js/admin-kind.js?v=1.89.395"></script>
-<script src="assets/js/admin-appstore.js?v=1.89.395"></script>
-<script src="assets/js/admin-appdev.js?v=1.89.395"></script>
-<script src="assets/js/admin-wh.js?v=1.89.395"></script>
-<script src="assets/js/admin-experts.js?v=1.89.395"></script>
-<script src="assets/js/admin-sources.js?v=1.89.395"></script>
-<script src="assets/js/admin-roles.js?v=1.89.395"></script>
-<script src="assets/js/admin-shipagg.js?v=1.89.395"></script>
-<script src="assets/js/admin-order-docs.js?v=1.89.395"></script>
-<script src="assets/js/admin-imgbatch.js?v=1.89.395"></script>
-<script src="assets/js/barcode-tool.js?v=1.89.395"></script>
-<script src="assets/js/magic-layers.js?v=1.89.395"></script>
-<script src="assets/js/admin-magiclayers.js?v=1.89.395"></script>
-<script src="assets/js/pack3d.js?v=1.89.395"></script>
-<script src="assets/js/box-designer.js?v=1.89.395"></script>
-<script src="assets/js/box-profiles.js?v=1.89.395"></script>
-<script src="assets/js/box-studio.js?v=1.89.395"></script>
-<script src="assets/js/mockup-studio.js?v=1.89.395"></script>
-<script src="assets/js/mockup-models.js?v=1.89.395"></script>
-<script src="assets/js/img3d.js?v=1.89.395"></script>
-<script src="assets/js/studio3d.js?v=1.89.395"></script>
-<script src="assets/js/admin-imgqa.js?v=1.89.395"></script>
-<script src="assets/js/admin-pagerater.js?v=1.89.395"></script>
-<script src="assets/js/img-upscale.js?v=1.89.395"></script>
-<script src="assets/js/admin-copyset.js?v=1.89.395"></script>
+<script src="assets/js/admin-float.js?v=1.89.396"></script>
+<script src="assets/js/admin-update.js?v=1.89.396"></script>
+<script src="assets/js/admin-search.js?v=1.89.396"></script>
+<script src="assets/js/admin-hand.js?v=1.89.396"></script>
+<script src="assets/js/admin-voice.js?v=1.89.396"></script>
+<script src="assets/js/admin-inventory.js?v=1.89.396"></script>
+<script src="assets/js/admin-social.js?v=1.89.396"></script>
+<script src="assets/js/admin-zones.js?v=1.89.396"></script>
+<script src="assets/js/admin-zones-io.js?v=1.89.396"></script>
+<script src="assets/js/admin-yalidine.js?v=1.89.396"></script>
+<script src="assets/js/admin-shoppages.js?v=1.89.396"></script>
+<script src="assets/js/admin-home.js?v=1.89.396"></script>
+<script src="assets/js/admin-tablesel.js?v=1.89.396"></script>
+<script src="assets/js/admin-orders-plus.js?v=1.89.396"></script>
+<script src="assets/js/admin-keys.js?v=1.89.396"></script>
+<script src="assets/js/admin-customers.js?v=1.89.396"></script>
+<script src="assets/js/admin-bulk-products.js?v=1.89.396"></script>
+<script src="assets/js/admin-reports.js?v=1.89.396"></script>
+<script src="assets/js/admin-audit.js?v=1.89.396"></script>
+<script src="assets/js/admin-returns.js?v=1.89.396"></script>
+<script src="assets/js/admin-payments.js?v=1.89.396"></script>
+<script src="assets/js/seo-box.js?v=1.89.396"></script>
+<script src="assets/js/admin-seo.js?v=1.89.396"></script>
+<script src="assets/js/admin-blog.js?v=1.89.396"></script>
+<script src="assets/js/admin-upsell.js?v=1.89.396"></script>
+<script src="assets/js/admin-pack.js?v=1.89.396"></script>
+<script src="assets/js/admin-insights.js?v=1.89.396"></script>
+<script src="assets/js/admin-confirm-svc.js?v=1.89.396"></script>
+<script src="assets/js/admin-carts.js?v=1.89.396"></script>
+<script src="assets/js/admin-paylink.js?v=1.89.396"></script>
+<script src="assets/js/admin-platform-sync.js?v=1.89.396"></script>
+<script src="assets/js/admin-callcenter.js?v=1.89.396"></script>
+<script src="assets/js/admin-callsync.js?v=1.89.396"></script>
+<script src="assets/js/admin-dispatch.js?v=1.89.396"></script>
+<script src="assets/js/admin-profit.js?v=1.89.396"></script>
+<script src="assets/js/admin-wallet.js?v=1.89.396"></script>
+<script src="assets/js/admin-studio.js?v=1.89.396"></script>
+<script src="assets/js/admin-agency.js?v=1.89.396"></script>
+<script src="assets/js/admin-digital.js?v=1.89.396"></script>
+<script src="assets/js/admin-marketplace.js?v=1.89.396"></script>
+<script src="assets/js/admin-edition.js?v=1.89.396"></script>
+<script src="assets/js/admin-kind.js?v=1.89.396"></script>
+<script src="assets/js/admin-appstore.js?v=1.89.396"></script>
+<script src="assets/js/admin-appdev.js?v=1.89.396"></script>
+<script src="assets/js/admin-wh.js?v=1.89.396"></script>
+<script src="assets/js/admin-experts.js?v=1.89.396"></script>
+<script src="assets/js/admin-sources.js?v=1.89.396"></script>
+<script src="assets/js/admin-roles.js?v=1.89.396"></script>
+<script src="assets/js/admin-shipagg.js?v=1.89.396"></script>
+<script src="assets/js/admin-order-docs.js?v=1.89.396"></script>
+<script src="assets/js/admin-imgbatch.js?v=1.89.396"></script>
+<script src="assets/js/barcode-tool.js?v=1.89.396"></script>
+<script src="assets/js/magic-layers.js?v=1.89.396"></script>
+<script src="assets/js/admin-magiclayers.js?v=1.89.396"></script>
+<script src="assets/js/pack3d.js?v=1.89.396"></script>
+<script src="assets/js/box-designer.js?v=1.89.396"></script>
+<script src="assets/js/box-profiles.js?v=1.89.396"></script>
+<script src="assets/js/box-studio.js?v=1.89.396"></script>
+<script src="assets/js/mockup-studio.js?v=1.89.396"></script>
+<script src="assets/js/mockup-models.js?v=1.89.396"></script>
+<script src="assets/js/img3d.js?v=1.89.396"></script>
+<script src="assets/js/studio3d.js?v=1.89.396"></script>
+<script src="assets/js/admin-imgqa.js?v=1.89.396"></script>
+<script src="assets/js/admin-pagerater.js?v=1.89.396"></script>
+<script src="assets/js/img-upscale.js?v=1.89.396"></script>
+<script src="assets/js/admin-copyset.js?v=1.89.396"></script>
 <script src="assets/js/ai-vision.js?v=55"></script>
+<script src="assets/js/ai-capture.js?v=1.89.396"></script>
+<script src="assets/js/ai-bgcut.js?v=1.89.396"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -14732,7 +14734,8 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
      والمنطقة خارج المستطيل تبقى من الأصل بالبكسل. طلبان بموافقة تكلفة واحدة. تتفاوت التفاصيل الدقيقة والموضع قليلاً لأن الصورة تُولَّد؛ وللتراجع Ctrl+Z. */
   const keyReady = () => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok && !!ImgGen.edit && !!ImgGen.estimate && !(window.ImgCfg && ImgCfg.get("capture", "engine", "auto") === "local"); } catch (e) { return false; } };
   const alphaBox = c => { const W = c.width, H = c.height, d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } return x1 < 0 ? null : { x0, y0, x1: x1 + 1, y1: y1 + 1 }; };
-  const keyPick = (sh, cv) => pickZone(sh, cv, { point: true });      // مفتاح متوفر: نقر على العنصر أو مستطيل
+  const keyPick = (sh, cv) => pickZone(sh, cv, { point: true, api: true });      // مفتاح متوفر: نقر على العنصر أو مستطيل أو كشف الكل
+  const segReady = () => { try { return !!window.AICapture && AICapture.ready() && !!ImgGen.edit; } catch (e) { return false; } };
   async function keyCapture(sh, cv, inf, w, Z0, pt) {
     const $ = sh.$, W = cv.width, H = cv.height; let [zx0, zy0, zx1, zy1] = Z0 || [0, 0, W, H], zw = zx1 - zx0, zh = zy1 - zy0; const est = ImgGen.estimate(), mk = (a, b) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(a)); c.height = Math.max(1, Math.round(b)); return c; };
     const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
@@ -14762,13 +14765,70 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       alert("✅ التُقط العنصر كصورة مستقلة قابلة للتحريك، ورُمِّمت الخلفية مكانه بالذكاء (Alyssum API).\nراجع النتيجة؛ للتراجع اضغط Ctrl+Z.");
     } catch (e) { console.error(e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : (e.message || e)); }
   }
+  /* التقاط العناصر بالـAPI بدقة عالية (وحدة AICapture المستقلة): كشف المربعات ← اختيار ← قناع تجزئة لكل عنصر على محيطه بدقة الصورة ← صقل الحواف من بكسلات الصورة الأصلية
+     ← إعادة رسم الخلفية مكان العناصر داخل منطقتها فقط ← معاينة ثم حفظ. يُرجع "local" ليكمل الطريقة المحلية عند فشل الكشف. */
+  async function apiCapture(sh, cv, inf, w, Z0, pt) {
+    const $ = sh.$, W = cv.width, H = cv.height;
+    if (!confirm("التقاط العناصر بالذكاء (Alyssum API): كشف العناصر ثم قصّ كل عنصر بدقة من بكسلات صورتك الأصلية (دون إعادة توليدها) وإعادة رسم الخلفية مكانه.\nسيستهلك من رصيد Alyssum API. متابعة؟")) { sh.close(); return null; }
+    const stopScan = scanFx(sh, cv); $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر بالذكاء…"; let items;
+    try { items = await AICapture.detect(cv, { zone: Z0 && Z0[2] - Z0[0] < W * .98 ? Z0 : null, onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); }
+    catch (e) { stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); const nk = e && (e.code === "NOKEY" || e.code === "OFF"); if (nk) { $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : "أدخل مفتاح Alyssum API من إعدادات مولّد الصور"); return null; }
+      alert("تعذّر الكشف بالذكاء (" + String(e && e.message || e).slice(0, 120) + ") — سيُستعمل التحليل المحلي."); return "local"; }
+    stopScan(); if (sh.S.closed) return null; $("pbs-load").style.display = "none";
+    const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
+    const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
+    const area = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0); let sel = new Set(), hov = -1, busy = false;
+    const hit = (x, y) => { let best = -1, ba = 1e18; items.forEach(it => { const b = it.box; if (x >= b.x0 * k && x <= b.x1 * k && y >= b.y0 * k && y <= b.y1 * k && area(it) < ba) { ba = area(it); best = it.id; } }); return best; };
+    if (pt) { const h = hit(pt[0] * k, pt[1] * k); if (h >= 0) sel.add(h); else { let bd = 1e18, bi = -1; items.forEach(it => { const d = Math.hypot((it.box.x0 + it.box.x1) / 2 - pt[0], (it.box.y0 + it.box.y1) / 2 - pt[1]); if (d < bd) { bd = d; bi = it.id; } }); if (bi >= 0) sel.add(bi); } }
+    $("pbs-hint").textContent = sh.S.hintOne = "انقر على مربع لاختيار عنصر. الأداة تقصّ العنصر بدقة من بكسلات صورتك الأصلية، وتعيد رسم الخلفية مكانه.";
+    $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill" checked> إعادة رسم الخلفية مكان العناصر بالذكاء</label>';
+    const colors = ["#0d9488", "#7c3aed", "#ea580c", "#2563eb", "#db2777", "#16a34a", "#ca8a04", "#0891b2"];
+    function paint() {
+      const g = ov.getContext("2d"), mode = sh.S.mode; g.clearRect(0, 0, vw, vh); g.font = "700 12px sans-serif"; g.textBaseline = "top";
+      items.forEach(it => { const b = it.box, on = mode === "all" || sel.has(it.id), c = colors[it.id % colors.length], x = b.x0 * k, y = b.y0 * k, bw = (b.x1 - b.x0) * k, bh = (b.y1 - b.y0) * k; g.lineWidth = on || hov === it.id ? 3 : 2; g.strokeStyle = c; g.setLineDash(on ? [] : [6, 3]);
+        if (on) { g.fillStyle = c + "33"; g.fillRect(x, y, bw, bh); } else if (hov === it.id) { g.fillStyle = c + "1a"; g.fillRect(x, y, bw, bh); } g.strokeRect(x, y, bw, bh); const tw = g.measureText(it.label).width + 10; g.setLineDash([]); g.fillStyle = c; g.fillRect(x, y, tw, 18); g.fillStyle = "#fff"; g.fillText(it.label, x + 5, y + 3); });
+      const n = mode === "all" ? items.length : sel.size; $("pbs-go").disabled = !n || busy; $("pbs-go").textContent = mode === "all" ? "التقاط " + items.length + " عنصراً" : "التقاط"; $("pbs-msg").textContent = n ? (mode === "all" ? "سيُلتقط كل ما وجده الذكاء (" + items.length + ")." : "عنصر محدّد.") : "وجد الذكاء " + items.length + " عنصراً — اختر منها.";
+    }
+    ov.onmousemove = e => { const r = ov.getBoundingClientRect(), h = hit(e.clientX - r.left, e.clientY - r.top); if (h !== hov) { hov = h; paint(); } };
+    ov.onclick = e => { if (sh.S.mode !== "one") return; const r = ov.getBoundingClientRect(), h = hit(e.clientX - r.left, e.clientY - r.top); if (h < 0) return; sel = new Set([h]); paint(); };
+    bindSeg(sh, () => { sel = new Set(); paint(); }); paint();
+    return new Promise(done => {
+      const c0 = sh.close; sh.close = () => { c0(); done(null); };
+      $("pbs-go").onclick = async () => {
+        const chosen = sh.S.mode === "all" ? items.slice() : items.filter(it => sel.has(it.id)); if (!chosen.length || busy) return; busy = true; $("pbs-go").disabled = true; const fill = !!($("pbs-fill") && $("pbs-fill").checked);
+        try {
+          const cuts = [], fails = []; let next = 0, dn = 0; const say = m => { if (!sh.S.closed) $("pbs-msg").textContent = m; };
+          const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
+          await Promise.all([worker(), worker()]); if (sh.S.closed) return; if (!cuts.length) throw new Error("لم يُعزل أي عنصر — جرّب مستطيلاً أضيق حول العنصر");
+          cuts.sort((a, b) => (a.y0 + a.h) - (b.y0 + b.h)); const nm = {}, cnt = {}; cuts.forEach(c => cnt[c.label] = (cnt[c.label] || 0) + 1); cuts.forEach(c => { nm[c.label] = (nm[c.label] || 0) + 1; c.label = cnt[c.label] > 1 ? c.label + " " + nm[c.label] : c.label; });
+          const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0); let how = "none";
+          if (fill) { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); how = "ai"; } catch (e) { console.warn("fillBg", e); say("⏳ ترميم الخلفية محلياً…"); try { await AIVision.eraseBg(part, AICapture.eraseCuts(cuts), { local: !LITE(), onStep: say }); how = "local"; } catch (e2) { console.warn(e2); } } }
+          const ok = await new Promise(res => {      // معاينة: الخلفية بعد الإزالة + العناصر مرفوعة قليلاً ← حفظ أو إلغاء
+            const kids = [...stage.childNodes]; kids.forEach(n => n.remove()); const c = document.createElement("canvas"); c.width = vw; c.height = vh; c.style.cssText = "display:block;background:#fff"; stage.appendChild(c); const g = c.getContext("2d");
+            g.drawImage(part, 0, 0, vw, vh); cuts.forEach(q => { g.save(); g.shadowColor = "rgba(0,0,0,.4)"; g.shadowBlur = 14; g.shadowOffsetY = 6; g.drawImage(q.canvas, q.x0 * k, q.y0 * k - 6, q.w * k, q.h * k); g.restore(); });
+            const bar = document.createElement("div"); bar.style.cssText = "display:flex;gap:.5rem"; bar.innerHTML = '<button type="button" id="pbs-ok" style="flex:1;border:0;border-radius:12px;padding:.75rem;font-weight:800;cursor:pointer;background:#0d9488;color:#fff;font-family:inherit">💾 حفظ</button><button type="button" id="pbs-no" style="flex:1;border:1.5px solid #d6d3cb;border-radius:12px;padding:.75rem;font-weight:800;cursor:pointer;background:#fff;color:#44403c;font-family:inherit">✖ إلغاء</button>';
+            $("pbs-go").style.display = "none"; $("pbs-go").after(bar); say("👀 النتيجة: العناصر مقصوصة من بكسلات صورتك" + (how === "none" ? "" : " والخلفية أُعيد رسمها") + (fails.length ? " — تعذّر: " + fails.join("، ") : "") + ". احفظها أو ألغِها.");
+            const end = v => { bar.remove(); $("pbs-go").style.display = ""; if (!v) { stage.innerHTML = ""; kids.forEach(n => stage.appendChild(n)); } res(v); }; bar.querySelector("#pbs-ok").onclick = () => end(true); bar.querySelector("#pbs-no").onclick = () => end(false); });
+          if (!ok) { busy = false; paint(); return; }
+          say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), toB = c => new Promise(r => c.toBlob(r, "image/png")), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
+          for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await toB(cuts[i].canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
+          const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close(); done(null);
+          alert("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (how === "ai" ? "\n🪄 أُعيد رسم الخلفية مكانها بالذكاء." : how === "local" ? "\nℹ️ رُمِّمت الخلفية محلياً." : "") + (fails.length ? "\n⚠️ تعذّر عزل: " + fails.join("، ") : "") + "\nللتراجع اضغط Ctrl+Z.");
+        } catch (e) { console.error(e); busy = false; if (!sh.S.closed) { $("pbs-msg").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : (e.message || e)); $("pbs-go").disabled = false; } }
+      };
+    });
+  }
   async function captureElements() {
     const t = target(); if (t.err) return alert(t.err);
     const inf = t.inf, w = inf.node, sh = shell("التقاط العناصر", "عنصر", "كل العناصر", HINT_EL1, HINT_EL2), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
     const lite = LITE(); cv = capCanvas(cv, lite ? 1280 : 2200);
     await new Promise(r => setTimeout(r, 40)); let Z = null;
-    if (keyReady()) { const z0 = await keyPick(sh, cv); if (sh.S.closed) return; if (z0 && z0.pt) return keyCapture(sh, cv, inf, w, null, z0.pt); if (z0) return keyCapture(sh, cv, inf, w, z0); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ تحليل الصورة كاملة بالنماذج المحلية…"; }      // مفتاح متوفر: مستطيل ← التقاط بالذكاء مباشرة؛ «تحليل كاملة» ← الطريقة المحلية
+    if (segReady()) {      // Alyssum API: كشف + قناع تجزئة + صقل حواف محلي من بكسلات الصورة الأصلية؛ «تحليل محلي مجاني» يعيدك للطريقة المحلية
+      const z0 = await keyPick(sh, cv); if (sh.S.closed) return;
+      if (!(z0 && z0.local)) { const r = await apiCapture(sh, cv, inf, w, Array.isArray(z0) ? z0 : null, z0 && z0.pt || null); if (r !== "local") return; }
+      $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ تحليل الصورة كاملة بالنماذج المحلية…";
+    }
     /* التحليل يبدأ مباشرة بلا خطوة وسيطة؛ لتحليل منطقة أدق يوجد زر «✏️ منطقة أخرى» بعد ظهور النتائج */
     if (lite && sh.setCollapsed) sh.setCollapsed(true);
     const stopScan = scanFx(sh, cv);
@@ -14783,14 +14843,14 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   /* الخطوة الأولى: الصورة كاملة + «حلّل الصورة كاملة» أو ارسم مستطيلاً حول العنصر (منطقة) ← [x0,y0,x1,y1] أو null */
   function pickZone(sh, cv, opt) {
     const $ = sh.$, W = cv.width, H = cv.height; $("pbs-load").style.display = "none"; $("pbs-seg").style.display = "none";
-    $("pbs-hint").innerHTML = "" + (opt && opt.point ? "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق للعناصر المتلاصقة).<br>وإن أردت التحليل المحلي المجاني لكل عناصر الصورة اضغط «تحليل الصورة كاملة»." : "<b>✏️ منطقة (أدق):</b> ارسم بالسحب مستطيلاً حول العنصر الذي تريد التقاطه، فتُحلَّل تلك المنطقة وحدها بدقة أعلى.<br>أو حلّل الصورة كاملة.");
-    $("pbs-go").disabled = false; $("pbs-go").textContent = "تحليل الصورة كاملة";
+    $("pbs-hint").innerHTML = "" + (opt && opt.point ? (opt.api ? "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق لعنصر صغير أو متلاصق)، أو اضغط «كشف كل العناصر» ليجدها الذكاء كلها." : "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق للعناصر المتلاصقة).<br>وإن أردت التحليل المحلي المجاني لكل عناصر الصورة اضغط «تحليل الصورة كاملة».") : "<b>✏️ منطقة (أدق):</b> ارسم بالسحب مستطيلاً حول العنصر الذي تريد التقاطه، فتُحلَّل تلك المنطقة وحدها بدقة أعلى.<br>أو حلّل الصورة كاملة.");
+    $("pbs-go").disabled = false; $("pbs-go").textContent = opt && opt.api ? "كشف كل العناصر (Alyssum API)" : "تحليل الصورة كاملة"; const ex0 = $("pbs-extra"); if (opt && opt.api) { ex0.innerHTML = ""; const lb = document.createElement("button"); lb.type = "button"; lb.textContent = "تحليل محلي مجاني (بلا API)"; lb.style.cssText = "border:1.5px dashed #6b7280;background:#fff;color:#374151;border-radius:10px;padding:.45rem;font-weight:700;cursor:pointer;font-family:inherit"; pickZone._lb = lb; ex0.appendChild(lb); }
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:" + (opt && opt.point ? "pointer" : "crosshair"); stage.appendChild(ov);
     return new Promise(res => {
       let d = null; const pos = e => { const r = ov.getBoundingClientRect(); return [Math.max(0, Math.min(vw, e.clientX - r.left)), Math.max(0, Math.min(vh, e.clientY - r.top))]; };
       const draw = (a, b) => { const g = ov.getContext("2d"); g.clearRect(0, 0, vw, vh); if (!a) return; const x = Math.min(a[0], b[0]), y = Math.min(a[1], b[1]), w = Math.abs(b[0] - a[0]), h = Math.abs(b[1] - a[1]); g.fillStyle = "rgba(15,15,20,.45)"; g.fillRect(0, 0, vw, vh); g.clearRect(x, y, w, h); g.setLineDash([6, 4]); g.strokeStyle = "#0d9488"; g.lineWidth = 2.5; g.strokeRect(x, y, w, h); };
-      const done = z => { stage.innerHTML = ""; $("pbs-seg").style.display = "flex"; $("pbs-hint").textContent = sh.S.hintOne; $("pbs-go").onclick = null; res(z); };
+      const done = z => { stage.innerHTML = ""; if (opt && opt.api) $("pbs-extra").innerHTML = ""; $("pbs-seg").style.display = "flex"; $("pbs-hint").textContent = sh.S.hintOne; $("pbs-go").onclick = null; res(z); }; if (pickZone._lb) { pickZone._lb.onclick = () => done({ local: true }); pickZone._lb = null; }
       ov.style.touchAction = "none";
       ov.onpointerdown = e => { try { ov.setPointerCapture(e.pointerId); } catch (er) { } d = { a: pos(e) }; e.preventDefault(); };
       ov.onpointermove = e => { if (!d) return; d.b = pos(e); draw(d.a, d.b); };
@@ -14798,7 +14858,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       ov.onpointerup = () => { if (!d) return; const a = d.a, b = d.b || a; d = null; if (opt && opt.point && Math.abs(b[0] - a[0]) < 8 && Math.abs(b[1] - a[1]) < 8) return done({ pt: [a[0] / k, a[1] / k] }); if (Math.abs(b[0] - a[0]) < 12 || Math.abs(b[1] - a[1]) < 12) return draw(null);
         const x0 = Math.min(a[0], b[0]) / k, y0 = Math.min(a[1], b[1]) / k, x1 = Math.max(a[0], b[0]) / k, y1 = Math.max(a[1], b[1]) / k, m = Math.max(x1 - x0, y1 - y0) * .06;      // هامش صغير حول العنصر
         done([Math.max(0, Math.floor(x0 - m)), Math.max(0, Math.floor(y0 - m)), Math.min(W, Math.ceil(x1 + m)), Math.min(H, Math.ceil(y1 + m))]); };
-      $("pbs-go").onclick = () => done(null); const c0 = sh.close; sh.close = () => { c0(); res(null); };
+      $("pbs-go").onclick = () => done(opt && opt.api ? [0, 0, W, H] : null); const c0 = sh.close; sh.close = () => { c0(); res(null); };
     });
   }
   /* الواجهة الذكية: حدود ملوّنة تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
@@ -15881,7 +15941,14 @@ const PBBgRemove = (function () {
     if (o && o.onStep) o.onStep("✂️ نزع لون الخلفية من نتيجة الذكاء…");
     return classicCut(r.canvas, Object.assign({}, o, { onStep: null }));
   }
-  const METHODS = { key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
+  /* نزع الخلفية بالـAPI بدقة عالية (وحدة AIBgCut المستقلة): الذكاء يحدّد الموضوع وقناعه التقريبي، والحواف تُصقل محلياً من بكسلات صورتك الأصلية (بلا إعادة توليد) */
+  const segOK = () => { try { return !!window.AIBgCut && AIBgCut.ready(); } catch (e) { return false; } };
+  async function apiCut(srcC, o) {
+    if (!segOK()) throw new Error("NOKEY");
+    if (!(o && o.noConfirm) && !confirm("نزع الخلفية بالذكاء (Alyssum API): يحدّد الذكاء الموضوع ثم تُصقل حوافه بدقة من بكسلات صورتك الأصلية.\nسيستهلك من رصيد Alyssum API. متابعة؟ (إلغاء = الطريقة المحلية)")) { const e = new Error("أُلغي التنفيذ بالذكاء — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
+    const c = await AIBgCut.subject(srcC, { onStep: o && o.onStep }); if (o) o.diagBase = "api " + (c._via || ""); return c;
+  }
+  const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   /* خلفية استوديو متجانسة من الحواف (أبيض/رمادي/لون واحد)؟ عندها الفصل اللوني أدقّ من نماذج الكشف (التي قد تلتقط جزءاً من المنتج فقط) */
   function uniformBg(srcC) {
@@ -15904,7 +15971,7 @@ const PBBgRemove = (function () {
   }
   async function autoCut(srcC, o) {
     o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
-    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), kOK = !!o.allowKey && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
+    const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), sOK = !!o.allowKey && segOK(), kOK = !!o.allowKey && !sOK && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : sOK ? (aiOK() ? ["seg", "ai", "classic"] : ["seg", "classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
     for (const m of order) {
       try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
@@ -15930,13 +15997,13 @@ const PBBgRemove = (function () {
     const show = (c, bgOnly) => { cv.width = c ? c.width : srcC.width; cv.height = c ? c.height : srcC.height; cg.clearRect(0, 0, cv.width, cv.height); cg.drawImage(c || srcC, 0, 0, cv.width, cv.height); };
     const run = async methods => {
       if (S.busy) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
-      try { const oo = { methods, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diagBase ? oo.diagBase + " · عمق: " + (oo.depthUsed || "—") + " · ثوانٍ: " + (oo.timing || "") : ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
+      try { const oo = { methods, allowKey: true, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diagBase ? oo.diagBase + " · عمق: " + (oo.depthUsed || "—") + " · ثوانٍ: " + (oo.timing || "") : ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
         msg("✅ تمّ. إن لم تعجبك النتيجة اضغط «إعادة» لتجربة طريقة أخرى."); $("bg-dg").textContent = r.method + (r.diag ? " · " + r.diag : "");
         $("bg-save").disabled = $("bg-again").disabled = false; }
       catch (e) { if (!S.closed) { $("bg-ln").style.display = "none"; const er = e && e.message || e; if (S.res) { show(S.res.canvas); msg("⚠️ فشلت هذه الطريقة (" + er + ") — عدتُ للنتيجة السابقة."); } else { msg("⚠️ " + er); S.res = null; }
         $("bg-again").disabled = false; $("bg-save").disabled = !S.res; } console.error(e); } S.busy = false;
     };
-    $("bg-again").onclick = () => { const all = aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"], i = all.indexOf(S.res ? S.res.method : "classic"); run([all[(i + 1) % all.length]]); };
+    $("bg-again").onclick = () => { const all = (segOK() ? ["seg"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(S.res ? S.res.method : "classic"); run([all[(i + 1) % all.length]]); };
     const save = async asCopy => {
       if (S.busy || !S.res) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true;
       try { const blob = await new Promise(r => S.res.canvas.toBlob(r, "image/png")); msg("⏳ رفع الصورة…"); const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
@@ -15967,7 +16034,7 @@ const PBBgRemove = (function () {
     const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
-      const all = (keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
+      const all = (segOK() ? ["seg"] : keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
       const r = await autoCut(LV.src, { methods, allowKey: true, onStep: m => chip(m, true) }); LV.res = r;
       await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); { let cf = ""; try { const q = confidence(r.canvas); cf = " · ثقة تقديرية " + Math.round(q.score * 100) + "%" + (q.notes.length ? " (" + q.notes[0] + ")" : ""); } catch (e) { } chip("✅ تمّ" + cf + " — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)"); }
