@@ -292,17 +292,17 @@ const MagicLayers = (() => {
     return { canvas: base, name: "الصورة الأصلية", note: "" };
   }
 
-  async function generate() {
+  async function generate(opt) {
     if (!S.src || S.busy) return;
     readOpts();
     const useApi = O.api && hasKey(), useLocal = O.local && localOk();
     if (!useApi && !useLocal) { say(O.api ? "لا مفتاح Alyssum API في هذا المتصفح، والكشف المحلي غير متاح — اضبط المفتاح من «إعدادات مولّد الصور» أو فعّل الكشف المحلي." : "فعّل الكشف المحلي أو Alyssum API.", "err"); return; }
     const cfg = COVER[O.cover] || COVER.dense, calls = useApi ? 1 + (tilesFor(S.W, S.H, cfg.grid).length) + cfg.rounds : 0, bgMode = O.bg === "auto" ? (useLocal ? "local" : "orig") : O.bg, bgCalls = bgMode === "api" ? 1 : 0;
-    if (useApi && !confirm("سيُرسَل حتى " + (calls + bgCalls) + " طلباً إلى Alyssum API (تحليل الصورة كاملة + مربعات + المتبقي" + (bgCalls ? " + ترميم الخلفية" : "") + ") وتُحتسب من رصيدك. المتابعة؟")) return;
+    if (useApi && !(opt && opt.confirmed === true) && !confirm("سيُرسَل حتى " + (calls + bgCalls) + " طلباً إلى Alyssum API (تحليل الصورة كاملة + مربعات + المتبقي" + (bgCalls ? " + ترميم الخلفية" : "") + ") وتُحتسب من رصيدك. المتابعة؟")) return;
     S.busy = true; S.run = { cancelled: false }; ui(true); const t0 = Date.now();
     try {
       let items = [], st = null, layers = [], summary = [];
-      if (useApi) { const r = await detectApi({ max: O.max, cover: O.cover, ctx: O.ctx }); items = r.items; st = r.stats; summary.push("الصورة كاملة " + st.full + (st.tiles ? " + التجزئة " + st.tiles : "") + (st.extra.length ? " + المتبقي " + st.extra.reduce((a, b) => a + b, 0) : "")); if (st.errors.length) summary.push(st.errors.length + " طلب فاشل"); }
+      if (useApi) { const r = await detectApi({ max: O.max, cover: O.cover, ctx: (O.ctx + (S.intent ? " THE INTENDED CORRECT ARABIC COPY of this page is given below. Text inside the image may be misspelled or garbled by the image generator: for every text entry, set label to the CORRECT spelling taken from this copy (match by meaning/position), never output gibberish letters. COPY: " + S.intent : "")).trim() }); items = r.items; st = r.stats; summary.push("الصورة كاملة " + st.full + (st.tiles ? " + التجزئة " + st.tiles : "") + (st.extra.length ? " + المتبقي " + st.extra.reduce((a, b) => a + b, 0) : "")); if (st.errors.length) summary.push(st.errors.length + " طلب فاشل"); }
       chk();
       let rest = items;
       if (useLocal) {
@@ -625,9 +625,10 @@ const MagicLayers = (() => {
     if (!prompt) { const i = String(t).indexOf("Act as a world-class"); prompt = i >= 0 ? String(t).slice(i) : String(t); }
     if (prompt.length < 300) throw new Error("لم يُنتج النموذج برومبت تصميم صالحاً — أعد المحاولة");
     say("٢/٣ رسم الصفحة الطويلة كاملة بنصوصها (قد يستغرق دقيقة أو أكثر)…", "", true);
-    const r = await withTimeout(ImgGen.edit({ blob: photo, prompt, W: 1024, H: 4096, ar: "1:4", noFit: true, confirm: false, title: "صفحة هبوط كاملة" }), 360000); chk();
+    prompt += "\n\nIMPORTANT: every Arabic word must be spelled EXACTLY as written in the quoted texts above, with correct connected letters (RTL). Never invent or distort letters; if a phrase is too long, shorten the phrase but keep real correct words.";
+    const r = await withTimeout(ImgGen.edit({ blob: photo, prompt, W: 1024, H: 4096, ar: "1:4", noFit: true, pro: true, confirm: false, title: "صفحة هبوط كاملة" }), 360000); chk();
     if (!r || !r.blob) throw new Error("لم تُرجع الخدمة صورة");
-    return { blob: r.blob, prompt };
+    return { blob: r.blob, prompt, copy: String(t).replace(/```[\s\S]*?```/g, "").trim().slice(0, 2500) };
   }
   async function runLandingImage(L) {
     if (!confirm("سيُكتب نص الصفحة وبرومبتها (طلب نصي) ثم تُرسم صفحة طويلة كاملة بتقنية Alyssum API وتُستهلك من رصيدك، ثم تُفكَّك إلى صور ونصوص حقيقية قابلة للتعديل (طلبات إضافية للتفكيك). المتابعة؟")) return;
@@ -636,8 +637,8 @@ const MagicLayers = (() => {
     try { r = await landingImage(L); }
     catch (e) { S.busy = false; S.run = null; uiL(false); say(e.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد." : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return; }
     S.busy = false; S.run = null; uiL(false);
-    setMode("ext"); await loadSource(r.blob); say("تم رسم الصفحة — جارٍ تفكيكها إلى طبقات…", "", true);
-    await generate();
+    setMode("ext"); await loadSource(r.blob); S.intent = r.copy || ""; say("تم رسم الصفحة — جارٍ تفكيكها إلى طبقات…", "", true);
+    try { await generate({ confirmed: true }); } finally { S.intent = ""; }
     toast("✅ الصفحة مفكَّكة — راجع الطبقات ثم اضغط «أرسل إلى المطوّر»");
   }
   async function runLanding() {

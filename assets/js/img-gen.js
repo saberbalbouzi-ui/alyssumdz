@@ -133,9 +133,11 @@ const ImgGen = (() => {
     const names = (j.models || []).map(m => String(m.name).replace(/^models\//, "")).filter(n => /image/i.test(n) && !/embedding|tts/i.test(n));
     S.models = { key, names }; return names;
   }
-  async function pickModels(key) {
+  const PRO_FIRST = ["gemini-3-pro-image-preview", "gemini-3.1-flash-image", "gemini-2.5-flash-image"];
+  async function pickModels(key, pro) {
     const m = cfg.model(); if (m !== "auto") return [m];
     let names = []; try { names = await listModels(key); } catch (e) { if (e.status) throw e; }
+    if (pro) { const pl = PRO_FIRST.filter(x => names.includes(x)); if (pl.length) return pl.slice(0, 2); }   // نصوص عربية دقيقة تحتاج النموذج الاحترافي (القياسي يشوّه الحروف)
     const pick = PREF.filter(x => names.includes(x)), rest = names.filter(n => !pick.includes(n)).sort((a, b) => priceOf(a) - priceOf(b));
     const list = pick.concat(rest).slice(0, 2); return list.length ? list : [PREF[0]];
   }
@@ -147,8 +149,8 @@ const ImgGen = (() => {
     return new Promise(res => c.toBlob(res, "image/jpeg", .9));
   }
   /* طلب واحد (لا إعادة محاولة تلقائية متكررة حفاظاً على الرصيد): نموذج أول، ثم بديل واحد فقط عند 404/503 */
-  async function callModel(key, parts, ar) {
-    const models = await pickModels(key); let last = null;
+  async function callModel(key, parts, ar, pro) {
+    const models = await pickModels(key, pro); let last = null;
     for (const m of models) {
       const body = { contents: [{ parts }], generationConfig: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { aspectRatio: ar } } };
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify(body) });
@@ -374,8 +376,8 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const ar = nearAr(W, H), small = o.blob ? await shrink(o.blob, 1600) : null, d = small ? await b64(small) : "", parts = o.blob ? [{ text: o.prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }] : [{ text: o.prompt }];
     for (const x of (o.extra || []).slice(0, 2)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(x, 1200)) } });
     let out;
-    if (o.ar && !fal) { try { out = await callModel(key, parts, o.ar); } catch (e) { if (e.status !== 400 && !/\[400|aspect|ratio|size|invalid.argument/i.test(String(e.message))) throw e; out = await callModel(key, parts, ar); } }   // نسبة مخصصة (مثل 1:4 للصفحات الطويلة) ثم تراجع للأقرب المدعومة
-    else out = fal ? await callFal(key, o.prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, parts, ar);
+    if (o.ar && !fal) { try { out = await callModel(key, parts, o.ar, o.pro); } catch (e) { if (e.status !== 400 && !/\[400|aspect|ratio|size|invalid.argument/i.test(String(e.message))) throw e; out = await callModel(key, parts, ar, o.pro); } }   // نسبة مخصصة (مثل 1:4 للصفحات الطويلة) ثم تراجع للأقرب المدعومة
+    else out = fal ? await callFal(key, o.prompt, "data:image/jpeg;base64," + d, ar) : await callModel(key, parts, ar, o.pro);
     let cv; if (o.noFit) { const bm = await createImageBitmap(out.blob); cv = document.createElement("canvas"); cv.width = bm.width; cv.height = bm.height; cv.getContext("2d").drawImage(bm, 0, 0); } else cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob: await blobOf(cv, o.fmt === "png" ? "png" : "webp"), canvas: cv, model: out.model, cost: est };
   }
