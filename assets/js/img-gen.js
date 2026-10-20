@@ -489,11 +489,11 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const key = (LS.get(KEY, "") || "").trim(); if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
     if (!o || !String(o.prompt || "").trim()) throw new Error("التعليمات مطلوبة");
     if (cfg.budget() && cfg.budget() - cfg.spent() < TEXT_UNIT) { credit.note(); throw new Error(lowMsg); }
-    const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, 1024)) } });
+    const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, Math.max(512, Math.min(2048, Number(o.edge) || 1024)))) } });
     let last = null; const tried = new Set(), errs = [], queue = await textModels(key);
     for (let qi = 0; qi < queue.length && tried.size < 14; qi++) {
       const m = queue[qi]; if (tried.has(m)) continue; tried.add(m);
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: Math.max(256, Math.min(16384, Number(o.maxTokens) || 3072)) }, o.json ? { responseMimeType: "application/json" } : {}) }), signal: o.signal });
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: Math.max(256, Math.min(16384, Number(o.maxTokens) || 3072)) }, o.json || o.mime ? { responseMimeType: "application/json" } : {}) }), signal: o.signal });
       const j = await r.json().catch(() => ({}));
       if (r.ok) {
         const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x => x.text || "").join("").trim(); if (!t) { last = new Error("ردّ فارغ"); continue; }

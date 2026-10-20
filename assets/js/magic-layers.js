@@ -11,8 +11,8 @@ const MagicLayers = (() => {
   const $ = id => document.getElementById(id);
   const S = { src: null, blob: null, W: 0, H: 0, layers: [], sel: null, scale: 1, nextId: 1, run: null, busy: false, log: "", open: false };
   const LSK = "alyssum_ml_opts", COVER = { fast: { grid: 0, rounds: 1 }, dense: { grid: 2, rounds: 2 }, max: { grid: 3, rounds: 3 } };
-  const O = { max: 80, cover: "dense", local: true, api: true, bg: "auto", ctx: "", realText: true };
-  try { Object.assign(O, JSON.parse(localStorage.getItem(LSK) || "{}")); } catch (e) { }
+  const O = { max: 120, cover: "dense", local: true, api: true, bg: "auto", ctx: "", realText: true };
+  try { Object.assign(O, JSON.parse(localStorage.getItem(LSK) || "{}")); if (O.max === 80) O.max = 120; } catch (e) { }
   const saveO = () => { try { localStorage.setItem(LSK, JSON.stringify(O)); } catch (e) { } };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const toast = m => { try { (typeof Admin !== "undefined" && Admin.toast ? Admin.toast : typeof toast2 === "function" ? toast2 : m2 => console.log(m2))(m); } catch (e) { } };
@@ -184,7 +184,7 @@ const MagicLayers = (() => {
   const say = (m, kind, spin) => { S.status = m; const s = $("ml-st"); if (!s) return; s.className = kind || ""; s.textContent = ""; if (spin) { const d = document.createElement("i"); d.className = "ml-spin"; s.appendChild(d); } const t = document.createElement("span"); t.textContent = m || ""; s.appendChild(t); };
 
   const DETECT = (n, ctx, tile, listed) =>
-    "Find EVERY distinct visual element in this image so that each one can become its own editable layer. Be exhaustive: people (the whole person), animals, products and packaging, objects, food, plants, furniture, vehicles, buildings or distinct parts of a scene, logos, icons, stickers, illustrations, decorative shapes, photos or screenshots placed inside the layout, interface components, and EVERY separate line or block of text (use the exact text as its label). " +
+    "Find EVERY distinct visual element in this image so that each one can become its own editable layer. Be exhaustive: people (the whole person), animals, products and packaging (each jar, bottle, box or pouch is its own entry covering the WHOLE product including cap and label, even when it sits on a decorated, glowing or photographic background), objects, food, plants, furniture, vehicles, buildings or distinct parts of a scene, logos, icons, stickers, illustrations, decorative shapes, photos or screenshots placed inside the layout, interface components, and EVERY separate line or block of text (use the exact text as its label). " +
     "Small items, partly hidden items, and items on busy, textured or photographic backgrounds all count. When objects overlap, give each one its own entry covering its visible part. Do NOT output the plain backdrop itself (sky, wall, floor, solid color or gradient fill), and never output one entry that merely groups several others. " +
     (tile ? "This image is a zoomed crop of a larger picture: list only what is visible here, and skip an element that is cut by the crop edge unless at least half of it is visible. " : "") +
     "Return at most " + n + " entries, the most prominent first, as a compact JSON array with no commentary. Each entry: \"box_2d\": [ymin, xmin, ymax, xmax] normalized to 0-1000; \"label\": a short label; \"kind\": one of person, object, text, graphic; " +
@@ -202,12 +202,14 @@ const MagicLayers = (() => {
   async function askModel(prompt, blob) {
     if (typeof ImgGen === "undefined" || !ImgGen.text) throw new Error("خدمة النص غير متاحة");
     let last;
-    for (let a = 0; a < 3; a++) {
+    for (let a = 0; a < 4; a++) {
       chk();
-      try { const t = await ImgGen.text({ prompt, blobs: [blob], temp: .1, maxTokens: 16384 }); return parseItems(t); }
+      try { const t = await ImgGen.text({ prompt, blobs: [blob], temp: .1, maxTokens: 16384, edge: 1600, mime: "application/json" }); return parseItems(t); }
       catch (e) {
         last = e; if (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF" || !/\b429\b|RESOURCE_EXHAUSTED|overload|\b503\b|UNAVAILABLE|rate/i.test(e.message || "")) throw e;
-        say("الخدمة مشغولة (حدّ المعدّل) — إعادة المحاولة بعد لحظات…", "", true); await sleep(5000 * (a + 1));
+        S.slow = true;   // بعد أول حدّ معدّل نتوقف عن الطلبات المتوازية
+        const m = /retry in (\d+(?:\.\d+)?)s/i.exec(e.message || ""), wait = Math.min(65000, m ? Math.ceil(+m[1] * 1000) + 1500 : 8000 * (a + 1));
+        say("الخدمة مشغولة (حدّ المعدّل) — إعادة المحاولة بعد " + Math.round(wait / 1000) + " ث…", "", true); await sleep(wait);
       }
     }
     throw last;
@@ -219,30 +221,30 @@ const MagicLayers = (() => {
   const listed = items => items.map(i => ({ label: i.label, b: [Math.round(i.box[1] / S.H * 1000), Math.round(i.box[0] / S.W * 1000), Math.round(i.box[3] / S.H * 1000), Math.round(i.box[2] / S.W * 1000)] }));
   /* الكشف الكامل بـ Alyssum API: صورة كاملة ← مربعات ← مرورات المتبقي. يُرجع { items, stats } */
   async function detectApi(opt) {
-    const W = S.W, H = S.H, cfg = COVER[opt.cover] || COVER.dense, stats = { full: 0, tiles: 0, extra: [], errors: [], calls: 0 };
+    S.slow = false; const W = S.W, H = S.H, cfg = COVER[opt.cover] || COVER.dense, stats = { full: 0, tiles: 0, extra: [], errors: [], calls: 0 };
     let all = [], firstErr = null;
     const note = e => { stats.errors.push(e.message || String(e)); if (!firstErr) firstErr = e; if (e.code === "NOKEY" || e.code === "OFF") throw e; if (/رصيد|credit|quota|حصة|Quota|\b429\b/i.test(e.message || "")) stats.limited = true; };
     const per = Math.max(20, Math.min(60, opt.max));
     /* 1) الصورة كاملة */
     say("Alyssum API تحلّل الصورة كاملة…", "", true);
     try { stats.calls++; const blob = await cropBlob(0, 0, W, H, 1600), r = await askModel(DETECT(per, opt.ctx, false, null), blob); chk(); const ns = r.map(i => norm(i, { x: 0, y: 0, w: W, h: H }, W, H)).filter(Boolean); all = dedupe(ns); stats.full = all.length; } catch (e) { if (e.name === "AbortError") throw e; note(e); }
-    /* 2) مربعات متداخلة بدقة أعلى (اثنان معاً) */
-    const tiles = objTiles(W, H, cfg.grid);
-    for (let i = 0; i < tiles.length && !stats.limited; i += 2) {
-      chk(); const grp = tiles.slice(i, i + 2); say("تجزئة الصورة (" + Math.min(i + grp.length, tiles.length) + "/" + tiles.length + ") لالتقاط الصغير والمتداخل…", "", true);
-      const res = await Promise.all(grp.map(async t => {
-        try { stats.calls++; const blob = await cropBlob(t.x, t.y, t.w, t.h, 1400), r = await askModel(DETECT(per, opt.ctx, true, null), blob); return r.map(it => norm(it, t, W, H)).filter(Boolean); } catch (e) { if (e.name === "AbortError") throw e; note(e); return []; }
-      }));
-      chk(); const before = all.length; all = dedupe(all.concat(res.flat())); stats.tiles += all.length - before;
-    }
-    /* 2ب) مرور النصوص وحدها بأشرطة عالية الدقة: مرور الأشياء العام يهمل النصوص غالباً */
+    /* 2) مرور النصوص أولاً (الأهم: إن توقّف الكشف بحدّ الاستخدام تبقى النصوص) بأشرطة عالية الدقة */
     const bands = bandsFor(W, H); stats.text = 0;
-    for (let i = 0; i < bands.length && !stats.limited; i += 2) {
-      chk(); const grp = bands.slice(i, i + 2); say("قراءة النصوص (" + Math.min(i + grp.length, bands.length) + "/" + bands.length + ")…", "", true);
+    for (let i = 0; i < bands.length && !stats.limited; i += S.slow ? 1 : 2) {
+      chk(); const grp = bands.slice(i, i + (S.slow ? 1 : 2)); say("قراءة النصوص (" + Math.min(i + grp.length, bands.length) + "/" + bands.length + ")…", "", true);
       const res = await Promise.all(grp.map(async t => {
         try { stats.calls++; const blob = await cropBlob(t.x, t.y, t.w, t.h, 1600), r = await askModel(TEXTP(60, opt.copy), blob); return r.map(it => { const tx = String(it.text || it.label || "").replace(/\\n/g, "\n").trim(); if (!tx) return null; it.kind = "text"; it.label = tx; const n = norm(it, t, W, H); if (n) { n.label = tx; n.tstyle = { direction: it.direction, align: it.align, weight: it.weight, style: it.style, color: it.color }; } return n; }).filter(Boolean); } catch (e) { if (e.name === "AbortError") throw e; note(e); return []; }
       }));
       chk(); const before = all.filter(x => x.kind === "text").length; all = dedupe(all.concat(res.flat())); stats.text += all.filter(x => x.kind === "text").length - before;
+    }
+    /* 2ب) أشياء بدقة أعلى (اثنان معاً ما لم يظهر حدّ معدّل) */
+    const tiles = objTiles(W, H, cfg.grid);
+    for (let i = 0; i < tiles.length && !stats.limited; i += S.slow ? 1 : 2) {
+      chk(); const grp = tiles.slice(i, i + (S.slow ? 1 : 2)); say("تجزئة الصورة (" + Math.min(i + grp.length, tiles.length) + "/" + tiles.length + ") لالتقاط الصغير والمتداخل…", "", true);
+      const res = await Promise.all(grp.map(async t => {
+        try { stats.calls++; const blob = await cropBlob(t.x, t.y, t.w, t.h, 1400), r = await askModel(DETECT(per, opt.ctx, true, null), blob); return r.map(it => norm(it, t, W, H)).filter(Boolean); } catch (e) { if (e.name === "AbortError") throw e; note(e); return []; }
+      }));
+      chk(); const before = all.length; all = dedupe(all.concat(res.flat())); stats.tiles += all.length - before;
     }
     /* 3) مرورات المتبقي: نعطيه ما وُجد ونطلب ما فات */
     for (let r = 0; r < cfg.rounds && all.length < opt.max && !stats.limited; r++) {
@@ -252,9 +254,9 @@ const MagicLayers = (() => {
       const before = all.length; all = dedupe(all.concat(add)); const gain = all.length - before; stats.extra.push(gain); if (gain < 2) break;
     }
     if (!all.length && firstErr) throw firstErr;
-    const txt = all.filter(x => x.kind === "text"), oth = all.filter(x => x.kind !== "text"), tmax = Math.min(txt.length, Math.max(20, Math.round(opt.max * .5)));
+    const txt = all.filter(x => x.kind === "text"), oth = all.filter(x => x.kind !== "text"), tmax = Math.min(txt.length, Math.max(60, Math.round(opt.max * .6)));
     stats.textTotal = txt.length;
-    return { items: oth.slice(0, Math.max(10, opt.max - tmax)).concat(txt.slice(0, tmax)), stats };
+    return { items: oth.slice(0, Math.max(20, opt.max - tmax)).concat(txt.slice(0, tmax)), stats };
   }
 
   /* بناء طبقة من عنصر + قناعه */
@@ -356,7 +358,7 @@ const MagicLayers = (() => {
       /* ما لم يُقصّ بـSAM: مضلّع/مفتاح لوني/مستطيل */
       let n = 0; for (const it of rest) { chk(); say("قصّ العنصر " + (++n) + "/" + rest.length + ": " + it.label, "", true); try { layers.push(await layerFromApi(it)); } catch (e) { if (e.name === "AbortError") throw e; } if (n % 6 === 0) await sleep(0); }
       if (!layers.length) throw new Error("لم يُعثر على أي عنصر. جرّب تفعيل Alyssum API أو أضف وصفاً للصورة.");
-      if (layers.length > O.max) { layers.sort((a, b) => b.area - a.area); layers = layers.slice(0, O.max); }
+      if (layers.length > O.max) { const tx = layers.filter(l => l.text), ot = layers.filter(l => !l.text).sort((a, b) => b.area - a.area); layers = tx.concat(ot.slice(0, Math.max(10, O.max - tx.length))); }
       layers.sort((a, b) => b.area - a.area);
       chk(); const bg = await makeBackground(bgMode, layers);
       clearLayers(); setStage(S.src.width, S.src.height);
@@ -365,7 +367,7 @@ const MagicLayers = (() => {
       layout(); renderList(); updateButtons();
       const how = {}; layers.forEach(l => how[l.how] = (how[l.how] || 0) + 1);
       const hw = Object.keys(how).map(k => ({ sam: "قناع SAM", poly: "مضلّع", cut: "إزالة خلفية", text: "نص", rect: "مستطيل" }[k] + " " + how[k])).join(" · ");
-      S.log = summary.join(" — ") + " — " + hw + (bg.note ? " — " + bg.note : "");
+      S.dbg = st ? "calls=" + st.calls + " full=" + st.full + " text=" + (st.textTotal || 0) + " tiles=" + st.tiles + " limited=" + !!st.limited + " errors=" + st.errors.map(x => String(x).slice(0, 160)).join(" | ") : ""; S.log = summary.join(" — ") + " — " + hw + (bg.note ? " — " + bg.note : "");
       say(layers.length + " طبقة عنصر + الخلفية خلال " + Math.round((Date.now() - t0) / 1000) + " ث. " + S.log, "ok");
       return true;
     } catch (e) {
@@ -671,6 +673,7 @@ const MagicLayers = (() => {
     if (!prompt) { const i = String(t).indexOf("Act as a world-class"); prompt = i >= 0 ? String(t).slice(i) : String(t); }
     if (prompt.length < 300) throw new Error("لم يُنتج النموذج برومبت تصميم صالحاً — أعد المحاولة");
     say("٢/٣ رسم الصفحة الطويلة كاملة بنصوصها (قد يستغرق دقيقة أو أكثر)…", "", true);
+    prompt += "\n\nLAYOUT RULES: draw ONE single vertical column of full-width sections stacked top to bottom (never two columns or side-by-side sections, no collage). Words like \"SECTION 1\", \"SECTION 2 — THE PROBLEM\", section numbers and English structural labels in the instructions above are internal notes: NEVER print them in the image; print only the real marketing copy. Each product jar or bottle appears fully, on its own, with clear space around it.";
     prompt += "\n\nIMPORTANT: every Arabic word must be spelled EXACTLY as written in the quoted texts above, with correct connected letters (RTL). Never invent or distort letters; if a phrase is too long, shorten the phrase but keep real correct words.";
     const r = await withTimeout(ImgGen.edit({ blob: photo, prompt, W: 1024, H: 4096, ar: "1:4", noFit: true, pro: true, confirm: false, title: "صفحة هبوط كاملة" }), 360000); chk();
     if (!r || !r.blob) throw new Error("لم تُرجع الخدمة صورة");
@@ -794,6 +797,7 @@ const MagicLayers = (() => {
     $("ml-fit").onclick = fit; $("ml-desel").onclick = () => select(null); $("ml-rev").onclick = () => { S.layers.reverse(); layout(); renderList(); };
     $("ml-zip").onclick = exportZip; $("ml-png").onclick = async () => download(await toBlob(composite()), "magic-layers.png"); $("ml-send").onclick = sendToBuilder;
     const sz = $("ml-sizer"); sz.addEventListener("pointerdown", onDown); sz.addEventListener("pointermove", onMove); sz.addEventListener("pointerup", onUp); sz.addEventListener("pointercancel", onUp);
+    { const st = $("ml-st"); if (st) { st.title = "انقر لنسخ التقرير"; st.style.cursor = "copy"; st.addEventListener("click", () => { try { navigator.clipboard.writeText((S.status || "") + (S.dbg ? "\n" + S.dbg : "")); toast("نُسخ تقرير التفكيك"); } catch (e) { } }); } }
     ["ml-api", "ml-local", "ml-rt", "ml-cover", "ml-max", "ml-bgm", "ml-ctx"].forEach(id => { const e = $(id); if (e) e.addEventListener("change", readOpts); });
     document.querySelectorAll("#ml-bg [data-mt]").forEach(e => e.addEventListener("click", () => setMode(e.dataset.mt)));
     ["ml-lprod", "ml-lname", "ml-ldesc", "ml-llang", "ml-ltype", "ml-lcol", "ml-lgoal"].forEach(id => { const e = $(id); if (e) e.addEventListener("change", readLand); });
