@@ -636,7 +636,7 @@ const MagicLayers = (() => {
       '<div class="ml-card" data-m="land"><h4>2. التصميم</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="f" for="ml-llang">اللغة</label><select id="ml-llang"><option value="ar"' + sel(L.lang, "ar") + '>العربية</option><option value="fr"' + sel(L.lang, "fr") + '>الفرنسية</option><option value="en"' + sel(L.lang, "en") + '>الإنجليزية</option></select></div><div><label class="f" for="ml-ltype">النوع</label><select id="ml-ltype"><option value="landing"' + sel(L.type, "landing") + '>صفحة هبوط كاملة</option><option value="banner"' + sel(L.type, "banner") + '>بنر / إعلان</option></select></div></div>' +
       '<label class="f" for="ml-lcol">ألوان العلامة (اختياري)</label><input id="ml-lcol" value="' + esc(L.colors || "") + '" placeholder="مثال: #1e5e20 و #c8a24b"><label class="f" for="ml-lgoal">الجمهور والأسلوب (اختياري)</label><input id="ml-lgoal" value="' + esc(L.goal || "") + '" placeholder="مثال: أمهات الأطفال — أسلوب فاخر بألوان خضراء وذهبية">' +
       '<div style="margin-top:12px;display:grid;gap:8px"><button class="b g w" id="ml-land-go" type="button">🚀 أنشئ صفحة هبوط كاملة بطبقات</button><button class="b o w" id="ml-lcancel" type="button" hidden>إلغاء</button></div>' +
-      '<div class="ml-hint">يصمّم الذكاء الاصطناعي الصفحة بنفس برومبت المطوّر الذكي (أقسام ونصوص وأسعار حقيقية وقسم طلب)، ثم تُرسم كل صورها في لوحة أصول واحدة وتُقصّ وتُوزَّع على الطبقات. ما لم يُقصّ بدقة يبقى فارغاً ويُكمل بزر «توليد الصور الفارغة».</div></div>';
+      '<button class="b w" type="button" data-pbgen="1" style="margin-top:8px">📄 أريدها مثل المنشئ الذكي: فكّك آخر صفحة منه إلى طبقات</button><div class="ml-hint">للحصول على نفس جودة صفحة «صفحة هبوط ذكية» (صورة طويلة مرسومة كاملة): ولّدها من هناك أولاً ثم اضغط الزر أعلاه — تُفكَّك إلى عناصر ونصوص حقيقية.</div><div class="ml-hint">يصمّم الذكاء الاصطناعي الصفحة بنفس برومبت المطوّر الذكي (أقسام ونصوص وأسعار حقيقية وقسم طلب)، ثم تُرسم كل صورها في لوحة أصول واحدة وتُقصّ وتُوزَّع على الطبقات. ما لم يُقصّ بدقة يبقى فارغاً ويُكمل بزر «توليد الصور الفارغة».</div></div>';
   }
   function setMode(m) {
     O.mode = m === "land" ? "land" : "ext"; saveO(); document.querySelectorAll("#ml-bg [data-m]").forEach(e => { e.style.display = e.dataset.m === O.mode ? "" : "none"; });
@@ -668,6 +668,12 @@ const MagicLayers = (() => {
     O.max = Math.max(10, Math.min(200, +v("ml-max", O.max) || 80)); O.cover = v("ml-cover", O.cover); O.local = c("ml-local"); O.api = c("ml-api"); O.bg = v("ml-bgm", O.bg); O.ctx = v("ml-ctx", O.ctx).trim(); O.realText = c("ml-rt"); saveO();
   }
   function ui(busy) { const g = $("ml-go"), c = $("ml-cancel"); if (g) g.disabled = !!busy || !S.src; if (c) c.hidden = !busy; }
+  async function loadPbgenLast() {
+    const r = await new Promise(res => { try { const rq = indexedDB.open("pbgen", 1); rq.onupgradeneeded = () => { try { rq.transaction.abort(); } catch (_) { } }; rq.onerror = () => res(null); rq.onsuccess = () => { try { const g = rq.result.transaction("kv", "readonly").objectStore("kv").get("last"); g.onsuccess = () => res(g.result || null); g.onerror = () => res(null); } catch (_) { res(null); } }; } catch (_) { res(null); } });
+    const blob = (typeof PBGen !== "undefined" && PBGen.S && PBGen.S.blob) || (r && r.blob);
+    if (!blob) { say("لا توجد صفحة مولّدة من «صفحة هبوط ذكية» بعد — ولّدها أولاً من تبويب الصفحات.", "err"); return; }
+    setMode("ext"); await loadSource(blob); say("حُمّلت آخر صفحة من المنشئ الذكي — اضغط «استخرج كل العناصر».", "ok");
+  }
   async function loadSource(blob) {
     if (!blob || !(blob.type || "").startsWith("image/")) return;
     let bm; try { bm = await createImageBitmap(blob); } catch (e) { say("الصورة غير مقروءة.", "err"); return; }
@@ -681,7 +687,7 @@ const MagicLayers = (() => {
   }
   function optsHtml() {
     const sel = (v, a) => v === a ? " selected" : "";
-    return '<div class="ml-modes"><button type="button" data-mt="ext">🪄 تفكيك صورة</button><button type="button" data-mt="land">🚀 صفحة هبوط كاملة</button></div>' + landHtml() + '<div class="ml-card" data-m="ext"><h4>1. الصورة</h4><div id="ml-drop" tabindex="0" role="button"><div id="ml-dropin">اسحب صورة هنا، أو اضغط للاختيار، أو الصقها (Ctrl+V)</div></div><input type="file" id="ml-file" accept="image/*" hidden></div>' +
+    return '<div class="ml-modes"><button type="button" data-mt="ext">🪄 تفكيك صورة</button><button type="button" data-mt="land">🚀 صفحة هبوط كاملة</button></div>' + landHtml() + '<div class="ml-card" data-m="ext"><h4>1. الصورة</h4><div id="ml-drop" tabindex="0" role="button"><div id="ml-dropin">اسحب صورة هنا، أو اضغط للاختيار، أو الصقها (Ctrl+V)</div></div><input type="file" id="ml-file" accept="image/*" hidden><button class="b w" type="button" data-pbgen="1" style="margin-top:8px">📄 استعمل آخر صفحة من «صفحة هبوط ذكية»</button><div class="ml-hint">الصفحة الطويلة التي ولّدها المنشئ الذكي (بنصوصها المرسومة) تُفكَّك هنا إلى صور ونصوص حقيقية قابلة للتعديل.</div></div>' +
       '<div class="ml-card" data-m="ext"><h4>2. الاستخراج</h4>' +
       '<div class="ml-chk"><input type="checkbox" id="ml-api"' + (O.api ? " checked" : "") + '><label for="ml-api" style="margin:0">Alyssum API: يعدّد كل العناصر (يحتاج مفتاحاً)</label></div>' +
       '<div class="ml-chk"><input type="checkbox" id="ml-local"' + (O.local ? " checked" : "") + '><label for="ml-local" style="margin:0">كشف وأقنعة محلية (SAM) — مجاني، يُحمَّل نموذج مرة واحدة</label></div>' +
@@ -706,6 +712,7 @@ const MagicLayers = (() => {
     ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
     ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
     drop.addEventListener("drop", e => loadSource(e.dataTransfer.files[0]));
+    document.querySelectorAll("#ml-bg [data-pbgen]").forEach(b => b.onclick = loadPbgenLast);
     $("ml-x").onclick = () => close(); $("ml-go").onclick = generate; $("ml-cancel").onclick = () => { if (S.run) S.run.cancelled = true; };
     $("ml-fit").onclick = fit; $("ml-desel").onclick = () => select(null); $("ml-rev").onclick = () => { S.layers.reverse(); layout(); renderList(); };
     $("ml-zip").onclick = exportZip; $("ml-png").onclick = async () => download(await toBlob(composite()), "magic-layers.png"); $("ml-send").onclick = sendToBuilder;
@@ -727,6 +734,6 @@ const MagicLayers = (() => {
     const b = $("ml-bg"); if (b) b.remove(); window.removeEventListener("keydown", onKey); window.removeEventListener("resize", fit); window.removeEventListener("paste", onPaste);
     if (!quiet && S.run) S.run.cancelled = true; S.open = false;
   }
-  return { open, close, S, O, _t: { textProps, tilesFor, parseItems, norm, dedupe, iou, polyMask, keyOut, makeZip, crc32, detectApi, layerFromApi, generate, loadSource, composite, DETECT, COVER, listed, landing, landingOpen, gridFor, sheetPrompt, findBlobs, assignCells, cutWhite, emptyAssets, landExtra, setMode, runLanding } };
+  return { open, close, S, O, _t: { textProps, tilesFor, parseItems, norm, dedupe, iou, polyMask, keyOut, makeZip, crc32, detectApi, layerFromApi, generate, loadSource, composite, DETECT, COVER, listed, loadPbgenLast, landing, landingOpen, gridFor, sheetPrompt, findBlobs, assignCells, cutWhite, emptyAssets, landExtra, setMode, runLanding } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = MagicLayers;

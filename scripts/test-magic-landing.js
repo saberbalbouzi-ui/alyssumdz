@@ -62,6 +62,16 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
   const r2 = await runLand(p2, true);
   ok("خلية مهملة: طلبان (لوحة + أصل منفرد) ولا صور فارغة", r2.calls.edit === 2 && r2.imgs >= 3 && r2.empty === 0, r2);
   ok("خلية مهملة: كل الصور لها مصدر بعد الاحتياط", r2.imgs > 0 && r2.uploads >= 3, r2);
+  /* ٤) زر «آخر صفحة من المنشئ الذكي»: يحمّل الصورة الطويلة من IndexedDB إلى وضع التفكيك */
+  const pb = await p2.evaluate(async () => {
+    const c = document.createElement("canvas"); c.width = 600; c.height = 2000; const g = c.getContext("2d"); g.fillStyle = "#123"; g.fillRect(0, 0, 600, 2000); g.fillStyle = "#fc0"; g.fillRect(100, 100, 300, 200);
+    const blob = await new Promise(r => c.toBlob(r, "image/png"));
+    await new Promise((res, rej) => { const rq = indexedDB.open("pbgen", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("kv"); rq.onerror = () => rej(rq.error); rq.onsuccess = () => { const tx = rq.result.transaction("kv", "readwrite"); tx.objectStore("kv").put({ blob, name: "t", t: Date.now() }, "last"); tx.oncomplete = res; }; });
+    MagicLayers.open(); MagicLayers._t.setMode("land"); document.querySelector('#ml-bg [data-pbgen]').click();
+    for (let i = 0; i < 30 && !MagicLayers.S.src; i++) await new Promise(r => setTimeout(r, 100));
+    return { h: MagicLayers.S.src && MagicLayers.S.src.height, ext: getComputedStyle(document.querySelector('[data-m="ext"]')).display !== "none" };
+  });
+  ok("زر المنشئ الذكي يحمّل الصفحة الطويلة ويحوّل لوضع التفكيك", pb.h === 2000 && pb.ext, pb);
   ok("لا أخطاء JS", errs.length === 0, errs);
   await b.close(); console.log(fails ? "FAILED " + fails : "ALL OK"); process.exit(fails ? 1 : 0);
 })();
