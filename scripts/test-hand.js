@@ -444,6 +444,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       const q = bg.querySelector('input[data-f="qty"]'); q.value = "1"; q.dispatchEvent(new Event("input", { bubbles: true }));
       r.offerSel = bg.querySelector('select[data-f="offer"]').value; r.price = bg.querySelector('input[data-f="price"]').value; r.line = bg.querySelector("tr[data-i] b").textContent; bg.remove(); return r; });
     ok("طلب يدوي: تعديل الكمية بعد اختيار عرض يلغي العرض ويعيد سعر العلبة العادي (لا سعر الوحدة المقرَّب)", /4/.test(ql.offerLine) && ql.offerSel === "" && /2/.test(ql.price) && ql.line.replace(/\s/g, "") === ql.price, ql); }
+  { const oc = await p.evaluate(async () => { ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 500)); const bg = document.getElementById("mo-bg"), r = {};
+      const sel = bg.querySelector('select[data-f="sel"]'); sel.value = sel.options[1].value; sel.dispatchEvent(new Event("change", { bubbles: true }));
+      const of = bg.querySelector('select[data-f="offer"]'); of.value = "2"; of.dispatchEvent(new Event("change", { bubbles: true })); r.one = bg.querySelector("tr[data-i] b").textContent.replace(/\s/g, "");
+      const c = bg.querySelector('input[data-f="oc"]'); r.has = !!c; c.value = "2"; c.dispatchEvent(new Event("input", { bubbles: true }));
+      r.qty = bg.querySelector('input[data-f="qty"]').value; r.ro = bg.querySelector('input[data-f="qty"]').readOnly; r.line = bg.querySelector("tr[data-i] b").textContent.replace(/\s/g, ""); r.sub = bg.querySelector("#mo-sub").textContent.replace(/\s/g, ""); bg.remove(); return r; });
+    ok("طلب يدوي: عدد العروض (العرض ككل): 2 × (2+1 = 4800) = 6 قطع بـ9600 والكمية للقراءة فقط", oc.has && oc.one === "4800" && oc.qty === "6" && oc.ro && oc.line === "9600" && /9600/.test(oc.sub), oc); }
   { const kf = await p.evaluate(async () => { const A = Admin, r = {}, cf = A.courierFetch, fc = A.fetchCommuneFees, cfg0 = A.deliveryCfg.yalidine, ks0 = A._keyState.yalidine; let calls = []; A.deliveryCfg.yalidine = Object.assign({}, cfg0 || {}, { apiId: "1", apiToken: "2", enabled: true }); A._keyState.yalidine = { ok: false };
       A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ total_data: 3 }) }); A.fetchCommuneFees = async o => { calls.push(o); };
       await A.checkCompanyKeys("yalidine", { explain: true }); r.a = calls.length === 1 && calls[0].force === true; await A.checkCompanyKeys("yalidine", {}); r.b = calls.length === 1;
