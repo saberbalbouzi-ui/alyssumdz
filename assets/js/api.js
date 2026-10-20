@@ -163,7 +163,9 @@ const API = {
     enabled() { return typeof CONFIG !== "undefined" && !!CONFIG.SUPABASE_URL && !!CONFIG.SUPABASE_ANON_KEY; },
     url(path) { return CONFIG.SUPABASE_URL.replace(/\/$/, "") + path; },
     session() { try { return JSON.parse(localStorage.getItem("alyssum_sb_session") || "null"); } catch (e) { return null; } },
-    saveSession(r) { try { if (!r) { localStorage.removeItem("alyssum_sb_session"); return; } localStorage.setItem("alyssum_sb_session", JSON.stringify({ access_token: r.access_token, refresh_token: r.refresh_token, expires_at: Date.now() + (Number(r.expires_in) || 3600) * 1000 - 60000, email: (r.user && r.user.email) || "" })); } catch (e) {} },
+    /* سجلّ تشخيص قصير لأسباب فقدان الدخول (آخر 25 حدثاً) يظهر في شاشة الدخول ليُعرف السبب الحقيقي */
+    dbg(ev) { try { const L = JSON.parse(localStorage.getItem("alyssum_auth_log") || "[]"); L.push(new Date().toISOString().slice(5, 19).replace("T", " ") + " " + String(ev).slice(0, 140)); localStorage.setItem("alyssum_auth_log", JSON.stringify(L.slice(-25))); } catch (e) {} },
+    saveSession(r) { try { if (!r) { this.dbg("clear-session"); localStorage.removeItem("alyssum_sb_session"); return; } localStorage.setItem("alyssum_sb_session", JSON.stringify({ access_token: r.access_token, refresh_token: r.refresh_token, expires_at: Date.now() + (Number(r.expires_in) || 3600) * 1000 - 60000, email: (r.user && r.user.email) || "" })); } catch (e) {} },
     headers(auth) { const h = { "Content-Type": "application/json", apikey: CONFIG.SUPABASE_ANON_KEY }; if (auth) h.Authorization = "Bearer " + auth; return h; },
     /* استدعاء دالة للزوار (بدون تسجيل دخول) — لا ننتظر الرد ولا نكسر الصفحة أبداً */
     publicRpc(name, args) { try { fetch(this.url("/rest/v1/rpc/" + name), { method: "POST", headers: this.headers(), body: JSON.stringify(args), keepalive: true }).catch(() => {}); } catch (e) {} },
@@ -214,13 +216,15 @@ const API = {
       this._rp = (async () => {
         try {
           const ac = typeof AbortController !== "undefined" ? new AbortController() : null, to = ac ? setTimeout(() => ac.abort(), 15000) : 0;       // مهلة: لا يعلق التجديد للأبد
+          this.dbg("refresh-start rt=…" + String(s.refresh_token || "").slice(-4));
           const r = await fetch(this.url("/auth/v1/token?grant_type=refresh_token"), { method: "POST", headers: this.headers(), body: JSON.stringify({ refresh_token: s.refresh_token }), signal: ac ? ac.signal : undefined }); clearTimeout(to);
           const j = await r.json().catch(() => ({}));
-          if (r.ok && j.access_token) { if (!j.user) j.user = { email: s.email }; this.saveSession(j); return j.access_token; }
+          if (r.ok && j.access_token) { if (!j.user) j.user = { email: s.email }; this.saveSession(j); this.dbg("refresh-ok rt=…" + String(j.refresh_token || "").slice(-4)); return j.access_token; }
+          this.dbg("refresh-fail " + r.status + " " + (j.error_description || j.msg || j.error || ""));
           if (r.status >= 500 || r.status === 0 || r.status === 429) return null;       // عطل مؤقت: تبقى الجلسة
           const cur = this.session(); if (cur && cur.refresh_token !== s.refresh_token && Date.now() < cur.expires_at) return cur.access_token;     // جدّدتها نافذة أخرى
           this.saveSession(null); return null;                                              // الرمز مرفوض فعلاً
-        } catch (e) { return null; }                                                          // لا شبكة: تبقى الجلسة
+        } catch (e) { this.dbg("refresh-neterr " + (e && e.name)); return null; }                                                          // لا شبكة: تبقى الجلسة
         finally { setTimeout(() => { this._rp = null; }, 0); }
       })();
       return this._rp;

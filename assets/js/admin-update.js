@@ -48,7 +48,7 @@ const AdminUpdate = (() => {
   }
   /* يجلب الصفحة وسكربتاتها وأنماطها من الخادم متجاوزاً الكاش ثم يعيد تحميل الصفحة نفسها (دون مغادرتها) */
   async function reloadFresh(param, val) {
-    saveState();
+    saveState(); try { API.sb.dbg("update-reload " + param + " left=" + Math.round(((API.sb.session() || {}).expires_at - Date.now()) / 60000) + "m"); } catch (e) { }
     /* لا نخسر الدخول عند التحديث: نجدّد الجلسة الآن إن قاربت على الانتهاء ونوقف أي تجديد آخر قبل إعادة التحميل (ردّ تجديد ضائع يُبطل رمز التجديد القديم) */
     try { if (typeof API !== "undefined" && API.sb && API.sb.enabled() && API.sb.session()) { const s = API.sb.session(); if (s.expires_at - Date.now() < 25 * 60 * 1000) await API.sb.renew(); API.sb._freeze = true; } } catch (e) { }
     try { const urls = [location.pathname, "VERSION", ...[...document.scripts].map(x => x.src), ...[...document.querySelectorAll('link[rel="stylesheet"]')].map(x => x.href)].filter(Boolean); await Promise.all(urls.map(u => fetch(u, { cache: "reload" }).catch(() => 0))); } catch (e) { }
