@@ -83,7 +83,7 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
     document.getElementById("ml-lname").value = "عسل التركيز"; document.getElementById("ml-lprice").value = "1800"; document.getElementById("ml-lcol").value = "ازرق و برتقالي"; document.getElementById("ml-local").checked = false;
     const def = document.getElementById("ml-lmethod").value; document.getElementById("ml-land-go").click();
     for (let i = 0; i < 200 && !(MagicLayers.S.layers && MagicLayers.S.layers.length > 1); i++) await new Promise(r => setTimeout(r, 150));
-    return { layers: (MagicLayers.S.layers || []).length, def, calls, h: MagicLayers.S.src && MagicLayers.S.src.height, ext: getComputedStyle(document.querySelector('[data-m="ext"]')).display !== "none", price: /1800/.test(calls.text[0].p), colors: /ازرق و برتقالي/.test(calls.text[0].p) };
+    return { layers: (MagicLayers.S.layers || []).length, textLayers: (MagicLayers.S.layers || []).filter(l => l.text).length, bands: MagicLayers._t.bandsFor(1024, 4096).length, def, calls, h: MagicLayers.S.src && MagicLayers.S.src.height, ext: getComputedStyle(document.querySelector('[data-m="ext"]')).display !== "none", price: /1800/.test(calls.text[0].p), colors: /ازرق و برتقالي/.test(calls.text[0].p) };
   });
   ok("الطريقة الافتراضية = صفحة مرسومة مثل المنشئ الذكي", im.def === "image", im);
   ok("برومبت المنشئ يصل بالسعر والألوان وصورة المنتج", im.price && im.colors && im.calls.text[0].blobs === 1, im);
@@ -92,6 +92,8 @@ const ok = (n, c, x) => { if (!c) { fails++; console.log("✗", n, x === undefin
   ok("تأكيد واحد فقط (لا تأكيد ثانٍ عند التفكيك)", dlg3 === 1, dlg3);
   ok("نص المنشئ الصحيح يُمرَّر لخطوة التفكيك لتصحيح الحروف", im.calls.text.slice(1).some(c => /INTENDED CORRECT/.test(c.p)), im.calls.text.map(c => c.p.slice(0, 40)));
   ok("الصفحة فُكِّكت فعلاً إلى طبقات", im.layers > 1, im.layers);
+  ok("مرور نصوص مخصّص بأشرطة للصفحة الطويلة (4 أشرطة بنسبة قريبة من المربع)", im.bands === 4 && im.calls.text.filter(c => /EXACT text you read/.test(c.p)).length === 4, { b: im.bands, n: im.calls.text.filter(c => /EXACT text you read/.test(c.p)).length });
+  ok("النصوص تصير طبقات نصية حقيقية", im.textLayers >= 1, im.textLayers);
   ok("لا أخطاء JS", errs.length === 0, errs);
   await b.close(); console.log(fails ? "FAILED " + fails : "ALL OK"); process.exit(fails ? 1 : 0);
 })();

@@ -38,13 +38,14 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
     const texts = [["SALE 50%", 100, 90, "#ffffff", 70], ["Alyssum Honey", 700, 90, "#ffe27a", 60], ["NEW", 1300, 100, "#ffffff", 60], ["Free Delivery", 100, 1120, "#ffffff", 50], ["عسل طبيعي", 800, 1120, "#fff3c4", 56], ["Call now", 1300, 1120, "#ffffff", 40]];
     g.textBaseline = "alphabetic"; texts.forEach(([t, x, y, col, fs]) => { g.font = "800 " + fs + "px Arial, sans-serif"; g.fillStyle = col; g.fillText(t, x, y); const w = g.measureText(t).width; truth.push({ box: [x - 4, y - fs, x + w + 4, y + fs * .25], label: t, kind: "text" }); });
     const blob = await new Promise(r => cv.toBlob(r, "image/png"));
-    window.__truth = truth; window.__calls = []; let tileN = 0;
+    window.__truth = truth; window.__calls = []; let tileN = 0, textN = 0;
     const toRaw = (t, tile) => { const o = { box_2d: [Math.round((t.box[1] - tile.y) / tile.h * 1000), Math.round((t.box[0] - tile.x) / tile.w * 1000), Math.round((t.box[3] - tile.y) / tile.h * 1000), Math.round((t.box[2] - tile.x) / tile.w * 1000)], label: t.label, kind: t.kind };
       if (t.kind !== "text") { const [a, b, c, d] = o.box_2d; o.mask = [[b, a], [d, a], [d, c], [b, c]]; } return o; };
     const TILES = (n => { const T = MagicLayers._t.tilesFor(W, H, n); return T; })(2);
     ImgGen.text = async o => {
       const pr = o.prompt, isTile = /zoomed crop/.test(pr), resid = /ALREADY FOUND/.test(pr); let rows;
-      if (isTile) { const tl = TILES[tileN++ % TILES.length]; rows = truth.filter(t => { const cx = (t.box[0] + t.box[2]) / 2, cy = (t.box[1] + t.box[3]) / 2; return cx > tl.x + 8 && cx < tl.x + tl.w - 8 && cy > tl.y + 8 && cy < tl.y + tl.h - 8; }).map(t => toRaw(t, tl)); window.__calls.push("tile"); }
+      if (/EXACT text you read/.test(pr)) { const B = MagicLayers._t.bandsFor(W, H), bl = B[textN++ % Math.max(1, B.length)]; rows = truth.filter(t => { if (t.kind !== "text") return false; const cx = (t.box[0] + t.box[2]) / 2, cy = (t.box[1] + t.box[3]) / 2; return cx > bl.x && cx < bl.x + bl.w && cy > bl.y && cy < bl.y + bl.h; }).map(t => toRaw(t, bl)); window.__calls.push("text"); }
+      else if (isTile) { const tl = TILES[tileN++ % TILES.length]; rows = truth.filter(t => { const cx = (t.box[0] + t.box[2]) / 2, cy = (t.box[1] + t.box[3]) / 2; return cx > tl.x + 8 && cx < tl.x + tl.w - 8 && cy > tl.y + 8 && cy < tl.y + tl.h - 8; }).map(t => toRaw(t, tl)); window.__calls.push("tile"); }
       else if (resid) { const listed = (pr.match(/"/g) || []).length; rows = truth.slice(0).reverse().slice(0, 12).map(t => toRaw(t, { x: 0, y: 0, w: W, h: H })); window.__calls.push("resid"); }
       else { rows = truth.slice(0, 20).map(t => toRaw(t, { x: 0, y: 0, w: W, h: H })); window.__calls.push("full"); }
       return JSON.stringify(rows);
@@ -66,7 +67,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
     return res;
   });
   console.log("  fast:", JSON.stringify(out.fast), "dense:", JSON.stringify(out.dense), "found", out.found + "/" + out.total, "\n  status:", out.status);
-  ok("وضع «سريع» يتجاوز 20 عنصراً بمرور المتبقي", out.fast.n > 21 && out.fast.calls.join() === "full,resid,resid".slice(0, out.fast.calls.join().length) && out.fast.calls[0] === "full", out.fast);
+  ok("وضع «سريع» يتجاوز 20 عنصراً بمرور المتبقي", out.fast.n > 21 && out.fast.calls.filter(c => c !== "text").join() === "full,resid,resid".slice(0, out.fast.calls.filter(c => c !== "text").join().length) && out.fast.calls[0] === "full", out.fast);
   ok("وضع «شامل»: صورة كاملة + 4 مربعات + مرورا متبقٍ", out.dense.calls.filter(c => c === "tile").length === 4 && out.dense.calls[0] === "full" && out.dense.calls.includes("resid"), out.dense);
   ok("كل العناصر الـ36 مستخرجة (>20) + طبقة الخلفية", out.found === out.total && out.dense.n === out.total + 1, [out.found, out.total, out.dense.n]);
   ok("النصوص صارت نصاً حقيقياً بعبارتها وحجمها ولونها", (() => { const t = out.layers.filter(l => l.kind === "text"); return t.length === 6 && t.every(l => l.text && l.tp && l.tp.fs >= 20) && out.saleTp && out.saleTp.color.toLowerCase() >= "#e0e0e0" && out.layers.some(l => l.text === "عسل طبيعي" && l.tp.rtl); })(), out.saleTp);

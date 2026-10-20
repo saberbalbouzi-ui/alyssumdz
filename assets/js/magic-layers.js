@@ -38,6 +38,15 @@ const MagicLayers = (() => {
     }
     return out;
   }
+  /* شرائح لمرور النصوص: الصورة الطويلة تُقسَّم إلى أشرطة بنسبة قريبة من 1:1.2 بتداخل 15% فيبقى النص مقروءاً بدقة كاملة */
+  function bandsFor(W, H) {
+    const long = Math.max(W, H), short = Math.min(W, H);
+    if (long < 640) return [];
+    if (long / short < 1.5) return tilesFor(W, H, 2);
+    const size = Math.min(long, Math.round(short * 1.2)), n = Math.max(1, Math.ceil((long - size * .15) / (size * .85))), step = n > 1 ? (long - size) / (n - 1) : 0, out = [];
+    for (let i = 0; i < n; i++) { const o = Math.round(i * step); out.push(W <= H ? { x: 0, y: o, w: W, h: size, i: 0, j: i, g: n } : { x: o, y: 0, w: size, h: H, i, j: 0, g: n }); }
+    return out;
+  }
   /* تحليل ردّ النموذج: JSON سليم، أو مقطوع (نلتقط الكائنات الكاملة)، أو متهالك (نلتقط box_2d وlabel) */
   function extractLoose(t) {
     const parts = t.split(/"box_2d"\s*:/).slice(1), out = [];
@@ -179,6 +188,10 @@ const MagicLayers = (() => {
     (ctx ? " Context about the image: " + ctx : "") +
     (listed && listed.length ? " ALREADY FOUND (do not repeat these; return ONLY elements that are still missing, and return [] if nothing is missing): " + listed.slice(0, 160).map(l => l.label + " " + JSON.stringify(l.b)).join("; ") : "");
 
+  const TEXTP = (n, copy) =>
+    "List EVERY line or block of text that is visible in this image: titles, sub-titles, paragraphs, bullet points, button labels, prices, badges, captions, numbers and very small text. Write each entry's label as the EXACT text you read, keeping line order (Arabic is right-to-left). Put the box tightly around that text only. Ignore text that is physically printed on the label of a photographed product or jar. " +
+    "Return at most " + n + " entries as a compact JSON array with no commentary. Each entry: \"box_2d\": [ymin, xmin, ymax, xmax] normalized to 0-1000; \"label\": the text; \"kind\": \"text\"." +
+    (copy ? " The intended correct Arabic copy of this page is below; the image may show misspelled or garbled letters, so for every entry set label to the CORRECT spelling from this copy (match by meaning and position), never gibberish. COPY: " + copy : "");
   async function askModel(prompt, blob) {
     if (typeof ImgGen === "undefined" || !ImgGen.text) throw new Error("خدمة النص غير متاحة");
     const t = await ImgGen.text({ prompt, blobs: [blob], temp: .1, maxTokens: 16384 });
@@ -207,6 +220,15 @@ const MagicLayers = (() => {
       }));
       chk(); const before = all.length; all = dedupe(all.concat(res.flat())); stats.tiles += all.length - before;
     }
+    /* 2ب) مرور النصوص وحدها بأشرطة عالية الدقة: مرور الأشياء العام يهمل النصوص غالباً */
+    const bands = bandsFor(W, H); stats.text = 0;
+    for (let i = 0; i < bands.length; i += 2) {
+      chk(); const grp = bands.slice(i, i + 2); say("قراءة النصوص (" + Math.min(i + grp.length, bands.length) + "/" + bands.length + ")…", "", true);
+      const res = await Promise.all(grp.map(async t => {
+        try { stats.calls++; const blob = await cropBlob(t.x, t.y, t.w, t.h, 1600), r = await askModel(TEXTP(60, opt.copy), blob); return r.map(it => { it.kind = "text"; return norm(it, t, W, H); }).filter(Boolean); } catch (e) { if (e.name === "AbortError") throw e; note(e); return []; }
+      }));
+      chk(); const before = all.filter(x => x.kind === "text").length; all = dedupe(all.concat(res.flat())); stats.text += all.filter(x => x.kind === "text").length - before;
+    }
     /* 3) مرورات المتبقي: نعطيه ما وُجد ونطلب ما فات */
     for (let r = 0; r < cfg.rounds && all.length < opt.max; r++) {
       chk(); say("مرور المتبقي " + (r + 1) + "/" + cfg.rounds + " (وُجد " + all.length + ")…", "", true);
@@ -215,7 +237,9 @@ const MagicLayers = (() => {
       const before = all.length; all = dedupe(all.concat(add)); const gain = all.length - before; stats.extra.push(gain); if (gain < 2) break;
     }
     if (!all.length && firstErr) throw firstErr;
-    return { items: all.slice(0, opt.max), stats };
+    const txt = all.filter(x => x.kind === "text"), oth = all.filter(x => x.kind !== "text"), tmax = Math.min(txt.length, Math.max(20, Math.round(opt.max * .5)));
+    stats.textTotal = txt.length;
+    return { items: oth.slice(0, Math.max(10, opt.max - tmax)).concat(txt.slice(0, tmax)), stats };
   }
 
   /* بناء طبقة من عنصر + قناعه */
@@ -297,12 +321,13 @@ const MagicLayers = (() => {
     readOpts();
     const useApi = O.api && hasKey(), useLocal = O.local && localOk();
     if (!useApi && !useLocal) { say(O.api ? "لا مفتاح Alyssum API في هذا المتصفح، والكشف المحلي غير متاح — اضبط المفتاح من «إعدادات مولّد الصور» أو فعّل الكشف المحلي." : "فعّل الكشف المحلي أو Alyssum API.", "err"); return; }
-    const cfg = COVER[O.cover] || COVER.dense, calls = useApi ? 1 + (tilesFor(S.W, S.H, cfg.grid).length) + cfg.rounds : 0, bgMode = O.bg === "auto" ? (useLocal ? "local" : "orig") : O.bg, bgCalls = bgMode === "api" ? 1 : 0;
+    const cfg = COVER[O.cover] || COVER.dense, calls = useApi ? 1 + (tilesFor(S.W, S.H, cfg.grid).length) + bandsFor(S.W, S.H).length + cfg.rounds : 0, bgMode = O.bg === "auto" ? (useLocal ? "local" : "orig") : O.bg, bgCalls = bgMode === "api" ? 1 : 0;
     if (useApi && !(opt && opt.confirmed === true) && !confirm("سيُرسَل حتى " + (calls + bgCalls) + " طلباً إلى Alyssum API (تحليل الصورة كاملة + مربعات + المتبقي" + (bgCalls ? " + ترميم الخلفية" : "") + ") وتُحتسب من رصيدك. المتابعة؟")) return;
     S.busy = true; S.run = { cancelled: false }; ui(true); const t0 = Date.now();
     try {
       let items = [], st = null, layers = [], summary = [];
-      if (useApi) { const r = await detectApi({ max: O.max, cover: O.cover, ctx: (O.ctx + (S.intent ? " THE INTENDED CORRECT ARABIC COPY of this page is given below. Text inside the image may be misspelled or garbled by the image generator: for every text entry, set label to the CORRECT spelling taken from this copy (match by meaning/position), never output gibberish letters. COPY: " + S.intent : "")).trim() }); items = r.items; st = r.stats; summary.push("الصورة كاملة " + st.full + (st.tiles ? " + التجزئة " + st.tiles : "") + (st.extra.length ? " + المتبقي " + st.extra.reduce((a, b) => a + b, 0) : "")); if (st.errors.length) summary.push(st.errors.length + " طلب فاشل"); }
+      if (useApi) { const r = await detectApi({ max: O.max, cover: O.cover, copy: S.intent || "", ctx: (O.ctx + (S.intent ? " THE INTENDED CORRECT ARABIC COPY of this page is given below. Text inside the image may be misspelled or garbled by the image generator: for every text entry, set label to the CORRECT spelling taken from this copy (match by meaning/position), never output gibberish letters. COPY: " + S.intent : "")).trim() }); items = r.items; st = r.stats; summary.push("الصورة كاملة " + st.full + (st.tiles ? " + التجزئة " + st.tiles : "") + (st.extra.length ? " + المتبقي " + st.extra.reduce((a, b) => a + b, 0) : "")); summary.push("نصوص مقروءة " + (st.textTotal || 0)); if (st.errors.length) summary.push(st.errors.length + " طلب فاشل (" + String(st.errors[0]).slice(0, 90) + ")"); }
+      if (!useApi) summary.push("Alyssum API غير مفعّل: لا تُقرأ النصوص ولا البطاقات (الكشف المحلي يلتقط الصور فقط)");
       chk();
       let rest = items;
       if (useLocal) {
@@ -765,6 +790,6 @@ const MagicLayers = (() => {
     const b = $("ml-bg"); if (b) b.remove(); window.removeEventListener("keydown", onKey); window.removeEventListener("resize", fit); window.removeEventListener("paste", onPaste);
     if (!quiet && S.run) S.run.cancelled = true; S.open = false;
   }
-  return { open, close, S, O, _t: { textProps, tilesFor, parseItems, norm, dedupe, iou, polyMask, keyOut, makeZip, crc32, detectApi, layerFromApi, generate, loadSource, composite, DETECT, COVER, listed, loadPbgenLast, landing, landingOpen, gridFor, sheetPrompt, findBlobs, assignCells, cutWhite, emptyAssets, landExtra, setMode, runLanding } };
+  return { open, close, S, O, _t: { textProps, tilesFor, bandsFor, TEXTP, parseItems, norm, dedupe, iou, polyMask, keyOut, makeZip, crc32, detectApi, layerFromApi, generate, loadSource, composite, DETECT, COVER, listed, loadPbgenLast, landing, landingOpen, gridFor, sheetPrompt, findBlobs, assignCells, cutWhite, emptyAssets, landExtra, setMode, runLanding } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = MagicLayers;
