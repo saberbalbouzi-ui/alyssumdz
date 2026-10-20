@@ -282,7 +282,7 @@ body{overflow-x:hidden;margin:0}`;
     document.body.appendChild(d);
     frame = $("pbx-frame");
     const gridOn = () => { try { return localStorage.getItem("pbx_grid") === "1"; } catch (e) { return false; } };      // الافتراضي: صفحة بيضاء بلا شبكة، والشبكة اختيارية
-    const FRAMEDOC = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style><script>addEventListener("message",function(e){var d=e.data;if(!d||typeof d.pbH!=="number")return;var f=document.querySelectorAll(".pb-raw-fr iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){var h=Math.max(60,Math.min(6000,Math.ceil(d.pbH)));if(f[i].style.height!==h+"px"){f[i].style.height=h+"px";try{parent.postMessage({pbFrH:1},"*")}catch(x){}}}}});<\/script></head><body class="pb-page pb-edit${gridOn() ? "" : " pbx-nogrid"}"><div id="pbr"></div></body></html>`;
+    const FRAMEDOC = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style id="pbs"></style><style>html,body{touch-action:pan-x pan-y}</style><script>function pbFit(){var f=document.querySelectorAll(".pb-raw-fr iframe");for(var i=0;i<f.length;i++){var w=f[i].parentNode,h=+f[i].dataset.h||480,cw=w.clientWidth||1,vw=cw>=900?1280:cw>=600?768:390,k=Math.min(1,cw/vw);f[i].style.width=vw+"px";f[i].style.height=h+"px";f[i].style.transform="scale("+k+")";var nh=Math.round(h*k);if(w.style.height!==nh+"px"){w.style.height=nh+"px";try{parent.postMessage({pbFrH:1},"*")}catch(x){}}}}addEventListener("message",function(e){var d=e.data;if(!d||typeof d.pbH!=="number")return;var f=document.querySelectorAll(".pb-raw-fr iframe");for(var i=0;i<f.length;i++){if(f[i].contentWindow===e.source){f[i].dataset.h=Math.max(60,Math.min(8000,Math.ceil(d.pbH)));pbFit()}}});addEventListener("resize",pbFit);<\/script></head><body class="pb-page pb-edit${gridOn() ? "" : " pbx-nogrid"}"><div id="pbr"></div></body></html>`;
     frame.srcdoc = FRAMEDOC;
     frame.addEventListener("load", () => { let off = false; try { off = frame.contentWindow.location.href !== "about:srcdoc"; } catch (x) { off = true; } if (off) { frame.srcdoc = FRAMEDOC; return; }      // حماية: إن انتقل الإطار إلى صفحة أخرى يُعاد إلى إطار المحرر تلقائياً
       fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
@@ -570,7 +570,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     fitStage(); positionOverlay(); thumbsSoon(); liveBars(); runFx();
   }
   /* التأثيرات الحيّة داخل المحرّر: نشغّل سكربت FX_JS في إطار الصفحة بعد كل رسم (الحالة تُحفظ بين الرسمين: الشريحة الحالية وفتح الأكورديون) */
-  window.addEventListener("message", ev => { if (ev.data && ev.data.pbFrH) { try { positionOverlay(); } catch (x) { } } });
+  window.addEventListener("message", ev => { if (ev.data && ev.data.pbFrH) { try { let ch = false; (E.page && E.page.sections || []).forEach(sc => { try { const m0 = JSON.stringify(sc.set.mh); growCanvas(sc); if (JSON.stringify(sc.set.mh) !== m0) ch = true; } catch (x) { } }); if (ch) schedule(); else positionOverlay(); } catch (x) { } } });
   function runFx() {
     try { const w = fdoc && fdoc.defaultView; if (!w) return; if (!E.fx) { (w.__pbfxC || []).forEach(f => { try { f(); } catch (e) { } }); if (w.__pbfxC) w.__pbfxC.length = 0; fdoc.body.classList.remove("pb-fx"); return; } w.__pbEd = true; fdoc.body.classList.add("pb-fx"); w.eval(PB.FX_JS); } catch (e) { console.warn("fx", e); }
   }
@@ -2019,7 +2019,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   /* بلا أقسام: القماش يكبر تلقائياً ليتسع لأسفل عنصر حر (لا مقبض لتحجيم القسم) */
   /* ارتفاع عنصر حر: الفعلي المقيس للنص/العنوان بارتفاع تلقائي (للجهاز الحالي فقط) وإلا fh المحفوظ */
-  function freeH(sec, w, dev) { if (dev === E.dev && ["text", "heading"].includes(w.type) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; }
+  function freeH(sec, w, dev) { if (dev === E.dev && (["text", "heading"].includes(w.type) || (w.type === "html" && w.set.src !== "orig" && /<script|<style|<link/i.test(String(w.set.code || "")))) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; }
   function growCanvas(sec) {
     if (!FREE_ONLY || sec.set.kind !== "canvas" || E.page.ad) return; const dev = E.dev;      // لوحة التصميم بمقاس ثابت: لا تكبر مع العناصر
     const hOf = w => freeH(sec, w, dev);
@@ -2930,6 +2930,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (!t.dataset.k) return; const c = ctlByKey(inf, t.dataset.k); if (!c) return;
     if (t.dataset.range) { const n = t.parentNode.querySelector('input[type=number]'); if (n) n.value = t.value; }
     applyVal(inf, c, t.type === "checkbox" ? t.checked : t.value, t.dataset.i != null ? Number(t.dataset.i) : undefined);
+    if (inf.node.type === "html" && inf.free && t.dataset.k === "code" && !inf.set.pbWide && /<script|<style|<link/i.test(String(inf.set.code || ""))) { inf.set.pbWide = true; setR(inf.set, "fx", E.dev, 0); setR(inf.set, "fwd", E.dev, 100); }      // الكود الملصوق يظهر بعرض الصفحة كاملاً
     if (inf.node.type === "bullets" && (t.dataset.k === "items" || t.dataset.k === "mc")) { const w = document.querySelector("#pbx-insp [data-bcwrap]"); if (w) w.innerHTML = bcHtml(inf.set); }      // عدد صفوف الألوان يتبع عدد العناصر
     schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500);
   }
