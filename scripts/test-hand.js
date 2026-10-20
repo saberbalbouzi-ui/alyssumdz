@@ -430,6 +430,14 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       const sup0 = A._supPub; A._supPub = { [W.id]: { [yesD.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "")]: [150, 0] } }; const q = A.shipFeeFor(W, yesD, "home"); r.sup = q.sup === 150 && q.fee === q.base + 150; A._supPub = sup0; r.ready = typeof A.shipSupLoad === "function" && (await A.shipSupLoad(), true);
       bg.remove(); return r; });
     ok("طلب يدوي: Stop Desk يتعطل في البلدية بلا مكتب ويُفعَّل مع مكتب، وإضافة البلدية تُضاف لسعر الولاية", mo2.disabled && mo2.enabled && mo2.opts && mo2.sup && mo2.ready, mo2); }
+  { const ps = await p.evaluate(async () => { const A = Admin, r = {}, f0 = A.ydFees, c0 = A.deliveryCfg.yalidine, W = WILAYAS.find(w => w.id === 25), fw = A.fromWilayaId(), s0 = A._supPub;
+      A.deliveryCfg.yalidine = Object.assign({}, c0 || {}, { apiId: "1", apiToken: "2", enabled: true, isDefault: true, prices: { 25: { home: 750, stop: 500 } } });
+      A.ydFees = { [fw + "-25"]: { pc: { constantine: { h: 750, d: 500 }, ainsmara: { h: 800, d: 500 } } } }; A._supPub = null;
+      ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 500)); const bg = document.getElementById("mo-bg"), set = (id, v) => { const e = bg.querySelector("#" + id); e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); };
+      r.has = !!bg.querySelector("#mo-ps") && bg.querySelectorAll("#mo-ps option").length === 2; set("mo-wil", W.name); set("mo-com", W.communes.find(c => /sma/i.test(c))); r.co = bg.querySelector("#mo-fee").value; r.coNote = bg.querySelector("#mo-fh").textContent;
+      set("mo-ps", "zones"); r.zn = bg.querySelector("#mo-fee").value; set("mo-ps", "co"); r.back = bg.querySelector("#mo-fee").value;
+      bg.remove(); A.ydFees = f0; A.deliveryCfg.yalidine = c0; A._supPub = s0; return r; });
+    ok("طلب يدوي: خيار مصدر السعر (أسعار الشركة المفعّلة الافتراضية ⟷ أسعار المناطق): عين السمار 750+50 = 800 ثم المناطق 800 ثم العودة", ps.has && ps.co === "800" && /750/.test(ps.coNote) && /\+50/.test(ps.coNote) && ps.zn === "800" && ps.back === "800", ps); }
   { const kf = await p.evaluate(async () => { const A = Admin, r = {}, cf = A.courierFetch, fc = A.fetchCommuneFees, cfg0 = A.deliveryCfg.yalidine, ks0 = A._keyState.yalidine; let calls = []; A.deliveryCfg.yalidine = Object.assign({}, cfg0 || {}, { apiId: "1", apiToken: "2", enabled: true }); A._keyState.yalidine = { ok: false };
       A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ total_data: 3 }) }); A.fetchCommuneFees = async o => { calls.push(o); };
       await A.checkCompanyKeys("yalidine", { explain: true }); r.a = calls.length === 1 && calls[0].force === true; await A.checkCompanyKeys("yalidine", {}); r.b = calls.length === 1;
