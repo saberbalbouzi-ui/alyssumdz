@@ -38,7 +38,7 @@ const COPY = { headline: "عسل السدر الملكي <b>الأصيل</b>", s
     let prompt = ""; ImgGen.text = async o => { prompt = o.prompt; return copy; };
     PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id);
     const slug = ((Admin.products && Admin.products.length ? Admin.products : PRODUCTS).find(x => x.cover) || {}).slug; g("pp-prod").value = slug; g("pp-prod").dispatchEvent(new Event("change"));
-    const out = { slug, name: g("pp-name").value, hasThemes: document.querySelectorAll('#pp-bg [data-pp="th"]').length };
+    g("pp-mode").value = "layout"; const out = { slug, name: g("pp-name").value, hasThemes: document.querySelectorAll('#pp-bg [data-pp="th"]').length };
     document.querySelector('#pp-bg [data-pp="go"]').click();
     for (let i = 0; i < 100 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
     for (let i = 0; i < 50 && !(PBApp.E && PBApp.E.page && PBApp.E.page.sections && PBApp.E.page.sections.length); i++) await new Promise(r => setTimeout(r, 100));
@@ -56,11 +56,43 @@ const COPY = { headline: "عسل السدر الملكي <b>الأصيل</b>", s
   /* النسخة بدون ذكاء + فشل النموذج لا يضيّع شيئاً */
   const fail = await p.evaluate(async () => {
     ImgGen.text = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; };
-    PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id); g("pp-name").value = "منتج تجريبي"; g("pp-desc").value = "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي. جملة ثالثة طويلة بما يكفي.";
+    PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id); g("pp-mode").value = "layout"; g("pp-name").value = "منتج تجريبي"; g("pp-desc").value = "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي. جملة ثالثة طويلة بما يكفي.";
     document.querySelector('#pp-bg [data-pp="go"]').click(); for (let i = 0; i < 80 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
     return { open: !!document.getElementById("pp-bg"), title: PBApp.E.page && PBApp.E.page.title };
   });
   t("فشل المفتاح ← تُنشأ الصفحة من النسخة الاحتياطية", !fail.open && fail.title === "منتج تجريبي", fail);
+  /* وضع الصور التسويقية (النموذج والصور مُحاكاة) */
+  const pos = await p.evaluate(async copy => {
+    const calls = []; window.confirm = () => true;
+    ImgGen.text = async () => copy; ImgGen.ready = () => ({ ok: true });
+    ImgGen.edit = async o => { calls.push({ ref: !!o.blob, prompt: o.prompt, W: o.W, H: o.H, pro: o.pro, confirm: o.confirm });
+      const c = document.createElement("canvas"); c.width = 108; c.height = 144; c.getContext("2d").fillRect(0, 0, 108, 144); return { blob: await new Promise(r => c.toBlob(r, "image/png")) }; };
+    const up = []; PBApp.uploadBlob = async (b, n) => { up.push(n); return "assets/img/pages/" + n + ".png"; };
+    PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id);
+    const f = new File([await (await fetch("assets/img/tpl/generic-honey.webp")).blob()], "p.webp", { type: "image/webp" }); const dt = new DataTransfer(); dt.items.add(f); g("pp-file").files = dt.files;
+    g("pp-mode").value = "poster"; g("pp-name").value = "عسل السدر"; g("pp-desc").value = "عسل طبيعي خالص من جبال الأطلس. يدعم الطاقة اليومية."; g("pp-n").value = "3";
+    document.querySelector('#pp-bg [data-pp="go"]').click();
+    for (let i = 0; i < 120 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 800));
+    const P = PBApp.E.page, ws = P.sections.flatMap(s => s.cols.flatMap(c => c.widgets));
+    return { calls, up, imgs: ws.filter(w => w.type === "image").length, mq: ws.filter(w => w.type === "marquee").length, btn: ws.filter(w => w.type === "addcart").length, sticky: ws.some(w => w.type === "addcart" && w.set.asticky), media: (P.media || []).length, order: P.sections.some(s => s.set.cid === "order"), alt: (ws.find(w => w.type === "image") || { set: {} }).set.alt };
+  }, COPY);
+  t("بوستر: ثلاث صور مُولَّدة بالصورة المرجعية", pos.calls.length === 3 && pos.calls.every(c => c.ref && c.W === 1080 && c.H === 1440 && c.pro && c.confirm === false), pos.calls);
+  t("بوستر: النصوص العربية حرفياً في البرومبت", pos.calls[0].prompt.includes('"عسل السدر الملكي الأصيل"') && /EXACT product/.test(pos.calls[0].prompt) && pos.calls[1].prompt.includes("BENEFITS") && pos.calls[2].prompt.includes("CLOSING"), pos.calls[0].prompt.slice(0, 200));
+  t("بوستر: لا أسعار في البرومبت", !/\d+\s*(دج|DA)/.test(pos.calls.map(c => c.prompt).join(" ")));
+  t("بوستر: الصفحة = شريط متحرك + 3 صور + أزرار + طلب", pos.mq === 1 && pos.imgs === 3 && pos.btn >= 3 && pos.sticky && pos.order && pos.media === 3, pos);
+  t("بوستر: alt فيه نص العنوان للـSEO", /عسل السدر الملكي/.test(pos.alt || ""), pos.alt);
+  const pg2 = await p.evaluate(() => PagePilot.buildPosterPage(PagePilot.cleanCopy({ headline: "ع", benefits: [{ title: "أ" }] }), { posters: [{ kind: "hero", src: "a.png" }], product: "tarkiz", theme: "navy" }));
+  const w3 = pg2.sections.flatMap(s => s.cols.flatMap(c => c.widgets));
+  t("بوستر مع منتج: سعر وعروض ونموذج الطلب الحقيقي", ["pprice", "poffers", "orderorig"].every(ty => w3.some(w => w.type === ty)) && pg2.cover === "a.png");
+  /* فشل الصور ← رجوع للأقسام النصية */
+  const pf = await p.evaluate(async copy => {
+    window.confirm = () => true; ImgGen.text = async () => copy; ImgGen.edit = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; };
+    PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id); g("pp-mode").value = "poster"; g("pp-name").value = "منتج"; g("pp-desc").value = "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي.";
+    document.querySelector('#pp-bg [data-pp="go"]').click(); for (let i = 0; i < 80 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
+    const ws = PBApp.E.page.sections.flatMap(s => s.cols.flatMap(c => c.widgets)); return { secs: PBApp.E.page.sections.length, mq: ws.filter(w => w.type === "marquee").length };
+  }, COPY);
+  t("فشل توليد الصور ← الأقسام النصية بدل صفحة فارغة", pf.secs >= 6 && pf.mq === 0, pf);
   t("بلا أخطاء صفحة", errs.length === 0, errs);
   console.log(ok + " ✓ / " + bad + " ✗"); await b.close(); process.exit(bad ? 1 : 0);
 })();

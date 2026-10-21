@@ -163,8 +163,63 @@ html{scroll-behavior:smooth}
     return { v: 1, title: copy.headline || ctx.title || "صفحة هبوط", slug, desc: copy.sub || "", bg: "transparent", ff: "Cairo", header: false, footer: false, css: themeCss(th, rtl), sections: secs, seoTitle: "", kw: "", cover: ctx.cover || "", product: ctx.product || "" };
   }
 
+  /* ───────────── وضع «صور تسويقية كاملة»: بوستر لكل قسم (النص داخل الصورة) تُرصّ في الصفحة ───────────── */
+  const POSTER_ORDER = { 2: ["hero", "benefits"], 3: ["hero", "benefits", "closing"], 4: ["hero", "benefits", "solution", "closing"] };
+  function posterKinds(n) { return (POSTER_ORDER[n] || POSTER_ORDER[3]).slice(); }
+  /* برومبت بوستر: يُرسل مع صورة المنتج؛ النصوص العربية تُعطى حرفياً بين علامتي اقتباس */
+  function posterPrompt(kind, copy, info, th, lang) {
+    copy = copy || {}; th = th || THEMES.green; const rtl = lang === "ar", L = { ar: "Arabic", fr: "French", en: "English" }[lang] || "Arabic";
+    const q = s => '"' + String(s || "").replace(/"/g, "'") + '"', bs = (copy.badges || []).slice(0, 3);
+    const ben = (copy.benefits || []).slice(0, 4).map(b => b.title).filter(Boolean);
+    const head = "Create ONE vertical 3:4 marketing poster for a mobile e-commerce landing page, premium advertising-photography quality. "
+      + "The attached photo is the EXACT product: keep its shape, packaging, label, colors and proportions unchanged — never redraw, rename or invent a different product or logo. "
+      + "Product name (context only, do not print unless given below): " + (info && info.title || "the product") + ". "
+      + "Color palette to harmonize with: main " + th.main + ", accent " + th.acc + ". ";
+    const txt = "TEXT RULES: render ONLY the " + L + " texts listed below, exactly letter-for-letter as written" + (rtl ? ", correctly connected Arabic letters, right-to-left" : "") + ", in large, bold, high-contrast, clean typography with a readable background behind the text. "
+      + "Do NOT add any other text, prices, phone numbers, URLs, watermarks, stars/ratings, medical claims or extra logos. ";
+    let body = "";
+    if (kind === "hero") body = "POSTER: HERO. Place the product large and sharp in the center-bottom inside a cinematic lifestyle scene that matches what the product is used for (dramatic lighting, depth, attractive atmosphere). "
+      + "Top: giant bold headline " + q(copy.headline) + (copy.sub ? "; below it a smaller subtitle in warm yellow " + q(copy.sub) : "") + ". "
+      + (bs.length ? "Bottom: " + bs.length + " short badge rows, each with a small icon, with the texts " + bs.map(q).join(", ") + ". " : "");
+    else if (kind === "benefits") body = "POSTER: BENEFITS. A clean bright layout with the product on one side and a vertical list of " + ben.length + " benefit rows, each with a simple round icon and these texts: " + ben.map(q).join(", ") + ". "
+      + (copy.benefitsTitle ? "Heading on top: " + q(copy.benefitsTitle) + ". " : "");
+    else if (kind === "solution") body = "POSTER: SOLUTION / USAGE. A realistic lifestyle scene showing the product being used or placed naturally in its environment (no faces needed; if people appear keep them modest and fully dressed). "
+      + "Texts: heading " + q(copy.solution && copy.solution.title || copy.headline) + (copy.solution && copy.solution.text ? "; short line " + q(String(copy.solution.text).slice(0, 110)) : "") + ". ";
+    else body = "POSTER: CLOSING OFFER. Product presented proudly on a rich background with a glow, strong call-to-action feel. "
+      + "Texts: heading " + q(copy.closing && copy.closing.title || copy.cta || copy.headline) + (bs.length ? "; trust line " + q(bs.join(" • ")) : "") + "; and a large rounded button-shaped label " + q(copy.cta || (L10[lang] || L10.ar).order) + ". ";
+    return head + body + txt;
+  }
+  function posterAlt(kind, copy) {
+    copy = copy || {}; const j = a => a.filter(Boolean).join(" — ");
+    if (kind === "hero") return j([copy.headline, copy.sub, (copy.badges || []).join(" • ")]);
+    if (kind === "benefits") return j([copy.benefitsTitle].concat((copy.benefits || []).map(b => b.title)));
+    if (kind === "solution") return j([copy.solution && copy.solution.title, copy.solution && copy.solution.text]);
+    return j([copy.closing && copy.closing.title, copy.cta]);
+  }
+  /* ctx.posters = [{kind,src,alt}] (المسارات بعد الرفع) */
+  function buildPosterPage(copy, ctx) {
+    ctx = ctx || {}; const th = THEMES[ctx.theme] || THEMES.green, lang = ctx.lang || "ar", rtl = lang === "ar", l = L10[lang] || L10.ar, ink = th.ink, secs = [];
+    const cta = copy.cta || l.orderBtn.replace(/\s*[←→]/, ""), ps = (ctx.posters || []).filter(p => p && p.src);
+    const tick = (copy.badges || []).concat([l.cod]).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).slice(0, 4);
+    const ticker = W("marquee", { mqt: tick.join("\n"), mqs: 26, mqd: rtl ? "rtl" : "ltr", mqg: dm(40), mqbg: th.main, mqc: "#ffffff", fs: dm(15, 14), fw: "800", mh: dm(46) });
+    secs.push(SEC([COL([ticker], 100)], "pp-tick", [0, 0, 0, 0], [0, 0, 0, 0], { layout: "full", gap: dm(0) }));
+    const ctaBtn = sticky => W("addcart", { t: cta, dest: "custom", cust: "#order", abg: th.acc, atc: "#fff", afs: dm(20, 18), apad: dm([16, 28, 16, 28]), arad: dm(16), ashine: true, asticky: !!sticky });
+    const POST = (p, i) => W("image", { src: p.src, alt: p.alt || ctx.title || "", fit: "cover", hauto: true, rad: dm(0), cls: "pp-poster" });
+    ps.forEach((p, i) => {
+      secs.push(SEC([COL([POST(p, i)], 100)], "pp-pst", [0, 0, 0, 0], [0, 0, 0, 0], { cw: dm(640), gap: dm(0) }));
+      if (i < ps.length - 1 || !ps.length) secs.push(SEC([COL([ctaBtn(false)], 100)], "pp-cta", [14, 0, 14, 0], [10, 0, 10, 0], { cw: dm(640) }));
+    });
+    if (ctx.product) secs.push(SEC([COL([W("pprice", { fs: dm(34, 28) }), W("poffers", {})], 100)], "pp-offers", [26, 0, 10, 0], [18, 0, 8, 0], { cw: dm(640) }));
+    const wa = String(ctx.wa || "").replace(/\D/g, ""), ord = ctx.product ? [W("orderorig", { prod: ctx.product, auto: true })] : [BTN(l.wa, wa ? "https://wa.me/" + wa + "?text=" + encodeURIComponent((ctx.title || "") + "") : "#", "pp-btn", "center")];
+    secs.push(SEC([COL([W("text", { html: "<h2>" + esc(l.order) + " · " + esc(l.cod) + "</h2>", fs: dm(30, 22), ta: dm("center"), color: ink, fw: "900", cls: "pp-title" })].concat(ord), 100)], "pp-order", [30, 0, 30, 0], [20, 0, 20, 0], { cw: dm(640), cid: "order" }));
+    secs.push(SEC([COL([W("text", { html: "<p>" + esc(l.note) + "</p>", fs: dm(12, 12), ta: dm("center"), color: th.mut, cls: "pp-note" }), ctaBtn(true)], 100)], "pp-foot", [6, 0, 70, 0], [4, 0, 70, 0]));
+    const css = themeCss(th, rtl) + "\n.pp-poster img{width:100%;height:auto;display:block;border-radius:0}.pp-pst,.pp-tick{padding-top:0!important;padding-bottom:0!important}.pp-cta{background:var(--pp-bg)}";
+    const slug = (String(ctx.slug || ctx.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4);
+    return { v: 1, title: copy.headline || ctx.title || "صفحة هبوط", slug, desc: copy.sub || "", bg: "transparent", ff: "Cairo", header: false, footer: false, css, sections: secs, seoTitle: "", kw: "", cover: (ps[0] && ps[0].src) || ctx.cover || "", product: ctx.product || "" };
+  }
+
   /* ───────────── الواجهة ───────────── */
-  const S = { info: null, imgBlob: null, imgPath: "", imp: null };
+  const S ={ info: null, imgBlob: null, imgPath: "", imp: null };
   const BTN_CSS = "border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:12px;padding:.6rem 1rem;font-weight:800;cursor:pointer;font-family:inherit;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.25)";
   const FLD = "width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);font-family:inherit";
   const prods = () => { const a = typeof Admin !== "undefined" && Admin.products; return a && a.length ? a : (typeof PRODUCTS !== "undefined" && PRODUCTS) || []; };
@@ -191,8 +246,15 @@ html{scroll-behavior:smooth}
 <label style="font-size:.8rem">اللغة<select id="pp-lang" style="${FLD}"><option value="ar">العربية</option><option value="fr">الفرنسية</option><option value="en">الإنجليزية</option></select></label>
 <label style="font-size:.8rem">الجمهور/النبرة (اختياري)<input id="pp-aud" style="${FLD}" placeholder="مثال: أمهات — نبرة دافئة"></label>
 <div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">② الألوان</div><div id="pp-themes" style="display:flex;gap:8px;flex-wrap:wrap">${Object.entries(THEMES).map(([k, t], i) => `<button data-pp="th" data-k="${k}" style="${BTN_CSS};background:linear-gradient(120deg,${t.main} 50%,${t.acc} 50%);${i ? "" : "outline:2px solid #c6fe17;"}min-width:120px">${t.n}</button>`).join("")}</div></div>
+<label style="font-size:.8rem">③ نوع الصفحة<select id="pp-mode" style="${FLD}"><option value="hybrid">صفحة مصوّرة هجينة (خلفيات بالذكاء + المنتج الحقيقي + نص عربي حيّ قابل للتعديل)</option><option value="poster">بوستر كامل (النص داخل الصورة — قد تتشوه الحروف)</option><option value="layout">أقسام نصية قابلة للتعديل (هيرو، فوائد، أسئلة…)</option></select></label>
+<label style="font-size:.8rem">عدد الأقسام (الهجين)<select id="pp-hn" style="${FLD}"><option value="6">6</option><option value="8" selected>8</option><option value="10">10</option></select></label>
+<label style="font-size:.8rem">اللهجة<select id="pp-dia" style="${FLD}"><option value="dz">دارجة جزائرية</option><option value="msa">فصحى مبسّطة</option></select></label>
+<label style="font-size:.8rem">دمج المنتج<select id="pp-strat" style="${FLD}"><option value="composite">قصّ المنتج الحقيقي فوق الخلفية (أدق، قابل للتحريك)</option><option value="edit">يضعه الذكاء في المشهد (صورة واحدة)</option></select></label>
+<label style="font-size:.85rem"><input id="pp-gate" type="checkbox" checked> فحص جودة تلقائي للخلفيات (حتى محاولتين إضافيتين)</label>
+<label style="font-size:.8rem">عدد الصور (للبوستر)<select id="pp-n" style="${FLD}"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
+<div style="grid-column:1/-1;font-size:.78rem;opacity:.8;line-height:1.7">تُصنع الصور من صورة المنتج المختارة: من رابط المنتج (اضغط صورة من الصور المجلوبة) أو الصورة التي ترفعها أو غلاف منتج متجرك. المنتج يبقى كما هو والذكاء يرسم المشهد والنصوص حوله.</div>
 <label style="font-size:.85rem;grid-column:1/-1"><input id="pp-cut" type="checkbox"> عزل المنتج عن خلفية صورته (محلي مجاني)</label>
-<label style="font-size:.85rem;grid-column:1/-1"><input id="pp-scene" type="checkbox"> مشهد توليدي للمنتج في قسم «الحل» (يستهلك رصيد Alyssum API)</label></div>
+<label id="pp-scene-l" style="font-size:.85rem;grid-column:1/-1"><input id="pp-scene" type="checkbox"> مشهد توليدي للمنتج في قسم «الحل» (للنوع النصي فقط، يستهلك رصيد Alyssum API)</label></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin:.9rem 0"><button data-pp="go" style="${BTN_CSS};background:rgba(198,254,23,.28)">✨ أنشئ الصفحة بالذكاء</button><button data-pp="plain" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="بلا ذكاء ولا رصيد: من بيانات المنتج نفسها">نسخة بدون ذكاء</button></div>
 <div id="pp-rep" style="font-size:.86rem;line-height:1.8"></div></div>`;
     document.body.appendChild(bg);
@@ -218,6 +280,45 @@ html{scroll-behavior:smooth}
       say("⏳ ٢/٣ تجهيز الصور…"); const ctx = { theme, lang: o.lang, title: g.info.title, product: g.info.product, wa: (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "" };
       let heroBlob = g.blob;
       if (!heroBlob && g.path) { try { heroBlob = await urlBlob(g.path); } catch (_) { } }
+      if ($("pp-mode").value === "hybrid" && typeof PagePilotHybrid !== "undefined" && typeof PBSpec !== "undefined") {
+        const th0 = THEMES[theme] || THEMES.green, real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })(), cnt = +$("pp-hn").value || 8;
+        if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
+        if (useAI && real && !confirm("سيرسم الذكاء " + cnt + " خلفيات للصفحة (بلا نصوص) ويستهلك من رصيد Alyssum API. المتابعة؟")) throw new Error("أُلغي التوليد");
+        const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + cnt + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:65px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
+        const over = useAI ? {} : { llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }, real: false, image: { bg: async (pr, i, sec) => ({ canvas: PagePilotHybrid.mockBg(PagePilotHybrid.styleBible({}, th0), sec, i), mock: true }), edit: async () => null }, vision: { check: async () => null } };
+        say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
+        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, noFaces: true, audience: o.audience }, { section: prog }, over);
+        say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
+        const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title }, (b, tag) => upload(b, tag));
+        bg.remove(); PBApp.open(asm.page, "", true);
+        const wn = out.note.concat(asm.warn.slice(0, 3)); if (!out.real && useAI) wn.unshift("خلفيات تجريبية محلية: فعّل مفتاح Alyssum API ليرسم الذكاء مشاهد حقيقية."); if (wn.length && PBApp.toast) setTimeout(() => PBApp.toast(wn.join(" — ")), 600);
+        return;
+      }
+      if (useAI && $("pp-mode").value === "poster") {
+        const n = +$("pp-n").value || 3, kinds = posterKinds(n), th = THEMES[theme] || THEMES.green, posters = [];
+        let ready = true; try { if (typeof ImgGen === "undefined" || (ImgGen.ready && !ImgGen.ready().ok)) ready = false; } catch (_) { ready = false; }
+        if (!ready) note += " توليد الصور غير مفعّل (مفتاح Alyssum API) فصُنعت الصفحة بالأقسام النصية.";
+        if (ready && !heroBlob && !confirm("لم تختر صورة للمنتج: ستُرسم الصور من الوصف فقط وقد لا تشبه منتجك. للأفضل أَلغِ ثم ارفع صورة أو اجلب رابط المنتج. المتابعة؟")) throw new Error("أُلغي — اختر صورة المنتج ثم أعد المحاولة");
+        if (ready && !confirm("سيرسم الذكاء " + n + " صور تسويقية ويستهلك من رصيد Alyssum API. المتابعة؟")) throw new Error("أُلغي التوليد");
+        if (ready) {
+          for (let i = 0; i < kinds.length; i++) {
+            say("⏳ يرسم الذكاء الصورة " + (i + 1) + " من " + kinds.length + "… (قد تستغرق نحو دقيقة)");
+            try { const r = await race(ImgGen.edit({ blob: heroBlob || undefined, textOnly: !heroBlob, prompt: posterPrompt(kinds[i], copy, g.info, th, o.lang), W: 1080, H: 1440, pro: true, confirm: false, title: "صورة تسويقية " + (i + 1) }), 300000); if (r && r.blob) posters.push({ kind: kinds[i], blob: r.blob, alt: posterAlt(kinds[i], copy) }); }
+            catch (e) { note += " تعذّرت الصورة " + (i + 1) + " (" + esc(e.code === "NOKEY" ? "لا مفتاح" : e.code === "OFF" ? "التوليد معطّل" : e.message) + ")."; if (e.code === "NOKEY" || e.code === "OFF" || /quota|limit|402|429|credit|رصيد/i.test(e.message || "")) break; }
+          }
+        }
+        if (posters.length) {
+          say("⏳ ٣/٣ رفع الصور وفتح المطوّر…");
+          for (const p of posters) { p.src = await upload(p.blob, p.kind); }
+          if (g.path && !g.blob) ctx.cover = g.path;
+          const pg = buildPosterPage(copy, Object.assign(ctx, { posters })); pg.media = posters.map(p => p.src);
+          if (posters.length < kinds.length) note += " ظهر " + posters.length + " من " + kinds.length + " صور؛ أعد التوليد للبقية من «الصور الفارغة»/أداة مولّد الصور.";
+          bg.remove(); PBApp.open(pg, "", true);
+          const w2 = (copy.warn || []).concat(note ? [note] : []); if (w2.length && PBApp.toast) setTimeout(() => PBApp.toast(w2.join(" — ")), 600);
+          return;
+        }
+        if (ready) note += " لم تنجح أي صورة فصُنعت الصفحة بالأقسام النصية.";
+      }
       if (heroBlob && $("pp-cut").checked && typeof PBBgRemove !== "undefined") { try { const r = await PBBgRemove.autoCut(await toCanvas(heroBlob), { onStep: m => say("⏳ " + esc(m)) }); heroBlob = await canvasBlob(r.canvas, "image/png"); } catch (e) { note += " تعذّر عزل الخلفية فبقيت الصورة الأصلية."; } }
       let sceneBlob = null;
       if (heroBlob && $("pp-scene").checked && useAI) { try { say("⏳ يرسم الذكاء مشهد المنتج…"); const sr = await ImgGen.edit({ blob: heroBlob, prompt: "Place this exact product, unchanged (same shape, label and colors), in a clean realistic lifestyle scene that suits it, soft natural light, shallow depth of field. Absolutely no text, letters, logos, watermarks or people.", W: 1200, H: 1000, pro: true, title: "مشهد المنتج للصفحة" }); if (sr && sr.blob) sceneBlob = sr.blob; } catch (e) { note += " تعذّر المشهد التوليدي (" + esc(e.message) + ")."; } }
@@ -246,5 +347,5 @@ html{scroll-behavior:smooth}
     });
     bg.addEventListener("click", async e => { const im = e.target.closest("[data-ppi]"); if (!im || !S.imp || !PBSpec.pickImage) return; try { await PBSpec.pickImage(S.imp, +im.dataset.ppi); bg.querySelectorAll("[data-ppi]").forEach(x => x.style.borderColor = x === im ? "#c6fe17" : "rgba(255,255,255,.2)"); } catch (er) { say("❌ " + esc(er.message), true); } });
   }
-  return { open, THEMES, copyPrompt, cleanCopy, fallbackCopy, buildPage, themeCss };
+  return { open, THEMES, copyPrompt, cleanCopy, fallbackCopy, buildPage, buildPosterPage, posterPrompt, posterKinds, posterAlt, themeCss };
 })();
