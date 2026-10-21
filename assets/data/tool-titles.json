@@ -227,6 +227,19 @@
         "fr": "Transformez une image en calques indépendants : éléments et vrais textes sur un fond",
         "en": "Turn any image into independent layers: elements and real text over a background"
       }
+    },
+    "pagepilot": {
+      "icon": "14-catalogue-de-produits",
+      "t": {
+        "ar": "منشئ الصفحات بالذكاء",
+        "fr": "Créateur de pages par IA",
+        "en": "AI page builder"
+      },
+      "d": {
+        "ar": "من منتج أو رابط أو وصف إلى صفحة هبوط كاملة قابلة للتعديل",
+        "fr": "D'un produit, d'un lien ou d'une description à une page d'atterrissage complète et modifiable",
+        "en": "From a product, link or description to a complete editable landing page"
+      }
     }
   }
 }

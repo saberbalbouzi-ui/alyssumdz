@@ -731,5 +731,5 @@ ${o.extra ? o.extra + "\n" : ""}
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, importProduct, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, importProduct, pickImage, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
 })();
