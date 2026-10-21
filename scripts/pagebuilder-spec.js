@@ -575,10 +575,78 @@ ${o.extra ? o.extra + "\n" : ""}
   }
 
   /* ───────────── الواجهة ───────────── */
-  const S = { raw: "", res: null };
+  /* ───────────── استيراد منتج من رابط (عنوان، وصف، سعر، صور) ───────────── */
+  const PROXIES = [u => "https://corsproxy.io/?url=" + encodeURIComponent(u), u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u), u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u)];
+  const fetchTimed = async (u, kind, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 15000); try { const r = await fetch(u, { signal: c.signal }); if (!r.ok) throw new Error("HTTP " + r.status); return kind === "blob" ? await r.blob() : await r.text(); } finally { clearTimeout(t); } };
+  async function fetchPageHtml(url) {
+    let last = null;
+    for (const u of [url].concat(PROXIES.map(p => p(url)))) { try { const h = await fetchTimed(u, "text"); if (/<html|<body|<head|<!doctype/i.test(h.slice(0, 4000)) && h.length > 300) return h; last = new Error("استجابة ليست صفحة"); } catch (e) { last = e; } }
+    throw last || new Error("تعذّر جلب الصفحة");
+  }
+  async function fetchImgBlob(url) { for (const u of [url].concat(PROXIES.map(p => p(url)))) { try { const b = await fetchTimed(u, "blob", 12000); if (b && b.size > 1500 && /^image\//.test(b.type)) return b; } catch (_) { } } return null; }
+  /* نقية: HTML + رابط الأساس ← {title,desc,price,currency,images[],bullets[]} */
+  function parseProduct(html, base) {
+    const doc = new DOMParser().parseFromString(String(html || ""), "text/html"), out = { title: "", desc: "", price: "", currency: "", images: [], bullets: [] };
+    const abs = u => { try { return new URL(String(u).trim(), base || "http://x/").href; } catch (_) { return ""; } };
+    const meta = n => { const e = doc.querySelector(`meta[property="${n}"],meta[name="${n}"]`); return e ? (e.getAttribute("content") || "").trim() : ""; };
+    const clean = (s, n) => String(s || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, n || 1200);
+    const imgs = []; const addImg = u => { u = Array.isArray(u) ? u : [u]; u.forEach(x => { if (x && typeof x === "object") x = x.url || x.contentUrl; x = x && abs(x); if (x && /^https?:/.test(x) && !imgs.includes(x)) imgs.push(x); }); };
+    const nodes = []; doc.querySelectorAll('script[type="application/ld+json"]').forEach(s => { try { const j = JSON.parse(s.textContent); (function walk(v) { if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === "object") { nodes.push(v); if (v["@graph"]) walk(v["@graph"]); } })(j); } catch (_) { } });
+    const prod = nodes.find(n => /Product/i.test([].concat(n["@type"] || []).join(",")));
+    if (prod) {
+      out.title = clean(prod.name, 200); out.desc = clean(prod.description, 1500); addImg(prod.image || []);
+      const of = [].concat(prod.offers || [])[0]; if (of) { const o2 = of.offers ? [].concat(of.offers)[0] : of; out.price = String((o2 && (o2.price || o2.lowPrice)) || "").replace(/[^\d.,]/g, ""); out.currency = (o2 && o2.priceCurrency) || ""; }
+    }
+    if (!out.title) out.title = clean(meta("og:title") || meta("twitter:title") || (doc.querySelector("h1") || {}).textContent || doc.title, 200);
+    if (!out.desc) out.desc = clean(meta("og:description") || meta("description") || meta("twitter:description"), 1500);
+    if (!out.price) { out.price = (meta("product:price:amount") || meta("og:price:amount") || "").replace(/[^\d.,]/g, ""); out.currency = out.currency || meta("product:price:currency") || meta("og:price:currency"); }
+    addImg(meta("og:image")); addImg(meta("twitter:image"));
+    const bad = /logo|icon|sprite|avatar|banner|flag|payment|badge|placeholder|pixel|tracking|1x1|favicon/i;
+    Array.from(doc.querySelectorAll("img")).forEach(im => {
+      const ss = im.getAttribute("srcset"); let src = im.getAttribute("data-src") || im.getAttribute("data-lazy-src") || im.getAttribute("data-original") || im.getAttribute("src") || "";
+      if (ss) { const best = ss.split(",").map(x => x.trim().split(/\s+/)).sort((a, b) => (parseFloat(b[1]) || 0) - (parseFloat(a[1]) || 0))[0]; if (best && best[0]) src = best[0]; }
+      const w = parseInt(im.getAttribute("width") || "0", 10), h = parseInt(im.getAttribute("height") || "0", 10);
+      if (!src || /^data:/.test(src) || bad.test(src) || bad.test(im.className || "") || (w && w < 120) || (h && h < 120)) return; addImg(src);
+    });
+    out.images = imgs.slice(0, 8);
+    const lis = Array.from(doc.querySelectorAll("li")).map(l => clean(l.textContent, 160)).filter(t => t.length > 12 && t.length < 160); out.bullets = Array.from(new Set(lis)).slice(0, 8);
+    return out;
+  }
+  async function toJpegData(blob, max) {
+    const url = URL.createObjectURL(blob); try {
+      const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("صورة غير صالحة")); i.src = url; });
+      const k = Math.min(1, (max || 1000) / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas"); c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+      const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+      return { data: c.toDataURL("image/jpeg", .86), blob: await new Promise(r => c.toBlob(r, "image/jpeg", .86)) };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  async function importProduct(url, say) {
+    url = String(url || "").trim(); if (!/^https?:\/\/\S+$/i.test(url)) throw new Error("الصق رابطاً صحيحاً يبدأ بـhttp");
+    say && say("⏳ جارٍ جلب صفحة المنتج…"); const html = await fetchPageHtml(url), p = parseProduct(html, url);
+    if (!p.title && !p.desc && !p.images.length) throw new Error("لم أجد بيانات منتج في هذا الرابط (قد تُبنى الصفحة بالسكربت) — اكتب الاسم والوصف يدوياً");
+    p.url = url; return p;
+  }
+  async function pickImage(imp, i, say) {
+    const u = imp.images[i]; if (!u) return; say && say("⏳ جارٍ تحميل الصورة…"); const b = await fetchImgBlob(u); if (!b) throw new Error("تعذّر تحميل هذه الصورة (الموقع يمنعها) — جرّب صورة أخرى");
+    const j = await toJpegData(b, 1000); imp.pick = i; imp.data = j.data; imp.blob = j.blob;
+  }
+  /* يحقن صورة المنتج المستوردة أصلاً باسم product_photo في تصميم مولَّد، ويرفعها لمكتبة الموقع بدل data: داخل الصفحة */
+  async function attachImported(spec, imp) {
+    if (!spec || typeof spec !== "object" || !imp || !imp.data) return spec;
+    spec.assets = spec.assets && typeof spec.assets === "object" && !Array.isArray(spec.assets) ? spec.assets : {}; spec.assets.product_photo = { src: imp.data }; return spec;
+  }
+  async function uploadDataImages(pg) {
+    if (typeof PBApp === "undefined" || !PBApp.uploadBlob) return 0; const seen = {}; let n = 0;
+    const jobs = []; (pg.sections || []).forEach(sec => (sec.free || []).forEach(w => { const s = w.set && w.set.src; if (typeof s === "string" && /^data:image\//.test(s)) jobs.push(w); }));
+    for (const w of jobs) { const k = w.set.src; try { if (!seen[k]) { const b = await (await fetch(k)).blob(); seen[k] = await PBApp.uploadBlob(b, "imp-" + Date.now().toString(36)); } w.set.src = seen[k]; n++; } catch (_) { } }
+    const first = Object.values(seen)[0]; if (first) { pg.media = (pg.media || []).concat(first); } return n;
+  }
+  const impInfo = imp => imp ? `\nالمنتج مستورد من رابط خارجي (ليس في متجر العميل) — صورته الحقيقية مرفقة كمرجع. ضعها في assets باسم product_photo (بلا prompt) واستعمل src:"asset:product_photo" لصورة المنتج الرئيسية والبقية بـprompt بلا نص. ${imp.price ? "السعر المرجعي في الصفحة المصدر: " + imp.price + " " + (imp.currency || "") + " — اكتبه نصاً عادياً قابلاً للتعديل في طبقة واحدة فقط (لا طبقة price لأنه لا منتج مربوط)." : "لا تخترع سعراً."}${imp.bullets && imp.bullets.length ? "\nنقاط من صفحة المصدر (للمعلومة فقط، لا تنسخها حرفياً ولا تخترع ادعاءات غيرها): " + imp.bullets.slice(0, 6).join(" | ") : ""}` : "";
+
+  const S = { raw: "", res: null, imp: null };
   function prods() { return (typeof Admin !== "undefined" && Admin.products) || (typeof PRODUCTS !== "undefined" ? PRODUCTS : []) || []; }
   function open() {
-    const old = document.getElementById("pbx-spec"); if (old) old.remove();
+    const old = document.getElementById("pbx-spec"); if (old) old.remove(); S.imp = null;
     const ps = prods(), bg = document.createElement("div"); bg.id = "pbx-spec";
     bg.style.cssText = "position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(3px)";
     const btn = "border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:12px;padding:.6rem 1rem;font-weight:800;cursor:pointer;font-family:inherit;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.25)";
@@ -586,12 +654,14 @@ ${o.extra ? o.extra + "\n" : ""}
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h3 style="margin:0">🧩 تصميم بطبقات (يولّده الذكاء الاصطناعي)</h3><button data-sp="x" style="${btn};background:rgba(255,255,255,.1)">✕</button></div>
 <p style="margin:.2rem 0 .8rem;opacity:.85;line-height:1.8;font-size:.9rem">الذكاء الاصطناعي لا يرسم صورة، بل يخرج <b>طبقات</b> (نصوص، صور، أشكال، أزرار، ظلال، تأثيرات) بمواضعها وأحجامها، فيفتحها المطوّر عناصر منفصلة قابلة للتحريك والتعديل.</p>
 <div id="sp-keybox" style="margin:0 0 .8rem;padding:.6rem .8rem;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05)"><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><b style="font-size:.85rem">🔑 مفتاح Alyssum API</b><span id="sp-keyst" style="font-size:.8rem;opacity:.85"></span></div><div style="display:flex;gap:6px;margin-top:6px"><input id="sp-key" type="password" autocomplete="off" dir="ltr" placeholder="الصق المفتاح هنا" style="flex:1;min-width:0;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)"><button data-sp="key" style="${btn};background:rgba(198,254,23,.22)">حفظ</button></div><div style="font-size:.75rem;opacity:.7;margin-top:4px">يُحفظ في هذا المتصفح فقط ولا يُرسل لأي موقع آخر.</div></div>
+<div id="sp-impbox" style="margin:0 0 .8rem;padding:.6rem .8rem;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.05)"><b style="font-size:.85rem">🔗 من رابط منتج (اختياري)</b><div style="display:flex;gap:6px;margin-top:6px"><input id="sp-url" dir="ltr" placeholder="https://… رابط صفحة المنتج" style="flex:1;min-width:0;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)"><button data-sp="imp" style="${btn};background:rgba(198,254,23,.22)">جلب</button></div><div id="sp-impres" style="margin-top:6px;font-size:.82rem;line-height:1.7"></div></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <label style="font-size:.8rem">المنتج<select id="sp-prod" style="width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)"><option value="">— بلا ربط بمنتج —</option>${ps.map(p => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join("")}</select></label>
 <label style="font-size:.8rem">اللغة<select id="sp-lang" style="width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)"><option value="ar">العربية</option><option value="fr">الفرنسية</option><option value="en">الإنجليزية</option></select></label>
 <label style="font-size:.8rem">نوع التصميم<select id="sp-type" style="width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)"><option value="landing">صفحة هبوط كاملة</option><option value="banner">بنر / إعلان (قسم واحد)</option></select></label>
 <label style="font-size:.8rem">ألوان العلامة (اختياري)<input id="sp-colors" style="width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)" placeholder="مثال: #1e5e20 و #c8a24b"></label>
-<label style="font-size:.8rem;grid-column:1/-1">الهدف/الجمهور والأسلوب البصري (اختياري)<input id="sp-goal" style="width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)" placeholder="مثال: أمهات الأطفال — ألوان خضراء وذهبية، أسلوب فاخر"></label></div>
+<label style="font-size:.8rem;grid-column:1/-1">الهدف/الجمهور والأسلوب البصري (اختياري)<input id="sp-goal" style="width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2)" placeholder="مثال: أمهات الأطفال — ألوان خضراء وذهبية، أسلوب فاخر"></label>
+<label style="font-size:.8rem;grid-column:1/-1">وصف المنتج بكلماتك (اختياري — يتقدّم على الوصف المجلوب)<textarea id="sp-desc" rows="2" style="width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);font-family:inherit" placeholder="ما هو المنتج؟ مكوّناته؟ لمن؟ ما الذي يميّزه؟"></textarea></label></div>
 <div style="display:flex;flex-wrap:wrap;gap:8px;margin:.8rem 0">
 <button data-sp="copy" style="${btn};background:rgba(198,254,23,.18)">① نسخ البرومبت (ألصقه في ChatGPT/Claude)</button>
 <button data-sp="gen" style="${btn};background:rgba(198,254,23,.18)">✨ توليد مباشر (Alyssum API)</button>
@@ -610,7 +680,7 @@ ${o.extra ? o.extra + "\n" : ""}
 <div id="sp-rep" style="font-size:.85rem;line-height:1.8"></div></div>`;
     document.body.appendChild(bg);
     const $q = id => bg.querySelector("#" + id), rep = $q("sp-rep"), say = (h, bad) => { rep.innerHTML = `<div style="padding:.6rem .8rem;border-radius:10px;border:1px solid ${bad ? "rgba(255,120,120,.5)" : "rgba(198,254,23,.35)"};background:${bad ? "rgba(255,80,80,.1)" : "rgba(198,254,23,.07)"}">${h}</div>`; };
-    const opts = () => { const p = ps.find(x => x.slug === $q("sp-prod").value); return { name: p ? p.title : "", desc: p ? p.desc : "", goal: $q("sp-goal").value.trim(), lang: $q("sp-lang").value, type: $q("sp-type").value, colors: $q("sp-colors").value.trim(), height: 1080, say, offers: p && p.offers ? p.offers.map(x => x.qty + " قطع = " + x.price + " دج" + (x.free ? " (منها " + x.free + " هدية)" : "")).join("، ") : "", width: 1080 }; };
+    const opts = () => { const p = ps.find(x => x.slug === $q("sp-prod").value), imp = !p && S.imp ? S.imp : null, own = $q("sp-desc").value.trim(); return { name: p ? p.title : imp ? imp.title : "", desc: own || (p ? p.desc : imp ? imp.desc : ""), imp, extra: impInfo(imp), blobs: imp && imp.blob ? [imp.blob] : undefined, goal: $q("sp-goal").value.trim(), lang: $q("sp-lang").value, type: $q("sp-type").value, colors: $q("sp-colors").value.trim(), height: 1080, say, offers: p && p.offers ? p.offers.map(x => x.qty + " قطع = " + x.price + " دج" + (x.free ? " (منها " + x.free + " هدية)" : "")).join("، ") : "", width: 1080 }; };
     const check = () => {
       const t = $q("sp-json").value.trim(); if (!t) { say("ألصق JSON أولاً.", true); return null; }
       const r = validate(t); if (!r.ok) { say("❌ " + esc(r.error), true); $q("sp-new").disabled = $q("sp-ins").disabled = true; return null; }
@@ -621,33 +691,45 @@ ${o.extra ? o.extra + "\n" : ""}
     const keySt = () => { let ok = false, px = false; try { const v = (localStorage.getItem("alyssum_gp_gkey") || "").trim(); ok = !!v; px = v === "via-proxy"; } catch (_) {} $q("sp-keyst").textContent = ok ? (px ? "✅ يعمل عبر رمز الموقع" : "✅ مضبوط") : "⚠ غير مضبوط"; };
     keySt();
     bg.addEventListener("click", async e => {
+      const pi = e.target.closest("[data-spi]"); if (pi && S.imp) { const box = $q("sp-impres"); try { await pickImage(S.imp, +pi.dataset.spi, m => say(m)); box._draw && box._draw(); say("✅ اختيرت الصورة."); } catch (er) { say("❌ " + esc(er.message), true); } return; }
       const b = e.target.closest("[data-sp]"); if (!b) { if (e.target === bg) bg.remove(); return; } const a = b.dataset.sp;
       if (a === "x") bg.remove();
       else if (a === "key") { const k = ($q("sp-key").value || "").replace(/[\s"']/g, ""); if (!k) { say("الصق المفتاح أولاً.", true); return; } try { localStorage.setItem("alyssum_gp_gkey", k); } catch (_) { say("تعذّر الحفظ في هذا المتصفح.", true); return; } $q("sp-key").value = ""; try { ImgGen.credit && ImgGen.credit.renew && ImgGen.credit.renew(); } catch (_) {} keySt(); say("✅ حُفظ المفتاح في هذا المتصفح. يمكنك الآن «توليد كامل»."); }
+      else if (a === "imp") {
+        b.disabled = true; const box = $q("sp-impres"); box.textContent = "";
+        try {
+          const p = await importProduct($q("sp-url").value, m => say(m)); S.imp = p;
+          if (p.images.length) { try { await pickImage(p, 0, m => say(m)); } catch (er) { say("⚠ " + esc(er.message), true); } }
+          const drawImp = () => { box.innerHTML = `<div><b>${esc(p.title || "—")}</b>${p.price ? " — " + esc(p.price) + " " + esc(p.currency || "") : ""}</div><div style="opacity:.85">${esc((p.desc || "").slice(0, 180))}${(p.desc || "").length > 180 ? "…" : ""}</div>` + (p.images.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${p.images.map((u, i) => `<img data-spi="${i}" src="${esc(u)}" referrerpolicy="no-referrer" style="width:64px;height:64px;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid ${i === p.pick ? "#c6fe17" : "rgba(255,255,255,.2)"}">`).join("")}</div><div style="opacity:.7;font-size:.75rem;margin-top:3px">اضغط صورة لاختيارها كصورة المنتج الرئيسية.</div>` : `<div style="color:#fde68a">لم أجد صوراً — يمكنك الاستمرار بالوصف فقط.</div>`); };
+          box._draw = drawImp; drawImp(); say(`✅ جُلب المنتج: <b>${esc(p.title || "بلا عنوان")}</b>. راجع الوصف ثم اضغط «توليد كامل».`);
+          if (!$q("sp-desc").value.trim() && p.desc) $q("sp-desc").value = p.desc;
+        } catch (er) { S.imp = null; say("❌ " + esc(er.message), true); }
+        b.disabled = false;
+      }
       else if (a === "copy") { const p = prompt(opts()); try { await navigator.clipboard.writeText(p); say("✅ نُسخ البرومبت. ألصقه في ChatGPT أو Claude ثم انسخ الـJSON الناتج هنا."); } catch (_) { $q("sp-json").value = p; say("تعذّر النسخ التلقائي؛ وُضع البرومبت في الخانة — انسخه منها."); } }
       else if (a === "sample") { $q("sp-json").value = JSON.stringify(SAMPLE, null, 2); check(); }
       else if (a === "check") check();
       else if (a === "stop") { cancel(); say("… جارٍ الإلغاء"); }
       else if (a === "tolayers") { const r = exportLayered(); if (!r) say("افتح صفحة في المطوّر أولاً.", true); else if (!r.ok) say("❌ " + esc(r.error || "تعذّر التحويل"), true); else { $q("sp-json").value = r.json; check(); say(`✅ حُوّلت الصفحة إلى <b>${r.count.sections}</b> قسماً و<b>${r.count.layers}</b> طبقة ونُزّل الملف؛ الصفحة نفسها لم تتغيّر.` + (r.skipped.length ? `<div style="margin-top:6px;opacity:.85">ما لم يُحوَّل (${r.skipped.length}): ${r.skipped.slice(0, 6).map(esc).join("، ")}</div>` : "")); } }
       else if (a === "dl") { say(downloadProject() ? "✅ نُزّل ملف المشروع." : "افتح صفحة في المطوّر أولاً.", !PBApp.E.page); }
-      else if (a === "gen") { b.disabled = true; $q("sp-stop").style.display = ""; say("⏳ جارٍ توليد التصميم…"); try { const j = await generate(opts()); $q("sp-json").value = JSON.stringify(j, null, 2); check(); } catch (er) { say(er.code === "CANCEL" ? "أُلغي." : "❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد — استعمل «نسخ البرومبت» يدوياً" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message + " — لم يضِع شيء، يمكنك إعادة المحاولة"), er.code !== "CANCEL"); } b.disabled = false; $q("sp-stop").style.display = "none"; }
+      else if (a === "gen") { b.disabled = true; $q("sp-stop").style.display = ""; say("⏳ جارٍ توليد التصميم…"); try { const o0 = opts(), j = await attachImported(await generate(o0), o0.imp); $q("sp-json").value = JSON.stringify(j, null, 2); check(); } catch (er) { say(er.code === "CANCEL" ? "أُلغي." : "❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد — استعمل «نسخ البرومبت» يدوياً" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message + " — لم يضِع شيء، يمكنك إعادة المحاولة"), er.code !== "CANCEL"); } b.disabled = false; $q("sp-stop").style.display = "none"; }
       else if (a === "imgs") { b.disabled = true; $q("sp-stop").style.display = ""; try { const r = await fillImages({ say: m => say(m), dw: (S.res && S.res.page.width) || 1080 }); say(r.cancelled ? `أُلغي (اكتمل ${r.done} من ${r.total}).` : r.total ? `✅ جاهزة ${r.done} من ${r.total} صورة` + (r.cached ? ` (منها ${r.cached} من الكاش)` : "") + (r.failed ? ` — تعذّرت ${r.failed}${r.error ? ": " + esc(r.error) : ""}` : "") : "لا توجد صور فارغة في الصفحة المفتوحة.", !!r.failed && !r.done); } catch (er) { say("❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message), true); } b.disabled = false; $q("sp-stop").style.display = "none"; }
       else if (a === "full") {
         b.disabled = true; $q("sp-stop").style.display = ""; say("⏳ جارٍ توليد التصميم…");
         try {
-          const j = await generate(opts()); $q("sp-json").value = JSON.stringify(j, null, 2); const r = check(); if (!r) { b.disabled = false; return; }
+          const o0 = opts(), j = await attachImported(await generate(o0), o0.imp); $q("sp-json").value = JSON.stringify(j, null, 2); const r = check(); if (!r) { b.disabled = false; return; }
           const pg = toPage(r, { product: r.page.product }); pg.slug = (r.page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4);
-          const dw = r.page.width; bg.remove(); PBApp.open(pg, "", true);
+          const dw = r.page.width; say("⏳ جارٍ رفع صورة المنتج…"); await uploadDataImages(pg); bg.remove(); PBApp.open(pg, "", true);
           if (emptyImages_(pg)) { await new Promise(rs => setTimeout(rs, 700)); cancelBar(true); try { const f = await fillImages({ dw, say: m => PBApp.toast && PBApp.toast(m), confirm: true }); PBApp.toast && PBApp.toast(f.cancelled ? `أُلغي التوليد — اكتملت ${f.done} وبقيت الباقية فارغة (يمكن إكمالها من «توليد الصور الفارغة»)` : `🖼️ جاهزة ${f.done} من ${f.total} صورة` + (f.cached ? ` (${f.cached} من الكاش)` : "") + (f.failed ? ` — تعذّرت ${f.failed} فتبقى فارغة وتصلح بزر «توليد الصور الفارغة»` : "")); } catch (er) { PBApp.toast && PBApp.toast("⚠ " + (er.code === "NOKEY" ? "لا مفتاح للصور" : er.message) + " — التصميم محفوظ بلا ضياع"); } cancelBar(false); }
         } catch (er) { say(er.code === "CANCEL" ? "أُلغي." : "❌ " + esc(er.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد — استعمل «نسخ البرومبت» يدوياً" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message + " — لم يضِع شيء، يمكنك إعادة المحاولة"), er.code !== "CANCEL"); b.disabled = false; $q("sp-stop").style.display = "none"; }
       }
       else if (a === "new" || a === "ins") {
         const r = S.res || check(); if (!r) return; const ctx = { product: r.page.product };
-        if (a === "new") { const pg = toPage(r, ctx); pg.slug = (r.page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4); bg.remove(); PBApp.open(pg, "", true); if (pg.pending && pg.pending.length) setTimeout(() => { try { PBApp.toast && PBApp.toast(pg.pending.length + " صورة فارغة — زر «🧩 تصميم بطبقات» ← «🖼️ توليد الصور الفارغة» يولّدها تلقائياً"); } catch (_) { } }, 400); }
+        if (a === "new") { const pg = toPage(r, ctx); pg.slug = (r.page.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")) || "page-" + Date.now().toString(36).slice(-4); await uploadDataImages(pg); bg.remove(); PBApp.open(pg, "", true); if (pg.pending && pg.pending.length) setTimeout(() => { try { PBApp.toast && PBApp.toast(pg.pending.length + " صورة فارغة — زر «🧩 تصميم بطبقات» ← «🖼️ توليد الصور الفارغة» يولّدها تلقائياً"); } catch (_) { } }, 400); }
         else { const secs = toSections(r, ctx); bg.remove(); PBApp.insertSections(secs, "تصميم بطبقات"); }
       }
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, importProduct, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
 })();
