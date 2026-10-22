@@ -625,9 +625,10 @@ ${o.extra ? o.extra + "\n" : ""}
       return { data: c.toDataURL("image/jpeg", .86), blob: await new Promise(r => c.toBlob(r, "image/jpeg", .86)) };
     } finally { URL.revokeObjectURL(url); }
   }
-  async function importProduct(url, say) {
-    url = String(url || "").trim(); if (!/^https?:\/\/\S+$/i.test(url)) throw new Error("الصق رابطاً صحيحاً يبدأ بـhttp");
-    say && say("⏳ جارٍ جلب صفحة المنتج…"); const html = await fetchPageHtml(url), p = parseProduct(html, url);
+  async function importProduct(url, say, pasted) {
+    url = String(url || "").trim(); pasted = String(pasted || "").trim(); const hasPaste = pasted.length > 300;
+    if (!hasPaste && !/^https?:\/\/\S+$/i.test(url)) throw new Error("الصق رابطاً صحيحاً يبدأ بـhttp");
+    say && say(hasPaste ? "⏳ جارٍ قراءة الكود الملصوق…" : "⏳ جارٍ جلب صفحة المنتج…"); const html = hasPaste ? pasted : await fetchPageHtml(url), p = parseProduct(html, /^https?:/i.test(url) ? url : "");
     if (!p.title && !p.desc && !p.images.length) throw new Error("لم أجد بيانات منتج في هذا الرابط (قد تُبنى الصفحة بالسكربت) — اكتب الاسم والوصف يدوياً");
     p.url = url; return p;
   }

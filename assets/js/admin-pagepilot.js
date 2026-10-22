@@ -239,6 +239,7 @@ html{scroll-behavior:smooth}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <label style="font-size:.8rem;grid-column:1/-1">① منتج من متجرك (اختياري)<select id="pp-prod" style="${FLD}"><option value="">— بلا (رابط أو وصف يدوي) —</option>${ps.map(p => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join("")}</select></label>
 <label style="font-size:.8rem;grid-column:1/-1">أو رابط صفحة منتج<span style="display:flex;gap:6px"><input id="pp-url" dir="ltr" placeholder="https://… " style="${FLD};flex:1"><button data-pp="imp" style="${BTN_CSS};background:rgba(198,254,23,.22)">جلب</button></span></label>
+<details style="grid-column:1/-1;font-size:.8rem"><summary style="cursor:pointer;opacity:.85">الموقع يمنع الجلب؟ الصق كود الصفحة بدلاً من الرابط</summary><textarea id="pp-html" dir="ltr" rows="3" placeholder="افتح صفحة المنتج ← Ctrl+U ← Ctrl+A ← Ctrl+C ← الصقه هنا ثم اضغط «جلب»" style="${FLD};width:100%;margin-top:6px"></textarea></details>
 <div id="pp-impres" style="grid-column:1/-1;font-size:.82rem;line-height:1.7"></div>
 <label style="font-size:.8rem">اسم المنتج<input id="pp-name" style="${FLD}"></label>
 <label style="font-size:.8rem">صورة المنتج<input id="pp-file" type="file" accept="image/*" style="${FLD}"></label>
@@ -349,11 +350,11 @@ html{scroll-behavior:smooth}
       else if (a === "imp") {
         if (typeof PBSpec === "undefined" || !PBSpec.importProduct) { say("أداة الجلب غير متاحة.", true); return; } b.disabled = true;
         try {
-          const p = await PBSpec.importProduct($("pp-url").value, m => say(m)); S.imp = p; if (p.images.length && PBSpec.pickImage) { try { await PBSpec.pickImage(p, 0); } catch (_) { } }
+          const p = await PBSpec.importProduct($("pp-url").value, m => say(m), $("pp-html") && $("pp-html").value); S.imp = p; if (p.images.length && PBSpec.pickImage) { try { await PBSpec.pickImage(p, 0); } catch (_) { } }
           if (!$("pp-name").value.trim()) $("pp-name").value = p.title; if (!$("pp-desc").value.trim()) $("pp-desc").value = p.desc;
           $("pp-impres").innerHTML = p.images.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${p.images.map((u, i) => `<img data-ppi="${i}" src="${esc(u)}" referrerpolicy="no-referrer" style="width:60px;height:60px;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid ${i === p.pick ? "#c6fe17" : "rgba(255,255,255,.2)"}">`).join("")}</div><div style="opacity:.7;font-size:.75rem">اضغط صورة لاختيارها صورةً رئيسية.</div>` : "لم أجد صوراً — ارفع صورة بنفسك.";
           say("✅ جُلب: <b>" + esc(p.title || "بلا عنوان") + "</b>");
-        } catch (er) { S.imp = null; say("❌ " + esc(er.message) + " — يمكنك كتابة الاسم والوصف ورفع الصورة يدوياً.", true); } b.disabled = false;
+        } catch (er) { S.imp = null; say("❌ " + esc(er.message) + " — الصق كود الصفحة في الخانة أدناه، أو اكتب الاسم والوصف وارفع الصورة يدوياً.", true); const dt = $("pp-html") && $("pp-html").closest("details"); if (dt) dt.open = true; } b.disabled = false;
       }
       else if (a === "go" || a === "plain") { b.disabled = true; try { await run(a === "go"); } catch (er) { say("❌ " + esc(er.message), true); b.disabled = false; } }
     });
