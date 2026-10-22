@@ -213,19 +213,30 @@ const API = {
       if (Date.now() < s.expires_at) return s.access_token;
       if (this._freeze) return s.access_token;                      // أثناء تحديث اللوحة: لا تجديد يضيع ردّه عند إعادة التحميل (رمز التجديد يُستعمل مرة واحدة)
       if (this._rp) return this._rp;
-      this._rp = (async () => {
+      /* قفل بين التبويبات/النوافذ: رمز التجديد أحادي الاستعمال وSupabase يُبطل الجلسة كلها إن أُعيد استعماله بعد 10ث،
+         فلو جدّدت نافذتان معاً (فتح اللوحة في تبويبين، أو تحديث ونافذة قديمة) ضاع الدخول. الثانية تنتظر الأولى ثم تقرأ الجلسة الجديدة. */
+      const run = async () => {
         try {
+          const cur0 = this.session();
+          if (!cur0) return null;                                                             // مُسحت أثناء الانتظار (خروج)
+          if (Date.now() < cur0.expires_at) { this.dbg("refresh-skip (جدّدتها نافذة أخرى)"); return cur0.access_token; }
+          const rt = cur0.refresh_token;
           const ac = typeof AbortController !== "undefined" ? new AbortController() : null, to = ac ? setTimeout(() => ac.abort(), 45000) : 0;       // مهلة طويلة: قطع الطلب بعد وصوله للخادم يُضيع الرمز الجديد، وإعادة استعمال القديم بعد 10ث تُبطل الجلسة كلها
-          this.dbg("refresh-start rt=…" + String(s.refresh_token || "").slice(-4));
-          const r = await fetch(this.url("/auth/v1/token?grant_type=refresh_token"), { method: "POST", headers: this.headers(), body: JSON.stringify({ refresh_token: s.refresh_token }), signal: ac ? ac.signal : undefined }); clearTimeout(to);
+          this.dbg("refresh-start rt=…" + String(rt || "").slice(-4));
+          const r = await fetch(this.url("/auth/v1/token?grant_type=refresh_token"), { method: "POST", headers: this.headers(), body: JSON.stringify({ refresh_token: rt }), signal: ac ? ac.signal : undefined }); clearTimeout(to);
           const j = await r.json().catch(() => ({}));
-          if (r.ok && j.access_token) { if (!j.user) j.user = { email: s.email }; this.saveSession(j); this.dbg("refresh-ok rt=…" + String(j.refresh_token || "").slice(-4)); return j.access_token; }
+          if (r.ok && j.access_token) { if (!j.user) j.user = { email: cur0.email }; this.saveSession(j); this.dbg("refresh-ok rt=…" + String(j.refresh_token || "").slice(-4)); return j.access_token; }
           this.dbg("refresh-fail " + r.status + " " + (j.error_description || j.msg || j.error || ""));
           if (r.status >= 500 || r.status === 0 || r.status === 429) return null;       // عطل مؤقت: تبقى الجلسة
-          const cur = this.session(); if (cur && cur.refresh_token !== s.refresh_token && Date.now() < cur.expires_at) return cur.access_token;     // جدّدتها نافذة أخرى
+          const cur = this.session(); if (cur && cur.refresh_token !== rt && Date.now() < cur.expires_at) return cur.access_token;     // جدّدتها نافذة أخرى
           this.saveSession(null); return null;                                              // الرمز مرفوض فعلاً
         } catch (e) { this.dbg("refresh-neterr " + (e && e.name)); return null; }                                                          // لا شبكة: تبقى الجلسة
-        finally { setTimeout(() => { this._rp = null; }, 0); }
+      };
+      this._rp = (async () => {
+        try {
+          if (typeof navigator !== "undefined" && navigator.locks && navigator.locks.request) return await navigator.locks.request("alyssum_sb_refresh", run);
+          return await run();
+        } finally { setTimeout(() => { this._rp = null; }, 0); }
       })();
       return this._rp;
     },
