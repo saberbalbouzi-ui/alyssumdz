@@ -70,7 +70,7 @@ const COPY = { headline: "عسل السدر الملكي <b>الأصيل</b>", s
     const up = []; PBApp.uploadBlob = async (b, n) => { up.push(n); return "assets/img/pages/" + n + ".png"; };
     PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id);
     const f = new File([await (await fetch("assets/img/tpl/generic-honey.webp")).blob()], "p.webp", { type: "image/webp" }); const dt = new DataTransfer(); dt.items.add(f); g("pp-file").files = dt.files;
-    g("pp-mode").value = "poster"; g("pp-name").value = "عسل السدر"; g("pp-desc").value = "عسل طبيعي خالص من جبال الأطلس. يدعم الطاقة اليومية."; g("pp-n").value = "3";
+    g("pp-mode").value = "poster"; g("pp-name").value = "عسل السدر"; g("pp-desc").value = "عسل طبيعي خالص من جبال الأطلس. يدعم الطاقة اليومية."; 
     document.querySelector('#pp-bg [data-pp="go"]').click();
     for (let i = 0; i < 120 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
     await new Promise(r => setTimeout(r, 800));

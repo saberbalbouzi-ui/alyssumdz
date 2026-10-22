@@ -236,7 +236,7 @@ html{scroll-behavior:smooth}
     bg.style.cssText = "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(3px)";
     bg.innerHTML = `<div style="width:min(860px,100%);max-height:94vh;overflow:auto;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(198,254,23,.3);border-radius:18px;padding:18px;direction:rtl;font-family:inherit">
 <div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🚀 منشئ الصفحات بالذكاء</h3><button data-pp="x" style="${BTN_CSS};background:rgba(255,255,255,.1)">✕</button></div>
-<p style="margin:.3rem 0 .8rem;opacity:.85;line-height:1.8;font-size:.88rem">أعطني منتجاً (من متجرك أو رابط أو وصفك) فيكتب الذكاء النصوص بأسلوب AIDA وتُركَّب تلقائياً في مكوّنات جاهزة قابلة للتعديل في المطوّر. التخطيط ثابت ومضمون، والذكاء يكتب النص فقط.</p>
+<p style="margin:.3rem 0 .8rem;opacity:.85;line-height:1.8;font-size:.88rem">اختر منتجاً من متجرك أو الصق رابطه أو اكتب وصفه، فتبني الأداة صفحة هبوط جاهزة بأقسامها ونصوصها وصورها، وتُفتح في المطوّر لتعدّل عليها ما شئت.</p>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <label style="font-size:.8rem;grid-column:1/-1">① منتج من متجرك (اختياري)<select id="pp-prod" style="${FLD}"><option value="">— بلا (رابط أو وصف يدوي) —</option>${ps.map(p => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join("")}</select></label>
 <label style="font-size:.8rem;grid-column:1/-1">أو رابط صفحة منتج<span style="display:flex;gap:6px"><input id="pp-url" dir="ltr" placeholder="https://… " style="${FLD};flex:1"><button data-pp="imp" style="${BTN_CSS};background:rgba(198,254,23,.22)">جلب</button></span></label>
@@ -251,21 +251,17 @@ html{scroll-behavior:smooth}
 <label style="font-size:.8rem">الجمهور/النبرة (اختياري)<input id="pp-aud" style="${FLD}" placeholder="مثال: أمهات — نبرة دافئة"></label>
 <div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">② الألوان</div><div id="pp-themes" style="display:flex;gap:8px;flex-wrap:wrap">${Object.entries(THEMES).map(([k, t], i) => `<button data-pp="th" data-k="${k}" style="${BTN_CSS};background:linear-gradient(120deg,${t.main} 50%,${t.acc} 50%);${i ? "" : "outline:2px solid #c6fe17;"}min-width:120px">${t.n}</button>`).join("")}</div></div>
 <div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">🎨 لون خلفية الصفحة (الهجين) — لا يلزم أن يطابق لون المنتج؛ اختر لوناً منه أو قريباً أو فاتحاً</div>
-<div id="pp-cols" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button data-pp="col" data-c="" style="${BTN_CSS};background:rgba(255,255,255,.12);outline:2px solid #c6fe17">تلقائي</button><span id="pp-sw" style="display:contents"></span><button data-pp="cols" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="يستخرج ألوان صورة المنتج المختارة">استخرج ألوان المنتج</button><button data-pp="pip" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="قطّارة: التقط أي لون من صورة المنتج أو من الشاشة">💧 قطّارة</button><label style="font-size:.78rem;display:flex;gap:4px;align-items:center">لون حرّ <input id="pp-cc" type="color" value="#c8a24b" style="width:38px;height:30px;padding:0;border:0;background:none"></label>
+<div id="pp-cols" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button data-pp="col" data-c="" style="${BTN_CSS};background:rgba(255,255,255,.12);outline:2px solid #c6fe17">تلقائي</button><span id="pp-sw" style="display:contents"></span><button data-pp="cols" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="يستخرج ألوان صورة المنتج المختارة">استخرج ألوان المنتج</button><label style="font-size:.78rem;display:flex;gap:4px;align-items:center">لون حرّ <input id="pp-cc" type="color" value="#c8a24b" style="width:38px;height:30px;padding:0;border:0;background:none"></label>
 <label style="font-size:.78rem">الدرجة <select id="pp-tone" style="${FLD};width:auto"><option value="dark">داكنة</option><option value="mid">متوسطة</option><option value="light">فاتحة</option></select></label>
 <label style="font-size:.78rem">الخلفية خلف الأشخاص/المنتج <select id="pp-bd" style="${FLD};width:auto"><option value="solid">لون موحّد بلا مشهد</option><option value="scene">مشهد مختلف لكل قسم</option></select></label></div></div>
 <label style="font-size:.8rem">③ نوع الصفحة<select id="pp-mode" style="${FLD}"><option value="hybrid">صفحة مصوّرة هجينة (خلفيات بالذكاء + المنتج الحقيقي + نص عربي حيّ قابل للتعديل)</option><option value="poster">بوستر كامل (النص داخل الصورة — قد تتشوه الحروف)</option><option value="layout">أقسام نصية قابلة للتعديل (هيرو، فوائد، أسئلة…)</option></select></label>
 <label style="font-size:.8rem">عدد الأقسام (الهجين)<select id="pp-hn" style="${FLD}"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option></select></label>
 <label style="font-size:.8rem">اللهجة<select id="pp-dia" style="${FLD}"><option value="dz">دارجة جزائرية</option><option value="msa">فصحى مبسّطة</option></select></label>
-<label style="font-size:.8rem">دمج المنتج<select id="pp-strat" style="${FLD}"><option value="edit">يدمج الذكاء المنتج داخل المشهد — صورة مختلفة لكل قسم (الافتراضي)</option><option value="composite">قصّ المنتج فوق خلفية (قابل للتحريك)</option></select></label>
 <label style="font-size:.85rem"><input id="pp-people" type="checkbox" checked> صور أشخاص في المشاهد (هيرو، المشكلة، الاستعمال، الخاتمة — النساء بحجاب ولباس ساتر)</label>
 <label style="font-size:.85rem"><input id="pp-ticker" type="checkbox" checked> شريط علوي (دفع عند الاستلام • توصيل • تأكيد بالهاتف)</label>
 <label style="font-size:.85rem"><input id="pp-chain" type="checkbox" checked> استمرارية بصرية: كل صورة تُرسم بالاستناد إلى الصورة التي قبلها (نفس الخلفية والإضاءة فتبدو الصفحة مشهداً واحداً — أبطأ لأن الصور تُرسم بالتتابع)</label>
 <label style="font-size:.85rem"><input id="pp-gate" type="checkbox" checked> فحص جودة تلقائي للخلفيات (حتى محاولتين إضافيتين)</label>
-<label style="font-size:.8rem">عدد الصور (للبوستر)<select id="pp-n" style="${FLD}"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
-<div style="grid-column:1/-1;font-size:.78rem;opacity:.8;line-height:1.7">تُصنع الصور من صورة المنتج المختارة: من رابط المنتج (اضغط صورة من الصور المجلوبة) أو الصورة التي ترفعها أو غلاف منتج متجرك. المنتج يبقى كما هو والذكاء يرسم المشهد والنصوص حوله.</div>
-<label style="font-size:.85rem;grid-column:1/-1"><input id="pp-cut" type="checkbox"> عزل المنتج عن خلفية صورته (محلي مجاني)</label>
-<label id="pp-scene-l" style="font-size:.85rem;grid-column:1/-1"><input id="pp-scene" type="checkbox"> مشهد توليدي للمنتج في قسم «الحل» (للنوع النصي فقط، يستهلك رصيد Alyssum API)</label></div>
+</div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin:.9rem 0"><button data-pp="go" style="${BTN_CSS};background:rgba(198,254,23,.28)">✨ أنشئ الصفحة بالذكاء</button><button data-pp="plain" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="بلا ذكاء ولا رصيد: من بيانات المنتج نفسها">نسخة بدون ذكاء</button></div>
 <div id="pp-rep" style="font-size:.86rem;line-height:1.8"></div></div>`;
     document.body.appendChild(bg);
@@ -315,7 +311,7 @@ html{scroll-behavior:smooth}
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + cnt + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:65px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         const over = useAI ? {} : { llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }, real: false, image: { bg: async (pr, i, sec) => ({ canvas: PagePilotHybrid.mockBg(PagePilotHybrid.styleBible({}, th0), sec, i), mock: true }), edit: async () => null }, vision: { check: async () => null } };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
-        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value }, { section: prog }, over);
+        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: "edit", gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value }, { section: prog }, over);
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
         const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, tag));
         bg.remove(); PBApp.open(asm.page, "", true);
@@ -323,7 +319,7 @@ html{scroll-behavior:smooth}
         return;
       }
       if (useAI && $("pp-mode").value === "poster") {
-        const n = +$("pp-n").value || 3, kinds = posterKinds(n), th = THEMES[theme] || THEMES.green, posters = [];
+        const n = 3, kinds = posterKinds(n), th = THEMES[theme] || THEMES.green, posters = [];
         let ready = true; try { if (typeof ImgGen === "undefined" || (ImgGen.ready && !ImgGen.ready().ok)) ready = false; } catch (_) { ready = false; }
         if (!ready) note += " توليد الصور غير مفعّل (مفتاح Alyssum API) فصُنعت الصفحة بالأقسام النصية.";
         if (ready && !heroBlob && !confirm("لم تختر صورة للمنتج: ستُرسم الصور من الوصف فقط وقد لا تشبه منتجك. للأفضل أَلغِ ثم ارفع صورة أو اجلب رابط المنتج. المتابعة؟")) throw new Error("أُلغي — اختر صورة المنتج ثم أعد المحاولة");
@@ -347,11 +343,11 @@ html{scroll-behavior:smooth}
         }
         if (ready) note += " لم تنجح أي صورة فصُنعت الصفحة بالأقسام النصية.";
       }
-      if (heroBlob && $("pp-cut").checked && typeof PBBgRemove !== "undefined") { try { const r = await PBBgRemove.autoCut(await toCanvas(heroBlob), { onStep: m => say("⏳ " + esc(m)) }); heroBlob = await canvasBlob(r.canvas, "image/png"); } catch (e) { note += " تعذّر عزل الخلفية فبقيت الصورة الأصلية."; } }
+      if (false) { try { const r = await PBBgRemove.autoCut(await toCanvas(heroBlob), { onStep: m => say("⏳ " + esc(m)) }); heroBlob = await canvasBlob(r.canvas, "image/png"); } catch (e) { note += " تعذّر عزل الخلفية فبقيت الصورة الأصلية."; } }
       let sceneBlob = null;
-      if (heroBlob && $("pp-scene").checked && useAI) { try { say("⏳ يرسم الذكاء مشهد المنتج…"); const sr = await ImgGen.edit({ blob: heroBlob, prompt: "Place this exact product, unchanged (same shape, label and colors), in a clean realistic lifestyle scene that suits it, soft natural light, shallow depth of field. Absolutely no text, letters, logos, watermarks or people.", W: 1200, H: 1000, pro: true, title: "مشهد المنتج للصفحة" }); if (sr && sr.blob) sceneBlob = sr.blob; } catch (e) { note += " تعذّر المشهد التوليدي (" + esc(e.message) + ")."; } }
+      if (false) { try { say("⏳ يرسم الذكاء مشهد المنتج…"); const sr = await ImgGen.edit({ blob: heroBlob, prompt: "Place this exact product, unchanged (same shape, label and colors), in a clean realistic lifestyle scene that suits it, soft natural light, shallow depth of field. Absolutely no text, letters, logos, watermarks or people.", W: 1200, H: 1000, pro: true, title: "مشهد المنتج للصفحة" }); if (sr && sr.blob) sceneBlob = sr.blob; } catch (e) { note += " تعذّر المشهد التوليدي (" + esc(e.message) + ")."; } }
       say("⏳ ٣/٣ رفع الصور وفتح المطوّر…");
-      if (heroBlob) ctx.hero = g.path && !g.blob && heroBlob && !$("pp-cut").checked ? g.path : await upload(heroBlob, "hero");
+      if (heroBlob) ctx.hero = g.path && !g.blob && heroBlob ? g.path : await upload(heroBlob, "hero");
       if (sceneBlob) ctx.scene = await upload(sceneBlob, "scene");
       ctx.cover = ctx.hero || "";
       const pg = buildPage(copy, ctx); if (ctx.hero) pg.media = [ctx.hero].concat(ctx.scene ? [ctx.scene] : []);
@@ -371,17 +367,6 @@ html{scroll-behavior:smooth}
       const b = e.target.closest("[data-pp]"); if (!b) { if (e.target === bg) bg.remove(); return; } const a = b.dataset.pp;
       if (a === "x") bg.remove();
       else if (a === "col") setColor(b.dataset.c);
-      else if (a === "pip") {
-        const addSw = c => { const sw = $("pp-sw"); if (![...sw.querySelectorAll("[data-c]")].some(x => x.dataset.c === c)) sw.insertAdjacentHTML("beforeend", `<button data-pp="col" data-c="${c}" title="${c}" style="width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${c};cursor:pointer"></button>`); setColor(c); };
-        try {
-          if (window.EyeDropper) { const r = await new EyeDropper().open(); addSw(r.sRGBHex); return; }
-          const g = await gather(); let blob = g.blob; if (!blob && g.path) blob = await urlBlob(g.path); if (!blob) throw new Error("اختر صورة المنتج أولاً");
-          const cv = await toCanvas(blob), k = Math.min(1, 260 / Math.max(cv.width, cv.height)), pc = document.createElement("canvas"); pc.width = Math.round(cv.width * k); pc.height = Math.round(cv.height * k); pc.getContext("2d").drawImage(cv, 0, 0, pc.width, pc.height); pc.style.cssText = "cursor:crosshair;border-radius:10px;border:2px solid #c6fe17;max-width:100%"; pc.title = "انقر على اللون المطلوب";
-          const old = $("pp-pipc"); if (old) old.remove(); pc.id = "pp-pipc";
-          pc.addEventListener("click", e => { const r = pc.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) * pc.width / r.width), y = Math.floor((e.clientY - r.top) * pc.height / r.height), d = pc.getContext("2d").getImageData(Math.max(0, x - 1), Math.max(0, y - 1), 3, 3).data; let R = 0, G = 0, B = 0; for (let i = 0; i < 36; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; } const h = v => Math.round(v / 9).toString(16).padStart(2, "0"); addSw("#" + h(R) + h(G) + h(B)); pc.remove(); });
-          $("pp-cols").insertAdjacentElement("afterend", pc);
-        } catch (er) { if (er && er.name !== "AbortError") say("❌ " + esc(er.message || er), true); }
-      }
       else if (a === "cols") {
         b.disabled = true;
         try {
