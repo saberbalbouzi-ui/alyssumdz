@@ -593,7 +593,7 @@ ${o.extra ? o.extra + "\n" : ""}
   async function fetchPageHtml(url) {
     const sv = await viaServer({ op: "html", url }); if (sv && sv.ok && sv.html && sv.html.length > 300) return sv.html;
     const cands = [url].concat(PROXIES.map(p => p(url))), errs = [];
-    const one = async u => { const h = await fetchTimed(u, "text", 12000); if (/<html|<body|<head|<!doctype/i.test(h.slice(0, 4000)) && h.length > 300) return h; throw new Error("استجابة ليست صفحة"); };
+    const one = async u => { const h = await fetchTimed(u, "text", 12000); if ((/<html|<body|<head|<!doctype/i.test(h.slice(0, 4000)) || BLOCK_RE.test(h.slice(0, 9000))) && h.length > 300) return h; throw new Error("استجابة ليست صفحة"); };
     const first = await new Promise(res => { let n = cands.length; cands.forEach(u => one(u).then(h => res(h), e => { errs.push(String((e && e.message) || e)); if (--n === 0) res(null); })); });
     if (first) return first;
     const timeouts = errs.filter(e => /المهلة/.test(e)).length;
@@ -616,6 +616,7 @@ ${o.extra ? o.extra + "\n" : ""}
     if (!out.title) out.title = clean(meta("og:title") || meta("twitter:title") || (doc.querySelector("h1") || {}).textContent || doc.title, 200);
     if (!out.desc) out.desc = clean(meta("og:description") || meta("description") || meta("twitter:description"), 1500);
     if (!out.price) { out.price = (meta("product:price:amount") || meta("og:price:amount") || "").replace(/[^\d.,]/g, ""); out.currency = out.currency || meta("product:price:currency") || meta("og:price:currency"); }
+    if (!out.title) { const sc = Array.from(doc.querySelectorAll("script:not([src])")).map(x => x.textContent || "").join("\n").slice(0, 900000); const m = sc.match(/"(?:subject|productTitle|itemTitle)"\s*:\s*"([^"\\]{12,220})"/); if (m) out.title = clean(m[1], 200); const il = sc.match(/"imagePathList"\s*:\s*\[([^\]]{10,3000})\]/); if (il) (il[1].match(/https?:[^"\\]+/g) || []).forEach(addImg); }
     addImg(meta("og:image")); addImg(meta("twitter:image"));
     const bad = /logo|icon|sprite|avatar|banner|flag|payment|badge|placeholder|pixel|tracking|1x1|favicon/i;
     Array.from(doc.querySelectorAll("img")).forEach(im => {
@@ -636,11 +637,34 @@ ${o.extra ? o.extra + "\n" : ""}
       return { data: c.toDataURL("image/jpeg", .86), blob: await new Promise(r => c.toBlob(r, "image/jpeg", .86)) };
     } finally { URL.revokeObjectURL(url); }
   }
+  /* صفحة حماية/تحقق (كابتشا، punish، Cloudflare…) لا صفحة منتج */
+  const BLOCK_RE = /_____tmd_____|x5secdata|\/punish\b|g-recaptcha|cf-chl|cf-browser-verification|just a moment|access denied|unusual traffic|verify you are human|slide to verify|captcha interception|attention required/i;
+  const isBlock = (html, p) => { const h = String(html || ""); return (h.length < 9000 && BLOCK_RE.test(h)) || (p && /captcha|just a moment|access denied|attention required|robot|verification|bot\b/i.test(p.title || "") && !(p.price || (p.images || []).length > 1)); };
+  const hasData = (p, html) => !!(p && (p.title || p.desc || p.images.length) && !isBlock(html, p));
+  /* إضافة كروم (مساعد نسخ القوالب): تفتح الصفحة في متصفحك الحقيقي فتتجاوز الحماية؛ ترجع null إن لم تكن مثبّتة */
+  let EXTID = 9e8;
+  const extReq = (type, extra, ms) => new Promise((res, rej) => { const id = ++EXTID, to = setTimeout(() => { window.removeEventListener("message", on); rej(new Error("لا استجابة من الإضافة")); }, ms), on = e => { const d = e.data; if (e.source !== window || !d || d.aly !== 1 || d.id !== id) return; clearTimeout(to); window.removeEventListener("message", on); res(d); }; window.addEventListener("message", on); window.postMessage(Object.assign({ alyReq: 1, type, id }, extra || {}), location.origin); });
+  async function viaExt(url, say) {
+    try { const pg = await extReq("ping", {}, 900); if (!pg || !pg.v) return null; } catch (_) { return null; }
+    say && say("⏳ الموقع يحجب القراءة الآلية — أفتحه في متصفحك عبر الإضافة (نافذة صغيرة مؤقتة)…");
+    const r = await extReq("fetch", { url, width: 1280 }, 120000); if (r.error) throw new Error(r.error); return r.html || null;
+  }
   async function importProduct(url, say, pasted) {
     url = String(url || "").trim(); pasted = String(pasted || "").trim(); const hasPaste = pasted.length > 300;
     if (!hasPaste && !/^https?:\/\/\S+$/i.test(url)) throw new Error("الصق رابطاً صحيحاً يبدأ بـhttp");
-    say && say(hasPaste ? "⏳ جارٍ قراءة الكود الملصوق…" : "⏳ جارٍ جلب صفحة المنتج…"); const html = hasPaste ? pasted : await fetchPageHtml(url), p = parseProduct(html, /^https?:/i.test(url) ? url : "");
-    if (!p.title && !p.desc && !p.images.length) throw new Error("لم أجد بيانات منتج في هذا الرابط (قد تُبنى الصفحة بالسكربت) — اكتب الاسم والوصف يدوياً");
+    const base = /^https?:/i.test(url) ? url : ""; let html = "", p = null, fetchErr = null, blocked = false;
+    say && say(hasPaste ? "⏳ جارٍ قراءة الكود الملصوق…" : "⏳ جارٍ جلب صفحة المنتج…");
+    if (hasPaste) html = pasted; else { try { html = await fetchPageHtml(url); } catch (e) { fetchErr = e; } }
+    if (html) { p = parseProduct(html, base); if (isBlock(html, p)) blocked = true; if (!hasData(p, html)) p = null; }
+    if (!p && !hasPaste) {
+      try { const eh = await viaExt(url, say); if (eh) { const p2 = parseProduct(eh, base); if (hasData(p2, eh)) p = p2; else if (isBlock(eh, p2)) blocked = true; } } catch (e) { if (!fetchErr) fetchErr = e; }
+    }
+    if (!p) {
+      let host = ""; try { host = new URL(base).hostname.replace(/^www\./, ""); } catch (_) { }
+      if (blocked) throw new Error("الموقع" + (host ? " (" + host + ")" : "") + " يحجب القراءة الآلية بصفحة تحقق (كابتشا) ولا يمكن جلبه من الخادم. الحل: ثبّت إضافة «مساعد نسخ القوالب» لكروم (من نافذة نسخ القالب ← تثبيت إضافة كروم ثم F5) فتقرأ الصفحة من متصفحك، أو اكتب الاسم والوصف وارفع صورة المنتج");
+      if (fetchErr && !html) throw fetchErr;
+      throw new Error("لم أجد بيانات منتج في هذا الرابط (قد تُبنى الصفحة بالسكربت) — اكتب الاسم والوصف يدوياً");
+    }
     p.url = url; return p;
   }
   async function pickImage(imp, i, say) {

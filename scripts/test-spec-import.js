@@ -21,6 +21,21 @@ const PAGE = `<!doctype html><html><head><title>x</title>
   t("احتياط og/meta", og.title === "T" && og.desc === "D" && og.price === "1,800", og);
   t("رابط غير صالح يُرفض", await p.evaluate(async () => { try { await PBSpec.importProduct("foo"); return false; } catch (e) { return /رابطاً/.test(e.message); } }));
 
+  /* صفحة تحقق (كابتشا) تُكشف برسالة واضحة، والإضافة تُستعمل إن وُجدت */
+  const cap = await p.evaluate(async () => {
+    const of = window.fetch, CAP = '<script>var url = "https://www.aliexpress.us//item/1.html/_____tmd_____/punish?x5secdata=abc";location.href=url</script>'+" ".repeat(400);
+    window.fetch = async () => new Response(CAP, { status: 200 });
+    let msg = ""; try { await PBSpec.importProduct("https://www.aliexpress.com/item/1.html"); } catch (e) { msg = e.message; }
+    const html = '<html><head><title>x</title><meta property="og:title" content="مجفف شعر احترافي"><meta property="og:image" content="https://img.example.com/a.jpg"></head><body></body></html>';
+    const on = e => { const d = e.data; if (e.source !== window || !d || d.alyReq !== 1) return; if (d.type === "ping") window.postMessage({ aly: 1, type: "pong", id: d.id, v: "1.2.0", ok: true }, location.origin); if (d.type === "fetch") window.postMessage({ aly: 1, type: "res", id: d.id, html }, location.origin); };
+    window.addEventListener("message", on); let viaExt = null, say = []; try { viaExt = await PBSpec.importProduct("https://www.aliexpress.com/item/1.html", m => say.push(m)); } catch (e) { viaExt = { err: e.message }; }
+    window.removeEventListener("message", on); window.fetch = of; return { msg, viaExt, say };
+  });
+  t("الكابتشا تُكشف برسالة واضحة", /كابتشا/.test(cap.msg) && /aliexpress\.com/.test(cap.msg), cap.msg);
+  t("الإضافة تقرأ صفحة محجوبة", cap.viaExt && cap.viaExt.title === "مجفف شعر احترافي" && cap.say.some(m => /الإضافة/.test(m)), cap.viaExt);
+  const sc = await p.evaluate(() => PBSpec.parseProduct('<html><head><title></title></head><body><script>window.runParams={"data":{"titleModule":{"subject":"Professional ionic hair dryer 2200W"},"imageModule":{"imagePathList":["https://ae01.alicdn.com/kf/A.jpg","https://ae01.alicdn.com/kf/B.jpg"]}}}</script></body></html>', "https://x.com/"));
+  t("قراءة العنوان والصور من JSON داخل السكربت", /ionic hair dryer/.test(sc.title) && sc.images.length === 2, sc);
+
   /* الواجهة: جلب ← اختيار صورة ← توليد كامل (النموذج مُحاكى) */
   const res = await p.evaluate(async html => {
     const png = await (await fetch("assets/img/tpl/generic-honey.webp")).blob();
