@@ -580,7 +580,18 @@ ${o.extra ? o.extra + "\n" : ""}
   const PROXIES = [u => "https://corsproxy.io/?url=" + encodeURIComponent(u), u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u), u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u)];
   const fetchTimed = async (u, kind, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 15000); try { const r = await fetch(u, { signal: c.signal }); if (!r.ok) throw new Error("HTTP " + r.status); return kind === "blob" ? await r.blob() : await r.text(); } catch (e) { throw (e && e.name === "AbortError") ? new Error("انتهت المهلة") : e; } finally { clearTimeout(t); } };
   /* الرابط المباشر ثم الوسطاء بالتوازي: أول صفحة صالحة تُقبل؛ وإن فشلت كلها يُشرح السبب بالعربية */
+  /* وسيط الخادم (page-fetch): يتجاوز CORS وحماية الوسطاء؛ يتعطّل تلقائياً إن لم يكن منشوراً أو لا جلسة */
+  const SRV = { on: null };
+  async function viaServer(body) {
+    if (SRV.on === false || typeof API === "undefined" || !API.sb || !API.sb.url || !API.sb.token || !API.sb.headers) return null;
+    try {
+      const t = await API.sb.token(); if (!t) return null;
+      const c = new AbortController(), tm = setTimeout(() => c.abort(), 25000);
+      try { const r = await fetch(API.sb.url("/functions/v1/page-fetch"), { method: "POST", headers: API.sb.headers(t), body: JSON.stringify(body), signal: c.signal }); if ([401, 403, 404, 503].includes(r.status)) { SRV.on = false; return null; } SRV.on = true; return r.ok ? await r.json() : { error: (await r.json().catch(() => ({}))).error || ("HTTP " + r.status) }; } finally { clearTimeout(tm); }
+    } catch (e) { return null; }
+  }
   async function fetchPageHtml(url) {
+    const sv = await viaServer({ op: "html", url }); if (sv && sv.ok && sv.html && sv.html.length > 300) return sv.html;
     const cands = [url].concat(PROXIES.map(p => p(url))), errs = [];
     const one = async u => { const h = await fetchTimed(u, "text", 12000); if (/<html|<body|<head|<!doctype/i.test(h.slice(0, 4000)) && h.length > 300) return h; throw new Error("استجابة ليست صفحة"); };
     const first = await new Promise(res => { let n = cands.length; cands.forEach(u => one(u).then(h => res(h), e => { errs.push(String((e && e.message) || e)); if (--n === 0) res(null); })); });
@@ -588,7 +599,7 @@ ${o.extra ? o.extra + "\n" : ""}
     const timeouts = errs.filter(e => /المهلة/.test(e)).length;
     throw new Error("تعذّر جلب صفحة المنتج (" + (timeouts >= errs.length - 1 ? "انتهت المهلة؛ الموقع بطيء أو يمنع الجلب الآلي" : "الموقع يمنع الجلب الآلي أو الرابط غير صحيح") + ")");
   }
-  async function fetchImgBlob(url) { for (const u of [url].concat(PROXIES.map(p => p(url)))) { try { const b = await fetchTimed(u, "blob", 12000); if (b && b.size > 1500 && /^image\//.test(b.type)) return b; } catch (_) { } } return null; }
+  async function fetchImgBlob(url) { const sv = await viaServer({ op: "img", url }); if (sv && sv.ok && sv.b64) { try { const bin = atob(sv.b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); const b = new Blob([u8], { type: sv.type }); if (b.size > 1500) return b; } catch (_) { } } for (const u of [url].concat(PROXIES.map(p => p(url)))) { try { const b = await fetchTimed(u, "blob", 12000); if (b && b.size > 1500 && /^image\//.test(b.type)) return b; } catch (_) { } } return null; }
   /* نقية: HTML + رابط الأساس ← {title,desc,price,currency,images[],bullets[]} */
   function parseProduct(html, base) {
     const doc = new DOMParser().parseFromString(String(html || ""), "text/html"), out = { title: "", desc: "", price: "", currency: "", images: [], bullets: [] };
