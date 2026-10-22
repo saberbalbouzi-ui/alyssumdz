@@ -96,7 +96,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const wset = JSON.stringify(pg.sections), hadDeep = wset.indexOf(dk.palette.deep) >= 0;
     const r = H.recolorPage(pg, { color: "#1f4fa8", tone: "light" }); const after = JSON.stringify(pg.sections);
     o.rc = { ok: r.ok, changed: r.changed, hadDeep, oldGone: after.indexOf(dk.palette.deep) < 0, newIn: after.indexOf(lt.palette.deep) >= 0, bg: pg.bg === lt.palette.deep, kwSpan: /<b style="color:/.test(after) };
-    const L0 = spec.sections.flatMap(S => S.layers); o.fade = L0.filter(l => l.type === "image" && l.fade && l.fade.b > 0).length; o.glow = L0.filter(l => l.name === "إضاءة الخلفية" && l.gradient && l.gradient.type === "radial").length; o.vig = L0.filter(l => l.name === "تعتيم الأطراف").length; o.full = !!spec.page.full; { const c = document.createElement("canvas"); c.width = 200; c.height = 250; const x = c.getContext("2d"); x.fillStyle = "#c08040"; x.fillRect(0, 0, 200, 250); PagePilotHybrid.meltCanvas(c, "#102040"); const e = x.getImageData(0, 0, 1, 1).data, m = x.getImageData(100, 125, 1, 1).data; o.meltEdge = [e[0], e[1], e[2]].join(","); o.meltMid = [m[0], m[1], m[2]].join(","); }
+    const L0 = spec.sections.flatMap(S => S.layers); o.fade = L0.filter(l => l.type === "image" && l.fade && l.fade.b > 0).length; o.glow = L0.filter(l => l.name === "إضاءة الخلفية" || l.name === "لون موحّد").length; o.vig = L0.filter(l => l.name === "تعتيم الأطراف").length; o.full = !!spec.page.full; { const c = document.createElement("canvas"); c.width = 200; c.height = 250; const x = c.getContext("2d"); x.fillStyle = "#c08040"; x.fillRect(0, 0, 200, 250); PagePilotHybrid.meltCanvas(c, "#102040"); const e = x.getImageData(0, 0, 1, 1).data, m = x.getImageData(100, 125, 1, 1).data; o.meltEdge = [e[0], e[1], e[2]].join(","); o.meltMid = [m[0], m[1], m[2]].join(","); }
     o.recBad = H.recolorPage({ sections: [] }, {}).ok;
     return o;
   });
@@ -104,7 +104,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("لون محايد (أبيض) ← خلفية داكنة محايدة لا ملوّنة", /^#[0-9a-f]{6}$/.test(cl.nu), cl.nu);
   t("خلفية موحّدة افتراضياً بلا غرف/أثاث، والمشهد اختياري", /uniform flat/.test(cl.solid) && !/kitchen/.test(cl.solid) && /kitchen/.test(cl.scene), cl);
   t("كلمات مفتاحية ملوّنة في النصوص + كلمة العنوان المميّزة", cl.kwTexts >= 2 && cl.hlHead, cl);
-  t("الصور تذوب بالبكسل في لون الصفحة (الحواف = اللون العميق) + إضاءة شعاعية + عرض كامل للصفحة بلا شريط", cl.meltEdge === "16,32,64" && cl.meltMid === "192,128,64" && cl.glow >= 2 && cl.vig === 0 && cl.fade === 0 && cl.full, cl);
+  t("الصور تذوب بالبكسل في لون الصفحة (الحواف = اللون العميق) + بلا غشاء ولا طبقة لون فوق الصورة + عرض كامل للصفحة بلا شريط", cl.meltEdge === "16,32,64" && cl.meltMid === "192,128,64" && cl.glow === 0 && cl.vig === 0 && cl.fade === 0 && cl.full, cl);
   t("إعادة تلوين الصفحة: يستبدل اللون القديم بالجديد ويقلب الدرجة", cl.rc.ok && cl.rc.changed > 5 && cl.rc.hadDeep && cl.rc.oldGone && cl.rc.newIn && cl.rc.bg, cl.rc);
   t("إعادة التلوين ترفض صفحة ليست من المنشئ", cl.recBad === false);
   t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);
@@ -155,7 +155,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const sg = H.styleBible({ colors: ["#c9c9c9", "#b8b8b8"] }, null), hg = H.hex2hsl ? 0 : 0; o.greenDeep = sg.cname; 
     const names = new Set(Object.keys(PB.ICONS || {}).concat((PB.ICONS_LIST || []))); o.pbIconsType = Array.isArray(PB.ICONS) ? "arr" : typeof PB.ICONS;
     o.iconsValid = v.ok && PBSpec.ICONS.every(n => (typeof PB.iconHtml === "function" && /<svg/.test(String(PB.iconHtml("ic:" + n)))));
-    o.tint = spec.sections.every(sc => sc.layers.some(l => l.name === "لون موحّد" && l.h === 1350));
+    o.tint = spec.sections.every(sc => !sc.layers.some(l => l.name === "لون موحّد"));
     const vv = PBSpec.validate(spec, {}); const sb = vv.sections[by("benefits")], ics = sb.layers.filter(l => l.type === "icon"), cs = sb.layers.filter(l => l.type === "shape" && l.shape === "ellipse");
     o.iconCentered = ics.length >= 2 && ics.every((ic, k) => Math.abs((ic.y + ic.h / 2) - (cs[k].y + cs[k].h / 2)) <= 2 && Math.abs((ic.x + ic.w / 2) - (cs[k].x + cs[k].w / 2)) <= 2);
     const tx = sb.layers.filter(l => l.type === "text" && l.z === 5); const lim = 90 + 530; o.rowsInZone = tx.every(l => l.y + 30 <= lim + 40);
@@ -170,7 +170,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("صفوف المزايا: دائرة + أيقونة + نص لكل نقطة", cp.rowIcons === 3 && cp.circles === 3 && /^truck,/.test(cp.iconNames), cp);
   t("الاستمرارية: تدرّج لوني بكل قسم، خلفية موحّدة، والأقسام تُدمج في قماش واحد", cp.grads && cp.sameBg && cp.valid && cp.mergedSecs === 1, cp);
   t("الأشخاص: هيرو بشخص (حجاب ولباس ساتر)، المزايا بلا وجوه، والمنتج حاد ولونه من المنتج", cp.pHero && cp.pBen && cp.crisp && cp.tone, cp);
-  t("خلفية بلون المنتج (أخضر عند غياب لون ملوّن) وطبقة لون موحّد على كل قسم", /green/.test(cp.greenDeep) && cp.tint, cp);
+  t("منتج بلا لون ملوّن (أسود/رمادي) ← خلفية رمادية فحمية لا أخضر، ولا طبقة لون موحّد فوق الصورة", /gr[ae]y|graphite|charcoal|black|dark|navy|slate/.test(cp.greenDeep) && !/green/.test(cp.greenDeep) && cp.tint, cp);
   t("الأيقونات: كل الأسماء صالحة (لا نص «ic:xxx») وتتمركز داخل دوائرها بلا انجراف", cp.iconsValid && cp.iconCentered, cp);
   t("النص داخل منطقته فوق المنتج، والمنتج في الشريط السفلي (برومبت وبوابة)", cp.rowsInZone && cp.pBand && cp.gLow, cp);
   t("بوابة الجودة تفحص حدّة المنتج وتعيد المحاولة", cp.gateP && /sharp/.test(cp.gok), cp);
@@ -205,6 +205,29 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     return { chip: true, dlg: true, before, after, msg, changed: before !== after, lightBg: (() => { const h = after.replace("#", ""), r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), bl = parseInt(h.slice(4, 6), 16); return (r + g + bl) / 3 > 150; })() };
   });
   t("زر «لون الصفحة» في المحرّر يغيّر لون الصفحة إلى فاتح", rcu.chip && rcu.dlg && rcu.changed && rcu.lightBg && /تغيّر/.test(rcu.msg), rcu);
+  /* دمج الموضوع فوق لون الصفحة: خلفية الصورة المتجانسة تُستبدل باللون العميق (ألوان الموضوع تبقى) */
+  const fl = await p.evaluate(async () => {
+    const H = PagePilotHybrid, w = 200, h = 250, c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = "#2c5a3a"; x.fillRect(0, 0, w, h); x.fillStyle = "#101010"; x.fillRect(60, 80, 80, 120);
+    const cut = async cv => { const o = document.createElement("canvas"); o.width = w; o.height = h; const q = o.getContext("2d"); q.fillStyle = "#101010"; q.fillRect(60, 80, 80, 120); return o; };
+    const ok = await H.flattenOnDeep(c, "#14181f", cut, false), px = (X, Y) => Array.from(x.getImageData(X, Y, 1, 1).data.slice(0, 3)).join(",");
+    const bad = document.createElement("canvas"); bad.width = w; bad.height = h; const okBad = await H.flattenOnDeep(bad, "#14181f", async () => { const o = document.createElement("canvas"); o.width = w; o.height = h; return o; }, false);
+    return { ok, corner: px(2, 2), edgeMid: px(0, 125), subject: px(100, 140), okBad };
+  });
+  t("flattenOnDeep: الزوايا = اللون العميق والموضوع بلونه الأصلي، وقصّ فارغ يُرفض", fl.ok && fl.corner === "20,24,31" && Math.abs(+fl.edgeMid.split(",")[0] - 20) < 25 && fl.subject === "16,16,16" && !fl.okBad, fl);
+  /* وضع الدمج + خلفية موحّدة: القسم يُسطَّح على لون الصفحة فلا طبقات تلوين فوق الصورة */
+  const fe = await p.evaluate(async () => {
+    const H = PagePilotHybrid, blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob();
+    const mkc = () => { const c = document.createElement("canvas"); c.width = 108; c.height = 135; const x = c.getContext("2d"); x.fillStyle = "#335577"; x.fillRect(0, 0, 108, 135); return c; };
+    const out = await H.run({ info: { title: "مكواة", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob, refs: [blob], theme: PagePilot.THEMES.green, lang: "ar", count: 2, gate: false, backdrop: "solid" }, {}, {
+      real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
+      remover: { cut: async () => null, cutBg: async () => { const o = document.createElement("canvas"); o.width = 108; o.height = 135; const q = o.getContext("2d"); q.fillStyle = "#222"; q.fillRect(30, 40, 50, 70); return o; } },
+      image: { bg: async () => null, edit: async () => { const c = mkc(); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } }
+    });
+    const spec = H.buildSpec(out.plan, out.results.map((R, i) => Object.assign(R, { bgSrc: "assets/x" + i + ".webp", prodSrc: "" })), { style: out.style, strategy: out.strategy, title: "t", product: "" });
+    const L = spec.sections.flatMap(S => S.layers);
+    return { flat: out.results.map(r => !!r.flat), veil: L.filter(l => /لون موحّد|إضاءة الخلفية|تدرّج اللون|وصل/.test(l.name || "")).length, cname: out.style.cname };
+  });
+  t("خلفية موحّدة: الأقسام تُسطَّح على لون الصفحة بلا غشاء فوق الصورة", fe.flat.every(Boolean) && fe.veil === 0, fe);
   /* تباين الصفحة المنشورة: لون كل نص بالنسبة للخلفية */
   const html = await p.evaluate(() => PB.fullHtml(JSON.parse(JSON.stringify(PBApp.E.page)), Object.assign({ base: "/" }, PBApp.siteCtx())));
   t("HTML منشور: نص عربي حقيقي RTL لا صورة", /dir="rtl"|dir=rtl/.test(html) || /lang="ar"/.test(html));

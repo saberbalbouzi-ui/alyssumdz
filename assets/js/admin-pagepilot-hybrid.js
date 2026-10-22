@@ -49,6 +49,22 @@ const PagePilotHybrid = (() => {
     } catch (_) { }
     return cv;
   }
+  /* دمج الموضوع (المرأة/المنتج) فوق لون الصفحة الصلب: تُقصّ خلفية الاستوديو المتجانسة وتُملأ باللون العميق نفسه (+ وهج خفيف مخبوز تحت الموضوع)
+     فلا يبقى مستطيل أو غشاء؛ ألوان الموضوع تبقى الأصلية بلا أي تلوين. يعيد false إن لم ينجح القصّ فيُستعمل meltCanvas */
+  async function flattenOnDeep(cv, deepHex, cutFn, lightGlow) {
+    try {
+      if (!cutFn) return false; const cut = await cutFn(cv); if (!cut || !cut.getContext) return false;
+      const w = cv.width, h = cv.height, sm = document.createElement("canvas"); sm.width = 64; sm.height = Math.max(8, Math.round(64 * h / w)); const sx = sm.getContext("2d"); sx.drawImage(cut, 0, 0, sm.width, sm.height);
+      const d = sx.getImageData(0, 0, sm.width, sm.height).data; let n = 0, cx = 0, cy = 0; for (let y = 0; y < sm.height; y++) for (let x = 0; x < sm.width; x++) { if (d[(y * sm.width + x) * 4 + 3] > 128) { n++; cx += x; cy += y; } }
+      const cov = n / (sm.width * sm.height); if (cov < .06 || cov > .8) return false;
+      cx = cx / n / sm.width * w; cy = cy / n / sm.height * h;
+      const out = document.createElement("canvas"); out.width = w; out.height = h; const c = out.getContext("2d");
+      c.fillStyle = deepHex; c.fillRect(0, 0, w, h);
+      const gc = glowOf(deepHex), g = c.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .55); g.addColorStop(0, rgba(gc, lightGlow ? .5 : .42)); g.addColorStop(.5, rgba(gc, .16)); g.addColorStop(1, rgba(gc, 0)); c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.save(); c.shadowColor = "rgba(0,0,0,.28)"; c.shadowBlur = w * .02; c.shadowOffsetY = w * .01; c.drawImage(cut, 0, 0, w, h); c.restore();
+      cv.getContext("2d").clearRect(0, 0, w, h); cv.getContext("2d").drawImage(out, 0, 0); return true;
+    } catch (_) { return false; }
+  }
   function lumAt(canvas, r) {
     if (!canvas || !canvas.getContext) return .5;
     const kx = canvas.width / W, ky = canvas.height / H, sx = Math.max(0, Math.round(r.x * kx)), sy = Math.max(0, Math.round(r.y * ky)), sw = Math.max(1, Math.round(r.w * kx)), sh = Math.max(1, Math.round(r.h * ky));
@@ -121,9 +137,9 @@ dominant_colors: ألوان المنتج عموماً.
     opt = opt || {};
     an = an || {}; theme = theme || { main: "#187a3b", acc: "#f39a18", ink: "#16324c", soft: "#e9f5e4" };
     /* لون المنتج الحقيقي: أول لون ملوّن (تشبّع ≥ .3) من التحليل مع تجاوز البيج/الكريمي، وإلا لون الموقع؛ ثم نضمن تشبّعاً كافياً كي لا تخرج الخلفية رمادية */
-    const sc = c => { const h = hex2hsl(c); return h[1] >= .3 && h[2] >= .12 && h[2] <= .85; }, beige = c => { const h = hex2hsl(c); return h[0] >= 25 && h[0] <= 65 && h[1] < .55; }, lab = (an.labelColors || []).filter(sc).filter(c => !beige(c)), cols = (an.colors || []).filter(sc), cand = lab.length ? lab : cols.filter(c => !isAmber(c)).concat(cols.filter(isAmber)), dom = cand.find(c => !beige(c)) || cand[0] || theme.main, hs = hex2hsl(dom);
+    const sc = c => { const h = hex2hsl(c); return h[1] >= .3 && h[2] >= .12 && h[2] <= .85; }, beige = c => { const h = hex2hsl(c); return h[0] >= 25 && h[0] <= 65 && h[1] < .55; }, lab = (an.labelColors || []).filter(sc).filter(c => !beige(c)), cols = (an.colors || []).filter(sc), cand = lab.length ? lab : cols.filter(c => !isAmber(c)).concat(cols.filter(isAmber)), noCol = !cand.length, dom = cand.find(c => !beige(c)) || cand[0] || (noCol ? "#2b313b" : theme.main), hs = hex2hsl(dom);
     /* لون يختاره المستخدم (من ألوان المنتج أو لوناً قريباً/فاتحاً) ودرجته: داكن | متوسط | فاتح — الخلفية لا يلزم أن تطابق لون المنتج */
-    const ovr = opt.color && hex2rgb(opt.color) ? hex2hsl(opt.color) : null, tone = ["dark", "mid", "light"].includes(opt.tone) ? opt.tone : "dark", H0 = ovr ? ovr[0] : hs[0], S0 = ovr ? ovr[1] : hs[1], neutral = !!ovr && S0 < .12;
+    const ovr = opt.color && hex2rgb(opt.color) ? hex2hsl(opt.color) : null, tone = ["dark", "mid", "light"].includes(opt.tone) ? opt.tone : "dark", H0 = ovr ? ovr[0] : hs[0], S0 = ovr ? ovr[1] : hs[1], neutral = (!!ovr && S0 < .12) || (!ovr && noCol);
     const sat = (lo, hi) => neutral ? Math.min(S0, .08) : Math.max(lo, Math.min(hi, S0));
     const primary = hsl2hex(H0, sat(ovr ? .25 : .5, .85), Math.max(.28, Math.min(.42, ovr && tone !== "dark" ? hex2hsl(opt.color)[2] : hs[2])));
     const deep = tone === "light" ? hsl2hex(H0, neutral ? Math.min(S0, .06) : Math.max(.2, Math.min(.6, S0)), .91) : tone === "mid" ? hsl2hex(H0, sat(ovr ? .25 : .5, .75), .38) : hsl2hex(H0, sat(ovr ? .3 : .5, .8), neutral ? .11 : .17), hl = pickAccent(deep, H0), bgName = colorName(deep);
@@ -280,15 +296,12 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       /* تدرّج لون المنتج فوق منطقة النص (يضمن القراءة ويوحّد الأقسام) */
       const ov = zn === "top" ? { y: 0, h: Math.min(H, z.y + z.h), st: [[.9, 0], [.6, 55], [0, 100]] } : zn === "bottom" ? { y: Math.max(0, z.y - 170), h: 0, st: [[0, 0], [.86, 45], [.94, 100]] } : { y: 0, h: H, st: [[.84, 0], [.7, 50], [.84, 100]] };
       if (zn === "bottom") ov.h = H - ov.y;
-      /* لون موحّد بلون المنتج فوق القسم كله (أخف خلف المنتج كي يبقى نقياً) ← خلفية واحدة متّسقة بين الأقسام */
-      layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: H, z: 2, fill: deep, gradient: grad(0, [[.36, 0], [.34, 40], [.17, 56], [.17, 86], [.4, 100]]), locked: true, name: "لون موحّد" });
-      layers.push({ type: "shape", shape: "rect", x: 0, y: ov.y, w: W, h: ov.h, z: 2, fill: deep, gradient: grad(0, ov.st), locked: true, name: "تدرّج اللون" });
-      /* إضاءة ناعمة (وهج) خلف المنتج/الشخص + تعتيم أطراف (فينييت): تذيب الصورة في لون الصفحة بلا حدود ظاهرة */
-      const gc = glowOf(deep), gy = zn === "top" ? 440 : zn === "bottom" ? 30 : 180, gh = zn === "top" ? 820 : zn === "bottom" ? 780 : 940;
-      layers.push({ type: "shape", shape: "rect", x: 0, y: gy, w: W, h: gh, z: 2, fill: gc, gradient: { type: "radial", angle: 0, stops: [{ c: rgba(gc, lightBg ? .55 : .5), p: 0 }, { c: rgba(gc, .22), p: 38 }, { c: rgba(gc, 0), p: 68 }] }, locked: true, name: "إضاءة الخلفية" });
-      /* حواف متصلة: أعلى القسم وأسفله يذوبان في اللون العميق نفسه */
-      if (zn !== "top") layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 190, z: 2, fill: deep, gradient: grad(0, [[1, 0], [0, 100]]), locked: true, name: "وصل أعلى" });
-      if (zn !== "bottom" || ctaOn) layers.push({ type: "shape", shape: "rect", x: 0, y: H - 300, w: W, h: 300, z: 2, fill: deep, gradient: grad(0, [[0, 0], [.55, 55], [1, 100]]), locked: true, name: "وصل أسفل" });
+      /* الخلفية المدمجة (R.flat) = لون الصفحة نفسه خلف الموضوع، فلا طبقات تلوين فوق الصورة (لا غشاء). غير ذلك: تدرّج نص + وصلات حواف فقط */
+      if (!R.flat) {
+        layers.push({ type: "shape", shape: "rect", x: 0, y: ov.y, w: W, h: ov.h, z: 2, fill: deep, gradient: grad(0, ov.st), locked: true, name: "تدرّج اللون" });
+        if (zn !== "top") layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 190, z: 2, fill: deep, gradient: grad(0, [[1, 0], [0, 100]]), locked: true, name: "وصل أعلى" });
+        if (zn !== "bottom" || ctaOn) layers.push({ type: "shape", shape: "rect", x: 0, y: H - 300, w: W, h: 300, z: 2, fill: deep, gradient: grad(0, [[0, 0], [.55, 55], [1, 100]]), locked: true, name: "وصل أسفل" });
+      }
       const pk = textOn(R.lum, st);
       if (pk.scrim) layers.push({ type: "shape", shape: "rect", x: z.x - 30, y: z.y - 24, w: z.w + 60, h: z.h + 24, z: 2, fill: pk.scrim.color, opacity: pk.scrim.opacity, radius: st.radius });
       if (R.prodSrc && g.prod) layers.push({ type: "image", src: "asset:" + pn, x: g.prod.x, y: g.prod.y, w: g.prod.w, h: g.prod.h, z: 3, fit: "contain", alt: strip(ctx.productAlt || ctx.title, 120), shadow: { x: 0, y: 26, blur: 40, color: "rgba(0,0,0,.35)", follow: true }, effects: [{ type: "float", amount: 10, duration: 6 }] });
@@ -354,7 +367,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         bg: async (prompt, i, sec) => { if (!real) return { canvas: mockBg(P.style, sec, i), mock: true }; const r = await ImgGen.edit({ textOnly: true, prompt, W, H, confirm: false, title: "خلفية قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; },
         edit: async (blob, prompt, i) => { if (!real) return null; const r = await ImgGen.edit({ blob, prompt, W, H, pro: true, confirm: false, title: "مشهد قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; }
       },
-      remover: { cut: async (canvas, onStep) => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { onStep }); return r && r.canvas ? r.canvas : null; } },
+      remover: { cutBg: async canvas => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { methods: ["classic"] }); return r && r.canvas ? r.canvas : null; }, cut: async (canvas, onStep) => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { onStep }); return r && r.canvas ? r.canvas : null; } },
       vision: { check: async (blob, prompt, ref) => { if (!real || typeof ImgGen === "undefined" || !ImgGen.text) return null; return ImgGen.text({ prompt, json: true, temp: .1, blobs: ref ? [ref, blob] : [blob] }); } }
     };
     return Object.assign(P, over || {});
@@ -433,7 +446,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       }
       if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
-      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
+      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
       results[i] = R; cb.section && cb.section(i, R);
     });
     /* فشل صورة الذكاء في وضع الدمج ← لا يبقى القسم بلا منتج: يُقصّ المنتج ويوضع فوق الخلفية المحلية لتلك الأقسام فقط */
@@ -482,9 +495,9 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     if (!v.ok) throw new Error(v.error || "مخطط غير صالح");
     const pg = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: ctx.merge !== false });
     pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = [prodSrc].concat(out.results.map(r => r.bgSrc)).filter(Boolean);
-    pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, strategy: out.strategy, theme: out.style, colors: out.colors || [], sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: textOn(r.lum, out.style).ratio, person: !!r.person })), steps: out.log.slice(0, 200) } });
+    pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, flat: out.results.some(r => r && r.flat), strategy: out.strategy, theme: out.style, colors: out.colors || [], sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: textOn(r.lum, out.style).ratio, person: !!r.person })), steps: out.log.slice(0, 200) } });
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, flattenOnDeep, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();

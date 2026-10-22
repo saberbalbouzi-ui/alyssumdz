@@ -396,7 +396,7 @@ html{scroll-behavior:smooth}
     const d = document.createElement("div"); d.id = "pp-rc"; d.style.cssText = "position:fixed;left:16px;bottom:70px;z-index:100050;width:min(360px,92vw);padding:.9rem;border-radius:16px;background:rgba(9,24,18,.985);border:1px solid rgba(198,254,23,.4);box-shadow:0 14px 40px rgba(0,0,0,.5);color:#fff;font-family:inherit;direction:rtl";
     d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem"><b>🎨 لون خلفية الصفحة</b><button data-rc="x" style="background:none;border:0;color:#fff;font-size:1.1rem;cursor:pointer">✕</button></div>
 <div style="font-size:.78rem;opacity:.8;margin-bottom:.4rem">اختر لون المنتج أو لوناً قريباً أو فاتحاً — تتغير الألوان فوراً بلا إعادة توليد الصور (ويمكنك التراجع).</div>
-<div id="pp-rcs" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:.5rem">${cols.map(c => `<button data-rc="c" data-c="${c}" title="${c}" style="width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${c};cursor:pointer"></button>`).join("")}<input id="pp-rcc" type="color" value="${cols[0] || "#c8a24b"}" style="width:38px;height:34px;padding:0;border:0;background:none"></div>
+<div id="pp-rcs" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:.5rem">${cols.map(c => `<button data-rc="c" data-c="${c}" title="${c}" style="width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${c};cursor:pointer"></button>`).join("")}<input id="pp-rcc" type="color" value="${cols[0] || "#c8a24b"}" style="width:38px;height:34px;padding:0;border:0;background:none"><button data-rc="pip" title="قطّارة: التقط أي لون من الشاشة" style="${BTN_CSS};background:rgba(255,255,255,.12)">💧 قطّارة</button></div>${meta.flat ? '<div style="font-size:.74rem;color:#ffc928;margin-bottom:.4rem">ملاحظة: الصور المدمجة تحمل لون الخلفية الأصلي؛ يتغير لون الصفحة والنصوص والأزرار هنا، ولتغيير لون الصور نفسها أعد التوليد باللون الجديد.</div>' : ""}
 <label style="font-size:.8rem">الدرجة <select id="pp-rct" style="${FLD};width:auto"><option value="dark">داكنة</option><option value="mid">متوسطة</option><option value="light">فاتحة</option></select></label>
 <div style="display:flex;gap:8px;margin-top:.6rem"><button data-rc="go" style="${BTN_CSS};background:rgba(198,254,23,.28);flex:1">تطبيق</button></div><div id="pp-rcm" style="font-size:.8rem;margin-top:.4rem"></div>`;
     document.body.appendChild(d); d.querySelector("#pp-rct").value = tone0; let pick = (meta.theme && meta.theme.palette && meta.theme.palette.primary) || cols[0] || "#c8a24b";
@@ -405,6 +405,11 @@ html{scroll-behavior:smooth}
       const b = e.target.closest("[data-rc]"); if (!b) return; const a = b.dataset.rc;
       if (a === "x") d.remove();
       else if (a === "c") { pick = b.dataset.c; d.querySelector("#pp-rcc").value = pick; d.querySelectorAll('[data-rc="c"]').forEach(x => x.style.outline = x === b ? "2px solid #c6fe17" : ""); }
+      else if (a === "pip") {
+        const m = d.querySelector("#pp-rcm");
+        if (!window.EyeDropper) { m.textContent = "متصفحك لا يدعم القطّارة — استعمل منتقي اللون بجانبها."; return; }
+        d.style.display = "none"; new EyeDropper().open().then(r => { pick = r.sRGBHex; d.querySelector("#pp-rcc").value = pick; const sw = document.createElement("button"); sw.dataset.rc = "c"; sw.dataset.c = pick; sw.title = pick; sw.style.cssText = "width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:" + pick + ";cursor:pointer;outline:2px solid #c6fe17"; d.querySelector("#pp-rcs").insertBefore(sw, d.querySelector("#pp-rcc")); }).catch(() => { }).finally(() => { d.style.display = ""; });
+      }
       else if (a === "go") { const r = PBApp.mutatePage(pg => PagePilotHybrid.recolorPage(pg, { color: pick, tone: d.querySelector("#pp-rct").value }), "تغيير لون الصفحة"); d.querySelector("#pp-rcm").textContent = r && r.ok ? "✅ تغيّر لون الصفحة (" + r.changed + " عنصراً)" : "❌ " + ((r && r.error) || "تعذّر التغيير"); }
     });
   }
