@@ -23,7 +23,7 @@ const AICapture = (function () {
   const iou = (a, b) => { const x0 = Math.max(a.x0, b.x0), y0 = Math.max(a.y0, b.y0), x1 = Math.min(a.x1, b.x1), y1 = Math.min(a.y1, b.y1), i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0), u = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - i; return u > 0 ? i / u : 0; };
 
   const P_ALL = "Detect every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
-    "Treat things a person holds as separate objects from the person. Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects that are cut off by the image edge. " +
+    "Treat things a person holds as separate objects from the person and ALWAYS include a held product even if fingers cover part of it. Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects that are cut off by the image edge. " +
     "Return ONLY a JSON array (at most MAX items) of objects like {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000 and boxes that tightly enclose the whole object.";
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
@@ -41,7 +41,8 @@ const AICapture = (function () {
   }
 
   const P_MASKS = "Segment every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
-    "Treat things a person holds as separate objects from the person. Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects cut off by the image edge. " +
+    "Treat things a person holds as separate objects from the person, and ALWAYS include a held product even if fingers cover part of it: its mask must follow the exact visible outline of the object, leaving out the fingers, hands and anything in front of it (no overlap with the hand), with clean edges and no background pixels. " +
+    "Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects cut off by the image edge. " +
     "Return ONLY a JSON array (at most MAX entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the whole object,\"mask\":\"<base64 PNG of the segmentation mask cropped to that box, white = the object>\"}.";
   /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
   async function detectAll(cv, o) {
