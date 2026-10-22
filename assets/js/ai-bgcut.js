@@ -89,12 +89,13 @@ const AIBgCut = (function () {
   }
   /* (3) نزع الخلفية بطلب واحد: تطلب الخدمة قناع الموضوع الرئيسي (حتى 3 عناصر) من الصورة كاملة في ردّ واحد، ثم تُصقل الحواف محلياً من بكسلات صورتك الأصلية
      (ماتينغ بدقة البكسل) فتخرج نتيجة واحدة بحجم الأصل — كنزع خلفية كانفا بنقرة واحدة. إن جاء الردّ بلا قناع صالح يُعاد الطلب مرة واحدة تلقائياً ثم يُرفض بوضوح (لا بدائل محلية). */
-  const PSUBJ = "Segment the main subject(s) of this photo that a photographer would keep when removing the background: the main product, or the main person together with everything they wear and hold. " +
-    "Return ONLY a JSON list (at most 3 entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE subject,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the subject>\"}.";
+  const PSUBJ = "You are doing a one-click background removal like Canva. KEEP the main subject (the person, animal or product) together with EVERYTHING that belongs to its foreground scene: what it wears and holds, the furniture it sits or stands at (desk, table, chair), and every object lying on or standing in front of those surfaces (books, globe, pencil cups, plants on the desk, props). " +
+    "REMOVE only the true background behind them: walls, windows, curtains, wall shelves and bookcases, pictures and frames on the wall, distant floor, sky. " +
+    "Return ONLY a JSON list (at most 12 entries, one per kept object or group, the big pieces first) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the kept object>\"}.";
   async function subjectMask(work, o) {
     const ww = work.width, wh = work.height, arr = parseLoose(await ask(PSUBJ, work, { maxTokens: 8192, signal: o && o.signal })), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0);
     let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => area(q) - area(p)); if (!cand.length) return null;
-    cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .25).slice(0, 3);
+    cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .01).slice(0, 12);      // الموضوع + مشهده الأمامي (طاولة وأغراض)
     const M = new Float32Array(ww * wh); let used = 0;
     for (const q of cand) { const px0 = Math.round(q.b.x0 / 1000 * ww), py0 = Math.round(q.b.y0 / 1000 * wh), px1 = Math.round(q.b.x1 / 1000 * ww), py1 = Math.round(q.b.y1 / 1000 * wh), dm = await decodeMask(q.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0)); if (!dm) continue;
       let sum = 0; for (let i = 0; i < dm.m.length; i++) if (dm.m[i] > .5) sum++; const r = sum / Math.max(1, dm.m.length); if (r < .04 || r > .995) continue;      // قناع غير معقول داخل مربعه

@@ -16,7 +16,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
         calls.push("text"); const P = o.prompt;
         const fullBox = q => [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8], mkMask = q => { const m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)"; if (q.r) { x.beginPath(); x.ellipse(128 + 3, 128 + 3, 125, 125, 0, 0, 7); x.fill(); } else x.fillRect(4 + 3, 4 + 3, 248, 248); return m.toDataURL("image/png"); };
         if (/Segment every distinct/.test(P)) return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: fullBox(q), mask: mkMask(q) })));
-        if (/Segment the main subject/.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: fullBox(objs[0]), mask: mkMask(objs[0]) }]) + "\n```";
+        if (/one-click background removal/.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: fullBox(objs[0]), mask: mkMask(objs[0]) }]) + "\n```";
         const q = objs.find(z => P.includes(z.label)) || objs[0];    // طلب قناع على محيط العنصر: نحتاج إحداثيات الصورة المقصوصة التي لا نراها هنا ← نُعيد قناعاً دائرياً/مربعاً مزاحاً بحسب مربع كامل 0..1000 داخل القطع
         const cw = 1000, ch = 1000, m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)";
         // المربع المُعاد = ما يحيط العنصر ضمن القطعة (هامش 10% من أكبر ضلع): نحسبه من الإعداد نفسه
