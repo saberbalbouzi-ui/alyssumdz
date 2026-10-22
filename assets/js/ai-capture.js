@@ -31,12 +31,12 @@ const AICapture = (function () {
   }
   /* (1) كشف العناصر ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv. o.zone = [x0,y0,x1,y1] لتحليل منطقة بدقة أعلى، o.mode = "subject" للموضوع الرئيسي فقط */
   async function detect(cv, o) {
-    o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر بالذكاء…"); const z = o.zone || [0, 0, cv.width, cv.height], zw = z[2] - z[0], zh = z[3] - z[1];
+    o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…"); const z = o.zone || [0, 0, cv.width, cv.height], zw = z[2] - z[0], zh = z[3] - z[1];
     const t = await ask(P_ALL.replace("MAX", String(o.max || 12)), cropOf(cv, z[0], z[1], zw, zh, 1), o), arr = parseLoose(t), items = [];
     arr.forEach(e => { const b = boxOf(e); if (!b) return; const box = { x0: z[0] + b.x0 / 1000 * zw, y0: z[1] + b.y0 / 1000 * zh, x1: z[0] + b.x1 / 1000 * zw, y1: z[1] + b.y1 / 1000 * zh }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
       if (bw < cv.width * .02 || bh < cv.height * .02) return; if (items.length && items.some(q => iou(q.box, box) > .85)) return; items.push({ label: String(e.label || "عنصر").slice(0, 40), box }); });
     if (items.length > 1) { const full = items.filter(i => (i.box.x1 - i.box.x0) * (i.box.y1 - i.box.y0) > cv.width * cv.height * .94); if (full.length) full.forEach(f => items.splice(items.indexOf(f), 1)); }      // «الخلفية كلها» ليست عنصراً
-    items.forEach((it, i) => it.id = i); if (!items.length) throw new Error("لم يجد الذكاء عناصر كاملة قابلة للفصل في هذه الصورة");
+    items.forEach((it, i) => it.id = i); if (!items.length) throw new Error("لم تجد الأداة عناصر كاملة قابلة للفصل في هذه الصورة");
     return items;
   }
   /* قناع الخدمة (PNG base64 داخل مربع العنصر) ← Float32 0..1 بحجم العمل */
@@ -76,12 +76,12 @@ const AICapture = (function () {
     const bx0 = (b.x0 - rx0) * s, by0 = (b.y0 - ry0) * s, bx1 = (b.x1 - rx0) * s, by1 = (b.y1 - ry0) * s;
     let M = null, method = "api";
     try {
-      step("⏳ قناع «" + item.label + "» بالذكاء…"); const arr = parseLoose(await ask(PCUT(item.label), work, { maxTokens: 8192, signal: o.signal })), cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0) - (p.b.x1 - p.b.x0) * (p.b.y1 - p.b.y0))[0];
+      step("⏳ قناع «" + item.label + "»…"); const arr = parseLoose(await ask(PCUT(item.label), work, { maxTokens: 8192, signal: o.signal })), cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0) - (p.b.x1 - p.b.x0) * (p.b.y1 - p.b.y0))[0];
       if (cand) { const px0 = Math.round(cand.b.x0 / 1000 * ww), py0 = Math.round(cand.b.y0 / 1000 * wh), px1 = Math.round(cand.b.x1 / 1000 * ww), py1 = Math.round(cand.b.y1 / 1000 * wh), dm = await decodeMask(cand.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0));
         if (dm) { M = new Float32Array(ww * wh); for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) M[yy * ww + xx] = dm.m[y * dm.w + x]; } } } }
     } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg mask", e); }
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
-    if (!M) {      // احتياط: مربع الذكاء + فصل لوني محلي داخله
+    if (!M) {      // احتياط: مربع الأداة + فصل لوني محلي داخله
       method = "box"; step("⏳ فصل لوني محلي داخل المربع…"); const cut = await PBBgRemove.autoCut(work, { methods: ["classic"] }), d = cut.canvas.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh).data; M = new Float32Array(ww * wh);
       const ex = Math.round(Math.max(bx1 - bx0, by1 - by0) * .03); for (let y = Math.max(0, Math.floor(by0 - ex)); y < Math.min(wh, Math.ceil(by1 + ex)); y++) for (let x = Math.max(0, Math.floor(bx0 - ex)); x < Math.min(ww, Math.ceil(bx1 + ex)); x++) M[y * ww + x] = d[(y * ww + x) * 4 + 3] / 255; }
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
@@ -97,11 +97,11 @@ const AICapture = (function () {
     const d = hg.getImageData(0, 0, W, H).data, U = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) if (d[i * 4 + 3] > 12) U[i] = 1;
     const R = Math.max(3, Math.round(Math.max(W, H) / 400)), grown = ImageTools.sqDilate(U, W, H, R), s = Math.min(1, 1536 / Math.max(W, H)), w = Math.round(W * s), h = Math.round(H * s), c = mk(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(base, 0, 0, w, h);
     const im = g.getImageData(0, 0, w, h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (grown[Math.min(H - 1, Math.round((y + .5) / s)) * W + Math.min(W - 1, Math.round((x + .5) / s))]) { const i = (y * w + x) * 4; im.data[i] = 255; im.data[i + 1] = 0; im.data[i + 2] = 255; } g.putImageData(im, 0, 0);
-    if (o.onStep) o.onStep("⏳ إعادة رسم الخلفية مكان العناصر بالذكاء…");
+    if (o.onStep) o.onStep("⏳ إعادة رسم الخلفية مكان العناصر…");
     const r = await ImgGen.edit({ blob: await toBlob(c), W: w, H: h, fmt: "png", confirm: false, title: "ترميم الخلفية", prompt: "Edit this image: the areas painted solid magenta (#FF00FF) are holes where objects were removed. Fill ONLY the magenta areas with a realistic continuation of the surrounding background (walls, table, fabric, gradient, lighting and perspective), as if those objects were never there. Do not add any new object, person, text or logo. Keep every non-magenta pixel exactly the same, with the same framing and size. Return only the edited image." });
-    if (!r || !r.canvas) throw new Error("لم يُرجع الذكاء صورة للملء");
+    if (!r || !r.canvas) throw new Error("لم تُرجع الأداة صورة للملء");
     const gen = mk(W, H), gg = gen.getContext("2d", { willReadFrequently: true }); gg.imageSmoothingQuality = "high"; gg.drawImage(r.canvas, 0, 0, W, H); const G = gg.getImageData(0, 0, W, H).data; let mag = 0, tot = 0; for (let i = 0; i < W * H; i++) if (U[i]) { tot++; if (G[i * 4] > 200 && G[i * 4 + 1] < 60 && G[i * 4 + 2] > 200) mag++; }
-    if (tot && mag / tot > .03) throw new Error("لم يملأ الذكاء المنطقة");
+    if (tot && mag / tot > .03) throw new Error("لم تملأ الأداة المنطقة");
     const msk = mk(W, H), mg = msk.getContext("2d"); mg.fillStyle = "#000"; mg.fillRect(0, 0, W, H); const gi = new ImageData(W, H); for (let i = 0; i < W * H; i++) { const v = grown[i] ? 255 : 0; gi.data[i * 4] = v; gi.data[i * 4 + 1] = v; gi.data[i * 4 + 2] = v; gi.data[i * 4 + 3] = v; } mg.putImageData(gi, 0, 0);
     const soft = mk(W, H), sg = soft.getContext("2d"); try { sg.filter = "blur(" + Math.max(1, R / 2) + "px)"; } catch (e) { } sg.drawImage(msk, 0, 0); sg.filter = "none";
     gg.globalCompositeOperation = "destination-in"; gg.drawImage(soft, 0, 0); gg.globalCompositeOperation = "source-over"; base.getContext("2d").drawImage(gen, 0, 0); return true;      // الناتج داخل المنطقة فقط وحوافها ناعمة؛ خارجها الأصل كما هو

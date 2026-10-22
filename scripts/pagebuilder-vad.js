@@ -1,6 +1,6 @@
-/* صانع إعلانات الفيديو بالذكاء («مخرج ذكي»): من 1–4 صور للمنتج ← التعرّف على المنتج واقتراح النوع والمدة ← خطة لقطات ونص صوتي قابل للتعديل ← فيديو إعلاني بصوت بلغات متعددة بالممثل نفسه.
+/* صانع إعلانات الفيديو («مخرج»): من 1–4 صور للمنتج ← التعرّف على المنتج واقتراح النوع والمدة ← خطة لقطات ونص صوتي قابل للتعديل ← فيديو إعلاني بصوت بلغات متعددة بالممثل نفسه.
    أنواع: فيديو UGC (بأسلوب مبدع حقيقي)، فيديو منتج (المنتج في الصدارة)، فيديو ترند تيك توك، أو وصف حر. تنسيقات 9:16 (تيك توك/ميتا/ريلز) و16:9 (يوتيوب/الموقع) و1:1.
-   الخطة والنص بنص Alyssum API (ImgGen.text) والفيديو بخدمة الفيديو (ImgGen.video)؛ الرصيد وتنبيهاته كبقية أدوات الذكاء. منفصل عن «مولّد الفيديو» السريع (PBVGen). */
+   الخطة والنص بنص Alyssum API (ImgGen.text) والفيديو بخدمة الفيديو (ImgGen.video)؛ الرصيد وتنبيهاته كبقية الأدوات. منفصل عن «مولّد الفيديو» السريع (PBVGen). */
 const PBVAd = (() => {
   const A = () => PBApp, $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -11,15 +11,15 @@ const PBVAd = (() => {
   const RATIOS = [["9:16", "9:16 — تيك توك وميتا وريلز وستوري"], ["16:9", "16:9 — يوتيوب والموقع"], ["1:1", "1:1 — منشور مربع"]];
   const LENGTHS = [5, 8, 10];
   const CATS = { fashion: "أزياء", beauty: "تجميل وعناية", food: "أغذية", home: "منزل وأثاث", tech: "إلكترونيات", jewelry: "مجوهرات وإكسسوار", kids: "أطفال", health: "صحة وأعشاب", other: "عام" };
-  /* اقتراح نوع/مدة حسب الفئة (احتياط حين لا يتوفر التعرّف الذكي) */
+  /* اقتراح نوع/مدة حسب الفئة (احتياط حين لا يتوفر التعرّف) */
   const REC = { fashion: ["ugc", 8], beauty: ["ugc", 8], food: ["product", 5], home: ["product", 8], tech: ["ugc", 10], jewelry: ["product", 5], kids: ["ugc", 8], health: ["product", 8], other: ["product", 8] };
   const CLAIM = /علاج|يشفي|شفاء|يعالج|يداوي|مضمون 100|cure|heal|guérit|guerit|treat(s)? (a|the)? ?disease|100% guarantee/i;
   /* نقية: تحذيرات ادعاءات يجب مراجعتها في النص */
   const claims = txt => { const m = String(txt || "").match(new RegExp(CLAIM.source, "gi")); return m ? [...new Set(m)] : []; };
-  /* نقية: يحدّد فئة المنتج من عنوانه/تصنيفه حين لا يتوفر التعرّف الذكي */
-  const guessCat = t => { const s = String(t || ""); return /فستان|قميص|حذاء|حقيبة|عباية|جلابة|سروال|ملابس|dress|shirt|shoe|bag/i.test(s) ? "fashion" : /كريم|سيروم|شامبو|عناية|تجميل|عطر|cream|serum|perfume/i.test(s) ? "beauty" : /عسل|تمر|زيت|قهوة|حلويات|honey|dates|oil|coffee/i.test(s) ? "food" : /كرسي|طاولة|ديكور|مفرش|chair|table|decor/i.test(s) ? "home" : /هاتف|سماعة|شاحن|ساعة ذكية|phone|headphone|charger/i.test(s) ? "tech" : /خاتم|سوار|قلادة|ring|bracelet|necklace/i.test(s) ? "jewelry" : /أعشاب|مكمل|فيتامين|herb|supplement/i.test(s) ? "health" : "other"; };
+  /* نقية: يحدّد فئة المنتج من عنوانه/تصنيفه حين لا يتوفر التعرّف */
+  const guessCat = t => { const s = String(t || ""); return /فستان|قميص|حذاء|حقيبة|عباية|جلابة|سروال|ملابس|dress|shirt|shoe|bag/i.test(s) ? "fashion" : /كريم|سيروم|شامبو|عناية|تجميل|عطر|cream|serum|perfume/i.test(s) ? "beauty" : /عسل|تمر|زيت|قهوة|حلويات|honey|dates|oil|coffee/i.test(s) ? "food" : /كرسي|طاولة|ديكور|مفرش|chair|table|decor/i.test(s) ? "home" : /هاتف|سماعة|شاحن|ساعة|phone|headphone|charger/i.test(s) ? "tech" : /خاتم|سوار|قلادة|ring|bracelet|necklace/i.test(s) ? "jewelry" : /أعشاب|مكمل|فيتامين|herb|supplement/i.test(s) ? "health" : "other"; };
   const recommend = cat => { const r = REC[cat] || REC.other; return { type: r[0], length: r[1] }; };
-  /* نقية: يحوّل ردّ الذكاء إلى خطة صالحة (لقطات بمجموع ثوانٍ، نص صوتي لكل لغة مختارة) */
+  /* نقية: يحوّل ردّ الأداة إلى خطة صالحة (لقطات بمجموع ثوانٍ، نص صوتي لكل لغة مختارة) */
   function parsePlan(j, opt) {
     const shots = (Array.isArray(j && j.shots) ? j.shots : []).slice(0, 8).map(x => ({ s: Math.max(1, Math.min(10, Math.round(+x.seconds || +x.s || 2))), v: String(x.visual || x.v || "").trim().slice(0, 300), c: String(x.camera || x.c || "").trim().slice(0, 120) })).filter(x => x.v).map((x, i) => Object.assign(x, { n: i + 1 }));
     const sc = {}; for (const l of (opt.langs || ["ar"])) sc[l] = String(((j && j.script) || {})[l] || "").trim().slice(0, 700);
@@ -51,7 +51,7 @@ const PBVAd = (() => {
     const pics = allPics(), sp = storeProds();
     const chip = (k, v, t, on) => `<button type="button" class="pbx-small${on ? " pz-go" : ""}" data-vad="${k}" data-v="${v}">${t}</button>`;
     const rec = S.rec ? `<div class="ep-n" style="color:#16a34a">تعرّفنا على المنتج: <b>${esc(S.rec.name || "")}</b> (${esc(CATS[S.rec.category] || CATS.other)}) — نقترح: ${esc((TYPES.find(x => x[0] === S.rec.type) || [0, ""])[1])} · ${S.rec.length} ثوانٍ${(S.rec.points || []).length ? "<br>نقاط البيع: " + S.rec.points.map(esc).join(" · ") : ""}</div>` : "";
-    return `<div class="pbx-pz" id="pbvad"><p>أنشئ <b>إعلان فيديو</b> للتجارة الإلكترونية: أضف حتى 4 صور لمنتجك، ودع المخرج الذكي يتعرّف عليه ويقترح النوع والمدة، ثم يكتب خطة اللقطات والنص الصوتي لتراجعها وتعدّلها قبل التوليد، ويمكنك إصدار نسخ بلغات متعددة بالممثل نفسه.</p>
+    return `<div class="pbx-pz" id="pbvad"><p>أنشئ <b>إعلان فيديو</b> للتجارة الإلكترونية: أضف حتى 4 صور لمنتجك، ودع المخرج يتعرّف عليه ويقترح النوع والمدة، ثم يكتب خطة اللقطات والنص الصوتي لتراجعها وتعدّلها قبل التوليد، ويمكنك إصدار نسخ بلغات متعددة بالممثل نفسه.</p>
 <div class="ep-n"><b>① صور المنتج</b> (${pics.length} من 4) — الصورة المحدّدة مضمَّنة دائماً</div>
 <div id="pbvad-pool" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:96px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-vad="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(u) ? "3px solid #7c3aed" : "none"}">`).join("") || '<span class="ep-n">لا صور أخرى في الصفحة</span>'}</div>
 <div class="pbrt-row"><select id="pbvad-sp" class="pbx-small"><option value="">＋ من منتجات متجرك…</option>${sp.map(p => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join("")}</select><label class="pbx-small" style="cursor:pointer">📁 من جهازك<input type="file" id="pbvad-f" accept="image/*" multiple style="display:none"></label></div>
@@ -110,8 +110,8 @@ ${warn.length ? `<div class="ep-n" style="color:#b45309">⚠️ عبارات ت�
     if (S.busy || !S.plan) return; syncPlan(); S.busy = true; const ver = ++S.ver; S.res.forEach(r => URL.revokeObjectURL(r.url)); S.res = [];
     try {
       const blobs = []; for (const u of allPics()) blobs.push(await blobOf(u));
-      if (ImgGen.canVideo && !ImgGen.canVideo(S.langs.length)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); }
-      if (!confirm("إنشاء إعلان فيديو بالذكاء — " + S.langs.length + (S.langs.length > 1 ? " نسخ بلغات مختلفة" : " نسخة") + " — سيستهلك من رصيد Alyssum API.\nقد يستغرق التوليد دقائق. متابعة؟")) { say(""); S.busy = false; return; }
+      if (ImgGen.canVideo && !ImgGen.canVideo(S.langs.length)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد"); }
+      if (!confirm("إنشاء إعلان فيديو — " + S.langs.length + (S.langs.length > 1 ? " نسخ بلغات مختلفة" : " نسخة") + " — سيستهلك من رصيد Alyssum API.\nقد يستغرق التوليد دقائق. متابعة؟")) { say(""); S.busy = false; return; }
       const seed = Math.floor(Math.random() * 1e9);
       for (let i = 0; i < S.langs.length; i++) {
         const l = S.langs[i], L = LANGS.find(x => x[0] === l) || LANGS[0];

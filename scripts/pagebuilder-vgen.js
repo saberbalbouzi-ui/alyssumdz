@@ -1,4 +1,4 @@
-/* مولّد الفيديو بالذكاء (Alyssum API): صورة منتج (1–4 صور) + قالب جاهز للتجارة الإلكترونية و/أو وصف حر + نسبة أبعاد ← فيديو MP4 قصير يُضاف للصفحة أو يُنزَّل.
+/* مولّد الفيديو (Alyssum API): صورة منتج (1–4 صور) + قالب جاهز للتجارة الإلكترونية و/أو وصف حر + نسبة أبعاد ← فيديو MP4 قصير يُضاف للصفحة أو يُنزَّل.
    منفصل عن «تحريك الصورة» (PBVideo: حركة كاميرا محلية مجانية بلا ذكاء). يستعمل ImgGen.video (تأكيد تكلفة، حدّ إنفاق، لا إعادة تلقائية). */
 const PBVGen = (() => {
   const A = () => PBApp, $ = id => document.getElementById(id);
@@ -48,7 +48,7 @@ const PBVGen = (() => {
   const blobOfSrc = async src => { const r = await fetch(A().localize(String(src))); if (!r.ok) throw new Error("تعذّر قراءة الصورة"); return r.blob(); };
   function panel() {
     const rdy = typeof ImgGen !== "undefined" ? ImgGen.videoReady() : { ok: false, nokey: true, price: 0 };
-    return `<div class="pbx-pz" id="pbvg"><p>أنشئ فيديو إعلانياً من صورة منتجك بالذكاء: اختر قالباً جاهزاً أو اكتب وصف الحركة، وأضف حتى 4 صور للمنتج لدقة أفضل. (للتحريك المجاني بلا ذكاء استعمل «تحريك الصورة».)</p>
+    return `<div class="pbx-pz" id="pbvg"><p>أنشئ فيديو إعلانياً من صورة منتجك: اختر قالباً جاهزاً أو اكتب وصف الحركة، وأضف حتى 4 صور للمنتج لدقة أفضل. (للتحريك المجاني بلا ذكاء استعمل «تحريك الصورة».)</p>
 <div class="ep-n"><b>قوالب الحركة</b> (${TPL.length})</div><div class="pbrt-row">${["الكل"].concat([...new Set(TPL.map(x => x[3]))]).map(c => `<button type="button" class="pbx-small${S.cat === c ? " pz-go" : ""}" data-vg="cat" data-v="${c}">${c}</button>`).join("")}</div><div class="pbrt-row" id="pbvg-tpls">${TPL.filter(x => S.cat === "الكل" || x[3] === S.cat || x[3] === "عام").map(x => `<button type="button" class="pbx-small${S.tpl === x[0] ? " pz-go" : ""}" data-vg="tpl" data-v="${x[0]}">${x[1]}</button>`).join("")}</div>
 <label class="fl" style="display:block;margin:.4rem 0">وصف الحركة (اختياري مع القالب، إلزامي بدونه)<textarea id="pbvg-t" rows="3" style="width:100%" placeholder="مثال: تقترب الكاميرا ببطء من العبوة بينما تتساقط بتلات وردية حولها">${esc(S.text)}</textarea></label>
 <div class="ep-n"><b>صور المنتج</b> (<span id="pbvg-n">${1 + S.picks.length}</span> من 4) — الصورة المحدّدة دائماً مضمَّنة</div>
@@ -56,7 +56,7 @@ const PBVGen = (() => {
 <div class="pbrt-row"><select id="pbvg-r" class="pbx-small">${RATIOS.map(([k, t]) => `<option value="${k}"${S.ratio === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
 <div class="rt-g"><label>المدة (ثانية) <b id="pbvg-dv">${S.dur}</b><input type="range" id="pbvg-d" min="3" max="10" value="${S.dur}"></label></div>
 <div class="ep-n" id="pbvg-cost">${rdy.ok ? "يستهلك من رصيد Alyssum API — تُطلب موافقتك قبل التنفيذ" : "تحتاج مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور"}</div>
-<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vg="go">🎬 أنشئ الفيديو بالذكاء</button></div>
+<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vg="go">🎬 أنشئ الفيديو</button></div>
 <div id="pbvg-out"></div><div id="pbvg-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
   }
   const say = t => { S.msg = t; const e = $("pbvg-msg"); if (e) e.textContent = t; };
@@ -70,10 +70,10 @@ const PBVGen = (() => {
     S.busy = true; const ver = ++S.ver; say("⏳ تجهيز الصور…");
     try {
       const imgs = [await blobOfSrc(S.src)]; for (const u of S.picks.slice(0, 3)) imgs.push(await blobOfSrc(u));
-      const r = await ImgGen.video({ images: imgs, prompt, ratio: S.ratio, dur: S.dur, title: "فيديو بالذكاء", onStatus: m => { if (ver === S.ver) say("⏳ " + m); } });
+      const r = await ImgGen.video({ images: imgs, prompt, ratio: S.ratio, dur: S.dur, title: "فيديو", onStatus: m => { if (ver === S.ver) say("⏳ " + m); } });
       if (!r) { say("أُلغي"); return; }
       if (S.url) URL.revokeObjectURL(S.url); S.blob = r.blob; S.type = r.type; S.url = URL.createObjectURL(r.blob); showOut(); say("✅ جاهز — راجع الفيديو (قد تتغير تفاصيل دقيقة) ثم أضفه للصفحة");
-    } catch (e) { say(e.code === "NOKEY" ? "⚠️ أضف مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور" : e.code === "OFF" ? "توليد الفيديو بالذكاء معطّل من الإعدادات" : "❌ " + e.message); }
+    } catch (e) { say(e.code === "NOKEY" ? "⚠️ أضف مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور" : e.code === "OFF" ? "توليد الفيديو معطّل من الإعدادات" : "❌ " + e.message); }
     finally { S.busy = false; }
   }
   async function add() {

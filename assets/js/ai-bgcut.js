@@ -29,12 +29,12 @@ const AIBgCut = (function () {
   }
   /* (1) كشف الموضوع الرئيسي ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv */
   async function detect(cv, o) {
-    o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر بالذكاء…"); const z = o.zone || [0, 0, cv.width, cv.height], zw = z[2] - z[0], zh = z[3] - z[1];
+    o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…"); const z = o.zone || [0, 0, cv.width, cv.height], zw = z[2] - z[0], zh = z[3] - z[1];
     const t = await ask(P_SUBJ, cropOf(cv, z[0], z[1], zw, zh, 1), o), arr = parseLoose(t), items = [];
     arr.forEach(e => { const b = boxOf(e); if (!b) return; const box = { x0: z[0] + b.x0 / 1000 * zw, y0: z[1] + b.y0 / 1000 * zh, x1: z[0] + b.x1 / 1000 * zw, y1: z[1] + b.y1 / 1000 * zh }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
       if (bw < cv.width * .02 || bh < cv.height * .02) return; if (items.length && items.some(q => iou(q.box, box) > .85)) return; items.push({ label: String(e.label || "عنصر").slice(0, 40), box }); });
     if (items.length > 1) { const full = items.filter(i => (i.box.x1 - i.box.x0) * (i.box.y1 - i.box.y0) > cv.width * cv.height * .94); if (full.length) full.forEach(f => items.splice(items.indexOf(f), 1)); }      // «الخلفية كلها» ليست عنصراً
-    items.forEach((it, i) => it.id = i); if (!items.length) throw new Error("لم يجد الذكاء عناصر كاملة قابلة للفصل في هذه الصورة");
+    items.forEach((it, i) => it.id = i); if (!items.length) throw new Error("لم تجد الأداة عناصر كاملة قابلة للفصل في هذه الصورة");
     return items;
   }
   /* قناع الخدمة (PNG base64 داخل مربع العنصر) ← Float32 0..1 بحجم العمل */
@@ -74,12 +74,12 @@ const AIBgCut = (function () {
     const bx0 = (b.x0 - rx0) * s, by0 = (b.y0 - ry0) * s, bx1 = (b.x1 - rx0) * s, by1 = (b.y1 - ry0) * s;
     let M = null, method = "api";
     try {
-      step("⏳ قناع «" + item.label + "» بالذكاء…"); const arr = parseLoose(await ask(PCUT(item.label), work, { maxTokens: 8192, signal: o.signal })), cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0) - (p.b.x1 - p.b.x0) * (p.b.y1 - p.b.y0))[0];
+      step("⏳ قناع «" + item.label + "»…"); const arr = parseLoose(await ask(PCUT(item.label), work, { maxTokens: 8192, signal: o.signal })), cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0) - (p.b.x1 - p.b.x0) * (p.b.y1 - p.b.y0))[0];
       if (cand) { const px0 = Math.round(cand.b.x0 / 1000 * ww), py0 = Math.round(cand.b.y0 / 1000 * wh), px1 = Math.round(cand.b.x1 / 1000 * ww), py1 = Math.round(cand.b.y1 / 1000 * wh), dm = await decodeMask(cand.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0));
         if (dm) { M = new Float32Array(ww * wh); for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) M[yy * ww + xx] = dm.m[y * dm.w + x]; } } } }
     } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg mask", e); }
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
-    if (!M) {      // احتياط: مربع الذكاء + فصل لوني محلي داخله
+    if (!M) {      // احتياط: مربع الأداة + فصل لوني محلي داخله
       method = "box"; step("⏳ فصل لوني محلي داخل المربع…"); const cut = await PBBgRemove.autoCut(work, { methods: ["classic"] }), d = cut.canvas.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh).data; M = new Float32Array(ww * wh);
       const ex = Math.round(Math.max(bx1 - bx0, by1 - by0) * .03); for (let y = Math.max(0, Math.floor(by0 - ex)); y < Math.min(wh, Math.ceil(by1 + ex)); y++) for (let x = Math.max(0, Math.floor(bx0 - ex)); x < Math.min(ww, Math.ceil(bx1 + ex)); x++) M[y * ww + x] = d[(y * ww + x) * 4 + 3] / 255; }
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
@@ -94,7 +94,7 @@ const AIBgCut = (function () {
     o = o || {}; const items = await detect(cv, Object.assign({}, o, { mode: "subject" })), ar = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0), top = items.slice().sort((a, b) => ar(b) - ar(a)), keep = top.filter((it, i) => i === 0 || ar(it) >= ar(top[0]) * .25).slice(0, 3);
     const out = mk(cv.width, cv.height), g = out.getContext("2d"); let n = 0, via = [];
     for (const it of keep) { try { const c = await cutout(cv, it, o); g.drawImage(c.canvas, c.x0, c.y0, c.w, c.h); n++; via.push(c.method); } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg subject", e); } }
-    if (!n) throw new Error("لم يُعزل الموضوع بالذكاء"); out._via = via.join("+"); return out;
+    if (!n) throw new Error("لم يُعزل الموضوع"); out._via = via.join("+"); return out;
   }
   return { ready, detect, cutout, subject, _t: { parseLoose, boxOf, decodeMask, clean, iou } };
 })();

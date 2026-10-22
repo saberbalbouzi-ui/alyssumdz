@@ -1,0 +1,53 @@
+/* اختبار «ستوديو ديزاين»: لكل أداة أيقونة وصفحة، ونافذة تحميل الصورة تفتح الأداة على الصورة في المطوّر، وبلا ذكر للذكاء ولا خيار مجاني في أدوات الاستهلاك.
+   تشغيل: python3 -m http.server 8765 & ثم NODE_PATH=/opt/node-tools/node_modules node scripts/test-toolwin.js */
+const { chromium } = require("playwright"), fs = require("fs"), path = require("path");
+let ok = 0, bad = 0; const t = (n, c, x) => { if (c) { ok++; console.log("✓", n); } else { bad++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x)); } };
+const root = path.join(__dirname, "..");
+(async () => {
+  /* ١) الكتالوج: أيقونة لكل أداة وملفها موجود، وبلا كلمات الذكاء في الاسم والوصف */
+  const cat = JSON.parse(fs.readFileSync(path.join(root, "assets/data/tools-catalog.json"), "utf8")).tools;
+  t("كل أداة لها أيقونة وملفها موجود", cat.every(x => x.ic && fs.existsSync(path.join(root, "assets/img/tools/ic", x.ic + ".webp"))), cat.filter(x => !x.ic || !fs.existsSync(path.join(root, "assets/img/tools/ic", x.ic + ".webp"))).map(x => x.id));
+  const AIW = /ذكاء|ذكي|ذكية|الاصطناعي/;
+  t("لا ذكر للذكاء في أسماء الأدوات ووصفها وخطواتها", !cat.some(x => AIW.test([x.name, x.tag, x.what, ...(x.steps || []), ...(x.tips || [])].join(" "))), cat.filter(x => AIW.test([x.name, x.tag, x.what, ...(x.steps || []), ...(x.tips || [])].join(" "))).map(x => x.id));
+  const tools = JSON.parse(fs.readFileSync(path.join(root, "saas/guide/tools.json"), "utf8")).tools;
+  t("أدوات الاستهلاك (Alyssum API) بلا خيار مجاني في اسمها ووصفها", !tools.filter(x => x.needs === "ai").some(x => /مجان/.test([x.name, x.tag, x.what, ...(x.steps || []), ...(x.tips || []), x.needsText].join(" "))), tools.filter(x => x.needs === "ai" && /مجان/.test([x.name, x.tag, x.what, ...(x.steps || []), ...(x.tips || []), x.needsText].join(" "))).map(x => x.id));
+  const land = fs.readdirSync(path.join(root, "saas/landing")).filter(d => fs.existsSync(path.join(root, "saas/landing", d, "index.html")));
+  t("صفحات التعريف بلا ذكر للذكاء ولا «ابدأ مجاناً»", !land.some(d => { const h = fs.readFileSync(path.join(root, "saas/landing", d, "index.html"), "utf8").replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ""); return AIW.test(h) || /ابدأ مجاناً/.test(h); }), land.filter(d => { const h = fs.readFileSync(path.join(root, "saas/landing", d, "index.html"), "utf8").replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ""); return AIW.test(h) || /ابدأ مجاناً/.test(h); }));
+  /* ٢) الواجهة */
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1280, height: 900 } }); const errs = []; p.on("pageerror", e => errs.push(String(e)));
+  await p.goto("http://localhost:8765/admin.html"); await p.waitForTimeout(2500);
+  t("الوحدة محمّلة وتميّز الأدوات", await p.evaluate(() => typeof ToolWin === "object" && ToolWin.has("mk") && ToolWin.has("up") && ToolWin.has("bg") && !ToolWin.has("barcode") && !ToolWin.has("studio3d") && !ToolWin.has("gen") && typeof PBApp.toolSession === "function"));
+  /* ستوديو ديزاين: كل أداة بطاقة بأيقونة */
+  await p.evaluate(() => { try { Admin.tab("studio"); } catch (e) { document.getElementById("tab-studio").classList.remove("hidden"); } });
+  await p.waitForFunction(() => document.querySelectorAll("#studio-content .sd-card").length >= 40, null, { timeout: 8000 }).catch(() => { });
+  const st = await p.evaluate(() => { const cs = [...document.querySelectorAll("#studio-content .sd-card")]; return { n: cs.length, noIcon: cs.filter(c => !c.querySelector(".sd-h img")).length, ai: /ذكاء|ذكي|ذكية/.test(document.getElementById("studio-content").innerText) }; });
+  t("ستوديو ديزاين: 41 أداة كلها بأيقونة وبلا ذكر للذكاء", st.n === 41 && st.noIcon === 0 && !st.ai, st);
+  /* صفحة أداة بلا صفحة تعريف: زر «ابدأ الآن» */
+  await p.evaluate(() => AdminStudio.open("mk")); await p.waitForTimeout(300);
+  t("صفحة الأداة فيها «ابدأ الآن»", await p.evaluate(() => { const b = document.querySelector('#studio-content [data-sdgo="mk"]'); return !!b && /ابدأ الآن/.test(b.textContent); }));
+  /* نافذة الأداة: رفع صورة ثم تُفتح الأداة على الصورة في المطوّر */
+  const png = path.join(require("os").tmpdir(), "tw-test.png");
+  require("child_process").execFileSync("python3", ["-c", "from PIL import Image; im=Image.new('RGB',(150,100),(200,60,60)); im.paste((30,160,90),(40,20,110,80)); im.save('" + png + "')"]);
+  await p.evaluate(() => ToolWin.open("mk")); await p.waitForSelector("#tw-box"); 
+  t("النافذة: منطقة تحميل وزر البدء معطّل قبل الصورة", await p.evaluate(() => !!document.getElementById("tw-dz") && document.querySelector('#tw-box [data-tw="go"]').disabled));
+  await p.setInputFiles("#tw-file", png); await p.waitForTimeout(300);
+  t("بعد اختيار الصورة تظهر معاينتها ويتفعّل الزر", await p.evaluate(() => document.querySelectorAll("#tw-box .tw-pv img").length === 1 && !document.querySelector('#tw-box [data-tw="go"]').disabled));
+  await p.evaluate(() => document.querySelector('#tw-box [data-tw="go"]').click());
+  await p.waitForFunction(() => !document.getElementById("tw-bg") && PBApp.E && PBApp.E.page && PBApp.E.page.ad && document.getElementById("pbx-ep"), null, { timeout: 25000 }).catch(() => { });
+  const ss = await p.evaluate(() => { const E = PBApp.E, sec = E && E.page && E.page.sections[0], im = sec && (sec.free || []).find(w => w.type === "image"), ep = document.getElementById("pbx-ep"); return { ad: !!(E.page && E.page.ad), hasImg: !!im, sel: !!(im && E.sel === im.id), size: E.page && E.page.ad && E.page.ad.w + "x" + E.page.ad.h, panel: !!ep, ept: E.ept, closed: !document.getElementById("tw-bg") }; });
+  t("الجلسة: لوحة بمقاس الصورة (150×100) والصورة محدّدة ولوحة «ماسك» مفتوحة", ss.ad && ss.hasImg && ss.sel && ss.size === "150x100" && ss.panel && ss.ept === "mk" && ss.closed, ss);
+  /* كل أدوات الصور تفتح لوحتها على الصورة (بلا مفتاح: لا شبكة) */
+  const all = await p.evaluate(async () => {
+    window.confirm = () => true; window.alert = () => { }; try { ImgGen.edit = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; ImgGen.ready = () => ({ ok: false, nokey: true }); } catch (e) { }
+    const KEY = { bg: "bg", st: "st", vd: "vd", v360: "v3", fashion: "fa", tryon: "to", pshoot: "ps", mk: "mk", pz: "pz", cap: "cap", rt: "rt", ff: "ff", fr: "fr", bl: "bl", cl: "cl", xp: "xp", resize: "xp", sl: "sl", ai: "ai", up: "up", brand: "br", recolor: "rc", relight: "rl", textrm: "tr", uncrop: "uc", beautify: "bf", vgen: "vg", vad: "vad" }, bad = [], c = document.createElement("canvas"); c.width = 120; c.height = 90; const g = c.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(0, 0, 120, 90); g.fillStyle = "#3a6"; g.fillRect(30, 20, 60, 50);
+    const blob = await new Promise(r => c.toBlob(r, "image/png")); let n = 0;
+    for (const id of Object.keys(KEY).concat(["erase", "scene"])) {
+      try { const r = await PBApp.toolSession([blob], id, id); const E = PBApp.E; if (r === false || !(E.page && E.page.ad)) bad.push(id + ":session"); else if (KEY[id] && E.ept !== KEY[id]) bad.push(id + ":ept=" + E.ept); n++; } catch (e) { bad.push(id + ":" + String(e.message || e).slice(0, 60)); }
+      document.querySelectorAll("#pbs-modal,#pbs-bg").forEach(x => x.remove());
+    }
+    return { n, bad };
+  });
+  t("كل أدوات الصور (30) تفتح الأداة على صورتك: لوحتها أو نافذتها", all.n === 30 && all.bad.length === 0, all);
+  t("لا أخطاء جافاسكربت", errs.length === 0, errs);
+  await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
+})();

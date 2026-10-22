@@ -1,6 +1,6 @@
-/* «منشئ الصفحات بالذكاء» (PagePilot) — أداة مستقلة في ستوديو ديزاين.
-   منتج المتجر/رابط/وصف + صورة ← الصفحة المصوّرة الهجينة (PagePilotHybrid: صور بالذكاء لكل قسم + نص حيّ + زر طلب ثابت) ← تُفتح في المطوّر للتعديل والنشر.
-   تعمل بالذكاء فقط: بلا مفتاح/رصيد أو عند فشل أي خطوة ترفض بسبب واضح ولا تُنتج صفحة بديلة محلية. */
+/* «منشئ الصفحات» (PagePilot) — أداة مستقلة في ستوديو ديزاين.
+   منتج المتجر/رابط/وصف + صورة ← الصفحة المصوّرة الهجينة (PagePilotHybrid: صور لكل قسم + نص حيّ + زر طلب ثابت) ← تُفتح في المطوّر للتعديل والنشر.
+   تعمل فقط: بلا مفتاح/رصيد أو عند فشل أي خطوة ترفض بسبب واضح ولا تُنتج صفحة بديلة محلية. */
 const PagePilot = (() => {
   const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -35,7 +35,7 @@ const PagePilot = (() => {
     const ps = prods(), bg = document.createElement("div"); bg.id = "pp-bg";
     bg.style.cssText = "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(3px)";
     bg.innerHTML = `<div style="width:min(860px,100%);max-height:94vh;overflow:auto;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(198,254,23,.3);border-radius:18px;padding:18px;direction:rtl;font-family:inherit">
-<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🚀 منشئ الصفحات بالذكاء</h3><button data-pp="x" style="${BTN_CSS};background:rgba(255,255,255,.1)">✕</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🚀 منشئ الصفحات</h3><button data-pp="x" style="${BTN_CSS};background:rgba(255,255,255,.1)">✕</button></div>
 <p style="margin:.3rem 0 .8rem;opacity:.85;line-height:1.8;font-size:.88rem">اختر منتجاً من متجرك أو الصق رابطه أو اكتب وصفه، فتبني الأداة صفحة هبوط جاهزة بأقسامها ونصوصها وصورها، وتُفتح في المطوّر لتعدّل عليها ما شئت.</p>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <label style="font-size:.8rem;grid-column:1/-1">① منتج من متجرك (اختياري)<select id="pp-prod" style="${FLD}"><option value="">— بلا (رابط أو وصف يدوي) —</option>${ps.map(p => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join("")}</select></label>
@@ -63,7 +63,7 @@ const PagePilot = (() => {
 <label style="font-size:.85rem"><input id="pp-ab" type="checkbox"> 🧪 اختبار A/B: أنشئ أيضاً نسخة «ب» منافسة: صفحة كاملة بصورها وهويتها البصرية ونصوصها المختلفة (ضعف رصيد الصور) <span style="opacity:.75">· تذهب </span><input id="pp-abp" type="number" min="1" max="99" value="50" style="${FLD};width:64px;display:inline-block"> <span style="opacity:.75">% من الزوار إلى «ب»، وتُنشر مع الأصل عند «حفظ ونشر» (يلزم منتج من المتجر)</span></label>
 <label style="font-size:.85rem"><input id="pp-gate" type="checkbox" checked> فحص جودة تلقائي للخلفيات (حتى محاولتين إضافيتين)</label>
 </div>
-<div style="display:flex;gap:8px;flex-wrap:wrap;margin:.9rem 0"><button data-pp="go" style="${BTN_CSS};background:rgba(198,254,23,.28)">✨ أنشئ الصفحة بالذكاء</button></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:.9rem 0"><button data-pp="go" style="${BTN_CSS};background:rgba(198,254,23,.28)">✨ أنشئ الصفحة</button></div>
 <div id="pp-rep" style="font-size:.86rem;line-height:1.8"></div>
 <div id="pp-cr" style="margin-top:1rem;padding:1rem;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05)">
 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>شحن الرصيد</b><div style="font-size:.78rem;opacity:.8">حرّك الشريط لاختيار المبلغ — صفحة كاملة ${CR.page} رصيداً، واختبار A/B (زوج صفحات) ${CR.ab} رصيد، وإعادة رسم صورة واحدة ${CR.redo} رصيد.</div></div><div id="pp-cr-usd" style="font-size:2rem;font-weight:900;color:#c6fe17;direction:ltr"></div></div>
@@ -91,7 +91,7 @@ const PagePilot = (() => {
       const g = await gather(), o = { lang: $("pp-lang").value, audience: $("pp-aud").value.trim() };
       if (typeof PagePilotHybrid === "undefined" || typeof PBSpec === "undefined") throw new Error("وحدة بناء الصفحات غير محمَّلة — أعد تحميل اللوحة بـ Ctrl+Shift+R");
       const real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })();
-      if (!real) throw new Error("الأداة تعمل بالذكاء فقط ولا تنتج صفحة بدونه: فعّل مفتاح Alyssum API (أو جدّد الرصيد) من إعدادات مولّد الصور ثم أعد المحاولة.");
+      if (!real) throw new Error("الأداة تحتاج مفتاح Alyssum API ولا تنتج صفحة بدونه: فعّل المفتاح (أو جدّد الرصيد) من إعدادات مولّد الصور ثم أعد المحاولة.");
       say("⏳ تجهيز صور المنتج…"); const ctx = { theme, lang: o.lang, title: g.info.title, product: g.info.product, wa: (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "" };
       let heroBlob = g.blob;
       if (!heroBlob && g.path) { try { heroBlob = await urlBlob(g.path); } catch (_) { } }
@@ -116,7 +116,7 @@ const PagePilot = (() => {
         const abOn = !!($("pp-ab") && $("pp-ab").checked), abPct = Math.min(99, Math.max(1, Math.round(+($("pp-abp") && $("pp-abp").value) || 50)));
         if (abOn && !g.info.product) throw new Error("اختبار A/B يحتاج منتجاً من المتجر (ليُوزَّع الزوار بين النسختين): اختر منتجاً أو ألغِ خيار A/B");
         if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
-        if (!confirm("سيرسم الذكاء " + (nTodo + (abOn ? 10 : 0)) + " صورة مربّعة" + (abOn ? " (10 للنسخة أ و10 لنسخة ب المنافسة بهوية بصرية مختلفة)" : " للصفحة (صورة لكل قسم، بلا نصوص)") + " ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
+        if (!confirm("سيرسم الأداة " + (nTodo + (abOn ? 10 : 0)) + " صورة مربّعة" + (abOn ? " (10 للنسخة أ و10 لنسخة ب المنافسة بهوية بصرية مختلفة)" : " للصفحة (صورة لكل قسم، بلا نصوص)") + " ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + (RS ? RS.plan.sections.length : 10) + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
         let out; try { out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, resume: RS }, { section: prog }); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
@@ -182,7 +182,7 @@ const PagePilot = (() => {
     });
     bg.addEventListener("click", async e => { const im = e.target.closest("[data-ppi]"); if (!im || !S.imp || !PBSpec.pickImage) return; try { await PBSpec.pickImage(S.imp, +im.dataset.ppi); bg.querySelectorAll("[data-ppi]").forEach(x => x.style.borderColor = x === im ? "#c6fe17" : "rgba(255,255,255,.2)"); } catch (er) { say("❌ " + esc(er.message), true); } });
   }
-  /* ───── تغيير لون الصفحة المولَّدة داخل المحرّر (زر #pbx-rcb في شريط المطوّر العلوي يظهر لصفحات «منشئ الصفحات بالذكاء» فقط) ───── */
+  /* ───── تغيير لون الصفحة المولَّدة داخل المحرّر (زر #pbx-rcb في شريط المطوّر العلوي يظهر لصفحات «منشئ الصفحات» فقط) ───── */
   function recolorOpen() {
     if (typeof PBApp === "undefined" || !PBApp.pageJson || !PBApp.mutatePage) return; let meta = null; try { meta = (JSON.parse(PBApp.pageJson()).specMeta || {}).hybrid; } catch (_) { }
     if (!meta) return; const old = document.getElementById("pp-rc"); if (old) { old.remove(); return; }

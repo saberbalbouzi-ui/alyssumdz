@@ -69,3 +69,8 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 
 ## تكافؤ فوتوروم (v1.89.297)
 - المرجع `platform/docs/photoroom-parity.md`. أدوات `rl|tr|uc|bf` في `PBAI` بجدول `FXT` (لوحة موحّدة، `fxPrompt`)، ودرجة الجودة `PBAI.qa` والإعادة التلقائية (حد 70)، و`PBBgRemove.confidence`، وخيارات الإخراج في «أدوات تعديل الصور» (`AdminNav.itShow/imgDl`)، وظل الاستوديو (`shI/shB/shX/shY`). كل أداة ذكية جديدة: مدخل `FXT` أو kind مستقل + `saas/guide/tools.json` + `DEEP_NAME` + مقال في `admin-help.json` + اختبار في test-imgtools. نصوص الواجهة بلا أسماء مزوّدين وبلا مبالغ.
+
+## ستوديو ديزاين: نافذة الأداة والأيقونات (v1.89.440)
+- كل أداة صور تُفتح من «ابدأ الآن» عبر `ToolWin` (assets/js/admin-toolwin.js) ← `PBApp.toolSession(blobs, id, name)`؛ جدول `TS_KEY` في pagebuilder-editor.js يربط معرّف الأداة بلوحتها. الأدوات ذات النافذة الخاصة في `OWN`.
+- أداة جديدة: `tools.json` + `gen-tool-pages.py` + أيقونة (`scripts/gen-tool-icons.py`: دالة `i_<id>` + `ICONS`) + عنوان ar/fr/en في `tool-titles.json` + `TS_KEY`/`OWN`، ثم `node scripts/test-toolwin.js`.
+- لا كلمة «ذكاء/ذكي» في واجهة الأدوات (اسم الخدمة Alyssum API فقط)، ولا خيار «مجاني» ولا إعادة محاولة تلقائية ولا «خياران» في أدوات الاستهلاك: طلب واحد ونتيجة واحدة.

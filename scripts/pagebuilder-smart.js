@@ -1,4 +1,4 @@
-/* ═══ أدوات ذكية في منشئ الصفحات: «التقاط النص» (مثل Canva) ═══
+/* ═══ أدوات في منشئ الصفحات: «التقاط النص» (مثل Canva) ═══
    تفحص الصورة المحدّدة، تحيط النصوص المكتشفة بمستطيلات ملوّنة، وتعرض نافذة بخيارين: «عنصر» (نص واحد تنقر عليه) أو «كل النصوص».
    عند «التقاط» تُقرأ النصوص (Alyssum API إن وُجد مفتاحه وإلا Tesseract)، تُمسح من الصورة بدقة مع إعادة رسم الخلفية، وتصير عناصر نص قابلة للتعديل فوق الصورة.
    تعمل على صورة داخل قسم «كانفاس» (الصفحات المولَّدة). تعتمد على assets/js/text-capture.js و image-tools.js. */
@@ -130,7 +130,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   }
 
   /* ═══ التقاط العناصر (مثل «الالتقاط السحري» في Canva) ═══
-     الذكاء داخل المتصفح (assets/js/ai-vision.js): كشف العناصر بأسمائها (امرأة، طفل، عبوة، صحن، ملعقة، قلم، إبريق، كتب…) وحدود دقيقة بالبكسل،
+     الأداة داخل المتصفح (assets/js/ai-vision.js): كشف العناصر بأسمائها (امرأة، طفل، عبوة، صحن، ملعقة، قلم، إبريق، كتب…) وحدود دقيقة بالبكسل،
      واختيار عنصر أو أكثر أو الكل، وإضافة ما فات الكشف بنقرة أو مستطيل. إن تعذّر تحميل النموذج نعود إلى الكشف البسيط بالحواف. */
   const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره. تلتقط الأداة العناصر الكاملة فقط (شخص، منتج، كتاب، قلم، زهرة…)؛ الجزء المقطوع كيدٍ تمسك منتجاً لا يُلتقط، ويُلتقط المنتج وحده.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Alyssum API اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
@@ -153,8 +153,8 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   async function keyCapture(sh, cv, inf, w, Z0, pt) {
     const $ = sh.$, W = cv.width, H = cv.height; let [zx0, zy0, zx1, zy1] = Z0 || [0, 0, W, H], zw = zx1 - zx0, zh = zy1 - zy0; const est = ImgGen.estimate(), mk = (a, b) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(a)); c.height = Math.max(1, Math.round(b)); return c; };
     const toBlob = c => new Promise(r => c.toBlob(r, "image/png"));
-    if (!confirm("التقاط العنصر بالذكاء (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — سيستهلك من رصيد Alyssum API.\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
-    $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ عزل العنصر بالذكاء…";
+    if (!confirm("التقاط العنصر (Alyssum API): طلبان — عزل العنصر ثم ترميم الخلفية مكانه — سيستهلك من رصيد Alyssum API.\nقد تختلف التفاصيل الدقيقة قليلاً لأن الصورة تُولَّد. متابعة؟")) { sh.close(); return; }
+    $("pbs-load").style.display = ""; $("pbs-load").textContent = "⏳ عزل العنصر…";
     try {
       const crop = mk(zw, zh), cg = crop.getContext("2d"); cg.drawImage(cv, zx0, zy0, zw, zh, 0, 0, zw, zh);
       if (pt) { const r = Math.max(10, Math.round(Math.max(W, H) / 45)); cg.lineWidth = Math.max(3, Math.round(r / 4)); cg.strokeStyle = "#ff0000"; cg.fillStyle = "#ff0000"; cg.beginPath(); cg.arc(pt[0], pt[1], r, 0, 7); cg.stroke(); cg.beginPath(); cg.arc(pt[0], pt[1], Math.max(3, r / 4), 0, 7); cg.fill(); }      // علامة النقرة: حلقة ونقطة حمراء
@@ -165,7 +165,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       if (!bb || bb.x1 - bb.x0 < 8 || bb.y1 - bb.y0 < 8) throw new Error("لم يُعزل العنصر — جرّب مستطيلاً أضيق حول العنصر نفسه");
       if (pt) { const m = Math.max(bb.x1 - bb.x0, bb.y1 - bb.y0) * .1; zx0 = Math.max(0, Math.floor(bb.x0 - m)); zy0 = Math.max(0, Math.floor(bb.y0 - m)); zx1 = Math.min(W, Math.ceil(bb.x1 + m)); zy1 = Math.min(H, Math.ceil(bb.y1 + m)); zw = zx1 - zx0; zh = zy1 - zy0; }      // بعد النقر: منطقة الترميم = حدود العنصر المعزول + هامش
       const el = mk(bb.x1 - bb.x0, bb.y1 - bb.y0); el.getContext("2d").drawImage(cut.canvas, bb.x0, bb.y0, el.width, el.height, 0, 0, el.width, el.height);
-      $("pbs-load").textContent = "⏳ ترميم الخلفية مكان العنصر بالذكاء…";
+      $("pbs-load").textContent = "⏳ ترميم الخلفية مكان العنصر…";
       const framed = mk(W, H), fg = framed.getContext("2d"); fg.drawImage(cv, 0, 0); fg.lineWidth = Math.max(3, Math.round(Math.max(W, H) / 300)); fg.strokeStyle = "#ff0000"; fg.strokeRect(zx0, zy0, zw, zh);
       const r2 = await ImgGen.edit({ blob: await toBlob(framed), W, H, fmt: "png", confirm: false, title: "ترميم الخلفية", prompt: "Remove the object that is inside the thin red rectangle and fill the empty area with a natural continuation of the surrounding background (same lighting, texture and perspective). Also remove the red rectangle itself. Do not change anything outside the rectangle. No text, no watermark." });
       if (!r2) throw new Error("أُلغي التنفيذ"); if (sh.S.closed) return;
@@ -176,18 +176,18 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       const basePath = await A().uploadBlob(await toBlob(base), "bg-" + stamp, { max: 3200, q: .95 }), elPath = await A().uploadBlob(await toBlob(el), "el-" + stamp + "-0", { max: 2400, q: .92 });
       const ox = pt ? 0 : zx0, oy = pt ? 0 : zy0, els = [{ x0: ox + bb.x0, y0: oy + bb.y0, x1: ox + bb.x1, y1: oy + bb.y1, area: el.width * el.height, front: null, label: "عنصر ملتقط" }];
       applyElements(inf, w, W, H, els, [elPath], basePath); sh.close();
-      alert("✅ التُقط العنصر كصورة مستقلة قابلة للتحريك، ورُمِّمت الخلفية مكانه بالذكاء (Alyssum API).\nراجع النتيجة؛ للتراجع اضغط Ctrl+Z.");
-    } catch (e) { console.error(e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : (e.message || e)); }
+      alert("✅ التُقط العنصر كصورة مستقلة قابلة للتحريك، ورُمِّمت الخلفية مكانه (Alyssum API).\nراجع النتيجة؛ للتراجع اضغط Ctrl+Z.");
+    } catch (e) { console.error(e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e)); }
   }
   /* التقاط العناصر بالـAPI بدقة عالية (وحدة AICapture المستقلة): كشف المربعات ← اختيار ← قناع تجزئة لكل عنصر على محيطه بدقة الصورة ← صقل الحواف من بكسلات الصورة الأصلية
      ← إعادة رسم الخلفية مكان العناصر داخل منطقتها فقط ← معاينة ثم حفظ. يُرجع "local" ليكمل الطريقة المحلية عند فشل الكشف. */
   async function apiCapture(sh, cv, inf, w, Z0, pt) {
     const $ = sh.$, W = cv.width, H = cv.height;
-    if (!confirm("التقاط العناصر بالذكاء (Alyssum API): كشف العناصر ثم قصّ كل عنصر بدقة من بكسلات صورتك الأصلية (دون إعادة توليدها) وإعادة رسم الخلفية مكانه.\nسيستهلك من رصيد Alyssum API. متابعة؟")) { sh.close(); return null; }
-    const stopScan = scanFx(sh, cv); $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر بالذكاء…"; let items;
+    if (!confirm("التقاط العناصر (Alyssum API): كشف العناصر ثم قصّ كل عنصر بدقة من بكسلات صورتك الأصلية (دون إعادة توليدها) وإعادة رسم الخلفية مكانه.\nسيستهلك من رصيد Alyssum API. متابعة؟")) { sh.close(); return null; }
+    const stopScan = scanFx(sh, cv); $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر…"; let items;
     try { items = await AICapture.detect(cv, { zone: Z0 && Z0[2] - Z0[0] < W * .98 ? Z0 : null, onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); }
-    catch (e) { stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); const nk = e && (e.code === "NOKEY" || e.code === "OFF"); if (nk) { $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : "أدخل مفتاح Alyssum API من إعدادات مولّد الصور"); return null; }
-      alert("تعذّر الكشف بالذكاء (" + String(e && e.message || e).slice(0, 120) + ") — سيُستعمل التحليل المحلي."); return "local"; }
+    catch (e) { stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); const nk = e && (e.code === "NOKEY" || e.code === "OFF"); if (nk) { $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e.code === "OFF" ? "التوليد معطّل من الإعدادات" : "أدخل مفتاح Alyssum API من إعدادات مولّد الصور"); return null; }
+      alert("تعذّر الكشف (" + String(e && e.message || e).slice(0, 120) + ") — سيُستعمل التحليل المحلي."); return "local"; }
     stopScan(); if (sh.S.closed) return null; $("pbs-load").style.display = "none";
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
@@ -195,13 +195,13 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const hit = (x, y) => { let best = -1, ba = 1e18; items.forEach(it => { const b = it.box; if (x >= b.x0 * k && x <= b.x1 * k && y >= b.y0 * k && y <= b.y1 * k && area(it) < ba) { ba = area(it); best = it.id; } }); return best; };
     if (pt) { const h = hit(pt[0] * k, pt[1] * k); if (h >= 0) sel.add(h); else { let bd = 1e18, bi = -1; items.forEach(it => { const d = Math.hypot((it.box.x0 + it.box.x1) / 2 - pt[0], (it.box.y0 + it.box.y1) / 2 - pt[1]); if (d < bd) { bd = d; bi = it.id; } }); if (bi >= 0) sel.add(bi); } }
     $("pbs-hint").textContent = sh.S.hintOne = "انقر على مربع لاختيار عنصر. الأداة تقصّ العنصر بدقة من بكسلات صورتك الأصلية، وتعيد رسم الخلفية مكانه.";
-    $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill" checked> إعادة رسم الخلفية مكان العناصر بالذكاء</label>';
+    $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill" checked> إعادة رسم الخلفية مكان العناصر</label>';
     const colors = ["#0d9488", "#7c3aed", "#ea580c", "#2563eb", "#db2777", "#16a34a", "#ca8a04", "#0891b2"];
     function paint() {
       const g = ov.getContext("2d"), mode = sh.S.mode; g.clearRect(0, 0, vw, vh); g.font = "700 12px sans-serif"; g.textBaseline = "top";
       items.forEach(it => { const b = it.box, on = mode === "all" || sel.has(it.id), c = colors[it.id % colors.length], x = b.x0 * k, y = b.y0 * k, bw = (b.x1 - b.x0) * k, bh = (b.y1 - b.y0) * k; g.lineWidth = on || hov === it.id ? 3 : 2; g.strokeStyle = c; g.setLineDash(on ? [] : [6, 3]);
         if (on) { g.fillStyle = c + "33"; g.fillRect(x, y, bw, bh); } else if (hov === it.id) { g.fillStyle = c + "1a"; g.fillRect(x, y, bw, bh); } g.strokeRect(x, y, bw, bh); const tw = g.measureText(it.label).width + 10; g.setLineDash([]); g.fillStyle = c; g.fillRect(x, y, tw, 18); g.fillStyle = "#fff"; g.fillText(it.label, x + 5, y + 3); });
-      const n = mode === "all" ? items.length : sel.size; $("pbs-go").disabled = !n || busy; $("pbs-go").textContent = mode === "all" ? "التقاط " + items.length + " عنصراً" : "التقاط"; $("pbs-msg").textContent = n ? (mode === "all" ? "سيُلتقط كل ما وجده الذكاء (" + items.length + ")." : "عنصر محدّد.") : "وجد الذكاء " + items.length + " عنصراً — اختر منها.";
+      const n = mode === "all" ? items.length : sel.size; $("pbs-go").disabled = !n || busy; $("pbs-go").textContent = mode === "all" ? "التقاط " + items.length + " عنصراً" : "التقاط"; $("pbs-msg").textContent = n ? (mode === "all" ? "سيُلتقط كل ما وجدته الأداة (" + items.length + ")." : "عنصر محدّد.") : "وجدت الأداة " + items.length + " عنصراً — اختر منها.";
     }
     ov.onmousemove = e => { const r = ov.getBoundingClientRect(), h = hit(e.clientX - r.left, e.clientY - r.top); if (h !== hov) { hov = h; paint(); } };
     ov.onclick = e => { if (sh.S.mode !== "one") return; const r = ov.getBoundingClientRect(), h = hit(e.clientX - r.left, e.clientY - r.top); if (h < 0) return; sel = new Set([h]); paint(); };
@@ -227,8 +227,8 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
           say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), toB = c => new Promise(r => c.toBlob(r, "image/png")), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
           for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await toB(cuts[i].canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close(); done(null);
-          alert("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (how === "ai" ? "\n🪄 أُعيد رسم الخلفية مكانها بالذكاء." : how === "local" ? "\nℹ️ رُمِّمت الخلفية محلياً." : "") + (fails.length ? "\n⚠️ تعذّر عزل: " + fails.join("، ") : "") + "\nللتراجع اضغط Ctrl+Z.");
-        } catch (e) { console.error(e); busy = false; if (!sh.S.closed) { $("pbs-msg").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد الذكي معطّل من الإعدادات" : (e.message || e)); $("pbs-go").disabled = false; } }
+          alert("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (how === "ai" ? "\n🪄 أُعيد رسم الخلفية مكانها." : how === "local" ? "\nℹ️ رُمِّمت الخلفية محلياً." : "") + (fails.length ? "\n⚠️ تعذّر عزل: " + fails.join("، ") : "") + "\nللتراجع اضغط Ctrl+Z.");
+        } catch (e) { console.error(e); busy = false; if (!sh.S.closed) { $("pbs-msg").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e)); $("pbs-go").disabled = false; } }
       };
     });
   }
@@ -257,7 +257,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   /* الخطوة الأولى: الصورة كاملة + «حلّل الصورة كاملة» أو ارسم مستطيلاً حول العنصر (منطقة) ← [x0,y0,x1,y1] أو null */
   function pickZone(sh, cv, opt) {
     const $ = sh.$, W = cv.width, H = cv.height; $("pbs-load").style.display = "none"; $("pbs-seg").style.display = "none";
-    $("pbs-hint").innerHTML = "" + (opt && opt.point ? (opt.api ? "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق لعنصر صغير أو متلاصق)، أو اضغط «كشف كل العناصر» ليجدها الذكاء كلها." : "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق للعناصر المتلاصقة).<br>وإن أردت التحليل المحلي المجاني لكل عناصر الصورة اضغط «تحليل الصورة كاملة».") : "<b>✏️ منطقة (أدق):</b> ارسم بالسحب مستطيلاً حول العنصر الذي تريد التقاطه، فتُحلَّل تلك المنطقة وحدها بدقة أعلى.<br>أو حلّل الصورة كاملة.");
+    $("pbs-hint").innerHTML = "" + (opt && opt.point ? (opt.api ? "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق لعنصر صغير أو متلاصق)، أو اضغط «كشف كل العناصر» لتجدها الأداة كلها." : "<b>🖱️ انقر على العنصر</b> الذي تريد التقاطه، أو <b>✏️ ارسم مستطيلاً</b> حوله (أدق للعناصر المتلاصقة).<br>وإن أردت التحليل المحلي المجاني لكل عناصر الصورة اضغط «تحليل الصورة كاملة».") : "<b>✏️ منطقة (أدق):</b> ارسم بالسحب مستطيلاً حول العنصر الذي تريد التقاطه، فتُحلَّل تلك المنطقة وحدها بدقة أعلى.<br>أو حلّل الصورة كاملة.");
     $("pbs-go").disabled = false; $("pbs-go").textContent = opt && opt.api ? "كشف كل العناصر (Alyssum API)" : "تحليل الصورة كاملة"; const ex0 = $("pbs-extra"); if (opt && opt.api) { ex0.innerHTML = ""; const lb = document.createElement("button"); lb.type = "button"; lb.textContent = "تحليل محلي مجاني (بلا API)"; lb.style.cssText = "border:1.5px dashed #6b7280;background:#fff;color:#374151;border-radius:10px;padding:.45rem;font-weight:700;cursor:pointer;font-family:inherit"; pickZone._lb = lb; ex0.appendChild(lb); }
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:" + (opt && opt.point ? "pointer" : "crosshair"); stage.appendChild(ov);
@@ -275,7 +275,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       $("pbs-go").onclick = () => done(opt && opt.api ? [0, 0, W, H] : null); const c0 = sh.close; sh.close = () => { c0(); res(null); };
     });
   }
-  /* الواجهة الذكية: حدود ملوّنة تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
+  /* الواجهة: حدود ملوّنة تتبع العنصر + اسمه، قائمة العناصر، نقرة/مستطيل لإضافة عنصر، دمج، وملء الخلفية */
   function elementsAI(sh, cv, inf, w, res, key, Z, lite) {
     const $ = sh.$, W = cv.width, H = cv.height, S = res.S, allItems = res.items, items = allItems.filter(i => !i.partial); $("pbs-load").style.display = "none";
     $("pbs-ver").textContent = "تشخيص v3 · " + W + "×" + H + " · " + (S.dev === "webgpu" ? "⚡ كرت الشاشة" : "المعالج") + " · كشف: " + (res.src === "gemini" ? "Alyssum API+محلي" : "محلي") + " · مرشّحات: " + (res.dets || []).map(d => d.label + " " + Math.round(d.score * 100)).join("، ");
@@ -422,7 +422,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       } catch (e) { console.error(e); busy = false; $("pbs-msg").textContent = "⚠️ " + e.message; $("pbs-go").disabled = false; }
     };
   }
-  /* الكشف البسيط بالحواف (بلا شبكة): للتصاميم ذات الخلفية الناعمة — يُستعمل إن تعذّر تحميل النموذج الذكي */
+  /* الكشف البسيط بالحواف (بلا شبكة): للتصاميم ذات الخلفية الناعمة — يُستعمل إن تعذّر تحميل النموذج */
   function elementsBasic(sh, cv, inf, w, note) {
     const $ = sh.$, W = cv.width, H = cv.height; $("pbs-ver").textContent = "تشخيص v3 · الطريقة البسيطة (بلا نماذج)";
     $("pbs-hint").textContent = sh.S.hintOne = "انقر على أحد العناصر المحاطة بخط ملوّن لاختياره (منتج، عشبة، مكوّنات…).";
@@ -450,7 +450,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     ov.onmousemove = e => { const h = at(e); if (h !== hov) { hov = h; paint(); } };
     ov.onclick = e => { if (sh.S.mode !== "one") return; const h = at(e); if (h < 0) return; sel = new Set([h]); paint(); };
     bindSeg(sh, () => { sel = new Set(); paint(); }); paint();
-    if (note) { $("pbs-msg").style.color = "#b45309"; $("pbs-msg").textContent = "⚠️ لم يعمل الكشف الذكي: " + note.slice(0, 140) + " — هذه الطريقة البسيطة القديمة (لا تصلح للصور الفوتوغرافية)."; }
+    if (note) { $("pbs-msg").style.color = "#b45309"; $("pbs-msg").textContent = "⚠️ لم يعمل الكشف: " + note.slice(0, 140) + " — هذه الطريقة البسيطة القديمة (لا تصلح للصور الفوتوغرافية)."; }
     $("pbs-go").onclick = async () => {
       const chosen = sh.S.mode === "all" ? items.slice() : items.filter(it => sel.has(it.id)); if (!chosen.length) return; $("pbs-go").disabled = true;
       try {

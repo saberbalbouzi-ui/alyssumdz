@@ -37,7 +37,7 @@ ${t.what ? `<div class="sd-box"><b>ما هي هذه الأداة؟</b>${esc(t.wh
 ${t.nt ? `<div class="sd-box"><b>المتطلب</b>${esc(t.nt)}</div>` : ""}
 ${(t.steps || []).length ? `<div class="sd-box"><b>طريقة الاستعمال</b><ol>${t.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
 ${(t.tips || []).length ? `<div class="sd-box"><b>نصائح</b><ul>${t.tips.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
-<div class="sd-act"><button type="button" data-sdgo="${esc(t.id)}">افتح الأداة في المحرّر</button></div>
+<div class="sd-act"><button type="button" data-sdgo="${esc(t.id)}">ابدأ الآن</button></div>
 ${rel.length ? `<div class="sd-box"><b>أدوات مرتبطة</b><div class="sd-rel">${rel.map(r => `<button type="button" data-sdt="${esc(r.id)}">${esc(r.name)}</button>`).join("")}</div></div>` : ""}</div>`;
   }
   function draw() {
@@ -47,6 +47,8 @@ ${rel.length ? `<div class="sd-box"><b>أدوات مرتبطة</b><div class="sd
     host.innerHTML = `<div class="card"><h2>🎨 ستوديو ديزاين</h2>${t ? pageHtml(t) : `<div class="hint" style="margin:0 0 .6rem">كل أدوات الصور والتصميم في مكان واحد (${tools().length} أداة). اضغط أي أداة لتفتح صفحتها مباشرة، ومنها تفتحها في المحرّر.</div>${listHtml()}`}</div>`;
     try { window.scrollTo({ top: 0 }); } catch (e) { }
   }
+  /* «ابدأ الآن»: نافذة تحميل الصورة ثم الأداة على صورتك (أو نافذة الأداة الخاصة بها) */
+  function start(id) { if (typeof ToolWin !== "undefined") return ToolWin.open(id); if (typeof AdminNav !== "undefined") return AdminNav.toolGo(id); }
   function open(id) { S.id = id || ""; S.fh = 0; const h = id ? "#studio=" + id : ""; try { if (location.hash !== h) history.pushState(null, "", location.pathname + location.search + h); } catch (e) { } draw(); }
   function fromHash() { const m = /[#&]studio=([a-z0-9]+)/i.exec(location.hash); const id = m ? m[1].toLowerCase() : ""; if (id !== S.id) { S.id = id; if (!$("tab-studio").classList.contains("hidden")) draw(); } return id; }
   function bind() {
@@ -55,7 +57,7 @@ ${rel.length ? `<div class="sd-box"><b>أدوات مرتبطة</b><div class="sd
       const el = e.target.closest("[data-sdt],[data-sdg],[data-sdback],[data-sdgo]"); if (!el) return;
       if (el.dataset.sdt) return open(el.dataset.sdt);
       if (el.dataset.sdback) return open("");
-      if (el.dataset.sdgo) return typeof AdminNav !== "undefined" && AdminNav.toolGo(el.dataset.sdgo);
+      if (el.dataset.sdgo) return start(el.dataset.sdgo);
       if (el.dataset.sdg !== undefined) { S.g = el.dataset.sdg; draw(); }
     });
     host.addEventListener("input", e => { if (e.target.id === "sd-q") { S.q = e.target.value; const l = $("sd-list"); if (l) { const f = document.createElement("div"); f.innerHTML = listHtml(); l.innerHTML = f.querySelector("#sd-list").innerHTML; } } });
@@ -63,7 +65,7 @@ ${rel.length ? `<div class="sd-box"><b>أدوات مرتبطة</b><div class="sd
   window.addEventListener("message", e => {
     const d = e.data; if (!d || !d.pfStudio) return; const fr = $("sd-fr"); if (!fr || e.source !== fr.contentWindow) return;
     if (d.pfStudio === "h") { const h = Math.max(600, Math.min(30000, +d.h || 0)); if (h && Math.abs(h - S.fh) > 4) { S.fh = h; fr.style.height = h + "px"; } }
-    else if (d.pfStudio === "open" && /^[a-z0-9]+$/i.test(String(d.tool || "")) && typeof AdminNav !== "undefined") AdminNav.toolGo(d.tool);
+    else if (d.pfStudio === "open" && /^[a-z0-9]+$/i.test(String(d.tool || ""))) start(d.tool);
   });
   function init() {
     if (typeof Admin === "undefined" || !Admin.tab || Admin.tab.__sd) return setTimeout(init, 400);

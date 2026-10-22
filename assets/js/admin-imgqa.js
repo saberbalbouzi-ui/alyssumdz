@@ -35,7 +35,7 @@ const AdminImgQA = (() => {
     dark: ["صورة داكنة", "«تحسين تلقائي» يرفع الإضاءة، أو طبّق نمط المتجر بخلفية فاتحة", "restyle"],
     bright: ["إضاءة مفرطة/باهتة", "«تحسين تلقائي» يعيد التباين", "enhance"],
     tiny: ["المنتج صغير في الإطار", "«طبّق نمط المتجر» يكبّره ويوسّطه تلقائياً", "restyle"],
-    cropped: ["المنتج مقصوص من الحواف", "صوّر/ارفع نسخة أوسع، أو استعمل «توسيع الخلفية بالذكاء» ثم طبّق النمط", null],
+    cropped: ["المنتج مقصوص من الحواف", "صوّر/ارفع نسخة أوسع، أو استعمل «توسيع الخلفية» ثم طبّق النمط", null],
     bg: ["خلفية لا تطابق نمط المتجر", "«طبّق نمط المتجر» ينزع الخلفية ويضع خلفية المتجر الموحّدة", "restyle"],
     ratio: ["نسبة الصورة تخالف باقي المتجر", "«طبّق نمط المتجر» يوحّد المقاس (مثلاً 1:1)", "restyle"],
   };
@@ -72,20 +72,20 @@ const AdminImgQA = (() => {
     for (let i = 0; i < picks.length; i++) { const r = picks[i]; say("⏳ معالجة " + (i + 1) + " / " + picks.length + " — " + r.title); try { const src = await loadCanvas(urlOf(r.cover)), out = await restyle(src, S.opt), blob = await new Promise(x => out.toBlob(x, "image/webp", .92)); S.prev[r.slug] = { blob, url: URL.createObjectURL(blob), w: out.width, h: out.height }; } catch (e) { S.prev[r.slug] = { err: e.message || String(e) }; } await new Promise(r => setTimeout(r, 0)); draw(); }
     S.busy = false; say("✅ جاهزة للمعاينة — راجع «قبل/بعد» ثم اعتمد"); draw();
   }
-  /* تهيئة مشهد ذكي (AI Product Staging) لأغلفة المحدّد دفعة واحدة: موافقة واحدة على التكلفة الإجمالية، والنتيجة تدخل نفس مسار المعاينة والاعتماد */
+  /* تهيئة مشهد (AI Product Staging) لأغلفة المحدّد دفعة واحدة: موافقة واحدة على التكلفة الإجمالية، والنتيجة تدخل نفس مسار المعاينة والاعتماد */
   async function applyStage() {
     const picks = S.rows.filter(r => S.sel[r.slug] && !r.err); if (!picks.length || S.busy) { say("حدّد منتجاً واحداً على الأقل"); return; }
-    if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { say("المولّد الذكي غير متاح"); return; }
+    if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { say("المولّد غير متاح"); return; }
     const sh = PBAI._t.SHOTS[S.scene || 0] || PBAI._t.SHOTS[0], e = ImgGen.estimate ? ImgGen.estimate() : null;
-    if (e && !(e.can ? e.can(picks.length) : e.left >= (picks.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); say("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); return; }
-    if (e && !confirm("تهيئة مشهد ذكي «" + sh[1] + "» لـ" + picks.length + " منتج\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) return;
+    if (e && !(e.can ? e.can(picks.length) : e.left >= (picks.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); say("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد"); return; }
+    if (e && !confirm("تهيئة مشهد «" + sh[1] + "» لـ" + picks.length + " منتج\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) return;
     S.busy = true; S.prev = {}; let bad = "";
     for (let i = 0; i < picks.length; i++) {
       const r = picks[i]; say("⏳ مشهد " + (i + 1) + " / " + picks.length + " — " + r.title);
       try { const src = await loadCanvas(urlOf(r.cover)), k = Math.min(1, 1600 / Math.max(src.width, src.height)), c = document.createElement("canvas"); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k); c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
-        const blobIn = await new Promise(x => c.toBlob(x, "image/png")), o = await ImgGen.edit({ blob: blobIn, prompt: PBAI._t.shotPrompt(sh[2], "", sh[3]), W: c.width, H: c.height, title: "مشهد ذكي — " + r.title, confirm: e ? false : undefined });
+        const blobIn = await new Promise(x => c.toBlob(x, "image/png")), o = await ImgGen.edit({ blob: blobIn, prompt: PBAI._t.shotPrompt(sh[2], "", sh[3]), W: c.width, H: c.height, title: "مشهد — " + r.title, confirm: e ? false : undefined });
         if (!o) break; S.prev[r.slug] = { blob: o.blob, url: URL.createObjectURL(o.blob), w: c.width, h: c.height };
-      } catch (x) { S.prev[r.slug] = { err: x.message || "تعذّر التوليد" }; if (x && (x.code === "NOKEY" || x.code === "OFF")) { bad = x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد الذكي معطّل من الإعدادات"; break; } }
+      } catch (x) { S.prev[r.slug] = { err: x.message || "تعذّر التوليد" }; if (x && (x.code === "NOKEY" || x.code === "OFF")) { bad = x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد معطّل من الإعدادات"; break; } }
     }
     S.busy = false; say(bad || "✅ جاهزة للمعاينة — راجع «قبل/بعد» ثم اعتمد"); draw();
   }
@@ -107,7 +107,7 @@ const AdminImgQA = (() => {
 <div class="hint">افحص أغلفة منتجاتك: كل ملاحظة تأتي بحلّها. ثم وحّد شكل الكتالوج كله بنقرة: ينزع الخلفية ويحسّن اللون ويركّب نمط «استوديو المنتج» المحفوظ (الآن: خلفية ${esc(st.bg || "white")} — ظل ${esc(st.shadow || "contact")} — مقاس ${sz}). غيّر النمط من استوديو المنتج في المطوّر.</div>
 <div class="action-bar" style="margin-top:.5rem"><button class="small green" id="iq-scan" ${S.busy ? "disabled" : ""}>🔍 افحص جودة الأغلفة</button>
 <label class="small" style="display:inline-flex;gap:.3rem;align-items:center"><input type="checkbox" id="iq-bg" ${S.opt.removeBg ? "checked" : ""}> نزع الخلفية</label><label class="small" style="display:inline-flex;gap:.3rem;align-items:center"><input type="checkbox" id="iq-en" ${S.opt.enhance ? "checked" : ""}> تحسين تلقائي</label>
-<button class="small gold" id="iq-apply" ${S.rows.length && !S.busy ? "" : "disabled"}>▶ طبّق نمط المتجر على المحدّد</button><select id="iq-scene" class="small">${(typeof PBAI !== "undefined" ? PBAI._t.SHOTS : []).map((x, i) => `<option value="${i}"${(S.scene || 0) === i ? " selected" : ""}>${esc(x[1])}</option>`).join("")}</select><button class="small gold" id="iq-stage" ${S.rows.length && !S.busy ? "" : "disabled"}>🎬 مشهد ذكي للمحدّد</button><button class="small" id="iq-commit" ${Object.values(S.prev).some(v => v && v.blob) && !S.busy ? "" : "disabled"}>✔ اعتمد وانشر الأغلفة الجديدة</button></div>
+<button class="small gold" id="iq-apply" ${S.rows.length && !S.busy ? "" : "disabled"}>▶ طبّق نمط المتجر على المحدّد</button><select id="iq-scene" class="small">${(typeof PBAI !== "undefined" ? PBAI._t.SHOTS : []).map((x, i) => `<option value="${i}"${(S.scene || 0) === i ? " selected" : ""}>${esc(x[1])}</option>`).join("")}</select><button class="small gold" id="iq-stage" ${S.rows.length && !S.busy ? "" : "disabled"}>🎬 مشهد للمحدّد</button><button class="small" id="iq-commit" ${Object.values(S.prev).some(v => v && v.blob) && !S.busy ? "" : "disabled"}>✔ اعتمد وانشر الأغلفة الجديدة</button></div>
 <div id="iq-st" class="hint" style="min-height:1.3em">${esc(S.msg)}</div>${S.rows.length ? `<div style="overflow:auto"><table><thead><tr><th><input type="checkbox" id="iq-all"></th><th>المنتج</th><th>الحالي</th><th>الملاحظات والحلول</th><th>بعد النمط</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}`;
     wire();
   }

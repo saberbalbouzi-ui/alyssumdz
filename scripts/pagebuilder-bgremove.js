@@ -292,16 +292,16 @@ const PBBgRemove = (function () {
     const W = srcC.width, H = srcC.height, k = Math.min(1, 1600 / Math.max(W, H)), w = Math.round(W * k), h = Math.round(H * k);
     const blob = await new Promise(x => scaledCanvas(srcC, w, h).toBlob(x, "image/png")), hex = await ImgGen.pickKey(blob);
     const prompt = "Edit this product photo: replace the ENTIRE background with one perfectly flat, uniform solid color " + hex + " (no gradient, no shadow, no reflection, no texture, no floor line). Keep the main subject exactly as it is: same shape, proportions, colors, labels, details and sharp edges; do not crop, add, remove or redraw any part of it. No text, no watermark.";
-    const r = await ImgGen.edit({ blob, prompt, W: w, H: h, title: "نزع الخلفية بالذكاء (للخلفيات المعقدة)", fmt: "png" });
-    if (!r) { const e = new Error("أُلغي التنفيذ بالذكاء — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
-    if (o && o.onStep) o.onStep("✂️ نزع لون الخلفية من نتيجة الذكاء…");
+    const r = await ImgGen.edit({ blob, prompt, W: w, H: h, title: "نزع الخلفية (للخلفيات المعقدة)", fmt: "png" });
+    if (!r) { const e = new Error("أُلغي التنفيذ — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
+    if (o && o.onStep) o.onStep("✂️ نزع لون الخلفية من نتيجة الأداة…");
     return classicCut(r.canvas, Object.assign({}, o, { onStep: null }));
   }
-  /* نزع الخلفية بالـAPI بدقة عالية (وحدة AIBgCut المستقلة): الذكاء يحدّد الموضوع وقناعه التقريبي، والحواف تُصقل محلياً من بكسلات صورتك الأصلية (بلا إعادة توليد) */
+  /* نزع الخلفية بالـAPI بدقة عالية (وحدة AIBgCut المستقلة): الأداة يحدّد الموضوع وقناعه التقريبي، والحواف تُصقل محلياً من بكسلات صورتك الأصلية (بلا إعادة توليد) */
   const segOK = () => { try { return !!window.AIBgCut && AIBgCut.ready(); } catch (e) { return false; } };
   async function apiCut(srcC, o) {
     if (!segOK()) throw new Error("NOKEY");
-    if (!(o && o.noConfirm) && !confirm("نزع الخلفية بالذكاء (Alyssum API): يحدّد الذكاء الموضوع ثم تُصقل حوافه بدقة من بكسلات صورتك الأصلية.\nسيستهلك من رصيد Alyssum API. متابعة؟ (إلغاء = الطريقة المحلية)")) { const e = new Error("أُلغي التنفيذ بالذكاء — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
+    if (!(o && o.noConfirm) && !confirm("نزع الخلفية (Alyssum API): تحدّد الأداة الموضوع ثم تُصقل حوافه بدقة من بكسلات صورتك الأصلية.\nسيستهلك من رصيد Alyssum API. متابعة؟ (إلغاء = الطريقة المحلية)")) { const e = new Error("أُلغي التنفيذ — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
     const c = await AIBgCut.subject(srcC, { onStep: o && o.onStep }); if (o) o.diagBase = "api " + (c._via || ""); return c;
   }
   const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };

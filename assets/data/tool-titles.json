@@ -15,9 +15,9 @@
         "en": "Remove background"
       },
       "d": {
-        "ar": "أزل خلفية الصورة بنقرة",
-        "fr": "Retirez le fond d'une image en un clic",
-        "en": "Remove an image background in one click"
+        "ar": "اجعل خلفية أي منتج شفافة بنقرة",
+        "fr": "Retirez le fond d'une image",
+        "en": "Remove an image background"
       }
     },
     "gen": {
@@ -28,7 +28,7 @@
         "en": "Image generator"
       },
       "d": {
-        "ar": "ولّد مشاهد ومنتجات بالذكاء",
+        "ar": "ولّد صور منتجات وإعلانات بمقاسات المنصات",
         "fr": "Générez des scènes et produits avec l'IA",
         "en": "Generate scenes and products with AI"
       }
@@ -36,26 +36,26 @@
     "pshoot": {
       "icon": "03-photographie-produit-ia",
       "t": {
-        "ar": "تصوير المنتج بالذكاء",
-        "fr": "Photographie produit IA",
-        "en": "AI product photography"
+        "ar": "تصوير المنتج",
+        "fr": "Photo de produit",
+        "en": "Product photography"
       },
       "d": {
-        "ar": "عدة مشاهد احترافية دفعة واحدة",
-        "fr": "Plusieurs mises en scène pro en une fois",
-        "en": "Several pro scenes in one go"
+        "ar": "جلسة تصوير كاملة بمشاهد متعددة",
+        "fr": "Plusieurs scènes en une fois",
+        "en": "Several scenes at once"
       }
     },
     "fashion": {
       "icon": "04-modele-virtuel",
       "t": {
-        "ar": "استوديو أزياء ذكي",
-        "fr": "Modèle virtuel",
-        "en": "Virtual model"
+        "ar": "استوديو الأزياء",
+        "fr": "Studio de mode",
+        "en": "Fashion studio"
       },
       "d": {
-        "ar": "عارض افتراضي ومانيكان غير مرئي",
-        "fr": "Mannequin virtuel ou invisible",
+        "ar": "عارض افتراضي ومانيكان غير مرئي ومسطح",
+        "fr": "Modèle virtuel et mannequin invisible",
         "en": "Virtual model and ghost mannequin"
       }
     },
@@ -67,61 +67,61 @@
         "en": "Virtual try-on"
       },
       "d": {
-        "ar": "شاهد القطعة على جسمك",
-        "fr": "Voyez la pièce sur vous",
-        "en": "See the item on yourself"
+        "ar": "شاهد القطعة على جسم شخص حقيقي",
+        "fr": "Voyez l'article sur vous",
+        "en": "See the item on you"
       }
     },
     "scene": {
       "icon": "06-mise-en-scene-produit",
       "t": {
-        "ar": "مشهد ذكي للمنتج",
+        "ar": "مشهد المنتج",
         "fr": "Mise en scène produit",
-        "en": "Product staging"
+        "en": "Product scene"
       },
       "d": {
-        "ar": "ضع منتجك في مشهد استخدام واقعي",
-        "fr": "Placez le produit dans une scène réaliste",
-        "en": "Place your product in a realistic scene"
+        "ar": "ضع منتجك في مشهد احترافي واقعي",
+        "fr": "Placez votre produit en scène",
+        "en": "Place your product in a scene"
       }
     },
     "xp": {
       "icon": "08-redimensionner-agrandir",
       "t": {
-        "ar": "توسيع الخلفية بالذكاء",
-        "fr": "Redimensionner et agrandir",
-        "en": "Resize & expand"
+        "ar": "توسيع الخلفية",
+        "fr": "Extension du fond",
+        "en": "Expand background"
       },
       "d": {
-        "ar": "وسّع الصورة لأي منصة أو مقاس",
-        "fr": "Étendez l'image pour toute plateforme",
-        "en": "Expand the image for any platform"
+        "ar": "مدّ الصورة خارج إطارها",
+        "fr": "Étendez l'image hors du cadre",
+        "en": "Extend the image beyond its frame"
       }
     },
     "erase": {
       "icon": "09-supprimer-des-objets",
       "t": {
-        "ar": "ممحاة ذكية بالفرشاة",
-        "fr": "Supprimer des objets",
-        "en": "Remove objects"
+        "ar": "ممحاة",
+        "fr": "Gomme",
+        "en": "Eraser"
       },
       "d": {
-        "ar": "امسح أي عنصر غير مرغوب بفرشاة",
-        "fr": "Effacez un objet indésirable au pinceau",
-        "en": "Brush away unwanted objects"
+        "ar": "امسح الأشياء غير المرغوبة بالفرشاة",
+        "fr": "Effacez ce que vous ne voulez pas",
+        "en": "Erase what you don't want"
       }
     },
     "recolor": {
       "icon": "10-recolorer-vetements",
       "t": {
         "ar": "تلوين الملابس",
-        "fr": "Recolorer des vêtements",
+        "fr": "Recolorer les vêtements",
         "en": "Recolor clothing"
       },
       "d": {
         "ar": "ألوان متعددة من صورة واحدة",
-        "fr": "Plusieurs couleurs depuis une photo",
-        "en": "Several colors from one photo"
+        "fr": "Plusieurs couleurs depuis une image",
+        "en": "Several colors from one image"
       }
     },
     "brand": {
@@ -132,7 +132,7 @@
         "en": "Brand kit"
       },
       "d": {
-        "ar": "الخطوط والألوان والشعار",
+        "ar": "ألوان وخط وشعار علامتك في كل صورة",
         "fr": "Polices, couleurs et logo",
         "en": "Fonts, colors and logo"
       }
@@ -145,9 +145,9 @@
         "en": "Logo maker"
       },
       "d": {
-        "ar": "شعار مجاني أو بالذكاء بألوان علامتك",
-        "fr": "Logo gratuit ou par IA aux couleurs de votre marque",
-        "en": "Free or AI logo in your brand colors"
+        "ar": "شعار بألوان علامتك",
+        "fr": "Logo aux couleurs de votre marque",
+        "en": "Logo in your brand colors"
       }
     },
     "batch": {
@@ -158,35 +158,35 @@
         "en": "Batch processing"
       },
       "d": {
-        "ar": "عدّل آلاف الصور دفعة واحدة",
-        "fr": "Modifiez des milliers d'images d'un coup",
-        "en": "Edit thousands of images at once"
+        "ar": "عدّل مئات الصور دفعة واحدة",
+        "fr": "Traitez beaucoup d'images à la fois",
+        "en": "Process many images at once"
       }
     },
     "catalog": {
       "icon": "14-catalogue-de-produits",
       "t": {
         "ar": "كتالوج المنتجات",
-        "fr": "Catalogue de produits",
+        "fr": "Catalogue produits",
         "en": "Product catalog"
       },
       "d": {
-        "ar": "افحص وحدّث أغلفة كل متجرك",
-        "fr": "Vérifiez et mettez à jour tout votre catalogue",
-        "en": "Check and update your whole catalog"
+        "ar": "افحص ووحّد أغلفة متجرك كله",
+        "fr": "Contrôlez les visuels de votre boutique",
+        "en": "Check your store visuals"
       }
     },
     "vgen": {
       "icon": "07-generateur-de-video",
       "t": {
-        "ar": "مولّد الفيديو بالذكاء",
-        "fr": "Générateur de vidéo IA",
-        "en": "AI video generator"
+        "ar": "مولّد الفيديو",
+        "fr": "Générateur de vidéo",
+        "en": "Video generator"
       },
       "d": {
         "ar": "فيديو إعلاني من صورة ووصف أو قالب",
-        "fr": "Vidéo publicitaire à partir d'une image et d'un prompt ou d'un modèle",
-        "en": "Ad video from an image and a prompt or template"
+        "fr": "Vidéo publicitaire à partir d'une image",
+        "en": "Ad video from an image"
       }
     },
     "barcode": {
@@ -197,7 +197,7 @@
         "en": "Barcode & QR generator"
       },
       "d": {
-        "ar": "أنشئ رمز QR وباركود وحمّله PNG أو WebP",
+        "ar": "رمز QR وباركود جاهزان للطباعة بصيغة PNG أو WebP",
         "fr": "Créez un QR code ou un code-barres et téléchargez-le en PNG ou WebP",
         "en": "Create a QR or barcode and download it as PNG or WebP"
       }
@@ -210,7 +210,7 @@
         "en": "3D Studio"
       },
       "d": {
-        "ar": "علب وعبوات 3D",
+        "ar": "علب وعبوات ثلاثية الأبعاد",
         "fr": "Boîtes et emballages 3D",
         "en": "3D boxes and packs"
       }
@@ -219,26 +219,325 @@
       "icon": "19-magic-layers",
       "t": {
         "ar": "Magic Layers — تفكيك الصورة إلى طبقات",
-        "fr": "Magic Layers — décomposer une image en calques",
+        "fr": "Magic Layers — séparer l'image en calques",
         "en": "Magic Layers — split an image into layers"
       },
       "d": {
-        "ar": "حوّل أي صورة إلى طبقات مستقلة: عناصر ونصوص حقيقية على خلفية",
+        "ar": "حوّل أي صورة إلى طبقات مستقلة: كل عنصر على حدة والنصوص نصّ حقيقي قابل للتعديل",
         "fr": "Transformez une image en calques indépendants : éléments et vrais textes sur un fond",
         "en": "Turn any image into independent layers: elements and real text over a background"
       }
     },
     "pagepilot": {
-      "icon": "14-catalogue-de-produits",
+      "icon": "41-page-builder",
       "t": {
-        "ar": "منشئ الصفحات بالذكاء",
-        "fr": "Créateur de pages par IA",
-        "en": "AI page builder"
+        "ar": "منشئ الصفحات",
+        "fr": "Créateur de pages",
+        "en": "Page builder"
       },
       "d": {
-        "ar": "من منتج أو رابط أو وصف إلى صفحة هبوط كاملة قابلة للتعديل",
-        "fr": "D'un produit, d'un lien ou d'une description à une page d'atterrissage complète et modifiable",
-        "en": "From a product, link or description to a complete editable landing page"
+        "ar": "من منتج أو رابط أو وصف إلى صفحة هبوط كاملة قابلة للتعديل في دقائق",
+        "fr": "Une page de vente complète éditable",
+        "en": "A complete editable landing page"
+      }
+    },
+    "st": {
+      "icon": "20-product-studio",
+      "t": {
+        "ar": "استوديو المنتج",
+        "fr": "Studio produit",
+        "en": "Product studio"
+      },
+      "d": {
+        "ar": "خلفية وظل ومقاس موحّد لصور المنتج",
+        "fr": "Fond, ombre et format unifié",
+        "en": "Background, shadow and unified size"
+      }
+    },
+    "vd": {
+      "icon": "21-image-animation",
+      "t": {
+        "ar": "تحريك الصورة",
+        "fr": "Animation d'image",
+        "en": "Image animation"
+      },
+      "d": {
+        "ar": "حرّك صورة منتجك لفيديو قصير",
+        "fr": "Animez votre image en courte vidéo",
+        "en": "Animate your image into a short video"
+      }
+    },
+    "vad": {
+      "icon": "22-video-ads",
+      "t": {
+        "ar": "إعلان فيديو",
+        "fr": "Vidéo publicitaire",
+        "en": "Video ad"
+      },
+      "d": {
+        "ar": "إعلانات UGC وتيك توك ومنتج بصوت ولغات متعددة",
+        "fr": "Vidéo publicitaire à partir de vos images",
+        "en": "Video ads from your images"
+      }
+    },
+    "v360": {
+      "icon": "23-view-360",
+      "t": {
+        "ar": "عرض 360° للمنتج",
+        "fr": "Vue 360° du produit",
+        "en": "Product 360° view"
+      },
+      "d": {
+        "ar": "منتجك يدور بسحب الزائر",
+        "fr": "Vue rotative du produit",
+        "en": "Rotating product view"
+      }
+    },
+    "txt2img": {
+      "icon": "24-text-to-image",
+      "t": {
+        "ar": "صورة من وصف نصي",
+        "fr": "Image à partir d'un texte",
+        "en": "Text to image"
+      },
+      "d": {
+        "ar": "اكتب فكرتك وتُولَّد صورة جديدة",
+        "fr": "Créez une image à partir d'une description",
+        "en": "Create an image from a description"
+      }
+    },
+    "mk": {
+      "icon": "25-mask",
+      "t": {
+        "ar": "ماسك",
+        "fr": "Masque",
+        "en": "Mask"
+      },
+      "d": {
+        "ar": "اقتطع الصورة بأي شكل",
+        "fr": "Découpez l'image en forme",
+        "en": "Cut the image into a shape"
+      }
+    },
+    "pz": {
+      "icon": "26-puzzle",
+      "t": {
+        "ar": "بازل",
+        "fr": "Puzzle",
+        "en": "Puzzle"
+      },
+      "d": {
+        "ar": "قسّم الصورة إلى قطع أحجية",
+        "fr": "Transformez l'image en puzzle",
+        "en": "Turn the image into a puzzle"
+      }
+    },
+    "cap": {
+      "icon": "42-capture-elements",
+      "t": {
+        "ar": "التقاط العناصر",
+        "fr": "Capture d'éléments",
+        "en": "Capture elements"
+      },
+      "d": {
+        "ar": "استخرج كل عنصر في الصورة منفصلاً",
+        "fr": "Séparez les éléments de l'image",
+        "en": "Separate the image elements"
+      }
+    },
+    "rt": {
+      "icon": "27-retouch",
+      "t": {
+        "ar": "لمسات وتصحيح",
+        "fr": "Retouche et correction",
+        "en": "Retouch & correct"
+      },
+      "d": {
+        "ar": "تحسين تلقائي وإضاءة وألوان",
+        "fr": "Corrigez couleurs, bruit et perspective",
+        "en": "Fix color, noise and perspective"
+      }
+    },
+    "ff": {
+      "icon": "28-soft-edges",
+      "t": {
+        "ar": "حواف ناعمة",
+        "fr": "Bords doux",
+        "en": "Soft edges"
+      },
+      "d": {
+        "ar": "ذوّب حواف الصورة في الخلفية",
+        "fr": "Fondez les bords de l'image",
+        "en": "Fade the image edges"
+      }
+    },
+    "fr": {
+      "icon": "29-frame",
+      "t": {
+        "ar": "إطار وهوية",
+        "fr": "Cadre et identité",
+        "en": "Frame & brand"
+      },
+      "d": {
+        "ar": "إطار وظل وشعار على الصورة",
+        "fr": "Cadre et logo de marque",
+        "en": "Frame and brand logo"
+      }
+    },
+    "bl": {
+      "icon": "30-merge-images",
+      "t": {
+        "ar": "دمج صور",
+        "fr": "Fusion d'images",
+        "en": "Merge images"
+      },
+      "d": {
+        "ar": "دمج صورة داخل صورة بحواف ناعمة",
+        "fr": "Fusionnez deux images en douceur",
+        "en": "Blend two images smoothly"
+      }
+    },
+    "cl": {
+      "icon": "31-collage",
+      "t": {
+        "ar": "كولاج",
+        "fr": "Collage",
+        "en": "Collage"
+      },
+      "d": {
+        "ar": "اجمع عدة صور في تصميم واحد",
+        "fr": "Assemblez vos images en collage",
+        "en": "Combine images into a collage"
+      }
+    },
+    "resize": {
+      "icon": "08-redimensionner-agrandir",
+      "t": {
+        "ar": "تغيير المقاس والتوسيع",
+        "fr": "Redimensionner",
+        "en": "Resize"
+      },
+      "d": {
+        "ar": "مقاس أي منصة بنقرة",
+        "fr": "Format adapté à chaque plateforme",
+        "en": "Size for every platform"
+      }
+    },
+    "sl": {
+      "icon": "32-photo-styles",
+      "t": {
+        "ar": "أساليب التصوير",
+        "fr": "Styles de prise de vue",
+        "en": "Photo styles"
+      },
+      "d": {
+        "ar": "17 أسلوب تصوير جاهز",
+        "fr": "Plusieurs styles de photo",
+        "en": "Several photo styles"
+      }
+    },
+    "ai": {
+      "icon": "33-edit-by-prompt",
+      "t": {
+        "ar": "تعديل بالوصف",
+        "fr": "Modifier par description",
+        "en": "Edit by prompt"
+      },
+      "d": {
+        "ar": "اكتب ما تريد تغييره في الصورة",
+        "fr": "Modifiez l'image par une description",
+        "en": "Edit the image with a description"
+      }
+    },
+    "up": {
+      "icon": "34-quality-boost",
+      "t": {
+        "ar": "تحسين الجودة",
+        "fr": "Amélioration de la qualité",
+        "en": "Quality boost"
+      },
+      "d": {
+        "ar": "تكبير وحدّة وتقليل ضجيج",
+        "fr": "Plus de netteté et de résolution",
+        "en": "Sharper and higher resolution"
+      }
+    },
+    "relight": {
+      "icon": "35-relight",
+      "t": {
+        "ar": "إعادة الإضاءة",
+        "fr": "Relighting",
+        "en": "Relight"
+      },
+      "d": {
+        "ar": "صحّح الإضاءة الخاطئة دون تغيير المنتج",
+        "fr": "Changez l'éclairage du produit",
+        "en": "Change the product lighting"
+      }
+    },
+    "textrm": {
+      "icon": "36-remove-text",
+      "t": {
+        "ar": "إزالة النص والعلامات",
+        "fr": "Retirer texte et marques",
+        "en": "Remove text & marks"
+      },
+      "d": {
+        "ar": "علامات مائية وملصقات ولافتات",
+        "fr": "Effacez textes et marques",
+        "en": "Erase text and watermarks"
+      }
+    },
+    "uncrop": {
+      "icon": "37-restore-crop",
+      "t": {
+        "ar": "استعادة الجزء المقطوع",
+        "fr": "Restaurer la partie coupée",
+        "en": "Restore cropped area"
+      },
+      "d": {
+        "ar": "أكمل المنتج المقطوع عند حافة الصورة",
+        "fr": "Restaurez la partie coupée",
+        "en": "Restore the cropped part"
+      }
+    },
+    "beautify": {
+      "icon": "38-product-enhancer",
+      "t": {
+        "ar": "محسّن المنتج",
+        "fr": "Améliorateur produit",
+        "en": "Product enhancer"
+      },
+      "d": {
+        "ar": "صورة ضعيفة ← احترافية بنقرة",
+        "fr": "Améliorez une photo faible",
+        "en": "Enhance a weak photo"
+      }
+    },
+    "ast": {
+      "icon": "39-asset-library",
+      "t": {
+        "ar": "مكتبة الأصول",
+        "fr": "Bibliothèque d'assets",
+        "en": "Asset library"
+      },
+      "d": {
+        "ar": "صور وأيقونات وفيديو بلا علامات مائية",
+        "fr": "Photos, icônes et vidéos",
+        "en": "Photos, icons and videos"
+      }
+    },
+    "stk": {
+      "icon": "40-sticker-library",
+      "t": {
+        "ar": "مكتبة الملصقات",
+        "fr": "Bibliothèque d'autocollants",
+        "en": "Sticker library"
+      },
+      "d": {
+        "ar": "آلاف الملصقات الملونة",
+        "fr": "Des milliers d'autocollants",
+        "en": "Thousands of stickers"
       }
     }
   }

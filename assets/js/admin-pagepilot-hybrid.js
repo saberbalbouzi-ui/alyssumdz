@@ -1,4 +1,4 @@
-/* «منشئ الصفحات بالذكاء» — الوضع الهجين (PagePilotHybrid).
+/* «منشئ الصفحات» — الوضع الهجين (PagePilotHybrid).
    صورة منتج واحدة (أو صور من رابط) ← صفحة موبايل من ~8–10 أقسام بصرية، لكل قسم: خلفية مصمَّمة + المنتج الحقيقي (طبقة مقصوصة قابلة للتحريك) + نص عربي حيّ.
    القرار المعماري: الذكاء يرسم المشاهد/الخلفيات فقط **بلا أي كتابة** (النماذج تكسر وصل الحروف العربية)، والنص طبقات HTML حقيقية
    (RTL، تعديل فوري بلا ذكاء، SEO) فوق «منطقة نص آمنة» محجوزة في الصورة، بلون يضمن التباين WCAG AA.
@@ -412,13 +412,13 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const refs = (Array.isArray(inp.refs) ? inp.refs : []).filter(Boolean); if (inp.blob && !refs.includes(inp.blob)) refs.unshift(inp.blob);
     const photo = refs[0] ? await toCanvas(refs[0], 1600) : null;
     const NOAI = (m, code) => Object.assign(new Error(m), { code: code || "FAIL" });
-    if (!P.real) throw NOAI("الأداة تعمل بالذكاء فقط ولا تنتج صفحة بدونه: فعّل مفتاح Alyssum API (أو جدّد الرصيد) ثم أعد المحاولة.", "NOKEY");
+    if (!P.real) throw NOAI("الأداة تحتاج مفتاح Alyssum API ولا تنتج صفحة بدونه: فعّل المفتاح (أو جدّد الرصيد) ثم أعد المحاولة.", "NOKEY");
     if (!photo) throw NOAI("لا توجد صورة للمنتج: اختر منتجاً له صورة أو ارفع صورة.", "NOPHOTO");
     const strategy = "edit", edit = true;
     /* ١ تحليل المنتج */
     const RS = inp.resume && inp.resume.plan && inp.resume.style && inp.resume.an ? inp.resume : null;   /* استئناف: تُعاد الأقسام الفاشلة فقط */
     let an = RS ? RS.an : cleanAnalysis({});
-    if (!RS) try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { throw NOAI("فشل الذكاء في تحليل المنتج (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
+    if (!RS) try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { throw NOAI("تعذّر تحليل المنتج (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
     if (an.risks.some(r => /medical|cosmetic/.test(r))) note.push("المنتج يحمل مخاطر ادّعاء (" + an.risks.join("، ") + "): راجع النصوص قبل النشر.");
     let prod = null, prodOk = false, prods = [];
     /* ٣ دليل الأسلوب */
@@ -432,7 +432,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         plan = pl;
       } catch (e) { planErr = e; if (e && (e.code === "NOKEY" || e.code === "OFF")) break; }
     }
-    if (!plan) { const e = planErr; throw NOAI("فشل الذكاء في كتابة نصوص الصفحة (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
+    if (!plan) { const e = planErr; throw NOAI("تعذّرت كتابة نصوص الصفحة (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
     if (RS) (RS.note || []).forEach(w => note.push(w)); else plan.warn.forEach(w => note.push(w));
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
     const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta === true, results = RS ? RS.results.slice() : [], fails = [];
@@ -458,7 +458,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
           }
           break;
         } catch (e) {
-          if (e && (e.code === "NOKEY" || e.code === "OFF")) throw NOAI("الأداة تعمل بالذكاء فقط: " + (e.code === "OFF" ? "توليد الصور معطّل في الإعدادات" : "لا يوجد مفتاح Alyssum API") + " — لم تُنتَج صفحة.", e.code);
+          if (e && (e.code === "NOKEY" || e.code === "OFF")) throw NOAI("الأداة لا تعمل الآن: " + (e.code === "OFF" ? "توليد الصور معطّل في الإعدادات" : "لا يوجد مفتاح Alyssum API") + " — لم تُنتَج صفحة.", e.code);
           const em = String((e && (e.message || e.code)) || ""); if (!HARD.test(em) && RATE.test(em) && (R.rl = (R.rl || 0) + 1) <= 3) { const m = /retry in (\d+)/i.exec(em); await new Promise(r => setTimeout(r, Math.min(60000, (m ? +m[1] + 2 : 20 * R.rl) * 1000))); a--; continue; } if (HARD.test(em)) halted = em.slice(0, 120);   /* حدّ/رصيد/صلاحية: توقّف عن بقية الأقسام فلا يتكرر الخصم بلا فائدة */
           if (halted || a >= 2) { fails.push({ i, msg: em.slice(0, 120), code: halted ? "HALT" : "BG" }); return; }
           extra = ""; await new Promise(r => setTimeout(r, 600));
@@ -470,7 +470,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     });
     if (fails.length) {
       fails.sort((x, y) => x.i - y.i); const hard = fails.some(f => f.code === "HALT"), nums = fails.map(f => f.i + 1).join("، "), done = results.filter(Boolean).length;
-      const e = NOAI("تعذّر رسم " + fails.length + " من " + plan.sections.length + " قسم (الأقسام: " + nums + ") بالذكاء (" + fails[0].msg + ") — لم تُنتَج صفحة. " + (done ? "حُفظت الأقسام الناجحة (" + done + ") فلن تُعاد: " : "") + (hard ? "عالج السبب (الرصيد/الصلاحية) ثم أعد الأقسام الفاشلة فقط." : "اضغط «أعد الأقسام الفاشلة فقط»."), hard ? "HALT" : "BG");
+      const e = NOAI("تعذّر رسم " + fails.length + " من " + plan.sections.length + " قسم (الأقسام: " + nums + ") (" + fails[0].msg + ") — لم تُنتَج صفحة. " + (done ? "حُفظت الأقسام الناجحة (" + done + ") فلن تُعاد: " : "") + (hard ? "عالج السبب (الرصيد/الصلاحية) ثم أعد الأقسام الفاشلة فقط." : "اضغط «أعد الأقسام الفاشلة فقط»."), hard ? "HALT" : "BG");
       e.partial = { an, style, plan, results: results.slice(), note: note.slice() }; e.failed = fails.map(f => f.i + 1); throw e;
     }
     return { an, style, plan, results, prod, prods, prodOk, strategy, log, note, real: P.real, colors: photo ? productColors(photo, 6) : [] };
@@ -479,7 +479,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   /* ───────────── إعادة تلوين صفحة مولَّدة (لون الخلفية/الدرجة) بلا إعادة توليد الصور ─────────────
      يغيّر طبقات اللون الموحّد والتدرّجات وخلفية الأقسام ولون الكلمات المميّزة والأزرار، ويقلب لون النص (أبيض ↔ داكن) إن تغيّرت الدرجة بين داكن وفاتح. */
   function recolorPage(page, opt) {
-    const meta = page && page.specMeta && page.specMeta.hybrid; if (!meta || !meta.theme || !meta.theme.palette) return { ok: false, error: "ليست صفحة من «منشئ الصفحات بالذكاء»" };
+    const meta = page && page.specMeta && page.specMeta.hybrid; if (!meta || !meta.theme || !meta.theme.palette) return { ok: false, error: "ليست صفحة من «منشئ الصفحات»" };
     const old = meta.theme, od = old.palette.deep.toLowerCase(), oh = old.palette.hl.toLowerCase(), nt = styleBible({}, null, opt), nd = nt.palette.deep.toLowerCase(), nh = nt.palette.hl.toLowerCase();
     const oldLight = hexLum(od) > .4, newLight = hexLum(nd) > .4, flip = oldLight !== newLight, [dr, dg, db] = hex2rgb(nd), od3 = hex2rgb(od).join(",");
     const og3 = hex2rgb(glowOf(od)).join(","), [gr, gg, gb] = hex2rgb(glowOf(nd)), hex = c => { const m = String(c || "").toLowerCase(); if (m === od) return nd; if (m === glowOf(od).toLowerCase()) return glowOf(nd); if (oh !== "#ffffff" && oh !== "#111111" && m === oh) return nh; if (flip && m === "#ffffff") return "#111111"; if (flip && m === "#111111") return "#ffffff"; return c; };
@@ -549,7 +549,7 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   /* نتيجة جديدة للتجميع: الخطة والأقسام المرتبطة بكل صورة تحمل نصوص ب، والصور نفسها */
   const variantOut = (out, plan) => Object.assign({}, out, { plan, results: out.results.map((R, i) => Object.assign({}, R, { sec: plan.sections[i] ? Object.assign({}, R.sec, plan.sections[i]) : R.sec })) });
   async function variantB(out, inp, over) {
-    const P = providers(over); if (!P.real) throw Object.assign(new Error("نسخة ب تحتاج الذكاء: فعّل مفتاح Alyssum API ثم أعد المحاولة."), { code: "NOKEY" });
+    const P = providers(over); if (!P.real) throw Object.assign(new Error("نسخة ب تحتاج مفتاح Alyssum API: فعّله ثم أعد المحاولة."), { code: "NOKEY" });
     const raw = await withTimeout(P.llm.json(variantPrompt((inp && inp.info) || {}, out.an, out.plan, { dialect: inp && inp.dialect }), []), 150000, "نسخة ب");
     return mergeVariant(out.plan, raw);
   }

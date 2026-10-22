@@ -19,8 +19,8 @@ const AdminImgBatch = (() => {
   /* هدف المقاس: {w,h} أو null للأصلي (مع حدّ العرض الأقصى) */
   function target(c) { if (c.preset === "orig") return null; if (c.preset === "custom") return { aiPrompt, AI_MODES, w: Math.max(16, Math.min(6000, +c.w || 1000)), h: Math.max(16, Math.min(6000, +c.h || 1000)) }; const m = c.preset.split("x"); return { w: +m[0], h: +m[1] }; }
 
-  /* خطوة ذكاء اصطناعي اختيارية لكل صورة قبل بقية المعالجة (Alyssum API): تهيئة مشهد، مانيكان غير مرئي، مسطح، عارض افتراضي، إزالة تجاعيد، تلوين، تعديل بوصف. موافقة تكلفة واحدة للدفعة (حتى 250 صورة) */
-  const AI_MODES = [["none", "بلا خطوة ذكاء"], ["stage", "تهيئة مشهد (Product Staging)"], ["ghost", "مانيكان غير مرئي"], ["flat", "تصوير مسطح"], ["model", "عارض افتراضي"], ["wrinkle", "إزالة التجاعيد"], ["recolor", "تلوين المنتج"], ["beautify", "محسّن المنتج"], ["relight", "إعادة الإضاءة (استوديو)"], ["textrm", "إزالة العلامات والنصوص الدخيلة"], ["edit", "تعديل بوصف"]];
+  /* خطوة تحسين اصطناعي اختيارية لكل صورة قبل بقية المعالجة (Alyssum API): تهيئة مشهد، مانيكان غير مرئي، مسطح، عارض افتراضي، إزالة تجاعيد، تلوين، تعديل بوصف. موافقة تكلفة واحدة للدفعة (حتى 250 صورة) */
+  const AI_MODES = [["none", "بلا خطوة تحسين"], ["stage", "تهيئة مشهد (Product Staging)"], ["ghost", "مانيكان غير مرئي"], ["flat", "تصوير مسطح"], ["model", "عارض افتراضي"], ["wrinkle", "إزالة التجاعيد"], ["recolor", "تلوين المنتج"], ["beautify", "محسّن المنتج"], ["relight", "إعادة الإضاءة (استوديو)"], ["textrm", "إزالة العلامات والنصوص الدخيلة"], ["edit", "تعديل بوصف"]];
   const AI_MAX = 250;
   function aiPrompt(c) {
     const T = typeof PBAI !== "undefined" ? PBAI._t : null; if (!T) return "";
@@ -101,15 +101,15 @@ const AdminImgBatch = (() => {
   async function run() {
     if (S.busy || !S.files.length) return; const c = Object.assign({}, S.cfg), used = new Set();
     if (c.ai !== "none") {
-      if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { status("المولّد الذكي غير متاح"); return; }
+      if (typeof ImgGen === "undefined" || !ImgGen.edit || typeof PBAI === "undefined") { status("المولّد غير متاح"); return; }
       if (!aiPrompt(c)) { status("اكتب وصف التعديل أولاً"); return; }
-      if (S.files.length > AI_MAX) { status("الحدّ الأقصى للدفعة الذكية " + AI_MAX + " صورة — احذف الزائد"); return; }
-      const e = ImgGen.estimate ? ImgGen.estimate() : null; if (e) { if (!(e.can ? e.can(S.files.length) : e.left >= (S.files.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); status("رصيد Alyssum API لا يكفي لهذه الدفعة — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور"); return; } if (!confirm("خطوة ذكاء اصطناعي لـ" + S.files.length + " صورة\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) return; }
+      if (S.files.length > AI_MAX) { status("الحدّ الأقصى للدفعة " + AI_MAX + " صورة — احذف الزائد"); return; }
+      const e = ImgGen.estimate ? ImgGen.estimate() : null; if (e) { if (!(e.can ? e.can(S.files.length) : e.left >= (S.files.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); status("رصيد Alyssum API لا يكفي لهذه الدفعة — جدّد الرصيد"); return; } if (!confirm("خطوة تحسين اصطناعي لـ" + S.files.length + " صورة\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) return; }
     }
     S.busy = true; S.out = []; status("⏳ 0 / " + S.files.length);
     for (let i = 0; i < S.files.length; i++) {
       let it = S.files[i];
-      try { if (c.ai !== "none") { try { it = await aiStep(it, c); } catch (x) { if (x && (x.code === "NOKEY" || x.code === "OFF")) { S.out.push({ name: it.name, err: x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد الذكي معطّل من الإعدادات" }); break; } throw x; } }
+      try { if (c.ai !== "none") { try { it = await aiStep(it, c); } catch (x) { if (x && (x.code === "NOKEY" || x.code === "OFF")) { S.out.push({ name: it.name, err: x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد معطّل من الإعدادات" }); break; } throw x; } }
         const r = await render(it, c); S.out.push({ name: uniq(it.name + (c.wm !== "none" ? "-wm" : "") + "." + extOf(c.fmt), used), blob: r.blob, w: r.w, h: r.h, before: it.size, url: URL.createObjectURL(r.blob) }); }
       catch (e) { S.out.push({ name: it.name, err: e.message || String(e) }); }
       status("⏳ " + (i + 1) + " / " + S.files.length); await new Promise(r => setTimeout(r, 0));
@@ -138,7 +138,7 @@ ${tg && g.fit === "contain" ? `<label>لون الخلفية<input id="ib-bg" typ
 <label>الصيغة${sel("ib-fmt", [["webp", "WebP (الأخف)"], ["jpeg", "JPEG"], ["png", "PNG (شفافية)"]], g.fmt)}</label>
 <label>الجودة ${g.q}%<input id="ib-q" type="range" min="40" max="100" value="${g.q}"></label></div>
 <div class="ib-g"><label style="grid-column:1/-1"><span><input type="checkbox" id="ib-pipe" ${g.pipe ? "checked" : ""}> طبّق نمط المتجر (استوديو المنتج) قبل المقاس — ينزع الخلفية ويركّب الخلفية والظل المحفوظين</span></label>${g.pipe ? `<label><span><input type="checkbox" id="ib-pbg" ${g.pbg ? "checked" : ""}> نزع الخلفية</span></label><label><span><input type="checkbox" id="ib-penh" ${g.penh ? "checked" : ""}> تحسين تلقائي</span></label><div class="hint" style="grid-column:1/-1">يُستعمل مقاس النمط المحفوظ في استوديو المنتج بدل «المقاس» أعلاه.</div>` : ""}</div>
-<div class="ib-g"><label style="grid-column:1/-1">خطوة ذكاء اصطناعي قبل المعالجة (Alyssum API — حتى ${AI_MAX} صورة بموافقة تكلفة واحدة)${sel("ib-ai", AI_MODES, g.ai)}</label>
+<div class="ib-g"><label style="grid-column:1/-1">خطوة تحسين اصطناعي قبل المعالجة (Alyssum API — حتى ${AI_MAX} صورة بموافقة تكلفة واحدة)${sel("ib-ai", AI_MODES, g.ai)}</label>
 ${g.ai === "stage" ? `<label>المشهد${sel("ib-aisc", (typeof PBAI !== "undefined" ? PBAI._t.SHOTS : []).map((x, i) => [i, x[1]]), g.aiScene)}</label>` : ""}
 ${g.ai === "model" ? `<label>العارض${sel("ib-aiwho", [["mannequin", "مانيكان بلا وجه"], ["man", "رجل"], ["woman", "امرأة محجبة بلباس محتشم"]], g.aiWho)}</label>` : ""}
 ${g.ai === "recolor" ? `<label>اللون${sel("ib-aicol", (typeof PBAI !== "undefined" ? PBAI._t.RC_COLORS : []).map(x => [x[0], x[1]]), g.aiColor)}</label>` : ""}

@@ -69,9 +69,9 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   });
   t("استئناف: يفشل قسمان ويُحفظ الباقي مع رسالة بالأرقام", rsm.first.failed.join() === "2,4" && rsm.first.hasPartial && rsm.first.done === 3 && /الأقسام: 2، 4/.test(rsm.first.msg), rsm.first);
   t("الاستئناف يعيد القسمين الفاشلين فقط بلا تحليل ولا خطة", rsm.second.calls === 2 && rsm.second.idxs === "1,3" && rsm.second.llm === 0 && rsm.second.full, rsm.second);
-  t("بلا مفتاح: خطأ واضح ولا صفحة", /^NOKEY\|.*بالذكاء فقط/.test(noai.nokey), noai);
+  t("بلا مفتاح: خطأ واضح ولا صفحة", /^NOKEY\|.*تحتاج مفتاح Alyssum API/.test(noai.nokey), noai);
   t("بلا صورة منتج: خطأ", /^NOPHOTO/.test(noai.nophoto), noai);
-  t("فشل نص الذكاء: خطأ «لم تُستهلك أي صورة» بلا نص احتياطي", /فشل الذكاء في/.test(noai.planfail) && /لم تُستهلك/.test(noai.planfail), noai);
+  t("فشل نص الذكاء: خطأ «لم تُستهلك أي صورة» بلا نص احتياطي", /تعذّر تحليل المنتج|تعذّرت كتابة نصوص الصفحة/.test(noai.planfail) && /لم تُستهلك/.test(noai.planfail), noai);
   t("خطة ناقصة تُعاد مرتين ثم تُرفض", /خطة ناقصة/.test(noai.badplan), noai);
   t("فشل صورة قسم: خطأ ولا خلفية محلية", /^BG\|.*تعذّر رسم/.test(noai.imgfail) && /لم تُنتَج صفحة/.test(noai.imgfail), noai);
   t("نفاد الحصة يوقف فوراً بخطأ", /^HALT\|/.test(noai.quota), noai);

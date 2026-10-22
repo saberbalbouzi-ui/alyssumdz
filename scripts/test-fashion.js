@@ -49,7 +49,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("اختيار العارض المحفوظ: يقلّص القطع الإضافية إلى واحدة ويُرسل المرجع", ui.fModel === ui.models[0].id && ui.outfitCap === 1 && ui.c2 && ui.c2.extra === 2 && /REFERENCE MODEL/.test(ui.c2.prompt), [ui.outfitCap, ui.c2 && ui.c2.extra]);
   ok("حذف العارض المحفوظ", ui.after === 0);
   /* المشهد الذكي بخيارين */
-  ok("PBAI.stage: يضبط مشهدين (على طاولة، في اليد)", await T(() => { const ids = PBAI.stage(); return ids.length === 2 && PBAI.state.ps.length === 2; }));
+  ok("PBAI.stage: يضبط مشهداً واحداً (نتيجة واحدة بمسحة واحدة)", await T(() => { const ids = PBAI.stage(); return ids.length === 1 && PBAI.state.ps.length === 1; }));
   /* أيقونة بالذكاء */
   const p2 = await b.newPage(); await p2.route("https://t.test/**", r => r.fulfill({ contentType: "text/html", body: "<!doctype html><html><body></body></html>" })); await p2.goto("https://t.test/"); await p2.addScriptTag({ content: fs.readFileSync(path.join(__dirname, "pagebuilder-more.js"), "utf8") });
   const T2 = fn => p2.evaluate(fn);

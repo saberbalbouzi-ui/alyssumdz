@@ -23,7 +23,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
     document.querySelector('#pp-bg [data-pp="go"]').click(); await new Promise(r => setTimeout(r, 800));
     const rep = (document.getElementById("pp-rep") || {}).innerText || ""; PBApp.open = o; return { opened, rep };
   });
-  t("بلا مفتاح الأداة ترفض وتشرح السبب ولا تفتح صفحة", nokey.opened === 0 && /بالذكاء فقط/.test(nokey.rep), nokey);
+  t("بلا مفتاح الأداة ترفض وتشرح السبب ولا تفتح صفحة", nokey.opened === 0 && /تحتاج مفتاح Alyssum API/.test(nokey.rep), nokey);
   t("لا أخطاء صفحة", errs.length === 0, errs.slice(0, 2));
   console.log(ok + " ✓ / " + bad + " ✗"); await b.close(); process.exit(bad ? 1 : 0);
 })();

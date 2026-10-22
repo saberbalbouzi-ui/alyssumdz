@@ -39,7 +39,7 @@ const ImgGen = (() => {
     state() { if (LS.get(AIOUT, "0") === "1") return "out"; const b = cfg.budget(); if (!b) return "ok"; const left = b - cfg.spent(); if (left < unitCost()) return "out"; return left <= b * LOWFRAC ? "low" : "ok"; },
     pct() { const b = cfg.budget(); return b ? Math.max(0, Math.min(100, Math.round((b - cfg.spent()) / b * 100))) : null; },
     last() { try { return JSON.parse(LS.get(AIA, "null")) || null; } catch (e) { return null; } },
-    msg(s, p) { return s === "out" ? "⛔ نفد رصيد Alyssum API — تتوقف أدوات الذكاء حتى تجديد الرصيد" : "⚠️ رصيد Alyssum API على وشك النفاد" + (p != null ? " (متبقٍ نحو " + p + "٪)" : ""); },
+    msg(s, p) { return s === "out" ? "⛔ نفد رصيد Alyssum API — تتوقف الأدوات حتى تجديد الرصيد" : "⚠️ رصيد Alyssum API على وشك النفاد" + (p != null ? " (متبقٍ نحو " + p + "٪)" : ""); },
     note() {
       const s = credit.state(), prev = (credit.last() || {}).state || "";
       if (s === "ok") { if (prev) LS.set(AIA, "null"); return s; }
@@ -57,7 +57,7 @@ const ImgGen = (() => {
   const askNotify = () => { try { if (typeof Notification !== "undefined" && Notification.permission === "default") Notification.requestPermission(); } catch (e) { } };
   const billingHit = (status, text) => status === 402 || ((status === 403 || status === 429) && /quota|exhaust|insufficient|balance|billing|credit|limit exceeded|locked/i.test(String(text || "")));
   const useMsg = (title, detail) => title + " — سيستهلك من رصيد Alyssum API." + (detail ? "\n" + detail : "") + "\nمتابعة؟";
-  const lowMsg = "رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد أو ارفع السقف من إعدادات مولّد الصور";
+  const lowMsg = "رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد";
   const LANGS = { ar: ["العربية", "Arabic (right-to-left, perfectly shaped connected letters)"], fr: ["الفرنسية", "French"], en: ["الإنجليزية", "English"] };
 
   /* ───────── التعليمات (instruction) لكل نوع ─────────
@@ -230,14 +230,14 @@ const ImgGen = (() => {
     <select id="ig-lang" onchange="ImgGen.lang(this.value)">${Object.keys(LANGS).map(k => `<option value="${k}"${k === lang ? " selected" : ""}>لغة النص: ${LANGS[k][0]}</option>`).join("")}</select></div></div>
  </div>
 </div>
-<div class="action-bar"><button type="button" class="small" id="ig-go" onclick="ImgGen.generate()">✨ توليد صورة ذكية</button><button type="button" class="small gold" id="ig-go2" onclick="ImgGen.generate('editor')">🧩 إنشاء الصورة في المطوّر</button>${m === "ad" ? `<button type="button" class="small gray" onclick="ImgGen.blank()" title="يفتح المطوّر بصفحة فارغة بمقاس المنصة لتصمّم عليها بلا توليد">لوحة فارغة بهذا المقاس</button>` : ""}<span class="hint" id="ig-est"></span></div>
+<div class="action-bar"><button type="button" class="small" id="ig-go" onclick="ImgGen.generate()">✨ توليد صورة</button><button type="button" class="small gold" id="ig-go2" onclick="ImgGen.generate('editor')">🧩 إنشاء الصورة في المطوّر</button>${m === "ad" ? `<button type="button" class="small gray" onclick="ImgGen.blank()" title="يفتح المطوّر بصفحة فارغة بمقاس المنصة لتصمّم عليها بلا توليد">لوحة فارغة بهذا المقاس</button>` : ""}<span class="hint" id="ig-est"></span></div>
 <div class="hint" id="ig-msg"></div>
 <div id="ig-res" class="ig-res"></div>`;
     paintPrev(); paintEst();
   }
   function settingsHtml() {
     const fal = cfg.provider() === "fal";
-    return `<div class="ap-sec"><b>تفعيل Alyssum API</b><div class="tl-s"><label class="tl-r" style="cursor:pointer"><span>تفعيل توليد الصور الذكي</span><input type="checkbox" ${LS.get("alyssum_ai_img", "1") === "0" ? "" : "checked"} onchange="try{localStorage.setItem('alyssum_ai_img',this.checked?'1':'0')}catch(e){}"></label><div class="hint">عند التعطيل يتوقف توليد الصور من هنا ومن تبويب السوشيال. تفعيل/تعطيل توليد النص الذكي من «السوشيال ← الاتصال والإعدادات».</div></div></div>
+    return `<div class="ap-sec"><b>تفعيل Alyssum API</b><div class="tl-s"><label class="tl-r" style="cursor:pointer"><span>تفعيل توليد الصور</span><input type="checkbox" ${LS.get("alyssum_ai_img", "1") === "0" ? "" : "checked"} onchange="try{localStorage.setItem('alyssum_ai_img',this.checked?'1':'0')}catch(e){}"></label><div class="hint">عند التعطيل يتوقف توليد الصور من هنا ومن تبويب السوشيال. تفعيل/تعطيل توليد النص من «السوشيال ← الاتصال والإعدادات».</div></div></div>
 <div class="ap-sec"><b>مزوّد التوليد</b><div class="hint">اختر مسار التوليد: «Alyssum API — المسار أ» أو «المسار ب» (نماذج تعديل بصورة مرجعية). لكل مسار مفتاحه الخاص المحفوظ في هذا المتصفح فقط.</div><div class="tl-s"><div class="tl-r"><span>المزوّد</span><select onchange="ImgGen.set('provider',this.value);ImgGen.tab('set')"><option value="gemini"${fal ? "" : " selected"}>Alyssum API — المسار أ</option><option value="fal"${fal ? " selected" : ""}>Alyssum API — المسار ب</option></select></div>
 ${fal ? `<div class="tl-r"><span>مفتاح Alyssum API (المسار ب)</span><input id="ig-fkey" type="password" autocomplete="off" placeholder="key_id:key_secret" value="${esc(LS.get(FALKEY, ""))}" onchange="ImgGen.saveFalKey()"></div><div class="tl-r"><span>معرّف النموذج</span><input dir="ltr" value="${esc(cfg.falModel())}" placeholder="fal-ai/nano-banana/edit" onchange="ImgGen.set('falmodel',this.value.trim())"></div><div class="tl-r"><span>تكلفة الصورة التقريبية (دولار)</span><input type="number" step="0.005" min="0" value="${cfg.falPrice()}" onchange="ImgGen.set('falprice',this.value)"></div><div class="hint">احصل على المفتاح من لوحة مزوّد هذا المسار. النماذج المقترحة: <code>fal-ai/nano-banana/edit</code> (افتراضي) أو <code>fal-ai/flux-pro/kontext</code>. السعر يدوي لأن التسعير يختلف حسب النموذج؛ راجع الرصيد الفعلي في لوحة المزوّد. إن حجب المتصفح الطلب فأخبرنا لنضيف وسيطاً.</div>` : ""}</div></div>
 ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
@@ -301,7 +301,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   async function generate(after) {
     if (S.busy) return; const msg = $("ig-msg"), fal = cfg.provider() === "fal", key = fal ? LS.get(FALKEY, "") : (getKey() || LS.get(KEY, ""));
     const fs = formSize(), sz = fs, W = fs.W, H = fs.H;
-    if (LS.get("alyssum_ai_img", "1") === "0") { if (msg) msg.textContent = "⛔ توليد الصور الذكي معطّل — فعّله من الإعدادات."; return; }
+    if (LS.get("alyssum_ai_img", "1") === "0") { if (msg) msg.textContent = "⛔ توليد الصور معطّل — فعّله من الإعدادات."; return; }
     if (!key) { S.tab = "set"; render(); toast("أدخل مفتاح Alyssum API أولاً"); return; }
     if (!S.srcBlob) { msg.textContent = "❌ اختر صورة المنتج أولاً (رفع أو من منتجاتك)"; return; }
     const name = $("ig-name").value.trim(), desc = $("ig-desc").value.trim(); if (!name && !desc) { msg.textContent = "❌ اكتب اسم المنتج أو وصفه"; return; }
@@ -353,7 +353,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const cv = await fit(out.blob, o.W, o.H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob: await blobOf(cv, "webp"), model: out.model, cost: est };
   }
-  /* هل الخدمة الذكية جاهزة؟ يستعملها محرّر الصور لإظهار الحالة بلا استدعاء: {ok, off, nokey} */
+  /* هل الخدمة جاهزة؟ يستعملها محرّر الصور لإظهار الحالة بلا استدعاء: {ok, off, nokey} */
   function ready() {
     const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim(), off = LS.get("alyssum_ai_img", "1") === "0";
     return { ok: !!key && !off, off, nokey: !key };
@@ -370,7 +370,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (o.textOnly && fal) throw new Error("التوليد من وصف نصي فقط متاح مع الاتصال الأول (أ) — بدّل الاتصال من إعدادات مولّد الصور");
     const W = Math.max(64, Math.round(o.W)), H = Math.max(64, Math.round(o.H)), est = fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
-    if (o.confirm !== false && !confirm(useMsg(o.title || "تعديل ذكي للصورة", "المقاس الناتج: " + W + "×" + H))) return null;
+    if (o.confirm !== false && !confirm(useMsg(o.title || "تعديل للصورة", "المقاس الناتج: " + W + "×" + H))) return null;
     const ar = nearAr(W, H), small = o.blob ? await shrink(o.blob, 1600) : null, d = small ? await b64(small) : "", parts = o.blob ? [{ text: o.prompt }, { inline_data: { mime_type: "image/jpeg", data: d } }] : [{ text: o.prompt }];
     for (const x of (o.extra || []).slice(0, 2)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(x, 1200)) } });
     let out;
@@ -379,7 +379,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     let cv; if (o.noFit) { const bm = await createImageBitmap(out.blob); cv = document.createElement("canvas"); cv.width = bm.width; cv.height = bm.height; cv.getContext("2d").drawImage(bm, 0, 0); } else cv = await fit(out.blob, W, H); LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob: await blobOf(cv, o.fmt === "png" ? "png" : "webp"), canvas: cv, model: out.model, cost: est };
   }
-  /* ───────── توليد فيديو بالذكاء من صورة (1–4) ووصف أو قالب — عبر خدمة فيديو خارجية بمفتاح الاتصال الثاني (fal) ─────────
+  /* ───────── توليد فيديو من صورة (1–4) ووصف أو قالب — عبر خدمة فيديو خارجية بمفتاح الاتصال الثاني (fal) ─────────
      نفس ضوابط التكلفة: تأكيد قبل التنفيذ، حدّ إنفاق، لا إعادة محاولة تلقائية. النموذج والسعر قابلان للضبط (alyssum_vg_model / alyssum_vg_price)
      لأن مواصفات الخدمة لم تُثبَّت بعد؛ الطلب يمرّ بطابور الخدمة: إرسال ← استعلام الحالة ← جلب الفيديو. o = {images:[blob], prompt, ratio:"9:16|1:1|16:9|4:5", dur, confirm} ← {blob, type, cost} أو null */
   const vcfg = { model: () => (LS.get("alyssum_vg_model", "") || "fal-ai/kling-video/v2.1/standard/image-to-video").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_vg_price", "0.5")) || 0.5, dur: () => Math.max(3, Math.min(10, Number(LS.get("alyssum_vg_dur", "5")) || 5)) };
@@ -398,7 +398,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const imgs = (o.images || []).filter(Boolean).slice(0, 4); if (!imgs.length) throw new Error("حدّد صورة منتج واحدة على الأقل");
     const est = vcfg.price(), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
-    if (o.confirm !== false && !confirm(useMsg(o.title || "توليد فيديو بالذكاء", "النسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق."))) return null;
+    if (o.confirm !== false && !confirm(useMsg(o.title || "توليد فيديو", "النسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق."))) return null;
     const key = LS.get(FALKEY, "").trim(), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
     const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
     say("إرسال الطلب إلى خدمة الفيديو…");
@@ -464,7 +464,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob, cost: est, model: "fal:" + m };
   }
-  /* نص/رؤية بالذكاء (Alyssum API): تعليمات نصية + صور اختيارية ← نص (أو JSON مُحلَّل عند o.json). يُحتسب في الرصيد بوحدة صغيرة وتسري عليه تنبيهات الرصيد. o = {prompt, blobs:[], json:boolean} */
+  /* نص/رؤية (Alyssum API): تعليمات نصية + صور اختيارية ← نص (أو JSON مُحلَّل عند o.json). يُحتسب في الرصيد بوحدة صغيرة وتسري عليه تنبيهات الرصيد. o = {prompt, blobs:[], json:boolean} */
   const TEXT_UNIT = 0.003;
   /* نماذج النص المتاحة لهذا المفتاح: آخر نموذج نجح ثم الأحدث من قائمة الحساب (flash قبل lite) ثم احتياطي؛ الأسماء الثابتة تتقادم فلا نعتمد عليها وحدها */
   async function textModels(key) {
