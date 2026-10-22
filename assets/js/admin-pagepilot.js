@@ -141,7 +141,7 @@ const PagePilot = (() => {
         if (typeof PBSpec === "undefined" || !PBSpec.importProduct) { say("أداة الجلب غير متاحة.", true); return; } b.disabled = true;
         try {
           const p = await PBSpec.importProduct($("pp-url").value, m => say(m), $("pp-html") && $("pp-html").value); await applyImp(p);
-        } catch (er) { S.imp = null; say("❌ " + esc(er.message) + " — الصق كود الصفحة في الخانة أدناه، أو اكتب الاسم والوصف وارفع الصورة يدوياً.", true); const dt = $("pp-dt"); if (dt) dt.open = true; } b.disabled = false;
+        } catch (er) { S.imp = null; say("❌ " + esc(er.message) + (/كابتشا|الصق كود/.test(er.message) ? "" : " — الصق كود الصفحة في الخانة أدناه، أو اكتب الاسم والوصف وارفع الصورة يدوياً."), true); const dt = $("pp-dt"); if (dt) dt.open = true; } b.disabled = false;
       }
       else if (a === "go" || a === "resume") { b.disabled = true; if (a === "go") S.resume = null; try { await run(a === "resume"); } catch (er) { say("❌ " + esc(er.message) + (S.resume ? `<div style="margin-top:8px"><button data-pp="resume" style="${BTN_CSS};background:rgba(198,254,23,.28)">↻ أعد الأقسام الفاشلة فقط</button></div>` : ""), true); b.disabled = false; } }
     });
