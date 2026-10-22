@@ -247,6 +247,10 @@ html{scroll-behavior:smooth}
 <label style="font-size:.8rem">اللغة<select id="pp-lang" style="${FLD}"><option value="ar">العربية</option><option value="fr">الفرنسية</option><option value="en">الإنجليزية</option></select></label>
 <label style="font-size:.8rem">الجمهور/النبرة (اختياري)<input id="pp-aud" style="${FLD}" placeholder="مثال: أمهات — نبرة دافئة"></label>
 <div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">② الألوان</div><div id="pp-themes" style="display:flex;gap:8px;flex-wrap:wrap">${Object.entries(THEMES).map(([k, t], i) => `<button data-pp="th" data-k="${k}" style="${BTN_CSS};background:linear-gradient(120deg,${t.main} 50%,${t.acc} 50%);${i ? "" : "outline:2px solid #c6fe17;"}min-width:120px">${t.n}</button>`).join("")}</div></div>
+<div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">🎨 لون خلفية الصفحة (الهجين) — لا يلزم أن يطابق لون المنتج؛ اختر لوناً منه أو قريباً أو فاتحاً</div>
+<div id="pp-cols" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button data-pp="col" data-c="" style="${BTN_CSS};background:rgba(255,255,255,.12);outline:2px solid #c6fe17">تلقائي</button><span id="pp-sw" style="display:contents"></span><button data-pp="cols" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="يستخرج ألوان صورة المنتج المختارة">استخرج ألوان المنتج</button><label style="font-size:.78rem;display:flex;gap:4px;align-items:center">لون حرّ <input id="pp-cc" type="color" value="#c8a24b" style="width:38px;height:30px;padding:0;border:0;background:none"></label>
+<label style="font-size:.78rem">الدرجة <select id="pp-tone" style="${FLD};width:auto"><option value="dark">داكنة</option><option value="mid">متوسطة</option><option value="light">فاتحة</option></select></label>
+<label style="font-size:.78rem">الخلفية خلف الأشخاص/المنتج <select id="pp-bd" style="${FLD};width:auto"><option value="solid">لون موحّد بلا مشهد</option><option value="scene">مشهد مختلف لكل قسم</option></select></label></div></div>
 <label style="font-size:.8rem">③ نوع الصفحة<select id="pp-mode" style="${FLD}"><option value="hybrid">صفحة مصوّرة هجينة (خلفيات بالذكاء + المنتج الحقيقي + نص عربي حيّ قابل للتعديل)</option><option value="poster">بوستر كامل (النص داخل الصورة — قد تتشوه الحروف)</option><option value="layout">أقسام نصية قابلة للتعديل (هيرو، فوائد، أسئلة…)</option></select></label>
 <label style="font-size:.8rem">عدد الأقسام (الهجين)<select id="pp-hn" style="${FLD}"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option></select></label>
 <label style="font-size:.8rem">اللهجة<select id="pp-dia" style="${FLD}"><option value="dz">دارجة جزائرية</option><option value="msa">فصحى مبسّطة</option></select></label>
@@ -262,7 +266,9 @@ html{scroll-behavior:smooth}
 <div id="pp-rep" style="font-size:.86rem;line-height:1.8"></div></div>`;
     document.body.appendChild(bg);
     const $ = id => bg.querySelector("#" + id), say = (h, bad) => { $("pp-rep").innerHTML = `<div style="padding:.6rem .8rem;border-radius:10px;border:1px solid ${bad ? "rgba(255,120,120,.5)" : "rgba(198,254,23,.35)"};background:${bad ? "rgba(255,80,80,.1)" : "rgba(198,254,23,.07)"}">${h}</div>`; };
-    let theme = "green";
+    let theme = "green", pageColor = "";
+    const setColor = c => { pageColor = c || ""; try { delete $("pp-cc").dataset.on; } catch (_) { } bg.querySelectorAll('[data-pp="col"]').forEach(x => x.style.outline = (x.dataset.c || "") === pageColor ? "2px solid #c6fe17" : ""); };
+    $("pp-cc").addEventListener("input", () => { setColor(""); $("pp-cc").dataset.on = "1"; bg.querySelectorAll('[data-pp="col"]').forEach(x => x.style.outline = ""); });
     $("pp-prod").addEventListener("change", () => { const p = ps.find(x => x.slug === $("pp-prod").value); if (!p) return; $("pp-name").value = p.title || ""; $("pp-desc").value = String(p.desc || p.description || "").slice(0, 900); });
     async function gather() {
       const p = ps.find(x => x.slug === $("pp-prod").value) || null, f = $("pp-file").files[0], imp = S.imp;
@@ -301,7 +307,7 @@ html{scroll-behavior:smooth}
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + cnt + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:65px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         const over = useAI ? {} : { llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }, real: false, image: { bg: async (pr, i, sec) => ({ canvas: PagePilotHybrid.mockBg(PagePilotHybrid.styleBible({}, th0), sec, i), mock: true }), edit: async () => null }, vision: { check: async () => null } };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
-        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience }, { section: prog }, over);
+        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value }, { section: prog }, over);
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
         const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, tag));
         bg.remove(); PBApp.open(asm.page, "", true);
@@ -347,6 +353,16 @@ html{scroll-behavior:smooth}
     bg.addEventListener("click", async e => {
       const b = e.target.closest("[data-pp]"); if (!b) { if (e.target === bg) bg.remove(); return; } const a = b.dataset.pp;
       if (a === "x") bg.remove();
+      else if (a === "col") setColor(b.dataset.c);
+      else if (a === "cols") {
+        b.disabled = true;
+        try {
+          const g = await gather(); let blob = g.blob; if (!blob && g.path) blob = await urlBlob(g.path); if (!blob) throw new Error("اختر صورة المنتج أولاً");
+          const cs = PagePilotHybrid.productColors(await toCanvas(blob), 6); if (!cs.length) throw new Error("لم أجد ألواناً واضحة — اختر لوناً حرّاً");
+          $("pp-sw").innerHTML = cs.map(c => `<button data-pp="col" data-c="${c}" title="${c}" style="width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${c};cursor:pointer"></button>`).join(""); setColor(cs[0]);
+        } catch (er) { say("❌ " + esc(er.message || er), true); }
+        b.disabled = false;
+      }
       else if (a === "th") { theme = b.dataset.k; bg.querySelectorAll('[data-pp="th"]').forEach(x => x.style.outline = x === b ? "2px solid #c6fe17" : ""); }
       else if (a === "imp") {
         if (typeof PBSpec === "undefined" || !PBSpec.importProduct) { say("أداة الجلب غير متاحة.", true); return; } b.disabled = true;
@@ -361,5 +377,36 @@ html{scroll-behavior:smooth}
     });
     bg.addEventListener("click", async e => { const im = e.target.closest("[data-ppi]"); if (!im || !S.imp || !PBSpec.pickImage) return; try { await PBSpec.pickImage(S.imp, +im.dataset.ppi); bg.querySelectorAll("[data-ppi]").forEach(x => x.style.borderColor = x === im ? "#c6fe17" : "rgba(255,255,255,.2)"); } catch (er) { say("❌ " + esc(er.message), true); } });
   }
-  return { open, THEMES, copyPrompt, cleanCopy, fallbackCopy, buildPage, buildPosterPage, posterPrompt, posterKinds, posterAlt, themeCss };
+  /* ───── تغيير لون الصفحة المولَّدة داخل المحرّر (زر عائم يظهر لصفحات «منشئ الصفحات بالذكاء») ───── */
+  function recolorOpen() {
+    if (typeof PBApp === "undefined" || !PBApp.pageJson || !PBApp.mutatePage) return; let meta = null; try { meta = (JSON.parse(PBApp.pageJson()).specMeta || {}).hybrid; } catch (_) { }
+    if (!meta) return; const old = document.getElementById("pp-rc"); if (old) { old.remove(); return; }
+    const cols = (meta.colors || []).concat(["#ffffff", "#f5ecd9", "#1d1d22", "#0f3d2e", "#123e72", "#7a1f2b"]).filter((c, i, a) => a.indexOf(c) === i), tone0 = (meta.recolor && meta.recolor.tone) || "dark";
+    const d = document.createElement("div"); d.id = "pp-rc"; d.style.cssText = "position:fixed;left:16px;bottom:70px;z-index:100050;width:min(360px,92vw);padding:.9rem;border-radius:16px;background:rgba(9,24,18,.985);border:1px solid rgba(198,254,23,.4);box-shadow:0 14px 40px rgba(0,0,0,.5);color:#fff;font-family:inherit;direction:rtl";
+    d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem"><b>🎨 لون خلفية الصفحة</b><button data-rc="x" style="background:none;border:0;color:#fff;font-size:1.1rem;cursor:pointer">✕</button></div>
+<div style="font-size:.78rem;opacity:.8;margin-bottom:.4rem">اختر لون المنتج أو لوناً قريباً أو فاتحاً — تتغير الألوان فوراً بلا إعادة توليد الصور (ويمكنك التراجع).</div>
+<div id="pp-rcs" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:.5rem">${cols.map(c => `<button data-rc="c" data-c="${c}" title="${c}" style="width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${c};cursor:pointer"></button>`).join("")}<input id="pp-rcc" type="color" value="${cols[0] || "#c8a24b"}" style="width:38px;height:34px;padding:0;border:0;background:none"></div>
+<label style="font-size:.8rem">الدرجة <select id="pp-rct" style="${FLD};width:auto"><option value="dark">داكنة</option><option value="mid">متوسطة</option><option value="light">فاتحة</option></select></label>
+<div style="display:flex;gap:8px;margin-top:.6rem"><button data-rc="go" style="${BTN_CSS};background:rgba(198,254,23,.28);flex:1">تطبيق</button></div><div id="pp-rcm" style="font-size:.8rem;margin-top:.4rem"></div>`;
+    document.body.appendChild(d); d.querySelector("#pp-rct").value = tone0; let pick = (meta.theme && meta.theme.palette && meta.theme.palette.primary) || cols[0] || "#c8a24b";
+    d.querySelector("#pp-rcc").addEventListener("input", e => { pick = e.target.value; });
+    d.addEventListener("click", e => {
+      const b = e.target.closest("[data-rc]"); if (!b) return; const a = b.dataset.rc;
+      if (a === "x") d.remove();
+      else if (a === "c") { pick = b.dataset.c; d.querySelector("#pp-rcc").value = pick; d.querySelectorAll('[data-rc="c"]').forEach(x => x.style.outline = x === b ? "2px solid #c6fe17" : ""); }
+      else if (a === "go") { const r = PBApp.mutatePage(pg => PagePilotHybrid.recolorPage(pg, { color: pick, tone: d.querySelector("#pp-rct").value }), "تغيير لون الصفحة"); d.querySelector("#pp-rcm").textContent = r && r.ok ? "✅ تغيّر لون الصفحة (" + r.changed + " عنصراً)" : "❌ " + ((r && r.error) || "تعذّر التغيير"); }
+    });
+  }
+  /* زر عائم «🎨 لون الصفحة» أثناء فتح صفحة مولَّدة في المطوّر */
+  (function watch() {
+    if (typeof document === "undefined" || window.__ppRcWatch) return; window.__ppRcWatch = 1;
+    setInterval(() => {
+      try {
+        const on = !!document.getElementById("pbx-frame") && typeof PBApp !== "undefined" && PBApp.hasHybrid && PBApp.hasHybrid(), b = document.getElementById("pp-rcb");
+        if (on && !b) { const x = document.createElement("button"); x.id = "pp-rcb"; x.textContent = "🎨 لون الصفحة"; x.style.cssText = BTN_CSS + ";position:fixed;left:16px;bottom:16px;z-index:100040;background:rgba(198,254,23,.28)"; x.onclick = recolorOpen; document.body.appendChild(x); }
+        else if (!on && b) { b.remove(); const r = document.getElementById("pp-rc"); if (r) r.remove(); }
+      } catch (_) { }
+    }, 2500);
+  })();
+  return { open, recolorOpen, THEMES, copyPrompt, cleanCopy, fallbackCopy, buildPage, buildPosterPage, posterPrompt, posterKinds, posterAlt, themeCss };
 })();

@@ -52,7 +52,7 @@ const PBSpec = (() => {
     if (o.type === "text" || o.type === "heading") {
       const f = L.font && typeof L.font === "object" ? L.font : {};
       o.text = str(L.text, 3000); o.font = { size: num(f.size, 8, 300, o.type === "heading" ? 48 : 22), weight: ["300", "400", "500", "600", "700", "800", "900"].includes(String(f.weight)) ? String(f.weight) : (o.type === "heading" ? "900" : "600"), color: col(f.color, "#1a1a1a"), align: ["right", "left", "center", "justify"].includes(f.align) ? f.align : "center", lineHeight: num(f.lineHeight, .8, 3, o.type === "heading" ? 1.3 : 1.8), letterSpacing: num(f.letterSpacing, -5, 30, 0), family: str(f.family, 40).replace(/[^\w \-]/g, "") };
-      o.tag = ["h1", "h2", "h3", "h4", "p", "div"].includes(L.tag) ? L.tag : "h2"; if (L.autoH) o.autoH = true;
+      o.tag = ["h1", "h2", "h3", "h4", "p", "div"].includes(L.tag) ? L.tag : "h2"; if (L.autoH) o.autoH = true; if (L.hlColor) o.hlColor = col(L.hlColor, "#ffc928");
       if (!o.text.trim()) { warn.push(where + ": نص فارغ — تُجوهلت"); return null; }
     } else if (o.type === "image") {
       o.src = imgRef(str(L.src, 600).trim()); o.alt = str(L.alt || L.prompt, 200); o.prompt = str(L.prompt, 500); o.fit = ["cover", "contain", "fill"].includes(L.fit) ? L.fit : "cover";
@@ -117,7 +117,7 @@ const PBSpec = (() => {
     if (typeof document === "undefined" || !document.body || (!l.font && l.type !== "button")) return null;
     try {
       if (!_mz) { _mz = document.createElement("div"); _mz.setAttribute("aria-hidden", "true"); _mz.style.cssText = "position:absolute;left:-99999px;top:0;visibility:hidden;pointer-events:none;direction:rtl;white-space:normal;word-break:normal;overflow-wrap:break-word"; document.body.appendChild(_mz); }
-      const fo = l.font || {}, ff = "'" + (fo.family || "Cairo") + "','Cairo',sans-serif", plain = l.text.replace(/\*\*/g, "");
+      const fo = l.font || {}, ff = "'" + (fo.family || "Cairo") + "','Cairo',sans-serif", plain = l.text.replace(/\*\*|\[\[|\]\]/g, "");
       if (l.type === "button") {
         _mz.style.cssText += ";width:auto;white-space:nowrap;font:" + (fo.weight || 800) + " " + l.size + "px " + ff + ";line-height:1.2"; _mz.textContent = plain; return { tw: Math.ceil(_mz.getBoundingClientRect().width), th: Math.ceil(_mz.getBoundingClientRect().height) };
       }
@@ -128,7 +128,7 @@ const PBSpec = (() => {
   function estH(l) {
     if (l.type === "heading" || l.type === "text") { const m = l._m || (l._m = measure(l)); if (m && m.th) { const h = m.th + 10; if (!l.h || l.h < h) l.h = h; return l.h; } }
     if (l.h) return l.h; if (l.type === "button") return 64; if (l.type === "icon") return l.size + 60; if (l.type === "price") return 80; if (l.type === "offers") return 200;
-    const per = Math.max(1, l.w / (l.font.size * .45)); let n = 0; l.text.replace(/\*\*/g, "").split("\n").forEach(t => { n += Math.max(1, Math.ceil(t.length / per)); });
+    const per = Math.max(1, l.w / (l.font.size * .45)); let n = 0; l.text.replace(/\*\*|\[\[|\]\]/g, "").split("\n").forEach(t => { n += Math.max(1, Math.ceil(t.length / per)); });
     return Math.ceil(n * l.font.size * l.font.lineHeight) + 8;
   }
   function autofix(spec) {
@@ -233,7 +233,7 @@ const PBSpec = (() => {
     const P = pb(), x = Math.round(L.x / dw * 1000) / 10, wp = Math.round(L.w / dw * 1000) / 10; let w;
     const free = (type, h) => { w = P.mkFree(type, x, L.y, L.z); w.set.fx = { d: x }; w.set.fy = { d: Math.round(L.y) }; w.set.fwd = { d: wp }; w.set.fh = { d: Math.round(h || L.h || P.FREE_SIZE[type][1]) }; return w; };
     if (L.type === "text" || L.type === "heading") {
-      const html = esc(L.text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+      const html = esc(L.text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\[\[(.+?)\]\]/g, (m, w) => '<b style="color:' + (L.hlColor || "#ffc928") + '">' + w + "</b>").replace(/\n/g, "<br>");
       free(L.type, L.h || Math.ceil(L.text.split("\n").length * L.font.size * L.font.lineHeight) + 8);
       const t = { fs: { d: L.font.size }, fw: L.font.weight, color: L.font.color, ta: { d: L.font.align }, lh: { d: L.font.lineHeight } };
       if (L.font.letterSpacing) t.ls = { d: L.font.letterSpacing };

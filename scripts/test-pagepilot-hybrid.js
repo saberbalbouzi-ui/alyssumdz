@@ -67,7 +67,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   const ed = await p.evaluate(async () => {
     const H = PagePilotHybrid; const mk = async col => { const c = document.createElement("canvas"); c.width = 120; c.height = 150; const x = c.getContext("2d"); x.fillStyle = col; x.fillRect(0, 0, 120, 150); return new Promise(r => c.toBlob(r, "image/png")); };
     const refs = [await mk("#c81e1e"), await mk("#1ec85a"), await mk("#1e5ac8")], got = [], prompts = [], checks = []; let cut = 0, n = 0;
-    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 6, gate: true, noFaces: true }, {}, {
+    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 6, gate: true, noFaces: true, backdrop: "scene" }, {}, {
       real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
       remover: { cut: async () => { cut++; return null; } },
       image: { bg: async () => { throw new Error("must not be used"); }, edit: async (b, pr, i) => { got.push(refs.indexOf(b)); prompts.push(pr); const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } },
@@ -79,6 +79,32 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("وضع الدمج: لا قصّ للمنتج ولا طبقة منتج منفصلة", ed.strategy === "edit" && ed.cut === 0 && !ed.prod && /^1(,1)*$/.test(ed.imgLayers), ed);
   t("كل قسم يأخذ صورة مرجعية مختلفة من صور المنتج", ed.refsUsed === "0,1,2" && ed.calls >= 6, ed);
   t("برومبت الدمج: المنتج داخل المشهد ومختلف عن بقية الأقسام وبمشاهد متنوعة", ed.noProduct && ed.scenes >= 5, ed);
+
+  /* v1.89.414: لون/درجة اختيارية، خلفية موحّدة، كلمات مفتاحية ملوّنة، إعادة تلوين الصفحة */
+  const cl = await p.evaluate(() => {
+    const H = PagePilotHybrid, an = H.cleanAnalysis({ dominant_colors: ["#c8a24b"] }), o = {};
+    const dk = H.styleBible(an, null, { color: "#1f4fa8", tone: "dark" }), lt = H.styleBible(an, null, { color: "#1f4fa8", tone: "light" }), nu = H.styleBible(an, null, { color: "#ffffff", tone: "dark" });
+    o.dk = dk.palette.deep; o.lt = lt.palette.deep; o.ltHl = lt.palette.hl; o.ltLum = H.hexLum(lt.palette.deep); o.dkLum = H.hexLum(dk.palette.deep); o.nu = nu.palette.deep;
+    o.hlContrast = H.contrast(H.hexLum(lt.palette.hl), H.hexLum(lt.palette.deep));
+    o.solid = H.bgPrompt(dk, { type: "hero", scene: "kitchen with shelves" }, { withProduct: true }); o.scene = H.bgPrompt(dk, { type: "hero", scene: "kitchen with shelves" }, { withProduct: true, backdrop: "scene" });
+    const plan = { sections: [{ id: "s1-hero", type: "hero", headline: "شعرك كيما تحبه في دارك", hl: "", sub: "جهاز واحد يجفف ويسرّح ويعطي لمعة", bullets: [], icons: [], cta: "اطلب" }, { id: "s2-benefits", type: "benefits", headline: "علاش تحتاجه", hl: "", sub: "", bullets: ["7 رؤوس [[متعددة]] للتصفيف", "محرك سريع يجفف شعرك"], icons: ["star", "zap"], cta: "" }] };
+    const res = plan.sections.map((s, i) => ({ sec: s, bgSrc: "assets/x" + i + ".webp", lum: .1, prodAr: 1, flags: [] }));
+    const spec = H.buildSpec(plan, res, { style: dk, strategy: "edit", title: "t", product: "", lang: "ar" });
+    const txt = spec.sections.flatMap(S => S.layers).filter(l => l.type === "text" || l.type === "heading");
+    o.kwTexts = txt.filter(l => /\[\[.+\]\]/.test(l.text)).length; o.hlHead = txt.filter(l => l.type === "heading").some(l => l.font.color === dk.palette.hl);
+    const v = PBSpec.validate(spec); const pg = PBSpec.toPage(v, { merge: true }); pg.specMeta = { hybrid: { theme: dk, colors: [] } };
+    const wset = JSON.stringify(pg.sections), hadDeep = wset.indexOf(dk.palette.deep) >= 0;
+    const r = H.recolorPage(pg, { color: "#1f4fa8", tone: "light" }); const after = JSON.stringify(pg.sections);
+    o.rc = { ok: r.ok, changed: r.changed, hadDeep, oldGone: after.indexOf(dk.palette.deep) < 0, newIn: after.indexOf(lt.palette.deep) >= 0, bg: pg.bg === lt.palette.deep, kwSpan: /<b style="color:/.test(after) };
+    o.recBad = H.recolorPage({ sections: [] }, {}).ok;
+    return o;
+  });
+  t("لون المستخدم ودرجته: داكن/فاتح من اللون نفسه", cl.dkLum < .06 && cl.ltLum > .6 && cl.hlContrast >= 4.5, cl);
+  t("لون محايد (أبيض) ← خلفية داكنة محايدة لا ملوّنة", /^#[0-9a-f]{6}$/.test(cl.nu), cl.nu);
+  t("خلفية موحّدة افتراضياً بلا غرف/أثاث، والمشهد اختياري", /uniform flat/.test(cl.solid) && !/kitchen/.test(cl.solid) && /kitchen/.test(cl.scene), cl);
+  t("كلمات مفتاحية ملوّنة في النصوص + كلمة العنوان المميّزة", cl.kwTexts >= 2 && cl.hlHead, cl);
+  t("إعادة تلوين الصفحة: يستبدل اللون القديم بالجديد ويقلب الدرجة", cl.rc.ok && cl.rc.changed > 5 && cl.rc.hadDeep && cl.rc.oldGone && cl.rc.newIn && cl.rc.bg, cl.rc);
+  t("إعادة التلوين ترفض صفحة ليست من المنشئ", cl.recBad === false);
   t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);
   t("أقسام المشكلة/الأسئلة تُعاد توزيع منطقة نصها لتتسع للمنتج", ed.faqZone === "top" && ed.probZone === "top", ed);
 
@@ -167,6 +193,16 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   await p.waitForTimeout(1500);
   const sel = await p.evaluate(async () => { const E = PBApp.E, fd = document.getElementById("pbx-frame").contentDocument, ids = []; E.page.sections.forEach(s => (s.free || []).concat(...s.cols.map(c => c.widgets)).forEach(w => ids.push(w.id))); let okc = 0; for (const id of ids) { if (fd.querySelector('[data-pb="' + id + '"]')) okc++; } return { n: ids.length, ok: okc }; });
   t("كل طبقة تظهر في إطار المحرّر (قابلة للتحديد/التعديل)", sel.ok === sel.n && sel.n > 20, sel);
+  /* زر «لون الصفحة» داخل المحرّر يغيّر ألوان الصفحة المولَّدة (قابل للتراجع) */
+  await p.waitForFunction(() => document.getElementById("pp-rcb"), null, { timeout: 8000 }).catch(() => { });
+  const rcu = await p.evaluate(async () => {
+    const b = document.getElementById("pp-rcb"); if (!b) return { chip: false };
+    const before = PBApp.E.page.bg; b.click(); const d = document.getElementById("pp-rc"); if (!d) return { chip: true, dlg: false };
+    const sw = d.querySelector('[data-rc="c"]'); sw.click(); d.querySelector("#pp-rct").value = "light"; d.querySelector('[data-rc="go"]').click();
+    await new Promise(r => setTimeout(r, 300)); const after = PBApp.E.page.bg, msg = d.querySelector("#pp-rcm").textContent, undo = PBApp.E.hist ? PBApp.E.hist.length : 0;
+    return { chip: true, dlg: true, before, after, msg, changed: before !== after, lightBg: (() => { const h = after.replace("#", ""), r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), bl = parseInt(h.slice(4, 6), 16); return (r + g + bl) / 3 > 150; })() };
+  });
+  t("زر «لون الصفحة» في المحرّر يغيّر لون الصفحة إلى فاتح", rcu.chip && rcu.dlg && rcu.changed && rcu.lightBg && /تغيّر/.test(rcu.msg), rcu);
   /* تباين الصفحة المنشورة: لون كل نص بالنسبة للخلفية */
   const html = await p.evaluate(() => PB.fullHtml(JSON.parse(JSON.stringify(PBApp.E.page)), Object.assign({ base: "/" }, PBApp.siteCtx())));
   t("HTML منشور: نص عربي حقيقي RTL لا صورة", /dir="rtl"|dir=rtl/.test(html) || /lang="ar"/.test(html));
