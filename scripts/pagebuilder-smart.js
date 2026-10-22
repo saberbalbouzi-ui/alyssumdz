@@ -293,5 +293,58 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     };
     redrawBase();
   }
-  return { pane, capture, captureElements, importImages, eraser, warm, setGem, _shell: shell, _scanFx: scanFx };
+
+  /* ───── تمويه (Flou) على نهج كانفا: فرشاة «إضافة تمويه/حذف» بحجم وشدّة، أو «الصورة كاملة»، و«إزالة التمويه»؛ محلي بلا رصيد ───── */
+  async function blurTool(inf) {
+    if (!inf || inf.node.type !== "image" || !inf.set.src) { alert("حدّد صورة أولاً"); return; }
+    const id = inf.node.id; let src; try { src = await loadCanvas(inf.set.src); } catch (e) { alert("⚠️ " + e.message); return; }
+    const MAXS = 2000, k0 = Math.min(1, MAXS / Math.max(src.width, src.height)); let base = src;
+    if (k0 < 1) { base = document.createElement("canvas"); base.width = Math.round(src.width * k0); base.height = Math.round(src.height * k0); base.getContext("2d").drawImage(src, 0, 0, base.width, base.height); }
+    const W = base.width, H = base.height, dispW = Math.max(240, Math.min(W, innerWidth * .62, (innerHeight - 190) * W / H)), dispH = Math.round(dispW * H / W), K = W / dispW;
+    const mkc = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+    const ov = document.createElement("div"); ov.id = "pbs-bl"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.78);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
+    const seg = (k, t, on) => `<button type="button" data-bl="${k}" class="pbx-small${on ? " pz-go" : ""}" style="flex:1">${t}</button>`;
+    ov.innerHTML = `<div style="background:#fff;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#173f35">
+      <div style="width:250px;display:flex;flex-direction:column;gap:.55rem"><b style="font-size:1rem">💧 تمويه</b>
+        <div id="bl-mode" style="display:flex;gap:.3rem">${seg("m-brush", "فرشاة", 1)}${seg("m-whole", "الصورة كاملة", 0)}</div>
+        <div id="bl-btype" style="display:flex;gap:.3rem">${seg("t-add", "إضافة تمويه", 1)}${seg("t-del", "حذف", 0)}</div>
+        <label style="font-size:.78rem" id="bl-szl">حجم الفرشاة <b id="bl-szv">40</b><input id="bl-sz" type="range" min="6" max="160" value="40" style="width:100%"></label>
+        <label style="font-size:.78rem">الشدّة <b id="bl-inv">35</b><input id="bl-in" type="range" min="1" max="100" value="35" style="width:100%"></label>
+        <button id="bl-clear" type="button" class="pbx-small">إزالة التمويه</button>
+        <button id="bl-save" type="button" style="background:#173f35;color:#fff;border:0;border-radius:8px;padding:.5rem .9rem;font-weight:800;cursor:pointer;font-family:inherit" disabled>✔ تطبيق على الصورة</button><button id="bl-x" type="button" class="pbx-small">إلغاء</button>
+        <div id="bl-msg" style="font-size:.74rem;color:#6b6556;min-height:1.2em">ارسم فوق ما تريد تمويهه (مثلاً الخلفية خلف المنتج) فيظهر التمويه فوراً.</div></div>
+      <div id="bl-st" style="position:relative;width:${dispW}px;height:${dispH}px;background:#eee;border-radius:8px;overflow:hidden;touch-action:none"><canvas id="bl-v" width="${dispW}" height="${dispH}" style="position:absolute;inset:0"></canvas><canvas id="bl-o" width="${dispW}" height="${dispH}" style="position:absolute;inset:0;cursor:none"></canvas><div id="bl-c" style="position:absolute;pointer-events:none;border:2px solid #fff;box-shadow:0 0 0 1px #000;border-radius:50%;display:none"></div></div></div>`;
+    document.body.appendChild(ov); const $ = i => ov.querySelector("#" + i), v = $("bl-v"), o = $("bl-o"), cur = $("bl-c"), vg = v.getContext("2d"), msg = t => { $("bl-msg").textContent = t; };
+    const S = { whole: false, del: false, strokes: [], drawing: null, dirty: false, busy: false }, hasF = "filter" in vg;
+    const intensity = () => Number($("bl-in").value), radiusOf = (w, h) => intensity() / 100 * .035 * Math.max(w, h);
+    const blurOf = (c, r) => { const out = mkc(c.width, c.height), g = out.getContext("2d"); if (hasF && r > .3) { g.filter = "blur(" + r.toFixed(2) + "px)"; g.drawImage(c, -r * 2, -r * 2, c.width + r * 4, c.height + r * 4); } else { const k = Math.max(.03, 1 / (1 + r)), t = mkc(c.width * k, c.height * k); t.getContext("2d").drawImage(c, 0, 0, t.width, t.height); g.imageSmoothingQuality = "high"; g.drawImage(t, 0, 0, c.width, c.height); } return out; };
+    /* نقية: تُركّب الصورة المموّهة فوق الأصل بقناع الفرشاة (ناعم الحواف) */
+    function compose(baseC, blurC, scale, wholeF) {
+      const w = baseC.width, h = baseC.height, out = mkc(w, h), g = out.getContext("2d"); g.drawImage(baseC, 0, 0);
+      const m = mkc(w, h), mg = m.getContext("2d"); if (wholeF) { mg.fillStyle = "#fff"; mg.fillRect(0, 0, w, h); } else { mg.lineCap = mg.lineJoin = "round"; mg.strokeStyle = mg.fillStyle = "#fff"; S.strokes.forEach(s => { mg.globalCompositeOperation = s.del ? "destination-out" : "source-over"; mg.lineWidth = s.r * 2 * scale; mg.beginPath(); s.p.forEach((q, i) => i ? mg.lineTo(q[0] * scale, q[1] * scale) : mg.moveTo(q[0] * scale, q[1] * scale)); if (s.p.length === 1) { mg.arc(s.p[0][0] * scale, s.p[0][1] * scale, s.r * scale, 0, 7); mg.fill(); } else mg.stroke(); }); mg.globalCompositeOperation = "source-over"; }
+      const t = mkc(w, h), tg = t.getContext("2d"); tg.drawImage(blurC, 0, 0, w, h); tg.globalCompositeOperation = "destination-in";
+      const fe = wholeF ? 0 : Math.min(20, (Number($("bl-sz").value) / 4) * scale * K); if (hasF && fe > .5) tg.filter = "blur(" + fe.toFixed(1) + "px)"; tg.drawImage(m, 0, 0); tg.filter = "none"; g.drawImage(t, 0, 0); return out;
+    }
+    const dBase = mkc(dispW, dispH); dBase.getContext("2d").drawImage(base, 0, 0, dispW, dispH); let dBlur = null;
+    const render = () => { const r = radiusOf(dispW, dispH); if (!dBlur || dBlur._r !== r) { dBlur = blurOf(dBase, r); dBlur._r = r; } const c = compose(dBase, dBlur, 1 / K, S.whole); vg.clearRect(0, 0, dispW, dispH); vg.drawImage(c, 0, 0); S.dirty = S.whole || S.strokes.length > 0; $("bl-save").disabled = !S.dirty; };
+    const pos = e => { const r = o.getBoundingClientRect(); return [(e.clientX - r.left) * K * (dispW / r.width), (e.clientY - r.top) * K * (dispH / r.height)]; };
+    const rad = () => Number($("bl-sz").value) * K / 2;
+    o.addEventListener("pointerdown", e => { if (S.whole || S.busy) return; e.preventDefault(); o.setPointerCapture(e.pointerId); S.drawing = { r: rad(), del: S.del, p: [pos(e)] }; S.strokes.push(S.drawing); render(); });
+    o.addEventListener("pointermove", e => { const r = o.getBoundingClientRect(), z = Number($("bl-sz").value); cur.style.display = S.whole ? "none" : "block"; cur.style.width = cur.style.height = z + "px"; cur.style.left = (e.clientX - r.left - z / 2) + "px"; cur.style.top = (e.clientY - r.top - z / 2) + "px"; if (S.drawing) { S.drawing.p.push(pos(e)); render(); } });
+    o.addEventListener("pointerup", () => { S.drawing = null; }); o.addEventListener("pointerleave", () => { cur.style.display = "none"; });
+    const setBtn = (grp, k) => ov.querySelectorAll("#" + grp + " [data-bl]").forEach(b => b.classList.toggle("pz-go", b.dataset.bl === k));
+    ov.addEventListener("click", e => { const b = e.target.closest("[data-bl]"); if (!b) return; const k = b.dataset.bl;
+      if (k === "m-brush" || k === "m-whole") { S.whole = k === "m-whole"; setBtn("bl-mode", k); $("bl-btype").style.display = $("bl-szl").style.display = S.whole ? "none" : ""; render(); }
+      else if (k === "t-add" || k === "t-del") { S.del = k === "t-del"; setBtn("bl-btype", k); } });
+    $("bl-sz").oninput = () => { $("bl-szv").textContent = $("bl-sz").value; }; $("bl-in").oninput = () => { $("bl-inv").textContent = $("bl-in").value; render(); };
+    $("bl-clear").onclick = () => { S.strokes = []; S.whole = false; setBtn("bl-mode", "m-brush"); $("bl-btype").style.display = $("bl-szl").style.display = ""; render(); msg("أُزيل التمويه."); };
+    const close = () => { if (S.dirty && !confirm("هناك تمويه لم يُطبَّق على الصورة. إغلاق دون تطبيق؟")) return; ov.remove(); }; $("bl-x").onclick = close;
+    $("bl-save").onclick = async () => {
+      if (S.busy || !S.dirty) return; S.busy = true; $("bl-save").disabled = true; msg("⏳ جارٍ التطبيق…");
+      try { const full = compose(base, blurOf(base, radiusOf(W, H)), 1, S.whole), blob = await new Promise(r => full.toBlob(r, "image/png")), path = await A().uploadBlob(blob, "bl-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(id); if (q) { q.node.set.src = path; delete q.node.set.crop; A().E.sel = id; A().E.nextLabel = "تمويه"; A().renderCanvas(); A().commitAfter(id); } S.dirty = false; ov.remove(); }
+      catch (e) { msg("⚠️ " + (e.message || e)); $("bl-save").disabled = false; } S.busy = false;
+    };
+    render(); ov._t = { S, compose, blurOf };
+  }
+  return { pane, capture, captureElements, importImages, eraser, blur: blurTool, warm, setGem, _shell: shell, _scanFx: scanFx };
 })();

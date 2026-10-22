@@ -19,9 +19,9 @@ const root = path.join(__dirname, "..");
   t("الوحدة محمّلة وتميّز الأدوات", await p.evaluate(() => typeof ToolWin === "object" && ToolWin.has("mk") && ToolWin.has("up") && ToolWin.has("bg") && !ToolWin.has("barcode") && !ToolWin.has("studio3d") && !ToolWin.has("gen") && typeof PBApp.toolSession === "function"));
   /* ستوديو ديزاين: كل أداة بطاقة بأيقونة */
   await p.evaluate(() => { try { Admin.tab("studio"); } catch (e) { document.getElementById("tab-studio").classList.remove("hidden"); } });
-  await p.waitForFunction(() => document.querySelectorAll("#studio-content .sd-card").length >= 40, null, { timeout: 8000 }).catch(() => { });
+  await p.waitForFunction(() => document.querySelectorAll("#studio-content .sd-card").length >= 41, null, { timeout: 8000 }).catch(() => { });
   const st = await p.evaluate(() => { const cs = [...document.querySelectorAll("#studio-content .sd-card")]; return { n: cs.length, noIcon: cs.filter(c => !c.querySelector(".sd-h img")).length, ai: /ذكاء|ذكي|ذكية/.test(document.getElementById("studio-content").innerText) }; });
-  t("ستوديو ديزاين: 41 أداة كلها بأيقونة وبلا ذكر للذكاء", st.n === 41 && st.noIcon === 0 && !st.ai, st);
+  t("ستوديو ديزاين: 42 أداة كلها بأيقونة وبلا ذكر للذكاء", st.n === 42 && st.noIcon === 0 && !st.ai, st);
   /* صفحة أداة بلا صفحة تعريف: زر «ابدأ الآن» */
   await p.evaluate(() => AdminStudio.open("mk")); await p.waitForTimeout(300);
   t("صفحة الأداة فيها «ابدأ الآن»", await p.evaluate(() => { const b = document.querySelector('#studio-content [data-sdgo="mk"]'); return !!b && /ابدأ الآن/.test(b.textContent); }));
@@ -41,13 +41,13 @@ const root = path.join(__dirname, "..");
     window.confirm = () => true; window.alert = () => { }; try { ImgGen.edit = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; ImgGen.ready = () => ({ ok: false, nokey: true }); } catch (e) { }
     const KEY = { bg: "bg", st: "st", vd: "vd", v360: "v3", fashion: "fa", tryon: "to", pshoot: "ps", mk: "mk", pz: "pz", cap: "cap", rt: "rt", ff: "ff", fr: "fr", bl: "bl", cl: "cl", xp: "xp", resize: "xp", sl: "sl", ai: "ai", up: "up", brand: "br", recolor: "rc", relight: "rl", textrm: "tr", uncrop: "uc", beautify: "bf", vgen: "vg", vad: "vad" }, bad = [], c = document.createElement("canvas"); c.width = 120; c.height = 90; const g = c.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(0, 0, 120, 90); g.fillStyle = "#3a6"; g.fillRect(30, 20, 60, 50);
     const blob = await new Promise(r => c.toBlob(r, "image/png")); let n = 0;
-    for (const id of Object.keys(KEY).concat(["erase", "scene"])) {
+    for (const id of Object.keys(KEY).concat(["erase", "scene", "blur"])) {
       try { const r = await PBApp.toolSession([blob], id, id); const E = PBApp.E; if (r === false || !(E.page && E.page.ad)) bad.push(id + ":session"); else if (KEY[id] && E.ept !== KEY[id]) bad.push(id + ":ept=" + E.ept); n++; } catch (e) { bad.push(id + ":" + String(e.message || e).slice(0, 60)); }
       document.querySelectorAll("#pbs-modal,#pbs-bg").forEach(x => x.remove());
     }
     return { n, bad };
   });
-  t("كل أدوات الصور (30) تفتح الأداة على صورتك: لوحتها أو نافذتها", all.n === 30 && all.bad.length === 0, all);
+  t("كل أدوات الصور (31) تفتح الأداة على صورتك: لوحتها أو نافذتها", all.n === 31 && all.bad.length === 0, all);
   t("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
 })();

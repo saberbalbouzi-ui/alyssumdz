@@ -359,7 +359,7 @@
       }
     },
     "ff": {
-      "icon": "n-ff",
+      "icon": "28-soft-edges",
       "t": {
         "ar": "حواف ناعمة",
         "fr": "Bords doux",
@@ -538,6 +538,19 @@
         "ar": "آلاف الملصقات الملونة",
         "fr": "Des milliers d'autocollants",
         "en": "Thousands of stickers"
+      }
+    },
+    "blur": {
+      "icon": "n-blur",
+      "t": {
+        "ar": "تمويه",
+        "fr": "Flou",
+        "en": "Blur"
+      },
+      "d": {
+        "ar": "موّه جزءاً من الصورة بفرشاة أو الصورة كاملة",
+        "fr": "Floutez une zone au pinceau ou toute l'image",
+        "en": "Blur an area with a brush or the whole image"
       }
     }
   }
