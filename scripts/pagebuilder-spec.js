@@ -578,11 +578,15 @@ ${o.extra ? o.extra + "\n" : ""}
   /* ───────────── الواجهة ───────────── */
   /* ───────────── استيراد منتج من رابط (عنوان، وصف، سعر، صور) ───────────── */
   const PROXIES = [u => "https://corsproxy.io/?url=" + encodeURIComponent(u), u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u), u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u)];
-  const fetchTimed = async (u, kind, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 15000); try { const r = await fetch(u, { signal: c.signal }); if (!r.ok) throw new Error("HTTP " + r.status); return kind === "blob" ? await r.blob() : await r.text(); } finally { clearTimeout(t); } };
+  const fetchTimed = async (u, kind, ms) => { const c = new AbortController(), t = setTimeout(() => c.abort(), ms || 15000); try { const r = await fetch(u, { signal: c.signal }); if (!r.ok) throw new Error("HTTP " + r.status); return kind === "blob" ? await r.blob() : await r.text(); } catch (e) { throw (e && e.name === "AbortError") ? new Error("انتهت المهلة") : e; } finally { clearTimeout(t); } };
+  /* الرابط المباشر ثم الوسطاء بالتوازي: أول صفحة صالحة تُقبل؛ وإن فشلت كلها يُشرح السبب بالعربية */
   async function fetchPageHtml(url) {
-    let last = null;
-    for (const u of [url].concat(PROXIES.map(p => p(url)))) { try { const h = await fetchTimed(u, "text"); if (/<html|<body|<head|<!doctype/i.test(h.slice(0, 4000)) && h.length > 300) return h; last = new Error("استجابة ليست صفحة"); } catch (e) { last = e; } }
-    throw last || new Error("تعذّر جلب الصفحة");
+    const cands = [url].concat(PROXIES.map(p => p(url))), errs = [];
+    const one = async u => { const h = await fetchTimed(u, "text", 12000); if (/<html|<body|<head|<!doctype/i.test(h.slice(0, 4000)) && h.length > 300) return h; throw new Error("استجابة ليست صفحة"); };
+    const first = await new Promise(res => { let n = cands.length; cands.forEach(u => one(u).then(h => res(h), e => { errs.push(String((e && e.message) || e)); if (--n === 0) res(null); })); });
+    if (first) return first;
+    const timeouts = errs.filter(e => /المهلة/.test(e)).length;
+    throw new Error("تعذّر جلب صفحة المنتج (" + (timeouts >= errs.length - 1 ? "انتهت المهلة؛ الموقع بطيء أو يمنع الجلب الآلي" : "الموقع يمنع الجلب الآلي أو الرابط غير صحيح") + ")");
   }
   async function fetchImgBlob(url) { for (const u of [url].concat(PROXIES.map(p => p(url)))) { try { const b = await fetchTimed(u, "blob", 12000); if (b && b.size > 1500 && /^image\//.test(b.type)) return b; } catch (_) { } } return null; }
   /* نقية: HTML + رابط الأساس ← {title,desc,price,currency,images[],bullets[]} */
