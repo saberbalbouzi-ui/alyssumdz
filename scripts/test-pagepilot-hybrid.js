@@ -80,7 +80,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   const fbk = await p.evaluate(async () => {
     const H = PagePilotHybrid; const c0 = document.createElement("canvas"); c0.width = 120; c0.height = 150; const x = c0.getContext("2d"); x.fillStyle = "#c81e1e"; x.fillRect(0, 0, 120, 150);
     const ref = await new Promise(r => c0.toBlob(r, "image/png"));
-    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: ref, refs: [ref], theme: PagePilot.THEMES.green, lang: "ar", count: 4, gate: false }, {}, {
+    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: ref, refs: [ref], theme: PagePilot.THEMES.green, lang: "ar", count: 8, gate: false }, {}, {
       real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
       remover: { cut: async b => b },
       image: { bg: async () => { throw new Error("x"); }, edit: async () => { throw new Error("quota exceeded"); } },
@@ -92,6 +92,11 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   });
   t("فشل صور الذكاء: المنتج المقصوص يُضاف لكل قسم احتياطي", fbk.allMock && fbk.hasProd && fbk.prodLayers[0] === 1 && fbk.prodLayers.filter(n => n === 1).length >= 5, fbk);
   t("فشل صور الذكاء: رسالة واضحة بالسبب", /تعذّر توليد صور الذكاء/.test(fbk.note) && /quota/.test(fbk.note), fbk);
+
+  const cnts = await p.evaluate(() => [2,3,4,5,6,7,8].map(n => { const t = PagePilotHybrid.typesFor(n); return [n, t.length, t[0], t.includes("offer_price")]; }));
+  t("عدد الأقسام 2–8: كل عدد يعطي الأقسام المطلوبة ويبدأ بالهيرو ويحوي العرض", cnts.every(c => c[0] === c[1] && c[2] === "hero" && c[3]), cnts);
+  const opts = await p.evaluate(() => { PagePilot.open(); return Array.from(document.querySelectorAll("#pp-hn option")).map(o => o.value).join(","); });
+  t("خيارات عدد الأقسام في الواجهة 2…8", opts === "2,3,4,5,6,7,8", opts);
 
   /* أسلوب المنافس: لون المنتج، كلمة مبرزة، صفوف أيقونات، زر في كل قسم، شريط علوي، أشخاص، صفحة متصلة */
   const cp = await p.evaluate(() => {

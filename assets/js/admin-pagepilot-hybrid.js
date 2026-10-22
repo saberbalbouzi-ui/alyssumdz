@@ -123,7 +123,7 @@ const PagePilotHybrid = (() => {
     final_cta: "an inviting golden-hour scene, close and warm hero view of the product with gentle glow"
   };
   const zoneOf = (type, edit) => { const T = TYPES[type] || TYPES.hero; return edit && EDIT_ZONE[type] ? EDIT_ZONE[type] : T.zone; };
-  const ORDER = { 6: ["hero", "problem", "benefits", "offer_price", "delivery_guarantee", "final_cta"], 8: ["hero", "problem", "benefits", "how_to_use", "why_choose", "offer_price", "delivery_guarantee", "final_cta"], 10: ["hero", "problem", "benefits", "how_to_use", "why_choose", "comparison", "offer_price", "faq", "delivery_guarantee", "final_cta"] };
+  const ORDER = { 2: ["hero", "offer_price"], 3: ["hero", "benefits", "offer_price"], 4: ["hero", "problem", "benefits", "offer_price"], 5: ["hero", "problem", "benefits", "offer_price", "final_cta"], 7: ["hero", "problem", "benefits", "how_to_use", "offer_price", "delivery_guarantee", "final_cta"], 6: ["hero", "problem", "benefits", "offer_price", "delivery_guarantee", "final_cta"], 8: ["hero", "problem", "benefits", "how_to_use", "why_choose", "offer_price", "delivery_guarantee", "final_cta"], 10: ["hero", "problem", "benefits", "how_to_use", "why_choose", "comparison", "offer_price", "faq", "delivery_guarantee", "final_cta"] };
   const typesFor = n => (ORDER[n] || ORDER[8]).slice();
   function planPrompt(info, an, style, o) {
     o = o || {}; const types = typesFor(o.count), dia = o.dialect === "msa" ? "العربية الفصحى المبسّطة" : "الدارجة الجزائرية المكتوبة بحروف عربية (قريبة من الناس، بلا مبالغة)";
