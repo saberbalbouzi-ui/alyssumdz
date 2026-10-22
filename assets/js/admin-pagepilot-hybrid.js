@@ -57,6 +57,10 @@ const PagePilotHybrid = (() => {
       const w = cv.width, h = cv.height, sm = document.createElement("canvas"); sm.width = 64; sm.height = Math.max(8, Math.round(64 * h / w)); const sx = sm.getContext("2d"); sx.drawImage(cut, 0, 0, sm.width, sm.height);
       const d = sx.getImageData(0, 0, sm.width, sm.height).data; let n = 0, cx = 0, cy = 0; for (let y = 0; y < sm.height; y++) for (let x = 0; x < sm.width; x++) { if (d[(y * sm.width + x) * 4 + 3] > 128) { n++; cx += x; cy += y; } }
       const cov = n / (sm.width * sm.height); if (cov < .06 || cov > .8) return false;
+      /* الخلفية يجب أن تكون متجانسة فعلاً: نسبة البكسلات المخالفة للون الحواف ≈ تغطية القصّ، وإلا (هالة/قوس/تدرّج خلف الموضوع) لا نسطّح فيبقى قصّ مبتور */
+      { const s2 = document.createElement("canvas"); s2.width = 64; s2.height = sm.height; const q = s2.getContext("2d"); q.drawImage(cv, 0, 0, 64, sm.height); const e = q.getImageData(0, 0, 64, sm.height).data, bw = 64, bh = sm.height, edge = []; for (let x = 0; x < bw; x++) for (const y of [0, 1, bh - 2, bh - 1]) edge.push((y * bw + x) * 4); for (let y = 0; y < bh; y++) for (const x of [0, 1, bw - 2, bw - 1]) edge.push((y * bw + x) * 4);
+        const med = k => { const a = edge.map(i => e[i + k]).sort((m, o) => m - o); return a[a.length >> 1]; }, mr = med(0), mg = med(1), mb = med(2); let df = 0; for (let i = 0; i < e.length; i += 4) { const dr = e[i] - mr, dg = e[i + 1] - mg, db = e[i + 2] - mb; if (dr * dr + dg * dg + db * db > 45 * 45) df++; }
+        if (Math.abs(df / (bw * bh) - cov) > .14) return false; }
       cx = cx / n / sm.width * w; cy = cy / n / sm.height * h;
       const out = document.createElement("canvas"); out.width = w; out.height = h; const c = out.getContext("2d");
       c.fillStyle = deepHex; c.fillRect(0, 0, w, h);
@@ -249,7 +253,11 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     const crisp = o.withProduct ? "The product must be the pure, sharp, photorealistic hero of the image: perfectly in focus, high resolution, clean crisp edges, faithful colors, no blur, no warping. " : "";
     const tone = `Color mood: the whole scene, props and light are graded in ${style.cname || "deep"} tones (${style.palette.primary}). `;
     const nf = o.noFaces !== false && !person;
-    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail, completely empty space across ${zoneTxt} for a headline and text rows (nothing important there, the product must NOT enter that area), and keep the bottom 12% of the frame calm and plain for a button. The dominant background color of the entire frame is ${style.bgName} (${style.palette.deep}) — one unified color-graded scene, props and surfaces also in ${style.cname} tones${style.tone === "light" ? "" : "; no gray or white backdrop"}. Add soft cinematic lighting: a gentle glowing light behind the subject and product with a smooth gradient falloff (degradé), subtle rim light, never harsh. All four edges of the frame must dissolve like a vignette into the flat backdrop color with no visible border or frame line. The top 8% and bottom 8% of the frame must fade smoothly into the same solid ${style.bgName} (${style.palette.deep}) so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
+    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail, completely empty space across ${zoneTxt} for a headline and text rows (nothing important there, the product must NOT enter that area), and keep the bottom 12% of the frame calm and plain for a button. The dominant background color of the entire frame is ${style.bgName} (${style.palette.deep}) — one unified color-graded scene, props and surfaces also in ${style.cname} tones${style.tone === "light" ? "" : "; no gray or white backdrop"}. ${solid ? `Lighting: even, soft studio light on the subject and product only. ABSOLUTELY NO glow, NO halo, NO light beam, NO arch, NO circle or gradient shape behind the subject or product — the background behind them stays one perfectly flat uniform color exactly like the rest of the frame (the page adds its own glow later).` : `Add soft cinematic lighting: a gentle glowing light behind the subject and product with a smooth gradient falloff (degradé), subtle rim light, never harsh.`} All four edges of the frame must dissolve like a vignette into the flat backdrop color with no visible border or frame line. The top 8% and bottom 8% of the frame must fade smoothly into the same solid ${style.bgName} (${style.palette.deep}) so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
+  }
+  /* تعليمات الاستمرارية: الصورة الثانية = القسم السابق (والثالثة = أول قسم) */
+  function continuityNote(hasFirst) {
+    return "VISUAL CONTINUITY (very important): the second attached image is the PREVIOUS section of this same long vertical landing page" + (hasFirst ? " and the third attached image is the FIRST section (the style anchor)" : "") + ". Keep EXACTLY the same backdrop — same background color, texture, surface and props family, depth of field, light direction, color grade and mood — so that this image placed directly below the previous one looks like ONE continuous scene of the same place: the top edge of this image must flow seamlessly from the bottom edge of the previous image (same color and brightness at the seam). Only the product placement, camera angle, framing and the focal element change; do NOT copy the previous product pose and do NOT reuse its text area. Never invent a new room, new color scheme or new lighting.";
   }
   function gatePrompt(o) {
     const z = o.zone === "bottom" ? "الجزء السفلي" : o.zone === "full" ? "الجزء الأوسط" : "الجزء العلوي";
@@ -376,7 +384,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       llm: { json: async (prompt, blobs) => { if (!real || typeof ImgGen === "undefined" || !ImgGen.text) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } return ImgGen.text({ prompt, json: true, temp: .7, blobs: blobs && blobs.length ? blobs : undefined, edge: 1600 }); } },
       image: {
         bg: async (prompt, i, sec) => { if (!real) return { canvas: mockBg(P.style, sec, i), mock: true }; const r = await ImgGen.edit({ textOnly: true, prompt, W, H, confirm: false, title: "خلفية قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; },
-        edit: async (blob, prompt, i) => { if (!real) return null; const r = await ImgGen.edit({ blob, prompt, W, H, pro: true, confirm: false, title: "مشهد قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; }
+        edit: async (blob, prompt, i, extra) => { if (!real) return null; const r = await ImgGen.edit({ blob, extra: extra && extra.length ? extra : undefined, prompt, W, H, pro: true, confirm: false, title: "مشهد قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; }
       },
       remover: { cutBg: async canvas => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { methods: ["classic"], keepFrac: .04 }); return r && r.canvas ? r.canvas : null; }, cut: async (canvas, onStep) => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { onStep, keepFrac: .2 }); return r && r.canvas ? r.canvas : null; } },
       vision: { check: async (blob, prompt, ref) => { if (!real || typeof ImgGen === "undefined" || !ImgGen.text) return null; return ImgGen.text({ prompt, json: true, temp: .1, blobs: ref ? [ref, blob] : [blob] }); } }
@@ -434,16 +442,18 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     if (inp.strategy !== "composite" && !wantEdit && photo) note.push("دمج المنتج في المشهد يحتاج مفتاح Alyssum API: استُعمل قصّ المنتج فوق خلفية محلية.");
     const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta !== false, results = [];
     let halted = ""; const HARD = /quota|limit|billing|credit|insufficient|402|429|permission|unauthori|forbidden|api key|رصيد|حدّ|حد الاستخدام/i;
-    await pool(plan.sections, 3, async (sec, i) => {
+    const chain = edit && inp.chain !== false && P.real; let prevRaw = null, firstRaw = null;   /* استمرارية بصرية: القسم i يُرسم مع صورة القسم السابق مرجعاً (بالتتابع) */
+    await pool(plan.sections, chain ? 1 : 3, async (sec, i) => {
       const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, refBlob = refs.length ? refs[i % refs.length] : null; R.ref = refs.length ? i % refs.length : -1;
       let extra = "", why = [];
       for (let a = 1; a <= 3; a++) {
         R.attempts = a;
         if (halted) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:halted"); R.error = halted; break; }
         try {
-          const pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, backdrop: inp.backdrop, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
-          const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
-          if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock;
+          let pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, backdrop: inp.backdrop, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
+          const links = chain && prevRaw ? [prevRaw].concat(firstRaw && firstRaw !== prevRaw ? [firstRaw] : []) : []; if (links.length) { pr = pr + " " + continuityNote(links.length > 1); R.prompt = pr; R.chained = true; }
+          const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i, links) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
+          if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock; R.rawKeep = got.mock ? null : (got.blob || null);
           if (inp.gate !== false && P.real && !got.mock && R.bgBlob) {
             const v = await step("quality", () => withTimeout(P.vision.check(R.bgBlob, gatePrompt({ zone: zoneOf(sec.type, edit), ref: edit }), edit ? refBlob : null), 90000, "فحص الجودة"), sec.id).catch(() => null);
             const gk = v ? gateOk(v, noFaces && !hasPerson(sec.type, { people }), edit, hasPerson(sec.type, { people })) : { ok: true, why: [] };
@@ -458,6 +468,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
           extra = ""; await new Promise(r => setTimeout(r, 600));
         }
       }
+      if (chain && !R.mock && R.rawKeep) { prevRaw = R.rawKeep; if (!firstRaw) firstRaw = R.rawKeep; }
       if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
       const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
@@ -515,5 +526,5 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, flattenOnDeep, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, flattenOnDeep, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();

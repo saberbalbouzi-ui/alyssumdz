@@ -55,7 +55,15 @@ const AdminHome = (() => {
   function realSt(o) {
     const a = A(), g = stOf(o.status); let t = null; try { t = a.trackingOf && a.trackingOf(o); } catch (e) { }
     if (!t) return o.status === "nouvelle" || !o.status ? { t: "🆕 جديد — في انتظار التأكيد", c: g.c } : o.status === "confirmee" ? { t: "مؤكَّد — لم يُرسل للشركة", c: g.c } : { t: g.t, c: g.c };
-    let raw = ""; try { const r = window.AdminYd && AdminYd.S.rows.find(x => String(x.tracking) === String(t.tracking)); raw = (r && r.status) || ""; } catch (e) { }
+    let raw = "", gone = false; try {
+      const Y = typeof AdminYd !== "undefined" ? AdminYd : null, rows = (Y && Y.S.rows) || [], r = rows.find(x => String(x.tracking) === String(t.tracking)); raw = (r && r.status) || "";
+      /* طرد مسجَّل محلياً لكنه غير موجود في قائمة الشركة (حُذف هناك) ⟵ لا نعرض حالة قديمة محفوظة */
+      if (!r && rows.length && (!t.company || t.company === "yalidine") && ["confirmee", "nouvelle", "expediee"].includes(o.status)) {
+        const tm = d => { const x = new Date(String(d || "").replace(" ", "T")).getTime(); return isFinite(x) ? x : 0; }, oldest = Math.min.apply(null, rows.map(x => tm(x.date)).filter(Boolean).concat([Infinity]));
+        if (tm(o.date) >= oldest) gone = true;
+      }
+    } catch (e) { }
+    if (gone) return { t: "⚠️ الطرد غير موجود عند الشركة (حُذف)", c: "#f87171" };
     if (!raw) { try { raw = ((a.shipRaw || {})[o.id] || {}).raw || ""; } catch (e) { } }
     return { t: raw || (g.t + " (بانتظار الشركة)"), c: g.c };
   }

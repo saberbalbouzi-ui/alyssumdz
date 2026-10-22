@@ -97,6 +97,33 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("كل قسم يأخذ صورة مرجعية مختلفة من صور المنتج", ed.refsUsed === "0,1,2" && ed.calls >= 6, ed);
   t("برومبت الدمج: المنتج داخل المشهد ومختلف عن بقية الأقسام وبمشاهد متنوعة", ed.noProduct && ed.scenes >= 5, ed);
 
+  /* استمرارية بصرية: كل قسم يُرسم بالتتابع مع صورة القسم السابق (وأول قسم) مرجعاً */
+  const ch = await p.evaluate(async () => {
+    const H = PagePilotHybrid, mkb = async col => { const c = document.createElement("canvas"); c.width = 120; c.height = 150; const x = c.getContext("2d"); x.fillStyle = col; x.fillRect(0, 0, 120, 150); return new Promise(r => c.toBlob(r, "image/png")); };
+    const refs = [await mkb("#c81e1e"), await mkb("#1ec85a")];
+    const go = async chain => {
+      const log = []; let cur = 0, maxPar = 0, par = 0, gen = [];
+      await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 4, gate: false, noFaces: true, backdrop: "scene", chain }, {}, {
+        real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }, remover: { cut: async () => null },
+        image: { bg: async () => { throw new Error("x"); }, edit: async (b, pr, i, extra) => { par++; maxPar = Math.max(maxPar, par); await new Promise(r => setTimeout(r, 30)); const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); const bl = await new Promise(r => c.toBlob(r, "image/png")); gen.push(bl); log.push({ i, ex: (extra || []).length, prev: extra && extra[0] ? gen.indexOf(extra[0]) : -1, first: extra && extra[1] ? gen.indexOf(extra[1]) : -1, cont: /VISUAL CONTINUITY/.test(pr) }); par--; return { canvas: c, blob: bl }; } },
+        vision: { check: async () => null }
+      });
+      return { log, maxPar };
+    };
+    return { on: await go(undefined), off: await go(false) };
+  });
+  t("الاستمرارية: بالتتابع (لا توازٍ) وأول قسم بلا مرجع سابق", ch.on.maxPar === 1 && ch.on.log[0].ex === 0 && !ch.on.log[0].cont, ch.on);
+  t("الاستمرارية: القسم i يأخذ صورة i-1 مرجعاً ثانياً وأول صورة مرجعاً ثالثاً (من القسم 3) وبرومبت الاستمرارية", ch.on.log.slice(1).every(l => l.ex >= 1 && l.cont && l.prev === l.i - 1) && ch.on.log[2].first === 0 && ch.on.log[1].ex === 1, ch.on);
+  t("إلغاء الاستمرارية: توازٍ وبلا مراجع سابقة", ch.off.log.every(l => l.ex === 0 && !l.cont), ch.off);
+
+  /* خلفية فيها هالة/قوس خلف الموضوع: لا تسطيح (يبقى القصّ المبتور خارجاً) بل إذابة الحواف */
+  const halo = await p.evaluate(async () => {
+    const H = PagePilotHybrid, c = document.createElement("canvas"); c.width = 200; c.height = 250; const x = c.getContext("2d"); x.fillStyle = "#2c5a3a"; x.fillRect(0, 0, 200, 250);
+    x.fillStyle = "#e8a36a"; x.beginPath(); x.arc(100, 140, 90, 0, Math.PI * 2); x.fill(); x.fillStyle = "#101010"; x.fillRect(75, 100, 50, 80);
+    const cut = async () => { const o = document.createElement("canvas"); o.width = 200; o.height = 250; const q = o.getContext("2d"); q.fillStyle = "#101010"; q.fillRect(75, 100, 50, 80); return o; };
+    return await H.flattenOnDeep(c, "#14181f", cut, false);
+  });
+  t("هالة/قوس خلف الموضوع: لا تسطيح", halo === false, halo);
   /* v1.89.414: لون/درجة اختيارية، خلفية موحّدة، كلمات مفتاحية ملوّنة، إعادة تلوين الصفحة */
   const cl = await p.evaluate(() => {
     const H = PagePilotHybrid, an = H.cleanAnalysis({ dominant_colors: ["#c8a24b"] }), o = {};
@@ -234,7 +261,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   /* وضع الدمج + خلفية موحّدة: القسم يُسطَّح على لون الصفحة فلا طبقات تلوين فوق الصورة */
   const fe = await p.evaluate(async () => {
     const H = PagePilotHybrid, blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob();
-    const mkc = () => { const c = document.createElement("canvas"); c.width = 108; c.height = 135; const x = c.getContext("2d"); x.fillStyle = "#335577"; x.fillRect(0, 0, 108, 135); return c; };
+    const mkc = () => { const c = document.createElement("canvas"); c.width = 108; c.height = 135; const x = c.getContext("2d"); x.fillStyle = "#335577"; x.fillRect(0, 0, 108, 135); x.fillStyle = "#222"; x.fillRect(30, 40, 50, 70); return c; };
     const out = await H.run({ info: { title: "مكواة", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob, refs: [blob], theme: PagePilot.THEMES.green, lang: "ar", count: 2, gate: false, backdrop: "solid" }, {}, {
       real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
       remover: { cut: async () => null, cutBg: async () => { const o = document.createElement("canvas"); o.width = 108; o.height = 135; const q = o.getContext("2d"); q.fillStyle = "#222"; q.fillRect(30, 40, 50, 70); return o; } },
