@@ -346,5 +346,67 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     };
     render(); ov._t = { S, compose, blurOf };
   }
-  return { pane, capture, captureElements, importImages, eraser, blur: blurTool, warm, setGem, _shell: shell, _scanFx: scanFx };
+
+  /* ───── تركيز تلقائي (Mise au point automatique) على نهج كانفا: يُبقي ما عند «موضع التركيز» حاداً ويموّه الباقي تدريجياً بحسب العمق؛ شدّة التمويه وموضع التركيز بمنزلقين مع إظهار منطقة الحدّة بلون بنفسجي أثناء السحب.
+     العمق: النموذج المحلي (Depth Anything) إن توفّر وإلا طلب واحد إلى Alyssum API يعيد خريطة عمق رمادية. ───── */
+  async function autoFocus(inf) {
+    if (!inf || inf.node.type !== "image" || !inf.set.src) { alert("حدّد صورة أولاً"); return; }
+    const id = inf.node.id; let src; try { src = await loadCanvas(inf.set.src); } catch (e) { alert("⚠️ " + e.message); return; }
+    const MAXS = 1800, k0 = Math.min(1, MAXS / Math.max(src.width, src.height)); let base = src;
+    if (k0 < 1) { base = document.createElement("canvas"); base.width = Math.round(src.width * k0); base.height = Math.round(src.height * k0); base.getContext("2d").drawImage(src, 0, 0, base.width, base.height); }
+    const W = base.width, H = base.height, dispW = Math.max(240, Math.min(W, innerWidth * .62, (innerHeight - 190) * W / H)), dispH = Math.round(dispW * H / W);
+    const mkc = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+    const ov = document.createElement("div"); ov.id = "pbs-af"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.78);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
+    ov.innerHTML = `<div style="background:#fff;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#173f35">
+      <div style="width:250px;display:flex;flex-direction:column;gap:.55rem"><b style="font-size:1rem">🎯 تركيز تلقائي</b>
+        <label style="font-size:.78rem">شدّة التمويه <b id="af-inv">50</b><input id="af-in" type="range" min="0" max="100" value="50" style="width:100%" disabled></label>
+        <label style="font-size:.78rem">موضع التركيز <b id="af-pov">40</b><input id="af-pos" type="range" min="0" max="100" step="0.5" value="40" style="width:100%" disabled></label>
+        <button id="af-save" type="button" style="background:#173f35;color:#fff;border:0;border-radius:8px;padding:.5rem .9rem;font-weight:800;cursor:pointer;font-family:inherit" disabled>✔ تطبيق على الصورة</button><button id="af-x" type="button" class="pbx-small">إلغاء</button>
+        <div id="af-msg" style="font-size:.74rem;color:#6b6556;min-height:1.2em">⏳ تحليل العمق…</div></div>
+      <div style="position:relative;width:${dispW}px;height:${dispH}px;background:#eee;border-radius:8px;overflow:hidden"><canvas id="af-v" width="${dispW}" height="${dispH}" style="position:absolute;inset:0"></canvas><canvas id="af-o" width="${dispW}" height="${dispH}" style="position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .2s"></canvas></div></div>`;
+    document.body.appendChild(ov); const $ = i => ov.querySelector("#" + i), v = $("af-v"), vg = v.getContext("2d"), og = $("af-o").getContext("2d"), msg = t => { $("af-msg").textContent = t; };
+    const S = { D: null, dw: 0, dh: 0, ready: false, busy: false, saved: false }, hasF = "filter" in vg, N = 6;
+    let closed = false; const close = () => { closed = true; ov.remove(); }; $("af-x").onclick = close;
+    /* ١) خريطة العمق: 1 = الأقرب. محلياً أولاً ثم Alyssum API */
+    const norm = (arr, w, h) => { let mn = 1e9, mx = -1e9; for (let i = 0; i < arr.length; i++) { if (arr[i] < mn) mn = arr[i]; if (arr[i] > mx) mx = arr[i]; } const r = mx - mn || 1, D = new Float32Array(w * h); for (let i = 0; i < D.length; i++) D[i] = (arr[i] - mn) / r; return D; };
+    async function getDepth() {
+      if (typeof AIVision !== "undefined" && AIVision.depth) { try { const dm = await AIVision.depth(base, null, 448); if (dm && dm.data) return { D: norm(new Float32Array(dm.data), dm.w, dm.h), w: dm.w, h: dm.h }; } catch (e) { console.warn("depth", e); } }
+      if (typeof ImgGen !== "undefined" && ImgGen.edit && ImgGen.ready && ImgGen.ready().ok) {
+        const s = Math.min(1, 1024 / Math.max(W, H)), w = Math.round(W * s), h = Math.round(H * s), c = mkc(w, h); c.getContext("2d").drawImage(base, 0, 0, w, h);
+        const blob = await new Promise(r => c.toBlob(r, "image/png")), r = await ImgGen.edit({ blob, W: w, H: h, fmt: "png", confirm: false, title: "تحليل العمق", prompt: "Convert this photo into a monochrome DEPTH MAP with exactly the same framing and size: pure white for the nearest surfaces, pure black for the farthest background, smooth gray gradients in between, objects separated cleanly with no outlines, no text, no color. Return only the grayscale depth image." });
+        if (!r || !r.canvas) throw new Error("لم تُرجع الأداة خريطة عمق"); const g = r.canvas.getContext("2d", { willReadFrequently: true }), d = g.getImageData(0, 0, r.canvas.width, r.canvas.height).data, a = new Float32Array(d.length / 4); for (let i = 0; i < a.length; i++) a[i] = (d[i * 4] + d[i * 4 + 1] + d[i * 4 + 2]) / 3; return { D: norm(a, r.canvas.width, r.canvas.height), w: r.canvas.width, h: r.canvas.height };
+      }
+      throw new Error("تعذّر تقدير العمق: لا يتوفر النموذج المحلي ولا مفتاح Alyssum API");
+    }
+    /* ٢) عمق بدقة العمل: يُكبَّر بنعومة */
+    const depthAt = (w, h) => { const c = mkc(S.dw, S.dh), g = c.getContext("2d"), im = g.createImageData(S.dw, S.dh); for (let i = 0; i < S.D.length; i++) { const x = Math.round(S.D[i] * 255); im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = x; im.data[i * 4 + 3] = 255; } g.putImageData(im, 0, 0); const o = mkc(w, h), og2 = o.getContext("2d", { willReadFrequently: true }); og2.imageSmoothingQuality = "high"; og2.drawImage(c, 0, 0, w, h); const d = og2.getImageData(0, 0, w, h).data, out = new Float32Array(w * h); for (let i = 0; i < out.length; i++) out[i] = d[i * 4] / 255; return out; };
+    const blurOf = (c, r) => { const out = mkc(c.width, c.height), g = out.getContext("2d"); if (hasF && r > .3) { g.filter = "blur(" + r.toFixed(2) + "px)"; g.drawImage(c, -r * 2, -r * 2, c.width + r * 4, c.height + r * 4); } else { const k = Math.max(.03, 1 / (1 + r)), t = mkc(c.width * k, c.height * k); t.getContext("2d").drawImage(c, 0, 0, t.width, t.height); g.imageSmoothingQuality = "high"; g.drawImage(t, 0, 0, c.width, c.height); } return out; };
+    const TOL = .07, RNG = .4;
+    /* نقية: تُركّب مستويات التمويه بحسب |العمق − موضع التركيز| */
+    function compose(baseC, depth, focus, strength) {
+      const w = baseC.width, h = baseC.height, out = mkc(w, h), g = out.getContext("2d"), bd = baseC.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, w, h), res = g.createImageData(w, h);
+      if (strength <= 0) { g.drawImage(baseC, 0, 0); return out; }
+      const R = strength / 100 * .03 * Math.max(w, h), lv = [bd.data]; for (let k = 1; k <= N; k++) lv.push(blurOf(baseC, R * k / N).getContext("2d", { willReadFrequently: true }).getImageData(0, 0, w, h).data);
+      for (let i = 0; i < depth.length; i++) { const t = Math.max(0, Math.min(1, (Math.abs(depth[i] - focus) - TOL) / RNG)) * N, a = Math.floor(t), f = t - a, b = Math.min(N, a + 1), A = lv[a], B = lv[b], j = i * 4; res.data[j] = A[j] + (B[j] - A[j]) * f; res.data[j + 1] = A[j + 1] + (B[j + 1] - A[j + 1]) * f; res.data[j + 2] = A[j + 2] + (B[j + 2] - A[j + 2]) * f; res.data[j + 3] = A[j + 3]; }
+      g.putImageData(res, 0, 0); return out;
+    }
+    const dBase = mkc(dispW, dispH); dBase.getContext("2d").drawImage(base, 0, 0, dispW, dispH); let dDepth = null, t0 = 0;
+    const focusVal = () => Number($("af-pos").value) / 100, strength = () => Number($("af-in").value);
+    const render = () => { if (!dDepth) return; vg.clearRect(0, 0, dispW, dispH); vg.drawImage(compose(dBase, dDepth, focusVal(), strength()), 0, 0); S.dirty = true; };
+    const showFocus = () => { if (!dDepth) return; const im = og.createImageData(dispW, dispH), f = focusVal(); for (let i = 0; i < dDepth.length; i++) { const sharp = Math.abs(dDepth[i] - f) < TOL + .04; im.data[i * 4] = 124; im.data[i * 4 + 1] = 58; im.data[i * 4 + 2] = 237; im.data[i * 4 + 3] = sharp ? 120 : 0; } og.putImageData(im, 0, 0); $("af-o").style.opacity = 1; clearTimeout(t0); t0 = setTimeout(() => { $("af-o").style.opacity = 0; }, 700); };
+    $("af-in").oninput = () => { $("af-inv").textContent = $("af-in").value; render(); }; $("af-pos").oninput = () => { $("af-pov").textContent = $("af-pos").value; render(); showFocus(); };
+    $("af-save").onclick = async () => {
+      if (S.busy || !S.ready) return; S.busy = true; $("af-save").disabled = true; msg("⏳ جارٍ التطبيق…");
+      try { const full = compose(base, depthAt(W, H), focusVal(), strength()), blob = await new Promise(r => full.toBlob(r, "image/png")), path = await A().uploadBlob(blob, "af-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(id); if (q) { q.node.set.src = path; delete q.node.set.crop; A().E.sel = id; A().E.nextLabel = "تركيز تلقائي"; A().renderCanvas(); A().commitAfter(id); } S.saved = true; close(); }
+      catch (e) { msg("⚠️ " + (e.message || e)); $("af-save").disabled = false; } S.busy = false;
+    };
+    try {
+      const r = await getDepth(); if (closed) return; S.D = r.D; S.dw = r.w; S.dh = r.h; dDepth = depthAt(dispW, dispH);
+      /* موضع التركيز الافتراضي = عمق منتصف الصورة (غالباً الموضوع) */
+      let sum = 0, n = 0; for (let y = Math.round(dispH * .35); y < dispH * .65; y++) for (let x = Math.round(dispW * .35); x < dispW * .65; x++) { sum += dDepth[y * dispW + x]; n++; } const f0 = Math.round(sum / Math.max(1, n) * 1000) / 10; $("af-pos").value = f0; $("af-pov").textContent = f0;
+      S.ready = true; $("af-in").disabled = $("af-pos").disabled = false; $("af-save").disabled = false; render(); showFocus(); msg("اسحب «موضع التركيز» لتختار العمق الحاد (يظهر بالبنفسجي) و«شدّة التمويه» لقوة طمس الباقي.");
+    } catch (e) { msg("⚠️ " + (e.message || e)); }
+    ov._t = { S, compose, depthAt, render };
+  }
+  return { pane, capture, captureElements, importImages, eraser, blur: blurTool, autoFocus, warm, setGem, _shell: shell, _scanFx: scanFx };
 })();

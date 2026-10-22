@@ -552,6 +552,19 @@
         "fr": "Floutez une zone au pinceau ou toute l'image",
         "en": "Blur an area with a brush or the whole image"
       }
+    },
+    "af": {
+      "icon": "n-af",
+      "t": {
+        "ar": "تركيز تلقائي",
+        "fr": "Mise au point automatique",
+        "en": "Auto focus"
+      },
+      "d": {
+        "ar": "حدّة ما تختاره وتمويه الباقي حسب بعده",
+        "fr": "Net là où vous voulez, flou ailleurs",
+        "en": "Keep your focus point sharp and blur the rest"
+      }
     }
   }
 }
