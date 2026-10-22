@@ -565,6 +565,19 @@
         "fr": "Net là où vous voulez, flou ailleurs",
         "en": "Keep your focus point sharp and blur the rest"
       }
+    },
+    "bgen": {
+      "icon": "n-bgen",
+      "t": {
+        "ar": "مولّد الخلفية",
+        "fr": "Générateur d'arrière-plan",
+        "en": "Background generator"
+      },
+      "d": {
+        "ar": "4 خلفيات من وصفك والمنتج كما هو",
+        "fr": "4 arrière-plans selon votre description",
+        "en": "4 backgrounds from your description"
+      }
     }
   }
 }
