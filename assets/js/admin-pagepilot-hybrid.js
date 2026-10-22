@@ -72,6 +72,8 @@ const PagePilotHybrid = (() => {
     return l < .3 ? (n === "blue" ? "navy blue" : "dark " + n) : l > .7 ? "light " + n : "deep " + n;
   }
   /* لون التمييز (الكلمة المبرزة، الأيقونات، زر الطلب): أصفر دافئ يقرأ بوضوح فوق اللون الداكن */
+  /* لون الإضاءة الناعمة فوق اللون العميق (يُستعمل في وهج الخلفية ويُعاد حسابه عند إعادة التلوين) */
+  const glowOf = d => mix(d, "#ffffff", hexLum(d) > .4 ? .6 : .42);
   const pickAccent = (deep, hue) => { const cands = ["#ffc928", "#ffffff", hsl2hex(hue || 30, .85, .3), hsl2hex(hue || 30, .9, .22), "#111111"], ok = cands.find(c => contrast(hexLum(c), hexLum(deep)) >= 4.5); return ok || (hexLum(deep) > .4 ? "#111111" : "#ffffff"); };
   /* أيقونات مسموحة في طبقة icon (نسخة من PBSpec.ICONS) */
   const ICON_SET = ["leaf", "brain", "zap", "sprout", "sparkle", "shield-check", "truck", "cash", "headset", "cart", "check-circle", "pin", "box", "star", "heart", "gift", "clock", "phone", "mail", "award", "drop", "sun", "flame"];
@@ -212,7 +214,7 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     const crisp = o.withProduct ? "The product must be the pure, sharp, photorealistic hero of the image: perfectly in focus, high resolution, clean crisp edges, faithful colors, no blur, no warping. " : "";
     const tone = `Color mood: the whole scene, props and light are graded in ${style.cname || "deep"} tones (${style.palette.primary}). `;
     const nf = o.noFaces !== false && !person;
-    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail, completely empty space across ${zoneTxt} for a headline and text rows (nothing important there, the product must NOT enter that area), and keep the bottom 12% of the frame calm and plain for a button. The dominant background color of the entire frame is ${style.bgName} (${style.palette.deep}) — one unified color-graded scene, props and surfaces also in ${style.cname} tones${style.tone === "light" ? "" : "; no gray or white backdrop"}. The top 8% and bottom 8% of the frame must fade smoothly into the same solid ${style.bgName} (${style.palette.deep}) so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
+    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail, completely empty space across ${zoneTxt} for a headline and text rows (nothing important there, the product must NOT enter that area), and keep the bottom 12% of the frame calm and plain for a button. The dominant background color of the entire frame is ${style.bgName} (${style.palette.deep}) — one unified color-graded scene, props and surfaces also in ${style.cname} tones${style.tone === "light" ? "" : "; no gray or white backdrop"}. Add soft cinematic lighting: a gentle glowing light behind the subject and product with a smooth gradient falloff (degradé), subtle rim light, never harsh. All four edges of the frame must dissolve like a vignette into the flat backdrop color with no visible border or frame line. The top 8% and bottom 8% of the frame must fade smoothly into the same solid ${style.bgName} (${style.palette.deep}) so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
   }
   function gatePrompt(o) {
     const z = o.zone === "bottom" ? "الجزء السفلي" : o.zone === "full" ? "الجزء الأوسط" : "الجزء العلوي";
@@ -256,7 +258,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     results.forEach((R, i) => {
       const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr, ctx.strategy === "edit" && !R.mock, ctaOn), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
       assets[an] = { src: R.bgSrc, prompt: "" }; if (R.prodSrc && g.prod) assets[pn] = { src: R.prodSrc, prompt: "" };
-      layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true });
+      layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true, fade: { t: 12, b: 14, l: 0, r: 0 } });
       const z = g.zone, zn = g.zname;
       /* تدرّج لون المنتج فوق منطقة النص (يضمن القراءة ويوحّد الأقسام) */
       const ov = zn === "top" ? { y: 0, h: Math.min(H, z.y + z.h + 50), st: [[.93, 0], [.84, 72], [0, 100]] } : zn === "bottom" ? { y: Math.max(0, z.y - 170), h: 0, st: [[0, 0], [.86, 45], [.94, 100]] } : { y: 0, h: H, st: [[.84, 0], [.7, 50], [.84, 100]] };
@@ -264,6 +266,10 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       /* لون موحّد بلون المنتج فوق القسم كله (أخف خلف المنتج كي يبقى نقياً) ← خلفية واحدة متّسقة بين الأقسام */
       layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: H, z: 2, fill: deep, gradient: grad(0, [[.36, 0], [.34, 40], [.17, 56], [.17, 86], [.4, 100]]), locked: true, name: "لون موحّد" });
       layers.push({ type: "shape", shape: "rect", x: 0, y: ov.y, w: W, h: ov.h, z: 2, fill: deep, gradient: grad(0, ov.st), locked: true, name: "تدرّج اللون" });
+      /* إضاءة ناعمة (وهج) خلف المنتج/الشخص + تعتيم أطراف (فينييت): تذيب الصورة في لون الصفحة بلا حدود ظاهرة */
+      const gc = glowOf(deep), gy = zn === "top" ? 440 : zn === "bottom" ? 30 : 180, gh = zn === "top" ? 820 : zn === "bottom" ? 780 : 940;
+      layers.push({ type: "shape", shape: "rect", x: 0, y: gy, w: W, h: gh, z: 2, fill: gc, gradient: { type: "radial", angle: 0, stops: [{ c: rgba(gc, lightBg ? .55 : .5), p: 0 }, { c: rgba(gc, .22), p: 38 }, { c: rgba(gc, 0), p: 68 }] }, locked: true, name: "إضاءة الخلفية" });
+      layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: H, z: 2, fill: deep, gradient: { type: "radial", angle: 0, stops: [{ c: rgba(deep, 0), p: 52 }, { c: rgba(deep, lightBg ? .35 : .62), p: 100 }] }, locked: true, name: "تعتيم الأطراف" });
       /* حواف متصلة: أعلى القسم وأسفله يذوبان في اللون العميق نفسه */
       if (zn !== "top") layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 190, z: 2, fill: deep, gradient: grad(0, [[1, 0], [0, 100]]), locked: true, name: "وصل أعلى" });
       if (zn !== "bottom" || ctaOn) layers.push({ type: "shape", shape: "rect", x: 0, y: H - 300, w: W, h: 300, z: 2, fill: deep, gradient: grad(0, [[0, 0], [.55, 55], [1, 100]]), locked: true, name: "وصل أسفل" });
@@ -432,8 +438,8 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const meta = page && page.specMeta && page.specMeta.hybrid; if (!meta || !meta.theme || !meta.theme.palette) return { ok: false, error: "ليست صفحة من «منشئ الصفحات بالذكاء»" };
     const old = meta.theme, od = old.palette.deep.toLowerCase(), oh = old.palette.hl.toLowerCase(), nt = styleBible({}, null, opt), nd = nt.palette.deep.toLowerCase(), nh = nt.palette.hl.toLowerCase();
     const oldLight = hexLum(od) > .4, newLight = hexLum(nd) > .4, flip = oldLight !== newLight, [dr, dg, db] = hex2rgb(nd), od3 = hex2rgb(od).join(",");
-    const hex = c => { const m = String(c || "").toLowerCase(); if (m === od) return nd; if (oh !== "#ffffff" && oh !== "#111111" && m === oh) return nh; if (flip && m === "#ffffff") return "#111111"; if (flip && m === "#111111") return "#ffffff"; return c; };
-    const col = c => { if (typeof c !== "string") return c; const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,(.+)\)$/i.exec(c.trim()); if (m) return m[1] + "," + m[2] + "," + m[3] === od3 ? "rgba(" + dr + "," + dg + "," + db + "," + m[4] + ")" : (flip && /^255,255,255$/.test(m[1] + "," + m[2] + "," + m[3]) ? "rgba(0,0,0," + m[4] + ")" : c); return /^#[0-9a-f]{6}$/i.test(c.trim()) ? hex(c.trim()) : c; };
+    const og3 = hex2rgb(glowOf(od)).join(","), [gr, gg, gb] = hex2rgb(glowOf(nd)), hex = c => { const m = String(c || "").toLowerCase(); if (m === od) return nd; if (m === glowOf(od).toLowerCase()) return glowOf(nd); if (oh !== "#ffffff" && oh !== "#111111" && m === oh) return nh; if (flip && m === "#ffffff") return "#111111"; if (flip && m === "#111111") return "#ffffff"; return c; };
+    const col = c => { if (typeof c !== "string") return c; const m = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,(.+)\)$/i.exec(c.trim()); if (m) return m[1] + "," + m[2] + "," + m[3] === og3 ? "rgba(" + gr + "," + gg + "," + gb + "," + m[4] + ")" : m[1] + "," + m[2] + "," + m[3] === od3 ? "rgba(" + dr + "," + dg + "," + db + "," + m[4] + ")" : (flip && /^255,255,255$/.test(m[1] + "," + m[2] + "," + m[3]) ? "rgba(0,0,0," + m[4] + ")" : c); return /^#[0-9a-f]{6}$/i.test(c.trim()) ? hex(c.trim()) : c; };
     const grad = g => { if (g && Array.isArray(g.s)) g.s.forEach(x => { x.c = col(x.c); }); };
     let n = 0; const bump = (o, k, v) => { if (o[k] !== v) { o[k] = v; n++; } };
     (page.sections || []).forEach(sec => {
