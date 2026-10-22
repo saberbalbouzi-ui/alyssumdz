@@ -215,7 +215,7 @@ const API = {
       if (this._rp) return this._rp;
       this._rp = (async () => {
         try {
-          const ac = typeof AbortController !== "undefined" ? new AbortController() : null, to = ac ? setTimeout(() => ac.abort(), 15000) : 0;       // مهلة: لا يعلق التجديد للأبد
+          const ac = typeof AbortController !== "undefined" ? new AbortController() : null, to = ac ? setTimeout(() => ac.abort(), 45000) : 0;       // مهلة طويلة: قطع الطلب بعد وصوله للخادم يُضيع الرمز الجديد، وإعادة استعمال القديم بعد 10ث تُبطل الجلسة كلها
           this.dbg("refresh-start rt=…" + String(s.refresh_token || "").slice(-4));
           const r = await fetch(this.url("/auth/v1/token?grant_type=refresh_token"), { method: "POST", headers: this.headers(), body: JSON.stringify({ refresh_token: s.refresh_token }), signal: ac ? ac.signal : undefined }); clearTimeout(to);
           const j = await r.json().catch(() => ({}));
