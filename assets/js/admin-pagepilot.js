@@ -229,6 +229,7 @@ html{scroll-behavior:smooth}
   const canvasBlob = (c, type, q) => new Promise(r => c.toBlob(r, type || "image/webp", q || .9));
   async function upload(blob, tag) { if (typeof PBApp === "undefined" || !PBApp.uploadBlob) throw new Error("المطوّر غير متاح"); return PBApp.uploadBlob(blob, "pp-" + tag + "-" + Date.now().toString(36)); }
 
+  const bmHref = () => { try { return typeof PBSpec !== "undefined" && PBSpec.bookmarklet ? PBSpec.bookmarklet(location.origin + location.pathname) : "#"; } catch (_) { return "#"; } };
   function open() {
     const old = document.getElementById("pp-bg"); if (old) old.remove(); S.info = null; S.imgBlob = null; S.imgPath = ""; S.imp = null;
     const ps = prods(), bg = document.createElement("div"); bg.id = "pp-bg";
@@ -239,7 +240,9 @@ html{scroll-behavior:smooth}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <label style="font-size:.8rem;grid-column:1/-1">① منتج من متجرك (اختياري)<select id="pp-prod" style="${FLD}"><option value="">— بلا (رابط أو وصف يدوي) —</option>${ps.map(p => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join("")}</select></label>
 <label style="font-size:.8rem;grid-column:1/-1">أو رابط صفحة منتج<span style="display:flex;gap:6px"><input id="pp-url" dir="ltr" placeholder="https://… " style="${FLD};flex:1"><button data-pp="imp" style="${BTN_CSS};background:rgba(198,254,23,.22)">جلب</button></span></label>
-<details style="grid-column:1/-1;font-size:.8rem"><summary style="cursor:pointer;opacity:.85">الموقع يمنع الجلب؟ الصق كود الصفحة بدلاً من الرابط</summary><textarea id="pp-html" dir="ltr" rows="3" placeholder="افتح صفحة المنتج ← Ctrl+U ← Ctrl+A ← Ctrl+C ← الصقه هنا ثم اضغط «جلب»" style="${FLD};width:100%;margin-top:6px"></textarea></details>
+<details id="pp-dt" style="grid-column:1/-1;font-size:.8rem"><summary style="cursor:pointer;opacity:.85">الموقع يحجب الجلب (AliExpress وأمثاله)؟ استورد المنتج من متصفحك بنقرة</summary>
+<div style="margin-top:6px;line-height:1.9;opacity:.92"><b>الطريقة الأسهل (مرة واحدة):</b> اسحب هذا الزر إلى شريط المفضلة في متصفحك: <a id="pp-bm" draggable="true" href="${bmHref()}" style="${BTN_CSS};background:rgba(198,254,23,.25);text-decoration:none;display:inline-block;cursor:grab" title="اسحبني إلى شريط المفضلة">استيراد منتج</a><br>ثم افتح صفحة المنتج في موقعه واضغط المفضلة «استيراد منتج» — تنفتح هذه الأداة ومعها اسم المنتج وصوره جاهزة. (يعمل لأن الصفحة تُقرأ من متصفحك أنت لا من الخادم.)</div>
+<div style="margin-top:6px;opacity:.8">أو الصق كود الصفحة بدلاً من الرابط:</div><textarea id="pp-html" dir="ltr" rows="3" placeholder="افتح صفحة المنتج ← Ctrl+U ← Ctrl+A ← Ctrl+C ← الصقه هنا ثم اضغط «جلب»" style="${FLD};width:100%;margin-top:6px"></textarea></details>
 <div id="pp-impres" style="grid-column:1/-1;font-size:.82rem;line-height:1.7"></div>
 <label style="font-size:.8rem">اسم المنتج<input id="pp-name" style="${FLD}"></label>
 <label style="font-size:.8rem">صورة المنتج<input id="pp-file" type="file" accept="image/*" style="${FLD}"></label>
@@ -354,6 +357,15 @@ html{scroll-behavior:smooth}
       bg.remove(); PBApp.open(pg, "", true);
       const w = (copy.warn || []).concat(note ? [note] : []); if (w.length && PBApp.toast) setTimeout(() => PBApp.toast(w.join(" — ")), 600);
     }
+    /* يملأ الحقول بمنتج مستورد (من الجلب أو من زر المفضلة) */
+    async function applyImp(p) {
+      S.imp = p; if (p.images.length && PBSpec.pickImage) { try { await PBSpec.pickImage(p, 0); } catch (_) { } }
+      if (!$("pp-name").value.trim()) $("pp-name").value = p.title; if (!$("pp-desc").value.trim()) $("pp-desc").value = p.desc;
+      $("pp-impres").innerHTML = p.images.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${p.images.map((u, i) => `<img data-ppi="${i}" src="${esc(u)}" referrerpolicy="no-referrer" style="width:60px;height:60px;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid ${i === p.pick ? "#c6fe17" : "rgba(255,255,255,.2)"}">`).join("")}</div><div style="opacity:.7;font-size:.75rem">اضغط صورة لاختيارها صورةً رئيسية.</div>` : "لم أجد صوراً — ارفع صورة بنفسك.";
+      say("✅ جُلب: <b>" + esc(p.title || "بلا عنوان") + "</b>");
+    }
+    S.apply = applyImp;
+    bg.addEventListener("click", e => { const l = e.target.closest("#pp-bm"); if (l) { e.preventDefault(); const m = $("pp-rep"); say("اسحب الزر إلى شريط المفضلة (لا تضغطه هنا) ثم افتح صفحة المنتج واضغطه هناك."); } });
     bg.addEventListener("click", async e => {
       const b = e.target.closest("[data-pp]"); if (!b) { if (e.target === bg) bg.remove(); return; } const a = b.dataset.pp;
       if (a === "x") bg.remove();
@@ -382,11 +394,8 @@ html{scroll-behavior:smooth}
       else if (a === "imp") {
         if (typeof PBSpec === "undefined" || !PBSpec.importProduct) { say("أداة الجلب غير متاحة.", true); return; } b.disabled = true;
         try {
-          const p = await PBSpec.importProduct($("pp-url").value, m => say(m), $("pp-html") && $("pp-html").value); S.imp = p; if (p.images.length && PBSpec.pickImage) { try { await PBSpec.pickImage(p, 0); } catch (_) { } }
-          if (!$("pp-name").value.trim()) $("pp-name").value = p.title; if (!$("pp-desc").value.trim()) $("pp-desc").value = p.desc;
-          $("pp-impres").innerHTML = p.images.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap">${p.images.map((u, i) => `<img data-ppi="${i}" src="${esc(u)}" referrerpolicy="no-referrer" style="width:60px;height:60px;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid ${i === p.pick ? "#c6fe17" : "rgba(255,255,255,.2)"}">`).join("")}</div><div style="opacity:.7;font-size:.75rem">اضغط صورة لاختيارها صورةً رئيسية.</div>` : "لم أجد صوراً — ارفع صورة بنفسك.";
-          say("✅ جُلب: <b>" + esc(p.title || "بلا عنوان") + "</b>");
-        } catch (er) { S.imp = null; say("❌ " + esc(er.message) + " — الصق كود الصفحة في الخانة أدناه، أو اكتب الاسم والوصف وارفع الصورة يدوياً.", true); const dt = $("pp-html") && $("pp-html").closest("details"); if (dt) dt.open = true; } b.disabled = false;
+          const p = await PBSpec.importProduct($("pp-url").value, m => say(m), $("pp-html") && $("pp-html").value); await applyImp(p);
+        } catch (er) { S.imp = null; say("❌ " + esc(er.message) + " — الصق كود الصفحة في الخانة أدناه، أو اكتب الاسم والوصف وارفع الصورة يدوياً.", true); const dt = $("pp-dt"); if (dt) dt.open = true; } b.disabled = false;
       }
       else if (a === "go" || a === "plain") { b.disabled = true; try { await run(a === "go"); } catch (er) { say("❌ " + esc(er.message), true); b.disabled = false; } }
     });
@@ -417,5 +426,24 @@ html{scroll-behavior:smooth}
       else if (a === "go") { const r = PBApp.mutatePage(pg => PagePilotHybrid.recolorPage(pg, { color: pick, tone: d.querySelector("#pp-rct").value }), "تغيير لون الصفحة"); d.querySelector("#pp-rcm").textContent = r && r.ok ? "✅ تغيّر لون الصفحة (" + r.changed + " عنصراً)" : "❌ " + ((r && r.error) || "تعذّر التغيير"); }
     });
   }
+  /* استقبال منتج مُرسَل من زر المفضلة (#ppimp=…) */
+  (function boot() {
+    if (typeof window === "undefined" || window.__ppImpBoot) return; window.__ppImpBoot = 1;
+    let raw = ""; const h = location.hash || "";
+    if (h.indexOf("#ppimp=") === 0) { raw = h.slice(7); try { sessionStorage.setItem("pp_imp", raw); history.replaceState(null, "", location.pathname + location.search); } catch (_) { } }
+    else { try { raw = sessionStorage.getItem("pp_imp") || ""; } catch (_) { } }
+    if (!raw) return; let tries = 0;
+    const t = setInterval(async () => {
+      if (++tries > 240) { clearInterval(t); return; }
+      const lb = document.getElementById("login-box"), ready = typeof Admin !== "undefined" && !document.documentElement.classList.contains("au-boot") && (!lb || lb.offsetParent === null) && Array.isArray(Admin.products);
+      if (!ready) return; clearInterval(t);
+      try { sessionStorage.removeItem("pp_imp"); } catch (_) { }
+      try {
+        const j = JSON.parse(decodeURIComponent(escape(atob(raw.replace(/-/g, "+").replace(/_/g, "/")))));
+        const p = PBSpec.fromPayload(j); open(); if (S.apply) await S.apply(p);
+        const u = document.getElementById("pp-url"); if (u && p.url) u.value = p.url;
+      } catch (e) { try { alert("تعذّر قراءة المنتج المرسل من الزر: " + e.message); } catch (_) { } }
+    }, 500);
+  })();
   return { open, recolorOpen, THEMES, copyPrompt, cleanCopy, fallbackCopy, buildPage, buildPosterPage, posterPrompt, posterKinds, posterAlt, themeCss };
 })();

@@ -629,6 +629,44 @@ ${o.extra ? o.extra + "\n" : ""}
     const lis = Array.from(doc.querySelectorAll("li")).map(l => clean(l.textContent, 160)).filter(t => t.length > 12 && t.length < 160); out.bullets = Array.from(new Set(lis)).slice(0, 8);
     return out;
   }
+
+  /* ───── استيراد من متصفح العميل نفسه (للمواقع التي تحجب الخادم كـAliExpress): زر مفضلة يستخرج المنتج من الصفحة المفتوحة ويرسله للوحة ───── */
+  function bmExtract(A) {
+    var d = document, o = { title: "", desc: "", price: "", currency: "", images: [], bullets: [], url: location.href };
+    function mt(n) { var e = d.querySelector('meta[property="' + n + '"],meta[name="' + n + '"]'); return e ? (e.getAttribute("content") || "").trim() : ""; }
+    function cl(s, n) { return String(s || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, n || 1200); }
+    function add(u) {
+      if (!u) return; if (typeof u === "object") u = u.url || u.contentUrl; try { u = new URL(String(u).trim(), location.href).href; } catch (e) { return; }
+      u = u.replace(/(\.(?:jpe?g|png|webp))_[0-9]+x[0-9]+.*$/i, "$1");
+      if (/^https?:/.test(u) && !/logo|icon|sprite|avatar|flag|payment|badge|pixel|favicon|1x1/i.test(u) && o.images.indexOf(u) < 0) o.images.push(u);
+    }
+    var nodes = []; d.querySelectorAll('script[type="application/ld+json"]').forEach(function (x) { try { (function w(v) { if (Array.isArray(v)) v.forEach(w); else if (v && typeof v === "object") { nodes.push(v); if (v["@graph"]) w(v["@graph"]); } })(JSON.parse(x.textContent)); } catch (e) { } });
+    var pr = nodes.filter(function (n) { return /Product/i.test([].concat(n["@type"] || []).join(",")); })[0];
+    if (pr) { o.title = cl(pr.name, 200); o.desc = cl(pr.description, 1500); [].concat(pr.image || []).forEach(add); var of = [].concat(pr.offers || [])[0]; if (of) { var q = of.offers ? [].concat(of.offers)[0] : of; o.price = String((q && (q.price || q.lowPrice)) || "").replace(/[^0-9.,]/g, ""); o.currency = (q && q.priceCurrency) || ""; } }
+    var sc = Array.prototype.map.call(d.querySelectorAll("script:not([src])"), function (x) { return x.textContent || ""; }).join("\n").slice(0, 1500000);
+    var il = sc.match(/"imagePathList"\s*:\s*\[([^\]]{10,4000})\]/); if (il) (il[1].match(/https?:[^"\\]+/g) || []).forEach(add);
+    if (!o.title) { var h1 = d.querySelector("h1"); o.title = cl(mt("og:title") || (h1 && h1.textContent) || d.title, 200); }
+    if (!o.desc) o.desc = cl(mt("og:description") || mt("description"), 1500);
+    if (!o.price) { o.price = (mt("product:price:amount") || mt("og:price:amount") || "").replace(/[^0-9.,]/g, ""); o.currency = o.currency || mt("product:price:currency") || ""; }
+    if (!o.price) { var pe = d.querySelector('[class*="price"] , [class*="Price"]'); var mm = pe && (pe.textContent || "").match(/[0-9][0-9.,\s]*/); if (mm) o.price = mm[0].replace(/\s/g, "").slice(0, 14); }
+    add(mt("og:image"));
+    var im = Array.prototype.slice.call(d.images).filter(function (x) { return x.naturalWidth >= 300 && x.naturalHeight >= 300; }).sort(function (a, b) { return b.naturalWidth * b.naturalHeight - a.naturalWidth * a.naturalHeight; });
+    im.forEach(function (x) { add(x.currentSrc || x.src); });
+    o.images = o.images.slice(0, 8);
+    o.bullets = Array.prototype.map.call(d.querySelectorAll("li"), function (l) { return cl(l.textContent, 160); }).filter(function (t) { return t.length > 12 && t.length < 160; }).slice(0, 8);
+    function enc(x) { return btoa(unescape(encodeURIComponent(JSON.stringify(x)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
+    var b = enc(o); if (b.length > 14000) { o.bullets = []; b = enc(o); } if (b.length > 14000) { o.desc = o.desc.slice(0, 400); o.images = o.images.slice(0, 4); b = enc(o); }
+    if (!o.title && !o.images.length) { alert("لم أجد بيانات منتج في هذه الصفحة. افتح صفحة منتج ثم اضغط الزر."); return; }
+    if (!window.open(A + "#ppimp=" + b, "alyssum_admin")) alert("المتصفح منع فتح اللوحة؛ اسمح بالنوافذ المنبثقة لهذا الموقع.");
+  }
+  /* رابط javascript: للمفضلة */
+  function bookmarklet(adminUrl) { return "javascript:" + encodeURIComponent("(" + bmExtract.toString() + ")(" + JSON.stringify(String(adminUrl || "")) + ")"); }
+  /* يعقّم الحمولة القادمة من الزر (غير موثوقة) إلى شكل importProduct */
+  function fromPayload(o) {
+    o = o && typeof o === "object" ? o : {}; const st = (v, n) => String(v == null ? "" : v).replace(/[<>]/g, " ").slice(0, n);
+    const imgs = (Array.isArray(o.images) ? o.images : []).map(u => String(u)).filter(u => /^https:\/\//i.test(u) && u.length < 600).slice(0, 8);
+    return { title: st(o.title, 200), desc: st(o.desc, 1500), price: st(o.price, 20).replace(/[^\d.,]/g, ""), currency: st(o.currency, 8), images: imgs, bullets: (Array.isArray(o.bullets) ? o.bullets : []).map(x => st(x, 160)).slice(0, 8), url: /^https?:\/\//i.test(o.url || "") ? String(o.url).slice(0, 500) : "" };
+  }
   async function toJpegData(blob, max) {
     const url = URL.createObjectURL(blob); try {
       const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error("صورة غير صالحة")); i.src = url; });
@@ -661,7 +699,7 @@ ${o.extra ? o.extra + "\n" : ""}
     }
     if (!p) {
       let host = ""; try { host = new URL(base).hostname.replace(/^www\./, ""); } catch (_) { }
-      if (blocked) throw new Error("الموقع" + (host ? " (" + host + ")" : "") + " يحجب القراءة الآلية بصفحة تحقق (كابتشا) ولا يمكن جلبه من الخادم. الحل: ثبّت إضافة «مساعد نسخ القوالب» لكروم (من نافذة نسخ القالب ← تثبيت إضافة كروم ثم F5) فتقرأ الصفحة من متصفحك، أو اكتب الاسم والوصف وارفع صورة المنتج");
+      if (blocked) throw new Error("الموقع" + (host ? " (" + host + ")" : "") + " يحجب القراءة من الخادم بصفحة تحقق (كابتشا). الحل بنقرة: اسحب زر «استيراد منتج» (في الخانة أدناه) إلى شريط المفضلة، ثم افتح صفحة المنتج في الموقع واضغطه — تُقرأ الصفحة من متصفحك وتصل البيانات هنا جاهزة. (أو الصق كود الصفحة، أو اكتب الاسم والوصف وارفع الصورة.)");
       if (fetchErr && !html) throw fetchErr;
       throw new Error("لم أجد بيانات منتج في هذا الرابط (قد تُبنى الصفحة بالسكربت) — اكتب الاسم والوصف يدوياً");
     }
@@ -772,5 +810,5 @@ ${o.extra ? o.extra + "\n" : ""}
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, importProduct, pickImage, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, bookmarklet, fromPayload, importProduct, pickImage, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
 })();
