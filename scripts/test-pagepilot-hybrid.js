@@ -55,11 +55,25 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     let rl = 0; await go("rate", base, { real: true, llm: { json: window.__mockLlm }, image: { edit: async () => { if (++rl < 2) throw new Error("429 retry in 1s"); const c = canvas(); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } } });
     return res;
   });
+  /* استئناف: فشل قسمان ← أخطاء بالأرقام + partial، ثم إعادتهما وحدهما بلا تكرار الناجحة ولا التحليل/الخطة */
+  const rsm = await p.evaluate(async () => {
+    const H = PagePilotHybrid, blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob(); let calls = 0, llm = 0, bad = new Set([1, 3]), idxs = [];
+    const canvas = () => { const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); return c; };
+    const mk = () => ({ real: true, llm: { json: async p => { llm++; return window.__mockLlm(p); } }, image: { edit: async (b, pr, i) => { calls++; idxs.push(i); if (bad.has(i)) throw new Error("server error 500"); const c = canvas(); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } } });
+    const inp = { info: { title: "عسل", desc: "عسل طبيعي خالص." }, blob, theme: PagePilot.THEMES.green, lang: "ar", count: 5, gate: false, noFaces: true };
+    let err = null; try { await H.run(inp, {}, mk()); } catch (e) { err = e; }
+    const first = { calls, llm, failed: err && err.failed, hasPartial: !!(err && err.partial), done: err && err.partial.results.filter(Boolean).length, msg: err && err.message };
+    calls = 0; llm = 0; idxs = []; bad = new Set();
+    const out = await H.run(Object.assign({}, inp, { resume: err.partial }), {}, mk());
+    return { first, second: { calls, llm, idxs: idxs.slice().sort().join(","), full: out.results.length === 5 && out.results.every(Boolean) } };
+  });
+  t("استئناف: يفشل قسمان ويُحفظ الباقي مع رسالة بالأرقام", rsm.first.failed.join() === "2,4" && rsm.first.hasPartial && rsm.first.done === 3 && /الأقسام: 2، 4/.test(rsm.first.msg), rsm.first);
+  t("الاستئناف يعيد القسمين الفاشلين فقط بلا تحليل ولا خطة", rsm.second.calls === 2 && rsm.second.idxs === "1,3" && rsm.second.llm === 0 && rsm.second.full, rsm.second);
   t("بلا مفتاح: خطأ واضح ولا صفحة", /^NOKEY\|.*بالذكاء فقط/.test(noai.nokey), noai);
   t("بلا صورة منتج: خطأ", /^NOPHOTO/.test(noai.nophoto), noai);
   t("فشل نص الذكاء: خطأ «لم تُستهلك أي صورة» بلا نص احتياطي", /فشل الذكاء في/.test(noai.planfail) && /لم تُستهلك/.test(noai.planfail), noai);
   t("خطة ناقصة تُعاد مرتين ثم تُرفض", /خطة ناقصة/.test(noai.badplan), noai);
-  t("فشل صورة قسم: خطأ ولا خلفية محلية", /^BG\|.*القسم/.test(noai.imgfail) && /لم تُنتَج صفحة/.test(noai.imgfail), noai);
+  t("فشل صورة قسم: خطأ ولا خلفية محلية", /^BG\|.*تعذّر رسم/.test(noai.imgfail) && /لم تُنتَج صفحة/.test(noai.imgfail), noai);
   t("نفاد الحصة يوقف فوراً بخطأ", /^HALT\|/.test(noai.quota), noai);
   t("ازدحام مؤقت 429 يُنتظر ويُعاد ثم ينجح", noai.rate === "ok", noai);
 

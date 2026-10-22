@@ -17,7 +17,7 @@ const PagePilot = (() => {
     en: { benefits: "Why you'll love it", steps: "How to order", faq: "FAQ", offers: "Offers", order: "Order now", cod: "Cash on delivery", orderBtn: "Order now →", note: "Images are illustrative.", wa: "Order on WhatsApp" }
   };
   /* ───────────── الواجهة ───────────── */
-  const S ={ info: null, imgBlob: null, imgPath: "", imp: null };
+  const S ={ resume: null, info: null, imgBlob: null, imgPath: "", imp: null };
   const BTN_CSS = "border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:12px;padding:.6rem 1rem;font-weight:800;cursor:pointer;font-family:inherit;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.25)";
   const FLD = "width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);font-family:inherit";
   const prods = () => { const a = typeof Admin !== "undefined" && Admin.products; return a && a.length ? a : (typeof PRODUCTS !== "undefined" && PRODUCTS) || []; };
@@ -76,7 +76,7 @@ const PagePilot = (() => {
       if (f) blob = f; else if (imp && imp.blob) blob = imp.blob; else if (p && (p.cover || (p.images || [])[0])) { path = p.cover || p.images[0]; }
       return { info, blob, path, p, imp };
     }
-    async function run() {
+    async function run(resumeIt) {
       const g = await gather(), o = { lang: $("pp-lang").value, audience: $("pp-aud").value.trim() };
       if (typeof PagePilotHybrid === "undefined" || typeof PBSpec === "undefined") throw new Error("وحدة بناء الصفحات غير محمَّلة — أعد تحميل اللوحة بـ Ctrl+Shift+R");
       const real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })();
@@ -99,13 +99,15 @@ const PagePilot = (() => {
         }
       }
       {
-        const th0 = THEMES[theme] || THEMES.green, cnt = +$("pp-hn").value || 8;
+        const th0 = THEMES[theme] || THEMES.green, cnt = +$("pp-hn").value || 8, sig = [g.info.title, cnt, o.lang, $("pp-dia").value].join("|"), RS = resumeIt && S.resume && S.resume.sig === sig ? S.resume.p : null;
+        if (resumeIt && !RS) throw new Error("تغيّرت الإعدادات منذ المحاولة السابقة — اضغط «أنشئ الصفحة» لبدء إنشاء جديد");
+        const nTodo = RS ? RS.plan.sections.filter((x, k) => !RS.results[k]).length : cnt;
         if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
         if (ImgGen.credit && ImgGen.credit.state && ImgGen.credit.state() === "out" && ImgGen.renewLocal) { if (confirm("عدّاد الرصيد في هذا المتصفح يرى أن الرصيد انتهى (قد يكون قديماً بعد تجديدك). هل جدّدتَ الرصيد فعلاً؟ سأصفّر العدّاد وأتابع.")) ImgGen.renewLocal(); else throw new Error("جدّد الرصيد ثم أعد المحاولة"); }
-        if (!confirm("سيرسم الذكاء " + cnt + " صورة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
+        if (!confirm("سيرسم الذكاء " + nTodo + " صورة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + cnt + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:65px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
-        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value }, { section: prog });
+        let out; try { out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value, resume: RS }, { section: prog }); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
         const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, tag));
         bg.remove(); PBApp.open(asm.page, "", true);
@@ -141,7 +143,7 @@ const PagePilot = (() => {
           const p = await PBSpec.importProduct($("pp-url").value, m => say(m), $("pp-html") && $("pp-html").value); await applyImp(p);
         } catch (er) { S.imp = null; say("❌ " + esc(er.message) + " — الصق كود الصفحة في الخانة أدناه، أو اكتب الاسم والوصف وارفع الصورة يدوياً.", true); const dt = $("pp-dt"); if (dt) dt.open = true; } b.disabled = false;
       }
-      else if (a === "go") { b.disabled = true; try { await run(); } catch (er) { say("❌ " + esc(er.message), true); b.disabled = false; } }
+      else if (a === "go" || a === "resume") { b.disabled = true; if (a === "go") S.resume = null; try { await run(a === "resume"); } catch (er) { say("❌ " + esc(er.message) + (S.resume ? `<div style="margin-top:8px"><button data-pp="resume" style="${BTN_CSS};background:rgba(198,254,23,.28)">↻ أعد الأقسام الفاشلة فقط</button></div>` : ""), true); b.disabled = false; } }
     });
     bg.addEventListener("click", async e => { const im = e.target.closest("[data-ppi]"); if (!im || !S.imp || !PBSpec.pickImage) return; try { await PBSpec.pickImage(S.imp, +im.dataset.ppi); bg.querySelectorAll("[data-ppi]").forEach(x => x.style.borderColor = x === im ? "#c6fe17" : "rgba(255,255,255,.2)"); } catch (er) { say("❌ " + esc(er.message), true); } });
   }

@@ -384,14 +384,15 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     if (!photo) throw NOAI("لا توجد صورة للمنتج: اختر منتجاً له صورة أو ارفع صورة.", "NOPHOTO");
     const strategy = "edit", edit = true;
     /* ١ تحليل المنتج */
-    let an = cleanAnalysis({});
-    try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { throw NOAI("فشل الذكاء في تحليل المنتج (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
+    const RS = inp.resume && inp.resume.plan && inp.resume.style && inp.resume.an ? inp.resume : null;   /* استئناف: تُعاد الأقسام الفاشلة فقط */
+    let an = RS ? RS.an : cleanAnalysis({});
+    if (!RS) try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { throw NOAI("فشل الذكاء في تحليل المنتج (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
     if (an.risks.some(r => /medical|cosmetic/.test(r))) note.push("المنتج يحمل مخاطر ادّعاء (" + an.risks.join("، ") + "): راجع النصوص قبل النشر.");
     let prod = null, prodOk = false, prods = [];
     /* ٣ دليل الأسلوب */
-    const style = styleBible(an, inp.theme, { color: inp.color, tone: inp.tone }); P.style = style; log.push({ step: "style", section: "", status: "done", attempts: 1, ms: 0, error: "" }); cb.step && cb.step("style", "done", {});
+    const style = RS ? RS.style : styleBible(an, inp.theme, { color: inp.color, tone: inp.tone }); P.style = style; log.push({ step: "style", section: "", status: "done", attempts: 1, ms: 0, error: "" }); cb.step && cb.step("style", "done", {});
     /* ٤ خطة الأقسام والنصوص */
-    let plan, planErr = null;
+    let plan = RS ? RS.plan : undefined, planErr = null;
     for (let at = 1; at <= 2 && !plan; at++) {
       try {
         const pl = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count });
@@ -400,20 +401,21 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       } catch (e) { planErr = e; if (e && (e.code === "NOKEY" || e.code === "OFF")) break; }
     }
     if (!plan) { const e = planErr; throw NOAI("فشل الذكاء في كتابة نصوص الصفحة (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
-    plan.warn.forEach(w => note.push(w));
+    if (RS) (RS.note || []).forEach(w => note.push(w)); else plan.warn.forEach(w => note.push(w));
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
-    const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta === true, results = [];
+    const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta === true, results = RS ? RS.results.slice() : [], fails = [];
     let halted = ""; const HARD = /quota|billing|credit|insufficient|402|permission|unauthori|forbidden|api key|رصيد|حدّ|حد الاستخدام|الحصة|exceeded your current/i, RATE = /429|rate.?limit|too many|resource.?exhausted|overload|503|retry in|ازدحام/i;   /* الحدّ الفعلي يوقف الباقي؛ ازدحام/تمهّل مؤقت لا يوقفه بل يُنتظر ويُعاد */
-    const chain = edit && inp.chain !== false && P.real; let prevRaw = null, firstRaw = null;   /* استمرارية بصرية: القسم i يُرسم مع صورة القسم السابق مرجعاً (بالتتابع) */
-    await pool(plan.sections, chain ? 1 : 3, async (sec, i) => {
+    const chain = edit && inp.chain !== false && P.real;   /* استمرارية بصرية: القسم i يُرسم مع صورة القسم السابق مرجعاً (بالتتابع) */
+    const todo = plan.sections.map((sec, i) => ({ sec, i })).filter(x => !results[x.i]);
+    await pool(todo, chain ? 1 : 3, async ({ sec, i }) => {
       const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, refBlob = refs.length ? refs[i % refs.length] : null; R.ref = refs.length ? i % refs.length : -1;
       let extra = "", why = [];
       for (let a = 1; a <= 3; a++) {
         R.attempts = a;
-        if (halted) throw NOAI("توقّف توليد الصور لتوفير رصيدك بسبب: " + halted + " — لم تُنتَج صفحة. عالج السبب ثم أعد المحاولة.", "HALT");
+        if (halted) { fails.push({ i, msg: halted, code: "HALT" }); return; }
         try {
           let pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, backdrop: inp.backdrop, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
-          const links = chain && prevRaw ? [prevRaw].concat(firstRaw && firstRaw !== prevRaw ? [firstRaw] : []) : []; if (links.length) { pr = pr + " " + continuityNote(links.length > 1); R.prompt = pr; R.chained = true; }
+          const rk = j => results[j] && results[j].rawKeep; let pv = null, fv = null; for (let j = i - 1; j >= 0; j--) if (rk(j)) { pv = rk(j); break; } for (let j = 0; j < results.length; j++) if (rk(j)) { fv = rk(j); break; } const links = chain && pv ? [pv].concat(fv && fv !== pv ? [fv] : []) : []; if (links.length) { pr = pr + " " + continuityNote(links.length > 1); R.prompt = pr; R.chained = true; }
           const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i, links) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
           if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock; R.rawKeep = got.mock ? null : (got.blob || null);
           if (inp.gate !== false && P.real && !got.mock && R.bgBlob) {
@@ -426,15 +428,19 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         } catch (e) {
           if (e && (e.code === "NOKEY" || e.code === "OFF")) throw NOAI("الأداة تعمل بالذكاء فقط: " + (e.code === "OFF" ? "توليد الصور معطّل في الإعدادات" : "لا يوجد مفتاح Alyssum API") + " — لم تُنتَج صفحة.", e.code);
           const em = String((e && (e.message || e.code)) || ""); if (!HARD.test(em) && RATE.test(em) && (R.rl = (R.rl || 0) + 1) <= 3) { const m = /retry in (\d+)/i.exec(em); await new Promise(r => setTimeout(r, Math.min(60000, (m ? +m[1] + 2 : 20 * R.rl) * 1000))); a--; continue; } if (HARD.test(em)) halted = em.slice(0, 120);   /* حدّ/رصيد/صلاحية: توقّف عن بقية الأقسام فلا يتكرر الخصم بلا فائدة */
-          if (halted || a >= 2) throw NOAI("تعذّر رسم صورة القسم " + (i + 1) + " بالذكاء (" + em.slice(0, 120) + ") — لم تُنتَج صفحة. " + (halted ? "عالج السبب (الرصيد/الصلاحية) ثم أعد المحاولة." : "أعد المحاولة."), halted ? "HALT" : "BG");
+          if (halted || a >= 2) { fails.push({ i, msg: em.slice(0, 120), code: halted ? "HALT" : "BG" }); return; }
           extra = ""; await new Promise(r => setTimeout(r, 600));
         }
       }
-      if (chain && !R.mock && R.rawKeep) { prevRaw = R.rawKeep; if (!firstRaw) firstRaw = R.rawKeep; }
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
       const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !R.person && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
       results[i] = R; cb.section && cb.section(i, R);
     });
+    if (fails.length) {
+      fails.sort((x, y) => x.i - y.i); const hard = fails.some(f => f.code === "HALT"), nums = fails.map(f => f.i + 1).join("، "), done = results.filter(Boolean).length;
+      const e = NOAI("تعذّر رسم " + fails.length + " من " + plan.sections.length + " قسم (الأقسام: " + nums + ") بالذكاء (" + fails[0].msg + ") — لم تُنتَج صفحة. " + (done ? "حُفظت الأقسام الناجحة (" + done + ") فلن تُعاد: " : "") + (hard ? "عالج السبب (الرصيد/الصلاحية) ثم أعد الأقسام الفاشلة فقط." : "اضغط «أعد الأقسام الفاشلة فقط»."), hard ? "HALT" : "BG");
+      e.partial = { an, style, plan, results: results.slice(), note: note.slice() }; e.failed = fails.map(f => f.i + 1); throw e;
+    }
     return { an, style, plan, results, prod, prods, prodOk, strategy, log, note, real: P.real, colors: photo ? productColors(photo, 6) : [] };
   }
 
