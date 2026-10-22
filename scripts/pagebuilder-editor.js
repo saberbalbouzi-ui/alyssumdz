@@ -315,7 +315,7 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── فتح/إغلاق ───────────────── */
   function open(page, slug, isNew) {
     build();
-    E.page = PB.migrate(clone(page)); E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
+    E.page = PB.migrate(clone(page)); E.ab = null; E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
     $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
@@ -513,6 +513,7 @@ body{overflow-x:hidden;margin:0}`;
 <div class="pbx-f"><label>الرابط (slug) — حروف لاتينية وأرقام وشرطات</label><input type="text" dir="ltr" id="pg-slug" value="${esc(P.slug)}" ${E.isNew ? "" : "disabled"} oninput="PBApp.slugEdit(this.value)"><small style="color:#888">${E.isNew ? "سيكون: /lp/…/" : "لا يتغير بعد النشر"}</small></div>
 <div id="pg-seo"></div>
 <div class="pbx-f"><label>المنتج المرتبط (نموذج الطلب والصفحة تخصّه)</label><select onchange="PBApp.linkProduct(this.value)"><option value="">— بدون —</option>${((typeof Admin !== "undefined" && Admin.products) || []).map(x => `<option value="${esc(x.slug)}"${P.product === x.slug ? " selected" : ""}>${esc(x.title)}</option>`).join("")}</select></div>
+${E.ab && E.ab.page && P.product && !P.origin ? `<div class="pbx-f" style="border:1px dashed #b9b2a0;border-radius:10px;padding:.5rem"><label style="display:flex;gap:.5rem;align-items:center;font-weight:700"><input type="checkbox" ${E.ab.on ? "checked" : ""} onchange="PBApp.setAB(this.checked)"> 🧪 اختبار A/B: انشر نسخة ب (نصوص مختلفة بالصور نفسها)</label><label style="display:flex;gap:.5rem;align-items:center;margin-top:.3rem;font-size:.8rem">% من الزوار للنسخة ب <input type="number" min="1" max="99" value="${E.ab.pct || 50}" style="width:70px" onchange="PBApp.setAB(null,this.value)"></label><small style="color:#888">تُنشر ب باسم <b dir="ltr">${esc(P.slug)}-b</b> عند «حفظ ونشر»، وتصير هذه الصفحة مسار المنتج؛ والنتائج في «التحليلات».</small></div>` : ""}
 ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5rem;align-items:center;font-weight:700"><input type="checkbox" ${routeOn() ? "checked" : ""} onchange="PBApp.setMainRoute(this.checked)"> اجعلها مسار المنتج الرئيسي (يُحوَّل إليها كل من يفتح صفحة المنتج أو يضغط عليه في الموقع)</label><small style="color:#888">تُطبَّق عند «حفظ ونشر».</small></div>` : ""}
 <div class="pbx-f" style="display:flex;gap:.4rem;flex-wrap:wrap"><button type="button" class="pbx-btn" style="flex:1;background:#173f35;color:#fff;border:0;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.publish()">💾 حفظ ونشر</button><button type="button" class="pbx-btn" style="flex:1;background:#f3f1ea;border:1px solid #d9d2c3;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.dupCurrent()">⧉ نسخ الصفحة</button></div>
 <div class="pbx-f"><label>لون خلفية الصفحة</label><input type="color" value="${esc(P.bg || "#ffffff")}" oninput="PBApp.meta('bg',this.value)"></div>
@@ -3046,6 +3047,29 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     let sha; try { sha = (await GH.getFile(path)).sha; } catch (e) { sha = undefined; }
     return GH.putFile(path, b64(typeof obj === "string" ? obj : JSON.stringify(obj, null, 1)), sha, msg);
   }
+  /* كتابة ملفات صفحة هبوط (HTML + المصدر + الفهرس) — يستعملها النشر ونسخة ب لاختبار A/B */
+  async function writeLp(P) {
+    const slug = P.slug, html = PB.fullHtml(typeof PBBind !== "undefined" ? PBBind.bakePage(P) : P, Object.assign({ base: "../../" }, siteCtx()));
+    await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);
+    await putJson("assets/pages/" + slug + ".json", P, "مصدر صفحة هبوط: " + slug);
+    let idx = []; try { const f = await GH.getFile("assets/pages/index.json"); idx = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { }
+    const th = (JSON.stringify(P).match(/(?:assets\/img\/[^"\\\s]+?\.(?:webp|jpe?g|png))/i) || [])[0] || "", row = { slug, thumb: th, title: P.title, updated: new Date().toISOString().slice(0, 16).replace("T", " "), live: true };
+    const i = idx.findIndex(x => x.slug === slug); if (i >= 0) idx[i] = row; else idx.push(row);
+    await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط");
+  }
+  /* اختبار A/B: صفحة ب جاهزة (E.ab) تُنشر مع نشر الصفحة أ ويُضبط المنتج {route: أ، ab: {b: ب، pct}} فيُوزَّع الزوار ويثبت اختيار كل زائر (app.js) */
+  async function syncAB(P) {
+    const ab = E.ab; if (!ab || !ab.on || !ab.page || typeof Admin === "undefined" || !Admin.products) return;
+    const cur = Admin.products.find(x => x.slug === P.product); if (!cur) { toast("⚠️ اربط الصفحة بمنتج لبدء اختبار A/B"); return; }
+    const B = clone(ab.page); B.slug = (P.slug + "-b").slice(0, 60); B.title = (P.title || "") + " (ب)"; B.product = P.product;
+    const walk = n => { (n.cols || []).forEach(walk); (n.widgets || []).forEach(walk); (n.free || []).forEach(walk); if (n.type === "orderorig") n.set.prod = P.product; };
+    (B.sections || []).forEach(walk); delete B.pending;
+    await writeLp(B); if (typeof PBBind !== "undefined") await PBBind.commit();
+    cur.route = P.slug; cur.ab = { b: B.slug, pct: Math.min(99, Math.max(1, Math.round(+ab.pct || 50))) };
+    await Admin.publishDataJs(); try { Admin.renderProducts(); } catch (e) { }
+    E.ab = null; toast("🧪 بدأ اختبار A/B: أ /lp/" + P.slug + "/ — ب /lp/" + B.slug + "/ (" + cur.ab.pct + "% للنسخة ب)");
+  }
+  function setAB(on, pct) { if (!E.ab) return; if (on !== undefined && on !== null) E.ab.on = !!on; if (pct !== undefined && pct !== null && pct !== "") E.ab.pct = Math.min(99, Math.max(1, Math.round(+pct) || 50)); E.dirty = true; }
   async function publish(mode) {
     if (E.page.origin && !mode) return PBConvert.ask();      // صفحة قادمة من المنتج/الرئيسية: حفظ مباشر أو نسخة جديدة
     if (!validate(mode === "direct")) return;
@@ -3057,21 +3081,16 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       P = E.page;
       if (P.demo) { P.demo = false; try { renderCanvas(); } catch (e) { } }      // النشر دائماً ببيانات المتجر الحقيقية لا بيانات القالب التجريبية
       if (mode === "direct") { await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); return; }
-      const html = PB.fullHtml(typeof PBBind !== "undefined" ? PBBind.bakePage(P) : P, Object.assign({ base: "../../" }, siteCtx()));
-      await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);
-      await putJson("assets/pages/" + slug + ".json", P, "مصدر صفحة هبوط: " + slug);
-      let idx = []; try { const f = await GH.getFile("assets/pages/index.json"); idx = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { }
-      const th = (JSON.stringify(P).match(/(?:assets\/img\/[^"\\\s]+?\.(?:webp|jpe?g|png))/i) || [])[0] || "", row = { slug, thumb: th, title: P.title, updated: new Date().toISOString().slice(0, 16).replace("T", " "), live: true };
-      const i = idx.findIndex(x => x.slug === slug); if (i >= 0) idx[i] = row; else idx.push(row);
-      await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط");
+      await writeLp(P);
       if (typeof PBBind !== "undefined") await PBBind.commit();
       await syncRoute(P);
+      await syncAB(P);
       E.isNew = false; E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
       toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)");
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page),  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

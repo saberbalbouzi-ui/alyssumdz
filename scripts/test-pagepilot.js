@@ -9,7 +9,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   t("الدوال المحلية القديمة محذوفة نهائياً", await p.evaluate(() => ["buildPage", "buildPosterPage", "fallbackCopy", "cleanCopy", "copyPrompt"].every(k => PagePilot[k] === undefined) && typeof PagePilotHybrid.fallbackPlan === "undefined" && typeof PagePilotHybrid.mockBg === "undefined"));
   const ui = await p.evaluate(() => {
     PagePilot.open(); const q = id => document.querySelector("#pp-bg #" + id), bg = document.getElementById("pp-bg"), txt = bg.innerText;
-    return { removed: ["pp-mode", "pp-strat", "pp-n", "pp-cut", "pp-scene"].every(id => !q(id)), plain: !!bg.querySelector('[data-pp="plain"]'), go: !!bg.querySelector('[data-pp="go"]'), hn: !!q("pp-hn"),
+    return { removed: ["pp-mode", "pp-strat", "pp-n", "pp-cut", "pp-scene"].every(id => !q(id)), plain: !!bg.querySelector('[data-pp="plain"]'), go: !!bg.querySelector('[data-pp="go"]'), hn: !!q("pp-hn") && q("pp-hn").value === "10" && !!q("pp-ab"),
       noText: !/تُصنع الصور من صورة المنتج|عزل المنتج عن خلفية|مشهد توليدي|AIDA|بدون ذكاء|بوستر|أقسام نصية قابلة/.test(txt), pip: !!bg.querySelector('[data-pp="pip"]'), themes: bg.querySelectorAll('#pp-themes [data-pp="th"]').length };
   });
   t("الإعدادات الداخلية محذوفة من الواجهة", ui.removed, ui);

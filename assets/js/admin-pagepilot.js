@@ -55,11 +55,12 @@ const PagePilot = (() => {
 <label style="font-size:.78rem">الدرجة <select id="pp-tone" style="${FLD};width:auto"><option value="dark">داكنة</option><option value="mid">متوسطة</option><option value="light">فاتحة</option></select></label>
 </div></div>
 
-<label style="font-size:.8rem">الأقسام<select id="pp-hn" style="${FLD}"><option value="0" selected>حسب المنتج (حتى 8)</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></label>
+<div style="font-size:.8rem;align-self:end;padding-bottom:.5rem">الأقسام: <b>10</b> (صورة لكل قسم)<input id="pp-hn" type="hidden" value="10"></div>
 <label style="font-size:.8rem">اللهجة<select id="pp-dia" style="${FLD}"><option value="dz">دارجة جزائرية</option><option value="msa">فصحى مبسّطة</option></select></label>
 <label style="font-size:.85rem"><input id="pp-people" type="checkbox" checked> صور أشخاص في المشاهد (هيرو، المشكلة، الاستعمال، الخاتمة — النساء بحجاب ولباس ساتر)</label>
 <label style="font-size:.85rem"><input id="pp-ticker" type="checkbox" checked> شريط علوي (دفع عند الاستلام • توصيل • تأكيد بالهاتف)</label>
 <label style="font-size:.85rem"><input id="pp-chain" type="checkbox" checked> استمرارية بصرية: كل صورة تُرسم بالاستناد إلى الصورة التي قبلها (نفس الخلفية والإضاءة فتبدو الصفحة مشهداً واحداً — أبطأ لأن الصور تُرسم بالتتابع)</label>
+<label style="font-size:.85rem"><input id="pp-ab" type="checkbox"> 🧪 اختبار A/B: أنشئ أيضاً نسخة «ب» بنصوص مختلفة (العناوين والوصف والأزرار) بالصور نفسها — بلا رصيد صور إضافي <span style="opacity:.75">· تذهب </span><input id="pp-abp" type="number" min="1" max="99" value="50" style="${FLD};width:64px;display:inline-block"> <span style="opacity:.75">% من الزوار إلى «ب»، وتُنشر مع الأصل عند «حفظ ونشر» (يلزم منتج من المتجر)</span></label>
 <label style="font-size:.85rem"><input id="pp-gate" type="checkbox" checked> فحص جودة تلقائي للخلفيات (حتى محاولتين إضافيتين)</label>
 </div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin:.9rem 0"><button data-pp="go" style="${BTN_CSS};background:rgba(198,254,23,.28)">✨ أنشئ الصفحة بالذكاء</button></div>
@@ -97,7 +98,7 @@ const PagePilot = (() => {
       /* كل صور المنتج المتاحة (رابط المنتج + صور المتجر) مراجعَ لأقسام مختلفة */
       const refs = [], refNames = []; if (heroBlob) refs.push(heroBlob);
       {
-        const cnt0 = +$("pp-hn").value || 8, want = Math.min(8, cnt0);
+        const want = 8;
         if (g.imp && g.imp.images && g.imp.images.length > 1 && typeof PBSpec !== "undefined" && PBSpec.pickImage) {
           say("⏳ تحميل صور المنتج من الرابط…");
           for (let k = 0; k < g.imp.images.length && refs.length < want; k++) { if (k === g.imp.pick) continue; const t = { images: g.imp.images }; try { await PBSpec.pickImage(t, k); if (t.blob) refs.push(t.blob); } catch (_) { } }
@@ -109,18 +110,29 @@ const PagePilot = (() => {
         }
       }
       {
-        const th0 = THEMES[theme] || THEMES.green, cnt = +$("pp-hn").value || 0, sig = [g.info.title, cnt, o.lang, $("pp-dia").value].join("|"), RS = resumeIt && S.resume && S.resume.sig === sig ? S.resume.p : null;
+        const th0 = THEMES[theme] || THEMES.green, cnt = 10, sig = [g.info.title, cnt, o.lang, $("pp-dia").value].join("|"), RS = resumeIt && S.resume && S.resume.sig === sig ? S.resume.p : null;
         if (resumeIt && !RS) throw new Error("تغيّرت الإعدادات منذ المحاولة السابقة — اضغط «أنشئ الصفحة» لبدء إنشاء جديد");
-        const nTodo = RS ? RS.plan.sections.filter((x, k) => !RS.results[k]).length : (cnt || 8);
+        const nTodo = RS ? RS.plan.sections.filter((x, k) => !RS.results[k]).length : 10;
+        const abOn = !!($("pp-ab") && $("pp-ab").checked), abPct = Math.min(99, Math.max(1, Math.round(+($("pp-abp") && $("pp-abp").value) || 50))), upCache = {};
+        if (abOn && !g.info.product) throw new Error("اختبار A/B يحتاج منتجاً من المتجر (ليُوزَّع الزوار بين النسختين): اختر منتجاً أو ألغِ خيار A/B");
         if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
-        if (!confirm("سيرسم الذكاء " + (RS || cnt ? nTodo : "حتى 8") + " صورة مربّعة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
-        const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + (RS ? RS.plan.sections.length : (cnt || "حتى 8")) + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
+        if (!confirm("سيرسم الذكاء " + nTodo + " صورة مربّعة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
+        const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + (RS ? RS.plan.sections.length : 10) + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
         let out; try { out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, resume: RS }, { section: prog }); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
-        const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, tag));
-        bg.remove(); PBApp.open(asm.page, "", true);
-        const wn = out.note.concat(asm.warn.slice(0, 3)); if (wn.length && PBApp.toast) setTimeout(() => PBApp.toast(wn.join(" — ")), 600);
+        const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => (upCache[tag] = upload(b, tag)));
+        /* نسخة ب (A/B): طلب نصي واحد + تجميع بالصور المرفوعة نفسها (بلا رفع ولا رصيد صور إضافي) */
+        let abPage = null, abNote = [];
+        if (abOn) {
+          try {
+            say("⏳ ٣/٣ كتابة نسخة ب…"); const vb = await PagePilotHybrid.variantB(out, { info: g.info, dialect: $("pp-dia").value });
+            const asmB = await PagePilotHybrid.assemble(PagePilotHybrid.variantOut(out, vb.plan), { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upCache[tag] || upload(b, tag));
+            abPage = asmB.page; abNote = vb.warn;
+          } catch (er) { abNote = ["تعذّرت نسخة ب (" + String(er && er.message || er).slice(0, 100) + ") — الصفحة أ جاهزة ويمكنك إعادة المحاولة"]; }
+        }
+        bg.remove(); PBApp.open(asm.page, "", true); if (abPage && PBApp.setAbPage) PBApp.setAbPage(abPage, abPct);
+        const wn = out.note.concat(abPage ? ["🧪 نسخة ب جاهزة: ستُنشر مع الأصل عند «حفظ ونشر» (الإعدادات من «إعدادات الصفحة»)"] : [], abNote, asm.warn.slice(0, 3)); if (wn.length && PBApp.toast) setTimeout(() => PBApp.toast(wn.join(" — ")), 600);
       }
     }
     /* يملأ الحقول بمنتج مستورد (من الجلب أو من زر المفضلة) */

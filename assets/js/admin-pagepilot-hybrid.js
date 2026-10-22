@@ -516,6 +516,37 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const s = PB.mkS([PB.mkC(ws)], { layout: "boxed", cw: { d: 860 }, bg: deep, bgImg: R.bgSrc, ovl: deep, ovlOp: .66, pad: { d: [80, 24, 80, 24], m: [48, 16, 48, 16] }, gap: { d: 18 } });
     s.set.cid = "faq"; return s;
   }
+  /* ───────────── نسخة ب (اختبار A/B): نصوص مختلفة بالصور نفسها — طلب نصي واحد بلا صور إضافية ───────────── */
+  function variantPrompt(info, an, plan, o) {
+    o = o || {}; const dia = o.dialect === "msa" ? "العربية الفصحى المبسّطة" : "الدارجة الجزائرية المكتوبة بحروف عربية (قريبة من الناس، بلا مبالغة)";
+    const A = plan.sections.map(s => ({ type: s.type, headline: s.headline, hl: s.hl, sub: s.sub, bullets: s.bullets, cta: s.cta }));
+    return `أنت خبير تحسين التحويل (CRO) لصفحات الهبوط. لدينا النسخة «أ» من صفحة المنتج التالي، والمطلوب كتابة النسخة «ب» لاختبار A/B بنصوص تختلف في الزاوية الإقناعية لا في الحقائق.
+المنتج: ${info.title || "—"}${an && an.name ? " (" + an.name + ")" : ""}
+الوصف: ${info.desc || "—"}
+${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.features.join(" | ") + "\n" : ""}النسخة أ (JSON): ${JSON.stringify(A)}
+اكتب النسخة ب بـ${dia}: العناوين والعبارات تبدأ من زاوية مختلفة عن أ (مثلاً: إن بدأت أ بالمشكلة فابدأ ب بالنتيجة أو بسؤال، وإن كانت أ هادئة فاجعل ب أكثر حسماً) وبصياغة مختلفة تماماً لا مجرد ترادف، بالأقسام نفسها وبالترتيب نفسه وبعدد النقاط نفسه.
+قواعد صارمة: لا تغيّر الحقائق ولا تضف مزايا غير مؤكدة؛ لا ادّعاءات علاجية؛ لا آراء زبائن ولا عدّادات مخزون ولا «يشاهده X الآن» ولا أرقام مختلقة؛ لا أسعار ولا نسب خصم. hl كلمة/عبارة (≤3 كلمات) منسوخة حرفياً من العنوان. في sub وفي كل نقطة ضع كلمة أو كلمتين مفتاحيتين بين [[ ]].
+أخرج JSON واحداً فقط: {"sections":[{"type":"hero","headline":"≤45 حرفاً","hl":"","sub":"≤110 حرفاً","bullets":["≤45 حرفاً"],"cta":"≤22 حرفاً"}]}`;
+  }
+  /* يدمج نصوص ب في خطة أ مع إبقاء المشاهد والأيقونات والترتيب؛ ما فشل أو تشابه مع أ يبقى من أ */
+  function mergeVariant(plan, rawB) {
+    const warn = [], clean = cleanPlan(rawB, { count: plan.sections.length }), same = (a, b) => String(a || "").trim() === String(b || "").trim(); let diff = 0;
+    const sections = plan.sections.map((s, i) => {
+      const b = clean.sections.find(x => x.type === s.type) || clean.sections[i] || {}, bl = b.bullets && b.bullets.length === s.bullets.length ? b.bullets : s.bullets;
+      const head = b.headline || s.headline, sub = b.sub || s.sub, cta = b.cta || s.cta; if (!same(head, s.headline) || !same(sub, s.sub)) diff++;
+      return Object.assign({}, s, { headline: head, hl: b.headline ? b.hl : s.hl, sub, bullets: bl, icons: bl === s.bullets ? s.icons : bl.map((x, k) => iconFor(x, k, (s.icons || [])[k])), cta });
+    });
+    clean.warn.forEach(w => warn.push(w)); if (diff < Math.ceil(plan.sections.length / 2)) warn.push("نصوص النسخة ب قريبة من أ (" + diff + " قسماً مختلفاً) — راجعها قبل بدء الاختبار");
+    return { plan: { sections }, diff, warn };
+  }
+  /* نتيجة جديدة للتجميع: الخطة والأقسام المرتبطة بكل صورة تحمل نصوص ب، والصور نفسها */
+  const variantOut = (out, plan) => Object.assign({}, out, { plan, results: out.results.map((R, i) => Object.assign({}, R, { sec: plan.sections[i] ? Object.assign({}, R.sec, plan.sections[i]) : R.sec })) });
+  async function variantB(out, inp, over) {
+    const P = providers(over); if (!P.real) throw Object.assign(new Error("نسخة ب تحتاج الذكاء: فعّل مفتاح Alyssum API ثم أعد المحاولة."), { code: "NOKEY" });
+    const raw = await withTimeout(P.llm.json(variantPrompt((inp && inp.info) || {}, out.an, out.plan, { dialect: inp && inp.dialect }), []), 150000, "نسخة ب");
+    return mergeVariant(out.plan, raw);
+  }
+
   async function assemble(out, ctx, upload) {
     const spec0 = [];
     const plist = (out.prods && out.prods.length ? out.prods : (out.prod ? [out.prod] : [])), prodSrcs = [];
@@ -548,5 +579,5 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, seamCanvas, stitchSeam, NEG, PURPOSE, CANON, autoTypes, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, seamCanvas, stitchSeam, NEG, PURPOSE, CANON, autoTypes, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, variantPrompt, mergeVariant, variantB, variantOut, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();

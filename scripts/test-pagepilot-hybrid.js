@@ -7,7 +7,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1280, height: 900 } }); const errs = []; await p.exposeFunction("saveDemo", (nm, b64) => { const fs = require("fs"); fs.mkdirSync("assets/img/_demo", { recursive: true }); fs.writeFileSync("assets/img/_demo/" + nm, Buffer.from(b64, "base64")); }); p.on("pageerror", e => errs.push(String(e)));
   await p.goto("http://localhost:8765/admin.html"); await p.waitForTimeout(2500);
   t("الوحدة محمّلة", await p.evaluate(() => typeof PagePilotHybrid === "object" && typeof PagePilotHybrid.run === "function"));
-  await p.evaluate(() => { window.__mockLlm = async prompt => { if (/الأقسام بهذا الترتيب بالضبط|اختر من القائمة التالية الأقسام/.test(prompt)) { const types = /بالضبط: ([a-z_, ]+)\./.test(prompt) ? /بالضبط: ([a-z_, ]+)\./.exec(prompt)[1].split(",").map(x => x.trim()) : (window.__autoTypes || ["hero", "problem", "benefits", "offer_price", "final_cta"]), nb = { benefits: 4, how_to_use: 3, why_choose: 3, comparison: 3, faq: 3, delivery_guarantee: 3 }; return { sections: types.map(ty => ({ type: ty, headline: "عنوان " + ty, hl: "", sub: "وصف قصير للقسم", bullets: Array.from({ length: nb[ty] || 0 }, (_, i) => "ميزة " + (i + 1) + " مفيدة"), icons: [], cta: "اطلب الآن", scene: "a warm calm scene" })) }; } return { name: "منتج", category: "general", colors: ["#1b3a7a"] }; }; });
+  await p.evaluate(() => { window.__abSeen = 0; window.__mockLlm = async prompt => { if (/خبير تحسين التحويل/.test(prompt)) { window.__abSeen++; const A = JSON.parse(/النسخة أ \(JSON\): (\[.*\])/.exec(prompt)[1]); return { sections: A.map(s => ({ type: s.type, headline: "ب-" + s.headline, hl: "", sub: "وصف ب " + s.type, bullets: s.bullets.map((b, i) => "نقطة ب " + (i + 1)), cta: "اطلب ب" })) }; } if (/الأقسام بهذا الترتيب بالضبط|اختر من القائمة التالية الأقسام/.test(prompt)) { const types = /بالضبط: ([a-z_, ]+)\./.test(prompt) ? /بالضبط: ([a-z_, ]+)\./.exec(prompt)[1].split(",").map(x => x.trim()) : (window.__autoTypes || ["hero", "problem", "benefits", "offer_price", "final_cta"]), nb = { benefits: 4, how_to_use: 3, why_choose: 3, comparison: 3, faq: 3, delivery_guarantee: 3 }; return { sections: types.map(ty => ({ type: ty, headline: "عنوان " + ty, hl: "", sub: "وصف قصير للقسم", bullets: Array.from({ length: nb[ty] || 0 }, (_, i) => "ميزة " + (i + 1) + " مفيدة"), icons: [], cta: "اطلب الآن", scene: "a warm calm scene" })) }; } return { name: "منتج", category: "general", colors: ["#1b3a7a"] }; }; });
   const pure = await p.evaluate(() => {
     const H = PagePilotHybrid, o = {};
     o.cWB = H.contrast(H.hexLum("#ffffff"), H.hexLum("#000000")); o.pkDark = H.pickText(0.05, ["#111111", "#ffffff"]); o.pkMid = H.pickText(0.30, ["#777777", "#888888"]); o.pkLight = H.pickText(0.9, ["#ffffff", "#111111"]);
@@ -171,8 +171,8 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
 
   const cnts = await p.evaluate(() => [2,3,4,5,6,7,8,9,10,11,12].map(n => { const t = PagePilotHybrid.typesFor(n); return [n, t.length, t[0], t.includes("offer_price")]; }));
   t("عدد الأقسام 2–12: كل عدد يعطي الأقسام المطلوبة ويبدأ بالهيرو ويحوي العرض", cnts.every(c => c[0] === c[1] && c[2] === "hero" && c[3]), cnts);
-  const opts = await p.evaluate(() => { PagePilot.open(); return Array.from(document.querySelectorAll("#pp-hn option")).map(o => o.value).join(","); });
-  t("خيارات الأقسام: حسب المنتج ثم 2…12", opts === "0,2,3,4,5,6,7,8,9,10,11,12", opts);
+  const opts = await p.evaluate(() => { PagePilot.open(); const h = document.querySelector("#pp-hn"); return { sel: h && h.tagName, val: h && h.value, tag: document.querySelectorAll("#pp-hn option").length }; });
+  t("الأقسام ثابتة 10 فقط: لا قائمة اختيار والقيمة 10", opts.sel === "INPUT" && opts.val === "10" && opts.tag === 0, opts);
 
   /* أسلوب المنافس: لون المنتج، كلمة مبرزة، صفوف أيقونات، زر في كل قسم، شريط علوي، أشخاص، صفحة متصلة */
   const cp = await p.evaluate(() => {
@@ -223,7 +223,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const ups = []; const old = PBApp.uploadBlob; PBApp.uploadBlob = async (b, n) => { const r = shot ? await new Promise(res => { const f = new FileReader(); f.onload = async () => { const nm = n + "-" + Math.random().toString(36).slice(2, 6) + (b.type === "image/png" ? ".png" : ".webp"); await window.saveDemo(nm, f.result.split(",")[1]); res("assets/img/_demo/" + nm); }; f.readAsDataURL(b); }) : await old.call(PBApp, b, n); ups.push(r); return r; };
     PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id);
     const slug = ((Admin.products && Admin.products.length ? Admin.products : PRODUCTS).find(x => x.cover) || {}).slug; g("pp-prod").value = slug; g("pp-prod").dispatchEvent(new Event("change"));
-    const dflt = "hybrid"; g("pp-hn").value = "6";
+    const dflt = "hybrid"; window.__abSeen = 0; g("pp-ab").checked = true; g("pp-abp").value = "30";
     document.querySelector('#pp-bg [data-pp="go"]').click();
     for (let i = 0; i < 200 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
     for (let i = 0; i < 50 && !(PBApp.E && PBApp.E.page && PBApp.E.page.sections && PBApp.E.page.sections.length); i++) await new Promise(r => setTimeout(r, 100));
@@ -233,6 +233,24 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     t("صفحة واحدة متصلة (قماش واحد) + نموذج الطلب الحقيقي", ui.canvas === 1 && ui.secs === 3 && ui.hasOrder && ui.product, ui);
   t("العناوين نصوص حيّة وH1 واحد وطبقات صور، بلا أزرار في الأقسام وزر طلب ثابت واحد", ui.headings && ui.imgs >= 6 && ui.h1 && ui.btns === 0 && ui.sticky === 1, ui);
   t("بيانات التوليد محفوظة (البرومبتات/المحاولات/التباين)", ui.hasMeta);
+  const abx = await p.evaluate(async () => {
+    const E = PBApp.E, ab = E.ab, r = { has: !!ab, on: ab && ab.on, pct: ab && ab.pct, calls: window.__abSeen };
+    if (!ab) return r;
+    const txt = pg => { const o = []; const w = n => { (n.cols || []).forEach(c => (c.widgets || []).forEach(w)); (n.free || []).forEach(w); if (n.set && (n.type === "heading" || n.type === "text")) o.push(String(n.set.text || n.set.html || "").replace(/<[^>]+>/g, "")); }; (pg.sections || []).forEach(w); return o.join("|"); };
+    r.bText = /ب-/.test(txt(ab.page)); r.aText = txt(E.page).length > 20 && !/ب-/.test(txt(E.page)); r.sameImgs = JSON.stringify(ab.page.media) === JSON.stringify(E.page.media);
+    r.secsB = ab.page.sections.length === E.page.sections.length; r.tb = txt(ab.page).slice(0, 160); r.ta = txt(E.page).slice(0, 80);
+    const puts = [], oldP = GH.putFile, oldG = GH.getFile, oldD = Admin.publishDataJs; GH.getFile = async () => { throw new Error("404"); }; GH.putFile = async (path) => { puts.push(path); return {}; };
+    let dataPub = 0; Admin.publishDataJs = async () => { dataPub++; };
+    if (!(Admin.products && Admin.products.length)) Admin.products = PRODUCTS; const pr = (Admin.products || []).find(x => x.slug === E.page.product); r.hadProd = !!pr;
+    E.page.slug = "ab-test-a"; E.isNew = true; E.dirty = true;
+    try { await PBApp.publish(); } catch (e) { r.err = String(e.message || e); }
+    r.puts = puts.filter(x => /^lp\//.test(x)); r.route = pr && pr.route; r.abProd = pr && pr.ab; r.dataPub = dataPub; r.abCleared = !PBApp.E.ab;
+    GH.putFile = oldP; GH.getFile = oldG; Admin.publishDataJs = oldD; if (pr) { delete pr.ab; delete pr.route; }
+    return r;
+  });
+  t("A/B: نسخة ب بنصوص مختلفة بالصور نفسها وبعدد الأقسام نفسه", abx.has && abx.on && abx.pct === 30 && abx.calls === 1 && abx.bText && abx.aText && abx.sameImgs && abx.secsB, abx);
+  t("A/B: النشر يكتب صفحتي أ وب ويضبط المنتج route وab", abx.hadProd && abx.puts.includes("lp/ab-test-a/index.html") && abx.puts.includes("lp/ab-test-a-b/index.html") && abx.route === "ab-test-a" && abx.abProd && abx.abProd.b === "ab-test-a-b" && abx.abProd.pct === 30 && abx.dataPub >= 1 && abx.abCleared, abx);
+
   await p.waitForTimeout(1500);
   const sel = await p.evaluate(async () => { const E = PBApp.E, fd = document.getElementById("pbx-frame").contentDocument, ids = []; E.page.sections.forEach(s => (s.free || []).concat(...s.cols.map(c => c.widgets)).forEach(w => ids.push(w.id))); let okc = 0; for (const id of ids) { if (fd.querySelector('[data-pb="' + id + '"]')) okc++; } return { n: ids.length, ok: okc }; });
   t("كل طبقة تظهر في إطار المحرّر (قابلة للتحديد/التعديل)", sel.ok === sel.n && sel.n > 20, sel);
