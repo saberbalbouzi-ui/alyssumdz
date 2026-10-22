@@ -31,7 +31,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("الخطة: أنواع بترتيب 6 أقسام وبلا نوع مجهول", pure.types === "hero,problem,benefits,offer_price,delivery_guarantee,final_cta", pure.types);
   t("حذف ادّعاءات اجتماعية مختلقة (مشاهدون/مخزون)", pure.ben.length === 2 && !pure.ben.some(x => /يشاهد|متبقي/.test(x)) && pure.warn.length >= 1, pure);
   t("دليل الأسلوب: بادئة موحّدة بالألوان والمزاج", /natural mood/.test(pure.prefix) && /#c68a1a/i.test(pure.prefix) || /natural mood/.test(pure.prefix), pure.prefix);
-  t("برومبت الخلفية: بلا نصوص ويحجز منطقة العنوان ويمنع الوجوه", /No text, no letters/.test(pure.bg) && /top 40%/.test(pure.bg) && /human faces/.test(pure.bg) && /AVOID:/.test(pure.bg) && !/No human faces or people/.test(pure.bgFaces));
+  t("برومبت الخلفية: بلا نصوص ويحجز منطقة العنوان ويمنع الوجوه", /No text, no letters/.test(pure.bg) && /top 40%/.test(pure.bg) && /human faces/.test(pure.bg) && /STRICT NEGATIVE PROMPT/.test(pure.bg) && /vignette/.test(pure.bg) && /collage/.test(pure.bg) && /SEAMLESS CONTINUOUS PAGE/.test(pure.bg) && !/No human faces or people/.test(pure.bgFaces));
   t("بوابة الجودة: نص/وجه/منطقة", !pure.gate1.ok && pure.gate1.why[0] === "text" && !pure.gate2.ok && pure.gate3.ok);
   t("الهندسة: النص أعلى والمنتج أسفل وعكسه", pure.geo.top && pure.geo.bot && pure.geo.none && pure.geo.within, pure.geo);
   t("لون الملصق (label_colors) يتقدّم على لون المحتوى العنبري", /blue/.test(pure.labCname), pure.labCname);
@@ -112,6 +112,13 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("كل قسم يأخذ صورة مرجعية مختلفة من صور المنتج", ed.refsUsed === "0,1,2" && ed.calls >= 6, ed);
   t("برومبت الدمج: المنتج داخل المشهد ومختلف عن بقية الأقسام وبمشاهد متنوعة", ed.noProduct && ed.scenes >= 5, ed);
 
+  /* وصل الحدّ بين القسمين: الشريط الأسفل للسابق يُلصق أعلى التالي بالبكسل */
+  const sm = await p.evaluate(() => {
+    const H = PagePilotHybrid, mk = (col, w = 100, h = 100) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.fillStyle = col; x.fillRect(0, 0, w, h); return c; };
+    const prev = mk("#112233"), cur = mk("#ee8800"), sc = H.seamCanvas(prev), px = (c, y) => Array.from(c.getContext("2d").getImageData(50, y, 1, 1).data.slice(0, 3)).join(",");
+    H.stitchSeam(cur, prev); return { seamTop: px(sc, 2), seamLow: px(sc, 90), curTop: px(cur, 1), curMid: px(cur, 60), curFeather: px(cur, 17), same: sc.width === 100 && sc.height === 100 };
+  });
+  t("وصل الحدّ: قماش الوصل يحمل شريط السابق، وأعلى الناتج = لون السابق بالبكسل ووسطه لم يتغيّر", sm.seamTop === "17,34,51" && sm.curTop === "17,34,51" && sm.curMid === "238,136,0" && sm.curFeather !== "238,136,0" && sm.same, sm);
   /* استمرارية بصرية: كل قسم يُرسم بالتتابع مع صورة القسم السابق (وأول قسم) مرجعاً */
   const ch = await p.evaluate(async () => {
     const H = PagePilotHybrid, mkb = async col => { const c = document.createElement("canvas"); c.width = 120; c.height = 150; const x = c.getContext("2d"); x.fillStyle = col; x.fillRect(0, 0, 120, 150); return new Promise(r => c.toBlob(r, "image/png")); };
@@ -120,7 +127,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
       const log = []; let cur = 0, maxPar = 0, par = 0, gen = [];
       await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 4, gate: false, noFaces: true, backdrop: "scene", chain }, {}, {
         real: true, llm: { json: window.__mockLlm }, remover: { cut: async () => null },
-        image: { bg: async () => { throw new Error("x"); }, edit: async (b, pr, i, extra) => { par++; maxPar = Math.max(maxPar, par); await new Promise(r => setTimeout(r, 30)); const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); const bl = await new Promise(r => c.toBlob(r, "image/png")); gen.push(bl); log.push({ i, ex: (extra || []).length, prev: extra && extra[0] ? gen.indexOf(extra[0]) : -1, first: extra && extra[1] ? gen.indexOf(extra[1]) : -1, cont: /VISUAL CONTINUITY/.test(pr) }); par--; return { canvas: c, blob: bl }; } },
+        image: { bg: async () => { throw new Error("x"); }, edit: async (b, pr, i, extra) => { par++; maxPar = Math.max(maxPar, par); await new Promise(r => setTimeout(r, 30)); const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); const bl = await new Promise(r => c.toBlob(r, "image/png")); gen.push(bl); log.push({ i, ex: (extra || []).length, prev: extra && extra[0] ? gen.indexOf(extra[0]) : -1, first: extra && extra[1] ? gen.indexOf(extra[1]) : -1, cont: /VISUAL CONTINUITY/.test(pr), seam: /SEAM CANVAS/.test(pr) && extra[0] instanceof Blob && gen.indexOf(extra[0]) < 0 }); par--; return { canvas: c, blob: bl }; } },
         vision: { check: async () => null }
       });
       return { log, maxPar };
@@ -128,7 +135,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     return { on: await go(undefined), off: await go(false) };
   });
   t("الاستمرارية: بالتتابع (لا توازٍ) وأول قسم بلا مرجع سابق", ch.on.maxPar === 1 && ch.on.log[0].ex === 0 && !ch.on.log[0].cont, ch.on);
-  t("الاستمرارية: القسم i يأخذ صورة i-1 مرجعاً ثانياً وأول صورة مرجعاً ثالثاً (من القسم 3) وبرومبت الاستمرارية", ch.on.log.slice(1).every(l => l.ex >= 1 && l.cont && l.prev === l.i - 1) && ch.on.log[2].first === 0 && ch.on.log[1].ex === 1, ch.on);
+  t("الاستمرارية: القسم i يأخذ قماش وصل (شريط أسفل القسم السابق) مرجعاً ثانياً وأول صورة مرجعاً ثالثاً (من القسم 3)", ch.on.log.slice(1).every(l => l.ex >= 1 && l.cont && l.seam) && ch.on.log[2].first === 0 && ch.on.log[1].ex === 1, ch.on);
   t("إلغاء الاستمرارية: توازٍ وبلا مراجع سابقة", ch.off.log.every(l => l.ex === 0 && !l.cont), ch.off);
 
   /* v1.89.414: لون/درجة اختيارية، خلفية موحّدة، كلمات مفتاحية ملوّنة، إعادة تلوين الصفحة */
@@ -185,7 +192,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     o.sameBg = new Set(spec.sections.map(sc => sc.bg)).size === 1 && spec.page.bg === spec.sections[0].bg;
     const v = PBSpec.validate(spec, {}); o.valid = v.ok; const pg = PBSpec.toPage(v, { title: "t", merge: true }); o.mergedSecs = pg.sections.length;
     const pe = H.bgPrompt(st, { type: "hero", scene: "x" }, { withProduct: true, people: true, noFaces: true, audience: "نساء" }), pp = H.bgPrompt(st, { type: "benefits", scene: "x" }, { withProduct: true, people: true, noFaces: true });
-    o.pHero = /hijab/.test(pe) && /real adult person/.test(pe) && !/No human faces/.test(pe); o.pBen = /No human faces/.test(pp) && !/hijab/.test(pp); o.crisp = /sharp, photorealistic/.test(pe); o.tone = /navy blue/.test(pe) && /seamless/.test(pe);
+    o.pHero = /hijab/.test(pe) && /real adult person/.test(pe) && !/No human faces/.test(pe); o.pBen = /No human faces/.test(pp) && !/hijab/.test(pp); o.crisp = /sharp, photorealistic/.test(pe); o.tone = /navy blue/.test(pe) && /seamless/i.test(pe);
     /* جولة الشكاوى: لون موحّد، أيقونات صالحة، لا تداخل، المنتج في الشريط السفلي */
     const sg = H.styleBible({ colors: ["#c9c9c9", "#b8b8b8"] }, null), hg = H.hex2hsl ? 0 : 0; o.greenDeep = sg.cname; 
     const names = new Set(Object.keys(PB.ICONS || {}).concat((PB.ICONS_LIST || []))); o.pbIconsType = Array.isArray(PB.ICONS) ? "arr" : typeof PB.ICONS;
