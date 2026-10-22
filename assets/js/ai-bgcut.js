@@ -81,7 +81,7 @@ const AIBgCut = (function () {
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
     if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
-    const band = clamp(Math.round(Math.max(ww, wh) * .011), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
+    const band = clamp(Math.round(Math.max(ww, wh) * (poly ? .026 : .011)), 3, poly ? 32 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
     if (x1 < 0 || solid < n * .004) throw new Error("لم يُعزل «" + item.label + "»");
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0); const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);
@@ -89,23 +89,39 @@ const AIBgCut = (function () {
   }
   /* (3) نزع الخلفية بطلب واحد: تطلب الخدمة قناع الموضوع الرئيسي (حتى 3 عناصر) من الصورة كاملة في ردّ واحد، ثم تُصقل الحواف محلياً من بكسلات صورتك الأصلية
      (ماتينغ بدقة البكسل) فتخرج نتيجة واحدة بحجم الأصل — كنزع خلفية كانفا بنقرة واحدة. إن جاء الردّ بلا قناع صالح يُعاد الطلب مرة واحدة تلقائياً ثم يُرفض بوضوح (لا بدائل محلية). */
-  const PSUBJ = "You are doing a one-click background removal like Canva. KEEP the main subject (the person, animal or product) together with EVERYTHING that belongs to its foreground scene: what it wears and holds, the furniture it sits or stands at (desk, table, chair), and every object lying on or standing in front of those surfaces (books, globe, pencil cups, plants on the desk, props). " +
-    "REMOVE only the true background behind them: walls, windows, curtains, wall shelves and bookcases, pictures and frames on the wall, distant floor, sky. " +
-    "Return ONLY a JSON list (at most 12 entries, one per kept object or group, the big pieces first) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the kept object>\"}.";
-  async function subjectMask(work, o) {
-    const ww = work.width, wh = work.height, arr = parseLoose(await ask(PSUBJ, work, { maxTokens: 8192, signal: o && o.signal })), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0);
-    let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => area(q) - area(p)); if (!cand.length) return null;
-    cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .01).slice(0, 12);      // الموضوع + مشهده الأمامي (طاولة وأغراض)
-    const M = new Float32Array(ww * wh); let used = 0;
-    for (const q of cand) { const px0 = Math.round(q.b.x0 / 1000 * ww), py0 = Math.round(q.b.y0 / 1000 * wh), px1 = Math.round(q.b.x1 / 1000 * ww), py1 = Math.round(q.b.y1 / 1000 * wh), dm = await decodeMask(q.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0)); if (!dm) continue;
-      let sum = 0; for (let i = 0; i < dm.m.length; i++) if (dm.m[i] > .5) sum++; const r = sum / Math.max(1, dm.m.length); if (r < .04 || r > .995) continue;      // قناع غير معقول داخل مربعه
-      for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) { const v = dm.m[y * dm.w + x]; if (v > M[yy * ww + xx]) M[yy * ww + xx] = v; } } } used++; }
-    if (!used) return null; let tot = 0; for (let i = 0; i < M.length; i++) if (M[i] > .5) tot++; const cov = tot / M.length; return cov < .01 || cov > .985 ? null : M;
+  const MASKFMT = "Return ONLY a JSON list of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the kept object, at most 128x128 pixels>\"}. ";
+  /* ثلاث محاولات بصيغ مختلفة كي لا يتكرر الفشل نفسه: (١) الموضوع + مشهده الأمامي (٢) الموضوع الرئيسي وحده بأقنعة صغيرة (٣) محيط مضلّع خفيف الحمولة */
+  const ATTEMPTS = [
+    { id: "scene", maxTokens: 16384, prompt: "You are doing a one-click background removal like Canva. KEEP the main subject (the person, animal or product) together with what it wears and holds, and the furniture it sits or stands at plus the objects lying on or in front of those surfaces (books, props, plants on the desk). " +
+      "REMOVE only the true background behind them: walls, windows, curtains, wall shelves, pictures on the wall, distant floor, sky. At most 6 entries, the big pieces first. " + MASKFMT },
+    { id: "subject", maxTokens: 16384, prompt: "Remove the background of this photo: segment ONLY the main subject(s) a photographer would keep — the main person together with everything they wear and hold, or the main product. At most 2 entries. " + MASKFMT },
+    { id: "poly", maxTokens: 6000, poly: true, prompt: "Remove the background of this photo: trace the outline of ONLY the main subject (the main person together with everything they wear and hold, or the main product). " +
+      "Return ONLY a JSON list (at most 2 entries) of {\"label\":\"short Arabic name\",\"polygon\":[[y,x],...]} where the polygon has 40 to 90 points following the subject's edge clockwise, coordinates normalized to 0-1000." },
+  ];
+  async function subjectMask(work, o, at) {
+    at = at || ATTEMPTS[0]; const ww = work.width, wh = work.height, why = t => ({ M: null, why: t });
+    let arr; try { arr = parseLoose(await ask(at.prompt, work, { maxTokens: at.maxTokens, signal: o && o.signal })); } catch (e) { if (e && e.name === "AbortError") throw e; return why(String(e && e.message || e).slice(0, 90)); }
+    arr = (arr || []).filter(e => e && typeof e === "object"); if (!arr.length) return why("ردّ بلا عناصر");
+    const M = new Float32Array(ww * wh), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0); let used = 0;
+    if (at.poly) {
+      const c = document.createElement("canvas"); c.width = ww; c.height = wh; const g = c.getContext("2d"); g.fillStyle = "#fff"; let n = 0;
+      arr.slice(0, 2).forEach(e => { const pts = (e.polygon || e.points || []).map(q => Array.isArray(q) ? [Number(q[1]), Number(q[0])] : null).filter(q => q && isFinite(q[0]) && isFinite(q[1])); if (pts.length < 6) return; g.beginPath(); pts.forEach((q, i) => { const x = clamp(q[0], 0, 1000) / 1000 * ww, y = clamp(q[1], 0, 1000) / 1000 * wh; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fill(); n++; });
+      if (!n) return why("مضلّع غير صالح"); const d = g.getImageData(0, 0, ww, wh).data; for (let i = 0; i < ww * wh; i++) M[i] = d[i * 4 + 3] > 127 ? 1 : 0; used = n;
+    } else {
+      let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask); if (!cand.length) return why("ردّ بلا أقنعة (" + arr.length + " عنصراً)");
+      cand.sort((p, q) => area(q) - area(p)); cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .01).slice(0, 12);      // الموضوع + مشهده الأمامي
+      for (const q of cand) { const px0 = Math.round(q.b.x0 / 1000 * ww), py0 = Math.round(q.b.y0 / 1000 * wh), px1 = Math.round(q.b.x1 / 1000 * ww), py1 = Math.round(q.b.y1 / 1000 * wh), dm = await decodeMask(q.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0)); if (!dm) continue;
+        let sum = 0; for (let i = 0; i < dm.m.length; i++) if (dm.m[i] > .5) sum++; const r = sum / Math.max(1, dm.m.length); if (r < .04 || r > .995) continue;      // قناع غير معقول داخل مربعه
+        for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) { const v = dm.m[y * dm.w + x]; if (v > M[yy * ww + xx]) M[yy * ww + xx] = v; } } } used++; }
+      if (!used) return why("أقنعة غير صالحة أو غير معقولة");
+    }
+    let tot = 0; for (let i = 0; i < M.length; i++) if (M[i] > .5) tot++; const cov = tot / M.length; if (cov < .01 || cov > .985) return why("تغطية القناع " + Math.round(cov * 100) + "%"); return { M, why: "", poly: !!at.poly };
   }
   async function subject(cv, o) {
     o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), s = Math.min(1, Math.sqrt(MAXPX / (cv.width * cv.height))), work = cropOf(cv, 0, 0, cv.width, cv.height, s), ww = work.width, wh = work.height;
-    step("⏳ تحديد الموضوع…"); let M = await subjectMask(work, o); if (!M) { step("⏳ إعادة المحاولة…"); M = await subjectMask(work, o); }
-    if (!M) throw new Error("لم تُعزل الصورة: لم تُرجِع الخدمة قناعاً صالحاً — أعد المحاولة");
+    let M = null, poly = false; const reasons = [];
+    for (let a = 0; a < ATTEMPTS.length && !M; a++) { step(a ? "⏳ إعادة المحاولة بصيغة أخرى…" : "⏳ تحديد الموضوع…"); const r = await subjectMask(work, o, ATTEMPTS[a]); if (r.M) { M = r.M; poly = r.poly; } else reasons.push(ATTEMPTS[a].id + ": " + r.why); }
+    if (!M) { console.warn("bgcut", reasons); throw new Error("لم تُعزل الصورة (" + reasons.map(r => r.replace(/^[a-z]+: /, "")).join(" · ") + ") — أعد المحاولة أو جرّب صورة أخرى"); }
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
     const band = clamp(Math.round(Math.max(ww, wh) * .011), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh; let solid = 0;
     for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) solid++; }

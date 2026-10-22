@@ -16,7 +16,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
         calls.push("text"); const P = o.prompt;
         const fullBox = q => [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8], mkMask = q => { const m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)"; if (q.r) { x.beginPath(); x.ellipse(128 + 3, 128 + 3, 125, 125, 0, 0, 7); x.fill(); } else x.fillRect(4 + 3, 4 + 3, 248, 248); return m.toDataURL("image/png"); };
         if (/Segment every distinct/.test(P)) return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: fullBox(q), mask: mkMask(q) })));
-        if (/one-click background removal/.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: fullBox(objs[0]), mask: mkMask(objs[0]) }]) + "\n```";
+        if (/one-click background removal|Remove the background of this photo: segment/.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: fullBox(objs[0]), mask: mkMask(objs[0]) }]) + "\n```";
         const q = objs.find(z => P.includes(z.label)) || objs[0];    // طلب قناع على محيط العنصر: نحتاج إحداثيات الصورة المقصوصة التي لا نراها هنا ← نُعيد قناعاً دائرياً/مربعاً مزاحاً بحسب مربع كامل 0..1000 داخل القطع
         const cw = 1000, ch = 1000, m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)";
         // المربع المُعاد = ما يحيط العنصر ضمن القطعة (هامش 10% من أكبر ضلع): نحسبه من الإعداد نفسه
@@ -37,6 +37,13 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     const sj = await AIBgCut.subject(cv, {}); const sd = sj.getContext("2d").getImageData(0, 0, W, H).data; const at = (x, y) => sd[(y * W + x) * 4 + 3];
     out.subj = { size: sj.width + "x" + sj.height, center: at(250, 300), corner: at(20, 20), blue: at(580, 300), via: sj._via };
     const rr = await PBBgRemove.autoCut(cv, { allowKey: true, noConfirm: true }); out.auto = { method: rr.method, cov: Math.round(rr.cov * 100) };
+    /* فشل الصيغة الأولى لا يُسقط العملية: (أ) ردّ بلا أقنعة ثم نجاح الثانية (ب) أقنعة مفقودة في الأوليين ثم مضلّع */
+    const orig = ImgGen.text; const tryMode = async mode => { ImgGen.text = async o => { const P = o.prompt; if (/trace the outline/.test(P)) { if (mode !== "poly") return "[]"; const pts = []; for (let k = 0; k < 40; k++) { const a = k / 40 * 6.2832; pts.push([Math.round((300 + 110 * Math.sin(a)) / .6), Math.round((250 + 110 * Math.cos(a)) / .8)]); } return JSON.stringify([{ label: "كرة", polygon: pts }]); }
+      if (/Remove the background of this photo: segment ONLY/.test(P)) { if (mode === "second") return orig(o); return JSON.stringify([{ label: "كرة", box_2d: [100, 100, 300, 300] }]); }
+      return JSON.stringify([{ label: "كرة", box_2d: [100, 100, 300, 300] }]); };
+      try { const r = await AIBgCut.subject(cv, {}); const d = r.getContext("2d").getImageData(0, 0, W, H).data; return { ok: true, center: d[(300 * W + 250) * 4 + 3], corner: d[(20 * W + 20) * 4 + 3] }; } catch (e) { return { ok: false, err: String(e.message) }; } finally { ImgGen.text = orig; } };
+    out.second = await tryMode("second"); out.poly = await tryMode("poly");
+    ImgGen.text = async () => JSON.stringify([{ label: "x", box_2d: [100, 100, 300, 300] }]); try { await AIBgCut.subject(cv, {}); out.fail = "no error"; } catch (e) { out.fail = String(e.message); } ImgGen.text = orig;
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -48,6 +55,9 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.fill.ok && r.fill.holeGray && r.fill.outsideSame, "الخلفية تُرمَّم داخل منطقة العنصر فقط والبقية بلا تغيير", r.fill);
   ok(r.subj.size === "800x600" && r.subj.center > 240 && r.subj.corner === 0 && r.subj.blue === 0, "نزع الخلفية: الموضوع فقط بحجم الأصل", r.subj);
   ok(r.auto.method === "seg" && r.auto.cov > 3 && r.auto.cov < 25, "autoCut يختار طريقة الـAPI للخلفية المعقدة", r.auto);
+  ok(r.second.ok && r.second.center > 200 && r.second.corner < 20, "الصيغة الأولى بلا أقنعة ← تنجح الصيغة الثانية", r.second);
+  ok(r.poly.ok && r.poly.center > 200 && r.poly.corner < 20, "فشل الأقنعة كلها ← مضلّع المحيط يكفي", r.poly);
+  ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
   ok(!errs.length, "لا أخطاء صفحة", errs);
   console.log(n + " نجاح، " + fails.length + " فشل"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();
