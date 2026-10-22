@@ -431,7 +431,8 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const style = styleBible(an, inp.theme, { color: inp.color, tone: inp.tone }); P.style = style; log.push({ step: "style", section: "", status: "done", attempts: 1, ms: 0, error: "" }); cb.step && cb.step("style", "done", {});
     /* ٤ خطة الأقسام والنصوص */
     let plan;
-    try { plan = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count }); if (plan.sections.filter(s => s.headline).length < 3) throw new Error("خطة ناقصة"); }
+    try { plan = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count }); const okN = plan.sections.filter(s => s.headline).length; if (okN < Math.min(2, plan.sections.length)) throw new Error("خطة ناقصة (" + okN + " من " + plan.sections.length + ")");
+      if (okN < plan.sections.length) { const fb = fallbackPlan(inp.info, inp.lang, { count: inp.count }); plan.sections.forEach((s, i) => { if (!s.headline) { const f = fb.sections[i]; if (f) { s.headline = f.headline; s.sub = s.sub || f.sub; s.bullets = s.bullets.length ? s.bullets : f.bullets; s.icons = s.bullets === f.bullets ? f.icons : s.icons; s.cta = s.cta || f.cta; } } }); note.push("أُكملت نصوص بعض الأقسام من بيانات المنتج — راجعها."); } }
     catch (e) {
       /* مفتاح فعّال لكن الذكاء فشل في النص: لا تُنفَق صور على صفحة نصوصها مأخوذة من الرابط — توقّف واشرح السبب */
       if (P.real && e && e.code !== "NOKEY" && e.code !== "OFF") throw new Error("فشل الذكاء في كتابة نصوص الصفحة (" + String(e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.");
