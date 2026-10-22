@@ -60,7 +60,7 @@ const PagePilot = (() => {
 <label style="font-size:.85rem"><input id="pp-people" type="checkbox" checked> صور أشخاص في المشاهد (هيرو، المشكلة، الاستعمال، الخاتمة — النساء بحجاب ولباس ساتر)</label>
 <label style="font-size:.85rem"><input id="pp-ticker" type="checkbox" checked> شريط علوي (دفع عند الاستلام • توصيل • تأكيد بالهاتف)</label>
 <label style="font-size:.85rem"><input id="pp-chain" type="checkbox" checked> استمرارية بصرية: كل صورة تُرسم بالاستناد إلى الصورة التي قبلها (نفس الخلفية والإضاءة فتبدو الصفحة مشهداً واحداً — أبطأ لأن الصور تُرسم بالتتابع)</label>
-<label style="font-size:.85rem"><input id="pp-ab" type="checkbox"> 🧪 اختبار A/B: أنشئ أيضاً نسخة «ب» بنصوص مختلفة (العناوين والوصف والأزرار) بالصور نفسها — بلا رصيد صور إضافي <span style="opacity:.75">· تذهب </span><input id="pp-abp" type="number" min="1" max="99" value="50" style="${FLD};width:64px;display:inline-block"> <span style="opacity:.75">% من الزوار إلى «ب»، وتُنشر مع الأصل عند «حفظ ونشر» (يلزم منتج من المتجر)</span></label>
+<label style="font-size:.85rem"><input id="pp-ab" type="checkbox"> 🧪 اختبار A/B: أنشئ أيضاً نسخة «ب» منافسة: صفحة كاملة بصورها وهويتها البصرية ونصوصها المختلفة (ضعف رصيد الصور) <span style="opacity:.75">· تذهب </span><input id="pp-abp" type="number" min="1" max="99" value="50" style="${FLD};width:64px;display:inline-block"> <span style="opacity:.75">% من الزوار إلى «ب»، وتُنشر مع الأصل عند «حفظ ونشر» (يلزم منتج من المتجر)</span></label>
 <label style="font-size:.85rem"><input id="pp-gate" type="checkbox" checked> فحص جودة تلقائي للخلفيات (حتى محاولتين إضافيتين)</label>
 </div>
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin:.9rem 0"><button data-pp="go" style="${BTN_CSS};background:rgba(198,254,23,.28)">✨ أنشئ الصفحة بالذكاء</button></div>
@@ -113,26 +113,28 @@ const PagePilot = (() => {
         const th0 = THEMES[theme] || THEMES.green, cnt = 10, sig = [g.info.title, cnt, o.lang, $("pp-dia").value].join("|"), RS = resumeIt && S.resume && S.resume.sig === sig ? S.resume.p : null;
         if (resumeIt && !RS) throw new Error("تغيّرت الإعدادات منذ المحاولة السابقة — اضغط «أنشئ الصفحة» لبدء إنشاء جديد");
         const nTodo = RS ? RS.plan.sections.filter((x, k) => !RS.results[k]).length : 10;
-        const abOn = !!($("pp-ab") && $("pp-ab").checked), abPct = Math.min(99, Math.max(1, Math.round(+($("pp-abp") && $("pp-abp").value) || 50))), upCache = {};
+        const abOn = !!($("pp-ab") && $("pp-ab").checked), abPct = Math.min(99, Math.max(1, Math.round(+($("pp-abp") && $("pp-abp").value) || 50)));
         if (abOn && !g.info.product) throw new Error("اختبار A/B يحتاج منتجاً من المتجر (ليُوزَّع الزوار بين النسختين): اختر منتجاً أو ألغِ خيار A/B");
         if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
-        if (!confirm("سيرسم الذكاء " + nTodo + " صورة مربّعة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
+        if (!confirm("سيرسم الذكاء " + (nTodo + (abOn ? 10 : 0)) + " صورة مربّعة" + (abOn ? " (10 للنسخة أ و10 لنسخة ب المنافسة بهوية بصرية مختلفة)" : " للصفحة (صورة لكل قسم، بلا نصوص)") + " ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + (RS ? RS.plan.sections.length : 10) + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
         let out; try { out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, resume: RS }, { section: prog }); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
-        const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => (upCache[tag] = upload(b, tag)));
-        /* نسخة ب (A/B): طلب نصي واحد + تجميع بالصور المرفوعة نفسها (بلا رفع ولا رصيد صور إضافي) */
+        const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, upload);
+        /* نسخة ب (A/B): صفحة منافسة كاملة بصورها الخاصة (هوية بصرية ومشاهد وزوايا ونصوص مختلفة) — تعيد استعمال تحليل المنتج فقط */
         let abPage = null, abNote = [];
         if (abOn) {
           try {
-            say("⏳ ٣/٣ كتابة نسخة ب…"); const vb = await PagePilotHybrid.variantB(out, { info: g.info, dialect: $("pp-dia").value });
-            const asmB = await PagePilotHybrid.assemble(PagePilotHybrid.variantOut(out, vb.plan), { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upCache[tag] || upload(b, tag));
-            abPage = asmB.page; abNote = vb.warn;
-          } catch (er) { abNote = ["تعذّرت نسخة ب (" + String(er && er.message || er).slice(0, 100) + ") — الصفحة أ جاهزة ويمكنك إعادة المحاولة"]; }
+            say("⏳ ٣/٣ رسم نسخة ب المنافسة…");
+            const thumbsB = []; const progB = (i, R) => { thumbsB.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ نسخة ب: ظهر القسم " + thumbsB.length + " من 10" + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbsB.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
+            const outB = await PagePilotHybrid.runB(out, { info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience }, { section: progB });
+            const asmB = await PagePilotHybrid.assemble(outB, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: outB.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, "B" + tag));
+            abPage = asmB.page; abNote = outB.note.slice(0, 2);
+          } catch (er) { abNote = ["تعذّرت نسخة ب (" + String(er && er.message || er).slice(0, 140) + ") — الصفحة أ جاهزة، ويمكنك نشرها بدون A/B"]; }
         }
         bg.remove(); PBApp.open(asm.page, "", true); if (abPage && PBApp.setAbPage) PBApp.setAbPage(abPage, abPct);
-        const wn = out.note.concat(abPage ? ["🧪 نسخة ب جاهزة: ستُنشر مع الأصل عند «حفظ ونشر» (الإعدادات من «إعدادات الصفحة»)"] : [], abNote, asm.warn.slice(0, 3)); if (wn.length && PBApp.toast) setTimeout(() => PBApp.toast(wn.join(" — ")), 600);
+        const wn = out.note.concat(abPage ? ["🧪 نسخة ب المنافسة جاهزة: ستُنشر مع الأصل عند «حفظ ونشر» (الإعدادات من «إعدادات الصفحة»)"] : [], abNote, asm.warn.slice(0, 3)); if (wn.length && PBApp.toast) setTimeout(() => PBApp.toast(wn.join(" — ")), 600);
       }
     }
     /* يملأ الحقول بمنتج مستورد (من الجلب أو من زر المفضلة) */

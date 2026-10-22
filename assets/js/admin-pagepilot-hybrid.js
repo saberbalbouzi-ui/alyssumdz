@@ -148,6 +148,13 @@ dominant_colors: ألوان المنتج عموماً.
     return { palette: pal, mood, lighting: LIGHT[mood], family: FAMILY[mood], radius, shadow, prefix, cname, bgName, tone };
   }
 
+  /* هوية بصرية منافسة للنسخة ب: مزاج مختلف ولون مزاح في الدائرة اللونية ودرجة معاكسة، فتبدو الصفحة أخرى لا نسخة منها */
+  const ALT_MOOD = { clean: "energetic", premium: "natural", energetic: "premium", natural: "clean" }, ALT_TONE = { dark: "light", mid: "dark", light: "dark" };
+  function altStyle(an, theme, A) {
+    A = A || styleBible(an, theme); const h = hex2hsl(A.palette.primary), col = hsl2hex((h[0] + 150) % 360, Math.max(.45, Math.min(.8, h[1])), .4);
+    const s = styleBible(Object.assign({}, an || {}, { mood: ALT_MOOD[A.mood] || "premium", labelColors: [], colors: [] }), theme, { color: col, tone: ALT_TONE[A.tone] || "light" });
+    s.alt = true; return s;
+  }
   /* ───────────── ٤) خطة الأقسام والنصوص ───────────── */
   /* لكل نوع: مكان النص (zone: top|bottom|full) ومكان المنتج (يعاكسه) ومشهد افتراضي */
   const TYPES = {
@@ -255,7 +262,7 @@ ${auto ? `اختر من القائمة التالية الأقسام التي ي
     o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zn = zoneOf(sec.type, !!o.withProduct), zoneTxt = zn === "top" ? (o.withProduct ? "the top 46% of the frame" : "the top 40% of the frame") : zn === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
     const noProduct = !o.withProduct && T.product === false;
     const where = zn === "top" ? (o.withProduct ? "entirely inside the lower band of the frame (between 52% and 86% of the frame height), fully visible, centered, large, never cut off or touching any edge" : "in the lower half") : zn === "bottom" ? "in the upper half" : "small and centered";
-    const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page: " + (PURPOSE[sec.type] ? "Purpose of this image: " + PURPOSE[sec.type] : SHOTS[(o.idx || 0) % SHOTS.length]) + ". " + (o.refName ? "The reference photo shows the product variant \"" + o.refName + "\": keep exactly that variant's look. " : "") : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
+    const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page: " + (PURPOSE[sec.type] ? "Purpose of this image: " + PURPOSE[sec.type] : SHOTS[(o.idx || 0) % SHOTS.length]) + ". " + (o.refName ? "The reference photo shows the product variant \"" + o.refName + "\": keep exactly that variant's look. " : "") + (o.alt ? "COMPETING ALTERNATIVE DIRECTION: this page is a rival version of another page for the same product, so deliberately avoid the most obvious composition — use a different setting, different props and a different camera framing (suggested framing: " + SHOTS[((o.idx || 0) + 4) % SHOTS.length] + "). " : "") : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
     const person = !!(o.withProduct && hasPerson(sec.type, o));
     const solid = false;   /* مشهد حقيقي لكل قسم بهوية بصرية واحدة — لا خلفية مسطّحة ولا نزع للخلفية */
     const SOLID = `a seamless plain studio backdrop, one perfectly uniform flat ${style.bgName} (${style.palette.deep}) color filling the whole background — NO room, NO furniture, NO windows, NO shelves, NO bokeh, NO background objects at all, only a very subtle soft vignette; the subject and product are cleanly lit by soft studio light with a soft contact shadow`;
@@ -433,13 +440,13 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const chain = edit && inp.chain !== false && P.real;   /* استمرارية بصرية: القسم i يُرسم مع صورة القسم السابق مرجعاً (بالتتابع) */
     const todo = plan.sections.map((sec, i) => ({ sec, i })).filter(x => !results[x.i]);
     await pool(todo, chain ? 1 : 3, async ({ sec, i }) => {
-      const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, refBlob = refs.length ? refs[i % refs.length] : null; R.ref = refs.length ? i % refs.length : -1;
+      const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, ri = refs.length ? (i + (inp.alt && refs.length > 1 ? 1 : 0)) % refs.length : -1, refBlob = ri >= 0 ? refs[ri] : null; R.ref = ri;
       let extra = "", why = [];
       for (let a = 1; a <= 3; a++) {
         R.attempts = a;
         if (halted) { fails.push({ i, msg: halted, code: "HALT" }); return; }
         try {
-          let pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
+          let pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, idx: i, alt: !!inp.alt, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
           const rk = j => results[j] && results[j].rawKeep; let pvc = null, fv = null, pj = -1, fj = -1; for (let j = i - 1; j >= 0; j--) if (results[j] && results[j].bgCanvas && !results[j].mock) { pvc = results[j].bgCanvas; pj = j; break; } for (let j = 0; j < results.length; j++) if (rk(j)) { fv = rk(j); fj = j; break; } R.seamFrom = null; const seamB = chain && pvc ? await canvasBlob(seamCanvas(pvc), "image/png") : null; const links = seamB ? [seamB].concat(fv && fj !== pj ? [fv] : []) : []; if (links.length) { pr = pr + " " + continuityNote(links.length > 1); R.prompt = pr; R.chained = true; R.seamFrom = pvc; }
           const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i, links) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
           if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock; R.rawKeep = got.mock ? null : (got.blob || null); if (R.seamFrom && !got.mock) { try { stitchSeam(R.bgCanvas, R.seamFrom); } catch (_) { } }
@@ -519,14 +526,14 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   /* ───────────── نسخة ب (اختبار A/B): نصوص مختلفة بالصور نفسها — طلب نصي واحد بلا صور إضافية ───────────── */
   function variantPrompt(info, an, plan, o) {
     o = o || {}; const dia = o.dialect === "msa" ? "العربية الفصحى المبسّطة" : "الدارجة الجزائرية المكتوبة بحروف عربية (قريبة من الناس، بلا مبالغة)";
-    const A = plan.sections.map(s => ({ type: s.type, headline: s.headline, hl: s.hl, sub: s.sub, bullets: s.bullets, cta: s.cta }));
+    const A = plan.sections.map(s => ({ type: s.type, headline: s.headline, hl: s.hl, sub: s.sub, bullets: s.bullets, cta: s.cta, scene: s.scene }));
     return `أنت خبير تحسين التحويل (CRO) لصفحات الهبوط. لدينا النسخة «أ» من صفحة المنتج التالي، والمطلوب كتابة النسخة «ب» لاختبار A/B بنصوص تختلف في الزاوية الإقناعية لا في الحقائق.
 المنتج: ${info.title || "—"}${an && an.name ? " (" + an.name + ")" : ""}
 الوصف: ${info.desc || "—"}
 ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.features.join(" | ") + "\n" : ""}النسخة أ (JSON): ${JSON.stringify(A)}
 اكتب النسخة ب بـ${dia}: العناوين والعبارات تبدأ من زاوية مختلفة عن أ (مثلاً: إن بدأت أ بالمشكلة فابدأ ب بالنتيجة أو بسؤال، وإن كانت أ هادئة فاجعل ب أكثر حسماً) وبصياغة مختلفة تماماً لا مجرد ترادف، بالأقسام نفسها وبالترتيب نفسه وبعدد النقاط نفسه.
 قواعد صارمة: لا تغيّر الحقائق ولا تضف مزايا غير مؤكدة؛ لا ادّعاءات علاجية؛ لا آراء زبائن ولا عدّادات مخزون ولا «يشاهده X الآن» ولا أرقام مختلقة؛ لا أسعار ولا نسب خصم. hl كلمة/عبارة (≤3 كلمات) منسوخة حرفياً من العنوان. في sub وفي كل نقطة ضع كلمة أو كلمتين مفتاحيتين بين [[ ]].
-أخرج JSON واحداً فقط: {"sections":[{"type":"hero","headline":"≤45 حرفاً","hl":"","sub":"≤110 حرفاً","bullets":["≤45 حرفاً"],"cta":"≤22 حرفاً"}]}`;
+أخرج JSON واحداً فقط: {"sections":[{"type":"hero","headline":"≤45 حرفاً","hl":"","sub":"≤110 حرفاً","bullets":["≤45 حرفاً"],"cta":"≤22 حرفاً","scene":"English, ≤140 chars: a setting/props idea for the section photo that is clearly DIFFERENT from version A's scene"}]}`;
   }
   /* يدمج نصوص ب في خطة أ مع إبقاء المشاهد والأيقونات والترتيب؛ ما فشل أو تشابه مع أ يبقى من أ */
   function mergeVariant(plan, rawB) {
@@ -534,7 +541,7 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     const sections = plan.sections.map((s, i) => {
       const b = clean.sections.find(x => x.type === s.type) || clean.sections[i] || {}, bl = b.bullets && b.bullets.length === s.bullets.length ? b.bullets : s.bullets;
       const head = b.headline || s.headline, sub = b.sub || s.sub, cta = b.cta || s.cta; if (!same(head, s.headline) || !same(sub, s.sub)) diff++;
-      return Object.assign({}, s, { headline: head, hl: b.headline ? b.hl : s.hl, sub, bullets: bl, icons: bl === s.bullets ? s.icons : bl.map((x, k) => iconFor(x, k, (s.icons || [])[k])), cta });
+      return Object.assign({}, s, { headline: head, hl: b.headline ? b.hl : s.hl, sub, bullets: bl, icons: bl === s.bullets ? s.icons : bl.map((x, k) => iconFor(x, k, (s.icons || [])[k])), cta, scene: b.scene || "" });
     });
     clean.warn.forEach(w => warn.push(w)); if (diff < Math.ceil(plan.sections.length / 2)) warn.push("نصوص النسخة ب قريبة من أ (" + diff + " قسماً مختلفاً) — راجعها قبل بدء الاختبار");
     return { plan: { sections }, diff, warn };
@@ -547,6 +554,13 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     return mergeVariant(out.plan, raw);
   }
 
+  /* نسخة ب منافسة: صفحة كاملة بصورها (هوية بصرية مختلفة + مشاهد وزوايا ومرجع مختلفة + زاوية إقناعية مختلفة) تعيد استعمال تحليل المنتج فقط */
+  async function runB(out, inp, cb, over) {
+    const vb = await variantB(out, inp, over);
+    const style = altStyle(out.an, inp.theme, out.style);
+    const o2 = await run(Object.assign({}, inp, { alt: true, count: out.plan.sections.length, resume: { an: out.an, style, plan: vb.plan, results: [], note: [] } }), cb, over);
+    o2.note = (o2.note || []).concat(vb.warn || []); return o2;
+  }
   async function assemble(out, ctx, upload) {
     const spec0 = [];
     const plist = (out.prods && out.prods.length ? out.prods : (out.prod ? [out.prod] : [])), prodSrcs = [];
@@ -579,5 +593,5 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, seamCanvas, stitchSeam, NEG, PURPOSE, CANON, autoTypes, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, variantPrompt, mergeVariant, variantB, variantOut, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, seamCanvas, stitchSeam, NEG, PURPOSE, CANON, autoTypes, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, variantPrompt, mergeVariant, variantB, variantOut, runB, altStyle, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();
