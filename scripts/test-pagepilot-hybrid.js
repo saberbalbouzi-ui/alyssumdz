@@ -7,6 +7,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1280, height: 900 } }); const errs = []; await p.exposeFunction("saveDemo", (nm, b64) => { const fs = require("fs"); fs.mkdirSync("assets/img/_demo", { recursive: true }); fs.writeFileSync("assets/img/_demo/" + nm, Buffer.from(b64, "base64")); }); p.on("pageerror", e => errs.push(String(e)));
   await p.goto("http://localhost:8765/admin.html"); await p.waitForTimeout(2500);
   t("الوحدة محمّلة", await p.evaluate(() => typeof PagePilotHybrid === "object" && typeof PagePilotHybrid.run === "function"));
+  await p.evaluate(() => { window.__mockLlm = async prompt => { if (/الأقسام بهذا الترتيب بالضبط/.test(prompt)) { const types = /بالضبط: ([a-z_, ]+)\./.exec(prompt)[1].split(",").map(x => x.trim()), nb = { benefits: 4, how_to_use: 3, why_choose: 3, comparison: 3, faq: 3, delivery_guarantee: 3 }; return { sections: types.map(ty => ({ type: ty, headline: "عنوان " + ty, hl: "", sub: "وصف قصير للقسم", bullets: Array.from({ length: nb[ty] || 0 }, (_, i) => "ميزة " + (i + 1) + " مفيدة"), icons: [], cta: "اطلب الآن", scene: "a warm calm scene" })) }; } return { name: "منتج", category: "general", colors: ["#1b3a7a"] }; }; });
   const pure = await p.evaluate(() => {
     const H = PagePilotHybrid, o = {};
     o.cWB = H.contrast(H.hexLum("#ffffff"), H.hexLum("#000000")); o.pkDark = H.pickText(0.05, ["#111111", "#ffffff"]); o.pkMid = H.pickText(0.30, ["#777777", "#888888"]); o.pkLight = H.pickText(0.9, ["#ffffff", "#111111"]);
@@ -16,7 +17,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     o.bg = H.bgPrompt(st, { type: "hero", scene: "a sunny meadow" }, {}); o.bgFaces = H.bgPrompt(st, { type: "hero", scene: "x" }, { noFaces: false });
     o.gate1 = H.gateOk({ has_text: true, has_face: false, zone_empty: true }, true); o.gate2 = H.gateOk({ has_text: false, has_face: true, zone_empty: true }, true); o.gate3 = H.gateOk({ has_text: false, has_face: true, zone_empty: true }, false);
     const gt = H.geometry("hero", 0.8), gb = H.geometry("how_to_use", 0.8), gf = H.geometry("faq", 1);
-    o.geo = { top: gt.zone.y < gt.prod.y, bot: gb.zone.y > gb.prod.y, none: gf.prod === null, within: gt.prod.y + gt.prod.h <= H.H }; o.fb = H.fallbackPlan({ title: "منتج", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, "ar", { count: 10 }).sections.length;
+    o.geo = { top: gt.zone.y < gt.prod.y, bot: gb.zone.y > gb.prod.y, none: gf.prod === null, within: gt.prod.y + gt.prod.h <= H.H };
     const lb = H.styleBible(H.cleanAnalysis({ label_colors: ["#1f4fa8", "#ffffff"], dominant_colors: ["#d98a14", "#1f4fa8"] }), null); o.labCname = lb.cname; o.labDeepHue = H.hex2hsl ? 0 : 0;
     const am = H.styleBible(H.cleanAnalysis({ dominant_colors: ["#d98a14", "#1f4fa8"] }), null); o.amCname = am.cname; o.isAm = [H.isAmber("#d98a14"), H.isAmber("#1f4fa8")];
     o.domAm = H.dominantColors(new Uint8ClampedArray([217, 138, 20, 255, 217, 138, 20, 255, 217, 138, 20, 255, 31, 79, 168, 255]), 2, true);
@@ -33,46 +34,46 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("برومبت الخلفية: بلا نصوص ويحجز منطقة العنوان ويمنع الوجوه", /No text, no letters/.test(pure.bg) && /top 40%/.test(pure.bg) && /human faces/.test(pure.bg) && /AVOID:/.test(pure.bg) && !/No human faces or people/.test(pure.bgFaces));
   t("بوابة الجودة: نص/وجه/منطقة", !pure.gate1.ok && pure.gate1.why[0] === "text" && !pure.gate2.ok && pure.gate3.ok);
   t("الهندسة: النص أعلى والمنتج أسفل وعكسه", pure.geo.top && pure.geo.bot && pure.geo.none && pure.geo.within, pure.geo);
-  t("خطة احتياطية 10 أقسام", pure.fb === 10, pure.fb);
   t("لون الملصق (label_colors) يتقدّم على لون المحتوى العنبري", /blue/.test(pure.labCname), pure.labCname);
   t("بلا label_colors يُؤخَّر العنبر ويُختار الأزرق", /blue/.test(pure.amCname) && pure.isAm[0] === true && pure.isAm[1] === false, [pure.amCname, pure.isAm]);
   t("الاحتياط المحلي يؤخّر الأغلب عنبرياً", pure.domAm[0] === "#1f4fa8", pure.domAm);
   t("ألوان سائدة تتجاهل الرمادي والأبيض", pure.dom.length === 1 && pure.dom[0] === "#c81e1e", pure.dom);
 
-  /* خط الأنابيب بمزوّدات MOCK (بلا مفتاح) + صورة منتج حقيقية */
-  const pipe = await p.evaluate(async () => {
-    const H = PagePilotHybrid, blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob(); const steps = [], secs = [];
-    const out = await H.run({ info: { title: "عسل السدر", desc: "عسل طبيعي خالص من جبال الأطلس. يدعم الطاقة اليومية. يُستعمل صباحاً." }, blob, theme: PagePilot.THEMES.green, lang: "ar", dialect: "dz", count: 8, strategy: "composite", gate: true, noFaces: true }, { step: (n, s) => steps.push(n + ":" + s), section: i => secs.push(i) }, { real: false, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } } });
-    return { n: out.results.length, secs: secs.length, mock: out.results.every(r => r.mock), real: out.real, hasProd: !!out.prod && out.prod.canvas.width > 10, ar: out.results[0].prodAr, lum: out.results.every(r => r.lum >= 0 && r.lum <= 1), notes: out.note.length, log: out.log.map(l => l.step + ":" + l.status).filter((v, i, a) => a.indexOf(v) === i), cut: out.prodOk };
+  /* الأداة بالذكاء فقط: بلا مفتاح/بلا صورة/فشل نص أو صورة ← خطأ ولا صفحة */
+  const noai = await p.evaluate(async () => {
+    const H = PagePilotHybrid, blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob(), res = {};
+    const base = { info: { title: "عسل", desc: "عسل طبيعي خالص من جبال الأطلس." }, blob, theme: PagePilot.THEMES.green, lang: "ar", count: 3, gate: false, noFaces: true };
+    const go = async (k, inp, over) => { try { await H.run(inp, {}, over); res[k] = "ok"; } catch (e) { res[k] = (e.code || "") + "|" + e.message; } };
+    const canvas = () => { const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); return c; };
+    const goodImg = { edit: async () => { const c = canvas(); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } };
+    await go("nokey", base, { real: false });
+    await go("nophoto", Object.assign({}, base, { blob: null }), { real: true, llm: { json: window.__mockLlm }, image: goodImg });
+    await go("planfail", base, { real: true, llm: { json: async () => { throw new Error("boom"); } }, image: goodImg });
+    await go("badplan", base, { real: true, llm: { json: async p => /الأقسام بهذا الترتيب/.test(p) ? { sections: [{ type: "hero", headline: "واحد" }] } : {} }, image: goodImg });
+    await go("imgfail", base, { real: true, llm: { json: window.__mockLlm }, image: { edit: async () => { throw new Error("server error 500"); } } });
+    await go("quota", base, { real: true, llm: { json: window.__mockLlm }, image: { edit: async () => { throw new Error("quota exceeded"); } } });
+    let rl = 0; await go("rate", base, { real: true, llm: { json: window.__mockLlm }, image: { edit: async () => { if (++rl < 2) throw new Error("429 retry in 1s"); const c = canvas(); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } } });
+    return res;
   });
-  t("الأنابيب MOCK: 8 أقسام بخلفيات محلية وسطوع محسوب", pipe.n === 8 && pipe.secs === 8 && pipe.mock && pipe.lum && !pipe.real, pipe);
-  t("المنتج الحقيقي مقصوص ومعروف النسبة", pipe.hasProd && pipe.ar > 0.2, pipe);
-  t("سجلّ الخطوات: تحليل/قصّ/أسلوب/خطة/خلفية", ["cutout:done", "plan:failed", "background:done"].every(x => pipe.log.includes(x)) || ["cutout:done", "background:done"].every(x => pipe.log.includes(x)), pipe.log);
+  t("بلا مفتاح: خطأ واضح ولا صفحة", /^NOKEY\|.*بالذكاء فقط/.test(noai.nokey), noai);
+  t("بلا صورة منتج: خطأ", /^NOPHOTO/.test(noai.nophoto), noai);
+  t("فشل نص الذكاء: خطأ «لم تُستهلك أي صورة» بلا نص احتياطي", /فشل الذكاء في/.test(noai.planfail) && /لم تُستهلك/.test(noai.planfail), noai);
+  t("خطة ناقصة تُعاد مرتين ثم تُرفض", /خطة ناقصة/.test(noai.badplan), noai);
+  t("فشل صورة قسم: خطأ ولا خلفية محلية", /^BG\|.*القسم/.test(noai.imgfail) && /لم تُنتَج صفحة/.test(noai.imgfail), noai);
+  t("نفاد الحصة يوقف فوراً بخطأ", /^HALT\|/.test(noai.quota), noai);
+  t("ازدحام مؤقت 429 يُنتظر ويُعاد ثم ينجح", noai.rate === "ok", noai);
 
-  /* تنويع صور المنتج بين الأقسام (تنويعات/زوايا) + تنظيف بقايا القصّ */
-  const vary = await p.evaluate(async () => {
-    const H = PagePilotHybrid, bl = async u => (await fetch(u)).blob(), refs = [await bl("assets/img/tpl/generic-honey.webp"), await bl("assets/img/tpl/generic-cream.webp"), await bl("assets/img/tpl/generic-bottle.webp")];
-    const out = await H.run({ info: { title: "منتج", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 6, strategy: "composite", gate: false, noFaces: true }, {}, { real: false, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } } });
-    const pis = out.results.map(r => r.pi), rots = out.results.map(r => r.pv && r.pv.r);
-    out.results.forEach((r, i) => { r.bgSrc = "bg" + i; r.prodSrc = "pr" + (r.pi || 0); });
-    const spec = H.buildSpec(out.plan, out.results, { style: out.style, strategy: out.strategy, lang: "ar" });
-    const srcs = [...new Set(Object.keys(spec.assets || {}).filter(k => /^pr/.test(k)).map(k => spec.assets[k].src))], boxes = spec.sections.map(s => (s.layers || []).filter(l => /^asset:pr/.test(l.src || "")).map(l => l.x + "," + l.w + "," + (l.rot || 0)).join("")).filter(Boolean);
-    /* keepSubject: كتلة رئيسية + بقعة صغيرة منفصلة + بقعة تلامس الحافة */
-    const cv = document.createElement("canvas"); cv.width = 400; cv.height = 400; const g = cv.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(120, 80, 160, 240); g.fillStyle = "#e90"; g.fillRect(20, 20, 30, 24); g.fillRect(0, 300, 40, 90); g.fillRect(340, 330, 20, 20);
-    const r = PBBgRemove.keepSubject(cv, { frac: .15 }); const d = r.canvas.getContext("2d").getImageData(0, 0, 400, 400).data, a = (x, y) => d[(y * 400 + x) * 4 + 3];
-    return { n: out.prods.length, pis, rots, srcs: srcs.length, boxes: new Set(boxes).size, removed: r.removed, mainOn: a(200, 200) > 200, blob1: a(30, 30), blob2: a(10, 340), blob3: a(350, 340) };
-  });
-  t("ثلاث صور منتج مقصوصة وتتناوب على الأقسام", vary.n === 3 && new Set(vary.pis).size === 3, vary);
-  t("صورة المنتج لا تتكرر: مصادر وأوضاع مختلفة بين الأقسام", vary.srcs === 3 && vary.boxes >= 4 && new Set(vary.rots).size >= 3, vary);
-  t("keepSubject يمسح البقايا ويُبقي الجسم", vary.removed === 3 && vary.mainOn && vary.blob1 < 20 && vary.blob2 < 20 && vary.blob3 < 20, vary);
+  /* keepSubject: كتلة رئيسية + بقعة صغيرة منفصلة + بقعة تلامس الحافة */
+  const ks = await p.evaluate(() => { const cv = document.createElement("canvas"); cv.width = 400; cv.height = 400; const g = cv.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(120, 80, 160, 240); g.fillStyle = "#e90"; g.fillRect(20, 20, 30, 24); g.fillRect(0, 300, 40, 90); g.fillRect(340, 330, 20, 20); const r = PBBgRemove.keepSubject(cv, { frac: .15 }); const d = r.canvas.getContext("2d").getImageData(0, 0, 400, 400).data, a = (x, y) => d[(y * 400 + x) * 4 + 3]; return { removed: r.removed, mainOn: a(200, 200) > 200, blob1: a(30, 30), blob2: a(10, 340), blob3: a(350, 340) }; });
+  t("keepSubject يمسح البقايا ويُبقي الجسم", ks.removed === 3 && ks.mainOn && ks.blob1 < 20 && ks.blob2 < 20 && ks.blob3 < 20, ks);
 
   /* مسار إعادة المحاولة والعلم + الاسترداد: مزوّد صور "حقيقي" مُحاكى، بوابة جودة تفشل دائماً */
   const retry = await p.evaluate(async () => {
     const H = PagePilotHybrid; let calls = 0, checks = 0; const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135);
     const blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob(); const prompts = [];
     const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob, theme: PagePilot.THEMES.green, lang: "ar", count: 6, strategy: "composite", gate: true, noFaces: true }, {}, {
-      real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
-      image: { bg: async (pr) => { calls++; prompts.push(pr); const cb = await new Promise(r => c.toBlob(r, "image/png")); return { canvas: c, blob: cb }; }, edit: async () => null },
+      real: true, llm: { json: window.__mockLlm },
+      image: { edit: async (b, pr) => { calls++; prompts.push(pr); const cb = await new Promise(r => c.toBlob(r, "image/png")); return { canvas: c, blob: cb }; } },
       vision: { check: async () => { checks++; return { has_text: true, has_face: false, zone_empty: true, artifacts: false }; } }
     });
     return { calls, checks, flags: out.results.map(r => r.flags.length), att: out.results.map(r => r.attempts), retryHint: prompts.some(x => /STRICTLY NO text/.test(x)) };
@@ -85,7 +86,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const H = PagePilotHybrid; const mk = async col => { const c = document.createElement("canvas"); c.width = 120; c.height = 150; const x = c.getContext("2d"); x.fillStyle = col; x.fillRect(0, 0, 120, 150); return new Promise(r => c.toBlob(r, "image/png")); };
     const refs = [await mk("#c81e1e"), await mk("#1ec85a"), await mk("#1e5ac8")], got = [], prompts = [], checks = []; let cut = 0, n = 0;
     const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 6, gate: true, noFaces: true, backdrop: "scene" }, {}, {
-      real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
+      real: true, llm: { json: window.__mockLlm },
       remover: { cut: async () => { cut++; return null; } },
       image: { bg: async () => { throw new Error("must not be used"); }, edit: async (b, pr, i) => { got.push(refs.indexOf(b)); prompts.push(pr); const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } },
       vision: { check: async (b, pr, ref) => { checks.push({ ref: !!ref, p: /product_matches/.test(pr) }); n++; return { has_text: false, has_face: false, zone_empty: true, artifacts: false, product_matches: n !== 1 }; } }
@@ -104,7 +105,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const go = async chain => {
       const log = []; let cur = 0, maxPar = 0, par = 0, gen = [];
       await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 4, gate: false, noFaces: true, backdrop: "scene", chain }, {}, {
-        real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }, remover: { cut: async () => null },
+        real: true, llm: { json: window.__mockLlm }, remover: { cut: async () => null },
         image: { bg: async () => { throw new Error("x"); }, edit: async (b, pr, i, extra) => { par++; maxPar = Math.max(maxPar, par); await new Promise(r => setTimeout(r, 30)); const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); const bl = await new Promise(r => c.toBlob(r, "image/png")); gen.push(bl); log.push({ i, ex: (extra || []).length, prev: extra && extra[0] ? gen.indexOf(extra[0]) : -1, first: extra && extra[1] ? gen.indexOf(extra[1]) : -1, cont: /VISUAL CONTINUITY/.test(pr) }); par--; return { canvas: c, blob: bl }; } },
         vision: { check: async () => null }
       });
@@ -154,22 +155,6 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);
   t("أقسام المشكلة/الأسئلة تُعاد توزيع منطقة نصها لتتسع للمنتج", ed.faqZone === "top" && ed.probZone === "top", ed);
 
-  /* فشل صور الذكاء في وضع الدمج ← المنتج المقصوص يوضع فوق الخلفية المحلية + رسالة واضحة */
-  const fbk = await p.evaluate(async () => {
-    const H = PagePilotHybrid; const c0 = document.createElement("canvas"); c0.width = 120; c0.height = 150; const x = c0.getContext("2d"); x.fillStyle = "#c81e1e"; x.fillRect(0, 0, 120, 150);
-    const ref = await new Promise(r => c0.toBlob(r, "image/png"));
-    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: ref, refs: [ref], theme: PagePilot.THEMES.green, lang: "ar", count: 8, gate: false }, {}, {
-      real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
-      remover: { cut: async b => b },
-      image: { bg: async () => { throw new Error("x"); }, edit: async () => { throw new Error("quota exceeded"); } },
-      vision: { check: async () => null }
-    });
-    const spec = H.buildSpec(out.plan, out.results.map((R, i) => Object.assign(R, { bgSrc: "assets/x" + i + ".webp", prodSrc: "assets/p.png" })), { style: out.style, strategy: out.strategy, title: "t", product: "" });
-    const prodLayers = spec.sections.map(s => (s.layers || []).filter(l => l.type === "image" && /^asset:pr/.test(l.src)).length);
-    return { allMock: out.results.every(r => r.mock), hasProd: !!out.prod, prodLayers, note: out.note.join(" | ") };
-  });
-  t("فشل صور الذكاء: المنتج المقصوص يُضاف لكل قسم احتياطي", fbk.allMock && fbk.hasProd && fbk.prodLayers[0] === 1 && fbk.prodLayers.filter(n => n === 1).length >= 5, fbk);
-  t("فشل صور الذكاء: رسالة واضحة بالسبب", /تعذّر توليد صور الذكاء/.test(fbk.note) && /quota/.test(fbk.note), fbk);
 
   const cnts = await p.evaluate(() => [2,3,4,5,6,7,8].map(n => { const t = PagePilotHybrid.typesFor(n); return [n, t.length, t[0], t.includes("offer_price")]; }));
   t("عدد الأقسام 2–8: كل عدد يعطي الأقسام المطلوبة ويبدأ بالهيرو ويحوي العرض", cnts.every(c => c[0] === c[1] && c[2] === "hero" && c[3]), cnts);
@@ -221,19 +206,18 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
 
   /* الواجهة الكاملة: منتج المتجر ← صفحة هجينة تُفتح في المطوّر */
   const ui = await p.evaluate(async shot => {
-    window.confirm = () => true; ImgGen.text = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; ImgGen.ready = () => ({ ok: false });
+    window.confirm = () => true; ImgGen.text = async o => window.__mockLlm(o.prompt); ImgGen.ready = () => ({ ok: true }); ImgGen.credit = { state: () => "ok" }; ImgGen.edit = async () => { const c = document.createElement("canvas"); c.width = 108; c.height = 135; const q = c.getContext("2d"); q.fillStyle = "#223"; q.fillRect(0, 0, 108, 135); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; };
     const ups = []; const old = PBApp.uploadBlob; PBApp.uploadBlob = async (b, n) => { const r = shot ? await new Promise(res => { const f = new FileReader(); f.onload = async () => { const nm = n + "-" + Math.random().toString(36).slice(2, 6) + (b.type === "image/png" ? ".png" : ".webp"); await window.saveDemo(nm, f.result.split(",")[1]); res("assets/img/_demo/" + nm); }; f.readAsDataURL(b); }) : await old.call(PBApp, b, n); ups.push(r); return r; };
     PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id);
     const slug = ((Admin.products && Admin.products.length ? Admin.products : PRODUCTS).find(x => x.cover) || {}).slug; g("pp-prod").value = slug; g("pp-prod").dispatchEvent(new Event("change"));
-    const dflt = g("pp-mode").value; g("pp-hn").value = "6";
-    document.querySelector('#pp-bg [data-pp="plain"]').click();
+    const dflt = "hybrid"; g("pp-hn").value = "6";
+    document.querySelector('#pp-bg [data-pp="go"]').click();
     for (let i = 0; i < 200 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
     for (let i = 0; i < 50 && !(PBApp.E && PBApp.E.page && PBApp.E.page.sections && PBApp.E.page.sections.length); i++) await new Promise(r => setTimeout(r, 100));
     const P = PBApp.E.page; const secs = P.sections.filter(s => s.free && s.free.length); const prodSecs = secs.filter(s => s.free.filter(w => w.type === "image").length === 2);
     return { dflt, slug, secs: P.sections.length, canvas: secs.length, prodSecs: prodSecs.length, imgs: secs.reduce((n, s) => n + s.free.filter(w => w.type === "image").length, 0), btns: secs.reduce((n, s) => n + s.free.filter(w => w.type === "button").length, 0), sticky: P.sections.filter(s => JSON.stringify(s).includes("pp-sticky")).length, hasOrder: P.sections.some(s => s.set.cid === "order"), headings: secs.every(s => s.free.some(w => w.type === "heading")), h1: P.sections[0].free.some(w => w.type === "heading" && w.set.tag === "h1"), hasMeta: !!(P.specMeta && P.specMeta.hybrid), product: P.product === slug, ups: ups.length };
   }, !!shotDir);
-  t("الافتراضي = الوضع الهجين", ui.dflt === "hybrid", ui);
-  t("صفحة واحدة متصلة (قماش واحد) + نموذج الطلب الحقيقي", ui.canvas === 1 && ui.secs === 3 && ui.hasOrder && ui.product, ui);
+    t("صفحة واحدة متصلة (قماش واحد) + نموذج الطلب الحقيقي", ui.canvas === 1 && ui.secs === 3 && ui.hasOrder && ui.product, ui);
   t("العناوين نصوص حيّة وH1 واحد وطبقات صور، بلا أزرار في الأقسام وزر طلب ثابت واحد", ui.headings && ui.imgs >= 6 && ui.h1 && ui.btns === 0 && ui.sticky === 1, ui);
   t("بيانات التوليد محفوظة (البرومبتات/المحاولات/التباين)", ui.hasMeta);
   await p.waitForTimeout(1500);
@@ -263,7 +247,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const H = PagePilotHybrid, blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob();
     const mkc = () => { const c = document.createElement("canvas"); c.width = 108; c.height = 135; const x = c.getContext("2d"); x.fillStyle = "#335577"; x.fillRect(0, 0, 108, 135); x.fillStyle = "#222"; x.fillRect(30, 40, 50, 70); return c; };
     const out = await H.run({ info: { title: "مكواة", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob, refs: [blob], theme: PagePilot.THEMES.green, lang: "ar", count: 2, gate: false, backdrop: "solid" }, {}, {
-      real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
+      real: true, llm: { json: window.__mockLlm },
       remover: { cut: async () => null, cutBg: async () => { const o = document.createElement("canvas"); o.width = 108; o.height = 135; const q = o.getContext("2d"); q.fillStyle = "#222"; q.fillRect(30, 40, 50, 70); return o; } },
       image: { bg: async () => null, edit: async () => { const c = mkc(); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } }
     });

@@ -213,21 +213,6 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     });
     return { sections: out, warn };
   }
-  /* شعارات المتاجر وعبارات الصفحات المنسوخة ليست مزايا منتج */
-  const JUNK = /aliexpress|alibaba|amazon|temu|shein|ebay|\.com|\.net|smarter shopping|better living|free shipping|add to cart|buy now|shop now|all rights|cookie/i;
-  /* خطة بلا ذكاء (MOCK/احتياط): من بيانات المنتج نفسها */
-  function fallbackPlan(info, lang, o) {
-    o = o || {}; const t = strip(info.title, 60) || "المنتج", ss = strip(info.desc, 900).split(/(?<=[.!؟?])\s+/).filter(x => x.length > 12 && !JUNK.test(x)), cta = lang === "fr" ? "Commander" : lang === "en" ? "Order now" : "اطلب الآن";
-    const pick = (a, b) => ss[a] ? strip(ss[a], b) : "";
-    const copy = {
-      hero: [t, pick(0, 120), []], problem: ["هل تبحث عن الأفضل؟", pick(1, 120), []], benefits: ["لماذا تحبّه", "", ss.slice(0, 4).map(x => strip(x, 45))],
-      how_to_use: ["كيف تستعمله", "", ["اطلب من الصفحة", "استلمه في بيتك", "استمتع بنتيجته"]], why_choose: ["لماذا نحن", "", ["جودة واضحة", "خدمة بعد الطلب", "دفع مريح"]],
-      comparison: ["قارن بنفسك", "", ["مكوّنات واضحة", "سعر عادل", "توصيل لولايتك"]], offer_price: ["عرض اليوم", "", []], faq: ["أسئلة سريعة", "", ["س: كيف أدفع؟ ج: عند الاستلام.", "س: هل التوصيل متاح؟ ج: لكل الولايات.", "س: كيف أطلب؟ ج: بنموذج الطلب أدناه."]],
-      delivery_guarantee: ["توصيل ودفع مريح", "", ["توصيل لكل الولايات", "الدفع عند الاستلام", "تأكيد الطلب بالهاتف"]], final_cta: ["جاهز للطلب؟", pick(0, 100), []]
-    };
-    return cleanPlan({ sections: typesFor(o.count).map(ty => { const c = copy[ty] || [t, "", []]; return { type: ty, headline: c[0], sub: c[1], bullets: c[2], cta: TYPES[ty].cta ? cta : "" }; }) }, o);
-  }
-
   /* ───────────── ٥) البرومبتات ───────────── */
   /* أقسام تُدرج فيها صورة شخص (بنمط المنافس): وصف المشهد البشري؛ النساء بحجاب ولباس ساتر دائماً */
   const PEOPLE = {
@@ -368,22 +353,13 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const w = x1 - x0 + 1, h = y1 - y0 + 1, o = document.createElement("canvas"); o.width = w; o.height = h; o.getContext("2d").drawImage(c, x0, y0, w, h, 0, 0, w, h);
     return { canvas: o, coverage: op / (c.width * c.height), bbox: (w * h) / (c.width * c.height) };
   }
-  /* خلفية محلية (MOCK ImageProvider): تدرّج بألوان الأسلوب + بقع ناعمة، منطقة الشرح هادئة */
-  function mockBg(style, sec, seed) {
-    const c = document.createElement("canvas"); c.width = 540; c.height = 675; const x = c.getContext("2d"), p = style.palette, dark = hexLum(p.primary) < .2, T = TYPES[sec.type] || TYPES.hero;
-    const g = x.createLinearGradient(0, 0, 0, c.height); g.addColorStop(0, dark ? mix(p.primary, "#000000", .25) : mix(p.primary, "#ffffff", .86)); g.addColorStop(1, dark ? p.primary : mix(p.secondary, "#ffffff", .7)); x.fillStyle = g; x.fillRect(0, 0, c.width, c.height);
-    let s = (seed + 1) * 9301; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
-    for (let i = 0; i < 6; i++) { const cx = rnd() * c.width, cy = (T.zone === "top" ? .45 + rnd() * .55 : T.zone === "bottom" ? rnd() * .55 : rnd()) * c.height, r = 60 + rnd() * 120, rg = x.createRadialGradient(cx, cy, 0, cx, cy, r); rg.addColorStop(0, (i % 2 ? p.accent : p.secondary) + "55"); rg.addColorStop(1, (i % 2 ? p.accent : p.secondary) + "00"); x.fillStyle = rg; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.fill(); }
-    if (T.product !== false) { const py = T.zone === "top" ? c.height * .78 : c.height * .3, eg = x.createRadialGradient(c.width / 2, py, 0, c.width / 2, py, 190); eg.addColorStop(0, dark ? "#ffffff22" : "#ffffffaa"); eg.addColorStop(1, "#ffffff00"); x.fillStyle = eg; x.fillRect(0, 0, c.width, c.height); }
-    return c;
-  }
   const realImage = () => { try { return typeof ImgGen !== "undefined" && ImgGen.edit && (!ImgGen.ready || ImgGen.ready().ok); } catch (_) { return false; } };
   function providers(over) {
     const real = realImage(), P = {
       real,
       llm: { json: async (prompt, blobs) => { if (!real || typeof ImgGen === "undefined" || !ImgGen.text) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } return ImgGen.text({ prompt, json: true, temp: .7, blobs: blobs && blobs.length ? blobs : undefined, edge: 1600 }); } },
       image: {
-        bg: async (prompt, i, sec) => { if (!real) return { canvas: mockBg(P.style, sec, i), mock: true }; const r = await ImgGen.edit({ textOnly: true, prompt, W, H, confirm: false, title: "خلفية قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; },
+        bg: async (prompt, i, sec) => { if (!real) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } const r = await ImgGen.edit({ textOnly: true, prompt, W, H, confirm: false, title: "خلفية قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; },
         edit: async (blob, prompt, i, extra) => { if (!real) return null; const r = await ImgGen.edit({ blob, extra: extra && extra.length ? extra : undefined, prompt, W, H, pro: true, confirm: false, title: "مشهد قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; }
       },
       remover: { cutBg: async canvas => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { methods: ["classic"], keepFrac: .04 }); return r && r.canvas ? r.canvas : null; }, cut: async (canvas, onStep) => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { onStep, keepFrac: .2 }); return r && r.canvas ? r.canvas : null; } },
@@ -403,44 +379,29 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     /* صور مرجعية متعددة (من رابط المنتج/المتجر): كل قسم يأخذ مرجعاً مختلفاً ليخرج مشهده مختلفاً */
     const refs = (Array.isArray(inp.refs) ? inp.refs : []).filter(Boolean); if (inp.blob && !refs.includes(inp.blob)) refs.unshift(inp.blob);
     const photo = refs[0] ? await toCanvas(refs[0], 1600) : null;
-    const wantEdit = inp.strategy !== "composite" && P.real && !!photo;
-    const strategy = wantEdit ? "edit" : "composite", edit = wantEdit;
+    const NOAI = (m, code) => Object.assign(new Error(m), { code: code || "FAIL" });
+    if (!P.real) throw NOAI("الأداة تعمل بالذكاء فقط ولا تنتج صفحة بدونه: فعّل مفتاح Alyssum API (أو جدّد الرصيد) ثم أعد المحاولة.", "NOKEY");
+    if (!photo) throw NOAI("لا توجد صورة للمنتج: اختر منتجاً له صورة أو ارفع صورة.", "NOPHOTO");
+    const strategy = "edit", edit = true;
     /* ١ تحليل المنتج */
     let an = cleanAnalysis({});
-    try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { an = cleanAnalysis({}); if (photo) { const g = document.createElement("canvas"); g.width = g.height = 32; g.getContext("2d").drawImage(photo, 0, 0, 32, 32); an.colors = dominantColors(g.getContext("2d").getImageData(0, 0, 32, 32).data, 3, true); } }
+    try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { throw NOAI("فشل الذكاء في تحليل المنتج (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
     if (an.risks.some(r => /medical|cosmetic/.test(r))) note.push("المنتج يحمل مخاطر ادّعاء (" + an.risks.join("، ") + "): راجع النصوص قبل النشر.");
-    /* ٢ قصّ المنتج */
     let prod = null, prodOk = false, prods = [];
-    const hasAlpha = cv => { try { const x = cv.getContext("2d"), q = 6, pts = [[0, 0], [cv.width - q, 0], [0, cv.height - q], [cv.width - q, cv.height - q]]; return pts.every(t => { const d = x.getImageData(t[0], t[1], q, q).data; let a = 0; for (let i = 3; i < d.length; i += 4) a += d[i]; return a / (d.length / 4) < 40; }); } catch (_) { return false; } };
-    /* قصّ منتج واحد: صورة شفافة أصلاً تُستعمل كما هي؛ وإلا يُقصّ ثم تُنظَّف بقايا الخلفية (الكتل الصغيرة المنفصلة). لا يُعدَّل المنتج الأصلي أبداً */
-    const cutOne = async cv => {
-      const hasA = hasAlpha(cv); let src = hasA ? cv : null; if (!src) { try { src = await withTimeout(P.remover.cut(cv), 120000, "قصّ المنتج"); } catch (_) { src = null; } }
-      if (!src) throw new Error("تعذّر قصّ المنتج"); const tr = trimAlpha(src); if (tr.coverage < .02 || tr.bbox < .02) throw new Error("القصّ غير صالح"); tr.original = !!hasA; return tr;
-    };
-    const doCutout = async () => {
-      try { prod = await step("cutout", () => cutOne(photo)); prodOk = true; }
-      catch (e) { note.push("تعذّر قصّ المنتج من الخلفية فاستُعملت الصورة كما هي — قد تظهر بخلفيتها."); const tr = trimAlpha(photo); tr.fallback = true; prod = tr; }
-      prods = [prod];
-      /* صور المنتج الأخرى (تنويعات/زوايا): تُقصّ أيضاً لتتنوّع صورة المنتج بين الأقسام بدل تكرار الصورة نفسها */
-      for (const rf of refs.slice(1, 4)) { try { const cv = await toCanvas(rf, 1200); const tr = await cutOne(cv); if (!tr.fallback) prods.push(tr); } catch (_) { } }
-      if (prods.length > 1) note.push("استُعملت " + prods.length + " صور مختلفة للمنتج بين الأقسام.");
-    };
-    if (photo && !edit) await doCutout();
-    else if (!photo) note.push("لا توجد صورة للمنتج: اختر منتجاً له صورة أو ارفع صورة ليظهر المنتج في الصفحة.");
     /* ٣ دليل الأسلوب */
     const style = styleBible(an, inp.theme, { color: inp.color, tone: inp.tone }); P.style = style; log.push({ step: "style", section: "", status: "done", attempts: 1, ms: 0, error: "" }); cb.step && cb.step("style", "done", {});
     /* ٤ خطة الأقسام والنصوص */
-    let plan;
-    try { plan = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count }); const okN = plan.sections.filter(s => s.headline).length; if (okN < Math.min(2, plan.sections.length)) throw new Error("خطة ناقصة (" + okN + " من " + plan.sections.length + ")");
-      if (okN < plan.sections.length) { const fb = fallbackPlan(inp.info, inp.lang, { count: inp.count }); plan.sections.forEach((s, i) => { if (!s.headline) { const f = fb.sections[i]; if (f) { s.headline = f.headline; s.sub = s.sub || f.sub; s.bullets = s.bullets.length ? s.bullets : f.bullets; s.icons = s.bullets === f.bullets ? f.icons : s.icons; s.cta = s.cta || f.cta; } } }); note.push("أُكملت نصوص بعض الأقسام من بيانات المنتج — راجعها."); } }
-    catch (e) {
-      /* مفتاح فعّال لكن الذكاء فشل في النص: لا تُنفَق صور على صفحة نصوصها مأخوذة من الرابط — توقّف واشرح السبب */
-      if (P.real && e && e.code !== "NOKEY" && e.code !== "OFF") throw new Error("فشل الذكاء في كتابة نصوص الصفحة (" + String(e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.");
-      plan = fallbackPlan(inp.info, inp.lang, { count: inp.count }); note.push("استُعملت نصوص من بيانات المنتج" + (e && e.code === "NOKEY" ? " (لا مفتاح Alyssum API)" : "") + " — عدّلها في المطوّر.");
+    let plan, planErr = null;
+    for (let at = 1; at <= 2 && !plan; at++) {
+      try {
+        const pl = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count });
+        const okN = pl.sections.filter(s => s.headline).length; if (okN < pl.sections.length) throw new Error("خطة ناقصة (" + okN + " من " + pl.sections.length + ")");
+        plan = pl;
+      } catch (e) { planErr = e; if (e && (e.code === "NOKEY" || e.code === "OFF")) break; }
     }
+    if (!plan) { const e = planErr; throw NOAI("فشل الذكاء في كتابة نصوص الصفحة (" + String(e && e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.", e && e.code); }
     plan.warn.forEach(w => note.push(w));
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
-    if (inp.strategy !== "composite" && !wantEdit && photo) note.push("دمج المنتج في المشهد يحتاج مفتاح Alyssum API: استُعمل قصّ المنتج فوق خلفية محلية.");
     const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta === true, results = [];
     let halted = ""; const HARD = /quota|billing|credit|insufficient|402|permission|unauthori|forbidden|api key|رصيد|حدّ|حد الاستخدام|الحصة|exceeded your current/i, RATE = /429|rate.?limit|too many|resource.?exhausted|overload|503|retry in|ازدحام/i;   /* الحدّ الفعلي يوقف الباقي؛ ازدحام/تمهّل مؤقت لا يوقفه بل يُنتظر ويُعاد */
     const chain = edit && inp.chain !== false && P.real; let prevRaw = null, firstRaw = null;   /* استمرارية بصرية: القسم i يُرسم مع صورة القسم السابق مرجعاً (بالتتابع) */
@@ -449,7 +410,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       let extra = "", why = [];
       for (let a = 1; a <= 3; a++) {
         R.attempts = a;
-        if (halted) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:halted"); R.error = halted; break; }
+        if (halted) throw NOAI("توقّف توليد الصور لتوفير رصيدك بسبب: " + halted + " — لم تُنتَج صفحة. عالج السبب ثم أعد المحاولة.", "HALT");
         try {
           let pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, backdrop: inp.backdrop, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
           const links = chain && prevRaw ? [prevRaw].concat(firstRaw && firstRaw !== prevRaw ? [firstRaw] : []) : []; if (links.length) { pr = pr + " " + continuityNote(links.length > 1); R.prompt = pr; R.chained = true; }
@@ -463,27 +424,17 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
           }
           break;
         } catch (e) {
-          if (e && (e.code === "NOKEY" || e.code === "OFF")) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; break; }
+          if (e && (e.code === "NOKEY" || e.code === "OFF")) throw NOAI("الأداة تعمل بالذكاء فقط: " + (e.code === "OFF" ? "توليد الصور معطّل في الإعدادات" : "لا يوجد مفتاح Alyssum API") + " — لم تُنتَج صفحة.", e.code);
           const em = String((e && (e.message || e.code)) || ""); if (!HARD.test(em) && RATE.test(em) && (R.rl = (R.rl || 0) + 1) <= 3) { const m = /retry in (\d+)/i.exec(em); await new Promise(r => setTimeout(r, Math.min(60000, (m ? +m[1] + 2 : 20 * R.rl) * 1000))); a--; continue; } if (HARD.test(em)) halted = em.slice(0, 120);   /* حدّ/رصيد/صلاحية: توقّف عن بقية الأقسام فلا يتكرر الخصم بلا فائدة */
-          if (halted || a >= 2) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:bg_failed"); R.error = e && e.message; break; }
+          if (halted || a >= 2) throw NOAI("تعذّر رسم صورة القسم " + (i + 1) + " بالذكاء (" + em.slice(0, 120) + ") — لم تُنتَج صفحة. " + (halted ? "عالج السبب (الرصيد/الصلاحية) ثم أعد المحاولة." : "أعد المحاولة."), halted ? "HALT" : "BG");
           extra = ""; await new Promise(r => setTimeout(r, 600));
         }
       }
       if (chain && !R.mock && R.rawKeep) { prevRaw = R.rawKeep; if (!firstRaw) firstRaw = R.rawKeep; }
-      if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
       const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !R.person && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
       results[i] = R; cb.section && cb.section(i, R);
     });
-    /* فشل صورة الذكاء في وضع الدمج ← لا يبقى القسم بلا منتج: يُقصّ المنتج ويوضع فوق الخلفية المحلية لتلك الأقسام فقط */
-    const fb = results.filter(r => r && r.mock);
-    if (edit && fb.length && photo) {
-      await doCutout();
-      fb.forEach(R => { const ix = results.indexOf(R), pi = prods.length ? ix % prods.length : 0, pc = prods[pi] || prod, ar = pc ? pc.canvas.width / pc.canvas.height : 1, g = geometry(R.sec.type, ar, false, ctaOn); R.pi = pi; R.pv = variation(ix); R.prodAr = ar; R.lum = lumAt(R.bgCanvas, g.zone); R.person = false; });
-      note.push("تعذّر توليد صور الذكاء لـ" + fb.length + " قسم/أقسام" + (fb[0].error ? " (" + String(fb[0].error).slice(0, 80) + ")" : "") + ": وُضع المنتج المقصوص فوق خلفية محلية — أعد التشغيل لاحقاً أو غيّر الصورة المرجعية.");
-    }
-    if (halted) note.push("توقّف توليد الصور مبكراً لتوفير رصيدك بسبب: " + halted + ".");
-    if (!P.real) note.push("لم تُولَّد صور بالذكاء لأن Alyssum API غير مفعّل (المفتاح أو رصيد الصور): الخلفيات محلية.");
     return { an, style, plan, results, prod, prods, prodOk, strategy, log, note, real: P.real, colors: photo ? productColors(photo, 6) : [] };
   }
 
@@ -536,5 +487,5 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, flattenOnDeep, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, flattenOnDeep, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();
