@@ -72,7 +72,7 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 
 ## ستوديو ديزاين: نافذة الأداة والأيقونات (v1.89.440)
 - كل أداة صور تُفتح من «ابدأ الآن» عبر `ToolWin` (assets/js/admin-toolwin.js) ← `PBApp.toolSession(blobs, id, name)`؛ جدول `TS_KEY` في pagebuilder-editor.js يربط معرّف الأداة بلوحتها. الأدوات ذات النافذة الخاصة في `OWN`.
-- أداة جديدة: `tools.json` + `gen-tool-pages.py` + أيقونة (`scripts/gen-tool-icons.py`: دالة `i_<id>` + `ICONS`) + عنوان ar/fr/en في `tool-titles.json` + `TS_KEY`/`OWN`، ثم `node scripts/test-toolwin.js`.
+- أداة جديدة: `tools.json` + `gen-tool-pages.py` + أيقونة (قصّ من لوحة الأيقونات `assets/Grille d’outils créatifs aux néons verts.png` إلى `assets/img/tools/ic/n-<id>.webp`) + عنوان ar/fr/en في `tool-titles.json` + `TS_KEY`/`OWN`، ثم `node scripts/test-toolwin.js`.
 - لا كلمة «ذكاء/ذكي» في واجهة الأدوات (اسم الخدمة Alyssum API فقط)، ولا خيار «مجاني» ولا إعادة محاولة تلقائية ولا «خياران» في أدوات الاستهلاك: طلب واحد ونتيجة واحدة.
 
 

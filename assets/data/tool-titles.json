@@ -86,7 +86,7 @@
       }
     },
     "xp": {
-      "icon": "08-redimensionner-agrandir",
+      "icon": "n-xp",
       "t": {
         "ar": "توسيع الخلفية",
         "fr": "Extension du fond",
@@ -151,7 +151,7 @@
       }
     },
     "batch": {
-      "icon": "13-traitement-par-lots",
+      "icon": "n-batch",
       "t": {
         "ar": "معالجة الدفعات",
         "fr": "Traitement par lots",
@@ -164,7 +164,7 @@
       }
     },
     "catalog": {
-      "icon": "14-catalogue-de-produits",
+      "icon": "n-catalog",
       "t": {
         "ar": "كتالوج المنتجات",
         "fr": "Catalogue produits",
@@ -190,7 +190,7 @@
       }
     },
     "barcode": {
-      "icon": "15-generateur-de-code",
+      "icon": "n-barcode",
       "t": {
         "ar": "مولّد الباركود و QR",
         "fr": "Générateur de code-barres et QR",
@@ -203,7 +203,7 @@
       }
     },
     "studio3d": {
-      "icon": "18-mockup-studio",
+      "icon": "n-studio3d",
       "t": {
         "ar": "استوديو 3D",
         "fr": "Studio 3D",
@@ -216,7 +216,7 @@
       }
     },
     "magiclayers": {
-      "icon": "19-magic-layers",
+      "icon": "n-magiclayers",
       "t": {
         "ar": "Magic Layers — تفكيك الصورة إلى طبقات",
         "fr": "Magic Layers — séparer l'image en calques",
@@ -229,7 +229,7 @@
       }
     },
     "pagepilot": {
-      "icon": "41-page-builder",
+      "icon": "n-pagepilot",
       "t": {
         "ar": "منشئ الصفحات",
         "fr": "Créateur de pages",
@@ -242,7 +242,7 @@
       }
     },
     "st": {
-      "icon": "20-product-studio",
+      "icon": "n-st",
       "t": {
         "ar": "استوديو المنتج",
         "fr": "Studio produit",
@@ -255,7 +255,7 @@
       }
     },
     "vd": {
-      "icon": "21-image-animation",
+      "icon": "n-vd",
       "t": {
         "ar": "تحريك الصورة",
         "fr": "Animation d'image",
@@ -281,7 +281,7 @@
       }
     },
     "v360": {
-      "icon": "23-view-360",
+      "icon": "n-v360",
       "t": {
         "ar": "عرض 360° للمنتج",
         "fr": "Vue 360° du produit",
@@ -294,7 +294,7 @@
       }
     },
     "txt2img": {
-      "icon": "24-text-to-image",
+      "icon": "n-txt2img",
       "t": {
         "ar": "صورة من وصف نصي",
         "fr": "Image à partir d'un texte",
@@ -307,7 +307,7 @@
       }
     },
     "mk": {
-      "icon": "25-mask",
+      "icon": "n-mk",
       "t": {
         "ar": "ماسك",
         "fr": "Masque",
@@ -320,7 +320,7 @@
       }
     },
     "pz": {
-      "icon": "26-puzzle",
+      "icon": "n-pz",
       "t": {
         "ar": "بازل",
         "fr": "Puzzle",
@@ -333,7 +333,7 @@
       }
     },
     "cap": {
-      "icon": "42-capture-elements",
+      "icon": "n-cap",
       "t": {
         "ar": "التقاط العناصر",
         "fr": "Capture d'éléments",
@@ -346,7 +346,7 @@
       }
     },
     "rt": {
-      "icon": "27-retouch",
+      "icon": "n-rt",
       "t": {
         "ar": "لمسات وتصحيح",
         "fr": "Retouche et correction",
@@ -359,7 +359,7 @@
       }
     },
     "ff": {
-      "icon": "28-soft-edges",
+      "icon": "n-ff",
       "t": {
         "ar": "حواف ناعمة",
         "fr": "Bords doux",
@@ -385,7 +385,7 @@
       }
     },
     "bl": {
-      "icon": "30-merge-images",
+      "icon": "n-bl",
       "t": {
         "ar": "دمج صور",
         "fr": "Fusion d'images",
@@ -398,7 +398,7 @@
       }
     },
     "cl": {
-      "icon": "31-collage",
+      "icon": "n-cl",
       "t": {
         "ar": "كولاج",
         "fr": "Collage",
@@ -411,7 +411,7 @@
       }
     },
     "resize": {
-      "icon": "08-redimensionner-agrandir",
+      "icon": "n-resize",
       "t": {
         "ar": "تغيير المقاس والتوسيع",
         "fr": "Redimensionner",
@@ -424,7 +424,7 @@
       }
     },
     "sl": {
-      "icon": "32-photo-styles",
+      "icon": "n-sl",
       "t": {
         "ar": "أساليب التصوير",
         "fr": "Styles de prise de vue",
@@ -437,7 +437,7 @@
       }
     },
     "ai": {
-      "icon": "33-edit-by-prompt",
+      "icon": "n-ai",
       "t": {
         "ar": "تعديل بالوصف",
         "fr": "Modifier par description",
@@ -450,7 +450,7 @@
       }
     },
     "up": {
-      "icon": "34-quality-boost",
+      "icon": "n-up",
       "t": {
         "ar": "تحسين الجودة",
         "fr": "Amélioration de la qualité",
@@ -463,7 +463,7 @@
       }
     },
     "relight": {
-      "icon": "35-relight",
+      "icon": "n-relight",
       "t": {
         "ar": "إعادة الإضاءة",
         "fr": "Relighting",
@@ -476,7 +476,7 @@
       }
     },
     "textrm": {
-      "icon": "36-remove-text",
+      "icon": "n-textrm",
       "t": {
         "ar": "إزالة النص والعلامات",
         "fr": "Retirer texte et marques",
@@ -502,7 +502,7 @@
       }
     },
     "beautify": {
-      "icon": "38-product-enhancer",
+      "icon": "n-beautify",
       "t": {
         "ar": "محسّن المنتج",
         "fr": "Améliorateur produit",
@@ -515,7 +515,7 @@
       }
     },
     "ast": {
-      "icon": "39-asset-library",
+      "icon": "n-ast",
       "t": {
         "ar": "مكتبة الأصول",
         "fr": "Bibliothèque d'assets",
@@ -528,7 +528,7 @@
       }
     },
     "stk": {
-      "icon": "40-sticker-library",
+      "icon": "n-stk",
       "t": {
         "ar": "مكتبة الملصقات",
         "fr": "Bibliothèque d'autocollants",
