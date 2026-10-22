@@ -226,7 +226,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     ctx = ctx || {}; const st = ctx.style || styleBible({}, null), assets = {}, sections = [], rtl = (ctx.lang || "ar") === "ar", al = rtl ? "right" : "left", deep = st.palette.deep, hl = st.palette.hl, ctaOn = ctx.cta !== false;
     const grad = (a, stops) => ({ type: "linear", angle: 180, stops: stops.map(x => ({ c: rgba(deep, x[0]), p: x[1] })) });
     results.forEach((R, i) => {
-      const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr, ctx.strategy === "edit", ctaOn), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
+      const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr, ctx.strategy === "edit" && !R.mock, ctaOn), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
       assets[an] = { src: R.bgSrc, prompt: "" }; if (R.prodSrc && g.prod) assets[pn] = { src: R.prodSrc, prompt: "" };
       layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true });
       const z = g.zone, zn = g.zname;
@@ -329,7 +329,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     if (an.risks.some(r => /medical|cosmetic/.test(r))) note.push("المنتج يحمل مخاطر ادّعاء (" + an.risks.join("، ") + "): راجع النصوص قبل النشر.");
     /* ٢ قصّ المنتج */
     let prod = null, prodOk = false;
-    if (photo && !edit) {
+    const doCutout = async () => {
       try {
         prod = await step("cutout", async () => {
           /* صورة شفافة أصلاً (زوايا شفافة) تُستعمل كما هي؛ وإلا يُقصّ المنتج. لا يُعدَّل المنتج الأصلي أبداً */
@@ -339,7 +339,9 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         });
         prodOk = true;
       } catch (e) { note.push("تعذّر قصّ المنتج من الخلفية فاستُعملت الصورة كما هي — قد تظهر بخلفيتها."); const tr = trimAlpha(photo); tr.fallback = true; prod = tr; }
-    }
+    };
+    if (photo && !edit) await doCutout();
+    else if (!photo) note.push("لا توجد صورة للمنتج: اختر منتجاً له صورة أو ارفع صورة ليظهر المنتج في الصفحة.");
     /* ٣ دليل الأسلوب */
     const style = styleBible(an, inp.theme); P.style = style; log.push({ step: "style", section: "", status: "done", attempts: 1, ms: 0, error: "" }); cb.step && cb.step("style", "done", {});
     /* ٤ خطة الأقسام والنصوص */
@@ -377,6 +379,14 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
       results[i] = R; cb.section && cb.section(i, R);
     });
+    /* فشل صورة الذكاء في وضع الدمج ← لا يبقى القسم بلا منتج: يُقصّ المنتج ويوضع فوق الخلفية المحلية لتلك الأقسام فقط */
+    const fb = results.filter(r => r && r.mock);
+    if (edit && fb.length && photo) {
+      await doCutout(); const ar = prod ? prod.canvas.width / prod.canvas.height : 1;
+      fb.forEach(R => { const g = geometry(R.sec.type, ar, false, ctaOn); R.prodAr = ar; R.lum = lumAt(R.bgCanvas, g.zone); R.person = false; });
+      note.push("تعذّر توليد صور الذكاء لـ" + fb.length + " قسم/أقسام" + (fb[0].error ? " (" + String(fb[0].error).slice(0, 80) + ")" : "") + ": وُضع المنتج المقصوص فوق خلفية محلية — أعد التشغيل لاحقاً أو غيّر الصورة المرجعية.");
+    }
+    if (!P.real) note.push("لم تُولَّد صور بالذكاء لأن Alyssum API غير مفعّل (المفتاح أو رصيد الصور): الخلفيات محلية.");
     return { an, style, plan, results, prod, prodOk, strategy, log, note, real: P.real };
   }
 

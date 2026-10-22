@@ -76,6 +76,23 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);
   t("أقسام المشكلة/الأسئلة تُعاد توزيع منطقة نصها لتتسع للمنتج", ed.faqZone === "top" && ed.probZone === "top", ed);
 
+  /* فشل صور الذكاء في وضع الدمج ← المنتج المقصوص يوضع فوق الخلفية المحلية + رسالة واضحة */
+  const fbk = await p.evaluate(async () => {
+    const H = PagePilotHybrid; const c0 = document.createElement("canvas"); c0.width = 120; c0.height = 150; const x = c0.getContext("2d"); x.fillStyle = "#c81e1e"; x.fillRect(0, 0, 120, 150);
+    const ref = await new Promise(r => c0.toBlob(r, "image/png"));
+    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: ref, refs: [ref], theme: PagePilot.THEMES.green, lang: "ar", count: 4, gate: false }, {}, {
+      real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
+      remover: { cut: async b => b },
+      image: { bg: async () => { throw new Error("x"); }, edit: async () => { throw new Error("quota exceeded"); } },
+      vision: { check: async () => null }
+    });
+    const spec = H.buildSpec(out.plan, out.results.map((R, i) => Object.assign(R, { bgSrc: "assets/x" + i + ".webp", prodSrc: "assets/p.png" })), { style: out.style, strategy: out.strategy, title: "t", product: "" });
+    const prodLayers = spec.sections.map(s => (s.layers || []).filter(l => l.type === "image" && /^asset:pr/.test(l.src)).length);
+    return { allMock: out.results.every(r => r.mock), hasProd: !!out.prod, prodLayers, note: out.note.join(" | ") };
+  });
+  t("فشل صور الذكاء: المنتج المقصوص يُضاف لكل قسم احتياطي", fbk.allMock && fbk.hasProd && fbk.prodLayers[0] === 1 && fbk.prodLayers.filter(n => n === 1).length >= 5, fbk);
+  t("فشل صور الذكاء: رسالة واضحة بالسبب", /تعذّر توليد صور الذكاء/.test(fbk.note) && /quota/.test(fbk.note), fbk);
+
   /* أسلوب المنافس: لون المنتج، كلمة مبرزة، صفوف أيقونات، زر في كل قسم، شريط علوي، أشخاص، صفحة متصلة */
   const cp = await p.evaluate(() => {
     const H = PagePilotHybrid, o = {}; const st = H.styleBible({ colors: ["#1b3a7a", "#e0a020"], mood: "energetic", category: "طارد البعوض" }, null);
