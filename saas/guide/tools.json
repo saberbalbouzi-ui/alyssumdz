@@ -22,7 +22,7 @@
         "st",
         "scene"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/remove-background/"
     },
     {
@@ -45,7 +45,7 @@
         "sl",
         "pshoot"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)",
+      "needsText": "أداة PRO",
       "landing": "landing/product-scenes/"
     },
     {
@@ -71,7 +71,7 @@
         "batch",
         "catalog"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "vd",
@@ -95,7 +95,7 @@
         "vgen",
         "brand"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/video-maker/"
     },
     {
@@ -121,7 +121,7 @@
         "vd",
         "gen"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API وتُطلب موافقتك قبل كل تنفيذ",
+      "needsText": "أداة PRO",
       "landing": "landing/ai-video/"
     },
     {
@@ -147,7 +147,7 @@
         "vgen",
         "vd"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API وتُطلب موافقتك قبل كل تنفيذ",
+      "needsText": "أداة PRO",
       "landing": "landing/video-ads/"
     },
     {
@@ -172,7 +172,7 @@
         "txt2img",
         "pshoot"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)",
+      "needsText": "أداة PRO",
       "landing": "landing/image-generator/"
     },
     {
@@ -196,7 +196,7 @@
         "sl",
         "batch"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)",
+      "needsText": "أداة PRO",
       "landing": "landing/product-photography/"
     },
     {
@@ -219,7 +219,7 @@
         "pshoot",
         "st"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل التنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "fashion",
@@ -242,7 +242,7 @@
         "tryon",
         "recolor"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)",
+      "needsText": "أداة PRO",
       "landing": "landing/virtual-model/"
     },
     {
@@ -266,7 +266,7 @@
       "rel": [
         "fashion"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)",
+      "needsText": "أداة PRO",
       "landing": "landing/virtual-tryon/"
     },
     {
@@ -291,7 +291,7 @@
         "gen",
         "logo"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "mk",
@@ -314,7 +314,7 @@
         "pz",
         "ff"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "pz",
@@ -335,7 +335,7 @@
       "rel": [
         "mk"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "cap",
@@ -357,7 +357,7 @@
       "rel": [
         "bg"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/object-capture/"
     },
     {
@@ -380,7 +380,7 @@
         "up",
         "recolor"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "ff",
@@ -402,7 +402,7 @@
         "mk",
         "fr"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "fr",
@@ -425,7 +425,7 @@
         "brand",
         "logo"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "bl",
@@ -446,7 +446,7 @@
       "rel": [
         "cl"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "cl",
@@ -467,7 +467,7 @@
       "rel": [
         "bl"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "xp",
@@ -489,7 +489,7 @@
         "resize",
         "scene"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "resize",
@@ -511,7 +511,7 @@
         "xp",
         "batch"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "sl",
@@ -532,7 +532,7 @@
       "rel": [
         "pshoot"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "ai",
@@ -553,7 +553,7 @@
       "rel": [
         "erase"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "erase",
@@ -574,7 +574,7 @@
       "rel": [
         "ai"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/object-eraser/"
     },
     {
@@ -597,7 +597,7 @@
         "rt",
         "batch"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/quality-resize/"
     },
     {
@@ -623,7 +623,7 @@
         "fr",
         "vd"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/brand-identity/"
     },
     {
@@ -647,7 +647,7 @@
         "rt",
         "batch"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)",
+      "needsText": "أداة PRO",
       "landing": "landing/recolor-clothes/"
     },
     {
@@ -672,7 +672,7 @@
         "beautify",
         "rt"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "textrm",
@@ -695,7 +695,7 @@
         "erase",
         "ai"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "uncrop",
@@ -718,7 +718,7 @@
         "xp",
         "ai"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل كل تنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "beautify",
@@ -740,7 +740,7 @@
         "rt",
         "up"
       ],
-      "needsText": "تحتاج مفتاح Alyssum API (تُطلب موافقتك قبل التنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "logo",
@@ -761,7 +761,7 @@
       "rel": [
         "brand"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/logo-maker/"
     },
     {
@@ -785,7 +785,7 @@
         "catalog",
         "up"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/batch-processing/"
     },
     {
@@ -808,7 +808,7 @@
         "batch",
         "st"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح",
+      "needsText": "أداة PRO",
       "landing": "landing/product-catalog/"
     },
     {
@@ -830,7 +830,7 @@
       "rel": [
         "stk"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "stk",
@@ -851,7 +851,7 @@
       "rel": [
         "ast"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "barcode",
@@ -876,7 +876,7 @@
         "brand",
         "batch"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح"
+      "needsText": "أداة PRO"
     },
     {
       "id": "magiclayers",
@@ -891,7 +891,7 @@
         "عدّل الطبقات (تحريك، حجم، نص، إخفاء) ثم «أرسل إلى المطوّر» أو نزّل ZIP."
       ],
       "tips": [
-        "الكشف المحلي (SAM) يعطي حواف أدق للأشخاص والمنتجات؛ والنصوص والتعداد الكامل يحتاجان Alyssum API."
+        "الكشف المحلي (SAM) يعطي حواف أدق للأشخاص والمنتجات؛ والنصوص والتعداد الكامل من ميزات PRO."
       ],
       "needs": "ai",
       "rel": [
@@ -899,7 +899,7 @@
         "bg",
         "erase"
       ],
-      "needsText": "تستعمل Alyssum API (تُطلب موافقتك قبل التنفيذ)"
+      "needsText": "أداة PRO"
     },
     {
       "id": "studio3d",
@@ -952,7 +952,7 @@
         "magiclayers",
         "bg"
       ],
-      "needsText": "تستعمل Alyssum API (تُطلب موافقتك قبل التنفيذ)"
+      "needsText": "أداة PRO"
     }
   ]
 }
