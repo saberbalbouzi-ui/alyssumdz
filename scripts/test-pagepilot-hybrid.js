@@ -96,7 +96,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const wset = JSON.stringify(pg.sections), hadDeep = wset.indexOf(dk.palette.deep) >= 0;
     const r = H.recolorPage(pg, { color: "#1f4fa8", tone: "light" }); const after = JSON.stringify(pg.sections);
     o.rc = { ok: r.ok, changed: r.changed, hadDeep, oldGone: after.indexOf(dk.palette.deep) < 0, newIn: after.indexOf(lt.palette.deep) >= 0, bg: pg.bg === lt.palette.deep, kwSpan: /<b style="color:/.test(after) };
-    const L0 = spec.sections.flatMap(S => S.layers); o.fade = L0.filter(l => l.type === "image" && l.fade && l.fade.b > 0).length; o.glow = L0.filter(l => l.name === "إضاءة الخلفية" && l.gradient && l.gradient.type === "radial").length; o.vig = L0.filter(l => l.name === "تعتيم الأطراف").length;
+    const L0 = spec.sections.flatMap(S => S.layers); o.fade = L0.filter(l => l.type === "image" && l.fade && l.fade.b > 0).length; o.glow = L0.filter(l => l.name === "إضاءة الخلفية" && l.gradient && l.gradient.type === "radial").length; o.vig = L0.filter(l => l.name === "تعتيم الأطراف").length; o.full = !!spec.page.full; { const c = document.createElement("canvas"); c.width = 200; c.height = 250; const x = c.getContext("2d"); x.fillStyle = "#c08040"; x.fillRect(0, 0, 200, 250); PagePilotHybrid.meltCanvas(c, "#102040"); const e = x.getImageData(0, 0, 1, 1).data, m = x.getImageData(100, 125, 1, 1).data; o.meltEdge = [e[0], e[1], e[2]].join(","); o.meltMid = [m[0], m[1], m[2]].join(","); }
     o.recBad = H.recolorPage({ sections: [] }, {}).ok;
     return o;
   });
@@ -104,7 +104,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("لون محايد (أبيض) ← خلفية داكنة محايدة لا ملوّنة", /^#[0-9a-f]{6}$/.test(cl.nu), cl.nu);
   t("خلفية موحّدة افتراضياً بلا غرف/أثاث، والمشهد اختياري", /uniform flat/.test(cl.solid) && !/kitchen/.test(cl.solid) && /kitchen/.test(cl.scene), cl);
   t("كلمات مفتاحية ملوّنة في النصوص + كلمة العنوان المميّزة", cl.kwTexts >= 2 && cl.hlHead, cl);
-  t("الصور تذوب في الخلفية (تلاشي الحواف) + إضاءة شعاعية + تعتيم أطراف لكل قسم", cl.fade >= 2 && cl.glow >= 2 && cl.vig >= 2, cl);
+  t("الصور تذوب بالبكسل في لون الصفحة (الحواف = اللون العميق) + إضاءة شعاعية + عرض كامل للصفحة بلا شريط", cl.meltEdge === "16,32,64" && cl.meltMid === "192,128,64" && cl.glow >= 2 && cl.vig === 0 && cl.fade === 0 && cl.full, cl);
   t("إعادة تلوين الصفحة: يستبدل اللون القديم بالجديد ويقلب الدرجة", cl.rc.ok && cl.rc.changed > 5 && cl.rc.hadDeep && cl.rc.oldGone && cl.rc.newIn && cl.rc.bg, cl.rc);
   t("إعادة التلوين ترفض صفحة ليست من المنشئ", cl.recBad === false);
   t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);

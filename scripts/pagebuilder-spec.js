@@ -85,7 +85,7 @@ const PBSpec = (() => {
     if (typeof PBLayers !== "undefined" && PBLayers.is(spec)) { try { const cv = PBLayers.convert(spec, { assets: opts.layerAssets, product: opts.product, z: opts.layerZ, geo: opts.layerGeo, fs: opts.layerFs, fade: opts.layerFade, crop: opts.layerCrop }); (cv.notes || []).forEach(n => warn.push("استيراد الطبقات: " + n)); spec = cv; } catch (e) { return { ok: false, error: e.message, warn }; } }   // صيغة alyssum-design-layers (ChatGPT) ← تُحوَّل إلى الصيغة الأصلية
     if (!spec || typeof spec !== "object" || !Array.isArray(spec.sections) || !spec.sections.length) return { ok: false, error: "لا توجد أقسام (sections) في التصميم", warn };
     const pg = spec.page && typeof spec.page === "object" ? spec.page : {}; const dw = Math.round(num(pg.width, 600, 1920, 1080));
-    const out = { format: FORMAT, page: { title: str(pg.title, 120) || "صفحة جديدة", width: dw, bg: col(pg.bg, "#ffffff"), lang: ["ar", "fr", "en"].includes(pg.lang) ? pg.lang : "ar", product: str(pg.product, 80).replace(/[^\w-]/g, "") }, assets: {}, sections: [] };
+    const out = { format: FORMAT, page: { title: str(pg.title, 120) || "صفحة جديدة", width: dw, bg: col(pg.bg, "#ffffff"), full: !!pg.full, lang: ["ar", "fr", "en"].includes(pg.lang) ? pg.lang : "ar", product: str(pg.product, 80).replace(/[^\w-]/g, "") }, assets: {}, sections: [] };
     if (spec.assets && typeof spec.assets === "object") Object.keys(spec.assets).slice(0, 80).forEach(k => { const a = spec.assets[k] || {}; out.assets[str(k, 40).replace(/[^\w-]/g, "")] = { src: imgSrc(a.src), prompt: str(a.prompt, 500) }; });
     let nl = 0;
     spec.sections.slice(0, LIMITS.sections).forEach((S, si) => {
@@ -327,7 +327,7 @@ const PBSpec = (() => {
         const ow = P.mkW("orderorig", { prod: ctx.product }); cols.push(ow);
         const sec = P.mkS([P.mkC(cols)], Object.assign({ layout: "boxed", cw: { d: 1000 }, pad: { d: [50, 20, 50, 20], m: [30, 12, 30, 12] } }, base, S.bg || S.gradient ? {} : { bg: "#1e5e20" })); sec.set.cid = "order"; out.push(sec); return;
       }
-      const sec = P.mkCanvas(); Object.assign(sec.set, base, { scaled: true, dw, cw: { d: dw }, mh: { d: S.height }, layout: "boxed" }); sec.set.pad = { d: [0, 0, 0, 0] };
+      const sec = P.mkCanvas(); Object.assign(sec.set, base, { scaled: true, dw, cw: { d: dw }, mh: { d: S.height }, layout: spec.page.full ? "full" : "boxed" }); sec.set.pad = { d: [0, 0, 0, 0] };
       if (S.name) sec.set.cid = S.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 30) || undefined; if (!sec.set.cid) delete sec.set.cid;
       const gm = {}; sec.free = S.layers.slice().sort((a, b) => a.z - b.z).map(L => { const w = layerToWidget(L, dw, ctx); if (L.group) w.set.grp = gm[L.group] = gm[L.group] || "g" + P.uid(); if (L.type === "image" && !w.set.src && L.prompt) pending.push({ id: w.id, prompt: L.prompt }); return w; });
       out.push(sec);

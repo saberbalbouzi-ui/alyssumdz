@@ -32,6 +32,23 @@ const PagePilotHybrid = (() => {
     const sl = bgLum * (1 - scrim.opacity) + hexLum(scrim.color) * scrim.opacity, txt = dark ? "#ffffff" : "#111111";
     return { color: txt, ratio: contrast(sl, hexLum(txt)), scrim };
   }
+  /* دمج حواف الصورة بلون الصفحة بالبكسل: تُزاح ألوان الحافة نحو اللون العميق ثم تُمزج تدريجياً فتتطابق الحواف الأربع معه تماماً */
+  function meltCanvas(cv, deepHex) {
+    try {
+      const w = cv.width, h = cv.height, ctx = cv.getContext("2d"), img = ctx.getImageData(0, 0, w, h), d = img.data, dc = [parseInt(deepHex.slice(1, 3), 16), parseInt(deepHex.slice(3, 5), 16), parseInt(deepHex.slice(5, 7), 16)];
+      const ring = Math.max(2, Math.round(Math.min(w, h) * .01)); let sr = 0, sg = 0, sb = 0, n = 0;
+      for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { if (x < ring || y < ring || x >= w - ring || y >= h - ring) { const k = (y * w + x) * 4; sr += d[k]; sg += d[k + 1]; sb += d[k + 2]; n++; } }
+      if (!n) return cv; const dl = [dc[0] - sr / n, dc[1] - sg / n, dc[2] - sb / n];
+      const fy = h * .14, fx = w * .08, sm = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const e = Math.min(x / fx, (w - 1 - x) / fx, y / fy, (h - 1 - y) / fy), a = 1 - sm(e), k = (y * w + x) * 4; if (a <= 0) continue;
+        const sh = 1 - sm(e / 2.2);
+        for (let c = 0; c < 3; c++) { let v = d[k + c] + dl[c] * sh; v = v + (dc[c] - v) * a * a; d[k + c] = v < 0 ? 0 : v > 255 ? 255 : v; }
+      }
+      ctx.putImageData(img, 0, 0);
+    } catch (_) { }
+    return cv;
+  }
   function lumAt(canvas, r) {
     if (!canvas || !canvas.getContext) return .5;
     const kx = canvas.width / W, ky = canvas.height / H, sx = Math.max(0, Math.round(r.x * kx)), sy = Math.max(0, Math.round(r.y * ky)), sw = Math.max(1, Math.round(r.w * kx)), sh = Math.max(1, Math.round(r.h * ky));
@@ -74,7 +91,7 @@ const PagePilotHybrid = (() => {
   /* لون التمييز (الكلمة المبرزة، الأيقونات، زر الطلب): أصفر دافئ يقرأ بوضوح فوق اللون الداكن */
   /* لون الإضاءة الناعمة فوق اللون العميق (يُستعمل في وهج الخلفية ويُعاد حسابه عند إعادة التلوين) */
   const glowOf = d => mix(d, "#ffffff", hexLum(d) > .4 ? .6 : .42);
-  const pickAccent = (deep, hue) => { const cands = ["#ffc928", "#ffffff", hsl2hex(hue || 30, .85, .3), hsl2hex(hue || 30, .9, .22), "#111111"], ok = cands.find(c => contrast(hexLum(c), hexLum(deep)) >= 4.5); return ok || (hexLum(deep) > .4 ? "#111111" : "#ffffff"); };
+  const pickAccent = (deep, hue) => { const cands = ["#ffc928", "#ffffff", hsl2hex(hue || 30, .85, .3), hsl2hex(hue || 30, .9, .22), "#111111"], ok = cands.find(c => contrast(hexLum(c), hexLum(deep)) >= 3); return ok || (hexLum(deep) > .4 ? "#111111" : "#ffffff"); };
   /* أيقونات مسموحة في طبقة icon (نسخة من PBSpec.ICONS) */
   const ICON_SET = ["leaf", "brain", "zap", "sprout", "sparkle", "shield-check", "truck", "cash", "headset", "cart", "check-circle", "pin", "box", "star", "heart", "gift", "clock", "phone", "mail", "award", "drop", "sun", "flame"];
   const ICON_KW = [[/توصيل|شحن|livraison|deliver/i, "truck"], [/دفع|استلام|سعر|paiement|cash/i, "cash"], [/ضمان|جودة|أمان|حماية|garant|qualit/i, "shield-check"], [/سريع|فوري|دقائق|rapide|fast/i, "zap"], [/طبيع|عشب|نبات|naturel|natural/i, "leaf"], [/هاتف|اتصال|تأكيد|support|appel/i, "headset"], [/وقت|ساعة|يوم|temps|time/i, "clock"], [/هدية|عرض|gift|offre/i, "gift"], [/قلب|حب|راحة|santé|heart/i, "heart"], [/نظيف|ماء|ترطيب|eau|water/i, "drop"], [/طاقة|قوة|فعّال|énergie|power/i, "flame"]];
@@ -199,7 +216,7 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     how_to_use: "a real adult person using the product naturally, hands and product clearly visible",
     final_cta: "a happy confident real adult person with the product, warm light"
   };
-  const PEOPLE_RULES = "Any woman wears a hijab and fully modest clothing covering arms and legs; no revealing clothes; natural realistic faces and hands, correct anatomy, no distortion, no plastic skin. ";
+  const PEOPLE_RULES = "Any woman wears a hijab and fully modest clothing covering arms and legs; no revealing clothes; natural realistic faces and hands, correct anatomy, no distortion, no plastic skin. The person's ENTIRE head and face must be fully visible, uncropped and never covered, positioned in the LOWER 60% of the frame (face center around 62% of the frame height), below the empty text area. ";
   const hasPerson = (type, o) => !!(o && o.people && o.edit !== false && PEOPLE[type]);
   const NEG = "text, letters, words, numbers, watermark, logo, distorted product, extra parts, blurry, low resolution, malformed hands";
   function bgPrompt(style, sec, o) {
@@ -258,10 +275,10 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     results.forEach((R, i) => {
       const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr, ctx.strategy === "edit" && !R.mock, ctaOn), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
       assets[an] = { src: R.bgSrc, prompt: "" }; if (R.prodSrc && g.prod) assets[pn] = { src: R.prodSrc, prompt: "" };
-      layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true, fade: { t: 12, b: 14, l: 0, r: 0 } });
+      layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true });
       const z = g.zone, zn = g.zname;
       /* تدرّج لون المنتج فوق منطقة النص (يضمن القراءة ويوحّد الأقسام) */
-      const ov = zn === "top" ? { y: 0, h: Math.min(H, z.y + z.h + 50), st: [[.93, 0], [.84, 72], [0, 100]] } : zn === "bottom" ? { y: Math.max(0, z.y - 170), h: 0, st: [[0, 0], [.86, 45], [.94, 100]] } : { y: 0, h: H, st: [[.84, 0], [.7, 50], [.84, 100]] };
+      const ov = zn === "top" ? { y: 0, h: Math.min(H, z.y + z.h), st: [[.9, 0], [.6, 55], [0, 100]] } : zn === "bottom" ? { y: Math.max(0, z.y - 170), h: 0, st: [[0, 0], [.86, 45], [.94, 100]] } : { y: 0, h: H, st: [[.84, 0], [.7, 50], [.84, 100]] };
       if (zn === "bottom") ov.h = H - ov.y;
       /* لون موحّد بلون المنتج فوق القسم كله (أخف خلف المنتج كي يبقى نقياً) ← خلفية واحدة متّسقة بين الأقسام */
       layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: H, z: 2, fill: deep, gradient: grad(0, [[.36, 0], [.34, 40], [.17, 56], [.17, 86], [.4, 100]]), locked: true, name: "لون موحّد" });
@@ -269,7 +286,6 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       /* إضاءة ناعمة (وهج) خلف المنتج/الشخص + تعتيم أطراف (فينييت): تذيب الصورة في لون الصفحة بلا حدود ظاهرة */
       const gc = glowOf(deep), gy = zn === "top" ? 440 : zn === "bottom" ? 30 : 180, gh = zn === "top" ? 820 : zn === "bottom" ? 780 : 940;
       layers.push({ type: "shape", shape: "rect", x: 0, y: gy, w: W, h: gh, z: 2, fill: gc, gradient: { type: "radial", angle: 0, stops: [{ c: rgba(gc, lightBg ? .55 : .5), p: 0 }, { c: rgba(gc, .22), p: 38 }, { c: rgba(gc, 0), p: 68 }] }, locked: true, name: "إضاءة الخلفية" });
-      layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: H, z: 2, fill: deep, gradient: { type: "radial", angle: 0, stops: [{ c: rgba(deep, 0), p: 52 }, { c: rgba(deep, lightBg ? .35 : .62), p: 100 }] }, locked: true, name: "تعتيم الأطراف" });
       /* حواف متصلة: أعلى القسم وأسفله يذوبان في اللون العميق نفسه */
       if (zn !== "top") layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 190, z: 2, fill: deep, gradient: grad(0, [[1, 0], [0, 100]]), locked: true, name: "وصل أعلى" });
       if (zn !== "bottom" || ctaOn) layers.push({ type: "shape", shape: "rect", x: 0, y: H - 300, w: W, h: 300, z: 2, fill: deep, gradient: grad(0, [[0, 0], [.55, 55], [1, 100]]), locked: true, name: "وصل أسفل" });
@@ -307,7 +323,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       sections.push({ name: s.id, height: H, bg: deep, layers });
     });
     if (ctx.product) sections.push({ kind: "order", title: (ctx.lang === "fr" ? "Commander" : ctx.lang === "en" ? "Order now" : "اطلب الآن") + (rtl ? " · الدفع عند الاستلام" : ""), note: "", bg: deep });
-    return { format: "alyssum-design/1", page: { title: ctx.title || "صفحة هبوط", width: W, bg: deep, lang: ctx.lang || "ar", product: ctx.product || "" }, assets, sections };
+    return { format: "alyssum-design/1", page: { title: ctx.title || "صفحة هبوط", full: true, width: W, bg: deep, lang: ctx.lang || "ar", product: ctx.product || "" }, assets, sections };
   }
 
   /* ───────────── مزوّدات: حقيقية ومحاكاة (MOCK) ───────────── */
@@ -417,7 +433,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       }
       if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
-      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
+      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
       results[i] = R; cb.section && cb.section(i, R);
     });
     /* فشل صورة الذكاء في وضع الدمج ← لا يبقى القسم بلا منتج: يُقصّ المنتج ويوضع فوق الخلفية المحلية لتلك الأقسام فقط */
@@ -470,5 +486,5 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();

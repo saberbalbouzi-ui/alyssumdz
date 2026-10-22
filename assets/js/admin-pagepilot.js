@@ -248,7 +248,7 @@ html{scroll-behavior:smooth}
 <label style="font-size:.8rem">الجمهور/النبرة (اختياري)<input id="pp-aud" style="${FLD}" placeholder="مثال: أمهات — نبرة دافئة"></label>
 <div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">② الألوان</div><div id="pp-themes" style="display:flex;gap:8px;flex-wrap:wrap">${Object.entries(THEMES).map(([k, t], i) => `<button data-pp="th" data-k="${k}" style="${BTN_CSS};background:linear-gradient(120deg,${t.main} 50%,${t.acc} 50%);${i ? "" : "outline:2px solid #c6fe17;"}min-width:120px">${t.n}</button>`).join("")}</div></div>
 <div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">🎨 لون خلفية الصفحة (الهجين) — لا يلزم أن يطابق لون المنتج؛ اختر لوناً منه أو قريباً أو فاتحاً</div>
-<div id="pp-cols" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button data-pp="col" data-c="" style="${BTN_CSS};background:rgba(255,255,255,.12);outline:2px solid #c6fe17">تلقائي</button><span id="pp-sw" style="display:contents"></span><button data-pp="cols" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="يستخرج ألوان صورة المنتج المختارة">استخرج ألوان المنتج</button><label style="font-size:.78rem;display:flex;gap:4px;align-items:center">لون حرّ <input id="pp-cc" type="color" value="#c8a24b" style="width:38px;height:30px;padding:0;border:0;background:none"></label>
+<div id="pp-cols" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button data-pp="col" data-c="" style="${BTN_CSS};background:rgba(255,255,255,.12);outline:2px solid #c6fe17">تلقائي</button><span id="pp-sw" style="display:contents"></span><button data-pp="cols" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="يستخرج ألوان صورة المنتج المختارة">استخرج ألوان المنتج</button><button data-pp="pip" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="قطّارة: التقط أي لون من صورة المنتج أو من الشاشة">💧 قطّارة</button><label style="font-size:.78rem;display:flex;gap:4px;align-items:center">لون حرّ <input id="pp-cc" type="color" value="#c8a24b" style="width:38px;height:30px;padding:0;border:0;background:none"></label>
 <label style="font-size:.78rem">الدرجة <select id="pp-tone" style="${FLD};width:auto"><option value="dark">داكنة</option><option value="mid">متوسطة</option><option value="light">فاتحة</option></select></label>
 <label style="font-size:.78rem">الخلفية خلف الأشخاص/المنتج <select id="pp-bd" style="${FLD};width:auto"><option value="solid">لون موحّد بلا مشهد</option><option value="scene">مشهد مختلف لكل قسم</option></select></label></div></div>
 <label style="font-size:.8rem">③ نوع الصفحة<select id="pp-mode" style="${FLD}"><option value="hybrid">صفحة مصوّرة هجينة (خلفيات بالذكاء + المنتج الحقيقي + نص عربي حيّ قابل للتعديل)</option><option value="poster">بوستر كامل (النص داخل الصورة — قد تتشوه الحروف)</option><option value="layout">أقسام نصية قابلة للتعديل (هيرو، فوائد، أسئلة…)</option></select></label>
@@ -354,6 +354,17 @@ html{scroll-behavior:smooth}
       const b = e.target.closest("[data-pp]"); if (!b) { if (e.target === bg) bg.remove(); return; } const a = b.dataset.pp;
       if (a === "x") bg.remove();
       else if (a === "col") setColor(b.dataset.c);
+      else if (a === "pip") {
+        const addSw = c => { const sw = $("pp-sw"); if (![...sw.querySelectorAll("[data-c]")].some(x => x.dataset.c === c)) sw.insertAdjacentHTML("beforeend", `<button data-pp="col" data-c="${c}" title="${c}" style="width:38px;height:38px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${c};cursor:pointer"></button>`); setColor(c); };
+        try {
+          if (window.EyeDropper) { const r = await new EyeDropper().open(); addSw(r.sRGBHex); return; }
+          const g = await gather(); let blob = g.blob; if (!blob && g.path) blob = await urlBlob(g.path); if (!blob) throw new Error("اختر صورة المنتج أولاً");
+          const cv = await toCanvas(blob), k = Math.min(1, 260 / Math.max(cv.width, cv.height)), pc = document.createElement("canvas"); pc.width = Math.round(cv.width * k); pc.height = Math.round(cv.height * k); pc.getContext("2d").drawImage(cv, 0, 0, pc.width, pc.height); pc.style.cssText = "cursor:crosshair;border-radius:10px;border:2px solid #c6fe17;max-width:100%"; pc.title = "انقر على اللون المطلوب";
+          const old = $("pp-pipc"); if (old) old.remove(); pc.id = "pp-pipc";
+          pc.addEventListener("click", e => { const r = pc.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) * pc.width / r.width), y = Math.floor((e.clientY - r.top) * pc.height / r.height), d = pc.getContext("2d").getImageData(Math.max(0, x - 1), Math.max(0, y - 1), 3, 3).data; let R = 0, G = 0, B = 0; for (let i = 0; i < 36; i += 4) { R += d[i]; G += d[i + 1]; B += d[i + 2]; } const h = v => Math.round(v / 9).toString(16).padStart(2, "0"); addSw("#" + h(R) + h(G) + h(B)); pc.remove(); });
+          $("pp-cols").insertAdjacentElement("afterend", pc);
+        } catch (er) { if (er && er.name !== "AbortError") say("❌ " + esc(er.message || er), true); }
+      }
       else if (a === "cols") {
         b.disabled = true;
         try {
