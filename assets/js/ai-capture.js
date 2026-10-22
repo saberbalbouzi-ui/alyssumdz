@@ -11,7 +11,7 @@ const AICapture = (function () {
   const T = () => (typeof PBBgRemove !== "undefined" && PBBgRemove._t) || null;
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type || "image/png", q));
-  function ready() { try { return typeof ImgGen !== "undefined" && !!ImgGen.text && !!ImgGen.ready && ImgGen.ready().ok && !(window.ImgCfg && ImgCfg.get("capture", "engine", "auto") === "local"); } catch (e) { return false; } }
+  function ready() { try { return typeof ImgGen !== "undefined" && !!ImgGen.text && !!ImgGen.ready && ImgGen.ready().ok; } catch (e) { return false; } }
   function cropOf(cv, x0, y0, w, h, s) { const c = mk(w * (s || 1), h * (s || 1)), g = c.getContext("2d", { willReadFrequently: true }); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(cv, x0, y0, w, h, 0, 0, c.width, c.height); return c; }
   /* ردّ JSON متسامح: أسوار ```، ردّ مقطوع في آخره، أو كائنات متفرقة */
   function parseLoose(t) {
@@ -37,6 +37,25 @@ const AICapture = (function () {
       if (bw < cv.width * .02 || bh < cv.height * .02) return; if (items.length && items.some(q => iou(q.box, box) > .85)) return; items.push({ label: String(e.label || "عنصر").slice(0, 40), box }); });
     if (items.length > 1) { const full = items.filter(i => (i.box.x1 - i.box.x0) * (i.box.y1 - i.box.y0) > cv.width * cv.height * .94); if (full.length) full.forEach(f => items.splice(items.indexOf(f), 1)); }      // «الخلفية كلها» ليست عنصراً
     items.forEach((it, i) => it.id = i); if (!items.length) throw new Error("لم تجد الأداة عناصر كاملة قابلة للفصل في هذه الصورة");
+    return items;
+  }
+
+  const P_MASKS = "Segment every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
+    "Treat things a person holds as separate objects from the person. Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects cut off by the image edge. " +
+    "Return ONLY a JSON array (at most MAX entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the whole object,\"mask\":\"<base64 PNG of the segmentation mask cropped to that box, white = the object>\"}.";
+  /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
+  async function detectAll(cv, o) {
+    o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…");
+    const ask1 = async () => parseLoose(await ask(P_MASKS.replace("MAX", String(o.max || 10)), cv, { maxTokens: 16384, signal: o.signal })), build = async arr => {
+      const items = [], W = cv.width, H = cv.height;
+      for (const e of arr) { const b = boxOf(e); if (!b || !e.mask) continue; const box = { x0: b.x0 / 1000 * W, y0: b.y0 / 1000 * H, x1: b.x1 / 1000 * W, y1: b.y1 / 1000 * H }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+        if (bw < W * .02 || bh < H * .02 || (bw * bh > W * H * .94 && arr.length > 1)) continue; if (items.some(q => iou(q.box, box) > .85)) continue;
+        const px0 = Math.round(box.x0), py0 = Math.round(box.y0), dm = await decodeMask(e.mask, Math.max(2, Math.round(bw)), Math.max(2, Math.round(bh))); if (!dm) continue;
+        items.push({ label: String(e.label || "عنصر").slice(0, 40), box, pre: { m: dm.m, w: dm.w, h: dm.h, x0: px0, y0: py0 } }); }
+      items.forEach((it, i) => it.id = i); return items;
+    };
+    let items = await build(await ask1()); if (!items.length) items = await build(await ask1());
+    if (!items.length) throw new Error("لم تُرجِع الخدمة عناصر قابلة للفصل — أعد المحاولة");
     return items;
   }
   /* قناع الخدمة (PNG base64 داخل مربع العنصر) ← Float32 0..1 بحجم العمل */
@@ -75,15 +94,18 @@ const AICapture = (function () {
     const s = Math.min(1, Math.sqrt(MAXPX / (rw * rh))), work = cropOf(cv, rx0, ry0, rw, rh, s), ww = work.width, wh = work.height;
     const bx0 = (b.x0 - rx0) * s, by0 = (b.y0 - ry0) * s, bx1 = (b.x1 - rx0) * s, by1 = (b.y1 - ry0) * s;
     let M = null, method = "api";
-    try {
-      step("⏳ قناع «" + item.label + "»…"); const arr = parseLoose(await ask(PCUT(item.label), work, { maxTokens: 8192, signal: o.signal })), cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0) - (p.b.x1 - p.b.x0) * (p.b.y1 - p.b.y0))[0];
-      if (cand) { const px0 = Math.round(cand.b.x0 / 1000 * ww), py0 = Math.round(cand.b.y0 / 1000 * wh), px1 = Math.round(cand.b.x1 / 1000 * ww), py1 = Math.round(cand.b.y1 / 1000 * wh), dm = await decodeMask(cand.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0));
-        if (dm) { M = new Float32Array(ww * wh); for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) M[yy * ww + xx] = dm.m[y * dm.w + x]; } } } }
-    } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg mask", e); }
+    if (item.pre) {      // قناع جاهز من طلب الكشف: يُنقل إلى إحداثيات العمل بلا أي طلب إضافي
+      const pr = item.pre; M = new Float32Array(ww * wh);
+      for (let y = 0; y < wh; y++) { const sy = ry0 + y / s - pr.y0; if (sy < 0 || sy >= pr.h) continue; const iy = Math.min(pr.h - 1, sy | 0); for (let x = 0; x < ww; x++) { const sx = rx0 + x / s - pr.x0; if (sx < 0 || sx >= pr.w) continue; M[y * ww + x] = pr.m[iy * pr.w + Math.min(pr.w - 1, sx | 0)]; } }
+    } else {
+      try {
+        step("⏳ قناع «" + item.label + "»…"); const arr = parseLoose(await ask(PCUT(item.label), work, { maxTokens: 8192, signal: o.signal })), cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0) - (p.b.x1 - p.b.x0) * (p.b.y1 - p.b.y0))[0];
+        if (cand) { const px0 = Math.round(cand.b.x0 / 1000 * ww), py0 = Math.round(cand.b.y0 / 1000 * wh), px1 = Math.round(cand.b.x1 / 1000 * ww), py1 = Math.round(cand.b.y1 / 1000 * wh), dm = await decodeMask(cand.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0));
+          if (dm) { M = new Float32Array(ww * wh); for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) M[yy * ww + xx] = dm.m[y * dm.w + x]; } } } }
+      } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg mask", e); }
+    }
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
-    if (!M) {      // احتياط: مربع الأداة + فصل لوني محلي داخله
-      method = "box"; step("⏳ فصل لوني محلي داخل المربع…"); const cut = await PBBgRemove.autoCut(work, { methods: ["classic"] }), d = cut.canvas.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh).data; M = new Float32Array(ww * wh);
-      const ex = Math.round(Math.max(bx1 - bx0, by1 - by0) * .03); for (let y = Math.max(0, Math.floor(by0 - ex)); y < Math.min(wh, Math.ceil(by1 + ex)); y++) for (let x = Math.max(0, Math.floor(bx0 - ex)); x < Math.min(ww, Math.ceil(bx1 + ex)); x++) M[y * ww + x] = d[(y * ww + x) * 4 + 3] / 255; }
+    if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
     const band = clamp(Math.round(Math.max(ww, wh) * .011), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
@@ -108,6 +130,6 @@ const AICapture = (function () {
   }
   /* يحوّل نتائج cutout إلى صيغة AIVision.eraseBg (قناع المسح) للترميم المحلي الاحتياطي */
   function eraseCuts(cuts) { return cuts.map(c => { const w = Math.max(1, Math.round(c.w)), h = Math.max(1, Math.round(c.h)), cc = mk(w, h), g = cc.getContext("2d", { willReadFrequently: true }); g.drawImage(c.canvas, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] > 20) m[i] = 1; return { canvas: c.canvas, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h, label: c.label, erase: { m, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h } }; }); }
-  return { ready, detect, cutout, fillBg, eraseCuts, _t: { parseLoose, boxOf, decodeMask, clean, iou } };
+  return { ready, detect, detectAll, cutout, fillBg, eraseCuts, _t: { parseLoose, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;

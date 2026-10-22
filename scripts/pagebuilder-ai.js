@@ -3,6 +3,7 @@
    في التوسيع تُلصق المنطقة الأصلية فوق الناتج بحافة مُنعَّمة فلا يغيّر النموذج بكسلاً واحداً من المنتج. تعمل الأدوات المحلية (الممحاة، لمسات وتصحيح) بلا مفتاح. */
 const PBAI = (() => {
   const A = () => PBApp;
+  const confirm = () => true;      // الضغط على الأداة هو الموافقة: لا نوافذ تأكيد (الرصيد يُفحص قبل التنفيذ)
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -210,11 +211,6 @@ const PBAI = (() => {
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.35rem">${SHOTS.map((x, i) => `<button type="button" class="pbx-small" data-ai="shot" data-i="${i}" style="padding:.5rem .3rem;white-space:normal">${x[1]}</button>`).join("")}</div>
 <div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
 <div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
-    if (kind === "xp" && S.xpMode === "rs") return `<div class="pbx-pz" id="pbai"><p>غيّر مقاس الصورة لأي منصة أو اتجاه (مربع، طولي، عريض): تُملأ الهوامش بامتداد مموّه ثم يُضبط المقاس. اختر نسبة أو مقاس منصة ثم «غيّر المقاس».</p>${stateBar()}
-<div class="rt-g"><label>نسبة <select id="pbai-r" class="pbx-small">${RATIOS.map(([n, v]) => `<option value="${v}"${Math.abs(o.ratio - v) < .001 ? " selected" : ""}>${n}</option>`).join("")}</select></label><label>موضع الأصل <select id="pbai-a" class="pbx-small">${ANCH.map(a => `<option value="${a[0]}"${o.anchor === a[0] ? " selected" : ""}>${a[1]}</option>`).join("")}</select></label></div>
-<div class="rt-g"><label>أو مقاس جاهز لمنصة <select id="pbai-sz" class="pbx-small"><option value="">— اختر —</option>${(typeof ImgGen !== "undefined" && ImgGen.sizes ? ImgGen.sizes() : []).map(g => `<optgroup label="${esc(g[0])}">${g[1].filter(x => x[0] !== "custom").map(x => `<option value="${x[2]}x${x[3]}"${o.sz && o.sz.w === x[2] && o.sz.h === x[3] ? " selected" : ""}>${esc(x[1])}</option>`).join("")}</optgroup>`).join("")}</select></label></div>
-<div class="ep-n" id="pbai-xi" style="min-height:1.3em"></div>
-<div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="xlocal">↔ غيّر المقاس</button></div><div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     if (kind === "xp") return `<div class="pbx-pz" id="pbai"><p>غيّر مقاس الصورة أو اتجاهها (مربع، طولي، عريض) <b>بالتوسيع</b> الذي يملأ المساحة الجديدة بما يطابق الأصل. <b>اسحب مقابض الإطار البنفسجي حول الصورة إلى الخارج</b> حتى المكان الذي تريده (الصورة تبقى في مكانها)، ثم تُنشئ الأداة امتداداً للصورة الأم في نتيجة واحدة.</p>${stateBar()}
 <div class="rt-g"><label>أو اضبط الإطار حسب نسبة <select id="pbai-r" class="pbx-small">${RATIOS.map(([n, v]) => `<option value="${v}"${Math.abs(o.ratio - v) < .001 ? " selected" : ""}>${n}</option>`).join("")}</select></label><label>موضع الأصل <select id="pbai-a" class="pbx-small">${ANCH.map(a => `<option value="${a[0]}"${o.anchor === a[0] ? " selected" : ""}>${a[1]}</option>`).join("")}</select></label></div>
 <div class="rt-g"><label>أو مقاس جاهز لمنصة <select id="pbai-sz" class="pbx-small"><option value="">— اختر —</option>${(typeof ImgGen !== "undefined" && ImgGen.sizes ? ImgGen.sizes() : []).map(g => `<optgroup label="${esc(g[0])}">${g[1].filter(x => x[0] !== "custom").map(x => `<option value="${x[2]}x${x[3]}"${o.sz && o.sz.w === x[2] && o.sz.h === x[3] ? " selected" : ""}>${esc(x[1])}</option>`).join("")}</optgroup>`).join("")}</select></label></div>
@@ -284,16 +280,12 @@ const PBAI = (() => {
       }
       if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("مولّد الصور غير متاح");
       say("⏳ جارٍ تجهيز الصورة…"); const src0 = await loadImg(inf.set.src), k0 = Math.min(1, 1600 / Math.max(src0.width, src0.height)), src = k0 < 1 ? (() => { const c = mk(src0.width * k0, src0.height * k0); c.getContext("2d").drawImage(src0, 0, 0, c.width, c.height); return c; })() : src0;
-      if (kind === "expand" || kind === "xlocal") {
+      if (kind === "expand") {
         const o = S.opt, x = A().xpGet && A().xpGet(), g = A().xpGeom ? A().xpGeom(S.id) : null, frame = !!(x && g && x.id === S.id && (x.l + x.r + x.t + x.b) > 0);
         let base = src;      // الإطار الظاهر قد تكون نسبته غير نسبة الملف (قصّ cover): نقصّ الأصل لنسبة الإطار كي تنطبق الإضافات على ما يراه المستخدم
         if (frame) { const fa = g.w / g.h, ia = src.width / src.height; if (Math.abs(ia - fa) > .02 * fa) { const cw = ia > fa ? src.height * fa : src.width, ch = ia > fa ? src.height : src.width / fa, c = mk(cw, ch); c.getContext("2d").drawImage(src, (src.width - cw) / 2, (src.height - ch) / 2, cw, ch, 0, 0, cw, ch); base = c; } }
         const p = frame ? plan(base.width, base.height, { dirs: { l: x.l / g.w * 100, r: x.r / g.w * 100, t: x.t / g.h * 100, b: x.b / g.h * 100 } }) : plan(base.width, base.height, { ratio: o.ratio, anchor: o.anchor });
         if (!p.grow) { say(frame ? "الإطار لم يخرج عن الصورة — اسحب مقبضاً إلى الخارج" : "النسبة المطلوبة لا تحتاج توسيعاً — اختر نسبة مختلفة أو اسحب الإطار"); S.busy = false; return; }
-        if (kind === "xlocal") {      // تغيير مقاس مجاني: هوامش بامتداد مموّه (padded) ثم مقاس المنصة بالبكسل إن اختير
-          const pad = padded(base, p), tz = o.sz && Math.abs(p.W / p.H - o.sz.w / o.sz.h) < .012 * (o.sz.w / o.sz.h) ? o.sz : null, k = tz ? Math.min(1, 2048 / Math.max(tz.w, tz.h)) : 1, out = tz ? mk(tz.w * k, tz.h * k) : pad;
-          if (tz) out.getContext("2d").drawImage(pad, 0, 0, out.width, out.height); S.resP = p; S.frame = frame; showRes([out], "الحجم الناتج " + out.width + "×" + out.height + ""); say("✅ جاهز — راجع النتيجة ثم طبّق"); S.busy = false; return;
-        }
         const G = typeof ImgGen !== "undefined" ? ImgGen : null, e = G && G.estimate ? G.estimate() : null;
         if (e) { if (!(e.can ? e.can(1) : e.left >= e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد"); }; if (!confirm("توسيع الصورة\nسيستهلك من رصيد Alyssum API.\nالمقاس الناتج: " + p.W + "×" + p.H + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const pad = padded(base, p), blob = await blobOf(pad, "image/png"); say("⏳ تُنشئ الأداة الامتداد…");
@@ -401,5 +393,5 @@ const PBAI = (() => {
   const reset = () => { S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
   /* «مشهد المنتج» بنقرة: يضبط مشهدين من مشاهد الاستخدام اليومي (على طاولة، في اليد) فيخرج خياران للمقارنة بموافقة تكلفة واحدة (نفس مسار تصوير المنتج) */
   const stage = () => { const ids = ["table"]; S.ps = ids.map(id => SHOTS.findIndex(x => x[0] === id)).filter(i => i >= 0); return S.ps.slice(); };
-  return { setXpMode: m => { S.xpMode = m === "rs" ? "rs" : "ai"; }, stage, panel, mount, openTx, reset, xpChanged, qa: qaScore, state: S, _t: { FXT, fxPrompt, qaScore, qaText, FA_AGE, FA_BODY, FA_TONE, lookText, loadModels, saveModels, plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS, v360Prompt, polish, addView360 } };
+  return { setXpMode: () => { S.xpMode = "ai"; }, stage, panel, mount, openTx, reset, xpChanged, qa: qaScore, state: S, _t: { FXT, fxPrompt, qaScore, qaText, FA_AGE, FA_BODY, FA_TONE, lookText, loadModels, saveModels, plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS, v360Prompt, polish, addView360 } };
 })();

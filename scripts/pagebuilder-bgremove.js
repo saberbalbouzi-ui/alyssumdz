@@ -301,7 +301,6 @@ const PBBgRemove = (function () {
   const segOK = () => { try { return !!window.AIBgCut && AIBgCut.ready(); } catch (e) { return false; } };
   async function apiCut(srcC, o) {
     if (!segOK()) throw new Error("NOKEY");
-    if (!(o && o.noConfirm) && !confirm("نزع الخلفية (Alyssum API): تحدّد الأداة الموضوع ثم تُصقل حوافه بدقة من بكسلات صورتك الأصلية.\nسيستهلك من رصيد Alyssum API. متابعة؟ (إلغاء = الطريقة المحلية)")) { const e = new Error("أُلغي التنفيذ — أجرّب الطريقة المحلية"); e.declined = true; throw e; }
     const c = await AIBgCut.subject(srcC, { onStep: o && o.onStep }); if (o) o.diagBase = "api " + (c._via || ""); return c;
   }
   const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
@@ -348,7 +347,11 @@ const PBBgRemove = (function () {
     return { canvas: out, removed, kept: comp.length - removed };
   }
   async function autoCut(srcC, o) {
-    o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
+    o = o || {};
+    if (!o.methods) {      /* أداة «نزع الخلفية»: Alyssum API فقط — طلب واحد ونتيجة واحدة (بلا طرق محلية ولا إعادة بطرق أخرى) */
+      if (!segOK()) { const e = new Error("أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل نزع الخلفية"); e.code = "NOKEY"; throw e; }
+      let c = await apiCut(srcC, o); try { c = keepSubject(c, { frac: o.keepFrac }).canvas; } catch (_) { } const cov = coverage(c); if (!(cov > .005 && cov < .995)) throw new Error("نتيجة غير معقولة — أعد المحاولة"); return { canvas: c, method: "seg", cov };
+    } if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
     const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), sOK = !!o.allowKey && segOK(), kOK = !!o.allowKey && !sOK && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : sOK ? (aiOK() ? ["seg", "ai", "classic"] : ["seg", "classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
     for (const m of order) {
       try { let c = await METHODS[m](srcC, o); if (!c) continue; if (o.keepMain !== false) { try { c = keepSubject(c, { frac: o.keepFrac }).canvas; } catch (_) { } } const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
@@ -367,29 +370,28 @@ const PBBgRemove = (function () {
   <div id="bg-vw" style="position:relative;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/18px 18px;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:200px;max-height:68vh"><canvas id="bg-cv" style="max-width:100%;max-height:68vh;display:block"></canvas><div class="ln" id="bg-ln"></div></div>
   <div id="bg-msg" style="font-size:.84rem;line-height:1.7;color:#173f35;min-height:1.7em"></div>
   <div id="bg-dg" style="font-size:.66rem;color:#8a8472;line-height:1.5;direction:ltr;text-align:left;word-break:break-word"></div>
-  <div id="bg-bar" style="display:flex;gap:.45rem"><button id="bg-save" type="button" disabled style="flex:2;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.7rem;font-weight:800;cursor:pointer">💾 حفظ</button><button id="bg-again" type="button" disabled style="flex:1;background:#fff;color:#173f35;border:1.5px solid #d6d3cb;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer">🔁 إعادة</button><button id="bg-x" type="button" style="flex:1;background:#fff;color:#b83232;border:1.5px solid #e6c4c4;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer">✕ إلغاء</button></div>
+  <div id="bg-bar" style="display:flex;gap:.45rem"><button id="bg-save" type="button" disabled style="flex:2;background:#173f35;color:#fff;border:0;border-radius:10px;padding:.7rem;font-weight:800;cursor:pointer">💾 حفظ</button><button id="bg-x" type="button" style="flex:1;background:#fff;color:#b83232;border:1.5px solid #e6c4c4;border-radius:10px;padding:.7rem;font-weight:700;cursor:pointer">✕ إلغاء</button></div>
 </div>`;
     document.body.appendChild(ov); const $ = i => ov.querySelector("#" + i), cv = $("bg-cv"), cg = cv.getContext("2d"), msg = t => { $("bg-msg").textContent = t; };
     const S = { busy: false, res: null, tried: [], closed: false };
     const close = () => { S.closed = true; ov.remove(); }; $("bg-x").onclick = close;
     const show = (c, bgOnly) => { cv.width = c ? c.width : srcC.width; cv.height = c ? c.height : srcC.height; cg.clearRect(0, 0, cv.width, cv.height); cg.drawImage(c || srcC, 0, 0, cv.width, cv.height); };
     const run = async methods => {
-      if (S.busy) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
+      if (S.busy) return; S.busy = true; $("bg-save").disabled = true; $("bg-ln").style.display = ""; show(null); msg("⏳ جارٍ نزع الخلفية…"); await tick();
       try { const oo = { methods, allowKey: true, onStep: m => { if (!S.closed) msg(m); } }, r = await autoCut(srcC, oo); r.diag = oo.diagBase ? oo.diagBase + " · عمق: " + (oo.depthUsed || "—") + " · ثوانٍ: " + (oo.timing || "") : ""; if (S.closed) return; S.res = r; S.tried.push(r.method); show(r.canvas); $("bg-ln").style.display = "none";
-        msg("✅ تمّ. إن لم تعجبك النتيجة اضغط «إعادة» لتجربة طريقة أخرى."); $("bg-dg").textContent = r.method + (r.diag ? " · " + r.diag : "");
-        $("bg-save").disabled = $("bg-again").disabled = false; }
+        msg("✅ تمّ."); $("bg-dg").textContent = r.method + (r.diag ? " · " + r.diag : "");
+        $("bg-save").disabled = false; }
       catch (e) { if (!S.closed) { $("bg-ln").style.display = "none"; const er = e && e.message || e; if (S.res) { show(S.res.canvas); msg("⚠️ فشلت هذه الطريقة (" + er + ") — عدتُ للنتيجة السابقة."); } else { msg("⚠️ " + er); S.res = null; }
-        $("bg-again").disabled = false; $("bg-save").disabled = !S.res; } console.error(e); } S.busy = false;
+        $("bg-save").disabled = !S.res; } console.error(e); } S.busy = false;
     };
-    $("bg-again").onclick = () => { const all = (segOK() ? ["seg"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(S.res ? S.res.method : "classic"); run([all[(i + 1) % all.length]]); };
     const save = async asCopy => {
-      if (S.busy || !S.res) return; S.busy = true; $("bg-save").disabled = $("bg-again").disabled = true;
+      if (S.busy || !S.res) return; S.busy = true; $("bg-save").disabled = true;
       try { const blob = await new Promise(r => S.res.canvas.toBlob(r, "image/png")); msg("⏳ رفع الصورة…"); const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: 3200, q: .95 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
         if (asCopy) { const c = PB.mkFree("image", 0, 0, (Number(q.node.set.zi) || 1) + 1); Object.assign(c.set, JSON.parse(JSON.stringify(q.node.set)), { src: path, crop: q.node.set.crop ? JSON.parse(JSON.stringify(q.node.set.crop)) : undefined, clip: undefined, clipEO: undefined, clipMode: undefined, pz: undefined, pzh: undefined, pzo: undefined, zi: (Number(q.node.set.zi) || 1) + 1 });
           ["d", "m"].forEach(dev => { const fx = Number(PB.eff(q.node.set, "fx", dev)), fy = Number(PB.eff(q.node.set, "fy", dev)), fw = Number(PB.eff(q.node.set, "fwd", dev)), fh = Number(PB.eff(q.node.set, "fh", dev)); if (![fx, fy, fw, fh].every(Number.isFinite)) return; const right = fx + fw + 2 + fw <= 100; PB.setR(c.set, "fx", dev, right ? +(fx + fw + 2).toFixed(2) : fx); PB.setR(c.set, "fy", dev, right ? fy : +(fy + fh + 16).toFixed(2)); PB.setR(c.set, "fwd", dev, fw); PB.setR(c.set, "fh", dev, fh); });
           q.list.splice(q.idx + 1, 0, c); A().E.nextLabel = "نزع الخلفية (نسخة)"; A().E.sel = c.id; A().renderCanvas(); A().commitAfter(c.id); }
         else { q.node.set.src = path; A().E.nextLabel = "نزع الخلفية";      /* القصّ نسبي لنفس أبعاد الصورة فيبقى كما هو (حذفه كان يُظهر الصورة كاملة فيصغر المنتج داخل الإطار) */ A().E.sel = id; A().renderCanvas(); A().commitAfter(id); }
-        close(); } catch (e) { msg("⚠️ " + e.message); $("bg-save").disabled = $("bg-again").disabled = false; console.error(e); } S.busy = false;
+        close(); } catch (e) { msg("⚠️ " + e.message); $("bg-save").disabled = false; console.error(e); } S.busy = false;
     };
     $("bg-save").onclick = () => save(false);
     run(null);
@@ -407,15 +409,14 @@ const PBBgRemove = (function () {
       q.node.set.src = path; A().E.nextLabel = "نزع الخلفية";      /* القصّ نسبي لنفس أبعاد الصورة فيبقى كما هو (حذفه كان يُظهر الصورة كاملة فيصغر المنتج داخل الإطار) */ LV.res = null; LV.path = ""; A().liveClear(false); A().commitAfter(LV.id); chip("✅ نُفِّذ نزع الخلفية"); }
     catch (e) { chip("⚠️ " + (e.message || e)); } LV.busy = false;
   }
-  async function live(inf, again) {
+  async function live(inf) {
     if (!inf || inf.node.type !== "image" || !inf.node.set.src) { alert("حدّد صورة أولاً"); return; } if (LV.busy) return;
     const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
-      const all = (segOK() ? ["seg"] : keyOK() ? ["key"] : []).concat(aiOK() ? ["ai", "all", "classic", "gmm"] : ["classic", "gmm"]), i = all.indexOf(LV.res ? LV.res.method : "classic"), methods = again && LV.res ? [all[(i + 1) % all.length]] : null;
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
-      const r = await autoCut(LV.src, { methods, allowKey: true, onStep: m => chip(m, true) }); LV.res = r;
-      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); { let cf = ""; try { const q = confidence(r.canvas); cf = " · ثقة تقديرية " + Math.round(q.score * 100) + "%" + (q.notes.length ? " (" + q.notes[0] + ")" : ""); } catch (e) { } chip("✅ تمّ" + cf + " — اضغط «تنفيذ» أو «إلغاء» تحت الصورة (أو جرّب طريقة أخرى من اللوحة)"); }
+      const r = await autoCut(LV.src, { onStep: m => chip(m, true) }); LV.res = r;
+      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة");
     } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }

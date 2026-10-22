@@ -147,19 +147,22 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("دمج (اللوحة): تعرض صور الصفحة، تعرض النتيجة مباشرة بعد الاختيار، وتنفّذ فترفع وتثبّت التعديل", bl.pool === 1 && bl.enabled && bl.size === 60 && bl.up === 1 && bl.commit[0] === "b1", bl);
   /* ── نزع الخلفية: متجانسة ← محلي بلا ذكاء؛ معقدة + مفتاح ← بالذكاء (محاكاة الخدمة) ── */
   await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, "pagebuilder-bgremove.js"), "utf8") });
+  await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, "../assets/js/ai-bgcut.js"), "utf8") });
   const bgk = await p.evaluate(async () => {
     const mkc = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
     const prod = (g, bgf) => { bgf(g); g.fillStyle = "#c0392b"; g.fillRect(70, 60, 60, 80); };
     const uni = mkc(200, 200); prod(uni.getContext("2d"), g => { g.fillStyle = "#e8e8e8"; g.fillRect(0, 0, 200, 200); });
     const cx = mkc(200, 200); prod(cx.getContext("2d"), g => { for (let y = 0; y < 200; y += 10) for (let x = 0; x < 200; x += 10) { g.fillStyle = "hsl(" + ((x * 7 + y * 13) % 360) + ",60%," + (30 + (x + y) % 40) + "%)"; g.fillRect(x, y, 10, 10); } });
-    let calls = 0; window.ImgGen = { ready: () => ({ ok: true }), pickKey: async () => "#00D26A", estimate: () => ({ cost: .04, fmt: n => "$" + n }), edit: async o => { calls++; const c = mkc(o.W, o.H), g = c.getContext("2d"); g.fillStyle = "#00D26A"; g.fillRect(0, 0, o.W, o.H); g.fillStyle = "#c0392b"; g.fillRect(o.W * .35, o.H * .3, o.W * .3, o.H * .4); return { canvas: c, blob: null }; } };
-    const r1 = await PBBgRemove.autoCut(uni, { allowKey: true }), c1 = calls, r2 = await PBBgRemove.autoCut(cx, { allowKey: true }), c2 = calls, r3 = await PBBgRemove.autoCut(cx, {}), c3 = calls;
+    let calls = 0; const m = mkc(256, 256); { const g = m.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, 256, 256); g.fillStyle = "#fff"; g.fillRect(2, 2, 252, 252); }
+    window.ImgGen = { ready: () => ({ ok: true }), estimate: () => ({ cost: .04, fmt: n => "$" + n }), text: async o => { calls++; return JSON.stringify([{ label: "منتج", box_2d: [300, 350, 700, 650], mask: m.toDataURL("image/png") }]); } };
+    const r1 = await PBBgRemove.autoCut(uni, { methods: ["classic"] }), c1 = calls, r2 = await PBBgRemove.autoCut(cx, { allowKey: true }), c2 = calls;
+    window.ImgGen.ready = () => ({ ok: false, why: "NOKEY" }); let nokey = ""; try { await PBBgRemove.autoCut(cx, {}); } catch (e) { nokey = e.code || e.message; }
     const a = (c, x, y) => c.getContext("2d").getImageData(x, y, 1, 1).data[3];
-    return { m1: r1.method, c1, m2: r2.method, c2, c3, bgA: a(r2.canvas, 5, 5), fgA: a(r2.canvas, 100, 100), m3: r3.method };
+    return { m1: r1.method, c1, m2: r2.method, c2, bgA: a(r2.canvas, 5, 5), fgA: a(r2.canvas, 100, 100), nokey };
   });
-  ok("نزع الخلفية: متجانسة ← محلي (classic) بلا أي طلب ذكاء", bgk.m1 === "classic" && bgk.c1 === 0, bgk);
-  ok("نزع الخلفية: معقدة + مفتاح ← طريقة key بطلب ذكاء واحد، والخلفية شفافة والمنتج معتم", bgk.m2 === "key" && bgk.c2 === 1 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
-  ok("نزع الخلفية: بلا allowKey (دفعات/استوديو) لا يُستدعى الذكاء المدفوع", bgk.c3 === 1, bgk);
+  ok("نزع الخلفية: الاستعمال الداخلي بطرق صريحة (classic) يبقى محلياً بلا طلب", bgk.m1 === "classic" && bgk.c1 === 0, bgk);
+  ok("نزع الخلفية: بالذكاء بطلب واحد ونتيجة واحدة، الخلفية شفافة والمنتج معتم", bgk.m2 === "seg" && bgk.c2 === 1 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
+  ok("نزع الخلفية: بلا مفتاح يُرفض برسالة واضحة (لا بديل محلي)", bgk.nokey === "NOKEY", bgk);
   /* ── أدوات على نمط Photoroom: إضاءة، إزالة نص، استعادة، محسّن + درجة الجودة + ثقة نزع الخلفية ── */
   const fxp = await T(() => { const F = PBAI._t; return { rl: F.fxPrompt("rl", { light: "golden", str: "high" }, ""), tr1: F.fxPrompt("tr", { what: "wm", keep: "1" }, ""), tr0: F.fxPrompt("tr", { what: "all", keep: "0" }, ""), uc: F.fxPrompt("uc", { what: "top" }, "امتداد"), bf: F.fxPrompt("bf", { kind: "food", str: "low" }, "") }; });
   ok("إعادة الإضاءة: تعليمات الإضاءة والقوة مع حفظ المنتج", /RELIGHT/.test(fxp.rl) && /golden-hour/.test(fxp.rl) && /strong/.test(fxp.rl) && /EXACTLY the same/.test(fxp.rl), fxp.rl);

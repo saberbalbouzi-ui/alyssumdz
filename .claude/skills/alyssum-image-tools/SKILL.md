@@ -74,3 +74,8 @@ description: تطوير أدوات الصور في مطوّر الصفحات: ت
 - كل أداة صور تُفتح من «ابدأ الآن» عبر `ToolWin` (assets/js/admin-toolwin.js) ← `PBApp.toolSession(blobs, id, name)`؛ جدول `TS_KEY` في pagebuilder-editor.js يربط معرّف الأداة بلوحتها. الأدوات ذات النافذة الخاصة في `OWN`.
 - أداة جديدة: `tools.json` + `gen-tool-pages.py` + أيقونة (`scripts/gen-tool-icons.py`: دالة `i_<id>` + `ICONS`) + عنوان ar/fr/en في `tool-titles.json` + `TS_KEY`/`OWN`، ثم `node scripts/test-toolwin.js`.
 - لا كلمة «ذكاء/ذكي» في واجهة الأدوات (اسم الخدمة Alyssum API فقط)، ولا خيار «مجاني» ولا إعادة محاولة تلقائية ولا «خياران» في أدوات الاستهلاك: طلب واحد ونتيجة واحدة.
+
+
+## v1.89.441 — أدوات AI فقط بمسحة واحدة
+- نزع الخلفية (`PBBgRemove.autoCut` بلا `methods`)، التقاط العناصر (`AICapture.detectAll` + `cutout` من القناع الجاهز + `fillBg`)، الممحاة (فور رفع اليد ← `fillBg`)، تحسين الجودة (`ImgGen.edit`)، تغيير المقاس = توسيع: كلها Alyssum API بطلب واحد ونتيجة واحدة بلا بدائل محلية ولا تأكيد. الطرق المحلية تبقى فقط عند تمرير `methods` صريحة لخطوات داخلية.
+- أداة صور جديدة بالـAPI: ردّها يُصقل محلياً من بكسلات الأصل، `needs:"ai"` في tools.json، ولا نافذة تأكيد.

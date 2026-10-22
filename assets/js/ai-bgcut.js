@@ -10,7 +10,7 @@ const AIBgCut = (function () {
   const T = () => (typeof PBBgRemove !== "undefined" && PBBgRemove._t) || null;
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type || "image/png", q));
-  function ready() { try { return typeof ImgGen !== "undefined" && !!ImgGen.text && !!ImgGen.ready && ImgGen.ready().ok && !(window.ImgCfg && ImgCfg.get("bg", "api", true) === false); } catch (e) { return false; } }
+  function ready() { try { return typeof ImgGen !== "undefined" && !!ImgGen.text && !!ImgGen.ready && ImgGen.ready().ok; } catch (e) { return false; } }
   function cropOf(cv, x0, y0, w, h, s) { const c = mk(w * (s || 1), h * (s || 1)), g = c.getContext("2d", { willReadFrequently: true }); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(cv, x0, y0, w, h, 0, 0, c.width, c.height); return c; }
   /* ردّ JSON متسامح: أسوار ```، ردّ مقطوع في آخره، أو كائنات متفرقة */
   function parseLoose(t) {
@@ -79,9 +79,7 @@ const AIBgCut = (function () {
         if (dm) { M = new Float32Array(ww * wh); for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) M[yy * ww + xx] = dm.m[y * dm.w + x]; } } } }
     } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg mask", e); }
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
-    if (!M) {      // احتياط: مربع الأداة + فصل لوني محلي داخله
-      method = "box"; step("⏳ فصل لوني محلي داخل المربع…"); const cut = await PBBgRemove.autoCut(work, { methods: ["classic"] }), d = cut.canvas.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh).data; M = new Float32Array(ww * wh);
-      const ex = Math.round(Math.max(bx1 - bx0, by1 - by0) * .03); for (let y = Math.max(0, Math.floor(by0 - ex)); y < Math.min(wh, Math.ceil(by1 + ex)); y++) for (let x = Math.max(0, Math.floor(bx0 - ex)); x < Math.min(ww, Math.ceil(bx1 + ex)); x++) M[y * ww + x] = d[(y * ww + x) * 4 + 3] / 255; }
+    if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
     const band = clamp(Math.round(Math.max(ww, wh) * .011), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
@@ -89,13 +87,31 @@ const AIBgCut = (function () {
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0); const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);
     return { canvas: out, x0: rx0 + x0 / s, y0: ry0 + y0 / s, w: cw / s, h: ch / s, label: item.label, method, cov: solid / n, item };
   }
-  /* (3) الموضوع الرئيسي كاملاً لنزع الخلفية ← قماش بحجم الأصل (شفاف خارج الموضوع) */
-  async function subject(cv, o) {
-    o = o || {}; const items = await detect(cv, Object.assign({}, o, { mode: "subject" })), ar = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0), top = items.slice().sort((a, b) => ar(b) - ar(a)), keep = top.filter((it, i) => i === 0 || ar(it) >= ar(top[0]) * .25).slice(0, 3);
-    const out = mk(cv.width, cv.height), g = out.getContext("2d"); let n = 0, via = [];
-    for (const it of keep) { try { const c = await cutout(cv, it, o); g.drawImage(c.canvas, c.x0, c.y0, c.w, c.h); n++; via.push(c.method); } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg subject", e); } }
-    if (!n) throw new Error("لم يُعزل الموضوع"); out._via = via.join("+"); return out;
+  /* (3) نزع الخلفية بطلب واحد: تطلب الخدمة قناع الموضوع الرئيسي (حتى 3 عناصر) من الصورة كاملة في ردّ واحد، ثم تُصقل الحواف محلياً من بكسلات صورتك الأصلية
+     (ماتينغ بدقة البكسل) فتخرج نتيجة واحدة بحجم الأصل — كنزع خلفية كانفا بنقرة واحدة. إن جاء الردّ بلا قناع صالح يُعاد الطلب مرة واحدة تلقائياً ثم يُرفض بوضوح (لا بدائل محلية). */
+  const PSUBJ = "Segment the main subject(s) of this photo that a photographer would keep when removing the background: the main product, or the main person together with everything they wear and hold. " +
+    "Return ONLY a JSON list (at most 3 entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE subject,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the subject>\"}.";
+  async function subjectMask(work, o) {
+    const ww = work.width, wh = work.height, arr = parseLoose(await ask(PSUBJ, work, { maxTokens: 8192, signal: o && o.signal })), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0);
+    let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => area(q) - area(p)); if (!cand.length) return null;
+    cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .25).slice(0, 3);
+    const M = new Float32Array(ww * wh); let used = 0;
+    for (const q of cand) { const px0 = Math.round(q.b.x0 / 1000 * ww), py0 = Math.round(q.b.y0 / 1000 * wh), px1 = Math.round(q.b.x1 / 1000 * ww), py1 = Math.round(q.b.y1 / 1000 * wh), dm = await decodeMask(q.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0)); if (!dm) continue;
+      let sum = 0; for (let i = 0; i < dm.m.length; i++) if (dm.m[i] > .5) sum++; const r = sum / Math.max(1, dm.m.length); if (r < .04 || r > .995) continue;      // قناع غير معقول داخل مربعه
+      for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) { const v = dm.m[y * dm.w + x]; if (v > M[yy * ww + xx]) M[yy * ww + xx] = v; } } } used++; }
+    if (!used) return null; let tot = 0; for (let i = 0; i < M.length; i++) if (M[i] > .5) tot++; const cov = tot / M.length; return cov < .01 || cov > .985 ? null : M;
   }
-  return { ready, detect, cutout, subject, _t: { parseLoose, boxOf, decodeMask, clean, iou } };
+  async function subject(cv, o) {
+    o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), s = Math.min(1, Math.sqrt(MAXPX / (cv.width * cv.height))), work = cropOf(cv, 0, 0, cv.width, cv.height, s), ww = work.width, wh = work.height;
+    step("⏳ تحديد الموضوع…"); let M = await subjectMask(work, o); if (!M) { step("⏳ إعادة المحاولة…"); M = await subjectMask(work, o); }
+    if (!M) throw new Error("لم تُعزل الصورة: لم تُرجِع الخدمة قناعاً صالحاً — أعد المحاولة");
+    clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
+    const band = clamp(Math.round(Math.max(ww, wh) * .011), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh; let solid = 0;
+    for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) solid++; }
+    if (solid < n * .004) throw new Error("لم يُعزل الموضوع — أعد المحاولة");
+    const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0);
+    const out = mk(cv.width, cv.height), g = out.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(full, 0, 0, cv.width, cv.height); out._via = "api"; return out;
+  }
+  return { ready, detect, cutout, subject, _t: { subjectMask, parseLoose, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AIBgCut = AIBgCut;

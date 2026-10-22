@@ -253,6 +253,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("لمسات وتصحيح: التعديل يظهر مباشرة على الصورة في الصفحة مع زرّي «تنفيذ» و«إلغاء»", lv.on && lv.blob && lv.okTxt === "تنفيذ" && lv.noTxt === "إلغاء", lv);
   await p.evaluate(() => document.querySelector('#pbx-epf [data-epf="no"]').click()); await p.waitForTimeout(700);
   ok("لمسات وتصحيح: «إلغاء» يعيد الصورة الأصلية ويصفّر المنزلقات", await p.evaluate(() => { const im = document.getElementById("pbx-frame").contentDocument.querySelector("[data-pb] img"); return !PBApp.liveOn() && !!im && !/^blob:/.test(im.src) && !document.getElementById("pbx-epf") && document.querySelector('#pbrt [data-rtk="auto"]').value === "0"; }));
+  await p.evaluate(() => { const m = document.createElement("canvas"); m.width = 64; m.height = 64; const g = m.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, 64, 64); g.fillStyle = "#fff"; g.fillRect(4, 4, 56, 56); const url = m.toDataURL("image/png"); Object.assign(ImgGen, { ready: () => ({ ok: true }), text: async () => JSON.stringify([{ label: "منتج", box_2d: [200, 200, 800, 800], mask: url }]) }); });      // محاكاة Alyssum API: قناع الموضوع في الوسط (نزع الخلفية بالـAPI فقط)
   await p.evaluate(() => { try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-imgt="bg"]').click(); }); await p.waitForTimeout(500);
   await p.evaluate(() => document.querySelector('[data-bgr="open"]').click()); await p.waitForTimeout(9000);
   ok("نزع الخلفية: النتيجة تظهر مباشرة على الصورة مع «تنفيذ/إلغاء» (بلا نافذة منفصلة)", await p.evaluate(() => PBApp.liveOn() && !document.getElementById("pbbg") && !!document.querySelector('#pbx-epf [data-epf="ok"]')), await p.evaluate(() => ({ on: PBApp.liveOn(), chip: (document.getElementById("pbbg-chip") || {}).textContent })));
@@ -1344,8 +1345,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { const pg = PB.newPage("اختبار تكبير", ""); pg.slug = "up-t"; const sec = PB.mkS([PB.mkC([PB.mkW("image", { src: "assets/img/favicon.png", hauto: true })])]); pg.sections = [sec]; window.__upId = sec.cols[0].widgets[0].id; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => { PBApp.E.sel = window.__upId; PBApp.ltoggle("img"); }); await p.waitForTimeout(600);
   await p.evaluate(() => document.querySelector('[data-imgx="up"]').click()); await p.waitForTimeout(600);
-  ok("تحسين الجودة: تفتح لوحته بخيارات التكبير والحدّة والضجيج والتحسين التلقائي", await p.evaluate(() => !!document.querySelector('#pbx-ep [data-upk="scale"]') && !!document.querySelector('#pbx-ep [data-upk="sharp"]') && !!document.querySelector('#pbx-ep [data-upk="dn"]') && !!document.querySelector('#pbx-ep [data-upk="auto"]') && /تحسين الجودة/.test(document.querySelector("#pbx-ep .ep-h").textContent)));
-  await p.evaluate(() => { window.__preUp = PBApp.pageJson(); document.querySelector('#pbx-ep [data-upx="go"]').click(); }); await p.waitForTimeout(6000);
+  ok("تحسين الجودة: تفتح لوحته بخيار التكبير فقط (مسحة واحدة بالـAPI)", await p.evaluate(() => !!document.querySelector('#pbx-ep [data-upk="scale"]') && !document.querySelector('#pbx-ep [data-upk="sharp"]') && !document.querySelector('#pbx-ep [data-upk="dn"]') && /تحسين الجودة/.test(document.querySelector("#pbx-ep .ep-h").textContent)));
+  await p.evaluate(() => { window.__preUp = PBApp.pageJson(); window.__ige = ImgGen.edit; ImgGen.ready = () => ({ ok: true }); ImgGen.edit = async o => { const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; c.getContext("2d").fillRect(0, 0, o.W, o.H); return { canvas: c, blob: await new Promise(r => c.toBlob(r)) }; }; document.querySelector('#pbx-ep [data-upx="go"]').click(); }); await p.waitForTimeout(6000); await p.evaluate(() => { ImgGen.edit = window.__ige; });
   ok("تحسين الجودة: التنفيذ يستبدل الصورة بنسخة أكبر محفوظة", await p.evaluate(() => { const j = PBApp.pageJson(); return j !== window.__preUp && /assets\/img\/pages\/gen-/.test(j); }));
   // ── الهوية البصرية (ألوان + خط + شعار) ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
@@ -1442,12 +1443,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => document.querySelector('[data-imgx="resize"]').click()); await p.waitForTimeout(800);
   const rz = await p.evaluate(async () => {
     const head = (document.querySelector("#pbx-ep .ep-h") || {}).textContent || "", opts = document.querySelectorAll("#pbx-ep #pbai-sz option").length, btn = !!document.querySelector('#pbx-ep [data-ai="xlocal"]');
-    const sel = document.querySelector("#pbx-ep #pbai-sz"); sel.value = "1080x1920"; sel.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 300));
-    document.querySelector('#pbx-ep [data-ai="xlocal"]').click(); await new Promise(r => setTimeout(r, 1500));
-    const img = document.querySelector("#pbai-res img"), cards = document.querySelectorAll("#pbai-res [data-vc]").length;
-    return { head, opts, btn, cards, w: img ? img.naturalWidth : 0, h: img ? img.naturalHeight : 0, msg: (document.querySelector("#pbai-msg") || {}).textContent };
+    return { head, opts, btn, ai: !!document.querySelector('#pbx-ep [data-ai="expand"]') };
   });
-  ok("تغيير المقاس والتوسيع: الصف يفتح لوحة فيها قياسات المنصات وزر «بلا ذكاء»، ويُنتج 1080×1920 مجاناً", /توسيع/.test(rz.head) && rz.opts > 15 && rz.btn && rz.cards === 1 && rz.w === 1080 && rz.h === 1920, rz);
+  ok("تغيير المقاس والتوسيع: توسيع بالـAPI فقط — قياسات المنصات وزر التوسيع وبلا زر محلي", /توسيع/.test(rz.head) && rz.opts > 15 && !rz.btn && rz.ai, rz);
   const vt = await p.evaluate(() => { const T = PBVideo._t, c = document.createElement("canvas"); c.width = 360; c.height = 640; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 360, 640); T.overlay(g, 360, 640, .9, { title: "عسل طبيعي", price: "2500 دج", cta: "اطلب الآن", style: "bottom" }); const d = g.getImageData(180, 640 * .8 - 14, 1, 1).data; return { n: T.VTPL.length, painted: d[0] < 100 || d[1] < 120, ids: T.VTPL.map(x => x[0]).join() }; });
   ok("قوالب الفيديو: ستة قوالب والعنوان يُرسم على شريط بلون الهوية", vt.n === 6 && vt.painted, vt);
   // ── تلوين بالذكاء (ألوان متعددة بموافقة واحدة) ──

@@ -14,8 +14,9 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     Object.assign(ImgGen, { ready: () => ({ ok: true }), edit: async o => { calls.push("edit"); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const x = c.getContext("2d"); x.fillStyle = "#777"; x.fillRect(0, 0, o.W, o.H); return { canvas: c, blob: null }; },
       text: async o => {
         calls.push("text"); const P = o.prompt;
-        if (/Detect every/.test(P)) return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8] })));
-        if (/main subject/.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: [objs[0].box[0] / .6, objs[0].box[1] / .8, objs[0].box[2] / .6, objs[0].box[3] / .8] }]) + "\n```";
+        const fullBox = q => [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8], mkMask = q => { const m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)"; if (q.r) { x.beginPath(); x.ellipse(128 + 3, 128 + 3, 125, 125, 0, 0, 7); x.fill(); } else x.fillRect(4 + 3, 4 + 3, 248, 248); return m.toDataURL("image/png"); };
+        if (/Segment every distinct/.test(P)) return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: fullBox(q), mask: mkMask(q) })));
+        if (/Segment the main subject/.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: fullBox(objs[0]), mask: mkMask(objs[0]) }]) + "\n```";
         const q = objs.find(z => P.includes(z.label)) || objs[0];    // طلب قناع على محيط العنصر: نحتاج إحداثيات الصورة المقصوصة التي لا نراها هنا ← نُعيد قناعاً دائرياً/مربعاً مزاحاً بحسب مربع كامل 0..1000 داخل القطع
         const cw = 1000, ch = 1000, m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)";
         // المربع المُعاد = ما يحيط العنصر ضمن القطعة (هامش 10% من أكبر ضلع): نحسبه من الإعداد نفسه
@@ -25,7 +26,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
         return JSON.stringify([{ box_2d: [by0, bx0, by1, bx1], label: q.label, mask: m.toDataURL("image/png") }]);
       } });
     out.ready = AICapture.ready() && AIBgCut.ready();
-    const items = await AICapture.detect(cv, {}); out.det = items.map(i => i.label + ":" + Math.round(i.box.x0) + "," + Math.round(i.box.y0) + "," + Math.round(i.box.x1) + "," + Math.round(i.box.y1));
+    const t0 = calls.length; const items = await AICapture.detectAll(cv, {}); out.detCalls = calls.length - t0; out.det = items.map(i => i.label + ":" + Math.round(i.box.x0) + "," + Math.round(i.box.y0) + "," + Math.round(i.box.x1) + "," + Math.round(i.box.y1));
     const c1 = await AICapture.cutout(cv, items[0], {}), a = c1.canvas.getContext("2d").getImageData(0, 0, c1.canvas.width, c1.canvas.height).data;
     let inside = 0, bad = 0; for (let y = 0; y < c1.canvas.height; y++) for (let x = 0; x < c1.canvas.width; x++) { const i = (y * c1.canvas.width + x) * 4, al = a[i + 3]; if (al > 200) { inside++; if (!(a[i] > 150 && a[i + 1] < 90)) bad++; } }
     out.c1 = { x0: Math.round(c1.x0), y0: Math.round(c1.y0), w: Math.round(c1.w), h: Math.round(c1.h), method: c1.method, inside, bad };
@@ -40,7 +41,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
   ok(!r.err, "لا أخطاء تنفيذ", r.err); if (r.err) { await b.close(); process.exit(1); }
-  ok(r.ready, "الوحدتان جاهزتان عند وجود المفتاح"); ok(r.det.length === 2, "الكشف وجد عنصرين", r.det);
+  ok(r.ready, "الوحدتان جاهزتان عند وجود المفتاح"); ok(r.det.length === 2 && r.detCalls === 1, "الكشف وجد عنصرين وأقنعتهما بطلب واحد", [r.det, r.detCalls]);
   ok(Math.abs(r.c1.x0 - 140) <= 8 && Math.abs(r.c1.y0 - 190) <= 8 && Math.abs(r.c1.w - 220) <= 12 && r.c1.method === "api", "قصّ الكرة: موضع/حجم صحيحان بقناع الخدمة", r.c1);
   ok(r.c1.inside > 30000 && r.c1.bad / r.c1.inside < .02, "حواف الكرة نظيفة: بكسلات معتمة حمراء فقط رغم إزاحة قناع الخدمة", r.c1);
   ok(r.c2.method === "api" && Math.abs(r.c2.w - 180) <= 12, "قصّ العلبة الزرقاء", r.c2);
