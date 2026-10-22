@@ -23,7 +23,8 @@
         "scene"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/remove-background/"
+      "landing": "landing/remove-background/",
+      "pd": true
     },
     {
       "id": "scene",
@@ -46,7 +47,8 @@
         "pshoot"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/product-scenes/"
+      "landing": "landing/product-scenes/",
+      "pd": true
     },
     {
       "id": "st",
@@ -71,7 +73,8 @@
         "batch",
         "catalog"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "أداة PRO",
+      "pd": true
     },
     {
       "id": "vd",
@@ -148,7 +151,8 @@
         "vd"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/video-ads/"
+      "landing": "landing/video-ads/",
+      "pd": true
     },
     {
       "id": "gen",
@@ -197,7 +201,8 @@
         "batch"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/product-photography/"
+      "landing": "landing/product-photography/",
+      "pd": true
     },
     {
       "id": "v360",
@@ -219,7 +224,8 @@
         "pshoot",
         "st"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "أداة PRO",
+      "pd": true
     },
     {
       "id": "fashion",
@@ -243,7 +249,8 @@
         "recolor"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/virtual-model/"
+      "landing": "landing/virtual-model/",
+      "pd": true
     },
     {
       "id": "tryon",
@@ -267,7 +274,8 @@
         "fashion"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/virtual-tryon/"
+      "landing": "landing/virtual-tryon/",
+      "pd": true
     },
     {
       "id": "txt2img",
@@ -648,7 +656,8 @@
         "batch"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/recolor-clothes/"
+      "landing": "landing/recolor-clothes/",
+      "pd": true
     },
     {
       "id": "relight",
@@ -740,7 +749,8 @@
         "rt",
         "up"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "أداة PRO",
+      "pd": true
     },
     {
       "id": "logo",
@@ -809,7 +819,8 @@
         "st"
       ],
       "needsText": "أداة PRO",
-      "landing": "landing/product-catalog/"
+      "landing": "landing/product-catalog/",
+      "pd": true
     },
     {
       "id": "ast",
@@ -876,7 +887,8 @@
         "brand",
         "batch"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "أداة PRO",
+      "pd": true
     },
     {
       "id": "magiclayers",
@@ -926,7 +938,8 @@
         "barcode",
         "logo"
       ],
-      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح (تحتاج متصفحاً يدعم WebGL)"
+      "needsText": "مجانية — تعمل داخل متصفحك بلا مفتاح (تحتاج متصفحاً يدعم WebGL)",
+      "pd": true
     },
     {
       "id": "pagepilot",

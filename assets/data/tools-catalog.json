@@ -24,7 +24,8 @@
    "rel": [
     "st",
     "scene"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "scene",
@@ -47,7 +48,8 @@
    "rel": [
     "sl",
     "pshoot"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "st",
@@ -73,7 +75,8 @@
     "bg",
     "batch",
     "catalog"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "vd",
@@ -98,7 +101,8 @@
    "rel": [
     "vgen",
     "brand"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "vgen",
@@ -124,7 +128,8 @@
    "rel": [
     "vd",
     "gen"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "vad",
@@ -150,7 +155,8 @@
    "rel": [
     "vgen",
     "vd"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "gen",
@@ -175,7 +181,8 @@
    "rel": [
     "txt2img",
     "pshoot"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "pshoot",
@@ -199,7 +206,8 @@
    "rel": [
     "sl",
     "batch"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "v360",
@@ -222,7 +230,8 @@
    "rel": [
     "pshoot",
     "st"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "fashion",
@@ -246,7 +255,8 @@
    "rel": [
     "tryon",
     "recolor"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "tryon",
@@ -270,7 +280,8 @@
    "nt": "أداة PRO",
    "rel": [
     "fashion"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "txt2img",
@@ -295,7 +306,8 @@
    "rel": [
     "gen",
     "logo"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "mk",
@@ -319,7 +331,8 @@
    "rel": [
     "pz",
     "ff"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "pz",
@@ -341,7 +354,8 @@
    "nt": "أداة PRO",
    "rel": [
     "mk"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "cap",
@@ -364,7 +378,8 @@
    "nt": "أداة PRO",
    "rel": [
     "bg"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "rt",
@@ -387,7 +402,8 @@
    "rel": [
     "up",
     "recolor"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "ff",
@@ -410,7 +426,8 @@
    "rel": [
     "mk",
     "fr"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "fr",
@@ -434,7 +451,8 @@
    "rel": [
     "brand",
     "logo"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "bl",
@@ -456,7 +474,8 @@
    "nt": "أداة PRO",
    "rel": [
     "cl"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "cl",
@@ -478,7 +497,8 @@
    "nt": "أداة PRO",
    "rel": [
     "bl"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "xp",
@@ -501,7 +521,8 @@
    "rel": [
     "resize",
     "scene"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "resize",
@@ -524,7 +545,8 @@
    "rel": [
     "xp",
     "batch"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "sl",
@@ -546,7 +568,8 @@
    "nt": "أداة PRO",
    "rel": [
     "pshoot"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "ai",
@@ -568,7 +591,8 @@
    "nt": "أداة PRO",
    "rel": [
     "erase"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "erase",
@@ -590,7 +614,8 @@
    "nt": "أداة PRO",
    "rel": [
     "ai"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "up",
@@ -613,7 +638,8 @@
    "rel": [
     "rt",
     "batch"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "brand",
@@ -639,7 +665,8 @@
     "logo",
     "fr",
     "vd"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "recolor",
@@ -663,7 +690,8 @@
    "rel": [
     "rt",
     "batch"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "relight",
@@ -688,7 +716,8 @@
    "rel": [
     "beautify",
     "rt"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "textrm",
@@ -712,7 +741,8 @@
    "rel": [
     "erase",
     "ai"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "uncrop",
@@ -736,7 +766,8 @@
    "rel": [
     "xp",
     "ai"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "beautify",
@@ -759,7 +790,8 @@
    "rel": [
     "rt",
     "up"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "logo",
@@ -781,7 +813,8 @@
    "nt": "أداة PRO",
    "rel": [
     "brand"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "batch",
@@ -805,7 +838,8 @@
    "rel": [
     "catalog",
     "up"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "catalog",
@@ -828,7 +862,8 @@
    "rel": [
     "batch",
     "st"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "ast",
@@ -850,7 +885,8 @@
    "nt": "أداة PRO",
    "rel": [
     "stk"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "stk",
@@ -872,7 +908,8 @@
    "nt": "أداة PRO",
    "rel": [
     "ast"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "barcode",
@@ -898,7 +935,8 @@
     "logo",
     "brand",
     "batch"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "magiclayers",
@@ -922,7 +960,8 @@
     "cap",
     "bg",
     "erase"
-   ]
+   ],
+   "pd": false
   },
   {
    "id": "studio3d",
@@ -950,7 +989,8 @@
    "rel": [
     "barcode",
     "logo"
-   ]
+   ],
+   "pd": true
   },
   {
    "id": "pagepilot",
@@ -977,7 +1017,8 @@
     "gen",
     "magiclayers",
     "bg"
-   ]
+   ],
+   "pd": false
   }
  ]
 }
