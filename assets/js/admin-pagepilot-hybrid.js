@@ -45,6 +45,23 @@ const PagePilotHybrid = (() => {
     return Object.values(b).sort((a, c) => c.n - a.n).slice(0, n || 3).map(o => rgb2hex(o.r / o.n, o.g / o.n, o.b / o.n));
   }
 
+  const rgba = (h, a) => { const c = hex2rgb(h) || [0, 0, 0]; return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")"; };
+  /* اسم اللون بالإنجليزية لتوجيه النموذج الصوري (الـhex وحده ضعيف الدلالة) */
+  function colorName(hex) {
+    const c = hex2rgb(hex); if (!c) return "deep blue"; const [r, g, b] = c.map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, l = (mx + mn) / 2;
+    if (d < .08) return l < .25 ? "black" : l > .75 ? "white" : "gray";
+    let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360;
+    const n = h < 15 || h >= 345 ? "red" : h < 40 ? "orange" : h < 65 ? "yellow" : h < 95 ? "lime green" : h < 165 ? "green" : h < 195 ? "teal" : h < 250 ? "blue" : h < 290 ? "purple" : "pink";
+    return l < .3 ? (n === "blue" ? "navy blue" : "dark " + n) : l > .7 ? "light " + n : "deep " + n;
+  }
+  /* لون التمييز (الكلمة المبرزة، الأيقونات، زر الطلب): أصفر دافئ يقرأ بوضوح فوق اللون الداكن */
+  const pickAccent = deep => (contrast(hexLum("#ffc928"), hexLum(deep)) >= 4.5 ? "#ffc928" : "#ffffff");
+  /* أيقونات مسموحة في طبقة icon (نسخة من PBSpec.ICONS) */
+  const ICON_SET = ["leaf", "brain", "zap", "sprout", "sparkle", "shield-check", "truck", "cash", "headset", "cart", "check-circle", "pin", "box", "star", "heart", "gift", "clock", "phone", "mail", "award", "droplet", "sun", "flame"];
+  const ICON_KW = [[/توصيل|شحن|livraison|deliver/i, "truck"], [/دفع|استلام|سعر|paiement|cash/i, "cash"], [/ضمان|جودة|أمان|حماية|garant|qualit/i, "shield-check"], [/سريع|فوري|دقائق|rapide|fast/i, "zap"], [/طبيع|عشب|نبات|naturel|natural/i, "leaf"], [/هاتف|اتصال|تأكيد|support|appel/i, "headset"], [/وقت|ساعة|يوم|temps|time/i, "clock"], [/هدية|عرض|gift|offre/i, "gift"], [/قلب|حب|راحة|santé|heart/i, "heart"], [/نظيف|ماء|ترطيب|eau|water/i, "droplet"], [/طاقة|قوة|فعّال|énergie|power/i, "flame"]];
+  const ICON_CYCLE = ["check-circle", "star", "shield-check", "sparkle", "heart"];
+  const iconFor = (txt, i, hint) => { if (hint && ICON_SET.includes(hint)) return hint; const k = ICON_KW.find(x => x[0].test(txt || "")); return k ? k[1] : ICON_CYCLE[i % ICON_CYCLE.length]; };
+
   /* ───────────── ١) تحليل المنتج ───────────── */
   function analysisPrompt(info) {
     return `حلّل صورة المنتج المرفقة (والمعلومات أدناه إن وُجدت) وأخرج JSON واحداً فقط بلا شرح:
@@ -65,11 +82,12 @@ const PagePilotHybrid = (() => {
   function styleBible(an, theme) {
     an = an || {}; theme = theme || { main: "#187a3b", acc: "#f39a18", ink: "#16324c", soft: "#e9f5e4" };
     const dom = (an.colors && an.colors[0]) || theme.main, primary = hexLum(dom) > .6 ? mix(dom, "#000000", .45) : dom;
-    const accent = (an.colors && an.colors[1]) || theme.acc, mood = an.mood || "clean";
-    const pal = { primary, secondary: mix(primary, "#ffffff", .35), accent, text: hexLum(primary) < .25 ? "#ffffff" : "#16212b", surface: mix(primary, "#ffffff", .9) };
+    const deep = hexLum(primary) > .12 ? mix(primary, "#000000", .55) : primary, hl = pickAccent(deep);
+    const accent = (an.colors && an.colors[1]) || theme.acc, mood = an.mood || "clean", cname = colorName(primary);
+    const pal = { primary, deep, hl, secondary: mix(primary, "#ffffff", .35), accent, text: hexLum(primary) < .25 ? "#ffffff" : "#16212b", surface: mix(primary, "#ffffff", .9) };
     const radius = mood === "premium" ? 14 : mood === "energetic" ? 26 : 20, shadow = "soft realistic contact shadow";
-    const prefix = `Commercial e-commerce advertising photography, ${mood} mood, ${LIGHT[mood]}, ${FAMILY[mood]}, color palette ${pal.primary} / ${pal.accent} / ${pal.surface}${an.category ? ", product category: " + an.category : ""}`;
-    return { palette: pal, mood, lighting: LIGHT[mood], family: FAMILY[mood], radius, shadow, prefix };
+    const prefix = `Commercial e-commerce advertising photography, ${mood} mood, ${LIGHT[mood]}, ${FAMILY[mood]}, overall color grading in ${cname} tones (${pal.primary}) that match the product's own color, accents ${pal.accent} / ${pal.surface}${an.category ? ", product category: " + an.category : ""}`;
+    return { palette: pal, mood, lighting: LIGHT[mood], family: FAMILY[mood], radius, shadow, prefix, cname };
   }
 
   /* ───────────── ٤) خطة الأقسام والنصوص ───────────── */
@@ -112,7 +130,9 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
 الأقسام بهذا الترتيب بالضبط: ${types.join(", ")}.
 قواعد صارمة: جمل قصيرة تبدأ بالفائدة؛ لا ادّعاءات علاجية أو مبالغة؛ لا آراء زبائن ولا عدّادات مخزون ولا «يشاهده X الآن» ولا أرقام مختلقة؛ لا أسعار ولا نسب خصم في النصوص (تأتي من المتجر).
 حقل scene: وصف إنجليزي للمشهد/الخلفية فقط، بلا منتج ولا نصوص ولا وجوه أشخاص.
-أخرج JSON واحداً فقط: {"sections":[{"type":"hero","headline":"≤45 حرفاً","sub":"≤110 حرفاً","bullets":["≤45 حرفاً"],"cta":"≤22 حرفاً","scene":"…"}]}
+حقل hl: كلمة أو عبارة قصيرة (≤3 كلمات) منسوخة حرفياً من العنوان تُبرز بلون مختلف (اتركه "" إن لم يلزم). حقل icons: اسم أيقونة لكل نقطة من: ${ICON_SET.join("|")}.
+العناوين قوية وقصيرة تبدأ بالنتيجة أو بسؤال عن المشكلة.
+أخرج JSON واحداً فقط: {"sections":[{"type":"hero","headline":"≤45 حرفاً","hl":"","sub":"≤110 حرفاً","bullets":["≤45 حرفاً"],"icons":["leaf"],"cta":"≤22 حرفاً","scene":"…"}]}
 عدد bullets: hero 0، problem 0، benefits 4، how_to_use 3 (خطوات)، why_choose 3، comparison 3، offer_price 0، faq 3 (سؤال وجوابه في سطر واحد «س: … ج: …»)، delivery_guarantee 3، final_cta 0.`;
   }
   function cleanPlan(raw, o) {
@@ -122,7 +142,8 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
       const s = by[t] || src[i] || {}, bl = (Array.isArray(s.bullets) ? s.bullets : []).map(b => strip(typeof b === "string" ? b : b && (b.text || b.title), 60)).filter(Boolean);
       const keep = bl.filter(b => !FAKE.test(b)); if (keep.length < bl.length) warn.push("حُذفت عبارات تبدو ادّعاءً اجتماعياً مختلقاً من قسم " + t);
       const head = strip(s.headline || s.title, 60), sub = strip(s.sub || s.subheadline, 140);
-      const sec = { id: "s" + (i + 1) + "-" + t, type: t, headline: FAKE.test(head) ? "" : head, sub: FAKE.test(sub) ? "" : sub, bullets: keep.slice(0, 5), cta: strip(s.cta, 26), scene: strip(s.scene, 240) };
+      const hd = FAKE.test(head) ? "" : head, hl0 = strip(s.hl, 40), ics = (Array.isArray(s.icons) ? s.icons : []).map(x => String(x || "").trim());
+      const sec = { id: "s" + (i + 1) + "-" + t, type: t, headline: hd, hl: hl0 && hd.includes(hl0) && hl0.length < hd.length ? hl0 : "", sub: FAKE.test(sub) ? "" : sub, bullets: keep.slice(0, 5), icons: keep.slice(0, 5).map((b, k) => iconFor(b, k, ics[k])), cta: strip(s.cta, 26), scene: strip(s.scene, 240) };
       if (RISKY.test([sec.headline, sec.sub].concat(sec.bullets).join(" "))) warn.push("قسم " + t + " فيه عبارة قد تُعدّ ادّعاءً — راجعها");
       return sec;
     });
@@ -142,30 +163,43 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   }
 
   /* ───────────── ٥) البرومبتات ───────────── */
+  /* أقسام تُدرج فيها صورة شخص (بنمط المنافس): وصف المشهد البشري؛ النساء بحجاب ولباس ساتر دائماً */
+  const PEOPLE = {
+    hero: "a real adult person fitting the target audience, smiling confidently and holding or using the product in the foreground",
+    problem: "a real adult person visibly bothered by the everyday problem (expressive but tasteful), the product visible nearby as the solution",
+    how_to_use: "a real adult person using the product naturally, hands and product clearly visible",
+    final_cta: "a happy confident real adult person with the product, warm light"
+  };
+  const PEOPLE_RULES = "Any woman wears a hijab and fully modest clothing covering arms and legs; no revealing clothes; natural realistic faces and hands, correct anatomy, no distortion, no plastic skin. ";
+  const hasPerson = (type, o) => !!(o && o.people && o.edit !== false && PEOPLE[type]);
   const NEG = "text, letters, words, numbers, watermark, logo, distorted product, extra parts, blurry, low resolution, malformed hands";
   function bgPrompt(style, sec, o) {
     o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zn = zoneOf(sec.type, !!o.withProduct), zoneTxt = zn === "top" ? "the top 40% of the frame" : zn === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
     const noProduct = !o.withProduct && T.product === false;
     const where = zn === "top" ? "in the lower half" : zn === "bottom" ? "in the upper half" : "small and centered";
     const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page. " : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
-    const scene = o.withProduct ? (EDIT_SCENE[sec.type] || EDIT_SCENE.hero) + (sec.scene ? ". Setting inspiration: " + sec.scene : "") : (sec.scene || T.scene);
-    return `${style.prefix}. ${scene}. ${ref}Leave clean, calm, low-detail empty space across ${zoneTxt} for a headline. No text, no letters, no numbers, no watermark, no extra logos. ${o.noFaces === false ? "" : "No human faces or people. "}Vertical 4:5 composition. AVOID: ${NEG}${o.noFaces === false ? "" : ", human faces, people's faces"}. ${o.extra || ""}`.trim();
+    const person = !!(o.withProduct && hasPerson(sec.type, o));
+    const scene = o.withProduct ? (EDIT_SCENE[sec.type] || EDIT_SCENE.hero) + (person ? ". Include: " + PEOPLE[sec.type] + (o.audience ? " (target audience: " + o.audience + ")" : "") : "") + (sec.scene ? ". Setting inspiration: " + sec.scene : "") : (sec.scene || T.scene);
+    const crisp = o.withProduct ? "The product must be the pure, sharp, photorealistic hero of the image: perfectly in focus, high resolution, clean crisp edges, faithful colors, no blur, no warping. " : "";
+    const tone = `Color mood: the whole scene, props and light are graded in ${style.cname || "deep"} tones that match the product's color (${style.palette.primary}). `;
+    const nf = o.noFaces !== false && !person;
+    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail empty space across ${zoneTxt} for a headline, and keep the bottom 14% of the frame calm and plain. The top 8% and bottom 8% of the frame must fade smoothly into the same solid dark ${style.cname} so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
   }
   function gatePrompt(o) {
     const z = o.zone === "bottom" ? "الجزء السفلي" : o.zone === "full" ? "الجزء الأوسط" : "الجزء العلوي";
     if (o.ref) return `الصورة الأولى هي المنتج المرجعي، والثانية مشهد إعلاني يُفترض أن المنتج مدمج فيه. أخرج JSON واحداً فقط بلا شرح:
-{"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false,"product_matches":true|false}
-has_text: هل في المشهد (الثانية) كتابة جديدة أو أحرف أو أرقام أو علامة مائية غير الموجودة على عبوة المنتج نفسها؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من المشهد هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة؟ product_matches: هل المنتج الظاهر في المشهد هو نفسه المنتج المرجعي (الشكل واللون والملصق) وظاهر بوضوح وغير مشوَّه؟`;
+{"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false,"product_matches":true|false,"product_sharp":true|false,"face_natural":true|false}
+product_sharp: هل المنتج حاد وواضح وبحجم مقروء وغير ضبابي؟ face_natural: إن وُجد وجه إنسان فهل هو طبيعي بلا تشوّه (وإلا true)؟ has_text: هل في المشهد (الثانية) كتابة جديدة أو أحرف أو أرقام أو علامة مائية غير الموجودة على عبوة المنتج نفسها؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من المشهد هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة؟ product_matches: هل المنتج الظاهر في المشهد هو نفسه المنتج المرجعي (الشكل واللون والملصق) وظاهر بوضوح وغير مشوَّه؟`;
     return `افحص الصورة المرفقة (خلفية/مشهد إعلاني) وأخرج JSON واحداً فقط بلا شرح:
 {"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false}
 has_text: هل في الصورة أي كتابة أو أحرف أو أرقام أو علامة مائية؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من الصورة هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة أو أجزاء غريبة؟`;
   }
-  function gateOk(r, noFaces, needProduct) { r = r || {}; const why = []; if (r.has_text) why.push("text"); if (noFaces !== false && r.has_face) why.push("face"); if (r.zone_empty === false) why.push("zone"); if (r.artifacts) why.push("artifacts"); if (needProduct && r.product_matches === false) why.push("product"); return { ok: !why.length, why }; }
-  const retryNote = why => (why.includes("text") ? "STRICTLY NO text, letters or numbers anywhere. " : "") + (why.includes("face") ? "STRICTLY no human faces. " : "") + (why.includes("zone") ? "Keep the requested empty area completely calm and plain. " : "") + (why.includes("artifacts") ? "Clean, undistorted, simple composition. " : "") + (why.includes("product") ? "Reproduce the reference product EXACTLY and fully visible, unchanged shape, color and label. " : "");
+  function gateOk(r, noFaces, needProduct, person) { r = r || {}; const why = []; if (r.has_text) why.push("text"); if (noFaces !== false && r.has_face) why.push("face"); if (r.zone_empty === false) why.push("zone"); if (r.artifacts) why.push("artifacts"); if (needProduct && r.product_matches === false) why.push("product"); if (needProduct && r.product_sharp === false) why.push("sharp"); if (person && r.face_natural === false) why.push("face_bad"); return { ok: !why.length, why }; }
+  const retryNote = why => (why.includes("text") ? "STRICTLY NO text, letters or numbers anywhere. " : "") + (why.includes("face") ? "STRICTLY no human faces. " : "") + (why.includes("zone") ? "Keep the requested empty area completely calm and plain. " : "") + (why.includes("artifacts") ? "Clean, undistorted, simple composition. " : "") + (why.includes("sharp") ? "Render the product perfectly sharp, in focus and large enough to read its label. " : "") + (why.includes("face_bad") ? "Faces and hands must look natural and undistorted. " : "") + (why.includes("product") ? "Reproduce the reference product EXACTLY and fully visible, unchanged shape, color and label. " : "");
 
   /* ───────────── ٧) هندسة التخطيط (أبعاد الصفحة 1080×1350) ───────────── */
-  function geometry(type, ar, edit) {
-    const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), zone = zn === "top" ? { x: 70, y: 90, w: 940, h: 560 } : zn === "bottom" ? { x: 70, y: H - 650, w: 940, h: 560 } : { x: 70, y: 150, w: 940, h: H - 300 };
+  function geometry(type, ar, edit, cta) {
+    const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), c = cta ? 120 : 0, zone = zn === "top" ? { x: 70, y: 90, w: 940, h: 600 } : zn === "bottom" ? { x: 70, y: H - 650 - c, w: 940, h: 560 - c } : { x: 70, y: 150, w: 940, h: H - 300 - c };
     let prod = null;
     if (!edit && T.product !== false) {
       const box = zn === "top" ? { x: 120, y: 700, w: 840, h: 560 } : { x: 120, y: 60, w: 840, h: 560 }; ar = ar > 0 ? ar : 1;
@@ -178,29 +212,62 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   const estH = (txt, size, w, lh) => Math.ceil(Math.max(1, Math.ceil(String(txt).length * size * .52 / w)) * size * (lh || 1.4)) + 6;
 
   /* ───────────── ٩) تجميع الصفحة (مخطط alyssum-design/1 ← PBSpec) ───────────── */
-  /* results[i] = {sec, bgSrc, lum, prodSrc, prodAr, flags[], attempts}. ctx: {title, product, wa, lang, style, productAlt} */
+  const ROWS = ["benefits", "why_choose", "how_to_use", "delivery_guarantee", "comparison"];
+  const TICKER = { ar: "دفع عند الاستلام  •  توصيل لكل الولايات  •  تأكيد الطلب بالهاتف", fr: "Paiement à la livraison  •  Livraison partout  •  Confirmation par téléphone", en: "Cash on delivery  •  Nationwide delivery  •  Phone confirmation" };
+  /* لون النص فوق تدرّج اللون العميق: السطوع الفعلي = خلفية الصورة ممزوجة بالتدرّج (≈85%) */
+  const textOn = (lum, st) => pickText((lum != null ? lum : .5) * .15 + hexLum(st.palette.deep) * .85, ["#ffffff", "#111111"]);
+  /* results[i] = {sec, bgSrc, lum, prodSrc, prodAr, flags[], attempts}. ctx: {title, product, wa, lang, style, productAlt, cta, ticker}
+     الاستمرارية: كل قسم يبدأ وينتهي بتدرّج إلى اللون العميق نفسه (deep) فتلتحم الصور بلا درزة، والأقسام تُدمج في صفحة واحدة طويلة */
   function buildSpec(plan, results, ctx) {
-    ctx = ctx || {}; const st = ctx.style || styleBible({}, null), assets = {}, sections = [], rtl = (ctx.lang || "ar") === "ar", al = rtl ? "right" : "left";
+    ctx = ctx || {}; const st = ctx.style || styleBible({}, null), assets = {}, sections = [], rtl = (ctx.lang || "ar") === "ar", al = rtl ? "right" : "left", deep = st.palette.deep, hl = st.palette.hl, ctaOn = ctx.cta !== false;
+    const grad = (a, stops) => ({ type: "linear", angle: 180, stops: stops.map(x => ({ c: rgba(deep, x[0]), p: x[1] })) });
     results.forEach((R, i) => {
-      const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr, ctx.strategy === "edit"), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
+      const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr, ctx.strategy === "edit", ctaOn), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
       assets[an] = { src: R.bgSrc, prompt: "" }; if (R.prodSrc && g.prod) assets[pn] = { src: R.prodSrc, prompt: "" };
       layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true });
-      const pk = pickText(R.lum != null ? R.lum : .5, [st.palette.text, "#ffffff", "#111111"]), z = g.zone;
+      const z = g.zone, zn = g.zname;
+      /* تدرّج لون المنتج فوق منطقة النص (يضمن القراءة ويوحّد الأقسام) */
+      const ov = zn === "top" ? { y: 0, h: Math.min(H, z.y + z.h + 130), st: [[.94, 0], [.86, 55], [0, 100]] } : zn === "bottom" ? { y: Math.max(0, z.y - 170), h: 0, st: [[0, 0], [.86, 45], [.94, 100]] } : { y: 0, h: H, st: [[.84, 0], [.7, 50], [.84, 100]] };
+      if (zn === "bottom") ov.h = H - ov.y;
+      layers.push({ type: "shape", shape: "rect", x: 0, y: ov.y, w: W, h: ov.h, z: 2, fill: deep, gradient: grad(0, ov.st), locked: true, name: "تدرّج اللون" });
+      /* حواف متصلة: أعلى القسم وأسفله يذوبان في اللون العميق نفسه */
+      if (zn !== "top") layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 190, z: 2, fill: deep, gradient: grad(0, [[1, 0], [0, 100]]), locked: true, name: "وصل أعلى" });
+      if (zn !== "bottom" || ctaOn) layers.push({ type: "shape", shape: "rect", x: 0, y: H - 300, w: W, h: 300, z: 2, fill: deep, gradient: grad(0, [[0, 0], [.55, 55], [1, 100]]), locked: true, name: "وصل أسفل" });
+      const pk = textOn(R.lum, st);
       if (pk.scrim) layers.push({ type: "shape", shape: "rect", x: z.x - 30, y: z.y - 24, w: z.w + 60, h: z.h + 24, z: 2, fill: pk.scrim.color, opacity: pk.scrim.opacity, radius: st.radius });
       if (R.prodSrc && g.prod) layers.push({ type: "image", src: "asset:" + pn, x: g.prod.x, y: g.prod.y, w: g.prod.w, h: g.prod.h, z: 3, fit: "contain", alt: strip(ctx.productAlt || ctx.title, 120), shadow: { x: 0, y: 26, blur: 40, color: "rgba(0,0,0,.35)", follow: true }, effects: [{ type: "float", amount: 10, duration: 6 }] });
-      let y = z.y; const fs1 = (s.headline || "").length > 34 ? 60 : 72;
-      if (s.headline) { const h = estH(s.headline, fs1, z.w, 1.25); layers.push({ type: "heading", tag: i === 0 ? "h1" : "h2", text: s.headline, x: z.x, y, w: z.w, z: 5, font: { size: fs1, weight: 900, color: pk.color, align: g.zname === "full" ? "center" : al, lineHeight: 1.25 }, effects: [{ type: "fadeUp" }] }); y += h + 14; }
-      if (s.sub) { const h = estH(s.sub, 36, z.w, 1.6); layers.push({ type: "text", text: s.sub, x: z.x, y, w: z.w, z: 5, font: { size: 36, weight: 600, color: pk.color, align: g.zname === "full" ? "center" : al, lineHeight: 1.6 }, effects: [{ type: "fadeUp", delay: .1 }] }); y += h + 12; }
-      (s.bullets || []).forEach((b, bi) => { const txt = "• " + b, h = estH(txt, 38, z.w, 1.5); if (y + h > z.y + z.h + 40) return; layers.push({ type: "text", text: txt, x: z.x, y, w: z.w, z: 5, font: { size: 38, weight: 700, color: pk.color, align: al, lineHeight: 1.5 }, effects: [{ type: "fadeUp", delay: .15 + bi * .08 }] }); y += h + 6; });
-      if (T.price && ctx.product) { layers.push({ type: "price", x: z.x, y: Math.min(y + 10, z.y + z.h - 90), w: z.w, z: 5 }); }
-      if (T.cta) {
-        const wa = String(ctx.wa || "").replace(/\D/g, ""), link = ctx.product ? "#order" : (wa ? "https://wa.me/" + wa + "?text=" + encodeURIComponent(ctx.title || "") : "#order");
-        const by = Math.max(y + 16, z.y + z.h - 90); layers.push({ type: "button", text: s.cta || "اطلب الآن", link, x: z.x + (z.w - 520) / 2, y: Math.min(by, z.y + z.h + 40), w: 520, h: 92, z: 6, bg: st.palette.accent, color: hexLum(st.palette.accent) > .45 ? "#111111" : "#ffffff", radius: 46, font: { size: 34, weight: 900 }, effects: [{ type: "fadeUp", delay: .3 }, { type: "pulse" }, { type: "shine" }] });
+      let y = z.y;
+      if (i === 0 && ctx.ticker !== false) {
+        layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 64, z: 8, fill: hl, locked: true, name: "شريط علوي" });
+        layers.push({ type: "text", text: ctx.tickerText || TICKER[ctx.lang] || TICKER.ar, x: 0, y: 14, w: W, z: 9, font: { size: 28, weight: 900, color: "#161616", align: "center", lineHeight: 1.3 }, name: "شريط علوي (نص)" });
+        y = Math.max(y, 100);
       }
-      sections.push({ name: s.id, height: H, bg: st.palette.surface, layers });
+      const hd = s.headline || "", len = hd.length, fs1 = len <= 22 ? 88 : len <= 34 ? 76 : 64, rest = s.hl ? hd.replace(s.hl, " ").replace(/\s+/g, " ").trim() : hd;
+      const head = (txt, color, tag, delay) => { const h = estH(txt, fs1, z.w, 1.2); layers.push({ type: "heading", tag, text: txt, x: z.x, y, w: z.w, z: 5, font: { size: fs1, weight: 900, color, align: "center", lineHeight: 1.2 }, effects: [{ type: "fadeUp", delay: delay || 0 }] }); y += h + 4; };
+      if (hd) { if (rest) head(rest, pk.color, i === 0 ? "h1" : "h2"); if (s.hl) head(s.hl, hl, rest ? "h2" : (i === 0 ? "h1" : "h2"), .08); y += 10; }
+      const rows = ROWS.includes(s.type) && (s.bullets || []).length >= 2;
+      if (s.sub && !rows) { const h = estH(s.sub, 38, z.w, 1.55); layers.push({ type: "text", text: s.sub, x: z.x, y, w: z.w, z: 5, font: { size: 38, weight: 600, color: pk.color, align: "center", lineHeight: 1.55 }, effects: [{ type: "fadeUp", delay: .1 }] }); y += h + 12; }
+      const limit = z.y + z.h + 60;
+      (s.bullets || []).forEach((b, bi) => {
+        if (rows) {
+          const R0 = 80, tw = z.w - R0 - 26, h = estH(b, 40, tw, 1.35), step = Math.max(R0 + 18, h + 14); if (y + step > limit) return;
+          const cx = rtl ? z.x + z.w - R0 : z.x, tx = rtl ? z.x : z.x + R0 + 26, cy = y + (step - R0) / 2;
+          layers.push({ type: "shape", shape: "ellipse", x: cx, y: cy, w: R0, h: R0, z: 4, fill: "rgba(255,255,255,.08)", stroke: hl, strokeW: 4, effects: [{ type: "fadeUp", delay: .12 + bi * .08 }] });
+          layers.push({ type: "icon", icon: (s.icons && s.icons[bi]) || iconFor(b, bi), x: cx + 14, y: cy + 14, w: 52, size: 52, color: hl, z: 5, effects: [{ type: "fadeUp", delay: .14 + bi * .08 }] });
+          layers.push({ type: "text", text: b, x: tx, y: y + (step - h) / 2, w: tw, z: 5, font: { size: 40, weight: 800, color: pk.color, align: al, lineHeight: 1.35 }, effects: [{ type: "fadeUp", delay: .16 + bi * .08 }] });
+          y += step; return;
+        }
+        const txt = "• " + b, h = estH(txt, 38, z.w, 1.5); if (y + h > limit) return; layers.push({ type: "text", text: txt, x: z.x, y, w: z.w, z: 5, font: { size: 38, weight: 700, color: pk.color, align: al, lineHeight: 1.5 }, effects: [{ type: "fadeUp", delay: .15 + bi * .08 }] }); y += h + 6;
+      });
+      if (T.price && ctx.product) { layers.push({ type: "price", x: z.x, y: Math.min(y + 10, z.y + z.h - 90), w: z.w, z: 5 }); }
+      if (ctaOn) {
+        const wa = String(ctx.wa || "").replace(/\D/g, ""), link = ctx.product ? "#order" : (wa ? "https://wa.me/" + wa + "?text=" + encodeURIComponent(ctx.title || "") : "#order");
+        layers.push({ type: "button", text: s.cta || (ctx.lang === "fr" ? "Commander" : ctx.lang === "en" ? "Order now" : "اطلب الآن"), link, x: (W - 900) / 2, y: H - 150, w: 900, h: 96, z: 6, bg: hl, color: hexLum(hl) > .45 ? "#111111" : "#ffffff", radius: 48, font: { size: 42, weight: 900 }, effects: [{ type: "fadeUp", delay: .3 }, { type: "pulse" }, { type: "shine" }] });
+      }
+      sections.push({ name: s.id, height: H, bg: deep, layers });
     });
-    if (ctx.product) sections.push({ kind: "order", title: (ctx.lang === "fr" ? "Commander" : ctx.lang === "en" ? "Order now" : "اطلب الآن") + (rtl ? " · الدفع عند الاستلام" : ""), note: "" });
-    return { format: "alyssum-design/1", page: { title: ctx.title || "صفحة هبوط", width: W, bg: st.palette.surface, lang: ctx.lang || "ar", product: ctx.product || "" }, assets, sections };
+    if (ctx.product) sections.push({ kind: "order", title: (ctx.lang === "fr" ? "Commander" : ctx.lang === "en" ? "Order now" : "اطلب الآن") + (rtl ? " · الدفع عند الاستلام" : ""), note: "", bg: deep });
+    return { format: "alyssum-design/1", page: { title: ctx.title || "صفحة هبوط", width: W, bg: deep, lang: ctx.lang || "ar", product: ctx.product || "" }, assets, sections };
   }
 
   /* ───────────── مزوّدات: حقيقية ومحاكاة (MOCK) ───────────── */
@@ -276,19 +343,19 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     plan.warn.forEach(w => note.push(w));
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
     if (inp.strategy !== "composite" && !wantEdit && photo) note.push("دمج المنتج في المشهد يحتاج مفتاح Alyssum API: استُعمل قصّ المنتج فوق خلفية محلية.");
-    const noFaces = inp.noFaces !== false, results = [];
+    const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta !== false, results = [];
     await pool(plan.sections, 3, async (sec, i) => {
       const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, refBlob = refs.length ? refs[i % refs.length] : null; R.ref = refs.length ? i % refs.length : -1;
       let extra = "", why = [];
       for (let a = 1; a <= 3; a++) {
         R.attempts = a;
         try {
-          const pr = bgPrompt(style, sec, { withProduct: edit, noFaces, extra }); R.prompt = pr;
+          const pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra }); R.prompt = pr;
           const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
           if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock;
           if (inp.gate !== false && P.real && !got.mock && R.bgBlob) {
             const v = await step("quality", () => withTimeout(P.vision.check(R.bgBlob, gatePrompt({ zone: zoneOf(sec.type, edit), ref: edit }), edit ? refBlob : null), 90000, "فحص الجودة"), sec.id).catch(() => null);
-            const gk = v ? gateOk(v, noFaces, edit) : { ok: true, why: [] };
+            const gk = v ? gateOk(v, noFaces && !hasPerson(sec.type, { people }), edit, hasPerson(sec.type, { people })) : { ok: true, why: [] };
             if (!gk.ok && a < 3) { why = gk.why; extra = retryNote(why); continue; }
             if (!gk.ok) R.flags.push("needs_review:" + gk.why.join("+"));
           }
@@ -301,7 +368,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       }
       if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
-      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit); R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
+      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
       results[i] = R; cb.section && cb.section(i, R);
     });
     return { an, style, plan, results, prod, prodOk, strategy, log, note, real: P.real };
@@ -315,11 +382,11 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const spec = buildSpec(out.plan, spec0, Object.assign({ style: out.style, strategy: out.strategy }, ctx));
     const v = PBSpec.validate(spec, { product: ctx.product });
     if (!v.ok) throw new Error(v.error || "مخطط غير صالح");
-    const pg = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: false });
+    const pg = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: ctx.merge !== false });
     pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = [prodSrc].concat(out.results.map(r => r.bgSrc)).filter(Boolean);
-    pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, strategy: out.strategy, theme: out.style, sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: pickText(r.lum != null ? r.lum : .5, [out.style.palette.text, "#ffffff", "#111111"]).ratio })), steps: out.log.slice(0, 200) } });
+    pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, strategy: out.strategy, theme: out.style, sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: textOn(r.lum, out.style).ratio, person: !!r.person })), steps: out.log.slice(0, 200) } });
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, TYPES, EDIT_SCENE, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();

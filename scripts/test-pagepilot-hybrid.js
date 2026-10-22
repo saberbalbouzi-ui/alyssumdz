@@ -76,6 +76,37 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);
   t("أقسام المشكلة/الأسئلة تُعاد توزيع منطقة نصها لتتسع للمنتج", ed.faqZone === "bottom" && ed.probZone === "top", ed);
 
+  /* أسلوب المنافس: لون المنتج، كلمة مبرزة، صفوف أيقونات، زر في كل قسم، شريط علوي، أشخاص، صفحة متصلة */
+  const cp = await p.evaluate(() => {
+    const H = PagePilotHybrid, o = {}; const st = H.styleBible({ colors: ["#1b3a7a", "#e0a020"], mood: "energetic", category: "طارد البعوض" }, null);
+    o.cname = st.cname; o.hl = st.palette.hl; o.deepDark = H.hexLum(st.palette.deep) < .12; o.hlContrast = H.contrast(H.hexLum(st.palette.hl), H.hexLum(st.palette.deep)) >= 4.5;
+    const plan = H.cleanPlan({ sections: [{ type: "hero", headline: "اطرد البعوض نهائياً الليلة", hl: "نهائياً", sub: "وصف", cta: "اطلب" }, { type: "benefits", headline: "لماذا تحبه", bullets: ["توصيل سريع لكل الولايات", "طبيعي وآمن للعائلة", "سهل الاستعمال"], icons: ["truck", "bogus", "zap"] }, { type: "problem", headline: "تعبت من اللسع؟", sub: "x" }, { type: "faq", headline: "أسئلة", bullets: ["س: أ؟ ج: ب", "س: ج؟ ج: د"] }] }, { count: 10 }); const by = ty => plan.sections.findIndex(x => x.type === ty);
+    o.hlKept = plan.sections[0].hl; o.icons = plan.sections[by("benefits")].icons.join(); o.faqIcons = plan.sections[by("faq")].icons.length;
+    const res = plan.sections.map((sec, i) => ({ sec, bgSrc: "assets/b" + i + ".webp", lum: .8, prodAr: 0, prodSrc: "" }));
+    const spec = H.buildSpec(plan, res, { style: st, strategy: "edit", title: "t", product: "", lang: "ar", wa: "213555000111" });
+    const cnt = (sc, ty) => sc.layers.filter(l => l.type === ty).length;
+    o.btnAll = spec.sections.every(sc => cnt(sc, "button") === 1); o.btnY = spec.sections[0].layers.find(l => l.type === "button").y;
+    o.ticker = spec.sections[0].layers.filter(l => l.name && /شريط علوي/.test(l.name)).length; o.tickerOther = spec.sections.slice(1).some(sc => sc.layers.some(l => l.name && /شريط علوي/.test(l.name)));
+    const hero = spec.sections[0]; const heads = hero.layers.filter(l => l.type === "heading"); o.heads = heads.length; o.hlColor = heads[1] && heads[1].font.color === st.palette.hl; o.headSize = heads[0].font.size;
+    const ben = spec.sections[by("benefits")]; o.rowIcons = cnt(ben, "icon"); o.circles = ben.layers.filter(l => l.type === "shape" && l.shape === "ellipse").length; o.iconNames = ben.layers.filter(l => l.type === "icon").map(l => l.icon).join();
+    o.faqPlain = cnt(spec.sections[by("faq")], "icon") === 0;
+    o.grads = spec.sections.every(sc => sc.layers.some(l => l.type === "shape" && l.gradient && /rgba/.test(l.gradient.stops[0].c)));
+    o.sameBg = new Set(spec.sections.map(sc => sc.bg)).size === 1 && spec.page.bg === spec.sections[0].bg;
+    const v = PBSpec.validate(spec, {}); o.valid = v.ok; const pg = PBSpec.toPage(v, { title: "t", merge: true }); o.mergedSecs = pg.sections.length;
+    const pe = H.bgPrompt(st, { type: "hero", scene: "x" }, { withProduct: true, people: true, noFaces: true, audience: "نساء" }), pp = H.bgPrompt(st, { type: "benefits", scene: "x" }, { withProduct: true, people: true, noFaces: true });
+    o.pHero = /hijab/.test(pe) && /real adult person/.test(pe) && !/No human faces/.test(pe); o.pBen = /No human faces/.test(pp) && !/hijab/.test(pp); o.crisp = /sharp, photorealistic/.test(pe); o.tone = /navy blue/.test(pe) && /seamless/.test(pe);
+    o.gateP = /product_sharp/.test(H.gatePrompt({ zone: "top", ref: true })); o.gok = H.gateOk({ product_sharp: false, product_matches: true }, true, true).why.join();
+    return o;
+  });
+  t("لون المنتج يحكم الأسلوب: اسم اللون وأبيض/أصفر مميّز بتباين كافٍ", /navy|blue/.test(cp.cname) && cp.deepDark && cp.hlContrast, cp);
+  t("الخطة: كلمة مبرزة من العنوان وأيقونات صحيحة (الدخيل يُستبدل) وبلا أيقونات للأسئلة الشائعة", cp.hlKept === "نهائياً" && /^truck,/.test(cp.icons) && cp.icons.split(",")[1] !== "bogus" && cp.faqPlain, cp);
+  t("زر طلب في كل قسم بأسفله، وشريط علوي في الأول فقط", cp.btnAll && cp.btnY === 1200 && cp.ticker === 2 && !cp.tickerOther, cp);
+  t("عنوان كبير بسطرين: أبيض + كلمة مميّزة بلون التمييز", cp.heads === 2 && cp.hlColor && cp.headSize >= 76, cp);
+  t("صفوف المزايا: دائرة + أيقونة + نص لكل نقطة", cp.rowIcons === 3 && cp.circles === 3 && /^truck,/.test(cp.iconNames), cp);
+  t("الاستمرارية: تدرّج لوني بكل قسم، خلفية موحّدة، والأقسام تُدمج في قماش واحد", cp.grads && cp.sameBg && cp.valid && cp.mergedSecs === 1, cp);
+  t("الأشخاص: هيرو بشخص (حجاب ولباس ساتر)، المزايا بلا وجوه، والمنتج حاد ولونه من المنتج", cp.pHero && cp.pBen && cp.crisp && cp.tone, cp);
+  t("بوابة الجودة تفحص حدّة المنتج وتعيد المحاولة", cp.gateP && /sharp/.test(cp.gok), cp);
+
   /* الواجهة الكاملة: منتج المتجر ← صفحة هجينة تُفتح في المطوّر */
   const ui = await p.evaluate(async shot => {
     window.confirm = () => true; ImgGen.text = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; ImgGen.ready = () => ({ ok: false });
@@ -87,11 +118,11 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     for (let i = 0; i < 200 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
     for (let i = 0; i < 50 && !(PBApp.E && PBApp.E.page && PBApp.E.page.sections && PBApp.E.page.sections.length); i++) await new Promise(r => setTimeout(r, 100));
     const P = PBApp.E.page; const secs = P.sections.filter(s => s.free && s.free.length); const prodSecs = secs.filter(s => s.free.filter(w => w.type === "image").length === 2);
-    return { dflt, slug, secs: P.sections.length, canvas: secs.length, prodSecs: prodSecs.length, hasOrder: P.sections.some(s => s.set.cid === "order"), headings: secs.every(s => s.free.some(w => w.type === "heading")), h1: P.sections[0].free.some(w => w.type === "heading" && w.set.tag === "h1"), hasMeta: !!(P.specMeta && P.specMeta.hybrid), product: P.product === slug, ups: ups.length };
+    return { dflt, slug, secs: P.sections.length, canvas: secs.length, prodSecs: prodSecs.length, imgs: secs.reduce((n, s) => n + s.free.filter(w => w.type === "image").length, 0), btns: secs.reduce((n, s) => n + s.free.filter(w => w.type === "button").length, 0), hasOrder: P.sections.some(s => s.set.cid === "order"), headings: secs.every(s => s.free.some(w => w.type === "heading")), h1: P.sections[0].free.some(w => w.type === "heading" && w.set.tag === "h1"), hasMeta: !!(P.specMeta && P.specMeta.hybrid), product: P.product === slug, ups: ups.length };
   }, !!shotDir);
   t("الافتراضي = الوضع الهجين", ui.dflt === "hybrid", ui);
-  t("صفحة بـ6 أقسام قماش + نموذج الطلب الحقيقي", ui.canvas === 6 && ui.hasOrder && ui.product, ui);
-  t("كل قسم: عنوان نصي حيّ، وأقسام المنتج فيها طبقتا صورة (خلفية + منتج)", ui.headings && ui.prodSecs >= 4 && ui.h1, ui);
+  t("صفحة واحدة متصلة (قماش واحد) + نموذج الطلب الحقيقي", ui.canvas === 1 && ui.secs === 2 && ui.hasOrder && ui.product, ui);
+  t("العناوين نصوص حيّة وH1 واحد وعشر طبقات صور فأكثر (خلفيات + منتج)", ui.headings && ui.imgs >= 6 && ui.h1 && ui.btns >= 6, ui);
   t("بيانات التوليد محفوظة (البرومبتات/المحاولات/التباين)", ui.hasMeta);
   await p.waitForTimeout(1500);
   const sel = await p.evaluate(async () => { const E = PBApp.E, fd = document.getElementById("pbx-frame").contentDocument, ids = []; E.page.sections.forEach(s => (s.free || []).concat(...s.cols.map(c => c.widgets)).forEach(w => ids.push(w.id))); let okc = 0; for (const id of ids) { if (fd.querySelector('[data-pb="' + id + '"]')) okc++; } return { n: ids.length, ok: okc }; });
