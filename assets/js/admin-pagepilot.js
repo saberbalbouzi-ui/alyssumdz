@@ -392,12 +392,12 @@ html{scroll-behavior:smooth}
     });
     bg.addEventListener("click", async e => { const im = e.target.closest("[data-ppi]"); if (!im || !S.imp || !PBSpec.pickImage) return; try { await PBSpec.pickImage(S.imp, +im.dataset.ppi); bg.querySelectorAll("[data-ppi]").forEach(x => x.style.borderColor = x === im ? "#c6fe17" : "rgba(255,255,255,.2)"); } catch (er) { say("❌ " + esc(er.message), true); } });
   }
-  /* ───── تغيير لون الصفحة المولَّدة داخل المحرّر (زر عائم يظهر لصفحات «منشئ الصفحات بالذكاء») ───── */
+  /* ───── تغيير لون الصفحة المولَّدة داخل المحرّر (زر #pbx-rcb في شريط المطوّر العلوي يظهر لصفحات «منشئ الصفحات بالذكاء» فقط) ───── */
   function recolorOpen() {
     if (typeof PBApp === "undefined" || !PBApp.pageJson || !PBApp.mutatePage) return; let meta = null; try { meta = (JSON.parse(PBApp.pageJson()).specMeta || {}).hybrid; } catch (_) { }
     if (!meta) return; const old = document.getElementById("pp-rc"); if (old) { old.remove(); return; }
     const cols = (meta.colors || []).concat(["#ffffff", "#f5ecd9", "#1d1d22", "#0f3d2e", "#123e72", "#7a1f2b"]).filter((c, i, a) => a.indexOf(c) === i), tone0 = (meta.recolor && meta.recolor.tone) || "dark";
-    const d = document.createElement("div"); d.id = "pp-rc"; d.style.cssText = "position:fixed;left:16px;bottom:70px;z-index:100050;width:min(360px,92vw);padding:.9rem;border-radius:16px;background:rgba(9,24,18,.985);border:1px solid rgba(198,254,23,.4);box-shadow:0 14px 40px rgba(0,0,0,.5);color:#fff;font-family:inherit;direction:rtl";
+    const d = document.createElement("div"); d.id = "pp-rc"; d.style.cssText = "position:fixed;left:16px;top:64px;z-index:100050;width:min(360px,92vw);padding:.9rem;border-radius:16px;background:rgba(9,24,18,.985);border:1px solid rgba(198,254,23,.4);box-shadow:0 14px 40px rgba(0,0,0,.5);color:#fff;font-family:inherit;direction:rtl";
     d.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem"><b>🎨 لون خلفية الصفحة</b><button data-rc="x" style="background:none;border:0;color:#fff;font-size:1.1rem;cursor:pointer">✕</button></div>
 <div style="font-size:.78rem;opacity:.8;margin-bottom:.4rem">اختر لون المنتج أو لوناً قريباً أو فاتحاً — تتغير الألوان فوراً بلا إعادة توليد الصور (ويمكنك التراجع).</div>
 <div id="pp-rcs" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:.5rem">${cols.map(c => `<button data-rc="c" data-c="${c}" title="${c}" style="width:34px;height:34px;border-radius:50%;border:2px solid rgba(255,255,255,.5);background:${c};cursor:pointer"></button>`).join("")}<input id="pp-rcc" type="color" value="${cols[0] || "#c8a24b"}" style="width:38px;height:34px;padding:0;border:0;background:none"><button data-rc="pip" title="قطّارة: التقط أي لون من الشاشة" style="${BTN_CSS};background:rgba(255,255,255,.12)">💧 قطّارة</button></div>${meta.flat ? '<div style="font-size:.74rem;color:#ffc928;margin-bottom:.4rem">ملاحظة: الصور المدمجة تحمل لون الخلفية الأصلي؛ يتغير لون الصفحة والنصوص والأزرار هنا، ولتغيير لون الصور نفسها أعد التوليد باللون الجديد.</div>' : ""}
@@ -417,16 +417,5 @@ html{scroll-behavior:smooth}
       else if (a === "go") { const r = PBApp.mutatePage(pg => PagePilotHybrid.recolorPage(pg, { color: pick, tone: d.querySelector("#pp-rct").value }), "تغيير لون الصفحة"); d.querySelector("#pp-rcm").textContent = r && r.ok ? "✅ تغيّر لون الصفحة (" + r.changed + " عنصراً)" : "❌ " + ((r && r.error) || "تعذّر التغيير"); }
     });
   }
-  /* زر عائم «🎨 لون الصفحة» أثناء فتح صفحة مولَّدة في المطوّر */
-  (function watch() {
-    if (typeof document === "undefined" || window.__ppRcWatch) return; window.__ppRcWatch = 1;
-    setInterval(() => {
-      try {
-        const on = !!document.getElementById("pbx-frame") && typeof PBApp !== "undefined" && PBApp.hasHybrid && PBApp.hasHybrid(), b = document.getElementById("pp-rcb");
-        if (on && !b) { const x = document.createElement("button"); x.id = "pp-rcb"; x.textContent = "🎨 لون الصفحة"; x.style.cssText = BTN_CSS + ";position:fixed;left:16px;bottom:16px;z-index:100040;background:rgba(198,254,23,.28)"; x.onclick = recolorOpen; document.body.appendChild(x); }
-        else if (!on && b) { b.remove(); const r = document.getElementById("pp-rc"); if (r) r.remove(); }
-      } catch (_) { }
-    }, 2500);
-  })();
   return { open, recolorOpen, THEMES, copyPrompt, cleanCopy, fallbackCopy, buildPage, buildPosterPage, posterPrompt, posterKinds, posterAlt, themeCss };
 })();

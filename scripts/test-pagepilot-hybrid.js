@@ -213,9 +213,9 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   const sel = await p.evaluate(async () => { const E = PBApp.E, fd = document.getElementById("pbx-frame").contentDocument, ids = []; E.page.sections.forEach(s => (s.free || []).concat(...s.cols.map(c => c.widgets)).forEach(w => ids.push(w.id))); let okc = 0; for (const id of ids) { if (fd.querySelector('[data-pb="' + id + '"]')) okc++; } return { n: ids.length, ok: okc }; });
   t("كل طبقة تظهر في إطار المحرّر (قابلة للتحديد/التعديل)", sel.ok === sel.n && sel.n > 20, sel);
   /* زر «لون الصفحة» داخل المحرّر يغيّر ألوان الصفحة المولَّدة (قابل للتراجع) */
-  await p.waitForFunction(() => document.getElementById("pp-rcb"), null, { timeout: 8000 }).catch(() => { });
+  await p.waitForFunction(() => document.getElementById("pbx-rcb"), null, { timeout: 8000 }).catch(() => { });
   const rcu = await p.evaluate(async () => {
-    const b = document.getElementById("pp-rcb"); if (!b) return { chip: false };
+    const b = document.getElementById("pbx-rcb"); if (!b) return { chip: false }; if (!(b.offsetParent && b.closest("#pb-app") && !document.getElementById("pp-rcb"))) return { chip: false, vis: !!b.offsetParent };
     const before = PBApp.E.page.bg; b.click(); const d = document.getElementById("pp-rc"); if (!d) return { chip: true, dlg: false };
     const sw = d.querySelector('[data-rc="c"]'); sw.click(); d.querySelector("#pp-rct").value = "light"; d.querySelector('[data-rc="go"]').click();
     await new Promise(r => setTimeout(r, 300)); const after = PBApp.E.page.bg, msg = d.querySelector("#pp-rcm").textContent, undo = PBApp.E.hist ? PBApp.E.hist.length : 0;
