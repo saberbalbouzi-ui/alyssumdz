@@ -290,14 +290,18 @@ html{scroll-behavior:smooth}
       let heroBlob = g.blob;
       if (!heroBlob && g.path) { try { heroBlob = await urlBlob(g.path); } catch (_) { } }
       /* كل صور المنتج المتاحة (رابط المنتج + صور المتجر) مراجعَ لأقسام مختلفة */
-      const refs = []; if (heroBlob) refs.push(heroBlob);
-      if ($("pp-mode").value === "hybrid" && $("pp-strat").value === "edit") {
-        const cnt0 = +$("pp-hn").value || 8, want = Math.min(6, cnt0);
+      const refs = [], refNames = []; if (heroBlob) refs.push(heroBlob);
+      if ($("pp-mode").value === "hybrid") {
+        const cnt0 = +$("pp-hn").value || 8, want = Math.min(8, cnt0);
         if (g.imp && g.imp.images && g.imp.images.length > 1 && typeof PBSpec !== "undefined" && PBSpec.pickImage) {
           say("⏳ تحميل صور المنتج من الرابط…");
           for (let k = 0; k < g.imp.images.length && refs.length < want; k++) { if (k === g.imp.pick) continue; const t = { images: g.imp.images }; try { await PBSpec.pickImage(t, k); if (t.blob) refs.push(t.blob); } catch (_) { } }
         }
-        if (g.p && refs.length < want) { for (const u of [g.p.cover].concat(g.p.images || [])) { if (!u || refs.length >= want || (g.path && u === g.path)) continue; try { refs.push(await urlBlob(u)); } catch (_) { } } }
+        /* صور المتجر: الغلاف + الصور + صور التنويعات (لكل تنويع صورته واسمه) */
+        if (g.p && refs.length < want) {
+          const seen = new Set(g.path ? [g.path] : []), cand = [{ u: g.p.cover }].concat((g.p.images || []).map(u => ({ u })), (g.p.variations || []).filter(v => v && v.active !== false && v.image).map(v => ({ u: v.image, n: Object.values(v.attrs || {}).join(" / ") })));
+          for (const c of cand) { if (!c.u || refs.length >= want || seen.has(c.u)) continue; seen.add(c.u); try { refs.push(await urlBlob(c.u)); refNames[refs.length - 1] = c.n || ""; } catch (_) { } }
+        }
       }
       if ($("pp-mode").value === "hybrid" && typeof PagePilotHybrid !== "undefined" && typeof PBSpec !== "undefined") {
         const th0 = THEMES[theme] || THEMES.green, real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })(), cnt = +$("pp-hn").value || 8;
@@ -307,7 +311,7 @@ html{scroll-behavior:smooth}
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + cnt + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:65px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         const over = useAI ? {} : { llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }, real: false, image: { bg: async (pr, i, sec) => ({ canvas: PagePilotHybrid.mockBg(PagePilotHybrid.styleBible({}, th0), sec, i), mock: true }), edit: async () => null }, vision: { check: async () => null } };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
-        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value }, { section: prog }, over);
+        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value }, { section: prog }, over);
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
         const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, tag));
         bg.remove(); PBApp.open(asm.page, "", true);

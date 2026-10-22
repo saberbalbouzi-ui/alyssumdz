@@ -325,11 +325,33 @@ const PBBgRemove = (function () {
     if (cov < .06) { u += .4; notes.push("العنصر صغير جداً"); } else if (cov > .96) { u += .45; notes.push("الخلفية لم تُنزع غالباً"); }
     u = Math.max(0, Math.min(1, u)); return { score: Math.round((1 - u) * 100) / 100, cov: Math.round(cov * 100) / 100, notes };
   }
+  /* تنظيف نتيجة القصّ: يُبقي الجسم الرئيسي وما يقاربه حجماً أو موضعاً ويمسح بقايا الخلفية (كتل صغيرة منفصلة، أو كتل تلامس الحافة وهي أصغر بكثير)،
+     ويسدّ ثقوب الشفافية الصغيرة داخل الجسم. frac = أصغر نسبة من أكبر كتلة تبقى (الافتراضي .15) */
+  function keepSubject(cv, o) {
+    o = o || {}; const frac = o.frac == null ? .15 : o.frac, k = Math.min(1, 480 / Math.max(cv.width, cv.height)), w = Math.max(8, Math.round(cv.width * k)), h = Math.max(8, Math.round(cv.height * k)), n = w * h;
+    const lo = document.createElement("canvas"); lo.width = w; lo.height = h; const lg = lo.getContext("2d", { willReadFrequently: true }); lg.drawImage(cv, 0, 0, w, h); const d = lg.getImageData(0, 0, w, h).data;
+    const B = new Uint8Array(n); for (let i = 0; i < n; i++) B[i] = d[i * 4 + 3] > 127 ? 1 : 0;
+    const lab = new Int32Array(n).fill(-1), q = new Int32Array(n), comp = [];
+    for (let s0 = 0; s0 < n; s0++) { if (!B[s0] || lab[s0] >= 0) continue; let hd = 0, tl = 0, a = 0, x0 = w, y0 = h, x1 = 0, y1 = 0, border = false; q[tl++] = s0; lab[s0] = comp.length;
+      while (hd < tl) { const p = q[hd++], x = p % w, y = (p / w) | 0; a++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; if (x === 0 || y === 0 || x === w - 1 || y === h - 1) border = true;
+        if (x > 0 && B[p - 1] && lab[p - 1] < 0) { lab[p - 1] = comp.length; q[tl++] = p - 1; } if (x < w - 1 && B[p + 1] && lab[p + 1] < 0) { lab[p + 1] = comp.length; q[tl++] = p + 1; } if (y > 0 && B[p - w] && lab[p - w] < 0) { lab[p - w] = comp.length; q[tl++] = p - w; } if (y < h - 1 && B[p + w] && lab[p + w] < 0) { lab[p + w] = comp.length; q[tl++] = p + w; } }
+      comp.push({ a, x0, y0, x1, y1, border }); }
+    if (comp.length < 2) return { canvas: cv, removed: 0, kept: comp.length };
+    const big = comp.reduce((m, c) => (c.a > m.a ? c : m), comp[0]), dg = Math.hypot(big.x1 - big.x0, big.y1 - big.y0) || 1, gap = c => Math.max(0, Math.max(big.x0 - c.x1, c.x0 - big.x1), Math.max(big.y0 - c.y1, c.y0 - big.y1));
+    const keep = comp.map(c => c === big || (c.a >= frac * big.a && !(c.border && c.a < .35 * big.a) && gap(c) < .45 * dg));
+    const removed = keep.filter(v => !v).length; if (!removed) return { canvas: cv, removed: 0, kept: comp.length };
+    /* قناع الإزالة بدقة المصغّرة ثم تكبيره: البكسلات التي تقع في كتل محذوفة (مع تمدّد 1 بكسل) تُمسح من الأصل */
+    const mk = document.createElement("canvas"); mk.width = w; mk.height = h; const mg = mk.getContext("2d"), md = mg.createImageData(w, h);
+    for (let i = 0; i < n; i++) if (lab[i] >= 0 && !keep[lab[i]]) { md.data[i * 4 + 3] = 255; }
+    mg.putImageData(md, 0, 0); const big2 = document.createElement("canvas"); big2.width = cv.width; big2.height = cv.height; const bg = big2.getContext("2d"); bg.filter = "blur(" + Math.max(1, Math.round(1.2 / k)) + "px)"; bg.drawImage(mk, 0, 0, cv.width, cv.height); bg.filter = "none";
+    const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; const og = out.getContext("2d"); og.drawImage(cv, 0, 0); og.globalCompositeOperation = "destination-out"; og.globalAlpha = 1; og.drawImage(big2, 0, 0); og.drawImage(big2, 0, 0);
+    return { canvas: out, removed, kept: comp.length - removed };
+  }
   async function autoCut(srcC, o) {
     o = o || {}; if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
     const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), sOK = !!o.allowKey && segOK(), kOK = !!o.allowKey && !sOK && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : sOK ? (aiOK() ? ["seg", "ai", "classic"] : ["seg", "classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
     for (const m of order) {
-      try { const c = await METHODS[m](srcC, o); if (!c) continue; const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
+      try { let c = await METHODS[m](srcC, o); if (!c) continue; if (o.keepMain !== false) { try { c = keepSubject(c, { frac: o.keepFrac }).canvas; } catch (_) { } } const cov = coverage(c); last = { canvas: c, method: m, cov }; tried.push(last); if (cov > .06 && cov < .985) return last; if (o.onStep) o.onStep("⚠️ نتيجة غير معقولة (" + Math.round(cov * 100) + "%) — أجرّب طريقة أخرى…"); }
       catch (e) { err = e; console.warn("PBBgRemove", m, e); if (o.onStep) o.onStep("⚠️ " + (e && e.message || e) + " — أجرّب طريقة أخرى…"); }
     }
     const ok = tried.filter(t => t.cov > .02 && t.cov < .985).sort((a, b) => b.cov - a.cov)[0];      // لا نتيجة مقبولة: الأكبر تغطية (أقرب لعدم مسح الصورة كلها)
@@ -397,5 +419,5 @@ const PBBgRemove = (function () {
     } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, live, autoCut, confidence, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, autoCut, confidence, keepSubject, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();

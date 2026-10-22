@@ -235,11 +235,13 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   const PEOPLE_RULES = "Any woman wears a hijab and fully modest clothing covering arms and legs; no revealing clothes; natural realistic faces and hands, correct anatomy, no distortion, no plastic skin. The person's ENTIRE head and face must be fully visible, uncropped and never covered, positioned in the LOWER 60% of the frame (face center around 62% of the frame height), below the empty text area. ";
   const hasPerson = (type, o) => !!(o && o.people && o.edit !== false && PEOPLE[type]);
   const NEG = "text, letters, words, numbers, watermark, logo, distorted product, extra parts, blurry, low resolution, malformed hands";
+  /* لقطة/تكوين مختلف لكل قسم: الزاوية والمسافة وطريقة العرض — كي لا تتشابه صور الأقسام */
+  const SHOTS = ["eye-level front view, product centered, hero framing", "three-quarter view from the left, slightly low camera angle, dramatic perspective", "close-up detail shot of the product's front label and texture, shallow depth of field", "top-down 45-degree view with natural props that suggest use", "side profile view from the right, product slightly off-center with strong rim light", "wide establishing shot, product small-to-medium in a rich creative setting", "tilted dynamic angle with motion cues (floating droplets, petals or particles around the product)", "calm symmetrical composition on a pedestal, product facing the viewer"];
   function bgPrompt(style, sec, o) {
     o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zn = zoneOf(sec.type, !!o.withProduct), zoneTxt = zn === "top" ? (o.withProduct ? "the top 46% of the frame" : "the top 40% of the frame") : zn === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
     const noProduct = !o.withProduct && T.product === false;
     const where = zn === "top" ? (o.withProduct ? "entirely inside the lower band of the frame (between 52% and 86% of the frame height), fully visible, centered, large, never cut off or touching any edge" : "in the lower half") : zn === "bottom" ? "in the upper half" : "small and centered";
-    const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page. " : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
+    const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page: " + SHOTS[(o.idx || 0) % SHOTS.length] + ". " + (o.refName ? "The reference photo shows the product variant \"" + o.refName + "\": keep exactly that variant's look. " : "") : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
     const person = !!(o.withProduct && hasPerson(sec.type, o));
     const solid = !!o.withProduct && o.backdrop !== "scene";
     const SOLID = `a seamless plain studio backdrop, one perfectly uniform flat ${style.bgName} (${style.palette.deep}) color filling the whole background — NO room, NO furniture, NO windows, NO shelves, NO bokeh, NO background objects at all, only a very subtle soft vignette; the subject and product are cleanly lit by soft studio light with a soft contact shadow`;
@@ -262,6 +264,9 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   const retryNote = why => (why.includes("text") ? "STRICTLY NO text, letters or numbers anywhere. " : "") + (why.includes("face") ? "STRICTLY no human faces. " : "") + (why.includes("zone") ? "Keep the requested empty area completely calm and plain. " : "") + (why.includes("artifacts") ? "Clean, undistorted, simple composition. " : "") + (why.includes("sharp") ? "Render the product perfectly sharp, in focus and large enough to read its label. " : "") + (why.includes("lowprod") ? "Place the whole product in the LOWER band only (52%-86% of the frame height), fully visible, nothing in the top half. " : "") + (why.includes("face_bad") ? "Faces and hands must look natural and undistorted. " : "") + (why.includes("product") ? "Reproduce the reference product EXACTLY and fully visible, unchanged shape, color and label. " : "");
 
   /* ───────────── ٧) هندسة التخطيط (أبعاد الصفحة 1080×1350) ───────────── */
+  /* تنويع موضع المنتج بين الأقسام (حجم ودوران وإزاحة طفيفة) كي لا يتكرر في المكان نفسه بالشكل نفسه */
+  const VAR = [{ s: 1, r: 0, dx: 0 }, { s: .92, r: -4, dx: 60 }, { s: 1.06, r: 3, dx: -50 }, { s: .88, r: 5, dx: -70 }, { s: 1.02, r: -3, dx: 40 }, { s: .95, r: 2, dx: 0 }];
+  const variation = i => VAR[i % VAR.length];
   function geometry(type, ar, edit, cta) {
     const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), c = cta ? 120 : 0, zone = zn === "top" ? { x: 70, y: 90, w: 940, h: 530 } : zn === "bottom" ? { x: 70, y: H - 650 - c, w: 940, h: 560 - c } : { x: 70, y: 150, w: 940, h: H - 300 - c };
     let prod = null;
@@ -282,6 +287,12 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   const textOn = (lum, st) => pickText((lum != null ? lum : .5) * .15 + hexLum(st.palette.deep) * .85, ["#ffffff", "#111111"]);
   /* results[i] = {sec, bgSrc, lum, prodSrc, prodAr, flags[], attempts}. ctx: {title, product, wa, lang, style, productAlt, cta, ticker}
      الاستمرارية: كل قسم يبدأ وينتهي بتدرّج إلى اللون العميق نفسه (deep) فتلتحم الصور بلا درزة، والأقسام تُدمج في صفحة واحدة طويلة */
+  /* يطبّق تنويع الحجم/الإزاحة/الدوران على صندوق المنتج مع إبقائه داخل الصفحة */
+  function pvBox(b, v) {
+    if (!v) return { x: b.x, y: b.y, w: b.w, h: b.h };
+    const w = Math.round(b.w * v.s), h = Math.round(b.h * v.s); let x = Math.round(b.x + (b.w - w) / 2 + v.dx), y = Math.round(b.y + (b.h - h)); x = Math.max(20, Math.min(W - w - 20, x));
+    return { x, y, w, h, rot: v.r };
+  }
   function buildSpec(plan, results, ctx) {
     ctx = ctx || {}; const st = ctx.style || styleBible({}, null), assets = {}, sections = [], rtl = (ctx.lang || "ar") === "ar", al = rtl ? "right" : "left", deep = st.palette.deep, hl = st.palette.hl, ctaOn = ctx.cta !== false;
     const lightBg = hexLum(deep) > .4, hlBtnTxt = c => (hexLum(c) > .45 ? "#111111" : "#ffffff");
@@ -304,7 +315,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       }
       const pk = textOn(R.lum, st);
       if (pk.scrim) layers.push({ type: "shape", shape: "rect", x: z.x - 30, y: z.y - 24, w: z.w + 60, h: z.h + 24, z: 2, fill: pk.scrim.color, opacity: pk.scrim.opacity, radius: st.radius });
-      if (R.prodSrc && g.prod) layers.push({ type: "image", src: "asset:" + pn, x: g.prod.x, y: g.prod.y, w: g.prod.w, h: g.prod.h, z: 3, fit: "contain", alt: strip(ctx.productAlt || ctx.title, 120), shadow: { x: 0, y: 26, blur: 40, color: "rgba(0,0,0,.35)", follow: true }, effects: [{ type: "float", amount: 10, duration: 6 }] });
+      if (R.prodSrc && g.prod) layers.push({ type: "image", src: "asset:" + pn, ...pvBox(g.prod, R.pv), z: 3, fit: "contain", alt: strip(ctx.productAlt || ctx.title, 120), shadow: { x: 0, y: 26, blur: 40, color: "rgba(0,0,0,.35)", follow: true }, effects: [{ type: "float", amount: 10, duration: 6 }] });
       let y = z.y;
       if (i === 0 && ctx.ticker !== false) {
         layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 64, z: 8, fill: hl, locked: true, name: "شريط علوي" });
@@ -367,7 +378,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         bg: async (prompt, i, sec) => { if (!real) return { canvas: mockBg(P.style, sec, i), mock: true }; const r = await ImgGen.edit({ textOnly: true, prompt, W, H, confirm: false, title: "خلفية قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; },
         edit: async (blob, prompt, i) => { if (!real) return null; const r = await ImgGen.edit({ blob, prompt, W, H, pro: true, confirm: false, title: "مشهد قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; }
       },
-      remover: { cutBg: async canvas => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { methods: ["classic"] }); return r && r.canvas ? r.canvas : null; }, cut: async (canvas, onStep) => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { onStep }); return r && r.canvas ? r.canvas : null; } },
+      remover: { cutBg: async canvas => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { methods: ["classic"], keepFrac: .04 }); return r && r.canvas ? r.canvas : null; }, cut: async (canvas, onStep) => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { onStep, keepFrac: .2 }); return r && r.canvas ? r.canvas : null; } },
       vision: { check: async (blob, prompt, ref) => { if (!real || typeof ImgGen === "undefined" || !ImgGen.text) return null; return ImgGen.text({ prompt, json: true, temp: .1, blobs: ref ? [ref, blob] : [blob] }); } }
     };
     return Object.assign(P, over || {});
@@ -391,17 +402,20 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { an = cleanAnalysis({}); if (photo) { const g = document.createElement("canvas"); g.width = g.height = 32; g.getContext("2d").drawImage(photo, 0, 0, 32, 32); an.colors = dominantColors(g.getContext("2d").getImageData(0, 0, 32, 32).data, 3, true); } }
     if (an.risks.some(r => /medical|cosmetic/.test(r))) note.push("المنتج يحمل مخاطر ادّعاء (" + an.risks.join("، ") + "): راجع النصوص قبل النشر.");
     /* ٢ قصّ المنتج */
-    let prod = null, prodOk = false;
+    let prod = null, prodOk = false, prods = [];
+    const hasAlpha = cv => { try { const x = cv.getContext("2d"), q = 6, pts = [[0, 0], [cv.width - q, 0], [0, cv.height - q], [cv.width - q, cv.height - q]]; return pts.every(t => { const d = x.getImageData(t[0], t[1], q, q).data; let a = 0; for (let i = 3; i < d.length; i += 4) a += d[i]; return a / (d.length / 4) < 40; }); } catch (_) { return false; } };
+    /* قصّ منتج واحد: صورة شفافة أصلاً تُستعمل كما هي؛ وإلا يُقصّ ثم تُنظَّف بقايا الخلفية (الكتل الصغيرة المنفصلة). لا يُعدَّل المنتج الأصلي أبداً */
+    const cutOne = async cv => {
+      const hasA = hasAlpha(cv); let src = hasA ? cv : null; if (!src) { try { src = await withTimeout(P.remover.cut(cv), 120000, "قصّ المنتج"); } catch (_) { src = null; } }
+      if (!src) throw new Error("تعذّر قصّ المنتج"); const tr = trimAlpha(src); if (tr.coverage < .02 || tr.bbox < .02) throw new Error("القصّ غير صالح"); tr.original = !!hasA; return tr;
+    };
     const doCutout = async () => {
-      try {
-        prod = await step("cutout", async () => {
-          /* صورة شفافة أصلاً (زوايا شفافة) تُستعمل كما هي؛ وإلا يُقصّ المنتج. لا يُعدَّل المنتج الأصلي أبداً */
-          const hasA = (() => { try { const x = photo.getContext("2d"), s = 6, pts = [[0, 0], [photo.width - s, 0], [0, photo.height - s], [photo.width - s, photo.height - s]]; return pts.every(q => { const d = x.getImageData(q[0], q[1], s, s).data; let a = 0; for (let i = 3; i < d.length; i += 4) a += d[i]; return a / (d.length / 4) < 40; }); } catch (_) { return false; } })();
-          let src = hasA ? photo : null; if (!src) { try { src = await withTimeout(P.remover.cut(photo), 120000, "قصّ المنتج"); } catch (_) { src = null; } }
-          if (!src) throw new Error("تعذّر قصّ المنتج"); const tr = trimAlpha(src); if (tr.coverage < .02 || tr.bbox < .02) throw new Error("القصّ غير صالح"); tr.original = !!hasA; return tr;
-        });
-        prodOk = true;
-      } catch (e) { note.push("تعذّر قصّ المنتج من الخلفية فاستُعملت الصورة كما هي — قد تظهر بخلفيتها."); const tr = trimAlpha(photo); tr.fallback = true; prod = tr; }
+      try { prod = await step("cutout", () => cutOne(photo)); prodOk = true; }
+      catch (e) { note.push("تعذّر قصّ المنتج من الخلفية فاستُعملت الصورة كما هي — قد تظهر بخلفيتها."); const tr = trimAlpha(photo); tr.fallback = true; prod = tr; }
+      prods = [prod];
+      /* صور المنتج الأخرى (تنويعات/زوايا): تُقصّ أيضاً لتتنوّع صورة المنتج بين الأقسام بدل تكرار الصورة نفسها */
+      for (const rf of refs.slice(1, 4)) { try { const cv = await toCanvas(rf, 1200); const tr = await cutOne(cv); if (!tr.fallback) prods.push(tr); } catch (_) { } }
+      if (prods.length > 1) note.push("استُعملت " + prods.length + " صور مختلفة للمنتج بين الأقسام.");
     };
     if (photo && !edit) await doCutout();
     else if (!photo) note.push("لا توجد صورة للمنتج: اختر منتجاً له صورة أو ارفع صورة ليظهر المنتج في الصفحة.");
@@ -427,7 +441,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         R.attempts = a;
         if (halted) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:halted"); R.error = halted; break; }
         try {
-          const pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, backdrop: inp.backdrop }); R.prompt = pr;
+          const pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, backdrop: inp.backdrop, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
           const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
           if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock;
           if (inp.gate !== false && P.real && !got.mock && R.bgBlob) {
@@ -446,19 +460,19 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       }
       if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
-      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
+      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
       results[i] = R; cb.section && cb.section(i, R);
     });
     /* فشل صورة الذكاء في وضع الدمج ← لا يبقى القسم بلا منتج: يُقصّ المنتج ويوضع فوق الخلفية المحلية لتلك الأقسام فقط */
     const fb = results.filter(r => r && r.mock);
     if (edit && fb.length && photo) {
-      await doCutout(); const ar = prod ? prod.canvas.width / prod.canvas.height : 1;
-      fb.forEach(R => { const g = geometry(R.sec.type, ar, false, ctaOn); R.prodAr = ar; R.lum = lumAt(R.bgCanvas, g.zone); R.person = false; });
+      await doCutout();
+      fb.forEach(R => { const ix = results.indexOf(R), pi = prods.length ? ix % prods.length : 0, pc = prods[pi] || prod, ar = pc ? pc.canvas.width / pc.canvas.height : 1, g = geometry(R.sec.type, ar, false, ctaOn); R.pi = pi; R.pv = variation(ix); R.prodAr = ar; R.lum = lumAt(R.bgCanvas, g.zone); R.person = false; });
       note.push("تعذّر توليد صور الذكاء لـ" + fb.length + " قسم/أقسام" + (fb[0].error ? " (" + String(fb[0].error).slice(0, 80) + ")" : "") + ": وُضع المنتج المقصوص فوق خلفية محلية — أعد التشغيل لاحقاً أو غيّر الصورة المرجعية.");
     }
     if (halted) note.push("توقّف توليد الصور مبكراً لتوفير رصيدك بسبب: " + halted + ".");
     if (!P.real) note.push("لم تُولَّد صور بالذكاء لأن Alyssum API غير مفعّل (المفتاح أو رصيد الصور): الخلفيات محلية.");
-    return { an, style, plan, results, prod, prodOk, strategy, log, note, real: P.real, colors: photo ? productColors(photo, 6) : [] };
+    return { an, style, plan, results, prod, prods, prodOk, strategy, log, note, real: P.real, colors: photo ? productColors(photo, 6) : [] };
   }
 
   /* ───────────── إعادة تلوين صفحة مولَّدة (لون الخلفية/الدرجة) بلا إعادة توليد الصور ─────────────
@@ -488,13 +502,15 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   /* ───────────── ٨) الرفع والتجميع النهائي (يحتاج PBApp/PBSpec) ───────────── */
   async function assemble(out, ctx, upload) {
     const spec0 = [];
-    const prodSrc = out.prod ? await upload(await canvasBlob(out.prod.canvas, "image/png"), "product") : "";
-    for (let i = 0; i < out.results.length; i++) { const R = out.results[i], blob = R.bgBlob || await canvasBlob(R.bgCanvas, "image/webp", .88); R.bgSrc = await upload(blob, "bg" + (i + 1)); R.prodSrc = prodSrc; spec0.push(R); }
+    const plist = (out.prods && out.prods.length ? out.prods : (out.prod ? [out.prod] : [])), prodSrcs = [];
+    for (let k = 0; k < plist.length; k++) prodSrcs.push(await upload(await canvasBlob(plist[k].canvas, "image/png"), "product" + (k ? k + 1 : "")));
+    const prodSrc = prodSrcs[0] || "";
+    for (let i = 0; i < out.results.length; i++) { const R = out.results[i], blob = R.bgBlob || await canvasBlob(R.bgCanvas, "image/webp", .88); R.bgSrc = await upload(blob, "bg" + (i + 1)); R.prodSrc = prodSrcs.length ? prodSrcs[(R.pi || 0) % prodSrcs.length] : ""; spec0.push(R); }
     const spec = buildSpec(out.plan, spec0, Object.assign({ style: out.style, strategy: out.strategy }, ctx));
     const v = PBSpec.validate(spec, { product: ctx.product });
     if (!v.ok) throw new Error(v.error || "مخطط غير صالح");
     const pg = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: ctx.merge !== false });
-    pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = [prodSrc].concat(out.results.map(r => r.bgSrc)).filter(Boolean);
+    pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = prodSrcs.concat(out.results.map(r => r.bgSrc)).filter(Boolean);
     pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, flat: out.results.some(r => r && r.flat), strategy: out.strategy, theme: out.style, colors: out.colors || [], sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: textOn(r.lum, out.style).ratio, person: !!r.person })), steps: out.log.slice(0, 200) } });
     return { page: pg, warn: (v.warn || []) };
   }

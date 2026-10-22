@@ -49,6 +49,23 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("المنتج الحقيقي مقصوص ومعروف النسبة", pipe.hasProd && pipe.ar > 0.2, pipe);
   t("سجلّ الخطوات: تحليل/قصّ/أسلوب/خطة/خلفية", ["cutout:done", "plan:failed", "background:done"].every(x => pipe.log.includes(x)) || ["cutout:done", "background:done"].every(x => pipe.log.includes(x)), pipe.log);
 
+  /* تنويع صور المنتج بين الأقسام (تنويعات/زوايا) + تنظيف بقايا القصّ */
+  const vary = await p.evaluate(async () => {
+    const H = PagePilotHybrid, bl = async u => (await fetch(u)).blob(), refs = [await bl("assets/img/tpl/generic-honey.webp"), await bl("assets/img/tpl/generic-cream.webp"), await bl("assets/img/tpl/generic-bottle.webp")];
+    const out = await H.run({ info: { title: "منتج", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 6, strategy: "composite", gate: false, noFaces: true }, {}, { real: false, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } } });
+    const pis = out.results.map(r => r.pi), rots = out.results.map(r => r.pv && r.pv.r);
+    out.results.forEach((r, i) => { r.bgSrc = "bg" + i; r.prodSrc = "pr" + (r.pi || 0); });
+    const spec = H.buildSpec(out.plan, out.results, { style: out.style, strategy: out.strategy, lang: "ar" });
+    const srcs = [...new Set(Object.keys(spec.assets || {}).filter(k => /^pr/.test(k)).map(k => spec.assets[k].src))], boxes = spec.sections.map(s => (s.layers || []).filter(l => /^asset:pr/.test(l.src || "")).map(l => l.x + "," + l.w + "," + (l.rot || 0)).join("")).filter(Boolean);
+    /* keepSubject: كتلة رئيسية + بقعة صغيرة منفصلة + بقعة تلامس الحافة */
+    const cv = document.createElement("canvas"); cv.width = 400; cv.height = 400; const g = cv.getContext("2d"); g.fillStyle = "#c33"; g.fillRect(120, 80, 160, 240); g.fillStyle = "#e90"; g.fillRect(20, 20, 30, 24); g.fillRect(0, 300, 40, 90); g.fillRect(340, 330, 20, 20);
+    const r = PBBgRemove.keepSubject(cv, { frac: .15 }); const d = r.canvas.getContext("2d").getImageData(0, 0, 400, 400).data, a = (x, y) => d[(y * 400 + x) * 4 + 3];
+    return { n: out.prods.length, pis, rots, srcs: srcs.length, boxes: new Set(boxes).size, removed: r.removed, mainOn: a(200, 200) > 200, blob1: a(30, 30), blob2: a(10, 340), blob3: a(350, 340) };
+  });
+  t("ثلاث صور منتج مقصوصة وتتناوب على الأقسام", vary.n === 3 && new Set(vary.pis).size === 3, vary);
+  t("صورة المنتج لا تتكرر: مصادر وأوضاع مختلفة بين الأقسام", vary.srcs === 3 && vary.boxes >= 4 && new Set(vary.rots).size >= 3, vary);
+  t("keepSubject يمسح البقايا ويُبقي الجسم", vary.removed === 3 && vary.mainOn && vary.blob1 < 20 && vary.blob2 < 20 && vary.blob3 < 20, vary);
+
   /* مسار إعادة المحاولة والعلم + الاسترداد: مزوّد صور "حقيقي" مُحاكى، بوابة جودة تفشل دائماً */
   const retry = await p.evaluate(async () => {
     const H = PagePilotHybrid; let calls = 0, checks = 0; const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135);
