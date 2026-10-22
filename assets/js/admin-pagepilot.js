@@ -20,7 +20,7 @@ const PagePilot = (() => {
   const S ={ resume: null, info: null, imgBlob: null, imgPath: "", imp: null };
   const BTN_CSS = "border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:12px;padding:.6rem 1rem;font-weight:800;cursor:pointer;font-family:inherit;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.25)";
   /* شحن الرصيد: 10 رصيد = 1$، صفحة كاملة 40 رصيداً (10 صور)، إعادة رسم صورة 2 رصيد */
-  const CR = { min: 50, max: 2000, step: 50, def: 400, usd: 0.1, page: 40, redo: 2 };
+  const CR = { min: 50, max: 2000, step: 50, def: 400, usd: 0.1, page: 50, ab: 100, redo: 2 };
   const FLD = "width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);font-family:inherit";
   const prods = () => { const a = typeof Admin !== "undefined" && Admin.products; return a && a.length ? a : (typeof PRODUCTS !== "undefined" && PRODUCTS) || []; };
   const race = (p, ms) => new Promise((res, rej) => { const t = setTimeout(() => rej(Object.assign(new Error("انتهت مهلة الطلب"), { code: "TIMEOUT" })), ms); p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); }); });
@@ -66,14 +66,14 @@ const PagePilot = (() => {
 <div style="display:flex;gap:8px;flex-wrap:wrap;margin:.9rem 0"><button data-pp="go" style="${BTN_CSS};background:rgba(198,254,23,.28)">✨ أنشئ الصفحة بالذكاء</button></div>
 <div id="pp-rep" style="font-size:.86rem;line-height:1.8"></div>
 <div id="pp-cr" style="margin-top:1rem;padding:1rem;border-radius:16px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05)">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>شحن الرصيد</b><div style="font-size:.78rem;opacity:.8">حرّك الشريط لاختيار المبلغ — صفحة كاملة ${CR.page} رصيداً، وإعادة رسم صورة واحدة ${CR.redo} رصيد.</div></div><div id="pp-cr-usd" style="font-size:2rem;font-weight:900;color:#c6fe17;direction:ltr"></div></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><b>شحن الرصيد</b><div style="font-size:.78rem;opacity:.8">حرّك الشريط لاختيار المبلغ — صفحة كاملة ${CR.page} رصيداً، واختبار A/B (زوج صفحات) ${CR.ab} رصيد، وإعادة رسم صورة واحدة ${CR.redo} رصيد.</div></div><div id="pp-cr-usd" style="font-size:2rem;font-weight:900;color:#c6fe17;direction:ltr"></div></div>
 <input id="pp-cr-r" type="range" min="${CR.min}" max="${CR.max}" step="${CR.step}" value="${CR.def}" style="width:100%;margin:.8rem 0 .2rem;accent-color:#c6fe17;direction:ltr"><div style="display:flex;justify-content:space-between;font-size:.74rem;opacity:.7;direction:ltr"><span>${CR.min}</span><span id="pp-cr-n"></span><span>${CR.max}</span></div>
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:.7rem 0"><div style="text-align:center;padding:.6rem;border-radius:12px;background:rgba(255,255,255,.07)"><div id="pp-cr-c" style="font-size:1.6rem;font-weight:900"></div><div style="font-size:.76rem;opacity:.8">رصيد</div></div><div style="text-align:center;padding:.6rem;border-radius:12px;background:rgba(255,255,255,.07)"><div id="pp-cr-p" style="font-size:1.6rem;font-weight:900"></div><div style="font-size:.76rem;opacity:.8">صفحة بصور المنتج</div></div><div style="text-align:center;padding:.6rem;border-radius:12px;background:rgba(255,255,255,.07)"><div id="pp-cr-i" style="font-size:1.6rem;font-weight:900"></div><div style="font-size:.76rem;opacity:.8">إعادة رسم صورة</div></div></div>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:.7rem 0"><div style="text-align:center;padding:.6rem;border-radius:12px;background:rgba(255,255,255,.07)"><div id="pp-cr-c" style="font-size:1.6rem;font-weight:900"></div><div style="font-size:.76rem;opacity:.8">رصيد</div></div><div style="text-align:center;padding:.6rem;border-radius:12px;background:rgba(255,255,255,.07)"><div id="pp-cr-p" style="font-size:1.6rem;font-weight:900"></div><div style="font-size:.76rem;opacity:.8">صفحة بصور المنتج</div></div><div style="text-align:center;padding:.6rem;border-radius:12px;background:rgba(255,255,255,.07)"><div id="pp-cr-a" style="font-size:1.6rem;font-weight:900"></div><div style="font-size:.76rem;opacity:.8">اختبار A/B (زوج صفحات)</div></div><div style="text-align:center;padding:.6rem;border-radius:12px;background:rgba(255,255,255,.07)"><div id="pp-cr-i" style="font-size:1.6rem;font-weight:900"></div><div style="font-size:.76rem;opacity:.8">إعادة رسم صورة</div></div></div>
 <button data-pp="buy" id="pp-cr-b" style="${BTN_CSS};background:rgba(198,254,23,.28);width:100%"></button>
 <div style="font-size:.74rem;opacity:.7;margin-top:.4rem">يصل طلب الشحن إلى فريق الدعم ويُضاف الرصيد بعد تأكيده.</div></div></div>`;
     document.body.appendChild(bg);
     const $ = id => bg.querySelector("#" + id), say = (h, bad) => { $("pp-rep").innerHTML = `<div style="padding:.6rem .8rem;border-radius:10px;border:1px solid ${bad ? "rgba(255,120,120,.5)" : "rgba(198,254,23,.35)"};background:${bad ? "rgba(255,80,80,.1)" : "rgba(198,254,23,.07)"}">${h}</div>`; };
-    const crDraw = () => { const c = +$("pp-cr-r").value, d = c * CR.usd; $("pp-cr-usd").textContent = "$" + d.toFixed(2); $("pp-cr-n").textContent = c; $("pp-cr-c").textContent = c; $("pp-cr-p").textContent = Math.floor(c / CR.page); $("pp-cr-i").textContent = Math.floor(c / CR.redo); $("pp-cr-b").textContent = "اطلب شحن " + c + " رصيد — " + d.toFixed(2) + " $"; };
+    const crDraw = () => { const c = +$("pp-cr-r").value, d = c * CR.usd; $("pp-cr-usd").textContent = "$" + d.toFixed(2); $("pp-cr-n").textContent = c; $("pp-cr-c").textContent = c; $("pp-cr-p").textContent = Math.floor(c / CR.page); $("pp-cr-a").textContent = Math.floor(c / CR.ab); $("pp-cr-i").textContent = Math.floor(c / CR.redo); $("pp-cr-b").textContent = "اطلب شحن " + c + " رصيد — " + d.toFixed(2) + " $"; };
     $("pp-cr-r").addEventListener("input", crDraw); crDraw();
     let theme = "green", pageColor = "";
     const setColor = c => { pageColor = c || ""; try { delete $("pp-cc").dataset.on; } catch (_) { } bg.querySelectorAll('[data-pp="col"]').forEach(x => x.style.outline = (x.dataset.c || "") === pageColor ? "2px solid #c6fe17" : ""); };
@@ -164,7 +164,7 @@ const PagePilot = (() => {
         try {
           const N = typeof AdminStores !== "undefined" && AdminStores.notify;
           if (!N) throw new Error("تعذّر الاتصال بالدعم — حاول لاحقاً");
-          await AdminStores.notify("طلب شحن رصيد Alyssum API\nالرصيد: " + c + "\nالمبلغ: " + d + " $", "billing", { credits: c, usd: +d, pages: Math.floor(c / CR.page) }, "طلب شحن رصيد: " + c);
+          await AdminStores.notify("طلب شحن رصيد Alyssum API\nالرصيد: " + c + "\nالمبلغ: " + d + " $", "billing", { credits: c, usd: +d, pages: Math.floor(c / CR.page), ab: Math.floor(c / CR.ab) }, "طلب شحن رصيد: " + c);
           say("✅ أُرسل طلب شحن " + c + " رصيد إلى الدعم — يُضاف الرصيد بعد تأكيده.");
         } catch (er) { say("❌ " + esc(er.message || er), true); }
         b.disabled = false;
