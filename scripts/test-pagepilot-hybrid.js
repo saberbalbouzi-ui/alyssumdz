@@ -269,9 +269,9 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     });
     const spec = H.buildSpec(out.plan, out.results.map((R, i) => Object.assign(R, { bgSrc: "assets/x" + i + ".webp", prodSrc: "" })), { style: out.style, strategy: out.strategy, title: "t", product: "" });
     const L = spec.sections.flatMap(S => S.layers);
-    return { flat: out.results.map(r => !!r.flat), veil: L.filter(l => /لون موحّد|إضاءة الخلفية|تدرّج اللون|وصل/.test(l.name || "")).length, cname: out.style.cname };
+    return { np: out.results.filter(r => r.person).length, flat: out.results.map(r => !!r.flat || !!r.person), veil: L.filter(l => /لون موحّد|إضاءة الخلفية|تدرّج اللون|وصل/.test(l.name || "")).length, cname: out.style.cname };
   });
-  t("خلفية موحّدة: الأقسام تُسطَّح على لون الصفحة بلا غشاء فوق الصورة", fe.flat.every(Boolean) && fe.veil === 0, fe);
+  t("خلفية موحّدة: الأقسام تُسطَّح على لون الصفحة بلا غشاء فوق الصورة", fe.flat.every(Boolean) && fe.veil <= fe.np * 2, fe);
   /* تباين الصفحة المنشورة: لون كل نص بالنسبة للخلفية */
   const html = await p.evaluate(() => PB.fullHtml(JSON.parse(JSON.stringify(PBApp.E.page)), Object.assign({ base: "/" }, PBApp.siteCtx())));
   t("HTML منشور: نص عربي حقيقي RTL لا صورة", /dir="rtl"|dir=rtl/.test(html) || /lang="ar"/.test(html));

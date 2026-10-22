@@ -236,7 +236,7 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     how_to_use: "a real adult person using the product naturally, hands and product clearly visible",
     final_cta: "a happy confident real adult person with the product, warm light"
   };
-  const PEOPLE_RULES = "Any woman wears a hijab and fully modest clothing covering arms and legs; no revealing clothes; natural realistic faces and hands, correct anatomy, no distortion, no plastic skin. The person's ENTIRE head and face must be fully visible, uncropped and never covered, positioned in the LOWER 60% of the frame (face center around 62% of the frame height), below the empty text area. ";
+  const PEOPLE_RULES = "Any woman wears a hijab and fully modest clothing covering arms and legs; no revealing clothes; natural realistic faces and hands, correct anatomy, no distortion, no plastic skin. The person's clothing must be in a neutral color that clearly contrasts with the backdrop color (never the same color or tone as the background, so the body never melts into it), with both arms, hands and the whole upper body fully visible and complete (no missing or faded limbs). The person's ENTIRE head and face must be fully visible, uncropped and never covered, positioned in the LOWER 60% of the frame (face center around 62% of the frame height), below the empty text area. ";
   const hasPerson = (type, o) => !!(o && o.people && o.edit !== false && PEOPLE[type]);
   const NEG = "text, letters, words, numbers, watermark, logo, distorted product, extra parts, blurry, low resolution, malformed hands";
   /* لقطة/تكوين مختلف لكل قسم: الزاوية والمسافة وطريقة العرض — كي لا تتشابه صور الأقسام */
@@ -257,7 +257,7 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   }
   /* تعليمات الاستمرارية: الصورة الثانية = القسم السابق (والثالثة = أول قسم) */
   function continuityNote(hasFirst) {
-    return "VISUAL CONTINUITY (very important): the second attached image is the PREVIOUS section of this same long vertical landing page" + (hasFirst ? " and the third attached image is the FIRST section (the style anchor)" : "") + ". Keep EXACTLY the same backdrop — same background color, texture, surface and props family, depth of field, light direction, color grade and mood — so that this image placed directly below the previous one looks like ONE continuous scene of the same place: the top edge of this image must flow seamlessly from the bottom edge of the previous image (same color and brightness at the seam). Only the product placement, camera angle, framing and the focal element change; do NOT copy the previous product pose and do NOT reuse its text area. Never invent a new room, new color scheme or new lighting.";
+    return "VISUAL CONTINUITY (very important): the second attached image is the PREVIOUS section of this same long vertical landing page" + (hasFirst ? " and the third attached image is the FIRST section (the style anchor)" : "") + ". Keep EXACTLY the same backdrop — same background color, texture, surface and props family, depth of field, light direction, color grade and mood — so that this image placed directly below the previous one looks like ONE continuous scene of the same place: the top edge of this image must flow seamlessly from the bottom edge of the previous image (same color and brightness at the seam). The previous image is ONLY a color/light reference: this image must be a NEW photograph — the product must be shown rotated to a clearly different angle (at least 45 degrees different), at a different scale and position, with a different focal composition and different small props; do NOT copy the previous product pose or framing and do NOT reuse its text area. Never invent a new room, new color scheme or new lighting.";
   }
   function gatePrompt(o) {
     const z = o.zone === "bottom" ? "الجزء السفلي" : o.zone === "full" ? "الجزء الأوسط" : "الجزء العلوي";
@@ -442,7 +442,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
     if (inp.strategy !== "composite" && !wantEdit && photo) note.push("دمج المنتج في المشهد يحتاج مفتاح Alyssum API: استُعمل قصّ المنتج فوق خلفية محلية.");
     const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta !== false, results = [];
-    let halted = ""; const HARD = /quota|limit|billing|credit|insufficient|402|429|permission|unauthori|forbidden|api key|رصيد|حدّ|حد الاستخدام/i;
+    let halted = ""; const HARD = /quota|billing|credit|insufficient|402|permission|unauthori|forbidden|api key|رصيد|حدّ|حد الاستخدام|الحصة|exceeded your current/i, RATE = /429|rate.?limit|too many|resource.?exhausted|overload|503|retry in|ازدحام/i;   /* الحدّ الفعلي يوقف الباقي؛ ازدحام/تمهّل مؤقت لا يوقفه بل يُنتظر ويُعاد */
     const chain = edit && inp.chain !== false && P.real; let prevRaw = null, firstRaw = null;   /* استمرارية بصرية: القسم i يُرسم مع صورة القسم السابق مرجعاً (بالتتابع) */
     await pool(plan.sections, chain ? 1 : 3, async (sec, i) => {
       const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, refBlob = refs.length ? refs[i % refs.length] : null; R.ref = refs.length ? i % refs.length : -1;
@@ -464,7 +464,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
           break;
         } catch (e) {
           if (e && (e.code === "NOKEY" || e.code === "OFF")) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; break; }
-          const em = String((e && (e.message || e.code)) || ""); if (HARD.test(em)) halted = em.slice(0, 120);   /* حدّ/رصيد/صلاحية: توقّف عن بقية الأقسام فلا يتكرر الخصم بلا فائدة */
+          const em = String((e && (e.message || e.code)) || ""); if (!HARD.test(em) && RATE.test(em) && (R.rl = (R.rl || 0) + 1) <= 3) { const m = /retry in (\d+)/i.exec(em); await new Promise(r => setTimeout(r, Math.min(60000, (m ? +m[1] + 2 : 20 * R.rl) * 1000))); a--; continue; } if (HARD.test(em)) halted = em.slice(0, 120);   /* حدّ/رصيد/صلاحية: توقّف عن بقية الأقسام فلا يتكرر الخصم بلا فائدة */
           if (halted || a >= 2) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:bg_failed"); R.error = e && e.message; break; }
           extra = ""; await new Promise(r => setTimeout(r, 600));
         }
@@ -472,7 +472,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       if (chain && !R.mock && R.rawKeep) { prevRaw = R.rawKeep; if (!firstRaw) firstRaw = R.rawKeep; }
       if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
-      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
+      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !R.person && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
       results[i] = R; cb.section && cb.section(i, R);
     });
     /* فشل صورة الذكاء في وضع الدمج ← لا يبقى القسم بلا منتج: يُقصّ المنتج ويوضع فوق الخلفية المحلية لتلك الأقسام فقط */
