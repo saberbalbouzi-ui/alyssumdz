@@ -103,9 +103,6 @@ const PagePilot = (() => {
         if (resumeIt && !RS) throw new Error("تغيّرت الإعدادات منذ المحاولة السابقة — اضغط «أنشئ الصفحة» لبدء إنشاء جديد");
         const nTodo = RS ? RS.plan.sections.filter((x, k) => !RS.results[k]).length : (cnt || 8);
         if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
-        if (ImgGen.credit && ImgGen.credit.state && ImgGen.credit.state() === "out" && ImgGen.renewLocal) { if (confirm("عدّاد الرصيد في هذا المتصفح يرى أن الرصيد انتهى (قد يكون قديماً بعد تجديدك). هل جدّدتَ الرصيد فعلاً؟ سأصفّر العدّاد وأتابع.")) ImgGen.renewLocal(); else throw new Error("جدّد الرصيد ثم أعد المحاولة"); }
-        { const E = ImgGen.estimate ? ImgGen.estimate() : null, need = E ? E.cost * nTodo * ($("pp-gate").checked ? 1.6 : 1.2) : 0;
-          if (E && isFinite(E.left) && E.left < need) { if (confirm("سقف الاستعمال المحلي في هذا المتصفح لا يكفي لرسم " + nTodo + " صورة (وإعادات فحص الجودة). هل أرفع السقف تلقائياً ليكفي؟ (تجديد رصيدك عند المزوّد لا يغيّر هذا السقف)")) ImgGen.raiseCap && ImgGen.raiseCap(need - E.left + E.cost); else throw new Error("ارفع سقف الاستعمال من إعدادات مولّد الصور ثم أعد المحاولة"); } }
         if (!confirm("سيرسم الذكاء " + (RS || cnt ? nTodo : "حتى 8") + " صورة مربّعة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + (RS ? RS.plan.sections.length : (cnt || "حتى 8")) + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");

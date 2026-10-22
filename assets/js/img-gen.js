@@ -27,7 +27,7 @@ const ImgGen = (() => {
   const priceOf = m => PRICE[m] || .07;
   const S = { mode: "product", tab: "make", prod: null, srcBlob: null, srcName: "", res: null, resBlob: null, busy: false, models: null, lastModel: "" };
   const cfg = {
-    budget: () => Number(LS.get("alyssum_ig_budget", "3")) || 0, spent: () => Number(LS.get("alyssum_ig_spent", "0")) || 0, count: () => Number(LS.get("alyssum_ig_count", "0")) || 0,
+    budget: () => 0, /* بلا سقف محلي: المزوّد وحده يفرض الحدّ الفعلي */ spent: () => Number(LS.get("alyssum_ig_spent", "0")) || 0, count: () => Number(LS.get("alyssum_ig_count", "0")) || 0,
     model: () => LS.get("alyssum_ig_model", "auto"), provider: () => LS.get("alyssum_ig_provider", "gemini") === "fal" ? "fal" : "gemini", falModel: () => (LS.get("alyssum_ig_falmodel", "") || "fal-ai/nano-banana/edit").trim(), falPrice: () => Number(LS.get("alyssum_ig_falprice", "0.04")) || 0.04, lang: () => LS.get("alyssum_ig_lang", "ar"), fmt: () => LS.get("alyssum_ig_fmt", "webp")
   };
   const money = n => "$" + (Math.round(n * 1000) / 1000).toFixed(3);          // داخلي فقط: لا تُعرض قيم الاستهلاك للمستخدم
@@ -244,11 +244,9 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
 <div class="ap-sec"${fal ? ' style="display:none"' : ""}><b>مفتاح Alyssum API (المسار أ)</b><div class="hint">يُحفظ في هذا المتصفح فقط. احصل عليه من لوحة مزوّد الخدمة (مشروع جديد بلا قيود)، ونماذج الصور تتطلب تفعيل الفوترة بحدّ إنفاق صغير. المفتاح نفسه يعمل لتوليد النصوص في السوشيال.</div>
 <div class="tl-s"><input id="ig-key" type="password" autocomplete="off" placeholder="AIza…" value="${esc(LS.get(KEY, ""))}" onchange="ImgGen.saveKey()"><div class="action-bar"><button type="button" class="small" onclick="ImgGen.test()">اختبار المفتاح</button></div><div class="hint" id="ig-tmsg"></div></div></div>
 <div class="ap-sec"><b>رصيد الاستعمال</b><div class="tl-s">
-<div class="tl-r"><span>سقف الاستعمال — يتوقف التوليد عند بلوغه (0 = بلا حدّ)، وتصلك تنبيهات عند الاقتراب من النفاد وعند النفاد</span><input type="number" step="0.5" min="0" value="${cfg.budget()}" onchange="ImgGen.set('budget',this.value)"></div>
 <div class="tl-r"><span>النموذج</span><select onchange="ImgGen.set('model',this.value)"><option value="auto"${cfg.model() === "auto" ? " selected" : ""}>تلقائي — الأرخص أولاً (≈ $0.039 للصورة)</option>${PREF.map(m => `<option value="${m}"${cfg.model() === m ? " selected" : ""}>${MLBL[m] || m} (≈ ${money(priceOf(m))})</option>`).join("")}</select></div>
 <div class="tl-r"><span>صيغة الحفظ في المكتبة</span><select onchange="ImgGen.set('fmt',this.value)"><option value="webp"${cfg.fmt() === "webp" ? " selected" : ""}>WebP (أخف)</option><option value="png"${cfg.fmt() === "png" ? " selected" : ""}>PNG</option></select></div>
-<div class="action-bar"><button type="button" class="small gray" onclick="ImgGen.resetSpent()">تصفير عدّاد المصروف</button></div>
-<div class="hint">العدّاد تقديري من هذا المتصفح (سعر الصورة المعلن) وليس كشف حساب؛ راجع الرصيد الفعلي في لوحة المزوّد. لا إعادة محاولة تلقائية: كل ضغطة = صورة واحدة.</div></div></div>`;
+<div class="hint">لا يوجد سقف محلي: الحدّ الفعلي هو رصيد المزوّد وحده. لا إعادة محاولة تلقائية: كل ضغطة = صورة واحدة.</div></div></div>`;
   }
   function paintPrev() {
     const p = $("ig-prev"); if (!p) return; if (!S.srcBlob) return;
@@ -696,7 +694,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) { LS.set(FALKEY, k.trim()); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, model3d, model3dReady, credit, renewLocal: () => { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); }, raiseCap: n => { const b = cfg.budget(); if (b) { LS.set("alyssum_ig_budget", String(Math.ceil((b + n) * 2) / 2)); credit.renew(); } }, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, model3d, model3dReady, credit, renewLocal: () => { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); }, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

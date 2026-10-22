@@ -284,20 +284,14 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     await m.screenshot({ path: shotDir + "/demo-full.png", fullPage: true }); console.log("لقطة:", shotDir + "/demo-full.png", "height", hh);
     await m.close();
   }
-  /* سقف الاستعمال المحلي: لا يكفي لعدد الأقسام ← سؤال برفع السقف (بلا مبالغ)، والموافقة ترفعه */
+  /* لا سقف محلي: عدّاد المصروف الكبير لا يمنع التوليد ولا يظهر سؤال رفع السقف */
   const cap = await p.evaluate(async () => {
     const msgs = []; window.confirm = m => { msgs.push(m); return true; };
-    ImgGen.credit = { state: () => "ok", renew() { }, note() { } };
-    ImgGen.set("budget", 3); localStorage.setItem("alyssum_ig_spent", "2.9");
-    const before = ImgGen.estimate().left; PagePilot.open(); const g = id => document.querySelector("#pp-bg #" + id);
-    const slug = ((Admin.products && Admin.products.length ? Admin.products : PRODUCTS).find(x => x.cover) || {}).slug; g("pp-prod").value = slug; g("pp-prod").dispatchEvent(new Event("change"));
-    g("pp-hn").value = "6"; ImgGen.edit = async () => { throw new Error("stop-here"); };
-    document.querySelector('#pp-bg [data-pp="go"]').click();
-    for (let i = 0; i < 60 && !msgs.length; i++) await new Promise(r => setTimeout(r, 100));
-    await new Promise(r => setTimeout(r, 500));
-    return { msgs, before, after: ImgGen.estimate().left, cost: ImgGen.estimate().cost, dollars: msgs.some(m => /\$|دولار|USD/.test(m)) };
+    localStorage.setItem("alyssum_ig_budget", "3"); localStorage.setItem("alyssum_ig_spent", "2.99");
+    const e = ImgGen.estimate();
+    return { left: e.left, can: e.can(50), cap: /سقف/.test(document.body.innerHTML.slice(0, 0)) };
   });
-  t("سقف محلي ناقص ← سؤال برفع السقف، والموافقة تزيد المتبقي ليكفي، بلا أرقام مالية", cap.msgs.length >= 1 && /سقف/.test(cap.msgs[0]) && cap.after >= cap.cost * 6 && !cap.dollars, cap);
+  t("لا سقف محلي: المتبقي غير محدود حتى مع عدّاد مصروف كبير", cap.left === Infinity && cap.can, cap);
   t("بلا أخطاء صفحة", errs.length === 0, errs);
   console.log(ok + " ✓ / " + bad + " ✗"); await b.close(); process.exit(bad ? 1 : 0);
 })();
