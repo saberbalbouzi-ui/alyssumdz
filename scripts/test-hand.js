@@ -241,7 +241,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     await p.mouse.move(ww.x, ww.y); await p.mouse.down(); await p.mouse.move(ww.x + 80, ww.y, { steps: 4 }); await p.mouse.up(); await p.waitForTimeout(200);
     ok("توسيع: لا يمكن سحب المقبض للداخل (الإطار لا يقلّ عن الصورة)", await p.evaluate(() => { const x = PBApp.xpGet(); return x.l === 0; }));
     await p.evaluate(() => { window.__aiCalls = []; document.querySelector('#pbai [data-ai="expand"]').click(); }); await p.waitForTimeout(4500);
-    ok("توسيع: يُرسل طلبين ويعرض خيارين للاختيار", await p.evaluate(() => (window.__aiCalls || []).filter(u => /generateContent/.test(u)).length === 2 && document.querySelectorAll("#pbai-res img").length === 2 && document.querySelectorAll("#pbai-res input[name=pbai-v]").length === 2), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
+    ok("توسيع: يُرسل طلباً واحداً ويعرض نتيجة واحدة", await p.evaluate(() => (window.__aiCalls || []).filter(u => /generateContent/.test(u)).length === 1 && (document.querySelectorAll("#pbai-res img").length === 1 || !!(window.__live && window.__live.cv)) && document.querySelectorAll("#pbai-res input[name=pbai-v]").length === 0), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
   }
   await p.evaluate(() => document.querySelector('[data-imgm="erase"]').click()); await p.waitForTimeout(700);
   ok("الممحاة الذكية: تفتح محرّر الفرشاة", await p.evaluate(() => !!document.getElementById("pbs-er")));
@@ -866,7 +866,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const igt = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); const $ = id => document.getElementById(id);
     window.confirm = () => true; ImgGen.open(); ImgGen.tab("set"); const k = $("ig-key"); k.value = "TESTKEY"; ImgGen.saveKey(); ImgGen.tab("make"); ImgGen.mode("ad"); await wait(30);
-    const ui = { bgm: !!$("ig-bgm"), opts: $("ig-bgm") ? Array.from($("ig-bgm").options).map(o => o.value).join() : "", tn: !!$("ig-t-name"), td: !!$("ig-t-desc"), tg: !!$("ig-t-goal"), go: !!$("ig-go") && /توليد صورة ذكية/.test($("ig-go").textContent), go2: !!$("ig-go2") && /في المطوّر/.test($("ig-go2").textContent), cbox: $("ig-bgcbox").style.display };
+    const ui = { bgm: !!$("ig-bgm"), opts: $("ig-bgm") ? Array.from($("ig-bgm").options).map(o => o.value).join() : "", tn: !!$("ig-t-name"), td: !!$("ig-t-desc"), tg: !!$("ig-t-goal"), go: !!$("ig-go") && /توليد صورة/.test($("ig-go").textContent), go2: !!$("ig-go2") && /في المطوّر/.test($("ig-go2").textContent), cbox: $("ig-bgcbox").style.display };
     ImgGen.mode("product"); await wait(30); const noGoalInProduct = !$("ig-t-goal"); ImgGen.mode("ad"); await wait(30);
     $("ig-name").value = "عسل السدر"; $("ig-desc").value = "عسل جبلي طبيعي"; $("ig-goal").value = "خصم 30%";
     $("ig-t-name").checked = true; ImgGen.tog(); const l1 = $("ig-txt").value; $("ig-t-desc").checked = true; $("ig-t-goal").checked = true; ImgGen.tog(); const l3 = $("ig-txt").value, boxShown = $("ig-txtbox").style.display;
@@ -1386,7 +1386,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     ImgGen.edit = old; window.confirm = oc;
     return { head, soon, boxes, calls: calls.length, cards, life: /no face/.test(life) && !/no people/.test(life), plain: /no people/.test(plain), lifeShots };
   });
-  ok("تصوير المنتج بالذكاء: الصف مفعّل ويعرض مشاهد للاختيار ويُنتج خيارات متعددة بموافقة واحدة", /تصوير المنتج بالذكاء/.test(ps.head) && !ps.soon && ps.boxes >= 15 && ps.calls === 3 && ps.cards === 3, ps);
+  ok("تصوير المنتج بالذكاء: الصف مفعّل ويعرض مشاهد للاختيار ويُنتج خيارات متعددة بموافقة واحدة", /تصوير المنتج/.test(ps.head) && !ps.soon && ps.boxes >= 15 && ps.calls === 3 && ps.cards === 3, ps);
   ok("مشاهد الاستخدام اليومي (يد/طاولة/ملبوس/مكتب/هدية) محتشمة بلا وجه، والمشاهد العادية بلا أشخاص", ps.life && ps.plain && ["hand", "table", "worn", "desk", "gifting"].every(k => ps.lifeShots.includes(k)), ps);
   // ── عرض 360°: عنصر الصفحة + أداة الذكاء (محاكاة) + رفع صور حقيقية + تحسين الجودة ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
@@ -1409,7 +1409,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const small = await dim(await PBAI._t.polish(await mkB(300, 200), 1280)), big = await dim(await PBAI._t.polish(await mkB(1400, 900), 1280));
     return { head, row, soon, file, calls: calls.length, ex: calls.map(c => c.extra).join(), nc: calls.every(c => c.conf === false || c.conf === undefined), thumbs, has, lines, up: paths.length, T: /90 degrees/.test(T) && /SAME product/.test(T) && /No people/.test(T), small, big };
   });
-  ok("عرض 360°: الصف مفعّل ويفتح لوحة فيها رفع الصور الحقيقية", /360/.test(v3.head) && v3.row && !v3.soon && v3.file, v3);
+  ok("عرض 360°: الصف مفعّل ويفتح لوحته (بلا خيار رفع مجاني)", /360/.test(v3.head) && v3.row && !v3.soon && !v3.file, v3);
   ok("عرض 360° بالذكاء: 6 إطارات = 5 توليدات بموافقة واحدة (الأول الأصل)، ثم تُرفع ويُضاف عنصر view360 بـ6 أسطر", v3.calls === 5 && v3.thumbs === 6 && v3.has && v3.lines === 6 && v3.up === 6 && v3.T, v3);
   ok("تحسين الجودة قبل الاستعمال: الصورة الصغيرة تُكبَّر (≥1280) والكبيرة تبقى كما هي", v3.small[0] >= 1280 && v3.big[0] === 1400, v3);
   const vr = await (async () => {
@@ -1506,7 +1506,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const live = PBApp.liveOn && PBApp.liveOn(); ImgGen.edit = old;
     return { head, modes, who, hijab: /hijab/.test(pm) && /NO bare arms/.test(pm), ghost: /GHOST MANNEQUIN/.test(pg), flat: /FLAT LAY/.test(pf), wr: /wrinkles/.test(pw) && /smooth/.test(pw), faceless: /faceless/.test(pman), keep: [pm, pg, pf, pw].every(x => /EXACTLY/.test(x)), calls, live };
   });
-  ok("استوديو الأزياء: صف «استوديو أزياء ذكي» يفتح لوحته بأوضاعها الأربعة وخيارات العارض", /استوديو أزياء ذكي/.test(fa.head) && fa.modes.join() === "model,ghost,flat,wrinkle" && fa.who, fa);
+  ok("استوديو الأزياء: صف «استوديو أزياء ذكي» يفتح لوحته بأوضاعها الأربعة وخيارات العارض", /استوديو الأزياء/.test(fa.head) && fa.modes.join() === "model,ghost,flat,wrinkle" && fa.who, fa);
   ok("استوديو الأزياء: التعليمات محتشمة (خمار وبلا جلد مكشوف)، تحفظ القطعة، وتميّز الأوضاع", fa.hijab && fa.ghost && fa.flat && fa.wr && fa.faceless && fa.keep, fa);
   ok("استوديو الأزياء: التنفيذ يستدعي التوليد بمقاس 4:5 ويعرض النتيجة على الصورة", fa.calls.length === 1 && fa.calls[0].W === 1280 && fa.calls[0].H === 1600 && /GHOST/.test(fa.calls[0].p) && !!fa.live, fa);
   await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
@@ -1892,7 +1892,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.setItem(k, "fr")); PBApp.ltoggle("add"); await w(150); PBApp.ltoggle("img"); await w(500);
     R.fr = pane.querySelector('[data-imgt="bg"] span').textContent.trim(); ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.removeItem(k)); PBApp.close(); await w(300); return R;
   });
-  ok("أيقونات الأدوات: كل الصور تُحمَّل، والعناوين نصوص HTML من ملف الترجمة (عربي افتراضي وفرنسي عند ضبط اللغة)", icn.imgs >= 10 && icn.imgs === icn.imgsN && icn.tileTitle === "نزع الخلفية" && icn.rowTitle === "الهوية البصرية" && icn.rowIc && icn.langs && icn.n === 18 && icn.fr === "Suppression de fond", icn);
+  ok("أيقونات الأدوات: كل الصور تُحمَّل، والعناوين نصوص HTML من ملف الترجمة (عربي افتراضي وفرنسي عند ضبط اللغة)", icn.imgs >= 10 && icn.imgs === icn.imgsN && icn.tileTitle === "نزع الخلفية" && icn.rowTitle === "الهوية البصرية" && icn.rowIc && icn.langs && icn.n === 41 && icn.fr === "Suppression de fond", icn);
   const sdt = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; const btn = document.querySelector('.nav-btn[onclick*="studio"]'); R.btn = !!btn && btn.dataset.grp === "apps"; R.noAll = !document.querySelector('.nav-btn[data-app="tools"]'); btn.click(); await w(1500);
     const vis = () => !document.getElementById("tab-studio").classList.contains("hidden"); R.vis = vis();
@@ -1903,7 +1903,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     document.querySelector("[data-sdback]").click(); await w(100); R.back = document.querySelectorAll("#sd-list .sd-card").length;
     document.querySelector('[data-sdt="bg"]').click(); await w(300); const fr = document.getElementById("sd-fr"); R.frSrc = fr ? fr.getAttribute("src") : ""; R.noOld = !document.querySelector("#studio-content .sd-act");
     window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "h", h: 3210 }, source: fr.contentWindow })); await w(50); R.h = fr.style.height;
-    let go = ""; const og = AdminNav.toolGo; AdminNav.toolGo = id => { go = id; }; window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: fr.contentWindow })); window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: window })); AdminNav.toolGo = og; R.go2 = go;
+    let go = ""; const og = ToolWin.open; ToolWin.open = id => { go = id; }; window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: fr.contentWindow })); window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: window })); ToolWin.open = og; R.go2 = go;
     document.querySelector("[data-sdback]").click(); Admin.tab("home"); await w(200); R.hidden = !vis(); return R;
   });
   ok("ستوديو ديزاين: لا تبويب «كل الأدوات»، كل الأدوات (41) بمرشحات وبحث، الأداة تفتح صفحتها مباشرة (إطار صفحة التعريف الغنية بارتفاع تلقائي وزرّها يفتح المحرّر)، وللأدوات بلا صفحة تعريف صفحة مختصرة بلا دليل", sdt.btn && sdt.noAll && sdt.vis && sdt.n === 41 && sdt.chips === 4 && sdt.icons >= 14 && sdt.f >= 1 && sdt.f < 30 && /studio=v360/.test(sdt.hash) && sdt.page === "عرض 360° للمنتج" && sdt.steps >= 3 && sdt.rel >= 1 && sdt.go && sdt.noGuide && sdt.back === 41 && /saas\/landing\/remove-background\/\?embed=1$/.test(sdt.frSrc) && sdt.noOld && sdt.h === "3210px" && sdt.go2 === "bg" && sdt.hidden, sdt);
