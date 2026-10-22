@@ -18,7 +18,7 @@ const PBSpec = (() => {
   const CONT = ["float", "pulse", "sweep", "glow", "kenburns", "spin", "sway", "hoverLift", "hoverZoom", "hoverTilt", "shine"];
   const BLENDS = ["multiply", "screen", "overlay", "soft-light", "hard-light", "color-dodge", "color-burn", "darken", "lighten", "difference", "luminosity"];
   const SHAPES = ["rect", "ellipse", "triangle", "diamond", "pentagon", "hexagon", "octagon", "star4", "star5", "star6", "burst", "seal", "sparkle", "arrowR", "arrowL", "arrowU", "arrowD", "semicircle", "ring"];
-  const ICONS = ["leaf", "brain", "zap", "sprout", "sparkle", "shield-check", "truck", "cash", "headset", "cart", "check-circle", "pin", "box", "star", "heart", "gift", "clock", "phone", "mail", "award", "droplet", "sun", "flame"];
+  const ICONS = ["leaf", "brain", "zap", "sprout", "sparkle", "shield-check", "truck", "cash", "headset", "cart", "check-circle", "pin", "box", "star", "heart", "gift", "clock", "phone", "mail", "award", "drop", "sun", "flame"];
   const SEC_KIND = ["canvas", "order"];
   const LIMITS = { sections: 40, layers: 400 };
 
@@ -68,6 +68,7 @@ const PBSpec = (() => {
       o.src = vidSrc(L.src); o.poster = imgRef(str(L.poster, 600).trim()); o.autoplay = !!L.autoplay; o.alt = str(L.alt, 200);
       if (!o.src) { warn.push(where + ": فيديو بلا رابط صالح (https أو mp4/webm) — تُجوهلت"); return null; }
     } else if (o.type === "icon") {
+      if (L.icon === "droplet") L.icon = "drop";
       o.icon = ICONS.includes(L.icon) || /^img:assets\/img\/icons\/[\w.-]+\.svg$/.test(String(L.icon || "")) ? L.icon : "sparkle"; o.color = col(L.color, "#2e7d32"); o.size = num(L.size, 12, 400, 56); o.title = str(L.title, 80); o.text = str(L.text, 200);
     }
     if (o.x + o.w < 0 || o.x > dw || o.y > secH + 200) warn.push(where + ": الطبقة خارج حدود القسم");

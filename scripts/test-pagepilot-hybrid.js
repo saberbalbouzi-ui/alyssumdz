@@ -74,7 +74,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("كل قسم يأخذ صورة مرجعية مختلفة من صور المنتج", ed.refsUsed === "0,1,2" && ed.calls >= 6, ed);
   t("برومبت الدمج: المنتج داخل المشهد ومختلف عن بقية الأقسام وبمشاهد متنوعة", ed.noProduct && ed.scenes >= 5, ed);
   t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);
-  t("أقسام المشكلة/الأسئلة تُعاد توزيع منطقة نصها لتتسع للمنتج", ed.faqZone === "bottom" && ed.probZone === "top", ed);
+  t("أقسام المشكلة/الأسئلة تُعاد توزيع منطقة نصها لتتسع للمنتج", ed.faqZone === "top" && ed.probZone === "top", ed);
 
   /* أسلوب المنافس: لون المنتج، كلمة مبرزة، صفوف أيقونات، زر في كل قسم، شريط علوي، أشخاص، صفحة متصلة */
   const cp = await p.evaluate(() => {
@@ -95,16 +95,28 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const v = PBSpec.validate(spec, {}); o.valid = v.ok; const pg = PBSpec.toPage(v, { title: "t", merge: true }); o.mergedSecs = pg.sections.length;
     const pe = H.bgPrompt(st, { type: "hero", scene: "x" }, { withProduct: true, people: true, noFaces: true, audience: "نساء" }), pp = H.bgPrompt(st, { type: "benefits", scene: "x" }, { withProduct: true, people: true, noFaces: true });
     o.pHero = /hijab/.test(pe) && /real adult person/.test(pe) && !/No human faces/.test(pe); o.pBen = /No human faces/.test(pp) && !/hijab/.test(pp); o.crisp = /sharp, photorealistic/.test(pe); o.tone = /navy blue/.test(pe) && /seamless/.test(pe);
+    /* جولة الشكاوى: لون موحّد، أيقونات صالحة، لا تداخل، المنتج في الشريط السفلي */
+    const sg = H.styleBible({ colors: ["#c9c9c9", "#b8b8b8"] }, null), hg = H.hex2hsl ? 0 : 0; o.greenDeep = sg.cname; 
+    const names = new Set(Object.keys(PB.ICONS || {}).concat((PB.ICONS_LIST || []))); o.pbIconsType = Array.isArray(PB.ICONS) ? "arr" : typeof PB.ICONS;
+    o.iconsValid = v.ok && PBSpec.ICONS.every(n => (typeof PB.iconHtml === "function" && /<svg/.test(String(PB.iconHtml("ic:" + n)))));
+    o.tint = spec.sections.every(sc => sc.layers.some(l => l.name === "لون موحّد" && l.h === 1350));
+    const vv = PBSpec.validate(spec, {}); const sb = vv.sections[by("benefits")], ics = sb.layers.filter(l => l.type === "icon"), cs = sb.layers.filter(l => l.type === "shape" && l.shape === "ellipse");
+    o.iconCentered = ics.length >= 2 && ics.every((ic, k) => Math.abs((ic.y + ic.h / 2) - (cs[k].y + cs[k].h / 2)) <= 2 && Math.abs((ic.x + ic.w / 2) - (cs[k].x + cs[k].w / 2)) <= 2);
+    const tx = sb.layers.filter(l => l.type === "text" && l.z === 5); const lim = 90 + 530; o.rowsInZone = tx.every(l => l.y + 30 <= lim + 40);
+    o.pBand = /52% and 86%/.test(pe) && /top 46%/.test(pe) && /must NOT enter/.test(pe); o.gLow = /product_low/.test(H.gatePrompt({ zone: "top", ref: true })) && /lowprod/.test(H.gateOk({ product_low: false }, true, true).why.join());
     o.gateP = /product_sharp/.test(H.gatePrompt({ zone: "top", ref: true })); o.gok = H.gateOk({ product_sharp: false, product_matches: true }, true, true).why.join();
     return o;
   });
   t("لون المنتج يحكم الأسلوب: اسم اللون وأبيض/أصفر مميّز بتباين كافٍ", /navy|blue/.test(cp.cname) && cp.deepDark && cp.hlContrast, cp);
   t("الخطة: كلمة مبرزة من العنوان وأيقونات صحيحة (الدخيل يُستبدل) وبلا أيقونات للأسئلة الشائعة", cp.hlKept === "نهائياً" && /^truck,/.test(cp.icons) && cp.icons.split(",")[1] !== "bogus" && cp.faqPlain, cp);
   t("زر طلب في كل قسم بأسفله، وشريط علوي في الأول فقط", cp.btnAll && cp.btnY === 1200 && cp.ticker === 2 && !cp.tickerOther, cp);
-  t("عنوان كبير بسطرين: أبيض + كلمة مميّزة بلون التمييز", cp.heads === 2 && cp.hlColor && cp.headSize >= 76, cp);
+  t("عنوان كبير بسطرين: أبيض + كلمة مميّزة بلون التمييز", cp.heads === 2 && cp.hlColor && cp.headSize >= 56, cp);
   t("صفوف المزايا: دائرة + أيقونة + نص لكل نقطة", cp.rowIcons === 3 && cp.circles === 3 && /^truck,/.test(cp.iconNames), cp);
   t("الاستمرارية: تدرّج لوني بكل قسم، خلفية موحّدة، والأقسام تُدمج في قماش واحد", cp.grads && cp.sameBg && cp.valid && cp.mergedSecs === 1, cp);
   t("الأشخاص: هيرو بشخص (حجاب ولباس ساتر)، المزايا بلا وجوه، والمنتج حاد ولونه من المنتج", cp.pHero && cp.pBen && cp.crisp && cp.tone, cp);
+  t("خلفية بلون المنتج (أخضر عند غياب لون ملوّن) وطبقة لون موحّد على كل قسم", /green/.test(cp.greenDeep) && cp.tint, cp);
+  t("الأيقونات: كل الأسماء صالحة (لا نص «ic:xxx») وتتمركز داخل دوائرها بلا انجراف", cp.iconsValid && cp.iconCentered, cp);
+  t("النص داخل منطقته فوق المنتج، والمنتج في الشريط السفلي (برومبت وبوابة)", cp.rowsInZone && cp.pBand && cp.gLow, cp);
   t("بوابة الجودة تفحص حدّة المنتج وتعيد المحاولة", cp.gateP && /sharp/.test(cp.gok), cp);
 
   /* الواجهة الكاملة: منتج المتجر ← صفحة هجينة تُفتح في المطوّر */

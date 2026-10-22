@@ -16,6 +16,8 @@ const PagePilotHybrid = (() => {
   /* ───────────── ألوان وتباين (WCAG) ───────────── */
   const hex2rgb = h => { h = String(h || "").replace("#", ""); if (h.length === 3) h = h.replace(/./g, "$&$&"); const n = parseInt(h, 16); return isNaN(n) || h.length !== 6 ? null : [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
   const rgb2hex = (r, g, b) => "#" + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+  const hex2hsl = h => { const c = hex2rgb(h); if (!c) return [0, 0, 0]; const [r, g, b] = c.map(v => v / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, l = (mx + mn) / 2; let hh = 0; if (d) hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(hh * 60 + 360) % 360, d ? d / (1 - Math.abs(2 * l - 1)) : 0, l]; };
+  const hsl2hex = (h, s, l) => { const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2; const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x]; return rgb2hex((r + m) * 255, (g + m) * 255, (b + m) * 255); };
   const lin = c => { c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); };
   const relLum = (r, g, b) => .2126 * lin(r) + .7152 * lin(g) + .0722 * lin(b);
   const contrast = (l1, l2) => (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05);
@@ -57,8 +59,8 @@ const PagePilotHybrid = (() => {
   /* لون التمييز (الكلمة المبرزة، الأيقونات، زر الطلب): أصفر دافئ يقرأ بوضوح فوق اللون الداكن */
   const pickAccent = deep => (contrast(hexLum("#ffc928"), hexLum(deep)) >= 4.5 ? "#ffc928" : "#ffffff");
   /* أيقونات مسموحة في طبقة icon (نسخة من PBSpec.ICONS) */
-  const ICON_SET = ["leaf", "brain", "zap", "sprout", "sparkle", "shield-check", "truck", "cash", "headset", "cart", "check-circle", "pin", "box", "star", "heart", "gift", "clock", "phone", "mail", "award", "droplet", "sun", "flame"];
-  const ICON_KW = [[/توصيل|شحن|livraison|deliver/i, "truck"], [/دفع|استلام|سعر|paiement|cash/i, "cash"], [/ضمان|جودة|أمان|حماية|garant|qualit/i, "shield-check"], [/سريع|فوري|دقائق|rapide|fast/i, "zap"], [/طبيع|عشب|نبات|naturel|natural/i, "leaf"], [/هاتف|اتصال|تأكيد|support|appel/i, "headset"], [/وقت|ساعة|يوم|temps|time/i, "clock"], [/هدية|عرض|gift|offre/i, "gift"], [/قلب|حب|راحة|santé|heart/i, "heart"], [/نظيف|ماء|ترطيب|eau|water/i, "droplet"], [/طاقة|قوة|فعّال|énergie|power/i, "flame"]];
+  const ICON_SET = ["leaf", "brain", "zap", "sprout", "sparkle", "shield-check", "truck", "cash", "headset", "cart", "check-circle", "pin", "box", "star", "heart", "gift", "clock", "phone", "mail", "award", "drop", "sun", "flame"];
+  const ICON_KW = [[/توصيل|شحن|livraison|deliver/i, "truck"], [/دفع|استلام|سعر|paiement|cash/i, "cash"], [/ضمان|جودة|أمان|حماية|garant|qualit/i, "shield-check"], [/سريع|فوري|دقائق|rapide|fast/i, "zap"], [/طبيع|عشب|نبات|naturel|natural/i, "leaf"], [/هاتف|اتصال|تأكيد|support|appel/i, "headset"], [/وقت|ساعة|يوم|temps|time/i, "clock"], [/هدية|عرض|gift|offre/i, "gift"], [/قلب|حب|راحة|santé|heart/i, "heart"], [/نظيف|ماء|ترطيب|eau|water/i, "drop"], [/طاقة|قوة|فعّال|énergie|power/i, "flame"]];
   const ICON_CYCLE = ["check-circle", "star", "shield-check", "sparkle", "heart"];
   const iconFor = (txt, i, hint) => { if (hint && ICON_SET.includes(hint)) return hint; const k = ICON_KW.find(x => x[0].test(txt || "")); return k ? k[1] : ICON_CYCLE[i % ICON_CYCLE.length]; };
 
@@ -81,8 +83,10 @@ const PagePilotHybrid = (() => {
   const LIGHT = { clean: "soft diffused studio light", premium: "dramatic low-key lighting with subtle highlights", energetic: "bright punchy light", natural: "warm natural window light" };
   function styleBible(an, theme) {
     an = an || {}; theme = theme || { main: "#187a3b", acc: "#f39a18", ink: "#16324c", soft: "#e9f5e4" };
-    const dom = (an.colors && an.colors[0]) || theme.main, primary = hexLum(dom) > .6 ? mix(dom, "#000000", .45) : dom;
-    const deep = hexLum(primary) > .12 ? mix(primary, "#000000", .55) : primary, hl = pickAccent(deep);
+    /* لون المنتج الحقيقي: أول لون ملوّن (تشبّع ≥ .3) من التحليل مع تجاوز البيج/الكريمي، وإلا لون الموقع؛ ثم نضمن تشبّعاً كافياً كي لا تخرج الخلفية رمادية */
+    const sc = c => { const h = hex2hsl(c); return h[1] >= .3 && h[2] >= .12 && h[2] <= .85; }, beige = c => { const h = hex2hsl(c); return h[0] >= 25 && h[0] <= 65 && h[1] < .55; }, cand = (an.colors || []).filter(sc), dom = cand.find(c => !beige(c)) || cand[0] || theme.main, hs = hex2hsl(dom);
+    const primary = hsl2hex(hs[0], Math.max(.5, Math.min(.85, hs[1])), Math.max(.28, Math.min(.42, hs[2])));
+    const deep = hsl2hex(hs[0], Math.max(.5, Math.min(.8, hs[1])), .17), hl = pickAccent(deep);
     const accent = (an.colors && an.colors[1]) || theme.acc, mood = an.mood || "clean", cname = colorName(primary);
     const pal = { primary, deep, hl, secondary: mix(primary, "#ffffff", .35), accent, text: hexLum(primary) < .25 ? "#ffffff" : "#16212b", surface: mix(primary, "#ffffff", .9) };
     const radius = mood === "premium" ? 14 : mood === "energetic" ? 26 : 20, shadow = "soft realistic contact shadow";
@@ -105,7 +109,7 @@ const PagePilotHybrid = (() => {
     final_cta: { zone: "top", cta: true, scene: "an inviting finale backdrop with warm glow and a pedestal for the product" }
   };
   /* وضع «الدمج»: يرسم الذكاء المنتج داخل المشهد نفسه (صورة مختلفة لكل قسم) — النص يبقى طبقات حيّة في المنطقة المقابلة */
-  const EDIT_ZONE = { problem: "top", comparison: "top", faq: "bottom" };
+  const EDIT_ZONE = { problem: "top", comparison: "top", faq: "top", how_to_use: "top", delivery_guarantee: "top" };
   const EDIT_SCENE = {
     hero: "a dramatic hero shot, product at a low three-quarter angle on an elegant surface, shallow depth of field, depth and atmosphere that fit the product's use",
     problem: "a muted, slightly desaturated everyday setting that hints at the daily problem, cooler tones, the product sits calmly in the foreground as the solution",
@@ -174,35 +178,35 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   const hasPerson = (type, o) => !!(o && o.people && o.edit !== false && PEOPLE[type]);
   const NEG = "text, letters, words, numbers, watermark, logo, distorted product, extra parts, blurry, low resolution, malformed hands";
   function bgPrompt(style, sec, o) {
-    o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zn = zoneOf(sec.type, !!o.withProduct), zoneTxt = zn === "top" ? "the top 40% of the frame" : zn === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
+    o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zn = zoneOf(sec.type, !!o.withProduct), zoneTxt = zn === "top" ? (o.withProduct ? "the top 46% of the frame" : "the top 40% of the frame") : zn === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
     const noProduct = !o.withProduct && T.product === false;
-    const where = zn === "top" ? "in the lower half" : zn === "bottom" ? "in the upper half" : "small and centered";
+    const where = zn === "top" ? (o.withProduct ? "entirely inside the lower band of the frame (between 52% and 86% of the frame height), fully visible, centered, large, never cut off or touching any edge" : "in the lower half") : zn === "bottom" ? "in the upper half" : "small and centered";
     const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page. " : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
     const person = !!(o.withProduct && hasPerson(sec.type, o));
     const scene = o.withProduct ? (EDIT_SCENE[sec.type] || EDIT_SCENE.hero) + (person ? ". Include: " + PEOPLE[sec.type] + (o.audience ? " (target audience: " + o.audience + ")" : "") : "") + (sec.scene ? ". Setting inspiration: " + sec.scene : "") : (sec.scene || T.scene);
     const crisp = o.withProduct ? "The product must be the pure, sharp, photorealistic hero of the image: perfectly in focus, high resolution, clean crisp edges, faithful colors, no blur, no warping. " : "";
     const tone = `Color mood: the whole scene, props and light are graded in ${style.cname || "deep"} tones that match the product's color (${style.palette.primary}). `;
     const nf = o.noFaces !== false && !person;
-    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail empty space across ${zoneTxt} for a headline, and keep the bottom 14% of the frame calm and plain. The top 8% and bottom 8% of the frame must fade smoothly into the same solid dark ${style.cname} so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
+    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail, completely empty space across ${zoneTxt} for a headline and text rows (nothing important there, the product must NOT enter that area), and keep the bottom 12% of the frame calm and plain for a button. The dominant background color of the entire frame is ${style.cname} (${style.palette.deep}) — one unified color-graded scene, props and surfaces also in ${style.cname} tones; no gray or white backdrop. The top 8% and bottom 8% of the frame must fade smoothly into the same solid dark ${style.cname} so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
   }
   function gatePrompt(o) {
     const z = o.zone === "bottom" ? "الجزء السفلي" : o.zone === "full" ? "الجزء الأوسط" : "الجزء العلوي";
     if (o.ref) return `الصورة الأولى هي المنتج المرجعي، والثانية مشهد إعلاني يُفترض أن المنتج مدمج فيه. أخرج JSON واحداً فقط بلا شرح:
-{"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false,"product_matches":true|false,"product_sharp":true|false,"face_natural":true|false}
-product_sharp: هل المنتج حاد وواضح وبحجم مقروء وغير ضبابي؟ face_natural: إن وُجد وجه إنسان فهل هو طبيعي بلا تشوّه (وإلا true)؟ has_text: هل في المشهد (الثانية) كتابة جديدة أو أحرف أو أرقام أو علامة مائية غير الموجودة على عبوة المنتج نفسها؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من المشهد هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة؟ product_matches: هل المنتج الظاهر في المشهد هو نفسه المنتج المرجعي (الشكل واللون والملصق) وظاهر بوضوح وغير مشوَّه؟`;
+{"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false,"product_matches":true|false,"product_sharp":true|false,"product_low":true|false,"face_natural":true|false}
+product_sharp: هل المنتج حاد وواضح وبحجم مقروء وغير ضبابي؟ product_low: هل المنتج كله (بلا قصّ) في النصف السفلي من المشهد وبعيد عن الجزء العلوي الذي سيُكتب فيه النص؟ face_natural: إن وُجد وجه إنسان فهل هو طبيعي بلا تشوّه (وإلا true)؟ has_text: هل في المشهد (الثانية) كتابة جديدة أو أحرف أو أرقام أو علامة مائية غير الموجودة على عبوة المنتج نفسها؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من المشهد هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة؟ product_matches: هل المنتج الظاهر في المشهد هو نفسه المنتج المرجعي (الشكل واللون والملصق) وظاهر بوضوح وغير مشوَّه؟`;
     return `افحص الصورة المرفقة (خلفية/مشهد إعلاني) وأخرج JSON واحداً فقط بلا شرح:
 {"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false}
 has_text: هل في الصورة أي كتابة أو أحرف أو أرقام أو علامة مائية؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من الصورة هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة أو أجزاء غريبة؟`;
   }
-  function gateOk(r, noFaces, needProduct, person) { r = r || {}; const why = []; if (r.has_text) why.push("text"); if (noFaces !== false && r.has_face) why.push("face"); if (r.zone_empty === false) why.push("zone"); if (r.artifacts) why.push("artifacts"); if (needProduct && r.product_matches === false) why.push("product"); if (needProduct && r.product_sharp === false) why.push("sharp"); if (person && r.face_natural === false) why.push("face_bad"); return { ok: !why.length, why }; }
-  const retryNote = why => (why.includes("text") ? "STRICTLY NO text, letters or numbers anywhere. " : "") + (why.includes("face") ? "STRICTLY no human faces. " : "") + (why.includes("zone") ? "Keep the requested empty area completely calm and plain. " : "") + (why.includes("artifacts") ? "Clean, undistorted, simple composition. " : "") + (why.includes("sharp") ? "Render the product perfectly sharp, in focus and large enough to read its label. " : "") + (why.includes("face_bad") ? "Faces and hands must look natural and undistorted. " : "") + (why.includes("product") ? "Reproduce the reference product EXACTLY and fully visible, unchanged shape, color and label. " : "");
+  function gateOk(r, noFaces, needProduct, person) { r = r || {}; const why = []; if (r.has_text) why.push("text"); if (noFaces !== false && r.has_face) why.push("face"); if (r.zone_empty === false) why.push("zone"); if (r.artifacts) why.push("artifacts"); if (needProduct && r.product_matches === false) why.push("product"); if (needProduct && r.product_sharp === false) why.push("sharp"); if (needProduct && r.product_low === false) why.push("lowprod"); if (person && r.face_natural === false) why.push("face_bad"); return { ok: !why.length, why }; }
+  const retryNote = why => (why.includes("text") ? "STRICTLY NO text, letters or numbers anywhere. " : "") + (why.includes("face") ? "STRICTLY no human faces. " : "") + (why.includes("zone") ? "Keep the requested empty area completely calm and plain. " : "") + (why.includes("artifacts") ? "Clean, undistorted, simple composition. " : "") + (why.includes("sharp") ? "Render the product perfectly sharp, in focus and large enough to read its label. " : "") + (why.includes("lowprod") ? "Place the whole product in the LOWER band only (52%-86% of the frame height), fully visible, nothing in the top half. " : "") + (why.includes("face_bad") ? "Faces and hands must look natural and undistorted. " : "") + (why.includes("product") ? "Reproduce the reference product EXACTLY and fully visible, unchanged shape, color and label. " : "");
 
   /* ───────────── ٧) هندسة التخطيط (أبعاد الصفحة 1080×1350) ───────────── */
   function geometry(type, ar, edit, cta) {
-    const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), c = cta ? 120 : 0, zone = zn === "top" ? { x: 70, y: 90, w: 940, h: 600 } : zn === "bottom" ? { x: 70, y: H - 650 - c, w: 940, h: 560 - c } : { x: 70, y: 150, w: 940, h: H - 300 - c };
+    const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), c = cta ? 120 : 0, zone = zn === "top" ? { x: 70, y: 90, w: 940, h: 530 } : zn === "bottom" ? { x: 70, y: H - 650 - c, w: 940, h: 560 - c } : { x: 70, y: 150, w: 940, h: H - 300 - c };
     let prod = null;
     if (!edit && T.product !== false) {
-      const box = zn === "top" ? { x: 120, y: 700, w: 840, h: 560 } : { x: 120, y: 60, w: 840, h: 560 }; ar = ar > 0 ? ar : 1;
+      const box = zn === "top" ? { x: 120, y: 660, w: 840, h: cta ? 490 : 580 } : { x: 120, y: 60, w: 840, h: 560 }; ar = ar > 0 ? ar : 1;
       const w = Math.round(Math.min(box.w, box.h * ar)), h = Math.round(w / ar);
       prod = { x: Math.round(box.x + (box.w - w) / 2), y: Math.round(zn === "top" ? box.y + box.h - h : box.y + (box.h - h) / 2), w, h };
     }
@@ -227,8 +231,10 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true });
       const z = g.zone, zn = g.zname;
       /* تدرّج لون المنتج فوق منطقة النص (يضمن القراءة ويوحّد الأقسام) */
-      const ov = zn === "top" ? { y: 0, h: Math.min(H, z.y + z.h + 130), st: [[.94, 0], [.86, 55], [0, 100]] } : zn === "bottom" ? { y: Math.max(0, z.y - 170), h: 0, st: [[0, 0], [.86, 45], [.94, 100]] } : { y: 0, h: H, st: [[.84, 0], [.7, 50], [.84, 100]] };
+      const ov = zn === "top" ? { y: 0, h: Math.min(H, z.y + z.h + 50), st: [[.93, 0], [.84, 72], [0, 100]] } : zn === "bottom" ? { y: Math.max(0, z.y - 170), h: 0, st: [[0, 0], [.86, 45], [.94, 100]] } : { y: 0, h: H, st: [[.84, 0], [.7, 50], [.84, 100]] };
       if (zn === "bottom") ov.h = H - ov.y;
+      /* لون موحّد بلون المنتج فوق القسم كله (أخف خلف المنتج كي يبقى نقياً) ← خلفية واحدة متّسقة بين الأقسام */
+      layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: H, z: 2, fill: deep, gradient: grad(0, [[.36, 0], [.34, 40], [.17, 56], [.17, 86], [.4, 100]]), locked: true, name: "لون موحّد" });
       layers.push({ type: "shape", shape: "rect", x: 0, y: ov.y, w: W, h: ov.h, z: 2, fill: deep, gradient: grad(0, ov.st), locked: true, name: "تدرّج اللون" });
       /* حواف متصلة: أعلى القسم وأسفله يذوبان في اللون العميق نفسه */
       if (zn !== "top") layers.push({ type: "shape", shape: "rect", x: 0, y: 0, w: W, h: 190, z: 2, fill: deep, gradient: grad(0, [[1, 0], [0, 100]]), locked: true, name: "وصل أعلى" });
@@ -242,19 +248,19 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         layers.push({ type: "text", text: ctx.tickerText || TICKER[ctx.lang] || TICKER.ar, x: 0, y: 14, w: W, z: 9, font: { size: 28, weight: 900, color: "#161616", align: "center", lineHeight: 1.3 }, name: "شريط علوي (نص)" });
         y = Math.max(y, 100);
       }
-      const hd = s.headline || "", len = hd.length, fs1 = len <= 22 ? 88 : len <= 34 ? 76 : 64, rest = s.hl ? hd.replace(s.hl, " ").replace(/\s+/g, " ").trim() : hd;
+      const hd = s.headline || "", len = hd.length, fs1 = len <= 22 ? 76 : len <= 34 ? 66 : 56, rest = s.hl ? hd.replace(s.hl, " ").replace(/\s+/g, " ").trim() : hd;
       const head = (txt, color, tag, delay) => { const h = estH(txt, fs1, z.w, 1.2); layers.push({ type: "heading", tag, text: txt, x: z.x, y, w: z.w, z: 5, font: { size: fs1, weight: 900, color, align: "center", lineHeight: 1.2 }, effects: [{ type: "fadeUp", delay: delay || 0 }] }); y += h + 4; };
       if (hd) { if (rest) head(rest, pk.color, i === 0 ? "h1" : "h2"); if (s.hl) head(s.hl, hl, rest ? "h2" : (i === 0 ? "h1" : "h2"), .08); y += 10; }
       const rows = ROWS.includes(s.type) && (s.bullets || []).length >= 2;
       if (s.sub && !rows) { const h = estH(s.sub, 38, z.w, 1.55); layers.push({ type: "text", text: s.sub, x: z.x, y, w: z.w, z: 5, font: { size: 38, weight: 600, color: pk.color, align: "center", lineHeight: 1.55 }, effects: [{ type: "fadeUp", delay: .1 }] }); y += h + 12; }
-      const limit = z.y + z.h + 60;
+      const limit = z.y + z.h;
       (s.bullets || []).forEach((b, bi) => {
         if (rows) {
-          const R0 = 80, tw = z.w - R0 - 26, h = estH(b, 40, tw, 1.35), step = Math.max(R0 + 18, h + 14); if (y + step > limit) return;
-          const cx = rtl ? z.x + z.w - R0 : z.x, tx = rtl ? z.x : z.x + R0 + 26, cy = y + (step - R0) / 2;
-          layers.push({ type: "shape", shape: "ellipse", x: cx, y: cy, w: R0, h: R0, z: 4, fill: "rgba(255,255,255,.08)", stroke: hl, strokeW: 4, effects: [{ type: "fadeUp", delay: .12 + bi * .08 }] });
-          layers.push({ type: "icon", icon: (s.icons && s.icons[bi]) || iconFor(b, bi), x: cx + 14, y: cy + 14, w: 52, size: 52, color: hl, z: 5, effects: [{ type: "fadeUp", delay: .14 + bi * .08 }] });
-          layers.push({ type: "text", text: b, x: tx, y: y + (step - h) / 2, w: tw, z: 5, font: { size: 40, weight: 800, color: pk.color, align: al, lineHeight: 1.35 }, effects: [{ type: "fadeUp", delay: .16 + bi * .08 }] });
+          const R0 = 68, IS = 40, tw = z.w - R0 - 24, h = estH(b, 34, tw, 1.3), step = Math.max(R0 + 14, h + 14); if (y + step > limit) return;
+          const cx = rtl ? z.x + z.w - R0 : z.x, tx = rtl ? z.x : z.x + R0 + 24, cy = y + (step - R0) / 2;
+          layers.push({ type: "shape", shape: "ellipse", x: cx, y: cy, w: R0, h: R0, z: 4, fill: "rgba(255,255,255,.08)", stroke: hl, strokeW: 3, effects: [{ type: "fadeUp", delay: .12 + bi * .08 }] });
+          layers.push({ type: "icon", icon: (s.icons && s.icons[bi]) || iconFor(b, bi), x: cx + (R0 - IS) / 2, y: cy + (R0 - IS) / 2, w: IS, h: IS, size: IS, color: hl, z: 5, effects: [{ type: "fadeUp", delay: .14 + bi * .08 }] });
+          layers.push({ type: "text", text: b, x: tx, y: y + (step - h) / 2, w: tw, z: 5, font: { size: 34, weight: 800, color: pk.color, align: al, lineHeight: 1.3 }, effects: [{ type: "fadeUp", delay: .16 + bi * .08 }] });
           y += step; return;
         }
         const txt = "• " + b, h = estH(txt, 38, z.w, 1.5); if (y + h > limit) return; layers.push({ type: "text", text: txt, x: z.x, y, w: z.w, z: 5, font: { size: 38, weight: 700, color: pk.color, align: al, lineHeight: 1.5 }, effects: [{ type: "fadeUp", delay: .15 + bi * .08 }] }); y += h + 6;
