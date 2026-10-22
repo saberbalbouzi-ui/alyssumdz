@@ -54,7 +54,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     return out;
   });
   ok("توسيع: يرسل قماشاً بنسبة 9:16 وتعليمات outpaint ويعرض النتيجة", flow.res1 && flow.prompt && /^10x18$|^1[0-9]x[0-9]+$/.test(flow.p1), flow);
-  ok("توسيع: نتيجة واحدة في مسحة واحدة (بلا خيارين)", flow.nExp === 1 && flow.varB === 0, flow);
+  ok("توسيع: أربعة خيارات للاختيار (كانفا)", flow.nExp === 4 && flow.varB === 1, flow);
   ok("توسيع: التطبيق يرفع الصورة ويضع المصدر الجديد ويثبّت التعديل", /^assets\/img\/pages\/ai-/.test(flow.src) && flow.up === 1 && flow.commit[0] === "w1", flow);
   ok("تعديل بالوصف: يرفض تعليمات فارغة", /اكتب التعليمات/.test(flow.noText), flow.noText);
   ok("تعديل بالوصف: الاقتراح يملأ النص ثم ينفّذ بحجم الأصل", /لون المنتج/.test(flow.preset) && flow.editCall === true && flow.editSize === "10x10", flow);
