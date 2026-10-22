@@ -160,9 +160,11 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     });
     return { sections: out, warn };
   }
+  /* شعارات المتاجر وعبارات الصفحات المنسوخة ليست مزايا منتج */
+  const JUNK = /aliexpress|alibaba|amazon|temu|shein|ebay|\.com|\.net|smarter shopping|better living|free shipping|add to cart|buy now|shop now|all rights|cookie/i;
   /* خطة بلا ذكاء (MOCK/احتياط): من بيانات المنتج نفسها */
   function fallbackPlan(info, lang, o) {
-    o = o || {}; const t = strip(info.title, 60) || "المنتج", ss = strip(info.desc, 900).split(/(?<=[.!؟?])\s+/).filter(x => x.length > 12), cta = lang === "fr" ? "Commander" : lang === "en" ? "Order now" : "اطلب الآن";
+    o = o || {}; const t = strip(info.title, 60) || "المنتج", ss = strip(info.desc, 900).split(/(?<=[.!؟?])\s+/).filter(x => x.length > 12 && !JUNK.test(x)), cta = lang === "fr" ? "Commander" : lang === "en" ? "Order now" : "اطلب الآن";
     const pick = (a, b) => ss[a] ? strip(ss[a], b) : "";
     const copy = {
       hero: [t, pick(0, 120), []], problem: ["هل تبحث عن الأفضل؟", pick(1, 120), []], benefits: ["لماذا تحبّه", "", ss.slice(0, 4).map(x => strip(x, 45))],
@@ -354,16 +356,22 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     /* ٤ خطة الأقسام والنصوص */
     let plan;
     try { plan = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count }); if (plan.sections.filter(s => s.headline).length < 3) throw new Error("خطة ناقصة"); }
-    catch (e) { plan = fallbackPlan(inp.info, inp.lang, { count: inp.count }); note.push("استُعملت نصوص من بيانات المنتج" + (e && e.code === "NOKEY" ? " (لا مفتاح Alyssum API)" : "") + " — عدّلها في المطوّر."); }
+    catch (e) {
+      /* مفتاح فعّال لكن الذكاء فشل في النص: لا تُنفَق صور على صفحة نصوصها مأخوذة من الرابط — توقّف واشرح السبب */
+      if (P.real && e && e.code !== "NOKEY" && e.code !== "OFF") throw new Error("فشل الذكاء في كتابة نصوص الصفحة (" + String(e.message || e).slice(0, 140) + ") — لم تُستهلك أي صورة. أعد المحاولة بعد قليل.");
+      plan = fallbackPlan(inp.info, inp.lang, { count: inp.count }); note.push("استُعملت نصوص من بيانات المنتج" + (e && e.code === "NOKEY" ? " (لا مفتاح Alyssum API)" : "") + " — عدّلها في المطوّر.");
+    }
     plan.warn.forEach(w => note.push(w));
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
     if (inp.strategy !== "composite" && !wantEdit && photo) note.push("دمج المنتج في المشهد يحتاج مفتاح Alyssum API: استُعمل قصّ المنتج فوق خلفية محلية.");
     const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta !== false, results = [];
+    let halted = ""; const HARD = /quota|limit|billing|credit|insufficient|402|429|permission|unauthori|forbidden|api key|رصيد|حدّ|حد الاستخدام/i;
     await pool(plan.sections, 3, async (sec, i) => {
       const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, refBlob = refs.length ? refs[i % refs.length] : null; R.ref = refs.length ? i % refs.length : -1;
       let extra = "", why = [];
       for (let a = 1; a <= 3; a++) {
         R.attempts = a;
+        if (halted) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:halted"); R.error = halted; break; }
         try {
           const pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra }); R.prompt = pr;
           const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
@@ -377,7 +385,8 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
           break;
         } catch (e) {
           if (e && (e.code === "NOKEY" || e.code === "OFF")) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; break; }
-          if (a >= 3) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:bg_failed"); R.error = e && e.message; break; }
+          const em = String((e && (e.message || e.code)) || ""); if (HARD.test(em)) halted = em.slice(0, 120);   /* حدّ/رصيد/صلاحية: توقّف عن بقية الأقسام فلا يتكرر الخصم بلا فائدة */
+          if (halted || a >= 2) { R.bgCanvas = mockBg(style, sec, i); R.mock = true; R.flags.push("needs_review:bg_failed"); R.error = e && e.message; break; }
           extra = ""; await new Promise(r => setTimeout(r, 600));
         }
       }
@@ -393,6 +402,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       fb.forEach(R => { const g = geometry(R.sec.type, ar, false, ctaOn); R.prodAr = ar; R.lum = lumAt(R.bgCanvas, g.zone); R.person = false; });
       note.push("تعذّر توليد صور الذكاء لـ" + fb.length + " قسم/أقسام" + (fb[0].error ? " (" + String(fb[0].error).slice(0, 80) + ")" : "") + ": وُضع المنتج المقصوص فوق خلفية محلية — أعد التشغيل لاحقاً أو غيّر الصورة المرجعية.");
     }
+    if (halted) note.push("توقّف توليد الصور مبكراً لتوفير رصيدك بسبب: " + halted + ".");
     if (!P.real) note.push("لم تُولَّد صور بالذكاء لأن Alyssum API غير مفعّل (المفتاح أو رصيد الصور): الخلفيات محلية.");
     return { an, style, plan, results, prod, prodOk, strategy, log, note, real: P.real };
   }
