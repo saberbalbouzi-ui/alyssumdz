@@ -185,7 +185,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     const res = plan.sections.map((sec, i) => ({ sec, bgSrc: "assets/b" + i + ".webp", lum: .8, prodAr: 0, prodSrc: "" }));
     const spec = H.buildSpec(plan, res, { style: st, strategy: "edit", title: "t", product: "", lang: "ar", wa: "213555000111" });
     const cnt = (sc, ty) => sc.layers.filter(l => l.type === ty).length;
-    o.btnAll = spec.sections.every(sc => cnt(sc, "button") === 1); o.btnY = spec.sections[0].layers.find(l => l.type === "button").y;
+    o.btnAll = spec.sections.every(sc => cnt(sc, "button") === 0); o.btnY = 1200;
     o.ticker = spec.sections[0].layers.filter(l => l.name && /شريط علوي/.test(l.name)).length; o.tickerOther = spec.sections.slice(1).some(sc => sc.layers.some(l => l.name && /شريط علوي/.test(l.name)));
     const hero = spec.sections[0]; const heads = hero.layers.filter(l => l.type === "heading"); o.heads = heads.length; o.hlColor = heads[1] && heads[1].font.color === st.palette.hl; o.headSize = heads[0].font.size;
     const ben = spec.sections[by("benefits")]; o.rowIcons = cnt(ben, "icon"); o.circles = ben.layers.filter(l => l.type === "shape" && l.shape === "ellipse").length; o.iconNames = ben.layers.filter(l => l.type === "icon").map(l => l.icon).join();
@@ -209,7 +209,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   });
   t("لون المنتج يحكم الأسلوب: اسم اللون وأبيض/أصفر مميّز بتباين كافٍ", /navy|blue/.test(cp.cname) && cp.deepDark && cp.hlContrast, cp);
   t("الخطة: كلمة مبرزة من العنوان وأيقونات صحيحة (الدخيل يُستبدل) وبلا أيقونات للأسئلة الشائعة", cp.hlKept === "نهائياً" && /^truck,/.test(cp.icons) && cp.icons.split(",")[1] !== "bogus" && cp.faqPlain, cp);
-  t("زر طلب في كل قسم بأسفله، وشريط علوي في الأول فقط", cp.btnAll && cp.btnY === 1200 && cp.ticker === 2 && !cp.tickerOther, cp);
+  t("بلا زر طلب في الأقسام (زر واحد ثابت يضاف عند التجميع)، وشريط علوي في الأول فقط", cp.btnAll && cp.btnY === 1200 && cp.ticker === 2 && !cp.tickerOther, cp);
   t("عنوان كبير بسطرين: أبيض + كلمة مميّزة بلون التمييز", cp.heads === 2 && cp.hlColor && cp.headSize >= 56, cp);
   t("صفوف المزايا: دائرة + أيقونة + نص لكل نقطة", cp.rowIcons === 3 && cp.circles === 3 && /^truck,/.test(cp.iconNames), cp);
   t("الاستمرارية: تدرّج لوني بكل قسم، خلفية موحّدة، والأقسام تُدمج في قماش واحد", cp.grads && cp.sameBg && cp.valid && cp.mergedSecs === 1, cp);
@@ -230,11 +230,11 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     for (let i = 0; i < 200 && document.getElementById("pp-bg"); i++) await new Promise(r => setTimeout(r, 100));
     for (let i = 0; i < 50 && !(PBApp.E && PBApp.E.page && PBApp.E.page.sections && PBApp.E.page.sections.length); i++) await new Promise(r => setTimeout(r, 100));
     const P = PBApp.E.page; const secs = P.sections.filter(s => s.free && s.free.length); const prodSecs = secs.filter(s => s.free.filter(w => w.type === "image").length === 2);
-    return { dflt, slug, secs: P.sections.length, canvas: secs.length, prodSecs: prodSecs.length, imgs: secs.reduce((n, s) => n + s.free.filter(w => w.type === "image").length, 0), btns: secs.reduce((n, s) => n + s.free.filter(w => w.type === "button").length, 0), hasOrder: P.sections.some(s => s.set.cid === "order"), headings: secs.every(s => s.free.some(w => w.type === "heading")), h1: P.sections[0].free.some(w => w.type === "heading" && w.set.tag === "h1"), hasMeta: !!(P.specMeta && P.specMeta.hybrid), product: P.product === slug, ups: ups.length };
+    return { dflt, slug, secs: P.sections.length, canvas: secs.length, prodSecs: prodSecs.length, imgs: secs.reduce((n, s) => n + s.free.filter(w => w.type === "image").length, 0), btns: secs.reduce((n, s) => n + s.free.filter(w => w.type === "button").length, 0), sticky: P.sections.filter(s => JSON.stringify(s).includes("pp-sticky")).length, hasOrder: P.sections.some(s => s.set.cid === "order"), headings: secs.every(s => s.free.some(w => w.type === "heading")), h1: P.sections[0].free.some(w => w.type === "heading" && w.set.tag === "h1"), hasMeta: !!(P.specMeta && P.specMeta.hybrid), product: P.product === slug, ups: ups.length };
   }, !!shotDir);
   t("الافتراضي = الوضع الهجين", ui.dflt === "hybrid", ui);
-  t("صفحة واحدة متصلة (قماش واحد) + نموذج الطلب الحقيقي", ui.canvas === 1 && ui.secs === 2 && ui.hasOrder && ui.product, ui);
-  t("العناوين نصوص حيّة وH1 واحد وعشر طبقات صور فأكثر (خلفيات + منتج)", ui.headings && ui.imgs >= 6 && ui.h1 && ui.btns >= 6, ui);
+  t("صفحة واحدة متصلة (قماش واحد) + نموذج الطلب الحقيقي", ui.canvas === 1 && ui.secs === 3 && ui.hasOrder && ui.product, ui);
+  t("العناوين نصوص حيّة وH1 واحد وطبقات صور، بلا أزرار في الأقسام وزر طلب ثابت واحد", ui.headings && ui.imgs >= 6 && ui.h1 && ui.btns === 0 && ui.sticky === 1, ui);
   t("بيانات التوليد محفوظة (البرومبتات/المحاولات/التباين)", ui.hasMeta);
   await p.waitForTimeout(1500);
   const sel = await p.evaluate(async () => { const E = PBApp.E, fd = document.getElementById("pbx-frame").contentDocument, ids = []; E.page.sections.forEach(s => (s.free || []).concat(...s.cols.map(c => c.widgets)).forEach(w => ids.push(w.id))); let okc = 0; for (const id of ids) { if (fd.querySelector('[data-pb="' + id + '"]')) okc++; } return { n: ids.length, ok: okc }; });

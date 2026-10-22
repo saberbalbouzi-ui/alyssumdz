@@ -302,7 +302,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     return { x, y, w, h, rot: v.r };
   }
   function buildSpec(plan, results, ctx) {
-    ctx = ctx || {}; const st = ctx.style || styleBible({}, null), assets = {}, sections = [], rtl = (ctx.lang || "ar") === "ar", al = rtl ? "right" : "left", deep = st.palette.deep, hl = st.palette.hl, ctaOn = ctx.cta !== false;
+    ctx = ctx || {}; const st = ctx.style || styleBible({}, null), assets = {}, sections = [], rtl = (ctx.lang || "ar") === "ar", al = rtl ? "right" : "left", deep = st.palette.deep, hl = st.palette.hl, ctaOn = ctx.cta === true;   /* بلا زر في كل قسم: زر طلب واحد ثابت يُضاف في assemble */
     const lightBg = hexLum(deep) > .4, hlBtnTxt = c => (hexLum(c) > .45 ? "#111111" : "#ffffff");
     /* كلمات مفتاحية ملوّنة: النموذج يضعها بين [[ ]]؛ وإن لم يضع شيئاً نلوّن أطول كلمة (≥4 أحرف) */
     const kw = (t, auto) => { t = String(t || ""); if (/\[\[.+?\]\]/.test(t) || !auto) return t; const ws = t.split(/\s+/).filter(w => w.replace(/[^\p{L}\p{N}]/gu, "").length >= 4); if (!ws.length) return t; const w = ws.reduce((a, b) => (b.length > a.length ? b : a)); return t.replace(w, "[[" + w + "]]"); };
@@ -441,7 +441,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     plan.warn.forEach(w => note.push(w));
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
     if (inp.strategy !== "composite" && !wantEdit && photo) note.push("دمج المنتج في المشهد يحتاج مفتاح Alyssum API: استُعمل قصّ المنتج فوق خلفية محلية.");
-    const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta !== false, results = [];
+    const noFaces = inp.noFaces !== false, people = inp.people !== false && edit, ctaOn = inp.cta === true, results = [];
     let halted = ""; const HARD = /quota|billing|credit|insufficient|402|permission|unauthori|forbidden|api key|رصيد|حدّ|حد الاستخدام|الحصة|exceeded your current/i, RATE = /429|rate.?limit|too many|resource.?exhausted|overload|503|retry in|ازدحام/i;   /* الحدّ الفعلي يوقف الباقي؛ ازدحام/تمهّل مؤقت لا يوقفه بل يُنتظر ويُعاد */
     const chain = edit && inp.chain !== false && P.real; let prevRaw = null, firstRaw = null;   /* استمرارية بصرية: القسم i يُرسم مع صورة القسم السابق مرجعاً (بالتتابع) */
     await pool(plan.sections, chain ? 1 : 3, async (sec, i) => {
@@ -512,6 +512,14 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   }
 
   /* ───────────── ٨) الرفع والتجميع النهائي (يحتاج PBApp/PBSpec) ───────────── */
+  /* زر طلب واحد ثابت أسفل الشاشة (بدل زر في كل قسم): يختفي حين يظهر نموذج الطلب نفسه */
+  function stickyBtn(out, ctx) {
+    const st = out.style || styleBible({}, null), hl = st.palette.hl, wa = String(ctx.wa || "").replace(/\D/g, ""), lang = ctx.lang || "ar";
+    const link = ctx.product ? "#order" : (wa ? "https://wa.me/" + wa + "?text=" + encodeURIComponent(ctx.title || "") : "#order");
+    const first = out.plan && out.plan.sections && out.plan.sections[0], txt = (first && first.cta) || (lang === "fr" ? "Commander" : lang === "en" ? "Order now" : "اطلب الآن");
+    const fg = hexLum(hl) > .45 ? "#111111" : "#ffffff", esc2 = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    return `<style>.pp-sticky{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;width:min(92vw,560px);box-sizing:border-box;padding:16px 20px;border-radius:999px;background:${hl};color:${fg};font:900 20px/1.2 Cairo,system-ui,sans-serif;text-align:center;text-decoration:none;box-shadow:0 10px 28px rgba(0,0,0,.35);animation:ppPulse 2s ease-in-out infinite;transition:opacity .25s,transform .25s}.pp-sticky.off{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(30px)}@keyframes ppPulse{0%,100%{box-shadow:0 10px 28px rgba(0,0,0,.35)}50%{box-shadow:0 10px 36px rgba(0,0,0,.35),0 0 0 8px ${hl}44}}</style><a class="pp-sticky" href="${esc2(link)}">${esc2(txt)}</a><script>(function(){var b=document.querySelector(".pp-sticky"),o=document.getElementById("order");if(!b)return;if(o&&"IntersectionObserver"in window){new IntersectionObserver(function(es){es.forEach(function(x){b.classList.toggle("off",x.isIntersecting)})},{threshold:.1}).observe(o)}b.addEventListener("click",function(e){var t=document.getElementById("order");if(t&&b.getAttribute("href")==="#order"){e.preventDefault();t.scrollIntoView({behavior:"smooth",block:"start"})}})})()</script>`;
+  }
   async function assemble(out, ctx, upload) {
     const spec0 = [];
     const plist = (out.prods && out.prods.length ? out.prods : (out.prod ? [out.prod] : [])), prodSrcs = [];
@@ -522,6 +530,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const v = PBSpec.validate(spec, { product: ctx.product });
     if (!v.ok) throw new Error(v.error || "مخطط غير صالح");
     const pg = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: ctx.merge !== false });
+    if (ctx.sticky !== false && typeof PB !== "undefined" && PB.mkS && PB.mkC && PB.mkW) { try { const sb = PB.mkS([PB.mkC([PB.mkW("html", { code: stickyBtn(out, ctx) })])], { layout: "full", pad: { d: [0, 0, 0, 0] } }); sb.set = sb.set || {}; sb.set.cid = "sticky-order"; pg.sections.push(sb); } catch (_) { } }
     pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = prodSrcs.concat(out.results.map(r => r.bgSrc)).filter(Boolean);
     pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, flat: out.results.some(r => r && r.flat), strategy: out.strategy, theme: out.style, colors: out.colors || [], sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: textOn(r.lum, out.style).ratio, person: !!r.person })), steps: out.log.slice(0, 200) } });
     return { page: pg, warn: (v.warn || []) };
