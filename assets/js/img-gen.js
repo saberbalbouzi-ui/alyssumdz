@@ -488,7 +488,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (LS.get("alyssum_ai_text", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
     const key = (LS.get(KEY, "") || "").trim(); if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
     if (!o || !String(o.prompt || "").trim()) throw new Error("التعليمات مطلوبة");
-    if (cfg.budget() && cfg.budget() - cfg.spent() < TEXT_UNIT) { credit.note(); throw new Error(lowMsg); }
+    /* النص زهيد: لا يُحجب بسقف الصور المحلي (المزوّد يفرض الحدّ الفعلي ويُعلَّم النفاد عند رفضه) */
     const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, Math.max(512, Math.min(2048, Number(o.edge) || 1024)))) } });
     let last = null; const tried = new Set(), errs = [], queue = await textModels(key);
     for (let qi = 0; qi < queue.length && tried.size < 14; qi++) {
@@ -696,7 +696,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) { LS.set(FALKEY, k.trim()); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, model3d, model3dReady, credit, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, estimate, video, videoReady, model3d, model3dReady, credit, renewLocal: () => { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); }, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;
