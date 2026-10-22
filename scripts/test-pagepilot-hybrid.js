@@ -17,6 +17,9 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
     o.gate1 = H.gateOk({ has_text: true, has_face: false, zone_empty: true }, true); o.gate2 = H.gateOk({ has_text: false, has_face: true, zone_empty: true }, true); o.gate3 = H.gateOk({ has_text: false, has_face: true, zone_empty: true }, false);
     const gt = H.geometry("hero", 0.8), gb = H.geometry("how_to_use", 0.8), gf = H.geometry("faq", 1);
     o.geo = { top: gt.zone.y < gt.prod.y, bot: gb.zone.y > gb.prod.y, none: gf.prod === null, within: gt.prod.y + gt.prod.h <= H.H }; o.fb = H.fallbackPlan({ title: "منتج", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, "ar", { count: 10 }).sections.length;
+    const lb = H.styleBible(H.cleanAnalysis({ label_colors: ["#1f4fa8", "#ffffff"], dominant_colors: ["#d98a14", "#1f4fa8"] }), null); o.labCname = lb.cname; o.labDeepHue = H.hex2hsl ? 0 : 0;
+    const am = H.styleBible(H.cleanAnalysis({ dominant_colors: ["#d98a14", "#1f4fa8"] }), null); o.amCname = am.cname; o.isAm = [H.isAmber("#d98a14"), H.isAmber("#1f4fa8")];
+    o.domAm = H.dominantColors(new Uint8ClampedArray([217, 138, 20, 255, 217, 138, 20, 255, 217, 138, 20, 255, 31, 79, 168, 255]), 2, true);
     o.dom = H.dominantColors(new Uint8ClampedArray([200, 30, 30, 255, 200, 30, 30, 255, 250, 250, 250, 255, 128, 128, 128, 255]), 2);
     return o;
   });
@@ -31,6 +34,9 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   t("بوابة الجودة: نص/وجه/منطقة", !pure.gate1.ok && pure.gate1.why[0] === "text" && !pure.gate2.ok && pure.gate3.ok);
   t("الهندسة: النص أعلى والمنتج أسفل وعكسه", pure.geo.top && pure.geo.bot && pure.geo.none && pure.geo.within, pure.geo);
   t("خطة احتياطية 10 أقسام", pure.fb === 10, pure.fb);
+  t("لون الملصق (label_colors) يتقدّم على لون المحتوى العنبري", /blue/.test(pure.labCname), pure.labCname);
+  t("بلا label_colors يُؤخَّر العنبر ويُختار الأزرق", /blue/.test(pure.amCname) && pure.isAm[0] === true && pure.isAm[1] === false, [pure.amCname, pure.isAm]);
+  t("الاحتياط المحلي يؤخّر الأغلب عنبرياً", pure.domAm[0] === "#1f4fa8", pure.domAm);
   t("ألوان سائدة تتجاهل الرمادي والأبيض", pure.dom.length === 1 && pure.dom[0] === "#c81e1e", pure.dom);
 
   /* خط الأنابيب بمزوّدات MOCK (بلا مفتاح) + صورة منتج حقيقية */

@@ -38,14 +38,19 @@ const PagePilotHybrid = (() => {
     try { const g = document.createElement("canvas"); g.width = 24; g.height = 24; const c = g.getContext("2d"); c.drawImage(canvas, sx, sy, Math.min(sw, canvas.width - sx), Math.min(sh, canvas.height - sy), 0, 0, 24, 24); const d = c.getImageData(0, 0, 24, 24).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += relLum(d[i], d[i + 1], d[i + 2]); return s / (d.length / 4); } catch (_) { return .5; }
   }
   /* ألوان سائدة (بدون الأبيض/الرمادي المحايد) من ImageData مصغّرة */
-  function dominantColors(data, n) {
+  function dominantColors(data, n, noAmber) {
     const b = {}; for (let i = 0; i < data.length; i += 4) {
       if (data[i + 3] < 200) continue; const r = data[i], g = data[i + 1], bl = data[i + 2], mx = Math.max(r, g, bl), mn = Math.min(r, g, bl);
       if (mx - mn < 28) continue;   /* رمادي/أبيض/أسود */
       const k = (r >> 5) + "," + (g >> 5) + "," + (bl >> 5), o = b[k] || (b[k] = { n: 0, r: 0, g: 0, b: 0 }); o.n++; o.r += r; o.g += g; o.b += bl;
     }
-    return Object.values(b).sort((a, c) => c.n - a.n).slice(0, n || 3).map(o => rgb2hex(o.r / o.n, o.g / o.n, o.b / o.n));
+    const all = Object.values(b).sort((a, c) => c.n - a.n).map(o => rgb2hex(o.r / o.n, o.g / o.n, o.b / o.n));
+    /* لون المحتوى (عسل/زيت/عنبر) ليس لون الملصق: نؤخّر درجات العنبر عند الطلب */
+    const out = noAmber ? all.filter(c => !isAmber(c)).concat(all.filter(isAmber)) : all;
+    return out.slice(0, n || 3);
   }
+  /* درجة عنبرية/كهرمانية/بنية (لون العسل والزيوت داخل الزجاج) */
+  function isAmber(c) { const h = hex2hsl(c); return !!h && h[0] >= 20 && h[0] <= 55 && h[1] >= .35; }
 
   const rgba = (h, a) => { const c = hex2rgb(h) || [0, 0, 0]; return "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + a + ")"; };
   /* اسم اللون بالإنجليزية لتوجيه النموذج الصوري (الـhex وحده ضعيف الدلالة) */
@@ -67,15 +72,17 @@ const PagePilotHybrid = (() => {
   /* ───────────── ١) تحليل المنتج ───────────── */
   function analysisPrompt(info) {
     return `حلّل صورة المنتج المرفقة (والمعلومات أدناه إن وُجدت) وأخرج JSON واحداً فقط بلا شرح:
-{"category":"فئة المنتج بكلمتين","product_name_ar":"اسمه بالعربية","key_features":["≤5 مزايا ظاهرة أو مذكورة فقط"],"target_audience":"","use_cases":["≤3"],"problems_solved":["≤3"],"dominant_colors":["#hex","#hex","#hex"],"mood":"clean|premium|energetic|natural","risk_flags":["medical_claim|cosmetic_claim|brand|minors|none"]}
+{"category":"فئة المنتج بكلمتين","product_name_ar":"اسمه بالعربية","key_features":["≤5 مزايا ظاهرة أو مذكورة فقط"],"target_audience":"","use_cases":["≤3"],"problems_solved":["≤3"],"label_colors":["#hex","#hex"],"dominant_colors":["#hex","#hex","#hex"],"mood":"clean|premium|energetic|natural","risk_flags":["medical_claim|cosmetic_claim|brand|minors|none"]}
 لا تخترع مزايا غير ظاهرة أو غير مذكورة.
+label_colors: الألوان الغالبة على الملصق/الغلاف/العبوة الخارجية (الغطاء والملصق والعلبة) بالترتيب من الأغلب؛ تجاهل لون المحتوى الداخلي (العسل، الزيت، السائل، الكريم) ولون الزجاج الشفاف. مثال: برطمان عسل بملصق أزرق ← label_colors أزرق وليس عنبرياً.
+dominant_colors: ألوان المنتج عموماً.
 المنتج: ${info.title || "—"}
 الوصف: ${info.desc || "—"}`;
   }
   function cleanAnalysis(r) {
     r = r && typeof r === "object" ? r : {}; const arr = (a, n, f) => (Array.isArray(a) ? a : []).slice(0, n).map(f || (x => strip(x, 80))).filter(Boolean);
     const mood = ["clean", "premium", "energetic", "natural"].includes(r.mood) ? r.mood : "clean";
-    return { category: strip(r.category, 40), name: strip(r.product_name_ar || r.name, 80), features: arr(r.key_features, 5), audience: strip(r.target_audience, 80), uses: arr(r.use_cases, 3), problems: arr(r.problems_solved, 3), colors: arr(r.dominant_colors, 3, x => (hex2rgb(x) ? String(x).toLowerCase() : "")), mood, risks: arr(r.risk_flags, 5, x => strip(x, 30)).filter(x => x !== "none") };
+    return { category: strip(r.category, 40), name: strip(r.product_name_ar || r.name, 80), features: arr(r.key_features, 5), audience: strip(r.target_audience, 80), uses: arr(r.use_cases, 3), problems: arr(r.problems_solved, 3), labelColors: arr(r.label_colors, 3, x => (hex2rgb(x) ? String(x).toLowerCase() : "")), colors: arr(r.dominant_colors, 3, x => (hex2rgb(x) ? String(x).toLowerCase() : "")), mood, risks: arr(r.risk_flags, 5, x => strip(x, 30)).filter(x => x !== "none") };
   }
 
   /* ───────────── ٣) دليل الأسلوب (مشترك بين كل الأقسام ← اتّساق بصري) ───────────── */
@@ -84,13 +91,13 @@ const PagePilotHybrid = (() => {
   function styleBible(an, theme) {
     an = an || {}; theme = theme || { main: "#187a3b", acc: "#f39a18", ink: "#16324c", soft: "#e9f5e4" };
     /* لون المنتج الحقيقي: أول لون ملوّن (تشبّع ≥ .3) من التحليل مع تجاوز البيج/الكريمي، وإلا لون الموقع؛ ثم نضمن تشبّعاً كافياً كي لا تخرج الخلفية رمادية */
-    const sc = c => { const h = hex2hsl(c); return h[1] >= .3 && h[2] >= .12 && h[2] <= .85; }, beige = c => { const h = hex2hsl(c); return h[0] >= 25 && h[0] <= 65 && h[1] < .55; }, cand = (an.colors || []).filter(sc), dom = cand.find(c => !beige(c)) || cand[0] || theme.main, hs = hex2hsl(dom);
+    const sc = c => { const h = hex2hsl(c); return h[1] >= .3 && h[2] >= .12 && h[2] <= .85; }, beige = c => { const h = hex2hsl(c); return h[0] >= 25 && h[0] <= 65 && h[1] < .55; }, lab = (an.labelColors || []).filter(sc).filter(c => !beige(c)), cols = (an.colors || []).filter(sc), cand = lab.length ? lab : cols.filter(c => !isAmber(c)).concat(cols.filter(isAmber)), dom = cand.find(c => !beige(c)) || cand[0] || theme.main, hs = hex2hsl(dom);
     const primary = hsl2hex(hs[0], Math.max(.5, Math.min(.85, hs[1])), Math.max(.28, Math.min(.42, hs[2])));
     const deep = hsl2hex(hs[0], Math.max(.5, Math.min(.8, hs[1])), .17), hl = pickAccent(deep);
     const accent = (an.colors && an.colors[1]) || theme.acc, mood = an.mood || "clean", cname = colorName(primary);
     const pal = { primary, deep, hl, secondary: mix(primary, "#ffffff", .35), accent, text: hexLum(primary) < .25 ? "#ffffff" : "#16212b", surface: mix(primary, "#ffffff", .9) };
     const radius = mood === "premium" ? 14 : mood === "energetic" ? 26 : 20, shadow = "soft realistic contact shadow";
-    const prefix = `Commercial e-commerce advertising photography, ${mood} mood, ${LIGHT[mood]}, ${FAMILY[mood]}, overall color grading in ${cname} tones (${pal.primary}) that match the product's own color, accents ${pal.accent} / ${pal.surface}${an.category ? ", product category: " + an.category : ""}`;
+    const prefix = `Commercial e-commerce advertising photography, ${mood} mood, ${LIGHT[mood]}, ${FAMILY[mood]}, overall color grading in ${cname} tones (${pal.primary}) that match the color shown on the product's label/packaging (not the color of its contents), accents ${pal.accent} / ${pal.surface}${an.category ? ", product category: " + an.category : ""}`;
     return { palette: pal, mood, lighting: LIGHT[mood], family: FAMILY[mood], radius, shadow, prefix, cname };
   }
 
@@ -325,7 +332,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const strategy = wantEdit ? "edit" : "composite", edit = wantEdit;
     /* ١ تحليل المنتج */
     let an = cleanAnalysis({});
-    try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { an = cleanAnalysis({}); if (photo) { const g = document.createElement("canvas"); g.width = g.height = 32; g.getContext("2d").drawImage(photo, 0, 0, 32, 32); an.colors = dominantColors(g.getContext("2d").getImageData(0, 0, 32, 32).data, 3); } }
+    try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { an = cleanAnalysis({}); if (photo) { const g = document.createElement("canvas"); g.width = g.height = 32; g.getContext("2d").drawImage(photo, 0, 0, 32, 32); an.colors = dominantColors(g.getContext("2d").getImageData(0, 0, 32, 32).data, 3, true); } }
     if (an.risks.some(r => /medical|cosmetic/.test(r))) note.push("المنتج يحمل مخاطر ادّعاء (" + an.risks.join("، ") + "): راجع النصوص قبل النشر.");
     /* ٢ قصّ المنتج */
     let prod = null, prodOk = false;
@@ -404,5 +411,5 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();
