@@ -8,7 +8,7 @@
 const PagePilotHybrid = (() => {
   const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const strip = (s, n) => String(s == null ? "" : s).replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim().slice(0, n);
-  const W = 1080, H = 1350;
+  const W = 1080, H = 1080;   /* صور مربّعة بعرض الصفحة (أقل تكلفة) */
   const RISKY = /يعالج|يشفي|علاج نهائي|يقضي على|يمنع السرطان|معتمد من وزارة|مضمون 100|100% مضمون|cure[sd]?\b|guaranteed|clinically proven/i;
   /* ادّعاءات اجتماعية مختلقة ممنوعة: آراء، عدّادات مخزون، «يشاهد الآن» */
   const FAKE = /يشاهد(ه|ها|ون)?[^.]{0,24}(الآن|حاليا|حالياً)|(متبقي|بقي|باقي)\s*\d+|آخر\s*\d+\s*(قطع|علب|حبات)|\d+\s*(زبون|عميل|شخص)\s*(اشترى|طلب|راضي)|⭐|★|تقييم\s*\d/i;
@@ -48,26 +48,6 @@ const PagePilotHybrid = (() => {
       ctx.putImageData(img, 0, 0);
     } catch (_) { }
     return cv;
-  }
-  /* دمج الموضوع (المرأة/المنتج) فوق لون الصفحة الصلب: تُقصّ خلفية الاستوديو المتجانسة وتُملأ باللون العميق نفسه (+ وهج خفيف مخبوز تحت الموضوع)
-     فلا يبقى مستطيل أو غشاء؛ ألوان الموضوع تبقى الأصلية بلا أي تلوين. يعيد false إن لم ينجح القصّ فيُستعمل meltCanvas */
-  async function flattenOnDeep(cv, deepHex, cutFn, lightGlow) {
-    try {
-      if (!cutFn) return false; const cut = await cutFn(cv); if (!cut || !cut.getContext) return false;
-      const w = cv.width, h = cv.height, sm = document.createElement("canvas"); sm.width = 64; sm.height = Math.max(8, Math.round(64 * h / w)); const sx = sm.getContext("2d"); sx.drawImage(cut, 0, 0, sm.width, sm.height);
-      const d = sx.getImageData(0, 0, sm.width, sm.height).data; let n = 0, cx = 0, cy = 0; for (let y = 0; y < sm.height; y++) for (let x = 0; x < sm.width; x++) { if (d[(y * sm.width + x) * 4 + 3] > 128) { n++; cx += x; cy += y; } }
-      const cov = n / (sm.width * sm.height); if (cov < .06 || cov > .8) return false;
-      /* الخلفية يجب أن تكون متجانسة فعلاً: نسبة البكسلات المخالفة للون الحواف ≈ تغطية القصّ، وإلا (هالة/قوس/تدرّج خلف الموضوع) لا نسطّح فيبقى قصّ مبتور */
-      { const s2 = document.createElement("canvas"); s2.width = 64; s2.height = sm.height; const q = s2.getContext("2d"); q.drawImage(cv, 0, 0, 64, sm.height); const e = q.getImageData(0, 0, 64, sm.height).data, bw = 64, bh = sm.height, edge = []; for (let x = 0; x < bw; x++) for (const y of [0, 1, bh - 2, bh - 1]) edge.push((y * bw + x) * 4); for (let y = 0; y < bh; y++) for (const x of [0, 1, bw - 2, bw - 1]) edge.push((y * bw + x) * 4);
-        const med = k => { const a = edge.map(i => e[i + k]).sort((m, o) => m - o); return a[a.length >> 1]; }, mr = med(0), mg = med(1), mb = med(2); let df = 0; for (let i = 0; i < e.length; i += 4) { const dr = e[i] - mr, dg = e[i + 1] - mg, db = e[i + 2] - mb; if (dr * dr + dg * dg + db * db > 45 * 45) df++; }
-        if (Math.abs(df / (bw * bh) - cov) > .14) return false; }
-      cx = cx / n / sm.width * w; cy = cy / n / sm.height * h;
-      const out = document.createElement("canvas"); out.width = w; out.height = h; const c = out.getContext("2d");
-      c.fillStyle = deepHex; c.fillRect(0, 0, w, h);
-      const gc = glowOf(deepHex), g = c.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * .55); g.addColorStop(0, rgba(gc, lightGlow ? .5 : .42)); g.addColorStop(.5, rgba(gc, .16)); g.addColorStop(1, rgba(gc, 0)); c.fillStyle = g; c.fillRect(0, 0, w, h);
-      c.save(); c.shadowColor = "rgba(0,0,0,.28)"; c.shadowBlur = w * .02; c.shadowOffsetY = w * .01; c.drawImage(cut, 0, 0, w, h); c.restore();
-      cv.getContext("2d").clearRect(0, 0, w, h); cv.getContext("2d").drawImage(out, 0, 0); return true;
-    } catch (_) { return false; }
   }
   function lumAt(canvas, r) {
     if (!canvas || !canvas.getContext) return .5;
@@ -164,12 +144,14 @@ dominant_colors: ألوان المنتج عموماً.
     why_choose: { zone: "top", scene: "a premium confident backdrop with subtle light rays and a pedestal for the product" },
     comparison: { zone: "full", product: false, scene: "a simple split-tone clean background suggesting a comparison, no objects" },
     offer_price: { zone: "top", cta: true, price: true, scene: "a celebratory offer backdrop with soft glow and confetti-like shapes, a pedestal for the product" },
+    tech_specs: { zone: "top", scene: "a clean technical studio backdrop with subtle blueprint-like lines and a pedestal for the product" },
+    use_cases: { zone: "top", scene: "a bright everyday lifestyle setting with space for the product in the lower half" },
     faq: { zone: "full", product: false, scene: "a calm light background with very subtle pattern, no objects" },
     delivery_guarantee: { zone: "bottom", scene: "a trustworthy clean backdrop suggesting delivery and care, product area in the upper half" },
     final_cta: { zone: "top", cta: true, scene: "an inviting finale backdrop with warm glow and a pedestal for the product" }
   };
   /* وضع «الدمج»: يرسم الذكاء المنتج داخل المشهد نفسه (صورة مختلفة لكل قسم) — النص يبقى طبقات حيّة في المنطقة المقابلة */
-  const EDIT_ZONE = { problem: "top", comparison: "top", faq: "top", how_to_use: "top", delivery_guarantee: "top" };
+  const EDIT_ZONE = { problem: "top", comparison: "top", tech_specs: "top", use_cases: "top", faq: "top", how_to_use: "top", delivery_guarantee: "top" };
   const EDIT_SCENE = {
     hero: "a dramatic hero shot, product at a low three-quarter angle on an elegant surface, shallow depth of field, depth and atmosphere that fit the product's use",
     problem: "a muted, slightly desaturated everyday setting that hints at the daily problem, cooler tones, the product sits calmly in the foreground as the solution",
@@ -178,29 +160,43 @@ dominant_colors: ألوان المنتج عموماً.
     why_choose: "a premium confident podium scene with subtle light rays, product centered at eye level",
     comparison: "a clean studio background with a soft two-tone split, product on one side with calm studio lighting",
     offer_price: "a festive offer backdrop with warm glow and soft sparkles, product large and proud on a pedestal",
+    tech_specs: "a clean technical studio setting with fine blueprint-style guide lines, product shown precisely and evenly lit like a product spec shot",
+    use_cases: "a real everyday situation where the product is being used (home, travel or work, whichever fits the product), natural props, warm lifestyle feel",
     faq: "a calm, soft-focus home interior, product small on a shelf or table, bokeh background",
     delivery_guarantee: "a warm trustworthy scene with a kraft-paper gift package and ribbon beside the product, soft daylight",
     final_cta: "an inviting golden-hour scene, close and warm hero view of the product with gentle glow"
   };
   const zoneOf = (type, edit) => { const T = TYPES[type] || TYPES.hero; return edit && EDIT_ZONE[type] ? EDIT_ZONE[type] : T.zone; };
   const ORDER = { 2: ["hero", "offer_price"], 3: ["hero", "benefits", "offer_price"], 4: ["hero", "problem", "benefits", "offer_price"], 5: ["hero", "problem", "benefits", "offer_price", "final_cta"], 7: ["hero", "problem", "benefits", "how_to_use", "offer_price", "delivery_guarantee", "final_cta"], 6: ["hero", "problem", "benefits", "offer_price", "delivery_guarantee", "final_cta"], 8: ["hero", "problem", "benefits", "how_to_use", "why_choose", "offer_price", "delivery_guarantee", "final_cta"], 10: ["hero", "problem", "benefits", "how_to_use", "why_choose", "comparison", "offer_price", "faq", "delivery_guarantee", "final_cta"] };
+  ORDER[9] = ["hero", "problem", "benefits", "how_to_use", "why_choose", "comparison", "offer_price", "delivery_guarantee", "final_cta"];
+  ORDER[10] = ["hero", "problem", "benefits", "tech_specs", "how_to_use", "why_choose", "comparison", "offer_price", "delivery_guarantee", "final_cta"];
+  ORDER[11] = ["hero", "problem", "benefits", "tech_specs", "how_to_use", "use_cases", "why_choose", "comparison", "offer_price", "delivery_guarantee", "final_cta"];
+  ORDER[12] = ["hero", "problem", "benefits", "tech_specs", "how_to_use", "use_cases", "why_choose", "comparison", "offer_price", "faq", "delivery_guarantee", "final_cta"];
   const typesFor = n => (ORDER[n] || ORDER[8]).slice();
+  /* وضع «حسب المنتج»: يختار الذكاء الأقسام التي تناسب المنتج (حتى حدّ أقصى) */
+  const CANON = ["hero", "problem", "benefits", "tech_specs", "how_to_use", "use_cases", "why_choose", "comparison", "offer_price", "faq", "delivery_guarantee", "final_cta"];
+  const DROP_FIRST = ["faq", "use_cases", "tech_specs", "comparison", "delivery_guarantee", "why_choose", "how_to_use", "problem", "benefits"];
+  function autoTypes(raw, max) {
+    max = Math.max(4, Math.min(12, max || 8)); let got = []; (raw && Array.isArray(raw.sections) ? raw.sections : []).forEach(x => { const t = x && String(x.type || "").trim(); if (t && CANON.includes(t) && !got.includes(t)) got.push(t); });
+    for (const d of DROP_FIRST) { if (got.length <= max) break; got = got.filter(t => t !== d); }
+    return got.slice(0, max).sort((a, b) => CANON.indexOf(a) - CANON.indexOf(b));
+  }
   function planPrompt(info, an, style, o) {
-    o = o || {}; const types = typesFor(o.count), dia = o.dialect === "msa" ? "العربية الفصحى المبسّطة" : "الدارجة الجزائرية المكتوبة بحروف عربية (قريبة من الناس، بلا مبالغة)";
+    o = o || {}; const auto = !o.count, mx = o.max || 8, types = auto ? CANON.slice() : typesFor(o.count), dia = o.dialect === "msa" ? "العربية الفصحى المبسّطة" : "الدارجة الجزائرية المكتوبة بحروف عربية (قريبة من الناس، بلا مبالغة)";
     return `أنت كاتب إعلانات لصفحة هبوط موبايل مصوّرة. اكتب نصوص أقسام الصفحة للمنتج التالي بـ${dia}.
 المنتج: ${info.title || "—"}${an && an.name ? " (" + an.name + ")" : ""}
 الوصف: ${info.desc || "—"}
 ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.features.join(" | ") + "\n" : ""}${an && an.audience ? "الجمهور: " + an.audience + "\n" : ""}${o.audience ? "نبرة/جمهور مطلوب: " + o.audience + "\n" : ""}
-الأقسام بهذا الترتيب بالضبط: ${types.join(", ")}.
+${auto ? `اختر من القائمة التالية الأقسام التي يحتاجها هذا المنتج فعلاً (بين 5 و${mx} أقسام، لا تضع قسماً لا يخدم المنتج): ${CANON.join(", ")}. hero أولاً دائماً، offer_price قبل الأخير، final_cta أخيراً. أمثلة: tech_specs للأجهزة والأدوات ذات المواصفات، how_to_use لمنتجات الاستعمال المباشر (تجميل/غذاء/عناية)، comparison عند وجود بديل عادي واضح، use_cases لمنتج متعدد الاستعمالات، faq عند وجود أسئلة متوقعة، problem عندما يحلّ المنتج مشكلة. اكتب في كل عنصر type من هذه القائمة بالضبط وبالترتيب.` : `الأقسام بهذا الترتيب بالضبط: ${types.join(", ")}.`}
 قواعد صارمة: جمل قصيرة تبدأ بالفائدة؛ لا ادّعاءات علاجية أو مبالغة؛ لا آراء زبائن ولا عدّادات مخزون ولا «يشاهده X الآن» ولا أرقام مختلقة؛ لا أسعار ولا نسب خصم في النصوص (تأتي من المتجر).
 حقل scene: وصف إنجليزي للمشهد/الخلفية فقط، بلا منتج ولا نصوص ولا وجوه أشخاص.
 حقل hl: كلمة أو عبارة قصيرة (≤3 كلمات) منسوخة حرفياً من العنوان تُبرز بلون مختلف (اتركه "" إن لم يلزم). في sub وفي كل نقطة bullets ضع كلمة أو كلمتين مفتاحيتين (الفائدة/الرقم/الكلمة القوية) بين قوسين مربعين مزدوجين هكذا [[كلمة]] (واحدة أو اثنتان فقط في كل نص). حقل icons: اسم أيقونة لكل نقطة من: ${ICON_SET.join("|")}.
 العناوين قوية وقصيرة تبدأ بالنتيجة أو بسؤال عن المشكلة.
 أخرج JSON واحداً فقط: {"sections":[{"type":"hero","headline":"≤45 حرفاً","hl":"","sub":"≤110 حرفاً","bullets":["≤45 حرفاً"],"icons":["leaf"],"cta":"≤22 حرفاً","scene":"…"}]}
-عدد bullets: hero 0، problem 0، benefits 4، how_to_use 3 (خطوات)، why_choose 3، comparison 3، offer_price 0، faq 3 (سؤال وجوابه في سطر واحد «س: … ج: …»)، delivery_guarantee 3، final_cta 0.`;
+عدد bullets: hero 0، problem 0، benefits 3، how_to_use 3 (خطوات)، why_choose 3، comparison 3 (كل نقطة «ما يميّزنا ↔ البديل العادي»)، tech_specs 3 (مواصفات تقنية مؤكدة من الوصف فقط بصيغة «المواصفة: القيمة» ولا تخترع أرقاماً)، use_cases 3 (حالة استعمال واقعية لكل نقطة)، offer_price 0، faq 3 (سؤال وجوابه في سطر واحد «س: … ج: …»)، delivery_guarantee 3، final_cta 0.`;
   }
   function cleanPlan(raw, o) {
-    o = o || {}; const types = typesFor(o.count), src = raw && Array.isArray(raw.sections) ? raw.sections : [], by = {}; src.forEach(s => { const t = s && String(s.type || "").trim(); if (t && TYPES[t] && !by[t]) by[t] = s; });
+    o = o || {}; const src = raw && Array.isArray(raw.sections) ? raw.sections : [], types = o.count ? typesFor(o.count) : autoTypes(raw, o.max), by = {}; src.forEach(s => { const t = s && String(s.type || "").trim(); if (t && TYPES[t] && !by[t]) by[t] = s; });
     const warn = [];
     const out = types.map((t, i) => {
       const s = by[t] || src[i] || {}, bl = (Array.isArray(s.bullets) ? s.bullets : []).map(b => strip(typeof b === "string" ? b : b && (b.text || b.title), 60)).filter(Boolean);
@@ -226,19 +222,34 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   const NEG = "text, letters, words, numbers, watermark, logo, distorted product, extra parts, blurry, low resolution, malformed hands";
   /* لقطة/تكوين مختلف لكل قسم: الزاوية والمسافة وطريقة العرض — كي لا تتشابه صور الأقسام */
   const SHOTS = ["eye-level front view, product centered, hero framing", "three-quarter view from the left, slightly low camera angle, dramatic perspective", "close-up detail shot of the product's front label and texture, shallow depth of field", "top-down 45-degree view with natural props that suggest use", "side profile view from the right, product slightly off-center with strong rim light", "wide establishing shot, product small-to-medium in a rich creative setting", "tilted dynamic angle with motion cues (floating droplets, petals or particles around the product)", "calm symmetrical composition on a pedestal, product facing the viewer"];
+  /* غرض صورة كل قسم (لقطة محدّدة الهدف بدل التدوير العشوائي للزوايا) */
+  const PURPOSE = {
+    hero: "advertising hero image: the product proud and large, eye-level to slightly low three-quarter angle, aspirational and eye-catching",
+    problem: "context scene that evokes the everyday problem, product calmly present as the solution, cooler muted tones",
+    benefits: "close-up macro shot of the product label and key ingredient or texture, shallow depth of field, benefit-illustrating elements around it",
+    tech_specs: "precise detail shot: product seen straight-on and from a slightly rotated angle to show its construction, material and label details clearly, even lighting",
+    how_to_use: "the product in use: a hand applying, pouring or using it naturally, the action clearly visible, top-down or close three-quarter view",
+    use_cases: "lifestyle shot: the product in a real everyday situation of use (home, travel or work), natural props and warm ambience, product still clearly visible",
+    why_choose: "premium shot: product on a podium at eye level with rim light, quality and trust feeling, clean confident composition",
+    comparison: "clean side-by-side style composition: the product in sharp focus beside a generic unbranded alternative that looks dull and ordinary, calm studio light",
+    offer_price: "offer composition: the product (and a second unit or gift item if natural) arranged as a bundle on a pedestal with festive warm glow",
+    delivery_guarantee: "trust shot: the product with a neat shipping package and ribbon, soft daylight, reassuring feel",
+    faq: "calm friendly shot: product small on a shelf in a soft-focus home interior",
+    final_cta: "closing hero: warm golden-hour close view of the product, inviting and emotional"
+  };
   function bgPrompt(style, sec, o) {
     o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zn = zoneOf(sec.type, !!o.withProduct), zoneTxt = zn === "top" ? (o.withProduct ? "the top 46% of the frame" : "the top 40% of the frame") : zn === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
     const noProduct = !o.withProduct && T.product === false;
     const where = zn === "top" ? (o.withProduct ? "entirely inside the lower band of the frame (between 52% and 86% of the frame height), fully visible, centered, large, never cut off or touching any edge" : "in the lower half") : zn === "bottom" ? "in the upper half" : "small and centered";
-    const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page: " + SHOTS[(o.idx || 0) % SHOTS.length] + ". " + (o.refName ? "The reference photo shows the product variant \"" + o.refName + "\": keep exactly that variant's look. " : "") : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
+    const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page: " + (PURPOSE[sec.type] ? "Purpose of this image: " + PURPOSE[sec.type] : SHOTS[(o.idx || 0) % SHOTS.length]) + ". " + (o.refName ? "The reference photo shows the product variant \"" + o.refName + "\": keep exactly that variant's look. " : "") : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
     const person = !!(o.withProduct && hasPerson(sec.type, o));
-    const solid = !!o.withProduct && o.backdrop !== "scene";
+    const solid = false;   /* مشهد حقيقي لكل قسم بهوية بصرية واحدة — لا خلفية مسطّحة ولا نزع للخلفية */
     const SOLID = `a seamless plain studio backdrop, one perfectly uniform flat ${style.bgName} (${style.palette.deep}) color filling the whole background — NO room, NO furniture, NO windows, NO shelves, NO bokeh, NO background objects at all, only a very subtle soft vignette; the subject and product are cleanly lit by soft studio light with a soft contact shadow`;
     const scene = o.withProduct ? (solid ? SOLID : (EDIT_SCENE[sec.type] || EDIT_SCENE.hero)) + (person ? ". Include: " + PEOPLE[sec.type] + (o.audience ? " (target audience: " + o.audience + ")" : "") : "") + (!solid && sec.scene ? ". Setting inspiration: " + sec.scene : "") : (sec.scene || T.scene);
     const crisp = o.withProduct ? "The product must be the pure, sharp, photorealistic hero of the image: perfectly in focus, high resolution, clean crisp edges, faithful colors, no blur, no warping. " : "";
-    const tone = `Color mood: the whole scene, props and light are graded in ${style.cname || "deep"} tones (${style.palette.primary}). `;
+    const tone = `ONE visual identity for the whole page: the same color palette, light quality, material and props family in every section, while each section shows its own distinct scene. Color mood: the whole scene, props and light are graded in ${style.cname || "deep"} tones (${style.palette.primary}). `;
     const nf = o.noFaces !== false && !person;
-    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail, completely empty space across ${zoneTxt} for a headline and text rows (nothing important there, the product must NOT enter that area), and keep the bottom 12% of the frame calm and plain for a button. The dominant background color of the entire frame is ${style.bgName} (${style.palette.deep}) — one unified color-graded scene, props and surfaces also in ${style.cname} tones${style.tone === "light" ? "" : "; no gray or white backdrop"}. ${solid ? `Lighting: even, soft studio light on the subject and product only. ABSOLUTELY NO glow, NO halo, NO light beam, NO arch, NO circle or gradient shape behind the subject or product — the background behind them stays one perfectly flat uniform color exactly like the rest of the frame (the page adds its own glow later).` : `Add soft cinematic lighting: a gentle glowing light behind the subject and product with a smooth gradient falloff (degradé), subtle rim light, never harsh.`} All four edges of the frame must dissolve like a vignette into the flat backdrop color with no visible border or frame line. The top 8% and bottom 8% of the frame must fade smoothly into the same solid ${style.bgName} (${style.palette.deep}) so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Vertical 4:5 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
+    return `${style.prefix}. ${scene}. ${ref}${crisp}${tone}${person ? PEOPLE_RULES : ""}Leave clean, calm, low-detail, completely empty space across ${zoneTxt} for a headline and text rows (nothing important there, the product must NOT enter that area), and keep the bottom 12% of the frame calm and plain for a button. The dominant background color of the entire frame is ${style.bgName} (${style.palette.deep}) — one unified color-graded scene, props and surfaces also in ${style.cname} tones${style.tone === "light" ? "" : "; no gray or white backdrop"}. ${solid ? `Lighting: even, soft studio light on the subject and product only. ABSOLUTELY NO glow, NO halo, NO light beam, NO arch, NO circle or gradient shape behind the subject or product — the background behind them stays one perfectly flat uniform color exactly like the rest of the frame (the page adds its own glow later).` : `Add soft cinematic lighting: a gentle glowing light behind the subject and product with a smooth gradient falloff (degradé), subtle rim light, never harsh.`} All four edges of the frame must dissolve like a vignette into the flat backdrop color with no visible border or frame line. The top 8% and bottom 8% of the frame must fade smoothly into the same solid ${style.bgName} (${style.palette.deep}) so consecutive images join into one seamless continuous page with no visible border. No text, no letters, no numbers, no watermark, no extra logos. ${nf ? "No human faces or people. " : ""}Square 1:1 composition. AVOID: ${NEG}${nf ? ", human faces, people's faces" : ""}. ${o.extra || ""}`.trim();
   }
   /* تعليمات الاستمرارية: الصورة الثانية = القسم السابق (والثالثة = أول قسم) */
   function continuityNote(hasFirst) {
@@ -261,10 +272,10 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   const VAR = [{ s: 1, r: 0, dx: 0 }, { s: .92, r: -4, dx: 60 }, { s: 1.06, r: 3, dx: -50 }, { s: .88, r: 5, dx: -70 }, { s: 1.02, r: -3, dx: 40 }, { s: .95, r: 2, dx: 0 }];
   const variation = i => VAR[i % VAR.length];
   function geometry(type, ar, edit, cta) {
-    const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), c = cta ? 120 : 0, zone = zn === "top" ? { x: 70, y: 90, w: 940, h: 530 } : zn === "bottom" ? { x: 70, y: H - 650 - c, w: 940, h: 560 - c } : { x: 70, y: 150, w: 940, h: H - 300 - c };
+    const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), c = cta ? 120 : 0, zone = zn === "top" ? { x: 70, y: 60, w: 940, h: 500 } : zn === "bottom" ? { x: 70, y: H - 560 - c, w: 940, h: 470 - c } : { x: 70, y: 110, w: 940, h: H - 230 - c };
     let prod = null;
     if (!edit && T.product !== false) {
-      const box = zn === "top" ? { x: 120, y: 660, w: 840, h: cta ? 490 : 580 } : { x: 120, y: 60, w: 840, h: 560 }; ar = ar > 0 ? ar : 1;
+      const box = zn === "top" ? { x: 120, y: 600, w: 840, h: cta ? 370 : 440 } : { x: 120, y: 60, w: 840, h: 460 }; ar = ar > 0 ? ar : 1;
       const w = Math.round(Math.min(box.w, box.h * ar)), h = Math.round(w / ar);
       prod = { x: Math.round(box.x + (box.w - w) / 2), y: Math.round(zn === "top" ? box.y + box.h - h : box.y + (box.h - h) / 2), w, h };
     }
@@ -274,7 +285,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   const estH = (txt, size, w, lh) => Math.ceil(Math.max(1, Math.ceil(String(txt).replace(/\[\[|\]\]/g, "").length * size * .52 / w)) * size * (lh || 1.4)) + 6;
 
   /* ───────────── ٩) تجميع الصفحة (مخطط alyssum-design/1 ← PBSpec) ───────────── */
-  const ROWS = ["benefits", "why_choose", "how_to_use", "delivery_guarantee", "comparison"];
+  const ROWS = ["benefits", "why_choose", "how_to_use", "delivery_guarantee", "comparison", "tech_specs", "use_cases"];
   const TICKER = { ar: "دفع عند الاستلام  •  توصيل لكل الولايات  •  تأكيد الطلب بالهاتف", fr: "Paiement à la livraison  •  Livraison partout  •  Confirmation par téléphone", en: "Cash on delivery  •  Nationwide delivery  •  Phone confirmation" };
   /* لون النص فوق تدرّج اللون العميق: السطوع الفعلي = خلفية الصورة ممزوجة بالتدرّج (≈85%) */
   const textOn = (lum, st) => pickText((lum != null ? lum : .5) * .15 + hexLum(st.palette.deep) * .85, ["#ffffff", "#111111"]);
@@ -315,7 +326,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         layers.push({ type: "text", text: ctx.tickerText || TICKER[ctx.lang] || TICKER.ar, x: 0, y: 14, w: W, z: 9, font: { size: 28, weight: 900, color: hlBtnTxt(hl), align: "center", lineHeight: 1.3 }, name: "شريط علوي (نص)" });
         y = Math.max(y, 100);
       }
-      const hd = s.headline || "", len = hd.length, hlw = s.hl || ((() => { const w = hd.split(/\s+/).filter(Boolean); return w.length >= 3 ? w.slice(-(w.length >= 5 ? 2 : 1)).join(" ") : ""; })()), fs1 = len <= 22 ? 76 : len <= 34 ? 66 : 56, rest = hlw ? hd.replace(hlw, " ").replace(/\s+/g, " ").trim() : hd;
+      const hd = s.headline || "", len = hd.length, hlw = s.hl || ((() => { const w = hd.split(/\s+/).filter(Boolean); return w.length >= 3 ? w.slice(-(w.length >= 5 ? 2 : 1)).join(" ") : ""; })()), fs1 = len <= 22 ? 68 : len <= 34 ? 58 : 50, rest = hlw ? hd.replace(hlw, " ").replace(/\s+/g, " ").trim() : hd;
       const head = (txt, color, tag, delay) => { const h = estH(txt, fs1, z.w, 1.2); layers.push({ type: "heading", tag, text: txt, x: z.x, y, w: z.w, z: 5, font: { size: fs1, weight: 900, color, align: "center", lineHeight: 1.2 }, effects: [{ type: "fadeUp", delay: delay || 0 }] }); y += h + 4; };
       if (hd) { if (rest) head(rest, pk.color, i === 0 ? "h1" : "h2"); if (hlw) head(hlw, hl, rest ? "h2" : (i === 0 ? "h1" : "h2"), .08); y += 10; }
       const rows = ROWS.includes(s.type) && (s.bullets || []).length >= 2;
@@ -395,8 +406,8 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     let plan = RS ? RS.plan : undefined, planErr = null;
     for (let at = 1; at <= 2 && !plan; at++) {
       try {
-        const pl = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count });
-        const okN = pl.sections.filter(s => s.headline).length; if (okN < pl.sections.length) throw new Error("خطة ناقصة (" + okN + " من " + pl.sections.length + ")");
+        const pl = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, max: inp.max, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count, max: inp.max });
+        const okN = pl.sections.filter(s => s.headline).length; if ((!inp.count && pl.sections.length < 3) || !pl.sections.length || pl.sections[0].type !== "hero") throw new Error("خطة أقسام غير صالحة"); if (okN < pl.sections.length) throw new Error("خطة ناقصة (" + okN + " من " + pl.sections.length + ")");
         plan = pl;
       } catch (e) { planErr = e; if (e && (e.code === "NOKEY" || e.code === "OFF")) break; }
     }
@@ -414,7 +425,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         R.attempts = a;
         if (halted) { fails.push({ i, msg: halted, code: "HALT" }); return; }
         try {
-          let pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, backdrop: inp.backdrop, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
+          let pr = bgPrompt(style, sec, { withProduct: edit, noFaces, people, audience: an.audience, extra, idx: i, refName: (inp.refNames || [])[R.ref] || "" }); R.prompt = pr;
           const rk = j => results[j] && results[j].rawKeep; let pv = null, fv = null; for (let j = i - 1; j >= 0; j--) if (rk(j)) { pv = rk(j); break; } for (let j = 0; j < results.length; j++) if (rk(j)) { fv = rk(j); break; } const links = chain && pv ? [pv].concat(fv && fv !== pv ? [fv] : []) : []; if (links.length) { pr = pr + " " + continuityNote(links.length > 1); R.prompt = pr; R.chained = true; }
           const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i, links) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
           if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock; R.rawKeep = got.mock ? null : (got.blob || null);
@@ -433,7 +444,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         }
       }
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
-      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = edit && inp.backdrop !== "scene" && !R.person && !!P.remover && await flattenOnDeep(R.bgCanvas, style.palette.deep, c => P.remover.cutBg(c), style.tone === "light"); if (!R.flat) meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
+      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit, ctaOn); R.person = hasPerson(sec.type, { people }); if (!R.mock && R.bgCanvas && style.palette) { R.flat = false; meltCanvas(R.bgCanvas, style.palette.deep); R.bgBlob = null; } R.lum = lumAt(R.bgCanvas, g.zone); R.pi = prods.length ? i % prods.length : 0; R.pv = variation(i); R.prodAr = prods[R.pi] ? prods[R.pi].canvas.width / prods[R.pi].canvas.height : (prod ? prod.canvas.width / prod.canvas.height : 0);
       results[i] = R; cb.section && cb.section(i, R);
     });
     if (fails.length) {
@@ -477,21 +488,51 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const fg = hexLum(hl) > .45 ? "#111111" : "#ffffff", esc2 = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     return `<style>.pp-sticky{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9999;width:min(92vw,560px);box-sizing:border-box;padding:16px 20px;border-radius:999px;background:${hl};color:${fg};font:900 20px/1.2 Cairo,system-ui,sans-serif;text-align:center;text-decoration:none;box-shadow:0 10px 28px rgba(0,0,0,.35);animation:ppPulse 2s ease-in-out infinite;transition:opacity .25s,transform .25s}.pp-sticky.off{opacity:0;pointer-events:none;transform:translateX(-50%) translateY(30px)}@keyframes ppPulse{0%,100%{box-shadow:0 10px 28px rgba(0,0,0,.35)}50%{box-shadow:0 10px 36px rgba(0,0,0,.35),0 0 0 8px ${hl}44}}</style><a class="pp-sticky" href="${esc2(link)}">${esc2(txt)}</a><script>(function(){var b=document.querySelector(".pp-sticky"),o=document.getElementById("order");if(!b)return;if(o&&"IntersectionObserver"in window){new IntersectionObserver(function(es){es.forEach(function(x){b.classList.toggle("off",x.isIntersecting)})},{threshold:.1}).observe(o)}b.addEventListener("click",function(e){var t=document.getElementById("order");if(t&&b.getAttribute("href")==="#order"){e.preventDefault();t.scrollIntoView({behavior:"smooth",block:"start"})}})})()</script>`;
   }
+  function parseFaq(R) {
+    const sec = R.sec || {}, strip2 = t => String(t || "").replace(/\[\[|\]\]/g, "").trim();
+    const items = (sec.bullets || []).map(b => { const m = /^\s*(?:س|Q|Question)\s*[:：]\s*([\s\S]*?)\s*(?:ج|A|R|Réponse|Answer)\s*[:：]\s*([\s\S]*)$/.exec(strip2(b)); return m ? { q: m[1].trim(), a: m[2].trim() } : { q: strip2(b), a: "" }; }).filter(x => x.q);
+    return items;
+  }
+  function faqSection(R, st, ctx) {
+    const deep = st.palette.deep, light = hexLum(deep) > .4, txt = light ? "#16212b" : "#ffffff", sub = light ? "#3b4754" : "#e7edf3", hl = st.palette.hl;
+    const items = parseFaq(R); const sec = R.sec || {};
+    const ws = [PB.mkW("heading", { text: (sec.headline || "أسئلة شائعة").replace(/\[\[|\]\]/g, ""), tag: "h2", color: txt, ta: { d: "center" }, fs: { d: 40, m: 28 }, fw: "900" })];
+    if (sec.sub) ws.push(PB.mkW("text", { html: "<p>" + String(sec.sub).replace(/\[\[|\]\]/g, "").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) + "</p>", color: sub, ta: { d: "center" }, fs: { d: 20, m: 16 } }));
+    ws.push(PB.mkW("accordion", { items: items.length ? items : [{ q: sec.headline || "", a: sec.sub || "" }], first: true, qbg: light ? "rgba(0,0,0,.07)" : "rgba(255,255,255,.12)", qc: txt, ac: sub, qfs: { d: 22, m: 18 } }));
+    const s = PB.mkS([PB.mkC(ws)], { layout: "boxed", cw: { d: 860 }, bg: deep, bgImg: R.bgSrc, ovl: deep, ovlOp: .66, pad: { d: [80, 24, 80, 24], m: [48, 16, 48, 16] }, gap: { d: 18 } });
+    s.set.cid = "faq"; return s;
+  }
   async function assemble(out, ctx, upload) {
     const spec0 = [];
     const plist = (out.prods && out.prods.length ? out.prods : (out.prod ? [out.prod] : [])), prodSrcs = [];
     for (let k = 0; k < plist.length; k++) prodSrcs.push(await upload(await canvasBlob(plist[k].canvas, "image/png"), "product" + (k ? k + 1 : "")));
     const prodSrc = prodSrcs[0] || "";
     for (let i = 0; i < out.results.length; i++) { const R = out.results[i], blob = R.bgBlob || await canvasBlob(R.bgCanvas, "image/webp", .88); R.bgSrc = await upload(blob, "bg" + (i + 1)); R.prodSrc = prodSrcs.length ? prodSrcs[(R.pi || 0) % prodSrcs.length] : ""; spec0.push(R); }
-    const spec = buildSpec(out.plan, spec0, Object.assign({ style: out.style, strategy: out.strategy }, ctx));
-    const v = PBSpec.validate(spec, { product: ctx.product });
-    if (!v.ok) throw new Error(v.error || "مخطط غير صالح");
-    const pg = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: ctx.merge !== false });
+    /* الأسئلة الشائعة = أكورديون حقيقي (عنصر المطوّر) على صورة القسم؛ تُبنى الأقسام قبلها وبعدها صفحات منفصلة ثم تُجمع بالترتيب */
+    const parts = []; let cur = []; spec0.forEach(R => { if (R.sec && R.sec.type === "faq") { if (cur.length) parts.push({ res: cur }); cur = []; parts.push({ faq: R }); } else cur.push(R); });
+    if (cur.length) parts.push({ res: cur }); if (ctx.product && (!parts.length || parts[parts.length - 1].faq)) parts.push({ res: [] });
+    const lastRes = parts.map(p => !!p.res).lastIndexOf(true), warn = []; let pg = null;
+    for (let k = 0; k < parts.length; k++) {
+      const p = parts[k]; let secs, pend = [], meta = null;
+      if (p.faq) secs = [faqSection(p.faq, out.style, ctx)];
+      else {
+        const spec = buildSpec(out.plan, p.res, Object.assign({ style: out.style, strategy: out.strategy }, ctx, { product: k === lastRes ? ctx.product : "" }));
+        if (!spec.sections.length) continue;
+        const v = PBSpec.validate(spec, { product: ctx.product }); if (!v.ok) throw new Error(v.error || "مخطط غير صالح"); (v.warn || []).forEach(w => warn.push(w));
+        const g = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: ctx.merge !== false });
+        if (!pg) { pg = g; pg.pending = g.pending || []; continue; }
+        secs = g.sections; pend = g.pending || []; if (g.specMeta && g.specMeta.assets) Object.assign(pg.specMeta.assets, g.specMeta.assets);
+      }
+      if (!pg) { pg = PBSpec.toPage({ format: "alyssum-design/1", page: { title: ctx.title || "صفحة هبوط", full: true, width: W, bg: out.style.palette.deep, lang: ctx.lang || "ar", product: ctx.product || "" }, assets: {}, sections: [] }, { product: ctx.product, title: ctx.title }); pg.sections = []; pg.pending = []; }
+      pg.sections.push(...secs); if (pend.length) pg.pending = pg.pending.concat(pend);
+    }
+    if (!pg) throw new Error("مخطط غير صالح"); pg.pending = pg.pending || [];
+    const v = { warn };
     if (ctx.sticky !== false && typeof PB !== "undefined" && PB.mkS && PB.mkC && PB.mkW) { try { const sb = PB.mkS([PB.mkC([PB.mkW("html", { code: stickyBtn(out, ctx) })])], { layout: "full", pad: { d: [0, 0, 0, 0] } }); sb.set = sb.set || {}; sb.set.cid = "sticky-order"; pg.sections.push(sb); } catch (_) { } }
     pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = prodSrcs.concat(out.results.map(r => r.bgSrc)).filter(Boolean);
     pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, flat: out.results.some(r => r && r.flat), strategy: out.strategy, theme: out.style, colors: out.colors || [], sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: textOn(r.lum, out.style).ratio, person: !!r.person })), steps: out.log.slice(0, 200) } });
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, flattenOnDeep, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, PURPOSE, CANON, autoTypes, continuityNote, TYPES, EDIT_SCENE, PEOPLE, hasPerson, colorName, pickAccent, meltCanvas, iconFor, rgba, textOn, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, productColors, recolorPage, isAmber, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, bgPrompt, continuityNote, gatePrompt, gateOk, geometry, buildSpec, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();

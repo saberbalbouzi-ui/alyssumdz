@@ -51,9 +51,9 @@ const PagePilot = (() => {
 <div style="grid-column:1/-1"><div style="font-size:.8rem;margin-bottom:4px">🎨 لون خلفية الصفحة (الهجين) — لا يلزم أن يطابق لون المنتج؛ اختر لوناً منه أو قريباً أو فاتحاً</div>
 <div id="pp-cols" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button data-pp="col" data-c="" style="${BTN_CSS};background:rgba(255,255,255,.12);outline:2px solid #c6fe17">تلقائي</button><span id="pp-sw" style="display:contents"></span><button data-pp="cols" style="${BTN_CSS};background:rgba(255,255,255,.12)" title="يستخرج ألوان صورة المنتج المختارة">استخرج ألوان المنتج</button><label style="font-size:.78rem;display:flex;gap:4px;align-items:center">لون حرّ <input id="pp-cc" type="color" value="#c8a24b" style="width:38px;height:30px;padding:0;border:0;background:none"></label>
 <label style="font-size:.78rem">الدرجة <select id="pp-tone" style="${FLD};width:auto"><option value="dark">داكنة</option><option value="mid">متوسطة</option><option value="light">فاتحة</option></select></label>
-<label style="font-size:.78rem">الخلفية خلف الأشخاص/المنتج <select id="pp-bd" style="${FLD};width:auto"><option value="solid">لون موحّد بلا مشهد</option><option value="scene">مشهد مختلف لكل قسم</option></select></label></div></div>
+</div></div>
 
-<label style="font-size:.8rem">عدد الأقسام (الهجين)<select id="pp-hn" style="${FLD}"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option></select></label>
+<label style="font-size:.8rem">الأقسام<select id="pp-hn" style="${FLD}"><option value="0" selected>حسب المنتج (حتى 8)</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select></label>
 <label style="font-size:.8rem">اللهجة<select id="pp-dia" style="${FLD}"><option value="dz">دارجة جزائرية</option><option value="msa">فصحى مبسّطة</option></select></label>
 <label style="font-size:.85rem"><input id="pp-people" type="checkbox" checked> صور أشخاص في المشاهد (هيرو، المشكلة، الاستعمال، الخاتمة — النساء بحجاب ولباس ساتر)</label>
 <label style="font-size:.85rem"><input id="pp-ticker" type="checkbox" checked> شريط علوي (دفع عند الاستلام • توصيل • تأكيد بالهاتف)</label>
@@ -99,15 +99,15 @@ const PagePilot = (() => {
         }
       }
       {
-        const th0 = THEMES[theme] || THEMES.green, cnt = +$("pp-hn").value || 8, sig = [g.info.title, cnt, o.lang, $("pp-dia").value].join("|"), RS = resumeIt && S.resume && S.resume.sig === sig ? S.resume.p : null;
+        const th0 = THEMES[theme] || THEMES.green, cnt = +$("pp-hn").value || 0, sig = [g.info.title, cnt, o.lang, $("pp-dia").value].join("|"), RS = resumeIt && S.resume && S.resume.sig === sig ? S.resume.p : null;
         if (resumeIt && !RS) throw new Error("تغيّرت الإعدادات منذ المحاولة السابقة — اضغط «أنشئ الصفحة» لبدء إنشاء جديد");
-        const nTodo = RS ? RS.plan.sections.filter((x, k) => !RS.results[k]).length : cnt;
+        const nTodo = RS ? RS.plan.sections.filter((x, k) => !RS.results[k]).length : (cnt || 8);
         if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
         if (ImgGen.credit && ImgGen.credit.state && ImgGen.credit.state() === "out" && ImgGen.renewLocal) { if (confirm("عدّاد الرصيد في هذا المتصفح يرى أن الرصيد انتهى (قد يكون قديماً بعد تجديدك). هل جدّدتَ الرصيد فعلاً؟ سأصفّر العدّاد وأتابع.")) ImgGen.renewLocal(); else throw new Error("جدّد الرصيد ثم أعد المحاولة"); }
-        if (!confirm("سيرسم الذكاء " + nTodo + " صورة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
-        const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + cnt + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:65px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
+        if (!confirm("سيرسم الذكاء " + (RS || cnt ? nTodo : "حتى 8") + " صورة مربّعة للصفحة (صورة لكل قسم، بلا نصوص) ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
+        const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + (RS ? RS.plan.sections.length : (cnt || "حتى 8")) + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
-        let out; try { out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, backdrop: $("pp-bd").value, resume: RS }, { section: prog }); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
+        let out; try { out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, resume: RS }, { section: prog }); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
         const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, tag));
         bg.remove(); PBApp.open(asm.page, "", true);
