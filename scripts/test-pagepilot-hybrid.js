@@ -47,7 +47,7 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   const retry = await p.evaluate(async () => {
     const H = PagePilotHybrid; let calls = 0, checks = 0; const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135);
     const blob = await (await fetch("assets/img/tpl/generic-honey.webp")).blob(); const prompts = [];
-    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob, theme: PagePilot.THEMES.green, lang: "ar", count: 6, gate: true, noFaces: true }, {}, {
+    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob, theme: PagePilot.THEMES.green, lang: "ar", count: 6, strategy: "composite", gate: true, noFaces: true }, {}, {
       real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
       image: { bg: async (pr) => { calls++; prompts.push(pr); const cb = await new Promise(r => c.toBlob(r, "image/png")); return { canvas: c, blob: cb }; }, edit: async () => null },
       vision: { check: async () => { checks++; return { has_text: true, has_face: false, zone_empty: true, artifacts: false }; } }
@@ -56,6 +56,25 @@ const shotDir = (process.argv.indexOf("--shot") > 0 && process.argv[process.argv
   });
   t("بوابة الجودة: ثلاث محاولات كحدّ أقصى لكل قسم ثم علم needs_review", retry.calls === 18 && retry.checks === 18 && retry.att.every(a => a === 3) && retry.flags.every(f => f === 1), retry);
   t("إعادة المحاولة تعدّل البرومبت (تشديد منع النص)", retry.retryHint);
+
+  /* وضع الدمج: لا قصّ، مرجع مختلف لكل قسم، المنتج داخل المشهد، بوابة تطابق المنتج */
+  const ed = await p.evaluate(async () => {
+    const H = PagePilotHybrid; const mk = async col => { const c = document.createElement("canvas"); c.width = 120; c.height = 150; const x = c.getContext("2d"); x.fillStyle = col; x.fillRect(0, 0, 120, 150); return new Promise(r => c.toBlob(r, "image/png")); };
+    const refs = [await mk("#c81e1e"), await mk("#1ec85a"), await mk("#1e5ac8")], got = [], prompts = [], checks = []; let cut = 0, n = 0;
+    const out = await H.run({ info: { title: "عسل", desc: "جملة أولى طويلة بما يكفي. جملة ثانية طويلة بما يكفي." }, blob: refs[0], refs, theme: PagePilot.THEMES.green, lang: "ar", count: 6, gate: true, noFaces: true }, {}, {
+      real: true, llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } },
+      remover: { cut: async () => { cut++; return null; } },
+      image: { bg: async () => { throw new Error("must not be used"); }, edit: async (b, pr, i) => { got.push(refs.indexOf(b)); prompts.push(pr); const c = document.createElement("canvas"); c.width = 108; c.height = 135; c.getContext("2d").fillRect(0, 0, 108, 135); return { canvas: c, blob: await new Promise(r => c.toBlob(r, "image/png")) }; } },
+      vision: { check: async (b, pr, ref) => { checks.push({ ref: !!ref, p: /product_matches/.test(pr) }); n++; return { has_text: false, has_face: false, zone_empty: true, artifacts: false, product_matches: n !== 1 }; } }
+    });
+    const spec = H.buildSpec(out.plan, out.results.map((R, i) => Object.assign(R, { bgSrc: "assets/x" + i + ".webp", prodSrc: "assets/p.png" })), { style: out.style, strategy: out.strategy, title: "t", product: "" });
+    return { strategy: out.strategy, cut, prod: !!out.prod, refsUsed: Array.from(new Set(got)).sort().join(","), calls: got.length, noProduct: prompts.every(p => /reference photo/.test(p) && /clearly different/.test(p) && !/do not draw any product/.test(p)), scenes: new Set(prompts.map(p => p.split(". ")[1])).size, checks: checks.every(c => c.ref && c.p), retried: out.results[0].attempts === 2, imgLayers: spec.sections.map(s => (s.layers || []).filter(l => l.type === "image").length).join(","), faqZone: H.zoneOf("faq", true), probZone: H.zoneOf("problem", true) };
+  });
+  t("وضع الدمج: لا قصّ للمنتج ولا طبقة منتج منفصلة", ed.strategy === "edit" && ed.cut === 0 && !ed.prod && /^1(,1)*$/.test(ed.imgLayers), ed);
+  t("كل قسم يأخذ صورة مرجعية مختلفة من صور المنتج", ed.refsUsed === "0,1,2" && ed.calls >= 6, ed);
+  t("برومبت الدمج: المنتج داخل المشهد ومختلف عن بقية الأقسام وبمشاهد متنوعة", ed.noProduct && ed.scenes >= 5, ed);
+  t("بوابة الجودة تتحقق من تطابق المنتج وتعيد المحاولة عند عدم التطابق", ed.checks && ed.retried, ed);
+  t("أقسام المشكلة/الأسئلة تُعاد توزيع منطقة نصها لتتسع للمنتج", ed.faqZone === "bottom" && ed.probZone === "top", ed);
 
   /* الواجهة الكاملة: منتج المتجر ← صفحة هجينة تُفتح في المطوّر */
   const ui = await p.evaluate(async shot => {

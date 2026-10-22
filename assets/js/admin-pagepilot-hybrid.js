@@ -86,6 +86,21 @@ const PagePilotHybrid = (() => {
     delivery_guarantee: { zone: "bottom", scene: "a trustworthy clean backdrop suggesting delivery and care, product area in the upper half" },
     final_cta: { zone: "top", cta: true, scene: "an inviting finale backdrop with warm glow and a pedestal for the product" }
   };
+  /* وضع «الدمج»: يرسم الذكاء المنتج داخل المشهد نفسه (صورة مختلفة لكل قسم) — النص يبقى طبقات حيّة في المنطقة المقابلة */
+  const EDIT_ZONE = { problem: "top", comparison: "top", faq: "bottom" };
+  const EDIT_SCENE = {
+    hero: "a dramatic hero shot, product at a low three-quarter angle on an elegant surface, shallow depth of field, depth and atmosphere that fit the product's use",
+    problem: "a muted, slightly desaturated everyday setting that hints at the daily problem, cooler tones, the product sits calmly in the foreground as the solution",
+    benefits: "a bright fresh macro-style composition, product slightly angled, natural elements related to the product's key ingredient or benefit around it",
+    how_to_use: "a tidy lifestyle setting seen from above (flat-lay), product with a few simple related props that suggest everyday use",
+    why_choose: "a premium confident podium scene with subtle light rays, product centered at eye level",
+    comparison: "a clean studio background with a soft two-tone split, product on one side with calm studio lighting",
+    offer_price: "a festive offer backdrop with warm glow and soft sparkles, product large and proud on a pedestal",
+    faq: "a calm, soft-focus home interior, product small on a shelf or table, bokeh background",
+    delivery_guarantee: "a warm trustworthy scene with a kraft-paper gift package and ribbon beside the product, soft daylight",
+    final_cta: "an inviting golden-hour scene, close and warm hero view of the product with gentle glow"
+  };
+  const zoneOf = (type, edit) => { const T = TYPES[type] || TYPES.hero; return edit && EDIT_ZONE[type] ? EDIT_ZONE[type] : T.zone; };
   const ORDER = { 6: ["hero", "problem", "benefits", "offer_price", "delivery_guarantee", "final_cta"], 8: ["hero", "problem", "benefits", "how_to_use", "why_choose", "offer_price", "delivery_guarantee", "final_cta"], 10: ["hero", "problem", "benefits", "how_to_use", "why_choose", "comparison", "offer_price", "faq", "delivery_guarantee", "final_cta"] };
   const typesFor = n => (ORDER[n] || ORDER[8]).slice();
   function planPrompt(info, an, style, o) {
@@ -129,29 +144,35 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   /* ───────────── ٥) البرومبتات ───────────── */
   const NEG = "text, letters, words, numbers, watermark, logo, distorted product, extra parts, blurry, low resolution, malformed hands";
   function bgPrompt(style, sec, o) {
-    o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zoneTxt = T.zone === "top" ? "the top 40% of the frame" : T.zone === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
-    const noProduct = T.product === false;
-    const ref = o.withProduct ? "The product from the reference image, preserved exactly (shape, color, logo untouched), placed " + (T.zone === "top" ? "in the lower half" : T.zone === "bottom" ? "in the upper half" : "small and centered") + ". Soft realistic shadow. " : (noProduct ? "" : "Leave a clean, empty surface area in the " + (T.zone === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
-    return `${style.prefix}. ${sec.scene || T.scene}. ${ref}Leave clean, calm, low-detail empty space across ${zoneTxt} for a headline. No text, no letters, no numbers, no watermark, no extra logos. ${o.noFaces === false ? "" : "No human faces or people. "}Vertical 4:5 composition. AVOID: ${NEG}${o.noFaces === false ? "" : ", human faces, people's faces"}. ${o.extra || ""}`.trim();
+    o = o || {}; const T = TYPES[sec.type] || TYPES.hero, zn = zoneOf(sec.type, !!o.withProduct), zoneTxt = zn === "top" ? "the top 40% of the frame" : zn === "bottom" ? "the bottom 40% of the frame" : "the central 70% of the frame";
+    const noProduct = !o.withProduct && T.product === false;
+    const where = zn === "top" ? "in the lower half" : zn === "bottom" ? "in the upper half" : "small and centered";
+    const ref = o.withProduct ? "Use the reference photo: this exact same product (shape, color, label, logo and any printed text on the pack untouched) is naturally integrated INTO the scene — correct perspective, matching light, realistic contact shadow and reflections, as if it was photographed there; placed " + where + ". This image must look clearly different (camera angle, setting, props) from the other sections of the same page. " : (noProduct ? "" : "Leave a clean, empty surface area in the " + (zn === "top" ? "lower" : "upper") + " half where a product will be placed later; do not draw any product. ");
+    const scene = o.withProduct ? (EDIT_SCENE[sec.type] || EDIT_SCENE.hero) + (sec.scene ? ". Setting inspiration: " + sec.scene : "") : (sec.scene || T.scene);
+    return `${style.prefix}. ${scene}. ${ref}Leave clean, calm, low-detail empty space across ${zoneTxt} for a headline. No text, no letters, no numbers, no watermark, no extra logos. ${o.noFaces === false ? "" : "No human faces or people. "}Vertical 4:5 composition. AVOID: ${NEG}${o.noFaces === false ? "" : ", human faces, people's faces"}. ${o.extra || ""}`.trim();
   }
   function gatePrompt(o) {
+    const z = o.zone === "bottom" ? "الجزء السفلي" : o.zone === "full" ? "الجزء الأوسط" : "الجزء العلوي";
+    if (o.ref) return `الصورة الأولى هي المنتج المرجعي، والثانية مشهد إعلاني يُفترض أن المنتج مدمج فيه. أخرج JSON واحداً فقط بلا شرح:
+{"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false,"product_matches":true|false}
+has_text: هل في المشهد (الثانية) كتابة جديدة أو أحرف أو أرقام أو علامة مائية غير الموجودة على عبوة المنتج نفسها؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من المشهد هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة؟ product_matches: هل المنتج الظاهر في المشهد هو نفسه المنتج المرجعي (الشكل واللون والملصق) وظاهر بوضوح وغير مشوَّه؟`;
     return `افحص الصورة المرفقة (خلفية/مشهد إعلاني) وأخرج JSON واحداً فقط بلا شرح:
 {"has_text":true|false,"has_face":true|false,"zone_empty":true|false,"artifacts":true|false}
-has_text: هل في الصورة أي كتابة أو أحرف أو أرقام أو علامة مائية؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${o.zone === "bottom" ? "الجزء السفلي" : o.zone === "full" ? "الجزء الأوسط" : "الجزء العلوي"} من الصورة هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة أو أجزاء غريبة؟`;
+has_text: هل في الصورة أي كتابة أو أحرف أو أرقام أو علامة مائية؟ has_face: هل فيها وجه إنسان؟ zone_empty: هل ${z} من الصورة هادئ وفارغ بما يكفي لعنوان؟ artifacts: هل فيها تشوّهات واضحة أو أجزاء غريبة؟`;
   }
-  function gateOk(r, noFaces) { r = r || {}; const why = []; if (r.has_text) why.push("text"); if (noFaces !== false && r.has_face) why.push("face"); if (r.zone_empty === false) why.push("zone"); if (r.artifacts) why.push("artifacts"); return { ok: !why.length, why }; }
-  const retryNote = why => (why.includes("text") ? "STRICTLY NO text, letters or numbers anywhere. " : "") + (why.includes("face") ? "STRICTLY no human faces. " : "") + (why.includes("zone") ? "Keep the requested empty area completely calm and plain. " : "") + (why.includes("artifacts") ? "Clean, undistorted, simple composition. " : "");
+  function gateOk(r, noFaces, needProduct) { r = r || {}; const why = []; if (r.has_text) why.push("text"); if (noFaces !== false && r.has_face) why.push("face"); if (r.zone_empty === false) why.push("zone"); if (r.artifacts) why.push("artifacts"); if (needProduct && r.product_matches === false) why.push("product"); return { ok: !why.length, why }; }
+  const retryNote = why => (why.includes("text") ? "STRICTLY NO text, letters or numbers anywhere. " : "") + (why.includes("face") ? "STRICTLY no human faces. " : "") + (why.includes("zone") ? "Keep the requested empty area completely calm and plain. " : "") + (why.includes("artifacts") ? "Clean, undistorted, simple composition. " : "") + (why.includes("product") ? "Reproduce the reference product EXACTLY and fully visible, unchanged shape, color and label. " : "");
 
   /* ───────────── ٧) هندسة التخطيط (أبعاد الصفحة 1080×1350) ───────────── */
-  function geometry(type, ar) {
-    const T = TYPES[type] || TYPES.hero, zone = T.zone === "top" ? { x: 70, y: 90, w: 940, h: 560 } : T.zone === "bottom" ? { x: 70, y: H - 650, w: 940, h: 560 } : { x: 70, y: 150, w: 940, h: H - 300 };
+  function geometry(type, ar, edit) {
+    const T = TYPES[type] || TYPES.hero, zn = zoneOf(type, edit), zone = zn === "top" ? { x: 70, y: 90, w: 940, h: 560 } : zn === "bottom" ? { x: 70, y: H - 650, w: 940, h: 560 } : { x: 70, y: 150, w: 940, h: H - 300 };
     let prod = null;
-    if (T.product !== false) {
-      const box = T.zone === "top" ? { x: 120, y: 700, w: 840, h: 560 } : { x: 120, y: 60, w: 840, h: 560 }; ar = ar > 0 ? ar : 1;
+    if (!edit && T.product !== false) {
+      const box = zn === "top" ? { x: 120, y: 700, w: 840, h: 560 } : { x: 120, y: 60, w: 840, h: 560 }; ar = ar > 0 ? ar : 1;
       const w = Math.round(Math.min(box.w, box.h * ar)), h = Math.round(w / ar);
-      prod = { x: Math.round(box.x + (box.w - w) / 2), y: Math.round(T.zone === "top" ? box.y + box.h - h : box.y + (box.h - h) / 2), w, h };
+      prod = { x: Math.round(box.x + (box.w - w) / 2), y: Math.round(zn === "top" ? box.y + box.h - h : box.y + (box.h - h) / 2), w, h };
     }
-    return { zone, prod };
+    return { zone, prod, zname: zn };
   }
   /* تقدير ارتفاع نص (للتكديس قبل القياس الحقيقي في المحرّر) */
   const estH = (txt, size, w, lh) => Math.ceil(Math.max(1, Math.ceil(String(txt).length * size * .52 / w)) * size * (lh || 1.4)) + 6;
@@ -161,20 +182,20 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   function buildSpec(plan, results, ctx) {
     ctx = ctx || {}; const st = ctx.style || styleBible({}, null), assets = {}, sections = [], rtl = (ctx.lang || "ar") === "ar", al = rtl ? "right" : "left";
     results.forEach((R, i) => {
-      const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
+      const s = R.sec, T = TYPES[s.type] || TYPES.hero, g = geometry(s.type, R.prodAr, ctx.strategy === "edit"), layers = [], an = "bg" + (i + 1), pn = "pr" + (i + 1);
       assets[an] = { src: R.bgSrc, prompt: "" }; if (R.prodSrc && g.prod) assets[pn] = { src: R.prodSrc, prompt: "" };
       layers.push({ type: "image", src: "asset:" + an, x: 0, y: 0, w: W, h: H, z: 1, fit: "cover", alt: strip([s.headline, s.sub].filter(Boolean).join(" — "), 160), locked: true });
       const pk = pickText(R.lum != null ? R.lum : .5, [st.palette.text, "#ffffff", "#111111"]), z = g.zone;
       if (pk.scrim) layers.push({ type: "shape", shape: "rect", x: z.x - 30, y: z.y - 24, w: z.w + 60, h: z.h + 24, z: 2, fill: pk.scrim.color, opacity: pk.scrim.opacity, radius: st.radius });
       if (R.prodSrc && g.prod) layers.push({ type: "image", src: "asset:" + pn, x: g.prod.x, y: g.prod.y, w: g.prod.w, h: g.prod.h, z: 3, fit: "contain", alt: strip(ctx.productAlt || ctx.title, 120), shadow: { x: 0, y: 26, blur: 40, color: "rgba(0,0,0,.35)", follow: true }, effects: [{ type: "float", amount: 10, duration: 6 }] });
       let y = z.y; const fs1 = (s.headline || "").length > 34 ? 60 : 72;
-      if (s.headline) { const h = estH(s.headline, fs1, z.w, 1.25); layers.push({ type: "heading", tag: i === 0 ? "h1" : "h2", text: s.headline, x: z.x, y, w: z.w, z: 5, font: { size: fs1, weight: 900, color: pk.color, align: T.zone === "full" ? "center" : al, lineHeight: 1.25 }, effects: [{ type: "fadeUp" }] }); y += h + 14; }
-      if (s.sub) { const h = estH(s.sub, 36, z.w, 1.6); layers.push({ type: "text", text: s.sub, x: z.x, y, w: z.w, z: 5, font: { size: 36, weight: 600, color: pk.color, align: T.zone === "full" ? "center" : al, lineHeight: 1.6 }, effects: [{ type: "fadeUp", delay: .1 }] }); y += h + 12; }
+      if (s.headline) { const h = estH(s.headline, fs1, z.w, 1.25); layers.push({ type: "heading", tag: i === 0 ? "h1" : "h2", text: s.headline, x: z.x, y, w: z.w, z: 5, font: { size: fs1, weight: 900, color: pk.color, align: g.zname === "full" ? "center" : al, lineHeight: 1.25 }, effects: [{ type: "fadeUp" }] }); y += h + 14; }
+      if (s.sub) { const h = estH(s.sub, 36, z.w, 1.6); layers.push({ type: "text", text: s.sub, x: z.x, y, w: z.w, z: 5, font: { size: 36, weight: 600, color: pk.color, align: g.zname === "full" ? "center" : al, lineHeight: 1.6 }, effects: [{ type: "fadeUp", delay: .1 }] }); y += h + 12; }
       (s.bullets || []).forEach((b, bi) => { const txt = "• " + b, h = estH(txt, 38, z.w, 1.5); if (y + h > z.y + z.h + 40) return; layers.push({ type: "text", text: txt, x: z.x, y, w: z.w, z: 5, font: { size: 38, weight: 700, color: pk.color, align: al, lineHeight: 1.5 }, effects: [{ type: "fadeUp", delay: .15 + bi * .08 }] }); y += h + 6; });
       if (T.price && ctx.product) { layers.push({ type: "price", x: z.x, y: Math.min(y + 10, z.y + z.h - 90), w: z.w, z: 5 }); }
       if (T.cta) {
         const wa = String(ctx.wa || "").replace(/\D/g, ""), link = ctx.product ? "#order" : (wa ? "https://wa.me/" + wa + "?text=" + encodeURIComponent(ctx.title || "") : "#order");
-        const by = Math.max(y + 16, T.zone === "top" ? z.y + z.h - 90 : z.y + z.h - 90); layers.push({ type: "button", text: s.cta || "اطلب الآن", link, x: z.x + (z.w - 520) / 2, y: Math.min(by, z.y + z.h + 40), w: 520, h: 92, z: 6, bg: st.palette.accent, color: hexLum(st.palette.accent) > .45 ? "#111111" : "#ffffff", radius: 46, font: { size: 34, weight: 900 }, effects: [{ type: "fadeUp", delay: .3 }, { type: "pulse" }, { type: "shine" }] });
+        const by = Math.max(y + 16, z.y + z.h - 90); layers.push({ type: "button", text: s.cta || "اطلب الآن", link, x: z.x + (z.w - 520) / 2, y: Math.min(by, z.y + z.h + 40), w: 520, h: 92, z: 6, bg: st.palette.accent, color: hexLum(st.palette.accent) > .45 ? "#111111" : "#ffffff", radius: 46, font: { size: 34, weight: 900 }, effects: [{ type: "fadeUp", delay: .3 }, { type: "pulse" }, { type: "shine" }] });
       }
       sections.push({ name: s.id, height: H, bg: st.palette.surface, layers });
     });
@@ -211,7 +232,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
         edit: async (blob, prompt, i) => { if (!real) return null; const r = await ImgGen.edit({ blob, prompt, W, H, pro: true, confirm: false, title: "مشهد قسم " + (i + 1) }); return { canvas: r.canvas || await toCanvas(r.blob, 1400), blob: r.blob }; }
       },
       remover: { cut: async (canvas, onStep) => { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) return null; const r = await PBBgRemove.autoCut(canvas, { onStep }); return r && r.canvas ? r.canvas : null; } },
-      vision: { check: async (blob, prompt) => { if (!real || typeof ImgGen === "undefined" || !ImgGen.text) return null; return ImgGen.text({ prompt, json: true, temp: .1, blobs: [blob] }); } }
+      vision: { check: async (blob, prompt, ref) => { if (!real || typeof ImgGen === "undefined" || !ImgGen.text) return null; return ImgGen.text({ prompt, json: true, temp: .1, blobs: ref ? [ref, blob] : [blob] }); } }
     };
     return Object.assign(P, over || {});
   }
@@ -224,14 +245,18 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
   async function run(inp, cb, over) {
     cb = cb || {}; const P = providers(over), log = [], t0 = () => Date.now(); const note = [];
     const step = async (name, fn, sec) => { const e = { step: name, section: sec || "", status: "running", attempts: 1, ms: 0, error: "" }; log.push(e); const s = t0(); cb.step && cb.step(name, "running", e); try { const v = await fn(); e.status = "done"; e.ms = t0() - s; cb.step && cb.step(name, "done", e); return v; } catch (er) { e.status = "failed"; e.error = er && er.message || String(er); e.ms = t0() - s; cb.step && cb.step(name, "failed", e); throw er; } };
-    const photo = inp.blob ? await toCanvas(inp.blob, 1600) : null;
+    /* صور مرجعية متعددة (من رابط المنتج/المتجر): كل قسم يأخذ مرجعاً مختلفاً ليخرج مشهده مختلفاً */
+    const refs = (Array.isArray(inp.refs) ? inp.refs : []).filter(Boolean); if (inp.blob && !refs.includes(inp.blob)) refs.unshift(inp.blob);
+    const photo = refs[0] ? await toCanvas(refs[0], 1600) : null;
+    const wantEdit = inp.strategy !== "composite" && P.real && !!photo;
+    const strategy = wantEdit ? "edit" : "composite", edit = wantEdit;
     /* ١ تحليل المنتج */
     let an = cleanAnalysis({});
-    try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), inp.blob ? [inp.blob] : []), 90000, "تحليل المنتج"))); } catch (e) { an = cleanAnalysis({}); if (photo) { const g = document.createElement("canvas"); g.width = g.height = 32; g.getContext("2d").drawImage(photo, 0, 0, 32, 32); an.colors = dominantColors(g.getContext("2d").getImageData(0, 0, 32, 32).data, 3); } }
+    try { an = cleanAnalysis(await step("analysis", () => withTimeout(P.llm.json(analysisPrompt(inp.info), refs.slice(0, 3)), 90000, "تحليل المنتج"))); } catch (e) { an = cleanAnalysis({}); if (photo) { const g = document.createElement("canvas"); g.width = g.height = 32; g.getContext("2d").drawImage(photo, 0, 0, 32, 32); an.colors = dominantColors(g.getContext("2d").getImageData(0, 0, 32, 32).data, 3); } }
     if (an.risks.some(r => /medical|cosmetic/.test(r))) note.push("المنتج يحمل مخاطر ادّعاء (" + an.risks.join("، ") + "): راجع النصوص قبل النشر.");
     /* ٢ قصّ المنتج */
     let prod = null, prodOk = false;
-    if (photo) {
+    if (photo && !edit) {
       try {
         prod = await step("cutout", async () => {
           /* صورة شفافة أصلاً (زوايا شفافة) تُستعمل كما هي؛ وإلا يُقصّ المنتج. لا يُعدَّل المنتج الأصلي أبداً */
@@ -246,23 +271,24 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const style = styleBible(an, inp.theme); P.style = style; log.push({ step: "style", section: "", status: "done", attempts: 1, ms: 0, error: "" }); cb.step && cb.step("style", "done", {});
     /* ٤ خطة الأقسام والنصوص */
     let plan;
-    try { plan = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), inp.blob ? [inp.blob] : []), 150000, "خطة الأقسام")), { count: inp.count }); if (plan.sections.filter(s => s.headline).length < 3) throw new Error("خطة ناقصة"); }
+    try { plan = cleanPlan(await step("plan", () => withTimeout(P.llm.json(planPrompt(inp.info, an, style, { count: inp.count, dialect: inp.dialect, audience: inp.audience }), refs.slice(0, 1)), 150000, "خطة الأقسام")), { count: inp.count }); if (plan.sections.filter(s => s.headline).length < 3) throw new Error("خطة ناقصة"); }
     catch (e) { plan = fallbackPlan(inp.info, inp.lang, { count: inp.count }); note.push("استُعملت نصوص من بيانات المنتج" + (e && e.code === "NOKEY" ? " (لا مفتاح Alyssum API)" : "") + " — عدّلها في المطوّر."); }
     plan.warn.forEach(w => note.push(w));
     /* ٥+٦ الخلفيات وبوابة الجودة (بالتوازي بحدّ) */
-    const strategy = inp.strategy === "edit" && P.real && photo ? "edit" : "composite", noFaces = inp.noFaces !== false, results = [];
+    if (inp.strategy !== "composite" && !wantEdit && photo) note.push("دمج المنتج في المشهد يحتاج مفتاح Alyssum API: استُعمل قصّ المنتج فوق خلفية محلية.");
+    const noFaces = inp.noFaces !== false, results = [];
     await pool(plan.sections, 3, async (sec, i) => {
-      const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" };
+      const T = TYPES[sec.type] || TYPES.hero, R = { sec, bgBlob: null, bgCanvas: null, flags: [], attempts: 0, mock: false, prompt: "" }, refBlob = refs.length ? refs[i % refs.length] : null; R.ref = refs.length ? i % refs.length : -1;
       let extra = "", why = [];
       for (let a = 1; a <= 3; a++) {
         R.attempts = a;
         try {
-          const pr = bgPrompt(style, sec, { withProduct: strategy === "edit" && T.product !== false, noFaces, extra }); R.prompt = pr;
-          const got = await step("background", () => withTimeout(strategy === "edit" && T.product !== false ? P.image.edit(inp.blob, pr, i) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
+          const pr = bgPrompt(style, sec, { withProduct: edit, noFaces, extra }); R.prompt = pr;
+          const got = await step("background", () => withTimeout(edit ? P.image.edit(refBlob, pr, i) : P.image.bg(pr, i, sec), 240000, "الخلفية"), sec.id);
           if (!got || !got.canvas) throw new Error("لم تُرجَع صورة"); R.bgCanvas = got.canvas; R.bgBlob = got.blob || null; R.mock = !!got.mock;
           if (inp.gate !== false && P.real && !got.mock && R.bgBlob) {
-            const v = await step("quality", () => withTimeout(P.vision.check(R.bgBlob, gatePrompt({ zone: T.zone })), 90000, "فحص الجودة"), sec.id).catch(() => null);
-            const gk = v ? gateOk(v, noFaces) : { ok: true, why: [] };
+            const v = await step("quality", () => withTimeout(P.vision.check(R.bgBlob, gatePrompt({ zone: zoneOf(sec.type, edit), ref: edit }), edit ? refBlob : null), 90000, "فحص الجودة"), sec.id).catch(() => null);
+            const gk = v ? gateOk(v, noFaces, edit) : { ok: true, why: [] };
             if (!gk.ok && a < 3) { why = gk.why; extra = retryNote(why); continue; }
             if (!gk.ok) R.flags.push("needs_review:" + gk.why.join("+"));
           }
@@ -275,7 +301,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
       }
       if (R.mock && P.real) note.push("القسم " + (i + 1) + ": استُعملت خلفية محلية بدل الذكاء (فشلت المحاولات).");
       /* ٧ التباين: متوسط سطوع منطقة النص من الخلفية نفسها */
-      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1); R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
+      const g = geometry(sec.type, prod ? prod.canvas.width / prod.canvas.height : 1, edit); R.lum = lumAt(R.bgCanvas, g.zone); R.prodAr = prod ? prod.canvas.width / prod.canvas.height : 0;
       results[i] = R; cb.section && cb.section(i, R);
     });
     return { an, style, plan, results, prod, prodOk, strategy, log, note, real: P.real };
@@ -286,14 +312,14 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const spec0 = [];
     const prodSrc = out.prod ? await upload(await canvasBlob(out.prod.canvas, "image/png"), "product") : "";
     for (let i = 0; i < out.results.length; i++) { const R = out.results[i], blob = R.bgBlob || await canvasBlob(R.bgCanvas, "image/webp", .88); R.bgSrc = await upload(blob, "bg" + (i + 1)); R.prodSrc = prodSrc; spec0.push(R); }
-    const spec = buildSpec(out.plan, spec0, Object.assign({ style: out.style }, ctx));
+    const spec = buildSpec(out.plan, spec0, Object.assign({ style: out.style, strategy: out.strategy }, ctx));
     const v = PBSpec.validate(spec, { product: ctx.product });
     if (!v.ok) throw new Error(v.error || "مخطط غير صالح");
     const pg = PBSpec.toPage(v, { product: ctx.product, title: ctx.title, merge: false });
     pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = [prodSrc].concat(out.results.map(r => r.bgSrc)).filter(Boolean);
-    pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, strategy: out.strategy, theme: out.style, sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, attempts: r.attempts, flags: r.flags, contrast: pickText(r.lum != null ? r.lum : .5, [out.style.palette.text, "#ffffff", "#111111"]).ratio })), steps: out.log.slice(0, 200) } });
+    pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, strategy: out.strategy, theme: out.style, sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: pickText(r.lum != null ? r.lum : .5, [out.style.palette.text, "#ffffff", "#111111"]).ratio })), steps: out.log.slice(0, 200) } });
     return { page: pg, warn: (v.warn || []) };
   }
 
-  return { W, H, TYPES, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
+  return { W, H, TYPES, EDIT_SCENE, zoneOf, typesFor, relLum, contrast, hexLum, mix, pickText, lumAt, dominantColors, analysisPrompt, cleanAnalysis, styleBible, planPrompt, cleanPlan, fallbackPlan, bgPrompt, gatePrompt, gateOk, geometry, buildSpec, mockBg, providers, run, assemble, trimAlpha, toCanvas, canvasBlob, FAKE };
 })();

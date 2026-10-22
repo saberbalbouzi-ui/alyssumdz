@@ -249,7 +249,7 @@ html{scroll-behavior:smooth}
 <label style="font-size:.8rem">③ نوع الصفحة<select id="pp-mode" style="${FLD}"><option value="hybrid">صفحة مصوّرة هجينة (خلفيات بالذكاء + المنتج الحقيقي + نص عربي حيّ قابل للتعديل)</option><option value="poster">بوستر كامل (النص داخل الصورة — قد تتشوه الحروف)</option><option value="layout">أقسام نصية قابلة للتعديل (هيرو، فوائد، أسئلة…)</option></select></label>
 <label style="font-size:.8rem">عدد الأقسام (الهجين)<select id="pp-hn" style="${FLD}"><option value="6">6</option><option value="8" selected>8</option><option value="10">10</option></select></label>
 <label style="font-size:.8rem">اللهجة<select id="pp-dia" style="${FLD}"><option value="dz">دارجة جزائرية</option><option value="msa">فصحى مبسّطة</option></select></label>
-<label style="font-size:.8rem">دمج المنتج<select id="pp-strat" style="${FLD}"><option value="composite">قصّ المنتج الحقيقي فوق الخلفية (أدق، قابل للتحريك)</option><option value="edit">يضعه الذكاء في المشهد (صورة واحدة)</option></select></label>
+<label style="font-size:.8rem">دمج المنتج<select id="pp-strat" style="${FLD}"><option value="edit">يدمج الذكاء المنتج داخل المشهد — صورة مختلفة لكل قسم (الافتراضي)</option><option value="composite">قصّ المنتج فوق خلفية (قابل للتحريك)</option></select></label>
 <label style="font-size:.85rem"><input id="pp-gate" type="checkbox" checked> فحص جودة تلقائي للخلفيات (حتى محاولتين إضافيتين)</label>
 <label style="font-size:.8rem">عدد الصور (للبوستر)<select id="pp-n" style="${FLD}"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
 <div style="grid-column:1/-1;font-size:.78rem;opacity:.8;line-height:1.7">تُصنع الصور من صورة المنتج المختارة: من رابط المنتج (اضغط صورة من الصور المجلوبة) أو الصورة التي ترفعها أو غلاف منتج متجرك. المنتج يبقى كما هو والذكاء يرسم المشهد والنصوص حوله.</div>
@@ -267,7 +267,7 @@ html{scroll-behavior:smooth}
       if (!info.title) throw new Error("اكتب اسم المنتج أو اختر منتجاً أو اجلب رابطاً");
       let blob = null, path = "";
       if (f) blob = f; else if (imp && imp.blob) blob = imp.blob; else if (p && (p.cover || (p.images || [])[0])) { path = p.cover || p.images[0]; }
-      return { info, blob, path, p };
+      return { info, blob, path, p, imp };
     }
     async function run(useAI) {
       const g = await gather(), o = { lang: $("pp-lang").value, audience: $("pp-aud").value.trim() };
@@ -280,6 +280,16 @@ html{scroll-behavior:smooth}
       say("⏳ ٢/٣ تجهيز الصور…"); const ctx = { theme, lang: o.lang, title: g.info.title, product: g.info.product, wa: (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "" };
       let heroBlob = g.blob;
       if (!heroBlob && g.path) { try { heroBlob = await urlBlob(g.path); } catch (_) { } }
+      /* كل صور المنتج المتاحة (رابط المنتج + صور المتجر) مراجعَ لأقسام مختلفة */
+      const refs = []; if (heroBlob) refs.push(heroBlob);
+      if ($("pp-mode").value === "hybrid" && $("pp-strat").value === "edit") {
+        const cnt0 = +$("pp-hn").value || 8, want = Math.min(6, cnt0);
+        if (g.imp && g.imp.images && g.imp.images.length > 1 && typeof PBSpec !== "undefined" && PBSpec.pickImage) {
+          say("⏳ تحميل صور المنتج من الرابط…");
+          for (let k = 0; k < g.imp.images.length && refs.length < want; k++) { if (k === g.imp.pick) continue; const t = { images: g.imp.images }; try { await PBSpec.pickImage(t, k); if (t.blob) refs.push(t.blob); } catch (_) { } }
+        }
+        if (g.p && refs.length < want) { for (const u of [g.p.cover].concat(g.p.images || [])) { if (!u || refs.length >= want || (g.path && u === g.path)) continue; try { refs.push(await urlBlob(u)); } catch (_) { } } }
+      }
       if ($("pp-mode").value === "hybrid" && typeof PagePilotHybrid !== "undefined" && typeof PBSpec !== "undefined") {
         const th0 = THEMES[theme] || THEMES.green, real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })(), cnt = +$("pp-hn").value || 8;
         if (!heroBlob) throw new Error("ارفع صورة المنتج أو اجلب رابطاً أو اختر منتجاً له غلاف — الصفحة المصوّرة تحتاج صورة المنتج الحقيقية");
@@ -287,7 +297,7 @@ html{scroll-behavior:smooth}
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + cnt + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:65px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         const over = useAI ? {} : { llm: { json: async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; } }, real: false, image: { bg: async (pr, i, sec) => ({ canvas: PagePilotHybrid.mockBg(PagePilotHybrid.styleBible({}, th0), sec, i), mock: true }), edit: async () => null }, vision: { check: async () => null } };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
-        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, noFaces: true, audience: o.audience }, { section: prog }, over);
+        const out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, strategy: $("pp-strat").value, gate: $("pp-gate").checked, noFaces: true, audience: o.audience }, { section: prog }, over);
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
         const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title }, (b, tag) => upload(b, tag));
         bg.remove(); PBApp.open(asm.page, "", true);
