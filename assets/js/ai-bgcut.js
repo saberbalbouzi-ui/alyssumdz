@@ -107,6 +107,7 @@ const AIBgCut = (function () {
   const ATTEMPTS = [
     { id: "one", maxTokens: 6144, temp: .7, prompt: "One-click background removal like Canva. Return the outline(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
       "A person holding a product is ONE entry that covers both, following the exact visible outline (hair, fingers, fabric edges, the product's rim). " +
+      "If the subject is a plant, keep the whole plant together with its pot and soil; other plants, leaves and flowers further back or blurred are background. " +
       "Add a separate entry for an object ONLY when the subject is physically sitting on, leaning on or holding it. Never include table tops, counters, floors, shelves, rugs, shadows or reflections, nor any blurred room behind the subject. " +
       "Everything else is background and must NOT appear in any outline: surfaces, plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
   ];
