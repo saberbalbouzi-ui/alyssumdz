@@ -20,6 +20,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     out.applied = await wait(() => (sec.free || []).filter(w => w.type === "image").length >= 3, 25000); out.noPreview = !document.getElementById("pbs-ok"); out.calls = calls.join(",");
     out.after = (sec.free || []).filter(w => w.type === "image").length;
     { const fr = document.getElementById("pbx-frame"), d = fr.contentDocument, im = d.querySelector(".pb-cap img"); if (im) { const r = im.getBoundingClientRect(), fo = fr.getBoundingClientRect(); const sc = fo.width / (d.documentElement.clientWidth || fo.width); out.hp = { x: fo.left + (r.left + r.width / 2) * sc, y: fo.top + (r.top + r.height / 2) * sc, cx: fo.left + (r.left + 2) * sc, cy: fo.top + (r.top + 2) * sc, sc }; } else out.hp = null; }
+    { const cc = document.createElement("canvas"); cc.width = 100; cc.height = 100; cc.getContext("2d").fillRect(0, 0, 100, 100); const r2 = AICapture.clipBox({ canvas: cc, x0: 0, y0: 0, w: 100, h: 100 }, { x0: 20, y0: 20, x1: 60, y1: 60 }, .04); out.clip = [r2.x0, r2.y0, r2.w, r2.h, r2.canvas.width]; }
     /* نزع الخلفية: تُطبَّق النتيجة مباشرة */
     const m = document.createElement("canvas"); m.width = 64; m.height = 64; const mg = m.getContext("2d"); mg.fillStyle = "#000"; mg.fillRect(0, 0, 64, 64); mg.fillStyle = "#fff"; mg.fillRect(6, 6, 52, 52); const murl = m.toDataURL("image/png");
     const src0 = base.set.src;
@@ -44,6 +45,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.rep && /"counts"/.test(r.report) && /"raw"/.test(r.report), "فشل الكشف: زر نسخ التقرير يظهر والتقرير يحمل الأعداد وردّ الخدمة", r.report);
   ok(r.bg && r.bg.changed && r.bg.noBar && /نُفِّذ/.test(r.bg.chip), "نزع الخلفية يُطبَّق مباشرة بعد المسحة الأولى", r.bg);
   ok(r.hp && r.h1 && r.h1.on === 1 && /drop-shadow/.test(r.h1.f) && r.h2 && r.h2.on === 0, "المرور على العنصر الملتقط يوهّجه بخط أخضر يتبع ألفاه (وخارج ألفاه بلا توهج)", [r.hp, r.h1, r.h2]);
+  ok(r.clip && r.clip[0] === 18 && r.clip[2] === 44 && r.clip[4] === 44, "القصّ يُقيَّد بمربع العنصر (لا يتسرّب وجه/يد خارجه)", r.clip);
   ok(r.sbx, "مفتاح فوتوروم التجريبي (صورة كاملة) لا يُنتج عناصر مستطيلة: يكمل بالاحتياط", r);
   ok(r.after === r.before + 2, "العنصران صارا صورتين حرتين", r);
   ok(!errs.length, "لا أخطاء صفحة", errs); console.log(fails.length ? "\n✗ " + fails.length + " فشل" : "\n✓ " + n + " فحصاً ناجحاً"); await b.close(); process.exit(fails.length ? 1 : 0);

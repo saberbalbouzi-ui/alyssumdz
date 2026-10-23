@@ -198,6 +198,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
             if (!(await runSam())) { noPro = true; next = 0; await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; }
           }
           if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
+          for (let i = 0; i < cuts.length; i++) { const c = cuts[i], b = c.item && (c.item._src || c.item).box; if (b) try { cuts[i] = AICapture.clipBox(c, b, .04); } catch (e) { console.warn("clipBox", e); } }      // لا يخرج القصّ عن مربع العنصر (وجه/يد مجاورة)
           try { AICapture.separate(cuts); } catch (e) { console.warn("separate", e); }      // العنصر الأصغر يُطرح من الأكبر المتداخل معه
           cuts.sort((a, b) => (a.y0 + a.h) - (b.y0 + b.h)); const nm = {}, cnt = {}; cuts.forEach(c => cnt[c.label] = (cnt[c.label] || 0) + 1); cuts.forEach(c => { nm[c.label] = (nm[c.label] || 0) + 1; c.label = cnt[c.label] > 1 ? c.label + " " + nm[c.label] : c.label; });
           tintOff(); busy = false; await finish(cuts, fails);

@@ -191,14 +191,21 @@ const AICapture = (function () {
     const step = o.onStep || (() => { });
     try {
       step("⏳ تحميل نموذج التجزئة (مرة واحدة)…"); const r = await Promise.race([o.prep || V.analyze(cv, { noDetect: true, onStep: step }), new Promise((_, rj) => setTimeout(() => rj(new Error("انتهت مهلة تحميل نموذج التجزئة")), 120000))]), S = r.S, its = [], seen = new Set();
-      for (const it of items) { step("⏳ تجزئة «" + it.label + "»…"); const b = it.box; const m = await V.addItem(S, { box: [b.x0, b.y0, b.x1, b.y1], label: it.label }, r.items); if (m && !seen.has(m)) { seen.add(m); m.label = it.label; its.push(m); } }
+      for (const it of items) { step("⏳ تجزئة «" + it.label + "»…"); const b = it.box; const m = await V.addItem(S, { box: [b.x0, b.y0, b.x1, b.y1], label: it.label }, r.items); if (m && !seen.has(m)) { seen.add(m); m.label = it.label; m._src = it; its.push(m); } }
       if (!its.length) return null; step("✂️ صقل الحواف بدقة البكسل…");
       const cs = V.cutouts(S, cv, its, { shadow: false }); if (!cs || !cs.length) return null;
       return cs.map(c => ({ canvas: c.canvas, x0: c.x0, y0: c.y0, w: c.w, h: c.h, label: c.label, method: "sam", item: c.item }));
     } catch (e) { console.warn("samCuts", e); return null; }
   }
+  /* قصّ الناتج داخل مربع الكشف (+هامش) ليستحيل أن يتسرّب إليه وجه أو يد خارج مربع العنصر مهما كانت طريقة القصّ */
+  function clipBox(c, box, pad) {
+    if (!c || !box || !c.canvas || !(c.w > 0) || !(c.h > 0)) return c; const p = Math.max(2, Math.round(Math.max(box.x1 - box.x0, box.y1 - box.y0) * (pad == null ? .04 : pad)));
+    const x0 = Math.max(c.x0, box.x0 - p), y0 = Math.max(c.y0, box.y0 - p), x1 = Math.min(c.x0 + c.w, box.x1 + p), y1 = Math.min(c.y0 + c.h, box.y1 + p); if (x1 - x0 < 4 || y1 - y0 < 4) return c;
+    if (x0 <= c.x0 + .5 && y0 <= c.y0 + .5 && x1 >= c.x0 + c.w - .5 && y1 >= c.y0 + c.h - .5) return c; const sx = c.canvas.width / c.w, sy = c.canvas.height / c.h, ow = Math.max(1, Math.round((x1 - x0) * sx)), oh = Math.max(1, Math.round((y1 - y0) * sy)), out = mk(ow, oh);
+    out.getContext("2d").drawImage(c.canvas, Math.round((x0 - c.x0) * sx), Math.round((y0 - c.y0) * sy), ow, oh, 0, 0, ow, oh); return Object.assign({}, c, { canvas: out, x0, y0, w: x1 - x0, h: y1 - y0 });
+  }
   /* تحميل SAM وترميز الصورة بالتوازي مع طلب الكشف (توفير زمن الانتظار) */
   function samPrep(cv, onStep) { const V = typeof AIVision !== "undefined" ? AIVision : null; if (!V || !V.supported || !V.supported() || !V.analyze) return null; const p = V.analyze(cv, { noDetect: true, onStep: onStep || (() => { }) }); p.catch(() => { }); return p; }
-  return { ready, samPrep, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, samCuts, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
+  return { ready, samPrep, clipBox, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, samCuts, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;
