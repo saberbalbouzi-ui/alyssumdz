@@ -51,6 +51,18 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
       out.think = { n: bodies.length, budget0: bodies.every(b => b.generationConfig.thinkingConfig && b.generationConfig.thinkingConfig.thinkingBudget === 0), e1 };
       mode = "hang"; bodies.length = 0; let e2 = ""; const t0 = Date.now(); await ImgGen.text({ prompt: "x", blobs: [blob], noThink: true, maxModels: 1, timeoutMs: 400 }).catch(e => { e2 = String(e.message) + "|" + e.name; }); out.timeout = { e2, ms: Date.now() - t0 };
       window.fetch = f0; ImgGen.text = orig; }
+    /* مضلّع بدل قناع PNG (v1.89.462): الدائرة كمضلّع بـ72 نقطة مزاح 3px، ثم ردّ مقطوع/متدهور */
+    { const circ = (cx, cy, r, n) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return [Math.round((cy + 3 + Math.sin(a) * r) / .6), Math.round((cx + 3 + Math.cos(a) * r) / .8)]; });
+      const bx = [190 / .6, 140 / .8, 410 / .6, 360 / .8]; let reply = "";
+      ImgGen.text = async o => { out.polyMax = o.maxTokens; return reply; };
+      reply = JSON.stringify([{ label: "كرة", box_2d: bx, polygon: circ(250, 300, 110, 72) }]); const pj = await AIBgCut.subject(cv, {}); const pd = pj.getContext("2d").getImageData(0, 0, W, H).data; const pa = (x, y) => pd[(y * W + x) * 4 + 3];
+      out.polySubj = { center: pa(250, 300), corner: pa(20, 20), blue: pa(580, 300), edgeOut: pa(250, 300 - 120), edgeIn: pa(250, 300 - 100) };
+      const cit = await AICapture.detectAll(cv, {}); out.polyCap = cit.length;
+      reply = JSON.stringify(objs.map(q => ({ label: q.label, polygon: q.r ? circ(q.cx, q.cy, q.r, 72) : [[200 / .6, 500 / .8], [200 / .6, 680 / .8], [420 / .6, 680 / .8], [420 / .6, 500 / .8], [310 / .6, 500 / .8], [250 / .6, 500 / .8], [200 / .6, 590 / .8], [300 / .6, 680 / .8]] })));
+      const cit2 = await AICapture.detectAll(cv, {}); out.polyNoBox = cit2.length; const c3 = await AICapture.cutout(cv, cit2[0], {}); out.polyCut = { method: c3.method, w: Math.round(c3.w) };
+      reply = '[{"label":"x","box_2d":[100,100,900,900],"polygon":[[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10]]}]'; let m1 = ""; await AIBgCut.subject(cv, {}).catch(e => { m1 = String(e.message); }); out.polyLoop = m1;
+      reply = '[{"label":"أ","box_2d":[190,140,410,360],"polygon":' + JSON.stringify(circ(250, 300, 110, 72)) + '},{"label":"ب","box_2d":[1,2,3,4],"polygon":[[1,2],[3,'; const tj = await AIBgCut.subject(cv, {}); out.polyTrunc = tj.getContext("2d").getImageData(250, 300, 1, 1).data[3];
+      ImgGen.text = orig; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -67,6 +79,11 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.one.ok && r.one.cnt === 1 && r.one.noPlan, "نزع الخلفية بالذكاء: محاولة واحدة (طلب واحد، بلا تحليل مسبق)", r.one);
   ok(r.oneFail.cnt === 1 && /لم تُعزل الصورة/.test(r.oneFail.msg) && r.capFail.cnt === 1 && /لم تُرجِع الخدمة/.test(r.capFail.msg), "عند الفشل: طلب واحد فقط وسبب واضح (نزع الخلفية والالتقاط) بلا إعادة", [r.oneFail, r.capFail]);
   ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
+  ok(r.polyMax <= 6144, "طلب المضلّع: سقف توكن أصغر (يفشل سريعاً عند التدهور)", r.polyMax);
+  ok(r.polySubj.center > 240 && r.polySubj.corner === 0 && r.polySubj.blue === 0 && r.polySubj.edgeOut < 30 && r.polySubj.edgeIn > 200, "نزع الخلفية بمضلّع مزاح: الموضوع كاملاً والحافة ملتصقة بالحدّ الحقيقي", r.polySubj);
+  ok(r.polyCap === 1 && r.polyNoBox === 2 && r.polyCut.method === "api" && Math.abs(r.polyCut.w - 220) <= 14, "الالتقاط بمضلّع (ومربع مشتق من المضلّع إن غاب)", [r.polyCap, r.polyNoBox, r.polyCut]);
+  ok(/مضلّع غير معقول|ردّ بلا مضلّع/.test(r.polyLoop), "مضلّع متكرّر النقاط (تدهور) يُرفض بسبب واضح", r.polyLoop);
+  ok(r.polyTrunc > 240, "ردّ مقطوع: يُنقذ العنصر الأول المكتمل", r.polyTrunc);
   ok(!errs.length, "لا أخطاء صفحة", errs);
   console.log(n + " نجاح، " + fails.length + " فشل"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();

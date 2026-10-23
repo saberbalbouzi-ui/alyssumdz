@@ -22,6 +22,13 @@ const AICapture = (function () {
   const boxOf = e => { const b = e && (e.box_2d || e.box || e.bbox); if (!Array.isArray(b) || b.length < 4) return null; const v = b.map(Number); if (v.some(x => !isFinite(x))) return null; let [y0, x0, y1, x1] = v; if (y1 < y0) [y0, y1] = [y1, y0]; if (x1 < x0) [x0, x1] = [x1, x0]; y0 = clamp(y0, 0, 1000); y1 = clamp(y1, 0, 1000); x0 = clamp(x0, 0, 1000); x1 = clamp(x1, 0, 1000); return x1 - x0 < 8 || y1 - y0 < 8 ? null : { x0, y0, x1, y1 }; };
   const iou = (a, b) => { const x0 = Math.max(a.x0, b.x0), y0 = Math.max(a.y0, b.y0), x1 = Math.min(a.x1, b.x1), y1 = Math.min(a.y1, b.y1), i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0), u = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - i; return u > 0 ? i / u : 0; };
 
+  /* مضلّع الخدمة [[y,x],…] بإحداثيات 0..1000 ← نقاط [x,y] نظيفة (حذف المكرّر المتتالي، ورفض الحلقات المتكرّرة التي ينتجها النموذج عند التدهور) */
+  function polyPts(e) {
+    const raw = e && (e.polygon || e.points || e.outline); if (!Array.isArray(raw)) return null; const pts = [];
+    for (const q of raw) { if (!Array.isArray(q) || q.length < 2) continue; const y = Number(q[0]), x = Number(q[1]); if (!isFinite(x) || !isFinite(y)) continue; const p = [clamp(x, 0, 1000), clamp(y, 0, 1000)], l = pts[pts.length - 1]; if (l && l[0] === p[0] && l[1] === p[1]) continue; pts.push(p); }
+    if (pts.length < 8 || new Set(pts.map(p => p[0] + "," + p[1])).size < pts.length * .6) return null; return pts;
+  }
+
   const P_ALL = "Detect every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
     "Treat things a person holds as separate objects from the person and ALWAYS include a held product even if fingers cover part of it. Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects that are cut off by the image edge. " +
     "Return ONLY a JSON array (at most MAX items) of objects like {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000 and boxes that tightly enclose the whole object.";
@@ -29,7 +36,7 @@ const AICapture = (function () {
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
     LAST.req = { prompt: String(prompt).slice(0, 60), w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null;
-    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف العناصر ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv. o.zone = [x0,y0,x1,y1] لتحليل منطقة بدقة أعلى، o.mode = "subject" للموضوع الرئيسي فقط */
@@ -44,19 +51,23 @@ const AICapture = (function () {
   }
 
   const P_MASKS = "Segment every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
-    "Treat things a person holds as separate objects from the person, and ALWAYS include a held product even if fingers cover part of it: its mask must follow the exact visible outline of the object, leaving out the fingers, hands and anything in front of it (no overlap with the hand), with clean edges and no background pixels. " +
+    "Treat things a person holds as separate objects from the person, and ALWAYS include a held product even if fingers cover part of it: its outline must follow the exact visible edge of the object, leaving out the fingers, hands and anything in front of it (no overlap with the hand). " +
     "Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects cut off by the image edge. " +
-    "Return ONLY a JSON array (at most MAX entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the whole object,\"mask\":\"<base64 PNG of the segmentation mask cropped to that box, white = the object>\"}.";
+    "Return ONLY a JSON array (at most MAX entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the whole object,\"polygon\":[[y,x],...]} where polygon is the exact visible outline of that object as 40 to 120 points [y,x] normalized to 0-1000 over the WHOLE image, in order around the outline, more points on curves. No base64, no other fields.";
   /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
   async function detectAll(cv, o) {
     o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…");
-    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 16384, signal: o.signal })), build = async arr => {
+    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 8192, temp: .2, signal: o.signal })), build = async arr => {
       const items = [], W = cv.width, H = cv.height;
-      for (const e of arr) { const b = boxOf(e); if (!b) continue; const box = { x0: b.x0 / 1000 * W, y0: b.y0 / 1000 * H, x1: b.x1 / 1000 * W, y1: b.y1 / 1000 * H }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+      for (const e of arr) { if (!e || typeof e !== "object") continue; const pts = polyPts(e); let b = boxOf(e);
+        if (!b && pts) { const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys); if (x1 - x0 >= 8 && y1 - y0 >= 8) b = { x0, y0, x1, y1 }; }      // مربع مفقود: يُشتق من حدود المضلّع
+        if (!b) continue; const box = { x0: b.x0 / 1000 * W, y0: b.y0 / 1000 * H, x1: b.x1 / 1000 * W, y1: b.y1 / 1000 * H }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
         if (bw < W * .02 || bh < H * .02 || (bw * bh > W * H * .94 && arr.length > 1)) continue; if (items.some(q => iou(q.box, box) > .85)) continue;
-        const px0 = Math.round(box.x0), py0 = Math.round(box.y0), dm = e.mask ? await decodeMask(e.mask, Math.max(2, Math.round(bw)), Math.max(2, Math.round(bh))) : null;
-        items.push({ label: String(e.label || "عنصر").slice(0, 40), box, pre: dm ? { m: dm.m, w: dm.w, h: dm.h, x0: px0, y0: py0 } : null }); }      // مربع بلا قناع صالح يبقى عنصراً: قناعه يُطلب لاحقاً عند القصّ
-      items.forEach((it, i) => it.id = i); LAST.counts = { entries: arr.length, withBox: arr.filter(e => boxOf(e)).length, withMask: arr.filter(e => e && e.mask).length, usable: items.filter(i => i.pre).length }; return items;
+        const px0 = Math.round(box.x0), py0 = Math.round(box.y0), mw = Math.max(2, Math.round(bw)), mh = Math.max(2, Math.round(bh)); let pre = null;
+        if (pts) { const c = mk(mw, mh), g = c.getContext("2d", { willReadFrequently: true }); g.fillStyle = "#fff"; g.beginPath(); pts.forEach((q, i) => { const x = q[0] / 1000 * W - px0, y = q[1] / 1000 * H - py0; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fill(); const d = g.getImageData(0, 0, c.width, c.height).data, m = new Float32Array(c.width * c.height); let sum = 0; for (let i = 0; i < m.length; i++) { m[i] = d[i * 4 + 3] / 255; sum += m[i]; } const mean = sum / m.length; if (mean > .03 && mean < .995) pre = { m, w: c.width, h: c.height, x0: px0, y0: py0, poly: true }; }
+        if (!pre && e.mask) { const dm = await decodeMask(e.mask, mw, mh); if (dm) pre = { m: dm.m, w: dm.w, h: dm.h, x0: px0, y0: py0 }; }
+        items.push({ label: String(e.label || "عنصر").slice(0, 40), box, pre }); }      // عنصر بلا مضلّع/قناع صالح يُستبعد لاحقاً
+      items.forEach((it, i) => it.id = i); LAST.counts = { entries: arr.length, withBox: arr.filter(e => boxOf(e)).length, withMask: arr.filter(e => e && (e.mask || e.polygon || e.points)).length, usable: items.filter(i => i.pre).length }; return items;
     };
     /* محاولة واحدة دقيقة بالذكاء: كشف العناصر وأقنعتها في طلب واحد، بلا إعادة ولا طلبات إضافية لكل عنصر */
     let items = [], err = null; try { items = await build(await ask1(o.max || 8)); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; err = e; }
@@ -105,7 +116,7 @@ const AICapture = (function () {
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
     if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
-    const band = clamp(Math.round(Math.max(ww, wh) * .011), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
+    const pl = !!(item.pre && item.pre.poly), band = clamp(Math.round(Math.max(ww, wh) * (pl ? .02 : .011)), 3, pl ? 36 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
     if (x1 < 0 || solid < n * .004) throw new Error("لم يُعزل «" + item.label + "»");
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0); const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);
@@ -128,6 +139,6 @@ const AICapture = (function () {
   }
   /* يحوّل نتائج cutout إلى صيغة AIVision.eraseBg (قناع المسح) للترميم المحلي الاحتياطي */
   function eraseCuts(cuts) { return cuts.map(c => { const w = Math.max(1, Math.round(c.w)), h = Math.max(1, Math.round(c.h)), cc = mk(w, h), g = cc.getContext("2d", { willReadFrequently: true }); g.drawImage(c.canvas, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] > 20) m[i] = 1; return { canvas: c.canvas, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h, label: c.label, erase: { m, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h } }; }); }
-  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, eraseCuts, _t: { parseLoose, boxOf, decodeMask, clean, iou } };
+  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;

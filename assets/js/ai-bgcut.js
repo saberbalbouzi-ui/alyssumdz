@@ -21,13 +21,22 @@ const AIBgCut = (function () {
   const boxOf = e => { const b = e && (e.box_2d || e.box || e.bbox); if (!Array.isArray(b) || b.length < 4) return null; const v = b.map(Number); if (v.some(x => !isFinite(x))) return null; let [y0, x0, y1, x1] = v; if (y1 < y0) [y0, y1] = [y1, y0]; if (x1 < x0) [x0, x1] = [x1, x0]; y0 = clamp(y0, 0, 1000); y1 = clamp(y1, 0, 1000); x0 = clamp(x0, 0, 1000); x1 = clamp(x1, 0, 1000); return x1 - x0 < 8 || y1 - y0 < 8 ? null : { x0, y0, x1, y1 }; };
   const iou = (a, b) => { const x0 = Math.max(a.x0, b.x0), y0 = Math.max(a.y0, b.y0), x1 = Math.min(a.x1, b.x1), y1 = Math.min(a.y1, b.y1), i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0), u = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - i; return u > 0 ? i / u : 0; };
 
+  /* مضلّع الخدمة [[y,x],…] بإحداثيات 0..1000 ← نقاط [x,y] نظيفة (حذف المكرّر المتتالي، ورفض الحلقات المتكرّرة التي ينتجها النموذج عند التدهور) */
+  function polyPts(e) {
+    const raw = e && (e.polygon || e.points || e.outline); if (!Array.isArray(raw)) return null; const pts = [];
+    for (const q of raw) { if (!Array.isArray(q) || q.length < 2) continue; const y = Number(q[0]), x = Number(q[1]); if (!isFinite(x) || !isFinite(y)) continue; const p = [clamp(x, 0, 1000), clamp(y, 0, 1000)], l = pts[pts.length - 1]; if (l && l[0] === p[0] && l[1] === p[1]) continue; pts.push(p); }
+    if (pts.length < 8 || new Set(pts.map(p => p[0] + "," + p[1])).size < pts.length * .6) return null; return pts;
+  }
+  /* تعبئة المضلّع ← Float32 0..1 بحجم w×h (ox,oy,sx,sy: تحويل من 0..1000 إلى بكسلات المنطقة) */
+  function polyRaster(pts, w, h, ox, oy, sx, sy) { const c = mk(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.fillStyle = "#fff"; g.beginPath(); pts.forEach((q, i) => { const x = q[0] * sx - ox, y = q[1] * sy - oy; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fill(); const d = g.getImageData(0, 0, c.width, c.height).data, out = new Float32Array(c.width * c.height); for (let i = 0; i < out.length; i++) out[i] = d[i * 4 + 3] / 255; return out; }
+
   const P_SUBJ = "Find the main subject(s) of this image that a photographer would keep when removing the background: the main product, or the main person together with what they wear and hold. " +
     "Return ONLY a JSON array (at most 3 items) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000, tightly enclosing the WHOLE subject.";
   const LAST = { req: null, raw: null, err: null, ms: 0 };      // تقرير آخر طلب لتشخيص الفشل
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
     LAST.req = { w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null; const t0 = Date.now();
-    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.ms = Date.now() - t0; LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.ms = Date.now() - t0; LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.ms = Date.now() - t0; LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف الموضوع الرئيسي ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv */
@@ -84,7 +93,7 @@ const AIBgCut = (function () {
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
     if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
-    const band = clamp(Math.round(Math.max(ww, wh) * (poly ? .018 : .011)), 3, poly ? 32 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
+    const band = clamp(Math.round(Math.max(ww, wh) * (.011)), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
     if (x1 < 0 || solid < n * .004) throw new Error("لم يُعزل «" + item.label + "»");
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0); const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);
@@ -92,32 +101,31 @@ const AIBgCut = (function () {
   }
   /* (3) نزع الخلفية بطلب واحد: تطلب الخدمة قناع الموضوع الرئيسي (حتى 3 عناصر) من الصورة كاملة في ردّ واحد، ثم تُصقل الحواف محلياً من بكسلات صورتك الأصلية
      (ماتينغ بدقة البكسل) فتخرج نتيجة واحدة بحجم الأصل — كنزع خلفية كانفا بنقرة واحدة. محاولة واحدة؛ إن جاء الردّ بلا قناع صالح يُرفض بوضوح بسببه (لا إعادة ولا بدائل محلية). */
-  const MASKFMT = "Return ONLY a JSON list of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the kept object, at most 128x128 pixels>\"}. ";
+  const MASKFMT = "Return ONLY a JSON list of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"polygon\":[[y,x],...]} where polygon is the exact visible outline of the kept object as 60 to 140 points [y,x] normalized to 0-1000 over the WHOLE image, in order around the outline, more points on curves, fingers and hair. No base64, no other fields. ";
   /* محاولة واحدة دقيقة بالذكاء: برومبت واحد يحمل قاعدة القرار بنفسه (ما يبقى وما يُزال) فيصلح لكل صورة بلا طلب تحليل ولا بدائل */
   const ATTEMPTS = [
-    { id: "one", maxTokens: 16384, prompt: "One-click background removal like Canva. Return the mask(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
+    { id: "one", maxTokens: 6144, temp: .2, prompt: "One-click background removal like Canva. Return the outline(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
       "A person holding a product is ONE entry that covers both, following the exact visible outline (hair, fingers, fabric edges, the product's rim). " +
       "Include furniture or objects ONLY when the subject is physically sitting at, leaning on or touching them (extra entries are allowed for those). " +
       "Everything else is background and must NOT appear in any mask: plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
   ];
   async function subjectMask(work, o, at) {
     at = at || ATTEMPTS[0]; const ww = work.width, wh = work.height, why = t => ({ M: null, why: t });
-    let arr; try { arr = parseLoose(await ask(at.prompt, work, { maxTokens: at.maxTokens, signal: o && o.signal })); } catch (e) { if (e && e.name === "AbortError") throw e; return why(String(e && e.message || e).slice(0, 90)); }
+    let arr; try { arr = parseLoose(await ask(at.prompt, work, { maxTokens: at.maxTokens, temp: at.temp, signal: o && o.signal })); } catch (e) { if (e && e.name === "AbortError") throw e; return why(String(e && e.message || e).slice(0, 90)); }
     arr = (arr || []).filter(e => e && typeof e === "object"); if (!arr.length) return why("ردّ بلا عناصر");
-    const M = new Float32Array(ww * wh), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0); let used = 0;
-    if (at.poly) {
-      const c = document.createElement("canvas"); c.width = ww; c.height = wh; const g = c.getContext("2d"); g.fillStyle = "#fff"; let n = 0;
-      arr.slice(0, 2).forEach(e => { const pts = (e.polygon || e.points || []).map(q => Array.isArray(q) ? [Number(q[1]), Number(q[0])] : null).filter(q => q && isFinite(q[0]) && isFinite(q[1])); if (pts.length < 6) return; g.beginPath(); pts.forEach((q, i) => { const x = clamp(q[0], 0, 1000) / 1000 * ww, y = clamp(q[1], 0, 1000) / 1000 * wh; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fill(); n++; });
-      if (!n) return why("مضلّع غير صالح"); const d = g.getImageData(0, 0, ww, wh).data; for (let i = 0; i < ww * wh; i++) M[i] = d[i * 4 + 3] > 127 ? 1 : 0; used = n;
-    } else {
-      let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask); if (!cand.length) return why("ردّ بلا أقنعة (" + arr.length + " عنصراً)");
-      cand.sort((p, q) => area(q) - area(p)); cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .01).slice(0, 12);      // الموضوع + مشهده الأمامي
+    const M = new Float32Array(ww * wh), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0); let used = 0, poly = false, nPoly = 0;
+    const polys = arr.map(e => ({ e, pts: polyPts(e) })).filter(q => q.pts); nPoly = polys.length;
+    polys.slice(0, 6).forEach(q => { const R = polyRaster(q.pts, ww, wh, 0, 0, ww / 1000, wh / 1000); let sum = 0; for (let i = 0; i < R.length; i++) if (R[i] > .5) sum++; const r = sum / R.length; if (r < .004 || r > .985) return; for (let i = 0; i < R.length; i++) if (R[i] > M[i]) M[i] = R[i]; used++; poly = true; });
+    if (!used) {      // قناع PNG قديم الصيغة إن أعاده النموذج بدل المضلّع
+      let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask);
+      if (!cand.length) return why(nPoly ? "مضلّع غير معقول" : "ردّ بلا مضلّع (" + arr.length + " عنصراً)");
+      cand.sort((p, q) => area(q) - area(p)); cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .01).slice(0, 12);
       for (const q of cand) { const px0 = Math.round(q.b.x0 / 1000 * ww), py0 = Math.round(q.b.y0 / 1000 * wh), px1 = Math.round(q.b.x1 / 1000 * ww), py1 = Math.round(q.b.y1 / 1000 * wh), dm = await decodeMask(q.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0)); if (!dm) continue;
-        let sum = 0; for (let i = 0; i < dm.m.length; i++) if (dm.m[i] > .5) sum++; const r = sum / Math.max(1, dm.m.length); if (r < .04 || r > .995) continue;      // قناع غير معقول داخل مربعه
+        let sum = 0; for (let i = 0; i < dm.m.length; i++) if (dm.m[i] > .5) sum++; const r = sum / Math.max(1, dm.m.length); if (r < .04 || r > .995) continue;
         for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) { const v = dm.m[y * dm.w + x]; if (v > M[yy * ww + xx]) M[yy * ww + xx] = v; } } } used++; }
       if (!used) return why("أقنعة غير صالحة أو غير معقولة");
     }
-    let tot = 0; for (let i = 0; i < M.length; i++) if (M[i] > .5) tot++; const cov = tot / M.length; if (cov < .01 || cov > .985) return why("تغطية القناع " + Math.round(cov * 100) + "%"); return { M, why: "", poly: !!at.poly };
+    let tot = 0; for (let i = 0; i < M.length; i++) if (M[i] > .5) tot++; const cov = tot / M.length; if (cov < .01 || cov > .985) return why("تغطية القناع " + Math.round(cov * 100) + "%"); return { M, why: "", poly };
   }
   async function subject(cv, o) {
     o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), s = Math.min(1, Math.sqrt(MAXPX / (cv.width * cv.height))), work = cropOf(cv, 0, 0, cv.width, cv.height, s), ww = work.width, wh = work.height;
@@ -125,12 +133,12 @@ const AIBgCut = (function () {
     { const r = await subjectMask(work, o, ATTEMPTS[0]); if (r.M) { M = r.M; poly = r.poly; } else reasons.push(r.why); }
     if (!M) { console.warn("bgcut", reasons); throw new Error("لم تُعزل الصورة (" + reasons.map(r => r.replace(/^[a-z]+: /, "")).join(" · ") + ") — أعد المحاولة أو جرّب صورة أخرى"); }
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
-    const band = clamp(Math.round(Math.max(ww, wh) * .011), 3, 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh; let solid = 0;
+    const band = clamp(Math.round(Math.max(ww, wh) * (poly ? .02 : .011)), 3, poly ? 36 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh; let solid = 0;
     for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) solid++; }
     if (solid < n * .004) throw new Error("لم يُعزل الموضوع — أعد المحاولة");
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0);
     const out = mk(cv.width, cv.height), g = out.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(full, 0, 0, cv.width, cv.height); out._via = "api"; return out;
   }
-  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, cutout, subject, _t: { subjectMask, parseLoose, boxOf, decodeMask, clean, iou } };
+  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, cutout, subject, _t: { subjectMask, polyPts, polyRaster, parseLoose, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AIBgCut = AIBgCut;
