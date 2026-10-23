@@ -156,8 +156,20 @@ const AICapture = (function () {
     const soft = mk(W, H), sg = soft.getContext("2d"); try { sg.filter = "blur(" + Math.max(1, R / 2) + "px)"; } catch (e) { } sg.drawImage(msk, 0, 0); sg.filter = "none";
     gg.globalCompositeOperation = "destination-in"; gg.drawImage(soft, 0, 0); gg.globalCompositeOperation = "source-over"; base.getContext("2d").drawImage(gen, 0, 0); return true;      // الناتج داخل المنطقة فقط وحوافها ناعمة؛ خارجها الأصل كما هو
   }
+  /* ملء محلي احتياطي (يعمل بلا خدمة): يمحو مناطق العناصر من الخلفية بتدرّج لوني ناعم من محيطها حتى لا تبقى نسخ مكرّرة من العناصر تحت الملتقطة */
+  function localFill(base, cuts) {
+    const W = base.width, H = base.height, hole = mk(W, H), hg = hole.getContext("2d", { willReadFrequently: true }); cuts.forEach(c => hg.drawImage(c.canvas, c.x0, c.y0, c.w, c.h));
+    const d = hg.getImageData(0, 0, W, H).data, U = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) if (d[i * 4 + 3] > 12) U[i] = 1;
+    const R = Math.max(3, Math.round(Math.max(W, H) / 300)), grown = ImageTools.sqDilate(U, W, H, R), s = Math.min(1, 1000 / Math.max(W, H)), w = Math.max(8, Math.round(W * s)), h = Math.max(8, Math.round(H * s)), c = mk(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(base, 0, 0, w, h);
+    const m = new Uint8Array(w * h); for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (grown[Math.min(H - 1, Math.round((y + .5) / s)) * W + Math.min(W - 1, Math.round((x + .5) / s))]) m[y * w + x] = 1;
+    if (!ImageTools.fillMask(g, 0, 0, w, h, m)) throw new Error("تعذّر الملء المحلي");
+    const gen = mk(W, H), gg = gen.getContext("2d", { willReadFrequently: true }); gg.imageSmoothingQuality = "high"; gg.drawImage(c, 0, 0, W, H);
+    const msk = mk(W, H), mg = msk.getContext("2d"), gi = new ImageData(W, H); for (let i = 0; i < W * H; i++) { const v = grown[i] ? 255 : 0; gi.data[i * 4] = v; gi.data[i * 4 + 1] = v; gi.data[i * 4 + 2] = v; gi.data[i * 4 + 3] = v; } mg.putImageData(gi, 0, 0);
+    const soft = mk(W, H), sg = soft.getContext("2d"); try { sg.filter = "blur(" + Math.max(1, R / 2) + "px)"; } catch (e) { } sg.drawImage(msk, 0, 0); sg.filter = "none";
+    gg.globalCompositeOperation = "destination-in"; gg.drawImage(soft, 0, 0); gg.globalCompositeOperation = "source-over"; base.getContext("2d").drawImage(gen, 0, 0); return true;
+  }
   /* يحوّل نتائج cutout إلى صيغة AIVision.eraseBg (قناع المسح) للترميم المحلي الاحتياطي */
   function eraseCuts(cuts) { return cuts.map(c => { const w = Math.max(1, Math.round(c.w)), h = Math.max(1, Math.round(c.h)), cc = mk(w, h), g = cc.getContext("2d", { willReadFrequently: true }); g.drawImage(c.canvas, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] > 20) m[i] = 1; return { canvas: c.canvas, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h, label: c.label, erase: { m, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h } }; }); }
-  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
+  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, localFill, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;

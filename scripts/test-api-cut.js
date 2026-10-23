@@ -39,6 +39,8 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d").drawImage(cv, 0, 0); const fb = await AICapture.fillBg(part, [c1, c2], {});
     const pd = part.getContext("2d").getImageData(250, 300, 1, 1).data, qd = part.getContext("2d").getImageData(20, 20, 1, 1).data, od = cv.getContext("2d").getImageData(20, 20, 1, 1).data;
     out.fill = { ok: fb, holeGray: pd[0] > 100 && pd[0] < 140 && Math.abs(pd[0] - pd[2]) < 12, outsideSame: qd[0] === od[0] && qd[2] === od[2] };
+    { const p2 = document.createElement("canvas"); p2.width = W; p2.height = H; p2.getContext("2d").drawImage(cv, 0, 0); const ok2 = await AICapture.localFill(p2, [c1, c2]); const a = p2.getContext("2d").getImageData(250, 300, 1, 1).data, b = cv.getContext("2d").getImageData(250, 300, 1, 1).data, q = p2.getContext("2d").getImageData(20, 20, 1, 1).data, o0 = cv.getContext("2d").getImageData(20, 20, 1, 1).data;
+      out.localFill = { ok: ok2, holeGray: a[0] > 90 && a[0] < 150 && Math.abs(a[0] - a[2]) < 25, outsideSame: q[0] === o0[0] && q[2] === o0[2] }; }
     const orig = ImgGen.text;
     /* الالتقاط: فشل بطلب واحد وسبب واضح بلا إعادة */
     { let cnt = 0, msg = ""; ImgGen.text = async o => { cnt++; return "[]"; }; await AICapture.detectAll(cv, {}).catch(e => { msg = String(e.message); }); out.capFail = { cnt, msg }; ImgGen.text = orig; }
@@ -77,6 +79,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.c1.inside > 30000 && r.c1.bad / r.c1.inside < .02, "حواف الكرة نظيفة: بكسلات معتمة حمراء فقط رغم إزاحة قناع الخدمة", r.c1);
   ok(r.pro.method === "photoroom" && r.pro.w > 100 && r.pro.w < 260, "قصّ العنصر بـPhotoroom على مقطعه (ألفا الخدمة)", r.pro);
   ok(r.c2.method === "api" && Math.abs(r.c2.w - 180) <= 12, "قصّ العلبة الزرقاء", r.c2);
+  ok(r.localFill.ok && r.localFill.holeGray && r.localFill.outsideSame, "الملء المحلي الاحتياطي يمحو العنصر من الخلفية دون المساس بما خارجه", r.localFill);
   ok(r.fill.ok && r.fill.holeGray && r.fill.outsideSame, "الخلفية تُرمَّم داخل منطقة العنصر فقط والبقية بلا تغيير", r.fill);
   ok(r.think.n === 2 && r.think.budget0, "طلب التقاط/نزع: بلا تفكير (thinkingBudget=0) وبنموذجين على الأكثر", r.think);
   ok(/انتهت مهلة/.test(r.timeout.e2) && r.timeout.ms < 3000, "المهلة تُنتج رسالة واضحة لا «signal is aborted»", r.timeout);
