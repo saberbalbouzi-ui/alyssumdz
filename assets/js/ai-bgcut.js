@@ -16,7 +16,11 @@ const AIBgCut = (function () {
   function parseLoose(t) {
     t = String(t || "").replace(/^```[a-z]*\s*|```\s*$/g, "").trim(); try { const j = JSON.parse(t); return Array.isArray(j) ? j : (j && (j.objects || j.items || j.results)) || [j]; } catch (e) { }
     const a = t.indexOf("["); if (a >= 0) { let s = t.slice(a); const z = s.lastIndexOf("}"); if (z > 0) { try { return JSON.parse(s.slice(0, z + 1) + "]"); } catch (e) { } } }
-    const out = []; (t.match(/\{[^{}]*\}/g) || []).forEach(o => { try { out.push(JSON.parse(o)); } catch (e) { } }); return out;
+    const out = []; (t.match(/\{[^{}]*\}/g) || []).forEach(o => { try { out.push(JSON.parse(o)); } catch (e) { } }); if (out.some(e => e && e.box_2d)) return out;
+    /* ردّ مقطوع في منتصف قناع base64 (لا كائن مكتمل): تُنقَذ المربعات والعناوين التي سبقته */
+    const sal = []; const re = /"box_2d"\s*:\s*\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]/g; let m;
+    while ((m = re.exec(t))) { const lb = /"label"\s*:\s*"([^"]{0,60})"/.exec(t.slice(Math.max(0, m.index - 90), m.index + m[0].length + 120)); sal.push({ box_2d: [+m[1], +m[2], +m[3], +m[4]], label: lb ? lb[1] : "" }); }
+    return sal.length ? sal : out;
   }
   const boxOf = e => { const b = e && (e.box_2d || e.box || e.bbox); if (!Array.isArray(b) || b.length < 4) return null; const v = b.map(Number); if (v.some(x => !isFinite(x))) return null; let [y0, x0, y1, x1] = v; if (y1 < y0) [y0, y1] = [y1, y0]; if (x1 < x0) [x0, x1] = [x1, x0]; y0 = clamp(y0, 0, 1000); y1 = clamp(y1, 0, 1000); x0 = clamp(x0, 0, 1000); x1 = clamp(x1, 0, 1000); return x1 - x0 < 8 || y1 - y0 < 8 ? null : { x0, y0, x1, y1 }; };
   const iou = (a, b) => { const x0 = Math.max(a.x0, b.x0), y0 = Math.max(a.y0, b.y0), x1 = Math.min(a.x1, b.x1), y1 = Math.min(a.y1, b.y1), i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0), u = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - i; return u > 0 ? i / u : 0; };
@@ -102,14 +106,14 @@ const AIBgCut = (function () {
   }
   /* (3) نزع الخلفية بطلب واحد: تطلب الخدمة قناع الموضوع الرئيسي (حتى 3 عناصر) من الصورة كاملة في ردّ واحد، ثم تُصقل الحواف محلياً من بكسلات صورتك الأصلية
      (ماتينغ بدقة البكسل) فتخرج نتيجة واحدة بحجم الأصل — كنزع خلفية كانفا بنقرة واحدة. محاولة واحدة؛ إن جاء الردّ بلا قناع صالح يُرفض بوضوح بسببه (لا إعادة ولا بدائل محلية). */
-  const MASKFMT = "Output a JSON list of segmentation masks where each entry contains the 2D bounding box in the key \"box_2d\" ([ymin,xmin,ymax,xmax] normalized to 0-1000), the segmentation mask in the key \"mask\" (the PNG probability map of the object inside that box, as base64), and a short Arabic label in the key \"label\". ";
+  const MASKFMT = "Return ONLY a short JSON array where each entry is {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000, tightly enclosing the WHOLE subject including its edges (hair, fingers, held item). Do not output masks or polygons. ";
   /* محاولة واحدة دقيقة بالذكاء: برومبت واحد يحمل قاعدة القرار بنفسه (ما يبقى وما يُزال) فيصلح لكل صورة بلا طلب تحليل ولا بدائل */
   const ATTEMPTS = [
-    { id: "one", maxTokens: 6144, temp: .7, prompt: "One-click background removal like Canva. Return the outline(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
+    { id: "one", maxTokens: 1536, temp: .3, prompt: "One-click background removal like Canva. Return the entries for what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
       "A person holding a product is ONE entry that covers both, following the exact visible outline (hair, fingers, fabric edges, the product's rim). " +
       "Keep every part that belongs to the subject as one whole (its container, base, stand, attachments, held or worn items). Other things of the same kind further back, out of focus or not touching the subject are background. " +
       "Add a separate entry for an object ONLY when the subject is physically sitting on, leaning on or holding it. Never include table tops, counters, floors, shelves, rugs, shadows or reflections, nor any blurred room behind the subject. " +
-      "Everything else is background and must NOT appear in any outline: surfaces, plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
+      "Everything else is background and must NOT be inside any box more than unavoidable: surfaces, plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
   ];
   async function subjectMask(work, o, at) {
     at = at || ATTEMPTS[0]; const ww = work.width, wh = work.height; let boxes = []; const why = t => ({ M: null, why: t, boxes });

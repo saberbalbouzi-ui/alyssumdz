@@ -17,7 +17,11 @@ const AICapture = (function () {
   function parseLoose(t) {
     t = String(t || "").replace(/^```[a-z]*\s*|```\s*$/g, "").trim(); try { const j = JSON.parse(t); return Array.isArray(j) ? j : (j && (j.objects || j.items || j.results)) || [j]; } catch (e) { }
     const a = t.indexOf("["); if (a >= 0) { let s = t.slice(a); const z = s.lastIndexOf("}"); if (z > 0) { try { return JSON.parse(s.slice(0, z + 1) + "]"); } catch (e) { } } }
-    const out = []; (t.match(/\{[^{}]*\}/g) || []).forEach(o => { try { out.push(JSON.parse(o)); } catch (e) { } }); return out;
+    const out = []; (t.match(/\{[^{}]*\}/g) || []).forEach(o => { try { out.push(JSON.parse(o)); } catch (e) { } }); if (out.some(e => e && e.box_2d)) return out;
+    /* ردّ مقطوع في منتصف قناع base64 (لا كائن مكتمل): تُنقَذ المربعات والعناوين التي سبقته */
+    const sal = []; const re = /"box_2d"\s*:\s*\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]/g; let m;
+    while ((m = re.exec(t))) { const lb = /"label"\s*:\s*"([^"]{0,60})"/.exec(t.slice(Math.max(0, m.index - 90), m.index + m[0].length + 120)); sal.push({ box_2d: [+m[1], +m[2], +m[3], +m[4]], label: lb ? lb[1] : "" }); }
+    return sal.length ? sal : out;
   }
   const boxOf = e => { const b = e && (e.box_2d || e.box || e.bbox); if (!Array.isArray(b) || b.length < 4) return null; const v = b.map(Number); if (v.some(x => !isFinite(x))) return null; let [y0, x0, y1, x1] = v; if (y1 < y0) [y0, y1] = [y1, y0]; if (x1 < x0) [x0, x1] = [x1, x0]; y0 = clamp(y0, 0, 1000); y1 = clamp(y1, 0, 1000); x0 = clamp(x0, 0, 1000); x1 = clamp(x1, 0, 1000); return x1 - x0 < 8 || y1 - y0 < 8 ? null : { x0, y0, x1, y1 }; };
   const iou = (a, b) => { const x0 = Math.max(a.x0, b.x0), y0 = Math.max(a.y0, b.y0), x1 = Math.min(a.x1, b.x1), y1 = Math.min(a.y1, b.y1), i = Math.max(0, x1 - x0) * Math.max(0, y1 - y0), u = (a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - i; return u > 0 ? i / u : 0; };
@@ -53,11 +57,11 @@ const AICapture = (function () {
   const P_MASKS = "Segment every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
     "Treat things a person holds as separate objects from the person, and ALWAYS include a held product even if fingers cover part of it: its mask must follow the exact visible edge of the object, leaving out the fingers, hands and anything in front of it (no overlap with the hand). " +
     "Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects cut off by the image edge. " +
-    "Output a JSON list (at most MAX entries) where each entry contains the 2D bounding box in the key \"box_2d\" ([ymin,xmin,ymax,xmax] normalized to 0-1000), the segmentation mask in the key \"mask\" (the PNG probability map of the object inside that box, as base64), and a short Arabic label in the key \"label\".";
+    "Return ONLY a short JSON array (at most MAX entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000, tightly enclosing the WHOLE object including a held product's visible rim. Do not output masks or polygons.";
   /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
   async function detectAll(cv, o) {
     o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…");
-    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 6144, temp: .7, signal: o.signal })), build = async arr => {
+    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 2048, temp: .3, signal: o.signal })), build = async arr => {
       const items = [], W = cv.width, H = cv.height;
       for (const e of arr) { if (!e || typeof e !== "object") continue; const pts = polyPts(e); let b = boxOf(e);
         if (!b && pts) { const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys); if (x1 - x0 >= 8 && y1 - y0 >= 8) b = { x0, y0, x1, y1 }; }      // مربع مفقود: يُشتق من حدود المضلّع

@@ -72,6 +72,11 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
       const bj = await AIBgCut.subject(cv, {}); const bd = bj.getContext("2d").getImageData(0, 0, W, H).data; const ba = (x, y) => bd[(y * W + x) * 4 + 3];
       out.boxSubj = { center: ba(250, 300), corner: ba(20, 20), blue: ba(580, 300), via: JSON.parse(AIBgCut.report()).via };
       const bci = await AICapture.detectAll(cv, {}); const bcu = await AICapture.cutout(cv, bci[0], {}); out.boxCap = { n: bci.length, boxOnly: !!bci[0].boxOnly, method: bcu.method, w: Math.round(bcu.w), h: Math.round(bcu.h) };
+      /* تقرير صاحب المتجر (v1.89.470): ردّ مقطوع في منتصف قناع base64 مختلَق (لا كائن مكتمل) والمربع صحيح ← يُنقذ المربع ويُفصل الموضوع */
+      ImgGen.text = async () => '[\n  {"box_2d": [' + [190 / .6, 140 / .8, 410 / .6, 360 / .8].join(", ") + '], "label": "كرة", "mask": "iVBORw0KGgoAAAANSUhEUgAAAlgAAAJYCAYAAAC+ZArnAAAAB' + "/v0/+3u/84//zHf/1f/2X/sv".repeat(60);
+      const tj2 = await AIBgCut.subject(cv, {}).catch(e => e); const td = tj2 && tj2.getContext ? tj2.getContext("2d").getImageData(0, 0, W, H).data : null;
+      out.truncBox = { ok: !!td, center: td ? td[(300 * W + 250) * 4 + 3] : -1, corner: td ? td[(20 * W + 20) * 4 + 3] : -1, via: JSON.parse(AIBgCut.report()).via, msg: td ? "" : String(tj2 && tj2.message) };
+      const tci = await AICapture.detectAll(cv, {}).catch(e => []); out.truncCap = { n: tci.length, boxOnly: tci[0] && !!tci[0].boxOnly };
       ImgGen.text = orig; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
@@ -98,6 +103,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(/محيط غير معقول|ردّ بلا قناع/.test(r.polyLoop), "مضلّع متكرّر النقاط (تدهور) يُرفض بسبب واضح", r.polyLoop);
   ok(r.polyTrunc > 240, "ردّ مقطوع: يُنقذ العنصر الأول المكتمل", r.polyTrunc);
   ok(r.holes.center < 30 && r.holes.ring > 240, "ثقوب المضلّع (فراغ داخل العنصر) تُطرح والحلقة حوله تبقى", r.holes);
+  ok(r.truncBox.ok && r.truncBox.center > 240 && r.truncBox.corner === 0 && r.truncBox.via === "box" && r.truncCap.n === 1 && r.truncCap.boxOnly, "ردّ مقطوع في قناع مختلَق: المربع يُنقَذ والموضوع يُفصل (نزع الخلفية والالتقاط)", [r.truncBox, r.truncCap]);
   ok(!errs.length, "لا أخطاء صفحة", errs);
   console.log(n + " نجاح، " + fails.length + " فشل"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();
