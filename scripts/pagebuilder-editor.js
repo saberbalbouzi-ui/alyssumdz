@@ -1370,7 +1370,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to" || t === "ps" || t === "bgn" || t === "rc" || t === "v3" || t === "rl" || t === "tr" || t === "uc" || t === "bf") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
-    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة: تُحدَّد الصورة وتظهر النتيجة مباشرة على الصورة بحواف دقيقة. تستعمل رصيد Alyssum API.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
+    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة: تُحدَّد الصورة وتظهر النتيجة مباشرة على الصورة بحواف دقيقة. تستعمل رصيد Alyssum API.</p><button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} نزع الخلفية</button> <button type="button" class="pbx-small pz-go" data-bgr="edit">${ico("scissors", 16)} محرّر متقدّم (فرشاة وحواف)</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة، ثم «تنفيذ» أو «إلغاء» تحتها.</p></div>`;
     return `<div class="pbx-pz"><p>يفصل العناصر الكاملة في الصورة (أشخاص، منتجات…) كصور شفافة منفصلة ويضعها في الصفحة.</p><button type="button" class="pbx-small pz-go" data-q="smart-magic">${ico("cutout", 16)} التقاط العناصر</button></div>`;
   }
   function epPlace(p) {
@@ -1541,7 +1541,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t.dataset.mkp) { const v = t.dataset.mkp; if (v === "c") { PBMask.opt("px", 50); PBMask.opt("py", 50); } else PBMask.opt("size", Number(v)); epDraw(); return; }
     if (t.dataset.mksh) { PBMask.opt("target", t.dataset.mksh); epDraw(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); epDraw(); return; }
-    if (t.dataset.bgr) { PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
+    if (t.dataset.bgr) { if (t.dataset.bgr === "edit") PBBgRemove.edit(inf); else PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
     if (t.dataset.q === "smart-magic") { PBSmart.captureElements(); return; }
   }
   function epInput(e) {      // تحريك الأشرطة: معاينة حيّة بلا إعادة رسم اللوحة (حتى لا يُقطع السحب)
@@ -3036,7 +3036,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.pend) { pendAct(t.dataset.pend); return; }
     if (t.dataset.mksh) { if (PBMask.opt("target", t.dataset.mksh)) renderInspector(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); if (t.dataset.mk === "preview" || t.dataset.mk === "no") renderInspector(); return; }
-    if (t.dataset.bgr) { PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
+    if (t.dataset.bgr) { if (t.dataset.bgr === "edit") PBBgRemove.edit(inf); else PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
     if (t.dataset.hsite) { if (E.dirty && !confirm("لديك تعديلات غير منشورة في الصفحة — سيُغلق المطوّر وتُحفظ مسودتها تلقائياً. متابعة؟")) return; try { saveDraftNow(); } catch (e) { } close(); const nb = [...document.querySelectorAll(".nav-btn")].find(x => /chromeh/.test(x.getAttribute("onclick") || "")); if (nb) nb.click(); return; }
     if (t.dataset.scins) { const ta = document.querySelector('#pbx-insp textarea[data-k="code"]'), cd = PB.SC_LIST[+t.dataset.scins][0], cur = String(inf.set.code || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.code = cur.slice(0, at) + cd + cur.slice(at); afterEdit(); return; }
     if (t.dataset.icins) { const r = t.getBoundingClientRect(), ta = document.querySelector('#pbx-insp textarea'); showIconPop(Math.max(6, r.left - 120), r.bottom + 6, "", v => { const tk = PB.isIconTok(v) ? "{" + v + "}" : v, cur = String(inf.set.txt || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.txt = cur.slice(0, at) + tk + cur.slice(at); afterEdit(); }); return; }

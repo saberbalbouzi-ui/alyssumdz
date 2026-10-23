@@ -426,6 +426,14 @@ const PBBgRemove = (function () {
       LV.busy = false; await lvApply();      // كانفا: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
     } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + (window.AIBgCut && AIBgCut.report ? AIBgCut.report() : "")); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
   }
+  /* المحرّر المتقدّم (BgEditor): محرّك قابل للتبديل + فرشاة محو/استعادة + صقل حواف + خلفيات + تصدير PNG محقَّق؛ الصورة الأصلية لا تُعدَّل */
+  async function edit(inf) {
+    if (!inf || inf.node.type !== "image" || !inf.node.set.src) { alert("حدّد صورة أولاً"); return; } if (typeof BgEditor === "undefined") { alert("المحرّر المتقدّم غير محمّل — حدّث الصفحة"); return; }
+    const id = inf.node.id; let c; try { c = await load(inf.node.set.src); } catch (e) { alert("⚠️ " + e.message); return; }
+    BgEditor.open({ canvas: c, name: "image", onApply: async blob => {
+      const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: Math.max(c.width, c.height), q: .95 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
+      q.node.set.src = path; A().E.nextLabel = "نزع الخلفية (محرّر متقدّم)"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); chip("✅ طُبِّقت الصورة بقناعها"); } });
+  }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, live, autoCut, confidence, keepSubject, _t: { boxMask, uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, edit, autoCut, confidence, keepSubject, _t: { boxMask, uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();
