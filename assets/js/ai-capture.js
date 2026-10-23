@@ -25,9 +25,12 @@ const AICapture = (function () {
   const P_ALL = "Detect every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
     "Treat things a person holds as separate objects from the person and ALWAYS include a held product even if fingers cover part of it. Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects that are cut off by the image edge. " +
     "Return ONLY a JSON array (at most MAX items) of objects like {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000 and boxes that tightly enclose the whole object.";
+  const LAST = { req: null, raw: null, err: null, counts: null };      // تقرير آخر طلب لتشخيص الفشل (يُنسخ من الواجهة)
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
-    return ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal });
+    LAST.req = { prompt: String(prompt).slice(0, 60), w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null;
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    catch (e) { LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف العناصر ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv. o.zone = [x0,y0,x1,y1] لتحليل منطقة بدقة أعلى، o.mode = "subject" للموضوع الرئيسي فقط */
   async function detect(cv, o) {
@@ -53,7 +56,7 @@ const AICapture = (function () {
         if (bw < W * .02 || bh < H * .02 || (bw * bh > W * H * .94 && arr.length > 1)) continue; if (items.some(q => iou(q.box, box) > .85)) continue;
         const px0 = Math.round(box.x0), py0 = Math.round(box.y0), dm = e.mask ? await decodeMask(e.mask, Math.max(2, Math.round(bw)), Math.max(2, Math.round(bh))) : null;
         items.push({ label: String(e.label || "عنصر").slice(0, 40), box, pre: dm ? { m: dm.m, w: dm.w, h: dm.h, x0: px0, y0: py0 } : null }); }      // مربع بلا قناع صالح يبقى عنصراً: قناعه يُطلب لاحقاً عند القصّ
-      items.forEach((it, i) => it.id = i); return items;
+      items.forEach((it, i) => it.id = i); LAST.counts = { entries: arr.length, withBox: arr.filter(e => boxOf(e)).length, withMask: arr.filter(e => e && e.mask).length, usable: items.filter(i => i.pre).length }; return items;
     };
     /* محاولة واحدة دقيقة بالذكاء: كشف العناصر وأقنعتها في طلب واحد، بلا إعادة ولا طلبات إضافية لكل عنصر */
     let items = [], err = null; try { items = await build(await ask1(o.max || 8)); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; err = e; }
@@ -125,6 +128,6 @@ const AICapture = (function () {
   }
   /* يحوّل نتائج cutout إلى صيغة AIVision.eraseBg (قناع المسح) للترميم المحلي الاحتياطي */
   function eraseCuts(cuts) { return cuts.map(c => { const w = Math.max(1, Math.round(c.w)), h = Math.max(1, Math.round(c.h)), cc = mk(w, h), g = cc.getContext("2d", { willReadFrequently: true }); g.drawImage(c.canvas, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] > 20) m[i] = 1; return { canvas: c.canvas, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h, label: c.label, erase: { m, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h } }; }); }
-  return { ready, detect, detectAll, cutout, fillBg, eraseCuts, _t: { parseLoose, boxOf, decodeMask, clean, iou } };
+  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, eraseCuts, _t: { parseLoose, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;
