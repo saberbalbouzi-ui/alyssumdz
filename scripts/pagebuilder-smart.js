@@ -149,10 +149,11 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     catch (e) { stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل التقاط العناصر" : String(e && e.message || e).slice(0, 160)); return null; }
     stopScan(); if (sh.S.closed) return null; $("pbs-load").style.display = "none";
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
-    const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; stage.appendChild(ov);
+    const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; /* بلا مربعات حول العناصر: كل ما كُشف يُلتقط تلقائياً بمسحة واحدة */
     const area = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0); let sel = new Set(), hov = -1, busy = false;
     const hit = (x, y) => { let best = -1, ba = 1e18; items.forEach(it => { const b = it.box; if (x >= b.x0 * k && x <= b.x1 * k && y >= b.y0 * k && y <= b.y1 * k && area(it) < ba) { ba = area(it); best = it.id; } }); return best; };
-    $("pbs-hint").textContent = sh.S.hintOne = "انقر على عنصر لاختياره، أو التقط كل العناصر دفعة واحدة. تُقصّ الحواف بدقة من بكسلات صورتك الأصلية وتُعاد الخلفية مكانها.";
+    sh.S.mode = "all"; { const sg = $("pbs-seg"); if (sg) sg.style.display = "none"; } $("pbs-hint").textContent = "تُقصّ كل العناصر بدقة من بكسلات صورتك الأصلية وتُعاد الخلفية مكانها.";
+    let tintEl = null; const tintOn = () => { scanCss(); if (!tintEl) { tintEl = document.createElement("div"); tintEl.className = "pbs-tint-x"; tintEl.style.cssText = "position:absolute;inset:0"; stage.appendChild(tintEl); } }, tintOff = () => { if (tintEl) { tintEl.remove(); tintEl = null; } };
     $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill" checked> إعادة رسم الخلفية مكان العناصر</label>';
     const colors = ["#0d9488", "#7c3aed", "#ea580c", "#2563eb", "#db2777", "#16a34a", "#ca8a04", "#0891b2"];
     function paint() {
@@ -167,15 +168,15 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     return new Promise(done => {
       const c0 = sh.close; sh.close = () => { c0(); done(null); };
       $("pbs-go").onclick = async () => {
-        const chosen = sh.S.mode === "all" ? items.slice() : items.filter(it => sel.has(it.id)); if (!chosen.length || busy) return; busy = true; $("pbs-go").disabled = true; const fill = !!($("pbs-fill") && $("pbs-fill").checked);
+        const chosen = sh.S.mode === "all" ? items.slice() : items.filter(it => sel.has(it.id)); if (!chosen.length || busy) return; busy = true; $("pbs-go").disabled = true; tintOn(); const fill = !!($("pbs-fill") && $("pbs-fill").checked);
         try {
           const cuts = [], fails = []; let next = 0, dn = 0; const say = m => { if (!sh.S.closed) $("pbs-msg").textContent = m; };
           const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
-          await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; if (!cuts.length) throw new Error("لم يُعزل أي عنصر — جرّب مستطيلاً أضيق حول العنصر");
+          await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
           cuts.sort((a, b) => (a.y0 + a.h) - (b.y0 + b.h)); const nm = {}, cnt = {}; cuts.forEach(c => cnt[c.label] = (cnt[c.label] || 0) + 1); cuts.forEach(c => { nm[c.label] = (nm[c.label] || 0) + 1; c.label = cnt[c.label] > 1 ? c.label + " " + nm[c.label] : c.label; });
           const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0); let how = "none";
           if (fill) { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); how = "ai"; } catch (e) { console.warn("fillBg", e); if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; throw new Error("تعذّرت إعادة رسم الخلفية — أعد المحاولة أو ألغِ خيار «إعادة رسم الخلفية»"); } }
-          const ok = await new Promise(res => {      // معاينة: الخلفية بعد الإزالة + العناصر مرفوعة قليلاً ← حفظ أو إلغاء
+          tintOff(); const ok = await new Promise(res => {      // معاينة: الخلفية بعد الإزالة + العناصر مرفوعة قليلاً ← حفظ أو إلغاء
             const kids = [...stage.childNodes]; kids.forEach(n => n.remove()); const c = document.createElement("canvas"); c.width = vw; c.height = vh; c.style.cssText = "display:block;background:#fff"; stage.appendChild(c); const g = c.getContext("2d");
             g.drawImage(part, 0, 0, vw, vh); cuts.forEach(q => { g.save(); g.shadowColor = "rgba(0,0,0,.4)"; g.shadowBlur = 14; g.shadowOffsetY = 6; g.drawImage(q.canvas, q.x0 * k, q.y0 * k - 6, q.w * k, q.h * k); g.restore(); });
             const bar = document.createElement("div"); bar.style.cssText = "display:flex;gap:.5rem"; bar.innerHTML = '<button type="button" id="pbs-ok" style="flex:1;border:0;border-radius:12px;padding:.75rem;font-weight:800;cursor:pointer;background:#0d9488;color:#fff;font-family:inherit">💾 حفظ</button><button type="button" id="pbs-no" style="flex:1;border:1.5px solid #d6d3cb;border-radius:12px;padding:.75rem;font-weight:800;cursor:pointer;background:#fff;color:#44403c;font-family:inherit">✖ إلغاء</button>';
@@ -186,8 +187,9 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
           for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await toB(cuts[i].canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close(); done(null);
           alert("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (how === "ai" ? "\n🪄 أُعيد رسم الخلفية مكانها." : "") + (fails.length ? "\n⚠️ تعذّر عزل: " + fails.join("، ") : "") + "\nللتراجع اضغط Ctrl+Z.");
-        } catch (e) { console.error(e); busy = false; if (!sh.S.closed) { $("pbs-msg").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e)); $("pbs-go").disabled = false; } }
+        } catch (e) { console.error(e); tintOff(); busy = false; if (!sh.S.closed) { $("pbs-go").textContent = "↻ إعادة المحاولة"; $("pbs-msg").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e)); $("pbs-go").disabled = false; } }
       };
+      setTimeout(() => { if (!sh.S.closed && $("pbs-go").onclick) $("pbs-go").onclick(); }, 30);      // يبدأ الالتقاط فوراً بلا اختيار
     });
   }
   async function captureElements() {
