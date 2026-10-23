@@ -18,8 +18,8 @@ const PBApp = (() => {
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
 .pb-edit .pb-w:hover{outline:1px dashed #8b3dff;outline-offset:2px}
-.pb-edit .pb-w:has(img[src*="/el-"]):hover{outline:none}
-.pb-edit .pb-w:hover img[src*="/el-"]{filter:drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 7px rgba(74,222,128,.75)) !important;cursor:pointer}
+.pb-edit .pb-w.pb-cap:hover{outline:none}
+.pb-edit .pb-w.pb-cap.pb-caph img{filter:drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 7px rgba(74,222,128,.8)) !important;cursor:pointer}
 .pb-edit .pbx-dropcol{outline:3px dashed #9b59b6!important;outline-offset:-3px;background:rgba(155,89,182,.08)}
 .pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
 [contenteditable=true]{outline:none!important;cursor:text;min-width:20px}
@@ -762,6 +762,10 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     }, true);
     fdoc.addEventListener("submit", e => e.preventDefault(), true);
     fdoc.addEventListener("mousemove", e => { if (E.busy || (e.buttons & 1)) return; const se = e.target.closest && e.target.closest(".pb-sec"); if (se && se.dataset.pb && se.dataset.pb !== E.hs) { E.hs = se.dataset.pb; positionOverlay(); } });      // شريط القسم يتبع القسم تحت المؤشر
+    { const AC = new WeakMap(); let hot = null;      /* تمرير الفأرة على العناصر الملتقطة: التوهج يتبع ألفا العنصر لا مستطيله (الأعلى ذو الألفا تحت المؤشر) */
+      const alphaAt = (im, x, y) => { try { const r = im.getBoundingClientRect(); if (x < r.left || x > r.right || y < r.top || y > r.bottom || !im.naturalWidth) return false; let c = AC.get(im); if (!c || c.s !== im.src) { const cv = document.createElement("canvas"); cv.width = Math.min(im.naturalWidth, 256); cv.height = Math.max(1, Math.round(cv.width * im.naturalHeight / im.naturalWidth)); const g = cv.getContext("2d", { willReadFrequently: true }); g.drawImage(im, 0, 0, cv.width, cv.height); c = { s: im.src, g, w: cv.width, h: cv.height }; AC.set(im, c); } const px = Math.min(c.w - 1, Math.max(0, Math.floor((x - r.left) / r.width * c.w))), py = Math.min(c.h - 1, Math.max(0, Math.floor((y - r.top) / r.height * c.h))); return c.g.getImageData(px, py, 1, 1).data[3] > 24; } catch (x) { return true; } };
+      fdoc.addEventListener("mousemove", e => { if (E.busy || (e.buttons & 1)) return; let nh = null; try { for (const el of fdoc.elementsFromPoint(e.clientX, e.clientY)) { const w = el.closest && el.closest(".pb-cap"); if (w) { const im = w.querySelector("img"); if (im && alphaAt(im, e.clientX, e.clientY)) { nh = w; break; } } } } catch (x) { } if (nh !== hot) { if (hot) hot.classList.remove("pb-caph"); if (nh) nh.classList.add("pb-caph"); hot = nh; } }, true);
+      fdoc.addEventListener("mouseleave", () => { if (hot) { hot.classList.remove("pb-caph"); hot = null; } }, true); }
     fdoc.addEventListener("mousemove", e => { if (E.md && !E.md.moved && (e.buttons & 1) && Math.abs(e.clientX - E.md.x) + Math.abs(e.clientY - E.md.y) > 4) E.md.moved = true; }, true);
     fdoc.addEventListener("mousedown", e => {
       E.md = { x: e.clientX, y: e.clientY, moved: false, sel: E.sel };

@@ -19,6 +19,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     const st = document.getElementById("pbs-stage"); out.seg = await wait(() => { const sg = document.getElementById("pbs-seg"); return sg && sg.style.display === "none"; }, 8000); out.noBoxes = !!st && [...st.querySelectorAll("canvas")].length === 1;
     out.applied = await wait(() => (sec.free || []).filter(w => w.type === "image").length >= 3, 25000); out.noPreview = !document.getElementById("pbs-ok"); out.calls = calls.join(",");
     out.after = (sec.free || []).filter(w => w.type === "image").length;
+    { const fr = document.getElementById("pbx-frame"), d = fr.contentDocument, im = d.querySelector(".pb-cap img"); if (im) { const r = im.getBoundingClientRect(), fo = fr.getBoundingClientRect(); const sc = fo.width / (d.documentElement.clientWidth || fo.width); out.hp = { x: fo.left + (r.left + r.width / 2) * sc, y: fo.top + (r.top + r.height / 2) * sc, cx: fo.left + (r.left + 2) * sc, cy: fo.top + (r.top + 2) * sc, sc }; } else out.hp = null; }
     /* نزع الخلفية: تُطبَّق النتيجة مباشرة */
     const m = document.createElement("canvas"); m.width = 64; m.height = 64; const mg = m.getContext("2d"); mg.fillStyle = "#000"; mg.fillRect(0, 0, 64, 64); mg.fillStyle = "#fff"; mg.fillRect(6, 6, 52, 52); const murl = m.toDataURL("image/png");
     const src0 = base.set.src;
@@ -34,12 +35,15 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     PBApp.E.sel = base.id; ImgGen.text = async () => "[]"; PBSmart.captureElements(); out.rep = await wait(() => document.querySelector(".pbs-rep"), 12000); out.report = AICapture.report(); const x = document.getElementById("pbs-x"); if (x) x.click();
     return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
+  if (r.hp) { const st = () => p.evaluate(() => { const d = document.getElementById("pbx-frame").contentDocument; return { on: d.querySelectorAll(".pb-caph").length, f: (d.querySelector(".pb-caph img") ? getComputedStyle(d.querySelector(".pb-caph img")).filter : "").slice(0, 40) }; });
+    await p.mouse.move(r.hp.x, r.hp.y); await p.waitForTimeout(250); r.h1 = await st(); await p.mouse.move(r.hp.cx, r.hp.cy); await p.waitForTimeout(250); r.h2 = await st(); }
   console.log(JSON.stringify(r));
   ok(!r.err, "لا أخطاء تنفيذ", r.err); if (r.err) { await b.close(); process.exit(1); }
   ok(r.applied && r.noPreview, "الالتقاط يبدأ تلقائياً وتُطبَّق النتيجة مباشرة بعد المسحة بلا اختيار ولا معاينة", r);
   ok(r.seg, "لا مربعات حول العناصر ولا أزرار عنصر/كل العناصر", r);
   ok(r.rep && /"counts"/.test(r.report) && /"raw"/.test(r.report), "فشل الكشف: زر نسخ التقرير يظهر والتقرير يحمل الأعداد وردّ الخدمة", r.report);
   ok(r.bg && r.bg.changed && r.bg.noBar && /نُفِّذ/.test(r.bg.chip), "نزع الخلفية يُطبَّق مباشرة بعد المسحة الأولى", r.bg);
+  ok(r.hp && r.h1 && r.h1.on === 1 && /drop-shadow/.test(r.h1.f) && r.h2 && r.h2.on === 0, "المرور على العنصر الملتقط يوهّجه بخط أخضر يتبع ألفاه (وخارج ألفاه بلا توهج)", [r.hp, r.h1, r.h2]);
   ok(r.sbx, "مفتاح فوتوروم التجريبي (صورة كاملة) لا يُنتج عناصر مستطيلة: يكمل بالاحتياط", r);
   ok(r.after === r.before + 2, "العنصران صارا صورتين حرتين", r);
   ok(!errs.length, "لا أخطاء صفحة", errs); console.log(fails.length ? "\n✗ " + fails.length + " فشل" : "\n✓ " + n + " فحصاً ناجحاً"); await b.close(); process.exit(fails.length ? 1 : 0);

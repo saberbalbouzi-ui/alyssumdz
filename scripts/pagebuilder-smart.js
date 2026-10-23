@@ -181,7 +181,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
           say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
           (await Promise.all(cuts.map(async (c, i) => A().uploadBlob(await toB(c.canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 })))).forEach(x => paths.push(x));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close();
-          try { A().toast("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + (localFilled ? " — مُلئت الخلفية محلياً (تقريبي لتعذّر الخدمة)" : "") + (fillFail ? " — تعذّرت إعادة رسم الخلفية فبقيت الأصول تحتها" : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
+          try { A().toast("✅ التُقط " + n + " عنصراً (" + [...new Set(cuts.map(c => ({ sam: "SAM", photoroom: "فوتوروم", box: "فصل لوني", api: "قناع الكشف" }[c.method] || c.method || "?")))].join("+") + ") كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + (localFilled ? " — مُلئت الخلفية محلياً (تقريبي لتعذّر الخدمة)" : "") + (fillFail ? " — تعذّرت إعادة رسم الخلفية فبقيت الأصول تحتها" : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
         } catch (e) { console.error(e); tintOff(); busy = false; if (!sh.S.closed) { $("pbs-go").textContent = "↻ إعادة المحاولة"; say("⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e))); $("pbs-go").disabled = false; } }
       }
       const start = async () => {
@@ -223,7 +223,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     (sec.free || []).forEach(q => { if (q !== w && (Number(q.set.zi) || 0) > bz) q.set.zi = (Number(q.set.zi) || 0) + n; });          // نفتح مكاناً فوق الأساس مباشرة
     chosen.slice().sort((p, q) => p.front != null && q.front != null ? p.front - q.front : q.area - p.area).forEach((it, i) => {      // الخلفي أولاً (الأمامي = الأقرب للأسفل في الصورة)
       const idx = chosen.indexOf(it), im = PB.mkFree("image", 0, 0, bz + 1 + i);
-      Object.assign(im.set, { src: paths[idx], fit: "fill", alt: it.label || "", fx: { d: Math.round((fx + it.x0 / W * fwd) * 10) / 10 }, fy: { d: Math.round(fy + it.y0 * ky) }, fwd: { d: Math.round((it.x1 - it.x0) / W * fwd * 10) / 10 }, fh: { d: Math.max(10, Math.round((it.y1 - it.y0) * ky)) } });
+      Object.assign(im.set, { cls: "pb-cap", src: paths[idx], fit: "fill", alt: it.label || "", fx: { d: Math.round((fx + it.x0 / W * fwd) * 10) / 10 }, fy: { d: Math.round(fy + it.y0 * ky) }, fwd: { d: Math.round((it.x1 - it.x0) / W * fwd * 10) / 10 }, fh: { d: Math.max(10, Math.round((it.y1 - it.y0) * ky)) } });
       (sec.free = sec.free || []).push(im);
     });
     s.src = basePath; A().E.sel = w.id; A().renderCanvas(); A().commitAfter(w.id); return n;
