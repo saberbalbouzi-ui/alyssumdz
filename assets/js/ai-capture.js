@@ -88,8 +88,6 @@ const AICapture = (function () {
     for (let i = 0; i < n; i++) if (bgl[i] && !touch[bgl[i]] && bs[bgl[i]] < big * .004) M[i] = 1;
     return M;
   }
-  const PCUT = lbl => "This is a cropped photo. Give the segmentation mask of ONLY this one object: \"" + lbl + "\" (the whole object, fully or mostly inside the frame, e.g. including its cap, handle, label and the parts that stick out). " +
-    "Return ONLY a JSON list with a single entry {\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the object>\",\"label\":\"" + lbl.replace(/"/g, "") + "\"}.";
   /* (2) قصّ عنصر بدقة: ← { canvas (RGBA مقصوص), x0, y0, w, h (بإحداثيات cv), method, cov } */
   async function cutout(cv, item, o) {
     o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), b = item.box, bw = b.x1 - b.x0, bh = b.y1 - b.y0, m = Math.max(10, Math.round(Math.max(bw, bh) * .1));
@@ -100,13 +98,7 @@ const AICapture = (function () {
     if (item.pre) {      // قناع جاهز من طلب الكشف: يُنقل إلى إحداثيات العمل بلا أي طلب إضافي
       const pr = item.pre; M = new Float32Array(ww * wh);
       for (let y = 0; y < wh; y++) { const sy = ry0 + y / s - pr.y0; if (sy < 0 || sy >= pr.h) continue; const iy = Math.min(pr.h - 1, sy | 0); for (let x = 0; x < ww; x++) { const sx = rx0 + x / s - pr.x0; if (sx < 0 || sx >= pr.w) continue; M[y * ww + x] = pr.m[iy * pr.w + Math.min(pr.w - 1, sx | 0)]; } }
-    } else {
-      try {
-        step("⏳ قناع «" + item.label + "»…"); const arr = parseLoose(await ask(PCUT(item.label), work, { maxTokens: 8192, signal: o.signal })), cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask).sort((p, q) => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0) - (p.b.x1 - p.b.x0) * (p.b.y1 - p.b.y0))[0];
-        if (cand) { const px0 = Math.round(cand.b.x0 / 1000 * ww), py0 = Math.round(cand.b.y0 / 1000 * wh), px1 = Math.round(cand.b.x1 / 1000 * ww), py1 = Math.round(cand.b.y1 / 1000 * wh), dm = await decodeMask(cand.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0));
-          if (dm) { M = new Float32Array(ww * wh); for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) M[yy * ww + xx] = dm.m[y * dm.w + x]; } } } }
-      } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("AISeg mask", e); }
-    }
+    }      // لا طلب قناع ثانٍ لكل عنصر: القناع يأتي مع الكشف في المسحة الواحدة
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
     if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));

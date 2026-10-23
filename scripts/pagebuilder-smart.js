@@ -170,17 +170,17 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
       $("pbs-go").onclick = async () => {
         const chosen = sh.S.mode === "all" ? items.slice() : items.filter(it => sel.has(it.id)); if (!chosen.length || busy) return; busy = true; $("pbs-go").disabled = true; tintOn(); const fill = !!($("pbs-fill") && $("pbs-fill").checked);
         try {
-          const cuts = [], fails = []; let next = 0, dn = 0; const say = m => { if (!sh.S.closed) $("pbs-msg").textContent = m; };
+          const cuts = [], fails = []; let fillFail = false, next = 0, dn = 0; const say = m => { if (!sh.S.closed) $("pbs-msg").textContent = m; };
           const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
           await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
           cuts.sort((a, b) => (a.y0 + a.h) - (b.y0 + b.h)); const nm = {}, cnt = {}; cuts.forEach(c => cnt[c.label] = (cnt[c.label] || 0) + 1); cuts.forEach(c => { nm[c.label] = (nm[c.label] || 0) + 1; c.label = cnt[c.label] > 1 ? c.label + " " + nm[c.label] : c.label; });
           const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0); let how = "none";
-          if (fill) { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); how = "ai"; } catch (e) { console.warn("fillBg", e); if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; throw new Error("تعذّرت إعادة رسم الخلفية — أعد المحاولة أو ألغِ خيار «إعادة رسم الخلفية»"); } }
+          if (fill) { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); how = "ai"; } catch (e) { console.warn("fillBg", e); if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; how = "none"; fillFail = true; } }      // فشل ترميم الخلفية لا يُسقط العناصر الملتقطة
           tintOff();      // كانفا: النتيجة تُطبَّق مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
           say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), toB = c => new Promise(r => c.toBlob(r, "image/png")), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
           for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await toB(cuts[i].canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close(); done(null);
-          try { A().toast("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
+          try { A().toast("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + (fillFail ? " — تعذّرت إعادة رسم الخلفية فبقيت الأصول تحتها" : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
         } catch (e) { console.error(e); tintOff(); busy = false; if (!sh.S.closed) { $("pbs-go").textContent = "↻ إعادة المحاولة"; $("pbs-msg").textContent = "⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e)); $("pbs-go").disabled = false; } }
       };
       setTimeout(() => { if (!sh.S.closed && $("pbs-go").onclick) $("pbs-go").onclick(); }, 30);      // يبدأ الالتقاط فوراً بلا اختيار
