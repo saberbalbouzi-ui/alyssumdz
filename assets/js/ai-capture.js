@@ -184,6 +184,19 @@ const AICapture = (function () {
   }
   /* يحوّل نتائج cutout إلى صيغة AIVision.eraseBg (قناع المسح) للترميم المحلي الاحتياطي */
   function eraseCuts(cuts) { return cuts.map(c => { const w = Math.max(1, Math.round(c.w)), h = Math.max(1, Math.round(c.h)), cc = mk(w, h), g = cc.getContext("2d", { willReadFrequently: true }); g.drawImage(c.canvas, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] > 20) m[i] = 1; return { canvas: c.canvas, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h, label: c.label, erase: { m, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h } }; }); }
-  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
+  /* قصّ بنموذج تجزئة حقيقي (SAM2 داخل المتصفح): مربع كل عنصر من الكشف ← قناع العنصر وحده (دون اليد أو ما يجاوره) ← ألفا بدقة البكسل من الصورة الأصلية.
+     يُرجع قائمة قصّات بالشكل نفسه، أو null إن لم يتوفر النموذج/فشل (فيكمل المسار الاحتياطي). */
+  async function samCuts(cv, items, o) {
+    o = o || {}; const V = typeof AIVision !== "undefined" ? AIVision : null; if (!V || !V.supported || !V.supported() || !V.analyze || !V.addItem || !V.cutouts) return null;
+    const step = o.onStep || (() => { });
+    try {
+      step("⏳ تحميل نموذج التجزئة (مرة واحدة)…"); const r = await Promise.race([V.analyze(cv, { noDetect: true, onStep: step }), new Promise((_, rj) => setTimeout(() => rj(new Error("انتهت مهلة تحميل نموذج التجزئة")), 120000))]), S = r.S, its = [], seen = new Set();
+      for (const it of items) { step("⏳ تجزئة «" + it.label + "»…"); const b = it.box; const m = await V.addItem(S, { box: [b.x0, b.y0, b.x1, b.y1], label: it.label }, r.items); if (m && !seen.has(m)) { seen.add(m); m.label = it.label; its.push(m); } }
+      if (!its.length) return null; step("✂️ صقل الحواف بدقة البكسل…");
+      const cs = V.cutouts(S, cv, its, { shadow: false }); if (!cs || !cs.length) return null;
+      return cs.map(c => ({ canvas: c.canvas, x0: c.x0, y0: c.y0, w: c.w, h: c.h, label: c.label, method: "sam", item: c.item }));
+    } catch (e) { console.warn("samCuts", e); return null; }
+  }
+  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, samCuts, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;
