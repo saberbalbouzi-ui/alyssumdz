@@ -24,7 +24,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     /* نزع الخلفية: تُطبَّق النتيجة مباشرة */
     const m = document.createElement("canvas"); m.width = 64; m.height = 64; const mg = m.getContext("2d"); mg.fillStyle = "#000"; mg.fillRect(0, 0, 64, 64); mg.fillStyle = "#fff"; mg.fillRect(6, 6, 52, 52); const murl = m.toDataURL("image/png");
     const src0 = base.set.src;
-    await PBBgRemove.live({ node: base }); out.bg = { changed: base.set.src !== src0, noBar: !document.getElementById("pbx-epf"), chip: (document.getElementById("pbbg-chip") || {}).textContent || "" };
+    const _w = AIVision.weak; AIVision.weak = () => true; await PBBgRemove.live({ node: base }); AIVision.weak = _w;      /* مسار الهاتف (فوتوروم): الحاسوب بلا فوترة فوتوروم منذ 1.89.503 */ out.bg = { changed: base.set.src !== src0, noBar: !document.getElementById("pbx-epf"), chip: (document.getElementById("pbbg-chip") || {}).textContent || "" };
     /* مفتاح فوتوروم تجريبي: يعيد الصورة كاملة معتمة ← يُكتشف ويُكمل الالتقاط بالاحتياط */
     { const full = document.createElement("canvas"); full.width = W; full.height = H; const fg = full.getContext("2d"); fg.fillStyle = "#d9c7a3"; fg.fillRect(0, 0, W, H); const fb64 = full.toDataURL("image/png").split(",")[1];
       window.fetch = async (u, init) => /bg-remove/.test(String(u)) ? new Response(JSON.stringify({ ok: true, type: "image/png", b64: fb64 }), { status: 200 }) : f0(u, init);
