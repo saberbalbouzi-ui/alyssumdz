@@ -205,6 +205,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     });
   }
   async function captureElements() {
+    if (typeof AIVision !== "undefined" && AIVision.weak && AIVision.weak()) return alert("التقاط العناصر متاح على الحاسوب فقط. افتح اللوحة من حاسوب.");
     const t = target(); if (t.err) return alert(t.err);
     const inf = t.inf, w = inf.node, sh = shell("التقاط العناصر", "عنصر", "كل العناصر", HINT_EL1, HINT_EL2), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
