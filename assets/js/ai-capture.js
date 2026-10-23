@@ -43,10 +43,13 @@ const AICapture = (function () {
     try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1024, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, models: ["gemini-2.5-flash"], maxModels: 3, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
+  /* نزع الخلفية: الموضوع + كل ما في مشهده الأمامي (طاولة، كتب، كرة أرضية، ما يحمله)؛ الجدار والنوافذ والستائر والنباتات الخلفية تُترك */
+  const P_SCENE = "Find the MAIN SUBJECT of this image (a person or a product) and EVERYTHING in its foreground scene that belongs with it: the desk or table it sits at or leans on, books, globes, notebooks, lamps and other objects standing on that table, and anything it holds or wears. Output one box per item, each box tightly enclosing the whole item (the table as its own item). Do NOT include the room background behind the subject: walls, windows, curtains, shelves or furniture far behind, background plants, sky, distant floor. " +
+    "Return ONLY a JSON array (at most MAX items) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000.";
   /* (1) كشف العناصر ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv. o.zone = [x0,y0,x1,y1] لتحليل منطقة بدقة أعلى، o.mode = "subject" للموضوع الرئيسي فقط */
   async function detect(cv, o) {
     o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…"); const z = o.zone || [0, 0, cv.width, cv.height], zw = z[2] - z[0], zh = z[3] - z[1];
-    const t = await ask(P_ALL.replace("MAX", String(o.max || 12)), cropOf(cv, z[0], z[1], zw, zh, 1), o), arr = parseLoose(t), items = [];
+    const t = await ask((o.scene ? P_SCENE : P_ALL).replace("MAX", String(o.max || 12)), cropOf(cv, z[0], z[1], zw, zh, 1), o), arr = parseLoose(t), items = [];
     arr.forEach(e => { const b = boxOf(e); if (!b) return; const box = { x0: z[0] + b.x0 / 1000 * zw, y0: z[1] + b.y0 / 1000 * zh, x1: z[0] + b.x1 / 1000 * zw, y1: z[1] + b.y1 / 1000 * zh }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
       if (bw < cv.width * .02 || bh < cv.height * .02) return; if (items.length && items.some(q => iou(q.box, box) > .85)) return; items.push({ label: String(e.label || "عنصر").slice(0, 40), box }); });
     if (items.length > 1) { const full = items.filter(i => (i.box.x1 - i.box.x0) * (i.box.y1 - i.box.y0) > cv.width * cv.height * .94); if (full.length) full.forEach(f => items.splice(items.indexOf(f), 1)); }      // «الخلفية كلها» ليست عنصراً

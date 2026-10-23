@@ -332,8 +332,8 @@ const PBBgRemove = (function () {
     const step = o && o.onStep || (() => { });
     try {
       const prep = AICapture.samPrep(srcC); if (!prep) return null; const W = srcC.width, H = srcC.height;
-      step("⏳ تحديد الموضوع…"); const items = await AICapture.detect(srcC, { max: 6, onStep: step }), ar = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0);
-      let sel = items.filter(it => ar(it) >= W * H * .04); if (!sel.length && items.length) sel = [items.slice().sort((a, b) => ar(b) - ar(a))[0]]; if (!sel.length) return null;
+      step("⏳ تحديد الموضوع…"); const items = await AICapture.detect(srcC, { max: 12, scene: true, onStep: step }), ar = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0);
+      let sel = items.filter(it => ar(it) >= W * H * .004); if (!sel.length && items.length) sel = [items.slice().sort((a, b) => ar(b) - ar(a))[0]]; if (!sel.length) return null;      // الموضوع وكل مشهده الأمامي (طاولة/كتب/كرة أرضية)
       step("⏳ تجزئة الموضوع…"); const cuts = await AICapture.samCuts(srcC, sel, { onStep: step, prep }); if (!cuts || !cuts.length) return null;
       const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); cuts.forEach(k => g.drawImage(k.canvas, k.x0, k.y0, k.w, k.h)); if (o) o.diagBase = "sam"; return c;
     } catch (e) { console.warn("samCut", e); return null; }
@@ -384,7 +384,7 @@ const PBBgRemove = (function () {
   async function autoCut(srcC, o) {
     o = o || {};
     if (!o.methods) {      /* أداة «نزع الخلفية»: Photoroom فقط — طلب واحد ونتيجة واحدة (بلا طرق محلية ولا إعادة بطرق أخرى) */
-      let sc = await samCut(srcC, o); if (sc) { try { sc = keepSubject(sc, { frac: o.keepFrac }).canvas; } catch (_) { } const sv = coverage(sc); if (sv > .02 && sv < .98) return { canvas: sc, method: "sam", cov: sv }; }      // SAM+Gemini أولاً (مجاني محلي) وإلا Photoroom
+      let sc = await samCut(srcC, o); if (sc) { try { sc = keepSubject(sc, { frac: o.keepFrac != null ? o.keepFrac : .03 }).canvas; } catch (_) { } const sv = coverage(sc); if (sv > .02 && sv < .98) return { canvas: sc, method: "sam", cov: sv }; }      // SAM+Gemini أولاً (مجاني محلي) وإلا Photoroom
       let c = await apiCut(srcC, o); try { c = keepSubject(c, { frac: o.keepFrac }).canvas; } catch (_) { } const cov = coverage(c); if (!(cov > .005 && cov < .995)) throw new Error("نتيجة غير معقولة — أعد المحاولة"); return { canvas: c, method: "seg", cov };
     } if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
     const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), sOK = !!o.allowKey && segOK(), kOK = !!o.allowKey && !sOK && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : sOK ? (aiOK() ? ["seg", "ai", "classic"] : ["seg", "classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
