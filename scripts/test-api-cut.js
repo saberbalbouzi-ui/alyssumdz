@@ -73,6 +73,9 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
       /* تقرير صاحب المتجر (v1.89.470): ردّ مقطوع في منتصف قناع base64 مختلَق (لا كائن مكتمل) والمربع صحيح ← يُنقذ المربع ويُفصل الموضوع */
       ImgGen.text = async () => '[\n  {"box_2d": [' + [190 / .6, 140 / .8, 410 / .6, 360 / .8].join(", ") + '], "label": "كرة", "mask": "iVBORw0KGgoAAAANSUhEUgAAAlgAAAJYCAYAAAC+ZArnAAAAB' + "/v0/+3u/84//zHf/1f/2X/sv".repeat(60);
       const tci = await AICapture.detectAll(cv, {}).catch(e => []); out.truncCap = { n: tci.length, boxOnly: tci[0] && !!tci[0].boxOnly };
+      /* بلاغ صاحب المتجر (v1.89.491): الكشف يعيد الشخص وحده فيُلتقط مع المنتج بيده ← طلب مخصّص للمنتج الممسوك */
+      { const seq = []; ImgGen.text = async o => { seq.push(String(o.prompt).slice(0, 12)); return /holding, showing/.test(o.prompt) ? JSON.stringify([{ label: "برطمان", box_2d: [400, 300, 700, 520] }]) : JSON.stringify([{ label: "امرأة", box_2d: [50, 100, 980, 900] }]); };
+        const hi = await AICapture.detectAll(cv, {}); out.held = { n: hi.length, labels: hi.map(i => i.label).join(","), held: !!(hi[1] && hi[1].held), calls: seq.length }; }
       ImgGen.text = orig; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
@@ -93,6 +96,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(!/constant/i.test(r.pref.e3) && r.pref.n >= 1, "ImgGen.text الحقيقي مع models المفضّلة لا يرمي خطأ إسناد", r.pref);
   ok(r.boxCap.n === 1 && r.boxCap.boxOnly && r.boxCap.method === "box" && Math.abs(r.boxCap.w - 220) <= 24, "الالتقاط: عنصر بقناع وهمي لا يُسقط بل يُقصّ من مربعه", r.boxCap);
   ok(r.polyCap === 1 && r.polyNoBox === 2 && r.polyCut.method === "api" && Math.abs(r.polyCut.w - 220) <= 14, "الالتقاط بمضلّع (ومربع مشتق من المضلّع إن غاب)", [r.polyCap, r.polyNoBox, r.polyCut]);
+  ok(r.held.n === 2 && r.held.held && r.held.calls === 2, "شخص بلا عنصر داخله ← طلب مخصّص للمنتج الممسوك فيُلتقط منفصلاً", r.held);
   ok(!errs.length, "لا أخطاء صفحة", errs);
   console.log(n + " نجاح، " + fails.length + " فشل"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();

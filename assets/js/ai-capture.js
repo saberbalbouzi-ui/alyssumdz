@@ -58,6 +58,8 @@ const AICapture = (function () {
     "Treat things a person holds as separate objects from the person, and ALWAYS include a held product even if fingers cover part of it: its mask must follow the exact visible edge of the object, leaving out the fingers, hands and anything in front of it (no overlap with the hand). " +
     "Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects cut off by the image edge. " +
     "Return ONLY a short JSON array (at most MAX entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000, tightly enclosing the WHOLE object including a held product's visible rim. Do not output masks or polygons.";
+  const P_HELD = "Look at the person in this image. Is the person holding, showing or carrying a product or packaged item (a jar, bottle, box, bag, device, cosmetic)? " +
+    "If yes, return ONLY a JSON array with exactly one object {\"label\":\"short Arabic name of the product\",\"box_2d\":[ymin,xmin,ymax,xmax]} (coordinates normalized to 0-1000) with a tight box around the visible product only, excluding the person's body, face and clothes. If there is no such product return [].";
   /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
   async function detectAll(cv, o) {
     o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…");
@@ -77,6 +79,16 @@ const AICapture = (function () {
     let items = [], err = null; try { items = await build(await ask1(o.max || 8)); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; err = e; }
     /* عنصر مربعه دقيق وقناعه غير صالح لا يُسقط: يُفصل داخل المربع (مرجع الخدمة) ثم تُصقل حوافه من بكسلات الأصل */
     items = items.filter(it => it.pre || (it.box && T() && T().boxMask)); items.forEach(it => { if (!it.pre) it.boxOnly = true; });
+    /* منتج ممسوك: كشف الطلب الأول يعيد غالباً الشخص وحده فيُلتقط الشخص مع المنتج. إن وُجد شخص بلا عنصر داخله يُطلب المنتج الممسوك بطلب صغير مخصّص */
+    try {
+      const PERSON = /امرأة|إمرأة|فتاة|بنت|رجل|شخص|طفل|ولد|سيدة|عارض|حجاب|woman|man|girl|boy|person/i, W = cv.width, H = cv.height, per = items.find(it => PERSON.test(it.label));
+      if (per) { const pb = per.box, pa = (pb.x1 - pb.x0) * (pb.y1 - pb.y0), inner = items.some(q => q !== per && (q.box.x0 + q.box.x1) / 2 > pb.x0 && (q.box.x0 + q.box.x1) / 2 < pb.x1 && (q.box.y0 + q.box.y1) / 2 > pb.y0 && (q.box.y0 + q.box.y1) / 2 < pb.y1 && (q.box.x1 - q.box.x0) * (q.box.y1 - q.box.y0) < pa * .7);
+        if (!inner) { if (o.onStep) o.onStep("⏳ البحث عن منتج بيد الشخص…");
+          const arr = parseLoose(await ask(P_HELD, cv, { maxTokens: 512, temp: .2, signal: o.signal })), e = arr.find(x => boxOf(x));
+          if (e) { const b = boxOf(e), box = { x0: b.x0 / 1000 * W, y0: b.y0 / 1000 * H, x1: b.x1 / 1000 * W, y1: b.y1 / 1000 * H }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+            if (bw >= W * .02 && bh >= H * .02 && bw * bh < pa * .8 && !items.some(q => iou(q.box, box) > .6)) items.push({ label: String(e.label || "المنتج").slice(0, 40), box, boxOnly: true, held: true }); } } }
+    } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; console.warn("heldPass", e); }
+    items.forEach((it, i) => it.id = i);
     if (!items.length) throw new Error("لم تُرجِع الخدمة عناصر قابلة للفصل" + (err && err.message ? " (" + String(err.message).slice(0, 70) + ")" : "") + " — أعد المحاولة");
     return items;
   }
@@ -194,7 +206,8 @@ const AICapture = (function () {
       step("⏳ تحميل نموذج التجزئة (مرة واحدة)…"); const r = await Promise.race([o.prep || V.analyze(cv, { noDetect: true, onStep: step }), new Promise((_, rj) => setTimeout(() => rj(new Error("انتهت مهلة تحميل نموذج التجزئة")), 120000))]), S = r.S, its = [], seen = new Set();
       for (const it of items) { step("⏳ تجزئة «" + it.label + "»…"); const b = it.box; const m = await V.addItem(S, { box: [b.x0, b.y0, b.x1, b.y1], label: it.label }, r.items); if (m && !seen.has(m)) { seen.add(m); m.label = it.label; m._src = it; its.push(m); } }
       if (!its.length) return null; step("✂️ صقل الحواف بدقة البكسل…");
-      const cs = V.cutouts(S, cv, its, { shadow: false }); if (!cs || !cs.length) return null;
+      /* كل عنصر على حدة: cutouts مجتمعةً تطرح قناع الأكبر من الأصغر المرتّب بعده، فيُمحى المنتج الممسوك كاملاً لأن قناع الشخص يشمله؛ الفصل بين المتداخلات يتم لاحقاً في separate (الأصغر يُطرح من الأكبر) */
+      const cs = []; for (const m of its) { try { const r1 = V.cutouts(S, cv, [m], { shadow: false }); if (r1 && r1[0] && r1[0].px > 30) cs.push(r1[0]); } catch (e) { console.warn("samCut", m.label, e); } } if (!cs.length) return null;
       return cs.map(c => ({ canvas: c.canvas, x0: c.x0, y0: c.y0, w: c.w, h: c.h, label: c.label, method: "sam", item: c.item }));
     } catch (e) { console.warn("samCuts", e); return null; }
   }
