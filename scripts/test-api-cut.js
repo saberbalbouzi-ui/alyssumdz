@@ -84,7 +84,6 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.ready, "الوحدتان جاهزتان عند وجود المفتاح"); ok(r.det.length === 2 && r.detCalls === 1, "الكشف وجد عنصرين وأقنعتهما بطلب واحد", [r.det, r.detCalls]);
   ok(Math.abs(r.c1.x0 - 140) <= 8 && Math.abs(r.c1.y0 - 190) <= 8 && Math.abs(r.c1.w - 220) <= 12 && r.c1.method === "api", "قصّ الكرة: موضع/حجم صحيحان بقناع الخدمة", r.c1);
   ok(r.c1.inside > 30000 && r.c1.bad / r.c1.inside < .02, "حواف الكرة نظيفة: بكسلات معتمة حمراء فقط رغم إزاحة قناع الخدمة", r.c1);
-  ok(r.pro.method === "photoroom" && r.pro.w > 100 && r.pro.w < 260, "قصّ العنصر بـPhotoroom على مقطعه (ألفا الخدمة)", r.pro);
   ok(r.c2.method === "api" && Math.abs(r.c2.w - 180) <= 12, "قصّ العلبة الزرقاء", r.c2);
   ok(r.sep.n === 1 && r.sep.holeCleared && r.sep.restKept && r.sep.smallKept, "العنصر الأصغر يُفصل من الأكبر المتداخل ولا يمسّ البعيد", r.sep);
   ok(r.localFill.ok && r.localFill.holeGray && r.localFill.outsideSame, "الملء المحلي الاحتياطي يمحو العنصر من الخلفية دون المساس بما خارجه", r.localFill);

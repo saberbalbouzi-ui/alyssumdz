@@ -127,19 +127,6 @@ const AICapture = (function () {
     const s = Math.min(1, Math.sqrt(MAXPX / (rw * rh))), work = cropOf(cv, rx0, ry0, rw, rh, s), ww = work.width, wh = work.height;
     const bx0 = (b.x0 - rx0) * s, by0 = (b.y0 - ry0) * s, bx1 = (b.x1 - rx0) * s, by1 = (b.y1 - ry0) * s;
     let M = null, method = "api";
-    /* القصّ الدقيق = Photoroom (دالة الخادم bg-remove) على مقطع العنصر؛ ألفا الخدمة مع ألوان الأصل. عند تعذّره يُستعمل قناع الكشف كاحتياط */
-    if (!o.noPro && typeof PBBgRemove !== "undefined" && PBBgRemove.proCut) {
-      if (sbxKnown()) { const e0 = new Error("SANDBOX"); e0.code = "SANDBOX"; throw e0; }      // المفتاح التجريبي معروف: لا طلب لكل عنصر
-      try {
-        step("⏳ قصّ «" + item.label + "»…"); const pc = await PBBgRemove.proCut(work, { jpeg: true }), pg = pc.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh), wd = work.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh), nn = ww * wh;
-        let q0 = ww, r0 = wh, q1 = -1, r1 = -1, sol = 0; for (let i = 0; i < nn; i++) { const a = pg.data[i * 4 + 3]; wd.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { sol++; const x = i % ww, y = (i / ww) | 0; if (x < q0) q0 = x; if (x > q1) q1 = x; if (y < r0) r0 = y; if (y > r1) r1 = y; } }
-        const bn0 = Math.max(1, (bx1 - bx0) * (by1 - by0));
-        if (q1 >= 0 && sol / bn0 > .06 && sol / bn0 < 1.4) {
-          const full = mk(ww, wh); full.getContext("2d").putImageData(wd, 0, 0); const cw = q1 - q0 + 1, ch = r1 - r0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, q0, r0, cw, ch, 0, 0, cw, ch);
-          return { canvas: out, x0: rx0 + q0 / s, y0: ry0 + r0 / s, w: cw / s, h: ch / s, label: item.label, method: "photoroom", cov: sol / nn, item };
-        }
-      } catch (e) { if (e && e.code === "SANDBOX") SBX = Date.now(); if (e && (e.code === "NOKEY" || e.code === "SANDBOX")) throw e; console.warn("AICapture photoroom", e); }
-    }
     if (item.pre) {      // قناع جاهز من طلب الكشف: يُنقل إلى إحداثيات العمل بلا أي طلب إضافي
       const pr = item.pre; M = new Float32Array(ww * wh);
       for (let y = 0; y < wh; y++) { const sy = ry0 + y / s - pr.y0; if (sy < 0 || sy >= pr.h) continue; const iy = Math.min(pr.h - 1, sy | 0); for (let x = 0; x < ww; x++) { const sx = rx0 + x / s - pr.x0; if (sx < 0 || sx >= pr.w) continue; M[y * ww + x] = pr.m[iy * pr.w + Math.min(pr.w - 1, sx | 0)]; } }
