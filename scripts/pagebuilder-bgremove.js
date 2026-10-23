@@ -325,6 +325,19 @@ const PBBgRemove = (function () {
     try { const sm = document.createElement("canvas"); sm.width = 64; sm.height = 64; const sg = sm.getContext("2d", { willReadFrequently: true }); sg.drawImage(c, 0, 0, 64, 64); const d = sg.getImageData(0, 0, 64, 64).data; let op = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 250) op++; PRO.opq = op / 4096; if (op / 4096 > .985) { const e = new Error("أعادت الخدمة الصورة كاملة بلا قصّ (غالباً مفتاح فوتوروم تجريبي يضع علامة مائية) — استبدله بمفتاح حقيقي"); e.code = "SANDBOX"; throw e; } } catch (e2) { if (e2 && e2.code === "SANDBOX") throw e2; }
     if (o) o.diagBase = "photoroom"; return c;
   }
+  /* الطريقة الأولى: كشف Gemini للموضوع (مربعات) ← تجزئة SAM2 المحلية لكل مربع ← صقل الحواف من بكسلات الأصل؛ ترجع null عند أي تعذّر فيكمل Photoroom */
+  async function samCut(srcC, o) {
+    if (!(o && o.sam) || (window.ImgCfg && ImgCfg.get("bg", "sam", true) === false)) return null;      // لزر نزع الخلفية الحيّ فقط (الدفعات تبقى على فوتوروم)
+    if (typeof AICapture === "undefined" || !AICapture.detect || !AICapture.samCuts || !AICapture.samPrep || typeof AIVision === "undefined" || !AIVision.supported || !AIVision.supported()) return null;
+    const step = o && o.onStep || (() => { });
+    try {
+      const prep = AICapture.samPrep(srcC); if (!prep) return null; const W = srcC.width, H = srcC.height;
+      step("⏳ تحديد الموضوع…"); const items = await AICapture.detect(srcC, { max: 6, onStep: step }), ar = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0);
+      let sel = items.filter(it => ar(it) >= W * H * .04); if (!sel.length && items.length) sel = [items.slice().sort((a, b) => ar(b) - ar(a))[0]]; if (!sel.length) return null;
+      step("⏳ تجزئة الموضوع…"); const cuts = await AICapture.samCuts(srcC, sel, { onStep: step, prep }); if (!cuts || !cuts.length) return null;
+      const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); cuts.forEach(k => g.drawImage(k.canvas, k.x0, k.y0, k.w, k.h)); if (o) o.diagBase = "sam"; return c;
+    } catch (e) { console.warn("samCut", e); return null; }
+  }
   const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
   /* خلفية استوديو متجانسة من الحواف (أبيض/رمادي/لون واحد)؟ عندها الفصل اللوني أدقّ من نماذج الكشف (التي قد تلتقط جزءاً من المنتج فقط) */
@@ -371,6 +384,7 @@ const PBBgRemove = (function () {
   async function autoCut(srcC, o) {
     o = o || {};
     if (!o.methods) {      /* أداة «نزع الخلفية»: Photoroom فقط — طلب واحد ونتيجة واحدة (بلا طرق محلية ولا إعادة بطرق أخرى) */
+      let sc = await samCut(srcC, o); if (sc) { try { sc = keepSubject(sc, { frac: o.keepFrac }).canvas; } catch (_) { } const sv = coverage(sc); if (sv > .02 && sv < .98) return { canvas: sc, method: "sam", cov: sv }; }      // SAM+Gemini أولاً (مجاني محلي) وإلا Photoroom
       let c = await apiCut(srcC, o); try { c = keepSubject(c, { frac: o.keepFrac }).canvas; } catch (_) { } const cov = coverage(c); if (!(cov > .005 && cov < .995)) throw new Error("نتيجة غير معقولة — أعد المحاولة"); return { canvas: c, method: "seg", cov };
     } if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
     const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), sOK = !!o.allowKey && segOK(), kOK = !!o.allowKey && !sOK && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : sOK ? (aiOK() ? ["seg", "ai", "classic"] : ["seg", "classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
@@ -436,7 +450,7 @@ const PBBgRemove = (function () {
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
-      const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); } LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
+      const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { sam: true, onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); } LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
       LV.busy = false; await lvApply();      // كانفا: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
     } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + PRO.rep); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
   }
