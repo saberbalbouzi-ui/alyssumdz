@@ -136,7 +136,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
   const HINT_EL1 = "انقر على عنصر محاط بخط ملوّن لاختياره.", HINT_EL2 = "ستُلتقط كل العناصر المكتشفة دفعة واحدة وتبقى الخلفية.";
   const GEMK = "alyssum_pbs_gem", gemOn = () => { try { return localStorage.getItem(GEMK) === "1"; } catch (e) { return false; } };      // Alyssum API اختياري ومُطفأ افتراضياً: الأداة تعمل كاملة بلا مفتاح
   function setGem(on) { try { localStorage.setItem(GEMK, on ? "1" : "0"); } catch (e) { } }
-  function warm() { }      // لا تحميل نماذج محلية: الأدوات تعمل بـAlyssum API فقط
+  function warm() { try { if (typeof AIVision !== "undefined" && AIVision.warm) AIVision.warm(); } catch (e) { } }      // يحمّل SAM مسبقاً على الحاسوب فقط (الهاتف: supported() false)
   const LITE = () => { try { return (window.ImgCfg && ImgCfg.get("capture", "lite", false)) || matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4; } catch (e) { return false; } };      // هاتف/جهاز ضعيف: تحليل أخف حتى لا يتعطّل
   function capCanvas(cv, max) { const m = Math.max(cv.width, cv.height); if (m <= max) return cv; const r = max / m, c = document.createElement("canvas"); c.width = Math.round(cv.width * r); c.height = Math.round(cv.height * r); c.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0, c.width, c.height); return c; }
   const segReady = () => { try { return !!window.AICapture && AICapture.ready() && !!ImgGen.edit; } catch (e) { return false; } };

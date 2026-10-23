@@ -203,7 +203,7 @@ const AICapture = (function () {
       for (const it of items) { step("⏳ تجزئة «" + it.label + "»…"); const b = it.box; const m = await V.addItem(S, { box: [b.x0, b.y0, b.x1, b.y1], label: it.label }, r.items); if (m && !seen.has(m)) { seen.add(m); m.label = it.label; m._src = it; its.push(m); } }
       if (!its.length) return null; step("✂️ صقل الحواف بدقة البكسل…");
       /* كل عنصر على حدة: cutouts مجتمعةً تطرح قناع الأكبر من الأصغر المرتّب بعده، فيُمحى المنتج الممسوك كاملاً لأن قناع الشخص يشمله؛ الفصل بين المتداخلات يتم لاحقاً في separate (الأصغر يُطرح من الأكبر) */
-      const cs = []; for (const m of its) { try { const r1 = V.cutouts(S, cv, [m], { shadow: false }); if (r1 && r1[0] && r1[0].px > 30) cs.push(r1[0]); } catch (e) { console.warn("samCut", m.label, e); } } if (!cs.length) return null;
+      const cs = []; for (const m of its) { try { const r1 = V.cutouts(S, cv, [m], { shadow: false, matteMax: 2000000 }); if (r1 && r1[0] && r1[0].px > 30) cs.push(r1[0]); } catch (e) { console.warn("samCut", m.label, e); } } if (!cs.length) return null;
       return cs.map(c => ({ canvas: c.canvas, x0: c.x0, y0: c.y0, w: c.w, h: c.h, label: c.label, method: "sam", item: c.item }));
     } catch (e) { console.warn("samCuts", e); return null; }
   }

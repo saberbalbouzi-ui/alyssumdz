@@ -594,6 +594,6 @@ window.AIVision = (function () {
     const mk = arr => { const c = document.createElement("canvas"); c.width = dw; c.height = dh; const g = c.getContext("2d"), im = g.createImageData(dw, dh); for (let i = 0; i < dw * dh; i++) { const al = arr[i]; if (al) { im.data[i * 4] = rgb[0]; im.data[i * 4 + 1] = rgb[1]; im.data[i * 4 + 2] = rgb[2]; im.data[i * 4 + 3] = al; } } g.putImageData(im, 0, 0); return c; };
     return { out: mk(lineA), fill: mk(fillA) };
   }
-  function warm() { if (!supported()) return; try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
+  function warm() { if (!supported() || warm._d) return; warm._d = 1; try { worker("sam").call("load", { sam: true }).catch(() => { warm._d = 0; }); } catch (e) { warm._d = 0; } }      // SAM فقط (الكشف عبر Gemini): يُحمَّل مسبقاً فلا ينتظر المستخدم عند أول نقرة
   return { weak, cacheInfo, keepModels, _t: { mergeItems, trimEdges, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
 })();
