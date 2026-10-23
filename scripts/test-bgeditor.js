@@ -150,7 +150,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
 
   /* ⑩ تكامل مطوّر الصفحات */
   const r11 = await p.evaluate(() => ({ edit: typeof PBBgRemove.edit, hasBtn: /data-bgr="edit"/.test(document.documentElement.innerHTML) }));
-  ok(r11.edit === "function", "PBBgRemove.edit مكشوفة للمطوّر"); const src = require("fs").readFileSync("scripts/pagebuilder-editor.js", "utf8"); ok(/data-bgr="edit"/.test(src) && /PBBgRemove\.edit\(inf\)/.test(src), "زر «محرّر متقدّم» في لوحة نزع الخلفية ومعالجه");
+  ok(r11.edit === "function", "PBBgRemove.edit مكشوفة للمطوّر"); const src = require("fs").readFileSync("scripts/pagebuilder-editor.js", "utf8"); ok(!/data-bgr="edit">/.test(src) && /PBBgRemove\.edit\(inf\)/.test(src), "لوحة نزع الخلفية بزر واحد (حُذف زر المحرّر المتقدّم) والمعالج باقٍ");
   ok(!errs.length, "لا أخطاء صفحة", errs.slice(0, 3)); await b.close();
   console.log("\n" + n + " passed, " + fails.length + " failed"); process.exit(fails.length ? 1 : 0);
 })().catch(e => { console.error(e); process.exit(1); });
