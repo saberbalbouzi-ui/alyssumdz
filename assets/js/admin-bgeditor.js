@@ -160,7 +160,7 @@ const BgEditor = (() => {
 <div class="bd"><div class="stg" id="bge-stg"><div class="wr" id="bge-wr"><div class="bgl" id="bge-bgl"></div><canvas id="bge-cv"></canvas><canvas id="bge-oc" style="display:none"></canvas><div class="cmp" id="bge-cmp"><i>⇆</i></div></div><div class="cur" id="bge-cur"></div>
 <div class="drop" id="bge-drop"><div style="font-weight:800">اسحب صورة هنا أو اختر ملفاً</div><button class="btn g" id="bge-pick" type="button">📁 اختيار صورة</button><div class="note">PNG أو JPEG أو WebP — حتى 20MB. تُعالج بدقتها الأصلية.</div><input type="file" id="bge-file" accept="image/png,image/jpeg,image/webp" hidden></div></div>
 <div class="side">
-<div class="sec"><h4>① إزالة الخلفية</h4><select id="bge-eng"></select><div class="note" id="bge-engd" style="margin:.35rem 0"></div><div class="row"><button class="btn g" id="bge-go" type="button" disabled>✂️ إزالة الخلفية</button><button class="btn" id="bge-reset" type="button" disabled title="يعيد الصورة الأصلية كما هي ويمسح كل التعديلات">↺ إعادة للأصل</button></div><div class="pg" id="bge-pg" style="margin-top:.5rem"><i></i></div></div>
+<div class="sec"><h4>① إزالة الخلفية</h4><select id="bge-eng" style="display:none"></select><div class="note" id="bge-engd" style="margin:.35rem 0;display:none"></div><div class="row"><button class="btn g" id="bge-go" type="button" disabled>✂️ إزالة الخلفية</button><button class="btn" id="bge-reset" type="button" disabled title="يعيد الصورة الأصلية كما هي ويمسح كل التعديلات">↺ إعادة للأصل</button></div><div class="pg" id="bge-pg" style="margin-top:.5rem"><i></i></div></div>
 <div class="sec"><h4>② تصحيح القناع</h4><div class="row"><button class="btn on" id="bge-t-e" type="button" data-tool="erase" disabled>🧽 محو (E)</button><button class="btn" id="bge-t-r" type="button" data-tool="restore" disabled>🖌 استعادة (R)</button><button class="btn" id="bge-t-h" type="button" data-tool="hand" disabled>✋ تحريك (H)</button></div>
 <label class="r"><span>حجم الفرشاة</span><input type="range" id="bge-sz" min="2" max="400" value="40"><em id="bge-szv">40</em></label>
 <label class="r"><span>نعومة الحافة</span><input type="range" id="bge-sf" min="0" max="100" value="40"><em id="bge-sfv">40</em></label>
@@ -363,7 +363,7 @@ const BgEditor = (() => {
       if (!sel.options.length) { const o = document.createElement("option"); o.value = ""; o.textContent = "لا يوجد محرّك متاح"; sel.appendChild(o); }
       if ([...sel.options].some(o => o.value === keep)) sel.value = keep; else if ([...sel.options].some(o => o.value === (opts.engine || ""))) sel.value = opts.engine; descr();
     };
-    const descr = () => { const e = ENGINES.find(x => x.id === $("bge-eng").value); $("bge-engd").textContent = e ? e.desc : "خدمة نزع الخلفية غير مفعّلة على الخادم — راجع الدعم."; $("bge-go").disabled = !S.W || S.busy || !e; };
+    const descr = () => { const e = ENGINES.find(x => x.id === $("bge-eng").value); $("bge-engd").textContent = e ? "" : "خدمة نزع الخلفية غير مفعّلة على الخادم — راجع الدعم."; $("bge-engd").style.display = e ? "none" : ""; $("bge-go").disabled = !S.W || S.busy || !e; };
     $("bge-eng").onchange = descr; fillEngines(); extProbe().then(() => { if (document.body.contains(ov)) fillEngines(); });
 
     INST = { ov, close, S, loadCanvas, loadFile, runEngine, undo, redo, rebuild, exportBlob, download, apply, setTool, strokeStart, strokeMove, strokeEnd, commit, snap, resetAll };
