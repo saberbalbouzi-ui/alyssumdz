@@ -36,7 +36,7 @@ const AICapture = (function () {
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
     LAST.req = { prompt: String(prompt).slice(0, 60), w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null;
-    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, models: ["gemini-2.5-flash"], maxModels: 3, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف العناصر ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv. o.zone = [x0,y0,x1,y1] لتحليل منطقة بدقة أعلى، o.mode = "subject" للموضوع الرئيسي فقط */
@@ -71,13 +71,15 @@ const AICapture = (function () {
     };
     /* محاولة واحدة دقيقة بالذكاء: كشف العناصر وأقنعتها في طلب واحد، بلا إعادة ولا طلبات إضافية لكل عنصر */
     let items = [], err = null; try { items = await build(await ask1(o.max || 8)); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; err = e; }
-    items = items.filter(it => it.pre);      // عنصر بلا قناع صالح لا يُلتقط
+    /* عنصر مربعه دقيق وقناعه غير صالح لا يُسقط: يُفصل داخل المربع (مرجع الخدمة) ثم تُصقل حوافه من بكسلات الأصل */
+    items = items.filter(it => it.pre || (it.box && T() && T().boxMask)); items.forEach(it => { if (!it.pre) it.boxOnly = true; });
     if (!items.length) throw new Error("لم تُرجِع الخدمة عناصر قابلة للفصل" + (err && err.message ? " (" + String(err.message).slice(0, 70) + ")" : "") + " — أعد المحاولة");
     return items;
   }
   /* قناع الخدمة (PNG base64 داخل مربع العنصر) ← Float32 0..1 بحجم العمل */
   async function decodeMask(str, bw, bh) {
     let s = String(str || "").replace(/^data:image\/[a-z]+;base64,/, ""); if (!s) return null; let bmp; try { const bin = atob(s), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); bmp = await createImageBitmap(new Blob([arr], { type: "image/png" })); } catch (e) { return null; }
+    if (Math.min(bmp.width, bmp.height) < 24 && Math.min(bw, bh) > 60) return null;      // قناع وهمي بحجم أيقونة (4×4، 10×10)
     const c = mk(bw, bh), g = c.getContext("2d", { willReadFrequently: true }); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(bmp, 0, 0, c.width, c.height); const d = g.getImageData(0, 0, c.width, c.height).data, n = c.width * c.height; let amin = 255; for (let i = 0; i < n; i++) if (d[i * 4 + 3] < amin) amin = d[i * 4 + 3];
     const out = new Float32Array(n), useA = amin < 235; let sum = 0; for (let i = 0; i < n; i++) { const v = (useA ? d[i * 4 + 3] : d[i * 4]) / 255; out[i] = v; sum += v; }
     const mean = sum / n; if (mean < .02 || mean > .985) return null;
@@ -113,10 +115,11 @@ const AICapture = (function () {
       const pr = item.pre; M = new Float32Array(ww * wh);
       for (let y = 0; y < wh; y++) { const sy = ry0 + y / s - pr.y0; if (sy < 0 || sy >= pr.h) continue; const iy = Math.min(pr.h - 1, sy | 0); for (let x = 0; x < ww; x++) { const sx = rx0 + x / s - pr.x0; if (sx < 0 || sx >= pr.w) continue; M[y * ww + x] = pr.m[iy * pr.w + Math.min(pr.w - 1, sx | 0)]; } }
     }      // لا طلب قناع ثانٍ لكل عنصر: القناع يأتي مع الكشف في المسحة الواحدة
+    if (!M && !item.pre && t.boxMask) { step("⏳ فصل «" + item.label + "» داخل المربع…"); M = await t.boxMask(work, [bx0, by0, bx1, by1]); method = "box"; }
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
     if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
-    const pl = !!(item.pre && item.pre.poly), band = clamp(Math.round(Math.max(ww, wh) * (pl ? .02 : .011)), 3, pl ? 36 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
+    const pl = !!(item.pre && item.pre.poly) || method === "box", band = clamp(Math.round(Math.max(ww, wh) * (pl ? .02 : .011)), 3, pl ? 36 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
     if (x1 < 0 || solid < n * .004) throw new Error("لم يُعزل «" + item.label + "»");
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0); const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);

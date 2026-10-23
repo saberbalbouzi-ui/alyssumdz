@@ -147,6 +147,13 @@ const PBBgRemove = (function () {
   /* ───────── الألفا النهائي بدقّة الصورة ───────── */
   /* u: قناع التحليل المصغّر (0..1). opt: shift (px)، detail (0.5..3)، feather، decon */
   function matte(rgbObj, u, uw, uh, opt) { return matteCore(rgbObj, resizeF(u, uw, uh, rgbObj.w, rgbObj.h), opt); }
+  /* قناع تقريبي من مربع (يحدّده الذكاء): خارج المربع خلفية قطعاً، ومركزه مقدّمة، وبقية المنطقة تفصلها الألوان (GMM + رسم بياني) — rect بإحداثيات القماش work ← Float32 بحجمه */
+  async function boxMask(work, rect) {
+    const W = work.width, H = work.height, k = Math.min(1, 320 / Math.max(W, H)), lw = Math.max(8, Math.round(W * k)), lh = Math.max(8, Math.round(H * k)), lo = rgbOf(scaledCanvas(work, lw, lh));
+    const r = [Math.max(0, Math.floor(rect[0] * k)), Math.max(0, Math.floor(rect[1] * k)), Math.min(lw - 1, Math.ceil(rect[2] * k)), Math.min(lh - 1, Math.ceil(rect[3] * k))];
+    const u = await segment(lo, new Uint8Array(lw * lh), { rect: r }); if (!u) return null;
+    return resizeF(cleanMask(u, lw, lh, new Uint8Array(lw * lh)), lw, lh, W, H);
+  }
   /* النواة: M = قناع ناعم بدقّة الصورة نفسها (0..1؛ 0.5 = الحدّ). تُستعمل أيضاً في «التقاط العناصر» لحواف الشعر والعناصر */
   function matteCore(rgbObj, M, opt) {
     const { w, h, rgb } = rgbObj, n = w * h, K = Math.max(w, h) / 1000;
@@ -420,5 +427,5 @@ const PBBgRemove = (function () {
     } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + (window.AIBgCut && AIBgCut.report ? AIBgCut.report() : "")); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, live, autoCut, confidence, keepSubject, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, autoCut, confidence, keepSubject, _t: { boxMask, uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();

@@ -36,7 +36,7 @@ const AIBgCut = (function () {
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
     LAST.req = { w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null; const t0 = Date.now();
-    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.ms = Date.now() - t0; LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, models: ["gemini-2.5-flash"], maxModels: 3, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.ms = Date.now() - t0; LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.ms = Date.now() - t0; LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف الموضوع الرئيسي ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv */
@@ -52,6 +52,7 @@ const AIBgCut = (function () {
   /* قناع الخدمة (PNG base64 داخل مربع العنصر) ← Float32 0..1 بحجم العمل */
   async function decodeMask(str, bw, bh) {
     let s = String(str || "").replace(/^data:image\/[a-z]+;base64,/, ""); if (!s) return null; let bmp; try { const bin = atob(s), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); bmp = await createImageBitmap(new Blob([arr], { type: "image/png" })); } catch (e) { return null; }
+    if (Math.min(bmp.width, bmp.height) < 24 && Math.min(bw, bh) > 60) return null;      // قناع وهمي بحجم أيقونة (مثل 4×4 أو 10×10) لا يمثّل العنصر
     const c = mk(bw, bh), g = c.getContext("2d", { willReadFrequently: true }); g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high"; g.drawImage(bmp, 0, 0, c.width, c.height); const d = g.getImageData(0, 0, c.width, c.height).data, n = c.width * c.height; let amin = 255; for (let i = 0; i < n; i++) if (d[i * 4 + 3] < amin) amin = d[i * 4 + 3];
     const out = new Float32Array(n), useA = amin < 235; let sum = 0; for (let i = 0; i < n; i++) { const v = (useA ? d[i * 4 + 3] : d[i * 4]) / 255; out[i] = v; sum += v; }
     const mean = sum / n; if (mean < .02 || mean > .985) return null;
@@ -110,10 +111,11 @@ const AIBgCut = (function () {
       "Everything else is background and must NOT appear in any outline: surfaces, plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
   ];
   async function subjectMask(work, o, at) {
-    at = at || ATTEMPTS[0]; const ww = work.width, wh = work.height, why = t => ({ M: null, why: t });
+    at = at || ATTEMPTS[0]; const ww = work.width, wh = work.height; let boxes = []; const why = t => ({ M: null, why: t, boxes });
     let arr; try { arr = parseLoose(await ask(at.prompt, work, { maxTokens: at.maxTokens, temp: at.temp, signal: o && o.signal })); } catch (e) { if (e && e.name === "AbortError") throw e; return why(String(e && e.message || e).slice(0, 90)); }
     arr = (arr || []).filter(e => e && typeof e === "object"); if (!arr.length) return why("ردّ بلا عناصر");
     const M = new Float32Array(ww * wh), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0); let used = 0, poly = false, nPoly = 0;
+    boxes = arr.map(e => boxOf(e)).filter(b => b && b.x1 - b.x0 > 20 && b.y1 - b.y0 > 20 && (b.x1 - b.x0) * (b.y1 - b.y0) < 1000 * 1000 * .985).slice(0, 4);      // مربعات الخدمة (موثوقة) مرجع احتياطي إن لم يصلح القناع
     const polys = arr.map(e => ({ e, pts: polyPts(e) })).filter(q => q.pts); nPoly = polys.length;
     polys.slice(0, 6).forEach(q => { const R = polyRaster(q.pts, ww, wh, 0, 0, ww / 1000, wh / 1000); let sum = 0; for (let i = 0; i < R.length; i++) if (R[i] > .5) sum++; const r = sum / R.length; if (r < .004 || r > .985) return; (Array.isArray(q.e.holes) ? q.e.holes : []).slice(0, 8).forEach(hp => { const hq = polyPts({ polygon: hp }); if (!hq) return; const Hh = polyRaster(hq, ww, wh, 0, 0, ww / 1000, wh / 1000); let hs = 0; for (let i = 0; i < Hh.length; i++) if (Hh[i] > .5) hs++; if (hs / Hh.length > sum / R.length * .4) return; for (let i = 0; i < R.length; i++) if (Hh[i] > .5) R[i] = 0; });      // ثقوب (فراغ بين الذراع والجسم…): تُطرح من المضلّع، وثقب أكبر من 40% من العنصر مرفوض
       for (let i = 0; i < R.length; i++) if (R[i] > M[i]) M[i] = R[i]; used++; poly = true; });
@@ -126,12 +128,15 @@ const AIBgCut = (function () {
         for (let y = 0; y < dm.h; y++) { const yy = py0 + y; if (yy < 0 || yy >= wh) continue; for (let x = 0; x < dm.w; x++) { const xx = px0 + x; if (xx >= 0 && xx < ww) { const v = dm.m[y * dm.w + x]; if (v > M[yy * ww + xx]) M[yy * ww + xx] = v; } } } used++; }
       if (!used) return why("أقنعة غير صالحة أو غير معقولة");
     }
-    let tot = 0; for (let i = 0; i < M.length; i++) if (M[i] > .5) tot++; const cov = tot / M.length; if (cov < .01 || cov > .985) return why("تغطية القناع " + Math.round(cov * 100) + "%"); return { M, why: "", poly };
+    let tot = 0; for (let i = 0; i < M.length; i++) if (M[i] > .5) tot++; const cov = tot / M.length; if (cov < .01 || cov > .985) return why("تغطية القناع " + Math.round(cov * 100) + "%"); return { M, why: "", poly, boxes };
   }
   async function subject(cv, o) {
     o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), s = Math.min(1, Math.sqrt(MAXPX / (cv.width * cv.height))), work = cropOf(cv, 0, 0, cv.width, cv.height, s), ww = work.width, wh = work.height;
-    let M = null, poly = false; const reasons = []; step("⏳ تحديد الموضوع…");      // محاولة واحدة دقيقة بالذكاء (بلا تحليل مسبق ولا بدائل)
-    { const r = await subjectMask(work, o, ATTEMPTS[0]); if (r.M) { M = r.M; poly = r.poly; } else reasons.push(r.why); }
+    LAST.via = ""; let M = null, poly = false; const reasons = []; step("⏳ تحديد الموضوع…");      // محاولة واحدة دقيقة بالذكاء (بلا تحليل مسبق ولا بدائل)
+    let boxes = []; { const r = await subjectMask(work, o, ATTEMPTS[0]); boxes = r.boxes || []; if (r.M) { M = r.M; poly = r.poly; } else reasons.push(r.why); }
+    /* قناع الخدمة غير صالح (يحدث: PNG وهمي بحجم أيقونة) لكن مربعها دقيق ← المربع مرجع، وتفصل الألوان داخله ثم تُصقل الحواف من بكسلات الأصل */
+    if (!M && boxes.length && t.boxMask) { step("⏳ فصل الموضوع داخل مربع الخدمة…"); const u = { x0: 1e9, y0: 1e9, x1: -1, y1: -1 }; boxes.forEach(b => { u.x0 = Math.min(u.x0, b.x0); u.y0 = Math.min(u.y0, b.y0); u.x1 = Math.max(u.x1, b.x1); u.y1 = Math.max(u.y1, b.y1); });
+      try { const BM = await t.boxMask(work, [u.x0 / 1000 * ww, u.y0 / 1000 * wh, u.x1 / 1000 * ww, u.y1 / 1000 * wh]); if (BM) { let sum = 0; for (let i = 0; i < BM.length; i++) if (BM[i] > .5) sum++; const cov = sum / BM.length; if (cov > .02 && cov < .97) { M = BM; poly = true; LAST.via = "box"; } else reasons.push("فصل المربع " + Math.round(cov * 100) + "%"); } } catch (e) { reasons.push("فصل المربع: " + String(e && e.message || e).slice(0, 50)); } }
     if (!M) { console.warn("bgcut", reasons); throw new Error("لم تُعزل الصورة (" + reasons.map(r => r.replace(/^[a-z]+: /, "")).join(" · ") + ") — أعد المحاولة أو جرّب صورة أخرى"); }
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
     const band = clamp(Math.round(Math.max(ww, wh) * (poly ? .02 : .011)), 3, poly ? 36 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh; let solid = 0;

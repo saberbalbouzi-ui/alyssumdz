@@ -60,9 +60,16 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
       const cit = await AICapture.detectAll(cv, {}); out.polyCap = cit.length;
       reply = JSON.stringify(objs.map(q => ({ label: q.label, polygon: q.r ? circ(q.cx, q.cy, q.r, 72) : [[200 / .6, 500 / .8], [200 / .6, 680 / .8], [420 / .6, 680 / .8], [420 / .6, 500 / .8], [310 / .6, 500 / .8], [250 / .6, 500 / .8], [200 / .6, 590 / .8], [300 / .6, 680 / .8]] })));
       const cit2 = await AICapture.detectAll(cv, {}); out.polyNoBox = cit2.length; const c3 = await AICapture.cutout(cv, cit2[0], {}); out.polyCut = { method: c3.method, w: Math.round(c3.w) };
-      reply = '[{"label":"x","box_2d":[100,100,900,900],"polygon":[[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10]]}]'; let m1 = ""; await AIBgCut.subject(cv, {}).catch(e => { m1 = String(e.message); }); out.polyLoop = m1;
+      reply = '[{"label":"x","polygon":[[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10],[10,10]]}]'; let m1 = ""; await AIBgCut.subject(cv, {}).catch(e => { m1 = String(e.message); }); out.polyLoop = m1;
       reply = '[{"label":"أ","box_2d":[190,140,410,360],"polygon":' + JSON.stringify(circ(250, 300, 110, 72)) + '},{"label":"ب","box_2d":[1,2,3,4],"polygon":[[1,2],[3,'; const tj = await AIBgCut.subject(cv, {}); out.polyTrunc = tj.getContext("2d").getImageData(250, 300, 1, 1).data[3];
       reply = JSON.stringify([{ label: "كرة", box_2d: bx, polygon: circ(250, 300, 110, 72), holes: [circ(250, 300, 30, 24)] }]); const hj = await AIBgCut.subject(cv, {}); const hd = hj.getContext("2d").getImageData(0, 0, W, H).data; out.holes = { center: hd[(300 * W + 250) * 4 + 3], ring: hd[(300 * W + 250 + 70) * 4 + 3] };
+      ImgGen.text = orig; }
+    /* تقرير صاحب المتجر (v1.89.464): مربع دقيق + قناع PNG وهمي بحجم 10×10 ← يُرفض القناع ويُستعمل المربع مرجعاً للفصل (لا فشل) */
+    { const fake = document.createElement("canvas"); fake.width = 10; fake.height = 10; const fx = fake.getContext("2d"); fx.fillStyle = "#fff"; fx.fillRect(0, 0, 10, 10); const tiny = fake.toDataURL("image/png").split(",")[1];
+      ImgGen.text = async () => JSON.stringify([{ label: "كرة", box_2d: [190 / .6, 140 / .8, 410 / .6, 360 / .8], mask: tiny }]);
+      const bj = await AIBgCut.subject(cv, {}); const bd = bj.getContext("2d").getImageData(0, 0, W, H).data; const ba = (x, y) => bd[(y * W + x) * 4 + 3];
+      out.boxSubj = { center: ba(250, 300), corner: ba(20, 20), blue: ba(580, 300), via: JSON.parse(AIBgCut.report()).via };
+      const bci = await AICapture.detectAll(cv, {}); const bcu = await AICapture.cutout(cv, bci[0], {}); out.boxCap = { n: bci.length, boxOnly: !!bci[0].boxOnly, method: bcu.method, w: Math.round(bcu.w), h: Math.round(bcu.h) };
       ImgGen.text = orig; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
@@ -82,6 +89,8 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
   ok(r.polyMax <= 8192, "طلب المضلّع: سقف توكن أصغر (يفشل سريعاً عند التدهور)", r.polyMax);
   ok(r.polySubj.center > 240 && r.polySubj.corner === 0 && r.polySubj.blue === 0 && r.polySubj.edgeOut < 30 && r.polySubj.edgeIn > 200, "نزع الخلفية بمضلّع مزاح: الموضوع كاملاً والحافة ملتصقة بالحدّ الحقيقي", r.polySubj);
+  ok(r.boxSubj.center > 240 && r.boxSubj.corner === 0 && r.boxSubj.blue === 0 && r.boxSubj.via === "box", "قناع وهمي 10×10 مع مربع دقيق: يُفصل الموضوع داخل المربع بدل الفشل", r.boxSubj);
+  ok(r.boxCap.n === 1 && r.boxCap.boxOnly && r.boxCap.method === "box" && Math.abs(r.boxCap.w - 220) <= 24, "الالتقاط: عنصر بقناع وهمي لا يُسقط بل يُقصّ من مربعه", r.boxCap);
   ok(r.polyCap === 1 && r.polyNoBox === 2 && r.polyCut.method === "api" && Math.abs(r.polyCut.w - 220) <= 14, "الالتقاط بمضلّع (ومربع مشتق من المضلّع إن غاب)", [r.polyCap, r.polyNoBox, r.polyCut]);
   ok(/محيط غير معقول|ردّ بلا قناع/.test(r.polyLoop), "مضلّع متكرّر النقاط (تدهور) يُرفض بسبب واضح", r.polyLoop);
   ok(r.polyTrunc > 240, "ردّ مقطوع: يُنقذ العنصر الأول المكتمل", r.polyTrunc);
