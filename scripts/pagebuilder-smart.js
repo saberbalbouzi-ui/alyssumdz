@@ -180,6 +180,9 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
           const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0); let how = "none";
           if (fill) { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); how = "ai"; } catch (e) { console.warn("fillBg", e); if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; how = "none"; fillFail = true; } }      // فشل ترميم الخلفية لا يُسقط العناصر الملتقطة
           tintOff();      // كانفا: النتيجة تُطبَّق مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
+          try { const gl = document.createElement("canvas"); gl.width = vw; gl.height = vh; gl.style.cssText = "position:absolute;left:0;top:0;pointer-events:none"; stage.appendChild(gl); const g = gl.getContext("2d");      // توهّج أزرق حول كل عنصر التُقط (كما في كانفا) قبل التطبيق
+            cuts.forEach(c => { [["#ffffff", 3], ["#3b82f6", 16], ["#60a5fa", 7]].forEach(q => { g.save(); g.shadowColor = q[0]; g.shadowBlur = q[1]; g.drawImage(c.canvas, c.x0 * k, c.y0 * k, c.w * k, c.h * k); g.restore(); }); });
+            await new Promise(r => setTimeout(r, 900)); gl.remove(); } catch (e) { }
           say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), toB = c => new Promise(r => c.toBlob(r, "image/png")), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
           for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await toB(cuts[i].canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close(); done(null);
