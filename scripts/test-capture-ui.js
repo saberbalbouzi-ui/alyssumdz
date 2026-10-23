@@ -7,6 +7,8 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   const r = await p.evaluate(async () => {
     window.alert = () => { }; window.confirm = () => true; const out = {}; const W = 800, H = 600, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d");
     g.fillStyle = "#d9c7a3"; g.fillRect(0, 0, W, H); g.fillStyle = "#cc1f1f"; g.beginPath(); g.arc(250, 300, 110, 0, 7); g.fill(); g.fillStyle = "#1f3fcc"; g.fillRect(500, 200, 180, 220);
+    const oc = document.createElement("canvas"); oc.width = W; oc.height = H; const og = oc.getContext("2d"); og.fillStyle = "#cc1f1f"; og.beginPath(); og.ellipse(W / 2, H / 2, W * .45, H * .45, 0, 0, 7); og.fill(); const pb64 = oc.toDataURL("image/png").split(",")[1];
+    API.sb.url = p => "https://x.test" + p; API.sb.token = async () => "tok"; API.sb.headers = t => ({ Authorization: "Bearer " + t }); if (typeof BgEditor !== "undefined") BgEditor._t.extReset(); const f0 = window.fetch; window.fetch = async (u, init) => /bg-remove/.test(String(u)) ? new Response(JSON.stringify({ ok: true, type: "image/png", b64: pb64 }), { status: 200 }) : f0(u, init);
     const blob = await new Promise(r => cv.toBlob(r, "image/png")); const objs = [{ label: "كرة حمراء", r: 1, box: [190, 140, 410, 360] }, { label: "علبة زرقاء", box: [200, 500, 420, 680] }];
     const mkMask = q => { const m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; if (q.r) { x.beginPath(); x.ellipse(128, 128, 126, 126, 0, 0, 7); x.fill(); } else x.fillRect(2, 2, 252, 252); return m.toDataURL("image/png"); };
     const calls = []; Object.assign(ImgGen, { ready: () => ({ ok: true }), text: async o => { calls.push("text"); return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8], mask: mkMask(q) }))); },
@@ -19,8 +21,9 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     out.after = (sec.free || []).filter(w => w.type === "image").length;
     /* نزع الخلفية: تُطبَّق النتيجة مباشرة */
     const m = document.createElement("canvas"); m.width = 64; m.height = 64; const mg = m.getContext("2d"); mg.fillStyle = "#000"; mg.fillRect(0, 0, 64, 64); mg.fillStyle = "#fff"; mg.fillRect(6, 6, 52, 52); const murl = m.toDataURL("image/png");
-    ImgGen.text = async o => JSON.stringify([{ label: "منتج", box_2d: [200, 200, 800, 800], mask: murl }]); const src0 = base.set.src;
+    const src0 = base.set.src;
     await PBBgRemove.live({ node: base }); out.bg = { changed: base.set.src !== src0, noBar: !document.getElementById("pbx-epf"), chip: (document.getElementById("pbbg-chip") || {}).textContent || "" };
+    window.fetch = f0; ImgGen.text = async () => "[]";
     /* فشل الكشف: رسالة بسبب + زر نسخ تقرير الفشل (آخر طلب وردّه وأعداد العناصر/الأقنعة) */
     PBApp.E.sel = base.id; ImgGen.text = async () => "[]"; PBSmart.captureElements(); out.rep = await wait(() => document.querySelector(".pbs-rep"), 12000); out.report = AICapture.report(); const x = document.getElementById("pbs-x"); if (x) x.click();
     return out;

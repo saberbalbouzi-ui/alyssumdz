@@ -304,11 +304,24 @@ const PBBgRemove = (function () {
     if (o && o.onStep) o.onStep("✂️ نزع لون الخلفية من نتيجة الأداة…");
     return classicCut(r.canvas, Object.assign({}, o, { onStep: null }));
   }
-  /* نزع الخلفية بالـAPI بدقة عالية (وحدة AIBgCut المستقلة): الأداة يحدّد الموضوع وقناعه التقريبي، والحواف تُصقل محلياً من بكسلات صورتك الأصلية (بلا إعادة توليد) */
-  const segOK = () => { try { return !!window.AIBgCut && AIBgCut.ready(); } catch (e) { return false; } };
+  /* نزع الخلفية الرسمي = Photoroom عبر دالة الخادم bg-remove (المفتاح سرّ في الخادم). الخدمة تقصّ الموضوع الرئيسي بحواف دقيقة؛ لا تحليل محلي ولا Alyssum API. */
+  const PRO = { rep: "" };
+  const segOK = () => typeof API !== "undefined" && !!(API.sb && API.sb.url && API.sb.token && API.sb.headers);
+  const b64Of = blob => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] || ""); fr.onerror = () => rej(new Error("تعذّر قراءة الصورة")); fr.readAsDataURL(blob); });
   async function apiCut(srcC, o) {
-    if (!segOK()) throw new Error("NOKEY");
-    const c = await AIBgCut.subject(srcC, { onStep: o && o.onStep }); if (o) o.diagBase = "api " + (c._via || ""); return c;
+    if (!segOK()) { const e = new Error("نزع الخلفية يتطلب تسجيل الدخول إلى اللوحة"); e.code = "NOKEY"; throw e; }
+    let blob = await new Promise(r => srcC.toBlob(r, "image/png")); if (blob.size > 9 * 1048576) blob = await new Promise(r => srcC.toBlob(r, "image/jpeg", .95));
+    if (blob.size > 9.5 * 1048576) throw new Error("الصورة أكبر من حدّ الخدمة (≈9MB) — قلّل حجم الملف");
+    const t = await API.sb.token(); if (!t) { const e = new Error("انتهت الجلسة — سجّل الدخول من جديد"); e.code = "NOKEY"; throw e; }
+    if (o && o.onStep) o.onStep("⏳ جارٍ القصّ…"); const t0 = Date.now();
+    const r = await fetch(API.sb.url("/functions/v1/bg-remove"), { method: "POST", headers: API.sb.headers(t), body: JSON.stringify({ op: "cut", type: blob.type, b64: await b64Of(blob) }), signal: AbortSignal.timeout(120000) });
+    const j = await r.json().catch(() => ({})); PRO.rep = "bg-remove " + r.status + " · " + (j.error || (j.ok ? "ok" : "")) + (j.detail ? " " + j.detail : "") + " · " + Math.round((Date.now() - t0) / 100) / 10 + "s";
+    if (!r.ok || !j.ok) {
+      const nk = j.error === "not_configured" || j.error === "unauthorized"; const e = new Error(j.error === "rate_limited" ? "تجاوزت حدّ الطلبات — حاول بعد دقيقة" : j.error === "not_configured" ? "خدمة نزع الخلفية غير مفعّلة على الخادم" : j.error === "unauthorized" ? "انتهت الجلسة أو لا تملك صلاحية — سجّل الدخول من جديد" : j.error === "upstream_failed" ? "رفضت الخدمة الصورة (" + (j.detail || "") + ") — أعد المحاولة أو راجع رصيد الحساب" : "فشلت خدمة القصّ (" + (j.error || r.status) + ")"); if (nk) e.code = "NOKEY"; throw e;
+    }
+    const bin = atob(j.b64), u = new Uint8Array(bin.length); for (let i = 0; i < u.length; i++) u[i] = bin.charCodeAt(i);
+    const bmp = await createImageBitmap(new Blob([u], { type: j.type || "image/png" })), c = document.createElement("canvas"); c.width = srcC.width; c.height = srcC.height;
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); if (o) o.diagBase = "photoroom"; return c;
   }
   const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
@@ -355,8 +368,7 @@ const PBBgRemove = (function () {
   }
   async function autoCut(srcC, o) {
     o = o || {};
-    if (!o.methods) {      /* أداة «نزع الخلفية»: Alyssum API فقط — طلب واحد ونتيجة واحدة (بلا طرق محلية ولا إعادة بطرق أخرى) */
-      if (!segOK()) { const e = new Error("أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل نزع الخلفية"); e.code = "NOKEY"; throw e; }
+    if (!o.methods) {      /* أداة «نزع الخلفية»: Photoroom فقط — طلب واحد ونتيجة واحدة (بلا طرق محلية ولا إعادة بطرق أخرى) */
       let c = await apiCut(srcC, o); try { c = keepSubject(c, { frac: o.keepFrac }).canvas; } catch (_) { } const cov = coverage(c); if (!(cov > .005 && cov < .995)) throw new Error("نتيجة غير معقولة — أعد المحاولة"); return { canvas: c, method: "seg", cov };
     } if (window.ImgCfg && ImgCfg.get("bg", "depth", true) === false) o.noDepth = true;
     const cfgM = window.ImgCfg && ImgCfg.get("bg", "method", "auto"), uni = uniformBg(srcC), sOK = !!o.allowKey && segOK(), kOK = !!o.allowKey && !sOK && keyOK(), order = o.methods || (cfgM === "classic" ? ["classic"] : uni ? (aiOK() ? ["classic", "ai"] : ["classic"]) : sOK ? (aiOK() ? ["seg", "ai", "classic"] : ["seg", "classic"]) : kOK ? (aiOK() ? ["key", "ai", "classic"] : ["key", "classic"]) : aiOK() ? ["ai", "classic"] : ["classic"]); let err = null, last = null; const tried = [];
@@ -424,7 +436,7 @@ const PBBgRemove = (function () {
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
       const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); } LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
       LV.busy = false; await lvApply();      // كانفا: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
-    } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + (window.AIBgCut && AIBgCut.report ? AIBgCut.report() : "")); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
+    } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + PRO.rep); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
   }
   /* المحرّر المتقدّم (BgEditor): محرّك قابل للتبديل + فرشاة محو/استعادة + صقل حواف + خلفيات + تصدير PNG محقَّق؛ الصورة الأصلية لا تُعدَّل */
   async function edit(inf) {
@@ -435,5 +447,5 @@ const PBBgRemove = (function () {
       q.node.set.src = path; A().E.nextLabel = "نزع الخلفية (محرّر متقدّم)"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); chip("✅ طُبِّقت الصورة بقناعها"); } });
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, live, edit, autoCut, confidence, keepSubject, _t: { boxMask, uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, edit, autoCut, proCut: apiCut, confidence, keepSubject, _t: { boxMask, uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();

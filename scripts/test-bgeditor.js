@@ -45,10 +45,10 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(/غير مدعوم/.test(v.txt), "رفض نوع غير مدعوم", v.txt); ok(/لا يطابق/.test(v.magic), "رفض محتوى لا يطابق النوع (بصمة)", v.magic); ok(/20MB/.test(v.big), "رفض ملف أكبر من 20MB", v.big);
   ok(v.okW === "400x300" && v.drop === "none", "ملف PNG صالح يُحمَّل بأبعاده", v);
 
-  /* ② المحرّك المحلي الحقيقي على منتج بخلفية بيضاء + الأبعاد الأصلية + بقاء الأصل */
+  /* ② خط المعالجة بقناع معلوم على منتج بخلفية بيضاء + الأبعاد الأصلية + بقاء الأصل */
   const r2 = await p.evaluate(async () => {
-    const W = 1200, H = 900, sc = T.scene("white", W, H), h = await T.open(sc.c); const o0 = Array.from(h.S.orig.slice(0, 4000)).join(",");
-    await T.run("local"); const S = h.S; const o1 = Array.from(S.orig.slice(0, 4000)).join(",");
+    const W = 1200, H = 900, sc = T.scene("white", W, H); T.mock("m2", sc.gt); const h = await T.open(sc.c); const o0 = Array.from(h.S.orig.slice(0, 4000)).join(",");
+    await T.run("m2"); const S = h.S; const o1 = Array.from(S.orig.slice(0, 4000)).join(",");
     return { dim: S.W + "x" + S.H, iou: T.iou(S.fin, sc.gt), center: S.fin[(H / 2) * W + W / 2], corner: S.fin[5 * W + 5], origSame: o0 === o1, st: document.getElementById("bge-st").textContent, hist: S.hist.length, outA: S.out.data[(5 * W + 5) * 4 + 3] };
   });
   ok(r2.dim === "1200x900", "الأبعاد الأصلية محفوظة بعد الإزالة", r2.dim); ok(r2.iou > .96, "المحرّك المحلي: تطابق القناع مع الحقيقة (IoU)", r2.iou); ok(r2.center === 255 && r2.corner === 0, "المركز معتم والزاوية شفافة", r2); ok(r2.origSame, "الصورة الأصلية لم تُعدَّل"); ok(r2.hist === 1 && r2.outA === 0, "تاريخ + ألفا اللوحة", r2);
@@ -65,15 +65,17 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     if (["hair", "glass", "shadow"].includes(kind)) ok(r.semi > 200, kind + ": توجد بكسلات نصف شفافة محفوظة", r.semi);
   }
 
-  /* ④ Alyssum API بمحاكاة الخدمة (مربعات فقط) عبر ImgGen.text الحقيقي */
+  /* ④ Photoroom (المحرّك الرسمي) بمحاكاة دالة bg-remove: يعيد المنتج الأحمر وحده على خلفية شفافة */
   const r4 = await p.evaluate(async () => {
     const W = 800, H = 600, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const g = cv.getContext("2d"), gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, "#d9c7a3"); gr.addColorStop(1, "#8aa6c1"); g.fillStyle = gr; g.fillRect(0, 0, W, H);
     g.fillStyle = "#cc1f1f"; g.beginPath(); g.arc(400, 300, 150, 0, 7); g.fill();
-    const realText = ImgGen.text; ImgGen.ready = () => ({ ok: true }); ImgGen.text = async () => JSON.stringify([{ label: "كرة", box_2d: [(300 - 150) / .6, (400 - 150) / .8, (300 + 150) / .6, (400 + 150) / .8] }]);
-    const h = await T.open(cv); const sel = document.getElementById("bge-eng"); const opt = [...sel.options].map(o => o.value); sel.value = "api"; await h.runEngine(); const S = h.S; ImgGen.text = realText;
-    return { opt, center: S.fin[300 * W + 400], corner: S.fin[10 * W + 10], st: document.getElementById("bge-st").textContent };
+    const oc = document.createElement("canvas"); oc.width = W; oc.height = H; const og = oc.getContext("2d"); og.fillStyle = "#cc1f1f"; og.beginPath(); og.arc(400, 300, 150, 0, 7); og.fill(); const b64 = oc.toDataURL("image/png").split(",")[1];
+    API.sb.url = p => "https://x.test" + p; API.sb.token = async () => "tok"; API.sb.headers = t => ({ Authorization: "Bearer " + t }); if (typeof BgEditor !== "undefined") BgEditor._t.extReset();
+    const f0 = window.fetch; window.fetch = async (u, init) => { if (/bg-remove/.test(String(u))) { const b = JSON.parse(init.body); return new Response(JSON.stringify(b.op === "status" ? { ok: true, provider: "photoroom" } : { ok: true, type: "image/png", b64 }), { status: 200 }); } return f0(u, init); };
+    const h = await T.open(cv); await BgEditor._t.extProbe(); await new Promise(r => setTimeout(r, 200)); const sel = document.getElementById("bge-eng"); const opt = [...sel.options].map(o => o.value).filter(v => !/^m/.test(v)); const def = sel.value; sel.value = "ext"; await h.runEngine(); const S = h.S; window.fetch = f0;
+    return { opt, def, center: S.fin[300 * W + 400], corner: S.fin[10 * W + 10], st: document.getElementById("bge-st").textContent };
   });
-  ok(r4.opt.includes("api") && r4.opt.includes("local") && !r4.opt.includes("ext"), "قائمة المحرّكات: api وlocal فقط (ext مخفي بلا دالة خادم)", r4.opt); ok(r4.center > 240 && r4.corner < 15, "محرّك Alyssum API (محاكاة): المنتج معتم والخلفية شفافة", r4);
+  ok(r4.opt.includes("ext") && !r4.opt.includes("local") && !r4.opt.includes("api"), "قائمة المحرّكات: Photoroom وحده (الرسمي والافتراضي)، بلا محلي ولا Alyssum API", r4.opt); ok(r4.center > 240 && r4.corner < 15, "محرّك Photoroom (محاكاة): المنتج معتم والخلفية شفافة", r4);
 
   /* ⑤ الفرشاة بفأرة حقيقية + تراجع/إعادة + محو/استعادة */
   const sc5 = await p.evaluate(async () => { const W = 900, H = 700, sc = T.scene("white", W, H); T.mock("m5", sc.gt); const h = await T.open(sc.c); await T.run("m5"); const r = document.getElementById("bge-cv").getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, W, H }; });

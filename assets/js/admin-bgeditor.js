@@ -1,7 +1,7 @@
 /* محرّر إزالة الخلفية الاحترافي (BgEditor) — داخل محرّر الصور الحالي، بلا واجهة تجريبية منفصلة.
    المبدأ: الصورة الأصلية لا تُعدَّل أبداً؛ كل ما يلي طبقات غير مدمِّرة فوقها:
      قناع المحرّك (base) ← صقل الحواف (إزاحة/تنعيم/حدّة/هالة) ← ضربات الفرشاة (محو/استعادة) ← القناع النهائي (fin) بدقة الصورة الأصلية.
-   المحرّكات قابلة للتبديل (registerEngine): Alyssum API (تحديد الموضوع ثم صقل الحواف من بكسلات الأصل) · محلي (خلفية متجانسة) · خدمة قصّ متخصصة عبر دالة الخادم bg-remove إن ضُبطت.
+   المحرّكات قابلة للتبديل (registerEngine): Photoroom عبر دالة الخادم bg-remove (الرسمي والوحيد).
    التصدير PNG بقناع ألفا حقيقي مع تحقق بفكّ الملف الناتج؛ لا تُرسم الشفافية بالأبيض أبداً (رقعة الشطرنج CSS خلف اللوحة فقط). */
 const BgEditor = (() => {
   "use strict";
@@ -89,16 +89,6 @@ const BgEditor = (() => {
   const ENGINES = [];
   function registerEngine(e) { const i = ENGINES.findIndex(x => x.id === e.id); if (i >= 0) ENGINES[i] = e; else ENGINES.push(e); }
   const canvasAlpha = (c, W, H) => { let src = c; if (c.width !== W || c.height !== H) { src = document.createElement("canvas"); src.width = W; src.height = H; src.getContext("2d").drawImage(c, 0, 0, W, H); } const d = src.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, H).data, a = new Uint8Array(W * H); for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3]; return a; };
-  registerEngine({
-    id: "api", name: "Alyssum API — تحديد ذكي", desc: "يحدّد الموضوع ثم تُصقل الحواف من بكسلات صورتك الأصلية (لا إعادة توليد). الشعر والفرو والزجاج الشفاف أضعف — صحّحها بالفرشاة أو بالخدمة المتخصصة إن وُجدت.",
-    available: () => typeof ImgGen !== "undefined" && ImgGen.ready && !!ImgGen.ready().ok && typeof PBBgRemove !== "undefined",
-    run: async (c, o) => { const r = await PBBgRemove.autoCut(c, { onStep: o && o.onStep }); return r.canvas; }
-  });
-  registerEngine({
-    id: "local", name: "محلي — خلفية متجانسة", desc: "بلا رصيد ولا شبكة؛ يعمل فقط حين تكون الخلفية لوناً واحداً متجانساً (استوديو أبيض/ملوّن). لا يصلح للخلفيات المعقدة.",
-    available: () => typeof PBBgRemove !== "undefined",
-    run: async (c, o) => { const r = await PBBgRemove.autoCut(c, { methods: ["classic"], onStep: o && o.onStep }); return r.canvas; }
-  });
   const EXT = { state: null, provider: "" };
   async function extProbe() {
     if (EXT.state !== null) return EXT.state;
@@ -112,7 +102,7 @@ const BgEditor = (() => {
   const toB64 = blob => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] || ""); fr.onerror = () => rej(new Error("تعذّر قراءة الصورة")); fr.readAsDataURL(blob); });
   const b64Blob = (b, type) => { const bin = atob(b), u = new Uint8Array(bin.length); for (let i = 0; i < u.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type }); };
   registerEngine({
-    id: "ext", name: "خدمة قصّ متخصصة (Matting)", desc: "تُرسل الصورة عبر خادمك إلى مزوّد قصّ متخصص (الشعر والفرو والشفافية). لا تظهر إلا إن ضُبطت دالة الخادم bg-remove ومفتاحها.",
+    id: "ext", name: "Photoroom — قصّ احترافي", desc: "المحرّك الرسمي لنزع الخلفية: يُرسل الصورة عبر خادمك إلى Photoroom ويقصّ الموضوع الرئيسي بحواف دقيقة (الشعر والشفافية). ما يتبقى من أشياء بجانبه صحّحه بفرشاة المحو أو الاستعادة.",
     available: () => EXT.state === true,
     run: async (c, o) => {
       let blob = await new Promise(r => c.toBlob(r, "image/png")); if (blob.size > 9 * 1048576) blob = await new Promise(r => c.toBlob(r, "image/jpeg", .95)); if (blob.size > 9.5 * 1048576) throw new Error("الصورة أكبر من حدّ الخدمة (≈9MB) — قلّل حجم الملف");
@@ -188,7 +178,7 @@ const BgEditor = (() => {
     document.body.appendChild(ov);
     const $ = i => ov.querySelector("#" + i), stg = $("bge-stg"), wr = $("bge-wr"), cv = $("bge-cv"), oc = $("bge-oc"), cur = $("bge-cur"), cmp = $("bge-cmp");
     const S = { W: 0, H: 0, name: opts.name || "image", orig: null, origC: null, base0: null, base: null, bid: 0, params: DEF(), strokes: [], fbKey: "", fbase: null, rgba: null, out: null, fin: null, scr: null,
-      hist: [], hi: -1, tool: "erase", z: 1, fit: 1, tx: 0, ty: 0, busy: false, token: 0, stk: null, pan: null, cmpOn: false, cmpP: 50, bg: { mode: "none", color: "#ffffff", img: null, url: "" }, dirty: false, pBefore: null, eng: "api", space: false };
+      hist: [], hi: -1, tool: "erase", z: 1, fit: 1, tx: 0, ty: 0, busy: false, token: 0, stk: null, pan: null, cmpOn: false, cmpP: 50, bg: { mode: "none", color: "#ffffff", img: null, url: "" }, dirty: false, pBefore: null, eng: "ext", space: false };
     const say = t => { $("bge-st").textContent = t || ""; }, busy = on => { $("bge-pg").style.display = on ? "block" : "none"; };
 
     /* —— التاريخ: لقطات خفيفة (المصفوفات تُحفظ بالمرجع ولا تُعدَّل) —— */
@@ -369,16 +359,16 @@ const BgEditor = (() => {
 
     /* —— قائمة المحرّكات (المتاحة فقط؛ لا أزرار ميتة) —— */
     const fillEngines = () => {
-      const sel = $("bge-eng"), keep = sel.value; sel.innerHTML = ""; ENGINES.filter(e => { try { return e.available(); } catch (_) { return false; } }).forEach(e => { const o = document.createElement("option"); o.value = e.id; o.textContent = e.name + (e.id === "ext" && EXT.provider ? " (" + EXT.provider + ")" : ""); sel.appendChild(o); });
+      const sel = $("bge-eng"), keep = sel.value; sel.innerHTML = ""; ENGINES.filter(e => { try { return e.available(); } catch (_) { return false; } }).forEach(e => { const o = document.createElement("option"); o.value = e.id; o.textContent = e.name; sel.appendChild(o); });
       if (!sel.options.length) { const o = document.createElement("option"); o.value = ""; o.textContent = "لا يوجد محرّك متاح"; sel.appendChild(o); }
       if ([...sel.options].some(o => o.value === keep)) sel.value = keep; else if ([...sel.options].some(o => o.value === (opts.engine || ""))) sel.value = opts.engine; descr();
     };
-    const descr = () => { const e = ENGINES.find(x => x.id === $("bge-eng").value); let d = e ? e.desc : "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل الإزالة الذكية."; if (e && e.id === "api") { const k = (typeof localStorage !== "undefined" && localStorage.getItem("alyssum_gp_gkey")) || ""; if (k && k !== "via-proxy") d += " ⚠ المفتاح محفوظ في هذا المتصفح؛ للأمان اربط رمز الموقع ليمرّ عبر الخادم."; } $("bge-engd").textContent = d; $("bge-go").disabled = !S.W || S.busy || !e; };
+    const descr = () => { const e = ENGINES.find(x => x.id === $("bge-eng").value); $("bge-engd").textContent = e ? e.desc : "خدمة نزع الخلفية غير مفعّلة على الخادم — راجع الدعم."; $("bge-go").disabled = !S.W || S.busy || !e; };
     $("bge-eng").onchange = descr; fillEngines(); extProbe().then(() => { if (document.body.contains(ov)) fillEngines(); });
 
     INST = { ov, close, S, loadCanvas, loadFile, runEngine, undo, redo, rebuild, exportBlob, download, apply, setTool, strokeStart, strokeMove, strokeEnd, commit, snap, resetAll };
     if (opts.canvas) loadCanvas(opts.canvas); else if (opts.blob) loadFile(opts.blob); else if (opts.src) { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d").drawImage(im, 0, 0); loadCanvas(c); }; im.onerror = () => say("⚠️ تعذّر تحميل الصورة"); im.src = opts.src; }
     return INST;
   }
-  return { open, registerEngine, engines: () => ENGINES.slice(), inst: () => INST, _t: { refine, decontam, blurA, morph, stampDisc, stampSeg, extProbe } };
+  return { open, registerEngine, engines: () => ENGINES.slice(), inst: () => INST, _t: { refine, decontam, blurA, morph, stampDisc, stampSeg, extProbe, extReset: () => { EXT.state = null; } } };
 })();
