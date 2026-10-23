@@ -335,7 +335,9 @@ const PBBgRemove = (function () {
       step("⏳ تحديد الموضوع…"); const items = await AICapture.detect(srcC, { max: 12, scene: true, onStep: step }), ar = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0);
       let sel = items.filter(it => ar(it) >= W * H * .004); if (!sel.length && items.length) sel = [items.slice().sort((a, b) => ar(b) - ar(a))[0]]; if (!sel.length) return null;      // الموضوع وكل مشهده الأمامي (طاولة/كتب/كرة أرضية)
       step("⏳ تجزئة الموضوع…"); const cuts = await AICapture.samCuts(srcC, sel, { onStep: step, prep }); if (!cuts || !cuts.length) return null;
-      const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); cuts.forEach(k => g.drawImage(k.canvas, k.x0, k.y0, k.w, k.h)); if (o) o.diagBase = "sam"; return c;
+      const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"), TBL = /طاول|مكتب|منضد|desk|table/i;
+      sel.filter(it => TBL.test(it.label || "")).forEach(it => { const b = it.box, x0 = Math.max(0, Math.floor(b.x0)), y0 = Math.max(0, Math.floor(b.y0)), x1 = Math.min(W, Math.ceil(b.x1)), y1 = Math.min(H, Math.ceil(b.y1)); if (x1 - x0 > 4 && y1 - y0 > 4) g.drawImage(srcC, x0, y0, x1 - x0, y1 - y0, x0, y0, x1 - x0, y1 - y0); });      // الطاولة تبقى كاملة بمستطيل مربعها (قناعها ممزّق الحواف لتشابه لون سطحها مع الخلفية)
+      cuts.filter(k => !TBL.test(k.label || "")).forEach(k => g.drawImage(k.canvas, k.x0, k.y0, k.w, k.h)); if (o) o.diagBase = "sam"; return c;
     } catch (e) { console.warn("samCut", e); return null; }
   }
   const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
