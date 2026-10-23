@@ -488,7 +488,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (!o || !String(o.prompt || "").trim()) throw new Error("التعليمات مطلوبة");
     /* النص زهيد: لا يُحجب بسقف الصور المحلي (المزوّد يفرض الحدّ الفعلي ويُعلَّم النفاد عند رفضه) */
     const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, Math.max(512, Math.min(2048, Number(o.edge) || 1024)))) } });
-    let last = null; const tried = new Set(), errs = [], queue = await textModels(key), maxM = Number(o.maxModels) || 14;
+    let last = null, queue = await textModels(key); const tried = new Set(), errs = [], maxM = Number(o.maxModels) || 14;
     if (Array.isArray(o.models) && o.models.length) queue = o.models.concat(queue.filter(m => !o.models.includes(m)));      // نماذج مفضّلة أولاً (مثل التجزئة) ثم الاحتياط
     for (let qi = 0; qi < queue.length && tried.size < maxM; qi++) {
       const m = queue[qi]; if (tried.has(m)) continue; tried.add(m);

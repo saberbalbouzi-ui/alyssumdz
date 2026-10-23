@@ -50,6 +50,8 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
       const blob = await new Promise(r => cv.toBlob(r, "image/png")); let e1 = ""; await ImgGen.text({ prompt: "x", blobs: [blob], noThink: true, maxModels: 2, mime: true }).catch(e => { e1 = String(e.message); });
       out.think = { n: bodies.length, budget0: bodies.every(b => b.generationConfig.thinkingConfig && b.generationConfig.thinkingConfig.thinkingBudget === 0), e1 };
       mode = "hang"; bodies.length = 0; let e2 = ""; const t0 = Date.now(); await ImgGen.text({ prompt: "x", blobs: [blob], noThink: true, maxModels: 1, timeoutMs: 400 }).catch(e => { e2 = String(e.message) + "|" + e.name; }); out.timeout = { e2, ms: Date.now() - t0 };
+      /* خيار models: يُقدَّم على القائمة بلا خطأ (كان يرمي «Assignment to constant variable» حين queue const) */
+      mode = "empty"; bodies.length = 0; let e3 = ""; await ImgGen.text({ prompt: "x", blobs: [blob], models: ["gemini-2.5-flash"], maxModels: 3, mime: true }).catch(e => { e3 = String(e.message); }); out.pref = { e3, first: bodies[0] ? bodies[0].generationConfig && true : false, n: bodies.length };
       window.fetch = f0; ImgGen.text = orig; }
     /* مضلّع بدل قناع PNG (v1.89.462): الدائرة كمضلّع بـ72 نقطة مزاح 3px، ثم ردّ مقطوع/متدهور */
     { const circ = (cx, cy, r, n) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return [Math.round((cy + 3 + Math.sin(a) * r) / .6), Math.round((cx + 3 + Math.cos(a) * r) / .8)]; });
@@ -89,6 +91,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
   ok(r.polyMax <= 8192, "طلب المضلّع: سقف توكن أصغر (يفشل سريعاً عند التدهور)", r.polyMax);
   ok(r.polySubj.center > 240 && r.polySubj.corner === 0 && r.polySubj.blue === 0 && r.polySubj.edgeOut < 30 && r.polySubj.edgeIn > 200, "نزع الخلفية بمضلّع مزاح: الموضوع كاملاً والحافة ملتصقة بالحدّ الحقيقي", r.polySubj);
+  ok(!/constant/i.test(r.pref.e3) && r.pref.n >= 1, "ImgGen.text الحقيقي مع models المفضّلة لا يرمي خطأ إسناد", r.pref);
   ok(r.boxSubj.center > 240 && r.boxSubj.corner === 0 && r.boxSubj.blue === 0 && r.boxSubj.via === "box", "قناع وهمي 10×10 مع مربع دقيق: يُفصل الموضوع داخل المربع بدل الفشل", r.boxSubj);
   ok(r.boxCap.n === 1 && r.boxCap.boxOnly && r.boxCap.method === "box" && Math.abs(r.boxCap.w - 220) <= 24, "الالتقاط: عنصر بقناع وهمي لا يُسقط بل يُقصّ من مربعه", r.boxCap);
   ok(r.polyCap === 1 && r.polyNoBox === 2 && r.polyCut.method === "api" && Math.abs(r.polyCut.w - 220) <= 14, "الالتقاط بمضلّع (ومربع مشتق من المضلّع إن غاب)", [r.polyCap, r.polyNoBox, r.polyCut]);
