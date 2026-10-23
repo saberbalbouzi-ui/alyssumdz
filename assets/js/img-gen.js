@@ -512,7 +512,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (!S.res) return null; const blob = await blobOf(S.res, fmtNow());
     try {
       let path;
-      if (typeof PBApp !== "undefined" && PBApp.uploadBlob && PBApp.E && PBApp.E.page && $("pb-app") && $("pb-app").classList.contains("on")) path = await PBApp.uploadBlob(blob, "ig-" + Date.now().toString(36), { max: 4096, q: .92 });
+      if (typeof PBApp !== "undefined" && PBApp.uploadBlob && PBApp.E && PBApp.E.page && $("pb-app") && $("pb-app").classList.contains("on")) path = await PBApp.uploadBlob(blob, "ig-" + Date.now().toString(36), { max: 4096, q: .92 }), (!quiet && PBApp.mediaAdd && PBApp.mediaAdd([path]));
       else { const f = new File([blob], "ig." + (fmtNow() === "png" ? "png" : "webp"), { type: blob.type }); path = await Admin.uploadImageFile(f, "assets/img/pages", "gen-", { max: 4096, q: .92, noVariants: true, uniq: true }); try { PBApp && PBApp.mediaAdd && PBApp.mediaAdd([path]); } catch (e) { } }
       if (!quiet) { toast("✅ حُفظت في مكتبة الصور: " + path); try { if (typeof AdminSocial !== "undefined" && AdminSocial.onLibraryImage) AdminSocial.onLibraryImage(path); } catch (e) { } } return path;
     } catch (e) { toast("❌ تعذّر الحفظ: " + e.message); return null; }
