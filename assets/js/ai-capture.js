@@ -55,11 +55,10 @@ const AICapture = (function () {
         items.push({ label: String(e.label || "عنصر").slice(0, 40), box, pre: dm ? { m: dm.m, w: dm.w, h: dm.h, x0: px0, y0: py0 } : null }); }      // مربع بلا قناع صالح يبقى عنصراً: قناعه يُطلب لاحقاً عند القصّ
       items.forEach((it, i) => it.id = i); return items;
     };
-    /* ثلاث صيغ: (١) أقنعة حتى 10 (٢) أقنعة حتى 4 فيقصر الردّ ولا يُقطع (٣) مربعات فقط ثم قناع لكل عنصر عند القصّ */
-    let items = [], lastErr = null;
-    for (const mx of [o.max || 10, 4]) { try { items = await build(await ask1(mx)); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; lastErr = e; items = []; } if (items.length) break; if (o.onStep) o.onStep("⏳ إعادة المحاولة بصيغة أخرى…"); }
-    if (!items.length) { try { items = await detect(cv, Object.assign({}, o, { max: 8 })); items.forEach(it => it.pre = null); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; lastErr = e; } }
-    if (!items.length) throw new Error("لم تُرجِع الخدمة عناصر قابلة للفصل" + (lastErr && lastErr.message && !/لم تجد الأداة/.test(lastErr.message) ? " (" + String(lastErr.message).slice(0, 70) + ")" : "") + " — أعد المحاولة");
+    /* محاولة واحدة دقيقة بالذكاء: كشف العناصر وأقنعتها في طلب واحد، بلا إعادة ولا طلبات إضافية لكل عنصر */
+    let items = [], err = null; try { items = await build(await ask1(o.max || 8)); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; err = e; }
+    items = items.filter(it => it.pre);      // عنصر بلا قناع صالح لا يُلتقط
+    if (!items.length) throw new Error("لم تُرجِع الخدمة عناصر قابلة للفصل" + (err && err.message ? " (" + String(err.message).slice(0, 70) + ")" : "") + " — أعد المحاولة");
     return items;
   }
   /* قناع الخدمة (PNG base64 داخل مربع العنصر) ← Float32 0..1 بحجم العمل */

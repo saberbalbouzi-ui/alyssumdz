@@ -16,7 +16,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
         calls.push("text"); const P = o.prompt;
         const fullBox = q => [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8], mkMask = q => { const m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)"; if (q.r) { x.beginPath(); x.ellipse(128 + 3, 128 + 3, 125, 125, 0, 0, 7); x.fill(); } else x.fillRect(4 + 3, 4 + 3, 248, 248); return m.toDataURL("image/png"); };
         if (/Segment every distinct/.test(P)) return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: fullBox(q), mask: mkMask(q) })));
-        if (/one-click background removal|Remove the background of this photo: segment/.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: fullBox(objs[0]), mask: mkMask(objs[0]) }]) + "\n```";
+        if (/one-click background removal|Remove the background of this photo: segment/i.test(P)) return "```json\n" + JSON.stringify([{ label: "كرة حمراء", box_2d: fullBox(objs[0]), mask: mkMask(objs[0]) }]) + "\n```";
         const q = objs.find(z => P.includes(z.label)) || objs[0];    // طلب قناع على محيط العنصر: نحتاج إحداثيات الصورة المقصوصة التي لا نراها هنا ← نُعيد قناعاً دائرياً/مربعاً مزاحاً بحسب مربع كامل 0..1000 داخل القطع
         const cw = 1000, ch = 1000, m = document.createElement("canvas"); m.width = 256; m.height = 256; const x = m.getContext("2d"); x.fillStyle = "#000"; x.fillRect(0, 0, 256, 256); x.fillStyle = "#fff"; x.filter = "blur(2px)";
         // المربع المُعاد = ما يحيط العنصر ضمن القطعة (هامش 10% من أكبر ضلع): نحسبه من الإعداد نفسه
@@ -37,19 +37,12 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     const sj = await AIBgCut.subject(cv, {}); const sd = sj.getContext("2d").getImageData(0, 0, W, H).data; const at = (x, y) => sd[(y * W + x) * 4 + 3];
     out.subj = { size: sj.width + "x" + sj.height, center: at(250, 300), corner: at(20, 20), blue: at(580, 300), via: sj._via };
     const rr = await PBBgRemove.autoCut(cv, { allowKey: true, noConfirm: true }); out.auto = { method: rr.method, cov: Math.round(rr.cov * 100) };
-    /* فشل الصيغة الأولى لا يُسقط العملية: (أ) ردّ بلا أقنعة ثم نجاح الثانية (ب) أقنعة مفقودة في الأوليين ثم مضلّع */
-    const orig = ImgGen.text; const tryMode = async mode => { ImgGen.text = async o => { const P = o.prompt; if (/trace the outline/.test(P)) { if (mode !== "poly") return "[]"; const pts = []; for (let k = 0; k < 40; k++) { const a = k / 40 * 6.2832; pts.push([Math.round((300 + 110 * Math.sin(a)) / .6), Math.round((250 + 110 * Math.cos(a)) / .8)]); } return JSON.stringify([{ label: "كرة", polygon: pts }]); }
-      if (/Remove the background of this photo: segment ONLY/.test(P)) { if (mode === "second") return orig(o); return JSON.stringify([{ label: "كرة", box_2d: [100, 100, 300, 300] }]); }
-      return JSON.stringify([{ label: "كرة", box_2d: [100, 100, 300, 300] }]); };
-      try { const r = await AIBgCut.subject(cv, {}); const d = r.getContext("2d").getImageData(0, 0, W, H).data; return { ok: true, center: d[(300 * W + 250) * 4 + 3], corner: d[(20 * W + 20) * 4 + 3] }; } catch (e) { return { ok: false, err: String(e.message) }; } finally { ImgGen.text = orig; } };
-    out.second = await tryMode("second"); out.poly = await tryMode("poly");
+    const orig = ImgGen.text;
     ImgGen.text = async () => JSON.stringify([{ label: "x", box_2d: [100, 100, 300, 300] }]); try { await AIBgCut.subject(cv, {}); out.fail = "no error"; } catch (e) { out.fail = String(e.message); } ImgGen.text = orig;
-    /* برومبت يتكيّف مع كل صورة: نتيجة التحليل (يُبقى/يُزال) تصل إلى برومبت القناع */
-    { const seen = []; ImgGen.text = async o => { const P = o.prompt; seen.push(P); if (/Return ONLY JSON: \{"subject"/.test(P)) return JSON.stringify({ subject: "امرأة تحمل علبة", keep: ["المرأة", "علبة الكريم"], remove: ["أغصان الأوكالبتوس", "الستارة"] }); return orig(o); };
-      try { await AIBgCut.subject(cv, {}); } catch (e) { } ImgGen.text = orig; const m = seen.find(P => /For THIS photo/.test(P)); out.plan = { used: !!m, keep: !!(m && /KEEP: المرأة; علبة الكريم/.test(m)), rem: !!(m && /REMOVE: أغصان الأوكالبتوس; الستارة/.test(m)) }; }
-    /* التقاط العناصر: فشل صيغة الأقنعة (ردّ فارغ) ← مربعات فقط ثم قناع لكل عنصر عند القصّ */
-    { const seen = []; ImgGen.text = async o => { const P = o.prompt; seen.push(P.slice(0, 20)); if (/^Segment every distinct/.test(P)) return "[]"; if (/^Detect every distinct/.test(P)) return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8] }))); return orig(o); };
-      try { const its = await AICapture.detectAll(cv, {}); const c = await AICapture.cutout(cv, its[0], {}); out.fb = { n: its.length, pre: its.some(i => i.pre), seg: seen.filter(x => /^Segment/.test(x)).length, det: seen.filter(x => /^Detect/.test(x)).length, w: Math.round(c.w) }; } catch (e) { out.fb = { err: String(e.message) }; } ImgGen.text = orig; }
+    /* محاولة واحدة فقط: لا طلب تحليل ولا إعادة ولا بدائل — نجاح بطلب واحد، وفشل بطلب واحد وسبب واضح */
+    { let cnt = 0, last = ""; ImgGen.text = async o => { cnt++; last = o.prompt; return orig(o); }; const okc = await AIBgCut.subject(cv, {}).then(() => true, () => false); out.one = { ok: okc, cnt, noPlan: !/analysis found/.test(last) };
+      cnt = 0; ImgGen.text = async o => { cnt++; return "[]"; }; let msg = ""; await AIBgCut.subject(cv, {}).catch(e => { msg = String(e.message); }); out.oneFail = { cnt, msg };
+      cnt = 0; await AICapture.detectAll(cv, {}).catch(e => { msg = String(e.message); }); out.capFail = { cnt, msg }; ImgGen.text = orig; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -61,10 +54,8 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.fill.ok && r.fill.holeGray && r.fill.outsideSame, "الخلفية تُرمَّم داخل منطقة العنصر فقط والبقية بلا تغيير", r.fill);
   ok(r.subj.size === "800x600" && r.subj.center > 240 && r.subj.corner === 0 && r.subj.blue === 0, "نزع الخلفية: الموضوع فقط بحجم الأصل", r.subj);
   ok(r.auto.method === "seg" && r.auto.cov > 3 && r.auto.cov < 25, "autoCut يختار طريقة الـAPI للخلفية المعقدة", r.auto);
-  ok(r.second.ok && r.second.center > 200 && r.second.corner < 20, "الصيغة الأولى بلا أقنعة ← تنجح الصيغة الثانية", r.second);
-  ok(r.poly.ok && r.poly.center > 200 && r.poly.corner < 20, "فشل الأقنعة كلها ← مضلّع المحيط يكفي", r.poly);
-  ok(r.plan.used && r.plan.keep && r.plan.rem, "تحليل الصورة يحدّد ما يُبقى وما يُزال ويدخل في برومبت القناع", r.plan);
-  ok(r.fb && r.fb.n === 2 && !r.fb.pre && r.fb.seg === 2 && r.fb.det === 1 && Math.abs(r.fb.w - 220) <= 14, "الالتقاط: فشل الأقنعة ← مربعات فقط ثم قناع لكل عنصر عند القصّ", r.fb);
+  ok(r.one.ok && r.one.cnt === 1 && r.one.noPlan, "نزع الخلفية بالذكاء: محاولة واحدة (طلب واحد، بلا تحليل مسبق)", r.one);
+  ok(r.oneFail.cnt === 1 && /لم تُعزل الصورة/.test(r.oneFail.msg) && r.capFail.cnt === 1 && /لم تُرجِع الخدمة/.test(r.capFail.msg), "عند الفشل: طلب واحد فقط وسبب واضح (نزع الخلفية والالتقاط) بلا إعادة", [r.oneFail, r.capFail]);
   ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
   ok(!errs.length, "لا أخطاء صفحة", errs);
   console.log(n + " نجاح، " + fails.length + " فشل"); await b.close(); process.exit(fails.length ? 1 : 0);
