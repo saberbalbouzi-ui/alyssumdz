@@ -17,13 +17,6 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     PBSmart.captureElements();
     const wait = async (f, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (f()) return true; await new Promise(z => setTimeout(z, 150)); } return false; };
     const st = document.getElementById("pbs-stage"); out.seg = await wait(() => { const sg = document.getElementById("pbs-seg"); return sg && sg.style.display === "none"; }, 8000); out.noBoxes = !!st && [...st.querySelectorAll("canvas")].length === 1;
-    /* التحديد بالفأرة: يتلوّن العنصر بالأخضر ويُحاط بخط يتبع حدّه (لا مستطيل) ثم «التقاط المحدد» */
-    out.chooser = await wait(() => document.getElementById("pbs-all"), 25000); const ov = st.querySelectorAll("canvas")[1];
-    if (out.chooser && ov) { const r = ov.getBoundingClientRect(), k = r.width / 800, ptr = (x, y, t) => ov.dispatchEvent(new MouseEvent(t, { bubbles: true, clientX: r.left + x * k, clientY: r.top + y * k }));
-      const cnt = (x0, y0, w0, h0) => { const d = ov.getContext("2d").getImageData(Math.round(x0 * k), Math.round(y0 * k), Math.round(w0 * k), Math.round(h0 * k)).data; let n = 0, gr = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 30) { n++; if (d[i + 1] > d[i] && d[i + 1] > d[i + 2]) gr++; } return { n, gr }; };
-      out.none = cnt(0, 0, 800, 600).n === 0; ptr(250, 300, "mousemove"); out.hovC = cnt(0, 0, 800, 600); out.cornerClear = cnt(142, 192, 12, 12).n === 0;      /* زاوية مربع العنصر الدائري تبقى فارغة = حدّ تابع للشكل */
-      ptr(250, 300, "click"); ptr(590, 310, "mousemove"); ptr(590, 310, "click"); out.go = document.getElementById("pbs-go").textContent; ptr(250, 300, "click"); out.go2 = document.getElementById("pbs-go").textContent; ptr(250, 300, "click"); }
-    document.getElementById("pbs-go").click();
     out.applied = await wait(() => (sec.free || []).filter(w => w.type === "image").length >= 3, 25000); out.noPreview = !document.getElementById("pbs-ok"); out.calls = calls.join(",");
     out.after = (sec.free || []).filter(w => w.type === "image").length;
     /* نزع الخلفية: تُطبَّق النتيجة مباشرة */
@@ -37,10 +30,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
   ok(!r.err, "لا أخطاء تنفيذ", r.err); if (r.err) { await b.close(); process.exit(1); }
-  ok(r.chooser && r.none && r.hovC.n > 200 && r.hovC.gr / r.hovC.n > .9, "مرور الفأرة يلوّن العنصر بالأخضر", r);
-  ok(r.cornerClear, "الخط يتبع حدّ العنصر لا مستطيل", r);
-  ok(/\(2\)/.test(r.go) && /\(1\)/.test(r.go2), "النقر يحدّد ويلغي التحديد وعدّاد الزر", r);
-  ok(r.applied && r.noPreview, "«التقاط المحدد» يُطبّق العناصر المحدّدة فقط", r);
+  ok(r.applied && r.noPreview, "الالتقاط يبدأ تلقائياً وتُطبَّق النتيجة مباشرة بعد المسحة بلا اختيار ولا معاينة", r);
   ok(r.seg, "لا مربعات حول العناصر ولا أزرار عنصر/كل العناصر", r);
   ok(r.rep && /"counts"/.test(r.report) && /"raw"/.test(r.report), "فشل الكشف: زر نسخ التقرير يظهر والتقرير يحمل الأعداد وردّ الخدمة", r.report);
   ok(r.bg && r.bg.changed && r.bg.noBar && /نُفِّذ/.test(r.bg.chip), "نزع الخلفية يُطبَّق مباشرة بعد المسحة الأولى", r.bg);
