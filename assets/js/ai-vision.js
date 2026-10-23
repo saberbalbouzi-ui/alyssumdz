@@ -19,7 +19,9 @@ window.AIVision = (function () {
     return w;
   }
   const worker = kind => W8[kind] || (W8[kind] = mkWorker(kind));
-  const supported = () => typeof Worker !== "undefined";
+  /* الهاتف والأجهزة الضعيفة: نماذج التجزئة (~100MB + ذاكرة كبيرة) أطفأت هواتف فعلاً ← لا تُحمَّل هناك (إلا بتفعيل صريح alyssum_ai_force=1) فتعمل الأدوات بالمسار الخفيف */
+  const weak = () => { try { if (localStorage.getItem("alyssum_ai_force") === "1") return false; return matchMedia("(pointer: coarse)").matches || innerWidth <= 820 || (navigator.deviceMemory || 8) <= 4 || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent || ""); } catch (e) { return false; } };
+  const supported = () => typeof Worker !== "undefined" && !weak();
   function pix(cv, max) {
     const k = Math.min(1, max / Math.max(cv.width, cv.height)), w = Math.max(1, Math.round(cv.width * k)), h = Math.max(1, Math.round(cv.height * k)), c = document.createElement("canvas"); c.width = w; c.height = h;
     const g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h); return { data: g.getImageData(0, 0, w, h).data.buffer, w, h, k };
@@ -592,6 +594,6 @@ window.AIVision = (function () {
     const mk = arr => { const c = document.createElement("canvas"); c.width = dw; c.height = dh; const g = c.getContext("2d"), im = g.createImageData(dw, dh); for (let i = 0; i < dw * dh; i++) { const al = arr[i]; if (al) { im.data[i * 4] = rgb[0]; im.data[i * 4 + 1] = rgb[1]; im.data[i * 4 + 2] = rgb[2]; im.data[i * 4 + 3] = al; } } g.putImageData(im, 0, 0); return c; };
     return { out: mk(lineA), fill: mk(fillA) };
   }
-  function warm() { try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
-  return { cacheInfo, keepModels, _t: { mergeItems, trimEdges, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
+  function warm() { if (!supported()) return; try { worker("sam").call("load", { sam: true }).catch(() => { }); worker("det").call("load", { det: ["coco"] }).catch(() => { }); worker("det2").call("load", { det: ["o365"] }).catch(() => { }); worker("dep").call("depthLoad", {}).catch(() => { }); } catch (e) { } }
+  return { weak, cacheInfo, keepModels, _t: { mergeItems, trimEdges, stats, setS: o => { curS = o; } }, supported, analyze, pointMask, addItem, refineItem, zoneItem, joinItems, viewMask, fineView, overlays, cutouts, eraseBg, inpaintAI, localDetect, depth, cachedFor, warm };
 })();
