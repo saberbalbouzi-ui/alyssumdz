@@ -5,7 +5,8 @@
 // تنبيه: صيغ واجهات المزوّدين أدناه مكتوبة من وثائقهم المعروفة ولم تُجرَّب بمفتاح حقيقي.
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-const PROVIDER = (Deno.env.get("BG_PROVIDER") || "removebg").toLowerCase();
+// بلا BG_PROVIDER يُستنتج المزوّد من المفتاح الموجود (Photoroom إن وُجد مفتاحه وإلا remove.bg).
+const PROVIDER = (Deno.env.get("BG_PROVIDER") || (Deno.env.get("PHOTOROOM_API_KEY") && !Deno.env.get("REMOVEBG_API_KEY") ? "photoroom" : "removebg")).toLowerCase();
 const KEY = PROVIDER === "photoroom" ? Deno.env.get("PHOTOROOM_API_KEY") : Deno.env.get("REMOVEBG_API_KEY");
 const CORS = {
   "Access-Control-Allow-Origin": "*",
