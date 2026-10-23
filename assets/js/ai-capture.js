@@ -156,6 +156,20 @@ const AICapture = (function () {
     const soft = mk(W, H), sg = soft.getContext("2d"); try { sg.filter = "blur(" + Math.max(1, R / 2) + "px)"; } catch (e) { } sg.drawImage(msk, 0, 0); sg.filter = "none";
     gg.globalCompositeOperation = "destination-in"; gg.drawImage(soft, 0, 0); gg.globalCompositeOperation = "source-over"; base.getContext("2d").drawImage(gen, 0, 0); return true;      // الناتج داخل المنطقة فقط وحوافها ناعمة؛ خارجها الأصل كما هو
   }
+  /* فصل العناصر المتداخلة: ما يقع فيه عنصر أصغر يُطرح من العنصر الأكبر (كحال عبوة في يد امرأة) فيصير كل عنصر مستقلاً بلا ازدواج.
+     cuts بإحداثيات الصورة {canvas,x0,y0,w,h}؛ يعدّل الأقنعة في مكانها ويُرجع عدد العناصر المعدَّلة */
+  function separate(cuts) {
+    const area = c => c.w * c.h, order = cuts.slice().sort((a, b) => area(a) - area(b)); let changed = 0;
+    for (let i = 0; i < order.length; i++) for (let j = i + 1; j < order.length; j++) {
+      const a = order[i], b = order[j], ox = Math.min(a.x0 + a.w, b.x0 + b.w) - Math.max(a.x0, b.x0), oy = Math.min(a.y0 + a.h, b.y0 + b.h) - Math.max(a.y0, b.y0);
+      if (ox <= 2 || oy <= 2 || ox * oy < area(a) * .25) continue;      // لا تداخل مؤثّر: الأصغر ليس داخل الأكبر
+      const g = b.canvas.getContext("2d", { willReadFrequently: true }), sx = b.canvas.width / b.w, sy = b.canvas.height / b.h, pad = 2;
+      g.save(); g.globalCompositeOperation = "destination-out"; try { g.filter = "blur(1px)"; } catch (e) { }
+      const tmp = mk(a.canvas.width, a.canvas.height), tg = tmp.getContext("2d"); tg.drawImage(a.canvas, 0, 0); tg.globalCompositeOperation = "source-in"; tg.fillStyle = "#000"; tg.fillRect(0, 0, tmp.width, tmp.height);      // ظلّ القناع بلون صلب
+      g.drawImage(tmp, (a.x0 - b.x0) * sx - pad, (a.y0 - b.y0) * sy - pad, a.w * sx + pad * 2, a.h * sy + pad * 2); g.restore(); changed++;
+    }
+    return changed;
+  }
   /* ملء محلي احتياطي (يعمل بلا خدمة): يمحو مناطق العناصر من الخلفية بتدرّج لوني ناعم من محيطها حتى لا تبقى نسخ مكرّرة من العناصر تحت الملتقطة */
   function localFill(base, cuts) {
     const W = base.width, H = base.height, hole = mk(W, H), hg = hole.getContext("2d", { willReadFrequently: true }); cuts.forEach(c => hg.drawImage(c.canvas, c.x0, c.y0, c.w, c.h));
@@ -170,6 +184,6 @@ const AICapture = (function () {
   }
   /* يحوّل نتائج cutout إلى صيغة AIVision.eraseBg (قناع المسح) للترميم المحلي الاحتياطي */
   function eraseCuts(cuts) { return cuts.map(c => { const w = Math.max(1, Math.round(c.w)), h = Math.max(1, Math.round(c.h)), cc = mk(w, h), g = cc.getContext("2d", { willReadFrequently: true }); g.drawImage(c.canvas, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data, m = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) if (d[i * 4 + 3] > 20) m[i] = 1; return { canvas: c.canvas, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h, label: c.label, erase: { m, x0: Math.round(c.x0), y0: Math.round(c.y0), w, h } }; }); }
-  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, localFill, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
+  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;

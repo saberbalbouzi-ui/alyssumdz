@@ -41,6 +41,10 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     out.fill = { ok: fb, holeGray: pd[0] > 100 && pd[0] < 140 && Math.abs(pd[0] - pd[2]) < 12, outsideSame: qd[0] === od[0] && qd[2] === od[2] };
     { const p2 = document.createElement("canvas"); p2.width = W; p2.height = H; p2.getContext("2d").drawImage(cv, 0, 0); const ok2 = await AICapture.localFill(p2, [c1, c2]); const a = p2.getContext("2d").getImageData(250, 300, 1, 1).data, b = cv.getContext("2d").getImageData(250, 300, 1, 1).data, q = p2.getContext("2d").getImageData(20, 20, 1, 1).data, o0 = cv.getContext("2d").getImageData(20, 20, 1, 1).data;
       out.localFill = { ok: ok2, holeGray: a[0] > 90 && a[0] < 150 && Math.abs(a[0] - a[2]) < 25, outsideSame: q[0] === o0[0] && q[2] === o0[2] }; }
+    { const mkc = (w, h, f) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.fillStyle = "#c00"; f(g, w, h); return c; };
+      const big = { canvas: mkc(400, 400, (g, w, h) => g.fillRect(0, 0, w, h)), x0: 100, y0: 100, w: 400, h: 400 }, sm = { canvas: mkc(100, 100, (g, w, h) => g.fillRect(0, 0, w, h)), x0: 250, y0: 250, w: 100, h: 100 }, far = { canvas: mkc(50, 50, (g, w, h) => g.fillRect(0, 0, w, h)), x0: 700, y0: 700, w: 50, h: 50 };
+      const n = AICapture.separate([big, sm, far]); const gi = big.canvas.getContext("2d").getImageData(0, 0, 400, 400).data, at = (x, y) => gi[(y * 400 + x) * 4 + 3];
+      out.sep = { n, holeCleared: at(200, 200) === 0, restKept: at(20, 20) === 255 && at(380, 380) === 255, smallKept: sm.canvas.getContext("2d").getImageData(50, 50, 1, 1).data[3] === 255 }; }
     const orig = ImgGen.text;
     /* الالتقاط: فشل بطلب واحد وسبب واضح بلا إعادة */
     { let cnt = 0, msg = ""; ImgGen.text = async o => { cnt++; return "[]"; }; await AICapture.detectAll(cv, {}).catch(e => { msg = String(e.message); }); out.capFail = { cnt, msg }; ImgGen.text = orig; }
@@ -79,6 +83,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.c1.inside > 30000 && r.c1.bad / r.c1.inside < .02, "حواف الكرة نظيفة: بكسلات معتمة حمراء فقط رغم إزاحة قناع الخدمة", r.c1);
   ok(r.pro.method === "photoroom" && r.pro.w > 100 && r.pro.w < 260, "قصّ العنصر بـPhotoroom على مقطعه (ألفا الخدمة)", r.pro);
   ok(r.c2.method === "api" && Math.abs(r.c2.w - 180) <= 12, "قصّ العلبة الزرقاء", r.c2);
+  ok(r.sep.n === 1 && r.sep.holeCleared && r.sep.restKept && r.sep.smallKept, "العنصر الأصغر يُفصل من الأكبر المتداخل ولا يمسّ البعيد", r.sep);
   ok(r.localFill.ok && r.localFill.holeGray && r.localFill.outsideSame, "الملء المحلي الاحتياطي يمحو العنصر من الخلفية دون المساس بما خارجه", r.localFill);
   ok(r.fill.ok && r.fill.holeGray && r.fill.outsideSame, "الخلفية تُرمَّم داخل منطقة العنصر فقط والبقية بلا تغيير", r.fill);
   ok(r.think.n === 2 && r.think.budget0, "طلب التقاط/نزع: بلا تفكير (thinkingBudget=0) وبنموذجين على الأكثر", r.think);
