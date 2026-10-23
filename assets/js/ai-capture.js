@@ -175,11 +175,13 @@ const AICapture = (function () {
   }
   /* فصل العناصر المتداخلة: ما يقع فيه عنصر أصغر يُطرح من العنصر الأكبر (كحال عبوة في يد امرأة) فيصير كل عنصر مستقلاً بلا ازدواج.
      cuts بإحداثيات الصورة {canvas,x0,y0,w,h}؛ يعدّل الأقنعة في مكانها ويُرجع عدد العناصر المعدَّلة */
+  const PART = /ملصق|غطاء|نص|شعار|عنوان|label|lid|cap\b|text|logo/i, PERS = /امرأة|إمرأة|فتاة|بنت|رجل|شخص|طفل|ولد|سيدة|عارض|يد|ذراع|woman|man|girl|boy|person|hand|arm/i;
   function separate(cuts) {
     const area = c => c.w * c.h, order = cuts.slice().sort((a, b) => area(a) - area(b)); let changed = 0;
     for (let i = 0; i < order.length; i++) for (let j = i + 1; j < order.length; j++) {
       const a = order[i], b = order[j], ox = Math.min(a.x0 + a.w, b.x0 + b.w) - Math.max(a.x0, b.x0), oy = Math.min(a.y0 + a.h, b.y0 + b.h) - Math.max(a.y0, b.y0);
       if (ox <= 2 || oy <= 2 || ox * oy < area(a) * .25) continue;      // لا تداخل مؤثّر: الأصغر ليس داخل الأكبر
+      if (PART.test(a.label || "") || (!PERS.test(b.label || "") && area(a) > area(b) * .55)) continue;      // جزء من العنصر (ملصق/غطاء) أو مكوّن لا يُطرح منه وإلا ظهرت فيه ثقوب؛ الطرح لمن يحمله شخص/يد
       const g = b.canvas.getContext("2d", { willReadFrequently: true }), sx = b.canvas.width / b.w, sy = b.canvas.height / b.h, pad = 2;
       g.save(); g.globalCompositeOperation = "destination-out"; try { g.filter = "blur(1px)"; } catch (e) { }
       const tmp = mk(a.canvas.width, a.canvas.height), tg = tmp.getContext("2d"); tg.drawImage(a.canvas, 0, 0); tg.globalCompositeOperation = "source-in"; tg.fillStyle = "#000"; tg.fillRect(0, 0, tmp.width, tmp.height);      // ظلّ القناع بلون صلب
