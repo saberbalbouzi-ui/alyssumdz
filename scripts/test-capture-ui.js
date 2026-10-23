@@ -23,6 +23,12 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     const m = document.createElement("canvas"); m.width = 64; m.height = 64; const mg = m.getContext("2d"); mg.fillStyle = "#000"; mg.fillRect(0, 0, 64, 64); mg.fillStyle = "#fff"; mg.fillRect(6, 6, 52, 52); const murl = m.toDataURL("image/png");
     const src0 = base.set.src;
     await PBBgRemove.live({ node: base }); out.bg = { changed: base.set.src !== src0, noBar: !document.getElementById("pbx-epf"), chip: (document.getElementById("pbbg-chip") || {}).textContent || "" };
+    /* مفتاح فوتوروم تجريبي: يعيد الصورة كاملة معتمة ← يُكتشف ويُكمل الالتقاط بالاحتياط */
+    { const full = document.createElement("canvas"); full.width = W; full.height = H; const fg = full.getContext("2d"); fg.fillStyle = "#d9c7a3"; fg.fillRect(0, 0, W, H); const fb64 = full.toDataURL("image/png").split(",")[1];
+      window.fetch = async (u, init) => /bg-remove/.test(String(u)) ? new Response(JSON.stringify({ ok: true, type: "image/png", b64: fb64 }), { status: 200 }) : f0(u, init);
+      ImgGen.text = async o => JSON.stringify(objs.map(q => ({ label: q.label, box_2d: [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8], mask: mkMask(q) })));
+      const b4 = (sec.free || []).filter(w => w.type === "image").length; PBApp.E.sel = base.id; PBSmart.captureElements();
+      out.sbx = await wait(() => (sec.free || []).filter(w => w.type === "image").length >= b4 + 2, 25000); out.msg = (document.getElementById("pbs-msg")||{}).textContent; out.sbxN = (sec.free || []).filter(w => w.type === "image").length - b4; }
     window.fetch = f0; ImgGen.text = async () => "[]";
     /* فشل الكشف: رسالة بسبب + زر نسخ تقرير الفشل (آخر طلب وردّه وأعداد العناصر/الأقنعة) */
     PBApp.E.sel = base.id; ImgGen.text = async () => "[]"; PBSmart.captureElements(); out.rep = await wait(() => document.querySelector(".pbs-rep"), 12000); out.report = AICapture.report(); const x = document.getElementById("pbs-x"); if (x) x.click();
@@ -34,6 +40,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.seg, "لا مربعات حول العناصر ولا أزرار عنصر/كل العناصر", r);
   ok(r.rep && /"counts"/.test(r.report) && /"raw"/.test(r.report), "فشل الكشف: زر نسخ التقرير يظهر والتقرير يحمل الأعداد وردّ الخدمة", r.report);
   ok(r.bg && r.bg.changed && r.bg.noBar && /نُفِّذ/.test(r.bg.chip), "نزع الخلفية يُطبَّق مباشرة بعد المسحة الأولى", r.bg);
+  ok(r.sbx, "مفتاح فوتوروم التجريبي (صورة كاملة) لا يُنتج عناصر مستطيلة: يكمل بالاحتياط", r);
   ok(r.after === r.before + 2, "العنصران صارا صورتين حرتين", r);
   ok(!errs.length, "لا أخطاء صفحة", errs); console.log(fails.length ? "\n✗ " + fails.length + " فشل" : "\n✓ " + n + " فحصاً ناجحاً"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();

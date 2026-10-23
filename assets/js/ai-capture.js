@@ -125,7 +125,7 @@ const AICapture = (function () {
           const full = mk(ww, wh); full.getContext("2d").putImageData(wd, 0, 0); const cw = q1 - q0 + 1, ch = r1 - r0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, q0, r0, cw, ch, 0, 0, cw, ch);
           return { canvas: out, x0: rx0 + q0 / s, y0: ry0 + r0 / s, w: cw / s, h: ch / s, label: item.label, method: "photoroom", cov: sol / nn, item };
         }
-      } catch (e) { if (e && e.code === "NOKEY") throw e; console.warn("AICapture photoroom", e); }
+      } catch (e) { if (e && (e.code === "NOKEY" || e.code === "SANDBOX")) throw e; console.warn("AICapture photoroom", e); }
     }
     if (item.pre) {      // قناع جاهز من طلب الكشف: يُنقل إلى إحداثيات العمل بلا أي طلب إضافي
       const pr = item.pre; M = new Float32Array(ww * wh);

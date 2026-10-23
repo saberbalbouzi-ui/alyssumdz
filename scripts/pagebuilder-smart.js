@@ -188,10 +188,16 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         if (busy) return; busy = true; $("pbs-go").disabled = true; tintOn(); const chosen = items.slice();
         try {
           const cuts = [], fails = []; failsAll = fails; let next = 0, dn = 0;
-          let sam = null; try { if (typeof ImgCfg !== "undefined" && ImgCfg.get("capture", "engine", "photoroom") === "sam") sam = await AICapture.samCuts(cv, chosen, { onStep: say }); } catch (e) { }      // تجزئة حقيقية لكل عنصر وحده؛ وإن لم تتوفر يُستعمل المسار الاحتياطي
-          if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; }
-          const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
-          await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
+          let sbx = false, noPro = false; const useSam = typeof ImgCfg === "undefined" || ImgCfg.get("capture", "engine", "auto") !== "photoroom";
+          const runSam = async () => { let sam = null; try { sam = await AICapture.samCuts(cv, chosen, { onStep: say }); } catch (e) { } if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; return true; } return false; };      // تجزئة SAM بمربع كل عنصر (مجانية محلية)
+          if (useSam) await runSam();
+          const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { noPro, onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && e.code === "SANDBOX") { sbx = true; next = chosen.length; return; } if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
+          await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return;
+          if (sbx) {      // مفتاح فوتوروم لا يقصّ فعلياً (تجريبي): نكمل بتجزئة SAM بمربع كل عنصر ثم الفصل اللوني داخل المربع
+            cuts.length = 0; fails.length = 0; dn = 0; say("⚠️ فوتوروم لا يقصّ (مفتاح تجريبي) — نستعمل التجزئة المحلية");
+            if (!(await runSam())) { noPro = true; next = 0; await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; }
+          }
+          if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
           try { AICapture.separate(cuts); } catch (e) { console.warn("separate", e); }      // العنصر الأصغر يُطرح من الأكبر المتداخل معه
           cuts.sort((a, b) => (a.y0 + a.h) - (b.y0 + b.h)); const nm = {}, cnt = {}; cuts.forEach(c => cnt[c.label] = (cnt[c.label] || 0) + 1); cuts.forEach(c => { nm[c.label] = (nm[c.label] || 0) + 1; c.label = cnt[c.label] > 1 ? c.label + " " + nm[c.label] : c.label; });
           tintOff(); busy = false; await finish(cuts, fails);
