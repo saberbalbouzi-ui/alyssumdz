@@ -145,10 +145,14 @@ const AICapture = (function () {
       for (let y = 0; y < wh; y++) { const sy = ry0 + y / s - pr.y0; if (sy < 0 || sy >= pr.h) continue; const iy = Math.min(pr.h - 1, sy | 0); for (let x = 0; x < ww; x++) { const sx = rx0 + x / s - pr.x0; if (sx < 0 || sx >= pr.w) continue; M[y * ww + x] = pr.m[iy * pr.w + Math.min(pr.w - 1, sx | 0)]; } }
     }      // لا طلب قناع ثانٍ لكل عنصر: القناع يأتي مع الكشف في المسحة الواحدة
     if (!M && !item.pre && t.boxMask) { step("⏳ فصل «" + item.label + "» داخل المربع…"); M = await t.boxMask(work, [bx0, by0, bx1, by1]); method = "box"; }
-    if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
+    if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .02 || r > 1.6) M = null; }      // قناع غير معقول مقارنة بالمربع
+    if (!M && o.rectOk) {      // آخر احتياط: مستطيل المربع نفسه (حواف تُصقل من البكسلات) كي لا تضيع النتيجة كلها
+      M = new Float32Array(ww * wh); const qx0 = Math.max(0, Math.round(bx0)), qy0 = Math.max(0, Math.round(by0)), qx1 = Math.min(ww, Math.round(bx1)), qy1 = Math.min(wh, Math.round(by1));
+      for (let y = qy0; y < qy1; y++) for (let x = qx0; x < qx1; x++) M[y * ww + x] = 1; method = "rect";
+    }
     if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
-    const pl = !!(item.pre && item.pre.poly) || method === "box", band = clamp(Math.round(Math.max(ww, wh) * (pl ? .02 : .011)), 3, pl ? 36 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
+    const pl = !!(item.pre && item.pre.poly) || method === "box" || method === "rect", band = clamp(Math.round(Math.max(ww, wh) * (pl ? .02 : .011)), 3, pl ? 36 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
     if (x1 < 0 || solid < n * .004) throw new Error("لم يُعزل «" + item.label + "»");
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0); const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);

@@ -181,23 +181,23 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
           say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 2400, q: .92 }), paths = [];
           (await Promise.all(cuts.map(async (c, i) => A().uploadBlob(await toB(c.canvas), "el-" + stamp + "-" + i, { max: 2000, q: .9 })))).forEach(x => paths.push(x));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close();
-          try { A().toast("✅ التُقط " + n + " عنصراً (" + [...new Set(cuts.map(c => ({ sam: "SAM", photoroom: "فوتوروم", box: "فصل لوني", api: "قناع الكشف" }[c.method] || c.method || "?")))].join("+") + ") كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + (localFilled ? " — مُلئت الخلفية محلياً (تقريبي لتعذّر الخدمة)" : "") + (fillFail ? " — تعذّرت إعادة رسم الخلفية فبقيت الأصول تحتها" : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
+          try { A().toast("✅ التُقط " + n + " عنصراً (" + [...new Set(cuts.map(c => ({ sam: "SAM", photoroom: "فوتوروم", box: "فصل لوني", api: "قناع الكشف", rect: "مستطيل تقريبي" }[c.method] || c.method || "?")))].join("+") + ") كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + (localFilled ? " — مُلئت الخلفية محلياً (تقريبي لتعذّر الخدمة)" : "") + (fillFail ? " — تعذّرت إعادة رسم الخلفية فبقيت الأصول تحتها" : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
         } catch (e) { console.error(e); tintOff(); busy = false; if (!sh.S.closed) { $("pbs-go").textContent = "↻ إعادة المحاولة"; say("⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e))); $("pbs-go").disabled = false; } }
       }
       const start = async () => {
         if (busy) return; busy = true; $("pbs-go").disabled = true; tintOn(); const chosen = items.slice();
         try {
-          const cuts = [], fails = []; failsAll = fails; let next = 0, dn = 0;
+          const cuts = [], fails = [], reasons = []; failsAll = fails; let next = 0, dn = 0;
           let sbx = false, noPro = false; const useSam = !(typeof ImgCfg !== "undefined" && ImgCfg.get("capture", "engine", "auto") === "photoroom");
           const runSam = async () => { let sam = null; try { if (!samP && AICapture.samPrep) samP = AICapture.samPrep(cv); sam = await AICapture.samCuts(cv, chosen, { onStep: say, prep: samP }); } catch (e) { } if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; return true; } return false; };      // تجزئة SAM بمربع كل عنصر (مجانية محلية)
           if (useSam) await runSam();
-          const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { noPro, onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && e.code === "SANDBOX") { sbx = true; next = chosen.length; return; } if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
-          await Promise.all(Array.from({ length: Math.max(1, Math.min(chosen.length, 8)) }, worker)); if (sh.S.closed) return;
+          const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const st = m => say(m + " (" + dn + "/" + chosen.length + ")"); let c; try { c = await AICapture.cutout(cv, it, { noPro, rectOk: noPro, onStep: st }); } catch (e1) { if (e1 && (e1.code === "SANDBOX" || e1.code === "NOKEY" || e1.code === "OFF")) throw e1; c = await AICapture.cutout(cv, it, { noPro: true, rectOk: true, onStep: st }); } cuts.push(c); } catch (e) { if (e && e.code === "SANDBOX") { sbx = true; next = chosen.length; return; } if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); reasons.push((it.label || "?") + ": " + String(e && e.message || e).slice(0, 60)); console.warn("cutout", it.label, e); } dn++; } };
+          await Promise.all(Array.from({ length: Math.max(1, Math.min(chosen.length, 4)) }, worker)); if (sh.S.closed) return;
           if (sbx) {      // مفتاح فوتوروم لا يقصّ فعلياً (تجريبي): نكمل بتجزئة SAM بمربع كل عنصر ثم الفصل اللوني داخل المربع
             cuts.length = 0; fails.length = 0; dn = 0; say("⚠️ فوتوروم لا يقصّ (مفتاح تجريبي) — نستعمل التجزئة المحلية");
             if (!(await runSam())) { noPro = true; next = 0; await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; }
           }
-          if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
+          if (!cuts.length) throw new Error("لم يُعزل أي عنصر" + (reasons.length ? " (" + reasons.slice(0, 2).join(" | ") + ")" : "") + " — أعد المحاولة");
           for (let i = 0; i < cuts.length; i++) { const c = cuts[i], b = c.item && (c.item._src || c.item).box; if (b) try { cuts[i] = AICapture.clipBox(c, b, .025); } catch (e) { console.warn("clipBox", e); } }      // لا يخرج القصّ عن مربع العنصر (وجه/يد مجاورة)
           try { AICapture.separate(cuts); } catch (e) { console.warn("separate", e); }      // العنصر الأصغر يُطرح من الأكبر المتداخل معه
           cuts.sort((a, b) => (a.y0 + a.h) - (b.y0 + b.h)); const nm = {}, cnt = {}; cuts.forEach(c => cnt[c.label] = (cnt[c.label] || 0) + 1); cuts.forEach(c => { nm[c.label] = (nm[c.label] || 0) + 1; c.label = cnt[c.label] > 1 ? c.label + " " + nm[c.label] : c.label; });
