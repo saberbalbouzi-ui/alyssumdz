@@ -47,16 +47,19 @@ const AICapture = (function () {
   /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
   async function detectAll(cv, o) {
     o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…");
-    const ask1 = async () => parseLoose(await ask(P_MASKS.replace("MAX", String(o.max || 10)), cv, { maxTokens: 16384, signal: o.signal })), build = async arr => {
+    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 16384, signal: o.signal })), build = async arr => {
       const items = [], W = cv.width, H = cv.height;
-      for (const e of arr) { const b = boxOf(e); if (!b || !e.mask) continue; const box = { x0: b.x0 / 1000 * W, y0: b.y0 / 1000 * H, x1: b.x1 / 1000 * W, y1: b.y1 / 1000 * H }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+      for (const e of arr) { const b = boxOf(e); if (!b) continue; const box = { x0: b.x0 / 1000 * W, y0: b.y0 / 1000 * H, x1: b.x1 / 1000 * W, y1: b.y1 / 1000 * H }, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
         if (bw < W * .02 || bh < H * .02 || (bw * bh > W * H * .94 && arr.length > 1)) continue; if (items.some(q => iou(q.box, box) > .85)) continue;
-        const px0 = Math.round(box.x0), py0 = Math.round(box.y0), dm = await decodeMask(e.mask, Math.max(2, Math.round(bw)), Math.max(2, Math.round(bh))); if (!dm) continue;
-        items.push({ label: String(e.label || "عنصر").slice(0, 40), box, pre: { m: dm.m, w: dm.w, h: dm.h, x0: px0, y0: py0 } }); }
+        const px0 = Math.round(box.x0), py0 = Math.round(box.y0), dm = e.mask ? await decodeMask(e.mask, Math.max(2, Math.round(bw)), Math.max(2, Math.round(bh))) : null;
+        items.push({ label: String(e.label || "عنصر").slice(0, 40), box, pre: dm ? { m: dm.m, w: dm.w, h: dm.h, x0: px0, y0: py0 } : null }); }      // مربع بلا قناع صالح يبقى عنصراً: قناعه يُطلب لاحقاً عند القصّ
       items.forEach((it, i) => it.id = i); return items;
     };
-    let items = await build(await ask1()); if (!items.length) items = await build(await ask1());
-    if (!items.length) throw new Error("لم تُرجِع الخدمة عناصر قابلة للفصل — أعد المحاولة");
+    /* ثلاث صيغ: (١) أقنعة حتى 10 (٢) أقنعة حتى 4 فيقصر الردّ ولا يُقطع (٣) مربعات فقط ثم قناع لكل عنصر عند القصّ */
+    let items = [], lastErr = null;
+    for (const mx of [o.max || 10, 4]) { try { items = await build(await ask1(mx)); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; lastErr = e; items = []; } if (items.length) break; if (o.onStep) o.onStep("⏳ إعادة المحاولة بصيغة أخرى…"); }
+    if (!items.length) { try { items = await detect(cv, Object.assign({}, o, { max: 8 })); items.forEach(it => it.pre = null); } catch (e) { if (e && (e.name === "AbortError" || e.code === "NOKEY" || e.code === "OFF")) throw e; lastErr = e; } }
+    if (!items.length) throw new Error("لم تُرجِع الخدمة عناصر قابلة للفصل" + (lastErr && lastErr.message && !/لم تجد الأداة/.test(lastErr.message) ? " (" + String(lastErr.message).slice(0, 70) + ")" : "") + " — أعد المحاولة");
     return items;
   }
   /* قناع الخدمة (PNG base64 داخل مربع العنصر) ← Float32 0..1 بحجم العمل */

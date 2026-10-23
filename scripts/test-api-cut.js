@@ -47,6 +47,9 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     /* برومبت يتكيّف مع كل صورة: نتيجة التحليل (يُبقى/يُزال) تصل إلى برومبت القناع */
     { const seen = []; ImgGen.text = async o => { const P = o.prompt; seen.push(P); if (/Return ONLY JSON: \{"subject"/.test(P)) return JSON.stringify({ subject: "امرأة تحمل علبة", keep: ["المرأة", "علبة الكريم"], remove: ["أغصان الأوكالبتوس", "الستارة"] }); return orig(o); };
       try { await AIBgCut.subject(cv, {}); } catch (e) { } ImgGen.text = orig; const m = seen.find(P => /For THIS photo/.test(P)); out.plan = { used: !!m, keep: !!(m && /KEEP: المرأة; علبة الكريم/.test(m)), rem: !!(m && /REMOVE: أغصان الأوكالبتوس; الستارة/.test(m)) }; }
+    /* التقاط العناصر: فشل صيغة الأقنعة (ردّ فارغ) ← مربعات فقط ثم قناع لكل عنصر عند القصّ */
+    { const seen = []; ImgGen.text = async o => { const P = o.prompt; seen.push(P.slice(0, 20)); if (/^Segment every distinct/.test(P)) return "[]"; if (/^Detect every distinct/.test(P)) return JSON.stringify(objs.map(q => ({ label: q.label, box_2d: [q.box[0] / .6, q.box[1] / .8, q.box[2] / .6, q.box[3] / .8] }))); return orig(o); };
+      try { const its = await AICapture.detectAll(cv, {}); const c = await AICapture.cutout(cv, its[0], {}); out.fb = { n: its.length, pre: its.some(i => i.pre), seg: seen.filter(x => /^Segment/.test(x)).length, det: seen.filter(x => /^Detect/.test(x)).length, w: Math.round(c.w) }; } catch (e) { out.fb = { err: String(e.message) }; } ImgGen.text = orig; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -61,6 +64,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.second.ok && r.second.center > 200 && r.second.corner < 20, "الصيغة الأولى بلا أقنعة ← تنجح الصيغة الثانية", r.second);
   ok(r.poly.ok && r.poly.center > 200 && r.poly.corner < 20, "فشل الأقنعة كلها ← مضلّع المحيط يكفي", r.poly);
   ok(r.plan.used && r.plan.keep && r.plan.rem, "تحليل الصورة يحدّد ما يُبقى وما يُزال ويدخل في برومبت القناع", r.plan);
+  ok(r.fb && r.fb.n === 2 && !r.fb.pre && r.fb.seg === 2 && r.fb.det === 1 && Math.abs(r.fb.w - 220) <= 14, "الالتقاط: فشل الأقنعة ← مربعات فقط ثم قناع لكل عنصر عند القصّ", r.fb);
   ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
   ok(!errs.length, "لا أخطاء صفحة", errs);
   console.log(n + " نجاح، " + fails.length + " فشل"); await b.close(); process.exit(fails.length ? 1 : 0);
