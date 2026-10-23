@@ -38,9 +38,9 @@ const AICapture = (function () {
     "Return ONLY a JSON array (at most MAX items) of objects like {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000 and boxes that tightly enclose the whole object.";
   const LAST = { req: null, raw: null, err: null, counts: null };      // تقرير آخر طلب لتشخيص الفشل (يُنسخ من الواجهة)
   async function ask(prompt, canvas, o) {
-    const blob = await toBlob(canvas, "image/jpeg", .93);
+    const blob = await toBlob(canvas, "image/jpeg", .85);
     LAST.req = { prompt: String(prompt).slice(0, 60), w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null;
-    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, models: ["gemini-2.5-flash"], maxModels: 3, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1024, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, models: ["gemini-2.5-flash"], maxModels: 3, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف العناصر ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv. o.zone = [x0,y0,x1,y1] لتحليل منطقة بدقة أعلى، o.mode = "subject" للموضوع الرئيسي فقط */
@@ -190,13 +190,15 @@ const AICapture = (function () {
     o = o || {}; const V = typeof AIVision !== "undefined" ? AIVision : null; if (!V || !V.supported || !V.supported() || !V.analyze || !V.addItem || !V.cutouts) return null;
     const step = o.onStep || (() => { });
     try {
-      step("⏳ تحميل نموذج التجزئة (مرة واحدة)…"); const r = await Promise.race([V.analyze(cv, { noDetect: true, onStep: step }), new Promise((_, rj) => setTimeout(() => rj(new Error("انتهت مهلة تحميل نموذج التجزئة")), 120000))]), S = r.S, its = [], seen = new Set();
+      step("⏳ تحميل نموذج التجزئة (مرة واحدة)…"); const r = await Promise.race([o.prep || V.analyze(cv, { noDetect: true, onStep: step }), new Promise((_, rj) => setTimeout(() => rj(new Error("انتهت مهلة تحميل نموذج التجزئة")), 120000))]), S = r.S, its = [], seen = new Set();
       for (const it of items) { step("⏳ تجزئة «" + it.label + "»…"); const b = it.box; const m = await V.addItem(S, { box: [b.x0, b.y0, b.x1, b.y1], label: it.label }, r.items); if (m && !seen.has(m)) { seen.add(m); m.label = it.label; its.push(m); } }
       if (!its.length) return null; step("✂️ صقل الحواف بدقة البكسل…");
       const cs = V.cutouts(S, cv, its, { shadow: false }); if (!cs || !cs.length) return null;
       return cs.map(c => ({ canvas: c.canvas, x0: c.x0, y0: c.y0, w: c.w, h: c.h, label: c.label, method: "sam", item: c.item }));
     } catch (e) { console.warn("samCuts", e); return null; }
   }
-  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, samCuts, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
+  /* تحميل SAM وترميز الصورة بالتوازي مع طلب الكشف (توفير زمن الانتظار) */
+  function samPrep(cv, onStep) { const V = typeof AIVision !== "undefined" ? AIVision : null; if (!V || !V.supported || !V.supported() || !V.analyze) return null; const p = V.analyze(cv, { noDetect: true, onStep: onStep || (() => { }) }); p.catch(() => { }); return p; }
+  return { ready, samPrep, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, samCuts, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;

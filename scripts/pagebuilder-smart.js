@@ -147,7 +147,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     b.onclick = async () => { const t = AICapture.report() + (extra && extra() ? "\n" + extra() : ""); try { await navigator.clipboard.writeText(t); b.textContent = "✅ نُسخ — الصقه في المحادثة"; } catch (e) { prompt("انسخ التقرير:", t); } }; host.appendChild(b); }
   async function apiCapture(sh, cv, inf, w) {
     const $ = sh.$, W = cv.width, H = cv.height;
-    const stopScan = scanFx(sh, cv); $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر…"; let items;
+    const stopScan = scanFx(sh, cv); const samP = (typeof ImgCfg === "undefined" || ImgCfg.get("capture", "engine", "auto") !== "photoroom") && AICapture.samPrep ? AICapture.samPrep(cv) : null; $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر…"; let items;
     try { items = await AICapture.detectAll(cv, { onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); }
     catch (e) { stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل التقاط العناصر" : String(e && e.message || e).slice(0, 160)); if (!(e && (e.code === "OFF" || e.code === "NOKEY"))) repBtn($("pbs-load")); return null; }
     stopScan(); if (sh.S.closed) return null; $("pbs-load").style.display = "none";
@@ -157,7 +157,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const hit = (x, y) => { let best = -1, ba = 1e18; items.forEach(it => { const b = it.box; if (x >= b.x0 * k && x <= b.x1 * k && y >= b.y0 * k && y <= b.y1 * k && area(it) < ba) { ba = area(it); best = it.id; } }); return best; };
     sh.S.mode = "all"; { const sg = $("pbs-seg"); if (sg) sg.style.display = "none"; } $("pbs-hint").textContent = "تُقصّ كل العناصر بدقة من بكسلات صورتك الأصلية وتُعاد الخلفية مكانها.";
     let tintEl = null; const tintOn = () => { scanCss(); if (!tintEl) { tintEl = document.createElement("div"); tintEl.className = "pbs-tint-x"; tintEl.style.cssText = "position:absolute;inset:0"; stage.appendChild(tintEl); } }, tintOff = () => { if (tintEl) { tintEl.remove(); tintEl = null; } };
-    $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill" checked> إعادة رسم الخلفية مكان العناصر</label>';
+    $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill"> إعادة رسم الخلفية بدقة أعلى (أبطأ)</label>';
     const colors = ["#0d9488", "#7c3aed", "#ea580c", "#2563eb", "#db2777", "#16a34a", "#ca8a04", "#0891b2"];
     function paint() {
       const g = ov.getContext("2d"), mode = sh.S.mode; g.clearRect(0, 0, vw, vh); g.font = "700 12px sans-serif"; g.textBaseline = "top";
@@ -176,10 +176,10 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         if (!cuts.length || busy) return; busy = true; $("pbs-go").disabled = true; tintOn(); const fill = !!($("pbs-fill") && $("pbs-fill").checked); let fillFail = false, localFilled = false;
         try {
           const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0);
-          if (fill) { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); } catch (e) { console.warn("fillBg", e); if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fillFail = true; try { await AICapture.localFill(part, cuts); fillFail = false; localFilled = true; } catch (e2) { console.warn("localFill", e2); } } }      // فشل ترميم الخلفية لا يُسقط العناصر الملتقطة
+          if (!fill) { try { await AICapture.localFill(part, cuts); } catch (e2) { console.warn("localFill", e2); } } else { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); } catch (e) { console.warn("fillBg", e); if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fillFail = true; try { await AICapture.localFill(part, cuts); fillFail = false; localFilled = true; } catch (e2) { console.warn("localFill", e2); } } }      // فشل ترميم الخلفية لا يُسقط العناصر الملتقطة
           tintOff();      // كانفا: النتيجة تُطبَّق مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
           say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
-          for (let i = 0; i < cuts.length; i++) paths.push(await A().uploadBlob(await toB(cuts[i].canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 }));
+          (await Promise.all(cuts.map(async (c, i) => A().uploadBlob(await toB(c.canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 })))).forEach(x => paths.push(x));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close();
           try { A().toast("✅ التُقط " + n + " عنصراً كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + (localFilled ? " — مُلئت الخلفية محلياً (تقريبي لتعذّر الخدمة)" : "") + (fillFail ? " — تعذّرت إعادة رسم الخلفية فبقيت الأصول تحتها" : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
         } catch (e) { console.error(e); tintOff(); busy = false; if (!sh.S.closed) { $("pbs-go").textContent = "↻ إعادة المحاولة"; say("⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e))); $("pbs-go").disabled = false; } }
@@ -189,10 +189,10 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         try {
           const cuts = [], fails = []; failsAll = fails; let next = 0, dn = 0;
           let sbx = false, noPro = false; const useSam = typeof ImgCfg === "undefined" || ImgCfg.get("capture", "engine", "auto") !== "photoroom";
-          const runSam = async () => { let sam = null; try { sam = await AICapture.samCuts(cv, chosen, { onStep: say }); } catch (e) { } if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; return true; } return false; };      // تجزئة SAM بمربع كل عنصر (مجانية محلية)
+          const runSam = async () => { let sam = null; try { sam = await AICapture.samCuts(cv, chosen, { onStep: say, prep: samP }); } catch (e) { } if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; return true; } return false; };      // تجزئة SAM بمربع كل عنصر (مجانية محلية)
           if (useSam) await runSam();
           const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { noPro, onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && e.code === "SANDBOX") { sbx = true; next = chosen.length; return; } if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
-          await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return;
+          await Promise.all([worker(), worker(), worker(), worker(), worker()]); if (sh.S.closed) return;
           if (sbx) {      // مفتاح فوتوروم لا يقصّ فعلياً (تجريبي): نكمل بتجزئة SAM بمربع كل عنصر ثم الفصل اللوني داخل المربع
             cuts.length = 0; fails.length = 0; dn = 0; say("⚠️ فوتوروم لا يقصّ (مفتاح تجريبي) — نستعمل التجزئة المحلية");
             if (!(await runSam())) { noPro = true; next = 0; await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; }
