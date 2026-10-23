@@ -7,7 +7,7 @@
    الاحتياط: إن لم يعطِ الخدمة قناعاً صالحاً يُستعمل مربع العنصر مع فصل لوني محلي. لم يُجرَّب بمفتاح حقيقي (اختُبر بمحاكاة الخدمة). */
 const AICapture = (function () {
   "use strict";
-  let SBX = 0; const sbxKnown = () => Date.now() - SBX < 6e5, MAXPX = 3.2e6, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  let SBX = 0; const sbxKnown = () => Date.now() - SBX < 6e5, MAXPX = 2e6, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const T = () => (typeof PBBgRemove !== "undefined" && PBBgRemove._t) || null;
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type || "image/png", q));
@@ -110,7 +110,7 @@ const AICapture = (function () {
   }
   /* (2) قصّ عنصر بدقة: ← { canvas (RGBA مقصوص), x0, y0, w, h (بإحداثيات cv), method, cov } */
   async function cutout(cv, item, o) {
-    o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), b = item.box, bw = b.x1 - b.x0, bh = b.y1 - b.y0, m = Math.max(4, Math.round(Math.max(bw, bh) * .03));
+    o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), b = item.box, bw = b.x1 - b.x0, bh = b.y1 - b.y0, m = Math.max(3, Math.round(Math.max(bw, bh) * .015));
     const rx0 = Math.max(0, Math.floor(b.x0 - m)), ry0 = Math.max(0, Math.floor(b.y0 - m)), rx1 = Math.min(cv.width, Math.ceil(b.x1 + m)), ry1 = Math.min(cv.height, Math.ceil(b.y1 + m)), rw = rx1 - rx0, rh = ry1 - ry0;
     const s = Math.min(1, Math.sqrt(MAXPX / (rw * rh))), work = cropOf(cv, rx0, ry0, rw, rh, s), ww = work.width, wh = work.height;
     const bx0 = (b.x0 - rx0) * s, by0 = (b.y0 - ry0) * s, bx1 = (b.x1 - rx0) * s, by1 = (b.y1 - ry0) * s;

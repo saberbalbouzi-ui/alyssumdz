@@ -124,7 +124,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         const work = document.createElement("canvas"); work.width = W; work.height = H; work.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0);
         const res = await TextCapture.erase(work, use), skipped = res.filter(x => x.skipped).length;
         $("pbs-msg").textContent = "⏳ إنشاء عناصر النص…"; await new Promise(r => setTimeout(r, 30));
-        const path = await A().uploadBlob(await new Promise(r => work.toBlob(r, "image/png")), "txt-" + Date.now().toString(36), { max: 3200, q: .95 });
+        const path = await A().uploadBlob(await new Promise(r => work.toBlob(r, "image/png")), "txt-" + Date.now().toString(36), { max: 2400, q: .92 });
         const n = apply(inf, w, work.width, work.height, use, path); sh.close(); alert("✅ التُقط " + n + " نصاً وصار قابلاً للتعديل" + (skipped ? "\nℹ️ بقي " + skipped + " نصاً على خلفية معقدة (صورة) لم يُمسح." : ""));
       } catch (e) { console.error(e); $("pbs-msg").textContent = "⚠️ " + e.message; $("pbs-go").disabled = false; }
     };
@@ -178,8 +178,8 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
           const part = document.createElement("canvas"); part.width = W; part.height = H; part.getContext("2d", { willReadFrequently: true }).drawImage(cv, 0, 0);
           if (!fill) { try { await AICapture.localFill(part, cuts); } catch (e2) { console.warn("localFill", e2); } } else { try { say("⏳ إعادة رسم الخلفية…"); await AICapture.fillBg(part, cuts, { onStep: say }); } catch (e) { console.warn("fillBg", e); if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fillFail = true; try { await AICapture.localFill(part, cuts); fillFail = false; localFilled = true; } catch (e2) { console.warn("localFill", e2); } } }      // فشل ترميم الخلفية لا يُسقط العناصر الملتقطة
           tintOff();      // كانفا: النتيجة تُطبَّق مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
-          say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 3200, q: .95 }), paths = [];
-          (await Promise.all(cuts.map(async (c, i) => A().uploadBlob(await toB(c.canvas), "el-" + stamp + "-" + i, { max: 2400, q: .92 })))).forEach(x => paths.push(x));
+          say("⏳ رفع الصور…"); const stamp = Date.now().toString(36), basePath = await A().uploadBlob(await toB(part), "bg-" + stamp, { max: 2400, q: .92 }), paths = [];
+          (await Promise.all(cuts.map(async (c, i) => A().uploadBlob(await toB(c.canvas), "el-" + stamp + "-" + i, { max: 2000, q: .9 })))).forEach(x => paths.push(x));
           const els = cuts.map((c, i) => ({ x0: c.x0, y0: c.y0, x1: c.x0 + c.w, y1: c.y0 + c.h, area: c.w * c.h, front: i, label: c.label })), n = applyElements(inf, w, W, H, els, paths, basePath); sh.close();
           try { A().toast("✅ التُقط " + n + " عنصراً (" + [...new Set(cuts.map(c => ({ sam: "SAM", photoroom: "فوتوروم", box: "فصل لوني", api: "قناع الكشف" }[c.method] || c.method || "?")))].join("+") + ") كصور مستقلة قابلة للتحريك: " + els.map(e => e.label).join("، ") + (fails.length ? " — تعذّر عزل: " + fails.join("، ") : "") + (localFilled ? " — مُلئت الخلفية محلياً (تقريبي لتعذّر الخدمة)" : "") + (fillFail ? " — تعذّرت إعادة رسم الخلفية فبقيت الأصول تحتها" : "") + " — للتراجع Ctrl+Z"); } catch (e) { }
         } catch (e) { console.error(e); tintOff(); busy = false; if (!sh.S.closed) { $("pbs-go").textContent = "↻ إعادة المحاولة"; say("⚠️ " + (e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : (e.message || e))); $("pbs-go").disabled = false; } }
@@ -192,13 +192,13 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
           const runSam = async () => { let sam = null; try { if (!samP && AICapture.samPrep) samP = AICapture.samPrep(cv); sam = await AICapture.samCuts(cv, chosen, { onStep: say, prep: samP }); } catch (e) { } if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; return true; } return false; };      // تجزئة SAM بمربع كل عنصر (مجانية محلية)
           if (useSam) await runSam();
           const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { noPro, onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && e.code === "SANDBOX") { sbx = true; next = chosen.length; return; } if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
-          await Promise.all([worker(), worker(), worker(), worker(), worker()]); if (sh.S.closed) return;
+          await Promise.all(Array.from({ length: Math.max(1, Math.min(chosen.length, 8)) }, worker)); if (sh.S.closed) return;
           if (sbx) {      // مفتاح فوتوروم لا يقصّ فعلياً (تجريبي): نكمل بتجزئة SAM بمربع كل عنصر ثم الفصل اللوني داخل المربع
             cuts.length = 0; fails.length = 0; dn = 0; say("⚠️ فوتوروم لا يقصّ (مفتاح تجريبي) — نستعمل التجزئة المحلية");
             if (!(await runSam())) { noPro = true; next = 0; await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; }
           }
           if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
-          for (let i = 0; i < cuts.length; i++) { const c = cuts[i], b = c.item && (c.item._src || c.item).box; if (b) try { cuts[i] = AICapture.clipBox(c, b, .04); } catch (e) { console.warn("clipBox", e); } }      // لا يخرج القصّ عن مربع العنصر (وجه/يد مجاورة)
+          for (let i = 0; i < cuts.length; i++) { const c = cuts[i], b = c.item && (c.item._src || c.item).box; if (b) try { cuts[i] = AICapture.clipBox(c, b, .025); } catch (e) { console.warn("clipBox", e); } }      // لا يخرج القصّ عن مربع العنصر (وجه/يد مجاورة)
           try { AICapture.separate(cuts); } catch (e) { console.warn("separate", e); }      // العنصر الأصغر يُطرح من الأكبر المتداخل معه
           cuts.sort((a, b) => (a.y0 + a.h) - (b.y0 + b.h)); const nm = {}, cnt = {}; cuts.forEach(c => cnt[c.label] = (cnt[c.label] || 0) + 1); cuts.forEach(c => { nm[c.label] = (nm[c.label] || 0) + 1; c.label = cnt[c.label] > 1 ? c.label + " " + nm[c.label] : c.label; });
           tintOff(); busy = false; await finish(cuts, fails);
