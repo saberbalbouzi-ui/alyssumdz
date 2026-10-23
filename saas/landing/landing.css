@@ -76,5 +76,5 @@ footer{background:#040c08;color:var(--mu);padding:1.6rem 0;font-size:.88rem}foot
 h2 .cnt{font-size:.9rem;font-weight:600;color:var(--ltm)}.tipsg{max-width:900px;margin:0 auto}
 #lbx{position:fixed;inset:0;z-index:99;background:rgba(4,12,8,.92);display:none;align-items:center;justify-content:center;padding:1.2rem;cursor:zoom-out}#lbx.on{display:flex}
 #lbx img{max-width:96vw;max-height:88vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)}#lbx b{position:absolute;bottom:1.2rem;left:0;right:0;text-align:center;color:#fff;font-weight:700}
-html.emb .top,html.emb footer,html.emb .site{display:none!important}html.emb .hero{padding-top:1.4rem}
+html.emb .top,html.emb footer,html.emb .site{display:none!important}html.emb,html.emb body{scrollbar-width:none;-ms-overflow-style:none}html.emb::-webkit-scrollbar,html.emb body::-webkit-scrollbar,html.emb *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}html.emb .hero{padding-top:1.4rem}
 @media(max-width:700px){.gal{columns:2 150px}}
