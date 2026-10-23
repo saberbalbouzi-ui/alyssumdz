@@ -147,7 +147,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     b.onclick = async () => { const t = AICapture.report() + (extra && extra() ? "\n" + extra() : ""); try { await navigator.clipboard.writeText(t); b.textContent = "✅ نُسخ — الصقه في المحادثة"; } catch (e) { prompt("انسخ التقرير:", t); } }; host.appendChild(b); }
   async function apiCapture(sh, cv, inf, w) {
     const $ = sh.$, W = cv.width, H = cv.height;
-    const stopScan = scanFx(sh, cv); const samP = (typeof ImgCfg === "undefined" || ImgCfg.get("capture", "engine", "auto") !== "photoroom") && AICapture.samPrep ? AICapture.samPrep(cv) : null; $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر…"; let items;
+    const stopScan = scanFx(sh, cv); let samP = (typeof ImgCfg !== "undefined" && ImgCfg.get("capture", "engine", "auto") === "sam" || AICapture.sbxKnown && AICapture.sbxKnown()) && AICapture.samPrep ? AICapture.samPrep(cv) : null; $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر…"; let items;
     try { items = await AICapture.detectAll(cv, { onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); }
     catch (e) { stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل التقاط العناصر" : String(e && e.message || e).slice(0, 160)); if (!(e && (e.code === "OFF" || e.code === "NOKEY"))) repBtn($("pbs-load")); return null; }
     stopScan(); if (sh.S.closed) return null; $("pbs-load").style.display = "none";
@@ -188,8 +188,8 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         if (busy) return; busy = true; $("pbs-go").disabled = true; tintOn(); const chosen = items.slice();
         try {
           const cuts = [], fails = []; failsAll = fails; let next = 0, dn = 0;
-          let sbx = false, noPro = false; const useSam = typeof ImgCfg === "undefined" || ImgCfg.get("capture", "engine", "auto") !== "photoroom";
-          const runSam = async () => { let sam = null; try { sam = await AICapture.samCuts(cv, chosen, { onStep: say, prep: samP }); } catch (e) { } if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; return true; } return false; };      // تجزئة SAM بمربع كل عنصر (مجانية محلية)
+          let sbx = false, noPro = false; const useSam = typeof ImgCfg !== "undefined" && ImgCfg.get("capture", "engine", "auto") === "sam" || !!(AICapture.sbxKnown && AICapture.sbxKnown());
+          const runSam = async () => { let sam = null; try { if (!samP && AICapture.samPrep) samP = AICapture.samPrep(cv); sam = await AICapture.samCuts(cv, chosen, { onStep: say, prep: samP }); } catch (e) { } if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; return true; } return false; };      // تجزئة SAM بمربع كل عنصر (مجانية محلية)
           if (useSam) await runSam();
           const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { noPro, onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && e.code === "SANDBOX") { sbx = true; next = chosen.length; return; } if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
           await Promise.all([worker(), worker(), worker(), worker(), worker()]); if (sh.S.closed) return;

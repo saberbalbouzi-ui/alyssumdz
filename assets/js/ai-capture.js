@@ -7,7 +7,7 @@
    الاحتياط: إن لم يعطِ الخدمة قناعاً صالحاً يُستعمل مربع العنصر مع فصل لوني محلي. لم يُجرَّب بمفتاح حقيقي (اختُبر بمحاكاة الخدمة). */
 const AICapture = (function () {
   "use strict";
-  const MAXPX = 3.2e6, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  let SBX = 0; const sbxKnown = () => Date.now() - SBX < 6e5, MAXPX = 3.2e6, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const T = () => (typeof PBBgRemove !== "undefined" && PBBgRemove._t) || null;
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const toBlob = (c, type, q) => new Promise(r => c.toBlob(r, type || "image/png", q));
@@ -38,7 +38,7 @@ const AICapture = (function () {
     "Return ONLY a JSON array (at most MAX items) of objects like {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000 and boxes that tightly enclose the whole object.";
   const LAST = { req: null, raw: null, err: null, counts: null };      // تقرير آخر طلب لتشخيص الفشل (يُنسخ من الواجهة)
   async function ask(prompt, canvas, o) {
-    const blob = await toBlob(canvas, "image/jpeg", .85);
+    const blob = await toBlob(canvas, "image/jpeg", .8);
     LAST.req = { prompt: String(prompt).slice(0, 60), w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null;
     try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1024, mime: true, temp: o && o.temp != null ? o.temp : 0, noThink: true, models: ["gemini-2.5-flash"], maxModels: 3, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
@@ -61,7 +61,7 @@ const AICapture = (function () {
   /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
   async function detectAll(cv, o) {
     o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…");
-    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 2048, temp: .3, signal: o.signal })), build = async arr => {
+    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 1536, temp: .3, signal: o.signal })), build = async arr => {
       const items = [], W = cv.width, H = cv.height;
       for (const e of arr) { if (!e || typeof e !== "object") continue; const pts = polyPts(e); let b = boxOf(e);
         if (!b && pts) { const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys); if (x1 - x0 >= 8 && y1 - y0 >= 8) b = { x0, y0, x1, y1 }; }      // مربع مفقود: يُشتق من حدود المضلّع
@@ -117,15 +117,16 @@ const AICapture = (function () {
     let M = null, method = "api";
     /* القصّ الدقيق = Photoroom (دالة الخادم bg-remove) على مقطع العنصر؛ ألفا الخدمة مع ألوان الأصل. عند تعذّره يُستعمل قناع الكشف كاحتياط */
     if (!o.noPro && typeof PBBgRemove !== "undefined" && PBBgRemove.proCut) {
+      if (sbxKnown()) { const e0 = new Error("SANDBOX"); e0.code = "SANDBOX"; throw e0; }      // المفتاح التجريبي معروف: لا طلب لكل عنصر
       try {
-        step("⏳ قصّ «" + item.label + "»…"); const pc = await PBBgRemove.proCut(work, {}), pg = pc.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh), wd = work.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh), nn = ww * wh;
+        step("⏳ قصّ «" + item.label + "»…"); const pc = await PBBgRemove.proCut(work, { jpeg: true }), pg = pc.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh), wd = work.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, ww, wh), nn = ww * wh;
         let q0 = ww, r0 = wh, q1 = -1, r1 = -1, sol = 0; for (let i = 0; i < nn; i++) { const a = pg.data[i * 4 + 3]; wd.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { sol++; const x = i % ww, y = (i / ww) | 0; if (x < q0) q0 = x; if (x > q1) q1 = x; if (y < r0) r0 = y; if (y > r1) r1 = y; } }
         const bn0 = Math.max(1, (bx1 - bx0) * (by1 - by0));
         if (q1 >= 0 && sol / bn0 > .06 && sol / bn0 < 1.4) {
           const full = mk(ww, wh); full.getContext("2d").putImageData(wd, 0, 0); const cw = q1 - q0 + 1, ch = r1 - r0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, q0, r0, cw, ch, 0, 0, cw, ch);
           return { canvas: out, x0: rx0 + q0 / s, y0: ry0 + r0 / s, w: cw / s, h: ch / s, label: item.label, method: "photoroom", cov: sol / nn, item };
         }
-      } catch (e) { if (e && (e.code === "NOKEY" || e.code === "SANDBOX")) throw e; console.warn("AICapture photoroom", e); }
+      } catch (e) { if (e && e.code === "SANDBOX") SBX = Date.now(); if (e && (e.code === "NOKEY" || e.code === "SANDBOX")) throw e; console.warn("AICapture photoroom", e); }
     }
     if (item.pre) {      // قناع جاهز من طلب الكشف: يُنقل إلى إحداثيات العمل بلا أي طلب إضافي
       const pr = item.pre; M = new Float32Array(ww * wh);
@@ -206,6 +207,6 @@ const AICapture = (function () {
   }
   /* تحميل SAM وترميز الصورة بالتوازي مع طلب الكشف (توفير زمن الانتظار) */
   function samPrep(cv, onStep) { const V = typeof AIVision !== "undefined" ? AIVision : null; if (!V || !V.supported || !V.supported() || !V.analyze) return null; const p = V.analyze(cv, { noDetect: true, onStep: onStep || (() => { }) }); p.catch(() => { }); return p; }
-  return { ready, samPrep, clipBox, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, samCuts, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
+  return { ready, samPrep, clipBox, sbxKnown, report: () => JSON.stringify(LAST, null, 1), detect, detectAll, samCuts, cutout, fillBg, localFill, separate, eraseCuts, _t: { parseLoose, polyPts, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AICapture = AICapture;

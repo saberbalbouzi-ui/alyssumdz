@@ -310,7 +310,7 @@ const PBBgRemove = (function () {
   const b64Of = blob => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] || ""); fr.onerror = () => rej(new Error("تعذّر قراءة الصورة")); fr.readAsDataURL(blob); });
   async function apiCut(srcC, o) {
     if (!segOK()) { const e = new Error("نزع الخلفية يتطلب تسجيل الدخول إلى اللوحة"); e.code = "NOKEY"; throw e; }
-    let blob = await new Promise(r => srcC.toBlob(r, "image/png")); if (blob.size > 9 * 1048576) blob = await new Promise(r => srcC.toBlob(r, "image/jpeg", .95));
+    let blob = await new Promise(r => o && o.jpeg ? srcC.toBlob(r, "image/jpeg", .92) : srcC.toBlob(r, "image/png")); if (blob.size > 9 * 1048576) blob = await new Promise(r => srcC.toBlob(r, "image/jpeg", .95));
     if (blob.size > 9.5 * 1048576) throw new Error("الصورة أكبر من حدّ الخدمة (≈9MB) — قلّل حجم الملف");
     const t = await API.sb.token(); if (!t) { const e = new Error("انتهت الجلسة — سجّل الدخول من جديد"); e.code = "NOKEY"; throw e; }
     if (o && o.onStep) o.onStep("⏳ جارٍ القصّ…"); const t0 = Date.now();
