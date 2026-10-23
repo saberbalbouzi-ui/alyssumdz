@@ -14,15 +14,20 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     await PBApp.toolSession([blob], "mk", "t"); const E = PBApp.E, sec = E.page.sections[0], base = (sec.free || []).find(w => w.type === "image"); out.before = (sec.free || []).filter(w => w.type === "image").length;
     PBSmart.captureElements();
     const wait = async (f, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (f()) return true; await new Promise(z => setTimeout(z, 150)); } return false; };
-    out.preview = await wait(() => document.getElementById("pbs-ok"), 20000);
-    const st = document.getElementById("pbs-stage"); out.noBoxes = !!st && [...st.querySelectorAll("canvas")].length === 1; out.segHidden = (document.getElementById("pbs-seg") || {}).style && document.getElementById("pbs-seg").style.display === "none"; out.calls = calls.join(",");
-    if (out.preview) { document.getElementById("pbs-ok").click(); await wait(() => (sec.free || []).filter(w => w.type === "image").length >= 3, 15000); }
-    out.after = (sec.free || []).filter(w => w.type === "image").length; return out;
+    const st = document.getElementById("pbs-stage"); out.seg = await wait(() => { const sg = document.getElementById("pbs-seg"); return sg && sg.style.display === "none"; }, 8000); out.noBoxes = !!st && [...st.querySelectorAll("canvas")].length === 1;
+    out.applied = await wait(() => (sec.free || []).filter(w => w.type === "image").length >= 3, 25000); out.noPreview = !document.getElementById("pbs-ok"); out.calls = calls.join(",");
+    out.after = (sec.free || []).filter(w => w.type === "image").length;
+    /* نزع الخلفية: تُطبَّق النتيجة مباشرة */
+    const m = document.createElement("canvas"); m.width = 64; m.height = 64; const mg = m.getContext("2d"); mg.fillStyle = "#000"; mg.fillRect(0, 0, 64, 64); mg.fillStyle = "#fff"; mg.fillRect(6, 6, 52, 52); const murl = m.toDataURL("image/png");
+    ImgGen.text = async o => JSON.stringify([{ label: "منتج", box_2d: [200, 200, 800, 800], mask: murl }]); const src0 = base.set.src;
+    await PBBgRemove.live({ node: base }); out.bg = { changed: base.set.src !== src0, noBar: !document.getElementById("pbx-epf"), chip: (document.getElementById("pbbg-chip") || {}).textContent || "" };
+    return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
   ok(!r.err, "لا أخطاء تنفيذ", r.err); if (r.err) { await b.close(); process.exit(1); }
-  ok(r.preview, "الالتقاط يبدأ تلقائياً ويصل إلى معاينة حفظ/إلغاء بلا اختيار", r);
-  ok(r.noBoxes && r.segHidden, "لا مربعات حول العناصر ولا أزرار عنصر/كل العناصر", r);
+  ok(r.applied && r.noPreview, "الالتقاط يبدأ تلقائياً وتُطبَّق النتيجة مباشرة بلا معاينة ولا اختيار", r);
+  ok(r.noBoxes && r.seg, "لا مربعات حول العناصر ولا أزرار عنصر/كل العناصر", r);
+  ok(r.bg && r.bg.changed && r.bg.noBar && /نُفِّذ/.test(r.bg.chip), "نزع الخلفية يُطبَّق مباشرة بعد المسحة الأولى", r.bg);
   ok(r.after === r.before + 2, "العنصران صارا صورتين حرتين", r);
   ok(!errs.length, "لا أخطاء صفحة", errs); console.log(fails.length ? "\n✗ " + fails.length + " فشل" : "\n✓ " + n + " فحصاً ناجحاً"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();

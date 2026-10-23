@@ -416,8 +416,8 @@ const PBBgRemove = (function () {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
       const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); } LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
-      await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة");
-    } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
+      LV.busy = false; await lvApply();      // كانفا: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
+    } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لإخفاء الرسالة)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = () => c.remove(); clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
   return { open, live, autoCut, confidence, keepSubject, _t: { uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
