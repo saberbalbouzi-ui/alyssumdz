@@ -101,13 +101,13 @@ const AIBgCut = (function () {
   }
   /* (3) نزع الخلفية بطلب واحد: تطلب الخدمة قناع الموضوع الرئيسي (حتى 3 عناصر) من الصورة كاملة في ردّ واحد، ثم تُصقل الحواف محلياً من بكسلات صورتك الأصلية
      (ماتينغ بدقة البكسل) فتخرج نتيجة واحدة بحجم الأصل — كنزع خلفية كانفا بنقرة واحدة. محاولة واحدة؛ إن جاء الردّ بلا قناع صالح يُرفض بوضوح بسببه (لا إعادة ولا بدائل محلية). */
-  const MASKFMT = "Return ONLY a JSON list of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"polygon\":[[y,x],...]} where polygon is the exact visible outline of the kept object as 60 to 140 points [y,x] normalized to 0-1000 over the WHOLE image, in order around the outline, more points on curves, fingers and hair. No base64, no other fields. ";
+  const MASKFMT = "Return ONLY a JSON list of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"polygon\":[[y,x],...],\"holes\":[[[y,x],...]]} where polygon is the exact visible outline of the kept object hugging its edge as 100 to 200 points [y,x] normalized to 0-1000 over the WHOLE image, in order around the outline, with many points on curves, fingers, hair and fabric folds, and holes (optional, may be empty) are polygons of background seen THROUGH the object (gaps between arm and body, loops of hair, handles). Stay INSIDE the object edge, never outside it. No base64, no other fields. ";
   /* محاولة واحدة دقيقة بالذكاء: برومبت واحد يحمل قاعدة القرار بنفسه (ما يبقى وما يُزال) فيصلح لكل صورة بلا طلب تحليل ولا بدائل */
   const ATTEMPTS = [
-    { id: "one", maxTokens: 6144, temp: .2, prompt: "One-click background removal like Canva. Return the outline(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
+    { id: "one", maxTokens: 8192, temp: .2, prompt: "One-click background removal like Canva. Return the outline(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
       "A person holding a product is ONE entry that covers both, following the exact visible outline (hair, fingers, fabric edges, the product's rim). " +
-      "Include furniture or objects ONLY when the subject is physically sitting at, leaning on or touching them (extra entries are allowed for those). " +
-      "Everything else is background and must NOT appear in any mask: plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
+      "Include a separate object ONLY when the subject is physically sitting on, leaning on or holding it (extra entries for those); never include table tops, counters, floors, shelves, rugs, shadows or reflections as surfaces, even if the product stands on them. " +
+      "Everything else is background and must NOT appear in any outline: surfaces, plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
   ];
   async function subjectMask(work, o, at) {
     at = at || ATTEMPTS[0]; const ww = work.width, wh = work.height, why = t => ({ M: null, why: t });
@@ -115,7 +115,8 @@ const AIBgCut = (function () {
     arr = (arr || []).filter(e => e && typeof e === "object"); if (!arr.length) return why("ردّ بلا عناصر");
     const M = new Float32Array(ww * wh), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0); let used = 0, poly = false, nPoly = 0;
     const polys = arr.map(e => ({ e, pts: polyPts(e) })).filter(q => q.pts); nPoly = polys.length;
-    polys.slice(0, 6).forEach(q => { const R = polyRaster(q.pts, ww, wh, 0, 0, ww / 1000, wh / 1000); let sum = 0; for (let i = 0; i < R.length; i++) if (R[i] > .5) sum++; const r = sum / R.length; if (r < .004 || r > .985) return; for (let i = 0; i < R.length; i++) if (R[i] > M[i]) M[i] = R[i]; used++; poly = true; });
+    polys.slice(0, 6).forEach(q => { const R = polyRaster(q.pts, ww, wh, 0, 0, ww / 1000, wh / 1000); let sum = 0; for (let i = 0; i < R.length; i++) if (R[i] > .5) sum++; const r = sum / R.length; if (r < .004 || r > .985) return; (Array.isArray(q.e.holes) ? q.e.holes : []).slice(0, 8).forEach(hp => { const hq = polyPts({ polygon: hp }); if (!hq) return; const Hh = polyRaster(hq, ww, wh, 0, 0, ww / 1000, wh / 1000); let hs = 0; for (let i = 0; i < Hh.length; i++) if (Hh[i] > .5) hs++; if (hs / Hh.length > sum / R.length * .4) return; for (let i = 0; i < R.length; i++) if (Hh[i] > .5) R[i] = 0; });      // ثقوب (فراغ بين الذراع والجسم…): تُطرح من المضلّع، وثقب أكبر من 40% من العنصر مرفوض
+      for (let i = 0; i < R.length; i++) if (R[i] > M[i]) M[i] = R[i]; used++; poly = true; });
     if (!used) {      // قناع PNG قديم الصيغة إن أعاده النموذج بدل المضلّع
       let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask);
       if (!cand.length) return why(nPoly ? "مضلّع غير معقول" : "ردّ بلا مضلّع (" + arr.length + " عنصراً)");
