@@ -321,7 +321,9 @@ const PBBgRemove = (function () {
     }
     const bin = atob(j.b64), u = new Uint8Array(bin.length); for (let i = 0; i < u.length; i++) u[i] = bin.charCodeAt(i);
     const bmp = await createImageBitmap(new Blob([u], { type: j.type || "image/png" })), c = document.createElement("canvas"); c.width = srcC.width; c.height = srcC.height;
-    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); if (o) o.diagBase = "photoroom"; return c;
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    try { const sm = document.createElement("canvas"); sm.width = 64; sm.height = 64; const sg = sm.getContext("2d", { willReadFrequently: true }); sg.drawImage(c, 0, 0, 64, 64); const d = sg.getImageData(0, 0, 64, 64).data; let op = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 250) op++; PRO.opq = op / 4096; if (op / 4096 > .985) { const e = new Error("أعادت الخدمة الصورة كاملة بلا قصّ (غالباً مفتاح فوتوروم تجريبي يضع علامة مائية) — استبدله بمفتاح حقيقي"); e.code = "SANDBOX"; throw e; } } catch (e2) { if (e2 && e2.code === "SANDBOX") throw e2; }
+    if (o) o.diagBase = "photoroom"; return c;
   }
   const METHODS = { seg: apiCut, key: keyCut, ai: aiCut, all: (c, o) => aiCut(c, Object.assign({}, o, { variant: "all" })), classic: classicCut, gmm: (c, o) => classicCut(c, Object.assign({}, o, { noFlood: true })) };
   /* يجرّب الطرق بالترتيب حتى تنجح إحداها (نتيجة بتغطية معقولة) ← { canvas, method } */
