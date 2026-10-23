@@ -35,6 +35,14 @@ body{overflow-x:hidden;margin:0}`;
 #pb-app.on{display:flex}
 .pbx-tabs button.pbx-ah[data-lt="pub"]{display:none}#pb-app.pbx-ad .pbx-tabs button.pbx-ah[data-lt="pub"]{display:flex}.pbx-adx,.pbx-adsz{display:none!important}#pb-app.pbx-ad .pbx-adx,#pb-app.pbx-ad .pbx-adsz{display:inline-flex!important}
 #pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx):not(.pbx-adsz),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-spb,#pb-app.pbx-ad #pbx-rcb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2,#pb-app.pbx-ad #pbx-prev,#pb-app.pbx-ad .pbx-itabs{display:none!important}#pbx-upd{display:none!important}
+/* وضع نافذة الأداة (ستوديو ديزاين): الصورة + إعدادات الأداة + شريط نتيجة سفلي (فتح في المحرر / تحميل / حفظ في المكتبة) */
+#pbx-tbar{display:none;position:relative;z-index:10003;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.55rem .9rem;background:#173f35;color:#fff;border-top:1px solid rgba(198,254,23,.25)}
+#pb-app.pbx-tool #pbx-tbar{display:flex}#pbx-tbar b{font-weight:900;font-size:.95rem;margin-inline-end:auto}
+#pbx-tbar button,#pbx-tbar select{font-family:inherit;font-weight:800;font-size:.85rem;color:#fff;border:1px solid rgba(255,255,255,.28);border-radius:12px;padding:.5rem 1rem;cursor:pointer;background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 6px rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:transform .15s,background .15s}
+#pbx-tbar select{padding:.5rem .6rem;width:auto!important;height:auto!important;margin:0!important;flex:none}#pbx-tbar button{flex:none;white-space:nowrap}#pbx-tbar b{flex:1 1 auto}#pbx-tbar select option{color:#173f35}
+#pbx-tbar button:hover{transform:translateY(-2px);background:rgba(255,255,255,.2)}#pbx-tbar button.g{background:rgba(198,254,23,.22);border-color:rgba(198,254,23,.55)}#pbx-tbar button.g:hover{background:rgba(198,254,23,.38)}
+#pb-app.pbx-tool .pbx-left,#pb-app.pbx-tool #pbx-rz2,#pb-app.pbx-tool #pbx-rz,#pb-app.pbx-tool .pbx-add2,#pb-app.pbx-tool #pbx-tgl,#pb-app.pbx-tool #pbx-tgr,#pb-app.pbx-tool #pbx-title,#pb-app.pbx-tool #pbx-rn,#pb-app.pbx-tool #pbx-more,#pb-app.pbx-tool #pbx-adsz,#pb-app.pbx-tool #pbx-adx,#pb-app.pbx-tool .pbx-top .pub,#pb-app.pbx-tool #pbx-histb,#pb-app.pbx-tool #pbx-upb{display:none!important}
+#pb-app.pbx-tool #pbx-insp>*{display:none!important}#pb-app.pbx-tool #pbx-insp::before{content:"إعدادات الأداة تظهر هنا — اضغط «الإعدادات» أسفل الصفحة إن أغلقتَها";display:block;padding:1.2rem .9rem;color:#6b6556;font-size:.82rem;line-height:1.8}
 .pbx-top{display:flex;align-items:center;gap:.4rem;padding:.45rem .8rem;background:#173f35;color:#fff;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;white-space:nowrap}.pbx-top>*{flex:none}
 .pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
 .pbx-top input{background:#fff;border:0;border-radius:8px;padding:.3rem .55rem;font-weight:800;width:auto;field-sizing:content;flex:0 1 auto;min-width:6ch;max-width:26ch;font-family:inherit;font-size:.85rem;color:#173f35}#pbx-rn{padding:.42rem .5rem!important}
@@ -267,6 +275,7 @@ body{overflow-x:hidden;margin:0}`;
   <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
   <aside class="pbx-right" id="pbx-insp"></aside>
 </div>
+<div id="pbx-tbar" dir="rtl"><b id="pbx-tname"></b><button type="button" data-tb="reopen" title="إعادة فتح إعدادات الأداة">⚙ الإعدادات</button><button type="button" data-tb="editor" title="متابعة العمل على الصورة في مطوّر الصفحات">✏️ فتح في المحرر</button><select id="pbx-tfmt" title="صيغة التنزيل"><option value="png">PNG</option><option value="webp">WebP</option></select><button type="button" class="g" data-tb="dl" title="تنزيل الصورة النهائية">⬇ تحميل</button><button type="button" class="g" data-tb="lib" title="حفظ الصورة في مكتبة الموقع">💾 حفظ في المكتبة</button><button type="button" data-tb="x" title="إغلاق النافذة">✕ إغلاق</button></div>
 <div class="pbx-mbar2" id="pbx-mbar2">
   <b id="pbx-mmn">☑ 0</b><button onclick="PBApp.ma('copy')" title="نسخ المحدّد">⧉<small>نسخ</small></button><button onclick="PBApp.ma('dup')" title="تكرار المحدّد">➕<small>تكرار</small></button>
   <button onclick="PBApp.ma('group')" title="ربط العناصر ببعضها">🔗<small>ربط</small></button><button onclick="PBApp.ma('ungroup')" title="تفكيك الربط">⛓<small>تفكيك</small></button>
@@ -294,6 +303,7 @@ body{overflow-x:hidden;margin:0}`;
       st.addEventListener("touchmove", e => { if (pz && e.touches.length === 2) { e.preventDefault(); setZoom(pz.z * d2(e.touches) / pz.d); } }, { passive: false });
       st.addEventListener("touchend", e => { if (e.touches.length < 2) pz = null; }); }
     d.addEventListener("click", e => {
+      const tb = e.target.closest("#pbx-tbar [data-tb]"); if (tb) { toolAct(tb.dataset.tb); return; }
       const z = e.target.closest("[data-z]"); if (z) { const c = z.dataset.z; setZoom(c === "0" ? 1 : (E.zoom || 1) * (c === "+" ? 1.15 : 1 / 1.15)); return; }
       const mb = e.target.closest("#pbx-moreb"), mw = $("pbx-more"); if (mb) { const o = mw.classList.toggle("open"); mb.setAttribute("aria-expanded", o ? "true" : "false"); return; }
       if (mw && mw.classList.contains("open") && !e.target.closest("#pbx-more")) { mw.classList.remove("open"); const b = $("pbx-moreb"); if (b) b.setAttribute("aria-expanded", "false"); }
@@ -316,7 +326,7 @@ body{overflow-x:hidden;margin:0}`;
   function open(page, slug, isNew) {
     build();
     E.page = PB.migrate(clone(page)); E.ab = null; E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
-    $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
+    E.toolMode = null; $("pb-app").classList.remove("pbx-tool"); $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
@@ -334,7 +344,7 @@ body{overflow-x:hidden;margin:0}`;
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
     closeFloating();
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
-    $("pb-app").classList.remove("on", "pbx-ad"); document.body.style.overflow = "";
+    E.toolMode = null; $("pb-app").classList.remove("on", "pbx-ad", "pbx-tool"); document.body.style.overflow = "";
     purgeUnsaved(true).then(n => { if (n) toast("🧹 حُذفت " + n + " صورة غير محفوظة ونُظّفت المكتبة"); });
     if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
   }
@@ -1422,10 +1432,28 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     }
     if (!first) { toast("تعذّر رفع الصورة"); return false; }
     await new Promise(r => setTimeout(r, 500)); select(first.id);
-    const k = TS_KEY[tool]; if (k === "xp" && typeof PBAI !== "undefined") PBAI.setXpMode("ai");
-    if (tool === "af") { if (typeof PBSmart !== "undefined" && PBSmart.autoFocus) PBSmart.autoFocus(selInfo()); } else if (tool === "blur") { if (typeof PBSmart !== "undefined" && PBSmart.blur) PBSmart.blur(selInfo()); } else if (tool === "erase") imgSmart("erase"); else if (tool === "scene") imgSmart("scene"); else if (k) imgPick(k);
-    toast("✅ الصورة جاهزة" + (k || tool === "erase" || tool === "scene" || tool === "blur" || tool === "af" ? " والأداة مفتوحة" : "") + " — بعد التعديل اضغط «تصدير الصورة» للتنزيل أو الحفظ في المكتبة");
+    const reopen = () => {
+      const k = TS_KEY[tool]; if (E.last && !E.sel) { try { select(E.last); } catch (x) { } } if (k === "xp" && typeof PBAI !== "undefined") PBAI.setXpMode("ai");
+      if (tool === "af") { if (typeof PBSmart !== "undefined" && PBSmart.autoFocus) PBSmart.autoFocus(selInfo()); } else if (tool === "blur") { if (typeof PBSmart !== "undefined" && PBSmart.blur) PBSmart.blur(selInfo()); } else if (tool === "erase") imgSmart("erase"); else if (tool === "scene") imgSmart("scene"); else if (k) imgPick(k);
+    };
+    toolModeOn(tool, nm || "تعديل صورة", first.id, reopen); reopen();
+    toast("✅ الصورة جاهزة — اضبط إعدادات الأداة ثم اختر: فتح في المحرر أو تحميل أو حفظ في المكتبة");
     return true;
+  }
+  /* وضع نافذة الأداة: يُخفي أشرطة المحرر ويُبقي الصورة + إعدادات الأداة + شريط النتيجة؛ «فتح في المحرر» يعيد المحرر الكامل بنفس الصورة */
+  function toolModeOn(tool, name, id, reopen) {
+    E.toolMode = { tool, name, id, reopen }; const app = $("pb-app"); app.classList.add("pbx-tool"); const n = $("pbx-tname"); if (n) n.textContent = name;
+    setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60);
+  }
+  function toolModeOff() { E.toolMode = null; $("pb-app").classList.remove("pbx-tool"); try { renderLeft(); } catch (x) { } setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60); toast("✏️ المحرر الكامل مفتوح — الصورة في الصفحة جاهزة للتعديل"); }
+  function toolAct(a) {
+    const T = E.toolMode; if (!T) return;
+    if (a === "reopen") { if (T.reopen) T.reopen(); return; }
+    if (a === "editor") { toolModeOff(); return; }
+    if (a === "x") { close(); return; }
+    if (E.live) { toast("⏳ اضغط «تنفيذ» على نتيجة الأداة أولاً (أو «إلغاء») ثم احفظ"); return; }
+    if (typeof ImgGen === "undefined" || !ImgGen.exportAd) { toast("مولّد الصور غير متاح"); return; }
+    if (a === "dl") ImgGen.exportAd({ act: "download", fmt: ($("pbx-tfmt") || {}).value || "png" }); else if (a === "lib") ImgGen.exportAd({ act: "library" });
   }
   /* صفوف إضافية في قوائم «إنشاء/تعديل/أتمتة»: تنقّل لأدوات موجودة أو أدوات قيد التطوير */
   function goAdmin(tab) {
@@ -3108,7 +3136,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { toolSession, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { toolSession, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

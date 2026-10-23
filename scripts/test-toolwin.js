@@ -36,6 +36,14 @@ const root = path.join(__dirname, "..");
   await p.waitForFunction(() => !document.getElementById("tw-bg") && PBApp.E && PBApp.E.page && PBApp.E.page.ad && document.getElementById("pbx-ep"), null, { timeout: 25000 }).catch(() => { });
   const ss = await p.evaluate(() => { const E = PBApp.E, sec = E && E.page && E.page.sections[0], im = sec && (sec.free || []).find(w => w.type === "image"), ep = document.getElementById("pbx-ep"); return { ad: !!(E.page && E.page.ad), hasImg: !!im, sel: !!(im && E.sel === im.id), size: E.page && E.page.ad && E.page.ad.w + "x" + E.page.ad.h, panel: !!ep, ept: E.ept, closed: !document.getElementById("tw-bg") }; });
   t("الجلسة: لوحة بمقاس الصورة (150×100) والصورة محدّدة ولوحة «ماسك» مفتوحة", ss.ad && ss.hasImg && ss.sel && ss.size === "150x100" && ss.panel && ss.ept === "mk" && ss.closed, ss);
+  /* وضع نافذة الأداة: شريط النتيجة (فتح في المحرر/تحميل/حفظ في المكتبة) وإخفاء أشرطة المحرر، ثم «فتح في المحرر» يعيدها */
+  const tm = await p.evaluate(async () => { const v = id => { const e = document.getElementById(id); return !!(e && e.offsetParent !== null); }, app = document.getElementById("pb-app"), B = () => [...document.querySelectorAll("#pbx-tbar [data-tb]")].map(b => b.dataset.tb);
+    const r = { on: app.classList.contains("pbx-tool"), bar: v("pbx-tbar"), btns: B().join(","), left: v("pbx-lside"), pub: [...document.querySelectorAll(".pbx-top .pub")].some(b => b.offsetParent !== null), panel: (() => { const e = document.getElementById("pbx-ep"); const r = e && e.getBoundingClientRect(); return !!(r && r.width > 150 && r.height > 150); })(), name: document.getElementById("pbx-tname").textContent };
+    const calls = []; const ex = ImgGen.exportAd; ImgGen.exportAd = o => { calls.push(o && o.act + ":" + o.fmt); return Promise.resolve(); };
+    document.querySelector('#pbx-tbar [data-tb="dl"]').click(); document.querySelector('#pbx-tbar [data-tb="lib"]').click(); ImgGen.exportAd = ex; r.calls = calls.join(",");
+    document.querySelector('#pbx-tbar [data-tb="editor"]').click(); await new Promise(z => setTimeout(z, 200)); r.off = !app.classList.contains("pbx-tool") && !PBApp.toolMode(); r.leftBack = v("pbx-lside"); return r; });
+  t("وضع نافذة الأداة: شريط النتيجة ظاهر وأشرطة المحرر مخفية وإعدادات الأداة مفتوحة", tm.on && tm.bar && !tm.left && !tm.pub && tm.panel && /reopen,editor,dl,lib,x/.test(tm.btns) && !!tm.name, tm);
+  t("تحميل/حفظ في المكتبة يستدعيان التصدير المباشر، و«فتح في المحرر» يعيد المحرر الكامل", tm.calls === "download:png,library:undefined" && tm.off && tm.leftBack, tm);
   /* كل أدوات الصور تفتح لوحتها على الصورة (بلا مفتاح: لا شبكة) */
   const all = await p.evaluate(async () => {
     window.confirm = () => true; window.alert = () => { }; try { ImgGen.edit = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; ImgGen.ready = () => ({ ok: false, nokey: true }); } catch (e) { }

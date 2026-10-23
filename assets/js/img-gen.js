@@ -666,11 +666,14 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
       return cv;
     } finally { fr.remove(); }
   }
-  async function exportAd() {
+  async function exportAd(o) {
     const P = PBApp.E && PBApp.E.page; if (!P || !P.ad) return toast("هذه ليست لوحة إشهارية");
     toast("⏳ جارِ تجهيز الصورة…");
     try {
-      const cv = await renderAd(P); S.res = cv; S.resName = (P.title || "ad").slice(0, 40); const url = cv.toDataURL("image/png");
+      const cv = await renderAd(P); S.res = cv; S.resName = (P.title || "ad").slice(0, 40);
+      if (o && o.act === "download") { await download(o.fmt === "webp" ? "webp" : "png"); toast("✅ نُزّلت الصورة"); return; }      // وضع نافذة الأداة: بلا نافذة وسيطة
+      if (o && o.act === "library") { return await toLibrary(false); }
+      const url = cv.toDataURL("image/png");
       let ov = $("ig-exp"); if (ov) ov.remove(); ov = document.createElement("div"); ov.id = "ig-exp";
       ov.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(6,14,12,.82);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem";
       ov.innerHTML = `<div style="max-width:min(96vw,720px);max-height:94vh;overflow:auto;background:rgba(18,32,28,.96);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:1rem;color:#fff;text-align:center;font-family:inherit"><b>الصورة جاهزة — ${P.ad.w}×${P.ad.h}px</b><div style="margin:.7rem 0"><img src="${url}" alt="" style="max-width:100%;max-height:62vh;border-radius:10px;background:#fff"></div><div class="action-bar" style="justify-content:center;flex-wrap:wrap"><button type="button" class="small" onclick="ImgGen.download('png')">تنزيل PNG</button><button type="button" class="small" onclick="ImgGen.download('webp')">تنزيل WebP</button><button type="button" class="small gold" onclick="ImgGen.toLibrary()">حفظ في المكتبة</button><button type="button" class="small gray" onclick="document.getElementById('ig-exp').remove()">إغلاق</button></div></div>`;

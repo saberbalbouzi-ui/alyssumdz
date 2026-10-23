@@ -44,6 +44,9 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
       try { const r = await AIBgCut.subject(cv, {}); const d = r.getContext("2d").getImageData(0, 0, W, H).data; return { ok: true, center: d[(300 * W + 250) * 4 + 3], corner: d[(20 * W + 20) * 4 + 3] }; } catch (e) { return { ok: false, err: String(e.message) }; } finally { ImgGen.text = orig; } };
     out.second = await tryMode("second"); out.poly = await tryMode("poly");
     ImgGen.text = async () => JSON.stringify([{ label: "x", box_2d: [100, 100, 300, 300] }]); try { await AIBgCut.subject(cv, {}); out.fail = "no error"; } catch (e) { out.fail = String(e.message); } ImgGen.text = orig;
+    /* برومبت يتكيّف مع كل صورة: نتيجة التحليل (يُبقى/يُزال) تصل إلى برومبت القناع */
+    { const seen = []; ImgGen.text = async o => { const P = o.prompt; seen.push(P); if (/Return ONLY JSON: \{"subject"/.test(P)) return JSON.stringify({ subject: "امرأة تحمل علبة", keep: ["المرأة", "علبة الكريم"], remove: ["أغصان الأوكالبتوس", "الستارة"] }); return orig(o); };
+      try { await AIBgCut.subject(cv, {}); } catch (e) { } ImgGen.text = orig; const m = seen.find(P => /For THIS photo/.test(P)); out.plan = { used: !!m, keep: !!(m && /KEEP: المرأة; علبة الكريم/.test(m)), rem: !!(m && /REMOVE: أغصان الأوكالبتوس; الستارة/.test(m)) }; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -57,6 +60,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.auto.method === "seg" && r.auto.cov > 3 && r.auto.cov < 25, "autoCut يختار طريقة الـAPI للخلفية المعقدة", r.auto);
   ok(r.second.ok && r.second.center > 200 && r.second.corner < 20, "الصيغة الأولى بلا أقنعة ← تنجح الصيغة الثانية", r.second);
   ok(r.poly.ok && r.poly.center > 200 && r.poly.corner < 20, "فشل الأقنعة كلها ← مضلّع المحيط يكفي", r.poly);
+  ok(r.plan.used && r.plan.keep && r.plan.rem, "تحليل الصورة يحدّد ما يُبقى وما يُزال ويدخل في برومبت القناع", r.plan);
   ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
   ok(!errs.length, "لا أخطاء صفحة", errs);
   console.log(n + " نجاح، " + fails.length + " فشل"); await b.close(); process.exit(fails.length ? 1 : 0);

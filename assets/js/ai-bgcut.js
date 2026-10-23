@@ -81,7 +81,7 @@ const AIBgCut = (function () {
     if (M) { let sum = 0; const bn = Math.max(1, (bx1 - bx0) * (by1 - by0)); for (let i = 0; i < M.length; i++) if (M[i] > .5) sum++; const r = sum / bn; if (r < .06 || r > 1.4) M = null; }      // قناع غير معقول مقارنة بالمربع
     if (!M) throw new Error("لم يُعزل «" + item.label + "» — أعد المحاولة");
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
-    const band = clamp(Math.round(Math.max(ww, wh) * (poly ? .026 : .011)), 3, poly ? 32 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
+    const band = clamp(Math.round(Math.max(ww, wh) * (poly ? .018 : .011)), 3, poly ? 32 : 14), res = t.matteCore(t.rgbOf(work), M, { band, detail: 1, decon: true, shift: 0, feather: 0 }), n = ww * wh;
     let x0 = ww, y0 = wh, x1 = -1, y1 = -1, solid = 0; for (let i = 0; i < n; i++) { const a = clamp(res.alpha[i], 0, 1) * 255; res.data[i * 4 + 3] = a < 3 ? 0 : a; if (a > 20) { solid++; const x = i % ww, y = (i / ww) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
     if (x1 < 0 || solid < n * .004) throw new Error("لم يُعزل «" + item.label + "»");
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0); const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = mk(cw, ch); out.getContext("2d").drawImage(full, x0, y0, cw, ch, 0, 0, cw, ch);
@@ -92,15 +92,25 @@ const AIBgCut = (function () {
   const MASKFMT = "Return ONLY a JSON list of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"mask\":\"<base64 PNG of the mask cropped to that box, white = the kept object, at most 128x128 pixels>\"}. ";
   /* ثلاث محاولات بصيغ مختلفة كي لا يتكرر الفشل نفسه: (١) الموضوع + مشهده الأمامي (٢) الموضوع الرئيسي وحده بأقنعة صغيرة (٣) محيط مضلّع خفيف الحمولة */
   const ATTEMPTS = [
-    { id: "scene", maxTokens: 16384, prompt: "You are doing a one-click background removal like Canva. KEEP the main subject (the person, animal or product) together with what it wears and holds, and the furniture it sits or stands at plus the objects lying on or in front of those surfaces (books, props, plants on the desk). " +
-      "REMOVE only the true background behind them: walls, windows, curtains, wall shelves, pictures on the wall, distant floor, sky. At most 6 entries, the big pieces first. " + MASKFMT },
+    { id: "scene", maxTokens: 16384, prompt: pl => "You are doing a one-click background removal like Canva. KEEP only the main subject (the person, animal or product) together with everything it wears, holds or touches. " +
+      "Keep furniture and objects ONLY when the subject is physically sitting at, leaning on or touching them. " +
+      (pl ? "For THIS photo the analysis found — main subject: " + pl.subject + ". KEEP: " + (pl.keep.join("; ") || "only the subject") + ". REMOVE: " + (pl.remove.join("; ") || "all the rest") + ". Anything not in the KEEP list is background and must be removed. " : "REMOVE everything else, even if it looks nice: plants, leaves, branches, curtains, windows, walls, shelves, wall pictures, floor, sky, blur and light effects. ") +
+      "At most 6 entries, the big pieces first. " + MASKFMT },
     { id: "subject", maxTokens: 16384, prompt: "Remove the background of this photo: segment ONLY the main subject(s) a photographer would keep — the main person together with everything they wear and hold, or the main product. At most 2 entries. " + MASKFMT },
     { id: "poly", maxTokens: 6000, poly: true, prompt: "Remove the background of this photo: trace the outline of ONLY the main subject (the main person together with everything they wear and hold, or the main product). " +
-      "Return ONLY a JSON list (at most 2 entries) of {\"label\":\"short Arabic name\",\"polygon\":[[y,x],...]} where the polygon has 40 to 90 points following the subject's edge clockwise, coordinates normalized to 0-1000." },
+      "Return ONLY a JSON list (at most 2 entries) of {\"label\":\"short Arabic name\",\"polygon\":[[y,x],...]} where the polygon has 80 to 160 points following the subject's edge clockwise, coordinates normalized to 0-1000." },
   ];
+  /* تحليل قصير لكل صورة على حدة: ما الموضوع وما الذي يُبقى (يلمسه/يحمله/يجلس عنده) وما الذي يُزال — فيُبنى برومبت القناع لهذه الصورة وليس برومبتاً ثابتاً */
+  const PLANP = "Look at this photo for a one-click background removal. Decide what a professional retoucher would KEEP and what to REMOVE. Return ONLY JSON: {\"subject\":\"the main subject in a few words\",\"keep\":[\"each thing to keep: the subject, what it wears, holds or touches, furniture it sits at and objects lying on it\"],\"remove\":[\"each background thing to remove: plants, curtains, walls, shelves, decor, floor, sky, blur, other people not interacting with the subject\"]}. Be concrete and specific to this photo; keep at most 8 items per list.";
+  async function analyze(work, o) {
+    try {
+      const j = parseLoose(await ask(PLANP, work, { maxTokens: 700, signal: o && o.signal })), r = Array.isArray(j) ? j[0] : j, L = v => (Array.isArray(v) ? v : []).map(x => String(x || "").slice(0, 80)).filter(Boolean).slice(0, 8);
+      if (!r || typeof r !== "object" || !r.subject) return null; const pl = { subject: String(r.subject).slice(0, 80), keep: L(r.keep), remove: L(r.remove) }; return pl.keep.length || pl.remove.length ? pl : null;
+    } catch (e) { if (e && e.name === "AbortError") throw e; return null; }
+  }
   async function subjectMask(work, o, at) {
     at = at || ATTEMPTS[0]; const ww = work.width, wh = work.height, why = t => ({ M: null, why: t });
-    let arr; try { arr = parseLoose(await ask(at.prompt, work, { maxTokens: at.maxTokens, signal: o && o.signal })); } catch (e) { if (e && e.name === "AbortError") throw e; return why(String(e && e.message || e).slice(0, 90)); }
+    let arr; try { arr = parseLoose(await ask(typeof at.prompt === "function" ? at.prompt(o && o.plan) : at.prompt, work, { maxTokens: at.maxTokens, signal: o && o.signal })); } catch (e) { if (e && e.name === "AbortError") throw e; return why(String(e && e.message || e).slice(0, 90)); }
     arr = (arr || []).filter(e => e && typeof e === "object"); if (!arr.length) return why("ردّ بلا عناصر");
     const M = new Float32Array(ww * wh), area = q => (q.b.x1 - q.b.x0) * (q.b.y1 - q.b.y0); let used = 0;
     if (at.poly) {
@@ -119,7 +129,7 @@ const AIBgCut = (function () {
   }
   async function subject(cv, o) {
     o = o || {}; const t = T(); if (!t || !t.matteCore) throw new Error("أداة الحواف غير محمّلة"); const step = o.onStep || (() => { }), s = Math.min(1, Math.sqrt(MAXPX / (cv.width * cv.height))), work = cropOf(cv, 0, 0, cv.width, cv.height, s), ww = work.width, wh = work.height;
-    let M = null, poly = false; const reasons = [];
+    let M = null, poly = false; const reasons = []; step("⏳ تحليل الصورة…"); o.plan = await analyze(work, o);
     for (let a = 0; a < ATTEMPTS.length && !M; a++) { step(a ? "⏳ إعادة المحاولة بصيغة أخرى…" : "⏳ تحديد الموضوع…"); const r = await subjectMask(work, o, ATTEMPTS[a]); if (r.M) { M = r.M; poly = r.poly; } else reasons.push(ATTEMPTS[a].id + ": " + r.why); }
     if (!M) { console.warn("bgcut", reasons); throw new Error("لم تُعزل الصورة (" + reasons.map(r => r.replace(/^[a-z]+: /, "")).join(" · ") + ") — أعد المحاولة أو جرّب صورة أخرى"); }
     clean(M, ww, wh); step("✂️ صقل الحواف بدقة البكسل…"); await new Promise(r => setTimeout(r, 0));
@@ -129,6 +139,6 @@ const AIBgCut = (function () {
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0);
     const out = mk(cv.width, cv.height), g = out.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(full, 0, 0, cv.width, cv.height); out._via = "api"; return out;
   }
-  return { ready, detect, cutout, subject, _t: { subjectMask, parseLoose, boxOf, decodeMask, clean, iou } };
+  return { ready, detect, cutout, subject, _t: { analyze, subjectMask, parseLoose, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AIBgCut = AIBgCut;
