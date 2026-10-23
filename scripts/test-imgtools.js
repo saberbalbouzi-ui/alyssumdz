@@ -161,7 +161,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     return { m1: r1.method, c1, m2: r2.method, c2, bgA: a(r2.canvas, 5, 5), fgA: a(r2.canvas, 100, 100), nokey };
   });
   ok("نزع الخلفية: الاستعمال الداخلي بطرق صريحة (classic) يبقى محلياً بلا طلب", bgk.m1 === "classic" && bgk.c1 === 0, bgk);
-  ok("نزع الخلفية: بالذكاء بطلب واحد ونتيجة واحدة، الخلفية شفافة والمنتج معتم", bgk.m2 === "seg" && bgk.c2 === 1 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
+  ok("نزع الخلفية: بالذكاء بنقرة واحدة (تحليل نصي + قناع) ونتيجة واحدة، الخلفية شفافة والمنتج معتم", bgk.m2 === "seg" && bgk.c2 === 2 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
   ok("نزع الخلفية: بلا مفتاح يُرفض برسالة واضحة (لا بديل محلي)", bgk.nokey === "NOKEY", bgk);
   /* ── أدوات على نمط Photoroom: إضاءة، إزالة نص، استعادة، محسّن + درجة الجودة + ثقة نزع الخلفية ── */
   const fxp = await T(() => { const F = PBAI._t; return { rl: F.fxPrompt("rl", { light: "golden", str: "high" }, ""), tr1: F.fxPrompt("tr", { what: "wm", keep: "1" }, ""), tr0: F.fxPrompt("tr", { what: "all", keep: "0" }, ""), uc: F.fxPrompt("uc", { what: "top" }, "امتداد"), bf: F.fxPrompt("bf", { kind: "food", str: "low" }, "") }; });

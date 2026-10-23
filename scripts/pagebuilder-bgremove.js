@@ -415,7 +415,7 @@ const PBBgRemove = (function () {
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
-      const r = await autoCut(LV.src, { onStep: m => chip(m, true) }); LV.res = r;
+      const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); } LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
       await A().liveCanvas(id, r.canvas, { tab: "bg", apply: lvApply, cancel: () => { LV.res = null; } }); chip("✅ تمّ — اضغط «تنفيذ» أو «إلغاء» تحت الصورة");
     } catch (e) { chip("⚠️ " + (e && e.message || e)); console.error(e); } LV.busy = false;
   }
