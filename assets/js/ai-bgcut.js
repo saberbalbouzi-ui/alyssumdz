@@ -23,9 +23,12 @@ const AIBgCut = (function () {
 
   const P_SUBJ = "Find the main subject(s) of this image that a photographer would keep when removing the background: the main product, or the main person together with what they wear and hold. " +
     "Return ONLY a JSON array (at most 3 items) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax]} with coordinates normalized to 0-1000, tightly enclosing the WHOLE subject.";
+  const LAST = { req: null, raw: null, err: null, ms: 0 };      // تقرير آخر طلب لتشخيص الفشل
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
-    return ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal });
+    LAST.req = { w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null; const t0 = Date.now();
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.ms = Date.now() - t0; LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    catch (e) { LAST.ms = Date.now() - t0; LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف الموضوع الرئيسي ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv */
   async function detect(cv, o) {
@@ -128,6 +131,6 @@ const AIBgCut = (function () {
     const full = mk(ww, wh); full.getContext("2d").putImageData(new ImageData(res.data, ww, wh), 0, 0);
     const out = mk(cv.width, cv.height), g = out.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(full, 0, 0, cv.width, cv.height); out._via = "api"; return out;
   }
-  return { ready, detect, cutout, subject, _t: { subjectMask, parseLoose, boxOf, decodeMask, clean, iou } };
+  return { ready, report: () => JSON.stringify(LAST, null, 1), detect, cutout, subject, _t: { subjectMask, parseLoose, boxOf, decodeMask, clean, iou } };
 })();
 if (typeof window !== "undefined") window.AIBgCut = AIBgCut;

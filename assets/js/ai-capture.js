@@ -29,7 +29,7 @@ const AICapture = (function () {
   async function ask(prompt, canvas, o) {
     const blob = await toBlob(canvas, "image/jpeg", .93);
     LAST.req = { prompt: String(prompt).slice(0, 60), w: canvas.width, h: canvas.height, kb: Math.round(blob.size / 1024), maxTokens: o && o.maxTokens || 4096 }; LAST.raw = null; LAST.err = null;
-    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
+    try { const t = await ImgGen.text({ prompt, blobs: [blob], edge: 1600, mime: true, temp: 0, noThink: true, maxModels: 2, timeoutMs: 70000, maxTokens: o && o.maxTokens || 4096, signal: o && o.signal }); LAST.raw = { len: String(t || "").length, head: String(t || "").slice(0, 260), tail: String(t || "").slice(-120) }; return t; }
     catch (e) { LAST.err = String(e && e.message || e).slice(0, 400); throw e; }
   }
   /* (1) كشف العناصر ← [{id,label,box:{x0,y0,x1,y1}}] بإحداثيات الصورة cv. o.zone = [x0,y0,x1,y1] لتحليل منطقة بدقة أعلى، o.mode = "subject" للموضوع الرئيسي فقط */

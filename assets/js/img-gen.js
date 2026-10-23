@@ -154,7 +154,7 @@ const ImgGen = (() => {
     for (const m of models) {
       const body = { contents: [{ parts }], generationConfig: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { aspectRatio: ar } } };
       const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify(body) });
-      const j = await r.json().catch(() => ({}));
+      const j = await r.json().catch(() => ({})); if (tm) clearTimeout(tm);
       if (r.ok) {
         const pt = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
         if (!d) { last = new Error("لم يُرجع النموذج صورة" + ((j.promptFeedback && j.promptFeedback.blockReason) ? " (محجوب: " + j.promptFeedback.blockReason + ")" : "") + " — لم تُحتسب تكلفة غالباً."); continue; }
@@ -488,10 +488,11 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (!o || !String(o.prompt || "").trim()) throw new Error("التعليمات مطلوبة");
     /* النص زهيد: لا يُحجب بسقف الصور المحلي (المزوّد يفرض الحدّ الفعلي ويُعلَّم النفاد عند رفضه) */
     const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, Math.max(512, Math.min(2048, Number(o.edge) || 1024)))) } });
-    let last = null; const tried = new Set(), errs = [], queue = await textModels(key);
-    for (let qi = 0; qi < queue.length && tried.size < 14; qi++) {
+    let last = null; const tried = new Set(), errs = [], queue = await textModels(key), maxM = Number(o.maxModels) || 14;
+    for (let qi = 0; qi < queue.length && tried.size < maxM; qi++) {
       const m = queue[qi]; if (tried.has(m)) continue; tried.add(m);
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: Math.max(256, Math.min(16384, Number(o.maxTokens) || 3072)) }, o.json || o.mime ? { responseMimeType: "application/json" } : {}) }), signal: o.signal });
+      let sig = o.signal, tm = null, timedOut = false; if (o.timeoutMs) { const ac = new AbortController(); tm = setTimeout(() => { timedOut = true; ac.abort(); }, o.timeoutMs); if (o.signal) o.signal.addEventListener("abort", () => ac.abort()); sig = ac.signal; }      // مهلة لكل نموذج فلا ينتظر المستخدم طويلاً
+      let r; try { r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: Math.max(256, Math.min(16384, Number(o.maxTokens) || 3072)) }, o.json || o.mime ? { responseMimeType: "application/json" } : {}, o.noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}) }), signal: sig }); } catch (e) { if (timedOut) { last = new Error("انتهت مهلة الخدمة (" + Math.round(o.timeoutMs / 1000) + "ث)"); errs.push(m + "=timeout"); continue; } if (tm) clearTimeout(tm); throw e; }
       const j = await r.json().catch(() => ({}));
       if (r.ok) {
         const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x => x.text || "").join("").trim(); if (!t) { last = new Error("ردّ فارغ"); continue; }

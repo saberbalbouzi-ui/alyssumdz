@@ -11,6 +11,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     g.fillStyle = "#cc1f1f"; g.beginPath(); g.arc(250, 300, 110, 0, 7); g.fill(); g.fillStyle = "#1f3fcc"; g.fillRect(500, 200, 180, 220);
     const objs = [{ label: "كرة حمراء", cx: 250, cy: 300, r: 110, box: [190, 140, 410, 360] }, { label: "علبة زرقاء", box: [200, 500, 420, 680] }];   // ymin,xmin,ymax,xmax بالبكسل
     const calls = []; const maskPng = (o) => { const bw = 1000 * (o.box[3] - o.box[1]) / 800, bh = 1000 * (o.box[2] - o.box[0]) / 600; return null; };
+    const REALTEXT = ImgGen.text;
     Object.assign(ImgGen, { ready: () => ({ ok: true }), edit: async o => { calls.push("edit"); const c = document.createElement("canvas"); c.width = o.W; c.height = o.H; const x = c.getContext("2d"); x.fillStyle = "#777"; x.fillRect(0, 0, o.W, o.H); return { canvas: c, blob: null }; },
       text: async o => {
         calls.push("text"); const P = o.prompt;
@@ -43,6 +44,13 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     { let cnt = 0, last = ""; ImgGen.text = async o => { cnt++; last = o.prompt; return orig(o); }; const okc = await AIBgCut.subject(cv, {}).then(() => true, () => false); out.one = { ok: okc, cnt, noPlan: !/analysis found/.test(last) };
       cnt = 0; ImgGen.text = async o => { cnt++; return "[]"; }; let msg = ""; await AIBgCut.subject(cv, {}).catch(e => { msg = String(e.message); }); out.oneFail = { cnt, msg };
       cnt = 0; await AICapture.detectAll(cv, {}).catch(e => { msg = String(e.message); }); out.capFail = { cnt, msg }; ImgGen.text = orig; }
+    /* ImgGen.text للتقاط/النزع: بلا تفكير (thinkingBudget 0)، نموذجان فقط، ومهلة بخطأ واضح */
+    { const bodies = []; ImgGen.text = REALTEXT; let mode = "empty"; localStorage.setItem("alyssum_gp_gkey", "k-test"); const f0 = window.fetch;
+      window.fetch = async (u, init) => { u = String(u); if (/generateContent/.test(u)) { bodies.push(JSON.parse(init.body)); if (mode === "hang") return new Promise((_, rej) => init.signal && init.signal.addEventListener("abort", () => rej(new DOMException("aborted", "AbortError")))); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "" }] } }] }), { status: 200 }); } return new Response(JSON.stringify({ models: [{ name: "models/gemini-flash-latest", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.5-pro", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.0-flash", supportedGenerationMethods: ["generateContent"] }] }), { status: 200 }); };
+      const blob = await new Promise(r => cv.toBlob(r, "image/png")); let e1 = ""; await ImgGen.text({ prompt: "x", blobs: [blob], noThink: true, maxModels: 2, mime: true }).catch(e => { e1 = String(e.message); });
+      out.think = { n: bodies.length, budget0: bodies.every(b => b.generationConfig.thinkingConfig && b.generationConfig.thinkingConfig.thinkingBudget === 0), e1 };
+      mode = "hang"; bodies.length = 0; let e2 = ""; const t0 = Date.now(); await ImgGen.text({ prompt: "x", blobs: [blob], noThink: true, maxModels: 1, timeoutMs: 400 }).catch(e => { e2 = String(e.message) + "|" + e.name; }); out.timeout = { e2, ms: Date.now() - t0 };
+      window.fetch = f0; ImgGen.text = orig; }
     out.calls = calls.join(","); return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -54,6 +62,8 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.fill.ok && r.fill.holeGray && r.fill.outsideSame, "الخلفية تُرمَّم داخل منطقة العنصر فقط والبقية بلا تغيير", r.fill);
   ok(r.subj.size === "800x600" && r.subj.center > 240 && r.subj.corner === 0 && r.subj.blue === 0, "نزع الخلفية: الموضوع فقط بحجم الأصل", r.subj);
   ok(r.auto.method === "seg" && r.auto.cov > 3 && r.auto.cov < 25, "autoCut يختار طريقة الـAPI للخلفية المعقدة", r.auto);
+  ok(r.think.n === 2 && r.think.budget0, "طلب التقاط/نزع: بلا تفكير (thinkingBudget=0) وبنموذجين على الأكثر", r.think);
+  ok(/انتهت مهلة/.test(r.timeout.e2) && r.timeout.ms < 3000, "المهلة تُنتج رسالة واضحة لا «signal is aborted»", r.timeout);
   ok(r.one.ok && r.one.cnt === 1 && r.one.noPlan, "نزع الخلفية بالذكاء: محاولة واحدة (طلب واحد، بلا تحليل مسبق)", r.one);
   ok(r.oneFail.cnt === 1 && /لم تُعزل الصورة/.test(r.oneFail.msg) && r.capFail.cnt === 1 && /لم تُرجِع الخدمة/.test(r.capFail.msg), "عند الفشل: طلب واحد فقط وسبب واضح (نزع الخلفية والالتقاط) بلا إعادة", [r.oneFail, r.capFail]);
   ok(/لم تُعزل الصورة/.test(r.fail) && /ردّ بلا/.test(r.fail), "الفشل الكامل برسالة بسبب واضح", r.fail);
