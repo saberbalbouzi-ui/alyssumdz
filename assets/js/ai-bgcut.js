@@ -101,12 +101,12 @@ const AIBgCut = (function () {
   }
   /* (3) نزع الخلفية بطلب واحد: تطلب الخدمة قناع الموضوع الرئيسي (حتى 3 عناصر) من الصورة كاملة في ردّ واحد، ثم تُصقل الحواف محلياً من بكسلات صورتك الأصلية
      (ماتينغ بدقة البكسل) فتخرج نتيجة واحدة بحجم الأصل — كنزع خلفية كانفا بنقرة واحدة. محاولة واحدة؛ إن جاء الردّ بلا قناع صالح يُرفض بوضوح بسببه (لا إعادة ولا بدائل محلية). */
-  const MASKFMT = "Return ONLY a JSON list of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the WHOLE object,\"polygon\":[[y,x],...],\"holes\":[[[y,x],...]]} where polygon is the exact visible outline of the kept object hugging its edge as 100 to 200 points [y,x] normalized to 0-1000 over the WHOLE image, in order around the outline, with many points on curves, fingers, hair and fabric folds, and holes (optional, may be empty) are polygons of background seen THROUGH the object (gaps between arm and body, loops of hair, handles). Stay INSIDE the object edge, never outside it. No base64, no other fields. ";
+  const MASKFMT = "Output a JSON list of segmentation masks where each entry contains the 2D bounding box in the key \"box_2d\" ([ymin,xmin,ymax,xmax] normalized to 0-1000), the segmentation mask in the key \"mask\" (the PNG probability map of the object inside that box, as base64), and a short Arabic label in the key \"label\". ";
   /* محاولة واحدة دقيقة بالذكاء: برومبت واحد يحمل قاعدة القرار بنفسه (ما يبقى وما يُزال) فيصلح لكل صورة بلا طلب تحليل ولا بدائل */
   const ATTEMPTS = [
-    { id: "one", maxTokens: 8192, temp: .2, prompt: "One-click background removal like Canva. Return the outline(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
+    { id: "one", maxTokens: 6144, temp: .7, prompt: "One-click background removal like Canva. Return the outline(s) of what must STAY: the main subject (person, animal or product) together with everything it wears, holds or touches. " +
       "A person holding a product is ONE entry that covers both, following the exact visible outline (hair, fingers, fabric edges, the product's rim). " +
-      "Include a separate object ONLY when the subject is physically sitting on, leaning on or holding it (extra entries for those); never include table tops, counters, floors, shelves, rugs, shadows or reflections as surfaces, even if the product stands on them. " +
+      "Add a separate entry for an object ONLY when the subject is physically sitting on, leaning on or holding it. Never include table tops, counters, floors, shelves, rugs, shadows or reflections, nor any blurred room behind the subject. " +
       "Everything else is background and must NOT appear in any outline: surfaces, plants, leaves, branches, flowers, curtains, windows, walls, shelves, wall pictures, floor, sky, blurred areas and light effects. At most 4 entries, the main subject first. " + MASKFMT },
   ];
   async function subjectMask(work, o, at) {
@@ -119,7 +119,7 @@ const AIBgCut = (function () {
       for (let i = 0; i < R.length; i++) if (R[i] > M[i]) M[i] = R[i]; used++; poly = true; });
     if (!used) {      // قناع PNG قديم الصيغة إن أعاده النموذج بدل المضلّع
       let cand = arr.map(e => ({ e, b: boxOf(e) })).filter(q => q.b && q.e.mask);
-      if (!cand.length) return why(nPoly ? "مضلّع غير معقول" : "ردّ بلا مضلّع (" + arr.length + " عنصراً)");
+      if (!cand.length) return why(nPoly ? "محيط غير معقول" : "ردّ بلا قناع (" + arr.length + " عنصراً)");
       cand.sort((p, q) => area(q) - area(p)); cand = cand.filter((q, i) => i === 0 || area(q) >= area(cand[0]) * .01).slice(0, 12);
       for (const q of cand) { const px0 = Math.round(q.b.x0 / 1000 * ww), py0 = Math.round(q.b.y0 / 1000 * wh), px1 = Math.round(q.b.x1 / 1000 * ww), py1 = Math.round(q.b.y1 / 1000 * wh), dm = await decodeMask(q.e.mask, Math.max(2, px1 - px0), Math.max(2, py1 - py0)); if (!dm) continue;
         let sum = 0; for (let i = 0; i < dm.m.length; i++) if (dm.m[i] > .5) sum++; const r = sum / Math.max(1, dm.m.length); if (r < .04 || r > .995) continue;

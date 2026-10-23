@@ -83,7 +83,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.polyMax <= 8192, "طلب المضلّع: سقف توكن أصغر (يفشل سريعاً عند التدهور)", r.polyMax);
   ok(r.polySubj.center > 240 && r.polySubj.corner === 0 && r.polySubj.blue === 0 && r.polySubj.edgeOut < 30 && r.polySubj.edgeIn > 200, "نزع الخلفية بمضلّع مزاح: الموضوع كاملاً والحافة ملتصقة بالحدّ الحقيقي", r.polySubj);
   ok(r.polyCap === 1 && r.polyNoBox === 2 && r.polyCut.method === "api" && Math.abs(r.polyCut.w - 220) <= 14, "الالتقاط بمضلّع (ومربع مشتق من المضلّع إن غاب)", [r.polyCap, r.polyNoBox, r.polyCut]);
-  ok(/مضلّع غير معقول|ردّ بلا مضلّع/.test(r.polyLoop), "مضلّع متكرّر النقاط (تدهور) يُرفض بسبب واضح", r.polyLoop);
+  ok(/محيط غير معقول|ردّ بلا قناع/.test(r.polyLoop), "مضلّع متكرّر النقاط (تدهور) يُرفض بسبب واضح", r.polyLoop);
   ok(r.polyTrunc > 240, "ردّ مقطوع: يُنقذ العنصر الأول المكتمل", r.polyTrunc);
   ok(r.holes.center < 30 && r.holes.ring > 240, "ثقوب المضلّع (فراغ داخل العنصر) تُطرح والحلقة حوله تبقى", r.holes);
   ok(!errs.length, "لا أخطاء صفحة", errs);

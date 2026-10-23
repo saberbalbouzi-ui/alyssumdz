@@ -51,13 +51,13 @@ const AICapture = (function () {
   }
 
   const P_MASKS = "Segment every distinct, COMPLETE, individually separable object in this image: people, products and packaging, tools, plants, food, furniture and decor items. " +
-    "Treat things a person holds as separate objects from the person, and ALWAYS include a held product even if fingers cover part of it: its outline must follow the exact visible edge of the object, leaving out the fingers, hands and anything in front of it (no overlap with the hand). " +
+    "Treat things a person holds as separate objects from the person, and ALWAYS include a held product even if fingers cover part of it: its mask must follow the exact visible edge of the object, leaving out the fingers, hands and anything in front of it (no overlap with the hand). " +
     "Ignore background surfaces taken as a whole (walls, floor, table top, sky, backdrop), shadows, reflections and tiny fragments; skip objects cut off by the image edge. " +
-    "Return ONLY a JSON array (at most MAX entries) of {\"label\":\"short Arabic name\",\"box_2d\":[ymin,xmin,ymax,xmax] normalized to 0-1000 tightly enclosing the whole object,\"polygon\":[[y,x],...]} where polygon is the exact visible outline of that object as 40 to 120 points [y,x] normalized to 0-1000 over the WHOLE image, in order around the outline, more points on curves. No base64, no other fields.";
+    "Output a JSON list (at most MAX entries) where each entry contains the 2D bounding box in the key \"box_2d\" ([ymin,xmin,ymax,xmax] normalized to 0-1000), the segmentation mask in the key \"mask\" (the PNG probability map of the object inside that box, as base64), and a short Arabic label in the key \"label\".";
   /* (1) كشف العناصر مع أقنعتها في طلب واحد ← [{id,label,box,pre:{m,w,h,x0,y0}}] ؛ لا طلب إضافي لكل عنصر */
   async function detectAll(cv, o) {
     o = o || {}; if (o.onStep) o.onStep("⏳ كشف العناصر…");
-    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 8192, temp: .2, signal: o.signal })), build = async arr => {
+    const ask1 = async (max) => parseLoose(await ask(P_MASKS.replace("MAX", String(max)), cv, { maxTokens: 6144, temp: .7, signal: o.signal })), build = async arr => {
       const items = [], W = cv.width, H = cv.height;
       for (const e of arr) { if (!e || typeof e !== "object") continue; const pts = polyPts(e); let b = boxOf(e);
         if (!b && pts) { const xs = pts.map(q => q[0]), ys = pts.map(q => q[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys); if (x1 - x0 >= 8 && y1 - y0 >= 8) b = { x0, y0, x1, y1 }; }      // مربع مفقود: يُشتق من حدود المضلّع
