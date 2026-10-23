@@ -18,6 +18,8 @@ const PBApp = (() => {
 .pb-edit .pb-sec:hover{outline:1px dashed #2d6cdf;outline-offset:-1px}
 .pb-edit .pb-col:hover>.pb-colin{outline:1px dashed #9b59b6;outline-offset:-1px}
 .pb-edit .pb-w:hover{outline:1px dashed #8b3dff;outline-offset:2px}
+.pb-edit .pb-w:has(img[src*="/el-"]):hover{outline:none}
+.pb-edit .pb-w:hover img[src*="/el-"]{filter:drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 7px rgba(74,222,128,.75)) !important;cursor:pointer}
 .pb-edit .pbx-dropcol{outline:3px dashed #9b59b6!important;outline-offset:-3px;background:rgba(155,89,182,.08)}
 .pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
 [contenteditable=true]{outline:none!important;cursor:text;min-width:20px}

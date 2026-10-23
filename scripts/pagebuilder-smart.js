@@ -188,7 +188,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         if (busy) return; busy = true; $("pbs-go").disabled = true; tintOn(); const chosen = items.slice();
         try {
           const cuts = [], fails = []; failsAll = fails; let next = 0, dn = 0;
-          let sam = null; try { sam = await AICapture.samCuts(cv, chosen, { onStep: say }); } catch (e) { }      // تجزئة حقيقية لكل عنصر وحده؛ وإن لم تتوفر يُستعمل المسار الاحتياطي
+          let sam = null; try { if (typeof ImgCfg !== "undefined" && ImgCfg.get("capture", "engine", "photoroom") === "sam") sam = await AICapture.samCuts(cv, chosen, { onStep: say }); } catch (e) { }      // تجزئة حقيقية لكل عنصر وحده؛ وإن لم تتوفر يُستعمل المسار الاحتياطي
           if (sam && sam.length) { sam.forEach(c => cuts.push(c)); next = chosen.length; }
           const worker = async () => { while (next < chosen.length && !sh.S.closed) { const it = chosen[next++]; try { const c = await AICapture.cutout(cv, it, { onStep: m => say(m + " (" + dn + "/" + chosen.length + ")") }); cuts.push(c); } catch (e) { if (e && (e.code === "NOKEY" || e.code === "OFF")) throw e; fails.push(it.label); console.warn("cutout", it.label, e); } dn++; } };
           await Promise.all([worker(), worker(), worker()]); if (sh.S.closed) return; if (!cuts.length) throw new Error("لم يُعزل أي عنصر — أعد المحاولة");
