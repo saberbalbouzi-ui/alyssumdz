@@ -582,7 +582,20 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
-    fitStage(); positionOverlay(); thumbsSoon(); liveBars(); runFx();
+    fitStage(); positionOverlay(); thumbsSoon(); liveBars(); runFx(); if (E.toolMode) toolFit();
+  }
+  /* نافذة الأداة: بعد تنفيذ تغيير المقاس (أو أي أداة تغيّر أبعاد الصورة) تصير اللوحة بنسبة الصورة الجديدة فتظهر كاملة بدل بقاء الصفحة بالمقاس الأول */
+  function toolFit() {
+    const T = E.toolMode, P = E.page; if (!T || !P || !P.ad || (E.live && typeof E.live === "object") || !fdoc) return;
+    const el = fdoc.querySelector(`[data-pb="${T.id}"]`), im = el && el.querySelector("img"); if (!im) return;
+    const go = () => {
+      if (!E.toolMode || E.toolMode.id !== T.id || (E.live && typeof E.live === "object") || !im.naturalWidth) return;
+      const nw = im.naturalWidth, nh = im.naturalHeight, ar = nw / nh, cur = P.ad.w / P.ad.h; if (Math.abs(ar / cur - 1) < .02) return;
+      const sc = Math.min(1, 2000 / Math.max(nw, nh)), W = Math.max(64, Math.round(nw * sc)), H = Math.max(64, Math.round(nh * sc)), q = find(T.id); if (!q || !q.set) return;
+      setR(q.set, "fx", "d", 0); setR(q.set, "fy", "d", 0); setR(q.set, "fwd", "d", 100); setR(q.set, "fh", "d", H); q.set.hauto = false; q.set.fit = "contain";
+      adResize(W, H, false, "مخصّص " + W + "×" + H, "custom");
+    };
+    if (im.complete && im.naturalWidth) go(); else im.addEventListener("load", go, { once: true });
   }
   /* التأثيرات الحيّة داخل المحرّر: نشغّل سكربت FX_JS في إطار الصفحة بعد كل رسم (الحالة تُحفظ بين الرسمين: الشريحة الحالية وفتح الأكورديون) */
   window.addEventListener("message", ev => { if (ev.data && ev.data.pbFrH) { try { let ch = false; (E.page && E.page.sections || []).forEach(sc => { try { const m0 = JSON.stringify(sc.set.mh); growCanvas(sc); if (JSON.stringify(sc.set.mh) !== m0) ch = true; } catch (x) { } }); if (ch) schedule(); else positionOverlay(); } catch (x) { } } });

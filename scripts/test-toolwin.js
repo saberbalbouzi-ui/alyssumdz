@@ -89,6 +89,14 @@ const root = path.join(__dirname, "..");
     o.bgmode = ToolOpts.get("bg").mode; o.stbg = PBStudio.opts().bg; o.ov = PBStudio.opts().ov.length; o.ratio = PBAI.state.opt.ratio; o.ls = localStorage.getItem("pbx_studio"); return o;
   });
   t("غلق نافذة الأداة ثم فتحها: كل الإعدادات افتراضية (صفحة جديدة)", fr.bgmode === "transp" && fr.stbg === "white" && fr.ov === 0 && fr.ratio === 1 && !fr.ls, fr);
+  /* بعد تغيير المقاس تصير اللوحة بنسبة الصورة الجديدة فتظهر كاملة */
+  const fit = await p.evaluate(async () => {
+    window.confirm = () => true; const mk = (w, h, col) => { const c = document.createElement("canvas"); c.width = w; c.height = h; const g = c.getContext("2d"); g.fillStyle = col; g.fillRect(0, 0, w, h); return c; };
+    const blob = await new Promise(r => mk(200, 200, "#d22").toBlob(r, "image/png")); await PBApp.toolSession([blob], "st", "st"); await new Promise(z => setTimeout(z, 500));
+    const E = PBApp.E, id = E.toolMode.id, o = { before: E.page.ad.w + "x" + E.page.ad.h }; const q = PBApp.find(id); q.set.src = mk(180, 320, "#28c").toDataURL("image/png"); PBApp.commitAfter(id); await new Promise(z => setTimeout(z, 900));
+    o.after = E.page.ad.w + "x" + E.page.ad.h; const s0 = E.page.sections[0].set; o.mh = JSON.stringify(s0.mh); return o;
+  });
+  t("بعد تغيير المقاس: اللوحة تتبع نسبة الصورة الجديدة (9:16) لا تبقى مربعة", fit.before === "200x200" && fit.after === "180x320", fit);
   t("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
 })();
