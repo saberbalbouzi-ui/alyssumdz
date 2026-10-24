@@ -168,7 +168,7 @@ const PBStudio = (() => {
     return `<div id="pbst"><p class="pbst-n">حوّل صورة منتجك إلى صورة متجر أو إعلان: تُنزع الخلفية داخل متصفحك ثم تختار الخلفية والظل والملصقات والمقاس. تظهر التعديلات مباشرة على الصورة في الصفحة، وتحتها «تطبيق» أو «إلغاء».</p>
 <div class="pbst-ms" id="pbst-ms"></div>
 <div class="pbst-act"><button type="button" class="pbx-small pz-go" data-st="cut" id="pbst-cut">① انزع الخلفية</button></div>
-<div class="pbst-act"><button type="button" class="pbx-small" data-st="dl">تنزيل</button><button type="button" class="pbx-small" data-st="reset">استعادة الافتراضي</button></div>
+<div class="pbst-act"><button type="button" class="pbx-small" data-st="dl">تنزيل</button><button type="button" class="pbx-small" data-st="reset">استعادة الافتراضي</button><button type="button" class="pbx-small pbst-rv" id="pbst-rv" data-st="revert" style="display:none">↩ العودة للأصل</button></div>
 <div class="pbst-tabs">${tab("bg", "🎨 الخلفية")}${tab("prod", "📦 المنتج")}${tab("fx", "✨ تأثيرات")}${tab("txt", "🏷️ ملصقات وشعار")}${tab("out", "📐 المقاس والإخراج")}</div>
 <div ${pane("bg")}><div>${lh("الخلفية", "bg")}<div class="pbst-sw">${sw}</div><input type="color" id="pbst-c1" value="${esc(o.c1 || "#ffffff")}" style="width:100%;margin-top:.3rem;display:${o.bg === "custom" ? "block" : "none"}"></div>
 <div id="pbst-blurbox" style="display:${o.bg === "blur" ? "block" : "none"}">${rg("blur", "قوة الطمس", 4, 60, 1, o.blur)}</div></div>
@@ -245,13 +245,15 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
   function cancel() { S.dtok++; S.off = true; const had = S.pv; S.pv = ""; if (S.pvUrl) { const u = S.pvUrl; S.pvUrl = ""; setTimeout(() => { try { URL.revokeObjectURL(u); } catch (e) { } }, 2000); } say(""); if (had) A().stRestore(); }
   const redraw = () => { S.off = false; clearTimeout(drawT); drawT = setTimeout(draw, 120); };
   function say(t) { S.msg = t; const m = document.getElementById("pbst-ms"); if (m) { m.textContent = t; m.classList.toggle("on", !!t); } }
-  async function ensureSrc(inf) { if (!S.srcC) { say("⏳ جارِ تحميل الصورة…"); S.srcC = await loadImg(inf.node.set.src); } if (!S.cut && hasAlpha(S.srcC)) { S.cut = S.srcC; S.bb = bbox(S.cut); } say(""); }      // بلا نزع خلفية: كما في المعاينة
+  /* مصدر معتم (بلا شفافية) ← الظل الافتراضي «بدون» ما لم يختر المستخدم غيره */
+  function autoShadow() { if (!S.srcC || S.cut || S.shUser || S.opt.shadow !== DEF.shadow) return; S.opt.shadow = "none"; S.shAuto = true; const sh = document.getElementById("pbst-sh"), sc = document.getElementById("pbst-shc"); if (sh) sh.value = "none"; if (sc) sc.style.display = "none"; }
+  async function ensureSrc(inf) { if (!S.srcC) { say("⏳ جارِ تحميل الصورة…"); S.srcC = await loadImg(inf.node.set.src); } if (!S.cut && hasAlpha(S.srcC)) { S.cut = S.srcC; S.bb = bbox(S.cut); } else autoShadow(); say(""); }      // بلا نزع خلفية: كما في المعاينة
   async function ensureCut(inf) {
     if (S.cut) return true;
     say("⏳ جارِ تحميل الصورة…"); S.srcC = S.srcC || await loadImg(inf.node.set.src);
     if (hasAlpha(S.srcC)) { S.cut = S.srcC; S.bb = bbox(S.cut); say(""); return true; }
     say("⏳ جارِ نزع الخلفية داخل متصفحك…");
-    const r = await PBBgRemove.autoCut(S.srcC, { onStep: m => say(m) }); S.cut = r.canvas; S.bb = bbox(S.cut); say(""); return true;
+    const r = await PBBgRemove.autoCut(S.srcC, { onStep: m => say(m) }); S.cut = r.canvas; S.bb = bbox(S.cut); if (S.shAuto && !S.shUser) { S.opt.shadow = DEF.shadow; S.shAuto = false; const sh = document.getElementById("pbst-sh"), sc = document.getElementById("pbst-shc"); if (sh) sh.value = "contact"; if (sc) sc.style.display = "block"; } say(""); return true;
   }
   async function render() {
     const [W, H] = sizeOf(S.opt, S.srcC), o = optsFor(W, H);
@@ -261,19 +263,27 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
   async function applyCore(inf) {
     const id = inf.node.id; await ensureSrc(inf); say("⏳ جارِ تجهيز الصورة…"); const c = await render(), bl = await toBlob(c); say("⏳ جارِ رفع الصورة…");
     const path = await A().uploadBlob(bl, "studio-" + Date.now().toString(36), { max: 2600, q: .92 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
-    S.dtok++; S.pv = ""; S.off = true; S.id = id; S.src = path; clearTimeout(drawT);      // الأصل (S.srcC/S.cut) يبقى: أي تعديل لاحق يُركَّب من المنتج الأصلي لا من الصورة الناتجة hitsOff(); if (S.pvUrl) { const u = S.pvUrl; S.pvUrl = ""; setTimeout(() => { try { URL.revokeObjectURL(u); } catch (e) { } }, 2000); }
-    q.node.set.src = path; delete q.node.set.crop; q.node.set.hauto = true; A().E.nextLabel = "استوديو المنتج"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); S.off = true; S.pv = ""; try { A().epFloatNow(); } catch (e) { } say("✅ طُبِّقت على الصورة (Ctrl+Z للتراجع)");
+    if (S.origId !== id || !S.origSrc) { S.origId = id; S.origSrc = q.node.set.src; S.origCrop = q.node.set.crop; S.origHauto = q.node.set.hauto; }
+    S.dtok++; S.pv = ""; S.off = true; S.id = id; S.src = path; clearTimeout(drawT); hitsOff(); if (S.pvUrl) { const u = S.pvUrl; S.pvUrl = ""; setTimeout(() => { try { URL.revokeObjectURL(u); } catch (e) { } }, 2000); }      // الأصل (S.srcC/S.cut) يبقى: أي تعديل لاحق يُركَّب من المنتج الأصلي لا من الصورة الناتجة
+    q.node.set.src = path; delete q.node.set.crop; q.node.set.hauto = true; A().E.nextLabel = "استوديو المنتج"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); S.off = true; S.pv = ""; try { A().epFloatNow(); } catch (e) { } say("✅ طُبِّقت على الصورة (Ctrl+Z للتراجع)"); try { const rv = document.getElementById("pbst-rv"); if (rv) rv.style.display = ""; } catch (e) { }
+  }
+  async function revertOrig(inf) {
+    const id = inf.node.id; if (!S.origSrc || S.origId !== id) return; const q = A().find(id); if (!q) return;
+    q.node.set.src = S.origSrc; if (S.origCrop) q.node.set.crop = S.origCrop; else delete q.node.set.crop; if (S.origHauto === undefined) delete q.node.set.hauto; else q.node.set.hauto = S.origHauto;
+    S.dtok++; S.pv = ""; clearTimeout(drawT); hitsOff(); try { cancel(); } catch (e) { }
+    S.src = S.origSrc; S.srcC = null; S.cut = null; S.bb = null; S.bbSrc = null; S.origSrc = ""; S.origId = ""; S.off = true; S.msg = "↩ عادت الصورة الأصلية";
+    A().E.nextLabel = "استوديو المنتج — العودة للأصل"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); try { A().epFloatNow(); } catch (e) { } try { A().renderInspectorNow(); } catch (e) { }
   }
   async function applyExt(inf) { if (S.busy) return; S.busy = true; try { await applyCore(inf); } catch (e) { say("⚠️ " + (e && e.message || e)); console.error(e); } S.busy = false; }
   function mount(root, inf) {
     if (!root) return; css(); const id = inf.node.id, src = inf.node.set.src;
-    if (S.id !== id || S.src !== src) { S.id = id; S.src = src; S.cut = null; S.bb = null; S.bbSrc = null; S.srcC = null; S.msg = ""; S.off = false; S.pv = ""; }
+    if (S.id !== id || S.src !== src) { S.id = id; S.src = src; S.cut = null; S.bb = null; S.bbSrc = null; S.srcC = null; S.msg = ""; S.off = false; S.pv = ""; S.shUser = false; if (S.shAuto) { S.opt.shadow = DEF.shadow; S.shAuto = false; } }
     const $ = i => root.querySelector("#" + i), o = S.opt;
     $("pbst-sh").value = /^contact/.test(o.shadow) ? "contact" : (o.shadow === "soft" || o.shadow === "strong") ? "soft" : "none"; $("pbst-al").value = o.align; $("pbst-sz").value = o.size; $("pbst-pv-n").textContent = Math.round((1 - o.pad * 2) * 100) + "%";
-    const sync = () => { $("pbst-cut").style.display = S.cut ? "none" : ""; };
+    const sync = () => { $("pbst-cut").style.display = S.cut ? "none" : ""; const rv = $("pbst-rv"); if (rv) rv.style.display = S.origSrc && S.origId === id ? "" : "none"; };
     sync(); say(S.msg);
     const run = async fn => { if (S.busy) return; S.busy = true; try { await fn(); } catch (e) { say("⚠️ " + (e && e.message || e)); console.error(e); } S.busy = false; sync(); };
-    if (!S.srcC) run(async () => { say("⏳ جارِ تحميل الصورة…"); S.srcC = await loadImg(src); if (hasAlpha(S.srcC)) { S.cut = S.srcC; S.bb = bbox(S.cut); } say(""); }).then(() => { if (!S.off) redraw(); sync(); }); else if (!S.off) redraw();
+    if (!S.srcC) run(async () => { say("⏳ جارِ تحميل الصورة…"); S.srcC = await loadImg(src); if (hasAlpha(S.srcC)) { S.cut = S.srcC; S.bb = bbox(S.cut); } else autoShadow(); say(""); }).then(() => { if (!S.off) redraw(); sync(); }); else if (!S.off) redraw();
     const redrawPanel = () => { const bx = $("pbst-ovs"); if (bx) bx.innerHTML = ovHtml(); };
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-st-tab]"); if (t) { S.tab = t.dataset.stTab; root.querySelectorAll("[data-st-tab]").forEach(x => x.classList.toggle("on", x === t)); root.querySelectorAll("[data-stp]").forEach(x => { x.hidden = x.dataset.stp !== S.tab; }); return; }
@@ -297,9 +307,10 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
       else if (act === "logodel") { S.logo = null; const f = $("pbst-logo"); if (f) f.value = ""; redraw(); }
       else if (act === "dl") run(async () => { await ensureSrc(inf); const c = await render(), fmt = o.fmt || "png", bl = await toBlob(c, MIME[fmt], fmt === "png" ? undefined : (o.q || 92) / 100); const u = URL.createObjectURL(bl), l = document.createElement("a"); l.href = u; l.download = "product-studio." + (fmt === "jpeg" ? "jpg" : fmt); document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); say("✅ نُزّلت الصورة"); setTimeout(() => say(""), 2500); });
       else if (act === "apply") run(() => applyCore(inf));
+      else if (act === "revert") run(() => revertOrig(inf));
     });
     $("pbst-c1").addEventListener("input", e => { o.c1 = e.target.value; o.bg = "custom"; const cb = root.querySelector('[data-st-bg="custom"]'); if (cb) { cb.style.background = o.c1; root.querySelectorAll("[data-st-bg]").forEach(x => x.classList.toggle("on", x === cb)); } save(); redraw(); });
-    $("pbst-sh").addEventListener("change", e => { o.shadow = e.target.value; const sc = $("pbst-shc"); if (sc) sc.style.display = o.shadow === "contact" ? "block" : "none"; save(); redraw(); });
+    $("pbst-sh").addEventListener("change", e => { o.shadow = e.target.value; S.shUser = true; const sc = $("pbst-shc"); if (sc) sc.style.display = o.shadow === "contact" ? "block" : "none"; save(); redraw(); });
     $("pbst-al").addEventListener("change", e => { o.align = e.target.value; save(); redraw(); });
     $("pbst-sz").addEventListener("change", e => { o.size = e.target.value; const cs = $("pbst-cs"); if (cs) cs.style.display = o.size === "custom" ? "grid" : "none"; save(); redraw(); });
     $("pbst-pod").addEventListener("change", e => { o.podium = e.target.checked; save(); redraw(); });
@@ -314,6 +325,6 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
     });
   }
   /* بداية جديدة: لا تبقى إعدادات الجلسة السابقة بعد إغلاق نافذة الأداة */
-  const fresh = () => { try { cancel(); } catch (e) { } try { hitsOff(); } catch (e) { } S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; S.selOv = null; S.cut = null; S.srcC = null; S.bb = null; S.src = ""; S.id = ""; S.pv = ""; S.pvUrl = ""; S.tab = "bg"; S.off = false; S.busy = false; S.msg = ""; try { localStorage.removeItem(LSK); } catch (e) { } };
+  const fresh = () => { try { cancel(); } catch (e) { } try { hitsOff(); } catch (e) { } S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; S.selOv = null; S.cut = null; S.srcC = null; S.bb = null; S.src = ""; S.id = ""; S.pv = ""; S.pvUrl = ""; S.tab = "bg"; S.off = false; S.busy = false; S.msg = ""; S.origSrc = ""; S.origId = ""; S.shUser = false; S.shAuto = false; try { localStorage.removeItem(LSK); } catch (e) { } };
   return { fresh, redraw, logo: () => S.logo, TITLES, panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", hits, hitsOff, cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
 })();

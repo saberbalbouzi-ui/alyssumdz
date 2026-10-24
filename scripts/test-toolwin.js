@@ -99,13 +99,17 @@ const root = path.join(__dirname, "..");
   t("بعد تغيير المقاس: اللوحة تتبع نسبة الصورة الجديدة (9:16) لا تبقى مربعة", fit.before === "200x200" && fit.after === "180x320", fit);
   /* بعد «تنفيذ» تغيير المقاس في الاستوديو لا يبقى شريط تنفيذ/إلغاء ولا معاينة قديمة */
   const ap = await p.evaluate(async () => {
-    window.confirm = () => true; const c = document.createElement("canvas"); c.width = 200; c.height = 200; const g = c.getContext("2d"); g.fillStyle = "#d22"; g.fillRect(40, 40, 120, 120); const blob = await new Promise(r => c.toBlob(r, "image/png"));
-    await PBApp.toolSession([blob], "st", "st"); await new Promise(z => setTimeout(z, 600)); const so = PBStudio.opts(); so.size = "1080x1920"; PBStudio.setTab("size"); PBApp.renderInspectorNow(); await new Promise(z => setTimeout(z, 1200));
-    const o = { had: !!document.getElementById("pbx-epf"), pend: PBStudio.pending() }; const inf = PBApp.find(PBApp.E.toolMode.id);
+    window.confirm = () => true; const c = document.createElement("canvas"); c.width = 200; c.height = 200; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 200, 200); g.fillStyle = "#d22"; g.fillRect(40, 40, 120, 120); const blob = await new Promise(r => c.toBlob(r, "image/png"));
+    await PBApp.toolSession([blob], "st", "st"); await new Promise(z => setTimeout(z, 600)); const so = PBStudio.opts(); PBApp.E.stScene = false; so.size = "1080x1920"; PBStudio.setTab("size"); PBApp.renderInspectorNow(); await new Promise(z => setTimeout(z, 1200));
+    const o = { had: !!document.getElementById("pbx-epf"), pend: PBStudio.pending(), shDef: PBStudio.opts().shadow }; const inf = PBApp.find(PBApp.E.toolMode.id); o.src0 = inf.node.set.src;
     try { await PBStudio.apply({ node: inf.node || inf }); } catch (e) { o.err = String(e.message || e); } await new Promise(z => setTimeout(z, 1800));
-    o.keep = !!PBStudio._S.srcC; PBStudio.opts().bg = "custom"; PBStudio.opts().c1 = "#2a6"; PBStudio._S.off = false; PBStudio.redraw && PBStudio.redraw(); await new Promise(z => setTimeout(z, 1500)); o.bar2 = !!document.getElementById("pbx-epf"); o.srcOrig = PBStudio._S.srcC && PBStudio._S.srcC.width; PBStudio.cancel(); o.bar = false; o.pending = PBStudio.pending(); o.live = !!PBApp.E.live; return o;
+    o.keep = !!PBStudio._S.srcC; PBStudio.opts().bg = "custom"; PBStudio.opts().c1 = "#2a6"; PBStudio._S.off = false; PBStudio.redraw && PBStudio.redraw(); await new Promise(z => setTimeout(z, 1500)); o.bar2 = !!document.getElementById("pbx-epf"); o.srcOrig = PBStudio._S.srcC && PBStudio._S.srcC.width; PBStudio.cancel(); o.bar = false; o.pending = PBStudio.pending(); o.live = !!PBApp.E.live;
+    const rv = document.getElementById("pbst-rv"); o.rvShown = !!rv && rv.style.display !== "none"; o.dbg = { rv: !!rv, oo: PBStudio._S.origSrc, oi: PBStudio._S.origId, id: PBApp.E.toolMode.id }; o.src1 = PBApp.find(PBApp.E.toolMode.id).node.set.src;
+    rv && rv.click(); await new Promise(z => setTimeout(z, 1200)); o.src2 = PBApp.find(PBApp.E.toolMode.id).node.set.src; o.pend2 = PBStudio.pending(); o.bar3 = !!document.getElementById("pbx-epf"); const rv2 = document.getElementById("pbst-rv"); o.rvHidden = !rv2 || rv2.style.display === "none"; return o;
   });
   t("بعد تنفيذ المقاس: لا شريط تنفيذ/إلغاء ولا معاينة معلّقة", !ap.bar && !ap.pending && !ap.live, ap);
+  t("مصدر معتم: الظل الافتراضي «بدون»", ap.shDef === "none", ap.shDef);
+  t("بعد التنفيذ يظهر «العودة للأصل» ويعيد الصورة الأصلية بلا معاينة ثم يختفي", ap.rvShown && ap.src1 !== ap.src0 && ap.src2 === ap.src0 && !ap.pend2 && !ap.bar3 && ap.rvHidden, ap);
   t("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
 })();
