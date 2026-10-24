@@ -79,6 +79,16 @@ const root = path.join(__dirname, "..");
     return { n, bad };
   });
   t("كل أدوات الصور (30) تفتح الأداة على صورتك: لوحتها أو نافذتها", all.n === 30 && all.bad.length === 0, all);
+  /* بداية جديدة: بعد غلق نافذة الأداة لا تبقى الإعدادات السابقة */
+  const fr = await p.evaluate(async () => {
+    window.confirm = () => true; const c = document.createElement("canvas"); c.width = 120; c.height = 120; c.getContext("2d").fillRect(20, 20, 60, 60); const blob = await new Promise(r => c.toBlob(r, "image/png")); const o = {};
+    await PBApp.toolSession([blob], "st", "st"); await new Promise(z => setTimeout(z, 500));
+    ToolOpts.set("bg", "mode", "white"); const so = PBStudio.opts(); so.bg = "custom"; so.ov.push({ t: "x" }); PBAI.state.opt.ratio = 2; PBApp.E.stScene = true; localStorage.setItem("pbx_studio", "{\"bg\":\"custom\"}");
+    PBApp.toolAct("x"); await new Promise(z => setTimeout(z, 300));
+    await PBApp.toolSession([blob], "st", "st"); await new Promise(z => setTimeout(z, 500));
+    o.bgmode = ToolOpts.get("bg").mode; o.stbg = PBStudio.opts().bg; o.ov = PBStudio.opts().ov.length; o.ratio = PBAI.state.opt.ratio; o.ls = localStorage.getItem("pbx_studio"); return o;
+  });
+  t("غلق نافذة الأداة ثم فتحها: كل الإعدادات افتراضية (صفحة جديدة)", fr.bgmode === "transp" && fr.stbg === "white" && fr.ov === 0 && fr.ratio === 1 && !fr.ls, fr);
   t("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
 })();

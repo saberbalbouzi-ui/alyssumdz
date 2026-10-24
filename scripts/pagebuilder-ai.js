@@ -453,8 +453,11 @@ const PBAI = (() => {
       else if (k === "preset") { const p = PRESETS[+t.dataset.i], ta = $("pbai-text"); if (p && ta) { ta.value = p[1]; S.opt.text = p[1]; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }
     });
   }
+  const INIT = (() => { try { return JSON.parse(JSON.stringify(S)); } catch (e) { return null; } })();
+  /* بداية جديدة لنافذة أداة: تُعاد الإعدادات كلها (تبقى صورة الشخص المحفوظة بطلب المستخدم) */
+  const fresh = () => { const keep = { person: S.person, remember: S.remember, models: S.fa && S.fa.models }; if (INIT) { Object.keys(S).forEach(k => { delete S[k]; }); Object.assign(S, JSON.parse(JSON.stringify(INIT)), { person: keep.person, remember: keep.remember }); } S.bgn = null; S.res = null; S.vars = null; };
   const reset = () => { S.bgn = null; S.res = null; S.vars = null; S.frame = false; S.id = ""; S.msg = ""; S.busy = false; };
   /* «مشهد المنتج» بنقرة: يضبط مشهدين من مشاهد الاستخدام اليومي (على طاولة، في اليد) فيخرج خياران للمقارنة بموافقة تكلفة واحدة (نفس مسار تصوير المنتج) */
   const stage = () => { const ids = ["table"]; S.ps = ids.map(id => SHOTS.findIndex(x => x[0] === id)).filter(i => i >= 0); return S.ps.slice(); };
-  return { setXpMode: () => { S.xpMode = "ai"; }, stage, panel, mount, openTx, reset, xpChanged, qa: qaScore, state: S, _t: { FXT, fxPrompt, qaScore, qaText, FA_AGE, FA_BODY, FA_TONE, lookText, loadModels, saveModels, plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS, v360Prompt, polish, addView360 } };
+  return { fresh, setXpMode: () => { S.xpMode = "ai"; }, stage, panel, mount, openTx, reset, xpChanged, qa: qaScore, state: S, _t: { FXT, fxPrompt, qaScore, qaText, FA_AGE, FA_BODY, FA_TONE, lookText, loadModels, saveModels, plan, padded, restore, expandPrompt, editPrompt, shotPrompt, SHOTS, fashionPrompt, FA_MODES, tryOnPrompt, textPrompt, keepPerson, recolorPrompt, RC_COLORS, v360Prompt, polish, addView360 } };
 })();

@@ -1446,7 +1446,16 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   /* جلسة أداة من «ستوديو ديزاين»: صورة (أو عدة صور) من نافذة الأداة ← لوحة بمقاس الصورة ← تُحدَّد الصورة وتُفتح لوحة الأداة مباشرة؛ الحفظ بـ«تصدير الصورة» (تنزيل/مكتبة) أو «حفظ ونشر» أو متابعة التعديل في المطوّر */
   const TS_KEY = { bg: "bg", st: "st", vd: "vd", v360: "v3", fashion: "fa", tryon: "to", pshoot: "ps", bgen: "bgn", mk: "mk", pz: "pz", cap: "cap", rt: "rt", ff: "ff", fr: "fr", bl: "bl", cl: "cl", xp: "xp", resize: "xp", sl: "sl", ai: "ai", up: "up", brand: "br", recolor: "rc", relight: "rl", textrm: "tr", uncrop: "uc", beautify: "bf", vgen: "vg", vad: "vad" };
+  /* بداية جديدة: لا تحتفظ نافذة الأداة بإعدادات أو نتائج الجلسة السابقة */
+  function toolFresh() {
+    try { localStorage.removeItem("alyssum_toolopts"); if (TOPT.img) TOPT.img = null; } catch (x) { }
+    try { if (typeof PBStudio !== "undefined" && PBStudio.fresh) PBStudio.fresh(); } catch (x) { }
+    try { if (typeof PBAI !== "undefined" && PBAI.fresh) PBAI.fresh(); } catch (x) { }
+    try { if (E.live && typeof E.live === "object") liveCancel(); } catch (x) { }
+    E.stScene = null; E.capDone = false; E.ept = "";
+  }
   async function toolSession(blobs, tool, nm) {
+    toolFresh();
     try { const bi = typeof BgEditor !== "undefined" && BgEditor.inst(); if (bi && bi.ov.classList.contains("dk")) bi.close(true); } catch (x) { }
     blobs = (Array.isArray(blobs) ? blobs : [blobs]).filter(Boolean); if (!blobs.length) return false;
     if (typeof ImgGen === "undefined" || !ImgGen.openSized) { toast("مولّد الصور غير متاح"); return false; }
@@ -1489,7 +1498,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const T = E.toolMode; if (!T) return;
     const bge = () => (typeof BgEditor !== "undefined" && BgEditor.inst && BgEditor.inst() && BgEditor.inst().ov.classList.contains("dk")) ? BgEditor.inst() : null;
     if (a === "editor") { const b = bge(); Promise.resolve(b ? b.flush() : 1).then(() => { if (b) b.close(true); toolModeOff(); }); return; }
-    if (a === "x") { const b = bge(); if (b) b.close(true); close(); return; }
+    if (a === "x") { const b = bge(); if (b) b.close(true); close(); toolFresh(); return; }
     { const b = bge(); if (b && (a === "dl" || a === "lib") && b.S.dirty) { toast("⏳ تطبيق تعديلاتك على الصورة…"); b.flush().then(ok => { if (ok) toolAct(a); }); return; } }
     if (E.live) { toast("⏳ اضغط «تنفيذ» على نتيجة الأداة أولاً (أو «إلغاء») ثم احفظ"); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.exportAd) { toast("مولّد الصور غير متاح"); return; }
@@ -3193,7 +3202,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

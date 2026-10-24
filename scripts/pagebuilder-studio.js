@@ -312,5 +312,7 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
       const el = e.target; if (el.id === "pbst-logo" && el.files && el.files[0]) { const f = el.files[0], u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const c = mk(Math.min(800, im.naturalWidth), Math.min(800, im.naturalWidth) * im.naturalHeight / im.naturalWidth); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); S.logo = c; URL.revokeObjectURL(u); redraw(); }; im.onerror = () => say("⚠️ تعذّر قراءة الشعار"); im.src = u; }
     });
   }
-  return { logo: () => S.logo, TITLES, panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", hits, hitsOff, cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
+  /* بداية جديدة: لا تبقى إعدادات الجلسة السابقة بعد إغلاق نافذة الأداة */
+  const fresh = () => { try { cancel(); } catch (e) { } try { hitsOff(); } catch (e) { } S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; S.selOv = null; S.cut = null; S.srcC = null; S.bb = null; S.src = ""; S.id = ""; S.pv = ""; S.pvUrl = ""; S.tab = "bg"; S.off = false; S.busy = false; S.msg = ""; try { localStorage.removeItem(LSK); } catch (e) { } };
+  return { fresh, logo: () => S.logo, TITLES, panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", hits, hitsOff, cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
 })();
