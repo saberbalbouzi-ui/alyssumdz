@@ -1384,6 +1384,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة.</p>
       <button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} ابدأ نزع الخلفية</button>
       <p class="ep-n">تظهر النتيجة مباشرة على الصورة (تراجع Ctrl+Z). لتعديل الألوان والحواف وفرشاة الاستعادة افتح الأداة من «ستوديو ديزاين».</p></div>`;
+    if (E.capDone) return `<div class="pbx-pz"><p>✅ تم التقاط العناصر ووُضعت في الصفحة كصور مستقلة. للتراجع Ctrl+Z.</p><button type="button" class="pbx-small" data-capagain="1">التقاط مرة أخرى</button></div>`;
     { const o = TOPT.get("cap"); return `<div class="pbx-pz"><p>يفصل العناصر الكاملة في الصورة (أشخاص، منتجات…) كصور شفافة منفصلة ويضعها في الصفحة. اضبط الخيارات ثم اضغط «ابدأ».</p>
       <label class="fl" style="flex-direction:row;gap:.45rem;align-items:center"><input type="checkbox" data-topt="cap.fill"${o.fill ? " checked" : ""}> <span>إعادة رسم الخلفية بدقة أعلى (أبطأ)</span></label>
       <button type="button" class="pbx-small pz-go" data-q="smart-magic">${ico("cutout", 16)} ابدأ التقاط العناصر</button></div>`; }
@@ -1465,7 +1466,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   /* وضع نافذة الأداة: يُخفي أشرطة المحرر ويُبقي الصورة + إعدادات الأداة + شريط النتيجة؛ «فتح في المحرر» يعيد المحرر الكامل بنفس الصورة */
   function toolModeOn(tool, name, id, reopen) {
-    E.toolMode = { tool, name, id, reopen }; const app = $("pb-app"); app.classList.add("pbx-tool"); const n = $("pbx-tname"); if (n) n.textContent = name;
+    E.capDone = false; E.toolMode = { tool, name, id, reopen }; const app = $("pb-app"); app.classList.add("pbx-tool"); const n = $("pbx-tname"); if (n) n.textContent = name;
     setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60);
   }
   function toolModeOff() { E.toolMode = null; $("pb-app").classList.remove("pbx-tool"); try { renderLeft(); } catch (x) { } setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60); toast("✏️ المحرر الكامل مفتوح — الصورة في الصفحة جاهزة للتعديل"); }
@@ -1545,7 +1546,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function imgPick(k) {
     if (!epInf()) { toast("حدّد صورة في الصفحة أولاً"); return; }
-    if (!$("pbx-ep")) epOpen(); if (typeof PBMask !== "undefined") PBMask.cancel(); PBPuzzle.cancelPrev(); E.ept = k; epDraw(); renderLeft(); positionOverlay();
+    if (!$("pbx-ep")) epOpen(); if (typeof PBMask !== "undefined") PBMask.cancel(); PBPuzzle.cancelPrev(); if (k === "cap") E.capDone = false; E.ept = k; epDraw(); renderLeft(); positionOverlay();
   }
   async function imgSmart(k) {
     const inf = epInf(); if (!inf || !inf.set.src) { toast("حدّد صورة في الصفحة أولاً"); return; }
@@ -1566,6 +1567,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const t = e.target.closest("button"); if (!t) return; const inf = epInf(); if (!inf) return;
     if (t.dataset.ep === "x") { epClose(); return; }
     if (t.dataset.upx === "go") { await upGo(inf); return; }
+    if (t.dataset.capagain) { E.capDone = false; epDraw(); return; }
     if (t.dataset.ept) { if (typeof PBMask !== "undefined") PBMask.cancel(); PBPuzzle.cancelPrev(); E.ept = t.dataset.ept; epDraw(); return; }
     if (t.dataset.ddt) { (t.dataset.ddt === "pz" ? PBPuzzle : PBMask).opt("dd"); epDraw(); return; }
     if (t.dataset.pzpat) { PBPuzzle.opt("pat", t.dataset.pzpat); epDraw(); return; }
@@ -3178,7 +3180,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { openPimg: openPageImages, toolSession, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
