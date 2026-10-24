@@ -21,8 +21,8 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     saved.length = 0; Admin.products.forEach(q => { q.cover = "assets/img/tpl/generic-honey.webp"; q.images = []; }); const st2 = []; await AdminImgQA.applyAll({ slugs: ["a2"], onStep: m => st2.push(m) }); out.only = saved.slice(); out.last2 = st2[st2.length - 1];
     /* الواجهة */
     await PBApp.toolSession([await new Promise(z => cut.toBlob(z, "image/png"))], "st", "t"); await new Promise(z => setTimeout(z, 500)); const tb = document.querySelector('[data-stsub="txt"]'); out.hasTab = !!tb; if (tb) tb.click();
-    await new Promise(z => setTimeout(z, 600)); out.ui = { hasTab: out.hasTab, ept: PBApp.E.ept, sc: PBApp.E.stScene, tabs: [...document.querySelectorAll("[data-imgs]")].length, chk: document.querySelectorAll("[data-allp]").length, all: !!document.querySelector('[data-st="applyall"]'), n: (document.getElementById("pbst-alln") || {}).textContent };
-    const cb = document.querySelector('[data-allp="a1"]'); if (cb) { cb.checked = false; cb.dispatchEvent(new Event("input", { bubbles: true })); cb.dispatchEvent(new Event("change", { bubbles: true })); } out.n2 = (document.getElementById("pbst-alln") || {}).textContent;
+    await new Promise(z => setTimeout(z, 600)); out.ui = { hasTab: out.hasTab, ept: PBApp.E.ept, sc: PBApp.E.stScene, tabs: [...document.querySelectorAll("[data-imgs]")].length, all: !!document.querySelector('[data-st="applyall"]') };
+    out.noList = !document.querySelector("[data-allp]") && !document.querySelector('[data-st="allsel"]');
     return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -32,6 +32,6 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.saved.length === 2 && r.covers.every(c => /cover-x/.test(c)) && r.kept, "التطبيق على كل المنتجات: كل غلاف استُبدل والقديم محفوظ ضمن الصور", r);
   ok(/طُبّق النمط على 2/.test(r.last || ""), "ملخص النتيجة", r.last);
   ok(r.only && r.only.length === 1 && r.only[0] === "assets/img/a2" && /على 1 /.test(r.last2), "اختيار منتجات محدّدة: يُطبَّق على المختار فقط", [r.only, r.last2]);
-  ok(r.ui && r.ui.chk === 2 && r.ui.all && r.ui.n === "2" && r.n2 === "1", "واجهة اختيار المنتجات داخل الاستوديو وعدّاد المحدّد", [r.ui, r.n2]);
+  ok(r.ui && r.ui.all && r.noList, "زر التطبيق على المنتجات بلا قائمة اختيار", [r.ui]);
   ok(!errs.length, "لا أخطاء صفحة", errs); console.log(fails.length ? "\n✗ " + fails.length + " فشل" : "\n✓ " + n + " فحصاً ناجحاً"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();

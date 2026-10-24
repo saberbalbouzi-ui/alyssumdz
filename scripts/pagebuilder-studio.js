@@ -9,12 +9,12 @@ const PBStudio = (() => {
   /* عناوين عريضة بعرض الصورة (الرمز {name} يُستبدل باسم كل منتج عند التطبيق على كل المنتجات، و{price} بسعره) */
   const TITLES = [["{name}", "#16352b", "#ffffff", "title"], ["عرض خاص لفترة محدودة", "#dc2626", "#ffffff", "title"], ["توصيل لكل الولايات", "#0f766e", "#ffffff", "title"], ["جودة مضمونة", "#111827", "#fde68a", "title"], ["{name} — {price}", "#1d4ed8", "#ffffff", "title"]];
   const POS = ["أعلى يسار", "أعلى وسط", "أعلى يمين", "وسط يسار", "الوسط", "وسط يمين", "أسفل يسار", "أسفل وسط", "أسفل يمين"];
-  const DEF = { bg: "white", c1: "#ffffff", blur: 18, shadow: "contact", shI: 100, shB: 100, shX: 0, shY: 100, pad: .1, align: "center", size: "1000x1000", cw: 1000, ch: 1000, podium: false, rot: 0, flip: false, font: "", refl: 0, outW: 0, outC: "#ffffff", bri: 0, con: 0, sat: 0, tmp: 0, ov: [], logoPos: 8, logoSize: 16, logoOp: 90, fmt: "png", q: 92 };
+  const DEF = { bg: "white", c1: "#ffffff", blur: 18, shadow: "contact", shI: 100, shB: 100, shX: 0, shY: 100, shW: 100, shH: 100, pad: .1, align: "center", size: "1000x1000", cw: 1000, ch: 1000, podium: false, rot: 0, flip: false, font: "", refl: 0, outW: 0, outC: "#ffffff", bri: 0, con: 0, sat: 0, tmp: 0, ov: [], logoPos: 8, logoSize: 16, logoOp: 90, fmt: "png", q: 92 };
   const SITE_FF = "'Cairo','Segoe UI'", LSK = "pbx_studio";
   const S = { id: "", src: "", cut: null, bb: null, srcC: null, logo: null, opt: Object.assign({}, DEF), busy: false, msg: "", scenes: {}, tab: "bg", pv: "", pvUrl: "", off: false, dtok: 0, site: { ff: SITE_FF, url: "", loaded: false } };
   try { const o = JSON.parse(localStorage.getItem(LSK) || "null"); if (o && typeof o === "object") Object.assign(S.opt, o); } catch (e) { }
   if (!Array.isArray(S.opt.ov)) S.opt.ov = [];
-  const save = () => { try { localStorage.setItem(LSK, JSON.stringify(S.opt)); } catch (e) { } };
+  const save = () => { try { localStorage.setItem(LSK, JSON.stringify(S.opt, (k, v) => k === "_b" ? undefined : v)); } catch (e) { } };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
 
@@ -57,13 +57,15 @@ const PBStudio = (() => {
   const fontCss = (v, site) => v ? "'" + String(v).replace(/'/g, "") + "'" : (site || SITE_FF);
   /* ملصق/شارة نصية: pill | circle | ribbon | plain */
   function drawBadge(g, W, H, ov, o) {
-    const t = tok(String(ov.t || ""), o).trim(); if (!t) return; const fs = Math.max(10, W * (ov.s || 8) / 100), pos = ov.pos == null ? 2 : ov.pos, m = W * .04;
+    ov._b = null; const t = tok(String(ov.t || ""), o).trim(); if (!t) return; const fs = Math.max(10, W * (ov.s || 8) / 100), pos = ov.pos == null ? 2 : ov.pos, m = W * .04;
     g.save(); g.font = "800 " + fs + "px " + fontCss(ov.font || (o && o.font), o && o.siteFf) + ",Tahoma,Arial,sans-serif"; g.textBaseline = "middle"; g.textAlign = "center"; try { g.direction = /[؀-ۿ]/.test(t) ? "rtl" : "ltr"; } catch (e) { }
-    let tw = g.measureText(t).width; const st = ov.st || "pill";
-    if (st === "title") { let f2 = fs; while (tw > W * .92 && f2 > 10) { f2 -= 2; g.font = g.font.replace(/[0-9.]+px/, f2 + "px"); tw = g.measureText(t).width; } const h = f2 * 2.1, [, y] = anchor(pos, W, H, W, h, 0); g.fillStyle = ov.bg || "#16352b"; g.shadowColor = "rgba(0,0,0,.2)"; g.shadowBlur = f2 * .2; g.fillRect(0, y, W, h); g.shadowColor = "transparent"; g.fillStyle = ov.fg || "#ffffff"; g.fillText(t, W / 2, y + h / 2 + f2 * .04); g.restore(); return; }
-    if (st === "circle") { const d = Math.max(tw + fs * .9, fs * 2.2), [x, y] = anchor(pos, W, H, d, d, m); g.translate(x + d / 2, y + d / 2); g.rotate(-.1); g.fillStyle = ov.bg || "#e11d48"; g.shadowColor = "rgba(0,0,0,.25)"; g.shadowBlur = fs * .3; g.shadowOffsetY = fs * .1; g.beginPath(); g.arc(0, 0, d / 2, 0, Math.PI * 2); g.fill(); g.shadowColor = "transparent"; g.fillStyle = ov.fg || "#fff"; g.fillText(t, 0, fs * .04); }
-    else if (st === "plain") { const [x, y] = anchor(pos, W, H, tw, fs, m); g.fillStyle = ov.fg || "#111"; g.shadowColor = "rgba(0,0,0,.25)"; g.shadowBlur = fs * .15; g.fillText(t, x + tw / 2, y + fs / 2); }
-    else { const w = tw + fs * 1.4, h = fs * 1.7, [x, y] = anchor(pos, W, H, w, h, m); g.shadowColor = "rgba(0,0,0,.22)"; g.shadowBlur = fs * .25; g.shadowOffsetY = fs * .08; g.fillStyle = ov.bg || "#16a34a"; if (st === "ribbon") { g.beginPath(); g.moveTo(x, y); g.lineTo(x + w, y); g.lineTo(x + w - fs * .45, y + h / 2); g.lineTo(x + w, y + h); g.lineTo(x, y + h); g.lineTo(x + fs * .45, y + h / 2); g.closePath(); } else rrect(g, x, y, w, h, h / 2); g.fill(); g.shadowColor = "transparent"; g.fillStyle = ov.fg || "#fff"; g.fillText(t, x + w / 2, y + h / 2 + fs * .04); }
+    let tw = g.measureText(t).width; const st = ov.st || "pill", cl = (v, a, b) => Math.max(a, Math.min(b, v)), custom = ov.fx != null && ov.fy != null;
+    /* موضع مخصّص بالسحب (مركز العنصر كنسبة من الصورة) وإلا أحد المواضع التسعة؛ ويُسجَّل صندوق العنصر ov._b لمقابض السحب */
+    const place = (w, h, mm) => { const r = custom ? [cl(ov.fx * W - w / 2, 0, Math.max(0, W - w)), cl(ov.fy * H - h / 2, 0, Math.max(0, H - h))] : anchor(pos, W, H, w, h, mm); ov._b = [r[0] / W, r[1] / H, w / W, h / H]; return r; };
+    if (st === "title") { let f2 = fs; while (tw > W * .92 && f2 > 10) { f2 -= 2; g.font = g.font.replace(/[0-9.]+px/, f2 + "px"); tw = g.measureText(t).width; } const h = f2 * 2.1, y = ov.fy != null ? cl(ov.fy * H - h / 2, 0, Math.max(0, H - h)) : anchor(pos, W, H, W, h, 0)[1]; ov._b = [0, y / H, 1, h / H]; g.fillStyle = ov.bg || "#16352b"; g.shadowColor = "rgba(0,0,0,.2)"; g.shadowBlur = f2 * .2; g.fillRect(0, y, W, h); g.shadowColor = "transparent"; g.fillStyle = ov.fg || "#ffffff"; g.fillText(t, W / 2, y + h / 2 + f2 * .04); g.restore(); return; }
+    if (st === "circle") { const d = Math.max(tw + fs * .9, fs * 2.2), [x, y] = place(d, d, m); g.translate(x + d / 2, y + d / 2); g.rotate(-.1); g.fillStyle = ov.bg || "#e11d48"; g.shadowColor = "rgba(0,0,0,.25)"; g.shadowBlur = fs * .3; g.shadowOffsetY = fs * .1; g.beginPath(); g.arc(0, 0, d / 2, 0, Math.PI * 2); g.fill(); g.shadowColor = "transparent"; g.fillStyle = ov.fg || "#fff"; g.fillText(t, 0, fs * .04); }
+    else if (st === "plain") { const [x, y] = place(tw, fs, m); g.fillStyle = ov.fg || "#111"; g.shadowColor = "rgba(0,0,0,.25)"; g.shadowBlur = fs * .15; g.fillText(t, x + tw / 2, y + fs / 2); }
+    else { const w = tw + fs * 1.4, h = fs * 1.7, [x, y] = place(w, h, m); g.shadowColor = "rgba(0,0,0,.22)"; g.shadowBlur = fs * .25; g.shadowOffsetY = fs * .08; g.fillStyle = ov.bg || "#16a34a"; if (st === "ribbon") { g.beginPath(); g.moveTo(x, y); g.lineTo(x + w, y); g.lineTo(x + w - fs * .45, y + h / 2); g.lineTo(x + w, y + h); g.lineTo(x, y + h); g.lineTo(x + fs * .45, y + h / 2); g.closePath(); } else rrect(g, x, y, w, h, h / 2); g.fill(); g.shadowColor = "transparent"; g.fillStyle = ov.fg || "#fff"; g.fillText(t, x + w / 2, y + h / 2 + fs * .04); }
     g.restore();
   }
   /* المنتج بالتعديلات (سطوع/تباين/تشبّع/حرارة) ثم التدوير/القلب ← Canvas بحجم المنتج المعروض */
@@ -89,12 +91,12 @@ const PBStudio = (() => {
     if (o.podium && !scene) drawPodium(g, cx, foot, Math.max(dw * .72, W * .22), W, H, o.podiumColor);
     if (o.shadow === "contact" || o.shadow === "contactStrong") {
       const sI = (o.shI == null ? 100 : o.shI) / 100, sB = (o.shB == null ? 100 : o.shB) / 100, sX = (o.shX || 0) / 100 * dw, sY = (o.shY == null ? 100 : o.shY) / 100;
-      const op = Math.min(1, (o.shadow === "contact" ? .34 : .55) * sI), rx = dw * .5 * (.6 + .4 * sB), ry = Math.max(5, dw * .07 * sB); g.save(); g.translate(cx + sX, foot - ry * .25 + (sY - 1) * ry * .8); g.scale(1, ry / rx);
+      const op = Math.min(1, (o.shadow === "contact" ? .34 : .55) * sI), rx = dw * .5 * (.6 + .4 * sB) * (o.shW == null ? 100 : o.shW) / 100, ry = Math.max(5, dw * .07 * sB * (o.shH == null ? 100 : o.shH) / 100); g.save(); g.translate(cx + sX, foot - ry * .25 + (sY - 1) * ry * .8); g.scale(1, ry / rx);
       const gr = g.createRadialGradient(0, 0, 0, 0, 0, rx); gr.addColorStop(0, "rgba(0,0,0," + op + ")"); gr.addColorStop(.6, "rgba(0,0,0," + op * .45 + ")"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, Math.PI * 2); g.fill(); g.restore();
     }
     if (o.refl > 0) {      /* انعكاس على الأرضية: نسخة مقلوبة تتلاشى */
       const rf = mk(dw, dh), r = rf.getContext("2d"); r.translate(0, dh); r.scale(1, -1); r.drawImage(pcv, 0, 0); r.setTransform(1, 0, 0, 1, 0, 0); r.globalCompositeOperation = "destination-in";
-      const gr = r.createLinearGradient(0, 0, 0, dh * .6); gr.addColorStop(0, "rgba(0,0,0," + Math.min(.6, o.refl / 100 * .6) + ")"); gr.addColorStop(1, "rgba(0,0,0,0)"); r.fillStyle = gr; r.fillRect(0, 0, dw, dh); g.drawImage(rf, dx, foot - dh * .02);
+      const gr = r.createLinearGradient(0, 0, 0, dh * .6); gr.addColorStop(0, "rgba(0,0,0," + Math.min(.9, o.refl / 100 * .9) + ")"); gr.addColorStop(1, "rgba(0,0,0,0)"); r.fillStyle = gr; r.fillRect(0, 0, dw, dh); g.drawImage(rf, dx, foot - dh * .02);
     }
     if (o.outW > 0) {      /* حدّ حول المنتج */
       const sil = mk(dw, dh), s = sil.getContext("2d"); s.drawImage(pcv, 0, 0); s.globalCompositeOperation = "source-in"; s.fillStyle = o.outC || "#fff"; s.fillRect(0, 0, dw, dh); const rr = Math.max(1, W * o.outW / 1000);
@@ -165,13 +167,13 @@ ${fontSel('data-ovk="font"', v.font || "", "حسب الخط العام")}
 <div class="pbst-tabs">${tab("bg", "🎨 الخلفية")}${tab("prod", "📦 المنتج")}${tab("fx", "✨ تأثيرات")}${tab("txt", "🏷️ ملصقات وشعار")}${tab("out", "📐 المقاس والإخراج")}</div>
 <div ${pane("bg")}><div><label class="pbst-l">الخلفية</label><div class="pbst-sw">${sw}</div><input type="color" id="pbst-c1" value="${esc(o.c1 || "#ffffff")}" style="width:100%;margin-top:.3rem;display:${o.bg === "custom" ? "block" : "none"}"></div>
 <div id="pbst-blurbox" style="display:${o.bg === "blur" ? "block" : "none"}">${rg("blur", "قوة الطمس", 4, 60, 1, o.blur)}</div></div>
-<div ${pane("prod")}><div class="pbst-row"><div><label class="pbst-l">الظل</label><select id="pbst-sh"><option value="contact">ملامسة (الأنسب)</option><option value="contactStrong">ملامسة قوية</option><option value="soft">ناعم</option><option value="strong">قوي</option><option value="none">بدون</option></select></div>
+<div ${pane("prod")}><div class="pbst-row"><div><label class="pbst-l">نوع الظل</label><select id="pbst-sh"><option value="contact">تحت المنتج — دائرة (بيضاوي) بإعداداتها</option><option value="soft">خلف المنتج</option><option value="none">بدون ظل</option></select></div>
 <div><label class="pbst-l">الموضع</label><select id="pbst-al"><option value="center">في الوسط</option><option value="bottom">على الأرض</option></select></div></div>
-<div class="pbst-sub" style="margin:.35rem 0 .1rem;font-size:.74rem;opacity:.8">ضبط الظل (شدة، نعومة، اتجاه)</div>${rg("shI", "شدة الظل %", 0, 200, 5, o.shI == null ? 100 : o.shI)}${rg("shB", "نعومة الظل %", 20, 300, 5, o.shB == null ? 100 : o.shB)}${rg("shX", "إزاحة أفقية", -100, 100, 5, o.shX || 0)}${rg("shY", "إزاحة رأسية %", 0, 250, 5, o.shY == null ? 100 : o.shY)}
+<div class="pbst-sub" style="margin:.35rem 0 .1rem;font-size:.74rem;opacity:.8">ضبط الظل (شدة، نعومة، اتجاه)</div>${rg("shI", "شدة الظل %", 0, 200, 5, o.shI == null ? 100 : o.shI)}${rg("shB", "نعومة الظل %", 20, 300, 5, o.shB == null ? 100 : o.shB)}<div id="pbst-shc" style="display:${/^contact/.test(o.shadow) ? "block" : "none"}">${rg("shW", "عرض الدائرة %", 30, 200, 5, o.shW == null ? 100 : o.shW)}${rg("shH", "ارتفاع الدائرة %", 30, 300, 5, o.shH == null ? 100 : o.shH)}</div>${rg("shX", "إزاحة أفقية", -100, 100, 5, o.shX || 0)}${rg("shY", "إزاحة رأسية %", 0, 250, 5, o.shY == null ? 100 : o.shY)}<div class="pbst-sub" style="margin:.5rem 0 .1rem;font-size:.74rem;opacity:.8">انعكاس الأرضية (صفر = بلا انعكاس)</div>${rg("refl", "شفافية انعكاس المنتج %", 0, 100, 1, o.refl || 0)}
 <div><label class="pbst-l">حجم المنتج <span id="pbst-pv-n"></span></label><input type="range" id="pbst-pad" min="2" max="35" step="1" value="${Math.round((1 - o.pad * 2) * 100) ? Math.round(o.pad * 100) : 10}"></div>
 <label class="pbst-ck"><input type="checkbox" id="pbst-pod" ${o.podium ? "checked" : ""}> منصة عرض تحت المنتج</label>
 ${rg("rot", "تدوير", -180, 180, 1, o.rot)}<label class="pbst-ck"><input type="checkbox" data-stk="flip" ${o.flip ? "checked" : ""}> قلب أفقي</label></div>
-<div ${pane("fx")}>${rg("bri", "السطوع", -50, 50, 1, o.bri)}${rg("con", "التباين", -50, 50, 1, o.con)}${rg("sat", "التشبّع", -80, 80, 1, o.sat)}${rg("tmp", "الحرارة", -50, 50, 1, o.tmp)}${rg("refl", "انعكاس", 0, 100, 1, o.refl)}
+<div ${pane("fx")}>${rg("bri", "السطوع", -50, 50, 1, o.bri)}${rg("con", "التباين", -50, 50, 1, o.con)}${rg("sat", "التشبّع", -80, 80, 1, o.sat)}${rg("tmp", "الحرارة", -50, 50, 1, o.tmp)}
 ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لون الحدّ <input type="color" data-stk="outC" value="${esc(o.outC || "#ffffff")}"></label>
 <div class="pbst-act"><button type="button" class="pbx-small" data-st="fxreset">إعادة ضبط التأثيرات</button></div></div>
 <div ${pane("txt")}><label class="pbst-l">خط الملصقات</label>${fontSel('data-stk="font"', o.font, "خط الموقع (الافتراضي)")}<label class="pbst-l">ملصقات البيع (اضغط للإضافة)</label><div class="pbst-chips">${BADGES.map((b, i) => `<button type="button" class="pbx-small" data-st="addov" data-i="${i}">${esc(b[0])}</button>`).join("")}<button type="button" class="pbx-small" data-st="addov" data-i="-1">＋ نص مخصص</button></div><label class="pbst-l">عناوين عريضة (اضغط للإضافة — {name} اسم المنتج و{price} سعره)</label><div class="pbst-chips">${TITLES.map((b, i) => `<button type="button" class="pbx-small" data-st="addttl" data-i="${i}">${esc(b[0])}</button>`).join("")}</div>
@@ -184,19 +186,39 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
   let drawT = 0;
   S.allOff = S.allOff || {};
   const allProds = () => ((typeof Admin !== "undefined" && Admin.products) || []).filter(p => p && p.cover);
-  const allBlock = () => { const L = allProds(), n = L.filter(p => !S.allOff[p.slug]).length; return `<div class="pbst-act" style="flex-direction:column;align-items:stretch;gap:.3rem;margin-top:.4rem"><details${L.length ? "" : " hidden"}><summary class="pbx-small" style="cursor:pointer">🧾 اختيار المنتجات (<span id="pbst-alln">${n}</span> من ${L.length})</summary><div class="pbst-row" style="margin:.3rem 0"><button type="button" class="pbx-small" data-st="allsel" data-v="1">تحديد الكل</button><button type="button" class="pbx-small" data-st="allsel" data-v="0">إلغاء التحديد</button></div><div style="max-height:170px;overflow:auto;display:flex;flex-direction:column;gap:.15rem">${L.map(p => `<label style="display:flex;gap:.4rem;align-items:center;font-size:.8rem"><input type="checkbox" data-allp="${esc(p.slug)}"${S.allOff[p.slug] ? "" : " checked"}> ${esc(p.title || p.slug)}</label>`).join("")}</div></details><button type="button" class="pbx-small pz-go" data-st="applyall">🗂 تطبيق على المنتجات المحدّدة</button><div id="pbst-allst" class="ep-n" style="min-height:1.2em">يُطبَّق نمط الاستوديو الحالي (الخلفية والظل والمقاس والملصقات والعناوين والشعار) على غلاف المنتجات التي تختارها (الكل افتراضياً).</div></div>`; };
+  const allBlock = () => { const L = allProds(); return `<div class="pbst-act" style="flex-direction:column;align-items:stretch;gap:.3rem;margin-top:.4rem"><button type="button" class="pbx-small pz-go" data-st="applyall"${L.length ? "" : " disabled"}>🗂 تطبيق على المنتجات</button><div id="pbst-allst" class="ep-n" style="min-height:1.2em">يُطبَّق نمط الاستوديو الحالي (الخلفية والظل والمقاس والملصقات والعناوين والشعار) على غلاف المنتجات.</div></div>`; };
   const optsFor = (W, H) => Object.assign({}, S.opt, { bg: bgOf(S.opt), size: [W, H], scene: null, sceneFloor: SCENES[0].floor, logo: S.logo, blurSrc: S.srcC, siteFf: S.site.ff });
   /* معاينة مباشرة على الصورة في الصفحة (بعد نزع الخلفية): تُركَّب بالمقاس المختار وتُعرض مكان الصورة؛ «تطبيق/إلغاء» تحتها */
+  /* تحريك العناوين والملصقات بالماوس مباشرة على صورة المنتج: مقابض شفافة فوق كل عنصر (من الصندوق ov._b) تُسحب فيتغيّر موضعه (fx/fy) وتُعاد المعاينة */
+  let hitEl = null;
+  function hitsOff() { if (hitEl) { hitEl.remove(); hitEl = null; } }
+  function hits() {
+    if (S.dragging) return; const ovs = (S.opt && S.opt.ov) || [], R = S.pv && A().imgRect ? A().imgRect(S.pv) : null; if (!R || !document.getElementById("pbst") || !ovs.some(v => v._b)) return hitsOff();
+    if (!hitEl) { hitEl = document.createElement("div"); hitEl.id = "pbst-hits"; hitEl.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;z-index:10046;pointer-events:none"; document.body.appendChild(hitEl); }
+    hitEl.innerHTML = ovs.map((v, i) => v._b ? `<div class="pbst-hit" data-hi="${i}" title="اسحب لتحريك ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:fixed;left:${R.left + v._b[0] * R.width}px;top:${R.top + v._b[1] * R.height}px;width:${v._b[2] * R.width}px;height:${v._b[3] * R.height}px;pointer-events:auto;cursor:${v.st === "title" ? "ns-resize" : "move"};border:1.5px dashed rgba(198,254,23,.85);border-radius:6px;touch-action:none"></div>` : "").join("");
+  }
+  if (typeof document !== "undefined" && !document.__pbstHit) {
+    document.__pbstHit = 1;
+    document.addEventListener("pointerdown", e => {
+      const h = e.target.closest && e.target.closest(".pbst-hit"); if (!h) return; const i = +h.dataset.hi, ov = S.opt.ov[i], R = A().imgRect && A().imgRect(S.pv); if (!ov || !ov._b || !R) return; e.preventDefault(); e.stopPropagation(); S.dragging = true; try { h.setPointerCapture(e.pointerId); } catch (x) { }
+      const b = ov._b, cx0 = b[0] + b[2] / 2, cy0 = b[1] + b[3] / 2, x0 = e.clientX, y0 = e.clientY, title = ov.st === "title"; let busy = false;
+      const mv = ev => { const nx = Math.max(0, Math.min(1, cx0 + (ev.clientX - x0) / R.width)), ny = Math.max(0, Math.min(1, cy0 + (ev.clientY - y0) / R.height)); if (!title) ov.fx = Math.round(nx * 1000) / 1000; ov.fy = Math.round(ny * 1000) / 1000; if (ov.fx == null) ov.fx = .5;
+        h.style.left = (R.left + (title ? b[0] : nx - b[2] / 2) * R.width) + "px"; h.style.top = (R.top + (ny - b[3] / 2) * R.height) + "px"; if (!busy) { busy = true; setTimeout(() => { busy = false; redraw(); }, 60); } };
+      const up = () => { S.dragging = false; h.removeEventListener("pointermove", mv); h.removeEventListener("pointerup", up); h.removeEventListener("pointercancel", up); save(); redraw(); setTimeout(hits, 400); };
+      h.addEventListener("pointermove", mv); h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
+    }, true);
+    window.addEventListener("resize", () => setTimeout(hits, 100));
+  }
   async function draw() {
     if (!document.getElementById("pbst")) return; const tok = ++S.dtok;
-    const base = S.cut || S.srcC; if (!base) { if (S.pv) { S.pv = ""; A().stRestore(); } return; }      // قبل نزع الخلفية: تُعرض التعديلات على الصورة كما هي
+    const base = S.cut || S.srcC; if (!base) { if (S.pv) { S.pv = ""; A().stRestore(); } hitsOff(); return; }      // قبل نزع الخلفية: تُعرض التعديلات على الصورة كما هي
     const bbx = S.cut ? S.bb : (S.bbSrc || (S.bbSrc = bbox(S.srcC)));
     const [W, H] = sizeOf(S.opt, S.srcC), k = Math.min(1, 900 / Math.max(W, H)), PW = Math.max(1, Math.round(W * k)), PH = Math.max(1, Math.round(H * k)), o = optsFor(PW, PH);
     if (/^sc\d$/.test(S.opt.bg)) { try { o.scene = await sceneImg(S.opt.bg); } catch (e) { } }
     await loadSite(); o.siteFf = S.site.ff; await loadFonts(o); if (tok !== S.dtok) return;
     const out = compose(base, bbx, o), bl = await toBlob(out, "image/png"); if (tok !== S.dtok || S.off || !document.getElementById("pbst")) return;
     const url = URL.createObjectURL(bl), prev = S.pvUrl; S.pvUrl = url;
-    if (A().stPreview(S.id, url)) { S.pv = S.id; A().epFloatNow(); say("👁️ معاينة مباشرة على الصورة — " + W + "×" + H + (S.cut ? "" : " — اضغط «انزع الخلفية» لتظهر الخلفية الجديدة")); }
+    if (A().stPreview(S.id, url)) { S.pv = S.id; A().epFloatNow(); setTimeout(hits, 80); setTimeout(hits, 500); say("👁️ معاينة مباشرة على الصورة — " + W + "×" + H + (S.cut ? "" : " — اضغط «انزع الخلفية» لتظهر الخلفية الجديدة")); }
     if (prev) setTimeout(() => { try { URL.revokeObjectURL(prev); } catch (e) { } }, 2000);
   }
   function cancel() { S.dtok++; S.off = true; const had = S.pv; S.pv = ""; if (S.pvUrl) { const u = S.pvUrl; S.pvUrl = ""; setTimeout(() => { try { URL.revokeObjectURL(u); } catch (e) { } }, 2000); } say(""); if (had) A().stRestore(); }
@@ -225,7 +247,7 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
     if (!root) return; css(); const id = inf.node.id, src = inf.node.set.src;
     if (S.id !== id || S.src !== src) { S.id = id; S.src = src; S.cut = null; S.bb = null; S.bbSrc = null; S.srcC = null; S.msg = ""; S.off = false; S.pv = ""; }
     const $ = i => root.querySelector("#" + i), o = S.opt;
-    $("pbst-sh").value = o.shadow; $("pbst-al").value = o.align; $("pbst-sz").value = o.size; $("pbst-pv-n").textContent = Math.round((1 - o.pad * 2) * 100) + "%";
+    $("pbst-sh").value = /^contact/.test(o.shadow) ? "contact" : (o.shadow === "soft" || o.shadow === "strong") ? "soft" : "none"; $("pbst-al").value = o.align; $("pbst-sz").value = o.size; $("pbst-pv-n").textContent = Math.round((1 - o.pad * 2) * 100) + "%";
     const sync = () => { $("pbst-cut").style.display = S.cut ? "none" : ""; };
     sync(); say(S.msg);
     const run = async fn => { if (S.busy) return; S.busy = true; try { await fn(); } catch (e) { say("⚠️ " + (e && e.message || e)); console.error(e); } S.busy = false; sync(); };
@@ -239,8 +261,7 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
       else if (act === "reset") { S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; save(); A().renderInspectorNow(); }
       else if (act === "fxreset") { Object.assign(o, { bri: 0, con: 0, sat: 0, tmp: 0, refl: 0, outW: 0, rot: 0, flip: false }); save(); A().renderInspectorNow(); }
       else if (act === "addttl") { const bd = TITLES[+a.dataset.i]; if (!bd || o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: "title", pos: o.ov.some(v => v.st === "title" && v.pos === 2) ? 8 : 2, s: 5 }); save(); redrawPanel(); redraw(); }
-      else if (act === "allsel") { const on = a.dataset.v === "1"; allProds().forEach(p => { if (on) delete S.allOff[p.slug]; else S.allOff[p.slug] = 1; }); document.querySelectorAll("[data-allp]").forEach(c => c.checked = on); const e = document.getElementById("pbst-alln"); if (e) e.textContent = on ? allProds().length : 0; }
-      else if (act === "applyall") { if (typeof AdminImgQA === "undefined" || !AdminImgQA.applyAll) { alert("الأداة غير متاحة من هذه الصفحة"); return; } AdminImgQA.applyAll({ slugs: allProds().filter(p => !S.allOff[p.slug]).map(p => p.slug), onStep: m => { const e = document.getElementById("pbst-allst"); if (e) e.textContent = m; } }); }
+      else if (act === "applyall") { if (typeof AdminImgQA === "undefined" || !AdminImgQA.applyAll) { alert("الأداة غير متاحة من هذه الصفحة"); return; } AdminImgQA.applyAll({ slugs: allProds().map(p => p.slug), onStep: m => { const e = document.getElementById("pbst-allst"); if (e) e.textContent = m; } }); }
       else if (act === "addov") { const i = +a.dataset.i, bd = BADGES[i] || ["نص", "#16a34a", "#ffffff", "pill"]; if (o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: bd[3], pos: [2, 0, 8, 6][o.ov.length % 4], s: bd[3] === "circle" ? 7 : 6 }); save(); redrawPanel(); redraw(); }
       else if (act === "ovdel") { o.ov.splice(+a.dataset.i, 1); save(); redrawPanel(); redraw(); }
       else if (act === "logodel") { S.logo = null; const f = $("pbst-logo"); if (f) f.value = ""; redraw(); }
@@ -248,19 +269,19 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
       else if (act === "apply") run(() => applyCore(inf));
     });
     $("pbst-c1").addEventListener("input", e => { o.c1 = e.target.value; o.bg = "custom"; const cb = root.querySelector('[data-st-bg="custom"]'); if (cb) { cb.style.background = o.c1; root.querySelectorAll("[data-st-bg]").forEach(x => x.classList.toggle("on", x === cb)); } save(); redraw(); });
-    $("pbst-sh").addEventListener("change", e => { o.shadow = e.target.value; save(); redraw(); });
+    $("pbst-sh").addEventListener("change", e => { o.shadow = e.target.value; const sc = $("pbst-shc"); if (sc) sc.style.display = o.shadow === "contact" ? "block" : "none"; save(); redraw(); });
     $("pbst-al").addEventListener("change", e => { o.align = e.target.value; save(); redraw(); });
     $("pbst-sz").addEventListener("change", e => { o.size = e.target.value; const cs = $("pbst-cs"); if (cs) cs.style.display = o.size === "custom" ? "grid" : "none"; save(); redraw(); });
     $("pbst-pod").addEventListener("change", e => { o.podium = e.target.checked; save(); redraw(); });
     $("pbst-pad").addEventListener("input", e => { o.pad = +(Number(e.target.value) / 100).toFixed(3); $("pbst-pv-n").textContent = Math.round((1 - o.pad * 2) * 100) + "%"; save(); redraw(); });
     /* حقول عامة: data-stk (خيارات المعاينة) و data-ovk (ملصق) */
     root.addEventListener("input", e => {
-      const el = e.target; if (el.dataset.allp != null) { if (el.checked) delete S.allOff[el.dataset.allp]; else S.allOff[el.dataset.allp] = 1; const e2 = document.getElementById("pbst-alln"); if (e2) e2.textContent = allProds().filter(p => !S.allOff[p.slug]).length; return; } if (el.dataset.stk) { const k = el.dataset.stk; o[k] = el.type === "checkbox" ? el.checked : el.type === "range" || el.type === "number" || k === "logoPos" ? Number(el.value) : el.value; const v = root.querySelector('[data-stv="' + k + '"]'); if (v) v.textContent = o[k]; save(); redraw(); }
-      else if (el.dataset.ovk) { const box = el.closest("[data-ovi]"), ov = box && o.ov[+box.dataset.ovi]; if (!ov) return; const k = el.dataset.ovk; ov[k] = el.type === "range" || k === "pos" ? Number(el.value) : el.value; if (el.type === "range") { const b = el.parentNode.querySelector("b"); if (b) b.textContent = ov[k]; } save(); redraw(); }
+      const el = e.target; if (el.dataset.stk) { const k = el.dataset.stk; o[k] = el.type === "checkbox" ? el.checked : el.type === "range" || el.type === "number" || k === "logoPos" ? Number(el.value) : el.value; const v = root.querySelector('[data-stv="' + k + '"]'); if (v) v.textContent = o[k]; save(); redraw(); }
+      else if (el.dataset.ovk) { const box = el.closest("[data-ovi]"), ov = box && o.ov[+box.dataset.ovi]; if (!ov) return; const k = el.dataset.ovk; ov[k] = el.type === "range" || k === "pos" ? Number(el.value) : el.value; if (k === "pos") { delete ov.fx; delete ov.fy; } if (el.type === "range") { const b = el.parentNode.querySelector("b"); if (b) b.textContent = ov[k]; } save(); redraw(); }
     });
     root.addEventListener("change", e => {
       const el = e.target; if (el.id === "pbst-logo" && el.files && el.files[0]) { const f = el.files[0], u = URL.createObjectURL(f), im = new Image(); im.onload = () => { const c = mk(Math.min(800, im.naturalWidth), Math.min(800, im.naturalWidth) * im.naturalHeight / im.naturalWidth); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); S.logo = c; URL.revokeObjectURL(u); redraw(); }; im.onerror = () => say("⚠️ تعذّر قراءة الشعار"); im.src = u; }
     });
   }
-  return { logo: () => S.logo, TITLES, panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
+  return { logo: () => S.logo, TITLES, panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", hits, hitsOff, cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
 })();

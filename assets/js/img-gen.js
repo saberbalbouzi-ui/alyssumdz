@@ -338,22 +338,9 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     r.innerHTML = `<div class="ig-out"${(S.meta || {}).bgMode === "transp" ? ' style="background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/18px 18px"' : ""}><img src="${u}" alt=""></div><div class="action-bar">${ad ? `<button type="button" class="small" onclick="ImgGen.openAd()">فتح في المطوّر${tm === "builder" ? " (مع النص كطبقات قابلة للتعديل)" : " للتعديل والتصدير"}</button>` : `<button type="button" class="small" onclick="ImgGen.toEditor('current')">فتح في المطوّر (الصفحة المفتوحة)</button><button type="button" class="small" onclick="ImgGen.toEditor('new')">فتح في صفحة جديدة</button>`}<button type="button" class="small gold" onclick="ImgGen.toLibrary()">حفظ في المكتبة</button><button type="button" class="small gray" onclick="ImgGen.download()">تنزيل</button><button type="button" class="small gray" onclick="ImgGen.copyPrompt()">نسخ التعليمات</button></div>`;
   }
   const blobOf = (cv, fmt) => new Promise(res => cv.toBlob(res, fmt === "png" ? "image/png" : "image/webp", .92));
-  /* ربط المفتاح مباشرة من داخل الأداة: عند غيابه تظهر نافذة صغيرة تحفظه مرة واحدة في هذا المتصفح فتعمل به كل الأدوات، ثم تتابع الأداة عملها (بدل الإحالة إلى الإعدادات) */
-  let _askP = null;
-  function askKey(kind) {
-    if (typeof document === "undefined" || (navigator.webdriver && !window.__askKeyTest)) return Promise.resolve(false);
-    if (_askP && _askP.kind === kind) return _askP.p; const isF = kind === "f", store = isF ? FALKEY : KEY;
-    const p = new Promise(res => {
-      const bg = document.createElement("div"); bg.id = "ig-keyq"; bg.style.cssText = "position:fixed;inset:0;z-index:10090;background:rgba(5,12,9,.8);display:flex;align-items:center;justify-content:center;direction:rtl;font-family:inherit";
-      const bs = "border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:12px;padding:.6rem 1.1rem;font-weight:800;cursor:pointer;font-family:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 4px 12px rgba(0,0,0,.3);backdrop-filter:blur(6px)";
-      bg.innerHTML = `<div style="background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:16px;padding:1.2rem;width:min(430px,92vw);display:flex;flex-direction:column;gap:.7rem;box-shadow:0 20px 60px rgba(0,0,0,.6)"><b style="font-size:1.05rem">🔑 ${isF ? "مفتاح الفيديو والنماذج ثلاثية الأبعاد" : "مفتاح Alyssum API"}</b><div style="font-size:.85rem;line-height:1.7;opacity:.88">هذه الأداة تحتاج المفتاح. أدخله مرة واحدة هنا فيُحفظ في هذا المتصفح وتعمل به كل الأدوات المرتبطة، وتتابع الأداة عملها فوراً.</div><input id="ig-kq" type="password" autocomplete="off" dir="ltr" placeholder="${isF ? "key_id:key_secret" : "AIza…"}" style="width:100%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;border-radius:10px;padding:.6rem .7rem;font-family:inherit"><div id="ig-kmsg" style="font-size:.8rem;color:#fca5a5;min-height:1.2em"></div><div style="display:flex;gap:.5rem"><button type="button" id="ig-kok" style="${bs};background:linear-gradient(180deg,rgba(198,254,23,.38),rgba(198,254,23,.14))">حفظ ومتابعة</button><button type="button" id="ig-kno" style="${bs};background:rgba(255,255,255,.1)">إلغاء</button></div></div>`;
-      document.body.appendChild(bg); const q = bg.querySelector("#ig-kq"), done = v => { bg.remove(); _askP = null; res(v); }; q.focus();
-      bg.querySelector("#ig-kno").onclick = () => done(false);
-      const ok = () => { const v = q.value.trim().replace(/^["']|["']$/g, ""); if (v.length < 10) { bg.querySelector("#ig-kmsg").textContent = "المفتاح قصير جداً — تأكد من نسخه كاملاً"; return; } LS.set(store, v); try { credit.renew(); } catch (e) { } done(true); };
-      bg.querySelector("#ig-kok").onclick = ok; q.addEventListener("keydown", e => { if (e.key === "Enter") ok(); else if (e.key === "Escape") done(false); });
-    });
-    _askP = { kind, p }; return p;
-  }
+  /* لا خانة لإدخال المفتاح (الأدوات موجَّهة للزبائن ولا يملكون مفتاحاً): الخدمة تعمل عبر خادم المنصة بجلسة المالك أو برمز الموقع المضمَّن في حزمته (AiProxy)،
+     فهذه الدالة تفعّل العلامة وتُرجع true إن كان الربط بالخادم متاحاً، وإلا false فتظهر رسالة «غير مفعّلة» بدل أي نافذة إدخال. مفتاح الفيديو/النماذج ثلاثية الأبعاد (خدمة مستقلة) لا وسيط له بعد. */
+  function askKey(kind) { return Promise.resolve(kind !== "f" && typeof AiProxy !== "undefined" && !!AiProxy.mark()); }
   /* توليد صورة واحدة دون واجهة المولّد (يستعمله تبويب السوشيال): o = {blob مرجع, name, desc, goal, W, H, label} ← {blob, model, cost} أو null إن ألغى المستخدم */
   async function quick(o) {
     const fal = cfg.provider() === "fal"; let key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
@@ -372,6 +359,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   }
   /* هل الخدمة جاهزة؟ يستعملها محرّر الصور لإظهار الحالة بلا استدعاء: {ok, off, nokey} */
   function ready() {
+    try { if (typeof AiProxy !== "undefined") AiProxy.mark(); } catch (e) { }
     const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim(), off = LS.get("alyssum_ai_img", "1") === "0";
     return { ok: !!key && !off, off, nokey: !key };
   }

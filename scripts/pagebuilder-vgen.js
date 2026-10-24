@@ -55,7 +55,7 @@ const PBVGen = (() => {
 <div id="pbvg-pool" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:96px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-vg="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(u) ? "3px solid #7c3aed" : "none"}">`).join("") || '<span class="ep-n">لا صور أخرى في الصفحة</span>'}</div>
 <div class="pbrt-row"><select id="pbvg-r" class="pbx-small">${RATIOS.map(([k, t]) => `<option value="${k}"${S.ratio === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
 <div class="rt-g"><label>المدة (ثانية) <b id="pbvg-dv">${S.dur}</b><input type="range" id="pbvg-d" min="3" max="10" value="${S.dur}"></label></div>
-<div class="ep-n" id="pbvg-cost">${rdy.ok ? "يستهلك من رصيد Alyssum API — تُطلب موافقتك قبل التنفيذ" : "تحتاج مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور"}</div>
+<div class="ep-n" id="pbvg-cost">${rdy.ok ? "يستهلك من رصيد Alyssum API — تُطلب موافقتك قبل التنفيذ" : "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم"}</div>
 <div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vg="go">🎬 أنشئ الفيديو</button></div>
 <div id="pbvg-out"></div><div id="pbvg-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
   }
@@ -73,7 +73,7 @@ const PBVGen = (() => {
       const r = await ImgGen.video({ images: imgs, prompt, ratio: S.ratio, dur: S.dur, title: "فيديو", onStatus: m => { if (ver === S.ver) say("⏳ " + m); } });
       if (!r) { say("أُلغي"); return; }
       if (S.url) URL.revokeObjectURL(S.url); S.blob = r.blob; S.type = r.type; S.url = URL.createObjectURL(r.blob); showOut(); say("✅ جاهز — راجع الفيديو (قد تتغير تفاصيل دقيقة) ثم أضفه للصفحة");
-    } catch (e) { say(e.code === "NOKEY" ? "⚠️ أضف مفتاح Alyssum API (الاتصال الثاني) من إعدادات مولّد الصور" : e.code === "OFF" ? "توليد الفيديو معطّل من الإعدادات" : "❌ " + e.message); }
+    } catch (e) { say(e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : e.code === "OFF" ? "توليد الفيديو معطّل من الإعدادات" : "❌ " + e.message); }
     finally { S.busy = false; }
   }
   async function add() {

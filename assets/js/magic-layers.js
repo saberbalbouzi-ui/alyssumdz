@@ -341,7 +341,7 @@ const MagicLayers = (() => {
     if (!S.src || S.busy) return;
     readOpts();
     const useApi = O.api && hasKey(), useLocal = O.local && localOk();
-    if (!useApi && !useLocal) { say(O.api ? "لا مفتاح Alyssum API في هذا المتصفح، والكشف المحلي غير متاح — اضبط المفتاح من «إعدادات مولّد الصور» أو فعّل الكشف المحلي." : "فعّل الكشف المحلي أو Alyssum API.", "err"); return; }
+    if (!useApi && !useLocal) { say(O.api ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : "فعّل الكشف المحلي أو Alyssum API.", "err"); return; }
     const cfg = COVER[O.cover] || COVER.dense, calls = useApi ? 1 + (objTiles(S.W, S.H, cfg.grid).length) + bandsFor(S.W, S.H).length + cfg.rounds : 0, bgMode = O.bg === "auto" ? (useLocal ? "local" : "orig") : O.bg, bgCalls = bgMode === "api" ? 1 : 0;
     if (useApi && !(opt && opt.confirmed === true) && !confirm("سيُرسَل حتى " + (calls + bgCalls) + " طلباً إلى Alyssum API (تحليل الصورة كاملة + مربعات + المتبقي" + (bgCalls ? " + ترميم الخلفية" : "") + ") وتُحتسب من رصيدك. المتابعة؟")) return;
     S.busy = true; S.run = { cancelled: false }; ui(true); const t0 = Date.now();
@@ -684,7 +684,7 @@ const MagicLayers = (() => {
     S.busy = true; uiL(true); S.run = { cancelled: false };
     let r;
     try { r = await landingImage(L); }
-    catch (e) { S.busy = false; S.run = null; uiL(false); say(e.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد." : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return; }
+    catch (e) { S.busy = false; S.run = null; uiL(false); say(e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return; }
     S.busy = false; S.run = null; uiL(false);
     setMode("ext"); await loadSource(r.blob); S.intent = r.copy || ""; say("تم رسم الصفحة — جارٍ تفكيكها إلى طبقات…", "", true);
     let ok = false; try { ok = await generate({ confirmed: true }); } finally { S.intent = ""; }
@@ -693,7 +693,7 @@ const MagicLayers = (() => {
   async function runLanding() {
     if (S.busy) return; const L = readLand();
     if (!L.name) { say("اختر منتجاً أو اكتب اسمه أولاً.", "err"); return; }
-    if (!hasKey()) { say("يلزم مفتاح Alyssum API لهذا الوضع (اضبطه من «تصميم بطبقات» أو إعدادات مولّد الصور).", "err"); return; }
+    if (!hasKey()) { say("الخدمة غير مفعّلة لموقعك — تواصل مع الدعم", "err"); return; }
     if (L.method !== "layers") return runLandingImage(L);
     const noProd = !L.product;
     if (!confirm((noProd ? "⚠ لم تختر منتجاً من المتجر: لن تظهر أسعار المتجر وعروضه ولن يعمل نموذج الطلب الحقيقي (تُترك أقسام السعر والطلب خارج التصميم). اختر منتجاً أولاً للحصول على صفحة كاملة.\n\n" : "") + "سيُنشأ تصميم الصفحة ثم تُرسم أصولها في لوحة (أو أكثر) بتقنية Alyssum API وتُستهلك من رصيدك، وما لم يُقصّ منها يُولَّد وحده (بلا أي كتابة داخل الصور). المتابعة؟")) return;
@@ -704,7 +704,7 @@ const MagicLayers = (() => {
       close(true); const f = await landingOpen(res, { photoBlob: photo, say: m => toast(m) });
       toast("✅ صفحة هبوط من " + res.page.sections.length + " قسماً: رُكّبت " + f.placed + " من " + f.total + " أصل من اللوحة" + (f.filled ? " + " + f.filled + " صورة وُلّدت منفردة" : "") + (f.left ?" — بقيت " + f.left + " صورة فارغة (زر «🧩 تصميم بطبقات» ← «🖼️ توليد الصور الفارغة» يكملها)" : ""));
     } catch (e) {
-      S.busy = false; uiL(false); say(e.name === "AbortError" ? "أُلغيت العملية." : e.code === "NOKEY" ? "لم يُضبط مفتاح Alyssum API بعد." : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return;
+      S.busy = false; uiL(false); say(e.name === "AbortError" ? "أُلغيت العملية." : e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : e.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات." : "تعذّر الإنشاء: " + (e.message || e) + " — لم يضِع شيء، يمكنك إعادة المحاولة.", "err"); return;
     }
     S.busy = false;
   }

@@ -349,7 +349,7 @@ ${!aiOn("text") ? '<div class="sm-box"><b>✨ توليد النص الذكي م�
   }
   async function runAi(mode) {
     const p = S.cur, st = $("ai-st"), btns = document.querySelectorAll("[data-aigen]"); if (!p) return;
-    if (!apiKey()) { st.innerHTML = 'يلزم مفتاح Alyssum API — <a href="#" id="ai-goset" style="color:#fff;text-decoration:underline">أدخله من «الاتصال والإعدادات»</a> (يبقى منشورك محفوظاً).'; $("ai-goset").onclick = e => { e.preventDefault(); S.compose = false; S.tab = "set"; draw(); }; return; }
+    if (!apiKey()) { st.innerHTML = 'الخدمة غير مفعّلة لموقعك — تواصل مع الدعم'; return; }
     const cur = $("sm-text").value.trim(); if (mode === "improve" && !cur) { st.textContent = "اكتب نصاً أو ولّد نصاً جديداً أولاً."; return; }
     btns.forEach(b => b.disabled = true); st.textContent = "⏳ جارِ الكتابة… (5–15 ثانية)";
     try {
@@ -372,7 +372,7 @@ ${!aiOn("text") ? '<div class="sm-box"><b>✨ توليد النص الذكي م�
       const u = URL.createObjectURL(out.blob); box.innerHTML = '<img src="' + u + '" alt=""><div class="sm-chips" style="margin-top:8px"><button type="button" data-igu="1">✅ استعمل هذه الصورة</button><button type="button" data-igr="1">🔄 أعد التوليد</button></div><div class="sm-s" id="sg-st"></div>';
       box.querySelector("[data-igr]").onclick = quickImage;
       box.querySelector("[data-igu]").onclick = async () => { const st = $("sg-st"); st.textContent = "⏳ جارِ الحفظ في المكتبة…"; try { const f = new File([out.blob], "social.webp", { type: out.blob.type || "image/webp" }); p.image = await A().uploadImageFile(f, "assets/img/pages", "social-", { max: 2400, q: .92, noVariants: true, uniq: true }); saveSess(); drawComposer(); toast("✅ أُضيفت الصورة إلى المنشور"); } catch (e) { st.textContent = "❌ تعذّر الحفظ: " + e.message; } };
-    } catch (e) { box.innerHTML = '<div class="sm-warn">' + esc(e.code === "NOKEY" ? "يلزم مفتاح Alyssum API — أدخله من «الاتصال والإعدادات» (منشورك محفوظ)." : e.code === "OFF" ? "توليد الصور الذكي معطّل من الإعدادات." : e.message) + "</div>"; }
+    } catch (e) { box.innerHTML = '<div class="sm-warn">' + esc(e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : e.code === "OFF" ? "توليد الصور الذكي معطّل من الإعدادات." : e.message) + "</div>"; }
     btn.disabled = false;
   }
   function openBuilder() {

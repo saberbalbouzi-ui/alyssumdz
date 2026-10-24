@@ -44,6 +44,18 @@ function cleanParts(parts: unknown[]): unknown[] | null {
   }
   return out.length ? out : null;
 }
+// جلسة مدير المنصة (v1.89.523): لوحة المالك تمرّ بجلستها بلا رمز موقع؛ يُتحقق من الجلسة ثم من وجود البريد في جدول admins، ولا رصيد عليها (الحدّ هو المعدّل فقط).
+async function adminOf(jwt: string): Promise<string> {
+  if (!/^[\w-]+\.[\w-]+\.[\w-]+$/.test(jwt) || jwt.length > 4000) return "";
+  try {
+    const u = await fetch(`${URL_}/auth/v1/user`, { headers: { apikey: SRK, Authorization: `Bearer ${jwt}` } });
+    if (!u.ok) return "";
+    const me = await u.json(), em = String(me?.email ?? "").toLowerCase(); if (!em || !me?.email_confirmed_at) return "";
+    const a = await fetch(`${URL_}/rest/v1/admins?select=email`, { headers: { apikey: SRK, Authorization: `Bearer ${SRK}` } });
+    const rows = a.ok ? await a.json() : [];
+    return Array.isArray(rows) && rows.some((r: any) => String(r.email ?? "").toLowerCase() === em) ? em : "";
+  } catch { return ""; }
+}
 const MSG: Record<string, string> = {
   rate_limited: "طلبات كثيرة في وقت قصير — انتظر قليلاً ثم أعد المحاولة",
   unknown_token: "توكن الموقع غير صالح", suspended: "الخدمة موقوفة لهذا الموقع — تواصل مع المزوّد",
@@ -55,8 +67,10 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method" }, 405);
   if (!GKEY) return json({ error: "not_configured" }, 500);
   let b: any; try { b = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
-  const token = String(b.token ?? ""), kind = String(b.kind ?? "");
-  if (!/^[a-f0-9]{32,80}$/.test(token) || !MODELS[kind] || !Array.isArray(b.parts) || !b.parts.length) return json({ error: "bad_request" }, 400);
+  let token = String(b.token ?? ""); const kind = String(b.kind ?? ""), jwt = String(b.jwt ?? "");
+  let admin = "";
+  if (!token && jwt) { admin = await adminOf(jwt); if (!admin) return json({ error: "unauthorized", message: "انتهت جلسة الدخول — أعد تسجيل الدخول" }, 401); token = "admin:" + admin; }
+  if ((!admin && !/^[a-f0-9]{32,80}$/.test(token)) || !MODELS[kind] || !Array.isArray(b.parts) || !b.parts.length) return json({ error: "bad_request" }, 400);
   if (JSON.stringify(b.parts).length > 8_000_000) return json({ error: "too_large" }, 413);
   const parts = cleanParts(b.parts); if (!parts) return json({ error: "bad_parts", message: "محتوى الطلب غير مقبول" }, 400);
   const cfg: Record<string, unknown> = {};
@@ -64,7 +78,7 @@ Deno.serve(async (req) => {
   if (typeof cfg.maxOutputTokens === "number") cfg.maxOutputTokens = Math.max(1, Math.min(16384, cfg.maxOutputTokens));
   if (limited(token, kind)) return json({ error: "rate_limited", message: MSG.rate_limited }, 429);
 
-  const ch = await rpc("saas_ai_charge", { p_token: token, p_kind: kind });
+  const ch = admin ? { ok: true, left: null } : await rpc("saas_ai_charge", { p_token: token, p_kind: kind });
   if (!ch) return json({ error: "billing_unavailable" }, 502);
   if (!ch.ok) return json({ error: ch.reason, message: MSG[ch.reason] ?? "مرفوض" }, ch.reason === "unknown_token" ? 401 : 402);
 
@@ -79,6 +93,6 @@ Deno.serve(async (req) => {
       last = r.status;
     } catch { last = 504; }
   }
-  await rpc("saas_ai_refund", { p_token: token, p_kind: kind });            // لا يُحاسَب الموقع على طلب لم ينجح
+  if (!admin) await rpc("saas_ai_refund", { p_token: token, p_kind: kind });            // لا يُحاسَب الموقع على طلب لم ينجح
   return json({ error: "upstream_failed", status: last, message: "تعذّر الذكاء الاصطناعي مؤقتاً — لم يُخصم من رصيدك" }, 502);
 });

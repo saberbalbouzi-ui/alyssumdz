@@ -12,6 +12,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--out", default="dist/template")
 ap.add_argument("--name", default="اسم متجرك")
 ap.add_argument("--wa", default="213000000000")
+ap.add_argument("--ai-token", default="", help="رمز موقع العميل لخدمة التوليد (من لوحة المزوّد ← إعدادات API) يُضمَّن في config.js فلا يحتاج العميل مفتاحاً")
 ap.add_argument("--update", action="store_true", help="مع --target php: حزمة تحديث تحوي الكود فقط ولا تمسّ بيانات الزبون")
 ap.add_argument("--remote", action="store_true", help="مع --update: حزمة للتحديث عن بُعد (الملفات المشتركة فقط، بلا update.php)")
 ap.add_argument("--channel", default="https://raw.githubusercontent.com/saberbalbouzi-ui/alyssumdz/main/releases", help="رابط قناة التحديث (مجلد releases)")
@@ -126,6 +127,7 @@ cfg = re.sub(r'ORDERS_BACKEND:\s*"[^"]*"', 'ORDERS_BACKEND: "supabase"', cfg)
 cfg = re.sub(r'SUPABASE_URL:\s*"[^"]*"', 'SUPABASE_URL: ""', cfg)
 cfg = re.sub(r'SUPABASE_ANON_KEY:\s*"[^"]*"', 'SUPABASE_ANON_KEY: ""', cfg)
 cfg = re.sub(r'PLATFORM_(?:URL|CART_KEY|ORDER_KEY|TRYON_KEY):\s*"[^"]*",?\s*', '', cfg)   # مفتاح التقاط السلال خاص بأليسوم
+cfg = re.sub(r'AI_TOKEN:\s*"[^"]*"', 'AI_TOKEN: ' + json.dumps(a.ai_token if re.fullmatch(r"[a-f0-9]{32,80}", a.ai_token or "") else ""), cfg)   # رمز العميل لا رمزنا
 cfg = re.sub(r'HUB_SITE:\s*"[^"]*"', 'HUB_SITE: ""', cfg)      # معرّف متجر أليسوم في خدمة النشر لا يدخل قوالب العملاء
 site = 'SITE: {\n    name: %s,\n    domain: "example.com",\n    waNumber: %s,\n    instagram: "",\n    repoOwner: "",\n    repoName: "",\n  },' % (json.dumps(a.name, ensure_ascii=False), json.dumps(a.wa))
 cfg = re.sub(r"SITE:\s*\{.*?\n  \},", site, cfg, flags=re.S)

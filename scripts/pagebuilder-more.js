@@ -363,12 +363,12 @@ const PBBrand = (() => {
       else if (k === "icon") {
         const desc = ($("pblg-id").value || "").trim(); if (!desc) { m("اكتب ماذا تمثّل الأيقونة"); return; } if (typeof ImgGen === "undefined" || !ImgGen.edit) { m("مولّد الصور غير متاح"); return; }
         try { m("⏳ جارٍ توليد الأيقونة…"); const r = await ImgGen.edit({ textOnly: true, prompt: iconPrompt(desc, $("pblg-is").value, kit), W: 512, H: 512, title: "أيقونة" }); if (!r) { m(""); return; } show(r.canvas); m("✅ تمّت — راجع الأيقونة ثم أضفها للصفحة (الخلفية بيضاء؛ لإزالتها استعمل «نزع الخلفية»)"); }
-        catch (x) { m(x && x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : x && x.code === "OFF" ? "التوليد معطّل من الإعدادات" : "⚠️ " + (x.message || x)); }
+        catch (x) { m(x && x.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : x && x.code === "OFF" ? "التوليد معطّل من الإعدادات" : "⚠️ " + (x.message || x)); }
       }
       else if (k === "ai") {
         if (!name) { m("اكتب اسم العلامة أولاً"); return; } if (typeof ImgGen === "undefined" || !ImgGen.edit) { m("مولّد الصور غير متاح"); return; }
         try { m("⏳ جارٍ التوليد…"); const r = await ImgGen.edit({ textOnly: true, prompt: logoPrompt(name, $("pblg-k").value, kit, "modern, professional and minimal"), W: 1024, H: 1024, title: "منشئ الشعار" }); if (!r) { m(""); return; } show(r.canvas); m("✅ تمّ — راجع الشعار ثم اعتمده"); }
-        catch (x) { m(x && x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : x && x.code === "OFF" ? "التوليد معطّل من الإعدادات" : "⚠️ " + (x.message || x)); }
+        catch (x) { m(x && x.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : x && x.code === "OFF" ? "التوليد معطّل من الإعدادات" : "⚠️ " + (x.message || x)); }
       } else if (k === "save" && R.cv) {
         try { const d = R.cv.toDataURL("image/png"); if (d.length < 900000) localStorage.setItem(LSL, d); const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; kit.name = name || kit.name; save(); m("✅ اعتُمد شعاراً للعلامة — يظهر في «الهوية البصرية» و«إطار وهوية»"); } catch (x) { m("⚠️ تعذّر الحفظ: " + (x.message || x)); }
       } else if (k === "add" && R.cv) {

@@ -109,7 +109,7 @@ const AdminImgBatch = (() => {
     S.busy = true; S.out = []; status("⏳ 0 / " + S.files.length);
     for (let i = 0; i < S.files.length; i++) {
       let it = S.files[i];
-      try { if (c.ai !== "none") { try { it = await aiStep(it, c); } catch (x) { if (x && (x.code === "NOKEY" || x.code === "OFF")) { S.out.push({ name: it.name, err: x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد معطّل من الإعدادات" }); break; } throw x; } }
+      try { if (c.ai !== "none") { try { it = await aiStep(it, c); } catch (x) { if (x && (x.code === "NOKEY" || x.code === "OFF")) { S.out.push({ name: it.name, err: x.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : "التوليد معطّل من الإعدادات" }); break; } throw x; } }
         const r = await render(it, c); S.out.push({ name: uniq(it.name + (c.wm !== "none" ? "-wm" : "") + "." + extOf(c.fmt), used), blob: r.blob, w: r.w, h: r.h, before: it.size, url: URL.createObjectURL(r.blob) }); }
       catch (e) { S.out.push({ name: it.name, err: e.message || String(e) }); }
       status("⏳ " + (i + 1) + " / " + S.files.length); await new Promise(r => setTimeout(r, 0));

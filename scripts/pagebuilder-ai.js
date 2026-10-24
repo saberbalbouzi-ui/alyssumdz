@@ -160,7 +160,7 @@ const PBAI = (() => {
     return { score: Math.round(100 * (.45 * sharp + .3 * expo + .25 * res)), sharp: Math.round(sharp * 100), expo: Math.round(expo * 100), res: Math.round(res * 100), notes };
   }
   const qaText = q => "جودة تقديرية: " + q.score + "/100" + (q.notes.length ? " — " + q.notes.join("، ") : " ✔");
-  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
+  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '' : '<div class="ep-n" style="color:#b45309">⚠️ الخدمة غير مفعّلة لموقعك — تواصل مع الدعم. (الأدوات المحلية — لمسات وتصحيح وحواف ناعمة وإطار — تعمل بلا تفعيل.)</div>'; };
   const outfitPool = () => (typeof PBCollage !== "undefined" && PBCollage.poolOf ? PBCollage.poolOf(S.src || "") : []).filter(u => u && u !== S.src).slice(0, 20);
   function modelsHtml(f) {
     const ms = loadModels();
@@ -251,7 +251,7 @@ const PBAI = (() => {
     if ($("pbai-v3n")) S.v3.n = +v("pbai-v3n") || 8;
     if ($("pbai-hint")) o.hint = v("pbai-hint") || ""; if ($("pbai-text")) o.text = v("pbai-text") || "";
   };
-  const errText = e => e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل هذه الأداة" : e && e.code === "OFF" ? "التوليد للصور معطّل من الإعدادات" : "⚠️ " + (e && e.message || e);
+  const errText = e => e && e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : e && e.code === "OFF" ? "التوليد للصور معطّل من الإعدادات" : "⚠️ " + (e && e.message || e);
   function showRes(list, note) {
     const r = $("pbai-res"); if (!r) return; list = Array.isArray(list) ? list : [list]; try { note = (note ? note + " · " : "") + qaText(qaScore(list[0])); } catch (e) {} S.vars = list; S.res = list[0]; const many = list.length > 1;
     const card = (cv, i) => `<label style="display:block;cursor:pointer;border:2px solid ${i === 0 ? "#7c3aed" : "transparent"};border-radius:8px;padding:2px" data-vc="${i}"><div style="border-radius:6px;overflow:hidden;background:repeating-conic-gradient(#d8d4c8 0 25%,#fff 0 50%) 50%/14px 14px"><img src="${cv.toDataURL("image/webp", .85)}" alt="" style="max-width:100%;display:block;margin:auto"></div>${many ? `<div style="text-align:center;font-size:.8rem;margin-top:.2rem"><input type="radio" name="pbai-v" value="${i}"${i === 0 ? " checked" : ""}> الخيار ${i + 1}</div>` : ""}</label>`;

@@ -412,7 +412,7 @@ has_text: هل في الصورة أي كتابة أو أحرف أو أرقام �
     const refs = (Array.isArray(inp.refs) ? inp.refs : []).filter(Boolean); if (inp.blob && !refs.includes(inp.blob)) refs.unshift(inp.blob);
     const photo = refs[0] ? await toCanvas(refs[0], 1600) : null;
     const NOAI = (m, code) => Object.assign(new Error(m), { code: code || "FAIL" });
-    if (!P.real) throw NOAI("الأداة تحتاج مفتاح Alyssum API ولا تنتج صفحة بدونه: فعّل المفتاح (أو جدّد الرصيد) ثم أعد المحاولة.", "NOKEY");
+    if (!P.real) throw NOAI("الخدمة غير مفعّلة لموقعك — تواصل مع الدعم", "NOKEY");
     if (!photo) throw NOAI("لا توجد صورة للمنتج: اختر منتجاً له صورة أو ارفع صورة.", "NOPHOTO");
     const strategy = "edit", edit = true;
     /* ١ تحليل المنتج */
@@ -549,7 +549,7 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
   /* نتيجة جديدة للتجميع: الخطة والأقسام المرتبطة بكل صورة تحمل نصوص ب، والصور نفسها */
   const variantOut = (out, plan) => Object.assign({}, out, { plan, results: out.results.map((R, i) => Object.assign({}, R, { sec: plan.sections[i] ? Object.assign({}, R.sec, plan.sections[i]) : R.sec })) });
   async function variantB(out, inp, over) {
-    const P = providers(over); if (!P.real) throw Object.assign(new Error("نسخة ب تحتاج مفتاح Alyssum API: فعّله ثم أعد المحاولة."), { code: "NOKEY" });
+    const P = providers(over); if (!P.real) throw Object.assign(new Error("الخدمة غير مفعّلة لموقعك — تواصل مع الدعم"), { code: "NOKEY" });
     const raw = await withTimeout(P.llm.json(variantPrompt((inp && inp.info) || {}, out.an, out.plan, { dialect: inp && inp.dialect }), []), 150000, "نسخة ب");
     return mergeVariant(out.plan, raw);
   }

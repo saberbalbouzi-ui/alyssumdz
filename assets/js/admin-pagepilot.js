@@ -91,7 +91,7 @@ const PagePilot = (() => {
       const g = await gather(), o = { lang: $("pp-lang").value, audience: $("pp-aud").value.trim() };
       if (typeof PagePilotHybrid === "undefined" || typeof PBSpec === "undefined") throw new Error("وحدة بناء الصفحات غير محمَّلة — أعد تحميل اللوحة بـ Ctrl+Shift+R");
       let real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })(); if (!real && typeof ImgGen !== "undefined" && ImgGen.ensure) { try { real = await ImgGen.ensure(); } catch (_) { } }
-      if (!real) throw new Error("الأداة تحتاج مفتاح Alyssum API ولا تنتج صفحة بدونه: فعّل المفتاح (أو جدّد الرصيد) من إعدادات مولّد الصور ثم أعد المحاولة.");
+      if (!real) throw new Error("الخدمة غير مفعّلة لموقعك — تواصل مع الدعم");
       say("⏳ تجهيز صور المنتج…"); const ctx = { theme, lang: o.lang, title: g.info.title, product: g.info.product, wa: (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "" };
       let heroBlob = g.blob;
       if (!heroBlob && g.path) { try { heroBlob = await urlBlob(g.path); } catch (_) { } }

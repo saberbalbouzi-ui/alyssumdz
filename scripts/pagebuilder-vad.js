@@ -80,7 +80,7 @@ ${warn.length ? `<div class="ep-n" style="color:#b45309">⚠️ عبارات ت�
     return S.res.map((r, i) => `<div style="margin:.4rem 0"><div class="ep-n"><b>${esc(r.langName)}</b></div><video src="${r.url}" controls loop muted playsinline style="max-width:100%;border-radius:6px"></video><div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vad="add" data-i="${i}">＋ أضفه للصفحة</button><a class="pbx-small" href="${r.url}" download="alyssum-ad-${r.lang}.${/mp4/.test(r.type) ? "mp4" : "webm"}" style="text-decoration:none;display:inline-block">⬇ تنزيل</a></div></div>`).join("");
   }
   const say = t => { S.msg = t; const e = $("pbvad-msg"); if (e) e.textContent = t; };
-  const errText = e => e && e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من «إعدادات مولّد الصور»" : e && e.code === "OFF" ? "الأداة معطّلة من الإعدادات" : "❌ " + (e && e.message || e);
+  const errText = e => e && e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : e && e.code === "OFF" ? "الأداة معطّلة من الإعدادات" : "❌ " + (e && e.message || e);
   const prodCtx = () => { const p = storeProds().find(x => x.cover === S.src || (x.images || []).includes(S.src)); return p ? "Store listing: " + p.title + (p.desc ? " — " + String(p.desc).slice(0, 300) : "") + "." : ""; };
   async function recognize() {
     if (S.busy) return; S.busy = true; say("⏳ نتعرّف على المنتج…");

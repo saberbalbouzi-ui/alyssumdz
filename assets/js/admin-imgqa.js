@@ -85,7 +85,7 @@ const AdminImgQA = (() => {
       try { const src = await loadCanvas(urlOf(r.cover)), k = Math.min(1, 1600 / Math.max(src.width, src.height)), c = document.createElement("canvas"); c.width = Math.round(src.width * k); c.height = Math.round(src.height * k); c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
         const blobIn = await new Promise(x => c.toBlob(x, "image/png")), o = await ImgGen.edit({ blob: blobIn, prompt: PBAI._t.shotPrompt(sh[2], "", sh[3]), W: c.width, H: c.height, title: "مشهد — " + r.title, confirm: e ? false : undefined });
         if (!o) break; S.prev[r.slug] = { blob: o.blob, url: URL.createObjectURL(o.blob), w: c.width, h: c.height };
-      } catch (x) { S.prev[r.slug] = { err: x.message || "تعذّر التوليد" }; if (x && (x.code === "NOKEY" || x.code === "OFF")) { bad = x.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد معطّل من الإعدادات"; break; } }
+      } catch (x) { S.prev[r.slug] = { err: x.message || "تعذّر التوليد" }; if (x && (x.code === "NOKEY" || x.code === "OFF")) { bad = x.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : "التوليد معطّل من الإعدادات"; break; } }
     }
     S.busy = false; say(bad || "✅ جاهزة للمعاينة — راجع «قبل/بعد» ثم اعتمد"); draw();
   }
@@ -98,7 +98,7 @@ const AdminImgQA = (() => {
       for (let i = 0; i < list.length; i++) { const p = list[i]; say2("⏳ " + (i + 1) + " / " + list.length + " — " + (p.title || p.slug));
         try { const src = await loadCanvas(urlOf(p.cover)), out = await restyle(src, { removeBg: true, withOv: true, vars: { name: p.title || "", price: p.price != null ? String(p.price) + " دج" : "" } }), blob = await new Promise(x => out.toBlob(x, "image/webp", .92)), f = new File([blob], "cover.webp", { type: "image/webp" }), path = await A.uploadImageFile(f, "assets/img/" + p.slug, "cover-", { max: 2000, q: .92, noVariants: true, uniq: true });
           if (!path) throw new Error("تعذّر الرفع"); if (p.cover && !(p.images || []).includes(p.cover)) p.images = (p.images || []).concat([p.cover]); p.cover = path; n++;
-        } catch (e) { bad++; why = why || String(e && e.message || e).slice(0, 80); if (e && (e.code === "NOKEY" || e.code === "OFF")) { why = e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد معطّل من الإعدادات"; break; } }
+        } catch (e) { bad++; why = why || String(e && e.message || e).slice(0, 80); if (e && (e.code === "NOKEY" || e.code === "OFF")) { why = e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : "التوليد معطّل من الإعدادات"; break; } }
       }
       if (n) { say2("⏳ نشر…"); if (!(await A.publishDataJs())) throw new Error("تعذّر نشر بيانات المنتجات"); if (A.renderProducts) try { A.renderProducts(); } catch (e) { } }
       say2((n ? "✅ طُبّق النمط على " + n + " منتجاً ونُشر" : "لم يُطبَّق على أي منتج") + (bad ? " — تعذّر " + bad + (why ? " (" + why + ")" : "") : ""));
