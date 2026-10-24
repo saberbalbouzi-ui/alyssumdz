@@ -160,7 +160,7 @@ const PBAI = (() => {
     return { score: Math.round(100 * (.45 * sharp + .3 * expo + .25 * res)), sharp: Math.round(sharp * 100), expo: Math.round(expo * 100), res: Math.round(res * 100), notes };
   }
   const qaText = q => "جودة تقديرية: " + q.score + "/100" + (q.notes.length ? " — " + q.notes.join("، ") : " ✔");
-  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '<div class="ep-n" style="color:#16a34a">✔ Alyssum API جاهزة — تُطلب موافقتك قبل كل توليد، وتصلك تنبيهات عند اقتراب نفاد الرصيد.</div>' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
+  const stateBar = () => { const r = (typeof ImgGen !== "undefined" && ImgGen.ready) ? ImgGen.ready() : { ok: false, nokey: true }; return r.ok ? '' : '<div class="ep-n" style="color:#b45309">⚠️ هذه الأداة تحتاج تفعيل Alyssum API: أدخل مفتاح الاتصال من «إعدادات مولّد الصور». (الأدوات المحلية — الممحاة ولمسات وتصحيح ونزع الخلفية — تعمل بلا مفتاح.)</div>'; };
   const outfitPool = () => (typeof PBCollage !== "undefined" && PBCollage.poolOf ? PBCollage.poolOf(S.src || "") : []).filter(u => u && u !== S.src).slice(0, 20);
   function modelsHtml(f) {
     const ms = loadModels();
@@ -189,9 +189,9 @@ const PBAI = (() => {
     if (kind === "bgn") return `<div class="pbx-pz" id="pbai"><p>صف الخلفية التي تريدها وتُولَّد <b>4 خيارات</b> حول منتجك مع بقائه كما هو تماماً (إن لم تكن صورتك بخلفية شفافة تُنزع خلفيتها أولاً).</p>${stateBar()}
 <div class="rt-g"><label>وصف الخلفية<textarea id="pbai-bgp" rows="3" style="width:100%" placeholder="مثال: فوق طاولة عليها كتب وخلفهم مكتبة">${esc(o.bgp || "")}</textarea></label></div>
 <div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-ai="bgen">✨ توليد</button><button type="button" class="pbx-small" data-ai="bgidea" title="اقتراح فكرة">💡 اقتراح</button></div><div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
-    if (kind === "ps") return `<div class="pbx-pz" id="pbai"><p>جلسة تصوير كاملة لمنتجك: اختر حتى <b>3 مشاهد</b> ويُصوَّر المنتج في كلٍّ منها مع حفظ شكله وملصقاته، ثم تختار الأفضل. موافقة واحدة على التكلفة الإجمالية.</p>${stateBar()}
+    if (kind === "ps") return `<div class="pbx-pz" id="pbai"><p>اختر مشهداً أو اكتب الوصف الذي تشاء.</p>${stateBar()}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:.3rem">${SHOTS.map((x, i) => `<label style="border:1.5px solid rgba(128,128,128,.35);border-radius:8px;padding:.35rem .4rem;font-size:.78rem;cursor:pointer"><input type="checkbox" data-psk="${i}"${S.ps.includes(i) ? " checked" : ""}> ${x[1]}</label>`).join("")}</div>
-<div class="rt-g"><label>توجيه إضافي (اختياري)<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: ألوان دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
+<div class="rt-g"><label>أو اكتب الوصف الذي تشاء<textarea id="pbai-hint" rows="2" style="width:100%" placeholder="مثال: على رخام أبيض بإضاءة نافذة دافئة وحدّ أدنى من العناصر">${esc(o.hint)}</textarea></label></div>
 <button type="button" class="pbx-small pz-go" data-ai="pshoot">📸 ابدأ الجلسة</button>
 <div id="pbai-msg" class="ep-n" style="min-height:1.3em">${esc(S.msg)}</div><div id="pbai-res"></div></div>`;
     if (kind === "to") return `<div class="pbx-pz" id="pbai"><p>اختر صورة القطعة في الصفحة، ثم ارفع <b>صورة شخص واحدة</b> لترى القطعة عليه. تبقى ملامحه وجسمه ووضعيته وخلفيته كما هي ويتغير اللباس فقط.</p>${stateBar()}
@@ -322,11 +322,11 @@ const PBAI = (() => {
         if (!ok.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         showRes(ok, "المنتج محفوظ كما هو فوق كل خلفية — اختر خياراً ثم طبّقه."); say("✅ جاهز — اختر خياراً");
       } else if (kind === "pshoot") {
-        const idx = S.ps.filter(i => SHOTS[i]).slice(0, 3); if (!idx.length) { say("اختر مشهداً واحداً على الأقل"); S.busy = false; return; }
+        const hintTxt = (S.opt.hint || "").trim(), idx = S.ps.filter(i => SHOTS[i]).slice(0, 3), custom = !idx.length && hintTxt.length > 3; if (!idx.length && !custom) { say("اختر مشهداً أو اكتب الوصف الذي تشاء"); S.busy = false; return; } if (custom) idx.push(-1);
         const e = ImgGen.estimate ? ImgGen.estimate() : null;
         if (e) { if (!(e.can ? e.can(idx.length) : e.left >= (idx.length) * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد"); }; if (!confirm("تصوير المنتج — " + idx.length + " مشاهد\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const blob = await blobOf(src, "image/png"); say("⏳ جارٍ تصوير " + idx.length + " مشاهد…");
-        const rs = await Promise.allSettled(idx.map(i => ImgGen.edit({ blob, prompt: shotPrompt(SHOTS[i][2], S.opt.hint.trim(), SHOTS[i][3]), W: src.width, H: src.height, title: "تصوير المنتج — " + SHOTS[i][1], confirm: e ? false : undefined })));
+        const rs = await Promise.allSettled(idx.map(i => ImgGen.edit({ blob, prompt: i < 0 ? shotPrompt(hintTxt, "", false) : shotPrompt(SHOTS[i][2], S.opt.hint.trim(), SHOTS[i][3]), W: src.width, H: src.height, title: "تصوير المنتج — " + (i < 0 ? "وصف مخصّص" : SHOTS[i][1]), confirm: e ? false : undefined })));
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => r.value.canvas);
         if (!ok.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         showRes(ok, "نجح " + ok.length + " من " + idx.length + " — اختر الأفضل ثم طبّقه."); say("✅ جاهز — اختر أحد الخيارات");
