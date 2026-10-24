@@ -478,7 +478,7 @@ ${o.extra ? o.extra + "\n" : ""}
   async function fillImages(o) {
     o = o || {}; const list = emptyImages(), say = o.say || (() => { }); if (!list.length) return { done: 0, failed: 0, total: 0, cached: 0 };
     if (typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("أداة التوليد غير متاحة");
-    const rd = ImgGen.ready(); if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
+    let rd = ImgGen.ready(); if (!rd.ok && ImgGen.ensure && await ImgGen.ensure()) rd = ImgGen.ready(); if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
     const exists = o.exists || headOk, run = RUN = { cancelled: false }; const plan = [];
     const PR = o.ref === false ? { blob: null, title: "", desc: "", key: "" } : await productRef((typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page) || {});
     try {

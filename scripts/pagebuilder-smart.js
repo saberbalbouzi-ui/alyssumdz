@@ -228,7 +228,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const inf = t.inf, w = inf.node, sh = shell("التقاط العناصر", "عنصر", "كل العناصر", HINT_EL1, HINT_EL2), $ = sh.$;
     let cv; try { cv = await loadCanvas(w.set.src); } catch (e) { $("pbs-load").textContent = "⚠️ " + e.message; return; }
     cv = capCanvas(cv, 2200);
-    if (!segReady()) { $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل التقاط العناصر"; return; }
+    if (!segReady() && !(typeof ImgGen !== "undefined" && ImgGen.ensure && await ImgGen.ensure() && segReady())) { $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل التقاط العناصر"; return; }
     await new Promise(r => setTimeout(r, 40)); if (sh.S.closed) return;
     await apiCapture(sh, cv, inf, w);      // كشف وأقنعة بطلب واحد ← اختيار ← قصّ محلي بدقة البكسل ← إعادة رسم الخلفية بطلب واحد
   }
@@ -313,7 +313,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
         strokes.forEach(s => { mg.lineWidth = s.r * 2; mg.beginPath(); s.p.forEach((q, i) => i ? mg.lineTo(q[0], q[1]) : mg.moveTo(q[0], q[1])); if (s.p.length === 1) { mg.arc(s.p[0][0], s.p[0][1], s.r, 0, 7); mg.fill(); } else mg.stroke(); });
         const d = mg.getImageData(0, 0, W, H).data, U = new Uint8Array(W * H); let n = 0; for (let i = 0; i < W * H; i++) if (d[i * 4 + 3] > 100) { U[i] = 1; n++; } if (!n) throw new Error("لم يُحدَّد شيء");
         const work = document.createElement("canvas"); work.width = W; work.height = H; work.getContext("2d", { willReadFrequently: true }).drawImage(base, 0, 0);
-        if (typeof AICapture === "undefined" || !AICapture.ready()) { const e = new Error("أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل الممحاة"); throw e; }
+        if ((typeof AICapture === "undefined" || !AICapture.ready()) && !(typeof ImgGen !== "undefined" && ImgGen.ensure && await ImgGen.ensure() && typeof AICapture !== "undefined" && AICapture.ready())) { const e = new Error("أدخل مفتاح Alyssum API من «إعدادات مولّد الصور» لتفعيل الممحاة"); throw e; }
         const mc = document.createElement("canvas"); mc.width = W; mc.height = H; const mi = mc.getContext("2d"), im = mi.createImageData(W, H); for (let i = 0; i < W * H; i++) if (U[i]) { im.data[i * 4] = im.data[i * 4 + 1] = im.data[i * 4 + 2] = 255; im.data[i * 4 + 3] = 255; } mi.putImageData(im, 0, 0);
         msg("⏳ جارٍ المسح…"); await AICapture.fillBg(work, [{ canvas: mc, x0: 0, y0: 0, w: W, h: H }], { onStep: m => msg(m) });
         hist.push(base); base = work; redrawBase(); strokes = []; paintView(); dirty = true; $("er-back").disabled = false; $("er-save").disabled = false;

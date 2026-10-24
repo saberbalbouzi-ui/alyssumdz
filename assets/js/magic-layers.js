@@ -583,7 +583,7 @@ const MagicLayers = (() => {
   async function landing(o) {
     o = o || {}; const say = o.say || (() => { });
     if (typeof PBSpec === "undefined" || typeof PBApp === "undefined" || typeof ImgGen === "undefined" || !ImgGen.edit) throw new Error("المطوّر غير متاح");
-    const rd = ImgGen.ready ? ImgGen.ready() : { ok: hasKey() }; if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
+    let rd = ImgGen.ready ? ImgGen.ready() : { ok: hasKey() }; if (!rd.ok && ImgGen.ensure && await ImgGen.ensure()) rd = ImgGen.ready(); if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
     S.run = { cancelled: false }; const run = S.run; let photoUrl = "";
     try {
       if (o.photoBlob) photoUrl = await toDataUrl(o.photoBlob, 1100);
@@ -663,7 +663,7 @@ const MagicLayers = (() => {
   /* الطريقة الأولى «مثل المنشئ الذكي»: برومبت المنشئ نفسه (نصوص تسويقية + برومبت تصميم) ← صفحة طويلة مرسومة بنصوصها ← تفكيك إلى طبقات */
   async function landingImage(L) {
     if (typeof PBGen === "undefined" || !PBGen.buildPrompt) throw new Error("المنشئ الذكي غير متاح");
-    const rd = ImgGen.ready ? ImgGen.ready() : { ok: hasKey() }; if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
+    let rd = ImgGen.ready ? ImgGen.ready() : { ok: hasKey() }; if (!rd.ok && ImgGen.ensure && await ImgGen.ensure()) rd = ImgGen.ready(); if (!rd.ok) { const e = new Error(rd.off ? "OFF" : "NOKEY"); e.code = rd.off ? "OFF" : "NOKEY"; throw e; }
     let photo = S.lphoto || null; if (!photo) { const p = prodsList().find(x => x.slug === L.product), src = p && (p.cover || (p.images || [])[0]); if (src) photo = await fetchBlobL(src); }
     if (!photo) throw new Error("ارفع صورة المنتج أو اختر منتجاً له غلاف");
     const meta = PBGen.buildPrompt({ lang: L.lang, offer: "single", name: L.name, desc: L.desc, price: L.price ? L.price + (/[a-zA-Z\u0600-\u06FF]/.test(L.price) ? "" : " دج") : "", colors: L.colors, aud: L.goal, tpl: "11" });

@@ -53,7 +53,7 @@ const AdminImgQA = (() => {
     o = o || S.opt; if (typeof PBStudio === "undefined") throw new Error("استوديو المنتج غير متاح"); let cut = src;
     if (o.removeBg && !PBStudio.hasAlpha(src)) { if (typeof PBBgRemove === "undefined") throw new Error("أداة نزع الخلفية غير متاحة"); const r = await PBBgRemove.autoCut(src, o.method === "classic" ? { methods: ["classic"] } : {}); cut = r.canvas; }
     if (o.enhance && typeof PBRetouch !== "undefined") cut = PBRetouch._t.autoEnhance(cut);
-    const opt = Object.assign({}, PBStudio.opts()), bgo = PBStudio.bgOf(opt), full = Object.assign({}, opt, { size: PBStudio.sizeOf(opt, cut), bg: bgo && bgo.type === "scene" ? { type: "color", c1: "#ffffff" } : bgo, ov: [], logo: null });
+    const opt = Object.assign({}, PBStudio.opts()), bgo = PBStudio.bgOf(opt), full = Object.assign({}, opt, { size: PBStudio.sizeOf(opt, cut), bg: bgo && bgo.type === "scene" ? { type: "color", c1: "#ffffff" } : bgo, ov: o.withOv ? (opt.ov || []).slice() : [], logo: o.withOv ? PBStudio.logo() : null, vars: o.vars || null });
     return PBStudio.compose(cut, PBStudio.bbox(cut), full);
   }
 
@@ -89,6 +89,22 @@ const AdminImgQA = (() => {
     }
     S.busy = false; say(bad || "✅ جاهزة للمعاينة — راجع «قبل/بعد» ثم اعتمد"); draw();
   }
+  /* «تطبيق على كل المنتجات» من استوديو المنتج: يركّب نمط الاستوديو الحالي كاملاً (خلفية، ظل، مقاس، ملصقات، عناوين بأسماء المنتجات، شعار) على غلاف كل منتج ثم يعتمدها وينشرها دفعة واحدة */
+  async function applyAll(cb) {
+    if (S.busy) return; const say2 = m => { say(m); if (cb && cb.onStep) cb.onStep(m); }, A = typeof Admin !== "undefined" ? Admin : null, list = prods().filter(p => !cb || !cb.slugs || cb.slugs.indexOf(p.slug) >= 0); if (!A || !list.length) { say2(cb && cb.slugs ? "اختر منتجاً واحداً على الأقل" : "لا منتجات بغلاف"); return; }
+    if (!confirm("تطبيق نمط استوديو المنتج الحالي (الخلفية والظل والمقاس والملصقات والعناوين والشعار) على أغلفة " + list.length + " منتج؟\nتُنزع خلفية كل صورة (يستهلك رصيداً لكل صورة) وتبقى الأغلفة القديمة ضمن صور كل منتج.\nمتابعة؟")) return;
+    S.busy = true; let n = 0, bad = 0, why = "";
+    try {
+      for (let i = 0; i < list.length; i++) { const p = list[i]; say2("⏳ " + (i + 1) + " / " + list.length + " — " + (p.title || p.slug));
+        try { const src = await loadCanvas(urlOf(p.cover)), out = await restyle(src, { removeBg: true, withOv: true, vars: { name: p.title || "", price: p.price != null ? String(p.price) + " دج" : "" } }), blob = await new Promise(x => out.toBlob(x, "image/webp", .92)), f = new File([blob], "cover.webp", { type: "image/webp" }), path = await A.uploadImageFile(f, "assets/img/" + p.slug, "cover-", { max: 2000, q: .92, noVariants: true, uniq: true });
+          if (!path) throw new Error("تعذّر الرفع"); if (p.cover && !(p.images || []).includes(p.cover)) p.images = (p.images || []).concat([p.cover]); p.cover = path; n++;
+        } catch (e) { bad++; why = why || String(e && e.message || e).slice(0, 80); if (e && (e.code === "NOKEY" || e.code === "OFF")) { why = e.code === "NOKEY" ? "أدخل مفتاح Alyssum API من إعدادات مولّد الصور" : "التوليد معطّل من الإعدادات"; break; } }
+      }
+      if (n) { say2("⏳ نشر…"); if (!(await A.publishDataJs())) throw new Error("تعذّر نشر بيانات المنتجات"); if (A.renderProducts) try { A.renderProducts(); } catch (e) { } }
+      say2((n ? "✅ طُبّق النمط على " + n + " منتجاً ونُشر" : "لم يُطبَّق على أي منتج") + (bad ? " — تعذّر " + bad + (why ? " (" + why + ")" : "") : ""));
+    } catch (e) { say2("⚠️ " + (e.message || e)); }
+    S.busy = false;
+  }
   async function commit() {
     const ok = Object.entries(S.prev).filter(([, v]) => v && v.blob); if (!ok.length || S.busy) return; if (!confirm("استبدال أغلفة " + ok.length + " منتج بالنسخ الموحّدة؟ تبقى الأغلفة القديمة ضمن صور المنتج.")) return; S.busy = true; let n = 0; const A = Admin;
     try {
@@ -120,5 +136,5 @@ const AdminImgQA = (() => {
   }
   function init() { if (!$("tab-imgtools")) return setTimeout(init, 300); draw(); }
   if (typeof document !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0); }
-  return { scan, applyStyle, applyStage, commit, draw, restyle, S, _t: { metrics, sharpness, verdict, standard, ISSUES } };
+  return { scan, applyStyle, applyStage, applyAll, commit, draw, restyle, S, _t: { metrics, sharpness, verdict, standard, ISSUES } };
 })();

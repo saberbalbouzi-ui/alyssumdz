@@ -90,7 +90,7 @@ const PagePilot = (() => {
     async function run(resumeIt) {
       const g = await gather(), o = { lang: $("pp-lang").value, audience: $("pp-aud").value.trim() };
       if (typeof PagePilotHybrid === "undefined" || typeof PBSpec === "undefined") throw new Error("وحدة بناء الصفحات غير محمَّلة — أعد تحميل اللوحة بـ Ctrl+Shift+R");
-      const real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })();
+      let real = (() => { try { return typeof ImgGen !== "undefined" && ImgGen.ready && ImgGen.ready().ok; } catch (_) { return false; } })(); if (!real && typeof ImgGen !== "undefined" && ImgGen.ensure) { try { real = await ImgGen.ensure(); } catch (_) { } }
       if (!real) throw new Error("الأداة تحتاج مفتاح Alyssum API ولا تنتج صفحة بدونه: فعّل المفتاح (أو جدّد الرصيد) من إعدادات مولّد الصور ثم أعد المحاولة.");
       say("⏳ تجهيز صور المنتج…"); const ctx = { theme, lang: o.lang, title: g.info.title, product: g.info.product, wa: (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "" };
       let heroBlob = g.blob;

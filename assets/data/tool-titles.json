@@ -33,19 +33,6 @@
         "en": "Generate scenes and products with AI"
       }
     },
-    "pshoot": {
-      "icon": "03-photographie-produit-ia",
-      "t": {
-        "ar": "تصوير المنتج",
-        "fr": "Photo de produit",
-        "en": "Product photography"
-      },
-      "d": {
-        "ar": "جلسة تصوير كاملة بمشاهد متعددة",
-        "fr": "Plusieurs scènes en une fois",
-        "en": "Several scenes at once"
-      }
-    },
     "fashion": {
       "icon": "04-modele-virtuel",
       "t": {
@@ -70,19 +57,6 @@
         "ar": "شاهد القطعة على جسم شخص حقيقي",
         "fr": "Voyez l'article sur vous",
         "en": "See the item on you"
-      }
-    },
-    "scene": {
-      "icon": "06-mise-en-scene-produit",
-      "t": {
-        "ar": "مشهد المنتج",
-        "fr": "Mise en scène produit",
-        "en": "Product scene"
-      },
-      "d": {
-        "ar": "ضع منتجك في مشهد احترافي واقعي",
-        "fr": "Placez votre produit en scène",
-        "en": "Place your product in a scene"
       }
     },
     "xp": {
@@ -249,9 +223,9 @@
         "en": "Product studio"
       },
       "d": {
-        "ar": "خلفية وظل ومقاس موحّد لصور المنتج",
-        "fr": "Fond, ombre et format unifié",
-        "en": "Background, shadow and unified size"
+        "ar": "مشهد بالوصف أو خلفية وظل ومقاس موحّد",
+        "fr": "Scène par description, fond, ombre et format",
+        "en": "Scene by description, background, shadow and size"
       }
     },
     "vd": {
@@ -564,19 +538,6 @@
         "ar": "حدّة ما تختاره وتمويه الباقي حسب بعده",
         "fr": "Net là où vous voulez, flou ailleurs",
         "en": "Keep your focus point sharp and blur the rest"
-      }
-    },
-    "bgen": {
-      "icon": "n-bgen",
-      "t": {
-        "ar": "مولّد الخلفية",
-        "fr": "Générateur d'arrière-plan",
-        "en": "Background generator"
-      },
-      "d": {
-        "ar": "4 خلفيات من وصفك والمنتج كما هو",
-        "fr": "4 arrière-plans selon votre description",
-        "en": "4 backgrounds from your description"
       }
     }
   }
