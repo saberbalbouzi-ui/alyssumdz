@@ -32,6 +32,25 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     const keep = await p.evaluate(() => PBStudio.pending() && document.querySelectorAll(".pbst-hit").length);
     ok(keep === 3, "تبقى المقابض بعد السحب", keep);
   }
+  /* v1.89.524: لا حجم ولا موضع في إعدادات الملصق (يدوي على الصورة)، مقبض تحجيم على الصورة، أزرار إعادة للافتراضي، وملاءمة 9:16 */
+  await p.evaluate(async () => { PBApp.renderInspectorNow(); await new Promise(z => setTimeout(z, 900)); });
+  const ui = await p.evaluate(() => ({ pos: document.querySelectorAll('#pbst [data-ovk="pos"]').length, sz: document.querySelectorAll('#pbst [data-ovk="s"]').length, rz: document.querySelectorAll(".pbst-hit .pbst-rz").length, rs: document.querySelectorAll("#pbst .pbst-rs").length, ovrs: document.querySelectorAll("#pbst [data-ovi] .pbst-rs").length }));
+  ok(ui.pos === 0 && ui.sz === 0, "لا قائمة موضع ولا منزلق حجم في إعدادات الملصق", ui);
+  ok(ui.rz === 3, "مقبض تحجيم على كل عنصر في الصورة", ui);
+  ok(ui.rs >= 15 && ui.ovrs >= 12, "زر إعادة للافتراضي أمام الإعدادات (عامة وللملصقات)", ui);
+  const rbox = await p.evaluate(() => { const e = document.querySelectorAll(".pbst-hit .pbst-rz")[0].getBoundingClientRect(); return [e.left + e.width / 2, e.top + e.height / 2]; });
+  const s0 = await p.evaluate(() => PBStudio.opts().ov[0].s);
+  await p.mouse.move(rbox[0], rbox[1]); await p.mouse.down(); await p.mouse.move(rbox[0] + 70, rbox[1] + 50, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(900);
+  const s1 = await p.evaluate(() => PBStudio.opts().ov[0].s);
+  ok(s1 > s0 + .5, "سحب المقبض يكبّر الملصق (ov.s)", { s0, s1 });
+  await p.evaluate(() => { const ov = PBStudio.opts().ov[0]; ov.d = { bg: "#16a34a", fg: "#ffffff", st: "pill", font: "" }; ov.bg = "#123456"; document.querySelector('[data-st-tab="txt"]') && 0; });
+  await p.evaluate(() => { document.querySelector("#pbst-ovs") && 0; });
+  const rsov = await p.evaluate(async () => { const box = document.querySelector("#pbst [data-ovi=\"0\"]"); if (!box) return null; const o = PBStudio.opts(); o.ov[0].bg = "#123456"; const b = box.querySelectorAll(".pbst-rs"); const btn = [...b].find(x => x.dataset.rs === "bg"); btn.click(); await new Promise(z => setTimeout(z, 300)); return PBStudio.opts().ov[0].bg; });
+  ok(rsov === "#16a34a", "إعادة لون خلفية الملصق للافتراضي", rsov);
+  const rsg = await p.evaluate(async () => { const o = PBStudio.opts(); o.bri = 30; const t = document.querySelector('[data-st-tab="fx"]'); if (t) t.click(); const btn = document.querySelector('#pbst .pbst-rs[data-rs="bri"]'); btn.click(); await new Promise(z => setTimeout(z, 400)); return PBStudio.opts().bri; });
+  ok(rsg === 0, "زر إعادة منزلق السطوع يعيده للافتراضي", rsg);
+  const fit = await p.evaluate(async () => { const q0 = document.querySelector('[data-stsub="out"]'); if (q0) q0.click(); await new Promise(z => setTimeout(z, 500)); const sz = document.getElementById("pbst-sz"); sz.value = "1080x1920"; sz.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 2500)); const st = document.getElementById("pbx-stage"); return { h: st.clientHeight, sh: st.scrollHeight }; });
+  ok(fit.sh <= fit.h + 2, "ستوري/ريلز 9:16: الصورة كاملة في النافذة بلا شريط تمرير", fit);
   /* توسيع الشريط بالسحب */
   const rz = await p.evaluate(() => { const r = document.getElementById("pbx-rz"); if (!r) return null; const e = r.getBoundingClientRect(); return { x: e.left + e.width / 2, y: e.top + e.height / 2, vis: !!r.offsetParent }; });
   ok(rz && rz.vis, "مقبض توسيع الشريط ظاهر في نافذة الأداة", rz);

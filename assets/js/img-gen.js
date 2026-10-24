@@ -153,8 +153,11 @@ const ImgGen = (() => {
     const models = await pickModels(key, pro); let last = null;
     for (const m of models) {
       const body = { contents: [{ parts }], generationConfig: { responseModalities: ["IMAGE", "TEXT"], imageConfig: { aspectRatio: ar } } };
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify(body) });
-      const j = await r.json().catch(() => ({}));
+      /* مهلة لكل طلب: بلا مهلة كان الطلب المعلّق يوقف الأداة بلا نهاية */
+      const ac = new AbortController(), tmo = setTimeout(() => ac.abort(), 100000); let r, j;
+      try { r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify(body), signal: ac.signal }); j = await r.json().catch(() => ({})); }
+      catch (x) { clearTimeout(tmo); const e = new Error(ac.signal.aborted ? "انتهت مهلة الخدمة (أكثر من 100 ثانية) — أعد المحاولة بعد قليل" : "تعذّر الاتصال بالخدمة — تحقق من الشبكة"); e.status = ac.signal.aborted ? 504 : 0; throw e; }
+      clearTimeout(tmo);
       if (r.ok) {
         const pt = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).find(x => x.inlineData || x.inline_data), d = pt && (pt.inlineData || pt.inline_data);
         if (!d) { last = new Error("لم يُرجع النموذج صورة" + ((j.promptFeedback && j.promptFeedback.blockReason) ? " (محجوب: " + j.promptFeedback.blockReason + ")" : "") + " — لم تُحتسب تكلفة غالباً."); continue; }

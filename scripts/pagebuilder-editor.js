@@ -1607,7 +1607,14 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* معاينة مباشرة لاستوديو المنتج على صورة الصفحة نفسها (دون تعديل بياناتها): يبدّل الصورة المعروضة فقط؛ الإلغاء يعيد رسمها من البيانات */
   function stPreview(id, url) {
     const el = fdoc && fdoc.querySelector(`[data-pb="${id}"]`), im = el && el.querySelector("img"); if (!im) return false;
-    const done = () => { try { positionOverlay(); epFloatPos(); } catch (e) { } };
+    /* لوحة «تصميم بمقاس»/نافذة الأداة: معاينة أطول من اللوحة (ستوري/ريلز 9:16) تُصغَّر لتظهر كاملة داخل اللوحة ومتوسّطة، فلا شريط تمرير ولا جزء مقطوع */
+    const fitBoard = () => {
+      if (!(E.page && E.page.ad) || !im.naturalWidth) return; const par = el.offsetParent; if (!par) return;
+      ["width", "left", "top"].forEach(k => el.style.removeProperty(k)); const pw = par.clientWidth, ph = par.clientHeight, ratio = im.naturalHeight / im.naturalWidth; if (!pw || !ph) return;
+      const w0 = el.offsetWidth || pw; if (w0 * ratio <= ph + 1) return; const w = Math.max(40, Math.min(w0, ph / ratio));
+      el.style.setProperty("width", w + "px", "important"); el.style.setProperty("left", (pw - w) / 2 + "px", "important"); el.style.setProperty("top", Math.max(0, (ph - w * ratio) / 2) + "px", "important");
+    };
+    const done = () => { try { fitBoard(); positionOverlay(); epFloatPos(); } catch (e) { } };
     [el, el.querySelector(".pb-cropbox"), im].forEach(x => { if (x) x.style.setProperty("height", "auto", "important"); }); im.removeAttribute("srcset"); im.loading = "eager"; im.onload = done; im.src = url; done(); return true;
   }
   /* معاينة مباشرة موحَّدة لأدوات تعديل الصورة على صورة الصفحة نفسها + «تنفيذ / إلغاء» تحتها: الأداة تمرّر الصورة الناتجة (رابط أو قماش) وتعريف التنفيذ والإلغاء */

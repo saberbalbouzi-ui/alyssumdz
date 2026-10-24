@@ -10,6 +10,7 @@ const PBStudio = (() => {
   const TITLES = [["{name}", "#16352b", "#ffffff", "title"], ["عرض خاص لفترة محدودة", "#dc2626", "#ffffff", "title"], ["توصيل لكل الولايات", "#0f766e", "#ffffff", "title"], ["جودة مضمونة", "#111827", "#fde68a", "title"], ["{name} — {price}", "#1d4ed8", "#ffffff", "title"]];
   const POS = ["أعلى يسار", "أعلى وسط", "أعلى يمين", "وسط يسار", "الوسط", "وسط يمين", "أسفل يسار", "أسفل وسط", "أسفل يمين"];
   const DEF = { bg: "white", c1: "#ffffff", blur: 18, shadow: "contact", shI: 100, shB: 100, shX: 0, shY: 100, shW: 100, shH: 100, pad: .1, align: "center", size: "1000x1000", cw: 1000, ch: 1000, podium: false, rot: 0, flip: false, font: "", refl: 0, outW: 0, outC: "#ffffff", bri: 0, con: 0, sat: 0, tmp: 0, ov: [], logoPos: 8, logoSize: 16, logoOp: 90, fmt: "png", q: 92 };
+  const RSG = { bg: ["bg", "c1", "blur"], size: ["size", "cw", "ch"], shadow: ["shadow"] };
   const SITE_FF = "'Cairo','Segoe UI'", LSK = "pbx_studio";
   const S = { id: "", src: "", cut: null, bb: null, srcC: null, logo: null, opt: Object.assign({}, DEF), busy: false, msg: "", scenes: {}, tab: "bg", pv: "", pvUrl: "", off: false, dtok: 0, site: { ff: SITE_FF, url: "", loaded: false } };
   try { const o = JSON.parse(localStorage.getItem(LSK) || "null"); if (o && typeof o === "object") Object.assign(S.opt, o); } catch (e) { }
@@ -135,22 +136,26 @@ const PBStudio = (() => {
 #pbst label.pbst-l{font-weight:800;opacity:.9;display:block;margin-bottom:.2rem}#pbst .pbst-sw{display:flex;flex-wrap:wrap;gap:.3rem}
 #pbst .pbst-sw button{width:34px;height:34px;border-radius:9px;border:2px solid rgba(128,128,128,.4);cursor:pointer;padding:0;font-size:.6rem;font-weight:800;color:#222;overflow:hidden;background-size:cover;background-position:center}#pbst .pbst-sw button.on{border-color:#4ade80;box-shadow:0 0 0 2px rgba(74,222,128,.45)}
 #pbst select,#pbst input[type=range]{width:100%}#pbst .pbst-row{display:grid;grid-template-columns:1fr 1fr;gap:.4rem}#pbst .pbst-act{display:flex;flex-wrap:wrap;gap:.4rem}#pbst .pbst-act button{flex:1 1 auto}
+#pbst .pbst-lh{display:flex;align-items:center;gap:.35rem;justify-content:space-between}#pbst .pbst-lh>select{flex:1;min-width:0}#pbst .pbst-lh label.pbst-l{margin:0}
+#pbst .pbst-rs{flex:none;width:26px;height:26px;padding:0;line-height:1;font-size:.95rem;font-weight:800;cursor:pointer;color:#fff;border-radius:8px;border:1px solid rgba(255,255,255,.28);background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 3px rgba(0,0,0,.25),0 2px 6px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:transform .15s,background .15s}#pbst .pbst-rs:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(251,146,60,.5),rgba(251,146,60,.18))}
 #pbst .pbst-ck{display:flex;align-items:center;gap:.4rem;font-weight:700}
 #pbst .pbst-tabs{display:flex;flex-wrap:wrap;gap:.3rem}#pbst .pbst-tabs button{flex:1 1 auto;padding:.4rem .5rem;border-radius:9px;font-weight:800;cursor:pointer}#pbst .pbst-tabs button.on{outline:2px solid #4ade80}
 #pbst .pbst-pane{display:flex;flex-direction:column;gap:.55rem}#pbst .pbst-pane[hidden]{display:none}
 #pbst .pbst-chips{display:flex;flex-wrap:wrap;gap:.3rem}#pbst .pbst-chips button{padding:.3rem .55rem;border-radius:999px;cursor:pointer;font-weight:700}
 #pbst .pbst-ov{border:1px solid rgba(128,128,128,.35);border-radius:10px;padding:.4rem;display:flex;flex-direction:column;gap:.3rem}#pbst .pbst-ov input[type=text]{width:100%}
-#pbst .pbst-rg{display:grid;grid-template-columns:70px 1fr 38px;gap:.3rem;align-items:center}#pbst .pbst-rg b{text-align:end;opacity:.8}`;
+#pbst .pbst-rg{display:grid;grid-template-columns:70px 1fr 38px 26px;gap:.3rem;align-items:center}#pbst .pbst-rg b{text-align:end;opacity:.8}`;
     document.head.appendChild(st);
   };
-  const rg = (k, label, min, max, step, v) => `<div class="pbst-rg"><span>${label}</span><input type="range" data-stk="${k}" min="${min}" max="${max}" step="${step}" value="${v}"><b data-stv="${k}">${v}</b></div>`;
+  const rb = (k, ov) => `<button type="button" class="pbst-rs" data-rs="${k}"${ov ? ' data-rsov="1"' : ""} title="إعادة للافتراضي" aria-label="إعادة للافتراضي">↺</button>`;
+  const lh = (label, key) => `<div class="pbst-lh"><label class="pbst-l">${label}</label>${rb(key)}</div>`;
+  const rg = (k, label, min, max, step, v) => `<div class="pbst-rg"><span>${label}</span><input type="range" data-stk="${k}" min="${min}" max="${max}" step="${step}" value="${v}"><b data-stv="${k}">${v}</b>${rb(k)}</div>`;
   const posSel = (attr, v) => `<select ${attr}>${POS.map((n, i) => `<option value="${i}" ${+v === i ? "selected" : ""}>${n}</option>`).join("")}</select>`;
   function ovHtml() {
     return S.opt.ov.map((v, i) => `<div class="pbst-ov" data-ovi="${i}"><input type="text" data-ovk="t" value="${esc(v.t)}" placeholder="نص الملصق">
-<div class="pbst-row">${posSel('data-ovk="pos"', v.pos)}<select data-ovk="st">${[["pill", "حبّة"], ["circle", "دائرة"], ["ribbon", "شريط"], ["plain", "نص فقط"], ["title", "عنوان عريض"]].map(([k, n]) => `<option value="${k}" ${v.st === k ? "selected" : ""}>${n}</option>`).join("")}</select></div>
-${fontSel('data-ovk="font"', v.font || "", "حسب الخط العام")}
-<div class="pbst-row"><label>الخلفية <input type="color" data-ovk="bg" value="${esc(v.bg || "#16a34a")}"></label><label>النص <input type="color" data-ovk="fg" value="${esc(v.fg || "#ffffff")}"></label></div>
-<div class="pbst-rg"><span>الحجم</span><input type="range" data-ovk="s" min="3" max="20" step="0.5" value="${v.s || 8}"><b>${v.s || 8}</b></div>
+<div class="pbst-row"><div class="pbst-lh"><select data-ovk="st">${[["pill", "حبّة"], ["circle", "دائرة"], ["ribbon", "شريط"], ["plain", "نص فقط"], ["title", "عنوان عريض"]].map(([k, n]) => `<option value="${k}" ${v.st === k ? "selected" : ""}>${n}</option>`).join("")}</select>${rb("st", 1)}</div></div>
+<div class="pbst-lh">${fontSel('data-ovk="font"', v.font || "", "حسب الخط العام")}${rb("font", 1)}</div>
+<div class="pbst-row"><label class="pbst-lh">الخلفية <input type="color" data-ovk="bg" value="${esc(v.bg || "#16a34a")}">${rb("bg", 1)}</label><label class="pbst-lh">النص <input type="color" data-ovk="fg" value="${esc(v.fg || "#ffffff")}">${rb("fg", 1)}</label></div>
+<div class="pbst-n" style="margin:0">الموضع والحجم: اسحب العنصر على الصورة أو اسحب مقبضه الأخضر في الزاوية.</div>
 <button type="button" class="pbx-small" data-st="ovdel" data-i="${i}" style="background:rgba(239,68,68,.28);color:#fff;border:1px solid rgba(248,113,113,.6)">🗑 حذف الملصق</button></div>`).join("");
   }
   function panel() {
@@ -165,23 +170,23 @@ ${fontSel('data-ovk="font"', v.font || "", "حسب الخط العام")}
 <div class="pbst-act"><button type="button" class="pbx-small pz-go" data-st="cut" id="pbst-cut">① انزع الخلفية</button></div>
 <div class="pbst-act"><button type="button" class="pbx-small" data-st="dl">تنزيل</button><button type="button" class="pbx-small" data-st="reset">استعادة الافتراضي</button></div>
 <div class="pbst-tabs">${tab("bg", "🎨 الخلفية")}${tab("prod", "📦 المنتج")}${tab("fx", "✨ تأثيرات")}${tab("txt", "🏷️ ملصقات وشعار")}${tab("out", "📐 المقاس والإخراج")}</div>
-<div ${pane("bg")}><div><label class="pbst-l">الخلفية</label><div class="pbst-sw">${sw}</div><input type="color" id="pbst-c1" value="${esc(o.c1 || "#ffffff")}" style="width:100%;margin-top:.3rem;display:${o.bg === "custom" ? "block" : "none"}"></div>
+<div ${pane("bg")}><div>${lh("الخلفية", "bg")}<div class="pbst-sw">${sw}</div><input type="color" id="pbst-c1" value="${esc(o.c1 || "#ffffff")}" style="width:100%;margin-top:.3rem;display:${o.bg === "custom" ? "block" : "none"}"></div>
 <div id="pbst-blurbox" style="display:${o.bg === "blur" ? "block" : "none"}">${rg("blur", "قوة الطمس", 4, 60, 1, o.blur)}</div></div>
-<div ${pane("prod")}><div class="pbst-row"><div><label class="pbst-l">نوع الظل</label><select id="pbst-sh"><option value="contact">تحت المنتج — دائرة (بيضاوي) بإعداداتها</option><option value="soft">خلف المنتج</option><option value="none">بدون ظل</option></select></div>
-<div><label class="pbst-l">الموضع</label><select id="pbst-al"><option value="center">في الوسط</option><option value="bottom">على الأرض</option></select></div></div>
+<div ${pane("prod")}><div class="pbst-row"><div>${lh("نوع الظل", "shadow")}<select id="pbst-sh"><option value="contact">تحت المنتج — دائرة (بيضاوي) بإعداداتها</option><option value="soft">خلف المنتج</option><option value="none">بدون ظل</option></select></div>
+<div>${lh("الموضع", "align")}<select id="pbst-al"><option value="center">في الوسط</option><option value="bottom">على الأرض</option></select></div></div>
 <div class="pbst-sub" style="margin:.35rem 0 .1rem;font-size:.74rem;opacity:.8">ضبط الظل (شدة، نعومة، اتجاه)</div>${rg("shI", "شدة الظل %", 0, 200, 5, o.shI == null ? 100 : o.shI)}${rg("shB", "نعومة الظل %", 20, 300, 5, o.shB == null ? 100 : o.shB)}<div id="pbst-shc" style="display:${/^contact/.test(o.shadow) ? "block" : "none"}">${rg("shW", "عرض الدائرة %", 30, 200, 5, o.shW == null ? 100 : o.shW)}${rg("shH", "ارتفاع الدائرة %", 30, 300, 5, o.shH == null ? 100 : o.shH)}</div>${rg("shX", "إزاحة أفقية", -100, 100, 5, o.shX || 0)}${rg("shY", "إزاحة رأسية %", 0, 250, 5, o.shY == null ? 100 : o.shY)}<div class="pbst-sub" style="margin:.5rem 0 .1rem;font-size:.74rem;opacity:.8">انعكاس الأرضية (صفر = بلا انعكاس)</div>${rg("refl", "شفافية انعكاس المنتج %", 0, 100, 1, o.refl || 0)}
-<div><label class="pbst-l">حجم المنتج <span id="pbst-pv-n"></span></label><input type="range" id="pbst-pad" min="2" max="35" step="1" value="${Math.round((1 - o.pad * 2) * 100) ? Math.round(o.pad * 100) : 10}"></div>
-<label class="pbst-ck"><input type="checkbox" id="pbst-pod" ${o.podium ? "checked" : ""}> منصة عرض تحت المنتج</label>
-${rg("rot", "تدوير", -180, 180, 1, o.rot)}<label class="pbst-ck"><input type="checkbox" data-stk="flip" ${o.flip ? "checked" : ""}> قلب أفقي</label></div>
+<div><div class="pbst-lh"><label class="pbst-l">حجم المنتج <span id="pbst-pv-n"></span></label>${rb("pad")}</div><input type="range" id="pbst-pad" min="2" max="35" step="1" value="${Math.round((1 - o.pad * 2) * 100) ? Math.round(o.pad * 100) : 10}"></div>
+<div class="pbst-lh"><label class="pbst-ck"><input type="checkbox" id="pbst-pod" ${o.podium ? "checked" : ""}> منصة عرض تحت المنتج</label>${rb("podium")}</div>
+${rg("rot", "تدوير", -180, 180, 1, o.rot)}<div class="pbst-lh"><label class="pbst-ck"><input type="checkbox" data-stk="flip" ${o.flip ? "checked" : ""}> قلب أفقي</label>${rb("flip")}</div></div>
 <div ${pane("fx")}>${rg("bri", "السطوع", -50, 50, 1, o.bri)}${rg("con", "التباين", -50, 50, 1, o.con)}${rg("sat", "التشبّع", -80, 80, 1, o.sat)}${rg("tmp", "الحرارة", -50, 50, 1, o.tmp)}
-${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لون الحدّ <input type="color" data-stk="outC" value="${esc(o.outC || "#ffffff")}"></label>
+${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><label class="pbst-l">لون الحدّ <input type="color" data-stk="outC" value="${esc(o.outC || "#ffffff")}"></label>${rb("outC")}</div>
 <div class="pbst-act"><button type="button" class="pbx-small" data-st="fxreset">إعادة ضبط التأثيرات</button></div></div>
-<div ${pane("txt")}><label class="pbst-l">خط الملصقات</label>${fontSel('data-stk="font"', o.font, "خط الموقع (الافتراضي)")}<label class="pbst-l">ملصقات البيع (اضغط للإضافة)</label><div class="pbst-chips">${BADGES.map((b, i) => `<button type="button" class="pbx-small" data-st="addov" data-i="${i}">${esc(b[0])}</button>`).join("")}<button type="button" class="pbx-small" data-st="addov" data-i="-1">＋ نص مخصص</button></div><label class="pbst-l">عناوين عريضة (اضغط للإضافة — {name} اسم المنتج و{price} سعره)</label><div class="pbst-chips">${TITLES.map((b, i) => `<button type="button" class="pbx-small" data-st="addttl" data-i="${i}">${esc(b[0])}</button>`).join("")}</div>
+<div ${pane("txt")}>${lh("خط الملصقات", "font")}${fontSel('data-stk="font"', o.font, "خط الموقع (الافتراضي)")}<label class="pbst-l">ملصقات البيع (اضغط للإضافة)</label><div class="pbst-chips">${BADGES.map((b, i) => `<button type="button" class="pbx-small" data-st="addov" data-i="${i}">${esc(b[0])}</button>`).join("")}<button type="button" class="pbx-small" data-st="addov" data-i="-1">＋ نص مخصص</button></div><label class="pbst-l">عناوين عريضة (اضغط للإضافة — {name} اسم المنتج و{price} سعره)</label><div class="pbst-chips">${TITLES.map((b, i) => `<button type="button" class="pbx-small" data-st="addttl" data-i="${i}">${esc(b[0])}</button>`).join("")}</div>
 <div id="pbst-ovs">${ovHtml()}</div>
-<label class="pbst-l">شعار (اختياري)</label><input type="file" id="pbst-logo" accept="image/*"><div class="pbst-row">${posSel('data-stk="logoPos"', o.logoPos)}<button type="button" class="pbx-small" data-st="logodel">إزالة الشعار</button></div>${rg("logoSize", "حجم الشعار", 5, 50, 1, o.logoSize)}${rg("logoOp", "الشفافية", 10, 100, 1, o.logoOp)}${allBlock()}</div>
-<div ${pane("out")}><div><label class="pbst-l">المقاس</label><select id="pbst-sz">${SIZES.map(([v, n]) => `<option value="${v}">${esc(n)}</option>`).join("")}</select></div>
+<label class="pbst-l">شعار (اختياري)</label><input type="file" id="pbst-logo" accept="image/*"><div class="pbst-row"><div class="pbst-lh">${posSel('data-stk="logoPos"', o.logoPos)}${rb("logoPos")}</div><button type="button" class="pbx-small" data-st="logodel">إزالة الشعار</button></div>${rg("logoSize", "حجم الشعار", 5, 50, 1, o.logoSize)}${rg("logoOp", "الشفافية", 10, 100, 1, o.logoOp)}${allBlock()}</div>
+<div ${pane("out")}><div>${lh("المقاس", "size")}<select id="pbst-sz">${SIZES.map(([v, n]) => `<option value="${v}">${esc(n)}</option>`).join("")}</select></div>
 <div class="pbst-row" id="pbst-cs" style="display:${o.size === "custom" ? "grid" : "none"}"><label>العرض <input type="number" data-stk="cw" min="100" max="4000" value="${o.cw}" style="width:100%"></label><label>الارتفاع <input type="number" data-stk="ch" min="100" max="4000" value="${o.ch}" style="width:100%"></label></div>
-<div class="pbst-row"><div><label class="pbst-l">صيغة التنزيل</label><select data-stk="fmt">${[["png", "PNG (شفافية)"], ["webp", "WebP (أخف)"], ["jpeg", "JPEG"]].map(([k, n]) => `<option value="${k}" ${o.fmt === k ? "selected" : ""}>${n}</option>`).join("")}</select></div><div>${rg("q", "الجودة", 50, 100, 1, o.q)}</div></div></div></div>`;
+<div class="pbst-row"><div>${lh("صيغة التنزيل", "fmt")}<select data-stk="fmt">${[["png", "PNG (شفافية)"], ["webp", "WebP (أخف)"], ["jpeg", "JPEG"]].map(([k, n]) => `<option value="${k}" ${o.fmt === k ? "selected" : ""}>${n}</option>`).join("")}</select></div><div>${rg("q", "الجودة", 50, 100, 1, o.q)}</div></div></div></div>`;
   }
   let drawT = 0;
   S.allOff = S.allOff || {};
@@ -195,12 +200,19 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
   function hits() {
     if (S.dragging) return; const ovs = (S.opt && S.opt.ov) || [], R = S.pv && A().imgRect ? A().imgRect(S.pv) : null; if (!R || !document.getElementById("pbst") || !ovs.some(v => v._b)) return hitsOff();
     if (!hitEl) { hitEl = document.createElement("div"); hitEl.id = "pbst-hits"; hitEl.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;z-index:10046;pointer-events:none"; document.body.appendChild(hitEl); }
-    hitEl.innerHTML = ovs.map((v, i) => v._b ? `<div class="pbst-hit" data-hi="${i}" title="اسحب لتحريك ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:fixed;left:${R.left + v._b[0] * R.width}px;top:${R.top + v._b[1] * R.height}px;width:${v._b[2] * R.width}px;height:${v._b[3] * R.height}px;pointer-events:auto;cursor:${v.st === "title" ? "ns-resize" : "move"};border:1.5px dashed rgba(198,254,23,.85);border-radius:6px;touch-action:none"></div>` : "").join("");
+    hitEl.innerHTML = ovs.map((v, i) => v._b ? `<div class="pbst-hit" data-hi="${i}" title="اسحب لتحريك ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:fixed;left:${R.left + v._b[0] * R.width}px;top:${R.top + v._b[1] * R.height}px;width:${v._b[2] * R.width}px;height:${v._b[3] * R.height}px;pointer-events:auto;cursor:${v.st === "title" ? "ns-resize" : "move"};border:1.5px dashed rgba(198,254,23,.85);border-radius:6px;touch-action:none"><i class="pbst-rz" title="اسحب لتكبير أو تصغير ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;border-radius:50%;background:rgba(198,254,23,.9);border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 5px rgba(0,0,0,.45);cursor:nwse-resize;touch-action:none"></i></div>` : "").join("");
   }
   if (typeof document !== "undefined" && !document.__pbstHit) {
     document.__pbstHit = 1;
     document.addEventListener("pointerdown", e => {
       const h = e.target.closest && e.target.closest(".pbst-hit"); if (!h) return; const i = +h.dataset.hi, ov = S.opt.ov[i], R = A().imgRect && A().imgRect(S.pv); if (!ov || !ov._b || !R) return; e.preventDefault(); e.stopPropagation(); S.dragging = true; try { h.setPointerCapture(e.pointerId); } catch (x) { }
+      if (e.target.classList && e.target.classList.contains("pbst-rz")) {      /* تحجيم: نسبة بُعد المؤشر عن مركز العنصر إلى بُعده الأول؛ يُكتب في ov.s */
+        const b0 = ov._b, ccx = R.left + (b0[0] + b0[2] / 2) * R.width, ccy = R.top + (b0[1] + b0[3] / 2) * R.height, d0 = Math.max(8, Math.hypot(e.clientX - ccx, e.clientY - ccy)), s0 = ov.s || 8, title0 = ov.st === "title"; let busy0 = false;
+        const mv2 = ev => { const f = Math.max(.25, Math.min(5, Math.hypot(ev.clientX - ccx, ev.clientY - ccy) / d0)); ov.s = Math.round(Math.max(2, Math.min(40, s0 * f)) * 10) / 10; const k = ov.s / s0, nw = title0 ? b0[2] : b0[2] * k, nh = b0[3] * k;
+          h.style.left = (R.left + (b0[0] + b0[2] / 2 - nw / 2) * R.width) + "px"; h.style.top = (R.top + (b0[1] + b0[3] / 2 - nh / 2) * R.height) + "px"; h.style.width = nw * R.width + "px"; h.style.height = nh * R.height + "px"; if (!busy0) { busy0 = true; setTimeout(() => { busy0 = false; redraw(); }, 60); } };
+        const up2 = () => { S.dragging = false; h.removeEventListener("pointermove", mv2); h.removeEventListener("pointerup", up2); h.removeEventListener("pointercancel", up2); save(); redraw(); setTimeout(hits, 400); };
+        h.addEventListener("pointermove", mv2); h.addEventListener("pointerup", up2); h.addEventListener("pointercancel", up2); return;
+      }
       const b = ov._b, cx0 = b[0] + b[2] / 2, cy0 = b[1] + b[3] / 2, x0 = e.clientX, y0 = e.clientY, title = ov.st === "title"; let busy = false;
       const mv = ev => { const nx = Math.max(0, Math.min(1, cx0 + (ev.clientX - x0) / R.width)), ny = Math.max(0, Math.min(1, cy0 + (ev.clientY - y0) / R.height)); if (!title) ov.fx = Math.round(nx * 1000) / 1000; ov.fy = Math.round(ny * 1000) / 1000; if (ov.fx == null) ov.fx = .5;
         h.style.left = (R.left + (title ? b[0] : nx - b[2] / 2) * R.width) + "px"; h.style.top = (R.top + (ny - b[3] / 2) * R.height) + "px"; if (!busy) { busy = true; setTimeout(() => { busy = false; redraw(); }, 60); } };
@@ -256,13 +268,21 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<label class="pbst-l">لو
     root.addEventListener("click", e => {
       const t = e.target.closest("[data-st-tab]"); if (t) { S.tab = t.dataset.stTab; root.querySelectorAll("[data-st-tab]").forEach(x => x.classList.toggle("on", x === t)); root.querySelectorAll("[data-stp]").forEach(x => { x.hidden = x.dataset.stp !== S.tab; }); return; }
       const b = e.target.closest("[data-st-bg]"); if (b) { o.bg = b.dataset.stBg; $("pbst-c1").style.display = o.bg === "custom" ? "block" : "none"; $("pbst-blurbox").style.display = o.bg === "blur" ? "block" : "none"; root.querySelectorAll("[data-st-bg]").forEach(x => x.classList.toggle("on", x === b)); save(); redraw(); return; }
+      const rs = e.target.closest("[data-rs]");
+      if (rs) {
+        const k = rs.dataset.rs;
+        if (rs.dataset.rsov) { const box = rs.closest("[data-ovi]"), ov = box && o.ov[+box.dataset.ovi]; if (!ov) return; const d = ov.d || { bg: "#16a34a", fg: "#ffffff", st: "pill", font: "" }; ov[k] = d[k]; save(); redrawPanel(); redraw(); return; }
+        (RSG[k] || [k]).forEach(x => { o[x] = DEF[x]; }); save();
+        const keep = []; for (let n = root; n; n = n.parentNode) if (n.scrollTop > 0) keep.push([n, n.scrollTop]);
+        A().renderInspectorNow(); const ap = () => { const r2 = document.getElementById("pbst"); for (let n = r2; n; n = n.parentNode) { const m = keep.find(x => x[0].id && n.id && x[0].id === n.id); if (m) n.scrollTop = m[1]; } keep.forEach(([n, t]) => { if (n.isConnected) n.scrollTop = t; }); }; ap(); setTimeout(ap, 60); S.off = false; redraw(); return;
+      }
       const a = e.target.closest("[data-st]"); if (!a) return; const act = a.dataset.st;
       if (act === "cut") run(async () => { await ensureCut(inf); }).then(() => { S.off = false; redraw(); });
       else if (act === "reset") { S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; save(); A().renderInspectorNow(); }
       else if (act === "fxreset") { Object.assign(o, { bri: 0, con: 0, sat: 0, tmp: 0, refl: 0, outW: 0, rot: 0, flip: false }); save(); A().renderInspectorNow(); }
-      else if (act === "addttl") { const bd = TITLES[+a.dataset.i]; if (!bd || o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: "title", pos: o.ov.some(v => v.st === "title" && v.pos === 2) ? 8 : 2, s: 5 }); save(); redrawPanel(); redraw(); }
+      else if (act === "addttl") { const bd = TITLES[+a.dataset.i]; if (!bd || o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: "title", pos: o.ov.some(v => v.st === "title" && v.pos === 2) ? 8 : 2, s: 5, d: { bg: bd[1], fg: bd[2], st: "title", font: "" } }); save(); redrawPanel(); redraw(); }
       else if (act === "applyall") { if (typeof AdminImgQA === "undefined" || !AdminImgQA.applyAll) { alert("الأداة غير متاحة من هذه الصفحة"); return; } AdminImgQA.applyAll({ slugs: allProds().map(p => p.slug), onStep: m => { const e = document.getElementById("pbst-allst"); if (e) e.textContent = m; } }); }
-      else if (act === "addov") { const i = +a.dataset.i, bd = BADGES[i] || ["نص", "#16a34a", "#ffffff", "pill"]; if (o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: bd[3], pos: [2, 0, 8, 6][o.ov.length % 4], s: bd[3] === "circle" ? 7 : 6 }); save(); redrawPanel(); redraw(); }
+      else if (act === "addov") { const i = +a.dataset.i, bd = BADGES[i] || ["نص", "#16a34a", "#ffffff", "pill"]; if (o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: bd[3], pos: [2, 0, 8, 6][o.ov.length % 4], s: bd[3] === "circle" ? 7 : 6, d: { bg: bd[1], fg: bd[2], st: bd[3], font: "" } }); save(); redrawPanel(); redraw(); }
       else if (act === "ovdel") { o.ov.splice(+a.dataset.i, 1); save(); redrawPanel(); redraw(); }
       else if (act === "logodel") { S.logo = null; const f = $("pbst-logo"); if (f) f.value = ""; redraw(); }
       else if (act === "dl") run(async () => { await ensureSrc(inf); const c = await render(), fmt = o.fmt || "png", bl = await toBlob(c, MIME[fmt], fmt === "png" ? undefined : (o.q || 92) / 100); const u = URL.createObjectURL(bl), l = document.createElement("a"); l.href = u; l.download = "product-studio." + (fmt === "jpeg" ? "jpg" : fmt); document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); say("✅ نُزّلت الصورة"); setTimeout(() => say(""), 2500); });
