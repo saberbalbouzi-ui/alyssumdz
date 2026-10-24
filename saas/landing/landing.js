@@ -15,5 +15,18 @@ function rep(){try{parent.postMessage({pfStudio:'h',h:document.documentElement.s
 window.addEventListener('load',rep);window.addEventListener('resize',rep);if(window.ResizeObserver)new ResizeObserver(rep).observe(document.body);setInterval(rep,1500)}
 var lb=document.createElement('div');lb.id='lbx';lb.innerHTML='<img alt=""><b></b>';document.body.appendChild(lb);
 lb.addEventListener('click',function(){lb.classList.remove('on')});document.addEventListener('keydown',function(e){if(e.key==='Escape')lb.classList.remove('on')});
-document.addEventListener('click',function(e){var im=e.target.closest&&e.target.closest('.gal img');if(!im)return;lb.querySelector('img').src=im.src;lb.querySelector('b').textContent=im.alt||'';lb.classList.add('on')});
+document.addEventListener('click',function(e){var im=e.target.closest&&e.target.closest('.gal img,.gsl img');if(!im)return;lb.querySelector('img').src=im.src;lb.querySelector('b').textContent=im.alt||'';lb.classList.add('on')});
 })();
+
+/* سلايدر المعرض */
+(function(){
+document.querySelectorAll('[data-gsl]').forEach(function(box){
+var tr=box.querySelector('.gsl-t'),sl=[].slice.call(tr.children),cnt=box.querySelector('.gsl-c'),timer=null,paused=false;if(!sl.length)return;
+function idx(){var c=tr.scrollLeft,b=0,bd=1e9;sl.forEach(function(s,i){var d=Math.abs(s.offsetLeft-tr.offsetLeft-c);if(d<bd){bd=d;b=i}});return b}
+function upd(){if(cnt)cnt.textContent=(idx()+1)+' / '+sl.length}
+function go(i){i=(i+sl.length)%sl.length;var s=sl[i];tr.scrollTo({left:s.offsetLeft-tr.offsetLeft,behavior:'smooth'})}
+box.querySelector('.prev').addEventListener('click',function(){go(idx()-1)});box.querySelector('.next').addEventListener('click',function(){go(idx()+1)});
+tr.addEventListener('scroll',function(){clearTimeout(tr._t);tr._t=setTimeout(upd,60)},{passive:true});upd();
+['mouseenter','touchstart','focusin'].forEach(function(e){box.addEventListener(e,function(){paused=true},{passive:true})});['mouseleave','touchend','focusout'].forEach(function(e){box.addEventListener(e,function(){paused=false},{passive:true})});
+if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)&&!/[?&]embed=1/.test(location.search)){timer=setInterval(function(){if(!paused&&!document.hidden)go(idx()+1)},4500)}
+})})();

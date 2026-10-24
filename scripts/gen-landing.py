@@ -60,6 +60,9 @@ def pack_images(slug):
     if not pk: return []
     d = root / "assets" / pk; d = d / "images" if (d / "images").is_dir() else d
     return d, sorted(f for f in d.iterdir() if f.suffix.lower() == ".webp" and not f.name.startswith("template"))
+# صور فيها كتابة مطبوعة (عربية أو فرنسية) أو شرائح مقتطعة ناقصة: تُستبعد من المعارض (فهارس الصور بعد الترتيب، تبدأ من 0)
+EXCL = {"image-generator": {0, 1, 9, 11, 13, 14, 16}, "virtual-model": {0, 1, 10, 12, 13}, "product-photography": {0, 1, 2, 14, 15, 16, 18},
+        "virtual-tryon": {0, 1, 12, 13, 14, 15, 17}, "logo-maker": {12}, "recolor-clothes": {0, 2, 4, 5, 7, 10}}
 def gallery(slug, title="معرض الصور", sub="كل صور الأداة في مكان واحد — اضغط أي صورة لتكبيرها. الصور توضيحية لأنواع النتائج ولا تمثل نتيجة مضمونة."):
     r = pack_images(slug)
     if not r: return ""
@@ -67,11 +70,14 @@ def gallery(slug, title="معرض الصور", sub="كل صور الأداة ف�
     g = L / slug / "gal"   # نسخ مقصوصة ومرفوعة الدقة من scripts/prep-pack-images.py (تُفضَّل على المصدر)
     if g.is_dir() and all((g / f.name).exists() for f in fs): d, fs, rel = g, [g / f.name for f in fs], "gal"
     figs = []
-    cl = CAP.get(slug)
+    cl = CAP.get(slug); ex = EXCL.get(slug, set()); n = 0
     for i, f in enumerate(fs):
+        if i in ex: continue
+        n += 1
         w, h = Image.open(f).size; c = (cl[i] + (" — قبل وبعد" if slug == "remove-background" and i < 21 else "") if cl and i < len(cl) else caption(f.name))
         figs.append(f'<figure><img src="{rel}/{f.name}" width="{w}" height="{h}" loading="lazy" alt="{E(c)}"><figcaption>{E(c)}</figcaption></figure>')
-    return f'<!--gal--><section class="band alt" id="gallery"><div class="w"><h2>{E(title)} <small class="cnt">({len(fs)} صورة)</small></h2><p class="sub">{E(sub)}</p><div class="gal">{"".join(figs)}</div></div></section><!--/gal-->'
+    # سلايدر أفقي: سهمان وعدّاد وتمرير بالسحب/اللمس وتشغيل تلقائي هادئ (landing.js)
+    return f'<!--gal--><section class="band alt" id="gallery"><div class="w"><h2>{E(title)} <small class="cnt">({n} صورة)</small></h2><p class="sub">{E(sub)}</p><div class="gsl" data-gsl><button type="button" class="gsl-b prev" aria-label="السابق">\u2039</button><div class="gsl-t">{"".join(figs)}</div><button type="button" class="gsl-b next" aria-label="التالي">\u203a</button><div class="gsl-c" aria-live="polite"></div></div></div></section><!--/gal-->'
 
 PAGES = [
  dict(

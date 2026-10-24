@@ -78,3 +78,13 @@ h2 .cnt{font-size:.9rem;font-weight:600;color:var(--ltm)}.tipsg{max-width:900px;
 #lbx img{max-width:96vw;max-height:88vh;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.6)}#lbx b{position:absolute;bottom:1.2rem;left:0;right:0;text-align:center;color:#fff;font-weight:700}
 html.emb .top,html.emb footer,html.emb .site{display:none!important}html.emb,html.emb body{scrollbar-width:none;-ms-overflow-style:none}html.emb::-webkit-scrollbar,html.emb body::-webkit-scrollbar,html.emb *::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}html.emb .hero{padding-top:1.4rem}
 @media(max-width:700px){.gal{columns:2 150px}}
+
+/* سلايدر معرض الصور */
+.gsl{position:relative;max-width:1180px;margin:0 auto}
+.gsl-t{position:relative;display:flex;gap:1rem;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;direction:ltr;padding:.3rem .2rem 1rem;scrollbar-width:none;-ms-overflow-style:none}.gsl-t::-webkit-scrollbar{display:none}
+.gsl-t figure{flex:0 0 min(80vw,340px);scroll-snap-align:start;margin:0;background:#fff;border:1px solid #e3e9e3;border-radius:16px;overflow:hidden;box-shadow:0 8px 20px rgba(16,36,27,.07);cursor:zoom-in;transition:transform .2s}
+.gsl-t figure:hover{transform:translateY(-3px)}.gsl-t img{display:block;width:100%;height:260px;object-fit:contain;background:#eef2ee}.gsl-t figcaption{padding:.5rem .8rem;font-weight:700;font-size:.85rem;color:var(--ltm);direction:rtl;text-align:center}
+.gsl-b{position:absolute;top:calc(50% - 1.6rem);z-index:2;width:2.6rem;height:2.6rem;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:rgba(16,36,27,.55);color:#fff;font-size:1.6rem;line-height:1;cursor:pointer;backdrop-filter:blur(6px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 16px rgba(0,0,0,.25);transition:transform .15s,background .15s}
+.gsl-b:hover{background:rgba(22,163,74,.7);transform:translateY(-2px)}.gsl-b.prev{left:.2rem}.gsl-b.next{right:.2rem}
+.gsl-c{text-align:center;font-weight:800;font-size:.85rem;color:var(--ltm);margin-top:.2rem}
+@media(max-width:700px){.gsl-b{display:none}}
