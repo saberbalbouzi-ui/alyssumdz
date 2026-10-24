@@ -149,12 +149,13 @@ const BgEditor = (() => {
 #bge .note{font-size:.7rem;color:rgba(255,255,255,.65);line-height:1.6}
 #bge .drop{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;z-index:6;background:#0b1511;direction:rtl}
 #bge .drop.dz{outline:3px dashed #c6fe17;outline-offset:-14px}
+#bge.dk{inset:0 0 var(--bge-b,64px) 0;z-index:10040}#bge.dk #bge-x,#bge.dk .sec.ex{display:none}
 @media(max-width:760px){#bge .bd{flex-direction:column-reverse}#bge .side{width:100%;max-width:none;max-height:46vh;border-right:0;border-top:1px solid rgba(255,255,255,.14)}}`;
 
   function open(opts) {
     opts = opts || {}; if (INST) INST.close(true);
     if (!document.getElementById("bge-css")) { const st = document.createElement("style"); st.id = "bge-css"; st.textContent = CSS; document.head.appendChild(st); }
-    const ov = document.createElement("div"); ov.id = "bge";
+    const ov = document.createElement("div"); ov.id = "bge"; if (opts.dock) { ov.classList.add("dk"); const tb = document.getElementById("pbx-tbar"); if (tb) ov.style.setProperty("--bge-b", Math.max(0, innerHeight - tb.getBoundingClientRect().top) + "px"); }
     ov.innerHTML = `<div class="hd"><b>✂️ محرّر إزالة الخلفية</b><span class="msg" id="bge-st" style="flex:1;min-width:140px"></span>
 <button class="btn" id="bge-undo" type="button" title="تراجع (Ctrl+Z)" disabled>↶</button><button class="btn" id="bge-redo" type="button" title="إعادة (Ctrl+Shift+Z)" disabled>↷</button><button class="btn r2" id="bge-x" type="button">✕ إغلاق</button></div>
 <div class="bd"><div class="stg" id="bge-stg"><div class="wr" id="bge-wr"><div class="bgl" id="bge-bgl"></div><canvas id="bge-cv"></canvas><canvas id="bge-oc" style="display:none"></canvas><div class="cmp" id="bge-cmp"><i>⇆</i></div></div><div class="cur" id="bge-cur"></div>
@@ -173,7 +174,7 @@ const BgEditor = (() => {
 <label class="r"><span>تقليل الهالة</span><input type="range" id="bge-p-halo" min="0" max="100" value="0"><em></em></label>
 <div class="note">الإزاحة السالبة تأكل الحافة والموجبة توسّعها. تقليل الهالة يستبدل ألوان بكسلات الحافة بلون الجسم المجاور ويقصّ الألفا الضعيف جداً.</div></div>
 <div class="sec"><h4>④ الخلفية</h4><div class="row"><label class="r" style="margin:0"><input type="radio" name="bge-bg" value="none" checked> شفافة</label><label class="r" style="margin:0"><input type="radio" name="bge-bg" value="color"> لون</label><input type="color" id="bge-bgc" value="#ffffff" style="width:2.2rem;height:1.8rem;padding:0;border:0;background:none"><label class="r" style="margin:0"><input type="radio" name="bge-bg" value="img"> صورة</label><button class="btn" id="bge-bgi" type="button">📁</button><input type="file" id="bge-bgf" accept="image/png,image/jpeg,image/webp" hidden></div></div>
-<div class="sec"><h4>⑤ التصدير</h4><div class="row"><button class="btn g" id="bge-dl" type="button" disabled>⬇ تنزيل PNG</button><button class="btn o" id="bge-ap" type="button" disabled style="display:none">✔ تطبيق على الصورة</button></div><div class="msg" id="bge-ver" style="margin-top:.4rem"></div></div>
+<div class="sec ex"><h4>⑤ التصدير</h4><div class="row"><button class="btn g" id="bge-dl" type="button" disabled>⬇ تنزيل PNG</button><button class="btn o" id="bge-ap" type="button" disabled style="display:none">✔ تطبيق على الصورة</button></div><div class="msg" id="bge-ver" style="margin-top:.4rem"></div></div>
 </div></div>`;
     document.body.appendChild(ov);
     const $ = i => ov.querySelector("#" + i), stg = $("bge-stg"), wr = $("bge-wr"), cv = $("bge-cv"), oc = $("bge-oc"), cur = $("bge-cur"), cmp = $("bge-cmp");
@@ -297,9 +298,9 @@ const BgEditor = (() => {
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "nobg-" + S.name.replace(/[^\w؀-ۿ-]+/g, "_") + ".png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); say("✅ نُزِّل الملف"); }
       catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false; updateButtons();
     }
-    async function apply() {
+    async function apply(keep) {
       if (S.busy || typeof opts.onApply !== "function") return; S.busy = true; updateButtons(); say("⏳ تطبيق على الصورة…");
-      try { const { blob, v } = await exportBlob(); $("bge-ver").textContent = v.msg; if (!v.ok) throw new Error("فشل التحقق من الملف الناتج"); await opts.onApply(blob, { w: S.W, h: S.H, name: S.name }); S.dirty = false; close(true); return; }
+      try { const { blob, v } = await exportBlob(); $("bge-ver").textContent = v.msg; if (!v.ok) throw new Error("فشل التحقق من الملف الناتج"); await opts.onApply(blob, { w: S.W, h: S.H, name: S.name }); S.dirty = false; if (keep === true) { S.busy = false; updateButtons(); say("✅ طُبِّق على الصورة"); return true; } close(true); return; }
       catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false; updateButtons();
     }
 
@@ -341,13 +342,13 @@ const BgEditor = (() => {
     /* ملف المصدر */
     $("bge-pick").onclick = () => $("bge-file").click(); $("bge-file").onchange = () => { const f = $("bge-file").files[0]; $("bge-file").value = ""; loadFile(f); };
     const dr = $("bge-drop"); ["dragenter", "dragover"].forEach(ev => dr.addEventListener(ev, e => { e.preventDefault(); dr.classList.add("dz"); })); ["dragleave", "drop"].forEach(ev => dr.addEventListener(ev, e => { e.preventDefault(); dr.classList.remove("dz"); })); dr.addEventListener("drop", e => loadFile(e.dataTransfer && e.dataTransfer.files[0]));
-    $("bge-go").onclick = runEngine; $("bge-reset").onclick = resetAll; $("bge-undo").onclick = undo; $("bge-redo").onclick = redo; $("bge-dl").onclick = download; $("bge-ap").onclick = apply;
+    $("bge-go").onclick = runEngine; $("bge-reset").onclick = resetAll; $("bge-undo").onclick = undo; $("bge-redo").onclick = redo; $("bge-dl").onclick = download; $("bge-ap").onclick = () => apply();
     if (typeof opts.onApply === "function") $("bge-ap").style.display = "";
     const close = force => { if (!force && S.dirty && !confirm("إغلاق المحرّر وفقدان التعديلات غير المطبّقة؟")) return; S.token++; document.removeEventListener("keydown", onKey, true); document.removeEventListener("keyup", onKeyUp, true); window.removeEventListener("resize", relayout); if (S.bg.url) URL.revokeObjectURL(S.bg.url); ov.remove(); if (INST && INST.ov === ov) INST = null; };
     $("bge-x").onclick = () => close(false);
     const onKey = e => {
       if (!document.body.contains(ov)) return; const tg = e.target && e.target.tagName; if (tg === "INPUT" && e.target.type !== "range" && e.target.type !== "radio" && e.target.type !== "color") return;
-      e.stopPropagation(); const k = e.key.toLowerCase(); if (e.key === "Escape") { close(false); return; }
+      e.stopPropagation(); const k = e.key.toLowerCase(); if (e.key === "Escape") { if (!opts.dock) close(false); return; }
       if ((e.ctrlKey || e.metaKey) && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; } if ((e.ctrlKey || e.metaKey) && k === "y") { e.preventDefault(); redo(); return; }
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === "Space") { S.space = true; e.preventDefault(); return; }
@@ -366,7 +367,8 @@ const BgEditor = (() => {
     const descr = () => { const e = ENGINES.find(x => x.id === $("bge-eng").value); $("bge-engd").textContent = e ? "" : "خدمة نزع الخلفية غير مفعّلة على الخادم — راجع الدعم."; $("bge-engd").style.display = e ? "none" : ""; $("bge-go").disabled = !S.W || S.busy || !e; };
     $("bge-eng").onchange = descr; fillEngines(); extProbe().then(() => { if (document.body.contains(ov)) fillEngines(); });
 
-    INST = { ov, close, S, loadCanvas, loadFile, runEngine, undo, redo, rebuild, exportBlob, download, apply, setTool, strokeStart, strokeMove, strokeEnd, commit, snap, resetAll };
+    const flush = async () => { if (!S.W || S.busy || !S.dirty) return true; return !!(await apply(true)); };
+    INST = { ov, close, S, flush, loadCanvas, loadFile, runEngine, undo, redo, rebuild, exportBlob, download, apply, setTool, strokeStart, strokeMove, strokeEnd, commit, snap, resetAll };
     if (opts.canvas) loadCanvas(opts.canvas); else if (opts.blob) loadFile(opts.blob); else if (opts.src) { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d").drawImage(im, 0, 0); loadCanvas(c); }; im.onerror = () => say("⚠️ تعذّر تحميل الصورة"); im.src = opts.src; }
     return INST;
   }

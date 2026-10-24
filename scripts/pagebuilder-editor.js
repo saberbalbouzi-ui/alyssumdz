@@ -277,7 +277,7 @@ body{overflow-x:hidden;margin:0}`;
   <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
   <aside class="pbx-right" id="pbx-insp"></aside>
 </div>
-<div id="pbx-tbar" dir="rtl"><b id="pbx-tname"></b><button type="button" data-tb="adv" id="pbx-tadv" style="display:none" title="ألوان الخلفية وفرشاة الاستعادة والحواف">🎨 الألوان والاستعادة</button><button type="button" data-tb="editor" title="متابعة العمل على الصورة في مطوّر الصفحات">✏️ فتح في المحرر</button><button type="button" class="g" data-tb="dl" title="تنزيل الصورة النهائية">⬇ تحميل</button><button type="button" class="g" data-tb="lib" title="حفظ الصورة في مكتبة الموقع">💾 حفظ في المكتبة</button><button type="button" data-tb="x" title="إغلاق النافذة">✕ إغلاق</button></div>
+<div id="pbx-tbar" dir="rtl"><b id="pbx-tname"></b><button type="button" data-tb="editor" title="متابعة العمل على الصورة في مطوّر الصفحات">✏️ فتح في المحرر</button><button type="button" class="g" data-tb="dl" title="تنزيل الصورة النهائية">⬇ تحميل</button><button type="button" class="g" data-tb="lib" title="حفظ الصورة في مكتبة الموقع">💾 حفظ في المكتبة</button><button type="button" data-tb="x" title="إغلاق النافذة">✕ إغلاق</button></div>
 <div class="pbx-mbar2" id="pbx-mbar2">
   <b id="pbx-mmn">☑ 0</b><button onclick="PBApp.ma('copy')" title="نسخ المحدّد">⧉<small>نسخ</small></button><button onclick="PBApp.ma('dup')" title="تكرار المحدّد">➕<small>تكرار</small></button>
   <button onclick="PBApp.ma('group')" title="ربط العناصر ببعضها">🔗<small>ربط</small></button><button onclick="PBApp.ma('ungroup')" title="تفكيك الربط">⛓<small>تفكيك</small></button>
@@ -343,6 +343,7 @@ body{overflow-x:hidden;margin:0}`;
     ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
   function close() {
+    try { if (typeof BgEditor !== "undefined" && BgEditor.inst() && BgEditor.inst().ov.classList.contains("dk")) BgEditor.inst().close(true); } catch (x) { }
     if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
     closeFloating();
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
@@ -1380,9 +1381,9 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t === "xp" || t === "ai" || t === "sl" || t === "fa" || t === "to" || t === "ps" || t === "bgn" || t === "rc" || t === "v3" || t === "rl" || t === "tr" || t === "uc" || t === "bf") return PBAI.panel(t);
     if (t === "pz") return PBPuzzle.panel(inf);
     if (t === "mk") return inf.set.pz ? `<p class="ep-n">قطع البازل لا تدعم الماسك — أرجِع الصورة كاملة أولاً من تبويب «بازل».</p>` : PBMask.panel(inf);
-    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة، ثم عدّل الألوان والحواف واستعد أجزاء بفرشاة من «الألوان والاستعادة».</p>
+    if (t === "bg") return `<div class="pbx-pz"><p>انزع خلفية الصورة بنقرة واحدة.</p>
       <button type="button" class="pbx-small pz-go" data-bgr="open">${ico("scissors", 16)} ابدأ نزع الخلفية</button>
-      <button type="button" class="pbx-small pz-go" data-bgr="adv">🎨 الألوان والاستعادة</button><p class="ep-n">تظهر النتيجة مباشرة على الصورة (تراجع Ctrl+Z). الألوان والحواف وفرشاة الاستعادة وصيغة التنزيل (PNG/WebP) كلها في «الألوان والاستعادة».</p></div>`;
+      <p class="ep-n">تظهر النتيجة مباشرة على الصورة (تراجع Ctrl+Z). لتعديل الألوان والحواف وفرشاة الاستعادة افتح الأداة من «ستوديو ديزاين».</p></div>`;
     { const o = TOPT.get("cap"); return `<div class="pbx-pz"><p>يفصل العناصر الكاملة في الصورة (أشخاص، منتجات…) كصور شفافة منفصلة ويضعها في الصفحة. اضبط الخيارات ثم اضغط «ابدأ».</p>
       <label class="fl" style="flex-direction:row;gap:.45rem;align-items:center"><input type="checkbox" data-topt="cap.fill"${o.fill ? " checked" : ""}> <span>إعادة رسم الخلفية بدقة أعلى (أبطأ)</span></label>
       <button type="button" class="pbx-small pz-go" data-q="smart-magic">${ico("cutout", 16)} ابدأ التقاط العناصر</button></div>`; }
@@ -1440,6 +1441,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   /* جلسة أداة من «ستوديو ديزاين»: صورة (أو عدة صور) من نافذة الأداة ← لوحة بمقاس الصورة ← تُحدَّد الصورة وتُفتح لوحة الأداة مباشرة؛ الحفظ بـ«تصدير الصورة» (تنزيل/مكتبة) أو «حفظ ونشر» أو متابعة التعديل في المطوّر */
   const TS_KEY = { bg: "bg", st: "st", vd: "vd", v360: "v3", fashion: "fa", tryon: "to", pshoot: "ps", bgen: "bgn", mk: "mk", pz: "pz", cap: "cap", rt: "rt", ff: "ff", fr: "fr", bl: "bl", cl: "cl", xp: "xp", resize: "xp", sl: "sl", ai: "ai", up: "up", brand: "br", recolor: "rc", relight: "rl", textrm: "tr", uncrop: "uc", beautify: "bf", vgen: "vg", vad: "vad" };
   async function toolSession(blobs, tool, nm) {
+    try { const bi = typeof BgEditor !== "undefined" && BgEditor.inst(); if (bi && bi.ov.classList.contains("dk")) bi.close(true); } catch (x) { }
     blobs = (Array.isArray(blobs) ? blobs : [blobs]).filter(Boolean); if (!blobs.length) return false;
     if (typeof ImgGen === "undefined" || !ImgGen.openSized) { toast("مولّد الصور غير متاح"); return false; }
     const im = await createImageBitmap(blobs[0]), sc = Math.min(1, 2000 / Math.max(im.width, im.height)), W = Math.max(64, Math.round(im.width * sc)), H = Math.max(64, Math.round(im.height * sc));
@@ -1455,7 +1457,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     await new Promise(r => setTimeout(r, 500)); select(first.id);
     const reopen = () => {
       const k = TS_KEY[tool]; if (E.last && !E.sel) { try { select(E.last); } catch (x) { } } if (k === "xp" && typeof PBAI !== "undefined") PBAI.setXpMode("ai");
-      if (tool === "af") { if (typeof PBSmart !== "undefined" && PBSmart.autoFocus) PBSmart.autoFocus(selInfo()); } else if (tool === "blur") { if (typeof PBSmart !== "undefined" && PBSmart.blur) PBSmart.blur(selInfo()); } else if (tool === "erase") imgSmart("erase"); else if (tool === "scene") imgSmart("scene"); else if (k) imgPick(k);
+      if (tool === "bg") { if (k) imgPick(k); if (!(typeof BgEditor !== "undefined" && BgEditor.inst() && BgEditor.inst().ov.classList.contains("dk"))) setTimeout(() => PBBgRemove.edit(selInfo(), { dock: true }), 80); } else if (tool === "af") { if (typeof PBSmart !== "undefined" && PBSmart.autoFocus) PBSmart.autoFocus(selInfo()); } else if (tool === "blur") { if (typeof PBSmart !== "undefined" && PBSmart.blur) PBSmart.blur(selInfo()); } else if (tool === "erase") imgSmart("erase"); else if (tool === "scene") imgSmart("scene"); else if (k) imgPick(k);
     };
     toolModeOn(tool, nm || "تعديل صورة", first.id, reopen); reopen();
     toast("✅ الصورة جاهزة — اضبط إعدادات الأداة ثم اختر: فتح في المحرر أو تحميل أو حفظ في المكتبة");
@@ -1463,7 +1465,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   /* وضع نافذة الأداة: يُخفي أشرطة المحرر ويُبقي الصورة + إعدادات الأداة + شريط النتيجة؛ «فتح في المحرر» يعيد المحرر الكامل بنفس الصورة */
   function toolModeOn(tool, name, id, reopen) {
-    E.toolMode = { tool, name, id, reopen }; const app = $("pb-app"); app.classList.add("pbx-tool"); const n = $("pbx-tname"); if (n) n.textContent = name; const ad = $("pbx-tadv"); if (ad) ad.style.display = tool === "bg" ? "" : "none";
+    E.toolMode = { tool, name, id, reopen }; const app = $("pb-app"); app.classList.add("pbx-tool"); const n = $("pbx-tname"); if (n) n.textContent = name;
     setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60);
   }
   function toolModeOff() { E.toolMode = null; $("pb-app").classList.remove("pbx-tool"); try { renderLeft(); } catch (x) { } setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60); toast("✏️ المحرر الكامل مفتوح — الصورة في الصفحة جاهزة للتعديل"); }
@@ -1479,9 +1481,10 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   function toolAct(a) {
     const T = E.toolMode; if (!T) return;
-    if (a === "adv") { if (typeof PBBgRemove !== "undefined" && PBBgRemove.edit) { try { if (!E.sel && T.id) select(T.id); } catch (x) { } PBBgRemove.edit(selInfo()); } return; }
-    if (a === "editor") { toolModeOff(); return; }
-    if (a === "x") { close(); return; }
+    const bge = () => (typeof BgEditor !== "undefined" && BgEditor.inst && BgEditor.inst() && BgEditor.inst().ov.classList.contains("dk")) ? BgEditor.inst() : null;
+    if (a === "editor") { const b = bge(); Promise.resolve(b ? b.flush() : 1).then(() => { if (b) b.close(true); toolModeOff(); }); return; }
+    if (a === "x") { const b = bge(); if (b) b.close(true); close(); return; }
+    { const b = bge(); if (b && (a === "dl" || a === "lib") && b.S.dirty) { toast("⏳ تطبيق تعديلاتك على الصورة…"); b.flush().then(ok => { if (ok) toolAct(a); }); return; } }
     if (E.live) { toast("⏳ اضغط «تنفيذ» على نتيجة الأداة أولاً (أو «إلغاء») ثم احفظ"); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.exportAd) { toast("مولّد الصور غير متاح"); return; }
     if (a === "dl") { toolFmtPick(f => ImgGen.exportAd({ act: "download", fmt: f })); return; }
@@ -1570,7 +1573,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (t.dataset.mkp) { const v = t.dataset.mkp; if (v === "c") { PBMask.opt("px", 50); PBMask.opt("py", 50); } else PBMask.opt("size", Number(v)); epDraw(); return; }
     if (t.dataset.mksh) { PBMask.opt("target", t.dataset.mksh); epDraw(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); epDraw(); return; }
-    if (t.dataset.bgr) { if (t.dataset.bgr === "edit" || t.dataset.bgr === "adv") PBBgRemove.edit(inf); else PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
+    if (t.dataset.bgr) { if (t.dataset.bgr === "edit") PBBgRemove.edit(inf); else PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
     if (t.dataset.q === "smart-magic") { PBSmart.captureElements(); return; }
   }
   function epInput(e) {      // تحريك الأشرطة: معاينة حيّة بلا إعادة رسم اللوحة (حتى لا يُقطع السحب)
@@ -3069,7 +3072,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.pend) { pendAct(t.dataset.pend); return; }
     if (t.dataset.mksh) { if (PBMask.opt("target", t.dataset.mksh)) renderInspector(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); if (t.dataset.mk === "preview" || t.dataset.mk === "no") renderInspector(); return; }
-    if (t.dataset.bgr) { if (t.dataset.bgr === "edit" || t.dataset.bgr === "adv") PBBgRemove.edit(inf); else PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
+    if (t.dataset.bgr) { if (t.dataset.bgr === "edit") PBBgRemove.edit(inf); else PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
     if (t.dataset.hsite) { if (E.dirty && !confirm("لديك تعديلات غير منشورة في الصفحة — سيُغلق المطوّر وتُحفظ مسودتها تلقائياً. متابعة؟")) return; try { saveDraftNow(); } catch (e) { } close(); const nb = [...document.querySelectorAll(".nav-btn")].find(x => /chromeh/.test(x.getAttribute("onclick") || "")); if (nb) nb.click(); return; }
     if (t.dataset.scins) { const ta = document.querySelector('#pbx-insp textarea[data-k="code"]'), cd = PB.SC_LIST[+t.dataset.scins][0], cur = String(inf.set.code || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.code = cur.slice(0, at) + cd + cur.slice(at); afterEdit(); return; }
     if (t.dataset.icins) { const r = t.getBoundingClientRect(), ta = document.querySelector('#pbx-insp textarea'); showIconPop(Math.max(6, r.left - 120), r.bottom + 6, "", v => { const tk = PB.isIconTok(v) ? "{" + v + "}" : v, cur = String(inf.set.txt || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.txt = cur.slice(0, at) + tk + cur.slice(at); afterEdit(); }); return; }

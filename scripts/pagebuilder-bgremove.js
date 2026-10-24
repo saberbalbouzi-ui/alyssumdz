@@ -480,10 +480,10 @@ const PBBgRemove = (function () {
     } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + PRO.rep); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
   }
   /* المحرّر المتقدّم (BgEditor): محرّك قابل للتبديل + فرشاة محو/استعادة + صقل حواف + خلفيات + تصدير PNG محقَّق؛ الصورة الأصلية لا تُعدَّل */
-  async function edit(inf) {
+  async function edit(inf, eo) {
     if (!inf || inf.node.type !== "image" || !inf.node.set.src) { alert("حدّد صورة أولاً"); return; } if (typeof BgEditor === "undefined") { alert("المحرّر المتقدّم غير محمّل — حدّث الصفحة"); return; }
     const id = inf.node.id; let c; try { c = await load(inf.node.set.src); } catch (e) { alert("⚠️ " + e.message); return; }
-    BgEditor.open({ canvas: c, name: "image", onApply: async blob => {
+    BgEditor.open({ canvas: c, name: "image", dock: !!(eo && eo.dock), onApply: async blob => {
       const path = await A().uploadBlob(blob, "nobg-" + Date.now().toString(36), { max: Math.max(c.width, c.height), q: .95 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
       q.node.set.src = path; A().E.nextLabel = "نزع الخلفية (محرّر متقدّم)"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); chip("✅ طُبِّقت الصورة بقناعها"); } });
   }

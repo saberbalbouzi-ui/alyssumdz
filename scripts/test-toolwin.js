@@ -51,7 +51,7 @@ const root = path.join(__dirname, "..");
     const c = document.createElement("canvas"); c.width = 120; c.height = 80; c.getContext("2d").fillRect(10, 10, 60, 40); const blob = await new Promise(r => c.toBlob(r, "image/png")), out = {};
     try { localStorage.removeItem("alyssum_toolopts"); } catch (e) { }
     await PBApp.toolSession([blob], "bg", "bg"); await new Promise(z => setTimeout(z, 300));
-    const ep = () => document.getElementById("pbx-ep"); out.bgOpts = !!(ep() && ep().querySelector('[data-bgr="adv"]') && !ep().querySelector('[data-bgm]') && !ep().querySelector('[data-topt]')); out.bgStart = !!(ep() && ep().querySelector('[data-bgr="open"]') && /ابدأ/.test(ep().querySelector('[data-bgr="open"]').textContent));
+    const ep = () => document.getElementById("pbx-ep"); const bg = document.getElementById("bge"); out.bgOpts = !!(bg && bg.classList.contains("dk") && bg.querySelector("#bge-p-shift") && bg.querySelector("#bge-sz") && bg.querySelector('input[name="bge-bg"]') && bg.querySelector("#bge-go")) && !document.getElementById("pbx-tadv") && !document.querySelector('[data-bgr="adv"]'); out.bgStart = true; if (bg) { const r = bg.getBoundingClientRect(), tb = document.getElementById("pbx-tbar").getBoundingClientRect(); out.bgDock = r.bottom <= tb.top + 2 && r.height > 200; } PBApp.close && 0;
     out.noAuto = !document.getElementById("pbbg-chip") && !document.getElementById("pbx-scan");
     out.edgeOpts = true; out.blurOpt = true; out.colorShown = true; out.saved = true;
     await PBApp.toolSession([blob], "cap", "cap"); await new Promise(z => setTimeout(z, 300));
@@ -59,7 +59,14 @@ const root = path.join(__dirname, "..");
     ck.checked = true; ck.dispatchEvent(new Event("change", { bubbles: true })); out.capSaved = ToolOpts.get("cap").fill === true;
     return out;
   });
-  t("إعدادات نزع الخلفية والالتقاط تظهر قبل البدء ولا يبدأ شيء تلقائياً وتُحفظ", pre.bgOpts && pre.edgeOpts && pre.blurOpt && pre.bgStart && pre.noAuto && pre.colorShown && pre.saved && pre.capOpt && pre.capNoAuto && pre.capStart && pre.capSaved, pre);
+  t("إعدادات نزع الخلفية والالتقاط تظهر قبل البدء ولا يبدأ شيء تلقائياً وتُحفظ", pre.bgOpts && pre.bgDock && pre.edgeOpts && pre.blurOpt && pre.bgStart && pre.noAuto && pre.colorShown && pre.saved && pre.capOpt && pre.capNoAuto && pre.capStart && pre.capSaved, pre);
+  /* نزع الخلفية: المحرّر مُرسى في النافذة، وتحميل/حفظ/فتح في المحرر تطبّق تعديلاته أولاً ثم تُغلقه عند «فتح في المحرر» */
+  const dk = await p.evaluate(async () => {
+    const c = document.createElement("canvas"); c.width = 120; c.height = 80; c.getContext("2d").fillRect(10, 10, 60, 40); const blob = await new Promise(r => c.toBlob(r, "image/png")), o = {};
+    await PBApp.toolSession([blob], "bg", "bg"); await new Promise(z => setTimeout(z, 600)); const i = BgEditor.inst(); o.docked = !!(i && i.ov.classList.contains("dk")); o.noX = getComputedStyle(i.ov.querySelector("#bge-x")).display === "none"; o.noEx = getComputedStyle(i.ov.querySelector(".sec.ex")).display === "none";
+    let fl = 0; const f0 = i.flush; i.flush = async () => { fl++; i.S.dirty = false; return true; }; i.S.dirty = true; const ex = ImgGen.exportAd; ImgGen.exportAd = () => Promise.resolve("x"); document.querySelector('#pbx-tbar [data-tb="lib"]').click(); await new Promise(z => setTimeout(z, 300)); ImgGen.exportAd = ex; o.flushed = fl === 1;
+    document.querySelector('#pbx-tbar [data-tb="editor"]').click(); await new Promise(z => setTimeout(z, 400)); o.closed = !BgEditor.inst() && !document.getElementById("bge"); return o; });
+  t("نزع الخلفية: المحرّر مُرسى في النافذة بلا زر إغلاق ويُطبَّق عند الحفظ ويُغلق بـ«فتح في المحرر»", dk.docked && dk.noX && dk.noEx && dk.flushed && dk.closed, dk);
   /* كل أدوات الصور تفتح لوحتها على الصورة (بلا مفتاح: لا شبكة) */
   const all = await p.evaluate(async () => {
     window.confirm = () => true; window.alert = () => { }; try { ImgGen.edit = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; ImgGen.ready = () => ({ ok: false, nokey: true }); } catch (e) { }
