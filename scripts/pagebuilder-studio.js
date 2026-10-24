@@ -200,12 +200,21 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
   function hits() {
     if (S.dragging) return; const ovs = (S.opt && S.opt.ov) || [], R = S.pv && A().imgRect ? A().imgRect(S.pv) : null; if (!R || !document.getElementById("pbst") || !ovs.some(v => v._b)) return hitsOff();
     if (!hitEl) { hitEl = document.createElement("div"); hitEl.id = "pbst-hits"; hitEl.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;z-index:10046;pointer-events:none"; document.body.appendChild(hitEl); }
-    hitEl.innerHTML = ovs.map((v, i) => v._b ? `<div class="pbst-hit" data-hi="${i}" title="اسحب لتحريك ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:fixed;left:${R.left + v._b[0] * R.width}px;top:${R.top + v._b[1] * R.height}px;width:${v._b[2] * R.width}px;height:${v._b[3] * R.height}px;pointer-events:auto;cursor:${v.st === "title" ? "ns-resize" : "move"};border:1.5px dashed rgba(198,254,23,.85);border-radius:6px;touch-action:none"><i class="pbst-rz" title="اسحب لتكبير أو تصغير ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;border-radius:50%;background:rgba(198,254,23,.9);border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 5px rgba(0,0,0,.45);cursor:nwse-resize;touch-action:none"></i></div>` : "").join("");
+    hitEl.innerHTML = ovs.map((v, i) => v._b ? `<div class="pbst-hit" data-hi="${i}" title="اسحب لتحريك ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:fixed;left:${R.left + v._b[0] * R.width}px;top:${R.top + v._b[1] * R.height}px;width:${v._b[2] * R.width}px;height:${v._b[3] * R.height}px;pointer-events:auto;cursor:${v.st === "title" ? "ns-resize" : "move"};border:${S.selOv === i ? "2.5px solid" : "1.5px dashed"} rgba(198,254,23,${S.selOv === i ? 1 : .85});border-radius:6px;touch-action:none"><i class="pbst-rz" title="اسحب لتكبير أو تصغير ${v.st === "title" ? "العنوان" : "الملصق"}" style="position:absolute;right:-8px;bottom:-8px;width:16px;height:16px;border-radius:50%;background:rgba(198,254,23,.9);border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 5px rgba(0,0,0,.45);cursor:nwse-resize;touch-action:none"></i></div>` : "").join("");
   }
   if (typeof document !== "undefined" && !document.__pbstHit) {
     document.__pbstHit = 1;
+    /* حذف الملصق/العنوان المحدَّد على الصورة بمفتاح Delete أو Backspace (لا يعمل أثناء الكتابة في حقل) */
+    document.addEventListener("keydown", e => {
+      if ((e.key !== "Delete" && e.key !== "Backspace") || S.selOv == null || !S.opt || !S.opt.ov || !document.getElementById("pbst")) return;
+      const t = e.target, tag = t && t.tagName; if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t && t.isContentEditable)) return;
+      if (!S.opt.ov[S.selOv]) { S.selOv = null; return; }
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); S.opt.ov.splice(S.selOv, 1); S.selOv = null; save(); A().renderInspectorNow(); redraw(); setTimeout(hits, 100);
+    }, true);
     document.addEventListener("pointerdown", e => {
       const h = e.target.closest && e.target.closest(".pbst-hit"); if (!h) return; const i = +h.dataset.hi, ov = S.opt.ov[i], R = A().imgRect && A().imgRect(S.pv); if (!ov || !ov._b || !R) return; e.preventDefault(); e.stopPropagation(); S.dragging = true; try { h.setPointerCapture(e.pointerId); } catch (x) { }
+      S.selOv = i; try { const ae = document.activeElement; if (ae && ae !== document.body && ae.blur && !(ae.isContentEditable)) ae.blur(); } catch (x) { }
+      document.querySelectorAll(".pbst-hit").forEach(q => { const on = +q.dataset.hi === i; q.style.borderStyle = on ? "solid" : "dashed"; q.style.borderWidth = on ? "2.5px" : "1.5px"; });
       if (e.target.classList && e.target.classList.contains("pbst-rz")) {      /* تحجيم: نسبة بُعد المؤشر عن مركز العنصر إلى بُعده الأول؛ يُكتب في ov.s */
         const b0 = ov._b, ccx = R.left + (b0[0] + b0[2] / 2) * R.width, ccy = R.top + (b0[1] + b0[3] / 2) * R.height, d0 = Math.max(8, Math.hypot(e.clientX - ccx, e.clientY - ccy)), s0 = ov.s || 8, title0 = ov.st === "title"; let busy0 = false;
         const mv2 = ev => { const f = Math.max(.25, Math.min(5, Math.hypot(ev.clientX - ccx, ev.clientY - ccy) / d0)); ov.s = Math.round(Math.max(2, Math.min(40, s0 * f)) * 10) / 10; const k = ov.s / s0, nw = title0 ? b0[2] : b0[2] * k, nh = b0[3] * k;
@@ -278,12 +287,12 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
       }
       const a = e.target.closest("[data-st]"); if (!a) return; const act = a.dataset.st;
       if (act === "cut") run(async () => { await ensureCut(inf); }).then(() => { S.off = false; redraw(); });
-      else if (act === "reset") { S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; save(); A().renderInspectorNow(); }
+      else if (act === "reset") { S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; S.selOv = null; save(); A().renderInspectorNow(); }
       else if (act === "fxreset") { Object.assign(o, { bri: 0, con: 0, sat: 0, tmp: 0, refl: 0, outW: 0, rot: 0, flip: false }); save(); A().renderInspectorNow(); }
       else if (act === "addttl") { const bd = TITLES[+a.dataset.i]; if (!bd || o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: "title", pos: o.ov.some(v => v.st === "title" && v.pos === 2) ? 8 : 2, s: 5, d: { bg: bd[1], fg: bd[2], st: "title", font: "" } }); save(); redrawPanel(); redraw(); }
       else if (act === "applyall") { if (typeof AdminImgQA === "undefined" || !AdminImgQA.applyAll) { alert("الأداة غير متاحة من هذه الصفحة"); return; } AdminImgQA.applyAll({ slugs: allProds().map(p => p.slug), onStep: m => { const e = document.getElementById("pbst-allst"); if (e) e.textContent = m; } }); }
       else if (act === "addov") { const i = +a.dataset.i, bd = BADGES[i] || ["نص", "#16a34a", "#ffffff", "pill"]; if (o.ov.length >= 6) return; o.ov.push({ t: bd[0], bg: bd[1], fg: bd[2], st: bd[3], pos: [2, 0, 8, 6][o.ov.length % 4], s: bd[3] === "circle" ? 7 : 6, d: { bg: bd[1], fg: bd[2], st: bd[3], font: "" } }); save(); redrawPanel(); redraw(); }
-      else if (act === "ovdel") { o.ov.splice(+a.dataset.i, 1); save(); redrawPanel(); redraw(); }
+      else if (act === "ovdel") { o.ov.splice(+a.dataset.i, 1); S.selOv = null; save(); redrawPanel(); redraw(); }
       else if (act === "logodel") { S.logo = null; const f = $("pbst-logo"); if (f) f.value = ""; redraw(); }
       else if (act === "dl") run(async () => { await ensureSrc(inf); const c = await render(), fmt = o.fmt || "png", bl = await toBlob(c, MIME[fmt], fmt === "png" ? undefined : (o.q || 92) / 100); const u = URL.createObjectURL(bl), l = document.createElement("a"); l.href = u; l.download = "product-studio." + (fmt === "jpeg" ? "jpg" : fmt); document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 4000); say("✅ نُزّلت الصورة"); setTimeout(() => say(""), 2500); });
       else if (act === "apply") run(() => applyCore(inf));

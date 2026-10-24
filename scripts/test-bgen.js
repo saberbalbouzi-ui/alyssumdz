@@ -16,7 +16,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) { ok++; console.log("✓ " 
     await PBApp.toolSession([blob], "st", "t"); await new Promise(r => setTimeout(r, 800));
     const out = { ept: PBApp.E.ept, panel: !!document.getElementById("pbai-bgp") }; document.getElementById("pbai-bgp").value = "فوق طاولة خشبية"; const sc = document.getElementById("pbai-bgc"); out.cnt = !!sc; out.def0 = sc.value; sc.value = "4"; sc.dispatchEvent(new Event("input", { bubbles: true }));
     document.querySelector('#pbai [data-ai="bgen"]').click(); await new Promise(r => setTimeout(r, 2500));
-    out.calls = calls.length; out.prompt = calls[0] && /GENERATE A NEW BACKGROUND/.test(calls[0].prompt) && /فوق طاولة خشبية/.test(calls[0].prompt); out.var = new Set(calls.map(c => (c.prompt.match(/VARIATION ([A-D])/) || [])[1])).size >= 3;
+    out.calls = calls.length; out.prompt = calls[0] && /GENERATE A BACKGROUND SCENE ONLY/.test(calls[0].prompt) && /فوق طاولة خشبية/.test(calls[0].prompt); out.var = new Set(calls.map(c => (c.prompt.match(/VARIATION ([A-D])/) || [])[1])).size >= 3;
     const cards = document.querySelectorAll("#pbai-res [data-vc]"); out.cards = cards.length; out.regen = !!document.querySelector('#pbai-res [data-ai="bgen"]');
     const im = cards[0] && cards[0].querySelector("img"); out.img = !!im;
     if (im) { await new Promise(r => { if (im.complete) r(); else im.onload = r; }); const t = document.createElement("canvas"); t.width = im.naturalWidth; t.height = im.naturalHeight; const tg = t.getContext("2d"); tg.drawImage(im, 0, 0); const px = (x, y) => [...tg.getImageData(x, y, 1, 1).data]; const prod = px(100, 110), bg = px(150, 30); out.prod = prod; out.bg = bg; out.productKept = prod[0] > 180 && prod[1] < 90; out.bgBlue = bg[2] > 150 && bg[0] < 90; }
@@ -31,7 +31,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) { ok++; console.log("✓ " 
   const r2 = await p.evaluate(async () => {
     const calls = []; const c = document.createElement("canvas"); c.width = 200; c.height = 200; const g = c.getContext("2d"); g.fillStyle = "#d22"; g.fillRect(70, 60, 60, 100);
     const blob = await new Promise(r => c.toBlob(r, "image/png"));
-    ImgGen.edit = async o => { calls.push(1); const d = document.createElement("canvas"); d.width = o.W; d.height = o.H; const q = d.getContext("2d"); q.fillStyle = "#2255cc"; q.fillRect(0, 0, o.W, o.H); q.fillStyle = "#d22"; q.fillRect(70, 60, 60, 100); return { canvas: d }; };
+    ImgGen.edit = async o => { calls.push(1); const d = document.createElement("canvas"); d.width = o.W; d.height = o.H; const q = d.getContext("2d"); q.fillStyle = "#2255cc"; q.fillRect(0, 0, o.W, o.H); return { canvas: d }; };
     await PBApp.toolSession([blob], "st", "t"); await new Promise(r => setTimeout(r, 800));
     const sc = document.getElementById("pbai-bgc"), out = { def: sc && sc.value }; sc.value = "1"; sc.dispatchEvent(new Event("input", { bubbles: true }));
     document.querySelector('#pbai [data-ai="bgen"]').click(); await new Promise(r => setTimeout(r, 2000)); out.calls = calls.length; out.cards = document.querySelectorAll("#pbai-res [data-vc]").length;

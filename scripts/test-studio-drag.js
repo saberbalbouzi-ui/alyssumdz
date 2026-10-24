@@ -51,6 +51,10 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(rsg === 0, "زر إعادة منزلق السطوع يعيده للافتراضي", rsg);
   const fit = await p.evaluate(async () => { const q0 = document.querySelector('[data-stsub="out"]'); if (q0) q0.click(); await new Promise(z => setTimeout(z, 500)); const sz = document.getElementById("pbst-sz"); sz.value = "1080x1920"; sz.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 2500)); const st = document.getElementById("pbx-stage"); return { h: st.clientHeight, sh: st.scrollHeight }; });
   ok(fit.sh <= fit.h + 2, "ستوري/ريلز 9:16: الصورة كاملة في النافذة بلا شريط تمرير", fit);
+  /* حذف الملصق المحدَّد بالكيبورد */
+  const dk = await p.evaluate(async () => { const o = PBStudio.opts(); const n0 = o.ov.length, h = document.querySelectorAll(".pbst-hit")[0]; if (!h) return { none: 1 }; const e = h.getBoundingClientRect(); return { n0, x: e.left + e.width / 2, y: e.top + e.height / 2 }; });
+  if (!dk.none) { await p.mouse.move(dk.x, dk.y); await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(200); await p.keyboard.press("Delete"); await p.waitForTimeout(400);
+    const n1 = await p.evaluate(() => PBStudio.opts().ov.length); ok(n1 === dk.n0 - 1, "Delete يحذف الملصق/العنوان المحدَّد على الصورة", { n0: dk.n0, n1 }); }
   /* توسيع الشريط بالسحب */
   const rz = await p.evaluate(() => { const r = document.getElementById("pbx-rz"); if (!r) return null; const e = r.getBoundingClientRect(); return { x: e.left + e.width / 2, y: e.top + e.height / 2, vis: !!r.offsetParent }; });
   ok(rz && rz.vis, "مقبض توسيع الشريط ظاهر في نافذة الأداة", rz);

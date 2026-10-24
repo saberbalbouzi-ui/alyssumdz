@@ -291,6 +291,7 @@ const PBAI = (() => {
   }
   function bgnClean(i) {
     const B = S.bgn; if (B.clean[i]) return B.clean[i]; const c = mk(B.bgs[i].width, B.bgs[i].height); c.getContext("2d").drawImage(B.bgs[i], 0, 0);
+    if (B.empty) return (B.clean[i] = c);      // الخلفية مولَّدة فارغة مكان المنتج: لا حاجة لملء بصمته
     try { if (typeof AICapture !== "undefined" && AICapture.localFill) AICapture.localFill(c, [{ canvas: B.cut, x0: 0, y0: 0, w: c.width, h: c.height }]); } catch (x) { }
     return (B.clean[i] = c);
   }
@@ -314,8 +315,8 @@ const PBAI = (() => {
     });
   }
   const BG_IDEAS = ["فوق طاولة خشبية وخلفها مكتبة كتب ضبابية", "منصة رخامية بيضاء وضوء نافذة ناعم", "مطبخ عصري مشمس وعلى سطح العمل أعشاب خضراء", "حديقة طبيعية وأوراق خضراء وضوء الصباح", "استوديو داكن فاخر وإضاءة جانبية دافئة", "شاطئ رملي وسماء صافية عند الغروب", "رف حمّام نظيف بمناشف بيضاء وضوء هادئ", "طاولة مكتب أنيقة وكوب قهوة ونباتات صغيرة"];
-  const bgenPrompt = (text, v) => "GENERATE A NEW BACKGROUND for this product. The attached image shows a product cut-out placed on a neutral gray canvas. Create a photorealistic scene AROUND it: " + (String(text || "").trim() || "a tasteful professional studio-style setting that suits the product") + ". "
-    + "STRICT RULES: keep the product EXACTLY as it is and EXACTLY at the same position and size (do not move, resize, crop, re-light, redraw or restyle it — same shape, label, text and colors); build the scene behind and under it with matching perspective, light direction and natural contact shadow and reflections; no extra copies of the product, no people, no text, no logos, no watermark, no borders. "
+  const bgenPrompt = (text, v) => "GENERATE A BACKGROUND SCENE ONLY — NO PRODUCT. The attached image is a flat gray canvas; the solid darker-gray silhouette on it only marks an EMPTY SPOT where an object will be placed later by someone else. Paint a photorealistic scene: " + (String(text || "").trim() || "a tasteful professional studio-style setting") + ". "
+    + "STRICT RULES: the marked spot must contain NO object at all — fill it with the natural empty surface of the scene (table top, shelf, floor, ground or counter) continuing seamlessly with matching perspective and light, with no shadow shape, no outline and no gray left; do NOT draw the product, any bottle, jar, box or similar object, any copy of the silhouette, people, text, logos, watermark or borders. The surface at the spot must be large and flat enough for an object of that size to stand on, and the camera angle should look slightly down at it. "
     + (v ? "VARIATION " + "ABCD"[v % 4] + " of 4: compose the surroundings differently from the other variations (different props, depth and light mood) while following the description. " : "") + "Output the complete image at the same aspect ratio as the input.";
   async function run(kind, inf) {
     if (S.busy) return; readForm(); S.id = inf.node.id; S.busy = true;
@@ -355,12 +356,14 @@ const PBAI = (() => {
         const nb = Math.max(1, Math.min(4, +S.opt.bgc || 2)), e = ImgGen.estimate ? ImgGen.estimate() : null;
         if (e) { if (!(e.can ? e.can(nb) : e.left >= nb * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد"); }; if (!confirm("مولّد الخلفية (" + (nb === 1 ? "خيار واحد" : nb + " خيارات") + ")\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
         let cut = src; if (!(typeof PBRetouch !== "undefined" && PBRetouch._t.hasAlpha(src))) { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) throw new Error("أداة نزع الخلفية غير محمّلة"); say("⏳ نزع خلفية المنتج…"); cut = await PBBgRemove.autoCut(src); }
-        const guide = mk(cut.width, cut.height), gg = guide.getContext("2d"); gg.fillStyle = "#9a9a9a"; gg.fillRect(0, 0, guide.width, guide.height); gg.drawImage(cut, 0, 0);
+        const guide = mk(cut.width, cut.height), gg = guide.getContext("2d"); gg.fillStyle = "#c4c4c4"; gg.fillRect(0, 0, guide.width, guide.height);
+        const sil = mk(cut.width, cut.height), sg = sil.getContext("2d"), pad = Math.max(2, Math.round(cut.width * .006)); sg.filter = "blur(" + pad + "px)"; sg.drawImage(cut, 0, 0); sg.filter = "none"; sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#5a5a5a"; sg.fillRect(0, 0, sil.width, sil.height);
+        const sil2 = mk(cut.width, cut.height), s2 = sil2.getContext("2d"); s2.drawImage(sil, 0, 0); s2.globalAlpha = 1; for (const [dx, dy] of [[pad, 0], [-pad, 0], [0, pad], [0, -pad]]) s2.drawImage(sil, dx, dy); gg.drawImage(sil2, 0, 0);
         const blob = await blobOf(guide, "image/png"); say("⏳ تُولَّد الخلفيات…");
         const rs = await settleSome(Array.from({ length: nb }, (_, v) => ImgGen.edit({ blob, prompt: bgenPrompt(S.opt.bgp, v), W: cut.width, H: cut.height, title: "مولّد الخلفية", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُولَّد الخلفيات… (اكتمل " + d + " من " + n + ")"));
         const bgs = rs.filter(r => r.status === "fulfilled" && r.value && r.value.canvas).map(r => { const c = mk(cut.width, cut.height), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(r.value.canvas, 0, 0, c.width, c.height); return c; });
         if (!bgs.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
-        S.bgn = { cut, bgs, clean: [], bb: alphaBox(cut), t: { x: 0, y: 0, s: 100 } };
+        S.bgn = { cut, bgs, clean: [], empty: true, bb: alphaBox(cut), t: { x: 0, y: 0, s: 100 } };
         showRes(bgs.map((_, i) => bgnCompose(i)), "المنتج محفوظ كما هو فوق كل خلفية — اختر خياراً ثم طبّقه، أو حرّك المنتج وكبّره من الأسفل."); bgnCtl(); say("✅ جاهز — اختر خياراً");
       } else if (kind === "pshoot") {
         const hintTxt = (S.opt.hint || "").trim(), idx = S.ps.filter(i => SHOTS[i]).slice(0, 3), custom = !idx.length && hintTxt.length > 3; if (!idx.length && !custom) { say("اختر مشهداً أو اكتب الوصف الذي تشاء"); S.busy = false; return; } if (custom) idx.push(-1);
