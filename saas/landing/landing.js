@@ -15,7 +15,7 @@ function rep(){try{parent.postMessage({pfStudio:'h',h:document.documentElement.s
 window.addEventListener('load',rep);window.addEventListener('resize',rep);if(window.ResizeObserver)new ResizeObserver(rep).observe(document.body);setInterval(rep,1500)}
 var lb=document.createElement('div');lb.id='lbx';lb.innerHTML='<img alt=""><b></b>';document.body.appendChild(lb);
 lb.addEventListener('click',function(){lb.classList.remove('on')});document.addEventListener('keydown',function(e){if(e.key==='Escape')lb.classList.remove('on')});
-document.addEventListener('click',function(e){var im=e.target.closest&&e.target.closest('.gal img,.gsl img');if(!im)return;lb.querySelector('img').src=im.src;lb.querySelector('b').textContent=im.alt||'';lb.classList.add('on')});
+document.addEventListener('click',function(e){var im=e.target.closest&&e.target.closest('.gal img,.gsl img');if(!im)return;lb.querySelector('img').src=im.src;lb.querySelector('b').textContent='';lb.classList.add('on')});
 })();
 
 /* سلايدر المعرض */

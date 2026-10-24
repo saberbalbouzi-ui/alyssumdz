@@ -75,7 +75,7 @@ def gallery(slug, title="معرض الصور", sub="كل صور الأداة ف�
         if i in ex: continue
         n += 1
         w, h = Image.open(f).size; c = (cl[i] + (" — قبل وبعد" if slug == "remove-background" and i < 21 else "") if cl and i < len(cl) else caption(f.name))
-        figs.append(f'<figure><img src="{rel}/{f.name}" width="{w}" height="{h}" loading="lazy" alt="{E(c)}"><figcaption>{E(c)}</figcaption></figure>')
+        figs.append(f'<figure><img src="{rel}/{f.name}" width="{w}" height="{h}" loading="lazy" alt=""></figure>')      # بلا عنوان نصي تحت الصورة (طلب صاحب المتجر)
     # سلايدر أفقي: سهمان وعدّاد وتمرير بالسحب/اللمس وتشغيل تلقائي هادئ (landing.js)
     return f'<!--gal--><section class="band alt" id="gallery"><div class="w"><h2>{E(title)} <small class="cnt">({n} صورة)</small></h2><p class="sub">{E(sub)}</p><div class="gsl" data-gsl><button type="button" class="gsl-b prev" aria-label="السابق">\u2039</button><div class="gsl-t">{"".join(figs)}</div><button type="button" class="gsl-b next" aria-label="التالي">\u203a</button><div class="gsl-c" aria-live="polite"></div></div></div></section><!--/gal-->'
 
