@@ -51,10 +51,10 @@ const root = path.join(__dirname, "..");
     const c = document.createElement("canvas"); c.width = 120; c.height = 80; c.getContext("2d").fillRect(10, 10, 60, 40); const blob = await new Promise(r => c.toBlob(r, "image/png")), out = {};
     try { localStorage.removeItem("alyssum_toolopts"); } catch (e) { }
     await PBApp.toolSession([blob], "bg", "bg"); await new Promise(z => setTimeout(z, 300));
-    const ep = () => document.getElementById("pbx-ep"); out.bgOpts = !!(ep() && ep().querySelector('[data-topt="bg.mode"]') && ep().querySelector('[data-topt="bg.edit"]')); out.bgStart = !!(ep() && ep().querySelector('[data-bgr="open"]') && /ابدأ/.test(ep().querySelector('[data-bgr="open"]').textContent));
+    const ep = () => document.getElementById("pbx-ep"); out.bgOpts = !!(ep() && ep().querySelector('[data-bgm="transp"]') && ep().querySelector('[data-topt="bg.edit"]')); out.bgStart = !!(ep() && ep().querySelector('[data-bgr="open"]') && /ابدأ/.test(ep().querySelector('[data-bgr="open"]').textContent));
     out.noAuto = !document.getElementById("pbbg-chip") && !document.getElementById("pbx-scan");
-    const sel = ep().querySelector('[data-topt="bg.mode"]'); sel.value = "color"; sel.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
-    out.edgeOpts = !!(ep().querySelector('[data-topt="bg.shift"]') && ep().querySelector('[data-topt="bg.contrast"]') && ep().querySelector('[data-topt="bg.trim"]')); out.blurOpt = !!ep().querySelector('[data-topt="bg.mode"] option[value="blur"]'); out.colorShown = !!ep().querySelector('[data-topt="bg.color"]'); out.saved = ToolOpts.get("bg").mode === "color";
+    const sel = ep().querySelector('[data-topt="bg.color"]'); sel.value = "#336699"; sel.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
+    out.edgeOpts = !!(ep().querySelector('[data-topt="bg.shift"]') && ep().querySelector('[data-topt="bg.contrast"]') && ep().querySelector('[data-topt="bg.trim"]')); out.blurOpt = !!ep().querySelector('[data-bgm="blur"]') && !!ep().querySelector('[data-bgm="image"]'); out.colorShown = !!ep().querySelector('[data-topt="bg.color"]'); out.saved = ToolOpts.get("bg").mode === "color";
     await PBApp.toolSession([blob], "cap", "cap"); await new Promise(z => setTimeout(z, 300));
     const ck = ep().querySelector('[data-topt="cap.fill"]'); out.capOpt = !!ck; out.capNoAuto = !document.getElementById("pbs-modal"); out.capStart = !!ep().querySelector('[data-q="smart-magic"]');
     ck.checked = true; ck.dispatchEvent(new Event("change", { bubbles: true })); out.capSaved = ToolOpts.get("cap").fill === true;

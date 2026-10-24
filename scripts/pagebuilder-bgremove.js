@@ -462,7 +462,8 @@ const PBBgRemove = (function () {
     const m = OP.mode || "transp"; if (m === "transp" && bw === W && bh === H && c === cv) return cv;
     const o = document.createElement("canvas"); o.width = bw; o.height = bh; const g = o.getContext("2d");
     if (m === "blur" && orig) { g.filter = "blur(" + Math.max(6, Math.round(Math.max(bw, bh) / 60)) + "px)"; g.drawImage(orig, bx, by, bw, bh, -8, -8, bw + 16, bh + 16); g.filter = "none"; }
-    else if (m !== "transp") { g.fillStyle = m === "color" ? (OP.color || "#ffffff") : (BG_COL[m] || "#ffffff"); g.fillRect(0, 0, bw, bh); }
+    else if (m === "image" && window.ToolOpts && window.ToolOpts.img) { const im = window.ToolOpts.img, sc = Math.max(bw / im.width, bh / im.height), dw = im.width * sc, dh = im.height * sc; g.drawImage(im, (bw - dw) / 2, (bh - dh) / 2, dw, dh); }
+    else if (m !== "transp" && m !== "image") { g.fillStyle = m === "color" ? (OP.color || "#ffffff") : (BG_COL[m] || "#ffffff"); g.fillRect(0, 0, bw, bh); }
     g.drawImage(c, bx, by, bw, bh, 0, 0, bw, bh); return o;
   }
   async function live(inf) {
