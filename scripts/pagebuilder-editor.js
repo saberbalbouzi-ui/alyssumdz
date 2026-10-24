@@ -277,7 +277,7 @@ body{overflow-x:hidden;margin:0}`;
   <div class="pbx-rz" id="pbx-rz" title="اسحب لتوسيع الشريط الجانبي (نقر مزدوج = الافتراضي)"></div>
   <aside class="pbx-right" id="pbx-insp"></aside>
 </div>
-<div id="pbx-tbar" dir="rtl"><b id="pbx-tname"></b><button type="button" data-tb="reopen" title="إعادة فتح إعدادات الأداة">⚙ الإعدادات</button><button type="button" data-tb="editor" title="متابعة العمل على الصورة في مطوّر الصفحات">✏️ فتح في المحرر</button><select id="pbx-tfmt" title="صيغة التنزيل"><option value="png">PNG</option><option value="webp">WebP</option></select><button type="button" class="g" data-tb="dl" title="تنزيل الصورة النهائية">⬇ تحميل</button><button type="button" class="g" data-tb="lib" title="حفظ الصورة في مكتبة الموقع">💾 حفظ في المكتبة</button><button type="button" data-tb="x" title="إغلاق النافذة">✕ إغلاق</button></div>
+<div id="pbx-tbar" dir="rtl"><b id="pbx-tname"></b><button type="button" data-tb="adv" id="pbx-tadv" style="display:none" title="ألوان الخلفية وفرشاة الاستعادة والحواف">🎨 الألوان والاستعادة</button><button type="button" data-tb="editor" title="متابعة العمل على الصورة في مطوّر الصفحات">✏️ فتح في المحرر</button><button type="button" class="g" data-tb="dl" title="تنزيل الصورة النهائية">⬇ تحميل</button><button type="button" class="g" data-tb="lib" title="حفظ الصورة في مكتبة الموقع">💾 حفظ في المكتبة</button><button type="button" data-tb="x" title="إغلاق النافذة">✕ إغلاق</button></div>
 <div class="pbx-mbar2" id="pbx-mbar2">
   <b id="pbx-mmn">☑ 0</b><button onclick="PBApp.ma('copy')" title="نسخ المحدّد">⧉<small>نسخ</small></button><button onclick="PBApp.ma('dup')" title="تكرار المحدّد">➕<small>تكرار</small></button>
   <button onclick="PBApp.ma('group')" title="ربط العناصر ببعضها">🔗<small>ربط</small></button><button onclick="PBApp.ma('ungroup')" title="تفكيك الربط">⛓<small>تفكيك</small></button>
@@ -1455,18 +1455,32 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   }
   /* وضع نافذة الأداة: يُخفي أشرطة المحرر ويُبقي الصورة + إعدادات الأداة + شريط النتيجة؛ «فتح في المحرر» يعيد المحرر الكامل بنفس الصورة */
   function toolModeOn(tool, name, id, reopen) {
-    E.toolMode = { tool, name, id, reopen }; const app = $("pb-app"); app.classList.add("pbx-tool"); const n = $("pbx-tname"); if (n) n.textContent = name;
+    E.toolMode = { tool, name, id, reopen }; const app = $("pb-app"); app.classList.add("pbx-tool"); const n = $("pbx-tname"); if (n) n.textContent = name; const ad = $("pbx-tadv"); if (ad) ad.style.display = tool === "bg" ? "" : "none";
     setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60);
   }
   function toolModeOff() { E.toolMode = null; $("pb-app").classList.remove("pbx-tool"); try { renderLeft(); } catch (x) { } setTimeout(() => { try { fitStage(); positionOverlay(); if ($("pbx-ep")) epPlace($("pbx-ep")); } catch (x) { } }, 60); toast("✏️ المحرر الكامل مفتوح — الصورة في الصفحة جاهزة للتعديل"); }
+  /* اختيار صيغة التنزيل يظهر بعد الضغط على «تحميل» فقط */
+  function toolFmtPick(cb) {
+    const old = $("pbx-tfp"); if (old) old.remove(); const bar = $("pbx-tbar"); if (!bar) return cb("png");
+    const pop = document.createElement("div"); pop.id = "pbx-tfp"; pop.dir = "rtl";
+    pop.style.cssText = "position:fixed;z-index:10070;display:flex;gap:.4rem;padding:.5rem;background:rgba(9,24,18,.97);border:1px solid rgba(198,254,23,.45);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.45)";
+    pop.innerHTML = '<button type="button" data-f="png" class="g">PNG (شفاف)</button><button type="button" data-f="webp" class="g">WebP</button>';
+    pop.querySelectorAll("button").forEach(b => { b.style.cssText = "background:linear-gradient(180deg,rgba(198,254,23,.30),rgba(198,254,23,.12));color:#fff;border:1px solid rgba(198,254,23,.5);border-radius:10px;padding:.5rem .9rem;font:700 .85rem inherit;font-family:inherit;cursor:pointer"; b.onclick = () => { pop.remove(); cb(b.dataset.f); }; });
+    document.body.appendChild(pop); const r = (bar.querySelector('[data-tb="dl"]') || bar).getBoundingClientRect(); pop.style.left = Math.max(8, Math.min(innerWidth - pop.offsetWidth - 8, r.left)) + "px"; pop.style.top = Math.max(8, r.top - pop.offsetHeight - 8) + "px";
+    setTimeout(() => { const off = ev => { if (!pop.contains(ev.target)) { pop.remove(); document.removeEventListener("pointerdown", off, true); } }; document.addEventListener("pointerdown", off, true); }, 0);
+  }
   function toolAct(a) {
     const T = E.toolMode; if (!T) return;
-    if (a === "reopen") { if (T.reopen) T.reopen(); return; }
+    if (a === "adv") { if (typeof PBBgRemove !== "undefined" && PBBgRemove.edit) { try { if (!E.sel && T.id) select(T.id); } catch (x) { } PBBgRemove.edit(selInfo()); } return; }
     if (a === "editor") { toolModeOff(); return; }
     if (a === "x") { close(); return; }
     if (E.live) { toast("⏳ اضغط «تنفيذ» على نتيجة الأداة أولاً (أو «إلغاء») ثم احفظ"); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.exportAd) { toast("مولّد الصور غير متاح"); return; }
-    if (a === "dl") ImgGen.exportAd({ act: "download", fmt: ($("pbx-tfmt") || {}).value || "png" }); else if (a === "lib") ImgGen.exportAd({ act: "library" });
+    if (a === "dl") { toolFmtPick(f => ImgGen.exportAd({ act: "download", fmt: f })); return; }
+    if (a === "lib") {
+      const b = document.querySelector('#pbx-tbar [data-tb="lib"]'); if (b && b.dataset.busy) return; const t0 = b ? b.textContent : ""; if (b) { b.dataset.busy = "1"; b.textContent = "⏳ جارٍ الحفظ…"; }
+      Promise.resolve(ImgGen.exportAd({ act: "library" })).then(path => { if (!path) { if (b) { b.textContent = t0; delete b.dataset.busy; } return; } if (b) { b.textContent = "✅ تم الحفظ في المكتبة"; setTimeout(() => { b.textContent = t0; delete b.dataset.busy; }, 3000); } }, e => { if (b) { b.textContent = t0; delete b.dataset.busy; } toast("⚠️ تعذّر الحفظ: " + ((e && e.message) || e)); });
+    }
   }
   /* صفوف إضافية في قوائم «إنشاء/تعديل/أتمتة»: تنقّل لأدوات موجودة أو أدوات قيد التطوير */
   function goAdmin(tab) {
