@@ -2878,7 +2878,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     if (adM) { el.innerHTML = `<div class="pbx-stk"><div class="pbx-ih">${lbl}<button type="button" class="pbx-pimgb" data-pimg="1" title="تحميل صورة">${ico("image", 14)}<span>تحميل صورة</span></button></div></div>${inspGroups(all, inf)}`; return; }
     el.innerHTML = `<div class="pbx-stk"><div class="pbx-ih">${lbl}<button type="button" class="pbx-pimgb" data-pimg="1" title="تحميل صورة: يفتح مكان شريط الإعدادات مكتبة صور هذه الصفحة لرفع صور جديدة وحذفها وسحبها إلى الصفحة">${ico("image", 14)}<span>تحميل صورة</span></button></div>
 <div class="pbx-itabs">${[["c", "محتوى"], ["s", "تنسيق"], ["a", "متقدم"]].concat(hasFx(inf) ? [["f", "تأثيرات منسوخة (" + (inf.set.fxs.length + (inf.set.anim ? 1 : 0)) + ")"]] : []).map(([k, n]) => `<button data-itab="${k}" class="${E.tab === k ? "on" : ""}"${k === "f" ? ' style="flex:2.3;white-space:nowrap;font-size:.74rem"' : ""}>${n}</button>`).join("")}</div></div>
-<div id="pbx-pend" class="pbx-pend" style="display:none"><button type="button" class="ok" data-pend="ok">✓ تأكيد</button><button type="button" class="no" data-pend="no">↩ إلغاء</button></div>
+
 ${quickHtml(inf)}
 ${visRow(inf)}
 <div class="pbx-dv">${DEVS.map(d => `<button data-dev="${d}" class="${E.dev === d ? "on" : ""}" title="${DEVNAME[d]}">${DEVIC[d]}</button>`).join("")}</div>
