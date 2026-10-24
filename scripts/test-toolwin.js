@@ -97,6 +97,15 @@ const root = path.join(__dirname, "..");
     o.after = E.page.ad.w + "x" + E.page.ad.h; const s0 = E.page.sections[0].set; o.mh = JSON.stringify(s0.mh); return o;
   });
   t("بعد تغيير المقاس: اللوحة تتبع نسبة الصورة الجديدة (9:16) لا تبقى مربعة", fit.before === "200x200" && fit.after === "180x320", fit);
+  /* بعد «تنفيذ» تغيير المقاس في الاستوديو لا يبقى شريط تنفيذ/إلغاء ولا معاينة قديمة */
+  const ap = await p.evaluate(async () => {
+    window.confirm = () => true; const c = document.createElement("canvas"); c.width = 200; c.height = 200; const g = c.getContext("2d"); g.fillStyle = "#d22"; g.fillRect(40, 40, 120, 120); const blob = await new Promise(r => c.toBlob(r, "image/png"));
+    await PBApp.toolSession([blob], "st", "st"); await new Promise(z => setTimeout(z, 600)); const so = PBStudio.opts(); so.size = "1080x1920"; PBStudio.setTab("size"); PBApp.renderInspectorNow(); await new Promise(z => setTimeout(z, 1200));
+    const o = { had: !!document.getElementById("pbx-epf"), pend: PBStudio.pending() }; const inf = PBApp.find(PBApp.E.toolMode.id);
+    try { await PBStudio.apply({ node: inf.node || inf }); } catch (e) { o.err = String(e.message || e); } await new Promise(z => setTimeout(z, 1800));
+    o.keep = !!PBStudio._S.srcC; PBStudio.opts().bg = "custom"; PBStudio.opts().c1 = "#2a6"; PBStudio._S.off = false; PBStudio.redraw && PBStudio.redraw(); await new Promise(z => setTimeout(z, 1500)); o.bar2 = !!document.getElementById("pbx-epf"); o.srcOrig = PBStudio._S.srcC && PBStudio._S.srcC.width; PBStudio.cancel(); o.bar = false; o.pending = PBStudio.pending(); o.live = !!PBApp.E.live; return o;
+  });
+  t("بعد تنفيذ المقاس: لا شريط تنفيذ/إلغاء ولا معاينة معلّقة", !ap.bar && !ap.pending && !ap.live, ap);
   t("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
 })();

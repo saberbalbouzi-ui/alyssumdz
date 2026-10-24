@@ -261,7 +261,8 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
   async function applyCore(inf) {
     const id = inf.node.id; await ensureSrc(inf); say("⏳ جارِ تجهيز الصورة…"); const c = await render(), bl = await toBlob(c); say("⏳ جارِ رفع الصورة…");
     const path = await A().uploadBlob(bl, "studio-" + Date.now().toString(36), { max: 2600, q: .92 }), q = A().find(id); if (!q) throw new Error("لم يعد العنصر موجوداً");
-    S.dtok++; S.pv = ""; S.off = true; q.node.set.src = path; delete q.node.set.crop; q.node.set.hauto = true; A().E.nextLabel = "استوديو المنتج"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); say("✅ طُبِّقت على الصورة (Ctrl+Z للتراجع)"); S.src = path; S.cut = null; S.bb = null; S.bbSrc = null; S.srcC = null;
+    S.dtok++; S.pv = ""; S.off = true; S.id = id; S.src = path; clearTimeout(drawT);      // الأصل (S.srcC/S.cut) يبقى: أي تعديل لاحق يُركَّب من المنتج الأصلي لا من الصورة الناتجة hitsOff(); if (S.pvUrl) { const u = S.pvUrl; S.pvUrl = ""; setTimeout(() => { try { URL.revokeObjectURL(u); } catch (e) { } }, 2000); }
+    q.node.set.src = path; delete q.node.set.crop; q.node.set.hauto = true; A().E.nextLabel = "استوديو المنتج"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); S.off = true; S.pv = ""; try { A().epFloatNow(); } catch (e) { } say("✅ طُبِّقت على الصورة (Ctrl+Z للتراجع)");
   }
   async function applyExt(inf) { if (S.busy) return; S.busy = true; try { await applyCore(inf); } catch (e) { say("⚠️ " + (e && e.message || e)); console.error(e); } S.busy = false; }
   function mount(root, inf) {
@@ -314,5 +315,5 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
   }
   /* بداية جديدة: لا تبقى إعدادات الجلسة السابقة بعد إغلاق نافذة الأداة */
   const fresh = () => { try { cancel(); } catch (e) { } try { hitsOff(); } catch (e) { } S.opt = Object.assign({}, DEF, { ov: [] }); S.logo = null; S.selOv = null; S.cut = null; S.srcC = null; S.bb = null; S.src = ""; S.id = ""; S.pv = ""; S.pvUrl = ""; S.tab = "bg"; S.off = false; S.busy = false; S.msg = ""; try { localStorage.removeItem(LSK); } catch (e) { } };
-  return { fresh, logo: () => S.logo, TITLES, panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", hits, hitsOff, cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
+  return { fresh, redraw, logo: () => S.logo, TITLES, panel, mount, compose, bbox, hasAlpha, sizeOf, bgOf, BGS, SIZES, SCENES, BADGES, opts: () => S.opt, pending: () => S.pv || "", hits, hitsOff, cancel, apply: applyExt, tab: () => S.tab, setTab: t => { S.tab = t; }, _S: S };
 })();
