@@ -447,6 +447,24 @@ const PBBgRemove = (function () {
       q.node.set.src = path; A().E.nextLabel = "نزع الخلفية";      /* القصّ نسبي لنفس أبعاد الصورة فيبقى كما هو (حذفه كان يُظهر الصورة كاملة فيصغر المنتج داخل الإطار) */ LV.res = null; LV.path = ""; A().liveClear(false); A().commitAfter(LV.id); chip("✅ نُفِّذ نزع الخلفية"); }
     catch (e) { chip("⚠️ " + (e.message || e)); } LV.busy = false;
   }
+  /* خيارات النافذة قبل البدء: حواف (إزاحة/حدّة) ← قصّ الهوامش ← خلفية (لون أو تمويه الأصل) */
+  const BG_COL = { white: "#ffffff", black: "#000000", beige: "#f3e9dc", blue: "#dbe7ff", teal: "#14b8a6" };
+  function finishOpts(cv, orig, OP) {
+    const W = cv.width, H = cv.height; let c = cv;
+    const sh = +OP.shift || 0, ct = +OP.contrast || 0;
+    if ((sh || ct) && typeof BgEditor !== "undefined" && BgEditor._t && BgEditor._t.refine) {
+      const g = cv.getContext("2d", { willReadFrequently: true }), d = g.getImageData(0, 0, W, H), a = new Uint8Array(W * H); for (let i = 0; i < a.length; i++) a[i] = d.data[i * 4 + 3];
+      const b = BgEditor._t.refine(a, W, H, { shift: sh, feather: 0, contrast: ct, halo: 0 }); for (let i = 0; i < a.length; i++) d.data[i * 4 + 3] = b[i];
+      c = document.createElement("canvas"); c.width = W; c.height = H; c.getContext("2d").putImageData(d, 0, 0);
+    }
+    let bx = 0, by = 0, bw = W, bh = H;
+    if (OP.trim) { const d = c.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, H).data; let x0 = W, y0 = H, x1 = -1, y1 = -1; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } if (x1 >= x0 && y1 >= y0) { bx = x0; by = y0; bw = x1 - x0 + 1; bh = y1 - y0 + 1; } }
+    const m = OP.mode || "transp"; if (m === "transp" && bw === W && bh === H && c === cv) return cv;
+    const o = document.createElement("canvas"); o.width = bw; o.height = bh; const g = o.getContext("2d");
+    if (m === "blur" && orig) { g.filter = "blur(" + Math.max(6, Math.round(Math.max(bw, bh) / 60)) + "px)"; g.drawImage(orig, bx, by, bw, bh, -8, -8, bw + 16, bh + 16); g.filter = "none"; }
+    else if (m !== "transp") { g.fillStyle = m === "color" ? (OP.color || "#ffffff") : (BG_COL[m] || "#ffffff"); g.fillRect(0, 0, bw, bh); }
+    g.drawImage(c, bx, by, bw, bh, 0, 0, bw, bh); return o;
+  }
   async function live(inf) {
     if (!inf || inf.node.type !== "image" || !inf.node.set.src) { alert("حدّد صورة أولاً"); return; } if (LV.busy) return;
     const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
@@ -455,7 +473,7 @@ const PBBgRemove = (function () {
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
       const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { sam: true, onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); }
       const OP = window.ToolOpts ? window.ToolOpts.get("bg") : { mode: "transp" };      // خيارات نافذة الأداة قبل البدء
-      if (OP.mode === "white" || OP.mode === "color") { const cv2 = document.createElement("canvas"); cv2.width = r.canvas.width; cv2.height = r.canvas.height; const g2 = cv2.getContext("2d"); g2.fillStyle = OP.mode === "white" ? "#ffffff" : (OP.color || "#ffffff"); g2.fillRect(0, 0, cv2.width, cv2.height); g2.drawImage(r.canvas, 0, 0); r = Object.assign({}, r, { canvas: cv2 }); }
+      r = Object.assign({}, r, { canvas: finishOpts(r.canvas, LV.src, OP) });
       LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
       LV.busy = false; await lvApply(); if (OP.edit) { const q2 = A().find(id); if (q2) edit(q2.node ? q2 : inf); }      // كانفا: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
     } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + PRO.rep); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
@@ -469,5 +487,5 @@ const PBBgRemove = (function () {
       q.node.set.src = path; A().E.nextLabel = "نزع الخلفية (محرّر متقدّم)"; A().E.sel = id; A().renderCanvas(); A().commitAfter(id); chip("✅ طُبِّقت الصورة بقناعها"); } });
   }
   function load(src) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => { const c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext("2d", { willReadFrequently: true }).drawImage(im, 0, 0); res(c); }; im.onerror = () => rej(new Error("تعذّر تحميل الصورة")); im.src = A().localize(String(src)); }); }
-  return { open, live, edit, autoCut, proCut: apiCut, confidence, keepSubject, _t: { boxMask, uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
+  return { open, live, edit, autoCut, proCut: apiCut, confidence, keepSubject, _t: { finishOpts, boxMask, uniformBg, matteCore, llOf, setTemp: v => { TEMP = v; }, segment, matte, cleanMask, rgbOf, scaledCanvas, fitGMM, solve, guidedFast, boxMean, morph } };
 })();

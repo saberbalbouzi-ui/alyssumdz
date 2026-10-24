@@ -54,13 +54,13 @@ const root = path.join(__dirname, "..");
     const ep = () => document.getElementById("pbx-ep"); out.bgOpts = !!(ep() && ep().querySelector('[data-topt="bg.mode"]') && ep().querySelector('[data-topt="bg.edit"]')); out.bgStart = !!(ep() && ep().querySelector('[data-bgr="open"]') && /ابدأ/.test(ep().querySelector('[data-bgr="open"]').textContent));
     out.noAuto = !document.getElementById("pbbg-chip") && !document.getElementById("pbx-scan");
     const sel = ep().querySelector('[data-topt="bg.mode"]'); sel.value = "color"; sel.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
-    out.colorShown = !!ep().querySelector('[data-topt="bg.color"]'); out.saved = ToolOpts.get("bg").mode === "color";
+    out.edgeOpts = !!(ep().querySelector('[data-topt="bg.shift"]') && ep().querySelector('[data-topt="bg.contrast"]') && ep().querySelector('[data-topt="bg.trim"]')); out.blurOpt = !!ep().querySelector('[data-topt="bg.mode"] option[value="blur"]'); out.colorShown = !!ep().querySelector('[data-topt="bg.color"]'); out.saved = ToolOpts.get("bg").mode === "color";
     await PBApp.toolSession([blob], "cap", "cap"); await new Promise(z => setTimeout(z, 300));
     const ck = ep().querySelector('[data-topt="cap.fill"]'); out.capOpt = !!ck; out.capNoAuto = !document.getElementById("pbs-modal"); out.capStart = !!ep().querySelector('[data-q="smart-magic"]');
     ck.checked = true; ck.dispatchEvent(new Event("change", { bubbles: true })); out.capSaved = ToolOpts.get("cap").fill === true;
     return out;
   });
-  t("إعدادات نزع الخلفية والالتقاط تظهر قبل البدء ولا يبدأ شيء تلقائياً وتُحفظ", pre.bgOpts && pre.bgStart && pre.noAuto && pre.colorShown && pre.saved && pre.capOpt && pre.capNoAuto && pre.capStart && pre.capSaved, pre);
+  t("إعدادات نزع الخلفية والالتقاط تظهر قبل البدء ولا يبدأ شيء تلقائياً وتُحفظ", pre.bgOpts && pre.edgeOpts && pre.blurOpt && pre.bgStart && pre.noAuto && pre.colorShown && pre.saved && pre.capOpt && pre.capNoAuto && pre.capStart && pre.capSaved, pre);
   /* كل أدوات الصور تفتح لوحتها على الصورة (بلا مفتاح: لا شبكة) */
   const all = await p.evaluate(async () => {
     window.confirm = () => true; window.alert = () => { }; try { ImgGen.edit = async () => { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }; ImgGen.ready = () => ({ ok: false, nokey: true }); } catch (e) { }
