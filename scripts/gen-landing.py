@@ -62,7 +62,7 @@ def pack_images(slug):
     return d, sorted(f for f in d.iterdir() if f.suffix.lower() == ".webp" and not f.name.startswith("template"))
 # صور فيها كتابة مطبوعة (عربية أو فرنسية) أو شرائح مقتطعة ناقصة: تُستبعد من المعارض (فهارس الصور بعد الترتيب، تبدأ من 0)
 EXCL = {"image-generator": {0, 1, 9, 11, 13, 14, 16}, "virtual-model": {0, 1, 10, 12, 13}, "product-photography": {0, 1, 2, 14, 15, 16, 18},
-        "virtual-tryon": {0, 1, 12, 13, 14, 15, 17}, "logo-maker": {12}, "recolor-clothes": {0, 2, 4, 5, 7, 10}, "remove-background": {13, 20, 21, 22, 23}}
+        "virtual-tryon": {0, 1, 12, 13, 14, 15, 17}, "logo-maker": {12}, "recolor-clothes": {0, 2, 4, 5, 7, 10}, "remove-background": {3, 13, 20, 21, 22, 23}}
 def gallery(slug, title="معرض الصور", sub="كل صور الأداة في مكان واحد — اضغط أي صورة لتكبيرها. الصور توضيحية لأنواع النتائج ولا تمثل نتيجة مضمونة."):
     r = pack_images(slug)
     if not r: return ""
