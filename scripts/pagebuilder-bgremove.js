@@ -453,8 +453,11 @@ const PBBgRemove = (function () {
     try {
       if (LV.id !== id || LV.path !== src || !LV.src) { LV.src = await load(src); LV.id = id; LV.path = src; LV.res = null; }
       chip("⏳ جارٍ نزع الخلفية…", true); await tick();
-      const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { sam: true, onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); } LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
-      LV.busy = false; await lvApply();      // كانفا: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
+      const stopScan = A().scanOver ? A().scanOver(id) : null; let r; try { r = await autoCut(LV.src, { sam: true, onStep: m => chip(m, true) }); } finally { if (stopScan) stopScan(); }
+      const OP = window.ToolOpts ? window.ToolOpts.get("bg") : { mode: "transp" };      // خيارات نافذة الأداة قبل البدء
+      if (OP.mode === "white" || OP.mode === "color") { const cv2 = document.createElement("canvas"); cv2.width = r.canvas.width; cv2.height = r.canvas.height; const g2 = cv2.getContext("2d"); g2.fillStyle = OP.mode === "white" ? "#ffffff" : (OP.color || "#ffffff"); g2.fillRect(0, 0, cv2.width, cv2.height); g2.drawImage(r.canvas, 0, 0); r = Object.assign({}, r, { canvas: cv2 }); }
+      LV.res = r;      // نفس غشاء التقاط العناصر وخط مسحه أثناء المعالجة
+      LV.busy = false; await lvApply(); if (OP.edit) { const q2 = A().find(id); if (q2) edit(q2.node ? q2 : inf); }      // كانفا: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (التراجع بـCtrl+Z)
     } catch (e) { chip("⚠️ " + (e && e.message || e) + " (اضغط لنسخ تقرير الفشل)", true); const c = document.getElementById("pbbg-chip"); if (c) { c.style.cursor = "pointer"; c.onclick = async () => { try { await navigator.clipboard.writeText((e && e.message || "") + "\n" + PRO.rep); c.textContent = "✅ نُسخ تقرير الفشل — الصقه في المحادثة"; setTimeout(() => c.remove(), 2500); } catch (x) { c.remove(); } }; clearTimeout(c._t); c._t = setTimeout(() => c.remove(), 25000); } console.error(e); } LV.busy = false;      // رسالة الفشل تبقى 25ث ليُقرأ سببها
   }
   /* المحرّر المتقدّم (BgEditor): محرّك قابل للتبديل + فرشاة محو/استعادة + صقل حواف + خلفيات + تصدير PNG محقَّق؛ الصورة الأصلية لا تُعدَّل */

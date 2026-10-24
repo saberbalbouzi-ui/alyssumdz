@@ -157,7 +157,7 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const hit = (x, y) => { let best = -1, ba = 1e18; items.forEach(it => { const b = it.box; if (x >= b.x0 * k && x <= b.x1 * k && y >= b.y0 * k && y <= b.y1 * k && area(it) < ba) { ba = area(it); best = it.id; } }); return best; };
     sh.S.mode = "all"; { const sg = $("pbs-seg"); if (sg) sg.style.display = "none"; } $("pbs-hint").textContent = "تُقصّ كل العناصر بدقة من بكسلات صورتك الأصلية وتُعاد الخلفية مكانها.";
     let tintEl = null, lnEl = null; const tintOn = () => { scanCss(); if (!tintEl) { tintEl = document.createElement("div"); tintEl.className = "pbs-tint-x"; tintEl.style.cssText = "position:absolute;inset:0"; stage.appendChild(tintEl); lnEl = document.createElement("div"); lnEl.className = "pbs-scanline-x"; stage.appendChild(lnEl); } }, tintOff = () => { if (tintEl) { tintEl.remove(); tintEl = null; } if (lnEl) { lnEl.remove(); lnEl = null; } };
-    $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill"> إعادة رسم الخلفية بدقة أعلى (أبطأ)</label>';
+    $("pbs-extra").innerHTML = '<label style="display:flex;gap:.45rem;align-items:center;font-size:.82rem;font-weight:700"><input type="checkbox" id="pbs-fill"'+((window.ToolOpts&&window.ToolOpts.get("cap").fill)?" checked":"")+'> إعادة رسم الخلفية بدقة أعلى (أبطأ)</label>';
     const colors = ["#0d9488", "#7c3aed", "#ea580c", "#2563eb", "#db2777", "#16a34a", "#ca8a04", "#0891b2"];
     function paint() {
       const g = ov.getContext("2d"), mode = sh.S.mode; g.clearRect(0, 0, vw, vh); g.font = "700 12px sans-serif"; g.textBaseline = "top";
