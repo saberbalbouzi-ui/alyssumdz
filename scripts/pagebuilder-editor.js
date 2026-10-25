@@ -2216,7 +2216,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   /* القسم الحر الذي فرغ بعد الحذف يُحذف (يبقى فراغاً وإطاراً لا يُحدَّد)؛ لا تُمسّ أقسام الهيدر/الفوتر/الشريط */
   function dropEmptySecs(secs) {
     const P = E.page; if (!P || !secs || P.ad || P.sections.length < 2) return 0; let n = 0;
-    new Set(secs.filter(Boolean)).forEach(sc => { if (P.sections.length < 2 || !P.sections.includes(sc) || isHF(sc) || sc.set.tight || sc.set.kind !== "canvas") return;
+    new Set(secs.filter(Boolean)).forEach(sc => { if (P.sections.length < 2 || !P.sections.includes(sc) || isHF(sc) || sc.set.tight) return;
       const has = (sc.free || []).length + (sc.cols || []).reduce((a, c) => a + (c.widgets || []).length, 0); if (has) return; P.sections.splice(P.sections.indexOf(sc), 1); n++; });
     if (n) toast("🗑 حُذف " + (n > 1 ? n + " أقسام فارغة" : "القسم الفارغ") + " — Ctrl+Z للتراجع"); return n;
   }
