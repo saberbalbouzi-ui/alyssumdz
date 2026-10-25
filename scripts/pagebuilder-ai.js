@@ -289,7 +289,7 @@ const PBAI = (() => {
   function alphaBox(cv) {
     const w = 160, h = Math.max(8, Math.round(160 * cv.height / cv.width)), c = mk(w, h), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(cv, 0, 0, w, h); const d = g.getImageData(0, 0, w, h).data; let x0 = w, y0 = h, x1 = 0, y1 = 0;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3] > 24) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-    if (x1 <= x0) return { cx: cv.width / 2, cy: cv.height / 2 }; return { cx: (x0 + x1 + 1) / 2 / w * cv.width, cy: (y0 + y1 + 1) / 2 / h * cv.height };
+    if (x1 <= x0) return { cx: cv.width / 2, cy: cv.height / 2, w: cv.width * .3, y1: cv.height * .9 }; return { cx: (x0 + x1 + 1) / 2 / w * cv.width, cy: (y0 + y1 + 1) / 2 / h * cv.height, w: (x1 - x0 + 1) / w * cv.width, h: (y1 - y0 + 1) / h * cv.height, y1: (y1 + 1) / h * cv.height };
   }
   function bgnClean(i) {
     const B = S.bgn; if (B.clean[i]) return B.clean[i]; const c = mk(B.bgs[i].width, B.bgs[i].height); c.getContext("2d").drawImage(B.bgs[i], 0, 0);
@@ -297,11 +297,24 @@ const PBAI = (() => {
     try { if (typeof AICapture !== "undefined" && AICapture.localFill) AICapture.localFill(c, [{ canvas: B.cut, x0: 0, y0: 0, w: c.width, h: c.height }]); } catch (x) { }
     return (B.clean[i] = c);
   }
+  /* متوسط لون المشهد (لكل خيار) لمواءمة لون المنتج مع إضاءته */
+  function bgnTone(i) {
+    const B = S.bgn; B.tone = B.tone || []; if (B.tone[i]) return B.tone[i];
+    const c = mk(8, 8), g = c.getContext("2d", { willReadFrequently: true }); g.drawImage(B.bgs[i], 0, 0, 8, 8); const d = g.getImageData(0, 0, 8, 8).data; let r = 0, gg = 0, b = 0; for (let k = 0; k < 256; k += 4) { r += d[k]; gg += d[k + 1]; b += d[k + 2]; }
+    return (B.tone[i] = [r / 64 | 0, gg / 64 | 0, b / 64 | 0]);
+  }
+  /* يرسم المنتج الأصلي (بدون المساس بتصميمه إلا بمزج 6% من لون المشهد) مع ظل ملامسة عند قاعدته وظل منتشر خفيف؛ k = مقياس التكبير الحالي */
+  function bgnProd(g, i, k) {
+    const B = S.bgn, bb = B.bb, W = B.cut.width, H = B.cut.height, bw = Math.max(8, bb.w || W * .3), base = bb.y1 || H * .9, life = !!B.life;
+    g.save(); g.filter = "blur(" + Math.max(2, bw * .035 / k) + "px)"; g.fillStyle = life ? "rgba(0,0,0,.14)" : "rgba(0,0,0,.4)"; g.beginPath(); g.ellipse(bb.cx, base - bw * .012, bw * .47, bw * (life ? .045 : .07), 0, 0, Math.PI * 2); g.fill(); g.restore();
+    const t = mk(W, H), tg = t.getContext("2d"); tg.drawImage(B.cut, 0, 0); const [r, gr, b] = bgnTone(i); tg.globalCompositeOperation = "source-atop"; tg.fillStyle = "rgba(" + r + "," + gr + "," + b + ",.06)"; tg.fillRect(0, 0, W, H);
+    g.save(); g.shadowColor = "rgba(0,0,0,.22)"; g.shadowBlur = Math.max(6, W * .012) / k; g.shadowOffsetY = Math.max(3, W * .006) / k; g.drawImage(t, 0, 0); g.restore();
+  }
   function bgnCompose(i) {
     const B = S.bgn, t = B.t, W = B.cut.width, H = B.cut.height, c = mk(W, H), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; const moved = t.x || t.y || t.s !== 100;
     g.drawImage(moved ? bgnClean(i) : B.bgs[i], 0, 0);
-    if (!moved) { g.drawImage(B.cut, 0, 0); return c; }
-    const k = t.s / 100; g.save(); g.translate(B.bb.cx + t.x / 100 * W, B.bb.cy + t.y / 100 * H); g.scale(k, k); g.translate(-B.bb.cx, -B.bb.cy); g.shadowColor = "rgba(0,0,0,.28)"; g.shadowBlur = Math.max(6, W * .012) / k; g.shadowOffsetY = Math.max(3, W * .006) / k; g.drawImage(B.cut, 0, 0); g.restore(); return c;
+    if (!moved) { bgnProd(g, i, 1); return c; }
+    const k = t.s / 100; g.save(); g.translate(B.bb.cx + t.x / 100 * W, B.bb.cy + t.y / 100 * H); g.scale(k, k); g.translate(-B.bb.cx, -B.bb.cy); bgnProd(g, i, k); g.restore(); return c;
   }
   function bgnCtl() {
     const r = $("pbai-res"); if (!r || !S.bgn) return; const t = S.bgn.t;
@@ -317,8 +330,14 @@ const PBAI = (() => {
     });
   }
   const BG_IDEAS = ["فوق طاولة خشبية وخلفها مكتبة كتب ضبابية", "منصة رخامية بيضاء وضوء نافذة ناعم", "مطبخ عصري مشمس وعلى سطح العمل أعشاب خضراء", "حديقة طبيعية وأوراق خضراء وضوء الصباح", "استوديو داكن فاخر وإضاءة جانبية دافئة", "شاطئ رملي وسماء صافية عند الغروب", "رف حمّام نظيف بمناشف بيضاء وضوء هادئ", "طاولة مكتب أنيقة وكوب قهوة ونباتات صغيرة"];
-  const bgenPrompt = (text, v) => "GENERATE A BACKGROUND SCENE ONLY — NO PRODUCT. The attached image is a flat gray canvas; the solid darker-gray silhouette on it only marks an EMPTY SPOT where an object will be placed later by someone else. Paint a photorealistic scene: " + (String(text || "").trim() || "a tasteful professional studio-style setting") + ". "
-    + "STRICT RULES: the marked spot must contain NO object at all — fill it with the natural empty surface of the scene (table top, shelf, floor, ground or counter) continuing seamlessly with matching perspective and light, with no shadow shape, no outline and no gray left; do NOT draw the product, any bottle, jar, box or similar object, any copy of the silhouette, people, text, logos, watermark or borders. The surface at the spot must be large and flat enough for an object of that size to stand on, and the camera angle should look slightly down at it. "
+  /* مشهد فيه يد/شخص (يحمل المنتج أو يقدّمه أو يرتديه): تعليمات خاصة بالإمساك والمقياس */
+  const isLifeScene = t => /\b(hands?|held|holds?|holding|worn|wearing|wears?|carry(?:ing)?|fingers?|person|model|gift(?:ing)?)\b|يد|اليد|يدين|يحمل|حمل|ملبوس|محمول|امرأة|رجل|شخص|تسليم/i.test(String(t || ""));
+  const bgenPrompt = (text, v, life) => "GENERATE A BACKGROUND SCENE ONLY — NO PRODUCT. The attached image is a flat gray canvas; the solid darker-gray silhouette on it only marks an EMPTY SPOT where the real product will be placed later by someone else, at exactly that size and position. Paint a photorealistic scene: " + (String(text || "").trim().replace(/\bthe product\b/gi, "the object at the marked spot") || "a tasteful professional studio-style setting") + ". "
+    + "STRICT RULES: the marked spot must contain NO object at all — fill it with the natural empty surface of the scene (table top, shelf, floor, ground or counter" + (life ? ", or the palm and fingers of the hand that holds it" : "") + ") continuing seamlessly with matching perspective and light, with no shadow shape, no outline and no gray left; do NOT draw the product, any bottle, jar, box or similar object, any copy of the silhouette, " + (life ? "" : "people, ") + "text, logos, watermark or borders. "
+    + (life
+      ? "HAND INTERACTION: show ONLY the hand(s) and forearm(s) — long modest sleeves, NO face and no other bare skin — positioned so the object will look genuinely held once placed: the palm cradles it from behind or below, and the thumb and fingers wrap around its left and right edges with the fingertips just touching the silhouette edges (no gap, nothing floating beside it, never in front of the spot), the wrist at a natural angle and the forearm entering from the frame edge in correct perspective. SCALE: draw the hand at a realistic size against the silhouette (an adult hand is about 18 cm long and the silhouette is a real hand-sized product), choosing the camera distance so proportions look natural. "
+      : "The surface at the spot must be large and flat enough for an object of that size to stand on, and the camera angle should look slightly down at it. SCALE: treat the silhouette as a real packaged product about 10–12 cm tall and keep every prop (cups, books, plants, tools) at true everyday size relative to it, none of them dwarfing or being dwarfed by it. ")
+    + "LIGHT: one consistent light direction with soft natural shadows on the surfaces around the spot, so a contact shadow added later will look right. "
     + (v ? "VARIATION " + "ABCD"[v % 4] + " of 4: compose the surroundings differently from the other variations (different props, depth and light mood) while following the description. " : "") + "Output the complete image at the same aspect ratio as the input.";
   async function run(kind, inf) {
     if (S.busy) return; readForm(); S.id = inf.node.id; S.busy = true;
@@ -361,11 +380,11 @@ const PBAI = (() => {
         const guide = mk(cut.width, cut.height), gg = guide.getContext("2d"); gg.fillStyle = "#c4c4c4"; gg.fillRect(0, 0, guide.width, guide.height);
         const sil = mk(cut.width, cut.height), sg = sil.getContext("2d"), pad = Math.max(2, Math.round(cut.width * .006)); sg.filter = "blur(" + pad + "px)"; sg.drawImage(cut, 0, 0); sg.filter = "none"; sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#5a5a5a"; sg.fillRect(0, 0, sil.width, sil.height);
         const sil2 = mk(cut.width, cut.height), s2 = sil2.getContext("2d"); s2.drawImage(sil, 0, 0); s2.globalAlpha = 1; for (const [dx, dy] of [[pad, 0], [-pad, 0], [0, pad], [0, -pad]]) s2.drawImage(sil, dx, dy); gg.drawImage(sil2, 0, 0);
-        const blob = await blobOf(guide, "image/png"); say("⏳ تُولَّد الخلفيات…");
-        const rs = await crB("مشهد وخلفية", nb >= 4 ? 6 : nb * 2, () => settleSome(Array.from({ length: nb }, (_, v) => ImgGen.edit({ blob, prompt: bgenPrompt(S.opt.bgp, v), W: cut.width, H: cut.height, title: "مولّد الخلفية", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُولَّد الخلفيات… (اكتمل " + d + " من " + n + ")")));
+        const blob = await blobOf(guide, "image/png"), life = isLifeScene(S.opt.bgp); say("⏳ تُولَّد الخلفيات…");
+        const rs = await crB("مشهد وخلفية", nb >= 4 ? 6 : nb * 2, () => settleSome(Array.from({ length: nb }, (_, v) => ImgGen.edit({ blob, prompt: bgenPrompt(S.opt.bgp, v, life), W: cut.width, H: cut.height, title: "مولّد الخلفية", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُولَّد الخلفيات… (اكتمل " + d + " من " + n + ")")));
         const bgs = rs.filter(r => r.status === "fulfilled" && r.value && r.value.canvas).map(r => { const c = mk(cut.width, cut.height), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(r.value.canvas, 0, 0, c.width, c.height); return c; });
         if (!bgs.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
-        S.bgn = { cut, bgs, clean: [], empty: true, bb: alphaBox(cut), t: { x: 0, y: 0, s: 100 } };
+        S.bgn = { cut, bgs, clean: [], empty: true, life, bb: alphaBox(cut), t: { x: 0, y: 0, s: 100 } };
         showRes(bgs.map((_, i) => bgnCompose(i)), "المنتج محفوظ كما هو فوق كل خلفية — اختر خياراً ثم طبّقه، أو حرّك المنتج وكبّره من الأسفل."); bgnCtl(); say("✅ جاهز — اختر خياراً");
       } else if (kind === "pshoot") {
         const hintTxt = (S.opt.hint || "").trim(), idx = S.ps.filter(i => SHOTS[i]).slice(0, 3), custom = !idx.length && hintTxt.length > 3; if (!idx.length && !custom) { say("اختر مشهداً أو اكتب الوصف الذي تشاء"); S.busy = false; return; } if (custom) idx.push(-1);
