@@ -62,14 +62,39 @@ const Credits = (() => {
   function topup(n, label) { n = Math.round(+n * 100) / 100; if (!(n > 0)) return false; const s = load(); s.left = Math.round((s.left + n) * 100) / 100; s.total = Math.round((s.total + n) * 100) / 100; s.log.push({ t: Date.now(), k: label || "شحن", n }); save(s); return true; }
   function set(l, t) { const s = load(); s.left = Math.max(0, +l || 0); s.total = Math.max(s.left, t != null ? +t || 0 : s.total); s.log.push({ t: Date.now(), k: "تعديل يدوي", n: 0 }); save(s); }
   const label = id => (TOOLS[id] || {}).t || "";
-  const chip = (id, extra) => {
-    if (!on()) return ""; const s = load(), t = label(EP[id] ? EP[id] : id) || label(id); if (!t) return "";
-    const low = s.total && s.left / s.total <= .2;
-    return `<div class="cr-chip${low ? " low" : ""}" data-cr="chip"><span>التكلفة: <b>${esc(t)}</b></span><span class="cr-left">المتبقي <b>${fmt(s.left)}/${fmt(s.total)}</b></span>${extra || ""}</div>`;
+  /* الصف النصي «التكلفة/المتبقي» أُلغي: المتبقي في الشارة العلوية بعملة ذهبية، والتكلفة داخل زر التنفيذ نفسه (decorate) */
+  const COIN = '<svg class="cr-coin-i" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><defs><linearGradient id="crg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3a6"/><stop offset=".5" stop-color="#ffc928"/><stop offset="1" stop-color="#d98a00"/></linearGradient></defs><circle cx="12" cy="12" r="10.5" fill="url(#crg)" stroke="#a86a00" stroke-width="1.4"/><circle cx="12" cy="12" r="7.2" fill="none" stroke="#b97a00" stroke-width="1.2" opacity=".75"/><path d="M12 7.4l1.5 3.1 3.4.5-2.45 2.4.6 3.4L12 15.2l-3.05 1.6.6-3.4-2.45-2.4 3.4-.5z" fill="#fff6c7" stroke="#b97a00" stroke-width=".6" stroke-linejoin="round"/></svg>';
+  /* أعلى نافذة/لوحة الأداة: «الرصيد المتبقي» بعملة ذهبية فقط (التكلفة داخل الزر)؛ للأدوات المجانية بلا شيء */
+  const chip = id => {
+    if (!on()) return ""; const t = label(EP[id] ? EP[id] : id) || label(id); if (!t || /^مجاني$/.test(t)) return "";
+    const s = load(), low = s.total && s.left / s.total <= .2;
+    return `<div class="cr-rem${low ? " low" : ""}" data-cr="rem" title="المتبقي ${fmt(s.left)} من ${fmt(s.total)} رصيد"><span>الرصيد المتبقي</span><span class="cr-pill">${COIN}<b>${fmt(s.left)}</b></span></div>`;
   };
+  /* سعر زر التنفيذ: [محدِّد, دالة تُرجع الرصيد اللازم (0/null = بلا مبلغ)] */
+  const q = id => document.getElementById(id);
+  const BTN = [
+    ['[data-ai="bgen"]', b => /خلفيتي/.test(b.textContent) ? 0 : (() => { const n = Math.max(1, Math.min(4, +((q("pbai-bgc") || {}).value) || 2)); return n >= 4 ? 6 : n * 2; })()],
+    ['[data-ai="bgblend"]', () => 2], ['[data-ai="expand"]', () => 6], ['[data-ai="edit"]', () => 2], ['[data-ai="tryon"]', () => 2], ['[data-ai="fx"]', () => 2],
+    ['[data-ai="recolor"]', () => 2 * Math.max(1, (document.querySelectorAll('[data-rck]:checked').length + (((q("pbai-rcu") || {}).checked) ? 1 : 0)) || 1)], ['[data-ai="v360"]', () => 14],
+    ['[data-txb="go"]', () => 2], ['[data-lg="ai"]', () => 2], ['[data-bgr="open"]', () => 1], ['[data-q="smart-magic"]', () => 1], ['[data-upx="go"]', () => 2],
+    ['[data-pp="go"]', () => { const ab = q("pp-ab"); return ab && ab.checked ? 70 : 40; }]
+  ];
+  function decorate(root) {
+    if (!on() || typeof document === "undefined") return;
+    const sc = root && root.querySelectorAll ? root : document;
+    BTN.forEach(([sel, fn]) => sc.querySelectorAll(sel).forEach(b => {
+      let n = 0; try { n = +fn(b) || 0; } catch (e) { n = 0; }
+      let c = b.querySelector(":scope > .cr-coin");
+      if (!n) { if (c) c.remove(); return; }
+      if (!c) { c = document.createElement("span"); c.className = "cr-coin"; c.dir = "ltr"; b.appendChild(c); }
+      const h = COIN + "<b>" + fmt(n) + "</b>"; if (c.dataset.h !== h) { c.dataset.h = h; c.innerHTML = h; }
+      c.title = "الرصيد اللازم لهذه العملية";
+    }));
+  }
+  let dq = 0; const sched = () => { if (dq) return; dq = requestAnimationFrame(() => { dq = 0; decorate(); }); };
   /* ───────── الواجهة: شارة أعلى اللوحة + نافذة التفاصيل ───────── */
-  const CSS = `.cr-chip{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.45rem .75rem;margin:.4rem 0;border-radius:12px;font-size:.78rem;line-height:1.6;color:#fff;background:rgba(9,24,18,.92);border:1px solid rgba(198,254,23,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -2px 3px rgba(0,0,0,.18);backdrop-filter:blur(6px)}.cr-chip b{color:#c6fe17;font-weight:900}.cr-chip.low b.cr-lb,.cr-chip.low .cr-left b{color:#fdba74}
-#cr-top{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .95rem;border-radius:12px;font-weight:800;font-size:.85rem;cursor:pointer;font-family:inherit;color:#fff;background:rgba(198,254,23,.16);border:1px solid rgba(198,254,23,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.22),0 1px 5px rgba(0,0,0,.25);backdrop-filter:blur(6px);transition:transform .15s,background .15s}#cr-top:hover{background:rgba(198,254,23,.3);transform:translateY(-2px)}#cr-top.low{background:rgba(245,158,11,.3);border-color:rgba(245,158,11,.7)}#cr-top.out{background:rgba(239,68,68,.3);border-color:rgba(239,68,68,.7)}#cr-top b{direction:ltr;unicode-bidi:isolate}
+  const CSS = `.cr-rem{display:flex;align-items:center;justify-content:flex-end;gap:.5rem;margin:.3rem 0 .5rem;font-size:.8rem;font-weight:800;opacity:.95}.cr-rem .cr-pill{display:inline-flex;align-items:center;gap:.3rem;padding:.15rem .7rem .15rem .55rem;border-radius:999px;background:rgba(255,201,40,.16);border:1px solid rgba(255,201,40,.55);color:#ffe27a;font-weight:900;direction:ltr}.cr-rem.low .cr-pill{background:rgba(245,158,11,.25);color:#ffd27a}.cr-rem .cr-coin-i{flex:none}
+#cr-top{display:inline-flex;align-items:center;gap:.4rem;padding:.4rem .95rem;border-radius:999px;font-weight:900;font-size:.9rem;cursor:pointer;font-family:inherit}#cr-top b{direction:ltr;unicode-bidi:isolate}#cr-top .cr-coin-i{flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
 #cr-bg{position:fixed;inset:0;z-index:100020;background:rgba(0,0,0,.7);display:grid;place-items:center;padding:12px}#cr-box{width:min(560px,100%);max-height:92vh;overflow:auto;background:rgba(9,24,18,.99);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:1.1rem 1.2rem;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 #cr-box h3{margin:0 0 .6rem;font-size:1.1rem}#cr-box .cr-big{font-size:2rem;font-weight:900;color:#c6fe17;direction:ltr;text-align:center}#cr-box .cr-bar{height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:.4rem 0 .9rem}#cr-box .cr-bar i{display:block;height:100%;background:linear-gradient(90deg,#86efac,#c6fe17)}
 #cr-box .cr-packs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;margin:.5rem 0}#cr-box .cr-btn{border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:12px;padding:.6rem .8rem;font-weight:800;cursor:pointer;font-family:inherit;background:rgba(198,254,23,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 3px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:transform .15s,background .15s}#cr-box .cr-btn:hover{background:rgba(198,254,23,.36);transform:translateY(-2px)}#cr-box .cr-btn small{display:block;font-weight:600;opacity:.85}
@@ -77,8 +102,8 @@ const Credits = (() => {
 #cr-box::-webkit-scrollbar{width:16px}#cr-box::-webkit-scrollbar-track{background:rgba(255,160,40,.14);border-radius:9px}#cr-box::-webkit-scrollbar-thumb{background:rgba(255,150,30,.75);border-radius:9px;border:3px solid transparent;background-clip:padding-box}`;
   function paint() {
     if (typeof document === "undefined") return;
-    const b = document.getElementById("cr-top"); if (b) { const s = load(); b.className = s.left <= 0 ? "out" : (s.total && s.left / s.total <= .2 ? "low" : ""); b.innerHTML = `الرصيد <b>${fmt(s.left)}/${fmt(s.total)}</b>`; b.title = "الرصيد المتبقي من أدوات ستوديو ديزاين — اضغط للتفاصيل والشحن"; }
-    document.querySelectorAll('[data-cr="chip"] .cr-left').forEach(e => { const s = load(); e.innerHTML = `المتبقي <b>${fmt(s.left)}/${fmt(s.total)}</b>`; });
+    document.querySelectorAll('[data-cr="rem"]').forEach(e => { const s = load(); e.classList.toggle("low", !!(s.total && s.left / s.total <= .2)); const bb = e.querySelector(".cr-pill b"); if (bb) bb.textContent = fmt(s.left); });
+    const b = document.getElementById("cr-top"); if (b) { const s = load(); b.className = s.left <= 0 ? "out" : (s.total && s.left / s.total <= .2 ? "low" : ""); b.innerHTML = COIN + `<b>${fmt(s.left)}</b>`; b.title = "المتبقي " + fmt(s.left) + " من " + fmt(s.total) + " رصيد — اضغط للتفاصيل والشحن"; }
   }
   function mount() {
     if (!on() || document.getElementById("cr-top")) { paint(); return; }
@@ -113,7 +138,11 @@ ${hist ? `<details><summary>آخر العمليات</summary><table>${hist}</tab
     });
     document.addEventListener("keydown", onKey, true);
   }
-  function init() { mount(); window.addEventListener("storage", e => { if (e.key === KEY) paint(); }); setTimeout(mount, 1500); setTimeout(mount, 5000); }
+  function init() {
+    mount(); window.addEventListener("storage", e => { if (e.key === KEY) paint(); }); setTimeout(mount, 1500); setTimeout(mount, 5000);
+    try { new MutationObserver(sched).observe(document.body, { childList: true, subtree: true }); } catch (e) { }
+    document.addEventListener("change", sched, true); document.addEventListener("input", sched, true); sched();
+  }
   if (typeof document !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  return { on, take, bundle, cost, left, total, state, topup, set, chip, label, open, close, mount, paint, TOOLS, EP, PACKS, KIND };
+  return { on, take, bundle, cost, left, total, state, topup, set, chip, decorate, COIN, label, open, close, mount, paint, TOOLS, EP, PACKS, KIND };
 })();

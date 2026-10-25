@@ -113,16 +113,17 @@ const root = path.join(__dirname, "..");
   /* رصيد الأدوات: شارة أعلى اللوحة + شريحة التكلفة والمتبقي في نافذة الأداة ولوحتها، ورفض التنفيذ عند نفاد الرصيد */
   const cr = await p.evaluate(async () => {
     const o = {}; Credits.set(110, 110); o.badge = (document.getElementById("cr-top") || {}).textContent || "";
-    ToolWin.open("bg"); await new Promise(z => setTimeout(z, 300)); const tw = document.querySelector("#tw-box .cr-chip"); o.tw = tw ? tw.textContent.replace(/\s+/g, " ") : ""; ToolWin.close();
+    ToolWin.open("bg"); await new Promise(z => setTimeout(z, 300)); o.tw = !!document.querySelector("#tw-box .cr-rem .cr-coin-i"); o.twTxt = (document.getElementById("tw-box") || {}).textContent || ""; ToolWin.close();
     const mk = (w, h, c) => { const x = document.createElement("canvas"); x.width = w; x.height = h; const g = x.getContext("2d"); g.fillStyle = c; g.fillRect(0, 0, w, h); return x; };
     const blob = await new Promise(r => mk(200, 200, "#d22").toBlob(r, "image/png")); await PBApp.toolSession([blob], "up", "up"); await new Promise(z => setTimeout(z, 400));
-    const ep = document.querySelector("#pbx-ep .cr-chip"); o.ep = ep ? ep.textContent.replace(/\s+/g, " ") : "";
+    o.ep = !!document.querySelector("#pbx-ep .cr-rem .cr-coin-i"); o.epTxt = (document.getElementById("pbx-ep") || {}).textContent || ""; o.coinGo = (() => { const g = document.querySelector('#pbx-ep [data-upx="go"] .cr-coin'); return g ? g.textContent.trim() : ""; })();
+    o.badgeCoin = !!document.querySelector("#cr-top svg.cr-coin-i");
     Credits.set(0, 110); let code = ""; try { Credits.take("img"); } catch (e) { code = e.code; } o.noCredit = code; o.badgeOut = document.getElementById("cr-top").className;
     Credits.set(110, 110); return o;
   });
-  t("شارة الرصيد أعلى اللوحة 110/110", /110\/110/.test(cr.badge), cr.badge);
-  t("نافذة الأداة: التكلفة والمتبقي", /1 رصيد/.test(cr.tw) && /110\/110/.test(cr.tw), cr.tw);
-  t("لوحة الأداة (تحسين الجودة): التكلفة والمتبقي", /2 رصيد/.test(cr.ep) && /110\/110/.test(cr.ep), cr.ep);
+  t("شارة الرصيد أعلى اللوحة: المتبقي 110 مع عملة ذهبية", /^\s*110\s*$/.test(cr.badge) && cr.badgeCoin, cr);
+  t("نافذة الأداة: «الرصيد المتبقي» بعملة بلا نص التكلفة", cr.tw && !/التكلفة:/.test(cr.twTxt), cr.twTxt);
+  t("لوحة الأداة: المتبقي بعملة، والتكلفة داخل زر التنفيذ (تحسين الجودة = 2)", cr.ep && !/التكلفة:/.test(cr.epTxt) && cr.coinGo === "2", cr);
   t("نفاد الرصيد يوقف التنفيذ ويحمّر الشارة", cr.noCredit === "NOCREDIT" && /out/.test(cr.badgeOut), cr);
   t("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);

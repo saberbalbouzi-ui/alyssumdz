@@ -36,10 +36,8 @@ function make(cfg, ls) {
   // شحن
   C.set(10, 110); C.topup(110, "10$"); ok(C.left() === 120 && C.total() === 220, "الشحن يزيد المتبقي والإجمالي");
   // chip
-  ok(/120\/220/.test(C.chip("bg")) && /1 رصيد/.test(C.chip("bg")), "الشريحة تُظهر التكلفة والمتبقي");
-  ok(C.chip("pz") === "", "أداة مجانية بلا شريحة");
-  ok(/4 رصيد لكل ثانية/.test(C.chip("vgen")) && /40 رصيد للصفحة/.test(C.chip("pagepilot")), "نصوص الأسعار");
-  ok(C.chip("er") !== "" && C.chip("bgn") === C.chip("st"), "مفاتيح لوحة المحرر تُحوَّل لمعرّف الأداة");
+  ok(/cr-rem/.test(C.chip("bg")) && !/التكلفة/.test(C.chip("bg")) && /120/.test(C.chip("bg")) && C.chip("studio3d") === "" && C.chip("zz") === "", "سطر «الرصيد المتبقي» بعملة فقط للأدوات المدفوعة وبلا نص التكلفة");
+  ok(/4 رصيد لكل ثانية/.test(C.TOOLS.vgen.t) && /40 رصيد للصفحة/.test(C.TOOLS.pagepilot.t) && C.EP.bgn === "st" && C.EP.er === "erase", "نصوص الأسعار ومفاتيح لوحة المحرر");
   // تحذير الاقتراب من النفاد
   ({ C, toasts } = make({ HUB_SITE: "alyssum" })); C.set(21, 100); C.take("img"); ok(toasts.some(m => /على وشك النفاد/.test(m)), "تنبيه ≤20%");
   // موقع عميل: خامل بلا رصيد ولا خصم

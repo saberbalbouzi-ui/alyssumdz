@@ -138,3 +138,8 @@ svg.ch text{fill:rgba(234,246,239,.7);font-size:10px}
 @keyframes ti{from{transform:translateY(14px);opacity:0}}
 
 @media(max-width:900px){#app{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;overflow:auto}.brand{display:none}.spacer{display:none}.nv{width:auto}.inbox{grid-template-columns:1fr}.det{position:static;max-height:none}.tl{max-height:none}main{padding:1rem .8rem 3rem}}
+
+/* v1.89.534 — الأزرار الأساسية ليمونية (نفس لون لوحة المتجر)؛ .o برتقالي و.r أحمر و.g رمادي يبقون */
+.btn:not(.o):not(.r):not(.g){background:linear-gradient(180deg,#effe17,#e2fe17);color:#1f2123;border:0;font-weight:900;box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 0 #91ac10,0 8px 14px -4px rgba(0,0,0,.4)}
+.btn:not(.o):not(.r):not(.g):hover{background:linear-gradient(180deg,#f6ff4d,#e9ff2e);transform:translateY(-2px);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 6px 0 #91ac10,0 12px 18px -4px rgba(0,0,0,.45)}
+.btn:not(.o):not(.r):not(.g):active{transform:translateY(3px);box-shadow:0 1px 0 #91ac10}
