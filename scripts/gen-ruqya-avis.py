@@ -17,16 +17,16 @@ def COL(ws, w=100): return {"id": uid(), "set": {"w": dm(w, 100)}, "widgets": ws
 GREEN, NAVY, GOLD, MUTED = "#187a3b", "#123e72", "#f39a18", "#5d6f66"
 data = json.load(open(os.path.join(ROOT, "assets/data/ruqya-avis.json"), encoding="utf-8"))["items"]
 STAR = '<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path fill="#f5b301" d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3 6.1 20.6l1.3-6.6L2.5 9.4l6.6-.8z"/></svg>'
-def cap(it):
+def cap(it, i):
     st = int(it.get("stars") or 0); nm = html.escape((it.get("name") or "").strip()); wl = html.escape((it.get("wilaya") or "").strip())
-    if not (st or nm or wl): return ""
+    if not (st or nm or wl): return '<figcaption><span class="rv-who">تجربة رقم %d · الاسم محجوب للخصوصية</span></figcaption>' % i
     parts = []
     if st: parts.append('<span class="rv-st" role="img" aria-label="%d من 5">%s</span>' % (max(1, min(5, st)), STAR * max(1, min(5, st))))
     who = " — ".join(x for x in (nm, wl) if x)
     if who: parts.append('<span class="rv-who">%s</span>' % who)
     return '<figcaption>%s</figcaption>' % "".join(parts)
 figs = "".join('<figure class="rv-f"><a href="/assets/img/ruqya/avis/%s.webp" class="rv-a"><img src="/assets/img/ruqya/avis/%s.webp" width="%d" height="%d" loading="lazy" alt="تجربة حقيقية لأحد من جرب الباقة العلاجية عن بعد (%d)"></a>%s</figure>'
-               % (it["f"], it["f"], it["w"], it["h"], i, cap(it)) for i, it in enumerate(data, 1))
+               % (it["f"], it["f"], it["w"], it["h"], i, cap(it, i)) for i, it in enumerate(data, 1))
 JS = r'''<div class="rv-lb" id="rvLb" hidden><button type="button" class="rv-x" aria-label="إغلاق">&times;</button><button type="button" class="rv-n rv-p" aria-label="السابق">&rsaquo;</button><img alt=""><button type="button" class="rv-n rv-nx" aria-label="التالي">&lsaquo;</button></div>
 <script>(function(){var lb=document.getElementById("rvLb");if(!lb)return;var im=lb.querySelector("img"),as=[].slice.call(document.querySelectorAll(".rv-a")),k=0;
 function show(i){k=(i+as.length)%as.length;im.src=as[k].getAttribute("href");im.alt=as[k].querySelector("img").alt;lb.hidden=false;document.body.style.overflow="hidden"}
