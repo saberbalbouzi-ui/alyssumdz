@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """صفحة «تجارب حقيقية لبعض من جرب الباقة العلاجية عن بعد» (assets/pages/ruqya-avis.json): معرض لقطات حقيقية بعدسة مكبّرة.
 اللقطات في assets/img/ruqya/avis (منسوخة من assets/avis el baqa 4). الاسم والولاية والنجوم تُقرأ من assets/data/ruqya-avis.json
-ولا تُعرض إلا إن ملأها صاحب المتجر (لا نخترع هوية لأصحاب اللقطات). الطلب مرتبط بالمنتج pack4.
+ولا تُعرض إلا إن ملأها صاحب المتجر (لا نخترع هوية لأصحاب اللقطات). صفحة آراء فقط (بلا نموذج طلب) وفيها زر يقود إلى صفحة المنتج pack4.
 تشغيل: python3 scripts/gen-ruqya-avis.py ثم: python3 -m http.server 8765 & NODE_PATH=/opt/node-tools/node_modules node scripts/publish-lp.js ruqya-avis ثم python3 scripts/seo.py
 تنبيه: إعادة التشغيل تمسح تعديلات المطوّر على الصفحة."""
 import json, os, random, string, html
@@ -66,10 +66,10 @@ hero = [W("text", html="<p>شهادات حقيقية • الباقة العلا
 secs.append(SEC([COL(hero)], "rv-hero", pad=(70, 0, 20, 0), padm=(44, 0, 14, 0), cid="top"))
 secs.append(SEC([COL([W("html", code='<div class="rv-grid">%s</div>%s' % (figs, JS))])], "rv-gal", pad=(10, 0, 30, 0), padm=(6, 0, 20, 0), cid="avis"))
 secs.append(SEC([COL([W("html", code='<p class="rv-note">هذه تجارب شخصية قد تختلف نتائجها من شخص لآخر، ولا تُعدّ وعداً بنتيجة ولا بديلاً عن الاستشارة الطبية أو الرقية الشرعية الصحيحة. الأسماء والمعلومات الشخصية محجوبة حفاظاً على خصوصية أصحابها.</p>')])], "rv-nsec", pad=(0, 0, 36, 0), padm=(0, 0, 26, 0)))
-cta = [H("جرّب الباقة العلاجية الآن", 36, 26, "#ffffff", tag="h2"),
-       T("اختر العرض وأدخل بياناتك، وسنتواصل معك لتأكيد الطلب. الدفع عند الاستلام.", 16, 14, "#e3f1e8"),
-       W("orderorig", prod="pack4", auto=True)]
-secs.append(SEC([COL(cta)], "", pad=(30, 0, 70, 0), padm=(20, 0, 44, 0), cw=820, cid="order"))
+cta = [H("هل تريد معرفة المزيد عن الباقة؟", 32, 24, NAVY, tag="h2"),
+       T("هذه الصفحة مخصّصة لتجارب من جرّب الباقة فقط. لمعرفة محتواها وأسعارها يمكنك زيارة صفحة المنتج.", 16, 14),
+       W("button", text="صفحة الباقة الرباعية", kind="link", link="/p/pack4/", bgc=GREEN, color="#fff", hbg="#126b32", fs=dm(17, 15), fw="900", brad={"d": 999}, bpad={"d": [14, 34, 14, 34]}, al={"d": "center"})]
+secs.append(SEC([COL(cta)], "", pad=(10, 0, 70, 0), padm=(6, 0, 44, 0), cw=820, cid="more"))
 for si, s in enumerate(secs):
     for col in s["cols"]:
         for w in col["widgets"]:
@@ -78,6 +78,6 @@ for si, s in enumerate(secs):
 page = {"v": 1, "title": "تجارب حقيقية لبعض من جرب الباقة العلاجية عن بعد — أليسوم", "slug": "ruqya-avis",
         "desc": "لقطات حقيقية من رسائل أشخاص جرّبوا الباقة العلاجية للرقية الشرعية عن بعد وشاركوا تجاربهم.",
         "bg": "transparent", "ff": "Cairo", "header": True, "footer": True, "css": CSS, "sections": secs,
-        "seoTitle": "", "kw": "تجارب الباقة العلاجية, الرقية الشرعية, آراء الزبائن, الباقة الرباعية", "cover": "assets/img/ruqya/avis/r06.webp", "product": "pack4"}
+        "seoTitle": "", "kw": "تجارب الباقة العلاجية, الرقية الشرعية, آراء الزبائن, الباقة الرباعية", "cover": "assets/img/ruqya/avis/r06.webp"}
 json.dump(page, open(os.path.join(ROOT, "assets/pages/ruqya-avis.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 print("sections:", len(secs), "images:", len(data))
