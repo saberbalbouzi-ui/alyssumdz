@@ -311,13 +311,14 @@ const PBAI = (() => {
     g.save(); g.shadowColor = "rgba(0,0,0,.22)"; g.shadowBlur = Math.max(6, W * .012) / k; g.shadowOffsetY = Math.max(3, W * .006) / k; g.drawImage(t, 0, 0); g.restore();
   }
   function bgnCompose(i) {
-    const B = S.bgn, t = B.t, W = B.cut.width, H = B.cut.height, c = mk(W, H), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; const moved = t.x || t.y || t.s !== 100;
+    const B = S.bgn; if (B.held) return B.bgs[i];
+    const t = B.t, W = B.cut.width, H = B.cut.height, c = mk(W, H), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; const moved = t.x || t.y || t.s !== 100;
     g.drawImage(moved ? bgnClean(i) : B.bgs[i], 0, 0);
     if (!moved) { bgnProd(g, i, 1); return c; }
     const k = t.s / 100; g.save(); g.translate(B.bb.cx + t.x / 100 * W, B.bb.cy + t.y / 100 * H); g.scale(k, k); g.translate(-B.bb.cx, -B.bb.cy); bgnProd(g, i, k); g.restore(); return c;
   }
   function bgnCtl() {
-    const r = $("pbai-res"); if (!r || !S.bgn) return; const t = S.bgn.t;
+    const r = $("pbai-res"); if (!r || !S.bgn || S.bgn.held) return; const t = S.bgn.t;
     const row = (k, lab, min, max, v) => `<div class="pbst-rg" style="display:grid;grid-template-columns:78px 1fr 40px 26px;gap:.3rem;align-items:center;margin:.15rem 0"><span>${lab}</span><input type="range" data-bgn="${k}" min="${min}" max="${max}" step="1" value="${v}"><b data-bgnv="${k}" style="text-align:end;opacity:.8">${v}</b><button type="button" data-bgnrs="${k}" title="إعادة للافتراضي" aria-label="إعادة للافتراضي" style="width:26px;height:26px;padding:0;cursor:pointer;color:#fff;border-radius:8px;border:1px solid rgba(255,255,255,.28);background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.06));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -2px 3px rgba(0,0,0,.25)">↺</button></div>`;
     const box = document.createElement("div"); box.id = "pbai-bgnctl"; box.style.cssText = "margin:.4rem 0;padding:.45rem;border:1px solid rgba(128,128,128,.35);border-radius:10px"; box.innerHTML = `<div style="font-weight:800;margin-bottom:.2rem">تحريك المنتج وحجمه (يدوي)</div>${row("s", "حجم المنتج %", 40, 180, t.s)}${row("x", "أفقي %", -45, 45, t.x)}${row("y", "رأسي %", -45, 45, t.y)}`;
     const first = r.firstElementChild; r.insertBefore(box, first && first.nextSibling);
@@ -339,6 +340,13 @@ const PBAI = (() => {
       : "The surface at the spot must be large and flat enough for an object of that size to stand on, and the camera angle should look slightly down at it. SCALE: treat the silhouette as a real packaged product about 10–12 cm tall and keep every prop (cups, books, plants, tools) at true everyday size relative to it, none of them dwarfing or being dwarfed by it. ")
     + "LIGHT: one consistent light direction with soft natural shadows on the surfaces around the spot, so a contact shadow added later will look right. "
     + (v ? "VARIATION " + "ABCD"[v % 4] + " of 4: compose the surroundings differently from the other variations (different props, depth and light mood) while following the description. " : "") + "Output the complete image at the same aspect ratio as the input.";
+  /* مشهد يد/شخص: النموذج يرسم المنتج نفسه داخل اليد من صورته المرجعية (الأصابع تلفّ حوافه فعلاً) بدل لصقه فوق خلفية */
+  const heldPrompt = (text, v) => "PHOTOREALISTIC PRODUCT PHOTO. The attached image shows the exact product centered on a plain gray canvas. Create ONE new photograph of this SAME product, unchanged, being held: " + (String(text || "").trim().replace(/\bthe product\b/gi, "this exact product") || "held naturally in a hand") + ". "
+    + "PRODUCT FIDELITY: keep the product's exact shape, proportions, colors, label artwork, lid and every printed word and logo as in the reference — do not redesign, re-letter, duplicate or add anything on it. "
+    + "HOLDING: a real adult hand genuinely grips it — the palm supports it from below or behind, the thumb and fingers wrap around its sides with the fingertips pressing on the surface, some fingers passing IN FRONT of the product's edges so it is clearly held (never floating above the palm, never pasted, never beside the hand). Show only the hand and forearm in a long modest sleeve, no face and no other bare skin. "
+    + "SCALE: the product keeps its true everyday size relative to an adult hand (about 18 cm long). "
+    + "LIGHT: one consistent soft light direction; the product receives matching highlights and the hand casts a soft natural shadow on it; shallow depth of field with a softly blurred realistic background. "
+    + (v ? "VARIATION " + "ABCD"[v % 4] + " of 4: use a different camera angle, hand pose and background than the other variations. " : "") + "No text overlays, watermark, borders or collage. Output a single square image.";
   async function run(kind, inf) {
     if (S.busy) return; readForm(); S.id = inf.node.id; S.busy = true;
     try {
@@ -377,15 +385,27 @@ const PBAI = (() => {
         const nb = Math.max(1, Math.min(4, +S.opt.bgc || 2)), e = ImgGen.estimate ? ImgGen.estimate() : null;
         if (e) { if (!(e.can ? e.can(nb) : e.left >= nb * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد"); }; if (!confirm("مولّد الخلفية (" + (nb === 1 ? "خيار واحد" : nb + " خيارات") + ")\nسيستهلك من رصيد Alyssum API.\nمتابعة؟")) { say(""); S.busy = false; return; } }
         let cut = src; if (!(typeof PBRetouch !== "undefined" && PBRetouch._t.hasAlpha(src))) { if (typeof PBBgRemove === "undefined" || !PBBgRemove.autoCut) throw new Error("أداة نزع الخلفية غير محمّلة"); say("⏳ نزع خلفية المنتج…"); cut = await PBBgRemove.autoCut(src); }
+        const life = isLifeScene(S.opt.bgp);
+        if (life) {      // يد/شخص: ارسم المنتج داخل اليد من صورته المرجعية (مربّع 1:1 بمساحة حول المنتج)
+          const N = 1024, ref = mk(N, N), rg = ref.getContext("2d"); rg.fillStyle = "#c4c4c4"; rg.fillRect(0, 0, N, N); const bbx = alphaBox(cut); bbx.h = bbx.h || bbx.w; const k = Math.min(N * .55 / Math.max(8, bbx.w), N * .62 / Math.max(8, bbx.h)); rg.imageSmoothingQuality = "high";
+          rg.drawImage(cut, Math.max(0, bbx.cx - bbx.w / 2), Math.max(0, bbx.cy - bbx.h / 2), bbx.w, bbx.h, (N - bbx.w * k) / 2, (N - bbx.h * k) / 2, bbx.w * k, bbx.h * k);
+          const rblob = await blobOf(ref, "image/png"); say("⏳ يُرسم المنتج داخل اليد…");
+          const rs = await crB("مشهد وخلفية", nb >= 4 ? 6 : nb * 2, () => settleSome(Array.from({ length: nb }, (_, v) => ImgGen.edit({ blob: rblob, prompt: heldPrompt(S.opt.bgp, v), W: N, H: N, title: "مشهد في اليد", confirm: e ? false : undefined })), 60000, (d, n) => say("⏳ يُرسم المنتج داخل اليد… (اكتمل " + d + " من " + n + ")")));
+          const imgs = rs.filter(r => r.status === "fulfilled" && r.value && r.value.canvas).map(r => { const c = mk(N, N), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(r.value.canvas, 0, 0, N, N); return c; });
+          if (!imgs.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
+          S.bgn = { cut, bgs: imgs, clean: [], held: true, life, bb: alphaBox(cut), t: { x: 0, y: 0, s: 100 } };
+          showRes(imgs, "المنتج مرسوم داخل اليد بصورته المرجعية — راجع الكتابة على العبوة قبل التطبيق؛ إن لم يعجبك اضغط «توليد من جديد»."); say("✅ جاهز — اختر خياراً");
+        } else {
         const guide = mk(cut.width, cut.height), gg = guide.getContext("2d"); gg.fillStyle = "#c4c4c4"; gg.fillRect(0, 0, guide.width, guide.height);
         const sil = mk(cut.width, cut.height), sg = sil.getContext("2d"), pad = Math.max(2, Math.round(cut.width * .006)); sg.filter = "blur(" + pad + "px)"; sg.drawImage(cut, 0, 0); sg.filter = "none"; sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#5a5a5a"; sg.fillRect(0, 0, sil.width, sil.height);
         const sil2 = mk(cut.width, cut.height), s2 = sil2.getContext("2d"); s2.drawImage(sil, 0, 0); s2.globalAlpha = 1; for (const [dx, dy] of [[pad, 0], [-pad, 0], [0, pad], [0, -pad]]) s2.drawImage(sil, dx, dy); gg.drawImage(sil2, 0, 0);
-        const blob = await blobOf(guide, "image/png"), life = isLifeScene(S.opt.bgp); say("⏳ تُولَّد الخلفيات…");
+        const blob = await blobOf(guide, "image/png"); say("⏳ تُولَّد الخلفيات…");
         const rs = await crB("مشهد وخلفية", nb >= 4 ? 6 : nb * 2, () => settleSome(Array.from({ length: nb }, (_, v) => ImgGen.edit({ blob, prompt: bgenPrompt(S.opt.bgp, v, life), W: cut.width, H: cut.height, title: "مولّد الخلفية", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُولَّد الخلفيات… (اكتمل " + d + " من " + n + ")")));
         const bgs = rs.filter(r => r.status === "fulfilled" && r.value && r.value.canvas).map(r => { const c = mk(cut.width, cut.height), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(r.value.canvas, 0, 0, c.width, c.height); return c; });
         if (!bgs.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         S.bgn = { cut, bgs, clean: [], empty: true, life, bb: alphaBox(cut), t: { x: 0, y: 0, s: 100 } };
         showRes(bgs.map((_, i) => bgnCompose(i)), "المنتج محفوظ كما هو فوق كل خلفية — اختر خياراً ثم طبّقه، أو حرّك المنتج وكبّره من الأسفل."); bgnCtl(); say("✅ جاهز — اختر خياراً");
+        }
       } else if (kind === "pshoot") {
         const hintTxt = (S.opt.hint || "").trim(), idx = S.ps.filter(i => SHOTS[i]).slice(0, 3), custom = !idx.length && hintTxt.length > 3; if (!idx.length && !custom) { say("اختر مشهداً أو اكتب الوصف الذي تشاء"); S.busy = false; return; } if (custom) idx.push(-1);
         const e = ImgGen.estimate ? ImgGen.estimate() : null;
