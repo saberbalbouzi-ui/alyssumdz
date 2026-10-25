@@ -2052,6 +2052,13 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (c && c.w) ic = { x: c.x / 100 * W0, y: c.y / 100 * H0, w: c.w / 100 * W0, q };
       else { const k = Math.max(W0 / im.naturalWidth, H0 / im.naturalHeight), w = im.naturalWidth * k; ic = { x: (W0 - w) / 2, y: (H0 - w * q) / 2, w, q }; } } }
     if (inf.kind === "column" && hasW && !gridCell) { const sibs = inf.sec.cols, nbn = dir.includes("w") ? (sibs[inf.idx + 1] || sibs[inf.idx - 1]) : (sibs[inf.idx - 1] || sibs[inf.idx + 1]); if (nbn && eff(nbn.set, "w", dev) != null && eff(set, "w", dev) != null) { nb = nbn; pair = Number(eff(set, "w", dev)) + Number(eff(nbn.set, "w", dev)); } }
+    let deps = null; const fh0 = free ? (Number(eff(set, "fh", dev)) || Math.round(r0.height / uOf(inf.sec, cr))) : 0;      // نموذج الطلب: تكبير ارتفاعه (المقبض السفلي) يُزيح معه كل ما تحته في القسم نفسه
+    const fyf = w => Number(eff(w.set, "fy", dev)) || 0;
+    if (free && inf.node.type === "orderorig" && dir.includes("s")) { const bot = fyf(inf.node) + fh0; deps = (inf.sec.free || []).filter(w => w !== inf.node && fyf(w) >= bot - 2).map(w => ({ w, y0: fyf(w) })); }
+    const cards = deps ? (inf.sec.free || []).filter(w => w !== inf.node && w.type === "shape" && fyf(w) <= fyf(inf.node) + 4 && fyf(w) + (Number(eff(w.set, "fh", dev)) || 0) >= fyf(inf.node) + fh0 - 4).map(w => ({ w, h0: Number(eff(w.set, "fh", dev)) || 0 })) : [];      // خلفية البطاقة التي تحوي النموذج تتمدّد معه
+    const pushDeps = () => { if (!deps) return; const dl = (Number(eff(set, "fh", dev)) || 0) - fh0;
+      deps.forEach(q => { setR(q.w.set, "fy", dev, Math.max(0, Math.round(q.y0 + dl))); if (dev !== "d" && own(q.w.set, "fy", "d") === undefined) setR(q.w.set, "fy", "d", q.y0); });
+      cards.forEach(q => { setR(q.w.set, "fh", dev, Math.max(14, Math.round(q.h0 + dl))); if (dev !== "d" && own(q.w.set, "fh", "d") === undefined) setR(q.w.set, "fh", "d", q.h0); }); };
     const mv = (dx, dy, ev) => {
       let label = "", guides = [];
       if (free) {
@@ -2070,7 +2077,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
         if (!ic && hasW && hasH && !ev.shiftKey) { if (ws0 == null) ws0 = Number(eff(set, "wsc", dev)) || 100; setR(set, "wsc", dev, Math.max(20, Math.min(500, Math.round(ws0 * (R - L) / W0)))); if (dev !== "d" && own(set, "wsc", "d") === undefined) setR(set, "wsc", "d", ws0); }      // زوايا العنصر الحر: نسبة ثابتة + المحتوى يكبر معه (Shift = تحجيم حر)
         setR(set, "fx", dev, Math.round(L / cr.width * 1000) / 10); setR(set, "fwd", dev, Math.round((R - L) / cr.width * 1000) / 10); setR(set, "fy", dev, Math.round(T / uOf(inf.sec, cr))); setR(set, "fh", dev, Math.round((B - T) / uOf(inf.sec, cr)));
         if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(set, k, "d") === undefined) setR(set, k, "d", eff(set, k, dev)); });
-        label = Math.round((R - L)) + "×" + Math.round(B - T); growCanvas(inf.sec);
+        label = Math.round((R - L)) + "×" + Math.round(B - T); pushDeps(); growCanvas(inf.sec);
       } else if (inf.kind === "widget") {
         const al = eff(set, "al", dev);
         if (hasW && hasH) {      /* زوايا العنصر: تكبير تناسبي — العرض والمحتوى معاً */
