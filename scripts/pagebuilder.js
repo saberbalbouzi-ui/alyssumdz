@@ -1148,7 +1148,7 @@ const PB = (() => {
         else emit(css, cx, cs, [["w", v => `flex:0 0 ${num(v)}%;width:${num(v)}%;max-width:${num(v)}%;`]]);
         hideRules(css, cx, cs, edit); customCss(css, cx, cs);
         const ws = col.widgets.map(w => renderW(w, false)).join("");
-        return `<div class="pb-col x-${col.id}${cs.cls ? " " + esc(cs.cls) : ""}"${attrs(col, "column", cs)}><div class="pb-colin">${ws || (edit ? '<div class="pb-empty">＋ اسحب عنصراً إلى هنا</div>' : "")}</div></div>`;
+        return `<div class="pb-col x-${col.id}${cs.cls ? " " + esc(cs.cls) : ""}"${attrs(col, "column", cs)}><div class="pb-colin">${ws}</div></div>`;
       }).join("");
       const free = (sec.free || []).map(w => renderW(w, true)).join("");
       if (free && autoFlowFree(sec)) {                                                              // عناصر حرة داخل قسم عادي: تُرتَّب عمودياً تحت الأعمدة على الهاتف ما لم تُضبط قيم هاتف صريحة
@@ -1157,7 +1157,7 @@ const PB = (() => {
           const wd = Number(eff(w.set, "fwd", "d")) || 30, small = wd < 30 || ["button", "counter", "countdown", "spacer", "divider"].includes(w.type), wm = small ? Math.min(92, Math.max(60, wd * 2.4)) : 92;
           css.m.push(`.pb-w.x-${w.id}{position:relative;left:auto;top:auto;width:${Math.round(wm * 10) / 10}%;margin:12px auto;z-index:auto}`); });
       }
-      const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free || (edit ? '<div class="pb-empty" style="margin:40px auto;max-width:360px;pointer-events:none">اسحب العناصر إلى هذا القماش الحر وحرّكها وغيّر أحجامها بحرية</div>' : "")}</div>` : "";
+      const fz = (free || kind === "canvas") ? `<div class="pb-fz">${free}</div>` : "";
       const tag = ["section", "div", "header", "footer"].includes(s.tag) ? s.tag : "section";
       SC = false; return `<${tag} class="pb-sec k-${kind}${s.scaled ? " pb-scaled" : ""}${s.bgImg ? " pb-hasbg" : ""}${edit && s.off ? " pb-off" : ""} x-${sec.id}${s.cls ? " " + esc(s.cls) : ""}"${attrs(sec, "section", s)}>${s.ovl || num(s.bgDark) > 0 ? '<div class="pb-ov"></div>' : ""}<div class="pb-in">${cols}${fz}</div></${tag}>`;
     }).join("");

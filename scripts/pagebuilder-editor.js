@@ -21,7 +21,7 @@ const PBApp = (() => {
 .pb-edit .pb-w.pb-cap:hover{outline:none}
 .pb-edit .pb-w.pb-cap.pb-caph img{filter:drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 1px #4ade80) drop-shadow(0 0 7px rgba(74,222,128,.8)) !important;cursor:pointer}
 .pb-edit .pbx-dropcol{outline:3px dashed #9b59b6!important;outline-offset:-3px;background:rgba(155,89,182,.08)}
-.pb-empty{border:2px dashed #cdbfa0;border-radius:10px;padding:18px;text-align:center;color:#a1936f;font-size:.9rem;width:100%}
+.pb-edit .pb-colin:empty{min-height:56px}
 [contenteditable=true]{outline:none!important;cursor:text;min-width:20px}
 .pb-edit .k-canvas.pb-hasbg .pb-in{background-image:none!important}
 .pb-edit.pbx-nogrid .k-canvas .pb-in{background-image:none!important}
