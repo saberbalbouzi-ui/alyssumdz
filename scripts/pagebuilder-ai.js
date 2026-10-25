@@ -276,6 +276,8 @@ const PBAI = (() => {
   }
   /* مولّد الخلفية (Générateur d'arrière-plan): المنتج المقصوص يبقى بكسلاً بكسلاً والخلفية تُولَّد من وصفك في 4 خيارات */
   /* ينتظر نتائج عدّة طلبات: يعرض ما اكتمل بعد مهلة سماح من أول نجاح (لا يوقف الأداة طلبٌ بطيء) ويُعلِم بالتقدّم */
+  /* رصيد الأدوات: خيارات متعددة بسعر واحد (4 خيارات = 6)؛ يُسترد كاملاً إن فشلت كلها */
+  const crB = (label, n, fn) => (typeof Credits !== "undefined" && Credits.bundle) ? Credits.bundle(label, { n }, async () => { const rs = await fn(); if (Array.isArray(rs) && rs.length && rs.every(r => r.status === "rejected")) throw rs[0].reason; return rs; }) : fn();
   function settleSome(ps, grace, onTick) {
     return new Promise(res => {
       const out = new Array(ps.length); let done = 0, tm = null, fin = false;
@@ -338,7 +340,7 @@ const PBAI = (() => {
         const G = typeof ImgGen !== "undefined" ? ImgGen : null, e = G && G.estimate ? G.estimate() : null;
         if (e) { if (!(e.can ? e.can(4) : e.left >= 4 * e.cost)) { if (ImgGen.credit) ImgGen.credit.note(); throw new Error("رصيد Alyssum API لا يكفي لهذه العملية — جدّد الرصيد"); }; if (!confirm("توسيع الصورة (4 خيارات)\nسيستهلك من رصيد Alyssum API.\nالمقاس الناتج: " + p.W + "×" + p.H + "\nمتابعة؟")) { say(""); S.busy = false; return; } }
         const pad = padded(base, p), blob = await blobOf(pad, "image/png"); say("⏳ تُنشئ الأداة الامتداد…");
-        const rs = await settleSome([0, 1, 2, 3].map(v => ImgGen.edit({ blob, prompt: expandPrompt(o.hint.trim(), v), W: p.W, H: p.H, title: "توسيع الصورة", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُنشئ الأداة الامتداد… (اكتمل " + d + " من " + n + ")"));
+        const rs = await crB("توسيع الخلفية", 6, () => settleSome([0, 1, 2, 3].map(v => ImgGen.edit({ blob, prompt: expandPrompt(o.hint.trim(), v), W: p.W, H: p.H, title: "توسيع الصورة", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُنشئ الأداة الامتداد… (اكتمل " + d + " من " + n + ")")));
         const ok = rs.filter(r => r.status === "fulfilled" && r.value).map(r => restore(r.value.canvas, base, p));
         if (!ok.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         S.resP = p; S.frame = frame; showRes(ok, "الحجم الناتج " + p.W + "×" + p.H + " — الصورة الأصلية محفوظة كما هي. اختر خياراً ثم طبّقه."); say("✅ جاهز — راجع النتيجة ثم نفّذ");
@@ -360,7 +362,7 @@ const PBAI = (() => {
         const sil = mk(cut.width, cut.height), sg = sil.getContext("2d"), pad = Math.max(2, Math.round(cut.width * .006)); sg.filter = "blur(" + pad + "px)"; sg.drawImage(cut, 0, 0); sg.filter = "none"; sg.globalCompositeOperation = "source-in"; sg.fillStyle = "#5a5a5a"; sg.fillRect(0, 0, sil.width, sil.height);
         const sil2 = mk(cut.width, cut.height), s2 = sil2.getContext("2d"); s2.drawImage(sil, 0, 0); s2.globalAlpha = 1; for (const [dx, dy] of [[pad, 0], [-pad, 0], [0, pad], [0, -pad]]) s2.drawImage(sil, dx, dy); gg.drawImage(sil2, 0, 0);
         const blob = await blobOf(guide, "image/png"); say("⏳ تُولَّد الخلفيات…");
-        const rs = await settleSome(Array.from({ length: nb }, (_, v) => ImgGen.edit({ blob, prompt: bgenPrompt(S.opt.bgp, v), W: cut.width, H: cut.height, title: "مولّد الخلفية", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُولَّد الخلفيات… (اكتمل " + d + " من " + n + ")"));
+        const rs = await crB("مشهد وخلفية", nb >= 4 ? 6 : nb * 2, () => settleSome(Array.from({ length: nb }, (_, v) => ImgGen.edit({ blob, prompt: bgenPrompt(S.opt.bgp, v), W: cut.width, H: cut.height, title: "مولّد الخلفية", confirm: e ? false : undefined })), 40000, (d, n) => say("⏳ تُولَّد الخلفيات… (اكتمل " + d + " من " + n + ")")));
         const bgs = rs.filter(r => r.status === "fulfilled" && r.value && r.value.canvas).map(r => { const c = mk(cut.width, cut.height), g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(r.value.canvas, 0, 0, c.width, c.height); return c; });
         if (!bgs.length) { const bad = rs.find(r => r.status === "rejected"); if (bad) throw bad.reason; say(""); S.busy = false; return; }
         S.bgn = { cut, bgs, clean: [], empty: true, bb: alphaBox(cut), t: { x: 0, y: 0, s: 100 } };

@@ -37,6 +37,7 @@ const ToolWin = (() => {
     const ico = t.ic ? `<img src="assets/img/tools/ic/${esc(t.ic)}.webp" alt="">` : `<i>${esc((t.name || "?").charAt(0))}</i>`;
     const prods = (typeof Admin !== "undefined" && Admin.products || []).filter(p => p && p.cover);
     $("tw-box").innerHTML = `<div class="tw-h">${ico}<span><b>${esc(t.name)}</b><small>${esc(t.tag || "")}</small></span><button type="button" class="tw-x" data-tw="x" aria-label="إغلاق">✕</button></div>
+${typeof Credits !== "undefined" ? Credits.chip(S.id) : ""}
 <div class="tw-dz" id="tw-dz" tabindex="0">${n ? `<div class="tw-pv">${S.urls.map((u, i) => `<div><img src="${u}" alt=""><button type="button" data-tw="rm" data-i="${i}" aria-label="حذف">✕</button></div>`).join("")}</div>` : `<div><div style="font-size:2rem">⬆</div><b>اسحب الصورة هنا أو اضغط للاختيار</b><div style="opacity:.75;font-size:.85rem;margin-top:.3rem">${esc(MULTI[S.id] || NEED[S.id] || "يمكنك أيضاً لصق صورة بـ Ctrl+V")}</div></div>`}</div>
 <input id="tw-file" type="file" accept="image/*" ${multi() ? "multiple" : ""} hidden>
 <div class="tw-row">${prods.length ? `<select id="tw-prod"><option value="">أو اختر صورة منتج من متجرك…</option>${prods.map(p => `<option value="${esc(p.slug)}">${esc(p.title || p.slug)}</option>`).join("")}</select>` : ""}<button type="button" class="tw-b" data-tw="go" ${n && !S.busy ? "" : "disabled"}>${S.busy ? "⏳ جارٍ الفتح…" : "ابدأ التعديل"}</button></div>

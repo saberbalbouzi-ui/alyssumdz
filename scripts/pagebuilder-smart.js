@@ -147,10 +147,11 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     b.onclick = async () => { const t = AICapture.report() + (extra && extra() ? "\n" + extra() : ""); try { await navigator.clipboard.writeText(t); b.textContent = "✅ نُسخ — الصقه في المحادثة"; } catch (e) { prompt("انسخ التقرير:", t); } }; host.appendChild(b); }
   async function apiCapture(sh, cv, inf, w) {
     const $ = sh.$, W = cv.width, H = cv.height;
-    const stopScan = scanFx(sh, cv); let samP = AICapture.samPrep ? AICapture.samPrep(cv) : null; $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر…"; let items;
+    const stopScan = scanFx(sh, cv); let samP = AICapture.samPrep ? AICapture.samPrep(cv) : null; $("pbs-load").style.display = "flex"; $("pbs-load").textContent = "⏳ كشف العناصر…"; let items, crc = null;
+    try { crc = (typeof Credits !== "undefined" && Credits.take) ? Credits.take("cap", { n: 1, label: "التقاط العناصر" }) : null; } catch (e) { stopScan(); $("pbs-load").textContent = "⛔ " + e.message; return null; }
     try { items = await AICapture.detectAll(cv, { onStep: m => { if (!sh.S.closed) $("pbs-load").textContent = m; } }); }
-    catch (e) { stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : e && e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : String(e && e.message || e).slice(0, 160)); if (!(e && (e.code === "OFF" || e.code === "NOKEY"))) repBtn($("pbs-load")); return null; }
-    stopScan(); if (sh.S.closed) return null; $("pbs-load").style.display = "none";
+    catch (e) { if (crc) crc.refund(); stopScan(); if (sh.S.closed) return null; console.warn("AICapture", e); $("pbs-load").style.display = ""; $("pbs-load").textContent = "⚠️ " + (e && e.code === "OFF" ? "التوليد معطّل من الإعدادات" : e && e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : String(e && e.message || e).slice(0, 160)); if (!(e && (e.code === "OFF" || e.code === "NOKEY"))) repBtn($("pbs-load")); return null; }
+    stopScan(); if (!(items && items.length) && crc) crc.refund(); if (sh.S.closed) return null; $("pbs-load").style.display = "none";
     const stage = $("pbs-stage"), { vw, vh, k } = viewSize(sh, W, H), img = document.createElement("canvas"); img.width = vw; img.height = vh; img.getContext("2d").drawImage(cv, 0, 0, vw, vh); img.style.cssText = "display:block;background:#fff"; stage.appendChild(img);
     const ov = document.createElement("canvas"); ov.width = vw; ov.height = vh; ov.style.cssText = "position:absolute;left:0;top:0;cursor:pointer"; /* بلا مربعات حول العناصر: كل ما كُشف يُلتقط تلقائياً بمسحة واحدة */
     let failsAll = null; const area = it => (it.box.x1 - it.box.x0) * (it.box.y1 - it.box.y0); let sel = new Set(), hov = -1, busy = false;

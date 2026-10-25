@@ -17,10 +17,12 @@ const PagePilot = (() => {
     en: { benefits: "Why you'll love it", steps: "How to order", faq: "FAQ", offers: "Offers", order: "Order now", cod: "Cash on delivery", orderBtn: "Order now →", note: "Images are illustrative.", wa: "Order on WhatsApp" }
   };
   /* ───────────── الواجهة ───────────── */
+  /* رصيد الأدوات: الصفحة = 4 رصيد لكل قسم (10 أقسام = 40) ونسخة ب = 30؛ الأقسام الفاشلة تُستردّ */
+  const crBundle = (label, o, fn) => (typeof Credits !== "undefined" && Credits.bundle) ? Credits.bundle(label, o, fn) : fn();
   const S ={ resume: null, info: null, imgBlob: null, imgPath: "", imp: null };
   const BTN_CSS = "border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:12px;padding:.6rem 1rem;font-weight:800;cursor:pointer;font-family:inherit;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.18),0 4px 12px rgba(0,0,0,.25)";
   /* شحن الرصيد: 10 رصيد = 1$، صفحة كاملة 40 رصيداً (10 صور)، إعادة رسم صورة 2 رصيد */
-  const CR = { min: 50, max: 2000, step: 50, def: 400, usd: 0.1, page: 50, ab: 100, redo: 2 };
+  const CR = { min: 50, max: 2000, step: 50, def: 400, usd: 0.1, page: 40, ab: 70, redo: 2 };
   const FLD = "width:100%;padding:.5rem;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.2);font-family:inherit";
   const prods = () => { const a = typeof Admin !== "undefined" && Admin.products; return a && a.length ? a : (typeof PRODUCTS !== "undefined" && PRODUCTS) || []; };
   const race = (p, ms) => new Promise((res, rej) => { const t = setTimeout(() => rej(Object.assign(new Error("انتهت مهلة الطلب"), { code: "TIMEOUT" })), ms); p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); }); });
@@ -35,7 +37,7 @@ const PagePilot = (() => {
     const ps = prods(), bg = document.createElement("div"); bg.id = "pp-bg";
     bg.style.cssText = "position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(3px)";
     bg.innerHTML = `<div style="width:min(860px,100%);max-height:94vh;overflow:auto;background:rgba(9,24,18,.985);color:#fff;border:1px solid rgba(198,254,23,.3);border-radius:18px;padding:18px;direction:rtl;font-family:inherit">
-<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🚀 منشئ الصفحات</h3><button data-pp="x" style="${BTN_CSS};background:rgba(255,255,255,.1)">✕</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">🚀 منشئ الصفحات</h3><button data-pp="x" style="${BTN_CSS};background:rgba(255,255,255,.1)">✕</button></div>${typeof Credits !== "undefined" ? Credits.chip("pagepilot") : ""}
 <p style="margin:.3rem 0 .8rem;opacity:.85;line-height:1.8;font-size:.88rem">اختر منتجاً من متجرك أو الصق رابطه أو اكتب وصفه، فتبني الأداة صفحة هبوط جاهزة بأقسامها ونصوصها وصورها، وتُفتح في المطوّر لتعدّل عليها ما شئت.</p>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <label style="font-size:.8rem;grid-column:1/-1">① منتج من متجرك (اختياري)<select id="pp-prod" style="${FLD}"><option value="">— بلا (رابط أو وصف يدوي) —</option>${ps.map(p => `<option value="${esc(p.slug)}">${esc(p.title)}</option>`).join("")}</select></label>
@@ -119,7 +121,7 @@ const PagePilot = (() => {
         if (!confirm("سيرسم الأداة " + (nTodo + (abOn ? 10 : 0)) + " صورة مربّعة" + (abOn ? " (10 للنسخة أ و10 لنسخة ب المنافسة بهوية بصرية مختلفة)" : " للصفحة (صورة لكل قسم، بلا نصوص)") + " ويستهلك من رصيد Alyssum API" + ($("pp-gate").checked ? " — وفحص الجودة قد يعيد رسم بعضها" : "") + ". المتابعة؟")) throw new Error("أُلغي التوليد");
         const thumbs = []; const prog = (i, R) => { thumbs.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ ظهر القسم " + (thumbs.length) + " من " + (RS ? RS.plan.sections.length : 10) + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbs.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
         say("⏳ ١/٣ تحليل المنتج وتخطيط الأقسام…");
-        let out; try { out = await PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, resume: RS }, { section: prog }); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
+        let out; try { out = await crBundle("منشئ الصفحات", { n: nTodo * 4, refundOf: e => (e && e.failed && e.failed.length ? e.failed.length * 4 : null) }, () => PagePilotHybrid.run({ info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, count: cnt, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience, color: $("pp-cc").dataset.on ? $("pp-cc").value : pageColor, tone: $("pp-tone").value, resume: RS }, { section: prog })); } catch (e) { S.resume = e && e.partial ? { sig, p: e.partial } : null; throw e; } S.resume = null;
         say("⏳ ٢/٣ رفع الصور وتجميع الصفحة…");
         const asm = await PagePilotHybrid.assemble(out, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: out.an.name || g.info.title, ticker: $("pp-ticker").checked }, upload);
         /* نسخة ب (A/B): صفحة منافسة كاملة بصورها الخاصة (هوية بصرية ومشاهد وزوايا ونصوص مختلفة) — تعيد استعمال تحليل المنتج فقط */
@@ -128,7 +130,7 @@ const PagePilot = (() => {
           try {
             say("⏳ ٣/٣ رسم نسخة ب المنافسة…");
             const thumbsB = []; const progB = (i, R) => { thumbsB.push(R.bgCanvas.toDataURL("image/jpeg", .5)); say("⏳ نسخة ب: ظهر القسم " + thumbsB.length + " من 10" + `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px">${thumbsB.map(u => `<img src="${u}" style="width:52px;height:52px;object-fit:cover;border-radius:6px">`).join("")}</div>`); };
-            const outB = await PagePilotHybrid.runB(out, { info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience }, { section: progB });
+            const outB = await crBundle("نسخة ب (A/B)", { n: 30 }, () => PagePilotHybrid.runB(out, { info: g.info, blob: heroBlob, refs, refNames, theme: th0, lang: o.lang, dialect: $("pp-dia").value, gate: $("pp-gate").checked, chain: !$("pp-chain") || $("pp-chain").checked, noFaces: true, people: $("pp-people").checked, audience: o.audience }, { section: progB }));
             const asmB = await PagePilotHybrid.assemble(outB, { title: g.info.title, product: g.info.product, lang: o.lang, wa: ctx.wa, productAlt: outB.an.name || g.info.title, ticker: $("pp-ticker").checked }, (b, tag) => upload(b, "B" + tag));
             abPage = asmB.page; abNote = outB.note.slice(0, 2);
           } catch (er) { abNote = ["تعذّرت نسخة ب (" + String(er && er.message || er).slice(0, 140) + ") — الصفحة أ جاهزة، ويمكنك نشرها بدون A/B"]; }

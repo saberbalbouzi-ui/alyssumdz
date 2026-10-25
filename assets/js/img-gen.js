@@ -317,6 +317,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const models = cfg.model(), est = fal ? cfg.falPrice() : models === "auto" ? PRICE[PREF[0]] : priceOf(models), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { msg.textContent = "⛔ " + lowMsg; credit.note(); return; }
     if (!confirm(useMsg("توليد صورة واحدة", "المقاس: " + W + "×" + H + " — " + (S.mode === "product" ? "صورة منتج" : "صورة إشهارية")))) return;
+    let crc = null; try { crc = crTake("img"); } catch (e) { msg.textContent = "⛔ " + e.message; return; }
     S.busy = true; $("ig-go").disabled = true; if ($("ig-go2")) $("ig-go2").disabled = true; msg.textContent = "⏳ جارِ التوليد (قد يستغرق 10–40 ثانية)…";
     try {
       if (bgMode === "transp") bgColor = await pickKey(S.srcBlob);
@@ -333,7 +334,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
       LS.set("alyssum_ig_spent", String(cfg.spent() + (out.cost || priceOf(out.model)))); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
       showRes(cv, W, H); msg.textContent = "✅ تمّ بنموذج " + out.model + " — " + W + "×" + H + "px" + (bgMode !== "scene" ? " · PNG" : "") + note; const cb = document.querySelector(".ig-cost"); if (cb) cb.outerHTML = costBar(); paintEst();
       if (after === "editor") { S.busy = false; await ((S.mode === "ad" || (tmode === "builder" && txt)) ? openAd() : toEditor("current")); }
-    } catch (e) { msg.textContent = "❌ " + e.message; } finally { S.busy = false; ["ig-go", "ig-go2"].forEach(i => { const g = $(i); if (g) g.disabled = false; }); }
+    } catch (e) { if (crc) crc.refund(); msg.textContent = "❌ " + e.message; } finally { S.busy = false; ["ig-go", "ig-go2"].forEach(i => { const g = $(i); if (g) g.disabled = false; }); }
   }
   function showRes(cv, W, H) {
     const r = $("ig-res"); if (!r) return; const u = cv.toDataURL((S.meta || {}).bgMode && S.meta.bgMode !== "scene" ? "image/png" : "image/webp", .92);
@@ -345,7 +346,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
      فهذه الدالة تفعّل العلامة وتُرجع true إن كان الربط بالخادم متاحاً، وإلا false فتظهر رسالة «غير مفعّلة» بدل أي نافذة إدخال. مفتاح الفيديو/النماذج ثلاثية الأبعاد (خدمة مستقلة) لا وسيط له بعد. */
   function askKey(kind) { return Promise.resolve(kind !== "f" && typeof AiProxy !== "undefined" && !!AiProxy.mark()); }
   /* توليد صورة واحدة دون واجهة المولّد (يستعمله تبويب السوشيال): o = {blob مرجع, name, desc, goal, W, H, label} ← {blob, model, cost} أو null إن ألغى المستخدم */
-  async function quick(o) {
+  async function quick0(o) {
     const fal = cfg.provider() === "fal"; let key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
     if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
     if (!key && await askKey(fal ? "f" : "g")) key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
@@ -370,7 +371,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
      المقاس الناتج W×H (قصّ cover)؛ يرمي بالرمز OFF/NOKEY كما quick. */
   /* تقدير تكلفة طلب واحد والمتبقي من الحدّ (لأدوات تُرسل أكثر من طلب بموافقة واحدة) */
   function estimate() { const fal = cfg.provider() === "fal"; return { cost: fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left: cfg.budget() ? cfg.budget() - cfg.spent() : Infinity, fmt: () => "", can: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * unitCost() }; }
-  async function edit(o) {
+  async function edit0(o) {
     const fal = cfg.provider() === "fal"; let key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
     if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
     if (!key && await askKey(fal ? "f" : "g")) key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
@@ -399,7 +400,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (urls.length === 1) body.image_url = urls[0]; else if (urls.length > 1) { body.image_url = urls[0]; body.image_urls = urls; }
     return body;
   }
-  async function video(o) {
+  async function video0(o) {
     let st = videoReady();
     if (st.off) { const e = new Error("OFF"); e.code = "OFF"; throw e; }
     if (st.nokey && await askKey("f")) st = videoReady();
@@ -441,7 +442,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const seen = []; (function walk(v) { if (!v || seen.length > 40) return; if (typeof v === "string") { if (/^https?:\/\/.+\.(glb|gltf)(\?|$)/i.test(v)) seen.push(v); return; } if (typeof v === "object") for (const k in v) walk(v[k]); })(j);
     const o = (j.model_mesh || j.model_glb || j.glb || j.mesh || (j.data && (j.data.model_mesh || j.data.glb)) || {}); return (o && o.url) || seen[0] || "";
   }
-  async function model3d(o) {
+  async function model3d0(o) {
     let st = model3dReady();
     if (st.off) { const e = new Error("OFF"); e.code = "OFF"; throw e; }
     if (st.nokey && await askKey("f")) st = model3dReady();
@@ -478,6 +479,10 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   /* نص/رؤية (Alyssum API): تعليمات نصية + صور اختيارية ← نص (أو JSON مُحلَّل عند o.json). يُحتسب في الرصيد بوحدة صغيرة وتسري عليه تنبيهات الرصيد. o = {prompt, blobs:[], json:boolean} */
   const TEXT_UNIT = 0.003;
   /* نماذج النص المتاحة لهذا المفتاح: آخر نموذج نجح ثم الأحدث من قائمة الحساب (flash قبل lite) ثم احتياطي؛ الأسماء الثابتة تتقادم فلا نعتمد عليها وحدها */
+  /* رصيد الأدوات (Credits): خصم مسبق يُسترد عند الفشل أو الإلغاء. بلا وحدة الرصيد (مواقع العملاء) لا أثر. */
+  const crTake = (k, o) => (typeof Credits !== "undefined" && Credits.take) ? Credits.take(k, o) : { refund() { } };
+  const crWrap = (fn, kind, optsOf) => async o => { const c = crTake(kind, optsOf ? optsOf(o) : undefined); try { const r = await fn(o); if (r == null) c.refund(); return r; } catch (e) { c.refund(); throw e; } };
+  const quick = crWrap(quick0, "img"), edit = crWrap(edit0, "img"), video = crWrap(video0, "video", o => ({ dur: (o && o.dur) || vcfg.dur(), label: "فيديو" })), model3d = crWrap(model3d0, "model3d", () => ({ label: "مجسّم 3D" }));
   async function textModels(key) {
     const out = [], add = n => { if (n && !out.includes(n)) out.push(n); }; add(LS.get("alyssum_ig_tmodel", "")); textModels.seen = "";
     ["gemini-flash-latest", "gemini-flash-lite-latest"].forEach(add);

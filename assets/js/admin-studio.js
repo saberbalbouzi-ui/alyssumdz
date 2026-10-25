@@ -37,10 +37,11 @@ const AdminStudio = (() => {
   const base = () => String((typeof CONFIG !== "undefined" && CONFIG.TOOLS_PAGES) || (S.data && S.data.base) || "").replace(/\/*$/, "/");
   function navHtml(t) { const L = tools(), i = L.findIndex(x => x.id === t.id), prev = L[(i - 1 + L.length) % L.length], next = L[(i + 1) % L.length]; return `<div class="sd-nav"><button type="button" class="small gray" data-sdback="1">→ كل الأدوات</button><span><button type="button" class="small gray" data-sdt="${esc(prev.id)}">‹ ${esc(prev.name)}</button> <button type="button" class="small gray" data-sdt="${esc(next.id)}">${esc(next.name)} ›</button></span></div>`; }
   function pageHtml(t) {
-    if (t.landing) return `<div class="sd-page">${navHtml(t)}<iframe id="sd-fr" class="sd-fr" title="${esc(t.name)}" src="${esc(base() + t.landing + "?embed=1")}" loading="eager" style="height:${S.fh || 900}px"></iframe></div>`;
+    if (t.landing) return `<div class="sd-page">${navHtml(t)}${typeof Credits !== "undefined" ? Credits.chip(t.id) : ""}<iframe id="sd-fr" class="sd-fr" title="${esc(t.name)}" src="${esc(base() + t.landing + "?embed=1")}" loading="eager" style="height:${S.fh || 900}px"></iframe></div>`;
     const rel = (t.rel || []).map(byId).filter(Boolean);
     return `<div class="sd-page">${navHtml(t)}
 <div class="sd-head">${ico(t)}<div><h2>${esc(t.name)}</h2><p>${esc(t.tag)}</p>${badge(t)}</div></div>
+${typeof Credits !== "undefined" ? Credits.chip(t.id) : ""}
 ${t.what ? `<div class="sd-box"><b>ما هي هذه الأداة؟</b>${esc(t.what)}</div>` : ""}
 ${t.nt ? `<div class="sd-box"><b>المتطلب</b>${esc(t.nt)}</div>` : ""}
 ${(t.steps || []).length ? `<div class="sd-box"><b>طريقة الاستعمال</b><ol>${t.steps.map(x => `<li>${esc(x)}</li>`).join("")}</ol></div>` : ""}
@@ -84,5 +85,5 @@ ${rel.length ? `<div class="sd-box"><b>أدوات مرتبطة</b><div class="sd
     if (/[#&]studio=/.test(location.hash)) { let n = 0; const t = setInterval(() => { n++; if (typeof Admin !== "undefined" && Admin.products && document.getElementById("app") && !document.getElementById("app").hidden) { clearInterval(t); const b = document.querySelector('.nav-btn[onclick*="studio"]'); if (b) b.click(); } else if (n > 60) clearInterval(t); }, 500); }
   }
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { open, draw, load, state: S };
+  return { open, draw, load, state: S, catalog: () => tools() };
 })();

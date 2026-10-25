@@ -110,6 +110,20 @@ const root = path.join(__dirname, "..");
   t("بعد تنفيذ المقاس: لا شريط تنفيذ/إلغاء ولا معاينة معلّقة", !ap.bar && !ap.pending && !ap.live, ap);
   t("مصدر معتم: الظل الافتراضي «بدون»", ap.shDef === "none", ap.shDef);
   t("بعد التنفيذ يظهر «العودة للأصل» ويعيد الصورة الأصلية بلا معاينة ثم يختفي", ap.rvShown && ap.src1 !== ap.src0 && ap.src2 === ap.src0 && !ap.pend2 && !ap.bar3 && ap.rvHidden, ap);
+  /* رصيد الأدوات: شارة أعلى اللوحة + شريحة التكلفة والمتبقي في نافذة الأداة ولوحتها، ورفض التنفيذ عند نفاد الرصيد */
+  const cr = await p.evaluate(async () => {
+    const o = {}; Credits.set(110, 110); o.badge = (document.getElementById("cr-top") || {}).textContent || "";
+    ToolWin.open("bg"); await new Promise(z => setTimeout(z, 300)); const tw = document.querySelector("#tw-box .cr-chip"); o.tw = tw ? tw.textContent.replace(/\s+/g, " ") : ""; ToolWin.close();
+    const mk = (w, h, c) => { const x = document.createElement("canvas"); x.width = w; x.height = h; const g = x.getContext("2d"); g.fillStyle = c; g.fillRect(0, 0, w, h); return x; };
+    const blob = await new Promise(r => mk(200, 200, "#d22").toBlob(r, "image/png")); await PBApp.toolSession([blob], "up", "up"); await new Promise(z => setTimeout(z, 400));
+    const ep = document.querySelector("#pbx-ep .cr-chip"); o.ep = ep ? ep.textContent.replace(/\s+/g, " ") : "";
+    Credits.set(0, 110); let code = ""; try { Credits.take("img"); } catch (e) { code = e.code; } o.noCredit = code; o.badgeOut = document.getElementById("cr-top").className;
+    Credits.set(110, 110); return o;
+  });
+  t("شارة الرصيد أعلى اللوحة 110/110", /110\/110/.test(cr.badge), cr.badge);
+  t("نافذة الأداة: التكلفة والمتبقي", /1 رصيد/.test(cr.tw) && /110\/110/.test(cr.tw), cr.tw);
+  t("لوحة الأداة (تحسين الجودة): التكلفة والمتبقي", /2 رصيد/.test(cr.ep) && /110\/110/.test(cr.ep), cr.ep);
+  t("نفاد الرصيد يوقف التنفيذ ويحمّر الشارة", cr.noCredit === "NOCREDIT" && /out/.test(cr.badgeOut), cr);
   t("لا أخطاء جافاسكربت", errs.length === 0, errs);
   await b.close(); console.log(bad ? `\n✗ ${bad} من ${ok + bad} فشل` : `\n✓ ${ok} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);
 })();

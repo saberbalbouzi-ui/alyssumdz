@@ -383,7 +383,13 @@ const PBBgRemove = (function () {
     const out = document.createElement("canvas"); out.width = cv.width; out.height = cv.height; const og = out.getContext("2d"); og.drawImage(cv, 0, 0); og.globalCompositeOperation = "destination-out"; og.globalAlpha = 1; og.drawImage(big2, 0, 0); og.drawImage(big2, 0, 0);
     return { canvas: out, removed, kept: comp.length - removed };
   }
+  /* رصيد الأدوات: نزع الخلفية بالخدمة = 1 رصيد للصورة (يُسترد عند الفشل)؛ الخطوات الداخلية بـ methods صريحة مجانية */
   async function autoCut(srcC, o) {
+    if (o && o.methods) return autoCut0(srcC, o);
+    const c = (typeof Credits !== "undefined" && Credits.take) ? Credits.take("bg", { n: 1, label: "نزع الخلفية" }) : { refund() { } };
+    try { return await autoCut0(srcC, o); } catch (e) { c.refund(); throw e; }
+  }
+  async function autoCut0(srcC, o) {
     o = o || {};
     if (!o.methods) {      /* أداة «نزع الخلفية»: Photoroom فقط — طلب واحد ونتيجة واحدة (بلا طرق محلية ولا إعادة بطرق أخرى) */
       let sc = await samCut(srcC, o); if (sc) { try { sc = keepSubject(sc, { frac: o.keepFrac != null ? o.keepFrac : .03 }).canvas; } catch (_) { } const sv = coverage(sc); if (sv > .02 && sv < .98) return { canvas: sc, method: "sam", cov: sv }; }      // SAM+Gemini أولاً (مجاني محلي) وإلا Photoroom
