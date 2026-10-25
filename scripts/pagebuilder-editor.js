@@ -1071,6 +1071,12 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
   /* صفحة طويلة: قسم قماش واحد = الصفحة نفسها (لا قسم ولا فواصل ولا شريط أقسام) */
   function isLong() { const P = E.page, s0 = P && !P.ad && P.sections && P.sections.length === 1 && P.sections[0]; return !!(s0 && s0.set && s0.set.kind === "canvas" && !s0.set.tight); }
+  /* القسم الذي يتحكم بطول الصفحة: الصفحة الطويلة قسمها الوحيد، وفي الصفحات القديمة آخر قسم محتوى (ليس الفوتر ولا الشريط/الهيدر المحكم) */
+  function lengthSec() {
+    const P = E.page; if (!P || P.ad || !P.sections || !P.sections.length) return null; if (isLong()) return P.sections[0];
+    for (let i = P.sections.length - 1; i >= 0; i--) { const q = P.sections[i], st = q.set || {}; if (st.off || st.tight || st.grp === "bot" || st.grp === "top") continue; const ws = (q.free || []).concat(...(q.cols || []).map(c => c.widgets || [])); if (ws.length && ws.every(w => ["sfoot", "shdr", "sbar"].includes(w.type))) continue; return q; }
+    return null;
+  }
   function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
   function select(id) {
     if (id && isLong()) { const q1 = find(id); if (q1 && q1.kind !== "widget") id = null; }
@@ -1276,14 +1282,14 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   const actSec = () => E.page.sections.find(x => x.id === E.hs) || E.page.sections[0];
   /* خط نهاية الصفحة الطويلة: يُسحب للأعلى لتقصيرها (يلتصق بأسفل آخر عنصر) وللأسفل لتطويلها */
   function drawPageEnd(ovl) {
-    if (!isLong() || !fdoc || !root) return; const sec = E.page.sections[0], el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return;
+    const sec = lengthSec(); if (!sec || !fdoc || !root) return; const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return;
     const r = layoutRect(el), o = ovlOrigin(), s = o.s, y = o.oy + (r.top + r.height) * s, x0 = o.ox + r.left * s, w = r.width * s;
     const ln = document.createElement("div"); ln.className = "pbx-pgend"; ln.style.cssText = `left:${x0}px;top:${y - 1}px;width:${w}px`;
     const hd = document.createElement("div"); hd.className = "pbx-pend-h"; hd.title = "اسحب للأعلى لتقصير الصفحة أو للأسفل لتطويلها (يلتصق بأسفل آخر عنصر)"; hd.innerHTML = "↕ نهاية الصفحة"; ln.appendChild(hd); ovl.appendChild(ln);
     hd.onmousedown = e => {
       e.preventDefault(); e.stopPropagation(); const dev = E.dev, mh0 = Number(eff(sec.set, "mh", dev)) || r.height, k = mh0 / (r.height || 1), top = r.top, tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
       const mv = (dx, dy, ev) => {
-        let h = r.height + dy; const eb = Math.max(0, ...Array.from(fdoc.querySelectorAll('[data-kind="widget"]')).map(q => { const b = layoutRect(q); return b.top + b.height - top; }));
+        let h = r.height + dy; const eb = Math.max(0, ...Array.from(el.querySelectorAll('[data-kind="widget"]')).map(q => { const b = layoutRect(q); return b.top + b.height - top; }));
         if (h < eb + 10) h = eb;      // لا يقصّ عنصراً: يتوقف عند حافة آخر عنصر بالضبط
         const H = Math.max(100, Math.round(h * k)); setR(sec.set, "mh", dev, H); tip.textContent = H + "px"; renderCanvas(); positionOverlay();
         const st = $("pbx-ovl").getBoundingClientRect(); $("pbx-ovl").appendChild(tip); tip.style.left = (ev.clientX - st.left + 14) + "px"; tip.style.top = (ev.clientY - st.top + 14) + "px";
@@ -2974,11 +2980,11 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const el = $("pbx-insp"); if (!el) return; if (multiOn()) { multiPanel(el); return; } const inf = selInfo(), newSel = E.inspSel !== E.sel; E.inspSel = E.sel; if (newSel) setTimeout(() => { el.scrollTop = 0; }, 0);      // التحوّل لعنصر آخر: الإعدادات من أعلى القائمة، واسم العنصر ثابت أعلاها
     const adM = !!(E.page && E.page.ad);
     if (!inf && adM) { adPagePanel(el); return; }
-    if (!inf && isLong()) {
-      const sec = E.page.sections[0], H = Math.round(Number(eff(sec.set, "mh", E.dev)) || 520);
-      el.innerHTML = `<div class="pbx-ih">📄 الصفحة الطويلة</div><div class="field adp"><label>↕ ارتفاع الصفحة (px)</label><div class="adp-wh"><input type="number" id="lp-h" min="100" max="30000" value="${H}"></div><button type="button" id="lp-set" class="pbx-small">تطبيق الارتفاع</button><button type="button" id="lp-trim" class="pbx-small">✂ قصّ عند آخر عنصر</button></div><p style="color:#888;font-size:.78rem;line-height:1.8">صفحة واحدة متصلة بلا أقسام: ضع العناصر أينما شئت وتطول الصفحة تلقائياً. اقصّها عند النهاية بالزر أعلاه أو بالزر الأيمن على الخلفية.</p>`;
+    if (!inf && lengthSec()) {
+      const sec = lengthSec(), H = Math.round(Number(eff(sec.set, "mh", E.dev)) || (fdoc && fdoc.querySelector(`[data-pb="${sec.id}"]`) ? layoutRect(fdoc.querySelector(`[data-pb="${sec.id}"]`)).height : 0) || 520);
+      el.innerHTML = `<div class="pbx-ih">${isLong() ? "📄 الصفحة الطويلة" : "📄 طول الصفحة"}</div><div class="field adp"><label>↕ ارتفاع الصفحة (px)</label><div class="adp-wh"><input type="number" id="lp-h" min="100" max="30000" value="${H}"></div><button type="button" id="lp-set" class="pbx-small">تطبيق الارتفاع</button>${sec.set.kind === "canvas" ? '<button type="button" id="lp-trim" class="pbx-small">✂ قصّ عند آخر عنصر</button>' : ""}</div><p style="color:#888;font-size:.78rem;line-height:1.8">${isLong() ? "صفحة واحدة متصلة بلا أقسام: ضع العناصر أينما شئت وتطول الصفحة تلقائياً. اقصّها عند النهاية بالزر أعلاه أو بالزر الأيمن على الخلفية." : "هذا ارتفاع آخر قسم في الصفحة (يطول به كل المحتوى). يمكنك أيضاً سحب المقبض «↕ نهاية الصفحة» أسفل الصفحة. لقسم آخر: حدّده واضبط «الارتفاع» من تبويب متقدم."}</p>`;
       el.querySelector("#lp-set").onclick = () => { const v = Math.round(+el.querySelector("#lp-h").value); if (!(v >= 100 && v <= 30000)) return toast("الارتفاع بين 100 و30000"); setR(sec.set, "mh", E.dev, v); E.nextLabel = "ارتفاع الصفحة"; afterEdit(); };
-      el.querySelector("#lp-trim").onclick = () => { trimLong(sec); toast("✂ قُصّت الصفحة عند آخر عنصر"); };
+      const tb = el.querySelector("#lp-trim"); if (tb) tb.onclick = () => { trimLong(sec); toast("✂ قُصّت الصفحة عند آخر عنصر"); };
       return;
     }
     if (!inf) { el.innerHTML = `<div class="pbx-ih">⚙️ الإعدادات</div><p style="color:#888;font-size:.85rem;line-height:1.8">${E.page && E.page.ad ? "انقر على أي عنصر في الصفحة لتعديل إعداداته. للخلفية: زر الفأرة الأيمن على الخلفية ← «إضافة لون الخلفية»." : FREE_ONLY ? "انقر على أي عنصر في الصفحة لتعديل إعداداته (الأعمدة معطّلة مؤقتاً: كل العناصر حرة). شريط القسم على يمين القسم: نقل/إخفاء/قفل/تكرار/حذف/إضافة قسم." : "انقر على أي قسم أو عمود أو عنصر في الصفحة لتعديل إعداداته."}<br><br>• انقر مرتين على النص لتعديله مباشرة.<br>• اسحب المقبض الجانبي ↔ لتغيير العرض والسفلي ↕ للارتفاع (Shift = خطوات ثابتة).<br>• غيّر الجهاز من الأعلى: تعديلات التابلت والهاتف تُحفظ منفصلة وتتوارث من الأكبر.</p>`; return; }
