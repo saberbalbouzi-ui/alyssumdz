@@ -40,8 +40,11 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 .rv-hero .pb-t{max-width:760px;margin-inline:auto}
 .rv-kick .pb-t{display:flex;align-items:center;justify-content:center;gap:12px;color:#187a3b;font-size:13px;font-weight:900}.rv-kick .pb-t p{margin:0}
 .rv-kick .pb-t:before,.rv-kick .pb-t:after{content:"";height:2px;width:34px;background:#f39a18;border-radius:4px}
-.rv-note{max-width:720px;margin:0 auto;padding:13px 18px;border-radius:16px;background:#fff7e3;border:1px solid #f1dca6;color:#6d5313;font-size:13px;line-height:1.9;font-weight:700;text-align:center}
-.rv-grid{column-count:3;column-gap:18px}
+.rv-cta{text-align:center;padding:46px 22px;border-radius:30px;background:linear-gradient(120deg,#123e72,#187a3b);color:#fff}
+.rv-cta .pb-t{color:#fff}
+.pb-page .pb-btn{box-shadow:0 10px 24px #17813a33;transition:transform .25s}.pb-page .pb-btn:hover{transform:translateY(-4px)}
+"""
+GAL_CSS = r""".rv-grid{column-count:3;column-gap:18px}
 .rv-f{break-inside:avoid;margin:0 0 18px;background:#fff;border:1px solid #e3ece1;border-radius:20px;padding:10px;box-shadow:0 12px 30px #2c50320d;transition:transform .3s,box-shadow .3s}
 .rv-f:hover{transform:translateY(-5px);box-shadow:0 20px 44px #2c503220}
 .rv-a{display:block;cursor:zoom-in}.rv-f img{display:block;width:100%;height:auto;border-radius:13px;background:#f1f0f0}
@@ -51,12 +54,12 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 .rv-lb[hidden]{display:none}.rv-lb img{max-width:min(92vw,980px);max-height:90vh;border-radius:14px;background:#fff}
 .rv-x,.rv-n{position:absolute;border:0;background:#ffffff22;color:#fff;width:46px;height:46px;border-radius:50%;font-size:30px;line-height:1;cursor:pointer}.rv-x{top:16px;left:16px}
 .rv-n{top:50%;margin-top:-23px}.rv-p{right:14px}.rv-nx{left:14px}
-.rv-cta{text-align:center;padding:46px 22px;border-radius:30px;background:linear-gradient(120deg,#123e72,#187a3b);color:#fff}
-.rv-cta .pb-t{color:#fff}
-.pb-page .pb-btn{box-shadow:0 10px 24px #17813a33;transition:transform .25s}.pb-page .pb-btn:hover{transform:translateY(-4px)}
 @media(max-width:900px){.rv-grid{column-count:2}}
 @media(max-width:560px){.rv-grid{column-count:1}.rv-f{border-radius:16px}}
 """
+NOTE_CSS = r""".rv-note{max-width:720px;margin:0 auto;padding:13px 18px;border-radius:16px;background:#fff7e3;border:1px solid #f1dca6;color:#6d5313;font-size:13px;line-height:1.9;font-weight:700;text-align:center}
+"""
+# أنماط الكتل المضمّنة تُكتب داخل كود العنصر نفسه كي يرسمها المحرّر (إطار معزول) كما تظهر في الصفحة المنشورة
 def H(text, fs, m, color, ta="center", tag="h2"): return W("heading", text=text, tag=tag, fs=dm(fs, m), fw="900", ta={"d": ta}, color=color, lh={"d": 1.3})
 def T(h, fs, m, color=MUTED, ta="center", fw="600"): return W("text", html="<p>%s</p>" % h, fs=dm(fs, m), lh={"d": 1.9}, ta={"d": ta}, color=color, fw=fw)
 secs = []
@@ -64,8 +67,8 @@ hero = [W("text", html="<p>شهادات حقيقية • الباقة العلا
         H("تجارب حقيقية لبعض من جرب الباقة العلاجية عن بعد", 46, 28, NAVY, tag="h1"),
         T("لقطات حقيقية من رسائل أشخاص جرّبوا الباقة العلاجية للرقية الشرعية وشاركوا ما شعروا به بعد استعمالها. اضغط على أي لقطة لتكبيرها.", 17, 15)]
 secs.append(SEC([COL(hero)], "rv-hero", pad=(70, 0, 20, 0), padm=(44, 0, 14, 0), cid="top"))
-secs.append(SEC([COL([W("html", code='<div class="rv-grid">%s</div>%s' % (figs, JS))])], "rv-gal", pad=(10, 0, 30, 0), padm=(6, 0, 20, 0), cid="avis"))
-secs.append(SEC([COL([W("html", code='<p class="rv-note">هذه تجارب شخصية قد تختلف نتائجها من شخص لآخر، ولا تُعدّ وعداً بنتيجة ولا بديلاً عن الاستشارة الطبية أو الرقية الشرعية الصحيحة. الأسماء والمعلومات الشخصية محجوبة حفاظاً على خصوصية أصحابها.</p>')])], "rv-nsec", pad=(0, 0, 36, 0), padm=(0, 0, 26, 0)))
+secs.append(SEC([COL([W("html", code='<style>%s</style><div class="rv-grid">%s</div>%s' % (GAL_CSS, figs, JS))])], "rv-gal", pad=(10, 0, 30, 0), padm=(6, 0, 20, 0), cid="avis"))
+secs.append(SEC([COL([W("html", code='<style>' + NOTE_CSS + '</style><p class="rv-note">هذه تجارب شخصية قد تختلف نتائجها من شخص لآخر، ولا تُعدّ وعداً بنتيجة ولا بديلاً عن الاستشارة الطبية أو الرقية الشرعية الصحيحة. الأسماء والمعلومات الشخصية محجوبة حفاظاً على خصوصية أصحابها.</p>')])], "rv-nsec", pad=(0, 0, 36, 0), padm=(0, 0, 26, 0)))
 cta = [H("هل تريد معرفة المزيد عن الباقة؟", 32, 24, NAVY, tag="h2"),
        T("هذه الصفحة مخصّصة لتجارب من جرّب الباقة فقط. لمعرفة محتواها وأسعارها يمكنك زيارة صفحة المنتج.", 16, 14),
        W("button", text="صفحة الباقة الرباعية", kind="link", link="/p/pack4/", bgc=GREEN, color="#fff", hbg="#126b32", fs=dm(17, 15), fw="900", brad={"d": 999}, bpad={"d": [14, 34, 14, 34]}, al={"d": "center"})]
