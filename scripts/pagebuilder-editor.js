@@ -2666,20 +2666,37 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     }, () => { wrap.remove(); E.marqEl = null; if (!moved) return; E.skipClick = Date.now(); const all = base.slice(); hits.forEach(id => { (grpOf(id) || [id]).forEach(g => { if (!all.includes(g)) all.push(g); }); }); setMulti(all); if (all.length > 1) toast("☑ حُدّد " + all.length + " عناصر — Delete للحذف، Ctrl+G للربط، زر الفأرة الأيمن للمزيد"); });
   }
   /* سحب عدة عناصر حرة معاً (أو مجموعة مربوطة) */
+  /* عناصر التحديد المتعدد: القسم العادي (أعمدة) يتحوّل كله إلى عناصر حرة عند أول تحريك، فلا يبقى العنصر "مسجوناً" في عموده */
+  function multiFree() {
+    let ids = selIds();
+    if (E.dev === "d" && ids.map(find).some(i => i && !i.free && i.sec.set.kind !== "canvas" && !isLocked(i))) {
+      new Set(ids.map(find).filter(i => i && !i.free && i.sec.set.kind !== "canvas").map(i => i.sec)).forEach(sec => flowToFree(sec, true));
+      renderCanvas();
+    }
+    return ids.map(find).filter(i => i && i.free && !isLocked(i));
+  }
+  /* أقل إزاحة رأسية تسمح لكل أعضاء المجموعة بالبقاء داخل القسم (الحدّ للمجموعة كلها فتبقى المسافات بين أعضائها كما هي) */
+  function clampGroupDy(st, dy) {
+    const by = new Map(); st.forEach(q => { const k = q.i.sec.id; by.set(k, Math.min(by.has(k) ? by.get(k) : Infinity, q.fy)); });
+    let lo = -Infinity; st.forEach(q => { lo = Math.max(lo, -by.get(q.i.sec.id) * q.u); }); return Math.max(dy, lo);
+  }
   function startMoveMulti(e) {
-    const dev = E.dev, infs = selIds().map(find).filter(i => i && i.free && !isLocked(i)); if (!infs.length) return; infs.forEach(i => ensureMobile(i.sec));
+    const dev = E.dev, infs = multiFree(); if (!infs.length) return; infs.forEach(i => ensureMobile(i.sec));
     const st = infs.map(i => { const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width; return { i, fx: Number(eff(i.set, "fx", dev)) || 0, fy: Number(eff(i.set, "fy", dev)) || 0, cw, u: uOf(i.sec, { width: cw }) }; });
     let moved = false;
     dragTrack(e, "move", (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return; moved = true; if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
+      dy = clampGroupDy(st, dy);
       st.forEach(q => { setR(q.i.set, "fx", dev, Math.round((q.fx + dx / q.cw * 100) * 10) / 10); setR(q.i.set, "fy", dev, Math.max(0, Math.round(q.fy + dy / q.u))); if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(q.i.set, k, "d") === undefined) setR(q.i.set, k, "d", eff(q.i.set, k, dev)); }); });
       new Set(st.map(q => q.i.sec)).forEach(growCanvas); renderCanvas(); positionOverlay();
     }, () => { if (moved) { E.nextLabel = "نقل " + st.length + " عناصر"; commitHist(); renderInspector(); } });
   }
   function nudgeMulti(dx, dy) {
-    const dev = E.dev, infs = selIds().map(find).filter(i => i && i.free && !isLocked(i)); if (!infs.length) return;
-    infs.forEach(i => { ensureMobile(i.sec); const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, u = uOf(i.sec, { width: cw });
-      setR(i.set, "fx", dev, Math.round(((Number(eff(i.set, "fx", dev)) || 0) + dx / cw * 100) * 10) / 10); setR(i.set, "fy", dev, Math.max(0, Math.round((Number(eff(i.set, "fy", dev)) || 0) + dy / u)));
+    const dev = E.dev, infs = multiFree(); if (!infs.length) return;
+    const st = infs.map(i => { ensureMobile(i.sec); const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width; return { i, cw, u: uOf(i.sec, { width: cw }), fy: Number(eff(i.set, "fy", dev)) || 0 }; });
+    dy = clampGroupDy(st, dy);
+    st.forEach(q => { const i = q.i;
+      setR(i.set, "fx", dev, Math.round(((Number(eff(i.set, "fx", dev)) || 0) + dx / q.cw * 100) * 10) / 10); setR(i.set, "fy", dev, Math.max(0, Math.round(q.fy + dy / q.u)));
       if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(i.set, k, "d") === undefined) setR(i.set, k, "d", eff(i.set, k, dev)); }); });
     schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 400);
   }
