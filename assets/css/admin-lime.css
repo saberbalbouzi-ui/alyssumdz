@@ -118,3 +118,7 @@ html:is(.glass,.white) body .nav-btn.on:not(#_) svg,html:is(.glass,.white) body 
 html:is(.glass,.white) body #theme-sw button.on:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;color:var(--lime-ink)!important;box-shadow:none!important}
 html:is(.glass,.white) body #theme-sw button.on:not(#_) svg{color:var(--lime-ink)!important}
 html:is(.glass,.white) body .ah-btn:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;color:var(--lime-ink)!important;border:0!important;box-shadow:none!important}
+/* v1.89.538: مفتاح التفعيل وشارة «مفعّل» وعناوين صفحة إعدادات الإضافة ليمونية */
+html:is(.glass,.white) body .sw input:checked+i:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;border-color:transparent!important}
+html:is(.glass,.white) body .app-cfg .ap-s.on:not(#_){color:var(--lime-ink)!important;background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;border-color:transparent!important}
+html.glass body .app-cfg .ap-sec>b:not(#_){color:var(--lime-lo)!important}
