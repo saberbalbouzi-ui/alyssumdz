@@ -1004,7 +1004,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   /* زر واحد: كل أقسام الصفحة (غير الحرة) تصير عناصر حرة بمواضعها الفعلية، بدل التحويل عند كل سحب */
   function convertAllFree() {
     if (E.dev !== "d") return toast("حوّل إلى عرض المكتب أولاً ثم كرّر الأمر");
-    const L = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas"), ok = L.filter(sc => { const se = fdoc.querySelector(`[data-pb="${sc.id}"]`); return se && se.getBoundingClientRect().width >= 1; });
+    const L = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas" && !isHF(sc)), ok = L.filter(sc => { const se = fdoc.querySelector(`[data-pb="${sc.id}"]`); return se && se.getBoundingClientRect().width >= 1; });
     if (!L.length) return toast("كل أقسام الصفحة حرّة أصلاً"); if (!ok.length) return toast("لا قسم ظاهر للتحويل");
     ok.forEach(sc => flowToFree(sc, true)); E.nextLabel = "تحويل كل الأقسام إلى عناصر حرة"; afterEdit(null); toast("✅ صارت " + ok.length + " أقسام حرّة — اسحب أي عنصر بحرية وانقله بين الأقسام" + (ok.length < L.length ? " (" + (L.length - ok.length) + " مخفية لم تُحوَّل)" : ""));
   }
@@ -1145,15 +1145,15 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function snapPts(inf, cont, ex) {
     const cr = cont.getBoundingClientRect(), xs = [0, cr.width / 2, cr.width], ys = [0, cr.height / 2, cr.height], rects = [];
     const self = inf && inf.node ? fdoc.querySelector(`[data-pb="${inf.node.id}"]`) : null, seen = new Set();      // حواف ومنتصفات كل العناصر في الصفحة (ليس عناصر القسم فقط) ليتراص ما يُحرَّك مع غيره على استقامة
-    fdoc.querySelectorAll('[data-kind="widget"]').forEach(el => { if (el === self || (self && self.contains(el)) || (self && el.contains(self))) return; if (ex && ex.has(el.dataset.pb)) return; const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return; const l = r.left - cr.left, t = r.top - cr.top, k = Math.round(l) + "," + Math.round(t) + "," + Math.round(r.width) + "," + Math.round(r.height); if (seen.has(k)) return; seen.add(k); xs.push(l, l + r.width / 2, l + r.width); ys.push(t, t + r.height / 2, t + r.height); rects.push({ l, t, w: r.width, h: r.height }); });
+    fdoc.querySelectorAll('[data-kind="widget"]').forEach(el => { if (el === self || (self && self.contains(el)) || (self && el.contains(self))) return; if (ex && ex.has(el.dataset.pb)) return; const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) return; const l = r.left - cr.left, t = r.top - cr.top, k = Math.round(l) + "," + Math.round(t) + "," + Math.round(r.width) + "," + Math.round(r.height); if (seen.has(k)) return; seen.add(k); xs.push(l, l + r.width / 2, l + r.width); ys.push(t, t + r.height / 2, t + r.height); rects.push({ l, t, w: r.width, h: r.height, id: el.dataset.pb }); });
     return { xs, ys, cr, rects };
   }
   /* مغناطيس بفجوة: محاذاة الحواف/المنتصفات، والالتصاق بمسافة ثابتة (gap) من العناصر المجاورة دون تماسّ، وتوسّط العنصر بين عنصرين بفجوتين متساويتين */
   const GAP_D = 11;      // الفجوة = 3 مم ≈ 11 بكسلاً تصميمياً
   function magnetBox(x, y, w, h, pts, gap) {
     const T = 14, R = pts.rects || [], gx = [], gy = [], G = gap || 8;
-    let bx = x, by = y, dX = T + 1, dY = T + 1, kx = null, ky = null, gdx = [], gdy = [], pushY = false;
-    const tX = (nx, d, gd, kind) => { if (d < dX) { dX = d; bx = nx; gdx = gd; kx = kind; } }, tY = (ny, d, gd, kind, push) => { if (d < dY) { dY = d; by = ny; gdy = gd; ky = kind; pushY = !!push; } };
+    let bx = x, by = y, dX = T + 1, dY = T + 1, kx = null, ky = null, gdx = [], gdy = [], pushY = false, below = null;
+    const tX = (nx, d, gd, kind) => { if (d < dX) { dX = d; bx = nx; gdx = gd; kx = kind; } }, tY = (ny, d, gd, kind, push, bid) => { if (d < dY) { dY = d; by = ny; gdy = gd; ky = kind; pushY = !!push; below = kind === "gap" && push ? bid || null : null; } };
     [[0, 0], [pts.cr.width / 2, w / 2], [pts.cr.width, w]].forEach(([p, off]) => { const v = x + off; tX(p - off, Math.abs(v - p), [{ x: p }], "align"); });
     [[0, 0], [pts.cr.height / 2, h / 2], [pts.cr.height, h]].forEach(([p, off]) => { const v = y + off; tY(p - off, Math.abs(v - p), [{ y: p }], "align"); });
     const ov = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0);
@@ -1165,15 +1165,16 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (deep) return;
       const ry = [Math.max(y, N.t), Math.min(y + h, N.t + N.h)], rx = [Math.max(x, N.l), Math.min(x + w, N.l + N.w)];
       if (oy > 0) { tX(N.l + N.w + G, Math.abs(x - (N.l + N.w + G)), [{ x: N.l + N.w, bx: [N.l + N.w, N.l + N.w + G], r: ry }, { x: N.l + N.w + G }], "gap"); tX(N.l - G - w, Math.abs(x + w - (N.l - G)), [{ x: N.l, bx: [N.l - G, N.l], r: ry }, { x: N.l - G }], "gap"); }
-      if (ox > 0) { tY(N.t + N.h + G, Math.abs(y - (N.t + N.h + G)), [{ y: N.t + N.h, by: [N.t + N.h, N.t + N.h + G], r: rx }, { y: N.t + N.h + G }], "gap", true); tY(N.t - G - h, Math.abs(y + h - (N.t - G)), [{ y: N.t, by: [N.t - G, N.t], r: rx }, { y: N.t - G }], "gap", false); }
+      if (ox > 0) { tY(N.t + N.h + G, Math.abs(y - (N.t + N.h + G)), [{ y: N.t + N.h, by: [N.t + N.h, N.t + N.h + G], r: rx }, { y: N.t + N.h + G }], "gap", true, N.id); tY(N.t - G - h, Math.abs(y + h - (N.t - G)), [{ y: N.t, by: [N.t - G, N.t], r: rx }, { y: N.t - G }], "gap", false); }
     });
     /* بين عنصرين: فجوتان متساويتان (أفقياً ثم عمودياً) */
     const cx = x + w / 2, cy = y + h / 2;
     { const L = R.filter(N => ov(y, y + h, N.t, N.t + N.h) > 0 && N.l + N.w <= cx), Rr = R.filter(N => ov(y, y + h, N.t, N.t + N.h) > 0 && N.l >= cx);
-      if (L.length && Rr.length) { const A = Math.max(...L.map(N => N.l + N.w)), B = Math.min(...Rr.map(N => N.l)); if (B - A >= w + 2 * G) { const c = A + (B - A - w) / 2, d = Math.abs(x - c) * 0.5; if (d < T) { dX = T + 1; tX(c, d, [{ x: c }, { x: c + w }], "between"); } } } }
+      if (L.length && Rr.length) { const A = Math.max(...L.map(N => N.l + N.w)), B = Math.min(...Rr.map(N => N.l)); if (B - A >= w + 2 * G) { const c = A + (B - A - w) / 2, d = Math.abs(x - c) * 0.5; if (d < T && kx !== "gap") { dX = T + 1; tX(c, d, [{ x: c }, { x: c + w }], "between"); } } } }
     { const U = R.filter(N => ov(x, x + w, N.l, N.l + N.w) > 0 && N.t + N.h <= cy), D = R.filter(N => ov(x, x + w, N.l, N.l + N.w) > 0 && N.t >= cy);
-      if (U.length && D.length) { const A = Math.max(...U.map(N => N.t + N.h)), B = Math.min(...D.map(N => N.t)); if (B - A >= h + 2 * G) { const c = A + (B - A - h) / 2, d = Math.abs(y - c) * 0.5; if (d < T) { dY = T + 1; tY(c, d, [{ y: c }, { y: c + h }], "between", true); } } else if (B - A < h + 2 * G && Math.abs(y - (A + G)) < T * 2) { /* الفجوة أضيق من العنصر: يلتصق تحت العلوي ويُدفع السفلي عند الإفلات */ tY(A + G, 0, [{ y: A }, { y: A + G }], "gap", true); } } }
-    return { x: bx, y: by, guides: gdx.concat(gdy), kx, ky, pushY };
+      if (U.length && D.length) { const A = Math.max(...U.map(N => N.t + N.h)), B = Math.min(...D.map(N => N.t)); if (B - A >= h + 2 * G) { const c = A + (B - A - h) / 2, d = Math.abs(y - c) * 0.5; if (d < T && ky !== "gap") { dY = T + 1; tY(c, d, [{ y: c }, { y: c + h }], "between", true); } } else if (B - A < h + 2 * G && Math.abs(y - (A + G)) < T * 2) { /* الفجوة أضيق من العنصر: يلتصق تحت العلوي ويُدفع السفلي عند الإفلات */ tY(A + G, 0, [{ y: A }, { y: A + G }], "gap", true); } } }
+    if (!below) { let bd = 2; R.forEach(N => { const d = Math.abs(by - (N.t + N.h + G)); if (d < bd && ov(bx, bx + w, N.l, N.l + N.w) > 0 && N.id) { bd = d; below = N.id; } }); }      // استقرّ على فجوة 3 مم تحت عنصر (حتى لو سبقتها محاذاة): يُربط به
+    return { x: bx, y: by, guides: gdx.concat(gdy), kx, ky, pushY, below };
   }
   /* نقل عنصر/مجموعة إلى قسم حر آخر بالسحب: صندوق الأقسام الأصلي، القسم تحت المؤشر، شبح الإفلات، والنقل الفعلي */
   const unionRect = rs => { const l = Math.min(...rs.map(r => r.left)), t = Math.min(...rs.map(r => r.top)), rr = Math.max(...rs.map(r => r.left + r.width)), b = Math.max(...rs.map(r => r.top + r.height)); return { l, t, w: rr - l, h: b - t }; };
@@ -2054,10 +2055,14 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (inf.kind === "column" && hasW && !gridCell) { const sibs = inf.sec.cols, nbn = dir.includes("w") ? (sibs[inf.idx + 1] || sibs[inf.idx - 1]) : (sibs[inf.idx - 1] || sibs[inf.idx + 1]); if (nbn && eff(nbn.set, "w", dev) != null && eff(set, "w", dev) != null) { nb = nbn; pair = Number(eff(set, "w", dev)) + Number(eff(nbn.set, "w", dev)); } }
     let deps = null; const fh0 = free ? (Number(eff(set, "fh", dev)) || Math.round(r0.height / uOf(inf.sec, cr))) : 0;      // نموذج الطلب: تكبير ارتفاعه (المقبض السفلي) يُزيح معه كل ما تحته في القسم نفسه
     const fyf = w => Number(eff(w.set, "fy", dev)) || 0;
-    if (free && inf.node.type === "orderorig" && dir.includes("s")) { const bot = fyf(inf.node) + fh0; deps = (inf.sec.free || []).filter(w => w !== inf.node && fyf(w) >= bot - 2).map(w => ({ w, y0: fyf(w) })); }
-    const cards = deps ? (inf.sec.free || []).filter(w => w !== inf.node && w.type === "shape" && fyf(w) <= fyf(inf.node) + 4 && fyf(w) + (Number(eff(w.set, "fh", dev)) || 0) >= fyf(inf.node) + fh0 - 4).map(w => ({ w, h0: Number(eff(w.set, "fh", dev)) || 0 })) : [];      // خلفية البطاقة التي تحوي النموذج تتمدّد معه
+    if (free && dir.includes("s") && !inf.sec.set.tight && !(E.page && E.page.ad)) {      // كل عنصر حر: تكبيره للأسفل يُزيح معه ما تحته (المتداخل أفقياً معه ومع ما أُزيح) بالمسافة نفسها
+      const fxf = w => Number(eff(w.set, "fx", dev)) || 0, fwf = w => Number(eff(w.set, "fwd", dev)) || 0, ov = (a, c) => Math.min(fxf(a) + fwf(a), fxf(c) + fwf(c)) - Math.max(fxf(a), fxf(c)) > 0.5, bot = fyf(inf.node) + fh0, inc = [inf.node];
+      const L = (inf.sec.free || []).filter(w => w !== inf.node && fyf(w) >= bot - 2).sort((x, y) => fyf(x) - fyf(y)); deps = [];
+      L.forEach(w => { if (inc.some(q => ov(q, w))) { inc.push(w); deps.push({ w, y0: fyf(w) }); } }); if (!deps.length) deps = null; }
+    const cards = deps ? (inf.sec.free || []).filter(w => w !== inf.node && w.type === "shape" && Math.min((Number(eff(w.set, "fx", dev)) || 0) + (Number(eff(w.set, "fwd", dev)) || 0), (Number(eff(inf.node.set, "fx", dev)) || 0) + (Number(eff(inf.node.set, "fwd", dev)) || 0)) - Math.max(Number(eff(w.set, "fx", dev)) || 0, Number(eff(inf.node.set, "fx", dev)) || 0) > 0.5 && fyf(w) <= fyf(inf.node) + 4 && fyf(w) + (Number(eff(w.set, "fh", dev)) || 0) >= fyf(inf.node) + fh0 - 4).map(w => ({ w, h0: Number(eff(w.set, "fh", dev)) || 0 })) : [];      // خلفية البطاقة التي تحوي النموذج تتمدّد معه
     const pushDeps = () => { if (!deps) return; const dl = (Number(eff(set, "fh", dev)) || 0) - fh0;
       deps.forEach(q => { setR(q.w.set, "fy", dev, Math.max(0, Math.round(q.y0 + dl))); if (dev !== "d" && own(q.w.set, "fy", "d") === undefined) setR(q.w.set, "fy", "d", q.y0); });
+      deps.forEach(q => { if (q.w.set.stk && q.w.set.stk.id === inf.node.id) q.w.set.stk.h = Math.round(freeH(inf.sec, inf.node, "d")); });
       cards.forEach(q => { setR(q.w.set, "fh", dev, Math.max(14, Math.round(q.h0 + dl))); if (dev !== "d" && own(q.w.set, "fh", "d") === undefined) setR(q.w.set, "fh", "d", q.h0); }); };
     const mv = (dx, dy, ev) => {
       let label = "", guides = [];
@@ -2077,7 +2082,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
         if (!ic && hasW && hasH && !ev.shiftKey) { if (ws0 == null) ws0 = Number(eff(set, "wsc", dev)) || 100; setR(set, "wsc", dev, Math.max(20, Math.min(500, Math.round(ws0 * (R - L) / W0)))); if (dev !== "d" && own(set, "wsc", "d") === undefined) setR(set, "wsc", "d", ws0); }      // زوايا العنصر الحر: نسبة ثابتة + المحتوى يكبر معه (Shift = تحجيم حر)
         setR(set, "fx", dev, Math.round(L / cr.width * 1000) / 10); setR(set, "fwd", dev, Math.round((R - L) / cr.width * 1000) / 10); setR(set, "fy", dev, Math.round(T / uOf(inf.sec, cr))); setR(set, "fh", dev, Math.round((B - T) / uOf(inf.sec, cr)));
         if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(set, k, "d") === undefined) setR(set, k, "d", eff(set, k, dev)); });
-        label = Math.round((R - L)) + "×" + Math.round(B - T); pushDeps(); growCanvas(inf.sec);
+        label = Math.round((R - L)) + "×" + Math.round(B - T); pushDeps(); if (!dir.includes("s")) resyncStk(inf.sec, inf.node); growCanvas(inf.sec);
       } else if (inf.kind === "widget") {
         const al = eff(set, "al", dev);
         if (hasW && hasH) {      /* زوايا العنصر: تكبير تناسبي — العرض والمحتوى معاً */
@@ -2138,7 +2143,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } clearDrop(); dropCol = null; xfer = ghostMove({ tsec, U, pt, grab: { x: U.l - px0, y: U.t - py0 }, ev, ex: exSet() }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       let X = X0 + dx, Y = Y0 + dy, guides = [];
-      if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; }
+      let lnkId = null; if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; lnkId = sn.below; }
+      if (inf.free && E.dev === "d") setStk(inf.node, inf.sec, lnkId);      // التصق تحت عنصر بفجوة 3 مم ← يتبعه؛ تحريك يدوي بلا التصاق يفكّ الربط
       const pzS = inf.set.pz && !ev.altKey ? PBPuzzle.snap(inf, X, Y, cr.width, u, dev) : null;      // تجاذب قطع البازل
       if (pzS) { X = pzS.x; Y = pzS.y; guides = []; }
       setR(inf.set, "fx", dev, pzS ? Math.round(pzS.fx * 1000) / 1000 : Math.round(X / cr.width * 1000) / 10); setR(inf.set, "fy", dev, pzS ? Math.round(pzS.fy * 1000) / 1000 : Math.round(Y / u)); growCanvas(inf.sec);
@@ -2207,7 +2213,14 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       fr.forEach(w => { const g = w.set && w.set.grp; if (g && w.type !== "shape") cnt[g] = (cnt[g] || 0) + 1; });
       sc.free = fr.filter(w => { const g = w.set && w.set.grp; return !(g && w.type === "shape" && (!set || set.has(g)) && !cnt[g] && !w.set.locked); }); });
   }
-  function del() { if (multiOn()) return delMulti(); const inf = selInfo(); if (!inf) return; if (inf.kind === "column" && inf.sec.cols.length === 1) { toast("القسم يحتاج عموداً واحداً على الأقل — احذف القسم كله"); return; } const gk = inf.node && inf.node.set && inf.node.set.grp; inf.list.splice(inf.idx, 1); cleanOrphans(gk ? [gk] : null); afterEdit(null); }
+  /* القسم الحر الذي فرغ بعد الحذف يُحذف (يبقى فراغاً وإطاراً لا يُحدَّد)؛ لا تُمسّ أقسام الهيدر/الفوتر/الشريط */
+  function dropEmptySecs(secs) {
+    const P = E.page; if (!P || !secs || P.ad || P.sections.length < 2) return 0; let n = 0;
+    new Set(secs.filter(Boolean)).forEach(sc => { if (P.sections.length < 2 || !P.sections.includes(sc) || isHF(sc) || sc.set.tight || sc.set.kind !== "canvas") return;
+      const has = (sc.free || []).length + (sc.cols || []).reduce((a, c) => a + (c.widgets || []).length, 0); if (has) return; P.sections.splice(P.sections.indexOf(sc), 1); n++; });
+    if (n) toast("🗑 حُذف " + (n > 1 ? n + " أقسام فارغة" : "القسم الفارغ") + " — Ctrl+Z للتراجع"); return n;
+  }
+  function del() { if (multiOn()) return delMulti(); const inf = selInfo(); if (!inf) return; if (inf.kind === "column" && inf.sec.cols.length === 1) { toast("القسم يحتاج عموداً واحداً على الأقل — احذف القسم كله"); return; } const gk = inf.node && inf.node.set && inf.node.set.grp; inf.list.splice(inf.idx, 1); cleanOrphans(gk ? [gk] : null); if (inf.kind === "widget") dropEmptySecs([inf.sec]); afterEdit(null); }
   function addCol(sec, at) { const c = PB.mkC([]); if (at == null) sec.cols.push(c); else sec.cols.splice(at, 0, c); if (sec.set.kind !== "grid") sec.cols.forEach(x => { if (x.set.w) delete x.set.w; }); afterEdit(c.id); }
   /* مرتبة الطبقات: أمام/خلف نسبةً لبقية عناصر القسم */
   const zList = sec => (sec.free || []).map((w, i) => [w, i]).sort((x, y) => (Number(x[0].set.zi) || 0) - (Number(y[0].set.zi) || 0) || x[1] - y[1]).map(x => x[0]);
@@ -2296,7 +2309,17 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   /* بلا أقسام: القماش يكبر تلقائياً ليتسع لأسفل عنصر حر (لا مقبض لتحجيم القسم) */
   /* ارتفاع عنصر حر: الفعلي المقيس للنص/العنوان بارتفاع تلقائي (للجهاز الحالي فقط) وإلا fh المحفوظ */
   function freeH(sec, w, dev) { if (dev === E.dev && (["text", "heading"].includes(w.type) || (w.type === "html" && w.set.src !== "orig" && /<script|<style|<link/i.test(String(w.set.code || "")))) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; }
+  /* ربط العنصر بما فوقه (الفجوة 3 مم): إن تغيّر ارتفاع «الإطار البنفسجي» لما فوقه (تكبير/تصغير/تمدّد النص) يتبعه العنصر بالفرق نفسه، إلا إن حُرِّك يدوياً بعدها (يُفكّ الربط) */
+  function setStk(w, sec, anchorId) { const a = anchorId && (sec.free || []).find(q => q.id === anchorId); if (a && a !== w) w.set.stk = { id: anchorId, h: Math.round(freeH(sec, a, "d")) }; else delete w.set.stk; }
+  function applyStack(sec) {
+    if (E.dev !== "d" || !sec.free) return; const fyf = w => Number(eff(w.set, "fy", "d")) || 0;
+    const sh = {};      // الإزاحة المطبَّقة على كل عنصر في هذه الدورة (السلسلة: ما تحت العنصر المُزاح يُزاح معه)
+    sec.free.filter(w => w.set.stk).sort((x, y) => fyf(x) - fyf(y)).forEach(w => { const st = w.set.stk, a = sec.free.find(q => q.id === st.id); if (!a) { delete w.set.stk; return; }
+      const h = Math.round(freeH(sec, a, "d")), d = (h - (Number(st.h) || h)) + (sh[a.id] || 0); st.h = h; if (Math.abs(d) >= 1) { setR(w.set, "fy", "d", Math.max(0, fyf(w) + d)); sh[w.id] = d; } });
+  }
+  function resyncStk(sec, a) { (sec.free || []).forEach(w => { if (w.set.stk && w.set.stk.id === a.id) w.set.stk.h = Math.round(freeH(sec, a, "d")); }); }
   function growCanvas(sec) {
+    if (sec.set.kind === "canvas") applyStack(sec);
     if (!FREE_ONLY || sec.set.kind !== "canvas" || E.page.ad) return; const dev = E.dev;      // لوحة التصميم بمقاس ثابت: لا تكبر مع العناصر
     const hOf = w => freeH(sec, w, dev);
     const tight = !!sec.set.tight, bot = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))), need = tight ? bot : bot + 40, cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
@@ -2318,7 +2341,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (x == null && y == null && !E.page.ad) {      // العنصر الجديد (بالنقر) يدخل مباشرة تحت آخر عنصر في الصفحة بفجوة ثابتة ومحاذٍ لآخر عنصر غير شكل
       const f0 = sec.free || [], bOf = q => (Number(eff(q.set, "fy", "d")) || 0) + freeH(sec, q, "d"); let lb = -1, ln = null, lnb = -1;
       f0.forEach(q => { const b = bOf(q); if (b > lb) lb = b; if (q.type !== "shape" && b > lnb) { lnb = b; ln = q; } });
-      if (lb >= 0) { x = ln ? (Number(eff(ln.set, "fx", "d")) || 6) : 6; y = lb + GAP_D; }
+      if (lb >= 0) { x = ln ? (Number(eff(ln.set, "fx", "d")) || 6) : 6; y = lb + GAP_D; if (ln && lnb >= lb - 1) { const lk = ln; init = (i0 => w => { if (i0) i0(w); setStk(w, sec, lk.id); })(init); } }
     }
     if (x == null && y == null) { const ref = selInfo() || (E.last ? find(E.last) : null); if (ref && ref.kind === "widget" && ref.free && ref.sec === sec) { x = Number(eff(ref.set, "fx", "d")) || 6; y = (Number(eff(ref.set, "fy", "d")) || 0) + (Number(eff(ref.set, "fh", "d")) || 0) + 18; } }      // تحت آخر عنصر مفتوح
     const fr = sec.free || [], bottom = fr.reduce((m, q) => Math.max(m, (Number(eff(q.set, "fy", "d")) || 0) + (Number(eff(q.set, "fh", "d")) || 0)), 0);
@@ -2729,7 +2752,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (!E.drag.dim) { if (E.drag.stk) E.drag.dim = { w: 18, h: 180 }; else { const m = PB.mkFree(E.drag.add, 0, 0, 1); E.drag.dim = { w: Number(m.set.fwd && m.set.fwd.d) || 30, h: Number(m.set.fh && m.set.fh.d) || 100 }; } }
       const w = E.drag.dim.w / 100 * cr.width, h = E.drag.dim.h * u; if (!E.drag.pts || E.drag.pts.id !== tg.sec.id) E.drag.pts = { id: tg.sec.id, p: snapPts(null, cont) };
       const mg = magnetBox(e.clientX - cr.left, e.clientY - cr.top, w, h, E.drag.pts.p, GAP_D * u);
-      E.drag.mag = { sec: tg.sec, px: Math.max(0, Math.round(mg.x / cr.width * 1000) / 10), py: Math.max(0, Math.round(mg.y / u)), wPct: E.drag.dim.w, hd: E.drag.dim.h, push: !!mg.pushY };
+      E.drag.mag = { sec: tg.sec, px: Math.max(0, Math.round(mg.x / cr.width * 1000) / 10), py: Math.max(0, Math.round(mg.y / u)), wPct: E.drag.dim.w, hd: E.drag.dim.h, push: !!mg.pushY, below: mg.below };
       d.style.top = (cr.top + mg.y + sy - 2) + "px"; d.style.left = (cr.left + mg.x) + "px"; d.style.width = w + "px"; drawGuides(mg.guides, cr);
       document.querySelectorAll(".pbx-ghost").forEach(n => n.remove()); { const oo = ovlOrigin(), gh = document.createElement("div"); gh.className = "pbx-ghost"; gh.style.cssText = `left:${oo.ox + (cr.left + mg.x) * oo.s}px;top:${oo.oy + (cr.top + mg.y) * oo.s}px;width:${w * oo.s}px;height:${h * oo.s}px`; $("pbx-ovl").appendChild(gh); }      // مستطيل بحجم العنصر الحقيقي يبيّن مكانه ومقاسه قبل الإفلات
     }
@@ -2744,7 +2767,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (dr.dflt) { addDefault(dr.dflt, tg.at); return; }
     if (dr.move) { const q = find(dr.move); if (q && q.kind === "section") { const list = E.page.sections, from = list.indexOf(q.node); list.splice(from, 1); list.splice(Math.min(tg.at, list.length), 0, q.node); afterEdit(q.node.id); return; } }
     if (tg.type === "free") {
-      if (dr.add) { addFree(dr.add, tg.sec, fx, fy, null, true); return; }
+      if (dr.add) { addFree(dr.add, tg.sec, fx, fy, mg && mg.below ? w => setStk(w, tg.sec, mg.below) : null, true); return; }
       if (dr.move) { const inf = find(dr.move); if (inf && inf.kind === "widget" && !inf.free) { E.sel = inf.node.id; const secBak = tg.sec; toggleFree(); const nw = find(dr.move); if (nw && nw.sec !== secBak) { nw.list.splice(nw.idx, 1); (secBak.free = secBak.free || []).push(nw.node); } const w2 = find(dr.move); if (w2) { setR(w2.set, "fx", E.dev, Math.max(0, Math.round(tg.px))); setR(w2.set, "fy", E.dev, Math.max(0, Math.round(tg.py))); afterEdit(dr.move); } } return; }
     }
     if (dr.add) { addWidget(dr.add, tg.col, tg.at); return; }
@@ -2817,7 +2840,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
     let moved = false, xfer = null; E._ghp = null;
     dragTrack(e, "move", (dx, dy, ev) => {
-      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return; moved = true; if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return; if (!moved) st.forEach(q => { delete q.i.set.stk; }); moved = true; if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
       const pt = ptrFrame(ev), tsec = oneSec ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } xfer = ghostMove({ tsec, U: U0, pt, grab: { x: U0.l - px0, y: U0.t - py0 }, ev, ex: ids }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
@@ -2846,7 +2869,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function delMulti() {
     const L = selIds().map(find).filter(Boolean), ok = L.filter(i => !isLocked(i)); if (!ok.length) { toast("🔒 العناصر المحدّدة مقفلة"); return; }
-    const gks = ok.map(i => i.node && i.node.set && i.node.set.grp).filter(Boolean); ok.forEach(i => { const k = i.list.indexOf(i.node); if (k >= 0) i.list.splice(k, 1); }); cleanOrphans(gks); E.nextLabel = "حذف " + ok.length + " عناصر"; afterEdit(null); toastUndo("🗑 حُذف " + ok.length + " عناصر" + (ok.length < L.length ? " (تُركت المقفلة)" : ""));
+    const gks = ok.map(i => i.node && i.node.set && i.node.set.grp).filter(Boolean); ok.forEach(i => { const k = i.list.indexOf(i.node); if (k >= 0) i.list.splice(k, 1); }); cleanOrphans(gks); dropEmptySecs(ok.map(i => i.sec)); E.nextLabel = "حذف " + ok.length + " عناصر"; afterEdit(null); toastUndo("🗑 حُذف " + ok.length + " عناصر" + (ok.length < L.length ? " (تُركت المقفلة)" : ""));
   }
   function groupSel() {
     const L = selIds().map(find).filter(Boolean); if (L.length < 2) { toast("حدّد عنصرين أو أكثر لربطهم"); return; } const g = "g" + uid(); L.forEach(i => { i.set.grp = g; });
@@ -2975,7 +2998,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     c.set.zi = (Number(c.set.zi) || 0) + 1; inf.list.splice(inf.idx + 1, 0, c); afterEdit(c.id); toast(axis === "h" ? "↔ أُنشئت نسخة متناظرة أفقياً" : "↕ أُنشئت نسخة متناظرة عمودياً");
   }
   function nudge(dx, dy) {
-    const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec);
+    const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec); delete inf.set.stk;
     const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, u = uOf(inf.sec, { width: cw });
     setR(inf.set, "fx", E.dev, Math.round(((Number(eff(inf.set, "fx", E.dev)) || 0) + dx / cw * 100) * 10) / 10); setR(inf.set, "fy", E.dev, Math.round((Number(eff(inf.set, "fy", E.dev)) || 0) + dy / u));
     if (E.dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, E.dev)); });
@@ -3027,7 +3050,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (d[k]) d[k]();
   }
   function nudge(dx, dy) {
-    const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec);
+    const inf = selInfo(); if (!inf || !inf.free) return; ensureMobile(inf.sec); delete inf.set.stk;
     const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, u = uOf(inf.sec, { width: cw });
     setR(inf.set, "fx", E.dev, Math.round(((Number(eff(inf.set, "fx", E.dev)) || 0) + dx / cw * 100) * 10) / 10); setR(inf.set, "fy", E.dev, Math.round((Number(eff(inf.set, "fy", E.dev)) || 0) + dy / u));
     if (E.dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, E.dev)); });
@@ -3424,7 +3447,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { drawGuides, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
