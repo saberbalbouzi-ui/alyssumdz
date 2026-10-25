@@ -574,5 +574,16 @@ ${isA || el.querySelector(":scope > a") ? "" : ""}${isA ? `<label class="pe-l">�
     if (!rt._ped) { rt._ped = true; rt.addEventListener("click", onClick, true); rt.addEventListener("dblclick", onDbl, true); rt.addEventListener("mouseover", onOver); }
     if (sel) { if (!isOrig(sel.wid)) hide(); else mark(); }
   }
-  return { after, hide, select };
+  /* قائمة الزر الأيمن على عنصر داخل كتلة أصلية: حذف/تكرار/تحريك/إخفاء لهذا العنصر وحده (يُرجع null خارج الكتل فتظهر قائمة العنصر المعتادة) */
+  function menu(e) {
+    const x = target(e); if (!x || x.t.closest("[contenteditable=true]")) return null; const el = pick(x.t, x.r); if (!el) return null;
+    const path = pathOf(el, x.r); select(x.wid, path);
+    const tag = el.tagName.toLowerCase(), move = d => { const last = sel.path[sel.path.length - 1]; let moved = false; mutate(n => { const ks = kidsOf(n.parentElement), j = ks.indexOf(n) + d; if (j < 0 || j >= ks.length) return; d < 0 ? ks[j].before(n) : ks[j].after(n); moved = true; }, true); if (moved) sel.path = sel.path.slice(0, -1).concat(last + d); mark(); show(); };
+    return [["🗑", "حذف هذا العنصر (" + tag + ")", () => { const p = sel.path.slice(); mutate(n => { n.remove(); }, true); sel.path = p.slice(0, -1); if (!p.length) return hide(); mark(); show(); toast("🗑 حُذف العنصر (Ctrl+Z للتراجع)"); }, "", 1],
+      ["⧉", "تكرار", () => { mutate(n => { const cl = n.cloneNode(true); cl.removeAttribute("id"); cl.querySelectorAll("[id]").forEach(q => q.removeAttribute("id")); n.after(cl); }, true); sel.path = sel.path.slice(0, -1).concat(sel.path[sel.path.length - 1] + 1); mark(); show(); }],
+      ["▲", "تحريك لأعلى", () => move(-1)], ["▼", "تحريك لأسفل", () => move(1)],
+      ["👁", "إخفاء", () => { mutate(n => n.style.setProperty("display", "none"), true); show(); }], "-",
+      ["⬆", "تحديد العنصر الأب", () => { if (sel.path.length) { sel.path = sel.path.slice(0, -1); mark(); show(); } }]];
+  }
+  return { after, hide, select, menu };
 })();

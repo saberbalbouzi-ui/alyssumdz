@@ -895,6 +895,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
   function showCtx(e) {
     if (e.target.closest && e.target.closest("[contenteditable=true]")) { hideCtx(); return; }      // أثناء تحرير نص: تظهر قائمة المتصفح الأصلية (نسخ/قص/لصق للنص المحدَّد) لا قائمة العنصر
     const wEl = e.target.closest('[data-kind="widget"]'); hideCtx();
+    { const pm = typeof PBEd !== "undefined" && PBEd.menu ? PBEd.menu(e) : null; if (pm) { e.preventDefault(); const f1 = $("pbx-fw").getBoundingClientRect(), k1 = E.scale; return openCtx(f1.left + e.clientX * k1, f1.top + e.clientY * k1, null, pm); } }      // عنصر داخل كتلة أصلية: قائمة حذف/تكرار/تحريك له وحده
     if (!wEl) { const se = e.target.closest && e.target.closest(".pb-sec"), si = se && find(se.dataset.pb); if (si && si.kind === "section" && (FREE_ONLY || si.set.bgImg)) { e.preventDefault(); const f1 = $("pbx-fw").getBoundingClientRect(), k = E.scale; if (E.page.ad) return openAdBgMenu(f1.left + e.clientX * k, f1.top + e.clientY * k, si.node); openBgMenu(f1.left + e.clientX * k, f1.top + e.clientY * k, si.node); } return; }
     e.preventDefault(); if (E.sel !== wEl.dataset.pb && !selIds().includes(wEl.dataset.pb)) select(wEl.dataset.pb);
     const f0 = $("pbx-fw").getBoundingClientRect(), s = E.scale; if (selIds().length > 1) return openMultiCtx(f0.left + e.clientX * s, f0.top + e.clientY * s);
