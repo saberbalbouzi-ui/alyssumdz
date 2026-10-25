@@ -493,6 +493,7 @@ const PBEd = (() => {
   function hide() { sel = null; if (root) root.querySelectorAll(".pbed-sel,.pbed-hv").forEach(x => x.classList.remove("pbed-sel", "pbed-hv")); if (panel) { panel.remove(); panel = null; } }
   const colorRow = (k, lbl, val, def) => `<div class="pe-f"><span>${lbl}</span><div class="pe-c"><input type="color" data-k="${k}" value="${/^#[0-9a-f]{6}$/i.test(val || def) ? (val || def) : "#000000"}"><button type="button" data-clr="${k}" title="إرجاع الافتراضي">افتراضي</button><i>${val || "—"}</i></div></div>`;
   function show() {
+    return;      // لوحة «العنصر المحدد» العائمة أُلغيت بطلب صاحب المتجر (تبقى إعدادات العنصر العادية؛ التحديد والقائمة اليمنى ونقرتان للنص كما هي)
     if (!sel) return; const c = codeDom(sel.wid); const el = c && resolve(c.tpl, sel.path); if (!el) return hide();
     const sv = k => mob ? mobGet(el, c.tpl, kebab(k)) : el.style[k];
     const ce = canvasEl(), cs = ce ? ce.ownerDocument.defaultView.getComputedStyle(ce) : null, tag = el.tagName;
