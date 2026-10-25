@@ -973,7 +973,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     setTimeout(() => document.addEventListener("pointerdown", away, true), 0);
   }
   /* تحويل قسم عادي (أعمدة) إلى قسم حرّ: كل عنصر يُثبَّت بموضعه الفعلي، وخلفية كل عمود (البطاقة الخضراء) تصير شكلاً مستقلاً قابلاً للتعديل ومربوطاً بعناصره (grp) فيتحرك معها */
-  function flowToFree(sec) {
+  function flowToFree(sec, quiet) {
     if (!sec || sec.set.kind === "canvas") return toast("القسم حرّ أصلاً");
     if (E.dev !== "d") return toast("حوّل إلى عرض المكتب أولاً ثم كرّر الأمر");
     const d = $("pbx-frame") && $("pbx-frame").contentDocument, se = d && d.querySelector('[data-pb="' + sec.id + '"]'); if (!se) return;
@@ -995,7 +995,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     });
     ["gap", "pad", "layout", "cw", "mh", "va"].forEach(k => delete sec.set[k]);
     Object.assign(sec.set, { kind: "canvas", scaled: true, dw: W, cw: { d: W }, layout: "full", mh: { d: Math.ceil(sr.height) }, pad: { d: [0, 0, 0, 0] } });
-    sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
+    sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; if (quiet) { E.covered = null; renderCanvas(); return; } afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
   }
   /* وضع «صفحة هبوط»: يحذف الشريط العلوي والهيدر والفوتر (أقسام الموقع العامة) ويُلغي الترويسة/التذييل البسيطين؛ إلغاؤه يعيدها بأماكنها */
   const isHF = sec => sec.grp === "top" || sec.grp === "bot" || [].concat(...(sec.cols || []).map(c => c.widgets || []), sec.free || []).some(w => /^(shdr|sbar|sfoot)$/.test(w.type));
@@ -2025,12 +2025,20 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const id = inf.node.id, dev = E.dev; if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
     let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
-    const u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top; let moved = false, dropCol = null, ptr = null; const origCol = lazy && inf.col ? inf.col.id : null;
+    let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null; const origCol = lazy && inf.col ? inf.col.id : null;
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
-      if (!conv) { conv = true; E.sel = id; toggleFree(); inf = find(id); ensureMobile(inf.sec); pts = snapPts(inf, fdoc.querySelector(`[data-pb="${id}"]`).closest(".pb-in")); cr = pts.cr; }
+      if (!conv) {
+        conv = true; E.sel = id;
+        const wasFlow = inf.sec.set.kind !== "canvas" && E.dev === "d";
+        if (wasFlow) flowToFree(inf.sec, true);      // السحب الأول يحوّل القسم كله إلى عناصر حرة (البطاقة الخضراء تصير شكلاً مرتبطاً بعناصرها فتتحرك معها بدل أن تبقى خلفية عالقة)
+        if (wasFlow && inf.sec.set.kind === "canvas") {
+          inf = find(id); const el2 = fdoc.querySelector(`[data-pb="${id}"]`), r2 = layoutRect(el2); pts = snapPts(inf, el2.closest(".pb-in")); cr = pts.cr; u = uOf(inf.sec, cr); X0 = r2.left - cr.left; Y0 = r2.top - cr.top;
+          const g = inf.set.grp; peers = g ? (inf.sec.free || []).filter(w => w !== inf.node && w.set.grp === g).map(w => ({ w, fx: Number(eff(w.set, "fx", "d")) || 0, fy: Number(eff(w.set, "fy", "d")) || 0 })) : [];
+        } else { toggleFree(); inf = find(id); ensureMobile(inf.sec); pts = snapPts(inf, fdoc.querySelector(`[data-pb="${id}"]`).closest(".pb-in")); cr = pts.cr; }
+      }
       if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }                       // Shift = حركة في محور واحد
       let X = X0 + dx, Y = Y0 + dy, guides = [];
       if (E.snap && (copy || !ev.altKey)) { const sn = snapBox(X, Y, r0.width, r0.height, pts); X = sn.x; Y = sn.y; guides = sn.guides; }
@@ -2038,6 +2046,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (pzS) { X = pzS.x; Y = pzS.y; guides = []; }
       setR(inf.set, "fx", dev, pzS ? Math.round(pzS.fx * 1000) / 1000 : Math.round(X / cr.width * 1000) / 10); setR(inf.set, "fy", dev, pzS ? Math.round(pzS.fy * 1000) / 1000 : Math.round(Y / u)); growCanvas(inf.sec);
       if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, dev)); });
+      if (peers.length) { const ddx = (X - X0) / cr.width * 100, ddy = (Y - Y0) / u; peers.forEach(q => { setR(q.w.set, "fx", "d", Math.round((q.fx + ddx) * 10) / 10); setR(q.w.set, "fy", "d", Math.round(q.fy + ddy)); }); }      // أعضاء المجموعة (خلفية البطاقة وبقية عناصرها) تتحرك معه
       renderCanvas(); positionOverlay(); drawGuides(guides, pts.cr);
       ptr = { x: px0 + dx, y: py0 + dy }; let col = fdoc.elementsFromPoint(ptr.x, ptr.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);       // العمود تحت المؤشر
       if (FREE_ONLY) col = null;
