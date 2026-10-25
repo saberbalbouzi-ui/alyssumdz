@@ -110,3 +110,11 @@ html:is(.glass,.white) body #cr-top.out:not(#_){background:linear-gradient(180de
 .cr-coin b{font-weight:900;direction:ltr;unicode-bidi:isolate}.cr-coin .cr-coin-i{width:1.15em;height:1.15em;flex:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
 html.white body .cr-rem .cr-pill:not(#_){color:#6b4600;background:rgba(255,201,40,.3);border-color:#d99a00}
 html.white body .cr-rem:not(#_){color:#1e293b}
+/* v1.89.537: بطاقات القائمة والمجموعات النشطة = ليموني مسطّح بنص داكن (بدل الأخضر الزيتوني) */
+html:is(.glass,.white) body .nav-btn.on:not(#_),html:is(.glass,.white) body .nav-groups .ng.on:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;color:var(--lime-ink)!important;border-color:transparent!important;box-shadow:none!important;text-shadow:none!important}
+html:is(.glass,.white) body .nav-btn.on:not(#_) .nav-txt b,html:is(.glass,.white) body .nav-btn.on:not(#_) .nav-txt small,html:is(.glass,.white) body .nav-groups .ng.on:not(#_) span:not(.ng-ic){color:var(--lime-ink)!important}
+html:is(.glass,.white) body .nav-btn.on:not(#_) .nav-ic,html:is(.glass,.white) body .nav-groups .ng.on:not(#_) .ng-ic{background:rgba(31,33,35,.12)!important;border-color:rgba(31,33,35,.25)!important;color:var(--lime-ink)!important}
+html:is(.glass,.white) body .nav-btn.on:not(#_) svg,html:is(.glass,.white) body .nav-groups .ng.on:not(#_) svg{color:var(--lime-ink)!important;stroke:currentColor}
+html:is(.glass,.white) body #theme-sw button.on:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;color:var(--lime-ink)!important;box-shadow:none!important}
+html:is(.glass,.white) body #theme-sw button.on:not(#_) svg{color:var(--lime-ink)!important}
+html:is(.glass,.white) body .ah-btn:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;color:var(--lime-ink)!important;border:0!important;box-shadow:none!important}
