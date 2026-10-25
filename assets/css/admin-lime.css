@@ -162,3 +162,8 @@ html:is(.glass,.white) body .ig-modes button.on:not(#_):active,
 html:is(.glass,.white) body .tab-seg button.on:not(#_):active{transform:translateY(3px)}
 html:is(.glass,.white) body #tl-inst .ti-act button.gray:not(#_){background:rgba(255,255,255,.1)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;box-shadow:none!important}
 html.white body #tl-inst .ti-act button.gray:not(#_){background:#eef1f6!important;color:#1f2123!important;border-color:#d2d9e3!important}
+
+/* v1.89.547: شرح البطاقة النشطة الليمونية (نص أبيض كان لا يظهر) + حقل فلتر الصفحات */
+html:is(.glass,.white) body :is(.ig-modes,.np-t) button.on small:not(#_){color:rgba(31,33,35,.78)!important}
+html:is(.glass,.white) body #pb-q:not(#_){background:rgba(255,255,255,.08)!important;color:inherit!important;border:1px solid rgba(255,255,255,.25)!important}
+html.white body #pb-q:not(#_){background:#fff!important;border-color:#cfd6e0!important}
