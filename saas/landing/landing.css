@@ -11,12 +11,15 @@ a{color:inherit}img{max-width:100%;display:block}
 .top nav{display:flex;gap:1.3rem;margin-inline-start:1rem;font-size:.92rem;color:var(--mu)}.top nav a{text-decoration:none}.top nav a:hover{color:#fff}
 .top .sp{flex:1}
 /* أزرار زجاجية منتفخة بنص أبيض */
-.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.72rem 1.5rem;border-radius:14px;font:inherit;font-weight:800;text-decoration:none;color:#fff;cursor:pointer;border:1px solid rgba(var(--ac-rgb),.6);background:linear-gradient(180deg,rgba(var(--ac-rgb),.34),rgba(var(--ac-rgb),.12));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 10px rgba(0,0,0,.28),0 6px 18px rgba(0,0,0,.28);backdrop-filter:blur(8px);transition:transform .15s,background .15s}
-.btn:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(var(--ac-rgb),.5),rgba(var(--ac-rgb),.2))}
-.btn.ghost{border-color:var(--ln);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05))}
-.band:not(.dk) .btn{border-color:rgba(23,63,53,.9);background:linear-gradient(180deg,rgba(44,107,28,.92),rgba(23,63,53,.96));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -6px 10px rgba(0,0,0,.25),0 6px 16px rgba(16,36,27,.25)}
-.band:not(.dk) .btn:hover{background:linear-gradient(180deg,rgba(60,140,36,.95),rgba(23,63,53,.96))}
-.btn.lg{padding:.95rem 2.2rem;font-size:1.12rem}.btn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:.72rem 1.5rem;border-radius:14px;font:inherit;font-weight:800;text-decoration:none;color:#1f2123;cursor:pointer;border:0;background:linear-gradient(180deg,#effe17,#e2fe17);box-shadow:none;transition:transform .15s,filter .15s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.04)}
+.btn:active{transform:translateY(3px)}
+.btn.ghost{color:#fff;border:1px solid var(--ln);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.05))}
+.btn.ghost svg{stroke:#fff}
+.band:not(.dk) .btn{color:#1f2123;border:0;background:linear-gradient(180deg,#effe17,#e2fe17);box-shadow:none}
+.band:not(.dk) .btn.ghost{color:#10241b;border:1px solid #d4dcd6;background:#eef1ee}
+.band:not(.dk) .btn:hover{filter:brightness(1.04)}
+.btn.lg{padding:.95rem 2.2rem;font-size:1.12rem}.btn svg{width:18px;height:18px;stroke:#1f2123;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 /* الهيرو */
 .hero{background:radial-gradient(900px 480px at 15% 20%,rgba(var(--ac-rgb),.14),transparent 60%),radial-gradient(800px 500px at 90% 0,#134a36,transparent 60%),var(--bg);padding:3.2rem 0 3.6rem}
 .hero .w{display:grid;grid-template-columns:1.05fr 1fr;gap:2.4rem;align-items:center}

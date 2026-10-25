@@ -122,3 +122,43 @@ html:is(.glass,.white) body .ah-btn:not(#_){background:linear-gradient(180deg,va
 html:is(.glass,.white) body .sw input:checked+i:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;border-color:transparent!important}
 html:is(.glass,.white) body .app-cfg .ap-s.on:not(#_){color:var(--lime-ink)!important;background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;border-color:transparent!important}
 html.glass body .app-cfg .ap-sec>b:not(#_){color:var(--lime-lo)!important}
+
+/* v1.89.542: كل الأزرار الخضراء المتبقية (نوافذ القوالب والمعاينة والتثبيت وتبويبات الإعدادات النشطة) = ليموني مسطّح */
+html:is(.glass,.white) body #tl-inst .ti-act button:not(.gray):not(#_),
+html:is(.glass,.white) body #tl-lib .tl-act button.small:not(#_),
+html:is(.glass,.white) body #tl-lib .tl-c button.small:not(#_),
+html:is(.glass,.white) body #tl-view .tv-top button.small:not(.gray):not(#_),
+html:is(.glass,.white) body #ig-body .action-bar button.small:not(.gray):not(.warn):not(.danger):not(.red):not(#_),
+html:is(.glass,.white) body .spv-bar button.inst:not(#_),
+html:is(.glass,.white) body .spv-bar button.edit:not(#_),
+html:is(.glass,.white) body .ap-tabs button.on:not(#_),
+html:is(.glass,.white) body #tl-lib .tl-fl button.on:not(#_),
+html:is(.glass,.white) body button[data-itab].on:not(#_),
+html:is(.glass,.white) body .ig-modes button.on:not(#_),
+html:is(.glass,.white) body .tab-seg button.on:not(#_){background:linear-gradient(180deg,var(--lime-hi),var(--lime-lo))!important;color:var(--lime-ink)!important;border:0!important;border-radius:14px!important;font-weight:900;text-shadow:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html:is(.glass,.white) body #tl-inst .ti-act button:not(.gray):not(#_):hover,
+html:is(.glass,.white) body #tl-lib .tl-act button.small:not(#_):hover,
+html:is(.glass,.white) body #tl-lib .tl-c button.small:not(#_):hover,
+html:is(.glass,.white) body #tl-view .tv-top button.small:not(.gray):not(#_):hover,
+html:is(.glass,.white) body #ig-body .action-bar button.small:not(.gray):not(.warn):not(.danger):not(.red):not(#_):hover,
+html:is(.glass,.white) body .spv-bar button.inst:not(#_):hover,
+html:is(.glass,.white) body .spv-bar button.edit:not(#_):hover,
+html:is(.glass,.white) body .ap-tabs button.on:not(#_):hover,
+html:is(.glass,.white) body #tl-lib .tl-fl button.on:not(#_):hover,
+html:is(.glass,.white) body button[data-itab].on:not(#_):hover,
+html:is(.glass,.white) body .ig-modes button.on:not(#_):hover,
+html:is(.glass,.white) body .tab-seg button.on:not(#_):hover{transform:translateY(-2px);filter:brightness(1.05)}
+html:is(.glass,.white) body #tl-inst .ti-act button:not(.gray):not(#_):active,
+html:is(.glass,.white) body #tl-lib .tl-act button.small:not(#_):active,
+html:is(.glass,.white) body #tl-lib .tl-c button.small:not(#_):active,
+html:is(.glass,.white) body #tl-view .tv-top button.small:not(.gray):not(#_):active,
+html:is(.glass,.white) body #ig-body .action-bar button.small:not(.gray):not(.warn):not(.danger):not(.red):not(#_):active,
+html:is(.glass,.white) body .spv-bar button.inst:not(#_):active,
+html:is(.glass,.white) body .spv-bar button.edit:not(#_):active,
+html:is(.glass,.white) body .ap-tabs button.on:not(#_):active,
+html:is(.glass,.white) body #tl-lib .tl-fl button.on:not(#_):active,
+html:is(.glass,.white) body button[data-itab].on:not(#_):active,
+html:is(.glass,.white) body .ig-modes button.on:not(#_):active,
+html:is(.glass,.white) body .tab-seg button.on:not(#_):active{transform:translateY(3px)}
+html:is(.glass,.white) body #tl-inst .ti-act button.gray:not(#_){background:rgba(255,255,255,.1)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important;box-shadow:none!important}
+html.white body #tl-inst .ti-act button.gray:not(#_){background:#eef1f6!important;color:#1f2123!important;border-color:#d2d9e3!important}
