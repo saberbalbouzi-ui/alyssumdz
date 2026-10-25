@@ -271,7 +271,8 @@ ${o.direct ? `<button data-m="restore" style="${btn}background:#fbe9e7;color:#b3
       if (m === "copy") {
         const s = document.getElementById("pbc-slug").value.trim().toLowerCase();
         if (!/^[a-z0-9][a-z0-9-]{1,60}$/.test(s)) return toast("الرابط: حروف لاتينية صغيرة وأرقام وشرطات (حرفان على الأقل)");
-        bg.remove(); P.slug = s; delete P.origin; PBApp.E.isNew = true; return PBApp.publish("lp");
+        bg.remove(); P.slug = s; delete P.origin; PBApp.E.isNew = true; PBApp.stripHF(P); P.header = false; P.footer = false; P.landing = true;      // نسخة جديدة = صفحة هبوط مستقلة: بلا هيدر ولا فوتر ولا شريط علوي
+        return PBApp.publish("lp");
       }
       bg.remove();
       if (m === "direct") return PBApp.publish("direct");

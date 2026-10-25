@@ -7,7 +7,9 @@
 .pb-sec p,.pb-sec .pb-t p{color:#c5dccd!important}
 .pb-sec a{color:#bef264}
 /* بطاقات زجاجية داكنة */
-.pb-colin,.pbox,.offer,.total-box,.cod-note,.dtype,.lp-card,.pb-tbc,.pb-card,.card,.order-form,.pb-order,#pb-order,.form-card,.box{
+.pb-colin{
+  background:linear-gradient(145deg,rgba(12,54,29,.88),rgba(3,16,9,.94));border:1px solid rgba(134,239,172,.28);border-radius:20px;
+  box-shadow:0 18px 44px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14);color:#ecfdf5;backdrop-filter:blur(16px)}.pbox,.offer,.total-box,.cod-note,.dtype,.lp-card,.pb-tbc,.pb-card,.card,.order-form,.pb-order,#pb-order,.form-card,.box{
   background:linear-gradient(145deg,rgba(12,54,29,.88),rgba(3,16,9,.94))!important;border:1px solid rgba(134,239,172,.28)!important;border-radius:20px;
   box-shadow:0 18px 44px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.14)!important;color:#ecfdf5!important;backdrop-filter:blur(16px)}
 .pb-tbc{border-radius:999px!important;background:rgba(21,128,61,.2)!important;border-color:rgba(134,239,172,.4)!important;color:#d9f99d!important;box-shadow:none!important}

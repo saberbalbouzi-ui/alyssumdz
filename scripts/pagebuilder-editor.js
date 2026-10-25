@@ -531,6 +531,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
 <div class="pbx-f" style="display:flex;gap:.4rem;flex-wrap:wrap"><button type="button" class="pbx-btn" style="flex:1;background:#173f35;color:#fff;border:0;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.publish()">💾 حفظ ونشر</button><button type="button" class="pbx-btn" style="flex:1;background:#f3f1ea;border:1px solid #d9d2c3;border-radius:8px;padding:.5rem;cursor:pointer;font-family:inherit;font-weight:800" onclick="PBApp.dupCurrent()">⧉ نسخ الصفحة</button></div>
 <div class="pbx-f"><label>لون خلفية الصفحة</label><input type="color" value="${esc(P.bg || "#ffffff")}" oninput="PBApp.meta('bg',this.value)"></div>
 <div class="pbx-f"><label>الخط</label><select onchange="PBApp.meta('ff',this.value)">${PB.F_FONT.slice(0, 3).concat(PB.F_FONT.slice(4)).map(o => `<option value="${esc(o[0])}"${P.ff === o[0] ? " selected" : ""}>${o[1]}</option>`).join("")}</select></div>
+${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type="checkbox" ${P.landing ? "checked" : ""} onchange="PBApp.landingMode(this.checked)"> صفحة هبوط — بلا هيدر ولا فوتر ولا شريط علوي</label></div>`}
 <div class="pbx-f"><label><input type="checkbox" ${P.header ? "checked" : ""} onchange="PBApp.meta('header',this.checked);PBApp.renderCanvas()"> ترويسة بسيطة (الشعار + واتساب)</label></div>
 <div class="pbx-f"><label><input type="checkbox" ${P.footer ? "checked" : ""} onchange="PBApp.meta('footer',this.checked)"> تذييل بسيط</label></div>
 <div class="pbx-f"><label>CSS مخصص للصفحة كلها</label><textarea dir="ltr" oninput="PBApp.meta('css',this.value)">${esc(P.css)}</textarea></div>`;
@@ -911,6 +912,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
       ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
+      !canvas ? ["⤢", "تحويل القسم إلى عناصر حرة", () => flowToFree(inf.sec)] : null,
       img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], img ? ["↔", "بعرض الصفحة (بنسبة الصورة)", () => fitWidth(inf)] : null,
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
       img && canvas && !EDB() && !WEAKDEV() ? "-" : null, img && canvas && !EDB() && !WEAKDEV() ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null,
@@ -970,6 +972,40 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
     const away = ev => { if (!d.isConnected) return document.removeEventListener("pointerdown", away, true); if (!d.contains(ev.target)) { d.remove(); document.removeEventListener("pointerdown", away, true); } };
     setTimeout(() => document.addEventListener("pointerdown", away, true), 0);
   }
+  /* تحويل قسم عادي (أعمدة) إلى قسم حرّ: كل عنصر يُثبَّت بموضعه الفعلي، وخلفية كل عمود (البطاقة الخضراء) تصير شكلاً مستقلاً قابلاً للتعديل ومربوطاً بعناصره (grp) فيتحرك معها */
+  function flowToFree(sec) {
+    if (!sec || sec.set.kind === "canvas") return toast("القسم حرّ أصلاً");
+    if (E.dev !== "d") return toast("حوّل إلى عرض المكتب أولاً ثم كرّر الأمر");
+    const d = $("pbx-frame") && $("pbx-frame").contentDocument, se = d && d.querySelector('[data-pb="' + sec.id + '"]'); if (!se) return;
+    const sr = se.getBoundingClientRect(), W = Math.round(sr.width), P = PB, r1 = v => Math.round(v * 10) / 10;
+    const rgb = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return null; const a = m[1].split(",").map(x => parseFloat(x)); const h = a.slice(0, 3).map(x => ("0" + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2)).join(""); return { c: "#" + h, o: a[3] == null || isNaN(a[3]) ? 1 : a[3] }; };
+    const free = [];
+    sec.cols.forEach(col => {
+      const g = "g" + P.uid(), cin = d.querySelector(".pb-col.x-" + col.id + ">.pb-colin"), items = [];
+      if (cin) { const cs = d.defaultView.getComputedStyle(cin), bi = cs.backgroundImage, bc = rgb(cs.backgroundColor), bd = parseFloat(cs.borderTopWidth) || 0, hasBg = (bi && bi !== "none") || (bc && bc.o > 0.01);
+        if (hasBg || bd > 0) { const r = cin.getBoundingClientRect(), sh = P.mkFree("shape", 0, 0, 1), st = (bi && bi !== "none" ? (bi.match(/rgba?\([^)]+\)/g) || []) : []).map(rgb).filter(Boolean);
+          Object.assign(sh.set, { shape: "rect", keep: false, outline: false, fill: (st[0] || bc || { c: "#0c361d" }).c, rx: r1(Math.min(50, (parseFloat(cs.borderTopLeftRadius) || 0) / Math.max(1, r.width) * 100)), ry: r1(Math.min(50, (parseFloat(cs.borderTopLeftRadius) || 0) / Math.max(1, r.height) * 100)), fx: { d: r1((r.left - sr.left) / W * 100) }, fy: { d: Math.round(r.top - sr.top) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.round(r.height) }, zi: 1, grp: g, sh: "lg" });
+          if (st.length > 1) sh.set.fgr = { t: "linear", a: 145, s: st.slice(0, 3).map((x, i, a) => ({ c: x.c, o: x.o, p: Math.round(i / (a.length - 1) * 100) })) };
+          if (bd > 0) { const b = rgb(cs.borderTopColor); sh.set.stroke = b ? b.c : "#86efac"; sh.set.sw = Math.max(1, Math.round(bd)); }
+          items.push(sh); } }
+      col.widgets.forEach((w, i) => { const el = d.querySelector('[data-pb="' + w.id + '"]'); if (!el) return; const r = el.getBoundingClientRect(); if (r.width < 1 && r.height < 1) return;
+        ["w", "mh", "mar", "al"].forEach(k => delete w.set[k]);
+        Object.assign(w.set, { fx: { d: r1((r.left - sr.left) / W * 100) }, fy: { d: Math.round(r.top - sr.top) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.round(r.height) }, zi: 2 + i, grp: g }); items.push(w); });
+      free.push(...items);
+    });
+    ["gap", "pad", "layout", "cw", "mh", "va"].forEach(k => delete sec.set[k]);
+    Object.assign(sec.set, { kind: "canvas", scaled: true, dw: W, cw: { d: W }, layout: "full", mh: { d: Math.ceil(sr.height) }, pad: { d: [0, 0, 0, 0] } });
+    sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
+  }
+  /* وضع «صفحة هبوط»: يحذف الشريط العلوي والهيدر والفوتر (أقسام الموقع العامة) ويُلغي الترويسة/التذييل البسيطين؛ إلغاؤه يعيدها بأماكنها */
+  const isHF = sec => sec.grp === "top" || sec.grp === "bot" || [].concat(...(sec.cols || []).map(c => c.widgets || []), sec.free || []).some(w => /^(shdr|sbar|sfoot)$/.test(w.type));
+  function stripHF(P) { const rem = []; P.sections = (P.sections || []).filter((sc, i) => { if (isHF(sc)) { rem.push({ i, s: sc }); return false; } return true; }); return rem; }
+  function landingMode(on) {
+    const P = E.page; if (!P || P.origin) return;
+    if (on) { const rem = stripHF(P); P.hfStash = { rem, header: P.header, footer: P.footer }; P.header = false; P.footer = false; P.landing = true; E.nextLabel = "صفحة هبوط: حذف الهيدر والفوتر"; }
+    else { const st = P.hfStash; if (st) { st.rem.slice().sort((a, b) => a.i - b.i).forEach(r => P.sections.splice(Math.min(r.i, P.sections.length), 0, r.s)); P.header = st.header; P.footer = st.footer; } delete P.hfStash; P.landing = false; E.nextLabel = "إعادة الهيدر والفوتر"; }
+    E.dirty = true; E.sel = null; E.multi = []; afterEdit(null); toast(on ? "✅ صارت صفحة هبوط: حُذف الهيدر والفوتر" : "↩ أُعيد الهيدر والفوتر");
+  }
   function openBgMenu(x, y, sec) {
     const set = sec.set, has = !!set.bgImg, lk = !!set.bgLocked, canvas = set.kind === "canvas";
     const items = [[ico("image", 16), has ? "الخلفية: تعديلها في الإعدادات" : "إضافة الخلفية (لون / صورة / تدرّج)", () => openSecBg(sec)], "-",
@@ -978,6 +1014,7 @@ ${P.product && !P.origin ? `<div class="pbx-f"><label style="display:flex;gap:.5
       ["➕", "إضافة قسم", () => addSecAfter(sec), "Ctrl+Shift+Enter"], ["⧉", "تكرار القسم", () => dupSec(sec)],
       has ? ["🗑", "حذف الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); ["bgImg", "bgSize", "bgPos", "bgOrig"].forEach(k => delete set[k]); E.nextLabel = "حذف الخلفية"; afterEdit(); }, "Del", 1, 0, lk] : null, "-",
       has ? [lk ? "🔓" : "🔒", lk ? "فتح قفل الخلفية" : "قفل الخلفية", () => { if (lk) delete set.bgLocked; else set.bgLocked = true; afterEdit(); toast(lk ? "🔓 فُتحت الخلفية" : "🔒 الخلفية مقفلة"); }] : null,
+      !canvas ? ["⤢", "تحويل القسم إلى عناصر حرة (تتحرك البطاقات مع محتواها)", () => flowToFree(sec)] : null,
       canvas ? ["✂", "قصّ الصفحة عند آخر عنصر", () => { trimLong(sec); toast("✂ قُصّت الصفحة عند آخر عنصر"); }] : null,
       canvas ? ["↕", "تغيير حجم الصفحة (الارتفاع)", () => { const v = Number(prompt("ارتفاع الصفحة بالبكسل:", Number(eff(set, "mh", E.dev)) || 520)); if (v >= 100) { setR(set, "mh", E.dev, Math.round(v)); afterEdit(); } }] : null,
       ["#", "الدلائل", null, "", 0, [[E.nogrid ? "▦" : "▧", E.nogrid ? "إظهار الشبكة" : "إخفاء الشبكة", () => setGrid(!!E.nogrid)], ["🧲", E.snap ? "إيقاف الالتصاق" : "تفعيل الالتصاق", toggleSnap]]],
@@ -3216,7 +3253,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { landingMode, stripHF, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

@@ -112,12 +112,14 @@ const PB = (() => {
     if (s.bg) bgd += `background-color:${s.bg};`;
     const gl = gradCss(s.gr) || ((s.grad1 && s.grad2) ? `linear-gradient(${num(s.gradAng) ?? 135}deg,${s.grad1},${s.grad2})` : "");
     if (gl) bgd += `background-image:${gl};`;
+    if (s.bg && !gl && !s.bgImg) bgd += "background-image:none;";      // اللون المختار يعلو تدرّج القالب الافتراضي (خلفية البطاقة قابلة للتعديل)
     if (s.bgImg) { bgd += `background-image:${gl ? gl + "," : ""}url('${/^(https?:|data:|\/)/.test(s.bgImg) ? s.bgImg : (css.base || "") + s.bgImg}');background-size:${s.bgSize || "cover"};background-position:${s.bgPos || "center"};background-repeat:no-repeat;`; if (s.bgFixed) bgd += "background-attachment:fixed;"; }
     /* الإطار: سماكة عامة أو لكل جهة، نمط، لون بشفافية، وتدوير كل زاوية */
     const bws = Array.isArray(s.bws) ? s.bws : [], bwA = [0, 1, 2, 3].map(i => (bws[i] === "" || bws[i] == null || isNaN(Number(bws[i]))) ? (num(s.bw) || 0) : Number(bws[i]));
+    if (s.bw !== undefined && s.bw !== "" && num(s.bw) === 0 && !(Array.isArray(s.bws) && s.bws.some(x => num(x) > 0))) d += "border-width:0;";      // «سماكة 0» تلغي حدّ القالب
     /* الإطار يزيد للخارج ولا يغيّر حجم العنصر: outline للسماكة الموحّدة، وطبقة ::before خارجية عند اختلاف سماكة الجهات */
     if (bwA.some(x => x > 0)) { const col = hexA(s.bc || "#ddd", s.bco), st = s.bs || "solid";
-      if (bwA.every(x => x === bwA[0])) d += `outline:${bwA[0]}px ${st} ${col};outline-offset:0;`;
+      if (bwA.every(x => x === bwA[0])) d += `outline:${bwA[0]}px ${st} ${col};outline-offset:0;${s.bc ? "border-color:" + col + ";" : ""}`;
       else { d += "position:relative;"; css.d.push(`${sel}::before{content:"";position:absolute;inset:${bwA.map(x => -x + "px").join(" ")};border-style:${st};border-color:${col};border-width:${bwA.map(x => x + "px").join(" ")};border-radius:inherit;pointer-events:none}`); } }
     if (Array.isArray(s.radc) && s.radc.some(x => x !== "" && x != null && !isNaN(Number(x)))) d += `border-radius:${[0, 1, 2, 3].map(i => (num(s.radc[i]) || 0) + "px").join(" ")}!important;`;
     /* الخلفية في طبقة مستقلة (::after) عند ضبط شفافية الخلفية أو تدوير زواياها: لا تتأثر بها الحدود ولا المحتوى */
@@ -221,7 +223,7 @@ const PB = (() => {
         defs = g.t === "radial" || g.t === "conic" ? `<radialGradient id="${gid}" cx="${num(g.x) ?? 50}%" cy="${num(g.y) ?? 50}%" r="70%">${stops}</radialGradient>` : `<linearGradient id="${gid}" gradientTransform="rotate(${(num(g.a) ?? 135) - 90} .5 .5)" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient>`; fill = `url(#${gid})`; } }
     const lw = sw || ((kind === "stroke" || kind === "line") ? 4 : 0), attrs = ` fill="${fill}"${(stroke && lw) ? ` stroke="${esc(stroke)}" stroke-width="${lw}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"${s.dash ? ` stroke-dasharray="${esc(s.dash)}"` : ""}` : ""}${sh[5] ? ` fill-rule="${sh[5]}"` : ""}`;
     let el;
-    if (kind === "rect") el = `<rect x="${lw ? 1 : 0}" y="${lw ? 1 : 0}" width="${lw ? 98 : 100}" height="${lw ? 98 : 100}" rx="${num(s.rx) || 0}" ry="${num(s.rx) || 0}"${attrs}/>`;
+    if (kind === "rect") el = `<rect x="${lw ? 1 : 0}" y="${lw ? 1 : 0}" width="${lw ? 98 : 100}" height="${lw ? 98 : 100}" rx="${num(s.rx) || 0}" ry="${s.ry != null && s.ry !== "" ? (num(s.ry) || 0) : (num(s.rx) || 0)}"${attrs}/>`;
     else if (kind === "ellipse") el = `<ellipse cx="50" cy="50" rx="${lw ? 49 : 50}" ry="${lw ? 49 : 50}"${attrs}/>`;
     else if (kind === "poly") el = sh[2].includes("|") ? sh[2].split("|").map(p => `<polygon points="${p}"${attrs}/>`).join("") : `<polygon points="${sh[2]}"${attrs}/>`;
     else if (kind === "line") { const [x1, y1, x2, y2] = sh[2].split(","); el = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${attrs.replace(/fill="[^"]*"/, 'fill="none"')} vector-effect="non-scaling-stroke"/>`; }
