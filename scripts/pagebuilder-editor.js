@@ -2345,7 +2345,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     }
     if (x == null && y == null) { const ref = selInfo() || (E.last ? find(E.last) : null); if (ref && ref.kind === "widget" && ref.free && ref.sec === sec) { x = Number(eff(ref.set, "fx", "d")) || 6; y = (Number(eff(ref.set, "fy", "d")) || 0) + (Number(eff(ref.set, "fh", "d")) || 0) + 18; } }      // تحت آخر عنصر مفتوح
     const fr = sec.free || [], bottom = fr.reduce((m, q) => Math.max(m, (Number(eff(q.set, "fy", "d")) || 0) + (Number(eff(q.set, "fh", "d")) || 0)), 0);
-    const w = PB.mkFree(type, adFull ? 0 : x != null ? x : 6, adFull ? 0 : y != null ? y : (fr.length ? bottom + 20 : 24), adFull ? 1 : Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1);
+    const w = PB.mkFree(type, adFull ? 0 : x != null ? x : 6, adFull ? 0 : y != null ? y : (fr.length ? bottom + 20 : sec.set.fresh ? GAP_D : 24), adFull ? 1 : Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1);
     if (adFull) { const H = Number(eff(sec.set, "mh", "d")) || E.page.ad.h; w.set.fx = { d: 0 }; w.set.fy = { d: 0 }; w.set.fwd = { d: 100 }; w.set.fh = { d: Math.round(H) }; w.set.fit = "cover"; w.set.hauto = false; fr.forEach(q => { if ((Number(q.set.zi) || 0) < 2) q.set.zi = 2; }); }      // الصورة خلف العناصر الموجودة
     if (init) init(w);
     if (adFull && w.set.src) setTimeout(() => fitAdImage(w.id), 0);      // مقاس الصفحة: الصورة تُلائم الصفحة بجانبها الأطول (لا قصّ)
@@ -2420,7 +2420,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   /* وجهة الإضافة: قسم حر/عنصر حر ⟵ طبقة حرة، وإلا عمود */
   function target() {
     if (FREE_ONLY) {      // كل عنصر جديد حر: في آخر قسم محتوى بالصفحة (تحت آخر عنصر)، وإلا قسم العنصر المحدد، وإلا آخر قماش، وإلا قماش جديد
-      if (!E.page.ad) { const ls = lengthSec(); if (ls && ls.set.kind === "canvas") return { sec: ls }; }
+      if (!E.page.ad) { const ls = lengthSec(); if (ls && ls.set.kind === "canvas") return { sec: ls };
+        if (ls) { const ns = TPLS.canvas.f(); ns.set.mh = { d: 60 }; ns.set.fresh = true; E.page.sections.splice(E.page.sections.indexOf(ls) + 1, 0, ns); return { sec: ns }; } }      // آخر قسم في الصفحة ليس حراً: يُضاف بعده قسم حر جديد (قبل الفوتر) فيدخل العنصر تحته مباشرة
       const inf = selInfo() || (E.last ? find(E.last) : null); if (inf && inf.sec) return { sec: inf.sec };
       let sec = (E.page.sections.find(x => x.id === E.hs && x.set.kind === "canvas")) || E.page.sections.slice().reverse().find(x => x.set.kind === "canvas"); if (!sec) { sec = TPLS.canvas.f(); E.page.sections.push(sec); }
       return { sec };
