@@ -711,8 +711,8 @@ html body .aly-buybar .bb-btn:hover{background:var(--ds-glass-g2)!important;tran
 /* ───── v1.89.534 — أزرار المتجر الأساسية بالليموني (نفس لون اللوحة): وجه متدرّج + حافة سفلية 3D + نص داكن ───── */
 html body .btn-order,html body .btn-wa,html body .btn-gold,html body .cta,html body .bb-btn,html body .lp-btn-gold,html body .lp-btn-green,html body .cart-btn,html body #chips .chip.active,html body #chips .chip:hover,html body .aly-buybar .bb-btn{
   background:linear-gradient(180deg,#effe17,#e2fe17)!important;background-image:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important;border:0!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 4px 0 #91ac10,0 8px 14px -4px rgba(0,0,0,.4)!important;-webkit-backdrop-filter:none;backdrop-filter:none;font-weight:900}
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55)!important;-webkit-backdrop-filter:none;backdrop-filter:none;font-weight:900}
 html body .btn-order:hover,html body .btn-wa:hover,html body .btn-gold:hover,html body .cta:hover,html body .bb-btn:hover,html body .lp-btn-gold:hover,html body .lp-btn-green:hover,html body .cart-btn:hover,html body .aly-buybar .bb-btn:hover{
-  background:linear-gradient(180deg,#f6ff4d,#e9ff2e)!important;background-image:linear-gradient(180deg,#f6ff4d,#e9ff2e)!important;transform:translateY(-2px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 6px 0 #91ac10,0 12px 18px -4px rgba(0,0,0,.45)!important}
-html body .btn-order:active,html body .btn-wa:active,html body .btn-gold:active,html body .cta:active,html body .bb-btn:active,html body .lp-btn-gold:active,html body .lp-btn-green:active{transform:translateY(3px)!important;box-shadow:0 1px 0 #91ac10!important}
+  background:linear-gradient(180deg,#f6ff4d,#e9ff2e)!important;background-image:linear-gradient(180deg,#f6ff4d,#e9ff2e)!important;transform:translateY(-2px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)!important}
+html body .btn-order:active,html body .btn-wa:active,html body .btn-gold:active,html body .cta:active,html body .bb-btn:active,html body .lp-btn-gold:active,html body .lp-btn-green:active{transform:translateY(3px)!important;box-shadow:none!important}
 html body .btn-order svg,html body .btn-wa svg,html body .btn-gold svg,html body .cta svg,html body .bb-btn svg,html body .cart-btn svg{color:#1f2123!important;stroke:#1f2123!important}

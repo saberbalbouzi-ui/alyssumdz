@@ -11,11 +11,11 @@ window.SeoBox = (() => {
 .sbx textarea{min-height:76px;resize:vertical}.sbx select option{background:#10231b;color:#fff}
 .sbx .sbx-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}.sbx .sbx-bar i{display:block;height:100%;width:0;border-radius:99px;background:#f59e0b;transition:width .2s,background .2s}
 .sbx .sbx-bar.ok i{background:#22c55e}.sbx .sbx-cnt{display:flex;justify-content:space-between;gap:.5rem;font-size:.78rem;color:#f5b04a}.sbx .sbx-cnt.ok{color:#d4ff4d}
-.sbx .sbx-help{padding:.55rem .7rem;border-radius:10px;border:1px dashed rgba(198,254,23,.4);color:#c7d9ce;font-size:.82rem;line-height:1.7}
+.sbx .sbx-help{padding:.55rem .7rem;border-radius:10px;border:1px dashed rgba(226,254,23,.4);color:#c7d9ce;font-size:.82rem;line-height:1.7}
 .sbx .sbx-chk{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.8rem}.sbx .sbx-chk span{color:#f5b04a}.sbx .sbx-chk span.ok{color:#d4ff4d}
 .sbx .sbx-img{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.sbx .sbx-th{width:86px;height:58px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06) center/cover no-repeat;display:grid;place-items:center;font-size:1.3rem;flex:none}
 .sbx .sbx-btn{padding:.45rem .8rem;border-radius:11px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -4px 8px rgba(0,0,0,.2),0 4px 10px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:transform .18s,background .18s}
-.sbx .sbx-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.16)}.sbx .sbx-btn.g{background:rgba(74,222,128,.2);border-color:rgba(198,254,23,.5)}
+.sbx .sbx-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.16)}.sbx .sbx-btn.g{background:rgba(74,222,128,.2);border-color:rgba(226,254,23,.5)}
 .sbx .sbx-pv{padding:.7rem .8rem;border-radius:12px;background:#fff;color:#202124;direction:rtl}.sbx .sbx-pv .u{font-size:.74rem;color:#188038;direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sbx .sbx-pv .t{font-size:1.02rem;color:#1a0dab;font-weight:600;line-height:1.35}.sbx .sbx-pv .d{font-size:.8rem;color:#4d5156;line-height:1.5}
 .sbx .sbx-sec{font-weight:900;color:#d4ff4d}`;
   function css() { if (!$("sbx-css")) { const s = document.createElement("style"); s.id = "sbx-css"; s.textContent = CSS; document.head.appendChild(s); } }

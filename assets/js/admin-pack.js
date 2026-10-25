@@ -71,7 +71,7 @@ const AdminPack = (() => {
   }
   function scanCard() {
     const L = S.last, msg = !L ? "وجّه الماسح إلى باركود الوصل أو اكتب رقم التتبع/الطلب ثم Enter." :
-      L.st === "ok" ? '<b style="color:#86efac">✓ جُهِّز</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) + '<div class="hint">' + esc(parseItems(L.r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</div>' :
+      L.st === "ok" ? '<b style="color:#e2fe17">✓ جُهِّز</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) + '<div class="hint">' + esc(parseItems(L.r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</div>' :
       L.st === "dup" ? '<b style="color:#fbbf24">سبق تجهيزه</b> — ' + esc(L.r.id) + " · " + esc(L.r.name) :
       L.st === "fail" ? '<b style="color:#fca5a5">تعذّر الحفظ</b> — أعد المحاولة' : '<b style="color:#fca5a5">غير موجود في الطلبات المؤكَّدة/المرسَلة:</b> <span dir="ltr">' + esc(L.code) + "</span>";
     return '<div class="card" id="pk-scan-card"><b>📷 ماسح التجهيز</b><div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><input id="pk-scan" type="text" inputmode="none" autocomplete="off" placeholder="امسح الباركود أو اكتب الرقم ثم Enter" dir="ltr" style="flex:1;min-width:200px"><button type="button" class="small" data-pk="cam">' + (S.cam ? "⏹ إيقاف الكاميرا" : "📷 الكاميرا") + '</button></div>' +
@@ -90,7 +90,7 @@ const AdminPack = (() => {
   /* ── الواجهة ── */
   function css() {
     if ($("pk-css")) return; const st = document.createElement("style"); st.id = "pk-css";
-    st.textContent = "#pk .chip{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;font-weight:800;border:1px solid rgba(255,255,255,.25)}#pk .chip.ok{color:#d4ff4d;border-color:rgba(198,254,23,.5)}#pk .chip.td{color:#fcd34d;border-color:rgba(245,158,11,.5)}#pk td,#pk th{padding:.45rem .5rem;vertical-align:top;text-align:right}#pk .it{white-space:pre-line}#pk .tbw{overflow:auto}#pk .pl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;margin:.5rem 0}#pk .pl div{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem .6rem;border-radius:10px;background:rgba(255,255,255,.07)}#pk .pl b{font-size:1.1rem}";
+    st.textContent = "#pk .chip{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;font-weight:800;border:1px solid rgba(255,255,255,.25)}#pk .chip.ok{color:#d4ff4d;border-color:rgba(226,254,23,.5)}#pk .chip.td{color:#fcd34d;border-color:rgba(245,158,11,.5)}#pk td,#pk th{padding:.45rem .5rem;vertical-align:top;text-align:right}#pk .it{white-space:pre-line}#pk .tbw{overflow:auto}#pk .pl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;margin:.5rem 0}#pk .pl div{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem .6rem;border-radius:10px;background:rgba(255,255,255,.07)}#pk .pl b{font-size:1.1rem}";
     document.head.appendChild(st);
   }
   function draw() {

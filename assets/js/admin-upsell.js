@@ -107,7 +107,7 @@ const AdminUpsell = (() => {
   }
   function ruleStat(r) {
     const st = ruleStats((A() || {}).orders || [], [r])[0]; if (!st || !st.orders) return '<div style="margin-top:.3rem">لا طلبات بهذه القاعدة بعد (آخر 30 يوماً)</div>';
-    return '<div style="margin-top:.3rem">📈 آخر 30 يوماً: <b>' + st.orders + '</b> طلب · إيراد مضاف <b>' + fmt(st.rev) + '</b> · ' + (st.profit == null ? 'الربح غير محسوب (أضف سعر شراء المنتج)' : 'ربح تقديري <b style="color:' + (st.profit >= 0 ? "#86efac" : "#fca5a5") + '">' + fmt(st.profit) + '</b>') + '</div>';
+    return '<div style="margin-top:.3rem">📈 آخر 30 يوماً: <b>' + st.orders + '</b> طلب · إيراد مضاف <b>' + fmt(st.rev) + '</b> · ' + (st.profit == null ? 'الربح غير محسوب (أضف سعر شراء المنتج)' : 'ربح تقديري <b style="color:' + (st.profit >= 0 ? "#e2fe17" : "#fca5a5") + '">' + fmt(st.profit) + '</b>') + '</div>';
   }
   function ruleCard(r, i) {
     const P = ((A() && A().products) || []).filter(p => p.active !== false && p.slug !== "test"), cats = (A() && A().categories) || {}, f = (k, label, inner) => '<label class="fl"><span class="fl-t">' + label + '</span>' + inner + '</label>';

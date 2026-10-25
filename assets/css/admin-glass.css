@@ -7,9 +7,9 @@ html.glass{
   --g-bg:#000; --g-tx:#eef3f6; --g-mut:rgba(244,249,252,.9); --g-dim:rgba(244,249,252,.72);
   --g-surf:linear-gradient(155deg,rgba(70,170,80,.13),rgba(8,24,12,.55) 70%); --g-surf2:rgba(110,230,110,.1); --g-line:rgba(120,235,120,.2); --g-line2:rgba(150,255,150,.32);
   --g-smoke:rgba(10,30,16,.66);                       /* الأخضر القديم ← زجاج مدخَّن */
-  --g-mint:#c6fe17; --g-cyan:#3be6ff; --g-vio:#b79bff; --g-amber:#ffd45e; --g-rose:#ff5d82; --g-blue:#5aa8ff;
-  /* ألوان الحالات والتمييز: مصدر واحد — غيّر القيمة هنا فتتبدّل في اللوحة كلها. لا تكتب rgba(198,254,23,…) ثابتة؛ استعمل rgba(var(--g-mint-rgb),α) */
-  --g-mint-rgb:198,254,23; --g-mint-d-rgb:170,220,10; --g-mint-dd-rgb:150,200,10; --g-mint-l-rgb:215,255,90;
+  --g-mint:#e2fe17; --g-cyan:#3be6ff; --g-vio:#b79bff; --g-amber:#ffd45e; --g-rose:#ff5d82; --g-blue:#5aa8ff;
+  /* ألوان الحالات والتمييز: مصدر واحد — غيّر القيمة هنا فتتبدّل في اللوحة كلها. لا تكتب rgba(226,254,23,…) ثابتة؛ استعمل rgba(var(--g-mint-rgb),α) */
+  --g-mint-rgb:226,254,23; --g-mint-d-rgb:200,230,15; --g-mint-dd-rgb:175,205,10; --g-mint-l-rgb:239,254,90;
   --g-amber-rgb:255,212,94; --g-rose-rgb:255,93,130; --g-blue-rgb:90,168,255;
   --g-ok:var(--g-mint); --g-warn:var(--g-amber); --g-err:var(--g-rose); --g-info:var(--g-blue);
   --g-ok-rgb:var(--g-mint-rgb); --g-warn-rgb:var(--g-amber-rgb); --g-err-rgb:var(--g-rose-rgb); --g-info-rgb:var(--g-blue-rgb);
@@ -170,14 +170,14 @@ html.glass .card,html.glass .stat div,html.glass .side-nav,html.glass .top,html.
 }
 html.glass .card{border-radius:22px}
 /* بطاقات الإحصاء الملوّنة: كل بطاقة بلون زجاجي مختلف كما في التصميم المرجعي (أخضر، سماوي، ذهبي، بنفسجي) */
-html.glass .stat div{border-radius:20px;text-align:start;padding:1rem 1.1rem;--c:198,254,23;color:var(--g-mut);
+html.glass .stat div{border-radius:20px;text-align:start;padding:1rem 1.1rem;--c:226,254,23;color:var(--g-mut);
   background:var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.38),rgba(var(--c),.1) 62%,rgba(0,0,0,.3));
   border-color:rgba(var(--c),.55);
   box-shadow:var(--g-thick),var(--g-drop),0 0 26px rgba(var(--c),.16)}
 html.glass .stat div:nth-child(4n+2){--c:59,230,255}
 html.glass .stat div:nth-child(4n+3){--c:255,200,70}
 html.glass .stat div:nth-child(4n+4){--c:183,155,255}
-html.glass .stat b{color:#fff;font-size:1.55rem;text-shadow:0 0 16px rgba(var(--c,198,254,23),.5)}
+html.glass .stat b{color:#fff;font-size:1.55rem;text-shadow:0 0 16px rgba(var(--c,226,254,23),.5)}
 html.glass .stat span{color:rgba(255,255,255,.7)}
 html.glass .alert-card{background:var(--g-sheen),linear-gradient(150deg,rgba(var(--g-rose-rgb),.22),rgba(0,0,0,.35))!important;border-color:rgba(var(--g-rose-rgb),.6)!important}
 /* الأزرار الزجاجية أيضاً بسُمك */
@@ -267,7 +267,7 @@ html.glass .pbx-ach:hover{transform:translateY(-1px);background:linear-gradient(
 html.glass .pbx-ach.on{background:linear-gradient(135deg,rgba(var(--g-mint-rgb),.46),rgba(var(--g-mint-dd-rgb),.24))!important;color:#fff!important;border-color:rgba(170,255,150,.7)!important;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -2px 5px rgba(0,0,0,.2)}
 
 /* ───── effet cristal للبطاقات الملوّنة: وجوه ضوئية مائلة + لمعة علوية + توهّج داخلي بلون البطاقة + حافة بيضاء ───── */
-html.glass{--g-crystal:linear-gradient(115deg,rgba(255,255,255,0) 18%,rgba(255,255,255,.07) 23%,rgba(255,255,255,0) 29%,rgba(255,255,255,0) 52%,rgba(255,255,255,.04) 57%,rgba(255,255,255,0) 63%),radial-gradient(130px 50px at 16% 0%,rgba(255,255,255,.14),transparent 72%),radial-gradient(110px 90px at 100% 100%,rgba(var(--c,198,254,23),.14),transparent 72%)}
+html.glass{--g-crystal:linear-gradient(115deg,rgba(255,255,255,0) 18%,rgba(255,255,255,.07) 23%,rgba(255,255,255,0) 29%,rgba(255,255,255,0) 52%,rgba(255,255,255,.04) 57%,rgba(255,255,255,0) 63%),radial-gradient(130px 50px at 16% 0%,rgba(255,255,255,.14),transparent 72%),radial-gradient(110px 90px at 100% 100%,rgba(var(--c,226,254,23),.14),transparent 72%)}
 html.glass .stat div{background:var(--g-crystal),var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.34),rgba(var(--c),.09) 65%,rgba(0,0,0,.25))!important;-webkit-backdrop-filter:blur(16px) saturate(190%) brightness(1.08);backdrop-filter:blur(16px) saturate(190%) brightness(1.08);border-color:rgba(255,255,255,.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 8px rgba(var(--c),.14),0 10px 22px -6px rgba(0,0,0,.75)!important}
 html.glass .stat div:hover{background:var(--g-crystal),var(--g-sheen),linear-gradient(150deg,rgba(var(--c),.55),rgba(var(--c),.16) 65%,rgba(0,0,0,.25))!important}
 html.glass .nav-btn.on{background:var(--g-crystal),var(--g-sheen),linear-gradient(135deg,rgba(var(--g-mint-rgb),.38),rgba(var(--g-mint-rgb),.1))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -3px 8px rgba(var(--g-mint-rgb),.14),0 8px 18px -6px rgba(0,0,0,.7)!important}

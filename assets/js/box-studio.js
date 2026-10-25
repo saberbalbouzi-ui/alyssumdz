@@ -116,7 +116,7 @@ const BoxStudio = (() => {
 #bs .csb{width:32px;height:32px;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.28);cursor:pointer;position:relative;box-shadow:inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 5px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.3);transition:transform .15s,border-color .15s}
 #bs .csb i{position:absolute;inset:0;border-radius:50%;display:block}
 #bs .csb:hover{transform:translateY(-2px)}
-#bs .csb[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--g-mint-rgb,198,254,23),.35),inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 5px rgba(0,0,0,.3)}
+#bs .csb[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px rgba(var(--g-mint-rgb,226,254,23),.35),inset 0 2px 3px rgba(255,255,255,.4),inset 0 -3px 5px rgba(0,0,0,.3)}
 #bs .cpk{position:relative;width:34px;height:34px;border-radius:50%;background:conic-gradient(#f43f5e,#f59e0b,#eab308,#22c55e,#06b6d4,#3b82f6,#a855f7,#f43f5e);box-shadow:inset 0 2px 3px rgba(255,255,255,.4),0 2px 6px rgba(0,0,0,.3);display:inline-block;transition:transform .15s}
 #bs .cpk:hover{transform:translateY(-2px)}
 #bs .cpk input[type=color]{position:absolute;inset:0;width:100%;height:100%;opacity:0}
@@ -146,13 +146,13 @@ const BoxStudio = (() => {
 #bs .xf:before{content:"";position:absolute;left:50%;top:-30px;height:30px;border-left:1.5px solid var(--accent)}
 #bs .ctxm{position:absolute;pointer-events:auto;z-index:6;min-width:200px;padding:6px;border-radius:14px;background:rgba(10,26,19,.97);border:1px solid rgba(255,255,255,.2);box-shadow:0 12px 32px rgba(0,0,0,.5);backdrop-filter:blur(8px);direction:rtl;color:#fff}
 #bs .ctxm .it{display:flex;gap:10px;align-items:center;width:100%;padding:10px 12px;border:0;background:none;color:#fff;border-radius:10px;cursor:pointer;font-weight:600;font-size:13.5px;text-align:start}
-#bs .ctxm .it:hover{background:rgba(var(--g-mint-rgb,198,254,23),.16)}
+#bs .ctxm .it:hover{background:rgba(var(--g-mint-rgb,226,254,23),.16)}
 #bs .ctxm .it svg{width:18px;height:18px;flex:none}
 #bs .szp{padding:6px 8px 8px;min-width:250px}
 #bs .szp h4{margin:2px 0 8px;font-size:14px}
 #bs .szp .u{display:inline-flex;margin-bottom:10px;gap:0;border-radius:9px;overflow:hidden;border:1px solid rgba(255,255,255,.25)}
 #bs .szp .u button{padding:3px 14px;border:0;background:none;color:#fff;cursor:pointer;font-size:12px}
-#bs .szp .u button[aria-pressed=true]{background:rgba(var(--g-mint-rgb,198,254,23),.35);font-weight:700}
+#bs .szp .u button[aria-pressed=true]{background:rgba(var(--g-mint-rgb,226,254,23),.35);font-weight:700}
 #bs .szp .f3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
 #bs .szp label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;padding:5px;border-radius:10px;border:1px solid transparent}
 #bs .szp label.hi{background:rgba(139,92,246,.22);border-color:#8b5cf6}

@@ -85,7 +85,7 @@ const AdminYd = (() => {
 #yd-card .yd-chip:hover{transform:translateY(-2px)}
 #yd-card .yd-chip b{background:rgba(255,255,255,.18);border-radius:999px;padding:1px 9px;font-size:.8rem}
 #yd-card .yd-chip.g{background:rgba(170,220,10,.28);border-color:rgba(170,220,10,.6)}
-#yd-card .yd-chip.p{color:#d4ff4d;background:rgba(170,220,10,.16);border-color:#22c55e}#yd-card .yd-chip.p b{background:rgba(170,220,10,.3);color:#bbf7d0}
+#yd-card .yd-chip.p{color:#d4ff4d;background:rgba(170,220,10,.16);border-color:#22c55e}#yd-card .yd-chip.p b{background:rgba(170,220,10,.3);color:#e2fe17}
 #yd-card .yd-chip.y{color:#fde047;background:rgba(234,179,8,.16);border-color:#eab308}#yd-card .yd-chip.y b{background:rgba(234,179,8,.3);color:#fef08a}
 #yd-card .yd-chip.a{background:rgba(245,158,11,.28);border-color:rgba(245,158,11,.6)}
 #yd-card .yd-chip.r{background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.55)}

@@ -13,13 +13,13 @@ const AdminHand = (() => {
   function css() {
     if (document.getElementById("aly-hand-css")) return;
     const st = document.createElement("style"); st.id = "aly-hand-css";
-    st.textContent = `#aly-hand{position:fixed;left:0;top:0;width:46px;height:52px;z-index:100000;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 4px 8px rgba(0,0,0,.45)) drop-shadow(0 0 10px rgba(198,254,23,.75));will-change:transform}
+    st.textContent = `#aly-hand{position:fixed;left:0;top:0;width:46px;height:52px;z-index:100000;pointer-events:none;opacity:0;transition:opacity .25s;filter:drop-shadow(0 4px 8px rgba(0,0,0,.45)) drop-shadow(0 0 10px rgba(226,254,23,.75));will-change:transform}
 #aly-hand.on{opacity:1}
-#aly-hand.dot{width:34px;height:34px;filter:none}#aly-hand .aly-dot{display:block;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#bbf7d0,#22c55e 58%,#15803d);border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 7px rgba(198,254,23,.28),0 0 22px rgba(198,254,23,.95),0 4px 10px rgba(0,0,0,.4);transition:transform .12s;animation:alyd 1.4s ease-in-out infinite}
-#aly-hand.dot.press .aly-dot{transform:scale(.72)}@keyframes alyd{50%{box-shadow:0 0 0 12px rgba(198,254,23,.12),0 0 28px rgba(198,254,23,.7),0 4px 10px rgba(0,0,0,.4)}}#aly-hand svg{width:100%;height:100%;display:block;transform-origin:21px 3px;transition:transform .12s}#aly-hand.press svg{transform:scale(.82) translateY(3px)}
-.aly-ring{position:fixed;z-index:99999;pointer-events:none;border-radius:50%;border:3px solid rgba(198,254,23,.9);box-shadow:0 0 16px rgba(198,254,23,.7);transform:translate(-50%,-50%) scale(.2);opacity:.95;animation:alyr .6s ease-out forwards}
+#aly-hand.dot{width:34px;height:34px;filter:none}#aly-hand .aly-dot{display:block;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e2fe17,#22c55e 58%,#15803d);border:2px solid rgba(255,255,255,.9);box-shadow:0 0 0 7px rgba(226,254,23,.28),0 0 22px rgba(226,254,23,.95),0 4px 10px rgba(0,0,0,.4);transition:transform .12s;animation:alyd 1.4s ease-in-out infinite}
+#aly-hand.dot.press .aly-dot{transform:scale(.72)}@keyframes alyd{50%{box-shadow:0 0 0 12px rgba(226,254,23,.12),0 0 28px rgba(226,254,23,.7),0 4px 10px rgba(0,0,0,.4)}}#aly-hand svg{width:100%;height:100%;display:block;transform-origin:21px 3px;transition:transform .12s}#aly-hand.press svg{transform:scale(.82) translateY(3px)}
+.aly-ring{position:fixed;z-index:99999;pointer-events:none;border-radius:50%;border:3px solid rgba(226,254,23,.9);box-shadow:0 0 16px rgba(226,254,23,.7);transform:translate(-50%,-50%) scale(.2);opacity:.95;animation:alyr .6s ease-out forwards}
 @keyframes alyr{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
-.aly-hl{outline:3px solid rgba(198,254,23,.95)!important;outline-offset:3px;box-shadow:0 0 0 6px rgba(198,254,23,.28),0 0 22px rgba(198,254,23,.55)!important;transition:outline-color .2s,box-shadow .2s;border-radius:10px}
+.aly-hl{outline:3px solid rgba(226,254,23,.95)!important;outline-offset:3px;box-shadow:0 0 0 6px rgba(226,254,23,.28),0 0 22px rgba(226,254,23,.55)!important;transition:outline-color .2s,box-shadow .2s;border-radius:10px}
 .ah-panel.ah-dim{opacity:.1;pointer-events:none;transition:opacity .25s}#av-hud.ah-dim{opacity:.15;pointer-events:none}`;
     document.head.appendChild(st);
   }

@@ -327,7 +327,7 @@
     const bars = rows.map((r, i) => '<rect x="' + (pl + i * bw + bw * 0.15) + '" y="' + y(r.created) + '" width="' + (bw * 0.7) + '" height="' + (H - pb - y(r.created)) + '" rx="2" fill="#38bdf8"><title>' + r.d + ": " + r.created + ' طلب</title></rect>').join("");
     const pts = rows.map((r, i) => (pl + i * bw + bw / 2) + "," + y(r.resolved)).join(" ");
     const step = Math.ceil(n / 8), lab = rows.map((r, i) => i % step === 0 ? '<text x="' + (pl + i * bw + bw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + r.d.slice(5) + '</text>' : "").join("");
-    return '<svg class="ch" viewBox="0 0 ' + W + " " + H + '" direction="ltr">' + g + bars + '<polyline points="' + pts + '" fill="none" stroke="#86f06a" stroke-width="2.2"/>' + lab + '</svg><div class="lg"><span><i style="background:#38bdf8"></i>طلبات جديدة</span><span><i style="background:#86f06a"></i>طلبات محلولة</span></div>';
+    return '<svg class="ch" viewBox="0 0 ' + W + " " + H + '" direction="ltr">' + g + bars + '<polyline points="' + pts + '" fill="none" stroke="#e2fe17" stroke-width="2.2"/>' + lab + '</svg><div class="lg"><span><i style="background:#38bdf8"></i>طلبات جديدة</span><span><i style="background:#e2fe17"></i>طلبات محلولة</span></div>';
   }
   function weekChart(rows) {
     if (!rows || !rows.length) return ""; const W = 640, H = 130, n = rows.length, max = Math.max(1, ...rows.map(r => r.n)), bw = W / n;

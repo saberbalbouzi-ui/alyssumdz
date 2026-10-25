@@ -17,7 +17,7 @@ window.SaasShipping = (() => {
     } catch (e) { return { ok: false, j: { error: "network" } }; }
   }
   const ERR = { not_configured: "الخدمة غير مضبوطة بعد", unauthorized: "سجّل الدخول من جديد", network: "تعذّر الاتصال", path_not_allowed: "إجراء غير مسموح" };
-  const bar = (n, max) => { const p = max > 0 ? Math.min(100, Math.round(n * 100 / max)) : 0; return '<div style="height:6px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:4px"><div style="height:100%;width:' + p + '%;background:' + (p >= 90 ? "#f87171" : p >= 70 ? "#fbbf24" : "#4ade80") + '"></div></div>'; };
+  const bar = (n, max) => { const p = max > 0 ? Math.min(100, Math.round(n * 100 / max)) : 0; return '<div style="height:6px;border-radius:6px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:4px"><div style="height:100%;width:' + p + '%;background:' + (p >= 90 ? "#f87171" : p >= 70 ? "#fbbf24" : "#e2fe17") + '"></div></div>'; };
   async function load() {
     S.busy = true; draw();
     const [a, b, c] = await Promise.all([api("GET", "/admin/summary"), api("GET", "/admin/plans"), api("GET", "/admin/audit")]);

@@ -44,7 +44,7 @@ const AdminZones = (() => {
 #zn-card details{margin-top:8px;border:1px solid rgba(255,255,255,.16);border-radius:12px;background:rgba(255,255,255,.05)}#zn-card summary{cursor:pointer;padding:9px 12px;font-weight:800}
 #zn-card .zn-l{max-height:230px;overflow:auto;padding:8px 12px 10px;display:grid;gap:3px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));background:rgba(9,24,18,.985);border-top:1px solid rgba(255,255,255,.12);border-radius:0 0 12px 12px}
 #zn-card .zn-l label{display:flex;gap:6px;align-items:center;margin:0;font-size:.84rem;opacity:1}#zn-card .zn-l input{width:auto}#zn-card .zn-l label.off{opacity:.45}
-#zn-card .zn-tag{display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(198,254,23,.16);margin:2px;font-size:.78rem}#zn-card .zn-tag.rd{background:rgba(255,100,100,.18)}#zn-card .zn-tag button{border:0;background:transparent;color:inherit;cursor:pointer;margin-inline-start:4px}
+#zn-card .zn-tag{display:inline-block;padding:3px 10px;border-radius:999px;background:rgba(226,254,23,.16);margin:2px;font-size:.78rem}#zn-card .zn-tag.rd{background:rgba(255,100,100,.18)}#zn-card .zn-tag button{border:0;background:transparent;color:inherit;cursor:pointer;margin-inline-start:4px}
 #zn-card .zn-ws{margin-top:6px;font-size:.84rem;line-height:1.9;opacity:.92}#zn-card .zn-x{margin-top:10px;padding:10px 12px;border:1px solid rgba(255,120,120,.25);border-radius:12px;background:rgba(255,100,100,.06)}`;
     document.head.appendChild(st);
   }

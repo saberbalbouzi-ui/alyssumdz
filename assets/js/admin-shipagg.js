@@ -166,7 +166,7 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
     const pct = ph === "geo" ? Math.round((1 - left / Math.max(58, left || 1)) * 80) : ph === "meta" ? 85 : ph === "verify" ? 95 : 100;
     const lab = ph === "done" ? "اكتمل التجهيز" : "جارٍ التجهيز";
     return '<div style="margin:.6rem 0"><b>⚙️ نجهّز الربط مع الشركة</b><div class="hint">لحظات ويكون كل شيء جاهزاً.</div>' +
-      '<div style="height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:.5rem 0"><div style="height:100%;width:' + pct + '%;background:#34d399;transition:width .3s"></div></div><div class="hint">' + lab + ' (' + pct + '%)</div></div>';
+      '<div style="height:10px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:.5rem 0"><div style="height:100%;width:' + pct + '%;background:#e2fe17;transition:width .3s"></div></div><div class="hint">' + lab + ' (' + pct + '%)</div></div>';
   }
   /* يتابع المعايرة دفعةً بعد دفعة حتى تنتهي ويعرض تقدمها في `box`. يُرجع الملخّص النهائي (أو null عند الفشل). */
   async function calibrate(code, box, first, restart) {

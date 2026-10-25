@@ -115,7 +115,7 @@ const PageRater = (() => {
   }
   const S = { res: null, busy: false, msg: "", mode: "store", slug: "", url: "" };
   function ensure() { const tab = $("tab-imgtools"); if (!tab) return null; let c = $("pr-card"); if (!c) { c = document.createElement("div"); c.id = "pr-card"; c.className = "card"; tab.appendChild(c); } return c; }
-  const colr = s => s == null ? "#9aa" : s >= 8 ? "#86efac" : s >= 5 ? "#fcd34d" : "#fca5a5";
+  const colr = s => s == null ? "#9aa" : s >= 8 ? "#e2fe17" : s >= 5 ? "#fcd34d" : "#fca5a5";
   function draw() {
     const c = ensure(); if (!c) return; const prods = ((typeof Admin !== "undefined" && Admin.products) || []).filter(p => p && p.active !== false), r = S.res;
     c.innerHTML = `<style>#pr-card .pr-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:.5rem 0}#pr-card .pr-cat{border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:.7rem .9rem;margin:.5rem 0}#pr-card .pr-s{font-size:1.4rem;font-weight:900}#pr-card ul{margin:.3rem 0 0;padding-inline-start:1.1rem}</style>
