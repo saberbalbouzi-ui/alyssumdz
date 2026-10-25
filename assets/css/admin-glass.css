@@ -510,3 +510,15 @@ html.glass #pbed .pe-mob{background:rgba(var(--g-amber-rgb),.18)!important;color
 html.glass #pbed .pe-h code{color:var(--g-mint)!important;background:rgba(255,255,255,.08)!important}
 html.glass #pbx-insp textarea.pbx-code{font-family:ui-monospace,Consolas,monospace;font-size:12px;line-height:1.55;color:#e8fff0!important;background:rgba(0,0,0,.35)!important;border-color:rgba(var(--g-mint-rgb),.4)!important;tab-size:2;white-space:pre}
 html.glass #pbx-insp .pbx-hint2{font-size:.72rem;color:rgba(255,255,255,.75);margin-top:.3rem;line-height:1.6}
+
+/* v1.89.544: نافذة «بيانات المنتج» (#pbb-m، PBBind) كانت شفافة فيظهر محتوى الصفحة خلفها؛ سطح داكن معتم بنصوص وحقول مقروءة */
+html.glass #pbb-m{background:rgba(4,12,9,.78)!important}
+html.glass #pbb-m>div{background:#0b1f18!important;border:1px solid rgba(var(--g-mint-rgb),.5);color:#fff!important}
+html.glass #pbb-m h3,html.glass #pbb-m b{color:#fff!important}
+html.glass #pbb-m label{color:var(--g-mint)!important}
+html.glass #pbb-m p{color:rgba(255,255,255,.78)!important}
+html.glass #pbb-m input{background:rgba(255,255,255,.08)!important;color:#fff!important;border-color:rgba(255,255,255,.28)!important}
+html.glass #pbb-m button{background:rgba(255,255,255,.12)!important;color:#fff!important;border:1px solid rgba(255,255,255,.25)!important}
+html.glass #pbb-m [data-a=done]{background:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important;border:0!important}
+html.glass #pbb-m div[style*="f4efe6"]{background:rgba(255,255,255,.07)!important;color:rgba(255,255,255,.8)!important}
+html.glass #pbb-m div[style*="fff4e5"]{background:rgba(var(--g-amber-rgb),.2)!important;border-color:rgba(var(--g-amber-rgb),.5)!important;color:#fff!important}
