@@ -109,7 +109,7 @@ const root = path.join(__dirname, "..");
   });
   t("بعد تنفيذ المقاس: لا شريط تنفيذ/إلغاء ولا معاينة معلّقة", !ap.bar && !ap.pending && !ap.live, ap);
   t("مصدر معتم: الظل الافتراضي «بدون»", ap.shDef === "none", ap.shDef);
-  t("بعد التنفيذ يظهر «العودة للأصل» ويعيد الصورة الأصلية بلا معاينة ثم يختفي", ap.rvShown && ap.src1 !== ap.src0 && ap.src2 === ap.src0 && !ap.pend2 && !ap.bar3 && ap.rvHidden, ap);
+  t("بعد التنفيذ يظهر «استرجاع الصورة الأصلية» ويعيد الصورة الأصلية بلا معاينة ثم يختفي", ap.rvShown && ap.src1 !== ap.src0 && ap.src2 === ap.src0 && !ap.pend2 && !ap.bar3 && ap.rvHidden, ap);
   /* رصيد الأدوات: شارة أعلى اللوحة + شريحة التكلفة والمتبقي في نافذة الأداة ولوحتها، ورفض التنفيذ عند نفاد الرصيد */
   const cr = await p.evaluate(async () => {
     const o = {}; Credits.set(110, 110); o.badge = (document.getElementById("cr-top") || {}).textContent || "";

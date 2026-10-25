@@ -22,7 +22,7 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
     /* الواجهة */
     await PBApp.toolSession([await new Promise(z => cut.toBlob(z, "image/png"))], "st", "t"); await new Promise(z => setTimeout(z, 500)); const tb = document.querySelector('[data-stsub="txt"]'); out.hasTab = !!tb; if (tb) tb.click();
     await new Promise(z => setTimeout(z, 600)); out.ui = { hasTab: out.hasTab, ept: PBApp.E.ept, sc: PBApp.E.stScene, tabs: [...document.querySelectorAll("[data-imgs]")].length, all: !!document.querySelector('[data-st="applyall"]') };
-    out.noList = !document.querySelector("[data-allp]") && !document.querySelector('[data-st="allsel"]');
+    out.noList = !!document.querySelector("#pbst-all");
     return out;
   }).catch(e => ({ err: String(e && e.stack || e) }));
   console.log(JSON.stringify(r));
@@ -32,6 +32,6 @@ const { chromium } = require("playwright"); let n = 0; const fails = []; const o
   ok(r.saved.length === 2 && r.covers.every(c => /cover-x/.test(c)) && r.kept, "التطبيق على كل المنتجات: كل غلاف استُبدل والقديم محفوظ ضمن الصور", r);
   ok(/طُبّق النمط على 2/.test(r.last || ""), "ملخص النتيجة", r.last);
   ok(r.only && r.only.length === 1 && r.only[0] === "assets/img/a2" && /على 1 /.test(r.last2), "اختيار منتجات محدّدة: يُطبَّق على المختار فقط", [r.only, r.last2]);
-  ok(r.ui && r.ui.all && r.noList, "زر التطبيق على المنتجات بلا قائمة اختيار", [r.ui]);
+  ok(r.ui && r.ui.all && r.noList, "تطبيق على المنتجات ظاهر مع قائمة اختيار", [r.ui]);
   ok(!errs.length, "لا أخطاء صفحة", errs); console.log(fails.length ? "\n✗ " + fails.length + " فشل" : "\n✓ " + n + " فحصاً ناجحاً"); await b.close(); process.exit(fails.length ? 1 : 0);
 })();
