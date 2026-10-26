@@ -2013,7 +2013,7 @@ const PhoneDZ = {
   if(!/[?&]embed=1/.test(location.search)) return;
   document.documentElement.classList.add("pb-embed");
   const st = document.createElement("style");
-  st.textContent = "html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}";
+  st.textContent = "html.pb-embed,html.pb-embed body{overflow:hidden!important}html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}";
   document.head.appendChild(st);
   /* إعدادات نموذج الطلب القادمة من عنصر «نموذج الطلب» في مطوّر الصفحات (متغيّر oc): ألوان وعنوان ونص الزر */
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
