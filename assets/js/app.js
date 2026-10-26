@@ -2029,6 +2029,7 @@ const PhoneDZ = {
     if(bd) c += F+"{border:1px solid "+bd+"!important}";
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += F+"{border-radius:"+Math.max(0,Math.min(60,r))+"px!important}";
     if(Array.isArray(oc.x)){ const M = {cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
+    if(oc.w === "100") c += W+".frow{grid-template-columns:1fr!important}"; else if(oc.w === "50") c += "@media(min-width:561px){"+W+".frow{grid-template-columns:1fr 1fr!important}}";
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
     const txt = ()=>{ try{
       if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && h.textContent !== oc.t) h.textContent = String(oc.t); }
