@@ -818,7 +818,7 @@ const PB = (() => {
         { k: "stk", l: "زر طلب ثابت أسفل الشاشة (يظهر أثناء التمرير ويختفي عند ظهور النموذج)", t: "switch", tab: "c" }, { k: "stkt", l: "نص الزر الثابت", t: "text", tab: "c", showIf: ["stk", true] },
         { k: "fcm", l: "إظهار خانة البلدية", t: "switch", tab: "c" }, { k: "fdt", l: "إظهار اختيار نوع التوصيل (منزل / مكتب)", t: "switch", tab: "c" }, { k: "fcp", l: "إظهار خانة كود الخصم", t: "switch", tab: "c" }, { k: "fwa", l: "إظهار زر الطلب عبر واتساب", t: "switch", tab: "c" }, { k: "fnt", l: "إظهار ملاحظة الدفع عند الاستلام", t: "switch", tab: "c" }, { k: "fof", l: "إظهار خانة العروض (اختيار الكمية والسعر)", t: "switch", tab: "c" }, { k: "ofw", l: "عرض الخانات", t: "select", o: () => [["", "الأصلي"], ["50", "50% (خانتان في كل صف)"], ["100", "100% (خانة في كل صف)"]], tab: "c" },
         { k: "lnm", l: "عنوان خانة الاسم (فارغ = الأصلي)", t: "text", tab: "c" }, { k: "lph", l: "عنوان خانة الهاتف (فارغ = الأصلي)", t: "text", tab: "c" }, { k: "lwl", l: "عنوان خانة الولاية (فارغ = الأصلي)", t: "text", tab: "c" }, { k: "lcm", l: "عنوان خانة البلدية (فارغ = الأصلي)", t: "text", tab: "c", showIf: ["fcm", true] }, { k: "lcp", l: "نص خانة كود الخصم (فارغ = الأصلي)", t: "text", tab: "c", showIf: ["fcp", true] }, { k: "lwa", l: "نص زر واتساب (فارغ = الأصلي)", t: "text", tab: "c", showIf: ["fwa", true] }, { k: "lnt", l: "نص الملاحظة تحت الزر (فارغ = الأصلي)", t: "text", tab: "c", showIf: ["fnt", true] },
-        { k: "obg", l: "خلفية النموذج", t: "color", tab: "s" }, { k: "otc", l: "لون النص", t: "color", tab: "s" }, { k: "obd", l: "لون الحدود", t: "color", tab: "s" }, { k: "oac", l: "لون التمييز (الأزرار والخيار المختار)", t: "color", tab: "s" }, { k: "obt", l: "لون نص الأزرار", t: "color", tab: "s" }, { k: "orad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
+        { k: "obg", l: "خلفية النموذج", t: "color", tab: "s" }, { k: "otc", l: "لون النص", t: "color", tab: "s" }, { k: "obd", l: "لون الحدود", t: "color", tab: "s" }, { k: "oac", l: "لون التمييز (الأزرار والخيار المختار)", t: "color", tab: "s" }, { k: "obt", l: "لون نص الأزرار", t: "color", tab: "s" }, { k: "ofb", l: "خلفية الحقول (الاسم، الهاتف، الولاية…)", t: "color", tab: "s" }, { k: "otb", l: "لون إطار صندوق الإجمالي", t: "color", tab: "s" }, { k: "orad", l: "تدوير الزوايا (px)", t: "num", r: 1, min: 0, max: 60, tab: "s" }],
       html: (s, id, ctx) => {
         const p = (ctx.products || []).find(x => x.slug === s.prod);
         if (ctx.edit) {      // محاكاة أمينة لمكوّنات النموذج الحقيقي (عروض، حقول، ولاية/بلدية، توصيل، كوبون، ملخص، زر) — تُملأ ببيانات المنتج
@@ -833,7 +833,7 @@ const PB = (() => {
       },
       css: (c, sel, s) => {
         const ok = v => /^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v || "").trim()) ? String(v).trim() : "";
-        const bg = ok(s.obg), tc = ok(s.otc), bd = ok(s.obd), ac = ok(s.oac), bt = ok(s.obt), rd = num(s.orad);
+        const bg = ok(s.obg), tc = ok(s.otc), bd = ok(s.obd), ac = ok(s.oac), bt = ok(s.obt), rd = num(s.orad), fb = ok(s.ofb), tb = ok(s.otb);
         const f = sel + " .pb-ofm", r = sel + " .pb-ofraw";
         if (bg) c.d.push(`${f}{background:${bg}!important}${r} .order-wide,${r} #order-form{background:${bg}!important}`);
         if (tc) c.d.push(`${f},${f} h4,${r} .order-wide,${r} label,${r} h3{color:${tc}!important}`);
@@ -841,6 +841,8 @@ const PB = (() => {
         if (ac) c.d.push(`${f}-b,${f}-o.on i,${f}-d.on i{background:${ac}!important}${f}-o.on{border-color:${ac}!important}${f}-o b{color:${ac}!important}${r}{--gold:${ac}}${r} .btn-order{background:${ac}!important}`);
         if (bt) c.d.push(`${f}-b{color:${bt}!important}${r} .btn-order{color:${bt}!important}`);
         if (rd != null) c.d.push(`${f},${r} .order-wide,${r} #order-form{border-radius:${rd}px!important}`);
+        if (fb) c.d.push(`${f}-f,${f}-c{background:${fb}!important}${r} .field input,${r} .field select,${r} .coupon-box input{background:${fb}!important}`);
+        if (tb) c.d.push(`${f}-t.tot{border-top-color:${tb}!important}${r} .total-box{border:1px solid ${tb}!important}`);
         const hid = [];
         if (s.fof === false) hid.push(`${r} #offers`);
         if (s.fcm === false) hid.push(`${r} .field:has(#commune)`);
@@ -958,7 +960,7 @@ const PB = (() => {
   const expandSC = (str, ctx) => String(str || "").replace(/\[([a-z_]+)((?:\s+[\w-]+\s*=\s*(?:"[^"]*"|'[^']*'))*)\s*\]/gi, (m, name, attrs) => { const fn = SCODE[name.toLowerCase()]; if (!fn) return m; const a = {}; attrs.replace(/([\w-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g, (x, k, v1, v2) => { a[k.toLowerCase()] = v1 != null ? v1 : v2; return x; }); try { return fn(a, ctx || {}); } catch (e) { return m; } });
   const SC_TYPES = new Set(["text", "heading", "html"]);
   /* إعدادات نموذج الطلب (محتوى/ألوان) تنتقل إلى صفحة المنتج المضمَّنة عبر متغيّر oc في الرابط ويطبّقها وضع ?embed=1 في app.js */
-  const ofParam = s => { const o = {}; [["ottl", "t"], ["obtn", "b"], ["obg", "bg"], ["otc", "tc"], ["obd", "bd"], ["oac", "ac"], ["obt", "bt"], ["orad", "r"]].forEach(([k, n]) => { if (s[k] !== undefined && s[k] !== "" && s[k] !== null) o[n] = s[k]; }); const x = [["fof", "of"], ["fcm", "cm"], ["fdt", "dt"], ["fcp", "cp"], ["fwa", "wa"], ["fnt", "nt"]].filter(([k]) => s[k] === false).map(([, n]) => n); if (x.length) o.x = x; if (s.ofw === "100" || s.ofw === "50") o.w = s.ofw; const L = {}; [["lnm", "nm"], ["lph", "ph"], ["lwl", "wl"], ["lcm", "cm"], ["lcp", "cp"], ["lwa", "wa"], ["lnt", "nt"]].forEach(([k, n]) => { if (s[k]) L[n] = String(s[k]).slice(0, 120); }); if (Object.keys(L).length) o.L = L;
+  const ofParam = s => { const o = {}; [["ottl", "t"], ["obtn", "b"], ["obg", "bg"], ["otc", "tc"], ["obd", "bd"], ["oac", "ac"], ["obt", "bt"], ["orad", "r"], ["ofb", "fb"], ["otb", "tb"]].forEach(([k, n]) => { if (s[k] !== undefined && s[k] !== "" && s[k] !== null) o[n] = s[k]; }); const x = [["fof", "of"], ["fcm", "cm"], ["fdt", "dt"], ["fcp", "cp"], ["fwa", "wa"], ["fnt", "nt"]].filter(([k]) => s[k] === false).map(([, n]) => n); if (x.length) o.x = x; if (s.ofw === "100" || s.ofw === "50") o.w = s.ofw; const L = {}; [["lnm", "nm"], ["lph", "ph"], ["lwl", "wl"], ["lcm", "cm"], ["lcp", "cp"], ["lwa", "wa"], ["lnt", "nt"]].forEach(([k, n]) => { if (s[k]) L[n] = String(s[k]).slice(0, 120); }); if (Object.keys(L).length) o.L = L;
   return Object.keys(o).length ? "&oc=" + encodeURIComponent(JSON.stringify(o)) : ""; };
   const ORDER = ["heading", "text", "image", "button", "shape", "slider", "gallery", "products", "orderorig", "contact", "tbadges", "pgal", "shopcats", "herow", "sfoot", "sbar", "shdr", "pprice", "poffers", "pgallery", "social", "iconbox", "bullets", "video", "accordion", "testimonial", "counter", "countdown", "divider", "spacer", "html", "anchor", "shortcode", "map", "marquee", "progress", "beforeafter", "view360", "table", "pcard", "addcart", "stock", "coupon"];
   /* تصنيف لوحة العناصر: عامة / e-commerce */

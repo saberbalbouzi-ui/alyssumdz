@@ -2019,7 +2019,7 @@ const PhoneDZ = {
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
   if(oc && typeof oc === "object"){
     const ok = v=>/^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v||"").trim()) ? String(v).trim() : "";
-    const bg = ok(oc.bg), tc = ok(oc.tc), bd = ok(oc.bd), ac = ok(oc.ac), bt = ok(oc.bt), r = Number(oc.r);
+    const bg = ok(oc.bg), tc = ok(oc.tc), bd = ok(oc.bd), ac = ok(oc.ac), bt = ok(oc.bt), fb = ok(oc.fb), tb = ok(oc.tb), r = Number(oc.r);
     const W = "#pb-embed-wrap ", F = W+".order-wide,"+W+"#order-form";
     let c = "";
     if(ac) c += "html.pb-embed{--gold:"+ac+"}"+W+".btn-order{background:"+ac+"!important}"+W+".offer.active,"+W+".offer.on,"+W+".offer.sel{border-color:"+ac+"!important}";
@@ -2027,6 +2027,8 @@ const PhoneDZ = {
     if(bg) c += F+"{background:"+bg+"!important}";
     if(tc) c += F+","+W+"label,"+W+"h3,"+W+".total-box,"+W+".total-box b,"+W+".total-box #fee{color:"+tc+"!important}";
     if(bd) c += F+"{border:1px solid "+bd+"!important}";
+    if(fb) c += W+".field input,"+W+".field select,"+W+".coupon-box input{background:"+fb+"!important}";
+    if(tb) c += W+".total-box{border:1px solid "+tb+"!important}";
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += F+"{border-radius:"+Math.max(0,Math.min(60,r))+"px!important}";
     if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
     if(oc.w === "100") c += W+".frow{grid-template-columns:1fr!important}"; else if(oc.w === "50") c += "@media(min-width:561px){"+W+".frow{grid-template-columns:1fr 1fr!important}}";
@@ -2105,7 +2107,7 @@ const PhoneDZ = {
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 /* مرآة الطلب إلى المنصة (مراقبة الأسعار والمخزون) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/platform-order.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=1'; s.async=true; document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} }); document.head.appendChild(s); }catch(e){} })();
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=2'; s.async=true; document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} }); document.head.appendChild(s); }catch(e){} })();
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 /* «جرّب عليك» لمنتجات الأزياء (يعمل فقط إن ضُبط PLATFORM_TRYON_KEY ومنتج فيه tryon:true) */

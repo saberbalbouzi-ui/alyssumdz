@@ -58,7 +58,7 @@
   function css() {
     if (document.getElementById("ups-css")) return;
     var st = document.createElement("style"); st.id = "ups-css";
-    st.textContent = ".ups-bump{display:flex;gap:.7rem;align-items:center;border:2px dashed #e8a33d;background:rgba(232,163,61,.1);border-radius:14px;padding:.7rem .8rem;margin:.8rem 0;cursor:pointer;text-align:right}" +
+    st.textContent = ".ups-bump[hidden]{display:none!important}.ups-bump{display:flex;gap:.7rem;align-items:center;border:2px dashed #e8a33d;background:rgba(232,163,61,.1);border-radius:14px;padding:.7rem .8rem;margin:.8rem 0;cursor:pointer;text-align:right}" +
       ".ups-bump.on{border-style:solid;background:rgba(34,197,94,.12);border-color:#22c55e}.ups-bump input{width:22px;height:22px;flex:none;accent-color:#16a34a}" +
       ".ups-bump img{width:54px;height:54px;object-fit:cover;border-radius:10px;flex:none;background:#fff}.ups-bump b{display:block;font-size:.95rem}.ups-bump small{display:block;opacity:.85;margin-top:.15rem}" +
       ".ups-bump s{opacity:.6}.ups-post{margin:1rem 0;border:2px solid #22c55e;border-radius:16px;padding:.9rem;background:rgba(34,197,94,.1);text-align:center}" +
