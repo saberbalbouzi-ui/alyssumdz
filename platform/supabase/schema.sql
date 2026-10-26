@@ -84,6 +84,15 @@ begin
   on conflict (vid) do update set page = excluded.page, seen_at = now();
 end $$;
 
+-- عدّاد «يشاهدون الآن» الحقيقي لصفحة واحدة (رقم فقط، بلا هوية أحد) — عام للزوّار
+create or replace function public.public_viewers(p_page text) returns int
+language sql stable security definer set search_path = public as $$
+  select count(*)::int from public.presence
+  where page = left(coalesce(p_page, ''), 60) and seen_at > now() - interval '75 seconds'
+$$;
+revoke all on function public.public_viewers(text) from public;
+grant execute on function public.public_viewers(text) to anon, authenticated;
+
 create or replace function public.log_question(p_q text, p_page text, p_lang text default 'ar') returns void
 language plpgsql security definer set search_path = public as $$
 declare n text;
