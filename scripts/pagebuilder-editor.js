@@ -12,6 +12,7 @@ const PBApp = (() => {
   let frame, fdoc, root, styleEl, built = false, raf = 0, saveT = 0;
 
   const EDIT_CSS = `
+html,body{overflow-anchor:none}
 .pb-edit.pb-fx .pb-sl-off,.pb-edit.pb-fx .pb-gx-off{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-color:rgba(255,128,24,.62) transparent}}
 .pb-edit [data-pb]{cursor:pointer}
@@ -67,7 +68,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-vis{display:flex;align-items:center;gap:.35rem;margin:.4rem 0;flex-wrap:wrap}.pbx-vis>span{font-size:.74rem;font-weight:800;color:#555}.pbx-vis button{display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid #cfe5d8;background:#eef7f2;color:#157a55;border-radius:999px;padding:.2rem .6rem;font:inherit;font-size:.74rem;font-weight:800;cursor:pointer}.pbx-vis button.off{background:#fdeeee;border-color:#f0c4c4;color:#b83232;text-decoration:line-through;opacity:.9}.pbx-vis button svg{width:1.2em;height:1.2em}.pbx-cat{font-weight:900;font-size:.8rem;color:#173f35;margin:.9rem 0 .4rem;padding-bottom:.25rem;border-bottom:2px solid #eadfc4}.pbx-cat:first-child{margin-top:.2rem}.pbx-sci{display:flex;flex-wrap:wrap;gap:.3rem}.pbx-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
 .pbx-wi{border:1.5px solid #e6dfcf;border-radius:10px;padding:.6rem .3rem;text-align:center;cursor:grab;background:#faf6ec;font-size:.8rem;font-weight:800;color:#173f35;user-select:none}.pbx-wi:hover{border-color:#c8a24b;background:#fff3d6}.pbx-wi i{display:block;font-style:normal;font-size:1.4rem;margin-bottom:.2rem}
 .pbx-tpl{display:block;width:100%;text-align:start;border:1.5px solid #e6dfcf;border-radius:10px;padding:.65rem;margin-bottom:.5rem;background:#faf6ec;font-weight:800;color:#173f35;cursor:grab;font-family:inherit}.pbx-tpl:hover{border-color:#c8a24b}
-.pbx-stage{flex:1;position:relative;overflow:auto;background:#cfcabd;min-width:0}
+.pbx-stage{flex:1;position:relative;overflow:auto;overflow-anchor:none;background:#cfcabd;min-width:0}
 .pbx-sc{position:relative;margin:18px auto}
 .pbx-fw{position:absolute;left:0;top:0;transform-origin:0 0;background:#fff;box-shadow:0 8px 40px rgba(0,0,0,.25)}
 .pbx-fw iframe{border:0;width:100%;height:100%;display:block;background:#fff}
@@ -579,14 +580,15 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (!fdoc || !root || !E.page) return;
     if (FREE_ONLY && !E.page.sections.length) E.page.sections.push(TPLS.canvas.f());      // صفحة فارغة ⟵ قماش حر واحد
     const r = PB.renderSections(E.page, ctx());
-    const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0;
+    const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0, stg = $("pbx-stage"), stTop = stg ? stg.scrollTop : 0;      // الصفحة لا تتحرك أبداً بسبب إعادة الرسم: يُثبَّت موضع التمرير قبلها وبعدها (الصور المحمَّلة تغيّر الارتفاع لحظياً)
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
     styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
     fixCountdown();
     if (typeof PBConvert !== "undefined") try { PBConvert.after(root, E.page); } catch (e) { console.warn(e); }
     if (fdoc.scrollingElement) fdoc.scrollingElement.scrollTop = sc;
-    fitStage(); positionOverlay(); thumbsSoon(); liveBars(); runFx(); if (E.toolMode) toolFit();
+    fitStage(); if (stg && Math.abs(stg.scrollTop - stTop) > 1) stg.scrollTop = stTop; positionOverlay(); thumbsSoon(); liveBars(); runFx(); if (E.toolMode) toolFit();
+    if (stg && (E.busy || editing)) { const keep = () => { if (stg && (E.busy || editing) && Math.abs(stg.scrollTop - stTop) > 1) stg.scrollTop = stTop; }; requestAnimationFrame(keep); }
   }
   /* نافذة الأداة: بعد تنفيذ تغيير المقاس (أو أي أداة تغيّر أبعاد الصورة) تصير اللوحة بنسبة الصورة الجديدة فتظهر كاملة بدل بقاء الصفحة بالمقاس الأول */
   function toolFit() {
@@ -748,7 +750,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
     const isAd = !!(E.page && E.page.ad), gut = FREE_ONLY && !isMob() && !isAd ? 132 : 0; st.style.paddingRight = gut ? gut + "px" : ""; st.style.paddingTop = isAd ? "64px" : FREE_ONLY ? (gut ? "62px" : "56px") : ""; st.style.paddingBottom = isAd ? "0" : "";      // أعلى الصفحة مكان شريط الإعدادات السريعة      // يمين الصفحة: شريط القسم ومصغّرات الأقسام
     const w = DEVW[E.dev];
-    const h = FREE_ONLY ? Math.max(200, root ? root.offsetHeight : 0) : Math.max(500, (root ? root.offsetHeight : 0) + 40);      // بلا أقسام عادية: لا شريط أبيض تحت آخر قسم
+    let h = FREE_ONLY ? Math.max(200, root ? root.offsetHeight : 0) : Math.max(500, (root ? root.offsetHeight : 0) + 40);
+    if (E.busy || editing) { if (E.holdH && E.holdFor === (E.busy ? "b" : "e")) h = Math.max(h, E.holdH); E.holdH = h; E.holdFor = E.busy ? "b" : "e"; } else E.holdH = 0;      // أثناء السحب أو الكتابة لا ينكمش طول الصفحة (يتذبذب لحظياً فيقفز التمرير)      // بلا أقسام عادية: لا شريط أبيض تحت آخر قسم
     /* «تصميم بمقاس»: تظهر الصفحة كاملة (العرض والارتفاع معاً) داخل مجال الرؤية مهما كان مقاسها، والتكبير/التصغير نسبة إليها؛ لا شريط فارغ أعلاها ولا فراغ تحتها */
     const pad = isAd ? 16 : 0, fit = isAd ? Math.min(Math.max(120, st.clientWidth - 2 * pad) / w, Math.max(120, st.clientHeight - 64 - 2 * pad) / h) : Math.min(1, Math.max(300, st.clientWidth - gut - 40) / w), s = fit * (E.zoom || 1); E.scale = s;
     sc.style.margin = isAd ? Math.max(pad, Math.round((st.clientHeight - 64 - h * s) / 2)) + "px auto" : "";
@@ -1041,7 +1044,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const wEl = el.closest('[data-kind="widget"]'); if (!wEl) return;
     select(wEl.dataset.pb);
     const field = el.dataset.edit, rich = field === "html"; editing = { el, id: wEl.dataset.pb, field, rich, idx: el.dataset.idx };
-    el.setAttribute("contenteditable", "true"); el.focus();
+    el.setAttribute("contenteditable", "true"); { const st0 = $("pbx-stage"), t0 = st0 ? st0.scrollTop : 0; try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); } if (st0 && Math.abs(st0.scrollTop - t0) > 1) st0.scrollTop = t0; }
     const r = fdoc.createRange(); r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
@@ -1103,7 +1106,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
      positionOverlay(); liveBars(); if (E.ltab === "lay" || E.ltab === "img") renderLeft();
-    { const q = id && find(id); if (q && q.node && q.node.type === "shdr" && E.page.sections.indexOf(q.sec) <= 1) setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 40); }      // الهيدر في أعلى الصفحة: تنتقل الشاشة إلى مكانه
+    { const q = id && find(id); if (q && q.node && q.node.type === "shdr" && E.page.sections.indexOf(q.sec) <= 1 && !editing && !E.busy) setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 40); }      // الهيدر في أعلى الصفحة: تنتقل الشاشة إلى مكانه
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
   /* تتبّع سحب موحّد: يعمل لمن بدأ داخل الـ iframe (Chrome يوصل الأحداث للإطار الذي بدأ فيه الضغط) أو من اللوحة؛ الإزاحة تُعاد بوحدات بكسل الصفحة */
@@ -2741,7 +2744,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function dragAutoScroll(e) {      // سحب قرب حافة المنصة يمرّر الصفحة تلقائياً (ليسهل إدراج نموذج الطلب في أي موضع)
     const st = $("pbx-stage"), fr = $("pbx-frame"); if (!st || !fr) return; const sb = st.getBoundingClientRect(), fb = fr.getBoundingClientRect();
     const sy = e.target && e.target.ownerDocument === fdoc ? fb.top + e.clientY * (E.scale || 1) : e.clientY, z = 90, top = sb.top + (FREE_ONLY ? 64 : 8);
-    if (sy < top + z) st.scrollTop -= Math.ceil((top + z - sy) / z * 24); else if (sy > sb.bottom - z) st.scrollTop += Math.ceil((sy - (sb.bottom - z)) / z * 24);
+    if (sy < top + z) st.scrollTop -= Math.ceil((top + z - sy) / z * 12); else if (sy > sb.bottom - z) st.scrollTop += Math.ceil((sy - (sb.bottom - z)) / z * 12);
   }
   function onDragOver(e) {
     if (!E.drag) return; dragAutoScroll(e); if (E.drag.img && imgDragOver(e)) return; const tg = dropTarget(e); if (!tg) { hideDrop(); return; } e.preventDefault(); e.dataTransfer.dropEffect = E.drag.img ? "copy" : "move";
