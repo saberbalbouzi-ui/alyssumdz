@@ -878,7 +878,7 @@ function initProduct(slug){
   // للمنتج المتغيّر تُعاد أسعار العروض بنسبة سعر التنويع المختار إلى السعر الأساسي (p.price)
   const offersBox = document.getElementById("offers");
   const type = productType(p);
-  let offerIdx = bestIdx;
+  let offerIdx = p.offers[bestIdx] ? bestIdx : 0;
   function buildOffers(){
     offersBox.innerHTML = ""; // تفريغ أي بطاقات عروض ثابتة مضمّنة في HTML (تفادي التكرار)
     const sc = (type==="variable" && state.variation && Number(p.price)>0) ? state.variation.price / p.price : 1;
@@ -2028,7 +2028,7 @@ const PhoneDZ = {
     if(tc) c += F+","+W+"label,"+W+"h3,"+W+".total-box{color:"+tc+"!important}";
     if(bd) c += F+"{border:1px solid "+bd+"!important}";
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += F+"{border-radius:"+Math.max(0,Math.min(60,r))+"px!important}";
-    if(Array.isArray(oc.x)){ const M = {cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
+    if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
     if(oc.w === "100") c += W+".frow{grid-template-columns:1fr!important}"; else if(oc.w === "50") c += "@media(min-width:561px){"+W+".frow{grid-template-columns:1fr 1fr!important}}";
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
     const txt = ()=>{ try{
@@ -2044,6 +2044,8 @@ const PhoneDZ = {
     }catch(e){} };
     setInterval(txt, 700); setTimeout(txt, 200);
   }
+  window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || typeof e.data.pbOffer!=="number") return; const b = document.querySelectorAll("#offers .offer")[e.data.pbOffer]; if(b) b.click(); });
+  document.addEventListener("click", e=>{ const o = e.target.closest && e.target.closest("#offers .offer"); if(!o) return; try{ parent.postMessage({ pbOfferSel: [...o.parentElement.children].indexOf(o) }, location.origin); }catch(_){} }, true);
   const go = ()=>{
     const form = document.querySelector(".order-wide") || document.querySelector(".pb-ofraw") || document.getElementById("order-form"); if(!form) return;
     const wrap = document.createElement("div"); wrap.id = "pb-embed-wrap";
