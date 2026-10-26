@@ -2028,10 +2028,18 @@ const PhoneDZ = {
     if(tc) c += F+","+W+"label,"+W+"h3,"+W+".total-box{color:"+tc+"!important}";
     if(bd) c += F+"{border:1px solid "+bd+"!important}";
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += F+"{border-radius:"+Math.max(0,Math.min(60,r))+"px!important}";
+    if(Array.isArray(oc.x)){ const M = {cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
     const txt = ()=>{ try{
       if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && h.textContent !== oc.t) h.textContent = String(oc.t); }
       if(oc.b){ const bn = document.querySelector(W+".btn-order"); if(bn){ const cur = bn.textContent, i = cur.indexOf(" — "), nt = String(oc.b) + (i > -1 ? cur.slice(i) : ""); if(cur !== nt && cur.indexOf(String(oc.b)) !== 0) bn.textContent = nt; } }
+      if(oc.L && typeof oc.L === "object"){
+        const L = oc.L, lab = (id,t)=>{ const e = document.querySelector(W+'label[for="'+id+'"]'); if(e && t){ const nt = String(t) + (/\*\s*$/.test(e.textContent) ? " *" : ""); if(e.textContent !== nt) e.textContent = nt; } };
+        lab("name", L.nm); lab("phone", L.ph); lab("wilaya", L.wl); lab("commune", L.cm);
+        if(L.cp){ const i = document.getElementById("prod-coupon-input"); if(i && i.placeholder !== L.cp) i.placeholder = String(L.cp); }
+        if(L.wa){ const e = document.querySelector(W+".btn-wa"); if(e && e.textContent !== L.wa) e.textContent = String(L.wa); }
+        if(L.nt){ const e = document.querySelector(W+".cod-note"); if(e && e.textContent !== L.nt) e.textContent = String(L.nt); }
+      }
     }catch(e){} };
     setInterval(txt, 700); setTimeout(txt, 200);
   }
