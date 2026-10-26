@@ -2032,7 +2032,7 @@ const PhoneDZ = {
   + WW+".btn-order *,"+WW+".btn-wa *{color:inherit!important}"
   + WW+".coupon-box button{background-image:none!important;box-shadow:none!important}"
   + WW+".field small,"+WW+".field .hint,"+WW+".gp-open{color:var(--o-tc)!important;opacity:.7}"
-  + "#pb-embed-wrap #med-note{background:#fffbeb!important;color:#92400e!important;border:1px solid #fcd34d!important;box-shadow:none!important}#pb-embed-wrap #med-note *{color:inherit!important}";
+  + "#pb-embed-wrap #med-note{background:color-mix(in srgb,#f59e0b 14%,var(--o-cb))!important;color:var(--o-tc)!important;border:1px solid #f59e0b!important;box-shadow:none!important}#pb-embed-wrap #med-note *{color:inherit!important}";
   document.head.appendChild(st);
   /* إعدادات نموذج الطلب القادمة من عنصر «نموذج الطلب» في مطوّر الصفحات (متغيّر oc): ألوان وعنوان ونص الزر */
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
