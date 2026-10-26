@@ -2013,7 +2013,7 @@ const PhoneDZ = {
   if(!/[?&]embed=1/.test(location.search)) return;
   document.documentElement.classList.add("pb-embed");
   const st = document.createElement("style");
-  st.textContent = "html.pb-embed,html.pb-embed body{overflow:hidden!important}html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}";
+  st.textContent = "html.pb-embed,html.pb-embed body{overflow:hidden!important}html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}#pb-embed-wrap .total-box b,#pb-embed-wrap .total-box #fee{color:var(--gold-2,#e4c87f)!important}#pb-embed-wrap .total-box #fee,#pb-embed-wrap .total-box small{color:inherit!important}";
   document.head.appendChild(st);
   /* إعدادات نموذج الطلب القادمة من عنصر «نموذج الطلب» في مطوّر الصفحات (متغيّر oc): ألوان وعنوان ونص الزر */
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
@@ -2025,7 +2025,7 @@ const PhoneDZ = {
     if(ac) c += "html.pb-embed{--gold:"+ac+"}"+W+".btn-order{background:"+ac+"!important}"+W+".offer.active,"+W+".offer.on,"+W+".offer.sel{border-color:"+ac+"!important}";
     if(bt) c += W+".btn-order{color:"+bt+"!important}";
     if(bg) c += F+"{background:"+bg+"!important}";
-    if(tc) c += F+","+W+"label,"+W+"h3,"+W+".total-box{color:"+tc+"!important}";
+    if(tc) c += F+","+W+"label,"+W+"h3,"+W+".total-box,"+W+".total-box b,"+W+".total-box #fee{color:"+tc+"!important}";
     if(bd) c += F+"{border:1px solid "+bd+"!important}";
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += F+"{border-radius:"+Math.max(0,Math.min(60,r))+"px!important}";
     if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
