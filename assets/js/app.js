@@ -2015,6 +2015,26 @@ const PhoneDZ = {
   const st = document.createElement("style");
   st.textContent = "html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}";
   document.head.appendChild(st);
+  /* إعدادات نموذج الطلب القادمة من عنصر «نموذج الطلب» في مطوّر الصفحات (متغيّر oc): ألوان وعنوان ونص الزر */
+  let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
+  if(oc && typeof oc === "object"){
+    const ok = v=>/^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v||"").trim()) ? String(v).trim() : "";
+    const bg = ok(oc.bg), tc = ok(oc.tc), bd = ok(oc.bd), ac = ok(oc.ac), bt = ok(oc.bt), r = Number(oc.r);
+    const W = "#pb-embed-wrap ", F = W+".order-wide,"+W+"#order-form";
+    let c = "";
+    if(ac) c += "html.pb-embed{--gold:"+ac+"}"+W+".btn-order{background:"+ac+"!important}"+W+".offer.active,"+W+".offer.on,"+W+".offer.sel{border-color:"+ac+"!important}";
+    if(bt) c += W+".btn-order{color:"+bt+"!important}";
+    if(bg) c += F+"{background:"+bg+"!important}";
+    if(tc) c += F+","+W+"label,"+W+"h3,"+W+".total-box{color:"+tc+"!important}";
+    if(bd) c += F+"{border:1px solid "+bd+"!important}";
+    if(isFinite(r) && oc.r !== "" && oc.r != null) c += F+"{border-radius:"+Math.max(0,Math.min(60,r))+"px!important}";
+    if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
+    const txt = ()=>{ try{
+      if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && h.textContent !== oc.t) h.textContent = String(oc.t); }
+      if(oc.b){ const bn = document.querySelector(W+".btn-order"); if(bn){ const cur = bn.textContent, i = cur.indexOf(" — "), nt = String(oc.b) + (i > -1 ? cur.slice(i) : ""); if(cur !== nt && cur.indexOf(String(oc.b)) !== 0) bn.textContent = nt; } }
+    }catch(e){} };
+    setInterval(txt, 700); setTimeout(txt, 200);
+  }
   const go = ()=>{
     const form = document.querySelector(".order-wide") || document.querySelector(".pb-ofraw") || document.getElementById("order-form"); if(!form) return;
     const wrap = document.createElement("div"); wrap.id = "pb-embed-wrap";
