@@ -333,7 +333,11 @@
       "fwa": true,
       "fcm": true,
       "fdt": true,
-      "fnt": true
+      "fnt": true,
+      "wsc": {
+       "d": 100
+      },
+      "ofw": "50"
      }
     },
     {
