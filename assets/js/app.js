@@ -2013,23 +2013,37 @@ const PhoneDZ = {
   if(!/[?&]embed=1/.test(location.search)) return;
   document.documentElement.classList.add("pb-embed");
   const st = document.createElement("style");
-  st.textContent = "html.pb-embed,html.pb-embed body{overflow:hidden!important}html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}#pb-embed-wrap .total-box b,#pb-embed-wrap .total-box #fee{color:var(--gold-2,#e4c87f)!important}#pb-embed-wrap .total-box #fee,#pb-embed-wrap .total-box small{color:inherit!important}";
+  const WW = "#pb-embed-wrap ", FF = WW+".order-wide,"+WW+"#order-form";
+  st.textContent = "html.pb-embed,html.pb-embed body{overflow:hidden!important}html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed body{background:transparent!important;padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px;--o-bg:#ffffff;--o-tc:#1f2937;--o-bd:#e5e7eb;--o-ac:#16a34a;--o-bt:#ffffff;--o-fb:#f9fafb;--o-tb:#e5e7eb;--o-cb:#f9fafb;--o-wb:#25d366;--o-r:14px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}"
+  /* الشكل الافتراضي: ألوان طبيعية فاتحة؛ كل لون متغيّر o-* يغيّره المستعمل من إعدادات العنصر */
+  + FF+"{background:var(--o-bg)!important;background-image:none!important;color:var(--o-tc)!important;border:1px solid var(--o-bd)!important;border-radius:var(--o-r)!important;box-shadow:none!important}"
+  + WW+"label,"+WW+"h3,"+WW+".field,"+WW+"#prod-coupon-msg,"+WW+".total-box small,"+WW+".total-box b,"+WW+".total-box #fee,"+WW+".dtype label,"+WW+".dtype span{color:var(--o-tc)!important}"
+  + WW+".field input,"+WW+".field select,"+WW+".field textarea,"+WW+".coupon-box input{background:var(--o-fb)!important;color:var(--o-tc)!important;border:1px solid var(--o-bd)!important}"
+  + WW+".offer,"+WW+".dtype,"+WW+".total-box,"+WW+".cod-note{background:var(--o-cb)!important;background-image:none!important;color:var(--o-tc)!important;border:1px solid var(--o-bd)!important;box-shadow:none!important}"
+  + WW+".total-box{border-color:var(--o-tb)!important}"
+  + WW+".offer *{color:inherit!important}"
+  + WW+".offer.active,"+WW+".offer.on,"+WW+".offer.sel{border-color:var(--o-ac)!important;background:color-mix(in srgb,var(--o-ac) 10%,var(--o-cb))!important}"
+  + WW+".dtype label{background:var(--o-bg)!important;border:1px solid var(--o-bd)!important}"
+  + WW+".dtype label:has(input:checked){border-color:var(--o-ac)!important;background:color-mix(in srgb,var(--o-ac) 12%,var(--o-bg))!important}"
+  + WW+".coupon-box button{background:var(--o-cb)!important;color:var(--o-tc)!important;border:1px solid var(--o-bd)!important}"
+  + WW+".btn-order{background:var(--o-ac)!important;background-image:none!important;color:var(--o-bt)!important;border:0!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important}"
+  + WW+".btn-wa{background:var(--o-wb)!important;background-image:none!important;color:#fff!important;border:0!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important}"
+  + WW+".cod-note{color:var(--o-tc)!important;opacity:.85}"
+  + WW+".btn-order *,"+WW+".btn-wa *{color:inherit!important}"
+  + WW+".coupon-box button{background-image:none!important;box-shadow:none!important}"
+  + WW+".field small,"+WW+".field .hint,"+WW+".gp-open{color:var(--o-tc)!important;opacity:.7}"
+  + "#pb-embed-wrap #med-note{background:#fffbeb!important;color:#92400e!important;border:1px solid #fcd34d!important;box-shadow:none!important}#pb-embed-wrap #med-note *{color:inherit!important}";
   document.head.appendChild(st);
   /* إعدادات نموذج الطلب القادمة من عنصر «نموذج الطلب» في مطوّر الصفحات (متغيّر oc): ألوان وعنوان ونص الزر */
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
   if(oc && typeof oc === "object"){
     const ok = v=>/^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v||"").trim()) ? String(v).trim() : "";
-    const bg = ok(oc.bg), tc = ok(oc.tc), bd = ok(oc.bd), ac = ok(oc.ac), bt = ok(oc.bt), fb = ok(oc.fb), tb = ok(oc.tb), r = Number(oc.r);
-    const W = "#pb-embed-wrap ", F = W+".order-wide,"+W+"#order-form";
+    const V = {bg:"bg",tc:"tc",bd:"bd",ac:"ac",bt:"bt",fb:"fb",tb:"tb",cb:"cb",wb:"wb"}, r = Number(oc.r);
+    const W = "#pb-embed-wrap ";
     let c = "";
-    if(ac) c += "html.pb-embed{--gold:"+ac+"}"+W+".btn-order{background:"+ac+"!important}"+W+".offer.active,"+W+".offer.on,"+W+".offer.sel{border-color:"+ac+"!important}";
-    if(bt) c += W+".btn-order{color:"+bt+"!important}";
-    if(bg) c += F+"{background:"+bg+"!important}";
-    if(tc) c += F+","+W+"label,"+W+"h3,"+W+".total-box,"+W+".total-box b,"+W+".total-box #fee{color:"+tc+"!important}";
-    if(bd) c += F+"{border:1px solid "+bd+"!important}";
-    if(fb) c += W+".field input,"+W+".field select,"+W+".coupon-box input{background:"+fb+"!important}";
-    if(tb) c += W+".total-box{border:1px solid "+tb+"!important}";
-    if(isFinite(r) && oc.r !== "" && oc.r != null) c += F+"{border-radius:"+Math.max(0,Math.min(60,r))+"px!important}";
+    const vars = Object.keys(V).map(k=>{ const v = ok(oc[k]); return v ? "--o-"+V[k]+":"+v+";" : ""; }).join("");
+    if(isFinite(r) && oc.r !== "" && oc.r != null) c += "#pb-embed-wrap{--o-r:"+Math.max(0,Math.min(60,r))+"px}";
+    if(vars) c += "#pb-embed-wrap{"+vars+"}html.pb-embed{--gold:"+(ok(oc.ac)||"#16a34a")+"}";
     if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
     if(oc.w === "100") c += W+".frow{grid-template-columns:1fr!important}"; else if(oc.w === "50") c += "@media(min-width:561px){"+W+".frow{grid-template-columns:1fr 1fr!important}}";
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
@@ -2042,6 +2056,8 @@ const PhoneDZ = {
         if(L.cp){ const i = document.getElementById("prod-coupon-input"); if(i && i.placeholder !== L.cp) i.placeholder = String(L.cp); }
         if(L.wa){ const e = document.querySelector(W+".btn-wa"); if(e && e.textContent !== L.wa) e.textContent = String(L.wa); }
         if(L.nt){ const e = document.querySelector(W+".cod-note"); if(e && e.textContent !== L.nt) e.textContent = String(L.nt); }
+        const sm = document.querySelectorAll(W+".total-box small"); if(L.fe && sm[0] && sm[0].textContent !== L.fe) sm[0].textContent = String(L.fe); if(L.gt && sm[1] && sm[1].textContent !== L.gt) sm[1].textContent = String(L.gt);
+        const dl = document.querySelectorAll(W+".dtype label span"); if(L.dh && dl[0] && dl[0].textContent !== L.dh) dl[0].textContent = String(L.dh); if(L.ds && dl[1] && dl[1].textContent !== L.ds) dl[1].textContent = String(L.ds);
       }
     }catch(e){} };
     setInterval(txt, 700); setTimeout(txt, 200);
