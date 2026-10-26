@@ -1917,10 +1917,11 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (redo) en.i = (en.i + 1) % en.l.length; m.res = en.l[en.i % en.l.length]; m.kind = "ai"; mwCsave(C, key);
       m.msg = "من المحفوظات — مجاناً بلا استهلاك API (" + (en.i + 1) + "/" + en.l.length + ")."; mwPreview(inf, m.res); mwRefresh(); return;
     }
+    let cr = null; try { if (typeof Credits !== "undefined") cr = Credits.take("mw", { n: 1, label: "الكتابة السحرية" }); } catch (e) { m.msg = e.message || "الرصيد لا يكفي"; toast("⚠ " + m.msg); mwRefresh(); return; }
     m.busy = true; m.msg = ""; mwRefresh(); positionOverlay();
     try { const t = await mwGemini(redo ? Object.assign({}, o, { prev: en.l[en.i] || m.res, instr: "أعد الصياغة بأسلوب مختلف مع الحفاظ على الطول نفسه تقريباً" }) : Object.assign({}, o, { prev: "", instr: "" })); en.l.push(t); en.i = en.l.length - 1; mwCsave(C, key); m.res = t; m.kind = "ai";
       m.msg = redo ? "هذه إعادتك الوحيدة بـAPI لهذا الطلب؛ الضغط التالي يعرض المحفوظات مجاناً." : "حُفظت الإجابة لاستدعائها مجاناً لاحقاً؛ لك إعادة واحدة جديدة بـAPI."; }
-    catch (e) { m.msg = e.code === "API_OFF" ? "الكتابة بتقنية Alyssum (Alyssum API) معطّلة حالياً. المحفوظات تعمل مجاناً، ويمكنك استعمال «قالب جاهز»." : "تعذّر Alyssum API: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
+    catch (e) { if (cr) cr.refund(); m.msg = e.code === "API_OFF" ? "الكتابة بتقنية Alyssum (Alyssum API) معطّلة حالياً. المحفوظات تعمل مجاناً، ويمكنك استعمال «قالب جاهز»." : "تعذّر Alyssum API: " + (e.message === "NOKEY" ? "لا يوجد مفتاح (يُضاف من «مولّد الصفحات»)." : e.message) + " — لم يُستعمل أي قالب. يمكنك الضغط على «🧩 قالب جاهز» إن أردت."; toast("⚠ " + m.msg); m.busy = false; positionOverlay(); mwRefresh(); return; }
     m.busy = false; const i2 = selInfo(); if (i2 && i2.node.id === inf.node.id && m.res) mwPreview(i2, m.res); else positionOverlay(); mwRefresh();
   }
   function mwRedo(ins) {      // إعادة: واحدة بـAPI ثم المحفوظات مجاناً. أطول/أقصر: ينتقل بين الأطوال (من المحفوظات إن وُجدت)
@@ -1931,7 +1932,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function mwPanel(inf, btn) {
     const m = E.mw = E.mw || {}; Object.entries({ words: "", style: "mk", len: "p", lang: mwLang0(), pslug: inf.set.prod || E.page.product || "", res: "", kind: "", ti: 0, msg: "", busy: false }).forEach(([k, v]) => { if (!(k in m)) m[k] = v; });
     const prods = (ctx().products) || [], sel = (id, o, v) => `<select data-mw="${id}">${Object.entries(o).map(([k, n]) => `<option value="${esc(k)}"${v === k ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`, P = mwProd(m.pslug);
-    const html = `<h6>✨ الكتابة السحرية — وصف فقط</h6>
+    const html = `<h6>✨ الكتابة السحرية — وصف فقط</h6>${typeof Credits !== "undefined" ? Credits.chip("mw") : ""}
       <h6>المنتج</h6>${sel("pslug", Object.assign({ "": "— منتج خارج المتجر / بدون منتج —" }, Object.fromEntries(prods.map(x => [x.slug, x.title]))), m.pslug)}
       <p style="margin:-.2rem 0 .5rem">${P ? "منتج من المتجر: يُطوَّر وصفه بمعلوماته." : "منتج من خارج المتجر: يُنشأ الوصف من كلماتك."}</p>
       <textarea data-mw="words" rows="3" placeholder="${P ? "ملاحظات اختيارية (مثل: ركّز على فائدة معيّنة)" : "اكتب على الأقل خمس كلمات وصفية"}" style="width:100%;border:1px solid #d9dbe3;border-radius:8px;padding:.5rem;font-family:inherit;margin-bottom:.5rem">${esc(m.words)}</textarea>

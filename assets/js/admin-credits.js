@@ -16,6 +16,7 @@ const Credits = (() => {
     st: { t: "مشهد/خلفية بالوصف: 6 رصيد (4 خيارات) · بقية أدوات الاستوديو مجانية" },
     v360: { t: "2 رصيد لكل إطار جديد (8 إطارات = 14)" }, gen: { t: "2 رصيد للصورة" }, txt2img: { t: "2 رصيد للصورة" }, logo: { t: "الشعار النصي مجاني · الصورة 2 رصيد" },
     vgen: { t: "4 رصيد لكل ثانية (5 ثوانٍ = 20)" }, vad: { t: "4 رصيد لكل ثانية (5 ثوانٍ = 20)" }, studio3d: { t: "مجاني" },
+    mw: { t: "1 رصيد للنص الجديد · القالب الجاهز والمحفوظات مجانية" },
     pagepilot: { t: "40 رصيد للصفحة · A/B 70 · إعادة رسم قسم 2" }, batch: { t: "الخطوة الذكية 2 رصيد للصورة · نزع الخلفية 1" }, catalog: { t: "نزع الخلفية 1 + المشهد 2 لكل منتج" }
   };
   /* مفتاح لوحة المحرر (EP_TABS) ← معرّف الأداة */
@@ -76,7 +77,7 @@ const Credits = (() => {
     ['[data-ai="bgen"]', b => /خلفيتي/.test(b.textContent) ? 0 : (() => { const n = Math.max(1, Math.min(4, +((q("pbai-bgc") || {}).value) || 2)); return n >= 4 ? 6 : n * 2; })()],
     ['[data-ai="bgblend"]', () => 2], ['[data-ai="expand"]', () => 6], ['[data-ai="edit"]', () => 2], ['[data-ai="tryon"]', () => 2], ['[data-ai="fx"]', () => 2],
     ['[data-ai="recolor"]', () => 2 * Math.max(1, (document.querySelectorAll('[data-rck]:checked').length + (((q("pbai-rcu") || {}).checked) ? 1 : 0)) || 1)], ['[data-ai="v360"]', () => 14],
-    ['[data-txb="go"]', () => 2], ['[data-lg="ai"]', () => 2], ['[data-bgr="open"]', () => 1], ['[data-q="smart-magic"]', () => 1], ['[data-upx="go"]', () => 2],
+    ['[data-txb="go"]', () => 2], ['[data-mwa="go"]', () => 1], ['[data-lg="ai"]', () => 2], ['[data-bgr="open"]', () => 1], ['[data-q="smart-magic"]', () => 1], ['[data-upx="go"]', () => 2],
     ['[data-pp="go"]', () => { const ab = q("pp-ab"); return ab && ab.checked ? 70 : 40; }]
   ];
   function decorate(root) {
