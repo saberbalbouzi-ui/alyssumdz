@@ -38,7 +38,7 @@ body{overflow-x:hidden;margin:0}`;
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
 .pbx-tabs button.pbx-ah[data-lt="pub"]{display:none}#pb-app.pbx-ad .pbx-tabs button.pbx-ah[data-lt="pub"]{display:flex}.pbx-adx,.pbx-adsz{display:none!important}#pb-app.pbx-ad .pbx-adx,#pb-app.pbx-ad .pbx-adsz{display:inline-flex!important}
-#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx):not(.pbx-adsz),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-spb,#pb-app.pbx-ad #pbx-rcb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2,#pb-app.pbx-ad #pbx-prev,#pb-app.pbx-ad .pbx-itabs{display:none!important}#pbx-upd{display:none!important}
+#pb-app.pbx-ad [data-dv="t"],#pb-app.pbx-ad [data-dv="m"],#pb-app.pbx-ad .pub:not(.pbx-adx):not(.pbx-adsz),#pb-app.pbx-ad #pbx-clb,#pb-app.pbx-ad #pbx-spb,#pb-app.pbx-ad #pbx-rcb,#pb-app.pbx-ad #pbx-anim,#pb-app.pbx-ad #pbx-fx,#pb-app.pbx-ad [data-lt="def"],#pb-app.pbx-ad [data-lt="pg"],#pb-app.pbx-ad .pbx-dv,#pb-app.pbx-ad #pbx-add2,#pb-app.pbx-ad #pbx-prev,#pb-app.pbx-ad .pbx-itabs{display:none!important}#pbx-upd,#pbx-clb,#pbx-spb{display:none!important}
 /* وضع نافذة الأداة (ستوديو ديزاين): الصورة + إعدادات الأداة + شريط نتيجة سفلي (فتح في المحرر / تحميل / حفظ في المكتبة) */
 #pbx-tbar{display:none;position:relative;z-index:10003;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.55rem .9rem;background:#173f35;color:#fff;border-top:1px solid rgba(198,254,23,.25)}
 #pb-app.pbx-tool #pbx-tbar{display:flex}#pbx-tbar b{font-weight:900;font-size:.95rem;margin-inline-end:auto}
