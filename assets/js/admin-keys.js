@@ -16,8 +16,8 @@ const AdminKeys = (() => {
       const t = e.target, typing = t && (/^(input|textarea|select)$/i.test(t.tagName) || t.isContentEditable); if (document.querySelector('#pb-app.on')) return; if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key === "Escape" && box) { help(); return; }
       if (e.key === "?") { e.preventDefault(); help(); return; }
-      if (e.key.toLowerCase() === "g" && !armed) { armed = Date.now(); return; }
-      if (armed && Date.now() - armed < 1500) { const m = MAP.find(x => x[0] === e.key.toLowerCase()); armed = 0; if (m) { e.preventDefault(); go(m[1]); } } else armed = 0;
+      if (String(e.key||"").toLowerCase() === "g" && !armed) { armed = Date.now(); return; }
+      if (armed && Date.now() - armed < 1500) { const m = MAP.find(x => x[0] === String(e.key||"").toLowerCase()); armed = 0; if (m) { e.preventDefault(); go(m[1]); } } else armed = 0;
     });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();

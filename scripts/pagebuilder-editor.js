@@ -46,7 +46,7 @@ body{overflow-x:hidden;margin:0}`;
 #pbx-tbar select{padding:.5rem .6rem;width:auto!important;height:auto!important;margin:0!important;flex:none}#pbx-tbar button{flex:none;white-space:nowrap}#pbx-tbar b{flex:1 1 auto}#pbx-tbar select option{color:#173f35}
 #pbx-tbar button:hover{transform:translateY(-2px);background:rgba(255,255,255,.2)}#pbx-tbar button.g{background:rgba(198,254,23,.22);border-color:rgba(198,254,23,.55)}#pbx-tbar button.g:hover{background:rgba(198,254,23,.38)}
 #pb-app.pbx-tool .pbx-left,#pb-app.pbx-tool #pbx-rz2,#pb-app.pbx-tool .pbx-add2,#pb-app.pbx-tool #pbx-tgl,#pb-app.pbx-tool #pbx-tgr,#pb-app.pbx-tool #pbx-title,#pb-app.pbx-tool #pbx-rn,#pb-app.pbx-tool #pbx-more,#pb-app.pbx-tool #pbx-adsz,#pb-app.pbx-tool #pbx-adx,#pb-app.pbx-tool .pbx-top .pub,#pb-app.pbx-tool #pbx-histb,#pb-app.pbx-tool #pbx-upb{display:none!important}
-#pb-app.pbx-tool #pbx-insp>*{display:none!important}#pb-app.pbx-tool #pbx-insp::before{content:"إعدادات الأداة تظهر هنا — اضغط «الإعدادات» أسفل الصفحة إن أغلقتَها";display:block;padding:1.2rem .9rem;color:#6b6556;font-size:.82rem;line-height:1.8}
+#pb-app.pbx-tool #pbx-insp>*{display:none!important}#pb-app.pbx-tool #pbx-insp::before{content:"اختر الأداة من الأعلى وابدأ التعديل على الصورة";display:block;padding:1.2rem .9rem;color:#6b6556;font-size:.82rem;line-height:1.8}
 .pbx-top{display:flex;align-items:center;gap:.4rem;padding:.45rem .8rem;background:#173f35;color:#fff;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;white-space:nowrap}.pbx-top>*{flex:none}
 .pbx-top input[readonly]{background:rgba(255,255,255,.1);color:#fff;cursor:default;outline:0}.pbx-top input#pbx-title:not([readonly]){box-shadow:0 0 0 3px #c8a24b}
 .pbx-top input{background:#fff;border:0;border-radius:8px;padding:.3rem .55rem;font-weight:800;width:auto;field-sizing:content;flex:0 1 auto;min-width:6ch;max-width:26ch;font-family:inherit;font-size:.85rem;color:#173f35}#pbx-rn{padding:.42rem .5rem!important}
@@ -2948,16 +2948,16 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (!$("pb-app").classList.contains("on")) return;
     const tag = (e.target.tagName || "").toLowerCase(); if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
     const mod = e.ctrlKey || e.metaKey;
-    if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
-    else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+    if (mod && String(e.key||"").toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if (mod && String(e.key||"").toLowerCase() === "y") { e.preventDefault(); redo(); }
     else if (mod && e.shiftKey && e.key === "Enter") { e.preventDefault(); addSecAfter(actSec()); }
-    else if (mod && e.key.toLowerCase() === "d") { e.preventDefault(); dup(); }
+    else if (mod && String(e.key||"").toLowerCase() === "d") { e.preventDefault(); dup(); }
     else if (mod && e.altKey && e.code === "KeyC" && E.sel) { e.preventDefault(); copyStyle(); }
     else if (mod && e.altKey && e.code === "KeyV" && E.sel) { e.preventDefault(); pasteStyle(); }
-    else if (mod && !e.altKey && e.key.toLowerCase() === "c" && E.sel && selInfo() && selInfo().kind === "widget") { e.preventDefault(); copyEl(); }
-    else if (mod && !e.altKey && e.key.toLowerCase() === "v" && E.clip) { e.preventDefault(); pasteEl(); }
-    else if (mod && e.key.toLowerCase() === "g" && selIds().length > 1) { e.preventDefault(); e.shiftKey ? ungroupSel() : groupSel(); }
-    else if (mod && e.key.toLowerCase() === "a" && (E.sel || E.hs)) { e.preventDefault(); selectAllSec(); }
+    else if (mod && !e.altKey && String(e.key||"").toLowerCase() === "c" && E.sel && selInfo() && selInfo().kind === "widget") { e.preventDefault(); copyEl(); }
+    else if (mod && !e.altKey && String(e.key||"").toLowerCase() === "v" && E.clip) { e.preventDefault(); pasteEl(); }
+    else if (mod && String(e.key||"").toLowerCase() === "g" && selIds().length > 1) { e.preventDefault(); e.shiftKey ? ungroupSel() : groupSel(); }
+    else if (mod && String(e.key||"").toLowerCase() === "a" && (E.sel || E.hs)) { e.preventDefault(); selectAllSec(); }
     else if (e.key === "Delete" && E.sel) { e.preventDefault(); del(); }
     else if ((e.key === "]" || e.key === "[") && E.sel) { const i0 = selInfo(); if (i0 && i0.kind === "widget") { e.preventDefault(); zMove(mod ? (e.key === "]" ? "front" : "back") : (e.key === "]" ? "up" : "down")); } }
     else if (e.key === "Escape" && (multiOn() || E.mm)) { E.mm = false; select(null); }

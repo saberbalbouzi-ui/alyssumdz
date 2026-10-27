@@ -2737,7 +2737,7 @@ dOn('keydown', e=>{
   if(!R.isConnected) return;
   if(e.key==='Escape' && !$('dialog[open]')){ if(!e.target.closest('input,textarea,select')){ host.close(); return; } }
   if(e.target.closest('input,textarea,select,dialog[open]')) return;
-  const k = e.key.toLowerCase(), mod = e.ctrlKey || e.metaKey;
+  const k = String(e.key||"").toLowerCase(), mod = e.ctrlKey || e.metaKey;
   if(mod && k==='z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
   else if(mod && k==='y'){ e.preventDefault(); redo(); }
   else if(mod || e.altKey) return;

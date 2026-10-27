@@ -157,7 +157,7 @@ const BarcodeTool = (() => {
       if (S.tpl !== "wifi" && S.tpl !== "tel") h += '<label class="f">' + (S.tpl === "wa" ? "رسالة جاهزة (اختياري)" : S.tpl === "mail" ? "الموضوع (اختياري)" : "النص أو الرابط — سطر لكل رمز") + '</label><textarea id="bc-x" dir="auto" placeholder="https://alyssumdz.com">' + esc(S.text) + "</textarea>";
       h += '<label class="f">مستوى تصحيح الأخطاء</label><select id="bc-e">' + [["L", "منخفض 7%"], ["M", "متوسط 15% (موصى به)"], ["Q", "عالٍ 25%"], ["H", "أعلى 30%"]].map(e => '<option value="' + e[0] + '"' + (S.ecc === e[0] ? " selected" : "") + ">" + e[1] + "</option>").join("") + "</select>";
     } else {
-      const ph = { ean13: "12 أو 13 رقماً — مثال: 6130000012345", ean8: "7 أو 8 أرقام", upca: "11 أو 12 رقماً", code128: "مثال: ORDER-10452", code39: "أحرف كبيرة وأرقام: ABC-123" }[S.t];
+      const ph = { ean13: "12 أو 13 رقماً — مثال: 6130000012346", ean8: "7 أو 8 أرقام", upca: "11 أو 12 رقماً", code128: "مثال: ORDER-10452", code39: "أحرف كبيرة وأرقام: ABC-123" }[S.t];
       h += '<label class="f">القيمة — سطر لكل رمز</label><textarea id="bc-x" dir="ltr" placeholder="' + esc(ph) + '">' + esc(S.text) + "</textarea>";
       h += '<label class="f">ارتفاع الأعمدة (بكسل)</label><input id="bc-h" type="number" min="20" max="600" value="' + S.height + '"><label style="display:flex;gap:.4rem;align-items:center;margin-top:.5rem"><input type="checkbox" id="bc-lab"' + (S.label ? " checked" : "") + '> إظهار الأرقام تحت الباركود</label>';
     }

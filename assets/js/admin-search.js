@@ -116,7 +116,7 @@ const AdminSearch = (() => {
   function init() {
     attach();
     document.addEventListener("keydown", e => {
-      const k = e.key.toLowerCase(), t = e.target, typing = t && (/^(input|textarea|select)$/i.test(t.tagName) || t.isContentEditable);
+      const k = String(e.key || "").toLowerCase(), t = e.target, typing = t && (/^(input|textarea|select)$/i.test(t.tagName) || t.isContentEditable);
       if ((e.ctrlKey || e.metaKey) && k === "k") { e.preventDefault(); open ? close() : show(); }
       else if (k === "/" && !typing && !e.ctrlKey && !e.metaKey && !e.altKey && !open) { e.preventDefault(); show(); }
       else if (k === "escape" && open) close();

@@ -348,7 +348,7 @@ const BgEditor = (() => {
     $("bge-x").onclick = () => close(false);
     const onKey = e => {
       if (!document.body.contains(ov)) return; const tg = e.target && e.target.tagName; if (tg === "INPUT" && e.target.type !== "range" && e.target.type !== "radio" && e.target.type !== "color") return;
-      e.stopPropagation(); const k = e.key.toLowerCase(); if (e.key === "Escape") { if (!opts.dock) close(false); return; }
+      e.stopPropagation(); const k = String(e.key||"").toLowerCase(); if (e.key === "Escape") { if (!opts.dock) close(false); return; }
       if ((e.ctrlKey || e.metaKey) && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; } if ((e.ctrlKey || e.metaKey) && k === "y") { e.preventDefault(); redo(); return; }
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.code === "Space") { S.space = true; e.preventDefault(); return; }

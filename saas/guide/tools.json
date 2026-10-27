@@ -49,7 +49,7 @@
         "catalog",
         "sl"
       ],
-      "needsText": "أداة PRO",
+      "needsText": "مجانية — بعض الخيارات تحتاج رصيداً",
       "pd": true,
       "landing": "landing/product-photography/"
     },
@@ -75,7 +75,7 @@
         "vgen",
         "brand"
       ],
-      "needsText": "أداة PRO",
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد",
       "landing": "landing/video-maker/"
     },
     {
@@ -272,7 +272,7 @@
         "pz",
         "ff"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "pz",
@@ -293,7 +293,7 @@
       "rel": [
         "mk"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "cap",
@@ -338,7 +338,7 @@
         "up",
         "recolor"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "ff",
@@ -360,7 +360,7 @@
         "mk",
         "fr"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "fr",
@@ -383,7 +383,7 @@
         "brand",
         "logo"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "bl",
@@ -404,7 +404,7 @@
       "rel": [
         "cl"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "cl",
@@ -425,7 +425,7 @@
       "rel": [
         "bl"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "xp",
@@ -624,7 +624,7 @@
         "fr",
         "vd"
       ],
-      "needsText": "أداة PRO",
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد",
       "landing": "landing/brand-identity/"
     },
     {
@@ -764,7 +764,7 @@
       "rel": [
         "brand"
       ],
-      "needsText": "أداة PRO",
+      "needsText": "مجانية — بعض الخيارات تحتاج رصيداً",
       "landing": "landing/logo-maker/"
     },
     {
@@ -788,7 +788,7 @@
         "catalog",
         "up"
       ],
-      "needsText": "أداة PRO",
+      "needsText": "مجانية — بعض الخيارات تحتاج رصيداً",
       "landing": "landing/batch-processing/"
     },
     {
@@ -811,7 +811,7 @@
         "batch",
         "st"
       ],
-      "needsText": "أداة PRO",
+      "needsText": "مجانية — بعض الخيارات تحتاج رصيداً",
       "landing": "landing/product-catalog/",
       "pd": true
     },
@@ -834,7 +834,7 @@
       "rel": [
         "stk"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "stk",
@@ -855,7 +855,7 @@
       "rel": [
         "ast"
       ],
-      "needsText": "أداة PRO"
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد"
     },
     {
       "id": "barcode",
@@ -880,7 +880,7 @@
         "brand",
         "batch"
       ],
-      "needsText": "أداة PRO",
+      "needsText": "مجانية — تعمل داخل المطوّر بلا رصيد",
       "pd": true
     },
     {
