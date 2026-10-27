@@ -587,7 +587,9 @@ ${an && an.features && an.features.length ? "مزايا مؤكدة: " + an.featu
     }
     if (!pg) throw new Error("مخطط غير صالح"); pg.pending = pg.pending || [];
     const v = { warn };
-    if (ctx.sticky !== false && typeof PB !== "undefined" && PB.mkS && PB.mkC && PB.mkW) { try { const sb = PB.mkS([PB.mkC([PB.mkW("html", { code: stickyBtn(out, ctx) })])], { layout: "full", pad: { d: [0, 0, 0, 0] } }); sb.set = sb.set || {}; sb.set.cid = "sticky-order"; pg.sections.push(sb); } catch (_) { } }
+    let stkOf = false;
+    if (ctx.sticky !== false && ctx.product) { const walk = o => { if (!o || typeof o !== "object") return; if (o.type === "orderorig") { o.set = o.set || {}; o.set.stk = true; stkOf = true; return; } (Array.isArray(o) ? o : Object.values(o)).forEach(walk); }; try { walk(pg.sections); } catch (_) { } }
+    if (ctx.sticky !== false && !stkOf && typeof PB !== "undefined" && PB.mkS && PB.mkC && PB.mkW) { try { const sb = PB.mkS([PB.mkC([PB.mkW("html", { code: stickyBtn(out, ctx) })])], { layout: "full", pad: { d: [0, 0, 0, 0] } }); sb.set = sb.set || {}; sb.set.cid = "sticky-order"; pg.sections.push(sb); } catch (_) { } }
     pg.cover = out.results[0] && out.results[0].bgSrc || ""; pg.media = prodSrcs.concat(out.results.map(r => r.bgSrc)).filter(Boolean);
     pg.specMeta = Object.assign(pg.specMeta || {}, { hybrid: { v: 1, flat: out.results.some(r => r && r.flat), strategy: out.strategy, theme: out.style, colors: out.colors || [], sections: out.results.map(r => ({ id: r.sec.id, type: r.sec.type, prompt: r.prompt, ref: r.ref, attempts: r.attempts, flags: r.flags, contrast: textOn(r.lum, out.style).ratio, person: !!r.person })), steps: out.log.slice(0, 200) } });
     return { page: pg, warn: (v.warn || []) };
