@@ -2055,6 +2055,14 @@ const PhoneDZ = {
         const L = oc.L, lab = (id,t)=>{ const e = document.querySelector(W+'label[for="'+id+'"]'); if(e && t){ const nt = String(t) + (/\*\s*$/.test(e.textContent) ? " *" : ""); if(e.textContent !== nt) e.textContent = nt; } };
         lab("name", L.nm); lab("phone", L.ph); lab("wilaya", L.wl); lab("commune", L.cm);
         if(L.cp){ const i = document.getElementById("prod-coupon-input"); if(i && i.placeholder !== L.cp) i.placeholder = String(L.cp); }
+        if(L.o1||L.o2||L.on||L.ofr||L.ou||L.ov||L.of||L.osp||L.obs){
+          document.querySelectorAll(W+"#offers .offer").forEach(of=>{
+            const q = of.querySelector(".q"), u = of.querySelector(".u"), bs = of.querySelector(".best");
+            if(q){ if(q.__o === undefined) q.__o = q.textContent.trim(); const o = q.__o, m = /^(\d+) قطع$/.exec(o); const t = o==="قطعة واحدة"?L.o1 : o==="قطعتان"?L.o2 : m?(L.on&&String(L.on).replace("{n}",m[1])) : /الثالثة/.test(o)?L.ofr : ""; if(t && q.textContent !== t) q.textContent = String(t); }
+            if(u){ if(u.__o === undefined) u.__o = u.innerHTML; let h = u.__o; if(L.ou) h = h.replace("للقطعة", L.ou.replace(/[<>&]/g,"")); if(L.ov) h = h.replace("وفر", L.ov.replace(/[<>&]/g,"")); if(L.of) h = h.replace("مجاناً داخل العرض", L.of.replace(/[<>&]/g,"")); if(L.osp) h = h.replace("🚚 شحن مجاني", L.osp.replace(/[<>&]/g,"")); if(u.innerHTML !== h) u.innerHTML = h; }
+            if(bs && L.obs && bs.textContent !== L.obs) bs.textContent = String(L.obs);
+          });
+        }
         if(L.gp){ const e = document.querySelector(W+".gp-open"); if(e){ const t = String(L.gp); if(e.__gp !== t){ e.textContent = t; e.__gp = t; } } }
         if(L.sw){ const e = document.querySelector(W+'#wilaya option[value=""]'); if(e && e.textContent !== L.sw) e.textContent = String(L.sw); }
         if(L.sc){ const e = document.querySelector(W+'#commune option[value=""]'); if(e && e.textContent !== L.sc) e.textContent = String(L.sc); }
