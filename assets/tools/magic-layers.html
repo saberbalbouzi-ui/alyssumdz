@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -20,6 +20,21 @@
       --chk1:#262a34; --chk2:#2f3440;
     }
   }
+  /* مظهر لوحة التحكم (أخضر زجاجي داكن + ليموني) والاتجاه من اليمين لليسار */
+  :root,:root:root{--bg:#07130d;--panel:#0d2218;--panel2:#12301f;--line:rgba(255,255,255,.16);--text:#f1f5ee;--muted:#a9c0ae;--accent:#e2fe17;--accent-ink:#1f2123;--danger:#ff8a8a;--ok:#e2fe17;--sel:#e2fe17;--chk1:#13281d;--chk2:#1a3827}
+  html,body{font-family:Cairo,Tajawal,system-ui,sans-serif;color-scheme:dark}
+  html{direction:rtl}
+  #viewport,#sizer,#stage{direction:ltr}
+  header{background:linear-gradient(155deg,rgba(70,170,80,.12),rgba(0,0,0,.25))}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));backdrop-filter:blur(8px);border-radius:16px}
+  .card h2{text-transform:none;letter-spacing:0;color:var(--accent);font-size:14px}
+  button{border-radius:12px;font-weight:700}
+  button.primary{background:linear-gradient(180deg,#effe17,#e2fe17);border:0;color:#1f2123;border-radius:14px}
+  button.primary:hover{transform:translateY(-2px)}
+  button.primary:active{transform:translateY(3px)}
+  select,input[type=text],input[type=password],input[type=number],textarea{border-radius:10px}
+  input[type=range]{direction:ltr}
+  ::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:rgba(255,160,40,.12);border-radius:9px}::-webkit-scrollbar-thumb{background:rgba(255,150,30,.7);border-radius:9px;border:2px solid transparent;background-clip:padding-box}
   *{box-sizing:border-box}
   [hidden]{display:none!important}
   html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -95,159 +110,159 @@
 </head>
 <body>
 <header>
-  <h1>Magic Layers <small style="font-size:12px;font-weight:600;opacity:.7">v25 · effacement garanti</small></h1>
-  <span>Décomposez une image en calques modifiables, puis déplacez, redimensionnez et exportez.</span>
+  <h1>Magic Layers <small style="font-size:12px;font-weight:600;opacity:.7">v25 · مسح مضمون</small></h1>
+  <span>فكّك الصورة إلى طبقات قابلة للتعديل، ثم حرّكها وغيّر حجمها وصدّرها.</span>
 </header>
 
 <main>
   <!-- Colonne gauche : image + génération -->
   <section>
     <div class="card">
-      <h2>Mode</h2>
+      <h2>الوضع</h2>
       <select id="mode">
-        <option value="decompose">Décomposer une image existante en calques</option>
-        <option value="create">Créer un visuel en calques depuis un produit (Gemini)</option>
+        <option value="decompose">تفكيك صورة موجودة إلى طبقات</option>
+        <option value="create">إنشاء تصميم بطبقات من منتج (Alyssum API)</option>
       </select>
     </div>
 
     <div class="card" id="cardProduct" hidden>
-      <h2>1. Produit</h2>
-      <div class="drop" id="pDrop" tabindex="0" role="button" aria-label="Choisir la photo du produit">
-        <div id="pDropInner">Glissez la photo du produit ici,<br>cliquez pour choisir, ou collez-la (Ctrl+V)</div>
+      <h2>1. المنتج</h2>
+      <div class="drop" id="pDrop" tabindex="0" role="button" aria-label="اختيار صورة المنتج">
+        <div id="pDropInner">اسحب صورة المنتج وأفلتها هنا،<br>أو انقر للاختيار، أو الصقها (Ctrl+V)</div>
       </div>
       <input type="file" id="pFile" accept="image/*" hidden>
-      <label for="pKind">Type de visuel</label>
-      <select id="pKind"><option value="rich">Page riche qualité v17 : image complète de Gemini + textes modifiables + produit PNG</option><option value="layered">Page en calques : une photo par section, tout séparé (verre transparent)</option><option value="landing">Page de vente longue (9 sections, textes en calques)</option><option value="poster">Affiche unique avec enfant</option></select>
-      <label for="pName">Nom du produit</label>
-      <input type="text" id="pName" dir="auto" placeholder="Ex. : ALYSSUM Anti Grey Serum">
-      <label for="pDesc">Description du produit</label>
-      <textarea id="pDesc" dir="auto" rows="4" placeholder="Composition, bienfaits, mode d'emploi, ce qui le distingue…"></textarea>
-      <label for="pAud">Public cible (optionnel)</label>
-      <input type="text" id="pAud" dir="auto" placeholder="Ex. : femmes de 25 à 45 ans en Algérie">
-      <label for="pStyle">Style visuel</label>
-      <input type="text" id="pStyle" dir="auto" value="naturel, premium et propre">
+      <label for="pKind">نوع التصميم</label>
+      <select id="pKind"><option value="rich">صفحة غنية بجودة v17: صورة كاملة من Alyssum API + نصوص قابلة للتعديل + منتج PNG</option><option value="layered">صفحة بطبقات: صورة لكل قسم وكل شيء منفصل (زجاج شفاف)</option><option value="landing">صفحة بيع طويلة (9 أقسام، نصوص بطبقات)</option><option value="poster">ملصق واحد مع طفل</option></select>
+      <label for="pName">اسم المنتج</label>
+      <input type="text" id="pName" dir="auto" placeholder="مثال: سيروم ALYSSUM ضد الشيب">
+      <label for="pDesc">وصف المنتج</label>
+      <textarea id="pDesc" dir="auto" rows="4" placeholder="المكوّنات، الفوائد، طريقة الاستعمال، ما يميّزه…"></textarea>
+      <label for="pAud">الجمهور المستهدف (اختياري)</label>
+      <input type="text" id="pAud" dir="auto" placeholder="مثال: نساء بين 25 و45 سنة في الجزائر">
+      <label for="pStyle">الأسلوب البصري</label>
+      <input type="text" id="pStyle" dir="auto" value="طبيعي وفاخر ونظيف">
       <div class="row2">
-        <div><label for="pPrice">Prix</label><input type="text" id="pPrice" dir="auto" placeholder="Ex. : 1800 دج"></div>
-        <div><label for="pColors">Couleurs du design</label><input type="text" id="pColors" dir="auto" placeholder="Ex. : bleu et orange"></div>
+        <div><label for="pPrice">السعر</label><input type="text" id="pPrice" dir="auto" placeholder="مثال: 1800 دج"></div>
+        <div><label for="pColors">ألوان التصميم</label><input type="text" id="pColors" dir="auto" placeholder="مثال: أزرق وبرتقالي"></div>
       </div>
-      <label for="pOffer">Offre à mettre en avant (optionnel)</label>
-      <input type="text" id="pOffer" dir="auto" placeholder="Ex. : Livraison gratuite, paiement à la livraison">
+      <label for="pOffer">العرض المراد إبرازه (اختياري)</label>
+      <input type="text" id="pOffer" dir="auto" placeholder="مثال: توصيل مجاني، الدفع عند الاستلام">
       <div class="row2">
-        <div><label for="pLang">Langue des textes</label>
-          <select id="pLang"><option value="ar">العربية (RTL)</option><option value="fr">Français</option><option value="en">English</option></select></div>
-        <div id="wFmt"><label for="pFmt">Format</label>
-          <select id="pFmt"><option value="4:5">Post 4:5 (1080×1350)</option><option value="1:1">Carré 1:1 (1080×1080)</option><option value="9:16">Story 9:16 (1080×1920)</option></select></div>
+        <div><label for="pLang">لغة النصوص</label>
+          <select id="pLang"><option value="ar">العربية (RTL)</option><option value="fr">الفرنسية</option><option value="en">الإنجليزية</option></select></div>
+        <div id="wFmt"><label for="pFmt">المقاس</label>
+          <select id="pFmt"><option value="4:5">منشور 4:5 (1080×1350)</option><option value="1:1">مربع 1:1 (1080×1080)</option><option value="9:16">ستوري 9:16 (1080×1920)</option></select></div>
       </div>
       <div class="row2">
-        <div><label for="pChild">Enfant</label>
-          <select id="pChild"><option value="any">Au choix</option><option value="boy">Garçon</option><option value="girl">Fille</option></select></div>
-        <div><label for="pAge">Âge</label><input type="text" id="pAge" value="4 à 6 ans"></div>
+        <div><label for="pChild">الطفل</label>
+          <select id="pChild"><option value="any">حسب الاختيار</option><option value="boy">ولد</option><option value="girl">بنت</option></select></div>
+        <div><label for="pAge">العمر</label><input type="text" id="pAge" value="من 4 إلى 6 سنوات"></div>
       </div>
-      <label for="pScene">Décor de la scène (optionnel)</label>
-      <input type="text" id="pScene" dir="auto" placeholder="Ex. : salon lumineux, jardin au soleil, cuisine moderne…">
+      <label for="pScene">ديكور المشهد (اختياري)</label>
+      <input type="text" id="pScene" dir="auto" placeholder="مثال: صالون مضيء، حديقة مشمسة، مطبخ عصري…">
       <div class="row2">
-        <div id="wNF"><label for="pNF">Pastilles d'atouts (texte)</label><input type="number" id="pNF" min="0" max="4" value="3"></div>
-        <div><label for="pRes">Résolution de l'image</label>
-          <select id="pRes"><option value="">Standard</option><option value="2K">2K (plus net)</option><option value="4K">4K (plus lent)</option></select></div>
+        <div id="wNF"><label for="pNF">شارات المزايا (نص)</label><input type="number" id="pNF" min="0" max="4" value="3"></div>
+        <div><label for="pRes">دقة الصورة</label>
+          <select id="pRes"><option value="">عادية</option><option value="2K">2K (أوضح)</option><option value="4K">4K (أبطأ)</option></select></div>
       </div>
-      <div id="wRichRatio"><label for="pRichRatio">Longueur de la page riche (largeur : hauteur)</label>
-        <select id="pRichRatio"><option value="1:4">1:4 — recommandé : une seule colonne garantie (la plus courte qui tient 9 sections)</option><option value="9:16">9:16 — court, mais Gemini coupe souvent la page en 2 colonnes</option><option value="5:14">5:14 — comme votre exemple (essai ; sinon 1:4)</option><option value="9:32">9:32 — un peu plus longue (essai ; sinon 1:4)</option><option value="1:8">1:8 — très longue</option></select>
-        <div class="check"><input type="checkbox" id="pAutoLayers" checked><label for="pAutoLayers" style="margin:0">Après la génération : garder la page entière en qualité d’origine + textes modifiables (les textes sont lus par bandes ; appels supplémentaires)</label></div>
-        <div class="check"><input type="checkbox" id="pCleanBg" checked><label for="pCleanBg" style="margin:0">Faire effacer les textes par Gemini (1 image de plus ; arrière-plan propre, sans traces — sinon effacement local)</label></div>
-        <div class="check"><input type="checkbox" id="pRepProd" checked><label for="pRepProd" style="margin:0">Poser mon PNG d’origine sur chaque produit de la page</label></div>
-        <div class="check"><input type="checkbox" id="pObjLayers"><label for="pObjLayers" style="margin:0">Détourer aussi les éléments en copies (optionnel ; peut donner des morceaux)</label></div></div>
-      <div id="wLay"><label>Sections à inclure</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px"><div class="check"><input type="checkbox" id="lay_hero" checked><label for="lay_hero" style="margin:0">En-tête</label></div><div class="check"><input type="checkbox" id="lay_problem" checked><label for="lay_problem" style="margin:0">Problème</label></div><div class="check"><input type="checkbox" id="lay_solution" checked><label for="lay_solution" style="margin:0">Solution</label></div><div class="check"><input type="checkbox" id="lay_ingredients" checked><label for="lay_ingredients" style="margin:0">Ingrédients</label></div><div class="check"><input type="checkbox" id="lay_offer" checked><label for="lay_offer" style="margin:0">Offre et prix</label></div><div class="check"><input type="checkbox" id="lay_guarantees" checked><label for="lay_guarantees" style="margin:0">Garanties</label></div><div class="check"><input type="checkbox" id="lay_reviews" checked><label for="lay_reviews" style="margin:0">Avis clients</label></div><div class="check"><input type="checkbox" id="lay_order" checked><label for="lay_order" style="margin:0">Comment commander</label></div><div class="check"><input type="checkbox" id="lay_final" checked><label for="lay_final" style="margin:0">Appel final</label></div></div><label for="pLayLen">Longueur de la page</label><select id="pLayLen"><option value="0.55">Courte (≈ 1 : 3)</option><option value="0.75" selected>Moyenne (≈ 1 : 4,3)</option><option value="1">Longue (≈ 1 : 5,7)</option></select><label for="pCardA">Cartes derrière les textes</label><select id="pCardA"><option value="glass" selected>Verre flouté sombre (la photo reste visible)</option><option value="0.82">Blanches semi-transparentes</option><option value="1">Blanches opaques</option></select><label for="pVar">Disposition des textes</label><select id="pVar"><option value="alt" selected>Variée : droite, gauche, centre</option><option value="inv">Variée (inversée)</option><option value="same">Toujours du même côté</option></select></div>
-      <div id="wSecs"><label>Sections à inclure (la longueur de l'image s'adapte au nombre choisi)</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px"><div class="check"><input type="checkbox" id="sec_hero" checked><label for="sec_hero" style="margin:0">En-tête</label></div><div class="check"><input type="checkbox" id="sec_problem" checked><label for="sec_problem" style="margin:0">Problème</label></div><div class="check"><input type="checkbox" id="sec_solution" checked><label for="sec_solution" style="margin:0">Solution</label></div><div class="check"><input type="checkbox" id="sec_ba" checked><label for="sec_ba" style="margin:0">Avant / Après</label></div><div class="check"><input type="checkbox" id="sec_feature" checked><label for="sec_feature" style="margin:0">Fonctionnalité</label></div><div class="check"><input type="checkbox" id="sec_compare" checked><label for="sec_compare" style="margin:0">Comparaison</label></div><div class="check"><input type="checkbox" id="sec_life" checked><label for="sec_life" style="margin:0">Scène de vie (enfant)</label></div><div class="check"><input type="checkbox" id="sec_review" checked><label for="sec_review" style="margin:0">Avis clients</label></div><div class="check"><input type="checkbox" id="sec_footer" checked><label for="sec_footer" style="margin:0">Prix et bouton</label></div></div></div>
+      <div id="wRichRatio"><label for="pRichRatio">طول الصفحة الغنية (العرض : الارتفاع)</label>
+        <select id="pRichRatio"><option value="1:4">1:4 — موصى به: عمود واحد مضمون (أقصر طول يتّسع لـ 9 أقسام)</option><option value="9:16">9:16 — قصير، لكن الأداة كثيراً ما تقسم الصفحة إلى عمودين</option><option value="5:14">5:14 — مثل مثالك (تجريبي، وإلا 1:4)</option><option value="9:32">9:32 — أطول قليلاً (تجريبي، وإلا 1:4)</option><option value="1:8">1:8 — طويلة جداً</option></select>
+        <div class="check"><input type="checkbox" id="pAutoLayers" checked><label for="pAutoLayers" style="margin:0">بعد التوليد: إبقاء الصفحة كاملة بجودتها الأصلية + نصوص قابلة للتعديل (تُقرأ النصوص على شرائح؛ طلبات إضافية)</label></div>
+        <div class="check"><input type="checkbox" id="pCleanBg" checked><label for="pCleanBg" style="margin:0">مسح النصوص عبر Alyssum API (صورة إضافية؛ خلفية نظيفة بلا آثار — وإلا مسح محلي)</label></div>
+        <div class="check"><input type="checkbox" id="pRepProd" checked><label for="pRepProd" style="margin:0">وضع صورة PNG الأصلية على كل منتج في الصفحة</label></div>
+        <div class="check"><input type="checkbox" id="pObjLayers"><label for="pObjLayers" style="margin:0">فصل العناصر أيضاً كنسخ (اختياري؛ قد تظهر قطع ناقصة)</label></div></div>
+      <div id="wLay"><label>الأقسام المطلوبة</label><div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px"><div class="check"><input type="checkbox" id="lay_hero" checked><label for="lay_hero" style="margin:0">الرأس</label></div><div class="check"><input type="checkbox" id="lay_problem" checked><label for="lay_problem" style="margin:0">المشكلة</label></div><div class="check"><input type="checkbox" id="lay_solution" checked><label for="lay_solution" style="margin:0">الحل</label></div><div class="check"><input type="checkbox" id="lay_ingredients" checked><label for="lay_ingredients" style="margin:0">المكوّنات</label></div><div class="check"><input type="checkbox" id="lay_offer" checked><label for="lay_offer" style="margin:0">العرض والسعر</label></div><div class="check"><input type="checkbox" id="lay_guarantees" checked><label for="lay_guarantees" style="margin:0">الضمانات</label></div><div class="check"><input type="checkbox" id="lay_reviews" checked><label for="lay_reviews" style="margin:0">آراء الزبائن</label></div><div class="check"><input type="checkbox" id="lay_order" checked><label for="lay_order" style="margin:0">طريقة الطلب</label></div><div class="check"><input type="checkbox" id="lay_final" checked><label for="lay_final" style="margin:0">الدعوة الختامية</label></div></div><label for="pLayLen">طول الصفحة</label><select id="pLayLen"><option value="0.55">قصيرة (≈ 1 : 3)</option><option value="0.75" selected>متوسطة (≈ 1 : 4,3)</option><option value="1">طويلة (≈ 1 : 5,7)</option></select><label for="pCardA">بطاقات خلف النصوص</label><select id="pCardA"><option value="glass" selected>زجاج معتم ضبابي (تبقى الصورة ظاهرة)</option><option value="0.82">بيضاء شبه شفافة</option><option value="1">بيضاء معتمة</option></select><label for="pVar">توزيع النصوص</label><select id="pVar"><option value="alt" selected>متنوع: يمين، يسار، وسط</option><option value="inv">متنوع (معكوس)</option><option value="same">دائماً في الجهة نفسها</option></select></div>
+      <div id="wSecs"><label>الأقسام المطلوبة (يتكيّف طول الصورة مع العدد المختار)</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 10px"><div class="check"><input type="checkbox" id="sec_hero" checked><label for="sec_hero" style="margin:0">الرأس</label></div><div class="check"><input type="checkbox" id="sec_problem" checked><label for="sec_problem" style="margin:0">المشكلة</label></div><div class="check"><input type="checkbox" id="sec_solution" checked><label for="sec_solution" style="margin:0">الحل</label></div><div class="check"><input type="checkbox" id="sec_ba" checked><label for="sec_ba" style="margin:0">قبل / بعد</label></div><div class="check"><input type="checkbox" id="sec_feature" checked><label for="sec_feature" style="margin:0">الميزة</label></div><div class="check"><input type="checkbox" id="sec_compare" checked><label for="sec_compare" style="margin:0">المقارنة</label></div><div class="check"><input type="checkbox" id="sec_life" checked><label for="sec_life" style="margin:0">مشهد حياتي (طفل)</label></div><div class="check"><input type="checkbox" id="sec_review" checked><label for="sec_review" style="margin:0">آراء الزبائن</label></div><div class="check"><input type="checkbox" id="sec_footer" checked><label for="sec_footer" style="margin:0">السعر والزر</label></div></div></div>
       <div id="wCols" class="row2">
-        <div><label for="pCIdea">Couleur du texte — idée</label><input type="color" id="pCIdea" value="#ffffff" style="height:36px;padding:2px"></div>
-        <div><label for="pCOffer">Couleur — offre, prix, bouton</label><input type="color" id="pCOffer" value="#ffd21f" style="height:36px;padding:2px"></div>
+        <div><label for="pCIdea">لون النص — الفكرة</label><input type="color" id="pCIdea" value="#ffffff" style="height:36px;padding:2px"></div>
+        <div><label for="pCOffer">اللون — العرض والسعر والزر</label><input type="color" id="pCOffer" value="#ffd21f" style="height:36px;padding:2px"></div>
       </div>
-      <label for="pExtra">Consignes supplémentaires (optionnel)</label>
-      <textarea id="pExtra" dir="auto" rows="2" placeholder="Ex. : ton chaleureux, éviter le rouge, mentionner 100 % naturel…"></textarea>
-      <div class="check"><input type="checkbox" id="pOrig" checked><label for="pOrig" style="margin:0">Poser mon PNG tel quel (sans découpe) sur le produit de la scène</label></div>
-      <div class="hint">Affiche : un seul appel à Gemini, qui renvoie une image réaliste (un enfant souriant qui tient le produit) et les textes (JSON) avec la position du produit. La page pose votre PNG d'origine, non modifié, sur le produit de la scène, puis ajoute les textes comme vrais calques modifiables. Pour que le PNG d'origine se pose sans fond blanc, il doit avoir un fond transparent.</div>
+      <label for="pExtra">تعليمات إضافية (اختياري)</label>
+      <textarea id="pExtra" dir="auto" rows="2" placeholder="مثال: نبرة دافئة، تجنّب الأحمر، ذكر أنه طبيعي 100%…"></textarea>
+      <div class="check"><input type="checkbox" id="pOrig" checked><label for="pOrig" style="margin:0">وضع صورة PNG كما هي (بلا قصّ) على منتج المشهد</label></div>
+      <div class="hint">ملصق: طلب واحد يعيد صورة واقعية (طفل مبتسم يحمل المنتج) والنصوص (JSON) مع موضع المنتج. تضع الأداة صورة PNG الأصلية دون تعديل على منتج المشهد، ثم تضيف النصوص كطبقات حقيقية قابلة للتعديل. ولكي تُوضع بلا خلفية بيضاء يجب أن تكون خلفيتها شفافة.</div>
     </div>
 
     <div class="card" id="cardImage">
-      <h2>1. Image</h2>
-      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choisir une image">
-        <div id="dropInner">Glissez une image ici,<br>cliquez pour choisir, ou collez-la (Ctrl+V)</div>
+      <h2>1. الصورة</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="اختيار صورة">
+        <div id="dropInner">اسحب صورة وأفلتها هنا،<br>أو انقر للاختيار، أو الصقها (Ctrl+V)</div>
       </div>
       <input type="file" id="file" accept="image/*" hidden>
     </div>
 
     <div class="card">
-      <h2>2. Décomposition IA</h2>
-      <label for="provider">Moteur</label>
+      <h2>2. التفكيك إلى طبقات</h2>
+      <label for="provider">المحرّك</label>
       <select id="provider">
-        <option value="gemini">Gemini (clé Google AI Studio)</option>
-        <option value="fal">fal.ai (Qwen-Image-Layered)</option>
+        <option value="gemini">Alyssum API (مفتاح الخدمة)</option>
+        <option value="fal">محرّك بديل (Qwen-Image-Layered)</option>
       </select>
-      <label for="key" id="keyLabel">Clé API Gemini</label>
+      <label for="key" id="keyLabel">مفتاح Alyssum API</label>
       <input type="text" id="key" name="gem-k-x" placeholder="AIza…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other" style="-webkit-text-security:disc">
-      <div class="check"><input type="checkbox" id="remember"><label for="remember" style="margin:0">Mémoriser la clé dans ce navigateur</label></div>
+      <div class="check"><input type="checkbox" id="remember"><label for="remember" style="margin:0">تذكّر المفتاح في هذا المتصفح</label></div>
       <div class="hint" id="keyHint"></div>
-      <button class="wide" id="testKey" type="button" style="margin-top:8px">Tester la clé et lister les modèles</button>
+      <button class="wide" id="testKey" type="button" style="margin-top:8px">اختبار المفتاح وعرض النماذج</button>
 
       <div class="row2" id="rowN">
-        <div><label for="n" id="nLabel">Nombre de calques</label><input type="number" id="n" min="2" max="20" value="4"></div>
-        <div id="stepsWrap"><label for="steps">Étapes</label><input type="number" id="steps" min="10" max="50" value="28"></div>
+        <div><label for="n" id="nLabel">عدد الطبقات</label><input type="number" id="n" min="2" max="20" value="4"></div>
+        <div id="stepsWrap"><label for="steps">الخطوات</label><input type="number" id="steps" min="10" max="50" value="28"></div>
       </div>
-      <div class="check" id="textWrap"><input type="checkbox" id="textMode" checked><label for="textMode" style="margin:0">Convertir les textes en textes modifiables (arabe inclus)</label></div>
-      <div class="check" id="inpaintWrap"><input type="checkbox" id="inpaint"><label for="inpaint" style="margin:0">Reconstruire l'arrière-plan (modèle image Gemini, 1 appel de plus)</label></div>
-      <label for="prompt" id="promptLabel">Description de l'image (optionnel)</label>
-      <textarea id="prompt" placeholder="Ex. : affiche publicitaire avec un flacon, du texte et un fond dégradé"></textarea>
+      <div class="check" id="textWrap"><input type="checkbox" id="textMode" checked><label for="textMode" style="margin:0">تحويل النصوص إلى نصوص قابلة للتعديل (بما فيها العربية)</label></div>
+      <div class="check" id="inpaintWrap"><input type="checkbox" id="inpaint"><label for="inpaint" style="margin:0">إعادة بناء الخلفية (نموذج الصور، طلب إضافي)</label></div>
+      <label for="prompt" id="promptLabel">وصف الصورة (اختياري)</label>
+      <textarea id="prompt" placeholder="مثال: ملصق إعلاني بقارورة ونص وخلفية متدرجة"></textarea>
 
       <details>
-        <summary>Réglages avancés</summary>
+        <summary>إعدادات متقدمة</summary>
         <div id="advGem">
-          <label for="gemSeg">Modèle de segmentation</label>
+          <label for="gemSeg">نموذج التجزئة</label>
           <input type="text" id="gemSeg" value="gemini-3.8-flash" spellcheck="false" list="gemSegList"><datalist id="gemSegList"></datalist>
-          <label for="gemImg">Modèle image (arrière-plan)</label>
+          <label for="gemImg">نموذج الصور (الخلفية)</label>
           <input type="text" id="gemImg" value="gemini-nano-banana-2.1" spellcheck="false" list="gemImgList"><datalist id="gemImgList"></datalist>
-          <label for="gemApi">Type d'appel</label>
+          <label for="gemApi">نوع الاستدعاء</label>
           <select id="gemApi">
-            <option value="auto">Automatique (Interactions, sinon generateContent)</option>
+            <option value="auto">تلقائي (Interactions، وإلا generateContent)</option>
             <option value="interactions">Interactions</option>
             <option value="generateContent">generateContent</option>
-            <option value="vertex">Vertex AI (clés « AQ. »)</option>
+            <option value="vertex">خدمة بديلة (مفاتيح « AQ. »)</option>
           </select>
-          <div class="hint">Si une erreur « modèle introuvable » apparaît, copiez le nom exact d'un modèle depuis Google AI Studio. Les modèles Gemini sont facturés ou limités selon votre offre.</div>
+          <div class="hint">إذا ظهر خطأ «النموذج غير موجود» فانسخ الاسم الدقيق لنموذج من لوحة الخدمة. تُحتسب النماذج أو تُقيَّد بحسب باقتك.</div>
         </div>
         <div id="advFal">
-        <label for="endpoint">Modèle fal</label>
+        <label for="endpoint">نموذج المحرّك البديل</label>
         <input type="text" id="endpoint" value="fal-ai/qwen-image-layered" spellcheck="false">
-        <div class="hint">Par défaut : Qwen-Image-Layered, qui sépare une image en calques RGBA avec transparence. Le service est payant à l'usage, voir fal.ai/pricing.</div>
+        <div class="hint">الافتراضي: Qwen-Image-Layered الذي يفصل الصورة إلى طبقات RGBA شفافة. الخدمة مدفوعة بحسب الاستعمال.</div>
         </div>
       </details>
 
       <div style="margin-top:12px;display:grid;gap:8px">
-        <button class="primary" id="go" disabled>Générer les calques</button>
-        <button id="cancel" class="wide" hidden>Annuler</button>
+        <button class="primary" id="go" disabled>إنشاء الطبقات</button>
+        <button id="cancel" class="wide" hidden>إلغاء</button>
       </div>
       <div id="status" role="status" aria-live="polite"></div>
-      <details id="rawBox" hidden><summary>Réponse brute de Gemini (pour diagnostic)</summary>
+      <details id="rawBox" hidden><summary>الرد الخام للخدمة (للتشخيص)</summary>
         <pre id="rawText" style="white-space:pre-wrap;word-break:break-all;max-height:200px;overflow:auto;font-size:11px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0 0"></pre>
       </details>
     </div>
 
     <div class="card">
-      <h2>Sans clé API</h2>
-      <button class="wide" id="demo">Charger un exemple de calques</button>
-      <div class="hint">Pour essayer l'éditeur (sélection, déplacement, ordre, export) sans rien envoyer.</div>
+      <h2>بدون مفتاح</h2>
+      <button class="wide" id="demo">تحميل مثال لطبقات</button>
+      <div class="hint">لتجربة المحرّر (التحديد، التحريك، الترتيب، التصدير) دون إرسال شيء.</div>
     </div>
   </section>
 
   <!-- Centre : éditeur -->
   <section>
     <div class="toolbar">
-      <button id="fit">Ajuster</button>
-      <button id="addText" title="Ajouter un texte modifiable">+ Texte</button>
-      <button id="reverse" title="Inverser l'ordre des calques si le fond se retrouve au-dessus">Inverser l'ordre</button>
-      <button id="desel">Désélectionner</button>
+      <button id="fit">ملاءمة</button>
+      <button id="addText" title="إضافة نص قابل للتعديل">+ نص</button>
+      <button id="reverse" title="اعكس ترتيب الطبقات إن ظهرت الخلفية فوق العناصر">عكس الترتيب</button>
+      <button id="desel">إلغاء التحديد</button>
       <span class="sp"></span>
-      <span class="hint" style="margin:0">Flèches : déplacer (<kbd>Maj</kbd> = 10 px) · <kbd>Suppr</kbd> : supprimer · <kbd>Maj</kbd> + coin : déformer</span>
+      <span class="hint" style="margin:0">الأسهم: تحريك (<kbd>Shift</kbd> = 10 px) · <kbd>Delete</kbd> : حذف · <kbd>Shift</kbd> + زاوية: تشويه</span>
     </div>
     <div id="viewport">
       <div id="sizer">
@@ -258,7 +273,7 @@
             <div class="h" data-h="sw"></div><div class="h" data-h="se"></div>
           </div>
         </div>
-        <div id="empty">Chargez une image, puis lancez la décomposition.<br>Les calques apparaîtront ici.</div>
+        <div id="empty">حمّل صورة ثم ابدأ التفكيك.<br>ستظهر الطبقات هنا.</div>
       </div>
     </div>
   </section>
@@ -266,34 +281,34 @@
   <!-- Droite : calques + export -->
   <section>
     <div class="card" id="textCard" hidden>
-      <h2>Texte sélectionné</h2>
+      <h2>النص المحدد</h2>
       <textarea id="tText" dir="auto" rows="3" style="font-size:16px"></textarea>
       <div class="row2">
-        <div><label for="tFont">Police</label>
+        <div><label for="tFont">الخط</label>
           <select id="tFont"><option>Cairo</option><option>Tajawal</option><option>Almarai</option><option>Amiri</option><option>Noto Naskh Arabic</option><option>Inter</option><option>Georgia</option><option>Arial</option><option>Times New Roman</option></select></div>
-        <div><label for="tSize">Taille (px)</label><input type="number" id="tSize" min="4" max="800"></div>
+        <div><label for="tSize">الحجم (px)</label><input type="number" id="tSize" min="4" max="800"></div>
       </div>
       <div class="row2">
-        <div><label for="tWeight">Graisse</label><select id="tWeight"><option value="400">Normale</option><option value="700">Gras</option><option value="900">Très gras</option></select></div>
-        <div><label for="tColor">Couleur</label><input type="color" id="tColor" style="width:100%;height:36px;padding:2px;border-radius:8px;border:1px solid var(--line);background:var(--panel2)"></div>
+        <div><label for="tWeight">السماكة</label><select id="tWeight"><option value="400">عادية</option><option value="700">عريض</option><option value="900">عريض جداً</option></select></div>
+        <div><label for="tColor">اللون</label><input type="color" id="tColor" style="width:100%;height:36px;padding:2px;border-radius:8px;border:1px solid var(--line);background:var(--panel2)"></div>
       </div>
       <div class="row2">
-        <div><label for="tAlign">Alignement</label><select id="tAlign"><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option></select></div>
-        <div><label for="tDir">Sens</label><select id="tDir"><option value="rtl">Droite à gauche</option><option value="ltr">Gauche à droite</option></select></div>
+        <div><label for="tAlign">المحاذاة</label><select id="tAlign"><option value="left">يسار</option><option value="center">وسط</option><option value="right">يمين</option></select></div>
+        <div><label for="tDir">الاتجاه</label><select id="tDir"><option value="rtl">من اليمين لليسار</option><option value="ltr">من اليسار لليمين</option></select></div>
       </div>
-      <label for="tLh">Interligne</label><input type="number" id="tLh" min="0.8" max="3" step="0.05">
-      <div class="hint">Double-cliquez un texte sur l'image pour le modifier. Les polices arabes (Cairo, Tajawal, Almarai, Amiri, Noto Naskh) viennent de Google Fonts : une connexion est nécessaire.</div>
+      <label for="tLh">تباعد الأسطر</label><input type="number" id="tLh" min="0.8" max="3" step="0.05">
+      <div class="hint">انقر نقراً مزدوجاً على نص في الصورة لتعديله. الخطوط العربية (Cairo وTajawal وAlmarai وAmiri وNoto Naskh) تُحمَّل من الإنترنت فيلزم اتصال.</div>
     </div>
     <div class="card">
-      <h2>Calques</h2>
+      <h2>الطبقات</h2>
       <ul id="layers"></ul>
       <div class="exp">
-        <button class="primary" id="zip" disabled>Télécharger le ZIP (calques PNG + manifeste)</button>
-        <button class="wide" id="svg" disabled>Télécharger en SVG (textes modifiables)</button>
-        <button class="wide" id="png" disabled>Télécharger l'image composée (PNG)</button>
-        <button class="primary" id="toDev" disabled hidden>Envoyer au développeur (éditeur de pages)</button>
+        <button class="primary" id="zip" disabled>تنزيل ZIP (طبقات PNG + ملف الوصف)</button>
+        <button class="wide" id="svg" disabled>تنزيل SVG (نصوص قابلة للتعديل)</button>
+        <button class="wide" id="png" disabled>تنزيل الصورة المركّبة (PNG)</button>
+        <button class="primary" id="toDev" disabled hidden>إرسال إلى المطوّر (محرّر الصفحات)</button>
       </div>
-      <div class="hint">Chaque calque du ZIP est exporté à la taille de la page, à sa position actuelle : il se superpose exactement dans Photoshop, Figma, Photopea ou Canva.</div>
+      <div class="hint">تُصدَّر كل طبقة في ملف ZIP بحجم الصفحة وفي موضعها الحالي، فتنطبق تماماً عند فتحها في Photoshop أو Figma أو Photopea أو Canva.</div>
     </div>
   </section>
 </main>
@@ -340,7 +355,7 @@ async function loadSource(blob){
   if (!blob || !blob.type.startsWith('image/')) return;
   try {
     S.src = await createImageBitmap(blob);
-  } catch(e){ setStatus('Image illisible.', 'err'); return; }
+  } catch(e){ setStatus('تعذّرت قراءة الصورة.', 'err'); return; }
   const url = URL.createObjectURL(blob);
   $('dropInner').innerHTML = '';
   const im = new Image(); im.src = url; $('dropInner').appendChild(im);
@@ -351,7 +366,7 @@ async function loadSource(blob){
   const o = $('orig'); o.width = S.src.width; o.height = S.src.height; o.getContext('2d').drawImage(S.src, 0, 0); o.hidden = false;
   $('empty').style.display = 'none';
   $('go').disabled = false;
-  setStatus('Image chargée. Renseignez la clé API puis lancez la décomposition.');
+  setStatus('تم تحميل الصورة. أدخل المفتاح ثم ابدأ التفكيك.');
 }
 const drop = $('drop'), fileIn = $('file');
 drop.addEventListener('click', () => fileIn.click());
@@ -508,7 +523,7 @@ function thumb(l){
 function renderList(){
   const ul = $('layers'); ul.innerHTML = '';
   if (!S.layers.length){
-    const d = document.createElement('div'); d.className = 'none'; d.textContent = 'Aucun calque pour le moment.'; ul.appendChild(d); return;
+    const d = document.createElement('div'); d.className = 'none'; d.textContent = 'لا توجد طبقات بعد.'; ul.appendChild(d); return;
   }
   for (let i = S.layers.length - 1; i >= 0; i--){
     const l = S.layers[i];
@@ -520,15 +535,15 @@ function renderList(){
     nm.addEventListener('input', () => { l.name = nm.value; });
     const btns = document.createElement('div'); btns.className = 'btns';
     const op = document.createElement('input'); op.type = 'range'; op.min = 0; op.max = 100; op.value = Math.round(l.opacity * 100);
-    op.title = 'Opacité'; op.addEventListener('click', e => e.stopPropagation());
+    op.title = 'الشفافية'; op.addEventListener('click', e => e.stopPropagation());
     op.addEventListener('input', () => { l.opacity = op.value / 100; styleLayer(l); });
     btns.append(
       iconBtn(l.visible ? 'eye' : 'eyeoff', l.visible ? 'Masquer' : 'Afficher', false, () => { l.visible = !l.visible; layout(); renderList(); }),
-      iconBtn(l.locked ? 'lock' : 'unlock', l.locked ? 'Déverrouiller (sélectionnable au clic)' : 'Verrouiller (ignoré au clic)', l.locked, () => { l.locked = !l.locked; renderList(); }),
+      iconBtn(l.locked ? 'lock' : 'unlock', l.locked ? 'إلغاء القفل (قابلة للتحديد بالنقر)' : 'قفل (تُتجاهل عند النقر)', l.locked, () => { l.locked = !l.locked; renderList(); }),
       op,
       iconBtn('up', 'Monter', false, () => move(l, 1)),
       iconBtn('down', 'Descendre', false, () => move(l, -1)),
-      iconBtn('dl', 'Télécharger ce calque (PNG)', false, async () => download(await toBlob(l.canvas), slug(l.name) + '.png')),
+      iconBtn('dl', 'تنزيل هذه الطبقة (PNG)', false, async () => download(await toBlob(l.canvas), slug(l.name) + '.png')),
       iconBtn('trash', 'Supprimer', false, () => removeLayer(l))
     );
     meta.append(nm, btns);
@@ -546,9 +561,9 @@ async function prepareInput(){
 async function errMessage(r){
   let t = ''; try { t = await r.text(); } catch(e){}
   let d = t; try { const j = JSON.parse(t); d = typeof j.detail === 'string' ? j.detail : JSON.stringify(j.detail || j); } catch(e){}
-  if (r.status === 401 || r.status === 403) return 'Clé API refusée (' + r.status + '). Vérifiez la clé et le solde fal.ai. ' + d.slice(0, 160);
-  if (r.status === 404) return 'Modèle introuvable (404) : vérifiez le nom du modèle dans les réglages avancés.';
-  return 'Erreur ' + r.status + ' : ' + d.slice(0, 240);
+  if (r.status === 401 || r.status === 403) return 'رُفض المفتاح (' + r.status + '). تحقق من المفتاح والرصيد. ' + d.slice(0, 160);
+  if (r.status === 404) return 'النموذج غير موجود (404): تحقق من اسم النموذج في الإعدادات المتقدمة.';
+  return 'خطأ ' + r.status + ' : ' + d.slice(0, 240);
 }
 const sleep = (ms, sig) => new Promise((res, rej) => {
   const t = setTimeout(res, ms);
@@ -556,7 +571,7 @@ const sleep = (ms, sig) => new Promise((res, rej) => {
 });
 async function runFal(){
   const key = $('key').value.trim();
-  if (!key){ setStatus('Entrez votre clé API fal.ai.', 'err'); $('key').focus(); return; }
+  if (!key){ setStatus('أدخل مفتاح الخدمة.', 'err'); $('key').focus(); return; }
   const endpoint = ($('endpoint').value.trim() || 'fal-ai/qwen-image-layered').replace(/^\/+|\/+$/g, '');
   store('ml_endpoint', endpoint);
   if ($('remember').checked) store('ml_key_fal', key); else store('ml_key_fal', null);
@@ -564,7 +579,7 @@ async function runFal(){
   const ctl = new AbortController(); S.abort = ctl; const sig = ctl.signal;
   $('go').disabled = true; $('cancel').hidden = false;
   try {
-    setStatus('Préparation de l’image…', '', true);
+    setStatus('جارٍ تجهيز الصورة…', '', true);
     const body = {
       image_url: await prepareInput(),
       num_layers: Math.max(2, Math.min(10, +$('n').value || 4)),
@@ -574,7 +589,7 @@ async function runFal(){
     const pr = $('prompt').value.trim(); if (pr) body.prompt = pr;
     const headers = { 'Authorization': 'Key ' + key, 'Content-Type': 'application/json' };
 
-    setStatus('Envoi à fal.ai…', '', true);
+    setStatus('جارٍ الإرسال…', '', true);
     const r = await fetch('https://queue.fal.run/' + endpoint, { method:'POST', headers, body:JSON.stringify(body), signal:sig });
     if (!r.ok) throw new Error(await errMessage(r));
     const job = await r.json();
@@ -590,22 +605,22 @@ async function runFal(){
       if (st.status === 'COMPLETED') break;
       const sec = Math.round((Date.now() - t0) / 1000);
       setStatus(st.status === 'IN_QUEUE'
-        ? 'En file d’attente' + (st.queue_position != null ? ' (position ' + st.queue_position + ')' : '') + ' — ' + sec + ' s'
-        : 'Décomposition en cours — ' + sec + ' s', '', true);
-      if (sec > 420) throw new Error('Délai dépassé (plus de 7 minutes).');
+        ? 'في قائمة الانتظار' + (st.queue_position != null ? ' (الترتيب ' + st.queue_position + ')' : '') + ' — ' + sec + ' s'
+        : 'التفكيك جارٍ — ' + sec + ' s', '', true);
+      if (sec > 420) throw new Error('انتهت المهلة (أكثر من 7 دقائق).');
     }
-    setStatus('Téléchargement des calques…', '', true);
+    setStatus('جارٍ تنزيل الطبقات…', '', true);
     const rr = await fetch(resultUrl, { headers:{ 'Authorization':'Key ' + key }, signal:sig });
     if (!rr.ok) throw new Error(await errMessage(rr));
     const res = await rr.json();
     const imgs = res.images || (res.image ? [res.image] : []);
-    if (!imgs.length) throw new Error('Le modèle n’a renvoyé aucune image.');
+    if (!imgs.length) throw new Error('لم يُرجع النموذج أي صورة.');
 
     const bitmaps = [];
     for (const im of imgs){
       const u = typeof im === 'string' ? im : im.url;
       const b = await fetch(u, { signal:sig });
-      if (!b.ok) throw new Error('Impossible de télécharger un calque (' + b.status + ').');
+      if (!b.ok) throw new Error('تعذّر تنزيل طبقة (' + b.status + ').');
       bitmaps.push(await createImageBitmap(await b.blob()));
     }
     clearLayers();
@@ -614,13 +629,13 @@ async function runFal(){
     bitmaps.forEach((bm, i) => {
       const c = document.createElement('canvas'); c.width = bm.width; c.height = bm.height;
       c.getContext('2d').drawImage(bm, 0, 0);
-      addLayer(c, 'Calque ' + (i + 1));
+      addLayer(c, 'طبقة ' + (i + 1));
     });
     layout(); renderList(); updateButtons();
-    setStatus(bitmaps.length + ' calques générés. Si le fond est au-dessus, utilisez « Inverser l’ordre ».', 'ok');
+    setStatus(bitmaps.length + ' طبقة. إن ظهرت الخلفية فوق العناصر فاستعمل «عكس الترتيب».', 'ok');
   } catch(e){
-    if (e.name === 'AbortError') setStatus('Annulé.');
-    else if (e instanceof TypeError) setStatus('Échec réseau (« ' + e.message + ' »). Vérifiez la connexion ; si une extension ou un pare-feu bloque fal.run, désactivez-le pour cette page.', 'err');
+    if (e.name === 'AbortError') setStatus('أُلغي.');
+    else if (e instanceof TypeError) setStatus('فشل الشبكة (« ' + e.message + ' »). تحقق من الاتصال؛ وإن كانت إضافة أو جدار حماية يحجب الخدمة فعطّله لهذه الصفحة.', 'err');
     else setStatus(e.message, 'err');
   } finally {
     S.abort = null; $('cancel').hidden = true; $('go').disabled = !goEnabled();
@@ -641,7 +656,7 @@ async function ensureFonts(){
 const hex2 = n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0');
 const rgbToHex = c => '#' + hex2(c.r) + hex2(c.g) + hex2(c.b);
 function newTextLayer(text, o){
-  const l = addLayer(document.createElement('canvas'), String(text).replace(/\s+/g, ' ').slice(0, 30) || 'Texte');
+  const l = addLayer(document.createElement('canvas'), String(text).replace(/\s+/g, ' ').slice(0, 30) || 'نص');
   Object.assign(l, { type:'text', text:String(text), font:o.font || 'Cairo', size:o.size || 48, weight:o.weight || 400,
     color:o.color || '#111111', align:o.align || 'left', dir:o.dir || 'ltr', lh:o.lh || 1.25, bw:0 });
   return l;
@@ -774,7 +789,7 @@ function editText(fn){
   const l = S.sel; if (!l || l.type !== 'text') return;
   const R = l.x + l.w, C = l.x + l.w / 2;
   fn(l); l.bw = 0;
-  if (l.autoName) l.name = l.text.replace(/\s+/g, ' ').slice(0, 30) || 'Texte';
+  if (l.autoName) l.name = l.text.replace(/\s+/g, ' ').slice(0, 30) || 'نص';
   renderText(l);
   l.x = Math.round(l.align === 'right' ? R - l.w : l.align === 'center' ? C - l.w / 2 : l.x);
   layout(); renderList();
@@ -805,25 +820,25 @@ let gemNoThink = false; // vrai si le modèle refuse le niveau de réflexion « 
 // Nettoie la clé collée : espaces, retours à la ligne, guillemets et caractères invisibles.
 function cleanKey(v){ return String(v || '').replace(/[\s"'`​-‏‪-‮﻿]/g, ''); }
 function keyInfo(k){
-  if (/^AQ\./.test(k)) return ' (clé au format « AQ. », essayée aussi sur Vertex AI)';
-  return ' (clé reçue : ' + k.length + ' caractères, commence par « ' + k.slice(0, 4) + ' » ; une clé AI Studio standard fait 39 caractères et commence par « AIza »)';
+  if (/^AQ\./.test(k)) return ' (مفتاح بصيغة « AQ. » جُرّب أيضاً على الخدمة البديلة)';
+  return ' (المفتاح المُدخل: ' + k.length + ' حرفاً، يبدأ بـ « ' + k.slice(0, 4) + ' »؛ المفتاح القياسي طوله 39 حرفاً ويبدأ بـ « AIza »)';
 }
 let gemKeyInfo = '';
 // Refuse d'envoyer à Google un champ qui ne ressemble pas à une clé (texte collé par erreur, mot de passe rempli par le navigateur…).
 function badGemKey(k){
   if (/^AIza[\w-]{30,}$/.test(k) || /^AQ\.[\w.-]{30,}$/.test(k)) return '';
-  const shown = k.length > 6 ? k.slice(0, 4) + '…' + ' (' + k.length + ' caractères)' : '(' + k.length + ' caractères)';
-  return 'Le champ ne contient pas une clé Gemini : il commence par « ' + k.slice(0, 4) + ' » ' + shown + '. Une clé AI Studio commence par « AIza ». Videz le champ (le navigateur a peut-être rempli un mot de passe enregistré), puis collez la clé copiée depuis aistudio.google.com/apikey.';
+  const shown = k.length > 6 ? k.slice(0, 4) + '…' + ' (' + k.length + ' حرفاً)' : '(' + k.length + ' حرفاً)';
+  return 'الحقل لا يحوي مفتاحاً صالحاً: يبدأ بـ « ' + k.slice(0, 4) + ' » ' + shown + '. المفتاح الصالح يبدأ بـ « AIza ». أفرغ الحقل (ربما ملأ المتصفح كلمة مرور محفوظة) ثم الصق المفتاح الصحيح.';
 }
 async function gemError(r){
   let t = ''; try { t = await r.text(); } catch(e){}
   let m = t; try { const j = JSON.parse(t); m = (j.error && j.error.message) || j.message || t; } catch(e){}
   m = String(m).slice(0, 260);
-  if (r.status === 400 && /api key/i.test(m)) return 'Google rejette la clé API' + gemKeyInfo + '. Recopiez-la sans rien ajouter, ou créez-en une nouvelle sur aistudio.google.com/apikey. Message de Google : ' + m;
-  if (r.status === 401 || r.status === 403) return 'Accès refusé (' + r.status + ') : clé invalide, API non activée ou région non prise en charge. ' + m;
-  if (r.status === 404) return 'Modèle ou service introuvable (404). Vérifiez le nom du modèle dans les réglages avancés. ' + m;
-  if (r.status === 429) return 'Quota Gemini dépassé (429). Attendez un peu ou vérifiez votre offre. ' + m;
-  return 'Erreur Gemini ' + r.status + ' : ' + m;
+  if (r.status === 400 && /api key/i.test(m)) return 'رُفض المفتاح' + gemKeyInfo + '. أعد نسخه دون إضافة شيء أو أنشئ مفتاحاً جديداً. رسالة الخدمة: ' + m;
+  if (r.status === 401 || r.status === 403) return 'تم رفض الوصول (' + r.status + ') : مفتاح غير صالح أو خدمة غير مفعّلة أو منطقة غير مدعومة. ' + m;
+  if (r.status === 404) return 'النموذج أو الخدمة غير موجودة (404). تحقق من اسم النموذج في الإعدادات المتقدمة. ' + m;
+  if (r.status === 429) return 'تجاوزت الحصة (429). انتظر قليلاً أو تحقق من باقتك. ' + m;
+  return 'خطأ في الخدمة ' + r.status + ' : ' + m;
 }
 // Parcourt la réponse (formats Interactions ou generateContent) sans reprendre l'éventuel écho de la requête.
 function gemRoots(j){ return j.steps || j.outputs || j.candidates || j; }
@@ -893,14 +908,14 @@ async function gemCall({ key, model, prompt, b64, mime, wantImage, sig: userSig,
       const evs = txt.split('\n').filter(l => l.startsWith('data:')).map(l => l.slice(5).trim()).filter(l => l && l !== '[DONE]');
       for (let k = evs.length - 1; k >= 0; k--){ try { return JSON.parse(evs[k]); } catch(e){} }
       showRaw(txt);
-      throw new Error('Réponse de Google illisible : ' + txt.slice(0, 200));
+      throw new Error('تعذّرت قراءة رد الخدمة: ' + txt.slice(0, 200));
     }
     lastErr = await gemError(r);
-    const badKey = r.status === 400 && /rejette la clé/.test(lastErr);
+    const badKey = r.status === 400 && /رُفض المفتاح/.test(lastErr);
     if (badKey && mode !== 'vertex' && order.includes('vertex')){ i = order.indexOf('vertex') - 1; continue; } // clé « AQ. » : on tente Vertex AI
     if (!((r.status === 404 || badKey) && i < order.length - 1)) throw new Error(lastErr);
   }
-  throw new Error(lastErr || 'Appel Gemini impossible.');
+  throw new Error(lastErr || 'تعذّر الاتصال بالخدمة.');
 }
 function showRaw(t){
   $('rawText').textContent = String(t).slice(0, 20000); $('rawBox').hidden = false;
@@ -911,7 +926,7 @@ function extractLoose(t){
   parts.forEach((p, i) => {
     const m = p.match(/^\s*\[\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*\]/);
     if (!m) return;
-    const it = { box_2d:[+m[1], +m[2], +m[3], +m[4]], label:'Élément ' + (i + 1) };
+    const it = { box_2d:[+m[1], +m[2], +m[3], +m[4]], label:'عنصر ' + (i + 1) };
     const lab = p.match(/"label"\s*:\s*"((?:[^"\\]|\\.)*)"/); if (lab) it.label = lab[1];
     const tx = p.match(/"text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
     if (tx){ try { it.text = JSON.parse('"' + tx[1] + '"'); } catch(e){ it.text = tx[1]; } }
@@ -944,7 +959,7 @@ function parseItems(text){
         }
       }
       const lo = extractLoose(t), loose = objs.length >= lo.length ? objs : lo;
-      if (!loose.length) throw new Error('Réponse Gemini illisible : ' + t.slice(0, 160).replace(/\s+/g, ' ') + (t.length > 160 ? '…' : ''));
+      if (!loose.length) throw new Error('تعذّرت قراءة رد الخدمة: ' + t.slice(0, 160).replace(/\s+/g, ' ') + (t.length > 160 ? '…' : ''));
       j = loose;
     }
   }
@@ -996,29 +1011,29 @@ async function buildSegment(it){
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const g = c.getContext('2d'); g.drawImage(S.src, px0, py0, w, h, 0, 0, w, h);
   if (m){ g.globalCompositeOperation = 'destination-in'; g.drawImage(m, 0, 0); }
-  return { canvas:c, x:px0, y:py0, w, h, name:String(it.label || 'Élément').slice(0, 60), area:w * h, masked:!!m };
+  return { canvas:c, x:px0, y:py0, w, h, name:String(it.label || 'عنصر').slice(0, 60), area:w * h, masked:!!m };
 }
 $('testKey').addEventListener('click', async () => {
   const key = cleanKey($('key').value);
-  if (!key){ setStatus('Entrez d’abord la clé.', 'err'); $('key').focus(); return; }
+  if (!key){ setStatus('أدخل المفتاح أولاً.', 'err'); $('key').focus(); return; }
   gemKeyInfo = keyInfo(key);
   const fal = $('provider').value === 'fal';
-  if (fal){ setStatus('Le test de clé n’existe que pour Gemini.'); return; }
+  if (fal){ setStatus('اختبار المفتاح متاح للمحرّك الأساسي فقط.'); return; }
   const bad = badGemKey(key); if (bad){ setStatus(bad, 'err'); return; }
-  setStatus('Vérification de la clé…', '', true);
+  setStatus('جارٍ التحقق من المفتاح…', '', true);
   try {
     const r = await fetch(GEM + '/models?pageSize=200', { headers:{ 'x-goog-api-key':key } });
     if (!r.ok){
       const err = await gemError(r);
-      if (key.startsWith('AQ.') && /rejette la clé/.test(err)){
+      if (key.startsWith('AQ.') && /رُفض المفتاح/.test(err)){
         // Les clés « AQ. » sont acceptées par Vertex AI (mode express) : on essaie un mini appel.
         const model = $('gemSeg').value.trim() || 'gemini-2.5-flash';
         const v = await fetch(VERTEX + '/models/' + encodeURIComponent(model) + ':generateContent', { method:'POST',
           headers:{ 'x-goog-api-key':key, 'Content-Type':'application/json' },
           body:JSON.stringify({ contents:[{ role:'user', parts:[{ text:'ping' }] }], generationConfig:{ maxOutputTokens:8 } }) });
-        if (v.ok){ gemMode = 'vertex'; setStatus('Clé acceptée par Vertex AI (mode express) avec le modèle « ' + model + ' ». La page utilisera ce service.', 'ok'); return; }
+        if (v.ok){ gemMode = 'vertex'; setStatus('تم قبول المفتاح (الوضع السريع) مع النموذج « ' + model + ' ». ستستعمل الصفحة هذه الخدمة.', 'ok'); return; }
         const verr = await gemError(v);
-        throw new Error('Refusée par AI Studio et par Vertex AI. Vertex : ' + verr);
+        throw new Error('رُفض المفتاح من الخدمتين. التفاصيل: ' + verr);
       }
       throw new Error(err);
     }
@@ -1027,13 +1042,13 @@ $('testKey').addEventListener('click', async () => {
     const img = names.filter(n => /image|banana/i.test(n)), seg = names.filter(n => !/image|banana|embed|tts|live|audio/i.test(n));
     $('gemSegList').innerHTML = seg.map(n => '<option value="' + n + '">').join('');
     $('gemImgList').innerHTML = img.map(n => '<option value="' + n + '">').join('');
-    let msg = 'Clé valide. ' + names.length + ' modèles Gemini disponibles sur votre compte.';
+    let msg = 'المفتاح صالح. ' + names.length + ' نموذجاً متاحاً في حسابك.';
     const cs = $('gemSeg').value.trim(), ci = $('gemImg').value.trim();
-    if (names.length && !names.includes(cs)) msg += ' Le modèle de segmentation « ' + cs + ' » n’est pas dans la liste : choisissez-en un dans Réglages avancés (ex. ' + (seg.find(n => /flash/i.test(n)) || seg[0] || '?') + ').';
-    if (names.length && !names.includes(ci)) msg += ' Le modèle image « ' + ci + ' » n’est pas dans la liste' + (img[0] ? ' (ex. ' + img[0] + ')' : '') + '.';
-    setStatus(msg, msg.includes('n’est pas') ? '' : 'ok');
+    if (names.length && !names.includes(cs)) msg += ' نموذج التجزئة « ' + cs + ' » غير موجود في القائمة: اختر نموذجاً من الإعدادات المتقدمة (مثال: ' + (seg.find(n => /flash/i.test(n)) || seg[0] || '?') + ').';
+    if (names.length && !names.includes(ci)) msg += ' نموذج الصور « ' + ci + ' » غير موجود في القائمة' + (img[0] ? ' (ex. ' + img[0] + ')' : '') + '.';
+    setStatus(msg, msg.includes('غير موجود') ? '' : 'ok');
   } catch(e){
-    setStatus(e instanceof TypeError ? 'Échec réseau (« ' + e.message + ' »).' : e.message, 'err');
+    setStatus(e instanceof TypeError ? 'فشل الشبكة (« ' + e.message + ' »).' : e.message, 'err');
   }
 });
 
@@ -1062,16 +1077,16 @@ async function tiledAnalyze({ key, model, prompt, textPrompt, doText, doSeg, pro
     if (jt){ try { parseItems(gemText(jt)).forEach(t => {
       if (!t || !String(t.text || '').trim() || !Array.isArray(t.box_2d) || t.box_2d.length < 4) return; const bx = conv(t.box_2d); if (!inOwn(bx)) return;
       titems.push(Object.assign({}, t, { box_2d:bx })); }); } catch(e){ textErr = e.message; } }
-    done++; ph('Gemini analyse la page : bande ' + done + ' / ' + ys.length);
+    done++; ph('تحليل الصفحة: الشريط ' + done + ' / ' + ys.length);
   };
-  ph('Gemini analyse la page : bande 0 / ' + ys.length);
+  ph('تحليل الصفحة: الشريط 0 / ' + ys.length);
   for (let i = 0; i < ys.length; i += 2) await Promise.all([one(i)].concat(i + 1 < ys.length ? [one(i + 1)] : []));
   return { items, titems, prods, textErr, tiles:ys.length };
 }
 async function runGemini(){
   const key = cleanKey($('key').value);
   gemKeyInfo = keyInfo(key);
-  if (!key){ setStatus('Entrez votre clé API Gemini.', 'err'); $('key').focus(); return; }
+  if (!key){ setStatus('أدخل مفتاح Alyssum API.', 'err'); $('key').focus(); return; }
   const bad = badGemKey(key); if (bad){ setStatus(bad, 'err'); $('key').focus(); return; }
   const segModel = $('gemSeg').value.trim() || 'gemini-3.8-flash', imgModel = $('gemImg').value.trim() || 'gemini-nano-banana-2.1';
   store('ml_gemseg', segModel); store('ml_gemimg', imgModel);
@@ -1082,7 +1097,7 @@ async function runGemini(){
   const ph = m => { phaseMsg = m; phaseT0 = Date.now(); setStatus(m + '…', '', true); };
   const tick = setInterval(() => { if (phaseMsg) setStatus(phaseMsg + ' — ' + Math.round((Date.now() - phaseT0) / 1000) + ' s', '', true); }, 1000);
   try {
-    setStatus('Préparation de l’image…', '', true);
+    setStatus('جارٍ تجهيز الصورة…', '', true);
     const b64 = (await prepareInput()).split(',')[1];
     const nmax = Math.max(2, Math.min(20, +$('n').value || 8)), ctx = $('prompt').value.trim();
     const doText = $('textMode').checked;
@@ -1100,14 +1115,14 @@ async function runGemini(){
       '"direction" as "rtl" or "ltr"; "align" as "left", "center" or "right"; "weight" as "regular", "bold" or "black"; ' +
       '"style" as "sans", "serif", "display" or "script"; "color" as the text color in #RRGGBB.' +
       (ctx ? ' Context about the image: ' + ctx : '');
-    ph(doText ? 'Gemini analyse l’image (éléments et textes)' : 'Gemini analyse l’image et détoure les éléments');
+    ph(doText ? 'تحليل الصورة (العناصر والنصوص)' : 'تحليل الصورة وفصل العناصر');
     let textErr = '';
     let items = [], titems = [];
     const tallImg = S.src.height / S.src.width > 2.2, ro = RICH_OPT, useTiles = tallImg || !!ro; let prods = [];
     if (useTiles){
       const r = await tiledAnalyze({ key, model:segModel, prompt, textPrompt, doText, doSeg:!ro || ro.seg, prodB64:ro && ro.prod ? P.b64 : null, perTile:Math.max(nmax, 12), sig, ph });
       items = r.items; titems = r.titems; textErr = r.textErr; prods = r.prods || []; phaseMsg = '';
-      if (!items.length && !titems.length && !prods.length) throw new Error('Gemini n’a trouvé aucun élément ni texte à séparer dans les bandes de la page.');
+      if (!items.length && !titems.length && !prods.length) throw new Error('لم تجد الخدمة أي عنصر أو نص للفصل في شرائح الصفحة.');
     } else {
       const pSeg = gemCall({ key, model:segModel, prompt, b64, mime:'image/jpeg', wantImage:false, sig, timeoutMs:150000 });
       const pTxt = doText
@@ -1117,7 +1132,7 @@ async function runGemini(){
       const [j, jt] = await Promise.all([pSeg, pTxt]);
       phaseMsg = '';
       const txt = gemText(j);
-      if (!txt.trim()){ showRaw(JSON.stringify(j, null, 1)); throw new Error('Gemini n’a renvoyé aucun texte' + (j.status ? ' (statut : ' + j.status + ')' : '') + '. Voir la réponse brute ci-dessous.'); }
+      if (!txt.trim()){ showRaw(JSON.stringify(j, null, 1)); throw new Error('لم تُرجع الخدمة أي نص' + (j.status ? ' (الحالة: ' + j.status + ')' : '') + '. انظر الرد الخام أدناه.'); }
       
       try { items = parseItems(txt).slice(0, nmax); } catch(e){ if (!doText) throw e; }
       
@@ -1126,51 +1141,51 @@ async function runGemini(){
         catch(e){ textErr = e.message; }
       }
     }
-    if (!items.length && !titems.length && !prods.length) throw new Error('Gemini n’a trouvé aucun élément ni texte à séparer. Essayez une image plus simple ou ajoutez une description.');
+    if (!items.length && !titems.length && !prods.length) throw new Error('لم تجد الخدمة أي عنصر أو نص للفصل. جرّب صورة أبسط أو أضف وصفاً.');
 
-    setStatus('Découpe de ' + items.length + ' éléments…', '', true);
+    setStatus('جارٍ قصّ ' + items.length + ' عنصراً…', '', true);
     const segs = []; for (const it of items){ const s = await buildSegment(it); if (s) segs.push(s); }
-    if (!segs.length && !titems.length && !prods.length) throw new Error('Les boîtes renvoyées par Gemini sont inutilisables.');
+    if (!segs.length && !titems.length && !prods.length) throw new Error('المربعات التي أعادتها الخدمة غير صالحة للاستعمال.');
     segs.sort((a, b) => b.area - a.area); // les grands éléments en dessous, les petits au-dessus
 
     let bg = null, bgModel = false;
     if ($('inpaint').checked && !useTiles){
-      ph('Reconstruction de l’arrière-plan');
+      ph('إعادة بناء الخلفية');
       try {
         const jp = 'Remove every foreground element (people, objects, products, logos, icons and all text) from this image and reconstruct the empty background naturally, keeping the same composition, colors, lighting and aspect ratio. Return only the edited image.';
         const ji = await gemCall({ key, model:imgModel, prompt:jp, b64, mime:'image/jpeg', wantImage:true, sig, timeoutMs:120000 });
-        const im = gemImage(ji); if (!im) throw new Error('aucune image renvoyée');
+        const im = gemImage(ji); if (!im) throw new Error('لم تُرجع الخدمة أي صورة');
         const bm = await createImageBitmap(b64ToBlob(im.data, im.mime));
         bg = document.createElement('canvas'); bg.width = S.W; bg.height = S.H; bg.getContext('2d').drawImage(bm, 0, 0, S.W, S.H); bgModel = true;
       } catch(e){
         if (e.name === 'AbortError') throw e;
-        phaseMsg = ''; bg = null; setStatus('Arrière-plan non reconstruit (' + e.message + '). Image d’origine conservée.', '', true);
+        phaseMsg = ''; bg = null; setStatus('لم تُبنَ الخلفية (' + e.message + '). أُبقيت الصورة الأصلية.', '', true);
       }
     }
     let cleanNote = '';
     if (!bg && ro && ro.clean){
-      ph('Gemini efface les textes de la page (arrière-plan propre)');
+      ph('مسح نصوص الصفحة (خلفية نظيفة)');
       try {
         const rr = S.src.height / S.src.width, AS = [['1:8', 8], ['1:4', 4], ['9:16', 16 / 9], ['2:3', 1.5], ['3:4', 4 / 3], ['4:5', 1.25], ['1:1', 1]], asp = AS.reduce((a, c) => Math.abs(Math.log(c[1] / rr)) < Math.abs(Math.log(a[1] / rr)) ? c : a)[0];
         const cp = 'Edit this landing page image: remove ALL the text (every letter, number, symbol and punctuation mark of every language, including the text inside buttons, banners, ribbons, badges, cards and captions) and NOTHING else. Keep every photograph, icon, shape, product, color, shadow, border and the EXACT layout, positions, sizes and proportions unchanged. Where text was, continue the background naturally (card color, gradient or texture), leaving the buttons, ribbons and cards empty. Do not add, move, resize or redraw any element. Return only the edited image, with exactly the same aspect ratio.';
         const ji = await gemCall({ key, model:imgModel, prompt:cp, b64, mime:'image/jpeg', wantImage:true, sig, timeoutMs:360000, size:$('pRes').value, aspect:asp, aspectFb:ratioFallbacks(asp) });
-        const im = gemImage(ji); if (!im) throw new Error('aucune image renvoyée');
+        const im = gemImage(ji); if (!im) throw new Error('لم تُرجع الخدمة أي صورة');
         const bm = await createImageBitmap(b64ToBlob(im.data, im.mime));
         const dif = lowFreqDiff(S.src, bm);
-        if (dif > 0.14) throw new Error('la mise en page a changé (écart ' + dif.toFixed(2) + ')');
-        bg = document.createElement('canvas'); bg.width = S.W; bg.height = S.H; bg.getContext('2d').drawImage(bm, 0, 0, S.W, S.H); bgModel = true; cleanNote = ' Arrière-plan propre fourni par Gemini (écart de mise en page ' + dif.toFixed(2) + ').';
+        if (dif > 0.14) throw new Error('تغيّر التخطيط (فرق ' + dif.toFixed(2) + ')');
+        bg = document.createElement('canvas'); bg.width = S.W; bg.height = S.H; bg.getContext('2d').drawImage(bm, 0, 0, S.W, S.H); bgModel = true; cleanNote = ' خلفية نظيفة من الخدمة (فرق التخطيط ' + dif.toFixed(2) + ').';
       } catch(e){
         if (e.name === 'AbortError') throw e;
-        bg = null; cleanNote = ' Effacement par Gemini non utilisé (' + e.message + ') : effacement local à la place.';
+        bg = null; cleanNote = ' لم يُستعمل المسح عبر الخدمة (' + e.message + ') : استُعمل المسح المحلي بدلاً منه.';
       }
     }
     phaseMsg = '';
-    if (titems.length){ setStatus('Création des textes modifiables…', '', true); await ensureFonts(); }
+    if (titems.length){ setStatus('جارٍ إنشاء النصوص القابلة للتعديل…', '', true); await ensureFonts(); }
     clearLayers(); setStage(S.src.width, S.src.height); $('empty').style.display = 'none';
     const orig = document.createElement('canvas'); orig.width = S.W; orig.height = S.H;
     orig.getContext('2d', { willReadFrequently:true }).drawImage(S.src, 0, 0);
     if (!bg){ bg = document.createElement('canvas'); bg.width = S.W; bg.height = S.H; bg.getContext('2d', { willReadFrequently:true }).drawImage(S.src, 0, 0); }
-    addLayer(bg, bgModel ? (ro && ro.clean ? 'Page (textes retirés)' : 'Arrière-plan') : (ro ? 'Page (textes effacés localement)' : 'Image d’origine'));
+    addLayer(bg, bgModel ? (ro && ro.clean ? 'الصفحة (بلا نصوص)' : 'الخلفية') : (ro ? 'الصفحة (نصوص ممسوحة محلياً)' : 'الصورة الأصلية'));
     segs.forEach(s => { const l = addLayer(s.canvas, s.name); l.x = s.x; l.y = s.y; l.w = s.w; l.h = s.h; });
     let nProd = 0, prodWarn = '';
     if (prods.length && P.bitmap){
@@ -1178,9 +1193,9 @@ async function runGemini(){
       prods.forEach(bx => {
         const bw = (bx[3] - bx[1]) / 1000 * S.W, bh = (bx[2] - bx[0]) / 1000 * S.H; if (bw < 0.06 * S.W || bh < 0.04 * S.W || bw / bh > 3) return;
         const k = Math.min(bw / pc.width, bh / pc.height) * 1.05, w = pc.width * k, h = pc.height * k;
-        const l = addLayer(cloneCv(pc), 'Produit (PNG d’origine)'); l.w = Math.round(w); l.h = Math.round(h); l.x = Math.round((bx[1] + bx[3]) / 2000 * S.W - w / 2); l.y = Math.round(bx[2] / 1000 * S.H - h); l.visible = alphaOk; nProd++;
+        const l = addLayer(cloneCv(pc), 'المنتج (PNG الأصلي)'); l.w = Math.round(w); l.h = Math.round(h); l.x = Math.round((bx[1] + bx[3]) / 2000 * S.W - w / 2); l.y = Math.round(bx[2] / 1000 * S.H - h); l.visible = alphaOk; nProd++;
       });
-      if (nProd && !alphaOk) prodWarn = ' Le PNG n’a pas de transparence : les calques produit sont masqués.';
+      if (nProd && !alphaOk) prodWarn = ' صورة PNG بلا شفافية: طبقات المنتج مخفية.';
     }
     let nText = 0;
     // Libellés anglais de section (PROBLEM, SOLUTION…) que Gemini a écrits malgré la consigne : on les efface, sans créer de texte
@@ -1192,18 +1207,18 @@ async function runGemini(){
     layout(); renderList(); updateButtons();
     const rect = segs.filter(s => !s.masked).length;
     if (ro && !ro.seg){
-      setStatus('Page conservée entière (qualité d’origine' + (bgModel ? '' : ', textes effacés localement') + ') + ' + nText + ' textes modifiables' + (nLbl ? ' (' + nLbl + ' libellé(s) anglais effacé(s))' : '') + (nProd ? ' + ' + nProd + ' calque(s) produit avec votre PNG d’origine.' : '.') + prodWarn + cleanNote + (textErr ? ' Textes non convertis : ' + textErr : ''), textErr || /non utilisé/.test(cleanNote) ? '' : 'ok');
+      setStatus('حُفظت الصفحة كاملة (بالجودة الأصلية' + (bgModel ? '' : '، نصوص ممسوحة محلياً') + ') + ' + nText + ' نصاً قابلاً للتعديل' + (nLbl ? ' (' + nLbl + ' عبارة إنجليزية ممسوحة)' : '') + (nProd ? ' + ' + nProd + ' طبقة منتج بصورتك الأصلية.' : '.') + prodWarn + cleanNote + (textErr ? ' نصوص لم تُحوَّل: ' + textErr : ''), textErr || /لم يُستعمل/.test(cleanNote) ? '' : 'ok');
       return;
     }
-    setStatus(segs.length + ' éléments détourés' + (nText ? ' et ' + nText + ' textes convertis en texte modifiable.' : '.') + (nProd ? ' ' + nProd + ' produit(s) remplacé(s) par votre PNG.' : '') +
-      (rect ? ' ' + rect + ' sans masque exploitable (découpés en rectangle).' : '') +
-      (textErr ? ' Textes non convertis : ' + textErr : '') +
-      (bgModel ? '' : ' Le calque du bas est l’image d’origine' + (nText ? ' (textes effacés localement)' : '') + ' : masquez-le pour voir les éléments seuls.'), textErr ? '' : 'ok');
+    setStatus(segs.length + ' عنصراً مفصولاً' + (nText ? ' و' + nText + ' نصاً حُوّل إلى نص قابل للتعديل.' : '.') + (nProd ? ' ' + nProd + ' منتج استُبدل بصورتك.' : '') +
+      (rect ? ' ' + rect + ' بلا قناع صالح (قُصّت كمستطيل).' : '') +
+      (textErr ? ' نصوص لم تُحوَّل: ' + textErr : '') +
+      (bgModel ? '' : ' الطبقة السفلى هي الصورة الأصلية' + (nText ? ' (نصوص ممسوحة محلياً)' : '') + ': أخفِها لترى العناصر وحدها.'), textErr ? '' : 'ok');
   } catch(e){
     phaseMsg = '';
-    if (e.name === 'TimeoutError') setStatus('Gemini met trop de temps à répondre (plus de 2 minutes). Essayez un modèle plus rapide dans Réglages avancés (un modèle « flash », voir « Tester la clé »), moins d’éléments, ou une image plus simple.', 'err');
-    else if (e.name === 'AbortError') setStatus('Annulé.');
-    else if (e instanceof TypeError) setStatus('Échec réseau (« ' + e.message + ' »). Vérifiez la connexion ou une extension qui bloque googleapis.com.', 'err');
+    if (e.name === 'TimeoutError') setStatus('تأخّر رد الخدمة أكثر من دقيقتين. جرّب نموذجاً أسرع من الإعدادات المتقدمة أو عدداً أقل من العناصر أو صورة أبسط.', 'err');
+    else if (e.name === 'AbortError') setStatus('أُلغي.');
+    else if (e instanceof TypeError) setStatus('فشل الشبكة (« ' + e.message + ' »). تحقق من الاتصال أو من إضافة تحجب الخدمة.', 'err');
     else setStatus(e.message, 'err');
   } finally {
     clearInterval(tick);
@@ -1228,16 +1243,16 @@ const P = { bitmap:null, b64:'' };
 function goEnabled(){ return $('mode').value === 'create' ? !!P.bitmap : !!S.src; }
 async function loadProduct(blob){
   if (!blob || !blob.type.startsWith('image/')) return;
-  try { P.bitmap = await createImageBitmap(blob); } catch(e){ setStatus('Photo du produit illisible.', 'err'); return; }
+  try { P.bitmap = await createImageBitmap(blob); } catch(e){ setStatus('تعذّرت قراءة صورة المنتج.', 'err'); return; }
   const k = Math.min(1, 1024 / Math.max(P.bitmap.width, P.bitmap.height));
   const c = document.createElement('canvas'); c.width = Math.round(P.bitmap.width * k); c.height = Math.round(P.bitmap.height * k);
   const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(P.bitmap, 0, 0, c.width, c.height);
   P.b64 = c.toDataURL('image/jpeg', 0.92).split(',')[1];
   const box = $('pDropInner'); box.innerHTML = '';
   const im = new Image(); im.src = URL.createObjectURL(blob); box.appendChild(im);
-  const t = document.createElement('div'); t.textContent = 'Photo chargée (' + P.bitmap.width + ' × ' + P.bitmap.height + ') — cliquez pour changer'; box.appendChild(t);
+  const t = document.createElement('div'); t.textContent = 'تم تحميل الصورة (' + P.bitmap.width + ' × ' + P.bitmap.height + ') — انقر للتغيير'; box.appendChild(t);
   $('go').disabled = !goEnabled();
-  setStatus('Photo du produit chargée. Renseignez le nom et la description, puis lancez la création.');
+  setStatus('تم تحميل صورة المنتج. أدخل الاسم والوصف ثم ابدأ الإنشاء.');
 }
 const pDrop = $('pDrop'), pFile = $('pFile');
 pDrop.addEventListener('click', () => pFile.click());
@@ -1292,7 +1307,7 @@ function parseObj(text){
   const t = String(text).trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, ''); showRaw(t);
   let o = null; try { o = JSON.parse(t); } catch(e){ const m = t.match(/\{[\s\S]*\}/); if (m){ try { o = JSON.parse(m[0]); } catch(e2){} } }
   if (Array.isArray(o)) o = o[0];
-  if (!o || typeof o !== 'object') throw new Error('Plan de création illisible : ' + t.slice(0, 160).replace(/\s+/g, ' '));
+  if (!o || typeof o !== 'object') throw new Error('تعذّرت قراءة خطة الإنشاء: ' + t.slice(0, 160).replace(/\s+/g, ' '));
   return o;
 }
 function normPlan(o, nF, nD, name){
@@ -1342,7 +1357,7 @@ function composeProduct(A, plan, fmt, lang){
   let cov = null;
   if (A.scene){ const k = Math.max(W / A.scene.width, H / A.scene.height), w = A.scene.width * k, h = A.scene.height * k; cov = { k, ox:(W - w) / 2, oy:(H - h) / 2 }; bg.drawImage(A.scene, cov.ox, cov.oy, w, h); }
   else { const gr = bg.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, pal.light); gr.addColorStop(1, pal.secondary); bg.fillStyle = gr; bg.fillRect(0, 0, W, H); }
-  addLayer(bgc, 'Arrière-plan (enfant + produit)');
+  addLayer(bgc, 'الخلفية (طفل + منتج)');
   const place = (cv, name, cx, cy, w, h) => { const l = addLayer(cv, name); l.w = Math.round(w); l.h = Math.round(h); l.x = Math.round(cx - w / 2); l.y = Math.round(cy - h / 2); return l; };
   const mkText = (text, o) => {
     const l = newTextLayer(text, { font, dir, align:'center', weight:o.weight, color:o.color, size:o.size, lh:o.lh || 1.2 }); l.autoName = true;
@@ -1370,7 +1385,7 @@ function composeProduct(A, plan, fmt, lang){
     const sw = cov ? A.scene.width : W, sh = cov ? A.scene.height : H, k = cov ? cov.k : 1, ox = cov ? cov.ox : 0, oy = cov ? cov.oy : 0;
     const X0 = ox + bx[1] / 1000 * sw * k, X1 = ox + bx[3] / 1000 * sw * k, Y0 = oy + bx[0] / 1000 * sh * k, Y1 = oy + bx[2] / 1000 * sh * k;
     const s = Math.min((X1 - X0) / A.product.width, (Y1 - Y0) / A.product.height) * 1.03;
-    const l = place(A.product, 'Produit (PNG d’origine)', (X0 + X1) / 2, (Y0 + Y1) / 2, A.product.width * s, A.product.height * s);
+    const l = place(A.product, 'المنتج (PNG الأصلي)', (X0 + X1) / 2, (Y0 + Y1) / 2, A.product.width * s, A.product.height * s);
     l.visible = !A.hideProduct;
   }
   // Atouts : pastilles de texte modifiables
@@ -1502,10 +1517,10 @@ async function createFromProduct(){
   if ($('pKind').value === 'landing') return createLanding();
   if ($('pKind').value === 'rich') return createRich();
   const key = cleanKey($('key').value); gemKeyInfo = keyInfo(key);
-  if (!P.bitmap){ setStatus('Ajoutez d’abord la photo du produit.', 'err'); return; }
+  if (!P.bitmap){ setStatus('أضف صورة المنتج أولاً.', 'err'); return; }
   const name = $('pName').value.trim(), desc = $('pDesc').value.trim();
-  if (!name && !desc){ setStatus('Renseignez au moins le nom ou la description du produit.', 'err'); $('pName').focus(); return; }
-  if (!key){ setStatus('Entrez votre clé API Gemini.', 'err'); $('key').focus(); return; }
+  if (!name && !desc){ setStatus('أدخل على الأقل اسم المنتج أو وصفه.', 'err'); $('pName').focus(); return; }
+  if (!key){ setStatus('أدخل مفتاح Alyssum API.', 'err'); $('key').focus(); return; }
   const bad = badGemKey(key); if (bad){ setStatus(bad, 'err'); $('key').focus(); return; }
   const imgModel = $('gemImg').value.trim() || 'gemini-nano-banana-2.1';
   store('ml_gemimg', imgModel);
@@ -1539,34 +1554,34 @@ async function createFromProduct(){
       '"texts":{"headline":"max 6 words","subheadline":"max 12 words","features":[' + nF + ' objects {"label":"max 4 words"}],"cta":"max 3 words","trust":"short trust line such as warranty, delivery or cash on delivery"}}\n' +
       '"product_box" is the bounding box of the product as it appears IN THE IMAGE YOU JUST GENERATED, integers from 0 to 1000 (ymin, xmin, ymax, xmax; origin top-left). ' +
       'The palette comes from the generated image. Write every text in ' + langName + ', short, persuasive and faithful to the details above. Do not invent medical claims, statistics, prices or certifications that are not in the details.';
-    ph('Gemini génère la scène (enfant + produit) et les textes — un seul appel');
+    ph('جارٍ إنشاء المشهد (طفل + منتج) والنصوص — طلب واحد');
     const j = await gemCall({ key, model:imgModel, prompt, b64:P.b64, mime:'image/jpeg', wantImage:true, sig, timeoutMs:240000, size, aspect:fmt });
     phaseMsg = '';
     const txt = gemText(j), im = gemImage(j);
     showRaw(txt || JSON.stringify(j, null, 1).slice(0, 4000));
-    if (!im) throw new Error('Gemini n’a pas renvoyé d’image. Vérifiez le modèle image dans Réglages avancés (voir « Tester la clé »). Réponse brute ci-dessous.');
+    if (!im) throw new Error('لم تُرجع الخدمة صورة. تحقق من نموذج الصور في الإعدادات المتقدمة (انظر «اختبار المفتاح»). الرد الخام أدناه.');
     const scene = await createImageBitmap(b64ToBlob(im.data, im.mime));
 
-    setStatus('Assemblage des calques…', '', true); await ensureFonts();
+    setStatus('جارٍ تجميع الطبقات…', '', true); await ensureFonts();
     const warn = [];
     const raw = extractJsonObject(txt || '');
-    if (!raw) warn.push('le texte JSON n’a pas été renvoyé : seul le nom du produit est utilisé comme titre');
+    if (!raw) warn.push('لم يُرجَع نص JSON: يُستعمل اسم المنتج وحده كعنوان');
     const plan = normPlan(raw || {}, nF, 0, name);
     const A = { scene, product:null, box:normBox(raw && raw.product_box), hideProduct:false };
     if (useOrig){
       A.product = bitmapToCanvas(P.bitmap);
-      if (!hasAlphaEdge(P.bitmap)){ A.hideProduct = true; warn.push('le PNG n’a pas de transparence (fond opaque) : le calque « Produit (PNG d’origine) » est ajouté mais masqué, pour ne pas cacher la scène'); }
-      if (!A.box) warn.push('position du produit non renvoyée par Gemini : le PNG est placé au centre, déplacez-le sur le produit de la scène');
+      if (!hasAlphaEdge(P.bitmap)){ A.hideProduct = true; warn.push('صورة PNG بلا شفافية (خلفية معتمة): أُضيفت طبقة «المنتج (PNG الأصلي)» لكنها مخفية كي لا تحجب المشهد'); }
+      if (!A.box) warn.push('لم تُرجع الخدمة موضع المنتج: وُضعت الصورة في الوسط، حرّكها إلى منتج المشهد');
     }
     composeProduct(A, plan, fmt, lang);
     const nImg = S.layers.filter(l => l.type !== 'text').length, nTxt = S.layers.filter(l => l.type === 'text').length;
-    setStatus('Visuel créé avec un seul appel : ' + S.layers.length + ' calques (' + nImg + ' images et formes, ' + nTxt + ' textes modifiables). Déplacez, redimensionnez ou modifiez chaque calque, puis exportez.' +
-      (warn.length ? ' À noter : ' + warn.join(' ; ') + '.' : ''), warn.length ? '' : 'ok');
+    setStatus('أُنشئ التصميم بطلب واحد: ' + S.layers.length + ' طبقة (' + nImg + ' صور وأشكال، ' + nTxt + ' نصوصاً قابلة للتعديل). حرّك كل طبقة أو غيّر حجمها أو عدّلها ثم صدّر.' +
+      (warn.length ? ' ملاحظات: ' + warn.join(' ; ') + '.' : ''), warn.length ? '' : 'ok');
   } catch(e){
     phaseMsg = '';
-    if (e.name === 'TimeoutError') setStatus('Gemini met trop de temps à répondre (plus de 4 minutes). Réessayez avec la résolution Standard.', 'err');
-    else if (e.name === 'AbortError') setStatus('Annulé.');
-    else if (e instanceof TypeError) setStatus('Échec réseau (« ' + e.message + ' »). Vérifiez la connexion ou une extension qui bloque googleapis.com.', 'err');
+    if (e.name === 'TimeoutError') setStatus('تأخّر رد الخدمة أكثر من 4 دقائق. أعد المحاولة بالدقة العادية.', 'err');
+    else if (e.name === 'AbortError') setStatus('أُلغي.');
+    else if (e instanceof TypeError) setStatus('فشل الشبكة (« ' + e.message + ' »). تحقق من الاتصال أو من إضافة تحجب الخدمة.', 'err');
     else setStatus(e.message, 'err');
   } finally {
     clearInterval(tick); S.abort = null; $('cancel').hidden = true; $('go').disabled = !goEnabled();
@@ -1579,22 +1594,22 @@ const LTXT = {
   en:{ trust:'Trusted by our customers', urg:'⚠️ Very limited stock, order now!', cta:'Order now — cash on delivery', before:'❌ Before: ', after:'✅ After: ' }
 };
 const SECS = [
-  { id:'hero', name:'En-tête', spot:true, keys:'"badge":"2-3 words such as best seller or new","headline":"huge powerful headline, max 6 words","subheadline":"the big benefit, max 14 words"',
+  { id:'hero', name:'الرأس', spot:true, keys:'"badge":"2-3 words such as best seller or new","headline":"huge powerful headline, max 6 words","subheadline":"the big benefit, max 14 words"',
     vis:'HERO: a premium, realistic photograph of the product natural setting (for a food product: a rustic table with its natural ingredients, utensils and flowers softly out of focus in warm golden light), with a large clean empty surface in the foreground center (table top, stone, wooden board) where the product will stand.' },
-  { id:'problem', name:'Problème', keys:'"problem_title":"question that touches the customer problem","problem_text":"short problem explanation"',
+  { id:'problem', name:'المشكلة', keys:'"problem_title":"question that touches the customer problem","problem_text":"short problem explanation"',
     vis:'PROBLEM: a realistic photograph that shows the customer problem you infer from the description (for example a tired, distracted child struggling to study at a desk, or whatever person suffers from the problem), authentic emotion, slightly cooler tone.' },
-  { id:'solution', name:'Solution', spot:true, keys:'"solution_title":"presents the product as the final solution","solution_text":"confirms the power of the solution"',
+  { id:'solution', name:'الحل', spot:true, keys:'"solution_title":"presents the product as the final solution","solution_text":"confirms the power of the solution"',
     vis:'SOLUTION: a bright, hopeful realistic photograph of the happy result (for example a smiling, focused child or person in warm morning light, natural ingredients nearby), with a large clean empty surface in the foreground center where the product will stand.' },
-  { id:'ba', name:'Avant / Après', keys:'"ba_title":"before/after title","before_text":"short description of the suffering, no prefix","after_text":"short description of the relief, no prefix"',
+  { id:'ba', name:'قبل / بعد', keys:'"ba_title":"before/after title","before_text":"short description of the suffering, no prefix","after_text":"short description of the relief, no prefix"',
     vis:'BEFORE/AFTER: realistic photographs of the same kind of person: on the left tired, dull, dim light; on the right happy, energetic, bright light; the two blend through a soft gradient with no hard line.' },
-  { id:'feature', name:'Fonctionnalité', keys:'"feature_title":"first feature headline","feature_text":"strong explanation of the feature"',
+  { id:'feature', name:'الميزة', keys:'"feature_title":"first feature headline","feature_text":"strong explanation of the feature"',
     vis:'FEATURE: a stunning realistic macro photograph of the product main ingredient (real textures, droplets, natural elements), sharp and appetizing, no packaging.' },
-  { id:'compare', name:'Comparaison', spot:true, keys:'"compare_title":"compares and proves superiority","compare_good":["advantage 1","advantage 2"],"compare_bad":["competitor flaw 1","competitor flaw 2"]',
+  { id:'compare', name:'المقارنة', spot:true, keys:'"compare_title":"compares and proves superiority","compare_good":["advantage 1","advantage 2"],"compare_bad":["competitor flaw 1","competitor flaw 2"]',
     vis:'COMPARISON: a realistic photograph with a bright, warm left side that has a large clean empty surface where the product will stand, and on the right side a dull, grayish plain unbranded generic container on a lifeless surface as the competitor.' },
-  { id:'life', name:'Scène de vie', keys:'"life_title":"daily benefit headline","life_text":"how the product improves the customer life"', life:true, vis:'' },
-  { id:'review', name:'Avis clients', keys:'"review_text":"short positive review in a customer voice"',
+  { id:'life', name:'مشهد حياتي', keys:'"life_title":"daily benefit headline","life_text":"how the product improves the customer life"', life:true, vis:'' },
+  { id:'review', name:'آراء الزبائن', keys:'"review_text":"short positive review in a customer voice"',
     vis:'REVIEWS: a realistic, warm photograph of satisfied customers (for example a happy parent and child smiling together at home), natural and authentic.' },
-  { id:'footer', name:'Prix et bouton', spot:true, keys:'"price":"PRICE"', vis:'FOOTER: a rich, warm, saturated realistic photograph of the product natural ingredients in golden light, with a large clean empty surface in the center foreground where the product will stand.' }
+  { id:'footer', name:'السعر والزر', spot:true, keys:'"price":"PRICE"', vis:'FOOTER: a rich, warm, saturated realistic photograph of the product natural ingredients in golden light, with a large clean empty surface in the center foreground where the product will stand.' }
 ];
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)).join(',');
 function ratioFor(n){ return n <= 1 ? '4:5' : n === 2 ? '9:16' : n <= 4 ? '1:4' : '1:8'; }
@@ -1624,7 +1639,7 @@ function composeLanding(A, cp, lang, o){
   const bg = bgc.getContext('2d', { willReadFrequently:true });
   if (A.scene) bg.drawImage(A.scene, 0, 0, W, H);
   else { const gr = bg.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, pal.primary); gr.addColorStop(0.5, pal.secondary); gr.addColorStop(1, pal.dark); bg.fillStyle = gr; bg.fillRect(0, 0, W, H); }
-  addLayer(bgc, 'Arrière-plan (photo unique)');
+  addLayer(bgc, 'الخلفية (صورة واحدة)');
   const place = (cv, name, cx, cy, w, h) => { const l = addLayer(cv, name); l.w = Math.round(w); l.h = Math.round(h); l.x = Math.round(cx - w / 2); l.y = Math.round(cy - h / 2); return l; };
   const mk = { font, dir, align:'center' };
   // Zone de texte et emplacement produit : positions données par Gemini (sur l'image générée), sinon répartition par défaut
@@ -1678,13 +1693,13 @@ function composeLanding(A, cp, lang, o){
     const sc2 = document.createElement('canvas'); sc2.width = 256; sc2.height = 64; const g2 = sc2.getContext('2d'), rg = g2.createRadialGradient(128, 32, 4, 128, 32, 126);
     rg.addColorStop(0, 'rgba(0,0,0,0.45)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g2.save(); g2.scale(1, 0.25); g2.fillStyle = rg; g2.fillRect(0, 0, 256, 256); g2.restore();
     place(sc2, 'Ombre — ' + label, cx, by - h * 0.01, w * 1.15, h * 0.16);
-    const l = place(cloneCv(A.product), 'Produit — ' + label, cx, cy, w, h); l.visible = !A.hideProduct;
+    const l = place(cloneCv(A.product), 'المنتج — ' + label, cx, cy, w, h); l.visible = !A.hideProduct;
   });
   let lifeOk = false;
   if (A.product && A.lifeBox && ix.life != null){ const b = A.lifeBox, cy = (b[0] + b[2]) / 2 / 1000 * H, i = ix.life; lifeOk = cy > sec(i) && cy < sec(i + 1) && (b[2] - b[0]) / 1000 * H < 0.7 * sH; A.lifeSkipped = !lifeOk; }
   if (lifeOk){
     const b = A.lifeBox, X0 = b[1] / 1000 * W, X1 = b[3] / 1000 * W, Y0 = b[0] / 1000 * H, Y1 = b[2] / 1000 * H, s = Math.min((X1 - X0) / A.product.width, (Y1 - Y0) / A.product.height) * 1.03;
-    const l = place(cloneCv(A.product), 'Produit — scène de vie', (X0 + X1) / 2, (Y0 + Y1) / 2, A.product.width * s, A.product.height * s); l.visible = !A.hideProduct;
+    const l = place(cloneCv(A.product), 'المنتج — مشهد حياتي', (X0 + X1) / 2, (Y0 + Y1) / 2, A.product.width * s, A.product.height * s); l.visible = !A.hideProduct;
   }
   ids.forEach((id, i) => defs[id](i));
   if (ix.footer != null){
@@ -1699,12 +1714,12 @@ function composeLanding(A, cp, lang, o){
 }
 async function createLanding(){
   const key = cleanKey($('key').value); gemKeyInfo = keyInfo(key);
-  if (!P.bitmap){ setStatus('Ajoutez d’abord la photo du produit.', 'err'); return; }
+  if (!P.bitmap){ setStatus('أضف صورة المنتج أولاً.', 'err'); return; }
   const name = $('pName').value.trim(), desc = $('pDesc').value.trim();
-  if (!name && !desc){ setStatus('Renseignez au moins le nom ou la description du produit.', 'err'); $('pName').focus(); return; }
+  if (!name && !desc){ setStatus('أدخل على الأقل اسم المنتج أو وصفه.', 'err'); $('pName').focus(); return; }
   const secs = SECS.filter(s => $('sec_' + s.id).checked);
-  if (!secs.length){ setStatus('Cochez au moins une section.', 'err'); return; }
-  if (!key){ setStatus('Entrez votre clé API Gemini.', 'err'); $('key').focus(); return; }
+  if (!secs.length){ setStatus('اختر قسماً واحداً على الأقل.', 'err'); return; }
+  if (!key){ setStatus('أدخل مفتاح Alyssum API.', 'err'); $('key').focus(); return; }
   const bad = badGemKey(key); if (bad){ setStatus(bad, 'err'); $('key').focus(); return; }
   const imgModel = $('gemImg').value.trim() || 'gemini-nano-banana-2.1';
   store('ml_gemimg', imgModel);
@@ -1740,19 +1755,19 @@ async function createLanding(){
       'Each moment keeps one natural, softly blurred area (blurred background, sky, wall, bokeh) that is calm enough to hold a few lines of text WITHOUT covering the subject of the photograph. ' +
       'DO NOT draw the product itself, except in the lifestyle moment: where a moment says so, leave a LARGE clean empty surface (at least 45% of the image width) in the foreground center, where the real product photo will be placed afterwards, big and prominent; no pedestal, no circle, no glow, no frame on it. Moments from top to bottom:\n' + zoneVis + '\n\n' +
       'THEN, after the image, write ONLY this JSON object as text (no markdown fence, no comment). Write every copy string in ' + langName + ', as persuasive direct-response copy faithful to the details above, short and punchy, without invented medical claims, statistics or certifications:\n' + jsonSpec;
-    ph('Gemini génère la photo unique et les textes — un seul appel');
+    ph('جارٍ إنشاء الصورة الواحدة والنصوص — طلب واحد');
     const j = await gemCall({ key, model:imgModel, prompt, b64:P.b64, mime:'image/jpeg', wantImage:true, sig, timeoutMs:300000, size, aspect:ratio, aspectFb:ratioFallbacks(ratio) });
     phaseMsg = '';
     const txt = gemText(j), im = gemImage(j);
     showRaw(txt || JSON.stringify(j, null, 1).slice(0, 4000));
-    if (!im) throw new Error('Gemini n’a pas renvoyé d’image. Vérifiez le modèle image dans Réglages avancés (voir « Tester la clé »). Réponse brute ci-dessous.');
+    if (!im) throw new Error('لم تُرجع الخدمة صورة. تحقق من نموذج الصور في الإعدادات المتقدمة (انظر «اختبار المفتاح»). الرد الخام أدناه.');
     const scene = await createImageBitmap(b64ToBlob(im.data, im.mime));
-    setStatus('Assemblage des calques…', '', true); await ensureFonts();
+    setStatus('جارٍ تجميع الطبقات…', '', true); await ensureFonts();
     const warn = []; let raw = extractJsonObject(txt || '');
     const enough = r => r && r.copy && Object.values(r.copy).filter(v => v && String(v).trim()).length >= Math.max(2, secs.length);
     if (!enough(raw)){
       // L'image n'est pas revenue avec les textes : un second appel (texte seul, avec la photo générée) les récupère
-      ph('Gemini n’a pas renvoyé les textes avec l’image — appel de secours pour les textes');
+      ph('لم تُرجع الخدمة النصوص مع الصورة — طلب احتياطي للنصوص');
       const cv = document.createElement('canvas'), k = Math.min(1, 3000 / scene.height); cv.width = Math.max(1, Math.round(scene.width * k)); cv.height = Math.round(scene.height * k);
       cv.getContext('2d').drawImage(scene, 0, 0, cv.width, cv.height);
       const tp = prompt.slice(0, prompt.indexOf('THE IMAGE:')) + 'The first attached image is the product photo; the second attached image is the landing-page image already generated (do NOT generate another image). Do ONLY the text part: ' +
@@ -1760,29 +1775,29 @@ async function createLanding(){
       try {
         const jt = await gemCall({ key, model:$('gemSeg').value.trim() || 'gemini-3.8-flash', prompt:tp, b64:P.b64, mime:'image/jpeg', wantImage:false, sig, timeoutMs:120000, extra:[{ b64:cv.toDataURL('image/jpeg', 0.85).split(',')[1], mime:'image/jpeg' }] });
         const r2 = extractJsonObject(gemText(jt) || ''); phaseMsg = '';
-        if (enough(r2)){ raw = r2; warn.push('les textes ont été obtenus par un second appel (texte seul)'); }
+        if (enough(r2)){ raw = r2; warn.push('حُصل على النصوص بطلب ثانٍ (نص فقط)'); }
       } catch(e2){ phaseMsg = ''; if (e2.name === 'AbortError') throw e2; }
     }
-    if (!enough(raw)) warn.push('Gemini n’a pas renvoyé les textes : seuls le titre et le bouton sont créés (voir la réponse brute ci-dessous)');
+    if (!enough(raw)) warn.push('لم تُرجع الخدمة النصوص: أُنشئ العنوان والزر فقط (انظر الرد الخام أدناه)');
     const cp = normCopy(raw, name);
     if (secs.some(s => s.id === 'footer') && !price && !cp.price) warn.push('aucun prix fourni');
-    if (N >= 4 && scene.height / scene.width < N * 0.45) warn.push('Google a renvoyé une image moins allongée que demandée (' + scene.width + '×' + scene.height + ') : réduisez le nombre de sections');
+    if (N >= 4 && scene.height / scene.width < N * 0.45) warn.push('أعادت الخدمة صورة أقصر من المطلوب (' + scene.width + '×' + scene.height + ') : قلّل عدد الأقسام');
     const A = { scene, product:null, lifeBox:null, hideProduct:false };
     if (useOrig){
       A.product = bitmapToCanvas(P.bitmap); A.lifeBox = hasLife ? normBox(raw && raw.lifestyle_box) : null;
-      if (!hasAlphaEdge(P.bitmap)){ A.hideProduct = true; warn.push('le PNG n’a pas de transparence : les calques « Produit » sont ajoutés mais masqués pour ne pas cacher la page'); }
+      if (!hasAlphaEdge(P.bitmap)){ A.hideProduct = true; warn.push('صورة PNG بلا شفافية: أُضيفت طبقات «المنتج» لكنها مخفية كي لا تحجب الصفحة'); }
     }
     const defaults = [];
     composeLanding(A, cp, lang, { ids:secs.map(s => s.id), idea, offer, layout:(raw && raw.layout) || {}, defaults });
-    if (defaults.length) warn.push('positions par défaut utilisées pour : ' + [...new Set(defaults)].join(', '));
-    if (useOrig && A.lifeSkipped) warn.push('position du produit dans la scène de l’enfant non fiable : le produit dessiné par Gemini est conservé dans cette section');
+    if (defaults.length) warn.push('استُعملت مواضع افتراضية لـ: ' + [...new Set(defaults)].join(', '));
+    if (useOrig && A.lifeSkipped) warn.push('موضع المنتج في مشهد الطفل غير موثوق: أُبقي المنتج المرسوم في هذا القسم');
     const nImg = S.layers.filter(l => l.type !== 'text').length, nTxt = S.layers.filter(l => l.type === 'text').length;
-    setStatus('Page créée avec ' + (warn.some(w => /second appel/.test(w)) ? '2 appels' : 'un seul appel') + ' : ' + S.layers.length + ' calques (' + nImg + ' images et formes, ' + nTxt + ' textes modifiables). Les calques « Produit » sont votre PNG d’origine ; déplacez-les si besoin.' + (warn.length ? ' À noter : ' + warn.join(' ; ') + '.' : ''), warn.length ? '' : 'ok');
+    setStatus('أُنشئت الصفحة بـ ' + (warn.some(w => /بطلب ثانٍ/.test(w)) ? 'طلبين' : 'طلب واحد') + ' : ' + S.layers.length + ' طبقة (' + nImg + ' صور وأشكال، ' + nTxt + ' نصوصاً قابلة للتعديل). طبقات «المنتج» هي صورتك الأصلية؛ حرّكها عند الحاجة.' + (warn.length ? ' ملاحظات: ' + warn.join(' ; ') + '.' : ''), warn.length ? '' : 'ok');
   } catch(e){
     phaseMsg = '';
-    if (e.name === 'TimeoutError') setStatus('Gemini met trop de temps à répondre (plus de 5 minutes). Réessayez avec la résolution Standard ou moins de sections.', 'err');
-    else if (e.name === 'AbortError') setStatus('Annulé.');
-    else if (e instanceof TypeError) setStatus('Échec réseau (« ' + e.message + ' »). Vérifiez la connexion ou une extension qui bloque googleapis.com.', 'err');
+    if (e.name === 'TimeoutError') setStatus('تأخّر رد الخدمة أكثر من 5 دقائق. أعد المحاولة بالدقة العادية أو بأقسام أقل.', 'err');
+    else if (e.name === 'AbortError') setStatus('أُلغي.');
+    else if (e instanceof TypeError) setStatus('فشل الشبكة (« ' + e.message + ' »). تحقق من الاتصال أو من إضافة تحجب الخدمة.', 'err');
     else setStatus(e.message, 'err');
   } finally {
     clearInterval(tick); S.abort = null; $('cancel').hidden = true; $('go').disabled = !goEnabled();
@@ -1791,10 +1806,10 @@ async function createLanding(){
 
 async function createRich(){
   const key = cleanKey($('key').value); gemKeyInfo = keyInfo(key);
-  if (!P.bitmap){ setStatus('Ajoutez d’abord la photo du produit.', 'err'); return; }
+  if (!P.bitmap){ setStatus('أضف صورة المنتج أولاً.', 'err'); return; }
   const name = $('pName').value.trim(), desc = $('pDesc').value.trim();
-  if (!name && !desc){ setStatus('Renseignez au moins le nom ou la description du produit.', 'err'); $('pName').focus(); return; }
-  if (!key){ setStatus('Entrez votre clé API Gemini.', 'err'); $('key').focus(); return; }
+  if (!name && !desc){ setStatus('أدخل على الأقل اسم المنتج أو وصفه.', 'err'); $('pName').focus(); return; }
+  if (!key){ setStatus('أدخل مفتاح Alyssum API.', 'err'); $('key').focus(); return; }
   const bad = badGemKey(key); if (bad){ setStatus(bad, 'err'); $('key').focus(); return; }
   const imgModel = $('gemImg').value.trim() || 'gemini-nano-banana-2.1';
   store('ml_gemimg', imgModel);
@@ -1835,30 +1850,30 @@ async function createRich(){
       '7. REVIEWS: a headline, then THREE customer review cards, each with a realistic portrait photo of a customer, 5 gold stars, a short positive review written in the customer voice, and the customer location (' + L.cities + ').\n' +
       '8. HOW TO ORDER: a headline, then 4 numbered step cards connected by arrows, with circular icons and bold captions, exactly: ' + L.st.map((x, i) => (i + 1) + ') "' + x + '"').join(' ، ') + '.\n' +
       '9. FINAL CALL TO ACTION: a strong, solid, high-contrast footer with the brand logo or name, a big closing headline, one persuasive sentence, and a huge order button "' + L.cta + '".';
-    phaseMsg = 'Gemini génère la page riche (un seul appel, c’est long)'; phaseT0 = Date.now(); setStatus(phaseMsg + '…', '', true);
+    phaseMsg = 'جارٍ إنشاء الصفحة الغنية (طلب واحد، يستغرق وقتاً)'; phaseT0 = Date.now(); setStatus(phaseMsg + '…', '', true);
     const j = await gemCall({ key, model:imgModel, prompt, b64:P.b64, mime:'image/jpeg', wantImage:true, sig, timeoutMs:360000, size, aspect:ratio, aspectFb:ratioFallbacks(ratio) });
     phaseMsg = '';
     const txt = gemText(j), im = gemImage(j);
     showRaw(txt || JSON.stringify(j, null, 1).slice(0, 4000));
-    if (!im) throw new Error('Gemini n’a pas renvoyé d’image. Vérifiez le modèle image dans Réglages avancés (voir « Tester la clé »). Réponse brute ci-dessous.');
+    if (!im) throw new Error('لم تُرجع الخدمة صورة. تحقق من نموذج الصور في الإعدادات المتقدمة (انظر «اختبار المفتاح»). الرد الخام أدناه.');
     const blob = b64ToBlob(im.data, im.mime);
     const probe = await createImageBitmap(blob), askedR = { '9:16':1.78, '5:14':2.8, '9:32':3.56, '1:4':4, '1:8':8 }[ratio], gotR = probe.height / probe.width;
-    const lenWarn = gotR > askedR * 1.25 ? ' Attention : Google a renvoyé une image plus longue que demandée (' + probe.width + ' × ' + probe.height + ').' : gotR < askedR * 0.75 ? ' Attention : Google a renvoyé une image plus courte que demandée (' + probe.width + ' × ' + probe.height + ') ; certaines sections peuvent être comprimées.' : '';
+    const lenWarn = gotR > askedR * 1.25 ? ' تنبيه: أعادت الخدمة صورة أطول من المطلوب (' + probe.width + ' × ' + probe.height + ').' : gotR < askedR * 0.75 ? ' تنبيه: أعادت الخدمة صورة أقصر من المطلوب (' + probe.width + ' × ' + probe.height + ')؛ قد تكون بعض الأقسام مضغوطة.' : '';
     $('mode').value = 'decompose'; applyMode(); await loadSource(blob);
     S.lastRich = blob;
     if ($('pAutoLayers').checked){
       $('textMode').checked = true; RICH_OPT = { seg:$('pObjLayers').checked, prod:$('pRepProd').checked, clean:$('pCleanBg').checked };
-      setStatus('Page riche créée avec un seul appel (' + S.src.width + ' × ' + S.src.height + ' px). Conversion en calques en cours…' + lenWarn, '', true);
+      setStatus('أُنشئت الصفحة الغنية بطلب واحد (' + S.src.width + ' × ' + S.src.height + ' px). جارٍ التحويل إلى طبقات…' + lenWarn, '', true);
       try { await runGemini(); } finally { RICH_OPT = null; }
-      if (S.layers.length > 1) setStatus(($('status').textContent || '') + ' (Page générée : 1 appel ; analyse des textes par bandes : appels supplémentaires.)', 'ok');
+      if (S.layers.length > 1) setStatus(($('status').textContent || '') + ' (الصفحة بطلب واحد؛ وتحليل النصوص على شرائح بطلبات إضافية.)', 'ok');
       return;
     }
-    setStatus('Page riche créée avec un seul appel (' + S.src.width + ' × ' + S.src.height + ' px), chargée dans l’outil de décomposition. Cliquez « Générer les calques » avec « Convertir les textes en textes modifiables » coché pour séparer images et textes (appels supplémentaires ; plus fiable avec la résolution 4K). Vous pouvez aussi la télécharger telle quelle depuis l’aperçu.' + lenWarn, lenWarn ? '' : 'ok');
+    setStatus('أُنشئت الصفحة الغنية بطلب واحد (' + S.src.width + ' × ' + S.src.height + ' px) وحُمّلت في أداة التفكيك. اضغط «إنشاء الطبقات» مع تفعيل «تحويل النصوص إلى نصوص قابلة للتعديل» لفصل الصور عن النصوص (طلبات إضافية؛ أدق مع دقة 4K). ويمكنك أيضاً تنزيلها كما هي من المعاينة.' + lenWarn, lenWarn ? '' : 'ok');
   } catch(e){
     phaseMsg = '';
-    if (e.name === 'TimeoutError') setStatus('Gemini met trop de temps à répondre (plus de 6 minutes). Réessayez avec la résolution 2K.', 'err');
-    else if (e.name === 'AbortError') setStatus('Annulé.');
-    else if (e instanceof TypeError) setStatus('Échec réseau (« ' + e.message + ' »). Vérifiez la connexion ou une extension qui bloque googleapis.com.', 'err');
+    if (e.name === 'TimeoutError') setStatus('تأخّر رد الخدمة أكثر من 6 دقائق. أعد المحاولة بدقة 2K.', 'err');
+    else if (e.name === 'AbortError') setStatus('أُلغي.');
+    else if (e instanceof TypeError) setStatus('فشل الشبكة (« ' + e.message + ' »). تحقق من الاتصال أو من إضافة تحجب الخدمة.', 'err');
     else setStatus(e.message, 'err');
   } finally {
     clearInterval(tick); S.abort = null; $('cancel').hidden = true; $('go').disabled = !goEnabled();
@@ -1866,9 +1881,9 @@ async function createRich(){
 }
 /* ---------- Page riche en VRAIS calques : une photo par section, textes/cartes/produit au-dessus ---------- */
 const LAYSEC = [
-  { id:'hero', name:'En-tête', h:700 }, { id:'problem', name:'Problème', h:760 }, { id:'solution', name:'Solution', h:700 },
-  { id:'ingredients', name:'Ingrédients', h:600 }, { id:'offer', name:'Offre et prix', h:620 }, { id:'guarantees', name:'Garanties', h:260 },
-  { id:'reviews', name:'Avis clients', h:940 }, { id:'order', name:'Comment commander', h:700 }, { id:'final', name:'Appel final', h:680 }
+  { id:'hero', name:'الرأس', h:700 }, { id:'problem', name:'المشكلة', h:760 }, { id:'solution', name:'الحل', h:700 },
+  { id:'ingredients', name:'المكوّنات', h:600 }, { id:'offer', name:'العرض والسعر', h:620 }, { id:'guarantees', name:'الضمانات', h:260 },
+  { id:'reviews', name:'آراء الزبائن', h:940 }, { id:'order', name:'طريقة الطلب', h:700 }, { id:'final', name:'الدعوة الختامية', h:680 }
 ];
 const RL = {
   ar:{ t:['ضمان الجودة والأصالة', 'منتج طبيعي بدون مواد حافظة', 'الدفع عند الاستلام', 'التوصيل لجميع الولايات'],
@@ -1932,7 +1947,7 @@ function composeLayered(A, cp, lang, o){
   clearLayers(); setStage(W, H); $('empty').style.display = 'none';
   const base = document.createElement('canvas'); base.width = W; base.height = H; const bg = base.getContext('2d');
   const gr = bg.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, pal.secondary); gr.addColorStop(1, mixHex(pal.secondary, pal.primary, 0.35)); bg.fillStyle = gr; bg.fillRect(0, 0, W, H);
-  addLayer(base, 'Fond de page');
+  addLayer(base, 'خلفية الصفحة');
   const bands = [];
   secs.forEach((s, i) => {
     const ovT = i ? 70 : 0, ovB = i < secs.length - 1 ? 70 : 0, c = photoBand(A.photos[s.id], W, s.h, ovT, ovB, pal), l = addLayer(c, 'Photo — ' + s.name);
@@ -1960,7 +1975,7 @@ function composeLayered(A, cp, lang, o){
   };
   const card = (b, fill, alpha, rad, name, shadow) => {
     if (GLASS && (fill === WHITE || fill === PR || fill === DK)) return glassCard(b, fill === PR ? PR : DK, fill === PR ? 0.55 : 0.55, rad, name); const k = cardCv(b[2], b[3], rad, fill, fill === WHITE ? Math.min(1, alpha * CA) : alpha, shadow !== false); return put(k.c, name || 'Carte', b[0] - k.pad, b[1] - k.pad, k.c.width, k.c.height); };
-  const icon = (b, glyph, fill, ring, fg, name) => put(iconCv(Math.round(Math.min(b[2], b[3])), fill, glyph, ring, fg), name || 'Icône', b[0], b[1], Math.round(Math.min(b[2], b[3])), Math.round(Math.min(b[2], b[3])));
+  const icon = (b, glyph, fill, ring, fg, name) => put(iconCv(Math.round(Math.min(b[2], b[3])), fill, glyph, ring, fg), name || 'أيقونة', b[0], b[1], Math.round(Math.min(b[2], b[3])), Math.round(Math.min(b[2], b[3])));
   const txt = (text, b, op) => {
     text = String(text || '').trim(); if (!text) return null;
     const al = op.align === 'start' ? (rtl ? 'right' : 'left') : (op.align || 'center');
@@ -1977,25 +1992,25 @@ function composeLayered(A, cp, lang, o){
     const sc = document.createElement('canvas'); sc.width = 256; sc.height = 64; const g2 = sc.getContext('2d'), rg = g2.createRadialGradient(128, 32, 4, 128, 32, 126);
     rg.addColorStop(0, 'rgba(0,0,0,0.45)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g2.save(); g2.scale(1, 0.25); g2.fillStyle = rg; g2.fillRect(0, 0, 256, 256); g2.restore();
     put(sc, 'Ombre — ' + label, cx - w * 0.575, by - h * 0.09, w * 1.15, h * 0.16);
-    const l = put(cloneCv(A.product), 'Produit — ' + label, cx - w / 2, by - h, w, h); l.visible = !A.hideProduct;
+    const l = put(cloneCv(A.product), 'المنتج — ' + label, cx - w / 2, by - h, w, h); l.visible = !A.hideProduct;
   };
   const titleBar = (r, text, fy, fh) => { if (!text) return; card(r.B(0.05, fy, 0.9, fh), DK, 0.55, 26, 'Carte — titre'); txt(text, r.B(0.08, fy + 0.01, 0.84, fh - 0.02), { size:0.056, weight:900, color:IDEA, lines:2 }); };
   const glyphs = ['✅', '🌿', '💵', '🚚'];
   let r;
   if ((r = R('hero'))){
-    card(r.B(0.03, 0.04, 0.56, 0.76), PR, 0.74, 30, 'Carte — texte');
+    card(r.B(0.03, 0.04, 0.56, 0.76), PR, 0.74, 30, 'بطاقة — نص');
     txt(cp.brand, r.B(0.06, 0.06, 0.5, 0.07), { size:0.034, weight:800, color:OFFER, align:'start', lines:1 });
     txt(cp.badge, r.B(0.06, 0.135, 0.5, 0.065), { size:0.03, weight:700, color:IDEA, align:'start', lines:1 });
     txt(cp.headline, r.B(0.06, 0.205, 0.5, 0.25), { size:0.08, weight:900, color:IDEA, align:'start', lines:3 });
     txt(cp.sub, r.B(0.06, 0.465, 0.5, 0.14), { size:0.038, weight:600, color:IDEA, align:'start', lines:3 });
-    button(r.B(0.06, 0.645, 0.4, 0.12), RLx.cta, 'Bouton — En-tête');
-    prod(r.B(0.65, 0.3, 0.32, 0.54), 'En-tête');
+    button(r.B(0.06, 0.645, 0.4, 0.12), RLx.cta, 'زر — الرأس');
+    prod(r.B(0.65, 0.3, 0.32, 0.54), 'الرأس');
     const n = cp.benefits.length;
     if (n){
       card(r.B(0.03, 0.86, 0.94, 0.125), WHITE, 0.93, 22, 'Carte — atouts');
       cp.benefits.forEach((it, i) => {
         const cw = 0.94 / n, c = r.B(0.03 + i * cw, 0.86, cw, 0.125), d = Math.min(c[3] * 0.72, c[2] * 0.36), ix = r.m ? c[0] + c[2] - d - 8 : c[0] + 8;
-        icon([ix, c[1] + (c[3] - d) / 2, d, d], it.icon, mixHex(pal.secondary, '#ffffff', 0.5), PR, null, 'Icône — ' + it.label);
+        icon([ix, c[1] + (c[3] - d) / 2, d, d], it.icon, mixHex(pal.secondary, '#ffffff', 0.5), PR, null, 'أيقونة — ' + it.label);
         txt(it.label, [r.m ? c[0] + 4 : c[0] + d + 14, c[1], c[2] - d - 20, c[3]], { size:0.026, weight:800, color:INK, align:'start', lines:2 });
       });
     }
@@ -2005,8 +2020,8 @@ function composeLayered(A, cp, lang, o){
     const n = cp.problems.length;
     cp.problems.forEach((it, i) => {
       const cw = 0.94 / n, c = r.B(0.03 + i * cw + 0.006, 0.53, cw - 0.012, 0.43), d = Math.min(c[2] * 0.42, c[3] * 0.26);
-      card(c, WHITE, 0.94, 24, 'Carte — problème ' + (i + 1));
-      icon([c[0] + (c[2] - d) / 2, c[1] + 10, d, d], it.icon, mixHex('#d9534f', '#ffffff', 0.82), '#d9534f', null, 'Icône — problème ' + (i + 1));
+      card(c, WHITE, 0.94, 24, 'بطاقة — مشكلة ' + (i + 1));
+      icon([c[0] + (c[2] - d) / 2, c[1] + 10, d, d], it.icon, mixHex('#d9534f', '#ffffff', 0.82), '#d9534f', null, 'أيقونة — مشكلة ' + (i + 1));
       txt(it.title, [c[0] + 8, c[1] + d + 16, c[2] - 16, c[3] * 0.2], { size:0.029, weight:900, color:GLASS ? '#ffb3a7' : '#b02a2a', lines:2 });
       txt(it.text, [c[0] + 8, c[1] + d + 20 + c[3] * 0.2, c[2] - 16, c[3] - d - 28 - c[3] * 0.2], { size:0.025, weight:600, color:INK, lines:4, top:true });
     });
@@ -2018,7 +2033,7 @@ function composeLayered(A, cp, lang, o){
     cp.solutions.forEach((it, i) => {
       const left = i < 2, row = i % 2, c = r.B(left ? 0.02 : 0.71, 0.23 + row * 0.37, 0.27, 0.34), d = Math.min(c[3] * 0.34, c[2] * 0.3);
       card(c, WHITE, 0.93, 22, 'Carte — atout ' + (i + 1));
-      icon([r.m ? c[0] + c[2] - d - 10 : c[0] + 10, c[1] + 12, d, d], it.icon, mixHex(pal.secondary, '#ffffff', 0.5), PR, null, 'Icône — atout ' + (i + 1));
+      icon([r.m ? c[0] + c[2] - d - 10 : c[0] + 10, c[1] + 12, d, d], it.icon, mixHex(pal.secondary, '#ffffff', 0.5), PR, null, 'أيقونة — ميزة ' + (i + 1));
       txt(it.title, [r.m ? c[0] + 8 : c[0] + d + 18, c[1] + 8, c[2] - d - 26, d + 10], { size:0.028, weight:900, color:HEAD, align:'start', lines:2 });
       txt(it.text, [c[0] + 10, c[1] + d + 20, c[2] - 20, c[3] - d - 28], { size:0.025, weight:600, color:INK, align:'start', lines:3, top:true });
     });
@@ -2027,10 +2042,10 @@ function composeLayered(A, cp, lang, o){
     titleBar(r, cp.ingredients_title, 0.03, 0.14);
     const n = cp.ingredients.length;
     if (n){
-      card(r.B(0.03, 0.55, 0.94, 0.41), WHITE, 0.92, 28, 'Carte — ingrédients');
+      card(r.B(0.03, 0.55, 0.94, 0.41), WHITE, 0.92, 28, 'بطاقة — مكوّنات');
       cp.ingredients.forEach((it, i) => {
         const cw = 0.94 / n, c = r.B(0.03 + i * cw, 0.55, cw, 0.41), d = Math.min(c[2] * 0.8, c[3] * 0.56);
-        icon([c[0] + (c[2] - d) / 2, c[1] + 12, d, d], it.icon, mixHex(pal.secondary, '#ffffff', 0.4), pal.accent, null, 'Icône — ' + it.name);
+        icon([c[0] + (c[2] - d) / 2, c[1] + 12, d, d], it.icon, mixHex(pal.secondary, '#ffffff', 0.4), pal.accent, null, 'أيقونة — ' + it.name);
         txt(it.name, [c[0] + 4, c[1] + d + 18, c[2] - 8, c[3] - d - 28], { size:0.026, weight:800, color:INK, lines:2, top:true });
       });
     }
@@ -2048,7 +2063,7 @@ function composeLayered(A, cp, lang, o){
     card(r.B(0.03, 0.1, 0.94, 0.8), WHITE, 0.93, 26, 'Carte — garanties');
     RLx.t.forEach((t, i) => {
       const cw = 0.94 / 4, c = r.B(0.03 + i * cw, 0.1, cw, 0.8), d = Math.min(c[2] * 0.36, c[3] * 0.42);
-      icon([c[0] + (c[2] - d) / 2, c[1] + 12, d, d], glyphs[i], mixHex(pal.secondary, '#ffffff', 0.45), PR, null, 'Icône — garantie ' + (i + 1));
+      icon([c[0] + (c[2] - d) / 2, c[1] + 12, d, d], glyphs[i], mixHex(pal.secondary, '#ffffff', 0.45), PR, null, 'أيقونة — ضمان ' + (i + 1));
       txt(t, [c[0] + 6, c[1] + d + 18, c[2] - 12, c[3] - d - 26], { size:0.024, weight:800, color:INK, lines:3, top:true });
     });
   }
@@ -2069,16 +2084,16 @@ function composeLayered(A, cp, lang, o){
     titleBar(r, cp.order_title, 0.03, 0.15);
     RLx.st.forEach((t, i) => {
       const rh = 0.76 / 4, c = r.B(0.03, 0.2 + i * rh, 0.7, rh - 0.025), d = Math.min(c[3] * 0.72, 110), ix = r.m ? c[0] + c[2] - d - 14 : c[0] + 14;
-      card(c, WHITE, 0.95, 26, 'Carte — étape ' + (i + 1));
+      card(c, WHITE, 0.95, 26, 'بطاقة — خطوة ' + (i + 1));
       const nc = document.createElement('canvas'), k = 2; nc.width = nc.height = Math.ceil(d * k); const g = nc.getContext('2d'); g.scale(k, k);
       g.fillStyle = PR; g.beginPath(); g.arc(d / 2, d / 2, d / 2 - 2, 0, 7); g.fill(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '900 ' + Math.round(d * 0.55) + 'px "Cairo","Inter",sans-serif'; g.fillText(String(i + 1), d / 2, d / 2 + d * 0.04);
-      put(nc, 'Numéro — étape ' + (i + 1), ix, c[1] + (c[3] - d) / 2, d, d);
+      put(nc, 'رقم — خطوة ' + (i + 1), ix, c[1] + (c[3] - d) / 2, d, d);
       txt(t, [r.m ? c[0] + 18 : c[0] + d + 30, c[1] + 4, c[2] - d - 50, c[3] - 8], { size:0.036, weight:800, color:INK, align:'start', lines:2 });
     });
   }
   if ((r = R('final'))){
     const ce = !!o.centerFinal, X0 = ce ? 0.1 : 0.03, XW = ce ? 0.8 : 0.62, TX = ce ? 0.15 : 0.07, TW = ce ? 0.7 : 0.54;
-    card(r.B(X0, ce ? 0.3 : 0.08, XW, ce ? 0.64 : 0.84), PR, 0.82, 34, 'Carte — appel final');
+    card(r.B(X0, ce ? 0.3 : 0.08, XW, ce ? 0.64 : 0.84), PR, 0.82, 34, 'بطاقة — الدعوة الختامية');
     txt(cp.brand, r.B(TX, ce ? 0.33 : 0.12, TW, 0.07), { size:0.034, weight:800, color:OFFER, lines:1 });
     txt(cp.final_title, r.B(TX, ce ? 0.4 : 0.22, TW, ce ? 0.22 : 0.3), { size:0.062, weight:900, color:IDEA, lines:ce ? 3 : 4 });
     txt(cp.final_text, r.B(TX, ce ? 0.63 : 0.53, TW, ce ? 0.14 : 0.17), { size:0.036, weight:600, color:IDEA, lines:3 });
@@ -2088,12 +2103,12 @@ function composeLayered(A, cp, lang, o){
 }
 async function createLayered(){
   const key = cleanKey($('key').value); gemKeyInfo = keyInfo(key);
-  if (!P.bitmap){ setStatus('Ajoutez d’abord la photo du produit.', 'err'); return; }
+  if (!P.bitmap){ setStatus('أضف صورة المنتج أولاً.', 'err'); return; }
   const name = $('pName').value.trim(), desc = $('pDesc').value.trim();
-  if (!name && !desc){ setStatus('Renseignez au moins le nom ou la description du produit.', 'err'); $('pName').focus(); return; }
+  if (!name && !desc){ setStatus('أدخل على الأقل اسم المنتج أو وصفه.', 'err'); $('pName').focus(); return; }
   const picked = LAYSEC.filter(s => $('lay_' + s.id).checked);
-  if (!picked.length){ setStatus('Cochez au moins une section.', 'err'); return; }
-  if (!key){ setStatus('Entrez votre clé API Gemini.', 'err'); $('key').focus(); return; }
+  if (!picked.length){ setStatus('اختر قسماً واحداً على الأقل.', 'err'); return; }
+  if (!key){ setStatus('أدخل مفتاح Alyssum API.', 'err'); $('key').focus(); return; }
   const bad = badGemKey(key); if (bad){ setStatus(bad, 'err'); $('key').focus(); return; }
   const imgModel = $('gemImg').value.trim() || 'gemini-nano-banana-2.1', segModel = $('gemSeg').value.trim() || 'gemini-3.8-flash';
   store('ml_gemimg', imgModel); store('ml_gemseg', segModel);
@@ -2122,11 +2137,11 @@ async function createLayered(){
       (offerTxt ? '\n- Offer to highlight: ' + offerTxt : '') + ($('pExtra').value.trim() ? '\n- Extra instructions: ' + $('pExtra').value.trim() : '') + '\n- Copy language: ' + langName + (lang === 'ar' ? ' (right-to-left)' : '') + '\n\n' +
       'Analyze the attached product photo. Act as a world-class direct-response copywriter and art director for a mobile landing page of 9 sections. Write ONLY this JSON object (no markdown fence, no comment). ' +
       'Every copy string is in ' + langName + ', short and punchy, faithful to the details above, without invented medical claims, statistics, prices or certifications; the "photos" sentences are in English. The palette must follow the design colors given:\n' + spec;
-    ph('Gemini prépare les textes et le plan des photos');
+    ph('جارٍ تجهيز النصوص وخطة الصور');
     let raw = null; const warn = [];
     try { raw = extractJsonObject(gemText(await gemCall({ key, model:segModel, prompt, b64:P.b64, mime:'image/jpeg', wantImage:false, sig, timeoutMs:150000 })) || ''); }
-    catch(e){ if (e.name === 'AbortError') throw e; warn.push('textes non obtenus (' + e.message.slice(0, 90) + ')'); }
-    if (!raw || !raw.copy) warn.push('Gemini n’a pas renvoyé les textes : seuls le titre et les boutons sont créés');
+    catch(e){ if (e.name === 'AbortError') throw e; warn.push('لم تُستخرج النصوص (' + e.message.slice(0, 90) + ')'); }
+    if (!raw || !raw.copy) warn.push('لم تُرجع الخدمة النصوص: أُنشئ العنوان والأزرار فقط');
     const cp = normLay(raw, name, desc);
     const side = lang === 'ar' ? 'left' : 'right';
     const DEF = { hero:cp.photos.hero || (kid + ' smiling at home with natural ingredients'), problem:'a realistic photo illustrating the customer problem, softly blurred muted tones', solution:'natural ingredients in warm golden light',
@@ -2151,26 +2166,26 @@ async function createLayered(){
         for (let t = 0; t < 2 && !photos[s.id]; t++){
           try {
             const j = await gemCall({ key, model:imgModel, prompt:p, wantImage:true, sig, timeoutMs:240000, size, aspect:asp, aspectFb:['3:2', '4:3'] }), im = gemImage(j);
-            if (!im) throw new Error('aucune image renvoyée'); photos[s.id] = await createImageBitmap(b64ToBlob(im.data, im.mime));
+            if (!im) throw new Error('لم تُرجع الخدمة أي صورة'); photos[s.id] = await createImageBitmap(b64ToBlob(im.data, im.mime));
           } catch(e){ if (e.name === 'AbortError') throw e; if (t) errs.push(s.name + ' : ' + String(e.message).slice(0, 70)); else await sleep(2500, sig); }
         }
-        done++; ph('Gemini génère les photos de fond : ' + done + ' / ' + secs.length);
+        done++; ph('جارٍ إنشاء صور الخلفية: ' + done + ' / ' + secs.length);
       }
     };
-    ph('Gemini génère les photos de fond : 0 / ' + secs.length);
+    ph('جارٍ إنشاء صور الخلفية: 0 / ' + secs.length);
     await Promise.all([job(), job(), job()]);
-    phaseMsg = ''; setStatus('Assemblage des calques…', '', true); await ensureFonts();
-    if (errs.length) warn.push('photo remplacée par un dégradé pour : ' + errs.join(' ; '));
+    phaseMsg = ''; setStatus('جارٍ تجميع الطبقات…', '', true); await ensureFonts();
+    if (errs.length) warn.push('استُبدلت الصورة بتدرّج لـ: ' + errs.join(' ; '));
     const A = { photos, product:null, hideProduct:false };
-    if (useOrig){ A.product = bitmapToCanvas(P.bitmap); if (!hasAlphaEdge(P.bitmap)){ A.hideProduct = true; warn.push('le PNG n’a pas de transparence : les calques « Produit » sont ajoutés mais masqués'); } }
+    if (useOrig){ A.product = bitmapToCanvas(P.bitmap); if (!hasAlphaEdge(P.bitmap)){ A.hideProduct = true; warn.push('صورة PNG بلا شفافية: أُضيفت طبقات «المنتج» لكنها مخفية'); } }
     composeLayered(A, cp, lang, { secs, idea, offer, price, glass:$('pCardA').value === 'glass', ca:parseFloat($('pCardA').value) || 0.82, flip, centerFinal });
     const nImg = S.layers.filter(l => l.type !== 'text').length, nTxt = S.layers.filter(l => l.type === 'text').length;
-    setStatus('Page en vrais calques : ' + S.layers.length + ' calques (' + nImg + ' images et formes, ' + nTxt + ' textes modifiables), ' + (1 + secs.length) + ' appels (1 pour les textes, ' + secs.length + ' photos). Les calques « Produit » sont votre PNG d’origine.' + (warn.length ? ' À noter : ' + warn.join(' ; ') + '.' : ''), warn.length ? '' : 'ok');
+    setStatus('صفحة بطبقات حقيقية: ' + S.layers.length + ' طبقة (' + nImg + ' صور وأشكال، ' + nTxt + ' textes modifiables), ' + (1 + secs.length) + ' طلباً (1 للنصوص و' + secs.length + ' صور). طبقات «المنتج» هي صورتك الأصلية.' + (warn.length ? ' ملاحظات: ' + warn.join(' ; ') + '.' : ''), warn.length ? '' : 'ok');
   } catch(e){
     phaseMsg = '';
-    if (e.name === 'TimeoutError') setStatus('Gemini met trop de temps à répondre. Réessayez avec la résolution Standard ou moins de sections.', 'err');
-    else if (e.name === 'AbortError') setStatus('Annulé.');
-    else if (e instanceof TypeError) setStatus('Échec réseau (« ' + e.message + ' »). Vérifiez la connexion ou une extension qui bloque googleapis.com.', 'err');
+    if (e.name === 'TimeoutError') setStatus('تأخّر رد الخدمة. أعد المحاولة بالدقة العادية أو بأقسام أقل.', 'err');
+    else if (e.name === 'AbortError') setStatus('أُلغي.');
+    else if (e instanceof TypeError) setStatus('فشل الشبكة (« ' + e.message + ' »). تحقق من الاتصال أو من إضافة تحجب الخدمة.', 'err');
     else setStatus(e.message, 'err');
   } finally {
     clearInterval(tick); S.abort = null; $('cancel').hidden = true; $('go').disabled = !goEnabled();
@@ -2192,7 +2207,7 @@ function applyMode(){
   if (c && !gem){ $('provider').value = 'gemini'; updateProvider(true); }
   $('cardImage').hidden = c; $('cardProduct').hidden = !c; $('rowN').hidden = c; $('promptLabel').hidden = c; $('prompt').hidden = c;
   $('textWrap').hidden = c || $('provider').value !== 'gemini'; $('inpaintWrap').hidden = c || $('provider').value !== 'gemini';
-  $('provider').disabled = c; $('go').textContent = c ? 'Créer le visuel en calques' : 'Générer les calques'; $('go').disabled = !goEnabled();
+  $('provider').disabled = c; $('go').textContent = c ? 'إنشاء التصميم بطبقات' : 'إنشاء الطبقات'; $('go').disabled = !goEnabled();
   applyKind(); store('ml_mode', $('mode').value);
 }
 $('mode').addEventListener('change', applyMode);
@@ -2212,7 +2227,7 @@ $('demo').addEventListener('click', () => {
   const place = () => { renderText(t1); t1.x = Math.round((W - t1.w) / 2); t1.y = 60; renderText(t2); t2.x = Math.round((W - t2.w) / 2); t2.y = 175; layout(); renderList(); };
   place(); updateButtons();
   ensureFonts().then(place);
-  setStatus('Exemple chargé : cliquez un élément, déplacez-le, redimensionnez-le par un coin. Les deux titres sont de vrais textes : sélectionnez-en un pour le modifier.', 'ok');
+  setStatus('تم تحميل المثال: انقر عنصراً وحرّكه وغيّر حجمه من إحدى زواياه. العنوانان نصّان حقيقيان: حدّد أحدهما لتعديله.', 'ok');
 });
 
 /* ---------- export ---------- */
@@ -2318,12 +2333,12 @@ function updateProvider(loadKey){
   const g = $('provider').value === 'gemini';
   $('advGem').hidden = !g; $('advFal').hidden = g;
   $('stepsWrap').hidden = g; $('inpaintWrap').hidden = !g; $('textWrap').hidden = !g;
-  $('keyLabel').textContent = g ? 'Clé API Gemini' : 'Clé API fal.ai';
+  $('keyLabel').textContent = g ? 'مفتاح Alyssum API' : 'مفتاح الخدمة';
   $('key').placeholder = g ? 'AIza…' : 'xxxxxxxx-xxxx:xxxxxxxx…';
-  $('nLabel').textContent = g ? 'Éléments max.' : 'Nombre de calques';
+  $('nLabel').textContent = g ? 'أقصى عدد للعناصر' : 'عدد الطبقات';
   $('keyHint').textContent = g
-    ? 'Clé créée dans Google AI Studio (aistudio.google.com/apikey). Elle part directement de votre navigateur vers Google, et nulle part ailleurs. Gemini détoure chaque élément (objets, personnes, textes) en calque ; l’arrière-plan reste l’image d’origine, ou est reconstruit si vous cochez l’option.'
-    : 'La clé part directement de votre navigateur vers fal.ai, et nulle part ailleurs. Créez-en une dédiée à cet usage sur fal.ai/dashboard/keys.';
+    ? 'يُرسَل المفتاح من متصفحك مباشرة إلى الخدمة ولا يُرسَل إلى أي جهة أخرى. تفصل الأداة كل عنصر (أشياء وأشخاص ونصوص) في طبقة؛ وتبقى الخلفية هي الصورة الأصلية أو تُعاد بناؤها إن فعّلت الخيار.'
+    : 'يُرسَل المفتاح من متصفحك مباشرة إلى الخدمة ولا يُرسَل إلى أي جهة أخرى. أنشئ مفتاحاً مخصصاً لهذا الاستعمال.';
   if (loadKey){ const k = load('ml_key_' + $('provider').value); $('key').value = k || ''; $('remember').checked = !!k; }
   store('ml_provider', $('provider').value);
 }
