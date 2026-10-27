@@ -2065,6 +2065,7 @@ const PhoneDZ = {
   }
   window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || typeof e.data.pbOffer!=="number") return; const b = document.querySelectorAll("#offers .offer")[e.data.pbOffer]; if(b) b.click(); });
   window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || typeof e.data.pbCoupon!=="string") return; const i = document.getElementById("prod-coupon-input"), b = i && i.closest(".coupon-box") && i.closest(".coupon-box").querySelector("button"); if(i && b){ i.value = e.data.pbCoupon.slice(0,40); b.click(); } });
+  window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || !e.data.pbSubmit) return; const b = document.querySelector(".btn-order"); if(b) b.click(); });
   document.addEventListener("click", e=>{ const o = e.target.closest && e.target.closest("#offers .offer"); if(!o) return; try{ parent.postMessage({ pbOfferSel: [...o.parentElement.children].indexOf(o) }, location.origin); }catch(_){} }, true);
   const go = ()=>{
     const form = document.querySelector(".order-wide") || document.querySelector(".pb-ofraw") || document.getElementById("order-form"); if(!form) return;
