@@ -3076,7 +3076,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (c.onlyFree && !inf.free) return false;
       if (FREE_ONLY && inf.free && ["w", "mh", "al"].includes(c.k)) return false;      // إعدادات العمود (عرض %/ارتفاع أدنى/موضع داخل العمود) لا معنى لها مع الأعمدة المعطّلة؛ الحجم والموضع من الحقول الحرة
       if (inf.free && (c.k === "w" || c.k === "al" || c.k === "mh") && c.tab === "s") return false;                       // العنصر الحر يُدار بالموضع والحجم
-      for (const sf of [c.showIf, c.showIf2]) if (sf) { const cur = inf.set[sf[0]] === undefined ? (sf[0] === "kind" ? "flow" : sf[0] === "mode" ? "all" : undefined) : inf.set[sf[0]]; if (sf[1] === "*" ? !cur : sf[1] === "!" ? !!cur : (typeof sf[1] === "string" && sf[1].length > 1 && sf[1][0] === "!") ? cur === sf[1].slice(1) : cur !== sf[1]) return false; }      // showIf2 شرط ثانٍ (و)
+      for (const sf of [c.showIf, c.showIf2]) if (sf) { const cur = inf.set[sf[0]] === undefined ? (sf[0] === "kind" ? "flow" : sf[0] === "mode" ? "all" : /^f(cm|dt|cp|wa|nt|of)$/.test(sf[0]) ? true : undefined) : inf.set[sf[0]]; if (sf[1] === "*" ? !cur : sf[1] === "!" ? !!cur : (typeof sf[1] === "string" && sf[1].length > 1 && sf[1][0] === "!") ? cur === sf[1].slice(1) : cur !== sf[1]) return false; }      // showIf2 شرط ثانٍ (و)
       return true;
     });
   }
@@ -3192,7 +3192,7 @@ ${E.tab === "f" ? fxTabHtml(inf) : inspGroups(all, inf)}`;
   }
   function field(c, set) {
     const dev = E.dev, k = c.k, isR = !!c.r;
-    const ownV = isR ? own(set, k, dev) : set[k], effV = isR ? eff(set, k, dev) : set[k];
+    const ownV = isR ? own(set, k, dev) : set[k], effV0 = isR ? eff(set, k, dev) : set[k], effV = (c.t === "switch" && c.on && effV0 === undefined) ? true : effV0;
     const inherited = isR && ownV === undefined && effV !== undefined;
     const rs = (ownV !== undefined && ownV !== "" && !(c.t === "switch" && ownV === false && !isR)) ? `<button class="rs" data-rs="${k}" title="إعادة للافتراضي">↺</button>` : "";
     const sp = typeof CtlHelp !== "undefined" ? CtlHelp.split(c.l) : { t: c.l, h: "" }, hq = typeof CtlHelp !== "undefined" && sp.t ? CtlHelp.q(c.k, E.curType, sp.t, sp.h, c.t) : "", head = `<label>${esc(sp.t)}${hq}${isR ? ` <span class="dv">${DEVIC[dev]}</span>` : ""}${rs}</label>`;
