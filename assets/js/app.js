@@ -2048,6 +2048,7 @@ const PhoneDZ = {
     if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], gp:[".gp"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
     if(oc.w === "100") c += W+".frow{grid-template-columns:1fr!important}"; else if(oc.w === "50") c += "@media(min-width:561px){"+W+".frow{grid-template-columns:1fr 1fr!important}}";
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
+    const nz = t=>String(t).replace(/[^\p{L}\p{N}]/gu,""), same = (e,t)=>nz(e.textContent) === nz(t);
     const txt = ()=>{ try{
       if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && h.textContent !== oc.t) h.textContent = String(oc.t); }
       { const bn = document.querySelector(W+".btn-order"); if(bn){ const sp = bn.querySelector("#btn-total"), noT = Array.isArray(oc.x) && oc.x.indexOf("bt") > -1, gl = (oc.L && oc.L.gt) ? String(oc.L.gt) : "الإجمالي"; if(noT){ if(sp){ const t = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "")).trim(); bn.textContent = t; } } else if(sp && (oc.b || oc.L)){ const lead = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "").trim()) + " — " + gl + ": "; if(bn.__oc !== lead || bn.firstChild === sp || (bn.firstChild && bn.firstChild.textContent !== lead)){ while(bn.firstChild && bn.firstChild !== sp) bn.removeChild(bn.firstChild); bn.insertBefore(document.createTextNode(lead), sp); bn.__oc = lead; } } } }
@@ -2058,20 +2059,20 @@ const PhoneDZ = {
         if(L.o1||L.o2||L.on||L.ofr||L.ou||L.ov||L.of||L.osp||L.obs){
           document.querySelectorAll(W+"#offers .offer").forEach(of=>{
             const q = of.querySelector(".q"), u = of.querySelector(".u"), bs = of.querySelector(".best");
-            if(q){ if(q.__o === undefined) q.__o = q.textContent.trim(); const o = q.__o, m = /^(\d+) قطع$/.exec(o); const t = o==="قطعة واحدة"?L.o1 : o==="قطعتان"?L.o2 : m?(L.on&&String(L.on).replace("{n}",m[1])) : /الثالثة/.test(o)?L.ofr : ""; if(t && q.textContent !== t) q.textContent = String(t); }
+            if(q){ if(q.__o === undefined) q.__o = q.textContent.trim(); const o = q.__o, m = /^(\d+) قطع$/.exec(o); const t = o==="قطعة واحدة"?L.o1 : o==="قطعتان"?L.o2 : m?(L.on&&String(L.on).replace("{n}",m[1])) : /الثالثة/.test(o)?L.ofr : ""; if(t && !same(q,t)) q.textContent = String(t); }
             if(u){ if(u.__o === undefined) u.__o = u.innerHTML; let h = u.__o; if(L.ou) h = h.replace("للقطعة", L.ou.replace(/[<>&]/g,"")); if(L.ov) h = h.replace("وفر", L.ov.replace(/[<>&]/g,"")); if(L.of) h = h.replace("مجاناً داخل العرض", L.of.replace(/[<>&]/g,"")); if(L.osp) h = h.replace("🚚 شحن مجاني", L.osp.replace(/[<>&]/g,"")); if(u.innerHTML !== h) u.innerHTML = h; }
-            if(bs && L.obs && bs.textContent !== L.obs) bs.textContent = String(L.obs);
+            if(bs && L.obs && !same(bs,L.obs)) bs.textContent = String(L.obs);
           });
         }
-        if(L.gp){ const e = document.querySelector(W+".gp-open"); if(e){ const t = String(L.gp); if(e.__gp !== t){ e.textContent = t; e.__gp = t; } } }
-        if(L.sw){ const e = document.querySelector(W+'#wilaya option[value=""]'); if(e && e.textContent !== L.sw) e.textContent = String(L.sw); }
-        if(L.sc){ const e = document.querySelector(W+'#commune option[value=""]'); if(e && e.textContent !== L.sc) e.textContent = String(L.sc); }
-        if(L.ap){ const e = document.querySelector(W+"#prod-coupon-btn"); if(e && e.textContent !== L.ap) e.textContent = String(L.ap); }
-        if(L.ac){ const e = document.getElementById("add-cart"); if(e && e.textContent !== L.ac) e.textContent = String(L.ac); }
-        if(L.wa){ const e = document.querySelector(W+".btn-wa"); if(e && e.textContent !== L.wa) e.textContent = String(L.wa); }
-        if(L.nt){ const e = document.querySelector(W+".cod-note"); if(e && e.textContent !== L.nt) e.textContent = String(L.nt); }
-        const sm = document.querySelectorAll(W+".total-box small"); if(L.fe && sm[0] && sm[0].textContent !== L.fe) sm[0].textContent = String(L.fe); if(L.gt && sm[1] && sm[1].textContent !== L.gt) sm[1].textContent = String(L.gt);
-        const dl = document.querySelectorAll(W+".dtype label span"); if(L.dh && dl[0] && dl[0].textContent !== L.dh) dl[0].textContent = String(L.dh); if(L.ds && dl[1] && dl[1].textContent !== L.ds) dl[1].textContent = String(L.ds);
+        if(L.gp){ const e = document.querySelector(W+".gp-open"); if(e){ const t = String(L.gp); if(!same(e,t)) e.textContent = t; } }
+        if(L.sw){ const e = document.querySelector(W+'#wilaya option[value=""]'); if(e && !same(e,L.sw)) e.textContent = String(L.sw); }
+        if(L.sc){ const e = document.querySelector(W+'#commune option[value=""]'); if(e && !same(e,L.sc)) e.textContent = String(L.sc); }
+        if(L.ap){ const e = document.querySelector(W+"#prod-coupon-btn"); if(e && !same(e,L.ap)) e.textContent = String(L.ap); }
+        if(L.ac){ const e = document.getElementById("add-cart"); if(e && !same(e,L.ac)) e.textContent = String(L.ac); }
+        if(L.wa){ const e = document.querySelector(W+".btn-wa"); if(e && !same(e,L.wa)) e.textContent = String(L.wa); }
+        if(L.nt){ const e = document.querySelector(W+".cod-note"); if(e && !same(e,L.nt)) e.textContent = String(L.nt); }
+        const sm = document.querySelectorAll(W+".total-box small"); if(L.fe && sm[0] && !same(sm[0],L.fe)) sm[0].textContent = String(L.fe); if(L.gt && sm[1] && !same(sm[1],L.gt)) sm[1].textContent = String(L.gt);
+        const dl = document.querySelectorAll(W+".dtype label span"); if(L.dh && dl[0] && !same(dl[0],L.dh)) dl[0].textContent = String(L.dh); if(L.ds && dl[1] && !same(dl[1],L.ds)) dl[1].textContent = String(L.ds);
       }
     }catch(e){} };
     setInterval(txt, 700); setTimeout(txt, 200);
