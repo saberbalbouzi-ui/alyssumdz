@@ -62,7 +62,7 @@ const BoxStudio = (() => {
 #bs .drop.over .big{color:var(--accent-ink)}
 #bs .chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 #bs .chip{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:11px;border:1px solid var(--line);background:var(--panel);text-align:start;font-size:12.5px;line-height:1.25}
-#bs .chip canvas{width:38px;height:30px;border-radius:5px;border:1px solid var(--line);flex:none;background:var(--panel2)}
+#bs .chip canvas{width:56px;height:44px;border-radius:5px;border:1px solid var(--line);flex:none;background:var(--panel2)}
 #bs .chip small{display:block;color:var(--muted);font-size:11px}
 #bs .chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
 #bs .layers{display:flex;flex-direction:column;gap:6px}
@@ -2261,7 +2261,7 @@ function buildRealDims(b){
 function buildFaceChips(){
   const g = $('#faceChips'); if(!g) return; g.innerHTML = '';
   Object.values(FC).forEach(f=>{
-    const b = el('<button type="button" class="chip" aria-pressed="'+(state.sel.face===f.key)+'"><canvas data-k="'+f.key+'" width="76" height="60"></canvas><span>'+f.label+(f.real ? '' : '<small>'+Math.round(f.w)+' × '+Math.round(f.h)+' مم</small>')+'</span></button>');
+    const b = el('<button type="button" class="chip" aria-pressed="'+(state.sel.face===f.key)+'"><canvas data-k="'+f.key+'" width="112" height="88"></canvas><span>'+f.label+(f.real ? '' : '<small>'+Math.round(f.w)+' × '+Math.round(f.h)+' مم</small>')+'</span></button>');
     b.onclick = ()=>X.selectFace(f.key,true); g.appendChild(b); hooks.thumb(f.key);
   });
 }
@@ -2592,7 +2592,7 @@ $('#menu').innerHTML = '<button data-act="new" role="menuitem">'+ico('reset')+' 
 const tools = $('#tools');
 tools.innerHTML = [['select','cursor','تحديد وتدوير (V)'],['move','move','نقل الطبقة (M)'],['pan','hand','تحريك المشهد (H)'],['comment','comment','تعليق (C)']].map(t=>'<button class="ib" data-tool="'+t[0]+'" title="'+t[2]+'" aria-label="'+t[2]+'">'+ico(t[1])+'</button>').join('')+'<hr><button class="ib" id="tUndo" title="تراجع" aria-label="تراجع">'+ico('undo')+'</button><button class="ib" id="tRedo" title="إعادة" aria-label="إعادة">'+ico('redo')+'</button>';
 const TIPS = {select:'اسحب للتدوير · انقر على وجه لتحديده · العجلة للتكبير · Shift للتحريك', move:'اسحب على الوجه المحدد لتحريك الطبقة النشطة', pan:'اسحب لتحريك المشهد', comment:'انقر على العلبة لإضافة تعليق'};
-hooks.tool = t=>{ $$('[data-tool]',tools).forEach(b=>b.classList.toggle('on', b.dataset.tool===t)); $('#tip').textContent = TIPS[t]; X.canvasEl.style.cursor = {select:'grab',move:'crosshair',pan:'move',comment:'copy'}[t]; };
+hooks.tool = t=>{ $$('[data-tool]',tools).forEach(b=>b.classList.toggle('on', b.dataset.tool===t)); $('#tip').textContent = TIPS[t]; (()=>{ const tp=$('#tip'); tp.style.opacity='1'; clearTimeout(tp._h); tp._h=setTimeout(()=>{ tp.style.transition='opacity .6s'; tp.style.opacity='0'; },6500); })(); X.canvasEl.style.cursor = {select:'grab',move:'crosshair',pan:'move',comment:'copy'}[t]; };
 tools.addEventListener('click', e=>{ const b = e.target.closest('[data-tool]'); if(b) X.tool = b.dataset.tool; });
 $('#tUndo').onclick = undo; $('#tRedo').onclick = redo;
 function syncTools(){ $('#tUndo').disabled = hist.i<=0; $('#tRedo').disabled = hist.i>=hist.stack.length-1; }
