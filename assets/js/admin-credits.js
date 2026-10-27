@@ -75,7 +75,7 @@ const Credits = (() => {
   const q = id => document.getElementById(id);
   const BTN = [
     ['[data-ai="bgen"]', b => /خلفيتي/.test(b.textContent) ? 0 : (() => { const n = Math.max(1, Math.min(4, +((q("pbai-bgc") || {}).value) || 2)); return n >= 4 ? 6 : n * 2; })()],
-    ['[data-ai="bgblend"]', () => 2], ['[data-ai="expand"]', () => 6], ['[data-ai="edit"]', () => 2], ['[data-ai="tryon"]', () => 2], ['[data-ai="fx"]', () => 2],
+    ['[data-ai="shot"]', () => 2], ['[data-ai="fashion"]', () => 2], ['[data-ai="bgblend"]', () => 2], ['[data-ai="expand"]', () => 6], ['[data-ai="edit"]', () => 2], ['[data-ai="tryon"]', () => 2], ['[data-ai="fx"]', () => 2],
     ['[data-ai="recolor"]', () => 2 * Math.max(1, (document.querySelectorAll('[data-rck]:checked').length + (((q("pbai-rcu") || {}).checked) ? 1 : 0)) || 1)], ['[data-ai="v360"]', () => 14],
     ['[data-txb="go"]', () => 2], ['[data-mwa="go"]', () => 1], ['[data-lg="ai"]', () => 2], ['[data-bgr="open"]', () => 1], ['[data-q="smart-magic"]', () => 1], ['[data-upx="go"]', () => 2],
     ['[data-pp="go"]', () => { const ab = q("pp-ab"); return ab && ab.checked ? 70 : 40; }]

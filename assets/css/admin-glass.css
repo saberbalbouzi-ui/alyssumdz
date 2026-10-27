@@ -522,3 +522,6 @@ html.glass #pbb-m button{background:rgba(255,255,255,.12)!important;color:#fff!i
 html.glass #pbb-m [data-a=done]{background:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important;border:0!important}
 html.glass #pbb-m div[style*="f4efe6"]{background:rgba(255,255,255,.07)!important;color:rgba(255,255,255,.8)!important}
 html.glass #pbb-m div[style*="fff4e5"]{background:rgba(var(--g-amber-rgb),.2)!important;border-color:rgba(var(--g-amber-rgb),.5)!important;color:#fff!important}
+/* v1.89.587 — زر التنفيذ في لوحات الأدوات الطويلة يبقى ظاهراً أسفل اللوحة دون تمرير */
+.pbx-ep .ep-b .pbrt-row:has(>.pz-go),.pbx-ep .ep-b #pbai>.pz-go,.pbx-ep .ep-b #pbai>.pbrt-row{position:sticky;bottom:0;z-index:4;padding:.45rem 0 .2rem;background:linear-gradient(180deg,transparent,rgba(9,24,18,.94) 38%)}
+.pbx-ep .ep-b #pbai>.pz-go{width:100%}

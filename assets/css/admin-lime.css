@@ -167,3 +167,10 @@ html.white body #tl-inst .ti-act button.gray:not(#_){background:#eef1f6!importan
 html:is(.glass,.white) body :is(.ig-modes,.np-t) button.on small:not(#_){color:rgba(31,33,35,.78)!important}
 html:is(.glass,.white) body #pb-q:not(#_){background:rgba(255,255,255,.08)!important;color:inherit!important;border:1px solid rgba(255,255,255,.25)!important}
 html.white body #pb-q:not(#_){background:#fff!important;border-color:#cfd6e0!important}
+/* v1.89.587 — محرّر إزالة الخلفية: الزر الأساسي (.g) ليموني مملوء، والبقية ثانوية بحدّ فقط، والأداة النشطة مملوءة */
+html:is(.glass,.white) body #bge .btn:not(.g):not(.on):not(.r2):not(#_){background:rgba(255,255,255,.06)!important;color:#fff!important;border:1px solid rgba(255,255,255,.3)!important}
+html:is(.glass,.white) body #bge .btn:not(.g):not(.on):not(.r2):not(#_):hover{background:rgba(255,255,255,.14)!important;color:#fff!important}
+html:is(.glass,.white) body #bge .btn.on:not(#_){background:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important;outline:0}
+html:is(.glass,.white) body #bge .btn.r2:not(#_){background:rgba(248,113,113,.18)!important;color:#fecaca!important;border:1px solid rgba(248,113,113,.55)!important}
+/* v1.89.587 — وصف البطاقة النشطة (صفحة ويب / صور إشهارية…) داكن وواضح على الليموني */
+html:is(.glass,.white) body :is(.ig-modes,.np-t) button.on small:not(#_){color:#262a0d!important;opacity:1!important;font-weight:600}
