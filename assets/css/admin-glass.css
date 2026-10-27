@@ -529,3 +529,6 @@ html.glass #pbb-m div[style*="fff4e5"]{background:rgba(var(--g-amber-rgb),.2)!im
 html input[type=range]{direction:ltr}
 /* رأس اللوحة في سطر واحد على الشاشات العريضة */
 @media(min-width:1200px){html.glass .top,html.white .top{flex-wrap:nowrap}html.glass .top>*,html.white .top>*{min-width:0}}
+/* v1.89.593: شريط أزرار «تعديل سريع» معتم وفوق المحتوى (كان شفافاً فيظهر النص تحته ويبدو أن الأزرار لا تعمل) */
+#pq-bg .action-bar{z-index:6!important;position:sticky!important}
+html.glass #pq-bg .action-bar{background:#0b1f18!important;border:0!important;border-top:1px solid rgba(255,255,255,.16)!important;border-radius:0!important;box-shadow:0 -10px 14px #0b1f18}
