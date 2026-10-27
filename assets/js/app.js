@@ -2043,6 +2043,7 @@ const PhoneDZ = {
     let c = "";
     const vars = Object.keys(V).map(k=>{ const v = ok(oc[k]); return v ? "--o-"+V[k]+":"+v+";" : ""; }).join("");
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += "#pb-embed-wrap{--o-r:"+Math.max(0,Math.min(60,r))+"px}";
+    { const bw = Number(oc.bw); if(isFinite(bw) && oc.bw !== "" && oc.bw != null) c += W+".order-wide,"+W+"#order-form{border-width:"+Math.max(0,Math.min(40,bw))+"px!important}"; }
     if(vars) c += "#pb-embed-wrap{"+vars+"}html.pb-embed{--gold:"+(ok(oc.ac)||"#16a34a")+"}";
     if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
     if(oc.w === "100") c += W+".frow{grid-template-columns:1fr!important}"; else if(oc.w === "50") c += "@media(min-width:561px){"+W+".frow{grid-template-columns:1fr 1fr!important}}";
