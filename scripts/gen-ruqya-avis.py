@@ -45,9 +45,9 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 .pb-page .pb-btn{box-shadow:0 10px 24px #17813a33;transition:transform .25s}.pb-page .pb-btn:hover{transform:translateY(-4px)}
 """
 GAL_CSS = r""".rv-grid{column-count:3;column-gap:18px}
-.rv-f{break-inside:avoid;margin:0 0 18px;background:#fff;border:1px solid #e3ece1;border-radius:20px;padding:10px;box-shadow:0 12px 30px #2c50320d;transition:transform .3s,box-shadow .3s}
-.rv-f:hover{transform:translateY(-5px);box-shadow:0 20px 44px #2c503220}
-.rv-a{display:block;cursor:zoom-in}.rv-f img{display:block;width:100%;height:auto;border-radius:13px;background:#f1f0f0}
+.rv-f{break-inside:avoid;margin:0 6px 24px;background:#fff;border:3px solid #187a3b;border-radius:22px;padding:10px;box-shadow:0 0 0 5px #f39a1838,0 14px 34px #123e7229;transition:transform .3s,box-shadow .3s,border-color .3s}
+.rv-f:hover{transform:translateY(-5px);border-color:#f39a18;box-shadow:0 0 0 5px #187a3b2e,0 22px 46px #123e7233}
+.rv-a{display:block;cursor:zoom-in}.rv-f img{display:block;width:100%;height:auto;border-radius:13px;background:#f1f0f0;border:1px solid #d6e3d8}
 .rv-f figcaption{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:10px 6px 2px;font-size:13px;font-weight:800;color:#123e72}
 .rv-st{display:inline-flex;gap:2px;direction:ltr}.rv-who{color:#5d6f66}
 .rv-lb{position:fixed;inset:0;z-index:9999;background:rgba(8,20,14,.92);display:flex;align-items:center;justify-content:center;padding:18px}
