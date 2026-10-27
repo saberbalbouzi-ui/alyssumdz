@@ -3109,7 +3109,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       all.forEach(c => L[POS.includes(c.k) ? "pos" : VIS.includes(c.k) ? "vis" : ADV.includes(c.k) ? "adv" : "own"].push(c));
       groups = [["own", "إعدادات خاصة بالعنصر", L.own], ["pos", "الموضع والحجم والتدوير", L.pos], ["vis", "الظهور والحركة", L.vis], ["adv", "متقدم (CSS)", L.adv]];
     } else if (E.tab === "c" && all.length > 5) {
-      const TXT = ["text", "textarea", "rich", "image", "gallery", "rep", "prodpick", "shapepick", "iconpick", "badgecolors", "mask", "puzzle", "bgremove"], A = all.filter(c => TXT.includes(c.t)), B = all.filter(c => !TXT.includes(c.t));
+      const TXT = ["text", "textarea", "rich", "image", "gallery", "rep", "prodpick", "shapepick", "iconpick", "badgecolors", "mask", "puzzle", "bgremove"], A = all.filter(c => TXT.includes(c.t) || c.top), B = all.filter(c => !TXT.includes(c.t) && !c.top);
       groups = A.length && B.length ? [["ct", "المحتوى", A], ["co", "خيارات العرض", B]] : [];
     }
     if (pre.length) { if (E.tab !== "s" && all.length) groups = [["gen", "إعدادات أخرى", all]]; groups = pre.concat(groups); }
