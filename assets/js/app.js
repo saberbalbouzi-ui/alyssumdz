@@ -2050,7 +2050,7 @@ const PhoneDZ = {
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
     const txt = ()=>{ try{
       if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && h.textContent !== oc.t) h.textContent = String(oc.t); }
-      if(oc.b){ const bn = document.querySelector(W+".btn-order"); if(bn){ const cur = bn.textContent, i = cur.indexOf(" — "), nt = String(oc.b) + (i > -1 ? cur.slice(i) : ""); if(cur !== nt && cur.indexOf(String(oc.b)) !== 0) bn.textContent = nt; } }
+      if(oc.b){ const bn = document.querySelector(W+".btn-order"); if(bn){ const sp = bn.querySelector("#btn-total"); if(sp){ const lead = String(oc.b) + " — "; if(bn.__oc !== lead || bn.firstChild === sp){ while(bn.firstChild && bn.firstChild !== sp) bn.removeChild(bn.firstChild); bn.insertBefore(document.createTextNode(lead), sp); bn.__oc = lead; } } else { const cur = bn.textContent, i = cur.indexOf(" — "), nt = String(oc.b) + (i > -1 ? cur.slice(i) : ""); if(cur !== nt && cur.indexOf(String(oc.b)) !== 0) bn.textContent = nt; } } }
       if(oc.L && typeof oc.L === "object"){
         const L = oc.L, lab = (id,t)=>{ const e = document.querySelector(W+'label[for="'+id+'"]'); if(e && t){ const nt = String(t) + (/\*\s*$/.test(e.textContent) ? " *" : ""); if(e.textContent !== nt) e.textContent = nt; } };
         lab("name", L.nm); lab("phone", L.ph); lab("wilaya", L.wl); lab("commune", L.cm);
