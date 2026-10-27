@@ -224,7 +224,7 @@ const PBFade = (() => {
     const sh = (k, t) => `<button type="button" class="pbx-small pz-pat${S.shape === k ? " on" : ""}" data-ff="shape" data-v="${k}">${t}</button>`;
     return `<div class="pbx-pz" id="pbff"><p>تذويب أطراف الصورة تدريجياً (Contour fondu): تظهر المعاينة مباشرة على الصورة في الصفحة، ثم «تنفيذ» أو «إلغاء» تحتها.</p>
 <div class="pbrt-row"><b>الشكل</b>${sh("rect", "▢ مربع")}${sh("circle", "◯ دائرة")}</div>
-<div class="rt-g"><label>درجة التمويه (غاوسي) <b id="pbff-v">${S.blur}</b><input type="range" id="pbff-b" min="0" max="100" value="${S.blur}"></label></div>
+<div class="rt-g"><label>درجة التمويه (غاوسي) <b id="pbff-v">${S.blur}</b><input type="range" id="pbff-b" min="0" max="90" value="${Math.min(90, S.blur)}"></label><div class="ep-n" id="pbff-w" style="color:#fbbf24;min-height:1.1em">${S.blur > 60 ? "درجة عالية: تُذيب معظم أطراف الصورة وقد تمحو جزءاً من المنتج" : ""}</div></div>
 <div id="pbff-msg" class="ep-n" style="min-height:1.3em">${S.msg}</div></div>`;
   }
   const say = t => { S.msg = t; const e = $("pbff-msg"); if (e) e.textContent = t; };
@@ -236,9 +236,9 @@ const PBFade = (() => {
   }
   const later = () => { clearTimeout(S.t); S.t = setTimeout(preview, 90); };
   async function mount(host, inf) {
-    const id = inf.node.id, src = inf.set.src; if (S.id !== id || S.src !== src || !S.base) { S.id = id; S.src = src; S.base = null; try { S.base = await loadImg(src); } catch (e) { say("⚠️ " + e.message); return; } }
+    const id = inf.node.id, src = inf.set.src; if (S.id !== id || S.src !== src || !S.base) { S.id = id; S.src = src; S.base = null; say("⏳ جارٍ تحميل الصورة…"); try { S.base = await loadImg(src); say(""); } catch (e) { say("⚠️ " + e.message); return; } }
     const root = host.querySelector("#pbff"); if (!root || root._ff) { preview(); return; } root._ff = 1;
-    root.addEventListener("input", e => { if (e.target.id === "pbff-b") { S.blur = +e.target.value; const v = $("pbff-v"); if (v) v.textContent = S.blur; later(); } });
+    root.addEventListener("input", e => { if (e.target.id === "pbff-b") { S.blur = +e.target.value; const v = $("pbff-v"); if (v) v.textContent = S.blur; const w = $("pbff-w"); if (w) w.textContent = S.blur > 60 ? "درجة عالية: تُذيب معظم أطراف الصورة وقد تمحو جزءاً من المنتج" : ""; later(); } });
     root.addEventListener("click", async e => {
       const t = e.target.closest("[data-ff]"); if (!t) return; const k = t.dataset.ff;
       if (k === "shape") { S.shape = t.dataset.v; root.querySelectorAll('[data-ff="shape"]').forEach(b => b.classList.toggle("on", b.dataset.v === S.shape)); later(); }

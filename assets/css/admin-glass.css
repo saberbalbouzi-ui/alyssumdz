@@ -525,3 +525,7 @@ html.glass #pbb-m div[style*="fff4e5"]{background:rgba(var(--g-amber-rgb),.2)!im
 /* v1.89.587 — زر التنفيذ في لوحات الأدوات الطويلة يبقى ظاهراً أسفل اللوحة دون تمرير */
 .pbx-ep .ep-b .pbrt-row:has(>.pz-go),.pbx-ep .ep-b #pbai>.pz-go,.pbx-ep .ep-b #pbai>.pbrt-row{position:sticky;bottom:0;z-index:4;padding:.45rem 0 .2rem;background:linear-gradient(180deg,transparent,rgba(9,24,18,.94) 38%)}
 .pbx-ep .ep-b #pbai>.pz-go{width:100%}
+/* v1.89.587 — المنزلقات دائماً من اليسار (أقل) إلى اليمين (أكثر) حتى في الواجهة العربية */
+html input[type=range]{direction:ltr}
+/* رأس اللوحة في سطر واحد على الشاشات العريضة */
+@media(min-width:1200px){html.glass .top,html.white .top{flex-wrap:nowrap}html.glass .top>*,html.white .top>*{min-width:0}}

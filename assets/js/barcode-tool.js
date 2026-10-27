@@ -157,8 +157,8 @@ const BarcodeTool = (() => {
       if (S.tpl !== "wifi" && S.tpl !== "tel") h += '<label class="f">' + (S.tpl === "wa" ? "رسالة جاهزة (اختياري)" : S.tpl === "mail" ? "الموضوع (اختياري)" : "النص أو الرابط — سطر لكل رمز") + '</label><textarea id="bc-x" dir="auto" placeholder="https://alyssumdz.com">' + esc(S.text) + "</textarea>";
       h += '<label class="f">مستوى تصحيح الأخطاء</label><select id="bc-e">' + [["L", "منخفض 7%"], ["M", "متوسط 15% (موصى به)"], ["Q", "عالٍ 25%"], ["H", "أعلى 30%"]].map(e => '<option value="' + e[0] + '"' + (S.ecc === e[0] ? " selected" : "") + ">" + e[1] + "</option>").join("") + "</select>";
     } else {
-      const ph = { ean13: "12 أو 13 رقماً — مثال: 6130000012346", ean8: "7 أو 8 أرقام", upca: "11 أو 12 رقماً", code128: "مثال: ORDER-10452", code39: "أحرف كبيرة وأرقام: ABC-123" }[S.t];
-      h += '<label class="f">القيمة — سطر لكل رمز</label><textarea id="bc-x" dir="ltr" placeholder="' + esc(ph) + '">' + esc(S.text) + "</textarea>";
+      const ph = { ean13: "6130000012346", ean8: "96385074", upca: "036000291452", code128: "ORDER-10452", code39: "ABC-123" }[S.t];
+      h += '<label class="f">القيمة — سطر لكل رمز <small style="opacity:.7">(' + ({ ean13: "12 أو 13 رقماً", ean8: "7 أو 8 أرقام", upca: "11 أو 12 رقماً", code128: "نص أو أرقام", code39: "أحرف كبيرة وأرقام" }[S.t] || "") + ')</small></label><textarea id="bc-x" dir="ltr" placeholder="' + esc(ph) + '">' + esc(S.text) + "</textarea>";
       h += '<label class="f">ارتفاع الأعمدة (بكسل)</label><input id="bc-h" type="number" min="20" max="600" value="' + S.height + '"><label style="display:flex;gap:.4rem;align-items:center;margin-top:.5rem"><input type="checkbox" id="bc-lab"' + (S.label ? " checked" : "") + '> إظهار الأرقام تحت الباركود</label>';
     }
     h += '<div class="bc-r"><div><label class="f">حجم الوحدة (بكسل)</label><input id="bc-s" type="number" min="1" max="40" value="' + S.scale + '"></div><div><label class="f">الهامش الأبيض (وحدات)</label><input id="bc-m" type="number" min="0" max="30" value="' + (S.margin == null ? (q ? 4 : 10) : S.margin) + '"></div>' +
@@ -178,6 +178,8 @@ const BarcodeTool = (() => {
     read(); const ls = lines(), err = $("bc-err"), pv = $("bc-pv"); err.textContent = ""; if (!pv) return;
     if (!ls.length) { pv.innerHTML = '<span class="bc-m" style="color:#555">اكتب المحتوى لتظهر المعاينة</span>'; $("bc-info").textContent = ""; return; }
     try { const cv = document.createElement("canvas"), L = draw(cv, specOf(ls[0])); pv.innerHTML = ""; pv.appendChild(cv);
+      const lum = h => { const m = /^#?([0-9a-f]{6})$/i.exec(h || ""); if (!m) return null; const c = [0, 2, 4].map(i => { const x = parseInt(m[1].substr(i, 2), 16) / 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }, a = lum(S.fg), b2 = lum(S.bg);
+      if (!S.clear && a != null && b2 != null) { const r = (Math.max(a, b2) + .05) / (Math.min(a, b2) + .05); if (r < 3) err.textContent = "⚠️ التباين بين لون الرمز والخلفية ضعيف (" + r.toFixed(1) + ":1) وقد لا يُقرأ بالماسح — اجعل الرمز أغمق من الخلفية"; else if (S.t === "qr" && a > b2) err.textContent = "⚠️ الرمز أفتح من الخلفية (مقلوب): بعض الماسحات لا تقرأه"; }
       $("bc-info").textContent = ls.length > 1 ? "المعاينة للسطر الأول — سيُنتَج " + ls.length + " رمزاً في ملف ZIP" : (L.kind === "qr" ? "QR إصدار " + L.q.version + " • " + L.q.size + "×" + L.q.size + " وحدة • " : "") + L.w + "×" + L.h + " بكسل";
     } catch (e) { pv.innerHTML = ""; err.textContent = "⚠️ " + e.message; $("bc-info").textContent = ""; }
   }

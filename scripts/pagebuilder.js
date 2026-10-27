@@ -813,7 +813,7 @@ const PB = (() => {
     },
     orderorig: {
       label: "نموذج الطلب (الأصلي)", ic: "🛒", fit: 1, def: { prod: "", auto: true, stk: false, stkt: "اطلب الآن — الدفع عند الاستلام", fcm: true, fdt: true, fcp: true, fwa: true, fnt: true, fof: true },
-      ctl: [{ k: "prod", l: "المنتج (يظهر نموذج طلبه الأصلي بكل عروضه وإعداداته)", t: "select", o: () => [["", "— اختر المنتج —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c", top: 1 }, { k: "auto", l: "الارتفاع تلقائي حسب المحتوى (يتعطّل عند تغيير الارتفاع بالسحب)", t: "switch", tab: "c" },
+      ctl: [{ k: "prod", l: "المنتج (يظهر نموذج طلبه الأصلي بكل عروضه وإعداداته)", t: "select", o: () => [["", "— اختر المنتج —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c", top: 1 },
         { k: "ottl", l: "عنوان النموذج (فارغ = العنوان الأصلي)", t: "text", tab: "c" }, { k: "obtn", l: "نص زر التأكيد (فارغ = الأصلي)", t: "text", tab: "c" },
         { k: "stk", l: "زر طلب ثابت أسفل الشاشة (يظهر أثناء التمرير ويختفي عند ظهور النموذج)", t: "switch", tab: "c" }, { k: "stkt", l: "نص الزر الثابت", t: "text", tab: "c", showIf: ["stk", true] },
         { k: "fcm", l: "إظهار خانة البلدية", t: "switch", tab: "c", on: 1 }, { k: "fdt", l: "إظهار اختيار نوع التوصيل (منزل / مكتب)", t: "switch", tab: "c", on: 1 }, { k: "fcp", l: "إظهار خانة كود الخصم", t: "switch", tab: "c", on: 1 }, { k: "fwa", l: "إظهار زر الطلب عبر واتساب", t: "switch", tab: "c", on: 1 }, { k: "fnt", l: "إظهار ملاحظة الدفع عند الاستلام", t: "switch", tab: "c", on: 1 }, { k: "fof", l: "إظهار خانة العروض (اختيار الكمية والسعر)", t: "switch", tab: "c", on: 1 }, { k: "ofw", l: "عرض الخانات", t: "select", o: () => [["", "الأصلي"], ["50", "50% (خانتان في كل صف)"], ["100", "100% (خانة في كل صف)"]], tab: "c" },
@@ -829,7 +829,7 @@ const PB = (() => {
         if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
         const stkH = s.stk && !ctx.edit ? `<a class="pb-ofs" href="#pb-order" data-pbofs style="${s.oac ? "background:" + esc(s.oac) + ";" : ""}${s.obt ? "color:" + esc(s.obt) + ";" : ""}">${esc(s.stkt || "اطلب الآن")}</a>` : "";
         if (ctx.inlineOrder && s.raw) return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><div class="pb-ofraw">${s.raw}</div>${stkH}`;      // على صفحة المنتج نفسها: نموذج الطلب الأصلي كما هو (دون تضمين الصفحة في نفسها)
-        return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="${s.auto === false ? 0 : 1}"${s.auto === false ? "" : ' scrolling="no"'} src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}${ofParam(s)}" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe>${stkH}`;
+        return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="1" scrolling="no" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}${ofParam(s)}" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe>${stkH}`;
       },
       css: (c, sel, s0) => {
         const s = ofEff(s0), ok = v => /^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v || "").trim()) ? String(v).trim() : "";

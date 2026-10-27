@@ -346,15 +346,26 @@ body{overflow-x:hidden;margin:0}`;
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
     ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbs-bl", "pbs-af", "pbs-er", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
-  function close() {
+  /* حوار تأكيد داخل الصفحة بدل نافذة المتصفح الأصلية (لا يعطّل الأتمتة ويطابق مظهر اللوحة) */
+  function pbAsk(msg, okText, onOk, noText) {
+    const old = document.getElementById("pbx-ask"); if (old) old.remove();
+    const bg = document.createElement("div"); bg.id = "pbx-ask"; bg.setAttribute("style", "position:fixed;inset:0;z-index:100050;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:14px;direction:rtl");
+    bg.innerHTML = '<div role="alertdialog" aria-modal="true" style="max-width:440px;width:100%;background:rgba(9,24,18,.99);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:1.2rem 1.3rem;box-shadow:0 20px 60px rgba(0,0,0,.6);font-family:inherit"><div style="font-weight:800;line-height:1.8;margin-bottom:1rem">' + esc(msg) + '</div><div style="display:flex;gap:.5rem;justify-content:flex-start"><button type="button" data-k="ok" style="background:linear-gradient(180deg,#effe17,#e2fe17);color:#1f2123;border:0;border-radius:12px;padding:.55rem 1.1rem;font-weight:900;cursor:pointer;font-family:inherit">' + esc(okText || "متابعة") + '</button><button type="button" data-k="no" style="background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:12px;padding:.55rem 1.1rem;font-weight:800;cursor:pointer;font-family:inherit">' + esc(noText || "إلغاء") + '</button></div></div>';
+    const end = ok => { document.removeEventListener("keydown", kd, true); bg.remove(); if (ok) { try { onOk(); } catch (x) { console.warn(x); } } };
+    const kd = ev => { if (ev.key === "Escape") { ev.stopPropagation(); end(false); } else if (ev.key === "Enter") { ev.stopPropagation(); end(true); } };
+    bg.addEventListener("click", ev => { const b = ev.target.closest("[data-k]"); if (b) end(b.dataset.k === "ok"); else if (ev.target === bg) end(false); });
+    document.addEventListener("keydown", kd, true); document.body.appendChild(bg); const ok = bg.querySelector('[data-k="ok"]'); if (ok) ok.focus();
+  }
+  function close(force, cb) {
     try { if (typeof BgEditor !== "undefined" && BgEditor.inst() && BgEditor.inst().ov.classList.contains("dk")) BgEditor.inst().close(true); } catch (x) { }
-    if (E.dirty && !confirm("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟")) return;
+    if (E.dirty && force !== true) { pbAsk("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟", "إغلاق وفقدانها", () => close(true, cb)); return; }
     closeFloating();
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
     E.toolMode = null; $("pb-app").classList.remove("on", "pbx-ad", "pbx-tool"); document.body.style.overflow = "";
     const bt = E.backTab; E.backTab = null; if (bt && bt !== "builder" && bt !== "imggen" && typeof Admin !== "undefined") setTimeout(() => { try { Admin.tab(bt); } catch (e) { } }, 0);      // العودة إلى القسم الذي فُتح منه المحرر (ستوديو ديزاين) بدل منطقة فارغة
     purgeUnsaved(true).then(n => { if (n) toast("🧹 حُذفت " + n + " صورة غير محفوظة ونُظّفت المكتبة"); });
     if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
+    if (typeof cb === "function") { try { cb(); } catch (x) { } }
   }
 
   /* ───────────────── البحث في النموذج ───────────────── */
@@ -568,8 +579,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     E.page.sections.forEach(walk); E.dirty = true; E.mr = null; commitHist(); renderCanvas(); updateTop(); if (E.ltab === "pg") renderLeft(); toast(slug ? "🔗 رُبطت الصفحة بالمنتج" : "أُزيل الربط");
   }
   /* نسخ الصفحة الحالية كصفحة جديدة (تُفتح للتعديل ثم تُنشر) */
-  function dupCurrent() {
-    if (E.dirty && !confirm("هناك تعديلات غير منشورة في هذه الصفحة. ستُنسخ كما هي في صفحة جديدة، أما الأصل فيبقى كما نُشر آخر مرة. متابعة؟")) return;
+  function dupCurrent(ok) {
+    if (E.dirty && ok !== true) { pbAsk("هناك تعديلات غير منشورة في هذه الصفحة. ستُنسخ كما هي في صفحة جديدة، أما الأصل فيبقى كما نُشر آخر مرة. متابعة؟", "متابعة", () => dupCurrent(true)); return; }
     const ns = prompt("رابط الصفحة الجديدة (حروف لاتينية صغيرة وأرقام وشرطات):", (E.page.slug || "page") + "-copy"); if (!ns) return;
     const p = clone(E.page); p.slug = ns.toLowerCase().replace(/[^a-z0-9-]/g, ""); p.title = (p.title || "") + " (نسخة)"; E.dirty = false; open(p, "", true); toast("⧉ هذه نسخة جديدة: عدّل ثم «حفظ ونشر»");
   }
@@ -1655,8 +1666,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   /* صفوف إضافية في قوائم «إنشاء/تعديل/أتمتة»: تنقّل لأدوات موجودة أو أدوات قيد التطوير */
   function goAdmin(tab) {
-    if (typeof Admin === "undefined") return; close(); if ($("pb-app") && $("pb-app").classList.contains("on")) return;      // أُلغي الإغلاق
-    setTimeout(() => { try { Admin.tab(tab); } catch (x) { } }, 60);
+    if (typeof Admin === "undefined") return; close(false, () => setTimeout(() => { try { Admin.tab(tab); } catch (x) { } }, 60));
   }
   function imgRow(k) {
     if (k === "gen") return goAdmin("imggen");
@@ -2560,7 +2570,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (t) { const inf = t.inf; E.keepPimg = true; try { select(inf.node.id); } finally { E.keepPimg = false; } E.nextLabel = "استبدال صورة"; const se = e.target.closest("[data-slot]"), ce = e.target.closest("[data-cell]");
       if (inf.node.type === "pgal") pgFill(inf, [pth], se ? Number(se.dataset.slot) : -1);
       else if (inf.node.type === "gallery" && inf.set.grid) galFill(inf, [pth], ce ? Number(ce.dataset.cell) : Math.max(0, galArr(inf).findIndex(x => !x)));
-      else applyPaths(inf, [pth]); return; }
+      else applyPaths(inf, [pth]); try { toast("↻ استُبدلت الصورة — اضغط Ctrl+Z للتراجع"); } catch (x) { } return; }
     const tg = dropTarget(e), init = w => { w.set.src = pth; w.set.hauto = true; }; E.nextLabel = "إضافة صورة";
     if (tg && tg.type === "free") return addFree("image", tg.sec, Math.max(0, Math.round(tg.px)), Math.max(0, Math.round(tg.py)), init);
     if (tg && tg.col) { const w = PB.mkW("image"); init(w); tg.col.widgets.splice(Math.min(tg.at, tg.col.widgets.length), 0, w); afterEdit(w.id); return; }
@@ -3352,7 +3362,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.mksh) { if (PBMask.opt("target", t.dataset.mksh)) renderInspector(); return; }
     if (t.dataset.mk) { PBMask.act(t.dataset.mk, inf); if (t.dataset.mk === "preview" || t.dataset.mk === "no") renderInspector(); return; }
     if (t.dataset.bgr) { if (t.dataset.bgr === "edit") PBBgRemove.edit(inf); else PBBgRemove.live(inf, t.dataset.bgr === "again"); return; }
-    if (t.dataset.hsite) { if (E.dirty && !confirm("لديك تعديلات غير منشورة في الصفحة — سيُغلق المطوّر وتُحفظ مسودتها تلقائياً. متابعة؟")) return; try { saveDraftNow(); } catch (e) { } close(); const nb = [...document.querySelectorAll(".nav-btn")].find(x => /chromeh/.test(x.getAttribute("onclick") || "")); if (nb) nb.click(); return; }
+    if (t.dataset.hsite) { const go2 = () => { try { saveDraftNow(); } catch (e) { } close(true); const nb = [...document.querySelectorAll(".nav-btn")].find(x => /chromeh/.test(x.getAttribute("onclick") || "")); if (nb) nb.click(); }; if (E.dirty) pbAsk("لديك تعديلات غير منشورة في الصفحة — سيُغلق المطوّر وتُحفظ مسودتها تلقائياً. متابعة؟", "متابعة", go2); else go2(); return; }
     if (t.dataset.oft) { const th = PB.OF_THEMES[t.dataset.oft] || null; PB.OF_KEYS.forEach(k => { if (th) inf.set[k] = th[k]; else delete inf.set[k]; }); if (t.dataset.oft === "reset") delete inf.set.orad; E.nextLabel = "قالب ألوان نموذج الطلب"; afterEdit(); return; }
     if (t.dataset.scins) { const ta = document.querySelector('#pbx-insp textarea[data-k="code"]'), cd = PB.SC_LIST[+t.dataset.scins][0], cur = String(inf.set.code || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.code = cur.slice(0, at) + cd + cur.slice(at); afterEdit(); return; }
     if (t.dataset.icins) { const r = t.getBoundingClientRect(), ta = document.querySelector('#pbx-insp textarea'); showIconPop(Math.max(6, r.left - 120), r.bottom + 6, "", v => { const tk = PB.isIconTok(v) ? "{" + v + "}" : v, cur = String(inf.set.txt || ""), at = ta && ta.selectionStart != null && ta.selectionStart <= cur.length ? ta.selectionStart : cur.length; inf.set.txt = cur.slice(0, at) + tk + cur.slice(at); afterEdit(); }); return; }

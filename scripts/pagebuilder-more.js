@@ -19,11 +19,12 @@ const PBCollage = (() => {
     });
     return c;
   }
-  const S = { id: "", layout: "g4", size: "1080x1080", gap: 12, radius: 14, bg: "#ffffff", picks: [], pool: [], res: null, busy: false, msg: "" };
+  const S = { id: "", layout: "g4", size: "1080x1080", gap: 12, radius: 14, bg: "#ffffff", picks: [], pool: [], extra: [], res: null, busy: false, msg: "" };
   const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = "anonymous"; im.onload = () => res(im); im.onerror = () => rej(new Error("تعذّر تحميل صورة")); im.src = A().localize(String(src)); });
   function poolOf(curSrc) {
     const out = [], add = u => { u = String(u || ""); if (u && !/^data:|\.svg(\?|$)/i.test(u) && !out.includes(u)) out.push(u); }; add(curSrc);
     try { const E = A().E; (E.page.media || []).forEach(add); const walk = ws => ws.forEach(w => { if (w.type === "image" && w.set) add(w.set.src); }); (E.page.sections || []).forEach(sec => { (sec.cols || []).forEach(c => walk(c.widgets || [])); walk(sec.free || []); }); } catch (e) { }
+    (S.extra || []).forEach(add);
     return out.slice(0, 40);
   }
   function panel() {
@@ -31,7 +32,7 @@ const PBCollage = (() => {
     return `<div class="pbx-pz" id="pbcl"><p>اصنع كولاجاً من صور الصفحة: اختر القالب ثم انقر الصور بالترتيب (حتى ${need}) — يظهر مباشرة على الصورة ثم «تنفيذ» أو «إلغاء».</p>
 <div class="pbrt-row"><select id="pbcl-l" class="pbx-small">${Object.entries(LAYOUTS).map(([k, v]) => `<option value="${k}"${S.layout === k ? " selected" : ""}>${v[0]}</option>`).join("")}</select><select id="pbcl-s" class="pbx-small">${SIZES.map(([v, t]) => `<option value="${v}"${S.size === v ? " selected" : ""}>${t}</option>`).join("")}</select></div>
 <div class="rt-g"><label>المسافة <input type="range" id="pbcl-g" min="0" max="60" value="${S.gap}"></label><label>الزوايا <input type="range" id="pbcl-r" min="0" max="80" value="${S.radius}"></label><label>الخلفية <input type="color" id="pbcl-b" value="${S.bg}"></label></div>
-<div class="ep-n">الصور المختارة: <b id="pbcl-n">${S.picks.length}</b> / ${need} <button type="button" class="pbx-small" data-cl="clear">مسح</button></div>
+<div class="ep-n">الصور المختارة: <b id="pbcl-n">${S.picks.length}</b> / ${need} <button type="button" class="pbx-small" data-cl="clear">مسح</button> <label class="pbx-small" style="cursor:pointer;display:inline-block">＋ أضف صوراً من جهازك<input type="file" accept="image/*" multiple id="pbcl-up" style="display:none"></label></div>
 <div id="pbcl-pool" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;max-height:150px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-cl="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(i) ? "3px solid #7c3aed" : "none"}">`).join("")}</div>
 <div id="pbcl-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
   }
@@ -51,14 +52,15 @@ const PBCollage = (() => {
     try { const [W, H] = S.size.split("x").map(Number), need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length, ims = []; for (const i of S.picks.slice(0, need)) ims.push(await loadImg(S.pool[i])); const out = render(ims, { layout: S.layout, W, H, gap: S.gap, radius: S.radius, bg: S.bg }), blob = await new Promise(r => out.toBlob(r, "image/webp", .93)), path = await A().uploadBlob(blob, "cl-" + Date.now().toString(36), { max: 4096, q: .93 }), q = A().find(S.id); if (q && path) { q.node.set.src = path; delete q.node.set.crop; A().E.nextLabel = "كولاج الصور"; S.picks = []; A().liveClear(false); A().commitAfter(S.id); say("✅ نُفِّذ الكولاج"); } } catch (e) { say("⚠️ " + (e.message || e)); } S.busy = false;
   }
   function mount(host, inf) {
-    if (S.id !== inf.node.id) { S.id = inf.node.id; S.picks = []; } S.pool = poolOf(inf.set.src); const root = host.querySelector("#pbcl"); if (!root) return; draw();
+    if (S.id !== inf.node.id) { S.id = inf.node.id; S.picks = []; } S.pool = poolOf(inf.set.src); const root = host.querySelector("#pbcl"); if (!root) return; draw(); if (root._cl) return; root._cl = 1;
     root.addEventListener("change", e => { const t = e.target; if (t.id === "pbcl-l") { S.layout = t.value; S.picks = S.picks.slice(0, (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length); root.parentNode.innerHTML = panel(); mount(host, inf); } else if (t.id === "pbcl-s") { S.size = t.value; draw(); } else if (t.id === "pbcl-b") { S.bg = t.value; draw(); } });
+    root.addEventListener("change", async e => { const t = e.target; if (t.id !== "pbcl-up" || !t.files || !t.files.length) return; say("⏳ جارٍ رفع الصور…"); try { for (const f of [...t.files].slice(0, 8)) { const path = await A().uploadBlob(f, "cl-src-" + Date.now().toString(36), { max: 2400, q: .92 }); if (path) S.extra.push(path); } S.pool = poolOf(inf.set.src); const need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length; S.picks = []; S.pool.forEach((u, i) => { if (S.extra.includes(u) && S.picks.length < need) S.picks.push(i); }); root.parentNode.innerHTML = panel(); mount(host, inf); say("✔ أُضيفت الصور وحُدِّدت"); } catch (x) { say("⚠️ تعذّر رفع الصور"); } });
     root.addEventListener("input", e => { const t = e.target; if (t.id === "pbcl-g") { S.gap = +t.value; draw(); } else if (t.id === "pbcl-r") { S.radius = +t.value; draw(); } });
     root.addEventListener("click", e => { const t = e.target.closest("[data-cl]"); if (!t) return; const k = t.dataset.cl, need = (LAYOUTS[S.layout] || LAYOUTS.g4)[1].length;
       if (k === "pick") { const i = +t.dataset.i, at = S.picks.indexOf(i); if (at >= 0) S.picks.splice(at, 1); else if (S.picks.length < need) S.picks.push(i); else { say("اكتمل العدد — أزل صورة أو غيّر القالب"); return; } root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = S.picks.includes(+im.dataset.i) ? "3px solid #7c3aed" : "none"; }); draw(); }
       else if (k === "clear") { S.picks = []; root.querySelectorAll('[data-cl="pick"]').forEach(im => { im.style.outline = "none"; }); draw(); } });
   }
-  return { panel, mount, poolOf, reset: () => { S.id = ""; S.picks = []; S.msg = ""; }, state: S, _t: { render, LAYOUTS } };
+  return { panel, mount, poolOf, reset: () => { S.id = ""; S.picks = []; S.extra = []; S.msg = ""; }, state: S, _t: { render, LAYOUTS } };
 })();
 
 const PBFrame = (() => {
@@ -66,7 +68,8 @@ const PBFrame = (() => {
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
   const LSK = "alyssum_brand_logo";      // يتزامن مع حسابك عبر PrivSync (s_brand_logo)
   const S = { id: "", base: null, o: { border: 0, bcolor: "#ffffff", radius: 0, pad: 0, bg: "#ffffff", card: false, shadow: 0, logo: false, lpos: "br", lsize: 16, lop: 90 }, logo: null, msg: "", busy: false };
-  try { let d = localStorage.getItem(LSK); if (!d) { d = localStorage.getItem("pbx_brand_logo"); if (d) localStorage.setItem(LSK, d); } if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  const syncLogo = () => { try { let d = localStorage.getItem(LSK); if (!d) { d = localStorage.getItem("pbx_brand_logo"); if (d) localStorage.setItem(LSK, d); } if (!d) { S.logo = null; S._ld = ""; return; } if (S._ld === d) return; S._ld = d; const im = new Image(); im.onload = () => { S.logo = im; const e = $("pbfr-ls"); if (e) e.textContent = "✔ الشعار محفوظ"; }; im.src = d; } catch (e) { } };
+  syncLogo();
   /* نقية: إطار (هامش بخلفية + حدّ + زوايا مدوّرة + ظل بطاقة) وختم شعار؛ تُرجع قماشاً جديداً أكبر قليلاً عند وجود هامش/ظل */
   function frame(src, o, logo) {
     const w = src.width, h = src.height, m = Math.min(w, h), pad = Math.round(m * (o.pad || 0) / 100), bw = Math.round(m * (o.border || 0) / 100), sh = Math.round(m * (o.shadow || 0) / 100), rad = Math.round(m * (o.radius || 0) / 100), ext = sh * 2 + (sh ? Math.round(sh * .3) : 0);
@@ -83,7 +86,7 @@ const PBFrame = (() => {
     const o = S.o;
     return `<div class="pbx-pz" id="pbfr"><p>إطار وهوية: حدّ وزوايا وهامش وظل بطاقة، وختم شعار علامتك — يظهر مباشرة على الصورة ثم «تنفيذ» أو «إلغاء».</p>
 <div class="rt-g">${rg("pbfr-b", "border", 0, 12, "سماكة الحدّ", o.border)}<label>لون الحدّ <input type="color" data-fr="bcolor" value="${o.bcolor}"></label>${rg("pbfr-r", "radius", 0, 40, "الزوايا", o.radius)}${rg("pbfr-p", "pad", 0, 20, "الهامش الداخلي", o.pad)}<label>لون الهامش <input type="color" data-fr="bg" value="${o.bg}"></label>${rg("pbfr-s", "shadow", 0, 12, "ظل البطاقة", o.shadow)}</div>
-<div class="rt-g"><label><input type="checkbox" data-fr="logo" ${o.logo ? "checked" : ""}> ختم شعار العلامة</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbfr-lf" style="display:none"></label><span class="ep-n">${S.logo ? "✔ الشعار محفوظ" : "لم يُرفع شعار بعد"}</span>
+<div class="rt-g"><label><input type="checkbox" data-fr="logo" ${o.logo ? "checked" : ""}> ختم شعار العلامة</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbfr-lf" style="display:none"></label><span class="ep-n" id="pbfr-ls">${S.logo ? "✔ الشعار محفوظ" : "لم يُرفع شعار بعد"}</span><button type="button" class="pbx-small" data-frb="rmlogo">حذف الشعار</button>
 <label>الموضع <select data-fr="lpos" class="pbx-small">${[["tl", "أعلى يسار"], ["tr", "أعلى يمين"], ["bl", "أسفل يسار"], ["br", "أسفل يمين"], ["mc", "الوسط"]].map(([k, t]) => `<option value="${k}"${o.lpos === k ? " selected" : ""}>${t}</option>`).join("")}</select></label>${rg("pbfr-ls", "lsize", 5, 50, "حجم الشعار", o.lsize)}${rg("pbfr-lo", "lop", 10, 100, "الشفافية", o.lop)}</div>
 <div class="pbrt-row"><button type="button" class="pbx-small" data-frb="reset">تصفير</button></div><div id="pbfr-msg" class="ep-n" style="min-height:1.2em">${S.msg}</div></div>`;
   }
@@ -103,8 +106,9 @@ const PBFrame = (() => {
     const root = host.querySelector("#pbfr"); if (!root) return; draw();
     const upd = e => { const t = e.target, k = t.dataset && t.dataset.fr; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : t.value; draw(); };
     root.addEventListener("input", upd); root.addEventListener("change", upd);
+    syncLogo();
     const lf = $("pbfr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { if (String(r.result).length < 600000) localStorage.setItem(LSK, String(r.result)); } catch (e) { } host.innerHTML = panel(); mount(host, inf); }; im.src = String(r.result); }; r.readAsDataURL(f); };
-    root.addEventListener("click", async e => { const t = e.target.closest("[data-frb]"); if (!t) return; if (t.dataset.frb === "reset") { Object.assign(S.o, { border: 0, radius: 0, pad: 0, shadow: 0, card: false, logo: false }); A().liveClear(true); host.innerHTML = panel(); mount(host, inf); } });
+    root.addEventListener("click", async e => { const t = e.target.closest("[data-frb]"); if (!t) return; if (t.dataset.frb === "rmlogo") { try { localStorage.removeItem(LSK); localStorage.removeItem("pbx_brand_logo"); } catch (x) { } S.logo = null; S._ld = ""; S.o.logo = false; A().liveClear(true); host.innerHTML = panel(); mount(host, inf); return; } if (t.dataset.frb === "reset") { Object.assign(S.o, { border: 0, radius: 0, pad: 0, shadow: 0, card: false, logo: false }); A().liveClear(true); host.innerHTML = panel(); mount(host, inf); } });
   }
   async function apply() {
     if (S.busy || !S.base || !dirtyF()) return; S.busy = true; say("⏳ جارٍ التنفيذ…");
@@ -240,7 +244,8 @@ const PBBrand = (() => {
   const S = { id: "", base: null, kit: null, logo: null, msg: "", busy: false, site: false, o: { border: 0, bcol: 1, pad: 0, bgc: 2, radius: 0, logo: false, lpos: "br", lsize: 16, lop: 90, txt: false, tpos: "bc", tsize: 6, tcol: 2, band: true } };
   const load = () => { if (S.kit) return S.kit; let k = null; try { const raw = localStorage.getItem(LSK) || localStorage.getItem("pbx_brand_kit"); k = JSON.parse(raw || "null"); } catch (e) { } S.kit = Object.assign({}, DEF, k && typeof k === "object" ? k : {}); if (!Array.isArray(S.kit.colors) || S.kit.colors.length < 5) S.kit.colors = DEF.colors.slice(); return S.kit; };
   const save = () => { try { localStorage.setItem(LSK, JSON.stringify(S.kit)); } catch (e) { } };
-  try { const d = localStorage.getItem(LSL) || localStorage.getItem("pbx_brand_logo"); if (d) { const im = new Image(); im.onload = () => { S.logo = im; }; im.src = d; } } catch (e) { }
+  const syncLogo = () => { try { const d = localStorage.getItem(LSL) || localStorage.getItem("pbx_brand_logo"); if (!d) { S.logo = null; S._ld = ""; return; } if (S._ld === d) return; S._ld = d; const im = new Image(); im.onload = () => { S.logo = im; const e = $("pbbr-ls"); if (e) e.textContent = "✔ الشعار محفوظ"; }; im.src = d; } catch (e) { } };
+  syncLogo();
   const hex = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : "#000000";
   const FONTS = () => (typeof PB !== "undefined" && PB.FONT_FAMS ? PB.FONT_FAMS.filter(x => !x[3]) : []).map(([n, w, l]) => [n, l === n ? n : l + " (" + n + ")"]);
   async function loadFont(name) {
@@ -273,7 +278,7 @@ const PBBrand = (() => {
 <div class="rt-g"><label>خط العلامة <select data-brk="font" class="pbx-small">${FONTS().map(([n, l]) => `<option value="${esc(n)}"${kit.font === n ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label><label>اسم العلامة <input type="text" data-brk="name" value="${esc(kit.name)}" placeholder="اسم متجرك" style="width:100%"></label></div>
 <div class="rt-g"><label><input type="checkbox" data-bro="txt" ${o.txt ? "checked" : ""}> كتابة اسم العلامة على الصورة</label><label>الموضع <select data-bro="tpos" class="pbx-small">${[["tc", "أعلى"], ["mc", "الوسط"], ["bc", "أسفل"]].map(([a, t]) => `<option value="${a}"${o.tpos === a ? " selected" : ""}>${t}</option>`).join("")}</select></label>${rg("tsize", 3, 14, "حجم الاسم", o.tsize)}<label>لون الاسم ${pick("tcol", o.tcol, kit)}</label><label><input type="checkbox" data-bro="band" ${o.band ? "checked" : ""}> شريط بلون العلامة خلف الاسم</label></div>
 <div class="ep-n"><b>③ الشعار</b></div>
-<div class="rt-g"><label><input type="checkbox" data-bro="logo" ${o.logo ? "checked" : ""}> ختم الشعار</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbbr-lf" style="display:none"></label><span class="ep-n">${S.logo ? "✔ الشعار محفوظ" : "لا يوجد شعار محفوظ بعد"}</span><label>الموضع ${pos("lpos", o.lpos)}</label>${rg("lsize", 6, 40, "الحجم", o.lsize)}${rg("lop", 20, 100, "الشفافية", o.lop)}</div>
+<div class="rt-g"><label><input type="checkbox" data-bro="logo" ${o.logo ? "checked" : ""}> ختم الشعار</label><label class="pbx-small" style="cursor:pointer">رفع الشعار<input type="file" accept="image/*" id="pbbr-lf" style="display:none"></label><span class="ep-n" id="pbbr-ls">${S.logo ? "✔ الشعار محفوظ" : "لا يوجد شعار محفوظ بعد"}</span><button type="button" class="pbx-small" data-brb="rmlogo">حذف الشعار</button><label>الموضع ${pos("lpos", o.lpos)}</label>${rg("lsize", 6, 40, "الحجم", o.lsize)}${rg("lop", 20, 100, "الشفافية", o.lop)}</div>
 <div class="ep-n"><b>④ الإطار بألوان العلامة</b></div>
 <div class="rt-g">${rg("border", 0, 12, "سماكة الحدّ", o.border)}<label>لون الحدّ ${pick("bcol", o.bcol, kit)}</label>${rg("pad", 0, 20, "الهامش", o.pad)}<label>لون الهامش ${pick("bgc", o.bgc, kit)}</label>${rg("radius", 0, 40, "الزوايا", o.radius)}</div>
 <div class="pbrt-row"><button type="button" class="pbx-small" data-brb="reset">تصفير الصورة</button></div><div id="pbbr-msg" class="ep-n" style="min-height:1.2em">${esc(S.msg)}</div></div>`;
@@ -312,11 +317,13 @@ const PBBrand = (() => {
       const k = t.dataset.bro; if (!k) return; S.o[k] = t.type === "checkbox" ? t.checked : t.type === "range" ? +t.value : /^(bcol|bgc|tcol)$/.test(k) ? +t.value : t.value; draw();
     };
     root.addEventListener("input", upd); root.addEventListener("change", upd);
+    syncLogo();
     const lf = $("pbbr-lf"); if (lf) lf.onchange = () => { const f = lf.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { const im = new Image(); im.onload = () => { S.logo = im; S.o.logo = true; try { let keep = String(r.result); if (keep.length >= 600000) { const kk = Math.min(1, 700 / Math.max(im.naturalWidth, im.naturalHeight)), cc = mk(im.naturalWidth * kk, im.naturalHeight * kk); cc.getContext("2d").drawImage(im, 0, 0, cc.width, cc.height); keep = cc.toDataURL("image/png"); } if (keep.length < 600000) localStorage.setItem(LSL, keep); else say("⚠️ الشعار كبير جداً ولم يُحفظ للجلسات القادمة — صغّره وأعد رفعه"); } catch (e) { } rerender(); }; im.src = String(r.result); }; r.readAsDataURL(f); };
     root.addEventListener("click", async e => {
       const t = e.target.closest("[data-brb]"); if (!t) return; const k = t.dataset.brb;
       if (k === "site") { say("⏳ جارٍ الاستيراد…"); if (await fromSite()) rerender(); else say("تعذّر قراءة ألوان الموقع"); }
       else if (k === "defaults") { S.kit.colors = DEF.colors.slice(); save(); rerender(); }
+      else if (k === "rmlogo") { try { localStorage.removeItem(LSL); localStorage.removeItem("pbx_brand_logo"); } catch (x) { } S.logo = null; S._ld = ""; S.o.logo = false; A().liveClear(true); rerender(); }
       else if (k === "reset") { reset(); A().liveClear(true); rerender(); }
     });
   }

@@ -596,7 +596,7 @@ const AdminNav = (() => {
     if (id === "barcode") { if (typeof BarcodeTool === "undefined") return false; BarcodeTool.open(); return true; }
     if (id === "pagepilot") { if (typeof PagePilot === "undefined") return false; PagePilot.open(); return true; }
     if (id === "magiclayers") { if (typeof MagicLayersV25 === "undefined") return false; MagicLayersV25.open(); return true; }
-    if (DEEP_TAB[id]) { try { Admin.tab(DEEP_TAB[id]); } catch (e) { } return true; }
+    if (DEEP_TAB[id]) { try { Admin.tab(DEEP_TAB[id]); } catch (e) { } if (id === "batch" || id === "catalog") { const cid = id === "batch" ? "ib-card" : "iq-card"; let n = 0; const go = () => { const c = document.getElementById(cid); if (c) { c.scrollIntoView({ behavior: "smooth", block: "start" }); c.style.outline = "2px solid #e2fe17"; setTimeout(() => { c.style.outline = ""; }, 2200); } else if (++n < 12) setTimeout(go, 250); }; setTimeout(go, 250); } return true; }
     if (typeof ToolWin !== "undefined" && ToolWin.has(id)) { ToolWin.open(id); return true; }      /* أدوات الصور: نافذة تحميل الصورة ثم الأداة على صورتك في المطوّر */
     if (typeof PBAdmin === "undefined" || typeof PBApp === "undefined") return false;
     try { Admin.tab("builder"); } catch (e) { }
