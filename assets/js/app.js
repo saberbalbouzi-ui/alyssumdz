@@ -2075,6 +2075,8 @@ const PhoneDZ = {
     const send = ()=>{ try{ parent.postMessage({ pbEmbedH: Math.ceil(wrap.getBoundingClientRect().height) + 12 }, location.origin); }catch(e){} };
     try{ new ResizeObserver(send).observe(wrap); }catch(e){}
     send(); setTimeout(send, 600); setTimeout(send, 2000);
+    let lastT = null; const sendT = ()=>{ const b = document.getElementById("btn-total"), t = b ? b.textContent.trim() : ""; if(t === lastT) return; lastT = t; try{ parent.postMessage({ pbTotal: t }, location.origin); }catch(e){} };
+    setInterval(sendT, 500); sendT();
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 }catch(e){} })();
