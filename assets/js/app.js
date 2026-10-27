@@ -471,7 +471,7 @@ function applyCheckout(cfg){
       document.querySelectorAll("#add-cart").forEach(b=>{ b.style.display = "none"; });
     }
     // نصوص الأزرار المخصصة
-    const orderBtn = document.querySelector(".btn-order");
+    const orderBtn = document.querySelector("#order-form .btn-order, .order-wide .btn-order") || document.querySelector(".btn-order");
     if(orderBtn && cfg.orderBtnText){
       const span = orderBtn.querySelector("#btn-total");
       orderBtn.innerHTML = cfg.orderBtnText + ' — <span id="btn-total">' + (span?span.textContent:"") + '</span>';
@@ -1132,8 +1132,8 @@ function initProduct(slug){
     if(st) st.textContent = fmt(total);
     // زر «تأكيد الطلب» كان يعرض دائماً سعر القطعة الواحدة الثابت (p.price) ولا يتحدّث أبداً
     // مع تغيير العرض أو إضافة رسوم التوصيل — أصبح الآن يعكس نفس الإجمالي الحقيقي دوماً (يشمل خصم الكوبون إن وُجد)
-    const bt = document.getElementById("btn-total");
-    if(bt) bt.textContent = fmt(total);
+    const bt = document.querySelector("#order-form #btn-total, .order-wide #btn-total") || document.getElementById("btn-total");
+    if(bt){ bt.textContent = fmt(total); const pn = bt.previousSibling; if(pn && pn.nodeType === 3 && !/الإجمالي|الاجمالي/.test(pn.textContent)) pn.textContent = pn.textContent.replace(/—\s*$/, "— الإجمالي: "); }
     if(bumpCtl) bumpCtl.refresh();      // تغيّر العرض/الكمية قد يغيّر أهلية الـOrder Bump
   }
   if(p.digital){ const __dm = ()=>{ try{ DigitalCheckout.mount(p); update(); }catch(e){} }; if(window.DigitalCheckout) __dm(); else document.addEventListener("digital:ready", __dm, { once:true }); }   // منتج رقمي: بلا توصيل، بريد + دفع مسبق (assets/js/digital-checkout.js)
@@ -2050,7 +2050,7 @@ const PhoneDZ = {
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
     const txt = ()=>{ try{
       if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && h.textContent !== oc.t) h.textContent = String(oc.t); }
-      if(oc.b){ const bn = document.querySelector(W+".btn-order"); if(bn){ const sp = bn.querySelector("#btn-total"); if(sp){ const lead = String(oc.b) + " — "; if(bn.__oc !== lead || bn.firstChild === sp){ while(bn.firstChild && bn.firstChild !== sp) bn.removeChild(bn.firstChild); bn.insertBefore(document.createTextNode(lead), sp); bn.__oc = lead; } } else { const cur = bn.textContent, i = cur.indexOf(" — "), nt = String(oc.b) + (i > -1 ? cur.slice(i) : ""); if(cur !== nt && cur.indexOf(String(oc.b)) !== 0) bn.textContent = nt; } } }
+      { const bn = document.querySelector(W+".btn-order"); if(bn){ const sp = bn.querySelector("#btn-total"), noT = Array.isArray(oc.x) && oc.x.indexOf("bt") > -1, gl = (oc.L && oc.L.gt) ? String(oc.L.gt) : "الإجمالي"; if(noT){ if(sp){ const t = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "")).trim(); bn.textContent = t; } } else if(sp && (oc.b || oc.L)){ const lead = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "").trim()) + " — " + gl + ": "; if(bn.__oc !== lead || bn.firstChild === sp || (bn.firstChild && bn.firstChild.textContent !== lead)){ while(bn.firstChild && bn.firstChild !== sp) bn.removeChild(bn.firstChild); bn.insertBefore(document.createTextNode(lead), sp); bn.__oc = lead; } } } }
       if(oc.L && typeof oc.L === "object"){
         const L = oc.L, lab = (id,t)=>{ const e = document.querySelector(W+'label[for="'+id+'"]'); if(e && t){ const nt = String(t) + (/\*\s*$/.test(e.textContent) ? " *" : ""); if(e.textContent !== nt) e.textContent = nt; } };
         lab("name", L.nm); lab("phone", L.ph); lab("wilaya", L.wl); lab("commune", L.cm);
@@ -2078,7 +2078,7 @@ const PhoneDZ = {
   }
   window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || typeof e.data.pbOffer!=="number") return; const b = document.querySelectorAll("#offers .offer")[e.data.pbOffer]; if(b) b.click(); });
   window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || typeof e.data.pbCoupon!=="string") return; const i = document.getElementById("prod-coupon-input"), b = i && i.closest(".coupon-box") && i.closest(".coupon-box").querySelector("button"); if(i && b){ i.value = e.data.pbCoupon.slice(0,40); b.click(); } });
-  window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || !e.data.pbSubmit) return; const b = document.querySelector(".btn-order"); if(b) b.click(); });
+  window.addEventListener("message", e=>{ if(e.origin!==location.origin || !e.data || !e.data.pbSubmit) return; const b = document.querySelector("#order-form .btn-order, .order-wide .btn-order") || document.querySelector(".btn-order"); if(b) b.click(); });
   document.addEventListener("click", e=>{ const o = e.target.closest && e.target.closest("#offers .offer"); if(!o) return; try{ parent.postMessage({ pbOfferSel: [...o.parentElement.children].indexOf(o) }, location.origin); }catch(_){} }, true);
   const go = ()=>{
     const form = document.querySelector(".order-wide") || document.querySelector(".pb-ofraw") || document.getElementById("order-form"); if(!form) return;
@@ -2088,7 +2088,7 @@ const PhoneDZ = {
     const send = ()=>{ try{ parent.postMessage({ pbEmbedH: Math.ceil(wrap.getBoundingClientRect().height) + 12 }, location.origin); }catch(e){} };
     try{ new ResizeObserver(send).observe(wrap); }catch(e){}
     send(); setTimeout(send, 600); setTimeout(send, 2000);
-    let lastT = null; const sendT = ()=>{ const b = document.getElementById("btn-total"), t = b ? b.textContent.trim() : ""; if(t === lastT) return; lastT = t; try{ parent.postMessage({ pbTotal: t }, location.origin); }catch(e){} };
+    let lastT = null; const sendT = ()=>{ const b = document.querySelector("#order-form #btn-total, .order-wide #btn-total") || document.getElementById("btn-total"), t = b ? b.textContent.trim() : ""; if(t === lastT) return; lastT = t; try{ parent.postMessage({ pbTotal: t }, location.origin); }catch(e){} };
     setInterval(sendT, 500); sendT();
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
