@@ -181,7 +181,7 @@ const PBAssets = (() => {
     let h = `<div class="ast-grid ${grid}">` + S.res.map((x, i) => {
       const busy = S.ibusy === (S.tab === "ico" ? "ico" : S.tab) + i ? " busy" : "";
       if (S.tab === "ico") return `<button type="button" class="ast-i${busy}" data-ast-take="${i}" title="${esc(x)}"><img loading="lazy" alt="" src="${esc(iconSvgUrl(x, S.icolor))}"></button>`;
-      if (S.tab === "vid") { const v = x.videos && (x.videos.tiny || x.videos.small); return `<button type="button" class="ast-i${busy}" data-ast-take="${i}" title="${esc(x.tags)}"><img loading="lazy" alt="" src="${esc("https://i.vimeocdn.com/video/" + x.picture_id + "_295x166.jpg")}"><span>${esc(x.duration)}ث — ${esc(x.user)}</span></button>`; }
+      if (S.tab === "vid") { const v = x.videos && (x.videos.tiny || x.videos.small); return `<button type="button" class="ast-i${busy}" data-ast-take="${i}" title="${esc(x.tags)}">${(() => { const th = (v && v.thumbnail) || (x.videos && x.videos.small && x.videos.small.thumbnail) || (x.picture_id ? "https://i.vimeocdn.com/video/" + x.picture_id + "_295x166.jpg" : ""); return th ? `<img loading="lazy" alt="" src="${esc(th)}">` : `<i style="display:flex;align-items:center;justify-content:center;aspect-ratio:16/9;background:rgba(255,255,255,.08);font-style:normal">▶</i>`; })()}<span>${esc(x.duration)}ث — ${esc(x.user)}</span></button>`; }
       return `<button type="button" class="ast-i${busy}" data-ast-take="${i}" title="${esc(x.tags)}"><img loading="lazy" alt="" src="${esc(x.previewURL || x.webformatURL)}"><span>${esc(x.imageWidth)}×${esc(x.imageHeight)} — ${esc(x.user)}</span></button>`;
     }).join("") + `</div>`;
     const pages = Math.ceil(S.total / (S.tab === "ico" ? 96 : 30));

@@ -399,7 +399,7 @@ def page(p):
 <html lang="ar" dir="rtl" data-admin-url="../../../admin.html" data-brand-src="../../brand.json">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{E(p["title"])}</title><meta name="description" content="{E(p["desc"])}"><meta property="og:title" content="{E(p["title"])}"><meta property="og:description" content="{E(p["desc"])}">
-<link rel="stylesheet" href="../landing.css"></head>
+<link rel="stylesheet" href="../landing.css"><script>if(/[?&]embed=1/.test(location.search))document.addEventListener("click",function(e){{var a=e.target.closest&&e.target.closest("a[data-open]");if(a){{e.preventDefault();try{{parent.postMessage({{pfStudio:"open",tool:a.dataset.open}},"*")}}catch(x){{}}}}}},true)</script></head>
 <body>
 <header class="top"><div class="w"><a class="brand" href="#"><i>{svg("layers")}</i><span data-brand>المنصة</span></a>
 <nav><a href="#gallery">المعرض</a><a href="#how">كيف تعمل</a><a href="#options">الخيارات</a><a href="#faq">الأسئلة الشائعة</a></nav><span class="sp"></span>

@@ -37,7 +37,7 @@ const AdminStudio = (() => {
   const base = () => String((typeof CONFIG !== "undefined" && CONFIG.TOOLS_PAGES) || (S.data && S.data.base) || "").replace(/\/*$/, "/");
   function navHtml(t) { const L = tools(), i = L.findIndex(x => x.id === t.id), prev = L[(i - 1 + L.length) % L.length], next = L[(i + 1) % L.length]; return `<div class="sd-nav"><button type="button" class="small gray" data-sdback="1">→ كل الأدوات</button><span><button type="button" class="small gray" data-sdt="${esc(prev.id)}">‹ ${esc(prev.name)}</button> <button type="button" class="small gray" data-sdt="${esc(next.id)}">${esc(next.name)} ›</button></span></div>`; }
   function pageHtml(t) {
-    if (t.landing) return `<div class="sd-page">${navHtml(t)}${typeof Credits !== "undefined" ? Credits.chip(t.id) : ""}<iframe id="sd-fr" class="sd-fr" title="${esc(t.name)}" src="${esc(base() + t.landing + "?embed=1")}" loading="eager" style="height:${S.fh || 900}px"></iframe></div>`;
+    if (t.landing) return `<div class="sd-page">${navHtml(t)}${typeof Credits !== "undefined" ? Credits.chip(t.id) : ""}<iframe id="sd-fr" class="sd-fr" title="${esc(t.name)}" data-src0="${esc(base() + t.landing + "?embed=1")}" src="${esc(base() + t.landing + "?embed=1")}" loading="eager" style="height:${S.fh || 900}px"></iframe></div>`;
     const rel = (t.rel || []).map(byId).filter(Boolean);
     return `<div class="sd-page">${navHtml(t)}
 <div class="sd-head">${ico(t)}<div><h2>${esc(t.name)}</h2><p>${esc(t.tag)}</p>${badge(t)}</div></div>
@@ -76,6 +76,11 @@ ${rel.length ? `<div class="sd-box"><b>أدوات مرتبطة</b><div class="sd
     if (d.pfStudio === "h") { const h = Math.max(600, Math.min(30000, +d.h || 0)); if (h && Math.abs(h - S.fh) > 4) { S.fh = h; fr.style.height = h + "px"; } }
     else if (d.pfStudio === "open" && /^[a-z0-9]+$/i.test(String(d.tool || ""))) start(d.tool);
   });
+  /* حارس السباق: نقرة «ابدأ الآن» قبل ربط سكربت صفحة التعريف تُحمِّل لوحة كاملة داخل الإطار — نُعيد الإطار لصفحته ونفتح الأداة */
+  document.addEventListener("load", e => {
+    const fr = e.target; if (!fr || fr.id !== "sd-fr") return;
+    try { const l = fr.contentWindow.location; if (/admin(\.html)?$/i.test(l.pathname) && !/\/landing\//.test(l.pathname)) { const m = /tool=([a-z0-9]+)/i.exec(l.hash || ""); fr.src = fr.dataset.src0 || fr.getAttribute("data-src0") || "about:blank"; if (m) start(m[1]); } } catch (x) { }
+  }, true);
   function init() {
     if (typeof Admin === "undefined" || !Admin.tab || Admin.tab.__sd) return setTimeout(init, 400);
     const orig = Admin.tab;

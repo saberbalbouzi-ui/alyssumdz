@@ -344,7 +344,7 @@ body{overflow-x:hidden;margin:0}`;
   function closeFloating() {
     try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
-    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbs-bl", "pbs-af", "pbs-er", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
   function close() {
     try { if (typeof BgEditor !== "undefined" && BgEditor.inst() && BgEditor.inst().ov.classList.contains("dk")) BgEditor.inst().close(true); } catch (x) { }
@@ -1595,6 +1595,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     try { if (typeof PBAI !== "undefined" && PBAI.fresh) PBAI.fresh(); } catch (x) { }
     try { if (E.live && typeof E.live === "object") liveCancel(); } catch (x) { }
     E.stScene = null; E.capDone = false; E.ept = "";
+    ["pbs-bl", "pbs-af", "pbs-er", "pbs-modal"].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); });      /* لا لوحة أداة معلّقة من جلسة سابقة */
   }
   async function toolSession(blobs, tool, nm) {
     toolFresh();

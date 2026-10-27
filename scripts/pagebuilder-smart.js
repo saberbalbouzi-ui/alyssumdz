@@ -286,8 +286,8 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     const MAXS = 1800, k0 = Math.min(1, MAXS / Math.max(src.width, src.height)); let base = src;
     if (k0 < 1) { base = document.createElement("canvas"); base.width = Math.round(src.width * k0); base.height = Math.round(src.height * k0); base.getContext("2d").drawImage(src, 0, 0, base.width, base.height); }
     const W = base.width, H = base.height, dispW = Math.max(240, Math.min(W, innerWidth * .88 - 8, (innerHeight - 230) * W / H)), dispH = Math.round(dispW * H / W), K = W / dispW;
-    const ov = document.createElement("div"); ov.id = "pbs-er"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.78);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
-    ov.innerHTML = `<div style="background:#fff;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;flex-direction:column;gap:.6rem;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    const ov = document.createElement("div"); ov.id = "pbs-er"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
+    ov.innerHTML = `<div style="background:#fdfdfd;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;flex-direction:column;gap:.6rem;box-shadow:0 20px 60px rgba(0,0,0,.5)">
       <div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center"><b style="font-size:1rem">🧽 ممحاة الصورة</b><span style="flex:1"></span>
         <label style="font-size:.78rem;display:flex;gap:.4rem;align-items:center">حجم الفرشاة <input id="er-sz" type="range" min="6" max="120" value="36" style="width:120px"></label>
         <button id="er-undo" type="button" class="pbx-small">↶ ضربة</button><button id="er-clr" type="button" class="pbx-small">مسح الرسم</button><button id="er-back" type="button" class="pbx-small" disabled>↩ تراجع الإزالة</button>
@@ -337,9 +337,9 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     if (k0 < 1) { base = document.createElement("canvas"); base.width = Math.round(src.width * k0); base.height = Math.round(src.height * k0); base.getContext("2d").drawImage(src, 0, 0, base.width, base.height); }
     const W = base.width, H = base.height, dispW = Math.max(240, Math.min(W, innerWidth * .62, (innerHeight - 190) * W / H)), dispH = Math.round(dispW * H / W), K = W / dispW;
     const mkc = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
-    const ov = document.createElement("div"); ov.id = "pbs-bl"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.78);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
+    const ov = document.createElement("div"); ov.id = "pbs-bl"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
     const seg = (k, t, on) => `<button type="button" data-bl="${k}" class="pbx-small${on ? " pz-go" : ""}" style="flex:1">${t}</button>`;
-    ov.innerHTML = `<div style="background:#fff;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#173f35">
+    ov.innerHTML = `<div style="background:#fdfdfd;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#173f35">
       <div style="width:250px;display:flex;flex-direction:column;gap:.55rem"><b style="font-size:1rem">💧 تمويه</b>
         <div id="bl-mode" style="display:flex;gap:.3rem">${seg("m-brush", "فرشاة", 1)}${seg("m-whole", "الصورة كاملة", 0)}</div>
         <div id="bl-btype" style="display:flex;gap:.3rem">${seg("t-add", "إضافة تمويه", 1)}${seg("t-del", "حذف", 0)}</div>
@@ -391,8 +391,8 @@ ${(typeof PBGen !== "undefined" && PBGen.aiOn && PBGen.aiOn()) ? `<label style="
     if (k0 < 1) { base = document.createElement("canvas"); base.width = Math.round(src.width * k0); base.height = Math.round(src.height * k0); base.getContext("2d").drawImage(src, 0, 0, base.width, base.height); }
     const W = base.width, H = base.height, dispW = Math.max(240, Math.min(W, innerWidth * .62, (innerHeight - 190) * W / H)), dispH = Math.round(dispW * H / W);
     const mkc = (w, h) => { const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
-    const ov = document.createElement("div"); ov.id = "pbs-af"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.78);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
-    ov.innerHTML = `<div style="background:#fff;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#173f35">
+    const ov = document.createElement("div"); ov.id = "pbs-af"; ov.style.cssText = "position:fixed;inset:0;z-index:10050;background:rgba(10,15,12,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-family:inherit;direction:rtl";
+    ov.innerHTML = `<div style="background:#fdfdfd;border-radius:16px;padding:.8rem;max-width:96vw;max-height:96vh;display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;box-shadow:0 20px 60px rgba(0,0,0,.5);color:#173f35">
       <div style="width:250px;display:flex;flex-direction:column;gap:.55rem"><b style="font-size:1rem">🎯 تركيز تلقائي</b>
         <label style="font-size:.78rem">شدّة التمويه <b id="af-inv">50</b><input id="af-in" type="range" min="0" max="100" value="50" style="width:100%" disabled></label>
         <label style="font-size:.78rem">موضع التركيز <b id="af-pov">40</b><input id="af-pos" type="range" min="0" max="100" step="0.5" value="40" style="width:100%" disabled></label>
