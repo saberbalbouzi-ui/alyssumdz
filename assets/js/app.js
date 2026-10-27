@@ -2055,6 +2055,9 @@ const PhoneDZ = {
         const L = oc.L, lab = (id,t)=>{ const e = document.querySelector(W+'label[for="'+id+'"]'); if(e && t){ const nt = String(t) + (/\*\s*$/.test(e.textContent) ? " *" : ""); if(e.textContent !== nt) e.textContent = nt; } };
         lab("name", L.nm); lab("phone", L.ph); lab("wilaya", L.wl); lab("commune", L.cm);
         if(L.cp){ const i = document.getElementById("prod-coupon-input"); if(i && i.placeholder !== L.cp) i.placeholder = String(L.cp); }
+        if(L.gp){ const e = document.querySelector(W+".gp-open"); if(e){ const t = String(L.gp); if(e.__gp !== t){ e.textContent = t; e.__gp = t; } } }
+        if(L.sw){ const e = document.querySelector(W+'#wilaya option[value=""]'); if(e && e.textContent !== L.sw) e.textContent = String(L.sw); }
+        if(L.sc){ const e = document.querySelector(W+'#commune option[value=""]'); if(e && e.textContent !== L.sc) e.textContent = String(L.sc); }
         if(L.ap){ const e = document.querySelector(W+"#prod-coupon-btn"); if(e && e.textContent !== L.ap) e.textContent = String(L.ap); }
         if(L.ac){ const e = document.getElementById("add-cart"); if(e && e.textContent !== L.ac) e.textContent = String(L.ac); }
         if(L.wa){ const e = document.querySelector(W+".btn-wa"); if(e && e.textContent !== L.wa) e.textContent = String(L.wa); }

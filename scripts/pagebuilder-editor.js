@@ -827,6 +827,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     });
     /* معرض المنتج 1+4: النقر على صورة (رئيسية/مصغّرة) يفتح اختيارها مباشرة (الفارغة فوراً، والممتلئة إن كان المعرض محدّداً قبل النقرة) */
     fdoc.addEventListener("mousedown", e => { E.selAtDown = E.sel; }, true);
+    fdoc.addEventListener("click", e => { const ob = e.target.closest && e.target.closest("[data-ofsoff]"); if (ob) { const w = ob.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); if (inf && inf.node.type === "orderorig") { e.preventDefault(); e.stopPropagation(); inf.node.set.stk = false; afterEdit(inf.node.id); } return; } });
     fdoc.addEventListener("click", e => { const sl = e.target.closest && e.target.closest("[data-slot]"); if (!sl || sl.classList.contains("pbbind")) return; const w = sl.closest('[data-kind="widget"]'), inf = w && find(w.dataset.pb); if (!inf || inf.node.type !== "pgal") return;
       const idx = Number(sl.dataset.slot), arr = pgArr(inf); if (arr[idx] && E.selAtDown !== w.dataset.pb) return; e.preventDefault(); e.stopPropagation(); select(inf.node.id); slotPick(inf, idx); }, true);
     /* زر «رفع صورة» داخل الصندوق الفارغ + سحب صور من الحاسوب وإفلاتها على صورة/سلايدر/معرض (في المعرض: على خليته) */
