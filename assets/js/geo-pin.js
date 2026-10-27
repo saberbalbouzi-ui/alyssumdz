@@ -21,11 +21,11 @@
     ui.st.textContent = "✓ تم تحديد الموقع"; ui.rm.hidden = false;
   }
   function build(host) {
-    var w = document.createElement("div"); w.className = "gp"; w.style.cssText = "margin:.6rem 0";
+    var w = document.createElement("div"); w.className = "gp"; w.style.cssText = "margin:.6rem 0;color:var(--o-tc,inherit)";
     w.innerHTML = '<button type="button" class="gp-open" style="width:100%;padding:.7rem;border-radius:12px;font:inherit;font-weight:800;cursor:pointer;color:inherit;background:rgba(127,127,127,.12);border:1px dashed rgba(127,127,127,.5)">📍 حدّد موقعك على الخريطة (اختياري — يسهّل وصول الموزّع)</button>' +
       '<div class="gp-box" hidden style="margin-top:.5rem"><div class="gp-map" style="height:240px;border-radius:12px;overflow:hidden;border:1px solid rgba(127,127,127,.4)"></div>' +
-      '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem;align-items:center"><button type="button" class="gp-me" style="padding:.45rem .8rem;border-radius:10px;font:inherit;font-weight:700;cursor:pointer">📡 حدّد موقعي</button><button type="button" class="gp-rm" hidden style="padding:.45rem .8rem;border-radius:10px;font:inherit;cursor:pointer">إزالة</button><span class="gp-st" style="font-size:.85rem"></span></div>' +
-      '<small style="display:block;opacity:.7;margin-top:.3rem;line-height:1.5">اضغط على الخريطة أو اسحب الدبوس. بتحديد موقعك توافق على مشاركته مع المتجر وشركة التوصيل لهذا الطلب فقط.</small></div>';
+      '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem;align-items:center"><button type="button" class="gp-me" style="padding:.45rem .8rem;border-radius:10px;font:inherit;font-weight:700;cursor:pointer;color:inherit">📡 حدّد موقعي</button><button type="button" class="gp-rm" hidden style="padding:.45rem .8rem;border-radius:10px;font:inherit;cursor:pointer;color:inherit">إزالة</button><span class="gp-st" style="font-size:.88rem;font-weight:700"></span></div>' +
+      '<div class="gp-hint" style="opacity:.92;margin-top:.4rem;line-height:1.7;font-size:.82rem;color:var(--o-tc,inherit)">اضغط على الخريطة أو اسحب الدبوس. زر «حدّد موقعي» يطلب إذن الموقع من هاتفك (فعّل خدمة الموقع GPS) ثم يضع الدبوس تلقائياً، ويمكنك تعديله. بتحديد موقعك توافق على مشاركته مع المتجر وشركة التوصيل لهذا الطلب فقط.</div></div>';
     host.appendChild(w);
     var ui = { st: w.querySelector(".gp-st"), rm: w.querySelector(".gp-rm") }, box = w.querySelector(".gp-box");
     w.querySelector(".gp-open").onclick = function () {

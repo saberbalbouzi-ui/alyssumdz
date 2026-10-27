@@ -2122,7 +2122,7 @@ const PhoneDZ = {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
 /* دبوس الموقع على الخريطة (اختياري) */
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
+(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=3'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 /* مرآة الطلب إلى المنصة (مراقبة الأسعار والمخزون) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/platform-order.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=2'; s.async=true; document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} }); document.head.appendChild(s); }catch(e){} })();
