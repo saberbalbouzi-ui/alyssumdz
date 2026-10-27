@@ -2055,6 +2055,8 @@ const PhoneDZ = {
         const L = oc.L, lab = (id,t)=>{ const e = document.querySelector(W+'label[for="'+id+'"]'); if(e && t){ const nt = String(t) + (/\*\s*$/.test(e.textContent) ? " *" : ""); if(e.textContent !== nt) e.textContent = nt; } };
         lab("name", L.nm); lab("phone", L.ph); lab("wilaya", L.wl); lab("commune", L.cm);
         if(L.cp){ const i = document.getElementById("prod-coupon-input"); if(i && i.placeholder !== L.cp) i.placeholder = String(L.cp); }
+        if(L.ap){ const e = document.querySelector(W+"#prod-coupon-btn"); if(e && e.textContent !== L.ap) e.textContent = String(L.ap); }
+        if(L.ac){ const e = document.getElementById("add-cart"); if(e && e.textContent !== L.ac) e.textContent = String(L.ac); }
         if(L.wa){ const e = document.querySelector(W+".btn-wa"); if(e && e.textContent !== L.wa) e.textContent = String(L.wa); }
         if(L.nt){ const e = document.querySelector(W+".cod-note"); if(e && e.textContent !== L.nt) e.textContent = String(L.nt); }
         const sm = document.querySelectorAll(W+".total-box small"); if(L.fe && sm[0] && sm[0].textContent !== L.fe) sm[0].textContent = String(L.fe); if(L.gt && sm[1] && sm[1].textContent !== L.gt) sm[1].textContent = String(L.gt);
