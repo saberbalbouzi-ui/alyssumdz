@@ -47,7 +47,7 @@ const PagePilot = (() => {
 <div style="margin-top:6px;opacity:.8">أو الصق كود الصفحة بدلاً من الرابط:</div><textarea id="pp-html" dir="ltr" rows="3" placeholder="افتح صفحة المنتج ← Ctrl+U ← Ctrl+A ← Ctrl+C ← الصقه هنا ثم اضغط «جلب»" style="${FLD};width:100%;margin-top:6px"></textarea></details>
 <div id="pp-impres" style="grid-column:1/-1;font-size:.82rem;line-height:1.7"></div>
 <label style="font-size:.8rem">اسم المنتج<input id="pp-name" style="${FLD}"></label>
-<label style="font-size:.8rem">صورة المنتج<input id="pp-file" type="file" accept="image/*" style="${FLD}"></label>
+<div style="font-size:.8rem">صورة المنتج<div style="display:flex;gap:8px;align-items:center;margin-top:4px"><button type="button" id="pp-fbtn" style="${BTN_CSS};background:rgba(255,255,255,.12)" onclick="document.getElementById('pp-file').click()">اختر صورة…</button><span id="pp-fname" style="opacity:.75;font-size:.78rem">لم تُختر صورة</span></div><input id="pp-file" type="file" accept="image/*" hidden></div>
 <label style="font-size:.8rem;grid-column:1/-1">وصف المنتج / ما يميّزه<textarea id="pp-desc" rows="3" style="${FLD}" placeholder="مكوّناته، فوائده، لمن؟…"></textarea></label>
 <label style="font-size:.8rem">اللغة<select id="pp-lang" style="${FLD}"><option value="ar">العربية</option><option value="fr">الفرنسية</option><option value="en">الإنجليزية</option></select></label>
 <label style="font-size:.8rem">الجمهور/النبرة (اختياري)<input id="pp-aud" style="${FLD}" placeholder="مثال: أمهات — نبرة دافئة"></label>
@@ -80,6 +80,7 @@ const PagePilot = (() => {
     let theme = "green", pageColor = "";
     const setColor = c => { pageColor = c || ""; try { delete $("pp-cc").dataset.on; } catch (_) { } bg.querySelectorAll('[data-pp="col"]').forEach(x => x.style.outline = (x.dataset.c || "") === pageColor ? "2px solid #e2fe17" : ""); };
     $("pp-cc").addEventListener("input", () => { setColor(""); $("pp-cc").dataset.on = "1"; bg.querySelectorAll('[data-pp="col"]').forEach(x => x.style.outline = ""); });
+    $("pp-file").addEventListener("change", () => { const f = $("pp-file").files[0]; $("pp-fname").textContent = f ? f.name : "لم تُختر صورة"; });
     $("pp-prod").addEventListener("change", () => { const p = ps.find(x => x.slug === $("pp-prod").value); if (!p) return; $("pp-name").value = p.title || ""; $("pp-desc").value = String(p.desc || p.description || "").slice(0, 900); });
     async function gather() {
       const p = ps.find(x => x.slug === $("pp-prod").value) || null, f = $("pp-file").files[0], imp = S.imp;

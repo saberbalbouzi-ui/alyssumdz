@@ -277,7 +277,7 @@ ${resplit ? "" : S.pv ? `<p class="pz-h">تظهر معاينة التقسيم ع
       bar.querySelector("[data-d=ok]").disabled = !D.strokes.length; bar.querySelector("[data-d=undo]").disabled = !D.strokes.length; };
     D.pos = () => { if (!D) return; const L = A().layoutOf(id), fw = document.getElementById("pbx-fw"); if (!L || !fw) return stopDraw(); const f = fw.getBoundingClientRect(), s = A().E.scale;
       layer.style.cssText = `left:${f.left + L.left * s}px;top:${f.top + L.top * s}px;width:${L.width * s}px;height:${L.height * s}px`;
-      const bh = bar.offsetHeight || 40; let ty = f.top + L.top * s - bh - 10; if (ty < 8) ty = Math.min(innerHeight - bh - 8, f.top + (L.top + L.height) * s + 10);
+      const bh = bar.offsetHeight || 40; let ty = f.top + L.top * s - bh - 10; const stt = (document.getElementById("pbx-stage") || {}).getBoundingClientRect, minT = stt ? document.getElementById("pbx-stage").getBoundingClientRect().top + 6 : 70; if (ty < minT) ty = Math.min(innerHeight - bh - 8, f.top + (L.top + L.height) * s + 10);
       bar.style.top = ty + "px"; bar.style.left = Math.max(6, Math.min(innerWidth - bar.offsetWidth - 6, f.left + (L.left + L.width / 2) * s - bar.offsetWidth / 2)) + "px"; draw(); };
     bar.innerHTML = `<span>✏️ ارسم خطوط التقسيم</span><button type="button" data-d="line" class="on">— مستقيم</button><button type="button" data-d="curve">〰 منحنى</button><button type="button" data-d="undo">↶ تراجع</button><button type="button" data-d="clear">🗑 مسح</button><button type="button" data-d="ok" class="ok">✓ قسّم</button><button type="button" data-d="no" class="no">✕ إلغاء</button>`;
     bar.onclick = async ev => { const b = ev.target.closest("[data-d]"); if (!b || b.disabled) return; const k = b.dataset.d;

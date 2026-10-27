@@ -352,6 +352,7 @@ body{overflow-x:hidden;margin:0}`;
     closeFloating();
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
     E.toolMode = null; $("pb-app").classList.remove("on", "pbx-ad", "pbx-tool"); document.body.style.overflow = "";
+    const bt = E.backTab; E.backTab = null; if (bt && bt !== "builder" && bt !== "imggen" && typeof Admin !== "undefined") setTimeout(() => { try { Admin.tab(bt); } catch (e) { } }, 0);      // العودة إلى القسم الذي فُتح منه المحرر (ستوديو ديزاين) بدل منطقة فارغة
     purgeUnsaved(true).then(n => { if (n) toast("🧹 حُذفت " + n + " صورة غير محفوظة ونُظّفت المكتبة"); });
     if (typeof PBAdmin !== "undefined") PBAdmin.refresh();
   }
@@ -1597,8 +1598,9 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     E.stScene = null; E.capDone = false; E.ept = "";
     ["pbs-bl", "pbs-af", "pbs-er", "pbs-modal"].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); });      /* لا لوحة أداة معلّقة من جلسة سابقة */
   }
+  const curTabName = () => { try { const b = document.querySelector(".nav-btn.on"), m = b && /tab\(['"](\w+)['"]/.exec(b.getAttribute("onclick") || ""); return m ? m[1] : ""; } catch (e) { return ""; } };
   async function toolSession(blobs, tool, nm) {
-    toolFresh();
+    E.backTab = curTabName(); toolFresh();
     try { const bi = typeof BgEditor !== "undefined" && BgEditor.inst(); if (bi && bi.ov.classList.contains("dk")) bi.close(true); } catch (x) { }
     blobs = (Array.isArray(blobs) ? blobs : [blobs]).filter(Boolean); if (!blobs.length) return false;
     if (typeof ImgGen === "undefined" || !ImgGen.openSized) { toast("مولّد الصور غير متاح"); return false; }
