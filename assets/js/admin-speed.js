@@ -1,12 +1,12 @@
-/* «سرعة الموقع»: تحليل أداء موقعك بمحرّك Lighthouse نفسه الذي تعتمد عليه PageSpeed (الأداء، إمكانية الوصول، أفضل الممارسات، SEO) للجوال والحاسوب،
-   ثم «معالج الأخطاء»: قائمة بالبنود الراسبة مرتبة بعدد النقاط التي ستستردّها كل واحدة مع طريقة إصلاحها حتى تصل إلى 100.
-   طريقتان للفحص: (1) فحص مفصّل على خادم الموقع (Chromium حقيقي، نتيجة مطابقة لـPageSpeed ولا حصة عليه) (2) PageSpeed Insights من Google مباشرة (بلا إعداد؛ حصته المشتركة قد تنفد فيلزم مفتاح مجاني).
-   المنطق النقي (الملخص والوصفات) في speed-core.js؛ المشغّل scripts/speed-run.mjs + .github/workflows/speed-test.yml. */
+/* «سرعة الموقع»: تحليل أداء موقعك للجوال والحاسوب (الأداء، إمكانية الوصول، أفضل الممارسات، SEO) ثم «معالج الأخطاء»:
+   قائمة بالبنود الراسبة مرتبة بعدد النقاط التي ستستردّها كل واحدة مع طريقة إصلاحها حتى تصل إلى 100.
+   الواجهة بلا خيارات: تختار الأداة الطريقة داخلياً — فحص مفصّل على خادم الموقع، وإن لم يتوفر تنتقل تلقائياً لخدمة احتياطية.
+   المنطق النقي في speed-core.js؛ المشغّل scripts/speed-run.mjs + .github/workflows/speed-test.yml. */
 const AdminSpeed = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
-  const K_HIST = "alyssum_speed_hist", K_KEY = "alyssum_psi_key", K_ENG = "alyssum_speed_eng", K_URL = "alyssum_speed_url";
+  const K_HIST = "alyssum_speed_hist", K_URL = "alyssum_speed_url";
   const CAT_N = { performance: "الأداء", accessibility: "إمكانية الوصول", "best-practices": "أفضل الممارسات", seo: "SEO" };
   const DEV_N = { mobile: "الجوال", desktop: "الحاسوب" };
   const S = { url: "", dev: "both", eng: "", busy: false, prog: "", err: "", res: null, cur: "mobile", cat: "all", open: {}, full: false, runId: 0, loaded: false };
@@ -16,7 +16,6 @@ const AdminSpeed = (() => {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   function ghCfg() { try { const c = typeof GH !== "undefined" && GH.cfg ? GH.cfg() : null; return c && c.token && c.token !== "php" && c.owner ? c : null; } catch (e) { return null; } }
-  function engines() { return [{ id: "server", n: "فحص مفصّل بخادم الموقع", d: "Chromium حقيقي على خادم، نتيجة مطابقة لـPageSpeed وبلا حصة. يستغرق 2–4 دقائق.", ok: !!ghCfg() }, { id: "psi", n: "PageSpeed Insights من Google", d: "فوري تقريباً (30–60 ثانية) بلا إعداد. حصته المشتركة قد تنفد، فأضف مفتاحاً مجانياً إن ظهر خطأ الحصة.", ok: true }]; }
 
   async function loadRecipes() {
     if (S.loaded || typeof SpeedCore === "undefined") return; S.loaded = true;
@@ -25,16 +24,16 @@ const AdminSpeed = (() => {
 
   /* ───────── المحرّك 1: Lighthouse على خادم الموقع (Actions) ───────── */
   async function runServer(url, devices, say, token) {
-    const c = ghCfg(); if (!c) throw Object.assign(new Error("الفحص المفصّل يحتاج ربط النشر في الإعدادات. استعمل PageSpeed Insights."), { code: "NOGH" });
+    const c = ghCfg(); if (!c) throw Object.assign(new Error("الفحص غير متاح حالياً"), { code: "NOGH", fallback: true });
     const id = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main";
     const H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" }, path = "assets/speed/" + id + ".json.gz", t0 = Date.now();
-    say("تشغيل الفحص على الخادم…");
-    const r = await fetch(api + "/actions/workflows/speed-test.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ ref: br, inputs: { url, devices, locale: "ar", id } }) }).catch(e => { console.warn("speed dispatch", e); throw new Error("تعذّر الاتصال بخدمة الفحص المفصّل (" + (e && e.message || "شبكة") + "). أعد تحميل اللوحة (Ctrl+Shift+R) ثم حاول، أو جرّب PageSpeed Insights."); });
-    if (r.status !== 204) throw new Error(r.status === 404 ? "خدمة الفحص المفصّل غير مفعّلة في موقعك — حدّث اللوحة أو استعمل PageSpeed Insights" : r.status === 403 || r.status === 401 ? "رمز النشر بلا صلاحية تشغيل الفحص" : "فشل تشغيل الفحص (" + r.status + ")");
+    say("جارٍ تجهيز الفحص…");
+    const r = await fetch(api + "/actions/workflows/speed-test.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ ref: br, inputs: { url, devices, locale: "ar", id } }) }).catch(e => { console.warn("speed dispatch", e); throw Object.assign(new Error("تعذّر الاتصال بالخدمة"), { fallback: true }); });
+    if (r.status !== 204) throw Object.assign(new Error("فشل تشغيل الفحص (" + r.status + ")"), { fallback: true });
     let n = 0;
     while (Date.now() - t0 < 600000) {
       await sleep(6000); if (S.runId !== token) throw new Error("أُلغي الفحص"); n++;
-      say("الخادم يفحص موقعك… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 2–4 دقائق)");
+      say("جارٍ فحص موقعك… " + Math.round((Date.now() - t0) / 1000) + " ثانية");
       const g = await fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(br) + "&t=" + Date.now(), { headers: H }).catch(() => null);
       if (g && g.ok) {
         const m = await g.json(); if (!m.content && m.sha) { const bl = await fetch(api + "/git/blobs/" + m.sha, { headers: H }).then(x => x.ok ? x.json() : null).catch(() => null); if (bl && bl.content) m.content = bl.content; }     // ملف أكبر من 1MB لا تعيده واجهة المحتويات
@@ -48,7 +47,7 @@ const AdminSpeed = (() => {
       if (n % 3 === 0) {       // اكتشاف فشل التشغيل مبكراً بدل انتظار المهلة كلها
         const rr = await fetch(api + "/actions/workflows/speed-test.yml/runs?event=workflow_dispatch&per_page=5&t=" + Date.now(), { headers: H }).then(x => x.ok ? x.json() : null).catch(() => null);
         const bad = rr && (rr.workflow_runs || []).find(w => Date.parse(w.created_at) >= t0 - 15000 && w.conclusion === "failure");
-        if (bad) throw new Error("فشل تشغيل الفحص على الخادم — أعد المحاولة أو استعمل PageSpeed Insights");
+        if (bad) throw new Error("تعذّر إكمال الفحص — أعد المحاولة بعد قليل");
       }
     }
     throw new Error("انتهت المهلة قبل اكتمال الفحص — حاول مجدداً");
@@ -56,17 +55,17 @@ const AdminSpeed = (() => {
 
   /* ───────── المحرّك 2: PageSpeed Insights ───────── */
   async function runPsi(url, devices, say, token) {
-    const out = { v: 1, url, at: new Date().toISOString(), devices: {} }, key = rd(K_KEY, "");
+    const out = { v: 1, url, at: new Date().toISOString(), devices: {} }, key = "";
     for (const d of (devices === "both" ? ["mobile", "desktop"] : [devices])) {
       if (S.runId !== token) throw new Error("أُلغي الفحص");
-      say("PageSpeed يفحص نسخة " + DEV_N[d] + "… (قد يستغرق دقيقة)");
+      say("جارٍ فحص نسخة " + DEV_N[d] + "…");
       const q = "url=" + encodeURIComponent(url) + "&strategy=" + d + "&locale=ar" + CAT_N_KEYS().map(c => "&category=" + c.toUpperCase().replace("-", "_")).join("") + (key ? "&key=" + encodeURIComponent(key) : "");
       let j = null, st = 0;
       for (let a = 0; a < 2 && !(j && j.lighthouseResult); a++) {
-        try { const r = await fetch("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?" + q); st = r.status; j = await r.json().catch(() => null); } catch (e) { j = { error: { code: 0, message: "تعذّر الاتصال بـPageSpeed — تحقق من اتصالك" } }; }
+        try { const r = await fetch("https://www.googleapis.com/pagespeedonline/v5/runPagespeed?" + q); st = r.status; j = await r.json().catch(() => null); } catch (e) { j = { error: { code: 0, message: "تعذّر الاتصال بالخدمة — تحقق من اتصالك" } }; }
         if (st === 429) break; if (!j || j.error) await sleep(2500);
       }
-      if (st === 429) out.devices[d] = { error: { code: "PSI_QUOTA", message: key ? "تجاوزت حصة مفتاحك في PageSpeed. حاول لاحقاً." : "حصة PageSpeed المشتركة منتهية الآن. أضف مفتاحاً مجانياً (من Google Cloud ← PageSpeed Insights API) في الحقل أدناه، أو استعمل الفحص المفصّل." } };
+      if (st === 429) out.devices[d] = { error: { code: "PSI_QUOTA", message: "الخدمة مشغولة الآن، حاول بعد دقائق قليلة." } };
       else out.devices[d] = SpeedCore.fromPsi(d, j);
     }
     return out;
@@ -77,11 +76,11 @@ const AdminSpeed = (() => {
   async function run() {
     const url = SpeedCore.normUrl(S.url); if (!url) return toast("اكتب رابط موقعك الصحيح (يبدأ بـ https://)");
     if (/^https?:\/\/(localhost|127\.|10\.|192\.168\.)/i.test(url)) return toast("الفحص يعمل على المواقع المنشورة فقط، لا على عناوين محلية");
-    await loadRecipes(); S.url = url; wr(K_URL, url); wr(K_ENG, S.eng);
+    await loadRecipes(); S.url = url; wr(K_URL, url);
     const token = ++S.runId; S.busy = true; S.err = ""; S.res = null; S.full = false; S.prog = "جارٍ التجهيز…"; draw();
     const say = t => { if (S.runId === token) { S.prog = t; const e = $("sp-prog"); if (e) e.textContent = t; } };
     try {
-      const res = S.eng === "server" ? await runServer(url, S.dev, say, token) : await runPsi(url, S.dev, say, token);
+      let res; try { res = await runServer(url, S.dev, say, token); } catch (e) { if (!e.fallback) throw e; res = await runPsi(url, S.dev, say, token); }
       if (S.runId !== token) return;
       S.res = res; S.cur = res.devices.mobile ? "mobile" : "desktop"; S.cat = "all"; S.open = {};
       pushHist(res);
@@ -132,11 +131,9 @@ html.white .sp-box,html.white .sp-eng label,html.white .sp-iss{border-color:#d2d
     return `<details class="sp-iss" data-id="${esc(it.id)}"${open}><summary>${pts}<b>${esc(it.title)}</b>${cats}</summary>${body}</details>`;
   }
   function draw() {
-    const host = $("sp-app"); if (!host) return; const engs = engines(); if (!S.eng || !(engs.find(e => e.id === S.eng) || {}).ok) S.eng = (engs[0].ok ? engs[0].id : "psi");
+    const host = $("sp-app"); if (!host) return;
     const form = `<div class="sp-box"><h3>⚡ تحليل سرعة موقعك</h3><div class="sp-row"><input id="sp-url" class="sp-in" type="url" dir="ltr" placeholder="https://example.com" value="${esc(S.url)}"><div class="sp-seg" id="sp-dev">${[["both", "الاثنان"], ["mobile", "الجوال"], ["desktop", "الحاسوب"]].map(([v, n]) => `<button data-sp="dev" data-v="${v}" class="${S.dev === v ? "on" : ""}">${n}</button>`).join("")}</div><button class="sp-btn" data-sp="run" ${S.busy ? "disabled" : ""}>${S.busy ? "جارٍ الفحص…" : "حلّل الآن"}</button></div>
-<div class="sp-eng">${engs.map(e => `<label class="${S.eng === e.id ? "on" : ""} ${e.ok ? "" : "off"}"><input type="radio" name="sp-eng" data-sp="eng" value="${e.id}" ${S.eng === e.id ? "checked" : ""} ${e.ok ? "" : "disabled"}><span><b>${esc(e.n)}</b>${e.ok ? "" : " (يحتاج ربط النشر)"}<small>${esc(e.d)}</small></span></label>`).join("")}</div>
-${S.eng === "psi" ? `<div class="sp-row" style="margin-top:.6rem"><input id="sp-key" class="sp-in" dir="ltr" placeholder="مفتاح PageSpeed API (اختياري — يحميك من نفاد الحصة)" value="${esc(rd(K_KEY, ""))}"></div>` : ""}
-<p class="sp-hint">يعمل الفحص بإعدادات PageSpeed نفسها: جوال (Moto G Power، 4G بطيء، معالج أبطأ 4 مرات) وحاسوب. افحص الموقع بعد النشر، ولا تفتح نافذة أخرى في الجهاز أثناء الفحص.</p></div>`;
+<p class="sp-hint">يستغرق الفحص من دقيقة إلى بضع دقائق بحسب حجم الصفحة. افحص الموقع بعد النشر.</p></div>`;
     const prog = S.busy ? `<div class="sp-box sp-prog"><span class="sp-spin"></span><span id="sp-prog">${esc(S.prog)}</span><button class="sp-btn g" data-sp="cancel" style="margin-inline-start:auto">إلغاء</button></div>` : "";
     const err = S.err ? `<div class="sp-err" role="alert">${esc(S.err)}</div>` : "";
     let out = "";
@@ -181,9 +178,8 @@ ${S.eng === "psi" ? `<div class="sp-row" style="margin-top:.6rem"><input id="sp-
   async function copy(t) { try { await navigator.clipboard.writeText(t); toast("✓ نُسخ"); } catch (e) { const a = document.createElement("textarea"); a.value = t; document.body.appendChild(a); a.select(); try { document.execCommand("copy"); toast("✓ نُسخ"); } catch (x) { toast("تعذّر النسخ"); } a.remove(); } }
   function onClick(e) {
     const el = e.target.closest("[data-sp]"); if (!el) return; const a = el.dataset.sp;
-    if (a === "run") { S.url = ($("sp-url") || {}).value || S.url; const k = $("sp-key"); if (k) wr(K_KEY, k.value.trim()); run(); }
+    if (a === "run") { S.url = ($("sp-url") || {}).value || S.url; run(); }
     else if (a === "dev") { S.dev = el.dataset.v; S.url = ($("sp-url") || {}).value || S.url; draw(); }
-    else if (a === "eng") { S.eng = el.value; S.url = ($("sp-url") || {}).value || S.url; draw(); }
     else if (a === "cancel") { S.runId++; S.busy = false; S.err = "أُلغي الفحص"; draw(); }
     else if (a === "cur") { S.cur = el.dataset.v; S.cat = "all"; S.full = false; draw(); }
     else if (a === "cat") { S.cat = el.dataset.v; draw(); }
@@ -196,7 +192,7 @@ ${S.eng === "psi" ? `<div class="sp-row" style="margin-top:.6rem"><input id="sp-
   function bind() { const r = $("sp-app"); if (!r || r._b) return; r._b = 1; r.addEventListener("click", onClick); r.addEventListener("toggle", e => { const d = e.target.closest && e.target.closest(".sp-iss"); if (d) S.open[S.cur + d.dataset.id] = d.open; }, true); r.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "sp-url") { e.preventDefault(); S.url = e.target.value; run(); } }); }
   async function render() {
     css(); const host = $("speed-content"); if (!host) return; if (!$("sp-app")) host.innerHTML = '<div id="sp-app"></div>'; bind();
-    if (!S.url) S.url = rd(K_URL, "") || (location.origin.startsWith("http") ? location.origin + "/" : ""); S.eng = S.eng || rd(K_ENG, ""); await loadRecipes(); if (!S.busy) draw();
+    if (!S.url) S.url = rd(K_URL, "") || (location.origin.startsWith("http") ? location.origin + "/" : ""); await loadRecipes(); if (!S.busy) draw();
   }
   function init() {
     const w = () => { if (typeof Admin === "undefined" || !Admin.tab || Admin._spWrapped) return; const orig = Admin.tab;

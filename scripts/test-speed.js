@@ -41,7 +41,7 @@ const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u =
     Admin.tab("speed");
   });
   await p.waitForSelector("#sp-url");
-  ok("الخيار الافتراضي: الفحص المفصّل لأن النشر مربوط", await p.evaluate(() => document.querySelector('input[name=sp-eng]:checked').value === "server"));
+  ok("لا خيارات محرّك ولا أسماء خدمات في الواجهة", !(await p.$("input[name=sp-eng]")) && !(await p.$("#sp-key")) && !/PageSpeed|Lighthouse|GitHub|Google/i.test(await p.evaluate(() => document.getElementById("sp-app").textContent)));
   /* رابط خاطئ ومحلي */
   await p.fill("#sp-url", "javascript:alert(1)"); await p.click("[data-sp=run]"); ok("رابط خطير يُرفض بلا نداء", gh.dispatch === null && (await p.evaluate(() => window.__toasts)).length >= 1);
   await p.fill("#sp-url", "http://localhost:3000/"); await p.click("[data-sp=run]"); ok("عنوان محلي يُرفض", gh.dispatch === null && (await p.evaluate(() => window.__toasts)).length >= 2);
@@ -58,12 +58,15 @@ const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u =
   ok("نسخ تقرير الأخطاء نصّ كامل بالإصلاحات", await p.evaluate(() => /# تقرير سرعة الموقع/.test(window.__clip) && /الإصلاح:/.test(window.__clip) && /\+\d/.test(window.__clip)));
   await p.click("[data-sp=full]"); await p.waitForSelector("#sp-full .lh-root, #sp-full .lh-vars, #sp-full [class*=lh-]", { timeout: 20000 }); ok("التقرير الكامل يُعرض بعارضه الرسمي", await p.evaluate(() => document.querySelectorAll("#sp-full .lh-audit").length > 10));
   ok("XSS: لا عناصر script داخل النتيجة", !(await p.$("#sp-app script")));
-  /* إخفاق التشغيل ونفاد الحصة */
-  gh.mode = "nowf"; await p.click("[data-sp=run]"); await p.waitForSelector(".sp-err", { timeout: 15000 }); ok("الخدمة غير مفعّلة تُشرح", /غير مفعّلة/.test(await p.textContent(".sp-err")));
-  await p.evaluate(() => { document.querySelector('input[name=sp-eng][value=psi]').click(); }); psi.status = 429; await p.click("[data-sp=run]"); await p.waitForSelector(".sp-err, .sp-box .sp-err", { timeout: 60000 });
-  ok("نفاد حصة PageSpeed يُشرح مع الحل", /حصة PageSpeed/.test(await p.textContent("#sp-app")) && /مفتاح/.test(await p.textContent("#sp-app")));
-  psi.status = 200; psi.n = 0; await p.fill("#sp-key", "KEY123"); await p.click("[data-sp=run]"); await p.waitForSelector(".sp-rings", { timeout: 60000 });
-  ok("PageSpeed: طلب لكل جهاز بالمفتاح واللغة", psi.n === 2 && /key=KEY123/.test(psi.last) && /locale=ar/.test(psi.last) && /category=BEST_PRACTICES/.test(psi.last), psi.last);
+  /* الخدمة غير مفعّلة ← انتقال تلقائي صامت للخدمة الاحتياطية */
+  gh.mode = "nowf"; psi.n = 0; await p.click("[data-sp=run]"); await p.waitForSelector(".sp-prog", { timeout: 5000 }); await p.waitForSelector(".sp-rings", { timeout: 60000 });
+  ok("الانتقال التلقائي للاحتياطية بنتيجة كاملة وبلا رسالة خطأ", psi.n === 2 && !(await p.$(".sp-err")), psi.n);
+  /* نفاد حصة الاحتياطية ← رسالة عامة بلا أسماء */
+  psi.status = 429; await p.click("[data-sp=run]"); await p.waitForSelector(".sp-err", { timeout: 60000 });
+  ok("رسالة الازدحام عامة", /مشغولة الآن/.test(await p.textContent("#sp-app")) && !/PageSpeed|Google|مفتاح/.test(await p.textContent("#sp-app")));
+  /* بلا ربط نشر ← احتياطي مباشرة */
+  psi.status = 200; psi.n = 0; await p.evaluate(() => { window.__gh = null; }); await p.click("[data-sp=run]"); await p.waitForSelector(".sp-rings", { timeout: 60000 });
+  ok("بلا ربط نشر: يعمل بالاحتياطي دون خطأ", psi.n === 2 && /locale=ar/.test(psi.last) && /category=BEST_PRACTICES/.test(psi.last), psi.last);
   ok("السجل يحفظ الفحوص", await p.evaluate(() => JSON.parse(localStorage.getItem("alyssum_speed_hist")).length >= 2));
   ok("بلا أخطاء JS", errs.length === 0, errs);
   await browser.close(); srv.close(); console.log(fails ? "فشل " + fails : "✓ كل اختبارات سرعة الموقع نجحت"); process.exit(fails ? 1 : 0);
