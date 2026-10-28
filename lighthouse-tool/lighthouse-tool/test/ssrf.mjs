@@ -1,3 +1,0 @@
-import {validateTarget, isPrivateIp} from '../src/security.mjs';
-const cases = ['http://localhost/', 'http://127.0.0.1/', 'http://127.1/', 'http://2130706433/', 'http://0x7f.0.0.1/', 'http://[::1]/', 'http://[::ffff:127.0.0.1]/', 'http://169.254.169.254/latest/meta-data/', 'http://10.0.0.5/', 'http://192.168.1.1/', 'http://172.20.0.1/', 'http://metadata.google.internal/', 'http://user:pw@example.com/', 'http://93.184.216.34:22/', 'file:///etc/passwd', 'javascript:alert(1)', 'http://93.184.216.34/', 'https://93.184.216.34/'];
-for (const c of cases) { try { const r = await validateTarget(c); console.log('ALLOWED ', c, '->', r); } catch (e) { console.log('blocked ', c, '|', e.code); } }

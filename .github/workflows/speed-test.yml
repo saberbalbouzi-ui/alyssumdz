@@ -1,0 +1,33 @@
+# يفحص سرعة صفحة بمحرّك Lighthouse (إعدادات PageSpeed) ويحفظ النتيجة مضغوطة في assets/speed/<id>.json.gz؛ تقرؤها لوحة «سرعة الموقع» ثم تحذفها.
+name: speed-test
+on:
+  workflow_dispatch:
+    inputs:
+      url: { description: "رابط الصفحة (http/https)", required: true }
+      devices: { description: "both | mobile | desktop", required: false, default: "both" }
+      locale: { description: "لغة التقرير", required: false, default: "ar" }
+      id: { description: "معرّف النتيجة", required: true }
+permissions:
+  contents: write
+concurrency: { group: speed-test, cancel-in-progress: false }
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Lighthouse
+        run: npm install --no-save --no-package-lock lighthouse@13 chrome-launcher@1
+      - name: Run
+        env: { SPEED_URL: "${{ inputs.url }}", SPEED_DEVICES: "${{ inputs.devices }}", SPEED_LOCALE: "${{ inputs.locale }}", SPEED_ID: "${{ inputs.id }}", CHROME_PATH: "/usr/bin/google-chrome" }
+        run: node scripts/speed-run.mjs
+      - name: Commit
+        env: { SPEED_ID: "${{ inputs.id }}" }
+        run: |
+          git config user.name "speed-bot"; git config user.email "speed-bot@users.noreply.github.com"
+          git add assets/speed
+          git commit -m "speed $SPEED_ID" || exit 0
+          for i in 1 2 3 4; do git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep $((i*3)); done
+          exit 1

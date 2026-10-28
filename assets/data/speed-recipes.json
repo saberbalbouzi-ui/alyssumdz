@@ -1,13 +1,13 @@
 {
  "render-blocking-insight": [
-  "أجّل أو أزل الـ CSS/JS الذي يحجب أول رسم: استخدم next/script بـ strategy=\"lazyOnload\"، وضمّن الـ CSS الحرج، واحذف الأنماط غير المستعملة من <head>.",
-  "Différez ou retirez le CSS/JS qui bloque le premier rendu : next/script avec strategy=\"lazyOnload\", CSS critique en ligne, retirez les feuilles inutiles du <head>.",
-  "Defer or remove the CSS/JS that blocks first paint: next/script with strategy=\"lazyOnload\", inline critical CSS, drop unused stylesheets from <head>."
+  "أجّل أو أزل الـ CSS/JS الذي يحجب أول رسم: أضف defer لسكربتات <head>، وضمّن الـ CSS الحرج داخل الصفحة، واحذف الأنماط غير المستعملة.",
+  "Différez ou retirez le CSS/JS qui bloque le premier rendu : defer sur les scripts du <head>, CSS critique en ligne, retirez les feuilles inutiles.",
+  "Defer or remove the CSS/JS that blocks first paint: add defer to <head> scripts, inline critical CSS, drop unused stylesheets."
  ],
  "lcp-discovery-insight": [
-  "اجعل صورة LCP تُكتشف مبكراً: أضف priority إلى next/image، ولا تستعمل loading=\"lazy\" عليها، وضعها في HTML الأولي لا عبر JavaScript.",
-  "Faites découvrir l’image LCP tôt : priority sur next/image, pas de loading=\"lazy\", image présente dans le HTML initial et non injectée par JavaScript.",
-  "Make the LCP image discoverable early: add priority to next/image, never loading=\"lazy\" on it, and keep it in the initial HTML instead of injecting it with JavaScript."
+  "اجعل صورة LCP تُكتشف مبكراً: أضف <link rel=\"preload\" as=\"image\" fetchpriority=\"high\"> لها في <head>، ولا تستعمل loading=\"lazy\" عليها، وضعها في HTML الأولي لا عبر JavaScript.",
+  "Faites découvrir l’image LCP tôt : <link rel=\"preload\" as=\"image\" fetchpriority=\"high\"> dans le <head>, jamais loading=\"lazy\" dessus, image présente dans le HTML initial.",
+  "Make the LCP image discoverable early: add <link rel=\"preload\" as=\"image\" fetchpriority=\"high\"> in <head>, never loading=\"lazy\" on it, and keep it in the initial HTML."
  ],
  "lcp-breakdown-insight": [
   "افحص أي مرحلة تبطئ LCP (استجابة الخادم، تأخر تحميل المورد، تأخر الرسم) وعالج الأطول أولاً.",
@@ -15,14 +15,14 @@
   "Find which phase slows LCP (server response, resource load delay, render delay) and fix the longest one first."
  ],
  "image-delivery-insight": [
-  "حوّل الصور إلى WebP/AVIF وبحجم العرض الفعلي: next/image مع sizes صحيحة، وجودة 75-80، وتجنب رفع صور أكبر من اللازم.",
-  "Passez les images en WebP/AVIF à la taille affichée : next/image avec sizes corrects, qualité 75-80, pas d’images surdimensionnées.",
-  "Serve WebP/AVIF at the displayed size: next/image with correct sizes, quality 75-80, no oversized uploads."
+  "حوّل الصور إلى WebP وبحجم العرض الفعلي: استعمل srcset/sizes، وجودة 75-80، ولا ترفع صوراً أكبر من اللازم.",
+  "Convertissez les images en WebP à la taille d’affichage réelle : srcset/sizes, qualité 75-80, évitez les images surdimensionnées.",
+  "Serve WebP images at their displayed size: srcset/sizes, quality 75-80, and avoid oversized uploads."
  ],
  "cache-insight": [
-  "فعّل التخزين المؤقت الطويل للأصول الثابتة: Cache-Control: public, max-age=31536000, immutable على ملفات بأسماء مُبصَّمة (hash). على Vercel يتم ذلك تلقائياً لـ /_next/static.",
-  "Activez un cache long pour les ressources statiques : Cache-Control: public, max-age=31536000, immutable sur des fichiers à nom haché. Vercel le fait pour /_next/static.",
-  "Enable long caching for static assets: Cache-Control: public, max-age=31536000, immutable on hashed filenames. Vercel does this for /_next/static."
+  "فعّل التخزين المؤقت الطويل للأصول الثابتة (Cache-Control طويل على ملفات بأسماء مُبصَّمة). على GitHub Pages المدة 10 دقائق ثابتة، فضع Cloudflare أمام الموقع لرفعها.",
+  "Activez un cache long pour les ressources statiques (Cache-Control long sur des fichiers à nom versionné). GitHub Pages fixe 10 min : placez Cloudflare devant le site.",
+  "Enable long caching for static assets (long Cache-Control on versioned filenames). GitHub Pages fixes it at 10 min; put Cloudflare in front to raise it."
  ],
  "document-latency-insight": [
   "قلّل زمن استجابة المستند: أزل إعادة التوجيه، فعّل الضغط (gzip/br)، واستعمل التخزين المؤقت أو التوليد الساكن (SSG/ISR) بدل الحساب عند كل طلب.",
@@ -45,9 +45,9 @@
   "Drop legacy polyfills and transforms: set a modern browserslist and update libraries that ship ES5."
  ],
  "font-display-insight": [
-  "أضف font-display: swap للخطوط، أو استعمل next/font الذي يضبطها ويستضيف الخط محلياً.",
-  "Ajoutez font-display: swap, ou utilisez next/font qui l’applique et auto-héberge la police.",
-  "Add font-display: swap, or use next/font which sets it and self-hosts the font."
+  "أضف font-display: swap للخطوط، واستضف الخط محلياً بدل Google Fonts.",
+  "Ajoutez font-display: swap aux polices et hébergez-les localement plutôt que sur Google Fonts.",
+  "Add font-display: swap to fonts and self-host them instead of Google Fonts."
  ],
  "forced-reflow-insight": [
   "تجنب قراءة أبعاد DOM (offsetHeight، getBoundingClientRect) بعد تعديله مباشرة؛ اجمع القراءات ثم الكتابات.",
@@ -60,9 +60,9 @@
   "Shorten critical request chains: preconnect to needed origins and load resources in parallel instead of in sequence."
  ],
  "third-parties-insight": [
-  "حمّل سكربتات الطرف الثالث (تحليلات، بكسل، دردشة) متأخراً: next/script بـ lazyOnload أو Partytown، وأزل ما لا تحتاجه.",
-  "Chargez les scripts tiers (analytics, pixel, chat) tardivement : next/script lazyOnload ou Partytown, supprimez l’inutile.",
-  "Load third-party scripts (analytics, pixels, chat) late: next/script lazyOnload or Partytown, and remove what you do not need."
+  "حمّل سكربتات الطرف الثالث (تحليلات، بكسل، دردشة) متأخراً بعد أول تفاعل أو بعد load، وأزل ما لا تحتاجه.",
+  "Chargez les scripts tiers (analytics, pixels, chat) après le premier événement utilisateur ou load, et retirez l’inutile.",
+  "Load third-party scripts (analytics, pixels, chat) after first interaction or load, and remove what you don’t need."
  ],
  "cls-culprits-insight": [
   "حدّد أبعاداً ثابتة (width/height أو aspect-ratio) للصور والإعلانات والبانرات، وخصّص مساحة للمحتوى الذي يظهر متأخراً.",
@@ -75,9 +75,9 @@
   "Find elements that move during load and reserve their space; do not insert content above existing content except on user input."
  ],
  "unsized-images": [
-  "أضف width وheight (أو aspect-ratio في CSS) لكل <img>. next/image يطلبهما تلقائياً.",
-  "Ajoutez width et height (ou aspect-ratio en CSS) à chaque <img>. next/image les exige.",
-  "Add width and height (or CSS aspect-ratio) to every <img>. next/image requires them."
+  "أضف width وheight (أو aspect-ratio في CSS) لكل <img> كي لا تتحرك الصفحة أثناء التحميل.",
+  "Ajoutez width et height (ou aspect-ratio en CSS) à chaque <img> pour éviter les décalages.",
+  "Add width and height (or CSS aspect-ratio) to every <img> to avoid layout shifts."
  ],
  "viewport-insight": [
   "أضف <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> وتأكد من أن التفاعل لا يتأخر 300ms.",
@@ -95,14 +95,14 @@
   "Break up long tasks and defer non-essential work after the interaction (startTransition, requestIdleCallback)."
  ],
  "unminified-css": [
-  "فعّل تصغير CSS في البناء (يتم افتراضياً في next build) وتأكد أن ما يُخدَّم هو نسخة الإنتاج.",
-  "Activez la minification CSS au build (par défaut avec next build) et servez bien la version de production.",
-  "Minify CSS in the build (default in next build) and make sure the production build is what you serve."
+  "صغّر ملفات CSS قبل النشر (أزل المسافات والتعليقات).",
+  "Minifiez les fichiers CSS avant publication (espaces et commentaires).",
+  "Minify CSS files before publishing (whitespace and comments)."
  ],
  "unminified-javascript": [
-  "صغّر JavaScript في البناء، وتأكد أنك لا تخدم نسخة التطوير. next build يفعل ذلك افتراضياً.",
-  "Minifiez le JavaScript au build et ne servez pas la version de développement. next build le fait par défaut.",
-  "Minify JavaScript at build time and do not serve the development build. next build does this by default."
+  "صغّر ملفات JavaScript قبل النشر.",
+  "Minifiez les fichiers JavaScript avant publication.",
+  "Minify JavaScript files before publishing."
  ],
  "unused-css-rules": [
   "أزل CSS غير المستعمل: Tailwind مع content صحيح، وتجنب استيراد مكتبات CSS كاملة.",
@@ -110,9 +110,9 @@
   "Remove unused CSS: Tailwind with a correct content config, and avoid importing whole CSS libraries."
  ],
  "unused-javascript": [
-  "قسّم الشيفرة: next/dynamic للمكونات الثقيلة، واستورد من المكتبات بالدوال لا بالحزمة كاملة، وأزل الاعتماديات غير المستعملة.",
-  "Découpez le code : next/dynamic pour les composants lourds, imports ciblés, retirez les dépendances inutiles.",
-  "Split code: next/dynamic for heavy components, import functions instead of whole packages, remove unused dependencies."
+  "قسّم الشيفرة: حمّل الأجزاء الثقيلة عند الحاجة فقط، وأزل السكربتات غير المستعملة في الصفحة.",
+  "Découpez le code : chargez les parties lourdes à la demande et retirez les scripts inutilisés de la page.",
+  "Split code: load heavy parts on demand and remove scripts the page doesn’t use."
  ],
  "total-byte-weight": [
   "قلّل الحجم الكلي (أقل من 1.6MB): اضغط الصور، أزل الخطوط والمكتبات الزائدة، وفعّل brotli.",
@@ -145,9 +145,9 @@
   "Raise contrast to at least 4.5:1 for normal text (3:1 for large text): darken the text or lighten the background."
  ],
  "html-has-lang": [
-  "أضف lang و dir على <html>، مثل lang=\"ar\" dir=\"rtl\". في Next.js يكون ذلك في app/layout.tsx.",
-  "Ajoutez lang et dir sur <html>, par ex. lang=\"ar\" dir=\"rtl\". Dans Next.js : app/layout.tsx.",
-  "Add lang and dir on <html>, e.g. lang=\"ar\" dir=\"rtl\". In Next.js that is app/layout.tsx."
+  "أضف lang و dir على <html>، مثل lang=\"ar\" dir=\"rtl\".",
+  "Ajoutez lang et dir sur <html>, par ex. lang=\"ar\" dir=\"rtl\".",
+  "Add lang and dir to <html>, e.g. lang=\"ar\" dir=\"rtl\"."
  ],
  "image-alt": [
   "أضف alt وصفياً لكل صورة معبّرة، و alt=\"\" للصور الزخرفية.",
@@ -170,9 +170,9 @@
   "Associate every form field with a <label for> or an aria-label."
  ],
  "document-title": [
-  "أضف <title> فريداً ووصفياً لكل صفحة (metadata.title في Next.js).",
-  "Ajoutez un <title> unique et descriptif à chaque page (metadata.title dans Next.js).",
-  "Add a unique, descriptive <title> to every page (metadata.title in Next.js)."
+  "أضف <title> فريداً ووصفياً لكل صفحة (من SEO داخل إعدادات الصفحة أو المنتج).",
+  "Ajoutez un <title> unique et descriptif à chaque page (SEO dans les réglages de la page ou du produit).",
+  "Add a unique, descriptive <title> to every page (SEO box in page or product settings)."
  ],
  "heading-order": [
   "رتّب العناوين بلا قفز (h1 ثم h2 ثم h3).",
@@ -200,9 +200,9 @@
   "Serve every resource over HTTPS and redirect HTTP to HTTPS."
  ],
  "csp-xss": [
-  "أضف سياسة Content-Security-Policy صارمة (headers() في next.config).",
-  "Ajoutez une Content-Security-Policy stricte (headers() dans next.config).",
-  "Add a strict Content-Security-Policy (headers() in next.config)."
+  "أضف سياسة Content-Security-Policy صارمة عبر ترويسة الخادم (Cloudflare Transform Rules أو ملف _headers). على GitHub Pages لا تتاح الترويسات مباشرة.",
+  "Ajoutez une Content-Security-Policy stricte via les en-têtes serveur (Cloudflare Transform Rules). GitHub Pages n’expose pas les en-têtes.",
+  "Add a strict Content-Security-Policy via server headers (Cloudflare Transform Rules). GitHub Pages doesn’t expose headers."
  ],
  "inspector-issues": [
   "افتح تبويب Issues في DevTools وعالج المشاكل المعروضة.",
@@ -215,9 +215,9 @@
   "Display images at their natural aspect ratio: no distorting width/height, use object-fit."
  ],
  "meta-description": [
-  "أضف وصفاً تعريفياً فريداً (120-160 حرفاً) لكل صفحة: metadata.description في Next.js.",
-  "Ajoutez une meta description unique (120-160 caractères) : metadata.description dans Next.js.",
-  "Add a unique meta description (120-160 characters): metadata.description in Next.js."
+  "أضف وصفاً تعريفياً فريداً (120-160 حرفاً) لكل صفحة من صندوق SEO في إعدادات الصفحة أو المنتج.",
+  "Ajoutez une meta description unique (120-160 caractères) via le bloc SEO des réglages de la page ou du produit.",
+  "Add a unique meta description (120-160 chars) from the SEO box in page or product settings."
  ],
  "http-status-code": [
   "تأكد أن الصفحة تعيد 200 وليس 4xx/5xx.",
@@ -240,9 +240,9 @@
   "Remove noindex from the meta tag or X-Robots-Tag if the page should be indexed."
  ],
  "robots-txt": [
-  "أصلح ملف robots.txt (app/robots.ts في Next.js) ليكون صالحاً ويُعيد 200.",
-  "Corrigez robots.txt (app/robots.ts dans Next.js) : valide et renvoyant 200.",
-  "Fix robots.txt (app/robots.ts in Next.js) so it is valid and returns 200."
+  "أصلح ملف robots.txt ليكون صالحاً ويُعيد 200 (يولّده seo.py تلقائياً بعد النشر).",
+  "Corrigez robots.txt pour qu’il soit valide et renvoie 200 (généré par seo.py après publication).",
+  "Fix robots.txt so it is valid and returns 200 (generated by seo.py after publish)."
  ],
  "canonical": [
   "أضف رابطاً canonical واحداً صحيحاً (alternates.canonical في metadata).",

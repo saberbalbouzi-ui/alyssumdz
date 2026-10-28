@@ -23,7 +23,7 @@ const ALLOW = [
   /^git\/(blobs|trees|commits)(\/[0-9a-f]{40})?$/,
   /^git\/refs\/heads\/[A-Za-z0-9._\/-]+$/,
   /^git\/ref\/heads\/[A-Za-z0-9._\/-]+$/,
-  /^actions\/workflows\/(clone-page|release)\.yml\/(dispatches|runs)$/,       // قائمة بيضاء: لا تشغيل لسكربتات الأسرار (publish-site/social-publish) من الحساب المشترك
+  /^actions\/workflows\/(clone-page|release|speed-test)\.yml\/(dispatches|runs)$/,       // قائمة بيضاء: لا تشغيل لسكربتات الأسرار (publish-site/social-publish) من الحساب المشترك
   /^actions\/runs(\/[0-9]+)?$/,
   /^(commits|branches)(\/[A-Za-z0-9._\/-]+)?$/,
 ];

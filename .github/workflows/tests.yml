@@ -72,6 +72,7 @@ jobs:
       - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-speed.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-appstore.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-ui.js
       - run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-dev-ui.js
