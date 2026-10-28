@@ -530,18 +530,6 @@ ${o.extra ? o.extra + "\n" : ""}
     if (!b) { b = document.createElement("button"); b.id = "pbx-spec-cancel"; b.type = "button"; b.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:100001;padding:.65rem 1.3rem;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:rgba(220,60,60,.38);color:#fff;font:800 14px inherit;font-family:inherit;cursor:pointer;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.2),0 6px 16px rgba(0,0,0,.35)"; b.onclick = () => { cancel(); b.textContent = "… جارٍ الإلغاء"; }; document.body.appendChild(b); }
     b.textContent = label || "⛔ إلغاء التوليد";
   }
-  /* نسخة التنزيل: محتوى العميل وحده (العناصر والنصوص والصور والتخطيط)؛ تُحذف بيانات المنصة الداخلية (برومبتات الصور وسجلّ التوليد والخطة والإصلاحات) */
-  function cleanForExport(P) {
-    const c = JSON.parse(JSON.stringify(P)), m = c.specMeta; delete c.specMeta;
-    if (m && m.product) c.specMeta = { product: m.product };
-    return c;
-  }
-  function downloadProject() {
-    const P = typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page; if (!P) return false;
-    const data = JSON.stringify({ format: FORMAT + "-project", v: 1, saved: new Date().toISOString(), page: cleanForExport(P) }, null, 1);
-    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: "application/json" })); a.download = (P.slug || "design") + ".project.json"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); return true;
-  }
-
   /* ───────────── تحويل عكسي: صفحة المطوّر ← JSON بطبقات (alyssum-design/1) دون المساس بالصفحة ─────────────
      يعمل على عناصر الأقسام الحرّة (قماش `scaled`: ناتج «صفحة هبوط ذكية» وتصميم الطبقات والنسخ)؛ ما سواها يُسجَّل في skipped. */
   function fromPage(P) {
@@ -752,7 +740,6 @@ ${o.extra ? o.extra + "\n" : ""}
 <button data-sp="full" style="${btn};background:rgba(198,254,23,.28)" title="يولّد التصميم ثم الصور ويفتحه جاهزاً">🚀 توليد كامل (التصميم + الصور)</button>
 <button data-sp="imgs" style="${btn};background:rgba(255,255,255,.1)" title="يولّد الصور الفارغة في الصفحة المفتوحة (ما سبق توليده بنفس الوصف يُؤخذ من الكاش بلا استهلاك)">🖼️ توليد الصور الفارغة</button>
 <button data-sp="stop" id="sp-stop" style="${btn};background:rgba(220,60,60,.3);display:none">⛔ إلغاء</button>
-<button data-sp="dl" style="${btn};background:rgba(255,255,255,.1)" title="ينزّل الصفحة المفتوحة في المطوّر كملف مشروع JSON كامل (عناصر وطبقات وتأثيرات)">⬇ تنزيل المشروع (JSON)</button>
 <button data-sp="tolayers" style="${btn};background:rgba(255,255,255,.1)" title="يحوّل الصفحة المفتوحة في المطوّر (مثلاً ناتج «صفحة هبوط ذكية») إلى JSON بطبقات دون تغيير الصفحة نفسها">📤 تحويل الصفحة المفتوحة إلى JSON بطبقات</button>
 <button data-sp="sample" style="${btn};background:rgba(255,255,255,.1)">تجربة بنموذج جاهز</button>
 <label style="${btn};background:rgba(255,255,255,.1)">📁 رفع ملف JSON<input id="sp-file" type="file" accept=".json,application/json,text/plain" hidden></label></div>
@@ -792,7 +779,6 @@ ${o.extra ? o.extra + "\n" : ""}
       else if (a === "check") check();
       else if (a === "stop") { cancel(); say("… جارٍ الإلغاء"); }
       else if (a === "tolayers") { const r = exportLayered(); if (!r) say("افتح صفحة في المطوّر أولاً.", true); else if (!r.ok) say("❌ " + esc(r.error || "تعذّر التحويل"), true); else { $q("sp-json").value = r.json; check(); say(`✅ حُوّلت الصفحة إلى <b>${r.count.sections}</b> قسماً و<b>${r.count.layers}</b> طبقة ونُزّل الملف؛ الصفحة نفسها لم تتغيّر.` + (r.skipped.length ? `<div style="margin-top:6px;opacity:.85">ما لم يُحوَّل (${r.skipped.length}): ${r.skipped.slice(0, 6).map(esc).join("، ")}</div>` : "")); } }
-      else if (a === "dl") { say(downloadProject() ? "✅ نُزّل ملف المشروع." : "افتح صفحة في المطوّر أولاً.", !PBApp.E.page); }
       else if (a === "gen") { b.disabled = true; $q("sp-stop").style.display = ""; say("⏳ جارٍ توليد التصميم…"); try { const o0 = opts(), j = await attachImported(await generate(o0), o0.imp); $q("sp-json").value = JSON.stringify(j, null, 2); check(); } catch (er) { say(er.code === "CANCEL" ? "أُلغي." : "❌ " + esc(er.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message + " — لم يضِع شيء، يمكنك إعادة المحاولة"), er.code !== "CANCEL"); } b.disabled = false; $q("sp-stop").style.display = "none"; }
       else if (a === "imgs") { b.disabled = true; $q("sp-stop").style.display = ""; try { const r = await fillImages({ say: m => say(m), dw: (S.res && S.res.page.width) || 1080 }); say(r.cancelled ? `أُلغي (اكتمل ${r.done} من ${r.total}).` : r.total ? `✅ جاهزة ${r.done} من ${r.total} صورة` + (r.cached ? ` (منها ${r.cached} من الكاش)` : "") + (r.failed ? ` — تعذّرت ${r.failed}${r.error ? ": " + esc(r.error) : ""}` : "") : "لا توجد صور فارغة في الصفحة المفتوحة.", !!r.failed && !r.done); } catch (er) { say("❌ " + esc(er.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : er.code === "OFF" ? "التوليد الذكي معطّل في الإعدادات" : er.message), true); } b.disabled = false; $q("sp-stop").style.display = "none"; }
       else if (a === "full") {
@@ -812,5 +798,5 @@ ${o.extra ? o.extra + "\n" : ""}
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, cleanForExport, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, bookmarklet, fromPayload, importProduct, pickImage, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, bookmarklet, fromPayload, importProduct, pickImage, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
 })();
