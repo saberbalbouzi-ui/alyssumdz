@@ -530,9 +530,15 @@ ${o.extra ? o.extra + "\n" : ""}
     if (!b) { b = document.createElement("button"); b.id = "pbx-spec-cancel"; b.type = "button"; b.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:100001;padding:.65rem 1.3rem;border-radius:14px;border:1px solid rgba(255,255,255,.3);background:rgba(220,60,60,.38);color:#fff;font:800 14px inherit;font-family:inherit;cursor:pointer;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.2),0 6px 16px rgba(0,0,0,.35)"; b.onclick = () => { cancel(); b.textContent = "… جارٍ الإلغاء"; }; document.body.appendChild(b); }
     b.textContent = label || "⛔ إلغاء التوليد";
   }
+  /* نسخة التنزيل: محتوى العميل وحده (العناصر والنصوص والصور والتخطيط)؛ تُحذف بيانات المنصة الداخلية (برومبتات الصور وسجلّ التوليد والخطة والإصلاحات) */
+  function cleanForExport(P) {
+    const c = JSON.parse(JSON.stringify(P)), m = c.specMeta; delete c.specMeta;
+    if (m && m.product) c.specMeta = { product: m.product };
+    return c;
+  }
   function downloadProject() {
     const P = typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page; if (!P) return false;
-    const data = JSON.stringify({ format: FORMAT + "-project", v: 1, saved: new Date().toISOString(), page: JSON.parse(JSON.stringify(P)) }, null, 1);
+    const data = JSON.stringify({ format: FORMAT + "-project", v: 1, saved: new Date().toISOString(), page: cleanForExport(P) }, null, 1);
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: "application/json" })); a.download = (P.slug || "design") + ".project.json"; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); return true;
   }
 
@@ -806,5 +812,5 @@ ${o.extra ? o.extra + "\n" : ""}
     });
     $q("sp-file").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; $q("sp-json").value = await f.text(); check(); });
   }
-  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, bookmarklet, fromPayload, importProduct, pickImage, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
+  return { FORMAT, SAMPLE, DOC, RULES, prompt, validate, lint, toSections, toPage, fromPage, exportLayered, cleanForExport, generate, fillImages, emptyImages, open, _t_upload: uploadDataImages, parseProduct, bookmarklet, fromPayload, importProduct, pickImage, attachImported, impInfo, autofix, planPrompt, cleanPlan, cancel, NOREF, assetKey, costLog: () => lsGet(LK, []), cacheState: cache,  TYPES, ENTR, CONT, SHAPES, ICONS };
 })();

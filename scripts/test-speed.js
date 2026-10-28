@@ -74,7 +74,7 @@ const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u =
   ok("التأجيل يحتاج مراجعة وغير محدد افتراضياً", !(await p.evaluate(() => { const c = document.querySelector('[data-sp=fxsel][data-id=defer]'); return c ? c.checked : false; })));
   await p.click("[data-sp=fxapply]"); await p.waitForSelector(".sp-fx .sp-fix, .sp-fx .sp-err", { timeout: 20000 });
   const w = (await p.evaluate(() => window.__puts)).filter((x) => x.pth === "index.html");
-  ok("نُشرت الصفحة معدّلة", w.length === 1 && /aria-label="إغلاق"/.test(w[0].txt) && /loading="lazy"/.test(w[0].txt) && /aspect-ratio:\d+\/\d+/.test(w[0].txt) && /lang="ar"/.test(w[0].txt), w[0] && w[0].txt);
+  ok("نُشرت الصفحة معدّلة", w.length === 1 && /aria-label="إغلاق"/.test(w[0].txt) && /loading="lazy"/.test(w[0].txt) && !/aspect-ratio/.test(w[0].txt) && /lang="ar"/.test(w[0].txt), w[0] && w[0].txt);
   ok("زر التراجع يظهر بعد التطبيق", !!(await p.$("[data-sp=fxundo]")));
   await p.click("[data-sp=fxundo]"); await p.waitForFunction(() => window.__puts.filter((x) => x.pth === "index.html").length === 2, null, { timeout: 15000 });
   ok("التراجع يعيد الصفحة الأصلية", await p.evaluate(() => { const h = window.__puts.filter((x) => x.pth === "index.html"); return !/aria-label|loading=/.test(h[1].txt) && h[0].txt !== h[1].txt; }));

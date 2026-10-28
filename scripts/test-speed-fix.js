@@ -41,11 +41,13 @@ ok("lazy+decoding على الثالثة والخامسة", /<img src="x\/b\.jpg"
 ok("LCP: preload بالمسار الجديد WebP بعد الاستبدال؟ (preload يحمل الأصل ثم يُستبدل بالتالي)", /rel="preload" as="image" href="assets\/img\/hero(-opt\.webp|\.png)"/.test(h), h.match(/<link rel="preload"[^>]*>/));
 ok("aspect-ratio للصورة المقاسة", /<img src="a1\.png" style="aspect-ratio:400\/300"/.test(h));
 ok("preconnect بعد <head> مع crossorigin للخطوط", /<head>\n<link rel="preconnect" href="https:\/\/cdn\.x\.com">\n<link rel="preconnect" href="https:\/\/fonts\.gstatic\.com" crossorigin>/.test(h) || /preconnect[^>]*gstatic[^>]*crossorigin/.test(h), h.slice(0, 400));
-ok("font-display", /font-display:swap\}/.test(h) && /Cairo&display=swap/.test(h));
+ok("font-display", /font-display:swap\}/.test(h) && /Cairo&amp;display=swap/.test(h));
 ok("defer على app.js وليس b.js", /<script defer src="assets\/js\/app\.js">/.test(h) && /<script src="assets\/js\/b\.js" async>/.test(h));
 ok("noscript والسكربت الداخلي لم يُمسّا", h.includes('<noscript><img src="ns.png"></noscript>') && h.includes("var s='<img src=\"in.png\"><button>✕</button>'"));
 ok("fixCss: لا يكرّر ولا يكسر", F.fixCss("@font-face{font-family:A;src:url(a)}@font-face{font-display:block;src:url(b)}").n === 1 && F.fixCss("@font-face{a:b;}").css === "@font-face{a:b;font-display:swap}");
 ok("pagePath", F.pagePath("https://s.dz/") === "index.html" && F.pagePath("https://s.dz/lp/x/") === "lp/x/index.html" && F.pagePath("https://s.dz/shop.html") === "shop.html" && F.pagePath("https://s.dz/p/a") === "p/a/index.html");
 ok("localCss: محلي فقط مع أصل الموقع", JSON.stringify(F.localCss(HTML, "https://shop.dz")) === '["assets/css/s.css"]', F.localCss(HTML, "https://shop.dz"));
 ok("AUDIT_FIX", F.AUDIT_FIX["button-name"] === "a11y" && F.AUDIT_FIX["offscreen-images"] === "lazy");
+{ const t = F._t.fontdisplay('<head><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cairo&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=X" rel="stylesheet"></head>', {}, {});
+  ok("fontdisplay: لا يمسّ preconnect ولا الرابط الذي فيه display أصلاً", t.n === 1 && t.html.includes('rel="preconnect" href="https://fonts.googleapis.com"') && !/display=swap&display=swap|display=swap&amp;display=swap/.test(t.html) && /family=X&amp;display=swap/.test(t.html), t.html); }
 process.exit(fails ? 1 : 0);

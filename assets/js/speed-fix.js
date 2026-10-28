@@ -151,7 +151,7 @@
   function fontdisplay(h, lhr, ctx) {
     let n = 0, out = h; const css = (ctx && ctx.css) || {};
     const r1 = edit(out, /<style\b[^>]*>[\s\S]*?<\/style>/gi, t => { const o = /^<style\b[^>]*>/i.exec(t)[0], c = t.slice(o.length, t.length - 8), f = fixCss(c); return f.n ? o + f.css + "</style>" : null; }, maskC); out = r1.html; n += r1.n;
-    const r2 = edit(out, /<link\b[^>]*fonts\.googleapis\.com[^>]*>/gi, t => { const hr = getA(t, "href"); if (!hr || /[?&]display=/.test(hr)) return null; return setA(t, "href", hr + (hr.includes("?") ? "&" : "?") + "display=swap"); }, maskC); out = r2.html; n += r2.n;
+    const r2 = edit(out, /<link\b[^>]*fonts\.googleapis\.com[^>]*>/gi, t => { if (!/\brel\s*=\s*["']?stylesheet/i.test(t)) return null; const hr = getA(t, "href"); if (!hr || !/\/css2?\?/.test(hr) || /(?:[?&]|&amp;|&#38;)display=/i.test(hr)) return null; return setA(t, "href", hr + (hr.includes("?") ? "&amp;" : "?") + "display=swap"); }, maskC); out = r2.html; n += r2.n;
     return { html: out, n: n + Object.values(css).reduce((s, c) => s + fixCss(c).n, 0) };
   }
 
@@ -178,7 +178,7 @@
     { id: "alt", title: "النص البديل للصور", desc: "الصور الزخرفية داخل الروابط تُعلَّم زخرفية، وما له عنوان يأخذه نصاً بديلاً.", risk: "safe", run: alt, audits: ["image-alt", "role-img-alt"] },
     { id: "lcp", title: "أولوية تحميل صورة الشاشة الأولى", desc: "رفع أولوية أكبر صورة ظاهرة وتحميلها مسبقاً لتظهر أسرع.", risk: "safe", run: lcp, audits: ["prioritize-lcp-image", "lcp-lazy-loaded", "lcp-discovery-insight", "largest-contentful-paint-element"] },
     { id: "lazy", title: "تحميل الصور الكسول", desc: "تأخير الصور التي تحت الشاشة الأولى لتخفيف الحمل الأول.", risk: "safe", run: lazy, audits: ["offscreen-images"] },
-    { id: "ratio", title: "حجز مساحة الصور", desc: "إضافة نسبة أبعاد لكل صورة كي لا تقفز الصفحة أثناء التحميل (يحسّن CLS).", risk: "safe", run: ratio, audits: ["unsized-images", "cls-culprits-insight", "layout-shifts"] },
+    { id: "ratio", title: "حجز مساحة الصور", desc: "إضافة نسبة أبعاد لكل صورة كي لا تقفز الصفحة أثناء التحميل (يحسّن CLS). قد تتعارض مع تنسيق الصور في بعض التصاميم فراجع النتيجة.", risk: "review", run: ratio, audits: ["unsized-images", "cls-culprits-insight", "layout-shifts"] },
     { id: "preconnect", title: "اتصال مسبق بالنطاقات الخارجية", desc: "فتح الاتصال بالخطوط والمكتبات الخارجية قبل طلبها.", risk: "safe", run: preconnect, audits: ["uses-rel-preconnect", "network-dependency-tree-insight"] },
     { id: "fontdisplay", title: "عرض النص أثناء تحميل الخط", desc: "إضافة font-display:swap كي يظهر النص فوراً بخط بديل.", risk: "safe", run: fontdisplay, audits: ["font-display", "font-display-insight"] },
     { id: "webp", title: "تحويل الصور الثقيلة إلى WebP", desc: "إنشاء نسخة WebP أخف لصور PNG/JPG الكبيرة واستبدالها في هذه الصفحة (الأصلية تبقى كما هي).", risk: "safe", run: webp, audits: ["modern-image-formats", "uses-optimized-images", "image-delivery-insight", "uses-responsive-images", "total-byte-weight"] },
