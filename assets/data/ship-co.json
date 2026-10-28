@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-28T14:25:08.629Z",
+ "updated": "2026-10-28T14:39:04.305Z",
  "def": "yalidine",
  "companies": {
   "yalidine": {
@@ -281,7 +281,8 @@
      "home": 1200,
      "stop": 700
     }
-   }
+   },
+   "adj": 0
   }
  },
  "sup": {
