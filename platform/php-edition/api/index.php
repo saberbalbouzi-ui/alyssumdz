@@ -251,8 +251,14 @@ const UPD_PLACEHOLDER_NAME = 'اسم متجرك';
 const UPD_PLACEHOLDER_WA = '213000000000';
 function updAllowed(string $p): bool {
     if ($p === '' || strlen($p) > 120 || str_contains($p, '..') || $p[0] === '/' || strpbrk($p, "\\\0") !== false) return false;
-    if (in_array($p, ['admin.html', 'assets/css/style.css', 'api/index.php', 'p/_template/index.html'], true)) return true;
-    return (bool)preg_match('#^assets/js/(app|api|agent|agent-brain)\.js$#', $p);
+    if (in_array($p, ['admin.html', 'order-embed.html', 'api/index.php', 'p/_template/index.html'], true)) return true;
+    /* ملفات اللوحة المشتركة فقط (مرآة shared-files.json): أنواع محددة داخل مجلدات الأصول؛ ما سواها (بيانات الموقع، الإعدادات، api/_data، .github) مرفوض */
+    if (preg_match('#^assets/js/(vendor/[A-Za-z0-9._-]+\.(js|txt)|[A-Za-z0-9._-]+\.js)$#', $p)) return true;
+    if (preg_match('#^assets/css/[A-Za-z0-9._-]+\.css$#', $p)) return true;
+    if (preg_match('#^assets/(img|fonts)/[A-Za-z0-9._/-]+\.(webp|jpe?g|png|svg|woff2?|txt|md)$#', $p)) return true;
+    if (preg_match('#^assets/pages/templates/[A-Za-z0-9._/-]+\.(json|css|jpe?g|webp)$#', $p)) return true;
+    if (preg_match('#^assets/tools/[A-Za-z0-9._-]+\.html$#', $p)) return true;
+    return in_array($p, ['assets/data/ctl-help.json', 'assets/data/speed-recipes.json', 'assets/data/admin-help.json', 'assets/data/voice-lexicon.json', 'assets/data/stickers.json', 'assets/data/tool-titles.json', 'assets/data/tools-catalog.json'], true);
 }
 function updConfig(): ?array {
     $f = __DIR__ . '/update-config.php'; $k = __DIR__ . '/update-key.pem';

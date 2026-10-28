@@ -33,6 +33,7 @@ if a.update:
     for rel in keep:                                            # «dir/**» = كل ملفات المجلد (مكتبة الملصقات)
         if rel.endswith("/**"): exp += sorted(str(f.relative_to(ROOT)) for f in (ROOT / rel[:-3]).rglob("*") if f.is_file())
         else: exp.append(rel)
+    exp = [r for r in exp if not r.startswith("scripts/")]      # سكربتات البناء تخص مستودع GitHub لا استضافة PHP (والمحدِّث يرفضها)
     for rel in exp:
         src = tmp / rel if (tmp / rel).exists() else ROOT / rel     # ما لا يدخل الحزمة الأساسية (قوالب، صور) يُنسخ من المصدر
         if not src.exists(): print("تحذير: ملف مشترك مفقود في المصدر:", rel); continue
@@ -221,10 +222,11 @@ if a.target == "php":
 (OUT / "version.json").write_text(json.dumps({"version": (ROOT / "VERSION").read_text(encoding="utf-8").strip()}) + "\n", encoding="utf-8")
 
 # فحص التسرّب
-bad = [r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", "0559", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s not in ("demo", "test")]
+bad = [r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", r"(?<!\d)0559(?!\d)", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s not in ("demo", "test")]
 # مفتاح منصة SaaS العام (anon/publishable) مقصود وجوده في عميل المنصة؛ يُستثنى من الفحص بنصّه الحرفي فقط
 _sk = re.search(r'SAAS_KEY:\s*"(sb_publishable_[^"]+)"', (ROOT / "assets/js/config.js").read_text(encoding="utf-8"))
-ALLOWED_BRAND = re.compile(r"alyssum\s+(?:api|الذكية|الذكي)" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
+# أسماء أدوات المنصة (Alyssum 3D Pack Studio، Box Designer…) و«تقنية Alyssum» وبصمات داخلية في ملفات PDF/المصادقة الثنائية ليست هوية متجرك
+ALLOWED_BRAND = re.compile(r"alyssum\s+(?:api|الذكية|الذكي|3d|box|mockup|studio|pack)|تقنية\s+alyssum|\(alyssum\)|issuer:\s*\"alyssum\"|\"alyssum \"\s*\+" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
 hits = []
 for f in OUT.rglob("*"):
     if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:
