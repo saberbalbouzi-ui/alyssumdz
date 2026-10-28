@@ -2042,6 +2042,7 @@ const PhoneDZ = {
     const W = "#pb-embed-wrap ";
     let c = "";
     const vars = Object.keys(V).map(k=>{ const v = ok(oc[k]); return v ? "--o-"+V[k]+":"+v+";" : ""; }).join("");
+    { const z = Number(oc.z); if(isFinite(z) && oc.z !== "" && oc.z != null && z !== 100) c += "#pb-embed-wrap{zoom:"+(Math.max(70,Math.min(150,z))/100)+"}"; }
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += "#pb-embed-wrap{--o-r:"+Math.max(0,Math.min(60,r))+"px}";
     { const bw = Number(oc.bw); if(isFinite(bw) && oc.bw !== "" && oc.bw != null) c += W+".order-wide,"+W+"#order-form{border-width:"+Math.max(0,Math.min(40,bw))+"px!important}"; }
     if(vars) c += "#pb-embed-wrap{"+vars+"}html.pb-embed{--gold:"+(ok(oc.ac)||"#16a34a")+"}";
