@@ -80,7 +80,7 @@ const AdminSpeed = (() => {
     const token = ++S.runId; S.busy = true; S.err = ""; S.res = null; S.full = false; S.prog = "جارٍ التجهيز…"; draw();
     const say = t => { if (S.runId === token) { S.prog = t; const e = $("sp-prog"); if (e) e.textContent = t; } };
     try {
-      let res; try { res = await runServer(url, S.dev, say, token); } catch (e) { if (!e.fallback) throw e; res = await runPsi(url, S.dev, say, token); }
+      let res; try { res = await runServer(url, S.dev, say, token); } catch (e) { if (!e.fallback) throw e; S.why = (e && (e.code || "") + " " + (e && e.message || "")).trim(); console.warn("speed: الفحص المفصّل غير متاح", S.why); res = await runPsi(url, S.dev, say, token); res.why = S.why; }
       if (S.runId !== token) return;
       S.res = res; S.cur = res.devices.mobile ? "mobile" : "desktop"; S.cat = "all"; S.open = {};
       pushHist(res);
@@ -166,7 +166,7 @@ html.white .sp-box,html.white .sp-eng label,html.white .sp-iss{border-color:#d2d
     } catch (e) { box.textContent = e.message; }
   }
   function reportText(sm, only) {
-    const lines = ["# تقرير سرعة الموقع", "الرابط: " + (S.res.url || ""), "الجهاز: " + DEV_N[S.cur], "الدرجات: " + SpeedCore.CATS.filter(c => sm.scores[c] != null).map(c => CAT_N[c] + " " + sm.scores[c]).join(" | "), ""];
+    const lines = ["# تقرير سرعة الموقع", "الرابط: " + (S.res.url || ""), ...(S.res.why ? ["ملاحظة تقنية: " + S.res.why] : []), "الجهاز: " + DEV_N[S.cur], "الدرجات: " + SpeedCore.CATS.filter(c => sm.scores[c] != null).map(c => CAT_N[c] + " " + sm.scores[c]).join(" | "), ""];
     if (!only) lines.push("المقاييس: " + sm.metrics.map(m => m.acronym + " " + (m.value || "—")).join(" | "), "");
     for (const i of sm.issues.filter(x => !only || x.id === only)) {
       lines.push("## " + i.title + " (" + i.id + ") — " + (i.diagnostic ? "تشخيص" : "+" + i.pointsGain + " نقطة") + " — " + Object.keys(i.categories).map(c => CAT_N[c] || c).join("، "));

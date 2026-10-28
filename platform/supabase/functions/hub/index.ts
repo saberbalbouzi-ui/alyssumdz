@@ -107,7 +107,8 @@ async function handle(req) {
       method: req.method, headers: { Authorization: `Bearer ${tk}`, Accept: "application/vnd.github+json", "Content-Type": "application/json", "User-Agent": "hub", "X-GitHub-Api-Version": "2022-11-28" }, body: req.method === "GET" || !hasBody ? undefined : body,
     });
     const txt = await up.text();
-    return new Response(txt, { status: up.status, headers: { ...CORS, "Content-Type": up.headers.get("content-type") || "application/json" } });
+    const nob = up.status === 204 || up.status === 205 || up.status === 304;   // ردّ بلا جسم: Response بجسم فارغ مع 204 يرمي خطأ ويصير 500
+    return new Response(nob ? null : txt, { status: up.status, headers: { ...CORS, "Content-Type": up.headers.get("content-type") || "application/json" } });
   }
   return json({ error: "not_found" }, 404);
 }
