@@ -2140,13 +2140,23 @@ const PhoneDZ = {
   const boot = () => { scan(); try { new MutationObserver(later).observe(document.body, { childList: true, subtree: true }); } catch (e) { } };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
+/* السكربتات غير الحرجة (دبوس الموقع، مرآة الطلب، العروض الإضافية، السلة المتروكة، جرّب عليك، المنتج الرقمي): في صفحات المنتج تُحمَّل فوراً كما كانت، وفي غيرها (الرئيسية والمتجر) بعد اكتمال التحميل وخمول المتصفح أو عند أول تفاعل — فتخفّ مهام الإقلاع الطويلة */
+window.__lazyLoad = function(fn){
+  var done = 0, run = function(){ if(done) return; done = 1; try{ fn(); }catch(e){} };
+  if(document.getElementById("order-form") || document.querySelector(".order-wide,.pb-ofraw") || /[?&]embed=1/.test(location.search)) return run();
+  var ev = ["pointerdown","keydown","touchstart","wheel"], off = function(){ ev.forEach(function(n){ removeEventListener(n, hit, true); }); }, hit = function(){ off(); run(); };
+  ev.forEach(function(n){ addEventListener(n, hit, { capture:true, passive:true, once:true }); });
+  var idle = function(){ (window.requestIdleCallback || function(f){ setTimeout(f, 300); })(function(){ off(); run(); }, { timeout: 3500 }); };
+  document.readyState === "complete" ? idle() : addEventListener("load", function(){ setTimeout(idle, 1200); }, { once:true });
+};
 /* دبوس الموقع على الخريطة (اختياري) */
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=3'; s.async=true; document.head.appendChild(s); }catch(e){} })();
+__lazyLoad(function(){ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/geo-pin.js?v=3'; s.async=true; document.head.appendChild(s); });
 /* مرآة الطلب إلى المنصة (مراقبة الأسعار والمخزون) */
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/platform-order.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=2'; s.async=true; document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} }); document.head.appendChild(s); }catch(e){} })();
+__lazyLoad(function(){ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/platform-order.js?v=1'; s.async=false; document.head.appendChild(s); });
+document.addEventListener('upsell:ready',function(){ try{ Cart.render(); }catch(e){} });
+__lazyLoad(function(){ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/upsell.js?v=2'; s.async=true; document.head.appendChild(s); });
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
+__lazyLoad(function(){ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); });
 /* «جرّب عليك» لمنتجات الأزياء (يعمل فقط إن ضُبط PLATFORM_TRYON_KEY ومنتج فيه tryon:true) */
-(function(){ try{ if(/[?&]embed=1/.test(location.search)) return; var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/tryon-shopper.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/digital-checkout.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();
+if(!/[?&]embed=1/.test(location.search)) __lazyLoad(function(){ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/tryon-shopper.js?v=1'; s.async=true; document.head.appendChild(s); });
+__lazyLoad(function(){ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/digital-checkout.js?v=1'; s.async=false; document.head.appendChild(s); });
