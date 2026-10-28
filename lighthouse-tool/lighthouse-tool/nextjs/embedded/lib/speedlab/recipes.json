@@ -1,0 +1,282 @@
+{
+ "render-blocking-insight": [
+  "أجّل أو أزل الـ CSS/JS الذي يحجب أول رسم: استخدم next/script بـ strategy=\"lazyOnload\"، وضمّن الـ CSS الحرج، واحذف الأنماط غير المستعملة من <head>.",
+  "Différez ou retirez le CSS/JS qui bloque le premier rendu : next/script avec strategy=\"lazyOnload\", CSS critique en ligne, retirez les feuilles inutiles du <head>.",
+  "Defer or remove the CSS/JS that blocks first paint: next/script with strategy=\"lazyOnload\", inline critical CSS, drop unused stylesheets from <head>."
+ ],
+ "lcp-discovery-insight": [
+  "اجعل صورة LCP تُكتشف مبكراً: أضف priority إلى next/image، ولا تستعمل loading=\"lazy\" عليها، وضعها في HTML الأولي لا عبر JavaScript.",
+  "Faites découvrir l’image LCP tôt : priority sur next/image, pas de loading=\"lazy\", image présente dans le HTML initial et non injectée par JavaScript.",
+  "Make the LCP image discoverable early: add priority to next/image, never loading=\"lazy\" on it, and keep it in the initial HTML instead of injecting it with JavaScript."
+ ],
+ "lcp-breakdown-insight": [
+  "افحص أي مرحلة تبطئ LCP (استجابة الخادم، تأخر تحميل المورد، تأخر الرسم) وعالج الأطول أولاً.",
+  "Repérez la phase qui ralentit le LCP (serveur, chargement de la ressource, rendu) et corrigez la plus longue d’abord.",
+  "Find which phase slows LCP (server response, resource load delay, render delay) and fix the longest one first."
+ ],
+ "image-delivery-insight": [
+  "حوّل الصور إلى WebP/AVIF وبحجم العرض الفعلي: next/image مع sizes صحيحة، وجودة 75-80، وتجنب رفع صور أكبر من اللازم.",
+  "Passez les images en WebP/AVIF à la taille affichée : next/image avec sizes corrects, qualité 75-80, pas d’images surdimensionnées.",
+  "Serve WebP/AVIF at the displayed size: next/image with correct sizes, quality 75-80, no oversized uploads."
+ ],
+ "cache-insight": [
+  "فعّل التخزين المؤقت الطويل للأصول الثابتة: Cache-Control: public, max-age=31536000, immutable على ملفات بأسماء مُبصَّمة (hash). على Vercel يتم ذلك تلقائياً لـ /_next/static.",
+  "Activez un cache long pour les ressources statiques : Cache-Control: public, max-age=31536000, immutable sur des fichiers à nom haché. Vercel le fait pour /_next/static.",
+  "Enable long caching for static assets: Cache-Control: public, max-age=31536000, immutable on hashed filenames. Vercel does this for /_next/static."
+ ],
+ "document-latency-insight": [
+  "قلّل زمن استجابة المستند: أزل إعادة التوجيه، فعّل الضغط (gzip/br)، واستعمل التخزين المؤقت أو التوليد الساكن (SSG/ISR) بدل الحساب عند كل طلب.",
+  "Réduisez la latence du document : supprimez les redirections, activez la compression (gzip/br), utilisez cache ou génération statique (SSG/ISR).",
+  "Cut document latency: remove redirects, enable compression (gzip/br), use caching or static generation (SSG/ISR) instead of computing per request."
+ ],
+ "dom-size-insight": [
+  "قلّل حجم DOM (أقل من 1400 عنصراً): قسّم القوائم الطويلة، حمّل الأقسام السفلية عند الحاجة، وبسّط التداخل.",
+  "Réduisez le DOM (moins de 1400 nœuds) : paginez ou virtualisez les longues listes, chargez les sections basses à la demande.",
+  "Reduce DOM size (under 1,400 nodes): virtualize long lists, load below-the-fold sections on demand, flatten nesting."
+ ],
+ "duplicated-javascript-insight": [
+  "أزل الحزم المكررة في الـ bundle: وحّد إصدارات المكتبات (npm dedupe) وراجع الاستيراد لتجنب نسختين من المكتبة نفسها.",
+  "Supprimez les paquets dupliqués du bundle : unifiez les versions (npm dedupe) et vérifiez les imports.",
+  "Remove duplicated packages in the bundle: unify library versions (npm dedupe) and check imports for two copies of the same library."
+ ],
+ "legacy-javascript-insight": [
+  "أزل الـ polyfills والتحويلات القديمة: حدّد browserslist حديثاً، وحدّث المكتبات التي تشحن ES5.",
+  "Retirez les polyfills et transpilations inutiles : browserslist moderne, mettez à jour les libs qui livrent de l’ES5.",
+  "Drop legacy polyfills and transforms: set a modern browserslist and update libraries that ship ES5."
+ ],
+ "font-display-insight": [
+  "أضف font-display: swap للخطوط، أو استعمل next/font الذي يضبطها ويستضيف الخط محلياً.",
+  "Ajoutez font-display: swap, ou utilisez next/font qui l’applique et auto-héberge la police.",
+  "Add font-display: swap, or use next/font which sets it and self-hosts the font."
+ ],
+ "forced-reflow-insight": [
+  "تجنب قراءة أبعاد DOM (offsetHeight، getBoundingClientRect) بعد تعديله مباشرة؛ اجمع القراءات ثم الكتابات.",
+  "Évitez de lire des dimensions du DOM juste après l’avoir modifié ; regroupez lectures puis écritures.",
+  "Avoid reading layout (offsetHeight, getBoundingClientRect) right after changing the DOM; batch reads, then writes."
+ ],
+ "network-dependency-tree-insight": [
+  "اقصر سلاسل الطلبات الحرجة: استعمل preconnect للنطاقات الضرورية، وحمّل الموارد بالتوازي بدل تسلسلها.",
+  "Raccourcissez les chaînes de requêtes critiques : preconnect aux origines nécessaires, chargez en parallèle.",
+  "Shorten critical request chains: preconnect to needed origins and load resources in parallel instead of in sequence."
+ ],
+ "third-parties-insight": [
+  "حمّل سكربتات الطرف الثالث (تحليلات، بكسل، دردشة) متأخراً: next/script بـ lazyOnload أو Partytown، وأزل ما لا تحتاجه.",
+  "Chargez les scripts tiers (analytics, pixel, chat) tardivement : next/script lazyOnload ou Partytown, supprimez l’inutile.",
+  "Load third-party scripts (analytics, pixels, chat) late: next/script lazyOnload or Partytown, and remove what you do not need."
+ ],
+ "cls-culprits-insight": [
+  "حدّد أبعاداً ثابتة (width/height أو aspect-ratio) للصور والإعلانات والبانرات، وخصّص مساحة للمحتوى الذي يظهر متأخراً.",
+  "Fixez des dimensions (width/height ou aspect-ratio) pour images, pubs et bannières, et réservez l’espace du contenu tardif.",
+  "Set fixed dimensions (width/height or aspect-ratio) for images, ads and banners, and reserve space for late content."
+ ],
+ "layout-shifts": [
+  "ابحث عن العناصر التي تتحرك أثناء التحميل وثبّت مساحتها مسبقاً؛ لا تُدرج محتوى فوق ما هو معروض إلا بعد تفاعل المستخدم.",
+  "Trouvez les éléments qui bougent au chargement et réservez leur espace ; n’insérez pas de contenu au-dessus de l’existant hors interaction.",
+  "Find elements that move during load and reserve their space; do not insert content above existing content except on user input."
+ ],
+ "unsized-images": [
+  "أضف width وheight (أو aspect-ratio في CSS) لكل <img>. next/image يطلبهما تلقائياً.",
+  "Ajoutez width et height (ou aspect-ratio en CSS) à chaque <img>. next/image les exige.",
+  "Add width and height (or CSS aspect-ratio) to every <img>. next/image requires them."
+ ],
+ "viewport-insight": [
+  "أضف <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> وتأكد من أن التفاعل لا يتأخر 300ms.",
+  "Ajoutez <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">.",
+  "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">."
+ ],
+ "modern-http-insight": [
+  "فعّل HTTP/2 أو HTTP/3 على الخادم أو الـ CDN.",
+  "Activez HTTP/2 ou HTTP/3 sur le serveur ou le CDN.",
+  "Enable HTTP/2 or HTTP/3 on the server or CDN."
+ ],
+ "inp-breakdown-insight": [
+  "قسّم المهام الطويلة، وأجّل العمل غير الضروري بعد التفاعل (startTransition، requestIdleCallback).",
+  "Découpez les tâches longues et reportez le travail non essentiel après l’interaction (startTransition, requestIdleCallback).",
+  "Break up long tasks and defer non-essential work after the interaction (startTransition, requestIdleCallback)."
+ ],
+ "unminified-css": [
+  "فعّل تصغير CSS في البناء (يتم افتراضياً في next build) وتأكد أن ما يُخدَّم هو نسخة الإنتاج.",
+  "Activez la minification CSS au build (par défaut avec next build) et servez bien la version de production.",
+  "Minify CSS in the build (default in next build) and make sure the production build is what you serve."
+ ],
+ "unminified-javascript": [
+  "صغّر JavaScript في البناء، وتأكد أنك لا تخدم نسخة التطوير. next build يفعل ذلك افتراضياً.",
+  "Minifiez le JavaScript au build et ne servez pas la version de développement. next build le fait par défaut.",
+  "Minify JavaScript at build time and do not serve the development build. next build does this by default."
+ ],
+ "unused-css-rules": [
+  "أزل CSS غير المستعمل: Tailwind مع content صحيح، وتجنب استيراد مكتبات CSS كاملة.",
+  "Supprimez le CSS inutilisé : Tailwind avec le bon content, évitez d’importer des feuilles complètes.",
+  "Remove unused CSS: Tailwind with a correct content config, and avoid importing whole CSS libraries."
+ ],
+ "unused-javascript": [
+  "قسّم الشيفرة: next/dynamic للمكونات الثقيلة، واستورد من المكتبات بالدوال لا بالحزمة كاملة، وأزل الاعتماديات غير المستعملة.",
+  "Découpez le code : next/dynamic pour les composants lourds, imports ciblés, retirez les dépendances inutiles.",
+  "Split code: next/dynamic for heavy components, import functions instead of whole packages, remove unused dependencies."
+ ],
+ "total-byte-weight": [
+  "قلّل الحجم الكلي (أقل من 1.6MB): اضغط الصور، أزل الخطوط والمكتبات الزائدة، وفعّل brotli.",
+  "Réduisez le poids total (sous 1,6 Mo) : compressez les images, retirez polices et libs superflues, activez brotli.",
+  "Cut total weight (under 1.6 MB): compress images, drop extra fonts and libraries, enable brotli."
+ ],
+ "bootup-time": [
+  "قلّل زمن تنفيذ JavaScript: قسّم الحزم، أجّل السكربتات الثقيلة، وانقل العمل إلى Web Worker أو الخادم.",
+  "Réduisez le temps d’exécution JavaScript : découpage, report des scripts lourds, Web Worker ou serveur.",
+  "Reduce JavaScript execution time: split bundles, defer heavy scripts, move work to a Web Worker or the server."
+ ],
+ "mainthread-work-breakdown": [
+  "قلّل عمل الخيط الرئيسي: أقل JS، تخطيط وتنسيق أبسط، ومهام أقصر من 50ms.",
+  "Réduisez le travail du thread principal : moins de JS, styles et mises en page plus simples, tâches de moins de 50 ms.",
+  "Reduce main-thread work: less JS, simpler styles and layout, tasks under 50 ms."
+ ],
+ "cumulative-layout-shift": [
+  "ثبّت أبعاد الصور والإطارات والإعلانات، واحجز مساحة للمحتوى المتأخر، وتجنب الحركات التي تغيّر التخطيط.",
+  "Fixez les dimensions des images, iframes et pubs, réservez l’espace du contenu tardif, évitez les animations qui déplacent la mise en page.",
+  "Fix dimensions of images, iframes and ads, reserve space for late content, avoid animations that move layout."
+ ],
+ "button-name": [
+  "أعطِ كل <button> نصاً ظاهراً أو aria-label يصف وظيفته.",
+  "Donnez à chaque <button> un texte visible ou un aria-label décrivant son rôle.",
+  "Give every <button> visible text or an aria-label that describes what it does."
+ ],
+ "color-contrast": [
+  "ارفع التباين إلى 4.5:1 على الأقل للنص العادي (3:1 للنص الكبير): غمّق لون النص أو فتّح الخلفية.",
+  "Portez le contraste à 4,5:1 minimum pour le texte normal (3:1 pour le grand texte) : assombrissez le texte ou éclaircissez le fond.",
+  "Raise contrast to at least 4.5:1 for normal text (3:1 for large text): darken the text or lighten the background."
+ ],
+ "html-has-lang": [
+  "أضف lang و dir على <html>، مثل lang=\"ar\" dir=\"rtl\". في Next.js يكون ذلك في app/layout.tsx.",
+  "Ajoutez lang et dir sur <html>, par ex. lang=\"ar\" dir=\"rtl\". Dans Next.js : app/layout.tsx.",
+  "Add lang and dir on <html>, e.g. lang=\"ar\" dir=\"rtl\". In Next.js that is app/layout.tsx."
+ ],
+ "image-alt": [
+  "أضف alt وصفياً لكل صورة معبّرة، و alt=\"\" للصور الزخرفية.",
+  "Ajoutez un alt descriptif à chaque image informative et alt=\"\" aux images décoratives.",
+  "Add descriptive alt text to every meaningful image and alt=\"\" to decorative ones."
+ ],
+ "landmark-one-main": [
+  "لفّ المحتوى الرئيسي بعنصر <main> واحد فقط.",
+  "Enveloppez le contenu principal dans un seul élément <main>.",
+  "Wrap the primary content in exactly one <main> element."
+ ],
+ "link-name": [
+  "أعطِ كل رابط نصاً مفهوماً أو aria-label.",
+  "Donnez à chaque lien un texte explicite ou un aria-label.",
+  "Give every link readable text or an aria-label."
+ ],
+ "label": [
+  "اربط كل حقل إدخال بـ <label for> أو aria-label.",
+  "Associez chaque champ à un <label for> ou un aria-label.",
+  "Associate every form field with a <label for> or an aria-label."
+ ],
+ "document-title": [
+  "أضف <title> فريداً ووصفياً لكل صفحة (metadata.title في Next.js).",
+  "Ajoutez un <title> unique et descriptif à chaque page (metadata.title dans Next.js).",
+  "Add a unique, descriptive <title> to every page (metadata.title in Next.js)."
+ ],
+ "heading-order": [
+  "رتّب العناوين بلا قفز (h1 ثم h2 ثم h3).",
+  "Ordonnez les titres sans saut (h1, h2, h3).",
+  "Order headings without skipping levels (h1, h2, h3)."
+ ],
+ "meta-viewport": [
+  "أضف meta viewport ولا تعطّل التكبير (user-scalable=no).",
+  "Ajoutez le meta viewport sans bloquer le zoom (user-scalable=no).",
+  "Add the viewport meta and do not disable zoom (user-scalable=no)."
+ ],
+ "target-size": [
+  "اجعل أهداف اللمس 24×24px على الأقل مع مسافة كافية بينها.",
+  "Donnez aux cibles tactiles au moins 24×24 px avec un espacement suffisant.",
+  "Make touch targets at least 24×24 px with enough spacing."
+ ],
+ "errors-in-console": [
+  "افتح الـ Console وأصلح الأخطاء المسجلة (طلبات 404، استثناءات JS، مشاكل CORS).",
+  "Ouvrez la console et corrigez les erreurs (404, exceptions JS, CORS).",
+  "Open the console and fix the logged errors (404s, JS exceptions, CORS)."
+ ],
+ "is-on-https": [
+  "اخدم كل الموارد عبر HTTPS وأعد توجيه HTTP إلى HTTPS.",
+  "Servez toutes les ressources en HTTPS et redirigez HTTP vers HTTPS.",
+  "Serve every resource over HTTPS and redirect HTTP to HTTPS."
+ ],
+ "csp-xss": [
+  "أضف سياسة Content-Security-Policy صارمة (headers() في next.config).",
+  "Ajoutez une Content-Security-Policy stricte (headers() dans next.config).",
+  "Add a strict Content-Security-Policy (headers() in next.config)."
+ ],
+ "inspector-issues": [
+  "افتح تبويب Issues في DevTools وعالج المشاكل المعروضة.",
+  "Ouvrez l’onglet Issues de DevTools et traitez les problèmes listés.",
+  "Open the Issues tab in DevTools and address what it lists."
+ ],
+ "image-aspect-ratio": [
+  "اعرض الصور بنسبتها الأصلية: لا تمدد width وheight معاً بنسب مختلفة، واستعمل object-fit.",
+  "Affichez les images dans leur ratio d’origine : pas de width/height déformants, utilisez object-fit.",
+  "Display images at their natural aspect ratio: no distorting width/height, use object-fit."
+ ],
+ "meta-description": [
+  "أضف وصفاً تعريفياً فريداً (120-160 حرفاً) لكل صفحة: metadata.description في Next.js.",
+  "Ajoutez une meta description unique (120-160 caractères) : metadata.description dans Next.js.",
+  "Add a unique meta description (120-160 characters): metadata.description in Next.js."
+ ],
+ "http-status-code": [
+  "تأكد أن الصفحة تعيد 200 وليس 4xx/5xx.",
+  "Vérifiez que la page renvoie 200 et non 4xx/5xx.",
+  "Make sure the page returns 200, not 4xx/5xx."
+ ],
+ "link-text": [
+  "استبدل نصوص الروابط العامة (\"اضغط هنا\") بنصوص تصف الوجهة.",
+  "Remplacez les libellés génériques (« cliquez ici ») par des textes décrivant la destination.",
+  "Replace generic link text (\"click here\") with text that describes the destination."
+ ],
+ "crawlable-anchors": [
+  "استعمل <a href=\"...\"> حقيقية بدل onClick على عناصر أخرى.",
+  "Utilisez de vrais <a href=\"...\"> plutôt qu’un onClick sur d’autres éléments.",
+  "Use real <a href=\"...\"> elements instead of onClick on other elements."
+ ],
+ "is-crawlable": [
+  "أزل noindex من meta أو X-Robots-Tag إن أردت فهرسة الصفحة.",
+  "Retirez noindex du meta ou de X-Robots-Tag si la page doit être indexée.",
+  "Remove noindex from the meta tag or X-Robots-Tag if the page should be indexed."
+ ],
+ "robots-txt": [
+  "أصلح ملف robots.txt (app/robots.ts في Next.js) ليكون صالحاً ويُعيد 200.",
+  "Corrigez robots.txt (app/robots.ts dans Next.js) : valide et renvoyant 200.",
+  "Fix robots.txt (app/robots.ts in Next.js) so it is valid and returns 200."
+ ],
+ "canonical": [
+  "أضف رابطاً canonical واحداً صحيحاً (alternates.canonical في metadata).",
+  "Ajoutez un lien canonical unique et correct (alternates.canonical dans metadata).",
+  "Add one correct canonical link (alternates.canonical in metadata)."
+ ],
+ "hreflang": [
+  "أصلح قيم hreflang لتكون رموز لغة صالحة وتشير إلى صفحات موجودة.",
+  "Corrigez hreflang : codes de langue valides et pages existantes.",
+  "Fix hreflang values so they are valid language codes pointing to existing pages."
+ ],
+ "font-size": [
+  "استعمل خطاً 12px أو أكبر في معظم النص.",
+  "Utilisez une taille de police d’au moins 12 px pour la majorité du texte.",
+  "Use at least 12 px font size for most of the text."
+ ],
+ "agent-accessibility-tree": [
+  "نظّف شجرة إمكانية الوصول: عناصر تفاعلية بأدوار وأسماء صحيحة، وأزل aria-hidden عن العناصر المهمة وتجنب التفاف div بلا معنى.",
+  "Assainissez l’arbre d’accessibilité : éléments interactifs avec rôle et nom, pas d’aria-hidden sur l’important, moins de div sans sens.",
+  "Clean up the accessibility tree: interactive elements with proper roles and names, no aria-hidden on important content, fewer meaningless div wrappers."
+ ],
+ "llms-txt": [
+  "أضف /llms.txt يصف موقعك للوكلاء (app/llms.txt/route.ts).",
+  "Ajoutez /llms.txt décrivant votre site pour les agents (app/llms.txt/route.ts).",
+  "Add /llms.txt describing your site for agents (app/llms.txt/route.ts)."
+ ],
+ "ard-schema": [
+  "أضف ملف اكتشاف موارد الوكلاء بالمخطط المطلوب وتأكد من صحته.",
+  "Ajoutez le fichier de découverte de ressources pour agents avec le schéma attendu.",
+  "Add the agent resource discovery file with the expected schema and validate it."
+ ],
+ "webmcp-registered-tools": [
+  "سجّل أدوات WebMCP التي يستعملها الوكلاء إن كان موقعك يوفر إجراءات.",
+  "Enregistrez les outils WebMCP utilisés par les agents si votre site expose des actions.",
+  "Register the WebMCP tools agents use if your site exposes actions."
+ ]
+}

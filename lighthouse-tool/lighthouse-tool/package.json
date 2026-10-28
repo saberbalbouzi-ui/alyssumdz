@@ -1,0 +1,9 @@
+{
+  "name": "lighthouse-service",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=20"},
+  "scripts": {"start": "node src/server.mjs", "test": "node test/ssrf.mjs"},
+  "dependencies": {"chrome-launcher": "^1.2.0", "lighthouse": "^13.6.0"}
+}
