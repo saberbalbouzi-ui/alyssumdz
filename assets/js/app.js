@@ -47,7 +47,7 @@ function shipQuote(w, commune, type, sub, co, pf){
     if(v !== null && v >= 0){ base = v; flatFree = v === 0; }
   } else if(src !== "zones"){
     const key = src || __SHIPDEF;
-    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0) base = v; }
+    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = Number(__SHIPCO[key].adj) || 0; if(aj) base = Math.max(0, base - aj); } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
   }
   if(src !== "free"){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
     const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
