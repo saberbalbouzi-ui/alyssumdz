@@ -37,7 +37,9 @@ const AdminSpeed = (() => {
       say("الخادم يفحص موقعك… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 2–4 دقائق)");
       const g = await fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(br) + "&t=" + Date.now(), { headers: H }).catch(() => null);
       if (g && g.ok) {
-        const m = await g.json(); const bin = Uint8Array.from(atob(String(m.content || "").replace(/\s/g, "")), ch => ch.charCodeAt(0));
+        const m = await g.json(); if (!m.content && m.sha) { const bl = await fetch(api + "/git/blobs/" + m.sha, { headers: H }).then(x => x.ok ? x.json() : null).catch(() => null); if (bl && bl.content) m.content = bl.content; }     // ملف أكبر من 1MB لا تعيده واجهة المحتويات
+        if (!m.content) throw new Error("تعذّر قراءة نتيجة الفحص");
+        const bin = Uint8Array.from(atob(String(m.content || "").replace(/\s/g, "")), ch => ch.charCodeAt(0));
         const res = await SpeedCore.gunzipJson(bin);
         fetch(api + "/contents/" + path, { method: "DELETE", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ message: "speed: تنظيف", sha: m.sha, branch: br }) }).catch(() => { });
         return res;
