@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar"><head><meta name="robots" content="noindex"><!--route-early--><script>try{var m=/\/p\/([a-z0-9-]+)\/?/i.exec(location.pathname);if(m&&self===top&&!/[?&](noroute|embed|preview)=/.test(location.search)){var x=new XMLHttpRequest();x.open("GET","../../assets/js/data.js",false);x.send();if(x.status===200){var p=(new Function(x.responseText+";return PRODUCTS"))().filter(function(q){return q.slug===m[1]})[0];if(p&&p.route){var g=p.route,v="";if(p.ab&&p.ab.b){var k="alyssum_ab_"+p.slug,a="";try{a=localStorage.getItem(k)||""}catch(e){}if(a!=="A"&&a!=="B"){a=Math.random()*100<(Number(p.ab.pct)||50)?"B":"A";try{localStorage.setItem(k,a)}catch(e){}}if(a==="B")g=p.ab.b;v=a}var q=location.search+(v&&!/[?&]ab=/.test(location.search)?(location.search?"&":"?")+"ab="+v:"");document.documentElement.style.display="none";location.replace("../../lp/"+g+"/"+q+location.hash)}}}}catch(e){}</script>
+<html dir="rtl" lang="ar"><head><script>var __S=(new URLSearchParams(location.search).get("p")||"").replace(/[^a-z0-9-]/gi,"")</script><meta name="robots" content="noindex"><!--route-early--><script>try{var m=/\/p\/([a-z0-9-]+)\/?/i.exec(location.pathname);if(m&&self===top&&!/[?&](noroute|embed|preview)=/.test(location.search)){var x=new XMLHttpRequest();x.open("GET","assets/js/data.js",false);x.send();if(x.status===200){var p=(new Function(x.responseText+";return PRODUCTS"))().filter(function(q){return q.slug===m[1]})[0];if(p&&p.route){var g=p.route,v="";if(p.ab&&p.ab.b){var k="alyssum_ab_"+p.slug,a="";try{a=localStorage.getItem(k)||""}catch(e){}if(a!=="A"&&a!=="B"){a=Math.random()*100<(Number(p.ab.pct)||50)?"B":"A";try{localStorage.setItem(k,a)}catch(e){}}if(a==="B")g=p.ab.b;v=a}var q=location.search+(v&&!/[?&]ab=/.test(location.search)?(location.search?"&":"?")+"ab="+v:"");document.documentElement.style.display="none";location.replace("lp/"+g+"/"+q+location.hash)}}}}catch(e){}</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="stylesheet" href="../../assets/css/style.css">
-<link rel="icon" href="../../assets/img/favicon.png">
-<title>كريمة ضد التجاعيد و البقع — أليسوم | الدفع عند الاستلام</title><meta name="description" content="كريمة طبيعية غنية بالزيوت النباتية مثل الأرغان والجوجوبا وبذور التين الشوكي وفيتامين E، تساعد على ترطيب البشرة وتحسين مظهر التجاعيد والبقع."><style id="premium-overrides">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" href="assets/img/favicon.png">
+<title>طلب — كريمة ضد حب الشباب — أليسوم | الدفع عند الاستلام</title><meta name="description" content="كريمة نباتية للعناية بالبشرة المعرضة لحب الشباب، تحتوي على زيت شجرة الشاي والإكليل والجيرانيوم وعرق السوس والميرمية وعشبة القديسين وفيتامين E، وتساعد ">
+<style id="alyssum-premium-overrides">
 :root{
   --green:#23463a;
   --green-2:#2f5d4f;
@@ -418,7 +419,6 @@ footer.site h4{color:#fff!important}
 @media (prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
 }
-
 /* نموذج الطلب العريض */
 .order-wide{margin-top:2rem}
 .order-wide .form{max-width:none!important;margin-top:0!important}
@@ -438,7 +438,37 @@ footer.site h4{color:#fff!important}
   .order-wide .form .cod-note{grid-column:1/-1;margin:0}
 }
 </style>
-<style id="pb-native">
+
+<script src="assets/js/agent-brain.js"></script><script src="assets/js/avatar-script.js"></script><style>#agent-avatar{position:fixed;right:14px;bottom:92px;z-index:72;font-family:inherit;direction:rtl}
+#agent-avatar .av-btn{width:78px;height:78px;border-radius:50%;border:2px solid var(--gold,#c8a24b);background:#f7f4ed;padding:0;cursor:pointer;box-shadow:0 10px 26px rgba(23,63,53,.35);overflow:hidden;display:block;position:relative}
+#agent-avatar .av-btn svg{width:100%;height:100%;display:block}
+#agent-avatar.idle .av-btn::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(200,162,75,.55);animation:avPulse 2.2s infinite}
+#agent-avatar.talk .av-btn{box-shadow:0 0 0 4px rgba(47,107,87,.35),0 10px 26px rgba(23,63,53,.35)}
+#agent-avatar .av-tag{position:absolute;right:50%;transform:translateX(50%);bottom:-8px;background:var(--green,#173f35);color:#fff;font-size:.68rem;font-weight:800;padding:.1rem .55rem;border-radius:999px;white-space:nowrap}
+#agent-avatar .av-bub{position:absolute;right:0;bottom:94px;width:min(310px,calc(100vw - 28px));background:#fff;border:1px solid var(--gold-2,#d9c28a);border-radius:16px 16px 4px 16px;box-shadow:0 14px 34px rgba(23,63,53,.25);padding:.8rem .9rem;font-size:.92rem;line-height:1.7;display:none}
+#agent-avatar.open .av-bub{display:block}
+#agent-avatar .av-bub .av-x{position:absolute;top:2px;left:6px;background:none;border:0;font-size:1rem;cursor:pointer;color:#777}
+#agent-avatar .av-txt{padding-top:.2rem;min-height:3.2em;max-height:34vh;overflow:auto}
+#agent-avatar .av-tools,#agent-avatar .av-chips{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.55rem}
+#agent-avatar .av-tools button,#agent-avatar .av-chips button{font-family:inherit;font-size:.8rem;font-weight:800;border-radius:999px;padding:.35rem .8rem;cursor:pointer;border:1px solid var(--gold-2,#d9c28a);background:#f4efe4;color:var(--green,#173f35)}
+#agent-avatar .av-tools .gold{background:var(--gold,#c8a24b);color:#1d1d1d;border-color:var(--gold,#c8a24b)}
+#agent-avatar.point .av-order{animation:avHl 1s infinite}
+#agent-avatar .av-in{display:flex;gap:.4rem;margin-top:.55rem}
+#agent-avatar .av-in input{flex:1;min-width:0;border:1.5px solid var(--line,#e5dfd0);border-radius:999px;padding:.4rem .8rem;font-family:inherit;font-size:.88rem}
+#agent-avatar .av-in button{width:36px;height:36px;border-radius:50%;background:var(--green,#173f35);color:#fff;border:0;cursor:pointer}
+#agent-avatar .av-hand{position:absolute;right:58px;bottom:62px;width:46px;height:64px;display:none;pointer-events:none;transform-origin:50% 100%}
+#agent-avatar.point .av-hand{display:block;animation:avPoint .9s ease-in-out infinite}
+#agent-avatar .av-eye{transform-box:fill-box;transform-origin:center;animation:avBlink 4.6s infinite}
+#agent-avatar .av-eye.e2{animation-delay:.03s}
+#agent-avatar .m1,#agent-avatar .m2{display:none}
+#agent-avatar[data-m="0"] .m0,#agent-avatar[data-m="1"] .m1,#agent-avatar[data-m="2"] .m2{display:inline}
+.av-hl{outline:3px solid #c8a24b!important;outline-offset:3px;animation:avHl 1s infinite}
+@keyframes avBlink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes avPulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.25);opacity:0}}
+@keyframes avPoint{0%,100%{transform:translateY(0) rotate(-14deg)}50%{transform:translateY(-9px) rotate(-14deg)}}
+@keyframes avHl{0%,100%{box-shadow:0 0 0 0 rgba(200,162,75,.7)}50%{box-shadow:0 0 0 9px rgba(200,162,75,0)}}
+@media (prefers-reduced-motion:reduce){#agent-avatar .av-eye,#agent-avatar.idle .av-btn::after,#agent-avatar.point .av-hand,.av-hl,#agent-avatar.point .av-order{animation:none}}
+@media (max-width:640px){#agent-avatar{right:10px;bottom:84px}#agent-avatar .av-btn{width:64px;height:64px}#agent-avatar .av-bub{bottom:80px}#agent-avatar .av-hand{right:46px;bottom:50px}}</style><style id="pb-native">
 *{box-sizing:border-box}
 ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(255,158,52,.66),rgba(255,106,0,.52));border-radius:6px;box-shadow:inset 0 0 0 1px rgba(255,222,176,.6),inset 0 1px 0 rgba(255,255,255,.55),0 0 7px rgba(255,120,20,.4)}::-webkit-scrollbar-thumb:hover,::-webkit-scrollbar-thumb:active{background:linear-gradient(180deg,rgba(255,176,82,.82),rgba(255,120,10,.7))}@supports not selector(::-webkit-scrollbar){*{scrollbar-width:thin;scrollbar-color:rgba(255,128,24,.62) transparent}}
 .pb-page{margin:0;font-family:'Cairo','Segoe UI',Tahoma,sans-serif;color:#1c2420;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -678,119 +708,121 @@ main .sec-sub,main .lead{color:#b9d4c3!important}
 
 
 
-<script>try{var c=document.querySelector('link[rel=canonical]');if(c&&self===top&&!/[?&](noroute|embed|preview)=/.test(location.search)){var u=new URL(c.href);if(u.host===location.host&&u.pathname!==location.pathname)history.replaceState(null,'',u.pathname+location.search+location.hash)}}catch(e){}</script>
+
 <!--seo:end-->
-<link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin><style>@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(../../assets/fonts/cairo-arabic.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(../../assets/fonts/cairo-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}body::before,body::after{background-image:none!important;content:none!important}</style></head><body><style>.pb-dc{display:contents!important}.pb-sec.x-85f92hy{padding-top:60px;padding-right:20px;padding-bottom:60px;padding-left:20px;}
-.pb-sec.x-85f92hy>.pb-in{margin:0 auto;width:100%;position:relative}
-.pb-sec.x-85f92hy>.pb-in{max-width:1140px}
-.pb-sec.x-85f92hy>.pb-in{max-width:1140px;}
-.pb-sec.x-85f92hy>.pb-in{display:flex;flex-wrap:wrap}
-.pb-sec.x-85f92hy>.pb-in>.pb-col{padding-left:10px;padding-right:10px;}
-.pb-col.x-vi0pkxc{flex:1 1 0;min-width:0;display:flex}
-.pb-col.x-vi0pkxc>.pb-colin{width:100%;display:flex;flex-direction:column}
-.pb-col.x-vi0pkxc>.pb-colin{outline:1px solid rgba(134,239,172,.3);outline-offset:0;box-shadow:0 18px 48px rgba(0,0,0,.22);}
-.pb-col.x-vi0pkxc>.pb-colin{padding-top:18px;padding-right:18px;padding-bottom:18px;padding-left:18px;border-radius:32px;text-align:start;}
-.pb-w.x-6a0719x{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}
-.pb-w.x-qd7ya8t{margin-top:0px;margin-right:0px;margin-bottom:928px;margin-left:0px;}
-.pb-w.x-10gjemm{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}
-.pb-w.x-10gjemm .pb-t{color:#ecfdf5;font-size:16px;line-height:1.7;text-align:start;}
-.pb-w.x-10gjemm{height:auto!important}
-.pb-col.x-170y7dz{flex:1 1 0;min-width:0;display:flex}
-.pb-col.x-170y7dz>.pb-colin{width:100%;display:flex;flex-direction:column}
-.pb-col.x-170y7dz>.pb-colin{padding-top:10px;padding-right:4px;padding-bottom:10px;padding-left:10px;text-align:start;}
-.pb-w.x-ri1mvke{outline:1px solid rgba(134,239,172,.3);outline-offset:0;box-shadow:0 8px 24px rgba(0,0,0,.16);}
-.pb-w.x-ri1mvke{margin-top:0px;margin-right:0px;margin-bottom:26px;margin-left:0px;padding-top:8px;padding-right:14px;padding-bottom:8px;padding-left:14px;border-radius:999px;width:31%;}
-.pb-w.x-ri1mvke .pb-t{color:#ecfdf5;font-size:12px;font-weight:900;line-height:1.7;text-align:start;}
-.pb-w.x-ri1mvke{height:auto!important}
-.pb-w.x-ri1mvke{overflow:hidden}
-.pb-w.x-dct3xk2{margin-top:0px;margin-right:0px;margin-bottom:17px;margin-left:0px;}
-.pb-w.x-dct3xk2 .pb-t{color:#ecfdf5;font-size:64px;font-weight:800;line-height:1.08;letter-spacing:-1.8px;text-align:start;}
-.pb-w.x-dct3xk2{height:auto!important}
-.pb-w.x-ry1mmx2{margin-top:0px;margin-right:0px;margin-bottom:11px;margin-left:0px;}
-.pb-w.x-ry1mmx2 .pb-t{color:#bb8c36;font-size:14px;line-height:1.7;letter-spacing:2px;text-align:start;}
-.pb-w.x-ry1mmx2{height:auto!important}
-.pb-w.x-6cnydzg{margin-top:0px;margin-right:0px;margin-bottom:6px;margin-left:0px;}
-.pb-w.x-6cnydzg .pb-t{color:#ecfdf5;font-size:26px;font-weight:900;line-height:1.55;text-align:start;}
-.pb-w.x-6cnydzg{height:auto!important}
-.pb-w.x-jj4u9n0{margin-top:0px;margin-right:0px;margin-bottom:24px;margin-left:0px;}
-.pb-w.x-jj4u9n0 .pb-t{color:#ecfdf5;font-size:17px;line-height:1.95;text-align:start;}
-.pb-w.x-jj4u9n0{height:auto!important}
-.pb-w.x-noncybh{margin-top:0px;margin-right:0px;margin-bottom:24px;margin-left:0px;}
-.pb-w.x-noncybh .pb-tb{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px}.pb-w.x-noncybh .pb-tbc{display:inline-flex;align-items:center;gap:.4em;background:rgba(21,128,61,.2);color:#d9f99d;border:1px solid rgba(134,239,172,.3);padding:.45em .95em;font-weight:700;box-shadow:0 4px 14px rgba(23,63,53,.06);white-space:nowrap}.pb-w.x-noncybh .pb-tbl{color:#b83232;border-color:#f0c4c0;background:#fff7f6}.pb-w.x-noncybh .pb-tbd{width:9px;height:9px;border-radius:50%;background:#d64545;display:inline-block;animation:pbtb 1.4s infinite}@keyframes pbtb{50%{opacity:.35;transform:scale(1.4)}}
-.pb-w.x-noncybh .pb-tbc{border-radius:999px;font-size:12px;}
-.pb-w.x-ftauffi{margin-top:0px;margin-right:0px;margin-bottom:29px;margin-left:0px;}
-.pb-w.x-ftauffi .pb-pp{display:flex;gap:11px;align-items:baseline;flex-wrap:wrap}.pb-w.x-ftauffi .pb-off{display:none!important}:where(.pb-w.x-ftauffi .price-now){font-weight:900;color:#157a55}:where(.pb-w.x-ftauffi .price-old){text-decoration:line-through;color:#999}:where(.pb-w.x-ftauffi .save-pill){background:#fde8e8;color:#b83232;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:800}
-.pb-w.x-ftauffi .price-now{font-size:34px;}
-.pb-w.x-j8zz1fs{margin-top:0px;margin-right:0px;margin-bottom:30px;margin-left:0px;}
-.pb-w.x-pnr9y02{margin-top:0px;margin-right:0px;margin-bottom:32px;margin-left:0px;}
-.pb-w.x-pnr9y02 .pb-po{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}:where(.pb-w.x-pnr9y02 .offer){border:1.5px solid #e1dac8;border-radius:12px;padding:.7rem;text-align:center;background:#fff;position:relative}:where(.pb-w.x-pnr9y02 .offer.on){border-color:#157a55;background:#f1faf5}:where(.pb-w.x-pnr9y02 .offer .best){position:absolute;top:-10px;inset-inline-start:8px;background:#c8a24b;color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:0 .5rem}:where(.pb-w.x-pnr9y02 .offer .p){font-weight:900;font-size:1.15rem}:where(.pb-w.x-pnr9y02 .offer .u){font-size:.72rem;color:#777}
-.pb-w.x-o90umz4{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
-.pb-w.x-o90umz4{margin-top:0px;margin-right:0px;margin-bottom:9px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
-.pb-w.x-o90umz4 .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
-.pb-w.x-o90umz4{height:auto!important}
-.pb-w.x-o90umz4{overflow:hidden}
-.pb-w.x-atwfeak{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
-.pb-w.x-atwfeak{margin-top:0px;margin-right:0px;margin-bottom:9px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
-.pb-w.x-atwfeak .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
-.pb-w.x-atwfeak{height:auto!important}
-.pb-w.x-atwfeak{overflow:hidden}
-.pb-w.x-9nlk83d{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
-.pb-w.x-9nlk83d{margin-top:0px;margin-right:0px;margin-bottom:9px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
-.pb-w.x-9nlk83d .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
-.pb-w.x-9nlk83d{height:auto!important}
-.pb-w.x-9nlk83d{overflow:hidden}
-.pb-w.x-el16qp5{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
-.pb-w.x-el16qp5{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
-.pb-w.x-el16qp5 .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
-.pb-w.x-el16qp5{height:auto!important}
-.pb-w.x-el16qp5{overflow:hidden}
+<link rel="preload" href="assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin><style>@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(assets/fonts/cairo-arabic.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(assets/fonts/cairo-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}body::before,body::after{background-image:none!important;content:none!important}</style></head>
+<body><style>.pb-dc{display:contents!important}.pb-sec.x-7m3pz87{padding-top:60px;padding-right:20px;padding-bottom:60px;padding-left:20px;}
+.pb-sec.x-7m3pz87>.pb-in{margin:0 auto;width:100%;position:relative}
+.pb-sec.x-7m3pz87>.pb-in{max-width:1140px}
+.pb-sec.x-7m3pz87>.pb-in{max-width:1140px;}
+.pb-sec.x-7m3pz87>.pb-in{display:flex;flex-wrap:wrap}
+.pb-sec.x-7m3pz87>.pb-in>.pb-col{padding-left:10px;padding-right:10px;}
+.pb-col.x-ge7guov{flex:1 1 0;min-width:0;display:flex}
+.pb-col.x-ge7guov>.pb-colin{width:100%;display:flex;flex-direction:column}
+.pb-col.x-ge7guov>.pb-colin{outline:1px solid rgba(134,239,172,.3);outline-offset:0;box-shadow:0 18px 48px rgba(0,0,0,.22);}
+.pb-col.x-ge7guov>.pb-colin{padding-top:18px;padding-right:18px;padding-bottom:18px;padding-left:18px;border-radius:32px;text-align:start;}
+.pb-w.x-jepqrb6{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}
+.pb-w.x-8xbw70n{margin-top:0px;margin-right:0px;margin-bottom:844px;margin-left:0px;}
+.pb-w.x-avaxkne{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}
+.pb-w.x-avaxkne .pb-t{color:#ecfdf5;font-size:16px;line-height:1.7;text-align:start;}
+.pb-w.x-avaxkne{height:auto!important}
+.pb-col.x-tohez8a{flex:1 1 0;min-width:0;display:flex}
+.pb-col.x-tohez8a>.pb-colin{width:100%;display:flex;flex-direction:column}
+.pb-col.x-tohez8a>.pb-colin{padding-top:10px;padding-right:4px;padding-bottom:10px;padding-left:10px;text-align:start;}
+.pb-w.x-37x5x9p{outline:1px solid rgba(134,239,172,.3);outline-offset:0;box-shadow:0 8px 24px rgba(0,0,0,.16);}
+.pb-w.x-37x5x9p{margin-top:0px;margin-right:0px;margin-bottom:26px;margin-left:0px;padding-top:8px;padding-right:14px;padding-bottom:8px;padding-left:14px;border-radius:999px;width:31%;}
+.pb-w.x-37x5x9p .pb-t{color:#ecfdf5;font-size:12px;font-weight:900;line-height:1.7;text-align:start;}
+.pb-w.x-37x5x9p{height:auto!important}
+.pb-w.x-37x5x9p{overflow:hidden}
+.pb-w.x-lylizu1{margin-top:0px;margin-right:0px;margin-bottom:17px;margin-left:0px;}
+.pb-w.x-lylizu1 .pb-t{color:#ecfdf5;font-size:64px;font-weight:800;line-height:1.08;letter-spacing:-1.8px;text-align:start;}
+.pb-w.x-lylizu1{height:auto!important}
+.pb-w.x-j0p8uw7{margin-top:0px;margin-right:0px;margin-bottom:11px;margin-left:0px;}
+.pb-w.x-j0p8uw7 .pb-t{color:#bb8c36;font-size:14px;line-height:1.7;letter-spacing:2px;text-align:start;}
+.pb-w.x-j0p8uw7{height:auto!important}
+.pb-w.x-suadv2e{margin-top:0px;margin-right:0px;margin-bottom:6px;margin-left:0px;}
+.pb-w.x-suadv2e .pb-t{color:#ecfdf5;font-size:26px;font-weight:900;line-height:1.55;text-align:start;}
+.pb-w.x-suadv2e{height:auto!important}
+.pb-w.x-7ldp3s3{margin-top:0px;margin-right:0px;margin-bottom:24px;margin-left:0px;}
+.pb-w.x-7ldp3s3 .pb-t{color:#ecfdf5;font-size:17px;line-height:1.95;text-align:start;}
+.pb-w.x-7ldp3s3{height:auto!important}
+.pb-w.x-pw5qm6v{margin-top:0px;margin-right:0px;margin-bottom:24px;margin-left:0px;}
+.pb-w.x-pw5qm6v .pb-tb{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:10px}.pb-w.x-pw5qm6v .pb-tbc{display:inline-flex;align-items:center;gap:.4em;background:rgba(21,128,61,.2);color:#d9f99d;border:1px solid rgba(134,239,172,.3);padding:.45em .95em;font-weight:700;box-shadow:0 4px 14px rgba(23,63,53,.06);white-space:nowrap}.pb-w.x-pw5qm6v .pb-tbl{color:#b83232;border-color:#f0c4c0;background:#fff7f6}.pb-w.x-pw5qm6v .pb-tbd{width:9px;height:9px;border-radius:50%;background:#d64545;display:inline-block;animation:pbtb 1.4s infinite}@keyframes pbtb{50%{opacity:.35;transform:scale(1.4)}}
+.pb-w.x-pw5qm6v .pb-tbc{border-radius:999px;font-size:12px;}
+.pb-w.x-o433j9n{margin-top:0px;margin-right:0px;margin-bottom:29px;margin-left:0px;}
+.pb-w.x-o433j9n .pb-pp{display:flex;gap:11px;align-items:baseline;flex-wrap:wrap}.pb-w.x-o433j9n .pb-off{display:none!important}:where(.pb-w.x-o433j9n .price-now){font-weight:900;color:#157a55}:where(.pb-w.x-o433j9n .price-old){text-decoration:line-through;color:#999}:where(.pb-w.x-o433j9n .save-pill){background:#fde8e8;color:#b83232;border-radius:999px;padding:.1rem .6rem;font-size:.8rem;font-weight:800}
+.pb-w.x-o433j9n .price-now{font-size:34px;}
+.pb-w.x-zg2xgyu{margin-top:0px;margin-right:0px;margin-bottom:30px;margin-left:0px;}
+.pb-w.x-gebhwxf{margin-top:0px;margin-right:0px;margin-bottom:32px;margin-left:0px;}
+.pb-w.x-gebhwxf .pb-po{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}:where(.pb-w.x-gebhwxf .offer){border:1.5px solid #e1dac8;border-radius:12px;padding:.7rem;text-align:center;background:#fff;position:relative}:where(.pb-w.x-gebhwxf .offer.on){border-color:#157a55;background:#f1faf5}:where(.pb-w.x-gebhwxf .offer .best){position:absolute;top:-10px;inset-inline-start:8px;background:#c8a24b;color:#fff;font-size:.65rem;font-weight:800;border-radius:999px;padding:0 .5rem}:where(.pb-w.x-gebhwxf .offer .p){font-weight:900;font-size:1.15rem}:where(.pb-w.x-gebhwxf .offer .u){font-size:.72rem;color:#777}
+.pb-w.x-csz6sen{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
+.pb-w.x-csz6sen{margin-top:0px;margin-right:0px;margin-bottom:9px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
+.pb-w.x-csz6sen .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
+.pb-w.x-csz6sen{height:auto!important}
+.pb-w.x-csz6sen{overflow:hidden}
+.pb-w.x-5vlqpnc{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
+.pb-w.x-5vlqpnc{margin-top:0px;margin-right:0px;margin-bottom:9px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
+.pb-w.x-5vlqpnc .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
+.pb-w.x-5vlqpnc{height:auto!important}
+.pb-w.x-5vlqpnc{overflow:hidden}
+.pb-w.x-srlbi45{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
+.pb-w.x-srlbi45{margin-top:0px;margin-right:0px;margin-bottom:9px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
+.pb-w.x-srlbi45 .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
+.pb-w.x-srlbi45{height:auto!important}
+.pb-w.x-srlbi45{overflow:hidden}
+.pb-w.x-472u138{outline:1px solid rgba(134,239,172,.3);outline-offset:0;background-color:rgba(12,54,29,.82);box-shadow:0 8px 24px rgba(0,0,0,.16);}
+.pb-w.x-472u138{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;padding-top:10px;padding-right:16px;padding-bottom:10px;padding-left:16px;border-radius:15px;}
+.pb-w.x-472u138 .pb-t{color:#d8e4db;font-size:15px;font-weight:800;line-height:1.7;text-align:start;}
+.pb-w.x-472u138{height:auto!important}
+.pb-w.x-472u138{overflow:hidden}
 @media(max-width:1024px){
 
 }
 @media(max-width:767px){
 .pb-sec .pb-col{width:100%;flex:0 0 100%;max-width:100%}
-.pb-sec.x-85f92hy{padding-top:36px;padding-right:16px;padding-bottom:36px;padding-left:16px;}
-.pb-w.x-dct3xk2 .pb-t{font-size:46px;}
-}</style><section class="pb-sec"><div class="pb-in"><div class="pb-colin"><div class="offers pb-po" id="offers"><div class="offer"><div class="q">قطعة واحدة</div><div class="p">1 800 دج</div><div class="u">1 800 دج للقطعة </div></div><div class="offer"><div class="q">قطعتان</div><div class="p">3 400 دج</div><div class="u">1 700 دج للقطعة · وفر 6%</div></div><div class="offer on"><span class="best">الأكثر طلباً 🔥</span><div class="q">قطعتان + الثالثة 🎁</div><div class="p">3 600 دج</div><div class="u">1 800 دج للقطعة </div></div></div><div hidden><span id="gmain"></span><div class="gthumbs"></div></div></div></div></section><style>.pb-dc{display:contents!important}.pb-sec.x-b4ihowh{padding-top:60px;padding-right:20px;padding-bottom:60px;padding-left:20px;}
-.pb-sec.x-b4ihowh>.pb-in{margin:0 auto;width:100%;position:relative}
-.pb-sec.x-b4ihowh>.pb-in{max-width:1140px}
-.pb-sec.x-b4ihowh>.pb-in{max-width:1140px;}
-.pb-sec.x-b4ihowh>.pb-in{display:flex;flex-wrap:wrap}
-.pb-sec.x-b4ihowh>.pb-in>.pb-col{padding-left:10px;padding-right:10px;}
-.pb-col.x-t41v0vm{flex:1 1 0;min-width:0;display:flex}
-.pb-col.x-t41v0vm>.pb-colin{width:100%;display:flex;flex-direction:column}
-.pb-w.x-qxaw62t{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}
+.pb-sec.x-7m3pz87{padding-top:36px;padding-right:16px;padding-bottom:36px;padding-left:16px;}
+.pb-w.x-lylizu1 .pb-t{font-size:46px;}
+}</style><section class="pb-sec"><div class="pb-in"><div class="pb-colin"><div class="offers pb-po" id="offers"><div class="offer"><div class="q">قطعة واحدة</div><div class="p">2 400 دج</div><div class="u">2 400 دج للقطعة </div></div><div class="offer"><div class="q">قطعتان</div><div class="p">4 550 دج</div><div class="u">2 275 دج للقطعة · وفر 5%</div></div><div class="offer on"><span class="best">الأكثر طلباً 🔥</span><div class="q">قطعتان + الثالثة 🎁</div><div class="p">4 800 دج</div><div class="u">2 400 دج للقطعة </div></div></div><div hidden><span id="gmain"></span><div class="gthumbs"></div></div></div></div></section><style>.pb-dc{display:contents!important}.pb-sec.x-eznc2dt{padding-top:60px;padding-right:20px;padding-bottom:60px;padding-left:20px;}
+.pb-sec.x-eznc2dt>.pb-in{margin:0 auto;width:100%;position:relative}
+.pb-sec.x-eznc2dt>.pb-in{max-width:1140px}
+.pb-sec.x-eznc2dt>.pb-in{max-width:1140px;}
+.pb-sec.x-eznc2dt>.pb-in{display:flex;flex-wrap:wrap}
+.pb-sec.x-eznc2dt>.pb-in>.pb-col{padding-left:10px;padding-right:10px;}
+.pb-col.x-nbhzlgr{flex:1 1 0;min-width:0;display:flex}
+.pb-col.x-nbhzlgr>.pb-colin{width:100%;display:flex;flex-direction:column}
+.pb-w.x-y69xy3a{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;}
 @media(max-width:1024px){
 
 }
 @media(max-width:767px){
 .pb-sec .pb-col{width:100%;flex:0 0 100%;max-width:100%}
-.pb-sec.x-b4ihowh{padding-top:36px;padding-right:16px;padding-bottom:36px;padding-left:16px;}
-}</style><section class="pb-sec k-flow x-b4ihowh"><div class="pb-in"><div class="pb-col x-t41v0vm"><div class="pb-colin"><div class="pb-w x-qxaw62t pb-fit" data-type="orderorig"><i id="pb-order" class="pb-anc" style="display:block;height:0"></i><div class="pb-ofraw"><form class="form" id="order-form" style="margin-top:1rem">
+.pb-sec.x-eznc2dt{padding-top:36px;padding-right:16px;padding-bottom:36px;padding-left:16px;}
+}</style><section class="pb-sec k-flow x-eznc2dt"><div class="pb-in"><div class="pb-col x-nbhzlgr"><div class="pb-colin"><div class="pb-w x-y69xy3a pb-fit" data-type="orderorig"><i id="pb-order" class="pb-anc" style="display:block;height:0"></i><div class="pb-ofraw"><form class="form" id="order-form" style="margin-top:1rem">
         <h3 role="heading" aria-level="2">📝 املأ معلوماتك — الدفع عند الاستلام</h3>
         <div class="frow">
           <div class="field"><label for="name">الاسم الكامل *</label><input id="name" required="" placeholder="مثال: أحمد بن علي"></div>
-          <div class="field"><label for="phone">رقم الهاتف *</label><input id="phone" required="" inputmode="tel" placeholder="05XXXXXXXX"></div>
+          <div class="field"><label for="phone">رقم الهاتف *</label><input id="phone" required="" inputmode="numeric" placeholder="05XXXXXXXX" data-dz="1" autocomplete="tel-national"></div>
         </div>
         <div class="frow">
-          <div class="field"><label for="wilaya">الولاية *</label><select id="wilaya" required=""><option value="">— اختر ولايتك —</option></select></div>
-          <div class="field"><label for="commune">البلدية</label><input id="commune" placeholder="اختياري"></div>
+          <div class="field"><label for="wilaya">الولاية *</label><select id="wilaya" required="" aria-label="الولاية"><option value="">— اختر ولايتك —</option></select></div>
+          <div class="field"><label for="commune">البلدية</label><select id="commune" aria-label="البلدية"><option value="">— اختر البلدية —</option></select></div>
         </div>
         <div class="field" id="desk-wrap" style="display:none"><label for="desk">مكتب التوصيل (Stop Desk) *</label><select id="desk" aria-label="مكتب التوصيل"></select></div>
-        <div class="field"><label for="address">العنوان الكامل</label><input id="address" placeholder="الحي، الشارع، رقم المنزل..."></div>
+        
         <div class="dtype">
           <label><input type="radio" name="dtype" value="home" checked=""><span>🏠 توصيل للمنزل</span></label>
           <label><input type="radio" name="dtype" value="stop"><span>🏢 مكتب Stop Desk (أرخص)</span></label>
         </div>
-        <div class="total-box">
-          <div><small>رسوم التوصيل</small><span id="fee">—</span></div>
-          <div style="text-align:left"><small>الإجمالي</small><b id="grand">—</b></div>
+        <div class="coupon-box" style="display:flex;gap:.4rem;margin:.6rem 0;align-items:center;flex-wrap:wrap"><input id="prod-coupon-input" placeholder="🎟️ كود الخصم (إن وُجد)" style="flex:1;min-width:120px;padding:.55rem .7rem;border:1.5px solid var(--line);border-radius:8px;font-family:inherit" data-bound="1"><button type="button" id="prod-coupon-btn" class="btn-cart2" style="padding:.5rem .9rem;white-space:nowrap">تطبيق</button></div><div id="prod-coupon-msg" style="font-size:.82rem;margin:-.3rem 0 .6rem;min-height:1.1em"></div><div class="total-box">
+          <div><small>رسوم التوصيل</small><span id="fee">اختر الولاية</span></div>
+          <div style="text-align:left"><small>الإجمالي</small><b id="grand">4 800 دج</b></div>
         </div>
-        <button type="submit" class="btn-order">✅ تأكيد الطلب — <span id="btn-total"></span></button>
-        <a class="btn-wa" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20التجاعيد%20و%20البقع" target="_blank">💬 اطلب مباشرة عبر واتساب</a>
+        <button type="submit" class="btn-order">✅ تأكيد الطلب — <span id="btn-total">4 800 دج</span></button>
+        <a class="btn-wa" href="https://wa.me/213559237239?text=أريد%20طلب:%20كريمة%20ضد%20حب%20الشباب" target="_blank">💬 اطلب مباشرة عبر واتساب</a>
         <button type="button" class="btn-cart2" id="add-cart">🛒 أضف إلى السلة</button>
         <div class="cod-note">💵 لا نطلب أي دفع مسبق — تدفع عند استلام طلبك</div>
       </form></div></div></div></div></div></section>
+
 <div class="aly-buybar" dir="rtl"><div class="bb-p"><small>السعر</small><b id="bb-price"></b></div><a class="bb-btn" href="#order-form">اطلب الآن</a></div><script>(function(){var bar=document.querySelector(".aly-buybar");if(!bar)return;var pe=function(){return document.querySelector(".price-now,#pprice")},o=document.getElementById("order-form");function sync(){var e=pe(),b=document.getElementById("bb-price");if(e&&b)b.textContent=e.textContent.trim()}sync();setInterval(sync,1500);if(o&&"IntersectionObserver"in window){new IntersectionObserver(function(es){es.forEach(function(x){bar.classList.toggle("off",x.isIntersecting)})},{threshold:.15}).observe(o)}var a=bar.querySelector(".bb-btn");a.addEventListener("click",function(ev){if(o){ev.preventDefault();o.scrollIntoView({behavior:"smooth",block:"start"})}})})()</script>
 <div class="drawer-bg" id="drawer-bg"></div>
 <div class="drawer" id="drawer">
@@ -799,7 +831,7 @@ main .sec-sub,main .lead{color:#b9d4c3!important}
   <div class="foot">
     <div class="frow" style="grid-template-columns:1fr 1fr">
       <div class="field"><label for="cname">الاسم الكامل</label><input id="cname" placeholder="مثال: أحمد بن علي"></div>
-      <div class="field"><label for="cphone">رقم الهاتف</label><input id="cphone" placeholder="05XXXXXXXX" inputmode="tel"></div>
+      <div class="field"><label for="cphone">رقم الهاتف</label><input id="cphone" placeholder="05XXXXXXXX" inputmode="numeric" data-dz="1" autocomplete="tel-national"></div>
     </div>
     <div class="frow" style="grid-template-columns:1fr 1fr">
       <div class="field"><label for="cwilaya">الولاية</label><select id="cwilaya" aria-label="الولاية"><option value="">— اختر —</option></select></div>
@@ -809,16 +841,16 @@ main .sec-sub,main .lead{color:#b9d4c3!important}
       <label><input type="radio" name="cdtype" value="home" checked=""><span>🏠 إلى المنزل</span></label>
       <label><input type="radio" name="cdtype" value="stop"><span>🏢 مكتب Stop Desk</span></label>
     </div>
-    <div class="tot"><span>الإجمالي (مع التوصيل)</span><span id="cart-total">0 دج</span></div>
+    <div class="coupon-box" style="display:flex;gap:.4rem;margin:.6rem 0;align-items:center;flex-wrap:wrap"><input id="cart-coupon-input" placeholder="🎟️ كود الخصم (إن وُجد)" style="flex:1;min-width:120px;padding:.55rem .7rem;border:1.5px solid var(--line);border-radius:8px;font-family:inherit" data-bound="1"><button type="button" id="cart-coupon-btn" class="btn-cart2" style="padding:.5rem .9rem;white-space:nowrap">تطبيق</button></div><div id="cart-coupon-msg" style="font-size:.82rem;margin:-.3rem 0 .6rem;min-height:1.1em"></div><div class="tot"><span>الإجمالي (مع التوصيل)</span><span id="cart-total">0 دج</span></div>
     <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem;margin-bottom:.8rem"><span>رسوم التوصيل</span><span id="cart-fee">—</span></div>
     <button class="btn-order" onclick="Cart.checkout()">تأكيد الطلب عبر واتساب ✓</button>
   </div>
-</div><script>const REL="../../";</script>
-<script defer="" src="../../assets/js/config.js"></script>
-<script defer="" src="../../assets/js/data.js"></script>
-<script defer="" src="../../assets/js/wilayas.js"></script>
-<script defer="" src="../../assets/js/api.js"></script>
-<script defer="" src="../../assets/js/app.js"></script>
+</div><script>const REL="";</script>
+<script defer="" src="assets/js/config.js"></script>
+<script defer="" src="assets/js/data.js"></script>
+<script defer="" src="assets/js/wilayas.js"></script>
+<script defer="" src="assets/js/api.js"></script>
+<script defer="" src="assets/js/app.js"></script>
 
 <script>
 /* معرض الصور: الصورة الكبيرة تتبع الصور المصغّرة، وتدوير تلقائي (يتوقف داخل محرر اللوحة والفأرة فوق المعرض) */
@@ -839,10 +871,10 @@ main .sec-sub,main .lead{color:#b9d4c3!important}
 })();
 </script>
 <script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{
-      initProduct("anti-rides-2");
+      initProduct(__S);try{var __p=PRODUCTS.find(function(x){return x.slug===__S});document.querySelectorAll(".btn-wa").forEach(function(a){a.href=a.href.split("?text=")[0]+"?text="+encodeURIComponent("أريد طلب: "+(__p&&__p.title||""))})}catch(e){}
       initCartDrawer();
       fillCartWilayas();
-      const p = PRODUCTS.find(x=>x.slug==="anti-rides-2");
+      const p = PRODUCTS.find(x=>x.slug===__S);
       if(p){
         if(p.old){ (document.getElementById("pold")||{}).textContent = fmt(p.old);
           (document.getElementById("psave")||{}).textContent = "وفّر " + Math.round((1-p.price/p.old)*100) + "%"; }
@@ -850,15 +882,18 @@ main .sec-sub,main .lead{color:#b9d4c3!important}
         document.getElementById("pprice").textContent = fmt(p.price);
       }
       // منتجات مشابهة
-      const rel2 = PRODUCTS.filter(x=>x.slug!=="anti-rides-2"&&x.cat===(p?p.cat:"")).slice(0,4);
-      const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!=="anti-rides-2").slice(0,4);
+      const rel2 = PRODUCTS.filter(x=>x.slug!==__S&&x.cat===(p?p.cat:"")).slice(0,4);
+      const others = rel2.length?rel2:PRODUCTS.filter(x=>x.slug!==__S).slice(0,4);
       (document.getElementById("related")||{}).innerHTML = others.map(x=>`
-        <a class="card" href="../../p/${x.slug}/">
+        <a class="card" href="p/${x.slug}/">
           <div class="thumb"></div>
           <div class="body"><h3>${x.title}</h3>
           <div class="price-row"><span class="price">${fmt(x.price)}</span>${x.old?`<span class="old">${fmt(x.old)}</span>`:""}</div></div>
         </a>`).join("");
-    });});</script><script>var __pbBase="../../";var __pbSlug="";var __pbMeta={};(function(){
+    });});</script>
+
+
+<script>var __pbBase="";var __pbSlug="";var __pbMeta={};(function(){
 var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 $('.pb-tp[data-rot],.pb-tp[data-hide],.pb-tp[data-close]').forEach(function(b){var k=b.getAttribute('data-close'),gone=0;var sc=b.closest('.pb-sec');function hid(a){if(a){b.style.maxHeight=b.offsetHeight+'px';void b.offsetHeight}b.classList.add('pb-tp-h');if(sc){sc.style.transition='min-height .35s,height .35s';sc.style.minHeight='0';sc.style.height='0';sc.style.overflow='hidden'}}try{if(k&&localStorage.getItem(k)){b.style.maxHeight='0px';b.classList.add('pb-tp-h');gone=1}}catch(e){}var x=b.querySelector('.pb-tp-x');if(x)x.onclick=function(e){e.preventDefault();e.stopPropagation();gone=1;try{localStorage.setItem(k,'1')}catch(_){}hid(1)};var r=+b.getAttribute('data-rot')||0;if(r>0){var it=[].slice.call(b.querySelectorAll('.pb-tp-i')),i=0;if(it.length>1)setInterval(function(){it[i].classList.remove('on');i=(i+1)%it.length;it[i].classList.add('on')},r*1000)}if(b.hasAttribute('data-hide')&&!gone){var hs=0;addEventListener('scroll',function(){var y=window.pageYOffset||document.documentElement.scrollTop||0;if(gone)return;if(y>80&&!hs){hs=1;hid(1)}else if(y<20&&hs){hs=0;b.classList.remove('pb-tp-h');b.style.maxHeight='';if(sc){sc.style.minHeight='';sc.style.height='';sc.style.overflow=''}}},{passive:true})}});
 $('.pb-hd[data-tr]').forEach(function(h){var sc=h.closest('.pb-sec');if(sc)sc.style.zIndex=60;var p=+h.getAttribute('data-trp');if(isNaN(p))p=30;function f(){h.classList.toggle('pb-sc',(window.pageYOffset||document.documentElement.scrollTop||0)>p)}f();addEventListener('scroll',f,{passive:true})});

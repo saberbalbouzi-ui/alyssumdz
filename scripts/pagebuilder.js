@@ -830,7 +830,7 @@ const PB = (() => {
         if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
         const stkH = s.stk && !ctx.edit ? `<a class="pb-ofs" href="#pb-order" data-pbofs${s.fbt === false ? "" : ` data-lg="${esc(s.lgt || "الإجمالي")}"`} style="background:${esc(s.oac || "#16a34a")};color:${esc(s.obt || "#fff")};">${esc(s.stkt || s.obtn || "✅ تأكيد الطلب")}</a>` : "";
         if (ctx.inlineOrder && s.raw) return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><div class="pb-ofraw">${s.raw}</div>${stkH}`;      // على صفحة المنتج نفسها: نموذج الطلب الأصلي كما هو (دون تضمين الصفحة في نفسها)
-        return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="1" scrolling="no" src="${esc(ctx.base)}p/${esc(s.prod)}/order.html?embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}${ofParam(s)}" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe>${stkH}`;
+        return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="1" scrolling="no" src="${esc(ctx.base)}order-embed.html?p=${esc(s.prod)}&embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}${ofParam(s)}" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe>${stkH}`;
       },
       css: (c, sel, s0) => {
         const s = ofEff(s0), ok = v => /^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v || "").trim()) ? String(v).trim() : "";

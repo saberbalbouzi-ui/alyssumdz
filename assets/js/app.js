@@ -257,6 +257,7 @@ async function loadPixels(){
   return __pixelsCache;
 }
 function currentProductSlugFromUrl(){
+  { const q = location.search.match(/[?&]p=([a-z0-9-]+)/i); if(q && /[?&]embed=1/.test(location.search) && /order-embed\.html$/.test(location.pathname)) return q[1]; }   // صفحة النموذج المستقلة
   const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
   if(m) return m[1];
   /* الرابط النظيف: alyssumdz.com/<slug>/ */

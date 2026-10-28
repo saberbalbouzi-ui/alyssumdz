@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""يولّد p/<slug>/order.html: نسخة خفيفة من صفحة المنتج فيها العروض ونموذج الطلب فقط
+"""يولّد order-embed.html (صفحة واحدة مستقلة عن صفحات المنتجات، تُحمَّل بـ?p=<slug>): نسخة خفيفة من صفحة منتج مرجعية فيها العروض ونموذج الطلب فقط
 (بلا صور ولا هيدر/فوتر ولا أقسام أخرى ولا خطوط خارجية)؛ يحمّلها إطار orderorig بدل صفحة المنتج الكاملة.
 أعد تشغيله بعد أي تعديل على صفحات المنتجات (يُستدعى أيضاً من seo.py)."""
 import re, glob, os, sys
@@ -59,13 +59,27 @@ def build(h):
     out = re.sub(r'<video\b.*?</video>', '', out, flags=re.S)
     return out
 
+REF = 'anti-acne'   # صفحة مرجعية لهيكل النموذج؛ الباقي كله يأتي من data.js بحسب ?p=<slug>
+
+def shared(h, ref):
+    out = build(h)
+    if not out: return None
+    # لا تحويل مسار ولا قراءة متزامنة لـdata.js ولا canonical (الصفحة مستقلة عن أي منتج)
+    out = re.sub(r'<script>[^<]*XMLHttpRequest[^<]*</script>', '', out)
+    out = re.sub(r'<script>[^<]*link\[rel=canonical\][^<]*</script>', '', out)
+    out = out.replace('<head>', '<head><script>var __S=(new URLSearchParams(location.search).get("p")||"").replace(/[^a-z0-9-]/gi,"")</script>', 1)
+    out = out.replace('initProduct("%s")' % ref, 'initProduct(__S)')
+    out = out.replace('x.slug==="%s"' % ref, 'x.slug===__S').replace('x.slug!=="%s"' % ref, 'x.slug!==__S')
+    out = out.replace('../../', '')
+    # رابط واتساب باسم المنتج المطلوب
+    out = out.replace('initProduct(__S);', 'initProduct(__S);try{var __p=PRODUCTS.find(function(x){return x.slug===__S});document.querySelectorAll(".btn-wa").forEach(function(a){a.href=a.href.split("?text=")[0]+"?text="+encodeURIComponent("أريد طلب: "+(__p&&__p.title||""))})}catch(e){}', 1)
+    out = out.replace('<title>', '<title>طلب — ', 1)
+    return out
+
 def main():
-    n = 0
-    for f in sorted(glob.glob('p/*/index.html')):
-        slug = f.split('/')[1]
-        if slug in ('_template', 'test'): continue
-        out = build(open(f, encoding='utf-8').read())
-        if not out: print('skip', f); continue
-        open(os.path.join(os.path.dirname(f), 'order.html'), 'w', encoding='utf-8').write(out); n += 1
-    print('order.html:', n)
+    ref = 'p/%s/index.html' % REF
+    out = shared(open(ref, encoding='utf-8').read(), REF)
+    if not out: sys.exit('تعذّر بناء order-embed.html')
+    open('order-embed.html', 'w', encoding='utf-8').write(out)
+    print('order-embed.html:', len(out))
 main()

@@ -342,6 +342,7 @@
     "assets/data/stickers.json",
     "assets/img/stickers/**",
     "assets/fonts/**",
+    "order-embed.html",
     "scripts/gen-order-embeds.py",
     "assets/img/tools/**",
     "assets/data/tool-titles.json",
