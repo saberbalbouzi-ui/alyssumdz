@@ -6,7 +6,7 @@
  "bg": "transparent",
  "ff": "Cairo",
  "header": true,
- "footer": true,
+ "footer": false,
  "css": "\nbody.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#16324c;font-family:'Cairo',sans-serif;overflow-x:hidden}\n.rv-hero .pb-t{max-width:760px;margin-inline:auto}\n.rv-kick .pb-t{display:flex;align-items:center;justify-content:center;gap:12px;color:#187a3b;font-size:13px;font-weight:900}.rv-kick .pb-t p{margin:0}\n.rv-kick .pb-t:before,.rv-kick .pb-t:after{content:\"\";height:2px;width:34px;background:#f39a18;border-radius:4px}\n.rv-cta{text-align:center;padding:46px 22px;border-radius:30px;background:linear-gradient(120deg,#123e72,#187a3b);color:#fff}\n.rv-cta .pb-t{color:#fff}\n.pb-page .pb-btn{box-shadow:0 10px 24px #17813a33;transition:transform .25s}.pb-page .pb-btn:hover{transform:translateY(-4px)}\n",
  "sections": [
   {
@@ -359,5 +359,11 @@
  ],
  "seoTitle": "",
  "kw": "تجارب الباقة العلاجية, الرقية الشرعية, آراء الزبائن, الباقة الرباعية",
- "cover": "assets/img/ruqya/avis/r06.webp"
+ "cover": "assets/img/ruqya/avis/r06.webp",
+ "hfStash": {
+  "rem": [],
+  "header": true,
+  "footer": true
+ },
+ "landing": true
 }
