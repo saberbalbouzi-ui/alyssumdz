@@ -70,7 +70,7 @@ def cp(rel, dest=None):
     d.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(s, d) if s.is_dir() else shutil.copy2(s, d)
 
-for rel in ["admin.html", "assets/css", "assets/js", "assets/data", ("platform/supabase", "supabase"), "p/_template", "assets/img/placeholder", "assets/img/stickers", "assets/img/tools", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", "assets/ext"]:
+for rel in ["admin.html", "assets/css", "assets/js", "assets/data", ("platform/supabase", "supabase"), "p/_template", "assets/img/placeholder", "assets/img/stickers", "assets/img/tools", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", ".github/workflows/speed-test.yml", "scripts/speed-run.mjs", "assets/ext"]:
     cp(*rel) if isinstance(rel, tuple) else cp(rel)
 
 vals = {"SITE_NAME": a.name, "SITE_EN": a.name, "WA": a.wa, "YEAR": str(datetime.date.today().year)}

@@ -79,7 +79,7 @@ const AdminSpeed = (() => {
   const b64enc = t => btoa(unescape(encodeURIComponent(t)));
   const blobB64 = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); });
   const undoList = () => { try { return JSON.parse(rd(K_UNDO, "[]")) || []; } catch (e) { return []; } };
-  const ghReady = () => typeof GH !== "undefined" && GH.getFile && GH.putFile && ghCfg();
+  const ghReady = () => typeof GH !== "undefined" && GH.getFile && GH.putFile && (ghCfg() || (GH.cfg && (GH.cfg() || {}).token === "php"));       // الاستضافة العادية (PHP) تقرأ وتكتب الملفات عبر الواجهة نفسها
   async function ghPut(path, b64, msg) { let sha; try { sha = (await GH.getFile(path)).sha; } catch (e) { } return GH.putFile(path, b64, sha, msg); }
   async function loadSrc(path) {       // نسخة الرابط النظيف تُولَّد من الصفحة الأصلية، فنعدّل الأصل لا النسخة
     const f = await GH.getFile(path), html = b64dec(f.content);
@@ -131,9 +131,14 @@ const AdminSpeed = (() => {
       if (ids.includes("fontdisplay")) for (const [p, c] of Object.entries(fx.ctx.css)) { const r = SpeedFix.fixCss(c); if (r.n) { undo.css.push({ path: p, prev: b64enc(c) }); writes.push({ path: p, b64: b64enc(r.css), msg: "سرعة الموقع: عرض النص أثناء تحميل الخط" }); } }
       if (res.html !== fx.html) writes.push({ path: fx.path, b64: b64enc(res.html), msg: "سرعة الموقع: إصلاحات تلقائية (" + ids.join("، ") + ")" });
       if (!writes.length) throw new Error("لا تغييرات لتطبيقها");
-      for (const w of writes) await ghPut(w.path, w.b64, w.msg);
+      let skipped = 0; const doneCss = [];
+      for (const w of writes) {       // الصفحة نفسها إلزامية؛ ملفات الصور وCSS اختيارية (بعض الاستضافات لا تسمح بكتابتها)
+        if (w.path === fx.path) { await ghPut(w.path, w.b64, w.msg); continue; }
+        try { await ghPut(w.path, w.b64, w.msg); doneCss.push(w.path); } catch (e) { skipped++; }
+      }
+      undo.css = undo.css.filter(c => doneCss.includes(c.path));
       if (undo.prev.length + undo.css.reduce((s, c) => s + c.prev.length, 0) < 1500000) wr(K_UNDO, JSON.stringify([undo].concat(undoList()).slice(0, 3)));
-      S.fx = { done: true, report: res.report.filter(r => r.n), path: fx.path, files: writes.length };
+      S.fx = { done: true, report: res.report.filter(r => r.n), path: fx.path, files: writes.length, skipped };
       toast("✓ نُشرت الإصلاحات — أعد الفحص بعد دقيقة");
     } catch (e) { S.fx = Object.assign({}, fx, { busy: false, err: "تعذّر تطبيق الإصلاح: " + (e.message || e) }); }
     draw();
@@ -152,7 +157,7 @@ const AdminSpeed = (() => {
     let body = "";
     if (fx.busy) body = `<div class="sp-prog"><span class="sp-spin"></span><span>${esc(fx.msg || "")}</span></div>`;
     else if (fx.err) body = `<div class="sp-err" role="alert">${esc(fx.err)}</div>`;
-    else if (fx.done) body = `<div class="sp-fix"><b>${fx.undone ? "تم التراجع عن آخر إصلاح." : "تم تطبيق الإصلاحات ونشرها"}</b>${fx.report ? "<ul class=\"sp-it\" style=\"direction:rtl;text-align:start\">" + fx.report.map(r => "<li>" + esc((SpeedFix.FIXERS.find(f => f.id === r.id) || {}).title || r.id) + " — " + r.n + " تعديل</li>").join("") + "</ul>" : ""}<small>الموقع يتحدّث خلال دقيقة تقريباً، ثم اضغط «حلّل الآن» لترى النتيجة.</small></div>`;
+    else if (fx.done) body = `<div class="sp-fix"><b>${fx.undone ? "تم التراجع عن آخر إصلاح." : "تم تطبيق الإصلاحات ونشرها"}</b>${fx.report ? "<ul class=\"sp-it\" style=\"direction:rtl;text-align:start\">" + fx.report.map(r => "<li>" + esc((SpeedFix.FIXERS.find(f => f.id === r.id) || {}).title || r.id) + " — " + r.n + " تعديل</li>").join("") + "</ul>" : ""}${fx.skipped ? `<small>تعذّرت كتابة ${fx.skipped} من ملفات الصور/الأنماط في استضافتك فلم تُطبَّق.</small><br>` : ""}<small>الموقع يتحدّث خلال دقيقة تقريباً، ثم اضغط «حلّل الآن» لترى النتيجة.</small></div>`;
     else if (fx.plan) {
       const rows = fx.plan.filter(p => p.count || p.manual.length).map(p => `<div class="sp-fxr"><label><input type="checkbox" data-sp="fxsel" data-id="${p.id}"${fx.sel[p.id] ? " checked" : ""}${p.count ? "" : " disabled"}> <b>${esc(p.title)}</b> <span class="sp-pts${p.count ? "" : " z"}">${p.count ? p.count + " تعديل" : "يدوي"}</span>${p.risk === "review" ? ' <span class="sp-cat">يحتاج مراجعة بعد التطبيق</span>' : ""}</label><small>${esc(p.desc)}${p.id === "webp" && fx.saved ? " — توفير ≈ " + Math.round(fx.saved / 1024) + " KiB" : ""}</small>${p.manual.length ? '<ul class="sp-it" style="direction:rtl;text-align:start">' + p.manual.slice(0, 5).map(m => "<li>" + esc(m) + " — يحتاج تدخلك</li>").join("") + "</ul>" : ""}</div>`).join("");
       const n = fx.plan.filter(p => fx.sel[p.id] && p.count).reduce((s, p) => s + p.count, 0);
