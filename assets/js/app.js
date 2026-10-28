@@ -376,7 +376,7 @@ async function loadTheme(){
 function applyTheme(theme){
   if(!theme || typeof theme !== "object") return;
   try{
-    if(theme.fontUrl && ![...document.querySelectorAll('link[rel="stylesheet"]')].some(l=>l.href === theme.fontUrl)){   // لا تكرار إن كان الخط محمّلاً في <head>
+    if(theme.fontUrl && !(/[?&]embed=1/.test(location.search) && /family=Cairo/.test(theme.fontUrl)) && ![...document.querySelectorAll('link[rel="stylesheet"]')].some(l=>l.href === theme.fontUrl)){   // لا تكرار إن كان الخط محمّلاً في <head>
       const link = document.createElement("link");
       link.rel = "stylesheet"; link.href = theme.fontUrl;
       document.head.appendChild(link);
@@ -510,6 +510,7 @@ async function initCheckout(){
 /* حالة الاشتراك: الموقع الذي أغلقته المنصة (خمول/انتهاء اشتراك/قرار إداري) تظهر فيه رسالة بدل المتجر للزوار؛ أي فشل اتصال = المتجر يعمل.
    المدير (alyssum_admin_on) لا تُحجب عنه الصفحات. للتعطيل: CONFIG.SAAS_GATE = false */
 async function siteGate(){
+  if(/[?&]embed=1/.test(location.search)) return;   // الصفحة الأم تتحقق
   if(/\/admin(\.html)?\/?$/.test(location.pathname) || localStorage.getItem("alyssum_admin_on") === "1") return;
   const C = (typeof CONFIG !== "undefined" && CONFIG) || {}; if(C.SAAS_GATE === false) return;
   const url = String(C.SAAS_URL || "https://qvdaiundlkfbmjlummni.supabase.co").replace(/\/+$/, ""), key = C.SAAS_KEY || "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h";
@@ -860,7 +861,7 @@ function initProduct(slug){
   // معرض الصور — تُقرأ دائماً من data.js (p.images) عند كل تحميل للصفحة، ولا تُترك
   // لتجمّد داخل HTML الثابت للصفحة، حتى تبقى متطابقة مع ما يُعدَّل من لوحة التحكم
   const staticGallery = !!document.querySelector(".gthumbs[data-static]");   // صفحات القالب الجديد: معرض مكتوب في الصفحة نفسها (يُعدَّل من اللوحة) ولا يتبع صور المنتج
-  if(!staticGallery){
+  if(!staticGallery && !/[?&]embed=1/.test(location.search)){   // في التضمين (نموذج الطلب) لا معرض ولا تحميل صور
     const main = document.getElementById("gmain");
     const gthumbsEl = document.querySelector(".gthumbs");
     if(gthumbsEl) gthumbsEl.innerHTML = ""; // تفريغ أي صور مصغّرة ثابتة مضمّنة في HTML (تفادي التكرار)
@@ -2146,5 +2147,5 @@ const PhoneDZ = {
 /* التقاط السلة المتروكة (يعمل فقط إن ضُبط PLATFORM_CART_KEY في config.js) */
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/abandoned-cart.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 /* «جرّب عليك» لمنتجات الأزياء (يعمل فقط إن ضُبط PLATFORM_TRYON_KEY ومنتج فيه tryon:true) */
-(function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/tryon-shopper.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
+(function(){ try{ if(/[?&]embed=1/.test(location.search)) return; var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/tryon-shopper.js?v=1'; s.async=true; document.head.appendChild(s); }catch(e){} })();
 (function(){ try{ var s=document.createElement('script'); s.src=(typeof REL!=='undefined'?REL:'')+'assets/js/digital-checkout.js?v=1'; s.async=false; document.head.appendChild(s); }catch(e){} })();

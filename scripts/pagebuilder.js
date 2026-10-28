@@ -245,6 +245,7 @@ const PB = (() => {
     ["Tilt Neon", "", "", 1], ["Rubik Glitch", "", "", 1], ["Shrikhand", "", "", 1], ["Orbitron", "400;700", "", 1], ["Alfa Slab One", "", "", 1], ["Rye", "", "", 1], ["Bangers", "", "", 1], ["Lilita One", "", "", 1], ["Pacifico", "", "", 1], ["Press Start 2P", "", "", 1], ["Dancing Script", "400;700", "", 1]];
   const F_FONT = [["", "الافتراضي (Cairo)"], ["Georgia,'Times New Roman',serif", "Serif"], ["system-ui,sans-serif", "System"], ["'Courier New',monospace", "Mono"]].concat(FONT_FAMS.filter(x => !x[3]).map(([n, w, l]) => [`'${n}','Cairo',sans-serif`, l === n ? n : l + " (" + n + ")"]));
   const fontsHref = names => names.length ? "https://fonts.googleapis.com/css2?" + names.map(n => { const f = FONT_FAMS.find(x => x[0] === n); return "family=" + n.replace(/ /g, "+") + (f && f[1] ? ":wght@" + f[1] : ""); }).join("&") + "&display=swap" : "";
+  const cairoFace = base => { const u = f => "url(" + esc(base) + "assets/fonts/" + f + ".woff2) format('woff2')"; return "@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:" + u("cairo-arabic") + ";unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:" + u("cairo-latin") + ";unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}\n"; };
   const usedFonts = obj => { const str = JSON.stringify(obj || ""), pf = Object.keys(TPRE).filter(k => str.includes('"tpre":"' + k + '"')).map(k => TPRE[k][1]); return FONT_FAMS.filter(([n]) => str.includes("'" + n + "'") || pf.includes(n)).map(x => x[0]); };
   const F_W = [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]];
   const AL = [["start", "⇥ بداية"], ["center", "↔ وسط"], ["end", "⇤ نهاية"]];
@@ -829,7 +830,7 @@ const PB = (() => {
         if (!s.prod) return `<div class="pb-ph">اختر المنتج من إعدادات العنصر</div>`;
         const stkH = s.stk && !ctx.edit ? `<a class="pb-ofs" href="#pb-order" data-pbofs${s.fbt === false ? "" : ` data-lg="${esc(s.lgt || "الإجمالي")}"`} style="background:${esc(s.oac || "#16a34a")};color:${esc(s.obt || "#fff")};">${esc(s.stkt || s.obtn || "✅ تأكيد الطلب")}</a>` : "";
         if (ctx.inlineOrder && s.raw) return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><div class="pb-ofraw">${s.raw}</div>${stkH}`;      // على صفحة المنتج نفسها: نموذج الطلب الأصلي كما هو (دون تضمين الصفحة في نفسها)
-        return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="1" scrolling="no" src="${esc(ctx.base)}p/${esc(s.prod)}/?embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}${ofParam(s)}" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe>${stkH}`;
+        return `<i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="1" scrolling="no" src="${esc(ctx.base)}p/${esc(s.prod)}/order.html?embed=1${ctx.pageSlug && !ctx.edit ? "&src=" + encodeURIComponent("lp/" + ctx.pageSlug) : ""}${ofParam(s)}" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe>${stkH}`;
       },
       css: (c, sel, s0) => {
         const s = ofEff(s0), ok = v => /^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v || "").trim()) ? String(v).trim() : "";
@@ -1383,11 +1384,10 @@ ${FX_JS}
 <meta name="description" content="${esc(page.desc || "")}">${(page.kw || page.seoFocus) ? `<meta name="keywords" content="${esc([page.seoFocus, page.kw].filter(Boolean).join(", "))}">` : ""}${page.noindex ? `<meta name="robots" content="noindex">` : ""}
 <link rel="canonical" href="${esc(url)}"><meta property="og:type" content="website"><meta property="og:title" content="${esc(page.seoTitle || page.title)}"><meta property="og:description" content="${esc(page.desc || "")}"><meta property="og:url" content="${esc(url)}">${page.cover ? `<meta property="og:image" content="${esc((site.domain ? "https://" + site.domain + "/" : ctx.base) + page.cover)}">` : ""}
 <link rel="icon" href="${esc(ctx.base)}assets/img/favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); return u ? `<link href="${u}" rel="stylesheet" media="print" onload="this.media='all'">` : ""; })()}
+<link rel="preload" href="${esc(ctx.base)}assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); return u ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="${u}" rel="stylesheet" media="print" onload="this.media='all'">` : ""; })()}
 <noscript><style>[data-anim],.pb-bl[data-ia] .pb-bi{opacity:1!important;transform:none!important}</style></noscript>
-<style>${BASE_CSS}
+<style>${cairoFace(ctx.base)}${BASE_CSS}
 .pb-page{background:${esc(page.bg || "#fff")}${page.ff ? ";font-family:" + page.ff : ""}}
 ${r.css}
 ${page.css || ""}${page.tplCss || ""}</style></head>

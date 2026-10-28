@@ -3,7 +3,7 @@ name: seo-refresh
 on:
   push:
     branches: [main]
-    paths: ["assets/js/data.js", "redirects.json", "scripts/seo.py", "assets/js/config.js", "assets/data/seo.json", "assets/data/blog.json", "scripts/gen-blog.py", "assets/pages/index.json", "p/*/index.html", "lp/*/index.html"]
+    paths: ["assets/js/data.js", "redirects.json", "scripts/seo.py", "scripts/gen-order-embeds.py", "assets/js/config.js", "assets/data/seo.json", "assets/data/blog.json", "scripts/gen-blog.py", "assets/pages/index.json", "p/*/index.html", "lp/*/index.html"]
   workflow_dispatch:
 permissions:
   contents: write
@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 scripts/gen-blog.py
+      - run: python3 scripts/gen-order-embeds.py
       - run: python3 scripts/seo.py
       - name: Commit if changed
         run: |
