@@ -377,7 +377,7 @@ async function loadTheme(){
 function applyTheme(theme){
   if(!theme || typeof theme !== "object") return;
   try{
-    if(theme.fontUrl && !(/[?&]embed=1/.test(location.search) && /family=Cairo/.test(theme.fontUrl)) && ![...document.querySelectorAll('link[rel="stylesheet"]')].some(l=>l.href === theme.fontUrl)){   // لا تكرار إن كان الخط محمّلاً في <head>
+    if(theme.fontUrl && !((/[?&]embed=1/.test(location.search) || document.getElementById("cairo-local")) && /family=Cairo/.test(theme.fontUrl)) && ![...document.querySelectorAll('link[rel="stylesheet"]')].some(l=>l.href === theme.fontUrl)){   // لا تكرار إن كان الخط محمّلاً في <head>
       const link = document.createElement("link");
       link.rel = "stylesheet"; link.href = theme.fontUrl;
       document.head.appendChild(link);
@@ -1300,14 +1300,26 @@ function initHome(){
   const chips = document.getElementById("chips");
   let filter = "all";
   const chipBtns = {};
+  let rt = 0;
   function render(){
-    grid.innerHTML = "";
-    PRODUCTS.filter(p=>filter==="all"||p.cat===filter).forEach(p=>{
-      const a = document.createElement("a");
-      a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = productHref(p);
-      a.innerHTML = productCardHTML(p);
-      grid.appendChild(a);
-    });
+    const tk = ++rt; grid.innerHTML = "";
+    const list = PRODUCTS.filter(p=>filter==="all"||p.cat===filter);
+    /* أول 6 بطاقات فوراً والباقي دفعات صغيرة في وقت الخمول: لا مهمة واحدة طويلة تجمّد الصفحة على الهاتف */
+    const add = (from, to)=>{
+      const f = document.createDocumentFragment();
+      list.slice(from, to).forEach(p=>{
+        const a = document.createElement("a");
+        a.className = "card" + (isOutOfStock(p)?" oos":""); a.href = productHref(p);
+        a.innerHTML = productCardHTML(p);
+        f.appendChild(a);
+      });
+      grid.appendChild(f);
+    };
+    const later = fn=>{ window.requestIdleCallback ? requestIdleCallback(fn, { timeout: 700 }) : setTimeout(fn, 60); };
+    add(0, 6);
+    let i = 6;
+    const step = ()=>{ if(tk!==rt || i>=list.length) return; add(i, i+6); i += 6; if(i<list.length) later(step); };
+    if(list.length>6) later(step);
   }
   const all = document.createElement("button");
   all.className = "chip active"; all.textContent = "الكل";
@@ -2123,17 +2135,31 @@ const PhoneDZ = {
 
 /* بطاقات المنتجات (قالب أليسوم): الصورة الشفافة (المنتج وحده) تقف على مشهد القالب، أما الصورة المعتمة (منتج بخلفية/مشهد جاهز) فتُعرض كاملة بتكبير عند التمرير — يُوسَم الثاني بـ img-full ويقرأ القالب الصنف */
 (function () {
-  const seen = new WeakSet();
+  /* الفحص بكسل-بكسل مكلف على الهاتف: لا يُجرى إلا للصور الظاهرة وفي وقت الخمول، ونتيجته تُحفظ لكل صورة فلا تتكرر */
+  const seen = new WeakSet(), KEY = "alyssum_imgfull_v1"; let cache = {}, st = 0;
+  try { cache = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { cache = {}; }
+  const save = () => { clearTimeout(st); st = setTimeout(() => { try { const k = Object.keys(cache); if (k.length > 400) k.slice(0, k.length - 400).forEach(x => delete cache[x]); localStorage.setItem(KEY, JSON.stringify(cache)); } catch (e) { } }, 800); };
+  const mark = img => { const h = img.closest(".pb-pci,.thumb"); if (h) h.classList.add("img-full"); };
+  const idle = fn => (window.requestIdleCallback || (f => setTimeout(f, 90)))(fn, { timeout: 2500 });
+  const queue = []; let busy = 0;
+  const work = img => {
+    const key = img.currentSrc || img.src;
+    try {
+      const N = 32, c = document.createElement("canvas"); c.width = c.height = N; const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(img, 0, 0, N, N);
+      const d = x.getImageData(0, 0, N, N).data; let op = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) op++;
+      const full = op / (N * N) > .8; cache[key] = full ? 1 : 0; save(); if (full) mark(img);
+    } catch (e) { }
+  };
+  const pump = () => { if (busy) return; busy = 1; const step = () => { const im = queue.shift(); if (im) work(im); if (queue.length) idle(step); else busy = 0; }; idle(step); };
+  const io = "IntersectionObserver" in window ? new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); queue.push(e.target); } }); if (queue.length) pump(); }, { rootMargin: "300px" }) : null;
   function check(img) {
     if (seen.has(img)) return; seen.add(img);
-    const run = () => {
-      try {
-        const N = 32, c = document.createElement("canvas"); c.width = c.height = N; const x = c.getContext("2d"); x.drawImage(img, 0, 0, N, N);
-        const d = x.getImageData(0, 0, N, N).data; let op = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 40) op++;
-        if (op / (N * N) > .8) { const h = img.closest(".pb-pci,.thumb"); if (h) h.classList.add("img-full"); }
-      } catch (e) { }
+    const go = () => {
+      const key = img.currentSrc || img.src;
+      if (key in cache) { if (cache[key]) mark(img); return; }
+      if (io) io.observe(img); else { queue.push(img); pump(); }
     };
-    if (img.complete && img.naturalWidth) run(); else img.addEventListener("load", run, { once: true });
+    if (img.complete && img.naturalWidth) go(); else img.addEventListener("load", go, { once: true });
   }
   const scan = () => document.querySelectorAll(".pb-pci img,.aly-grid .card .thumb img").forEach(check);
   let t = 0; const later = () => { clearTimeout(t); t = setTimeout(scan, 150); };

@@ -716,3 +716,7 @@ html body .btn-order:hover,html body .btn-wa:hover,html body .btn-gold:hover,htm
   background:linear-gradient(180deg,#f6ff4d,#e9ff2e)!important;background-image:linear-gradient(180deg,#f6ff4d,#e9ff2e)!important;transform:translateY(-2px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.6)!important}
 html body .btn-order:active,html body .btn-wa:active,html body .btn-gold:active,html body .cta:active,html body .bb-btn:active,html body .lp-btn-gold:active,html body .lp-btn-green:active{transform:translateY(3px)!important;box-shadow:none!important}
 html body .btn-order svg,html body .btn-wa svg,html body .btn-gold svg,html body .cta svg,html body .bb-btn svg,html body .cart-btn svg{color:#1f2123!important;stroke:#1f2123!important}
+
+/* أداء: بطاقات الشبكة خارج الشاشة لا تُخطَّط ولا تُرسم (ولا تعمل حركاتها) حتى تقترب؛ الارتفاع التقديري يُستبدل بالفعلي بعد أول عرض */
+.grid.aly-grid>.card{content-visibility:auto;contain-intrinsic-size:auto 500px}
+@media(min-width:768px){.grid.aly-grid>.card{contain-intrinsic-size:auto 410px}}
