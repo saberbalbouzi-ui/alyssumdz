@@ -212,7 +212,7 @@ let ok = 0, bad = 0; const t = (n, c, x) => { if (c) ok++; else { bad++; console
   const q2 = await b.newPage({ viewport: { width: 1080, height: 900 } }); await q2.setContent(pubInfo.html.replace("<head>", '<head><base href="http://localhost:8765/">'), { waitUntil: "load" }); await q2.waitForTimeout(2500);
   const pub = await q2.evaluate(() => ({ txt: document.body.innerText, form: !!document.querySelector("iframe[src*='embed'],iframe[src*='p/tarkiz'],.pb-ofraw iframe"), ifr: [...document.querySelectorAll("iframe")].map(f => f.src) }));
   t("المنشورة: السعر الحقيقي من بيانات المنتج", pubInfo.price && pub.txt.replace(/\s|,/g, "").includes(String(pubInfo.price)), { price: pubInfo.price, txt: pub.txt.slice(0, 200) });
-  t("المنشورة: نموذج الطلب الحقيقي للمنتج (iframe المنتج)", pub.ifr.some(u => /p\/tarkiz\//.test(u)), pub.ifr);
+  t("المنشورة: نموذج الطلب الحقيقي للمنتج (صفحة النموذج المستقلة)", pub.ifr.some(u => /order-embed\.html\?p=tarkiz&/.test(u)), pub.ifr);
   await q2.close();
   /* ١٢) تحويل عكسي: صفحة المطوّر ← JSON بطبقات (يُرجع نفس المواضع ولا يعدّل الصفحة) */
   const revRes = await p.evaluate(() => {
