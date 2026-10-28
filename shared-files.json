@@ -55,6 +55,7 @@
     "assets/js/admin-agency.js",
     "assets/js/admin-speed.js",
     "assets/js/speed-core.js",
+    "assets/js/speed-fix.js",
     "assets/data/speed-recipes.json",
     "assets/js/vendor/lighthouse-report.js",
     "assets/js/admin-appstore.js",

@@ -37,7 +37,7 @@ const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u =
   await p.evaluate(async () => {
     document.body.innerHTML = '<div id="tab-speed" class="hidden"><div id="speed-content"></div></div>'; window.__toasts = [];
     window.GH = { cfg: () => window.__gh }; window.__gh = { token: "t", owner: "o", repo: "r", branch: "main" }; window.Admin = { tab() { }, toast: (t) => window.__toasts.push(t) };
-    for (const s of ["/assets/js/speed-core.js", "/assets/js/admin-speed.js"]) await new Promise((r) => { const e = document.createElement("script"); e.src = s; e.onload = r; document.body.appendChild(e); });
+    for (const s of ["/assets/js/speed-core.js", "/assets/js/speed-fix.js", "/assets/js/admin-speed.js"]) await new Promise((r) => { const e = document.createElement("script"); e.src = s; e.onload = r; document.body.appendChild(e); });
     Admin.tab("speed");
   });
   await p.waitForSelector("#sp-url");
@@ -58,6 +58,29 @@ const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u =
   ok("نسخ تقرير الأخطاء نصّ كامل بالإصلاحات", await p.evaluate(() => /# تقرير سرعة الموقع/.test(window.__clip) && /الإصلاح:/.test(window.__clip) && /\+\d/.test(window.__clip)));
   await p.click("[data-sp=full]"); await p.waitForSelector("#sp-full .lh-root, #sp-full .lh-vars, #sp-full [class*=lh-]", { timeout: 20000 }); ok("التقرير الكامل يُعرض بعارضه الرسمي", await p.evaluate(() => document.querySelectorAll("#sp-full .lh-audit").length > 10));
   ok("XSS: لا عناصر script داخل النتيجة", !(await p.$("#sp-app script")));
+  /* الإصلاح التلقائي */
+  await p.evaluate(() => {
+    const HTML = '<!doctype html><html><head><title>t</title></head><body><img src="assets/img/icon-192.png"><img src="assets/img/icon-512.png"><img src="assets/img/icon-192.png" class="z"><button id="agent-close">✕</button></body></html>';
+    window.__puts = []; window.__file = HTML;
+    GH.getFile = async (pth) => { if (pth !== "index.html") throw new Error("404"); return { content: btoa(unescape(encodeURIComponent(window.__file))), sha: "s1" }; };
+    GH.putFile = async (pth, b64, sha, msg) => { let txt = "(binary)"; try { txt = decodeURIComponent(escape(atob(b64))); } catch (e) { } window.__puts.push({ pth, txt, msg }); if (pth === "index.html") window.__file = txt; return {}; };
+    AdminSpeed.S.res.url = location.origin + "/"; localStorage.removeItem("alyssum_speed_undo");
+  });
+  await p.evaluate(() => { document.querySelector("[data-sp=cat][data-v=all]").click(); });
+  ok("صندوق الإصلاح التلقائي ظاهر قبل البنود", !!(await p.$(".sp-fx [data-sp=fxscan]")));
+  ok("بند قابل للإصلاح يحمل شارة", (await p.$$(".sp-auto")).length >= 1);
+  await p.click("[data-sp=fxscan]"); await p.waitForSelector("[data-sp=fxapply]", { timeout: 20000 });
+  t = await p.textContent(".sp-fx"); ok("قائمة الإصلاحات بأعدادها", /أسماء الأزرار والروابط/.test(t) && /تحميل الصور الكسول/.test(t) && /حجز مساحة الصور/.test(t) && !/GitHub|Google/.test(t), t.slice(0, 300));
+  ok("التأجيل يحتاج مراجعة وغير محدد افتراضياً", !(await p.evaluate(() => { const c = document.querySelector('[data-sp=fxsel][data-id=defer]'); return c ? c.checked : false; })));
+  await p.click("[data-sp=fxapply]"); await p.waitForSelector(".sp-fx .sp-fix, .sp-fx .sp-err", { timeout: 20000 });
+  const w = (await p.evaluate(() => window.__puts)).filter((x) => x.pth === "index.html");
+  ok("نُشرت الصفحة معدّلة", w.length === 1 && /aria-label="إغلاق"/.test(w[0].txt) && /loading="lazy"/.test(w[0].txt) && /aspect-ratio:\d+\/\d+/.test(w[0].txt) && /lang="ar"/.test(w[0].txt), w[0] && w[0].txt);
+  ok("زر التراجع يظهر بعد التطبيق", !!(await p.$("[data-sp=fxundo]")));
+  await p.click("[data-sp=fxundo]"); await p.waitForFunction(() => window.__puts.filter((x) => x.pth === "index.html").length === 2, null, { timeout: 15000 });
+  ok("التراجع يعيد الصفحة الأصلية", await p.evaluate(() => { const h = window.__puts.filter((x) => x.pth === "index.html"); return !/aria-label|loading=/.test(h[1].txt) && h[0].txt !== h[1].txt; }));
+  /* صفحة ليست من هذا الموقع */
+  await p.evaluate(() => { AdminSpeed.S.res.url = "https://example.org/"; }); await p.click("[data-sp=fxscan]"); await p.waitForSelector(".sp-fx .sp-err", { timeout: 10000 });
+  ok("صفحة خارجية ترفض برسالة واضحة", /صفحات موقعك فقط/.test(await p.textContent(".sp-fx .sp-err")));
   /* الخدمة غير مفعّلة ← انتقال تلقائي صامت للخدمة الاحتياطية */
   gh.mode = "nowf"; psi.n = 0; await p.click("[data-sp=run]"); await p.waitForSelector(".sp-prog", { timeout: 5000 }); await p.waitForSelector(".sp-rings", { timeout: 60000 });
   ok("الانتقال التلقائي للاحتياطية بنتيجة كاملة وبلا رسالة خطأ", psi.n === 2 && !(await p.$(".sp-err")), psi.n);

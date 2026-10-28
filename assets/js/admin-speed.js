@@ -72,12 +72,101 @@ const AdminSpeed = (() => {
   }
   const CAT_N_KEYS = () => Object.keys(CAT_N);
 
+
+  /* ───────── الإصلاح التلقائي: نعدّل كود الصفحة وننشره ثم يُعاد الفحص ───────── */
+  const K_UNDO = "alyssum_speed_undo";
+  const b64dec = b => decodeURIComponent(escape(atob(String(b).replace(/\s/g, ""))));
+  const b64enc = t => btoa(unescape(encodeURIComponent(t)));
+  const blobB64 = b => new Promise(ok => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.readAsDataURL(b); });
+  const undoList = () => { try { return JSON.parse(rd(K_UNDO, "[]")) || []; } catch (e) { return []; } };
+  const ghReady = () => typeof GH !== "undefined" && GH.getFile && GH.putFile && ghCfg();
+  async function ghPut(path, b64, msg) { let sha; try { sha = (await GH.getFile(path)).sha; } catch (e) { } return GH.putFile(path, b64, sha, msg); }
+  async function loadSrc(path) {       // نسخة الرابط النظيف تُولَّد من الصفحة الأصلية، فنعدّل الأصل لا النسخة
+    const f = await GH.getFile(path), html = b64dec(f.content);
+    if (/<!--seo-mirror-->/.test(html)) { const m = /^([^/]+)\/index\.html$/.exec(path); if (m) for (const c of ["p/" + m[1] + "/index.html", "lp/" + m[1] + "/index.html"]) { try { const g = await GH.getFile(c); return { path: c, html: b64dec(g.content) }; } catch (e) { } } }
+    return { path, html };
+  }
+  const fxDims = (srcs, base) => Promise.all(srcs.slice(0, 40).map(s => new Promise(res => { const im = new Image(); im.onload = () => res([s, im.naturalWidth && im.naturalHeight ? { w: im.naturalWidth, h: im.naturalHeight } : null]); im.onerror = () => res([s, null]); try { im.src = new URL(s, base).href; } catch (e) { res([s, null]); } }))).then(a => Object.fromEntries(a.filter(x => x[1])));
+  async function fxWebp(srcs, base) {
+    const files = [], map = {};
+    for (const s of srcs) {
+      if (files.length >= 6) break;
+      try {
+        const u = new URL(s, base); if (u.origin !== location.origin) continue;
+        const r = await fetch(u.href, { cache: "no-store" }); if (!r.ok) continue; const b = await r.blob(); if (b.size < 40 * 1024) continue;
+        const bm = await createImageBitmap(b), sc = Math.min(1, 1600 / bm.width), w = Math.round(bm.width * sc), h = Math.round(bm.height * sc), cv = document.createElement("canvas"); cv.width = w; cv.height = h; cv.getContext("2d").drawImage(bm, 0, 0, w, h);
+        const wb = await new Promise(ok => cv.toBlob(ok, "image/webp", 0.82)); if (!wb || wb.type !== "image/webp" || wb.size > b.size * 0.85) continue;
+        const rel = s.replace(/\.(?:png|jpe?g)(?:[?#].*)?$/i, "") + "-opt.webp"; files.push({ path: new URL(rel, base).pathname.replace(/^\//, ""), blob: wb, saved: b.size - wb.size }); map[s] = rel;
+      } catch (e) { }
+    }
+    return { files, map };
+  }
+  function anyLhr() { const d = S.res && S.res.devices; if (!d) return null; return (d[S.cur] && d[S.cur].lhr) || (d.mobile && d.mobile.lhr) || (d.desktop && d.desktop.lhr) || null; }
+  async function fxScan() {
+    S.fx = { busy: true, msg: "جارٍ فحص كود الصفحة…" }; draw();
+    try {
+      if (!S.res || typeof SpeedFix === "undefined") throw new Error("حلّل الموقع أولاً");
+      if (!ghReady()) throw new Error("الإصلاح التلقائي يحتاج ربط النشر من إعدادات الموقع");
+      let u; try { u = new URL(S.res.url); } catch (e) { throw new Error("رابط غير صالح"); }
+      if (u.origin !== location.origin) throw new Error("الإصلاح التلقائي يعمل على صفحات موقعك فقط");
+      const path = SpeedFix.pagePath(u.href); if (!path) throw new Error("تعذّر تحديد ملف الصفحة");
+      const src = await loadSrc(path).catch(() => { throw new Error("تعذّر قراءة الصفحة (" + path + ")"); });
+      const base = new URL(src.path, location.origin + "/").href, lhr = anyLhr() || {}, origin = location.origin;
+      S.fx.msg = "جارٍ تجهيز الصور…"; draw();
+      const first = SpeedFix.analyze(src.html, lhr, { origin }), need = id => ((first.find(x => x.id === id) || {}).need) || [];
+      const dims = await fxDims(need("ratio"), base), wp = await fxWebp(need("webp"), base), css = {};
+      for (const h of SpeedFix.localCss(src.html, origin)) { try { const p = new URL(h, base).pathname.replace(/^\//, ""), g = await GH.getFile(p); css[p] = b64dec(g.content); } catch (e) { } }
+      const ctx = { origin, dims, webp: wp.map, css }, plan = SpeedFix.analyze(src.html, lhr, ctx), sel = {}; plan.forEach(p => { sel[p.id] = p.risk === "safe" && p.count > 0; });
+      S.fx = { path: src.path, html: src.html, lhr, ctx, plan, sel, files: wp.files, saved: wp.files.reduce((s, f) => s + f.saved, 0) };
+    } catch (e) { S.fx = { err: e.message || String(e) }; }
+    draw();
+  }
+  async function fxApply() {
+    const fx = S.fx; if (!fx || fx.busy || !fx.plan) return; const ids = fx.plan.filter(p => fx.sel[p.id] && p.count).map(p => p.id);
+    if (!ids.length) return toast("اختر إصلاحاً واحداً على الأقل");
+    fx.busy = true; fx.msg = "جارٍ تطبيق الإصلاحات ونشرها…"; draw();
+    try {
+      const res = SpeedFix.apply(fx.html, ids, fx.lhr, fx.ctx), undo = { at: Date.now(), path: fx.path, prev: b64enc(fx.html), css: [] }, writes = [];
+      if (ids.includes("webp")) for (const f of fx.files) writes.push({ path: f.path, b64: await blobB64(f.blob), msg: "سرعة الموقع: نسخة WebP أخف" });
+      if (ids.includes("fontdisplay")) for (const [p, c] of Object.entries(fx.ctx.css)) { const r = SpeedFix.fixCss(c); if (r.n) { undo.css.push({ path: p, prev: b64enc(c) }); writes.push({ path: p, b64: b64enc(r.css), msg: "سرعة الموقع: عرض النص أثناء تحميل الخط" }); } }
+      if (res.html !== fx.html) writes.push({ path: fx.path, b64: b64enc(res.html), msg: "سرعة الموقع: إصلاحات تلقائية (" + ids.join("، ") + ")" });
+      if (!writes.length) throw new Error("لا تغييرات لتطبيقها");
+      for (const w of writes) await ghPut(w.path, w.b64, w.msg);
+      if (undo.prev.length + undo.css.reduce((s, c) => s + c.prev.length, 0) < 1500000) wr(K_UNDO, JSON.stringify([undo].concat(undoList()).slice(0, 3)));
+      S.fx = { done: true, report: res.report.filter(r => r.n), path: fx.path, files: writes.length };
+      toast("✓ نُشرت الإصلاحات — أعد الفحص بعد دقيقة");
+    } catch (e) { S.fx = Object.assign({}, fx, { busy: false, err: "تعذّر تطبيق الإصلاح: " + (e.message || e) }); }
+    draw();
+  }
+  async function fxUndo() {
+    const l = undoList(), u = l[0]; if (!u) return;
+    S.fx = { busy: true, msg: "جارٍ التراجع…" }; draw();
+    try { await ghPut(u.path, u.prev, "سرعة الموقع: تراجع عن الإصلاح التلقائي"); for (const c of u.css || []) await ghPut(c.path, c.prev, "سرعة الموقع: تراجع عن الإصلاح التلقائي"); wr(K_UNDO, JSON.stringify(l.slice(1))); S.fx = { done: true, undone: true, path: u.path }; toast("✓ تم التراجع"); }
+    catch (e) { S.fx = { err: "تعذّر التراجع: " + (e.message || e) }; }
+    draw();
+  }
+  function fxBox() {
+    const fx = S.fx || {}, un = undoList().length, who = "";
+    const head = `<div class="sp-row" style="justify-content:space-between"><h3 style="margin:0">🛠 إصلاح تلقائي</h3><span>${un ? '<button class="sp-btn g" data-sp="fxundo">↩ تراجع عن آخر إصلاح</button> ' : ""}<button class="sp-btn" data-sp="fxscan"${fx.busy ? " disabled" : ""}>${fx.plan ? "إعادة الفحص" : "افحص ما يمكن إصلاحه"}</button></span></div>`;
+    const hint = '<p class="sp-hint">لا نعرض المشاكل فقط: تعدّل الأداة كود صفحتك وتنشره، ويمكنك التراجع بنقرة. ما لا يمكن إصلاحه آلياً تجد حلّه مكتوباً في البنود أدناه.</p>';
+    let body = "";
+    if (fx.busy) body = `<div class="sp-prog"><span class="sp-spin"></span><span>${esc(fx.msg || "")}</span></div>`;
+    else if (fx.err) body = `<div class="sp-err" role="alert">${esc(fx.err)}</div>`;
+    else if (fx.done) body = `<div class="sp-fix"><b>${fx.undone ? "تم التراجع عن آخر إصلاح." : "تم تطبيق الإصلاحات ونشرها"}</b>${fx.report ? "<ul class=\"sp-it\" style=\"direction:rtl;text-align:start\">" + fx.report.map(r => "<li>" + esc((SpeedFix.FIXERS.find(f => f.id === r.id) || {}).title || r.id) + " — " + r.n + " تعديل</li>").join("") + "</ul>" : ""}<small>الموقع يتحدّث خلال دقيقة تقريباً، ثم اضغط «حلّل الآن» لترى النتيجة.</small></div>`;
+    else if (fx.plan) {
+      const rows = fx.plan.filter(p => p.count || p.manual.length).map(p => `<div class="sp-fxr"><label><input type="checkbox" data-sp="fxsel" data-id="${p.id}"${fx.sel[p.id] ? " checked" : ""}${p.count ? "" : " disabled"}> <b>${esc(p.title)}</b> <span class="sp-pts${p.count ? "" : " z"}">${p.count ? p.count + " تعديل" : "يدوي"}</span>${p.risk === "review" ? ' <span class="sp-cat">يحتاج مراجعة بعد التطبيق</span>' : ""}</label><small>${esc(p.desc)}${p.id === "webp" && fx.saved ? " — توفير ≈ " + Math.round(fx.saved / 1024) + " KiB" : ""}</small>${p.manual.length ? '<ul class="sp-it" style="direction:rtl;text-align:start">' + p.manual.slice(0, 5).map(m => "<li>" + esc(m) + " — يحتاج تدخلك</li>").join("") + "</ul>" : ""}</div>`).join("");
+      const n = fx.plan.filter(p => fx.sel[p.id] && p.count).reduce((s, p) => s + p.count, 0);
+      body = rows ? `<div class="sp-fxl">${rows}</div><div class="sp-row" style="margin-top:.7rem"><button class="sp-btn" data-sp="fxapply"${n ? "" : " disabled"}>طبّق الإصلاحات المحدّدة (${n})</button></div><p class="sp-hint">الصفحة: <span dir="ltr">${esc(fx.path)}</span> — الصفحات التي يعيد المطوّر بناءها عند حفظها قد تحتاج إعادة تطبيق الإصلاح.</p>` : '<p class="sp-hint">لا توجد إصلاحات آلية لهذه الصفحة. راجع الحلول المكتوبة في البنود أدناه.</p>';
+    }
+    return `<div class="sp-box sp-fx">${head}${hint}${body}</div>`;
+  }
+
   /* ───────── تشغيل الفحص ───────── */
   async function run() {
     const url = SpeedCore.normUrl(S.url); if (!url) return toast("اكتب رابط موقعك الصحيح (يبدأ بـ https://)");
     if (/^https?:\/\/(localhost|127\.|10\.|192\.168\.)/i.test(url)) return toast("الفحص يعمل على المواقع المنشورة فقط، لا على عناوين محلية");
     await loadRecipes(); S.url = url; wr(K_URL, url);
-    const token = ++S.runId; S.busy = true; S.err = ""; S.res = null; S.full = false; S.prog = "جارٍ التجهيز…"; draw();
+    const token = ++S.runId; S.busy = true; S.err = ""; S.res = null; S.fx = null; S.full = false; S.prog = "جارٍ التجهيز…"; draw();
     const say = t => { if (S.runId === token) { S.prog = t; const e = $("sp-prog"); if (e) e.textContent = t; } };
     try {
       let res; try { res = await runServer(url, S.dev, say, token); } catch (e) { if (!e.fallback) throw e; S.why = (e && (e.code || "") + " " + (e && e.message || "")).trim(); console.warn("speed: الفحص المفصّل غير متاح", S.why); res = await runPsi(url, S.dev, say, token); res.why = S.why; }
@@ -115,6 +204,7 @@ const AdminSpeed = (() => {
 .sp-err{padding:.8rem 1rem;border-radius:12px;background:rgba(var(--g-rose-rgb),.15);border:1px solid rgba(var(--g-rose-rgb),.5)}.sp-prog{display:flex;gap:.7rem;align-items:center}.sp-spin{width:20px;height:20px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:rgb(var(--g-mint-rgb));animation:spSpin 1s linear infinite;flex:none}@keyframes spSpin{to{transform:rotate(360deg)}}
 .sp-hist{display:grid;gap:.4rem;font-size:.85rem}.sp-hist button{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:space-between;text-align:start;padding:.5rem .7rem;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:transparent;color:inherit;font:inherit;cursor:pointer}.sp-hist i{font-style:normal;direction:ltr;opacity:.8}
 .sp-hint{font-size:.8rem;opacity:.8;margin:.4rem 0 0;line-height:1.7}#sp-full{border-radius:14px;overflow:hidden;background:#fff;color:#212121}
+.sp-fxl{display:grid;gap:.5rem}.sp-fxr{padding:.55rem .75rem;border-radius:12px;border:1px solid rgba(255,255,255,.14)}.sp-fxr label{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;cursor:pointer}.sp-fxr small{display:block;opacity:.8;margin-top:.25rem;line-height:1.7}.sp-auto{border-color:rgba(var(--g-mint-rgb),.6);color:rgb(var(--g-mint-rgb))}
 html.white .sp-box,html.white .sp-eng label,html.white .sp-iss{border-color:#d2d9e3}html.white .sp-in{background:#fff;border-color:#c5ccd8}`;
     document.head.appendChild(s);
   }
@@ -128,7 +218,7 @@ html.white .sp-box,html.white .sp-eng label,html.white .sp-iss{border-color:#d2d
     const pts = it.pointsGain > 0 ? `<span class="sp-pts">+${it.pointsGain < 1 ? it.pointsGain.toFixed(1) : Math.round(it.pointsGain)}${it.approximate ? "≈" : ""} نقطة</span>` : `<span class="sp-pts z">تشخيص</span>`;
     const desc = esc(it.description || "").replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, (m, t, u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${t}</a>`);
     const body = `<div class="sp-body">${it.displayValue ? `<div><b>${esc(it.displayValue)}</b></div>` : ""}${it.fix ? `<div class="sp-fix"><b>طريقة الإصلاح:</b> ${esc(it.fix)}</div>` : ""}<div class="sp-ds">${desc}</div>${it.items.length ? `<div><b>العناصر المتأثرة${it.itemCount > it.items.length ? " (" + it.itemCount + ")" : ""}:</b><ul class="sp-it">${it.items.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}<div><button class="sp-btn g" data-sp="copy1" data-id="${esc(it.id)}">نسخ هذا البند</button></div></div>`;
-    return `<details class="sp-iss" data-id="${esc(it.id)}"${open}><summary>${pts}<b>${esc(it.title)}</b>${cats}</summary>${body}</details>`;
+    return `<details class="sp-iss" data-id="${esc(it.id)}"${open}><summary>${pts}<b>${esc(it.title)}</b>${typeof SpeedFix !== "undefined" && SpeedFix.AUDIT_FIX[it.id] ? '<span class="sp-cat sp-auto">🛠 يُصلَح تلقائياً</span>' : ""}${cats}</summary>${body}</details>`;
   }
   function draw() {
     const host = $("sp-app"); if (!host) return;
@@ -150,7 +240,7 @@ html.white .sp-box,html.white .sp-eng label,html.white .sp-iss{border-color:#d2d
         const gain = Math.round(sm.issues.reduce((s, i) => s + (i.diagnostic ? 0 : i.pointsGain), 0));
         const fixes = `<div class="sp-box"><div class="sp-row" style="justify-content:space-between"><h3 style="margin:0">ما الذي يمنع الوصول إلى 100؟</h3><span><button class="sp-btn g" data-sp="copyall">نسخ تقرير الأخطاء</button> <button class="sp-btn g" data-sp="json">تحميل JSON</button></span></div><p class="sp-hint">مرتبة بعدد النقاط التي ستستردّها عند إصلاح كل بند (تقديرية للأداء، وقد تتداخل البنود). ${gain ? "المجموع النظري المتبقي: " + gain + " نقطة موزعة على الفئات." : ""}</p>${ftabs}${list.length ? list.map(issueHtml).join("") : '<p>ممتاز! لا توجد بنود راسبة في هذه الفئة.</p>'}</div>`;
         const warn = sm.meta.warnings && sm.meta.warnings.length ? `<p class="sp-hint">⚠ ${sm.meta.warnings.map(esc).join(" · ")}</p>` : "";
-        out = `<div class="sp-box">${tabs}${rings}${mets}${warn}<div class="sp-row" style="margin-top:.8rem"><button class="sp-btn g" data-sp="full">${S.full ? "إخفاء التقرير الكامل" : "عرض التقرير الكامل"}</button></div>${S.full ? '<div id="sp-full" style="margin-top:.8rem"></div>' : ""}</div>${fixes}`;
+        out = `<div class="sp-box">${tabs}${rings}${mets}${warn}<div class="sp-row" style="margin-top:.8rem"><button class="sp-btn g" data-sp="full">${S.full ? "إخفاء التقرير الكامل" : "عرض التقرير الكامل"}</button></div>${S.full ? '<div id="sp-full" style="margin-top:.8rem"></div>' : ""}</div>${fxBox()}${fixes}`;
       }
     }
     const h = hist(), hs = h.length ? `<div class="sp-box"><h3>آخر الفحوص</h3><div class="sp-hist">${h.map((x, i) => `<button data-sp="again" data-i="${i}"><span dir="ltr">${esc(x.url.replace(/^https?:\/\//, ""))}</span><span>${["mobile", "desktop"].filter(d => x.s[d]).map(d => DEV_N[d] + ": <i>" + SpeedCore.CATS.map(c => x.s[d][c] == null ? "–" : x.s[d][c]).join(" / ") + "</i>").join(" · ")}</span><span class="sp-hint" style="margin:0">${esc(String(x.at).slice(0, 16).replace("T", " "))}</span></button>`).join("")}</div><p class="sp-hint">الأرقام: الأداء / إمكانية الوصول / أفضل الممارسات / SEO. اضغط على فحص لإعادته.</p></div>` : "";
@@ -185,6 +275,10 @@ html.white .sp-box,html.white .sp-eng label,html.white .sp-iss{border-color:#d2d
     else if (a === "cat") { S.cat = el.dataset.v; draw(); }
     else if (a === "full") { S.full = !S.full; draw(); }
     else if (a === "json") { const d = S.res && S.res.devices[S.cur]; if (d && d.lhr) { const u = URL.createObjectURL(new Blob([JSON.stringify(d.lhr)], { type: "application/json" })), l = document.createElement("a"); l.href = u; l.download = "lighthouse-" + S.cur + ".json"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 3000); } }
+    else if (a === "fxscan") fxScan();
+    else if (a === "fxapply") fxApply();
+    else if (a === "fxundo") fxUndo();
+    else if (a === "fxsel") { if (S.fx && S.fx.sel) { S.fx.sel[el.dataset.id] = el.checked; draw(); } }
     else if (a === "copyall") { const sm = current(); if (sm && !sm.error) copy(reportText(sm)); }
     else if (a === "copy1") { const sm = current(); if (sm && !sm.error) copy(reportText(sm, el.dataset.id)); }
     else if (a === "again") { const x = hist()[+el.dataset.i]; if (x) { S.url = x.url; draw(); toast("اضغط «حلّل الآن» لإعادة الفحص"); } }
