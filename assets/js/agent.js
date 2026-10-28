@@ -912,12 +912,12 @@ const Agent = (() => {
       <div class="agent-head">
         <div class="av">🌿</div>
         <div><b>مساعد أليسوم الذكي</b><small>متصل الآن · يرد فوراً · AR / FR</small></div>
-        <button class="x" id="agent-close">✕</button>
+        <button class="x" id="agent-close" type="button" aria-label="إغلاق المحادثة">✕</button>
       </div>
       <div class="agent-body" id="agent-body"></div>
       <div class="agent-input">
         <input id="agent-input" placeholder="اكتب سؤالك… / Écrivez votre question">
-        <button id="agent-send">➤</button>
+        <button id="agent-send" type="button" aria-label="إرسال الرسالة">➤</button>
       </div>`;
     document.body.appendChild(p);
     document.getElementById("agent-close").onclick = close;
