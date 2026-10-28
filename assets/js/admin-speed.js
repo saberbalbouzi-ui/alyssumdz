@@ -29,7 +29,7 @@ const AdminSpeed = (() => {
     const id = "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, br = c.branch || "main";
     const H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" }, path = "assets/speed/" + id + ".json.gz", t0 = Date.now();
     say("تشغيل الفحص على الخادم…");
-    const r = await fetch(api + "/actions/workflows/speed-test.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ ref: br, inputs: { url, devices, locale: "ar", id } }) });
+    const r = await fetch(api + "/actions/workflows/speed-test.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ ref: br, inputs: { url, devices, locale: "ar", id } }) }).catch(e => { console.warn("speed dispatch", e); throw new Error("تعذّر الاتصال بخدمة الفحص المفصّل (" + (e && e.message || "شبكة") + "). أعد تحميل اللوحة (Ctrl+Shift+R) ثم حاول، أو جرّب PageSpeed Insights."); });
     if (r.status !== 204) throw new Error(r.status === 404 ? "خدمة الفحص المفصّل غير مفعّلة في موقعك — حدّث اللوحة أو استعمل PageSpeed Insights" : r.status === 403 || r.status === 401 ? "رمز النشر بلا صلاحية تشغيل الفحص" : "فشل تشغيل الفحص (" + r.status + ")");
     let n = 0;
     while (Date.now() - t0 < 600000) {
@@ -86,7 +86,7 @@ const AdminSpeed = (() => {
       S.res = res; S.cur = res.devices.mobile ? "mobile" : "desktop"; S.cat = "all"; S.open = {};
       pushHist(res);
       if (Object.values(res.devices).every(d => d.error)) S.err = Object.values(res.devices)[0].error.message;
-    } catch (e) { if (S.runId === token) S.err = e.message || "فشل الفحص"; }
+    } catch (e) { if (S.runId === token) S.err = (/^Failed to fetch|NetworkError|Load failed/i.test(e && e.message || "") ? "تعذّر الاتصال بالخدمة (" + e.message + ") — تحقق من اتصالك وأعد تحميل اللوحة، أو بدّل طريقة الفحص." : e.message) || "فشل الفحص"; console.warn("speed", e); }
     if (S.runId === token) { S.busy = false; draw(); }
   }
   function pushHist(res) {
