@@ -4,13 +4,16 @@ const AdminKind = (() => {
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   /* أقسام لا معنى لها في متجر رقمي (توصيل، تجهيز طرود، مرتجعات مادية، مخزون علب…) */
   const PHYS = ["shipped", "callcenter", "pack", "dispatch", "delivery", "fees", "returns", "inventory", "sources", "blacklist", "market"];
+  /* أقسام تعتمد على خدمات المنصة المركزية (محفظة، خدمات تسويق، سوق التوريد، منتجات رقمية، متجر تطبيقات، مركز المتاجر) ولا تعمل على الاستضافة العادية (PHP) */
+  const PLAT = ["wallet", "agency", "market", "digital", "appstore", "appdev", "sources"];
+  const isPhp = () => { try { return typeof CONFIG !== "undefined" && CONFIG.BACKEND === "php"; } catch (e) { return false; } };
   const D = () => (typeof AdminStores !== "undefined" && AdminStores.data && AdminStores.data()) || {};
   const owner = () => { try { const m = AdminRoles.state && AdminRoles.state.me; return !m || m.owner !== false; } catch (e) { return true; } };
   const kind = () => (D().kind === "digital" || D().edition === "digital" ? "digital" : "physical");
   const landing = () => (kind() === "digital" && owner() ? "digital" : "home");
   function css() {
     if ($("kd-css")) return; const st = document.createElement("style"); st.id = "kd-css";
-    st.textContent = 'html.kind-digital .nav-btn.kind-phys{display:none!important}' +
+    st.textContent = 'html.kind-digital .nav-btn.kind-phys,html.be-php .nav-btn.be-plat{display:none!important}' +
       '#kd-bg{position:fixed;inset:0;z-index:99999;background:rgba(9,24,18,.985);display:flex;align-items:center;justify-content:center;padding:1rem;overflow:auto}' +
       '#kd-box{max-width:760px;width:100%;color:#fff;text-align:center}#kd-box h2{margin:0 0 .4rem;font-size:1.6rem}#kd-box p{margin:0 0 1.2rem;opacity:.85}' +
       '.kd-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem}@media(max-width:620px){.kd-cards{grid-template-columns:1fr}}' +
@@ -22,8 +25,8 @@ const AdminKind = (() => {
       '.kd-sw{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}.kd-sw button{cursor:pointer;color:#fff;border-radius:12px;padding:.5rem .9rem;font:inherit;font-weight:800;border:1px solid rgba(255,255,255,.3);background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.05));box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -4px 8px rgba(0,0,0,.2),0 2px 8px rgba(0,0,0,.25);transition:transform .15s,background .15s}.kd-sw button:hover{transform:translateY(-2px);background:linear-gradient(180deg,rgba(var(--g-mint-rgb,226,254,23),.38),rgba(var(--g-mint-rgb,226,254,23),.12))}';
     document.head.appendChild(st);
   }
-  function mark() { document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z0-9]+)'/.exec(b.getAttribute("onclick") || ""); if (m && PHYS.includes(m[1])) b.classList.add("kind-phys"); }); }
-  function apply() { try { if (typeof AdminEdition !== "undefined") AdminEdition.apply(); } catch (e) { } css(); mark(); document.documentElement.classList.toggle("kind-digital", kind() === "digital"); heroDraw(); }
+  function mark() { document.querySelectorAll(".nav-btn").forEach(b => { const m = /Admin\.tab\('([a-z0-9]+)'/.exec(b.getAttribute("onclick") || ""); if (m && PHYS.includes(m[1])) b.classList.add("kind-phys"); if (m && PLAT.includes(m[1])) b.classList.add("be-plat"); }); }
+  function apply() { try { if (typeof AdminEdition !== "undefined") AdminEdition.apply(); } catch (e) { } css(); mark(); document.documentElement.classList.toggle("be-php", isPhp()); document.documentElement.classList.toggle("kind-digital", kind() === "digital"); heroDraw(); }
   /* بطاقة الرئيسية الرقمية أعلى تبويب المنتجات الرقمية */
   function heroDraw() {
     const t = $("tab-digital"); if (!t) return; let h = $("kd-hero");
