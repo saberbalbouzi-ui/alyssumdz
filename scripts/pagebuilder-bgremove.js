@@ -391,6 +391,7 @@ const PBBgRemove = (function () {
   }
   async function autoCut0(srcC, o) {
     o = o || {};
+    if (!o.methods) { o.sam = true; o.noPro = true; }      /* أي نزع خلفية بلا طرق صريحة = SAM2 على الحاسوب فقط (بلا فوتوروم) */
     if (!o.methods) {      /* أداة «نزع الخلفية»: Photoroom فقط — طلب واحد ونتيجة واحدة (بلا طرق محلية ولا إعادة بطرق أخرى) */
       let sc = await samCut(srcC, o); if (sc) { try { sc = keepSubject(sc, { frac: o.keepFrac != null ? o.keepFrac : .03 }).canvas; } catch (_) { } const sv = coverage(sc); if (sv > .02 && sv < .98) return { canvas: sc, method: "sam", cov: sv }; }      // SAM+Gemini أولاً (مجاني محلي) وإلا Photoroom
       if (o.sam && !(typeof AIVision !== "undefined" && AIVision.weak && AIVision.weak())) throw new Error("تعذّر نزع الخلفية بالتجزئة (SAM + Gemini): تأكد من مفتاح Gemini وأن الصورة فيها موضوع واضح، ثم أعد المحاولة");      // الحاسوب: بلا فوترة فوتوروم (تجربة)؛ الهاتف فقط يبقى فوتوروم

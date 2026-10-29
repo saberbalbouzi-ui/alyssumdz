@@ -152,19 +152,20 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     const prod = (g, bgf) => { bgf(g); g.fillStyle = "#c0392b"; g.fillRect(70, 60, 60, 80); };
     const uni = mkc(200, 200); prod(uni.getContext("2d"), g => { g.fillStyle = "#e8e8e8"; g.fillRect(0, 0, 200, 200); });
     const cx = mkc(200, 200); prod(cx.getContext("2d"), g => { for (let y = 0; y < 200; y += 10) for (let x = 0; x < 200; x += 10) { g.fillStyle = "hsl(" + ((x * 7 + y * 13) % 360) + ",60%," + (30 + (x + y) % 40) + "%)"; g.fillRect(x, y, 10, 10); } });
-    /* Photoroom عبر دالة bg-remove: نحاكي الخادم بقصّ المنتج الأحمر وحده (خلفية شفافة) */
-    let calls = 0, mode = "ok"; const outC = mkc(200, 200); { const g = outC.getContext("2d"); g.fillStyle = "#c0392b"; g.fillRect(70, 60, 60, 80); }
-    const outB64 = outC.toDataURL("image/png").split(",")[1];
-    window.API = { sb: { url: p => "https://x.test" + p, token: async () => "tok", headers: t => ({ Authorization: "Bearer " + t }) } };
-    const f0 = window.fetch; window.fetch = async (u, init) => { if (/bg-remove/.test(String(u))) { calls++; if (mode === "off") return new Response(JSON.stringify({ error: "not_configured" }), { status: 503 }); return new Response(JSON.stringify({ ok: true, type: "image/png", b64: outB64 }), { status: 200 }); } return f0(u, init); };
-    const r1 = await PBBgRemove.autoCut(uni, { methods: ["classic"] }), c1 = calls, r2 = await PBBgRemove.autoCut(cx, { allowKey: true }), c2 = calls;
-    mode = "off"; let nokey = ""; try { await PBBgRemove.autoCut(cx, {}); } catch (e) { nokey = e.code || e.message; } window.fetch = f0;
+    /* SAM2 (بلا فوتوروم): نحاكي الكشف والتجزئة فيعيدان المنتج الأحمر وحده */
+    let calls = 0; window.AIVision = window.AIVision || { supported: () => false }; window.AICapture = window.AICapture || {}; const sup0 = AIVision.supported, d0 = AICapture.detect, p0 = AICapture.samPrep, s0 = AICapture.samCuts, w0 = window.fetch;
+    window.fetch = async (u, init) => { if (/bg-remove/.test(String(u))) calls++; return w0(u, init); };
+    AIVision.supported = () => true; AICapture.samPrep = () => ({}); AICapture.detect = async c => [{ label: "منتج", box: { x0: 0, y0: 0, x1: c.width, y1: c.height } }];
+    AICapture.samCuts = async c => { const k = document.createElement("canvas"); k.width = c.width; k.height = c.height; const g = k.getContext("2d"); g.fillStyle = "#c0392b"; g.fillRect(70, 60, 60, 80); return [{ label: "منتج", canvas: k, x0: 0, y0: 0, w: c.width, h: c.height }]; };
+    const r1 = await PBBgRemove.autoCut(uni, { methods: ["classic"] }), c1 = calls, r2 = await PBBgRemove.autoCut(cx, {}), c2 = calls;
+    AIVision.supported = () => false; let nokey = ""; try { await PBBgRemove.autoCut(cx, {}); } catch (e) { nokey = e.code || e.message; }
+    AIVision.supported = sup0; AICapture.detect = d0; AICapture.samPrep = p0; AICapture.samCuts = s0; window.fetch = w0;
     const a = (c, x, y) => c.getContext("2d").getImageData(x, y, 1, 1).data[3];
     return { m1: r1.method, c1, m2: r2.method, c2, bgA: a(r2.canvas, 5, 5), fgA: a(r2.canvas, 100, 100), nokey };
   });
   ok("نزع الخلفية: الاستعمال الداخلي بطرق صريحة (classic) يبقى محلياً بلا طلب", bgk.m1 === "classic" && bgk.c1 === 0, bgk);
-  ok("نزع الخلفية: Photoroom بنقرة واحدة وطلب واحد ونتيجة واحدة، الخلفية شفافة والمنتج معتم", bgk.m2 === "seg" && bgk.c2 === 1 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
-  ok("نزع الخلفية: الخدمة غير مفعّلة تُرفض برسالة واضحة (لا بديل محلي)", bgk.nokey === "NOKEY", bgk);
+  ok("نزع الخلفية: SAM2 بنقرة واحدة بلا أي طلب فوتوروم، الخلفية شفافة والمنتج معتم", bgk.m2 === "sam" && bgk.c2 === 0 && bgk.bgA === 0 && bgk.fgA === 255, bgk);
+  ok("نزع الخلفية: بلا SAM (هاتف/جهاز ضعيف) يُرفض برسالة واضحة بلا بديل", /SAM|الحاسوب/.test(bgk.nokey), bgk);
   /* ── أدوات على نمط Photoroom: إضاءة، إزالة نص، استعادة، محسّن + درجة الجودة + ثقة نزع الخلفية ── */
   const fxp = await T(() => { const F = PBAI._t; return { rl: F.fxPrompt("rl", { light: "golden", str: "high" }, ""), tr1: F.fxPrompt("tr", { what: "wm", keep: "1" }, ""), tr0: F.fxPrompt("tr", { what: "all", keep: "0" }, ""), uc: F.fxPrompt("uc", { what: "top" }, "امتداد"), bf: F.fxPrompt("bf", { kind: "food", str: "low" }, "") }; });
   ok("إعادة الإضاءة: تعليمات الإضاءة والقوة مع حفظ المنتج", /RELIGHT/.test(fxp.rl) && /golden-hour/.test(fxp.rl) && /strong/.test(fxp.rl) && /EXACTLY the same/.test(fxp.rl), fxp.rl);

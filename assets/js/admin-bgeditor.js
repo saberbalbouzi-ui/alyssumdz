@@ -1,7 +1,7 @@
 /* محرّر إزالة الخلفية الاحترافي (BgEditor) — داخل محرّر الصور الحالي، بلا واجهة تجريبية منفصلة.
    المبدأ: الصورة الأصلية لا تُعدَّل أبداً؛ كل ما يلي طبقات غير مدمِّرة فوقها:
      قناع المحرّك (base) ← صقل الحواف (إزاحة/تنعيم/حدّة/هالة) ← ضربات الفرشاة (محو/استعادة) ← القناع النهائي (fin) بدقة الصورة الأصلية.
-   المحرّكات قابلة للتبديل (registerEngine): Photoroom عبر دالة الخادم bg-remove (الرسمي والوحيد).
+   المحرّكات قابلة للتبديل (registerEngine): SAM2 (كشف + تجزئة محلية على الحاسوب) هو الوحيد.
    التصدير PNG بقناع ألفا حقيقي مع تحقق بفكّ الملف الناتج؛ لا تُرسم الشفافية بالأبيض أبداً (رقعة الشطرنج CSS خلف اللوحة فقط). */
 const BgEditor = (() => {
   "use strict";
@@ -89,27 +89,16 @@ const BgEditor = (() => {
   const ENGINES = [];
   function registerEngine(e) { const i = ENGINES.findIndex(x => x.id === e.id); if (i >= 0) ENGINES[i] = e; else ENGINES.push(e); }
   const canvasAlpha = (c, W, H) => { let src = c; if (c.width !== W || c.height !== H) { src = document.createElement("canvas"); src.width = W; src.height = H; src.getContext("2d").drawImage(c, 0, 0, W, H); } const d = src.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, W, H).data, a = new Uint8Array(W * H); for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3]; return a; };
-  const EXT = { state: null, provider: "" };
-  async function extProbe() {
-    if (EXT.state !== null) return EXT.state;
-    try {
-      if (typeof API === "undefined" || !API.sb || !API.sb.url || !API.sb.token || !API.sb.headers) return (EXT.state = false);
-      const t = await API.sb.token(); if (!t) return (EXT.state = false);
-      const r = await fetch(API.sb.url("/functions/v1/bg-remove"), { method: "POST", headers: API.sb.headers(t), body: JSON.stringify({ op: "status" }), signal: AbortSignal.timeout(8000) });
-      const j = r.ok ? await r.json().catch(() => ({})) : {}; EXT.provider = j.provider || ""; return (EXT.state = !!j.ok);
-    } catch (_) { return (EXT.state = false); }
-  }
-  const toB64 = blob => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] || ""); fr.onerror = () => rej(new Error("تعذّر قراءة الصورة")); fr.readAsDataURL(blob); });
-  const b64Blob = (b, type) => { const bin = atob(b), u = new Uint8Array(bin.length); for (let i = 0; i < u.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type }); };
+  /* المحرّك الوحيد: كشف Gemini + SAM2 داخل المتصفح (الحاسوب فقط) — بلا فوترة خدمة قصّ خارجية */
+  const EXT = { state: null };
+  async function extProbe() { return true; }
+  const samOK = () => { try { return typeof AIVision !== "undefined" && AIVision.supported && AIVision.supported() && typeof PBBgRemove !== "undefined" && !!PBBgRemove.autoCut; } catch (_) { return false; } };
   registerEngine({
-    id: "ext", name: "Photoroom — قصّ احترافي", desc: "المحرّك الرسمي لنزع الخلفية: يُرسل الصورة عبر خادمك إلى Photoroom ويقصّ الموضوع الرئيسي بحواف دقيقة (الشعر والشفافية). ما يتبقى من أشياء بجانبه صحّحه بفرشاة المحو أو الاستعادة.",
-    available: () => EXT.state === true,
+    id: "sam", name: "SAM2 — قصّ بالتجزئة", desc: "كشف الموضوع ثم تجزئته داخل متصفحك بحواف دقيقة. ما يتبقى من أشياء بجانبه صحّحه بفرشاة المحو أو الاستعادة.",
+    available: samOK,
     run: async (c, o) => {
-      let blob = await new Promise(r => c.toBlob(r, "image/png")); if (blob.size > 9 * 1048576) blob = await new Promise(r => c.toBlob(r, "image/jpeg", .95)); if (blob.size > 9.5 * 1048576) throw new Error("الصورة أكبر من حدّ الخدمة (≈9MB) — قلّل حجم الملف");
-      const t = await API.sb.token(); if (o && o.onStep) o.onStep("إرسال الصورة إلى خدمة القصّ…");
-      const r = await fetch(API.sb.url("/functions/v1/bg-remove"), { method: "POST", headers: API.sb.headers(t), body: JSON.stringify({ op: "cut", type: blob.type, b64: await toB64(blob) }), signal: AbortSignal.timeout(120000) });
-      const j = await r.json().catch(() => ({})); if (!r.ok || !j.ok) throw new Error(j.error === "rate_limited" ? "تجاوزت حدّ الطلبات — حاول بعد دقيقة" : j.error === "not_configured" ? "الخدمة غير مضبوطة على الخادم" : "فشلت خدمة القصّ (" + (j.error || r.status) + ")");
-      const bmp = await createImageBitmap(b64Blob(j.b64, j.type || "image/png")), cv = document.createElement("canvas"); cv.width = bmp.width; cv.height = bmp.height; cv.getContext("2d").drawImage(bmp, 0, 0); return cv;
+      if (o && o.onStep) o.onStep("كشف الموضوع وتجزئته…");
+      const r = await PBBgRemove.autoCut(c, { sam: true, noPro: true, onStep: o && o.onStep }); return r.canvas;
     }
   });
 
