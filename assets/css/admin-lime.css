@@ -174,3 +174,10 @@ html:is(.glass,.white) body #bge .btn.on:not(#_){background:linear-gradient(180d
 html:is(.glass,.white) body #bge .btn.r2:not(#_){background:rgba(248,113,113,.18)!important;color:#fecaca!important;border:1px solid rgba(248,113,113,.55)!important}
 /* v1.89.587 — وصف البطاقة النشطة (صفحة ويب / صور إشهارية…) داكن وواضح على الليموني */
 html:is(.glass,.white) body :is(.ig-modes,.np-t) button.on small:not(#_){color:#262a0d!important;opacity:1!important;font-weight:600}
+/* v1.89.634 — شريط اللوحة العلوي: عناوين الأزرار في سطر واحد دائماً (يلتفّ الزر كاملاً إلى صف جديد لا نصّه) */
+@media(min-width:761px){
+  #app .top{flex-wrap:wrap;row-gap:.6rem}
+  #app .top :is(button,.small,.live-pill,#ah-btn,#cr-top,#theme-sw,#theme-sw button,#upd-btn,#pbx-upd){white-space:nowrap!important;flex:0 0 auto;display:inline-flex;align-items:center;gap:.4rem}
+  #app .top :is(button,.small,#ah-btn,#cr-top) *{white-space:nowrap}
+  #app .top>h1{flex:0 1 auto;white-space:nowrap}
+}
