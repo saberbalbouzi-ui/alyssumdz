@@ -236,7 +236,15 @@ const AdminYd = (() => {
     const r = S.rows.find(x => x.tracking === tr); if (!r) return; const o = trackMap()[tr], rl = real(r, o), a = A(), idx = o && a ? a.orders.indexOf(o) : -1, can = prep(r.status);
     pvClose(); const bg = document.createElement("div"); bg.id = "ydp-bg"; bg.className = "modal-bg open"; bg.dir = "rtl";
     const row = (k, v) => '<tr><td style="color:#8a8f8c;width:110px;vertical-align:top">' + k + '</td><td>' + v + '</td></tr>', inp = (id, ph, v) => '<input id="ydp-' + id + '" placeholder="' + esc(ph) + '" value="' + esc(v == null ? "" : v) + '" style="width:100%;margin:.15rem 0 .5rem">';
-    const info = '<table style="width:100%;border-collapse:collapse">' + row("التتبع", '<b dir="ltr">' + esc(r.tracking) + '</b>') + row("التاريخ", esc(String(r.date).slice(0, 10))) + row("الاسم", esc(rl.name)) + row("الهاتف", '<span dir="ltr">' + esc(rl.phone) + '</span>' + contact(rl.phone)) + row("الوجهة", esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "")) + row("السعر", esc(r.price || "—")) + row("الحالة", '<span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span>') + row("الطلب", o ? "#" + esc(String(o.id).slice(-6)) + " — " + esc(o.name || "") : "غير مرتبط بطلب في لوحتك") + '</table>';
+    /* تفاصيل الطرد بترتيب صفحة «Détails du colis» عند ياليدين: التاريخ ثم المستلم والوجهة ثم الطلب والمنتج والسعر والتوصيل */
+    const L = (k, v) => '<div style="margin:.15rem 0"><b>' + k + ':</b> ' + v + '</div>', hr = '<hr style="border:0;border-top:1px solid rgba(128,128,128,.35);margin:.7rem 0">';
+    const prodTxt = r.product || ptxt(o) || "—", coNo = r.orderId || (o && a && a.coNoOf ? a.coNoOf(o) : "");
+    const info = '<div style="line-height:1.7">' + L("التتبع", '<b dir="ltr">' + esc(r.tracking) + '</b> &nbsp; <span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span>') + L("تاريخ الإنشاء", '<span dir="ltr">' + esc(String(r.date).replace("T", " ").slice(0, 19)) + '</span>') + hr +
+      L("المستلم", '<span dir="auto">' + esc(rl.name) + '</span>') + L("هاتف المستلم", '<span dir="ltr">' + esc(rl.phone) + '</span>' + contact(rl.phone)) +
+      L("من ← إلى", (r.from ? esc(r.from) + ' <span class="yd-b g">إلى</span> ' : "") + esc(r.wilaya) + (r.commune ? " (" + esc(r.commune) + ")" : "") + (r.stop ? " — مكتب Stop Desk" : "")) + hr +
+      L("رقم الطلب عند الشركة", esc(coNo || "—")) + L("المنتج", '<span dir="auto">' + esc(prodTxt) + '</span>') + L("السعر", esc(r.price || "—")) +
+      L("رسم التوصيل", r.fee == null ? "—" : esc(r.fee)) + L("توصيل مجاني", r.free ? "نعم" : "لا") + hr +
+      L("الطلب في لوحتك", o ? "#" + esc(String(o.id).slice(-6)) + " — " + esc(o.name || "") : "غير مرتبط بطلب في لوحتك") + (r.importId ? L("رقم الاستيراد", esc(r.importId)) : "") + '</div>';
     let body;
     if (edit && can) {
       const W = typeof WILAYAS !== "undefined" ? WILAYAS : [], nn = a && a.normName ? t => a.normName(t) : t => String(t || "").toLowerCase(), cw = W.find(w => nn(w.name) === nn(r.wilaya)) || null;
