@@ -51,7 +51,7 @@ const AdminImgQA = (() => {
   /* ── خط المعالجة: نزع خلفية ← تحسين ← تركيب الاستوديو بالنمط المحفوظ ── */
   async function restyle(src, o) {
     o = o || S.opt; if (typeof PBStudio === "undefined") throw new Error("استوديو المنتج غير متاح"); let cut = src;
-    if (o.removeBg && !PBStudio.hasAlpha(src)) { if (typeof PBBgRemove === "undefined") throw new Error("أداة نزع الخلفية غير متاحة"); const r = await PBBgRemove.autoCut(src, o.method === "classic" ? { methods: ["classic"] } : {}); cut = r.canvas; }
+    if (o.removeBg && !PBStudio.hasAlpha(src)) { if (typeof PBBgRemove === "undefined") throw new Error("أداة نزع الخلفية غير متاحة"); const r = await PBBgRemove.autoCut(src, o.method === "classic" ? { methods: ["classic"] } : { sam: true, noPro: true }); cut = r.canvas; }
     if (o.enhance && typeof PBRetouch !== "undefined") cut = PBRetouch._t.autoEnhance(cut);
     const opt = Object.assign({}, PBStudio.opts()), bgo = PBStudio.bgOf(opt), full = Object.assign({}, opt, { size: PBStudio.sizeOf(opt, cut), bg: bgo && bgo.type === "scene" ? { type: "color", c1: "#ffffff" } : bgo, ov: o.withOv ? (opt.ov || []).slice() : [], logo: o.withOv ? PBStudio.logo() : null, vars: o.vars || null });
     return PBStudio.compose(cut, PBStudio.bbox(cut), full);

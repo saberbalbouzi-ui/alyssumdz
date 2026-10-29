@@ -255,7 +255,7 @@ ${rg("outW", "حدّ المنتج", 0, 20, 1, o.outW)}<div class="pbst-lh"><labe
     say("⏳ جارِ تحميل الصورة…"); S.srcC = S.srcC || await loadImg(inf.node.set.src);
     if (hasAlpha(S.srcC)) { S.cut = S.srcC; S.bb = bbox(S.cut); say(""); return true; }
     say("⏳ جارِ نزع الخلفية داخل متصفحك…");
-    const r = await PBBgRemove.autoCut(S.srcC, { onStep: m => say(m) }); S.cut = r.canvas; S.bb = bbox(S.cut); if (S.shAuto && !S.shUser) { S.opt.shadow = DEF.shadow; S.shAuto = false; const sh = document.getElementById("pbst-sh"), sc = document.getElementById("pbst-shc"); if (sh) sh.value = "contact"; if (sc) sc.style.display = "block"; } say(""); return true;
+    const r = await PBBgRemove.autoCut(S.srcC, { sam: true, noPro: true, onStep: m => say(m) }); S.cut = r.canvas; S.bb = bbox(S.cut); if (S.shAuto && !S.shUser) { S.opt.shadow = DEF.shadow; S.shAuto = false; const sh = document.getElementById("pbst-sh"), sc = document.getElementById("pbst-shc"); if (sh) sh.value = "contact"; if (sc) sc.style.display = "block"; } say(""); return true;
   }
   async function render() {
     const [W, H] = sizeOf(S.opt, S.srcC), o = optsFor(W, H);
