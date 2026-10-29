@@ -14,7 +14,7 @@ const AdminStudio = (() => {
   function css() { if ($("sd-css")) return; const s = document.createElement("style"); s.id = "sd-css"; s.textContent = CSS; document.head.appendChild(s); }
   function load() { if (S.data || S.busy) return; S.busy = true; S.err = false; fetch("assets/data/tools-catalog.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.tools) S.data = j; else S.err = true; }).catch(() => { S.err = true; }).finally(() => { S.busy = false; draw(); }); }
   const weakDev = () => { try { return typeof AIVision !== "undefined" && AIVision.weak && AIVision.weak(); } catch (e) { return false; } };      // الهاتف: لا التقاط عناصر
-  const tools = () => ((S.data && S.data.tools) || []).filter(t => !(t.id === "cap" && weakDev()));
+  const tools = () => ((S.data && S.data.tools) || []).filter(t => !((t.id === "cap" || t.id === "bg") && weakDev()));
   const groups = () => tools().reduce((a, t) => (a.indexOf(t.g) < 0 && a.push(t.g), a), []);
   const byId = id => tools().find(t => t.id === id);
   const badge = t => `<em class="sd-b ${t.needs === "free" ? "free" : "pro"}">${t.needs === "free" ? "مجانية" : "PRO"}</em>`;

@@ -473,6 +473,7 @@ const PBBgRemove = (function () {
     g.drawImage(c, bx, by, bw, bh, 0, 0, bw, bh); return o;
   }
   async function live(inf) {
+    if (typeof AIVision !== "undefined" && AIVision.weak && AIVision.weak()) { alert("نزع الخلفية متاح على الحاسوب فقط. افتح اللوحة من حاسوب."); return; }
     if (!inf || inf.node.type !== "image" || !inf.node.set.src) { alert("حدّد صورة أولاً"); return; } if (LV.busy) return;
     const id = inf.node.id, src = inf.node.set.src; LV.busy = true;
     try {
