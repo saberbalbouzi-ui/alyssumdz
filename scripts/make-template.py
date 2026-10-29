@@ -40,8 +40,10 @@ if a.update:
         (OUT / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, OUT / rel)
     if not a.remote:
         # تحديث يدوي: يحمل أيضاً ملفات إعداد المحدِّث لتفعيل التحديث عن بُعد في المواقع القديمة (لا تدخل القناة البعيدة)
-        for rel in ("api/update-config.php", "api/update-key.pem"):
+        (OUT / "api").mkdir(parents=True, exist_ok=True)
+        for rel in ("api/update-config.php", "api/update-key.pem", "api/index.php"):   # index.php يحمل بوابة التحديث (updAllowed) ومنطق الخادم: لا يصل للمواقع القديمة إلا بالتحديث اليدوي
             if (tmp / rel).exists(): shutil.copy2(tmp / rel, OUT / rel)
+        if (tmp / "api/shipping").exists(): shutil.copytree(tmp / "api/shipping", OUT / "api/shipping", dirs_exist_ok=True)
         upd = (ROOT / "platform/php-edition/update.php").read_text(encoding="utf-8").replace("__DEFAULT_NAME__", a.name).replace("__DEFAULT_WA__", a.wa)
         (OUT / "update.php").write_text(upd, encoding="utf-8")
     shutil.rmtree(tmp)
