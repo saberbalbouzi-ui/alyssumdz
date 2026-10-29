@@ -76,6 +76,61 @@ const AdminYd = (() => {
       return true;
     });
   }
+  /* منتجات الطرد من الطلب المرتبط: [{t:اسم المنتج, q:الكمية}] (اسم المنتج الظاهر، وبلا طلب مرتبط يُرجع فارغاً) */
+  function plines(o) {
+    const a = A(); if (!o || !a) return [];
+    const raw = String(a.itemsDisplay ? a.itemsDisplay(o) : (o.items || "")), out = [];
+    raw.split(/\n/).forEach(l => { l = l.trim(); if (!l) return; const m = l.match(/^(.+?)\s*(?:×|x)\s*(\d+)\s*(?:=.*)?$/i); out.push(m ? { t: m[1].trim(), q: Number(m[2]) || 1 } : { t: l, q: 1 }); });
+    return out;
+  }
+  const ptxt = o => plines(o).map(x => x.t + " ×" + x.q).join("، ");
+  /* تجهيز الطلبات: قائمة (المنتج، الكمية، الولاية، التتبع) للطرود قيد التجهيز أو لكل المعروض، مع تجميع الكميات لكل منتج وطباعة/PDF */
+  let PREP = { all: false };
+  function prepRows() {
+    const tm = trackMap(), base = PREP.all ? filtered() : filtered().filter(r => tone(r.status) === "p");
+    const out = [];
+    base.forEach(r => { const o = tm[r.tracking], L = plines(o); if (!L.length) out.push({ t: "— (طرد بلا طلب مرتبط في اللوحة)", q: "", w: r.wilaya, trk: r.tracking, st: r.status }); else L.forEach(x => out.push({ t: x.t, q: x.q, w: r.wilaya, trk: r.tracking, st: r.status })); });
+    return out;
+  }
+  function prepSum(rows) { const g = {}; rows.forEach(x => { if (x.q === "") return; g[x.t] = (g[x.t] || 0) + x.q; }); return Object.keys(g).sort((a, b) => g[b] - g[a]).map(k => ({ t: k, q: g[k] })); }
+  function prepHtml(rows, forPrint) {
+    const sum = prepSum(rows), total = sum.reduce((a, x) => a + x.q, 0), nTrk = new Set(rows.map(x => x.trk)).size;
+    const th = '<tr><th>#</th><th>المنتج</th><th>الكمية</th><th>الولاية</th><th>التتبع</th></tr>';
+    const body = rows.map((x, i) => '<tr><td>' + (i + 1) + '</td><td dir="auto">' + esc(x.t) + '</td><td class="q">' + esc(x.q) + '</td><td>' + esc(x.w) + '</td><td class="m">' + esc(x.trk) + '</td></tr>').join("") || '<tr><td colspan="5" style="text-align:center;opacity:.7">لا توجد طرود قيد التجهيز</td></tr>';
+    const sm = sum.length ? '<table class="pp-sum"><tr><th>المنتج</th><th>مجموع الكمية</th></tr>' + sum.map(x => '<tr><td dir="auto">' + esc(x.t) + '</td><td class="q">' + x.q + '</td></tr>').join("") + '<tr><th>الإجمالي</th><th class="q">' + total + '</th></tr></table>' : "";
+    return '<div class="pp-h"><b>📦 تجهيز الطلبات</b> <span>' + nTrk + ' طرد · ' + total + ' قطعة · ' + new Date().toLocaleDateString("ar-DZ") + '</span></div>' + sm + '<table class="pp-t">' + th + body + '</table>';
+  }
+  const PPCSS = 'body{font-family:Tahoma,sans-serif;margin:0;padding:14px;color:#111;background:#fff}.pp-h{display:flex;justify-content:space-between;gap:8px;font-size:16px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}th,td{border:1px solid #222;padding:5px 7px;text-align:right}th{background:#eee}.q{text-align:center;font-weight:800}.m{direction:ltr;font-family:monospace;text-align:left}.pp-sum{width:auto;min-width:50%}@page{size:A4;margin:10mm}tr{page-break-inside:avoid}';
+  function prepClose() { const b = $("ydprep-bg"); if (b) b.remove(); }
+  function prepDraw() {
+    let bg = $("ydprep-bg");
+    if (!bg) {
+      bg = document.createElement("div"); bg.id = "ydprep-bg"; bg.className = "modal-bg open"; bg.style.cssText = "position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)";
+      bg.innerHTML = '<div class="modal" style="max-width:860px;width:96vw;max-height:92vh;overflow:auto;position:relative;background:#0b1f18;border:1px solid rgba(226,254,23,.4);border-radius:16px;padding:16px;color:#fff"><div id="ydprep-in"></div></div>';
+      bg.addEventListener("click", ev => {
+        if (ev.target === bg) return prepClose();
+        const b = ev.target.closest("[data-ypp]"); if (!b) return; const k = b.dataset.ypp;
+        if (k === "x") prepClose(); else if (k === "print") prepPrint(); else if (k === "csv") prepCsv();
+      });
+      bg.addEventListener("change", ev => { if (ev.target.id === "ydprep-all") { PREP.all = ev.target.checked; prepDraw(); } });
+      document.body.appendChild(bg);
+    }
+    const rows = prepRows();
+    $("ydprep-in").innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px"><b style="flex:1">📦 تجهيز الطلبات</b><label style="display:flex;gap:6px;align-items:center;font-size:.85rem"><input type="checkbox" id="ydprep-all"' + (PREP.all ? " checked" : "") + '> كل الطرود المعروضة (وليس «قيد التجهيز» فقط)</label>' +
+      '<button class="small" type="button" data-ypp="print">🖨 طباعة / PDF</button><button class="small" type="button" data-ypp="csv">⬇ CSV</button><button class="small gray" type="button" data-ypp="x">✕ إغلاق</button></div>' +
+      '<style>#ydprep-in table{width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:12px}#ydprep-in th,#ydprep-in td{border:1px solid rgba(255,255,255,.2);padding:5px 8px;text-align:right}#ydprep-in th{background:rgba(255,255,255,.1)}#ydprep-in .q{text-align:center;font-weight:800}#ydprep-in .m{direction:ltr;font-family:monospace;text-align:left}#ydprep-in .pp-sum{width:auto;min-width:50%}#ydprep-in .pp-h{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}</style>' + prepHtml(rows);
+  }
+  function prepOpen() { if (!S.rows.length) { if (typeof toast === "function") toast("ℹ️ حمّل الطرود أولاً (🔄 تحميل / تحديث الطرود)"); return; } prepDraw(); }
+  function prepPrint() {
+    const w = window.open("", "_blank"); if (!w) { if (typeof toast === "function") toast("⚠️ المتصفح حجب النافذة — اسمح بالنوافذ المنبثقة"); return; }
+    w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>تجهيز الطلبات</title><style>' + PPCSS + '</style></head><body>' + prepHtml(prepRows(), true) + '</body></html>'); w.document.close();
+    setTimeout(() => { try { w.focus(); w.print(); } catch (e) { } }, 400);
+  }
+  function prepCsv() {
+    const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', rows = prepRows();
+    const out = ["product,quantity,wilaya,tracking"].concat(rows.map(x => [x.t, x.q, x.w, x.trk].map(q).join(",")));
+    const b = new Blob(["\ufeff" + out.join("\n")], { type: "text/csv" }), u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = "prepare-orders.csv"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 3000);
+  }
   function css() {
     if ($("yd-css")) return; const st = document.createElement("style"); st.id = "yd-css";
     st.textContent = `#yd-card .yd-top{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
@@ -112,18 +167,18 @@ const AdminYd = (() => {
     const chips = dupChip + keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + (tone(r.status) === 'y' ? contact(real(r, o).phone) : '') + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
-    }).join("") || '<tr><td colspan="9" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
+      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + (tone(r.status) === 'y' ? contact(real(r, o).phone) : '') + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td dir="auto" style="max-width:240px">' + (o ? esc(ptxt(o)) || "—" : "—") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
+    }).join("") || '<tr><td colspan="10" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
-      '<button class="small" type="button" data-yd="csv"' + (S.rows.length ? "" : " disabled") + '>⬇ CSV</button><button class="small" type="button" data-yd="gs"' + (S.rows.length ? "" : " disabled") + ' title="ينسخ الجدول ويفتح Google Sheets جديداً — ألصقه في الخلية A1">📊 Google Sheets</button></div>' +
+      '<button class="small" type="button" data-yd="prep"' + (S.rows.length ? "" : " disabled") + ' title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button><button class="small" type="button" data-yd="csv"' + (S.rows.length ? "" : " disabled") + '>⬇ CSV</button><button class="small" type="button" data-yd="gs"' + (S.rows.length ? "" : " disabled") + ' title="ينسخ الجدول ويفتح Google Sheets جديداً — ألصقه في الخلية A1">📊 Google Sheets</button></div>' +
       (S.rows.length ? '<div class="yd-top"><span class="yd-total">Total ' + (S.total || S.rows.length) + '</span><span class="hint" style="margin:0">par statut:</span><div class="yd-chips">' + chips + '</div>' +
         '<button class="small" type="button" data-yd="fl">⚙ Filtre' + (S.q || S.wil || S.from || S.to || S.link ? " •" : "") + '</button>' + (S.st || S.q || S.wil || S.from || S.to || S.link || S.dup ? '<button class="small" type="button" data-yd="clr">✖ مسح التصفية</button>' : "") + '</div>' : '<div class="hint">اضغط «تحميل / تحديث الطرود» لعرض إحصاءات حسابك في ياليدين حسب الحالة.</div>') +
       (S.fopen && S.rows.length ? '<div class="yd-f"><input data-yd-in="q" placeholder="🔍 تتبع / اسم / هاتف…" value="' + esc(S.q) + '"><select data-yd-in="wil"><option value="">كل الولايات</option>' + wils.map(w => '<option' + (norm(S.wil) === norm(w) ? " selected" : "") + '>' + esc(w) + '</option>').join("") + '</select>' +
         '<input type="date" data-yd-in="from" value="' + esc(S.from) + '" title="من تاريخ"><input type="date" data-yd-in="to" value="' + esc(S.to) + '" title="إلى تاريخ">' +
         '<select data-yd-in="link"><option value="">مرتبط وغير مرتبط</option><option value="yes"' + (S.link === "yes" ? " selected" : "") + '>مرتبط بطلب في اللوحة</option><option value="no"' + (S.link === "no" ? " selected" : "") + '>بلا طلب في اللوحة</option></select></div>' : "") +
       (S.rows.length ? '<div class="hint">' + list.length + ' من أصل ' + (S.total || S.rows.length) + ' طرد' + (S.rows.length < S.total ? " (حُمِّل منها " + S.rows.length + ")" : "") + ' — الاسم والهاتف الحقيقيان يظهران للطرود المرتبطة بطلب في لوحتك، وغيرها تُقنِّعه ياليدين في القائمة.</div>' +
-        '<div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th>التتبع</th><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>الوجهة</th><th>السعر</th><th>الحالة</th><th>الطلب</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div class="rtw" style="overflow:auto"><table class="rt"><thead><tr><th>التتبع</th><th>التاريخ</th><th>الاسم</th><th>الهاتف</th><th>الوجهة</th><th>المنتج</th><th>السعر</th><th>الحالة</th><th>الطلب</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
         (pages > 1 ? '<div style="text-align:center;margin-top:8px"><button class="small" data-yd="prev"' + (S.page <= 1 ? " disabled" : "") + '>›</button> <span class="hint">' + S.page + ' / ' + pages + '</span> <button class="small" data-yd="next"' + (S.page >= pages ? " disabled" : "") + '>‹</button></div>' : "") : "");
   }
   async function load(auto) {
@@ -140,13 +195,13 @@ const AdminYd = (() => {
   }
   function csv() {
     const list = filtered(), q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', tm = trackMap();
-    const out = ["tracking,date,name,phone,wilaya,commune,price,status,order"].concat(list.map(r => [r.tracking, String(r.date).slice(0, 10), real(r, tm[r.tracking]).name, real(r, tm[r.tracking]).phone, r.wilaya, r.commune, r.price, r.status, tm[r.tracking] ? tm[r.tracking].id : ""].map(q).join(",")));
+    const out = ["tracking,date,name,phone,wilaya,commune,product,price,status,order"].concat(list.map(r => [r.tracking, String(r.date).slice(0, 10), real(r, tm[r.tracking]).name, real(r, tm[r.tracking]).phone, r.wilaya, r.commune, ptxt(tm[r.tracking]), r.price, r.status, tm[r.tracking] ? tm[r.tracking].id : ""].map(q).join(",")));
     const b = new Blob(["﻿" + out.join("\n")], { type: "text/csv" }), u = URL.createObjectURL(b), l = document.createElement("a"); l.href = u; l.download = "yalidine-parcels.csv"; l.click(); setTimeout(() => URL.revokeObjectURL(u), 3000);
   }
   /* Google Sheets: ينسخ الجدول (بحسب التصفية) كنص مفصول بتبويب ويفتح جدولاً جديداً — اللصق في A1 يملأ الخلايا مباشرة */
   function sheets() {
     const list = filtered(), tm = trackMap(), cell = v => String(v == null ? "" : v).replace(/[\t\r\n]+/g, " ").trim();
-    const rows = [["tracking", "date", "name", "phone", "wilaya", "commune", "price", "status", "order"]].concat(list.map(r => { const x = real(r, tm[r.tracking]); return [r.tracking, String(r.date).slice(0, 10), x.name, x.phone, r.wilaya, r.commune, r.price, r.status, tm[r.tracking] ? tm[r.tracking].id : ""]; }));
+    const rows = [["tracking", "date", "name", "phone", "wilaya", "commune", "product", "price", "status", "order"]].concat(list.map(r => { const x = real(r, tm[r.tracking]); return [r.tracking, String(r.date).slice(0, 10), x.name, x.phone, r.wilaya, r.commune, ptxt(tm[r.tracking]), r.price, r.status, tm[r.tracking] ? tm[r.tracking].id : ""]; }));
     const tsv = rows.map(r => r.map(cell).join("\t")).join("\n"), n = list.length;
     try { window.open("https://sheets.new", "_blank", "noopener"); } catch (e) { }
     const done = () => { if (typeof toast === "function") toast("📊 نُسخ " + n + " طرداً — ألصقه (Ctrl+V) في الخلية A1 من Google Sheets"); };
@@ -269,7 +324,7 @@ const AdminYd = (() => {
     const dchip = e.target.closest("#yd-card [data-yd-dup]"); if (dchip) { S.dup = !S.dup; S.page = 1; draw(); return; }
     if (chip) { const k = chip.dataset.ydSt; S.st = S.st === k ? "" : k; S.page = 1; draw(); return; }
     if (!btn) return; const k = btn.dataset.yd;
-    if (k === "load") load(); else if (k === "csv") csv(); else if (k === "gs") sheets(); else if (k === "fl") { S.fopen = !S.fopen; draw(); }
+    if (k === "load") load(); else if (k === "prep") prepOpen(); else if (k === "csv") csv(); else if (k === "gs") sheets(); else if (k === "fl") { S.fopen = !S.fopen; draw(); }
     else if (k === "clr") { S.st = S.q = S.wil = S.from = S.to = S.link = ""; S.dup = false; S.page = 1; draw(); }
     else if (k === "prev") { S.page--; draw(); } else if (k === "next") { S.page++; draw(); }
   });
@@ -286,5 +341,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, setQuery, noteSent, forget };
+  return { set, draw, load, S, setQuery, noteSent, forget, prepOpen, _t: { prepRows, prepSum, plines } };
 })();
