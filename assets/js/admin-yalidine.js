@@ -100,7 +100,7 @@ const AdminYd = (() => {
     const sm = sum.length ? '<table class="pp-sum"><tr><th>المنتج</th><th>مجموع الكمية</th></tr>' + sum.map(x => '<tr><td dir="auto">' + esc(x.t) + '</td><td class="q">' + x.q + '</td></tr>').join("") + '<tr><th>الإجمالي</th><th class="q">' + total + '</th></tr></table>' : "";
     return '<div class="pp-h"><b>📦 تجهيز الطلبات</b> <span>' + nTrk + ' طرد · ' + total + ' قطعة · ' + new Date().toLocaleDateString("ar-DZ") + '</span></div>' + sm + '<table class="pp-t">' + th + body + '</table>';
   }
-  const PPCSS = 'body{font-family:Tahoma,sans-serif;margin:0;padding:14px;color:#111;background:#fff}.pp-h{display:flex;justify-content:space-between;gap:8px;font-size:16px;margin-bottom:10px}table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}th,td{border:1px solid #222;padding:5px 7px;text-align:right}th{background:#eee}.q{text-align:center;font-weight:800}.m{direction:ltr;font-family:monospace;text-align:left}.pp-sum{width:auto;min-width:50%}@page{size:A4;margin:10mm}tr{page-break-inside:avoid}';
+  const PPCSS = 'html,body{margin:0;padding:0;background:#fff}body{font-family:Tahoma,sans-serif;color:#111;padding:0}#pg{width:190mm;padding:0}.pp-h{display:flex;justify-content:space-between;gap:8px;font-size:15px;margin-bottom:6px}table{width:100%;border-collapse:collapse;font-size:12px;margin:0 0 8px}th,td{border:1px solid #222;padding:3px 6px;text-align:right;line-height:1.25}th{background:#eee}.q{text-align:center;font-weight:800;width:60px}.m{direction:ltr;font-family:monospace;text-align:left}.pp-sum{width:auto;min-width:40%}@page{size:A4;margin:10mm}tr{page-break-inside:avoid}'
   function prepClose() { const b = $("ydprep-bg"); if (b) b.remove(); }
   function prepDraw() {
     let bg = $("ydprep-bg");
@@ -123,8 +123,9 @@ const AdminYd = (() => {
   function prepOpen() { if (!S.rows.length) { if (typeof toast === "function") toast("ℹ️ حمّل الطرود أولاً (🔄 تحميل / تحديث الطرود)"); return; } prepDraw(); }
   function prepPrint() {
     const w = window.open("", "_blank"); if (!w) { if (typeof toast === "function") toast("⚠️ المتصفح حجب النافذة — اسمح بالنوافذ المنبثقة"); return; }
-    w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>تجهيز الطلبات</title><style>' + PPCSS + '</style></head><body>' + prepHtml(prepRows(), true) + '</body></html>'); w.document.close();
-    setTimeout(() => { try { w.focus(); w.print(); } catch (e) { } }, 400);
+    /* صفحة A4 واحدة فقط: يُقاس ارتفاع الجدول ويُصغَّر تلقائياً ليتسع (ارتفاع المنطقة المطبوعة ≈ 277mm) */
+    const fit = 'var pg=document.getElementById("pg"),mm=document.createElement("div");mm.style.cssText="position:absolute;visibility:hidden;height:277mm;width:1px";document.body.appendChild(mm);var H=mm.offsetHeight,h=pg.offsetHeight;var z=1;for(var k=0;k<8&&pg.getBoundingClientRect().height>H-6&&z>.25;k++){z=z*(H-8)/pg.getBoundingClientRect().height*.98;pg.style.zoom=z.toFixed(3)}mm.remove();setTimeout(function(){window.print()},200);';
+    w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>تجهيز الطلبات</title><style>' + PPCSS + '</style></head><body><div id="pg">' + prepHtml(prepRows(), true) + '</div><script>window.onload=function(){' + fit + '}<\/script></body></html>'); w.document.close();
   }
   function prepCsv() {
     const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"', rows = prepRows();
