@@ -41,6 +41,28 @@ ok("تفصيل طرد مسلَّم: محصَّل 8000، توصيل 750، COD 54.
 const free = AP.settle(AP.items()[5]);
 ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم free", free.net === -750 && free.free === true, free);
 
+// كشف pmt-LE18VD (12 طرداً: 9 مسلَّمة و3 مرتجعة برسوم فعلية 260/250/250): TOTAUX الكشف = 52586.875
+{
+  const K = [ // [trk, status, price, del, cod, ret, net]
+    ["ZB88SL","echec",0,0,0,260,-260],["BZ72YV","echec",0,0,0,250,-250],["KX46VC","echec",0,0,0,250,-250],
+    ["DT96HM","livree",4400,500,33,0,4367],["RR40PU","livree",11900,800,89.25,0,11810.75],["BT74YR","livree",2400,800,18,0,2382],
+    ["ZD41FU","livree",2800,700,21,0,2779],["DL95RB","livree",4100,800,30.75,0,4069.25],["MR90EF","livree",4100,800,30.75,0,4069.25],
+    ["TF63LE","livree",5450,850,40.875,0,5409.125],["MU48VB","livree",12500,800,93.75,0,12406.25],["YH82YC","livree",6100,800,45.75,0,6054.25] ];
+  const orders = K.map((r, i) => ({ id: "k" + i, status: r[1], total: r[2] + r[3], fee: r[3], _trk: r[0], date: "2026-10-20" }));
+  const act = {}; K.forEach(r => { act[r[0]] = { st: r[1] === "echec" ? "Retourné au vendeur" : "Livré", price: r[2], del: r[3], ret: r[5], ins: 0, cod: r[4], net: r[6] }; });
+  const Admin = { orders, fin: { costs: {}, set: { packaging: 0 } }, ST_AR: {}, ydActual: act,
+    trackingOf: o => ({ company: "yalidine", tracking: o._trk }), actualFees(o) { return this.ydActual[o._trk] || null; },
+    realFees: () => null, orderLines: () => [], carrierCost: o => o.fee, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  const items = sb.AP.items(), bad = [];
+  items.forEach((it, i) => { const x = sb.AP.settle(it); if (!x || Math.abs(x.net - K[i][6]) > 0.001) bad.push([K[i][0], x && x.net, K[i][6]]); });
+  ok("كشف LE18VD: صافي كل طرد من الـ12 يطابق net client", !bad.length, JSON.stringify(bad));
+  const T = sb.AP.sumSettle(items);
+  ok("كشف LE18VD: مجموع الصافي = 52586.875، التوصيل 6850، COD 403.125، الإرجاع 760", Math.abs(T.net - 52586.875) < 1e-6 && Math.abs(T.del - 6850) < 1e-6 && Math.abs(T.cod - 403.125) < 1e-6 && T.retLoss === 760 && T.nRet === 3 && T.nDone === 9, T);
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [

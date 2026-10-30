@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.667">
+<meta name="admin-version" content="1.89.668">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -5765,7 +5765,7 @@ const Admin = {
         if(dly) v = succD[pk.id + "|" + dk] ? (Number(pk.cfg.a) || 0) / succD[pk.id + "|" + dk] * (Number(pk.cfg.m) || 1) : (Number(pk.cfg.a) || 0) * (Number(pk.cfg.m) || 1);
         else if(pk && pk.win) v = this.adCalc(pk.cfg, succW[pk.id] || 0); else { const c = pk ? pk.cfg : (this.fin.set.ad || { method:"fixed", a:0 }); v = this.adCalc(c, c === S.ad ? succAll.n : (succ[sl] || 0)); }
         return (adNow[key] = v); }, adFixed = (sl, t)=>{ const pk = this.adPick(sl, t), c = pk ? pk.cfg : (this.fin.set.ad || { method:"fixed", a:0 }); return (c.method === "fixed" || (c.daily && c.method === "spend")) ? adFor(sl, t) : 0; };   // الطرق الأخرى تحمل كلفة الطلبات الفاشلة داخلها
-    const row = p=>per[p.slug] || (per[p.slug] = { p, units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, ad:0, feeIn:0, realN:0, estN:0, loss:0, profit:0, expProfit:0 });
+    const row = p=>per[p.slug] || (per[p.slug] = { p, units:0, expUnits:0, retUnits:0, revenue:0, cogs:0, delivery:0, pack:0, ad:0, feeIn:0, realN:0, estN:0, loss:0, adL:0, retC:0, profit:0, expProfit:0 });
     this.orders.forEach(o=>{
       const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(until && !(t < until)) return;
       if(!["livree","echec","confirmee","expediee"].includes(o.status)) return;
@@ -5779,7 +5779,7 @@ const Admin = {
       lines.forEach(l=>{
         const share = (sum === lines.length && !lines.reduce((a,x)=>a + x.total, 0)) ? 1 / lines.length : l.total / sum, r = row(l.p);
         const cost = Number(this.fin.costs[l.p.slug]) || 0;
-        if(o.status === "echec"){ const adF = Math.round(adFixed(l.p.slug, t)); K.adTotal += adF; const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share) + adF; r.loss += loss; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; od -= loss; odPre -= (loss - adF); K.parts.retLoss += loss - adF; }
+        if(o.status === "echec"){ const adF = Math.round(adFixed(l.p.slug, t)); K.adTotal += adF; const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share) + adF; r.loss += loss; r.adL += adF; r.retC += loss - adF; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; od -= loss; odPre -= (loss - adF); K.parts.retLoss += loss - adF; }
         else{
           const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), ad = Math.round(adFor(l.p.slug, t)), pr = rev - cogs - del - pk - ad; K.adTotal += ad;
           if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.ad += ad; r.feeIn += Math.round(fee * share); (useReal || useAct) ? r.realN++ : r.estN++; r.profit += pr; K.real += pr; K.revenue += rev; od += pr; odPre += pr + ad; K.parts.rev += rev; K.parts.cogs += cogs; K.parts.del += del; K.parts.pack += pk; }
@@ -5794,13 +5794,13 @@ const Admin = {
       }
     });
     /* v1.89.132 (لجنة الخبراء): إنفاق حملة بلا أي طلب ناجح كان يُحسب 0 فيبدو الربح سليماً — صار خسارة صريحة */
-    K.adIdle = 0; this.adAllCamps().forEach(c=>{ const k = c.cfg; if(!(k && k.method === "spend" && (Number(k.a) || 0) > 0 && !(Number(k.n) > 0)) || !this.products.some(p=>p.slug === c.slug)) return;
+    K.adIdle = 0; K.adIdleBy = {}; const idl = (sl, v)=>{ K.adIdle += v; K.adIdleBy[sl] = (K.adIdleBy[sl] || 0) + v; }; this.adAllCamps().forEach(c=>{ const k = c.cfg; if(!(k && k.method === "spend" && (Number(k.a) || 0) > 0 && !(Number(k.n) > 0)) || !this.products.some(p=>p.slug === c.slug)) return;
       if(k.daily){      /* أيام الحملة اليومية بلا أي طلب مسلَّم: إنفاقها خسارة صريحة */
         const now = Date.now(); let st = c.win && isFinite(c.win.f) ? c.win.f : 0; if(!st){ this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(o.status === "livree" && this.orderLines(o).some(l=>l.p.slug === c.slug) && (!st || t < st)) st = t; }); } if(!st) return;
         const en = Math.min(c.win && isFinite(c.win.e) ? c.win.e : now, now); let n = 0;
-        for(let t = st; t <= en && n < 800; t += 86400000, n++){ if((since && t + 86400000 <= since) || (until && t >= until)) continue; if(!succD[c.id + "|" + this.isoDay(new Date(t))]) K.adIdle += Number(k.a) || 0; }
+        for(let t = st; t <= en && n < 800; t += 86400000, n++){ if((since && t + 86400000 <= since) || (until && t >= until)) continue; if(!succD[c.id + "|" + this.isoDay(new Date(t))]) idl(c.slug, Number(k.a) || 0); }
         return; }
-      if(c.win){ const f = c.win.f, e = c.win.e; if((since && e < since) || (until && f >= until)) return; if(!(succW[c.id] > 0)) K.adIdle += Number(k.a) || 0; } else if(!(succ[c.slug] > 0)) K.adIdle += Number(k.a) || 0; }); K.adIdle = Math.round(K.adIdle); K.real -= K.adIdle; K.adTotal += K.adIdle;
+      if(c.win){ const f = c.win.f, e = c.win.e; if((since && e < since) || (until && f >= until)) return; if(!(succW[c.id] > 0)) idl(c.slug, Number(k.a) || 0); } else if(!(succ[c.slug] > 0)) idl(c.slug, Number(k.a) || 0); }); K.adIdle = Math.round(K.adIdle); K.real -= K.adIdle; K.adTotal += K.adIdle;
     this.products.forEach(p=>adFor(p.slug, Date.now())); this._adNow = {}; this.products.forEach(p=>{ this._adNow[p.slug] = adFor(p.slug, Date.now());
       /* حملة بإنفاق يومي: «إعلان الطلب» في التحليل المقترح = متوسط الحملة (إنفاق كل أيامها ÷ كل طلباتها المسلَّمة) لا كلفة اليوم الجاري وحده */
       const pk = this.adPick(p.slug, Date.now()); if(pk && pk.cfg.daily && pk.cfg.method === "spend"){ const now = Date.now(), dk = this.isoDay(new Date(now)); let st = pk.win && isFinite(pk.win.f) ? pk.win.f : 0, del = 0; Object.keys(succD).forEach(k=>{ if(k.indexOf(pk.id + "|") === 0) del += succD[k]; });
@@ -6349,13 +6349,34 @@ const Admin = {
     if(typeof AdminPayments === "undefined") return '<div class="hint">قسم المدفوعات غير متاح.</div>';
     const empty = !(typeof AdminYd !== "undefined" && AdminYd.S && AdminYd.S.rows && AdminYd.S.rows.length);
     if(empty && this.listCompanyKey && this.listCompanyKey() && !this._finFetched){ this._finFetched = true; Promise.resolve(this.ydFetchParcels(10)).then(()=>{ if(this._finSel === p.slug && this._finTab === 4) this.finPanelRender(true); }).catch(()=>{}); }
-    const T = this.finPayAgg(p);
+    const T = this.finPayAgg(p), flow = this.finProfitFlow(p);
     if(!T.rows.length) return '<div class="hint" style="padding:1rem 0">لا طلبات لهذا المنتج مسجَّلة عند شركة التوصيل بعد' + (empty && this.listCompanyKey && this.listCompanyKey() ? " (تُحمَّل قائمة طرود الشركة…)" : "") + '. تظهر هنا الطلبات المؤكَّدة المرسلة والمسلَّمة والمرتجعة.</div>';
     const stL = { livree: "مسلَّم ✅", echec: "مرتجع ↩️", expediee: "في الطريق 🚚", confirmee: "مؤكَّد" }, avgDel = T.nDone ? T.del / T.nDone : 0;
     const cards = '<div class="stat"><div><b style="color:var(--ok)">' + nf(T.netDone) + ' دج</b><span>صافي المسلَّم (' + T.nDone + ' طلب)</span></div><div><b>' + (T.unitsDone ? nf(T.netDone / T.unitsDone) : "—") + ' دج</b><span>السعر الصافي للقطعة</span></div><div><b>' + nf(avgDel) + ' دج</b><span>تكلفة التوصيل الحقيقية للطلب</span></div><div><b style="color:' + (T.retLoss ? "var(--red)" : "inherit") + '">' + nf(T.retLoss) + ' دج</b><span>رسوم الإرجاع (' + T.nRet + ')</span></div><div><b>' + nf(T.netExp) + ' دج</b><span>صافي قيد التوصيل (' + T.nExp + ')</span></div></div>';
     const body = T.rows.map(w=>{ const x = w.x; return '<tr><td dir="ltr" style="white-space:nowrap">#' + PB.esc(String(w.it.id)) + ' · ' + PB.esc(String(w.it.date || "").slice(0, 10)) + '</td><td>' + (stL[w.it.ship] || w.it.ship) + '</td><td>' + w.qty + '</td><td>' + nf(w.got) + '</td><td>' + (x.kind === "ret" ? "—" : nf(w.del)) + '</td><td>' + (x.kind === "ret" ? "—" : nf(w.cod + w.ins)) + '</td><td style="color:' + (w.ret ? "var(--red)" : "inherit") + '">' + (w.ret ? nf(w.ret) : "—") + '</td><td><b style="color:' + (w.net >= 0 ? "var(--ok)" : "var(--red)") + '">' + nf(w.net) + '</b></td><td title="' + (x.src === "file" ? "من كشف ياليدين" : "تقدير من التعريفة") + '">' + (x.src === "file" ? "✓" : "≈") + '</td></tr>'; }).join("");
-    return '<div class="hint" style="margin:.6rem 0">حصة هذا المنتج من كل طلب مسجَّل عند شركة التوصيل: السعر الصافي = المحصَّل − التوصيل − عمولة COD − التأمين − رسم الإرجاع. ✓ من كشف الدفع المستورد، ≈ تقدير من التعريفة.</div>' + cards +
+    return flow + '<div class="hint" style="margin:.6rem 0">حصة هذا المنتج من كل طلب مسجَّل عند شركة التوصيل: السعر الصافي = المحصَّل − التوصيل − عمولة COD − التأمين − رسم الإرجاع. ✓ من كشف الدفع المستورد، ≈ تقدير من التعريفة.</div>' + cards +
       '<div class="rtw" style="overflow:auto;margin-top:.6rem"><table class="rt"><tr class="hd"><th>الطلب</th><th>الحالة</th><th>القطع</th><th>المحصَّل</th><th>توصيل حقيقي</th><th>COD + تأمين</th><th>إرجاع</th><th>الصافي</th><th></th></tr>' + body + '</table></div>';
+  },
+  /* v1.89.668: من كشف ياليدين إلى الربح الحقيقي لمنتج: صافي الكشف (المسلَّم − التوصيل − COD) − التكلفة − التغليف − رسوم الإرجاع = الربح بلا إعلان، ثم يُطرح إنفاق الحملة فيظهر الربح الحقيقي */
+  finProfitFlow(p){
+    const C = this._finC, r = C && C.per && C.per[p.slug]; if(!r || !(r.units || r.retUnits || r.ad || r.adL)) return "";
+    const nf = x=>Math.round(x).toLocaleString("fr-DZ"), idle = Math.round((C.K.adIdleBy && C.K.adIdleBy[p.slug]) || 0), ad = Math.round(r.ad + r.adL) + idle;
+    const net = r.revenue - r.delivery, pre = net - r.cogs - r.pack - r.retC, real = pre - ad, T = this.finPayAgg(p);
+    const col = x=>x >= 0 ? "var(--ok)" : "var(--red)", sg = x=>(x >= 0 ? "" : "−") + nf(Math.abs(x)) + " دج";
+    const ln = (t, v, o)=>'<tr' + (o && o.b ? ' style="font-weight:800;background:rgba(255,255,255,.04)"' : '') + '><td>' + t + '</td><td style="white-space:nowrap;text-align:left" dir="ltr"><span style="color:' + (o && o.c ? o.c : "inherit") + '">' + v + '</span></td><td class="hint" style="margin:0">' + ((o && o.n) || "") + '</td></tr>';
+    const src = T.nFile ? "✓ " + T.nFile + " طلب من كشف ياليدين المستورد" + (r.estN ? " + " + r.estN + " بالتقدير" : "") : "≈ تقدير من التعريفة (استورد كشف الدفع ليصير فعلياً)";
+    return '<div style="margin:.6rem 0 1rem"><b style="color:var(--green)">📐 من كشف ياليدين إلى الربح الحقيقي</b> <small class="hint">(الفترة المعروضة · ' + src + ')</small>' +
+      '<div class="rtw" style="overflow:auto;margin-top:.4rem"><table class="rt"><tr class="hd"><th>البند</th><th>المبلغ</th><th>ملاحظة</th></tr>' +
+      ln("المسلَّم (" + r.units + " قطعة) — ما حصّلته الشركة", nf(r.revenue) + " دج", { n: "السعر + التوصيل الذي دفعه الزبون" }) +
+      ln("− توصيل وعمولة COD", sg(-r.delivery), { n: "الأرقام الفعلية من الكشف حين تتوفر" }) +
+      ln("= صافي الكشف", sg(net), { b: 1, c: col(net), n: "ما تدفعه لك الشركة عن هذا المنتج" }) +
+      ln("− تكلفة المنتجات", sg(-r.cogs), { n: "سعر الشراء × القطع المسلَّمة" }) +
+      ln("− التغليف", sg(-r.pack), {}) +
+      ln("− خسارة المرتجعات", sg(-r.retC), { n: r.retUnits + " قطعة مرتجعة: رسم الإرجاع الفعلي + تغليفها" }) +
+      ln("= الربح الصافي بلا إعلان", sg(pre), { b: 1, c: col(pre), n: r.units ? "≈ " + nf(pre / r.units) + " دج للقطعة المسلَّمة" : "" }) +
+      ln("− الحملة الإعلانية", sg(-ad), { n: "إنفاق الحملة على طلبات هذا المنتج" + (idle ? " (منها " + nf(idle) + " دج أيام بلا طلبات)" : "") }) +
+      ln("= الربح الحقيقي", sg(real), { b: 1, c: col(real), n: r.units ? "≈ " + nf(real / r.units) + " دج للقطعة المسلَّمة" : "" }) +
+      '</table></div></div>';
   },
   /* التبويب 5 — مقارنة السعر الصافي بالفائدة الحقيقية + رأي + محلل ذكي */
   finAnalysisHtml(p, r, sg, C, v){
