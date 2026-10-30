@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.662">
+<meta name="admin-version" content="1.89.663">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -6199,12 +6199,19 @@ const Admin = {
     else this._adRows.splice(i, 1);
     this.renderAds(true);
   },
+  /* «المبلغ المنقوص من سعر التوصيل» المضبوط لهذا المنتج (بدعم الشحن الذي تتحمله): خاص بالمنتج ثم شركة التوصيل الافتراضية؛ لا يسري مع شحن مجاني أو أسعار المناطق أو سعر حرّ */
+  shipSubsidyOf(p){
+    try{ if(!p || p.freeShip || p.shipCo === "zones" || p.shipCo === "free") return 0;
+      if(p.shipAdj !== undefined && p.shipAdj !== null && p.shipAdj !== "" && !isNaN(Number(p.shipAdj))) return Math.max(0, Number(p.shipAdj));
+      const k = (p.shipCo && p.shipCo !== "zones" && p.shipCo !== "free") ? p.shipCo : this.activeCompanyKey(); if(!k) return 0;
+      return Math.max(0, Number((this.deliveryCfg[k] || {}).adj) || 0); }catch(e){ return 0; }
+  },
   /* سعر البيع الأدنى = (الشراء + التغليف + الإعلان + عبء التوصيل + احتياطي الإرجاع + الفائدة) ÷ (1 − نسبة التأمين)، مقرَّباً لأعلى إلى أقرب 50 دج */
   suggestPrice(p, r, K){
     const S = this.fin.set, buy = Number(this.fin.costs[p.slug]); if(!(buy >= 0) || this.fin.costs[p.slug] == null) return null;
     const pack = Number(S.packaging) || 0, ad = (this._adNow && this._adNow[p.slug]) || 0;
     const est = S.delMode === "val" ? (Number(S.delVal) || 0) : Math.round(600 * (Number(S.delVal) || 0) / 100);
-    const burden = r.units > 0 ? Math.max(0, (r.delivery - r.feeIn) / r.units) : (p.freeShip ? est : 0);          // ما تتحمله من التوصيل فوق ما يدفعه الزبون
+    const burden = Math.max(r.units > 0 ? Math.max(0, (r.delivery - r.feeIn) / r.units) : (p.freeShip ? est : 0), p.freeShip ? 0 : this.shipSubsidyOf(p));          // ما تتحمله من التوصيل فوق ما يدفعه الزبون (يشمل «المبلغ المنقوص» المضبوط حتى قبل وصول طلبات به)
     const risk = K.delivered ? (K.lossTotal || 0) / K.delivered : 0;                                              // احتياطي الإرجاع لكل طلب مُسلَّم
     const profit = S.profMode === "val" ? (Number(S.profVal) || 0) : buy * (Number(S.profVal) || 0) / 100;
     const insPct = S.insMode === "pct" ? (Number(S.insVal) || 0) : 0, insVal = S.insMode === "val" ? (Number(S.insVal) || 0) : 0;
