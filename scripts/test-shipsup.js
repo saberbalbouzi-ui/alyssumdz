@@ -2,7 +2,7 @@
 const fs = require("fs"); const src = fs.readFileSync(__dirname + "/../assets/js/app.js", "utf8");
 const i = src.indexOf("function shipQuote("); let d = 0, j = src.indexOf("{", i); const st = j; for (; j < src.length; j++) { if (src[j] === "{") d++; else if (src[j] === "}") { d--; if (!d) break; } }
 const fn = src.slice(i, j + 1);
-const make = (SUP, CO) => new Function("__SHIPSUP", "__SHIPCO", "__SHIPDEF", "shipBlocked", fn + "; return shipQuote;")(SUP, CO || {}, "", () => "");
+const make = (SUP, CO, CP, DEF) => new Function("__SHIPSUP", "__SHIPCO", "__SHIPDEF", "__SHIPCP", "shipBlocked", fn + "; return shipQuote;")(SUP, CO || {}, DEF || "", CP || {}, () => "");
 let ok = 0, bad = 0; const t = (n, c) => { console.log((c ? "✓ " : "✗ ") + n); c ? ok++ : bad++; };
 const w = { id: 16, name: "Alger", home: 750, stop: 500, fh: false, fs: false };
 const q = make({ 16: { kouba: [50, 0] } });
@@ -14,6 +14,19 @@ t("سعر حر لمنتج: لا إضافة", q(w, "Kouba", "home", 2400, "free",
 t("شحن مجاني للولاية يبقى 0", q(Object.assign({}, w, { fh: true }), "Kouba", "home", 2400, "", null).fee === 0);
 t("ولاية جديدة (par) تأخذ إضافات أمها", make({ 16: { x: [30, 0] } })({ id: 59, par: 16, name: "N", home: 700, stop: 400 }, "X", "home", 1, "", null).fee === 730);
 t("الإضافة تُعاد في sup (50) ولا تُحسب مجاناً", q(w, "Kouba", "home", 2400, "", null).sup === 50 && q(w, "Bab Ezzouar", "home", 2400, "", null).sup === 0 && q(Object.assign({}, w, { fh: true }), "Kouba", "home", 2400, "", null).sup === 0);
+
+/* سعر البلدية مستقل عن سعر الولاية (بلاغ بني عباس: الولاية 1200 والبلدية 1400 كما عند ياليدين) */
+{ const ba = { id: 52, name: "Béni Abbès", home: 1250, stop: 700 }, CO = { yalidine: { name: "Y", prices: { 52: { home: 1200, stop: 700 } }, adj: 0 } }, CP = { 52: { beniabbes: [1400, 700], eltest: [1250, 700] } };
+  const qq = make({}, CO, CP, "yalidine");
+  t("بلا بلدية: سعر الولاية 1200", qq(ba, "", "home", 1, "", null).fee === 1200);
+  t("بني عباس: سعر البلدية 1400 مستقل", qq(ba, "Béni Abbès", "home", 1, "", null).fee === 1400);
+  t("بلدية بسعر أقل من الولاية تأخذ سعرها (1250)", qq(ba, "El Test", "home", 1, "", null).fee === 1250);
+  t("مكتب: 700", qq(ba, "Béni Abbès", "stop", 1, "", null).fee === 700);
+  t("بلدية بلا بيانات: سعر الولاية", qq(ba, "Unknown", "home", 1, "", null).fee === 1200);
+  const q2 = make({}, { yalidine: { name: "Y", prices: { 52: { home: 1200, stop: 700 } }, adj: 200 } }, CP, "yalidine");
+  t("تعديل السعر المعروض (200) يُطرح من سعر البلدية: 1200", q2(ba, "Béni Abbès", "home", 1, "", null).fee === 1200 && q2(ba, "", "home", 1, "", null).fee === 1000);
+  t("أسعار المناطق: سعر المنطقة بلا سعر ياليدين", qq(ba, "Béni Abbès", "home", 1, "zones", null).fee === 1250);
+}
 
 /* اتساق تعريفة ياليدين: base (أرخص بلدية) + sup = سعر ياليدين لكل بلدية (بلاغ قسنطينة 750 + عين السمار 50) */
 const adm = fs.readFileSync(__dirname + "/../admin.html", "utf8");

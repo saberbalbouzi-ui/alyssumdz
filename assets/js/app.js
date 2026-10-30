@@ -18,11 +18,11 @@ function shipBlocked(w, commune, type){
 }
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
-let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {};
+let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {};
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
@@ -49,7 +49,11 @@ function shipQuote(w, commune, type, sub, co, pf){
     const key = src || __SHIPDEF;
     if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = Number(__SHIPCO[key].adj) || 0; if(aj){ const nb = Math.max(0, base - aj); adjApplied = base - nb; base = nb; } } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
   }
-  if(src !== "free"){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
+  const kcm = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), ckey = src !== "free" && src !== "zones" ? (src || __SHIPDEF) : "", cpd = ckey === "yalidine" && kcm && __SHIPCP[w.par || w.id] && __SHIPCP[w.par || w.id][kcm];
+  if(cpd && (type === "stop" ? cpd[1] : cpd[0]) > 0){      // سعر البلدية المستقل عند الشركة (مطلق) — منفصل عن سعر الولاية؛ يبقى تعديل السعر المعروض (adj) مطبَّقاً عليه
+    const wb = base, aj = Number(__SHIPCO[ckey] && __SHIPCO[ckey].adj) || 0, nb = Math.max(0, Number(type === "stop" ? cpd[1] : cpd[0]) - aj);
+    supAdd = nb - wb; adjApplied = aj ? Number(type === "stop" ? cpd[1] : cpd[0]) - nb : 0; base = nb;
+  } else if(src !== "free"){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
     const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
     if(d){ const add = Number(type === "stop" ? d[1] : d[0]) || 0; if(add){ const nb = Math.max(0, base + add); supAdd = nb - base; base = nb; } }
   }
