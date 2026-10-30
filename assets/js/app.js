@@ -84,6 +84,15 @@ function fillCommuneSel(sel, w){
   sel.innerHTML = '<option value="">— اختر البلدية —</option>';
   commOpts(w).forEach(x=>{ const o = document.createElement("option"); o.value = x.c; o.textContent = shipOptLabel(x.w, x.c) + (x.kid ? " — ولاية " + x.w.name : ""); if(x.kid) o.dataset.w = x.w.id; if(x.w.xc && x.w.xc[x.c] === "all") o.disabled = true; sel.appendChild(o); });
 }
+/* سعر كل بلدية يظهر بجانب اسمها في القائمة (يُحسب بالمنطق نفسه الذي يحسب رسم الطلب: نوع التوصيل والمنتج والشحن المجاني) */
+function labelCommunes(sel, w, fn){
+  if(!sel || !w || !sel.options) return;
+  for(let i = 0; i < sel.options.length; i++){
+    const o = sel.options[i]; if(!o.value) continue; if(o.dataset.t === undefined) o.dataset.t = o.textContent; if(o.disabled) continue;
+    const ww = o.dataset.w ? (WILAYAS.find(x=>x.id == o.dataset.w) || w) : w; let f = null; try{ f = fn(ww, o.value); }catch(e){}
+    o.textContent = o.dataset.t + (f === null || f === undefined ? "" : " — " + (f === 0 ? "مجاني" : fmt(f)));
+  }
+}
 /* إن كانت البلدية المختارة تابعة لولاية جديدة: بدّل قائمة الولاية إليها وأعد ملء بلدياتها وأبقِ البلدية محدّدة */
 function kidSwitch(wsel, csel){
   const op = csel.selectedOptions && csel.selectedOptions[0], kid = op && op.dataset.w ? WILAYAS.find(x=>x.id == op.dataset.w) : null;
@@ -171,6 +180,8 @@ const Cart = {
     if(autoMsg) autoMsg.textContent = disc.autoDiscount > 0 ? "🎉 " + disc.message + " — خصم " + fmt(disc.autoDiscount) : "";
     const feeEl = document.getElementById("cart-fee");
     const sq = Cart.quote();
+    try{ const cw = document.getElementById("cwilaya"), cc = document.getElementById("ccommune"), w0 = cw && WILAYAS.find(x=>x.id == cw.value), t0 = document.querySelector('input[name="cdtype"]:checked');
+      if(w0 && cc) labelCommunes(cc, w0, (ww, c)=>{ const q = shipQuote(ww, c, t0 ? t0.value : "home", Cart.subtotal(), cartShipCo(Cart.all()), cartShipPf(Cart.all())); return q.blocked ? null : ((items.every(cartItemFreeShip) || couponFreeShip() || q.free) ? 0 : q.fee); }); }catch(e){}
     if(feeEl){ feeEl.title = sq.msg || ""; feeEl.textContent = items.length ? (sq.blocked ? "غير متاح ⛔" : ((fee===0 && (items.every(cartItemFreeShip) || couponFreeShip() || sq.free)) ? "مجاني 🚚" : fmt(fee))) : "—"; }
     let sm = document.getElementById("cart-ship-msg");
     if(!sm && feeEl){ sm = document.createElement("div"); sm.id = "cart-ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.85rem;margin:.3rem 0;font-weight:700"; (feeEl.closest("div")||feeEl.parentNode).appendChild(sm); }
@@ -1133,6 +1144,7 @@ function initProduct(slug){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
     const sq = (state.wilaya && !p.digital) ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)) : null;
     const fee = p.digital ? 0 : (freeShip ? 0 : (sq ? sq.fee : null));
+    if(!p.digital && state.wilaya) labelCommunes(communeSel, state.wilaya, (ww, c)=>{ const q = shipQuote(ww, c, state.dtype, state.offer.price, p.shipCo, prodShipPf(p)); return q.blocked ? null : ((freeShip || q.free) ? 0 : q.fee); });
     feeEl.textContent = p.digital ? "—" : freeShip ? "مجاني 🚚" : (sq && sq.blocked ? "غير متاح ⛔" : (sq && sq.free ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية")));
     let sm = document.getElementById("ship-msg");
     if(!sm){ sm = document.createElement("div"); sm.id = "ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.88rem;margin:.4rem 0;font-weight:700"; const tb = feeEl.closest(".total-box"); if(tb) tb.parentNode.insertBefore(sm, tb); }
