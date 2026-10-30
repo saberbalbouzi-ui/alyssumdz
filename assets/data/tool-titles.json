@@ -539,6 +539,19 @@
         "fr": "Net là où vous voulez, flou ailleurs",
         "en": "Keep your focus point sharp and blur the rest"
       }
+    },
+    "pagerater": {
+      "icon": "n-catalog",
+      "t": {
+        "ar": "تقييم صفحة المنتج",
+        "fr": "Évaluer la page produit",
+        "en": "Product page score"
+      },
+      "d": {
+        "ar": "درجة لصفحة منتجك وما يحسّنها",
+        "fr": "Une note pour votre page produit",
+        "en": "Score your product page"
+      }
     }
   }
 }

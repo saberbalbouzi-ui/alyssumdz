@@ -5,7 +5,7 @@ const ToolWin = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   /* أدوات بنافذتها الخاصة (لا تحتاج خطوة الصورة) */
-  const OWN = ["gen", "batch", "catalog", "logo", "txt2img", "ast", "stk", "barcode", "studio3d", "magiclayers", "pagepilot"];
+  const OWN = ["gen", "batch", "catalog", "pagerater", "logo", "txt2img", "ast", "stk", "barcode", "studio3d", "magiclayers", "pagepilot"];
   const MULTI = { bl: "دمج صور: الصورة الأولى هي الأساس والباقي تُدمج فوقها", cl: "كولاج: اختر من 2 إلى 8 صور", vgen: "حتى 4 صور للفيديو", vad: "حتى 4 صور للإعلان", v360: "من 6 إلى 36 إطاراً مرتّبة بأسمائها" };
   const NEED = { tryon: "صورة القطعة — صورة الشخص تُرفع داخل الأداة" };
   const S = { id: "", files: [], urls: [], cat: null, busy: false };

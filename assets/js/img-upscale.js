@@ -82,7 +82,5 @@ const ImgUpscale = (() => {
     }
     S.busy = false;
   }
-  function init() { if (!$("tab-imgtools")) return setTimeout(init, 300); draw(); const a = typeof Admin !== "undefined" ? Admin : null; if (a && !a.__iuWrapped && a.tab) { a.__iuWrapped = true; const o = a.tab.bind(a); a.tab = function (t) { const r = o.apply(a, arguments); if (t === "imgtools" && !$("iu-card")) draw(); return r; }; } }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   return { run, resize, sharpen };
 })();

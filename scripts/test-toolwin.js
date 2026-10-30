@@ -21,7 +21,7 @@ const root = path.join(__dirname, "..");
   await p.evaluate(() => { try { Admin.tab("studio"); } catch (e) { document.getElementById("tab-studio").classList.remove("hidden"); } });
   await p.waitForFunction(() => document.querySelectorAll("#studio-content .sd-card").length >= 43, null, { timeout: 8000 }).catch(() => { });
   const st = await p.evaluate(() => { const cs = [...document.querySelectorAll("#studio-content .sd-card")]; return { n: cs.length, noIcon: cs.filter(c => !c.querySelector(".sd-h img")).length, ai: /ذكاء|ذكي|ذكية/.test(document.getElementById("studio-content").innerText) }; });
-  t("ستوديو ديزاين: 41 أداة كلها بأيقونة وبلا ذكر للذكاء", st.n === 41 && st.noIcon === 0 && !st.ai, st);
+  t("ستوديو ديزاين: 42 أداة كلها بأيقونة وبلا ذكر للذكاء", st.n === 42 && st.noIcon === 0 && !st.ai, st);
   /* صفحة أداة بلا صفحة تعريف: زر «ابدأ الآن» */
   await p.evaluate(() => AdminStudio.open("mk")); await p.waitForTimeout(300);
   t("صفحة الأداة فيها «ابدأ الآن»", await p.evaluate(() => { const b = document.querySelector('#studio-content [data-sdgo="mk"]'); return !!b && /ابدأ الآن/.test(b.textContent); }));
