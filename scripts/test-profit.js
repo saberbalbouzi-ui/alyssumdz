@@ -19,4 +19,16 @@ const cm = P.campaigns({ "summer a": { n: 4, ok: 3, ko: 1, rev: 9000, pre: 4000 
 ok("campaigns: مطابقة بالاسم المطبَّع وطرح الإنفاق من الصافي", cm.rows.find(r => r.name === "summer a").spend === 1500 && cm.rows.find(r => r.name === "summer a").net === 2500 && cm.rows.find(r => r.name === "summer a").matched, cm.rows);
 ok("campaigns: إنفاق بلا طلبات منسوبة يظهر يتيماً، والحملة غير المطابقة لا تأخذ إنفاقاً", cm.orphanSpend === 300 && cm.rows.find(r => r.name === "zzz").spend === 0 && cm.rows.find(r => r.raw).name === "بلا حملة محدّدة", cm);
 ok("ترتيب الحملات بالصافي تنازلياً", cm.rows[0].net >= cm.rows[1].net && cm.rows[1].net >= cm.rows[2].net, cm.rows.map(r => r.net));
+// تجميع «من كشف ياليدين إلى الربح الحقيقي» لكل المنتجات: يطابق الحساب العام للتبويب
+{
+  const per = { A: { p: { title: "أ" }, units: 3, retUnits: 1, revenue: 9000, delivery: 1500, cogs: 3000, pack: 300, ad: 600, adL: 200, retC: 250 }, B: { p: { title: "ب" }, units: 2, retUnits: 0, revenue: 4000, delivery: 800, cogs: 1000, pack: 200, ad: 400, adL: 0, retC: 0 }, Z: { units: 0, retUnits: 0, revenue: 0, delivery: 0, cogs: 0, pack: 0, ad: 0, adL: 0, retC: 0 } };
+  const Kf = { real: 4500, adTotal: 1300, adIdle: 100, adIdleBy: { A: 100 }, refunds: 150, actN: 4, realN: 1, estN: 0, parts: { rev: 13000 } };
+  const f = P.flow(per, Kf, { fixed: 0 }), c2 = P.calc(Kf, { days: 30 });
+  ok("flow: مجاميع الكشف والتكلفة والمرتجعات", f.units === 5 && f.revenue === 13000 && f.delivery === 2300 && f.net === 10700 && f.cogs === 4000 && f.retC === 250, f);
+  ok("flow: الربح بلا إعلان = real+adTotal في الحساب العام والإعلان يشمل الأيام الخاملة", f.pre === 5800 && f.pre === c2.preAds && f.ads === 1300 && f.idle === 100, f);
+  ok("flow: الربح الحقيقي يطابق صافي التبويب", f.real === 4500 && f.real === c2.net, [f.real, c2.net]);
+  ok("flow: الإنفاق الفعلي والثابت يحلّان محل التقدير", P.flow(per, Kf, { adsApi: 2000, fixed: 300 }).real === 5800 - 2000 - 300, P.flow(per, Kf, { adsApi: 2000, fixed: 300 }));
+  ok("flow: قائمة المنتجات مرتبة بالحقيقي وصف بلا نشاط يُستبعد", f.list.length === 2 && f.list[0].slug === "A" && f.list[0].real === 3950 - 900 && f.list[1].real === 1600, f.list);
+  ok("flowHtml: بلا بيانات لا شيء، ومعها بطاقة بالنص", P.flowHtml(P.flow({}, {}, {})) === "" && /الربح الحقيقي/.test(P.flowHtml(f)) && /4 طلب/.test(P.flowHtml(f)));
+}
 console.log(bad ? "✗ فشل " + bad + " من " + n : "✓ " + n + " فحصاً ناجحاً"); process.exit(bad ? 1 : 0);

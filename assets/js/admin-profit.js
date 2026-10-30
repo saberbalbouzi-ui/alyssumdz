@@ -26,6 +26,36 @@ const AdminProfit = (() => {
     return { net, preAds, ads, hasApi, fixed, steps, rev: P.rev || 0, delivered: K.delivered || 0, failed: K.failed || 0, open: K.open || 0, rate: pct(K.delivered || 0, n),
       roas: ads > 0 ? Math.round((P.rev || 0) / ads * 100) / 100 : 0, cpa: ads > 0 && K.delivered ? Math.round(ads / K.delivered) : 0, perOrder: K.delivered ? Math.round(net / K.delivered) : 0, margin: pct(net, P.rev || 0), exp: Math.round(K.exp || 0) };
   }
+  /* ── من كشف شركة التوصيل إلى الربح الحقيقي لكل المنتجات معاً (يجمع صفوف المنتجات من computeFinance؛ نقي وقابل للاختبار) ── */
+  function flow(per, K, o) {
+    o = o || {}; K = K || {}; const rows = Object.keys(per || {}).map(k => ({ slug: k, r: per[k] })).filter(x => x.r && (x.r.units || x.r.retUnits || x.r.ad || x.r.adL));
+    const T = { units: 0, retUnits: 0, revenue: 0, delivery: 0, cogs: 0, pack: 0, retC: 0, adOrders: 0 };
+    const idleBy = K.adIdleBy || {}, list = rows.map(x => {
+      const r = x.r, idle = Math.round(idleBy[x.slug] || 0), ad = Math.round((r.ad || 0) + (r.adL || 0)) + idle, net = (r.revenue || 0) - (r.delivery || 0), pre = net - (r.cogs || 0) - (r.pack || 0) - (r.retC || 0);
+      T.units += r.units || 0; T.retUnits += r.retUnits || 0; T.revenue += r.revenue || 0; T.delivery += r.delivery || 0; T.cogs += r.cogs || 0; T.pack += r.pack || 0; T.retC += r.retC || 0; T.adOrders += Math.round((r.ad || 0) + (r.adL || 0));
+      return { slug: x.slug, title: (r.p && r.p.title) || x.slug, units: r.units || 0, net, pre, ad, real: pre - ad };
+    }).sort((a, b) => b.real - a.real);
+    const idle = Math.round(K.adIdle || 0), refunds = Math.round(K.refunds || 0), adEst = T.adOrders + idle, hasApi = o.adsApi != null && o.adsApi > 0, ads = hasApi ? Math.round(o.adsApi) : adEst;
+    const fixed = Math.round(o.fixed || 0), net = T.revenue - T.delivery, pre = net - T.cogs - T.pack - T.retC - refunds;
+    return { ...T, net, refunds, pre, idle, adEst, ads, hasApi, fixed, real: pre - ads - fixed, list, nFile: K.actN || 0, nReal: K.realN || 0, nEst: K.estN || 0 };
+  }
+  function flowHtml(f) {
+    if (!f.units && !f.retUnits && !f.ads) return "";
+    const col = x => (x >= 0 ? "pos" : "neg"), ln = (t, v, n, b) => `<tr${b ? ' style="font-weight:800"' : ""}><td>${t}</td><td dir="ltr" style="text-align:left;white-space:nowrap" class="${b ? col(v) : ""}">${dz(v)}</td><td class="pf-mut">${n || ""}</td></tr>`;
+    const src = f.nFile ? `✓ ${f.nFile} طلب بأرقام كشف ياليدين` + (f.nReal + f.nEst ? ` + ${f.nReal + f.nEst} بالتعريفة/التقدير` : "") : "≈ تقدير من التعريفة (استورد كشف الدفع ليصير فعلياً)";
+    return `<div class="pf-card"><h3>📐 من كشف ياليدين إلى الربح الحقيقي — كل المنتجات</h3><div class="pf-sub">${src}</div><div class="pf-wrap"><table class="pf-tbl"><tr><th>البند</th><th>المبلغ</th><th>ملاحظة</th></tr>
+      ${ln("المسلَّم (" + f.units + " قطعة) — ما حصّلته الشركة", f.revenue, "السعر + التوصيل الذي دفعه الزبون")}
+      ${ln("− توصيل وعمولة COD", -f.delivery, "الفعلي من الكشف حين يتوفر")}
+      ${ln("= صافي الكشف", f.net, "ما تدفعه لك الشركة", 1)}
+      ${ln("− تكلفة المنتجات والتغليف", -(f.cogs + f.pack), "سعر الشراء × القطع المسلَّمة + التغليف")}
+      ${ln("− خسارة المرتجعات", -f.retC, f.retUnits + " قطعة مرتجعة: رسم الإرجاع الفعلي")}
+      ${f.refunds ? ln("− مبالغ مستردة بعد التسليم", -f.refunds, "") : ""}
+      ${ln("= الربح الصافي بلا إعلان", f.pre, f.units ? "≈ " + nf(f.pre / f.units) + " دج للقطعة المسلَّمة" : "", 1)}
+      ${ln("− الحملات الإعلانية" + (f.hasApi ? " (الفعلية)" : ""), -f.ads, f.hasApi ? "من حساباتك الإعلانية المربوطة" : "إنفاق الطلبات" + (f.idle ? " (منها " + nf(f.idle) + " دج أيام بلا طلبات)" : ""))}
+      ${f.fixed ? ln("− مصاريف ثابتة", -f.fixed, "حصة الفترة") : ""}
+      ${ln("= الربح الحقيقي", f.real, f.units ? "≈ " + nf(f.real / f.units) + " دج للقطعة المسلَّمة" : "", 1)}</table></div>
+      ${f.list.length > 1 ? `<div class="pf-sub" style="margin-top:.6rem">لكل منتج (الربح الحقيقي بعد إعلانه الخاص):</div><div class="pf-wrap"><table class="pf-tbl"><tr><th>المنتج</th><th>قطع</th><th>صافي الكشف</th><th>بلا إعلان</th><th>الحقيقي</th></tr>${f.list.slice(0, 12).map(w => `<tr><td>${esc(w.title)}</td><td>${w.units}</td><td>${dz(w.net)}</td><td class="${col(w.pre)}">${dz(w.pre)}</td><td class="${col(w.real)}">${dz(w.real)}</td></tr>`).join("")}</table></div>` : ""}</div>`;
+  }
   /* توزيع الإنفاق الفعلي على أيام وحملات ثم ربطه بحملات الطلبات (utm) بالاسم */
   function spendBy(rows) {
     const day = {}, camp = {}; (rows || []).forEach(r => { day[r.day] = (day[r.day] || 0) + r.spend_dzd; const k = r.campaign_name || r.campaign_id; const c = camp[k] || (camp[k] = { name: k, provider: r.provider, spend: 0, clicks: 0, impr: 0 }); c.spend += r.spend_dzd; c.clicks += r.clicks || 0; c.impr += r.impressions || 0; });
@@ -146,16 +176,18 @@ const AdminProfit = (() => {
     let body = "";
     if (typeof Admin === "undefined" || !Admin.computeFinance || !Admin.fin) body = '<div class="pf-card"><div class="pf-sub">بيانات الطلبات لم تُحمَّل بعد.</div></div>';
     else {
-      const g = range(), { K } = Admin.computeFinance(0, { from: g.from, to: g.to }), sp = S.spend ? spendBy(S.spend.spend) : null;
+      const g = range(), { K, per } = Admin.computeFinance(0, { from: g.from, to: g.to }), sp = S.spend ? spendBy(S.spend.spend) : null;
       const c = calc(K, { days: S.days, adsApi: S.spend ? S.spend.total_dzd : null, fixedMonthly: S.fixed });
       const shown = (Admin.orders || []).filter(o => { const t = new Date(o.date).getTime(); return t >= g.from && t < g.to && ["confirmee", "expediee", "livree", "echec"].includes(o.status); }).reduce((t, o) => t + (Number(o.total) || 0), 0);
       const subs = (Admin.orders || []).filter(o => { const t = new Date(o.date).getTime(); return t >= g.from && t < g.to && o.status === "livree"; }).reduce((t, o) => { const e = o.extra && typeof o.extra === "object" ? Number(o.extra["🎁 دعم الشحن"]) : 0; return t + (isFinite(e) ? e : 0); }, 0);
+      const fl = flow(per, K, { adsApi: S.spend ? S.spend.total_dzd : null, fixed: c.fixed });
       const cm = sp ? campaigns(K.bySrc, sp.camp) : null;
       const wil = Object.keys(K.byWil || {}).map(k => ({ name: k, ...K.byWil[k] })).sort((a, b) => b.pre - a.pre);
       const bad = wil.filter(w => w.n >= 3 && w.pre < 0).length;
       body = `<div class="pf-card pf-hero ${c.net < 0 ? "neg" : ""}"><div class="pf-sub">الربح الصافي الحقيقي · آخر ${S.days} يوماً</div><div class="pf-big ${c.net < 0 ? "neg" : "pos"}">${dz(c.net)}</div>
         <div class="pf-sub">النقد الذي دخل فعلاً من الطرود المسلَّمة (${dz(c.rev)}) بعد كل التكاليف · هامش ${c.margin}% · ${c.hasApi ? "الإعلان من حساباتك الفعلية" : "الإعلان تقدير — اربط حساباتك للدقة"}</div>
         <div class="pf-sub">المبيعات «الظاهرة» (كل الطلبات المؤكّدة والمشحونة والمسلَّمة والمرتجعة) <b>${dz(shown)}</b> — منها ${dz(c.rev)} فقط تحصّلت، والباقي مرتجع أو لم يصل بعد (متوقع ${dz(c.exp)}).</div></div>
+        ${flowHtml(fl)}
         <div class="pf-grid">${subs ? `<div class="pf-k"><b>${dz(subs)}</b><span>${subs > 0 ? "دعم الشحن الذي تحمّلته (الفرق بين سعر الشركة وما دفعه الزبائن، للطلبات المسلَّمة)" : "زيادة الشحن المحصَّلة فوق سعر الشركة"}</span></div>` : ""}<div class="pf-k"><b>${c.rate}%</b><span>نسبة التسليم (${c.delivered} مسلَّم / ${c.failed} مرتجع)</span></div><div class="pf-k"><b>${dz(c.perOrder)}</b><span>الصافي لكل طلب مسلَّم</span></div><div class="pf-k"><b>${c.cpa ? dz(c.cpa) : "—"}</b><span>تكلفة الإعلان لكل طلب مسلَّم (CPA الحقيقي)</span></div><div class="pf-k"><b>${c.roas ? c.roas + "×" : "—"}</b><span>العائد الفعلي على الإعلان (ROAS)</span></div><div class="pf-k"><b>${dz(c.ads)}</b><span>الإعلانات ${c.hasApi ? "(فعلية)" : "(تقدير)"}</span></div><div class="pf-k"><b>${c.open}</b><span>طلبات في الطريق (لم تُحسب بعد)</span></div></div>
         ${c.rate && c.rate < 60 ? `<div class="pf-note">⚠️ نسبة التسليم ${c.rate}% — كل مرتجع يكلّفك توصيلاً ذهاباً وإياباً وتغليفاً، فالإعلان الذي يجلب مرتجعات أغلى من مظهره.</div>` : ""}
         ${c.ads > 0 && c.net < 0 ? '<div class="pf-note">🔴 أنت تخسر فعلاً بعد حساب الإعلان والمرتجعات: ارفع نسبة التأكيد أو أوقف الحملات الأضعف (انظر الجدول أدناه).</div>' : ""}
@@ -235,6 +267,6 @@ const AdminProfit = (() => {
     w(); setTimeout(w, 500);
   }
   if (typeof document !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  return { render, refresh, S, calc, oauthReturn, spendBy, campaigns, _t: { norm, pct } };
+  return { render, refresh, S, calc, flow, flowHtml, oauthReturn, spendBy, campaigns, _t: { norm, pct } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = AdminProfit;
