@@ -32,7 +32,9 @@ function handle(b) {
     window.API = { sb: { token: async () => "tok", url: (q) => "/sb" + q, headers: () => ({ "Content-Type": "application/json" }) } }; window.Admin = { tab() { }, toast: (t) => window.__toasts.push(t) };
     await new Promise((r) => { const e = document.createElement("script"); e.src = "/assets/js/admin-appdev.js"; e.onload = r; document.body.appendChild(e); }); Admin.tab("appdev");
   });
-  await p.waitForSelector(".ad-tbl", { timeout: 8000 });
+  await p.waitForSelector(".ad-gd", { timeout: 8000 });
+  { const g = await p.evaluate(() => document.getElementById("ad-app").textContent); ok("الدليل هو الصفحة الافتراضية بمراحله وخطواته", /دليل المطوّر/.test(g) && /تفعيل حساب مطوّر/.test(g) && /أرسلها للمراجعة/.test(g) && /OAuth/.test(g) && /webhook/.test(g) && /قائمة تحقق قبل الإرسال/.test(g)); }
+  await p.click("[data-ad=tab][data-k=apps]"); await p.waitForSelector(".ad-tbl", { timeout: 8000 });
   const txt = () => p.evaluate(() => document.getElementById("ad-app").textContent.replace(/[\u00a0\u202f]/g, " ")), toasts = () => p.evaluate(() => window.__toasts);
   let t = await txt();
   ok("قائمة التطبيقات بالحالة وسبب الرفض", /مرفوض/.test(t) && /اشرح الصلاحيات/.test(t) && /1 000 دج/.test(t));

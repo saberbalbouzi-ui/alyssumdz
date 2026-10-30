@@ -3,7 +3,7 @@
 const AdminAppDev = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const S = { apps: [], dels: [], earn: null, notDev: false, off: false, err: "", busy: false, form: null, secrets: null, tab: "apps", dstate: "", timer: null };
+  const S = { apps: [], dels: [], earn: null, notDev: false, off: false, err: "", busy: false, form: null, secrets: null, tab: "guide", dstate: "", timer: null };
   const nf = n => Math.round(+n || 0).toLocaleString("fr-DZ");
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const SCOPES = [["read_orders", "قراءة الطلبات (بلا بيانات الزبائن)"], ["read_customers", "⚠️ أسماء الزبائن وهواتفهم"], ["read_products", "قراءة المنتجات"], ["write_products", "تعديل المنتجات والأكواد"], ["read_carts", "قراءة السلال المتروكة"]];
@@ -41,14 +41,18 @@ const AdminAppDev = (() => {
 .ad-tbl{width:100%;border-collapse:collapse;font-size:.85rem}.ad-tbl th,.ad-tbl td{padding:.45rem .5rem;border-bottom:1px solid rgba(255,255,255,.1);text-align:right;vertical-align:top}.ad-chip{display:inline-block;padding:.1rem .6rem;border-radius:99px;font-size:.75rem;font-weight:800;border:1px solid currentColor}
 .ad-wrap{overflow:auto}.ad-hint{font-size:.8rem;opacity:.8;margin:.4rem 0 0}.ad-off{padding:1.2rem;text-align:center;opacity:.85}.ad-sec{padding:.8rem;border-radius:12px;background:rgba(var(--g-amber-rgb),.14);border:1px solid rgba(var(--g-amber-rgb),.55);font-size:.85rem;display:grid;gap:.4rem}.ad-sec code{display:block;direction:ltr;text-align:left;padding:.3rem .5rem;border-radius:8px;background:rgba(0,0,0,.35);word-break:break-all;user-select:all}
 .ad-fm{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:.7rem}.ad-fm label.fl{display:grid;gap:.25rem;font-size:.82rem}.ad-fm input,.ad-fm textarea,.ad-fm select{padding:.5rem;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:inherit;font:inherit;width:100%;box-sizing:border-box}.ad-ck{display:flex;gap:.4rem;align-items:center;font-size:.85rem}
-.ad-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem}.ad-kpi div{padding:.8rem;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}.ad-kpi b{display:block;font-size:1.3rem}`;
+.ad-kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem}.ad-kpi div{padding:.8rem;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}.ad-kpi b{display:block;font-size:1.3rem}
+.ad-gd h3{margin:.2rem 0 .6rem}.ad-gd p,.ad-gd li{line-height:1.9;font-size:.9rem}.ad-gd ul,.ad-gd ol{margin:.3rem 1.2rem}.ad-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(210px,100%),1fr));gap:.7rem;counter-reset:st}
+.ad-steps>div{position:relative;padding:.9rem .9rem .8rem;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);counter-increment:st}.ad-steps>div:before{content:counter(st);position:absolute;top:-.6rem;inset-inline-start:.8rem;width:1.7rem;height:1.7rem;border-radius:50%;display:grid;place-items:center;font-weight:900;background:var(--g-mint,#e2fe17);color:#1f2123}
+.ad-steps b{display:block;margin:.2rem 0 .25rem}.ad-steps span{font-size:.82rem;opacity:.85;line-height:1.7}pre.ad-code{direction:ltr;text-align:left;overflow:auto;padding:.8rem;border-radius:12px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);font-size:.78rem;line-height:1.6;margin:.5rem 0;white-space:pre}
+.ad-warn{padding:.7rem .9rem;border-radius:12px;background:rgba(var(--g-amber-rgb),.14);border:1px solid rgba(var(--g-amber-rgb),.55);font-size:.86rem;line-height:1.8;margin:.6rem 0}.ad-ok{padding:.7rem .9rem;border-radius:12px;background:rgba(var(--g-mint-rgb),.12);border:1px solid rgba(var(--g-mint-rgb),.45);font-size:.86rem;line-height:1.8;margin:.6rem 0}`;
     document.head.appendChild(s);
   }
   const chip = (m, k) => { const x = m[k] || [k, "inherit"]; return `<span class="ad-chip" style="color:rgb(${x[1]})">${esc(x[0])}</span>`; };
   const sec = () => { const x = S.secrets; if (!x) return ""; return `<div class="ad-sec"><b>🔐 احفظ هذه الأسرار الآن — لن تظهر مرة أخرى</b>${x.client_id ? `<div>client_id</div><code>${esc(x.client_id)}</code>` : ""}<div>client_secret</div><code>${esc(x.client_secret)}</code><div>webhook_secret</div><code>${esc(x.webhook_secret)}</code><div><button class="ad-btn g sm" data-ad="hide">أنهيت الحفظ — إخفاء</button></div></div>`; };
   function formHtml() {
     const f = S.form, a = f.draft ? { ...(f.app || {}), ...f.draft } : (f.app || {}), sc = new Set((a.scopes || []).map(x => x.id || x)), ev = new Set(a.events || []);
-    return `<div class="ad-box" id="ad-form"><h3>${a.id ? `تعديل «${esc(a.name)}»` : "تطبيق جديد"}</h3>
+    return `<div class="ad-box" id="ad-form"><h3>${a.id ? `تعديل «${esc(a.name)}»` : "إضافة جديدة"}</h3>
 <div class="ad-fm">${a.id ? "" : `<label class="fl">المعرّف (لاتيني)<input id="adf-slug" maxlength="40" placeholder="my-app" value="${esc(a.slug || "")}"></label>`}
 <label class="fl">الاسم<input id="adf-name" maxlength="80" value="${esc(a.name || "")}"></label>
 <label class="fl">السعر (دج، 0 = مجاني)<input id="adf-price" type="number" min="0" value="${esc(a.price || 0)}"></label>
@@ -67,7 +71,7 @@ ${a.id && a.status === "approved" ? '<p class="ad-hint">⚠️ تعديل الس
 <td>${chip(ST, a.status)}<div class="ad-hint">${a.price > 0 ? nf(a.price) + " دج" + (a.billing === "monthly" ? " / شهر" : "") : "مجاني"}</div></td>
 <td><div class="ad-hint">${a.rating ? "★ " + esc(a.rating) + " (" + esc(a.rating_count) + ")" : "بلا تقييم"}</div></td>
 <td><button class="ad-btn g sm" data-ad="edit" data-id="${a.id}">تعديل</button> ${["draft", "rejected"].includes(a.status) ? `<button class="ad-btn sm" data-ad="submit" data-id="${a.id}" data-n="${esc(a.name)}">إرسال للمراجعة</button> ` : ""}${a.webhook_url && !a.domain_verified ? `<button class="ad-btn o sm" data-ad="verify" data-id="${a.id}">توثيق النطاق</button> ` : ""}<button class="ad-btn o sm" data-ad="rotate" data-id="${a.id}" data-n="${esc(a.name)}">تدوير الأسرار</button></td></tr>`).join("");
-    return `${sec()}${S.form ? formHtml() : ""}<div class="ad-box"><h3>تطبيقاتي</h3>${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>التطبيق</th><th>الحالة والسعر</th><th>التقييم</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="ad-hint">لا تطبيقات بعد.</p>'}<div style="margin-top:.7rem"><button class="ad-btn" data-ad="new">＋ تطبيق جديد</button></div>
+    return `${sec()}${S.form ? formHtml() : ""}<div class="ad-box"><h3>إضافاتي</h3>${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>التطبيق</th><th>الحالة والسعر</th><th>التقييم</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="ad-hint">لا تطبيقات بعد.</p>'}<div style="margin-top:.7rem"><button class="ad-btn" data-ad="new">＋ تطبيق جديد</button></div>
 <p class="ad-hint">لتوثيق النطاق: انشر الملف <code style="direction:ltr">https://نطاق-webhook/.well-known/alyssum-app.json</code> بمحتوى <code style="direction:ltr;display:inline">{"client_id":"ci_…"}</code> ثم اضغط «توثيق النطاق».</p></div>`;
   }
   function delsHtml() {
@@ -81,13 +85,83 @@ ${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>التطبي
     return `<div class="ad-box"><h3>إيراداتي</h3><div class="ad-kpi"><div>الإجمالي<b>${nf(t.gross)} دج</b></div><div>عمولة المنصة<b>${nf(t.fee)} دج</b></div><div>صافيك<b>${nf(t.net)} دج</b></div></div><p class="ad-hint">الصافي يُقيَّد في متاح محفظتك.</p>
 ${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>التطبيق</th><th>الفترة</th><th>الإجمالي</th><th>العمولة</th><th>الصافي</th><th>الحالة</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}</div>`;
   }
+  /* دليل المطوّر: المراحل والطريقة الصحيحة لإضافة إضافة جديدة (يظهر لكل الحسابات، حتى غير المفعّلة كمطوّر) */
+  function guideHtml() {
+    const c = t => `<pre class="ad-code">${esc(t)}</pre>`;
+    return `<div class="ad-box ad-gd"><h3>📘 دليل المطوّر — كيف تضيف إضافة جديدة إلى متجر الإضافات</h3>
+<p>«متجر الإضافات» يتيح لمطوّرين مستقلين بناء أدوات تُثبَّت على متاجر التجار. <b>القاعدة:</b> إضافتك ترى أقل ما يلزم، والتاجر يوافق على كل صلاحية، والإدارة تراجع الإضافة قبل ظهورها. هذه الصفحة تشرح المراحل كاملة بالترتيب.</p>
+<div class="ad-steps">
+<div><b>تفعيل حساب مطوّر</b><span>تفعّل الإدارة حسابك كمطوّر (من الدعم). بدونه تبقى تبويبات «إضافاتي» مغلقة.</span></div>
+<div><b>صمّم إضافتك</b><span>حدّد ما تفعله، وأقل صلاحيات تحتاجها، والأحداث التي تريد استقبالها، والسعر.</span></div>
+<div><b>أنشئها واحفظ الأسرار</b><span>من «إضافاتي ← إضافة جديدة». تظهر الأسرار <b>مرة واحدة</b> فقط: انسخها فوراً.</span></div>
+<div><b>ابنِ خادمك</b><span>أنشئ رابط إعادة التوجيه (OAuth) ورابط الأحداث (webhook) على خادمك بالتحقق من التوقيع.</span></div>
+<div><b>وثّق نطاقك</b><span>انشر ملف التوثيق على نطاق الـwebhook لتظهر شارة «نطاق موثّق».</span></div>
+<div><b>أرسلها للمراجعة</b><span>زر «إرسال للمراجعة». تراجعها الإدارة يدوياً وقد تطلب تعديلات.</span></div>
+<div><b>الاعتماد والظهور</b><span>بعد القبول تظهر في «متجر الإضافات» ويراها كل التجار.</span></div>
+<div><b>التثبيت والتحديث</b><span>التاجر يثبّتها ويوافق على الصلاحيات؛ تتابع التسليمات والإيرادات من هنا.</span></div>
+</div></div>
+<div class="ad-box ad-gd"><h3>1) تصميم الإضافة قبل إنشائها</h3>
+<ul><li><b>اطلب أقل الصلاحيات:</b> كل صلاحية إضافية تجعل المراجعة أشدّ وتخيف التاجر. لا تطلب «أسماء الزبائن» إلا إن كانت وظيفتها تتطلب ذلك فعلاً.</li>
+<li><b>لا يوجد</b> صلاحية للمحفظة أو المفاتيح أو إدخال الأحداث. أي مسار خارج صلاحياتك يردّ <code>403 insufficient_scope</code>.</li>
+<li><b>الأحداث:</b> اشترك فقط فيما تحتاجه. أحداث الطلبات والدفع تتطلب صلاحية قراءة الطلبات.</li>
+<li><b>السعر:</b> 0 = مجانية، أو دفعة واحدة، أو اشتراك شهري. يُخصم من رصيد التاجر وتأخذ المنصة عمولة (20% افتراضياً) والباقي لرصيدك.</li></ul>
+<div class="ad-hint"><b>الصلاحيات المتاحة</b></div>
+<div class="ad-wrap"><table class="ad-tbl"><tr><th>الصلاحية</th><th>ما تتيحه</th></tr>
+<tr><td><code>read_orders</code></td><td>قراءة الطلبات والاشتراك في أحداث الطلبات والدفع — <b>بلا اسم الزبون وهاتفه</b></td></tr>
+<tr><td><code>read_customers</code> ⚠️</td><td>يكشف الأسماء والهواتف في الطلبات والسلال والأحداث. حسّاسة: تظهر للتاجر بتحذير وموافقة منفصلة</td></tr>
+<tr><td><code>read_products</code> / <code>write_products</code></td><td>قراءة / تعديل المنتجات والأكواد</td></tr>
+<tr><td><code>read_carts</code></td><td>السلال المتروكة (الهواتف مخفية دون <code>read_customers</code>)</td></tr></table></div></div>
+<div class="ad-box ad-gd"><h3>2) إنشاء الإضافة: ماذا تكتب في كل حقل</h3>
+<ul><li><b>المعرّف (لاتيني):</b> اسم قصير فريد مثل <code>sms-tools</code>؛ لا يتغير بعد الإنشاء.</li>
+<li><b>الاسم والوصف:</b> ما يراه التاجر في المتجر. صِف الفائدة لا التقنية.</li>
+<li><b>روابط إعادة التوجيه (OAuth):</b> رابط https على خادمك يستقبل رمز التفعيل بعد موافقة التاجر. يجب أن يطابق حرفياً ما تكتبه هنا (حتى 3 روابط).</li>
+<li><b>رابط الأحداث (webhook):</b> رابط https يستقبل الأحداث التي اشتركت بها.</li>
+<li><b>الصلاحيات والأحداث:</b> اختر من القائمة (انظر أعلاه).</li></ul>
+<div class="ad-warn">⚠️ بعد الحفظ تظهر <b>client_secret</b> و<b>webhook_secret</b> مرة واحدة فقط ولا تُخزَّن في المتصفح ولا عندنا بصيغة قابلة للاسترجاع. انسخهما إلى مكان آمن في خادمك. إن ضاعا استعمل «تدوير الأسرار» (تبطل القديمة فوراً).</div></div>
+<div class="ad-box ad-gd"><h3>3) تدفق التثبيت (OAuth) على خادمك</h3>
+<ol><li>التاجر يضغط «تثبيت» ويوافق على <b>كل</b> الصلاحيات المطلوبة.</li>
+<li>يُحوَّل متصفحه إلى أول رابط إعادة توجيه عندك مع: <code>code</code> و<code>installation</code> و<code>shop</code> و<code>timestamp</code> و<code>signature</code>.</li>
+<li><b>تحقّق من التوقيع</b> (HMAC-SHA256 بـwebhook_secret على المعاملات مرتّبة أبجدياً) وأن الوقت حديث، وإلا ارفض.</li>
+<li>بدّل الرمز (صالح 10 دقائق ولمرة واحدة) برمز وصول:</li></ol>
+${c(`POST https://api.alyssumhub.fyi/oauth/token
+Authorization: Basic base64(client_id:client_secret)
+grant_type=authorization_code&code=ac_...&redirect_uri=<نفس الرابط المسجَّل تماماً>
+
+→ { "access_token":"at_...", "refresh_token":"rt_...", "expires_in":3600, "scope":"read_orders" }`)}
+<ol start="5"><li>استعمل <code>Authorization: Bearer at_...</code> في طلباتك. <code>GET /v1/appstore/me</code> يعرّفك بالمتجر والصلاحيات الممنوحة.</li>
+<li>جدّد قبل الانتهاء بـ<code>grant_type=refresh_token</code>. الرمز دوّار: <b>إعادة استعمال رمز تجديد قديم تبطل السلسلة كلها</b> (تُعدّ تسريباً).</li></ol></div>
+<div class="ad-box ad-gd"><h3>4) استقبال الأحداث (webhooks) بأمان</h3>
+<p>نرسل <code>POST</code> JSON إلى رابطك مع الترويسة <code>X-App-Signature: t=…,v1=…</code>. تحقّق دائماً قبل المعالجة:</p>
+${c(`const [t, v1] = req.headers['x-app-signature'].split(',').map(x => x.split('=')[1]);
+const fresh = Math.abs(Date.now()/1000 - +t) < 300;            // ارفض الأقدم من 5 دقائق
+const sig = crypto.createHmac('sha256', WEBHOOK_SECRET).update(t + '.' + rawBody).digest();
+const ok = fresh && crypto.timingSafeEqual(Buffer.from(v1,'hex'), sig);`)}
+<ul><li>ردّ بـ<code>2xx</code> خلال 10 ثوانٍ، وإلا نعيد المحاولة بعد 1د ثم 5د ثم 30د ثم 2س ثم 12س.</li>
+<li><b>اجعل المعالجة آمنة للتكرار</b> باستعمال <code>X-App-Delivery</code> (قد يصلك الحدث أكثر من مرة).</li>
+<li>بيانات الزبون تُحذف من الحمولة ما لم تملك <code>read_customers</code>.</li></ul></div>
+<div class="ad-box ad-gd"><h3>5) توثيق النطاق ثم الإرسال للمراجعة</h3>
+<ol><li>انشر الملف <code>https://نطاقك/.well-known/alyssum-app.json</code> بمحتوى <code>{"client_id":"ci_..."}</code>.</li>
+<li>اضغط «توثيق النطاق» في صف إضافتك. تظهر شارة ✔ للتجار، وتسقط تلقائياً إن غيّرتَ نطاق الـwebhook.</li>
+<li>اضغط «إرسال للمراجعة». حالات الإضافة: <b>مسودة ← قيد المراجعة ← معتمد</b> أو <b>مرفوض</b> (عدّل ثم أعد الإرسال) أو <b>موقوف</b> (تعليق فوري يبطل الرموز).</li></ol>
+<div class="ad-ok">✅ <b>قائمة تحقق قبل الإرسال:</b> الصلاحيات أقل ما يلزم · رابط OAuth يطابق المسجَّل · التوقيع يُتحقَّق منه في الخادم · المعالجة آمنة للتكرار · النطاق موثّق · الوصف واضح للتاجر.</div></div>
+<div class="ad-box ad-gd"><h3>6) بعد الاعتماد</h3>
+<ul><li><b>تعديل حقل حسّاس</b> (السعر، الروابط، الأحداث، الصلاحيات) على إضافة معتمدة يعيدها إلى المراجعة.</li>
+<li><b>سجلّ التسليمات:</b> تبويب «سجلّ التسليمات» يعرض كل حدث أُرسل وحالته، ويتيح إعادة إرسال الفاشل.</li>
+<li><b>الإيرادات:</b> تبويب «إيراداتي»؛ يستطيع التاجر الاسترداد خلال 7 أيام من آخر دفعة فيُسحب نصيبك منها.</li>
+<li><b>التقييمات:</b> التجار يقيّمون إضافتك من 1 إلى 5، وقد تضع الإدارة عليها «⭐ مميّز».</li>
+<li><b>أخطاء شائعة:</b> <code>consent_mismatch</code> (لم يوافق التاجر على كل الصلاحيات) · <code>invalid_grant</code> (رمز مستعمل أو انتهت صلاحيته أو رابط إعادة توجيه مختلف) · <code>403 insufficient_scope</code> (استدعيت مساراً خارج صلاحياتك).</li></ul>
+<p class="ad-hint">لأي استفسار تقني تواصل مع الدعم. الوثيقة الكاملة للمطوّرين: <code>app-store-developers.md</code>.</p></div>`;
+  }
   function draw() {
     const host = $("ad-app"); if (!host) return;
-    if (S.off) { host.innerHTML = '<div class="ad-box ad-off">بوابة المطوّر غير مفعّلة على حسابك — تواصل مع الدعم.</div>'; return; }
-    if (S.notDev) { host.innerHTML = '<div class="ad-box ad-off">حسابك غير مفعّل كمطوّر تطبيقات. تواصل مع الدعم لتفعيله ثم عُد إلى هنا.</div>'; return; }
-    if (S.err) { host.innerHTML = `<div class="ad-box ad-off">${esc(S.err)} <button class="ad-btn" data-ad="reload">إعادة المحاولة</button></div>`; return; }
-    const tabs = `<div class="ad-tabs">${[["apps", "تطبيقاتي"], ["dels", "سجلّ التسليمات"], ["earn", "إيراداتي"]].map(([k, l]) => `<button class="ad-btn g ${S.tab === k ? "on" : ""}" data-ad="tab" data-k="${k}">${l}</button>`).join("")}</div>`;
-    host.innerHTML = tabs + (S.tab === "apps" ? appsHtml() : S.tab === "dels" ? delsHtml() : earnHtml());
+    const tabs = `<div class="ad-tabs">${[["guide", "📘 الدليل"], ["apps", "إضافاتي"], ["dels", "سجلّ التسليمات"], ["earn", "إيراداتي"]].map(([k, l]) => `<button class="ad-btn g ${S.tab === k ? "on" : ""}" data-ad="tab" data-k="${k}">${l}</button>`).join("")}</div>`;
+    let body;
+    if (S.tab === "guide") body = S.off ? '<div class="ad-box ad-off">بوابة المطوّر غير مفعّلة على حسابك — تواصل مع الدعم. الدليل أدناه متاح لك.</div>' + guideHtml() : S.notDev ? '<div class="ad-warn">ℹ️ حسابك غير مفعّل كمطوّر بعد. تواصل مع الدعم لتفعيله، وفي الأثناء اقرأ الدليل.</div>' + guideHtml() : guideHtml();
+    else if (S.off) body = '<div class="ad-box ad-off">بوابة المطوّر غير مفعّلة على حسابك — تواصل مع الدعم.</div>';
+    else if (S.notDev) body = '<div class="ad-box ad-off">حسابك غير مفعّل كمطوّر. تواصل مع الدعم لتفعيله ثم عُد إلى هنا، واقرأ «📘 الدليل» لتعرف المراحل.</div>';
+    else if (S.err) body = `<div class="ad-box ad-off">${esc(S.err)} <button class="ad-btn" data-ad="reload">إعادة المحاولة</button></div>`;
+    else body = S.tab === "apps" ? appsHtml() : S.tab === "dels" ? delsHtml() : earnHtml();
+    host.innerHTML = tabs + body;
   }
   const readForm = () => {
     const v = id => ($(id) || {}).value || "", f = S.form.app || {};
