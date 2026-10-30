@@ -12,7 +12,7 @@ const AdminYd = (() => {
   let DET = {}; try { DET = JSON.parse(localStorage.getItem(DKEY) || "{}") || {}; } catch (e) { }
   const saveDet = () => { try { localStorage.setItem(DKEY, JSON.stringify(DET)); } catch (e) { } };
   const masked = v => /\*/.test(String(v || ""));
-  const S = { rows: [], total: 0, partial: false, at: 0, st: "", q: "", wil: "", from: "", to: "", link: "", fopen: false, page: 1, busy: false, prog: "" };
+  const S = { raw: [], rows: [], total: 0, partial: false, at: 0, st: "", q: "", wil: "", from: "", to: "", link: "", fopen: false, page: 1, busy: false, prog: "" };
   const A = () => (typeof Admin !== "undefined" ? Admin : null);
   const norm = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f\u064b-\u065f\u0670]/g, "").toLowerCase().replace(/[\u0623\u0625\u0622]/g, "\u0627").replace(/\u0629/g, "\u0647").replace(/\u0649/g, "\u064a").trim();
   /* لون الحالة: أخضر للتسليم، عنبري للمرتجع الذي ينتظر، أحمر للمرتجع/الفشل، داكن لغيرها */
@@ -35,15 +35,18 @@ const AdminYd = (() => {
     return '<div class="yd-ct"><a class="yd-cb call" href="tel:+' + w + '">📞 اتصال</a><a class="yd-cb wa" href="https://wa.me/' + w + '" target="_blank" rel="noopener">💬 واتساب</a></div>';
   }
 
-  function save() { try { localStorage.setItem(KEY, JSON.stringify({ rows: S.rows, total: S.total, partial: S.partial, at: S.at })); } catch (e) { } }
-  function restore() { try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j && Array.isArray(j.rows)) { S.rows = j.rows; S.total = j.total || j.rows.length; S.partial = !!j.partial; S.at = j.at || 0; } } catch (e) { } }
+  /* الأرشيف: S.raw القائمة الكاملة (تُحفظ) وS.rows المرئي فقط */
+  function vis(rows) { try { return (typeof AdminArchive !== "undefined") ? rows.filter(r => !AdminArchive.hiddenRow(r)) : rows; } catch (e) { return rows; } }
+  function refilter() { S.rows = vis(S.raw); S.total = Math.max(S.rows.length, (S.tot0 || S.raw.length) - (S.raw.length - S.rows.length)); S.page = 1; draw(); }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify({ rows: S.raw, total: S.total, partial: S.partial, at: S.at })); } catch (e) { } }
+  function restore() { try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j && Array.isArray(j.rows)) { S.raw = j.rows; S.tot0 = j.total || j.rows.length; S.rows = vis(j.rows); S.total = Math.max(S.rows.length, S.tot0 - (j.rows.length - S.rows.length)); S.partial = !!j.partial; S.at = j.at || 0; } } catch (e) { } }
   /* طرود لا يقابلها أي طلب في اللوحة (آخر 30 يوماً، بلا المرتجع والملغى): تضيع من الحساب إن لم تُربط */
   function orphans(days) {
     if (!S.rows.length) return []; const tm = trackMap(), lim = Date.now() - (days || 30) * 864e5;
     return S.rows.filter(r => !tm[r.tracking] && !/retourn|annul|refus/i.test(r.status || "") && (!r.date || (Date.parse(String(r.date).replace(" ", "T")) || Date.now()) >= lim));
   }
   function showOrphans() { S.link = "no"; S.st = ""; S.q = ""; S.page = 1; draw(); }
-  function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); try { typeof AdminHome !== "undefined" && AdminHome.refreshSoft && AdminHome.refreshSoft(); } catch (e) { } }
+  function set(rows, total, partial) { S.raw = rows || []; S.tot0 = total || S.raw.length; S.rows = vis(S.raw); S.total = Math.max(S.rows.length, S.tot0 - (S.raw.length - S.rows.length)); S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); try { typeof AdminHome !== "undefined" && AdminHome.refreshSoft && AdminHome.refreshSoft(); } catch (e) { } }
   /* هاتف/اسم مقنَّع (نجوم) مقابل نصّ حقيقي: نفس الطول والأحرف الظاهرة متطابقة */
   function mmPhone(mk, pl) { const a = String(mk || "").replace(/\s/g, ""), b = String(pl || "").replace(/\D/g, ""); if (!/\*/.test(a) || a.length < 8 || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== "*" && a[i] !== b[i]) return false; return true; }
   function mmName(mk, pl) { const A1 = String(mk || "").split(/\s+/).filter(w => /[^*.\-]/.test(w)), B1 = String(pl || "").trim().split(/\s+/); if (!A1.length) return true; if (A1.length > B1.length) return false; return A1.every(w => B1.some(x => norm(x)[0] === norm(w)[0] && (!/\*/.test(w) || x.length >= w.length - 1))); }
@@ -356,5 +359,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, setQuery, noteSent, forget, prepOpen, orphans, showOrphans, _t: { prepRows, prepSum, plines } };
+  return { set, draw, load, S, setQuery, noteSent, forget, prepOpen, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
 })();

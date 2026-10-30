@@ -67,7 +67,7 @@ const AdminPayments = (() => {
   /* عناصر الجدول: طلبات الموقع + المدفوعات اليدوية (m…) بنفس الشكل */
   function items() {
     const os=(A().orders||[]).filter(o=>o&&id(o)&&inCo(o)).map(o=>({ o, id:id(o), date:o.date||"", name:o.name||"", phone:o.phone||"", product:productOf(o), total:Number(o.total)||0, ship:status(o), manual:false }));
-    const ms=(S.manual||[]).map(m=>({ o:m, id:String(m.id), date:m.date||"", name:m.name||"", phone:m.phone||"", product:m.product||"", total:Number(m.total)||0, ship:"", manual:true }));
+    const cutA=(typeof AdminArchive!=="undefined"&&AdminArchive.cut())||0,ms=(S.manual||[]).filter(m=>{if(!cutA)return true;const t=new Date(String(m.date||"").replace(" ","T")).getTime();return !(t&&t<cutA);}).map(m=>({ o:m, id:String(m.id), date:m.date||"", name:m.name||"", phone:m.phone||"", product:m.product||"", total:Number(m.total)||0, ship:"", manual:true }));
     return os.concat(ms);
   }
   /* السجلّ الفعّال: يدوي إن وُجد (status محفوظ) وإلا تلقائي من شركة التوصيل: تسليم = مدفوع */

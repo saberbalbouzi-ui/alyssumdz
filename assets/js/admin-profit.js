@@ -92,7 +92,7 @@ const AdminProfit = (() => {
     if (r && r.st === 0) return "تعذّر الاتصال بالإنترنت، أعد المحاولة";
     return "تعذّر تنفيذ الطلب" + (r && r.st ? " (" + r.st + ")" : "");
   };
-  const range = () => { const d = new Date(); d.setHours(0, 0, 0, 0); const from = new Date(d); from.setDate(from.getDate() - (S.days - 1)); return { from: from.getTime(), to: Date.now() + 1, since: iso(from), until: iso(new Date()) }; };
+  const range = () => { const d = new Date(); d.setHours(0, 0, 0, 0); const from = new Date(d); from.setDate(from.getDate() - (S.days - 1)); const c = (typeof AdminArchive !== "undefined" && AdminArchive.cut()) || 0; if (c && from.getTime() < c) { const cd = new Date(c); cd.setHours(0, 0, 0, 0); from.setTime(cd.getTime()); } return { from: from.getTime(), to: Date.now() + 1, since: iso(from), until: iso(new Date()) }; };
 
   async function loadAds() {
     const r = await call("GET", "/v1/ads/accounts"); if (r.off) { S.off = true; S.ads = []; return; } if (!r.ok) { S.err = errOf(r); return; }
@@ -177,7 +177,7 @@ const AdminProfit = (() => {
     if (typeof Admin === "undefined" || !Admin.computeFinance || !Admin.fin) body = '<div class="pf-card"><div class="pf-sub">بيانات الطلبات لم تُحمَّل بعد.</div></div>';
     else {
       const g = range(), { K, per } = Admin.computeFinance(0, { from: g.from, to: g.to }), sp = S.spend ? spendBy(S.spend.spend) : null;
-      const c = calc(K, { days: S.days, adsApi: S.spend ? S.spend.total_dzd : null, fixedMonthly: S.fixed });
+      const c = calc(K, { days: Math.max(1, Math.min(S.days, Math.round((Date.now() - g.from) / 864e5) + 1)), adsApi: S.spend ? S.spend.total_dzd : null, fixedMonthly: S.fixed });
       const shown = (Admin.orders || []).filter(o => { const t = new Date(o.date).getTime(); return t >= g.from && t < g.to && ["confirmee", "expediee", "livree", "echec"].includes(o.status); }).reduce((t, o) => t + (Number(o.total) || 0), 0);
       const subs = (Admin.orders || []).filter(o => { const t = new Date(o.date).getTime(); return t >= g.from && t < g.to && o.status === "livree"; }).reduce((t, o) => { const e = o.extra && typeof o.extra === "object" ? Number(o.extra["🎁 دعم الشحن"]) : 0; return t + (isFinite(e) ? e : 0); }, 0);
       const fl = flow(per, K, { adsApi: S.spend ? S.spend.total_dzd : null, fixed: c.fixed });

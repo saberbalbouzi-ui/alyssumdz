@@ -7,6 +7,8 @@ const AdminCustomers = (() => {
   const A = () => typeof Admin === "undefined" ? null : Admin;
   function phone(value) { const a = A(); return a && a.normalizePhone ? a.normalizePhone(value) : String(value || "").replace(/\D/g, "").replace(/^213/, "0").replace(/^(?!0)/, "0"); }
   function parseItems(order) { const a = A(); try { return a && a.parseOrderItems ? a.parseOrderItems(order.items) : []; } catch (_) { return []; } }
+  /* العملاء من كل الطلبات حتى المؤرشفة (هوية العميل لا تتبع الفترة) */
+  function ALL(a) { return (typeof AdminArchive !== "undefined" && a && a.orders) ? AdminArchive.allOrders() : ((a && a.orders) || []); }
   function aggregate(orders, products, blacklist, vipLimit, now) {
     const groups = new Map(), current = now == null ? Date.now() : now;
     (orders || []).forEach(o => {
@@ -37,7 +39,7 @@ const AdminCustomers = (() => {
   }
   function currentRows() {
     const a = A(); if (!a) return [];
-    const all = enrich(aggregate(a.orders || [], a.products || [], a.blacklist || [], threshold));
+    const all = enrich(aggregate(ALL(a), a.products || [], a.blacklist || [], threshold));
     const q = query.toLowerCase().trim();
     return all.filter(c => (segment === "all" || c.segments.includes(segment)) && (!q || (c.name + " " + c.phone + " " + c.wilaya + " " + c.favorites.map(x=>x[0]).join(" ")).toLowerCase().includes(q)))
       .sort((x,y) => sort === "orders" ? y.orders-x.orders || y.spend-x.spend : sort === "last" ? (new Date(y.last)-new Date(x.last)) : y.spend-x.spend);
@@ -61,7 +63,7 @@ const AdminCustomers = (() => {
     out.forEach(c => { c.segments = c.segments.slice(); const tags = ((notes.notes || {})[c.key] || {}).tags || []; segs.forEach(g => { if (matchSeg(c, g.cond, Array.isArray(tags) ? tags : [])) c.segments.push("c:" + g.id); }); });
     return out;
   }
-  function counts() { const a=A(); return enrich(aggregate(a?.orders || [], a?.products || [], a?.blacklist || [], threshold)); }
+  function counts() { const a=A(); return enrich(aggregate(ALL(a), a?.products || [], a?.blacklist || [], threshold)); }
   function render() {
     const host = $("customers-app"); if (!host) return;
     const all = counts(), rows = currentRows(), names = [["all","الكل"],["new","جديد"],["repeat","متكرر"],["vip","VIP"],["inactive","خامل"],["risk","مخاطرة"],...(notes.segments || []).map(g => ["c:" + g.id, g.name])];
@@ -159,7 +161,7 @@ const AdminCustomers = (() => {
     const rows = parseCsv(text.replace(/^\uFEFF/, "")); if (!rows.length) { toast("الملف فارغ"); return; }
     const head = rows[0].map(x => x.trim().toLowerCase()), find = (...ns) => head.findIndex(h => ns.includes(h)), hasHead = find("phone","هاتف","tel","mobile","téléphone","telephone") >= 0;
     const ip = hasHead ? find("phone","هاتف","tel","mobile","téléphone","telephone") : 1, inm = hasHead ? find("name","اسم","الاسم","nom") : 0, it = hasHead ? find("tags","وسوم","tag","الوسوم") : 2, iw = hasHead ? find("wilaya","ولاية","الولاية") : -1;
-    const existing = new Set(enrich(aggregate((A() || {}).orders || [], (A() || {}).products || [], (A() || {}).blacklist || [], threshold)).filter(c => !c.imported).map(c => c.key)), seen = new Set(), res = { add:[], merge:[], invalid:0, dup:0 };
+    const existing = new Set(enrich(aggregate(ALL(A() || {}), (A() || {}).products || [], (A() || {}).blacklist || [], threshold)).filter(c => !c.imported).map(c => c.key)), seen = new Set(), res = { add:[], merge:[], invalid:0, dup:0 };
     rows.slice(hasHead ? 1 : 0).forEach(r => {
       const key = phone(r[ip] || ""); if (!/^0\d{8,9}$/.test(key)) { res.invalid++; return; }
       if (seen.has(key)) { res.dup++; return; } seen.add(key);

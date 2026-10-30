@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.671">
+<meta name="admin-version" content="1.89.672">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -600,10 +600,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <div><b>🛡️ التأمين</b><div class="hint" style="margin:.15rem 0 0">نسبة من قيمة الطلب، أو قيمة ثابتة لكل طلب. اتركه 0 إن لم تدفع تأميناً.</div></div>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ins-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من قيمة الطلب</option><option value="val">قيمة ثابتة لكل طلب (دج)</option></select><input id="fin-ins" type="number" min="0" placeholder="0" style="max-width:130px"></div>
         </div>
-        <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
-          <div><b>💰 الفائدة المطلوبة</b><div class="hint" style="margin:.15rem 0 0">ربحك الذي تريده في القطعة الواحدة. من هنا يُحسب «سعر البيع الأدنى» لكل منتج في الجدول.</div></div>
-          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-prof-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من سعر الشراء</option><option value="val">قيمة ثابتة للقطعة (دج)</option></select><input id="fin-prof" type="number" min="0" placeholder="30" style="max-width:130px"></div>
-        </div>
+        
         <label style="display:flex;gap:.5rem;align-items:flex-start;padding:.65rem 0;border-bottom:1px solid var(--line)"><input type="checkbox" id="fin-real" style="width:auto;margin-top:.25rem"><span><b>🤖 الأرقام الفعلية تلقائياً</b><span class="hint" style="display:block;margin:.15rem 0 0">عند توفر أرقام شركة التوصيل (كشف الدفع المستورد أو التعريفة الرسمية) تُستعمل بدل تقديراتك أعلاه؛ تقديراتك تُستعمل للطلبات التي لا أرقام فعلية لها.</span></span></label>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
           <div><b>🔔 حدّ تنبيه انخفاض المخزون</b><div class="hint" style="margin:.15rem 0 0">يتلوّن المخزون بالبرتقالي عند وصوله لهذا العدد.</div></div>
@@ -1715,18 +1712,19 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-social.js?v=0654bf3f"></script>
 <script src="assets/js/admin-zones.js?v=d35e39a5"></script>
 <script src="assets/js/admin-zones-io.js?v=baf86994"></script>
-<script src="assets/js/admin-yalidine.js?v=e516a4d7"></script>
+<script src="assets/js/admin-archive.js?v=bf394106"></script>
+<script src="assets/js/admin-yalidine.js?v=a523be19"></script>
 <script src="assets/js/admin-shoppages.js?v=f37d32bc"></script>
 <script src="assets/js/admin-home.js?v=aa99ff37"></script>
 <script src="assets/js/admin-tablesel.js?v=ee7af49e"></script>
 <script src="assets/js/admin-orders-plus.js?v=acb6f3de"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
-<script src="assets/js/admin-customers.js?v=67e6820f"></script>
+<script src="assets/js/admin-customers.js?v=056673f1"></script>
 <script src="assets/js/admin-bulk-products.js?v=f12fc350"></script>
 <script src="assets/js/admin-reports.js?v=bfe80ebd"></script>
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
 <script src="assets/js/admin-returns.js?v=8890030a"></script>
-<script src="assets/js/admin-payments.js?v=b86f39e5"></script>
+<script src="assets/js/admin-payments.js?v=8d58a311"></script>
 <script src="assets/js/seo-box.js?v=34fae1c8"></script>
 <script src="assets/js/admin-seo.js?v=de4b03e8"></script>
 <script src="assets/js/admin-blog.js?v=98b5bb66"></script>
@@ -1740,7 +1738,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-callcenter.js?v=1abc1d1c"></script>
 <script src="assets/js/admin-callsync.js?v=17265a9a"></script>
 <script src="assets/js/admin-dispatch.js?v=d0786e99"></script>
-<script src="assets/js/admin-profit.js?v=d586846f"></script>
+<script src="assets/js/admin-profit.js?v=075ce029"></script>
 <script src="assets/js/admin-wallet.js?v=5827c8ee"></script>
 <script src="assets/js/admin-studio.js?v=71f00dce"></script>
 <script src="assets/js/admin-toolwin.js?v=51f61b13"></script>
@@ -2703,7 +2701,9 @@ const Admin = {
       if(!me){ try{ API.sb.dbg("load-no-identity meErr=" + (API.sb._meErr?1:0)); }catch(e){} toast("⛔ هذا الحساب لا يملك صلاحية دخول"); this.logout(); return }
       AdminRoles.apply();
     }
-    await PrivSync.pull();                                   // إعدادات المتصفح الحسّاسة تتزامن بين أجهزتك قبل قراءتها
+    await PrivSync.pull();
+    try{ if(typeof AdminArchive !== "undefined") await AdminArchive.load(); }catch(e){}   // الأرشيف قبل قراءة الطلبات
+    // إعدادات المتصفح الحسّاسة تتزامن بين أجهزتك قبل قراءتها
     if(window.Hub && Hub.on()) await Hub.sync();             // النشر التلقائي: يُضبط الربط من حسابك بلا رمز
     if(!CONFIG.API_URL && !PHPAPI.on()){ toast("⚠️ لم يُربط الـ API بعد"); }
     // ملاحظة: المنتجات ورسوم التوصيل تُقرأ محلياً من data.js/wilayas.js فقط (المصدر الوحيد
@@ -5216,7 +5216,7 @@ const Admin = {
   blFailOrders(phone){
     if(!this.blRule) this.loadBlRule();
     const R = this.blRule, p = this.normalizePhone(phone), now = Date.now(); if(!p) return [];
-    return (this.orders||[]).filter(o=>{
+    return ((typeof AdminArchive !== "undefined") ? AdminArchive.allOrders() : (this.orders||[])).filter(o=>{
       if(this.normalizePhone(o.phone) !== p) return false;
       if(!(o.status === "echec" || (R.cancelled && o.status === "annulee"))) return false;
       if(R.days){ const t = new Date(o.date).getTime(); if(!isNaN(t) && now - t > R.days * 864e5) return false; }
@@ -5439,7 +5439,7 @@ const Admin = {
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
     if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
     try{ if(window.AdminWh && AdminWh.load) this.wh = await AdminWh.load(); }catch(e){}
-    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, adh: (await Priv.get("adhist", [])) || [], cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, adh: (await Priv.get("adhist", [])) || [], pw: (await Priv.get("profwant", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     try{ this.rcpMigrate(); }catch(e){ }
     this.reconcileStatusChanges();
@@ -5631,7 +5631,7 @@ const Admin = {
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    this.fin.set = { packaging: n("fin-pack", 0), ad: this.fin.set.ad || { method:"fixed", a:0 }, delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: $f("fin-prof-mode").value, profVal: n("fin-prof", 30) };
+    this.fin.set = { packaging: n("fin-pack", 0), ad: this.fin.set.ad || { method:"fixed", a:0 }, delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: this.fin.set.profMode || "pct", profVal: this.fin.set.profVal == null ? 30 : this.fin.set.profVal };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
   /* ════════ استيراد كشف دفع ياليدين: أرقام فعلية لكل طرد (توصيل، إرجاع، COD، تأمين) تحلّ محلّ التقدير ════════ */
@@ -5757,7 +5757,7 @@ const Admin = {
   computeFinance(days, range){
     this._adCampsC = null;
     /* range = {from,to} بالمللي ثانية (اختياري) يغلب days؛ to حصرية. يملأ أيضاً K.parts/pre/byDay/bySrc/byWil لتبويب «الربح الحقيقي» (إضافة فقط: لا يغيّر الأرقام الأصلية) */
-    const since = range && range.from != null ? range.from : (days > 0 ? Date.now() - days * 86400000 : 0), until = range && range.to != null ? range.to : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0, adTotal:0, parts:{ rev:0, cogs:0, del:0, pack:0, retLoss:0 }, byDay:{}, bySrc:{}, byWil:{} };
+    let since = range && range.from != null ? range.from : (days > 0 ? Date.now() - days * 86400000 : 0); { const _c = (typeof AdminArchive !== "undefined") ? AdminArchive.cut() : 0; if(_c && since < _c) since = _c; } const until = range && range.to != null ? range.to : 0, S = this.fin.set, per = {}, K = { real:0, exp:0, delivered:0, failed:0, open:0, revenue:0, adTotal:0, parts:{ rev:0, cogs:0, del:0, pack:0, retLoss:0 }, byDay:{}, bySrc:{}, byWil:{} };
     const succ = {}, succAll = { n:0 }; this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(since && !(t >= since)) return; if(until && !(t < until)) return; if(o.status !== "livree") return; const ls = this.orderLines(o); if(!ls.length) return; succAll.n++; new Set(ls.map(l=>l.p.slug)).forEach(sl=>{ succ[sl] = (succ[sl] || 0) + 1; }); });
     /* v1.89.228: لكل حملة نافذة زمنية (من/إلى): تكلفة الإعلان تُحمَّل فقط على طلبات تاريخها داخل النافذة، وعدد الطلبات الناجحة للحملة يُحسب داخل نافذتها كلها (لا الفترة المعروضة)؛ حملة بلا نافذة = السلوك القديم (تشمل كل الطلبات) */
     const succW = {}; this.orders.forEach(o=>{ if(o.status !== "livree") return; const t = new Date(o.date).getTime(); new Set(this.orderLines(o).map(l=>l.p.slug)).forEach(sl=>{ const c = this.adPick(sl, t); if(c && c.win){ succW[c.id] = (succW[c.id] || 0) + 1; } }); });
@@ -6235,13 +6235,16 @@ const Admin = {
       return Math.max(0, Number((this.deliveryCfg[k] || {}).adj) || 0); }catch(e){ return 0; }
   },
   /* سعر البيع الأدنى = (الشراء + التغليف + الإعلان + عبء التوصيل + احتياطي الإرجاع + الفائدة) ÷ (1 − نسبة التأمين)، مقرَّباً لأعلى إلى أقرب 50 دج */
+  /* الفائدة المطلوبة لكل منتج: {mode:"pct"|"val", val}؛ بلا قيمة محفوظة للمنتج تُستعمل القيمة العامة القديمة (30% افتراضياً) */
+  profWant(slug){ const w = this.fin.pw && this.fin.pw[slug], S = this.fin.set; if(w && (w.mode === "pct" || w.mode === "val") && w.val != null && w.val !== "") return { mode: w.mode, val: Number(w.val) || 0, own: true }; return { mode: S.profMode === "val" ? "val" : "pct", val: S.profVal == null ? 30 : Number(S.profVal) || 0, own: false }; },
+  async setProfWant(slug, mode, val){ this.fin.pw = this.fin.pw || {}; if(val === "" || val == null) delete this.fin.pw[slug]; else this.fin.pw[slug] = { mode: mode === "val" ? "val" : "pct", val: Math.max(0, Number(val) || 0) }; await Priv.set("profwant", this.fin.pw); toast("✅ حُفظت الفائدة المطلوبة لهذا المنتج"); try{ this.renderFinance(true); }catch(e){} },
   suggestPrice(p, r, K){
     const S = this.fin.set, buy = Number(this.fin.costs[p.slug]); if(!(buy >= 0) || this.fin.costs[p.slug] == null) return null;
     const pack = Number(S.packaging) || 0, ad = (this._adNow && this._adNow[p.slug]) || 0;
     const est = S.delMode === "val" ? (Number(S.delVal) || 0) : Math.round(600 * (Number(S.delVal) || 0) / 100);
     const burden = Math.max(r.units > 0 ? Math.max(0, (r.delivery - r.feeIn) / r.units) : (p.freeShip ? est : 0), p.freeShip ? 0 : this.shipSubsidyOf(p));          // ما تتحمله من التوصيل فوق ما يدفعه الزبون (يشمل «المبلغ المنقوص» المضبوط حتى قبل وصول طلبات به)
     const risk = K.delivered ? (K.lossTotal || 0) / K.delivered : 0;                                              // احتياطي الإرجاع لكل طلب مُسلَّم
-    const profit = S.profMode === "val" ? (Number(S.profVal) || 0) : buy * (Number(S.profVal) || 0) / 100;
+    const W = this.profWant(p.slug), profit = W.mode === "val" ? W.val : buy * W.val / 100;
     const insPct = S.insMode === "pct" ? (Number(S.insVal) || 0) : 0, insVal = S.insMode === "val" ? (Number(S.insVal) || 0) : 0;
     const base = buy + pack + ad + burden + risk + profit + insVal, price = Math.ceil(base / Math.max(0.2, 1 - insPct / 100) / 50) * 50;
     return { price, parts: { buy, pack, ad: Math.round(ad), burden: Math.round(burden), risk: Math.round(risk), profit: Math.round(profit), ins: Math.round(insVal + price * insPct / 100) } };
@@ -6323,7 +6326,7 @@ const Admin = {
       line("🚚", "توصيل تتحمله", t ? nf(t.burden) + " دج" : "—", p.freeShip ? "المنتج بشحن مجاني: تتحمل تكلفة التوصيل كلها" : "الفرق بين تكلفة شركة التوصيل وما يدفعه الزبون", go("الإعدادات", "Admin.finView('set')")),
       line("↩️", "احتياطي الإرجاع", t ? nf(t.risk) + " دج" : "—", "خسارة المرتجعات موزَّعة على القطع المُسلَّمة", ""),
       line("🛡️", "التأمين", t ? nf(t.ins) + " دج" : "—", S.insMode === "pct" ? "نسبة " + (Number(S.insVal) || 0) + "% من قيمة الطلب" : "قيمة ثابتة لكل طلب", go("تعديل", "Admin.finView('set')")),
-      line("💰", "الفائدة المطلوبة", t ? nf(t.profit) + " دج" : "—", S.profMode === "val" ? "قيمة ثابتة للقطعة" : "نسبة " + (S.profVal == null ? 30 : S.profVal) + "% من سعر الشراء", go("تعديل", "Admin.finView('set')"))
+      line("💰", "الفائدة المطلوبة", t ? nf(t.profit) + " دج" : "—", (()=>{ const W = this.profWant(p.slug); return '<select id="fp-pm" onchange="Admin.setProfWant(\'' + p.slug + '\', this.value, document.getElementById(\'fp-pv\').value)"><option value="pct"' + (W.mode === "pct" ? " selected" : "") + '>نسبة % من سعر الشراء</option><option value="val"' + (W.mode === "val" ? " selected" : "") + '>قيمة ثابتة للقطعة (دج)</option></select> <input id="fp-pv" type="number" min="0" value="' + W.val + '" style="width:90px" onchange="Admin.setProfWant(\'' + p.slug + '\', document.getElementById(\'fp-pm\').value, this.value)">' + (W.own ? "" : ' <span class="hint" style="margin:0">(افتراضي — عدّله لهذا المنتج)</span>'); })(), "")
     ].join("");
     let sum = "";
     if(t){ const base = t.buy + t.pack + t.ad + t.burden + t.risk + t.ins, parts = [["شراء", t.buy, "#22c55e"], ["تغليف", t.pack, "#38bdf8"], ["إعلان", t.ad, "#f59e0b"], ["توصيل", t.burden, "#a78bfa"], ["إرجاع", t.risk, "#f43f5e"], ["تأمين", t.ins, "#94a3b8"], ["فائدة", t.profit, "#bef264"]], tot = parts.reduce((a,x)=>a + x[1], 0) || 1;
@@ -6408,7 +6411,7 @@ const Admin = {
       const dp = sg.price - price;
       if(dp > 0) out.push({ i: "💲", t: "ارفع سعر البيع إلى " + nf(sg.price) + " دج", d: "زيادة " + nf(dp) + " دج (" + Math.round(dp / Math.max(1, price) * 100) + "%) تحقق فائدتك المطلوبة " + nf(tg) + " دج للقطعة." + (dp / Math.max(1, price) > .15 ? " الزيادة كبيرة: جرّبها تدريجياً أو قدّمها مع هدية/عرض." : "") });
       if(t.ad > 0){ const cut = Math.min(t.ad, gap); out.push({ i: "📣", t: "خفّض تكلفة الإعلان للطلب من " + nf(t.ad) + " إلى " + nf(t.ad - cut) + " دج", d: "حسّن الاستهداف أو الإبداع، أو اختر معاملاً أقل في خيار «تكلفة الإعلان» (تبويب الحملة)." + (cut >= gap ? " وهذا وحده يكفي لبلوغ فائدتك." : " يغطي " + nf(cut) + " من أصل " + nf(gap) + " دج ناقصة.") }); }
-      const pctP = S.profMode === "val" ? 0 : (Number(S.profVal) || 0) / 100, newBuy = Math.max(0, t.buy - gap / (1 + pctP));
+      const Wp = this.profWant(p.slug), pctP = Wp.mode === "val" ? 0 : Wp.val / 100, newBuy = Math.max(0, t.buy - gap / (1 + pctP));
       out.push({ i: "🛒", t: "فاوض على سعر الشراء: ≤ " + nf(newBuy) + " دج", d: "بدل " + nf(t.buy) + " دج. إن كان المنتج مصنَّعاً فراجع الوصفة وسعر المواد (تبويب تكلفة المنتجات)." });
       if(t.burden > 0) out.push({ i: "🚚", t: "لا تتحمل التوصيل كاملاً", d: "تدفع " + nf(t.burden) + " دج للقطعة فوق ما يدفعه الزبون" + (p.freeShip ? " (الشحن المجاني)" : "") + ". اجعل الشحن المجاني مشروطاً بقطعتين أو بحد أدنى للسلة." });
       const insPct = S.insMode === "pct" ? (Number(S.insVal) || 0) : 0, insVal = S.insMode === "val" ? (Number(S.insVal) || 0) : 0, fixed = t.pack + t.ad + t.burden + t.risk + insVal;
@@ -6452,7 +6455,7 @@ const Admin = {
     if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
     if(typeof AdminReturns !== "undefined" && AdminReturns.ensure && !AdminReturns.loaded()){ AdminReturns.ensure().then(()=>{ if(AdminReturns.items().length) this.renderFinance(true); }); }
     const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
-    if(!document.activeElement || !["fin-pack","fin-del","fin-ret","fin-ins","fin-low","fin-prof"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret-mode").value = S.retMode; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; $f("fin-prof-mode").value = S.profMode || "pct"; $f("fin-prof").value = S.profVal == null ? 30 : S.profVal; }
+    if(!document.activeElement || !["fin-pack","fin-del","fin-ret","fin-ins","fin-low"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret-mode").value = S.retMode; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; }
     this.finExample(); this.renderAds();
     const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
     this.orders.forEach(o=>{ if(!["confirmee","expediee","livree"].includes(o.status) || !(new Date(o.date).getTime() >= since14)) return; this.orderLines(o).forEach(l=>{ sold14[l.p.slug] = (sold14[l.p.slug] || 0) + l.qty; }); });
@@ -8258,7 +8261,7 @@ const Admin = {
   TRASH_RE: /🗑(@[0-9-]+)?\s*/g,
   /* v1.89.132 (لجنة الخبراء): بيانات الزبون مصدر غير موثوق — نزع علامات HTML من حقولها النصية قبل أي عرض */
   cleanOrderText(list){ const F = ["name","phone","wilaya","commune","desk","items","items_text","dtype"]; (list || []).forEach(o=>{ if(!o) return; F.forEach(k=>{ if(typeof o[k] === "string" && /[<>]/.test(o[k])) o[k] = o[k].replace(/</g, "‹").replace(/>/g, "›"); }); }); return list; },
-  liveOrders(list){ list = this.cleanOrderText(list || []); const has = o=>/🗑/.test(String((o && o.note) || "")); this.trash = list.filter(o=>has(o) && !/🗑✕/.test(String(o.note||""))); const L = list.filter(o=>!has(o)); return window.OrderEdit ? OrderEdit.apply(L) : L; },       // + تعديلات بيانات الطلب المحفوظة في اللوحة
+  liveOrders(list){ list = this.cleanOrderText(list || []); const has = o=>/🗑/.test(String((o && o.note) || "")); this.trash = list.filter(o=>has(o) && !/🗑✕/.test(String(o.note||""))); const L = list.filter(o=>!has(o)), E = window.OrderEdit ? OrderEdit.apply(L) : L; return (typeof AdminArchive !== "undefined") ? AdminArchive.split(E) : E; },       // + تعديلات بيانات الطلب المحفوظة في اللوحة
   trashedAt(o){ const m = String((o && o.note) || "").match(/🗑@([0-9-]+)/); return m ? m[1] : ""; },
   renderTrashBadge(){ const n = (this.trash || []).length, b = $f("trash-count"); if(b) b.textContent = n ? "(" + n + ")" : ""; },
   async deleteOrders(list, opts){
@@ -8893,7 +8896,7 @@ const Admin = {
     if(!co || !co.listRequest){ if(!opts.bg) toast("⚠️ المطابقة متاحة لياليدين فقط — فعّلها من «شركات التوصيل»"); return; }
     this._reconciling = true; const btn = $f("ship-rec-btn"); if(btn){ btn.disabled = true; btn.textContent = "⏳ جارِ المطابقة…"; }
     try{
-      const parcels = (await this.ydFetchParcels(25)).rows;
+      const parcels = (await this.ydFetchParcels(25)).rows.filter(p=>!(typeof AdminArchive !== "undefined" && AdminArchive.hiddenRow(p)));
       /* ياليدين تُرجع الاسم والهاتف في القائمة مُقنَّعَين (أول/آخر حرف ورقم فقط والباقي *) فالمطابقة نمطية:
          طول الكلمات والأحرف الظاهرة + الولاية والبلدية + السعر + قرب التاريخ، ولا يُربط إلا تطابق وحيد واضح */
       const mm = (mask, plain)=>{ mask = String(mask || ""); plain = String(plain || ""); if(mask.length !== plain.length) return false; for(let k = 0; k < mask.length; k++){ if(mask[k] !== "*" && mask[k].toLowerCase() !== plain[k].toLowerCase()) return false; } return true; };
