@@ -48,11 +48,16 @@ function cartShipCo(items){
   const set = new Set((items||[]).map(it=>{ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; return (p && p.shipCo) || ""; }));
   return set.size === 1 ? [...set][0] : "";
 }
+function prodShipAdj(p){ if(!p || p.shipAdj === undefined || p.shipAdj === null || p.shipAdj === "" || isNaN(Number(p.shipAdj))) return null; return Math.round(Number(p.shipAdj)); }      // المبلغ المنقوص من سعر التوصيل لهذا المنتج (يتجاوز إعداد الشركة؛ 0 = بلا نقص)
+function cartShipAdj(items){
+  const slugs = new Set((items||[]).map(it=>it.slug)); if(slugs.size !== 1) return null;
+  const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===[...slugs][0]) : null; return prodShipAdj(p);
+}
 function cartShipPf(items){
   const slugs = new Set((items||[]).map(it=>it.slug)); if(slugs.size !== 1) return null;
   const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===[...slugs][0]) : null; return prodShipPf(p);
 }
-function shipQuote(w, commune, type, sub, co, pf){
+function shipQuote(w, commune, type, sub, co, pf, pa){
   if(!w) return { fee:null, free:false, blocked:false, msg:"" };
   const msg = shipBlocked(w, commune, type); if(msg) return { fee:0, free:false, blocked:true, msg };
   let base = type === "stop" ? w.stop : w.home, flatFree = false, supAdd = 0, adjApplied = 0;
@@ -62,11 +67,11 @@ function shipQuote(w, commune, type, sub, co, pf){
     if(v !== null && v >= 0){ base = v; flatFree = v === 0; }
   } else if(src !== "zones"){
     const key = src || __SHIPDEF;
-    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = Number(__SHIPCO[key].adj) || 0; if(aj){ const nb = Math.max(0, base - aj); adjApplied = base - nb; base = nb; } } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
+    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[key].adj) || 0); if(aj){ const nb = Math.max(0, base - aj); adjApplied = base - nb; base = nb; } } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
   }
   const kcm = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), ckey = src !== "free" && src !== "zones" ? (src || __SHIPDEF) : "", cpd = ckey === "yalidine" && kcm && __SHIPCP[w.par || w.id] && __SHIPCP[w.par || w.id][kcm];
   if(cpd && (type === "stop" ? cpd[1] : cpd[0]) > 0){      // سعر البلدية المستقل عند الشركة (مطلق) — منفصل عن سعر الولاية؛ يبقى تعديل السعر المعروض (adj) مطبَّقاً عليه
-    const wb = base, aj = Number(__SHIPCO[ckey] && __SHIPCO[ckey].adj) || 0, nb = Math.max(0, Number(type === "stop" ? cpd[1] : cpd[0]) - aj);
+    const wb = base, aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[ckey] && __SHIPCO[ckey].adj) || 0), nb = Math.max(0, Number(type === "stop" ? cpd[1] : cpd[0]) - aj);
     supAdd = nb - wb; adjApplied = aj ? Number(type === "stop" ? cpd[1] : cpd[0]) - nb : 0; base = nb;
   } else if(src !== "free"){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
     const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
@@ -197,7 +202,7 @@ const Cart = {
     const feeEl = document.getElementById("cart-fee");
     const sq = Cart.quote();
     try{ const cw = document.getElementById("cwilaya"), cc = document.getElementById("ccommune"), w0 = cw && WILAYAS.find(x=>x.id == cw.value), t0 = document.querySelector('input[name="cdtype"]:checked');
-      if(w0 && cc) labelCommunes(cc, w0, (ww, c)=>{ const q = shipQuote(ww, c, t0 ? t0.value : "home", Cart.subtotal(), cartShipCo(Cart.all()), cartShipPf(Cart.all())); return q.blocked ? null : ((items.every(cartItemFreeShip) || couponFreeShip() || q.free) ? 0 : q.fee); }); }catch(e){}
+      if(w0 && cc) labelCommunes(cc, w0, (ww, c)=>{ const q = shipQuote(ww, c, t0 ? t0.value : "home", Cart.subtotal(), cartShipCo(Cart.all()), cartShipPf(Cart.all()), cartShipAdj(Cart.all())); return q.blocked ? null : ((items.every(cartItemFreeShip) || couponFreeShip() || q.free) ? 0 : q.fee); }); }catch(e){}
     if(feeEl){ feeEl.title = sq.msg || ""; feeEl.textContent = items.length ? (sq.blocked ? "غير متاح ⛔" : ((fee===0 && (items.every(cartItemFreeShip) || couponFreeShip() || sq.free)) ? "مجاني 🚚" : fmt(fee))) : "—"; }
     let sm = document.getElementById("cart-ship-msg");
     if(!sm && feeEl){ sm = document.createElement("div"); sm.id = "cart-ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.85rem;margin:.3rem 0;font-weight:700"; (feeEl.closest("div")||feeEl.parentNode).appendChild(sm); }
@@ -216,7 +221,7 @@ const Cart = {
   quote(){
     const w = document.getElementById("cwilaya"), t = document.querySelector('input[name="cdtype"]:checked'), c = document.getElementById("ccommune");
     const wl = w && w.value ? WILAYAS.find(x=>x.id==w.value) : null;
-    return shipQuote(wl, c ? c.value : "", t ? t.value : "home", Cart.subtotal(), cartShipCo(Cart.all()), cartShipPf(Cart.all()));
+    return shipQuote(wl, c ? c.value : "", t ? t.value : "home", Cart.subtotal(), cartShipCo(Cart.all()), cartShipPf(Cart.all()), cartShipAdj(Cart.all()));
   },
   async checkout(){
     const items = Cart.all();
@@ -1159,9 +1164,9 @@ function initProduct(slug){
   const bumpAmt = ()=> bumpSel ? bumpSel.price * bumpSel.qty : 0;
   function update(){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
-    const sq = (state.wilaya && !p.digital) ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)) : null;
+    const sq = (state.wilaya && !p.digital) ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p), prodShipAdj(p)) : null;
     const fee = p.digital ? 0 : (freeShip ? 0 : (sq ? sq.fee : null));
-    if(!p.digital && state.wilaya) labelCommunes(communeSel, state.wilaya, (ww, c)=>{ const q = shipQuote(ww, c, state.dtype, state.offer.price, p.shipCo, prodShipPf(p)); return q.blocked ? null : ((freeShip || q.free) ? 0 : q.fee); });
+    if(!p.digital && state.wilaya) labelCommunes(communeSel, state.wilaya, (ww, c)=>{ const q = shipQuote(ww, c, state.dtype, state.offer.price, p.shipCo, prodShipPf(p), prodShipAdj(p)); return q.blocked ? null : ((freeShip || q.free) ? 0 : q.fee); });
     feeEl.textContent = p.digital ? "—" : freeShip ? "مجاني 🚚" : (sq && sq.blocked ? "غير متاح ⛔" : (sq && sq.free ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية")));
     let sm = document.getElementById("ship-msg");
     if(!sm){ sm = document.createElement("div"); sm.id = "ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.88rem;margin:.4rem 0;font-weight:700"; const tb = feeEl.closest(".total-box"); if(tb) tb.parentNode.insertBefore(sm, tb); }
@@ -1206,7 +1211,7 @@ function initProduct(slug){
     if(type==="variable" && !state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(type==="grouped" && !(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); const gb = document.getElementById("group-box"); if(gb) gb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(!p.digital && !state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
-    const __sq = p.digital ? { fee:0 } : shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p)); if(!p.digital && __sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
+    const __sq = p.digital ? { fee:0 } : shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p), prodShipAdj(p)); if(!p.digital && __sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
     if(!p.digital && state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     // جمع قيم الحقول الإضافية المخصّصة (لوحة التحكم ⟵ نموذج الطلب) — تُرفق في رسالة واتساب وفي الطلب المُسجَّل
     const extraValues = {};

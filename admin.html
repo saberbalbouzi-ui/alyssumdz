@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.654">
+<meta name="admin-version" content="1.89.655">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -1267,6 +1267,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <label class="fl"><span>سعر التوصيل للمكتب Stop Desk (دج)</span><input id="f-shipfree-stop" type="number" min="0" placeholder="للمكتب Stop Desk (دج)"></label>
         </div>
         <div class="hint" id="f-shipco-h"></div>
+        <label class="fl-t" for="f-shipadj-m" style="margin-top:.6rem">المبلغ المنقوص من سعر التوصيل</label>
+        <select id="f-shipadj-m" onchange="Admin.shipAdjToggle()"><option value="">حسب إعداد شركة التوصيل (الافتراضي)</option><option value="none">بلا نقص لهذا المنتج</option><option value="custom">مبلغ خاص بهذا المنتج</option></select>
+        <div id="f-shipadj-b" style="display:none;margin-top:.5rem"><label class="fl"><span>المبلغ المنقوص (دج) — رقم سالب = يزيد على سعر الشركة</span><input id="f-shipadj" type="number" step="10" placeholder="مثال: 200" dir="ltr"></label></div>
+        <div class="hint" id="f-shipadj-h"></div>
         <div id="f-seo-box"></div>
       </div>
       <div>
@@ -1683,100 +1687,100 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/chrome.js?v=11"></script>
 <script src="assets/js/modern-icons.js?v=1.28.3"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
-<script src="assets/js/ctl-help.js?v=1.89.654"></script>
-<script src="assets/js/chrome-admin.js?v=1.89.654"></script>
-<script src="assets/js/admin-assistant.js?v=1.89.654"></script>
-<script src="assets/js/img-gen.js?v=1.89.654"></script>
+<script src="assets/js/ctl-help.js?v=1.89.655"></script>
+<script src="assets/js/chrome-admin.js?v=1.89.655"></script>
+<script src="assets/js/admin-assistant.js?v=1.89.655"></script>
+<script src="assets/js/img-gen.js?v=1.89.655"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
-<script src="assets/js/admin-nav.js?v=1.89.654"></script>
-<script src="assets/js/admin-coname.js?v=1.89.654"></script>
-<script src="assets/js/admin-tplsite.js?v=1.89.654"></script>
-<script src="assets/js/admin-theme.js?v=1.89.654"></script>
-<script src="assets/js/saas-client.js?v=1.89.654"></script>
-<script src="assets/js/hub.js?v=1.89.654"></script>
-<script src="assets/js/ai-proxy.js?v=1.89.654"></script>
-<script src="assets/js/admin-credits.js?v=1.89.654"></script>
-<script src="assets/js/admin-stockcheck.js?v=1.89.654"></script>
-<script src="assets/js/admin-orderedit.js?v=1.89.654"></script>
-<script src="assets/js/admin-wilkids.js?v=1.89.654"></script>
-<script src="assets/js/admin-manualorder.js?v=1.89.654"></script>
-<script src="assets/js/admin-stores.js?v=1.89.654"></script>
+<script src="assets/js/admin-nav.js?v=1.89.655"></script>
+<script src="assets/js/admin-coname.js?v=1.89.655"></script>
+<script src="assets/js/admin-tplsite.js?v=1.89.655"></script>
+<script src="assets/js/admin-theme.js?v=1.89.655"></script>
+<script src="assets/js/saas-client.js?v=1.89.655"></script>
+<script src="assets/js/hub.js?v=1.89.655"></script>
+<script src="assets/js/ai-proxy.js?v=1.89.655"></script>
+<script src="assets/js/admin-credits.js?v=1.89.655"></script>
+<script src="assets/js/admin-stockcheck.js?v=1.89.655"></script>
+<script src="assets/js/admin-orderedit.js?v=1.89.655"></script>
+<script src="assets/js/admin-wilkids.js?v=1.89.655"></script>
+<script src="assets/js/admin-manualorder.js?v=1.89.655"></script>
+<script src="assets/js/admin-stores.js?v=1.89.655"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
-<script src="assets/js/admin-float.js?v=1.89.654"></script>
-<script src="assets/js/admin-update.js?v=1.89.654"></script>
-<script src="assets/js/admin-search.js?v=1.89.654"></script>
-<script src="assets/js/admin-hand.js?v=1.89.654"></script>
-<script src="assets/js/admin-voice.js?v=1.89.654"></script>
-<script src="assets/js/admin-inventory.js?v=1.89.654"></script>
-<script src="assets/js/admin-social.js?v=1.89.654"></script>
-<script src="assets/js/admin-zones.js?v=1.89.654"></script>
-<script src="assets/js/admin-zones-io.js?v=1.89.654"></script>
-<script src="assets/js/admin-yalidine.js?v=1.89.654"></script>
-<script src="assets/js/admin-shoppages.js?v=1.89.654"></script>
-<script src="assets/js/admin-home.js?v=1.89.654"></script>
-<script src="assets/js/admin-tablesel.js?v=1.89.654"></script>
-<script src="assets/js/admin-orders-plus.js?v=1.89.654"></script>
-<script src="assets/js/admin-keys.js?v=1.89.654"></script>
-<script src="assets/js/admin-customers.js?v=1.89.654"></script>
-<script src="assets/js/admin-bulk-products.js?v=1.89.654"></script>
-<script src="assets/js/admin-reports.js?v=1.89.654"></script>
-<script src="assets/js/admin-audit.js?v=1.89.654"></script>
-<script src="assets/js/admin-returns.js?v=1.89.654"></script>
-<script src="assets/js/admin-payments.js?v=1.89.654"></script>
-<script src="assets/js/seo-box.js?v=1.89.654"></script>
-<script src="assets/js/admin-seo.js?v=1.89.654"></script>
-<script src="assets/js/admin-blog.js?v=1.89.654"></script>
-<script src="assets/js/admin-upsell.js?v=1.89.654"></script>
-<script src="assets/js/admin-pack.js?v=1.89.654"></script>
-<script src="assets/js/admin-insights.js?v=1.89.654"></script>
-<script src="assets/js/admin-confirm-svc.js?v=1.89.654"></script>
-<script src="assets/js/admin-carts.js?v=1.89.654"></script>
-<script src="assets/js/admin-paylink.js?v=1.89.654"></script>
-<script src="assets/js/admin-platform-sync.js?v=1.89.654"></script>
-<script src="assets/js/admin-callcenter.js?v=1.89.654"></script>
-<script src="assets/js/admin-callsync.js?v=1.89.654"></script>
-<script src="assets/js/admin-dispatch.js?v=1.89.654"></script>
-<script src="assets/js/admin-profit.js?v=1.89.654"></script>
-<script src="assets/js/admin-wallet.js?v=1.89.654"></script>
-<script src="assets/js/admin-studio.js?v=1.89.654"></script>
-<script src="assets/js/admin-toolwin.js?v=1.89.654"></script>
-<script src="assets/js/admin-agency.js?v=1.89.654"></script>
-<script src="assets/js/speed-core.js?v=1.89.654"></script>
-<script src="assets/js/speed-fix.js?v=1.89.654"></script>
-<script src="assets/js/admin-speed.js?v=1.89.654"></script>
-<script src="assets/js/admin-digital.js?v=1.89.654"></script>
-<script src="assets/js/admin-marketplace.js?v=1.89.654"></script>
-<script src="assets/js/admin-edition.js?v=1.89.654"></script>
-<script src="assets/js/admin-kind.js?v=1.89.654"></script>
-<script src="assets/js/admin-appstore.js?v=1.89.654"></script>
-<script src="assets/js/admin-appdev.js?v=1.89.654"></script>
-<script src="assets/js/admin-wh.js?v=1.89.654"></script>
-<script src="assets/js/admin-experts.js?v=1.89.654"></script>
-<script src="assets/js/admin-sources.js?v=1.89.654"></script>
-<script src="assets/js/admin-roles.js?v=1.89.654"></script>
-<script src="assets/js/admin-shipagg.js?v=1.89.654"></script>
-<script src="assets/js/admin-order-docs.js?v=1.89.654"></script>
-<script src="assets/js/admin-imgbatch.js?v=1.89.654"></script>
-<script src="assets/js/barcode-tool.js?v=1.89.654"></script>
-<script src="assets/js/magic-layers.js?v=1.89.654"></script>
-<script src="assets/js/admin-magiclayers.js?v=1.89.654"></script>
-<script src="assets/js/admin-pagepilot.js?v=1.89.654"></script>
-<script src="assets/js/admin-pagepilot-hybrid.js?v=1.89.654"></script>
-<script src="assets/js/pack3d.js?v=1.89.654"></script>
-<script src="assets/js/box-designer.js?v=1.89.654"></script>
-<script src="assets/js/box-profiles.js?v=1.89.654"></script>
-<script src="assets/js/box-studio.js?v=1.89.654"></script>
-<script src="assets/js/mockup-studio.js?v=1.89.654"></script>
-<script src="assets/js/mockup-models.js?v=1.89.654"></script>
-<script src="assets/js/img3d.js?v=1.89.654"></script>
-<script src="assets/js/studio3d.js?v=1.89.654"></script>
-<script src="assets/js/admin-imgqa.js?v=1.89.654"></script>
-<script src="assets/js/admin-pagerater.js?v=1.89.654"></script>
-<script src="assets/js/img-upscale.js?v=1.89.654"></script>
-<script src="assets/js/admin-copyset.js?v=1.89.654"></script>
+<script src="assets/js/admin-float.js?v=1.89.655"></script>
+<script src="assets/js/admin-update.js?v=1.89.655"></script>
+<script src="assets/js/admin-search.js?v=1.89.655"></script>
+<script src="assets/js/admin-hand.js?v=1.89.655"></script>
+<script src="assets/js/admin-voice.js?v=1.89.655"></script>
+<script src="assets/js/admin-inventory.js?v=1.89.655"></script>
+<script src="assets/js/admin-social.js?v=1.89.655"></script>
+<script src="assets/js/admin-zones.js?v=1.89.655"></script>
+<script src="assets/js/admin-zones-io.js?v=1.89.655"></script>
+<script src="assets/js/admin-yalidine.js?v=1.89.655"></script>
+<script src="assets/js/admin-shoppages.js?v=1.89.655"></script>
+<script src="assets/js/admin-home.js?v=1.89.655"></script>
+<script src="assets/js/admin-tablesel.js?v=1.89.655"></script>
+<script src="assets/js/admin-orders-plus.js?v=1.89.655"></script>
+<script src="assets/js/admin-keys.js?v=1.89.655"></script>
+<script src="assets/js/admin-customers.js?v=1.89.655"></script>
+<script src="assets/js/admin-bulk-products.js?v=1.89.655"></script>
+<script src="assets/js/admin-reports.js?v=1.89.655"></script>
+<script src="assets/js/admin-audit.js?v=1.89.655"></script>
+<script src="assets/js/admin-returns.js?v=1.89.655"></script>
+<script src="assets/js/admin-payments.js?v=1.89.655"></script>
+<script src="assets/js/seo-box.js?v=1.89.655"></script>
+<script src="assets/js/admin-seo.js?v=1.89.655"></script>
+<script src="assets/js/admin-blog.js?v=1.89.655"></script>
+<script src="assets/js/admin-upsell.js?v=1.89.655"></script>
+<script src="assets/js/admin-pack.js?v=1.89.655"></script>
+<script src="assets/js/admin-insights.js?v=1.89.655"></script>
+<script src="assets/js/admin-confirm-svc.js?v=1.89.655"></script>
+<script src="assets/js/admin-carts.js?v=1.89.655"></script>
+<script src="assets/js/admin-paylink.js?v=1.89.655"></script>
+<script src="assets/js/admin-platform-sync.js?v=1.89.655"></script>
+<script src="assets/js/admin-callcenter.js?v=1.89.655"></script>
+<script src="assets/js/admin-callsync.js?v=1.89.655"></script>
+<script src="assets/js/admin-dispatch.js?v=1.89.655"></script>
+<script src="assets/js/admin-profit.js?v=1.89.655"></script>
+<script src="assets/js/admin-wallet.js?v=1.89.655"></script>
+<script src="assets/js/admin-studio.js?v=1.89.655"></script>
+<script src="assets/js/admin-toolwin.js?v=1.89.655"></script>
+<script src="assets/js/admin-agency.js?v=1.89.655"></script>
+<script src="assets/js/speed-core.js?v=1.89.655"></script>
+<script src="assets/js/speed-fix.js?v=1.89.655"></script>
+<script src="assets/js/admin-speed.js?v=1.89.655"></script>
+<script src="assets/js/admin-digital.js?v=1.89.655"></script>
+<script src="assets/js/admin-marketplace.js?v=1.89.655"></script>
+<script src="assets/js/admin-edition.js?v=1.89.655"></script>
+<script src="assets/js/admin-kind.js?v=1.89.655"></script>
+<script src="assets/js/admin-appstore.js?v=1.89.655"></script>
+<script src="assets/js/admin-appdev.js?v=1.89.655"></script>
+<script src="assets/js/admin-wh.js?v=1.89.655"></script>
+<script src="assets/js/admin-experts.js?v=1.89.655"></script>
+<script src="assets/js/admin-sources.js?v=1.89.655"></script>
+<script src="assets/js/admin-roles.js?v=1.89.655"></script>
+<script src="assets/js/admin-shipagg.js?v=1.89.655"></script>
+<script src="assets/js/admin-order-docs.js?v=1.89.655"></script>
+<script src="assets/js/admin-imgbatch.js?v=1.89.655"></script>
+<script src="assets/js/barcode-tool.js?v=1.89.655"></script>
+<script src="assets/js/magic-layers.js?v=1.89.655"></script>
+<script src="assets/js/admin-magiclayers.js?v=1.89.655"></script>
+<script src="assets/js/admin-pagepilot.js?v=1.89.655"></script>
+<script src="assets/js/admin-pagepilot-hybrid.js?v=1.89.655"></script>
+<script src="assets/js/pack3d.js?v=1.89.655"></script>
+<script src="assets/js/box-designer.js?v=1.89.655"></script>
+<script src="assets/js/box-profiles.js?v=1.89.655"></script>
+<script src="assets/js/box-studio.js?v=1.89.655"></script>
+<script src="assets/js/mockup-studio.js?v=1.89.655"></script>
+<script src="assets/js/mockup-models.js?v=1.89.655"></script>
+<script src="assets/js/img3d.js?v=1.89.655"></script>
+<script src="assets/js/studio3d.js?v=1.89.655"></script>
+<script src="assets/js/admin-imgqa.js?v=1.89.655"></script>
+<script src="assets/js/admin-pagerater.js?v=1.89.655"></script>
+<script src="assets/js/img-upscale.js?v=1.89.655"></script>
+<script src="assets/js/admin-copyset.js?v=1.89.655"></script>
 <script src="assets/js/ai-vision.js?v=57"></script>
-<script src="assets/js/ai-capture.js?v=1.89.654"></script>
-<script src="assets/js/admin-bgeditor.js?v=1.89.654"></script>
+<script src="assets/js/ai-capture.js?v=1.89.655"></script>
+<script src="assets/js/admin-bgeditor.js?v=1.89.655"></script>
 <script src="assets/js/avatar-script.js"></script>
 <script src="assets/js/wilayas.js"></script>
 <script src="assets/js/api.js"></script>
@@ -7792,7 +7796,16 @@ const Admin = {
     sel.value = cur;
     const fh = $f("f-shipfree-home"), fs = $f("f-shipfree-stop");
     if(fh) fh.value = src && src.shipFreeHome != null ? src.shipFreeHome : ""; if(fs) fs.value = src && src.shipFreeStop != null ? src.shipFreeStop : "";
+    const am = $f("f-shipadj-m"), ai = $f("f-shipadj"), has = src && src.shipAdj !== undefined && src.shipAdj !== null && src.shipAdj !== "" && !isNaN(Number(src.shipAdj));
+    if(am){ am.value = !has ? "" : Number(src.shipAdj) === 0 ? "none" : "custom"; } if(ai) ai.value = has && Number(src.shipAdj) ? String(Number(src.shipAdj)) : "";
+    this.shipAdjToggle();
     this.shipFreeToggle();
+  },
+  shipAdjToggle(){
+    const m = ($f("f-shipadj-m")||{}).value, b = $f("f-shipadj-b"), h = $f("f-shipadj-h"); if(b) b.style.display = m === "custom" ? "block" : "none";
+    if(h) h.textContent = m === "custom" ? "يُنقص هذا المبلغ من سعر التوصيل الذي يراه الزبون لهذا المنتج وحده (تتحمله أنت). يسري على أسعار الشركة المجلوبة تلقائياً، لا على السعر الحر ولا أسعار المناطق."
+      : m === "none" ? "هذا المنتج يُحسب بسعر الشركة كاملاً حتى لو حدّدتَ مبلغاً منقوصاً في إعدادات الشركة."
+      : "يتبع المبلغ المنقوص المحدّد في إعدادات شركة التوصيل (إن وُجد).";
   },
   shipFreeToggle(){
     const v = ($f("f-shipco")||{}).value, b = $f("f-shipfree"); if(b) b.style.display = v === "free" ? "flex" : "none";
@@ -7803,12 +7816,13 @@ const Admin = {
       : "يتبع تسعير المتجر الحالي: المناطق، وتحلّ محلها أسعار الشركة الافتراضية تلقائياً عند تفعيل شركة تجلب أسعارها.";
   },
   readShipCo(){
-    const v = ($f("f-shipco")||{}).value; if(!v) return {};
-    if(v !== "free") return { shipCo: v };
+    const m = ($f("f-shipadj-m")||{}).value, an = Number((($f("f-shipadj")||{}).value || "").replace(",", ".")), ao = m === "none" ? { shipAdj: 0 } : (m === "custom" && isFinite(an) && an !== 0 ? { shipAdj: Math.round(an) } : {});
+    const v = ($f("f-shipco")||{}).value; if(!v) return ao;
+    if(v !== "free") return { shipCo: v, ...ao };
     const n = x=>{ const e = $f(x); return e && e.value !== "" && Number(e.value) >= 0 ? Number(e.value) : undefined };
     const home = n("f-shipfree-home"), stop = n("f-shipfree-stop");
-    if(home === undefined && stop === undefined) return {};
-    return { shipCo: "free", ...(home !== undefined ? { shipFreeHome: home } : {}), ...(stop !== undefined ? { shipFreeStop: stop } : {}) };
+    if(home === undefined && stop === undefined) return ao;
+    return { ...ao, shipCo: "free", ...(home !== undefined ? { shipFreeHome: home } : {}), ...(stop !== undefined ? { shipFreeStop: stop } : {}) };
   },
   /* حالة التسعير الحالية للمتجر: المناطق (الافتراضي) أو أسعار الشركة الافتراضية إن كانت مفعّلة وتجلب أسعارها وجُلبت */
   pricingState(){
