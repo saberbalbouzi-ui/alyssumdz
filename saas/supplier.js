@@ -83,9 +83,9 @@
   }
   function vProds() {
     var f = S.form ? '<div class="card"><h2>منتج جديد</h2><div class="g2"><div><label for="p-title">اسم المنتج</label><input id="p-title" maxlength="160"></div><div><label for="p-cat">التصنيف</label><input id="p-cat" maxlength="60"></div></div>'
-      + '<div class="g3"><div><label for="p-rrp">سعر البيع للزبون (دج) — يبيع به الجميع</label><input id="p-rrp" type="number" min="2"></div><div><label for="p-cm">عمولة الأفلييت للقطعة (دج) — تُقتطع منه</label><input id="p-cm" type="number" min="1"></div></div>'
+      + '<div class="g3"><div><label for="p-rrp">سعر البيع للزبون (دج) — يبيع به الجميع</label><input id="p-rrp" type="number" min="2"></div><div><label for="p-cm">عمولة الأفلييت للقطعة (دج) — تُقتطع منه</label><input id="p-cm" type="number" min="1"></div></div><p class="mut" id="p-live"></p>'
       + '<div class="g2"><div><label for="p-st">المخزون (فارغ = غير محدود)</label><input id="p-st" type="number" min="0"></div><div><label for="p-img">صور المنتج (حتى 4)</label><input id="p-img" type="file" accept="image/*" multiple></div></div><label for="p-desc">الوصف</label><textarea id="p-desc" maxlength="2000"></textarea>'
-      + '<p class="mut">تُحجز العمولة من رصيدك عند كل طلب. المنتج الجديد يمرّ بموافقة الإدارة.</p><button class="btn" data-a="padd"' + (S.busy ? " disabled" : "") + ">أدرج المنتج</button></div>" : "";
+      + '<p class="mut">⚠️ تغيير سعر البيع لاحقاً يصل كل الأفلييت فوراً ويتغيّر في متاجرهم. تُحجز العمولة من رصيدك عند كل طلب. المنتج الجديد يمرّ بموافقة الإدارة.</p><button class="btn" data-a="padd"' + (S.busy ? " disabled" : "") + ">أدرج المنتج</button></div>" : "";
     return '<div class="row" style="margin:.4rem 0"><button class="btn" data-a="pform">' + (S.form ? "إغلاق" : "＋ منتج جديد") + "</button></div>" + f + (S.prods.length ? S.prods.map(function (p) {
       return '<div class="card"><div class="row" style="justify-content:space-between"><b>' + esc(p.title) + '</b><span class="st ' + (p.status === "active" ? "approved" : "pending") + '">' + esc(PST[p.status] || p.status) + "</span></div><p class=\"mut\">سعر البيع " + nf(p.rrp) + " · عمولة " + nf(p.commission) + " · يبقى لك " + nf(p.supplier_price) + " · أفلييت " + nf(p.importers) + " · طلبات معلّقة " + nf(p.pending_orders) + (p.note ? " · " + esc(p.note) : "") + "</p>"
         + '<div class="row"><label style="margin:0">المخزون</label><input id="s-' + p.id + '" type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:110px"><button class="btn g" data-a="pstk" data-id="' + p.id + '">حفظ</button>' + (p.status === "active" ? '<button class="btn r" data-a="ppause" data-id="' + p.id + '" data-s="paused">إيقاف</button>' : p.status === "paused" ? '<button class="btn" data-a="ppause" data-id="' + p.id + '" data-s="active">استئناف</button>' : "") + "</div></div>";
@@ -116,7 +116,7 @@
   var DRAFT = {};
   function snap() { if (!ROOT) return; Array.prototype.forEach.call(ROOT.querySelectorAll("input[id],textarea[id],select[id]"), function (el) { if (el.type === "file" || /^(s-|d-sel|k-in)/.test(el.id)) return; DRAFT[el.id] = el.type === "checkbox" ? el.checked : el.value; }); }
   function restore() { Object.keys(DRAFT).forEach(function (id) { var el = $(id); if (!el) return; if (el.type === "checkbox") el.checked = !!DRAFT[id]; else el.value = DRAFT[id]; }); kindToggle(); var me = $("d-me"); if (me && $("d-pfw")) $("d-pfw").style.display = me.value === "ccp" ? "" : "none"; }
-  function draw() { snap(); if (S.key && S.prof) board(); else guest(); restore(); }
+  function draw() { snap(); if (S.key && S.prof) board(); else guest(); restore(); liveCm(); }
 
   /* ───── إجراءات ───── */
   function addProduct() {
@@ -149,6 +149,8 @@
     }
   }
   ROOT.addEventListener("click", act);
+  function liveCm() { var el = $("p-live"); if (!el) return; var pr = Math.round(+($("p-rrp") || {}).value), cm = Math.round(+($("p-cm") || {}).value); el.textContent = pr >= 2 && cm >= 1 ? (cm >= pr ? "العمولة يجب أن تكون أقل من سعر البيع" : "العمولة: " + nf(cm) + " دج (" + (Math.round(cm / pr * 1000) / 10) + "% من سعر البيع)") : ""; }
+  ROOT.addEventListener("input", function (e) { if (e.target.id === "p-rrp" || e.target.id === "p-cm") liveCm(); });
   ROOT.addEventListener("change", function (e) { if (e.target.id === "a-kind") kindToggle(); if (e.target.id === "d-sel") { S.days = +e.target.value; load(); } });
   S.key = key(); if (S.key) { ROOT.innerHTML = head() + '<p class="mut">جارِ التحميل…</p>'; load(true); } else guest();
   window.SupplierPortal = { S: S, _t: { shrink: shrink } };
