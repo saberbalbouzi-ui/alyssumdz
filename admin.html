@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.656">
+<meta name="admin-version" content="1.89.657">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -351,7 +351,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('profit',this)"><span class="nav-ic">💰</span><span class="nav-txt"><b>الربح الحقيقي</b><small>صافي ما دخل جيبك بعد التوصيل والمرتجعات والبضاعة وإعلانات Meta وتيك توك</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('wallet',this)"><span class="nav-ic">👛</span><span class="nav-txt"><b>المحفظة</b><small>رصيدك على المنصة: الضمان والسحب ورصيد الإعلانات بالدولار ودفتر الحركات</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('agency',this)"><span class="nav-ic">📣</span><span class="nav-txt"><b>خدمات التسويق</b><small>اشترِ حساب TikTok/Meta Ads جاهزاً بالدينار من محفظتك واستلم رابط الدعوة</small></span></button>
-      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('market',this)"><span class="nav-ic">🤝</span><span class="nav-txt"><b>سوق التوريد</b><small>بيع منتجات موردين بعمولة أو إدراج منتجاتك ليبيعها غيرك، بضمان الدفع</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('market',this)"><span class="nav-ic">🤝</span><span class="nav-txt"><b>التسويق بالعمولة</b><small>بيع منتجات موردين بعمولة أو إدراج منتجاتك ليبيعها غيرك، بضمان الدفع</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('digital',this)"><span class="nav-ic">💾</span><span class="nav-txt"><b>المنتجات الرقمية</b><small>مفاتيح وحسابات وملفات تُسلَّم تلقائياً بعد الدفع، وموافقة تحويلات BaridiMob وCCP</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('appstore',this)"><span class="nav-ic">🧩</span><span class="nav-txt"><b>متجر الإضافات</b><small>ثبّت تطبيقات من مطوّرين مستقلين بصلاحيات تحددها أنت</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('appdev',this)"><span class="nav-ic">🛠️</span><span class="nav-txt"><b>للمطوّرين</b><small>أنشئ تطبيقك، وتابع التسليمات والإيرادات وتوثيق النطاق</small></span></button>
@@ -1708,7 +1708,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=6063c915"></script>
 <script src="assets/js/admin-update.js?v=42f0eb03"></script>
-<script src="assets/js/admin-search.js?v=fb004603"></script>
+<script src="assets/js/admin-search.js?v=6b4a7bb1"></script>
 <script src="assets/js/admin-hand.js?v=b971c99c"></script>
 <script src="assets/js/admin-voice.js?v=5337116b"></script>
 <script src="assets/js/admin-inventory.js?v=4610792e"></script>
@@ -1717,7 +1717,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-zones-io.js?v=baf86994"></script>
 <script src="assets/js/admin-yalidine.js?v=98d06a79"></script>
 <script src="assets/js/admin-shoppages.js?v=f37d32bc"></script>
-<script src="assets/js/admin-home.js?v=c800eb01"></script>
+<script src="assets/js/admin-home.js?v=b1f9d637"></script>
 <script src="assets/js/admin-tablesel.js?v=ee7af49e"></script>
 <script src="assets/js/admin-orders-plus.js?v=acb6f3de"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
@@ -1749,9 +1749,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/speed-fix.js?v=b647504f"></script>
 <script src="assets/js/admin-speed.js?v=5a089e1c"></script>
 <script src="assets/js/admin-digital.js?v=abc14d43"></script>
-<script src="assets/js/admin-marketplace.js?v=7190980e"></script>
+<script src="assets/js/admin-marketplace.js?v=402aeac1"></script>
 <script src="assets/js/admin-edition.js?v=ef57eac5"></script>
-<script src="assets/js/admin-kind.js?v=5fde2603"></script>
+<script src="assets/js/admin-kind.js?v=5dec6f2b"></script>
 <script src="assets/js/admin-appstore.js?v=5d01d70d"></script>
 <script src="assets/js/admin-appdev.js?v=cc7cde0c"></script>
 <script src="assets/js/admin-wh.js?v=34766355"></script>
@@ -8309,11 +8309,11 @@ const Admin = {
   },
 
   /* حارس الإرسال: لا يُرسل الطلب نفسه مرتين (نقرتان، تأكيد + زر إرسال، إرسال تلقائي + يدوي، أو نافذتان) */
-  isMarket(o){ return !!(o && o.extra && typeof o.extra === "object" && o.extra["🛒 سوق التوريد"]); },       // طلب منتج مستورد من مورّد: يشحنه المورّد من حسابه (تبويب «سوق التوريد»)، فلا يُرسل من هنا
+  isMarket(o){ return !!(o && o.extra && typeof o.extra === "object" && o.extra["🛒 سوق التوريد"]); },       // طلب منتج مستورد من مورّد: يشحنه المورّد من حسابه (تبويب «التسويق بالعمولة»)، فلا يُرسل من هنا
   isDigital(o){ return !!(o && o.extra && typeof o.extra === "object" && o.extra["💾 منتج رقمي"]); },       // منتج رقمي: لا يُشحن ولا يُرسل لشركة توصيل أبداً
   async sendOrderToDelivery(orderIndex, companyKey){
     const o0 = this.orders[orderIndex], id = o0 && o0.id; let infl = {};
-    if(this.isMarket(o0)){ toast("🛒 هذا طلب منتج من سوق التوريد — يشحنه المورّد ويُتابَع من تبويب «سوق التوريد»"); return false }
+    if(this.isMarket(o0)){ toast("🛒 هذا طلب منتج من التسويق بالعمولة — يشحنه المورّد ويُتابَع من تبويب «التسويق بالعمولة»"); return false }
     if(this.isDigital(o0)){ toast("💾 هذا طلب منتج رقمي — لا يُشحن، ويُسلَّم من تبويب «المنتجات الرقمية» بعد الدفع"); return false }
     if(id){
       this._sendLock = this._sendLock || {};

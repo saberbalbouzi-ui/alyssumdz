@@ -33,7 +33,7 @@
       fr.readAsDataURL(file);
     });
   }
-  function head(sub) { return '<div class="top"><div><h1>🤝 بوابة المورّدين</h1><p class="mut">' + esc(sub || "سوق التوريد — بِع منتجاتك عبر مئات المتاجر بعمولة، واشحن واحصد المبيعات") + '</p></div>' + (S.key ? '<button class="btn g" data-a="out">خروج</button>' : "") + "</div>" + (S.msg ? '<div class="msg ' + (S.msg.bad ? "e" : "k") + '">' + esc(S.msg.t) + "</div>" : ""); }
+  function head(sub) { return '<div class="top"><div><h1>🤝 بوابة المورّدين</h1><p class="mut">' + esc(sub || "التسويق بالعمولة — بِع منتجاتك عبر مئات المتاجر بعمولة، واشحن واحصد المبيعات") + '</p></div>' + (S.key ? '<button class="btn g" data-a="out">خروج</button>' : "") + "</div>" + (S.msg ? '<div class="msg ' + (S.msg.bad ? "e" : "k") + '">' + esc(S.msg.t) + "</div>" : ""); }
 
   /* ───── الزائر: تقديم + دخول ───── */
   function guest() {

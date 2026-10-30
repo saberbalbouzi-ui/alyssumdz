@@ -1,4 +1,4 @@
-/* اختبار تبويب «سوق التوريد» في لوحة المزوّد (saas/marketplace.js) بوسيط مُحاكى + قوائم السماح (platform-admin و platform-proxy).
+/* اختبار تبويب «التسويق بالعمولة» في لوحة المزوّد (saas/marketplace.js) بوسيط مُحاكى + قوائم السماح (platform-admin و platform-proxy).
    NODE_PATH=/opt/node-tools/node_modules node scripts/test-saas-market.js */
 const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
 const root = path.join(__dirname, ".."); let fails = 0;

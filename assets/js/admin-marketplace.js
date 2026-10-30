@@ -1,4 +1,4 @@
-/* «سوق التوريد»: شبكة دروبشيبينغ محلية بين متاجر المنصة.
+/* «التسويق بالعمولة»: شبكة دروبشيبينغ محلية بين متاجر المنصة.
    (1) الكتالوج: منتجات الموردين بسعر المورّد والسعر العام المقترح والعمولة، واستيراد بنقرة إلى متجرك (يبقى مرتبطاً بالمورّد فيتزامن المخزون).
    (2) مستورداتي: سعر البيع (لا يقل عن سعر المورّد + العمولة) والمخزون الحيّ من المورّد.
    (3) كمورّد: أدرج منتجاتك، وتابع الطلبات المطلوب شحنها ببيانات الزبون وحدّث حالتها.
@@ -12,7 +12,7 @@ const AdminMarketplace = (() => {
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
   const dt = s => { const n = +s; return n ? new Date(n * 1000).toLocaleString("fr-DZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : ""; };
-  const ERR = { own_product: "هذا منتجك أنت", slug_taken: "هذا الرابط مستعمل لديك، جرّب آخر", plan_limit: "بلغت الحد المسموح", bad_state: "الحالة الحالية لا تسمح بهذا الإجراء", module_disabled: "سوق التوريد غير مفعّل لحسابك", rate_limited: "طلبات كثيرة، أعد المحاولة بعد قليل" };
+  const ERR = { own_product: "هذا منتجك أنت", slug_taken: "هذا الرابط مستعمل لديك، جرّب آخر", plan_limit: "بلغت الحد المسموح", bad_state: "الحالة الحالية لا تسمح بهذا الإجراء", module_disabled: "التسويق بالعمولة غير مفعّل لحسابك", rate_limited: "طلبات كثيرة، أعد المحاولة بعد قليل" };
   const PST = { pending: ["بانتظار موافقة الإدارة", "var(--g-amber-rgb)"], active: ["معروض", "var(--g-mint-rgb)"], paused: ["موقوف منك", "var(--g-blue-rgb)"], rejected: ["مرفوض", "var(--g-rose-rgb)"], suspended: ["أوقفته الإدارة", "var(--g-rose-rgb)"] };
   const OST = { pending: ["معلّقة", "var(--g-amber-rgb)"], available: ["متاحة", "var(--g-mint-rgb)"], returned: ["مرتجعة", "var(--g-rose-rgb)"], return_claimed: ["مرتجع بانتظار قرار الإدارة", "var(--g-amber-rgb)"], rejected: ["رُفض (رصيد المورّد)", "var(--g-rose-rgb)"] };
   const SHIP = { new: "لم يُشحن", shipped: "شُحن", delivered: "سُلِّم", returned: "مرتجع" };
@@ -120,7 +120,15 @@ const AdminMarketplace = (() => {
 <div class="mk-kv"><span>سعر المورّد</span><b>${nf(p.supplier_price)} دج</b></div><div class="mk-kv"><span>عمولتك</span><b>${nf(p.commission)} دج</b></div><div class="mk-kv"><span>السعر المقترح</span><span>${nf(p.rrp)} دج</span></div><div class="mk-kv"><span>المخزون</span><span>${p.stock == null ? "غير محدود" : nf(p.stock)}</span></div>
 ${p.imported ? '<span class="mk-chip" style="--c:var(--g-mint-rgb)">✓ مستورد في متجرك</span>' : `<label class="mk-row" style="display:grid;font-size:.8rem">سعر بيعك (دج)<input id="mk-pr-${p.id}" type="number" min="${p.supplier_price + p.commission}" value="${p.rrp}"></label><button class="mk-btn" data-mk="imp" data-id="${p.id}" ${S.busy ? "disabled" : ""}>استيراد بنقرة</button>`}</div></div>`;
   }
-  function vCat() { return `<div class="mk-box"><div class="mk-row"><label style="flex:1;min-width:180px">بحث<input id="mk-q" value="${esc(S.q)}" placeholder="اسم المنتج"></label><label>الترتيب<select id="mk-sort"><option value="new"${S.sort === "new" ? " selected" : ""}>الأحدث</option><option value="commission"${S.sort === "commission" ? " selected" : ""}>الأعلى عمولة</option><option value="price"${S.sort === "price" ? " selected" : ""}>الأرخص عند المورّد</option></select></label><label>البائع<select id="mk-seller"><option value="">الكل</option><option value="wholesale"${S.seller === "wholesale" ? " selected" : ""}>🏭 جملة</option><option value="retail"${S.seller === "retail" ? " selected" : ""}>🛍️ تجزئة</option></select></label><button class="mk-btn" data-mk="search">بحث</button></div></div>
+  function rulesHtml() {
+    return `<details class="mk-box" style="margin-bottom:.7rem"><summary style="cursor:pointer;font-weight:800">📜 قواعد التعامل بين المورّد والأفلييت</summary><div class="mk-hint" style="line-height:1.9;opacity:1">
+<b>الأدوار:</b> المورّد يملك المنتج والمخزون ويؤكّد الطلب بالهاتف ويشحن ويحصّل ثمنه من الزبون عند الاستلام. الأفلييت يعرض المنتج ويجلب الزبائن، ولا يشحن ولا يحصّل المال.<br>
+<b>المال:</b> سعر بيعك لا يقل عن سعر المورّد + العمولة. تُحجز العمولة من رصيد المورّد عند الطلب، وتُحرَّر لك عند «سُلِّم» بعد رسم المنصة، وتعود للمورّد عند الإرجاع أو الإلغاء قبل الشحن. رصيد المورّد لا يكفي ← يُرفض الطلب.<br>
+<b>مواعيد مقترحة للمورّد:</b> تأكيد الزبون بالهاتف خلال 24 ساعة، والشحن خلال 48 ساعة من التأكيد؛ زبون لا يردّ ← إلغاء قبل الشحن.<br>
+<b>التواصل:</b> حالة الطلب والعمولة والمخزون تتحدّث تلقائياً لدى الطرفين. المورّد وحده يتصل بالزبون. الخلاف بين الطرفين يُرفع كطلب دعم من «إعدادات الموقع ← طلبات الدعم» وتحسمه الإدارة.<br>
+<b>الأفلييت:</b> لا ادّعاءات طبية أو وعود غير حقيقية، ويسوّق المنتج كما وصفه المورّد.</div></details>`;
+  }
+  function vCat() { return rulesHtml() + `<div class="mk-box"><div class="mk-row"><label style="flex:1;min-width:180px">بحث<input id="mk-q" value="${esc(S.q)}" placeholder="اسم المنتج"></label><label>الترتيب<select id="mk-sort"><option value="new"${S.sort === "new" ? " selected" : ""}>الأحدث</option><option value="commission"${S.sort === "commission" ? " selected" : ""}>الأعلى عمولة</option><option value="price"${S.sort === "price" ? " selected" : ""}>الأرخص عند المورّد</option></select></label><label>البائع<select id="mk-seller"><option value="">الكل</option><option value="wholesale"${S.seller === "wholesale" ? " selected" : ""}>🏭 جملة</option><option value="retail"${S.seller === "retail" ? " selected" : ""}>🛍️ تجزئة</option></select></label><button class="mk-btn" data-mk="search">بحث</button></div></div>
 ${S.cat.length ? `<div class="mk-grid">${S.cat.map(cardHtml).join("")}</div>${S.more ? '<p><button class="mk-btn" data-mk="more">عرض المزيد</button></p>' : ""}` : '<div class="mk-box mk-off">لا منتجات في الكتالوج حالياً. عندما يعرض الموردون منتجاتهم تظهر هنا.</div>'}`; }
   function vImp() {
     return `<div class="mk-box"><div class="mk-row"><h3 style="margin:0">منتجاتي المستوردة</h3><button class="mk-btn o" data-mk="sync">⟳ مزامنة المخزون والأسعار مع متجري</button></div><p class="mk-hint">المخزون والإتاحة يتبعان المورّد: ينفد عنده ← يتوقف البيع عندك تلقائياً. تعديل السعر هنا ينعكس على متجرك.</p>
@@ -140,7 +148,7 @@ ${S.aff.length ? `<div class="mk-sc"><table class="mk-tbl"><thead><tr><th>الط
 
   function draw() {
     const host = $("mk-app"); if (!host) return;
-    if (S.off) { host.innerHTML = '<div class="mk-box mk-off">سوق التوريد غير مفعّل بعد على حسابك — تواصل مع الدعم لتفعيله.</div>'; return; }
+    if (S.off) { host.innerHTML = '<div class="mk-box mk-off">التسويق بالعمولة غير مفعّل بعد على حسابك — تواصل مع الدعم لتفعيله.</div>'; return; }
     if (S.err) { host.innerHTML = `<div class="mk-box mk-off">${esc(S.err)} <button class="mk-btn" data-mk="reload">إعادة المحاولة</button></div>`; return; }
     if (!S.w) { host.innerHTML = '<div class="mk-box mk-off">جارِ التحميل…</div>'; return; }
     const V = [["cat", "الكتالوج"], ["imp", "مستورداتي"], ["aff", "عمولاتي"], ["sup", "منتجاتي كمورّد"], ["ord", "طلبات للشحن" + (S.w.supplier && S.w.supplier.to_ship ? " (" + S.w.supplier.to_ship + ")" : "")]];

@@ -4,7 +4,7 @@ const AdminKind = (() => {
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   /* أقسام لا معنى لها في متجر رقمي (توصيل، تجهيز طرود، مرتجعات مادية، مخزون علب…) */
   const PHYS = ["shipped", "callcenter", "pack", "dispatch", "delivery", "fees", "returns", "inventory", "sources", "blacklist", "market"];
-  /* أقسام تعتمد على خدمات المنصة المركزية (محفظة، خدمات تسويق، سوق التوريد، منتجات رقمية، متجر تطبيقات، مركز المتاجر) ولا تعمل على الاستضافة العادية (PHP) */
+  /* أقسام تعتمد على خدمات المنصة المركزية (محفظة، خدمات تسويق، التسويق بالعمولة، منتجات رقمية، متجر تطبيقات، مركز المتاجر) ولا تعمل على الاستضافة العادية (PHP) */
   const PLAT = ["wallet", "agency", "market", "digital", "appstore", "appdev", "sources"];
   const isPhp = () => { try { return typeof CONFIG !== "undefined" && CONFIG.BACKEND === "php"; } catch (e) { return false; } };
   const D = () => (typeof AdminStores !== "undefined" && AdminStores.data && AdminStores.data()) || {};

@@ -12,7 +12,7 @@
   const CST = { lead: "محتمل", active: "نشط", suspended: "موقوف", churned: "مفقود" };
   const DST = { none: "—", requested: "مطلوب", dns_ready: "DNS جاهز", connected: "مربوط", rejected: "مرفوض" };
   const DMODE = { platform: "دومين المنصة", own: "دومين خاص", request: "دومين جديد مطلوب" };
-  const TABS = { home: "نظرة عامة", inbox: "الطلبات", sites: "المواقع", customers: "الزبائن", subs: "الاشتراكات والإغلاق", api: "إعدادات API", outbox: "الإشعارات الصادرة", stats: "التحليلات", ship: "الشحن", wallet: "المحفظة", market: "سوق التوريد", agency: "خدمات التسويق", appstore: "متجر الإضافات", calib: "المعايرة", experts: "شبكة الخبراء", rel: "نشر التحديثات", settings: "الإعدادات" };
+  const TABS = { home: "نظرة عامة", inbox: "الطلبات", sites: "المواقع", customers: "الزبائن", subs: "الاشتراكات والإغلاق", api: "إعدادات API", outbox: "الإشعارات الصادرة", stats: "التحليلات", ship: "الشحن", wallet: "المحفظة", market: "التسويق بالعمولة", agency: "خدمات التسويق", appstore: "متجر الإضافات", calib: "المعايرة", experts: "شبكة الخبراء", rel: "نشر التحديثات", settings: "الإعدادات" };
   const CANNED = [
     ["تم الاستلام", "مرحباً، استلمنا طلبك وسنعالجه في أقرب وقت. شكراً لثقتك."],
     ["نحتاج معلومات", "لنتابع طلبك نحتاج منك بعض المعلومات الإضافية. هل يمكنك تزويدنا بالتفاصيل؟"],
