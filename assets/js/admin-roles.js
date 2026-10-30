@@ -39,7 +39,7 @@
     products: "products", bulkp: "products", inventory: "products", categories: "products", attributes: "products", audit: "products",
     seo: "site", blog: "site", builder: "site", pbgen: "site", imgtools: "site", imggen: "site", theme: "site", chromeh: "site", chromef: "site", checkout: "site", tpl: "site",
   };
-  const APP_PERM = { builder: "site", smart: "site", imgtools: "site", imggen: "site", cloner: "site", floaters: "site" };
+  const APP_PERM = { builder: "site", smart: "site", imggen: "site", cloner: "site", floaters: "site" };
   const SELF = ["team", "admtheme"];        // متاحة لكل من سجّل الدخول (أمان حسابه ومظهر لوحته)
   const SELF_APPS = ["ask", "voice"];
 

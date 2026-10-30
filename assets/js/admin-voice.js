@@ -131,7 +131,7 @@ const AdminVoice = (() => {
     ask: ["اسالني", "مساعد اللوحه", "assistant du panneau"],
     cloner: ["ناسخ القوالب", "نسخ قالب", "نسخ موقع", "cloneur", "cloner un site"],
     floaters: ["الايقونات العائمه", "ايقونات عائمه", "واتساب العائم", "icones flottantes"],
-    imgtools: ["ادوات الصور", "ادوات تعديل الصور", "تعديل الصور", "outils images", "outils d image"],
+    studio: ["ستوديو ديزاين", "ادوات الصور", "ادوات تعديل الصور", "تعديل الصور", "outils images", "outils d image", "studio design"],
     imggen: ["مولد الصور", "توليد الصور", "generateur d images", "generateur"],
     agent: ["الوكيل الذكي", "agent intelligent"],
     attributes: ["السمات", "سمات", "attributs"],

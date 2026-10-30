@@ -36,7 +36,6 @@ const AdminNav = (() => {
   const APPS = {
     builder: { n: "مطوّر الصفحات", d: "محرّر مرئي لتصميم صفحات الهبوط وتعديل الصفحة الرئيسية وصفحات المنتجات بالسحب والإفلات: أقسام وعناصر حرّة (نص، صورة، زر، سلايدر، منتجات…) مع معاينة للجوال والتابلت وحفظ ونشر بضغطة واحدة.", how: ["اضغط زر «أفتح» في «أين تجده ؟»: قائمة صفحاتك أو زر «تعديل الصفحة الرئيسية» أعلى اللوحة.", "اختر «صفحة جديدة» أو «تعديل» لصفحة موجودة؛ يُفتح المحرّر المرئي.", "أضف العناصر من لوحة «عناصر» وحدّد أي عنصر لتظهر إعداداته (محتوى/تنسيق/متقدم).", "«حفظ ونشر» ينشر الصفحة على موقعك؛ والتعديلات غير المنشورة تُحفظ كمسودة."], where: "تبويب الصفحات + زر «تعديل الصفحة الرئيسية» + أزرار تعديل المنتجات", work: "builder", off: "يُمنع فتح المحرّر المرئي من أي زر." },
     smart: { n: "المطوّر الذكي", d: "يولّد صفحة جديدة من صورة واحدة ثم تحرّرها بالأدوات الذكية (التقاط العناصر، نزع الخلفية…) وتحفظها.", how: ["اضغط زر «أفتح» في «أين تجده ؟» ثم ارفع صورة تصميم.", "يُحوَّل التصميم إلى صفحة قابلة للتعديل.", "حرّرها بالأدوات الذكية ثم احفظها."], where: "تبويب المطوّر الذكي (مولّد الصفحات)", work: "pbgen", off: "يُمنع فتح المولّد الذكي." },
-    imgtools: { tools: true, n: "أدوات تعديل الصور", d: "أدوات سريعة تعمل في متصفحك بلا مفتاح: نزع الخلفية بالذكاء المحلي وضغط الصور وتحويلها إلى WebP. والأدوات المتقدمة (التقاط العناصر، الماسك، البازل) داخل مطوّر الصفحات.", how: ["اضغط زر «أفتح» في «أين تجده ؟» واختر صورة من جهازك.", "اضغط «نزع الخلفية» أو «ضغط وتحويل WebP».", "نزّل النتيجة أو استعملها في صفحاتك."], where: "تبويب أدوات تعديل الصور", work: "imgtools", off: "يُمنع فتح صفحة أدوات الصور." },
     imggen: { n: "مولّد الصور", d: "ينشئ بـPRO صور منتجات وصوراً إشهارية بمقاسات المنصات (النص اختياري: بلا نص أو نص قابل للتعديل في المطوّر أو نص بـPRO)، ويفتح لوحة بالمقاس في وضع «صور إشهارية» بمطوّر الصفحات للتعديل والتصدير. مفتاحك يبقى في متصفحك، وبحدّ إنفاق تضبطه.", how: ["اضغط زر «أفتح» في «أين تجده ؟» وأدخل مفتاح PRO (الإعدادات) واضبط حدّ الإنفاق.", "اختر صورة المنتج (PNG بخلفية بيضاء أو من منتجاتك) والمقاس والاسم والوصف.", "اختر «بنص» أو «بلا نص» ثم «توليد الصورة».", "افتحها في المطوّر أو احفظها في المكتبة أو نزّلها."], where: "تبويب مولّد الصور", work: "imggen", off: "يُمنع فتح مولّد الصور." },
     agent: { n: "الوكيل الذكي", d: "مساعد على موقعك يجيب الزبائن تلقائياً من أسئلة وأجوبة تدرّبه عليها، ويقترح المنتجات، ويسجّل الأسئلة التي لم يعرف جوابها لتجيب عنها.", how: ["اضغط زر «أفتح» في «أين تجده ؟» ودرّب الوكيل: أسئلة وأجوبة لكل صفحة.", "جرّبه ثم انشر التدريب.", "تابع الأسئلة الجديدة وأجب عنها ليتحسّن."], where: "نافذة المحادثة على موقعك + تبويب تدريب الوكيل", work: "agent", off: "يختفي الوكيل من موقعك كلياً (الزر والمحادثة)." },
     voice: { n: "الوكيل الناطق", d: "واجهة بديلة للوكيل: أفاتار ناطق يقرأ الصفحة ويقنع الزبون ويشير إلى «اطلب الآن»، بصوت احترافي أو ملفات صوت جاهزة.", how: ["اضغط زر «أفتح» في «أين تجده ؟» واختر الواجهة (محادثة نصية أو أفاتار ناطق).", "أدخل مفتاح الصوت (اختياري) ومعرّف الصوت.", "ولّد ملفات الصوت الجاهزة لكل صفحة ليسمعها الزبائن بلا مفتاح."], where: "الأفاتار على موقعك + قسم الوكيل الناطق", work: "voice", off: "يعود الموقع إلى المحادثة النصية دائماً." },
@@ -547,36 +546,6 @@ const AdminNav = (() => {
   function ask(go) { if (off("ask")) return toast("اسألني معطّل من إعدادات الإضافات"); try { AdminHelp.show ? AdminHelp.show() : AdminHelp.toggle(); } catch (e) { toast("المساعد غير متاح"); } }
   function clone(go) { if (off("cloner")) return toast("ناسخ القوالب معطّل من إعدادات الإضافات"); try { if (typeof PBClone === "undefined") throw 0; PBClone.open(); } catch (e) { toast("ناسخ القوالب غير متاح في هذه النسخة"); } }
   function openBuilder() { const b = workBtn("builder"); if (b) Admin.tab("builder", b); }
-  /* ── أدوات تعديل الصور (مستقلة عن المطوّر): نزع الخلفية بالذكاء المحلي، ضغط وتحويل WebP ── */
-  const IT = { cv: null, res: null, name: "image", busy: false };
-  const msg = m => { const e = $("it-msg"); if (e) e.textContent = m || ""; };
-  function paint(c, host) { const h = $(host); if (!h) return; h.innerHTML = ""; c.style.cssText = "max-width:100%;max-height:420px;display:block;margin:auto"; h.appendChild(c); }
-  function imgLoad(inp) {
-    const f = inp.files && inp.files[0]; if (!f) return; IT.name = f.name.replace(/\.[^.]+$/, ""); IT.res = null; const u = URL.createObjectURL(f), im = new Image();
-    im.onload = () => { const k = Math.min(1, 1800 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); IT.cv = c; URL.revokeObjectURL(u); paint(c, "it-pv"); msg(c.width + "×" + c.height + " — اختر أداة"); ["it-cut", "it-webp"].forEach(i => { const b = $(i); if (b) b.disabled = false; }); const d = $("it-dl"); if (d) d.disabled = true; };
-    im.onerror = () => msg("تعذّر قراءة الصورة"); im.src = u;
-  }
-  async function imgCut() {
-    if (!IT.cv || IT.busy) return; if (typeof PBBgRemove === "undefined") return msg("أداة نزع الخلفية غير محمّلة"); IT.busy = true; msg("جارٍ نزع الخلفية…");
-    try { const r = await PBBgRemove.autoCut(IT.cv, { allowKey: true, onStep: s => msg(s) }); IT.res = r.canvas; IT.mode = "cut"; IT.cut = r.canvas; itShow(); let cf = ""; try { const q = PBBgRemove.confidence(r.canvas); cf = " — ثقة تقديرية " + Math.round(q.score * 100) + "%" + (q.notes.length ? " (" + q.notes.join("، ") + ")" : ""); } catch (e) { } msg("تم نزع الخلفية" + cf); const d = $("it-dl"); if (d) d.disabled = false; ["it-bg", "it-fmt"].forEach(i => { const e = $(i); if (e) e.disabled = false; }); }
-    catch (e) { msg("⚠️ " + (e && e.message || e)); } IT.busy = false;
-  }
-  /* تركيب النتيجة على الخلفية المختارة: شفافة | بيضاء | لون (على نمط خيارات Background Remover) */
-  function itCompose() {
-    const c = IT.cut; if (!c) return null; const bg = ($("it-bg") || {}).value || "transp", col = bg === "white" ? "#ffffff" : bg === "color" ? (($("it-bgc") || {}).value || "#ffffff") : null; if (!col) return c;
-    const o = document.createElement("canvas"); o.width = c.width; o.height = c.height; const g = o.getContext("2d"); g.fillStyle = col; g.fillRect(0, 0, o.width, o.height); g.drawImage(c, 0, 0); return o;
-  }
-  function itShow() { const o = itCompose(); if (!o) return; IT.res = o; paint(o, "it-pv"); const h = $("it-pv"), t = !(($("it-bg") || {}).value) || ($("it-bg").value === "transp"); if (h) h.style.background = t ? "repeating-conic-gradient(rgba(255,255,255,.12) 0 25%,transparent 0 50%) 50%/18px 18px" : ""; const c = $("it-bgc"); if (c) c.style.display = ($("it-bg") || {}).value === "color" ? "" : "none"; const f = $("it-fmt"); if (f && f.value === "jpeg" && t) f.value = "png"; }
-  async function imgWebp() {
-    if (!IT.cv) return; const q = Number(($("it-q") || {}).value || 82) / 100; IT.res = IT.cv; IT.mode = "webp"; IT.q = q;
-    const b = await new Promise(r => IT.cv.toBlob(r, "image/webp", q)); msg("WebP بجودة " + Math.round(q * 100) + "% — الحجم " + Math.round(b.size / 1024) + " ك.ب"); const d = $("it-dl"); if (d) d.disabled = false;
-  }
-  async function imgDl() {
-    if (!IT.res) return; const cut = IT.mode === "cut", fmt = cut ? (($("it-fmt") || {}).value || "png") : "webp", mime = fmt === "jpeg" ? "image/jpeg" : fmt === "webp" ? "image/webp" : "image/png";
-    let cv = IT.res; if (cut && fmt === "jpeg" && (($("it-bg") || {}).value || "transp") === "transp") { const o = document.createElement("canvas"); o.width = cv.width; o.height = cv.height; const g = o.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, o.width, o.height); g.drawImage(cv, 0, 0); cv = o; }
-    const b = await new Promise(r => cv.toBlob(r, mime, IT.q || .92)); if (!b) return;
-    const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = IT.name + (cut ? "-nobg" : "") + "." + (fmt === "jpeg" ? "jpg" : fmt); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  }
   /* «إعدادات الموقع» و«تجهيز المتجر» صفحتان في قسم واحد: شريط تبديل أعلى كلٍّ منهما، وزر القائمة الجانبية واحد */
   function seg() {
     [["store", "tab-store"], ["setup", "tab-setup"]].forEach(([, id]) => { const t = $(id); if (!t || t.querySelector(":scope>.tab-seg")) return; const d = document.createElement("div"); d.className = "tab-seg"; d.innerHTML = '<button type="button" class="small green" data-sg="store">⚙️ إعدادات الموقع</button><button type="button" class="small gold" data-sg="setup">🚀 تجهيز المتجر</button>'; d.addEventListener("click", e => { const b = e.target.closest("[data-sg]"); if (b) goto(b.dataset.sg); }); t.insertBefore(d, t.firstChild); });
@@ -626,5 +595,5 @@ const AdminNav = (() => {
   window.addEventListener("hashchange", () => { if (/[#&]tool=/.test(location.hash)) deepTool(); });
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", deepBoot) : deepBoot();
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { deepTool, toolGo, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, imgLoad, imgCut, imgWebp, imgDl, itShow, apply, off };
+  return { deepTool, toolGo, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, apply, off };
 })();
