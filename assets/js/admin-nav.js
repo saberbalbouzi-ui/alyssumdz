@@ -19,7 +19,17 @@ const AdminNav = (() => {
   }
   try { if (localStorage.getItem("admin_nav_subs") === "1") setTimeout(() => subs(true), 0); } catch (e) { }
   document.addEventListener("click", e => { const b = e.target.closest && e.target.closest(".nav-btn"); if (b && (b.classList.contains("nav-sub") || b.querySelector(".nav-car"))) { const nav = document.querySelector(".side-nav"); if (nav && !nav.classList.contains("subs-look") && b.classList.contains("nav-sub")) subs(true); } }, true);
-  function group(g) { apply(g); const on = document.querySelector(".side-nav .nav-btn.on"); if (!on || on.dataset.grp !== g || on.classList.contains("nav-work")) { const f = btns(g).find(x => !x.classList.contains("nav-work")); if (f) f.click(); } }
+  /* عناوين أقسام القائمة (.nav-sec): تُخفى إن لم يظهر تحتها زر (نسخة اللوحة أو صلاحيات الدور تخفي أزراراً) */
+  function secs() {
+    const nav = document.querySelector(".side-nav"); if (!nav) return;
+    nav.querySelectorAll(".nav-sec").forEach(h => {
+      let n = h.nextElementSibling, any = false;
+      while (n && !n.classList.contains("nav-sec")) { if (n.classList.contains("nav-btn") && getComputedStyle(n).display !== "none") { any = true; break; } n = n.nextElementSibling; }
+      h.classList.toggle("nv-off", !any);
+    });
+  }
+  setInterval(secs, 2000); setTimeout(secs, 600);
+  function group(g) { apply(g); setTimeout(secs, 0); const on = document.querySelector(".side-nav .nav-btn.on"); if (!on || on.dataset.grp !== g || on.classList.contains("nav-work")) { const f = btns(g).find(x => !x.classList.contains("nav-work")); if (f) f.click(); } }
   /* الوكيل الذكي (التدريب) والوكيل الناطق (الأفاتار والصوت) يتشاركان قسم agent بعرضين */
   function agentView(v) { const t = $("tab-agent"); if (t) t.dataset.view = v; }
   /* ══ سجلّ التطبيقات: كل عنصر في تبويب «تطبيقات» يفتح إعدادات التطبيق (تعريف، كيف يعمل، النسخة، التحديث، تفعيل/تعطيل)، أما التطبيق نفسه فيبقى يعمل في مكانه ══ */
