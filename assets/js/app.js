@@ -31,7 +31,7 @@ function applyShipList(cos, def){
   const wl = cos.yalidine.wl, nz = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), vals = Object.keys(wl).map(k=>wl[k]), find = w=>{ const n = nz(w.name), e = wl[w.id]; return (e && (e[0] === n || e[0].includes(n) || n.includes(e[0]))) ? e : vals.find(v=>v[0] === n); };
   const tops = WILAYAS.filter(w=>!w.par); let hit = 0; tops.forEach(w=>{ if(find(w)) hit++; }); if(hit < 50) return;
   tops.forEach(w=>{ const e = find(w); w.hide = !e || !e[1]; });
-  WILAYAS.filter(w=>w.par).forEach(w=>{ const t = WILAYAS.find(x=>x.id === w.par); w.hide = !!(t && t.hide); });
+  WILAYAS.filter(w=>w.par).forEach(w=>{ const e = find(w); w.hide = !e || !e[1]; });   // الولايات الجديدة 59–69: لا تظهر كولايات إلا إن عدّتها الشركة ولاية (بئر العاتر عند ياليدين ما زالت بلدية تابعة لتبسة)
 }
 function loadShipCo(){
   if(__SHIPCO !== null) return;
@@ -93,7 +93,7 @@ function commHidden(w, c){
 }
 function commOpts(w){
   const out = ((w && w.communes) || []).filter(c=>!commHidden(w, c)).map(c=>({ c, w, kid:false }));
-  if(w && !w.par && typeof WILAYAS !== "undefined") WILAYAS.filter(k=>k.par === w.id).forEach(k=>(k.communes || []).forEach(c=>{ if(!commHidden(k, c) && !out.some(x=>x.c === c)) out.push({ c, w:k, kid:true }); }));
+  if(w && !w.par && typeof WILAYAS !== "undefined") WILAYAS.filter(k=>k.par === w.id).forEach(k=>(k.communes || []).forEach(c=>{ if(!commHidden(k, c) && !out.some(x=>x.c === c)) out.push({ c, w:k, kid:!k.hide }); }));
   return out;
 }
 function fillCommuneSel(sel, w){

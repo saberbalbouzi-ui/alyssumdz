@@ -5,7 +5,7 @@
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function list(w) {
     const out = ((w && w.communes) || []).map(c => ({ c, w, kid: false }));
-    if (w && !w.par) W().filter(k => k.par === w.id).forEach(k => (k.communes || []).forEach(c => { if (!out.some(x => x.c === c)) out.push({ c, w: k, kid: true }); }));
+    if (w && !w.par) W().filter(k => k.par === w.id).forEach(k => (k.communes || []).forEach(c => { if (!out.some(x => x.c === c)) out.push({ c, w: k, kid: !(typeof Admin !== "undefined" && Admin.wilHidden && Admin.wilHidden(k)) }); }));
     return out;
   }
   function html(w, cur) {
