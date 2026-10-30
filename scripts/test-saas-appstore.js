@@ -1,4 +1,4 @@
-/* اختبار تبويب «متجر التطبيقات» في لوحة المزوّد (saas/appstore.js) بوسيط مُحاكى + قوائم السماح في platform-admin وplatform-proxy.
+/* اختبار تبويب «متجر الإضافات» في لوحة المزوّد (saas/appstore.js) بوسيط مُحاكى + قوائم السماح في platform-admin وplatform-proxy.
    NODE_PATH=/opt/node-tools/node_modules node scripts/test-saas-appstore.js */
 const fs = require("fs"), path = require("path"), { chromium } = require("playwright");
 const root = path.join(__dirname, ".."); let fails = 0;

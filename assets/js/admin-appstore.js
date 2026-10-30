@@ -1,4 +1,4 @@
-/* «متجر التطبيقات»: تطبيقات إضافية من مطوّرين مستقلين تُثبَّت على متجرك بموافقتك الصريحة على كل صلاحية تطلبها.
+/* «متجر الإضافات»: تطبيقات إضافية من مطوّرين مستقلين تُثبَّت على متجرك بموافقتك الصريحة على كل صلاحية تطلبها.
    لا يصل أي تطبيق إلى المحفظة أو المفاتيح أو إعداداتك أبداً؛ وبيانات الزبائن (الأسماء والهواتف) مخفية عنه ما لم توافق عليها صراحةً.
    المدفوع يُخصم من متاحك في المحفظة؛ وإلغاء التثبيت يقطع وصول التطبيق فوراً. كل شيء يمرّ عبر وسيط مدير مسجَّل الدخول. */
 const AdminAppStore = (() => {
@@ -44,7 +44,7 @@ const AdminAppStore = (() => {
   const priceOf = a => a.price > 0 ? `${nf(a.price)} دج${a.billing === "monthly" ? " / شهر" : ""}` : "مجاني";
   function draw() {
     const host = $("as-app"); if (!host) return;
-    if (S.off) { host.innerHTML = '<div class="as-box as-off">متجر التطبيقات غير مفعّل بعد على حسابك — تواصل مع الدعم لتفعيله.</div>'; return; }
+    if (S.off) { host.innerHTML = '<div class="as-box as-off">متجر الإضافات غير مفعّل بعد على حسابك — تواصل مع الدعم لتفعيله.</div>'; return; }
     if (S.err) { host.innerHTML = `<div class="as-box as-off">${esc(S.err)} <button class="as-btn" data-as="reload">إعادة المحاولة</button></div>`; return; }
     const mine = new Map(S.inst.filter(i => i.status !== "uninstalled").map(i => [i.app_id, i]));
     const cards = S.apps.map(a => { const m = mine.get(a.id);

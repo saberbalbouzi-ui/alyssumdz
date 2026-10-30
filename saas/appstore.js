@@ -1,4 +1,4 @@
-/* «متجر التطبيقات» داخل لوحة مزوّد المنصة: مراجعة تطبيقات المطوّرين (اعتماد/رفض/تعليق مع إبطال رموزهم فوراً)، تفعيل حسابات المطوّرين، ضبط عمولة المنصة، وملخص الإيرادات.
+/* «متجر الإضافات» داخل لوحة مزوّد المنصة: مراجعة تطبيقات المطوّرين (اعتماد/رفض/تعليق مع إبطال رموزهم فوراً)، تفعيل حسابات المطوّرين، ضبط عمولة المنصة، وملخص الإيرادات.
    كل الطلبات تمرّ بدالة platform-admin (تتحقق أنك مدير منصة وتحمل رمز الإدارة في الخادم). الأسرار لا تظهر هنا أبداً. */
 window.SaasAppStore = (() => {
   const $ = id => document.getElementById(id);
@@ -31,7 +31,7 @@ window.SaasAppStore = (() => {
   function draw() {
     if (!root) return;
     if (S.busy && !S.rev) { root.innerHTML = '<div class="card"><p class="hint">جارٍ التحميل…</p></div>'; return; }
-    if (S.err) { root.innerHTML = '<div class="card"><b>متجر التطبيقات</b><p class="hint" style="color:#f87171">' + esc(S.err) + '</p><button class="btn" data-as="reload">إعادة المحاولة</button></div>'; return; }
+    if (S.err) { root.innerHTML = '<div class="card"><b>متجر الإضافات</b><p class="hint" style="color:#f87171">' + esc(S.err) + '</p><button class="btn" data-as="reload">إعادة المحاولة</button></div>'; return; }
     const cnt = id => S.inst.filter(i => i.app_id === id && ["active", "past_due"].includes(i.status)).length;
     const tabs = Object.keys(TL).map(k => '<button class="btn ' + (S.st === k ? "" : "g") + '" data-as="st" data-st="' + k + '">' + TL[k] + '</button>').join(" ");
     const rows = S.apps.map(a => {
