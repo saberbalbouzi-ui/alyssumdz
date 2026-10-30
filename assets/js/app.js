@@ -25,13 +25,22 @@ function applyShipNd(nd, def){
   const nz = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
   WILAYAS.forEach(w=>{ const L = nd[w.par || w.id]; if(!L || !L.length) return; const set = new Set(L); (w.communes || []).forEach(c=>{ if(set.has(nz(c))){ w.xc = w.xc || {}; if(!w.xc[c]) w.xc[c] = "all"; } }); });
 }
+/* قائمة ولايات شركة التوصيل الافتراضية نفسها (لا القائمة الموحّدة): ولاية غير موجودة أو غير مخدومة عندها تُحذف من القوائم (w.hide)، وبلدياتها الجديدة 59–69 تتبع أمّها؛ لا يُطبَّق إن لم تتطابق 50 ولاية على الأقل (اختلاف تسمية) */
+function applyShipList(cos, def){
+  if(def !== "yalidine" || typeof WILAYAS === "undefined" || !cos || !cos.yalidine || !cos.yalidine.wl) return;
+  const wl = cos.yalidine.wl, nz = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), vals = Object.keys(wl).map(k=>wl[k]), find = w=>{ const n = nz(w.name), e = wl[w.id]; return (e && (e[0] === n || e[0].includes(n) || n.includes(e[0]))) ? e : vals.find(v=>v[0] === n); };
+  const tops = WILAYAS.filter(w=>!w.par); let hit = 0; tops.forEach(w=>{ if(find(w)) hit++; }); if(hit < 50) return;
+  tops.forEach(w=>{ const e = find(w); w.hide = !e || !e[1]; });
+  WILAYAS.filter(w=>w.par).forEach(w=>{ const t = WILAYAS.find(x=>x.id === w.par); w.hide = !!(t && t.hide); });
+}
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); }catch(e){} if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
+document.addEventListener("shipco:ready", ()=>{ try{ ["wilaya","cwilaya"].forEach(id=>{ const sel = document.getElementById(id); if(!sel || typeof WILAYAS === "undefined") return; Array.from(sel.options).forEach(o=>{ const w = o.value && WILAYAS.find(x=>x.id == o.value); if(w && w.hide) o.remove(); }); }); }catch(e){} });
 /* سعر المنتج الحر: يُرجع {home,stop} (قيمة فارغة = null) أو null */
 function prodShipPf(p){ if(!p || p.shipCo !== "free") return null; const n = v=>(v === undefined || v === null || v === "" || isNaN(Number(v))) ? null : Number(v); const pf = { home:n(p.shipFreeHome), stop:n(p.shipFreeStop) }; return (pf.home === null && pf.stop === null) ? null : pf; }
 /* مصدر تسعير بنود السلة: إن اتفقت كلها على مصدر واحد فهو، وإلا (مختلطة) التسعير الافتراضي */
@@ -75,9 +84,16 @@ function shipRadios(name, w, commune){
 }
 function shipOptLabel(w, c){ return (w && w.xc && w.xc[c] === "all") ? c + " (غير متوفر)" : c; }
 /* بلديات الولايات الجديدة 59–69 تظهر أيضاً مع بلديات ولايتها الأم (بريكة مع باتنة)؛ اختيار إحداها يحوّل الولاية إلى الجديدة تلقائياً */
+/* بلدية غير موجودة في قائمة بلديات ياليدين لولايتها (قائمة cp المنشورة) تُحذف؛ لا يُطبَّق إن لم تتطابق 70% من بلديات الولاية (اختلاف تهجئة) */
+function commHidden(w, c){
+  if(__SHIPDEF !== "yalidine" || !w) return false; const cp = __SHIPCP[w.par || w.id]; if(!cp) return false;
+  const nz = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), keys = Object.keys(cp), has = n=>{ const k = nz(n); return keys.some(y=>y === k || y.includes(k) || k.includes(y)); };
+  const all = w.communes || []; if(all.length && all.filter(has).length / all.length < .7) return false;
+  return !has(c);
+}
 function commOpts(w){
-  const out = ((w && w.communes) || []).map(c=>({ c, w, kid:false }));
-  if(w && !w.par && typeof WILAYAS !== "undefined") WILAYAS.filter(k=>k.par === w.id).forEach(k=>(k.communes || []).forEach(c=>{ if(!out.some(x=>x.c === c)) out.push({ c, w:k, kid:true }); }));
+  const out = ((w && w.communes) || []).filter(c=>!commHidden(w, c)).map(c=>({ c, w, kid:false }));
+  if(w && !w.par && typeof WILAYAS !== "undefined") WILAYAS.filter(k=>k.par === w.id).forEach(k=>(k.communes || []).forEach(c=>{ if(!commHidden(k, c) && !out.some(x=>x.c === c)) out.push({ c, w:k, kid:true }); }));
   return out;
 }
 function fillCommuneSel(sel, w){
@@ -1112,6 +1128,7 @@ function initProduct(slug){
     const cur = document.querySelector('input[name="dtype"]:checked'); if(cur) state.dtype = cur.value;
   }
   WILAYAS.forEach(w=>{
+    if(w.hide) return;
     const o = document.createElement("option");
     o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متوفر)" : ""); if(w.xw){ o.disabled = true; o.style.color = "#9aa3a0"; }
     sel.appendChild(o);
@@ -1502,6 +1519,7 @@ function fillCartWilayas(){
     shipRadios("cdtype", w, commune);
   }
   WILAYAS.forEach(w=>{
+    if(w.hide) return;
     const o = document.createElement("option");
     o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متوفر)" : ""); if(w.xw){ o.disabled = true; o.style.color = "#9aa3a0"; }
     sel.appendChild(o);
@@ -1649,7 +1667,7 @@ const Account = {
   guest(tab){
     if(tab) this.tab = tab;
     const local = this.mode() === "local", reg = local || this.tab === "reg";
-    const wOpts = '<option value="">— الولاية (اختياري) —</option>' + (typeof WILAYAS !== "undefined" ? WILAYAS.map(w=>`<option value="${this.esc(w.name)}">${String(w.id).padStart(2,"0")} - ${this.esc(w.name)}</option>`).join("") : "");
+    const wOpts = '<option value="">— الولاية (اختياري) —</option>' + (typeof WILAYAS !== "undefined" ? WILAYAS.filter(w=>!w.hide).map(w=>`<option value="${this.esc(w.name)}">${String(w.id).padStart(2,"0")} - ${this.esc(w.name)}</option>`).join("") : "");
     const b = this.body(`
       <h3>👤 حسابي</h3>
       <p class="acc-sub">${reg ? "أنشئ حسابك مرة واحدة: تتبّع طلباتك وأعد الطلب ببياناتك المحفوظة، وثبّت الموقع على هاتفك." : "سجّل الدخول لمتابعة طلباتك."}</p>
@@ -1729,7 +1747,7 @@ const Account = {
         <div class="ao-i">${this.esc(o.items).replace(/\n/g, "<br>")}</div>
         <div class="ao-f"><span>${new Date(o.date).toLocaleDateString("ar-DZ")}</span><b>${fmt(Number(o.total) || 0)}</b></div>
         ${o.tracking ? `<div class="ao-t">رقم التتبع: <b dir="ltr">${this.esc(o.tracking)}</b></div>` : ""}</div>`; }).join("");
-    const wOpts = '<option value="">—</option>' + (typeof WILAYAS !== "undefined" ? WILAYAS.map(w=>`<option value="${this.esc(w.name)}"${w.name === pr.wilaya ? " selected" : ""}>${this.esc(w.name)}</option>`).join("") : "");
+    const wOpts = '<option value="">—</option>' + (typeof WILAYAS !== "undefined" ? WILAYAS.filter(w=>!w.hide).map(w=>`<option value="${this.esc(w.name)}"${w.name === pr.wilaya ? " selected" : ""}>${this.esc(w.name)}</option>`).join("") : "");
     const gifts = await Gifts.cardsHtml();
     const b = this.body(`
       <h3>👤 ${this.esc(pr.name)}</h3><p class="acc-sub" dir="ltr" style="text-align:right">${this.esc(pr.phone)}</p>

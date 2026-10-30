@@ -9,7 +9,8 @@
     return out;
   }
   function html(w, cur) {
-    const items = list(w), head = cur && !items.some(x => x.c === cur) ? `<option value="${esc(cur)}">${esc(cur)}</option>` : "";
+    const hid = x => { try { return typeof Admin !== "undefined" && Admin.communeHidden && x.c !== cur && Admin.communeHidden(x.w, x.c); } catch (e) { return false; } };   // بلدية غير موجودة في قائمة ياليدين نفسها
+    const items = list(w).filter(x => !hid(x)), head = cur && !items.some(x => x.c === cur) ? `<option value="${esc(cur)}">${esc(cur)}</option>` : "";
     const nd = x => { try { return typeof Admin !== "undefined" && Admin.ndHas && Admin.ndHas(x.w, x.c) && Admin.pricingState().key === "yalidine"; } catch (e) { return false; } };   // بلدية لا توصّل إليها الشركة: رمادية بلا نقر
     return head + items.map(x => { const d = nd(x); return `<option value="${esc(x.c)}"${x.c === cur ? " selected" : ""}${x.kid ? ` data-w="${esc(x.w.name)}"` : ""}${d ? ' disabled style="color:#9aa3a0"' : ""}>${esc(x.c)}${x.kid ? " — ولاية " + esc(x.w.name) : ""}${d ? " (غير متوفر)" : ""}</option>`; }).join("");
   }

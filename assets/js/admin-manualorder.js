@@ -38,7 +38,7 @@ window.ManualOrder = (function () {
     const ad = A(); if (!ad) return; opt = opt || {}; const mode = opt.mode || "new", src = opt.order || null;
     if (mode === "edit" && (!src || src.status !== "nouvelle" || (ad.trackingOf && ad.trackingOf(src)))) { toast("التعديل الكامل متاح للطلب الجديد غير المسجَّل لدى الشركة فقط — للمؤكَّد استعمل «✏️ تعديل»"); return; }
     let bg = document.getElementById("mo-bg"); if (bg) bg.remove(); bg = document.createElement("div"); bg.id = "mo-bg"; bg.className = "modal-bg open"; bg.dir = "rtl";
-    const P = prodOpts(), wil = W().slice().sort((a, b) => a.id - b.id), fld = (l, h, s) => `<div class="field" style="margin-bottom:.5rem;${s || ""}"><label style="font-weight:800;font-size:.82rem">${l}</label>${h}</div>`;
+    const P = prodOpts(), wil = W().slice().sort((a, b) => a.id - b.id).filter(x => !(A() && A().wilHidden && A().wilHidden(x)) || (src && x.name === src.wilaya)), fld = (l, h, s) => `<div class="field" style="margin-bottom:.5rem;${s || ""}"><label style="font-weight:800;font-size:.82rem">${l}</label>${h}</div>`;
     let lines = src ? parseLines(ad.itemsDisplay ? ad.itemsDisplay(src) : src.items).map(l => Object.assign({ slug: ((P.find(p => p.title === l.title) || (ad.products || []).find(p => p.title === l.title || l.title.startsWith(p.title + " — "))) || {}).slug || "" }, l)) : [];
     if (!lines.length) lines = [{ slug: "", title: "", qty: 1, price: 0 }];
     const ttl = mode === "edit" ? "✏️ تعديل الطلب " + esc(src.id) : mode === "copy" ? "📄 نسخ كطلب جديد" : "➕ طلب يدوي جديد";

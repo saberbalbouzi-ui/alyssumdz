@@ -22,7 +22,7 @@ window.OrderEdit = (function () {
     let bg = document.getElementById("oe-bg"); if (bg) bg.remove();
     bg = document.createElement("div"); bg.id = "oe-bg"; bg.className = "modal-bg open"; bg.dir = "rtl";
     const t = ad.trackingOf ? ad.trackingOf(o) : null, sub = num(o.subtotal), disc = num(o.discount);
-    const wil = W().slice().sort((a, b) => a.id - b.id), fld = (l, h) => `<div class="field" style="margin-bottom:.55rem"><label style="font-weight:800;font-size:.82rem">${l}</label>${h}</div>`;
+    const wil = W().slice().sort((a, b) => a.id - b.id).filter(x => !(typeof Admin !== "undefined" && Admin.wilHidden && Admin.wilHidden(x)) || x.name === o.wilaya), fld = (l, h) => `<div class="field" style="margin-bottom:.55rem"><label style="font-weight:800;font-size:.82rem">${l}</label>${h}</div>`;
     bg.innerHTML = `<div class="modal" style="max-width:520px;position:relative"><button type="button" class="ord-x" id="oe-x" title="إغلاق" aria-label="إغلاق">✕</button><h3>✏️ تعديل الطلب <span dir="ltr">${esc(o.id)}</span></h3>
 <p class="hint" style="margin:.2rem 0 .7rem">${t ? "هذا الطلب مسجَّل لدى شركة التوصيل (التتبع <b dir=\"ltr\">" + esc(t.tracking) + "</b>): تُحدَّث بياناته عندها تلقائياً بعد الحفظ." : "الطلب لم يُرسل لشركة التوصيل بعد؛ تُحفظ التعديلات وتُستعمل عند الإرسال."}</p>
 ${fld("الاسم", `<input id="oe-name" value="${esc(o.name)}">`)}
