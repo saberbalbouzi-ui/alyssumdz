@@ -19,7 +19,7 @@ function handle(b) {
   if (m === "GET" && p === "/v1/marketplace/imports") return { imports: DB.imps };
   if (m === "GET" && p === "/v1/marketplace/products") return { products: DB.mine };
   if (m === "GET" && p === "/v1/marketplace/orders") return { orders: b.query.role === "supplier" ? DB.ord : DB.aff };
-  if (m === "POST" && p === "/v1/marketplace/imports") { const c = DB.cat.find((x) => x.id === b.body.mp_id); if (b.body.price < c.supplier_price + c.commission) return { __err: { status: 400, error: { code: "validation_error", message: "x" } } }; DB.imps = [{ id: 1, slug: b.body.slug, price: b.body.price, active: true, mp_id: c.id, min_price: c.supplier_price + c.commission, sellable: true, title: c.title, commission: c.commission, stock: DB.stock, product_status: "active", rrp: c.rrp }]; c.imported = true; return { id: 1, slug: b.body.slug, price: b.body.price, product: { ...c, descr: "وصف", images: [c.image] } }; }
+  if (m === "POST" && p === "/v1/marketplace/imports") { const c = DB.cat.find((x) => x.id === b.body.mp_id); if (b.body.price !== undefined && b.body.price !== c.rrp) return { __err: { status: 400, error: { code: "price_locked", message: "x" } } }; DB.imps = [{ id: 1, slug: b.body.slug, price: c.rrp, active: true, mp_id: c.id, min_price: c.rrp, sellable: true, title: c.title, commission: c.commission, stock: DB.stock, product_status: "active", rrp: c.rrp }]; c.imported = true; return { id: 1, slug: b.body.slug, price: c.rrp, product: { ...c, descr: "وصف", images: [c.image] } }; }
   if (m === "POST" && /\/orders\/\d+\/status$/.test(p)) { DB.ord[0].state = b.body.status === "delivered" ? "available" : "pending"; if (b.body.status === "shipped") DB.ord[0].ship = "shipped"; return { ok: true }; }
   if (m === "PATCH" && /products\/\d+$/.test(p)) return { ok: true };
   return { __err: { status: 404, error: { code: "not_found" } } };
@@ -47,28 +47,27 @@ function handle(b) {
   let t = await txt();
   ok("بطاقات الملخص: المتاح والضمان والعمولات", /9 000 دج/.test(t) && /600 دج/.test(t) && /800 دج/.test(t));
   ok("تنبيه رصيد المورّد غير الكافي (طلبان مرفوضان)", /رُفض 2 طلب/.test(t));
-  ok("الكتالوج: سعر المورّد والعمولة والمقترح، والعنوان يُهرَّب", /2 000 دج/.test(t) && /400 دج/.test(t) && /2 800 دج/.test(t) && await p.evaluate(() => !window.__pwn && !document.querySelector("#mk-app .mk-p img[src=x]")));
+  ok("الكتالوج: سعر البيع الثابت والعمولة، والعنوان يُهرَّب", /2 800 دج/.test(t) && /400 دج/.test(t) && !/سعر بيعك/.test(t) && await p.evaluate(() => !window.__pwn && !document.querySelector("#mk-app .mk-p img[src=x]")));
   ok("الكتالوج: شارة جملة ونسبة التسليم", /🏭 جملة/.test(t) && /90%/.test(t));
   await p.selectOption("#mk-seller", "retail"); await p.click('[data-mk="search"]'); await p.waitForTimeout(200);
   ok("فلتر البائع يُرسل seller", DB.calls.some((c) => c.path === "/v1/marketplace/catalog" && c.query && c.query.seller === "retail")); await p.selectOption("#mk-seller", ""); await p.click('[data-mk="search"]'); await p.waitForTimeout(200);
   ok("المنتج المستورد سابقاً يظهر «مستورد» بلا زر", /مستورد في متجرك/.test(t) && (await p.evaluate(() => document.querySelectorAll('[data-mk="imp"]').length === 1)));
-  /* سعر أقل من الحد الأدنى */
-  await p.fill("#mk-pr-7", "2300"); await p.click('[data-mk="imp"]'); ok("سعر أقل من (المورّد+العمولة) لا يُرسل", !DB.calls.some((c) => c.method === "POST" && c.path === "/v1/marketplace/imports"));
+  /* السعر مقفل: لا خانة سعر للأفلييت */
+  ok("لا خانة سعر في بطاقة الاستيراد (السعر مقفل)", await p.evaluate(() => !document.querySelector('[id^="mk-pr-"]')));
   /* استيراد بنقرة */
-  await p.fill("#mk-pr-7", "2800"); await p.click('[data-mk="imp"]');
+  await p.click('[data-mk="imp"]');
   await p.waitForFunction(() => window.__pub >= 1);
   const imp = DB.calls.find((c) => c.method === "POST" && c.path === "/v1/marketplace/imports");
-  ok("الاستيراد يرسل المعرّف والسعر وslug نظيفاً [a-z0-9-]", imp && imp.body.mp_id === 7 && imp.body.price === 2800 && /^[a-z0-9-]+$/.test(imp.body.slug), imp && imp.body);
+  ok("الاستيراد يرسل المعرّف والسعر وslug نظيفاً [a-z0-9-]", imp && imp.body.mp_id === 7 && imp.body.price === undefined && /^[a-z0-9-]+$/.test(imp.body.slug), imp && imp.body);
   const pr = await p.evaluate(() => Admin.products.find((x) => x.mpId === 7));
-  ok("المنتج أُنشئ في المتجر مرتبطاً بالمورّد بالسعر والمخزون والحد الأدنى", pr && pr.price === 2800 && pr.stock === 4 && pr.mpMin === 2400 && pr.active === true && pr.cover === "https://cdn.example/s.jpg" && pr.cat === "skin", pr);
+  ok("المنتج أُنشئ في المتجر مرتبطاً بالمورّد بالسعر والمخزون والحد الأدنى", pr && pr.price === 2800 && pr.stock === 4 && pr.mpMin === 2800 && pr.active === true && pr.cover === "https://cdn.example/s.jpg" && pr.cat === "skin", pr);
   /* مزامنة المخزون: نفد عند المورّد */
   await p.click('[data-mk="v"][data-v="imp"]'); DB.stock = 0; DB.imps[0].stock = 0; DB.imps[0].sellable = false;
   await p.click('[data-mk="sync"]'); await p.waitForFunction(() => window.__pub >= 2);
   const pr2 = await p.evaluate(() => Admin.products.find((x) => x.mpId === 7));
   ok("نفاد المخزون عند المورّد يوقف المنتج في متجرك", pr2.stock === 0 && pr2.active === false, pr2);
   /* سعر المستورد */
-  await p.fill("#mk-ip-1", "2900"); await p.click('[data-mk="ipr"]');
-  ok("تعديل سعر المستورد يرسل PATCH", DB.calls.some((c) => c.method === "PATCH" && /imports\/1$/.test(c.path) && c.body.price === 2900));
+  ok("لا تعديل لسعر المستورد (مقفل)", await p.evaluate(() => !document.querySelector('#mk-ip-1,[data-mk="ipr"]')));
   /* عمولاتي */
   await p.click('[data-mk="v"][data-v="aff"]'); t = await txt(); ok("عمولاتي: معلّقة بحالتها العربية", /معلّقة/.test(t) && /سارة/.test(t));
   /* كمورّد */

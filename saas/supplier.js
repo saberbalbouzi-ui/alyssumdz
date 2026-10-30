@@ -83,11 +83,11 @@
   }
   function vProds() {
     var f = S.form ? '<div class="card"><h2>منتج جديد</h2><div class="g2"><div><label for="p-title">اسم المنتج</label><input id="p-title" maxlength="160"></div><div><label for="p-cat">التصنيف</label><input id="p-cat" maxlength="60"></div></div>'
-      + '<div class="g3"><div><label for="p-sp">سعرك للأفلييت (دج)</label><input id="p-sp" type="number" min="1"></div><div><label for="p-cm">عمولة الأفلييت للقطعة (دج)</label><input id="p-cm" type="number" min="1"></div><div><label for="p-rrp">السعر العام المقترح (دج)</label><input id="p-rrp" type="number" min="1"></div></div>'
+      + '<div class="g3"><div><label for="p-rrp">سعر البيع للزبون (دج) — يبيع به الجميع</label><input id="p-rrp" type="number" min="2"></div><div><label for="p-cm">عمولة الأفلييت للقطعة (دج) — تُقتطع منه</label><input id="p-cm" type="number" min="1"></div></div>'
       + '<div class="g2"><div><label for="p-st">المخزون (فارغ = غير محدود)</label><input id="p-st" type="number" min="0"></div><div><label for="p-img">صور المنتج (حتى 4)</label><input id="p-img" type="file" accept="image/*" multiple></div></div><label for="p-desc">الوصف</label><textarea id="p-desc" maxlength="2000"></textarea>'
       + '<p class="mut">تُحجز العمولة من رصيدك عند كل طلب. المنتج الجديد يمرّ بموافقة الإدارة.</p><button class="btn" data-a="padd"' + (S.busy ? " disabled" : "") + ">أدرج المنتج</button></div>" : "";
     return '<div class="row" style="margin:.4rem 0"><button class="btn" data-a="pform">' + (S.form ? "إغلاق" : "＋ منتج جديد") + "</button></div>" + f + (S.prods.length ? S.prods.map(function (p) {
-      return '<div class="card"><div class="row" style="justify-content:space-between"><b>' + esc(p.title) + '</b><span class="st ' + (p.status === "active" ? "approved" : "pending") + '">' + esc(PST[p.status] || p.status) + "</span></div><p class=\"mut\">سعرك " + nf(p.supplier_price) + " · عمولة " + nf(p.commission) + " · مقترح " + nf(p.rrp) + " · أفلييت " + nf(p.importers) + " · طلبات معلّقة " + nf(p.pending_orders) + (p.note ? " · " + esc(p.note) : "") + "</p>"
+      return '<div class="card"><div class="row" style="justify-content:space-between"><b>' + esc(p.title) + '</b><span class="st ' + (p.status === "active" ? "approved" : "pending") + '">' + esc(PST[p.status] || p.status) + "</span></div><p class=\"mut\">سعر البيع " + nf(p.rrp) + " · عمولة " + nf(p.commission) + " · يبقى لك " + nf(p.supplier_price) + " · أفلييت " + nf(p.importers) + " · طلبات معلّقة " + nf(p.pending_orders) + (p.note ? " · " + esc(p.note) : "") + "</p>"
         + '<div class="row"><label style="margin:0">المخزون</label><input id="s-' + p.id + '" type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:110px"><button class="btn g" data-a="pstk" data-id="' + p.id + '">حفظ</button>' + (p.status === "active" ? '<button class="btn r" data-a="ppause" data-id="' + p.id + '" data-s="paused">إيقاف</button>' : p.status === "paused" ? '<button class="btn" data-a="ppause" data-id="' + p.id + '" data-s="active">استئناف</button>' : "") + "</div></div>";
     }).join("") : '<p class="mut">لم تُدرج منتجاً بعد.</p>');
   }
@@ -120,13 +120,13 @@
 
   /* ───── إجراءات ───── */
   function addProduct() {
-    var g = function (id) { return ($(id) || {}).value || ""; }, sp = Math.round(+g("p-sp")), cm = Math.round(+g("p-cm")), rrp = Math.round(+g("p-rrp")) || sp + cm, title = g("p-title").trim(), files = ($("p-img") || {}).files ? Array.prototype.slice.call($("p-img").files, 0, 4) : [];
-    if (title.length < 3) return flash("اكتب اسم المنتج", true); if (!(sp >= 1 && cm >= 1)) return flash("اكتب سعرك وعمولة الأفلييت", true); if (rrp < sp + cm) return flash("السعر العام المقترح لا يقل عن سعرك + العمولة (" + nf(sp + cm) + ")", true); if (!files.length) return flash("أضف صورة واحدة على الأقل", true);
+    var g = function (id) { return ($(id) || {}).value || ""; }, cm = Math.round(+g("p-cm")), rrp = Math.round(+g("p-rrp")), title = g("p-title").trim(), files = ($("p-img") || {}).files ? Array.prototype.slice.call($("p-img").files, 0, 4) : [];
+    if (title.length < 3) return flash("اكتب اسم المنتج", true); if (!(rrp >= 2 && cm >= 1)) return flash("اكتب سعر البيع وعمولة الأفلييت", true); if (cm >= rrp) return flash("العمولة يجب أن تكون أقل من سعر البيع", true); if (!files.length) return flash("أضف صورة واحدة على الأقل", true);
     var v = { descr: g("p-desc").trim(), cat: g("p-cat").trim(), st: g("p-st") };
     S.busy = true; draw();
     var urls = []; files.reduce(function (p, f) { return p.then(function () { return shrink(f).then(function (u) { return call("POST", "/v1/marketplace/images", { image: u }).then(function (r) { if (!r.ok) throw new Error(errOf(r)); urls.push(r.j.url); }); }); }); }, Promise.resolve())
-      .then(function () { var st = v.st; return call("POST", "/v1/marketplace/products", { slug: "p" + Date.now().toString(36), title: title, descr: v.descr, image: urls[0], images: urls, category: v.cat, supplier_price: sp, commission: cm, rrp: rrp, stock: st === "" ? null : Math.round(+st) }); })
-      .then(function (r) { S.busy = false; if (!r.ok) { flash(errOf(r), true); return; } S.form = false; ["p-title","p-cat","p-sp","p-cm","p-rrp","p-st","p-desc"].forEach(function (i) { delete DRAFT[i]; }); flash(r.j.status === "pending" ? "✅ أُرسل للمراجعة — يظهر للأفلييت بعد موافقة الإدارة" : "✅ المنتج معروض"); return load(); })
+      .then(function () { var st = v.st; return call("POST", "/v1/marketplace/products", { slug: "p" + Date.now().toString(36), title: title, descr: v.descr, image: urls[0], images: urls, category: v.cat, price: rrp, commission: cm, stock: st === "" ? null : Math.round(+st) }); })
+      .then(function (r) { S.busy = false; if (!r.ok) { flash(errOf(r), true); return; } S.form = false; ["p-title","p-cat","p-cm","p-rrp","p-st","p-desc"].forEach(function (i) { delete DRAFT[i]; }); flash(r.j.status === "pending" ? "✅ أُرسل للمراجعة — يظهر للأفلييت بعد موافقة الإدارة" : "✅ المنتج معروض"); return load(); })
       .catch(function (e) { S.busy = false; flash(e && e.message && e.message !== "img" && e.message !== "big" ? e.message : "تعذّر قراءة الصورة، جرّب صورة أخرى", true); });
   }
   function deposit() {

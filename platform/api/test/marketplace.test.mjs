@@ -20,7 +20,7 @@ ok("مرجع المورّد", supplierRef(12) === "MKO-12");
 
 /* ───── إدراج المورّد ───── */
 const P = { slug: "serum", title: "سيروم الوجه", descr: "وصف <b>x</b>", image: "https://cdn.example/s.jpg", category: "تجميل", supplier_price: 1500, commission: 400, rrp: 2400, stock: 5 };
-let [c, b] = await call("POST", "/v1/marketplace/products", { ...P, rrp: 1800 }, S.key); ok("rrp أقل من سعر المورّد + العمولة مرفوض", c === 400, b);
+let [c, b] = await call("POST", "/v1/marketplace/products", { ...P, commission: 2400 }, S.key); ok("عمولة لا تقل عن سعر البيع مرفوضة (يبقى للمورّد جزء)", c === 400, b);
 [c] = await call("POST", "/v1/marketplace/products", { ...P, commission: 0 }, S.key); ok("عمولة صفر مرفوضة", c === 400);
 [c] = await call("POST", "/v1/marketplace/products", { ...P, slug: "bad slug" }, S.key); ok("slug غير صالح", c === 400);
 [c, b] = await call("POST", "/v1/marketplace/products", P, S.key); ok("إدراج جديد ينتظر المراجعة", c === 201 && b.status === "pending", b);
@@ -29,17 +29,18 @@ const mpId = b.id;
 [c] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId }, A.key); ok("لا استيراد لمنتج غير معتمد", c === 404);
 [c] = await adm("POST", `/admin/marketplace/products/${mpId}/approve`, {}); ok("اعتماد المزوّد", c === 200);
 [c] = await adm("POST", `/admin/marketplace/products/${mpId}/approve`, {}); ok("اعتماد مكرر 409", c === 409);
-[, b] = await call("GET", "/v1/marketplace/catalog", null, A.key); ok("الكتالوج يعرض المنتج بأرقامه وصورة https", b.products.length === 1 && b.products[0].min_price === 1900 && b.products[0].commission === 400 && b.products[0].imported === false && b.products[0].descr.includes("x") && !b.products[0].descr.includes("<"), b);
+[, b] = await call("GET", "/v1/marketplace/catalog", null, A.key); ok("الكتالوج يعرض المنتج بأرقامه وصورة https", b.products.length === 1 && b.products[0].min_price === 2400 && b.products[0].supplier_price === 2000 && b.products[0].commission === 400 && b.products[0].imported === false && b.products[0].descr.includes("x") && !b.products[0].descr.includes("<"), b);
 [, b] = await call("GET", "/v1/marketplace/catalog", null, S.key); ok("المورّد لا يرى منتجاته في كتالوج الاستيراد", b.products.length === 0);
 [c] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId }, S.key); ok("لا استيراد لمنتجك", c === 404 || c === 409);
 
 /* ───── الاستيراد بنقرة ───── */
-[c, b] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId, price: 1800 }, A.key); ok("سعر أقل من الحد الأدنى مرفوض", c === 400, b);
+[c, b] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId, price: 1800 }, A.key); ok("الأفلييت لا يغيّر سعر البيع (مقفل)", c === 400 && b.error.code === "price_locked", b);
 [c, b] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId }, A.key); ok("استيراد بالسعر المقترح", c === 201 && b.slug === "mp-serum" && b.price === 2400 && b.product.title === "سيروم الوجه", b);
-[c, b] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId, price: 2500 }, A.key); ok("إعادة الاستيراد تحدّث السعر ولا تكرّر", c === 200 && sql("SELECT COUNT(*) n FROM mk_imports WHERE tenant_id=?", A.id).n === 1 && sql("SELECT price p FROM mk_imports WHERE tenant_id=?", A.id).p === 2500);
-await call("POST", "/v1/marketplace/imports", { mp_id: mpId, price: 2400 }, A.key); await app.cron();
+[c, b] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId, price: 2500 }, A.key); ok("إعادة الاستيراد بسعر مختلف مرفوضة", c === 400);
+[c] = await call("POST", "/v1/marketplace/imports", { mp_id: mpId }, A.key); ok("إعادة الاستيراد لا تكرّر", c === 200 && sql("SELECT COUNT(*) n FROM mk_imports WHERE tenant_id=?", A.id).n === 1 && sql("SELECT price p FROM mk_imports WHERE tenant_id=?", A.id).p === 2400);
+await call("POST", "/v1/marketplace/imports", { mp_id: mpId }, A.key); await app.cron();
 ok("المنتج يصل كتالوج الأفلييت (commerce) بمخزون المورّد", sql("SELECT s.stock st, s.price pr FROM cm_skus s WHERE s.tenant_id=? AND s.slug='mp-serum' AND s.vkey=''", A.id)?.st === 5 && sql("SELECT s.price pr FROM cm_skus s WHERE s.tenant_id=? AND s.slug='mp-serum'", A.id).pr === 2400);
-[, b] = await call("GET", "/v1/marketplace/imports", null, A.key); ok("قائمة المستورد بمخزون حيّ وحالة قابل للبيع", b.imports[0].stock === 5 && b.imports[0].sellable === true && b.imports[0].min_price === 1900, b);
+[, b] = await call("GET", "/v1/marketplace/imports", null, A.key); ok("قائمة المستورد بمخزون حيّ وحالة قابل للبيع", b.imports[0].stock === 5 && b.imports[0].sellable === true && b.imports[0].min_price === 2400 && b.imports[0].price === 2400, b);
 [, b] = await call("GET", "/v1/marketplace/catalog", null, A.key); ok("الكتالوج يعلّم المستورد", b.products[0].imported === true);
 
 /* ───── حارس الطلب: رصيد المورّد صفر ← رفض + تنبيه ───── */
@@ -62,8 +63,9 @@ ok("الدفتر متوازن", await balanced());
 
 /* حراس إضافية */
 [c, b] = await pub(order({ items: [{ slug: "mp-serum", qty: 4, price: 2400 }], subtotal: 9600, total: 10200 })); ok("كمية فوق مخزون المورّد 409 بلا أثر", c === 409 && b.error.code === "out_of_stock" && bal(S.id, "mk_escrow") === 800 && sql("SELECT stock s FROM mk_products WHERE id=?", mpId).s === 3, b);
-await call("POST", "/v1/marketplace/products", { ...P, commission: 1000, rrp: 2600 }, S.key);       // المورّد رفع العمولة فصار الحد الأدنى 2500 > سعر استيراد الأفلييت 2400
-[c, b] = await pub(order({ items: [{ slug: "mp-serum", qty: 1, price: 2400 }], subtotal: 2400, total: 3000 })); ok("سعر الاستيراد صار دون الحد بعد رفع العمولة ← 422 لحماية المورّد", c === 422 && b.error.code === "price_too_low" && bal(S.id, "mk_escrow") === 800, b);
+await call("POST", "/v1/marketplace/products", { ...P, commission: 1000, rrp: 2600 }, S.key);       // المورّد رفع سعر البيع: يصل كل المستوردين (السعر مقفل)
+await app.cron();
+ok("تغيير المورّد لسعر البيع يصل المستورد وكتالوجه", sql("SELECT price p FROM mk_imports WHERE tenant_id=?", A.id).p === 2600 && sql("SELECT s.price pr FROM cm_skus s WHERE s.tenant_id=? AND s.slug='mp-serum'", A.id).pr === 2600);
 await call("POST", "/v1/marketplace/products", { ...P, stock: 3 }, S.key);
 [c, b] = await pub(order({ items: [{ slug: "mp-serum", vid: "x", qty: 1, price: 2400 }], subtotal: 2400, total: 3000 })); ok("التنويعات غير مدعومة في السوق (حتى لو جهلها الكتالوج)", c === 422 && b.error.code === "variant_unsupported", b);
 
@@ -124,7 +126,7 @@ ok("استئناف وتحديث المخزون لحظياً عند الأفلي�
 [c] = await adm("POST", `/admin/marketplace/products/${mpId}/suspend`, { note: "مخالفة" }); await app.cron(); ok("إيقاف الإدارة", c === 200 && sql("SELECT active a FROM cm_skus WHERE tenant_id=? AND slug='mp-serum'", A.id).a === 0);
 [c] = await call("PATCH", `/v1/marketplace/products/${mpId}`, { status: "active" }, S.key); ok("المورّد لا يرفع إيقاف الإدارة", c === 409);
 [c] = await adm("POST", `/admin/marketplace/products/${mpId}/approve`, {}); ok("الإدارة تعيده", c === 200);
-[c, b] = await call("PATCH", `/v1/marketplace/imports/${sql("SELECT id i FROM mk_imports WHERE tenant_id=?", A.id).i}`, { price: 1000 }, A.key); ok("تعديل سعر الاستيراد دون الحد مرفوض", c === 400, b);
+[c, b] = await call("PATCH", `/v1/marketplace/imports/${sql("SELECT id i FROM mk_imports WHERE tenant_id=?", A.id).i}`, { price: 1000 }, A.key); ok("تعديل سعر الاستيراد مرفوض (مقفل)", c === 400 && b.error.code === "price_locked", b);
 [c, b] = await call("PATCH", `/v1/marketplace/imports/${sql("SELECT id i FROM mk_imports WHERE tenant_id=?", A.id).i}`, { active: false }, A.key); ok("الأفلييت يوقف منتجه", c === 200 && b.active === false);
 [c] = await pub(order()); ok("استيراد موقوف ← طلب مرفوض", c === 409);
 

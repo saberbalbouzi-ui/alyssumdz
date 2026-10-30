@@ -11,7 +11,7 @@ const SLUG = /^[A-Za-z0-9._-]{1,80}$/, MAX_PRICE = 100_000_000, REF_RE = /^MKO-(
 const txt = (v, n) => String(v ?? "").replace(/[<>\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, n);
 const int = (v) => { const n = Math.round(+v); return Number.isSafeInteger(n) ? n : NaN; };
 const imgUrl = (u) => (u && safeHttpsUrl(String(u)) && String(u).length <= 600 ? String(u) : "");
-/** الحد الأدنى لسعر بيع الأفلييت: يغطي سعر المورّد + العمولة (الباقي هامش المورّد) */
+/** سعر البيع المقفل = سعر المورّد + عمولته (سعر المورّد هنا = حصته من سعر البيع بعد اقتطاع العمولة) */
 export const minPrice = (p) => p.supplier_price + p.commission;
 /** رسم المنصة من العمولة المحرَّرة (نسبة) */
 export const feeOfCommission = (amount, pct) => Math.min(amount, Math.max(0, Math.round(amount * (+pct || 0) / 100)));
@@ -72,12 +72,11 @@ export const marketplace = {
         if (d.rowId) await db.run("DELETE FROM mk_orders WHERE id=?", d.rowId); } };
       try {
         for (const p of rows) {
-          const ln = o.lines.filter((l) => l.slug === p.islug); const qty = ln.reduce((a, l) => a + (l.qty >= 1 && l.qty <= 999 ? l.qty : NaN), 0), unit = p.iprice;      // السعر المعتمد = سعر الاستيراد (لا ما يدّعيه العميل؛ المخالفة تعلّمها commerce)
+          const ln = o.lines.filter((l) => l.slug === p.islug); const qty = ln.reduce((a, l) => a + (l.qty >= 1 && l.qty <= 999 ? l.qty : NaN), 0), unit = p.rrp;      // السعر مقفل = سعر المورّد (لا ما يدّعيه العميل؛ المخالفة تعلّمها commerce)
           if (!Number.isSafeInteger(qty)) throw new HttpError(422, "invalid_quantity", "كمية غير صالحة");
           if (ln.some((l) => l.vkey)) throw new HttpError(422, "variant_unsupported", "منتجات السوق المشترك لا تدعم التنويعات");
           if (!p.iactive || p.status !== "active") throw new HttpError(409, "supplier_unavailable", "هذا المنتج غير متاح حالياً");
           if (p.tenant_id === tid) throw new HttpError(409, "own_product", "لا يمكن بيع منتجك عبر السوق المشترك");
-          if (unit < minPrice(p)) throw new HttpError(422, "price_too_low", "سعر البيع أقل من الحد الأدنى للمنتج", { min_price: minPrice(p) });
           const prev = await db.one("SELECT id,state FROM mk_orders WHERE affiliate_id=? AND ref=? AND mp_id=?", tid, o.ref, p.id);
           if (prev && prev.state !== "rejected") continue;           // سبق توجيهه (إعادة محاولة)
           if (prev) await db.run("DELETE FROM mk_orders WHERE id=?", prev.id);
@@ -101,10 +100,13 @@ export const marketplace = {
     const productInput = (b, cur = null) => {
       const slug = cur ? cur.slug : txt(b.slug, 80); if (!SLUG.test(slug)) throw new HttpError(400, "validation_error", "slug: A-Z a-z 0-9 . _ -", { slug: "A-Za-z0-9._-" });
       const title = txt(b.title ?? cur?.title, 160); if (title.length < 3) throw new HttpError(400, "validation_error", "عنوان المنتج (3 أحرف على الأقل)", { title: "required" });
-      const sp = int(b.supplier_price ?? cur?.supplier_price), cm = int(b.commission ?? cur?.commission), rrp = int(b.rrp ?? cur?.rrp ?? NaN);
-      if (!(sp >= 1 && sp <= MAX_PRICE)) throw new HttpError(400, "validation_error", "supplier_price: سعر المورّد بالدينار", { supplier_price: "1..1e8" });
+      /* سعر بيع واحد يحدّده المورّد (price أو rrp) ويبيع به كل الأفلييت؛ عمولة الأفلييت تُقتطع منه وحصة المورّد = الباقي (تُشتق ولا تُدخَل) */
+      const cm = int(b.commission ?? cur?.commission); let price = int(b.price ?? b.rrp ?? cur?.rrp ?? NaN);
+      if (!Number.isFinite(price) && b.supplier_price !== undefined && Number.isFinite(cm)) price = int(b.supplier_price) + cm;      // توافق قديم: سعرك + العمولة
+      if (!(price >= 2 && price <= MAX_PRICE)) throw new HttpError(400, "validation_error", "price: سعر البيع للزبون بالدينار", { price: "2..1e8" });
       if (!(cm >= 1 && cm <= MAX_PRICE)) throw new HttpError(400, "validation_error", "commission: عمولة الأفلييت للقطعة بالدينار", { commission: "1..1e8" });
-      if (!(rrp >= sp + cm && rrp <= MAX_PRICE)) throw new HttpError(400, "validation_error", "rrp: السعر العام المقترح لا يقل عن سعر المورّد + العمولة", { rrp: `≥ ${sp + cm}` });
+      if (!(cm < price)) throw new HttpError(400, "validation_error", "commission: العمولة أقل من سعر البيع (يبقى للمورّد جزء منه)", { commission: `< ${price}` });
+      const sp = price - cm, rrp = price;
       const st = b.stock === undefined ? (cur?.stock ?? null) : (b.stock === null || b.stock === "" ? null : int(b.stock)); if (st !== null && !(st >= 0 && st <= 10_000_000)) throw new HttpError(400, "validation_error", "stock: عدد صحيح ≥ 0 أو null", { stock: "0.." });
       const images = (Array.isArray(b.images) ? b.images : JSON.parse(cur?.images ?? "[]")).map(imgUrl).filter(Boolean).slice(0, 8), image = imgUrl(b.image) || (b.image === undefined ? cur?.image : "") || images[0] || "";
       return { slug, title, descr: txt(b.descr ?? cur?.descr, 4000), image, images: JSON.stringify(images), category: txt(b.category ?? cur?.category, 60), supplier_price: sp, rrp, commission: cm, stock: st };
@@ -116,7 +118,12 @@ export const marketplace = {
       if (cur) {
         const st = cur.status === "rejected" ? ((await cfg()).auto_approve ? "active" : "pending") : cur.status;
         await db.run("UPDATE mk_products SET title=?,descr=?,image=?,images=?,category=?,supplier_price=?,rrp=?,commission=?,stock=?,status=?,updated_at=? WHERE id=?", d.title, d.descr, d.image, d.images, d.category, d.supplier_price, d.rrp, d.commission, d.stock, st, now, cur.id);
-        const p = await db.one("SELECT * FROM mk_products WHERE id=?", cur.id); await broadcast(p); return ok({ id: cur.id, status: st });
+        const p = await db.one("SELECT * FROM mk_products WHERE id=?", cur.id);
+        if (cur.rrp !== d.rrp) {          // السعر مقفل: تغيير المورّد لسعر البيع يصل كل المستوردين (كتالوجهم يتحدّث بالحدث)
+          const imps = await db.all("SELECT id,tenant_id,slug,active FROM mk_imports WHERE mp_id=? LIMIT 500", cur.id); await db.run("UPDATE mk_imports SET price=? WHERE mp_id=?", d.rrp, cur.id); let n = 0;
+          for (const i of imps) { const x = `mk:imp:${i.id}:${randHex(4)}`; await ctx.emit(i.tenant_id, "marketplace.imported", { mp_id: p.id, slug: i.slug, title: p.title, price: d.rrp, stock: p.stock, category: p.category }, x); if (n++ < 25) { try { await ctx.flush(i.tenant_id, x); } catch { /* cron */ } } }
+        }
+        await broadcast(p); return ok({ id: cur.id, status: st });
       }
       const st = (await cfg()).auto_approve ? "active" : "pending";
       const x = await db.run("INSERT INTO mk_products (tenant_id,slug,title,descr,image,images,category,supplier_price,rrp,commission,stock,status,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", tid, d.slug, d.title, d.descr, d.image, d.images, d.category, d.supplier_price, d.rrp, d.commission, d.stock, st, now, now);
@@ -144,10 +151,10 @@ export const marketplace = {
       const rows = await db.all(`SELECT p.*, t.name supplier_name, COALESCE(s.kind,'retail') seller_kind, s.name seller_name, (SELECT COUNT(*) FROM mk_orders o WHERE o.supplier_id=p.tenant_id AND o.state='available') n_del, (SELECT COUNT(*) FROM mk_orders o WHERE o.supplier_id=p.tenant_id AND o.state='returned') n_ret, (SELECT i.id FROM mk_imports i WHERE i.mp_id=p.id AND i.tenant_id=?) imported_id FROM mk_products p JOIN pf_tenants t ON t.id=p.tenant_id LEFT JOIN mk_sellers s ON s.tenant_id=p.tenant_id AND s.status='approved' WHERE ${w.join(" AND ")} ORDER BY ${sort} LIMIT ? OFFSET ?`, req.tenant.id, ...a, lim + 1, off);
       const more = rows.length > lim; return ok({ products: rows.slice(0, lim).map((p) => pubProduct(p, { supplier: p.seller_name || p.supplier_name, imported: !!p.imported_id, seller: { kind: p.seller_kind, delivered: p.n_del, returned: p.n_ret, rate: p.n_del + p.n_ret ? Math.round(100 * p.n_del / (p.n_del + p.n_ret)) : null } })), next_offset: more ? off + lim : null });
     });
-    r.post("/v1/marketplace/imports", { scope: "marketplace:write", limit: { key: "mki", max: 60, win: 3600 }, summary: "استيراد منتج من الكتالوج بنقرة: { mp_id, price? (افتراضي السعر المقترح، ≥ الحد الأدنى), slug? }. يعيد بيانات المنتج لإنشائه في متجرك" }, async (req) => {
+    r.post("/v1/marketplace/imports", { scope: "marketplace:write", limit: { key: "mki", max: 60, win: 3600 }, summary: "استيراد منتج من الكتالوج بنقرة: { mp_id, slug? }. السعر مقفل = سعر المورّد (لا يُغيَّر)؛ عمولتك تُقتطع منه. يعيد بيانات المنتج لإنشائه في متجرك" }, async (req) => {
       const b = req.json(), tid = req.tenant.id, p = await db.one("SELECT * FROM mk_products WHERE id=? AND status='active'", int(b.mp_id)); if (!p) throw new HttpError(404, "not_found", "المنتج غير موجود أو غير متاح");
-      if (p.tenant_id === tid) throw new HttpError(409, "own_product", "هذا منتجك أنت"); const price = b.price === undefined ? p.rrp : int(b.price);
-      if (!(price >= minPrice(p) && price <= MAX_PRICE)) throw new HttpError(400, "validation_error", `السعر لا يقل عن ${minPrice(p)} دج (سعر المورّد + العمولة)`, { price: `≥ ${minPrice(p)}` });
+      if (p.tenant_id === tid) throw new HttpError(409, "own_product", "هذا منتجك أنت"); const price = p.rrp;
+      if (b.price !== undefined && int(b.price) !== price) throw new HttpError(400, "price_locked", `سعر البيع يحدّده المورّد (${price} دج) ولا يمكن تغييره`, { price: `= ${price}` });
       const slug = b.slug === undefined ? `mp-${p.slug}`.slice(0, 80) : txt(b.slug, 80); if (!SLUG.test(slug)) throw new HttpError(400, "validation_error", "slug غير صالح", { slug: "A-Za-z0-9._-" });
       if (sandbox(req)) return ok({ ok: true, sandbox: true }, 201);
       const ex = await db.one("SELECT * FROM mk_imports WHERE tenant_id=? AND mp_id=?", tid, p.id), now = ctx.nowS(); let id;
@@ -160,12 +167,12 @@ export const marketplace = {
     });
     r.get("/v1/marketplace/imports", { scope: "marketplace:read", summary: "منتجاتي المستوردة مع مخزون المورّد الحيّ وحالته (للتزامن مع كتالوج المتجر)" }, async (req) => {
       const rows = await db.all("SELECT i.id,i.slug,i.price,i.active,i.mp_id,i.created_at, p.title,p.descr,p.image,p.images,p.category,p.supplier_price,p.rrp,p.commission,p.stock,p.status FROM mk_imports i JOIN mk_products p ON p.id=i.mp_id WHERE i.tenant_id=? ORDER BY i.id DESC LIMIT 300", req.tenant.id);
-      return ok({ imports: rows.map((x) => ({ id: x.id, slug: x.slug, price: x.price, active: !!x.active, mp_id: x.mp_id, min_price: x.supplier_price + x.commission, sellable: x.status === "active" && !!x.active && (x.stock == null || x.stock > 0) && x.price >= x.supplier_price + x.commission,
+      return ok({ imports: rows.map((x) => ({ id: x.id, slug: x.slug, price: x.rrp, active: !!x.active, mp_id: x.mp_id, min_price: x.rrp, sellable: x.status === "active" && !!x.active && (x.stock == null || x.stock > 0),
         title: x.title, descr: x.descr, image: x.image, images: JSON.parse(x.images || "[]"), category: x.category, rrp: x.rrp, commission: x.commission, stock: x.stock, product_status: x.status })) });
     });
-    r.patch("/v1/marketplace/imports/:id", { scope: "marketplace:write", limit: { key: "mkip", max: 120, win: 3600 }, summary: "تغيير سعر بيع منتج مستورد أو إيقافه/استئنافه: { price?, active? }" }, async (req) => {
-      const i = await db.one("SELECT i.*, p.supplier_price, p.commission, p.stock, p.status, p.title, p.category FROM mk_imports i JOIN mk_products p ON p.id=i.mp_id WHERE i.id=? AND i.tenant_id=?", +req.params.id, req.tenant.id); if (!i) throw new HttpError(404, "not_found", "غير موجود"); const b = req.json();
-      let price = i.price, active = i.active; if (b.price !== undefined) { price = int(b.price); if (!(price >= i.supplier_price + i.commission && price <= MAX_PRICE)) throw new HttpError(400, "validation_error", `السعر لا يقل عن ${i.supplier_price + i.commission} دج`, { price: `≥ ${i.supplier_price + i.commission}` }); }
+    r.patch("/v1/marketplace/imports/:id", { scope: "marketplace:write", limit: { key: "mkip", max: 120, win: 3600 }, summary: "إيقاف/استئناف منتج مستورد: { active? } (السعر مقفل)" }, async (req) => {
+      const i = await db.one("SELECT i.*, p.supplier_price, p.rrp, p.commission, p.stock, p.status, p.title, p.category FROM mk_imports i JOIN mk_products p ON p.id=i.mp_id WHERE i.id=? AND i.tenant_id=?", +req.params.id, req.tenant.id); if (!i) throw new HttpError(404, "not_found", "غير موجود"); const b = req.json();
+      const price = i.rrp; let active = i.active; if (b.price !== undefined && int(b.price) !== price) throw new HttpError(400, "price_locked", `سعر البيع يحدّده المورّد (${price} دج) ولا يمكن تغييره`, { price: `= ${price}` });
       if (b.active !== undefined) active = b.active ? 1 : 0; await db.run("UPDATE mk_imports SET price=?, active=? WHERE id=?", price, active, i.id);
       await ctx.emit(req.tenant.id, "marketplace.imported", { mp_id: i.mp_id, slug: i.slug, title: i.title, price, stock: i.stock, category: i.category }, `mk:imp:${i.id}:${randHex(4)}`);
       await ctx.emit(req.tenant.id, "marketplace.stock", { slug: i.slug, stock: i.stock, active: !!active && i.status === "active", mp_id: i.mp_id }, `mk:stk:${i.id}:${randHex(4)}`); return ok({ ok: true, price, active: !!active });

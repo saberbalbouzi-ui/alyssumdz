@@ -21,7 +21,7 @@ const KEY = "pk_live_" + "b".repeat(40), PNG = Buffer.from("iVBORw0KGgoAAAANSUhE
     else if (b.path === "/v1/marketplace/stats") data = { orders: 3, delivered: 2, returned: 1, delivery_rate: 67, sales: 8400, commissions_paid: 800, commissions_held: 400, top: [] };
     else if (b.path === "/v1/marketplace/wallet") data = { available: 3000, supplier_escrow: 400, supplier: { to_ship: 1, rejected_for_funds: 0 }, affiliate: { available: 0 } };
     else if (b.path === "/v1/marketplace/products" && b.method === "GET") data = { products: PRODS };
-    else if (b.path === "/v1/marketplace/products" && b.method === "POST") { PRODS.push({ id: 2, title: b.body.title, status: "pending", supplier_price: b.body.supplier_price, commission: b.body.commission, rrp: b.body.rrp, stock: b.body.stock }); data = { id: 2, status: "pending" }; }
+    else if (b.path === "/v1/marketplace/products" && b.method === "POST") { PRODS.push({ id: 2, title: b.body.title, status: "pending", supplier_price: b.body.price - b.body.commission, commission: b.body.commission, rrp: b.body.price, stock: b.body.stock }); data = { id: 2, status: "pending" }; }
     else if (b.path === "/v1/marketplace/images") data = { url: "https://api.example/v1/marketplace/img/9" };
     else if (b.path === "/v1/marketplace/orders" && b.method === "GET") data = { orders: ORD };
     else if (/orders\/7\/status/.test(b.path)) { ORD[0].state = b.body.status === "delivered" ? "available" : "pending"; data = { ok: true }; }
@@ -56,10 +56,10 @@ const KEY = "pk_live_" + "b".repeat(40), PNG = Buffer.from("iVBORw0KGgoAAAANSUhE
   ok("لا XSS في اسم المنتج", !(await page.$("#exw b b")) && (await page.innerText("#exw")).includes("<b>سيروم</b>"));
   await page.click('[data-a="pform"]'); await page.click('[data-a="padd"]'); await page.waitForTimeout(150);
   ok("إدراج بلا بيانات يُرفض محلياً", !calls.some(c => c.method === "POST" && c.path === "/v1/marketplace/products"));
-  await page.fill("#p-title", "كريم الليل"); await page.fill("#p-sp", "1500"); await page.fill("#p-cm", "300"); await page.fill("#p-st", "20"); await page.setInputFiles("#p-img", { name: "x.png", mimeType: "image/png", buffer: PNG });
+  await page.fill("#p-title", "كريم الليل"); await page.fill("#p-rrp", "1800"); await page.fill("#p-cm", "300"); await page.fill("#p-st", "20"); await page.setInputFiles("#p-img", { name: "x.png", mimeType: "image/png", buffer: PNG });
   await page.click('[data-a="padd"]'); await page.waitForSelector("text=أُرسل للمراجعة");
   const im = calls.find(c => c.path === "/v1/marketplace/images"), pr = calls.find(c => c.method === "POST" && c.path === "/v1/marketplace/products");
-  ok("الصورة تُضغط وتُرفع ثم يُدرج المنتج بروابطها", im && /^data:image\/(jpeg|webp|png)/.test(im.body.image) && pr && pr.body.images[0].includes("/img/9") && pr.body.supplier_price === 1500 && pr.body.commission === 300 && pr.body.rrp === 1800 && pr.body.stock === 20, pr && pr.body);
+  ok("الصورة تُضغط وتُرفع ثم يُدرج المنتج بروابطها", im && /^data:image\/(jpeg|webp|png)/.test(im.body.image) && pr && pr.body.images[0].includes("/img/9") && pr.body.price === 1800 && pr.body.commission === 300 && pr.body.stock === 20, pr && pr.body);
   await page.click('[data-a="v"][data-v="ord"]'); await page.waitForSelector("text=MKO-7");
   ok("الطلب: بيانات الزبون وزر واتساب بلا XSS", (await page.evaluate(() => window.__z)) === undefined && !!(await page.$('#exw a[href^="https://wa.me/2136611"]')));
   await page.click('[data-a="ost"][data-s="delivered"]'); await page.waitForTimeout(250);

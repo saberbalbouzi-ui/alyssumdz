@@ -1,6 +1,6 @@
 /* «التسويق بالعمولة»: شبكة دروبشيبينغ محلية بين متاجر المنصة.
-   (1) الكتالوج: منتجات الموردين بسعر المورّد والسعر العام المقترح والعمولة، واستيراد بنقرة إلى متجرك (يبقى مرتبطاً بالمورّد فيتزامن المخزون).
-   (2) مستورداتي: سعر البيع (لا يقل عن سعر المورّد + العمولة) والمخزون الحيّ من المورّد.
+   (1) الكتالوج: منتجات الموردين بسعر بيع ثابت يحدّده المورّد وعمولتك، واستيراد بنقرة إلى متجرك (يبقى مرتبطاً بالمورّد فيتزامن المخزون).
+   (2) مستورداتي: سعر البيع مقفل = سعر المورّد (عمولتك تُقتطع منه) والمخزون الحيّ من المورّد.
    (3) كمورّد: أدرج منتجاتك، وتابع الطلبات المطلوب شحنها ببيانات الزبون وحدّث حالتها.
    (4) عمولاتي كأفلييت: معلّقة ← متاحة عند التسليم فقط.
    الأموال تُقيَّد في الخادم وحده (ضمان من رصيد المورّد)؛ يعمل عبر وسيط مدير مسجَّل الدخول. كل نص قادم من الخادم يُهرَّب. */
@@ -51,7 +51,7 @@ const AdminMarketplace = (() => {
     for (const i of S.imps) {
       const p = ad.products.find(x => x.slug === i.slug && x.mpId === i.mp_id); if (!p) continue;
       const stock = i.stock == null ? null : +i.stock, act = !!i.sellable;
-      const patch = { stock, active: act, mpMin: i.min_price, price: i.price };
+      const patch = { stock, active: act, mpMin: i.price, price: i.price };
       for (const k of Object.keys(patch)) { if (JSON.stringify(p[k]) !== JSON.stringify(patch[k]) && !(k === "stock" && patch.stock === null && p.stock == null)) { p[k] = patch[k]; n++; } }
       if (stock === null) delete p.stock;
     }
@@ -62,14 +62,12 @@ const AdminMarketplace = (() => {
 
   /* ───── استيراد بنقرة ───── */
   async function doImport(id) {
-    const ad = A(), card = S.cat.find(x => x.id === id); if (!ad || !card) return; const inp = $("mk-pr-" + id), price = Math.round(+(inp || {}).value || card.rrp);
-    if (price < card.supplier_price + card.commission) { toast(`السعر لا يقل عن ${nf(card.supplier_price + card.commission)} دج (سعر المورّد + عمولته)`); return; }
-    S.busy = true; draw(); const slug = slugOf("mp-" + card.slug);
-    const r = await call("POST", "/v1/marketplace/imports", { mp_id: id, price, slug }); S.busy = false;
+    const ad = A(), card = S.cat.find(x => x.id === id); if (!ad || !card) return; S.busy = true; draw(); const slug = slugOf("mp-" + card.slug);
+    const r = await call("POST", "/v1/marketplace/imports", { mp_id: id, slug }); S.busy = false;          // السعر مقفل = سعر المورّد
     if (!r.ok) { toast(errOf(r)); draw(); return; }
     const pr = r.j.product || card, imgs = (pr.images && pr.images.length ? pr.images : (pr.image ? [pr.image] : []));
     const had = ad.products.findIndex(x => x.slug === r.j.slug);
-    const rec = { slug: r.j.slug, title: pr.title, price: r.j.price, desc: pr.descr || "", cat: Object.keys(ad.categories || {})[0] || "", cover: imgs[0] || pr.image || "", images: imgs, active: pr.stock == null || pr.stock > 0, mpId: id, mpMin: pr.supplier_price + pr.commission, tags: [] };
+    const rec = { slug: r.j.slug, title: pr.title, price: r.j.price, desc: pr.descr || "", cat: Object.keys(ad.categories || {})[0] || "", cover: imgs[0] || pr.image || "", images: imgs, active: pr.stock == null || pr.stock > 0, mpId: id, mpMin: r.j.price, tags: [] };
     if (pr.stock != null) rec.stock = pr.stock;
     const before = ad.products.slice(); if (had >= 0) ad.products[had] = Object.assign({}, ad.products[had], rec); else ad.products.push(rec);
     const ok = typeof ad.publishDataJs === "function" ? await ad.publishDataJs() : false;
@@ -81,11 +79,11 @@ const AdminMarketplace = (() => {
   function ownList() { const ad = A(); return ad && Array.isArray(ad.products) ? ad.products.filter(p => p.slug && !p.mpId && !p.digital && !(S.mine || []).some(m => m.slug === p.slug)) : []; }
   async function listOwn() {
     const ad = A(), slug = ($("mk-f-p") || {}).value, p = ad && ad.products.find(x => x.slug === slug); if (!p) { toast("اختر منتجاً"); return; }
-    const sp = Math.round(+($("mk-f-sp") || {}).value), cm = Math.round(+($("mk-f-cm") || {}).value), rrp = Math.round(+($("mk-f-rrp") || {}).value) || sp + cm, st = ($("mk-f-st") || {}).value;
-    if (!(sp >= 1) || !(cm >= 1)) { toast("اكتب سعرك للأفلييت وعمولته بالدينار"); return; } if (rrp < sp + cm) { toast("السعر العام المقترح لا يقل عن سعرك + العمولة (" + nf(sp + cm) + ")"); return; }
+    const price = Math.round(+($("mk-f-pr") || {}).value), cm = Math.round(+($("mk-f-cm") || {}).value), st = ($("mk-f-st") || {}).value;
+    if (!(price >= 2) || !(cm >= 1)) { toast("اكتب سعر البيع للزبون وعمولة الأفلييت بالدينار"); return; } if (cm >= price) { toast("العمولة يجب أن تكون أقل من سعر البيع (يبقى لك الباقي)"); return; }
     const imgs = (Array.isArray(p.images) ? p.images : []).concat(p.cover ? [p.cover] : []).map(abs).filter(u => /^https:\/\//.test(u));
     if (!imgs.length) { toast("المنتج يحتاج صورة على رابط https (انشر موقعك أولاً)"); return; }
-    S.busy = true; draw(); const r = await call("POST", "/v1/marketplace/products", { slug: p.slug, title: p.title, descr: String(p.desc || "").slice(0, 3900), image: abs(p.cover) || imgs[0], images: [...new Set(imgs)].slice(0, 8), category: (ad.categories || {})[p.cat] || "", supplier_price: sp, commission: cm, rrp, stock: st === "" ? (p.stock == null ? null : +p.stock) : +st }); S.busy = false;
+    S.busy = true; draw(); const r = await call("POST", "/v1/marketplace/products", { slug: p.slug, title: p.title, descr: String(p.desc || "").slice(0, 3900), image: abs(p.cover) || imgs[0], images: [...new Set(imgs)].slice(0, 8), category: (ad.categories || {})[p.cat] || "", price, commission: cm, stock: st === "" ? (p.stock == null ? null : +p.stock) : +st }); S.busy = false;
     if (!r.ok) toast(errOf(r)); else { toast(r.j.status === "pending" ? "✅ أُرسل للمراجعة — يظهر في الكتالوج بعد موافقة الإدارة" : "✅ المنتج معروض في الكتالوج"); S.form = false; } await loadAll(); draw();
   }
 
@@ -117,13 +115,13 @@ const AdminMarketplace = (() => {
   }
   function cardHtml(p) {
     return `<div class="mk-p">${p.image ? `<img loading="lazy" src="${esc(p.image)}" alt="">` : ""}<div><h4>${esc(p.title)}</h4><small style="opacity:.75">${esc(p.supplier || "")}${sellerBadge(p.seller)}${p.category ? " · " + esc(p.category) : ""}</small>
-<div class="mk-kv"><span>سعر المورّد</span><b>${nf(p.supplier_price)} دج</b></div><div class="mk-kv"><span>عمولتك</span><b>${nf(p.commission)} دج</b></div><div class="mk-kv"><span>السعر المقترح</span><span>${nf(p.rrp)} دج</span></div><div class="mk-kv"><span>المخزون</span><span>${p.stock == null ? "غير محدود" : nf(p.stock)}</span></div>
-${p.imported ? '<span class="mk-chip" style="--c:var(--g-mint-rgb)">✓ مستورد في متجرك</span>' : `<label class="mk-row" style="display:grid;font-size:.8rem">سعر بيعك (دج)<input id="mk-pr-${p.id}" type="number" min="${p.supplier_price + p.commission}" value="${p.rrp}"></label><button class="mk-btn" data-mk="imp" data-id="${p.id}" ${S.busy ? "disabled" : ""}>استيراد بنقرة</button>`}</div></div>`;
+<div class="mk-kv"><span>سعر البيع للزبون</span><b>${nf(p.rrp)} دج</b></div><div class="mk-kv"><span>عمولتك من كل قطعة</span><b>${nf(p.commission)} دج</b></div><div class="mk-kv"><span>المخزون</span><span>${p.stock == null ? "غير محدود" : nf(p.stock)}</span></div>
+${p.imported ? '<span class="mk-chip" style="--c:var(--g-mint-rgb)">✓ مستورد في متجرك</span>' : `<small class="mk-hint">تبيعه بنفس السعر ولا يمكن تغييره؛ عمولتك تُقتطع منه بعد التسليم.</small><button class="mk-btn" data-mk="imp" data-id="${p.id}" ${S.busy ? "disabled" : ""}>استيراد بنقرة</button>`}</div></div>`;
   }
   function rulesHtml() {
     return `<details class="mk-box" style="margin-bottom:.7rem"><summary style="cursor:pointer;font-weight:800">📜 قواعد التعامل بين المورّد والأفلييت</summary><div class="mk-hint" style="line-height:1.9;opacity:1">
 <b>الأدوار:</b> المورّد يملك المنتج والمخزون ويؤكّد الطلب بالهاتف ويشحن ويحصّل ثمنه من الزبون عند الاستلام. الأفلييت يعرض المنتج ويجلب الزبائن، ولا يشحن ولا يحصّل المال.<br>
-<b>المال:</b> سعر بيعك لا يقل عن سعر المورّد + العمولة. تُحجز العمولة من رصيد المورّد عند الطلب، وتُحرَّر لك عند «سُلِّم» بعد رسم المنصة، وتعود للمورّد عند الإرجاع أو الإلغاء قبل الشحن. رصيد المورّد لا يكفي ← يُرفض الطلب.<br>
+<b>المال:</b> تبيع بنفس سعر المورّد ولا تغيّره، وعمولتك تُقتطع من هذا السعر. تُحجز العمولة من رصيد المورّد عند الطلب، وتُحرَّر لك عند «سُلِّم» بعد رسم المنصة، وتعود للمورّد عند الإرجاع أو الإلغاء قبل الشحن. رصيد المورّد لا يكفي ← يُرفض الطلب.<br>
 <b>مواعيد مقترحة للمورّد:</b> تأكيد الزبون بالهاتف خلال 24 ساعة، والشحن خلال 48 ساعة من التأكيد؛ زبون لا يردّ ← إلغاء قبل الشحن.<br>
 <b>التواصل:</b> حالة الطلب والعمولة والمخزون تتحدّث تلقائياً لدى الطرفين. المورّد وحده يتصل بالزبون. الخلاف بين الطرفين يُرفع كطلب دعم من «إعدادات الموقع ← طلبات الدعم» وتحسمه الإدارة.<br>
 <b>الأفلييت:</b> لا ادّعاءات طبية أو وعود غير حقيقية، ويسوّق المنتج كما وصفه المورّد.</div></details>`;
@@ -132,12 +130,12 @@ ${p.imported ? '<span class="mk-chip" style="--c:var(--g-mint-rgb)">✓ مستو
 ${S.cat.length ? `<div class="mk-grid">${S.cat.map(cardHtml).join("")}</div>${S.more ? '<p><button class="mk-btn" data-mk="more">عرض المزيد</button></p>' : ""}` : '<div class="mk-box mk-off">لا منتجات في الكتالوج حالياً. عندما يعرض الموردون منتجاتهم تظهر هنا.</div>'}`; }
   function vImp() {
     return `<div class="mk-box"><div class="mk-row"><h3 style="margin:0">منتجاتي المستوردة</h3><button class="mk-btn o" data-mk="sync">⟳ مزامنة المخزون والأسعار مع متجري</button></div><p class="mk-hint">المخزون والإتاحة يتبعان المورّد: ينفد عنده ← يتوقف البيع عندك تلقائياً. تعديل السعر هنا ينعكس على متجرك.</p>
-${S.imps.length ? `<div class="mk-sc"><table class="mk-tbl"><thead><tr><th>المنتج</th><th>سعر بيعك</th><th>الحد الأدنى</th><th>عمولتك</th><th>مخزون المورّد</th><th>الحالة</th><th></th></tr></thead><tbody>${S.imps.map(i => `<tr><td>${esc(i.title)}<br><small>${esc(i.slug)}</small></td><td><input id="mk-ip-${i.id}" type="number" value="${i.price}" min="${i.min_price}" style="width:90px"> <button class="mk-btn" data-mk="ipr" data-id="${i.id}">حفظ</button></td><td>${nf(i.min_price)}</td><td>${nf(i.commission)}</td><td>${i.stock == null ? "غير محدود" : nf(i.stock)}</td><td>${i.sellable ? chip("للبيع", "var(--g-mint-rgb)") : chip(i.product_status !== "active" ? "أوقفه المورّد" : i.active ? "نفد المخزون" : "موقوف منك", "var(--g-rose-rgb)")}</td><td><button class="mk-btn ${i.active ? "r" : ""}" data-mk="itog" data-id="${i.id}" data-on="${i.active ? 0 : 1}">${i.active ? "إيقاف" : "استئناف"}</button></td></tr>`).join("")}</tbody></table></div>` : '<p class="mk-hint">لم تستورد منتجاً بعد — ابدأ من «الكتالوج».</p>'}</div>`; }
+${S.imps.length ? `<div class="mk-sc"><table class="mk-tbl"><thead><tr><th>المنتج</th><th>سعر البيع (ثابت)</th><th>عمولتك</th><th>مخزون المورّد</th><th>الحالة</th><th></th></tr></thead><tbody>${S.imps.map(i => `<tr><td>${esc(i.title)}<br><small>${esc(i.slug)}</small></td><td>${nf(i.price)} دج</td><td>${nf(i.commission)}</td><td>${i.stock == null ? "غير محدود" : nf(i.stock)}</td><td>${i.sellable ? chip("للبيع", "var(--g-mint-rgb)") : chip(i.product_status !== "active" ? "أوقفه المورّد" : i.active ? "نفد المخزون" : "موقوف منك", "var(--g-rose-rgb)")}</td><td><button class="mk-btn ${i.active ? "r" : ""}" data-mk="itog" data-id="${i.id}" data-on="${i.active ? 0 : 1}">${i.active ? "إيقاف" : "استئناف"}</button></td></tr>`).join("")}</tbody></table></div>` : '<p class="mk-hint">لم تستورد منتجاً بعد — ابدأ من «الكتالوج».</p>'}</div>`; }
   function vSup() {
     const own = ownList();
     return `<div class="mk-box"><div class="mk-row"><h3 style="margin:0">منتجاتي المعروضة للأفلييت</h3><button class="mk-btn" data-mk="form">${S.form ? "إغلاق" : "＋ إدراج منتج"}</button></div>
-${S.form ? `<div class="mk-row" style="margin-top:.7rem"><label style="flex:1;min-width:200px">المنتج<select id="mk-f-p">${own.map(p => `<option value="${esc(p.slug)}">${esc(p.title)} — ${nf(p.price)} دج</option>`).join("")}</select></label><label>سعرك للأفلييت (دج)<input id="mk-f-sp" type="number" min="1"></label><label>عمولة الأفلييت للقطعة (دج)<input id="mk-f-cm" type="number" min="1"></label><label>السعر العام المقترح (دج)<input id="mk-f-rrp" type="number" min="1"></label><label>المخزون (فارغ = مخزون المنتج)<input id="mk-f-st" type="number" min="0"></label><button class="mk-btn" data-mk="list" ${S.busy || !own.length ? "disabled" : ""}>أدرج في السوق</button></div><p class="mk-hint">تُحجز العمولة من رصيدك عند كل طلب، فاحرص على رصيد كافٍ. المنتج الجديد يمرّ بموافقة الإدارة.</p>` : ""}
-${S.mine.length ? `<div class="mk-sc"><table class="mk-tbl"><thead><tr><th>المنتج</th><th>سعرك</th><th>العمولة</th><th>المقترح</th><th>المخزون</th><th>الحالة</th><th>أفلييت/طلبات</th><th></th></tr></thead><tbody>${S.mine.map(p => { const s = PST[p.status] || [p.status, "var(--g-blue-rgb)"]; return `<tr><td>${esc(p.title)}</td><td>${nf(p.supplier_price)}</td><td>${nf(p.commission)}</td><td>${nf(p.rrp)}</td><td><input id="mk-st-${p.id}" type="number" min="0" value="${p.stock == null ? "" : p.stock}" placeholder="∞" style="width:80px"> <button class="mk-btn" data-mk="stk" data-id="${p.id}">حفظ</button></td><td>${chip(s[0], s[1])}${p.note ? `<br><small>${esc(p.note)}</small>` : ""}</td><td>${nf(p.importers)} / ${nf(p.pending_orders)}</td><td>${p.status === "active" ? `<button class="mk-btn r" data-mk="pst" data-id="${p.id}" data-s="paused">إيقاف</button>` : p.status === "paused" ? `<button class="mk-btn" data-mk="pst" data-id="${p.id}" data-s="active">استئناف</button>` : ""}</td></tr>`; }).join("")}</tbody></table></div>` : '<p class="mk-hint">لم تُدرج منتجاً بعد.</p>'}</div>`; }
+${S.form ? `<div class="mk-row" style="margin-top:.7rem"><label style="flex:1;min-width:200px">المنتج<select id="mk-f-p">${own.map(p => `<option value="${esc(p.slug)}">${esc(p.title)} — ${nf(p.price)} دج</option>`).join("")}</select></label><label>سعر البيع للزبون (دج) — يبيع به الجميع<input id="mk-f-pr" type="number" min="2"></label><label>عمولة الأفلييت للقطعة (دج) — تُقتطع منه<input id="mk-f-cm" type="number" min="1"></label><label>المخزون (فارغ = مخزون المنتج)<input id="mk-f-st" type="number" min="0"></label><button class="mk-btn" data-mk="list" ${S.busy || !own.length ? "disabled" : ""}>أدرج في السوق</button></div><p class="mk-hint">تُحجز العمولة من رصيدك عند كل طلب، فاحرص على رصيد كافٍ. المنتج الجديد يمرّ بموافقة الإدارة.</p>` : ""}
+${S.mine.length ? `<div class="mk-sc"><table class="mk-tbl"><thead><tr><th>المنتج</th><th>سعر البيع</th><th>العمولة</th><th>يبقى لك</th><th>المخزون</th><th>الحالة</th><th>أفلييت/طلبات</th><th></th></tr></thead><tbody>${S.mine.map(p => { const s = PST[p.status] || [p.status, "var(--g-blue-rgb)"]; return `<tr><td>${esc(p.title)}</td><td>${nf(p.rrp)}</td><td>${nf(p.commission)}</td><td>${nf(p.supplier_price)}</td><td><input id="mk-st-${p.id}" type="number" min="0" value="${p.stock == null ? "" : p.stock}" placeholder="∞" style="width:80px"> <button class="mk-btn" data-mk="stk" data-id="${p.id}">حفظ</button></td><td>${chip(s[0], s[1])}${p.note ? `<br><small>${esc(p.note)}</small>` : ""}</td><td>${nf(p.importers)} / ${nf(p.pending_orders)}</td><td>${p.status === "active" ? `<button class="mk-btn r" data-mk="pst" data-id="${p.id}" data-s="paused">إيقاف</button>` : p.status === "paused" ? `<button class="mk-btn" data-mk="pst" data-id="${p.id}" data-s="active">استئناف</button>` : ""}</td></tr>`; }).join("")}</tbody></table></div>` : '<p class="mk-hint">لم تُدرج منتجاً بعد.</p>'}</div>`; }
   function vOrd() {
     const rows = S.ord.filter(o => o.state !== "rejected");
     return `<div class="mk-box"><h3>طلبات تشحنها كمورّد</h3><p class="mk-hint">هذه طلبات متاجر الأفلييت لمنتجاتك: اشحنها للزبون وحصّل <b>المبلغ الإجمالي</b> منه عند التسليم (دفع عند الاستلام). تُحجز العمولة من رصيدك لحين التسليم.</p>
@@ -163,7 +161,6 @@ ${S.aff.length ? `<div class="mk-sc"><table class="mk-tbl"><thead><tr><th>الط
     else if (a === "more") { await loadCat(true); draw(); }
     else if (a === "imp") await doImport(id);
     else if (a === "sync") { await loadAll(); const n = await syncStore(true); if (n === -1) toast("تعذّر نشر التحديث"); draw(); }
-    else if (a === "ipr") { const v = Math.round(+($("mk-ip-" + id) || {}).value); const r = await call("PATCH", "/v1/marketplace/imports/" + id, { price: v }); toast(r.ok ? "✅ حُفظ السعر" : errOf(r)); await loadAll(); await syncStore(); draw(); }
     else if (a === "itog") { const r = await call("PATCH", "/v1/marketplace/imports/" + id, { active: el.dataset.on === "1" }); toast(r.ok ? "تم" : errOf(r)); await loadAll(); await syncStore(); draw(); }
     else if (a === "form") { S.form = !S.form; draw(); }
     else if (a === "list") await listOwn();
