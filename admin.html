@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.676">
+<meta name="admin-version" content="1.89.677">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -20485,6 +20485,14 @@ const PBClone = (function () {
     throw new Error("تعذّر جلب الصفحة (" + (last && last.message || "؟") + "). جرّب موقعاً آخر أو استعمل تبويب «صورة» بلقطة شاشة للصفحة.");
   }
   /* جلب بمتصفح كامل على خادم: يشغّل workflow «clone-page» في مستودعك (التشغيل الآلي + Chromium) فيعرض الصفحة بجافاسكربتها ويحفظ نسخة جامدة في assets/clone ثم تُقرأ هنا */
+  /* وسيط النشر لا يمرّر ترويسة Accept الخام فتعود استجابة JSON فيها content بـbase64 (أو بلا content للملفات الكبيرة): نفكّها إلى النص الأصلي */
+  async function ghBody(txt, H) {
+    const t = String(txt || "").replace(/^\uFEFF/, ""); if (t.charAt(0) !== "{") return txt; let j; try { j = JSON.parse(t); } catch (e) { return txt; } if (!j || j.type !== "file" && !j.git_url) return txt;
+    const dec = b64 => { const bin = atob(String(b64).replace(/\s/g, "")), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new TextDecoder("utf-8").decode(u); };
+    if (j.content && j.encoding === "base64") return dec(j.content);
+    if (j.git_url) { const r = await fetch(j.git_url, { headers: H }).catch(() => null); if (r && r.ok) { const b = await r.json().catch(() => null); if (b && b.content) return dec(b.content); } }
+    return txt;
+  }
   async function fetchFull(url, W, token) {
     const c = typeof GH !== "undefined" ? GH.cfg() : null; if (!c || !c.token || c.token === "php" || !c.owner) throw new Error("الجلب بمتصفح كامل يحتاج ربط النشر في الإعدادات (غير متاح في هذه النسخة)");
     const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), api = "https://api.github.com/repos/" + c.owner + "/" + c.repo, H = { Authorization: "Bearer " + c.token, Accept: "application/vnd.github+json" };
@@ -20494,7 +20502,7 @@ const PBClone = (function () {
     const t0 = Date.now(), path = "assets/clone/" + id + ".html"; S.runId = id;
     while (Date.now() - t0 < 300000) { await sleep(6000); if (S.runId !== id || !$("pbx-clone")) throw new Error("أُلغي الجلب"); st("المتصفح الكامل يعرض الصفحة… " + Math.round((Date.now() - t0) / 1000) + " ثانية (يستغرق عادة 1–2 دقيقة)");
       const g = await fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main") + "&t=" + Date.now(), { headers: Object.assign({}, H, { Accept: "application/vnd.github.raw+json" }) }).catch(() => null); if (!g || g.status === 404) continue; if (!g.ok) throw new Error("تعذّر قراءة النتيجة (" + g.status + ")");
-      const html = await g.text(); fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main"), { headers: H }).then(m => m.ok ? m.json() : null).then(m => m && fetch(api + "/contents/" + path, { method: "DELETE", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ message: "clone: تنظيف", sha: m.sha, branch: c.branch || "main" }) })).catch(() => { });      // تنظيف الملف المؤقت
+      const html = await ghBody(await g.text(), H); fetch(api + "/contents/" + path + "?ref=" + encodeURIComponent(c.branch || "main"), { headers: H }).then(m => m.ok ? m.json() : null).then(m => m && fetch(api + "/contents/" + path, { method: "DELETE", headers: Object.assign({ "Content-Type": "application/json" }, H), body: JSON.stringify({ message: "clone: تنظيف", sha: m.sha, branch: c.branch || "main" }) })).catch(() => { });      // تنظيف الملف المؤقت
       return html; }
     throw new Error("انتهت المهلة قبل اكتمال العرض — حاول مجدداً");
   }
