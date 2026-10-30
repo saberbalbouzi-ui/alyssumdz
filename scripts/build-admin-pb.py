@@ -12,7 +12,11 @@ if "<!--PB:start-->" in s:
 else:
     i = s.rfind("</body>")          # آخر </body> (توجد نصوص </body> داخل سكربتات أخرى)
     s = s[:i] + block + "\n" + s[i:]
+import hashlib
+def stamp(tag):      # ختم كل سكربت ببصمة محتواه هو (لا برقم الإصدار) كي لا يُعاد تنزيل كل السكربتات عند كل تحديث، بل ما تغيّر منها فقط
+    f = root / re.search(r'src="([^"?]+)', tag).group(1)
+    return hashlib.sha1(f.read_bytes()).hexdigest()[:8] if f.exists() else ver
 ver = (root / "VERSION").read_text(encoding="utf-8").strip()
 s = re.sub(r'<meta name="admin-version" content="[^"]*">', '<meta name="admin-version" content="%s">' % ver, s, count=1)
-s = re.sub(r'(<script src="assets/js/(?:admin-[a-z0-9-]+|chrome-admin|ctl-help|img-gen|barcode-tool|magic-layers|pack3d|box-designer|box-profiles|box-studio|mockup-studio|mockup-models|img3d|studio3d|img-upscale|seo-box|saas-client|hub|ai-proxy|ai-capture|speed-core|speed-fix)\.js)(?:\?v=[^"]*)?(")', lambda m: m.group(1) + "?v=" + ver + m.group(2), s)      # كسر كاش السكربتات عند كل إصدار
+s = re.sub(r'(<script src="assets/js/(?:admin-[a-z0-9-]+|chrome-admin|ctl-help|img-gen|barcode-tool|magic-layers|pack3d|box-designer|box-profiles|box-studio|mockup-studio|mockup-models|img3d|studio3d|img-upscale|seo-box|saas-client|hub|ai-proxy|ai-capture|speed-core|speed-fix)\.js)(?:\?v=[^"]*)?(")', lambda m: m.group(1) + "?v=" + stamp(m.group(1)) + m.group(2), s)      # كسر كاش السكربتات عند كل إصدار
 p.write_text(s, encoding="utf-8"); print("ok", len(src), "bytes")
