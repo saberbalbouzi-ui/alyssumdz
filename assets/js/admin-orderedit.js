@@ -31,7 +31,7 @@ ${fld("البلدية", `<select id="oe-com"></select>`)}
 ${fld("طريقة التوصيل", `<div style="display:flex;gap:1rem;flex-wrap:wrap"><label><input type="radio" name="oe-dt" value="home"${o.dtype !== "stop" ? " checked" : ""}> إلى المنزل</label><label><input type="radio" name="oe-dt" value="stop"${o.dtype === "stop" ? " checked" : ""}> مكتب Stop Desk</label></div>`)}
 <div id="oe-deskw">${fld("المكتب", `<select id="oe-desk"></select>`)}</div>
 ${t ? "" : fld("ولاية الانطلاق", `<select id="oe-from">${fromOpts(ad, o)}</select><small class="hint">الافتراضية من إعدادات شركة التوصيل — يتبعها رسم التوصيل وتُرسل منها الطرد</small>`)}
-${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" step="50" value="${num(o.fee)}"><small id="oe-fh" class="hint"></small>`)}
+${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" step="50" value="${num(o.fee)}"><small id="oe-fh" class="hint" style="white-space:pre-line"></small>`)}
 <div style="display:flex;justify-content:space-between;align-items:center;margin:.3rem 0 .8rem;font-weight:900">الإجمالي الجديد <span id="oe-tot" style="color:var(--green)"></span></div>
 <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button type="button" class="small green" id="oe-save">حفظ</button><button type="button" class="small warn" id="oe-no">إلغاء</button></div></div>`;
     document.body.appendChild(bg);
