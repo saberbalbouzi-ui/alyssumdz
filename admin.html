@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.663">
+<meta name="admin-version" content="1.89.664">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -5801,7 +5801,11 @@ const Admin = {
         for(let t = st; t <= en && n < 800; t += 86400000, n++){ if((since && t + 86400000 <= since) || (until && t >= until)) continue; if(!succD[c.id + "|" + this.isoDay(new Date(t))]) K.adIdle += Number(k.a) || 0; }
         return; }
       if(c.win){ const f = c.win.f, e = c.win.e; if((since && e < since) || (until && f >= until)) return; if(!(succW[c.id] > 0)) K.adIdle += Number(k.a) || 0; } else if(!(succ[c.slug] > 0)) K.adIdle += Number(k.a) || 0; }); K.adIdle = Math.round(K.adIdle); K.real -= K.adIdle; K.adTotal += K.adIdle;
-    this.products.forEach(p=>adFor(p.slug, Date.now())); this._adNow = {}; this.products.forEach(p=>{ this._adNow[p.slug] = adFor(p.slug, Date.now()); }); this._adWin = succW; this._adSucc = succ; K.lossTotal = Object.values(per).reduce((a,x)=>a + x.loss, 0);
+    this.products.forEach(p=>adFor(p.slug, Date.now())); this._adNow = {}; this.products.forEach(p=>{ this._adNow[p.slug] = adFor(p.slug, Date.now());
+      /* حملة بإنفاق يومي: «إعلان الطلب» في التحليل المقترح = متوسط الحملة (إنفاق كل أيامها ÷ كل طلباتها المسلَّمة) لا كلفة اليوم الجاري وحده */
+      const pk = this.adPick(p.slug, Date.now()); if(pk && pk.cfg.daily && pk.cfg.method === "spend"){ const now = Date.now(), dk = this.isoDay(new Date(now)); let st = pk.win && isFinite(pk.win.f) ? pk.win.f : 0, del = 0; Object.keys(succD).forEach(k=>{ if(k.indexOf(pk.id + "|") === 0) del += succD[k]; });
+        if(!st){ this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(o.status === "livree" && this.orderLines(o).some(l=>l.p.slug === p.slug) && (!st || t < st)) st = t; }); }
+        if(st){ let en = Math.min(pk.win && isFinite(pk.win.e) ? pk.win.e : now, now); if(!succD[pk.id + "|" + dk] && en > now - 86400000) en -= 86400000; const days = Math.max(1, Math.min(800, Math.floor((en - st) / 86400000) + 1)); this._adNow[p.slug] = del ? (Number(pk.cfg.a) || 0) * days / del * (Number(pk.cfg.m) || 1) : this._adNow[p.slug]; } } }); this._adWin = succW; this._adSucc = succ; K.lossTotal = Object.values(per).reduce((a,x)=>a + x.loss, 0);
     /* مرتجعات ما بعد التسليم (تبويب المرتجعات): تُطرح المبالغ المستردة المؤكَّدة من صافي الربح المحقق */
     K.refunds = (typeof AdminReturns !== "undefined" && AdminReturns.refunds) ? AdminReturns.refunds(since, until || undefined) : 0; K.real -= K.refunds;
     return { per, K };
