@@ -37,7 +37,13 @@ const AdminYd = (() => {
 
   function save() { try { localStorage.setItem(KEY, JSON.stringify({ rows: S.rows, total: S.total, partial: S.partial, at: S.at })); } catch (e) { } }
   function restore() { try { const j = JSON.parse(localStorage.getItem(KEY) || "null"); if (j && Array.isArray(j.rows)) { S.rows = j.rows; S.total = j.total || j.rows.length; S.partial = !!j.partial; S.at = j.at || 0; } } catch (e) { } }
-  function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); try { window.AdminHome && AdminHome.refreshSoft && AdminHome.refreshSoft(); } catch (e) { } }
+  /* طرود لا يقابلها أي طلب في اللوحة (آخر 30 يوماً، بلا المرتجع والملغى): تضيع من الحساب إن لم تُربط */
+  function orphans(days) {
+    if (!S.rows.length) return []; const tm = trackMap(), lim = Date.now() - (days || 30) * 864e5;
+    return S.rows.filter(r => !tm[r.tracking] && !/retourn|annul|refus/i.test(r.status || "") && (!r.date || (Date.parse(String(r.date).replace(" ", "T")) || Date.now()) >= lim));
+  }
+  function showOrphans() { S.link = "no"; S.st = ""; S.q = ""; S.page = 1; draw(); }
+  function set(rows, total, partial) { S.rows = rows || []; S.total = total || S.rows.length; S.partial = !!partial; S.at = Date.now(); S.page = 1; save(); draw(); try { typeof AdminHome !== "undefined" && AdminHome.refreshSoft && AdminHome.refreshSoft(); } catch (e) { } }
   /* هاتف/اسم مقنَّع (نجوم) مقابل نصّ حقيقي: نفس الطول والأحرف الظاهرة متطابقة */
   function mmPhone(mk, pl) { const a = String(mk || "").replace(/\s/g, ""), b = String(pl || "").replace(/\D/g, ""); if (!/\*/.test(a) || a.length < 8 || a.length !== b.length) return false; for (let i = 0; i < a.length; i++) if (a[i] !== "*" && a[i] !== b[i]) return false; return true; }
   function mmName(mk, pl) { const A1 = String(mk || "").split(/\s+/).filter(w => /[^*.\-]/.test(w)), B1 = String(pl || "").trim().split(/\s+/); if (!A1.length) return true; if (A1.length > B1.length) return false; return A1.every(w => B1.some(x => norm(x)[0] === norm(w)[0] && (!/\*/.test(w) || x.length >= w.length - 1))); }
@@ -350,5 +356,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, setQuery, noteSent, forget, prepOpen, _t: { prepRows, prepSum, plines } };
+  return { set, draw, load, S, setQuery, noteSent, forget, prepOpen, orphans, showOrphans, _t: { prepRows, prepSum, plines } };
 })();

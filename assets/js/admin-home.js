@@ -147,6 +147,7 @@ const AdminHome = (() => {
     let mk = null; try { if (typeof AdminMarketplace !== "undefined") { mk = AdminMarketplace.alerts(); AdminMarketplace.warm(); } } catch (e) { }
     let aic = null; try { if (typeof ImgGen !== "undefined" && ImgGen.credit) { const st = ImgGen.credit.state(); if (st !== "ok") aic = { st, p: ImgGen.credit.pct() }; } } catch (e) { }
     let adLow = []; try { adLow = a.adStockAlerts ? a.adStockAlerts(5) : []; } catch (e) { }
+    let orph = []; try { orph = (typeof AdminYd !== "undefined" && AdminYd.orphans) ? AdminYd.orphans() : []; } catch (e) { }
     let dgHint = 0; try { if (typeof AdminKind !== "undefined" && AdminKind.kind() === "physical" && typeof AdminStores !== "undefined" && AdminStores.kind() !== "digital") dgHint = (a.products || []).filter(p => p && p.digital && p.active !== false).length; } catch (e) { }
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
@@ -182,6 +183,7 @@ ${dg ? `<button type="button" class="${dg.proofs ? "w" : "ok"}" data-go="digital
 <button type="button" class="${dg.low + dg.out + dg.short ? "w" : "ok"}" data-go="digital" title="${(dg.lowSkus || []).join(" | ").replace(/"/g, "")}"><b>${num(dg.low + dg.out + dg.short)}</b><span>منتج رقمي مخزون مفاتيحه ${dg.out ? "نفد" : "منخفض"}${dg.short ? " (وطلبات تنتظر مفاتيح)" : ""}</span></button>` : ""}
 ${mk && (mk.to_ship || mk.rej) ? `<button type="button" class="w" data-go="market"><b>${num(mk.to_ship + mk.rej)}</b><span>${mk.to_ship ? "طلب التسويق بالعمولة ينتظر شحنك" : ""}${mk.to_ship && mk.rej ? " · " : ""}${mk.rej ? "طلب رُفض لنقص رصيدك كمورّد" : ""}</span></button>` : ""}
 <button type="button" class="${od ? "w" : "ok"}" data-go="callcenter"><b>${num(od)}</b><span>طلب بلا استجابة منذ مدة</span></button>
+${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph.slice(0, 8).map(r => r.tracking).join(" | ")}"><b>${num(orph.length)}</b><span>طرد عند الشركة بلا طلب في اللوحة — اربطه كي لا يضيع من الحساب</span></button>` : ""}
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
 <h3 style="margin-top:16px">أفضل المنتجات مبيعاً</h3>${top.length ? `<div class="tp">${top.map(([t, q], i) => `<div class="r"><span class="n">${i + 1}</span><span class="t"></span><span class="q">${num(q)} قطعة</span><span class="bar"><i style="width:${Math.max(6, q / topMax * 100)}%"></i></span></div>`).join("")}</div>` : '<div class="em" style="padding:10px">لا مبيعات في هذه الفترة.</div>'}</div>
 </div>`;
@@ -216,6 +218,7 @@ ${mk && (mk.to_ship || mk.rej) ? `<button type="button" class="w" data-go="marke
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
     if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }
     if (w === "aicredit") { try { a.tab("imggen"); if (typeof ImgGen !== "undefined" && ImgGen.tab) ImgGen.tab("set"); } catch (e) { } return; }
+    if (w === "orphans") { a.tab("shipped", btn("shipped")); try { AdminYd.showOrphans(); } catch (e) { } return; }
     if (w === "kinddg") { try { AdminStores.newKind("digital"); } catch (e) { } return; }
     if (w === "ads") { a.tab("finance", btn("finance")); try { a.finView("prod"); const x = a.adStockAlerts(5)[0]; if (x) a.finOpen(x.c.slug, 2); } catch (e) { } return; }
     const b = btn(w); if (b) a.tab(w, b);
