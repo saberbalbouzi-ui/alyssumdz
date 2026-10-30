@@ -73,7 +73,7 @@ function shipRadios(name, w, commune){
   const cur = rs.find(r=>r.checked);
   if(cur && cur.disabled){ const alt = rs.find(r=>!r.disabled); if(alt){ alt.checked = true; alt.dispatchEvent(new Event("change")); } }
 }
-function shipOptLabel(w, c){ return (w && w.xc && w.xc[c] === "all") ? c + " (غير متاح)" : c; }
+function shipOptLabel(w, c){ return (w && w.xc && w.xc[c] === "all") ? c + " (غير متوفر)" : c; }
 /* بلديات الولايات الجديدة 59–69 تظهر أيضاً مع بلديات ولايتها الأم (بريكة مع باتنة)؛ اختيار إحداها يحوّل الولاية إلى الجديدة تلقائياً */
 function commOpts(w){
   const out = ((w && w.communes) || []).map(c=>({ c, w, kid:false }));
@@ -82,7 +82,7 @@ function commOpts(w){
 }
 function fillCommuneSel(sel, w){
   sel.innerHTML = '<option value="">— اختر البلدية —</option>';
-  commOpts(w).forEach(x=>{ const o = document.createElement("option"); o.value = x.c; o.textContent = shipOptLabel(x.w, x.c) + (x.kid ? " — ولاية " + x.w.name : ""); if(x.kid) o.dataset.w = x.w.id; if(x.w.xc && x.w.xc[x.c] === "all") o.disabled = true; sel.appendChild(o); });
+  commOpts(w).forEach(x=>{ const o = document.createElement("option"); o.value = x.c; o.textContent = shipOptLabel(x.w, x.c) + (x.kid ? " — ولاية " + x.w.name : ""); if(x.kid) o.dataset.w = x.w.id; if(x.w.xc && x.w.xc[x.c] === "all"){ o.disabled = true; o.style.color = "#9aa3a0"; } sel.appendChild(o); });
 }
 /* سعر كل بلدية يظهر بجانب اسمها في القائمة (يُحسب بالمنطق نفسه الذي يحسب رسم الطلب: نوع التوصيل والمنتج والشحن المجاني) */
 function labelCommunes(sel, w, fn){
@@ -1113,7 +1113,7 @@ function initProduct(slug){
   }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
-    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متاح)" : ""); if(w.xw) o.disabled = true;
+    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متوفر)" : ""); if(w.xw){ o.disabled = true; o.style.color = "#9aa3a0"; }
     sel.appendChild(o);
   });
   sel.onchange = ()=>{ state.wilaya = WILAYAS.find(w=>w.id==sel.value); setCommunes(state.wilaya); setDesks(state.wilaya); update() };
@@ -1503,7 +1503,7 @@ function fillCartWilayas(){
   }
   WILAYAS.forEach(w=>{
     const o = document.createElement("option");
-    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متاح)" : ""); if(w.xw) o.disabled = true;
+    o.value = w.id; o.textContent = `${String(w.id).padStart(2,"0")} - ${w.name}` + (w.xw ? " (غير متوفر)" : ""); if(w.xw){ o.disabled = true; o.style.color = "#9aa3a0"; }
     sel.appendChild(o);
   });
   sel.onchange = ()=>{
