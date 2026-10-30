@@ -28,6 +28,15 @@ t("الإضافة تُعاد في sup (50) ولا تُحسب مجاناً", q(w,
   t("أسعار المناطق: سعر المنطقة بلا سعر ياليدين", qq(ba, "Béni Abbès", "home", 1, "zones", null).fee === 1250);
 }
 
+/* بلديات لا توصّل إليها ياليدين (تبلبالة) تُحجب في المتجر */
+{ const a = src.indexOf("function applyShipNd("), b = src.indexOf("function loadShipCo("), code = src.slice(a, b);
+  const W = [{ id: 52, name: "Béni Abbès", communes: ["Igli", "Tabelbala", "Béni Abbès"] }, { id: 8, name: "Béchar", communes: ["Béchar"] }];
+  new Function("WILAYAS", "nd", "def", code + "; applyShipNd(nd, def);")(W, { 52: ["tabelbala"] }, "yalidine");
+  t("تبلبالة تُعلَّم غير متاحة (xc=all)", W[0].xc && W[0].xc.Tabelbala === "all" && !W[0].xc.Igli && !W[1].xc);
+  const W2 = [{ id: 52, communes: ["Tabelbala"] }]; new Function("WILAYAS", "nd", "def", code + "; applyShipNd(nd, def);")(W2, { 52: ["tabelbala"] }, "zr");
+  t("لا حجب لشركة افتراضية غير ياليدين", !W2[0].xc);
+}
+
 /* اتساق تعريفة ياليدين: base (أرخص بلدية) + sup = سعر ياليدين لكل بلدية (بلاغ قسنطينة 750 + عين السمار 50) */
 const adm = fs.readFileSync(__dirname + "/../admin.html", "utf8");
 const meth = (name) => { const a = adm.indexOf("\n  " + name + "("); const b = adm.indexOf("\n  },", a); return adm.slice(a + 1, b + 4).replace(/^\s*(async\s+)?/, ""); };

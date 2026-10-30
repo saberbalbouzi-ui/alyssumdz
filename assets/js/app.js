@@ -19,10 +19,16 @@ function shipBlocked(w, commune, type){
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
 let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {};
+/* بلديات لا توصّل إليها شركة التوصيل الافتراضية (مثل تبلبالة عند ياليدين): تُعلَّم «غير متاح» بنفس آلية الاستثناءات w.xc */
+function applyShipNd(nd, def){
+  if(!nd || def !== "yalidine" || typeof WILAYAS === "undefined") return;
+  const nz = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  WILAYAS.forEach(w=>{ const L = nd[w.par || w.id]; if(!L || !L.length) return; const set = new Set(L); (w.communes || []).forEach(c=>{ if(set.has(nz(c))){ w.xc = w.xc || {}; if(!w.xc[c]) w.xc[c] = "all"; } }); });
+}
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); }catch(e){} if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
