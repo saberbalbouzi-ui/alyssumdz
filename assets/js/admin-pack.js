@@ -54,7 +54,7 @@ const AdminPack = (() => {
   }
   async function load() {
     S.busy = true; draw();
-    try { S.rows = (await call("pack_orders")) || []; S.err = ""; } catch (e) { S.err = /42501|forbidden|unauthorized|401|403/.test(String(e.message)) ? "ليس لديك صلاحية «تجهيز الطلبات»." : "تعذّر تحميل الطلبات: " + e.message; }
+    try { S.rows = ((await call("pack_orders")) || []).filter(r => r.status !== "expediee"); /* v1.89.694: المرسَلة للزبون لا تُجهَّز ثانية (الخادم يستبعدها أيضاً) */ S.err = ""; } catch (e) { S.err = /42501|forbidden|unauthorized|401|403/.test(String(e.message)) ? "ليس لديك صلاحية «تجهيز الطلبات»." : "تعذّر تحميل الطلبات: " + e.message; }
     S.busy = false; draw();
   }
   async function mark(ids, undo) {

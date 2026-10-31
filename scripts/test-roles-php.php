@@ -140,6 +140,9 @@ ok('قائمة التجهيز بلا هاتف ولا أسعار ولا ملاح�
 [$c] = $call('pack_orders', 'GET', null, $stf); ok('موظف الدعم: لا يملك التجهيز', $c === 403 || $c === 401);
 [$c, $j] = $call('pack_mark', 'POST', ['id' => $oid], $whj); ok('تعليم جُهِّز', $c === 200 && ($j['packed'] ?? false) === true, $j);
 [$c, $j] = $call('pack_orders', 'GET', null, $whj); ok('القائمة تعكس «جُهِّز»', ($j['orders'] ? array_values(array_filter($j['orders'], fn($x) => $x['id'] === $oid))[0]['packed'] : null) === true);
+[$c] = $call('order_update', 'POST', ['id' => $oid, 'status' => 'expediee'], $own);
+[$c, $j] = $call('pack_orders', 'GET', null, $whj); ok('v1.89.694: الطلب المرسَل للزبون لا يظهر في التجهيز', count(array_filter($j['orders'] ?? [], fn($x) => $x['id'] === $oid)) === 0, $j);
+[$c] = $call('order_update', 'POST', ['id' => $oid, 'status' => 'confirmee'], $own);
 [$c, $j] = $call('orders', 'GET', null, $own); $ro = array_values(array_filter($j['orders'], fn($x) => $x['id'] === $oid))[0] ?? [];
 ok('المالك يرى علامة 🧰 في الملاحظة', str_contains((string)($ro['note'] ?? ''), '🧰'), $ro['note'] ?? null);
 [$c, $j] = $call('team', 'POST', ['action' => 'audit'], $own); ok('سجلّ النشاط يحوي order.packed باسم أمين المخزن', $c === 200 && count(array_filter($j['rows'] ?? $j['audit'] ?? [], fn($x) => ($x['action'] ?? '') === 'order.packed' && ($x['actor'] ?? '') === 'magasin')) >= 1, array_slice($j['rows'] ?? $j['audit'] ?? [], 0, 2));
