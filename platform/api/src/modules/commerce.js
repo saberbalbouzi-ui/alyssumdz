@@ -101,6 +101,36 @@ const histSig = (ctx, tid, h) => hmacHex(ctx.secret, `ph:${tid}:${h.slug}:${h.vk
 const trustSig = (ctx, tid, ref, total) => hmacHex(ctx.secret, `trust:${tid}:${ref}:${total}`);
 export { trustSig };
 
+/* ───── دفتر حجز المخزون (A-05): pending ← committed | released؛ كل انتقال تحديث مشروط بالحالة (idempotent تحت التزامن وإعادة المعالجة) ───── */
+const HOLD_DEFAULT_H = 72;
+export const holdHours = (settings) => { const h = Math.round(+settings?.hold_hours); return Number.isFinite(h) && h >= 1 && h <= 720 ? h : HOLD_DEFAULT_H; };
+const restoreQty = (db, tid, r) => db.run("UPDATE cm_skus SET stock=stock+? WHERE tenant_id=? AND slug=? AND vkey=? AND stock IS NOT NULL", r.qty, tid, r.slug, r.vkey);
+/** يحرّر سطور الحجز من الحالات `from` إلى released ويعيد مخزونها مرة واحدة لكل سطر. يعيد عدد ما حُرِّر. */
+async function releaseRows(db, rows, from, now) {
+  let n = 0;
+  for (const r of rows) { const x = await db.run(`UPDATE cm_resv SET state='released', updated_at=? WHERE id=? AND state IN (${from.map(() => "?").join(",")})`, now, r.id, ...from); if (x.changes) { await restoreQty(db, r.tenant_id, r); n++; } }
+  return n;
+}
+/** يعيد حجز سطور released (طلب انتهت مهلته ثم أُكّد): كل سطر يُحجز ذرّياً بشرط الكفاية؛ إن نقص أيٌّ منها يُتراجع عن الكل ويعيد false. */
+async function reacquireRows(db, rows, now) {
+  const got = [];
+  for (const r of rows) {
+    const claim = await db.run("UPDATE cm_resv SET state='committed', updated_at=? WHERE id=? AND state='released'", now, r.id); if (!claim.changes) continue;      // سبقه معالج آخر
+    const x = await db.run("UPDATE cm_skus SET stock=stock-? WHERE tenant_id=? AND slug=? AND vkey=? AND stock IS NOT NULL AND stock>=?", r.qty, r.tenant_id, r.slug, r.vkey, r.qty);
+    if (x.changes) { got.push(r); continue; }
+    const k = await db.one("SELECT stock FROM cm_skus WHERE tenant_id=? AND slug=? AND vkey=?", r.tenant_id, r.slug, r.vkey);
+    if (k && k.stock == null) continue;                                          // صار غير متتبَّع: لا حاجة لحجز
+    await db.run("UPDATE cm_resv SET state='released', updated_at=? WHERE id=? AND state='committed'", now, r.id);        // لم يكفِ: أعد السطر released وتراجع عن ما سبق
+    for (const g of got) { const y = await db.run("UPDATE cm_resv SET state='released', updated_at=? WHERE id=? AND state='committed'", now, g.id); if (y.changes) await restoreQty(db, g.tenant_id, g); }
+    return false;
+  }
+  return true;
+}
+async function addFlag(db, orderId, flag) {
+  const o = await db.one("SELECT flags FROM cm_orders WHERE id=?", orderId); if (!o) return; const f = JSON.parse(o.flags || "[]"); if (f.includes(flag)) return;
+  f.push(flag); await db.run("UPDATE cm_orders SET flags=? WHERE id=?", JSON.stringify(f), orderId);
+}
+
 export const commerce = {
   id: "commerce",
   routes(r, ctx) {
@@ -200,13 +230,13 @@ export const commerce = {
       // المخزون: observe يعلّم فقط، enforce يحجز ذرّياً (خصم مشروط ثم تعويض عند فشل سطر)
       const short = []; for (const l of v.lines) if (l.sku.stock != null && l.sku.stock < l.qty) short.push(l.slug);
       if (short.length) for (const s of short) v.flags.push("stock_short:" + s);
-      let reserved = 0;
+      let reserved = 0, holdRows = [];
       if (mode === "enforce") {
         const bad = v.flags.filter((f) => FATAL.includes(f.split(":")[0]));
         if (bad.length) throw new HttpError(422, "order_rejected", "الطلب لا يطابق الأسعار أو الشروط", { flags: bad });
         /* حجز ذرّي بجملة SQL واحدة (A-05): تُخصم كل الأسطر أو لا شيء؛ الشرط يفحص كفاية جميع الأسطر على لقطة واحدة، فلا يبقى حجز جزئي ولا يلزم تعويض عند نفاد سطر لاحق */
         const need = new Map(); for (const l of v.lines) { if (l.sku.stock == null) continue; const k = l.slug + "\u0000" + l.vkey, c = need.get(k); need.set(k, { slug: l.slug, vkey: l.vkey, qty: (c ? c.qty : 0) + l.qty }); }
-        const L = [...need.values()];
+        const L = [...need.values()]; holdRows = L;
         if (L.length) {
           const caseOf = (al) => "CASE " + L.map(() => `WHEN ${al}slug=? AND ${al}vkey=? THEN ?`).join(" ") + " END", cargs = L.flatMap((x) => [x.slug, x.vkey, x.qty]), keys = L.map(() => "(?,?)").join(","), kargs = L.flatMap((x) => [x.slug, x.vkey]);
           const x = await db.run(`UPDATE cm_skus SET stock=stock-(${caseOf("")}) WHERE tenant_id=? AND stock IS NOT NULL AND (slug,vkey) IN (VALUES ${keys}) AND (SELECT COUNT(*) FROM cm_skus k WHERE k.tenant_id=? AND k.stock IS NOT NULL AND (k.slug,k.vkey) IN (VALUES ${keys}) AND k.stock>=(${caseOf("k.")}))=${L.length}`, ...cargs, tid, ...kargs, tid, ...kargs, ...cargs);
@@ -217,7 +247,13 @@ export const commerce = {
       const email = (() => { const e = String(b.customer?.email ?? "").trim().toLowerCase(); return e.length <= 120 && /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]{2,}$/.test(e) ? e : ""; })(), pay = payV;
       const now = ctx.nowS(), enc = await ctx.vault.encrypt(phone, `ord:${tid}`), ph = await hmacHex(ctx.secret, "ord:" + phone);
       const items = (sv ? sv.lines.map((l) => ({ ...l, title: lines.find((x) => x.slug === l.slug && x.vkey === l.vkey)?.title })) : v.lines).map((l) => ({ id: l.slug, vkey: l.vkey, title: clean((l.sku.ptitle || l.title) + (l.sku.label ? " — " + l.sku.label : ""), 200), qty: l.qty, price: l.unit }));
-      try { await db.run("INSERT INTO cm_orders (tenant_id,ref,status,name,phone_h,phone_enc,wilaya,commune,dtype,desk,items,subtotal,discount,fee,total,coupon,flags,mode,reserved,created_at,updated_at) VALUES (?,?,'nouvelle',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", tid, ref, clean(b.customer?.name, 80), ph, enc, clean(b.wilaya, 40), clean(b.commune, 60), b.dtype === "stop" ? "stop" : "home", clean(b.desk, 80), JSON.stringify(items), fSub, fDisc, fFee, fTotal, coupon, JSON.stringify(v.flags), mode, reserved, now, now); }
+      const orderSql = "INSERT INTO cm_orders (tenant_id,ref,status,name,phone_h,phone_enc,wilaya,commune,dtype,desk,items,subtotal,discount,fee,total,coupon,flags,mode,reserved,created_at,updated_at) VALUES (?,?,'nouvelle',?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", orderArgs = [tid, ref, clean(b.customer?.name, 80), ph, enc, clean(b.wilaya, 40), clean(b.commune, 60), b.dtype === "stop" ? "stop" : "home", clean(b.desk, 80), JSON.stringify(items), fSub, fDisc, fFee, fTotal, coupon, JSON.stringify(v.flags), mode, reserved, now, now];
+      try {
+        if (reserved && holdRows.length) {          // الطلب وسطور الحجز في معاملة واحدة: لا حجز بلا طلب ولا العكس
+          const exp = now + holdHours(req.tenant.settings) * 3600;
+          await db.batch([[orderSql, ...orderArgs], ...holdRows.map((q) => ["INSERT INTO cm_resv (tenant_id,ref,slug,vkey,qty,state,expires_at,created_at,updated_at) VALUES (?,?,?,?,?,'pending',?,?,?)", tid, ref, q.slug, q.vkey, q.qty, exp, now, now])], { atomic: true });
+        } else await db.run(orderSql, ...orderArgs);
+      }
       catch (e) { if (reserved) for (const l of v.lines) if (l.sku.stock != null) await db.run("UPDATE cm_skus SET stock=stock+? WHERE tenant_id=? AND slug=? AND vkey=?", l.qty, tid, l.slug, l.vkey); if (/UNIQUE|constraint/i.test(String(e?.message))) return ok({ ok: true, ref, duplicate: true }); throw e; }
       await ctx.emit(tid, "order.created", { order_id: ref, total: fTotal, currency: "DZD", customer: { name: clean(b.customer?.name, 80), phone, city: clean(b.wilaya, 40), ...(email ? { email } : {}) }, ...(pay ? { pay } : {}), items: items.map((i) => ({ id: i.id, ...(i.vkey ? { vkey: i.vkey } : {}), title: i.title, qty: i.qty, price: i.price })), verified: v.flags.length === 0, ...(trusted ? { ts: await trustSig(ctx, tid, ref, fTotal) } : {}) }, `order.created:${ref}`);
       if (pay && pay !== "cod") { try { await ctx.flush(tid, `order.created:${ref}`); } catch { /* يُعاد في نبضة cron */ } }      // الدفع المسبق (رقمي): يلزم تسجيل المبلغ المتوقع قبل أن يرفع الزبون إثباتاً أو يبدأ الدفع
@@ -249,16 +285,37 @@ export const commerce = {
     });
     r.get("/v1/orders/stats", { scope: "orders:read", summary: "عدد الطلبات والمخالفات" }, async (req) => {
       const row = await db.one("SELECT COUNT(*) n, SUM(CASE WHEN flags<>'[]' THEN 1 ELSE 0 END) flagged, COALESCE(SUM(total),0) value FROM cm_orders WHERE tenant_id=?", req.tenant.id);
-      return ok({ orders: row.n, flagged: row.flagged ?? 0, value: row.value, mode: req.tenant.settings?.order_mode === "enforce" ? "enforce" : "observe" });
+      const holds = { pending: 0, committed: 0, released: 0 }; for (const h of await db.all("SELECT state, COUNT(*) n FROM cm_resv WHERE tenant_id=? GROUP BY state", req.tenant.id)) holds[h.state] = h.n;
+      const nx = await db.one("SELECT MIN(expires_at) e FROM cm_resv WHERE tenant_id=? AND state='pending'", req.tenant.id);
+      return ok({ orders: row.n, flagged: row.flagged ?? 0, value: row.value, mode: req.tenant.settings?.order_mode === "enforce" ? "enforce" : "observe", holds, hold_hours: holdHours(req.tenant.settings), next_expiry: nx?.e ?? null });
     });
+  },
+  /** cron: يحرّر الحجوزات pending المنتهية المهلة (طلبات لم تُؤكَّد في الوقت) فيعود مخزونها للبيع، ويوسم الطلب `reservation_expired`؛ يُنظَّف الدفتر الأقدم من 90 يوماً. حتى 200 سطر في النبضة. */
+  async cron(ctx) {
+    const db = ctx.db, now = ctx.nowS(), due = await db.all("SELECT * FROM cm_resv WHERE state='pending' AND expires_at<=? ORDER BY expires_at LIMIT 200", now);
+    const n = await releaseRows(db, due, ["pending"], now), seen = new Set();
+    for (const r of due) { const k = r.tenant_id + "\u0000" + r.ref; if (seen.has(k)) continue; seen.add(k);
+      if (!(await db.one("SELECT 1 AS x FROM cm_resv WHERE tenant_id=? AND ref=? AND state IN ('pending','committed') LIMIT 1", r.tenant_id, r.ref))) {
+        const o = await db.one("SELECT id FROM cm_orders WHERE tenant_id=? AND ref=?", r.tenant_id, r.ref); if (o) { await db.run("UPDATE cm_orders SET reserved=0 WHERE id=?", o.id); await addFlag(db, o.id, "reservation_expired"); } } }
+    if (now % 50 < 5) await db.run("DELETE FROM cm_resv WHERE state IN ('committed','released') AND updated_at<?", now - 90 * 86400);
+    return { expired: n };
   },
   on: {
     ...Object.fromEntries([["order.confirmed", "confirmee"], ["order.delivered", "livree"], ["order.failed", "echec"], ["order.returned", "echec"], ["order.cancelled", "annulee"]].map(([t, st]) => [t, async (e, ctx) => {
     const ref = String(e.data?.order_id ?? ""); if (!ref) return; const o = await ctx.db.one("SELECT id,reserved,items FROM cm_orders WHERE tenant_id=? AND ref=?", e.tenantId, ref); if (!o) return;
-    await ctx.db.run("UPDATE cm_orders SET status=?, updated_at=? WHERE id=?", st, ctx.nowS(), o.id);
-    if (st === "annulee" && o.reserved) {                                         // إلغاء: إعادة المحجوز مرة واحدة فقط
-      const x = await ctx.db.run("UPDATE cm_orders SET reserved=0 WHERE id=? AND reserved=1", o.id);
-      if (x.changes) for (const i of JSON.parse(o.items)) await ctx.db.run("UPDATE cm_skus SET stock=stock+? WHERE tenant_id=? AND slug=? AND vkey=? AND stock IS NOT NULL", i.qty, e.tenantId, i.id, i.vkey ?? "");
+    const db = ctx.db, now = ctx.nowS();
+    await db.run("UPDATE cm_orders SET status=?, updated_at=? WHERE id=?", st, now, o.id);
+    const rows = await db.all("SELECT * FROM cm_resv WHERE tenant_id=? AND ref=?", e.tenantId, ref);
+    if (st === "annulee") {                                                       // إلغاء: يُحرَّر pending/committed ويُعاد المخزون مرة واحدة لكل سطر
+      if (rows.length) { await releaseRows(db, rows, ["pending", "committed"], now); await db.run("UPDATE cm_orders SET reserved=0 WHERE id=?", o.id); }
+      else if (o.reserved) {                                                      // طلبات سبقت الدفتر (حجز بلا سطور): الإعادة من بنود الطلب كما كانت
+        const x = await db.run("UPDATE cm_orders SET reserved=0 WHERE id=? AND reserved=1", o.id);
+        if (x.changes) for (const i of JSON.parse(o.items)) await db.run("UPDATE cm_skus SET stock=stock+? WHERE tenant_id=? AND slug=? AND vkey=? AND stock IS NOT NULL", i.qty, e.tenantId, i.id, i.vkey ?? "");
+      }
+    } else if ((st === "confirmee" || st === "livree") && rows.length) {         // تأكيد/تسليم: الحجز نهائي. إن انتهت مهلته قبل التأكيد يُعاد حجزه ذرّياً، وإن نقص المخزون يُوسَم الطلب للمراجعة
+      const lost = rows.filter((r) => r.state === "released");
+      await db.run("UPDATE cm_resv SET state='committed', updated_at=? WHERE tenant_id=? AND ref=? AND state='pending'", now, e.tenantId, ref);
+      if (lost.length) { if (await reacquireRows(db, lost, now)) await db.run("UPDATE cm_orders SET reserved=1 WHERE id=?", o.id); else await addFlag(db, o.id, "reservation_lost"); }
     }
   }])),
     /* السوق المشترك (وحدة marketplace): منتج مستورد يصل كتالوج المتجر كنسخة قابلة للبيع، ومخزونه مرآة لمخزون المورّد (يُحدَّث لحظياً بـmarketplace.stock) */

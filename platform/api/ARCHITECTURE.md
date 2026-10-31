@@ -85,3 +85,5 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 
 ## ملحق: التحقق الصارم من الأسعار
 `commerce` يملك `cm_meta` و`cm_price_hist` و`cm_calc` (بادئة `cm_` ضمن خريطة الملكية). `payments` لا يقرأ جداول `commerce`؛ يتلقى مستوى الثقة في حدث `order.created` (توقيع HMAC بسرّ المنصة). التفاصيل والتفعيل والرجوع: `platform/docs/strict-pricing.md`.
+
+- **دفتر حجز المخزون (A-05)**: `cm_resv` (وحدة `commerce`) سطر لكل (طلب، صنف): `pending` (مهلة `settings.hold_hours`، الافتراضي 72س) ← `committed` عند `order.confirmed|delivered` | `released` عند `order.cancelled` أو انتهاء المهلة (cron). كل انتقال مشروط بالحالة ولا يُعاد المخزون إلا إن تغيّر السطر؛ التأكيد المتأخر يعيد الحجز كل-أو-لا-شيء ويوسم `reservation_lost` عند النقص.

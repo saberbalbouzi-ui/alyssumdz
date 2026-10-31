@@ -132,6 +132,9 @@ CREATE TABLE IF NOT EXISTS cm_price_hist (id INTEGER PRIMARY KEY AUTOINCREMENT, 
 CREATE INDEX IF NOT EXISTS ix_cm_price_hist ON cm_price_hist (tenant_id, slug, vkey, id);
 CREATE TABLE IF NOT EXISTS cm_calc (tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, ref TEXT NOT NULL, at INTEGER NOT NULL, mode TEXT NOT NULL, scope TEXT NOT NULL, pay TEXT NOT NULL DEFAULT '', decision TEXT NOT NULL, reasons TEXT NOT NULL DEFAULT '[]', notes TEXT NOT NULL DEFAULT '[]', expected INTEGER NOT NULL DEFAULT 0, client INTEGER NOT NULL DEFAULT 0, trusted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, ref));
 CREATE INDEX IF NOT EXISTS ix_cm_calc ON cm_calc (tenant_id, at);
+-- دفتر حجز المخزون (A-05): سطر لكل (طلب، صنف) بحالة pending (محجوز بمهلة) ← committed (أُكّد الطلب فصار الحجز نهائياً) | released (أُعيد للمخزون: إلغاء أو انتهاء مهلة). كل انتقال بتحديث مشروط بالحالة فلا يتكرر خصم ولا إعادة.
+CREATE TABLE IF NOT EXISTS cm_resv (id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, ref TEXT NOT NULL, slug TEXT NOT NULL, vkey TEXT NOT NULL DEFAULT '', qty INTEGER NOT NULL, state TEXT NOT NULL DEFAULT 'pending', expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, UNIQUE (tenant_id, ref, slug, vkey));
+CREATE INDEX IF NOT EXISTS ix_cm_resv_due ON cm_resv (state, expires_at);
 -- الهَب المركزي للمصادر: متاجر خارجية (Shopify/WooCommerce/Google Sheets) تُسحب طلباتها للقراءة فقط. الأسرار والهاتف والعنوان مشفّرة.
 CREATE TABLE IF NOT EXISTS src_sources (
   id INTEGER PRIMARY KEY AUTOINCREMENT, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, kind TEXT NOT NULL, name TEXT NOT NULL, config TEXT NOT NULL DEFAULT '{}', secret_enc TEXT NULL,
