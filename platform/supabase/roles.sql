@@ -210,7 +210,7 @@ drop policy if exists "staff finance read kv" on public.admin_kv;
 create policy "staff finance read kv" on public.admin_kv for select to authenticated
   using (key in ('costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes') and public.has_perm('finance'));
 
--- v1.89.694: القائمة = المؤكَّدة غير المرسَلة فقط (المرسَلة للزبون لا تظهر)، غير المجهَّزة خلال 14 يوماً + المجهَّزة اليوم للتراجع
+-- v1.89.694: القائمة = المؤكَّدة غير المرسَلة فقط (المرسَلة للزبون لا تظهر)، غير المجهَّزة خلال يومين + المجهَّزة اليوم للتراجع
 -- 7) أمين المخزن (v1.89.239): صلاحية pack فقط — لا يقرأ جدول الطلبات (لا سياسة له) بل دالتين تُرجعان ما يلزم للتجهيز:
 --    الطلبات المؤكَّدة/المرسَلة بلا هاتف ولا أسعار ولا مالية. علامة 🧰 في الملاحظة = «جُهِّز».
 alter table public.staff drop constraint if exists staff_role_check;
@@ -226,7 +226,7 @@ begin
       'tracking', case when position(':' in o.sh) > 0 then substr(o.sh, position(':' in o.sh) + 1) else o.sh end,
       'packed', position('🧰' in o.note) > 0) order by o.created_at desc)
     from (select t.*, coalesce(substring(t.note from '🚚(\S+)'), '') as sh from public.orders t
-          where t.status = 'confirmee' and position('🗑' in t.note) = 0 and t.created_at > now() - interval '14 days'
+          where t.status = 'confirmee' and position('🗑' in t.note) = 0 and t.created_at > now() - interval '2 days'
             and (position('🧰' in t.note) = 0 or position('🧰@' || to_char(now() at time zone 'Africa/Algiers', 'YYYY-MM-DD') in t.note) > 0)
           order by t.created_at desc limit 300) o), '[]'::jsonb);
 end $$;

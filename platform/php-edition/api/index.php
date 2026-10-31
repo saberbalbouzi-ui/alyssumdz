@@ -777,7 +777,7 @@ switch ($route) {
     /* أمين المخزن (v1.89.239): قائمة تجهيز بلا هاتف ولا أسعار ولا مالية — الطلبات المؤكَّدة/المرسَلة فقط، وعلامة 🧰 في الملاحظة تعني «جُهِّز» */
     case 'pack_orders':
         needPerm('pack');
-        $rows = db()->query("SELECT id, created_at, name, wilaya, commune, dtype, desk, items_text, status, note FROM orders WHERE status = 'confirmee' AND note NOT LIKE '%🗑%' AND created_at > " . (time() - 14 * 86400) . " AND (note NOT LIKE '%🧰%' OR note LIKE '%🧰@" . gmdate('Y-m-d') . "%') ORDER BY created_at DESC LIMIT 300")->fetchAll();
+        $rows = db()->query("SELECT id, created_at, name, wilaya, commune, dtype, desk, items_text, status, note FROM orders WHERE status = 'confirmee' AND note NOT LIKE '%🗑%' AND created_at > " . (time() - 2 * 86400) . " AND (note NOT LIKE '%🧰%' OR note LIKE '%🧰@" . gmdate('Y-m-d') . "%') ORDER BY created_at DESC LIMIT 300")->fetchAll();
         out(200, ['ok' => true, 'orders' => array_map(function ($r) {
             $ship = preg_match('/🚚(\S+)/u', (string)$r['note'], $m) ? $m[1] : ''; $co = ''; $trk = $ship; if (strpos($ship, ':') !== false) [$co, $trk] = explode(':', $ship, 2);
             return ['id' => $r['id'], 'date' => iso((int)$r['created_at']), 'name' => $r['name'], 'wilaya' => $r['wilaya'], 'commune' => $r['commune'], 'dtype' => $r['dtype'], 'desk' => $r['desk'],
