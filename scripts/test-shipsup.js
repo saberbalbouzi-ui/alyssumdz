@@ -28,6 +28,8 @@ t("الإضافة تُعاد في sup (50) ولا تُحسب مجاناً", q(w,
   t("مبلغ منقوص خاص بالمنتج (300) يتجاوز إعداد الشركة (200)", q2(ba, "", "home", 1, "", null, 300).fee === 900 && q2(ba, "Béni Abbès", "home", 1, "", null, 300).fee === 1100);
   t("منتج بلا نقص (0) رغم نقص الشركة 200", q2(ba, "", "home", 1, "", null, 0).fee === 1200 && q2(ba, "Béni Abbès", "home", 1, "", null, 0).fee === 1400);
   t("منتج بلا إعداد (null) يتبع الشركة", q2(ba, "", "home", 1, "", null, null).fee === 1000);
+  const q3 = make({}, { yalidine: { name: "Y", prices: { 52: { home: 1200, stop: 700 } }, adj: 200, adjMode: "wilaya" } }, CP, "yalidine");
+  t("نقص على الولاية فقط: بلا بلدية 1000، وكل البلديات 1200 (سعر الولاية الأصلي)", q3(ba, "", "home", 1, "", null).fee === 1000 && q3(ba, "Béni Abbès", "home", 1, "", null).fee === 1200 && q3(ba, "El Test", "home", 1, "", null).fee === 1200 && q3(ba, "Unknown", "home", 1, "", null).fee === 1200);
   t("أسعار المناطق: سعر المنطقة بلا سعر ياليدين", qq(ba, "Béni Abbès", "home", 1, "zones", null).fee === 1250);
 }
 

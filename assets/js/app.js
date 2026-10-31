@@ -67,13 +67,13 @@ function shipQuote(w, commune, type, sub, co, pf, pa){
     if(v !== null && v >= 0){ base = v; flatFree = v === 0; }
   } else if(src !== "zones"){
     const key = src || __SHIPDEF;
-    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[key].adj) || 0); if(aj){ const nb = Math.max(0, base - aj); adjApplied = base - nb; base = nb; } } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
+    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[key].adj) || 0); if(aj && !(__SHIPCO[key].adjMode === "wilaya" && String(commune || "").trim())){ const nb = Math.max(0, base - aj); adjApplied = base - nb; base = nb; } } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
   }
-  const kcm = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), ckey = src !== "free" && src !== "zones" ? (src || __SHIPDEF) : "", cpd = ckey === "yalidine" && kcm && __SHIPCP[w.par || w.id] && __SHIPCP[w.par || w.id][kcm];
+  const kcm = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), ckey = src !== "free" && src !== "zones" ? (src || __SHIPDEF) : "", adjOnly = !!(ckey && __SHIPCO && __SHIPCO[ckey] && __SHIPCO[ckey].adjMode === "wilaya" && kcm), cpd = !adjOnly && ckey === "yalidine" && kcm && __SHIPCP[w.par || w.id] && __SHIPCP[w.par || w.id][kcm];
   if(cpd && (type === "stop" ? cpd[1] : cpd[0]) > 0){      // سعر البلدية المستقل عند الشركة (مطلق) — منفصل عن سعر الولاية؛ يبقى تعديل السعر المعروض (adj) مطبَّقاً عليه
     const wb = base, aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[ckey] && __SHIPCO[ckey].adj) || 0), nb = Math.max(0, Number(type === "stop" ? cpd[1] : cpd[0]) - aj);
     supAdd = nb - wb; adjApplied = aj ? Number(type === "stop" ? cpd[1] : cpd[0]) - nb : 0; base = nb;
-  } else if(src !== "free"){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
+  } else if(src !== "free" && !adjOnly){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
     const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
     if(d){ const add = Number(type === "stop" ? d[1] : d[0]) || 0; if(add){ const nb = Math.max(0, base + add); supAdd = nb - base; base = nb; } }
   }
