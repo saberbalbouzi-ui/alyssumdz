@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.691">
+<meta name="admin-version" content="1.89.692">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -1695,7 +1695,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stockcheck.js?v=29b40c15"></script>
 <script src="assets/js/admin-orderedit.js?v=7e1815fd"></script>
 <script src="assets/js/admin-wilkids.js?v=f737668d"></script>
-<script src="assets/js/admin-manualorder.js?v=8613fff7"></script>
+<script src="assets/js/admin-manualorder.js?v=512cdd8f"></script>
 <script src="assets/js/admin-stores.js?v=d62d8df5"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=6063c915"></script>
@@ -7315,9 +7315,9 @@ const Admin = {
       },
       cancelRequest(cfg, tracking){ return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "DELETE", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken } }; },
       /* تعديل طرد قائم (PATCH /v1/parcels/{tracking}): الاسم والعنوان والتوصيل والسعر؛ تقبله الشركة عادةً قبل خروج الطرد فقط */
-      updateRequest(cfg, tracking, order){
+      updateRequest(cfg, tracking, order, full){
         const b = JSON.parse(this.buildRequest(cfg, order).body)[0], body = {};
-        ["firstname","familyname","address","to_commune_name","to_wilaya_name","price","declared_value","freeshipping","is_stopdesk","stopdesk_id","opening_decision"].forEach(k=>{ if(b[k] !== undefined) body[k] = b[k]; });
+        ["firstname","familyname","address","to_commune_name","to_wilaya_name","price","declared_value","freeshipping","is_stopdesk","stopdesk_id","opening_decision"].concat(full ? ["contact_phone","product_list"] : []).forEach(k=>{ if(b[k] !== undefined) body[k] = b[k]; });
         if(!b.is_stopdesk) body.stopdesk_id = null;
         return { url: this.base + "/v1/parcels/" + encodeURIComponent(tracking), method: "PATCH", headers: { "X-API-ID": cfg.apiId, "X-API-TOKEN": cfg.apiToken, "Content-Type": "application/json" }, body: JSON.stringify(body) };
       },
@@ -8543,15 +8543,17 @@ const Admin = {
     return { ok:true, ord: Object.assign({}, ord, { items: this.bordItems(ord.items) }) };
   },
   /* تحديث بيانات طرد مرسَل لدى شركة التوصيل بعد تعديل الطلب (الاسم/الولاية/البلدية/التوصيل). يعيد {ok,msg,skipped} */
-  async updateAtCompany(i){
+  async updateAtCompany(i, opt){
+    opt = opt || {};
     const o0 = this.orders[i], t = o0 && this.trackingOf(o0); if(!t) return { skipped:true };
     const co = this.allDeliveryCompanies()[t.company], cfg = this.deliveryCfg[t.company] || {};
     if(!co || !co.updateRequest) return { ok:false, msg:"هذه الشركة لا تدعم تعديل الطرد آلياً" };
     if(!cfg.enabled && !cfg.apiId) return { ok:false, msg:"مفاتيح الشركة غير مضبوطة" };
     try{
       const nz = await this.normForCompany(co, cfg, await this.coOrderFor(co, cfg, o0)); if(!nz.ok) return { ok:false, msg:nz.msg }; const ord = nz.ord;
-      const r = await this.courierFetch(co.updateRequest(cfg, t.tracking, ord));
-      if(r.ok) return { ok:true };
+      let r = await this.courierFetch(co.updateRequest(cfg, t.tracking, ord, !!opt.full));
+      if(r.ok) return { ok:true, full: !!opt.full };
+      if(opt.full){ const r2 = await this.courierFetch(co.updateRequest(cfg, t.tracking, ord, false)); if(r2.ok) return { ok:true, partial:true, msg:"حُدّث عنوان الطرد وسعره، أما المنتجات/الهاتف فلم تقبلها الشركة — عدّلها يدوياً من حسابها" }; }
       let why = ""; try{ const j = JSON.parse(r.text); why = j.message || j.error || (Object.values(j)[0] && Object.values(j)[0].message) || ""; }catch(e){}
       return { ok:false, msg:"رفضت الشركة التعديل (رمز " + r.status + ")" + (why ? ": " + why : "") + " — غالباً لأن الطرد خرج من مرحلة التحضير" };
     }catch(err){ return { ok:false, msg:String((err && err.message) || err) }; }
@@ -8643,6 +8645,16 @@ const Admin = {
   /* ════════ الطلبات الجديدة: تأكيد / محاولات اتصال / إلغاء ════════ */
   ST_AR: { nouvelle:"في انتظار التأكيد", confirmee:"مؤكَّد", expediee:"في الطريق", livree:"تم التسليم", annulee:"ملغاة", echec:"فشل التوصيل" },
   /* متابعة التوصيل الفاشل: الطرد بحالة «Tentative échouée» عند الشركة يدخل مركز الاتصال تلقائياً؛ وسم 📲ok|no@اليوم يخفيه لبقية اليوم، و📲ref (رفض الاستلام) يُخرجه نهائياً */
+  /* «تعديل كامل» (منتجات/هاتف/سعر): الجديد والمؤكَّد غير المرسَل، أو المرسَل ما دام الطرد في التحضير عند شركة تدعم تعديل الطرد */
+  canFullEdit(o){
+    if(!o || /🗑/.test(o.note || "")) return false;
+    const t = this.trackingOf(o);
+    if(!t) return ["nouvelle","confirmee"].includes(o.status);
+    if(!["confirmee","expediee"].includes(o.status)) return false;
+    const co = this.allDeliveryCompanies()[t.company]; if(!co || !co.updateRequest) return false;
+    const raw = String(this.rawShip(o) || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    return !raw || /prepar|en attente|pret a expedier/.test(raw);
+  },
   rawShip(o){ const t = this.trackingOf(o); if(!t) return ""; let raw = ""; try{ const r = window.AdminYd && AdminYd.S.rows.find(x=>String(x.tracking) === String(t.tracking)); raw = (r && r.status) || ""; }catch(e){} return raw || ((this.shipRaw || {})[o.id] || {}).raw || ""; },
   failedAttempt(o){
     if(!o || !["confirmee","expediee"].includes(o.status) || /🗑/.test(o.note || "")) return false;
@@ -9043,7 +9055,7 @@ const Admin = {
     const dg = String(o.phone||"").replace(/\D/g,""), intl = dg ? (dg.startsWith("0") ? "213"+dg.slice(1) : (dg.startsWith("213")?dg:"213"+dg)) : "";
     a.innerHTML = (intl ? '<a class="small green call-lnk" data-oid="' + esc(String(o.id)) + '" href="tel:+' + intl + '" style="text-decoration:none;text-align:center">📞 اتصل</a><a class="small blue" target="_blank" rel="noopener" href="https://wa.me/' + intl + '" style="text-decoration:none;text-align:center">💬 واتساب</a>' : "") + (o.status === "nouvelle" ? '<button class="small green" type="button" onclick="' + close + ';Admin.confirmOrder(' + i + ')">✅ أكّد الطلب</button>' : "") +
       S(()=>window.OrderEdit && OrderEdit.canEdit(o) ? '<button class="small gold" type="button" onclick="OrderEdit.open(' + i + ')" title="تعديل الاسم والولاية والبلدية وطريقة التوصيل">✏️ تعديل</button>' : '') +
-      (window.ManualOrder && o.status === "nouvelle" && !t ? '<button class="small gold" type="button" onclick="' + close + ';ManualOrder.open({mode:\'edit\',order:Admin.orders[' + i + ']})" title="تعديل كل بيانات الطلب بما فيها المنتجات والهاتف">✏️ تعديل كامل</button>' : '') +
+      (window.ManualOrder && S(()=>this.canFullEdit(o)) ? '<button class="small gold" type="button" onclick="' + close + ';ManualOrder.open({mode:\'edit\',order:Admin.orders[' + i + ']})" title="تعديل كل بيانات الطلب بما فيها المنتجات والهاتف' + (t ? ' — يُحدَّث الطرد عند الشركة والمخزون' : '') + '">✏️ تعديل كامل</button>' : '') +
       (window.ManualOrder ? '<button class="small blue" type="button" onclick="' + close + ';ManualOrder.open({mode:\'copy\',order:Admin.orders[' + i + ']})" title="ينسخ هذا الطلب كطلب جديد غير مسجَّل (تعدّله قبل الحفظ وبعده)">📄 نسخ كطلب جديد</button>' : '') +
       (t ? '<button class="small blue" type="button" onclick="Admin.openLabel(' + i + ')" title="بوليصة شركة التوصيل الأصلية">🏷️ بوليصة الشركة</button>' : '') +
       '<button class="small gray" type="button" onclick="Admin.printOrderSlip(' + i + ')">🖨️ وصل</button>' +
