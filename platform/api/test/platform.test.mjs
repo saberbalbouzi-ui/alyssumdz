@@ -56,7 +56,9 @@ ok("لا هاتف ولا IP صريح في القاعدة", !JSON.stringify(sqlAl
 for (let i = 0; i < 3; i++) await chk(kA, { phone: "0551234567", name: "Amine Bouzid", total: 4500, device: { fingerprint: "fp-AAA" } });
 [c, b] = await chk(kA, { phone: "0551234567", name: "Amine Bouzid", total: 4500, device: { fingerprint: "fp-AAA" } }); ok("تكرار الرقم 24س يرفع الدرجة", b.reasons.some((r) => r.code === "repeat_phone"), b);
 for (const ph of ["0661000001", "0661000002", "0661000003"]) await chk(kA, { phone: ph, name: "Karim Ali", total: 3000, device: { fingerprint: "fp-SHARED" } }, "5.5.5." + ph.slice(-1));
-[c, b] = await chk(kB, { phone: "0771000009", name: "Samir Ben", total: 3000, device: { fingerprint: "fp-SHARED" } }); ok("جهاز واحد بأرقام كثيرة (عبر المستأجرين)", b.reasons.some((r) => r.code === "device_many_phones"), b);
+[c, b] = await chk(kB, { phone: "0771000008", name: "Samir Ben", total: 3000, device: { fingerprint: "fp-SHARED" } }); ok("V01-05: الافتراضي معزول — جهاز A لا يؤثر في B", c === 200 && !b.reasons.some((r) => r.code === "device_many_phones"), b);
+await adm("PATCH", `/admin/tenants/${tB}`, { settings: { fraud: { network: true } } });
+[c, b] = await chk(kB, { phone: "0771000009", name: "Samir Ben", total: 3000, device: { fingerprint: "fp-SHARED" } }); ok("جهاز واحد بأرقام كثيرة (عبر المستأجرين، باشتراك network)", b.reasons.some((r) => r.code === "device_many_phones"), b);
 [c, b] = await chk(kA, { phone: "0771000010", name: "Samir Ben", total: 3000 }); ok("بلا بصمة جهاز +5", b.reasons.some((r) => r.code === "no_device"));
 for (const ph of ["0770000001", "0770000002", "0770000003", "0770000004"]) await chk(kA, { phone: ph, name: "Lina Kaci", total: 2000, device: { fingerprint: "fp-" + ph } }, "7.7.7.7");
 [c, b] = await chk(kA, { phone: "0770000005", name: "Lina Kaci", total: 2000, device: { fingerprint: "fp-x" } }, "7.7.7.7"); ok("IP واحد بأرقام كثيرة في ساعة", b.reasons.some((r) => r.code === "ip_many_phones"), b);
@@ -72,11 +74,16 @@ const before = sql("SELECT COUNT(*) n FROM fr_checks").n; await call("POST", "/v
 [c, b] = await call("POST", "/v1/fraud/report", { phone: "0699999999", reason: "fake" }, kA); ok("بلاغ مكرر في اليوم لا يتضاعف", c === 200 && b.duplicate === true && sql("SELECT COUNT(*) n FROM fr_reports").n === 1);
 ok("لا هاتف صريح في البلاغات", !JSON.stringify(sqlAll("SELECT * FROM fr_reports")).includes("0699999999"));
 [c, b] = await chk(kB, { phone: "0699999999", name: "Nadir Hamidi", total: 5000, device: { fingerprint: "fp-n" } }); ok("تاجر آخر يرى الأثر (درجة ↑ بلا هوية المبلِّغ)", b.reasons.some((r) => r.code === "reported_others") && !JSON.stringify(b).includes("Shop A"), b);
+[c, b] = await call("POST", "/v1/fraud/check", { phone: "0699999999", name: "Nadir Hamidi", total: 5000, device: { fingerprint: "fp-n" } }, kC); ok("V01-05: مستأجر بلا network لا يتأثر ببلاغات الآخرين", c === 200 && !b.reasons.some((r) => r.code === "reported_others"), b);
+[c, b] = await call("GET", "/v1/fraud/phone/0699999999", null, kC); ok("V01-05: الاستعلام المجمَّع بلا network = 0", c === 200 && b.network === false && b.otherTenants === 0, b);
 [c, b] = await chk(kA, { phone: "0699999999", name: "Nadir Hamidi", total: 5000, device: { fingerprint: "fp-n" } }); ok("المبلِّغ نفسه: reported_own وليس others", b.reasons.some((r) => r.code === "reported_own") && !b.reasons.some((r) => r.code === "reported_others"));
 await call("POST", "/v1/fraud/report", { phone: "0699999999", reason: "returned" }, kB);
-[c, b] = await call("GET", "/v1/fraud/phone/0699999999", null, kA); ok("استعلام مجمَّع: عدد التجار الآخرين فقط", c === 200 && b.otherTenants === 1 && b.own[0].reason === "fake" && !JSON.stringify(b).includes("returned"), b);
+await adm("PATCH", `/admin/tenants/${tA}`, { settings: { fraud: { network: true } } });
+[c, b] = await call("GET", "/v1/fraud/phone/0699999999", null, kA); ok("استعلام مجمَّع: عدد التجار الآخرين فقط (باشتراك network)", c === 200 && b.otherTenants === 1 && b.own[0].reason === "fake" && !JSON.stringify(b).includes("returned"), b);
 [c, b] = await call("GET", "/v1/fraud/phone/abc", null, kA); ok("استعلام برقم خاطئ 422", c === 422);
 [c, b] = await call("DELETE", "/v1/fraud/report/0699999999", null, kA); ok("المستأجر يسحب بلاغاته فقط", c === 200 && b.removed === 1 && sql("SELECT COUNT(*) n FROM fr_reports").n === 1);
+{ let last = 0; for (let i = 0; i < 205; i++) { [c] = await call("POST", "/v1/fraud/report", { phone: "0660" + String(100000 + i), reason: "fake" }, kB); last = c; if (c === 429) break; }
+  ok("V01-05: سقف البلاغات اليومي لكل مستأجر (429)", last === 429); }
 
 /* أحداث عالية الخطر + cron */
 ok("حدث fraud.high_risk في الصندوق", sql("SELECT COUNT(*) n FROM pf_events WHERE type='fraud.high_risk'").n >= 1);

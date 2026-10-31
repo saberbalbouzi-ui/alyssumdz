@@ -4,6 +4,9 @@ import { hmacHex, localPhone } from "../util.js";
 const REASONS = ["refused", "fake", "no_answer", "returned", "fraud"];
 const DEF = { review: 30, block: 80 };
 const DAY = 86400, HOUR = 3600;
+/** V01-05: الإشارات المشتركة بين المستأجرين اشتراك صريح (settings.fraud.network === true)؛ الافتراضي معزول لمنع تسميم الدرجات */
+export const networkOn = (t) => t?.settings?.fraud?.network === true;
+const REPORT_DAILY_CAP = 200;
 /** تسميات الأسباب (للعرض): يضيفها المستهلك بلغته؛ الرموز ثابتة */
 export const REASON_LABEL = {
   invalid_phone: "رقم هاتف غير صالح", fake_pattern: "رقم يبدو وهمياً (أرقام متكررة)", bad_name: "اسم غير معقول", no_device: "لا بصمة جهاز (قد يكون برنامجاً آلياً)",
@@ -42,12 +45,12 @@ export const antifraud = {
       const total = Math.max(0, Math.round(+b.total || 0)); if (total > 10_000_000) throw new HttpError(400, "validation_error", "total خارج الحدود", { total: "≤ 10,000,000" });
       const dev = b.device && typeof b.device === "object" ? String(b.device.fingerprint ?? "").slice(0, 200) : "";
       const ph = phone ? await H("ph", phone) : await H("raw", String(b.phone ?? "").slice(0, 40)), dh = dev ? await H("dv", dev) : null, ih = req.ip && req.ip !== "0" ? await H("ip", req.ip) : null;
-      const one = (sql, ...a) => db.val(sql, ...a);
+      const one = (sql, ...a) => db.val(sql, ...a), net = networkOn(req.tenant), scope = net ? "" : " AND tenant_id=?", sa = net ? [] : [tid];
       const [repeat, devPh, ipPh, repTen, own, avg] = await Promise.all([
         one("SELECT COUNT(*) FROM fr_checks WHERE tenant_id=? AND phone_h=? AND at>?", tid, ph, now - DAY),
-        dh ? one("SELECT COUNT(DISTINCT phone_h) FROM fr_checks WHERE device_h=? AND at>? AND phone_h<>?", dh, now - DAY, ph) : 0,
-        ih ? one("SELECT COUNT(DISTINCT phone_h) FROM fr_checks WHERE ip_h=? AND at>? AND phone_h<>?", ih, now - HOUR, ph) : 0,
-        one("SELECT COUNT(DISTINCT tenant_id) FROM fr_reports WHERE phone_h=? AND tenant_id<>?", ph, tid),
+        dh ? one("SELECT COUNT(DISTINCT phone_h) FROM fr_checks WHERE device_h=? AND at>? AND phone_h<>?" + scope, dh, now - DAY, ph, ...sa) : 0,
+        ih ? one("SELECT COUNT(DISTINCT phone_h) FROM fr_checks WHERE ip_h=? AND at>? AND phone_h<>?" + scope, ih, now - HOUR, ph, ...sa) : 0,
+        net ? one("SELECT COUNT(DISTINCT tenant_id) FROM fr_reports WHERE phone_h=? AND tenant_id<>?", ph, tid) : 0,
         one("SELECT COUNT(*) FROM fr_reports WHERE phone_h=? AND tenant_id=?", ph, tid),
         db.one("SELECT AVG(total) AS a, COUNT(*) AS n FROM (SELECT total FROM fr_checks WHERE tenant_id=? AND total>0 ORDER BY id DESC LIMIT 50)", tid),
       ]);
@@ -64,6 +67,7 @@ export const antifraud = {
       if (!REASONS.includes(b.reason)) throw new HttpError(400, "validation_error", "reason غير صالح", { reason: REASONS });
       if (req.mode !== "live") return ok({ ok: true, sandbox: true });
       const day = ctx.now().slice(0, 10);
+      if ((await db.val("SELECT COUNT(*) FROM fr_reports WHERE tenant_id=? AND day=?", req.tenant.id, day)) >= REPORT_DAILY_CAP) throw new HttpError(429, "report_quota", "تجاوزتَ الحد اليومي للبلاغات");
       try { await db.run("INSERT INTO fr_reports (tenant_id,phone_h,reason,day,at) VALUES (?,?,?,?,?)", req.tenant.id, await H("ph", phone), b.reason, day, ctx.nowS()); } catch (e) { if (!/UNIQUE|constraint/i.test(String(e.message))) throw e; return ok({ ok: true, duplicate: true }); }
       return ok({ ok: true }, 201);
     });
@@ -72,7 +76,7 @@ export const antifraud = {
     r.get("/v1/fraud/phone/:phone", { scope: "fraud:check" }, async (req) => {
       const phone = localPhone(decodeURIComponent(req.params.phone)); if (!phone) throw new HttpError(422, "invalid_phone", "رقم هاتف جزائري محمول غير صالح");
       const h = await H("ph", phone), tid = req.tenant.id;
-      return ok({ phone, otherTenants: await db.val("SELECT COUNT(DISTINCT tenant_id) FROM fr_reports WHERE phone_h=? AND tenant_id<>?", h, tid), own: await db.all("SELECT reason, COUNT(*) AS n FROM fr_reports WHERE phone_h=? AND tenant_id=? GROUP BY reason", h, tid) });
+      return ok({ phone, network: networkOn(req.tenant), otherTenants: !networkOn(req.tenant) ? 0 : await db.val("SELECT COUNT(DISTINCT tenant_id) FROM fr_reports WHERE phone_h=? AND tenant_id<>?", h, tid), own: await db.all("SELECT reason, COUNT(*) AS n FROM fr_reports WHERE phone_h=? AND tenant_id=? GROUP BY reason", h, tid) });
     });
     // حق الحذف للمستأجر: يسحب بلاغاته عن رقم
     r.delete("/v1/fraud/report/:phone", { scope: "fraud:report" }, async (req) => {

@@ -321,6 +321,7 @@ begin
   if v_phone !~ '^0[567][0-9]{8}$' and v_phone !~ '^0[0-9]{8}$' then raise exception 'invalid_phone'; end if;
   if char_length(v_pw) not between 6 and 72 then raise exception 'invalid_password'; end if;
   if (select count(*) from public.customers where created_at > now() - interval '1 hour') >= 60 then raise exception 'rate_limited'; end if;
+  perform public._rl_hit('cust_reg', 8, interval '1 hour');
   if exists (select 1 from public.customers where phone = v_phone) then raise exception 'phone_taken'; end if;
   insert into public.customers (phone, name, wilaya, commune, pass_hash)
   values (v_phone, left(v_name, 120), left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), extensions.crypt(v_pw, extensions.gen_salt('bf', 8)))
@@ -396,6 +397,7 @@ language plpgsql security definer set search_path = public as $$
 declare t text := btrim(coalesce(p ->> 'tracking', '')); o record;
 begin
   if t !~ '^[A-Za-z0-9._-]{4,40}$' then return jsonb_build_object('found', false); end if;
+  perform public._rl_hit('track', 30, interval '1 minute');
   delete from public.track_fails where at < now() - interval '1 hour';
   if (select count(*) from public.track_fails where at > now() - interval '1 minute') >= 40 then raise exception 'rate_limited'; end if;
   select status, created_at, wilaya, commune, dtype into o from public.orders
@@ -499,6 +501,21 @@ language sql security definer set search_path = public as $$
   select t || '.' || public._guard_sig(t) from (select extract(epoch from clock_timestamp())::bigint::text as t) x
 $$;
 revoke all on function public._guard_secret(), public._guard_sig(text), public._ip_hash(text), public._client_ip() from public, anon, authenticated;
+-- حدّ معدّل لكل عنوان IP (V01-06): يسجّل الضربة ثم يرفض عند التجاوز؛ بلا ترويسة IP لا يُطبَّق (يبقى الحدّ العام)
+create table if not exists public.rate_hits (kind text not null, ip_h text not null, at timestamptz not null default now());
+create index if not exists rate_hits_idx on public.rate_hits (kind, ip_h, at);
+alter table public.rate_hits enable row level security;
+revoke all on public.rate_hits from anon, authenticated;
+create or replace function public._rl_hit(p_kind text, p_max int, p_win interval) returns void
+language plpgsql security definer set search_path = public as $$
+declare v_h text := public._ip_hash(public._client_ip());
+begin
+  if v_h is null then return; end if;
+  if random() < 0.02 then delete from public.rate_hits where at < now() - interval '1 day'; end if;
+  insert into public.rate_hits (kind, ip_h) values (p_kind, v_h);
+  if (select count(*) from public.rate_hits where kind = p_kind and ip_h = v_h and at > now() - p_win) > p_max then raise exception 'rate_limited'; end if;
+end $$;
+revoke all on function public._rl_hit(text, int, interval) from public, anon, authenticated;
 revoke all on function public.form_token() from public;
 grant execute on function public.form_token() to anon, authenticated;
 

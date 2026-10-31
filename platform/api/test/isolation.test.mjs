@@ -105,6 +105,9 @@ const fill = (p) => p.replace(/\{[a-z]+\}/g, "1");
 /* 10) الاحتيال: البلاغات مجمّعة (عدد مستأجرين فقط) ولا هوية؛ المحو والاستعلام لا يتجاوزان مستأجرهما */
 { const F1 = await tenant("F1"), F2 = await tenant("F2"), P = "0770123456";
   tick(); await call("POST", "/v1/fraud/report", { phone: P, reason: "refused" }, F1.key);
+  tick(); const [, q0] = await call("GET", `/v1/fraud/phone/${P}`, null, F2.key);
+  ok("V01-05: F2 بلا network لا يرى بلاغات F1", q0.otherTenants === 0 && q0.network === false, q0);
+  await adm("PATCH", `/admin/tenants/${F2.id}`, { settings: { fraud: { network: true } } });
   tick(); const [, q2] = await call("GET", `/v1/fraud/phone/${P}`, null, F2.key);
   ok("F2 يرى عدد المبلِّغين الآخرين فقط (1) وبلا تفاصيل", q2.otherTenants === 1 && Array.isArray(q2.own) && q2.own.length === 0 && !JSON.stringify(q2).includes("refused") && !/tenant|F1/.test(JSON.stringify(q2)), q2);
   tick(); const [, d2] = await call("DELETE", `/v1/fraud/report/${P}`, null, F2.key); ok("F2 لا يستطيع حذف بلاغ F1", d2.removed === 0 && sql("SELECT COUNT(*) n FROM fr_reports WHERE tenant_id=?", F1.id).n === 1, d2);

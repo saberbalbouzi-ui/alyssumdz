@@ -56,6 +56,9 @@ language plpgsql security definer set search_path = public as $$
 declare q text := btrim(coalesce(p_q,'')); d text := public._ruqya_norm(p_q); r jsonb;
 begin
   if char_length(q) < 3 then return '{"found":false,"matches":[]}'::jsonb; end if;
+  -- V01-06: حدّ لكل IP، والبحث بالرقم يشترط 8 أرقام فأكثر (يمنع تعداد الأرقام بأجزاء قصيرة)
+  perform public._rl_hit('ruqya_lookup', 15, interval '10 minutes');
+  if q !~ '[^0-9+ ]' and char_length(d) < 8 then return '{"found":false,"matches":[]}'::jsonb; end if;
   with src as (
     select name, public._ruqya_norm(phone) ph from public.ruqya_bookings where status <> 'cancelled'
     union select name, public._ruqya_norm(phone) from public.orders
@@ -80,6 +83,7 @@ declare
   v_reg boolean := coalesce((p ->> 'registered')::boolean, false); v_known boolean; v_price int; v_pack int; v_id bigint;
   v_all text[] := public._ruqya_slots(); v_i int; v_k int; v_cap int := 1; v_ok boolean;
 begin
+  perform public._rl_hit('ruqya_book', 10, interval '1 hour');
   if not coalesce((p ->> 'terms')::boolean, false) then raise exception 'terms_required'; end if;
   if extract(dow from v_day) <> 6 then raise exception 'not_saturday'; end if;
   if v_day < (now() at time zone 'Africa/Algiers')::date then raise exception 'past_day'; end if;
