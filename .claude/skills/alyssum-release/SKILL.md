@@ -11,7 +11,7 @@ description: خطوات إصدار ونشر تعديلات منصة أليسوم
 2. ارفع رقم `VERSION` (صيغة `1.89.N`؛ `release.py` يرفض رقماً أقل).
 3. `python3 scripts/build-admin-pb.py` (يختم النسخة في admin.html ويكسر كاش السكربتات). إن غيّرت CSS اللوحة فارفع `?v=` لملف الـCSS في admin.html.
 4. اختبر: `NODE_PATH=/opt/node-tools/node_modules node scripts/test-hand.js` و`node scripts/test-voice.js` (+ اختبارات المجال: test-stock/test-payments/test-shipsup).
-5. حدّث `assets/data/admin-help.json` (مقال لكل أداة/إعداد جديد) و`CLAUDE.md` (ملاحظة بالإصدار) ؛ ملفات جديدة مشتركة تدخل `shared-files.json`.
+5. حدّث `assets/data/admin-help.json` (مقال لكل أداة/إعداد جديد) و`platform/docs/changelog.md` (فقرة الإصدار في آخره؛ لا تُضَف إلى CLAUDE.md) ؛ ملفات جديدة مشتركة تدخل `shared-files.json`.
 6. commit بملحقات الإسناد المطلوبة (Co-Authored-By + Claude-Session)، ثم:
    `git fetch origin main && git merge origin/main` ثم `git push origin HEAD:<فرع الجلسة>` و`git push origin HEAD:main`.
 7. تحقق: `curl -s https://alyssumdz.com/VERSION` يطابق الرقم (انتظر دقيقة).
