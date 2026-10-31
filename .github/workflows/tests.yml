@@ -71,6 +71,8 @@ jobs:
         with: { node-version: '20' }
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
+      - name: poppler-utils (pdfinfo/pdftoppm لاختبارات PDF)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
