@@ -1,0 +1,13 @@
+{
+  "on": true,
+  "rc": true,
+  "img": true,
+  "keys": true,
+  "dev": true,
+  "frame": true,
+  "note": true,
+  "sel": false,
+  "copy": false,
+  "print": false,
+  "bots": false
+}
