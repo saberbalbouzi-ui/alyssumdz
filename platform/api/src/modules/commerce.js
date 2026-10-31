@@ -264,7 +264,8 @@ export const commerce = {
       const lim = clampLimit(req.query.limit), after = +req.query.after || 0, a = [req.tenant.id]; let q = "SELECT * FROM cm_orders WHERE tenant_id=?";
       if (req.query.status) { q += " AND status=?"; a.push(String(req.query.status)); } if (req.query.flagged === "1") q += " AND flags<>'[]'"; if (after) { q += " AND id<?"; a.push(after); }
       const pg = paginate(await db.all(q + " ORDER BY id DESC LIMIT ?", ...a, lim + 1), lim), out = [];
-      for (const o of pg.items) out.push({ ref: o.ref, status: o.status, name: seesPii(req) ? o.name : maskName(o.name), phone: seesPii(req) ? await ctx.vault.decrypt(o.phone_enc, `ord:${req.tenant.id}`) : maskPhone(await ctx.vault.decrypt(o.phone_enc, `ord:${req.tenant.id}`)), wilaya: o.wilaya, items: JSON.parse(o.items), subtotal: o.subtotal, discount: o.discount, fee: o.fee, total: o.total, coupon: o.coupon, flags: JSON.parse(o.flags), mode: o.mode, reserved: !!o.reserved, created_at: o.created_at });
+      const phoneOf = async (o) => { try { return await ctx.vault.decrypt(o.phone_enc, `ord:${req.tenant.id}`); } catch { return ""; } };   // صف تالف/منقول من مستأجر آخر: يُعرض بلا هاتف بدل إسقاط القائمة كلها (V-01)
+      for (const o of pg.items) out.push({ ref: o.ref, status: o.status, name: seesPii(req) ? o.name : maskName(o.name), phone: seesPii(req) ? await phoneOf(o) : maskPhone(await phoneOf(o)), wilaya: o.wilaya, items: JSON.parse(o.items), subtotal: o.subtotal, discount: o.discount, fee: o.fee, total: o.total, coupon: o.coupon, flags: JSON.parse(o.flags), mode: o.mode, reserved: !!o.reserved, created_at: o.created_at });
       return ok({ orders: out, next: pg.next });
     });
     r.get("/v1/orders/strict-report", { scope: "orders:read", summary: "تقرير وضع الظل للتحقق الصارم (?days=1..30؛ افتراضي 7): المعدلات والأسباب والحالات المحتمل أنها مشروعة — أرقام مجمّعة بلا بيانات شخصية" }, async (req) => {

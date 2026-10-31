@@ -292,7 +292,7 @@ export const sources = {
       const s = await own(req.tenant.id, req.params.id); await db.run("DELETE FROM src_orders WHERE source_id=?", s.id); await db.run("DELETE FROM src_sources WHERE id=?", s.id); await ctx.audit("tenant:" + req.tenant.id, "source.delete", s.id, { kind: s.kind }); return ok({ ok: true });
     });
     r.get("/v1/sources/orders", { scope: "sources:read", summary: "الطلبات الموحّدة من كل المصادر (الأحدث أولاً): source, status, q, since, until, limit, after=<ts.id>" }, async (req) => {
-      const q = req.query, lim = clampLimit(q.limit, 50, 200), tid = req.tenant.id, a = [tid]; let sql = "FROM src_orders o JOIN src_sources s ON s.id=o.source_id WHERE o.tenant_id=?";
+      const q = req.query, lim = clampLimit(q.limit, 50, 200), tid = req.tenant.id, a = [tid]; let sql = "FROM src_orders o JOIN src_sources s ON s.id=o.source_id AND s.tenant_id=o.tenant_id WHERE o.tenant_id=?";
       if (q.source) { sql += " AND o.source_id=?"; a.push(+q.source || 0); }
       if (q.status) { sql += " AND o.status=?"; a.push(String(q.status)); }
       if (+q.since) { sql += " AND o.created_at>=?"; a.push(+q.since); } if (+q.until) { sql += " AND o.created_at<?"; a.push(+q.until); }

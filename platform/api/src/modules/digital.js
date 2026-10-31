@@ -90,7 +90,7 @@ export const digital = {
       return ok({ ...out, emailed }, 201);
     });
     r.get("/v1/digital/grants", { scope: "digital:read", summary: "المنح حسب order_ref (بلا الروابط — تظهر مرة واحدة عند الإصدار)" }, async (req) => {
-      const lim = clampLimit(req.query.limit), after = +req.query.after || 0, a = [req.tenant.id]; let q = "SELECT g.id,a.sku,g.order_ref,g.expires_at,g.max_downloads,g.downloads,g.revoked_at,g.created_at FROM dg_grants g JOIN dg_assets a ON a.id=g.asset_id WHERE g.tenant_id=?";
+      const lim = clampLimit(req.query.limit), after = +req.query.after || 0, a = [req.tenant.id]; let q = "SELECT g.id,a.sku,g.order_ref,g.expires_at,g.max_downloads,g.downloads,g.revoked_at,g.created_at FROM dg_grants g JOIN dg_assets a ON a.id=g.asset_id AND a.tenant_id=g.tenant_id WHERE g.tenant_id=?";
       if (req.query.order_ref) { q += " AND g.order_ref=?"; a.push(String(req.query.order_ref)); } if (after) { q += " AND g.id<?"; a.push(after); }
       const pg = paginate(await db.all(q + " ORDER BY g.id DESC LIMIT ?", ...a, lim + 1), lim); return ok({ grants: pg.items, next: pg.next });
     });
@@ -156,7 +156,7 @@ export const digital = {
       const w = await ctx.window("dl:" + req.ip, 60, 60); if (w !== null) throw new HttpError(429, "rate_limited", "طلبات كثيرة", null, { "Retry-After": String(w) });
       if (!/^[0-9a-f]{64}$/.test(req.params.token)) throw new HttpError(404, "not_found", "الرابط غير صالح");
       const g = await db.one("SELECT * FROM dg_grants WHERE token_hash=?", await sha256Hex(req.params.token)); if (!g) throw new HttpError(404, "not_found", "الرابط غير صالح");
-      const now = ctx.nowS(), a = await db.one("SELECT * FROM dg_assets WHERE id=?", g.asset_id), t = await db.one("SELECT status FROM pf_tenants WHERE id=?", g.tenant_id);
+      const now = ctx.nowS(), a = await db.one("SELECT * FROM dg_assets WHERE id=? AND tenant_id=?", g.asset_id, g.tenant_id), t = await db.one("SELECT status FROM pf_tenants WHERE id=?", g.tenant_id);
       if (g.revoked_at || !a || !a.active || !t || t.status !== "active") throw new HttpError(410, "revoked", "الرابط ملغى");
       if (g.expires_at <= now) throw new HttpError(410, "expired", "انتهت صلاحية الرابط");
       const got = await db.run("UPDATE dg_grants SET downloads=downloads+1, last_download_at=? WHERE id=? AND downloads<max_downloads AND revoked_at IS NULL AND expires_at>?", now, g.id, now);

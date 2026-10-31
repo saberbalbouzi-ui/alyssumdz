@@ -134,7 +134,7 @@ export const ads = {
     });
     r.get("/v1/ads/spend", { scope: "ads:read", summary: "الإنفاق اليومي لكل حملة بين since وuntil (YYYY-MM-DD، شاملين) مع القيمة بالدينار (spend × fx)" }, async (req) => {
       const q = req.query, d = (x, def) => (/^\d{4}-\d{2}-\d{2}$/.test(String(x ?? "")) ? String(x) : def), until = d(q.until, ymd(ctx.nowS())), since = d(q.since, ymd(ctx.nowS() - 29 * DAY));
-      const rows = await db.all("SELECT s.day, s.campaign_id, s.campaign_name, s.spend, s.impressions, s.clicks, a.id AS account_id, a.provider, a.currency, a.fx, a.name AS account_name FROM ad_spend s JOIN ad_accounts a ON a.id=s.account_id WHERE s.tenant_id=? AND s.day>=? AND s.day<=? ORDER BY s.day DESC, s.spend DESC LIMIT 20000", req.tenant.id, since, until);
+      const rows = await db.all("SELECT s.day, s.campaign_id, s.campaign_name, s.spend, s.impressions, s.clicks, a.id AS account_id, a.provider, a.currency, a.fx, a.name AS account_name FROM ad_spend s JOIN ad_accounts a ON a.id=s.account_id AND a.tenant_id=s.tenant_id WHERE s.tenant_id=? AND s.day>=? AND s.day<=? ORDER BY s.day DESC, s.spend DESC LIMIT 20000", req.tenant.id, since, until);
       const out = rows.map((x) => ({ day: x.day, account_id: x.account_id, provider: x.provider, account_name: x.account_name, campaign_id: x.campaign_id, campaign_name: x.campaign_name, currency: x.currency, spend: x.spend, spend_dzd: Math.round(x.spend * x.fx * 100) / 100, impressions: x.impressions, clicks: x.clicks }));
       return ok({ since, until, total_dzd: Math.round(out.reduce((t, x) => t + x.spend_dzd, 0)), spend: out });
     });
