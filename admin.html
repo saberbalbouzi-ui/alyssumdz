@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.696">
+<meta name="admin-version" content="1.89.697">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -5794,7 +5794,7 @@ const Admin = {
       }
     });
     /* v1.89.132 (لجنة الخبراء): إنفاق حملة بلا أي طلب ناجح كان يُحسب 0 فيبدو الربح سليماً — صار خسارة صريحة */
-    K.adIdle = 0; K.adIdleBy = {}; const idl = (sl, v)=>{ K.adIdle += v; K.adIdleBy[sl] = (K.adIdleBy[sl] || 0) + v; }; this.adAllCamps().forEach(c=>{ const k = c.cfg; if(!(k && k.method === "spend" && (Number(k.a) || 0) > 0 && !(Number(k.n) > 0)) || !this.products.some(p=>p.slug === c.slug)) return;
+    K.adIdle = 0; K.adIdleBy = {}; const idl = (sl, v)=>{ K.adIdle += v; K.adIdleBy[sl] = (K.adIdleBy[sl] || 0) + v; }; this.adAllCamps().forEach(c=>{ const k = c.cfg; if(!k || k.off) return; if(!(k && k.method === "spend" && (Number(k.a) || 0) > 0 && !(Number(k.n) > 0)) || !this.products.some(p=>p.slug === c.slug)) return;
       if(k.daily){      /* أيام الحملة اليومية بلا أي طلب مسلَّم: إنفاقها خسارة صريحة */
         const now = Date.now(); let st = c.win && isFinite(c.win.f) ? c.win.f : 0; if(!st){ this.orders.forEach(o=>{ const t = new Date(o.date).getTime(); if(o.status === "livree" && this.orderLines(o).some(l=>l.p.slug === c.slug) && (!st || t < st)) st = t; }); } if(!st) return;
         const en = Math.min(c.win && isFinite(c.win.e) ? c.win.e : now, now); let n = 0;
@@ -5821,7 +5821,7 @@ const Admin = {
   },
   adPick(sl, t){
     let legacy = null; const L = this._adCampsC || (this._adCampsC = this.adAllCamps());       // كاش يُصفَّر عند بدء computeFinance وعند أي حفظ
-    for(const c of L){ if(c.slug !== sl) continue; if(c.win){ if(t >= c.win.f && t <= c.win.e) return c; } else legacy = c; }
+    for(const c of L){ if(c.slug !== sl || (c.cfg && c.cfg.off)) continue; if(c.win){ if(t >= c.win.f && t <= c.win.e) return c; } else legacy = c; }
     return legacy;
   },
   adCfgFor(sl){ const c = this.fin.ads && this.fin.ads[sl]; return (c && c.method && c.method !== "inherit") ? c : (this.fin.set.ad || { method:"fixed", a:0 }); },
@@ -5837,13 +5837,13 @@ const Admin = {
     const nf = x=>Math.round(x).toLocaleString("fr-DZ"), d = Number(cfg.n) > 0 ? Number(cfg.n) : nSucc, real = d ? (Number(cfg.a) || 0) / d : 0;
     return this.AD_MS.map(m=>({ v: "m:" + m, t: (m === 1 ? "Cost الحقيقي" : "Cost × " + m) + (cfg.daily ? " (يومياً)" : " = " + nf(real * m) + " دج") })).concat([{ v: "fixed", t: "قيمة ثابتة" + (cfg.method === "fixed" ? " = " + nf(Number(cfg.a) || 0) + " دج" : "") }]);
   },
-  adNorm(c){ c = c || {}; const meta = o=>{ ["from","to","name","note"].forEach(k=>{ if(c[k]) o[k] = String(c[k]); }); return o; }; if(c.method === "fixed") return meta({ method: "fixed", a: Number(c.a) || 0 }); if(c.method === "costx") return meta((Number(c.b) > 0 || !(Number(c.a) > 0)) ? { method: "spend", a: Number(c.b) || 0, n: 0, m: Number(c.m) || 1 } : { method: "fixed", a: (Number(c.a) || 0) * (Number(c.m) || 1) }); const sp = meta({ method: "spend", a: Number(c.a) || 0, n: Number(c.n) || 0, m: Number(c.m) || 1 }); if(c.daily) sp.daily = true; return sp; },
+  adNorm(c){ c = c || {}; const meta = o=>{ ["from","to","name","note"].forEach(k=>{ if(c[k]) o[k] = String(c[k]); }); if(c.off) o.off = true; return o; }; if(c.method === "fixed") return meta({ method: "fixed", a: Number(c.a) || 0 }); if(c.method === "costx") return meta((Number(c.b) > 0 || !(Number(c.a) > 0)) ? { method: "spend", a: Number(c.b) || 0, n: 0, m: Number(c.m) || 1 } : { method: "fixed", a: (Number(c.a) || 0) * (Number(c.m) || 1) }); const sp = meta({ method: "spend", a: Number(c.a) || 0, n: Number(c.n) || 0, m: Number(c.m) || 1 }); if(c.daily) sp.daily = true; return sp; },
   adReadRow(i){
     const g = id=>$f("fin-p" + i + "-" + id), num = id=>{ const x = g(id) ? Number(g(id).value) : 0; return isFinite(x) ? x : 0; }, mode = g("mode") ? g("mode").value : "m:1";
     const tx = id=>g(id) ? String(g(id).value || "").trim() : "", base = mode === "fixed" ? { method: "fixed", a: num("fx") } : { method: "spend", a: num("spend"), n: num("n"), m: Number(mode.slice(2)) || 1 };
     ["from","to","name","note"].forEach(k=>{ const v = tx(k); if(v) base[k] = v; }); if(base.method === "spend" && g("dly") && g("dly").value === "1") base.daily = true; return base;
   },
-  adSync(){ (this._adRows || []).forEach((r, i)=>{ if($f("fin-p" + i + "-mode")) r.cfg = this.adReadRow(i); const sel = $f("fin-p" + i + "-prod"); if(sel) r.slug = sel.value; }); },
+  adSync(){ (this._adRows || []).forEach((r, i)=>{ if($f("fin-p" + i + "-mode")){ const off = r.cfg && r.cfg.off; r.cfg = this.adReadRow(i); if(off) r.cfg.off = true; } const sel = $f("fin-p" + i + "-prod"); if(sel) r.slug = sel.value; }); },
   adRowsInit(){
     const sig = JSON.stringify(this.fin.ads || {}); if(this._adRows && this._adSig === sig) return; this._adSig = sig;
     const drafts = (this._adRows || []).filter(r=>!r.saved);
@@ -5860,19 +5860,24 @@ const Admin = {
       if(sel && r.slug !== sel) return "";
       const c = r.cfg, used = new Set(rows.filter((x, j)=>j !== i).map(x=>x.slug)), nS = ((this._adSucc || {})[r.slug]) || 0, mode = c.method === "fixed" ? "fixed" : "m:" + (Number(c.m) || 1);
       const opts = '<option value="">اختر منتجاً…</option>' + act.filter(p=>!used.has(p.slug) || p.slug === r.slug).map(p=>'<option value="' + PB.esc(p.slug) + '"' + (p.slug === r.slug ? " selected" : "") + '>' + PB.esc(p.title) + '</option>').join("");
-      const today = this.isoDay(), ended = !!(c.to && c.to < today), st = !r.saved ? "" : ended ? '<span class="pill st-annulee">⏹ متوقفة</span>' : '<span class="pill st-livree">🟢 نشطة</span>';
+      const today = this.isoDay(), ended = !!(c.to && c.to < today), st = !r.saved ? "" : c.off ? '<span class="pill st-annulee">⏸ معطّلة</span>' : ended ? '<span class="pill st-annulee">⏹ متوقفة</span>' : '<span class="pill st-livree">🟢 نشطة</span>';
       return '<tr data-ar="' + i + '" oninput="Admin.adLive(' + i + ')" onchange="Admin.adLive(' + i + ')"><td ' + td + '><select id="fin-p' + i + '-prod" style="min-width:170px">' + opts + '</select><div style="margin-top:.3rem">' + st + '</div></td>' +
         '<td ' + td + '><input id="fin-p' + i + '-name" type="text" placeholder="اسم الحملة (كما في utm_campaign)" value="' + PB.esc(c.name || "") + '" style="min-width:170px"><div style="display:flex;gap:.3rem;margin-top:.3rem;align-items:center;flex-wrap:wrap"><label class="hint" style="margin:0"><b>بداية الحملة</b> <input id="fin-p' + i + '-from" type="date" value="' + PB.esc(c.from || "") + '" style="max-width:140px"></label><label class="hint" style="margin:0">النهاية (اختياري) <input id="fin-p' + i + '-to" type="date" value="' + PB.esc(c.to || "") + '" style="max-width:140px"></label></div><div class="hint" style="margin:.2rem 0 0">الحملة مفتوحة حتى تضغط «⏹ إيقاف الحملة» أو تحدّد نهاية</div><input id="fin-p' + i + '-note" type="text" placeholder="ملاحظة (سبب الإيقاف، النتيجة…)" value="' + PB.esc(c.note || "") + '" style="margin-top:.3rem;min-width:170px"></td>' +
         '<td ' + td + '><input id="fin-p' + i + '-spend" type="number" min="0" step="any" placeholder="' + (c.daily ? "الإنفاق اليومي" : "إنفاق الحملة") + '" value="' + v(c.method === "fixed" ? "" : c.a) + '" style="max-width:150px"><select id="fin-p' + i + '-dly" style="margin-top:.3rem;max-width:150px"><option value="0"' + (c.daily ? "" : " selected") + '>إجمالي الحملة</option><option value="1"' + (c.daily ? " selected" : "") + '>إنفاق يومي (لكل يوم)</option></select></td>' +
         '<td ' + td + '><input id="fin-p' + i + '-n" type="number" min="0" step="1" placeholder="تلقائي" value="' + v(c.n) + '" style="max-width:110px;' + (c.daily ? "display:none" : "") + '"><div id="fin-p' + i + '-auto" class="hint" style="margin:.15rem 0 0">' + (c.daily ? "يوزَّع كل يوم على طلبات ذلك اليوم المسلَّمة (حدّد «من» أول يوم للحملة)" : "الفارغ = الناجحة (" + nS + ")") + '</div></td>' +
         '<td ' + td + '><div style="display:flex;gap:.35rem;align-items:center;flex-wrap:wrap"><select id="fin-p' + i + '-mode" style="min-width:230px;font-weight:800">' + this.adOpts(c, nS).map(o=>'<option value="' + o.v + '"' + (o.v === mode ? " selected" : "") + '>' + o.t + '</option>').join("") + '</select><input id="fin-p' + i + '-fx" type="number" min="0" step="any" placeholder="دج / طلب" value="' + v(c.method === "fixed" ? c.a : "") + '" style="max-width:110px;' + (mode === "fixed" ? "" : "display:none") + '"></div></td>' +
-        '<td ' + td + '><div style="display:flex;gap:.35rem;flex-wrap:wrap"><button class="small green" type="button" onclick="Admin.saveAdRow(' + i + ')">💾 حفظ</button>' + (r.saved ? (ended ? '<button class="small gold" type="button" onclick="Admin.resumeAdRow(' + i + ')" title="تعيد احتساب تكلفة الإعلان على الطلبات الجديدة">▶ استئناف</button><button class="small blue" type="button" onclick="Admin.newAdCampaign(' + i + ')" title="تؤرشف هذه الحملة بأرقامها وتبدأ حملة جديدة للمنتج">🆕 حملة جديدة</button>' : '<button class="small warn" type="button" onclick="Admin.stopAdRow(' + i + ')" title="تتوقف تكلفة الإعلان عن الطلبات التي بعد اليوم">⏹ إيقاف الحملة</button>') : '') + '<button class="small warn" type="button" onclick="Admin.delAdRow(' + i + ')" title="حذف الحملة">🗑</button></div></td></tr>';
+        '<td ' + td + '><div style="display:flex;gap:.35rem;flex-wrap:wrap"><button class="small green" type="button" onclick="Admin.saveAdRow(' + i + ')">💾 حفظ</button>' + (r.saved ? '<button class="small ' + (c.off ? "gold" : "gray") + '" type="button" onclick="Admin.toggleAdRow(' + i + ')" title="' + (c.off ? "تعيد احتساب تكلفة الحملة" : "تتوقف تكلفة الحملة عن الاحتساب كلياً وتبقى الحملة محفوظة") + '">' + (c.off ? "▶ تفعيل الحملة" : "⏸ تعطيل الحملة") + '</button>' + (ended ? '<button class="small gold" type="button" onclick="Admin.resumeAdRow(' + i + ')" title="تعيد احتساب تكلفة الإعلان على الطلبات الجديدة">▶ استئناف</button><button class="small blue" type="button" onclick="Admin.newAdCampaign(' + i + ')" title="تؤرشف هذه الحملة بأرقامها وتبدأ حملة جديدة للمنتج">🆕 حملة جديدة</button>' : '<button class="small warn" type="button" onclick="Admin.stopAdRow(' + i + ')" title="تتوقف تكلفة الإعلان عن الطلبات التي بعد اليوم">⏹ إيقاف الحملة</button>') : '') + '<button class="small warn" type="button" onclick="Admin.delAdRow(' + i + ')" title="حذف الحملة">🗑</button></div></td></tr>';
     }).join("") + '</tbody></table>';
   },
   /* v1.89.228: إيقاف/استئناف/أرشفة حملة */
   async stopAdRow(i){
     this.adSync(); const r = (this._adRows || [])[i]; if(!r || !r.slug) return; if(!confirm("إيقاف حملة هذا المنتج اليوم؟ تتوقف تكلفة الإعلان عن الطلبات التي تصل بعد اليوم، وتبقى أرقام الفترة السابقة كما هي.")) return;
     const te = $f("fin-p" + i + "-to"); if(te) te.value = this.isoDay(); await this.saveAdRow(i, true); toast("⏹ أُوقفت الحملة — لن تُحمَّل تكلفة إعلان على الطلبات الجديدة");
+  },
+  async toggleAdRow(i){
+    this.adSync(); const r = (this._adRows || [])[i]; if(!r || !r.slug || !r.saved) return;
+    if(r.cfg.off) delete r.cfg.off; else r.cfg.off = true;
+    await this.saveAdRow(i, true); toast(r.cfg.off ? "⏸ عُطّلت الحملة — لا تُحتسب تكلفتها (تبقى محفوظة)" : "▶ فُعّلت الحملة");
   },
   async resumeAdRow(i){ this.adSync(); const r = (this._adRows || [])[i]; if(!r) return; const te = $f("fin-p" + i + "-to"); if(te) te.value = ""; await this.saveAdRow(i, true); toast("▶ استُؤنفت الحملة"); },
   async newAdCampaign(i){
