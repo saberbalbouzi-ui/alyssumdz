@@ -129,7 +129,7 @@ const totp = (sec, step) => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigI
   ok("أمين المخزن: يفتح على قسم التجهيز", await W.p.evaluate(() => !document.getElementById("tab-pack").classList.contains("hidden")));
   await W.p.waitForSelector("#pk table tbody tr[data-id]", { timeout: 8000 });
   const wtxt = await W.p.evaluate(() => document.getElementById("tab-pack").textContent);
-  ok("القائمة تعرض الطلب المؤكَّد وقائمة الجمع", wtxt.includes(conf.id) && /قائمة الجمع/.test(wtxt));
+  ok("القائمة تعرض الطلب المؤكَّد وقائمة الجمع", (await W.p.evaluate(id => !!document.querySelector('#pk tr[data-id="' + id + '"]'), conf.id)) && /قائمة الجمع/.test(wtxt));
   ok("لا رقم هاتف ولا مبلغ الطلب في الصفحة كلها", !(await W.p.evaluate(() => document.body.innerText.replace(/\D/g, ""))).includes(conf.phone) , "phone visible");
   ok("بيانات الطلبات الكاملة غير محمّلة عند أمين المخزن", await W.p.evaluate(() => !(Admin.orders && Admin.orders.length)), await W.p.evaluate(() => (Admin.orders || []).length));
   await W.p.click('#pk tr[data-id="' + conf.id + '"] [data-pk=one]'); await W.p.waitForTimeout(700);
