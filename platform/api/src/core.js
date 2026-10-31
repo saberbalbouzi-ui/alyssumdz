@@ -39,7 +39,7 @@ export const CORE_MODULES = ["admin", "platform"];
 /** هل عُطّلت الوحدة لهذا المستأجر؟ (settings.modules_off) — الوحدات تعمل مستقلة: تعطيل واحدة لا يمسّ البقية */
 export const moduleOff = (settings, id) => !CORE_MODULES.includes(id) && Array.isArray(settings?.modules_off) && settings.modules_off.includes(id);
 
-export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn = fetch }) {
+export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn = (...a) => fetch(...a) }) {
   if (!secret || String(secret).length < 16) throw new Error("PLATFORM_SECRET مطلوب (16 حرفاً فأكثر)");
   const db = new DB(d1), routes = [];
   const ctx = { authProviders: [], orderGuards: [], db, clock, fetchFn, secret, vault, files, config, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
