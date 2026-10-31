@@ -52,9 +52,15 @@ const AdminPack = (() => {
     }
     throw new Error("no_backend");
   }
+  /* v1.89.696: قيد التجهيز عند الشركة فقط — للمالك (قائمة الطرود محمّلة) نستبعد ما خرج من حالة «En préparation» */
+  function outOfPrep(r) {
+    try { const Y = typeof AdminYd !== "undefined" ? AdminYd : null, rows = Y && Y.S && (Y.S.raw && Y.S.raw.length ? Y.S.raw : Y.S.rows); if (!rows || rows.length <= 20 || !r.tracking) return false;
+      const p = rows.find(x => String(x.tracking) === String(r.tracking)); if (!p || !p.status) return false;
+      return !/preparation|prepar|pret a expedier|en attente/.test(String(p.status).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()); } catch (e) { return false; }
+  }
   async function load() {
     S.busy = true; draw();
-    try { S.rows = ((await call("pack_orders")) || []).filter(r => r.status !== "expediee"); /* v1.89.694: المرسَلة للزبون لا تُجهَّز ثانية (الخادم يستبعدها أيضاً) */ S.err = ""; } catch (e) { S.err = /42501|forbidden|unauthorized|401|403/.test(String(e.message)) ? "ليس لديك صلاحية «تجهيز الطلبات»." : "تعذّر تحميل الطلبات: " + e.message; }
+    try { S.rows = ((await call("pack_orders")) || []).filter(r => r.status !== "expediee" && !outOfPrep(r)); /* v1.89.694: المرسَلة للزبون لا تُجهَّز ثانية (الخادم يستبعدها أيضاً) */ S.err = ""; } catch (e) { S.err = /42501|forbidden|unauthorized|401|403/.test(String(e.message)) ? "ليس لديك صلاحية «تجهيز الطلبات»." : "تعذّر تحميل الطلبات: " + e.message; }
     S.busy = false; draw();
   }
   async function mark(ids, undo) {

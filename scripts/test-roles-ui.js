@@ -121,6 +121,7 @@ const totp = (sec, step) => { const c = Buffer.alloc(8); c.writeBigUInt64BE(BigI
   // ═══ أمين المخزن: قسم التجهيز وحده، بلا هواتف ولا أسعار ═══
   await O.p.evaluate(async () => { await PHPAPI.call("team", { method: "POST", body: JSON.stringify({ action: "create", email: "mag", name: "Mag", role: "warehouse", password: "warepass-12345" }) }); });
   const conf = await O.p.evaluate(async () => { await Admin.load(); const o = Admin.orders.find(x => x.status === "confirmee"); return o ? { id: o.id, phone: String(o.phone).replace(/\D/g, ""), total: o.total } : null; });
+  if (conf) await O.p.evaluate(async id => { await PHPAPI.call("order_update", { method: "POST", body: JSON.stringify({ id, note: "🚚yalidine:yal-TEST1" }) }); }, conf.id); /* v1.89.696: التجهيز = طرد عند الشركة */
   ok("(تهيئة) يوجد طلب مؤكَّد للتجهيز", !!conf, conf);
   const W = await ctx(); await login(W.p, "mag", "warepass-12345"); await ready(W.p); await W.p.waitForTimeout(2000);
   const visW = await W.p.evaluate(() => [...document.querySelectorAll(".nav-btn:not(.rl-hid):not(.nav-hid):not(.nav-work)")].map(b => (b.querySelector(".nav-txt b") || b).textContent.trim().replace(/\s+/g, " ")));
