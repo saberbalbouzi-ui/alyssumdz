@@ -6,7 +6,7 @@ import { Dispatcher } from "./dispatcher.js";
 import { S, ALL as ALL_STATUS, canTransition } from "./status.js";
 import { makeParcel, ValidationError } from "./parcel.js";
 import { CARRIERS, catalog, makeAdapter, makeHttp, resolveCarrier, CarrierError, CredentialsError, UnsupportedError, ApiError } from "./carriers.js";
-import { nowStr, randHex, safeEq, safeHttpsUrl, sha256Hex } from "./util.js";
+import { actorOf, nowStr, randHex, safeEq, safeHttpsUrl, sha256Hex } from "./util.js";
 import * as Cal from "./calibrator.js";
 
 const MAX_BODY = 262144;
@@ -21,8 +21,8 @@ const REF = /^[A-Za-z0-9._-]{1,64}$/;
  * بوابة الشحن (Cloudflare Worker + D1). handle() نقية: لا تقرأ كائن Request ولا تعتمد على البيئة فتُختبر بلا خادم.
  * وضعان للمفاتيح: inline (مع كل طلب، لا تُخزَّن) أو vault (مشفّرة في gw_connections).
  */
-export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "", carrierFetch = null, platformEmit = null, pause = (ms) => new Promise((r) => setTimeout(r, Math.min(ms, 600))) }) {
-  const db = new DB(d1), tenants = new Tenants(db, vault), limiter = new Limiter(db, clock), dispatcher = new Dispatcher(db, tenants, fetchFn, clock), http = makeHttp(carrierFetch ?? fetchFn);
+export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken = "", clock = () => Date.now(), geo = new Geo(), docsHtml = "", carrierFetch = null, platformEmit = null, dohFetch = null, pause = (ms) => new Promise((r) => setTimeout(r, Math.min(ms, 600))) }) {
+  const db = new DB(d1), tenants = new Tenants(db, vault), limiter = new Limiter(db, clock), dispatcher = new Dispatcher(db, tenants, fetchFn, clock, dohFetch), http = makeHttp(carrierFetch ?? fetchFn);
   const aadConn = (tid, code) => `tenant:${tid}|carrier:${code}`;
   const ours = Cal.ourGeo(geo);
   /* ملف معايرة الحساب (gw_profiles): يُنشأ الجدول عند أول استعمال كي لا يتوقف النشر على تحديث المخطط */
@@ -398,7 +398,7 @@ export function createApp({ d1, vault, fetchFn = fetch, baseUrl = "", adminToken
       const w = await limiter.window("adm:" + ip, 20, 60); if (w !== null) throw new HttpError(429, "rate_limited", "محاولات كثيرة", null, { "Retry-After": String(w) });
       throw new HttpError(401, "unauthorized", "رمز الإدارة غير صالح");
     }
-    let mm; const actor = String(hd["x-actor"] ?? "admin").slice(0, 80);
+    let mm; const actor = await actorOf(tok, hd["x-actor"]);
     const audit = (action, target, detail) => db.run("INSERT INTO gw_audit (at,actor,action,target,detail) VALUES (?,?,?,?,?)", nowStr(clock()), actor, action, target == null ? null : String(target), detail == null ? null : JSON.stringify(detail).slice(0, 500));
     if (m === "GET" && p === "/admin/summary") {
       const day = limiter.day(), since = new Date(clock() - 29 * 864e5).toISOString().slice(0, 10);

@@ -1,10 +1,10 @@
 /** حدود الاستعمال: نوافذ في gw_rl وعدّادات يومية في gw_usage (أساس الفوترة). */
 export class Limiter {
   constructor(db, clock = () => Date.now()) { this.db = db; this.clock = clock; }
+  /** نافذة ذرّية: إدراج مشروط بجملة SQL واحدة فلا تتجاوز الطلبات المتزامنة السقف */
   async window(key, max, win, now = Math.floor(this.clock() / 1000)) {
-    const r = await this.db.one("SELECT COUNT(*) AS n, MIN(t) AS o FROM gw_rl WHERE k=? AND t>?", key, now - win);
-    if (r.n >= max) return Math.max(1, r.o + win - now);
-    await this.db.run("INSERT INTO gw_rl (k,t) VALUES (?,?)", key, now);
+    const ins = await this.db.run("INSERT INTO gw_rl (k,t) SELECT ?,? WHERE (SELECT COUNT(*) FROM gw_rl WHERE k=? AND t>?) < ?", key, now, key, now - win, max);
+    if (ins.changes === 0) { const r = await this.db.one("SELECT MIN(t) AS o FROM gw_rl WHERE k=? AND t>?", key, now - win); return Math.max(1, (r?.o ?? now) + win - now); }
     if (Math.random() < 0.01) await this.db.run("DELETE FROM gw_rl WHERE t<?", now - 7200);
     return null;
   }

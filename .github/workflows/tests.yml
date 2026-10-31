@@ -20,6 +20,11 @@ jobs:
             else node -e "new Function(require('fs').readFileSync('$f','utf8'))" 2>/tmp/err || { echo "::error file=$f::$(head -c 300 /tmp/err)"; fail=1; }; fi
           done
           exit $fail
+      - name: admin.html مولَّد ومطابق للمصادر (E-07)
+        run: |
+          python3 scripts/build-admin-pb.py >/dev/null
+          git diff --stat -- admin.html
+          git diff --quiet -- admin.html || { echo "::error file=admin.html::admin.html غير محدَّث من المصادر — شغّل python3 scripts/build-admin-pb.py وأضفه للإيداع"; exit 1; }
       - name: الأوامر الصوتية
         run: node scripts/test-voice.js
       - name: المخزون
@@ -55,11 +60,11 @@ jobs:
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts tryon payments sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet agency appstore logistics digital-vault boundaries; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet agency appstore logistics digital-vault boundaries hardening; do node --no-warnings platform/api/test/$t.test.mjs; done
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     runs-on: ubuntu-latest
-    continue-on-error: true      # معلوماتي في البداية: يصبح إلزامياً بعد استقراره على GitHub
+    # كل خطوة تعمل حتى لو فشلت سابقتها (لا يحجب test-hand بقية الاختبارات) والمهمة تفشل إن فشلت أي خطوة؛ continue-on-error أُزيل بعد إصلاح الاختبارات
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,35 +72,67 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
       - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-speed.js
-      - run: node scripts/test-speed-fix.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-appstore.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-ui.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-dev-ui.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-digital-ui.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-kind.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-assets.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-vgen.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-vad.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-pagerater.js
-      - run: node scripts/test-edition.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-edition-live.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-edition-real.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-barcode.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-pack3d.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-mockup.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-boxdesigner.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles3d.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-boxstudio.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-fashion.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-digital-checkout.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-speed.js
+      - if: ${{ !cancelled() }}
+        run: node scripts/test-speed-fix.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-appstore.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-ui.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-dev-ui.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-digital-ui.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-kind.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-assets.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-vgen.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-vad.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-pagerater.js
+      - if: ${{ !cancelled() }}
+        run: node scripts/test-edition.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-edition-live.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-edition-real.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-barcode.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-pack3d.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-mockup.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-boxdesigner.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles3d.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-boxstudio.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-fashion.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-digital-checkout.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-upsell.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js

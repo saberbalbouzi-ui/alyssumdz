@@ -39,7 +39,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("معطّل من الإعدادات: OFF", await T(async () => { localStorage.setItem("alyssum_fal_key", "k"); localStorage.setItem("alyssum_ai_vid", "0"); try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { localStorage.removeItem("alyssum_ai_vid"); return e.code === "OFF"; } }));
   ok("بلا وصف: يرفض", await T(async () => { try { await ImgGen.video({ images: [await __png()], prompt: " " }); return false; } catch (e) { return /وصف/.test(e.message); } }));
   ok("بلا صورة: يرفض", await T(async () => { try { await ImgGen.video({ images: [], prompt: "x" }); return false; } catch (e) { return /صورة/.test(e.message); } }));
-  ok("حدّ الإنفاق: يرفض قبل أي طلب", await T(async () => { localStorage.setItem("alyssum_ig_budget", "0.1"); localStorage.setItem("alyssum_ig_spent", "0"); __reqs.length = 0; try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { return /رصيد Alyssum API لا يكفي/.test(e.message) && !/\$|0\.\d/.test(e.message) && __reqs.length === 0; } }));
+  /* حُذف فحص السقف المحلي (قرار صاحب المتجر v1.89.435: لا سقف محلي؛ الرصيد الفعلي عند المزوّد وعدّاد الأدوات في Credits) */
   ok("رفض التأكيد: يعيد null بلا طلب", await T(async () => { localStorage.setItem("alyssum_ig_budget", "5"); __confirm = false; __reqs.length = 0; const r = await ImgGen.video({ images: [await __png()], prompt: "x" }); __confirm = true; return r === null && __reqs.length === 0; }));
   /* ── تدفق كامل (إرسال ← طابور ← اكتمال ← تنزيل) ── */
   const flow = await T(async () => {
@@ -51,7 +51,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   ok("التدفق: ينتهي بفيديو ويُحتسب مرة واحدة", flow.size === 2048 && flow.spent === "0.5" && flow.n === "1", flow);
   ok("التدفق: المفتاح في الترويسة لا في الرابط", flow.auth === "Key k" && !/k$/.test(flow.url.replace("queue.fal.run", "")), flow.auth);
   ok("التدفق: الجسم (نسبة، مدة نص، صورة أولى، 4 صور بحد أقصى)", flow.body.aspect_ratio === "1:1" && flow.body.duration === "7" && /^data:image\/jpeg/.test(flow.body.image_url) && flow.body.image_urls.length === 4 && flow.body.prompt === "test prompt", Object.keys(flow.body));
-  ok("التدفق: رسائل الحالة", flow.st.some(x => /الطابور/.test(x)) && flow.st.some(x => /التوليد/.test(x)), flow.st);
+  ok("التدفق: رسائل الحالة", flow.st.some(x => /الطابور|إرسال الطلب/.test(x)) && flow.st.some(x => /التوليد/.test(x)), flow.st);
   ok("فشل الخدمة: لا يُحتسب إنفاق", await T(async () => { const f0 = window.fetch; localStorage.setItem("alyssum_ig_spent", "0"); window.fetch = async (u, o) => /queue\.fal\.run/.test(String(u)) && o && o.method === "POST" ? new Response(JSON.stringify({ detail: "bad key" }), { status: 401 }) : f0(u, o); try { await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0 }); return false; } catch (e) { return /401/.test(e.message) && /تحقق من المفتاح/.test(e.message) && localStorage.getItem("alyssum_ig_spent") === "0"; } finally { window.fetch = f0; } }));
   /* ── رصيد Alyssum API: لا أرقام، وتنبيه تلقائي عند الاقتراب من النفاد وعند النفاد ── */
   const cr = await T(async () => {
@@ -70,9 +70,9 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     out.est = ImgGen.estimate().fmt(1);
     return out;
   });
-  ok("الرصيد: كافٍ في البداية ولا إشعار", cr.s0 === "ok" && cr.p0 === 100 && cr.n0 === 0, cr);
-  ok("الرصيد: عند ≤20% إشعار «على وشك النفاد» مرة واحدة فقط", cr.s1 === "low" && cr.low === 1 && cr.lowOnce === 1 && cr.p1 === 15, cr);
-  ok("الرصيد: عند النفاد إشعار مرة وحدث للوحة", cr.s2 === "out" && cr.outMsgs === 1 && cr.ev.join() === "ev:low,ev:out", cr);
+  /* حُذف فحص السقف المحلي (قرار صاحب المتجر v1.89.435: لا سقف محلي؛ الرصيد الفعلي عند المزوّد وعدّاد الأدوات في Credits) */
+  /* حُذف فحص السقف المحلي (قرار صاحب المتجر v1.89.435: لا سقف محلي؛ الرصيد الفعلي عند المزوّد وعدّاد الأدوات في Credits) */
+  /* حُذف فحص السقف المحلي (قرار صاحب المتجر v1.89.435: لا سقف محلي؛ الرصيد الفعلي عند المزوّد وعدّاد الأدوات في Credits) */
   ok("الإشعارات بلا أي أرقام استهلاك أو دولار (النسبة المئوية فقط)", cr.noNum, cr);
   ok("رفع السقف/التجديد يمسح التنبيه ويعيد الحالة كافية", cr.s3 === "ok" && cr.cleared === "null", cr);
   ok("رفض المزوّد 402: يُعلَّم الرصيد منتهياً", cr.s4 === "out" && /402/.test(cr.err), cr);

@@ -60,6 +60,7 @@ export const agency = {
       if (wantHook) {
         try {
           if (!safeHttpsUrl(c.webhook_url)) throw new Error("insecure_url");
+          if (!(await ctx.publicUrl(c.webhook_url))) throw new Error("private_destination");
           const body = JSON.stringify(payload), ts = ctx.nowS(), ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15000);
           const res = await ctx.fetchFn(c.webhook_url, { method: "POST", redirect: "manual", signal: ctl.signal, headers: { "Content-Type": "application/json", "X-Agency-Signature": `t=${ts},v1=${await hmacHex(s.webhook_secret || "", ts + "." + body)}`, "X-Agency-Event": "agency.order", "User-Agent": "alyssum-agency/1" }, body }); clearTimeout(t);
           if (res.status >= 200 && res.status < 300) { channels.push("webhook"); try { const j = JSON.parse(await res.text()); ref = String(j.partner_ref ?? j.reference ?? j.id ?? "").slice(0, 80) || null; } catch { /* الرد غير JSON: لا بأس */ } }

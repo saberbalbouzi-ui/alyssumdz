@@ -254,7 +254,7 @@ const adm = (m, p, body = null, tok = "adm-secret-token") => call(m, p, body, nu
 [c] = await adm("POST", `/admin/tenants/${idX}/keys`, { mode: "bad" }); ok("إدارة: وضع مفتاح خاطئ 400", c === 400);
 [c] = await adm("PATCH", "/admin/tenants/9999", { plan: "pro" }); ok("إدارة: تعديل مستأجر مجهول 404", c === 404);
 [c, b] = await call("GET", "/admin/audit", null, null, {}, { authorization: "Bearer adm-secret-token", "x-actor": "owner@x.dz" }); ok("إدارة: سجلّ التدقيق بلا أسرار", c === 200 && b.audit.some((a) => a.action === "tenant.create") && !JSON.stringify(b).includes("gk_live_"), b.audit.slice(0, 2));
-[c] = await call("PATCH", `/admin/tenants/${idX}`, { status: "active" }, null, {}, { authorization: "Bearer adm-secret-token", "x-actor": "owner@x.dz" }); [c2, b] = await adm("GET", "/admin/audit"); ok("التدقيق يسجّل الفاعل", b.audit.some((a) => a.action === "tenant.active" && a.actor === "owner@x.dz"));
+[c] = await call("PATCH", `/admin/tenants/${idX}`, { status: "active" }, null, {}, { authorization: "Bearer adm-secret-token", "x-actor": "owner@x.dz" }); [c2, b] = await adm("GET", "/admin/audit"); ok("التدقيق يسجّل الفاعل", b.audit.some((a) => a.action === "tenant.active" && /^admin#[0-9a-f]{8}\/owner@x\.dz$/.test(a.actor)));
 
 /* ناقل أحداث المنصة: التسليم/المرتجع/الشحن من البوابة ← صندوق gw_bus ← platformEmit (المصدر الموثوق للضمان) */
 exec(`UPDATE gw_tenants SET site_ref='site-bus' WHERE id=${tA}`);

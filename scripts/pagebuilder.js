@@ -1384,7 +1384,7 @@ ${FX_JS}
 <meta name="description" content="${esc(page.desc || "")}">${(page.kw || page.seoFocus) ? `<meta name="keywords" content="${esc([page.seoFocus, page.kw].filter(Boolean).join(", "))}">` : ""}${page.noindex ? `<meta name="robots" content="noindex">` : ""}
 <link rel="canonical" href="${esc(url)}"><meta property="og:type" content="website"><meta property="og:title" content="${esc(page.seoTitle || page.title)}"><meta property="og:description" content="${esc(page.desc || "")}"><meta property="og:url" content="${esc(url)}">${page.cover ? `<meta property="og:image" content="${esc((site.domain ? "https://" + site.domain + "/" : ctx.base) + page.cover)}">` : ""}
 <link rel="icon" href="${esc(ctx.base)}assets/img/favicon.png">
-<link rel="preload" href="${esc(ctx.base)}assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+${"<link rel=\"preload\" href=\"" + esc(ctx.base) + "assets/fonts/cairo-arabic.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>"}
 ${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); return u ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="${u}" rel="stylesheet" media="print" onload="this.media='all'">` : ""; })()}
 <noscript><style>[data-anim],.pb-bl[data-ia] .pb-bi{opacity:1!important;transform:none!important}</style></noscript>
 <style>${cairoFace(ctx.base)}${BASE_CSS}

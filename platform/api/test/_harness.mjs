@@ -9,7 +9,9 @@ import { platformModule } from "../src/modules/platform.js";
 export function makeEnv(extraModules = [], opts = {}) {
   const db = new DatabaseSync(":memory:"); db.exec("PRAGMA foreign_keys = ON"); db.exec(readFileSync(new URL("../schema.sql", import.meta.url), "utf8"));
   const nz = (a) => a.map((v) => (v === undefined ? null : v));
-  const d1 = { prepare: (sql) => ({ bind: (...a) => ({ first: async () => db.prepare(sql).get(...nz(a)) ?? null, all: async () => ({ results: db.prepare(sql).all(...nz(a)) }), run: async () => { const r = db.prepare(sql).run(...nz(a)); return { meta: { last_row_id: Number(r.lastInsertRowid), changes: Number(r.changes) } }; } }) }) };
+  const d1 = { prepare: (sql) => ({ bind: (...a) => ({ __sql: sql, __a: a, first: async () => db.prepare(sql).get(...nz(a)) ?? null, all: async () => ({ results: db.prepare(sql).all(...nz(a)) }), run: async () => { const r = db.prepare(sql).run(...nz(a)); return { meta: { last_row_id: Number(r.lastInsertRowid), changes: Number(r.changes) } }; } }) }),
+    /* يحاكي D1 batch: كل الأوامر في معاملة واحدة، وأي فشل يتراجع عن الكل (E-04) */
+    batch: async (stmts) => { db.exec("BEGIN"); try { const out = []; for (const s of stmts) { const r = db.prepare(s.__sql).run(...nz(s.__a)); out.push({ meta: { last_row_id: Number(r.lastInsertRowid), changes: Number(r.changes) } }); } db.exec("COMMIT"); return out; } catch (e) { try { db.exec("ROLLBACK"); } catch { } throw e; } } };
   const clock = { t: Date.parse("2026-10-12T10:00:00Z") }, fake = { calls: [], queue: [], handler: null };
   const fetchFn = async (url, init = {}) => { fake.calls.push({ url, init }); const r = fake.handler ? fake.handler(url, init) : fake.queue.shift() ?? [200, "{}"]; return { status: r[0], text: async () => (typeof r[1] === "string" ? r[1] : JSON.stringify(r[1])), headers: new Map(Object.entries(r[2] ?? {})), body: r[3] ?? null, json: async () => (typeof r[1] === "string" ? JSON.parse(r[1]) : r[1]), arrayBuffer: async () => r[4] ?? new ArrayBuffer(0) }; };
   const vault = opts.noVault ? null : new Vault({ k1: webcrypto.getRandomValues(new Uint8Array(32)) }, "k1");

@@ -5,7 +5,7 @@ import { localPhone, hmacHex, maskPhone, maskName, seesPii, strictCfg, safeEq } 
  *  الضبط في settings المستأجر: order_mode = observe|enforce، max_fee (افتراضي 3000). */
 const clean = (s, n) => String(s ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 const int = (v, d = 0) => { const n = Math.round(+v); return Number.isFinite(n) ? n : d; };
-const FATAL = ["price_mismatch", "subtotal_mismatch", "total_mismatch", "unknown_product", "inactive", "coupon_mismatch", "fee_out_of_range", "discount_unverified", "qty_invalid"];
+const FATAL = ["price_mismatch", "subtotal_mismatch", "total_mismatch", "unknown_product", "inactive", "coupon_mismatch", "fee_out_of_range", "fee_mismatch", "discount_unverified", "qty_invalid"];
 
 /** وحدات السعر المسموحة لسطر: سعر الـSKU وسعر الوحدة في كل عرض (يُضرب بنسبة التنويع إن وُجدت). */
 export function allowedUnits(sku, base, offers) {
@@ -14,7 +14,9 @@ export function allowedUnits(sku, base, offers) {
   return [...u];
 }
 /** تحقق نقي من حمولة طلب مقابل الكتالوج. */
-export function verifyOrder({ lines, skus, offers, subtotal, discount, fee, total, coupon, couponRow, maxFee = 3000, now = 0 }) {
+/** اسم ولاية/بلدية مطبَّع للمطابقة (حروف لاتينية صغيرة وأرقام فقط) */
+export const normPlace = (t) => String(t ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\u0600-\u06ff]/g, "");
+export function verifyOrder({ lines, skus, offers, subtotal, discount, fee, total, coupon, couponRow, maxFee = 3000, now = 0, rate = null, dtype = "home", digitalAll = false }) {
   const flags = [], out = []; let sum = 0;
   for (const l of lines) {
     if (!(l.qty >= 1 && l.qty <= 999)) { flags.push("qty_invalid:" + l.slug); continue; }
@@ -32,6 +34,9 @@ export function verifyOrder({ lines, skus, offers, subtotal, discount, fee, tota
     else { const exp = couponRow.type === "percent" ? Math.round((sum * couponRow.value) / 100) : couponRow.type === "fixed" ? Math.min(couponRow.value, sum) : 0; if (discount > exp + 1) flags.push("coupon_mismatch"); }
   } else if (coupon && couponRow?.type === "freeship" && fee > 0 && couponRow.active) { /* كود توصيل مجاني لم يُطبَّق: لصالح التاجر فلا علامة */ }
   if (fee < 0 || fee > maxFee) flags.push("fee_out_of_range");
+  /* A-01: إن وُجد سعر موثوق للوجهة فالرسم يجب أن يطابقه (±1) أو يكون صفراً بسبب مبرّر خادمياً (كود توصيل مجاني، صنف بشحن مجاني، حدّ الشحن المجاني)؛ بلا سعر موثوق للوجهة يبقى السلوك القديم (نطاق max_fee فقط) */
+  if (rate && !digitalAll) { const want = dtype === "stop" ? rate.stop : rate.home, freeOk = (coupon && couponRow?.type === "freeship" && couponRow.active) || (out.length > 0 && out.every((l) => l.sku.freeShip)) || (rate.free_over > 0 && sum >= rate.free_over);
+    if (!(Math.abs(fee - want) <= 1 || (fee === 0 && freeOk))) flags.push("fee_mismatch"); }
   if (Math.abs(total - (subtotal - discount + fee)) > 1) flags.push("total_mismatch");
   return { flags, lines: out, serverSubtotal: sum };
 }
@@ -107,6 +112,16 @@ export const commerce = {
       for (const o of await db.all(`SELECT slug,offers FROM cm_products WHERE tenant_id=? AND slug IN (${ph})`, tid, ...slugs)) offers[o.slug] = (() => { try { const a = JSON.parse(o.offers); return Array.isArray(a) ? a.filter((x) => x && Number.isFinite(+x.qty) && Number.isFinite(+x.price)).map((x) => ({ qty: +x.qty, price: +x.price, free: +x.free || 0 })) : null; } catch { return null; } })();
       return { skus, offers };
     };
+    r.put("/v1/catalog/shipping", { scope: "catalog:write", limit: { key: "cat", max: 30, win: 60 }, summary: "مزامنة جدول رسوم الشحن الموثوق: rates[{wilaya,commune?,home,stop,free_over?}] (replace:true يستبدل الجدول كله)" }, async (req) => {
+      const b = req.json(), tid = req.tenant.id, list = Array.isArray(b.rates) ? b.rates.slice(0, 5000) : null; if (!list) throw new HttpError(400, "validation_error", "rates مصفوفة مطلوبة");
+      const rows = []; for (const x of list) { const w = normPlace(x?.wilaya); if (!w || w.length > 60) continue; const home = int(x.home), stop = int(x.stop); if (home < 0 || stop < 0 || home > 20000 || stop > 20000) throw new HttpError(422, "validation_error", "سعر غير معقول", { wilaya: String(x.wilaya).slice(0, 40) }); rows.push([w, normPlace(x.commune).slice(0, 60), home, stop, Math.max(0, int(x.free_over))]); }
+      const now = ctx.nowS(), st = [];
+      if (b.replace === true) st.push(["DELETE FROM cm_ship WHERE tenant_id=?", tid]);
+      for (const [w, c, h, s2, f] of rows) st.push(["INSERT INTO cm_ship (tenant_id,wilaya,commune,home,stop,free_over,updated_at) VALUES (?,?,?,?,?,?,?) ON CONFLICT(tenant_id,wilaya,commune) DO UPDATE SET home=excluded.home,stop=excluded.stop,free_over=excluded.free_over,updated_at=excluded.updated_at", tid, w, c, h, s2, f, now]);
+      for (let i = 0; i < st.length; i += 50) await db.batch(st.slice(i, i + 50), { atomic: !!ctx.db.d1.batch });
+      return ok({ ok: true, rates: rows.length, total: await db.val("SELECT COUNT(*) FROM cm_ship WHERE tenant_id=?", tid) });
+    });
+    r.get("/v1/catalog/shipping", { scope: "catalog:read", summary: "عدّاد جدول الرسوم الموثوق" }, async (req) => ok({ rates: await db.val("SELECT COUNT(*) FROM cm_ship WHERE tenant_id=?", req.tenant.id), wilayas: await db.val("SELECT COUNT(DISTINCT wilaya) FROM cm_ship WHERE tenant_id=?", req.tenant.id) }));
     r.put("/v1/catalog/products", { scope: "catalog:write", limit: { key: "cat", max: 30, win: 60 }, summary: "مزامنة المنتجات (upsert بالـslug؛ replace:true يعطّل الغائب؛ keep_stock:true لا يمسّ المخزون)" }, async (req) => {
       const b = req.json(), list = Array.isArray(b.products) ? b.products : null; if (!list || list.length > 500) throw new HttpError(400, "validation_error", "products مصفوفة حتى 500 منتج");
       const tid = req.tenant.id, now = ctx.nowS(), seen = []; let n = 0;
@@ -153,7 +168,9 @@ export const commerce = {
       const mode = req.tenant.settings?.order_mode === "enforce" ? "enforce" : "observe", maxFee = int(req.tenant.settings?.max_fee, 3000) || 3000;
       const { skus, offers } = await loadSkus(tid, [...new Set(lines.map((l) => l.slug))]);
       const couponRow = coupon ? await db.one("SELECT * FROM cm_coupons WHERE tenant_id=? AND code=?", tid, coupon) : null;
-      const v = verifyOrder({ lines, skus, offers, subtotal, discount, fee, total, coupon, couponRow, maxFee, now: ctx.nowS() });
+      const wk = normPlace(b.wilaya), ck = normPlace(b.commune), shipRows = wk ? await db.all("SELECT commune,home,stop,free_over FROM cm_ship WHERE tenant_id=? AND (commune='' OR commune=?) AND wilaya=?", tid, ck, wk) : [], rate = shipRows.find((r) => r.commune === ck && ck) ?? shipRows.find((r) => r.commune === "") ?? null, slugsAll = [...new Set(lines.map((l) => l.slug))], digMap = {}; for (const m of await db.all(`SELECT slug,digital FROM cm_meta WHERE tenant_id=? AND slug IN (${slugsAll.map(() => "?").join(",")})`, tid, ...slugsAll)) digMap[m.slug] = !!m.digital;
+      const digitalAll = lines.length > 0 && lines.every((l) => digMap[l.slug]);
+      const v = verifyOrder({ lines, skus, offers, subtotal, discount, fee, total, coupon, couponRow, maxFee, now: ctx.nowS(), rate, dtype: b.dtype === "stop" ? "stop" : "home", digitalAll });
       /* التحقق الصارم (مطفأ افتراضياً لكل المستأجرين): يحسب الخادم السعر بنفسه. وضع الظل يسجّل القرار المتوقع في cm_calc ولا يرفض ولا يغيّر شيئاً؛ الرفض الفعلي لا يعمل إلا بـstrict.shadow=false */
       const sc = strictCfg(req.tenant.settings), payV = ["cod", "baridimob", "ccp", "chargily"].includes(b.pay) ? b.pay : "";
       let sv = null, trusted = false;
@@ -187,11 +204,14 @@ export const commerce = {
       if (mode === "enforce") {
         const bad = v.flags.filter((f) => FATAL.includes(f.split(":")[0]));
         if (bad.length) throw new HttpError(422, "order_rejected", "الطلب لا يطابق الأسعار أو الشروط", { flags: bad });
-        const done = [];
-        for (const l of v.lines) { if (l.sku.stock == null) continue;
-          const x = await db.run("UPDATE cm_skus SET stock=stock-? WHERE tenant_id=? AND slug=? AND vkey=? AND stock IS NOT NULL AND stock>=?", l.qty, tid, l.slug, l.vkey, l.qty);
-          if (!x.changes) { for (const d of done) await db.run("UPDATE cm_skus SET stock=stock+? WHERE tenant_id=? AND slug=? AND vkey=?", d.qty, tid, d.slug, d.vkey); throw new HttpError(409, "out_of_stock", "الكمية غير متوفرة", { slug: l.slug }); }
-          done.push(l); }
+        /* حجز ذرّي بجملة SQL واحدة (A-05): تُخصم كل الأسطر أو لا شيء؛ الشرط يفحص كفاية جميع الأسطر على لقطة واحدة، فلا يبقى حجز جزئي ولا يلزم تعويض عند نفاد سطر لاحق */
+        const need = new Map(); for (const l of v.lines) { if (l.sku.stock == null) continue; const k = l.slug + "\u0000" + l.vkey, c = need.get(k); need.set(k, { slug: l.slug, vkey: l.vkey, qty: (c ? c.qty : 0) + l.qty }); }
+        const L = [...need.values()];
+        if (L.length) {
+          const caseOf = (al) => "CASE " + L.map(() => `WHEN ${al}slug=? AND ${al}vkey=? THEN ?`).join(" ") + " END", cargs = L.flatMap((x) => [x.slug, x.vkey, x.qty]), keys = L.map(() => "(?,?)").join(","), kargs = L.flatMap((x) => [x.slug, x.vkey]);
+          const x = await db.run(`UPDATE cm_skus SET stock=stock-(${caseOf("")}) WHERE tenant_id=? AND stock IS NOT NULL AND (slug,vkey) IN (VALUES ${keys}) AND (SELECT COUNT(*) FROM cm_skus k WHERE k.tenant_id=? AND k.stock IS NOT NULL AND (k.slug,k.vkey) IN (VALUES ${keys}) AND k.stock>=(${caseOf("k.")}))=${L.length}`, ...cargs, tid, ...kargs, tid, ...kargs, ...cargs);
+          if (x.changes !== L.length) { const bad = L.find((q) => v.lines.some((l) => l.slug === q.slug && l.vkey === q.vkey && l.sku.stock != null && l.sku.stock < q.qty)) ?? L[0]; throw new HttpError(409, "out_of_stock", "الكمية غير متوفرة", { slug: bad.slug }); }
+        }
         reserved = 1;
       }
       const email = (() => { const e = String(b.customer?.email ?? "").trim().toLowerCase(); return e.length <= 120 && /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]{2,}$/.test(e) ? e : ""; })(), pay = payV;

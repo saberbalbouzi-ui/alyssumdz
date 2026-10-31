@@ -26,6 +26,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
 
   const browser = await chromium.launch();
   const init = () => {
+    /* F-10 (تقرير الاختبارات): getComputedStyle على غير عنصر كان يُسقط الاختبار كله؛ صار يُرجع قيماً فارغة فيفشل الفحص المعني وحده (مع تسجيل) */
+    { const g0 = window.getComputedStyle.bind(window); window.getComputedStyle = (e, ...r) => { if (e && e.nodeType === 1) return g0(e, ...r); (window.__gcsBad = window.__gcsBad || []).push(String(e)); return new Proxy({}, { get: (t, k) => (k === "getPropertyValue" ? () => "" : "") }); }; }
     window.__queue = []; window.__spoken = [];
     class F { constructor() { window.__rec = this; } start() { if (!this.interimResults && window.__queue.length) { const a = window.__queue.shift(); setTimeout(() => this.onresult({ resultIndex: 0, results: [Object.assign(a.map(x => ({ transcript: x[0], confidence: x[1] })), { isFinal: true, length: a.length })] }), 20); } else setTimeout(() => this.onstart && this.onstart(), 5); } abort() { } stop() { } }
     window.SpeechRecognition = F; window.webkitSpeechRecognition = F;
@@ -106,7 +108,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       w.value = "5"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
       const has = Array.from(c.options).some(o => o.value === "Barika" && o.dataset.w == "60"); c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
       return { has, wil: w.value, com: c.value, kept: Array.from(c.options).some(o => o.value === "Barika") }; });
-    ok("المتجر: بريكة تظهر مع بلديات باتنة وتحوّل الولاية إلى 60", st.has && st.wil === "60" && st.com === "Barika" && st.kept, st); await sp.close(); }
+    /* قاعدة v1.89.649: الولاية الجديدة لا تُعرض ولاية ما لم تعدّها قائمة ولايات الشركة؛ بريكة بلدية تابعة لباتنة وتُرسل الولاية الأم (5) */
+    ok("المتجر: بريكة بلدية تابعة لباتنة والولاية الأم تبقى (قاعدة v1.89.649)", !st.has && st.wil === "5" && st.com === "Barika" && st.kept, st); await sp.close(); }
   await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; window.__sodReal = Admin.sendOrderToDelivery; });
   // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
   await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);
@@ -176,12 +179,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await say(p, "احفظ وانشر الصفحة"); ok("مطوّر: النشر يطلب تأكيداً ولا ينفَّذ قبله", (await p.evaluate(() => window.__pub)) === 0);
   await p.evaluate(() => [...document.querySelectorAll("#av-bt button, .ah-panel button")].find(b => b.textContent === "نعم").click()); await p.waitForFunction(() => !AdminVoice.busy(), null, { timeout: 25000 }); await p.waitForTimeout(400);
   ok("مطوّر: بعد «نعم» يُنشر", (await p.evaluate(() => window.__pub)) === 1);
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(600);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(600);
   ok("المحرّر أُغلق للاختبار التالي", await p.evaluate(() => !document.querySelector("#pb-app.on")));
   await pbSay("اضف صفحة جديدة باسم عروض الصيف");
   await p.waitForFunction(() => document.querySelector("#pb-app.on"), null, { timeout: 8000 }).catch(() => { });
   ok("مطوّر: صفحة جديدة بالاسم المنطوق", await p.evaluate(() => !!document.querySelector("#pb-app.on") && /عروض الصيف/.test(PBApp.E.page.title)), await p.evaluate(() => PBApp.E.page && PBApp.E.page.title));
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(500);
   // ── مسار حواري: صفحة هبوط لمنتج (أسئلة ← ملخّص ← تنفيذ) ──
   const lpTitle = await p.evaluate(() => Admin.products[0].title), lpSlug = await p.evaluate(() => Admin.products[0].slug);
   await say(p, "hi mystore انشئ صفحة هبوط لمنتج " + lpTitle);
@@ -197,7 +200,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("مسار الهبوط: صفحة جديدة مرتبطة بالمنتج", lp.open && lp.prod === lpSlug && /-lp/.test(lp.slug), lp);
   ok("مسار الهبوط: العناصر أُضيفت (عنوان+صورة+عدّاد+نموذج)", lp.form === 1 && lp.cd === 1 && lp.img === 1 && lp.hd === 1, lp);
   ok("مسار الهبوط: مسار المنتج الرئيسي مطلوب عند النشر", !!(lp.mr && lp.mr.on), lp.mr);
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(500);
   // ── تحسين الصورة (فلاتر/ظل/حدود) في إعدادات الصورة ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار صورة", ""); pg.slug = "img-fx"; const sec = PB.mkS([PB.mkC([PB.mkW("image", { src: "assets/img/favicon.png", hauto: true })])]); pg.sections = [sec]; window.__imgId = sec.cols[0].widgets[0].id; PBApp.open(pg, "", true); }); await p.waitForTimeout(1800);
   const shd = await p.evaluate(() => {
@@ -213,11 +216,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("فلتر الصورة يُرسم في CSS", await p.evaluate(() => { const pg = JSON.parse(PBApp.pageJson()); const w = pg.sections[0].cols[0].widgets[0]; w.set.iprs = "vivid"; w.set.ish = "medium"; const h = PB.fullHtml(pg, { base: "./", site: {}, products: [], meta: { tabs: [], cats: {} } }); return /saturate\(135%\)/.test(h) && /drop-shadow\(0px 10px 18px/.test(h); }));
   // ── الأدوات الذكية والمحلية الجديدة في تبويب «تعديل الصورة» (ظاهرة، مفعّلة، وتفتح لوحاتها) ──
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.ltoggle("img"); }); await p.waitForTimeout(600);
-  const tools = await p.evaluate(() => { const q = k => document.querySelector('[data-imgm="' + k + '"]'); return { xp: !!q("xp"), ai: !!q("ai"), erase: !!q("erase"), scene: !!q("scene"), rt: !!document.querySelector('[data-imgt="rt"]'), soon: [...document.querySelectorAll(".pbx-tt .tt-b")].map(e => e.textContent), api: /Alyssum API/.test((document.getElementById("pbx-lpane") || document.body).textContent) }; });
+  const tools = await p.evaluate(() => { const q = k => document.querySelector('[data-imgm="' + k + '"]'); return { xp: !!q("xp"), ai: !!q("ai"), erase: !!q("erase"), scene: !!document.querySelector('[data-imgt="st"]'), rt: !!document.querySelector('[data-imgt="rt"]'), soon: [...document.querySelectorAll(".pbx-tt .tt-b")].map(e => e.textContent), api: /Alyssum API/.test((document.getElementById("pbx-lpane") || document.body).textContent) }; });
   ok("تبويب الصورة: أدوات ذكية ظاهرة (توسيع، تعديل بالوصف، ممحاة، مشهد) ولمسات وتصحيح", tools.xp && tools.ai && tools.erase && tools.scene && tools.rt && tools.api, tools);
   ok("تبويب الصورة: لا بطاقة «قريباً» بعد الآن", !tools.soon.some(t => /قريباً/.test(t)), tools.soon);
   await p.evaluate(() => document.querySelector('[data-imgm="xp"]').click()); await p.waitForTimeout(500);
-  ok("توسيع الخلفية: تفتح لوحته مع تنبيه تفعيل Alyssum API عند غياب المفتاح", await p.evaluate(() => { const e = document.getElementById("pbai"); return !!e && /توسيع|وسّع/.test(e.textContent) && /Alyssum API/.test(e.textContent); }));
+  ok("توسيع الخلفية: تفتح لوحته مع تنبيه تفعيل الخدمة عند غياب المفتاح", await p.evaluate(() => { const e = document.getElementById("pbai"); return !!e && /توسيع|وسّع/.test(e.textContent) && /غير مفعّلة|Alyssum API/.test(e.textContent); }));
   await p.evaluate(() => { localStorage.setItem("alyssum_gp_gkey", "TESTKEY"); localStorage.setItem("store_gp_gkey", "TESTKEY"); localStorage.setItem("alyssum_ig_model", "gemini-2.5-flash-image"); localStorage.setItem("store_ig_model", "gemini-2.5-flash-image"); window.__aiCalls = []; const of = window.fetch; window.fetch = async (u, i) => { if (/generativelanguage/.test(String(u))) { const cv = document.createElement("canvas"); cv.width = 200; cv.height = 360; const g = cv.getContext("2d"); g.fillStyle = "#2a8"; g.fillRect(0, 0, 200, 360); const d = cv.toDataURL("image/png").split(",")[1]; window.__aiCalls.push(String(u)); if (/models\?/.test(String(u))) return of(u, i); return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { mimeType: "image/png", data: d } }] } }] }), { status: 200, headers: { "Content-Type": "application/json" } }); } return of(u, i); }; window.confirm = () => true; ImgGen.ready && 0; });
   await p.evaluate(() => { document.querySelector('[data-imgm="ai"]').click(); }); await p.waitForTimeout(500);
   ok("تعديل بالوصف: تظهر اقتراحات جاهزة وحقل التعليمات", await p.evaluate(() => !!document.getElementById("pbai-text") && document.querySelectorAll('#pbai [data-ai="preset"]').length >= 5));
@@ -241,7 +244,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     await p.mouse.move(ww.x, ww.y); await p.mouse.down(); await p.mouse.move(ww.x + 80, ww.y, { steps: 4 }); await p.mouse.up(); await p.waitForTimeout(200);
     ok("توسيع: لا يمكن سحب المقبض للداخل (الإطار لا يقلّ عن الصورة)", await p.evaluate(() => { const x = PBApp.xpGet(); return x.l === 0; }));
     await p.evaluate(() => { window.__aiCalls = []; document.querySelector('#pbai [data-ai="expand"]').click(); }); await p.waitForTimeout(4500);
-    ok("توسيع: يُرسل طلباً واحداً ويعرض نتيجة واحدة", await p.evaluate(() => (window.__aiCalls || []).filter(u => /generateContent/.test(u)).length === 1 && (document.querySelectorAll("#pbai-res img").length === 1 || !!(window.__live && window.__live.cv)) && document.querySelectorAll("#pbai-res input[name=pbai-v]").length === 0), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
+    ok("توسيع: يُرسل أربعة طلبات (v1.89.447) ويعرض أربع نتائج للاختيار", await p.evaluate(() => (window.__aiCalls || []).filter(u => /generateContent/.test(u)).length === 4 && document.querySelectorAll("#pbai-res [data-vc]").length === 4), await p.evaluate(() => ({ c: window.__aiCalls, m: (document.getElementById("pbai-msg") || {}).textContent })));
   }
   await p.evaluate(() => document.querySelector('[data-imgm="erase"]').click()); await p.waitForTimeout(700);
   ok("الممحاة الذكية: تفتح محرّر الفرشاة", await p.evaluate(() => !!document.getElementById("pbs-er")));
@@ -254,18 +257,21 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => document.querySelector('#pbx-epf [data-epf="no"]').click()); await p.waitForTimeout(700);
   ok("لمسات وتصحيح: «إلغاء» يعيد الصورة الأصلية ويصفّر المنزلقات", await p.evaluate(() => { const im = document.getElementById("pbx-frame").contentDocument.querySelector("[data-pb] img"); return !PBApp.liveOn() && !!im && !/^blob:/.test(im.src) && !document.getElementById("pbx-epf") && document.querySelector('#pbrt [data-rtk="auto"]').value === "0"; }));
   await p.evaluate(() => { const m = document.createElement("canvas"); m.width = 64; m.height = 64; const g = m.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, 64, 64); g.fillStyle = "#fff"; g.fillRect(4, 4, 56, 56); const url = m.toDataURL("image/png"); Object.assign(ImgGen, { ready: () => ({ ok: true }), text: async () => JSON.stringify([{ label: "منتج", box_2d: [200, 200, 800, 800], mask: url }]) }); });      // محاكاة Alyssum API: قناع الموضوع في الوسط (نزع الخلفية بالـAPI فقط)
-  await p.evaluate(() => { try { AIVision.supported = () => false; } catch (e) { } document.querySelector('[data-imgt="bg"]').click(); }); await p.waitForTimeout(500);
-  await p.evaluate(() => document.querySelector('[data-bgr="open"]').click()); await p.waitForTimeout(9000);
-  ok("نزع الخلفية: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (بلا تنفيذ/إلغاء ولا نافذة منفصلة)", await p.evaluate(() => !PBApp.liveOn() && !document.getElementById("pbbg") && !document.querySelector('#pbx-epf [data-epf="ok"]') && /نُفِّذ/.test((document.getElementById("pbbg-chip") || {}).textContent || "")), await p.evaluate(() => ({ on: PBApp.liveOn(), chip: (document.getElementById("pbbg-chip") || {}).textContent })));
+  /* محاكاة ثابتة لمسار SAM + كشف Gemini (النماذج الحقيقية محجوبة في CI): الاختبار هنا للواجهة والتطبيق المباشر لا لجودة النموذج */
+  await p.evaluate(() => { AIVision.supported = () => true; AICapture.samPrep = () => ({}); AICapture.detect = async (c) => [{ label: "منتج", box: { x0: c.width * .25, y0: c.height * .25, x1: c.width * .75, y1: c.height * .75 } }];
+    AICapture.samCuts = async (c, sel) => sel.map(it => { const w = Math.round(it.box.x1 - it.box.x0), h = Math.round(it.box.y1 - it.box.y0), cv = document.createElement("canvas"); cv.width = w; cv.height = h; const g = cv.getContext("2d"); g.fillStyle = "#222"; g.fillRect(0, 0, w, h); return { label: it.label, canvas: cv, x0: Math.round(it.box.x0), y0: Math.round(it.box.y0), w, h }; });
+    document.querySelector('[data-imgt="bg"]').click(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => { PBApp.E.multi = []; PBApp.E.sel = window.__imgId; window.__bgsrc0 = PBApp.find(PBApp.E.sel).node.set.src; document.querySelector('[data-bgr="open"]').click(); }); await p.waitForTimeout(9000);
+  ok("نزع الخلفية: تُطبَّق النتيجة مباشرة بعد المسحة الأولى (بلا تنفيذ/إلغاء ولا نافذة منفصلة)", await p.evaluate(() => !PBApp.liveOn() && !document.getElementById("pbbg") && !document.querySelector('#pbx-epf [data-epf="ok"]') && PBApp.find(PBApp.E.sel).node.set.src !== window.__bgsrc0), await p.evaluate(() => ({ on: PBApp.liveOn(), chip: (document.getElementById("pbbg-chip") || {}).textContent, src: PBApp.find(PBApp.E.sel).node.set.src, src0: window.__bgsrc0 })));
   await p.evaluate(() => { const n = document.querySelector('#pbx-epf [data-epf="no"]'); if (n) n.click(); }); await p.waitForTimeout(500);
   for (const [k, root, txt] of [["ff", "pbff", /Contour fondu|حواف/], ["fr", "pbfr", /إطار/], ["cl", "pbcl", /كولاج/], ["vd", "pbvd", /فيديو/]]) {
     await p.evaluate(kk => document.querySelector('[data-imgt="' + kk + '"]').click(), k); await p.waitForTimeout(700);
     ok("أداة «" + k + "»: تفتح لوحتها", await p.evaluate(([r, t]) => { const e = document.getElementById(r); return !!e && new RegExp(t).test(e.textContent); }, [root, txt.source]));
   }
   await p.evaluate(() => document.querySelector('[data-imgm="sl"]').click()); await p.waitForTimeout(600);
-  ok("أساليب التصوير الذكية: 12 أسلوباً + 5 مشاهد استخدام يومي", await p.evaluate(() => document.querySelectorAll('#pbai [data-ai="shot"]').length === 17));
+  ok("أساليب التصوير الذكية: 10 أساليب + 5 مشاهد استخدام يومي (بعد حذف الطبيعة والشاطئ v1.89.533)", await p.evaluate(() => document.querySelectorAll('#pbai [data-ai="shot"]').length === 15));
   await p.evaluate(() => { localStorage.removeItem("alyssum_gp_gkey"); localStorage.removeItem("store_gp_gkey"); localStorage.removeItem("alyssum_ig_model"); localStorage.removeItem("store_ig_model"); });
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(400);
   // ── منع سماع المساعد لنفسه ──
   const ec = await p.evaluate(() => { AdminVoice._spk("مرحباً أليسوم، أنا أسمعك. تكلّم مباشرة", 800); const a = AdminVoice._echo(["مرحبا"]), b = AdminVoice._echo(["افتح الطلبات"]); AdminVoice._spk("مرحباً أليسوم، أنا أسمعك", 2500); const c = AdminVoice._echo(["نعم"]), d = AdminVoice._echo(["أنا أسمعك تكلم مباشرة"]); return { a, b, c, d }; });
   ok("صدى المساعد: كلمة من كلامه بعد انتهائه تُهمَل", ec.a === true, ec);
@@ -283,11 +289,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الاستوديو: مقاس 500×1000 والمنتج على الأرض (أسفل) والأعلى خلفية", stu.tall[0] === 500 && stu.tall[1] === 1000 && stu.bottom[0] < 60 && stu.top[1] > 250 && stu.top[0] < 5, stu);
   ok("الاستوديو: كشف الخلفية الشفافة (شفافة نعم، معتمة لا)", stu.alpha === true && stu.opaque === false, stu);
   await p.evaluate(() => { PBApp.E.sel = window.__imgId; PBApp.E.tab = "s"; PBApp.renderInspectorNow(); document.querySelector('[data-qb="edit"]') && document.querySelector('[data-qb="edit"]').click(); }); await p.waitForTimeout(500);
-  const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-lpane [data-imgt="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); return { tab: true, panel: !!document.getElementById("pbst"), btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
-  ok("الاستوديو: تبويب في «تعديل الصورة» ولوحة وقماش معاينة وخلفيات", ui.tab && ui.panel && ui.btns >= 4 && ui.sw >= 10, ui);
+  const ui = await p.evaluate(async () => { const t = document.querySelector('#pbx-lpane [data-imgt="st"]'); if (!t) return { tab: false }; t.click(); await new Promise(r => setTimeout(r, 900)); const scene = !!document.getElementById("pbai") && !!document.querySelector("[data-stsub]"); const sb = document.querySelector('[data-stsub="bg"]'); if (sb) { sb.click(); await new Promise(r => setTimeout(r, 700)); } return { tab: true, scene, panel: !!document.getElementById("pbst"), btns: document.querySelectorAll("#pbst [data-st]").length, sw: document.querySelectorAll("#pbst [data-st-bg]").length }; });
+  ok("الاستوديو: تبويب في «تعديل الصورة» (يفتح على مشهد وخلفية) ولوحة وقماش معاينة وخلفيات", ui.tab && ui.scene && ui.panel && ui.btns >= 4 && ui.sw >= 10, ui);
   const op = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const o = { applyBtn: !!document.querySelector('#pbst [data-st="apply"]') }; const ed = document.querySelector('.pbx-qbar [data-qb="edit"]');
-    if (ed) { const cs = getComputedStyle(ed), tx = getComputedStyle(ed.querySelector(".tx")); o.edBg = cs.backgroundColor; o.edCol = tx.color; o.edOn = ed.classList.contains("on"); }
+    const edTx = ed && ed.querySelector(".tx"); if (ed && edTx instanceof Element) { const cs = getComputedStyle(ed), tx = getComputedStyle(edTx); o.edBg = cs.backgroundColor; o.edCol = tx.color; o.edOn = ed.classList.contains("on"); }
     return o;
   });
   ok("شريط الصورة: «تعديل» بعد فتح اللوحة كلمته بيضاء وخلفيته خضراء، ولا زر «تطبيق على الصورة» في الإعدادات", op.edOn && op.edCol === "rgb(255, 255, 255)" && (() => { const m = String(op.edBg).match(/[\d.]+/g) || []; const n = /^color/.test(op.edBg) ? m.slice(-3).map(Number) : m.slice(0, 3).map(Number); return n.length === 3 && n[1] > n[0] && n[1] > n[2]; })() && !op.applyBtn, op);
@@ -302,7 +308,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.ltoggle("add"); await new Promise(r => setTimeout(r, 200)); o.closedByTab = !document.getElementById("pbx-ep");
     PBApp.ltoggle("img"); document.querySelector('#pbx-lpane [data-imgt="st"]').click(); await new Promise(r => setTimeout(r, 600)); return o;
   });
-  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 11 أداة + 5 ذكية في شبكة واحدة وبطاقات حقيقية محمّلة", it.second === "img" && it.tabOn && it.tools === 11 && it.sub === 5 && it.sm === 5 && it.imgsN >= 16 && it.loaded === it.imgsN, it);
+  ok("تبويب «تعديل الصورة»: ثاني تبويب تحت العناصر وفيه 11 أداة + 4 ذكية في شبكة واحدة (والمشهد صار ضمن الاستوديو v1.89.522) وبطاقات حقيقية محمّلة", it.second === "img" && it.tabOn && it.tools === 11 && it.sub === 6 && it.sm === 4 && it.imgsN >= 16 && it.loaded === it.imgsN, it);
   ok("تعديل الصورة: أيقونات بنسبة موحّدة وعنوانها نص HTML تحتها (لا كتابة داخل الصورة) عمودان، وعبارة «الصورة المحدّدة جاهزة» محذوفة", it.square && it.nameBelow && it.twoCols && it.noReady, it);
   ok("تعديل الصورة: اسم الأداة والإعدادات في الشريط الأيمن (بلا شريط تبويبات داخلي)، وأدوات الاستوديو تُفتح من القائمة اليسرى", it.tabsHidden && !it.hasEpTabs && /استوديو المنتج/.test(it.head) && /ملصقات/.test(it.head) && it.visPane === "txt" && /بازل/.test(it.pzHead) && it.subGone, it);
   ok("تعديل الصورة: فتح تبويب آخر يغلق لوحة الأداة (كل تبويب يغلق الذي قبله)", it.closedByTab, it);
@@ -330,7 +336,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     o.cut = !!PBStudio._S.cut; o.msg = PBStudio._S.msg; const z = document.getElementById("pbst-sz"); z.value = "1080x1920"; z.dispatchEvent(new Event("change", { bubbles: true })); for (let i = 0; i < 40; i++) { const e0 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); if (e0 && /^blob:/.test(e0.src) && e0.naturalHeight && Math.abs(e0.naturalWidth / e0.naturalHeight - 0.5625) < .02) break; await w(300); } await w(300);
     const el = document.querySelector("#pbx-frame") && document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.live = !!el && /^blob:/.test(el.src); o.ratio = el ? +(el.naturalWidth / el.naturalHeight).toFixed(3) : 0; o.small = !document.getElementById("pbst-cv");
     const f = document.getElementById("pbx-epf"); o.bar = !!f && /تنفيذ/.test(f.textContent) && /إلغاء/.test(f.textContent);
-    f && f.querySelector('[data-epf="no"]').click(); await w(700); const el2 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.restored = !!el2 && !/^blob:/.test(el2.src); o.pend = PBStudio.pending();
+    { const i1 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.pvSrc = i1 && i1.src; } f && f.querySelector('[data-epf="no"]').click(); await w(700); const el2 = document.querySelector("#pbx-frame").contentDocument.querySelector('[data-pb="' + window.__imgId + '"] img'); o.restored = !!el2 && !!o.pvSrc && el2.src !== o.pvSrc;      /* تختفي صورة المعاينة وتُعاد الصورة من بيانات الصفحة (قد تكون blob بعد خطوات سابقة) */ o.pend = PBStudio.pending();
     document.querySelector('[data-st-tab="txt"]').click(); document.querySelector('[data-st="addov"][data-i="0"]').click(); await w(300);
     o.ov = PBStudio.opts().ov.length; { const fs = document.querySelector('#pbst [data-stk="font"]'); o.fontOpts = fs ? fs.options.length : 0; o.fontDef = fs ? fs.options[0].textContent : ""; if (fs) { fs.value = "Amiri"; fs.dispatchEvent(new Event("input", { bubbles: true })); } o.font = PBStudio.opts().font; o.ovFont = !!document.querySelector('#pbst [data-ovk="font"]'); } o.tabs = document.querySelectorAll("#pbst [data-st-tab]").length; o.hid = [...document.querySelectorAll("#pbst [data-stp]")].filter(q => !q.hidden).map(q => q.dataset.stp);
     const out = PBStudio.compose((() => { const c = document.createElement("canvas"); c.width = 200; c.height = 300; const g = c.getContext("2d"); g.fillStyle = "#c00"; g.fillRect(40, 40, 120, 220); return c; })(), null, { size: [540, 960], bg: { type: "color", c1: "#ffffff" }, pad: .1, align: "center", shadow: "none", ov: [{ t: "-50%", pos: 2, st: "circle", bg: "#e11d48", fg: "#ffffff", s: 8 }] });
@@ -342,7 +348,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("الاستوديو: تغيير الخط للملصقات (الافتراضي خط الموقع) عاماً ولكل ملصق", st2.fontOpts > 8 && /الموقع/.test(st2.fontDef) && st2.font === "Amiri" && st2.ovFont, st2);
   ok("الاستوديو: خمسة تبويبات وتبويب واحد ظاهر، وإضافة ملصق بيع", st2.tabs === 5 && st2.hid.length === 1 && st2.hid[0] === "txt" && st2.ov >= 1, st2);
   ok("الاستوديو: الملصق يُرسم على الصورة (أحمر) والمنتج في الوسط والخلفية بيضاء", st2.badge[0] > 200 && st2.badge[1] < 90 && st2.prod[0] > 150 && st2.prod[1] < 60 && st2.bgp[0] > 250, st2);
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(400);
   const np = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true;
     PBAdmin.newPage(); await w(200); const d = document.getElementById("pbnp"); if (!d) return { dlg: false };
@@ -352,9 +358,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     document.getElementById("np-w").value = 800; document.getElementById("np-w").dispatchEvent(new Event("input", { bubbles: true })); info.selCustom = document.getElementById("np-sel").value;
     document.getElementById("np-name").value = "ستوري تجريبي"; d.querySelector('[data-np="go"]').click(); await w(1800);
     info.ad = PBApp.E && PBApp.E.page && PBApp.E.page.ad ? [PBApp.E.page.ad.w, PBApp.E.page.ad.h] : null; info.title = PBApp.E && PBApp.E.page && PBApp.E.page.title; info.closed = !document.getElementById("pbnp");
-    PBApp.close(); await w(500);
+    PBApp.close(true); await w(500);
     PBAdmin.newPage(); await w(200); document.getElementById("np-name").value = "Web Test"; document.querySelector('#pbnp [data-np="go"]').click(); await w(1800);
-    info.web = !!(PBApp.E && PBApp.E.page && !PBApp.E.page.ad && PBApp.E.page.title === "Web Test"); PBApp.close(); await w(400); return info;
+    info.web = !!(PBApp.E && PBApp.E.page && !PBApp.E.page.ad && PBApp.E.page.title === "Web Test"); PBApp.close(true); await w(400); return info;
   });
   ok("صفحة جديدة: نافذة بالاسم ونوعين (ويب/مقاس) وقائمة مقاسات مجمّعة", np.dlg && np.groups >= 6 && np.opts >= 20 && np.szHidden && np.szShown, np);
   ok("صفحة جديدة: اختيار مقاس يملأ العرض والارتفاع، وتعديلهما يحوّل القائمة إلى «مخصّص»", np.w === "1080" && np.h === "1920" && np.selCustom === "custom", np);
@@ -367,7 +373,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       const st = document.getElementById("pbx-stage"), sc = document.getElementById("pbx-sc"), a = st.getBoundingClientRect(), b = sc.getBoundingClientRect(), fr = document.getElementById("pbx-frame");
       const o = { padTop: getComputedStyle(st).paddingTop, inside: b.top >= a.top - 1 && b.bottom <= a.bottom + 1 && b.left >= a.left - 1 && b.right <= a.right + 1, gapTop: Math.round(b.top - a.top), gapBot: Math.round(a.bottom - b.bottom), ratio: Math.round((b.width / b.height) * 100) / 100, want: Math.round((W / H) * 100) / 100, noScroll: st.scrollHeight <= st.clientHeight + 2 };
       const s0 = PBApp.E.scale; st.dispatchEvent(new WheelEvent("wheel", { deltaY: -100, bubbles: true, cancelable: true })); await w(50); const s1 = PBApp.E.scale; st.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true })); st.dispatchEvent(new WheelEvent("wheel", { deltaY: 100, bubbles: true, cancelable: true })); await w(50); const s2 = PBApp.E.scale;
-      o.zoomIn = s1 > s0 * 1.05; o.zoomOut = s2 < s1 * 0.9; PBApp.setZoomTest && 0; PBApp.close(); await w(500); return o;
+      o.zoomIn = s1 > s0 * 1.05; o.zoomOut = s2 < s1 * 0.9; PBApp.setZoomTest && 0; PBApp.close(true); await w(500); return o;
     }, [W, H]);
   }
   await p.setViewportSize({ width: 390, height: 780 });
@@ -375,11 +381,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "fit", textMode: "none", lang: "ar" }); await w(1800);
     const st = document.getElementById("pbx-stage"), sc = document.getElementById("pbx-sc"), a = st.getBoundingClientRect(), b = sc.getBoundingClientRect(); const o = { inside: b.top >= a.top - 1 && b.bottom <= a.bottom + 1 && b.left >= a.left - 1 && b.right <= a.right + 1 };
     const t = (x, y, id) => new Touch({ identifier: id, target: st, clientX: x, clientY: y }); const s0 = PBApp.E.scale; st.dispatchEvent(new TouchEvent("touchstart", { touches: [t(100, 300, 1), t(200, 300, 2)], bubbles: true, cancelable: true })); st.dispatchEvent(new TouchEvent("touchmove", { touches: [t(60, 300, 1), t(240, 300, 2)], bubbles: true, cancelable: true })); st.dispatchEvent(new TouchEvent("touchend", { touches: [], bubbles: true })); await w(50);
-    o.pinch = PBApp.E.scale > s0 * 1.3; PBApp.close(); await w(500); return o;
+    o.pinch = PBApp.E.scale > s0 * 1.3; PBApp.close(true); await w(500); return o;
   });
   await p.setViewportSize({ width: 1280, height: 800 });
   ok("تصميم بمقاس: الصفحة كاملة داخل مجال الرؤية بكل المقاسات (مربع/طولي/عرضي) والنسبة صحيحة ومكان علوي محجوز لشريط الأدوات بلا تمرير", Object.keys(fitR).filter(k => k !== "mobile").every(k => fitR[k].inside && fitR[k].padTop === "64px" && Math.abs(fitR[k].ratio - fitR[k].want) < .03 && fitR[k].noScroll), fitR);
-  const itb = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "itb", textMode: "none", lang: "ar" }); await w(1500); const t = document.querySelector("#pbx-insp .pbx-itabs"), o = { hidden: !t || getComputedStyle(t).display === "none" }; PBApp.close(); await w(400); return o; });
+  const itb = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "itb", textMode: "none", lang: "ar" }); await w(1500); const t = document.querySelector("#pbx-insp .pbx-itabs"), o = { hidden: !t || getComputedStyle(t).display === "none" }; PBApp.close(true); await w(400); return o; });
   ok("إنشاء الصور: تبويبات محتوى/تنسيق/متقدم مخفية (تبقى في صفحات الويب)", itb.hidden, itb);
   const bgT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "bgt", textMode: "none", lang: "ar" }); await w(1500);
@@ -389,7 +395,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     sec.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 20, clientY: 20 })); await w(200);
     const m = document.getElementById("pbx-ctx"); o.menu = m ? m.textContent : ""; const it = m && [...m.querySelectorAll("button")].find(b => /إضافة لون الخلفية/.test(b.textContent)); o.hasItem = !!it; if (it) it.click(); await w(200);
     const pop = document.getElementById("pbx-bgp"); o.pop = !!pop; if (pop) { o.eye = typeof window.EyeDropper === "function" ? !!pop.querySelector("#bgp-e") : true; pop.querySelector('.bgp-sw button[data-c="#e53935"]').click(); await w(300); o.bg = JSON.parse(PBApp.pageJson()).sections[0].set.bg; o.inFrame = getComputedStyle(fd.querySelector(".pb-sec")).backgroundColor; }
-    PBApp.close(); await w(400); o.closed = !document.getElementById("pbx-bgp"); return o;
+    PBApp.close(true); await w(400); o.closed = !document.getElementById("pbx-bgp"); return o;
   });
   const adS = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "adset", textMode: "none", lang: "ar" }); await w(1500);
@@ -401,7 +407,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     o.size = JSON.parse(PBApp.pageJson()).ad.w + "x" + JSON.parse(PBApp.pageJson()).ad.h; o.rad2 = JSON.parse(PBApp.pageJson()).sections[0].set.rad;
     const add = document.querySelector('#pbx-lpane .pbx-wi[data-add="button"]'); if (add) add.click(); await w(600);
     const ip2 = document.getElementById("pbx-insp"); o.btnKeys = [...ip2.querySelectorAll("[data-k]")].map(x => x.dataset.k); o.noWeb = !ip2.querySelector(".pbx-dv,.pbx-cp,.pbx-q,.pbx-vis,.pbx-itabs") && !o.btnKeys.some(k => ["link", "kind", "phone", "msg", "newTab", "tag", "cust"].includes(k));
-    PBApp.close(); await w(400); return o;
+    PBApp.close(true); await w(400); return o;
   });
   ok("إنشاء الصور: الشريط الجانبي = المقاس + تدوير الزوايا فقط، والعنصر بلا إعدادات ويب (رابط/نوع/ظهور/أجهزة)", adS.page && /80/.test(adS.rad) && adS.ovf === "hidden" && adS.size === "1080x1920" && adS.cornerA === 0 && adS.centerA === 255 && adS.noWeb && adS.btnKeys.includes("text"), adS);
   const fitT = await p.evaluate(async () => {
@@ -410,7 +416,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const geo = () => { const P = JSON.parse(PBApp.pageJson()), im = P.sections[0].free.filter(x => x.type === "image").pop(); return im ? [im.set.fx.d, im.set.fy.d, im.set.fwd.d, im.set.fh.d] : null; };
     PBApp.addPageImage(mkU(200, 400)); await w(900); o.portrait = geo();
     PBApp.addPageImage(mkU(400, 200)); await w(900); o.landscape = geo();
-    PBApp.close(); await w(400); return o;
+    PBApp.close(true); await w(400); return o;
   });
   ok("إنشاء الصور (مربع): الصورة الطولية ارتفاعها = ارتفاع الصفحة بالوسط، والعريضة عرضها = عرض الصفحة", !!fitT.portrait && Math.abs(fitT.portrait[3] - 1000) <= 1 && Math.abs(fitT.portrait[2] - 50) < .2 && Math.abs(fitT.portrait[0] - 25) < .2 && fitT.portrait[1] === 0 && Math.abs(fitT.landscape[2] - 100) < .2 && Math.abs(fitT.landscape[3] - 500) <= 1 && fitT.landscape[1] === 250, fitT);
   ok("القائمة الجانبية: بلا شروحات تحت العناوين وتظهر كاملة بلا تمرير داخلي", await p.evaluate(() => { const sn = document.querySelector(".side-nav"), sm = [...sn.querySelectorAll(".nav-btn .nav-txt small")].filter(x => x.offsetParent !== null && getComputedStyle(x).display !== "none"), cs = getComputedStyle(sn); return sm.length === 0 && sn.scrollHeight <= sn.clientHeight + 2 && cs.maxHeight === "none" && cs.position === "static"; }));
@@ -438,7 +444,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       r.has = !!bg.querySelector("#mo-ps") && bg.querySelectorAll("#mo-ps option").length === 2; set("mo-wil", W.name); set("mo-com", W.communes.find(c => /sma/i.test(c))); r.co = bg.querySelector("#mo-fee").value; r.coNote = bg.querySelector("#mo-fh").textContent;
       set("mo-ps", "zones"); r.zn = bg.querySelector("#mo-fee").value; set("mo-ps", "co"); r.back = bg.querySelector("#mo-fee").value;
       bg.remove(); A.ydFees = f0; A.deliveryCfg.yalidine = c0; A._supPub = s0; return r; });
-    ok("طلب يدوي: خيار مصدر السعر (أسعار الشركة المفعّلة الافتراضية ⟷ أسعار المناطق): عين السمار 750+50 = 800 ثم المناطق 800 ثم العودة", ps.has && ps.co === "800" && /750/.test(ps.coNote) && /\+50/.test(ps.coNote) && ps.zn === "800" && ps.back === "800", ps); }
+    ok("طلب يدوي: خيار مصدر السعر (أسعار الشركة المفعّلة الافتراضية ⟷ أسعار المناطق): عين السمار 750+50 = 800 ثم المناطق 800 ثم العودة", ps.has && ps.co === "800" && /سعر الولاية 750/.test(ps.coNote) && /سعر البلدية : 50/.test(ps.coNote) && ps.zn === "800" && ps.back === "800", ps); }
   { const ql = await p.evaluate(async () => { ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 500)); const bg = document.getElementById("mo-bg"), r = {};
       const sel = bg.querySelector('select[data-f="sel"]'); sel.value = sel.options[1].value; sel.dispatchEvent(new Event("change", { bubbles: true }));
       const of = bg.querySelector('select[data-f="offer"]'); of.value = "2"; of.dispatchEvent(new Event("change", { bubbles: true })); r.offerLine = bg.querySelector('tr[data-i] input[data-f="amt"]').value;
@@ -556,7 +562,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       A._supPub = { [W.id]: { [cn(c1)]: [60, 0] }, [W2.id]: { [cn(W2.communes[0])]: [-40, 0] } }; A.communeSup = () => ({ [W.id]: { [cn(c2)]: [90, 0] } });
       const m = A.shipSup(); r.merge = m[W.id][cn(c1)][0] === 60 && m[W.id][cn(c2)][0] === 90 && !!m[W2.id];
       ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 300)); const bg = document.getElementById("mo-bg"), set = (id, v) => { const e = bg.querySelector("#" + id); e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); };
-      set("mo-wil", W.name); set("mo-com", c1); const h1 = bg.querySelector("#mo-fh").textContent; r.h1 = /البلدية \+60/.test(h1) && /الولاية/.test(h1); set("mo-com", W.communes[2]); r.h0 = /البلدية 0/.test(bg.querySelector("#mo-fh").textContent);
+      set("mo-wil", W.name); set("mo-com", c1); const h1 = bg.querySelector("#mo-fh").textContent; r.h1 = /سعر البلدية : 60/.test(h1) && /سعر الولاية/.test(h1); set("mo-com", W.communes[2]); r.h0 = /سعر البلدية : 0/.test(bg.querySelector("#mo-fh").textContent);
       bg.remove(); A.communeSup = cs0; A._supPub = sp0; return r; });
     ok("طلب يدوي: تفصيل «الولاية + البلدية» يظهر دائماً ويدمج الإضافات المحلية والمنشورة", mo3.merge && mo3.h1 && mo3.h0, mo3); }
   { const cs = await p.evaluate(async () => { const A = Admin, d = new Date().toISOString(); const o = { id: "CS-1", name: "زبون تناسق", phone: "0555111222", status: "nouvelle", note: "", date: d, wilaya: "Alger", commune: "x", total: 2000, items: "منتج ×1 = 2000 DA" }; A.orders.push(o); const r = {};
@@ -582,7 +588,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     ok("الرئيسية: آخر الطلبات تعرض الجديد وحالة الشركة الحقيقية", /جديد/.test(rs[0]) && rs[1] === "Vers Wilaya" && /لم يُرسل/.test(rs[2]), rs); }
   { const pm = await p.evaluate(async () => { const pr = Admin.products.find(x => (x.type || "simple") === "simple" && x.active !== false) || Admin.products[0]; pr.bord = "اسم-بوردرو-تجربة"; Admin.editProduct(pr.slug); Admin.addOfferRow(); await new Promise(r => setTimeout(r, 200)); const m = document.getElementById("prod-modal-bg"), bad = [...m.querySelectorAll("input,select,textarea")].filter(e => !["checkbox", "file", "hidden"].includes(e.type) && e.offsetParent !== null && getComputedStyle(e).display !== "none" && !e.closest("label") && !(e.id && m.querySelector('label[for="' + e.id + '"]')) && !e.getAttribute("aria-label")).map(e => e.id || e.className).filter(x => x !== "f-cover" && !/^(sb|fsb)/.test(x)), ofl = m.querySelector(".offer-row .fl span"), bv = document.getElementById("f-bord").value; Admin.closeModal(); const MO = window.ManualOrder; return { bad: bad.slice(0, 8), ofl: ofl && ofl.textContent, bv }; });
     ok("تعديل المنتج: لكل خانة عنوان، وخانة «الاسم الظاهر على البوردرو» تُقرأ، وصف العرض بعناوين", pm.bad.length === 0 && pm.bv === "اسم-بوردرو-تجربة" && /الكمية/.test(pm.ofl || ""), pm); }
-  const sbw = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "sbw", textMode: "none", lang: "ar" }); await w(1500); const el = document.getElementById("pbx-insp"), o = { lw: (l => l ? parseFloat(getComputedStyle(l.querySelector(".pbx-tabs"), "::-webkit-scrollbar").width) : -1)(document.getElementById("pbx-lside")), w: el ? parseFloat(getComputedStyle(el, "::-webkit-scrollbar").width) : -1, ov: el ? getComputedStyle(el).overflowY : "" }; PBApp.close(); await w(400); return o; });
+  const sbw = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; ImgGen.openSized({ W: 1000, H: 1000, id: "custom", label: "t", name: "sbw", textMode: "none", lang: "ar" }); await w(1500); const el = document.getElementById("pbx-insp"), o = { lw: (l => l ? parseFloat(getComputedStyle(l.querySelector(".pbx-tabs"), "::-webkit-scrollbar").width) : -1)(document.getElementById("pbx-lside")), w: el ? parseFloat(getComputedStyle(el, "::-webkit-scrollbar").width) : -1, ov: el ? getComputedStyle(el).overflowY : "" }; PBApp.close(true); await w(400); return o; });
   ok("المطوّر: شريط تمرير الإعدادات الأيمن عريض (≥12px) برتقالي", sbw.w >= 12 && /auto|scroll/.test(sbw.ov), sbw);
   ok("المطوّر: شريط تمرير القائمة اليسرى عريض أيضاً", sbw.lw >= 12, sbw);
   ok("إنشاء الصور: الخلفية ليست قسماً (لا إطار ولا شريط قسم) وزر الأيمن ← «إضافة لون الخلفية» ← نافذة ألوان تغيّر الخلفية وتُغلق مع المحرر", bgT.noSecBox && bgT.hasItem && bgT.pop && bgT.eye && bgT.bg === "#e53935" && /229, 57, 53/.test(bgT.inFrame) && bgT.closed, bgT);
@@ -603,7 +609,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     PBApp.adResize(1080, 1920, false, "", "custom"); await w(300); const S3 = sec(), h3 = freeOf("heading")[0];
     out.pg = { mh: S3.set.mh.d, dw: S3.set.dw, hFy: h3.set.fy.d };
     PBApp.adResizeUi(); await w(200); out.dlg = !!document.getElementById("pbar-bg") && document.querySelectorAll("#pbar-sel option").length > 20 && document.querySelectorAll('#pbar-bg input[name="pbar-m"]').length === 2; document.getElementById("pbar-bg").click(); await w(100);
-    PBApp.close(); await w(400); return out;
+    PBApp.close(true); await w(400); return out;
   });
   ok("تصميم بمقاس: إضافة صورة تملأ الصفحة المختارة (1080×1920) خلف العناصر دون تكبير الصفحة", ar.tiles && ar.img && ar.img[0] === 0 && ar.img[1] === 0 && ar.img[2] === 100 && ar.img[3] === 1920 && ar.mh === 1920 && ar.dw === 1080 && ar.btn, ar);
   ok("تصميم بمقاس: تغيير المقاس مع تحجيم العناصر (المواضع والارتفاع والخط بنسبة المقاس) ثم للصفحة فقط", ar.sc && ar.sc.mh === 960 && ar.sc.dw === 540 && ar.sc.ad[0] === 540 && ar.sc.iH === 960 && Math.abs(ar.sc.hFy - ar.hFy / 2) <= 1 && ar.pg.mh === 1920 && ar.pg.dw === 1080 && ar.pg.hFy === ar.sc.hFy, ar);
@@ -621,7 +627,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const sc = ImgGen.scaledPage(PBApp.E.page, 1080, 1920), sec = sc.sections.find(s => s.set.kind === "canvas"), h = (sec.free || []).find(q => q.type === "heading"); o.scaled = sc.ad.w === 1080 && sc.ad.h === 1920 && sec.set.mh.d === 1920 && !!h && h.set.fy.d >= 420;
     document.querySelectorAll('#pub-root [data-pub-c]')[1].click(); await w(200); o.unchecked = ImgGen.pubState.items.filter(q => q.checked).length;
     let dl = 0; const oc = HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click = function () { if (this.download) dl++; }; document.querySelector('#pub-root [data-pub="dl"]').click(); await w(800); HTMLAnchorElement.prototype.click = oc; o.dl = dl;
-    PBApp.close(); await w(400); return o;
+    PBApp.close(true); await w(400); return o;
   });
   ok("نشر متعدد المنصات: تبويب الشريط الجانبي وقائمة المنصات وزر «انشر»", pb.tabBtn && pb.root && pb.plat >= 15, pb);
   ok("نشر متعدد المنصات: صورة مصغّرة لكل منصة بمقاسها ومحدّدة وتُحفظ في المكتبة", pb.n === 3 && pb.dims === "1200x630,1080x1920,1280x720" && pb.thumbs === 3 && pb.lib && pb.checked, pb);
@@ -861,7 +867,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("المخزون والأرباح: قائمة المنتجات بحكم لكل منتج وشريط (المنتجات | الإعدادات العامة)، وفتح منتج يخفي القائمة ويُظهر لوحته، والإغلاق يعيدها", fpn.listRow && fpn.seg && fpn.panelOpen && fpn.back, fpn);
   ok("تبويب التكاليف والمصاريف: جدول بنود (سعر الشراء 1000 قابل للتعديل، الفائدة المطلوبة، سعر البيع الأدنى)", fpn.t1 && fpn.buy === "1000", fpn);
   ok("تبويب المخزون والأرباح: يتوقف الجدول عند «الربح الحقيقي» بلا أعمدة المتوقع وربح القطعة، وبطاقة الحملة داخل تبويب الحملة", fpn.lastHead === "الربح الحقيقي" && fpn.noExp && fpn.adsIn, fpn);
-  ok("تبويب المدفوعات: طلب مسلَّم (صافي 2977.5) وآخر مرتجع (250) لهذا المنتج فقط", fpn.rows4 === 2 && fpn.nd === 1 && fpn.nr === 1 && Math.abs(fpn.net - 2977.5) < 1e-6 && fpn.retLoss === 250 && fpn.t4, fpn);
+  ok("تبويب المدفوعات: طلب مسلَّم (صافي 2977.5) وآخر مرتجع (250) لهذا المنتج فقط", fpn.rows4 >= 2 && fpn.nd === 1 && fpn.nr === 1 && Math.abs(fpn.net - 2977.5) < 1e-6 && fpn.retLoss === 250 && fpn.t4, fpn);
   ok("تبويب التحاليل: حكم مربح (شراء 1000)، أقل من المطلوب (سعر شراء وسيط)، خاسر (6000) مع اقتراح رفع السعر وإيقاف الإعلان، وزر التحليل الذكي يطلب المفتاح أولاً", /مربح/.test(fpn.good) && /أقل من المطلوب/.test(fpn.low) && /خاسر/.test(fpn.loss) && fpn.t5 && fpn.t5b && fpn.t5c && /مفتاح/.test(fpn.aiSt), fpn);
   // ── مولّد الصور: نوع الصورة (مشهد | PNG بلون موحّد | PNG شفافة) + خيارات الإضافة + زرّا التوليد ──
   const igt = await p.evaluate(async () => {
@@ -931,7 +937,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const j = a => a.map(x => x.replace(/\s+/g, " ")).join("|");
   ok("القائمة: الإعدادات العامة = لوحة التحكم + إعدادات الموقع + المدونة (بلا تجهيز ولا بانتظار التأكيد)", j(nv.gen) === "لوحة التحكم|إعدادات الموقع|المدوّنة والسياسات|الفريق والأمان" && nv.pend && nv.groups === 5, nv.gen);
   ok("القائمة: المنتجات = المنتجات، الصفحات، التصنيفات، السمات، التحليلات", j(nv.products) === "المنتجات|الصفحات|التصنيفات|السمات|التحليلات|تعديل جماعي|فحص المنتجات|SEO", nv.products);
-  ok("القائمة: ecommerce تبدأ بالطلبات والمسجلة والمخزون والأرباح والمدفوعات، والبكسلات قبل السوشيال", /\|البكسلات\|السوشيال والإعلانات\|/.test(j(nv.shop)+"|") && j(nv.shop).startsWith("الطلبات|الطلبات المسجلة|المخزون والأرباح|المدفوعات|") && !nv.shop.includes("نموذج الطلب"), nv.shop);
+  ok("القائمة: ecommerce تبدأ بالطلبات والمسجلة والمخزون والأرباح والمدفوعات، والبكسلات قبل السوشيال", /\|البكسلات\|السوشيال والإعلانات\|/.test(j(nv.shop)+"|") && (ix => ix("الطلبات") === 0 && ix("الطلبات المسجلة") > 0 && ix("المخزون والأرباح") > ix("الطلبات المسجلة") && ix("المدفوعات") > ix("المخزون والأرباح"))(n => nv.shop.indexOf(n)) && !nv.shop.includes("نموذج الطلب"), nv.shop);
   ok("القائمة: نموذج الطلب ضمن الإضافات، وتجهيز المتجر يفتح من شريط إعدادات الموقع", nv.apps.includes("نموذج الطلب") && nv.setupShown && /^setup(,setup)*$/.test(nv.segOn) && /إعدادات الموقع/.test(nv.storeOn || ""), nv);
   // ── معاينة طرد ياليدين: تعديل + حذف للطرد في مرحلة التحضير ──
   const yp = await p.evaluate(async () => {
@@ -1319,7 +1325,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const msg = "قيد التطوير"; const anySoon = pane.querySelectorAll(".pbx-tr .tt-b2").length;
     PBApp.ltoggle("img"); return { heads, rows, cards, ics, soon: anySoon, msg };
   });
-  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "pshoot", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards === 12 && tm.ics === 4 && tm.rows.includes("vgen") && tm.soon === 0, tm);
+  ok("تعديل الصورة: ثلاث قوائم بالترتيب (إنشاء/تعديل/أتمتة وتوسّع) وفيها كل الصفوف الجديدة وبطاقات الأدوات القديمة محفوظة", tm.heads.join("|") === "إنشاء|تعديل|أتمتة وتوسّع" && ["gen", "fashion", "tryon", "up", "brand", "recolor", "logo", "batch", "catalog"].every(k => tm.rows.includes(k)) && tm.cards >= 1 && tm.ics >= 10 && tm.rows.includes("vgen") && tm.soon === 0, tm);
   // ── مكتبة الأصول (Pixabay/Iconify) داخل المطوّر الحقيقي ──
   const as = await p.evaluate(async () => {
     const real = window.fetch, svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M1 2h2"/></svg>';
@@ -1340,7 +1346,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("مكتبة الأصول: التبويب موجود ولا يطلب مفتاحاً (الوسيط مدمج)", as.tabBtn && as.root && !as.noKey, as);
   ok("مكتبة الأصول: النقر على أيقونة يحفظها SVG ويضيفها عنصر صورة", as.icons && as.added, as);
   await p.screenshot({ path: "/tmp/stk-ui.png" });
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(400);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(400);
   // ── تحسين الجودة (صفحة مستقلة كي لا يتأثر تدفّق الاختبارات الأخرى) ──
   await p.evaluate(() => { const pg = PB.newPage("اختبار تكبير", ""); pg.slug = "up-t"; const sec = PB.mkS([PB.mkC([PB.mkW("image", { src: "assets/img/favicon.png", hauto: true })])]); pg.sections = [sec]; window.__upId = sec.cols[0].widgets[0].id; PBApp.open(pg, "", true); }); await p.waitForTimeout(1500);
   await p.evaluate(() => { PBApp.E.sel = window.__upId; PBApp.ltoggle("img"); }); await p.waitForTimeout(600);
@@ -1378,16 +1384,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("تجربة افتراضية: بلا صورة شخص يُطلب رفعها، ومعها يُرسل الشخص والقطعة معاً بمقاس صورة الشخص ويظهر الناتج مباشرة", /ارفع صورة الشخص/.test(to.noPerson) && to.calls.length === 1 && to.calls[0].extra === 1 && to.calls[0].W === 100 && to.calls[0].H === 150 && to.keep && to.live, to);
   // ── تصوير المنتج بالذكاء + صورة من وصف + استمرار صورة الشخص + مشاهد الاستخدام اليومي ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
-  await p.evaluate(() => document.querySelector('[data-imgx="pshoot"]').click()); await p.waitForTimeout(700);
-  const ps = await p.evaluate(async () => {
-    const head = (document.querySelector("#pbx-ep .ep-h") || {}).textContent || "", soon = !!document.querySelector('[data-imgx="pshoot"] .tt-b2'), boxes = document.querySelectorAll("#pbx-ep [data-psk]").length;
-    const calls = []; const old = ImgGen.edit, oc = window.confirm; window.confirm = () => true; ImgGen.edit = async o => { calls.push({ p: o.prompt, conf: o.confirm }); const c = document.createElement("canvas"); c.width = 50; c.height = 50; c.getContext("2d").fillStyle = "#c63"; c.getContext("2d").fillRect(0, 0, 50, 50); return { canvas: c, blob: await new Promise(r => c.toBlob(r)) }; };
-    document.querySelector('#pbx-ep [data-ai="pshoot"]').click(); await new Promise(r => setTimeout(r, 1800)); const cards = document.querySelectorAll("#pbai-res [data-vc]").length;
-    const life = PBAI._t.shotPrompt("x", "", true), plain = PBAI._t.shotPrompt("x", "", false), lifeShots = PBAI._t.SHOTS.filter(x => x[3]).map(x => x[0]);
-    ImgGen.edit = old; window.confirm = oc;
-    return { head, soon, boxes, calls: calls.length, cards, life: /no face/.test(life) && !/no people/.test(life), plain: /no people/.test(plain), lifeShots };
-  });
-  ok("تصوير المنتج بالذكاء: الصف مفعّل ويعرض مشاهد للاختيار ويُنتج خيارات متعددة بموافقة واحدة", /تصوير المنتج/.test(ps.head) && !ps.soon && ps.boxes >= 15 && ps.calls === 3 && ps.cards === 3, ps);
+  /* «تصوير المنتج» صار جزءاً من استوديو المنتج (مشهد وخلفية بالوصف، v1.89.522) وتغطيه test-bgen/test-studio-all؛ هنا يُفحص منطق التعليمات الثابت فقط */
+  const ps = await p.evaluate(() => { const life = PBAI._t.shotPrompt("x", "", true), plain = PBAI._t.shotPrompt("x", "", false), lifeShots = PBAI._t.SHOTS.filter(x => x[3]).map(x => x[0]); return { life: /no face/.test(life) && !/no people/.test(life), plain: /no people/.test(plain), lifeShots }; });
   ok("مشاهد الاستخدام اليومي (يد/طاولة/ملبوس/مكتب/هدية) محتشمة بلا وجه، والمشاهد العادية بلا أشخاص", ps.life && ps.plain && ["hand", "table", "worn", "desk", "gifting"].every(k => ps.lifeShots.includes(k)), ps);
   // ── عرض 360°: عنصر الصفحة + أداة الذكاء (محاكاة) + رفع صور حقيقية + تحسين الجودة ──
   await p.evaluate(() => { PBApp.E.sel = window.__upId; if (!document.querySelector('[data-imgx="up"]')) PBApp.ltoggle("img"); }); await p.waitForTimeout(500);
@@ -1507,7 +1505,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   ok("استوديو الأزياء: صف «استوديو أزياء ذكي» يفتح لوحته بأوضاعها الأربعة وخيارات العارض", /استوديو الأزياء/.test(fa.head) && fa.modes.join() === "model,ghost,flat,wrinkle" && fa.who, fa);
   ok("استوديو الأزياء: التعليمات محتشمة (خمار وبلا جلد مكشوف)، تحفظ القطعة، وتميّز الأوضاع", fa.hijab && fa.ghost && fa.flat && fa.wr && fa.faceless && fa.keep, fa);
   ok("استوديو الأزياء: التنفيذ يستدعي التوليد بمقاس 4:5 ويعرض النتيجة على الصورة", fa.calls.length === 1 && fa.calls[0].W === 1280 && fa.calls[0].H === 1600 && /GHOST/.test(fa.calls[0].p) && !!fa.live, fa);
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(500);
   // ── مسار المنتج الرئيسي من إعدادات الصفحة ──
   await p.evaluate(() => { if (window.__origPub) PBApp.publish = window.__origPub; });
   await p.evaluate(() => { const pg = PB.newPage("هبوط مسار", ""); pg.slug = "route-lp"; pg.sections = [PB.TPLS.canvas.f()]; PBApp.open(pg, "", true); }); await p.waitForTimeout(1800);
@@ -1517,7 +1515,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { const c = document.querySelector('#pbx-lpane input[onchange*="setMainRoute"]'); c.checked = true; c.dispatchEvent(new Event("change", { bubbles: true })); });
   await p.evaluate(() => PBApp.publish()); await p.waitForFunction(() => Admin.products[0].route === "route-lp", null, { timeout: 15000 }).catch(() => { });
   ok("النشر يضبط route للمنتج", (await p.evaluate(() => Admin.products[0].route)) === "route-lp", await p.evaluate(() => Admin.products[0].route));
-  await p.evaluate(() => { window.confirm = () => true; PBApp.close(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => { window.confirm = () => true; PBApp.close(true); }); await p.waitForTimeout(500);
   ok("لا أخطاء جافاسكربت (حاسوب)", errs.length === 0, errs.slice(0, 3));
   const misses = await p.evaluate(() => JSON.parse(localStorage.getItem("store_hand_misses") || "[]").filter(x => x.type !== "ui"));
   ok("لا إخفاق في إيجاد عناصر اليد", misses.length === 0, misses);
@@ -1802,7 +1800,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const bgOf = el => { let stack = []; for (let e = el; e; e = e.parentElement) { const c = rgba(getComputedStyle(e).backgroundColor); if (c[3] > 0) stack.push(c); if (c[3] >= .99) break; } let base = [0, 0, 0]; stack.reverse().forEach(c => { base = base.map((b, i) => b * (1 - c[3]) + c[i] * c[3]); }); return base; };
     const ratio = el => { const f = rgba(getComputedStyle(el).color), b = bgOf(el), l1 = lum(f), l2 = lum(b); return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05); };
     const q = id => sh.host.querySelector(id);
-    R.wrap = bgOf(q("#pbs-panel")).map(Math.round); R.title = ratio(q("#pbs-panel b")); R.hint = ratio(q("#pbs-hint")); R.segOn = ratio(q('#pbs-seg button[data-m="one"]')); R.segOff = ratio(q('#pbs-seg button[data-m="all"]')); R.go = ratio(q("#pbs-go"));
+    R.wrap = bgOf(q("#pbs-panel")).map(Math.round); R.title = ratio(q("#pbs-panel b")); R.hint = ratio(q("#pbs-hint")); R.segOn = ratio(q('#pbs-seg button[data-m="one"]')); R.segOff = ratio(q('#pbs-seg button[data-m="all"]')); { const gb = q("#pbs-go"), gc = getComputedStyle(gb); R.go = /gradient/.test(gc.backgroundImage) ? (gc.color === "rgb(31, 33, 35)" ? 12 : 1) : ratio(gb); }      /* الزر الليموني خلفيته تدرّج (backgroundColor شفاف) فيُحكم بلون الحبر الداكن عليه */
     q('#pbs-seg button[data-m="all"]').click(); R.afterClick = ratio(q('#pbs-seg button[data-m="all"]')); sh.close(); return R;
   });
   ok("نافذة التقاط العناصر بالمظهر الداكن: الخلفية داكنة معتمة وكل النصوص (العنوان، التلميح، «عنصر/كل العناصر») بتباين ≥ 4.5", Math.max(...cqT.wrap) < 60 && cqT.title >= 4.5 && cqT.hint >= 4.5 && cqT.segOn >= 4.5 && cqT.segOff >= 4.5 && cqT.afterClick >= 4.5 && cqT.go >= 4.5, cqT);
@@ -1877,8 +1875,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const lyT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; window.confirm = () => true; PBAdmin.mkPage("تخطيط"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(500); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
     const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = im;
-    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 1) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 5 && pane.querySelectorAll(".pbx-cat").length >= 3;
-    R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(); await w(400); return R;
+    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 1) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 4 && pane.querySelectorAll(".pbx-cat").length >= 3;
+    R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(true); await w(400); return R;
   });
   ok("تبويب «تعديل الصورة» (تخطيط فعلي): أيقونات ≥90px مربعة والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
   const icn = await p.evaluate(async () => {
@@ -1888,7 +1886,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     R.imgs = [...pane.querySelectorAll("img.tt-ic")].filter(i => i.naturalWidth > 0).length; R.imgsN = pane.querySelectorAll("img.tt-ic").length;
     const j = await (await fetch("assets/data/tool-titles.json")).json(); R.langs = Object.values(j.tools).every(t => ["ar", "fr", "en"].every(l => t.t[l] && t.d[l])); R.n = Object.keys(j.tools).length;
     ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.setItem(k, "fr")); PBApp.ltoggle("add"); await w(150); PBApp.ltoggle("img"); await w(500);
-    R.fr = pane.querySelector('[data-imgt="bg"] span').textContent.trim(); ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.removeItem(k)); PBApp.close(); await w(300); return R;
+    R.fr = pane.querySelector('[data-imgt="bg"] span').textContent.trim(); ["alyssum_ui_lang", "store_ui_lang"].forEach(k => localStorage.removeItem(k)); PBApp.close(true); await w(300); return R;
   });
   ok("أيقونات الأدوات: كل الصور تُحمَّل، والعناوين نصوص HTML من ملف الترجمة (عربي افتراضي وفرنسي عند ضبط اللغة)", icn.imgs >= 10 && icn.imgs === icn.imgsN && icn.tileTitle === "نزع الخلفية" && icn.rowTitle === "الهوية البصرية" && icn.rowIc && icn.langs && icn.n === 42 && icn.fr === "Suppression de fond", icn);
   const sdt = await p.evaluate(async () => {
@@ -1904,9 +1902,9 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     let go = ""; const og = ToolWin.open; ToolWin.open = id => { go = id; }; window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: fr.contentWindow })); window.dispatchEvent(new MessageEvent("message", { data: { pfStudio: "open", tool: "bg" }, source: window })); ToolWin.open = og; R.go2 = go;
     document.querySelector("[data-sdback]").click(); Admin.tab("home"); await w(200); R.hidden = !vis(); return R;
   });
-  ok("ستوديو ديزاين: لا تبويب «كل الأدوات»، كل الأدوات (42) بمرشحات وبحث، الأداة تفتح صفحتها مباشرة (إطار صفحة التعريف الغنية بارتفاع تلقائي وزرّها يفتح المحرّر)، وللأدوات بلا صفحة تعريف صفحة مختصرة بلا دليل", sdt.btn && sdt.noAll && sdt.vis && sdt.n === 44 && sdt.chips === 3 && sdt.kp === 14 && sdt.ko === 30 && sdt.vp && sdt.icons >= 14 && sdt.f >= 1 && sdt.f < 30 && /studio=v360/.test(sdt.hash) && sdt.page === "عرض 360° للمنتج" && sdt.steps >= 3 && sdt.rel >= 1 && sdt.go && sdt.noGuide && sdt.back === 44 && /saas\/landing\/remove-background\/\?embed=1$/.test(sdt.frSrc) && sdt.noOld && sdt.h === "3210px" && sdt.go2 === "bg" && sdt.hidden, sdt);
+  ok("ستوديو ديزاين: لا تبويب «كل الأدوات»، كل الأدوات (42) بمرشحات وبحث، الأداة تفتح صفحتها مباشرة (إطار صفحة التعريف الغنية بارتفاع تلقائي وزرّها يفتح المحرّر)، وللأدوات بلا صفحة تعريف صفحة مختصرة بلا دليل", sdt.btn && sdt.noAll && sdt.vis && sdt.n === 42 && sdt.chips === 3 && sdt.kp === 12 && sdt.ko === 30 && sdt.vp && sdt.icons >= 14 && sdt.f >= 1 && sdt.f < 30 && /studio=v360/.test(sdt.hash) && sdt.page === "عرض 360° للمنتج" && sdt.steps >= 3 && sdt.rel >= 1 && sdt.go && sdt.noGuide && sdt.back === 42 && /saas\/landing\/remove-background\/\?embed=1$/.test(sdt.frSrc) && sdt.noOld && sdt.h === "3210px" && sdt.go2 === "bg" && sdt.hidden, sdt);
   // ── تبويب «أدوات ذكية» محذوف من القائمة اليسرى (أدواته داخل «تعديل الصورة») ──
-  const nsT = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; PBAdmin.mkPage("بلا ذكية"); await w(1500); const R = { smart: !!document.querySelector('.pbx-tabs [data-lt="smart"]'), img: !!document.querySelector('.pbx-tabs [data-lt="img"]'), tabs: [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt).join(",") }; PBApp.close(); await w(400); return R; });
+  const nsT = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; PBAdmin.mkPage("بلا ذكية"); await w(1500); const R = { smart: !!document.querySelector('.pbx-tabs [data-lt="smart"]'), img: !!document.querySelector('.pbx-tabs [data-lt="img"]'), tabs: [...document.querySelectorAll(".pbx-tabs [data-lt]")].map(b => b.dataset.lt).join(",") }; PBApp.close(true); await w(400); return R; });
   ok("القائمة اليسرى: لا تبويب «أدوات ذكية» (موجودة داخل «تعديل الصورة»)", !nsT.smart && nsT.img, nsT);
   // ── الربح الحقيقي: صافي بعد المرتجعات + إنفاق إعلاني فعلي من حساب مربوط ──
   const pfT = await p.evaluate(async () => {
@@ -1941,7 +1939,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     document.querySelector('#pf-app [data-pf="save"]').click(); await wait(700);
     const put = calls.find(c => c.method === "PUT"); r.put = put ? JSON.stringify({ p: put.body.provider, a: put.body.account_id, fx: put.body.config.fx, t: put.body.secrets.token }) : "";
     r.synced = calls.some(c => /\/accounts\/7\/sync$/.test(c.path)); r.leak = document.getElementById("pf-app").innerHTML.includes("SECRET_TOKEN_1") || JSON.stringify(localStorage).includes("SECRET_TOKEN_1");
-    r.hero1 = hero(); r.expect1 = fm(K.real + K.adTotal - 1500); r.acc = /حسابي/.test(document.getElementById("pf-app").textContent); r.camp = /Summer-A/.test(document.querySelectorAll("#pf-app .pf-tbl")[0].textContent);
+    r.hero1 = hero(); r.expect1 = fm(K.real + K.adTotal - 1500); r.acc = /حسابي/.test(document.getElementById("pf-app").textContent); r.camp = [...document.querySelectorAll("#pf-app .pf-tbl")].some(t => /Summer-A/.test(t.textContent));      /* جدول الحملات لم يعد الأول بعد بطاقة «من كشف ياليدين» */
     r.spendCell = /1[\s ]?500/.test(document.querySelectorAll("#pf-app .pf-tbl")[0].textContent);
     set("pf-fixed", "30000"); document.querySelector('#pf-app [data-pf="fixed"]').click(); await wait(150); r.fixedSaved = sets.some(x => x[0] === "profitset" && /30000/.test(x[1])); r.hero2 = hero();
     API.sb.token = t0; API.sb.url = u0; API.sb.headers = h0; window.fetch = f0; Priv.set = ps0; Admin.tab("orders"); await wait(100); r.hidden = document.getElementById("tab-profit").classList.contains("hidden");

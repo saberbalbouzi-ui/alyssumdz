@@ -1,4 +1,4 @@
-import { nowStr, randHex, safeEq, sha256Hex } from "./util.js";
+import { actorOf, nowStr, randHex, resolvesPublic, safeEq, sha256Hex } from "./util.js";
 
 /** أخطاء HTTP موحّدة: { error: { code, message, fields? } } */
 export class HttpError extends Error {
@@ -14,8 +14,12 @@ export class DB {
   async all(sql, ...a) { return (await this.stmt(sql, a).all()).results ?? []; }
   async run(sql, ...a) { const r = await this.stmt(sql, a).run(); return { id: r.meta?.last_row_id ?? 0, changes: r.meta?.changes ?? 0 }; }
   async val(sql, ...a) { const r = await this.one(sql, ...a); return r ? Object.values(r)[0] : null; }
-  /** عدة أوامر دفعة واحدة: [[sql, ...args], ...] (D1 batch إن وُجد وإلا بالتتابع) */
-  async batch(list) { for (let i = 0; i < list.length; i += 50) { const part = list.slice(i, i + 50); if (typeof this.d1.batch === "function") await this.d1.batch(part.map(([sql, ...a]) => this.stmt(sql, a))); else for (const [sql, ...a] of part) await this.stmt(sql, a).run(); } }
+  /** عدة أوامر دفعة واحدة: [[sql, ...args], ...]. D1 batch = معاملة ذرية لكل ≤50 أمراً. بلا d1.batch: المسار التتابعي غير ذري (للأعمال القابلة للإعادة فقط)؛ {atomic:true} يرفضه صراحةً بدل الاستمرار بصمت (E-04) */
+  async batch(list, { atomic = false } = {}) {
+    const hasBatch = typeof this.d1.batch === "function"; if (!hasBatch && atomic) throw new Error("d1.batch مطلوب لهذه العملية الذرية");
+    if (atomic && list.length > 50) throw new Error("العملية الذرية لا تتجاوز 50 أمراً");
+    for (let i = 0; i < list.length; i += 50) { const part = list.slice(i, i + 50); if (hasBatch) await this.d1.batch(part.map(([sql, ...a]) => this.stmt(sql, a))); else for (const [sql, ...a] of part) await this.stmt(sql, a).run(); }
+  }
   static isUnique(e) { return /UNIQUE|constraint/i.test(String(e?.message || e)); }
 }
 
@@ -44,16 +48,19 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       try { await db.run("INSERT INTO pf_events (tenant_id,type,payload,ext_id,state,attempts,next_at,created_at) VALUES (?,?,?,?,?,0,?,?)", tenantId, type, JSON.stringify(data), extId, "pending", Math.floor(clock() / 1000), nowStr(clock())); return true; }
       catch (e) { if (extId && DB.isUnique(e)) return false; throw e; }
     },
+    /** وجهة خارجية للاتصال الصادر: https آمن + حلّ DNS عام فقط وقت الاتصال (يلزم config.dohFetch؛ بدونه يُكتفى بفحص الصيغة) */
+    async publicUrl(url) { try { return await resolvesPublic(new URL(url).hostname, config.dohFetch, clock()); } catch { return false; } },
     /** إعداد مزوّد لمستأجر: { config, secrets } (الأسرار مفكوكة التشفير) أو null */
     async integration(tenantId, provider) {
       const r = await db.one("SELECT config, secret_enc FROM pf_integrations WHERE tenant_id=? AND provider=?", tenantId, provider); if (!r) return null;
       return { config: JSON.parse(r.config || "{}"), secrets: r.secret_enc && vault ? await vault.decryptJson(r.secret_enc, `pf:${tenantId}:${provider}`) : {} };
     },
     async audit(actor, action, target, detail) { await db.run("INSERT INTO pf_audit (at,actor,action,target,detail) VALUES (?,?,?,?,?)", nowStr(clock()), actor, action, target == null ? null : String(target), detail == null ? null : JSON.stringify(detail).slice(0, 500)); },
-    async window(key, max, win) { // نافذة معدّل بسيطة (MVP على D1)
-      const now = Math.floor(clock() / 1000), r = await db.one("SELECT COUNT(*) AS n, MIN(t) AS o FROM pf_rl WHERE k=? AND t>?", key, now - win);
-      if (r.n >= max) return Math.max(1, r.o + win - now);
-      await db.run("INSERT INTO pf_rl (k,t) VALUES (?,?)", key, now); if (Math.random() < 0.01) await db.run("DELETE FROM pf_rl WHERE t<?", now - 7200); return null;
+    /** نافذة معدّل ذرّية: إدراج مشروط بجملة SQL واحدة (العدّ والإدراج لا ينفصلان فلا تتجاوز الطلبات المتزامنة السقف) */
+    async window(key, max, win) {
+      const now = Math.floor(clock() / 1000), ins = await db.run("INSERT INTO pf_rl (k,t) SELECT ?,? WHERE (SELECT COUNT(*) FROM pf_rl WHERE k=? AND t>?) < ?", key, now, key, now - win, max);
+      if (ins.changes === 0) { const r = await db.one("SELECT MIN(t) AS o FROM pf_rl WHERE k=? AND t>?", key, now - win); return Math.max(1, (r?.o ?? now) + win - now); }
+      if (Math.random() < 0.01) await db.run("DELETE FROM pf_rl WHERE t<?", now - 7200); return null;
     } };
   const compile = (p) => new RegExp("^" + p.replace(/:([a-z]+)/g, "(?<$1>[^/]+)") + "$");
   let curMod = "";
@@ -73,7 +80,15 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       await db.run("UPDATE pf_tenants SET status=? WHERE id=?", status, tenantId); await ctx.audit(actor, "tenant.update", tenantId, { status, via: "provision" });
     },
   };
-  const add = (method) => (pattern, opts, handler) => routes.push({ method, pattern, mod: curMod, re: compile(pattern), opts: { auth: "tenant", ...opts }, handler });
+  const add = (method) => (pattern, opts, handler) => { routes.push({ method, pattern, mod: curMod, ord: routes.length, re: compile(pattern), opts: { auth: "tenant", ...opts }, handler }); routeIdx = null; };
+  /** فهرس المسارات (E-01): method ← أول مقطع ثابت ← قائمة مرتبة بأولوية التسجيل + مسارات أول مقطعها متغيّر؛ يُدمج المرشَّحان بترتيب التسجيل الأصلي فلا يتغيّر التطابق الأول */
+  let routeIdx = null;
+  const seg0 = (pat) => { const f = pat.split("/")[1] ?? ""; return f.startsWith(":") ? null : f; };
+  function candidates(m, p) {
+    if (!routeIdx) { routeIdx = new Map(); for (const rt of routes) { const mm = routeIdx.get(rt.method) ?? routeIdx.set(rt.method, { by: new Map(), dyn: [] }).get(rt.method), k = seg0(rt.pattern); if (k === null) mm.dyn.push(rt); else (mm.by.get(k) ?? mm.by.set(k, []).get(k)).push(rt); } }
+    const e = routeIdx.get(m); if (!e) return []; const a = e.by.get(p.split("/")[1] ?? "") ?? [], d = e.dyn; if (!d.length) return a; if (!a.length) return d;
+    const out = []; let i = 0, j = 0; while (i < a.length || j < d.length) out.push(j >= d.length || (i < a.length && a[i].ord < d[j].ord) ? a[i++] : d[j++]); return out;
+  }
   const r = { get: add("GET"), post: add("POST"), put: add("PUT"), delete: add("DELETE"), patch: add("PATCH") };
   ctx.moduleIds = modules.map((m) => m.id);
   for (const m of modules) { curMod = m.id; m.routes(r, ctx); }
@@ -105,7 +120,8 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     await db.run("UPDATE pf_keys SET last_used_at=? WHERE id=?", nowStr(clock()), k.id);
     return { tenant, key: k, pub, origin, mode: tok.startsWith("pk_test_") ? "test" : "live" };
   }
-  function authAdmin(hd) { const b = String(hd.authorization ?? ""), tok = /^bearer /i.test(b) ? b.slice(7).trim() : ""; if (!adminToken || !tok || !safeEq(tok, adminToken)) throw new HttpError(401, "unauthorized", "رمز الإدارة غير صالح"); return String(hd["x-actor"] ?? "admin").slice(0, 80); }
+  /** المنفذ الموثوق = بصمة رمز الإدارة (من الخادم)؛ ترويسة X-Actor وسم وصفي غير موثوق يُلحق بعد "/" ولا يستطيع تزوير البادئة */
+  async function authAdmin(hd) { const b = String(hd.authorization ?? ""), tok = /^bearer /i.test(b) ? b.slice(7).trim() : ""; if (!adminToken || !tok || !safeEq(tok, adminToken)) throw new HttpError(401, "unauthorized", "رمز الإدارة غير صالح"); return actorOf(tok, hd["x-actor"]); }
 
   async function handle(method, path, query, headers, raw, ip = "0") {
     const rid = "req_" + randHex(6); let res;
@@ -129,11 +145,11 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     const w = await ctx.window("ip:" + ip, 600, 60); if (w !== null) throw new HttpError(429, "rate_limited", "طلبات كثيرة", null, { "Retry-After": String(w) });
     if (m === "GET" && p === "/health") return ok({ ok: true, modules: modules.map((x) => x.id) });
     if (m === "GET" && p === "/openapi.json") return { status: 200, headers: { "Cache-Control": "public, max-age=300" }, body: JSON.stringify(openapi()) };
-    if (m === "POST" && p === "/admin/cron") { const actor = authAdmin(hd); const out = await cron(); await ctx.audit(actor, "cron.manual", null, out); return ok({ ok: true, ...out }); }   // تشغيل يدوي/تشخيص
-    for (const rt of routes) {
-      if (rt.method !== m) continue; const mm = rt.re.exec(p); if (!mm) continue;
+    if (m === "POST" && p === "/admin/cron") { const actor = await authAdmin(hd); const out = await cron(); await ctx.audit(actor, "cron.manual", null, out); return ok({ ok: true, ...out }); }   // تشغيل يدوي/تشخيص
+    for (const rt of candidates(m, p)) {
+      const mm = rt.re.exec(p); if (!mm) continue;
       const req = { method: m, path: p, params: mm.groups ?? {}, query: q, headers: hd, ip, raw, json() { try { const j = JSON.parse(raw); if (j && typeof j === "object" && !Array.isArray(j)) return j; } catch { /* يسقط إلى الخطأ */ } throw new HttpError(400, "validation_error", "جسم الطلب يجب أن يكون JSON"); } };
-      if (rt.opts.auth === "admin") req.actor = authAdmin(hd);
+      if (rt.opts.auth === "admin") req.actor = await authAdmin(hd);
       else if (rt.opts.auth === "tenant") {
         const a = await authTenant(hd, rt.opts.scope, ip); if (moduleOff(a.tenant.settings, rt.mod)) throw new HttpError(403, "module_disabled", `وحدة ${rt.mod} معطّلة لهذا المستأجر`); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin; req.app = a.app ?? null;
         const lim = rt.opts.limit; if (lim) { const wt = await ctx.window(`t${a.tenant.id}:${lim.key}`, lim.max, lim.win); if (wt !== null) throw new HttpError(429, "rate_limited", "تجاوزت الحدّ المسموح", null, { "Retry-After": String(wt) }); }
@@ -161,7 +177,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     for (const h of [...(handlers[e.type] ?? []), ...(handlers["*"] ?? [])]) {
       const key = h.mod + ":" + (handlers["*"]?.includes(h) ? "*" : e.type); if (done.has(key)) continue;
       if (moduleOff(await offFor(e.tenant_id), h.mod)) { done.add(key); continue; }       // وحدة معطّلة لهذا المستأجر: لا تستقبل أحداثه (ولا تُعاد عند التفعيل لاحقاً)
-      try { await h.fn({ id: e.id, tenantId: e.tenant_id, type: e.type, data: JSON.parse(e.payload) }, ctx); done.add(key); } catch (x) { err ??= x; }
+      try { await withTimeout(h.fn({ id: e.id, tenantId: e.tenant_id, type: e.type, data: JSON.parse(e.payload) }, ctx), 15000, key); done.add(key); } catch (x) { err ??= x; }
     }
     if (!err) { await db.run("UPDATE pf_events SET state='done', attempts=attempts+1, done=? WHERE id=?", JSON.stringify([...done]), e.id); out.events++; return; }
     out.failed++; const n = e.attempts + 1, back = [60, 300, 1800, 7200, 43200];
@@ -170,11 +186,24 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
   const offCacheFor = () => { const c = new Map(); return async (tid) => { if (!c.has(tid)) c.set(tid, JSON.parse((await db.val("SELECT settings FROM pf_tenants WHERE id=?", tid)) || "{}")); return c.get(tid); }; };
   /** معالجة فورية لحدث معلّق بعينه (extId) بدل انتظار نبضة الـcron — لمسارات يحتاج الزبون نتيجتها حالاً (مثل تسجيل المبلغ المتوقع بعد إنشاء طلب رقمي) */
   ctx.flush = async (tenantId, extId) => { const e = await db.one("SELECT * FROM pf_events WHERE tenant_id=? AND ext_id=? AND state='pending'", tenantId, extId); if (e) await runEvent(e, handlersMap(), offCacheFor(), { events: 0, failed: 0 }); };
+  /** مهلة لكل معالج/مهمة (E-02/E-05): مزوّد بطيء لا يحجز بقية الدورة */
+  const withTimeout = (p, ms, what) => { let t; return Promise.race([p, new Promise((_, rej) => { t = setTimeout(() => rej(new Error("timeout:" + what)), ms); })]).finally(() => clearTimeout(t)); };
+  const EVENT_BATCH = 50, EVENT_ROUNDS = 6, EVENT_PAR = 4, MOD_TIMEOUT_MS = 25000;
   async function cron() {
-    const out = { events: 0, failed: 0 }, handlers = handlersMap(), offFor = offCacheFor();
-    const rows = await db.all("SELECT * FROM pf_events WHERE state='pending' AND next_at<=? ORDER BY id LIMIT 50", Math.floor(clock() / 1000));
-    for (const e of rows) await runEvent(e, handlers, offFor, out);
-    for (const m of modules) if (m.cron) Object.assign(out, { [m.id]: await m.cron(ctx) });
+    const out = { events: 0, failed: 0 }, handlers = handlersMap(), offFor = offCacheFor(), t0 = Date.now();
+    /* الأحداث: حتى EVENT_ROUNDS دفعات من 50 في الدورة؛ كل مستأجر تسلسلياً (الترتيب) والمستأجرون بالتوازي المحدود. المعالجة تتوقف عند نفاد المعلّق أو ميزانية الوقت */
+    for (let round = 0; round < EVENT_ROUNDS && Date.now() - t0 < 20000; round++) {
+      const rows = await db.all("SELECT * FROM pf_events WHERE state='pending' AND next_at<=? ORDER BY id LIMIT ?", Math.floor(clock() / 1000), EVENT_BATCH); if (!rows.length) break;
+      const byT = new Map(); for (const e of rows) (byT.get(e.tenant_id) ?? byT.set(e.tenant_id, []).get(e.tenant_id)).push(e);
+      const queue = [...byT.values()]; await Promise.all(Array.from({ length: Math.min(EVENT_PAR, queue.length) }, async () => { for (let g; (g = queue.shift());) for (const e of g) await runEvent(e, handlers, offFor, out); }));
+      if (rows.length < EVENT_BATCH) break;
+    }
+    /* مهام الوحدات: كل مهمة معزولة بمهلة وخطأ مستقل — فشل واحدة لا يوقف الباقي */
+    out.mods = {};
+    for (const m of modules) if (m.cron) { const t = Date.now(); try { Object.assign(out, { [m.id]: await withTimeout(m.cron(ctx), MOD_TIMEOUT_MS, m.id) }); } catch (x) { out[m.id] = { error: String(x?.message || x).slice(0, 120) }; out.failed++; } out.mods[m.id] = Date.now() - t; }
+    /* قياسات (observability): عمق الطابور وأقدم معلّق */
+    try { const q = await db.one("SELECT COUNT(*) AS n, MIN(created_at) AS o FROM pf_events WHERE state='pending'"); out.backlog = { pending: q?.n ?? 0, oldest: q?.o ?? null }; } catch { /* اختياري */ }
+    out.ms = Date.now() - t0;
     return out;
   }
   return { handle, cron, ctx, db };

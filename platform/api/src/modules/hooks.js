@@ -40,6 +40,7 @@ export const hooks = {
       const body = JSON.stringify({ id: "evt_" + d.id, type: d.type, created: Math.floor(Date.parse(d.created_at.replace(" ", "T") + "Z") / 1000), data: JSON.parse(d.payload) });
       let status = 0, err = "";
       if (!safeHttpsUrl(ep.url)) err = "insecure_url";
+      else if (!(await ctx.publicUrl(ep.url))) err = "private_destination";
       else { try { const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15000);
         const res = await ctx.fetchFn(ep.url, { method: "POST", redirect: "manual", signal: ctl.signal, headers: { "Content-Type": "application/json", "X-Platform-Signature": `t=${ts},v1=${await hmacHex(secret, ts + "." + body)}`, "X-Platform-Event": d.type, "User-Agent": "alyssum-platform-webhook/1" }, body }); clearTimeout(t); status = res.status; } catch { err = "network"; } }
       const n = d.attempts + 1;

@@ -4,7 +4,8 @@
 // لا يمسّ هذا الملف أي موقع حالي؛ المضيف غير المعروف يعرض صفحة «غير موجود».
 const LOOKUP_TTL = 60_000;          // مدة تخزين نتيجة البحث في الذاكرة
 const CONTENT_TTL = 300;            // ثوانٍ (Cache API)
-const memo = new Map();             // host -> {t, v}
+const memo = new Map();             // host -> {t, v} — LRU محدود الحجم (E-03): الأقدم استعمالاً يُزال عند بلوغ MEMO_MAX
+const MEMO_MAX = 500, UNKNOWN_TTL = 10_000, HOST_RE = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$/;
 
 const page = (title, msg, status) => new Response(
   `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
@@ -37,6 +38,7 @@ export function parseSource(src) {
 }
 
 // PLATFORM_DOMAIN يقبل دومينًا واحدًا أو عدة دومينات مفصولة بفواصل (للانتقال من دومين منصة إلى آخر دون انقطاع).
+export const _memoSize = () => memo.size, _lookup = (env, host) => lookup(env, host);
 export function subOf(host, platform) {
   for (const raw of String(platform || "").split(",")) {
     const p = raw.trim().toLowerCase().replace(/^\./, "");
@@ -48,8 +50,9 @@ export function subOf(host, platform) {
 }
 
 async function lookup(env, host) {
+  if (host.length > 253 || !HOST_RE.test(host)) return { known: false };      // صيغة مضيف غير صالحة: لا استعلام ولا تخزين
   const hit = memo.get(host);
-  if (hit && Date.now() - hit.t < LOOKUP_TTL) return hit.v;
+  if (hit && Date.now() - hit.t < (hit.v && hit.v.known ? LOOKUP_TTL : UNKNOWN_TTL)) { memo.delete(host); memo.set(host, hit); return hit.v; }      // إعادة إدراج = الأحدث استعمالاً
   let v = { known: false, error: true };
   try {
     const r = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/saas_site_by_host`, {
@@ -59,7 +62,7 @@ async function lookup(env, host) {
     });
     if (r.ok) v = await r.json();
   } catch (_) { /* يبقى v خطأً مؤقتاً */ }
-  if (!v.error) memo.set(host, { t: Date.now(), v });
+  if (!v.error) { memo.delete(host); memo.set(host, { t: Date.now(), v }); while (memo.size > MEMO_MAX) memo.delete(memo.keys().next().value); }
   return v;
 }
 

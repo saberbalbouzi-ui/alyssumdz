@@ -90,7 +90,7 @@ T += 100 * 86400e3; r = await app.cron(); ok("cron: حذف الفحوص الأق
 await call("POST", "/v1/fraud/report", { phone: "0688888888", reason: "fraud" }, kA); await chk(kA, { phone: "0688888888", name: "Foo Bar", total: 10 });
 [c] = await call("POST", "/admin/fraud/erase", { phone: "0688888888" }, kA); ok("المحو للمدير فقط 401", c === 401);
 [c, b] = await adm("POST", "/admin/fraud/erase", { phone: "0688888888" }); ok("حق المحو يمحو كل أثر", c === 200 && b.reports === 1 && b.checks === 1 && sqlAll("SELECT * FROM fr_reports").every((x) => x.reason !== "fraud"));
-[c, b] = await adm("GET", "/admin/audit"); ok("سجلّ التدقيق بلا أسرار ويسجّل الفاعل", b.audit.some((a) => a.action === "fraud.erase" && a.actor === "owner@x.dz") && !JSON.stringify(b).includes("pk_live_"));
+[c, b] = await adm("GET", "/admin/audit"); ok("سجلّ التدقيق بلا أسرار ويسجّل الفاعل", b.audit.some((a) => a.action === "fraud.erase" && /^admin#[0-9a-f]{8}\/owner@x\.dz$/.test(a.actor)) && !JSON.stringify(b).includes("pk_live_"));
 await adm("PATCH", `/admin/tenants/${tA}`, { status: "suspended" }); [c] = await chk(kA, { phone: "0551234567", name: "Amine Bouzid", total: 1 }); ok("مستأجر موقوف 401", c === 401);
 await adm("PATCH", `/admin/tenants/${tA}`, { status: "active", settings: { fraud: { review: 5 } } }); [c, b] = await chk(kA, { phone: "0551234567", name: "Amine Bouzid", total: 1 }); ok("إعداد الحدّ لكل مستأجر", c === 200 && b.action === "review", b);
 [c] = await call("POST", "/admin/cron"); ok("cron يدوي يتطلب رمز الإدارة", c === 401);

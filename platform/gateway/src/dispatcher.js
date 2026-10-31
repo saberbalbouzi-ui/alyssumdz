@@ -1,8 +1,8 @@
-import { hmacHex, nowStr, safeHttpsUrl } from "./util.js";
+import { hmacHex, nowStr, resolvesPublic, safeHttpsUrl } from "./util.js";
 const BACKOFF = [60, 300, 1800, 7200, 43200];
 /** إرسال أحداث الحالة إلى webhook العميل: توقيع HMAC بطابع زمني + إعادة محاولة بتباعد. */
 export class Dispatcher {
-  constructor(db, tenants, fetchFn = fetch, clock = () => Date.now()) { this.db = db; this.tenants = tenants; this.fetchFn = fetchFn; this.clock = clock; }
+  constructor(db, tenants, fetchFn = fetch, clock = () => Date.now(), doh = null) { this.db = db; this.tenants = tenants; this.fetchFn = fetchFn; this.clock = clock; this.doh = doh; }
   async enqueue(tenantId, orderId, type, data, plan) {
     if (!plan?.webhooks || !(await this.tenants.webhook(tenantId))) return;
     const now = Math.floor(this.clock() / 1000);
@@ -17,6 +17,7 @@ export class Dispatcher {
       const body = JSON.stringify({ id: "evt_" + e.id, type: e.type, created: Math.floor(Date.parse(e.created_at.replace(" ", "T") + "Z") / 1000), data: JSON.parse(e.payload) });
       const ts = Math.floor(this.clock() / 1000); let status = 0, err = "";
       if (!safeHttpsUrl(wh.url)) err = "insecure_url";
+      else if (!(await resolvesPublic(new URL(wh.url).hostname, this.doh, this.clock()))) err = "private_destination";
       else { try { const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 15000);
         const r = await this.fetchFn(wh.url, { method: "POST", redirect: "manual", signal: ctl.signal, headers: { "Content-Type": "application/json", "X-Gateway-Signature": await Dispatcher.sign(wh.secret, ts, body), "X-Gateway-Event": e.type, "User-Agent": "shipgw-webhook/1" }, body });
         clearTimeout(t); status = r.status; } catch (x) { err = "network"; } }

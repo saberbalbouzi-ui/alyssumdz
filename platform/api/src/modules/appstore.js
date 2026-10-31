@@ -360,7 +360,7 @@ export const appstore = {
   async cron(ctx) {
     const out = { sent: 0, failed: 0, billed: 0, past_due: 0, settled: 0 }, db = ctx.db, now = ctx.nowS();
     for (const d of await db.all("SELECT d.*, a.webhook_url, a.webhook_secret_enc, a.status ast FROM app_deliveries d JOIN apps a ON a.id=d.app_id WHERE d.state='pending' AND d.next_at<=? ORDER BY d.id LIMIT 30", now)) {
-      if (!d.webhook_url || !ctx.vault || !safeHttpsUrl(d.webhook_url) || d.ast !== "approved") { await db.run("UPDATE app_deliveries SET state='failed', last_error='endpoint_unavailable' WHERE id=?", d.id); continue; }
+      if (!d.webhook_url || !ctx.vault || !safeHttpsUrl(d.webhook_url) || !(await ctx.publicUrl(d.webhook_url)) || d.ast !== "approved") { await db.run("UPDATE app_deliveries SET state='failed', last_error='endpoint_unavailable' WHERE id=?", d.id); continue; }
       const t = await db.one("SELECT name, site_ref FROM pf_tenants WHERE id=?", d.tenant_id), secret = await ctx.vault.decrypt(d.webhook_secret_enc, `app:${d.app_id}:wh`), ts = now;
       const body = JSON.stringify({ id: "adl_" + d.id, type: d.type, created: ts, shop: { id: d.tenant_id, domain: t?.site_ref ?? null }, data: JSON.parse(d.payload) });
       let status = 0, err = ""; try { const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 10000);

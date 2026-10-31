@@ -21,8 +21,37 @@ export function levenshtein(a, b) {
   for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
   return prev[n];
 }
-/** رابط خارجي آمن لاستدعاء الخادم: https، بلا IP مباشر ولا أسماء داخلية. */
+/** عنوان IP خاص/محجوز/حلقي/رابط-محلي/metadata (IPv4 وIPv6 بما فيها المُعنوَنة IPv4) */
+export function isPrivateIp(ip) {
+  const s = String(ip ?? "").trim().toLowerCase();
+  const m4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s);
+  if (m4) { const [a, b] = [+m4[1], +m4[2]]; if ([a, b, +m4[3], +m4[4]].some((x) => x > 255)) return true;
+    return a === 0 || a === 10 || a === 127 || a >= 224 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && (b === 168 || (b === 0 && +m4[3] === 0) || (b === 0 && +m4[3] === 2))) || (a === 198 && (b === 18 || b === 19 || (b === 51 && +m4[3] === 100))) || (a === 203 && b === 0 && +m4[3] === 113); }
+  if (s.includes(":")) { const v = s.replace(/^\[|\]$/g, ""), mp = /^(?:0{0,4}:){0,5}(?:ffff:)?(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(v); if (mp) return isPrivateIp(mp[1]);
+    return v === "::" || v === "::1" || /^(fc|fd|fe[89ab])/.test(v) || /^ff/.test(v) || /^2001:(db8|0?:)/.test(v) || /^64:ff9b/.test(v); }
+  return true;
+}
+const WILDCARD_DNS = /(^|\.)(nip\.io|sslip\.io|xip\.io|traefik\.me|localtest\.me|lvh\.me|vcap\.me|lacolhost\.com|localhost\.run)$/;
+const BAD_SUFFIX = /(^|\.)(localhost|local|internal|lan|home|corp|intranet|private|arpa|onion)$/;
+/** رابط خارجي آمن لاستدعاء الخادم: https على المنفذ الافتراضي، بلا IP مباشر (عشري/سداسي/ثماني) ولا أسماء داخلية ولا خدمات DNS الحرفية. */
 export function safeHttpsUrl(u) {
-  try { const p = new URL(u); if (p.protocol !== "https:" || p.username || p.password) return false; const h = p.hostname.toLowerCase();
-    if (!h.includes(".") || /^[0-9.]+$/.test(h) || h.includes(":") || /(^|\.)(localhost|local|internal|lan|home|corp)$/.test(h)) return false; return true; } catch { return false; }
+  try { const p = new URL(u); if (p.protocol !== "https:" || p.username || p.password || (p.port && p.port !== "443")) return false; const h = p.hostname.toLowerCase();
+    if (h.length > 253 || !h.includes(".") || h.includes(":") || /^[0-9a-fx.]+$/.test(h) || /(^|\.)0x/.test(h) || /\.\d+$/.test(h) || BAD_SUFFIX.test(h) || WILDCARD_DNS.test(h)) return false; return true; } catch { return false; }
+}
+const dnsMemo = new Map();
+/** يتحقق عند الاتصال (لا عند الحفظ فقط) أن اسم المضيف يحلّ إلى عناوين عامة فقط (DoH، ذاكرة 5 دقائق محدودة) ← يغلق DNS rebinding الشائع.
+ *  بلا `doh` (دالة fetch) يُعدّ الفحص معطّلاً ويُرجع true. الفشل في الحل = رفض (يُعاد لاحقاً بالتباعد). */
+export async function resolvesPublic(host, doh, now = Date.now()) {
+  if (!doh) return true; const h = String(host).toLowerCase(), c = dnsMemo.get(h); if (c && now - c.t < 300000) return c.v;
+  let v = false;
+  try { const out = [];
+    for (const type of ["A", "AAAA"]) { const r = await doh(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(h)}&type=${type}`, { headers: { accept: "application/dns-json" } }); if (!r || r.status !== 200) throw new Error("doh"); const j = await r.json(); for (const a of j.Answer ?? []) if (a.type === 1 || a.type === 28) out.push(String(a.data)); }
+    v = out.length > 0 && out.every((ip) => !isPrivateIp(ip)); } catch { v = false; }
+  if (dnsMemo.size >= 500) dnsMemo.delete(dnsMemo.keys().next().value); dnsMemo.set(h, { t: now, v }); return v;
+}
+
+/** هوية منفّذ الإدارة: بصمة الرمز (موثوقة) + وسم وصفي غير موثوق بعد "/" (انظر platform/api/src/util.js) */
+export async function actorOf(token, label) {
+  const fp = (await sha256Hex("actor:" + String(token))).slice(0, 8), lb = String(label ?? "").replace(/[^\w.@+ -]/g, "_").trim().slice(0, 60);
+  return lb ? `admin#${fp}/${lb}` : `admin#${fp}`;
 }
