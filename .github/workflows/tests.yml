@@ -31,6 +31,8 @@ jobs:
         run: node scripts/test-stock.js
       - name: المدفوعات
         run: node scripts/test-payments.js
+      - name: جدول رسوم الشحن الموثوق (A-01)
+        run: node scripts/test-shiptable.js
       - name: رسوم البلديات
         run: node scripts/test-shipsup.js
       - name: النشر التلقائي (hub)

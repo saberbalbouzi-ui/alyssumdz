@@ -37,12 +37,27 @@ const PlatformSync = (() => {
     await AdminCarts.call("PUT", "/v1/catalog/coupons", { coupons: cps });
     try { localStorage.setItem("alyssum_pf_cat", String(h)); } catch (e) { }
   }
+  /** جدول رسوم الشحن الموثوق (A-01): ما يدفعه الزبون فعلاً لكل ولاية/بلدية من إعدادات المتجر نفسها؛ لا يُرسل إلا عند تغيّره.
+      الخادم يستعمله للتحقق من رسم كل طلب (observe: علامة فقط). منتجات برسم توصيل خاص تُحصى في info.special لأن الجدول لا يمثّلها. */
+  async function syncShipping() {
+    if (typeof ShipTable === "undefined" || typeof WILAYAS === "undefined" || typeof Admin === "undefined" || !Admin.shipCoData) return;
+    let tb; try { tb = ShipTable.build(WILAYAS, Admin.shipCoData()); } catch (e) { return; }
+    if (!tb.rates.length) return;
+    const sig = JSON.stringify(tb.rates); let h = 0; for (let i = 0; i < sig.length; i++) h = (h * 31 + sig.charCodeAt(i)) | 0;
+    S.ship = { rates: tb.rates.length, blocked: tb.blocked, special: ShipTable.special(Admin.products) };
+    let last = ""; try { last = localStorage.getItem("alyssum_pf_ship") || ""; } catch (e) { }
+    if (last === String(h)) return;
+    const r = await AdminCarts.call("PUT", "/v1/catalog/shipping", { replace: true, rates: tb.rates });
+    if (!r.ok) { if (AdminCarts._s.off || r.st === 401) S.off = true; return; }
+    try { localStorage.setItem("alyssum_pf_ship", String(h)); } catch (e) { }
+  }
   async function tick() {
     if (window.AdminRoles && AdminRoles.state.me && !AdminRoles.state.me.owner) return;        // مزامنة المنصة للمالك فقط
     if (S.off || S.busy || document.hidden || typeof Admin === "undefined" || !Array.isArray(Admin.orders)) return;
     S.busy = true;
     try {
       await syncCatalog();
+      await syncShipping();
       const m = sent(), now = Date.now(); let n = 0;
       for (const o of Admin.orders) {
         if (n >= MAX) break; const type = TYPE[o.status]; if (!type || !o.id || (o.note && /🗑/.test(o.note))) continue;
@@ -56,5 +71,5 @@ const PlatformSync = (() => {
   }
   function init() { setTimeout(tick, 20000); setInterval(tick, 90000); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { tick, payload, syncCatalog, catalogPayload, refOf, _s: S };
+  return { tick, payload, syncCatalog, syncShipping, catalogPayload, refOf, _s: S };
 })();

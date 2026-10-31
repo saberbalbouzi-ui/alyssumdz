@@ -69,6 +69,7 @@
     "assets/js/digital-checkout.js",
     "assets/js/admin-roles.js",
     "assets/js/admin-platform-sync.js",
+    "assets/js/admin-shiptable.js",
     "assets/js/admin-shipagg.js",
     "assets/js/admin-order-docs.js",
     "scripts/gen-blog.py",
