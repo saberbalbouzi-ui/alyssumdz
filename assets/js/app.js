@@ -57,6 +57,11 @@ function cartShipPf(items){
   const slugs = new Set((items||[]).map(it=>it.slug)); if(slugs.size !== 1) return null;
   const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===[...slugs][0]) : null; return prodShipPf(p);
 }
+/* خيار «النقص على الولاية فقط»: بلدية الولاية نفسها (الاسم نفسه) تأخذ سعر الولاية − المبلغ المنقوص، وكل بلدية أخرى تأخذ سعر الولاية الأصلي */
+function __adjSkip(w, commune, co){
+  if(!co || co.adjMode !== "wilaya") return false; const nk = v => String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), c = nk(commune);
+  return !!c && c !== nk(w && w.name);
+}
 function shipQuote(w, commune, type, sub, co, pf, pa){
   if(!w) return { fee:null, free:false, blocked:false, msg:"" };
   const msg = shipBlocked(w, commune, type); if(msg) return { fee:0, free:false, blocked:true, msg };
@@ -67,7 +72,7 @@ function shipQuote(w, commune, type, sub, co, pf, pa){
     if(v !== null && v >= 0){ base = v; flatFree = v === 0; }
   } else if(src !== "zones"){
     const key = src || __SHIPDEF;
-    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[key].adj) || 0); if(aj && !(__SHIPCO[key].adjMode === "wilaya" && String(commune || "").trim())){ const nb = Math.max(0, base - aj); adjApplied = base - nb; base = nb; } } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
+    if(key && __SHIPCO && __SHIPCO[key] && __SHIPCO[key].prices){ const t = __SHIPCO[key].prices[w.id], v = t ? Number(type === "stop" ? t.stop : t.home) : 0; if(v > 0){ base = v; const aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[key].adj) || 0); if(aj && !__adjSkip(w, commune, __SHIPCO[key])){ const nb = Math.max(0, base - aj); adjApplied = base - nb; base = nb; } } }   // تعديل سعر التوصيل المعروض للزبون (يُطرح من سعر الشركة؛ سالب = يزيد)
   }
   const kcm = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), ckey = src !== "free" && src !== "zones" ? (src || __SHIPDEF) : "", adjOnly = !!(ckey && __SHIPCO && __SHIPCO[ckey] && __SHIPCO[ckey].adjMode === "wilaya" && kcm), cpd = !adjOnly && ckey === "yalidine" && kcm && __SHIPCP[w.par || w.id] && __SHIPCP[w.par || w.id][kcm];
   if(cpd && (type === "stop" ? cpd[1] : cpd[0]) > 0){      // سعر البلدية المستقل عند الشركة (مطلق) — منفصل عن سعر الولاية؛ يبقى تعديل السعر المعروض (adj) مطبَّقاً عليه

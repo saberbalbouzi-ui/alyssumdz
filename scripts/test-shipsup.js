@@ -1,7 +1,7 @@
 /* اختبار إضافة البلدية في سعر التوصيل بالمتجر (shipQuote) */
 const fs = require("fs"); const src = fs.readFileSync(__dirname + "/../assets/js/app.js", "utf8");
 const i = src.indexOf("function shipQuote("); let d = 0, j = src.indexOf("{", i); const st = j; for (; j < src.length; j++) { if (src[j] === "{") d++; else if (src[j] === "}") { d--; if (!d) break; } }
-const fn = src.slice(i, j + 1);
+const hi = src.indexOf("function __adjSkip("), hj = src.indexOf("\n}\n", hi) + 3, fn = src.slice(hi, hj) + "\n" + src.slice(i, j + 1);
 const make = (SUP, CO, CP, DEF) => new Function("__SHIPSUP", "__SHIPCO", "__SHIPDEF", "__SHIPCP", "shipBlocked", fn + "; return shipQuote;")(SUP, CO || {}, DEF || "", CP || {}, () => "");
 let ok = 0, bad = 0; const t = (n, c) => { console.log((c ? "✓ " : "✗ ") + n); c ? ok++ : bad++; };
 const w = { id: 16, name: "Alger", home: 750, stop: 500, fh: false, fs: false };
@@ -29,7 +29,8 @@ t("الإضافة تُعاد في sup (50) ولا تُحسب مجاناً", q(w,
   t("منتج بلا نقص (0) رغم نقص الشركة 200", q2(ba, "", "home", 1, "", null, 0).fee === 1200 && q2(ba, "Béni Abbès", "home", 1, "", null, 0).fee === 1400);
   t("منتج بلا إعداد (null) يتبع الشركة", q2(ba, "", "home", 1, "", null, null).fee === 1000);
   const q3 = make({}, { yalidine: { name: "Y", prices: { 52: { home: 1200, stop: 700 } }, adj: 200, adjMode: "wilaya" } }, CP, "yalidine");
-  t("نقص على الولاية فقط: بلا بلدية 1000، وكل البلديات 1200 (سعر الولاية الأصلي)", q3(ba, "", "home", 1, "", null).fee === 1000 && q3(ba, "Béni Abbès", "home", 1, "", null).fee === 1200 && q3(ba, "El Test", "home", 1, "", null).fee === 1200 && q3(ba, "Unknown", "home", 1, "", null).fee === 1200);
+  t("بلدية الولاية نفسها (Béni Abbès = اسم الولاية) تأخذ النقص 1000 مهما كان سعرها المستقل", q3(ba, "Béni Abbès", "home", 1, "", null).fee === 1000 && q3(ba, "Beni Abbes", "home", 1, "", null).fee === 1000);
+  t("نقص على الولاية فقط: بلا بلدية 1000، وكل البلديات الأخرى 1200 (سعر الولاية الأصلي)", q3(ba, "", "home", 1, "", null).fee === 1000 && q3(ba, "El Test", "home", 1, "", null).fee === 1200 && q3(ba, "Unknown", "home", 1, "", null).fee === 1200);
   t("أسعار المناطق: سعر المنطقة بلا سعر ياليدين", qq(ba, "Béni Abbès", "home", 1, "zones", null).fee === 1250);
 }
 
