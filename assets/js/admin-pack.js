@@ -28,6 +28,12 @@ const AdminPack = (() => {
 
   /* ── ماسح الباركود: رقم التتبع أو رقم الطلب (جهاز ماسح بلوحة مفاتيح أو كاميرا BarcodeDetector) ── */
   const normScan = v => { let t = String(v == null ? "" : v).trim(); const m = t.match(/[A-Za-z0-9\-_]{5,}\s*$/); if (/[\/?=]/.test(t) && m) t = m[0]; return t.replace(/\s+/g, "").toUpperCase(); };
+  /* طلب في التجهيز لا طرد له عند الشركة: بلا وسم تتبع، أو (لحساب المالك إن حُمّلت الطرود) تتبعه غير موجود في قائمة الشركة */
+  function noParcel(r) {
+    if (!r.tracking) return "لم يُرسل إلى الشركة";
+    try { const Y = typeof AdminYd !== "undefined" ? AdminYd : null, rows = Y && Y.S && (Y.S.raw && Y.S.raw.length ? Y.S.raw : Y.S.rows); if (rows && rows.length > 20 && !rows.some(x => String(x.tracking) === String(r.tracking))) return "الطرد غير موجود عند الشركة"; } catch (e) { }
+    return "";
+  }
   function findRow(rows, code) { const k = normScan(code); if (!k) return null; return (rows || []).find(r => normScan(r.tracking) === k || normScan(r.id) === k) || null; }
   function filter(rows, f, q) {
     q = String(q || "").trim().toLowerCase();
@@ -122,11 +128,11 @@ const AdminPack = (() => {
     h.innerHTML = '<div id="pk">' + scanCard() + '<div class="card"><div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center"><h2 style="margin:0">📦 تجهيز الطلبات</h2><button type="button" class="small" data-pk="reload">تحديث</button></div>' +
       '<p class="hint">الطلبات المؤكَّدة والمرسَلة فقط. جهِّز الطرد ثم اضغط «جُهِّز ✓»؛ يظهر ذلك لفريقك فوراً. لا تظهر هنا أرقام الهواتف ولا الأسعار.</p>' +
       (pl.length ? '<b>قائمة الجمع (ما لم يُجهَّز بعد)</b><div class="pl">' + pl.map(p => '<div><span>' + esc(p.title) + '</span><b>×' + p.qty + '</b></div>').join("") + '</div>' : '<p class="hint">🎉 لا شيء بانتظار التجهيز.</p>') + '</div>' +
-      '<div class="card"><div class="action-bar" style="flex-wrap:wrap">' + tab("todo", "بانتظار التجهيز", todo) + tab("done", "جُهِّزت", S.rows.length - todo) + tab("all", "الكل", S.rows.length) +
+      (S.rows.some(noParcel) ? '<div class="card" style="border:1px solid #f87171"><b style="color:#f87171">⚠️ ' + S.rows.filter(noParcel).length + ' طلب في التجهيز بلا طرد عند الشركة</b><p class="hint" style="margin:.2rem 0 0">مُعلَّمة بالأحمر وعلامة ⚠️: لا تجهّزها قبل إرسالها (أو إعادة إرسالها) إلى الشركة من «الطلبات».</p></div>' : '') + '<div class="card"><div class="action-bar" style="flex-wrap:wrap">' + tab("todo", "بانتظار التجهيز", todo) + tab("done", "جُهِّزت", S.rows.length - todo) + tab("all", "الكل", S.rows.length) +
       '<input type="search" id="pk-q" placeholder="بحث: اسم، رقم الطلب، التتبع…" value="' + esc(S.q) + '" style="flex:1;min-width:160px"></div>' +
       '<div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><button type="button" class="small" data-pk="all">' + (nSel === ids.length && ids.length ? "إلغاء التحديد" : "تحديد الكل") + '</button><button type="button" data-pk="markSel"' + (nSel ? "" : " disabled") + '>✓ تعليم المحدد كمجهَّز (' + nSel + ')</button><button type="button" class="small" data-pk="ptable">🖨️ طباعة الجدول (صفحة واحدة)</button><button type="button" class="small" data-pk="print"' + (nSel ? "" : " disabled") + '>🖨️ طباعة وصل التجهيز (' + nSel + ')</button></div>' +
       '<div class="tbw"><table class="pkt"><thead><tr><th></th><th>المنتج</th><th>الولاية</th><th></th></tr></thead><tbody>' +
-      (list.length ? list.map(r => '<tr data-id="' + esc(r.id) + '" title="' + esc(r.id) + '"><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td class="it">' + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td class="wl">' + esc(r.wilaya || "") + '</td><td class="ac">' +
+      (list.length ? list.map(r => '<tr data-id="' + esc(r.id) + '" title="' + esc(r.id) + '"' + (noParcel(r) ? ' style="background:rgba(248,113,113,.14)"' : '') + '><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td class="it">' + (noParcel(r) ? '<b style="color:#f87171" title="' + esc(noParcel(r)) + '">⚠️ </b>' : '') + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td class="wl">' + esc(r.wilaya || "") + '</td><td class="ac">' +
         (r.packed ? '<span class="chip ok">✓</span> <button type="button" class="small gray" data-pk="undo">تراجع</button>' : '<button type="button" class="small" data-pk="one">جُهِّز ✓</button>') + '</td></tr>').join("") : '<tr><td colspan="4" class="hint" style="text-align:center;padding:1.2rem">لا طلبات في هذا العرض</td></tr>') + '</tbody></table></div></div></div>';
     bind(); if (S.cam) { const v = $("pk-cam"); if (v && v.srcObject !== S.cam.stream) { v.srcObject = S.cam.stream; v.play && v.play().catch(() => { }); } }
   }
@@ -148,6 +154,6 @@ const AdminPack = (() => {
     h.addEventListener("input", e => { if (e.target.id === "pk-q") { S.q = e.target.value; const pos = e.target.selectionStart; draw(); const q = $("pk-q"); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } } });
   }
   function init(hostId) { S.host = $(hostId || "tab-pack"); if (!S.host) return false; S.host._pk = S.host._pk || 0; load(); return true; }
-  return { init, load, parseItems, shortName, printTable, pickList, filter, slip, normScan, findRow, onScan, _S: S };
+  return { init, load, parseItems, shortName, printTable, pickList, filter, slip, normScan, findRow, onScan, draw, noParcel, _S: S };
 })();
 document.addEventListener("DOMContentLoaded", () => { if (typeof Admin === "undefined" || Admin._packTabWrapped) return; const original = Admin.tab; Admin.tab = function (t, btn) { const r = original.call(this, t, btn), el = document.getElementById("tab-pack"); if (el) el.classList.toggle("hidden", t !== "pack"); if (t === "pack") AdminPack.init("tab-pack"); return r; }; Admin._packTabWrapped = true; });
