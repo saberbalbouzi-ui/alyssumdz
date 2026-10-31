@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.682">
+<meta name="admin-version" content="1.89.683">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -346,6 +346,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('pack',this)"><span class="nav-ic">📦</span><span class="nav-txt"><b>تجهيز الطلبات</b><small>قائمة الجمع ووصل التجهيز لأمين المخزن</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('shipped',this)"><span class="nav-ic">🚚</span><span class="nav-txt"><b>الطلبات المسجلة<span class="nb hidden" id="nb-shipped"></span></b><small>الطلبات المرسلة لشركة التوصيل وحالتها الحقيقية</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('dispatch',this)"><span class="nav-ic">🧭</span><span class="nav-txt"><b>التوجيه والبوردرو</b><small>توجيه الطلبات لشركات التوصيل بحسب المنطقة والأداء، إرسال وطباعة مئات البوردرو بنقرة، ومحطة مسح الباركود</small></span></button>
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('ruqya',this)"><span class="nav-ic">📅</span><span class="nav-txt"><b>مواعيد الرقية</b><small>حجوزات يوم السبت: تأكيد وإلغاء وتواصل</small></span></button>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('returns',this)"><span class="nav-ic">↩</span><span class="nav-txt"><b>المرتجعات</b><small>إرجاع واستبدال واسترداد بعد التسليم</small></span></button>
       <div class="nav-sec" data-grp="shop">المال والربح</div>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
@@ -831,6 +832,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-reports" class="hidden admin-extra-tab"><div id="admin-reports-app"></div></div>
   <div id="tab-audit" class="hidden admin-extra-tab"><div id="admin-audit-app"></div></div>
   <div id="tab-returns" class="hidden admin-extra-tab"><div id="returns-content"></div></div>
+  <div id="tab-ruqya" class="hidden admin-extra-tab"><div id="ruqya-content"></div></div>
   <div id="tab-payments" class="hidden admin-extra-tab"><div id="payments-content"></div></div>
   <div id="tab-callcenter" class="hidden admin-extra-tab"><div id="callcenter-content"></div></div>
   <div id="tab-experts" class="hidden admin-extra-tab"><div id="experts-content"></div></div>
@@ -1718,6 +1720,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-reports.js?v=bfe80ebd"></script>
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
 <script src="assets/js/admin-returns.js?v=8890030a"></script>
+<script src="assets/js/admin-ruqya.js?v=dac77641"></script>
 <script src="assets/js/admin-payments.js?v=8d58a311"></script>
 <script src="assets/js/seo-box.js?v=34fae1c8"></script>
 <script src="assets/js/admin-seo.js?v=de4b03e8"></script>
@@ -21452,6 +21455,7 @@ window.AIC = (function(){ const P = {
     sources:'<path d="M12 2l10 5-10 5L2 7z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>',
     costs:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
     upsell:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 010-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 010 5"/>',
+    ruqya:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
     returns:'<path d="M3 7v6h6"/><path d="M3 13a9 9 0 109-9 9 9 0 00-6.7 3"/>',
     inventory:'<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8M10 12h4"/>',
     reports:'<path d="M18 20V10M12 20V4M6 20v-6"/>',
