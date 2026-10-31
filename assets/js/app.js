@@ -244,7 +244,7 @@ const Cart = {
     const total = Math.max(0, sub - discount) + fee;
     const __cgrp = (window.Upsell && Upsell.hasType("post")) ? Upsell.gid() : "";
     // Enregistrement dans Google Sheets
-    const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
+    const __pre = (Guard.active() && waAutoOn()) ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
     const __order = {
       name, phone, wilaya: wl.name, commune, dtype,
       items: items.map(it => { const p = PRODUCTS.find(p=>p.slug===it.slug)||it;
@@ -270,7 +270,7 @@ const Cart = {
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     try{ const f0 = items[0] && (PRODUCTS.find(x=>x.slug===items[0].slug) || items[0]); trackEvent("Lead", { slug: items[0] && items[0].slug, title: f0 && f0.title, qty: items.reduce((a,i)=>a+i.qty,0), value: total }); if(f0) firePixelPurchase(f0, total, items.reduce((a,i)=>a+i.qty,0)); }catch(e){}
-    Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
+    if(waAutoOn()) Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
     Thanks.show({ name, total, up: { customer:{ name, phone, wilaya: wl.name, commune, dtype }, slugs: items.map(i=>i.slug), cats: items.map(i=>{ const q = PRODUCTS.find(x=>x.slug===i.slug); return q ? q.cat : ""; }), total, grp: __cgrp, page: PageSrc || "" }, lines: items.map(it=>{ const q = PRODUCTS.find(x=>x.slug===it.slug)||it; return q.title + (it.qty>1?" ×"+it.qty:""); }), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   }
 };
@@ -464,6 +464,8 @@ async function initTheme(){
    تُقرأ من assets/data/checkout.json وتُطبَّق على كل صفحة (رقم واتساب، إظهار/إخفاء الأزرار، النصوص، الألوان)؛
    حقول «العروض» و«الحقول الإضافية» و«تسميات الحقول» تُطبَّق داخل initProduct() لأنها خاصة بصفحة المنتج فقط. */
 let __checkoutCache = null;
+/* فتح واتساب تلقائياً بعد تسجيل الطلب (الافتراضي مفعّل؛ يُطفأ من «نموذج الطلب» في اللوحة: waAuto=false). زر «إرسال الطلب على واتساب» في صفحة الشكر يبقى. */
+function waAutoOn(){ return !(__checkoutCache && __checkoutCache.waAuto === false); }
 async function loadCheckout(){
   if(__checkoutCache) return __checkoutCache;
   try{
@@ -1237,7 +1239,7 @@ function initProduct(slug){
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
     const __grp = (bumpSel || (window.Upsell && Upsell.hasType("post"))) ? Upsell.gid() : "";    // مجموعة الطلب: تربط طلب «بعد الشراء» بهذا الطلب ليُدمجا في شحنة واحدة
     // Enregistrement dans Google Sheets
-    const __pre = Guard.active() ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
+    const __pre = (Guard.active() && waAutoOn()) ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
     const __order = {
       name, phone, wilaya: state.wilaya.name, commune,
       dtype: state.dtype, desk,
@@ -1272,7 +1274,7 @@ function initProduct(slug){
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     Object.entries(extraValues).forEach(([label,val])=>{ msg += `\n${label}: ${val}`; });
     msg += `\n\n💵 الدفع عند الاستلام`;
-    Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
+    if(waAutoOn()) Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
     Thanks.show({ name, total, up: { customer:{ name, phone, wilaya: state.wilaya.name, commune, dtype: state.dtype, desk }, slugs: __order.items.map(x=>x.slug), cats:[p.cat], total, grp: __grp, page: PageSrc || ("p/" + slug) }, lines: (type==="grouped" ? state.group.kids.filter((c,i)=>state.group.qty[i]).map(c=>c.title) : [p.title + (state.offer.qty>1?" ×"+state.offer.qty:"")]).concat(bumpSel ? [bumpSel.title] : []), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   });
 

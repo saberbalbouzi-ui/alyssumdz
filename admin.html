@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.678">
+<meta name="admin-version" content="1.89.679">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -1047,6 +1047,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-bottom:.7rem">
         <input type="checkbox" id="co-show-wa" style="width:auto">إظهار زر «الطلب مباشرة عبر واتساب»
       </label>
+      <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-bottom:.7rem"><input type="checkbox" id="co-wa-auto" style="width:auto">فتح واتساب تلقائياً للزبون بعد تسجيل الطلب</label>
       <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-bottom:.7rem">
         <input type="checkbox" id="co-show-cart" style="width:auto">إظهار زر «أضف إلى السلة»
       </label>
@@ -7096,6 +7097,7 @@ const Admin = {
   CHECKOUT_DEFAULTS: {
     waNumber: SITE_CFG.waNumber,
     showWhatsappBtn: true,
+    waAuto: true,
     showAddToCart: true,
     showOffers: true,
     orderBtnText: "✅ تأكيد الطلب",
@@ -7123,6 +7125,7 @@ const Admin = {
     const c = Object.assign({}, this.CHECKOUT_DEFAULTS, this.checkout || {});
     $f("co-wa-number").value = c.waNumber || "";
     $f("co-show-wa").checked = c.showWhatsappBtn !== false;
+    $f("co-wa-auto").checked = c.waAuto !== false;
     $f("co-show-cart").checked = c.showAddToCart !== false;
     $f("co-show-offers").checked = c.showOffers !== false;
     const gd = c.guard || {}; $f("co-antibot").checked = !!gd.antibot; $f("co-dup").checked = !!gd.dup; $f("co-dup-hours").value = gd.hours || 24; $f("co-phonedz").checked = c.phoneDz !== false;
@@ -7233,6 +7236,7 @@ const Admin = {
     const checkout = {
       waNumber,
       showWhatsappBtn: $f("co-show-wa").checked,
+      waAuto: $f("co-wa-auto").checked,
       showAddToCart: $f("co-show-cart").checked,
       showOffers: $f("co-show-offers").checked,
       phoneDz: $f("co-phonedz").checked,
