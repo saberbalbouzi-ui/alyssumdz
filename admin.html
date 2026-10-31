@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.690">
+<meta name="admin-version" content="1.89.691">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -1726,7 +1726,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-seo.js?v=de4b03e8"></script>
 <script src="assets/js/admin-blog.js?v=98b5bb66"></script>
 <script src="assets/js/admin-upsell.js?v=93ae5136"></script>
-<script src="assets/js/admin-pack.js?v=a29e99b9"></script>
+<script src="assets/js/admin-pack.js?v=3472c151"></script>
 <script src="assets/js/admin-insights.js?v=4664e019"></script>
 <script src="assets/js/admin-confirm-svc.js?v=665e3b15"></script>
 <script src="assets/js/admin-carts.js?v=a12c2dc6"></script>
@@ -3745,7 +3745,7 @@ const Admin = {
     if(!images.length && cover) images = [cover];
     const prevP = this.products.find(x=>x.slug===$f("f-slug").value.trim());
     const out = {
-      slug: $f("f-slug").value.trim(), title: $f("f-title").value.trim(), bord: $f("f-bord").value.trim() || undefined,
+      slug: $f("f-slug").value.trim(), title: $f("f-title").value.trim(), bord: $f("f-bord").value.trim() || undefined, bordNoQty: (prevP && prevP.bordNoQty && $f("f-bord").value.trim()) ? true : undefined,
       digital: $f("f-digital").checked || undefined,
       tryon: $f("f-tryon").checked || undefined,
       price: Number($f("f-price").value)||0, old: $f("f-old").value?Number($f("f-old").value):null,
@@ -8524,10 +8524,13 @@ const Admin = {
   /* يطبّع ولاية/مكتب/بلدية طلب (أو طرد) بأسماء الشركة الرسمية قبل إرساله أو تعديله. يعيد {ok,ord,msg} */
   /* نص المنتجات بأسماء البوردرو (حقل bord في المنتج): سطر «عنوان ×كمية = مبلغ» يُستبدل عنوانه (أو بادئته قبل « — ») باسم البوردرو إن وُجد */
   bordItems(text){
-    const P = (this.products||[]).filter(p=>p && p.bord && String(p.bord).trim() && p.bord !== p.title); if(!P.length) return text;
+    /* bordNoQty: يُكتب الاسم وحده (بلا «×كمية = مبلغ») — يشمل أسطراً مسجَّلة باسم البوردرو (الطلب اليدوي) */
+    const P = (this.products||[]).filter(p=>p && p.bord && String(p.bord).trim() && (p.bord !== p.title || p.bordNoQty)); if(!P.length) return text;
     return String(text||"").split(/\n/).map(l=>{ const m = l.match(/^(\s*)(.+?)(\s*×.*)$/); if(!m) return l; const t = m[2].trim();
-      const p = P.find(x=>x.title === t) || P.find(x=>t.indexOf(x.title + " — ") === 0); if(!p) return l;
-      return m[1] + (t === p.title ? p.bord : p.bord + t.slice(p.title.length)) + m[3]; }).join("\n");
+      const p = P.find(x=>x.title === t) || P.find(x=>t.indexOf(x.title + " — ") === 0) || P.find(x=>x.bord === t); if(!p) return l;
+      const tail = p.bordNoQty ? "" : m[3];
+      if(t === p.bord) return m[1] + t + tail;
+      return m[1] + (t === p.title ? p.bord : p.bord + t.slice(p.title.length)) + tail; }).join("\n");
   },
   async normForCompany(co, cfg, ord){
     if(co.wilayasRequest){ const wl = await this.companyWilayas(co, cfg), w0 = this.wCo(ord.wilaya), off = w0 && wl[ord.__coWid || w0.id]; if(off){ if(!off.ok) return { ok:false, msg:"الشركة لا تخدم ولاية " + off.name }; ord = Object.assign({}, ord, { wilaya: off.name }); } }

@@ -9,8 +9,16 @@ const AdminPack = (() => {
   const ST = { confirmee: "مؤكَّد", expediee: "مُرسَل" };
 
   /* ── نقية ── */
+  /* الاسم المختصر (حقل «الاسم الظاهر على البوردرو» في المنتج) إن وُجد — الكمية تبقى لأن أمين المخزن يحتاجها */
+  function shortName(title) {
+    try {
+      const ps = (typeof Admin !== "undefined" && Admin.products && Admin.products.length) ? Admin.products : (typeof PRODUCTS !== "undefined" ? PRODUCTS : []);
+      const p = (ps || []).find(x => x && x.bord && (x.title === title || String(title).indexOf(x.title + " — ") === 0));
+      return p ? (p.title === title ? p.bord : p.bord + title.slice(p.title.length)) : title;
+    } catch (e) { return title; }
+  }
   function parseItems(text) {
-    return String(text || "").split(/\n/).map(l => { const m = l.match(/^(.+?)\s*×\s*(\d+)/); return m ? { title: m[1].trim(), qty: Math.max(1, +m[2] || 1) } : null; }).filter(Boolean);
+    return String(text || "").split(/\n/).map(l => { const m = l.match(/^(.+?)\s*×\s*(\d+)/); return m ? { title: shortName(m[1].trim()), qty: Math.max(1, +m[2] || 1) } : null; }).filter(Boolean);
   }
   /** قائمة الجمع: مجموع كميات كل منتج في الطلبات غير المجهَّزة */
   function pickList(rows) {
@@ -63,6 +71,18 @@ const AdminPack = (() => {
   }
 
 
+  /* جدول التجهيز في صفحة A4 واحدة: يُقاس الارتفاع ويُصغَّر تلقائياً ليتسع (المنطقة المطبوعة ≈ 277mm) */
+  function printTable(list) {
+    if (!list.length) { if (typeof toast === "function") toast("لا طلبات للطباعة"); return; }
+    const w = window.open("", "_blank"); if (!w) { if (typeof toast === "function") toast("اسمح بالنوافذ المنبثقة للطباعة"); return; }
+    const tot = new Map(); list.forEach(r => parseItems(r.items).forEach(i => tot.set(i.title, (tot.get(i.title) || 0) + i.qty)));
+    const rows = list.map((r, n) => '<tr><td class="n">' + (n + 1) + '</td><td>' + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td>' + esc(r.wilaya || "") + '</td><td class="ck"><i></i></td></tr>').join("");
+    const sum = [...tot.entries()].sort((a, b) => b[1] - a[1]).map(([t, q]) => esc(t) + " ×" + q).join(" · ");
+    const css = '@page{size:A4;margin:8mm}*{box-sizing:border-box}body{font-family:Arial,"Noto Naskh Arabic",sans-serif;margin:0;color:#111}#pg{width:100%;transform-origin:top right}h1{font-size:15px;margin:0 0 4px;display:flex;justify-content:space-between}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #444;padding:3px 6px;text-align:right;line-height:1.35}th{background:#eee}td.n{width:28px;text-align:center}td.ck{width:34px;text-align:center}td.ck i{display:inline-block;width:13px;height:13px;border:1.5px solid #111}.sum{margin-top:6px;font-size:12px;font-weight:700}';
+    const fit = 'var pg=document.getElementById("pg"),mm=document.createElement("div");mm.style.cssText="position:absolute;visibility:hidden;height:277mm;width:1px";document.body.appendChild(mm);var H=mm.offsetHeight,z=1;for(var k=0;k<8&&pg.getBoundingClientRect().height>H-6&&z>.25;k++){z=z*(H-8)/pg.getBoundingClientRect().height*.98;pg.style.zoom=z.toFixed(3)}mm.remove();setTimeout(function(){window.print()},200);';
+    w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>تجهيز الطلبات</title><style>' + css + '</style></head><body><div id="pg"><h1><span>📦 تجهيز الطلبات (' + list.length + ')</span><span>' + new Date().toLocaleDateString("fr-DZ") + '</span></h1><table><thead><tr><th>#</th><th>المنتج</th><th>الولاية</th><th>✓</th></tr></thead><tbody>' + rows + '</tbody></table><div class="sum">المجموع: ' + sum + '</div></div><script>window.onload=function(){' + fit + '}<\/script></body></html>'); w.document.close();
+  }
+
   function beep(ok) { try { const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = ok ? 880 : 220; g.gain.value = .08; o.start(); setTimeout(() => { o.stop(); c.close(); }, ok ? 120 : 380); } catch (e) { } }
   async function onScan(code) {
     const k = normScan(code); if (!k) return; const r = findRow(S.rows, k); let st = "unknown";
@@ -104,7 +124,7 @@ const AdminPack = (() => {
       (pl.length ? '<b>قائمة الجمع (ما لم يُجهَّز بعد)</b><div class="pl">' + pl.map(p => '<div><span>' + esc(p.title) + '</span><b>×' + p.qty + '</b></div>').join("") + '</div>' : '<p class="hint">🎉 لا شيء بانتظار التجهيز.</p>') + '</div>' +
       '<div class="card"><div class="action-bar" style="flex-wrap:wrap">' + tab("todo", "بانتظار التجهيز", todo) + tab("done", "جُهِّزت", S.rows.length - todo) + tab("all", "الكل", S.rows.length) +
       '<input type="search" id="pk-q" placeholder="بحث: اسم، رقم الطلب، التتبع…" value="' + esc(S.q) + '" style="flex:1;min-width:160px"></div>' +
-      '<div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><button type="button" class="small" data-pk="all">' + (nSel === ids.length && ids.length ? "إلغاء التحديد" : "تحديد الكل") + '</button><button type="button" data-pk="markSel"' + (nSel ? "" : " disabled") + '>✓ تعليم المحدد كمجهَّز (' + nSel + ')</button><button type="button" class="small" data-pk="print"' + (nSel ? "" : " disabled") + '>🖨️ طباعة وصل التجهيز (' + nSel + ')</button></div>' +
+      '<div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><button type="button" class="small" data-pk="all">' + (nSel === ids.length && ids.length ? "إلغاء التحديد" : "تحديد الكل") + '</button><button type="button" data-pk="markSel"' + (nSel ? "" : " disabled") + '>✓ تعليم المحدد كمجهَّز (' + nSel + ')</button><button type="button" class="small" data-pk="ptable">🖨️ طباعة الجدول (صفحة واحدة)</button><button type="button" class="small" data-pk="print"' + (nSel ? "" : " disabled") + '>🖨️ طباعة وصل التجهيز (' + nSel + ')</button></div>' +
       '<div class="tbw"><table class="pkt"><thead><tr><th></th><th>المنتج</th><th>الولاية</th><th></th></tr></thead><tbody>' +
       (list.length ? list.map(r => '<tr data-id="' + esc(r.id) + '" title="' + esc(r.id) + '"><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td class="it">' + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td class="wl">' + esc(r.wilaya || "") + '</td><td class="ac">' +
         (r.packed ? '<span class="chip ok">✓</span> <button type="button" class="small gray" data-pk="undo">تراجع</button>' : '<button type="button" class="small" data-pk="one">جُهِّز ✓</button>') + '</td></tr>').join("") : '<tr><td colspan="4" class="hint" style="text-align:center;padding:1.2rem">لا طلبات في هذا العرض</td></tr>') + '</tbody></table></div></div></div>';
@@ -121,12 +141,13 @@ const AdminPack = (() => {
       if (k === "undo") { b.disabled = true; return void await mark([id], true); }
       if (k === "markSel") { const ids = list.filter(r => S.sel[r.id] && !r.packed).map(r => r.id); if (!ids.length) { if (typeof toast === "function") toast("لا طلبات غير مجهَّزة في التحديد"); return; } b.disabled = true; const n = await mark(ids, false); if (typeof toast === "function") toast("✓ جُهِّز " + n + " طلب"); return; }
       if (k === "cam") return camToggle();
+      if (k === "ptable") { const sl = list.filter(r => S.sel[r.id]); return printTable(sl.length ? sl : list); }
       if (k === "print") return printSlips(list.filter(r => S.sel[r.id]));
     });
     h.addEventListener("keydown", e => { if (e.target && e.target.id === "pk-scan" && e.key === "Enter") { e.preventDefault(); const v = e.target.value; e.target.value = ""; onScan(v); } });
     h.addEventListener("input", e => { if (e.target.id === "pk-q") { S.q = e.target.value; const pos = e.target.selectionStart; draw(); const q = $("pk-q"); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } } });
   }
   function init(hostId) { S.host = $(hostId || "tab-pack"); if (!S.host) return false; S.host._pk = S.host._pk || 0; load(); return true; }
-  return { init, load, parseItems, pickList, filter, slip, normScan, findRow, onScan, _S: S };
+  return { init, load, parseItems, shortName, printTable, pickList, filter, slip, normScan, findRow, onScan, _S: S };
 })();
 document.addEventListener("DOMContentLoaded", () => { if (typeof Admin === "undefined" || Admin._packTabWrapped) return; const original = Admin.tab; Admin.tab = function (t, btn) { const r = original.call(this, t, btn), el = document.getElementById("tab-pack"); if (el) el.classList.toggle("hidden", t !== "pack"); if (t === "pack") AdminPack.init("tab-pack"); return r; }; Admin._packTabWrapped = true; });
