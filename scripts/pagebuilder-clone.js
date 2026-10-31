@@ -854,7 +854,11 @@ const PBClone = (function () {
     const stg = $("cl-stage"); if (!stg) return; S.frame = null; S.img = null; const g = document.querySelector("#pbx-clone .cl-go"); if (g) g.disabled = true;
     stg.innerHTML = `<div class="cl-help"><h3>إضافة كروم «مساعد نسخ القوالب»</h3><p>تفتح الموقع في <b>متصفح كروم الذي عندك</b> بجلستك وكوكيزك فتتجاوز صفحات الحماية (Cloudflare…) وتقرأ المواقع المبنية بالجافاسكربت، ثم تعيد نسخته لهذه النافذة. تُثبَّت مرة واحدة:</p><ol><li><a href="assets/ext/alyssum-clone-helper.zip" download>حمّل ملف الإضافة (zip)</a> وفُكّ ضغطه في أي مكان.</li><li>افتح في كروم العنوان <code dir="ltr">chrome://extensions</code> وفعّل <b>وضع المطوّر (Developer mode)</b> أعلى اليمين.</li><li>اضغط <b>«تحميل إضافة غير مضغوطة» (Load unpacked)</b> واختر المجلد <code dir="ltr">alyssum-clone-helper</code>.</li><li>أعد تحميل لوحة التحكم (F5) ثم افتح «نسخ قالب»: سيظهر «● كروم متصل». عند أول استعمال تُسأل مرة واحدة السماح للوحة.</li></ol><p class="cl-sm">للأمان: الإضافة لا تعمل إلا من صفحة لوحة التحكم التي توافق عليها، وتفتح نافذة صغيرة مؤقتة لكل طلب ثم تغلقها، ولا ترسل شيئاً إلى أي خادم.</p></div>`;
   }
+  /* نطاقات أليسوم والمنصة لا تُنسخ بهذه الأداة (إلا من لوحة المالك نفسه) */
+  const PROTECTED = /(^|\.)(alyssumdz\.com|alyssumhub\.fyi)$/i;
+  function protectedUrl(u) { try { const h = new URL(u, location.href).hostname; if (!PROTECTED.test(h)) return false; return !(typeof CONFIG !== "undefined" && CONFIG.HUB_SITE); } catch (e) { return false; } }
   async function getPage(u, full, hop, via) {
+    if (protectedUrl(u)) throw new Error("هذا الموقع محميّ من النسخ — لا يمكن نسخه بهذه الأداة.");
     let html = null, src = full ? "github" : "proxy";
     if (full) html = await fetchFull(u, S.W);
     else {

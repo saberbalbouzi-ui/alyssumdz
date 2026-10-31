@@ -2212,6 +2212,7 @@ const PhoneDZ = {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
 /* السكربتات غير الحرجة (دبوس الموقع، مرآة الطلب، العروض الإضافية، السلة المتروكة، جرّب عليك، المنتج الرقمي): في صفحات المنتج تُحمَّل فوراً كما كانت، وفي غيرها (الرئيسية والمتجر) بعد اكتمال التحميل وخمول المتصفح أو عند أول تفاعل — فتخفّ مهام الإقلاع الطويلة */
+(function(){ try{ var s=document.createElement("script"); s.src=(typeof REL!=="undefined"?REL:"")+"assets/js/anti-copy.js?v=1"; s.async=true; document.head.appendChild(s); }catch(e){} })();
 window.__lazyLoad = function(fn){
   var done = 0, run = function(){ if(done) return; done = 1; try{ fn(); }catch(e){} };
   if(document.getElementById("order-form") || document.querySelector(".order-wide,.pb-ofraw") || /[?&]embed=1/.test(location.search)) return run();

@@ -3,6 +3,7 @@
 const fs = require("fs"), path = require("path");
 const { chromium } = require("playwright");
 const url = process.env.CLONE_URL || "", W = Math.max(320, Math.min(2000, parseInt(process.env.CLONE_W, 10) || 1280)), id = process.env.CLONE_ID || "";
+if (/(^|\.)(alyssumdz\.com|alyssumhub\.fyi)$/i.test((()=>{ try { return new URL(url).hostname; } catch (e) { return ""; } })()) && !/saberbalbouzi-ui\/alyssumdz/i.test(process.env.GITHUB_REPOSITORY || "")) { console.error("موقع محميّ من النسخ"); process.exit(2); }
 if (!/^https?:\/\/[^\s]+$/i.test(url)) { console.error("رابط غير صالح"); process.exit(1); }
 if (!/^[a-z0-9]{6,40}$/.test(id)) { console.error("معرّف غير صالح"); process.exit(1); }
 const OUT = path.join("assets", "clone"); fs.mkdirSync(OUT, { recursive: true });
