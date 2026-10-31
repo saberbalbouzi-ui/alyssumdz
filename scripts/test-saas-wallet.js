@@ -51,6 +51,7 @@ ok("قائمة السماح ترفض ما عداها", !allowed("GET", "/admin/t
   await page.click('[data-wl=st][data-st=requested]'); await page.waitForTimeout(150);
   /* إدارة المستأجر */
   await page.click('[data-wl=open]'); await page.waitForSelector("#wl-manage");
+  await page.waitForFunction(() => { const a = document.querySelector('[data-ws=usd_rate]'), b = document.querySelector('[data-ws=fee_pct]'); return a && b && a.value === "270" && b.value === "3"; }, null, { timeout: 5000 }).catch(() => {});
   ok("الإعدادات الحالية تُحمَّل في النموذج", await page.inputValue('[data-ws=usd_rate]') === "270" && await page.inputValue('[data-ws=fee_pct]') === "3");
   await page.click('[data-wl=deposit]'); await page.waitForTimeout(100);
   ok("إيداع بلا مبلغ يُرفض محلياً", !calls.some(c => /deposit$/.test(c.path)) && /مبلغاً/.test(await page.innerText("#toasts")));
