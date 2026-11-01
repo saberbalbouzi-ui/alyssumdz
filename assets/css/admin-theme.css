@@ -281,3 +281,11 @@ html.white .hs-bar::-webkit-scrollbar-track{background:#dfe5ee}html.white .hs-ba
   html body table.rt.m-scroll td.act .small{margin:.1rem!important}
   html body table.rt.m-scroll td.img img{max-width:56px;height:auto}
 }
+
+/* v1.89.712: ألوان الحالات كما في «Mes colis» لدى ياليدين — أخضر بحدّ = في المسار/مؤكَّد، أزرق ممتلئ = في الطريق، أخضر ممتلئ = مُسلَّم، أحمر ممتلئ = فشل/ملغاة، أصفر بحدّ = بانتظار/محاولة */
+html:is(.glass,.white) .pill:is(.st-fresh,.st-nouvelle,.st-pending,.st-confirmee,.st-expediee,.st-livree,.st-annulee,.st-echec){border-radius:5px;border:1.5px solid;padding:.18rem .6rem;font-weight:700;backdrop-filter:none;box-shadow:none}
+html:is(.glass,.white) .pill:is(.st-fresh,.st-confirmee){background:transparent;color:#28a745;border-color:#28a745}
+html:is(.glass,.white) .pill:is(.st-nouvelle,.st-pending){background:transparent;color:#ffc107;border-color:#ffc107}
+html:is(.glass,.white) .pill.st-expediee{background:#007bff;color:#fff;border-color:#007bff}
+html:is(.glass,.white) .pill.st-livree{background:#28a745;color:#fff;border-color:#28a745}
+html:is(.glass,.white) .pill:is(.st-annulee,.st-echec){background:#dc3545;color:#fff;border-color:#dc3545}
