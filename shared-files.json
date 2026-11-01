@@ -18,6 +18,7 @@
     "assets/js/admin-search.js",
     "assets/js/admin-home.js",
     "assets/js/admin-tablesel.js",
+    "assets/js/admin-mtables.js",
     "assets/js/admin-orders-plus.js",
     "assets/js/admin-keys.js",
     "assets/js/abandoned-cart.js",

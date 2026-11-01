@@ -228,3 +228,10 @@ html.white .nav-groups .ng.on .ng-ic{background:rgba(255,255,255,.25)}
   table.m-cards td input,table.m-cards td select{max-width:100%!important;box-sizing:border-box}
   table.m-cards td[dir=ltr]{direction:ltr}
 }
+/* v1.89.701: صف عناوين داخل tbody يُخفى في وضع البطاقات؛ الخلايا بلا عنوان تبقى بلا سطر عنوان */
+@media(max-width:700px){
+  table.m-cards tr:has(>th){display:none}
+  table.m-cards td:empty{display:none}
+  table.m-cards td .small{margin:.15rem .15rem .15rem 0}
+}
+@media(max-width:700px){table.rt[style*="min-width"]{min-width:0!important}}
