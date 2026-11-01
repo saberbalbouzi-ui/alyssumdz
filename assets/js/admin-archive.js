@@ -111,12 +111,35 @@ const AdminArchive = (() => {
   /* ---------- الواجهة ---------- */
   function since() { return S.cut ? "من " + new Date(S.cut).toISOString().slice(0, 10) : "من البداية"; }
   function paint() {
+    try { mountBtns(); } catch (e) { }
     TABS.forEach(t => {
       const tab = document.getElementById("tab-" + t); if (!tab) return;
       let bar = tab.querySelector(":scope > .arch-bar");
       if (!bar) { bar = document.createElement("div"); bar.className = "arch-bar"; tab.insertBefore(bar, tab.firstChild); bar.addEventListener("click", e => { if (e.target.closest("[data-arch=open]")) show(); }); }
       bar.innerHTML = '<span class="arch-t">📅 الفترة الحالية ' + esc(since()) + (S.list.length ? " · " + S.list.length + " أرشيف" : "") + '</span><button type="button" class="small" data-arch="open">🗄 الأرشيف · بداية جديدة</button>';
     });
+  }
+  /* تصفّح الأرشيف عند الطلب فقط (v1.89.710): الطلبات المؤرشفة لا تظهر في الطلبات ولا في «إعادة الشراء» إلا بهذا الزر */
+  const ST_AR = { livree: "مسلَّم", echec: "مرتجع/فشل", annulee: "ملغى", expediee: "مرسَل", confirmee: "مؤكَّد", nouvelle: "جديد" };
+  function browse() {
+    css(); const a = A(); if (!a) return; const list = archived();
+    if (!list.length) { try { toast("ℹ️ لا طلبات مؤرشفة"); } catch (e) { } return; }
+    let bg = document.getElementById("arch-bg"); if (bg) bg.remove(); bg = document.createElement("div"); bg.id = "arch-bg";
+    const rows = q => { const k = String(q || "").trim().toLowerCase(), L = list.filter(o => !k || (String(o.name || "") + " " + String(o.phone || "") + " " + String(o.id || "") + " " + String(o.wilaya || "")).toLowerCase().includes(k)).sort((x, y) => dateMs(y.date) - dateMs(x.date)).slice(0, 300);
+      return L.length ? '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:620px"><thead><tr><th>التاريخ</th><th>الزبون</th><th>الهاتف</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th></th></tr></thead><tbody>' + L.map(o => '<tr><td>' + esc(String(o.date || "").slice(0, 10)) + '</td><td>' + esc(o.name || "") + '</td><td dir="ltr">' + esc(o.phone || "") + '</td><td>' + esc(o.wilaya || "") + '</td><td>' + dz(o.total) + '</td><td>' + esc(ST_AR[o.status] || o.status || "") + '</td><td><button type="button" class="small" data-arch="copy" data-id="' + esc(o.id) + '">📄 نسخ كطلب جديد</button></td></tr>').join("") + '</tbody></table></div>' + (list.length > 300 ? '<div class="ar-warn">يُعرض أول 300 فقط — استعمل البحث.</div>' : "") : '<div class="ar-warn">لا نتائج.</div>'; };
+    bg.innerHTML = '<div class="ar-box" dir="rtl"><h3>🗄 الطلبات المؤرشفة (' + list.length + ')</h3><div style="opacity:.85;font-size:.9rem;margin-bottom:8px">للاطلاع فقط — لا تدخل في الإحصائيات ولا القوائم. اختر «نسخ كطلب جديد» لإعادة طلب زبون قديم.</div><input id="ar-q" type="text" placeholder="🔍 بحث بالاسم أو الهاتف أو الولاية"><div id="ar-rows" style="margin-top:10px">' + rows("") + '</div><div class="ar-g"><button type="button" class="small" data-arch="x">إغلاق</button></div></div>';
+    document.body.appendChild(bg);
+    bg.addEventListener("input", e => { if (e.target.id === "ar-q") document.getElementById("ar-rows").innerHTML = rows(e.target.value); });
+    bg.addEventListener("click", e => {
+      if (e.target === bg) { bg.remove(); return; } const b = e.target.closest("[data-arch]"); if (!b) return;
+      if (b.dataset.arch === "x") bg.remove();
+      else if (b.dataset.arch === "copy") { const o = list.find(x => String(x.id) === b.dataset.id); bg.remove(); if (o && typeof ManualOrder !== "undefined") ManualOrder.open({ mode: "copy", order: o }); }
+    });
+  }
+  /* زر «🗄 الأرشيف (N)» بجانب سلة المهملات في الطلبات وفي «إعادة الشراء» */
+  function mountBtns() {
+    const n = archived().length, host = document.getElementById("trash-btn");
+    if (host && host.parentNode) { let b = document.getElementById("arch-btn"); if (!b) { b = document.createElement("button"); b.id = "arch-btn"; b.type = "button"; b.className = "small gray"; b.onclick = () => browse(); host.parentNode.insertBefore(b, host.nextSibling); } b.textContent = "🗄 الأرشيف" + (n ? " (" + n + ")" : ""); b.hidden = !n; }
   }
   function css() {
     if (document.getElementById("arch-css")) return; const s = document.createElement("style"); s.id = "arch-css";
@@ -172,5 +195,6 @@ const AdminArchive = (() => {
     });
   }
   setTimeout(function w() { if (document.getElementById("tab-shipped")) paint(); else setTimeout(w, 800); }, 1500);
-  return { load, split, hiddenRow, cut, show, plan, archived, allOrders, eligible, summarize, doArchive, restoreLast, S };
+  setInterval(() => { try { mountBtns(); } catch (e) { } }, 2500);
+  return { load, split, hiddenRow, cut, show, browse, mountBtns, plan, archived, allOrders, eligible, summarize, doArchive, restoreLast, S };
 })();
