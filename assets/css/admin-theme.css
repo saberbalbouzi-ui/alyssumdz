@@ -216,3 +216,15 @@ html.white .sec-title,html.white #sec-title{color:#92400e!important;background:r
 html.white .nav-groups{background:#fff!important;border:1px solid #d2d9e3!important;box-shadow:0 4px 14px -8px rgba(15,23,42,.25)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 html.white .nav-groups .ng .ng-ic{background:#eef1f6}
 html.white .nav-groups .ng.on .ng-ic{background:rgba(255,255,255,.25)}
+/* v1.89.700: جداول الحملات على الهاتف = بطاقات (عنوان فوق كل قيمة) بدل جدول عريض مقصوص */
+@media(max-width:700px){
+  table.m-cards{min-width:0!important;display:block}
+  table.m-cards thead{display:none}
+  table.m-cards tbody{display:block}
+  table.m-cards tr{display:block;border:1px solid var(--line);border-radius:14px;padding:.55rem .75rem;margin:0 0 .75rem;background:rgba(255,255,255,.04)}
+  table.m-cards td{display:block;border:0!important;padding:.35rem 0!important;text-align:start!important;white-space:normal!important}
+  table.m-cards td[data-l]::before{content:attr(data-l);display:block;font-size:.74rem;font-weight:800;color:var(--g-mint,#e2fe17);margin-bottom:.15rem}
+  table.m-cards td:first-child{border-bottom:1px solid var(--line)!important;padding-bottom:.5rem!important;margin-bottom:.2rem}
+  table.m-cards td input,table.m-cards td select{max-width:100%!important;box-sizing:border-box}
+  table.m-cards td[dir=ltr]{direction:ltr}
+}
