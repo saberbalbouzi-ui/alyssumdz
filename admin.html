@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.697">
+<meta name="admin-version" content="1.89.698">
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
@@ -243,7 +243,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
 <link rel="stylesheet" href="assets/css/admin-glass.css?v=46">
 <link rel="stylesheet" href="assets/css/admin-theme.css?v=16">
-<link rel="stylesheet" href="assets/css/admin-lime.css?v=13">
+<link rel="stylesheet" href="assets/css/admin-lime.css?v=14">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#e2fe17",fs:17.5},white:{accent:"#059669",fs:17.5}},
 mode:function(){var m=null;try{m=localStorage.getItem(this.K)}catch(e){}return(m==="white"||m==="classic")?"white":"dark"},
 cfg:function(){var c={};try{c=JSON.parse(localStorage.getItem(this.C)||"{}")||{}}catch(e){}return{dark:Object.assign({},this.D.dark,c.dark||{}),white:Object.assign({},this.D.white,c.white||{})}},
@@ -6324,7 +6324,7 @@ const Admin = {
     const buyIn = '<input id="fp-buy" type="number" min="0" value="' + (cost == null ? "" : cost) + '" placeholder="؟" style="width:110px;' + (cost == null ? "border-color:var(--red)" : "") + '" onchange="Admin.setCost(\'' + p.slug + '\', this.value)"> دج';
     const go = (t, fn)=>'<button class="small gray" type="button" onclick="' + fn + '">' + t + '</button>';
     const S = this.fin.set, t = sg ? sg.parts : null;
-    const line = (ic, name, val, note, act, col)=>'<tr><td style="white-space:nowrap"><b>' + ic + ' ' + name + '</b></td><td style="white-space:nowrap">' + val + '</td><td class="hint" style="margin:0">' + note + '</td><td>' + (act || "") + '</td></tr>';
+    const line = (ic, name, val, note, act, col)=>'<tr><td style="white-space:nowrap"><b class="fc-t">' + ic + ' ' + name + '</b></td><td style="white-space:nowrap">' + val + '</td><td class="hint" style="margin:0">' + note + '</td><td>' + (act || "") + '</td></tr>';
     const rows = [
       line("🛒", "سعر الشراء", buyIn, made ? "منتج مصنَّع: يُحسب من الوصفة والمواد الأولية" : "ثمن شراء القطعة الواحدة", go("تكلفة المنتجات", "Admin.tab('costs')")),
       line("📦", "التغليف والمصاريف", t ? nf(t.pack) + " دج" : "—", "تُحسب على كل طلب — من الإعدادات العامة", go("تعديل", "Admin.finView('set')")),

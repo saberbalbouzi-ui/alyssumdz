@@ -181,3 +181,6 @@ html:is(.glass,.white) body :is(.ig-modes,.np-t) button.on small:not(#_){color:#
   #app .top :is(button,.small,#ah-btn,#cr-top) *{white-space:nowrap}
   #app .top>h1{flex:0 1 auto;white-space:nowrap}
 }
+
+/* v1.89.698: عناوين بطاقات بنود التكلفة داخل المنتج (سعر الشراء، التغليف، الإعلان…) ليمونية في المظهر الداكن */
+html.glass #fin-panel .fc-t,html.glass #fp-1 .fc-t{color:var(--g-mint,#e2fe17)}
