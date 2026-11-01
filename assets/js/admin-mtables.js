@@ -5,7 +5,7 @@
 (function () {
   "use strict";
   const MQ = window.matchMedia ? window.matchMedia("(max-width:700px)") : { matches: false };
-  const SKIP = ".rt,.orders-compact,.m-cards,.kv,[data-nomc]";
+  const SKIP = ".orders-compact,.m-cards,.kv,[data-nomc]";
   const txt = el => (el.textContent || "").replace(/\s+/g, " ").trim();
   function headersOf(t) {
     const hr = t.querySelector("thead tr") || [...t.rows].find(r => r.cells.length && [...r.cells].every(c => c.tagName === "TH"));
@@ -45,7 +45,7 @@
     if (!MQ.matches) { document.querySelectorAll("table.m-scroll").forEach(t => { t.classList.remove("m-scroll"); const b = t.previousElementSibling; if (b && b.classList.contains("hs-bar")) b.classList.remove("on"); }); return; }
     (root || document).querySelectorAll("#app table, .modal table").forEach(t => {
       if (t.matches(SKIP) || t.closest("#pb-app,#pbx-frame,.pbx-ep")) return;
-      const H = headersOf(t); if (!H || H.length < 4 || !H.some(Boolean)) return;
+      const H = headersOf(t); if (!H || H.length < (t.classList.contains("rt") ? 3 : 4) || !H.some(Boolean)) return;
       t.classList.add("m-scroll"); try { tbar(t); } catch (e) {}
     });
   }

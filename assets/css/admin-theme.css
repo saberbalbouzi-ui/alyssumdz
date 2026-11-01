@@ -267,3 +267,17 @@ html.white #ord-hs::-webkit-scrollbar-thumb{background:linear-gradient(#9bb90f,#
   .hs-bar::-webkit-scrollbar-thumb{background:linear-gradient(#effe17,#e2fe17);border-radius:12px;border:3px solid transparent;background-clip:padding-box;min-width:60px}
 }
 html.white .hs-bar::-webkit-scrollbar-track{background:#dfe5ee}html.white .hs-bar::-webkit-scrollbar-thumb{background:linear-gradient(#9bb90f,#7d9a07);background-clip:padding-box}
+/* v1.89.708: جداول .rt (المنتجات والمخزون والعملاء…) على الهاتف بنفس شكل الطلبات: جدول بعناوينه يُسحب أفقياً بدل بطاقات الحاوية */
+@media(max-width:700px){
+  html body table.rt.m-scroll{display:block!important;width:100%!important}
+  html body table.rt.m-scroll tbody{display:table-row-group!important;width:auto!important}
+  html body table.rt.m-scroll tr{display:table-row!important;border:0!important;border-radius:0!important;padding:0!important;margin:0!important;background:transparent!important;gap:0!important}
+  html body table.rt.m-scroll tr:nth-child(even) td{background:rgba(255,255,255,.035)}
+  html body table.rt.m-scroll th{display:table-cell!important;padding:.55rem .6rem!important;text-align:start;white-space:nowrap;background:rgba(255,255,255,.07)!important}
+  html body table.rt.m-scroll td{display:table-cell!important;padding:.55rem .6rem!important;border-bottom:1px solid var(--line,rgba(255,255,255,.12))!important;border-top:0!important;white-space:nowrap;flex:none!important;vertical-align:middle}
+  html body table.rt.m-scroll td[data-l]::before{content:none!important}
+  html body table.rt.m-scroll td.t{white-space:normal;min-width:160px;max-width:240px}
+  html body table.rt.m-scroll td.act{display:table-cell!important}
+  html body table.rt.m-scroll td.act .small{margin:.1rem!important}
+  html body table.rt.m-scroll td.img img{max-width:56px;height:auto}
+}
