@@ -188,3 +188,5 @@ html.glass #fin-panel .fc-t,html.glass #fp-1 .fc-t{color:var(--g-mint,#e2fe17)}
 html:is(.glass,.white) #fp-1 button.small.gray{background:linear-gradient(#effe17,#e2fe17)!important;color:#1f2123!important;border:0!important;box-shadow:none!important;border-radius:14px;font-weight:800;transition:transform .15s}
 html:is(.glass,.white) #fp-1 button.small.gray:hover{transform:translateY(-2px)}
 html:is(.glass,.white) #fp-1 button.small.gray:active{transform:translateY(3px)}
+/* v1.89.711: عناوين القوائم القابلة للطي في «التوجيه والبوردرو» (تخصيص ولاية، خيارات أخرى للتوجيه، آخر الإعادات…) ليمونية في المظهر الداكن */
+html.glass #dispatch-content details>summary{color:var(--g-mint,#e2fe17);font-weight:800;cursor:pointer}
