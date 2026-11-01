@@ -49,7 +49,7 @@ ${fld("الولاية", `<select id="mo-wil">${wil.map(w => `<option value="${es
 ${fld("طريقة التوصيل", `<div style="display:flex;gap:1rem;flex-wrap:wrap"><label><input type="radio" name="mo-dt" value="home"${!src || src.dtype !== "stop" ? " checked" : ""}> إلى المنزل</label><label><input type="radio" name="mo-dt" value="stop"${src && src.dtype === "stop" ? " checked" : ""}> مكتب Stop Desk</label></div>`)}<div id="mo-deskw">${fld("المكتب", `<select id="mo-desk"></select>`)}</div>${mode === "edit" ? "" : psHtml(ad, fld)}${mode === "edit" ? "" : fld("ولاية الانطلاق", `<select id="mo-from">${fromOpts(ad)}</select><small class="hint">الافتراضية من إعدادات شركة التوصيل — غيّرها إن كانت البضاعة ستُرسل من مخزن في ولاية أخرى</small>`)}</div>
 <div style="font-weight:800;margin:.4rem 0 .3rem">المنتجات</div><div id="mo-lines" style="overflow:auto"></div><div style="margin:.3rem 0 .6rem"><button type="button" class="small gray" id="mo-add">➕ إضافة منتج</button></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 .7rem">${fld("رسم التوصيل (دج)", `<input id="mo-fee" type="number" min="0" step="50" value="${src ? num(src.fee) : 0}"><small id="mo-fh" style="white-space:pre-line" class="hint"></small>`)}${fld("الخصم (دج)", `<input id="mo-disc" type="number" min="0" step="50" value="${src ? num(src.discount) : 0}">`)}</div>
-${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder="تظهر في ملاحظات الطلب">`)}
+${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder="تظهر في ملاحظات الطلب">`)}${xchHtml(ad, mode, fld)}
 <div style="display:flex;justify-content:space-between;align-items:center;margin:.3rem 0 .8rem;font-weight:900"><span>سعر المنتجات <span id="mo-sub"></span></span><span>الإجمالي <span id="mo-tot" style="color:var(--green)"></span></span></div>
 <div style="display:flex;gap:.5rem;flex-wrap:wrap"><button type="button" class="small green" id="mo-save">${mode === "edit" ? "💾 حفظ التعديل" : "💾 حفظ الطلب"}</button><button type="button" class="small warn" id="mo-no">إلغاء</button></div></div>`;
     document.body.appendChild(bg);
@@ -86,6 +86,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     }
     fillCom(); fillDesk(); drawLines(); total(); if (!src) autoFee();
     /* خانة الهاتف (v1.89.704): عند اللصق/الخروج يُستخرج الرقم وحده من أي نص، وتُنزع النقاط والشرطات والمسافات بين الأرقام */
+    { const xc = $("mo-xch"); if (xc) xc.onchange = () => { const w = $("mo-xchw"); if (w) w.classList.toggle("hidden", !xc.checked); if (xc.checked && $("mo-xcht")) $("mo-xcht").focus(); }; }
     { const ph = $("mo-phone"); if (ph) {
       const fix = t => ManualOrder.cleanPhone(t);
       ph.addEventListener("paste", e => { const t = (e.clipboardData || window.clipboardData).getData("text"); if (!t) return; e.preventDefault(); ph.value = fix(t); ph.dispatchEvent(new Event("input", { bubbles: true })); });
@@ -125,7 +126,8 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
           close(); ad.renderStats(); ad.renderOrders(); try { ad.openOrderPreview(ad.orders.indexOf(src)); } catch (e) { }
           toast((saved ? "✅ حُفظ تعديل الطلب" : "✅ حُفظ التعديل في اللوحة") + stockMsg + coMsg); return;
         }
-        const extra = { "✍️ طلب يدوي": "نعم" }; if (offTxt) extra["🎁 العرض"] = offTxt; { const fe = $("mo-from"); if (fe && fe.value && fe.value !== fromDef(ad)) extra["📍 ولاية الانطلاق"] = fe.value; } if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
+        const xchOn = !!($("mo-xch") && $("mo-xch").checked), xchTxt = xchOn ? $("mo-xcht").value.trim() : ""; if (xchOn && !xchTxt) { b.disabled = false; b.textContent = lab; toast("⚠️ اكتب القطعة التي ستُسترجع من الزبون (الاستبدال)"); $("mo-xcht").focus(); return; }
+        const extra = { "✍️ طلب يدوي": "نعم" }; if (xchOn) extra["🔄 استبدال"] = xchTxt; if (offTxt) extra["🎁 العرض"] = offTxt; { const fe = $("mo-from"); if (fe && fe.value && fe.value !== fromDef(ad)) extra["📍 ولاية الانطلاق"] = fe.value; } if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
         const order = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, items: clean, subtotal: c.sub, fee: c.fee, total: c.total, coupon: "", discount: c.disc, extra, note: $("mo-note").value.trim() };
         const r = await API.addOrder(order);
         if (!r || !r.ok) { b.disabled = false; b.textContent = lab; toast("❌ تعذّر حفظ الطلب — تحقق من الاتصال وصلاحية الدخول"); return; }
@@ -136,6 +138,11 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     };
   }
   /* يستخرج رقم الهاتف من نص مُلصَق (اسم + عنوان + رقم…): أرقام عربية ← لاتينية، يُنزع ما بين الأرقام من نقاط/شرطات/مسافات/أقواس، ويُفضَّل الرقم الجزائري (05/06/07 أو +213)؛ بلا رقم واضح يُرجع النص كما هو بلا فواصل بين الأرقام */
+  /* استبدال بعد التسليم (خاصية ياليدين has_exchange/product_to_collect): يُنشئ بوردرو ثانياً لاسترجاع قطعة الزبون؛ يظهر الخيار فقط حين تكون ياليدين مفعّلة وفي الطلب الجديد */
+  function xchHtml(ad, mode, fld) {
+    if (mode === "edit" || !ad.enabledCompanyKeys || ad.enabledCompanyKeys().indexOf("yalidine") < 0) return "";
+    return `<label style="display:flex;gap:.5rem;align-items:flex-start;margin:.2rem 0 .5rem;font-weight:800"><input type="checkbox" id="mo-xch" style="margin-top:.25rem"> <span>🔄 طلب استبدال بعد التسليم <small class="hint" style="display:block;font-weight:400">يُنشئ بوردرو ثانياً لاسترجاع القطعة من الزبون مع بوردرو هذا الطلب</small></span></label><div id="mo-xchw" class="hidden">${fld("القطعة المراد استرجاعها", `<input id="mo-xcht" maxlength="200" placeholder="مثال: كريم قديم عبوة 50 مل">`)}</div>`;
+  }
   function cleanPhone(raw) {
     let t = String(raw == null ? "" : raw).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
     const seqs = (t.match(/\+?\d(?:[\d\s.\-_()·•]*\d)?/g) || []).map(x => ({ raw: x, d: x.replace(/\D/g, ""), plus: x.charAt(0) === "+" })).filter(x => x.d.length >= 9);
