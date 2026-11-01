@@ -235,3 +235,8 @@ html.white .nav-groups .ng.on .ng-ic{background:rgba(255,255,255,.25)}
   table.m-cards td .small{margin:.15rem .15rem .15rem 0}
 }
 @media(max-width:700px){table.rt[style*="min-width"]{min-width:0!important}}
+/* v1.89.702: قائمة Action تظهر كاملة على الهاتف (ورقة سفلية بعرض الشاشة بدل قائمة مطلقة تُقصّ) */
+@media(max-width:700px){
+  .ts-menu{position:fixed!important;inset:auto 8px 8px 8px!important;top:auto!important;width:auto!important;min-width:0!important;max-height:72vh;overflow-y:auto;z-index:100000!important;box-shadow:0 -10px 40px rgba(0,0,0,.6)!important}
+  .ts-menu .ts-i{padding:.8rem .9rem!important;font-size:.95rem!important;min-height:44px;text-align:start}
+}
