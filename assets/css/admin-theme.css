@@ -246,5 +246,11 @@ html.white #ord-hs::-webkit-scrollbar-thumb{background:linear-gradient(#9bb90f,#
 /* v1.89.703: أزرار Action أيقونية (أخضر معاينة، أزرق وصل، وردي تعديل، أحمر حذف) */
 .ord-ics{display:inline-flex;gap:6px;vertical-align:middle;margin-inline-start:6px}
 .ord-ic{width:36px;height:36px;min-width:36px!important;padding:0!important;border:0!important;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff!important;cursor:pointer;box-shadow:none!important;transition:transform .15s,filter .15s;-webkit-tap-highlight-color:transparent}
-.ord-ic:hover{filter:brightness(1.1);transform:translateY(-2px)}.ord-ic:active{transform:translateY(2px)}
+@media(hover:hover){.ord-ic:hover{filter:brightness(1.1);transform:translateY(-2px)}}.ord-ic:active{transform:translateY(2px)}
 .ord-ic.g{background:#22a745!important}.ord-ic.b{background:#1a73e8!important}.ord-ic.e{background:#e0405e!important}.ord-ic.r{background:#d9293d!important}
+
+/* v1.89.705: على أجهزة اللمس (بلا مؤشر تحويم) لا تأثيرات تحويم تحرّك/تغيّر الأزرار — في iOS Safari الضغطة الأولى على عنصر يتغيّر عند التحويم تُعدّ «تحويماً» فقط ولا تُطلق النقر (فيفتح الزر بعد عدة محاولات) */
+@media(hover:none){
+  html body button:hover,html body a:hover,html body .small:hover,html body [role=button]:hover,html body label:hover,html body select:hover,html body .ord-ic:hover,html body .ts-btn:hover,html body .ts-i:hover{transform:none!important;filter:none!important;transition:none!important}
+  html body .small,html body button,html body .ord-ic{transition:none!important}
+}
