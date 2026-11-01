@@ -198,7 +198,7 @@ create policy "admin update orders" on public.orders for update to authenticated
 create or replace function public.submit_order(p jsonb) returns text
 language plpgsql security definer set search_path = public as $$
 declare
-  v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid; v_promo text; v_extra jsonb; g jsonb; v_ip text; v_iph text; v_ts bigint; v_slugs text[];
+  v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid; v_promo text; v_extra jsonb; g jsonb; v_ip text; v_iph text; v_ts bigint; v_slugs text[]; bl jsonb;
 begin
   v_name := btrim(coalesce(p ->> 'name', ''));
   v_phone := regexp_replace(coalesce(p ->> 'phone', ''), '[^0-9+]', '', 'g');
@@ -213,6 +213,13 @@ begin
   v_ip := public._client_ip(); v_iph := public._ip_hash(v_ip);
   select coalesce(value, '{}'::jsonb) into g from public.admin_kv where key = 'guard';
   g := coalesce(g, '{}'::jsonb);
+  -- قائمة الحظر (لوحة الإدارة ← المرتجعات، admin_kv('blocklist')): هاتف محظور، أو اسم كامل محظور، أو IP مرتبط بهاتف محظور (إن فُعّل)
+  select coalesce(value, '{}'::jsonb) into bl from public.admin_kv where key = 'blocklist';
+  if bl is not null and bl <> '{}'::jsonb then
+    if coalesce(bl -> 'phones', '[]'::jsonb) ? public._cust_phone(v_phone) then raise exception 'blocked'; end if;
+    if coalesce(bl -> 'names', '[]'::jsonb) ? lower(btrim(regexp_replace(v_name, '\s+', ' ', 'g'))) then raise exception 'blocked'; end if;
+    if coalesce((bl ->> 'ip')::boolean, false) and v_iph is not null and exists (select 1 from public.orders o where o.ip_hash = v_iph and coalesce(bl -> 'phones', '[]'::jsonb) ? public._cust_phone(o.phone)) then raise exception 'blocked'; end if;
+  end if;
   if coalesce((g ->> 'antibot')::boolean, false) then
     if btrim(coalesce(p ->> 'hp', '')) <> '' then raise exception 'bot'; end if;                         -- حقل مخفي يملؤه الروبوت فقط
     begin v_ts := split_part(coalesce(p ->> 'ftok', ''), '.', 1)::bigint; exception when others then v_ts := null; end;

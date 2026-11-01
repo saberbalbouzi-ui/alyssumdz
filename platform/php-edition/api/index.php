@@ -521,6 +521,13 @@ switch ($route) {
         $d = db();
         /* حماية الطلبات: روبوتات وتكرار حسب IP — تُفعَّل من لوحة الإدارة ← نموذج الطلب */
         $g = kvGet('guard') ?: []; $iph = ipHash();
+        /* قائمة الحظر (لوحة الإدارة ← المرتجعات): هاتف محظور، اسم كامل محظور، أو IP مرتبط بهاتف محظور (إن فُعّل) */
+        if (!$manual && ($bl = kvGet('blocklist'))) {
+            $bp = array_map('strval', (array)($bl['phones'] ?? [])); $bn = array_map('strval', (array)($bl['names'] ?? []));
+            if (in_array(custPhone($phone), $bp, true)) out(403, ['error' => 'blocked']);
+            if ($bn && in_array(mb_strtolower(trim((string)preg_replace('/\s+/u', ' ', $name))), $bn, true)) out(403, ['error' => 'blocked']);
+            if (!empty($bl['ip']) && $bp) { $c = $d->prepare('SELECT phone FROM orders WHERE ip_hash = ? LIMIT 200'); $c->execute([$iph]); foreach ($c->fetchAll(PDO::FETCH_COLUMN) as $pp) if (in_array(custPhone((string)$pp), $bp, true)) out(403, ['error' => 'blocked']); }
+        }
         if (!$manual && !empty($g['antibot'])) {
             if (trim((string)($o['hp'] ?? '')) !== '') out(422, ['error' => 'bot']);
             $tk = explode('.', (string)($o['ftok'] ?? '')); $age = time() - (int)($tk[0] ?? 0);

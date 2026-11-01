@@ -2002,10 +2002,11 @@ const Thanks = {
 };
 const Guard = {
   cfg: null, tok: "",
-  active(){ return !!(this.cfg && (this.cfg.antibot || this.cfg.dup)); },
-  MSG: { duplicate_order:"لقد أرسلتَ طلباً لهذا المنتج مؤخراً ✅ سنتواصل معك قريباً. إن أردت تعديله راسلنا على واتساب.", bot:"تعذّر إرسال الطلب. أعد تحميل الصفحة وحاول مرة أخرى.", rate_limited:"طلبات كثيرة من نفس الجهاز — حاول لاحقاً أو راسلنا على واتساب.", invalid_phone:"رقم الهاتف أو الاسم غير صالح — تأكد منهما." },
+  /* دائماً فعّال: الخادم يفحص قائمة الحظر (من لوحة الإدارة) عند كل طلب؛ أي عطل شبكة لا يمنع الطلب */
+  active(){ return true; },
+  MSG: { duplicate_order:"لقد أرسلتَ طلباً لهذا المنتج مؤخراً ✅ سنتواصل معك قريباً. إن أردت تعديله راسلنا على واتساب.", bot:"تعذّر إرسال الطلب. أعد تحميل الصفحة وحاول مرة أخرى.", rate_limited:"طلبات كثيرة من نفس الجهاز — حاول لاحقاً أو راسلنا على واتساب.", invalid_phone:"رقم الهاتف أو الاسم غير صالح — تأكد منهما.", blocked:"تعذّر قبول هذا الطلب حالياً. للاستفسار راسلنا على واتساب." },
   async init(g){
-    this.cfg = g || null; if(!this.active()) return;
+    this.cfg = g || {}; if(!this.active()) return;
     if(this.cfg.antibot){
       document.querySelectorAll("#order-form, #drawer").forEach(host=>{
         if(host.querySelector(".hp-field")) return;

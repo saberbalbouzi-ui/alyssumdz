@@ -105,7 +105,7 @@ const API = {
   },
   /* إرسال الطلب مع انتظار ردّ الخادم (عند تفعيل الحماية): يُرجع {ok} أو {ok:false, error} بأحد رموز الحماية فقط؛ أي خطأ آخر لا يمنع الطلب */
   async submitOrderChecked(order) {
-    const ct = this.cust.token(), o = ct ? Object.assign({}, order, { ctoken: ct }) : order, GUARD = ["duplicate_order", "bot", "rate_limited", "invalid_phone"];
+    const ct = this.cust.token(), o = ct ? Object.assign({}, order, { ctoken: ct }) : order, GUARD = ["duplicate_order", "bot", "rate_limited", "invalid_phone", "blocked"];
     try {
       if (this.php.on()) {
         const r = await fetch(this.php.url("order"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ order: o }), credentials: "same-origin" });
