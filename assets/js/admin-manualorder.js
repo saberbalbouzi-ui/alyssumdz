@@ -85,6 +85,12 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       }).join("") + "</table>";
     }
     fillCom(); fillDesk(); drawLines(); total(); if (!src) autoFee();
+    /* خانة الهاتف (v1.89.704): عند اللصق/الخروج يُستخرج الرقم وحده من أي نص، وتُنزع النقاط والشرطات والمسافات بين الأرقام */
+    { const ph = $("mo-phone"); if (ph) {
+      const fix = t => ManualOrder.cleanPhone(t);
+      ph.addEventListener("paste", e => { const t = (e.clipboardData || window.clipboardData).getData("text"); if (!t) return; e.preventDefault(); ph.value = fix(t); ph.dispatchEvent(new Event("input", { bubbles: true })); });
+      ph.addEventListener("change", () => { ph.value = fix(ph.value); });
+    } }
     $("mo-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); };
     if (ad.shipSupLoad) ad.shipSupLoad().then(() => { if (!src && document.body.contains(bg)) autoFee(); });
     bg.querySelectorAll('input[name="mo-dt"]').forEach(r => r.onchange = () => { fillDesk($("mo-desk").value); autoFee(); });
@@ -129,5 +135,15 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       } catch (e) { b.disabled = false; b.textContent = lab; toast("❌ " + (e && e.message || e)); }
     };
   }
-  return { open, parseLines, calc, textOf, fromDef };
+  /* يستخرج رقم الهاتف من نص مُلصَق (اسم + عنوان + رقم…): أرقام عربية ← لاتينية، يُنزع ما بين الأرقام من نقاط/شرطات/مسافات/أقواس، ويُفضَّل الرقم الجزائري (05/06/07 أو +213)؛ بلا رقم واضح يُرجع النص كما هو بلا فواصل بين الأرقام */
+  function cleanPhone(raw) {
+    let t = String(raw == null ? "" : raw).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+    const seqs = (t.match(/\+?\d(?:[\d\s.\-_()·•]*\d)?/g) || []).map(x => ({ raw: x, d: x.replace(/\D/g, ""), plus: x.charAt(0) === "+" })).filter(x => x.d.length >= 9);
+    const norm = x => { let d = x.d; if (/^00213/.test(d)) d = d.slice(5); else if (/^213/.test(d) && d.length >= 12) d = d.slice(3); else if (x.plus && /^213/.test(d)) d = d.slice(3); if (d.length === 9 && /^[567]/.test(d)) d = "0" + d; return d; };
+    const good = seqs.map(norm).filter(d => /^0[567]\d{8}$/.test(d));
+    if (good.length) return good[0];
+    if (seqs.length) return norm(seqs[0]);
+    return t.replace(/(\d)[\s.\-_/()·•](?=\d)/g, "$1").replace(/[^0-9+]/g, "");
+  }
+  return { open, parseLines, calc, textOf, fromDef, cleanPhone };
 })();

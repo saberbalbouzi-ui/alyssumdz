@@ -165,7 +165,7 @@ html.white #ord-prev-b .kv td{border-bottom-color:#dde3ec}
 /* ── الهاتف: أزرار منتظمة في الطلبات وكل صفحات الإعدادات ── */
 @media (max-width:760px){
   .orders-compact{font-size:.8rem}
-  .orders-compact .act-sel{width:100%;max-width:none;min-height:40px;font-size:.84rem}
+  .orders-compact .act-sel{width:auto;max-width:150px;min-height:38px;font-size:.84rem}
   .orders-compact td.nw .small,.orders-compact td .small{min-height:38px;min-width:42px;font-size:.95rem}
   .orders-compact td.nm{max-width:none}
   .action-bar,.card .row-btns,.card>.row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
@@ -183,18 +183,6 @@ html.white #ord-prev-b .kv td{border-bottom-color:#dde3ec}
   .search-bar>.date-field input{flex:1;min-width:0}
   .search-bar>button{width:100%;min-height:44px;margin:0!important;display:inline-flex;align-items:center;justify-content:center;text-align:center;font-size:.86rem;padding:.4rem .5rem;white-space:normal;line-height:1.25}
   .rtw{padding:.5rem!important}
-  table.orders-compact,table.orders-compact tbody{display:block;width:100%}
-  table.orders-compact tr:first-child:has(th){display:none}
-  table.orders-compact tr{display:grid;grid-template-columns:1fr 1fr;gap:.35rem .8rem;border:1px solid var(--line,rgba(255,255,255,.14));border-radius:14px;padding:.7rem .8rem;margin-bottom:.6rem}
-  table.orders-compact td{display:block!important;border:none!important;padding:0!important;max-width:none!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;min-width:0;background:transparent!important}
-  table.orders-compact td[data-l]::before{content:attr(data-l) ": ";color:#8a8f8c;font-size:.72rem;font-weight:700}
-  table.orders-compact td.nm,table.orders-compact td.c-items,table.orders-compact td.o-act,table.orders-compact td.o-btns{grid-column:1/-1}
-  table.orders-compact td.o-btns{display:flex!important;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line,rgba(255,255,255,.14))!important;padding-top:.5rem!important}
-  table.orders-compact td.o-btns .small{flex:1;min-height:42px;white-space:nowrap}
-  table.orders-compact td.o-act{display:flex!important;align-items:center;gap:.5rem;flex-wrap:wrap}
-  table.orders-compact td.o-act::before{display:none}
-  table.orders-compact td[data-l="الهاتف"]{display:flex!important;align-items:center;gap:.6rem;flex-wrap:wrap}
-  table.orders-compact td[data-l="الهاتف"]::before{display:none}
 }
 .ord-prev-act a.small{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;min-height:44px;padding:.4rem .9rem;border-radius:12px;cursor:pointer;font-weight:800;color:#fff}
 
@@ -240,3 +228,23 @@ html.white .nav-groups .ng.on .ng-ic{background:rgba(255,255,255,.25)}
   .ts-menu{position:fixed!important;inset:auto 8px 8px 8px!important;top:auto!important;width:auto!important;min-width:0!important;max-height:72vh;overflow-y:auto;z-index:100000!important;box-shadow:0 -10px 40px rgba(0,0,0,.6)!important}
   .ts-menu .ts-i{padding:.8rem .9rem!important;font-size:.95rem!important;min-height:44px;text-align:start}
 }
+/* v1.89.703: الطلبات جدول بعناوينه على الهاتف والمكتب (بدل بطاقات) مع شريط سحب أفقي علوي بسمك 6 مم ≈ 23px */
+#orders-table.orders-compact{min-width:760px}
+.rtw:has(>#orders-table){overflow-x:auto!important;padding:.5rem!important}
+.rtw:has(>#orders-table)::-webkit-scrollbar{height:0!important}
+#ord-hs{overflow-x:scroll;overflow-y:hidden;height:23px;margin:0 0 .5rem;border-radius:12px;display:none;-webkit-overflow-scrolling:touch}
+#ord-hs.on{display:block}
+#ord-hs>div{height:1px}
+#ord-hs::-webkit-scrollbar{height:23px!important}
+#ord-hs::-webkit-scrollbar-track{background:rgba(255,255,255,.1);border-radius:12px}
+#ord-hs::-webkit-scrollbar-thumb{background:linear-gradient(#effe17,#e2fe17);border-radius:12px;border:3px solid transparent;background-clip:padding-box;min-width:60px}
+html.white #ord-hs::-webkit-scrollbar-track{background:#dfe5ee}
+html.white #ord-hs::-webkit-scrollbar-thumb{background:linear-gradient(#9bb90f,#7d9a07);background-clip:padding-box}
+#orders-table.orders-compact th,#orders-table.orders-compact td{padding:.55rem .5rem}
+#orders-table.orders-compact th{background:rgba(255,255,255,.07);text-align:start}
+#orders-table.orders-compact tbody tr:nth-child(even) td,#orders-table.orders-compact tr:nth-child(even) td{background:rgba(255,255,255,.035)}
+/* v1.89.703: أزرار Action أيقونية (أخضر معاينة، أزرق وصل، وردي تعديل، أحمر حذف) */
+.ord-ics{display:inline-flex;gap:6px;vertical-align:middle;margin-inline-start:6px}
+.ord-ic{width:36px;height:36px;min-width:36px!important;padding:0!important;border:0!important;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#fff!important;cursor:pointer;box-shadow:none!important;transition:transform .15s,filter .15s;-webkit-tap-highlight-color:transparent}
+.ord-ic:hover{filter:brightness(1.1);transform:translateY(-2px)}.ord-ic:active{transform:translateY(2px)}
+.ord-ic.g{background:#22a745!important}.ord-ic.b{background:#1a73e8!important}.ord-ic.e{background:#e0405e!important}.ord-ic.r{background:#d9293d!important}
