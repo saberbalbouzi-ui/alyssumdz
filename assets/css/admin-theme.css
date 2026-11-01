@@ -254,3 +254,16 @@ html.white #ord-hs::-webkit-scrollbar-thumb{background:linear-gradient(#9bb90f,#
   html body button:hover,html body a:hover,html body .small:hover,html body [role=button]:hover,html body label:hover,html body select:hover,html body .ord-ic:hover,html body .ts-btn:hover,html body .ts-i:hover{transform:none!important;filter:none!important;transition:none!important}
   html body .small,html body button,html body .ord-ic{transition:none!important}
 }
+/* v1.89.706: جداول الهاتف تبقى جداول (صف لكل سجلّ) وتُسحب أفقياً بشريط علوي 6مم، بدل البطاقات العمودية */
+.hs-bar{display:none}
+@media(max-width:700px){
+  table.m-scroll{display:block;max-width:100%;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  table.m-scroll th,table.m-scroll td{white-space:nowrap}
+  table.m-scroll::-webkit-scrollbar{height:0!important}
+  .hs-bar.on{display:block;overflow-x:scroll;overflow-y:hidden;height:23px;margin:0 0 .5rem;border-radius:12px}
+  .hs-bar>div{height:1px}
+  .hs-bar::-webkit-scrollbar{height:23px!important}
+  .hs-bar::-webkit-scrollbar-track{background:rgba(255,255,255,.1);border-radius:12px}
+  .hs-bar::-webkit-scrollbar-thumb{background:linear-gradient(#effe17,#e2fe17);border-radius:12px;border:3px solid transparent;background-clip:padding-box;min-width:60px}
+}
+html.white .hs-bar::-webkit-scrollbar-track{background:#dfe5ee}html.white .hs-bar::-webkit-scrollbar-thumb{background:linear-gradient(#9bb90f,#7d9a07);background-clip:padding-box}
