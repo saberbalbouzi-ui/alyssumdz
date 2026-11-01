@@ -33,22 +33,53 @@
     min = Math.max(1, +min || 8);
     return rest.slice().sort((a, b) => { const ra = rate(stats, a, pid, min), rb = rate(stats, b, pid, min); if (ra != null && rb != null && ra !== rb) return rb - ra; if (ra != null && rb == null) return -1; if (rb != null && ra == null) return 1; return (b === def) - (a === def); });
   }
-  /* يختار شركة ولاية بالقواعد: ولاية ← منطقة ← "" (الافتراضية)؛ والقيمة auto = الأفضل أداءً (عيّنة كافية في الولاية وإلا في منطقتها) */
-  function pick(pid, cfg, enabled, stats, minSample) {
-    if (!cfg || !cfg.on || !pid) return ""; const reg = regionOf(pid), min = Math.max(1, +minSample || +cfg.minSample || 8);
-    const ch = (cfg.wil && cfg.wil[pid]) || (cfg.regions && cfg.regions[reg]) || ""; if (!ch) return "";
-    if (ch !== "auto") return enabled.indexOf(ch) >= 0 ? ch : "";
-    let best = "", bs = -1;
+  /* يختار الشركة (v1.89.709: خيارات تتجاوز المناطق): (1) قواعد شرطية بالترتيب — نوع التوصيل، مبلغ التحصيل، ولايات، منتجات — (2) تخصيص ولاية ← منطقة (3) استراتيجية عامة للباقي: بالمناطق | الأفضل أداءً | الأرخص | توزيع بالنسب (4) حدّ يومي لكل شركة يحوّل الفائض لغيرها.
+     القيم الخاصة: auto = الأعلى نسبة تسليم (عيّنة كافية في الولاية وإلا في منطقتها)، cheapest = الأقل رسماً من أسعار الشركات المجلوبة، split = حسب نسب cfg.split. ctx = {id,total,dtype,slugs[],fee(k),counts{k:n}} اختياري (بدونه يعمل القديم كما هو). */
+  const fnv = t => { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  function perfBest(pid, enabled, stats, min, skip) {
+    const reg = regionOf(pid); let best = "", bs = -1;
     enabled.forEach(k => {
-      const c = (stats && stats[k]) || {}; let x = c[pid];
+      if (skip && skip.indexOf(k) >= 0) return; const c = (stats && stats[k]) || {}; let x = c[pid];
       if (!x || x.d + x.f < min) { x = { d: 0, f: 0 }; REGIONS[reg] && REGIONS[reg].ids.forEach(i => { if (c[i]) { x.d += c[i].d; x.f += c[i].f; } }); }
-      if (x.d + x.f < min) return; const s = smooth(x); if (s > bs + 1e-9) { bs = s; best = k; }
+      if (x.d + x.f < min) return; const sc = smooth(x); if (sc > bs + 1e-9) { bs = sc; best = k; }
     });
     return best;
   }
+  function cheapestOf(enabled, ctx, skip) { let best = "", bf = Infinity; enabled.forEach(k => { if (skip && skip.indexOf(k) >= 0) return; const f = ctx && ctx.fee ? Number(ctx.fee(k)) : 0; if (f > 0 && f < bf) { bf = f; best = k; } }); return best; }
+  function splitOf(cfg, enabled, ctx, skip) {
+    const w = enabled.filter(k => !(skip && skip.indexOf(k) >= 0)).map(k => [k, Math.max(0, +((cfg.split || {})[k]) || 0)]).filter(x => x[1] > 0), tot = w.reduce((a, x) => a + x[1], 0); if (!tot) return "";
+    let r = fnv(String((ctx && ctx.id) || "x")) % tot; for (const x of w) { if (r < x[1]) return x[0]; r -= x[1]; } return w[0][0];
+  }
+  function matchRule(r, ctx) {
+    if (!r || r.on === false || !ctx) return false; const w = r.when || {}, has = v => v !== undefined && v !== null && v !== "";
+    if (w.dtype && w.dtype !== ctx.dtype) return false;
+    if (has(w.minTotal) && !(Number(ctx.total) >= Number(w.minTotal))) return false;
+    if (has(w.maxTotal) && !(Number(ctx.total) <= Number(w.maxTotal))) return false;
+    if (w.wilayas && w.wilayas.length && w.wilayas.map(Number).indexOf(Number(ctx.pid)) < 0) return false;
+    if (w.products && w.products.length && !(ctx.slugs || []).some(x => w.products.indexOf(x) >= 0)) return false;
+    return true;
+  }
+  function resolveCh(ch, pid, cfg, enabled, stats, min, ctx, skip) {
+    if (ch === "auto") return perfBest(pid, enabled, stats, min, skip);
+    if (ch === "cheapest") return cheapestOf(enabled, ctx, skip);
+    if (ch === "split") return splitOf(cfg, enabled, ctx, skip);
+    return enabled.indexOf(ch) >= 0 && !(skip && skip.indexOf(ch) >= 0) ? ch : "";
+  }
+  function pick(pid, cfg, enabled, stats, minSample, ctx) {
+    if (!cfg || !cfg.on || !pid) return ""; const reg = regionOf(pid), min = Math.max(1, +minSample || +cfg.minSample || 8);
+    if (ctx) ctx.pid = pid; let ch = "";
+    if (ctx && Array.isArray(cfg.rules)) { const r = cfg.rules.find(x => matchRule(x, ctx) && x.co); if (r) ch = r.co; }
+    if (!ch) ch = (cfg.wil && cfg.wil[pid]) || (cfg.regions && cfg.regions[reg]) || "";
+    if (!ch && cfg.strategy && ["auto", "cheapest", "split"].indexOf(cfg.strategy) >= 0) ch = cfg.strategy;
+    if (!ch) return "";
+    let k = resolveCh(ch, pid, cfg, enabled, stats, min, ctx, null);
+    const cap = x => Number((cfg.caps || {})[x]) > 0 && ctx && ctx.counts && (ctx.counts[x] || 0) >= Number(cfg.caps[x]);
+    if (k && cap(k)) { const full = enabled.filter(cap); k = resolveCh(ch === "split" || ch === "cheapest" || ch === "auto" ? ch : "auto", pid, cfg, enabled, stats, min, ctx, full) || enabled.find(x => full.indexOf(x) < 0) || ""; }
+    return k;
+  }
   /* يحوّل ما يلتقطه الماسح (نص الباركود) إلى مفتاح مقارنة: بلا مسافات وبحروف كبيرة، وإن كان رابطاً أو فيه بادئة يؤخذ آخر مقطع طويل */
   const normScan = v => { let s = String(v == null ? "" : v).trim(); const m = s.match(/[A-Za-z0-9\-_]{6,}\s*$/); if (/[\/?=]/.test(s) && m) s = m[0]; return s.replace(/\s+/g, "").toUpperCase(); };
-  const model = { REGIONS, regionOf, perfStats, pick, normScan, smooth, rate, rankFallback };
+  const model = { REGIONS, regionOf, perfStats, pick, normScan, smooth, rate, rankFallback, matchRule };
   if (typeof module !== "undefined" && module.exports) { module.exports = model; }
   if (typeof document === "undefined") return;
 
@@ -67,19 +98,60 @@
   /* واجهة الاستخدام داخل Admin.orderCompanyKey */
   let memo = { at: 0, n: -1, v: null };
   const statsMemo = () => { const a = A(), n = (a.orders || []).length; if (memo.v && memo.n === n && Date.now() - memo.at < 5000) return memo.v; memo = { at: Date.now(), n, v: stats() }; return memo.v; };
+  const todayCounts = () => { const a = A(), day0 = a.isoDay ? a.isoDay() : "", c = {}; (a.orders || []).forEach(x => { const t = a.trackingOf(x); if (t && t.company && String(x.date || "").slice(0, 10) === day0) c[t.company] = (c[t.company] || 0) + 1; }); return c; };
+  let cmemo = { at: 0, n: -1, v: null };
+  const countsMemo = () => { const a = A(), n = (a.orders || []).length; if (cmemo.v && cmemo.n === n && Date.now() - cmemo.at < 5000) return cmemo.v; cmemo = { at: Date.now(), n, v: todayCounts() }; return cmemo.v; };
+  function ctxOf(o, pid) {
+    const a = A(); let slugs = []; try { slugs = (a.orderLines(o) || []).map(l => l.p && l.p.slug).filter(Boolean); } catch (e) { }
+    const type = o.dtype === "stop" ? "stop" : "home";
+    return { id: o.id, total: Number(o.total) || 0, dtype: type, slugs, counts: countsMemo(), fee: k => { try { const pr = ((a.deliveryCfg[k] || {}).prices || {})[pid]; return pr ? Number(type === "stop" ? pr.stop : pr.home) || 0 : 0; } catch (e) { return 0; } } };
+  }
   function route(o) {
     if (!S.cfg || !S.cfg.on || !A()) return ""; const pid = pidOf(o); if (!pid) return "";
-    return pick(pid, S.cfg, en(), statsMemo());
+    return pick(pid, S.cfg, en(), statsMemo(), undefined, ctxOf(o, pid));
   }
   function fallbackOrder(o, rest, def) { return rankFallback(pidOf(o), rest, statsMemo(), def, S.cfg && S.cfg.minSample); }
   async function load() {
     try { const v = typeof Priv !== "undefined" ? await Priv.get("shiprouting", null) : null; if (v && typeof v === "object") S.cfg = Object.assign({ on: false, regions: {}, wil: {}, minSample: 8 }, v); } catch (e) { }
     S.loaded = true; loadScan();
   }
+  /* خيارات توجيه خارج المناطق (v1.89.709): استراتيجية عامة، نسب توزيع، حدّ يومي لكل شركة، وقواعد شرطية */
+  function ruleRow(r, i) {
+    const w = r.when || {}, P = (A().products || []).filter(x => x.active !== false), sel = (v, opts) => opts.map(([k, l]) => `<option value="${esc(k)}"${k === v ? " selected" : ""}>${esc(l)}</option>`).join("");
+    return `<div class="dp-rule" data-i="${i}" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.4rem;padding:.55rem;border:1px solid rgba(255,255,255,.14);border-radius:12px;margin-bottom:.5rem">
+<label class="dp-chip" style="display:flex;gap:.4rem;align-items:center"><input type="checkbox" data-rf="on"${r.on !== false ? " checked" : ""}> <input data-rf="name" value="${esc(r.name || "")}" placeholder="اسم القاعدة" style="flex:1;min-width:0"></label>
+<label class="dp-chip">نوع التوصيل <select data-rf="dtype">${sel(w.dtype || "", [["", "الكل"], ["home", "إلى المنزل"], ["stop", "إلى المكتب (Stop Desk)"]])}</select></label>
+<label class="dp-chip">المبلغ من <input data-rf="minTotal" type="number" min="0" value="${esc(w.minTotal == null ? "" : w.minTotal)}" placeholder="—" style="width:90px"></label>
+<label class="dp-chip">إلى <input data-rf="maxTotal" type="number" min="0" value="${esc(w.maxTotal == null ? "" : w.maxTotal)}" placeholder="—" style="width:90px"></label>
+<label class="dp-chip">ولايات (أرقام) <input data-rf="wilayas" value="${esc((w.wilayas || []).join(","))}" placeholder="16,31,25" dir="ltr" style="width:120px"></label>
+<label class="dp-chip">منتجات (slug) <input data-rf="products" list="dp-prods" value="${esc((w.products || []).join(","))}" placeholder="كل المنتجات" dir="ltr" style="width:140px"></label>
+<label class="dp-chip">← الشركة <select data-rf="co">${coOptions(r.co || "", [["", "—"], ["auto", "🤖 الأفضل أداءً"], ["cheapest", "💰 الأرخص"]])}</select></label>
+<button class="small warn" type="button" data-dp="delrule:${i}">🗑</button><datalist id="dp-prods">${P.map(x => `<option value="${esc(x.slug)}">${esc(x.title)}</option>`).join("")}</datalist></div>`;
+  }
+  function optionsHtml() {
+    const c = S.cfg, ens = en(), rules = Array.isArray(c.rules) ? c.rules : [], so = [["", "بالمناطق فقط (الافتراضي)"], ["auto", "🤖 الأفضل أداءً في كل ولاية"], ["cheapest", "💰 الأرخص (من أسعار الشركات)"], ["split", "⚖ توزيع بنسب"]];
+    return `<details style="margin-top:.6rem"${(rules.length || c.strategy || Object.keys(c.caps || {}).length) ? " open" : ""}><summary>⚙ خيارات أخرى للتوجيه (بدل المناطق فقط)</summary>
+<p class="hint" style="margin:.4rem 0">الترتيب: القواعد الشرطية أولاً، ثم تخصيص الولاية/المنطقة أعلاه، ثم الاستراتيجية العامة. «الأرخص» يقارن أسعار الشركات التي جُلبت أسعارها فقط. الحدّ اليومي يحوّل الفائض إلى شركة أخرى.</p>
+<div class="dp-row"><label class="dp-chip">الاستراتيجية العامة للباقي <select id="dp-strat">${so.map(([k, l]) => `<option value="${k}"${(c.strategy || "") === k ? " selected" : ""}>${esc(l)}</option>`).join("")}</select></label></div>
+<div class="dp-g" style="margin-top:.5rem">${ens.map(k => `<label class="dp-chip" title="وزن التوزيع بالنسب (فارغ = لا يدخل) / الحدّ اليومي لطلبات اليوم">${esc(coName(k))}<br>نسبة <input id="dp-sp-${esc(k)}" type="number" min="0" max="100" value="${esc((c.split || {})[k] || "")}" style="width:64px"> % · حدّ يومي <input id="dp-cap-${esc(k)}" type="number" min="0" value="${esc((c.caps || {})[k] || "")}" style="width:72px"></label>`).join("")}</div>
+<h4 style="margin:.8rem 0 .3rem">📐 قواعد شرطية (الأولى المطابقة تفوز)</h4>
+<div id="dp-rules">${rules.map(ruleRow).join("") || '<p class="hint">لا قواعد بعد.</p>'}</div>
+<button class="small blue" type="button" data-dp="addrule">＋ قاعدة جديدة</button></details>`;
+  }
+  function readRules(keep) {
+    const out = []; document.querySelectorAll("#dp-rules .dp-rule").forEach(el => {
+      const g = k => { const e = el.querySelector('[data-rf="' + k + '"]'); return e ? (e.type === "checkbox" ? e.checked : String(e.value || "").trim()) : ""; }, num = v => (v === "" ? undefined : Number(v)), list = v => String(v).split(/[,،\s]+/).filter(Boolean);
+      const when = {}; if (g("dtype")) when.dtype = g("dtype"); if (num(g("minTotal")) != null) when.minTotal = num(g("minTotal")); if (num(g("maxTotal")) != null) when.maxTotal = num(g("maxTotal"));
+      const wl = list(g("wilayas")).map(Number).filter(x => x > 0); if (wl.length) when.wilayas = wl; const pl = list(g("products")); if (pl.length) when.products = pl;
+      if (keep || g("co")) out.push({ on: g("on"), name: g("name"), co: g("co"), when });
+    }); return out;
+  }
   async function save() {
     const g = id => $(id) || {}, cfg = { on: !!g("dp-on").checked, fallback: g("dp-fb").checked !== false, minSample: Math.max(3, Math.min(100, Math.round(+g("dp-min").value || 8))), regions: {}, wil: {} };
     Object.keys(REGIONS).forEach(k => { const v = (g("dp-r-" + k).value || ""); if (v) cfg.regions[k] = v; });
     document.querySelectorAll("#dp-wil [data-w]").forEach(s => { if (s.value) cfg.wil[s.dataset.w] = s.value; });
+    if ($("dp-strat")) { cfg.strategy = $("dp-strat").value || ""; cfg.split = {}; cfg.caps = {}; en().forEach(k => { const sp = Number((g("dp-sp-" + k) || {}).value) || 0, cp = Math.round(Number((g("dp-cap-" + k) || {}).value) || 0); if (sp > 0) cfg.split[k] = sp; if (cp > 0) cfg.caps[k] = cp; }); cfg.rules = readRules(); }
+    else { cfg.strategy = S.cfg.strategy || ""; cfg.split = S.cfg.split || {}; cfg.caps = S.cfg.caps || {}; cfg.rules = S.cfg.rules || []; }
     S.cfg = cfg; await Priv.set("shiprouting", cfg); toast("🧭 حُفظ التوجيه"); draw();
   }
 
@@ -169,6 +241,7 @@
 <div class="card"><h3>🧭 التوجيه الذكي (Auto-Routing)</h3><p class="hint">اختر لكل منطقة شركتها، أو «الأفضل أداءً» ليختار النظام الشركة الأعلى نسبة تسليم في الولاية (من طلباتك المسلَّمة والفاشلة، بعد عيّنة كافية، وإلا الافتراضية). شركة المنتج المحدَّدة في بطاقة المنتج تتقدّم على التوجيه، والطرد المسجَّل يبقى عند شركته.</p>
 <div class="dp-row"><label><input type="checkbox" id="dp-on"${S.cfg.on ? " checked" : ""}> فعّل التوجيه التلقائي</label><label title="إن لم تقبل الشركة الطلب (ولاية غير مخدومة، بلدية لا تطابق، أو رفض صريح) يُجرَّب غيرها من المفعّلة تلقائياً"><input type="checkbox" id="dp-fb"${S.cfg.fallback !== false ? " checked" : ""}> أعد التوجيه تلقائياً عند الرفض</label>${Object.keys(REGIONS).map(regionRow).join("")}<label class="dp-chip">أقل عيّنة <input id="dp-min" type="number" min="3" max="100" value="${esc(S.cfg.minSample || 8)}" style="width:4rem"></label></div>
 <details style="margin-top:.5rem"><summary>تخصيص ولاية بعينها</summary><div id="dp-wil" class="dp-g" style="margin-top:.5rem">${W.map(w => `<label class="dp-chip">${w.id} ${esc(w.name)} <select data-w="${w.id}">${coOptions((S.cfg.wil || {})[w.id] || "", [["", "حسب المنطقة"], ["auto", "🤖 الأفضل أداءً"]])}</select></label>`).join("")}</div></details>
+${optionsHtml()}
 <div class="dp-row" style="margin-top:.6rem"><span class="hint">الشركات المفعّلة:</span>${ens.length ? ens.map(k => `<span class="dp-chip">${esc(coName(k))}${k === a.activeCompanyKey() ? " ⭐" : ""}</span>`).join("") : '<span class="dp-chip">لا شركة</span>'}<button class="small blue" data-dp="companies">⚙ تفعيل شركات أخرى</button></div>
 ${fbLog().length ? `<details style="margin-top:.5rem"><summary>↪ آخر إعادات التوجيه (${fbLog().length})</summary><table><tbody>${fbLog().slice(0, 10).map(x => `<tr><td>${esc(new Date(x.at).toLocaleString("fr-DZ"))}</td><td>${esc(x.name)}</td><td>${esc(x.wilaya)}</td><td>${esc(coName(x.from))} ← ${esc(coName(x.to))}</td></tr>`).join("")}</tbody></table></details>` : ""}
 <div class="dp-row" style="margin-top:.6rem"><button class="small green" data-dp="save">💾 حفظ التوجيه</button>${ens.length < 2 ? '<span class="hint">فعّل شركتين على الأقل من «شركات التوصيل» ليكون للتوجيه معنى.</span>' : ""}</div>
@@ -188,6 +261,7 @@ ${left.length ? `<details style="margin-top:.5rem"><summary>المتبقي لل�
     const b = e.target.closest && e.target.closest("[data-dp]"); if (!b || !$("dispatch-content") || !$("dispatch-content").contains(b)) return; const a = b.dataset.dp;
     if (a === "run") runAll(); else if (a === "print") printAll(); else if (a === "save") save(); else if (a === "cam") camToggle(); else if (a === "undo") undo(); else if (a === "companies") { const b = document.querySelector('.nav-btn[onclick*="\'delivery\'"]'); if (b) b.click(); else if (A()) A().tab("delivery"); }
     else if (a === "reset") { if (confirm("مسح سجل المسح لهذا اليوم؟")) { S.scan = {}; saveScan(); S.last = null; draw(); } }
+    else if (a === "addrule") { S.cfg.rules = readRules(true).concat([{ on: true, name: "", co: "", when: {} }]); draw(); } else if (a.indexOf("delrule:") === 0) { const l = readRules(true); l.splice(+a.slice(8), 1); S.cfg.rules = l; draw(); }
     else if (a === "manifest") manifest(); else if (a.indexOf("manifest:") === 0) manifest(a.slice(9));
   }
   function init() {
