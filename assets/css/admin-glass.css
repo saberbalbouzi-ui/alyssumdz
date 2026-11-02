@@ -532,3 +532,8 @@ html input[type=range]{direction:ltr}
 /* v1.89.593: شريط أزرار «تعديل سريع» معتم وفوق المحتوى (كان شفافاً فيظهر النص تحته ويبدو أن الأزرار لا تعمل) */
 #pq-bg .action-bar{z-index:6!important;position:sticky!important}
 html.glass #pq-bg .action-bar{background:#0b1f18!important;border:0!important;border-top:1px solid rgba(255,255,255,.16)!important;border-radius:0!important;box-shadow:0 -10px 14px #0b1f18}
+
+/* v1.89.746: قائمة الأيقونات (منتقي الأيقونات في المنشئ) معتمة لا شفافة */
+html.glass .pbx-ip,html.glass #pbx-ip{background:#171a1f!important;border-color:rgba(255,255,255,.18)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.glass .pbx-ip .g button{background:#232830!important}
+html.glass .pbx-ip .g button:hover{background:#2f3641!important}
