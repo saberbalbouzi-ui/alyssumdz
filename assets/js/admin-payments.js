@@ -101,7 +101,7 @@ const AdminPayments = (() => {
       got=Math.round((net+del+cod+ins+ret)*1000)/1000;
     } else {
       const rf=A_.realFees?A_.realFees(o):null; price=Math.max(0,total-fee);
-      if (st==="echec") { ret=rf&&Number(rf.retour)>0?Number(rf.retour):DEF_RET; got=0; }      // رسم الإرجاع الفعلي لمسار الطرد من تعريفة ياليدين (يختلف بين الولايات)، وإلا 250
+      if (st==="echec") { ret=DEF_RET+(A_.retLate?A_.retLate(o):0); got=0; }      // رسم الإرجاع 250 ثابت + غرامة تأخر سحب المرتجع (10 دج لكل يوم بعد 10 أيام عند الشركة)
       else {
         del=rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee);
         cod=price*DEF_COD/100; ins=0; got=total;
@@ -167,7 +167,7 @@ const AdminPayments = (() => {
   function settleCard() {
     const T=sumSettle(items()); if(!T.n) return `<section class="pm-card"><b>🧾 تسوية ياليدين</b><p class="pm-note">لا طلبات مسجَّلة بعد. عند التسجيل تظهر هنا الأرقام تلقائياً؛ ولأدقّ النتائج استورد كشف الدفع من حساب ياليدين.</p><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين (xlsx / csv)</button></section>`;
     const c=(l,v,k,t)=>`<div class="pm-card pm-stat"${t?` title="${esc(t)}"`:""}><small>${l}</small><b${k?` style="color:${k}"`:""}>${v}</b></div>`;
-    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع فقط (حسب تعريفة ياليدين لمساره، وإلا ${DEF_RET} دج). ${T.nFile}/${T.n} طرد بأرقام الكشف الفعلية والباقي تقدير من التعريفة.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
+    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع (${DEF_RET} دج ثابتة) + 10 دج عن كل يوم تأخّر فيه سحبه أكثر من 10 أيام عند الشركة. ${T.nFile}/${T.n} طرد بأرقام الكشف الفعلية والباقي تقدير من التعريفة.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
       ${detailBlock(T)}
       <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
         ${c("صافي ما يخصّك (مسلَّم + مرتجع)",dz(T.net)+" دج",T.net<0?"#fca5a5":"#d4ff4d","مثل «net client» في كشف ياليدين")}

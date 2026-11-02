@@ -83,6 +83,11 @@ const AdminReturns = (() => {
     return { n: list.length, ready: c.ready, received: c.received, transit: c.transit, rate: del + list.length ? (list.length / (del + list.length) * 100).toFixed(1) : "0.0", product: top ? top[0] + " (" + top[1] + ")" : "—" };
   }
   /* عدّاد إرجاعات صاحب الطلب: أخضر ثم برتقالي ثم أحمر عند بلوغ حدّ الحظر؛ وزرّ حظر مباشر */
+  /* مدة بقاء المرتجع جاهزاً عند الشركة: 10 أيام مجاناً ثم 10 دج/يوم */
+  function waitCell(x) {
+    const a = A(); if (x.ph === "transit" || !a.retDays) return "—"; const d = a.retDays(x.o), late = a.retLate(x.o), left = 10 - d;
+    return x.ph === "received" ? `<small>${d} يوم${late ? " · غرامة " + late + " دج" : ""}</small>` : `<b style="color:${late ? "#dc3545" : left <= 3 ? "#fd7e14" : "#28a745"}">${d} يوم</b><br><small>${late ? "غرامة " + late + " دج" : "يتبقى " + left + " يوم"}</small>`;
+  }
   function counterCell(o) {
     const a = A(), p = a.normalizePhone ? a.normalizePhone(o.phone) : "", n = a.retCount ? a.retCount(p) : 0, e = a.isBlacklisted ? a.isBlacklisted(p) : null, c = a.retColor ? a.retColor(n) : "#28a745";
     return `<span class="rt-cnt" style="background:${c}" title="عدد الطرود الراجعة لهذا الزبون">${n}</span> ` + (e ? (e.state === "pending" ? '<small>⏳ بانتظار مراجعتك</small>' : '<small>🚫 محظور</small>') : `<button type="button" class="rt-btn rt-quiet" data-block="${esc(p)}" style="padding:4px 9px">🚫 حظر</button>`);
@@ -93,8 +98,8 @@ const AdminReturns = (() => {
   }
   function courierHtml(list) {
     const rows = list.slice(0, 300).map(x => { const o = x.o, ph = PH[x.ph], raw = ((A().shipRaw || {})[o.id] || {}).raw || ""; let items = ""; try { items = A().itemsDisplay ? A().itemsDisplay(o) : ""; } catch (_) { }
-      return `<tr><td>#${esc(String(o.id).slice(-6))}</td><td dir="ltr">${esc(phone(o))}</td><td>${esc(o.name || "")}<br><small>${esc(o.wilaya || "")}</small></td><td style="white-space:pre-line">${esc(items)}</td><td><b style="color:${ph[1]}">${ph[0]}</b>${raw ? `<br><small>${esc(raw)}</small>` : ""}</td><td>${counterCell(o)}</td></tr>`; }).join("");
-    return `<section class="rt-card"><div class="rt-head"><h3>طرود راجعة (حسب حالة شركة التوصيل)</h3><span class="rt-note">«Retour à récupérer» = جاهز للسحب من مركز الشركة · «Retourné au vendeur» = وصل إليك · الدفع عند الاستلام فلا استرداد أموال</span></div><div class="rt-table"><table><thead><tr><th>الطلب</th><th>الهاتف</th><th>الزبون / الولاية</th><th>المنتجات</th><th>حالة الرجوع</th><th>الإرجاعات</th></tr></thead><tbody>${rows || '<tr><td colspan="6" class="rt-note">لا طرود راجعة حالياً.</td></tr>'}</tbody></table></div></section>`;
+      return `<tr><td>#${esc(String(o.id).slice(-6))}</td><td dir="ltr">${esc(phone(o))}</td><td>${esc(o.name || "")}<br><small>${esc(o.wilaya || "")}</small></td><td style="white-space:pre-line">${esc(items)}</td><td><b style="color:${ph[1]}">${ph[0]}</b>${raw ? `<br><small>${esc(raw)}</small>` : ""}</td><td>${waitCell(x)}</td><td>${counterCell(o)}</td></tr>`; }).join("");
+    return `<section class="rt-card"><div class="rt-head"><h3>طرود راجعة (حسب حالة شركة التوصيل)</h3><span class="rt-note">«Retour à récupérer» = جاهز للسحب من مركز الشركة · «Retourné au vendeur» = وصل إليك · الدفع عند الاستلام فلا استرداد أموال</span></div><div class="rt-table"><table><thead><tr><th>الطلب</th><th>الهاتف</th><th>الزبون / الولاية</th><th>المنتجات</th><th>حالة الرجوع</th><th>الانتظار عند الشركة</th><th>الإرجاعات</th></tr></thead><tbody>${rows || '<tr><td colspan="7" class="rt-note">لا طرود راجعة حالياً.</td></tr>'}</tbody></table></div></section>`;
   }
   function filteredOrders() {
     const q=String(S.query||"").trim().toLowerCase(), qd=digits(q);

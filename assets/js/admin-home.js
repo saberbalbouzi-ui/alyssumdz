@@ -147,6 +147,7 @@ const AdminHome = (() => {
     let mk = null; try { if (typeof AdminMarketplace !== "undefined") { mk = AdminMarketplace.alerts(); AdminMarketplace.warm(); } } catch (e) { }
     let aic = null; try { if (typeof ImgGen !== "undefined" && ImgGen.credit) { const st = ImgGen.credit.state(); if (st !== "ok") aic = { st, p: ImgGen.credit.pct() }; } } catch (e) { }
     let adLow = []; try { adLow = a.adStockAlerts ? a.adStockAlerts(5) : []; } catch (e) { }
+    let rr = []; try { rr = a.retReadyList ? a.retReadyList() : []; } catch (e) { }
     let orph = []; try { orph = (typeof AdminYd !== "undefined" && AdminYd.orphans) ? AdminYd.orphans() : []; } catch (e) { }
     let dgHint = 0; try { if (typeof AdminKind !== "undefined" && AdminKind.kind() === "physical" && typeof AdminStores !== "undefined" && AdminStores.kind() !== "digital") dgHint = (a.products || []).filter(p => p && p.digital && p.active !== false).length; } catch (e) { }
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
@@ -183,6 +184,7 @@ ${dg ? `<button type="button" class="${dg.proofs ? "w" : "ok"}" data-go="digital
 <button type="button" class="${dg.low + dg.out + dg.short ? "w" : "ok"}" data-go="digital" title="${(dg.lowSkus || []).join(" | ").replace(/"/g, "")}"><b>${num(dg.low + dg.out + dg.short)}</b><span>منتج رقمي مخزون مفاتيحه ${dg.out ? "نفد" : "منخفض"}${dg.short ? " (وطلبات تنتظر مفاتيح)" : ""}</span></button>` : ""}
 ${mk && (mk.to_ship || mk.rej) ? `<button type="button" class="w" data-go="market"><b>${num(mk.to_ship + mk.rej)}</b><span>${mk.to_ship ? "طلب التسويق بالعمولة ينتظر شحنك" : ""}${mk.to_ship && mk.rej ? " · " : ""}${mk.rej ? "طلب رُفض لنقص رصيدك كمورّد" : ""}</span></button>` : ""}
 <button type="button" class="${od ? "w" : "ok"}" data-go="callcenter"><b>${num(od)}</b><span>طلب بلا استجابة منذ مدة</span></button>
+${rr.length ? `<button type="button" class="w" data-go="returns" title="${rr.slice(0, 8).map(x => x.o.id + ": " + x.days + " يوم").join(" | ").replace(/\"/g, "")}"><b>${num(rr.length)}</b><span>طرد راجع جاهز للسحب (Retour à récupérer) — المهلة 10 أيام ثم 10 دج/يوم${rr.some(x => x.late) ? " · غرامة جارية " + num(rr.reduce((t, x) => t + x.late, 0)) + " دج" : rr.some(x => x.days >= 7) ? " · بعضها يقترب من المهلة" : ""}</span></button>` : ""}
 ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph.slice(0, 8).map(r => r.tracking).join(" | ")}"><b>${num(orph.length)}</b><span>طرد عند الشركة بلا طلب في اللوحة — اربطه كي لا يضيع من الحساب</span></button>` : ""}
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
 <h3 style="margin-top:16px">أفضل المنتجات مبيعاً</h3>${top.length ? `<div class="tp">${top.map(([t, q], i) => `<div class="r"><span class="n">${i + 1}</span><span class="t"></span><span class="q">${num(q)} قطعة</span><span class="bar"><i style="width:${Math.max(6, q / topMax * 100)}%"></i></span></div>`).join("")}</div>` : '<div class="em" style="padding:10px">لا مبيعات في هذه الفترة.</div>'}</div>
