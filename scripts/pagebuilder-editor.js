@@ -1060,6 +1060,15 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const r = fdoc.createRange(); r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
+    /* لصق نص خارجي: نصٌّ خام بلا أي تنسيق (حجم/لون/خط الموقع المنسوخ منه) فيأخذ نمط النص الأصلي ويبقى قابلاً للتعديل */
+    el.addEventListener("paste", ev => {
+      const cd = ev.clipboardData; if (!cd) return; const t = cd.getData("text/plain"); if (!t && !cd.getData("text/html")) return; ev.preventDefault();
+      const lines = String(t || "").replace(/\r/g, "").replace(/\u00a0/g, " ").replace(/\n{3,}/g, "\n\n").split("\n");
+      if (rich) lines.forEach((l, i) => { if (i) fdoc.execCommand("insertParagraph"); if (l) fdoc.execCommand("insertText", false, l); });
+      else if (wEl.dataset.type === "heading") lines.forEach((l, i) => { if (i) fdoc.execCommand("insertLineBreak"); if (l) fdoc.execCommand("insertText", false, l); });
+      else fdoc.execCommand("insertText", false, lines.join(" ").replace(/\s+/g, " ").trim());
+      const q = find(wEl.dataset.pb); if (q && q.sec) growCanvas(q.sec); positionOverlay();
+    });
     el.addEventListener("input", () => { const q = find(wEl.dataset.pb); if (q && q.sec) growCanvas(q.sec); positionOverlay(); });      // الإطار يتوسّع تلقائياً مع الأسطر أثناء الكتابة
     const multi = field === "text" && wEl.dataset.type === "heading";      // العنوان: Enter ينتقل إلى السطر الموالي (و Ctrl+Enter أو Esc أو النقر خارجه ينهي التحرير)
     const listH = multi && !!(find(wEl.dataset.pb) || { set: {} }).set.lm;
@@ -1083,12 +1092,26 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     }
     renderCanvas(); renderInspector();
   }
+  /* مسح التنسيق المنسوخ من الخارج: يزيل style/class/color/font من المحدَّد (أو كل النص إن لم يُحدَّد شيء) فيعود لنمط عنصر النص */
+  const FMT_ATTR = ["style", "class", "color", "face", "size", "bgcolor", "align", "lang", "dir"];
+  function stripFmtIn(root, sel) {
+    const all = [root].concat([...root.querySelectorAll("*")]);
+    all.forEach(n => { if (n === root && !sel) return; if (n.tagName === "FONT") { while (n.firstChild) n.parentNode.insertBefore(n.firstChild, n); n.remove(); return; } if (sel && n !== root && !sel.intersectsNode(n)) return; FMT_ATTR.forEach(a => { if (n !== root) n.removeAttribute(a); }); });
+    root.querySelectorAll("span").forEach(n => { if (!n.attributes.length) { while (n.firstChild) n.parentNode.insertBefore(n.firstChild, n); n.remove(); } });
+  }
+  function clearFmt() {
+    if (!editing) return; const el = editing.el, sl = fdoc.getSelection(), r = sl && sl.rangeCount ? sl.getRangeAt(0) : null, part = r && !r.collapsed && el.contains(r.commonAncestorContainer);
+    if (part) { fdoc.execCommand("removeFormat"); stripFmtIn(el, r); } else { stripFmtIn(el, null); }
+    toast("تم مسح التنسيق المنسوخ — يعود النص لنمط العنصر");
+  }
+  /* نص عنصر بلا تنسيق مضمَّن (للصق النمط على نص حُشر فيه تنسيق خارجي) */
+  function plainFmtHtml(html) { const d = new DOMParser().parseFromString("<body>" + String(html || "") + "</body>", "text/html"); stripFmtIn(d.body, null); return d.body.innerHTML; }
   function showRt(on) {
     let rt = $("pbx-rt");
     if (!rt) { rt = document.createElement("div"); rt.id = "pbx-rt"; rt.className = "pbx-rt";
       rt.innerHTML = `<button data-c="bold"><b>B</b></button><button data-c="italic"><i>I</i></button><button data-c="underline"><u>U</u></button><button data-c="insertUnorderedList">• قائمة</button><button data-c="createLink">🔗</button><button data-c="removeFormat">✕ تنسيق</button><input type="color" data-c="foreColor" title="لون النص">`;
       rt.addEventListener("mousedown", e => { if (e.target.tagName !== "INPUT") e.preventDefault(); });
-      rt.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; let v = null; if (b.dataset.c === "createLink") { v = prompt("الرابط:", "https://"); if (!v) return; } fdoc.execCommand(b.dataset.c, false, v); });
+      rt.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; let v = null; if (b.dataset.c === "createLink") { v = prompt("الرابط:", "https://"); if (!v) return; } if (b.dataset.c === "removeFormat") { clearFmt(); return; } fdoc.execCommand(b.dataset.c, false, v); });
       rt.addEventListener("input", e => { if (e.target.dataset.c) fdoc.execCommand(e.target.dataset.c, false, e.target.value); });
       $("pbx-stage").appendChild(rt); }
     rt.style.display = on ? "flex" : "none";
@@ -2039,7 +2062,9 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function copyStyle() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const keys = styleKeys(inf), st = {}; keys.forEach(k => { if (inf.set[k] !== undefined) st[k] = clone(inf.set[k]); }); E.styleClip = { keys, st }; toast("🎨 نُسخ نمط العنصر — حدّد عنصراً آخر وانقر «لصق النمط»"); }
   function pasteStyle() {
     const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf));
-    E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else delete inf.set[k]; }); E.nextLabel = "لصق نمط"; afterEdit();
+    E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else delete inf.set[k]; });
+    if (inf.node.type === "text" && typeof inf.set.html === "string" && /\s(style|class|color|face|size)=|<font/i.test(inf.set.html)) inf.set.html = plainFmtHtml(inf.set.html);      // تنسيق مضمَّن (من لصق خارجي) يمنع ظهور النمط المنسوخ
+    E.nextLabel = "لصق نمط"; afterEdit();
   }
   /* محاذاة العنصر على القسم/الصفحة: أفقياً (يسار/وسط/يمين) أو عمودياً (أعلى/وسط/أسفل) */
   function alignPage(how) {
