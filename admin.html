@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.727">
+<meta name="admin-version" content="1.89.728">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
@@ -1731,7 +1731,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
 <script src="assets/js/admin-returns.js?v=eb4cea27"></script>
 <script src="assets/js/admin-ruqya.js?v=dac77641"></script>
-<script src="assets/js/admin-payments.js?v=26962789"></script>
+<script src="assets/js/admin-payments.js?v=f8793236"></script>
 <script src="assets/js/seo-box.js?v=34fae1c8"></script>
 <script src="assets/js/admin-seo.js?v=de4b03e8"></script>
 <script src="assets/js/admin-blog.js?v=98b5bb66"></script>

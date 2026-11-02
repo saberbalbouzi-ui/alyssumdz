@@ -161,7 +161,7 @@ const AdminPayments = (() => {
   /* «Détail paiement» بنسق ياليدين نفسه (Livré / Retour، Total ramassé، Frais de recouvrement / livraison / retour / assurance، Net) لمقارنته مع كشف الشركة بالسنتيم */
   const d2=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString("fr-DZ",{minimumFractionDigits:2,maximumFractionDigits:2})+" DA";
   function detailBlock(T) {
-    const row=(l,v,k)=>`<div class="pm-dl"><span>${l}</span><span dir="ltr" style="color:${k}">${v}</span></div>`, net=T.got-T.cod-T.del-T.ret-T.ins;
+    const row=(l,v,k)=>`<div class="pm-dl"><span>${l}</span><span dir="ltr" style="color:${k}">${v}</span></div>`, net=T.realNet!=null?T.realNet:T.got-T.cod-T.del-T.ret-T.ins;      // مع الكشوف الحقيقية: مجموع صافي كل كشف كما حسبته الشركة (تقريب كل كشف على حدة)
     return `<div class="pm-card" style="margin:.6rem 0"><b>Détail paiement</b><div class="pm-note">الطرود المنتهية: ${T.nDone} Livré · ${T.nRet} Retour (كما في ياليدين)</div>${row("Total ramassé",d2(T.got),"#60a5fa")}${row("Frais de recouvrement","-"+d2(T.cod),"#fca5a5")}${row("Frais de livraison","-"+d2(T.del),"#fca5a5")}${row("Frais de retour","-"+d2(T.ret),"#fca5a5")}${row("Frais d'assurance","-"+d2(T.ins),"#fca5a5")}${row("Net","= "+d2(net),net<0?"#fca5a5":"#d4ff4d")}</div>`;
   }
   /* كشوف «Détail paiement» الحقيقية من ياليدين (pas prêt / prêt à payer): تُلصق نصاً وتُحفظ؛ مجموع صافيها = المستحق الفعلي، ويُقارَن بتقدير اللوحة */
@@ -174,6 +174,10 @@ const AdminPayments = (() => {
   }
   async function ydLoad() { if(YP.loaded) return; YP.loaded=true; try{ const v=await Priv.get("ydpay",[]); YP.list=Array.isArray(v)?v:[]; }catch(_){ } }
   async function ydSave() { try{ await Priv.set("ydpay",YP.list); }catch(_){ } }
+  function ydReal() {
+    if(!YP.list.length) return null; const z={ got:0, cod:0, del:0, ret:0, ins:0, net:0, livre:0, retour:0 };
+    YP.list.forEach(x=>{ Object.keys(z).forEach(k=>{ z[k]+=Number(x[k])||0; }); }); return z;
+  }
   function ydPayCard() {
     const nf=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString("fr-DZ",{minimumFractionDigits:2,maximumFractionDigits:2}), tot=YP.list.reduce((n,x)=>n+x.net,0), est=sumSettle(items()).net;
     const rows=YP.list.map((x,i)=>`<tr><td>${x.state==="ready"?"prêt à payer":"pas prêt"}</td><td>${x.livre} / ${x.retour}</td><td dir="ltr">${nf(x.got)}</td><td dir="ltr">-${nf(x.cod)}</td><td dir="ltr">-${nf(x.del)}</td><td dir="ltr">-${nf(x.ret)}</td><td dir="ltr">-${nf(x.ins)}</td><td dir="ltr"><b>${nf(x.net)}</b></td><td><button type="button" class="pm-btn pm-ydel" data-i="${i}">حذف</button></td></tr>`).join("");
@@ -182,15 +186,20 @@ const AdminPayments = (() => {
       <div class="pm-row" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start;margin-top:.5rem"><select id="pm-yst" style="min-width:140px"><option value="notready">pas prêt</option><option value="ready">prêt à payer</option></select><textarea id="pm-ytx" rows="3" placeholder="الصق هنا نص Détail paiement" style="flex:1;min-width:200px"></textarea><button type="button" class="pm-btn pm-primary" id="pm-yadd">إضافة الكشف</button></div>${YP.msg?`<div class="pm-note" style="color:#fca5a5">${esc(YP.msg)}</div>`:""}</section>`;
   }
   function settleCard() {
-    const T=sumSettle(items()); if(!T.n) return `<section class="pm-card"><b>🧾 تسوية ياليدين</b><p class="pm-note">لا طلبات مسجَّلة بعد. عند التسجيل تظهر هنا الأرقام تلقائياً؛ ولأدقّ النتائج استورد كشف الدفع من حساب ياليدين.</p><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين (xlsx / csv)</button></section>`;
+    let T=sumSettle(items()); const R=ydReal();
+    /* كشوف الشركة الحقيقية الملصوقة تحلّ محل التقدير في كل الأرقام (المحصَّل، التوصيل، COD، الإرجاع، الصافي، عدد الطرود) */
+    if(R) T=Object.assign({},T,{ got:R.got, cod:R.cod, del:R.del, ret:R.ret, ins:R.ins, net:R.net, realNet:R.net, retLoss:R.ret, nDone:R.livre, nRet:R.retour, nFile:T.n, profit:R.net-T.cogs-T.pack });
+    const M=v=>R?d2(v):dz(v)+" دج";
+    if(!T.n&&!R) return `<section class="pm-card"><b>🧾 تسوية ياليدين</b><p class="pm-note">لا طلبات مسجَّلة بعد. عند التسجيل تظهر هنا الأرقام تلقائياً؛ ولأدقّ النتائج استورد كشف الدفع من حساب ياليدين.</p><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين (xlsx / csv)</button></section>`;
     const c=(l,v,k,t)=>`<div class="pm-card pm-stat"${t?` title="${esc(t)}"`:""}><small>${l}</small><b${k?` style="color:${k}"`:""}>${v}</b></div>`;
     return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع (${DEF_RET} دج ثابتة) + 10 دج عن كل يوم تأخّر فيه سحبه أكثر من 10 أيام عند الشركة. ${T.nFile}/${T.n} طرد بأرقام الكشف الفعلية والباقي تقدير من التعريفة.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
       ${detailBlock(T)}
       <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-        ${c("صافي ما يخصّك (مسلَّم + مرتجع)",dz(T.net)+" دج",T.net<0?"#fca5a5":"#d4ff4d","مثل «net client» في كشف ياليدين")}
-        ${c("رسوم التوصيل المدفوعة لياليدين",dz(T.del)+" دج")}
-        ${c("عمولة COD"+(T.ins?" + التأمين":""),dz(T.cod+T.ins)+" دج")}
-        ${c("خسارة المرتجعات ("+T.nRet+")",dz(T.retLoss)+" دج","#fdba74")}
+        ${R?c("المحصَّل ("+T.nDone+" طرد مسلَّم)",d2(R.got),"#60a5fa"):""}
+        ${c("صافي ما يخصّك (مسلَّم + مرتجع)",M(T.net),T.net<0?"#fca5a5":"#d4ff4d","مثل «net client» في كشف ياليدين")}
+        ${c("رسوم التوصيل المدفوعة لياليدين",M(T.del))}
+        ${c("عمولة COD"+(T.ins?" + التأمين":""),M(T.cod+T.ins))}
+        ${c("رسوم الإرجاع ("+T.nRet+")",M(T.retLoss),"#fdba74")}
         ${c("تكلفة منتجات المسلَّم",dz(T.cogs)+" دج",null,"من تبويب «تكلفة المنتجات»")}
         ${c("التغليف",dz(T.pack)+" دج")}
         ${c("الربح النهائي (بعد التكلفة والتغليف)",dz(T.profit)+" دج",T.profit<0?"#fca5a5":"#d4ff4d","الإعلان لا يدخل هنا؛ تجده في «المخزون والأرباح»")}
