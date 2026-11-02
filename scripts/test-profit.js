@@ -31,4 +31,16 @@ ok("ترتيب الحملات بالصافي تنازلياً", cm.rows[0].net >
   ok("flow: قائمة المنتجات مرتبة بالحقيقي وصف بلا نشاط يُستبعد", f.list.length === 2 && f.list[0].slug === "A" && f.list[0].real === 3950 - 900 && f.list[1].real === 1600, f.list);
   ok("flowHtml: بلا بيانات لا شيء، ومعها بطاقة بالنص", P.flowHtml(P.flow({}, {}, {})) === "" && /الربح الحقيقي/.test(P.flowHtml(f)) && /4 طلب/.test(P.flowHtml(f)));
 }
+// الربح اليومي لكل منتج: يوم ← صف لكل منتج، الإعلان الخامل يُحتسب، والأيام الفارغة تُستبعد
+{
+  const iso = t => { const d = new Date(t); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const A = { computeFinance: (z, g) => iso(g.from) === "2026-10-02" ? { K: { adIdleBy: { B: 300 } }, per: { A: { p: { title: "أ" }, units: 2, expUnits: 1, revenue: 6000, delivery: 800, cogs: 2000, pack: 100, ad: 500, adL: 0, retC: 200 }, B: { p: { title: "ب" }, units: 0, revenue: 0 } } } : { K: {}, per: {} } };
+  const d = P.daily(A, "2026-10-01", "2026-10-03");
+  ok("daily: يوم واحد فيه نشاط فقط", d.days.length === 1 && d.days[0].day === "2026-10-02" && d.n === 3, d);
+  const ra = d.days[0].rows.find(r => r.slug === "A"), rb = d.days[0].rows.find(r => r.slug === "B");
+  ok("daily: مبيعات وتكلفة وحملة وصافي منتج", ra.sales === 6000 && ra.cost === 2100 && ra.ad === 500 && ra.net === 6000 - 800 - 2100 - 200 - 500 && ra.pend === 1, ra);
+  ok("daily: منتج بلا مبيعات وله إنفاق خامل يظهر بصافٍ سالب", rb && rb.ad === 300 && rb.net === -300, rb);
+  ok("daily: الإجمالي = مجموع الصفوف", d.tot.sales === 6000 && d.tot.ad === 800 && d.tot.net === ra.net + rb.net, d.tot);
+  ok("daily: فترة معكوسة أو بلا Admin ترجع فارغة", P.daily(A, "2026-10-05", "2026-10-01").days.length === 0 && P.daily(null, "2026-10-01", "2026-10-02").days.length === 0);
+}
 console.log(bad ? "✗ فشل " + bad + " من " + n : "✓ " + n + " فحصاً ناجحاً"); process.exit(bad ? 1 : 0);

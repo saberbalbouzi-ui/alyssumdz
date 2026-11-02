@@ -56,6 +56,37 @@ const AdminProfit = (() => {
       ${ln("= الربح الحقيقي", f.real, f.units ? "≈ " + nf(f.real / f.units) + " دج للقطعة المسلَّمة" : "", 1)}</table></div>
       ${f.list.length > 1 ? `<div class="pf-sub" style="margin-top:.6rem">لكل منتج (الربح الحقيقي بعد إعلانه الخاص):</div><div class="pf-wrap"><table class="pf-tbl"><tr><th>المنتج</th><th>قطع</th><th>صافي الكشف</th><th>بلا إعلان</th><th>الحقيقي</th></tr>${f.list.slice(0, 12).map(w => `<tr><td>${esc(w.title)}</td><td>${w.units}</td><td>${dz(w.net)}</td><td class="${col(w.pre)}">${dz(w.pre)}</td><td class="${col(w.real)}">${dz(w.real)}</td></tr>`).join("")}</table></div>` : ""}</div>`;
   }
+  /* ── الربح اليومي لكل منتج: يوم ← صف لكل منتج (مبيعات، تكلفة المنتجات، الحملة إن وُجدت، الصافي) لفترة يحدّدها المستخدم. اليوم = تاريخ الطلب، والمبيعات = المحصَّل من المسلَّم (كما في بقية الصفحة) ── */
+  const dayMs = d => { const p = String(d || "").split("-").map(Number); return p.length === 3 && p[0] ? new Date(p[0], p[1] - 1, p[2]).getTime() : NaN; };
+  function daily(A, fromIso, toIso) {
+    const a = dayMs(fromIso), b = dayMs(toIso); if (!(a <= b) || !A || !A.computeFinance) return { days: [], tot: null, n: 0 };
+    const out = [], tot = { units: 0, pend: 0, sales: 0, cost: 0, ad: 0, net: 0 }; let n = 0;
+    for (let t = a; t <= b && n < 93; n++) {
+      const nx = new Date(t); nx.setDate(nx.getDate() + 1); const { K, per } = A.computeFinance(0, { from: t, to: nx.getTime() }), idleBy = (K && K.adIdleBy) || {}, rows = [];
+      Object.keys(per || {}).forEach(sl => {
+        const r = per[sl]; if (!r) return; const idle = Math.round(idleBy[sl] || 0), ad = Math.round((r.ad || 0) + (r.adL || 0)) + idle;
+        if (!(r.units || r.retUnits || r.expUnits || ad)) return;
+        const sales = Math.round(r.revenue || 0), cost = Math.round((r.cogs || 0) + (r.pack || 0)), net = Math.round((r.revenue || 0) - (r.delivery || 0) - (r.cogs || 0) - (r.pack || 0) - (r.retC || 0) - ad);
+        rows.push({ slug: sl, title: (r.p && r.p.title) || sl, units: r.units || 0, pend: r.expUnits || 0, ret: r.retUnits || 0, sales, cost, ad, net });
+      });
+      if (rows.length) { rows.sort((x, y) => y.net - x.net); const d = rows.reduce((m, x) => ({ units: m.units + x.units, pend: m.pend + x.pend, sales: m.sales + x.sales, cost: m.cost + x.cost, ad: m.ad + x.ad, net: m.net + x.net }), { units: 0, pend: 0, sales: 0, cost: 0, ad: 0, net: 0 }); Object.keys(tot).forEach(k => { tot[k] += d[k]; }); out.push({ day: iso(new Date(t)), rows, tot: d }); }
+      t = nx.getTime();
+    }
+    return { days: out.reverse(), tot, n };
+  }
+  function dailyHtml() {
+    const pad = 6 * 864e5, end = iso(), st = iso(new Date(Date.now() - pad)); if (!S.dFrom) S.dFrom = st; if (!S.dTo) S.dTo = end;
+    const cl = x => (x >= 0 ? "pos" : "neg"), cell = (v, c) => `<td dir="ltr" style="text-align:left;white-space:nowrap"${c ? ` class="${c}"` : ""}>${v}</td>`;
+    const D = daily(Admin, S.dFrom, S.dTo);
+    const body = D.days.map(d => d.rows.map((x, i) => `<tr><td data-l="اليوم" style="white-space:nowrap">${i ? "" : esc(d.day)}</td><td data-l="المنتج"><b>${esc(x.title)}</b>${x.units || x.pend ? `<br><small>${x.units} مسلَّمة${x.pend ? " · " + x.pend + " قيد التوصيل" : ""}${x.ret ? " · " + x.ret + " مرتجعة" : ""}</small>` : ""}</td>${cell(dz(x.sales))}${cell(dz(-x.cost))}${cell(x.ad ? dz(-x.ad) : "—")}${cell(dz(x.net), cl(x.net))}</tr>`).join("") +
+      (d.rows.length > 1 ? `<tr style="font-weight:800;background:rgba(255,255,255,.05)"><td></td><td>مجموع ${esc(d.day)}</td>${cell(dz(d.tot.sales))}${cell(dz(-d.tot.cost))}${cell(d.tot.ad ? dz(-d.tot.ad) : "—")}${cell(dz(d.tot.net), cl(d.tot.net))}</tr>` : "")).join("");
+    return `<div class="pf-card"><h3>📅 الربح اليومي لكل منتج</h3>
+      <div class="pf-row" style="align-items:flex-end"><label>من <input id="pf-d-from" class="pf-in" type="date" value="${esc(S.dFrom)}" max="${end}"></label><label>إلى <input id="pf-d-to" class="pf-in" type="date" value="${esc(S.dTo)}" max="${end}"></label><button class="pf-btn" data-pf="drange">عرض</button>
+        <button class="pf-btn g" data-pf="dq" data-d="1">اليوم</button><button class="pf-btn g" data-pf="dq" data-d="7">7 أيام</button><button class="pf-btn g" data-pf="dq" data-d="30">30 يوماً</button><button class="pf-btn g" data-pf="dq" data-d="m">هذا الشهر</button></div>
+      <div class="pf-sub">اليوم = تاريخ الطلب. المبيعات = المحصَّل من الطرود المسلَّمة؛ تكلفة المنتجات = سعر الشراء + التغليف؛ الحملة = إنفاقها المنسوب للمنتج (أو «—» إن لم توجد)؛ الصافي بعد التوصيل وخسارة المرتجعات.${D.n >= 93 ? " (الحد الأقصى 93 يوماً)" : ""}</div>
+      ${D.days.length ? `<div class="pf-wrap"><table class="pf-tbl"><tr><th>اليوم</th><th>المنتج</th><th>مجموع المبيعات</th><th>تكلفة المنتجات</th><th>الحملة الإعلانية</th><th>صافي الربح</th></tr>${body}
+        <tr style="font-weight:900"><td></td><td>إجمالي الفترة</td>${cell(dz(D.tot.sales))}${cell(dz(-D.tot.cost))}${cell(D.tot.ad ? dz(-D.tot.ad) : "—")}${cell(dz(D.tot.net), cl(D.tot.net))}</tr></table></div>` : '<div class="pf-sub">لا مبيعات ولا إنفاق إعلاني في هذه الفترة.</div>'}</div>`;
+  }
   /* توزيع الإنفاق الفعلي على أيام وحملات ثم ربطه بحملات الطلبات (utm) بالاسم */
   function spendBy(rows) {
     const day = {}, camp = {}; (rows || []).forEach(r => { day[r.day] = (day[r.day] || 0) + r.spend_dzd; const k = r.campaign_name || r.campaign_id; const c = camp[k] || (camp[k] = { name: k, provider: r.provider, spend: 0, clicks: 0, impr: 0 }); c.spend += r.spend_dzd; c.clicks += r.clicks || 0; c.impr += r.impressions || 0; });
@@ -188,6 +219,7 @@ const AdminProfit = (() => {
         <div class="pf-sub">النقد الذي دخل فعلاً من الطرود المسلَّمة (${dz(c.rev)}) بعد كل التكاليف · هامش ${c.margin}% · ${c.hasApi ? "الإعلان من حساباتك الفعلية" : "الإعلان تقدير — اربط حساباتك للدقة"}</div>
         <div class="pf-sub">المبيعات «الظاهرة» (كل الطلبات المؤكّدة والمشحونة والمسلَّمة والمرتجعة) <b>${dz(shown)}</b> — منها ${dz(c.rev)} فقط تحصّلت، والباقي مرتجع أو لم يصل بعد (متوقع ${dz(c.exp)}).</div></div>
         ${flowHtml(fl)}
+        ${dailyHtml()}
         <div class="pf-grid">${subs ? `<div class="pf-k"><b>${dz(subs)}</b><span>${subs > 0 ? "دعم الشحن — تكلفة تُغطّيها زيادة سعر المنتج (الفرق بين سعر الشركة وما دفعه الزبائن، للطلبات المسلَّمة)؛ يدخل في التكاليف لا في الربح" : "زيادة الشحن المحصَّلة فوق سعر الشركة"}</span></div>` : ""}<div class="pf-k"><b>${c.rate}%</b><span>نسبة التسليم (${c.delivered} مسلَّم / ${c.failed} مرتجع)</span></div><div class="pf-k"><b>${dz(c.perOrder)}</b><span>الصافي لكل طلب مسلَّم</span></div><div class="pf-k"><b>${c.cpa ? dz(c.cpa) : "—"}</b><span>تكلفة الإعلان لكل طلب مسلَّم (CPA الحقيقي)</span></div><div class="pf-k"><b>${c.roas ? c.roas + "×" : "—"}</b><span>العائد الفعلي على الإعلان (ROAS)</span></div><div class="pf-k"><b>${dz(c.ads)}</b><span>الإعلانات ${c.hasApi ? "(فعلية)" : "(تقدير)"}</span></div><div class="pf-k"><b>${c.open}</b><span>طلبات في الطريق (لم تُحسب بعد)</span></div></div>
         ${c.rate && c.rate < 60 ? `<div class="pf-note">⚠️ نسبة التسليم ${c.rate}% — كل مرتجع يكلّفك توصيلاً ذهاباً وإياباً وتغليفاً، فالإعلان الذي يجلب مرتجعات أغلى من مظهره.</div>` : ""}
         ${c.ads > 0 && c.net < 0 ? '<div class="pf-note">🔴 أنت تخسر فعلاً بعد حساب الإعلان والمرتجعات: ارفع نسبة التأكيد أو أوقف الحملات الأضعف (انظر الجدول أدناه).</div>' : ""}
@@ -229,7 +261,9 @@ const AdminProfit = (() => {
   }
   async function onClick(e) {
     const t = e.target.closest("[data-pf]"); if (!t) return; const a = t.dataset.pf, id = +t.dataset.id; if (S.flash && a !== "fbconnect") { S.flash = ""; }
-    if (a === "days") { S.days = +t.dataset.d; await loadAds(); draw(); }
+    if (a === "drange") { const f = ($("pf-d-from") || {}).value, to = ($("pf-d-to") || {}).value; if (!f || !to || dayMs(f) > dayMs(to)) { toast("حدّد فترة صحيحة: البداية قبل النهاية"); return; } S.dFrom = f; S.dTo = to; draw(); }
+    else if (a === "dq") { const d = t.dataset.d, now = new Date(); S.dTo = iso(now); S.dFrom = d === "m" ? iso(new Date(now.getFullYear(), now.getMonth(), 1)) : iso(new Date(Date.now() - (+d - 1) * 864e5)); draw(); }
+    else if (a === "days") { S.days = +t.dataset.d; await loadAds(); draw(); }
     else if (a === "refresh") refresh();
     else if (a === "add") { S.form = { provider: "meta", currency: "DZD", fx: 1 }; draw(); const f = $("pf-form"); if (f) f.scrollIntoView({ block: "nearest" }); }
     else if (a === "edit") { const x = S.ads.find(y => y.id === id); if (x) { S.form = { id: x.id, provider: x.provider, account_id: x.account_id, name: x.name, currency: x.currency, fx: x.fx }; draw(); } }
@@ -267,6 +301,6 @@ const AdminProfit = (() => {
     w(); setTimeout(w, 500);
   }
   if (typeof document !== "undefined") { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init(); }
-  return { render, refresh, S, calc, flow, flowHtml, oauthReturn, spendBy, campaigns, _t: { norm, pct } };
+  return { render, refresh, S, calc, flow, flowHtml, daily, oauthReturn, spendBy, campaigns, _t: { norm, pct } };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = AdminProfit;
