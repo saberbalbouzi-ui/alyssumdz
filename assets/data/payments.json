@@ -1,4 +1,78 @@
 {
-  "byOrder": {}
+  "byOrder": {
+    "M261022-N81JZ": {
+      "status": "paid",
+      "amount": 4900,
+      "date": "2026-10-25",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "M261020-SWL6D": {
+      "status": "paid",
+      "amount": 6900,
+      "date": "2026-10-21",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "M261019-OPX5J": {
+      "status": "paid",
+      "amount": 13300,
+      "date": "2026-10-20",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "M261019-M2YDU": {
+      "status": "paid",
+      "amount": 3800,
+      "date": "2026-10-21",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "M261014-YTIIP": {
+      "status": "paid",
+      "amount": 4900,
+      "date": "2026-10-17",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "M261012-X7UWE": {
+      "status": "paid",
+      "amount": 4850,
+      "date": "2026-10-14",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "M261012-8JMCD": {
+      "status": "paid",
+      "amount": 3500,
+      "date": "2026-10-15",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "S261010-F5D05": {
+      "status": "paid",
+      "amount": 3150,
+      "date": "2026-10-13",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    },
+    "S261010-2FB29": {
+      "status": "paid",
+      "amount": 5800,
+      "date": "2026-11-02",
+      "method": "cod",
+      "note": "",
+      "manual": true
+    }
+  },
+  "manual": [],
+  "updatedAt": "2026-11-02T14:07:52.613Z"
 }
-
