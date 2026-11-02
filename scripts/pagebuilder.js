@@ -1143,7 +1143,7 @@ const PB = (() => {
       /* تكبير تناسبي للعنصر: يُضبط بسحب زواياه فيكبر محتواه كله مع إطاره */
       emit(css, wsx + ">*", s2, [["wsc", v => `zoom:${Math.max(.2, Math.min(5, (num(v) || 100) / 100))};`]]);
       ["t", "m"].forEach(dv => { if (own(s2, "wsc", dv) === undefined && own(s2, "wsc", "d") !== undefined) css[dv].push(`${wsx}>*{zoom:1}`); });
-      if (free) css.d.push(`${wsx}{position:absolute;margin:0;max-width:none}`);
+      if (free) css.d.push(`${wsx}{position:absolute!important;margin:0;max-width:none}`);      // مهم: قوالب التأثيرات (لمعة…) تضع position:relative على العنصر فتُفسد الموضع الحر وتقذفه بعيداً
       if (free && curAuto && curAuto.items[w.id]) { const a = curAuto.items[w.id]; css.m.push(`${wsx}{left:${a.fx}%;top:${a.fy}px;width:${a.fwd}%;height:${a.fh}px}`); }
       def.css(css, wsx, s2);
       if (!["shdr", "sbar", "herow"].includes(w.type) && (DEVS.some(dv => num(own(s2, "rad", dv)) > 0) || (Array.isArray(s2.radc) && s2.radc.some(x => num(x) > 0)))) css.d.push(`${wsx}{overflow:hidden}`);      // تدوير زوايا الإطار يقصّ المحتوى معه (الهيدر والشريط والهيرو ترث التدوير بدل القص)
