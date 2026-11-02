@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.716">
+<meta name="admin-version" content="1.89.717">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
@@ -243,7 +243,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
 <link rel="stylesheet" href="assets/css/admin-glass.css?v=46">
-<link rel="stylesheet" href="assets/css/admin-theme.css?v=28">
+<link rel="stylesheet" href="assets/css/admin-theme.css?v=29">
 <link rel="stylesheet" href="assets/css/admin-lime.css?v=16">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#e2fe17",fs:17.5},white:{accent:"#059669",fs:17.5}},
 mode:function(){var m=null;try{m=localStorage.getItem(this.K)}catch(e){}return(m==="white"||m==="classic")?"white":"dark"},
@@ -898,16 +898,21 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-blacklist" class="hidden">
     <div class="card">
       <b style="color:var(--green)">القائمة السوداء لأرقام الهواتف</b>
-      <div class="hint">لحماية متجرك من الطلبات الوهمية أو المتكررة في الإلغاء.</div>
-      <div id="bl-rule" style="margin:.8rem 0"></div>
-      <b style="display:block;margin-top:.6rem">إضافة يدوية</b>
-      <div class="grid2" style="margin-top:.5rem">
-        <input id="bl-phone" placeholder="رقم الهاتف" dir="ltr">
-        <input id="bl-reason" placeholder="السبب (اختياري)">
-      </div>
-      <button class="small warn" onclick="Admin.addBlacklistEntry()">🚫 إضافة للقائمة السوداء</button>
+      <div class="hint">لحماية متجرك من الطلبات الوهمية أو المتكررة في الإلغاء والإرجاع.</div>
+      <div style="display:flex;gap:.4rem;margin-top:.6rem;flex-wrap:wrap"><button type="button" class="small" id="bl-t-list" onclick="Admin.blTab('list')">🚫 القائمة</button><button type="button" class="small gray" id="bl-t-set" onclick="Admin.blTab('set')">⚙ الإعدادات</button></div>
     </div>
-    <div class="card"><div class="rtw" style="overflow:auto"><table id="blacklist-table" class="rt"></table></div></div>
+    <div id="bl-p-set" class="hidden"><div class="card"><div id="bl-rule"></div></div></div>
+    <div id="bl-p-list">
+      <div class="card">
+        <b style="display:block">إضافة يدوية</b>
+        <div class="grid2" style="margin-top:.5rem">
+          <input id="bl-phone" placeholder="رقم الهاتف" dir="ltr">
+          <input id="bl-reason" placeholder="السبب (اختياري)">
+        </div>
+        <button class="small warn" onclick="Admin.addBlacklistEntry()">🚫 إضافة للقائمة السوداء</button>
+      </div>
+      <div class="card"><div class="rtw" style="overflow:auto"><table id="blacklist-table" class="rt"></table></div></div>
+    </div>
   </div>
 
   <div id="tab-pending" class="hidden">
@@ -1721,7 +1726,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-bulk-products.js?v=f12fc350"></script>
 <script src="assets/js/admin-reports.js?v=bfe80ebd"></script>
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
-<script src="assets/js/admin-returns.js?v=6c97e9a1"></script>
+<script src="assets/js/admin-returns.js?v=e0eb04ab"></script>
 <script src="assets/js/admin-ruqya.js?v=dac77641"></script>
 <script src="assets/js/admin-payments.js?v=8d58a311"></script>
 <script src="assets/js/seo-box.js?v=34fae1c8"></script>
@@ -5247,6 +5252,9 @@ const Admin = {
       return true;
     });
   },
+  /* تبويبان داخل القائمة السوداء: القائمة | الإعدادات */
+  blTab(k){ k = k === "set" ? "set" : "list"; ["list", "set"].forEach(x=>{ const p = $f("bl-p-" + x), b = $f("bl-t-" + x); if(p) p.classList.toggle("hidden", x !== k); if(b) b.classList.toggle("gray", x !== k); }); },
+  openBlSettings(){ const b = [...document.querySelectorAll(".nav-btn")].find(x=>(x.getAttribute("onclick")||"").includes("'blacklist'")); this.tab("blacklist", b); this.blTab("set"); },
   _retPh(o){ try{ return !!this.returnPhase(o); }catch(e){ return false; } },
   /* عدّاد إرجاعات رقم (طرود راجعة/فاشلة) ولونه: أخضر أول إرجاع، برتقالي ما قبل الحدّ، أحمر عند بلوغ حدّ الحظر */
   retCount(phone){ return this.blFailOrders(phone).length; },
@@ -5304,10 +5312,13 @@ const Admin = {
     const R = this.blRule, all = this.allDeliveryCompanies(), keys = Object.keys(all).filter(k=>(this.deliveryCfg[k]||{}).enabled || R.companies.includes(k));
     const sel = (id, opts, cur)=>'<select id="' + id + '" onchange="Admin.setBlRule()">' + opts.map(o=>'<option value="' + o[0] + '"' + (String(o[0]) === String(cur) ? " selected" : "") + '>' + o[1] + '</option>').join("") + '</select>';
     box.innerHTML = '<div class="card" style="margin:0"><label style="display:flex;gap:.5rem;align-items:center;font-weight:800"><input type="checkbox" id="bl-r-on" ' + (R.on ? "checked" : "") + ' onchange="Admin.setBlRule()"> الحظر التلقائي حسب الطلبات الفاشلة</label>' +
-      '<div class="grid2" style="margin-top:.6rem"><div><label class="hint">عدد الطلبات الفاشلة للحظر</label>' + sel("bl-r-th", [[2,"طلبان"],[3,"3 طلبات"],[4,"4 طلبات"],[5,"5 طلبات"]], R.threshold) + '</div>' +
+      '<div class="grid2" style="margin-top:.6rem"><div><label class="hint">عدد الإرجاعات/الطلبات الفاشلة للحظر</label>' + sel("bl-r-th", [[2,"طلبان"],[3,"3 طلبات"],[4,"4 طلبات"],[5,"5 طلبات"]], R.threshold) + '</div>' +
       '<div><label class="hint">المدة المحتسبة</label>' + sel("bl-r-days", [[0,"كل الطلبات"],[30,"آخر 30 يوماً"],[60,"آخر 60 يوماً"],[90,"آخر 90 يوماً"],[180,"آخر 6 أشهر"]], R.days) + '</div>' +
       '<div><label class="hint">عند بلوغ الحدّ</label>' + sel("bl-r-mode", [["pending","إضافة بانتظار مراجعتي"],["confirmed","حظر مباشر"]], R.mode) + '</div></div>' +
       '<label style="display:flex;gap:.5rem;align-items:center;margin-top:.6rem"><input type="checkbox" id="bl-r-ca" ' + (R.cancelled ? "checked" : "") + ' onchange="Admin.setBlRule()"> احتسب أيضاً الطلبات الملغاة (إلغاء الزبون)</label>' +
+      '<label style="display:flex;gap:.5rem;align-items:center;margin-top:.6rem"><input type="checkbox" id="bl-r-names" ' + (R.names !== false ? "checked" : "") + ' onchange="Admin.setBlRule()"> حظر الاسم الكامل أيضاً (من كلمتين فأكثر) من الطلب في الموقع</label>' +
+      '<label style="display:flex;gap:.5rem;align-items:flex-start;margin-top:.6rem"><input type="checkbox" id="bl-r-ip" ' + (R.ip ? "checked" : "") + ' onchange="Admin.setBlRule()" style="margin-top:.25rem"> <span>حظر عنوان الشبكة (IP) المرتبط بالرقم المحظور أيضاً<small class="hint" style="display:block;margin:0">احذر: قد يمنع زبائن آخرين يشاركون نفس الشبكة (شرائح الهاتف مثلاً)</small></span></label>' +
+      '<div class="hint" style="margin-top:.6rem">عدّاد الإرجاعات في تبويب «المرتجعات»: <b style="color:#28a745">أخضر</b> ثم <b style="color:#fd7e14">برتقالي</b> ثم <b style="color:#dc3545">أحمر</b> عند بلوغ الحدّ فيُحظر. المحظور لا يستطيع الطلب من الموقع ويظهر تحذير عند تسجيل طلبه يدوياً.</div>' +
       (keys.length ? '<div class="hint" style="margin-top:.6rem">احتساب فشل شركات التوصيل: ' + (R.companies.length ? "المحدّدة فقط" : "كل الشركات") + ' (اتركها بلا تحديد لاحتساب الكل؛ الطلبات غير المسجّلة لدى شركة تُحتسب دائماً)</div><div style="display:flex;flex-wrap:wrap;gap:.5rem">' +
         keys.map(k=>'<label style="display:flex;gap:.3rem;align-items:center"><input type="checkbox" class="bl-r-co" value="' + k + '" ' + (R.companies.includes(k) ? "checked" : "") + ' onchange="Admin.setBlRule()"> ' + all[k].name + '</label>').join("") + '</div>' : "") +
       '<div class="hint" style="margin-top:.6rem">«فشل التوصيل» يُسجَّل عند تحديد الطلب فاشلاً أو عندما تُرجع شركة التوصيل حالة رفض/إرجاع. عند حذفك رقماً يدوياً لا يُضاف ثانية إلا إن زادت طلباته الفاشلة.</div>' +
@@ -5315,9 +5326,9 @@ const Admin = {
   },
   setBlRule(){
     if(!this.blRule) this.loadBlRule(); const R = this.blRule;
-    R.on = !!$f("bl-r-on").checked; R.threshold = Number($f("bl-r-th").value) || 2; R.days = Number($f("bl-r-days").value) || 0; R.mode = $f("bl-r-mode").value === "confirmed" ? "confirmed" : "pending"; R.cancelled = !!$f("bl-r-ca").checked;
+    R.on = !!$f("bl-r-on").checked; R.threshold = Number($f("bl-r-th").value) || 2; R.days = Number($f("bl-r-days").value) || 0; R.mode = $f("bl-r-mode").value === "confirmed" ? "confirmed" : "pending"; R.cancelled = !!$f("bl-r-ca").checked; R.names = !!$f("bl-r-names").checked; R.ip = !!$f("bl-r-ip").checked;
     R.companies = [...document.querySelectorAll(".bl-r-co")].filter(c=>c.checked).map(c=>c.value);
-    this.saveBlRule(); this._blMap = null; this.renderBlRule(); this.renderOrders(); this.renderBlacklist(); toast("✅ حُفظت قاعدة الحظر");
+    this.saveBlRule(); this._blMap = null; this.publishBlock(); this.renderBlRule(); this.renderOrders(); this.renderBlacklist(); toast("✅ حُفظت قاعدة الحظر");
   },
 
   isBlacklisted(phone){

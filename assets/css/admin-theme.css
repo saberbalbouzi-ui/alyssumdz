@@ -300,3 +300,12 @@ html:is(.glass,.white) .pill:is(.st-annulee,.st-echec){background:#dc3545;color:
   .pbx-pact .small{flex:1 1 auto;justify-content:center;min-height:38px;padding:.35rem .55rem;font-size:.8rem;margin:0}
   .pbx-pact .small.ico{flex:0 0 42px}
 }
+
+/* v1.89.717: أقسام اللوحة المبنية بشبكة (التقارير، المدفوعات، التوجيه…) تتسع لعرض الهاتف ولا يوسّعها جدول عريض؛ وإيقاف «اسحب للتحديث» على الهاتف */
+@media(max-width:900px){
+  #ar,#aa,#pm,#sm,#dp,#ahome,#ag-app,#ad-app,#as-app,#dg-app,#sp-app{grid-template-columns:minmax(0,1fr);max-width:100%;min-width:0}
+  #ar>*,#aa>*,#pm>*,#sm>*,#dp>*,#ahome>*,#ag-app>*,#ad-app>*,#as-app>*,#dg-app>*,#sp-app>*,#ar .ar-card{min-width:0;max-width:100%}
+  #ar .ar-head,#ar .ar-controls{min-width:0}#ar .ar-controls input{max-width:100%;min-width:0}
+  #ar-content{min-width:0}
+}
+html,body{overscroll-behavior-y:none}
