@@ -119,8 +119,9 @@ const PB = (() => {
     if (s.bw !== undefined && s.bw !== "" && num(s.bw) === 0 && !(Array.isArray(s.bws) && s.bws.some(x => num(x) > 0))) d += "border-width:0;";      // «سماكة 0» تلغي حدّ القالب
     /* الإطار يزيد للخارج ولا يغيّر حجم العنصر: outline للسماكة الموحّدة، وطبقة ::before خارجية عند اختلاف سماكة الجهات */
     if (bwA.some(x => x > 0)) { const col = hexA(s.bc || "#ddd", s.bco), st = s.bs || "solid";
-      if (bwA.every(x => x === bwA[0])) d += `outline:${bwA[0]}px ${st} ${col};outline-offset:0;${s.bc ? "border-color:" + col + ";" : ""}`;
+      if (bwA.every(x => x === bwA[0])) d += `${num(s.bw) > 0 ? "border-width:0;" : ""}outline:${bwA[0]}px ${st} ${col};outline-offset:0;${s.bc ? "border-color:" + col + ";" : ""}`;      // حدّ الصفحة/القالب (CSS) يُستبدل بإطارك فلا يظهر إطاران
       else { d += "position:relative;"; css.d.push(`${sel}::before{content:"";position:absolute;inset:${bwA.map(x => -x + "px").join(" ")};border-style:${st};border-color:${col};border-width:${bwA.map(x => x + "px").join(" ")};border-radius:inherit;pointer-events:none}`); } }
+    if (!bwA.some(x => x > 0) && s.bc) d += `border-color:${hexA(s.bc, s.bco)};`;      // تغيير لون حدّ موجود (من CSS الصفحة) دون سماكة جديدة
     if (Array.isArray(s.radc) && s.radc.some(x => x !== "" && x != null && !isNaN(Number(x)))) d += `border-radius:${[0, 1, 2, 3].map(i => (num(s.radc[i]) || 0) + "px").join(" ")}!important;`;
     /* الخلفية في طبقة مستقلة (::after) عند ضبط شفافية الخلفية أو تدوير زواياها: لا تتأثر بها الحدود ولا المحتوى */
     const bga = num(s.bga), layer = !!bgd && ((bga != null && bga < 1) || DEVS.some(dv => own(s, "bgrad", dv) !== undefined));
@@ -504,9 +505,9 @@ const PB = (() => {
     },
     iconbox: {
       label: "صندوق أيقونة", ic: "💠", def: { icon: "🌿", title: "ميزة رائعة", text: "وصف قصير يشرح الميزة للزبون.", al: { d: "center" }, isz: { d: 44 }, tc: "#173F35", xc: "#555555" },
-      ctl: [{ k: "icon", l: "الأيقونة (اختر من القائمة أو اكتب أي رمز) — أو انقر الأيقونة في الصفحة", t: "iconpick", tab: "c" }, { k: "title", l: "العنوان", t: "text", tab: "c" }, { k: "text", l: "الوصف", t: "textarea", tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 16, max: 140, tab: "s" }, { k: "tc", l: "لون العنوان", t: "color", tab: "s" }, { k: "xc", l: "لون الوصف", t: "color", tab: "s" }, { k: "tfs", l: "حجم العنوان (px)", t: "num", r: 1, min: 12, max: 60, tab: "s" }],
+      ctl: [{ k: "icon", l: "الأيقونة (اختر من القائمة أو اكتب أي رمز) — أو انقر الأيقونة في الصفحة", t: "iconpick", tab: "c" }, { k: "title", l: "العنوان", t: "text", tab: "c" }, { k: "text", l: "الوصف", t: "textarea", tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }, { k: "isz", l: "حجم الأيقونة (px)", t: "num", r: 1, min: 16, max: 140, tab: "s" }, { k: "tc", l: "لون العنوان", t: "color", tab: "s" }, { k: "xc", l: "لون الوصف", t: "color", tab: "s" }, { k: "tfs", l: "حجم العنوان (px)", t: "num", r: 1, min: 12, max: 60, tab: "s" }, { k: "xfs", l: "حجم النص (الوصف) (px)", t: "num", r: 1, min: 9, max: 40, tab: "s" }],
       html: (s, id, ctx) => { const b = `<div class="pb-ib"><div class="pb-ibi" data-icon="icon">${iconHtml(s.icon, ctx && ctx.base)}</div><h3 data-edit="title">${esc(s.title)}</h3><p data-edit="text">${esc(s.text)}</p></div>`; return s.link ? `<a href="${esc(s.link)}" style="color:inherit;text-decoration:none">${b}</a>` : b; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-ibi", s, [["isz", px("font-size")]]); emit(c, sel + " .pb-ib h3", s, [["tfs", px("font-size")]]); if (s.tc) c.d.push(`${sel} .pb-ib h3{color:${s.tc}}`); if (s.xc) c.d.push(`${sel} .pb-ib p{color:${s.xc}}`); },
+      css: (c, sel, s) => { emit(c, sel + " .pb-ibi", s, [["isz", px("font-size")]]); emit(c, sel + " .pb-ib h3", s, [["tfs", px("font-size")]]); emit(c, sel + " .pb-ib p", s, [["xfs", px("font-size")]]); if (s.tc) c.d.push(`${sel} .pb-ib h3{color:${s.tc}}`); if (s.xc) c.d.push(`${sel} .pb-ib p{color:${s.xc}}`); },
     },
     bullets: {
       label: "قائمة المزايا", ic: "•", fit: 1, def: { items: "ميزة أولى للمنتج\nميزة ثانية للمنتج\nميزة ثالثة للمنتج", micon: "ic:check-circle", mk: "disc", mchar: "★", mc: "#157a55", ms: { d: 18 }, gap: { d: 8 }, fs: { d: 18 } },
