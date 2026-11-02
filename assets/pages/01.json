@@ -1408,7 +1408,8 @@
         },
         "fw": "900",
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
         "color": "#1b4a8a",
         "lh": {
@@ -1423,7 +1424,108 @@
        "id": "46v6cu5",
        "type": "text",
        "set": {
-        "html": "<p>مزيج طبيعي من العسل وخلاصات أعشاب ومكوّنات نباتية، مناسب للأطفال من 4 إلى 18 سنة ضمن روتينهم اليومي.</p>",
+        "html": "<p></p><p>مزيج طبيعي من العسل وخلاصات أعشاب ومكوّنات نباتية، مناسب للأطفال من 4 إلى 18 سنة ضمن روتينهم اليومي.</p>",
+        "fs": {
+         "d": 18,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start",
+         "m": "center"
+        },
+        "color": "#000000",
+        "fw": "600",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1,
+        "hauto": false,
+        "mh": {
+         "m": 112
+        },
+        "bg": "#c1dafb",
+        "rad": {
+         "m": 23
+        }
+       }
+      },
+      {
+       "id": "bcaxbq6",
+       "type": "text",
+       "set": {
+        "html": "<p></p><p>ملائم للأطفال دون أي اعراض جانبية .</p>",
+        "fs": {
+         "d": 18,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start",
+         "m": "center"
+        },
+        "color": "#000000",
+        "fw": "600",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1,
+        "hauto": false,
+        "mh": {
+         "m": 68
+        },
+        "bg": "#c1dafb",
+        "rad": {
+         "m": 23
+        }
+       }
+      },
+      {
+       "id": "y95fgyt",
+       "type": "text",
+       "set": {
+        "html": "<p></p><p>يتكون من عسل البرتقال +خلاصة الاعشاب سائلة .</p>",
+        "fs": {
+         "d": 18,
+         "m": 16
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start",
+         "m": "center"
+        },
+        "color": "#000000",
+        "fw": "600",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1,
+        "hauto": false,
+        "mh": {
+         "m": 65
+        },
+        "mar": {
+         "m": [
+          30,
+          0,
+          0,
+          0
+         ]
+        },
+        "bg": "#c1dafb",
+        "rad": {
+         "m": 23
+        }
+       }
+      },
+      {
+       "id": "k2d2fml",
+       "type": "text",
+       "set": {
+        "html": "<p></p><span style=\"background-color: transparent;\">✅️ يزيد التركيز و الذكاء&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يرفع القدرة على الحفظ&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يقوي الذاكرة&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ فرط الحركة و سرعة النمو&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ الخوف و التشتت&nbsp;</span>",
         "fs": {
          "d": 18,
          "m": 16
@@ -1434,11 +1536,15 @@
         "ta": {
          "d": "start"
         },
-        "color": "#444",
+        "color": "#000000",
         "fw": "600",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0.1
+        "animDelay": 0.1,
+        "hauto": false,
+        "mh": {
+         "m": 173
+        }
        }
       },
       {
