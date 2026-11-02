@@ -132,7 +132,7 @@ const AdminPayments = (() => {
   function view(it) { const r=rawRec(it)||{}, ov=r.ov||{}; return { name:ov.name!=null?ov.name:it.name, phone:ov.phone!=null?ov.phone:it.phone, product:ov.product!=null?ov.product:it.product, total:ov.total!=null?Number(ov.total):it.total }; }
   function amount(it, r) { return Number(r.amount)>0?Number(r.amount):view(it).total; }
   /* القائمة تُبقي ما يدخل في حساب الدفعة القادمة فقط: طرود الشركة (مسلَّم/مرتجع/في الطريق) غير المعلَّمة «مدفوع»؛ وزرّ «عرض الكل» يكشف الباقي للتراجع */
-  const inNext = it => !!settle(it) && !(isMan(it) && record(it).status === "paid");
+  const inNext = it => !!settle(it) && !(isMan(it) && record(it).status === "paid") && !inFile(it);
   const baseList = () => S.all ? items() : items().filter(inNext);
   function filtered() {
     const q=S.query.trim().toLowerCase(), qd=q.replace(/\D/g, "");
@@ -171,7 +171,9 @@ const AdminPayments = (() => {
   const YP = { list:[], loaded:false, msg:"", cut:"" };
   /* طرود التسوية: من تاريخ القطع (الأقدم دُفع سابقاً فيُستثنى من التسوية لا من الأرباح) */
   /* وكذلك ما عُلِّم يدوياً «مدفوع» (تعليم المحدد كمدفوع) = قُبض سابقاً فلا يدخل في التسوية */
-  const sItems = () => items().filter(it => !(isMan(it) && record(it).status === "paid"));
+  /* وما ورد في كشف ياليدين المستورد (الكشف المدفوع: أرقام الشركة الفعلية لكل طرد) = مدفوع فلا يدخل في المتبقي */
+  const inFile = it => { try{ return !!(A().actualFees && it.o && A().actualFees(it.o)); }catch(_){ return false; } };
+  const sItems = () => items().filter(it => !(isMan(it) && record(it).status === "paid") && !inFile(it));
   const pnum = v => Number(String(v).replace(/[\s\u00a0\u202f]/g,"").replace(",",".")) || 0;
   function parseDetail(txt) {
     const t=String(txt||"").replace(/\u00a0|\u202f/g," "), amt=l=>{ const m=t.match(new RegExp(l+"[^\\d\\-=]*([-=]?\\s*-?\\s*\\d[\\d\\s]*[,.]\\d{2})","i")); return m?pnum(m[1].replace(/[=\s]/g,"")):null; };
@@ -222,7 +224,7 @@ const AdminPayments = (() => {
     const M=v=>R?d2(v):dz(v)+" دج";
     if(!T.n&&!R) return `<section class="pm-card"><b>🧾 تسوية ياليدين</b><p class="pm-note">لا طلبات مسجَّلة بعد. عند التسجيل تظهر هنا الأرقام تلقائياً؛ ولأدقّ النتائج استورد كشف الدفع من حساب ياليدين.</p><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين (xlsx / csv)</button></section>`;
     const c=(l,v,k,t)=>`<div class="pm-card pm-stat"${t?` title="${esc(t)}"`:""}><small>${l}</small><b${k?` style="color:${k}"`:""}>${v}</b></div>`;
-    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع (${DEF_RET} دج ثابتة) + 10 دج عن كل يوم تأخّر فيه سحبه أكثر من 10 أيام عند الشركة. ${T.nFile}/${T.n} طرد بأرقام الكشف الفعلية والباقي تقدير من التعريفة.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
+    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع (${DEF_RET} دج ثابتة) + 10 دج عن كل يوم تأخّر فيه سحبه أكثر من 10 أيام عند الشركة. المتبقي عند الشركة: ${T.n} طرد (تقدير من التعريفة)${(()=>{ const p=items().filter(it=>inFile(it)&&settle(it)).length; return p?` · ${p} طرد مدفوع في الكشف المستورد مُستثنى`:""; })()}.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
       ${detailBlock(T)}
       ${retList()}
       <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
