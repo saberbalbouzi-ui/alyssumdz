@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.721">
+<meta name="admin-version" content="1.89.722">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
@@ -1251,6 +1251,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <label class="fl-t" for="f-cost">سعر الشراء (التكلفة) للقطعة</label>
         <input id="f-cost" type="number" min="0" placeholder="سعر الشراء (التكلفة) للقطعة — مرتبط بتبويب «المخزون والأرباح» (لا يظهر للزبائن)">
         <div class="hint">إذا تُرك فارغاً، يبقى المنتج متاحاً دائماً بدون تتبع كمية. إذا وصلت الكمية لـ 0 يظهر "نفدت الكمية" في الموقع ويُعطَّل الطلب تلقائياً.</div>
+        <label class="fl-t">تكلفة العروض (اختياري)</label>
+        <div id="f-ocost"></div>
+        <button type="button" class="small gray" onclick="Admin.ocAdd()">إضافة تكلفة عرض</button>
+        <div class="hint">للعرض الذي تختلف تكلفته عن «سعر الشراء × عدد القطع»: مثلاً عرض 2+1 (3 قطع) تكلفته علبتان + قارورة = 600 + 350 = 950 دج، فاكتب 3 ثم 950. تُحتسب في الأرباح بدل ضرب سعر الشراء في 3، ولا تظهر للزبائن.</div>
         <label class="fl-t" for="f-desc">وصف مختصر</label>
         <textarea id="f-desc" rows="3" placeholder="وصف مختصر"></textarea>
         <div class="section-title">🤖 كلمات مفتاحية للوكيل الذكي</div>
@@ -1728,11 +1732,11 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
 <script src="assets/js/admin-returns.js?v=e0eb04ab"></script>
 <script src="assets/js/admin-ruqya.js?v=dac77641"></script>
-<script src="assets/js/admin-payments.js?v=8d58a311"></script>
+<script src="assets/js/admin-payments.js?v=c3fa17d2"></script>
 <script src="assets/js/seo-box.js?v=34fae1c8"></script>
 <script src="assets/js/admin-seo.js?v=de4b03e8"></script>
 <script src="assets/js/admin-blog.js?v=98b5bb66"></script>
-<script src="assets/js/admin-upsell.js?v=93ae5136"></script>
+<script src="assets/js/admin-upsell.js?v=e26d67bf"></script>
 <script src="assets/js/admin-pack.js?v=f4266190"></script>
 <script src="assets/js/admin-insights.js?v=4664e019"></script>
 <script src="assets/js/admin-confirm-svc.js?v=665e3b15"></script>
@@ -3230,7 +3234,7 @@ const Admin = {
     $f("f-cat").value = src?src.cat:Object.keys(this.categories)[0];
     $f("f-active").value = src?(src.active!==false?"1":"0"):"1";
     $f("f-stock").value = (src && src.stock!==undefined && src.stock!==null) ? src.stock : "";
-    { const c = src && this.fin && this.fin.costs ? this.fin.costs[src.slug] : null; $f("f-cost").value = c == null ? "" : c; }
+    { const c = src && this.fin && this.fin.costs ? this.fin.costs[src.slug] : null; $f("f-cost").value = c == null ? "" : c; this.ocFill(src ? src.slug : "", src ? src.offers : []); }
     $f("f-freeship").checked = !!(src && src.freeShip);
     const pgOpts = sel => '<option value="">الصفحة الافتراضية للمنتج (/p/' + (src?src.slug:"…") + '/)</option>' + ((typeof PBAdmin !== "undefined" && PBAdmin.list) || []).map(x=>'<option value="'+x.slug+'"'+(sel===x.slug?" selected":"")+'>'+(x.title||x.slug).replace(/</g,"&lt;")+' — /lp/'+x.slug+'/'+(x.product && src && x.product===src.slug ? " ✓ مرتبطة" : "")+'</option>').join("");
     $f("f-official").innerHTML = pgOpts(src && src.officialPage); $f("f-route").innerHTML = pgOpts(src && src.route);
@@ -3886,6 +3890,7 @@ const Admin = {
     this.pending = this.pending.filter(x=>!(x.type==="product" && x.slug===p.slug));
     this.savePending();
     if(cr !== undefined){ const cv = Number(cr); if(String(cr).trim() === "" || !isFinite(cv) || cv < 0) delete this.fin.costs[p.slug]; else this.fin.costs[p.slug] = cv; Priv.set("costs", this.fin.costs); }
+    try{ this.ocSave(p.slug); }catch(e){}
     this.closeModal();
     this.renderProducts(); this.renderStats(); if(this.renderFinance) try{ this.renderFinance(); }catch(e){}
     toast("⏳ جارِ نشر المنتج على الموقع الحي...");
@@ -3905,7 +3910,7 @@ const Admin = {
     $f("f-images").value = (p.images||[]).join(", ");
     $f("f-desc").value = p.desc||""; $f("f-cat").value = p.cat;
     $f("f-active").value = "1";
-    $f("f-stock").value = ""; if($f("f-cost")) $f("f-cost").value = (this.fin.costs[p.slug] == null ? "" : this.fin.costs[p.slug]);
+    $f("f-stock").value = ""; if($f("f-cost")) $f("f-cost").value = (this.fin.costs[p.slug] == null ? "" : this.fin.costs[p.slug]); this.ocFill(p.slug, p.offers);
     this.fillSeoBox(p); this.fillShipCo(p);
     if($f("f-keywords")) $f("f-keywords").value = p.keywords||"";
     this.renderOffersRows(p.offers||[]);
@@ -5495,7 +5500,7 @@ const Admin = {
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
     if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
     try{ if(window.AdminWh && AdminWh.load) this.wh = await AdminWh.load(); }catch(e){}
-    this.fin = { costs: costs || {}, ads: (await Priv.get("adcfg", {})) || {}, adh: (await Priv.get("adhist", [])) || [], pw: (await Priv.get("profwant", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
+    this.fin = { costs: costs || {}, oc: (await Priv.get("offercosts", {})) || {}, ads: (await Priv.get("adcfg", {})) || {}, adh: (await Priv.get("adhist", [])) || [], pw: (await Priv.get("profwant", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
     if(!this.fin.cfg.since){ this.fin.cfg.since = new Date().toISOString(); Priv.set("stockcfg", this.fin.cfg); }
     try{ this.rcpMigrate(); }catch(e){ }
     this.reconcileStatusChanges();
@@ -5810,6 +5815,22 @@ const Admin = {
   insCost(price){ const S = this.fin.set; return S.insMode === "val" ? (Number(S.insVal) || 0) : Math.round(price * (Number(S.insVal) || 0) / 100); },
   retCost(est){ const S = this.fin.set; return S.retMode === "val" ? (Number(S.retVal) || 0) : Math.round(est * (Number(S.retVal) || 0) / 100); },
   /* حساب الأرباح لكل منتج في فترة: livree = محقق، echec = خسارة (توصيل + إرجاع + تغليف؛ البضاعة تعود للمخزون)، confirmee/expediee = متوقع */
+  /* تكلفة بند في الطلب: إن عُرّفت للمنتج «تكلفة عرض» لهذا العدد من القطع (مثلاً عرض 2+1 = علبتان + قارورة) تُستعمل كما هي، وإلا سعر الشراء × الكمية */
+  lineCogs(slug, qty){ const oc = (this.fin && this.fin.oc && this.fin.oc[slug]) || null, q = Number(qty) || 0, v = oc ? oc[q] : undefined; if(v != null && v !== "" && isFinite(Number(v)) && Number(v) >= 0) return Number(v); return (Number(this.fin && this.fin.costs && this.fin.costs[slug]) || 0) * q; },
+  /* محرّر «تكلفة العروض» في نافذة المنتج: صفوف (عدد القطع ← تكلفة العرض) تُحفظ في بيانات المدير الخاصة لا في data.js العامة */
+  ocFill(slug, offers){
+    const box = $f("f-ocost"); if(!box) return; const have = Object.assign({}, (this.fin.oc || {})[slug] || {});
+    (offers || []).forEach(o=>{ const q = Number(o && o.qty); if(q > 0 && have[q] == null) have[q] = ""; });
+    box.innerHTML = ""; Object.keys(have).sort((a,b)=>a - b).forEach(q=>this.ocAdd(q, have[q]));
+  },
+  ocAdd(q, c){
+    const box = $f("f-ocost"); if(!box) return; const d = document.createElement("div"); d.className = "oc-row"; d.style.cssText = "display:flex;gap:.4rem;margin:.3rem 0;align-items:center";
+    d.innerHTML = '<input class="oc-q" type="number" min="2" step="1" placeholder="عدد القطع" style="flex:1;margin:0" value="' + (q == null ? "" : String(q).replace(/[^0-9.]/g, "")) + '"><input class="oc-c" type="number" min="0" placeholder="تكلفة العرض (دج)" style="flex:2;margin:0" value="' + (c == null ? "" : String(c).replace(/[^0-9.]/g, "")) + '"><button type="button" class="small warn ico" title="حذف" onclick="this.parentNode.remove()">×</button>'; box.appendChild(d);
+  },
+  ocSave(slug){
+    if(!$f("f-ocost") || !slug) return; const m = {}; document.querySelectorAll("#f-ocost .oc-row").forEach(r=>{ const q = Math.floor(Number(r.querySelector(".oc-q").value)), c = r.querySelector(".oc-c").value; if(q > 0 && String(c).trim() !== "" && isFinite(Number(c)) && Number(c) >= 0) m[q] = Number(c); });
+    this.fin.oc = this.fin.oc || {}; if(Object.keys(m).length) this.fin.oc[slug] = m; else delete this.fin.oc[slug]; Priv.set("offercosts", this.fin.oc);
+  },
   computeFinance(days, range){
     this._adCampsC = null;
     /* range = {from,to} بالمللي ثانية (اختياري) يغلب days؛ to حصرية. يملأ أيضاً K.parts/pre/byDay/bySrc/byWil لتبويب «الربح الحقيقي» (إضافة فقط: لا يغيّر الأرقام الأصلية) */
@@ -5839,7 +5860,7 @@ const Admin = {
         const cost = Number(this.fin.costs[l.p.slug]) || 0;
         if(o.status === "echec"){ const adF = Math.round(adFixed(l.p.slug, t)); K.adTotal += adF; const loss = Math.round((((useReal || useAct) ? 0 : car) + ret + pack) * share) + adF; r.loss += loss; r.adL += adF; r.retC += loss - adF; r.retUnits += l.qty; r.profit -= loss; K.real -= loss; od -= loss; odPre -= (loss - adF); K.parts.retLoss += loss - adF; }
         else{
-          const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = cost * l.qty, del = Math.round(car * share), pk = Math.round(pack * share), ad = Math.round(adFor(l.p.slug, t)), pr = rev - cogs - del - pk - ad; K.adTotal += ad;
+          const rev = l.total - Math.round(disc * share) + Math.round(fee * share), cogs = this.lineCogs(l.p.slug, l.qty), del = Math.round(car * share), pk = Math.round(pack * share), ad = Math.round(adFor(l.p.slug, t)), pr = rev - cogs - del - pk - ad; K.adTotal += ad;
           if(o.status === "livree"){ r.units += l.qty; r.revenue += rev; r.cogs += cogs; r.delivery += del; r.pack += pk; r.ad += ad; r.feeIn += Math.round(fee * share); (useReal || useAct) ? r.realN++ : r.estN++; r.profit += pr; K.real += pr; K.revenue += rev; od += pr; odPre += pr + ad; K.parts.rev += rev; K.parts.cogs += cogs; K.parts.del += del; K.parts.pack += pk; }
           else { r.expUnits += l.qty; r.expProfit += pr; K.exp += pr; }
         }

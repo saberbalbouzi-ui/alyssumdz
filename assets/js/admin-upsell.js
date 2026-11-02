@@ -47,7 +47,7 @@ const AdminUpsell = (() => {
       const mine = L.filter(o => ex(o)[RID] === r.id); let rev = 0, cost = 0, units = 0, known = true;
       mine.forEach(o => {
         const lines = a && a.orderLines ? a.orderLines(o) : [];
-        lines.filter(l => l.p.slug === r.offer).forEach(l => { rev += l.total; units += l.qty; if (costs[l.p.slug] == null) known = false; else cost += (Number(costs[l.p.slug]) || 0) * l.qty; });
+        lines.filter(l => l.p.slug === r.offer).forEach(l => { rev += l.total; units += l.qty; if (costs[l.p.slug] == null) known = false; else cost += a.lineCogs ? a.lineCogs(l.p.slug, l.qty) : (Number(costs[l.p.slug]) || 0) * l.qty; });
       });
       return { id: r.id, type: r.type, offer: r.offer, orders: mine.length, units, rev, cost: known ? cost : null, profit: known ? rev - cost : null };
     });

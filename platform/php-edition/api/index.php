@@ -759,7 +759,7 @@ switch ($route) {
     /* تخزين خاص بالمدير (أسعار التكلفة، إعدادات الأرباح، سجل المخزون) — لا يصل إليه الزوار */
     case 'kv':
         /* الموظف بصلاحية «المالية» يقرأ مفاتيح المالية فقط (GET)؛ الكتابة وبقية المفاتيح للمالك */
-        $finKeys = ['costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes'];
+        $finKeys = ['costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes', 'offercosts'];
         if (!$isAdmin && !($method === 'GET' && can('finance') && in_array((string)($_GET['k'] ?? ''), $finKeys, true))) needOwner();
         if ($method === 'GET') {
             $k = (string)($_GET['k'] ?? ''); if (!preg_match('/^[a-z0-9_]{1,40}$/', $k)) out(400, ['error' => 'bad_key']);

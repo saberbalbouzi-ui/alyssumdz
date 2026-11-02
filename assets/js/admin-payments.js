@@ -111,7 +111,7 @@ const AdminPayments = (() => {
     const kind=st==="echec"?"ret":(st==="livree"?"done":"exp");
     return { price, got, del, cod, ins, ret, net, src, kind, free:!(fee>0)&&st!=="echec" };
   }
-  function cogs(it) { try { const A_=A(), L=A_.orderLines?A_.orderLines(it.o)||[]:[]; return L.reduce((n,l)=>n+(Number(A_.fin&&A_.fin.costs&&A_.fin.costs[l.p&&l.p.slug])||0)*(Number(l.qty)||1),0); } catch (_) { return 0; } }
+  function cogs(it) { try { const A_=A(), L=A_.orderLines?A_.orderLines(it.o)||[]:[]; return L.reduce((n,l)=>n+(A_.lineCogs?A_.lineCogs(l.p&&l.p.slug,Number(l.qty)||1):(Number(A_.fin&&A_.fin.costs&&A_.fin.costs[l.p&&l.p.slug])||0)*(Number(l.qty)||1)),0); } catch (_) { return 0; } }
   function sumSettle(list) {
     const T={ net:0, netDone:0, netExp:0, retLoss:0, del:0, cod:0, ins:0, ret:0, cogs:0, pack:0, n:0, nDone:0, nExp:0, nRet:0, nFile:0 };
     const pk=Number(A().fin&&A().fin.set&&A().fin.set.packaging)||0;

@@ -208,7 +208,7 @@ grant execute on function public.audit_perf(int) to authenticated;
 -- 6) المالية للقراءة: الموظف بصلاحية finance يقرأ مفاتيح المالية فقط من التخزين الخاص (الكتابة للمالك وحده)
 drop policy if exists "staff finance read kv" on public.admin_kv;
 create policy "staff finance read kv" on public.admin_kv for select to authenticated
-  using (key in ('costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes') and public.has_perm('finance'));
+  using (key in ('costs', 'finset', 'stockcfg', 'stocklog', 'ydfees', 'ydactual', 'adcfg', 'costcalc', 'costmats', 'recipes', 'offercosts') and public.has_perm('finance'));
 
 -- v1.89.694: القائمة = المؤكَّدة غير المرسَلة فقط (المرسَلة للزبون لا تظهر)، غير المجهَّزة بطرد عند الشركة (en préparation) خلال 30 يوماً + المجهَّزة اليوم للتراجع
 -- 7) أمين المخزن (v1.89.239): صلاحية pack فقط — لا يقرأ جدول الطلبات (لا سياسة له) بل دالتين تُرجعان ما يلزم للتجهيز:
