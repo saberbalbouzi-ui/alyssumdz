@@ -228,7 +228,7 @@ const AdminPayments = (() => {
       ${detailBlock(T)}
       ${retList()}
       <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
-        ${R?c("المحصَّل ("+T.nDone+" طرد مسلَّم)",d2(R.got),"#60a5fa"):""}
+        ${c("إجمالي المحصَّل ("+T.nDone+" طرد مسلَّم)",dz(T.got)+" دج","#60a5fa","ما يجمعه ياليدين من الزبائن للطرود المسلَّمة المتبقية (Total ramassé)")}
         ${c("صافي ما يخصّك (مسلَّم + مرتجع)",M(T.net),T.net<0?"#fca5a5":"#d4ff4d","مثل «صافي الكشف» في كشف ياليدين")}
         ${c("رسوم التوصيل المدفوعة لياليدين",M(T.del))}
         ${c("عمولة COD"+(T.ins?" + التأمين":""),M(T.cod+T.ins))}
