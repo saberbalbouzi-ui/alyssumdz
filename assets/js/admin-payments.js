@@ -159,13 +159,13 @@ const AdminPayments = (() => {
 
   function totRow(list) {
     const T=sumSettle(list); if(!T.n) return "";
-    return `<tfoot><tr style="font-weight:700"><td colspan="6">TOTAUX (${T.nDone+T.nRet} طرد منتهٍ)</td><td></td><td style="white-space:nowrap;font-size:.76rem">توصيل ${dz(T.del)} · COD ${dz(T.cod)}${T.ret?" · إرجاع "+dz(T.ret):""}</td><td style="color:${T.net<0?"#fca5a5":"#d4ff4d"};white-space:nowrap">${dz(T.net)} دج</td><td colspan="7"></td></tr></tfoot>`;
+    return `<tfoot><tr style="font-weight:700"><td colspan="6">المجموع (${T.nDone+T.nRet} طرد منتهٍ)</td><td></td><td style="white-space:nowrap;font-size:.76rem">توصيل ${dz(T.del)} · COD ${dz(T.cod)}${T.ret?" · إرجاع "+dz(T.ret):""}</td><td style="color:${T.net<0?"#fca5a5":"#d4ff4d"};white-space:nowrap">${dz(T.net)} دج</td><td colspan="7"></td></tr></tfoot>`;
   }
   /* «Détail paiement» بنسق ياليدين نفسه (Livré / Retour، Total ramassé، Frais de recouvrement / livraison / retour / assurance، Net) لمقارنته مع كشف الشركة بالسنتيم */
   const d2=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString("fr-DZ",{minimumFractionDigits:2,maximumFractionDigits:2})+" DA";
   function detailBlock(T) {
     const row=(l,v,k)=>`<div class="pm-dl"><span>${l}</span><span dir="ltr" style="color:${k}">${v}</span></div>`, net=T.realNet!=null?T.realNet:T.got-T.cod-T.del-T.ret-T.ins;      // مع الكشوف الحقيقية: مجموع صافي كل كشف كما حسبته الشركة (تقريب كل كشف على حدة)
-    return `<div class="pm-card" style="margin:.6rem 0"><b>Détail paiement</b><div class="pm-note">${T.realNet!=null?"أرقام كشفَي الشركة الملصوقَين: "+T.nDone+" Livré · "+T.nRet+" Retour":"تقدير اللوحة للطرود المنتهية غير المعلَّمة «مدفوع» ("+T.nDone+" Livré · "+T.nRet+" Retour)"}</div>${row("Total ramassé",d2(T.got),"#60a5fa")}${row("Frais de recouvrement","-"+d2(T.cod),"#fca5a5")}${row("Frais de livraison","-"+d2(T.del),"#fca5a5")}${row("Frais de retour","-"+d2(T.ret),"#fca5a5")}${row("Frais d'assurance","-"+d2(T.ins),"#fca5a5")}${row("Net","= "+d2(net),net<0?"#fca5a5":"#d4ff4d")}</div>`;
+    return `<div class="pm-card" style="margin:.6rem 0"><b>تفاصيل الدفع</b><div class="pm-note">${T.realNet!=null?"أرقام كشفَي الشركة الملصوقَين: "+T.nDone+" مسلَّم · "+T.nRet+" مرتجع":"تقدير اللوحة للطرود المنتهية غير المعلَّمة «مدفوع» ("+T.nDone+" Livré · "+T.nRet+" Retour)"}</div>${row("إجمالي المحصَّل",d2(T.got),"#60a5fa")}${row("عمولة التحصيل (COD)","-"+d2(T.cod),"#fca5a5")}${row("رسوم التوصيل","-"+d2(T.del),"#fca5a5")}${row("رسوم الإرجاع","-"+d2(T.ret),"#fca5a5")}${row("رسوم التأمين","-"+d2(T.ins),"#fca5a5")}${row("الصافي","= "+d2(net),net<0?"#fca5a5":"#d4ff4d")}</div>`;
   }
   /* كشوف «Détail paiement» الحقيقية من ياليدين (pas prêt / prêt à payer): تُلصق نصاً وتُحفظ؛ مجموع صافيها = المستحق الفعلي، ويُقارَن بتقدير اللوحة */
   const YP = { list:[], loaded:false, msg:"", cut:"" };
@@ -210,7 +210,7 @@ const AdminPayments = (() => {
   }
   /* الطرود الراجعة المحسوبة في رسوم الإرجاع: لكل طلب فاشل مرحلته عند الشركة (للتعرّف على الطرد الذي لا يظهر في كشف ياليدين) */
   function retList() {
-    const A_=A(), PHL={ transit:"في طريق العودة", ready:"Retour à récupérer", received:"Retourné au vendeur", "":"غير محدّدة عند الشركة" };
+    const A_=A(), PHL={ transit:"في طريق العودة", ready:"جاهز للسحب عند الشركة", received:"عاد للبائع", "":"غير محدّدة عند الشركة" };
     const L=sItems().filter(it=>{ const x=settle(it); return x&&x.kind==="ret"; }).map(it=>{ const x=settle(it), ph=A_.returnPhase?A_.returnPhase(it.o):"", raw=((A_.shipRaw||{})[it.o.id]||{}).raw||""; return { id:String(it.o.id).slice(-6), name:it.o.name||"", ph, raw, fee:x.ret }; });
     if(!L.length) return "";
     return `<details style="margin-top:.6rem"><summary style="cursor:pointer;font-weight:800;color:#e2fe17">طرود الإرجاع المحسوبة (${L.length}) — قارنها بكشف ياليدين</summary><div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><tbody>${L.map(r=>`<tr><td style="padding:.2rem .5rem;white-space:nowrap">#${esc(r.id)}</td><td style="padding:.2rem .5rem;white-space:nowrap">${esc(r.name)}</td><td style="padding:.2rem .5rem;white-space:nowrap;color:${r.ph==="received"?"#d4ff4d":"#fdba74"}">${PHL[r.ph]||""}${r.raw?" · "+esc(r.raw):""}</td><td dir="ltr" style="padding:.2rem .5rem">${dz(r.fee)}</td></tr>`).join("")}</tbody></table></div><div class="pm-note">إن كان عند ياليدين عدد أقل (مثلاً 3) فالطرد الزائد غالباً لم يصل بعد أو دُفع في دفعة سابقة. علّم المدفوع سابقاً «مدفوع» من القائمة أدناه فيُستثنى.</div></details>`;
@@ -227,7 +227,7 @@ const AdminPayments = (() => {
       ${retList()}
       <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
         ${R?c("المحصَّل ("+T.nDone+" طرد مسلَّم)",d2(R.got),"#60a5fa"):""}
-        ${c("صافي ما يخصّك (مسلَّم + مرتجع)",M(T.net),T.net<0?"#fca5a5":"#d4ff4d","مثل «net client» في كشف ياليدين")}
+        ${c("صافي ما يخصّك (مسلَّم + مرتجع)",M(T.net),T.net<0?"#fca5a5":"#d4ff4d","مثل «صافي الكشف» في كشف ياليدين")}
         ${c("رسوم التوصيل المدفوعة لياليدين",M(T.del))}
         ${c("عمولة COD"+(T.ins?" + التأمين":""),M(T.cod+T.ins))}
         ${c("رسوم الإرجاع ("+T.nRet+")",M(T.retLoss),"#fdba74")}
