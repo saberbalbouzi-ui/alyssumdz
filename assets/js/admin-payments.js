@@ -217,6 +217,12 @@ const AdminPayments = (() => {
     if(!L.length) return "";
     return `<details style="margin-top:.6rem"><summary style="cursor:pointer;font-weight:800;color:#e2fe17">طرود الإرجاع المحسوبة (${L.length}) — قارنها بكشف ياليدين</summary><div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><tbody>${L.map(r=>`<tr><td style="padding:.2rem .5rem;white-space:nowrap">#${esc(r.id)}</td><td style="padding:.2rem .5rem;white-space:nowrap">${esc(r.name)}</td><td style="padding:.2rem .5rem;white-space:nowrap;color:${r.ph==="received"?"#d4ff4d":"#fdba74"}">${PHL[r.ph]||""}${r.raw?" · "+esc(r.raw):""}</td><td dir="ltr" style="padding:.2rem .5rem">${dz(r.fee)}</td></tr>`).join("")}</tbody></table></div><div class="pm-note">إن كان عند ياليدين عدد أقل (مثلاً 3) فالطرد الزائد غالباً لم يصل بعد أو دُفع في دفعة سابقة. علّم المدفوع سابقاً «مدفوع» من القائمة أدناه فيُستثنى.</div></details>`;
   }
+  /* طرود «في الطريق» في اللوحة: قد يكون أحدها سُلّم عند الشركة ولم تتحدّث حالته هنا فينقص المسلَّم والمحصَّل عن كشف الشركة */
+  function expList() {
+    const A_=A(), L=sItems().filter(it=>{ const x=settle(it); return x&&x.kind==="exp"; }).map(it=>({ id:String(it.o.id).slice(-6), name:it.o.name||"", wil:it.o.wilaya||"", total:Number(it.o.total)||0, raw:((A_.shipRaw||{})[it.o.id]||{}).raw||"" }));
+    if(!L.length) return "";
+    return `<details style="margin-top:.6rem"><summary style="cursor:pointer;font-weight:800;color:#e2fe17">طرود في الطريق (${L.length}) — قد يكون أحدها سُلّم عند الشركة</summary><div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><tbody>${L.map(r=>`<tr><td style="padding:.2rem .5rem;white-space:nowrap">#${esc(r.id)}</td><td style="padding:.2rem .5rem;white-space:nowrap">${esc(r.name)}</td><td style="padding:.2rem .5rem;white-space:nowrap">${esc(r.wil)}</td><td dir="ltr" style="padding:.2rem .5rem;white-space:nowrap;font-weight:700">${dz(r.total)}</td><td style="padding:.2rem .5rem;white-space:nowrap;color:#fdba74">${esc(r.raw)}</td></tr>`).join("")}</tbody></table></div><div class="pm-note">إن كان مبلغ أحدها يساوي فرق المحصَّل عن ياليدين فهو غالباً سُلّم هناك؛ حدّث حالات الطرود من «المسجلة» (تحديث الحالات).</div></details>`;
+  }
   function settleCard() {
     let T=sumSettle(sItems()); const R=ydReal();
     /* كشوف الشركة الحقيقية الملصوقة تحلّ محل التقدير في كل الأرقام (المحصَّل، التوصيل، COD، الإرجاع، الصافي، عدد الطرود) */
@@ -227,6 +233,7 @@ const AdminPayments = (() => {
     return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع (${DEF_RET} دج ثابتة) + 10 دج عن كل يوم تأخّر فيه سحبه أكثر من 10 أيام عند الشركة. المتبقي عند الشركة: ${T.n} طرد (تقدير من التعريفة)${(()=>{ const p=items().filter(it=>inFile(it)&&settle(it)).length; return p?` · ${p} طرد مدفوع في الكشف المستورد مُستثنى`:""; })()}.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
       ${detailBlock(T)}
       ${retList()}
+      ${expList()}
       <div class="pm-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
         ${c("إجمالي المحصَّل ("+T.nDone+" طرد مسلَّم)",dz(T.got)+" دج","#60a5fa","ما يجمعه ياليدين من الزبائن للطرود المسلَّمة المتبقية (Total ramassé)")}
         ${c("صافي ما يخصّك (مسلَّم + مرتجع)",M(T.net),T.net<0?"#fca5a5":"#d4ff4d","مثل «صافي الكشف» في كشف ياليدين")}
