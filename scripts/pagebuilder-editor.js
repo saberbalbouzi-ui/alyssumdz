@@ -207,6 +207,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-pop select{padding:0 .5rem!important;font-size:.82rem;color:#0e1318;background:#fff}.pbx-pop select,.pbx-pop input[type=color]{width:100%;height:34px;border:1px solid #d9dbe3;border-radius:8px;font-family:inherit;margin-bottom:.5rem}.pbx-pop p{margin:.2rem 0 0;font-size:.72rem;color:#888;line-height:1.6}
 .pbx-cov{position:absolute;border:2px dashed #e5484d;background:rgba(229,72,77,.12);pointer-events:none;box-sizing:border-box}.pbx-lcv{display:flex;flex-wrap:wrap;gap:.3rem;padding:.2rem .3rem .5rem}.pbx-lcv>div{flex:1 1 100%}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
+.pbx-ed .pbx-ft,.pbx-ed .pbx-sb,.pbx-ed .pbx-mwbar,.pbx-ed .pbx-slnav{display:none!important}      /* أثناء تحرير النص: تُخفى أشرطة العنصر العائمة فلا تغطي النص */
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
 .pbx-pop .mwlib{display:flex;flex-direction:column;gap:.4rem;margin-top:.4rem}
@@ -1055,7 +1056,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (editing && editing.el === el) return;                                  // نقرة مزدوجة بعد نقرة بدأت التحرير فعلاً
     const wEl = el.closest('[data-kind="widget"]'); if (!wEl) return;
     select(wEl.dataset.pb);
-    const field = el.dataset.edit, rich = field === "html"; editing = { el, id: wEl.dataset.pb, field, rich, idx: el.dataset.idx };
+    const field = el.dataset.edit, rich = field === "html"; editing = { el, id: wEl.dataset.pb, field, rich, idx: el.dataset.idx }; if ($("pb-app")) $("pb-app").classList.add("pbx-ed");
     el.setAttribute("contenteditable", "true"); { const st0 = $("pbx-stage"), t0 = st0 ? st0.scrollTop : 0; try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); } if (st0 && Math.abs(st0.scrollTop - t0) > 1) st0.scrollTop = t0; }
     const r = fdoc.createRange(); r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
@@ -1080,7 +1081,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
         } else if (multi && !(ev.ctrlKey || ev.metaKey)) fdoc.execCommand("insertLineBreak"); else el.blur(); } if (ev.key === "Escape") el.blur(); });
   }
   function endEdit() {
-    if (!editing) return; const { el, id, field, rich, idx } = editing; editing = null; showRt(false);
+    if (!editing) return; const { el, id, field, rich, idx } = editing; editing = null; showRt(false); if ($("pb-app")) $("pb-app").classList.remove("pbx-ed"); try { positionOverlay(); } catch (x) { }
     el.removeAttribute("contenteditable");
     const inf0 = find(id), inf = inf0, val = rich ? PB.cleanHtml(el.innerHTML) : (field === "text" && inf0 && inf0.node.type === "heading" ? el.innerText.replace(/\u00a0/g, " ").replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim() : el.textContent.replace(/\s+/g, " ").trim());
     if (inf) {
@@ -1115,7 +1116,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       rt.addEventListener("input", e => { if (e.target.dataset.c) fdoc.execCommand(e.target.dataset.c, false, e.target.value); });
       $("pbx-stage").appendChild(rt); }
     rt.style.display = on ? "flex" : "none";
-    if (on && editing) { const r = editing.el.getBoundingClientRect(), o = ovlOrigin(), k = E.scale; rt.style.top = (o.oy + r.top * k - 40) + "px"; rt.style.left = Math.max(4, o.ox + r.left * k) + "px"; }
+    if (on && editing) { const r = editing.el.getBoundingClientRect(), o = ovlOrigin(), k = E.scale, stg = $("pbx-stage"), vt = stg ? stg.scrollTop + (FREE_ONLY ? 58 : 0) : 0; let top = o.oy + r.top * k - 44; if (top < vt + 4) top = o.oy + r.bottom * k + 8;      /* فوق النص إن اتسع المكان وإلا تحته: لا يغطّي النص المُحرَّر */
+      rt.style.top = top + "px"; rt.style.left = Math.max(4, o.ox + r.left * k) + "px"; }
   }
 
   /* ───────────────── التحديد + الغطاء (Overlay) ───────────────── */
