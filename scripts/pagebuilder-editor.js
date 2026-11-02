@@ -844,6 +844,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     fdoc.addEventListener("contextmenu", showCtx); fdoc.addEventListener("scroll", hideCtx, true);
     fdoc.addEventListener("dragover", onDragOver); fdoc.addEventListener("drop", onDrop); fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) hideDrop(); });
     fdoc.addEventListener("keydown", onKey);
+    fdoc.addEventListener("selectionchange", () => { const inf = selInfo(), bar = $("pbx-qbar"); if (!bar || !inf || inf.kind !== "widget" || !["text", "heading"].includes(inf.node.type)) return; const i = bar.querySelector('[data-qi="fs"]'); if (!i || document.activeElement === i) return; const cs = qFont(inf); if (cs) i.value = Math.round(parseFloat(cs.fontSize)); });      // حجم الخط في الشريط يتبع المحدَّد داخل النص
     fdoc.defaultView.addEventListener("scroll", () => positionOverlay());
     new ResizeObserver(() => { fitStage(); positionOverlay(); }).observe(root);
   }
@@ -1501,12 +1502,19 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   const qLive = (inf, k, v, r) => { qSet(inf, k, v, r); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); };
   const qDone = (inf, k, v, r) => { qSet(inf, k, v, r); afterEdit(); };
-  const qFont = inf => { const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"] .pb-t`); return el ? fdoc.defaultView.getComputedStyle(el) : null; };
+  const qFont = inf => {
+    const root = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"] .pb-t`); if (!root) return null;
+    /* الحجم/اللون الظاهران فعلاً: عنصر المحدَّد داخل النص، وإلا أول عنصر فيه نص (قد يكون h2 أو span بحجمه الخاص) بدل حاوية النص */
+    let el = null; const sl = fdoc.getSelection && fdoc.getSelection();
+    if (sl && sl.rangeCount && sl.anchorNode && root.contains(sl.anchorNode)) { const n = sl.anchorNode.nodeType === 1 ? sl.anchorNode : sl.anchorNode.parentElement; if (n && root.contains(n)) el = n; }
+    if (!el) el = (function f(n) { for (const c of n.childNodes) { if (c.nodeType === 3 && c.textContent.trim()) return n; if (c.nodeType === 1) { const r = f(c); if (r) return r; } } return null; })(root) || root;
+    return fdoc.defaultView.getComputedStyle(el);
+  };
   function qbarHtml(inf) {
     const t = inf.node.type, set = inf.set, dev = E.dev, isTx = t === "heading" || t === "text", isImg = t === "image", btn = (k, ic, tt, on, dis) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${ic}</button>`, tb = (k, label, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}><span class="ic">${QI[k] || QI.flip}</span><span class="tx">${label}</span></button>`, sep = '<span class="qsep"></span>';
     let h = "";
     if (isTx) {
-      const cs = qFont(inf), fs = Number(eff(set, "fs", dev)) || (cs ? Math.round(parseFloat(cs.fontSize)) : 17), fw = Number(set.fw || (cs && cs.fontWeight) || 400), col = /^#[0-9a-f]{6}$/i.test(set.color || "") ? set.color : (cs ? "#" + (cs.color.match(/\d+/g) || [0, 0, 0]).slice(0, 3).map(n => Number(n).toString(16).padStart(2, "0")).join("") : "#000000");
+      const cs = qFont(inf), fs = (cs ? Math.round(parseFloat(cs.fontSize)) : 0) || Number(eff(set, "fs", dev)) || 17, fw = Number((cs && cs.fontWeight) || set.fw || 400), col = /^#[0-9a-f]{6}$/i.test(set.color || "") ? set.color : (cs ? "#" + (cs.color.match(/\d+/g) || [0, 0, 0]).slice(0, 3).map(n => Number(n).toString(16).padStart(2, "0")).join("") : "#000000");
       const ff = (qDef(inf, "ff") || { o: [] }).o, ta = eff(set, "ta", dev) || "start";
       h += `<select data-qi="ff" title="الخط">${ff.map(([v, n]) => `<option value="${esc(v)}" style="font-family:${esc(v) || "inherit"}"${(set.ff || "") === v ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`
         + `<span class="qn"><button type="button" data-qb="fs-" title="تصغير الخط">−</button><input type="number" data-qi="fs" min="8" max="160" value="${fs}" title="حجم الخط"><button type="button" data-qb="fs+" title="تكبير الخط">+</button></span>`
@@ -2004,7 +2012,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
-    if (k === "fs-" || k === "fs+") { const cs = qFont(inf), cur = Number(eff(set, "fs", dev)) || (cs ? Math.round(parseFloat(cs.fontSize)) : 17); return qDone(inf, "fs", Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
+    if (k === "fs-" || k === "fs+") { const cs = qFont(inf), cur = (cs ? Math.round(parseFloat(cs.fontSize)) : 0) || Number(eff(set, "fs", dev)) || 17; return qDone(inf, "fs", Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
     if (k === "clearfmt") { if (editing) { clearFmt(); return; } if (typeof set.html === "string") { set.html = plainFmtHtml(set.html); E.nextLabel = "مسح التنسيق"; afterEdit(); toast("تم مسح التنسيق المنسوخ"); } return; }
     if (["bold", "italic", "under", "strike"].includes(k) && qSel(k)) return;
     if (k === "bold") { const cs = qFont(inf), cur = Number(set.fw || (cs && cs.fontWeight) || 400); return qDone(inf, "fw", cur >= 600 ? "400" : (inf.node.type === "heading" ? "800" : "700")); }
