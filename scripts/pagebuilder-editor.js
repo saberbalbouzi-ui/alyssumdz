@@ -1063,6 +1063,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const r = rng || fdoc.createRange(); if (!rng) r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
     el.addEventListener("blur", endEdit, { once: true });
+    el.addEventListener("mouseup", () => setTimeout(() => applyRangePaint(el), 0));      // فرشاة نمط النص: بعد التحديد
     /* لصق نص خارجي: نصٌّ خام بلا أي تنسيق (حجم/لون/خط الموقع المنسوخ منه) فيأخذ نمط النص الأصلي ويبقى قابلاً للتعديل */
     el.addEventListener("paste", ev => {
       const cd = ev.clipboardData; if (!cd) return; const t = cd.getData("text/plain"); if (!t && !cd.getData("text/html")) return; ev.preventDefault();
@@ -1136,7 +1137,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
   function select(id) {
-    const paintNow = !!(E.painter && id && id !== E.painter && (() => { const q = find(id); return q && q.kind === "widget"; })());      // فرشاة النمط: النقر على عنصر آخر يلصق النمط مباشرة
+    const paintNow = !!(typeof E.painter === "string" && E.painter && id && id !== E.painter && (() => { const q = find(id); return q && q.kind === "widget"; })());      // فرشاة النمط: النقر على عنصر آخر يلصق النمط مباشرة
     if (E.painter && !id) cancelPainter();
     if (id && isLong()) { const q1 = find(id); if (q1 && q1.kind !== "widget") id = null; }
     if (id && E.page && E.page.ad) { const q0 = find(id); if (q0 && q0.kind !== "widget") id = null; }      // «إنشاء صور»: الخلفية ليست قسماً — لا تحديد للقسم ولا إعدادات له
@@ -1842,6 +1843,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function drawQbar() {
     const app = $("pb-app"); if (!app) return; let bar = $("pbx-qbar");
     if (!bar) { bar = document.createElement("div"); bar.id = "pbx-qbar"; bar.className = "pbx-qbar"; app.appendChild(bar);
+      bar.addEventListener("mousedown", e => { if (editing && !e.target.closest("input,select,textarea,label")) e.preventDefault(); });      // أزرار الشريط لا تسحب التركيز من النص المُحرَّر فيبقى التحديد
       bar.addEventListener("click", e => { const b = e.target.closest("[data-qb]"); if (b) qAct(b.dataset.qb, b); });
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
       bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qDone(inf, "fs", Math.max(8, Math.min(160, Number(t.value) || 17)), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
@@ -2095,11 +2097,26 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     } catch (x) { } }
     E.styleClip = { keys, st }; toast("🎨 نُسخ نمط العنصر — حدّد عنصراً آخر وانقر «لصق النمط»"); }
   /* فرشاة النمط: انقر الأيقونة وعنصر محدَّد ← يُنسخ نمطه فوراً، ثم انقر أي عنصر آخر ← يُلصق عليه مباشرة (Esc أو الأيقونة ثانيةً للإلغاء) */
-  function cancelPainter() { E.painter = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
+  function cancelPainter() { E.painter = null; E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
   function startPainter() {
-    if (E.painter) { cancelPainter(); return; }
-    const inf = selInfo(); if (!inf || inf.kind !== "widget") return; copyStyle(); if (!E.styleClip) return;
+    if (E.painter || E.painterR) { cancelPainter(); return; }
+    const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
+    const sl0 = editing && editing.rich && fdoc.getSelection();
+    if (sl0 && sl0.rangeCount && editing.el.contains(sl0.anchorNode)) {      /* نمط نصّ داخل نص: يُنسخ نمط موضع المؤشر/المحدَّد ثم يُلصق على ما تحدّده بعده في النص نفسه */
+      const n = sl0.anchorNode.nodeType === 1 ? sl0.anchorNode : sl0.anchorNode.parentElement, cs = fdoc.defaultView.getComputedStyle(n);
+      E.painterR = { id: inf.node.id, st: { fs: cs.fontSize, color: cs.color, fw: cs.fontWeight, fst: cs.fontStyle, td: cs.textDecorationLine, ff: cs.fontFamily } };
+      const pa = $("pb-app"); if (pa) pa.classList.add("pbx-painting"); toast("🖌️ نُسخ نمط النص — حدّد النص الذي تريده أن يأخذه (Esc للإلغاء)"); return;
+    }
+    copyStyle(); if (!E.styleClip) return;
     E.painter = inf.node.id; const pa = $("pb-app"); if (pa) pa.classList.add("pbx-painting"); toast("🖌️ نُسخ النمط — انقر عنصراً آخر ليأخذه مباشرة (Esc للإلغاء)");
+  }
+  /* لصق نمط نصّ على تحديد داخل النص المُحرَّر: يُستبدل المحدَّد بنص خام في span بنمط المصدر (يلغي التنسيق الملصوق عليه) */
+  function applyRangePaint(el) {
+    const P = E.painterR; if (!P || !editing || editing.el !== el) return; const sl = fdoc.getSelection(); if (!sl || !sl.rangeCount || sl.isCollapsed || !el.contains(sl.anchorNode)) return;
+    const t = sl.toString(); if (!t) return; const q = P.st, css = `font-size:${q.fs};color:${q.color};font-weight:${q.fw};font-style:${q.fst};${q.td && q.td !== "none" ? "text-decoration:" + q.td + ";" : ""}font-family:${String(q.ff).replace(/"/g, "'")};`;
+    const esc2 = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
+    fdoc.execCommand("insertHTML", false, `<span style="${css}">${esc2(t)}</span>`);
+    E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); toast("🎨 طُبِّق نمط النص");
   }
   function pasteStyle() {
     const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf));
@@ -3022,7 +3039,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     dragTrack(e, "grabbing", mv, () => { tip.remove(); commitHist(); renderInspector(); });
   }
   function onKey(e) {
-    if (e.key === "Escape") { hideCtx(); if (E.painter) cancelPainter(); }
+    if (e.key === "Escape") { hideCtx(); if (E.painter || E.painterR) cancelPainter(); }
     if (!$("pb-app").classList.contains("on")) return;
     /* نصٌّ مظلَّل داخل الصفحة والتركيز على زرّ/قائمة في اللوحة (بعد استعمال شريط التنسيق مثلاً): Delete/Backspace يحذف المظلَّل من النص بدل أن يضيع الضغط */
     if ((e.key === "Delete" || e.key === "Backspace") && !editing && !(e.target.isContentEditable) && !/^(textarea)$/i.test(e.target.tagName || "") && !(/^input$/i.test(e.target.tagName || "") && !/^(checkbox|radio|range|color|button)$/i.test(e.target.type || ""))) {
