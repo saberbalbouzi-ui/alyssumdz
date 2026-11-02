@@ -33,7 +33,7 @@ const AdminProfit = (() => {
     const idleBy = K.adIdleBy || {}, list = rows.map(x => {
       const r = x.r, idle = Math.round(idleBy[x.slug] || 0), ad = Math.round((r.ad || 0) + (r.adL || 0)) + idle, net = (r.revenue || 0) - (r.delivery || 0), pre = net - (r.cogs || 0) - (r.pack || 0) - (r.retC || 0);
       T.units += r.units || 0; T.retUnits += r.retUnits || 0; T.revenue += r.revenue || 0; T.delivery += r.delivery || 0; T.cogs += r.cogs || 0; T.pack += r.pack || 0; T.retC += r.retC || 0; T.adOrders += Math.round((r.ad || 0) + (r.adL || 0));
-      return { slug: x.slug, title: (r.p && r.p.title) || x.slug, units: r.units || 0, net, pre, ad, real: pre - ad };
+      return { slug: x.slug, title: (r.p && r.p.title) || x.slug, units: r.units || 0, net, cost: Math.round((r.cogs || 0) + (r.pack || 0)), pre, ad, real: pre - ad };
     }).sort((a, b) => b.real - a.real);
     const idle = Math.round(K.adIdle || 0), refunds = Math.round(K.refunds || 0), adEst = T.adOrders + idle, hasApi = o.adsApi != null && o.adsApi > 0, ads = hasApi ? Math.round(o.adsApi) : adEst;
     const fixed = Math.round(o.fixed || 0), net = T.revenue - T.delivery, pre = net - T.cogs - T.pack - T.retC - refunds;
@@ -54,7 +54,7 @@ const AdminProfit = (() => {
       ${ln("− الحملات الإعلانية" + (f.hasApi ? " (الفعلية)" : ""), -f.ads, f.hasApi ? "من حساباتك الإعلانية المربوطة" : "إنفاق الطلبات" + (f.idle ? " (منها " + nf(f.idle) + " دج أيام بلا طلبات)" : ""))}
       ${f.fixed ? ln("− مصاريف ثابتة", -f.fixed, "حصة الفترة") : ""}
       ${ln("= الربح الحقيقي", f.real, f.units ? "≈ " + nf(f.real / f.units) + " دج للقطعة المسلَّمة" : "", 1)}</table></div>
-      ${f.list.length > 1 ? `<div class="pf-sub" style="margin-top:.6rem">لكل منتج (الربح الحقيقي بعد إعلانه الخاص):</div><div class="pf-wrap"><table class="pf-tbl"><tr><th>المنتج</th><th>قطع</th><th>صافي الكشف</th><th>بلا إعلان</th><th>الحقيقي</th></tr>${f.list.slice(0, 12).map(w => `<tr><td>${esc(w.title)}</td><td>${w.units}</td><td>${dz(w.net)}</td><td class="${col(w.pre)}">${dz(w.pre)}</td><td class="${col(w.real)}">${dz(w.real)}</td></tr>`).join("")}</table></div>` : ""}</div>`;
+      ${f.list.length > 1 ? `<div class="pf-sub" style="margin-top:.6rem">لكل منتج (صافي الربح بعد التوصيل وخسارة المرتجعات وإعلانه الخاص):</div><div class="pf-wrap"><table class="pf-tbl"><tr><th>المنتج</th><th>قطع</th><th>صافي الكشف</th><th>سعر المنتجات</th><th>قيمة الإعلان</th><th>صافي الربح</th></tr>${f.list.slice(0, 12).map(w => `<tr><td>${esc(w.title)}</td><td>${w.units}</td><td>${dz(w.net)}</td><td>${dz(-w.cost)}</td><td>${w.ad ? dz(-w.ad) : "—"}</td><td class="${col(w.real)}">${dz(w.real)}</td></tr>`).join("")}</table></div>` : ""}</div>`;
   }
   /* ── الربح اليومي لكل منتج: يوم ← صف لكل منتج (مبيعات، تكلفة المنتجات، الحملة إن وُجدت، الصافي) لفترة يحدّدها المستخدم. اليوم = تاريخ الطلب، والمبيعات = المحصَّل من المسلَّم (كما في بقية الصفحة) ── */
   const dayMs = d => { const p = String(d || "").split("-").map(Number); return p.length === 3 && p[0] ? new Date(p[0], p[1] - 1, p[2]).getTime() : NaN; };
