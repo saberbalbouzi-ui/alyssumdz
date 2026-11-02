@@ -207,6 +207,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-pop select{padding:0 .5rem!important;font-size:.82rem;color:#0e1318;background:#fff}.pbx-pop select,.pbx-pop input[type=color]{width:100%;height:34px;border:1px solid #d9dbe3;border-radius:8px;font-family:inherit;margin-bottom:.5rem}.pbx-pop p{margin:.2rem 0 0;font-size:.72rem;color:#888;line-height:1.6}
 .pbx-cov{position:absolute;border:2px dashed #e5484d;background:rgba(229,72,77,.12);pointer-events:none;box-sizing:border-box}.pbx-lcv{display:flex;flex-wrap:wrap;gap:.3rem;padding:.2rem .3rem .5rem}.pbx-lcv>div{flex:1 1 100%}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
+.pbx-painting #pbx-stage,.pbx-painting #pbx-stage *{cursor:copy!important}
 .pbx-ed .pbx-ft,.pbx-ed .pbx-sb,.pbx-ed .pbx-mwbar,.pbx-ed .pbx-slnav{display:none!important}      /* أثناء تحرير النص: تُخفى أشرطة العنصر العائمة فلا تغطي النص */
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
@@ -1131,6 +1132,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
   function select(id) {
+    const paintNow = !!(E.painter && id && id !== E.painter && (() => { const q = find(id); return q && q.kind === "widget"; })());      // فرشاة النمط: النقر على عنصر آخر يلصق النمط مباشرة
+    if (E.painter && !id) cancelPainter();
     if (id && isLong()) { const q1 = find(id); if (q1 && q1.kind !== "widget") id = null; }
     if (id && E.page && E.page.ad) { const q0 = find(id); if (q0 && q0.kind !== "widget") id = null; }      // «إنشاء صور»: الخلفية ليست قسماً — لا تحديد للقسم ولا إعدادات له
     if (id && !E.keepPimg) closePageImages();      // النقر على عنصر في الصفحة يخفي نافذة تحميل الصورة فتظهر الإعدادات
@@ -1143,6 +1146,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
      positionOverlay(); liveBars(); if (E.ltab === "lay" || E.ltab === "img") renderLeft();
+    if (paintNow) { E.painter = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); pasteStyle(); }
     { const q = id && find(id); if (q && q.node && q.node.type === "shdr" && E.page.sections.indexOf(q.sec) <= 1 && !editing && !E.busy) setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 40); }      // الهيدر في أعلى الصفحة: تنتقل الشاشة إلى مكانه
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
@@ -1514,7 +1518,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       h += cks.map(c => { const v = /^#[0-9a-f]{6}$/i.test(set[c.k] || "") ? set[c.k] : "#ffffff"; return `<label class="qa" title="${esc(c.l)}"><b style="font-size:.78rem">${esc(c.l.replace(/^لون\s*/, "").replace(/\s*\(.*$/, "").slice(0, 10))}</b><i style="background:${v}"></i><input type="color" data-qi="${c.k}" value="${v}"></label>`; }).join("") + (cks.length ? sep : "")
         + btn("border", QI.border, "الإطار") + btn("radius", QI.rad, "تدوير الزوايا") + sep;
     }
-    h += btn("opacity", QI.op, "الشفافية") + (isTx ? tb("effects", "تأثيرات", "تأثيرات النص (Effets) وظل العنصر") : "") + sep + btn("style", QI.paint, "نسخ النمط ولصقه");
+    h += btn("opacity", QI.op, "الشفافية") + (isTx ? tb("effects", "تأثيرات", "تأثيرات النص (Effets) وظل العنصر") : "") + sep + btn("style", QI.paint, "فرشاة النمط — انقر لنسخ نمط هذا العنصر ثم انقر أي عنصر آخر ليأخذه مباشرة (Esc للإلغاء)");
     return h;
   }
   function placeQbar() {
@@ -2028,7 +2032,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (k === "anim") { const o = (qDef(inf, "anim") || { o: [] }).o; return qPop(btn, `<h6>حركة الظهور</h6><select data-pa>${o.map(([v, n]) => `<option value="${v}"${(set.anim || "") === v ? " selected" : ""}>${n}</option>`).join("")}</select>` + qRange(inf, null, "animDur", "مدة الحركة (ثانية)", .1, 3, .1, Number(set.animDur) || .6), p => { p.querySelector("[data-pa]").onchange = e => qDone(inf, "anim", e.target.value); bindRanges(p, inf, (kk, v) => qLive(inf, kk, v)); }, { dock: true }); }
     if (k === "pos") return qPop(btn, `<h6>الترتيب</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-a="front">⬆ أول الواجهة</button><button type="button" class="pb2" data-a="back">⬇ آخر الواجهة</button><button type="button" class="pb2" data-a="up">↥ تقديم درجة</button><button type="button" class="pb2" data-a="down">↧ تأخير درجة</button></div><div class="pg" style="grid-template-columns:1fr"><button type="button" class="pb2" data-a="fit">📐 بحجم الصفحة</button></div><h6>المحاذاة على الصفحة</h6><div class="pg"><button type="button" class="pb2" data-a="left">⇤ يسار</button><button type="button" class="pb2" data-a="center">↔ وسط</button><button type="button" class="pb2" data-a="right">⇥ يمين</button><button type="button" class="pb2" data-a="top">⤒ أعلى</button><button type="button" class="pb2" data-a="middle">↕ وسط</button><button type="button" class="pb2" data-a="bottom">⤓ أسفل</button></div>`,
       p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { const a = b.dataset.a; if (a === "front" || a === "back" || a === "up" || a === "down") zMove(a); else if (a === "fit") fitPage(inf); else alignPage(a); }), { dock: true });
-    if (k === "style") return qPop(btn, `<h6>نمط العنصر</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-a="copy">🖌️ نسخ النمط</button><button type="button" class="pb2"${E.styleClip ? "" : " disabled style=\"opacity:.4\""} data-a="paste">🎨 لصق النمط</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { b.dataset.a === "copy" ? copyStyle() : pasteStyle(); qAct("style", btn); }), { dock: true });
+    if (k === "style") return startPainter();
+    if (k === "style0") return qPop(btn, `<h6>نمط العنصر</h6><div class="pg" style="grid-template-columns:1fr 1fr"><button type="button" class="pb2" data-a="copy">🖌️ نسخ النمط</button><button type="button" class="pb2"${E.styleClip ? "" : " disabled style=\"opacity:.4\""} data-a="paste">🎨 لصق النمط</button></div>`, p => p.querySelectorAll("[data-a]").forEach(b => b.onclick = () => { b.dataset.a === "copy" ? copyStyle() : pasteStyle(); qAct("style", btn); }), { dock: true });
     if (k === "border") { const bw = Number(set.bw) || 0, bs = (qDef(inf, "bs") || { o: [] }).o; return qPop(btn, qRange(inf, null, "bw", "سماكة الإطار (px)", 0, 40, 1, bw) + `<h6>النمط</h6><select data-pa>${bs.map(([v, n]) => `<option value="${v}"${(set.bs || "solid") === v ? " selected" : ""}>${n}</option>`).join("")}</select><h6>اللون</h6><input type="color" data-pc value="${/^#[0-9a-f]{6}$/i.test(set.bc || "") ? set.bc : "#333333"}">`, p => { p.querySelector("[data-pa]").onchange = e => qDone(inf, "bs", e.target.value); p.querySelector("[data-pc]").oninput = e => qLive(inf, "bc", e.target.value); p.querySelector("[data-pc]").onchange = () => { commitHist(); renderInspector(); }; bindRanges(p, inf, (kk, v) => qLive(inf, kk, v || "")); }, { dock: true }); }
     if (k === "radius") return qPop(btn, qRange(inf, null, "rad", "تدوير الزوايا (px)", 0, 200, 1, Number(eff(set, "rad", dev)) || 0), p => bindRanges(p, inf, (kk, v) => qLive(inf, kk, v, true)));
     if (k === "undo") { undo(); return; }
@@ -2062,6 +2067,13 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   const STYLE_SKIP = ["w", "mh", "al", "mar", "fx", "fy", "fwd", "fh", "zi", "rot", "locked"];
   const styleKeys = inf => ctlsFor(inf).filter(c => c.tab === "s" && !STYLE_SKIP.includes(c.k)).map(c => c.k);
   function copyStyle() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const keys = styleKeys(inf), st = {}; keys.forEach(k => { if (inf.set[k] !== undefined) st[k] = clone(inf.set[k]); }); E.styleClip = { keys, st }; toast("🎨 نُسخ نمط العنصر — حدّد عنصراً آخر وانقر «لصق النمط»"); }
+  /* فرشاة النمط: انقر الأيقونة وعنصر محدَّد ← يُنسخ نمطه فوراً، ثم انقر أي عنصر آخر ← يُلصق عليه مباشرة (Esc أو الأيقونة ثانيةً للإلغاء) */
+  function cancelPainter() { E.painter = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
+  function startPainter() {
+    if (E.painter) { cancelPainter(); return; }
+    const inf = selInfo(); if (!inf || inf.kind !== "widget") return; copyStyle(); if (!E.styleClip) return;
+    E.painter = inf.node.id; const pa = $("pb-app"); if (pa) pa.classList.add("pbx-painting"); toast("🖌️ نُسخ النمط — انقر عنصراً آخر ليأخذه مباشرة (Esc للإلغاء)");
+  }
   function pasteStyle() {
     const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf));
     E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else delete inf.set[k]; });
@@ -2983,7 +2995,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     dragTrack(e, "grabbing", mv, () => { tip.remove(); commitHist(); renderInspector(); });
   }
   function onKey(e) {
-    if (e.key === "Escape") hideCtx();
+    if (e.key === "Escape") { hideCtx(); if (E.painter) cancelPainter(); }
     if (!$("pb-app").classList.contains("on")) return;
     const tag = (e.target.tagName || "").toLowerCase(); if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
     const mod = e.ctrlKey || e.metaKey;
