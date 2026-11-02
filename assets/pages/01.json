@@ -1448,6 +1448,15 @@
         "bg": "#c1dafb",
         "rad": {
          "m": 23
+        },
+        "al": {
+         "d": "start"
+        },
+        "w": {
+         "d": 100
+        },
+        "wsc": {
+         "d": 126
         }
        }
       },
@@ -1455,7 +1464,7 @@
        "id": "bcaxbq6",
        "type": "text",
        "set": {
-        "html": "<p></p><p>ملائم للأطفال دون أي اعراض جانبية .</p>",
+        "html": "<p></p>",
         "fs": {
          "d": 18,
          "m": 16
@@ -1527,7 +1536,7 @@
        "set": {
         "html": "<p></p><span style=\"background-color: transparent;\">✅️ يزيد التركيز و الذكاء&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يرفع القدرة على الحفظ&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يقوي الذاكرة&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ فرط الحركة و سرعة النمو&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ الخوف و التشتت&nbsp;</span>",
         "fs": {
-         "d": 18,
+         "d": 28,
          "m": 16
         },
         "lh": {
@@ -2127,77 +2136,7 @@
        ]
       }
      },
-     "widgets": [
-      {
-       "id": "f1uviy9",
-       "type": "image",
-       "set": {
-        "src": "assets/img/tarkiz/lp/c-nuts.webp",
-        "alt": "مكسرات مطحونة",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 200
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.5,
-        "fxs": [
-         {
-          "id": "a5cahgg",
-          "n": "رفع بالمرور",
-          "on": true,
-          "tpl": "selector img{transition:transform .45s cubic-bezier(.2,.8,.2,1),box-shadow .45s}selector img:hover{transform:translateY(-8px);box-shadow:0 22px 44px rgba(0,0,0,.22)}",
-          "p": {}
-         },
-         {
-          "id": "9sizafb",
-          "n": "لمعة تعبر الصورة",
-          "on": true,
-          "tpl": "selector{position:relative}selector::after{content:\"\";position:absolute;top:0;left:-80%;width:45%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-22deg);animation:fksw6_5Sw [[d]]s ease-in-out infinite}@keyframes fksw6_5Sw{0%,60%{left:-80%}100%{left:150%}}",
-          "p": {
-           "d": {
-            "l": "زمن الدورة ثانية",
-            "t": "num",
-            "v": 5
-           }
-          }
-         }
-        ]
-       }
-      },
-      {
-       "id": "0dfcv8l",
-       "type": "heading",
-       "set": {
-        "text": "مكسرات مطحونة",
-        "tag": "h3",
-        "fs": {
-         "d": 17,
-         "m": 15
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#1a1a1a",
-        "lh": {
-         "d": 1.3
-        },
-        "mar": {
-         "d": [
-          8,
-          0,
-          0,
-          0
-         ]
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.5
-       }
-      }
-     ]
+     "widgets": []
     }
    ],
    "free": []
