@@ -308,4 +308,3 @@ html:is(.glass,.white) .pill:is(.st-annulee,.st-echec){background:#dc3545;color:
   #ar .ar-head,#ar .ar-controls{min-width:0}#ar .ar-controls input{max-width:100%;min-width:0}
   #ar-content{min-width:0}
 }
-html,body{overscroll-behavior-y:none}
