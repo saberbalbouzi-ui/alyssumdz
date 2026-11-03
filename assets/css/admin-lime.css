@@ -190,3 +190,6 @@ html:is(.glass,.white) #fp-1 button.small.gray:hover{transform:translateY(-2px)}
 html:is(.glass,.white) #fp-1 button.small.gray:active{transform:translateY(3px)}
 /* v1.89.711: عناوين القوائم القابلة للطي في «التوجيه والبوردرو» (تخصيص ولاية، خيارات أخرى للتوجيه، آخر الإعادات…) ليمونية في المظهر الداكن */
 html.glass #dispatch-content details>summary{color:var(--g-mint,#e2fe17);font-weight:800;cursor:pointer}
+/* v1.89.759: حقل «اسألني» (لوحة بيضاء) نصّه داكن وخلفيته بيضاء في كل المظاهر، فلا يختفي النص المكتوب */
+html .ah-f input#ah-in,html.glass .ah-f input#ah-in{color:#173f35!important;background:#fff!important;-webkit-text-fill-color:#173f35!important;caret-color:#173f35}
+html .ah-f input#ah-in::placeholder{color:#8a8f8c!important;-webkit-text-fill-color:#8a8f8c!important;opacity:1}

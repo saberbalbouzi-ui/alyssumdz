@@ -26,6 +26,16 @@ const AdminYd = (() => {
     if (/retour/.test(s)) return "a";
     return "d";
   }
+  /* ألوان حالات ياليدين كما في حسابهم: Livré أخضر ممتلئ، Expédié/Sorti en livraison أزرق ممتلئ، Transfert/Centre/Vers Wilaya/En localisation أخضر بحدّ، Tentative échouée أصفر بحدّ، Echec/Retourné أحمر ممتلئ، Retour à retirer أصفر ممتلئ */
+  function ys(st) {
+    const s = norm(st);
+    if (/^livre/.test(s)) return "ys-liv";
+    if (/expedi|sorti en livraison|en livraison/.test(s)) return "ys-exp";
+    if (/tentative|echouee/.test(s)) return "ys-try";
+    if (/retour a retirer|a retirer/.test(s)) return "ys-ret2";
+    if (/retourn|retour|echec|annul|refus/.test(s)) return "ys-ret";
+    return "ys-go";
+  }
   /* الاسم/الهاتف الحقيقيان: من الطلب المرتبط (لوحتك)، وإلا من تفاصيل الطرد الفردي المحفوظة، وإلا المقنَّع كما ترجعه ياليدين */
   function real(r, o) { const d = DET[r.tracking], g = REG[r.tracking]; if (o && (o.name || o.phone)) return { name: o.name || r.name, phone: o.phone || r.phone, src: "o" }; if (g && (g.name || g.phone)) return { name: g.name || r.name, phone: g.phone || r.phone, src: "g" }; if (d && !masked(d.name) && !masked(d.phone)) return { name: d.name, phone: d.phone, src: "d" }; return { name: r.name, phone: r.phone, src: "m" }; }
   /* أزرار اتصال/واتساب للرقم الحقيقي فقط (غير المقنَّع): 0XXXXXXXXX ← 213XXXXXXXXX */
@@ -155,6 +165,13 @@ const AdminYd = (() => {
 #yd-card .yd-chip.a{background:rgba(245,158,11,.28);border-color:rgba(245,158,11,.6)}
 #yd-card .yd-chip.r{background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.55)}
 #yd-card .yd-chip.on{outline:2px solid #fff}
+#yd-card .yd-b,#yd-card .yd-chip{border:1.5px solid transparent!important}
+#yd-card .yd-b.ys-go,#yd-card .yd-chip.ys-go{background:transparent!important;color:#28a745!important;border-color:#28a745!important;box-shadow:none!important}#yd-card .yd-chip.ys-go b{background:rgba(40,167,69,.22)!important;color:#28a745!important}
+#yd-card .yd-b.ys-liv,#yd-card .yd-chip.ys-liv{background:#28a745!important;color:#fff!important;border-color:#28a745!important;box-shadow:none!important}#yd-card .yd-chip.ys-liv b{background:rgba(255,255,255,.25)!important;color:#fff!important}
+#yd-card .yd-b.ys-exp,#yd-card .yd-chip.ys-exp{background:#007bff!important;color:#fff!important;border-color:#007bff!important;box-shadow:none!important}#yd-card .yd-chip.ys-exp b{background:rgba(255,255,255,.25)!important;color:#fff!important}
+#yd-card .yd-b.ys-try,#yd-card .yd-chip.ys-try{background:transparent!important;color:#ffc107!important;border-color:#ffc107!important;box-shadow:none!important}#yd-card .yd-chip.ys-try b{background:rgba(255,193,7,.25)!important;color:#ffc107!important}
+#yd-card .yd-b.ys-ret2,#yd-card .yd-chip.ys-ret2{background:#ffc107!important;color:#212529!important;border-color:#ffc107!important;box-shadow:none!important}#yd-card .yd-chip.ys-ret2 b{background:rgba(0,0,0,.15)!important;color:#212529!important}
+#yd-card .yd-b.ys-ret,#yd-card .yd-chip.ys-ret{background:#dc3545!important;color:#fff!important;border-color:#dc3545!important;box-shadow:none!important}#yd-card .yd-chip.ys-ret b{background:rgba(255,255,255,.25)!important;color:#fff!important}
 #yd-card .yd-f{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;padding:10px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
 #yd-card .yd-f input,#yd-card .yd-f select{flex:1 1 140px;min-width:120px}
 #yd-card .yd-b{padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700;color:#fff;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);white-space:nowrap}
@@ -174,10 +191,10 @@ const AdminYd = (() => {
     if (S.page > pages) S.page = pages;
     const tm = trackMap(), dmp = dupMap(), ndup = Object.keys(dmp).length, wils = [...new Set(S.rows.map(r => r.wilaya).filter(Boolean))].sort();
     const dupChip = ndup ? '<span class="yd-chip r' + (S.dup ? " on" : "") + '" data-yd-dup="1" title="طرود بالاسم والهاتف والوجهة والسعر نفسها خلال 3 أيام — غالباً إرسال مكرر">⚠️ مكرّر <b>' + ndup + '</b></span>' : "";
-    const chips = dupChip + keys.map(k => '<span class="yd-chip ' + tone(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
+    const chips = dupChip + keys.map(k => '<span class="yd-chip ' + tone(k) + ' ' + ys(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + (tone(r.status) === 'y' ? contact(real(r, o).phone) : '') + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td dir="auto" style="max-width:240px">' + (o ? esc(ptxt(o)) || "—" : "—") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
+      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + (tone(r.status) === 'y' ? contact(real(r, o).phone) : '') + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td dir="auto" style="max-width:240px">' + (o ? esc(ptxt(o)) || "—" : "—") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + ' ' + ys(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
     }).join("") || '<tr><td colspan="10" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
@@ -249,7 +266,7 @@ const AdminYd = (() => {
     /* تفاصيل الطرد بترتيب صفحة «Détails du colis» عند ياليدين: التاريخ ثم المستلم والوجهة ثم الطلب والمنتج والسعر والتوصيل */
     const L = (k, v) => '<div style="margin:.15rem 0"><b>' + k + ':</b> ' + v + '</div>', hr = '<hr style="border:0;border-top:1px solid rgba(128,128,128,.35);margin:.7rem 0">';
     const prodTxt = r.product || ptxt(o) || "—", coNo = r.orderId || (o && a && a.coNoOf ? a.coNoOf(o) : "");
-    const info = '<div style="line-height:1.7">' + L("التتبع", '<b dir="ltr">' + esc(r.tracking) + '</b> &nbsp; <span class="yd-b ' + tone(r.status) + '">' + esc(r.status || "—") + '</span>') + L("تاريخ الإنشاء", '<span dir="ltr">' + esc(String(r.date).replace("T", " ").slice(0, 19)) + '</span>') + hr +
+    const info = '<div style="line-height:1.7">' + L("التتبع", '<b dir="ltr">' + esc(r.tracking) + '</b> &nbsp; <span class="yd-b ' + tone(r.status) + ' ' + ys(r.status) + ' ' + ys(r.status) + '">' + esc(r.status || "—") + '</span>') + L("تاريخ الإنشاء", '<span dir="ltr">' + esc(String(r.date).replace("T", " ").slice(0, 19)) + '</span>') + hr +
       L("المستلم", '<span dir="auto">' + esc(rl.name) + '</span>') + L("هاتف المستلم", '<span dir="ltr">' + esc(rl.phone) + '</span>' + contact(rl.phone)) +
       L("من ← إلى", (r.from ? esc(r.from) + ' <span class="yd-b g">إلى</span> ' : "") + esc(r.wilaya) + (r.commune ? " (" + esc(r.commune) + ")" : "") + (r.stop ? " — مكتب Stop Desk" : "")) + hr +
       L("رقم الطلب عند الشركة", esc(coNo || "—")) + L("المنتج", '<span dir="auto">' + esc(prodTxt) + '</span>') + L("السعر", esc(r.price || "—")) +
