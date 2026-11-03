@@ -67,7 +67,7 @@ window.TableSel = (() => {
   function drawBar(t, sk, title) {
     const b = barOf(t, sk), S = sel[sk]; b.dataset.tsTitle = title; const n = S.size, ks = [...t.querySelectorAll("input.ts-ck[data-k]")], allOn = !!ks.length && ks.every(c => c.checked);
     b.classList.toggle("on", n > 0);
-    b.innerHTML = '<label class="ts-all"><input type="checkbox" class="ts-ck" data-barall="1"' + (allOn ? " checked" : "") + "> تحديد الكل</label><span>محدَّد: <b>" + n + "</b></span>" + menuHtml(t.querySelector("tr[data-trk]") ? BASE_ITEMS.concat([{ g: "طباعة", k: "bord", l: "🏷️ طباعة البوردرو الأصلي (PDF)" }]) : BASE_ITEMS, "data-ts", !n) + (n ? '<button type="button" class="ts-btn al" data-ts="clear">إلغاء التحديد</button>' : "");
+    b.innerHTML = '<label class="ts-all"><input type="checkbox" class="ts-ck" data-barall="1"' + (allOn ? " checked" : "") + "> تحديد الكل</label><span>محدَّد: <b>" + n + "</b></span>" + menuHtml(t.querySelector("tr[data-trk]") ? [{ g: "كل الطرود المعروضة", k: "yd-gs", l: "📊 نسخ إلى Google Sheets" }, { g: "كل الطرود المعروضة", k: "yd-csv", l: "⬇ تصدير CSV" }].concat(BASE_ITEMS, [{ g: "طباعة", k: "bord", l: "🏷️ طباعة البوردرو الأصلي (PDF)" }]) : BASE_ITEMS, "data-ts", !n && !t.querySelector("tr[data-trk]")) + (n ? '<button type="button" class="ts-btn al" data-ts="clear">إلغاء التحديد</button>' : "");
   }
   function collect(t, sk) {
     const S = sel[sk], rows = [...t.rows].filter(tr => !isHead(tr) && tr.dataset.tsKey && S.has(tr.dataset.tsKey)), head = [...t.rows].find(isHead);
@@ -90,6 +90,7 @@ window.TableSel = (() => {
   document.addEventListener("click", e => {
     const b = e.target.closest(".ts-bar [data-ts]"); if (!b) return; const bar = b.closest(".ts-bar"), sk = bar.dataset.tsFor, t = document.querySelector('table[data-ts="' + sk.replace(/"/g, "") + '"]'), k = b.dataset.ts;
     if (k === "menu") return toggleMenu(b);
+    if (k === "yd-gs" || k === "yd-csv") { document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); if (typeof AdminYd !== "undefined") { if (k === "yd-gs") AdminYd.sheets(); else AdminYd.csv(); } return; }
     if (!t) return; const S = sel[sk];
     if (k === "clear") { S.clear(); t.querySelectorAll("input.ts-ck").forEach(x => { x.checked = false; }); t.querySelectorAll("tr.ts-sel").forEach(r => r.classList.remove("ts-sel")); syncAll(t); drawBar(t, sk, bar.dataset.tsTitle); return; }
     if (k === "bord") { const S2 = sel[sk], trs = [...t.querySelectorAll("tr[data-trk]")].filter(tr => { const ck = tr.querySelector("input.ts-ck[data-k]"); return (ck && ck.checked) || (tr.dataset.tsKey && S2.has(tr.dataset.tsKey)); }).map(tr => ({ tracking: tr.dataset.trk, company: tr.dataset.co || "" })); document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); if (!trs.length) return toast("حدد طرداً واحداً على الأقل"); const ad = typeof Admin !== "undefined" ? Admin : null; if (ad && ad.printBordereauxFor) ad.printBordereauxFor(trs); return; }

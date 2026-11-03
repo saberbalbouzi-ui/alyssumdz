@@ -181,7 +181,7 @@ const AdminYd = (() => {
     }).join("") || '<tr><td colspan="10" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
-      '<button class="small" type="button" data-yd="prep"' + (S.rows.length ? "" : " disabled") + ' title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button><button class="small" type="button" data-yd="csv"' + (S.rows.length ? "" : " disabled") + '>⬇ CSV</button><button class="small" type="button" data-yd="gs"' + (S.rows.length ? "" : " disabled") + ' title="ينسخ الجدول ويفتح Google Sheets جديداً — ألصقه في الخلية A1">📊 Google Sheets</button></div>' +
+      '<button class="small" type="button" data-yd="prep"' + (S.rows.length ? "" : " disabled") + ' title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button></div>' +
       (S.rows.length ? '<div class="yd-top"><span class="yd-total">Total ' + (S.total || S.rows.length) + '</span><span class="hint" style="margin:0">par statut:</span><div class="yd-chips">' + chips + '</div>' +
         '<button class="small" type="button" data-yd="fl">⚙ Filtre' + (S.q || S.wil || S.from || S.to || S.link ? " •" : "") + '</button>' + (S.st || S.q || S.wil || S.from || S.to || S.link || S.dup ? '<button class="small" type="button" data-yd="clr">✖ مسح التصفية</button>' : "") + '</div>' : '<div class="hint">اضغط «تحميل / تحديث الطرود» لعرض إحصاءات حسابك في ياليدين حسب الحالة.</div>') +
       (S.fopen && S.rows.length ? '<div class="yd-f"><input data-yd-in="q" placeholder="🔍 تتبع / اسم / هاتف…" value="' + esc(S.q) + '"><select data-yd-in="wil"><option value="">كل الولايات</option>' + wils.map(w => '<option' + (norm(S.wil) === norm(w) ? " selected" : "") + '>' + esc(w) + '</option>').join("") + '</select>' +
@@ -359,5 +359,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, setQuery, noteSent, forget, prepOpen, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
+  return { set, draw, load, S, csv, sheets, setQuery, noteSent, forget, prepOpen, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
 })();
