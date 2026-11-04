@@ -208,6 +208,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-cov{position:absolute;border:2px dashed #e5484d;background:rgba(229,72,77,.12);pointer-events:none;box-sizing:border-box}.pbx-lcv{display:flex;flex-wrap:wrap;gap:.3rem;padding:.2rem .3rem .5rem}.pbx-lcv>div{flex:1 1 100%}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-painting #pbx-stage,.pbx-painting #pbx-stage *{cursor:copy!important}
+.pbx-painting .pbx-ft,.pbx-painting .pbx-sb,.pbx-painting .pbx-mwbar,.pbx-painting .pbx-slnav,.pbx-painting .pbx-h,.pbx-painting .pbx-rz{display:none!important}      /* أثناء فرشاة النمط: لا شيء عائم يغطي العناصر المجاورة فيستقبل النقر بدلها */
 .pbx-ed .pbx-ft,.pbx-ed .pbx-sb,.pbx-ed .pbx-mwbar,.pbx-ed .pbx-slnav{display:none!important}      /* أثناء تحرير النص: تُخفى أشرطة العنصر العائمة فلا تغطي النص */
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
