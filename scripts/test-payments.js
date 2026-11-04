@@ -145,6 +145,18 @@ ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم fre
   ok("رقم التتبع الأصلي للطلب: yal-HM35XS", sb.AP.trkOf(it) === "yal-HM35XS", sb.AP.trkOf(it));
 }
 
+// مرتجع لم يصل بعد (Retour vers centre / Tentative échouée) لا يدخل رسوم الإرجاع كما عند الشركة؛ المرتجع النهائي يدخل
+{
+  const orders = [{ id: "r1", status: "echec", total: 3000, fee: 500, _trk: "X1", date: "2026-10-20" }, { id: "r2", status: "echec", total: 3000, fee: 500, _trk: "X2", date: "2026-10-20" }, { id: "r3", status: "echec", total: 3000, fee: 500, _trk: "X3", date: "2026-10-20" }];
+  const sr = { r1: { raw: "Retour vers centre", pay: "not-ready", fin: { fee: 500, price: 2500, tp: 0.75, tr: 250 } }, r2: { raw: "Retourné au vendeur", pay: "ready", fin: { fee: 500, price: 2500, tp: 0.75, tr: 250 } }, r3: { raw: "Tentative échouée", pay: "not-ready", fin: { fee: 500, price: 2500, tp: 0.75, tr: 250 } } };
+  const Admin = { orders, fin: { costs: {}, set: {} }, ST_AR: {}, ydActual: {}, shipRaw: sr, trackingOf: o => ({ company: "yalidine", tracking: o._trk }), actualFees: () => null, realFees: () => null, orderLines: () => [], carrierCost: o => o.fee, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  const ks = sb.AP.items().map(it => sb.AP.settle(it).kind);
+  ok("مرتجع في الطريق وTentative échouée لا يُحسبان؛ «Retourné au vendeur» وحده يُحسب", ks.join() === "exp,ret,exp", ks);
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [

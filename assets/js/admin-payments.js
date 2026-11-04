@@ -94,7 +94,7 @@ const AdminPayments = (() => {
   function settle(it) {
     if (it.manual) return null; const o=it.o, A_=A(); let st=it.ship;
     if (!["livree","echec","expediee","confirmee"].includes(st)) return null;
-    { const f0=((A_.shipRaw||{})[o.id]||{}), rw=normS(f0.raw); if (f0.fin) { if (/^livr/.test(rw)) st="livree"; else if (/retourne\w* au vendeur|retour a retirer/.test(rw)) st="echec"; } }      // حالة الطرد الفعلية عند الشركة تسبق حالة الطلب في اللوحة (تحديث متأخر)
+    { const f0=((A_.shipRaw||{})[o.id]||{}), rw=normS(f0.raw); if (f0.fin) { if (/^livr/.test(rw)) st="livree"; else if (/retourne\w* au vendeur|retour a retirer/.test(rw)) st="echec"; else if (st==="livree"||st==="echec") st="expediee"; } }      // الشركة لا تحسب المرتجع قبل «Retourné au vendeur/Retour à retirer» ولا «Tentative échouée»: يبقى معلَّقاً      // حالة الطرد الفعلية عند الشركة تسبق حالة الطلب في اللوحة (تحديث متأخر)
     const trk=A_.trackingOf?A_.trackingOf(o):null; if (st==="confirmee"&&!trk) return null;
     const act=A_.actualFees?A_.actualFees(o):null, fee=Number(o.fee)||0, total=Number(o.total)||0;
     let price, del=0, cod=0, ins=0, ret=0, net, got, src="est", pend=act&&act.pend?String(act.pend):"";
