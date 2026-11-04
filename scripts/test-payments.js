@@ -120,6 +120,20 @@ ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم fre
   ok("مجاميع الشركة المباشرة: Prêt à payer 44 646,88 (55 800,00 ramassé) وPas prêt 37 266,50 (45 400,00)، والمدفوع «payed» مستثنى", /44[\s\u202f\u00a0]646,88/.test(h) && /55[\s\u202f\u00a0]800,00/.test(h) && /37[\s\u202f\u00a0]266,50/.test(h) && /45[\s\u202f\u00a0]400,00/.test(h) && /81[\s\u202f\u00a0]913,38/.test(h), h.slice(0, 600));
 }
 
+// علامة «مدفوع» اليدوية لا تُخرج طرداً تقول الشركة إنه ما زال Prêt à payer (الشركة هي المرجع)
+{
+  const orders = [{ id: "m1", status: "livree", total: 4800, fee: 700, _trk: "W1", date: "2026-10-20" }];
+  const row = { tracking: "W1", status: "Livré", pay: "ready", price: 4100, fee: 700, taxe: 0.75, taxeRet: 0, free: false, name: "x", wilaya: "Mascara" };
+  const ps = r => { const t = String(r || "").toLowerCase().replace(/[_-]+/g, " "); if (/not\s*ready/.test(t)) return "notready"; if (/ready/.test(t)) return "ready"; if (/paye/.test(t)) return "paid"; return ""; };
+  const Admin = { orders, fin: { costs: {}, set: { packaging: 0 } }, ST_AR: {}, ydActual: {}, shipRaw: { m1: { raw: "Livré", pay: "ready", fin: { fee: 700, price: 4100, tp: 0.75, tr: 0, free: 0 } } }, payState: ps, trackingOf: o => ({ company: "yalidine", tracking: o._trk }), actualFees: () => null, realFees: () => null, orderLines: () => [], carrierCost: o => o.fee, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, AdminYd: { S: { raw: [row], rows: [row] } }, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  sb.AP.S.byOrder["m1"] = { status: "paid", amount: 4800, method: "cash", date: "2026-11-01" };
+  const h = sb.AP.cmpCard().replace(/<[^>]+>/g, " ");
+  ok("طرد معلَّم «مدفوع» يدوياً والشركة تقول Prêt à payer: يدخل الحساب ولا يُدرَج ضمن «لا نحسبها»", /كل طرود الشركة في الكشفين محسوبة/.test(h) && !/علّمتَه/.test(h), h.slice(-300));
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [

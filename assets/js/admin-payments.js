@@ -134,7 +134,7 @@ const AdminPayments = (() => {
   function view(it) { const r=rawRec(it)||{}, ov=r.ov||{}; return { name:ov.name!=null?ov.name:it.name, phone:ov.phone!=null?ov.phone:it.phone, product:ov.product!=null?ov.product:it.product, total:ov.total!=null?Number(ov.total):it.total }; }
   function amount(it, r) { return Number(r.amount)>0?Number(r.amount):view(it).total; }
   /* القائمة تُبقي ما يدخل في حساب الدفعة القادمة فقط: طرود الشركة (مسلَّم/مرتجع/في الطريق) غير المعلَّمة «مدفوع»؛ وزرّ «عرض الكل» يكشف الباقي للتراجع */
-  const inNext = it => !!settle(it) && !(isMan(it) && record(it).status === "paid") && !inFile(it);
+  const inNext = it => !!settle(it) && !manPaid(it) && !inFile(it);
   const baseList = () => S.all ? items() : items().filter(inNext);
   function filtered() {
     const q=S.query.trim().toLowerCase(), qd=q.replace(/\D/g, "");
@@ -182,7 +182,10 @@ const AdminPayments = (() => {
   /* وما ورد في كشف ياليدين المستورد (الكشف المدفوع: أرقام الشركة الفعلية لكل طرد) = مدفوع فلا يدخل في المتبقي */
   const paidCo = it => { try{ const A_=A(); return !!(A_.payState && it.o && A_.payState(((A_.shipRaw||{})[it.o.id]||{}).pay)==="paid"); }catch(_){ return false; } };      /* الشركة تقول «مدفوع» لهذا الطرد ← يخرج من المتبقي تلقائياً */
   const inFile = it => { try{ const a=A().actualFees && it.o && A().actualFees(it.o); return !!(a && !a.pend) || paidCo(it); }catch(_){ return false; } };      /* الكشف المدفوع = مستثنى؛ كشف «قادم/غير جاهز» = يبقى في المستحق بأرقام الشركة الحقيقية */
-  const sItems = () => items().filter(it => !(isMan(it) && record(it).status === "paid") && !inFile(it));
+  /* علامة «مدفوع» اليدوية تُستثنى من التسوية إلا إن قالت الشركة إن الطرد ما زال Pas prêt / Prêt à payer (الشركة هي المرجع) */
+  const coPending = it => { try{ const A_=A(), ps=A_.payState?A_.payState(((A_.shipRaw||{})[it.o&&it.o.id]||{}).pay):""; return ps==="notready"||ps==="ready"; }catch(_){ return false; } };
+  const manPaid = it => isMan(it) && record(it).status === "paid" && !coPending(it);
+  const sItems = () => items().filter(it => !manPaid(it) && !inFile(it));
   const pnum = v => Number(String(v).replace(/[\s\u00a0\u202f]/g,"").replace(",",".")) || 0;
   function parseDetail(txt) {
     const t=String(txt||"").replace(/\u00a0|\u202f/g," "), amt=l=>{ const m=t.match(new RegExp(l+"[^\\d\\-=]*([-=]?\\s*-?\\s*\\d[\\d\\s]*[,.]\\d{2})","i")); return m?pnum(m[1].replace(/[=\s]/g,"")):null; };
@@ -252,13 +255,13 @@ const AdminPayments = (() => {
     /* اقتراح: طرود في اللوحة لا تُحسب مسلَّمة (في الطريق/معلَّمة مدفوعة) مجموع مبالغها = فرق المحصَّل وعددها = فرق المسلَّم */
     let cand="";
     if(st.length&&!apiOn){ const dl=C.livre-P.livre, dg=Math.round((C.got-P.got)*100)/100;
-      if(dl>0&&dl<=3&&dg>0){ const A_=A(), pool=items().filter(it=>{ const x=settle(it); return (x&&x.kind==="exp")||(isMan(it)&&record(it).status==="paid"&&!inFile(it)&&it.ship==="livree"); }).slice(0,60), val=it=>Number(it.o&&it.o.total)||0, out=[];
+      if(dl>0&&dl<=3&&dg>0){ const A_=A(), pool=items().filter(it=>{ const x=settle(it); return (x&&x.kind==="exp")||(manPaid(it)&&!inFile(it)&&it.ship==="livree"); }).slice(0,60), val=it=>Number(it.o&&it.o.total)||0, out=[];
         const rec=(i,left,sum,pick)=>{ if(out.length>=5) return; if(!left){ if(Math.abs(sum-dg)<0.5) out.push(pick.slice()); return; } for(let j=i;j<pool.length;j++){ pick.push(pool[j]); rec(j+1,left-1,sum+val(pool[j]),pick); pick.pop(); } };
         rec(0,dl,0,[]);
         cand=out.length?`<div style="margin-top:.5rem"><b>طرود محتملة تفسّر الفرق (${dl} طرد بمجموع ${d2(dg)})</b>${out.map(g=>`<div class="pm-note" style="margin:.25rem 0">${g.map(it=>{ const raw=((A_.shipRaw||{})[it.o.id]||{}).raw||""; return `#${esc(String(it.o.id).slice(-6))} · ${esc(it.o.name||"")} · ${esc(it.o.wilaya||"")} · ${dz(val(it))} دج${raw?" · "+esc(raw):""}`; }).join("<br>")}</div>`).join('<div style="border-top:1px dashed rgba(255,255,255,.2)"></div>')}<div class="pm-note">غالباً سُلّمت عند الشركة ولم تتحدّث حالتها هنا (أو عُلّمت «مدفوع» بالخطأ): حدّث الحالات من «المسجلة».</div></div>`:`<div class="pm-note" style="margin-top:.5rem">الشركة تحسب ${dl} طرد مسلَّم أكثر منا بمجموع ${d2(dg)}، ولا توجد في طرود اللوحة (في الطريق/المعلَّمة مدفوعة) مجموعة تطابق المبلغ؛ قد يكون الطرد غير مسجَّل عندنا أو بمبلغ معدَّل.</div>`; }
     }
     let missH=""; if(apiOn){ try{ const A_=A(), map={}, inS=new Set(sItems().map(x=>x.id)); items().forEach(it=>{ const t=A_.trackingOf?A_.trackingOf(it.o):null; if(t&&t.tracking) map[String(t.tracking)]=it; }); const L=[];
-        ["notready","ready"].forEach(k=>CG.g[k].rows.forEach(r=>{ const it=map[String(r.tracking)]; let why=""; if(!it) why="غير موجود في طلباتك (أُدخل عند الشركة مباشرة أو لم يُربط)"; else if(!inS.has(it.id)) why=isMan(it)&&record(it).status==="paid"?"علّمتَه «مدفوع» يدوياً عندنا":(inFile(it)?"مستثنى كمدفوع في كشف مستورد":"مستثنى"); else { const x=settle(it); if(!x||x.kind==="exp") why="حالة الطلب عندنا: "+((A_.ST_AR&&A_.ST_AR[it.ship])||it.ship||"—"); } if(why) L.push({ r, why, k }); }));
+        ["notready","ready"].forEach(k=>CG.g[k].rows.forEach(r=>{ const it=map[String(r.tracking)]; let why=""; if(!it) why="غير موجود في طلباتك (أُدخل عند الشركة مباشرة أو لم يُربط)"; else if(!inS.has(it.id)) why=manPaid(it)?"علّمتَه «مدفوع» يدوياً عندنا":(inFile(it)?"مستثنى كمدفوع في كشف مستورد":"مستثنى"); else { const x=settle(it); if(!x||x.kind==="exp") why="حالة الطلب عندنا: "+((A_.ST_AR&&A_.ST_AR[it.ship])||it.ship||"—"); } if(why) L.push({ r, why, k }); }));
         missH=L.length?`<div style="margin-top:.5rem"><b>طرود تحسبها الشركة ولا نحسبها (${L.length})</b>${L.map(x=>`<div class="pm-note" style="margin:.25rem 0"><span dir="ltr">${esc(String(x.r.tracking))}</span> · ${esc(x.r.name||"")} · ${esc(x.r.wilaya||"")} · ${dz(x.r.price)} دج · ${esc(x.r.status||"")} · ${x.k==="ready"?"Prêt à payer":"Pas prêt"}<br><b style="color:#fdba74">${esc(x.why)}</b></div>`).join("")}</div>`:`<div class="pm-note" style="margin-top:.5rem">✓ كل طرود الشركة في الكشفين محسوبة عندنا.</div>`; }catch(_){ } }
     const lst=st.length&&!apiOn?`<div class="pm-note" style="margin-top:.4rem">${st.map(x=>`${x.state==="ready"?"prêt à payer":"pas prêt"} <button type="button" class="pm-btn pm-ydel" data-i="${YP.list.indexOf(x)}" style="padding:2px 9px">حذف</button>`).join(" · ")}</div>`:"";
     /* تلقائي: تجميع الطرود حسب حالة الدفع التي ترسلها الشركة لكل طرد (not-ready = Pas prêt، ready = Prêt à payer) بلا لصق */
