@@ -213,6 +213,8 @@ begin
   v_ip := public._client_ip(); v_iph := public._ip_hash(v_ip);
   select coalesce(value, '{}'::jsonb) into g from public.admin_kv where key = 'guard';
   g := coalesce(g, '{}'::jsonb);
+  -- phone_dz_check: رقم جزائري صحيح فقط (جوال 10 أرقام 05/06/07 أو ثابت 9 أرقام 02/03/04) إلا إن عُطِّل phoneDz
+  if coalesce((g ->> 'phoneDz')::boolean, true) and public._cust_phone(v_phone) !~ '^0[567][0-9]{8}$' and public._cust_phone(v_phone) !~ '^0[2-4][0-9]{7}$' then raise exception 'invalid_phone'; end if;
   -- قائمة الحظر (لوحة الإدارة ← المرتجعات، admin_kv('blocklist')): هاتف محظور، أو اسم كامل محظور، أو IP مرتبط بهاتف محظور (إن فُعّل)
   select coalesce(value, '{}'::jsonb) into bl from public.admin_kv where key = 'blocklist';
   if bl is not null and bl <> '{}'::jsonb then

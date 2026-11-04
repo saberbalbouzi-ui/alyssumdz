@@ -2043,7 +2043,7 @@ const Guard = {
 const PhoneDZ = {
   on: ((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.country) || "DZ") === "DZ",
   MSG: "رقم الهاتف يجب أن يتكون من 10 أرقام ويبدأ بـ 05 أو 06 أو 07 (أرقام فقط، بلا حروف أو رموز)",
-  norm(v){ let d = String(v || "").replace(/\D/g, ""); if(d.startsWith("00213")) d = "0" + d.slice(5); else if(d.startsWith("213") && d.length > 10) d = "0" + d.slice(3); return d.slice(0, 10); },
+  norm(v){ let d = String(v || "").replace(/\D/g, ""); if(d.startsWith("00213")) d = "0" + d.slice(5); else if(d.startsWith("213") && d.length > 10) d = "0" + d.slice(3); return d.slice(0, 14); },      /* لا يُقصّ الرقم الزائد إلى 10 أرقام بصمت (كان 11 رقماً يصير رقماً آخر صالح الشكل): يبقى ظاهراً فيُرفض */
   ok(v){ return /^0[567]\d{8}$/.test(String(v || "")); },
   hint(el){
     let h = el.parentNode.querySelector(".phone-hint"); if(!h){ h = document.createElement("div"); h.className = "phone-hint"; h.style.cssText = "font-size:.78rem;min-height:1.1em;margin-top:.2rem;font-weight:700"; el.insertAdjacentElement("afterend", h); }
@@ -2053,6 +2053,7 @@ const PhoneDZ = {
     const v = el.value, h = this.hint(el);
     if(!v){ h.textContent = ""; return; }
     if(v.length >= 2 && !/^0[567]/.test(v)){ h.textContent = "⚠️ يجب أن يبدأ الرقم بـ 05 أو 06 أو 07"; h.style.color = "var(--red)"; }
+    else if(v.length > 10){ h.textContent = "⚠️ الرقم أطول من 10 أرقام (" + v.length + ") — تأكد منه"; h.style.color = "var(--red)"; }
     else if(v.length < 10){ h.textContent = v.length + " / 10 أرقام"; h.style.color = "var(--muted)"; }
     else if(this.ok(v)){ h.textContent = "✓ رقم صالح"; h.style.color = "var(--ok)"; }
   },

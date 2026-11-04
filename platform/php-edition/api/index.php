@@ -521,6 +521,8 @@ switch ($route) {
         $d = db();
         /* حماية الطلبات: روبوتات وتكرار حسب IP — تُفعَّل من لوحة الإدارة ← نموذج الطلب */
         $g = kvGet('guard') ?: []; $iph = ipHash();
+        /* رقم جزائري صحيح فقط (جوال 10 أرقام 05/06/07 أو ثابت 9 أرقام 02/03/04) إلا إن عُطِّل phoneDz — يسري على كل الطلبات */
+        { $pnx = custPhone($phone); if (($g['phoneDz'] ?? true) && !preg_match('/^0[567]\d{8}$/', $pnx) && !preg_match('/^0[2-4]\d{7}$/', $pnx)) out(422, ['error' => 'invalid_phone']); }
         /* قائمة الحظر (لوحة الإدارة ← المرتجعات): هاتف محظور، اسم كامل محظور، أو IP مرتبط بهاتف محظور (إن فُعّل) */
         if (!$manual && ($bl = kvGet('blocklist'))) {
             $bp = array_map('strval', (array)($bl['phones'] ?? [])); $bn = array_map('strval', (array)($bl['names'] ?? []));

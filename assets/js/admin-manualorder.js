@@ -111,8 +111,8 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     $("mo-lines").addEventListener("click", e => { const b = e.target.closest('[data-f="del"]'); if (!b) return; const i = +b.closest("tr").dataset.i; lines.splice(i, 1); if (!lines.length) lines.push({ slug: "", title: "", qty: 1, price: 0 }); drawLines(); total(); });
     const close = () => bg.remove(); $("mo-x").onclick = close; $("mo-no").onclick = close; bg.addEventListener("click", e => { if (e.target === bg) close(); });
     $("mo-save").onclick = async () => {
-      const name = $("mo-name").value.trim(), phone = $("mo-phone").value.replace(/[^0-9+]/g, ""), items = lines.filter(l => String(l.title).trim() && num(l.qty) > 0);
-      if (name.length < 2) { toast("⚠️ أدخل اسم الزبون"); return; } if (phone.length < 6 || phone.length > 20) { toast("⚠️ رقم الهاتف غير صحيح"); return; } if (!items.length) { toast("⚠️ أضف منتجاً واحداً على الأقل"); return; }
+      const name = $("mo-name").value.trim(), phone = normDz($("mo-phone").value), items = lines.filter(l => String(l.title).trim() && num(l.qty) > 0);
+      if (name.length < 2) { toast("⚠️ أدخل اسم الزبون"); return; } if (!validPhone(phone)) { toast("⚠️ رقم الهاتف غير صحيح: 10 أرقام تبدأ بـ 05 أو 06 أو 07 (أو رقم ثابت بـ 9 أرقام)"); const pe = document.getElementById("mo-phone"); if (pe) pe.focus(); return; } if (!items.length) { toast("⚠️ أضف منتجاً واحداً على الأقل"); return; }
       const dtp = dt(), desk = dtp === "stop" ? $("mo-desk").value : ""; if (dtp === "stop" && !desk) { toast("⚠️ اختر مكتب Stop Desk"); return; }
       const c = calc(items, $("mo-fee").value, $("mo-disc").value), b = $("mo-save"); b.disabled = true; const lab = b.textContent; b.textContent = "جارٍ الحفظ…";
       const clean = items.map(l => ({ slug: l.slug || "", title: String(l.title).trim().slice(0, 160), qty: num(l.qty), price: num(l.price) })), txt = textOf(items.map(l => ({ title: String(l.title).trim().slice(0, 160), qty: num(l.qty), price: num(l.price), amt: amtOf(l) }))), offTxt = items.filter(l => l.offer != null || num(l.free) > 0).map(l => { const oc = Math.max(1, num(l.oc) || 1), q1 = l.qty / oc, f1 = num(l.free) / oc; return "عرض " + q1 + " قطع" + (f1 > 0 ? " (" + (q1 - f1) + " + " + f1 + " مجاناً)" : "") + (oc > 1 ? " × " + oc + " (المجموع " + l.qty + " قطع)" : "") + " بسعر " + amtOf(l); }).join(" ؛ ");
@@ -135,7 +135,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
         }
         { const bh = mode === "edit" ? null : ad.blockHit(phone, name); if (bh && !window.confirm("⛔ تحذير: " + (bh.by === "name" ? "هذا الاسم" : "هذا الهاتف") + " في القائمة السوداء" + (bh.entry.reason ? " (" + bh.entry.reason + ")" : "") + ".\nهل تسجّل الطلب رغم ذلك؟")) { b.disabled = false; b.textContent = lab; return; } }
         const xchOn = !!($("mo-xch") && $("mo-xch").checked), xchTxt = xchOn ? $("mo-xcht").value.trim() : ""; if (xchOn && !xchTxt) { b.disabled = false; b.textContent = lab; toast("⚠️ اكتب القطعة التي ستُسترجع من الزبون (الاستبدال)"); $("mo-xcht").focus(); return; }
-        const extra = { "✍️ طلب يدوي": "نعم" }; { const p2 = $("mo-phone2") ? $("mo-phone2").value.replace(/[^0-9+]/g, "") : ""; if (p2) { if (p2.length < 6 || p2.length > 20) { b.disabled = false; b.textContent = lab; toast("⚠️ الهاتف الثاني غير صحيح"); return; } if (p2 !== phone) extra["📞 هاتف 2"] = p2; } } if (xchOn) extra["🔄 استبدال"] = xchTxt; if (offTxt) extra["🎁 العرض"] = offTxt; { const fe = $("mo-from"); if (fe && fe.value && fe.value !== fromDef(ad)) extra["📍 ولاية الانطلاق"] = fe.value; } if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
+        const extra = { "✍️ طلب يدوي": "نعم" }; { const p2 = $("mo-phone2") ? normDz($("mo-phone2").value) : ""; if (p2) { if (!validPhone(normDz(p2))) { b.disabled = false; b.textContent = lab; toast("⚠️ الهاتف الثاني غير صحيح: 10 أرقام تبدأ بـ 05 أو 06 أو 07"); return; } if (p2 !== phone) extra["📞 هاتف 2"] = p2; } } if (xchOn) extra["🔄 استبدال"] = xchTxt; if (offTxt) extra["🎁 العرض"] = offTxt; { const fe = $("mo-from"); if (fe && fe.value && fe.value !== fromDef(ad)) extra["📍 ولاية الانطلاق"] = fe.value; } if (mode === "copy" && src && !opt.extra) extra["📄 نسخة من"] = String(src.id).slice(-6); if (opt.extra) Object.assign(extra, opt.extra);
         const order = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, items: clean, subtotal: c.sub, fee: c.fee, total: c.total, coupon: "", discount: c.disc, extra, note: $("mo-note").value.trim() };
         const r = await API.addOrder(order);
         if (!r || !r.ok) { b.disabled = false; b.textContent = lab; toast("❌ تعذّر حفظ الطلب — تحقق من الاتصال وصلاحية الدخول"); return; }
@@ -154,6 +154,9 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     if (mode === "edit" || !ad.enabledCompanyKeys || ad.enabledCompanyKeys().indexOf("yalidine") < 0) return "";
     return `<label style="display:flex;gap:.5rem;align-items:flex-start;margin:.2rem 0 .5rem;font-weight:800"><input type="checkbox" id="mo-xch" style="margin-top:.25rem"> <span>🔄 طلب استبدال بعد التسليم <small class="hint" style="display:block;font-weight:400">يُنشئ بوردرو ثانياً لاسترجاع القطعة من الزبون مع بوردرو هذا الطلب</small></span></label><div id="mo-xchw" class="hidden">${fld("القطعة المراد استرجاعها", `<input id="mo-xcht" maxlength="200" placeholder="مثال: كريم قديم عبوة 50 مل">`)}</div>`;
   }
+  /* رقم جزائري صحيح فقط: جوال 10 أرقام (05/06/07) أو ثابت 9 أرقام (02/03/04)؛ أي طول آخر يُرفض (كان يُقبل أي نص بين 6 و20 رقماً) */
+  const normDz = v => { let d = String(v == null ? "" : v).replace(/[٠-٩]/g, c => "٠١٢٣٤٥٦٧٨٩".indexOf(c)).replace(/\D/g, ""); if (/^00213/.test(d)) d = "0" + d.slice(5); else if (/^213/.test(d) && d.length >= 12) d = "0" + d.slice(3); else if (d.length === 9 && /^[567]/.test(d)) d = "0" + d; return d; };
+  const validPhone = d => /^0[567]\d{8}$/.test(d) || /^0[2-4]\d{7}$/.test(d);
   function cleanPhone(raw) {
     let t = String(raw == null ? "" : raw).replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
     const seqs = (t.match(/\+?\d(?:[\d\s.\-_()·•]*\d)?/g) || []).map(x => ({ raw: x, d: x.replace(/\D/g, ""), plus: x.charAt(0) === "+" })).filter(x => x.d.length >= 9);
@@ -163,5 +166,5 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     if (seqs.length) return norm(seqs[0]);
     return t.replace(/(\d)[\s.\-_/()·•](?=\d)/g, "$1").replace(/[^0-9+]/g, "");
   }
-  return { open, parseLines, calc, textOf, fromDef, cleanPhone };
+  return { open, parseLines, calc, textOf, fromDef, cleanPhone, validPhone, normDz };
 })();
