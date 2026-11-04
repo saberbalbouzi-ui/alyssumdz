@@ -65,18 +65,13 @@
   function pmApply() {
     const h = document.documentElement, mob = MQP.matches && !!document.getElementById("app") && !document.getElementById("app").classList.contains("hidden");
     h.classList.toggle("m-page", mob && !PM.menu); h.classList.toggle("m-menu", mob && PM.menu);
-    const bar = document.getElementById("m-menubar"); if (bar) { bar.style.display = mob ? "flex" : "none"; const t = document.getElementById("sec-title"), tt = bar.querySelector("b"); if (tt) tt.textContent = PM.menu ? "اختر القسم" : ((t && t.textContent.trim()) || ""); const bt = bar.querySelector("button"); if (bt) bt.textContent = PM.menu ? "✕ رجوع للصفحة" : "☰ القائمة"; }
+    const old = document.getElementById("m-menubar"); if (old) old.remove();      // شريط «☰ القائمة» أُلغي: القوائم الأفقية للأقسام تكفي
   }
   function pmInit() {
     if (!document.getElementById("pm-css")) { const st = document.createElement("style"); st.id = "pm-css"; st.textContent = `
-#m-menubar{display:none;align-items:center;gap:.6rem;position:sticky;top:0;z-index:60;margin:0 0 .6rem;padding:.5rem .7rem;border-radius:14px;background:#12161b;border:1px solid rgba(226,254,23,.35)}
-#m-menubar button{flex:none;padding:.5rem .9rem;border:0;border-radius:12px;font:inherit;font-weight:900;color:#1f2123;background:linear-gradient(#effe17,#e2fe17);cursor:pointer}
-#m-menubar b{flex:1;min-width:0;color:#fff;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-html.white #m-menubar{background:#fff;border-color:#cdd5e0}html.white #m-menubar b{color:#0f172a}
-@media(max-width:900px){html.m-page #nav-groups,html.m-page nav.side-nav,html.m-page #stats{display:none!important}
-html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}}`; document.head.appendChild(st); }
-    const top = document.querySelector("#app > .top"); if (top && !document.getElementById("m-menubar")) { const bar = document.createElement("div"); bar.id = "m-menubar"; bar.innerHTML = '<button type="button">☰ القائمة</button><b></b>'; top.after(bar);
-      bar.querySelector("button").onclick = () => { PM.menu = !PM.menu; pmApply(); if (PM.menu) { window.scrollTo({ top: 0 }); const q = document.getElementById("nav-q"); if (q) q.blur(); } }; }
+@media(max-width:900px){html.m-page nav.side-nav,html.m-page #stats{display:none!important}
+html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
+.nav-groups{display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:.45rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}.nav-groups::-webkit-scrollbar{display:none}.nav-groups .ng{flex:0 0 auto;min-width:92px}}`; document.head.appendChild(st); }
     const wrap = () => {
       let ok = true;
       if (typeof Admin !== "undefined" && Admin.tab && !Admin.__pmTab) { const o = Admin.tab; Admin.tab = function () { const r = o.apply(this, arguments); if (!PM.grp) { PM.menu = false; } setTimeout(pmApply, 0); setTimeout(pmApply, 400); if (MQP.matches && !PM.grp) { try { window.scrollTo({ top: 0 }); } catch (e) { } } return r; }; Admin.__pmTab = true; } else if (typeof Admin === "undefined") ok = false;
