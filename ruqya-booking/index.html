@@ -179,7 +179,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
   <div class="rq-row">
    <div id="boxPersons" hidden><label class="rq-l" for="persons" id="lbPersons">عدد الأفراد</label><input type="number" id="persons" min="1" max="15" value="1" inputmode="numeric"></div>
    <div><label class="rq-l" for="sessions">عدد الجلسات</label><input type="number" id="sessions" min="1" max="8" value="1" inputmode="numeric"></div>
-   <div id="boxPack" class="rq-pack"><img src="/assets/img/ruqya-pack.webp" alt="الباقة العلاجية 4" width="96" height="96" loading="lazy"><div><b>الباقة العلاجية 4</b><small id="packSmall"></small><label class="rq-packchk"><input type="checkbox" id="packOpt"><span id="packLbl">أضف الباقة (اختياري)</span></label></div></div>
+   <div id="boxPack" class="rq-pack"><img src="/assets/img/ruqya-pack.webp" alt="الباقة العلاجية 4" width="96" height="96" loading="lazy"><div><b>الباقة العلاجية 4</b><small id="packSmall"></small><label class="rq-packchk"><input type="checkbox" id="packOpt"><span id="packLbl">أضف الباقة</span></label></div></div>
   </div>
   <div class="rq-note" id="kindNote"></div>
  
@@ -224,7 +224,7 @@ function perSession(){var k=ST.kind;return k==="kids"?500*persons():PRICE[k]}
 function first(){return !(ST.reg&&ST.picked)&&!ST.known}
 function packForced(){return first()&&(ST.kind==="single"||ST.kind==="couple")}
 function packOn(){return packForced()||!!ST.packUser}
-function packUi(){var f=packForced(),o=$("packOpt"),b=$("boxPack");if(!b)return;o.checked=f?true:!!ST.packUser;o.disabled=f;b.classList.toggle("rq-forced",f);$("packLbl").textContent=f?"مُضافة تلقائياً لأول تسجيل":"أضف الباقة (اختياري)";$("packSmall").textContent=f?"تُضاف مع أول جلسة فردية أو للزوجين":"مجموعة أعشاب وعسل وزيوت داعمة للعلاج"}
+function packUi(){var f=packForced(),o=$("packOpt"),b=$("boxPack");if(!b)return;o.checked=f?true:!!ST.packUser;o.disabled=f;b.classList.toggle("rq-forced",f);$("packLbl").textContent=f?"مُضافة تلقائياً لأول تسجيل":"أضف الباقة";$("packSmall").textContent=f?"تُضاف مع أول جلسة فردية أو للزوجين":"مجموعة أعشاب وعسل وزيوت داعمة للعلاج"}
 function ymd(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function dayLabel(d){return DAYN[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]}
 function periodOf(s){return s<"13:00"?0:1}
