@@ -103,6 +103,23 @@ ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم fre
   ok("تلقائي: عمودا Pas prêt وPrêt à payer بلا الطرد المدفوع a4", /Pas pr/.test(h) && /Pr.t . payer/.test(h) && /تلقائياً من حالة الدفع/.test(h), h.replace(/<[^>]+>/g, " ").slice(0, 300));
 }
 
+// مجاميع الشركة مباشرة من قائمة طرودها: تطابق نافذتَي «Détail paiement» بالسنتيم (أرقام المالك الحقيقية 4/11)
+{
+  const mk = (pay, status, price, fee, tr) => ({ tracking: "t" + Math.random(), status, pay, price, fee, taxeRet: tr || 0, taxe: 0.75, free: false });
+  const rows = [];
+  for (let i = 0; i < 14; i++) rows.push(mk("ready", "Livré", i < 13 ? 3500 : 250, 10050 / 14));                       // مجموع السعر 45750 والتوصيل 10050
+  rows.push(mk("ready", "Retourné au vendeur", 0, 0, 250), mk("ready", "Retourné au vendeur", 0, 0, 250), mk("ready", "Retourné au vendeur", 0, 0, 260));
+  for (let i = 0; i < 8; i++) rows.push(mk("not-ready", "Livré", i < 7 ? 4700 : 4900, 950));                           // 7×4700+4900 = 37800، توصيل 7600
+  rows.push(mk("not-ready", "Retour à retirer", 3200, 700, 250), mk("not-ready", "Retour vers centre", 5000, 800, 250), mk("payed", "Livré", 999, 500, 0));
+  const ps = r => { const t = String(r || "").toLowerCase().replace(/[_-]+/g, " "); if (/not\s*ready/.test(t)) return "notready"; if (/ready/.test(t)) return "ready"; if (/paye/.test(t)) return "paid"; return ""; };
+  const Admin = { orders: [], fin: { costs: {}, set: {} }, ST_AR: {}, ydActual: {}, shipRaw: {}, payState: ps, trackingOf: () => null, actualFees: () => null, realFees: () => null, orderLines: () => [], carrierCost: () => 0, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, AdminYd: { S: { raw: rows, rows } }, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  const h = sb.AP.cmpCard().replace(/<[^>]+>/g, " ");
+  ok("مجاميع الشركة المباشرة: Prêt à payer 44 646,88 (55 800,00 ramassé) وPas prêt 37 266,50 (45 400,00)، والمدفوع «payed» مستثنى", /44[\s\u202f\u00a0]646,88/.test(h) && /55[\s\u202f\u00a0]800,00/.test(h) && /37[\s\u202f\u00a0]266,50/.test(h) && /45[\s\u202f\u00a0]400,00/.test(h) && /81[\s\u202f\u00a0]913,38/.test(h), h.slice(0, 600));
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [

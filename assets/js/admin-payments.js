@@ -90,9 +90,11 @@ const AdminPayments = (() => {
      net client = prix à ramasser − frais livraison − Taxe COD − Taxe assurance − Taxe retour
      الأرقام الفعلية من الكشف المستورد (ydactual) تسبق التقدير من تعريفة الشركة */
   const DEF_COD = 0.75, DEF_RET = 250; /* ثابتان بقرار صاحب المتجر: عمولة COD 0.75% من سعر المنتج، ورسم الإرجاع 250 دج */
+  const normS = v => String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
   function settle(it) {
-    if (it.manual) return null; const o=it.o, st=it.ship, A_=A();
+    if (it.manual) return null; const o=it.o, A_=A(); let st=it.ship;
     if (!["livree","echec","expediee","confirmee"].includes(st)) return null;
+    { const f0=((A_.shipRaw||{})[o.id]||{}), rw=normS(f0.raw); if (f0.fin) { if (/^livr/.test(rw)) st="livree"; else if (/retourne\w* au vendeur|retour a retirer/.test(rw)) st="echec"; } }      // حالة الطرد الفعلية عند الشركة تسبق حالة الطلب في اللوحة (تحديث متأخر)
     const trk=A_.trackingOf?A_.trackingOf(o):null; if (st==="confirmee"&&!trk) return null;
     const act=A_.actualFees?A_.actualFees(o):null, fee=Number(o.fee)||0, total=Number(o.total)||0;
     let price, del=0, cod=0, ins=0, ret=0, net, got, src="est", pend=act&&act.pend?String(act.pend):"";
@@ -100,11 +102,11 @@ const AdminPayments = (() => {
       src="file"; price=Number(act.price)||0; del=Number(act.del)||0; ret=Number(act.ret)||0; ins=Number(act.ins)||0; cod=Number(act.cod)||0; net=Number(act.net)||0;
       got=Math.round((net+del+cod+ins+ret)*1000)/1000;
     } else {
-      const rf=A_.realFees?A_.realFees(o):null; price=Math.max(0,total-fee); const fin=((A_.shipRaw||{})[o.id]||{}).fin||null, tp=fin&&fin.tp>0?fin.tp:DEF_COD;      // أرقام الطرد الفعلية من قائمة الشركة تسبق التعريفة
+      const rf=A_.realFees?A_.realFees(o):null, fin=((A_.shipRaw||{})[o.id]||{}).fin||null, tp=fin&&fin.tp>0?fin.tp:DEF_COD; price=fin&&fin.price>0?Number(fin.price):Math.max(0,total-fee);      // أرقام الطرد الفعلية من قائمة الشركة تسبق التعريفة
       if (st==="echec") { ret=(fin&&fin.tr>0?fin.tr:DEF_RET)+(A_.retLate?A_.retLate(o):0); got=0; }      // رسم الإرجاع 250 ثابت + غرامة تأخر سحب المرتجع (10 دج لكل يوم بعد 10 أيام عند الشركة)
       else {
-        del=fin&&fin.fee!=null&&fin.fee>=0&&!(fin.free)?Number(fin.fee):(rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee));
-        cod=price*tp/100; ins=0; got=total;
+        del=fin&&fin.fee!=null&&fin.fee>=0?Number(fin.fee):(rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee));
+        cod=price*tp/100; ins=0; got=fin&&fin.price>0?price+(fin.free?0:del):total;      // الشركة: المحصَّل = سعر المنتج + رسم التوصيل (إلا الشحن المجاني)
       }
       net=got-del-cod-ins-ret;
     }
@@ -231,8 +233,17 @@ const AdminPayments = (() => {
     return `<details style="margin-top:.6rem"><summary style="cursor:pointer;font-weight:800;color:#e2fe17">طرود في الطريق (${L.length}) — قد يكون أحدها سُلّم عند الشركة</summary><div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><tbody>${L.map(r=>`<tr><td style="padding:.2rem .5rem;white-space:nowrap">#${esc(r.id)}</td><td style="padding:.2rem .5rem;white-space:nowrap">${esc(r.name)}</td><td style="padding:.2rem .5rem;white-space:nowrap">${esc(r.wil)}</td><td dir="ltr" style="padding:.2rem .5rem;white-space:nowrap;font-weight:700">${dz(r.total)}</td><td style="padding:.2rem .5rem;white-space:nowrap;color:#fdba74">${esc(r.raw)}</td></tr>`).join("")}</tbody></table></div><div class="pm-note">إن كان مبلغ أحدها يساوي فرق المحصَّل عن ياليدين فهو غالباً سُلّم هناك؛ حدّث حالات الطرود من «المسجلة» (تحديث الحالات).</div></details>`;
   }
   /* جدول مقارنة: كشفا الشركة (Pas prêt + Prêt à payer) مجموعَين مقابل حساب المنصة، مع الفرق لكل بند، واقتراح الطرود التي تفسّر فرق العدد والمبلغ */
+  /* مجاميع الشركة مباشرة من قائمة طرودها (AdminYd.S.raw) حسب payment_status: not-ready = Pas prêt، ready = Prêt à payer؛ تطابق نافذتَي «Détail paiement» بالسنتيم:
+     Livré: المحصَّل = السعر + رسم التوصيل، COD = السعر × النسبة، الصافي = المحصَّل − COD − التوصيل؛ «Retourné au vendeur» و«Retour à retirer»: رسم الإرجاع (taxe_retour) */
+  function carrierGroups() {
+    const A_=A(), R=(typeof AdminYd!=="undefined"&&AdminYd.S&&AdminYd.S.raw)||[], z=()=>({ livre:0, retour:0, got:0, cod:0, del:0, ret:0, ins:0, net:0, rows:[] }), g={ notready:z(), ready:z() }; let any=0;
+    R.forEach(r=>{ const ps=A_.payState?A_.payState(r.pay):""; if(ps!=="notready"&&ps!=="ready") return; const G=g[ps], sn=normS(r.status);
+      if(/^livr/.test(sn)){ const price=Number(r.price)||0, fee=Number(r.fee)||0, tp=r.taxe>0?r.taxe:DEF_COD, got=price+(r.free?0:fee), cod=price*tp/100; G.livre++; G.got+=got; G.cod+=cod; G.del+=fee; G.net+=got-cod-fee; G.rows.push(r); any++; }
+      else if(/retourne\w* au vendeur|retour a retirer/.test(sn)){ const t=r.taxeRet>0?r.taxeRet:DEF_RET; G.retour++; G.ret+=t; G.net-=t; G.rows.push(r); any++; } });
+    return { g, any };
+  }
   function cmpCard() {
-    const st=YP.list.filter(x=>x.state!=="paid"), np=st.find(x=>x.state==="notready"), rd=st.find(x=>x.state==="ready"), K=["livre","retour","got","cod","del","ret","ins","net"];
+    const CG=carrierGroups(), apiOn=CG.any>0, st=apiOn?[Object.assign({ state:"notready" },CG.g.notready),Object.assign({ state:"ready" },CG.g.ready)].filter(x=>x.livre||x.retour):YP.list.filter(x=>x.state!=="paid"), np=st.find(x=>x.state==="notready"), rd=st.find(x=>x.state==="ready"), K=["livre","retour","got","cod","del","ret","ins","net"];
     const C={}; K.forEach(k=>{ C[k]=st.reduce((n,x)=>n+(Number(x[k])||0),0); });
     const T=sumSettle(sItems()), P={ livre:T.nDone, retour:T.nRet, got:T.got, cod:T.cod, del:T.del, ret:T.ret, ins:T.ins, net:T.net };
     const f=(k,v)=>v==null?"—":(k==="livre"||k==="retour")?String(v)+" colis":d2(v), cell=(k,v)=>`<td dir="ltr" style="padding:.3rem .5rem;white-space:nowrap;text-align:end">${f(k,v)}</td>`;
@@ -240,21 +251,24 @@ const AdminPayments = (() => {
     const rows=st.length?K.map(k=>{ const d=Math.round((C[k]-P[k])*100)/100, col=Math.abs(d)<0.005?"#86efac":"#fca5a5", sg=d>0?"+":""; return `<tr style="${k==="net"?"font-weight:800;border-top:1px solid rgba(255,255,255,.25)":""}"><td style="padding:.3rem .5rem;white-space:nowrap">${L[k]}</td>${cell(k,np?np[k]:null)}${cell(k,rd?rd[k]:null)}${cell(k,C[k])}${cell(k,P[k])}<td dir="ltr" style="padding:.3rem .5rem;white-space:nowrap;text-align:end;color:${col};font-weight:700">${Math.abs(d)<0.005?"✓ 0":sg+((k==="livre"||k==="retour")?d+" colis":d2(d))}</td></tr>`; }).join(""):"";
     /* اقتراح: طرود في اللوحة لا تُحسب مسلَّمة (في الطريق/معلَّمة مدفوعة) مجموع مبالغها = فرق المحصَّل وعددها = فرق المسلَّم */
     let cand="";
-    if(st.length){ const dl=C.livre-P.livre, dg=Math.round((C.got-P.got)*100)/100;
+    if(st.length&&!apiOn){ const dl=C.livre-P.livre, dg=Math.round((C.got-P.got)*100)/100;
       if(dl>0&&dl<=3&&dg>0){ const A_=A(), pool=items().filter(it=>{ const x=settle(it); return (x&&x.kind==="exp")||(isMan(it)&&record(it).status==="paid"&&!inFile(it)&&it.ship==="livree"); }).slice(0,60), val=it=>Number(it.o&&it.o.total)||0, out=[];
         const rec=(i,left,sum,pick)=>{ if(out.length>=5) return; if(!left){ if(Math.abs(sum-dg)<0.5) out.push(pick.slice()); return; } for(let j=i;j<pool.length;j++){ pick.push(pool[j]); rec(j+1,left-1,sum+val(pool[j]),pick); pick.pop(); } };
         rec(0,dl,0,[]);
         cand=out.length?`<div style="margin-top:.5rem"><b>طرود محتملة تفسّر الفرق (${dl} طرد بمجموع ${d2(dg)})</b>${out.map(g=>`<div class="pm-note" style="margin:.25rem 0">${g.map(it=>{ const raw=((A_.shipRaw||{})[it.o.id]||{}).raw||""; return `#${esc(String(it.o.id).slice(-6))} · ${esc(it.o.name||"")} · ${esc(it.o.wilaya||"")} · ${dz(val(it))} دج${raw?" · "+esc(raw):""}`; }).join("<br>")}</div>`).join('<div style="border-top:1px dashed rgba(255,255,255,.2)"></div>')}<div class="pm-note">غالباً سُلّمت عند الشركة ولم تتحدّث حالتها هنا (أو عُلّمت «مدفوع» بالخطأ): حدّث الحالات من «المسجلة».</div></div>`:`<div class="pm-note" style="margin-top:.5rem">الشركة تحسب ${dl} طرد مسلَّم أكثر منا بمجموع ${d2(dg)}، ولا توجد في طرود اللوحة (في الطريق/المعلَّمة مدفوعة) مجموعة تطابق المبلغ؛ قد يكون الطرد غير مسجَّل عندنا أو بمبلغ معدَّل.</div>`; }
     }
-    const lst=st.length?`<div class="pm-note" style="margin-top:.4rem">${st.map(x=>`${x.state==="ready"?"prêt à payer":"pas prêt"} <button type="button" class="pm-btn pm-ydel" data-i="${YP.list.indexOf(x)}" style="padding:2px 9px">حذف</button>`).join(" · ")}</div>`:"";
+    let missH=""; if(apiOn){ try{ const A_=A(), map={}, inS=new Set(sItems().map(x=>x.id)); items().forEach(it=>{ const t=A_.trackingOf?A_.trackingOf(it.o):null; if(t&&t.tracking) map[String(t.tracking)]=it; }); const L=[];
+        ["notready","ready"].forEach(k=>CG.g[k].rows.forEach(r=>{ const it=map[String(r.tracking)]; let why=""; if(!it) why="غير موجود في طلباتك (أُدخل عند الشركة مباشرة أو لم يُربط)"; else if(!inS.has(it.id)) why=isMan(it)&&record(it).status==="paid"?"علّمتَه «مدفوع» يدوياً عندنا":(inFile(it)?"مستثنى كمدفوع في كشف مستورد":"مستثنى"); else { const x=settle(it); if(!x||x.kind==="exp") why="حالة الطلب عندنا: "+((A_.ST_AR&&A_.ST_AR[it.ship])||it.ship||"—"); } if(why) L.push({ r, why, k }); }));
+        missH=L.length?`<div style="margin-top:.5rem"><b>طرود تحسبها الشركة ولا نحسبها (${L.length})</b>${L.map(x=>`<div class="pm-note" style="margin:.25rem 0"><span dir="ltr">${esc(String(x.r.tracking))}</span> · ${esc(x.r.name||"")} · ${esc(x.r.wilaya||"")} · ${dz(x.r.price)} دج · ${esc(x.r.status||"")} · ${x.k==="ready"?"Prêt à payer":"Pas prêt"}<br><b style="color:#fdba74">${esc(x.why)}</b></div>`).join("")}</div>`:`<div class="pm-note" style="margin-top:.5rem">✓ كل طرود الشركة في الكشفين محسوبة عندنا.</div>`; }catch(_){ } }
+    const lst=st.length&&!apiOn?`<div class="pm-note" style="margin-top:.4rem">${st.map(x=>`${x.state==="ready"?"prêt à payer":"pas prêt"} <button type="button" class="pm-btn pm-ydel" data-i="${YP.list.indexOf(x)}" style="padding:2px 9px">حذف</button>`).join(" · ")}</div>`:"";
     /* تلقائي: تجميع الطرود حسب حالة الدفع التي ترسلها الشركة لكل طرد (not-ready = Pas prêt، ready = Prêt à payer) بلا لصق */
     let autoH=""; try{ const AG=autoGroups(), gs=["notready","ready"].filter(k=>AG.g[k]);
       if(gs.length){ const Z={}; K.forEach(k=>{ Z[k]=gs.reduce((n,g)=>n+(AG.g[g][k]||0),0); });
         autoH=`<div style="margin-top:.4rem"><b>تلقائياً من حالة الدفع عند الشركة</b><div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><thead><tr style="opacity:.75"><th style="padding:.3rem .5rem;text-align:start">البند</th>${gs.map(g=>`<th style="padding:.3rem .5rem">${g==="ready"?"Prêt à payer":"Pas prêt"}</th>`).join("")}<th style="padding:.3rem .5rem">المجموع</th></tr></thead><tbody>${K.map(k=>`<tr style="${k==="net"?"font-weight:800;border-top:1px solid rgba(255,255,255,.25)":""}"><td style="padding:.3rem .5rem;white-space:nowrap">${L[k]}</td>${gs.map(g=>cell(k,AG.g[g][k])).join("")}${cell(k,Z[k])}</tr>`).join("")}</tbody></table></div><div class="pm-note">من حالة كل طرد وأرقامه الفعلية (توصيل، نسبة COD، رسم الإرجاع) كما ترسلها الشركة؛ والطرود التي حالتها عندهم «مدفوع» لا تدخل. تتحدّث مع كل تحديث للطرود.</div></div>`; } }catch(_){ }
-    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>⚖️ المنصة مقابل الشركة</b><div class="pm-note">الصق نص كل نافذة «Détail paiement» (Pas prêt ثم Prêt à payer)؛ يُجمع الكشفان ويُقارَن مجموعهما بحساب المنصة بنداً بنداً.</div></div></div>
-      ${autoH}
-      ${st.length?`<div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><thead><tr style="opacity:.75"><th style="padding:.3rem .5rem;text-align:start">البند</th><th style="padding:.3rem .5rem">Pas prêt</th><th style="padding:.3rem .5rem">Prêt à payer</th><th style="padding:.3rem .5rem">مجموع الشركة</th><th style="padding:.3rem .5rem">المنصة</th><th style="padding:.3rem .5rem">الفرق</th></tr></thead><tbody>${rows}</tbody></table></div>${cand}${lst}`:'<div class="pm-note">لم يُضَف أي كشف بعد.</div>'}
-      <div class="pm-row" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start;margin-top:.5rem"><select id="pm-yst" style="min-width:140px"><option value="notready">pas prêt</option><option value="ready">prêt à payer</option></select><textarea id="pm-ytx" rows="3" placeholder="الصق هنا نص Détail paiement" style="flex:1;min-width:200px"></textarea><button type="button" class="pm-btn pm-primary" id="pm-yadd">إضافة الكشف</button></div>${YP.msg?`<div class="pm-note" style="color:#fca5a5">${esc(YP.msg)}</div>`:""}</section>`;
+    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>⚖️ المنصة مقابل الشركة</b><div class="pm-note">${apiOn?"عمودا الشركة من قائمة طرودها مباشرة حسب حالة الدفع (تطابق نافذتَي «Détail paiement»)؛ والمنصة = حساب طلباتك. الفرق يفسّره قسم الطرود أدناه.":"الصق نص كل نافذة «Détail paiement» (Pas prêt ثم Prêt à payer)؛ يُجمع الكشفان ويُقارَن مجموعهما بحساب المنصة بنداً بنداً."}</div></div></div>
+      ${apiOn?"":autoH}
+      ${st.length?`<div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><thead><tr style="opacity:.75"><th style="padding:.3rem .5rem;text-align:start">البند</th><th style="padding:.3rem .5rem">Pas prêt</th><th style="padding:.3rem .5rem">Prêt à payer</th><th style="padding:.3rem .5rem">مجموع الشركة</th><th style="padding:.3rem .5rem">المنصة</th><th style="padding:.3rem .5rem">الفرق</th></tr></thead><tbody>${rows}</tbody></table></div>${apiOn?missH:cand}${lst}`:'<div class="pm-note">لم يُضَف أي كشف بعد.</div>'}
+      ${apiOn?"":`      <div class="pm-row" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start;margin-top:.5rem"><select id="pm-yst" style="min-width:140px"><option value="notready">pas prêt</option><option value="ready">prêt à payer</option></select><textarea id="pm-ytx" rows="3" placeholder="الصق هنا نص Détail paiement" style="flex:1;min-width:200px"></textarea><button type="button" class="pm-btn pm-primary" id="pm-yadd">إضافة الكشف</button></div>${YP.msg?`<div class="pm-note" style="color:#fca5a5">${esc(YP.msg)}</div>`:""}</section>`}`;
   }
   function settleCard() {
     let T=sumSettle(sItems()); const R=ydReal();
