@@ -90,6 +90,7 @@ begin
   if v_day < (now() at time zone 'Africa/Algiers')::date then raise exception 'past_day'; end if;
   if v_day > (now() at time zone 'Africa/Algiers')::date + 120 then raise exception 'too_far'; end if;
   if v_ph !~ '^0[1-9][0-9]{7,8}$' then raise exception 'invalid_phone'; end if;
+  if (select count(*) from public.ruqya_warnings where phone = v_ph) >= 3 then raise exception 'banned'; end if;      -- 3 إنذارات غياب = حظر من الحجز
   if v_name !~ '[[:alpha:]]' or char_length(v_name) < 2 then raise exception 'invalid_name'; end if;
   if v_s < 1 or v_s > 8 then raise exception 'invalid_sessions'; end if;
   v_i := array_position(v_all, v_slot);
@@ -233,3 +234,43 @@ revoke all on function public.ruqya_portal_me() from public, anon;
 grant execute on function public.ruqya_portal_me() to authenticated;
 
 alter table public.ruqya_bookings add column if not exists whatsapp text check (whatsapp is null or whatsapp ~ '^0[5-7][0-9]{8}$');
+
+-- ═══ الإنذارات: الغياب بلا إخطار (24 ساعة) = إنذار في الملف؛ 3 إنذارات = حظر من حجز المواعيد (بحسب الهاتف) ═══
+do $$ declare c text; begin
+  for c in select conname from pg_constraint where conrelid = 'public.ruqya_bookings'::regclass and contype = 'c' and pg_get_constraintdef(oid) like '%status%pending%' loop
+    execute format('alter table public.ruqya_bookings drop constraint %I', c);
+  end loop;
+  alter table public.ruqya_bookings add constraint ruqya_bookings_status_check check (status in ('pending','confirmed','done','cancelled','noshow'));
+end $$;
+
+create table if not exists public.ruqya_warnings (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  phone text not null,
+  booking_id bigint references public.ruqya_bookings(id) on delete set null,
+  day date,
+  note text not null default '' check (char_length(note) <= 500)
+);
+create index if not exists ruqya_warn_phone_idx on public.ruqya_warnings (phone);
+alter table public.ruqya_warnings enable row level security;
+revoke all on public.ruqya_warnings from anon, authenticated;
+grant select, insert, update, delete on public.ruqya_warnings to authenticated;
+drop policy if exists "admin ruqya warnings" on public.ruqya_warnings;
+create policy "admin ruqya warnings" on public.ruqya_warnings for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- المدير: تعليم حجز «غاب بلا إخطار» وتسجيل إنذار؛ يعيد عدد الإنذارات والحظر
+create or replace function public.ruqya_mark_noshow(p_booking_id bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare b public.ruqya_bookings; n int;
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  select * into b from public.ruqya_bookings where id = p_booking_id;
+  if not found then raise exception 'not_found'; end if;
+  if b.status = 'noshow' then raise exception 'already_marked'; end if;
+  update public.ruqya_bookings set status = 'noshow' where id = b.id;
+  insert into public.ruqya_warnings (phone, booking_id, day, note) values (b.phone, b.id, b.day, 'غاب عن الموعد دون إخطار');
+  select count(*) into n from public.ruqya_warnings where phone = b.phone;
+  return jsonb_build_object('warnings', n, 'banned', n >= 3);
+end $$;
+revoke all on function public.ruqya_mark_noshow(bigint) from public, anon;
+grant execute on function public.ruqya_mark_noshow(bigint) to authenticated;

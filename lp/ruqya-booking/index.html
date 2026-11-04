@@ -137,6 +137,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 .rq-done{text-align:center;padding:26px 18px}.rq-done h2{margin:0 0 8px;color:#187a3b}
 .rq-pack{display:flex;gap:12px;align-items:center;border:2px solid #cfe0d3;border-radius:16px;padding:10px;background:#f7fbf8;grid-column:1/-1}.rq-pack img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none}.rq-pack b{display:block;color:#123e72;font-weight:900}.rq-pack small{display:block;color:#5d6f66;font-weight:700;font-size:12px;margin:2px 0 6px}.rq-packchk{display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;cursor:pointer}.rq-packchk input{width:20px;height:20px;accent-color:#187a3b}.rq-pack.rq-forced{border-color:#187a3b;background:#eaf6ee}
 .rq-n{direction:ltr;unicode-bidi:isolate;display:inline-block;white-space:nowrap}
+.rq-warn{text-align:start;background:#fff4e5;border:2px solid #f0b86e;border-radius:16px;padding:12px 16px;margin:12px 0;color:#7a3e00}.rq-warn b{display:block;margin-bottom:4px;font-size:16px}.rq-warn ul{margin:0;padding-inline-start:20px;font-weight:700;font-size:14px;line-height:1.9}
 .rq-note{font-size:13px;color:#5d6f66;font-weight:700;margin:10px 0 0}
 .rq [hidden]{display:none!important}
 @media(max-width:560px){.rq-row{grid-template-columns:1fr}.rq-find{flex-direction:column}.rq-card{padding:16px 13px}}
@@ -145,7 +146,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
  <div class="rq-info">أيام العمل: السبت فقط &middot; الفترة الصباحية 09:00 &larr; 12:30 &middot; الفترة المسائية 13:30 &larr; 17:00. الحجز مسبق، وسيتم تأكيد الموعد معك.</div>
  <div style="height:14px"></div>
 
- <div class="rq-card" id="s1"><h3><b>1</b>هل سبق أن حجزت أو اشتريت من أليسوم؟</h3>
+ <div class="rq-card" id="s1"><h3><b>1</b>هل سبق أن حجزت؟</h3>
   <div class="rq-tabs"><button type="button" class="rq-tab" data-reg="1">مسجَّل عندكم</button><button type="button" class="rq-tab rq-on" data-reg="0">أول مرة (جديد)</button></div>
   <div id="boxReg" hidden>
    <label class="rq-l">ابحث برقم هاتفك أو باسمك</label>
@@ -212,7 +213,7 @@ var PRICE={single:1500,couple:2000,family:2000},PACK=3000,DAYN=["الأحد","ا
 var ST={reg:0,picked:null,kind:"single",day:"",slot:"",taken:{},tk:{},days:[]};
 function $(i){return document.getElementById(i)}
 function rpc(fn,body){return fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error((j&&(j.message||j.hint))||("http_"+r.status));return j})})}
-var ERR={terms_required:"يجب الموافقة على الشروط",not_saturday:"الحجز ليوم السبت فقط",past_day:"هذا اليوم مضى",too_far:"التاريخ بعيد جدا",invalid_phone:"رقم الهاتف غير صحيح",invalid_name:"الاسم غير صحيح",invalid_sessions:"عدد الجلسات غير صحيح",invalid_slot:"الساعة غير صحيحة",slot_overflow:"الجلسات لا تتسع في هذه الفترة، اختر ساعة أبكر أو قلل عدد الجلسات",slot_taken:"هذه الساعة لم تعد متاحة، اختر ساعة أخرى",invalid_persons:"عدد الأفراد غير صحيح لهذا النوع",invalid_kind:"نوع الجلسة غير صحيح",not_registered:"لم نجدك في سجلاتنا بهذا الرقم، اختر (أول مرة) واملأ بياناتك",rate_limited:"محاولات كثيرة، حاول لاحقا"};
+var ERR={terms_required:"يجب الموافقة على الشروط",not_saturday:"الحجز ليوم السبت فقط",past_day:"هذا اليوم مضى",too_far:"التاريخ بعيد جدا",invalid_phone:"رقم الهاتف غير صحيح",invalid_name:"الاسم غير صحيح",invalid_sessions:"عدد الجلسات غير صحيح",invalid_slot:"الساعة غير صحيحة",slot_overflow:"الجلسات لا تتسع في هذا اليوم، اختر سبتاً آخر أو قلل عدد الجلسات",slot_taken:"هذا اليوم لم يعد متاحاً، اختر سبتاً آخر",invalid_persons:"عدد الأفراد غير صحيح لهذا النوع",invalid_kind:"نوع الجلسة غير صحيح",not_registered:"لم نجدك في سجلاتنا بهذا الرقم، اختر (أول مرة) واملأ بياناتك",rate_limited:"محاولات كثيرة، حاول لاحقا",invalid_whatsapp:"رقم الواتساب غير صحيح",banned:"تعذّر الحجز: أُوقف حجز المواعيد لهذا الرقم بسبب تكرار الغياب دون إخطار. تواصل معنا عبر واتساب."};
 function err(e){var m=String(e&&e.message||e);return ERR[m]||("تعذر الحجز الآن، حاول مجددا أو تواصل معنا عبر واتساب")}
 function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" دج"}
 function fmtH(n){return '<bdi class="rq-n">'+fmt(n)+'</bdi>'}/* المبلغ يُعزل يسار-يمين فلا تنعكس مجموعات الأرقام داخل صفحة عربية */
@@ -318,7 +319,7 @@ function book(){
  var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===String(id.wilaya)})[0];
  rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,whatsapp:waNum(),pack:packOn(),registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
   var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالواتساب: "+waNum()+"\nالموعد: "+dayLabel(d)+" (خلال أوقات العمل)\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"\nالمجموع: "+fmt(r.total);
-  var h='<h2>تم تسجيل طلب الموعد</h2><p style="font-weight:800">رقم الحجز <b>'+r.id+'</b> &middot; '+dayLabel(d)+' · خلال أوقات العمل (09:00-12:30 / 13:30-17:00)</p><p style="font-weight:800;font-size:20px;color:#123e72">المبلغ: '+fmtH(r.total)+(r.pack_price>0?' (يشمل الباقة العلاجية 4)':'')+'</p><a class="rq-btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">أرسل التفاصيل على واتساب</a>';
+  var h='<h2>تم تسجيل طلب الموعد</h2><p style="font-weight:800">رقم الحجز <b>'+r.id+'</b> &middot; '+dayLabel(d)+' · خلال أوقات العمل (09:00-12:30 / 13:30-17:00)</p><p style="font-weight:800;font-size:20px;color:#123e72">المبلغ: '+fmtH(r.total)+(r.pack_price>0?' (يشمل الباقة العلاجية 4)':'')+'</p><div class="rq-warn"><b>تنبيه مهم</b><ul><li>في حال تعذّر الحضور في الموعد يجب إخطارنا قبل 24 ساعة على الأقل.</li><li>الغياب عن الموعد دون إخطار يُسجَّل إنذاراً في ملفك.</li><li>بعد 3 إنذارات تُحظر من حجز المواعيد.</li></ul></div><a class="rq-btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">أرسل التفاصيل على واتساب</a>';
   ["s1"].forEach(function(){});[].forEach.call(document.querySelectorAll("#rq > .rq-card:not(#done), #rq > .rq-sum, #rq > .rq-info"),function(x){x.hidden=true});
   $("done").innerHTML=h;$("done").hidden=false;$("done").scrollIntoView({behavior:"smooth",block:"start"})
  }).catch(function(e){$("bkMsg").textContent=err(e);ready();loadTaken()})}
