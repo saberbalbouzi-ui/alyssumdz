@@ -130,7 +130,7 @@ const AdminRuqya = (() => {
         h += '<tr><td data-l="الموعد"><b>' + esc(dayName(r.day)) + '</b><br>' + esc(r.slot) + (r.slots > 1 ? ' (' + r.slots + ' جلسات)' : '') + '</td><td data-l="الاسم"><a href="#" data-rq="pat" data-id="' + r.id + '" style="font-weight:800;color:inherit;text-decoration:underline">' + esc(r.name) + '</a>' + '<br><small>' + (r.first_time ? "أول مرة" : "مسجَّل") + '</small></td>' +
           '<td data-l="الهاتف" dir="ltr">' + esc(r.phone) + '</td><td data-l="البلدية">' + esc(r.commune || "—") + (r.wilaya ? '<br><small>' + esc(r.wilaya) + '</small>' : '') + '</td>' +
           '<td data-l="الجلسة">' + esc(KIND[r.kind] || r.kind) + '<br><small>' + r.persons + ' أفراد · ' + r.sessions + ' جلسة</small></td>' +
-          '<td data-l="المبلغ">' + (Number(r.total) > 0 ? money(r.total) : "—") + (r.pack_price ? '<br><small>يشمل الباقة 4: ' + money(r.pack_price) + '</small>' : '') + '</td><td data-l="الحالة">' + esc(ST[r.status] || r.status) + '</td>' +
+          '<td data-l="المبلغ">' + (Number(r.total) > 0 ? '<bdi dir="ltr">' + money(r.total) + '</bdi>' : "—") + (r.pack_price ? '<br><small>يشمل الباقة 4: <bdi dir="ltr">' + money(r.pack_price) + '</bdi></small>' : '') + '</td><td data-l="الحالة">' + esc(ST[r.status] || r.status) + '</td>' +
           '<td data-l="إجراء" style="white-space:nowrap"><a class="btn gray" target="_blank" rel="noopener" href="' + wa + '">واتساب</a> ' +
           (r.status === "pending" ? '<button class="btn" data-rq="st" data-id="' + r.id + '" data-v="confirmed">تأكيد</button> ' : '') +
           (r.status === "confirmed" ? '<button class="btn" data-rq="st" data-id="' + r.id + '" data-v="done">تمت</button> ' : '') +
