@@ -131,6 +131,8 @@ const AdminPayments = (() => {
     const col=x.net<0?"#fca5a5":(x.kind==="exp"?"#fde047":"#d4ff4d");
     return `<td title="${esc(tip)}" style="font-size:.76rem;white-space:nowrap">${x.free?'<b style="color:#fdba74">توصيل مجاني</b> · ':""}${esc(parts.join(" · "))}<br><small>${x.src==="file"?"✓ كشف ياليدين":"≈ تقدير"}</small></td><td title="${esc(tip)}" style="color:${col};font-weight:700;white-space:nowrap">${dz(x.net)} دج${x.kind==="exp"?'<br><small style="font-weight:400">متوقع</small>':""}</td>`;
   }
+  /* رقم التتبع الأصلي عند الشركة (yal-…) للطلب؛ فارغ للمدفوعات اليدوية */
+  const trkOf = it => { try{ const t=A().trackingOf&&it.o&&!it.manual?A().trackingOf(it.o):null; return t&&t.tracking?String(t.tracking):""; }catch(_){ return ""; } };
   function view(it) { const r=rawRec(it)||{}, ov=r.ov||{}; return { name:ov.name!=null?ov.name:it.name, phone:ov.phone!=null?ov.phone:it.phone, product:ov.product!=null?ov.product:it.product, total:ov.total!=null?Number(ov.total):it.total }; }
   function amount(it, r) { return Number(r.amount)>0?Number(r.amount):view(it).total; }
   /* القائمة تُبقي ما يدخل في حساب الدفعة القادمة فقط: طرود الشركة (مسلَّم/مرتجع/في الطريق) غير المعلَّمة «مدفوع»؛ وزرّ «عرض الكل» يكشف الباقي للتراجع */
@@ -138,7 +140,7 @@ const AdminPayments = (() => {
   const baseList = () => S.all ? items() : items().filter(inNext);
   function filtered() {
     const q=S.query.trim().toLowerCase(), qd=q.replace(/\D/g, "");
-    return baseList().filter(it=>{ const r=record(it), v=view(it), m=S.filter==="all"||r.status===S.filter; return m&&(!q||it.id.toLowerCase().includes(q)||String(v.name).toLowerCase().includes(q)||String(v.product).toLowerCase().includes(q)||String(v.phone).toLowerCase().includes(q)||(qd&&String(v.phone).replace(/\D/g, "").includes(qd))); });
+    return baseList().filter(it=>{ const r=record(it), v=view(it), m=S.filter==="all"||r.status===S.filter; return m&&(!q||it.id.toLowerCase().includes(q)||trkOf(it).toLowerCase().includes(q)||String(v.name).toLowerCase().includes(q)||String(v.product).toLowerCase().includes(q)||String(v.phone).toLowerCase().includes(q)||(qd&&String(v.phone).replace(/\D/g, "").includes(qd))); });
   }
   function totals() {
     const is=items();
@@ -146,7 +148,7 @@ const AdminPayments = (() => {
   }
   function draftFor(it) { return S.drafts[it.id] || Object.assign({},record(it),{ name:view(it).name, phone:view(it).phone, product:view(it).product, total:view(it).total }); }
   function csv() {
-    const rows=[["id","date","name","phone","product","shipStatus","paymentStatus","amount","method","source","note"],...filtered().map(it=>{const r=draftFor(it);return[it.id,it.date||"",r.name,r.phone,r.product,it.manual?"manual":it.ship,r.status,r.amount,r.method,it.manual?"manual":(isMan(it)?"edited":"auto"),r.note||""];})];
+    const rows=[["tracking","id","date","name","phone","product","shipStatus","paymentStatus","amount","method","source","note"],...filtered().map(it=>{const r=draftFor(it);return[trkOf(it),it.id,it.date||"",r.name,r.phone,r.product,it.manual?"manual":it.ship,r.status,r.amount,r.method,it.manual?"manual":(isMan(it)?"edited":"auto"),r.note||""];})];
     const body="﻿"+rows.map(row=>row.map(v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"').join(",")).join("\r\n");
     const a=document.createElement("a"), u=URL.createObjectURL(new Blob([body],{type:"text/csv;charset=utf-8"})); a.href=u; a.download="payments.csv"; a.click(); setTimeout(()=>URL.revokeObjectURL(u),1000);
   }
@@ -156,7 +158,7 @@ const AdminPayments = (() => {
   }
   function row(it) {
     const r=draftFor(it), oid=esc(it.id), src=it.manual?'<span class="pm-src pm-man">يدوي</span>':(isMan(it)?'<span class="pm-src pm-man" title="عُدّل يدوياً؛ زر ↺ يعيده للتلقائي">معدَّل</span>':'<span class="pm-src pm-auto" title="من حالة شحن شركة التوصيل">⚡ تلقائي</span>');
-    return `<tr data-id="${oid}"><td><input class="pm-check" type="checkbox" data-id="${oid}"${S.selected.has(it.id)?" checked":""}></td><td dir="ltr">#${oid.replace(/^m/,"M")} · ${esc(String(it.date||"").slice(0,10))}</td><td><input class="pm-name" data-id="${oid}" type="text" value="${esc(r.name)}"></td><td><input class="pm-phone" data-id="${oid}" dir="ltr" type="text" value="${esc(r.phone)}"></td><td><input class="pm-prod" data-id="${oid}" type="text" value="${esc(r.product)}"></td><td>${it.manual?"—":esc((A().ST_AR&&A().ST_AR[it.ship])||it.ship||"—")}</td><td>${it.manual?`<input class="pm-total" data-id="${oid}" type="number" min="1" value="${Math.max(0,Number(r.total)||0)}" style="width:95px">`:money(r.total)}</td>${settleCells(it)}<td>${src}</td><td><select class="pm-status" data-id="${oid}">${Object.keys(labels).map(k=>`<option value="${k}"${k===r.status?" selected":""}>${labels[k]}</option>`).join("")}</select></td><td><input class="pm-amount" data-id="${oid}" type="number" min="0" step="1" value="${Math.max(0,Number(r.amount)||0)}"></td><td><select class="pm-method" data-id="${oid}">${Object.keys(methods).map(k=>`<option value="${k}"${k===(r.method||"cod")?" selected":""}>${methods[k]}</option>`).join("")}</select></td><td><input class="pm-date" data-id="${oid}" type="date" value="${esc(String(r.date||"").slice(0,10))}"></td><td><input class="pm-note-input" data-id="${oid}" type="text" maxlength="300" value="${esc(r.note||"")}"></td><td><button class="pm-btn pm-mini pm-save" type="button" data-id="${oid}" ${S.saving?"disabled":""}>حفظ</button>${it.manual?` <button class="pm-btn pm-mini pm-del" type="button" data-id="${oid}" title="حذف">🗑</button>`:(isMan(it)?` <button class="pm-btn pm-mini pm-reset" type="button" data-id="${oid}" title="إعادة للتلقائي">↺</button>`:"")}</td></tr>`;
+    return `<tr data-id="${oid}"><td><input class="pm-check" type="checkbox" data-id="${oid}"${S.selected.has(it.id)?" checked":""}></td><td dir="ltr" title="طلب #${oid.replace(/^m/,"M")}">${trkOf(it)?esc(trkOf(it)):"#"+oid.replace(/^m/,"M")} · ${esc(String(it.date||"").slice(0,10))}</td><td><input class="pm-name" data-id="${oid}" type="text" value="${esc(r.name)}"></td><td><input class="pm-phone" data-id="${oid}" dir="ltr" type="text" value="${esc(r.phone)}"></td><td><input class="pm-prod" data-id="${oid}" type="text" value="${esc(r.product)}"></td><td>${it.manual?"—":esc((A().ST_AR&&A().ST_AR[it.ship])||it.ship||"—")}</td><td>${it.manual?`<input class="pm-total" data-id="${oid}" type="number" min="1" value="${Math.max(0,Number(r.total)||0)}" style="width:95px">`:money(r.total)}</td>${settleCells(it)}<td>${src}</td><td><select class="pm-status" data-id="${oid}">${Object.keys(labels).map(k=>`<option value="${k}"${k===r.status?" selected":""}>${labels[k]}</option>`).join("")}</select></td><td><input class="pm-amount" data-id="${oid}" type="number" min="0" step="1" value="${Math.max(0,Number(r.amount)||0)}"></td><td><select class="pm-method" data-id="${oid}">${Object.keys(methods).map(k=>`<option value="${k}"${k===(r.method||"cod")?" selected":""}>${methods[k]}</option>`).join("")}</select></td><td><input class="pm-date" data-id="${oid}" type="date" value="${esc(String(r.date||"").slice(0,10))}"></td><td><input class="pm-note-input" data-id="${oid}" type="text" maxlength="300" value="${esc(r.note||"")}"></td><td><button class="pm-btn pm-mini pm-save" type="button" data-id="${oid}" ${S.saving?"disabled":""}>حفظ</button>${it.manual?` <button class="pm-btn pm-mini pm-del" type="button" data-id="${oid}" title="حذف">🗑</button>`:(isMan(it)?` <button class="pm-btn pm-mini pm-reset" type="button" data-id="${oid}" title="إعادة للتلقائي">↺</button>`:"")}</td></tr>`;
   }
 
   function totRow(list) {
@@ -370,5 +372,5 @@ const AdminPayments = (() => {
     if(typeof Admin==="undefined"||Admin._paymentsTabWrapped)return;
     const original=Admin.tab;Admin.tab=function(t,btn){const result=original.call(this,t,btn),el=$("tab-payments");if(el)el.classList.toggle("hidden",t!=="payments");if(t==="payments")AdminPayments.render();return result;};Admin._paymentsTabWrapped=true;
   });
-  return { render, items, record, view, autoRec, settle, sumSettle, detailBlock, parseDetail, totals, S, DEF_COD, DEF_RET, YP, cmpCard };
+  return { render, items, record, view, autoRec, settle, sumSettle, detailBlock, parseDetail, totals, S, DEF_COD, DEF_RET, YP, cmpCard, trkOf };
 })();

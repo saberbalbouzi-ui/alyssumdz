@@ -134,6 +134,17 @@ ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم fre
   ok("طرد معلَّم «مدفوع» يدوياً والشركة تقول Prêt à payer: يدخل الحساب ولا يُدرَج ضمن «لا نحسبها»", /كل طرود الشركة في الكشفين محسوبة/.test(h) && !/علّمتَه/.test(h), h.slice(-300));
 }
 
+// رقم الطلب في جدول المدفوعات = تتبع الشركة الأصلي (للعرض والبحث)
+{
+  const orders = [{ id: "M261103-QYN1A", status: "livree", total: 4000, fee: 700, _trk: "yal-HM35XS", date: "2026-11-03" }];
+  const Admin = { orders, fin: { costs: {}, set: {} }, ST_AR: {}, ydActual: {}, shipRaw: {}, trackingOf: o => ({ company: "yalidine", tracking: o._trk }), actualFees: () => null, realFees: () => null, orderLines: () => [], carrierCost: o => o.fee, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  const it = sb.AP.items()[0];
+  ok("رقم التتبع الأصلي للطلب: yal-HM35XS", sb.AP.trkOf(it) === "yal-HM35XS", sb.AP.trkOf(it));
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [
