@@ -124,3 +124,22 @@ begin
 end $$;
 revoke all on function public.ruqya_book(jsonb) from public;
 grant execute on function public.ruqya_book(jsonb) to anon, authenticated;
+
+
+-- ملف المريض: زيارات كل حجز مسجَّل (تاريخ، تطور الحالة، ملاحظات، متابعة) — للمدير فقط
+create table if not exists public.ruqya_visits (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  booking_id bigint not null references public.ruqya_bookings(id) on delete cascade,
+  day date not null,
+  slot text check (slot is null or slot ~ '^[0-2][0-9]:[0-5][0-9]$'),
+  progress text not null default '' check (progress in ('','new','better','same','worse','done')),
+  note text not null default '' check (char_length(note) <= 4000),
+  followup text not null default '' check (char_length(followup) <= 2000)
+);
+create index if not exists ruqya_visits_booking_idx on public.ruqya_visits (booking_id, day desc);
+alter table public.ruqya_visits enable row level security;
+revoke all on public.ruqya_visits from anon, authenticated;
+grant select, insert, update, delete on public.ruqya_visits to authenticated;
+drop policy if exists "admin ruqya visits" on public.ruqya_visits;
+create policy "admin ruqya visits" on public.ruqya_visits for all to authenticated using (public.is_admin()) with check (public.is_admin());
