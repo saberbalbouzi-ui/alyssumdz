@@ -138,12 +138,17 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 .rq-pack{display:flex;gap:12px;align-items:center;border:2px solid #cfe0d3;border-radius:16px;padding:10px;background:#f7fbf8;grid-column:1/-1}.rq-pack img{width:84px;height:84px;object-fit:cover;border-radius:12px;flex:none}.rq-pack b{display:block;color:#123e72;font-weight:900}.rq-pack small{display:block;color:#5d6f66;font-weight:700;font-size:12px;margin:2px 0 6px}.rq-packchk{display:flex;gap:8px;align-items:center;font-weight:800;font-size:14px;cursor:pointer}.rq-packchk input{width:20px;height:20px;accent-color:#187a3b}.rq-pack.rq-forced{border-color:#187a3b;background:#eaf6ee}
 .rq-n{direction:ltr;unicode-bidi:isolate;display:inline-block;white-space:nowrap}
 .rq-warn{text-align:start;background:#fff4e5;border:2px solid #f0b86e;border-radius:16px;padding:12px 16px;margin:12px 0;color:#7a3e00}.rq-warn b{display:block;margin-bottom:4px;font-size:16px}.rq-warn ul{margin:0;padding-inline-start:20px;font-weight:700;font-size:14px;line-height:1.9}
+.rq-hours{text-align:center;padding:14px 12px}.rq-hours .rq-hd{font-size:16px;font-weight:900;color:#14502a}.rq-hours .rq-hd b{color:#0e3f20}.rq-hours .rq-hr{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0;padding:10px 0;border-top:1px dashed #b7d6bd;border-bottom:1px dashed #b7d6bd}.rq-hours .rq-hr>div{flex:1 1 150px;max-width:260px}.rq-hours .rq-hr small{display:block;font-size:12px;color:#5d6f66;font-weight:800}.rq-hours .rq-hr span{display:block;font-size:17px;font-weight:900;color:#14502a}.rq-hours .rq-hn{font-size:13px;font-weight:700;color:#5d6f66}
 .rq-note{font-size:13px;color:#5d6f66;font-weight:700;margin:10px 0 0}
 .rq [hidden]{display:none!important}
 @media(max-width:560px){.rq-row{grid-template-columns:1fr}.rq-find{flex-direction:column}.rq-card{padding:16px 13px}}
 </style>
 <div class="rq" id="rq">
- <div class="rq-info">أيام العمل: السبت فقط &middot; الفترة الصباحية 09:00 &larr; 12:30 &middot; الفترة المسائية 13:30 &larr; 17:00. الحجز مسبق، وسيتم تأكيد الموعد معك.</div>
+ <div class="rq-info rq-hours">
+  <div class="rq-hd">أيام العمل: <b>السبت فقط</b></div>
+  <div class="rq-hr"><div><small>الفترة الصباحية</small><span>من <bdi>09:00</bdi> إلى <bdi>12:30</bdi></span></div><div><small>الفترة المسائية</small><span>من <bdi>13:30</bdi> إلى <bdi>17:00</bdi></span></div></div>
+  <div class="rq-hn">الحجز مسبق، وسيتم تأكيد الموعد معك.</div>
+ </div>
  <div style="height:14px"></div>
 
  <div class="rq-card" id="s1"><h3><b>1</b>هل سبق أن حجزت؟</h3>
