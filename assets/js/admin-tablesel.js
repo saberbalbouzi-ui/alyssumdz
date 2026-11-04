@@ -38,8 +38,9 @@ window.TableSel = (() => {
     attr = attr || "data-ts"; let g = "";
     return '<span class="ts-act"><button type="button" class="ts-btn"' + (off ? " disabled" : "") + " " + attr + '="menu">⚡ Action ▾</button><div class="ts-menu" hidden>' + items.map(it => { const h = it.g !== g ? '<div class="ts-g">' + esc(it.g) + "</div>" : ""; g = it.g; return h + '<button type="button" class="ts-i' + (it.c ? " " + it.c : "") + '" ' + attr + '="' + esc(it.k) + '">' + esc(it.l) + "</button>"; }).join("") + "</div></span>";
   }
-  function toggleMenu(btn) { const m = btn.parentNode.querySelector(".ts-menu"); if (!m) return; const open = m.hidden; document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); m.hidden = !open; }
-  document.addEventListener("click", e => { if (!e.target.closest(".ts-act")) document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); });
+  let OPEN = "";      /* القائمة المفتوحة تبقى مفتوحة عند إعادة رسم الجدول (تحديث الطرود يعيد بناء الشريط فكانت تُغلق فوراً ويبدو الزر معطّلاً) */
+  function toggleMenu(btn) { const m = btn.parentNode.querySelector(".ts-menu"); if (!m) return; const open = m.hidden; document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); m.hidden = !open; const bar = btn.closest(".ts-bar"); OPEN = open && bar ? bar.dataset.tsFor || "" : ""; }
+  document.addEventListener("click", e => { if (!e.target.closest(".ts-act")) { OPEN = ""; document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); } else if (e.target.closest(".ts-i")) OPEN = ""; });
   const BASE_ITEMS = [{ g: "طباعة", k: "print", l: "🖨 طباعة المحدد" }, { g: "تحميل", k: "csv", l: "⬇ ملف CSV (يفتح في Google Sheets/Excel)" }, { g: "تحميل", k: "xls", l: "⬇ ملف Excel" }];
 
   /* ── جداول عامة ── */
@@ -68,6 +69,7 @@ window.TableSel = (() => {
     const b = barOf(t, sk), S = sel[sk]; b.dataset.tsTitle = title; const n = S.size, ks = [...t.querySelectorAll("input.ts-ck[data-k]")], allOn = !!ks.length && ks.every(c => c.checked);
     b.classList.toggle("on", n > 0);
     b.innerHTML = '<label class="ts-all"><input type="checkbox" class="ts-ck" data-barall="1"' + (allOn ? " checked" : "") + "> تحديد الكل</label><span>محدَّد: <b>" + n + "</b></span>" + menuHtml(t.querySelector("tr[data-trk]") ? [{ g: "كل الطرود المعروضة", k: "yd-gs", l: "📊 نسخ إلى Google Sheets" }, { g: "كل الطرود المعروضة", k: "yd-csv", l: "⬇ تصدير CSV" }].concat(BASE_ITEMS, [{ g: "طباعة", k: "bord", l: "🏷️ طباعة البوردرو الأصلي (PDF)" }]) : BASE_ITEMS, "data-ts", !n && !t.querySelector("tr[data-trk]")) + (n ? '<button type="button" class="ts-btn al" data-ts="clear">إلغاء التحديد</button>' : "");
+    if (OPEN && OPEN === sk) { const mm = b.querySelector(".ts-menu"); if (mm) mm.hidden = false; }
   }
   function collect(t, sk) {
     const S = sel[sk], rows = [...t.rows].filter(tr => !isHead(tr) && tr.dataset.tsKey && S.has(tr.dataset.tsKey)), head = [...t.rows].find(isHead);
