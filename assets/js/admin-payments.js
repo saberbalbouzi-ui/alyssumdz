@@ -95,7 +95,7 @@ const AdminPayments = (() => {
     if (!["livree","echec","expediee","confirmee"].includes(st)) return null;
     const trk=A_.trackingOf?A_.trackingOf(o):null; if (st==="confirmee"&&!trk) return null;
     const act=A_.actualFees?A_.actualFees(o):null, fee=Number(o.fee)||0, total=Number(o.total)||0;
-    let price, del=0, cod=0, ins=0, ret=0, net, got, src="est";
+    let price, del=0, cod=0, ins=0, ret=0, net, got, src="est", pend=act&&act.pend?String(act.pend):"";
     if (act) {
       src="file"; price=Number(act.price)||0; del=Number(act.del)||0; ret=Number(act.ret)||0; ins=Number(act.ins)||0; cod=Number(act.cod)||0; net=Number(act.net)||0;
       got=Math.round((net+del+cod+ins+ret)*1000)/1000;
@@ -109,13 +109,13 @@ const AdminPayments = (() => {
       net=got-del-cod-ins-ret;
     }
     const kind=st==="echec"?"ret":(st==="livree"?"done":"exp");
-    return { price, got, del, cod, ins, ret, net, src, kind, free:!(fee>0)&&st!=="echec" };
+    return { price, got, del, cod, ins, ret, net, src, kind, pend, free:!(fee>0)&&st!=="echec" };
   }
   function cogs(it) { try { const A_=A(), L=A_.orderLines?A_.orderLines(it.o)||[]:[]; return L.reduce((n,l)=>n+(A_.lineCogs?A_.lineCogs(l.p&&l.p.slug,Number(l.qty)||1):(Number(A_.fin&&A_.fin.costs&&A_.fin.costs[l.p&&l.p.slug])||0)*(Number(l.qty)||1)),0); } catch (_) { return 0; } }
   function sumSettle(list) {
-    const T={ got:0, net:0, netDone:0, netExp:0, retLoss:0, del:0, cod:0, ins:0, ret:0, cogs:0, pack:0, n:0, nDone:0, nExp:0, nRet:0, nFile:0 };
+    const T={ grp:{}, got:0, net:0, netDone:0, netExp:0, retLoss:0, del:0, cod:0, ins:0, ret:0, cogs:0, pack:0, n:0, nDone:0, nExp:0, nRet:0, nFile:0 };
     const pk=Number(A().fin&&A().fin.set&&A().fin.set.packaging)||0;
-    list.forEach(it=>{ const x=settle(it); if(!x)return; T.n++; if(x.src==="file")T.nFile++;
+    list.forEach(it=>{ const x=settle(it); if(!x)return; T.n++; if(x.src==="file")T.nFile++; if(x.pend&&x.kind!=="exp"){ const G=T.grp[x.pend]||(T.grp[x.pend]={ n:0, net:0 }); G.n++; G.net+=x.net; }
       if(x.kind==="exp"){ T.netExp+=x.net; T.nExp++; return; }
       T.net+=x.net; T.del+=x.del; T.cod+=x.cod; T.ins+=x.ins; T.ret+=x.ret;
       if(x.kind==="ret"){ T.nRet++; T.retLoss+=x.ret; } else { T.nDone++; T.netDone+=x.net; T.got+=x.got; T.cogs+=cogs(it); T.pack+=pk; } });
@@ -163,16 +163,22 @@ const AdminPayments = (() => {
   }
   /* «Détail paiement» بنسق ياليدين نفسه (Livré / Retour، Total ramassé، Frais de recouvrement / livraison / retour / assurance، Net) لمقارنته مع كشف الشركة بالسنتيم */
   const d2=n=>(Math.round((Number(n)||0)*100)/100).toLocaleString("fr-DZ",{minimumFractionDigits:2,maximumFractionDigits:2})+" DA";
+  /* كشوف الشركة المستوردة غير المدفوعة: كل مجموعة بصافيها كما عند الشركة (Pas prêt / Prochain) ثم المجموع */
+  const GRP_L={ nr:"Pas prêt", next:"Prochain" };
+  function grpHtml(T) {
+    const g=T.grp||{}, ks=Object.keys(g).filter(k=>GRP_L[k]); if(!ks.length) return "";
+    return `<div style="margin-top:.5rem;padding-top:.4rem;border-top:1px dashed rgba(255,255,255,.25)"><b>مطابقة كشوف الشركة (أرقام فعلية)</b>${ks.map(k=>`<div class="pm-dl"><span>${GRP_L[k]} · ${g[k].n} طرد</span><span dir="ltr">${d2(g[k].net)}</span></div>`).join("")}<div class="pm-dl"><span><b>المجموع</b></span><span dir="ltr"><b>${d2(ks.reduce((n,k)=>n+g[k].net,0))}</b></span></div></div>`;
+  }
   function detailBlock(T) {
     const row=(l,v,k)=>`<div class="pm-dl"><span>${l}</span><span dir="ltr" style="color:${k}">${v}</span></div>`, net=T.realNet!=null?T.realNet:T.got-T.cod-T.del-T.ret-T.ins;      // مع الكشوف الحقيقية: مجموع صافي كل كشف كما حسبته الشركة (تقريب كل كشف على حدة)
-    return `<div class="pm-card" style="margin:.6rem 0"><b>تفاصيل الدفع</b><div class="pm-note">${T.realNet!=null?"أرقام كشفَي الشركة الملصوقَين: "+T.nDone+" مسلَّم · "+T.nRet+" مرتجع":"تقدير اللوحة للطرود المنتهية غير المعلَّمة «مدفوع» ("+T.nDone+" Livré · "+T.nRet+" Retour)"}</div>${row("إجمالي المحصَّل",d2(T.got),"#60a5fa")}${row("عمولة التحصيل (COD)","-"+d2(T.cod),"#fca5a5")}${row("رسوم التوصيل","-"+d2(T.del),"#fca5a5")}${row("رسوم الإرجاع","-"+d2(T.ret),"#fca5a5")}${row("رسوم التأمين","-"+d2(T.ins),"#fca5a5")}${row("الصافي","= "+d2(net),net<0?"#fca5a5":"#d4ff4d")}</div>`;
+    return `<div class="pm-card" style="margin:.6rem 0"><b>تفاصيل الدفع</b><div class="pm-note">${T.realNet!=null?"أرقام كشفَي الشركة الملصوقَين: "+T.nDone+" مسلَّم · "+T.nRet+" مرتجع":"تقدير اللوحة للطرود المنتهية غير المعلَّمة «مدفوع» ("+T.nDone+" Livré · "+T.nRet+" Retour)"}</div>${row("إجمالي المحصَّل",d2(T.got),"#60a5fa")}${row("عمولة التحصيل (COD)","-"+d2(T.cod),"#fca5a5")}${row("رسوم التوصيل","-"+d2(T.del),"#fca5a5")}${row("رسوم الإرجاع","-"+d2(T.ret),"#fca5a5")}${row("رسوم التأمين","-"+d2(T.ins),"#fca5a5")}${row("الصافي","= "+d2(net),net<0?"#fca5a5":"#d4ff4d")}${grpHtml(T)}</div>`;
   }
   /* كشوف «Détail paiement» الحقيقية من ياليدين (pas prêt / prêt à payer): تُلصق نصاً وتُحفظ؛ مجموع صافيها = المستحق الفعلي، ويُقارَن بتقدير اللوحة */
   const YP = { list:[], loaded:false, msg:"", cut:"" };
   /* طرود التسوية: من تاريخ القطع (الأقدم دُفع سابقاً فيُستثنى من التسوية لا من الأرباح) */
   /* وكذلك ما عُلِّم يدوياً «مدفوع» (تعليم المحدد كمدفوع) = قُبض سابقاً فلا يدخل في التسوية */
   /* وما ورد في كشف ياليدين المستورد (الكشف المدفوع: أرقام الشركة الفعلية لكل طرد) = مدفوع فلا يدخل في المتبقي */
-  const inFile = it => { try{ return !!(A().actualFees && it.o && A().actualFees(it.o)); }catch(_){ return false; } };
+  const inFile = it => { try{ const a=A().actualFees && it.o && A().actualFees(it.o); return !!(a && !a.pend); }catch(_){ return false; } };      /* الكشف المدفوع = مستثنى؛ كشف «قادم/غير جاهز» = يبقى في المستحق بأرقام الشركة الحقيقية */
   const sItems = () => items().filter(it => !(isMan(it) && record(it).status === "paid") && !inFile(it));
   const pnum = v => Number(String(v).replace(/[\s\u00a0\u202f]/g,"").replace(",",".")) || 0;
   function parseDetail(txt) {
@@ -230,7 +236,7 @@ const AdminPayments = (() => {
     const M=v=>R?d2(v):dz(v)+" دج";
     if(!T.n&&!R) return `<section class="pm-card"><b>🧾 تسوية ياليدين</b><p class="pm-note">لا طلبات مسجَّلة بعد. عند التسجيل تظهر هنا الأرقام تلقائياً؛ ولأدقّ النتائج استورد كشف الدفع من حساب ياليدين.</p><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين (xlsx / csv)</button></section>`;
     const c=(l,v,k,t)=>`<div class="pm-card pm-stat"${t?` title="${esc(t)}"`:""}><small>${l}</small><b${k?` style="color:${k}"`:""}>${v}</b></div>`;
-    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع (${DEF_RET} دج ثابتة) + 10 دج عن كل يوم تأخّر فيه سحبه أكثر من 10 أيام عند الشركة. المتبقي عند الشركة: ${T.n} طرد (تقدير من التعريفة)${(()=>{ const p=items().filter(it=>inFile(it)&&settle(it)).length; return p?` · ${p} طرد مدفوع في الكشف المستورد مُستثنى`:""; })()}.</div></div><div><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
+    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ياليدين</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة COD (${DEF_COD}% ثابتة من سعر المنتج)؛ والمرتجع يخسر رسم الإرجاع (${DEF_RET} دج ثابتة) + 10 دج عن كل يوم تأخّر فيه سحبه أكثر من 10 أيام عند الشركة. المتبقي عند الشركة: ${T.n} طرد (تقدير من التعريفة)${(()=>{ const p=items().filter(it=>inFile(it)&&settle(it)).length; return p?` · ${p} طرد مدفوع في الكشف المستورد مُستثنى`:""; })()}.</div></div><div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap"><select id="pm-impst" title="نوع الكشف الذي ستستورده" style="width:auto"><option value="paid"${S.impState==="paid"||!S.impState?" selected":""}>كشف مدفوع</option><option value="next"${S.impState==="next"?" selected":""}>كشف قادم (Prochain)</option><option value="nr"${S.impState==="nr"?" selected":""}>كشف غير جاهز (Pas prêt)</option></select><button id="pm-imp" type="button" class="pm-btn pm-primary">📥 استيراد كشف ياليدين</button></div></div>
       ${detailBlock(T)}
       ${retList()}
       ${expList()}
@@ -268,7 +274,7 @@ const AdminPayments = (() => {
     host.querySelectorAll(".pm-ypaid").forEach(el=>el.onclick=async()=>{ const x=YP.list[+el.dataset.i]; if(!x||!window.confirm("تأكيد: هذا الكشف ("+x.net+" DA) قُبض فعلاً؟ سينتقل إلى «مقبوض سابقاً» ولا يدخل في المستحق.")) return; x.state="paid"; x.paidAt=Date.now(); await ydSave(); draw(); });
     const yh=host.querySelector(".pm-yhis"); if(yh) yh.onclick=()=>{ YP.showHist=!YP.showHist; draw(); };
     host.querySelectorAll(".pm-ydel").forEach(el=>el.onclick=async()=>{ YP.list.splice(+el.dataset.i,1); await ydSave(); draw(); });
-    const imp=$("pm-imp");if(imp)imp.onclick=()=>{const f=document.getElementById("fin-import");if(f)f.click();else S.err="تعذّر فتح نافذة الاستيراد.";};
+    const ist=$("pm-impst");if(ist)ist.onchange=()=>{ S.impState=ist.value; };const imp=$("pm-imp");if(imp)imp.onclick=()=>{const f=document.getElementById("fin-import");if(f)f.click();else S.err="تعذّر فتح نافذة الاستيراد.";};
     const bulk=$("pm-bulk-paid");if(bulk)bulk.onclick=bulkPaid;
     const sa=$("pm-showall");if(sa)sa.onclick=()=>{S.all=!S.all;S.selected.clear();draw();};
     [$("pm-export"),$("pm-export2")].filter(Boolean).forEach(el=>el.onclick=csv);

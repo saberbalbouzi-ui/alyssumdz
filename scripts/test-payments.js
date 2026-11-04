@@ -63,6 +63,18 @@ ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم fre
   ok("كشف LE18VD: مجموع الصافي = 52586.875، التوصيل 6850، COD 403.125، الإرجاع 760", Math.abs(T.net - 52586.875) < 1e-6 && Math.abs(T.del - 6850) < 1e-6 && Math.abs(T.cod - 403.125) < 1e-6 && T.retLoss === 760 && T.nRet === 3 && T.nDone === 9, T);
 }
 
+// كشف «قادم/غير جاهز» مستورد: يبقى في المستحق بأرقام الشركة الحقيقية ويُجمَّع حسب الحالة؛ والمدفوع يُستثنى
+{
+  const orders = [{ id: "p1", status: "livree", total: 4000, fee: 700, _trk: "T1", date: "2026-10-20" }, { id: "p2", status: "livree", total: 3000, fee: 500, _trk: "T2", date: "2026-10-20" }, { id: "p3", status: "livree", total: 2000, fee: 500, _trk: "T3", date: "2026-10-20" }];
+  const act = { T1: { pend: "nr", st: "Livré", price: 3300, del: 700, ret: 0, ins: 0, cod: 24.75, net: 2575.25 }, T2: { pend: "next", st: "Livré", price: 2500, del: 500, ret: 0, ins: 0, cod: 18.75, net: 1981.25 }, T3: { st: "Livré", price: 1500, del: 500, ret: 0, ins: 0, cod: 11.25, net: 988.75 } };
+  const Admin = { orders, fin: { costs: {}, set: { packaging: 0 } }, ST_AR: {}, ydActual: act, trackingOf: o => ({ company: "yalidine", tracking: o._trk }), actualFees(o) { return this.ydActual[o._trk] || null; }, realFees: () => null, orderLines: () => [], carrierCost: o => o.fee, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  const items = sb.AP.items(), rest = items.filter(it => sb.AP.settle(it) && !(sb.AP.settle(it).src === "file" && !sb.AP.settle(it).pend)), T = sb.AP.sumSettle(rest);
+  ok("كشف قادم/غير جاهز: طردان يبقيان بأرقام الكشف (2575.25 + 1981.25) والمدفوع مستثنى", rest.length === 2 && Math.abs(T.net - 4556.5) < 1e-6 && T.grp.nr.n === 1 && Math.abs(T.grp.next.net - 1981.25) < 1e-6, T);
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [
