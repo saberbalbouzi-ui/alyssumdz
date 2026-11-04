@@ -1110,6 +1110,17 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   /* نص عنصر بلا تنسيق مضمَّن (للصق النمط على نص حُشر فيه تنسيق خارجي) */
   function plainFmtHtml(html) { const d = new DOMParser().parseFromString("<body>" + String(html || "") + "</body>", "text/html"); stripFmtIn(d.body, null); return d.body.innerHTML; }
+  /* حجم الخط من الشريط لكل النص: يُزال font-size المضمَّن (ملصوق من الخارج) كي يسري الحجم الجديد على كل النص بالتساوي لا على جزء منه */
+  function dropInlineSize(html) {
+    const d = new DOMParser().parseFromString("<body>" + String(html || "") + "</body>", "text/html");
+    d.body.querySelectorAll("*").forEach(n => { if (n.tagName === "FONT") { n.removeAttribute("size"); } if (n.style && n.style.fontSize) { n.style.removeProperty("font-size"); if (!n.getAttribute("style")) n.removeAttribute("style"); } });
+    d.body.querySelectorAll("span,font").forEach(n => { if (!n.attributes.length) { while (n.firstChild) n.parentNode.insertBefore(n.firstChild, n); n.remove(); } });
+    return d.body.innerHTML;
+  }
+  function qSize(inf, v, r) {
+    if (typeof inf.set.html === "string" && /font-size|<font/i.test(inf.set.html)) { const h = dropInlineSize(inf.set.html); if (h !== inf.set.html) { inf.set.html = h; if (editing && editing.el && editing.rich) editing.el.innerHTML = h; } }
+    qDone(inf, "fs", v, r);
+  }
   /* شريط تنسيق النص: بإحداثيات الشاشة، بجوار الشريط العلوي لا فوق النص — فوقه (وفوق الشريط) إن اتسع المكان وإلا تحت الإطار وتحت الشريط */
   function placeRt() {
     const rt = $("pbx-rt"), st = $("pbx-stage"), ovl = $("pbx-ovl"); if (!rt || !st || !editing || rt.style.display === "none") return;
@@ -1838,7 +1849,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       bar.addEventListener("mousedown", e => { if (editing && !e.target.closest("input,select,textarea,label")) e.preventDefault(); });      // أزرار الشريط لا تسحب التركيز من النص المُحرَّر فيبقى التحديد
       bar.addEventListener("click", e => { const b = e.target.closest("[data-qb]"); if (b) qAct(b.dataset.qb, b); });
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
-      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qDone(inf, "fs", Math.max(8, Math.min(160, Number(t.value) || 17)), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
+      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qSize(inf, Math.max(8, Math.min(160, Number(t.value) || 17)), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
     if (!document.getElementById("pbfonts-a")) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
     const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget" && !multiOn(); if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null; bar.style.display = show ? "flex" : "none"; try { epSync(); } catch (x) { console.warn(x); } if (!show) return;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه
     bar.innerHTML = qbarHtml(inf); placeQbar();
@@ -2006,7 +2017,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
-    if (k === "fs-" || k === "fs+") { const cs = qFont(inf), cur = (cs ? Math.round(parseFloat(cs.fontSize)) : 0) || Number(eff(set, "fs", dev)) || 17; return qDone(inf, "fs", Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
+    if (k === "fs-" || k === "fs+") { const cs = qFont(inf), cur = (cs ? Math.round(parseFloat(cs.fontSize)) : 0) || Number(eff(set, "fs", dev)) || 17; return qSize(inf, Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
     if (k === "clearfmt") { if (editing) { clearFmt(); return; } if (typeof set.html === "string") { set.html = plainFmtHtml(set.html); E.nextLabel = "مسح التنسيق"; afterEdit(); toast("تم مسح التنسيق المنسوخ"); } return; }
     if (["bold", "italic", "under", "strike"].includes(k) && qSel(k)) return;
     if (k === "bold") { const cs = qFont(inf), cur = Number(set.fw || (cs && cs.fontWeight) || 400); return qDone(inf, "fw", cur >= 600 ? "400" : (inf.node.type === "heading" ? "800" : "700")); }
