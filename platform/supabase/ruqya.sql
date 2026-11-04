@@ -82,7 +82,7 @@ declare
   v_n int := coalesce((p ->> 'persons')::int, 0); v_s int := coalesce((p ->> 'sessions')::int, 0);
   v_ph text := public._ruqya_norm(p ->> 'phone'); v_name text := btrim(left(coalesce(p ->> 'name',''), 120));
   v_reg boolean := coalesce((p ->> 'registered')::boolean, false); v_known boolean; v_price int; v_pack int; v_id bigint;
-  v_all text[] := public._ruqya_slots(); v_i int; v_k int; v_cap int := 1; v_ok boolean;
+  v_all text[] := public._ruqya_slots(); v_sn text; v_sp text; v_k2 boolean; v_pack2 int := 0; v_i int; v_k int; v_cap int := 1; v_ok boolean;
 begin
   perform public._rl_hit('ruqya_book', 10, interval '1 hour');
   if not coalesce((p ->> 'terms')::boolean, false) then raise exception 'terms_required'; end if;
@@ -117,13 +117,24 @@ begin
       or exists (select 1 from public.orders where public._ruqya_norm(phone) = v_ph)
       or exists (select 1 from public.customers where public._ruqya_norm(phone) = v_ph) into v_known;
   if v_reg and not v_known then raise exception 'not_registered'; end if;
-  v_pack := case when (not v_known and v_kind in ('single','couple')) or coalesce((p ->> 'pack')::boolean, false) then 3000 else 0 end;      -- الباقة العلاجية: تلقائية لأول تسجيل (فردية/زوجين) واختيارية لغيرها
+  v_pack := case when (not v_known and v_kind in ('single','couple')) or coalesce((p ->> 'pack')::boolean, false) then 3000 else 0 end;
+  -- مرافق آخر لبعض الجلسات: يُسجَّل بياناته وتُضاف له الباقة العلاجية
+  v_sn := nullif(btrim(left(coalesce(p ->> 'second_name', ''), 120)), '');
+  if v_sn is not null then
+    v_sp := public._ruqya_norm(p ->> 'second_phone');
+    if v_s < 2 or v_kind not in ('single', 'couple') or v_sn !~ '[[:alpha:]]' or v_sp !~ '^0[5-7][0-9]{8}$' then raise exception 'invalid_second'; end if;
+    if (select count(*) from public.ruqya_warnings where phone = v_sp) >= 3 then raise exception 'banned'; end if;
+    select exists (select 1 from public.ruqya_bookings where public._ruqya_norm(phone) = v_sp and status <> 'cancelled')
+        or exists (select 1 from public.orders where public._ruqya_norm(phone) = v_sp)
+        or exists (select 1 from public.customers where public._ruqya_norm(phone) = v_sp) into v_k2;
+    v_pack2 := case when not v_k2 or coalesce((p ->> 'pack2')::boolean, false) then 3000 else 0 end;
+  end if;      -- الباقة العلاجية: تلقائية لأول تسجيل (فردية/زوجين) واختيارية لغيرها
   if (select count(*) from public.ruqya_bookings where phone = v_ph and created_at > now() - interval '1 hour') >= 3 then raise exception 'rate_limited'; end if;
   if coalesce(p ->> 'whatsapp', '') <> '' and public._ruqya_norm(p ->> 'whatsapp') !~ '^0[5-7][0-9]{8}$' then raise exception 'invalid_whatsapp'; end if;
-  insert into public.ruqya_bookings (day, slot, slots, registered, first_time, name, phone, whatsapp, commune, wilaya, kind, persons, sessions, session_price, pack_price, total, terms)
-  values (v_day, v_slot, v_s, v_known, not v_known, v_name, v_ph, (case when coalesce(p ->> 'whatsapp', '') = '' then (case when v_ph ~ '^0[5-7][0-9]{8}$' then v_ph else null end) else public._ruqya_norm(p ->> 'whatsapp') end), left(p ->> 'commune', 120), left(p ->> 'wilaya', 80), v_kind, v_n, v_s, v_price, v_pack, v_price * v_s + v_pack, true)
+  insert into public.ruqya_bookings (day, slot, slots, registered, first_time, name, phone, whatsapp, commune, wilaya, kind, persons, sessions, session_price, pack_price, total, terms, second_name, second_phone)
+  values (v_day, v_slot, v_s, v_known, not v_known, v_name, v_ph, (case when coalesce(p ->> 'whatsapp', '') = '' then (case when v_ph ~ '^0[5-7][0-9]{8}$' then v_ph else null end) else public._ruqya_norm(p ->> 'whatsapp') end), left(p ->> 'commune', 120), left(p ->> 'wilaya', 80), v_kind, v_n, v_s, v_price, v_pack + v_pack2, v_price * v_s + v_pack + v_pack2, true, v_sn, v_sp)
   returning id into v_id;
-  return jsonb_build_object('ok', true, 'id', v_id, 'total', v_price * v_s + v_pack, 'session_price', v_price, 'pack_price', v_pack, 'first_time', not v_known);
+  return jsonb_build_object('ok', true, 'id', v_id, 'total', v_price * v_s + v_pack + v_pack2, 'session_price', v_price, 'pack_price', v_pack + v_pack2, 'first_time', not v_known);
 end $$;
 revoke all on function public.ruqya_book(jsonb) from public;
 grant execute on function public.ruqya_book(jsonb) to anon, authenticated;
@@ -274,3 +285,5 @@ begin
 end $$;
 revoke all on function public.ruqya_mark_noshow(bigint) from public, anon;
 grant execute on function public.ruqya_mark_noshow(bigint) to authenticated;
+
+alter table public.ruqya_bookings add column if not exists second_name text, add column if not exists second_phone text;      -- مرافق آخر لبعض الجلسات
