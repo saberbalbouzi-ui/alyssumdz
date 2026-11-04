@@ -89,7 +89,7 @@ const AdminRuqya = (() => {
   }
   function patientHtml() {
     const r = S.pat, vs = S.visits, first = vs.length ? vs[vs.length - 1].day : r.day, last = vs.length ? vs[0].day : r.day;
-    const wa = "https://wa.me/213" + String(r.phone).replace(/^0/, "");
+    const wa = "https://wa.me/213" + String(r.whatsapp || r.phone).replace(/^0/, "");
     const opts = k => Object.keys(PROG).map(x => '<option value="' + x + '"' + (x === k ? " selected" : "") + ">" + PROG[x] + "</option>").join("");
     const card = v => '<div class="card" style="padding:12px;margin:10px 0;border-inline-start:4px solid ' + (PCOL[v.progress] || "#ffffff44") + '" data-vid="' + v.id + '"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b>' + esc(dayName(v.day)) + (v.slot ? " · " + esc(v.slot) : "") + '</b><span style="flex:1"></span><select data-vf="progress">' + opts(v.progress) + '</select></div>' +
       '<label style="display:block;margin-top:8px;font-weight:700">تطور الحالة / ملاحظات الزيارة</label><textarea data-vf="note" rows="3" style="width:100%">' + esc(v.note) + '</textarea>' +
@@ -98,7 +98,7 @@ const AdminRuqya = (() => {
       '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-rq="vsave" data-id="' + v.id + '">حفظ</button><button class="btn warn" data-rq="vdel" data-id="' + v.id + '">حذف الزيارة</button></div></div>';
     return '<div class="card" style="padding:16px"><button class="btn gray" data-rq="pback">← رجوع للمواعيد</button>' +
       '<h2 style="margin:12px 0 4px">ملف المريض</h2>' + (S.perr ? '<div class="warn" style="margin:8px 0">' + esc(S.perr) + '</div>' : "") + (S.msg ? '<div class="hint">' + esc(S.msg) + '</div>' : "") +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0"><div><label style="font-weight:700">الاسم</label><input id="rq-pn" value="' + esc(r.name) + '"></div><div><label style="font-weight:700">المنطقة</label><input id="rq-pr" value="' + esc(r.commune || "") + '" placeholder="البلدية / الولاية"></div><div><label style="font-weight:700">الهاتف</label><div dir="ltr" style="padding:8px 0"><b>' + esc(r.phone) + '</b> · <a target="_blank" rel="noopener" href="' + wa + '">واتساب</a></div></div></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0"><div><label style="font-weight:700">الاسم</label><input id="rq-pn" value="' + esc(r.name) + '"></div><div><label style="font-weight:700">المنطقة</label><input id="rq-pr" value="' + esc(r.commune || "") + '" placeholder="البلدية / الولاية"></div><div><label style="font-weight:700">الهاتف</label><div dir="ltr" style="padding:8px 0"><b>' + esc(r.phone) + '</b> · <a target="_blank" rel="noopener" href="' + wa + '">واتساب' + (r.whatsapp && r.whatsapp !== r.phone ? ' ' + esc(r.whatsapp) : '') + '</a></div></div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn" data-rq="psave">حفظ بيانات المريض</button><span class="hint">أول زيارة: ' + esc(first) + ' · آخر زيارة: ' + esc(last) + ' · عدد الزيارات: ' + vs.length + '</span></div>' +
       (function () {
         const n = S.accts.length, shared = vs.filter(x => x.shared).length;
@@ -126,7 +126,7 @@ const AdminRuqya = (() => {
     else {
       h += '<div style="overflow-x:auto"><table class="rt" style="min-width:880px"><thead><tr><th>الموعد</th><th>الاسم</th><th>الهاتف</th><th>البلدية</th><th>الجلسة</th><th>المبلغ</th><th>الحالة</th><th></th></tr></thead><tbody>';
       list.forEach(r => {
-        const wa = "https://wa.me/213" + String(r.phone).replace(/^0/, "") + "?text=" + encodeURIComponent("السلام عليكم " + r.name + "، بخصوص موعدك للرقية الشرعية يوم " + dayName(r.day) + (r.status === "confirmed" ? " (مؤكَّد)." : ".") + " أوقات الحضور: الفترة الصباحية 09:00-12:30 والمسائية 13:30-17:00.");
+        const wa = "https://wa.me/213" + String(r.whatsapp || r.phone).replace(/^0/, "") + "?text=" + encodeURIComponent("السلام عليكم " + r.name + "، بخصوص موعدك للرقية الشرعية يوم " + dayName(r.day) + (r.status === "confirmed" ? " (مؤكَّد)." : ".") + " أوقات الحضور: الفترة الصباحية 09:00-12:30 والمسائية 13:30-17:00.");
         h += '<tr><td data-l="الموعد"><b>' + esc(dayName(r.day)) + '</b><br>' + esc(r.slot) + (r.slots > 1 ? ' (' + r.slots + ' جلسات)' : '') + '</td><td data-l="الاسم"><a href="#" data-rq="pat" data-id="' + r.id + '" style="font-weight:800;color:inherit;text-decoration:underline">' + esc(r.name) + '</a>' + '<br><small>' + (r.first_time ? "أول مرة" : "مسجَّل") + '</small></td>' +
           '<td data-l="الهاتف" dir="ltr">' + esc(r.phone) + '</td><td data-l="البلدية">' + esc(r.commune || "—") + (r.wilaya ? '<br><small>' + esc(r.wilaya) + '</small>' : '') + '</td>' +
           '<td data-l="الجلسة">' + esc(KIND[r.kind] || r.kind) + '<br><small>' + r.persons + ' أفراد · ' + r.sessions + ' جلسة</small></td>' +
@@ -150,7 +150,7 @@ const AdminRuqya = (() => {
     else if (a === "pinv") {
       try { const tok = await call("rpc/ruqya_portal_invite", { method: "POST", body: JSON.stringify({ p_booking_id: S.pat.id }) }); S.link = location.origin + "/ruqya-patient/?t=" + tok; S.perr = "";
         const txt = "السلام عليكم " + S.pat.name + "، هذا رابط ملفك في مواعيد الرقية الشرعية (أليسوم). افتحه وسجّل الدخول بحساب Google أو Apple أو بريدك لتطّلع على ملفك وتطور حالتك:\n" + S.link;
-        S.wa = "https://wa.me/213" + String(S.pat.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(txt); try { window.open(S.wa, "_blank", "noopener"); } catch (_) { } } catch (er) { S.perr = er.message; } draw();
+        S.wa = "https://wa.me/213" + String(S.pat.whatsapp || S.pat.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(txt); try { window.open(S.wa, "_blank", "noopener"); } catch (_) { } } catch (er) { S.perr = er.message; } draw();
     } else if (a === "pshare") {
       try { await call("ruqya_visits?booking_id=eq." + encodeURIComponent(S.pat.id), { method: "PATCH", body: JSON.stringify({ shared: true }) }); S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); S.msg = "✅ صارت كل الزيارات ظاهرة للمريض"; } catch (er) { S.perr = er.message; } draw();
     } else if (a === "punl") {

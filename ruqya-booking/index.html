@@ -103,7 +103,7 @@ body.pb-edit .pb-w.x-ltvo5y5{height:auto!important}
 body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#16324c;font-family:'Cairo',sans-serif;overflow-x:hidden}
 </style><!--seo:lp:start--><script>try{var c=document.querySelector('link[rel=canonical]');if(c&&self===top&&!/[?&](noroute|embed|preview)=/.test(location.search)){var u=new URL(c.href);if(u.host===location.host&&u.pathname!==location.pathname)history.replaceState(null,'',u.pathname+location.search+location.hash)}}catch(e){}</script><!--seo:lp:end-->
 </head>
-<body class="pb-page"><header class="pb-hdr"><div><a class="lg" href="../">أليسوم ALYSSUM</a><a class="wa" href="https://wa.me/213559237239" target="_blank" rel="noopener">واتساب</a></div></header><main><section class="pb-sec k-flow x-tpxoeq2" id="top"><div class="pb-in"><div class="pb-col x-l9swq7d"><div class="pb-colin"><div class="pb-w x-4nc5vrg" data-type="heading"><h1 class="pb-t pb-hd"><span data-edit="text">حجز موعد الرقية الشرعية</span></h1></div><div class="pb-w x-7qpnezs" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>احجز موعدك ليوم السبت، اختر نوع الجلسة وسيظهر لك السعر مباشرة قبل التأكيد.</p></div></div></div></div></div></section><section class="pb-sec k-flow x-col6gn6" id="booking"><div class="pb-in"><div class="pb-col x-vua7s0l"><div class="pb-colin"><div class="pb-w x-ltvo5y5" data-type="html"><div class="pb-raw"><style>
+<body class="pb-page"><header class="pb-hdr"><div><a class="lg" href="../">أليسوم ALYSSUM</a><a class="wa" href="https://wa.me/213559237239" target="_blank" rel="noopener">واتساب</a></div></header><main><section class="pb-sec k-flow x-tpxoeq2" id="top"><div class="pb-in"><div class="pb-col x-l9swq7d"><div class="pb-colin"><div class="pb-w x-4nc5vrg" data-type="heading"><h1 class="pb-t pb-hd"><span data-edit="text">حجز موعد الرقية الشرعية</span></h1></div></div></div></div></section><section class="pb-sec k-flow x-col6gn6" id="booking"><div class="pb-in"><div class="pb-col x-vua7s0l"><div class="pb-colin"><div class="pb-w x-ltvo5y5" data-type="html"><div class="pb-raw"><style>
 .rq{max-width:760px;margin:0 auto;font-family:'Cairo',sans-serif;color:#16324c;direction:rtl;line-height:1.7;box-sizing:border-box}
 .rq *{box-sizing:border-box}
 .rq-card{background:#fff;border:2px solid #d9e8dc;border-radius:22px;padding:20px 18px;margin:0 0 16px;box-shadow:0 10px 28px #123e7214}
@@ -175,6 +175,10 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
    <div><label class="rq-l" for="sessions">عدد الجلسات</label><input type="number" id="sessions" min="1" max="8" value="1" inputmode="numeric"></div>
   </div>
   <div class="rq-note" id="kindNote"></div>
+ 
+  <div id="boxWa" style="margin-top:6px"><label class="rq-l" for="wa">رقم الواتساب (لتأكيد الموعد)</label>
+   <label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:4px 0"><input type="checkbox" id="waSame" checked style="width:20px;height:20px"> رقم الواتساب هو نفس رقم الهاتف</label>
+   <input type="tel" id="wa" inputmode="tel" placeholder="05XXXXXXXX" autocomplete="off" hidden></div>
  </div>
 
  <div class="rq-card"><h3><b>3</b>اختر يوم السبت</h3>
@@ -238,12 +242,14 @@ function sum(){
 function ident(){
  if(ST.reg){return ST.picked?{name:$("pName").value.trim(),phone:$("pPhone").value.trim()}:null}
  return{name:$("nName").value.trim(),phone:$("nPhone").value.trim(),wilaya:$("nWil").value,commune:$("nCom").value}}
+function waNum(){return normPh($("waSame").checked?(ident()||{phone:""}).phone:$("wa").value)}
 function normPh(v){var d=String(v||"").replace(/[^0-9]/g,"");if(/^00213/.test(d))d="0"+d.slice(5);else if(/^213/.test(d)&&d.length>=12)d="0"+d.slice(3);else if(d.length===9&&/^[567]/.test(d))d="0"+d;return d}
 function ready(){
  var id=ident(),ph=id?normPh(id.phone):"",miss=[];
  if(!id)miss.push("اختر حسابك من نتائج البحث (أو اختر «أول مرة»)");
  else{if(id.name.length<2)miss.push("الاسم");if(!/^0[5-7][0-9]{8}$/.test(ph))miss.push("رقم هاتف صحيح من 10 أرقام يبدأ بـ 05 أو 06 أو 07");if(!ST.reg&&!id.commune)miss.push("الولاية والبلدية")}
  if(!ST.day)miss.push("يوم السبت");else if(!ST.slot)miss.push("لا يتّسع هذا اليوم لعدد الجلسات: اختر سبتاً آخر");
+ var wn=waNum();if(!/^0[5-7][0-9]{8}$/.test(wn))miss.push("رقم الواتساب (10 أرقام يبدأ بـ 05 أو 06 أو 07)");
  if(!$("t1").checked||!$("t2").checked)miss.push("الموافقة على الشرطين أدناه");
  $("bk").disabled=miss.length>0;
  var hn=$("bkHint");if(hn)hn.textContent=miss.length?("لتفعيل الزر أكمل: "+miss.join(" · ")):""}
@@ -286,6 +292,7 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("input",function(e){if(e.target.closest&&e.target.closest("#rq")){if(e.target.id==="sessions"){autoDay()}sum()}});
 document.addEventListener("change",function(e){if(!e.target.closest||!e.target.closest("#rq"))return;
+ if(e.target.id==="waSame"){$("wa").hidden=e.target.checked;if(!e.target.checked)$("wa").focus()}
  if(e.target.id==="nWil"){var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===e.target.value})[0],o='<option value="">اختر البلدية</option>';((w&&w.communes)||[]).forEach(function(c){o+='<option>'+c+'</option>'});$("nCom").innerHTML=o}
  sum()});
 function search(){
@@ -301,8 +308,8 @@ document.addEventListener("keydown",function(e){if(e.target&&e.target.id==="qSea
 function book(){
  var id=ident(),ph=normPh(id.phone);$("bk").disabled=true;$("bkMsg").textContent="";
  var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===String(id.wilaya)})[0];
- rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
-  var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالموعد: "+dayLabel(d)+" (خلال أوقات العمل)\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"\nالمجموع: "+fmt(r.total);
+ rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,whatsapp:waNum(),registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
+  var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالواتساب: "+waNum()+"\nالموعد: "+dayLabel(d)+" (خلال أوقات العمل)\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"\nالمجموع: "+fmt(r.total);
   var h='<h2>تم تسجيل طلب الموعد</h2><p style="font-weight:800">رقم الحجز <b>'+r.id+'</b> &middot; '+dayLabel(d)+' · خلال أوقات العمل (09:00-12:30 / 13:30-17:00)</p><p style="font-weight:800;font-size:20px;color:#123e72">المبلغ: '+fmt(r.total)+(r.first_time?' (يشمل الباقة العلاجية 4)':'')+'</p><a class="rq-btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">أرسل التفاصيل على واتساب</a>';
   ["s1"].forEach(function(){});[].forEach.call(document.querySelectorAll("#rq > .rq-card:not(#done), #rq > .rq-sum, #rq > .rq-info"),function(x){x.hidden=true});
   $("done").innerHTML=h;$("done").hidden=false;$("done").scrollIntoView({behavior:"smooth",block:"start"})

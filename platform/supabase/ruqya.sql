@@ -19,7 +19,8 @@ create table if not exists public.ruqya_bookings (
   session_price int not null, pack_price int not null default 0, total int not null,
   terms boolean not null default false,
   status text not null default 'pending' check (status in ('pending','confirmed','done','cancelled')),
-  note text
+  note text,
+  whatsapp text check (whatsapp is null or whatsapp ~ '^0[5-7][0-9]{8}$')      -- رقم الواتساب لتأكيد الموعد
 );
 create index if not exists ruqya_day_idx on public.ruqya_bookings (day, slot);
 create index if not exists ruqya_phone_idx on public.ruqya_bookings (phone);
@@ -117,8 +118,9 @@ begin
   if v_reg and not v_known then raise exception 'not_registered'; end if;
   v_pack := case when v_known then 0 else 3000 end;
   if (select count(*) from public.ruqya_bookings where phone = v_ph and created_at > now() - interval '1 hour') >= 3 then raise exception 'rate_limited'; end if;
-  insert into public.ruqya_bookings (day, slot, slots, registered, first_time, name, phone, commune, wilaya, kind, persons, sessions, session_price, pack_price, total, terms)
-  values (v_day, v_slot, v_s, v_known, not v_known, v_name, v_ph, left(p ->> 'commune', 120), left(p ->> 'wilaya', 80), v_kind, v_n, v_s, v_price, v_pack, v_price * v_s + v_pack, true)
+  if coalesce(p ->> 'whatsapp', '') <> '' and public._ruqya_norm(p ->> 'whatsapp') !~ '^0[5-7][0-9]{8}$' then raise exception 'invalid_whatsapp'; end if;
+  insert into public.ruqya_bookings (day, slot, slots, registered, first_time, name, phone, whatsapp, commune, wilaya, kind, persons, sessions, session_price, pack_price, total, terms)
+  values (v_day, v_slot, v_s, v_known, not v_known, v_name, v_ph, (case when coalesce(p ->> 'whatsapp', '') = '' then (case when v_ph ~ '^0[5-7][0-9]{8}$' then v_ph else null end) else public._ruqya_norm(p ->> 'whatsapp') end), left(p ->> 'commune', 120), left(p ->> 'wilaya', 80), v_kind, v_n, v_s, v_price, v_pack, v_price * v_s + v_pack, true)
   returning id into v_id;
   return jsonb_build_object('ok', true, 'id', v_id, 'total', v_price * v_s + v_pack, 'session_price', v_price, 'pack_price', v_pack, 'first_time', not v_known);
 end $$;
@@ -229,3 +231,5 @@ begin
 end $$;
 revoke all on function public.ruqya_portal_me() from public, anon;
 grant execute on function public.ruqya_portal_me() to authenticated;
+
+alter table public.ruqya_bookings add column if not exists whatsapp text check (whatsapp is null or whatsapp ~ '^0[5-7][0-9]{8}$');
