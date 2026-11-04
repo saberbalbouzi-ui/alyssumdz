@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.773">
+<meta name="admin-version" content="1.89.774">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
-<style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
+<style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
+/* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
+.of-more{display:contents}.of-tg{display:none!important}
+@media(max-width:900px){#tab-orders .of-tg{display:inline-flex!important;width:100%;justify-content:center}#tab-orders .of-more{display:none;flex-wrap:wrap;gap:.5rem;width:100%}#tab-orders .of-more.open{display:flex}}
+</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
@@ -440,11 +444,6 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-orders">
     <div id="cs-svc"></div>
     <div id="orders-banner"></div>
-    <div class="card" id="auto-reg-card" style="padding:.7rem 1rem">
-      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:0;font-weight:700"><input id="auto-reg" type="checkbox" onchange="Admin.setAutoReg(this.checked)" style="width:auto"> تسجيل الطلبات الجديدة تلقائياً لدى شركة التوصيل دون انتظار التأكيد (اختياري)</label>
-      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:.45rem 0 0;font-weight:700"><input id="auto-send" type="checkbox" onchange="Admin.setAutoOpt('send',this.checked)" style="width:auto"> إرسال الطلب المؤكَّد تلقائياً إلى شركة التوصيل ونقله إلى «الطلبات المسجلة»</label>
-      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:.45rem 0 0;font-weight:700"><input id="auto-del" type="checkbox" onchange="Admin.setAutoOpt('del',this.checked)" style="width:auto"> حذف الطلب الملغى تلقائياً (إن لم يكن مرسَلاً لشركة التوصيل)</label>
-    </div>
     <div class="card">
       <button class="green" type="button" id="mo-btn" onclick="ManualOrder.open({mode:'new'})" title="إضافة طلب يدوياً (هاتف، واتساب…) ليظهر كباقي الطلبات"><span class="mo-plus">＋</span> إضافة طلب جديد</button>
       <div class="search-bar">
@@ -459,6 +458,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <option value="annulee">ملغاة</option>
           <option value="echec">فشل التوصيل</option>
         </select>
+        <button class="small gray of-tg" type="button" id="of-tg" onclick="var m=document.getElementById('of-more');m.classList.toggle('open');this.textContent=m.classList.contains('open')?'▲ إخفاء الفلاتر والأدوات':'⚙ المزيد من الفلاتر والأدوات'">⚙ المزيد من الفلاتر والأدوات</button>
+        <div class="of-more" id="of-more">
         <button class="small gray hidden" id="import-orders-btn" onclick="Admin.importOrders()" title="ينسخ طلباتك القديمة إلى متجرك مرة واحدة (بدون تكرار)">⬆️ استيراد الطلبات القديمة</button>
         <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
         <label class="date-field">من<input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ"></label>
@@ -470,11 +471,17 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <button class="small blue" type="button" onclick="Admin.exportOrdersToSheets()">📊 نسخ لـ Google Sheets</button>
         <button class="small" type="button" id="sync-btn" onclick="Admin.syncShipping()" title="يجلب حالة كل طرد مرسَل إلى شركة التوصيل ويحدّث حالات الطلبات">🔄 تحديث حالات الشحن</button>
         <button class="small gold hidden" type="button" id="notify-btn" onclick="Admin.openNotify()">📣 إشعارات الزبائن <b id="notify-count"></b></button>
+        </div>
       </div>
       <div class="hint" id="orders-count-label" style="margin-top:.4rem"></div>
     </div>
     <div class="card rtw" style="overflow:auto"><table id="orders-table"></table></div>
     <div id="orders-pagination" style="text-align:center;margin-top:1rem"></div>
+    <div class="card" id="auto-reg-card" style="padding:.7rem 1rem">
+      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:0;font-weight:700"><input id="auto-reg" type="checkbox" onchange="Admin.setAutoReg(this.checked)" style="width:auto"> تسجيل الطلبات الجديدة تلقائياً لدى شركة التوصيل دون انتظار التأكيد (اختياري)</label>
+      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:.45rem 0 0;font-weight:700"><input id="auto-send" type="checkbox" onchange="Admin.setAutoOpt('send',this.checked)" style="width:auto"> إرسال الطلب المؤكَّد تلقائياً إلى شركة التوصيل ونقله إلى «الطلبات المسجلة»</label>
+      <label style="display:flex;gap:.6rem;align-items:center;cursor:pointer;margin:.45rem 0 0;font-weight:700"><input id="auto-del" type="checkbox" onchange="Admin.setAutoOpt('del',this.checked)" style="width:auto"> حذف الطلب الملغى تلقائياً (إن لم يكن مرسَلاً لشركة التوصيل)</label>
+    </div>
   </div>
 
   <div id="tab-shipped" class="hidden">
