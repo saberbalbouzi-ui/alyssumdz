@@ -168,7 +168,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
    <button type="button" class="rq-opt rq-on" data-k="single">فردية</button>
    <button type="button" class="rq-opt" data-k="couple">زوج وزوجة</button>
    <button type="button" class="rq-opt" data-k="kids">أبناء فقط</button>
-   <button type="button" class="rq-opt" data-k="family">جماعية من نفس العائلة (كبار فقط)</button>
+   <button type="button" class="rq-opt" data-k="family">جماعية من نفس العائلة (كبار فقط)<small id="famSmall"></small></button>
   </div>
   <div class="rq-row">
    <div id="boxPersons" hidden><label class="rq-l" for="persons" id="lbPersons">عدد الأفراد</label><input type="number" id="persons" min="1" max="15" value="1" inputmode="numeric"></div>
@@ -209,7 +209,7 @@ var ERR={terms_required:"يجب الموافقة على الشروط",not_saturd
 function err(e){var m=String(e&&e.message||e);return ERR[m]||("تعذر الحجز الآن، حاول مجددا أو تواصل معنا عبر واتساب")}
 function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" دج"}
 function num(i,a,b){var v=parseInt($(i).value,10);if(isNaN(v))v=a;return Math.max(a,Math.min(b,v))}
-function persons(){var k=ST.kind;return k==="single"?1:k==="couple"?2:num("persons",k==="family"?3:1,k==="family"?15:10)}
+function persons(){var k=ST.kind;return k==="single"?1:k==="couple"?2:num("persons",k==="family"?2:1,k==="family"?3:10)}
 function sessions(){return num("sessions",1,8)}
 function perSession(){var k=ST.kind;return k==="kids"?500*persons():PRICE[k]}
 function first(){return !(ST.reg&&ST.picked)}
@@ -222,8 +222,11 @@ function freeAt(tk,day,i,n){/* هل n جلسات متتالية تبدأ من ا
  for(var k=0;k<n;k++){var t=tk[SL[i+k]];if(t&&t.n>=t.cap)return false}if(pastSlot(day,SL[i]))return false;return true}
 function slotFree(i,n){return freeAt(ST.taken,ST.day,i,n)}
 function dayFull(day,n){var tk=ST.tk[day];if(!tk)return false;for(var i=0;i<SL.length;i++){if(freeAt(tk,day,i,n))return false}return true}
+function famGate(){/* الجلسة الجماعية للعائلة تُفتح ابتداءً من الجلسة الثانية */
+ var b=document.querySelector('#rq [data-k="family"]'),ok=sessions()>=2;if(!b)return;b.disabled=!ok;$("famSmall").textContent=ok?"":"تُفتح من الجلسة الثانية";
+ if(!ok&&ST.kind==="family"){ST.kind="single";[].forEach.call(document.querySelectorAll("#rq [data-k]"),function(x){x.classList.toggle("rq-on",x.getAttribute("data-k")==="single")});kindUi()}}
 function sum(){
- var s=sessions(),ps=perSession(),h="";
+ famGate();var s=sessions(),ps=perSession(),h="";
  var kn={single:"جلسة فردية",couple:"جلسة زوج وزوجة",kids:"جلسة أبناء ("+persons()+" "+(persons()===1?"طفل":"أطفال")+")",family:"جلسة جماعية للعائلة ("+persons()+" أفراد)"}[ST.kind];
  h+='<div class="rq-ln"><span>'+kn+'</span><span>'+fmt(ps)+'</span></div>';
  h+='<div class="rq-ln"><span>عدد الجلسات</span><span>&times; '+s+'</span></div>';
@@ -269,8 +272,8 @@ function loadTaken(){
 function kindUi(){
  var k=ST.kind;$("boxPersons").hidden=!(k==="kids"||k==="family");
  $("lbPersons").textContent=k==="kids"?"عدد الأطفال":"عدد أفراد العائلة (كبار)";
- $("persons").min=k==="family"?3:1;$("persons").max=k==="family"?15:10;if(k==="family"&&+$("persons").value<3)$("persons").value=3;
- $("kindNote").textContent={single:"جلسة لشخص واحد.",couple:"جلسة للزوج والزوجة معاً.",kids:"جلسة للأطفال: حدّد عدد الأطفال.",family:"جلسة جماعية للعائلة (3 كبار فأكثر)."}[k]}
+ $("persons").min=k==="family"?2:1;$("persons").max=k==="family"?3:10;if(k==="family"){var pv=+$("persons").value;if(pv<2)$("persons").value=2;if(pv>3)$("persons").value=3}
+ $("kindNote").textContent={single:"جلسة لشخص واحد.",couple:"جلسة للزوج والزوجة معاً.",kids:"جلسة للأطفال: حدّد عدد الأطفال.",family:"جلسة جماعية للعائلة: من 2 إلى 3 كبار، وتُتاح ابتداءً من الجلسة الثانية."}[k]}
 function loadWil(){
  var s=document.createElement("script");s.src="/assets/js/wilayas.js";s.onload=function(){try{var W=window.WILAYAS||[];var o='<option value="">اختر الولاية</option>';W.forEach(function(w){o+='<option value="'+w.id+'">'+w.id+" - "+w.name+'</option>'});$("nWil").innerHTML=o;window.__rqW=W}catch(e){}};document.head.appendChild(s)}
 document.addEventListener("click",function(e){

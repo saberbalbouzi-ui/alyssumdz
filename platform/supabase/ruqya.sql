@@ -108,7 +108,7 @@ begin
   if v_kind = 'single' then v_n := 1; v_price := 1500;
   elsif v_kind = 'couple' then v_n := 2; v_price := 2000;
   elsif v_kind = 'kids' then if v_n < 1 or v_n > 10 then raise exception 'invalid_persons'; end if; v_price := 500 * v_n;
-  elsif v_kind = 'family' then if v_n < 3 or v_n > 15 then raise exception 'invalid_persons'; end if; v_price := 2000;
+  elsif v_kind = 'family' then if v_n < 2 or v_n > 3 or v_s < 2 then raise exception 'invalid_persons'; end if; v_price := 2000;
   else raise exception 'invalid_kind'; end if;
   -- مسجَّل؟ (له حجز سابق أو طلب أو حساب)
   select exists (select 1 from public.ruqya_bookings where public._ruqya_norm(phone) = v_ph and status <> 'cancelled')
