@@ -165,10 +165,10 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 
  <div class="rq-card"><h3><b>2</b>نوع الجلسة</h3>
   <div class="rq-opts" id="kinds">
-   <button type="button" class="rq-opt rq-on" data-k="single">فردية<small>1500 دج</small></button>
-   <button type="button" class="rq-opt" data-k="couple">زوج وزوجة<small>2000 دج</small></button>
-   <button type="button" class="rq-opt" data-k="kids">أبناء فقط<small>500 دج للطفل</small></button>
-   <button type="button" class="rq-opt" data-k="family">جماعية من نفس العائلة (كبار فقط)<small>2000 دج</small></button>
+   <button type="button" class="rq-opt rq-on" data-k="single">فردية</button>
+   <button type="button" class="rq-opt" data-k="couple">زوج وزوجة</button>
+   <button type="button" class="rq-opt" data-k="kids">أبناء فقط</button>
+   <button type="button" class="rq-opt" data-k="family">جماعية من نفس العائلة (كبار فقط)</button>
   </div>
   <div class="rq-row">
    <div id="boxPersons" hidden><label class="rq-l" for="persons" id="lbPersons">عدد الأفراد</label><input type="number" id="persons" min="1" max="15" value="1" inputmode="numeric"></div>
@@ -270,7 +270,7 @@ function kindUi(){
  var k=ST.kind;$("boxPersons").hidden=!(k==="kids"||k==="family");
  $("lbPersons").textContent=k==="kids"?"عدد الأطفال":"عدد أفراد العائلة (كبار)";
  $("persons").min=k==="family"?3:1;$("persons").max=k==="family"?15:10;if(k==="family"&&+$("persons").value<3)$("persons").value=3;
- $("kindNote").textContent={single:"سعر الجلسة الفردية 1500 دج.",couple:"سعر جلسة الزوج والزوجة 2000 دج.",kids:"500 دج للطفل الواحد، سواء فردية أو جماعية.",family:"سعر الجلسة الجماعية للعائلة 2000 دج مهما كان عدد الكبار (3 فأكثر)."}[k]}
+ $("kindNote").textContent={single:"جلسة لشخص واحد.",couple:"جلسة للزوج والزوجة معاً.",kids:"جلسة للأطفال: حدّد عدد الأطفال.",family:"جلسة جماعية للعائلة (3 كبار فأكثر)."}[k]}
 function loadWil(){
  var s=document.createElement("script");s.src="/assets/js/wilayas.js";s.onload=function(){try{var W=window.WILAYAS||[];var o='<option value="">اختر الولاية</option>';W.forEach(function(w){o+='<option value="'+w.id+'">'+w.id+" - "+w.name+'</option>'});$("nWil").innerHTML=o;window.__rqW=W}catch(e){}};document.head.appendChild(s)}
 document.addEventListener("click",function(e){
