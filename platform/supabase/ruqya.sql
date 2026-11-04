@@ -116,7 +116,7 @@ begin
       or exists (select 1 from public.orders where public._ruqya_norm(phone) = v_ph)
       or exists (select 1 from public.customers where public._ruqya_norm(phone) = v_ph) into v_known;
   if v_reg and not v_known then raise exception 'not_registered'; end if;
-  v_pack := case when v_known then 0 else 3000 end;
+  v_pack := case when (not v_known and v_kind in ('single','couple')) or coalesce((p ->> 'pack')::boolean, false) then 3000 else 0 end;      -- الباقة العلاجية: تلقائية لأول تسجيل (فردية/زوجين) واختيارية لغيرها
   if (select count(*) from public.ruqya_bookings where phone = v_ph and created_at > now() - interval '1 hour') >= 3 then raise exception 'rate_limited'; end if;
   if coalesce(p ->> 'whatsapp', '') <> '' and public._ruqya_norm(p ->> 'whatsapp') !~ '^0[5-7][0-9]{8}$' then raise exception 'invalid_whatsapp'; end if;
   insert into public.ruqya_bookings (day, slot, slots, registered, first_time, name, phone, whatsapp, commune, wilaya, kind, persons, sessions, session_price, pack_price, total, terms)
