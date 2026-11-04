@@ -177,13 +177,10 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
   <div class="rq-note" id="kindNote"></div>
  </div>
 
- <div class="rq-card"><h3><b>3</b>اختر يوم السبت والساعة</h3>
+ <div class="rq-card"><h3><b>3</b>اختر يوم السبت</h3>
   <div class="rq-days" id="days"></div><div class="rq-note rq-ok" id="dayMsg"></div>
-  <div id="slotsBox" hidden>
-   <div class="rq-grp">الفترة الصباحية (09:00 - 12:30)</div><div class="rq-slots" id="slotsAm"></div>
-   <div class="rq-grp">الفترة المسائية (13:30 - 17:00)</div><div class="rq-slots" id="slotsPm"></div>
-   <div class="rq-note" id="slotNote"></div>
-  </div>
+  <div class="rq-note" id="hoursNote" style="margin-top:10px"><b>أوقات العمل:</b> السبت · الفترة الصباحية 09:00 - 12:30 · الفترة المسائية 13:30 - 17:00. احضر خلال هذه الأوقات، وسنؤكد معك الساعة الدقيقة على واتساب.</div>
+  <div id="slotsBox" hidden><div id="slotsAm"></div><div id="slotsPm"></div><div id="slotNote"></div></div>
  </div>
 
  <div class="rq-sum" id="sum"><h3><b>4</b>ملخص السعر</h3>
@@ -195,6 +192,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
   <label><input type="checkbox" id="t2"><span>أوافق على أنه يحضر مع الشخص المريض مرافق واحد فقط.</span></label>
   <div id="bkMsg" class="rq-msg"></div>
   <div style="height:8px"></div>
+  <div id="bkHint" class="rq-note" style="margin-bottom:8px"></div>
   <button type="button" class="rq-btn rq-big" id="bk" disabled>تأكيد الموعد</button>
  </div>
 
@@ -232,15 +230,20 @@ function sum(){
  var t=ps*s;
  if(first()){h+='<div class="rq-ln"><span>الباقة العلاجية 4 (لأول مرة)</span><span>'+fmt(PACK)+'</span></div>';t+=PACK}
  h+='<div class="rq-ln rq-tot"><span>المجموع</span><span>'+fmt(t)+'</span></div>';
- if(ST.day&&ST.slot)h+='<div class="rq-ln"><span>الموعد</span><span>'+dayLabel(new Date(ST.day+"T12:00:00"))+" - "+ST.slot+'</span></div>';
+ if(ST.day)h+='<div class="rq-ln"><span>الموعد</span><span>'+dayLabel(new Date(ST.day+"T12:00:00"))+' (خلال أوقات العمل)</span></div>';
  $("sumLines").innerHTML=h;ready()}
 function ident(){
  if(ST.reg){return ST.picked?{name:$("pName").value.trim(),phone:$("pPhone").value.trim()}:null}
  return{name:$("nName").value.trim(),phone:$("nPhone").value.trim(),wilaya:$("nWil").value,commune:$("nCom").value}}
+function normPh(v){var d=String(v||"").replace(/[^0-9]/g,"");if(/^00213/.test(d))d="0"+d.slice(5);else if(/^213/.test(d)&&d.length>=12)d="0"+d.slice(3);else if(d.length===9&&/^[567]/.test(d))d="0"+d;return d}
 function ready(){
- var id=ident(),ok=!!id&&id.name.length>1&&/^0[5-7][0-9]{8}$/.test(id.phone.replace(/[\s.-]/g,""))&&!!ST.day&&!!ST.slot&&$("t1").checked&&$("t2").checked;
- if(ok&&!ST.reg)ok=!!id.commune;
- $("bk").disabled=!ok}
+ var id=ident(),ph=id?normPh(id.phone):"",miss=[];
+ if(!id)miss.push("اختر حسابك من نتائج البحث (أو اختر «أول مرة»)");
+ else{if(id.name.length<2)miss.push("الاسم");if(!/^0[5-7][0-9]{8}$/.test(ph))miss.push("رقم هاتف صحيح من 10 أرقام يبدأ بـ 05 أو 06 أو 07");if(!ST.reg&&!id.commune)miss.push("الولاية والبلدية")}
+ if(!ST.day)miss.push("يوم السبت");else if(!ST.slot)miss.push("لا يتّسع هذا اليوم لعدد الجلسات: اختر سبتاً آخر");
+ if(!$("t1").checked||!$("t2").checked)miss.push("الموافقة على الشرطين أدناه");
+ $("bk").disabled=miss.length>0;
+ var hn=$("bkHint");if(hn)hn.textContent=miss.length?("لتفعيل الزر أكمل: "+miss.join(" · ")):""}
 function drawDays(){
  var h="",s=sessions();
  ST.days.forEach(function(k){var x=new Date(k+"T12:00:00"),full=dayFull(k,s);h+='<button type="button" class="rq-day'+(k===ST.day?" rq-on":"")+'" data-d="'+k+'"'+(full?" disabled":"")+'>'+dayLabel(x)+(full?'<small style="display:block;font-size:12px">مكتمل</small>':'')+'</button>'});
@@ -251,17 +254,15 @@ function initDays(){
  var n=0;ST.days.forEach(function(k){rpc("ruqya_taken",{p_day:k}).then(function(r){var m={};(r||[]).forEach(function(x){m[x.slot]={n:x.n,cap:x.cap||1}});ST.tk[k]=m}).catch(function(){ST.tk[k]={}}).then(function(){if(++n===ST.days.length)autoDay(true)})})}
 function autoDay(first){/* السبت الحالي مكتمل ← الانتقال إلى السبت الموالي المتاح */
  var s=sessions();
- if(ST.day&&!dayFull(ST.day,s)){drawDays();if(!$("slotsBox").hidden)drawSlots();return}
+ if(ST.day&&!dayFull(ST.day,s)){drawDays();drawSlots();sum();return}
  var old=ST.day,nx="";for(var i=0;i<ST.days.length;i++){if(!dayFull(ST.days[i],s)){nx=ST.days[i];break}}
  if(!nx){ST.day="";ST.slot="";drawDays();$("slotsBox").hidden=true;$("dayMsg").textContent="لا توجد مواعيد متاحة في الأسابيع القادمة، تواصل معنا عبر واتساب.";return}
  ST.day=nx;ST.slot="";ST.taken=ST.tk[nx]||{};$("dayMsg").textContent=(old&&old!==nx)?"السبت "+dayLabel(new Date(old+"T12:00:00"))+" مكتمل لهذا العدد من الجلسات، تم تحويلك إلى أقرب سبت متاح.":(first&&nx!==ST.days[0]?"السبت القادم مكتمل، تم اختيار أقرب سبت متاح.":"");
  drawDays();$("slotsBox").hidden=false;drawSlots();sum()}
-function drawSlots(){
- var s=sessions(),a="",p="";
- SL.forEach(function(t,i){var ok=slotFree(i,s),b='<button type="button" class="rq-slot'+(t===ST.slot?" rq-on":"")+'" data-s="'+t+'"'+(ok?"":" disabled")+'>'+t+'</button>';if(periodOf(t))p+=b;else a+=b});
- $("slotsAm").innerHTML=a;$("slotsPm").innerHTML=p;
- $("slotNote").textContent=s>1?("الجلسات الـ"+s+" متتالية (30 دقيقة لكل جلسة) داخل الفترة نفسها."):"كل جلسة 30 دقيقة.";
- if(ST.slot&&!slotFree(SL.indexOf(ST.slot),s)){ST.slot="";}}
+function drawSlots(){/* لا يختار الزائر الساعة: تُحجز تلقائياً أول فترة متاحة في اليوم ليبقى الحجز مرتّباً، وتُؤكَّد الساعة معه على واتساب */
+ var s=sessions();
+ if(!ST.day){ST.slot="";return}
+ if(!ST.slot||!slotFree(SL.indexOf(ST.slot),s)){ST.slot="";for(var i=0;i<SL.length;i++){if(slotFree(i,s)){ST.slot=SL[i];break}}}}
 function loadTaken(){
  if(!ST.day)return;$("slotsBox").hidden=false;
  var dd=ST.day;rpc("ruqya_taken",{p_day:dd}).then(function(r){var m={};(r||[]).forEach(function(x){m[x.slot]={n:x.n,cap:x.cap||1}});ST.tk[dd]=m;ST.taken=m;$("dayMsg").textContent="";if(dayFull(dd,sessions()))autoDay();else{drawDays();drawSlots();sum()}}).catch(function(){ST.taken={};drawSlots();sum()})}
@@ -295,11 +296,11 @@ function search(){
 document.addEventListener("click",function(e){if(e.target&&e.target.id==="qGo")search()});
 document.addEventListener("keydown",function(e){if(e.target&&e.target.id==="qSearch"&&e.key==="Enter"){e.preventDefault();search()}});
 function book(){
- var id=ident(),ph=id.phone.replace(/[\s.-]/g,"");$("bk").disabled=true;$("bkMsg").textContent="";
+ var id=ident(),ph=normPh(id.phone);$("bk").disabled=true;$("bkMsg").textContent="";
  var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===String(id.wilaya)})[0];
  rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
-  var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالموعد: "+dayLabel(d)+" الساعة "+ST.slot+"\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"\nالمجموع: "+fmt(r.total);
-  var h='<h2>تم تسجيل طلب الموعد</h2><p style="font-weight:800">رقم الحجز <b>'+r.id+'</b> &middot; '+dayLabel(d)+' الساعة '+ST.slot+'</p><p style="font-weight:800;font-size:20px;color:#123e72">المبلغ: '+fmt(r.total)+(r.first_time?' (يشمل الباقة العلاجية 4)':'')+'</p><p class="rq-note">سنتواصل معك لتأكيد الموعد. أرسل لنا نسخة على واتساب لتسريع التأكيد.</p><a class="rq-btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">أرسل التفاصيل على واتساب</a>';
+  var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالموعد: "+dayLabel(d)+" (خلال أوقات العمل)\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"\nالمجموع: "+fmt(r.total);
+  var h='<h2>تم تسجيل طلب الموعد</h2><p style="font-weight:800">رقم الحجز <b>'+r.id+'</b> &middot; '+dayLabel(d)+' · خلال أوقات العمل (09:00-12:30 / 13:30-17:00)</p><p style="font-weight:800;font-size:20px;color:#123e72">المبلغ: '+fmt(r.total)+(r.first_time?' (يشمل الباقة العلاجية 4)':'')+'</p><p class="rq-note">سنتواصل معك لتأكيد الموعد والساعة. أرسل لنا نسخة على واتساب لتسريع التأكيد.</p><a class="rq-btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">أرسل التفاصيل على واتساب</a>';
   ["s1"].forEach(function(){});[].forEach.call(document.querySelectorAll("#rq > .rq-card:not(#done), #rq > .rq-sum, #rq > .rq-info"),function(x){x.hidden=true});
   $("done").innerHTML=h;$("done").hidden=false;$("done").scrollIntoView({behavior:"smooth",block:"start"})
  }).catch(function(e){$("bkMsg").textContent=err(e);ready();loadTaken()})}

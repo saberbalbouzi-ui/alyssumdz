@@ -126,7 +126,7 @@ const AdminRuqya = (() => {
     else {
       h += '<div style="overflow-x:auto"><table class="rt" style="min-width:880px"><thead><tr><th>الموعد</th><th>الاسم</th><th>الهاتف</th><th>البلدية</th><th>الجلسة</th><th>المبلغ</th><th>الحالة</th><th></th></tr></thead><tbody>';
       list.forEach(r => {
-        const wa = "https://wa.me/213" + String(r.phone).replace(/^0/, "") + "?text=" + encodeURIComponent("السلام عليكم " + r.name + "، بخصوص موعدك للرقية الشرعية يوم " + dayName(r.day) + " الساعة " + r.slot + (r.status === "confirmed" ? " (مؤكَّد)." : "."));
+        const wa = "https://wa.me/213" + String(r.phone).replace(/^0/, "") + "?text=" + encodeURIComponent("السلام عليكم " + r.name + "، بخصوص موعدك للرقية الشرعية يوم " + dayName(r.day) + (r.status === "confirmed" ? " (مؤكَّد)." : ".") + " أوقات الحضور: الفترة الصباحية 09:00-12:30 والمسائية 13:30-17:00.");
         h += '<tr><td data-l="الموعد"><b>' + esc(dayName(r.day)) + '</b><br>' + esc(r.slot) + (r.slots > 1 ? ' (' + r.slots + ' جلسات)' : '') + '</td><td data-l="الاسم"><a href="#" data-rq="pat" data-id="' + r.id + '" style="font-weight:800;color:inherit;text-decoration:underline">' + esc(r.name) + '</a>' + '<br><small>' + (r.first_time ? "أول مرة" : "مسجَّل") + '</small></td>' +
           '<td data-l="الهاتف" dir="ltr">' + esc(r.phone) + '</td><td data-l="البلدية">' + esc(r.commune || "—") + (r.wilaya ? '<br><small>' + esc(r.wilaya) + '</small>' : '') + '</td>' +
           '<td data-l="الجلسة">' + esc(KIND[r.kind] || r.kind) + '<br><small>' + r.persons + ' أفراد · ' + r.sessions + ' جلسة</small></td>' +
