@@ -37,7 +37,8 @@ $$;
 -- الأماكن المحجوزة ليوم سبت: [{slot,n}] (عدّاد فقط)
 create or replace function public.ruqya_taken(p_day date) returns jsonb
 language sql stable security definer set search_path = public as $$
-  select coalesce(jsonb_agg(jsonb_build_object('slot', s, 'n', c, 'cap', greatest(coalesce((select (value ->> 'cap')::int from public.admin_kv where key = 'ruqya'), 1), 1))), '[]'::jsonb) from (
+  select coalesce(jsonb_agg(jsonb_build_object('slot', s, 'n', c, 'cap', greatest(coalesce((select (value ->> 'cap')::int from public.admin_kv where key = 'ruqya'), 1), 1))), '[]'::jsonb)
+    || jsonb_build_array(jsonb_build_object('slot', '_total', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled'), 0), 'cap', greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1))) from (
     select x.s, count(*) c from public.ruqya_bookings b
     cross join lateral unnest(public._ruqya_slots()) with ordinality as x(s, i)
     where b.day = p_day and b.status <> 'cancelled'
@@ -107,6 +108,8 @@ begin
     if not v_ok then raise exception 'slot_taken'; end if;
   end loop;
   -- السعر لكل جلسة
+  -- سقف الجلسات في اليوم (افتراضياً 15)؛ بعده يتحول التسجيل إلى السبت المقبل
+  if coalesce((select sum(sessions) from public.ruqya_bookings where day = v_day and status <> 'cancelled'), 0) + v_s > greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1) then raise exception 'day_full'; end if;
   if v_kind = 'single' then v_n := 1; v_price := 1500;
   elsif v_kind = 'couple' then v_n := 2; v_price := 2000;
   elsif v_kind = 'kids' then if v_n < 1 or v_n > 10 then raise exception 'invalid_persons'; end if; v_price := 500 * v_n;
