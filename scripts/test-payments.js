@@ -88,6 +88,21 @@ ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم fre
   ok("جدول المقارنة: يقترح طردَي 5000 + 3700 (مجموعهما فرق المحصَّل 8700)", /#c3/.test(h) && /#c4/.test(h) && !/#c5/.test(h), h.replace(/<[^>]+>/g, " ").slice(-400));
 }
 
+// تلقائي من حالة الدفع عند الشركة: not-ready/ready تتجمّع بأرقام الطرد الفعلية (توصيل، رسم إرجاع)، و«paid» يخرج من المتبقي
+{
+  const orders = [{ id: "a1", status: "livree", total: 3800, fee: 700, _trk: "V1", date: "2026-10-20" }, { id: "a2", status: "livree", total: 5300, fee: 900, _trk: "V2", date: "2026-10-20" }, { id: "a3", status: "echec", total: 3000, fee: 600, _trk: "V3", date: "2026-10-20" }, { id: "a4", status: "livree", total: 2000, fee: 500, _trk: "V4", date: "2026-10-20" }];
+  const raw = { a1: { raw: "Livré", pay: "not-ready", fin: { fee: 650, tp: 0.75, tr: 250 } }, a2: { raw: "Livré", pay: "ready", fin: { fee: 1000, tp: 0.75, tr: 250 } }, a3: { raw: "Retourné au vendeur", pay: "ready", fin: { fee: 600, tp: 0.75, tr: 260 } }, a4: { raw: "Livré", pay: "paid", fin: { fee: 500, tp: 0.75, tr: 250 } } };
+  const ps = r => { const t = String(r || "").toLowerCase().replace(/[_-]+/g, " "); if (!t) return ""; if (/not\s*ready/.test(t)) return "notready"; if (/ready/.test(t)) return "ready"; if (/paid/.test(t)) return "paid"; return ""; };
+  const Admin = { orders, fin: { costs: {}, set: { packaging: 0 } }, ST_AR: {}, ydActual: {}, shipRaw: raw, payState: ps, trackingOf: o => ({ company: "yalidine", tracking: o._trk }), actualFees() { return null; }, realFees: () => null, orderLines: () => [], carrierCost: o => o.fee, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  const it = id => sb.AP.items().find(x => x.id === id), x1 = sb.AP.settle(it("a1")), x3 = sb.AP.settle(it("a3"));
+  ok("أرقام الطرد الفعلية: توصيل a1 = 650 (لا 700) ورسم إرجاع a3 = 260", x1.del === 650 && x3.ret === 260, [x1.del, x3.ret]);
+  const h = sb.AP.cmpCard();
+  ok("تلقائي: عمودا Pas prêt وPrêt à payer بلا الطرد المدفوع a4", /Pas pr/.test(h) && /Pr.t . payer/.test(h) && /تلقائياً من حالة الدفع/.test(h), h.replace(/<[^>]+>/g, " ").slice(0, 300));
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [

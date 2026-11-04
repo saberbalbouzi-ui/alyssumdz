@@ -100,11 +100,11 @@ const AdminPayments = (() => {
       src="file"; price=Number(act.price)||0; del=Number(act.del)||0; ret=Number(act.ret)||0; ins=Number(act.ins)||0; cod=Number(act.cod)||0; net=Number(act.net)||0;
       got=Math.round((net+del+cod+ins+ret)*1000)/1000;
     } else {
-      const rf=A_.realFees?A_.realFees(o):null; price=Math.max(0,total-fee);
-      if (st==="echec") { ret=DEF_RET+(A_.retLate?A_.retLate(o):0); got=0; }      // رسم الإرجاع 250 ثابت + غرامة تأخر سحب المرتجع (10 دج لكل يوم بعد 10 أيام عند الشركة)
+      const rf=A_.realFees?A_.realFees(o):null; price=Math.max(0,total-fee); const fin=((A_.shipRaw||{})[o.id]||{}).fin||null, tp=fin&&fin.tp>0?fin.tp:DEF_COD;      // أرقام الطرد الفعلية من قائمة الشركة تسبق التعريفة
+      if (st==="echec") { ret=(fin&&fin.tr>0?fin.tr:DEF_RET)+(A_.retLate?A_.retLate(o):0); got=0; }      // رسم الإرجاع 250 ثابت + غرامة تأخر سحب المرتجع (10 دج لكل يوم بعد 10 أيام عند الشركة)
       else {
-        del=rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee);
-        cod=price*DEF_COD/100; ins=0; got=total;
+        del=fin&&fin.fee!=null&&fin.fee>=0&&!(fin.free)?Number(fin.fee):(rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee));
+        cod=price*tp/100; ins=0; got=total;
       }
       net=got-del-cod-ins-ret;
     }
@@ -178,7 +178,8 @@ const AdminPayments = (() => {
   /* طرود التسوية: من تاريخ القطع (الأقدم دُفع سابقاً فيُستثنى من التسوية لا من الأرباح) */
   /* وكذلك ما عُلِّم يدوياً «مدفوع» (تعليم المحدد كمدفوع) = قُبض سابقاً فلا يدخل في التسوية */
   /* وما ورد في كشف ياليدين المستورد (الكشف المدفوع: أرقام الشركة الفعلية لكل طرد) = مدفوع فلا يدخل في المتبقي */
-  const inFile = it => { try{ const a=A().actualFees && it.o && A().actualFees(it.o); return !!(a && !a.pend); }catch(_){ return false; } };      /* الكشف المدفوع = مستثنى؛ كشف «قادم/غير جاهز» = يبقى في المستحق بأرقام الشركة الحقيقية */
+  const paidCo = it => { try{ const A_=A(); return !!(A_.payState && it.o && A_.payState(((A_.shipRaw||{})[it.o.id]||{}).pay)==="paid"); }catch(_){ return false; } };      /* الشركة تقول «مدفوع» لهذا الطرد ← يخرج من المتبقي تلقائياً */
+  const inFile = it => { try{ const a=A().actualFees && it.o && A().actualFees(it.o); return !!(a && !a.pend) || paidCo(it); }catch(_){ return false; } };      /* الكشف المدفوع = مستثنى؛ كشف «قادم/غير جاهز» = يبقى في المستحق بأرقام الشركة الحقيقية */
   const sItems = () => items().filter(it => !(isMan(it) && record(it).status === "paid") && !inFile(it));
   const pnum = v => Number(String(v).replace(/[\s\u00a0\u202f]/g,"").replace(",",".")) || 0;
   function parseDetail(txt) {
@@ -246,7 +247,12 @@ const AdminPayments = (() => {
         cand=out.length?`<div style="margin-top:.5rem"><b>طرود محتملة تفسّر الفرق (${dl} طرد بمجموع ${d2(dg)})</b>${out.map(g=>`<div class="pm-note" style="margin:.25rem 0">${g.map(it=>{ const raw=((A_.shipRaw||{})[it.o.id]||{}).raw||""; return `#${esc(String(it.o.id).slice(-6))} · ${esc(it.o.name||"")} · ${esc(it.o.wilaya||"")} · ${dz(val(it))} دج${raw?" · "+esc(raw):""}`; }).join("<br>")}</div>`).join('<div style="border-top:1px dashed rgba(255,255,255,.2)"></div>')}<div class="pm-note">غالباً سُلّمت عند الشركة ولم تتحدّث حالتها هنا (أو عُلّمت «مدفوع» بالخطأ): حدّث الحالات من «المسجلة».</div></div>`:`<div class="pm-note" style="margin-top:.5rem">الشركة تحسب ${dl} طرد مسلَّم أكثر منا بمجموع ${d2(dg)}، ولا توجد في طرود اللوحة (في الطريق/المعلَّمة مدفوعة) مجموعة تطابق المبلغ؛ قد يكون الطرد غير مسجَّل عندنا أو بمبلغ معدَّل.</div>`; }
     }
     const lst=st.length?`<div class="pm-note" style="margin-top:.4rem">${st.map(x=>`${x.state==="ready"?"prêt à payer":"pas prêt"} <button type="button" class="pm-btn pm-ydel" data-i="${YP.list.indexOf(x)}" style="padding:2px 9px">حذف</button>`).join(" · ")}</div>`:"";
+    /* تلقائي: تجميع الطرود حسب حالة الدفع التي ترسلها الشركة لكل طرد (not-ready = Pas prêt، ready = Prêt à payer) بلا لصق */
+    let autoH=""; try{ const AG=autoGroups(), gs=["notready","ready"].filter(k=>AG.g[k]);
+      if(gs.length){ const Z={}; K.forEach(k=>{ Z[k]=gs.reduce((n,g)=>n+(AG.g[g][k]||0),0); });
+        autoH=`<div style="margin-top:.4rem"><b>تلقائياً من حالة الدفع عند الشركة</b><div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><thead><tr style="opacity:.75"><th style="padding:.3rem .5rem;text-align:start">البند</th>${gs.map(g=>`<th style="padding:.3rem .5rem">${g==="ready"?"Prêt à payer":"Pas prêt"}</th>`).join("")}<th style="padding:.3rem .5rem">المجموع</th></tr></thead><tbody>${K.map(k=>`<tr style="${k==="net"?"font-weight:800;border-top:1px solid rgba(255,255,255,.25)":""}"><td style="padding:.3rem .5rem;white-space:nowrap">${L[k]}</td>${gs.map(g=>cell(k,AG.g[g][k])).join("")}${cell(k,Z[k])}</tr>`).join("")}</tbody></table></div><div class="pm-note">من حالة كل طرد وأرقامه الفعلية (توصيل، نسبة COD، رسم الإرجاع) كما ترسلها الشركة؛ والطرود التي حالتها عندهم «مدفوع» لا تدخل. تتحدّث مع كل تحديث للطرود.</div></div>`; } }catch(_){ }
     return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>⚖️ المنصة مقابل الشركة</b><div class="pm-note">الصق نص كل نافذة «Détail paiement» (Pas prêt ثم Prêt à payer)؛ يُجمع الكشفان ويُقارَن مجموعهما بحساب المنصة بنداً بنداً.</div></div></div>
+      ${autoH}
       ${st.length?`<div style="overflow:auto"><table style="border-collapse:collapse;margin-top:.3rem"><thead><tr style="opacity:.75"><th style="padding:.3rem .5rem;text-align:start">البند</th><th style="padding:.3rem .5rem">Pas prêt</th><th style="padding:.3rem .5rem">Prêt à payer</th><th style="padding:.3rem .5rem">مجموع الشركة</th><th style="padding:.3rem .5rem">المنصة</th><th style="padding:.3rem .5rem">الفرق</th></tr></thead><tbody>${rows}</tbody></table></div>${cand}${lst}`:'<div class="pm-note">لم يُضَف أي كشف بعد.</div>'}
       <div class="pm-row" style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-start;margin-top:.5rem"><select id="pm-yst" style="min-width:140px"><option value="notready">pas prêt</option><option value="ready">prêt à payer</option></select><textarea id="pm-ytx" rows="3" placeholder="الصق هنا نص Détail paiement" style="flex:1;min-width:200px"></textarea><button type="button" class="pm-btn pm-primary" id="pm-yadd">إضافة الكشف</button></div>${YP.msg?`<div class="pm-note" style="color:#fca5a5">${esc(YP.msg)}</div>`:""}</section>`;
   }
