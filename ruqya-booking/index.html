@@ -221,7 +221,7 @@ function num(i,a,b){var v=parseInt($(i).value,10);if(isNaN(v))v=a;return Math.ma
 function persons(){var k=ST.kind;return k==="single"?1:k==="couple"?2:num("persons",k==="family"?2:1,k==="family"?3:10)}
 function sessions(){return num("sessions",1,8)}
 function perSession(){var k=ST.kind;return k==="kids"?500*persons():PRICE[k]}
-function first(){return !(ST.reg&&ST.picked)}
+function first(){return !(ST.reg&&ST.picked)&&!ST.known}
 function packForced(){return first()&&(ST.kind==="single"||ST.kind==="couple")}
 function packOn(){return packForced()||!!ST.packUser}
 function packUi(){var f=packForced(),o=$("packOpt"),b=$("boxPack");if(!b)return;o.checked=f?true:!!ST.packUser;o.disabled=f;b.classList.toggle("rq-forced",f);$("packLbl").textContent=f?"مُضافة تلقائياً لأول تسجيل":"أضف الباقة (اختياري)";$("packSmall").textContent=f?"تُضاف مع أول جلسة فردية أو للزوجين":"مجموعة أعشاب وعسل وزيوت داعمة للعلاج"}
@@ -298,9 +298,10 @@ document.addEventListener("click",function(e){
  else if(t.hasAttribute("data-s")){if(t.disabled)return;ST.slot=t.getAttribute("data-s");drawSlots();sum()}
  else if(t.classList.contains("rq-m")){ST.picked=t.getAttribute("data-n");[].forEach.call(document.querySelectorAll("#rq .rq-m"),function(b){b.classList.toggle("rq-on",b===t)});$("boxPick").hidden=false;sum()}
 });
-document.addEventListener("input",function(e){if(e.target.closest&&e.target.closest("#rq")){if(e.target.id==="packOpt"&&!e.target.disabled)ST.packUser=e.target.checked;if(e.target.id==="sessions"){autoDay()}sum()}});
+document.addEventListener("input",function(e){if(e.target.closest&&e.target.closest("#rq")){if(e.target.id==="nPhone")ST.known=false;if(e.target.id==="packOpt"&&!e.target.disabled)ST.packUser=e.target.checked;if(e.target.id==="sessions"){autoDay()}sum()}});
 document.addEventListener("change",function(e){if(!e.target.closest||!e.target.closest("#rq"))return;
  if(e.target.id==="packOpt"&&!e.target.disabled){ST.packUser=e.target.checked}
+ if(e.target.id==="nPhone"){var pn=normPh(e.target.value);if(/^0[5-7][0-9]{8}$/.test(pn)){rpc("ruqya_lookup",{p_q:pn}).then(function(r){ST.known=!!(r&&r.found&&(r.matches||[]).length);sum()}).catch(function(){})}}
  if(e.target.id==="waSame"){$("wa").hidden=e.target.checked;if(!e.target.checked)$("wa").focus()}
  if(e.target.id==="nWil"){var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===e.target.value})[0],o='<option value="">اختر البلدية</option>';((w&&w.communes)||[]).forEach(function(c){o+='<option>'+c+'</option>'});$("nCom").innerHTML=o}
  sum()});
@@ -317,7 +318,7 @@ document.addEventListener("keydown",function(e){if(e.target&&e.target.id==="qSea
 function book(){
  var id=ident(),ph=normPh(id.phone);$("bk").disabled=true;$("bkMsg").textContent="";
  var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===String(id.wilaya)})[0];
- rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,whatsapp:waNum(),pack:packOn(),registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
+ rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,whatsapp:waNum(),pack:!!ST.packUser,registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
   var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالواتساب: "+waNum()+"\nالموعد: "+dayLabel(d)+" (خلال أوقات العمل)\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"\nالمجموع: "+fmt(r.total);
   var h='<h2>تم تسجيل طلب الموعد</h2><p style="font-weight:800">رقم الحجز <b>'+r.id+'</b> &middot; '+dayLabel(d)+' · خلال أوقات العمل (09:00-12:30 / 13:30-17:00)</p><p style="font-weight:800;font-size:20px;color:#123e72">المبلغ: '+fmtH(r.total)+(r.pack_price>0?' (يشمل الباقة العلاجية 4)':'')+'</p><div class="rq-warn"><b>تنبيه مهم</b><ul><li>في حال تعذّر الحضور في الموعد يجب إخطارنا قبل 24 ساعة على الأقل.</li><li>الغياب عن الموعد دون إخطار يُسجَّل إنذاراً في ملفك.</li><li>بعد 3 إنذارات تُحظر من حجز المواعيد.</li></ul></div><a class="rq-btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">أرسل التفاصيل على واتساب</a>';
   ["s1"].forEach(function(){});[].forEach.call(document.querySelectorAll("#rq > .rq-card:not(#done), #rq > .rq-sum, #rq > .rq-info"),function(x){x.hidden=true});
