@@ -1168,12 +1168,23 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
   /* تتبّع سحب موحّد: يعمل لمن بدأ داخل الـ iframe (Chrome يوصل الأحداث للإطار الذي بدأ فيه الضغط) أو من اللوحة؛ الإزاحة تُعاد بوحدات بكسل الصفحة */
   function dragTrack(e, cursor, onMove, onEnd) {
-    const s = E.scale, inF = ev => ev.target && ev.target.ownerDocument === fdoc, f0 = $("pbx-fw").getBoundingClientRect();
-    const P = ev => inF(ev) ? { x: f0.left + ev.clientX * s, y: f0.top + ev.clientY * s } : { x: ev.clientX, y: ev.clientY };
-    const p0 = P(e), shield = inF(e) ? null : mkShield(cursor); E.busy = true;      // أثناء السحب يختفي الشريط العائم وأزرار الجانب
+    const s = E.scale, inF = ev => ev.target && ev.target.ownerDocument === fdoc, fw = $("pbx-fw"), stg = $("pbx-stage");
+    /* نقطة المؤشر على الشاشة ثم في إحداثيات الصفحة بمستطيل الإطار «الحالي» (فلا يتأثر بتمرير المنصة أثناء السحب) */
+    const scr = ev => { const f = fw.getBoundingClientRect(); return inF(ev) ? { x: f.left + ev.clientX * s, y: f.top + ev.clientY * s } : { x: ev.clientX, y: ev.clientY }; };
+    const doc = sp => { const f = fw.getBoundingClientRect(); return { x: (sp.x - f.left) / s, y: (sp.y - f.top) / s }; };
+    const s0 = scr(e), d0 = doc(s0), shield = inF(e) ? null : mkShield(cursor); E.busy = true;      // أثناء السحب يختفي الشريط العائم وأزرار الجانب
     const onEnd0 = onEnd; onEnd = ev => { E.busy = false; try { onEnd0(ev); } finally { positionOverlay(); } };
-    const mv = ev => { const p = P(ev); onMove((p.x - p0.x) / s, (p.y - p0.y) / s, ev); };
-    const up = ev => { [document, fdoc].forEach(d => { d.removeEventListener("mousemove", mv, true); d.removeEventListener("mouseup", up, true); }); if (shield) shield.remove(); onEnd(ev); };
+    let last = null, raf = 0, moved = false;
+    const run = () => { if (!last) return; const d = doc(last.sp); onMove(d.x - d0.x, d.y - d0.y, last.ev); };
+    const mv = ev => { last = { sp: scr(ev), ev }; if (!moved && Math.abs(last.sp.x - s0.x) + Math.abs(last.sp.y - s0.y) > 4) moved = true; run(); if (moved && !raf) raf = requestAnimationFrame(auto); };
+    /* تمرير تلقائي: قرب حافة المنصة العليا/السفلى تصعد الصفحة/تنزل مع سحب العنصر (والعنصر يتبع المؤشر) */
+    const auto = () => {
+      raf = 0; if (!last || !stg) return; const r = stg.getBoundingClientRect(), Z = 80, y = last.sp.y; let v = 0;
+      if (y < r.top + Z) v = -Math.min(1, (r.top + Z - y) / Z); else if (y > r.bottom - Z) v = Math.min(1, (y - (r.bottom - Z)) / Z);
+      if (!v) return; const before = stg.scrollTop; stg.scrollTop = before + Math.round(v * 22);
+      if (stg.scrollTop !== before) run(); raf = requestAnimationFrame(auto);
+    };
+    const up = ev => { cancelAnimationFrame(raf); raf = 0; last = null; [document, fdoc].forEach(d => { d.removeEventListener("mousemove", mv, true); d.removeEventListener("mouseup", up, true); }); if (shield) shield.remove(); onEnd(ev); };
     [document, fdoc].forEach(d => { d.addEventListener("mousemove", mv, true); d.addEventListener("mouseup", up, true); });
   }
   /* مستطيل التخطيط (قبل التدوير): المركز من getBoundingClientRect والأبعاد من offsetWidth/Height */

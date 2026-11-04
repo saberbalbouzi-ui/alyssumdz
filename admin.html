@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.764">
+<meta name="admin-version" content="1.89.765">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}</style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
@@ -12109,12 +12109,23 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
   /* تتبّع سحب موحّد: يعمل لمن بدأ داخل الـ iframe (Chrome يوصل الأحداث للإطار الذي بدأ فيه الضغط) أو من اللوحة؛ الإزاحة تُعاد بوحدات بكسل الصفحة */
   function dragTrack(e, cursor, onMove, onEnd) {
-    const s = E.scale, inF = ev => ev.target && ev.target.ownerDocument === fdoc, f0 = $("pbx-fw").getBoundingClientRect();
-    const P = ev => inF(ev) ? { x: f0.left + ev.clientX * s, y: f0.top + ev.clientY * s } : { x: ev.clientX, y: ev.clientY };
-    const p0 = P(e), shield = inF(e) ? null : mkShield(cursor); E.busy = true;      // أثناء السحب يختفي الشريط العائم وأزرار الجانب
+    const s = E.scale, inF = ev => ev.target && ev.target.ownerDocument === fdoc, fw = $("pbx-fw"), stg = $("pbx-stage");
+    /* نقطة المؤشر على الشاشة ثم في إحداثيات الصفحة بمستطيل الإطار «الحالي» (فلا يتأثر بتمرير المنصة أثناء السحب) */
+    const scr = ev => { const f = fw.getBoundingClientRect(); return inF(ev) ? { x: f.left + ev.clientX * s, y: f.top + ev.clientY * s } : { x: ev.clientX, y: ev.clientY }; };
+    const doc = sp => { const f = fw.getBoundingClientRect(); return { x: (sp.x - f.left) / s, y: (sp.y - f.top) / s }; };
+    const s0 = scr(e), d0 = doc(s0), shield = inF(e) ? null : mkShield(cursor); E.busy = true;      // أثناء السحب يختفي الشريط العائم وأزرار الجانب
     const onEnd0 = onEnd; onEnd = ev => { E.busy = false; try { onEnd0(ev); } finally { positionOverlay(); } };
-    const mv = ev => { const p = P(ev); onMove((p.x - p0.x) / s, (p.y - p0.y) / s, ev); };
-    const up = ev => { [document, fdoc].forEach(d => { d.removeEventListener("mousemove", mv, true); d.removeEventListener("mouseup", up, true); }); if (shield) shield.remove(); onEnd(ev); };
+    let last = null, raf = 0, moved = false;
+    const run = () => { if (!last) return; const d = doc(last.sp); onMove(d.x - d0.x, d.y - d0.y, last.ev); };
+    const mv = ev => { last = { sp: scr(ev), ev }; if (!moved && Math.abs(last.sp.x - s0.x) + Math.abs(last.sp.y - s0.y) > 4) moved = true; run(); if (moved && !raf) raf = requestAnimationFrame(auto); };
+    /* تمرير تلقائي: قرب حافة المنصة العليا/السفلى تصعد الصفحة/تنزل مع سحب العنصر (والعنصر يتبع المؤشر) */
+    const auto = () => {
+      raf = 0; if (!last || !stg) return; const r = stg.getBoundingClientRect(), Z = 80, y = last.sp.y; let v = 0;
+      if (y < r.top + Z) v = -Math.min(1, (r.top + Z - y) / Z); else if (y > r.bottom - Z) v = Math.min(1, (y - (r.bottom - Z)) / Z);
+      if (!v) return; const before = stg.scrollTop; stg.scrollTop = before + Math.round(v * 22);
+      if (stg.scrollTop !== before) run(); raf = requestAnimationFrame(auto);
+    };
+    const up = ev => { cancelAnimationFrame(raf); raf = 0; last = null; [document, fdoc].forEach(d => { d.removeEventListener("mousemove", mv, true); d.removeEventListener("mouseup", up, true); }); if (shield) shield.remove(); onEnd(ev); };
     [document, fdoc].forEach(d => { d.addEventListener("mousemove", mv, true); d.addEventListener("mouseup", up, true); });
   }
   /* مستطيل التخطيط (قبل التدوير): المركز من getBoundingClientRect والأبعاد من offsetWidth/Height */
