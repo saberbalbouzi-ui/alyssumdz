@@ -25,7 +25,7 @@ create index if not exists ruqya_day_idx on public.ruqya_bookings (day, slot);
 create index if not exists ruqya_phone_idx on public.ruqya_bookings (phone);
 alter table public.ruqya_bookings enable row level security;
 revoke all on public.ruqya_bookings from anon, authenticated;
-grant select, update, delete on public.ruqya_bookings to authenticated;
+grant select, insert, update, delete on public.ruqya_bookings to authenticated;      -- insert: استيراد العملاء من تقويم Google (المدير فقط عبر السياسة أدناه)
 drop policy if exists "admin ruqya" on public.ruqya_bookings;
 create policy "admin ruqya" on public.ruqya_bookings for all to authenticated using (public.is_admin()) with check (public.is_admin());
 
