@@ -87,5 +87,27 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}}`; document.
     if (MQP.addEventListener) MQP.addEventListener("change", pmApply);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", pmInit); else pmInit();
+
+  /* ───── المظهر الفاتح: أقسام لها CSS داكن مضمَّن (نصوص بيضاء/ليمونية/رمادية فاتحة) تصير مقروءة (v1.89.761) ─────
+     يُفحص نصّ كل عنصر فيها فإن تساوى لونه مع خلفيته الفعلية (تباين ضعيف) يُعطى لوناً داكناً؛ والأزرار الملوّنة (نصّ أبيض على خلفية داكنة) لا تُمسّ. */
+  const LT_ROOTS = "[id^=\"tab-\"],#ahome,#aa,#pf-app,#pm,#rt,#ar,#sm,#customers-app,#hs-app,#ad-app,#wl-app,#mk-app,#ag-app,#dg-app,#sd-list,#studio-content,#bulk-products-app,#stores-app,#dp,#pk,#adm-theme,#sp-app,#sm-body,#ca-body-header,#ca-body-footer,#rp-toks";
+  const rgbOf = c => { const str = String(c), v = (str.match(/[\d.]+/g) || [0, 0, 0, 1]).map(Number); return /^color\(srgb/.test(str) ? [v[0] * 255, v[1] * 255, v[2] * 255, v.length > 3 ? v[3] : 1] : v; }, lumOf = a => (0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]) / 255;
+  function effBg(n, dark) { let p = n; const layers = []; while (p && p.nodeType === 1) { const cs = getComputedStyle(p); let c = rgbOf(cs.backgroundColor), al = c.length > 3 ? c[3] : 1; const gi = cs.backgroundImage.match(/(?:rgba?|color)\([^)]+\)/); if (gi) { c = rgbOf(gi[0]); al = c.length > 3 ? c[3] : 1; } if (al > 0) layers.push([c, al]); if (al >= 0.99) break; p = p.parentElement; } let col = dark ? [10, 14, 12] : [255, 255, 255]; for (let i = layers.length - 1; i >= 0; i--) { const [c, al] = layers[i]; col = [0, 1, 2].map(k => c[k] * al + col[k] * (1 - al)); } return col; }
+  let ltT = 0, ltBusy = false;
+  function ltPass() {
+    if (ltBusy) return; const LIGHT = document.documentElement.classList.contains("white"); ltBusy = true; document.querySelectorAll(LIGHT ? ".lt-dk" : ".lt-fg,.lt-mut,.lt-lime,.lt-red").forEach(x => x.classList.remove("lt-dk", "lt-fg", "lt-mut", "lt-lime", "lt-red"));
+    try { document.querySelectorAll(LT_ROOTS).forEach(root => { if (!root.getClientRects().length) return; let n = 0; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let t;
+        while ((t = w.nextNode()) && n++ < 2500) { if (!t.textContent.trim()) continue; const p = t.parentElement; if (!p || p.classList.contains("lt-dk") || p.classList.contains("lt-fg") || p.classList.contains("lt-mut") || p.classList.contains("lt-lime") || p.classList.contains("lt-red") || p.closest("script,style,svg,option")) continue; if (/background/.test(p.getAttribute("style") || "")) continue;
+          const cs = getComputedStyle(p); if (cs.display === "none") continue; const fg = rgbOf(cs.color), bg = effBg(p, !LIGHT); if (Math.abs(lumOf(fg) - lumOf(bg)) >= 0.3) continue; if (!LIGHT) { if (lumOf(bg) > 0.55) p.classList.add("lt-dk"); continue; }
+          const lime = fg[1] > 180 && fg[2] < 130 && fg[0] > 130 && fg[1] > fg[0]; const red = fg[0] > 200 && fg[1] < 190 && fg[2] < 190 && fg[0] - fg[1] > 40; p.classList.add(lime ? "lt-lime" : red ? "lt-red" : (lumOf(fg) > 0.9 ? "lt-fg" : "lt-mut")); } }); } catch (e) { }
+    ltBusy = false;
+  }
+  function ltInit() {
+    if (!document.getElementById("lt-css")) { const st = document.createElement("style"); st.id = "lt-css"; st.textContent = "html.white body #app .lt-fg:not(#_){color:#0f172a!important;-webkit-text-fill-color:#0f172a!important}html.white body #app .lt-mut:not(#_){color:#475569!important}html.white body #app .lt-lime:not(#_){color:#3f6212!important}html.white body #app .lt-red:not(#_){color:#b91c1c!important}html.glass body #app .lt-dk:not(#_){color:#1f2123!important;-webkit-text-fill-color:#1f2123!important}"; document.head.appendChild(st); }
+    const go = () => { clearTimeout(ltT); ltT = setTimeout(ltPass, 350); };
+    new MutationObserver(go).observe(document.body, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(go).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] }); go();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ltInit); else ltInit();
   window.AdminMTables = { pass };
 })();

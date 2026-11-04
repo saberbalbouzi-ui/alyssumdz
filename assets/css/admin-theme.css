@@ -32,7 +32,7 @@ html.glass .theme-sw button.on{color:#06210f;background:linear-gradient(180deg,r
 .atm-act{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.2rem}
 
 /* ══════════ المظهر الفاتح (white) ══════════ */
-html.white{--ac:#059669;--green:color-mix(in srgb,var(--ac) 82%,#04261b);--gold:var(--ac);--gold2:color-mix(in srgb,var(--ac) 45%,#fff);--bg:#f3f5f8;--line:#e4e8ee;--blue:#2563eb;--red:#dc2626;color-scheme:light}
+html.white{--ac:#059669;--green:color-mix(in srgb,var(--ac) 40%,#0a2e1a);--gold:var(--ac);--gold2:color-mix(in srgb,var(--ac) 45%,#fff);--bg:#f3f5f8;--line:#e4e8ee;--blue:#2563eb;--red:#dc2626;color-scheme:light}
 html.white body{background:#f3f5f8;color:#0f172a}
 html.white .login,html.white .card,html.white .side-nav,html.white .stat div,html.white .modal{background:#fff;border:1px solid #e6eaf0;box-shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.05)}
 html.white .card,html.white .side-nav{border-radius:18px}
@@ -308,3 +308,7 @@ html:is(.glass,.white) .pill:is(.st-annulee,.st-echec){background:#dc3545;color:
   #ar .ar-head,#ar .ar-controls{min-width:0}#ar .ar-controls input{max-width:100%;min-width:0}
   #ar-content{min-width:0}
 }
+/* v1.89.761: عدّاد الإرجاعات المُلوَّن نصّه أبيض في المظهر الفاتح أيضاً */
+html.white #rt .rt-cnt{color:#fff!important}
+/* v1.89.761: الهاتف — أهداف لمس لا تقل عن 32px لأزرار الشرح «?» وعيّنات اللون في الإعدادات (كانت 15px و26px) */
+@media(max-width:900px){.ctl-q{min-width:32px!important;min-height:32px!important;display:inline-flex!important;align-items:center;justify-content:center;font-size:.9rem}.atm-sw{min-width:34px!important;min-height:34px!important}}
