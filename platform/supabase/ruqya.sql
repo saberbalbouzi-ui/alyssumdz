@@ -143,3 +143,89 @@ revoke all on public.ruqya_visits from anon, authenticated;
 grant select, insert, update, delete on public.ruqya_visits to authenticated;
 drop policy if exists "admin ruqya visits" on public.ruqya_visits;
 create policy "admin ruqya visits" on public.ruqya_visits for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- ═══ بوابة المريض: يطّلع المريض على ملفه وتطور حالته بعد تسجيل الدخول (Google/Apple/بريد) وربط حسابه برابط تأكيد يرسله المدير إلى هاتفه ═══
+alter table public.ruqya_visits add column if not exists shared boolean not null default false;      -- true = تظهر للمريض (ما لم يُشارَك لا يراه إلا المدير)
+
+create table if not exists public.ruqya_portal_links (
+  id bigint generated always as identity primary key,
+  created_at timestamptz not null default now(),
+  booking_id bigint not null references public.ruqya_bookings(id) on delete cascade,
+  token_hash text not null unique,
+  expires_at timestamptz not null,
+  used_at timestamptz, used_by uuid
+);
+create table if not exists public.ruqya_portal_accounts (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  booking_id bigint not null references public.ruqya_bookings(id) on delete cascade,
+  provider text, linked_at timestamptz not null default now()
+);
+create index if not exists ruqya_portal_acc_booking_idx on public.ruqya_portal_accounts (booking_id);
+alter table public.ruqya_portal_links enable row level security;
+alter table public.ruqya_portal_accounts enable row level security;
+revoke all on public.ruqya_portal_links, public.ruqya_portal_accounts from anon, authenticated;
+grant select on public.ruqya_portal_links, public.ruqya_portal_accounts to authenticated;
+drop policy if exists "admin portal links" on public.ruqya_portal_links;
+create policy "admin portal links" on public.ruqya_portal_links for select to authenticated using (public.is_admin());
+drop policy if exists "admin portal accounts" on public.ruqya_portal_accounts;
+create policy "admin portal accounts" on public.ruqya_portal_accounts for select to authenticated using (public.is_admin());
+
+-- المدير: رابط تأكيد لمريض (صالح 14 يوماً، يُستعمل مرة واحدة؛ المخزَّن بصمته فقط)
+create or replace function public.ruqya_portal_invite(p_booking_id bigint) returns text
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_tok text := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  if not exists (select 1 from public.ruqya_bookings where id = p_booking_id) then raise exception 'not_found'; end if;
+  insert into public.ruqya_portal_links (booking_id, token_hash, expires_at) values (p_booking_id, encode(digest(v_tok, 'sha256'), 'hex'), now() + interval '14 days');
+  return v_tok;
+end $$;
+revoke all on function public.ruqya_portal_invite(bigint) from public, anon;
+grant execute on function public.ruqya_portal_invite(bigint) to authenticated;
+
+-- المدير: فصل كل حسابات المريض
+create or replace function public.ruqya_portal_unlink(p_booking_id bigint) returns int
+language plpgsql security definer set search_path = public as $$
+declare n int;
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  delete from public.ruqya_portal_accounts where booking_id = p_booking_id; get diagnostics n = row_count;
+  update public.ruqya_portal_links set expires_at = now() where booking_id = p_booking_id and used_at is null and expires_at > now();
+  return n;
+end $$;
+revoke all on function public.ruqya_portal_unlink(bigint) from public, anon;
+grant execute on function public.ruqya_portal_unlink(bigint) to authenticated;
+
+-- المريض (مسجَّل الدخول): ربط حسابه بملفه عبر رابط التأكيد
+create or replace function public.ruqya_portal_claim(p_token text) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_uid uuid := auth.uid(); v_l public.ruqya_portal_links; v_old bigint; v_prov text;
+begin
+  if v_uid is null then raise exception 'not_signed_in'; end if;
+  perform public._rl_hit('ruqya_claim', 10, interval '10 minutes');
+  select * into v_l from public.ruqya_portal_links where token_hash = encode(digest(coalesce(p_token, ''), 'sha256'), 'hex') for update;
+  if not found or v_l.used_at is not null or v_l.expires_at < now() then raise exception 'invalid_link'; end if;
+  select booking_id into v_old from public.ruqya_portal_accounts where user_id = v_uid;
+  if v_old is not null and v_old <> v_l.booking_id then raise exception 'account_already_linked'; end if;
+  select coalesce(raw_app_meta_data ->> 'provider', '') into v_prov from auth.users where id = v_uid;
+  insert into public.ruqya_portal_accounts (user_id, booking_id, provider) values (v_uid, v_l.booking_id, v_prov) on conflict (user_id) do nothing;
+  update public.ruqya_portal_links set used_at = now(), used_by = v_uid where id = v_l.id;
+  return jsonb_build_object('ok', true);
+end $$;
+revoke all on function public.ruqya_portal_claim(text) from public, anon;
+grant execute on function public.ruqya_portal_claim(text) to authenticated;
+
+-- المريض: ملفه فقط — الاسم والمنطقة والزيارات المشارَكة (تاريخ، تطور الحالة، ملاحظات، متابعة)
+create or replace function public.ruqya_portal_me() returns jsonb
+language plpgsql stable security definer set search_path = public as $$
+declare v_uid uuid := auth.uid(); v_b public.ruqya_bookings;
+begin
+  if v_uid is null then return jsonb_build_object('linked', false); end if;
+  select b.* into v_b from public.ruqya_portal_accounts a join public.ruqya_bookings b on b.id = a.booking_id where a.user_id = v_uid;
+  if not found then return jsonb_build_object('linked', false); end if;
+  return jsonb_build_object('linked', true, 'name', v_b.name, 'region', coalesce(v_b.commune, ''),
+    'visits', coalesce((select jsonb_agg(jsonb_build_object('day', v.day, 'slot', v.slot, 'progress', v.progress, 'note', v.note, 'followup', v.followup) order by v.day desc, v.slot desc nulls last)
+                         from public.ruqya_visits v where v.booking_id = v_b.id and v.shared), '[]'::jsonb));
+end $$;
+revoke all on function public.ruqya_portal_me() from public, anon;
+grant execute on function public.ruqya_portal_me() to authenticated;

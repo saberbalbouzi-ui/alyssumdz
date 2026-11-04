@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ملفي — مواعيد الرقية الشرعية · أليسوم</title>
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<link rel="icon" href="../assets/img/favicon.png">
+<style>
+@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(../assets/fonts/cairo-arabic.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+:root{--bg:#f5f7f4;--card:#fff;--ink:#16221c;--mut:#5b6b62;--line:#dfe6e0;--g:#157a55;--gd:#0f5a3e}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Cairo,'Segoe UI',Tahoma,sans-serif;line-height:1.7}
+.wrap{max-width:720px;margin:0 auto;padding:18px 16px 60px}
+h1{font-size:1.4rem;margin:.4rem 0 .2rem;color:var(--gd)}.sub{color:var(--mut);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 6px 22px rgba(20,40,30,.05)}
+.btn{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;min-height:50px;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:14px;font:inherit;font-weight:800;font-size:1rem;cursor:pointer;margin:8px 0}
+.btn:hover{border-color:var(--g)}.btn.pri{background:var(--g);border-color:var(--g);color:#fff}.btn.apple{background:#000;border-color:#000;color:#fff}
+input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;direction:ltr;text-align:left;margin:8px 0}
+.msg{padding:10px 14px;border-radius:12px;margin:10px 0;font-weight:700}.msg.ok{background:#e8f6ee;color:#0f5a3e}.msg.err{background:#fdeceb;color:#a02820}.msg.inf{background:#eef3fb;color:#1f3f7a}
+.hd{display:flex;gap:12px;align-items:center}.av{width:54px;height:54px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;font-weight:900;font-size:1.4rem;flex:none}
+.visit{border-inline-start:5px solid #c9d3cc;padding:6px 14px;margin:14px 0}.visit h3{margin:0;font-size:1.02rem}.badge{display:inline-block;padding:1px 10px;border-radius:999px;font-weight:800;font-size:.82rem;margin-inline-start:8px;color:#16221c}
+.lbl{font-weight:800;color:var(--gd);font-size:.85rem;margin-top:6px}.txt{white-space:pre-wrap;margin:0 0 4px}
+.hide{display:none!important}.out{background:none;border:0;color:var(--mut);text-decoration:underline;cursor:pointer;font:inherit;margin-top:14px}
+.sep{text-align:center;color:var(--mut);margin:10px 0}
+</style></head><body><div class="wrap">
+<h1>ملفي</h1><p class="sub">مواعيد الرقية الشرعية · أليسوم — اطّلع على ملفك وتطور حالتك بعد كل زيارة.</p>
+<div id="msg"></div>
+<div id="login" class="card hide">
+  <b id="loginHint">سجّل الدخول لعرض ملفك</b>
+  <button class="btn" id="bg" type="button"><span>G</span> الدخول بحساب Google</button>
+  <button class="btn apple" id="ba" type="button"><span></span> الدخول بحساب Apple</button>
+  <div class="sep">أو برابط تأكيد على بريدك</div>
+  <input id="em" type="email" placeholder="name@email.com" autocomplete="email">
+  <button class="btn pri" id="be" type="button">أرسل لي رابط التأكيد</button>
+</div>
+<div id="file" class="hide"></div>
+<div id="unlinked" class="card hide"><b>حسابك غير مربوط بملف بعد</b><p class="sub">لربط حسابك بملفك افتح رابط التأكيد الذي أرسلته لك العيادة على واتساب (من نفس هذا الحساب). إن لم يصلك رابط فراسلنا.</p></div>
+<button class="out hide" id="so" type="button">تسجيل الخروج</button>
+</div>
+<script src="../assets/js/config.js"></script>
+<script>
+(function(){
+  var SB = (typeof CONFIG !== "undefined" && CONFIG.SUPABASE_URL) || "", KEY = (typeof CONFIG !== "undefined" && CONFIG.SUPABASE_ANON_KEY) || "", SK = "alyssum_pt_session", IK = "alyssum_pt_invite";
+  var $ = function(i){ return document.getElementById(i); };
+  var PROG = { "": "", "new": ["زيارة أولى", "#bcd7ff"], better: ["تحسّن", "#bff0d0"], same: ["مستقرة", "#fdeea0"], worse: ["تراجع", "#ffc9c4"], done: ["انتهت الحالة", "#dccbff"] };
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function msg(t, k){ $("msg").innerHTML = t ? '<div class="msg ' + (k || "inf") + '">' + esc(t) + "</div>" : ""; }
+  function load(){ try{ return JSON.parse(localStorage.getItem(SK) || "null"); }catch(e){ return null; } }
+  function save(s){ try{ if(s) localStorage.setItem(SK, JSON.stringify(s)); else localStorage.removeItem(SK); }catch(e){} }
+  /* رابط التأكيد ?t= يُحفظ في الجلسة ثم يُزال من العنوان (لا يبقى في السجل ولا يُرسَل مرجعاً) */
+  (function(){ try{ var m = /[?&]t=([A-Za-z0-9]{20,80})/.exec(location.search); if(m){ sessionStorage.setItem(IK, m[1]); history.replaceState(null, "", location.pathname); } }catch(e){} })();
+  /* العودة من Google/Apple/رابط البريد: الرمز في #hash */
+  (function(){ try{ var h = location.hash.replace(/^#/, ""); if(!/access_token=/.test(h)) return; var p = new URLSearchParams(h), at = p.get("access_token"); if(at){ save({ access_token: at, refresh_token: p.get("refresh_token") || "", expires_at: Date.now() + (Number(p.get("expires_in")) || 3600) * 1000 }); } history.replaceState(null, "", location.pathname); }catch(e){} })();
+  function hdr(tok){ return { apikey: KEY, Authorization: "Bearer " + (tok || KEY), "Content-Type": "application/json" }; }
+  async function token(){
+    var s = load(); if(!s) return null; if(s.expires_at - Date.now() > 60000) return s.access_token;
+    if(!s.refresh_token) { save(null); return null; }
+    try{ var r = await fetch(SB + "/auth/v1/token?grant_type=refresh_token", { method: "POST", headers: hdr(), body: JSON.stringify({ refresh_token: s.refresh_token }) }); var j = await r.json(); if(!r.ok || !j.access_token){ save(null); return null; }
+      save({ access_token: j.access_token, refresh_token: j.refresh_token || s.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000 }); return j.access_token; }catch(e){ return s.access_token; }
+  }
+  async function rpc(name, body, tok){ var r = await fetch(SB + "/rest/v1/rpc/" + name, { method: "POST", headers: hdr(tok), body: JSON.stringify(body || {}) }); var j = await r.json().catch(function(){ return null; }); if(!r.ok) throw new Error((j && (j.message || j.msg)) || ("HTTP " + r.status)); return j; }
+  var ERR = { invalid_link: "رابط التأكيد غير صالح أو انتهت صلاحيته أو استُعمل. اطلب رابطاً جديداً من العيادة.", account_already_linked: "هذا الحساب مربوط بملف آخر.", not_signed_in: "سجّل الدخول أولاً." };
+  function errTxt(e){ var m = String(e && e.message || e); return ERR[m] || ("تعذّر الإكمال: " + m); }
+  async function providerOn(p){ try{ var r = await fetch(SB + "/auth/v1/settings", { headers: { apikey: KEY } }); var j = await r.json(); return !!(j.external && j.external[p]); }catch(e){ return true; } }
+  async function oauth(p){
+    msg("");
+    if(!(await providerOn(p))){ msg("الدخول بـ " + (p === "google" ? "Google" : "Apple") + " غير مفعَّل بعد. استعمل رابط البريد أدناه أو راسل العيادة.", "err"); return; }
+    location.href = SB + "/auth/v1/authorize?provider=" + p + "&redirect_to=" + encodeURIComponent(location.origin + location.pathname);
+  }
+  async function mail(){
+    var e = $("em").value.trim(); if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){ msg("اكتب بريداً صحيحاً.", "err"); return; }
+    $("be").disabled = true;
+    try{ var r = await fetch(SB + "/auth/v1/otp?redirect_to=" + encodeURIComponent(location.origin + location.pathname), { method: "POST", headers: hdr(), body: JSON.stringify({ email: e, create_user: true }) });
+      if(!r.ok){ var j = await r.json().catch(function(){ return {}; }); throw new Error(j.msg || j.message || ("HTTP " + r.status)); }
+      msg("أرسلنا رابط التأكيد إلى " + e + ". افتح الرسالة واضغط الرابط (قد تكون في البريد غير المرغوب).", "ok"); }
+    catch(er){ msg("تعذّر إرسال الرابط: " + er.message, "err"); }
+    $("be").disabled = false;
+  }
+  function render(me){
+    var f = $("file"), v = me.visits || [], h = '<div class="card"><div class="hd"><div class="av">' + esc(String(me.name || "؟").trim().charAt(0)) + '</div><div><b style="font-size:1.15rem">' + esc(me.name) + "</b>" + (me.region ? '<div class="sub" style="margin:0">المنطقة: ' + esc(me.region) + "</div>" : "") + '<div class="sub" style="margin:0">عدد الزيارات المشارَكة: ' + v.length + "</div></div></div></div>";
+    h += '<div class="card"><b>سجل الزيارات وتطور الحالة</b>';
+    if(!v.length) h += '<p class="sub">لا توجد زيارات مشارَكة بعد.</p>';
+    v.forEach(function(x){ var pg = PROG[x.progress]; h += '<div class="visit" style="border-color:' + (pg ? pg[1] : "#c9d3cc") + '"><h3>' + esc(new Date(x.day + "T12:00:00").toLocaleDateString("ar-DZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })) + (x.slot ? " · " + esc(String(x.slot).slice(0, 5)) : "") + (pg ? '<span class="badge" style="background:' + pg[1] + '">' + pg[0] + "</span>" : "") + "</h3>" +
+      (x.note ? '<div class="lbl">تطور الحالة</div><p class="txt">' + esc(x.note) + "</p>" : "") + (x.followup ? '<div class="lbl">المتابعة</div><p class="txt">' + esc(x.followup) + "</p>" : "") + "</div>"; });
+    f.innerHTML = h + "</div>"; f.classList.remove("hide");
+  }
+  async function start(){
+    if(!SB || !KEY){ msg("الخدمة غير مهيّأة.", "err"); return; }
+    var t = await token(), inv = ""; try{ inv = sessionStorage.getItem(IK) || ""; }catch(e){}
+    if(!t){ $("login").classList.remove("hide"); if(inv) $("loginHint").textContent = "سجّل الدخول لربط ملفك برابط التأكيد الذي وصلك"; return; }
+    $("so").classList.remove("hide");
+    try{
+      if(inv){ try{ await rpc("ruqya_portal_claim", { p_token: inv }, t); msg("✅ تم ربط حسابك بملفك.", "ok"); }catch(e){ msg(errTxt(e), "err"); } try{ sessionStorage.removeItem(IK); }catch(e){} }
+      var me = await rpc("ruqya_portal_me", {}, t);
+      if(me && me.linked) render(me); else $("unlinked").classList.remove("hide");
+    }catch(e){ msg(errTxt(e), "err"); }
+  }
+  $("bg").onclick = function(){ oauth("google"); }; $("ba").onclick = function(){ oauth("apple"); }; $("be").onclick = mail;
+  $("so").onclick = function(){ save(null); try{ sessionStorage.removeItem(IK); }catch(e){} location.replace(location.pathname); };
+  start();
+})();
+</script></body></html>

@@ -6,7 +6,7 @@ const AdminRuqya = (() => {
   const money = n => Math.round(Number(n) || 0).toLocaleString("fr-DZ") + " دج";
   const KIND = { single: "فردية", couple: "زوج وزوجة", kids: "أبناء", family: "عائلة (كبار)" };
   const ST = { pending: "بانتظار التأكيد", confirmed: "مؤكَّد", done: "تمت", cancelled: "ملغى" };
-  const S = { rows: [], filter: "up", cap: 1, err: "", busy: false, q: "", found: null, msg: "", pat: null, visits: [], perr: "" };
+  const S = { rows: [], filter: "up", cap: 1, err: "", busy: false, q: "", found: null, msg: "", pat: null, visits: [], perr: "", accts: [], link: "", wa: "" };
   async function call(path, opt) {
     const t = await API.sb.token(); if (!t) throw new Error("انتهت الجلسة، أعد تسجيل الدخول");
     const r = await fetch(API.sb.url("/rest/v1/" + path), Object.assign({ headers: Object.assign(API.sb.headers(t), { Prefer: "return=representation" }) }, opt || {}));
@@ -84,8 +84,8 @@ const AdminRuqya = (() => {
   const PCOL = { new: "#60a5fa", better: "#86efac", same: "#fde047", worse: "#fca5a5", done: "#c4b5fd" };
   async function openPatient(id) {
     const r = (S.found || []).concat(S.rows).find(x => String(x.id) === String(id)); if (!r) return;
-    S.pat = r; S.visits = []; S.perr = ""; draw();
-    try { S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(r.id) + "&order=day.desc,slot.desc&limit=500"); } catch (e) { S.perr = e.message; } draw();
+    S.pat = r; S.visits = []; S.perr = ""; S.accts = []; S.link = ""; S.wa = ""; draw();
+    try { S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(r.id) + "&order=day.desc,slot.desc&limit=500"); S.accts = await call("ruqya_portal_accounts?select=user_id,provider,linked_at&booking_id=eq." + encodeURIComponent(r.id)); } catch (e) { S.perr = e.message; } draw();
   }
   function patientHtml() {
     const r = S.pat, vs = S.visits, first = vs.length ? vs[vs.length - 1].day : r.day, last = vs.length ? vs[0].day : r.day;
@@ -94,13 +94,20 @@ const AdminRuqya = (() => {
     const card = v => '<div class="card" style="padding:12px;margin:10px 0;border-inline-start:4px solid ' + (PCOL[v.progress] || "#ffffff44") + '" data-vid="' + v.id + '"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><b>' + esc(dayName(v.day)) + (v.slot ? " · " + esc(v.slot) : "") + '</b><span style="flex:1"></span><select data-vf="progress">' + opts(v.progress) + '</select></div>' +
       '<label style="display:block;margin-top:8px;font-weight:700">تطور الحالة / ملاحظات الزيارة</label><textarea data-vf="note" rows="3" style="width:100%">' + esc(v.note) + '</textarea>' +
       '<label style="display:block;margin-top:8px;font-weight:700">المتابعة (التوصيات والموعد القادم)</label><textarea data-vf="followup" rows="2" style="width:100%">' + esc(v.followup) + '</textarea>' +
+      '<label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:700"><input type="checkbox" data-vf="shared"' + (v.shared ? " checked" : "") + '> إظهار هذه الزيارة للمريض في بوابته</label>' +
       '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-rq="vsave" data-id="' + v.id + '">حفظ</button><button class="btn warn" data-rq="vdel" data-id="' + v.id + '">حذف الزيارة</button></div></div>';
     return '<div class="card" style="padding:16px"><button class="btn gray" data-rq="pback">← رجوع للمواعيد</button>' +
       '<h2 style="margin:12px 0 4px">ملف المريض</h2>' + (S.perr ? '<div class="warn" style="margin:8px 0">' + esc(S.perr) + '</div>' : "") + (S.msg ? '<div class="hint">' + esc(S.msg) + '</div>' : "") +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0"><div><label style="font-weight:700">الاسم</label><input id="rq-pn" value="' + esc(r.name) + '"></div><div><label style="font-weight:700">المنطقة</label><input id="rq-pr" value="' + esc(r.commune || "") + '" placeholder="البلدية / الولاية"></div><div><label style="font-weight:700">الهاتف</label><div dir="ltr" style="padding:8px 0"><b>' + esc(r.phone) + '</b> · <a target="_blank" rel="noopener" href="' + wa + '">واتساب</a></div></div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn" data-rq="psave">حفظ بيانات المريض</button><span class="hint">أول زيارة: ' + esc(first) + ' · آخر زيارة: ' + esc(last) + ' · عدد الزيارات: ' + vs.length + '</span></div>' +
+      (function () {
+        const n = S.accts.length, shared = vs.filter(x => x.shared).length;
+        return '<h3 style="margin:18px 0 6px">🔐 بوابة المريض</h3><div class="card" style="padding:12px"><div class="hint">' + (n ? "✅ المريض مربوط بحساب (" + n + ") — يطّلع على الزيارات المشارَكة فقط (" + shared + " من " + vs.length + ")." : "المريض لم يربط حسابه بعد. أرسل له رابط التأكيد على واتساب: يفتحه، يسجّل الدخول بـ Google أو Apple أو البريد، فيُربط حسابه بملفه.") + '</div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" data-rq="pinv">📲 إرسال رابط التأكيد بواتساب</button><button class="btn gray" data-rq="pshare">إظهار كل الزيارات للمريض</button>' + (n ? '<button class="btn warn" data-rq="punl">فصل الحساب</button>' : "") + '</div>' +
+          (S.link ? '<div class="hint" style="margin-top:8px">الرابط (صالح 14 يوماً، يُستعمل مرة واحدة): <input readonly dir="ltr" value="' + esc(S.link) + '" style="width:100%" onclick="this.select()"> <a class="btn" target="_blank" rel="noopener" href="' + esc(S.wa) + '" style="display:inline-block;margin-top:6px">فتح واتساب لإرساله</a></div>' : "") + '</div>';
+      })() +
       '<h3 style="margin:18px 0 6px">＋ زيارة جديدة</h3><div class="card" style="padding:12px"><div style="display:flex;gap:8px;flex-wrap:wrap"><input type="date" id="rq-vd" value="' + today() + '"><input type="time" id="rq-vt" value="10:00"><select id="rq-vp">' + opts("") + '</select></div>' +
-      '<textarea id="rq-vn" rows="3" style="width:100%;margin-top:8px" placeholder="تطور الحالة في هذه الزيارة…"></textarea><textarea id="rq-vf" rows="2" style="width:100%;margin-top:8px" placeholder="المتابعة: التوصيات والموعد القادم…"></textarea><button class="btn" data-rq="vadd" style="margin-top:8px">إضافة الزيارة</button></div>' +
+      '<textarea id="rq-vn" rows="3" style="width:100%;margin-top:8px" placeholder="تطور الحالة في هذه الزيارة…"></textarea><textarea id="rq-vf" rows="2" style="width:100%;margin-top:8px" placeholder="المتابعة: التوصيات والموعد القادم…"></textarea><label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:700"><input type="checkbox" id="rq-vs" checked> إظهارها للمريض في بوابته</label><button class="btn" data-rq="vadd" style="margin-top:8px">إضافة الزيارة</button></div>' +
       '<h3 style="margin:18px 0 6px">سجل الزيارات (' + vs.length + ')</h3>' + (vs.length ? vs.map(card).join("") : '<div class="hint">لا زيارات مسجّلة بعد.</div>') + '</div>';
   }
   function draw() {
@@ -140,16 +147,26 @@ const AdminRuqya = (() => {
     if (a === "f") { S.filter = b.getAttribute("data-k"); S.q = ""; S.found = null; S.pat = null; draw(); }
     else if (a === "imp") { const fi = $("rq-file"); if (fi) fi.click(); }
     else if (a === "pat") { e.preventDefault(); openPatient(b.getAttribute("data-id")); }
+    else if (a === "pinv") {
+      try { const tok = await call("rpc/ruqya_portal_invite", { method: "POST", body: JSON.stringify({ p_booking_id: S.pat.id }) }); S.link = location.origin + "/ruqya-patient/?t=" + tok; S.perr = "";
+        const txt = "السلام عليكم " + S.pat.name + "، هذا رابط ملفك في مواعيد الرقية الشرعية (أليسوم). افتحه وسجّل الدخول بحساب Google أو Apple أو بريدك لتطّلع على ملفك وتطور حالتك:\n" + S.link;
+        S.wa = "https://wa.me/213" + String(S.pat.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(txt); try { window.open(S.wa, "_blank", "noopener"); } catch (_) { } } catch (er) { S.perr = er.message; } draw();
+    } else if (a === "pshare") {
+      try { await call("ruqya_visits?booking_id=eq." + encodeURIComponent(S.pat.id), { method: "PATCH", body: JSON.stringify({ shared: true }) }); S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); S.msg = "✅ صارت كل الزيارات ظاهرة للمريض"; } catch (er) { S.perr = er.message; } draw();
+    } else if (a === "punl") {
+      if (!confirm("فصل حساب المريض؟ لن يعود يرى ملفه حتى يُرسَل له رابط جديد.")) return;
+      try { await call("rpc/ruqya_portal_unlink", { method: "POST", body: JSON.stringify({ p_booking_id: S.pat.id }) }); S.accts = []; S.link = ""; S.wa = ""; S.msg = "تم فصل الحساب"; } catch (er) { S.perr = er.message; } draw();
+    }
     else if (a === "pback") { S.pat = null; S.visits = []; S.msg = ""; draw(); }
     else if (a === "psave") {
       const nm = $("rq-pn").value.trim(), rg = $("rq-pr").value.trim(); if (nm.length < 2) { S.perr = "الاسم قصير"; draw(); return; }
       try { await call("ruqya_bookings?id=eq." + encodeURIComponent(S.pat.id), { method: "PATCH", body: JSON.stringify({ name: nm.slice(0, 120), commune: rg.slice(0, 120) || null }) }); S.pat.name = nm; S.pat.commune = rg; S.perr = ""; S.msg = "✅ حُفظت بيانات المريض"; await load(); } catch (er) { S.perr = er.message; } draw();
     } else if (a === "vadd") {
       const day = $("rq-vd").value; if (!day) { S.perr = "اختر تاريخ الزيارة"; draw(); return; }
-      try { await call("ruqya_visits", { method: "POST", body: JSON.stringify({ booking_id: S.pat.id, day, slot: $("rq-vt").value || null, progress: $("rq-vp").value, note: $("rq-vn").value.trim().slice(0, 4000), followup: $("rq-vf").value.trim().slice(0, 2000) }) }); S.perr = ""; S.msg = "✅ أُضيفت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
+      try { await call("ruqya_visits", { method: "POST", body: JSON.stringify({ booking_id: S.pat.id, day, slot: $("rq-vt").value || null, progress: $("rq-vp").value, note: $("rq-vn").value.trim().slice(0, 4000), followup: $("rq-vf").value.trim().slice(0, 2000), shared: $("rq-vs").checked }) }); S.perr = ""; S.msg = "✅ أُضيفت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
     } else if (a === "vsave") {
       const card = b.closest("[data-vid]"), g = k => card.querySelector('[data-vf="' + k + '"]').value;
-      try { await call("ruqya_visits?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "PATCH", body: JSON.stringify({ progress: g("progress"), note: g("note").trim().slice(0, 4000), followup: g("followup").trim().slice(0, 2000) }) }); S.perr = ""; S.msg = "✅ حُفظت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
+      try { await call("ruqya_visits?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "PATCH", body: JSON.stringify({ progress: g("progress"), note: g("note").trim().slice(0, 4000), followup: g("followup").trim().slice(0, 2000), shared: card.querySelector('[data-vf="shared"]').checked }) }); S.perr = ""; S.msg = "✅ حُفظت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
     } else if (a === "vdel") {
       if (!confirm("حذف هذه الزيارة نهائياً؟")) return;
       try { await call("ruqya_visits?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "DELETE" }); S.perr = ""; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
