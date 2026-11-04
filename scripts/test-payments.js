@@ -75,6 +75,19 @@ ok("طرد مجاني يخسر رسم التوصيل (−750) ويُوسَم fre
   ok("كشف قادم/غير جاهز: طردان يبقيان بأرقام الكشف (2575.25 + 1981.25) والمدفوع مستثنى", rest.length === 2 && Math.abs(T.net - 4556.5) < 1e-6 && T.grp.nr.n === 1 && Math.abs(T.grp.next.net - 1981.25) < 1e-6, T);
 }
 
+// جدول «المنصة مقابل الشركة»: مجموع الكشفين، الفروق، واقتراح الطردين اللذين يفسّران فرق العدد والمبلغ
+{
+  const orders = [{ id: "c1", status: "livree", total: 4000, fee: 700, _trk: "U1", date: "2026-10-20" }, { id: "c2", status: "livree", total: 3000, fee: 500, _trk: "U2", date: "2026-10-20" }, { id: "c3", status: "expediee", total: 5000, fee: 700, _trk: "U3", date: "2026-10-20", name: "أحمد", wilaya: "وهران" }, { id: "c4", status: "expediee", total: 3700, fee: 750, _trk: "U4", date: "2026-10-20", name: "سعاد", wilaya: "سطيف" }, { id: "c5", status: "expediee", total: 1111, fee: 500, _trk: "U5", date: "2026-10-20" }];
+  const Admin = { orders, fin: { costs: {}, set: { packaging: 0 } }, ST_AR: {}, ydActual: {}, trackingOf: o => ({ company: "yalidine", tracking: o._trk }), actualFees() { return null; }, realFees: () => null, orderLines: () => [], carrierCost: o => o.fee, retCost: () => 250, deliveredOf: () => "" };
+  const sb = { Admin, document: { addEventListener() {}, getElementById: () => null }, localStorage: { getItem: () => null, setItem() {} }, console, btoa, atob, escape, unescape, URL, Blob: function () {} };
+  sb.window = sb; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync("assets/js/admin-payments.js", "utf8") + ";this.AP=AdminPayments;", sb);
+  sb.AP.YP.list.push({ state: "notready", livre: 3, retour: 0, got: 12000, cod: 90, del: 2000, ret: 0, ins: 0, net: 9910 }, { state: "ready", livre: 1, retour: 0, got: 3700, cod: 27.75, del: 750, ret: 0, ins: 0, net: 2922.25 });
+  const h = sb.AP.cmpCard();
+  ok("جدول المقارنة: مجموع الشركة 15 700,00 وفرق Livré +2 colis", /15[\s\u202f\u00a0]700,00 DA/.test(h) && /\+2 colis/.test(h), h.slice(0, 200));
+  ok("جدول المقارنة: يقترح طردَي 5000 + 3700 (مجموعهما فرق المحصَّل 8700)", /#c3/.test(h) && /#c4/.test(h) && !/#c5/.test(h), h.replace(/<[^>]+>/g, " ").slice(-400));
+}
+
 // الجدول يضم الطلبات المسجَّلة عند الشركة فقط (F5D05 و2FB29 مثلاً)
 {
   const orders = [
