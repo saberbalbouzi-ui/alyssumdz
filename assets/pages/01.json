@@ -12,611 +12,693 @@
   {
    "id": "bk6zpqe",
    "set": {
-    "layout": "boxed",
+    "grad1": "#f5faee",
+    "grad2": "#ffffff",
+    "gradAng": 180,
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1140
+     "d": 1274
+    },
+    "layout": "full",
+    "mh": {
+     "d": 773
     },
     "pad": {
      "d": [
-      44,
-      20,
-      36,
-      20
-     ],
-     "m": [
-      24,
-      14,
-      24,
-      14
+      0,
+      0,
+      0,
+      0
      ]
-    },
-    "gap": {
-     "d": 28
-    },
-    "va": {
-     "d": "center"
-    },
-    "grad1": "#f5faee",
-    "grad2": "#ffffff",
-    "gradAng": 180
+    }
    },
    "cols": [
     {
-     "id": "dl9lplo",
-     "set": {
-      "w": {
-       "d": 55
-      },
-      "va": "center"
-     },
-     "widgets": [
-      {
-       "id": "ce7owap",
-       "type": "heading",
-       "set": {
-        "text": "مستخلصات طبيعية لعقل أكثر نشاطاً",
-        "tag": "div",
-        "fs": {
-         "d": 18,
-         "m": 15
-        },
-        "fw": "900",
-        "ta": {
-         "d": "start"
-        },
-        "color": "#ffffff",
-        "lh": {
-         "d": 1.3
-        },
-        "bg": "#2e7d32",
-        "rad": {
-         "d": 10
-        },
-        "pad": {
-         "d": [
-          6,
-          16,
-          6,
-          16
-         ]
-        },
-        "w": {
-         "d": 70,
-         "m": 100
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "hy0ulme",
-       "type": "heading",
-       "set": {
-        "text": "عسل طبيعي",
-        "tag": "h1",
-        "fs": {
-         "d": 50,
-         "m": 36
-        },
-        "fw": "900",
-        "ta": {
-         "d": "start"
-        },
-        "color": "#1b4a8a",
-        "lh": {
-         "d": 1.3
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "bvvf7q4",
-       "type": "heading",
-       "set": {
-        "text": "لدعم التركيز",
-        "tag": "div",
-        "fs": {
-         "d": 50,
-         "m": 36
-        },
-        "fw": "900",
-        "ta": {
-         "d": "start"
-        },
-        "color": "#2e7d32",
-        "lh": {
-         "d": 1.3
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "mrlzz1i",
-       "type": "heading",
-       "set": {
-        "text": "وتنشيط الذاكرة",
-        "tag": "div",
-        "fs": {
-         "d": 50,
-         "m": 36
-        },
-        "fw": "900",
-        "ta": {
-         "d": "start"
-        },
-        "color": "#c8920a",
-        "lh": {
-         "d": 1.3
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "tk8dzq8",
-       "type": "text",
-       "set": {
-        "html": "<p>مزيج فريد من العسل ومستخلصات نباتية طبيعية لدعم التعلّم والنشاط الذهني لدى الأطفال.</p>",
-        "fs": {
-         "d": 19,
-         "m": 16
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#444",
-        "fw": "600",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "vga88et",
-       "type": "button",
-       "set": {
-        "text": "اطلب الآن",
-        "kind": "link",
-        "link": "#order",
-        "bgc": "#2e7d32",
-        "color": "#fff",
-        "hbg": "#1b5e20",
-        "fs": {
-         "d": 20,
-         "m": 18
-        },
-        "fw": "900",
-        "brad": {
-         "d": 40
-        },
-        "bpad": {
-         "d": [
-          16,
-          44,
-          16,
-          44
-         ]
-        },
-        "al": "start",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "fxs": [
-         {
-          "id": "br8d44l",
-          "n": "نبض حلقي للزر",
-          "on": true,
-          "tpl": "selector .pb-btn{animation:fkb0Pu [[d]]s infinite}@keyframes fkb0Pu{0%{box-shadow:0 0 0 0 rgba([[rgb]],.5)}70%{box-shadow:0 0 0 18px rgba([[rgb]],0)}100%{box-shadow:0 0 0 0 rgba([[rgb]],0)}}",
-          "p": {
-           "rgb": {
-            "l": "اللون RGB",
-            "t": "text",
-            "v": "46,125,50"
-           },
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 2.2
-           }
-          }
-         },
-         {
-          "id": "bmt44t9",
-          "n": "لمعة تعبر الزر",
-          "on": true,
-          "tpl": "selector .pb-btn{position:relative;overflow:hidden}selector .pb-btn::after{content:\"\";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-22deg);animation:fks0Sh [[d]]s ease-in-out infinite}@keyframes fks0Sh{0%,55%{left:-70%}100%{left:140%}}",
-          "p": {
-           "d": {
-            "l": "زمن الدورة ثانية",
-            "t": "num",
-            "v": 3.4
-           }
-          }
-         }
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "id": "zz3bcmz",
-     "set": {
-      "w": {
-       "d": 45
-      },
-      "va": "center"
-     },
-     "widgets": [
-      {
-       "id": "yctpdp2",
-       "type": "image",
-       "set": {
-        "src": "assets/img/tarkiz/lp/hero.webp",
-        "alt": "عسل التركيز وتنشيط الذاكرة للأطفال — أليسوم",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 22
-        },
-        "shadow": "lg",
-        "anim": "zoomIn",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "fxs": [
-         {
-          "id": "cd01bih",
-          "n": "طفو هادئ",
-          "on": true,
-          "tpl": "selector img{animation:fkhFl [[d]]s ease-in-out infinite}@keyframes fkhFl{50%{transform:translateY(-[[a]]px)}}",
-          "p": {
-           "a": {
-            "l": "المسافة px",
-            "t": "num",
-            "v": 9
-           },
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 5.5
-           }
-          }
-         },
-         {
-          "id": "8l762pf",
-          "n": "نبض سطوع وتشبّع",
-          "on": true,
-          "tpl": "selector img{animation:fkhuHu [[d]]s ease-in-out infinite}@keyframes fkhuHu{50%{filter:brightness(1.08) saturate(1.2)}}",
-          "p": {
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 4
-           }
-          }
-         },
-         {
-          "id": "1dx0329",
-          "n": "لمعة تعبر الصورة",
-          "on": true,
-          "tpl": "selector{position:relative}selector::after{content:\"\";position:absolute;top:0;left:-80%;width:45%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-22deg);animation:fksw0Sw [[d]]s ease-in-out infinite}@keyframes fksw0Sw{0%,60%{left:-80%}100%{left:150%}}",
-          "p": {
-           "d": {
-            "l": "زمن الدورة ثانية",
-            "t": "num",
-            "v": 5
-           }
-          }
-         }
-        ]
-       }
-      }
-     ]
+     "id": "y863nch",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "ce7owap",
+     "type": "heading",
+     "set": {
+      "text": "مستخلصات طبيعية لعقل أكثر نشاطاً",
+      "tag": "div",
+      "fs": {
+       "d": 18,
+       "m": 15
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#ffffff",
+      "lh": {
+       "d": 1.3
+      },
+      "bg": "#2e7d32",
+      "rad": {
+       "d": 10
+      },
+      "pad": {
+       "d": [
+        6,
+        16,
+        6,
+        16
+       ]
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 52.1
+      },
+      "fy": {
+       "d": 44
+      },
+      "fwd": {
+       "d": 41.1
+      },
+      "fh": {
+       "d": 44
+      },
+      "zi": 2,
+      "hauto": false,
+      "wsc": {
+       "d": 125
+      }
+     }
+    },
+    {
+     "id": "hy0ulme",
+     "type": "heading",
+     "set": {
+      "text": "عسل طبيعي",
+      "tag": "h1",
+      "fs": {
+       "d": 50,
+       "m": 36
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#1b4a8a",
+      "lh": {
+       "d": 1.3
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 46.6
+      },
+      "fy": {
+       "d": 99
+      },
+      "fwd": {
+       "d": 47
+      },
+      "fh": {
+       "d": 65
+      },
+      "zi": 3,
+      "stk": {
+       "id": "ce7owap",
+       "h": 44
+      }
+     }
+    },
+    {
+     "id": "bvvf7q4",
+     "type": "heading",
+     "set": {
+      "text": "لدعم التركيز",
+      "tag": "div",
+      "fs": {
+       "d": 50,
+       "m": 36
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#2e7d32",
+      "lh": {
+       "d": 1.3
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 22.1
+      },
+      "fy": {
+       "d": 99
+      },
+      "fwd": {
+       "d": 47
+      },
+      "fh": {
+       "d": 65
+      },
+      "zi": 4,
+      "stk": {
+       "id": "ce7owap",
+       "h": 44
+      }
+     }
+    },
+    {
+     "id": "mrlzz1i",
+     "type": "heading",
+     "set": {
+      "text": "وتنشيط الذاكرة",
+      "tag": "div",
+      "fs": {
+       "d": 50,
+       "m": 36
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#c8920a",
+      "lh": {
+       "d": 1.3
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 46.2
+      },
+      "fy": {
+       "d": 175
+      },
+      "fwd": {
+       "d": 47
+      },
+      "fh": {
+       "d": 65
+      },
+      "zi": 5,
+      "stk": {
+       "id": "hy0ulme",
+       "h": 65
+      }
+     }
+    },
+    {
+     "id": "vga88et",
+     "type": "button",
+     "set": {
+      "text": "اطلب الآن",
+      "kind": "link",
+      "link": "#order",
+      "bgc": "#2e7d32",
+      "color": "#fff",
+      "hbg": "#1b5e20",
+      "fs": {
+       "d": 20,
+       "m": 18
+      },
+      "fw": "900",
+      "brad": {
+       "d": 40
+      },
+      "bpad": {
+       "d": [
+        16,
+        44,
+        16,
+        44
+       ]
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fxs": [
+       {
+        "id": "br8d44l",
+        "n": "نبض حلقي للزر",
+        "on": true,
+        "tpl": "selector .pb-btn{animation:fkb0Pu [[d]]s infinite}@keyframes fkb0Pu{0%{box-shadow:0 0 0 0 rgba([[rgb]],.5)}70%{box-shadow:0 0 0 18px rgba([[rgb]],0)}100%{box-shadow:0 0 0 0 rgba([[rgb]],0)}}",
+        "p": {
+         "rgb": {
+          "l": "اللون RGB",
+          "t": "text",
+          "v": "46,125,50"
+         },
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 2.2
+         }
+        }
+       },
+       {
+        "id": "bmt44t9",
+        "n": "لمعة تعبر الزر",
+        "on": true,
+        "tpl": "selector .pb-btn{position:relative;overflow:hidden}selector .pb-btn::after{content:\"\";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-22deg);animation:fks0Sh [[d]]s ease-in-out infinite}@keyframes fks0Sh{0%,55%{left:-70%}100%{left:140%}}",
+        "p": {
+         "d": {
+          "l": "زمن الدورة ثانية",
+          "t": "num",
+          "v": 3.4
+         }
+        }
+       }
+      ],
+      "fx": {
+       "d": 64.5
+      },
+      "fy": {
+       "d": 568
+      },
+      "fwd": {
+       "d": 28.7
+      },
+      "fh": {
+       "d": 62
+      },
+      "zi": 7
+     }
+    },
+    {
+     "id": "yctpdp2",
+     "type": "image",
+     "set": {
+      "src": "assets/img/tarkiz/lp/hero.webp",
+      "alt": "عسل التركيز وتنشيط الذاكرة للأطفال — أليسوم",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 22
+      },
+      "shadow": "lg",
+      "anim": "zoomIn",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fxs": [
+       {
+        "id": "cd01bih",
+        "n": "طفو هادئ",
+        "on": true,
+        "tpl": "selector img{animation:fkhFl [[d]]s ease-in-out infinite}@keyframes fkhFl{50%{transform:translateY(-[[a]]px)}}",
+        "p": {
+         "a": {
+          "l": "المسافة px",
+          "t": "num",
+          "v": 9
+         },
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 5.5
+         }
+        }
+       },
+       {
+        "id": "8l762pf",
+        "n": "نبض سطوع وتشبّع",
+        "on": true,
+        "tpl": "selector img{animation:fkhuHu [[d]]s ease-in-out infinite}@keyframes fkhuHu{50%{filter:brightness(1.08) saturate(1.2)}}",
+        "p": {
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 4
+         }
+        }
+       },
+       {
+        "id": "1dx0329",
+        "n": "لمعة تعبر الصورة",
+        "on": true,
+        "tpl": "selector{position:relative}selector::after{content:\"\";position:absolute;top:0;left:-80%;width:45%;height:100%;pointer-events:none;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:skewX(-22deg);animation:fksw0Sw [[d]]s ease-in-out infinite}@keyframes fksw0Sw{0%,60%{left:-80%}100%{left:150%}}",
+        "p": {
+         "d": {
+          "l": "زمن الدورة ثانية",
+          "t": "num",
+          "v": 5
+         }
+        }
+       }
+      ],
+      "fx": {
+       "d": 6.4
+      },
+      "fy": {
+       "d": 44
+      },
+      "fwd": {
+       "d": 40.2
+      },
+      "fh": {
+       "d": 595
+      },
+      "zi": 2,
+      "grp": "gcro1giz",
+      "crop": {
+       "x": 0,
+       "y": -2.8,
+       "w": 100
+      }
+     }
+    },
+    {
+     "id": "k2d2fml",
+     "type": "text",
+     "set": {
+      "html": "<p></p><span style=\"background-color: transparent;\">✅️ يزيد التركيز و الذكاء&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يرفع القدرة على الحفظ&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يقوي الذاكرة&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ فرط الحركة و سرعة النمو&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ الخوف و التشتت&nbsp;</span>",
+      "fs": {
+       "d": 28,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start"
+      },
+      "color": "#000000",
+      "fw": "600",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "fx": {
+       "d": 47.7
+      },
+      "fy": {
+       "d": 251
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 287
+      },
+      "zi": 8,
+      "stk": {
+       "id": "mrlzz1i",
+       "h": 65
+      }
+     }
+    }
+   ]
   },
   {
    "id": "2x58t5t",
    "set": {
-    "layout": "boxed",
+    "bg": "#ffffff",
+    "cid": "benefits",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1140
+     "d": 1274
+    },
+    "layout": "full",
+    "mh": {
+     "d": 132
     },
     "pad": {
      "d": [
-      20,
-      20,
-      20,
-      20
-     ],
-     "m": [
-      14,
-      12,
-      14,
-      12
+      0,
+      0,
+      0,
+      0
      ]
-    },
-    "gap": {
-     "d": 28
-    },
-    "va": {
-     "d": "center"
-    },
-    "bg": "#ffffff",
-    "cid": "benefits"
+    }
    },
    "cols": [
     {
-     "id": "ojtbb02",
-     "set": {
-      "w": {
-       "d": 25,
-       "m": 50
-      }
-     },
-     "widgets": [
-      {
-       "id": "i1sn1wb",
-       "type": "iconbox",
-       "set": {
-        "icon": "ic:leaf",
-        "title": "مكوّنات طبيعية",
-        "text": "",
-        "al": {
-         "d": "center"
-        },
-        "isz": {
-         "d": 34
-        },
-        "tc": "#1a1a1a",
-        "xc": "#555",
-        "w": {
-         "d": 100
-        },
-        "tfs": {
-         "d": 16
-        },
-        "fxs": [
-         {
-          "id": "n9in7wt",
-          "n": "لون الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{color:[[c]]}",
-          "p": {
-           "c": {
-            "l": "اللون",
-            "t": "text",
-            "v": "#2e7d32"
-           }
-          }
-         },
-         {
-          "id": "iut2lqx",
-          "n": "طفو الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_0If [[d]]s ease-in-out infinite}@keyframes fki1_0If{50%{transform:translateY(-6px) rotate(-5deg)}}",
-          "p": {
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 3.6
-           }
-          }
-         }
-        ],
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      }
-     ]
-    },
-    {
-     "id": "esuvldb",
-     "set": {
-      "w": {
-       "d": 25,
-       "m": 50
-      }
-     },
-     "widgets": [
-      {
-       "id": "tz34un7",
-       "type": "iconbox",
-       "set": {
-        "icon": "ic:brain",
-        "title": "يدعم التركيز والانتباه",
-        "text": "",
-        "al": {
-         "d": "center"
-        },
-        "isz": {
-         "d": 34
-        },
-        "tc": "#1a1a1a",
-        "xc": "#555",
-        "w": {
-         "d": 100
-        },
-        "tfs": {
-         "d": 16
-        },
-        "fxs": [
-         {
-          "id": "t5n8hzr",
-          "n": "لون الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{color:[[c]]}",
-          "p": {
-           "c": {
-            "l": "اللون",
-            "t": "text",
-            "v": "#2e7d32"
-           }
-          }
-         },
-         {
-          "id": "75a0rex",
-          "n": "طفو الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_1If [[d]]s ease-in-out infinite}@keyframes fki1_1If{50%{transform:translateY(-6px) rotate(-5deg)}}",
-          "p": {
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 3.6
-           }
-          }
-         }
-        ],
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      }
-     ]
-    },
-    {
-     "id": "2ptthq6",
-     "set": {
-      "w": {
-       "d": 25,
-       "m": 50
-      }
-     },
-     "widgets": [
-      {
-       "id": "062r2ke",
-       "type": "iconbox",
-       "set": {
-        "icon": "ic:sparkle",
-        "title": "يساعد على التعلّم",
-        "text": "",
-        "al": {
-         "d": "center"
-        },
-        "isz": {
-         "d": 34
-        },
-        "tc": "#1a1a1a",
-        "xc": "#555",
-        "w": {
-         "d": 100
-        },
-        "tfs": {
-         "d": 16
-        },
-        "fxs": [
-         {
-          "id": "oh676mr",
-          "n": "لون الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{color:[[c]]}",
-          "p": {
-           "c": {
-            "l": "اللون",
-            "t": "text",
-            "v": "#2e7d32"
-           }
-          }
-         },
-         {
-          "id": "orhrguj",
-          "n": "طفو الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_2If [[d]]s ease-in-out infinite}@keyframes fki1_2If{50%{transform:translateY(-6px) rotate(-5deg)}}",
-          "p": {
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 3.6
-           }
-          }
-         }
-        ],
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.2
-       }
-      }
-     ]
-    },
-    {
-     "id": "jxgu1e6",
-     "set": {
-      "w": {
-       "d": 25,
-       "m": 50
-      }
-     },
-     "widgets": [
-      {
-       "id": "hwmg5dr",
-       "type": "iconbox",
-       "set": {
-        "icon": "ic:shield-check",
-        "title": "للأطفال من 4 إلى 18 سنة",
-        "text": "",
-        "al": {
-         "d": "center"
-        },
-        "isz": {
-         "d": 34
-        },
-        "tc": "#1a1a1a",
-        "xc": "#555",
-        "w": {
-         "d": 100
-        },
-        "tfs": {
-         "d": 16
-        },
-        "fxs": [
-         {
-          "id": "wfs68ys",
-          "n": "لون الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{color:[[c]]}",
-          "p": {
-           "c": {
-            "l": "اللون",
-            "t": "text",
-            "v": "#2e7d32"
-           }
-          }
-         },
-         {
-          "id": "2j1puyj",
-          "n": "طفو الأيقونة",
-          "on": true,
-          "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_3If [[d]]s ease-in-out infinite}@keyframes fki1_3If{50%{transform:translateY(-6px) rotate(-5deg)}}",
-          "p": {
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 3.6
-           }
-          }
-         }
-        ],
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.3
-       }
-      }
-     ]
+     "id": "61azz2g",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "i1sn1wb",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:leaf",
+      "title": "مكوّنات طبيعية",
+      "text": "",
+      "isz": {
+       "d": 34
+      },
+      "tc": "#1a1a1a",
+      "xc": "#555",
+      "tfs": {
+       "d": 16
+      },
+      "fxs": [
+       {
+        "id": "n9in7wt",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#2e7d32"
+         }
+        }
+       },
+       {
+        "id": "iut2lqx",
+        "n": "طفو الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_0If [[d]]s ease-in-out infinite}@keyframes fki1_0If{50%{transform:translateY(-6px) rotate(-5deg)}}",
+        "p": {
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 3.6
+         }
+        }
+       }
+      ],
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 65.6
+      },
+      "fy": {
+       "d": -17
+      },
+      "fwd": {
+       "d": 27.6
+      },
+      "fh": {
+       "d": 126
+      },
+      "zi": 2,
+      "grp": "gue50ug2",
+      "wsc": {
+       "d": 137
+      }
+     }
+    },
+    {
+     "id": "tz34un7",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:brain",
+      "title": "يدعم التركيز والانتباه",
+      "text": "",
+      "isz": {
+       "d": 34
+      },
+      "tc": "#1a1a1a",
+      "xc": "#555",
+      "tfs": {
+       "d": 16
+      },
+      "fxs": [
+       {
+        "id": "t5n8hzr",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#2e7d32"
+         }
+        }
+       },
+       {
+        "id": "75a0rex",
+        "n": "طفو الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_1If [[d]]s ease-in-out infinite}@keyframes fki1_1If{50%{transform:translateY(-6px) rotate(-5deg)}}",
+        "p": {
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 3.6
+         }
+        }
+       }
+      ],
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 51.1
+      },
+      "fy": {
+       "d": 20
+      },
+      "fwd": {
+       "d": 20.2
+      },
+      "fh": {
+       "d": 92
+      },
+      "zi": 2,
+      "grp": "g4ub2b3f"
+     }
+    },
+    {
+     "id": "062r2ke",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:sparkle",
+      "title": "يساعد على التعلّم",
+      "text": "",
+      "isz": {
+       "d": 34
+      },
+      "tc": "#1a1a1a",
+      "xc": "#555",
+      "tfs": {
+       "d": 16
+      },
+      "fxs": [
+       {
+        "id": "oh676mr",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#2e7d32"
+         }
+        }
+       },
+       {
+        "id": "orhrguj",
+        "n": "طفو الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_2If [[d]]s ease-in-out infinite}@keyframes fki1_2If{50%{transform:translateY(-6px) rotate(-5deg)}}",
+        "p": {
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 3.6
+         }
+        }
+       }
+      ],
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.2,
+      "fx": {
+       "d": 28.7
+      },
+      "fy": {
+       "d": 20
+      },
+      "fwd": {
+       "d": 20.2
+      },
+      "fh": {
+       "d": 92
+      },
+      "zi": 2,
+      "grp": "gywrv02g"
+     }
+    },
+    {
+     "id": "hwmg5dr",
+     "type": "iconbox",
+     "set": {
+      "icon": "ic:shield-check",
+      "title": "للأطفال من 4 إلى 18 سنة",
+      "text": "",
+      "isz": {
+       "d": 34
+      },
+      "tc": "#1a1a1a",
+      "xc": "#555",
+      "tfs": {
+       "d": 16
+      },
+      "fxs": [
+       {
+        "id": "wfs68ys",
+        "n": "لون الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{color:[[c]]}",
+        "p": {
+         "c": {
+          "l": "اللون",
+          "t": "text",
+          "v": "#2e7d32"
+         }
+        }
+       },
+       {
+        "id": "2j1puyj",
+        "n": "طفو الأيقونة",
+        "on": true,
+        "tpl": "selector .pb-ibi{display:inline-block;animation:fki1_3If [[d]]s ease-in-out infinite}@keyframes fki1_3If{50%{transform:translateY(-6px) rotate(-5deg)}}",
+        "p": {
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 3.6
+         }
+        }
+       }
+      ],
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.3,
+      "fx": {
+       "d": 6.4
+      },
+      "fy": {
+       "d": 20
+      },
+      "fwd": {
+       "d": 20.2
+      },
+      "fh": {
+       "d": 92
+      },
+      "zi": 2,
+      "grp": "gxgxlu4v"
+     }
+    }
+   ]
   },
   {
    "id": "1z5zaff",
@@ -1284,304 +1366,916 @@
   {
    "id": "eeewldh",
    "set": {
-    "layout": "boxed",
-    "cw": {
-     "d": 1140
-    },
-    "pad": {
-     "d": [
-      48,
-      20,
-      48,
-      20
-     ],
-     "m": [
-      30,
-      16,
-      30,
-      16
-     ]
-    },
-    "gap": {
-     "d": 28
-    },
-    "va": {
-     "d": "center"
-    },
     "grad1": "#eef8e8",
     "grad2": "#ffffff",
     "gradAng": 160,
-    "cid": "solution"
+    "cid": "solution",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1280,
+    "cw": {
+     "d": 1280
+    },
+    "layout": "full",
+    "mh": {
+     "d": 964
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    }
    },
    "cols": [
     {
-     "id": "r7pb77u",
-     "set": {
-      "w": {
-       "d": 46
-      },
-      "va": "center"
-     },
-     "widgets": [
-      {
-       "id": "n2lshux",
-       "type": "image",
-       "set": {
-        "src": "assets/img/tarkiz/presentation/03.webp",
-        "alt": "عسل التركيز مع مكوّناته الطبيعية",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 22
-        },
-        "shadow": "lg",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "fxs": [
-         {
-          "id": "jufj6yr",
-          "n": "ميلان وتكبير بالمرور",
-          "on": true,
-          "tpl": "selector img{transition:transform .4s cubic-bezier(.2,.8,.2,1),filter .4s}selector img:hover{transform:scale(1.1) rotate(-3deg);filter:saturate(1.25) drop-shadow(0 10px 18px rgba(0,0,0,.25))}",
-          "p": {}
-         },
-         {
-          "id": "hv53vsf",
-          "n": "نبض سطوع وتشبّع",
-          "on": true,
-          "tpl": "selector img{animation:fkhu4_0Hu [[d]]s ease-in-out infinite}@keyframes fkhu4_0Hu{50%{filter:brightness(1.08) saturate(1.2)}}",
-          "p": {
-           "d": {
-            "l": "الدورة ثانية",
-            "t": "num",
-            "v": 4
-           }
-          }
-         }
-        ]
-       }
-      }
-     ]
-    },
-    {
-     "id": "xivwn39",
-     "set": {
-      "w": {
-       "d": 54
-      },
-      "va": "center"
-     },
-     "widgets": [
-      {
-       "id": "syqi5q0",
-       "type": "heading",
-       "set": {
-        "text": "الحل",
-        "tag": "div",
-        "fs": {
-         "d": 20,
-         "m": 18
-        },
-        "fw": "900",
-        "ta": {
-         "d": "start"
-        },
-        "color": "#2e7d32",
-        "lh": {
-         "d": 1.3
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      },
-      {
-       "id": "4esg99x",
-       "type": "heading",
-       "set": {
-        "text": "عسل أليسوم لدعم التركيز والذاكرة",
-        "tag": "h2",
-        "fs": {
-         "d": 36,
-         "m": 26
-        },
-        "fw": "900",
-        "ta": {
-         "d": "start",
-         "m": "center"
-        },
-        "color": "#1b4a8a",
-        "lh": {
-         "d": 1.3
-        },
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      },
-      {
-       "id": "46v6cu5",
-       "type": "text",
-       "set": {
-        "html": "<p></p><p>مزيج طبيعي من العسل وخلاصات أعشاب ومكوّنات نباتية، مناسب للأطفال من 4 إلى 18 سنة ضمن روتينهم اليومي.</p>",
-        "fs": {
-         "d": 18,
-         "m": 16
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start",
-         "m": "center"
-        },
-        "color": "#000000",
-        "fw": "600",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "hauto": false,
-        "mh": {
-         "m": 112
-        },
-        "bg": "#c1dafb",
-        "rad": {
-         "m": 23
-        },
-        "al": {
-         "d": "start"
-        },
-        "w": {
-         "d": 100
-        },
-        "wsc": {
-         "d": 126
-        }
-       }
-      },
-      {
-       "id": "bcaxbq6",
-       "type": "text",
-       "set": {
-        "html": "<p></p>",
-        "fs": {
-         "d": 18,
-         "m": 16
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start",
-         "m": "center"
-        },
-        "color": "#000000",
-        "fw": "600",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "hauto": false,
-        "mh": {
-         "m": 68
-        },
-        "bg": "#c1dafb",
-        "rad": {
-         "m": 23
-        }
-       }
-      },
-      {
-       "id": "y95fgyt",
-       "type": "text",
-       "set": {
-        "html": "<p></p><p>يتكون من عسل البرتقال +خلاصة الاعشاب سائلة .</p>",
-        "fs": {
-         "d": 18,
-         "m": 16
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start",
-         "m": "center"
-        },
-        "color": "#000000",
-        "fw": "600",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "hauto": false,
-        "mh": {
-         "m": 65
-        },
-        "mar": {
-         "m": [
-          30,
-          0,
-          0,
-          0
-         ]
-        },
-        "bg": "#c1dafb",
-        "rad": {
-         "m": 23
-        }
-       }
-      },
-      {
-       "id": "k2d2fml",
-       "type": "text",
-       "set": {
-        "html": "<p></p><span style=\"background-color: transparent;\">✅️ يزيد التركيز و الذكاء&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يرفع القدرة على الحفظ&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يقوي الذاكرة&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ فرط الحركة و سرعة النمو&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ الخوف و التشتت&nbsp;</span>",
-        "fs": {
-         "d": 28,
-         "m": 16
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#000000",
-        "fw": "600",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "hauto": false,
-        "mh": {
-         "m": 173
-        }
-       }
-      },
-      {
-       "id": "h4ql4sp",
-       "type": "text",
-       "set": {
-        "html": "<p><br></p>",
-        "fs": {
-         "d": 18,
-         "m": 16
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#444",
-        "fw": "600",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      }
-     ]
+     "id": "4tsh1ty",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "n2lshux",
+     "type": "image",
+     "set": {
+      "src": "assets/img/tarkiz/presentation/03.webp",
+      "alt": "عسل التركيز مع مكوّناته الطبيعية",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 22
+      },
+      "shadow": "lg",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fxs": [
+       {
+        "id": "jufj6yr",
+        "n": "ميلان وتكبير بالمرور",
+        "on": true,
+        "tpl": "selector img{transition:transform .4s cubic-bezier(.2,.8,.2,1),filter .4s}selector img:hover{transform:scale(1.1) rotate(-3deg);filter:saturate(1.25) drop-shadow(0 10px 18px rgba(0,0,0,.25))}",
+        "p": {}
+       },
+       {
+        "id": "hv53vsf",
+        "n": "نبض سطوع وتشبّع",
+        "on": true,
+        "tpl": "selector img{animation:fkhu4_0Hu [[d]]s ease-in-out infinite}@keyframes fkhu4_0Hu{50%{filter:brightness(1.08) saturate(1.2)}}",
+        "p": {
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 4
+         }
+        }
+       }
+      ],
+      "fx": {
+       "d": 54.7
+      },
+      "fy": {
+       "d": 121
+      },
+      "fwd": {
+       "d": 38.8
+      },
+      "fh": {
+       "d": 496
+      },
+      "zi": 2,
+      "grp": "g16ozha9"
+     }
+    },
+    {
+     "id": "syqi5q0",
+     "type": "heading",
+     "set": {
+      "text": "لماذا يفضله الأولياء ",
+      "tag": "div",
+      "fs": {
+       "d": 32,
+       "m": 18
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#2e7d32",
+      "lh": {
+       "d": 1.3
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 48
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 42
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "4esg99x",
+     "type": "heading",
+     "set": {
+      "text": "عسل أليسوم لدعم التركيز والذاكرة",
+      "tag": "h2",
+      "fs": {
+       "d": 36,
+       "m": 26
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#1b4a8a",
+      "lh": {
+       "d": 1.3
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 106
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 47
+      },
+      "zi": 3
+     }
+    },
+    {
+     "id": "46v6cu5",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; مزيج طبيعي من العسل وخلاصات أعشاب ومكوّنات نباتية،&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>",
+      "fs": {
+       "d": 17,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "wsc": {
+       "d": 126
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 6.9
+      },
+      "fy": {
+       "d": 168
+      },
+      "fwd": {
+       "d": 46.1
+      },
+      "fh": {
+       "d": 80
+      },
+      "zi": 4
+     }
+    },
+    {
+     "id": "bcaxbq6",
+     "type": "text",
+     "set": {
+      "html": "<p></p>",
+      "fs": {
+       "d": 18,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "600",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23
+      },
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 264
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 0
+      },
+      "zi": 5
+     }
+    },
+    {
+     "id": "y95fgyt",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; مناسب للأطفال من 4 إلى 18 سنة ضمن روتينهم اليومي.</p>",
+      "fs": {
+       "d": 22,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 7
+      },
+      "fy": {
+       "d": 255
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 77
+      },
+      "zi": 6
+     }
+    },
+    {
+     "id": "y658asi",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; ملائم للأطفال دون أي اعراض جانبية&nbsp;</p>",
+      "fs": {
+       "d": 22,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 6.9
+      },
+      "fy": {
+       "d": 343
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 77
+      },
+      "zi": 7,
+      "stk": {
+       "id": "y95fgyt",
+       "h": 77
+      }
+     }
+    },
+    {
+     "id": "2e4khey",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; امتصاص سريع فعالية فورية</p>",
+      "fs": {
+       "d": 22,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 6.8
+      },
+      "fy": {
+       "d": 431
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 77
+      },
+      "zi": 8,
+      "stk": {
+       "id": "y658asi",
+       "h": 77
+      }
+     }
+    },
+    {
+     "id": "jr30g1q",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; ذوق العسل لذيذ يحبه الطفل</p>",
+      "fs": {
+       "d": 22,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 6.9
+      },
+      "fy": {
+       "d": 520
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 77
+      },
+      "zi": 9
+     }
+    },
+    {
+     "id": "h4ql4sp",
+     "type": "text",
+     "set": {
+      "html": "<p><br></p>",
+      "fs": {
+       "d": 18,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start"
+      },
+      "color": "#444",
+      "fw": "600",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 636
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 34
+      },
+      "zi": 8
+     }
+    }
+   ]
+  },
+  {
+   "id": "rwwrud7",
+   "set": {
+    "grad1": "#eef8e8",
+    "grad2": "#ffffff",
+    "gradAng": 160,
+    "cid": "solution",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1280,
+    "cw": {
+     "d": 1280
+    },
+    "layout": "full",
+    "mh": {
+     "d": 807
+    },
+    "pad": {
+     "d": [
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "cols": [
+    {
+     "id": "3hngro9",
+     "set": {},
+     "widgets": []
+    }
+   ],
+   "free": [
+    {
+     "id": "vtr0zul",
+     "type": "image",
+     "set": {
+      "src": "assets/img/tarkiz/presentation/03.webp",
+      "alt": "عسل التركيز مع مكوّناته الطبيعية",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 22
+      },
+      "shadow": "lg",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fxs": [
+       {
+        "id": "jufj6yr",
+        "n": "ميلان وتكبير بالمرور",
+        "on": true,
+        "tpl": "selector img{transition:transform .4s cubic-bezier(.2,.8,.2,1),filter .4s}selector img:hover{transform:scale(1.1) rotate(-3deg);filter:saturate(1.25) drop-shadow(0 10px 18px rgba(0,0,0,.25))}",
+        "p": {}
+       },
+       {
+        "id": "hv53vsf",
+        "n": "نبض سطوع وتشبّع",
+        "on": true,
+        "tpl": "selector img{animation:fkhu4_0Hu [[d]]s ease-in-out infinite}@keyframes fkhu4_0Hu{50%{filter:brightness(1.08) saturate(1.2)}}",
+        "p": {
+         "d": {
+          "l": "الدورة ثانية",
+          "t": "num",
+          "v": 4
+         }
+        }
+       }
+      ],
+      "fx": {
+       "d": 54.7
+      },
+      "fy": {
+       "d": 121
+      },
+      "fwd": {
+       "d": 38.8
+      },
+      "fh": {
+       "d": 496
+      },
+      "zi": 2,
+      "grp": "gagqf06n"
+     }
+    },
+    {
+     "id": "8yuq8hy",
+     "type": "heading",
+     "set": {
+      "text": "لماذا يفضله الأولياء ",
+      "tag": "div",
+      "fs": {
+       "d": 32,
+       "m": 18
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start"
+      },
+      "color": "#2e7d32",
+      "lh": {
+       "d": 1.3
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 48
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 42
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "cq0pyg7",
+     "type": "heading",
+     "set": {
+      "text": "عسل أليسوم لدعم التركيز والذاكرة",
+      "tag": "h2",
+      "fs": {
+       "d": 36,
+       "m": 26
+      },
+      "fw": "900",
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#1b4a8a",
+      "lh": {
+       "d": 1.3
+      },
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 106
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 47
+      },
+      "zi": 3
+     }
+    },
+    {
+     "id": "s7mvhb0",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; مزيج طبيعي من العسل وخلاصات أعشاب ومكوّنات نباتية،&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;</p>",
+      "fs": {
+       "d": 17,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "wsc": {
+       "d": 126
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 6.9
+      },
+      "fy": {
+       "d": 168
+      },
+      "fwd": {
+       "d": 46.1
+      },
+      "fh": {
+       "d": 99
+      },
+      "zi": 4
+     }
+    },
+    {
+     "id": "gnj4sun",
+     "type": "text",
+     "set": {
+      "html": "<p></p>",
+      "fs": {
+       "d": 18,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "600",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23
+      },
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 283
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 0
+      },
+      "zi": 5
+     }
+    },
+    {
+     "id": "69xz9vu",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; مناسب للأطفال من 4 إلى 18 سنة ضمن روتينهم اليومي.</p>",
+      "fs": {
+       "d": 22,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 7
+      },
+      "fy": {
+       "d": 274
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 77
+      },
+      "zi": 6
+     }
+    },
+    {
+     "id": "yh76gsx",
+     "type": "text",
+     "set": {
+      "html": "<p></p><p>&nbsp; ملائم للأطفال دون أي اعراض جانبية&nbsp;</p>",
+      "fs": {
+       "d": 22,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#000000",
+      "fw": "700",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "bg": "#c1dafb",
+      "rad": {
+       "m": 23,
+       "d": 0
+      },
+      "radc": [
+       48,
+       0,
+       "",
+       ""
+      ],
+      "fx": {
+       "d": 6.8
+      },
+      "fy": {
+       "d": 362
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 77
+      },
+      "zi": 7,
+      "stk": {
+       "id": "y95fgyt",
+       "h": 77
+      }
+     }
+    },
+    {
+     "id": "kbhizu3",
+     "type": "text",
+     "set": {
+      "html": "<p></p><span style=\"background-color: transparent;\">✅️ يزيد التركيز و الذكاء&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يرفع القدرة على الحفظ&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ يقوي الذاكرة&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ فرط الحركة و سرعة النمو&nbsp;</span><br><span style=\"background-color: transparent;\">✅️ الخوف و التشتت&nbsp;</span>",
+      "fs": {
+       "d": 28,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start"
+      },
+      "color": "#000000",
+      "fw": "600",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "hauto": false,
+      "fx": {
+       "d": 7
+      },
+      "fy": {
+       "d": 479
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 288
+      },
+      "zi": 7
+     }
+    },
+    {
+     "id": "ghwrjr8",
+     "type": "text",
+     "set": {
+      "html": "<p><br></p>",
+      "fs": {
+       "d": 18,
+       "m": 16
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start"
+      },
+      "color": "#444",
+      "fw": "600",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 7.1
+      },
+      "fy": {
+       "d": 655
+      },
+      "fwd": {
+       "d": 45.9
+      },
+      "fh": {
+       "d": 34
+      },
+      "zi": 8
+     }
+    }
+   ]
   },
   {
    "id": "hgtuzyn",
