@@ -1115,9 +1115,9 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const rt = $("pbx-rt"), st = $("pbx-stage"), ovl = $("pbx-ovl"); if (!rt || !st || !editing || rt.style.display === "none") return;
     const sr = st.getBoundingClientRect(), bx = ovl && ovl.querySelector(".pbx-box"), br = (bx || editing.el).getBoundingClientRect(), bar = $("pbx-qbar"), qb = bar && bar.style.display !== "none" ? bar.getBoundingClientRect() : null, rh = rt.offsetHeight || 40, rw = rt.offsetWidth || 300;
     let top;
-    if (qb && qb.bottom <= br.top + 2) top = qb.top - rh - 4;           // الشريط العلوي فوق العنصر ← شريط النص فوقه
-    else if (qb && qb.top >= br.bottom - 2) top = qb.bottom + 4;         // الشريط تحت العنصر ← شريط النص تحته
-    else top = br.top - rh - 8;
+    const qBot = qb ? qb.bottom + 4 : sr.top + 2;
+    if (br.top - rh - 8 >= qBot) top = br.top - rh - 8;                 // الشريط العلوي ثابت أعلى المنصة ← شريط النص فوق العنصر تحته مباشرة
+    else top = br.bottom + 8;
     if (top < sr.top + 2) top = (qb && qb.top >= br.bottom - 2 ? qb.bottom : br.bottom) + 8;
     if (top + rh > sr.bottom - 2) top = Math.max(sr.top + 2, br.top - rh - 8);
     rt.style.top = top + "px"; rt.style.left = Math.max(sr.left + 4, Math.min(br.left, sr.right - rw - 4)) + "px";
@@ -1537,16 +1537,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const bar = $("pbx-qbar"), ovl = $("pbx-ovl"), st = $("pbx-stage"); if (!bar || !ovl || !st || bar.style.display === "none") return;
     const o = ovl.getBoundingClientRect(), r = st.getBoundingClientRect(), gut = isMob() ? 0 : 132; bar.style.maxWidth = Math.max(240, o.width - gut - 16) + "px"; bar.style.width = isMob() ? (o.width - 16) + "px" : "";
     let left = o.left + 8, top = r.top + (isMob() ? 6 : 8);
-    /* فوق العنصر المحدّد (وفوق شريطه العائم) كي لا يغطي الصورة؛ تحته إن لم يتسع المكان؛ وإلا أعلى المنصة */
-    const bx = ovl.querySelector(".pbx-box"), ft = ovl.querySelector(".pbx-ft"), bh = bar.offsetHeight || 44, bw = bar.offsetWidth || 0;
-    if (bx) {
-      const rs = [bx.getBoundingClientRect()]; if (ft) rs.push(ft.getBoundingClientRect());
-      const U = { t: Math.min(...rs.map(q => q.top)), b: Math.max(...rs.map(q => q.bottom)), l: rs[0].left };
-      const above = U.t - bh - 8, below = U.b + 8;
-      if (above >= r.top + 4) { top = above; left = U.l; }
-      else if (below + bh <= r.bottom - 4) { top = below; left = U.l; }
-      left = Math.max(r.left + 4, Math.min(left, r.right - bw - 4));
-    }
+    /* ثابت أعلى المنصة ما دام عنصر محدَّداً (لا يتبع العنصر ولا يتحرك مع التمرير) */
+    const bw = bar.offsetWidth || 0; left = Math.max(r.left + 4, Math.min(left, r.right - bw - 4));
     bar.style.left = left + "px"; bar.style.top = top + "px";
     if (editing) placeRt();
   }
