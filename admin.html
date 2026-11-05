@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.810">
+<meta name="admin-version" content="1.89.811">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7537,32 +7537,44 @@ const Admin = {
     zrexpress: {
       name: "ZR Express",
       confidence: "experimental",
-      note: "⚠️ تجريبي — التوثيق العام لهذه الشركة محدود، يُرجى التحقق من صيغة الطلب الصحيحة مع دعم ZR Express قبل الاعتماد عليه فعلياً.",
+      note: "⚠️ تجريبي — واجهة ZR Express (Procolis): ولّد Token وClé من صفحة «Développement» في حسابك ثم الصقهما هنا. جرّب طلباً واحداً حقيقياً وراجعه في لوحة الشركة قبل الاعتماد عليه.",
       fields: [
         { key:"token", label:"Token", type:"password" },
-        { key:"key", label:"Key", type:"password" },
+        { key:"key", label:"Clé (Key)", type:"password" },
       ],
+      base: "https://procolis.com/api_v1",
+      hdr(cfg){ const c = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); return { "token": c(cfg.token), "key": c(cfg.key), "Content-Type": "application/json" }; },
       buildRequest(cfg, order){
+        const loc = v=>{ let d = String(v||"").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
+        const w = Admin.wCo(order.wilaya), ph = loc(order.phone), p2 = loc(order.extra && order.extra["📞 هاتف 2"]);
+        if(!w || !w.id){ throw new Error("ولاية «" + (order.wilaya || "؟") + "» غير معروفة لتحديد رقمها عند ZR Express"); }
+        const items = String(order.items||"").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250);
         return {
-          url: "https://procolis.com/api_v1/add_colis",
-          method: "POST",
-          headers: { "token": cfg.token, "key": cfg.key, "Content-Type": "application/json" },
+          url: this.base + "/add_colis", method: "POST", headers: this.hdr(cfg),
           body: JSON.stringify({ Colis: [{
-            Tracking: String(order.id),
-            TypeLivraison: "0",
-            TypeColis: "0",
-            Confrimee: "1",
-            Client: order.name || "",
-            MobileA: order.phone || "",
-            MobileB: "",
-            Adresse: order.address || (order.wilaya||""),
-            IDWilaya: "",
-            Commune: order.commune || "",
-            Total: String(Number(order.total)||0),
-            Note: "",
-            TProduit: order.items || "",
+            Tracking: "", TypeLivraison: order.dtype === "stop" ? "1" : "0", TypeColis: order.extra && order.extra["🔄 استبدال"] ? "1" : "0", Confrimee: "1",
+            Client: order.name || "", MobileA: ph, MobileB: p2 && p2 !== ph ? p2 : "",
+            Adresse: String(order.address || order.commune || order.wilaya || "").slice(0, 250), IDWilaya: String(w.id), Commune: order.commune || "",
+            Total: String(Math.max(0, Math.round(Number(order.total) || 0))), Note: "", TProduit: items || "Produit", id_Externe: String(order.id), Source: "Alyssum",
           }]}),
         };
+      },
+      /* الردّ: {Colis:[{Tracking, MessageRetour}]} — الرفض يعود HTTP 200 مع MessageRetour (Good = نجاح) */
+      row(json){ const r = json && (Array.isArray(json.Colis) ? json.Colis[0] : (Array.isArray(json) ? json[0] : json)); return r && typeof r === "object" ? r : {}; },
+      parseSent(json){ const r = this.row(json), m = String(r.MessageRetour || r.message || "").trim(); return (r.Tracking && (!m || /^good$/i.test(m))) ? String(r.Tracking) : ""; },
+      parseError(json){ const r = this.row(json), m = String(r.MessageRetour || r.message || "").trim(); if(/double tracking/i.test(m)) return "طرد مكرّر عند ZR Express (Double Tracking) — لا يُرسَل ثانية"; return /^good$/i.test(m) ? "" : m; },
+      pingRequest(cfg){ return { url: this.base + "/token", method: "GET", headers: this.hdr(cfg) }; },
+      trackRequest(cfg, tracking){ return { url: this.base + "/lire", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ Colis: [{ Tracking: String(tracking) }] }) }; },
+      parseStatus(json){ const r = this.row(json); return String(r.Situation || r.situation || r.Statut || r.status || "").trim(); },
+      mapStatus(raw){
+        const t = String(raw||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[_\-\[\]()]/g, " ").replace(/\s+/g, " ").trim(); if(!t) return null;
+        if(/reporte|appel sans reponse|relance|injoignable|ne repond pas/.test(t)) return "__alert";         // محاولة فاشلة: تنبيه بلا تغيير
+        if(/en livraison|livraison en cours|out for delivery/.test(t)) return "expediee";
+        if(/annul|retour|refus|echec/.test(t)) return "echec";
+        if(/^livr|livree|delivered|encaisse/.test(t)) return "livree";
+        if(/pret a expedier|en preparation|en traitement|prepar/.test(t)) return "confirmee";
+        if(/dispatch|au bureau|echange|transit|centre|sorti|ramass|arriv|en cours|expedi/.test(t)) return "expediee";
+        return null;
       },
     },
     maystro: {
@@ -9031,7 +9043,19 @@ const Admin = {
     const key = this.editingDeliveryKey, co = this.allDeliveryCompanies()[key]; if(!co || !co.pingRequest){ toast("هذه الشركة لا تدعم اختبار المفاتيح"); return }
     const clean = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g,"");
     const cfg = Object.assign({}, this.deliveryCfg[key]);
-    (co.fields||[]).forEach(f=>{ const el = $f("dlv-f-" + f.key); if(el && f.type !== "select" && (f.key === "apiId" || f.key === "apiToken")) cfg[f.key] = clean(el.value); });
+    (co.fields||[]).forEach(f=>{ const el = $f("dlv-f-" + f.key); if(el && f.type !== "select" && (f.key === "apiId" || f.key === "apiToken" || (key === "zrexpress" && (f.key === "token" || f.key === "key")))) cfg[f.key] = clean(el.value); });
+    if(key === "zrexpress"){                                                              // ZR Express: Token + Clé، فحص قراءة فقط GET /token
+      if(!cfg.token || !cfg.key){ toast("⚠️ اكتب Token وClé أولاً"); return }
+      const b0 = $f("dlv-test-btn"); if(b0){ b0.disabled = true; b0.textContent = "… يجري الفحص" }
+      let r0; try{ r0 = await this.courierFetch(co.pingRequest(cfg)); }catch(e){ r0 = null }
+      if(b0){ b0.disabled = false; b0.textContent = "🧪 اختبر المفاتيح قبل الحفظ" }
+      if(!r0) return this.showNotice("⚠️ تعذّر الاتصال بالشركة", "لم نصل إلى خادم الشركة — أعد المحاولة بعد قليل.");
+      let st = ""; try{ const j = JSON.parse(r0.text); st = String((j && (j.Statut || j.statut || j.status)) || ""); }catch(e){}
+      if(r0.ok && /acc[eè]s activ/i.test(st)) return this.showNotice("✅ المفاتيح صحيحة", "قبلتها ZR Express والحساب مفعّل للربط. احفظ الإعدادات ثم جرّب إرسال طلب واحد.");
+      if(r0.ok) return this.showNotice("⚠️ الحساب غير مفعّل للربط", "ردّت الشركة: «" + nE(st || "بلا حالة") + "» — راجع صفحة Développement في حسابك أو تواصل مع دعم ZR.");
+      if(r0.status === 401 || r0.status === 403) return this.showNotice("🔴 ZR Express ترفض هذه المفاتيح (" + r0.status + ")", "ولّد Token وClé جديدين من صفحة Développement (زر Générer) وانسخهما كاملين دون مسافات.");
+      return this.showNotice("⚠️ رد غير متوقع من الشركة (" + r0.status + ")", "لا يمكن الحكم على المفاتيح الآن.");
+    }
     if(!cfg.apiId || !cfg.apiToken){ toast("⚠️ اكتب المعرّف والتوكن أولاً"); return }
     const b = $f("dlv-test-btn"); if(b){ b.disabled = true; b.textContent = "… يجري الفحص" }
     let r; try{ r = await this.courierFetch(co.pingRequest(cfg)); }catch(e){ r = null }
