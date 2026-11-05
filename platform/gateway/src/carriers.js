@@ -218,6 +218,93 @@ class ZRExpress extends Adapter {
   }
 }
 
+/* ───── ZR Express — المنصة الجديدة api.zrexpress.app: X-Api-Key + X-Tenant، أقاليم UUID، الطرد يُنشأ «استلام الطلب» حتى يُعيَّن stateId الجاهز للإرسال ───── */
+class ZRExpressApp extends Adapter {
+  static BASE = "https://api.zrexpress.app/api/v1";
+  static fields() {
+    return [{ key: "apiKey", label: "X-Api-Key (اللوحة ← API Rest ← Token API)", secret: true }, { key: "tenant", label: "X-Tenant (معرّف الحساب)", secret: false },
+      { key: "autoDispatch", label: "جعل الطرد «جاهز للإرسال» تلقائياً بعد إنشائه (1 افتراضي، 0 يبقى «استلام الطلب»)", secret: false, required: false }];
+  }
+  h() { return { "X-Api-Key": this.cred.apiKey, "X-Tenant": this.cred.tenant, "Content-Type": "application/json", Accept: "application/json" }; }
+  async ping() {
+    return this.probe(async () => {
+      const r = await this.send("POST", ZRExpressApp.BASE + "/territories/search", this.h(), { pageNumber: 1, pageSize: 1 });
+      return r.ok ? [true, "المفتاح صالح"] : [null, `ردّ غير متوقع (HTTP ${r.status})`];
+    });
+  }
+  /** كل الأقاليم (ولايات وبلديات) في طلب واحد ثم تُخزَّن في ذاكرة المحوّل: [{id, code, name, level, parentId, home, desk}] */
+  async territories() {
+    if (this._t) return this._t;
+    const r = await this.send("POST", ZRExpressApp.BASE + "/territories/search", this.h(), { pageNumber: 1, pageSize: 5000, orderBy: ["code asc"] });
+    const rows = Array.isArray(r.json()?.items) ? r.json().items : [];
+    return (this._t = rows.filter((t) => t && typeof t === "object" && t.id).map((t) => ({ id: String(t.id), code: t.code ?? null, name: String(t.name ?? ""), level: String(t.level ?? "").toLowerCase(),
+      parentId: t.parentId ? String(t.parentId) : null, home: (t.delivery ?? t.deliveryCapability ?? {}).hasHomeDelivery !== false })));
+  }
+  isWilaya(t) { return /wilaya|city|province/.test(t.level) || (t.parentId === null && !/commun|district/.test(t.level)); }
+  wilayaOf(ts, p) {
+    const ws = ts.filter((t) => this.isWilaya(t));
+    return ws.find((t) => +t.code === +p.wilayaCode) ?? ws.find((t) => +t.code === +p.legacyWilaya) ?? ws.find((t) => ck(t.name) === ck(p.wilayaName)) ?? null;
+  }
+  async discover(wilayas, want = {}) {
+    const d = Adapter.emptyDiscovery(["ZR Express الجديدة: الأقاليم تُجلب بطلب واحد؛ التعريفة والطرود غير مقروءة بعد (تجريبي)"]);
+    try {
+      if (want.communes) { const ts = await this.territories(); for (const w of wilayas) { const wt = ts.find((t) => this.isWilaya(t) && +t.code === +w); if (wt) d.communes[+w] = ts.filter((t) => t.parentId === wt.id).map((t) => ({ name: t.name, id: t.id })); } }
+    } catch (e) { if (e instanceof ApiError) d.notes.push(e.message); else throw e; }
+    return d;
+  }
+  /** معرّف الحالة «جاهز للإرسال» من سير العمل الافتراضي، أو null إن لم يُعثر عليه (يُنشأ الطرد عندئذٍ «استلام الطلب» مع تنبيه) */
+  async readyStateId() {
+    if (this._rs !== undefined) return this._rs;
+    this._rs = null;
+    try {
+      const r = await this.send("POST", ZRExpressApp.BASE + "/workflows/search", this.h(), { pageNumber: 1, pageSize: 20, onlyDefault: true });
+      const wfs = Array.isArray(r.json()?.items) ? r.json().items : [];
+      for (const w of wfs) for (const st of Array.isArray(w?.states) ? w.states : []) {
+        const t = `${st.name ?? ""} ${st.description ?? ""}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ");
+        if (/ready ?to ?dispatch|pret a (expedier|dispatch|etre)/.test(t)) { this._rs = String(st.id); return this._rs; }
+      }
+    } catch (e) { if (!(e instanceof ApiError)) throw e; }
+    return this._rs;
+  }
+  async create(p) {
+    if (p.stopDesk) return fail("التسليم لنقطة استلام (Stop Desk) غير مدعوم بعد في ZR Express الجديدة — اختر التوصيل إلى المنزل");
+    if (Math.round(p.total) > 150000) return fail("ZR Express تقبل 150,000 دج كحدّ أقصى للطرد (شاملاً التوصيل)");
+    const ts = await this.territories();
+    if (!ts.length) return fail("تعذّر جلب أقاليم ZR Express (راجع المفتاح ومعرّف الحساب أو أعد المحاولة)");
+    const w = this.wilayaOf(ts, p); if (!w) return fail(`ولاية ${p.wilayaName} غير موجودة في قائمة ZR Express`);
+    const list = ts.filter((t) => t.parentId === w.id).map((t) => ({ name: t.name, id: t.id }));
+    const m = list.length ? this.resolveCommune(list, p, "ZR Express") : { name: p.commune, id: w.id }; if (m.error) return fail(m.error);
+    const items = p.productsText(250) || "Produit", price = p.priceWithoutShipping() || Math.round(p.total);
+    const body = { customer: { customerId: crypto.randomUUID(), name: p.name, phone: { number1: "+213" + p.localPhone().slice(1), ...(p.phone2 ? { number2: "+213" + p.localPhone(p.phone2).slice(1) } : {}) } },
+      deliveryAddress: { cityTerritoryId: w.id, districtTerritoryId: m.id, street: clip(p.address || p.commune, 250) },
+      orderedProducts: [{ productName: clip(items, 100), unitPrice: price, quantity: 1, stockType: "none" }], deliveryType: "home",
+      description: clip(`${items}${p.note ? " — " + p.note : ""}`, 250).padEnd(2, "."), amount: Math.round(p.total), ExternalId: clip(p.orderRef, 100) };
+    let warn = "";
+    if ((this.cred.autoDispatch ?? "1") !== "0") { const sid = await this.readyStateId(); if (sid) body.stateId = sid; else warn = "أُنشئ الطرد بحالة «استلام الطلب» — حوّله إلى «جاهز للإرسال» من لوحة ZR ليقبله المركز"; }
+    const r = await this.send("POST", ZRExpressApp.BASE + "/parcels", this.h(), body); const j = r.json() ?? {};
+    if (r.status === 400 || r.status === 404 || r.status === 409) { const why = (Array.isArray(j.errors) ? j.errors.map((e) => e.description).filter(Boolean).join(" — ") : "") || pick(j, "detail", "title"); return fail(why || "HTTP " + r.status, j); }
+    const id = pick(j, "id"); if (!(r.ok && id)) return fail(pick(j, "detail", "title", "message") || "HTTP " + r.status, j);
+    let trk = ""; try { trk = pick((await this.send("GET", `${ZRExpressApp.BASE}/parcels/${encodeURIComponent(id)}`, this.h())).json() ?? {}, "trackingNumber"); } catch (e) { if (!(e instanceof ApiError)) throw e; }
+    return ok(trk || id, null, j, trk ? warn : (warn ? warn + " — " : "") + "لم يصل رقم التتبع بعد: يُستعمل معرّف الطرد مؤقتاً");
+  }
+  async track(trk) {
+    const r = await this.send("GET", `${ZRExpressApp.BASE}/parcels/${encodeURIComponent(trk)}`, this.h());
+    if (r.status === 404) throw new ApiError("لم تجد الشركة هذا الطرد");
+    const j = r.json() ?? {}; const st = j.state && typeof j.state === "object" ? j.state : {}, sit = j.situation && typeof j.situation === "object" ? j.situation : {};
+    const raw = String(st.description || st.name || "").trim(); if (!raw) throw missing();
+    return { tracking: pick(j, "trackingNumber") || trk, rawStatus: raw, status: this.mapStatus(raw), raw: j, note: String(sit.name ?? "") };
+  }
+  async cancel(trk) {
+    const g = await this.send("GET", `${ZRExpressApp.BASE}/parcels/${encodeURIComponent(trk)}`, this.h()); const id = pick(g.json() ?? {}, "id"); if (!g.ok || !id) return false;
+    return (await this.send("DELETE", `${ZRExpressApp.BASE}/parcels/${encodeURIComponent(id)}`, this.h())).ok;
+  }
+  parseWebhook(payload) {
+    const d = payload?.data && typeof payload.data === "object" ? payload.data : payload; if (!d || typeof d !== "object") return [];
+    const st = d.state && typeof d.state === "object" ? d.state : {}, raw = String(st.description || st.name || "").trim(), trk = pick(d, "trackingNumber");
+    return trk && raw ? [{ tracking: trk, rawStatus: raw, status: this.mapStatus(raw), orderRef: pick(d, "externalId") }] : [];
+  }
+}
+
 /* ───── Maystro: Authorization: Token، معرّف بلدية رقمي من base/communes، products[] وsource ───── */
 class Maystro extends Adapter {
   static BASE = "https://backend.maystro-delivery.com/api";
@@ -407,7 +494,8 @@ class Ecotrack extends Adapter {
 const E = (label, base = null, verified = false, aliases = []) => ({ label, cls: "eco", maturity: "experimental", base, base_verified: verified, aliases });
 export const CARRIERS = {
   yalidine: { label: "Yalidine", cls: Yalidine, maturity: "verified" },
-  zrexpress: { label: "ZR Express", cls: ZRExpress, maturity: "experimental", aliases: ["zr", "procolis"] },
+  zrexpress: { label: "ZR Express (Procolis القديمة)", cls: ZRExpress, maturity: "experimental", aliases: ["zr", "procolis"] },
+  zrexpress_app: { label: "ZR Express (المنصة الجديدة)", cls: ZRExpressApp, maturity: "experimental", aliases: ["zr2", "zrexpress-app", "zrexpress_new", "zr_app"] },
   maystro: { label: "Maystro Delivery", cls: Maystro, maturity: "experimental" },
   noest: { label: "NOEST Express", cls: Noest, maturity: "experimental" },
   ecotrack: E("Ecotrack (منصة عامة)"), dhd: E("DHD Livraison", "https://dhd.ecotrack.dz", true, ["dhd_livraison"]), conexlog: E("Conexlog"), zimou: E("Zimou Express"), hhd: E("HHD Express"),

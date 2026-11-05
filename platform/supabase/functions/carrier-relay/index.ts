@@ -2,7 +2,7 @@
 // فتمرّر البوابة طلباتها عبر هذه الدالة (خارج Cloudflare). مصادقة بسرّ مشترك RELAY_SECRET فقط، https ومضيفون مسموحون فقط.
 // النشر: functions/deploy?slug=carrier-relay مع إطفاء Verify JWT. الأسرار: RELAY_SECRET و(اختياري) COURIER_HOSTS.
 const SECRET = Deno.env.get("RELAY_SECRET") ?? "";
-const HOSTS = (Deno.env.get("COURIER_HOSTS") ?? "api.yalidine.app,yalidine.app,ecotrack.dz,procolis.com,zrexpress.dz,maystro-delivery.com,noest-dz.com,dhd-dz.com,conexlog-dz.com,zimou.express,hhd.dz,anderson-ecommerce.com,ecom-delivery.com,elogistia.com,48hexpress.com").split(",").map((s) => s.trim()).filter(Boolean);
+const HOSTS = (Deno.env.get("COURIER_HOSTS") ?? "api.yalidine.app,yalidine.app,ecotrack.dz,procolis.com,api.zrexpress.app,zrexpress.dz,maystro-delivery.com,noest-dz.com,dhd-dz.com,conexlog-dz.com,zimou.express,hhd.dz,anderson-ecommerce.com,ecom-delivery.com,elogistia.com,48hexpress.com").split(",").map((s) => s.trim()).filter(Boolean);
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
 function eq(a: string, b: string) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
 
