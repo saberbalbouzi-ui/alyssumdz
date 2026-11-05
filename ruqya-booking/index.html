@@ -243,7 +243,7 @@ function perSession(){var k=ST.kind;return k==="kids"?KID*persons():PRICE[k]}
 function first(){return !(ST.reg&&ST.picked)&&!ST.known}
 function packForced(){return first()&&(ST.kind==="single"||ST.kind==="couple")}
 function packOn(){return packForced()||!!ST.packUser}
-function packUi(){var f=packForced(),o=$("packOpt"),b=$("boxPack");if(!b)return;o.checked=f?true:!!ST.packUser;o.disabled=f;b.classList.toggle("rq-forced",f);$("packLbl").textContent=f?"مُضافة تلقائياً لأول تسجيل":"أضف الباقة";$("packSmall").textContent=f?"تُضاف مع أول جلسة فردية أو للزوجين":"مجموعة أعشاب وعسل وزيوت داعمة للعلاج"}
+function packUi(){var f=packForced(),o=$("packOpt"),b=$("boxPack");if(!b)return;o.checked=f?true:!!ST.packUser;o.disabled=f;b.classList.toggle("rq-forced",f);$("packLbl").textContent=f?"مُضافة تلقائياً لأول تسجيل":"أضف الباقة";$("packSmall").textContent=f?"ضرورية في الجلسة الأولى مع البرنامج العلاجي":"مجموعة أعشاب وعسل وزيوت داعمة للعلاج"}
 function ymd(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function dayLabel(d){return DAYN[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]}
 function periodOf(s){return s<"13:00"?0:1}
