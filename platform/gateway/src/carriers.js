@@ -251,6 +251,8 @@ class ZRExpressApp extends Adapter {
       parentId: t.parentId ? String(t.parentId) : null, home: (t.delivery ?? t.deliveryCapability ?? {}).hasHomeDelivery !== false }));
     return (this._t = list.length ? this.memoSet("t", list) : list);
   }
+  /** «Commande reçue» (OrderReceived) هي حالة ZR الأولى قبل الجاهزية: قيد الانتظار (ثبتت على طرد حقيقي) */
+  mapStatus(raw) { return /^(commande recue|order ?received)$/.test(String(raw ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[_\s-]+/g, " ").trim()) ? "pending" : super.mapStatus(raw); }
   isWilaya(t) { return /wilaya|city|province/.test(t.level) || (t.parentId === null && !/commun|district/.test(t.level)); }
   wilayaOf(ts, p) {
     const ws = ts.filter((t) => this.isWilaya(t));
