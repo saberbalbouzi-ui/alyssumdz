@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.820">
+<meta name="admin-version" content="1.89.821">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -445,6 +445,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div id="cs-svc"></div>
     <div id="orders-banner"></div>
     <div class="card">
+      <div id="order-co-chips" hidden style="display:none;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .7rem"></div>
       <button class="green" type="button" id="mo-btn" onclick="ManualOrder.open({mode:'new'})" title="إضافة طلب يدوياً (هاتف، واتساب…) ليظهر كباقي الطلبات"><span class="mo-plus">＋</span> إضافة طلب جديد</button>
       <div class="search-bar">
         <input id="order-filter-q" placeholder="🔍 بحث بالاسم أو الهاتف أو رقم الطلب..." oninput="Admin.applyOrderFilters()">
@@ -487,6 +488,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
   <div id="tab-shipped" class="hidden">
     <div id="ship-banner"></div>
     <div class="card">
+      <div id="ship-co-tabs" hidden style="display:none;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .3rem"></div>
+      <div id="ship-co-line" style="font-size:.85em;opacity:.85;margin:0 0 .6rem" hidden></div>
       <div class="search-bar">
         <input id="ship-q" placeholder="🔍 بحث بالتتبع أو الاسم أو الهاتف أو رقم الطلب..." oninput="Admin.renderShipped()">
         <select id="ship-co" onchange="Admin.renderShipped()" title="تصفية بشركة التوصيل" hidden style="display:none"><option value="">كل الشركات</option></select>
@@ -2914,6 +2917,7 @@ const Admin = {
         if(f.status === "fresh"){ if(!this.isFresh(o)) return false; }
         else if(f.status && o.status!==f.status) return false;
         if(f.wilaya && o.wilaya!==f.wilaya) return false;
+        if(f.company && this.orderCoKey(o) !== f.company) return false;
         if(q && !(String(o.name||"").toLowerCase().includes(q) || String(o.phone||"").includes(q) || String(o.id||"").toLowerCase().includes(q))) return false;
         if(f.dateFrom){ const d = new Date(o.date); if(d < new Date(f.dateFrom)) return false; }
         if(f.dateTo){ const d = new Date(o.date); const to = new Date(f.dateTo); to.setHours(23,59,59,999); if(d > to) return false; }
@@ -2953,6 +2957,7 @@ const Admin = {
       dateFrom: $f("order-filter-from").value,
       dateTo: $f("order-filter-to").value,
       showShipped: !!($f("order-show-shipped") && $f("order-show-shipped").checked),
+      company: this._ordCo || "",
     };
     this.orderPage = 1;
     this.renderOrders();
@@ -2965,7 +2970,24 @@ const Admin = {
     $f("order-filter-from").value = "";
     $f("order-filter-to").value = "";
     if($f("order-show-shipped")) $f("order-show-shipped").checked = false;
+    this._ordCo = "";
     this.applyOrderFilters();
+  },
+  /* شركة الطلب لأغراض الفرز: المسجَّل ⟵ شركة تتبعه، وغيره ⟵ الشركة المقرَّر إرساله بها (أو "none") */
+  orderCoKey(o){ const t = this.trackingOf(o); if(t) return t.company; try{ return this.orderCompanyKey(o) || "none"; }catch(e){ return "none"; } },
+  setOrderCo(k){ this._ordCo = k || ""; this.applyOrderFilters(); },
+  /* شرائح الشركات فوق قائمة الطلبات: تظهر حين تتعدد الشركات المفعّلة (أو يوجد طلب بغير الافتراضية) */
+  renderOrderCoChips(){
+    const box = $f("order-co-chips"); if(!box) return;
+    const all = this.allDeliveryCompanies(), en = this.enabledCompanyKeys(), f = this.orderFilters || {};
+    const vis = this.orders.filter(o=>f.showShipped || !(this.trackingOf(o) && o.status !== "nouvelle")), cnt = {};
+    vis.forEach(o=>{ const k = this.orderCoKey(o); cnt[k] = (cnt[k] || 0) + 1; });
+    const keys = en.concat(Object.keys(cnt).filter(k=>k !== "none" && !en.includes(k)));
+    if(keys.length < 2 && !(cnt.none && keys.length)){ box.style.display = "none"; box.innerHTML = ""; if(this._ordCo) this._ordCo = ""; return; }
+    const cur = this._ordCo || "", e = v=>String(v==null?"":v).replace(/[<>&"]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+    const chip = (k, label, n)=>'<button type="button" class="small ' + (cur === k ? "gold" : "gray") + '" onclick="Admin.setOrderCo(\'' + k + '\')">' + e(label) + ' <b>' + n + '</b></button>';
+    box.innerHTML = chip("", "الكل", vis.length) + keys.map(k=>chip(k, (all[k] || {}).name || k, cnt[k] || 0)).join("") + (cnt.none ? chip("none", "بلا شركة", cnt.none) : "");
+    box.style.display = "flex";
   },
 
   changeOrderPage(delta){ this.orderPage += delta; this.renderOrders(); },
@@ -3015,6 +3037,7 @@ const Admin = {
       $f("orders-pagination").innerHTML = ""; $f("orders-count-label").textContent = "";
       return;
     }
+    try{ this.renderOrderCoChips(); }catch(e){ console.warn("co-chips", e); }
     const filtered = this.getFilteredOrders();
     if(!filtered.length){
       el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>لا توجد طلبات مطابقة لهذا البحث/الفلتر</td></tr>";
@@ -9394,13 +9417,25 @@ const Admin = {
     this.renderShipSyncStatus();
     this.renderDeliveryBanners();
     const FD = t=>String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f\u064b-\u065f\u0670]/g, "").toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
-    const q = FD(($f("ship-q").value||"").trim()), st = $f("ship-status").value, cof = ($f("ship-co")||{}).value || "";
+    const q = FD(($f("ship-q").value||"").trim()), st = $f("ship-status").value, cof = this._shipCo || "";
     if(typeof AdminYd !== "undefined" && AdminYd.setQuery) AdminYd.setQuery(($f("ship-q").value||"").trim());          // نفس البحث يصفّي بطاقة طرود حسابك أيضاً
     const all = this.shippedOrders(), cos = this.allDeliveryCompanies();
     /* إحصاءات حسب شركة التوصيل (كل الطلبات المسجّلة) + قائمة التصفية */
     const by = {}; all.forEach(({o,t})=>{ const g = by[t.company] || (by[t.company] = { n:0, ok:0, bad:0, way:0, sum:0 }); g.n++; g.sum += Number(o.total)||0; if(o.status === "livree") g.ok++; else if(["echec","annulee"].includes(o.status)) g.bad++; else g.way++; });
     const sel = $f("ship-co"); if(sel){ const keys = Object.keys(by); sel.innerHTML = '<option value="">كل الشركات' + (keys.length > 1 ? "" : "") + '</option>' + keys.map(k=>'<option value="' + k + '"' + (cof === k ? " selected" : "") + '>' + ((cos[k]||{}).name || k) + ' (' + by[k].n + ')</option>').join(""); sel.style.display = keys.length > 1 ? "" : "none"; }
     const sb = $f("ship-co-stats"); if(sb){ const keys = Object.keys(by); sb.innerHTML = keys.length > 1 ? keys.map(k=>{ const g = by[k], d = g.ok + g.bad; return '<div class="pill" style="padding:.35rem .7rem;font-weight:700;cursor:pointer" onclick="$f(\'ship-co\').value=\'' + k + '\';Admin.renderShipped()"><b>' + ((cos[k]||{}).name || k) + '</b> · ' + g.n + ' طلب · ✅ ' + g.ok + ' · ⏳ ' + g.way + ' · ⛔ ' + g.bad + (d ? ' · نجاح ' + Math.round(g.ok / d * 100) + '%' : "") + ' · ' + Math.round(g.sum).toLocaleString("fr-DZ") + ' دج</div>'; }).join("") : ""; }
+    /* تبويب لكل شركة مفعّلة (أو لها طلبات): ياليدين كما هي، والبقية تعتمد طلباتنا مع حالتها الحيّة من الشركة */
+    { const tabs = $f("ship-co-tabs"), line = $f("ship-co-line"), en = this.enabledCompanyKeys(), keys = en.concat(Object.keys(by).filter(k=>!en.includes(k)));
+      const eT = v=>String(v==null?"":v).replace(/[<>&"]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
+      if(tabs){
+        if(keys.length < 2){ tabs.style.display = "none"; tabs.innerHTML = ""; if(this._shipCo){ this._shipCo = ""; return this.renderShipped(); } }
+        else { const b = (k, l, n)=>'<button type="button" class="small ' + (cof === k ? "gold" : "gray") + '" onclick="Admin._shipCo=\'' + k + '\';Admin.renderShipped()">' + eT(l) + ' <b>' + n + '</b></button>';
+          tabs.innerHTML = b("", "الكل", all.length) + keys.map(k=>b(k, (cos[k]||{}).name || k, (by[k]||{}).n || 0)).join(""); tabs.style.display = "flex"; }
+      }
+      if(line){ const g = cof && by[cof]; if(g){ const d = g.ok + g.bad; line.hidden = false; line.textContent = g.n + " طلب · ✅ " + g.ok + " · ⏳ " + g.way + " · ⛔ " + g.bad + (d ? " · نجاح " + Math.round(g.ok / d * 100) + "%" : "") + " · " + Math.round(g.sum).toLocaleString("fr-DZ") + " دج"; } else { line.hidden = true; line.textContent = ""; } }
+      const yOnly = !cof || cof === "yalidine";                                          // أدوات ياليدين وحدها: تجهيز الطلبات والمطابقة وبطاقة طرود حسابها
+      ["ship-prep-btn", "ship-rec-btn", "yd-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = yOnly ? "" : "none"; });
+    }
     const rows = all.filter(({o,t})=>{
       if(cof && t.company !== cof) return false;
       if(st && o.status !== st) return false;
