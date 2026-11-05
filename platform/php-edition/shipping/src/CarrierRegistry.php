@@ -24,6 +24,7 @@ final class CarrierRegistry
         'zimou'         => ['label' => 'Zimou Express',            'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         'hhd'           => ['label' => 'HHD Express',              'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         'anderson'      => ['label' => 'Anderson Delivery',        'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
+        'wecan'         => ['label' => 'WeCan Service',            'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false, 'aliases' => ['wecanservice', 'wecan_service', 'wecan-service']],
         'ecom_delivery' => ['label' => 'E-com Delivery',           'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         'elogistia'     => ['label' => 'Elogistia',                'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         '48h'           => ['label' => '48H Express',              'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],

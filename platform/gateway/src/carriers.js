@@ -411,7 +411,7 @@ export const CARRIERS = {
   maystro: { label: "Maystro Delivery", cls: Maystro, maturity: "experimental" },
   noest: { label: "NOEST Express", cls: Noest, maturity: "experimental" },
   ecotrack: E("Ecotrack (منصة عامة)"), dhd: E("DHD Livraison", "https://dhd.ecotrack.dz", true, ["dhd_livraison"]), conexlog: E("Conexlog"), zimou: E("Zimou Express"), hhd: E("HHD Express"),
-  anderson: E("Anderson Delivery"), ecom_delivery: E("E-com Delivery"), elogistia: E("Elogistia"), "48h": E("48H Express"),
+  anderson: E("Anderson Delivery"), wecan: E("WeCan Service", null, false, ["wecanservice", "wecan_service", "wecan-service"]), ecom_delivery: E("E-com Delivery"), elogistia: E("Elogistia"), "48h": E("48H Express"),
   mylers: { label: "Mylers", cls: null, maturity: "planned" },
 };
 export function resolveCarrier(code) {
