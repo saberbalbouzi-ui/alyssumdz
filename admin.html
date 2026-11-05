@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.821">
+<meta name="admin-version" content="1.89.822">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7747,36 +7747,47 @@ const Admin = {
     noest: {
       name: "Noest Express",
       confidence: "experimental",
-      feesRequest(cfg){ return { url: "https://app.noest-dz.com/api/public/fees", method: "GET", headers: { "Authorization": "Bearer " + cfg.apiToken, "Accept": "application/json" } }; },
-      parseFees(json){ return { prices: parseTarifRows(json), more: false }; },
-      note: "⚠️ تجريبي — يُرجى التحقق من صيغة الطلب الصحيحة مع دعم Noest Express قبل الاعتماد عليه فعلياً.",
+      note: "⚠️ تجريبي — واجهة NOEST العامة (api_token وuser_guid من حسابك). تُحلّ بلدية الطلب من قائمتها، ويُصدَّق الطرد تلقائياً بعد إنشائه، وتُتابَع الحالات بالتتبع. التوصيل إلى المنزل فقط حالياً (Stop Desk يحتاج رمز مكتب). جرّب طلباً واحداً وراجعه في لوحة الشركة.",
       fields: [
         { key:"apiToken", label:"api_token", type:"password" },
         { key:"userGuid", label:"user_guid", type:"text" },
       ],
+      base: "https://app.noest-dz.com/api/public",
+      cl(v){ return String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); },
+      hdr(cfg){ return { "Authorization": "Bearer " + this.cl(cfg.apiToken), "Content-Type": "application/json", "Accept": "application/json" }; },
+      auth(cfg, x){ return Object.assign({ api_token: this.cl(cfg.apiToken), user_guid: this.cl(cfg.userGuid) }, x || {}); },
+      pingRequest(cfg){ return { url: this.base + "/get/wilayas", method: "GET", headers: this.hdr(cfg) }; },
+      feesRequest(cfg){ return { url: this.base + "/fees", method: "GET", headers: this.hdr(cfg) }; },
+      parseFees(json){ return { prices: parseTarifRows(json), more: false }; },
+      /* بلديات ولاية: GET /get/communes/{رقم الولاية} ⟵ [{nom, is_active}] */
+      communesRequest(cfg, wilayaId){ return { url: this.base + "/get/communes/" + encodeURIComponent(wilayaId), method: "GET", headers: this.hdr(cfg) }; },
+      parseCommunes(json){ const rows = Array.isArray(json) ? json : []; return { names: rows.filter(r=>r && r.nom != null).map(r=>String(r.nom)), nd: rows.filter(r=>r && r.nom != null && (r.is_active === 0 || r.is_active === false || r.is_active === "0")).map(r=>String(r.nom)), more: false }; },
       buildRequest(cfg, order){
-        return {
-          url: "https://app.noest-dz.com/api/public/create/order",
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            api_token: cfg.apiToken,
-            user_guid: cfg.userGuid,
-            reference: String(order.id),
-            client: order.name || "",
-            phone: order.phone || "",
-            phone_2: "",
-            adresse: order.address || (order.wilaya||""),
-            wilaya_id: "",
-            commune: order.commune || "",
-            montant: Number(order.total)||0,
-            produit: order.items || "",
-            remarque: "",
-            stop_desk: 0,
-            stock: 0,
-          }),
-        };
+        const loc = v=>{ let d = String(v||"").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
+        if(order.dtype === "stop") throw new Error("NOEST يحتاج رمز مكتب Stop Desk (station_code) — حوّل التوصيل إلى المنزل أو اختر شركة أخرى");
+        const w = Admin.wCo(order.wilaya); if(!w || !w.id) throw new Error("ولاية «" + (order.wilaya || "؟") + "» غير معروفة لدى NOEST");
+        const ph = loc(order.phone), p2 = loc(order.extra && order.extra["📞 هاتف 2"]);
+        const items = String(order.items||"").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 255) || "Produit";
+        const body = this.auth(cfg, { reference: String(order.id), client: order.name || "", phone: ph, adresse: String(order.address || order.commune || order.wilaya || "").slice(0, 255), wilaya_id: w.id, commune: order.commune || "",
+          montant: Math.max(0, Math.round(Number(order.total) || 0)), produit: items, type_id: 1, poids: 1, stop_desk: 0, can_open: 1, stock: 0 });
+        if(p2 && p2 !== ph) body.phone_2 = p2;
+        return { url: this.base + "/create/order", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(body) };
       },
+      parseSent(json){ const t = json && (json.tracking || json.tracking_number); return (t && json.success !== false) ? String(t) : ""; },
+      parseError(json){ try{ const m = String((json && (json.message || json.error)) || ""); return m + (json && json.errors ? " — " + JSON.stringify(json.errors) : ""); }catch(e){ return ""; } },
+      /* الطرد يُنشأ مسوّدة حتى «valid/order»: نصدّقه فور إنشائه (فشل التصديق لا يُسقط الإرسال) */
+      async postSend(cfg, tracking, order, fetcher){ await fetcher({ url: this.base + "/valid/order", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(this.auth(cfg, { tracking })) }); },
+      trackRequest(cfg, tracking){ return { url: this.base + "/get/trackings/info", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(this.auth(cfg, { trackings: [String(tracking)] })) }; },
+      /* آخر حدث غير مُهمَل من activity ⟵ مفتاح الحدث (event_key) */
+      EV: { upload:"c", customer_validation:"c", validation_collect_colis:"e", validation_reception_admin:"e", validation_reception:"e", fdr_activated:"e", return_redispatched_to_livraison:"e", sent_to_redispatch:"a", nouvel_tentative_asked_by_customer:"a", colis_suspendu:"a", mise_a_jour:"a",
+        return_asked_by_customer:"f", return_asked_by_hub:"f", retour_dispatched_to_partenaires:"f", return_dispatched_to_partenaire:"f", colis_retour_transmit_to_partner:"f", livraison_echoue_recu:"f", return_validated_by_partener:"f", return_dispatched_to_warehouse:"f", livre:"l", livred:"l", ask_to_delete_by_admin:"f", ask_to_delete_by_hub:"f" },
+      parseStatus(json){
+        const row = (json && typeof json === "object") ? (Object.values(json).find(v=>v && typeof v === "object" && Array.isArray(v.activity)) || (Array.isArray(json.data) ? json.data[0] : null) || json) : null, a = row && row.activity;
+        if(!Array.isArray(a)) return "";
+        for(let i = a.length - 1; i >= 0; i--){ const ev = a[i] || {}, k = String(ev.event_key || ev.status || ev.event || "").trim(); if(k && this.EV[k.toLowerCase()]) return k; }
+        return "";
+      },
+      mapStatus(raw){ const c = this.EV[String(raw||"").trim().toLowerCase()]; return c === "l" ? "livree" : c === "f" ? "echec" : c === "a" ? "__alert" : c === "e" ? "expediee" : c === "c" ? "confirmee" : null; },
     },
     dhd: ecotrackCompany("DHD Express (Ecotrack)", "https://dhd.ecotrack.dz"),
     wecan: ecotrackCompany("WeCan Service (منصة Ecotrack)", ""),
@@ -7935,6 +7946,9 @@ const Admin = {
       try{ const wl = await this.companyWilayas(co, cfg), n = Object.keys(wl).length; add("الولايات", n > 0, n + " ولاية", n ? "" : "ردّت الشركة بقائمة فارغة — أرسل التقرير للدعم."); }
       catch(e){ add("الولايات", false, String(e.message||e).slice(0, 80), this.diagFix(e)); }
       try{ const w1 = (typeof WILAYAS !== "undefined" ? WILAYAS.find(x=>!x.par && x.id === 16) || WILAYAS.find(x=>!x.par) : null), c = w1 && co.communesRequest ? await this.companyCommunes(co, cfg, w1.id) : null; add("البلديات", c ? (c.names||[]).length > 0 : null, c ? (c.names||[]).length + " بلدية (عيّنة: " + w1.name + ")" : "لا تُجلب تلقائياً", c && !(c.names||[]).length ? "لم تُرجع الشركة بلديات — أرسل التقرير للدعم." : ""); }
+      catch(e){ add("البلديات", false, String(e.message||e).slice(0, 80), this.diagFix(e)); }
+    } else if(co.communesRequest){
+      try{ const w1 = (typeof WILAYAS !== "undefined" ? WILAYAS.find(x=>!x.par && x.id === 16) || WILAYAS.find(x=>!x.par) : null), c = await this.companyCommunes(co, cfg, w1.id); add("البلديات", (c.names||[]).length > 0, (c.names||[]).length + " بلدية (عيّنة: " + w1.name + ")", (c.names||[]).length ? "" : "لم تُرجع الشركة بلديات — أرسل التقرير للدعم."); }
       catch(e){ add("البلديات", false, String(e.message||e).slice(0, 80), this.diagFix(e)); }
     } else { add("الولايات والبلديات", null, "لا تُجلب تلقائياً من هذه الشركة", "تُستعمل قائمة المنصة، وإن رُفضت بلدية عند الإرسال اختر اسماً آخر."); }
     if(co.feesRequest){ const n = Object.keys(cfg.prices||{}).length; add("الأسعار", n > 0 ? true : null, n ? n + " ولاية" : "لم تُجلب بعد", n ? "" : "اضغط «جلب أسعار» من إعدادات الشركة أو أدخلها يدوياً."); }
@@ -8890,6 +8904,7 @@ const Admin = {
       let tracking = "";
       try{ if(r.ok && json) tracking = co.parseSent ? co.parseSent(json, ord) : this.genericTracking(json); }catch(e){}
       if(!tracking && r.ok && json && co.afterSend){ try{ tracking = await co.afterSend(cfg2, json, ord, q=>this.courierFetch(q)); }catch(e){} }
+      if(tracking && co.postSend){ try{ await co.postSend(cfg2, tracking, ord, q=>this.courierFetch(q)); }catch(e){ console.warn("postSend", e); } }
       if(tracking){
         if(ord.__ydId){ this.deliveryCfg[companyKey] = Object.assign({}, this.deliveryCfg[companyKey], { lastOrderNo: ord.__ydId }); this.saveDeliveryCfgToStorage(); }
         this.saveTracking(this.orders.find(x=>x.id === order.id) || this.orders[orderIndex] || order, companyKey, tracking, ord.__ydId); this.renderOrders();
@@ -9286,6 +9301,15 @@ const Admin = {
       if(r0.ok) return this.showNotice("⚠️ الحساب غير مفعّل للربط", "ردّت الشركة: «" + nE(st || "بلا حالة") + "» — راجع صفحة Développement في حسابك أو تواصل مع دعم ZR.");
       if(r0.status === 401 || r0.status === 403) return this.showNotice("🔴 ZR Express ترفض هذه المفاتيح (" + r0.status + ")", "ولّد Token وClé جديدين من صفحة Développement (زر Générer) وانسخهما كاملين دون مسافات.");
       return this.showNotice("⚠️ رد غير متوقع من الشركة (" + r0.status + ")", "لا يمكن الحكم على المفاتيح الآن.");
+    }
+    if(key !== "yalidine" && !(co.fields||[]).some(f=>f.key === "apiId")){                // أي شركة بحقول مختلفة: فحص قراءة عام بما أُدخل في النافذة
+      const c2 = Object.assign({}, cfg); (co.fields||[]).forEach(f=>{ const el = $f("dlv-f-" + f.key); if(el && f.type !== "select") c2[f.key] = clean(el.value); });
+      const need = (co.fields||[]).filter(f=>f.required !== false && !String(c2[f.key]||"").trim()); if(need.length){ toast("⚠️ أكمل: " + need.map(f=>f.label).join("، ")); return }
+      const bg = $f("dlv-test-btn"); if(bg){ bg.disabled = true; bg.textContent = "… يجري الفحص" }
+      let rg; try{ rg = await this.courierFetch(co.pingRequest(c2)); }catch(e){ rg = { status: 0, message: e.message }; }
+      if(bg){ bg.disabled = false; bg.textContent = "🧪 اختبر المفاتيح قبل الحفظ" }
+      if(rg.ok) return this.showNotice("✅ المفاتيح صحيحة", "قبلتها " + nE(co.name) + ". احفظ الإعدادات ثم جرّب إرسال طلب واحد.");
+      return this.showNotice(rg.status === 401 || rg.status === 403 ? "🔴 " + nE(co.name) + " ترفض هذه المفاتيح (" + rg.status + ")" : "⚠️ تعذّر فحص المفاتيح", nE(this.diagFix(rg)));
     }
     if(!cfg.apiId || !cfg.apiToken){ toast("⚠️ اكتب المعرّف والتوكن أولاً"); return }
     const b = $f("dlv-test-btn"); if(b){ b.disabled = true; b.textContent = "… يجري الفحص" }
