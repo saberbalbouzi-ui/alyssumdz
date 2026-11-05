@@ -32,13 +32,16 @@ const AdminRuqya = (() => {
     S.cfg = v;
   }
   S.catalog = () => (typeof Admin !== "undefined" && Admin.products) ? Admin.products.filter(p => p && p.active !== false) : [];
+  /* نص آمن للتخزين: يُقطع بالأحرف الكاملة (لا نصف رمز تعبيري) ويُنزع أي نصف زوج بديل فيرفضه الخادم */
+  const cut = (v, n) => Array.from(String(v == null ? "" : v).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, m => m.length === 2 ? m : "")).slice(0, n).join("");
+  const note = (t, ok) => { try { if (typeof toast === "function") toast((ok ? "✅ " : "❌ ") + t); } catch (_) { } };
   const isBlocked = ph => S.blocks.some(x => x.phone === ph);
   const DEFP = { single: 1500, couple: 2000, kid: 500, family: 2000, pack: 3000 };
   function nextSaturdays(n) { const out = [], d = new Date(Date.now() + 36e5); d.setUTCHours(12, 0, 0, 0); while (out.length < n) { d.setUTCDate(d.getUTCDate() + 1); if (d.getUTCDay() === 6) out.push(d.toISOString().slice(0, 10)); } return out; }
   function cfgHtml() {
     const c = S.cfg || {}, pr = Object.assign({}, DEFP, c.prices || {}), closed = c.closed || [], sel = new Map((c.products || []).map(x => [x.slug, x]));
     const inp = (id, l, v) => '<div><label style="font-weight:700">' + l + '</label><input type="number" min="0" id="' + id + '" value="' + v + '"></div>';
-    const prow = p => { const o = sel.get(p.slug); const img = p.cover || (p.images && p.images[0]) || ""; return '<div data-pp="' + esc(p.slug) + '" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #ffffff22;padding:6px 0"><label style="display:flex;gap:6px;align-items:center;min-width:160px;font-weight:700"><input type="checkbox" data-pon' + (o ? " checked" : "") + '>' + (img ? '<img src="/' + esc(img) + '" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">' : "") + esc(p.title) + '</label><input data-pdesc placeholder="وصف قصير" value="' + esc(o ? o.desc : String(p.desc || "").slice(0, 90)) + '" style="flex:1;min-width:160px"><input data-pprice type="number" min="0" value="' + (o ? o.price : p.price) + '" style="width:100px" title="السعر في المركز (دج)"></div>'; };
+    const prow = p => { const o = sel.get(p.slug); const img = p.cover || (p.images && p.images[0]) || ""; return '<div data-pp="' + esc(p.slug) + '" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #ffffff22;padding:6px 0"><label style="display:flex;gap:6px;align-items:center;min-width:160px;font-weight:700"><input type="checkbox" data-pon' + (o ? " checked" : "") + '>' + (img ? '<img src="/' + esc(img) + '" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">' : "") + esc(p.title) + '</label><input data-pdesc placeholder="وصف قصير" value="' + esc(o ? o.desc : cut(p.desc, 90)) + '" style="flex:1;min-width:160px"><input data-pprice type="number" min="0" value="' + (o ? o.price : p.price) + '" style="width:100px" title="السعر في المركز (دج)"></div>'; };
     return '<div id="rq-cfg" class="card" style="padding:16px"><button class="btn gray" data-rq="cfgback">← رجوع</button><h2 style="margin:12px 0 4px">إعدادات المواعيد</h2>' + (S.err ? '<div class="warn" style="margin:8px 0">' + esc(S.err) + '</div>' : "") +
       '<h3 style="margin:14px 0 6px">⛔ تعطيل المواعيد</h3><label style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="cf-off"' + (c.disabled ? " checked" : "") + '> إيقاف الحجز مؤقتاً (لا يستقبل الحجوزات)</label><textarea id="cf-msg" rows="2" style="width:100%;margin-top:6px" placeholder="رسالة تظهر للزائر (اختياري)">' + esc(c.msg || "") + '</textarea>' +
       '<h3 style="margin:14px 0 6px">💰 الأسعار (دج)</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">' + inp("cf-single", "جلسة فردية", pr.single) + inp("cf-couple", "زوج وزوجة", pr.couple) + inp("cf-kid", "طفل (للفرد)", pr.kid) + inp("cf-family", "جماعية للعائلة", pr.family) + inp("cf-pack", "الباقة العلاجية", pr.pack) + '</div>' +
@@ -221,15 +224,24 @@ const AdminRuqya = (() => {
       try { await call("ruqya_bookings?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "PATCH", body: JSON.stringify({ status: v }) }); await load(); draw(); } catch (er) { S.err = er.message; draw(); }
     } else if (a === "cap") {
       const n = Math.max(1, Math.min(20, parseInt($("rq-cap").value, 10) || 1)), mx = Math.max(1, Math.min(60, parseInt($("rq-max").value, 10) || 15));
-      try { await saveCfg({ cap: n, maxday: mx }); S.cap = n; S.max = mx; S.err = ""; draw(); } catch (er) { S.err = er.message; draw(); }
+      try { await saveCfg({ cap: n, maxday: mx }); S.cap = n; S.max = mx; S.err = ""; S.msg = "✅ حُفظ"; note("حُفظت الإعدادات", true); draw(); } catch (er) { S.err = er.message; note("تعذّر الحفظ: " + er.message, false); draw(); }
     } else if (a === "cfg") { S.view = "cfg"; draw(); }
     else if (a === "cfgback") { S.view = ""; draw(); }
     else if (a === "cfgsave") {
-      const num = id => Math.max(0, Math.round(Number($(id).value) || 0)), prods = [];
-      document.querySelectorAll("#rq-cfg [data-pp]").forEach(r => { if (!r.querySelector("[data-pon]").checked) return; const pr = (S.catalog().find(x => x.slug === r.dataset.pp) || {}); prods.push({ slug: r.dataset.pp, title: pr.title || r.dataset.pp, img: pr.cover || (pr.images && pr.images[0]) || "", desc: r.querySelector("[data-pdesc]").value.trim().slice(0, 160), price: Math.max(0, Math.round(Number(r.querySelector("[data-pprice]").value) || 0)) }); });
-      const closed = [...document.querySelectorAll("#rq-cfg [data-closed]")].filter(c => c.checked).map(c => c.getAttribute("data-closed"));
-      try { await saveCfg({ prices: { single: num("cf-single"), couple: num("cf-couple"), kid: num("cf-kid"), family: num("cf-family"), pack: num("cf-pack") }, disabled: $("cf-off").checked, msg: $("cf-msg").value.trim().slice(0, 300), closed, products: prods }); S.err = ""; S.msg = "✅ حُفظت الإعدادات"; S.view = ""; } catch (er) { S.err = er.message; }
-      draw();
+      const lab = b.textContent; b.disabled = true; b.textContent = "جارٍ الحفظ…";
+      try {
+        const num = id => Math.max(0, Math.round(Number($(id).value) || 0)), prods = [];
+        document.querySelectorAll("#rq-cfg [data-pp]").forEach(r => { if (!r.querySelector("[data-pon]").checked) return; const pr = (S.catalog().find(x => x.slug === r.dataset.pp) || {}); prods.push({ slug: r.dataset.pp, title: cut(pr.title || r.dataset.pp, 120), img: pr.cover || (pr.images && pr.images[0]) || "", desc: cut(r.querySelector("[data-pdesc]").value.trim(), 160), price: Math.max(0, Math.round(Number(r.querySelector("[data-pprice]").value) || 0)) }); });
+        const closed = [...document.querySelectorAll("#rq-cfg [data-closed]")].filter(c => c.checked).map(c => c.getAttribute("data-closed"));
+        const prices = { single: num("cf-single"), couple: num("cf-couple"), kid: num("cf-kid"), family: num("cf-family"), pack: num("cf-pack") };
+        const patch = { prices, disabled: $("cf-off").checked, msg: cut($("cf-msg").value.trim(), 300), closed }; if (document.querySelectorAll("#rq-cfg [data-pp]").length) patch.products = prods;      /* قائمة المنتجات لم تُحمَّل: لا تُمسح المحفوظة */
+        await saveCfg(patch); if (!patch.products) prods.length = (S.cfg.products || []).length;
+        /* تحقّق بالقراءة من الخادم أن ما حُفظ هو ما أُدخل */
+        const back = await call("admin_kv?select=value&key=eq.ruqya"), v = back && back[0] && back[0].value || {};
+        if (JSON.stringify(v.prices) !== JSON.stringify(prices) || (v.products || []).length !== prods.length) throw new Error("لم يتطابق المحفوظ مع المُدخل، أعد المحاولة");
+        S.err = ""; S.msg = "✅ حُفظت الإعدادات (" + prods.length + " منتج، " + closed.length + " عطلة)"; S.view = ""; note("حُفظت الإعدادات", true);
+      } catch (er) { S.err = er.message || String(er); note("تعذّر الحفظ: " + S.err, false); try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) { } }
+      draw(); try { window.scrollTo({ top: 0 }); } catch (_) { }
     } else if (a === "block") {
       const ph = b.getAttribute("data-ph"); if (!confirm("حظر الرقم " + ph + " من حجز المواعيد؟")) return;
       try { await call("ruqya_blocks?on_conflict=phone", { method: "POST", headers: Object.assign(API.sb.headers(await API.sb.token()), { Prefer: "resolution=merge-duplicates,return=representation" }), body: JSON.stringify({ phone: ph, reason: "حظر يدوي" }) }); S.blocks = await call("ruqya_blocks?select=phone,reason&limit=5000"); S.err = ""; S.msg = "🚫 حُظر الرقم من الحجز"; } catch (er) { S.err = er.message; } draw();
