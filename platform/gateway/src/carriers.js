@@ -233,12 +233,23 @@ class ZRExpressApp extends Adapter {
     });
   }
   /** كل الأقاليم (ولايات وبلديات) في طلب واحد ثم تُخزَّن في ذاكرة المحوّل: [{id, code, name, level, parentId, home, desk}] */
+  /** ذاكرة مشتركة بين الطلبات (ساعة): حدود ZR 200 طلب/دقيقة للمفتاح و600/5 دقائق للعنوان، فلا نعيد جلب الأقاليم وسير العمل مع كل طرد */
+  static memo = new Map();
+  memoGet(k) { const e = ZRExpressApp.memo.get(`${this.cred.tenant}|${k}`); return e && Date.now() - e.at < 3_600_000 ? e.v : undefined; }
+  memoSet(k, v) { if (ZRExpressApp.memo.size > 50) ZRExpressApp.memo.clear(); ZRExpressApp.memo.set(`${this.cred.tenant}|${k}`, { v, at: Date.now() }); return v; }
   async territories() {
     if (this._t) return this._t;
-    const r = await this.send("POST", ZRExpressApp.BASE + "/territories/search", this.h(), { pageNumber: 1, pageSize: 5000, orderBy: ["code asc"] });
-    const rows = Array.isArray(r.json()?.items) ? r.json().items : [];
-    return (this._t = rows.filter((t) => t && typeof t === "object" && t.id).map((t) => ({ id: String(t.id), code: t.code ?? null, name: String(t.name ?? ""), level: String(t.level ?? "").toLowerCase(),
-      parentId: t.parentId ? String(t.parentId) : null, home: (t.delivery ?? t.deliveryCapability ?? {}).hasHomeDelivery !== false })));
+    const hit = this.memoGet("t"); if (hit) return (this._t = hit);
+    const rows = [];   // الواجهة تقصّ الصفحة عند 1000 إقليم رغم طلب أكثر: نتصفّح حتى hasNext=false
+    for (let page = 1; page <= 8; page++) {
+      const j = (await this.send("POST", ZRExpressApp.BASE + "/territories/search", this.h(), { pageNumber: page, pageSize: 1000, orderBy: ["code asc"] })).json() ?? {};
+      if (Array.isArray(j.items)) rows.push(...j.items);
+      if (!j.hasNext || !Array.isArray(j.items) || !j.items.length) break;
+      await this.breath(150);
+    }
+    const list = rows.filter((t) => t && typeof t === "object" && t.id).map((t) => ({ id: String(t.id), code: t.code ?? null, name: String(t.name ?? ""), level: String(t.level ?? "").toLowerCase(),
+      parentId: t.parentId ? String(t.parentId) : null, home: (t.delivery ?? t.deliveryCapability ?? {}).hasHomeDelivery !== false }));
+    return (this._t = list.length ? this.memoSet("t", list) : list);
   }
   isWilaya(t) { return /wilaya|city|province/.test(t.level) || (t.parentId === null && !/commun|district/.test(t.level)); }
   wilayaOf(ts, p) {
@@ -255,14 +266,16 @@ class ZRExpressApp extends Adapter {
   /** معرّف الحالة «جاهز للإرسال» من سير العمل الافتراضي، أو null إن لم يُعثر عليه (يُنشأ الطرد عندئذٍ «استلام الطلب» مع تنبيه) */
   async readyStateId() {
     if (this._rs !== undefined) return this._rs;
+    const hit = this.memoGet("rs"); if (hit !== undefined) return (this._rs = hit || null);
     this._rs = null;
     try {
       const r = await this.send("POST", ZRExpressApp.BASE + "/workflows/search", this.h(), { pageNumber: 1, pageSize: 20, onlyDefault: true });
       const wfs = Array.isArray(r.json()?.items) ? r.json().items : [];
       for (const w of wfs) for (const st of Array.isArray(w?.states) ? w.states : []) {
         const t = `${st.name ?? ""} ${st.description ?? ""}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ");
-        if (/ready ?to ?dispatch|pret a (expedier|dispatch|etre)/.test(t)) { this._rs = String(st.id); return this._rs; }
+        if (/ready ?to ?dispatch|pret a (expedier|dispatch|etre)/.test(t)) { this._rs = String(st.id); this.memoSet("rs", this._rs); return this._rs; }
       }
+      this.memoSet("rs", "");
     } catch (e) { if (!(e instanceof ApiError)) throw e; }
     return this._rs;
   }
