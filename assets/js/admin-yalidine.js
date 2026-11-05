@@ -209,7 +209,7 @@ const AdminYd = (() => {
         (pages > 1 ? '<div style="text-align:center;margin-top:8px"><button class="small" data-yd="prev"' + (S.page <= 1 ? " disabled" : "") + '>›</button> <span class="hint">' + S.page + ' / ' + pages + '</span> <button class="small" data-yd="next"' + (S.page >= pages ? " disabled" : "") + '>‹</button></div>' : "") : "");
   }
   async function load(auto) {
-    const a = A(); if (!a || S.busy) return; S.busy = true; S.err = ""; S.prog = "جارِ التحميل…"; draw();
+    const a = A(); if (!a || S.busy) return; if (!auto && S.rows.length && S.at && Date.now() - S.at < 90000) { if (typeof toast === "function") toast("⏳ حُدِّثت قائمة الطرود قبل لحظات — انتظر دقيقة ونصف قبل التحديث مجدداً (حصة ياليدين)"); return; } S.busy = true; S.err = ""; S.prog = "جارِ التحميل…"; draw();
     try { await a.ydFetchParcels(60, (pg, n, tot) => { S.prog = n + (tot ? " / " + tot : ""); const b = document.querySelector('#yd-card [data-yd=load]'); if (b) b.textContent = "⏳ " + S.prog; }); }
     catch (e) { S.err = e.message || String(e); if (!auto && typeof toast === "function") toast("⚠️ " + (e.message || e)); }
     S.busy = false; draw();
