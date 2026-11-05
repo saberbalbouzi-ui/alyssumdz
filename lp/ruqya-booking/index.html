@@ -230,7 +230,7 @@ function rpc(fn,body){return fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:
 var ERR={terms_required:"يجب الموافقة على الشروط",not_saturday:"الحجز ليوم السبت فقط",past_day:"هذا اليوم مضى",too_far:"التاريخ بعيد جدا",invalid_phone:"رقم الهاتف غير صحيح",invalid_name:"الاسم غير صحيح",invalid_sessions:"عدد الجلسات غير صحيح",invalid_slot:"الساعة غير صحيحة",slot_overflow:"الجلسات لا تتسع في هذا اليوم، اختر سبتاً آخر أو قلل عدد الجلسات",slot_taken:"هذا اليوم لم يعد متاحاً، اختر سبتاً آخر",invalid_persons:"عدد الأفراد غير صحيح لهذا النوع",invalid_kind:"نوع الجلسة غير صحيح",not_registered:"لم نجدك في سجلاتنا بهذا الرقم، اختر (أول مرة) واملأ بياناتك",rate_limited:"محاولات كثيرة، حاول لاحقا",day_full:"اكتمل هذا السبت (الحد الأقصى 15 جلسة)، اختر السبت المقبل",invalid_whatsapp:"رقم الواتساب غير صحيح",banned:"تعذّر الحجز: أُوقف حجز المواعيد لهذا الرقم بسبب تكرار الغياب دون إخطار. تواصل معنا عبر واتساب."};
 function err(e){var m=String(e&&e.message||e);return ERR[m]||("تعذر الحجز الآن، حاول مجددا أو تواصل معنا عبر واتساب")}
 function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" دج"}
-function fmtH(n){return '<bdi class="rq-n">'+fmt(n)+'</bdi>'}/* المبلغ يُعزل يسار-يمين فلا تنعكس مجموعات الأرقام داخل صفحة عربية */
+function fmtH(n){return '<bdi class="rq-n">'+String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+'</bdi> دج'}/* المبلغ يُعزل يسار-يمين فلا تنعكس مجموعات الأرقام داخل صفحة عربية */
 function num(i,a,b){var v=parseInt($(i).value,10);if(isNaN(v))v=a;return Math.max(a,Math.min(b,v))}
 function persons(){var k=ST.kind;return k==="single"?1:k==="couple"?2:num("persons",k==="family"?2:1,k==="family"?3:10)}
 function sessions(){return num("sessions",1,8)}
