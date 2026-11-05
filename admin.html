@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.811">
+<meta name="admin-version" content="1.89.816">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7535,7 +7535,7 @@ const Admin = {
       parseError(json){ try{ const v = Object.values(json || {})[0]; return v && v.message ? String(v.message) : ""; }catch(e){ return ""; } },
     },
     zrexpress: {
-      name: "ZR Express",
+      name: "ZR Express (Procolis القديمة)",
       confidence: "experimental",
       note: "⚠️ تجريبي — واجهة ZR Express (Procolis): ولّد Token وClé من صفحة «Développement» في حسابك ثم الصقهما هنا. جرّب طلباً واحداً حقيقياً وراجعه في لوحة الشركة قبل الاعتماد عليه.",
       fields: [
@@ -7574,6 +7574,94 @@ const Admin = {
         if(/^livr|livree|delivered|encaisse/.test(t)) return "livree";
         if(/pret a expedier|en preparation|en traitement|prepar/.test(t)) return "confirmee";
         if(/dispatch|au bureau|echange|transit|centre|sorti|ramass|arriv|en cours|expedi/.test(t)) return "expediee";
+        return null;
+      },
+    },
+    zrexpress_app: {
+      name: "ZR Express",
+      confidence: "experimental",
+      note: "⚠️ تجريبي — واجهة ZR Express الجديدة (مفتاح X-Api-Key ومعرّف الحساب X-Tenant). الولاية والبلدية تُحلّان تلقائياً من قوائم الشركة، والطرد يُعيَّن «جاهز للإرسال» عند الإنشاء. التوصيل إلى المنزل فقط (Stop Desk غير مدعوم بعد). جرّب طلباً واحداً حقيقياً وراجعه في لوحة الشركة.",
+      fields: [
+        { key:"apiKey", label:"X-Api-Key (قائمة API Rest ← Token API في حساب ZR)", type:"password" },
+        { key:"tenant", label:"X-Tenant (معرّف الحساب)", type:"text" },
+      ],
+      base: "https://api.zrexpress.app/api/v1",
+      hdr(cfg){ const c = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); return { "X-Api-Key": c(cfg.apiKey), "X-Tenant": c(cfg.tenant), "Content-Type": "application/json", "Accept": "application/json" }; },
+      pingRequest(cfg){ return { url: this.base + "/territories/search", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ pageNumber: 1, pageSize: 1 }) }; },
+      /* الأقاليم (ولايات وبلديات) كلها بصفحات 1000 مع ذاكرة 6 ساعات في الصفحة: حدود الشركة 200 طلب/دقيقة */
+      async territories(cfg, fetcher){
+        const k = String(cfg.tenant || ""); this._tc = this._tc || {};
+        const hit = this._tc[k]; if(hit && Date.now() - hit.at < 21600000) return hit.v;
+        const rows = [];
+        for(let pg = 1; pg <= 8; pg++){
+          const r = await fetcher({ url: this.base + "/territories/search", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ pageNumber: pg, pageSize: 1000, orderBy: ["code asc"] }) });
+          if(!r || !r.ok) throw new Error("تعذّر جلب ولايات وبلديات ZR Express (" + (r ? r.status : "؟") + ") — راجع المفتاح ومعرّف الحساب");
+          let j = {}; try{ j = JSON.parse(r.text) }catch(e){}
+          if(Array.isArray(j.items)) rows.push(...j.items);
+          if(!j.hasNext || !Array.isArray(j.items) || !j.items.length) break;
+        }
+        const v = rows.filter(t=>t && t.id).map(t=>({ id: String(t.id), code: t.code, name: String(t.name||""), level: String(t.level||"").toLowerCase(), par: t.parentId ? String(t.parentId) : null }));
+        if(v.length) this._tc[k] = { v, at: Date.now() };
+        return v;
+      },
+      async readyState(cfg, fetcher){
+        const k = String(cfg.tenant || ""); this._rs = this._rs || {}; if(k in this._rs) return this._rs[k];
+        let id = "";
+        try{
+          const r = await fetcher({ url: this.base + "/workflows/search", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ pageNumber: 1, pageSize: 20, onlyDefault: true }) });
+          const j = JSON.parse(r.text);
+          for(const w of (j.items||[])) for(const st of (w.states||[])){ const t = (String(st.name||"") + " " + String(st.description||"")).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " "); if(/ready ?to ?dispatch|pret a (expedier|dispatch|etre)/.test(t)){ id = String(st.id); break; } if(id) break; }
+        }catch(e){}
+        if(id) this._rs[k] = id;
+        return id;
+      },
+      /* يحلّ معرّفات الولاية والبلدية (UUID) وحالة «جاهز للإرسال» قبل بناء الطلب */
+      async prepare(cfg, order, fetcher){
+        if(order.dtype === "stop") throw new Error("ZR Express الجديدة لا تدعم التسليم لمكتب (Stop Desk) بعد — حوّل التوصيل إلى المنزل أو اختر شركة أخرى");
+        if(Math.round(Number(order.total) || 0) > 150000) throw new Error("ZR Express تقبل 150,000 دج كحدّ أقصى للطرد (شاملاً التوصيل)");
+        const ts = await this.territories(cfg, fetcher); if(!ts.length) throw new Error("قائمة ولايات ZR Express فارغة — أعد المحاولة");
+        const nm = v=>Admin.normName(v), isW = t=>t.level === "wilaya" || (t.level !== "commune" && !t.par);
+        const ws = ts.filter(isW), wl = (typeof WILAYAS !== "undefined" && WILAYAS.find(x=>x.name === order.wilaya)) || null, legacy = Admin.wCo(order.wilaya);
+        const w = (wl && ws.find(t=>+t.code === +wl.id)) || ws.find(t=>nm(t.name) === nm(order.wilaya)) || (legacy && ws.find(t=>+t.code === +legacy.id)) || null;
+        if(!w) throw new Error("ولاية «" + order.wilaya + "» غير موجودة في قائمة ZR Express (قد لا تخدمها الشركة)");
+        const list = ts.filter(t=>t.par === w.id); if(!list.length) throw new Error("لا بلديات مسجّلة لولاية " + order.wilaya + " عند ZR Express");
+        const want = nm(order.commune); let c = list.find(t=>nm(t.name) === want) || (want.length > 3 && list.find(t=>nm(t.name).startsWith(want) || want.startsWith(nm(t.name)))) || null;
+        if(!c){ const sc = list.map(t=>({ t, d: Admin.levenshtein(nm(t.name), want) })).sort((a, b)=>a.d - b.d); if(sc[0] && sc[0].d <= Math.max(1, Math.floor(want.length / 4))) c = sc[0].t;
+          else throw new Error("بلدية «" + order.commune + "» غير موجودة عند ZR Express في " + order.wilaya + " — الأقرب: " + sc.slice(0, 3).map(x=>x.t.name).join("، ")); }
+        const st = await this.readyState(cfg, fetcher);
+        return Object.assign({}, order, { __zrW: w.id, __zrC: c.id, __zrState: st });
+      },
+      buildRequest(cfg, order){
+        const loc = v=>{ let d = String(v||"").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
+        const intl = v=>"+213" + loc(v).slice(1), ph = loc(order.phone), p2 = loc(order.extra && order.extra["📞 هاتف 2"]);
+        if(!order.__zrW || !order.__zrC) throw new Error("لم تُحلّ ولاية/بلدية ZR Express لهذا الطلب");
+        const items = String(order.items||"").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 200) || "Produit";
+        const total = Math.max(0, Math.round(Number(order.total) || 0)), price = Math.max(0, total - Math.round(Number(order.fee) || 0)) || total;
+        const rnd = ()=>(self.crypto && crypto.randomUUID) ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c=>{ const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); });
+        const body = { customer: { customerId: rnd(), name: String(order.name || "").trim() || "Client", phone: Object.assign({ number1: intl(ph) }, p2 && p2 !== ph ? { number2: intl(p2) } : {}) },
+          deliveryAddress: { cityTerritoryId: order.__zrW, districtTerritoryId: order.__zrC, street: String(order.address || order.commune || order.wilaya || "").slice(0, 250) },
+          orderedProducts: [{ productName: items.slice(0, 100), unitPrice: price, quantity: 1, stockType: "none" }], deliveryType: "home",
+          description: (items + (order.extra && order.extra["🔄 استبدال"] ? " — استبدال" : "")).slice(0, 250).padEnd(2, "."), amount: total, ExternalId: String(order.id).slice(0, 100) };
+        if(order.__zrState) body.stateId = order.__zrState;
+        return { url: this.base + "/parcels", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(body) };
+      },
+      /* الإنشاء يعيد {id} فقط (201): رقم التتبع الحقيقي يُقرأ من الطرد نفسه */
+      parseSent(json){ return ""; },
+      async afterSend(cfg, json, order, fetcher){
+        const id = json && json.id ? String(json.id) : ""; if(!id) return "";
+        try{ const r = await fetcher({ url: this.base + "/parcels/" + encodeURIComponent(id), method: "GET", headers: this.hdr(cfg) }); const j = JSON.parse(r.text); return String((j && j.trackingNumber) || id); }catch(e){ return id; }
+      },
+      parseError(json){ try{ if(Array.isArray(json.errors) && json.errors.length) return json.errors.map(e=>e.description).filter(Boolean).join(" — "); return String(json.detail || json.title || json.message || ""); }catch(e){ return ""; } },
+      trackRequest(cfg, tracking){ return { url: this.base + "/parcels/" + encodeURIComponent(tracking), method: "GET", headers: this.hdr(cfg) }; },
+      parseStatus(json){ const st = json && json.state; return String((st && (st.description || st.name)) || "").trim(); },
+      mapStatus(raw){
+        const t = String(raw||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[_\-\[\]()]/g, " ").replace(/\s+/g, " ").trim(); if(!t) return null;
+        if(/reporte|appel sans reponse|relance|injoignable|ne repond pas/.test(t)) return "__alert";
+        if(/en livraison|livraison en cours|out for delivery/.test(t)) return "expediee";
+        if(/annul|retour|refus|echec/.test(t)) return "echec";
+        if(/^livr|livree|delivered|encaisse/.test(t)) return "livree";
+        if(/commande recue|order received|pret a expedier|ready to dispatch|en preparation|en traitement|prepar/.test(t)) return "confirmee";
+        if(/dispatch|au bureau|echange|transit|centre|hub|sorti|ramass|arriv|en cours|expedi/.test(t)) return "expediee";
         return null;
       },
     },
@@ -8664,12 +8752,14 @@ const Admin = {
       }
       const fresh0 = this.orders.find(x=>x.id === order.id);                             // قد يكون وصله تتبع من مسار آخر أثناء الانتظار
       if(fresh0 && this.trackingOf(fresh0)){ toast("ℹ️ الطلب أُرسل إلى الشركة بالفعل (التتبع " + this.trackingOf(fresh0).tracking + ")"); return false }
+      if(co.prepare) ord = await co.prepare(cfg2, ord, q=>this.courierFetch(q));                  // حلّ معرّفات الشركة قبل البناء (ZR الجديدة)
       const req = co.buildRequest(cfg2, ord);
       const r = await this.courierFetch(req);
       if(r && (r.status === 401 || r.status === 403)) this.keyBad(companyKey, r.status);
       let json = null; try{ json = JSON.parse(r.text); }catch(e){}
       let tracking = "";
       try{ if(r.ok && json) tracking = co.parseSent ? co.parseSent(json, ord) : this.genericTracking(json); }catch(e){}
+      if(!tracking && r.ok && json && co.afterSend){ try{ tracking = await co.afterSend(cfg2, json, ord, q=>this.courierFetch(q)); }catch(e){} }
       if(tracking){
         if(ord.__ydId){ this.deliveryCfg[companyKey] = Object.assign({}, this.deliveryCfg[companyKey], { lastOrderNo: ord.__ydId }); this.saveDeliveryCfgToStorage(); }
         this.saveTracking(this.orders.find(x=>x.id === order.id) || this.orders[orderIndex] || order, companyKey, tracking, ord.__ydId); this.renderOrders();
@@ -9044,6 +9134,17 @@ const Admin = {
     const clean = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g,"");
     const cfg = Object.assign({}, this.deliveryCfg[key]);
     (co.fields||[]).forEach(f=>{ const el = $f("dlv-f-" + f.key); if(el && f.type !== "select" && (f.key === "apiId" || f.key === "apiToken" || (key === "zrexpress" && (f.key === "token" || f.key === "key")))) cfg[f.key] = clean(el.value); });
+    if(key === "zrexpress_app"){                                                          // ZR Express الجديدة: X-Api-Key + X-Tenant، فحص قراءة فقط
+      const k1 = clean(($f("dlv-f-apiKey")||{}).value), t1 = clean(($f("dlv-f-tenant")||{}).value);
+      if(!k1 || !t1){ toast("⚠️ اكتب X-Api-Key وX-Tenant أولاً"); return }
+      const bz = $f("dlv-test-btn"); if(bz){ bz.disabled = true; bz.textContent = "… يجري الفحص" }
+      let rz; try{ rz = await this.courierFetch(co.pingRequest({ apiKey: k1, tenant: t1 })); }catch(e){ rz = null }
+      if(bz){ bz.disabled = false; bz.textContent = "🧪 اختبر المفاتيح قبل الحفظ" }
+      if(!rz) return this.showNotice("⚠️ تعذّر الاتصال بالشركة", "لم نصل إلى خادم الشركة — أعد المحاولة بعد قليل.");
+      if(rz.ok) return this.showNotice("✅ المفاتيح صحيحة", "قبلتها ZR Express. احفظ الإعدادات ثم جرّب إرسال طلب واحد.");
+      if(rz.status === 401 || rz.status === 403) return this.showNotice("🔴 ZR Express ترفض هذه المفاتيح (" + rz.status + ")", "تأكد من X-Api-Key (يظهر مرة واحدة عند إنشائه) ومن معرّف الحساب X-Tenant.");
+      return this.showNotice("⚠️ رد غير متوقع من الشركة (" + rz.status + ")", "لا يمكن الحكم على المفاتيح الآن.");
+    }
     if(key === "zrexpress"){                                                              // ZR Express: Token + Clé، فحص قراءة فقط GET /token
       if(!cfg.token || !cfg.key){ toast("⚠️ اكتب Token وClé أولاً"); return }
       const b0 = $f("dlv-test-btn"); if(b0){ b0.disabled = true; b0.textContent = "… يجري الفحص" }
