@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.822">
+<meta name="admin-version" content="1.89.823">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7757,18 +7757,29 @@ const Admin = {
       hdr(cfg){ return { "Authorization": "Bearer " + this.cl(cfg.apiToken), "Content-Type": "application/json", "Accept": "application/json" }; },
       auth(cfg, x){ return Object.assign({ api_token: this.cl(cfg.apiToken), user_guid: this.cl(cfg.userGuid) }, x || {}); },
       pingRequest(cfg){ return { url: this.base + "/get/wilayas", method: "GET", headers: this.hdr(cfg) }; },
+      ownTariff: true,
+      /* تعريفة الحساب: GET /fees ⟵ {tarifs:{delivery:{"16":{tarif, tarif_stopdesk}}, return:{…}}} — نأخذ «delivery» فقط لا «return» */
       feesRequest(cfg){ return { url: this.base + "/fees", method: "GET", headers: this.hdr(cfg) }; },
-      parseFees(json){ return { prices: parseTarifRows(json), more: false }; },
+      parseFees(json){
+        const d = json && json.tarifs && json.tarifs.delivery, prices = {};
+        if(d && typeof d === "object") Object.keys(d).forEach(k=>{ const r = d[k] || {}, id = Number(r.wilaya_id != null ? r.wilaya_id : k), h = Number(r.tarif), st = Number(r.tarif_stopdesk);
+          if(id >= 1 && id <= 58 && (h > 0 || st > 0)) prices[id] = { home: h > 0 ? h : st, stop: st > 0 ? st : 0 }; });
+        return { prices, more: false };
+      },
+      /* ولايات الشركة: GET /get/wilayas ⟵ [{code, nom, is_active}] (58 ولاية) */
+      wilayasRequest(cfg){ return this.pingRequest(cfg); },
+      parseWilayas(json){ const m = {}; (Array.isArray(json) ? json : []).forEach(r=>{ const id = Number(r && r.code); if(id >= 1 && id <= 69) m[id] = { name: String(r.nom || ""), ok: !(r.is_active === 0 || r.is_active === false || r.is_active === "0") }; }); return m; },
       /* بلديات ولاية: GET /get/communes/{رقم الولاية} ⟵ [{nom, is_active}] */
       communesRequest(cfg, wilayaId){ return { url: this.base + "/get/communes/" + encodeURIComponent(wilayaId), method: "GET", headers: this.hdr(cfg) }; },
       parseCommunes(json){ const rows = Array.isArray(json) ? json : []; return { names: rows.filter(r=>r && r.nom != null).map(r=>String(r.nom)), nd: rows.filter(r=>r && r.nom != null && (r.is_active === 0 || r.is_active === false || r.is_active === "0")).map(r=>String(r.nom)), more: false }; },
       buildRequest(cfg, order){
         const loc = v=>{ let d = String(v||"").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
         if(order.dtype === "stop") throw new Error("NOEST يحتاج رمز مكتب Stop Desk (station_code) — حوّل التوصيل إلى المنزل أو اختر شركة أخرى");
-        const w = Admin.wCo(order.wilaya); if(!w || !w.id) throw new Error("ولاية «" + (order.wilaya || "؟") + "» غير معروفة لدى NOEST");
+        const wid = order.__coWid || order.__wid0 || (Admin.wCo(order.wilaya) || {}).id; if(!wid) throw new Error("ولاية «" + (order.wilaya || "؟") + "» غير معروفة لدى NOEST");
+        const ref = String(order.id).length < 5 ? "ALY-" + order.id : String(order.id);                  // المرجع عند NOEST خمسة أحرف على الأقل
         const ph = loc(order.phone), p2 = loc(order.extra && order.extra["📞 هاتف 2"]);
         const items = String(order.items||"").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 255) || "Produit";
-        const body = this.auth(cfg, { reference: String(order.id), client: order.name || "", phone: ph, adresse: String(order.address || order.commune || order.wilaya || "").slice(0, 255), wilaya_id: w.id, commune: order.commune || "",
+        const body = this.auth(cfg, { reference: ref, client: order.name || "", phone: ph, adresse: String(order.address || order.commune || order.wilaya || "").slice(0, 255), wilaya_id: wid, commune: order.commune || "",
           montant: Math.max(0, Math.round(Number(order.total) || 0)), produit: items, type_id: 1, poids: 1, stop_desk: 0, can_open: 1, stock: 0 });
         if(p2 && p2 !== ph) body.phone_2 = p2;
         return { url: this.base + "/create/order", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(body) };
@@ -7778,16 +7789,20 @@ const Admin = {
       /* الطرد يُنشأ مسوّدة حتى «valid/order»: نصدّقه فور إنشائه (فشل التصديق لا يُسقط الإرسال) */
       async postSend(cfg, tracking, order, fetcher){ await fetcher({ url: this.base + "/valid/order", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(this.auth(cfg, { tracking })) }); },
       trackRequest(cfg, tracking){ return { url: this.base + "/get/trackings/info", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(this.auth(cfg, { trackings: [String(tracking)] })) }; },
-      /* آخر حدث غير مُهمَل من activity ⟵ مفتاح الحدث (event_key) */
+      /* آخر حدث غير مُهمَل من activity: مفتاح الحدث event_key إن وُجد وإلا نص الحدث الفرنسي (event) — كما في توثيق NOEST v2.3 */
       EV: { upload:"c", customer_validation:"c", validation_collect_colis:"e", validation_reception_admin:"e", validation_reception:"e", fdr_activated:"e", return_redispatched_to_livraison:"e", sent_to_redispatch:"a", nouvel_tentative_asked_by_customer:"a", colis_suspendu:"a", mise_a_jour:"a",
         return_asked_by_customer:"f", return_asked_by_hub:"f", retour_dispatched_to_partenaires:"f", return_dispatched_to_partenaire:"f", colis_retour_transmit_to_partner:"f", livraison_echoue_recu:"f", return_validated_by_partener:"f", return_dispatched_to_warehouse:"f", livre:"l", livred:"l", ask_to_delete_by_admin:"f", ask_to_delete_by_hub:"f" },
+      LB: { "uploade sur le systeme":"c", "valide":"c", "colis ramasse":"e", "reception valide":"e", "enleve par le livreur":"e", "en livraison":"e", "retour remis en livraison":"e", "envoye en redispatch":"a", "nouvelle tentative demandee par le vendeur":"a", "suspendu":"a", "tentative de livraison":"a",
+        "retour demande par le partenaire":"f", "retour en transit":"f", "retour transmis au partenaire":"f", "colis retour transmis au partenaire":"f", "retour recu par le partenaire":"f", "retour valide par le partenaire":"f", "retour transmis vers entrepot":"f", "demande de suppression":"f", "livre":"l" },
+      nl(v){ return String(v||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim(); },
+      code(raw){ const r = String(raw||"").trim(); return this.EV[r.toLowerCase()] || this.LB[this.nl(r)] || ""; },
       parseStatus(json){
         const row = (json && typeof json === "object") ? (Object.values(json).find(v=>v && typeof v === "object" && Array.isArray(v.activity)) || (Array.isArray(json.data) ? json.data[0] : null) || json) : null, a = row && row.activity;
         if(!Array.isArray(a)) return "";
-        for(let i = a.length - 1; i >= 0; i--){ const ev = a[i] || {}, k = String(ev.event_key || ev.status || ev.event || "").trim(); if(k && this.EV[k.toLowerCase()]) return k; }
+        for(let i = a.length - 1; i >= 0; i--){ const ev = a[i] || {}, k = String(ev.event_key || "").trim(), l = String(ev.event || ev.status || "").trim(); if(k && this.code(k)) return k; if(l && this.code(l)) return l; }
         return "";
       },
-      mapStatus(raw){ const c = this.EV[String(raw||"").trim().toLowerCase()]; return c === "l" ? "livree" : c === "f" ? "echec" : c === "a" ? "__alert" : c === "e" ? "expediee" : c === "c" ? "confirmee" : null; },
+      mapStatus(raw){ const c = this.code(raw); return c === "l" ? "livree" : c === "f" ? "echec" : c === "a" ? "__alert" : c === "e" ? "expediee" : c === "c" ? "confirmee" : null; },
     },
     dhd: ecotrackCompany("DHD Express (Ecotrack)", "https://dhd.ecotrack.dz"),
     wecan: ecotrackCompany("WeCan Service (منصة Ecotrack)", ""),
@@ -8491,6 +8506,7 @@ const Admin = {
   },
   async courierFetch(req){
     const yd = /api\.yalidine\.app/i.test(String(req && req.url || ""));
+    if(/noest-dz\.com/i.test(String(req && req.url || ""))){ await this._rate("noest", 50, 60000, 350); return this._courierRaw(req); }       // حدّ NOEST 60 طلباً في الدقيقة
     if(!yd) return this._courierRaw(req);
     let r;
     for(let k = 0; k < 3; k++){
@@ -8849,7 +8865,7 @@ const Admin = {
     if(this.trackingOf(order)){ const tk = this.trackingOf(order).tracking; if(this._autoReg) this._autoFail = "أُرسل سابقاً"; this.showNotice("ℹ️ الطلب أُرسل إلى الشركة", "الطلب <b>" + String(order.id).slice(-6) + "</b> أُرسل إلى " + co.name + " من قبل (رقم التتبع <b>" + tk + "</b>) فلا يُرسل مرة ثانية كي لا يتكرر الطرد.<br><small>إن حذفتَ الطرد عند الشركة فاضغط «✓ أُرسل ↩» للتراجع ثم أرسله من جديد.</small>"); return false }
     toast("⏳ جارِ إرسال الطلب #" + order.id + " إلى " + co.name + "...");
     try{
-      let ord = order;
+      let ord = Object.assign({}, order, { __wid0: (Admin.wCo(order.wilaya) || {}).id });         // رقم الولاية بالنظام الموحّد قبل استبدال الاسم بالرسمي
       if(co.wilayasRequest){                                // أسماء الولايات الرسمية (بالرقم) + هل الولاية مخدومة
         const wl = await this.companyWilayas(co, cfg), w0 = Admin.wCo(order.wilaya);
         const off = w0 && wl[order.__coWid || w0.id];

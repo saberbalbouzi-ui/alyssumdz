@@ -5886,7 +5886,7 @@
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"ALY-G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
                     "s": 200,
                     "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
                 },
@@ -6074,7 +6074,7 @@
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G-b\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"kouba\",\"wilaya_id\":16,\"commune\":\"Kouba\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0,\"phone_2\":\"0661234567\",\"remarque\":\"اتصل قبل الوصول\"}",
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"ALY-G-b\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"kouba\",\"wilaya_id\":16,\"commune\":\"Kouba\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0,\"phone_2\":\"0661234567\",\"remarque\":\"اتصل قبل الوصول\"}",
                     "s": 200,
                     "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
                 },
@@ -6136,7 +6136,7 @@
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G-65\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":17,\"commune\":\"Aïn Oussera\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"ALY-G-65\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":17,\"commune\":\"Aïn Oussera\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
                     "s": 200,
                     "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
                 },
@@ -6198,7 +6198,7 @@
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G-69\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":32,\"commune\":\"El Abiodh Sidi Cheikh\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"ALY-G-69\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":32,\"commune\":\"El Abiodh Sidi Cheikh\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
                     "s": 200,
                     "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
                 },
@@ -6450,7 +6450,7 @@
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"ALY-G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
                     "s": 200,
                     "r": "{\"success\":true,\"tracking\":\"NOE1X\"}"
                 },
@@ -6474,7 +6474,7 @@
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"ALY-G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
                     "s": 200,
                     "r": "{\"success\":true,\"tracking\":\"NOE2X\"}"
                 },
@@ -6543,7 +6543,7 @@
                         "Content-Type": "application/json",
                         "Accept": "application/json"
                     },
-                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
+                    "b": "{\"api_token\":\"TOK\",\"user_guid\":\"GUID\",\"reference\":\"ALY-G1\",\"client\":\"Karim Benali\",\"phone\":\"0550123456\",\"adresse\":\"Cité 5 Juillet\",\"wilaya_id\":16,\"commune\":\"Bab Ezzouar\",\"montant\":4200,\"produit\":\"عسل ×2، زيت ×1\",\"type_id\":1,\"poids\":1,\"stop_desk\":0,\"can_open\":1,\"stock\":0}",
                     "s": 429,
                     "r": "{\"message\":\"Too Many Attempts.\"}"
                 }

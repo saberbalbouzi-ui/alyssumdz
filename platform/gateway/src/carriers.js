@@ -406,7 +406,7 @@ class Noest extends Adapter {
     let commune = p.commune;
     if (pc.name !== null) commune = String(pc.name);
     else { const list = await this.communes(p.legacyWilaya); if (list.length) { const m = this.resolveCommune(list, p, "NOEST"); if (m.error) return fail(m.error); commune = m.name; } }
-    const body = this.auth({ reference: p.orderRef, client: p.name, phone: p.localPhone(), adresse: p.address ? clip(p.address, 255) : p.commune, wilaya_id: p.legacyWilaya, commune, montant: Math.round(p.total),
+    const body = this.auth({ reference: p.orderRef.length < 5 ? "ALY-" + p.orderRef : p.orderRef, client: p.name, phone: p.localPhone(), adresse: p.address ? clip(p.address, 255) : p.commune, wilaya_id: p.legacyWilaya, commune, montant: Math.round(p.total),
       produit: clip(p.productsText() || "Produit", 255), type_id: 1, poids: 1, stop_desk: p.stopDesk ? 1 : 0, can_open: p.canOpen ? 1 : 0, stock: 0 });
     if (p.phone2) body.phone_2 = p.localPhone(p.phone2);
     if (p.note) body.remarque = clip(p.note, 255);
@@ -427,7 +427,12 @@ class Noest extends Adapter {
     const j = (await this.send("POST", Noest.BASE + "/get/trackings/info", this.h(), this.auth({ trackings: [trk] }))).json() ?? {};
     if (j.message !== undefined && j[trk] === undefined) throw new ApiError("لم تجد الشركة الطرد: " + pick(j, "message"));
     const row = j[trk] ?? j.data?.[0] ?? j[0] ?? j; const a = row && typeof row === "object" ? row.activity : null; let raw = "";
-    if (Array.isArray(a)) for (const ev of [...a].reverse()) { const k = pick(ev && typeof ev === "object" ? ev : {}, "event_key", "status", "event"); if (k && explain("noest", k)[0] !== "ignore") { raw = k; break; } }
+    if (Array.isArray(a)) for (const ev of [...a].reverse()) {                                  // الردّ الرسمي v2.3: event (نص فرنسي) وقد يغيب event_key
+      const e = ev && typeof ev === "object" ? ev : {}, k = pick(e, "event_key"), l = pick(e, "event", "status");
+      const KL = { "uploade sur le systeme": "upload", valide: "customer_validation", "colis ramasse": "validation_collect_colis", "reception valide": "validation_reception_admin", "enleve par le livreur": "validation_reception", "en livraison": "fdr_activated",
+        "envoye en redispatch": "sent_to_redispatch", suspendu: "colis_suspendu", "tentative de livraison": "mise_a_jour", "retour demande par le partenaire": "return_asked_by_customer", "retour en transit": "return_asked_by_hub", "retour transmis au partenaire": "return_dispatched_to_partenaire",
+        "colis retour transmis au partenaire": "colis_retour_transmit_to_partner", "retour recu par le partenaire": "livraison_echoue_recu", "retour valide par le partenaire": "return_validated_by_partener", "retour remis en livraison": "return_redispatched_to_livraison", "retour transmis vers entrepot": "return_dispatched_to_warehouse", livre: "livre", "demande de suppression": "ask_to_delete_by_admin" };
+      const c = k || KL[normText(l)] || l; if (c && explain("noest", c)[0] !== "ignore") { raw = c; break; } }
     if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
   }
   async cancel(trk) { const r = await this.send("POST", Noest.BASE + "/delete/order", this.h(), this.auth({ tracking: trk })); const j = r.json() ?? {}; return r.ok && j.success !== false; }

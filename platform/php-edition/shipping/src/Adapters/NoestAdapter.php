@@ -87,7 +87,7 @@ final class NoestAdapter extends AbstractAdapter
             }
         }
         $body = $this->auth([
-            'reference' => $p->orderRef, 'client' => $p->name, 'phone' => $p->localPhone(), 'adresse' => $p->address !== '' ? mb_substr($p->address, 0, 255) : $p->commune,
+            'reference' => strlen($p->orderRef) < 5 ? 'ALY-' . $p->orderRef : $p->orderRef, 'client' => $p->name, 'phone' => $p->localPhone(), 'adresse' => $p->address !== '' ? mb_substr($p->address, 0, 255) : $p->commune,
             'wilaya_id' => $p->legacyWilaya(), 'commune' => $commune, 'montant' => (int)round($p->total), 'produit' => mb_substr($p->productsText() ?: 'Produit', 0, 255),
             'type_id' => 1, 'poids' => 1, 'stop_desk' => $p->stopDesk ? 1 : 0, 'can_open' => $p->canOpen ? 1 : 0, 'stock' => 0,
         ]);
@@ -119,7 +119,13 @@ final class NoestAdapter extends AbstractAdapter
         $raw = '';
         if (is_array($a)) {
             foreach (array_reverse(array_values($a)) as $ev) {                          // آخر حدث يمثل حالة الطرد (لا حدث مالي/إداري)
-                $k = self::pick(is_array($ev) ? $ev : [], 'event_key', 'status', 'event');
+                // الردّ الرسمي v2.3: event (نص فرنسي) وقد يغيب event_key؛ نترجم النص إلى مفتاحه
+                $e = is_array($ev) ? $ev : [];
+                static $KL = ['uploade sur le systeme' => 'upload', 'valide' => 'customer_validation', 'colis ramasse' => 'validation_collect_colis', 'reception valide' => 'validation_reception_admin', 'enleve par le livreur' => 'validation_reception', 'en livraison' => 'fdr_activated',
+                    'envoye en redispatch' => 'sent_to_redispatch', 'suspendu' => 'colis_suspendu', 'tentative de livraison' => 'mise_a_jour', 'retour demande par le partenaire' => 'return_asked_by_customer', 'retour en transit' => 'return_asked_by_hub', 'retour transmis au partenaire' => 'return_dispatched_to_partenaire',
+                    'colis retour transmis au partenaire' => 'colis_retour_transmit_to_partner', 'retour recu par le partenaire' => 'livraison_echoue_recu', 'retour valide par le partenaire' => 'return_validated_by_partener', 'retour remis en livraison' => 'return_redispatched_to_livraison', 'retour transmis vers entrepot' => 'return_dispatched_to_warehouse', 'livre' => 'livre', 'demande de suppression' => 'ask_to_delete_by_admin'];
+                $key = self::pick($e, 'event_key'); $label = self::pick($e, 'event', 'status');
+                $k = $key !== '' ? $key : ($KL[StatusMapper::normalize($label)] ?? $label);
                 if ($k !== '' && StatusMapper::explain('noest', $k)[0] !== 'ignore') { $raw = $k; break; }
             }
         }
