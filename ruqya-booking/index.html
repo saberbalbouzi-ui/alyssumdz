@@ -139,6 +139,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 .rq-n{direction:ltr;unicode-bidi:isolate;display:inline-block;white-space:nowrap}
 .rq-warn{text-align:start;background:#fff4e5;border:2px solid #f0b86e;border-radius:16px;padding:12px 16px;margin:12px 0;color:#7a3e00}.rq-warn b{display:block;margin-bottom:4px;font-size:16px}.rq-warn ul{margin:0;padding-inline-start:20px;font-weight:700;font-size:14px;line-height:1.9}
 .rq-hours{text-align:center;padding:14px 12px}.rq-hours .rq-hd{font-size:16px;font-weight:900;color:#14502a}.rq-hours .rq-hd b{color:#0e3f20}.rq-hours .rq-hr{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:10px 0;padding:10px 0;border-top:1px dashed #b7d6bd;border-bottom:1px dashed #b7d6bd}.rq-hours .rq-hr>div{flex:1 1 150px;max-width:260px}.rq-hours .rq-hr small{display:block;font-size:12px;color:#5d6f66;font-weight:800}.rq-hours .rq-hr span{display:block;font-size:17px;font-weight:900;color:#14502a}.rq-hours .rq-hn{font-size:13px;font-weight:700;color:#5d6f66}
+.rq-prods{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.rq-prod{border:2px solid #cfe0d3;border-radius:16px;padding:10px;background:#fff;text-align:center}.rq-prod img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px;background:#f1f8f2}.rq-prod b{display:block;color:#123e72;margin:6px 0 2px}.rq-prod p{font-size:12px;color:#5d6f66;margin:0 0 6px;min-height:34px;font-weight:700}.rq-pp{font-weight:900;color:#187a3b;margin-bottom:6px}.rq-qty{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:900}.rq-qty button{width:36px;height:36px;border-radius:10px;border:2px solid #187a3b;background:#fff;font-weight:900;font-size:18px;cursor:pointer;color:#187a3b}.rq-prod .rq-btn{width:100%;min-height:42px;padding:8px}
 .rq-note{font-size:13px;color:#5d6f66;font-weight:700;margin:10px 0 0}
 .rq [hidden]{display:none!important}
 @media(max-width:560px){.rq-row{grid-template-columns:1fr}.rq-find{flex-direction:column}.rq-card{padding:16px 13px}}
@@ -149,6 +150,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
   <div class="rq-hr"><div><small>الفترة الصباحية</small><span>من <bdi>09:00</bdi> إلى <bdi>12:30</bdi></span></div><div><small>الفترة المسائية</small><span>من <bdi>13:30</bdi> إلى <bdi>17:00</bdi></span></div></div>
   <div class="rq-hn">الحجز مسبق، وسيتم تأكيد الموعد معك.</div>
  </div>
+ <div id="offBox" class="rq-warn" hidden></div>
  <div style="height:14px"></div>
 
  <div class="rq-card" id="s1"><h3><b>1</b>هل سبق أن حجزت؟</h3>
@@ -205,6 +207,8 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
   <div id="slotsBox" hidden><div id="slotsAm"></div><div id="slotsPm"></div><div id="slotNote"></div></div>
  </div>
 
+ <div class="rq-card" id="shopBox" hidden><h3><b>🛍</b>منتجات تجدونها في المركز</h3><div class="rq-prods" id="prods"></div></div>
+
  <div class="rq-sum" id="sum"><h3><b>4</b>ملخص السعر</h3>
   <div id="sumLines"></div>
  </div>
@@ -223,18 +227,19 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 <script>
 (function(){
 var SB="https://qvdaiundlkfbmjlummni.supabase.co",KEY="sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h",WA="213559237239",SL=["09:00","09:30","10:00","10:30","11:00","11:30","12:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30"];
-var PRICE={single:1500,couple:2000,family:2000},PACK=3000,DAYN=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],MON=["جانفي","فيفري","مارس","أفريل","ماي","جوان","جويلية","أوت","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-var ST={reg:0,picked:null,kind:"single",day:"",slot:"",taken:{},tk:{},days:[]};
+var PRICE={single:1500,couple:2000,family:2000},PACK=3000,KID=500,DAYN=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],MON=["جانفي","فيفري","مارس","أفريل","ماي","جوان","جويلية","أوت","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+var ST={reg:0,picked:null,kind:"single",day:"",slot:"",taken:{},tk:{},days:[],cart:{},prods:[],closed:[]};
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function $(i){return document.getElementById(i)}
 function rpc(fn,body){return fetch(SB+"/rest/v1/rpc/"+fn,{method:"POST",headers:{"apikey":KEY,"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error((j&&(j.message||j.hint))||("http_"+r.status));return j})})}
-var ERR={terms_required:"يجب الموافقة على الشروط",not_saturday:"الحجز ليوم السبت فقط",past_day:"هذا اليوم مضى",too_far:"التاريخ بعيد جدا",invalid_phone:"رقم الهاتف غير صحيح",invalid_name:"الاسم غير صحيح",invalid_sessions:"عدد الجلسات غير صحيح",invalid_slot:"الساعة غير صحيحة",slot_overflow:"الجلسات لا تتسع في هذا اليوم، اختر سبتاً آخر أو قلل عدد الجلسات",slot_taken:"هذا اليوم لم يعد متاحاً، اختر سبتاً آخر",invalid_persons:"عدد الأفراد غير صحيح لهذا النوع",invalid_kind:"نوع الجلسة غير صحيح",not_registered:"لم نجدك في سجلاتنا بهذا الرقم، اختر (أول مرة) واملأ بياناتك",rate_limited:"محاولات كثيرة، حاول لاحقا",day_full:"اكتمل هذا السبت (الحد الأقصى 15 جلسة)، اختر السبت المقبل",invalid_whatsapp:"رقم الواتساب غير صحيح",banned:"تعذّر الحجز: أُوقف حجز المواعيد لهذا الرقم بسبب تكرار الغياب دون إخطار. تواصل معنا عبر واتساب."};
+var ERR={terms_required:"يجب الموافقة على الشروط",not_saturday:"الحجز ليوم السبت فقط",past_day:"هذا اليوم مضى",too_far:"التاريخ بعيد جدا",invalid_phone:"رقم الهاتف غير صحيح",invalid_name:"الاسم غير صحيح",invalid_sessions:"عدد الجلسات غير صحيح",invalid_slot:"الساعة غير صحيحة",slot_overflow:"الجلسات لا تتسع في هذا اليوم، اختر سبتاً آخر أو قلل عدد الجلسات",slot_taken:"هذا اليوم لم يعد متاحاً، اختر سبتاً آخر",invalid_persons:"عدد الأفراد غير صحيح لهذا النوع",invalid_kind:"نوع الجلسة غير صحيح",not_registered:"لم نجدك في سجلاتنا بهذا الرقم، اختر (أول مرة) واملأ بياناتك",rate_limited:"محاولات كثيرة، حاول لاحقا",disabled:"المواعيد متوقفة مؤقتاً",closed_day:"هذا اليوم عطلة، اختر سبتاً آخر",invalid_product:"تعذّر إضافة أحد المنتجات، حدّث الصفحة وحاول من جديد",day_full:"اكتمل هذا السبت (الحد الأقصى 15 جلسة)، اختر السبت المقبل",invalid_whatsapp:"رقم الواتساب غير صحيح",banned:"تعذّر الحجز: أُوقف حجز المواعيد لهذا الرقم بسبب تكرار الغياب دون إخطار. تواصل معنا عبر واتساب."};
 function err(e){var m=String(e&&e.message||e);return ERR[m]||("تعذر الحجز الآن، حاول مجددا أو تواصل معنا عبر واتساب")}
 function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+" دج"}
 function fmtH(n){return '<bdi class="rq-n">'+String(n).replace(/\B(?=(\d{3})+(?!\d))/g," ")+'</bdi> دج'}/* المبلغ يُعزل يسار-يمين فلا تنعكس مجموعات الأرقام داخل صفحة عربية */
 function num(i,a,b){var v=parseInt($(i).value,10);if(isNaN(v))v=a;return Math.max(a,Math.min(b,v))}
 function persons(){var k=ST.kind;return k==="single"?1:k==="couple"?2:num("persons",k==="family"?2:1,k==="family"?3:10)}
 function sessions(){return num("sessions",1,8)}
-function perSession(){var k=ST.kind;return k==="kids"?500*persons():PRICE[k]}
+function perSession(){var k=ST.kind;return k==="kids"?KID*persons():PRICE[k]}
 function first(){return !(ST.reg&&ST.picked)&&!ST.known}
 function packForced(){return first()&&(ST.kind==="single"||ST.kind==="couple")}
 function packOn(){return packForced()||!!ST.packUser}
@@ -248,7 +253,7 @@ function freeAt(tk,day,i,n){/* هل n جلسات متتالية تبدأ من ا
  if(i+n>SL.length)return false;if(periodOf(SL[i])!==periodOf(SL[i+n-1]))return false;
  for(var k=0;k<n;k++){var t=tk[SL[i+k]];if(t&&t.n>=t.cap)return false}if(pastSlot(day,SL[i]))return false;return true}
 function slotFree(i,n){return freeAt(ST.taken,ST.day,i,n)}
-function dayFull(day,n){var tk=ST.tk[day];if(!tk)return false;for(var i=0;i<SL.length;i++){if(freeAt(tk,day,i,n))return false}return true}
+function dayFull(day,n){if((ST.closed||[]).indexOf(day)>=0)return true;var tk=ST.tk[day];if(!tk)return false;for(var i=0;i<SL.length;i++){if(freeAt(tk,day,i,n))return false}return true}
 function secOn(){return ST.who==="other"&&sessions()>=2&&(ST.kind==="single"||ST.kind==="couple")}
 function pack2Forced(){return secOn()&&!ST.known2}
 function pack2On(){return pack2Forced()||(secOn()&&!!ST.pack2User)}
@@ -266,6 +271,7 @@ function sum(){
  var t=ps*s;
  if(packOn()){h+='<div class="rq-ln"><span>الباقة العلاجية 4</span><span>'+fmtH(PACK)+'</span></div>';t+=PACK}
  if(pack2On()){h+='<div class="rq-ln"><span>الباقة العلاجية 4 (للفرد الآخر)</span><span>'+fmtH(PACK)+'</span></div>';t+=PACK}
+ (ST.prods||[]).forEach(function(p){var q=ST.cart[p.slug]||0;if(q){h+='<div class="rq-ln"><span>'+esc(p.title)+' <bdi class="rq-n">&times; '+q+'</bdi></span><span>'+fmtH(p.price*q)+'</span></div>';t+=p.price*q}});
  h+='<div class="rq-ln rq-tot"><span>المجموع</span><span>'+fmtH(t)+'</span></div>';
  if(ST.day)h+='<div class="rq-ln"><span>الموعد</span><span>'+dayLabel(new Date(ST.day+"T12:00:00"))+' (خلال أوقات العمل)</span></div>';
  $("sumLines").innerHTML=h;ready()}
@@ -278,6 +284,7 @@ function ready(){
  var id=ident(),ph=id?normPh(id.phone):"",miss=[];
  if(!id)miss.push("اختر حسابك من نتائج البحث (أو اختر «أول مرة»)");
  else{if(id.name.length<2)miss.push("الاسم");if(!/^0[5-7][0-9]{8}$/.test(ph))miss.push("رقم هاتف صحيح من 10 أرقام يبدأ بـ 05 أو 06 أو 07");if(!ST.reg&&!id.commune)miss.push("الولاية والبلدية")}
+ if(ST.disabled)miss.unshift("المواعيد متوقفة مؤقتاً");
  if(!ST.day)miss.push("يوم السبت");else if(!ST.slot)miss.push("لا يتّسع هذا اليوم لعدد الجلسات: اختر سبتاً آخر");
  if(secOn()){if($("sName").value.trim().length<2)miss.push("اسم الفرد الآخر");if(!/^0[5-7][0-9]{8}$/.test(normPh($("sPhone").value)))miss.push("هاتف الفرد الآخر (10 أرقام)")}
  var wn=waNum();if(!/^0[5-7][0-9]{8}$/.test(wn))miss.push("رقم الواتساب (10 أرقام يبدأ بـ 05 أو 06 أو 07)");
@@ -286,8 +293,15 @@ function ready(){
  var hn=$("bkHint");if(hn)hn.textContent=miss.length?("لتفعيل الزر أكمل: "+miss.join(" · ")):""}
 function drawDays(){
  var h="",s=sessions();
- ST.days.forEach(function(k){var x=new Date(k+"T12:00:00"),full=dayFull(k,s);h+='<button type="button" class="rq-day'+(k===ST.day?" rq-on":"")+'" data-d="'+k+'"'+(full?" disabled":"")+'>'+dayLabel(x)+(full?'<small style="display:block;font-size:12px">مكتمل</small>':'')+'</button>'});
+ ST.days.forEach(function(k){var x=new Date(k+"T12:00:00"),full=dayFull(k,s);h+='<button type="button" class="rq-day'+(k===ST.day?" rq-on":"")+'" data-d="'+k+'"'+(full?" disabled":"")+'>'+dayLabel(x)+(full?'<small style="display:block;font-size:12px">'+((ST.closed||[]).indexOf(k)>=0?'عطلة':'مكتمل')+'</small>':'')+'</button>'});
  $("days").innerHTML=h}
+function renderProds(){var P=ST.prods||[],bx=$("shopBox");if(!bx)return;if(!P.length){bx.hidden=true;return}bx.hidden=false;var h="";
+ P.forEach(function(p){var q=ST.cart[p.slug]||0;h+='<div class="rq-prod">'+(p.img?'<img src="/'+esc(p.img)+'" alt="'+esc(p.title)+'" loading="lazy">':'')+'<b>'+esc(p.title)+'</b><p>'+esc(p.desc)+'</p><div class="rq-pp">'+fmtH(p.price)+'</div>'+(q?'<div class="rq-qty"><button type="button" data-cq="-1" data-cs="'+esc(p.slug)+'">&minus;</button><span>'+q+'</span><button type="button" data-cq="1" data-cs="'+esc(p.slug)+'">+</button></div>':'<button type="button" class="rq-btn" data-cadd="'+esc(p.slug)+'">احجز الآن</button>')+'</div>'});
+ $("prods").innerHTML=h}
+function cartTotal(){var t=0;(ST.prods||[]).forEach(function(p){t+=(ST.cart[p.slug]||0)*p.price});return t}
+function loadCfg(){rpc("ruqya_config",{}).then(function(c){if(!c)return;var p=c.prices||{};PRICE={single:p.single||PRICE.single,couple:p.couple||PRICE.couple,family:p.family||PRICE.family};PACK=p.pack||PACK;KID=p.kid||KID;ST.closed=c.closed||[];ST.disabled=!!c.disabled;ST.offMsg=c.msg||"";ST.prods=c.products||[];
+  if(ST.disabled){$("offBox").hidden=false;$("offBox").innerHTML="<b>المواعيد متوقفة مؤقتاً</b>"+(ST.offMsg?"<div style=\"margin-top:4px\">"+esc(ST.offMsg)+"</div>":"")}
+  renderProds()}).catch(function(){}).then(function(){initDays();sum()})}
 function initDays(){
  var d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+((6-d.getDay()+7)%7));
  for(var i=0;i<8;i++)ST.days.push(ymd(new Date(d.getTime()+i*7*864e5)));
@@ -314,7 +328,9 @@ function kindUi(){
 function loadWil(){
  var s=document.createElement("script");s.src="/assets/js/wilayas.js";s.onload=function(){try{var W=window.WILAYAS||[];var o='<option value="">اختر الولاية</option>';W.forEach(function(w){o+='<option value="'+w.id+'">'+w.id+" - "+w.name+'</option>'});$("nWil").innerHTML=o;window.__rqW=W}catch(e){}};document.head.appendChild(s)}
 document.addEventListener("click",function(e){
- var t=e.target.closest&&e.target.closest("#rq [data-reg],#rq [data-k],#rq [data-d],#rq [data-s],#rq .rq-m,#rq [data-who]");if(!t)return;
+ var t=e.target.closest&&e.target.closest("#rq [data-reg],#rq [data-k],#rq [data-d],#rq [data-s],#rq .rq-m,#rq [data-who],#rq [data-cadd],#rq [data-cq]");if(!t)return;
+ if(t.hasAttribute("data-cadd")){ST.cart[t.getAttribute("data-cadd")]=1;renderProds();sum();return}
+ if(t.hasAttribute("data-cq")){var cs=t.getAttribute("data-cs"),nq=Math.max(0,Math.min(10,(ST.cart[cs]||0)+(+t.getAttribute("data-cq"))));if(nq)ST.cart[cs]=nq;else delete ST.cart[cs];renderProds();sum();return}
  if(t.hasAttribute("data-who")){ST.who=t.getAttribute("data-who");sum();return}
  if(t.hasAttribute("data-reg")){ST.reg=+t.getAttribute("data-reg");ST.picked=null;[].forEach.call(document.querySelectorAll("#rq [data-reg]"),function(b){b.classList.toggle("rq-on",b===t)});$("boxReg").hidden=!ST.reg;$("boxNew").hidden=!!ST.reg;$("boxPick").hidden=true;sum()}
  else if(t.hasAttribute("data-k")){ST.kind=t.getAttribute("data-k");[].forEach.call(document.querySelectorAll("#rq [data-k]"),function(b){b.classList.toggle("rq-on",b===t)});kindUi();sum()}
@@ -343,14 +359,14 @@ document.addEventListener("keydown",function(e){if(e.target&&e.target.id==="qSea
 function book(){
  var id=ident(),ph=normPh(id.phone);$("bk").disabled=true;$("bkMsg").textContent="";
  var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===String(id.wilaya)})[0];
- rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,whatsapp:waNum(),pack:!!ST.packUser,second_name:secOn()?$("sName").value.trim():"",second_phone:secOn()?normPh($("sPhone").value):"",pack2:!!ST.pack2User,registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
+ rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,whatsapp:waNum(),pack:!!ST.packUser,items:Object.keys(ST.cart).map(function(k){return{slug:k,qty:ST.cart[k]}}),second_name:secOn()?$("sName").value.trim():"",second_phone:secOn()?normPh($("sPhone").value):"",pack2:!!ST.pack2User,registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
   var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالواتساب: "+waNum()+"\nالموعد: "+dayLabel(d)+" (خلال أوقات العمل)"+(secOn()?"\nالفرد الآخر: "+$("sName").value.trim()+" - "+normPh($("sPhone").value):"")+"\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"\nالمجموع: "+fmt(r.total);
   var h='<h2>تم تسجيل طلب الموعد</h2><p style="font-weight:800">رقم الحجز <b>'+r.id+'</b> &middot; '+dayLabel(d)+' · خلال أوقات العمل (09:00-12:30 / 13:30-17:00)</p><p style="font-weight:800;font-size:20px;color:#123e72">المبلغ: '+fmtH(r.total)+(r.pack_price>0?' (يشمل الباقة العلاجية 4)':'')+'</p><div class="rq-warn"><b>تنبيه مهم</b><ul><li>في حال تعذّر الحضور في الموعد يجب إخطارنا قبل 24 ساعة على الأقل.</li><li>الغياب عن الموعد دون إخطار يُسجَّل إنذاراً في ملفك.</li><li>بعد 3 إنذارات تُحظر من حجز المواعيد.</li></ul></div><a class="rq-btn" style="display:inline-block;text-decoration:none;margin-top:8px" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">أرسل التفاصيل على واتساب</a>';
   ["s1"].forEach(function(){});[].forEach.call(document.querySelectorAll("#rq > .rq-card:not(#done), #rq > .rq-sum, #rq > .rq-info"),function(x){x.hidden=true});
   $("done").innerHTML=h;$("done").hidden=false;$("done").scrollIntoView({behavior:"smooth",block:"start"})
  }).catch(function(e){$("bkMsg").textContent=err(e);ready();loadTaken()})}
 document.addEventListener("click",function(e){if(e.target&&e.target.id==="bk")book()});
-kindUi();sum();loadWil();initDays();
+kindUi();sum();loadWil();loadCfg();
 })();
 </script></div></div></div></div></div></section></main><footer class="pb-ftr">© 2026 أليسوم ALYSSUM — جميع الحقوق محفوظة · <a href="../">العودة للمتجر</a></footer>
 <script src="../assets/js/anti-copy.js?v=1" defer></script>

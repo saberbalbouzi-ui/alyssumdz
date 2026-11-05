@@ -7,7 +7,7 @@ const AdminRuqya = (() => {
   const KIND = { single: "فردية", couple: "زوج وزوجة", kids: "أبناء", family: "عائلة (كبار)" };
   const ST = { pending: "بانتظار التأكيد", confirmed: "مؤكَّد", done: "تمت", cancelled: "ملغى", noshow: "غاب بلا إخطار" };
   const WMAX = 3;      /* بعد 3 إنذارات يُحظر الرقم من حجز المواعيد (يفرضه الخادم أيضاً) */
-  const S = { rows: [], filter: "up", cap: 1, max: 15, err: "", busy: false, q: "", found: null, msg: "", pat: null, visits: [], perr: "", accts: [], link: "", wa: "", warn: [] };
+  const S = { rows: [], filter: "up", cap: 1, max: 15, err: "", busy: false, q: "", found: null, msg: "", pat: null, visits: [], perr: "", accts: [], link: "", wa: "", warn: [], cfg: {}, blocks: [], view: "" };
   async function call(path, opt) {
     const t = await API.sb.token(); if (!t) throw new Error("انتهت الجلسة، أعد تسجيل الدخول");
     const r = await fetch(API.sb.url("/rest/v1/" + path), Object.assign({ headers: Object.assign(API.sb.headers(t), { Prefer: "return=representation" }) }, opt || {}));
@@ -17,13 +17,35 @@ const AdminRuqya = (() => {
     S.err = "";
     try {
       S.rows = await call("ruqya_bookings?select=*&order=day.asc,slot.asc&limit=500");
+      try { S.blocks = await call("ruqya_blocks?select=phone,reason&limit=5000"); } catch (_) { S.blocks = []; }
       try { S.warn = await call("ruqya_warnings?select=id,phone,day,note,created_at&order=id.desc&limit=5000"); } catch (_) { S.warn = []; }
-      const k = await call("admin_kv?select=value&key=eq.ruqya"); S.cap = Math.max(1, Number(k && k[0] && k[0].value && k[0].value.cap) || 1); S.max = Math.max(1, Number(k && k[0] && k[0].value && k[0].value.maxday) || 15);
+      const k = await call("admin_kv?select=value&key=eq.ruqya"); S.cfg = (k && k[0] && k[0].value) || {}; S.cap = Math.max(1, Number(S.cfg.cap) || 1); S.max = Math.max(1, Number(k && k[0] && k[0].value && k[0].value.maxday) || 15);
     } catch (e) { S.err = e.message; }
   }
   const today = () => new Date(Date.now() + 36e5).toISOString().slice(0, 10);
   function dayName(d) { try { return new Date(d + "T12:00:00").toLocaleDateString("ar-DZ", { weekday: "long", day: "numeric", month: "long" }); } catch (_) { return d; } }
-  const wOf = ph => S.warn.filter(w => w.phone === ph), wBadge = ph => { const n = wOf(ph).length; return n ? ' <span style="display:inline-block;background:' + (n >= WMAX ? "#e5484d" : "#f59e0b") + ';color:#fff;border-radius:999px;padding:0 8px;font-size:.75rem;font-weight:800">' + (n >= WMAX ? "محظور" : "⚠️ إنذار " + n) + "</span>" : ""; };
+  const wOf = ph => S.warn.filter(w => w.phone === ph), wBadge = ph => { const n = wOf(ph).length; if (isBlocked(ph)) return ' <span style="display:inline-block;background:#e5484d;color:#fff;border-radius:999px;padding:0 8px;font-size:.75rem;font-weight:800">محظور</span>'; return n ? ' <span style="display:inline-block;background:' + (n >= WMAX ? "#e5484d" : "#f59e0b") + ';color:#fff;border-radius:999px;padding:0 8px;font-size:.75rem;font-weight:800">' + (n >= WMAX ? "محظور" : "⚠️ إنذار " + n) + "</span>" : ""; };
+  /* حفظ إعدادات المواعيد (admin_kv 'ruqya'): تُدمج مع الموجود فلا يضيع شيء (الأسعار، العطل، التعطيل، المنتجات، السقوف) */
+  async function saveCfg(patch) {
+    const v = Object.assign({}, S.cfg, patch);
+    await call("admin_kv?on_conflict=key", { method: "POST", headers: Object.assign(API.sb.headers(await API.sb.token()), { Prefer: "resolution=merge-duplicates,return=representation" }), body: JSON.stringify({ key: "ruqya", value: v }) });
+    S.cfg = v;
+  }
+  S.catalog = () => (typeof Admin !== "undefined" && Admin.products) ? Admin.products.filter(p => p && p.active !== false) : [];
+  const isBlocked = ph => S.blocks.some(x => x.phone === ph);
+  const DEFP = { single: 1500, couple: 2000, kid: 500, family: 2000, pack: 3000 };
+  function nextSaturdays(n) { const out = [], d = new Date(Date.now() + 36e5); d.setUTCHours(12, 0, 0, 0); while (out.length < n) { d.setUTCDate(d.getUTCDate() + 1); if (d.getUTCDay() === 6) out.push(d.toISOString().slice(0, 10)); } return out; }
+  function cfgHtml() {
+    const c = S.cfg || {}, pr = Object.assign({}, DEFP, c.prices || {}), closed = c.closed || [], sel = new Map((c.products || []).map(x => [x.slug, x]));
+    const inp = (id, l, v) => '<div><label style="font-weight:700">' + l + '</label><input type="number" min="0" id="' + id + '" value="' + v + '"></div>';
+    const prow = p => { const o = sel.get(p.slug); const img = p.cover || (p.images && p.images[0]) || ""; return '<div data-pp="' + esc(p.slug) + '" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #ffffff22;padding:6px 0"><label style="display:flex;gap:6px;align-items:center;min-width:160px;font-weight:700"><input type="checkbox" data-pon' + (o ? " checked" : "") + '>' + (img ? '<img src="/' + esc(img) + '" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:8px">' : "") + esc(p.title) + '</label><input data-pdesc placeholder="وصف قصير" value="' + esc(o ? o.desc : String(p.desc || "").slice(0, 90)) + '" style="flex:1;min-width:160px"><input data-pprice type="number" min="0" value="' + (o ? o.price : p.price) + '" style="width:100px" title="السعر في المركز (دج)"></div>'; };
+    return '<div id="rq-cfg" class="card" style="padding:16px"><button class="btn gray" data-rq="cfgback">← رجوع</button><h2 style="margin:12px 0 4px">إعدادات المواعيد</h2>' + (S.err ? '<div class="warn" style="margin:8px 0">' + esc(S.err) + '</div>' : "") +
+      '<h3 style="margin:14px 0 6px">⛔ تعطيل المواعيد</h3><label style="display:flex;gap:8px;align-items:center;font-weight:700"><input type="checkbox" id="cf-off"' + (c.disabled ? " checked" : "") + '> إيقاف الحجز مؤقتاً (لا يستقبل الحجوزات)</label><textarea id="cf-msg" rows="2" style="width:100%;margin-top:6px" placeholder="رسالة تظهر للزائر (اختياري)">' + esc(c.msg || "") + '</textarea>' +
+      '<h3 style="margin:14px 0 6px">💰 الأسعار (دج)</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">' + inp("cf-single", "جلسة فردية", pr.single) + inp("cf-couple", "زوج وزوجة", pr.couple) + inp("cf-kid", "طفل (للفرد)", pr.kid) + inp("cf-family", "جماعية للعائلة", pr.family) + inp("cf-pack", "الباقة العلاجية", pr.pack) + '</div>' +
+      '<h3 style="margin:14px 0 6px">🏖️ العطل (أيام سبت مغلقة)</h3><div style="display:flex;gap:8px;flex-wrap:wrap">' + nextSaturdays(16).map(d => '<label style="display:flex;gap:6px;align-items:center;border:1px solid #ffffff44;border-radius:10px;padding:6px 10px"><input type="checkbox" data-closed="' + d + '"' + (closed.includes(d) ? " checked" : "") + '>' + esc(dayName(d)) + '</label>').join("") + '</div>' +
+      '<h3 style="margin:14px 0 6px">🛍️ منتجات تجدونها في المركز</h3><div class="hint">اختر من منتجات أليسوم ما يُعرض في صفحة الحجز: صورته ووصفه القصير وسعره في المركز وزر «احجز الآن» (يُضاف سعره إلى المجموع).</div>' + S.catalog().map(prow).join("") +
+      '<div style="margin-top:14px"><button class="btn" data-rq="cfgsave">حفظ كل الإعدادات</button></div></div>';
+  }
   /* ── بحث في كل السجل (الاسم أو الهاتف) من الخادم، لا في آخر 500 فقط ── */
   let qT = 0;
   async function search() {
@@ -111,7 +133,7 @@ const AdminRuqya = (() => {
       })() +
       (function () {
         const W = wOf(S.pat.phone), ban = W.length >= WMAX;
-        return '<h3 style="margin:18px 0 6px">⚠️ الإنذارات (' + W.length + ' / ' + WMAX + ')</h3><div class="card" style="padding:12px">' + (ban ? '<div class="warn" style="margin-bottom:8px">🚫 محظور من حجز المواعيد (3 إنذارات).</div>' : '') +
+        return '<div style="margin:14px 0 0">' + (isBlocked(S.pat.phone) ? '<span class="warn" style="padding:6px 10px">🚫 هذا الرقم محظور من الحجز</span> <button class="btn gray" data-rq="unblock" data-ph="' + esc(S.pat.phone) + '">رفع الحظر</button>' : '<button class="btn warn" data-rq="block" data-ph="' + esc(S.pat.phone) + '">🚫 حظر الرقم من الحجز</button>') + '</div><h3 style="margin:18px 0 6px">⚠️ الإنذارات (' + W.length + ' / ' + WMAX + ')</h3><div class="card" style="padding:12px">' + (ban ? '<div class="warn" style="margin-bottom:8px">🚫 محظور من حجز المواعيد (3 إنذارات).</div>' : '') +
           '<div class="hint">الغياب دون إخطار قبل 24 ساعة يُسجَّل إنذاراً (زر «غاب بلا إخطار» في المواعيد). بعد ' + WMAX + ' إنذارات يُحظر الرقم من الحجز.</div>' +
           W.map(w => '<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><span>' + esc(w.day ? dayName(w.day) : String(w.created_at).slice(0, 10)) + ' — ' + esc(w.note || "") + '</span><span style="flex:1"></span><button class="btn gray" data-rq="wdel" data-id="' + w.id + '">حذف</button></div>').join("") +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><input type="date" id="rq-wd" value="' + today() + '"><input id="rq-wn" placeholder="ملاحظة (اختياري)" style="flex:1;min-width:160px"><button class="btn" data-rq="wadd">＋ إنذار يدوي</button>' + (W.length ? '<button class="btn warn" data-rq="wclr">تصفير الإنذارات ورفع الحظر</button>' : "") + '</div></div>';
@@ -122,13 +144,14 @@ const AdminRuqya = (() => {
   }
   function draw() {
     const host = $("ruqya-content"); if (!host) return;
+    if (S.view === "cfg") { host.innerHTML = cfgHtml(); return; }
     if (S.pat) { host.innerHTML = patientHtml(); return; }
     const up = S.rows.filter(r => r.day >= today() && r.status !== "cancelled" && r.status !== "noshow"), pend = S.rows.filter(r => r.status === "pending").length;
     let list = S.found || S.rows;
     if (S.found) { /* نتائج البحث في كل السجل */ } else if (S.filter === "up") list = up; else if (S.filter === "pending") list = S.rows.filter(r => r.status === "pending"); else if (S.filter === "past") list = S.rows.filter(r => r.day < today());
     const f = (k, n) => '<button class="rq-fb' + (S.filter === k ? " on" : "") + '" data-rq="f" data-k="' + k + '">' + n + '</button>';
     let h = '<div class="card" style="padding:16px"><h2 style="margin:0 0 6px">مواعيد الرقية الشرعية</h2><div class="hint">الحجوزات القادمة من صفحة الحجز العامة. اضغط «تأكيد» ثم راسل صاحب الحجز بواتساب.</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0"><input id="rq-q" type="search" placeholder="🔍 ابحث بالاسم أو رقم الهاتف في كل السجل" value="' + esc(S.q) + '" style="flex:1;min-width:220px"><button class="btn gray" data-rq="imp"' + (S.busy ? ' disabled' : '') + '>📥 استيراد من تقويم Google</button><input type="file" id="rq-file" accept=".ics,.zip" class="hidden"></div>' + (S.msg ? '<div class="hint" style="margin:6px 0">' + esc(S.msg) + '</div>' : '') + (S.found ? '<div class="hint" style="margin:6px 0">نتائج البحث: ' + S.found.length + (S.found.length >= 300 ? ' (أول 300)' : '') + '</div>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0"><input id="rq-q" type="search" placeholder="🔍 ابحث بالاسم أو رقم الهاتف في كل السجل" value="' + esc(S.q) + '" style="flex:1;min-width:220px"><button class="btn gray" data-rq="cfg">⚙️ الإعدادات والأسعار والمنتجات</button><button class="btn gray" data-rq="imp"' + (S.busy ? ' disabled' : '') + '>📥 استيراد من تقويم Google</button><input type="file" id="rq-file" accept=".ics,.zip" class="hidden"></div>' + (S.msg ? '<div class="hint" style="margin:6px 0">' + esc(S.msg) + '</div>' : '') + (S.found ? '<div class="hint" style="margin:6px 0">نتائج البحث: ' + S.found.length + (S.found.length >= 300 ? ' (أول 300)' : '') + '</div>' : '') +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">' + f("up", "القادمة (" + up.length + ")") + f("pending", "بانتظار التأكيد (" + pend + ")") + f("past", "السابقة") + f("all", "الكل") +
       '<span style="flex:1"></span><label style="display:flex;align-items:center;gap:6px;font-weight:700">الحجوزات في الساعة الواحدة <input type="number" id="rq-cap" min="1" max="20" value="' + S.cap + '" style="width:70px"></label><label style="display:flex;align-items:center;gap:6px;font-weight:700">أقصى جلسات في السبت <input type="number" id="rq-max" min="1" max="60" value="' + S.max + '" style="width:70px"></label><button class="btn" data-rq="cap">حفظ</button></div>';
     if (S.err) h += '<div class="warn" style="margin:8px 0">' + esc(S.err) + '</div>';
@@ -140,9 +163,9 @@ const AdminRuqya = (() => {
         h += '<tr><td data-l="الموعد"><b>' + esc(dayName(r.day)) + '</b><br>' + esc(r.slot) + (r.slots > 1 ? ' (' + r.slots + ' جلسات)' : '') + '</td><td data-l="الاسم"><a href="#" data-rq="pat" data-id="' + r.id + '" style="font-weight:800;color:inherit;text-decoration:underline">' + esc(r.name) + '</a>' + wBadge(r.phone) + '<br><small>' + (r.first_time ? "أول مرة" : "مسجَّل") + '</small></td>' +
           '<td data-l="الهاتف" dir="ltr">' + esc(r.phone) + '</td><td data-l="البلدية">' + esc(r.commune || "—") + (r.wilaya ? '<br><small>' + esc(r.wilaya) + '</small>' : '') + '</td>' +
           '<td data-l="الجلسة">' + esc(KIND[r.kind] || r.kind) + '<br><small>' + r.persons + ' أفراد · ' + r.sessions + ' جلسة</small>' + (r.second_name ? '<br><small>+ فرد آخر: ' + esc(r.second_name) + ' <bdi dir="ltr">' + esc(r.second_phone || "") + '</bdi></small>' : '') + '</td>' +
-          '<td data-l="المبلغ">' + (Number(r.total) > 0 ? '<bdi dir="ltr">' + money(r.total) + '</bdi>' : "—") + (r.pack_price ? '<br><small>يشمل الباقة 4: <bdi dir="ltr">' + money(r.pack_price) + '</bdi></small>' : '') + '</td><td data-l="الحالة">' + esc(ST[r.status] || r.status) + '</td>' +
+          '<td data-l="المبلغ">' + (Number(r.total) > 0 ? '<bdi dir="ltr">' + money(r.total) + '</bdi>' : "—") + (Array.isArray(r.products) && r.products.length ? '<br><small>منتجات: ' + r.products.map(x => esc(x.title) + ' ×' + x.qty).join('، ') + '</small>' : '') + (r.pack_price ? '<br><small>يشمل الباقة 4: <bdi dir="ltr">' + money(r.pack_price) + '</bdi></small>' : '') + '</td><td data-l="الحالة">' + esc(ST[r.status] || r.status) + '</td>' +
           '<td data-l="إجراء" style="white-space:nowrap"><a class="btn gray" target="_blank" rel="noopener" href="' + wa + '">واتساب</a> ' +
-          ((r.status === "pending" || r.status === "confirmed") && r.day <= today() ? '<button class="btn warn" data-rq="noshow" data-id="' + r.id + '" title="يسجَّل إنذار في ملفه">غاب بلا إخطار</button> ' : '') +
+          (isBlocked(r.phone) ? '<button class="btn gray" data-rq="unblock" data-ph="' + esc(r.phone) + '">رفع الحظر</button> ' : '<button class="btn warn" data-rq="block" data-ph="' + esc(r.phone) + '" title="يمنع هذا الرقم من الحجز">حظر</button> ') + ((r.status === "pending" || r.status === "confirmed") && r.day <= today() ? '<button class="btn warn" data-rq="noshow" data-id="' + r.id + '" title="يسجَّل إنذار في ملفه">غاب بلا إخطار</button> ' : '') +
           (r.status === "pending" ? '<button class="btn" data-rq="st" data-id="' + r.id + '" data-v="confirmed">تأكيد</button> ' : '') +
           (r.status === "confirmed" ? '<button class="btn" data-rq="st" data-id="' + r.id + '" data-v="done">تمت</button> ' : '') +
           (r.status !== "cancelled" && r.status !== "done" && r.status !== "noshow" ? '<button class="btn warn" data-rq="st" data-id="' + r.id + '" data-v="cancelled">إلغاء</button>' : '') + '</td></tr>';
@@ -197,8 +220,22 @@ const AdminRuqya = (() => {
       const v = b.getAttribute("data-v"); if (v === "cancelled" && !confirm("إلغاء هذا الحجز؟ سيتحرر الموعد.")) return;
       try { await call("ruqya_bookings?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "PATCH", body: JSON.stringify({ status: v }) }); await load(); draw(); } catch (er) { S.err = er.message; draw(); }
     } else if (a === "cap") {
-      const n = Math.max(1, Math.min(20, parseInt($("rq-cap").value, 10) || 1));
-      try { await call("admin_kv?on_conflict=key", { method: "POST", headers: Object.assign(API.sb.headers(await API.sb.token()), { Prefer: "resolution=merge-duplicates,return=representation" }), body: JSON.stringify({ key: "ruqya", value: { cap: n, maxday: Math.max(1, Math.min(60, parseInt($("rq-max").value, 10) || 15)) } }) }); S.cap = n; S.max = Math.max(1, Math.min(60, parseInt($("rq-max").value, 10) || 15)); S.err = ""; draw(); } catch (er) { S.err = er.message; draw(); }
+      const n = Math.max(1, Math.min(20, parseInt($("rq-cap").value, 10) || 1)), mx = Math.max(1, Math.min(60, parseInt($("rq-max").value, 10) || 15));
+      try { await saveCfg({ cap: n, maxday: mx }); S.cap = n; S.max = mx; S.err = ""; draw(); } catch (er) { S.err = er.message; draw(); }
+    } else if (a === "cfg") { S.view = "cfg"; draw(); }
+    else if (a === "cfgback") { S.view = ""; draw(); }
+    else if (a === "cfgsave") {
+      const num = id => Math.max(0, Math.round(Number($(id).value) || 0)), prods = [];
+      document.querySelectorAll("#rq-cfg [data-pp]").forEach(r => { if (!r.querySelector("[data-pon]").checked) return; const pr = (S.catalog().find(x => x.slug === r.dataset.pp) || {}); prods.push({ slug: r.dataset.pp, title: pr.title || r.dataset.pp, img: pr.cover || (pr.images && pr.images[0]) || "", desc: r.querySelector("[data-pdesc]").value.trim().slice(0, 160), price: Math.max(0, Math.round(Number(r.querySelector("[data-pprice]").value) || 0)) }); });
+      const closed = [...document.querySelectorAll("#rq-cfg [data-closed]")].filter(c => c.checked).map(c => c.getAttribute("data-closed"));
+      try { await saveCfg({ prices: { single: num("cf-single"), couple: num("cf-couple"), kid: num("cf-kid"), family: num("cf-family"), pack: num("cf-pack") }, disabled: $("cf-off").checked, msg: $("cf-msg").value.trim().slice(0, 300), closed, products: prods }); S.err = ""; S.msg = "✅ حُفظت الإعدادات"; S.view = ""; } catch (er) { S.err = er.message; }
+      draw();
+    } else if (a === "block") {
+      const ph = b.getAttribute("data-ph"); if (!confirm("حظر الرقم " + ph + " من حجز المواعيد؟")) return;
+      try { await call("ruqya_blocks?on_conflict=phone", { method: "POST", headers: Object.assign(API.sb.headers(await API.sb.token()), { Prefer: "resolution=merge-duplicates,return=representation" }), body: JSON.stringify({ phone: ph, reason: "حظر يدوي" }) }); S.blocks = await call("ruqya_blocks?select=phone,reason&limit=5000"); S.err = ""; S.msg = "🚫 حُظر الرقم من الحجز"; } catch (er) { S.err = er.message; } draw();
+    } else if (a === "unblock") {
+      const ph = b.getAttribute("data-ph");
+      try { await call("ruqya_blocks?phone=eq." + encodeURIComponent(ph), { method: "DELETE" }); S.blocks = S.blocks.filter(x => x.phone !== ph); S.err = ""; S.msg = "رُفع الحظر"; } catch (er) { S.err = er.message; } draw();
     }
   });
   document.addEventListener("input", e => { if (e.target && e.target.id === "rq-q") { S.q = e.target.value; clearTimeout(qT); qT = setTimeout(search, 350); } });
