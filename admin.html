@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.818">
+<meta name="admin-version" content="1.89.819">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7589,6 +7589,20 @@ const Admin = {
       hdr(cfg){ const c = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); return { "X-Api-Key": c(cfg.apiKey), "X-Tenant": c(cfg.tenant), "Content-Type": "application/json", "Accept": "application/json" }; },
       pingRequest(cfg){ return { url: this.base + "/territories/search", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ pageNumber: 1, pageSize: 1 }) }; },
       /* تعريفة الشركة لكل ولاية: GET /delivery-pricing/rates ⟵ {rates:[{toTerritoryCode, toTerritoryLevel:"wilaya", deliveryPrices:[{deliveryType: home|pickup-point|return, price}]}]} (المستوى «commune» استثناءات بلدية لا تُستعمل هنا) */
+      ownTariff: true,                       // تعريفتها كاملة من الشركة: لا تُضاف إليها إضافات بلديات ياليدين
+      /* قوائم الشركة نفسها (تتكيّف المنصة معها): الولايات {رقم:{name,ok}} والبلديات لولاية {names, nd} من قائمة الأقاليم المخزَّنة */
+      wilayasRequest(cfg){ return this.pingRequest(cfg); },
+      communesRequest(cfg){ return this.pingRequest(cfg); },
+      async listWilayas(cfg, fetcher){
+        const ts = await this.territories(cfg, fetcher), m = {};
+        ts.filter(t=>t.level === "wilaya" || (t.level !== "commune" && !t.par)).forEach(t=>{ const id = Number(t.code); if(id >= 1 && id <= 69) m[id] = { name: t.name, ok: t.home !== false }; });
+        return m;
+      },
+      async listCommunes(cfg, wilayaId, fetcher){
+        const ts = await this.territories(cfg, fetcher), w = ts.find(t=>(t.level === "wilaya" || (t.level !== "commune" && !t.par)) && Number(t.code) === Number(wilayaId));
+        const kids = w ? ts.filter(t=>t.par === w.id) : [];
+        return { names: kids.map(t=>t.name), nd: kids.filter(t=>t.home === false).map(t=>t.name) };
+      },
       feesRequest(cfg){ return { url: this.base + "/delivery-pricing/rates", method: "GET", headers: this.hdr(cfg) }; },
       parseFees(json){
         const prices = {}, communes = new Set();
@@ -7616,7 +7630,7 @@ const Admin = {
           if(Array.isArray(j.items)) rows.push(...j.items);
           if(!j.hasNext || !Array.isArray(j.items) || !j.items.length) break;
         }
-        const v = rows.filter(t=>t && t.id).map(t=>({ id: String(t.id), code: t.code, name: String(t.name||""), level: String(t.level||"").toLowerCase(), par: t.parentId ? String(t.parentId) : null }));
+        const v = rows.filter(t=>t && t.id).map(t=>({ id: String(t.id), code: t.code, name: String(t.name||""), level: String(t.level||"").toLowerCase(), par: t.parentId ? String(t.parentId) : null, home: !(t.delivery && t.delivery.hasHomeDelivery === false) }));
         if(v.length) this._tc[k] = { v, at: Date.now() };
         return v;
       },
@@ -7861,6 +7875,19 @@ const Admin = {
     this.renderDelivery(); this.renderOrders(); this.renderDeliveryBanners(); this.publishShipCo();
     toast(on ? "✅ فُعّلت " + co.name + (en.length > 1 ? "" : " وهي الافتراضية") : "⏸️ عُطّلت " + co.name);
     if(on && co.feesRequest && !Object.keys(cfg.prices||{}).length) this.fetchCompanyPrices(key, { auto:true });
+    if(on && key !== "yalidine" && co.wilayasRequest) this.calibrateCompany(key);
+  },
+  /* ضبط تلقائي عند أول تفعيل لأي شركة: قائمة ولاياتها وبلدياتها (ما لا توصّله يُحجب في المتجر)، ثم أسعارها، ثم نشرها للمتجر */
+  async calibrateCompany(key){
+    const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {}; if(!co || !co.wilayasRequest || this._calBusy) return; this._calBusy = true;
+    try{
+      const wl = await this.companyWilayas(co, cfg); let nc = 0, nd = 0;
+      for(const w of (typeof WILAYAS !== "undefined" ? WILAYAS.filter(x=>!x.par) : [])){ if(!wl[w.id]) continue; try{ const c = await this.companyCommunes(co, cfg, w.id); nc += (c.names || []).length; nd += (c.nd || []).length; }catch(e){} }
+      this.deliveryCfg[key] = Object.assign({}, this.deliveryCfg[key] || cfg, { calAt: Date.now(), calW: Object.keys(wl).length, calC: nc });
+      this.saveDeliveryCfgToStorage(); await this.publishShipCo(); this.renderDelivery();
+      toast("✅ ضُبطت " + co.name + " تلقائياً: " + Object.keys(wl).length + " ولاية و" + nc + " بلدية" + (nd ? " (" + nd + " بلدية لا توصّل إليها)" : ""));
+    }catch(err){ console.error(err); toast("⚠️ تعذّر ضبط قوائم " + co.name + " تلقائياً: " + String(err.message || err).slice(0, 120)); }
+    finally{ this._calBusy = false; }
   },
   setDefaultCompany(key, silent){
     Object.keys(this.deliveryCfg).forEach(k=>{ const c = this.deliveryCfg[k]; if(c) c.isDefault = (k === key); });
@@ -7988,7 +8015,8 @@ const Admin = {
   },
   /* بلديات غير مخدومة عند ياليدين {معرّف الولاية الأم:[اسم مطبَّع]} من كاش بلديات الشركة */
   communeNd(){
-    const out = {}, co = this.allDeliveryCompanies().yalidine; if(!co || typeof WILAYAS === "undefined") return out;
+    let ak = "yalidine"; try{ const pk = this.pricingState().key; if(pk && this.allDeliveryCompanies()[pk] && this.allDeliveryCompanies()[pk].wilayasRequest) ak = pk; }catch(e){}
+    const out = {}, co = this.allDeliveryCompanies()[ak]; if(!co || typeof WILAYAS === "undefined") return out;
     const nz = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
     WILAYAS.filter(w=>!w.par).forEach(w=>{ try{ const ck = (co.name||"") + ":v2:" + w.id, c = this._communesCache[ck] || JSON.parse(localStorage.getItem("alyssum_communes_" + ck) || "null"); if(c && c.nd && c.nd.length) out[w.id] = Array.from(new Set(c.nd.map(nz).filter(Boolean))); }catch(e){} });
     return out;
@@ -8010,7 +8038,7 @@ const Admin = {
   },
   /* هل الولاية غير موجودة (أو غير مخدومة) عند الشركة الافتراضية؟ تُخفى من قوائم الطلب اليدوي وتعديل الطلب */
   wilHidden(w){
-    try{ if(!w || this.pricingState().key !== "yalidine") return false; const wl = this.wilListOf("yalidine"); if(!wl) return false;
+    try{ const pk = this.pricingState().key; if(!w || !pk) return false; const wl = this.wilListOf(pk); if(!wl) return false;
       const nz = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), top = w, n = nz(top.name);   /* الولايات الجديدة 59–69 تُخفى ما لم تعدّها الشركة ولاية (بئر العاتر عند ياليدين بلدية تابعة لتبسة) */
       let e = wl[top.id] && (wl[top.id][0] === n || wl[top.id][0].includes(n) || n.includes(wl[top.id][0])) ? wl[top.id] : Object.values(wl).find(v=>v[0] === n);
       return !e || !e[1];
@@ -8063,11 +8091,11 @@ const Admin = {
     try{ const st = this.pricingState(); const pr = st.key && this.deliveryCfg[st.key] && (this.deliveryCfg[st.key].prices || {})[w.id]; const v = pr ? Number(type === "stop" ? pr.stop : pr.home) : 0; if(v > 0) base = v; }catch(e){}   /* بلا «المبلغ المنقوص»: يخص المتجر وحده، والطلب اليدوي بسعر الشركة الحقيقي */
     let fee = base, known = false;
     try{ const key = (() => { try{ return this.pricingState().key; }catch(e){ return ""; } })(), k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), cp = this.shipCp()[w.par || w.id]; known = !!cp;
-      const d = key === "yalidine" && cp && k && cp[k], v = d ? Number(type === "stop" ? d[1] : d[0]) : 0;
+      const d = key === "yalidine" && cp && k && cp[k], v = d ? Number(type === "stop" ? d[1] : d[0]) : 0, own = !!(key && this.allDeliveryCompanies()[key] && this.allDeliveryCompanies()[key].ownTariff);
       if(v > 0) fee = v;       /* سعر البلدية مستقل عن سعر الولاية */
-      else if(!(key === "yalidine" && cp)){ const cs = this.shipSup()[w.par || w.id], d2 = cs && k && cs[k]; if(d2) fee = Math.max(0, base + (Number(type === "stop" ? d2[1] : d2[0]) || 0)); known = known || !!cs; }
+      else if(!(key === "yalidine" && cp) && !own){ const cs = this.shipSup()[w.par || w.id], d2 = cs && k && cs[k]; if(d2) fee = Math.max(0, base + (Number(type === "stop" ? d2[1] : d2[0]) || 0)); known = known || !!cs; }
     }catch(e){}
-    return { fee, base, sup: fee - base, known, nd: this.ndHas(w, commune) && (this.pricingState().key === "yalidine") };
+    return { fee, base, sup: fee - base, known, nd: this.ndHas(w, commune) && !!this.pricingState().key };
   },
   /* يجلب سعر كل بلدية لكل الولايات (58 طلباً متتابعاً) ثم ينشر الإضافات للمتجر */
   async fetchCommuneFees(opts){
@@ -8484,9 +8512,11 @@ const Admin = {
     const key = (co.name||"") + ":wil";
     if(this._wilayasCache[key]) return this._wilayasCache[key];
     try{ const c = JSON.parse(localStorage.getItem("alyssum_wilayas_" + key) || "null"), ct = Number(localStorage.getItem("alyssum_wilayas_" + key + "_t")) || 0; if(c && Object.keys(c).length > 40 && Date.now() - ct < 864e5){ this._wilayasCache[key] = c; return c; } }catch(e){}
-    const r = await this.courierFetch(co.wilayasRequest(cfg));
-    if(!r.ok) throw new Error("تعذّر جلب ولايات الشركة (رمز " + r.status + ")");
-    const m = co.parseWilayas(JSON.parse(r.text));
+    let m;
+    if(co.listWilayas) m = await co.listWilayas(cfg, q=>this.courierFetch(q));                  // شركات بقوائم أقاليم موحّدة (ZR الجديدة)
+    else { const r = await this.courierFetch(co.wilayasRequest(cfg));
+      if(!r.ok) throw new Error("تعذّر جلب ولايات الشركة (رمز " + r.status + ")");
+      m = co.parseWilayas(JSON.parse(r.text)); }
     if(Object.keys(m).length){ this._wilayasCache[key] = m; try{ localStorage.setItem("alyssum_wilayas_" + key, JSON.stringify(m)); localStorage.setItem("alyssum_wilayas_" + key + "_t", String(Date.now())); }catch(e){} }
     return m;
   },
@@ -8502,7 +8532,8 @@ const Admin = {
   async _companyCommunes(co, cfg, wilayaId, key){
     try{ const c = JSON.parse(localStorage.getItem("alyssum_communes_" + key) || "null"), ct = Number(localStorage.getItem("alyssum_communes_" + key + "_t")) || 0; if(c && c.names && c.names.length && Date.now() - ct < 3 * 864e5){ this._communesCache[key] = c; return c; } }catch(e){}
     let names = [], nd = [];
-    for(let pg = 1; pg <= 5; pg++){
+    if(co.listCommunes){ const got = await co.listCommunes(cfg, wilayaId, q=>this.courierFetch(q)); names = got.names || []; nd = got.nd || []; }
+    else for(let pg = 1; pg <= 5; pg++){
       const r = await this.courierFetch(co.communesRequest(cfg, wilayaId, pg));
       if(!r.ok){ const err = new Error("تعذّر جلب بلديات الشركة (رمز " + r.status + ")"); this._communesNeg[key] = { until: Date.now() + (r.status === 429 ? 90000 : 30000), err }; throw err; }
       const got = co.parseCommunes(JSON.parse(r.text)); names = names.concat(got.names); nd = nd.concat(got.nd || []); if(!got.more) break;
