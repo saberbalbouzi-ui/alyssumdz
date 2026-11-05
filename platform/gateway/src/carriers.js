@@ -241,8 +241,8 @@ class ZRExpressApp extends Adapter {
     if (this._t) return this._t;
     const hit = this.memoGet("t"); if (hit) return (this._t = hit);
     const rows = [];   // الواجهة تقصّ الصفحة عند 1000 إقليم رغم طلب أكثر: نتصفّح حتى hasNext=false
-    for (let page = 1; page <= 8; page++) {
-      const j = (await this.send("POST", ZRExpressApp.BASE + "/territories/search", this.h(), { pageNumber: page, pageSize: 1000, orderBy: ["code asc"] })).json() ?? {};
+    for (let page = 1; page <= 15; page++) {
+      const j = (await this.send("POST", ZRExpressApp.BASE + "/territories/search", this.h(), { pageNumber: page, pageSize: 250, orderBy: ["code asc"] })).json() ?? {};
       if (Array.isArray(j.items)) rows.push(...j.items);
       if (!j.hasNext || !Array.isArray(j.items) || !j.items.length) break;
       await this.breath(150);
