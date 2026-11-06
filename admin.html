@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.828">
+<meta name="admin-version" content="1.89.829">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7918,6 +7918,15 @@ const Admin = {
       const req = (co.fields||[]).filter(f=>f.required!==false), missing = req.filter(f=>!String(cfg[f.key]||"").trim());
       if(missing.length){ toast("⚠️ أدخل مفاتيح " + co.name + " أولاً (" + missing.map(f=>f.label).join("، ") + ")"); this.renderDelivery(); this.openDeliveryConfig(key); return }
     }
+    if(on){                                                      // شركة واحدة مفعّلة في الوقت نفسه: تفعيل شركة يعطّل السابقة (تبقى مفاتيحها وطلباتها المسجلة وتحديث حالاتها)
+      const others = this.enabledCompanyKeys().filter(k=>k !== key), all0 = this.allDeliveryCompanies();
+      if(others.length){
+        const names = others.map(k=>(all0[k] || {}).name || k).join("، ");
+        if(!opts.silent && !confirm("تفعيل «" + co.name + "» سيعطّل " + names + ".\nتبقى طلباتها المسجلة في تبويب باسمها ويستمر تحديث حالاتها، لكن الطلبات الجديدة تُرسل عبر «" + co.name + "» وحدها.\nمتابعة؟")) return;
+        others.forEach(k=>{ const c = Object.assign({}, this.deliveryCfg[k]); c.enabled = false; delete c.isDefault; this.deliveryCfg[k] = c; });
+        opts = Object.assign({}, opts, { makeDefault: true });
+      }
+    }
     cfg.enabled = !!on; if(!on) delete cfg.isDefault;
     this.deliveryCfg[key] = cfg;
     const en = this.enabledCompanyKeys();
@@ -9467,21 +9476,21 @@ const Admin = {
     const sel = $f("ship-co"); if(sel){ const keys = Object.keys(by); sel.innerHTML = '<option value="">كل الشركات' + (keys.length > 1 ? "" : "") + '</option>' + keys.map(k=>'<option value="' + k + '"' + (cof === k ? " selected" : "") + '>' + ((cos[k]||{}).name || k) + ' (' + by[k].n + ')</option>').join(""); sel.style.display = keys.length > 1 ? "" : "none"; }
     const sb = $f("ship-co-stats"); if(sb){ const keys = Object.keys(by); sb.innerHTML = keys.length > 1 ? keys.map(k=>{ const g = by[k], d = g.ok + g.bad; return '<div class="pill" style="padding:.35rem .7rem;font-weight:700;cursor:pointer" onclick="$f(\'ship-co\').value=\'' + k + '\';Admin.renderShipped()"><b>' + ((cos[k]||{}).name || k) + '</b> · ' + g.n + ' طلب · ✅ ' + g.ok + ' · ⏳ ' + g.way + ' · ⛔ ' + g.bad + (d ? ' · نجاح ' + Math.round(g.ok / d * 100) + '%' : "") + ' · ' + Math.round(g.sum).toLocaleString("fr-DZ") + ' دج</div>'; }).join("") : ""; }
     /* تبويب لكل شركة مفعّلة (أو لها طلبات): ياليدين كما هي، والبقية تعتمد طلباتنا مع حالتها الحيّة من الشركة */
-    { const tabs = $f("ship-co-tabs"), line = $f("ship-co-line"), en = this.enabledCompanyKeys(), oth = Object.keys(by).filter(k=>!en.includes(k)), keys = en.concat(oth.length ? ["__other"] : []);
+    { const tabs = $f("ship-co-tabs"), line = $f("ship-co-line"), en = this.enabledCompanyKeys(), keys = en.concat(Object.keys(by).filter(k=>!en.includes(k)).sort((a, b)=>by[b].n - by[a].n));   // المفعّلة أولاً ثم كل شركة لها طلبات مسجلة
       const eT = v=>String(v==null?"":v).replace(/[<>&"]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]));
       if(tabs){
         if(keys.length < 2){ tabs.style.display = "none"; tabs.innerHTML = ""; if(this._shipCo){ this._shipCo = ""; return this.renderShipped(); } }
         else {
           if(!cof || !keys.includes(cof)){ const ak = (()=>{ try{ return this.activeCompanyKey(); }catch(e){ return ""; } })(); this._shipCo = keys.includes(ak) ? ak : keys[0]; return this.renderShipped(); }   // لا «الكل»: كل شركة في تبويبها منفصلة
           const b = (k, l, n)=>'<button type="button" class="small ' + (cof === k ? "gold" : "gray") + '" onclick="Admin._shipCo=\'' + k + '\';Admin.renderShipped()">' + eT(l) + ' <b>' + n + '</b></button>';
-          tabs.innerHTML = keys.map(k=>b(k, this.coLabel(k), (k === "__other" ? oth.reduce((a, x)=>a + by[x].n, 0) : (by[k]||{}).n || 0))).join(""); tabs.style.display = "flex"; }
+          tabs.innerHTML = keys.map(k=>b(k, this.coLabel(k), (by[k]||{}).n || 0)).join(""); tabs.style.display = "flex"; }
       }
-      if(line){ const g = cof === "__other" ? (()=>{ const o = { n:0, ok:0, bad:0, way:0, sum:0 }; oth.forEach(x=>{ const y = by[x]; o.n += y.n; o.ok += y.ok; o.bad += y.bad; o.way += y.way; o.sum += y.sum; }); return o; })() : (cof && by[cof]); if(g){ const d = g.ok + g.bad; line.hidden = false; line.textContent = g.n + " طلب · ✅ " + g.ok + " · ⏳ " + g.way + " · ⛔ " + g.bad + (d ? " · نجاح " + Math.round(g.ok / d * 100) + "%" : "") + " · " + Math.round(g.sum).toLocaleString("fr-DZ") + " دج"; } else { line.hidden = true; line.textContent = ""; } }
+      if(line){ const g = cof && by[cof]; if(g){ const d = g.ok + g.bad; line.hidden = false; line.textContent = g.n + " طلب · ✅ " + g.ok + " · ⏳ " + g.way + " · ⛔ " + g.bad + (d ? " · نجاح " + Math.round(g.ok / d * 100) + "%" : "") + " · " + Math.round(g.sum).toLocaleString("fr-DZ") + " دج"; } else { line.hidden = true; line.textContent = ""; } }
       const yOnly = !cof || cof === "yalidine";                                          // أدوات ياليدين وحدها: تجهيز الطلبات والمطابقة وبطاقة طرود حسابها
       ["ship-prep-btn", "ship-rec-btn", "yd-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = yOnly ? "" : "none"; });
     }
     const rows = all.filter(({o,t})=>{
-      if(cof === "__other" ? this.enabledCompanyKeys().includes(t.company) : (cof && t.company !== cof)) return false;
+      if(cof && t.company !== cof) return false;
       if(st && o.status !== st) return false;
       return !q || FD([t.tracking, o.name, o.phone, o.id, o.wilaya, o.commune].join(" ")).includes(q);
     });
