@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.843">
+<meta name="admin-version" content="1.89.844">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -172,15 +172,11 @@ tr:hover td{background:#FAF7F0}
 .modal{background:#fff;border-radius:18px;padding:1.5rem;width:min(680px,100%);max-height:88vh;overflow:auto}
 /* جداول بطاقات المقارنة وطرود الشركات: العناوين والخانات في سطر واحد دائماً (يُمرَّر أفقياً على الهاتف) */
 #co-cmp table{width:max-content!important;min-width:100%}#co-cmp th,#co-cmp td{white-space:nowrap;padding:.35rem .7rem;text-align:start}
-@media(min-width:701px){#zr-card th,#zr-card td,#ext-card th,#ext-card td,#noc-card th,#noc-card td{white-space:nowrap;padding:.35rem .7rem;text-align:start}}
-/* الهاتف: بطاقات الطرود مدمجة — Tracking بسطر كامل ثم باقي القيم متجاورة (التسمية قبل القيمة) */
-@media(max-width:700px){
-  #noc-card table.m-cards tr:not(:has(>th)),#zr-card table.m-cards tr:not(:has(>th)),#ext-card table.m-cards tr:not(:has(>th)){display:block!important;padding:.5rem .7rem!important;margin:0 0 .45rem!important}
-  #noc-card table.m-cards td,#zr-card table.m-cards td,#ext-card table.m-cards td{display:inline-block!important;padding:.1rem 0!important;margin-inline-end:.85rem;font-size:.84rem;vertical-align:middle}
-  #noc-card table.m-cards td::before,#zr-card table.m-cards td::before,#ext-card table.m-cards td::before{display:inline!important;content:attr(data-l) ": "!important;font-size:.72rem!important;font-weight:700;opacity:.8;margin:0 0 0 .15rem!important}
-  #noc-card table.m-cards td:first-child,#zr-card table.m-cards td:first-child,#ext-card table.m-cards td:first-child{display:block!important;font-weight:800;font-size:.9rem;border-bottom:1px solid var(--line)!important;padding-bottom:.25rem!important;margin:0 0 .2rem!important}
-  #noc-card table.m-cards td:first-child::before,#zr-card table.m-cards td:first-child::before,#ext-card table.m-cards td:first-child::before{display:none!important}
-}.modal.lg{width:min(900px,100%)}
+/* بطاقات الطرود (ZR/Noest/المضافة): جدول أفقي بعناوين وخانات في سطر واحد، يُسحب أفقياً على الهاتف */
+#zr-card table,#ext-card table,#noc-card table{width:max-content;min-width:100%}
+#zr-card th,#zr-card td,#ext-card th,#ext-card td,#noc-card th,#noc-card td{white-space:nowrap;padding:.35rem .7rem;text-align:start}
+.hs-wrap{touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}
+@media(max-width:700px){.hs-wrap::before{content:"↔ اسحب أفقياً لرؤية بقية الأعمدة";display:block;position:sticky;inset-inline-start:0;font-size:.72rem;opacity:.65;margin:0 0 .25rem;white-space:nowrap}}.modal.lg{width:min(900px,100%)}
 .modal.xl{width:min(1280px,96vw);max-height:94vh;padding:1.6rem 2rem 0}
 .modal.xl .grid2{gap:0 2.2rem}
 .modal.xl .action-bar{position:sticky;bottom:0;background:#fff;padding:.9rem 0;margin-top:1rem;border-top:1.5px solid var(--line);z-index:2}
@@ -9628,7 +9624,7 @@ const Admin = {
     c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرود حسابك في ZR Express</b><span class="hint" style="margin:0">' + (P.at ? "آخر تحميل " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) + " · " + rows.length + " طرد" : "لم تُحمَّل بعد") + '</span><span style="flex:1"></span>' +
       '<button class="small gold" type="button" onclick="Admin.zrLoadParcels(true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ التحميل" : "🔄 تحميل / تحديث الطرود") + '</button></div>' +
       (rows.length ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0">' + Object.keys(cnt).map(k=>'<span class="pill">' + e(k) + ' <b>' + cnt[k] + '</b></span>').join("") + '</div>' +
-        '<div style="overflow:auto;max-height:340px"><table class="kv m-cards" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>الولاية / البلدية</th><th>المبلغ</th><th>توصيل</th><th>إرجاع</th><th>الطلب</th></tr>' +
+        '<div class="hs-wrap" style="overflow-x:auto"><table class="kv" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>الولاية / البلدية</th><th>المبلغ</th><th>توصيل</th><th>إرجاع</th><th>الطلب</th></tr>' +
         rows.slice(0, 100).map(r=>'<tr><td data-l="Tracking" dir="ltr">' + e(r.tracking) + '</td><td data-l="الحالة">' + e(r.status) + (r.isReturn ? " ↩" : "") + '</td><td data-l="الزبون">' + e(r.cust) + '</td><td data-l="الولاية / البلدية">' + e(r.city) + (r.dist && r.dist !== r.city ? " / " + e(r.dist) : "") + '</td><td data-l="المبلغ">' + n(r.amount) + ' دج</td><td data-l="توصيل">' + n(r.del) + ' دج</td><td data-l="إرجاع">' + n(r.ret) + ' دج</td><td data-l="الطلب" dir="ltr">' + (r.ext ? (mine.has(r.ext) ? "✓ " : "— ") + e(r.ext) : "—") + '</td></tr>').join("") + '</table></div>' : "");
   },
   /* تصديق طرد مسوّدة عند الشركة (NOEST): نعيد استدعاء postSend ثم نحدّث حالته */
@@ -9697,7 +9693,7 @@ const Admin = {
     const e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), co = this.allDeliveryCompanies()[cof] || {};
     c.style.display = "";
     c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📎 طرود مضافة بالتتبع (بلا طلب) — ' + e(this.coLabel(cof)) + '</b><span class="hint" style="margin:0">' + list.length + ' طرد</span><span style="flex:1"></span><button class="small gold" type="button" onclick="Admin.extRefresh(\'' + cof + '\')">🔄 تحديث حالتها</button></div>' +
-      '<div style="overflow:auto;margin-top:.5rem"><table class="kv m-cards" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>أُضيف</th><th></th></tr>' +
+      '<div class="hs-wrap" style="overflow-x:auto;margin-top:.5rem"><table class="kv" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>أُضيف</th><th></th></tr>' +
       list.map(x=>'<tr><td data-l="Tracking" dir="ltr">' + e(x.tracking) + '</td><td data-l="الحالة">' + e(x.raw || "—") + '</td><td data-l="الزبون">' + e(x.client) + '</td><td data-l="البلدية">' + e(x.commune) + '</td><td data-l="المبلغ">' + (Number(x.amount) || 0).toLocaleString("fr-DZ") + ' دج</td><td data-l="أُضيف">' + new Date(x.at || Date.now()).toLocaleDateString("ar-DZ") + '</td><td><button class="small gray" type="button" title="إزالة من القائمة (لا يمسّ الطرد عند الشركة)" onclick="Admin.extRemove(\'' + cof + '\', \'' + e(x.tracking) + '\')">✕</button></td></tr>').join("") + '</table></div>';
   },
   /* ───── بطاقة «طرود حسابك في NOEST»: ما سُجّل عند الشركة فعلاً لطلباتنا وللطرود المضافة بالتتبع (واجهتها لا تعرض قائمة الحساب، فنسأل عن تتبعاتنا بطلب واحد) ───── */
@@ -9736,7 +9732,7 @@ const Admin = {
     const e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), n = v=>(Number(v) || 0).toLocaleString("fr-DZ"); c.style.display = "";
     c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرودك المسجَّلة عند ' + e(this.coLabel(cof)) + '</b><span class="hint" style="margin:0">' + (P.at ? "آخر قراءة " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) : "لم تُقرأ بعد") + ' · ' + list.length + ' طرد</span><span style="flex:1"></span><button class="small gold" type="button" onclick="Admin.nocLoad(\'' + cof + '\', true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ القراءة" : "🔄 قراءة من الشركة") + '</button></div>' +
       '<div class="hint" style="margin:.3rem 0">ما سجّلته الشركة فعلاً لطرودنا (بالتتبع). «من المنصة» أُرسل من لوحتك، «خارجي» أضفته بالتتبع.</div>' +
-      '<div style="overflow:auto"><table class="kv m-cards" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>المصدر</th><th>الحالة عندهم</th><th>التصديق</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>المرجع</th></tr>' +
+      '<div class="hs-wrap" style="overflow-x:auto"><table class="kv" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>المصدر</th><th>الحالة عندهم</th><th>التصديق</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>المرجع</th></tr>' +
       list.map(x=>{ const r = P.rows[x.trk], inf = (r && r.info) || {}, src = x.o ? 'من المنصة — <span dir="ltr">' + e(String(x.o.id).slice(-10)) + '</span>' : "خارجي";
         const val = !r ? "—" : (r.validated ? "✅ مصدَّق" : '⚠️ مسوّدة <button class="small green" type="button" onclick="Admin.coValidateTrk(\'' + cof + '\', \'' + e(x.trk) + '\')">تصديق</button>');
         return '<tr><td data-l="Tracking" dir="ltr">' + e(x.trk) + '</td><td data-l="المصدر">' + src + '</td><td data-l="الحالة عندهم">' + (r ? e(r.label || r.raw || "—") : "—") + '</td><td data-l="التصديق">' + val + '</td><td data-l="الزبون">' + e(inf.client || (x.ext && x.ext.client) || "—") + '</td><td data-l="البلدية">' + e(inf.commune || (x.ext && x.ext.commune) || "—") + '</td><td data-l="المبلغ">' + (inf.amount != null || (x.ext && x.ext.amount) ? n(inf.amount || (x.ext && x.ext.amount)) + " دج" : "—") + '</td><td data-l="المرجع" dir="ltr">' + e(inf.reference || "—") + '</td></tr>'; }).join("") + '</table></div>';
@@ -9778,7 +9774,7 @@ const Admin = {
     this._shipRows = rows; { const _bb = $f("ship-bord-btn"); if(_bb) _bb.textContent = "🖨 طباعة البوردرو (" + this.bordTargets().length + ")"; }
     { const _sc = $f("ship-count"); if(_sc) _sc.textContent = rows.length + " من أصل " + all.length + " طلب مسجل" + (this._lastShipSync ? " — آخر تحديث " + new Date(this._lastShipSync).toLocaleTimeString("ar-DZ") : "") };
     if(!rows.length){ el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>" + (all.length ? "لا نتائج مطابقة" : "لا توجد طلبات مسجلة بعد — أكّد طلباً جديداً ليُرسل إلى شركة التوصيل تلقائياً") + "</td></tr>"; return }
-    el.classList.add("m-cards"); el.classList.remove("m-scroll");                         // الهاتف: بطاقات مكدّسة بدل جدول عريض يصعب سحبه
+    el.classList.remove("m-cards");                                                       // جدول أفقي (بطلب صاحب المتجر): يُسحب أفقياً على الهاتف
     el.innerHTML = '<tr class="hd"><th>Tracking</th><th>الحالة</th><th>الاسم واللقب</th><th>البلدية</th><th>الولاية</th><th>Stop Desk</th><th>Action</th></tr>' +
       rows.map(({o,i,t})=>{ const r = this.shipRaw[o.id];
         return '<tr data-trk="' + t.tracking + '" data-co="' + t.company + '"><td class="t" dir="ltr"><b>' + t.tracking + '</b>' + (Object.keys(by).length > 1 ? '<br><small style="color:#9fb5a9">' + ((cos[t.company]||{}).name || t.company) + '</small>' : "") + '</td>' +
