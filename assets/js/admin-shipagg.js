@@ -274,7 +274,7 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
       const h = ownedOrder(i); if (!h) return lb.apply(this, arguments);
       const w = window.open("", "_blank"); const r = await gwCall("POST", "/v1/label", { courier: h.t.company, trackingNumber: h.t.tracking });
       if (r.ok && r.j.labelUrl) { if (w) w.location.href = r.j.labelUrl; else location.href = r.j.labelUrl; return; }
-      if (w) w.close(); toast("ℹ️ بوليصة هذه الشركة غير متاحة عبر الخدمة — تُفتح عوضاً عنها نسخة وصل الطلب"); return Admin.printOrderSlip(i);
+      if (w) w.close(); toast("ℹ️ بوليصة هذه الشركة غير متاحة عبر الخدمة — اطبعها من حسابك عندها برقم التتبع"); return;
     };
     return true;
   }

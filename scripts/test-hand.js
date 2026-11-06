@@ -74,7 +74,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       let html = ""; const w = { document: { open() { html = ""; }, write(t) { html += t; }, close() { } }, closed: false };
       await Admin.printBordereaux(list, w);
       return { sheets: (html.match(/class="sheet"/g) || []).length, cells: (html.match(/class="lb"/g) || []).length, frames: (html.match(/<iframe/g) || []).length, dl: (html.match(/class="dl"/g) || []).length, stop: /مكتب باتنة/.test(html), bar: /تنزيل كل الأصلية/.test(html), svg: /<svg/.test(html) }; });
-    ok("طباعة البوردرو الجماعية: 4 في ورقة A4 (5 طرود ← ورقتان) وبطاقات تنزيل PDF الأصلية بلا iframe", bk.sheets === 2 && bk.cells === 5 && bk.frames === 0 && bk.dl === 5 && bk.stop && bk.bar && bk.svg, bk); }
+    ok("طباعة البوردرو الجماعية: لا أوراق مخترَعة (بوردرو الشركة الأصلي فقط) وبطاقات تنزيل PDF الأصلية بلا iframe", bk.sheets === 0 && bk.cells === 0 && bk.frames === 0 && bk.dl === 5 && bk.bar, bk); }
   { const mg = await p.evaluate(async () => { /* البوردرو الأصلي: 5 ملفات PDF (A6) تُجمَّع 4 في ورقة A4 ← ورقتان، وملف واحد فاشل يُعرض صفحة بالرابط */
       Admin.pdfBytes = Admin.__realPdfBytes; const P = await Admin.loadPdfLib(), mkPdf = async k => { const d = await P.PDFDocument.create(), pg = d.addPage([298, 420]); pg.drawText("LABEL " + k, { x: 20, y: 200, size: 20 }); return d.save(); };
       const b64 = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
@@ -92,7 +92,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       // ملف فاشل ← صفحة بها رابط المجمّع وتنبيه
       Admin.cacheLabel("ZMG9", "https://yalidine.app/p/NOPE.pdf"); const l2 = list.slice(0, 2).concat([{ o: mk(9), t: { company: "yalidine", tracking: "yal-MG9" } }]); href = ""; html = ""; await Admin.printBordereaux(l2, w);
       r.partial = href === "" && /bordereaux\.pdf/.test(html) && /تعذّر تجميع/.test(html);
-      Admin.courierFetch = async () => ({ ok: false, status: 500, text: "" }); html = ""; href = ""; await Admin.printBordereaux(list.slice(0, 2), w); r.none = href === "" && /تعذّر تجميع البوردرو الأصلي/.test(html) && /class="sheet"/.test(html);
+      Admin.courierFetch = async () => ({ ok: false, status: 500, text: "" }); html = ""; href = ""; await Admin.printBordereaux(list.slice(0, 2), w); r.none = href === "" && /تعذّر تجميع البوردرو الأصلي/.test(html) && !/class="sheet"/.test(html);
       Admin.courierFetch = cf0; Admin.pdfBytes = async () => null; return r; });
     ok("البوردرو الأصلي: 5 ملفات PDF تُجمَّع 4 في ورقة A4 (ورقتان) ويُفتح الملف المجمّع، مع حالات الفشل الجزئي والكلي", mg.href && mg.pages === 2 && mg.a4 && mg.partial && mg.none && mg.a4src && mg.a4src5, mg); }
   { const wk = await p.evaluate(async () => { /* بريكة (ولاية 60) تظهر مع بلديات باتنة، واختيارها يحوّل الولاية إليها */
@@ -497,10 +497,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       let slip = 0; A.printOrderSlip = () => { slip++; }; let calls = 0;
       A.courierFetch = async () => { calls++; return { ok: true, status: 200, text: JSON.stringify({ data: [{ tracking: "yal-BL1TEST", extra: { pdf: { label: "https://yalidine.app/p/BL1.pdf" } } }] }) }; };
       await A.openLabel(0); r.deep = wins[0] && wins[0].href === "https://yalidine.app/p/BL1.pdf" && calls === 1; await A.openLabel(0); r.cache = calls === 1 && wins[1] && wins[1].href === "https://yalidine.app/p/BL1.pdf";
-      A.labelCache = {}; A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ data: [{ tracking: "x" }] }) }); await A.openLabel(0); r.slip = slip === 1 && wins[2] && wins[2].closed;
-      A.courierFetch = async () => { throw new Error("boom"); }; await A.openLabel(0); r.slip2 = slip === 2;
+      A.labelCache = {}; A.courierFetch = async () => ({ ok: true, status: 200, text: JSON.stringify({ data: [{ tracking: "x" }] }) }); await A.openLabel(0); r.slip = slip === 0 && wins[2] && wins[2].closed;
+      A.courierFetch = async () => { throw new Error("boom"); }; await A.openLabel(0); r.slip2 = slip === 0;
       A.courierFetch = cf0; window.open = wo0; A.printOrderSlip = ps0; A.orders = ao0; A.labelCache = lc0; return r; });
-    ok("بوردرو الشركة الأصلي: يُبحث عن الرابط بعمق في الردّ ويُحفظ، وإن تعذّر يُفتح وصل الطلب بدل الفشل الصامت", bl.deep && bl.cache && bl.slip && bl.slip2, bl); }
+    ok("بوردرو الشركة الأصلي: يُبحث عن الرابط بعمق في الردّ ويُحفظ، وإن تعذّر لا يُفتح وصل مخترَع (تنبيه فقط)", bl.deep && bl.cache && bl.slip && bl.slip2, bl); }
   { const ff = await p.evaluate(async () => { const A = Admin, r = {}, f0 = A.ydFees, c0 = A.deliveryCfg.yalidine, cf0 = A.courierFetch, ps0 = Priv.set, W16 = WILAYAS.find(w => w.id === 16), W15 = WILAYAS.find(w => w.id === 15), W31 = WILAYAS.find(w => w.id === 31);
       A.deliveryCfg.yalidine = Object.assign({}, c0 || {}, { apiId: "1", apiToken: "2", enabled: true, fromWilayaName: "Alger" }); A.ydFees = {}; let urls = []; Priv.set = async () => { };
       const com = W31.communes[0]; A.courierFetch = async rq => { urls.push(rq.url); return { ok: true, status: 200, text: JSON.stringify({ retour_fee: 200, per_commune: { 1: { commune_name: com, express_home: 1234, express_desk: 777 } } }) }; };
@@ -901,10 +901,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.renderShipped(); const pv = Array.from(document.querySelectorAll("#ship-table .act button")).find(b => /openOrderPreview/.test(b.getAttribute("onclick") || ""));
     if (pv) pv.click(); await wait(80);
     const has = s => !!document.querySelector("#ord-prev-a " + s), calls = [], origDel = Admin.deleteOrders; Admin.deleteOrders = async l => { calls.push(l.map(o => o.id).join()); };
-    const out = { tableBtn: !!pv, edit: has('[onclick^="OrderEdit.open"]'), slip: has('[onclick^="Admin.printOrderSlip"]'), label: has('[onclick^="Admin.openLabel"]'), del: has('[onclick*="Admin.deleteOrders"]'), tr: /yal-123/.test(document.getElementById("ord-prev-b").textContent) };
+    const out = { tableBtn: !!pv, edit: has('[onclick^="OrderEdit.open"]'), slip: !has('[onclick^="Admin.printOrderSlip"]'), label: has('[onclick^="Admin.openLabel"]'), del: has('[onclick*="Admin.deleteOrders"]'), tr: /yal-123/.test(document.getElementById("ord-prev-b").textContent) };
     document.querySelector('#ord-prev-a [onclick*="Admin.deleteOrders"]').click(); await wait(30); Admin.deleteOrders = origDel; out.calls = calls.join("|"); out.closed = !document.getElementById("ord-prev-bg").classList.contains("open"); return out;
   });
-  ok("الطلبات المسجلة: زر «معاينة» يفتح نافذة فيها تعديل ووصل (طباعة) وبوليصة الشركة وحذف مع التتبع", rg.tableBtn && rg.edit && rg.slip && rg.label && rg.del && rg.tr, rg);
+  ok("الطلبات المسجلة: زر «معاينة» يفتح نافذة فيها تعديل وبوليصة الشركة (بلا وصل مخترَع) وحذف مع التتبع", rg.tableBtn && rg.edit && rg.slip && rg.label && rg.del && rg.tr, rg);
   ok("الطلبات المسجلة: زر الحذف في المعاينة يحذف الطلب ويغلق النافذة", rg.calls === "R1" && rg.closed, rg);
   // ── خصم المخزون عند التأكيد: عرض «علبتان + الثالثة مجاناً» (×3) ──
   const skf = await p.evaluate(async () => {
@@ -1271,7 +1271,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.courierFetch = cf0; window.open = wo0;
     return { label, nreq: reqs.length, html: html.length > 500, has1: html.includes("yal-111"), has2: html.includes("yal-222"), has3: html.includes("yal-333"), printBtn: /طباعة 4 في ورقة/.test(html), frames: (html.match(/class="dl"/g) || []).length };
   });
-  ok("بوردرو المسجلة: يطبع الطرود قيد التجهيز فقط (2) ويجلب بوردرو كل طرد ويعرضها في صفحة واحدة للطباعة", /\(2\)/.test(bd.label) && bd.nreq === 2 && bd.html && bd.has1 && bd.has2 && !bd.has3 && bd.printBtn && bd.frames === 2, bd);
+  ok("بوردرو المسجلة: يطبع الطرود قيد التجهيز فقط (2) ويجلب بوردرو كل طرد ويعرضها في صفحة واحدة للطباعة", /\(2\)/.test(bd.label) && bd.nreq === 2 && bd.html && bd.has1 && bd.has2 && !bd.has3 && !bd.printBtn && bd.frames === 2, bd);
   // ── ترتيب الطلبات تلقائياً بالحالة ──
   const srt = await p.evaluate(() => {
     Admin.refreshAlerts = async () => {}; API.updateOrder = async () => ({ ok: true }); Admin.orderFilters = {};
@@ -1624,11 +1624,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const dp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.enqueueNotify = () => { }; Admin.renderShippedBadge = () => { }; Admin.refreshAlerts = async () => {};
     const e0 = Admin.enabledCompanyKeys, a0 = Admin.activeCompanyKey, s0 = Admin.sendOrderToDelivery, c0 = Admin.courierFetch, o0 = window.open, u0 = API.updateOrder;
-    Admin.orderCompanyKey = window.__ockReal; Admin.enabledCompanyKeys = () => ["yalidine", "noest"]; Admin.activeCompanyKey = () => "yalidine"; API.updateOrder = async () => true;
+    Admin.orderCompanyKey = window.__ockReal; Admin.enabledCompanyKeys = () => ["yalidine", "maystro"]; Admin.activeCompanyKey = () => "yalidine"; API.updateOrder = async () => true;
     let fetches = 0; Admin.courierFetch = async () => { fetches++; return { ok: false, status: 500, text: "" }; };
     const mk = (id, name, wil, extra) => Object.assign({ id, date: new Date().toISOString(), status: "confirmee", name, phone: "0550001111", wilaya: wil, commune: "X", dtype: "home", items: "عنصر توجيه تجريبي ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" }, extra || {});
     Admin.orders = [mk("P0001", "قسنطيني", "Constantine"), mk("P0002", "تمنراستي", "Tamanrasset"), mk("P0003", "عاصمي", "Alger")];
-    AdminDispatch._S.cfg = { on: true, regions: { est: "noest", sud: "yalidine" }, wil: {}, minSample: 8 };
+    AdminDispatch._S.cfg = { on: true, regions: { est: "maystro", sud: "yalidine" }, wil: {}, minSample: 8 };
     const keys = Admin.orders.map(o => Admin.orderCompanyKey(o)), sentTo = [];
     Admin.sendOrderToDelivery = async (i, k) => { const o = Admin.orders[i]; sentTo.push(o.id + ":" + k); const t = "T" + o.id.slice(-4) + (k === "yalidine" ? "Y" : "Z"); o.note = "🚚" + k + ":" + t; if (k === "yalidine") Admin.cacheLabel(o.id, "https://labels.test/" + t + ".pdf"); return true; };
     let html = ""; const fakeWin = { document: { open() { html = ""; }, write(h) { html += h; }, close() { } }, close() { } }; window.open = () => fakeWin;
@@ -1645,13 +1645,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.enabledCompanyKeys = e0; Admin.activeCompanyKey = a0; Admin.sendOrderToDelivery = s0; Admin.courierFetch = c0; window.open = o0; API.updateOrder = u0; AdminDispatch._S.cfg.on = false; Admin.tab("orders"); await wait(50);
     return r;
   });
-  ok("التوجيه: الشرق ← ZR، الجنوب ← ياليدين، والوسط (بلا قاعدة) ← الافتراضية", dp.keys.join() === "noest,yalidine,yalidine" && dp.ui, dp);
-  ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) ووصل بباركود لشركة بلا بوردرو", dp.sentTo.join() === "P0001:noest,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 3 && dp.page.svg, dp);
+  ok("التوجيه: الشرق ← ZR، الجنوب ← ياليدين، والوسط (بلا قاعدة) ← الافتراضية", dp.keys.join() === "maystro,yalidine,yalidine" && dp.ui, dp);
+  ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) وبلا وصل مخترَع", dp.sentTo.join() === "P0001:maystro,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 0, dp);
   ok("محطة المسح: مسح جديد ثم مكرّر (يتجاهل حالة الأحرف والمسافات) ثم مجهول، والعدّاد وكشف التسليم لما مُسح فقط", dp.scan.s1 === "ok" && dp.scan.s2 === "dup" && dp.scan.s3 === "unknown" && dp.scan.count === 2 && dp.scan.txt && dp.manifest.has, dp);
   // ── إعادة التوجيه التلقائي عند رفض الشركة ──
   const fbt = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); const e0 = Admin.enabledCompanyKeys, a0 = Admin.activeCompanyKey, i0 = Admin._sendOrderToDelivery, sn0 = Admin.showNotice;
-    Admin.sendOrderToDelivery = window.__sodReal; Admin.enabledCompanyKeys = () => ["yalidine", "noest"]; Admin.activeCompanyKey = () => "yalidine"; localStorage.removeItem("alyssum_fb_log"); localStorage.removeItem("store_fb_log");
+    Admin.sendOrderToDelivery = window.__sodReal; Admin.enabledCompanyKeys = () => ["yalidine", "maystro"]; Admin.activeCompanyKey = () => "yalidine"; localStorage.removeItem("alyssum_fb_log"); localStorage.removeItem("store_fb_log");
     const notices = []; Admin.showNotice = (t) => { notices.push(t); };
     const mkO = id => ({ id, date: new Date().toISOString(), status: "confirmee", name: "ف" + id, phone: "0550002222", wilaya: "Alger", commune: "X", dtype: "home", items: "عنصر ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" });
     const run = async (id, behave, cfgFb) => {
@@ -1660,20 +1660,20 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       const r = await Admin.sendOrderToDelivery(0, "yalidine"); await wait(30); return { r, calls: calls.join(), note: Admin.orders[0].note };
     };
     const out = {};
-    out.reroute = await run("F0001", { yalidine: "reject", noest: "ok" });
+    out.reroute = await run("F0001", { yalidine: "reject", maystro: "ok" });
     out.log = JSON.parse(localStorage.getItem("alyssum_fb_log") || localStorage.getItem("store_fb_log") || "[]");
-    out.area = await run("F0002", { yalidine: "area", noest: "ok" });
-    out.input = await run("F0003", { yalidine: "input", noest: "ok" });
-    out.amb = await run("F0004", { yalidine: "amb", noest: "ok" });
-    out.cancel = await run("F0005", { yalidine: null, noest: "ok" });
-    notices.length = 0; out.allfail = await run("F0006", { yalidine: "reject", noest: "reject" }); out.allfailNotices = notices.length; out.quietOff = !Admin._fbQuiet;
-    out.off = await run("F0007", { yalidine: "reject", noest: "ok" }, false);
+    out.area = await run("F0002", { yalidine: "area", maystro: "ok" });
+    out.input = await run("F0003", { yalidine: "input", maystro: "ok" });
+    out.amb = await run("F0004", { yalidine: "amb", maystro: "ok" });
+    out.cancel = await run("F0005", { yalidine: null, maystro: "ok" });
+    notices.length = 0; out.allfail = await run("F0006", { yalidine: "reject", maystro: "reject" }); out.allfailNotices = notices.length; out.quietOff = !Admin._fbQuiet;
+    out.off = await run("F0007", { yalidine: "reject", maystro: "ok" }, false);
     Admin.enabledCompanyKeys = e0; Admin.activeCompanyKey = a0; Admin._sendOrderToDelivery = i0; Admin.showNotice = sn0; AdminDispatch._S.cfg = { on: false };
     return out;
   });
-  ok("إعادة التوجيه: رفض ياليدين ← تُرسل عبر الشركة الثانية بصمت، ويُسجَّل في السجل", fbt.reroute.r === true && fbt.reroute.calls === "yalidine~,noest~" && /noest:T/.test(fbt.reroute.note) && fbt.log.length === 1 && fbt.log[0].from === "yalidine" && fbt.log[0].to === "noest", fbt);
+  ok("إعادة التوجيه: رفض ياليدين ← تُرسل عبر الشركة الثانية بصمت، ويُسجَّل في السجل", fbt.reroute.r === true && fbt.reroute.calls === "yalidine~,maystro~" && /maystro:T/.test(fbt.reroute.note) && fbt.log.length === 1 && fbt.log[0].from === "yalidine" && fbt.log[0].to === "maystro", fbt);
   ok("إعادة التوجيه: ولاية غير مخدومة أو بلدية بلا مطابقة ← بديل؛ والإخفاق الملتبس (مهلة/5xx) وإلغاء المستخدم لا يُعاد توجيههما (منعاً لتكرار الطرد)", fbt.area.r === true && fbt.input.r === true && fbt.amb.r === false && fbt.amb.calls === "yalidine~" && fbt.cancel.r === false && fbt.cancel.calls === "yalidine~", fbt);
-  ok("إعادة التوجيه: إن رفضتها كل الشركات يُجرَّب الجميع ثم تظهر خلاصة واحدة، والتعطيل يرسل لشركة واحدة بلا صمت", fbt.allfail.r === false && fbt.allfail.calls === "yalidine~,noest~" && fbt.allfailNotices >= 1 && fbt.quietOff && fbt.off.r === false && fbt.off.calls === "yalidine", fbt);
+  ok("إعادة التوجيه: إن رفضتها كل الشركات يُجرَّب الجميع ثم تظهر خلاصة واحدة، والتعطيل يرسل لشركة واحدة بلا صمت", fbt.allfail.r === false && fbt.allfail.calls === "yalidine~,maystro~" && fbt.allfailNotices >= 1 && fbt.quietOff && fbt.off.r === false && fbt.off.calls === "yalidine", fbt);
   // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
   const plk = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));
