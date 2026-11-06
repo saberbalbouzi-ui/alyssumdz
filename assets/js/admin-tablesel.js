@@ -4,7 +4,7 @@
 window.TableSel = (() => {
   const LIST = [
     ["#ship-table", "الطلبات المسجلة"], ["#rp-table", "إعادة الشراء"], ["#loyalty-table", "الزبائن الأوفياء"], ["#fin-table", "المخزون والأرباح"],
-    ["#products-table", "المنتجات"], ["#coupons-table", "أكواد الخصم"], ["#blacklist-table", "القائمة السوداء"], ["#customers-app table", "العملاء"], ["#rt table", "المرتجعات"], ["#yd-card table", "طرود شركة التوصيل"]
+    ["#products-table", "المنتجات"], ["#coupons-table", "أكواد الخصم"], ["#blacklist-table", "القائمة السوداء"], ["#customers-app table", "العملاء"], ["#rt table", "المرتجعات"], ["#yd-card table", "طرود شركة التوصيل"], ["#cop-card table", "طرود شركة التوصيل"]
   ];
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const $ = id => document.getElementById(id);
@@ -92,6 +92,7 @@ window.TableSel = (() => {
   document.addEventListener("click", e => {
     const b = e.target.closest(".ts-bar [data-ts]"); if (!b) return; const bar = b.closest(".ts-bar"), sk = bar.dataset.tsFor, t = document.querySelector('table[data-ts="' + sk.replace(/"/g, "") + '"]'), k = b.dataset.ts;
     if (k === "menu") return toggleMenu(b);
+    if ((k === "yd-gs" || k === "yd-csv") && sk === "#cop-card table") { document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); const cf = (document.querySelector("#cop-card tr[data-co]") || {}).dataset; if (cf && typeof AdminCoP !== "undefined") AdminCoP.csvAll(cf.co); return; }
     if (k === "yd-gs" || k === "yd-csv") { document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); if (typeof AdminYd !== "undefined") { if (k === "yd-gs") AdminYd.sheets(); else AdminYd.csv(); } return; }
     if (!t) return; const S = sel[sk];
     if (k === "clear") { S.clear(); t.querySelectorAll("input.ts-ck").forEach(x => { x.checked = false; }); t.querySelectorAll("tr.ts-sel").forEach(r => r.classList.remove("ts-sel")); syncAll(t); drawBar(t, sk, bar.dataset.tsTitle); return; }
