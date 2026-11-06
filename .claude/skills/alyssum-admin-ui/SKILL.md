@@ -15,3 +15,4 @@ description: اتفاقيات واجهة لوحة تحكم أليسوم: الم�
 - **الجداول:** أضفها إلى `LIST` في admin-tablesel.js ليأخذ التحديد وقائمة Action؛ صفوف الطرود تحمل `data-trk`/`data-co` للبوردرو.
 - **الصوت واليد:** الفهرس الحي يلتقط أي زر جديد تلقائياً بتسمية واضحة (`aria-label`/`label`/نص)؛ سمِّ الأزرار بوضوح.
 - (v1.89.239) قسم جديد بصلاحية جديدة (مثل `pack`): أضف الصلاحية في `PERMS` بـ`admin-roles.js` و`staff-admin/index.ts` و`platform/php-edition/api/index.php` (`STAFF_PERMS`) و`TAB_PERM`، ودور جديد يُضاف لـ`ROLES` وللثلاثة نفسها ولقيد `staff_role_check` في `platform/supabase/roles.sql`؛ `test-roles.js` يتحقق من التطابق. دور لا يقرأ جدول الطلبات يحتاج دوال خادم تُرجع الحقول اللازمة فقط (نموذج `pack_orders`).
+- (v1.89.838) **عناوين الجداول في سطر واحد على الهاتف دائماً**: `white-space:nowrap` على th/td مع غلاف `overflow:auto` وجدول `width:max-content;min-width:100%` (انظر قاعدة `#co-cmp,#zr-card,#ext-card` في admin.html)؛ لا تتركها تلتفّ.
