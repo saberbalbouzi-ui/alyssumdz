@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-06T21:10:59.689Z",
- "def": "noest",
+ "updated": "2026-11-06T21:11:08.438Z",
+ "def": "",
  "companies": {
   "yalidine": {
    "name": "ياليدين Yalidine",
@@ -12499,103 +12499,130 @@
   }
  },
  "nd": {
-  "1": [
-   "tit"
-  ],
-  "2": [
-   "elhadjadj",
-   "benboutaleb"
-  ],
-  "4": [
-   "eldjazia",
-   "rahia"
+  "3": [
+   "ainsidiali",
+   "hadjmechri",
+   "taouiala",
+   "tadjrouna",
+   "ouedmorra"
   ],
   "6": [
    "tamokra",
-   "ighilali",
-   "benimelikeche",
-   "draakaid",
-   "tamridjet"
-  ],
-  "7": [
-   "elhaouch",
-   "ainzaatout",
-   "khanguetsidinadji"
-  ],
-  "8": [
-   "tabalbala"
+   "tizinberber"
   ],
   "11": [
    "abalessa",
    "idles",
-   "tazouk",
+   "tazrouk",
    "inamguel"
   ],
+  "12": [
+   "birelater"
+  ],
+  "14": [
+   "madna",
+   "nadorah",
+   "sidibakhti"
+  ],
   "17": [
+   "ainchouhada",
+   "amourah",
+   "elkhemis",
+   "faidhelbotma",
+   "guernini",
    "guettara",
+   "mliliha",
    "oumlaadham",
-   "amourah"
+   "sedrahal",
+   "selmana",
+   "sidibaizid",
+   "tadmit",
+   "zaafrane"
   ],
   "18": [
-   "erraguene",
-   "chahna",
    "selmabenziada",
-   "boussifouledaskeur",
-   "boudriabeniyadjis",
-   "bordjtaher",
-   "ouadjana"
+   "boucifouledaskeur"
   ],
   "20": [
-   "sidiahmed"
+   "ainsekhouna",
+   "hounet"
   ],
-  "24": [
-   "ainlarbi"
+  "26": [
+   "ainouksir",
+   "cheniguel"
   ],
-  "28": [
-   "ainfares"
+  "27": [
+   "ouledmaallah",
+   "sidibelattar"
   ],
-  "29": [
-   "elgaada"
-  ],
-  "30": [
-   "elborma"
+  "32": [
+   "kraakda",
+   "elbnoud",
+   "cheguig",
+   "sidiameur",
+   "tousmouline",
+   "sidislimane"
   ],
   "33": [
    "debdeb",
-   "bordjomardriss",
-   "inamenas"
+   "bordjomardriss"
   ],
-  "34": [
-   "colla"
+  "37": [
+   "oumelassel"
+  ],
+  "38": [
+   "benichaib",
+   "benilahcene",
+   "larbaa",
+   "sidiabed",
+   "sidiboutouchent"
   ],
   "40": [
-   "eloueldja",
    "djellal",
-   "tamza",
-   "msara",
    "khirane"
   ],
-  "43": [
-   "tessalalamatai"
+  "41": [
+   "ouledmoumene",
+   "oumeladhaim",
+   "ainsoltane",
+   "safelelouiden",
+   "ouedkeberit",
+   "terraguelt"
   ],
-  "47": [
-   "sebseb"
+  "44": [
+   "bathia",
+   "belaas",
+   "djemaaouledcheikh",
+   "elhassania",
+   "elmaine"
   ],
-  "49": [
-   "ouledaissa",
-   "talmine",
-   "metarfa"
+  "45": [
+   "kasdir"
   ],
   "50": [
    "bordjbadjimokhtar",
    "timiaouine"
   ],
+  "51": [
+   "besbes",
+   "raselmiaad"
+  ],
+  "52": [
+   "tabelbala"
+  ],
+  "53": [
+   "inghar",
+   "foggaretezzaouia"
+  ],
   "54": [
-   "ainguezzam",
-   "tinzouatine"
+   "inguezzam",
+   "tinzaouatine"
+  ],
+  "55": [
+   "elborma"
   ],
   "56": [
-   "bordjelhaouass"
+   "bordjelhaouas"
   ]
  }
 }
