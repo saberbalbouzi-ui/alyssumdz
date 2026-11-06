@@ -126,3 +126,24 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
   const end = () => { el = null; mode = ""; };
   document.addEventListener("touchend", end, { passive: true }); document.addEventListener("touchcancel", end, { passive: true });
 })();
+
+/* أزرار أسهم ◀ ▶ فوق كل جدول أفقي على الهاتف (v1.89.849): تمرير بالنقر إن تعذّر السحب على جهاز المستخدم */
+(function () {
+  const MQ = window.matchMedia("(max-width:700px)"), SEL = ".hs-wrap,table.m-scroll,#ship-table", M = new WeakMap();
+  function nav() {
+    if (!MQ.matches) { document.querySelectorAll(".hs-nav").forEach(n => n.remove()); return; }
+    document.querySelectorAll(SEL).forEach(t => {
+      let n = M.get(t); const ok = t.getClientRects().length && t.scrollWidth > t.clientWidth + 2;
+      if (!ok) { if (n) n.style.display = "none"; return; }
+      if (!n || !n.isConnected) {
+        n = document.createElement("div"); n.className = "hs-nav"; n.setAttribute("data-noco", "");
+        n.innerHTML = '<button type="button" class="small gray" data-d="-1" aria-label="يسار">◀</button><span>اسحب أو اضغط الأسهم</span><button type="button" class="small gray" data-d="1" aria-label="يمين">▶</button>';
+        n.addEventListener("click", e => { const b = e.target.closest("button[data-d]"); if (b) t.scrollBy({ left: (+b.dataset.d) * Math.max(120, t.clientWidth * 0.6), behavior: "auto" }); });
+        let at = t, pv = t.previousElementSibling; if (pv && pv.classList.contains("hs-bar")) at = pv;
+        at.parentNode.insertBefore(n, at); M.set(t, n);
+      }
+      n.style.display = "";
+    });
+  }
+  setInterval(nav, 1200); window.addEventListener("resize", nav); document.addEventListener("DOMContentLoaded", nav);
+})();

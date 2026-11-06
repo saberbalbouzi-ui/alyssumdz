@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.848">
+<meta name="admin-version" content="1.89.849">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -176,8 +176,8 @@ tr:hover td{background:#FAF7F0}
 #zr-card table,#ext-card table,#noc-card table{width:max-content;min-width:100%}
 #zr-card th,#zr-card td,#ext-card th,#ext-card td,#noc-card th,#noc-card td{white-space:nowrap;padding:.35rem .7rem;text-align:start}
 .hs-wrap,table.m-scroll,#ship-table{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}   /* التمرير الأفقي باللمس يتولاه admin-mtables.js */
-@media(max-width:700px){#tab-shipped{padding-bottom:95vh}}   /* مساحة تمرير تحت الجدول: ليصعد الطلب إلى أعلى الشاشة مهما قلّ عدد الطلبات */
-@media(max-width:700px){.hs-wrap::before{content:"↔ اسحب أفقياً لرؤية بقية الأعمدة";display:block;position:sticky;inset-inline-start:0;font-size:.72rem;opacity:.65;margin:0 0 .25rem;white-space:nowrap}}.modal.lg{width:min(900px,100%)}
+@media(max-width:700px){#tab-shipped{padding-bottom:95vh}#ship-table{scroll-margin-top:72px}}   /* مساحة تمرير تحت الجدول: ليصعد الطلب إلى أعلى الشاشة مهما قلّ عدد الطلبات */
+@media(max-width:700px){.hs-nav{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.2rem 0 .3rem;font-size:.72rem;opacity:.85}.hs-nav button{min-width:44px;padding:.25rem .6rem}.hs-nav span{flex:1;text-align:center}}.modal.lg{width:min(900px,100%)}
 .modal.xl{width:min(1280px,96vw);max-height:94vh;padding:1.6rem 2rem 0}
 .modal.xl .grid2{gap:0 2.2rem}
 .modal.xl .action-bar{position:sticky;bottom:0;background:#fff;padding:.9rem 0;margin-top:1rem;border-top:1.5px solid var(--line);z-index:2}
@@ -1742,7 +1742,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-shoppages.js?v=f37d32bc"></script>
 <script src="assets/js/admin-home.js?v=48ecc3de"></script>
 <script src="assets/js/admin-tablesel.js?v=5e58931c"></script>
-<script src="assets/js/admin-mtables.js?v=45f399b6"></script>
+<script src="assets/js/admin-mtables.js?v=617a3f47"></script>
 <script src="assets/js/admin-orders-plus.js?v=bb8f422f"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
 <script src="assets/js/admin-customers.js?v=056673f1"></script>
@@ -9625,7 +9625,7 @@ const Admin = {
     c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرود حسابك في ZR Express</b><span class="hint" style="margin:0">' + (P.at ? "آخر تحميل " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) + " · " + rows.length + " طرد (" + rows.filter(r=>r.ext && mine.has(r.ext)).length + " مرتبط بطلب" + (rows.some(r=>!(r.ext && mine.has(r.ext))) ? " · " + rows.filter(r=>!(r.ext && mine.has(r.ext))).length + " بلا طلب" : "") + ")" : "لم تُحمَّل بعد") + '</span><span style="flex:1"></span>' +
       '<button class="small gold" type="button" onclick="Admin.zrLoadParcels(true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ التحميل" : "🔄 تحميل / تحديث الطرود") + '</button></div>' +
       (rows.length ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0">' + Object.keys(cnt).map(k=>'<span class="pill">' + e(k) + ' <b>' + cnt[k] + '</b></span>').join("") + '</div>' +
-        '<div class="hs-wrap" style="overflow-x:auto"><table class="kv" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>الولاية / البلدية</th><th>المبلغ</th><th>توصيل</th><th>إرجاع</th><th>الطلب</th></tr>' +
+        '<div class="rtw hs-wrap" style="overflow-x:auto"><table class="rt" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>الولاية / البلدية</th><th>المبلغ</th><th>توصيل</th><th>إرجاع</th><th>الطلب</th></tr>' +
         rows.slice(0, 100).map(r=>'<tr><td data-l="Tracking" dir="ltr">' + e(r.tracking) + '</td><td data-l="الحالة">' + e(r.status) + (r.isReturn ? " ↩" : "") + '</td><td data-l="الزبون">' + e(r.cust) + '</td><td data-l="الولاية / البلدية">' + e(r.city) + (r.dist && r.dist !== r.city ? " / " + e(r.dist) : "") + '</td><td data-l="المبلغ">' + n(r.amount) + ' دج</td><td data-l="توصيل">' + n(r.del) + ' دج</td><td data-l="إرجاع">' + n(r.ret) + ' دج</td><td data-l="الطلب" dir="ltr">' + (r.ext && mine.has(r.ext) ? "✓ " + e(r.ext) : (r.ext ? "— " + e(r.ext) + " " : "") + '<button class="small gray" type="button" onclick="Admin.importTracking(\'' + e(r.tracking) + '\', \'zrexpress_app\')" title="هذا الطرد بلا طلب في اللوحة: اربطه بطلب أو احفظه كطرد خارجي">ربط</button>') + '</td></tr>').join("") + '</table></div>' : "");
   },
   /* تصديق طرد مسوّدة عند الشركة (NOEST): نعيد استدعاء postSend ثم نحدّث حالته */
@@ -9694,7 +9694,7 @@ const Admin = {
     const e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), co = this.allDeliveryCompanies()[cof] || {};
     c.style.display = "";
     c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📎 طرود مضافة بالتتبع (بلا طلب) — ' + e(this.coLabel(cof)) + '</b><span class="hint" style="margin:0">' + list.length + ' طرد</span><span style="flex:1"></span><button class="small gold" type="button" onclick="Admin.extRefresh(\'' + cof + '\')">🔄 تحديث حالتها</button></div>' +
-      '<div class="hs-wrap" style="overflow-x:auto;margin-top:.5rem"><table class="kv" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>أُضيف</th><th></th></tr>' +
+      '<div class="rtw hs-wrap" style="overflow-x:auto;margin-top:.5rem"><table class="rt" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>أُضيف</th><th></th></tr>' +
       list.map(x=>'<tr><td data-l="Tracking" dir="ltr">' + e(x.tracking) + '</td><td data-l="الحالة">' + e(x.raw || "—") + '</td><td data-l="الزبون">' + e(x.client) + '</td><td data-l="البلدية">' + e(x.commune) + '</td><td data-l="المبلغ">' + (Number(x.amount) || 0).toLocaleString("fr-DZ") + ' دج</td><td data-l="أُضيف">' + new Date(x.at || Date.now()).toLocaleDateString("ar-DZ") + '</td><td><button class="small gray" type="button" title="إزالة من القائمة (لا يمسّ الطرد عند الشركة)" onclick="Admin.extRemove(\'' + cof + '\', \'' + e(x.tracking) + '\')">✕</button></td></tr>').join("") + '</table></div>';
   },
   /* ───── بطاقة «طرود حسابك في NOEST»: ما سُجّل عند الشركة فعلاً لطلباتنا وللطرود المضافة بالتتبع (واجهتها لا تعرض قائمة الحساب، فنسأل عن تتبعاتنا بطلب واحد) ───── */
@@ -9733,7 +9733,7 @@ const Admin = {
     const e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), n = v=>(Number(v) || 0).toLocaleString("fr-DZ"); c.style.display = "";
     c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرودك المسجَّلة عند ' + e(this.coLabel(cof)) + '</b><span class="hint" style="margin:0">' + (P.at ? "آخر قراءة " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) : "لم تُقرأ بعد") + ' · ' + list.length + ' طرد</span><span style="flex:1"></span><button class="small gold" type="button" onclick="Admin.nocLoad(\'' + cof + '\', true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ القراءة" : "🔄 قراءة من الشركة") + '</button></div>' +
       '<div class="hint" style="margin:.3rem 0">ما سجّلته الشركة فعلاً لطرودنا (بالتتبع). «من المنصة» أُرسل من لوحتك، «خارجي» أضفته بالتتبع.</div>' +
-      '<div class="hs-wrap" style="overflow-x:auto"><table class="kv" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>المصدر</th><th>الحالة عندهم</th><th>التصديق</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>المرجع</th></tr>' +
+      '<div class="rtw hs-wrap" style="overflow-x:auto"><table class="rt" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>المصدر</th><th>الحالة عندهم</th><th>التصديق</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>المرجع</th></tr>' +
       list.map(x=>{ const r = P.rows[x.trk], inf = (r && r.info) || {}, src = x.o ? 'من المنصة — <span dir="ltr">' + e(String(x.o.id).slice(-10)) + '</span>' : "خارجي";
         const val = !r ? "—" : (r.validated ? "✅ مصدَّق" : '⚠️ مسوّدة <button class="small green" type="button" onclick="Admin.coValidateTrk(\'' + cof + '\', \'' + e(x.trk) + '\')">تصديق</button>');
         return '<tr><td data-l="Tracking" dir="ltr">' + e(x.trk) + '</td><td data-l="المصدر">' + src + '</td><td data-l="الحالة عندهم">' + (r ? e(r.label || r.raw || "—") : "—") + '</td><td data-l="التصديق">' + val + '</td><td data-l="الزبون">' + e(inf.client || (x.ext && x.ext.client) || "—") + '</td><td data-l="البلدية">' + e(inf.commune || (x.ext && x.ext.commune) || "—") + '</td><td data-l="المبلغ">' + (inf.amount != null || (x.ext && x.ext.amount) ? n(inf.amount || (x.ext && x.ext.amount)) + " دج" : "—") + '</td><td data-l="المرجع" dir="ltr">' + e(inf.reference || "—") + '</td></tr>'; }).join("") + '</table></div>';
@@ -9743,9 +9743,10 @@ const Admin = {
   shipFocus(){ if(window.innerWidth > 700) return; this._shipFocusUntil = Date.now() + 3000; this._doShipFocus(); [400, 1100, 2200].forEach(ms=>setTimeout(()=>{ if(Date.now() < this._shipFocusUntil + 300) this._doShipFocus(); }, ms)); },
   _doShipFocus(){
     try{
-      const t = $f("ship-table"); if(!t || !t.rows || !t.rows.length) return; const r = t.getBoundingClientRect(); if(!r.width) return;
-      const y = Math.max(0, Math.round(window.scrollY + r.top - 70));                       // 70px: شريط أعلى الصفحة
-      if(Math.abs(y - window.scrollY) > 4) window.scrollTo({ top: y, behavior: "instant" });
+      const t = $f("ship-table"); if(!t || !t.rows || !t.rows.length || !t.getBoundingClientRect().width) return;
+      t.scrollIntoView({ block: "start", behavior: "instant" });                               // يصعد أقرب مُمرِّر (الصفحة أو حاوية اللوحة) مهما كان
+      const top = t.getBoundingClientRect().top;
+      if(top > 110 || top < 0) window.scrollTo({ top: Math.max(0, Math.round(window.scrollY + top - 72)), behavior: "instant" });   // احتياط إن لم يتحرك المُمرِّر
     }catch(e){}
   },
   renderShipped(){
