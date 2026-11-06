@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.857">
+<meta name="admin-version" content="1.89.858">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7900,19 +7900,37 @@ const Admin = {
          + product_list نصّ + total_amount (مبلغ الدفع عند الاستلام)؛ المتجر ذو المخزون يرسل بدلها عناصر sku_id — وحسابنا من الأول (قوائم منتجاته ومخزونه فارغة) */
       buildRequest(cfg, order){
         const loc = v=>{ let d = String(v||"").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
-        if(order.dtype === "stop" && !order.__wcDesk) throw new Error("لم يُحلّ مكتب Stop Desk عند WeCan لهذا الطلب");
+        const desk = Number(order.__wcDesk || order.__deskId || 0); if(order.dtype === "stop" && !desk) throw new Error("لم يُحلّ مكتب Stop Desk عند WeCan لهذا الطلب");
         const wid = Number(order.__coWid || order.__wid0 || (Admin.wCo(order.wilaya) || {}).id); if(!(wid >= 1 && wid <= 58)) throw new Error("ولاية «" + (order.wilaya || "؟") + "» غير معروفة لدى WeCan");
         const ph = loc(order.phone), total = Math.max(0, Math.round(Number(order.total) || 0));
         const items = String(order.items || "").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 500) || "Produit";
         const attributes = { client_name: String(order.name || "").trim().slice(0, 255) || "Client", client_phone: ph, client_address: String(order.address || order.commune || order.wilaya || "").slice(0, 255), commune_name: String(order.commune || order.wilaya || ""), wilaya_code: wid,
           payment_method: "cod", product_list: items, total_amount: total };
-        if(order.dtype === "stop"){ attributes.stop_desk_id = Number(order.__wcDesk); attributes.shipping_type = "express_desk"; }
+        if(order.dtype === "stop"){ attributes.stop_desk_id = desk; attributes.shipping_type = "express_desk"; } else attributes.shipping_type = "express_home";       // التعريفة المجلوبة (express) هي نفسها المرسَلة
         const nt = String(order.note || "").replace(/(📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳]|🔒\S+|🏢[a-z0-9_]+|🚚[^\s]+|📦|👤\S+)\s*/g, "").trim().slice(0, 250); if(nt) attributes.notes = nt;
         return { url: this.baseOf(cfg) + "/orders", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ data: { type: "orders", attributes } }) };
       },
+      /* قوائم WeCan نفسها (تتكيّف المنصة معها كياليدين): الولايات GET /locations/states، وبلدياتها GET /locations/states/{id}/cities (20 في الصفحة؛ is_deliverable=false ⟵ لا توصيل إليها فيحجبها المتجر)،
+         ومراكز Stop Desk GET /centers (الحقول نفسها كياليدين: center_id/commune_name/wilaya_id) تُزامَن من إعدادات الشركة فلا يختار الزبون إلا مكتباً تقبله */
+      wilayasRequest(cfg){ return { url: this.baseOf(cfg) + "/locations/states", method: "GET", headers: this.hdr(cfg) }; },
+      parseWilayas(json){ const m = {}; (Array.isArray(json && json.data) ? json.data : []).forEach(r=>{ const a = r.attributes || {}, id = Number(a.code != null ? a.code : r.id); if(id >= 1 && id <= 58) m[id] = { name: String(a.name || ""), ok: true }; }); return m; },
+      communesRequest(cfg, wilayaId, pg){ return { url: this.baseOf(cfg) + "/locations/states/" + encodeURIComponent(wilayaId) + "/cities?page=" + (pg || 1), method: "GET", headers: this.hdr(cfg) }; },
+      parseCommunes(json){ const rows = Array.isArray(json && json.data) ? json.data : [], m = (json && json.meta) || {};
+        return { names: rows.map(r=>String((r.attributes || {}).name || "")).filter(Boolean), nd: rows.filter(r=>(r.attributes || {}).is_deliverable === false).map(r=>String((r.attributes || {}).name || "")), more: Number(m.current_page) < Number(m.last_page) }; },
+      centersRequest(cfg, page){ return { url: this.baseOf(cfg) + "/centers?page_size=100&page=" + (page || 1), method: "GET", headers: this.hdr(cfg) }; },
+      parseCenters(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r.center_id != null).map(r=>({ id: Number(r.center_id), name: String(r.name||""), address: String(r.address||""), commune: String(r.commune_name||""), wilaya_id: Number(r.wilaya_id) })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
+      /* تعريفة WeCan (express) من ولاية انطلاق المتجر إلى كل ولاية: GET /fees?from_wilaya_id=&to_wilaya_id= ⟵ {per_commune:{id:{express_home, express_desk,…}}}؛ سعر الولاية = الأكثر شيوعاً بين بلدياتها؛ نداء لكل ولاية (feesPages=58) */
+      ownTariff: true, feesPages: 58,
+      feesRequest(cfg, page){ const from = Number(Admin.fromWilayaId && Admin.fromWilayaId()) || 16; return { url: this.baseOf(cfg) + "/fees?from_wilaya_id=" + from + "&to_wilaya_id=" + (page || 1), method: "GET", headers: this.hdr(cfg) }; },
+      parseFees(json){
+        const to = Number(json && json.to_wilaya_id), pc = json && json.per_commune && typeof json.per_commune === "object" ? Object.values(json.per_commune) : [];
+        const mode = k=>{ const c = {}; pc.forEach(x=>{ const v = Number(x && x[k]); if(v > 0) c[v] = (c[v] || 0) + 1; }); let b = 0; Object.keys(c).forEach(v=>{ if(!b || c[v] > c[b] || (c[v] === c[b] && Number(v) > b)) b = Number(v); }); return b; };
+        const home = mode("express_home"), stop = mode("express_desk"), prices = {}; if(to >= 1 && to <= 58 && (home || stop)) prices[to] = { home: home || stop, stop: stop || 0 };
+        return { prices, more: false };
+      },
       /* مكتب Stop Desk: معرّفه من قائمة مراكزهم GET /centers?wilaya_id= (الحقل id/center_id)؛ نختار مركز بلدية الطلب (وعند تعدّد المراكز نطابق اسم المكتب المحفوظ في الطلب) */
       async prepare(cfg, order, fetcher){
-        if(order.dtype !== "stop") return order;
+        if(order.dtype !== "stop" || order.__deskId) return order;
         const wid = Number(order.__coWid || order.__wid0 || (Admin.wCo(order.wilaya) || {}).id); if(!(wid >= 1 && wid <= 58)) throw new Error("ولاية «" + (order.wilaya || "؟") + "» غير معروفة لدى WeCan");
         const r = await fetcher({ url: this.baseOf(cfg) + "/centers?wilaya_id=" + wid + "&page_size=100", method: "GET", headers: this.hdr(cfg) });
         let j = null; try{ j = JSON.parse(r.text); }catch(e){}
@@ -8200,13 +8218,14 @@ const Admin = {
     toast("⏳ جارِ جلب التعريفة من " + co.name + "...");
     try{
       const prices = {}; let sample = "";
-      for(let page = 1; page <= 6; page++){
+      for(let page = 1; page <= (co.feesPages || 6); page++){
         const r = await this.courierFetch(co.feesRequest(cfg, page));
-        if(!r.ok) throw new Error("رد الشركة " + r.status + " — تحقق من API ID/Token");
+        if(!r.ok){ if(co.feesPages && page > 1 && r.status !== 401 && r.status !== 403){ await new Promise(res=>setTimeout(res, 300)); continue } throw new Error("رد الشركة " + r.status + " — تحقق من API ID/Token"); }      // شركة بنداء لكل ولاية: ولاية بلا تعريفة لا تُسقط الباقي
         if(!sample) sample = String(r.text || "").replace(/\s+/g, " ").slice(0, 260);
         const got = co.parseFees(JSON.parse(r.text));
         Object.assign(prices, got.prices);
-        if(!got.more) break;
+        if(co.feesPages) await new Promise(res=>setTimeout(res, 250));
+        if(!got.more && !co.feesPages) break;
       }
       const n = Object.keys(prices).length;
       if(!n) throw new Error("لم تُرجع الشركة تعريفة مفهومة — عيّنة الردّ: " + sample);
