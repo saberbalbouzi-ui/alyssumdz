@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.842">
+<meta name="admin-version" content="1.89.843">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -173,7 +173,14 @@ tr:hover td{background:#FAF7F0}
 /* جداول بطاقات المقارنة وطرود الشركات: العناوين والخانات في سطر واحد دائماً (يُمرَّر أفقياً على الهاتف) */
 #co-cmp table{width:max-content!important;min-width:100%}#co-cmp th,#co-cmp td{white-space:nowrap;padding:.35rem .7rem;text-align:start}
 @media(min-width:701px){#zr-card th,#zr-card td,#ext-card th,#ext-card td,#noc-card th,#noc-card td{white-space:nowrap;padding:.35rem .7rem;text-align:start}}
-.modal.lg{width:min(900px,100%)}
+/* الهاتف: بطاقات الطرود مدمجة — Tracking بسطر كامل ثم باقي القيم متجاورة (التسمية قبل القيمة) */
+@media(max-width:700px){
+  #noc-card table.m-cards tr:not(:has(>th)),#zr-card table.m-cards tr:not(:has(>th)),#ext-card table.m-cards tr:not(:has(>th)){display:block!important;padding:.5rem .7rem!important;margin:0 0 .45rem!important}
+  #noc-card table.m-cards td,#zr-card table.m-cards td,#ext-card table.m-cards td{display:inline-block!important;padding:.1rem 0!important;margin-inline-end:.85rem;font-size:.84rem;vertical-align:middle}
+  #noc-card table.m-cards td::before,#zr-card table.m-cards td::before,#ext-card table.m-cards td::before{display:inline!important;content:attr(data-l) ": "!important;font-size:.72rem!important;font-weight:700;opacity:.8;margin:0 0 0 .15rem!important}
+  #noc-card table.m-cards td:first-child,#zr-card table.m-cards td:first-child,#ext-card table.m-cards td:first-child{display:block!important;font-weight:800;font-size:.9rem;border-bottom:1px solid var(--line)!important;padding-bottom:.25rem!important;margin:0 0 .2rem!important}
+  #noc-card table.m-cards td:first-child::before,#zr-card table.m-cards td:first-child::before,#ext-card table.m-cards td:first-child::before{display:none!important}
+}.modal.lg{width:min(900px,100%)}
 .modal.xl{width:min(1280px,96vw);max-height:94vh;padding:1.6rem 2rem 0}
 .modal.xl .grid2{gap:0 2.2rem}
 .modal.xl .action-bar{position:sticky;bottom:0;background:#fff;padding:.9rem 0;margin-top:1rem;border-top:1.5px solid var(--line);z-index:2}
@@ -9728,7 +9735,7 @@ const Admin = {
     if(!c){ c = document.createElement("div"); c.id = "noc-card"; c.className = "card"; c.setAttribute("data-noco", ""); const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
     const e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), n = v=>(Number(v) || 0).toLocaleString("fr-DZ"); c.style.display = "";
     c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرودك المسجَّلة عند ' + e(this.coLabel(cof)) + '</b><span class="hint" style="margin:0">' + (P.at ? "آخر قراءة " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) : "لم تُقرأ بعد") + ' · ' + list.length + ' طرد</span><span style="flex:1"></span><button class="small gold" type="button" onclick="Admin.nocLoad(\'' + cof + '\', true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ القراءة" : "🔄 قراءة من الشركة") + '</button></div>' +
-      '<div class="hint" style="margin:.4rem 0">واجهة ' + e(co.name || "") + ' لا تعرض قائمة الحساب: نعرض هنا ما سجّلته الشركة فعلاً لطرودنا (بالتتبع). «من المنصة» = أُرسل من لوحتك، «خارجي» = أضفته بالتتبع.</div>' +
+      '<div class="hint" style="margin:.3rem 0">ما سجّلته الشركة فعلاً لطرودنا (بالتتبع). «من المنصة» أُرسل من لوحتك، «خارجي» أضفته بالتتبع.</div>' +
       '<div style="overflow:auto"><table class="kv m-cards" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>المصدر</th><th>الحالة عندهم</th><th>التصديق</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>المرجع</th></tr>' +
       list.map(x=>{ const r = P.rows[x.trk], inf = (r && r.info) || {}, src = x.o ? 'من المنصة — <span dir="ltr">' + e(String(x.o.id).slice(-10)) + '</span>' : "خارجي";
         const val = !r ? "—" : (r.validated ? "✅ مصدَّق" : '⚠️ مسوّدة <button class="small green" type="button" onclick="Admin.coValidateTrk(\'' + cof + '\', \'' + e(x.trk) + '\')">تصديق</button>');
