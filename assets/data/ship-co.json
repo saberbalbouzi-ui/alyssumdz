@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-06T22:05:51.149Z",
- "def": "noest",
+ "updated": "2026-11-06T22:06:41.540Z",
+ "def": "wecan",
  "companies": {
   "yalidine": {
    "name": "ياليدين Yalidine",
@@ -12970,10 +12970,5 @@
    ]
   }
  },
- "nd": {
-  "2": [
-   "elhadjadj",
-   "benboutaleb"
-  ]
- }
+ "nd": {}
 }
