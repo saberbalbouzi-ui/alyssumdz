@@ -1624,11 +1624,11 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const dp = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); window.confirm = () => true; Admin.enqueueNotify = () => { }; Admin.renderShippedBadge = () => { }; Admin.refreshAlerts = async () => {};
     const e0 = Admin.enabledCompanyKeys, a0 = Admin.activeCompanyKey, s0 = Admin.sendOrderToDelivery, c0 = Admin.courierFetch, o0 = window.open, u0 = API.updateOrder;
-    Admin.orderCompanyKey = window.__ockReal; Admin.enabledCompanyKeys = () => ["yalidine", "zrexpress"]; Admin.activeCompanyKey = () => "yalidine"; API.updateOrder = async () => true;
+    Admin.orderCompanyKey = window.__ockReal; Admin.enabledCompanyKeys = () => ["yalidine", "noest"]; Admin.activeCompanyKey = () => "yalidine"; API.updateOrder = async () => true;
     let fetches = 0; Admin.courierFetch = async () => { fetches++; return { ok: false, status: 500, text: "" }; };
     const mk = (id, name, wil, extra) => Object.assign({ id, date: new Date().toISOString(), status: "confirmee", name, phone: "0550001111", wilaya: wil, commune: "X", dtype: "home", items: "عنصر توجيه تجريبي ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" }, extra || {});
     Admin.orders = [mk("P0001", "قسنطيني", "Constantine"), mk("P0002", "تمنراستي", "Tamanrasset"), mk("P0003", "عاصمي", "Alger")];
-    AdminDispatch._S.cfg = { on: true, regions: { est: "zrexpress", sud: "yalidine" }, wil: {}, minSample: 8 };
+    AdminDispatch._S.cfg = { on: true, regions: { est: "noest", sud: "yalidine" }, wil: {}, minSample: 8 };
     const keys = Admin.orders.map(o => Admin.orderCompanyKey(o)), sentTo = [];
     Admin.sendOrderToDelivery = async (i, k) => { const o = Admin.orders[i]; sentTo.push(o.id + ":" + k); const t = "T" + o.id.slice(-4) + (k === "yalidine" ? "Y" : "Z"); o.note = "🚚" + k + ":" + t; if (k === "yalidine") Admin.cacheLabel(o.id, "https://labels.test/" + t + ".pdf"); return true; };
     let html = ""; const fakeWin = { document: { open() { html = ""; }, write(h) { html += h; }, close() { } }, close() { } }; window.open = () => fakeWin;
@@ -1645,13 +1645,13 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.enabledCompanyKeys = e0; Admin.activeCompanyKey = a0; Admin.sendOrderToDelivery = s0; Admin.courierFetch = c0; window.open = o0; API.updateOrder = u0; AdminDispatch._S.cfg.on = false; Admin.tab("orders"); await wait(50);
     return r;
   });
-  ok("التوجيه: الشرق ← ZR، الجنوب ← ياليدين، والوسط (بلا قاعدة) ← الافتراضية", dp.keys.join() === "zrexpress,yalidine,yalidine" && dp.ui, dp);
-  ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) ووصل بباركود لشركة بلا بوردرو", dp.sentTo.join() === "P0001:zrexpress,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 3 && dp.page.svg, dp);
+  ok("التوجيه: الشرق ← ZR، الجنوب ← ياليدين، والوسط (بلا قاعدة) ← الافتراضية", dp.keys.join() === "noest,yalidine,yalidine" && dp.ui, dp);
+  ok("إرسال وطباعة بنقرة: كل طلب إلى شركته، بوردرو ياليدين من الرابط المحفوظ (بلا أي طلب للشركة) ووصل بباركود لشركة بلا بوردرو", dp.sentTo.join() === "P0001:noest,P0002:yalidine,P0003:yalidine" && dp.fetches === 0 && dp.page.iframes === 2 && dp.page.waybills === 3 && dp.page.svg, dp);
   ok("محطة المسح: مسح جديد ثم مكرّر (يتجاهل حالة الأحرف والمسافات) ثم مجهول، والعدّاد وكشف التسليم لما مُسح فقط", dp.scan.s1 === "ok" && dp.scan.s2 === "dup" && dp.scan.s3 === "unknown" && dp.scan.count === 2 && dp.scan.txt && dp.manifest.has, dp);
   // ── إعادة التوجيه التلقائي عند رفض الشركة ──
   const fbt = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms)); const e0 = Admin.enabledCompanyKeys, a0 = Admin.activeCompanyKey, i0 = Admin._sendOrderToDelivery, sn0 = Admin.showNotice;
-    Admin.sendOrderToDelivery = window.__sodReal; Admin.enabledCompanyKeys = () => ["yalidine", "zrexpress"]; Admin.activeCompanyKey = () => "yalidine"; localStorage.removeItem("alyssum_fb_log"); localStorage.removeItem("store_fb_log");
+    Admin.sendOrderToDelivery = window.__sodReal; Admin.enabledCompanyKeys = () => ["yalidine", "noest"]; Admin.activeCompanyKey = () => "yalidine"; localStorage.removeItem("alyssum_fb_log"); localStorage.removeItem("store_fb_log");
     const notices = []; Admin.showNotice = (t) => { notices.push(t); };
     const mkO = id => ({ id, date: new Date().toISOString(), status: "confirmee", name: "ف" + id, phone: "0550002222", wilaya: "Alger", commune: "X", dtype: "home", items: "عنصر ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" });
     const run = async (id, behave, cfgFb) => {
@@ -1660,20 +1660,20 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       const r = await Admin.sendOrderToDelivery(0, "yalidine"); await wait(30); return { r, calls: calls.join(), note: Admin.orders[0].note };
     };
     const out = {};
-    out.reroute = await run("F0001", { yalidine: "reject", zrexpress: "ok" });
+    out.reroute = await run("F0001", { yalidine: "reject", noest: "ok" });
     out.log = JSON.parse(localStorage.getItem("alyssum_fb_log") || localStorage.getItem("store_fb_log") || "[]");
-    out.area = await run("F0002", { yalidine: "area", zrexpress: "ok" });
-    out.input = await run("F0003", { yalidine: "input", zrexpress: "ok" });
-    out.amb = await run("F0004", { yalidine: "amb", zrexpress: "ok" });
-    out.cancel = await run("F0005", { yalidine: null, zrexpress: "ok" });
-    notices.length = 0; out.allfail = await run("F0006", { yalidine: "reject", zrexpress: "reject" }); out.allfailNotices = notices.length; out.quietOff = !Admin._fbQuiet;
-    out.off = await run("F0007", { yalidine: "reject", zrexpress: "ok" }, false);
+    out.area = await run("F0002", { yalidine: "area", noest: "ok" });
+    out.input = await run("F0003", { yalidine: "input", noest: "ok" });
+    out.amb = await run("F0004", { yalidine: "amb", noest: "ok" });
+    out.cancel = await run("F0005", { yalidine: null, noest: "ok" });
+    notices.length = 0; out.allfail = await run("F0006", { yalidine: "reject", noest: "reject" }); out.allfailNotices = notices.length; out.quietOff = !Admin._fbQuiet;
+    out.off = await run("F0007", { yalidine: "reject", noest: "ok" }, false);
     Admin.enabledCompanyKeys = e0; Admin.activeCompanyKey = a0; Admin._sendOrderToDelivery = i0; Admin.showNotice = sn0; AdminDispatch._S.cfg = { on: false };
     return out;
   });
-  ok("إعادة التوجيه: رفض ياليدين ← تُرسل عبر الشركة الثانية بصمت، ويُسجَّل في السجل", fbt.reroute.r === true && fbt.reroute.calls === "yalidine~,zrexpress~" && /zrexpress:T/.test(fbt.reroute.note) && fbt.log.length === 1 && fbt.log[0].from === "yalidine" && fbt.log[0].to === "zrexpress", fbt);
+  ok("إعادة التوجيه: رفض ياليدين ← تُرسل عبر الشركة الثانية بصمت، ويُسجَّل في السجل", fbt.reroute.r === true && fbt.reroute.calls === "yalidine~,noest~" && /noest:T/.test(fbt.reroute.note) && fbt.log.length === 1 && fbt.log[0].from === "yalidine" && fbt.log[0].to === "noest", fbt);
   ok("إعادة التوجيه: ولاية غير مخدومة أو بلدية بلا مطابقة ← بديل؛ والإخفاق الملتبس (مهلة/5xx) وإلغاء المستخدم لا يُعاد توجيههما (منعاً لتكرار الطرد)", fbt.area.r === true && fbt.input.r === true && fbt.amb.r === false && fbt.amb.calls === "yalidine~" && fbt.cancel.r === false && fbt.cancel.calls === "yalidine~", fbt);
-  ok("إعادة التوجيه: إن رفضتها كل الشركات يُجرَّب الجميع ثم تظهر خلاصة واحدة، والتعطيل يرسل لشركة واحدة بلا صمت", fbt.allfail.r === false && fbt.allfail.calls === "yalidine~,zrexpress~" && fbt.allfailNotices >= 1 && fbt.quietOff && fbt.off.r === false && fbt.off.calls === "yalidine", fbt);
+  ok("إعادة التوجيه: إن رفضتها كل الشركات يُجرَّب الجميع ثم تظهر خلاصة واحدة، والتعطيل يرسل لشركة واحدة بلا صمت", fbt.allfail.r === false && fbt.allfail.calls === "yalidine~,noest~" && fbt.allfailNotices >= 1 && fbt.quietOff && fbt.off.r === false && fbt.off.calls === "yalidine", fbt);
   // ── أزرار معاينة الطلب الجديدة: رابط دفع (قبل التسليم) وطلب تقييم (بعده) ──
   const plk = await p.evaluate(async () => {
     const wait = ms => new Promise(r => setTimeout(r, ms));

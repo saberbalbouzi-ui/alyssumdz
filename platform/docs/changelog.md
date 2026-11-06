@@ -1332,3 +1332,7 @@
 
 ## v1.89.869 — WeCan: ولاية الانطلاق إلزامية في /parcels
 ردّ WeCan على أول إرسال عبر `/parcels`: `The from_wilaya_name parameter is required` (success:false، بلا رقم تتبع). صار `buildRequest` يرسل دائماً `from_wilaya_name` = إعداد «ولاية الانطلاق» في بطاقة WeCan (حقل جديد)، وإلا ولاية انطلاق ياليدين المضبوطة، وإلا «Alger»؛ وتعريفة WeCan تستعمل الولاية نفسها. لم يُنشأ طرد اختباري عندهم (لا بيانات مختلَقة) فلم تُجرَّب بقية حقول الإنشاء بعد.
+
+## v1.89.870 — حذف ZR Express القديمة (Procolis) + أبعاد/وزن طرد WeCan
+- بطلب صاحب المتجر: حُذف إدخال `zrexpress` (Procolis القديمة) من لوحة التحكم وفحص مفاتيحه واسمه في الشرائح؛ تحققتُ (SELECT) أن لا طلب في الإنتاج بوسمها. تبقى «ZR Express» الجديدة (`zrexpress_app`). اختبارات `test-hand.js` للتوجيه صارت تستعمل Noest مكانها. (محوّلات `platform/gateway` و`php-edition` الخلفية لـProcolis لم تُمَسّ.)
+- WeCan: ردّت `The length parameter is required` (حقول ياليدين الأصلية الإلزامية): يُرسَل الآن `length/width/height` = 10 سم و`weight` = 1 كغ و`has_exchange`.

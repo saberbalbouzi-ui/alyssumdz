@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.869">
+<meta name="admin-version" content="1.89.870">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}/* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -2987,7 +2987,7 @@ const Admin = {
     this.applyOrderFilters();
   },
   /* أسماء ثابتة للشركات في الشرائح والتبويبات: ياليدين وZR شركتان مستقلتان ولا يُدمج اسماهما */
-  coLabel(k){ const F = { yalidine: "ياليدين", zrexpress_app: "ZR Express", zrexpress: "ZR (Procolis القديمة)", none: "بلا شركة", __other: "شركات غير مفعّلة" }; if(F[k]) return F[k]; const c = this.allDeliveryCompanies()[k]; return (c && c.name) || k; },
+  coLabel(k){ const F = { yalidine: "ياليدين", zrexpress_app: "ZR Express", none: "بلا شركة", __other: "شركات غير مفعّلة" }; if(F[k]) return F[k]; const c = this.allDeliveryCompanies()[k]; return (c && c.name) || k; },
   /* شركة الطلب لأغراض الفرز: المسجَّل ⟵ شركة تتبعه، وغيره ⟵ الشركة المقرَّر إرساله بها (أو "none") */
   orderCoKey(o){ const t = this.trackingOf(o); if(t) return t.company; try{ return this.orderCompanyKey(o) || "none"; }catch(e){ return "none"; } },
   setOrderCo(k){ this._ordCo = k || ""; this.applyOrderFilters(); },
@@ -7622,49 +7622,6 @@ const Admin = {
       /* رسالة الرفض من الرد: {order_id: {success:false, message}} */
       parseError(json){ try{ const v = Object.values(json || {})[0]; return v && v.message ? String(v.message) : ""; }catch(e){ return ""; } },
     },
-    zrexpress: {
-      name: "ZR Express (Procolis القديمة)",
-      confidence: "experimental",
-      note: "⚠️ تجريبي — واجهة ZR Express (Procolis): ولّد Token وClé من صفحة «Développement» في حسابك ثم الصقهما هنا. جرّب طلباً واحداً حقيقياً وراجعه في لوحة الشركة قبل الاعتماد عليه.",
-      fields: [
-        { key:"token", label:"Token", type:"password" },
-        { key:"key", label:"Clé (Key)", type:"password" },
-      ],
-      base: "https://procolis.com/api_v1",
-      hdr(cfg){ const c = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); return { "token": c(cfg.token), "key": c(cfg.key), "Content-Type": "application/json" }; },
-      buildRequest(cfg, order){
-        const loc = v=>{ let d = String(v||"").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
-        const w = Admin.wCo(order.wilaya), ph = loc(order.phone), p2 = loc(order.extra && order.extra["📞 هاتف 2"]);
-        if(!w || !w.id){ throw new Error("ولاية «" + (order.wilaya || "؟") + "» غير معروفة لتحديد رقمها عند ZR Express"); }
-        const items = String(order.items||"").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250);
-        return {
-          url: this.base + "/add_colis", method: "POST", headers: this.hdr(cfg),
-          body: JSON.stringify({ Colis: [{
-            Tracking: "", TypeLivraison: order.dtype === "stop" ? "1" : "0", TypeColis: order.extra && order.extra["🔄 استبدال"] ? "1" : "0", Confrimee: "1",
-            Client: order.name || "", MobileA: ph, MobileB: p2 && p2 !== ph ? p2 : "",
-            Adresse: String(order.address || order.commune || order.wilaya || "").slice(0, 250), IDWilaya: String(w.id), Commune: order.commune || "",
-            Total: String(Math.max(0, Math.round(Number(order.total) || 0))), Note: "", TProduit: items || "Produit", id_Externe: String(order.id), Source: "Alyssum",
-          }]}),
-        };
-      },
-      /* الردّ: {Colis:[{Tracking, MessageRetour}]} — الرفض يعود HTTP 200 مع MessageRetour (Good = نجاح) */
-      row(json){ const r = json && (Array.isArray(json.Colis) ? json.Colis[0] : (Array.isArray(json) ? json[0] : json)); return r && typeof r === "object" ? r : {}; },
-      parseSent(json){ const r = this.row(json), m = String(r.MessageRetour || r.message || "").trim(); return (r.Tracking && (!m || /^good$/i.test(m))) ? String(r.Tracking) : ""; },
-      parseError(json){ const r = this.row(json), m = String(r.MessageRetour || r.message || "").trim(); if(/double tracking/i.test(m)) return "طرد مكرّر عند ZR Express (Double Tracking) — لا يُرسَل ثانية"; return /^good$/i.test(m) ? "" : m; },
-      pingRequest(cfg){ return { url: this.base + "/token", method: "GET", headers: this.hdr(cfg) }; },
-      trackRequest(cfg, tracking){ return { url: this.base + "/lire", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ Colis: [{ Tracking: String(tracking) }] }) }; },
-      parseStatus(json){ const r = this.row(json); return String(r.Situation || r.situation || r.Statut || r.status || "").trim(); },
-      mapStatus(raw){
-        const t = String(raw||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[_\-\[\]()]/g, " ").replace(/\s+/g, " ").trim(); if(!t) return null;
-        if(/reporte|appel sans reponse|relance|injoignable|ne repond pas/.test(t)) return "__alert";         // محاولة فاشلة: تنبيه بلا تغيير
-        if(/en livraison|livraison en cours|out for delivery/.test(t)) return "expediee";
-        if(/annul|retour|refus|echec/.test(t)) return "echec";
-        if(/^livr|livree|delivered|encaisse/.test(t)) return "livree";
-        if(/pret a expedier|en preparation|en traitement|prepar/.test(t)) return "confirmee";
-        if(/dispatch|au bureau|echange|transit|centre|sorti|ramass|arriv|en cours|expedi/.test(t)) return "expediee";
-        return null;
-      },
-    },
     zrexpress_app: {
       name: "ZR Express",
       confidence: "experimental",
@@ -7930,8 +7887,9 @@ const Admin = {
         const products = String(order.items || "").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250) || "Produit";
         let p2 = String((order.extra && order.extra["📞 هاتف 2"]) || "").replace(/\D/g, ""); if(p2.startsWith("213")) p2 = "0" + p2.slice(3); else if(p2.length === 9) p2 = "0" + p2;
         const body = { order_id: String(order.__ydId || order.id), firstname: first, familyname: family, contact_phone: ph, address: String(order.address || [order.commune, order.wilaya].filter(Boolean).join("، ")).slice(0, 250),
-          to_commune_name: order.commune || "", to_wilaya_name: order.wilaya || "", product_list: products, price, do_insurance: false, declared_value: price, freeshipping: !(fee > 0), is_stopdesk: stop };
+          to_commune_name: order.commune || "", to_wilaya_name: order.wilaya || "", product_list: products, price, do_insurance: false, declared_value: price, freeshipping: !(fee > 0), is_stopdesk: stop, has_exchange: !!(order.extra && order.extra["🔄 استبدال"]), length: 10, width: 10, height: 10, weight: 1 };       // WeCan تشترط الأبعاد (سم) والوزن (كغ) كحقول ياليدين الأصلية
         if(p2 && p2 !== ph) body.contact_phone_2 = p2;
+        if(body.has_exchange) body.product_to_collect = String(order.extra["🔄 استبدال"]).slice(0, 200);
         body.from_wilaya_name = this.fromName(cfg);       // إلزامي في /parcels: ولاية انطلاق الطرد (إعداد WeCan، وإلا ولاية ياليدين الافتراضية، وإلا الجزائر)
         if(stop) body.stopdesk_id = desk;
         const nt = String(order.note || "").replace(/(📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳]|🔒\S+|🏢[a-z0-9_]+|🚚[^\s]+|📦|👤\S+)\s*/g, "").trim(); if(nt) body.notes = nt.slice(0, 250);
@@ -9527,18 +9485,6 @@ const Admin = {
       if(rz.ok) return this.showNotice("✅ المفاتيح صحيحة", "قبلتها ZR Express. احفظ الإعدادات ثم جرّب إرسال طلب واحد.");
       if(rz.status === 401 || rz.status === 403) return this.showNotice("🔴 ZR Express ترفض هذه المفاتيح (" + rz.status + ")", "تأكد من X-Api-Key (يظهر مرة واحدة عند إنشائه) ومن معرّف الحساب X-Tenant.");
       return this.showNotice("⚠️ رد غير متوقع من الشركة (" + rz.status + ")", "لا يمكن الحكم على المفاتيح الآن.");
-    }
-    if(key === "zrexpress"){                                                              // ZR Express: Token + Clé، فحص قراءة فقط GET /token
-      if(!cfg.token || !cfg.key){ toast("⚠️ اكتب Token وClé أولاً"); return }
-      const b0 = $f("dlv-test-btn"); if(b0){ b0.disabled = true; b0.textContent = "… يجري الفحص" }
-      let r0; try{ r0 = await this.courierFetch(co.pingRequest(cfg)); }catch(e){ r0 = null }
-      if(b0){ b0.disabled = false; b0.textContent = "🧪 اختبر المفاتيح قبل الحفظ" }
-      if(!r0) return this.showNotice("⚠️ تعذّر الاتصال بالشركة", "لم نصل إلى خادم الشركة — أعد المحاولة بعد قليل.");
-      let st = ""; try{ const j = JSON.parse(r0.text); st = String((j && (j.Statut || j.statut || j.status)) || ""); }catch(e){}
-      if(r0.ok && /acc[eè]s activ/i.test(st)) return this.showNotice("✅ المفاتيح صحيحة", "قبلتها ZR Express والحساب مفعّل للربط. احفظ الإعدادات ثم جرّب إرسال طلب واحد.");
-      if(r0.ok) return this.showNotice("⚠️ الحساب غير مفعّل للربط", "ردّت الشركة: «" + nE(st || "بلا حالة") + "» — راجع صفحة Développement في حسابك أو تواصل مع دعم ZR.");
-      if(r0.status === 401 || r0.status === 403) return this.showNotice("🔴 ZR Express ترفض هذه المفاتيح (" + r0.status + ")", "ولّد Token وClé جديدين من صفحة Développement (زر Générer) وانسخهما كاملين دون مسافات.");
-      return this.showNotice("⚠️ رد غير متوقع من الشركة (" + r0.status + ")", "لا يمكن الحكم على المفاتيح الآن.");
     }
     if(key !== "yalidine" && !(co.fields||[]).some(f=>f.key === "apiId")){                // أي شركة بحقول مختلفة: فحص قراءة عام بما أُدخل في النافذة
       const c2 = Object.assign({}, cfg); (co.fields||[]).forEach(f=>{ const el = $f("dlv-f-" + f.key); if(el && f.type !== "select") c2[f.key] = clean(el.value); });
