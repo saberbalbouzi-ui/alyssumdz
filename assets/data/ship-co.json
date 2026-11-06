@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-06T22:36:37.326Z",
+ "updated": "2026-11-06T22:39:54.476Z",
  "def": "wecan",
  "noStop": false,
  "companies": {
@@ -12971,5 +12971,11 @@
    ]
   }
  },
- "nd": {}
+ "nd": {
+  "5": [
+   "gosbat",
+   "larbaa",
+   "ouledammar"
+  ]
+ }
 }
