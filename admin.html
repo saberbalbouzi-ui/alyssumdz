@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.841">
+<meta name="admin-version" content="1.89.842">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7870,7 +7870,50 @@ const Admin = {
       mapStatus(raw){ const c = this.code(raw); return c === "l" ? "livree" : c === "f" ? "echec" : c === "a" ? "__alert" : c === "e" ? "expediee" : c === "c" ? "confirmee" : null; },
     },
     dhd: ecotrackCompany("DHD Express (Ecotrack)", "https://dhd.ecotrack.dz"),
-    wecan: ecotrackCompany("WeCan Service (منصة Ecotrack)", ""),
+    wecan: {
+      name: "WeCan Service",
+      confidence: "experimental",
+      note: "⚠️ تجريبي — WeCan منصة تنفيذ (Fulfillment): تُرسَل الطلبات إلى واجهتها بالمنتجات (SKU) ثم تؤكّدها وتنفّذها وتشحنها هي. أدخل X-API-Key وX-API-Secret، وللتجربة اكتب 1 في «وضع التجربة» (بيئة sandbox لا تنشئ طرداً حقيقياً). المنتجات تُطابَق عندهم بالـSKU: تأكد من وجودها في مخزونهم. لا تعريفة ولا قوائم ولايات تُجلب منهم (الرسوم يحسبها WeCan).",
+      fields: [
+        { key:"apiKey", label:"X-API-Key", type:"password" },
+        { key:"apiSecret", label:"X-API-Secret", type:"password" },
+        { key:"sandbox", label:"وضع التجربة (sandbox): اكتب 1 للتجربة، واتركه فارغاً للحقيقي", type:"text", required:false },
+      ],
+      cl(v){ return String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); },
+      baseOf(cfg){ return "https://wecanservices.com/api/v1" + (String(cfg.sandbox || "").trim() === "1" ? "/sandbox" : ""); },
+      hdr(cfg){ return { "X-API-Key": this.cl(cfg.apiKey), "X-API-Secret": this.cl(cfg.apiSecret), "Accept": "application/json", "Content-Type": "application/json" }; },
+      pingRequest(cfg){ return { url: this.baseOf(cfg) + "/orders", method: "GET", headers: this.hdr(cfg) }; },
+      buildRequest(cfg, order){
+        const loc = v=>{ let d = String(v||"").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
+        if(order.dtype === "stop") throw new Error("WeCan لا تدعم التسليم لمكتب (Stop Desk) عبر الواجهة — حوّل التوصيل إلى المنزل أو اختر شركة أخرى");
+        const ph = loc(order.phone), p2 = loc(order.extra && order.extra["📞 هاتف 2"]), total = Math.max(0, Math.round(Number(order.total) || 0)), fee = Math.max(0, Math.round(Number(order.fee) || 0));
+        let lines = []; try{ lines = Admin.orderLines(order) || []; }catch(e){}
+        let products = lines.map(l=>{ const sku = String(l.p.sku || l.p.slug || "").trim(), q = Math.max(1, l.qty); const pr = { name: String(l.p.title || "Produit").slice(0, 120), quantity: q, price: Math.round(l.total / q) }; if(sku) pr.sku = sku; return pr; });
+        if(!products.length) products = [{ name: (String(order.items||"").split(/\n/).map(x=>x.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ") || "Produit").slice(0, 120), quantity: 1, price: Math.max(0, total - fee) }];
+        const body = { data: { type: "orders", attributes: { external_id: String(order.id).slice(0, 100),
+          customer: Object.assign({ name: String(order.name || "").trim() || "Client", phone: ph, address: String(order.address || order.commune || order.wilaya || "").slice(0, 250), city: String(order.commune || order.wilaya || ""), wilaya: String(order.wilaya || ""), commune: String(order.commune || "") }, p2 && p2 !== ph ? { phone2: p2 } : {}),
+          products, payment: { method: "cod", amount: total }, shipping_fee: fee } } };
+        if(order.note) body.data.attributes.notes = String(order.note).replace(/(📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳]|🔒\S+|🏢[a-z0-9_]+|🚚[^\s]+|📦|👤\S+)\s*/g, "").trim().slice(0, 250);
+        return { url: this.baseOf(cfg) + "/orders", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(body) };
+      },
+      /* الردّ JSON:API: {data:{id, attributes:{order_number,...}}} — نخزّن المعرّف كرقم تتبع (القراءة والإلغاء به) */
+      parseSent(json){ const d = json && json.data; return d && !Array.isArray(d) && d.id != null ? String(d.id) : ""; },
+      parseError(json){ try{ const e = json && json.errors; if(e && typeof e === "object" && !Array.isArray(e)) return Object.values(e).map(v=>Array.isArray(v) ? v[0] : v).filter(Boolean).slice(0, 4).join(" — "); if(Array.isArray(e) && e.length) return e.map(x=>x.detail || x.title).filter(Boolean).join(" — "); return String((json && json.message) || ""); }catch(err){ return ""; } },
+      trackRequest(cfg, tracking){ return { url: this.baseOf(cfg) + "/orders/" + encodeURIComponent(tracking), method: "GET", headers: this.hdr(cfg) }; },
+      /* حالات WeCan ثلاث: fulfillment_status وstatus وconfirmation_status ← نص واحد */
+      parseStatus(json){ const d = json && json.data, a = d && (Array.isArray(d) ? (d[0] && d[0].attributes) : d.attributes); if(!a) return ""; return [a.fulfillment_status, a.status, a.confirmation_status].filter(Boolean).join(" · "); },
+      parseInfo(json){ const d = json && json.data, a = d && !Array.isArray(d) && d.attributes; if(!a) return null; return { reference: String(a.external_id || a.order_number || ""), client: String(a.client_name || ""), phone: String(a.client_phone || ""), commune: String(a.client_city || ""), amount: Number(a.total_amount) || 0, product: "", at: String(a.created_at || "") }; },
+      mapStatus(raw){
+        const t = String(raw||"").toLowerCase(); if(!t) return null;
+        if(/cancel|return|refus|reject/.test(t)) return "echec";
+        if(/unreachable/.test(t)) return "__alert";
+        if(/delivered/.test(t)) return "livree";
+        if(/shipped|out_for|transit/.test(t)) return "expediee";
+        if(/ready|processing|confirmed|pending|draft/.test(t)) return "confirmee";
+        return null;
+      },
+      cancelRequest(cfg, tracking){ return { url: this.baseOf(cfg) + "/orders/" + encodeURIComponent(tracking), method: "DELETE", headers: this.hdr(cfg) }; },
+    },
     ecotrack: ecotrackCompany("منصة Ecotrack (شركات أخرى: Anderson وغيرها)", ""),
     ecomdelivery: {
       name: "E-com Delivery",
