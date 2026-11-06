@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-06T21:09:49.887Z",
+ "updated": "2026-11-06T21:10:59.689Z",
  "def": "noest",
  "companies": {
   "yalidine": {
@@ -12499,9 +12499,103 @@
   }
  },
  "nd": {
+  "1": [
+   "tit"
+  ],
   "2": [
    "elhadjadj",
    "benboutaleb"
+  ],
+  "4": [
+   "eldjazia",
+   "rahia"
+  ],
+  "6": [
+   "tamokra",
+   "ighilali",
+   "benimelikeche",
+   "draakaid",
+   "tamridjet"
+  ],
+  "7": [
+   "elhaouch",
+   "ainzaatout",
+   "khanguetsidinadji"
+  ],
+  "8": [
+   "tabalbala"
+  ],
+  "11": [
+   "abalessa",
+   "idles",
+   "tazouk",
+   "inamguel"
+  ],
+  "17": [
+   "guettara",
+   "oumlaadham",
+   "amourah"
+  ],
+  "18": [
+   "erraguene",
+   "chahna",
+   "selmabenziada",
+   "boussifouledaskeur",
+   "boudriabeniyadjis",
+   "bordjtaher",
+   "ouadjana"
+  ],
+  "20": [
+   "sidiahmed"
+  ],
+  "24": [
+   "ainlarbi"
+  ],
+  "28": [
+   "ainfares"
+  ],
+  "29": [
+   "elgaada"
+  ],
+  "30": [
+   "elborma"
+  ],
+  "33": [
+   "debdeb",
+   "bordjomardriss",
+   "inamenas"
+  ],
+  "34": [
+   "colla"
+  ],
+  "40": [
+   "eloueldja",
+   "djellal",
+   "tamza",
+   "msara",
+   "khirane"
+  ],
+  "43": [
+   "tessalalamatai"
+  ],
+  "47": [
+   "sebseb"
+  ],
+  "49": [
+   "ouledaissa",
+   "talmine",
+   "metarfa"
+  ],
+  "50": [
+   "bordjbadjimokhtar",
+   "timiaouine"
+  ],
+  "54": [
+   "ainguezzam",
+   "tinzouatine"
+  ],
+  "56": [
+   "bordjelhaouass"
   ]
  }
 }
