@@ -1,7 +1,7 @@
 {
- "updated": "2026-11-06T22:30:25.398Z",
- "def": "noest",
- "noStop": true,
+ "updated": "2026-11-06T22:30:31.471Z",
+ "def": "zrexpress_app",
+ "noStop": false,
  "companies": {
   "yalidine": {
    "name": "ياليدين Yalidine",
@@ -12971,10 +12971,5 @@
    ]
   }
  },
- "nd": {
-  "2": [
-   "elhadjadj",
-   "benboutaleb"
-  ]
- }
+ "nd": {}
 }
