@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.849">
+<meta name="admin-version" content="1.89.850">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -1743,6 +1743,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-home.js?v=48ecc3de"></script>
 <script src="assets/js/admin-tablesel.js?v=5e58931c"></script>
 <script src="assets/js/admin-mtables.js?v=617a3f47"></script>
+<script src="assets/js/admin-coparcels.js?v=c27bd129"></script>
 <script src="assets/js/admin-orders-plus.js?v=bb8f422f"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
 <script src="assets/js/admin-customers.js?v=056673f1"></script>
@@ -7660,6 +7661,10 @@ const Admin = {
       base: "https://api.zrexpress.app/api/v1",
       hdr(cfg){ const c = v=>String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); return { "X-Api-Key": c(cfg.apiKey), "X-Tenant": c(cfg.tenant), "Content-Type": "application/json", "Accept": "application/json" }; },
       pingRequest(cfg){ return { url: this.base + "/territories/search", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ pageNumber: 1, pageSize: 1 }) }; },
+      /* بوردرو ZR الأصلي: POST /parcels/labels/individual ⟵ {parcelLabelFiles:[{trackingNumber,fileUrl}]} ملف HTML رسمي (4 بطاقات A6 في ورقة A4) يُفتح ويُطبع */
+      labelHtml: true,
+      labelRequest(cfg, tracking){ return { url: this.base + "/parcels/labels/individual", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ trackingNumbers: [String(tracking)] }) }; },
+      parseLabel(json){ const f = json && Array.isArray(json.parcelLabelFiles) ? json.parcelLabelFiles[0] : null; const u = f ? String(f.fileUrl || "") : ""; return /^https:\/\//.test(u) ? u : ""; },
       /* تعريفة الشركة لكل ولاية: GET /delivery-pricing/rates ⟵ {rates:[{toTerritoryCode, toTerritoryLevel:"wilaya", deliveryPrices:[{deliveryType: home|pickup-point|return, price}]}]} (المستوى «commune» استثناءات بلدية لا تُستعمل هنا) */
       ownTariff: true,                       // تعريفتها كاملة من الشركة: لا تُضاف إليها إضافات بلديات ياليدين
       /* قوائم الشركة نفسها (تتكيّف المنصة معها): الولايات {رقم:{name,ok}} والبلديات لولاية {names, nd} من قائمة الأقاليم المخزَّنة */
@@ -7844,6 +7849,9 @@ const Admin = {
         return { ok: false, msg: (m || "رمز " + r.status) + (j && j.errors ? " — " + JSON.stringify(j.errors).slice(0, 120) : "") };
       },
       /* دفعة تتبّع (حتى 100 طرد بطلب واحد) وتفكيك صف كل طرد: الزبون/البلدية/المبلغ/المرجع + آخر حالة + هل صُدِّق */
+      /* بوردرو Noest الأصلي: GET /get/order/label?tracking= ⟵ ملف PDF مباشرة (لا رابط) */
+      labelDirect: true,
+      labelRequest(cfg, tracking){ const a = this.auth(cfg, { tracking: String(tracking) }); return { url: this.base + "/get/order/label?" + Object.keys(a).map(k=>k + "=" + encodeURIComponent(a[k])).join("&"), method: "GET", headers: this.hdr(cfg), binary: true }; },
       batchTrackRequest(cfg, list){ return { url: this.base + "/get/trackings/info", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(this.auth(cfg, { trackings: list.slice(0, 100).map(String) })) }; },
       parseRow(json, trk){
         const row = json && json[trk]; if(!row || typeof row !== "object") return null;
@@ -9615,19 +9623,56 @@ const Admin = {
     }catch(err){ P.tried = Date.now(); if(force) toast("❌ تعذّر تحميل طرود ZR Express: " + String(err.message || err).slice(0, 100)); }
     finally{ P.busy = false; try{ this.renderShipped(); }catch(e){} }
   },
-  renderZrCard(){
-    const tbl = $f("ship-table"); if(!tbl) return; let c = $f("zr-card");
-    if(!c){ c = document.createElement("div"); c.id = "zr-card"; c.className = "card"; c.setAttribute("data-noco", ""); const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
-    const P = this._zrP, rows = P.rows || [], e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), n = v=>(Number(v) || 0).toLocaleString("fr-DZ");
-    const cnt = {}; rows.forEach(r=>{ const k = r.status || "—"; cnt[k] = (cnt[k] || 0) + 1; });
-    const mine = new Set(this.orders.map(o=>String(o.id)));
-    c.style.display = "";
-    c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرود حسابك في ZR Express</b><span class="hint" style="margin:0">' + (P.at ? "آخر تحميل " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) + " · " + rows.length + " طرد (" + rows.filter(r=>r.ext && mine.has(r.ext)).length + " مرتبط بطلب" + (rows.some(r=>!(r.ext && mine.has(r.ext))) ? " · " + rows.filter(r=>!(r.ext && mine.has(r.ext))).length + " بلا طلب" : "") + ")" : "لم تُحمَّل بعد") + '</span><span style="flex:1"></span>' +
-      '<button class="small gold" type="button" onclick="Admin.zrLoadParcels(true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ التحميل" : "🔄 تحميل / تحديث الطرود") + '</button></div>' +
-      (rows.length ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0">' + Object.keys(cnt).map(k=>'<span class="pill">' + e(k) + ' <b>' + cnt[k] + '</b></span>').join("") + '</div>' +
-        '<div class="rtw hs-wrap" style="overflow-x:auto"><table class="rt" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>الولاية / البلدية</th><th>المبلغ</th><th>توصيل</th><th>إرجاع</th><th>الطلب</th></tr>' +
-        rows.slice(0, 100).map(r=>'<tr><td data-l="Tracking" dir="ltr">' + e(r.tracking) + '</td><td data-l="الحالة">' + e(r.status) + (r.isReturn ? " ↩" : "") + '</td><td data-l="الزبون">' + e(r.cust) + '</td><td data-l="الولاية / البلدية">' + e(r.city) + (r.dist && r.dist !== r.city ? " / " + e(r.dist) : "") + '</td><td data-l="المبلغ">' + n(r.amount) + ' دج</td><td data-l="توصيل">' + n(r.del) + ' دج</td><td data-l="إرجاع">' + n(r.ret) + ' دج</td><td data-l="الطلب" dir="ltr">' + (r.ext && mine.has(r.ext) ? "✓ " + e(r.ext) : (r.ext ? "— " + e(r.ext) + " " : "") + '<button class="small gray" type="button" onclick="Admin.importTracking(\'' + e(r.tracking) + '\', \'zrexpress_app\')" title="هذا الطرد بلا طلب في اللوحة: اربطه بطلب أو احفظه كطرد خارجي">ربط</button>') + '</td></tr>').join("") + '</table></div>' : "");
+  /* بطاقة طرود الشركة الموحّدة (كل الشركات غير ياليدين): شرائح حالات + بحث + تصفية + ترقيم + CSV + عمود Action — نفس تجربة ياليدين (admin-coparcels.js) */
+  coRows(cof){
+    const co = this.allDeliveryCompanies()[cof] || {}, rows = [], seen = new Set();
+    const ordOf = trk=>{ const i = this.orders.findIndex(x=>{ const t = this.trackingOf(x); return t && t.company === cof && t.tracking === trk; }); return i > -1 ? { o: this.orders[i], i } : null; };
+    const push = (r, link)=>{ if(!r.tracking || seen.has(r.tracking)) return; seen.add(r.tracking); const lk = link || ordOf(r.tracking), o = lk && lk.o;
+      if(o){ r.orderId = String(o.id); r.oi = lk.i; r.client = r.client || o.name; r.phone = r.phone || o.phone; r.wilaya = r.wilaya || o.wilaya; r.commune = r.commune || o.commune; r.amount = r.amount || o.total; r.date = r.date || o.date; const sr = this.shipRaw[o.id]; r.status = r.status || (sr && sr.raw) || this.ST_AR[o.status] || o.status; }
+      rows.push(r); };
+    if(cof === "zrexpress_app"){ const mine = new Set(this.orders.map(o=>String(o.id)));
+      ((this._zrP && this._zrP.rows) || []).forEach(x=>push({ tracking: x.tracking, status: x.status + (x.isReturn ? " ↩" : ""), client: x.cust, phone: x.phone, wilaya: x.city, commune: x.dist && x.dist !== x.city ? x.dist : "", amount: x.amount, date: x.at, src: "acc", orderId: x.ext && mine.has(x.ext) ? x.ext : "" })); }
+    else if(co.batchTrackRequest){ const P = this._noP[cof] || { rows: {} };
+      this.nocList(cof).forEach(x=>{ const r = P.rows[x.trk], inf = (r && r.info) || {}, ex = x.ext || {};
+        const o = x.o ? { o: x.o, i: x.i } : null; push({ tracking: x.trk, status: r ? (r.label || r.raw || "") : "", client: inf.client || ex.client, phone: inf.phone || ex.phone, wilaya: inf.wilayaName || "", commune: inf.commune || ex.commune, amount: inf.amount || ex.amount, date: inf.at || (ex.at ? new Date(ex.at).toISOString() : ""), note: r && !r.validated ? "مسوّدة غير مصدَّقة" : "", draft: !!(r && !r.validated), src: x.o ? "plat" : "ext" }, o); }); }
+    else { this.orders.forEach((o, i)=>{ const t = this.trackingOf(o); if(t && t.company === cof) push({ tracking: t.tracking, src: "plat" }, { o, i }); });
+      (this.extAll()[cof] || []).forEach(x=>push({ tracking: x.tracking, status: x.raw || "", client: x.client, phone: x.phone, commune: x.commune, amount: x.amount, date: x.at ? new Date(x.at).toISOString() : "", src: "ext" })); }
+    return rows;
   },
+  coAct(cof, r){
+    const E = v=>String(v == null ? "" : v).replace(/[<>&"']/g, c=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;", "'":"&#39;" }[c])), co = this.allDeliveryCompanies()[cof] || {}, q = E(r.tracking);
+    return '<button class="small blue" type="button" onclick="Admin.coOne(\'' + cof + '\',\'' + q + '\',\'label\')" title="بوردرو الشركة الرسمي">🏷️ بوردرو</button> ' +
+      '<button class="small gray" type="button" onclick="Admin.coOne(\'' + cof + '\',\'' + q + '\',\'status\')" title="قراءة حالة هذا الطرد الآن">🔄</button> ' +
+      (r.draft && co.postSend ? '<button class="small green" type="button" onclick="Admin.coValidateTrk(\'' + cof + '\',\'' + q + '\')">✅ تصديق</button> ' : "") +
+      (r.oi != null ? '<button class="small blue" type="button" onclick="Admin.openOrderPreview(' + r.oi + ')">👁️</button> ' : "") +
+      '<button class="small gray" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(\'' + q + '\');toast(\'تم نسخ رقم التتبع\')" title="نسخ رقم التتبع">📋</button>' +
+      (r.src === "ext" ? ' <button class="small gray" type="button" onclick="Admin.extRemove(\'' + cof + '\',\'' + q + '\')" title="إزالة من القائمة (لا يمسّ الطرد عند الشركة)">✕</button>' : "");
+  },
+  async coOne(cof, trk, what){
+    const co = this.allDeliveryCompanies()[cof], cfg = this.deliveryCfg[cof] || {};
+    if(what === "label") return this.printBordereauxFor([{ tracking: trk, company: cof }]);
+    if(!co || !co.trackRequest) return; toast("⏳ جارِ قراءة حالة الطرد…");
+    try{ const r = await this.courierFetch(co.trackRequest(cfg, trk)); const j = JSON.parse(r.text); const raw = co.parseStatus ? co.parseStatus(j) : "";
+      if(!raw){ toast("ℹ️ لم تُعد الشركة حالة لهذا الطرد"); return }
+      const o = this.orders.find(x=>{ const t = this.trackingOf(x); return t && t.company === cof && t.tracking === trk; }); if(o){ try{ this.setShipRaw(o.id, raw); }catch(e){} }
+      const a = this.extAll(); const x = (a[cof] || []).find(z=>z.tracking === trk); if(x){ x.raw = raw; try{ localStorage.setItem("alyssum_ext_parcels", JSON.stringify(a)); }catch(e){} }
+      if(this._noP[cof] && this._noP[cof].rows[trk]){ this._noP[cof].rows[trk].label = raw; }
+      toast("✅ " + raw); this.renderShipped();
+    }catch(err){ toast("❌ " + String(err.message || err).slice(0, 100)); }
+  },
+  coReload(cof){ if(cof === "zrexpress_app") return this.zrLoadParcels(true); const co = this.allDeliveryCompanies()[cof] || {}; if(co.batchTrackRequest) return this.nocLoad(cof, true); return this.extRefresh(cof).then(()=>this.syncShipping({ silent:true })); },
+  renderCoCard(cof){
+    const tbl = $f("ship-table"); if(!tbl) return; let c = $f("cop-card"); const rows = this.coRows(cof), co = this.allDeliveryCompanies()[cof] || {};
+    const P = cof === "zrexpress_app" ? this._zrP : (this._noP[cof] || {});
+    if(!rows.length && cof !== "zrexpress_app"){ if(c) c.style.display = "none"; return }
+    if(!c){ c = document.createElement("div"); c.id = "cop-card"; c.className = "card"; c.setAttribute("data-noco", ""); const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
+    c.style.display = "";
+    AdminCoP.draw(c, { key: cof, title: "📦 طرود " + this.coLabel(cof), rows, at: P.at, busy: !!P.busy, actions: r=>this.coAct(cof, r), reload: ()=>this.coReload(cof), onAct: (a, r)=>{ if(a === "link") this.importTracking(r.tracking, cof); },
+      note: cof === "zrexpress_app" ? "كل طرود حسابك عند ZR Express." : (co.batchTrackRequest ? "ما سجّلته الشركة فعلاً لطرودنا (بالتتبع)؛ أضف طرداً خارجياً بزر «➕ إضافة طرد بالتتبع»." : "") });
+  },
+  renderZrCard(){ this.renderCoCard("zrexpress_app"); },
+  renderNocCard(cof){ this.renderCoCard(cof); },
+  renderExtCard(cof){ if(cof && cof !== "yalidine") this.renderCoCard(cof); },
   /* تصديق طرد مسوّدة عند الشركة (NOEST): نعيد استدعاء postSend ثم نحدّث حالته */
   async coValidate(i){
     const o = this.orders[i], t = o && this.trackingOf(o), co = t && this.allDeliveryCompanies()[t.company], cfg = (t && this.deliveryCfg[t.company]) || {};
@@ -9686,17 +9731,6 @@ const Admin = {
     for(const x of list){ try{ const r = await this.courierFetch(co.trackRequest(cfg, x.tracking)); const j = JSON.parse(r.text); const raw = co.parseStatus ? co.parseStatus(j) : ""; if(raw){ x.raw = raw; n++; } }catch(e){} await new Promise(res=>setTimeout(res, 450)); }
     try{ localStorage.setItem("alyssum_ext_parcels", JSON.stringify(a)); }catch(e){} toast("✅ حُدّثت حالة " + n + " من " + list.length + " طرد"); this.renderShipped();
   },
-  renderExtCard(cof){
-    const tbl = $f("ship-table"); if(!tbl) return; let c = $f("ext-card");
-    const list = cof ? (this.extAll()[cof] || []) : [];
-    if(!list.length){ if(c) c.style.display = "none"; return }
-    if(!c){ c = document.createElement("div"); c.id = "ext-card"; c.className = "card"; c.setAttribute("data-noco", ""); const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
-    const e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), co = this.allDeliveryCompanies()[cof] || {};
-    c.style.display = "";
-    c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📎 طرود مضافة بالتتبع (بلا طلب) — ' + e(this.coLabel(cof)) + '</b><span class="hint" style="margin:0">' + list.length + ' طرد</span><span style="flex:1"></span><button class="small gold" type="button" onclick="Admin.extRefresh(\'' + cof + '\')">🔄 تحديث حالتها</button></div>' +
-      '<div class="rtw hs-wrap" style="overflow-x:auto;margin-top:.5rem"><table class="rt" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>أُضيف</th><th></th></tr>' +
-      list.map(x=>'<tr><td data-l="Tracking" dir="ltr">' + e(x.tracking) + '</td><td data-l="الحالة">' + e(x.raw || "—") + '</td><td data-l="الزبون">' + e(x.client) + '</td><td data-l="البلدية">' + e(x.commune) + '</td><td data-l="المبلغ">' + (Number(x.amount) || 0).toLocaleString("fr-DZ") + ' دج</td><td data-l="أُضيف">' + new Date(x.at || Date.now()).toLocaleDateString("ar-DZ") + '</td><td><button class="small gray" type="button" title="إزالة من القائمة (لا يمسّ الطرد عند الشركة)" onclick="Admin.extRemove(\'' + cof + '\', \'' + e(x.tracking) + '\')">✕</button></td></tr>').join("") + '</table></div>';
-  },
   /* ───── بطاقة «طرود حسابك في NOEST»: ما سُجّل عند الشركة فعلاً لطلباتنا وللطرود المضافة بالتتبع (واجهتها لا تعرض قائمة الحساب، فنسأل عن تتبعاتنا بطلب واحد) ───── */
   _noP: {},
   nocList(cof){
@@ -9725,18 +9759,6 @@ const Admin = {
       if(ps && ps.ok === false){ this.showNotice("⚠️ لم يُصدَّق الطرد", "ردّت " + nE(co.name) + ": " + nE(ps.msg || "؟")); return }
       toast("✅ صُدِّق الطرد " + trk + " عند " + co.name); this.nocLoad(cof, true);
     }catch(err){ this.showNotice("⚠️ تعذّر الاتصال بـ" + nE(co.name), nE(err.message || err)); }
-  },
-  renderNocCard(cof){
-    const tbl = $f("ship-table"); if(!tbl) return; let c = $f("noc-card"); const co = this.allDeliveryCompanies()[cof] || {}, P = this._noP[cof] || { rows: {}, at: 0 };
-    const list = this.nocList(cof); if(!list.length){ if(c) c.style.display = "none"; return }
-    if(!c){ c = document.createElement("div"); c.id = "noc-card"; c.className = "card"; c.setAttribute("data-noco", ""); const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
-    const e = v=>String(v==null?"":v).replace(/[<>&"]/g, ch=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[ch])), n = v=>(Number(v) || 0).toLocaleString("fr-DZ"); c.style.display = "";
-    c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرودك المسجَّلة عند ' + e(this.coLabel(cof)) + '</b><span class="hint" style="margin:0">' + (P.at ? "آخر قراءة " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) : "لم تُقرأ بعد") + ' · ' + list.length + ' طرد</span><span style="flex:1"></span><button class="small gold" type="button" onclick="Admin.nocLoad(\'' + cof + '\', true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ القراءة" : "🔄 قراءة من الشركة") + '</button></div>' +
-      '<div class="hint" style="margin:.3rem 0">ما سجّلته الشركة فعلاً لطرودنا (بالتتبع). «من المنصة» أُرسل من لوحتك، «خارجي» أضفته بالتتبع.</div>' +
-      '<div class="rtw hs-wrap" style="overflow-x:auto"><table class="rt" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>المصدر</th><th>الحالة عندهم</th><th>التصديق</th><th>الزبون</th><th>البلدية</th><th>المبلغ</th><th>المرجع</th></tr>' +
-      list.map(x=>{ const r = P.rows[x.trk], inf = (r && r.info) || {}, src = x.o ? 'من المنصة — <span dir="ltr">' + e(String(x.o.id).slice(-10)) + '</span>' : "خارجي";
-        const val = !r ? "—" : (r.validated ? "✅ مصدَّق" : '⚠️ مسوّدة <button class="small green" type="button" onclick="Admin.coValidateTrk(\'' + cof + '\', \'' + e(x.trk) + '\')">تصديق</button>');
-        return '<tr><td data-l="Tracking" dir="ltr">' + e(x.trk) + '</td><td data-l="المصدر">' + src + '</td><td data-l="الحالة عندهم">' + (r ? e(r.label || r.raw || "—") : "—") + '</td><td data-l="التصديق">' + val + '</td><td data-l="الزبون">' + e(inf.client || (x.ext && x.ext.client) || "—") + '</td><td data-l="البلدية">' + e(inf.commune || (x.ext && x.ext.commune) || "—") + '</td><td data-l="المبلغ">' + (inf.amount != null || (x.ext && x.ext.amount) ? n(inf.amount || (x.ext && x.ext.amount)) + " دج" : "—") + '</td><td data-l="المرجع" dir="ltr">' + e(inf.reference || "—") + '</td></tr>'; }).join("") + '</table></div>';
   },
   /* الهاتف: عند فتح «الطلبات المسجلة» أو تبديل تبويب شركة تصعد الشاشة حتى يصل جدول الطلبات (عناوينه وأول طلب) إلى أعلاها، فلا تبقى الطلبات في الأسفل تحت البطاقات؛
      تُعاد المحاولة ثوانيَ قليلة لأن بطاقات الشركة تتحمّل بعد قليل وتدفع الجدول للأسفل */
@@ -9772,8 +9794,9 @@ const Admin = {
           tabs.innerHTML = keys.map(k=>b(k, this.coLabel(k), (by[k]||{}).n || 0)).join(""); tabs.style.display = "flex"; }
       }
       if(line){ const g = cof && by[cof]; if(g){ const d = g.ok + g.bad; line.hidden = false; line.textContent = g.n + " طلب · ✅ " + g.ok + " · ⏳ " + g.way + " · ⛔ " + g.bad + (d ? " · نجاح " + Math.round(g.ok / d * 100) + "%" : "") + " · " + Math.round(g.sum).toLocaleString("fr-DZ") + " دج"; } else { line.hidden = true; line.textContent = ""; } }
-      { const zc = $f("zr-card"); if(cof === "zrexpress_app"){ this.renderZrCard(); this.zrLoadParcels(false); } else if(zc) zc.style.display = "none"; }
-      try{ const cc = cof && this.allDeliveryCompanies()[cof]; if(cc && cc.batchTrackRequest){ this.renderNocCard(cof); this.nocLoad(cof, false); if($f("ext-card")) $f("ext-card").style.display = "none"; } else { const nc = $f("noc-card"); if(nc) nc.style.display = "none"; this.renderExtCard(cof); } }catch(e){ console.warn("noc-card", e); }
+      { ["zr-card", "noc-card", "ext-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = "none"; });             // بطاقات قديمة حلّت محلها البطاقة الموحّدة
+        if(cof && cof !== "yalidine"){ this.renderCoCard(cof); const cc = this.allDeliveryCompanies()[cof] || {}; if(cof === "zrexpress_app") this.zrLoadParcels(false); else if(cc.batchTrackRequest) this.nocLoad(cof, false); }
+        else { const x = $f("cop-card"); if(x) x.style.display = "none"; } }
       { const ib = $f("ship-imp-btn"), cc = cof && this.allDeliveryCompanies()[cof]; if(ib) ib.style.display = (cc && cc.trackRequest) ? "" : "none"; }
       const yOnly = !cof || cof === "yalidine";                                          // أدوات ياليدين وحدها: تجهيز الطلبات والمطابقة وبطاقة طرود حسابها
       ["ship-prep-btn", "ship-rec-btn", "yd-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = yOnly ? "" : "none"; });
@@ -9960,6 +9983,7 @@ const Admin = {
   async pdfBytes(url){
     const dec = b64=>{ const bin = atob(b64), u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
     const isPdf = u=>u && u.length > 100 && u[0] === 0x25 && u[1] === 0x50 && u[2] === 0x44 && u[3] === 0x46;
+    if(this._memPdf && this._memPdf[url]) return this._memPdf[url];
     try{ const r = await this.courierFetch({ url, method:"GET", headers:{}, binary:true }); if(r && r.b64){ const u = dec(r.b64); if(isPdf(u)) return u; } }catch(e){}
     try{ const r = await fetch(url, { credentials:"omit" }); if(r.ok){ const u = new Uint8Array(await r.arrayBuffer()); if(isPdf(u)) return u; } }catch(e){}
     return null;
@@ -9985,6 +10009,11 @@ const Admin = {
     const r = await this.courierFetch(co.labelRequest(cfg, t.tracking));
     if(r.status === 429) return { err: "بلغت الشركة حدّ الطلبات — أعد المحاولة بعد دقيقة" };
     if(!r.ok) return { err: this.coHttpErr(co, t.company, r), cors: false };
+    if(co.labelDirect){                                   // الشركة تردّ بملف PDF نفسه (Noest): نحفظ بايتاته في الذاكرة ونعطي رابط blob
+      let u8 = null; try{ const bin = atob(r.b64 || ""), a = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); u8 = a; }catch(e){}
+      if(!u8 || u8.length < 100 || u8[0] !== 0x25 || u8[1] !== 0x50) return { err: "لم تُعد الشركة ملف بوردرو لهذا الطرد — تأكّد أن الطرد مُصدَّق عندها" };
+      const u = URL.createObjectURL(new Blob([u8], { type: "application/pdf" })); (this._memPdf = this._memPdf || {})[u] = u8; return { url: u };
+    }
     let j = null; try{ j = JSON.parse(r.text); }catch(e){}
     const url = (j && (co.parseLabel(j) || this.deepLabel(j))) || "";
     if(!url){ let keys = ""; try{ const d = j && (Array.isArray(j.data) ? j.data[0] : j.data || j); keys = d && typeof d === "object" ? Object.keys(d).slice(0, 40).join("، ") : String(r.text || "").slice(0, 160); }catch(e){} return { err: "ردّت الشركة بلا رابط بوردرو لهذا الطرد", diag: keys }; }
@@ -9995,12 +10024,13 @@ const Admin = {
     const esc2 = v=>String(v == null ? "" : v).replace(/[<>&"]/g, c=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;" }[c]));
     const o = this.orders[i], t = o && this.trackingOf(o); if(!t) return;
     const co = this.allDeliveryCompanies()[t.company], cfg = this.deliveryCfg[t.company] || {};
-    if(!co || !co.labelRequest){ toast("ℹ️ بوردورو هذه الشركة غير مدعوم هنا — تُفتح عوضاً عنه نسخة وصل الطلب"); return this.printOrderSlip(i) }
+    if(!co || !co.labelRequest){ toast("ℹ️ الشركة لا تتيح بوردرو الرسمي عبر واجهتها — اطبعه من حسابك عندها برقم التتبع " + t.tracking + "؛ فُتح وصل الطلب بدلاً منه"); return this.printOrderSlip(i) }
     const w = window.open("", "_blank");            // يُفتح فوراً حتى لا يحجبه المتصفح بعد الانتظار
     if(!w) toast("⚠️ المتصفح حجب النافذة — اسمح بالنوافذ المنبثقة لهذا الموقع (أيقونة القفل بجانب العنوان) ثم أعد الضغط");
     else try{ w.document.write('<!doctype html><meta charset="utf-8"><body dir="rtl" style="font-family:sans-serif;padding:2rem;text-align:center">⏳ جارِ جلب البوردرو من شركة التوصيل…</body>'); }catch(e){}
     try{
       const r = await this.labelUrlFor(o, t, co, cfg);
+      if(r.url && co.labelHtml){ if(w) w.location.href = r.url; else window.open(r.url, "_blank"); toast("🏷️ فُتح بوردرو الشركة الأصلي — اطبعه من المتصفح (Ctrl+P)"); return }
       if(r.url){
         if(await this.dlPdf(r.url, "bordereau-" + t.tracking, w)){ if(w) try{ w.close(); }catch(e){} toast("⬇ نُزِّل البوردرو: bordereau-" + t.tracking + ".pdf"); }
         return;       // عند تعذّر التنزيل المباشر فتحه dlPdf في النافذة نفسها
