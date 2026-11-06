@@ -1,7 +1,7 @@
 {
- "updated": "2026-11-06T22:27:36.882Z",
- "def": "wecan",
- "noStop": false,
+ "updated": "2026-11-06T22:30:14.324Z",
+ "def": "noest",
+ "noStop": true,
  "companies": {
   "yalidine": {
    "name": "ياليدين Yalidine",
@@ -12971,5 +12971,10 @@
    ]
   }
  },
- "nd": {}
+ "nd": {
+  "2": [
+   "elhadjadj",
+   "benboutaleb"
+  ]
+ }
 }
