@@ -105,7 +105,9 @@ const AdminYd = (() => {
   const ptxt = o => plines(o).map(x => x.t + " ×" + x.q).join("، ");
   /* تجهيز الطلبات: قائمة (المنتج، الكمية، الولاية، التتبع) للطرود قيد التجهيز أو لكل المعروض، مع تجميع الكميات لكل منتج وطباعة/PDF */
   let PREP = { all: false };
+  let SRC = null;     /* مصدر خارجي لصفوف التجهيز (عام لكل الشركات): دالة (all)=>صفوف {t,q,w,trk,st} */
   function prepRows() {
+    if (SRC) { try { return SRC(PREP.all) || []; } catch (e) { return []; } }
     const tm = trackMap(), base = PREP.all ? filtered() : filtered().filter(r => tone(r.status) === "p");
     const out = [];
     base.forEach(r => { const o = tm[r.tracking], L = plines(o); if (!L.length) out.push({ t: "— (طرد بلا طلب مرتبط في اللوحة)", q: "", w: r.wilaya, trk: r.tracking, st: r.status }); else L.forEach(x => out.push({ t: x.t, q: x.q, w: r.wilaya, trk: r.tracking, st: r.status })); });
@@ -139,7 +141,8 @@ const AdminYd = (() => {
       '<button class="small" type="button" data-ypp="print">🖨 طباعة / PDF</button><button class="small" type="button" data-ypp="csv">⬇ CSV</button><button class="small gray" type="button" data-ypp="x">✕ إغلاق</button></div>' +
       '<style>#ydprep-in table{width:100%;border-collapse:collapse;font-size:.85rem;margin-bottom:12px}#ydprep-in th,#ydprep-in td{border:1px solid rgba(255,255,255,.2);padding:5px 8px;text-align:right}#ydprep-in th{background:rgba(255,255,255,.1)}#ydprep-in .q{text-align:center;font-weight:800}#ydprep-in .m{direction:ltr;font-family:monospace;text-align:left}#ydprep-in .pp-sum{width:auto;min-width:50%}#ydprep-in .pp-h{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}</style>' + prepHtml(rows);
   }
-  function prepOpen() { if (!S.rows.length) { if (typeof toast === "function") toast("ℹ️ حمّل الطرود أولاً (🔄 تحميل / تحديث الطرود)"); return; } prepDraw(); }
+  function prepOpenWith(fn) { SRC = fn; prepDraw(); }
+  function prepOpen() { SRC = null; if (!S.rows.length) { if (typeof toast === "function") toast("ℹ️ حمّل الطرود أولاً (🔄 تحميل / تحديث الطرود)"); return; } prepDraw(); }
   function prepPrint() {
     const w = window.open("", "_blank"); if (!w) { if (typeof toast === "function") toast("⚠️ المتصفح حجب النافذة — اسمح بالنوافذ المنبثقة"); return; }
     /* صفحة A4 واحدة فقط: يُقاس ارتفاع الجدول ويُصغَّر تلقائياً ليتسع (ارتفاع المنطقة المطبوعة ≈ 277mm) */
@@ -376,5 +379,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, csv, sheets, setQuery, noteSent, forget, prepOpen, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
+  return { set, draw, load, S, csv, sheets, setQuery, noteSent, forget, prepOpen, prepOpenWith, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
 })();

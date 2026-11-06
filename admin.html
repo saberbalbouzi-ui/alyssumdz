@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.850">
+<meta name="admin-version" content="1.89.851">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -505,7 +505,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <option value="">كل الحالات</option><option value="confirmee">قيد التجهيز</option><option value="expediee">في الطريق</option><option value="livree">تم التسليم</option><option value="echec">فشل / مرتجع</option>
         </select>
         <button class="small gold" type="button" id="ship-sync-btn" onclick="Admin.syncShipping({silent:true})">🔄 تحديث الحالة</button>
-        <button class="small green" type="button" id="ship-prep-btn" onclick="typeof AdminYd!=='undefined'&&AdminYd.prepOpen()" title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button>
+        <button class="small green" type="button" id="ship-prep-btn" onclick="Admin.prepOrders()" title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button>
         <button class="small green" type="button" id="ship-bord-btn" onclick="Admin.printBordereaux()" title="يجلب بوردرو كل الطرود المعروضة (قيد التجهيز افتراضياً) كما تصدره شركة التوصيل ويفتحها في صفحة واحدة للطباعة">🖨 طباعة البوردرو</button>
         <button class="small gray" type="button" id="ship-imp-btn" data-noco style="display:none" onclick="Admin.importTracking()" title="أدخل رقم تتبع طرد موجود عند الشركة (مثلاً أنشأته من لوحتها) فتجلب المنصة بياناته وحالته وتربطه بالطلب المطابق">➕ إضافة طرد بالتتبع</button>
         <button class="small" type="button" id="ship-rec-btn" data-noco onclick="Admin.reconcileShipping()" title="يقرأ آخر طرود حسابك في ياليدين ويربطها بطلبات اللوحة ويحدّث حالاتها">🔁 مطابقة مع ياليدين</button>
@@ -1738,12 +1738,12 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-zones.js?v=d35e39a5"></script>
 <script src="assets/js/admin-zones-io.js?v=baf86994"></script>
 <script src="assets/js/admin-archive.js?v=66814def"></script>
-<script src="assets/js/admin-yalidine.js?v=5907d14d"></script>
+<script src="assets/js/admin-yalidine.js?v=ffb751df"></script>
 <script src="assets/js/admin-shoppages.js?v=f37d32bc"></script>
 <script src="assets/js/admin-home.js?v=48ecc3de"></script>
 <script src="assets/js/admin-tablesel.js?v=5e58931c"></script>
 <script src="assets/js/admin-mtables.js?v=617a3f47"></script>
-<script src="assets/js/admin-coparcels.js?v=c27bd129"></script>
+<script src="assets/js/admin-coparcels.js?v=7b34bd4d"></script>
 <script src="assets/js/admin-orders-plus.js?v=bb8f422f"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
 <script src="assets/js/admin-customers.js?v=056673f1"></script>
@@ -9660,6 +9660,12 @@ const Admin = {
       toast("✅ " + raw); this.renderShipped();
     }catch(err){ toast("❌ " + String(err.message || err).slice(0, 100)); }
   },
+  coPrintAll(cof){
+    const rows = (AdminCoP.visible(cof) || []).filter(r=>!/^[lf]$/.test(AdminCoP.tone(r.status)));       // بلا المسلَّم والمرتجع
+    if(!rows.length){ toast("ℹ️ لا طرود قيد الإرسال لطباعة بوردرو لها (غيّر التصفية)"); return }
+    if(rows.length === 1) return this.coOne(cof, rows[0].tracking, "label");
+    return this.printBordereauxFor(rows.map(r=>({ tracking: r.tracking, company: cof })));
+  },
   coReload(cof){ if(cof === "zrexpress_app") return this.zrLoadParcels(true); const co = this.allDeliveryCompanies()[cof] || {}; if(co.batchTrackRequest) return this.nocLoad(cof, true); return this.extRefresh(cof).then(()=>this.syncShipping({ silent:true })); },
   renderCoCard(cof){
     const tbl = $f("ship-table"); if(!tbl) return; let c = $f("cop-card"); const rows = this.coRows(cof), co = this.allDeliveryCompanies()[cof] || {};
@@ -9667,12 +9673,24 @@ const Admin = {
     if(!rows.length && cof !== "zrexpress_app"){ if(c) c.style.display = "none"; return }
     if(!c){ c = document.createElement("div"); c.id = "cop-card"; c.className = "card"; c.setAttribute("data-noco", ""); const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
     c.style.display = "";
-    AdminCoP.draw(c, { key: cof, title: "📦 طرود " + this.coLabel(cof), rows, at: P.at, busy: !!P.busy, actions: r=>this.coAct(cof, r), reload: ()=>this.coReload(cof), onAct: (a, r)=>{ if(a === "link") this.importTracking(r.tracking, cof); },
+    AdminCoP.draw(c, { key: cof, title: "📦 طرود " + this.coLabel(cof), rows, head: co.labelRequest ? '<button class="small green" type="button" onclick="Admin.coPrintAll(\'' + cof + '\')" title="بوردرو الشركة الرسمي لكل الطرود المعروضة غير المسلَّمة، مجمّعاً 4 في ورقة A4">🖨 بوردرو الكل (4 في الورقة)</button>' : "", at: P.at, busy: !!P.busy, actions: r=>this.coAct(cof, r), reload: ()=>this.coReload(cof), onAct: (a, r)=>{ if(a === "link") this.importTracking(r.tracking, cof); },
       note: cof === "zrexpress_app" ? "كل طرود حسابك عند ZR Express." : (co.batchTrackRequest ? "ما سجّلته الشركة فعلاً لطرودنا (بالتتبع)؛ أضف طرداً خارجياً بزر «➕ إضافة طرد بالتتبع»." : "") });
   },
   renderZrCard(){ this.renderCoCard("zrexpress_app"); },
   renderNocCard(cof){ this.renderCoCard(cof); },
   renderExtCard(cof){ if(cof && cof !== "yalidine") this.renderCoCard(cof); },
+  /* تجهيز الطلبات (عام بلا ارتباط بشركة): الافتراضي كل الطلبات المؤكَّدة قيد التجهيز (المسجّلة عند أي شركة أو غير المرسلة بعد)، وبالخيار «كل المعروض» ما في جدول الطلبات المسجلة الآن */
+  prepOrders(){
+    if(typeof AdminYd === "undefined" || !AdminYd.prepOpenWith) return; const cos = this.allDeliveryCompanies();
+    const lines = (o, trk, co)=>{ const raw = String(this.itemsDisplay ? this.itemsDisplay(o) : (o.items || "")), out = [];
+      raw.split(/\n/).forEach(l=>{ l = l.trim(); if(!l) return; const m = l.match(/^(.+?)\s*(?:×|x)\s*(\d+)\s*(?:=.*)?$/i); out.push({ t: m ? m[1].trim() : l, q: m ? Number(m[2]) || 1 : 1, w: o.wilaya || "", trk: (trk || "لم يُرسل بعد") + (co ? " · " + co : ""), st: o.status }); }); return out; };
+    AdminYd.prepOpenWith(all=>{
+      const list = [], seen = new Set();
+      if(all) (this._shipRows || []).forEach(({ o, t })=>{ seen.add(o.id); list.push({ o, t }); });
+      else this.orders.forEach(o=>{ if(o.status !== "confirmee") return; seen.add(o.id); list.push({ o, t: this.trackingOf(o) }); });
+      list.sort((a, b)=>String((a.t || {}).company || "~").localeCompare(String((b.t || {}).company || "~")) || String(a.o.wilaya || "").localeCompare(String(b.o.wilaya || "")));
+      const out = []; list.forEach(({ o, t })=>lines(o, t && t.tracking, t && ((cos[t.company] || {}).name || t.company)).forEach(x=>out.push(x))); return out; });
+  },
   /* تصديق طرد مسوّدة عند الشركة (NOEST): نعيد استدعاء postSend ثم نحدّث حالته */
   async coValidate(i){
     const o = this.orders[i], t = o && this.trackingOf(o), co = t && this.allDeliveryCompanies()[t.company], cfg = (t && this.deliveryCfg[t.company]) || {};
@@ -9799,7 +9817,7 @@ const Admin = {
         else { const x = $f("cop-card"); if(x) x.style.display = "none"; } }
       { const ib = $f("ship-imp-btn"), cc = cof && this.allDeliveryCompanies()[cof]; if(ib) ib.style.display = (cc && cc.trackRequest) ? "" : "none"; }
       const yOnly = !cof || cof === "yalidine";                                          // أدوات ياليدين وحدها: تجهيز الطلبات والمطابقة وبطاقة طرود حسابها
-      ["ship-prep-btn", "ship-rec-btn", "yd-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = yOnly ? "" : "none"; });
+      ["ship-rec-btn", "yd-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = yOnly ? "" : "none"; });
     }
     const rows = all.filter(({o,t})=>{
       if(cof && t.company !== cof) return false;
@@ -9938,9 +9956,9 @@ const Admin = {
     if(!got.length){ msg("❌ تعذّر جلب أي بوردرو<br><small>" + bad.slice(0, 5).map(b=>esc(b.t.tracking) + ": " + esc(b.why)).join("<br>") + "</small>"); return }
     /* البوردرو الأصلي للشركة مجمّعاً: 4 في ورقة A4 (2×2)؛ إن نجح لكل الطرود تُفتح ورقة PDF واحدة جاهزة للطباعة، وإلا تُعرض الصفحة مع الرابط وما تعذّر */
     let merged = null, mergeFail = [], mergeErr = "";
-    { const withUrl = got.filter(g=>g.url), bytes = []; let q = 0;
-      for(const g of withUrl){ q++; msg("⏳ تحميل ملف البوردرو " + q + " / " + withUrl.length + "…"); const u8 = await this.pdfBytes(g.url); if(u8) bytes.push(u8); else mergeFail.push(g); }
-      if(bytes.length){ msg("⏳ تجميع " + bytes.length + " بوردرو في أوراق A4 (4 في الورقة)…"); try{ merged = await this.mergePdf4(bytes); merged.url = URL.createObjectURL(new Blob([merged.bytes], { type:"application/pdf" })); merged.n = bytes.length; }catch(e){ merged = null; mergeErr = String((e && e.message) || e); } }
+    { const withUrl = got.filter(g=>g.url), bytes = [], crops = []; let q = 0;
+      for(const g of withUrl){ q++; msg("⏳ تحميل ملف البوردرو " + q + " / " + withUrl.length + "…"); const u8 = await this.pdfBytes(g.url); if(u8){ bytes.push(u8); crops.push(!!(g.t && g.t.company === "yalidine")); } else mergeFail.push(g); }
+      if(bytes.length){ msg("⏳ تجميع " + bytes.length + " بوردرو في أوراق A4 (4 في الورقة)…"); try{ merged = await this.mergePdf4(bytes, crops); merged.url = URL.createObjectURL(new Blob([merged.bytes], { type:"application/pdf" })); merged.n = bytes.length; }catch(e){ merged = null; mergeErr = String((e && e.message) || e); } }
       if(merged && !mergeFail.length && !bad.length && got.every(g=>g.url)){ try{ w.location.href = merged.url; }catch(e){ window.open(merged.url, "_blank"); } toast("✅ " + merged.n + " بوردرو في " + merged.sheets + " ورقة A4 (4 في الورقة) — اطبع من عارض الـPDF"); return; } }
     const mergedBox = merged ? '<div class="bad" style="background:#e8f7ee"><b>📄 البوردرو الأصلي مجمّعاً: ' + merged.n + ' في ' + merged.sheets + ' ورقة A4 (4 في الورقة)</b> &nbsp; <a href="' + merged.url + '" target="_blank" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">فتح / طباعة</a> <a href="' + merged.url + '" download="bordereaux.pdf" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">⬇ تنزيل</a>' + (mergeFail.length ? '<br>تعذّر تجميع: ' + mergeFail.map(g=>'<span dir="ltr">' + esc(g.t.tracking) + '</span>').join("، ") + ' — افتحها منفردة من القائمة أدناه' : "") + '</div>'
       : '<div class="bad">⚠️ تعذّر تجميع البوردرو الأصلي في ورقة واحدة' + (mergeErr ? " (" + esc(mergeErr) + ")" : " — وسيط الاتصال بالشركة لا يمرّر الملفات (يلزم تحديثه)") + '؛ الأوراق أدناه (4 في الورقة) مبنيّة من بيانات الطلب بباركود التتبع.</div>';
@@ -9988,13 +10006,14 @@ const Admin = {
     try{ const r = await fetch(url, { credentials:"omit" }); if(r.ok){ const u = new Uint8Array(await r.arrayBuffer()); if(isPdf(u)) return u; } }catch(e){}
     return null;
   },
-  async mergePdf4(list){
+  async mergePdf4(list, crops){
     const P = await this.loadPdfLib(), out = await P.PDFDocument.create(), W = 595.28, H = 841.89, M = 14, G = 8, cw = (W - 2 * M - G) / 2, ch = (H - 2 * M - G) / 2;
     let slot = 0, page = null, n = 0;
-    for(const u8 of list){
+    for(let li = 0; li < list.length; li++){
+      const u8 = list[li], doCrop = crops ? !!crops[li] : true;           // القصّ إلى الربع العلوي خاص بملف ياليدين وحده؛ بوردرو غيرها يُدرَج كاملاً
       const src = await P.PDFDocument.load(u8, { ignoreEncryption:true }), idx = src.getPageIndices();
       for(const i of idx){
-        const sp = src.getPage(i), sz = sp.getSize(), mb = sp.getMediaBox(), big = sz.width >= 500 && sz.height >= 700;       // ملف ياليدين A4 والبوردرو في ربعه العلوي الأيسر فقط ← يُقصّ إليه
+        const sp = src.getPage(i), sz = sp.getSize(), mb = sp.getMediaBox(), big = doCrop && sz.width >= 500 && sz.height >= 700;       // ملف ياليدين A4 والبوردرو في ربعه العلوي الأيسر فقط ← يُقصّ إليه
         const [emb] = await out.embedPages([sp], big ? [{ left: mb.x, bottom: mb.y + sz.height / 2, right: mb.x + sz.width / 2, top: mb.y + sz.height }] : undefined), sw = emb.width, sh = emb.height, sc = Math.min(cw / sw, ch / sh), dw = sw * sc, dh = sh * sc;
         if(slot === 0){ page = out.addPage([W, H]); }
         const col = slot % 2, row = Math.floor(slot / 2), x = M + col * (cw + G) + (cw - dw) / 2, y = H - M - (row + 1) * ch - row * G + (ch - dh) / 2;

@@ -37,7 +37,7 @@
   }
   /* opts: { key, title, rows, at, busy, reload(), actions(row)->html, head (html إضافي في الرأس), note } */
   function draw(host, opts) {
-    if (!host) return; const key = opts.key, s = st(key), rows = opts.rows || []; host._cop = opts;
+    if (!host) return; const key = opts.key, s = st(key), rows = opts.rows || []; host._cop = opts; LAST[key] = opts;
     const cn = {}; rows.forEach(r => { const k = r.status || "—"; cn[k] = (cn[k] || 0) + 1; });
     const keys = Object.keys(cn).sort((a, b) => cn[b] - cn[a]), list = filtered(key, rows), pages = Math.max(1, Math.ceil(list.length / PER));
     if (s.page > pages) s.page = pages;
@@ -84,5 +84,7 @@
     '.cop-f{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.3rem 0}.cop-f input[data-cop-f=q]{grid-column:1/-1}.cop-f input,.cop-f select{width:100%!important;min-width:0;padding:.45rem .6rem;min-height:0}.cop-f label{display:flex;gap:.3rem;align-items:center;font-size:.8rem;min-width:0}.cop-f label input{flex:1 1 auto}.cop-f .small{grid-column:1/-1;justify-self:start}.cop-pg{display:flex;gap:.6rem;align-items:center;justify-content:center;margin:.6rem 0}' +
     '.act .small{margin:.1rem}';
   document.head.appendChild(css);
-  window.AdminCoP = { draw, tone, state: st };
+  const LAST = {};
+  function visible(key) { const o = LAST[key]; return o ? filtered(key, o.rows || []) : []; }
+  window.AdminCoP = { draw, tone, state: st, visible };
 })();
