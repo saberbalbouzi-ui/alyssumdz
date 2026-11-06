@@ -139,7 +139,7 @@ const AdminArchive = (() => {
   /* زر «🗄 الأرشيف (N)» بجانب سلة المهملات في الطلبات وفي «إعادة الشراء» */
   function mountBtns() {
     const n = archived().length, host = document.getElementById("trash-btn");
-    if (host && host.parentNode) { let b = document.getElementById("arch-btn"); if (!b) { b = document.createElement("button"); b.id = "arch-btn"; b.type = "button"; b.className = "small gray"; b.onclick = () => browse(); host.parentNode.insertBefore(b, host.nextSibling); } b.textContent = "🗄 الأرشيف" + (n ? " (" + n + ")" : ""); b.hidden = !n; }
+    if (host && host.parentNode) { let b = document.getElementById("arch-btn"); if (!b) { b = document.createElement("button"); b.id = "arch-btn"; b.type = "button"; b.className = "small gray"; b.onclick = () => browse(); host.parentNode.insertBefore(b, host.nextSibling); } const lbl = "🗄 الأرشيف" + (n ? " (" + n + ")" : ""); if (b.dataset.lbl !== lbl) { b.textContent = lbl; b.dataset.lbl = lbl; } if (b.hidden !== !n) b.hidden = !n; }   /* لا نعيد الكتابة كل 2.5ث: إعادة النص تُجبر محوّل الأيقونات على إعادة الرسم فتهتز الأزرار المجاورة */
   }
   function css() {
     if (document.getElementById("arch-css")) return; const s = document.createElement("style"); s.id = "arch-css";
