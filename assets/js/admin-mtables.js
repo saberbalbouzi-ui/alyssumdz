@@ -106,3 +106,23 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ltInit); else ltInit();
   window.AdminMTables = { pass };
 })();
+
+/* سحب الجداول الأفقية باللمس (v1.89.845): بعض الهواتف لا تمرّر الجدول الأفقي داخل حاويات التمرير الرأسية فيعلق المستخدم.
+   نعطّل التمرير الأصلي الأفقي لهذه الجداول (touch-action:pan-y في CSS) ونحوّل حركة الإصبع الأفقية إلى scrollLeft بأنفسنا؛ الرأسي يبقى للمتصفح. */
+(function () {
+  const SEL = ".hs-wrap,table.m-scroll,#ship-table", can = el => el && el.scrollWidth > el.clientWidth + 2;
+  let el = null, x0 = 0, y0 = 0, s0 = 0, mode = "";
+  document.addEventListener("touchstart", e => {
+    el = null; mode = ""; if (e.touches.length !== 1) return;
+    let t = e.target && e.target.closest ? e.target.closest(SEL) : null;
+    while (t && !can(t)) t = t.parentElement && t.parentElement.closest ? t.parentElement.closest(SEL) : null;
+    if (!t) return; el = t; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; s0 = el.scrollLeft;
+  }, { passive: true });
+  document.addEventListener("touchmove", e => {
+    if (!el || !e.touches.length) return; const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+    if (!mode) { if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return; mode = Math.abs(dx) > Math.abs(dy) ? "h" : "v"; }
+    if (mode === "h") { el.scrollLeft = s0 - dx; if (e.cancelable) e.preventDefault(); }
+  }, { passive: false });
+  const end = () => { el = null; mode = ""; };
+  document.addEventListener("touchend", end, { passive: true }); document.addEventListener("touchcancel", end, { passive: true });
+})();
