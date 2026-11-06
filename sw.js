@@ -1,6 +1,6 @@
 /* عامل الخدمة: يجعل الموقع قابلاً للتثبيت على الهاتف ويفتح آخر نسخة محفوظة عند انقطاع الإنترنت.
    الشبكة أولاً دائماً (حتى لا يرى الزبون سعراً قديماً)، والصور تُخدم من الذاكرة المؤقتة أولاً مع تحديثها في الخلفية. لا يمسّ طلبات الـ API ولا غير GET. */
-const CACHE = "store-v3";
+const CACHE = "store-v4";
 self.addEventListener("install", e => { self.skipWaiting(); });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -13,8 +13,14 @@ self.addEventListener("fetch", e => {
     e.respondWith(caches.open(CACHE).then(c => c.match(r).then(hit => { const net = fetch(r).then(res => { if (res.ok) c.put(r, res.clone()); return res; }).catch(() => hit); return hit || net; })));      /* تُعرض النسخة المحفوظة فوراً وتتحدّث في الخلفية: صورة بُدّلت بالمسار نفسه تصل في الزيارة التالية */
     return;
   }
+  /* ملفات لها ختم محتوى في رابطها (?v=ثمانية أحرف سداسية، يولّدها build-admin-pb.py عند كل إصدار): الرابط يتغيّر إن تغيّر الملف، فتُخدم من الذاكرة المحفوظة فوراً
+     بلا طلب شبكة (كانت 115 ملف سكربت للوحة تُعاد مراجعتها مع الشبكة في كل تحديث للصفحة فتبطؤ اللوحة على الهاتف). */
+  if (/[?&]v=[0-9a-f]{8}$/.test(u.search)) {
+    e.respondWith(caches.open(CACHE).then(c => c.match(r).then(hit => hit || fetch(r).then(res => { if (res.ok) c.put(r, res.clone()); return res; }))));
+    return;
+  }
   /* لوحة التحكم والمحرر: الشبكة دائماً (النسخة المحفوظة فقط عند انقطاع الإنترنت) حتى لا تُعرض أدوات قديمة على اتصال بطيء */
-  if (/(^|\/)(admin\.html|editor\/)/.test(u.pathname) || /admin\.html|\/editor\//.test(r.referrer || "")) {
+  if (/(^|\/)(admin(\.html)?$|editor\/)/.test(u.pathname) || /admin\.html|\/admin([?#]|$)|\/editor\//.test(r.referrer || "")) {
     e.respondWith(caches.open(CACHE).then(c => fetch(r, { cache: "no-cache" }).then(res => { if (res.ok) c.put(r, res.clone()); return res; }).catch(() => c.match(r).then(h => h || Response.error()))));
     return;
   }
