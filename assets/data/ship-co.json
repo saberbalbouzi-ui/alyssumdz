@@ -1,6 +1,6 @@
 {
- "updated": "2026-11-06T13:43:18.898Z",
- "def": "noest",
+ "updated": "2026-11-06T13:47:45.206Z",
+ "def": "yalidine",
  "companies": {
   "yalidine": {
    "name": "ياليدين Yalidine",
@@ -12264,5 +12264,131 @@
    ]
   }
  },
- "nd": {}
+ "nd": {
+  "3": [
+   "ainsidiali",
+   "hadjmechri",
+   "taouiala",
+   "tadjrouna",
+   "ouedmorra"
+  ],
+  "6": [
+   "tamokra",
+   "tizinberber"
+  ],
+  "11": [
+   "abalessa",
+   "idles",
+   "tazrouk",
+   "inamguel"
+  ],
+  "12": [
+   "birelater"
+  ],
+  "14": [
+   "madna",
+   "nadorah",
+   "sidibakhti"
+  ],
+  "17": [
+   "ainchouhada",
+   "amourah",
+   "elkhemis",
+   "faidhelbotma",
+   "guernini",
+   "guettara",
+   "mliliha",
+   "oumlaadham",
+   "sedrahal",
+   "selmana",
+   "sidibaizid",
+   "tadmit",
+   "zaafrane"
+  ],
+  "18": [
+   "selmabenziada",
+   "boucifouledaskeur"
+  ],
+  "20": [
+   "ainsekhouna",
+   "hounet"
+  ],
+  "26": [
+   "ainouksir",
+   "cheniguel"
+  ],
+  "27": [
+   "ouledmaallah",
+   "sidibelattar"
+  ],
+  "32": [
+   "kraakda",
+   "elbnoud",
+   "cheguig",
+   "sidiameur",
+   "tousmouline",
+   "sidislimane"
+  ],
+  "33": [
+   "debdeb",
+   "bordjomardriss"
+  ],
+  "37": [
+   "oumelassel"
+  ],
+  "38": [
+   "benichaib",
+   "benilahcene",
+   "larbaa",
+   "sidiabed",
+   "sidiboutouchent"
+  ],
+  "40": [
+   "djellal",
+   "khirane"
+  ],
+  "41": [
+   "ouledmoumene",
+   "oumeladhaim",
+   "ainsoltane",
+   "safelelouiden",
+   "ouedkeberit",
+   "terraguelt"
+  ],
+  "44": [
+   "bathia",
+   "belaas",
+   "djemaaouledcheikh",
+   "elhassania",
+   "elmaine"
+  ],
+  "45": [
+   "kasdir"
+  ],
+  "50": [
+   "bordjbadjimokhtar",
+   "timiaouine"
+  ],
+  "51": [
+   "besbes",
+   "raselmiaad"
+  ],
+  "52": [
+   "tabelbala"
+  ],
+  "53": [
+   "inghar",
+   "foggaretezzaouia"
+  ],
+  "54": [
+   "inguezzam",
+   "tinzaouatine"
+  ],
+  "55": [
+   "elborma"
+  ],
+  "56": [
+   "bordjelhaouas"
+  ]
+ }
 }
