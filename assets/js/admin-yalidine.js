@@ -181,7 +181,7 @@ const AdminYd = (() => {
   }
   function ensure() {
     const t = $("tab-shipped"), tbl = $("ship-table"); if (!t || !tbl) return null; let c = $("yd-card");
-    if (!c) { c = document.createElement("div"); c.id = "yd-card"; c.className = "card"; const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
+    if (!c) { c = document.createElement("div"); c.id = "yd-card"; c.className = "card"; c.setAttribute("data-noco", "");   /* بطاقة طرود حساب ياليدين: اسمها ثابت ولا يُبدَّل باسم الشركة الافتراضية */ const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
     return c;
   }
   function stamp() { if (!S.at) return "لم تُحمَّل بعد"; const d = new Date(S.at); return "آخر تحميل " + d.toLocaleDateString("ar-DZ") + " " + d.toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }); }
