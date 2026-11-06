@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.858">
+<meta name="admin-version" content="1.89.859">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7666,6 +7666,14 @@ const Admin = {
       labelHtml: true,
       labelRequest(cfg, tracking){ return { url: this.base + "/parcels/labels/individual", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ trackingNumbers: [String(tracking)] }) }; },
       parseLabel(json){ const f = json && Array.isArray(json.parcelLabelFiles) ? json.parcelLabelFiles[0] : null; const u = f ? String(f.fileUrl || "") : ""; return /^https:\/\//.test(u) ? u : ""; },
+      /* مكاتب الاستلام (Stop Desk) عند ZR: POST /hubs/search ⟵ {items:[{id(uuid), name, isPickupPoint, isVisible, address:{street, city, district, cityTerritoryId}}], hasNext}؛ الولاية من الإقليم المخزَّن أو من اسم المدينة */
+      centersRequest(cfg, page){ return { url: this.base + "/hubs/search", method: "POST", headers: this.hdr(cfg), body: JSON.stringify({ pageNumber: page || 1, pageSize: 100 }) }; },
+      parseCenters(json){
+        const items = Array.isArray(json && json.items) ? json.items : [], tc = Object.values(this._tc || {}).map(x=>x.v).flat();
+        const wid = a=>{ const t = tc.find(x=>x.id === String(a.cityTerritoryId || "")); if(t && Number(t.code) >= 1 && Number(t.code) <= 58) return Number(t.code); const w = (typeof WILAYAS !== "undefined" ? WILAYAS : []).find(x=>!x.par && Admin.normName(x.name) === Admin.normName(a.city)); return w ? w.id : 0; };
+        return { rows: items.filter(h=>h && h.id && h.isPickupPoint !== false && h.isVisible !== false && h.address).map(h=>({ id: String(h.id), name: String(h.name || ""), address: String(h.address.street || ""), commune: String(h.address.district || h.address.city || ""), wilaya_id: wid(h.address) })).filter(r=>r.wilaya_id),
+          more: !!(json && json.hasNext) };
+      },
       /* تعريفة الشركة لكل ولاية: GET /delivery-pricing/rates ⟵ {rates:[{toTerritoryCode, toTerritoryLevel:"wilaya", deliveryPrices:[{deliveryType: home|pickup-point|return, price}]}]} (المستوى «commune» استثناءات بلدية لا تُستعمل هنا) */
       ownTariff: true,                       // تعريفتها كاملة من الشركة: لا تُضاف إليها إضافات بلديات ياليدين
       /* قوائم الشركة نفسها (تتكيّف المنصة معها): الولايات {رقم:{name,ok}} والبلديات لولاية {names, nd} من قائمة الأقاليم المخزَّنة */
@@ -7725,7 +7733,7 @@ const Admin = {
       },
       /* يحلّ معرّفات الولاية والبلدية (UUID) وحالة «جاهز للإرسال» قبل بناء الطلب */
       async prepare(cfg, order, fetcher){
-        if(order.dtype === "stop") throw new Error("ZR Express الجديدة لا تدعم التسليم لمكتب (Stop Desk) بعد — حوّل التوصيل إلى المنزل أو اختر شركة أخرى");
+        if(order.dtype === "stop" && !order.__deskId) throw new Error("لم يُحدَّد مكتب Stop Desk لـZR Express — اختر مكتباً من قائمتها (مزامنة المكاتب في إعداداتها) أو حوّل التوصيل إلى المنزل");
         if(Math.round(Number(order.total) || 0) > 150000) throw new Error("ZR Express تقبل 150,000 دج كحدّ أقصى للطرد (شاملاً التوصيل)");
         const ts = await this.territories(cfg, fetcher); if(!ts.length) throw new Error("قائمة ولايات ZR Express فارغة — أعد المحاولة");
         const nm = v=>Admin.normName(v), isW = t=>t.level === "wilaya" || (t.level !== "commune" && !t.par);
@@ -7748,8 +7756,9 @@ const Admin = {
         const rnd = ()=>(self.crypto && crypto.randomUUID) ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c=>{ const r = Math.random() * 16 | 0; return (c === "x" ? r : (r & 3 | 8)).toString(16); });
         const body = { customer: { customerId: rnd(), name: String(order.name || "").trim() || "Client", phone: Object.assign({ number1: intl(ph) }, p2 && p2 !== ph ? { number2: intl(p2) } : {}) },
           deliveryAddress: { cityTerritoryId: order.__zrW, districtTerritoryId: order.__zrC, street: String(order.address || order.commune || order.wilaya || "").slice(0, 250) },
-          orderedProducts: [{ productName: items.slice(0, 100), unitPrice: price, quantity: 1, stockType: "none" }], deliveryType: "home",
+          orderedProducts: [{ productName: items.slice(0, 100), unitPrice: price, quantity: 1, stockType: "none" }], deliveryType: order.dtype === "stop" && order.__deskId ? "pickup-point" : "home",
           description: (items + (order.extra && order.extra["🔄 استبدال"] ? " — استبدال" : "")).slice(0, 250).padEnd(2, "."), amount: total, ExternalId: String(order.id).slice(0, 100) };
+        if(order.dtype === "stop" && order.__deskId) body.hubId = String(order.__deskId);       // مكتب الاستلام (hubId) من قائمة مراكز ZR
         if(order.__zrState) body.stateId = order.__zrState;
         return { url: this.base + "/parcels", method: "POST", headers: this.hdr(cfg), body: JSON.stringify(body) };
       },
@@ -8404,13 +8413,14 @@ const Admin = {
     const companies = {}, all = this.allDeliveryCompanies();
     this.enabledCompanyKeys().forEach(k=>{ const pr = (this.deliveryCfg[k]||{}).prices; if(all[k].feesRequest && pr && Object.keys(pr).length) companies[k] = { name: all[k].name, prices: pr, adj: Number((this.deliveryCfg[k]||{}).adj) || 0 }; if((this.deliveryCfg[k]||{}).adjMode === "wilaya") companies[k].adjMode = "wilaya"; try{ const wl = this.wilListOf(k); if(wl) companies[k].wl = wl; }catch(e){} });
     const st = this.pricingState();
-    return { def: st.key || "", companies, sup: this.communeSup(), cp: this.communeCp(), nd: this.communeNd() };
+    const dk = (()=>{ try{ return this.activeCompanyKey(); }catch(e){ return ""; } })(), dco = dk && all[dk];
+    return { def: st.key || "", companies, sup: this.communeSup(), cp: this.communeCp(), nd: this.communeNd(), noStop: !!(dco && !dco.centersRequest) };      // شركة افتراضية بلا قائمة مكاتب: لا Stop Desk في المتجر
   },
   async publishShipCo(){
     try{
       const d = this.shipCoData();
       if(typeof PBApp === "undefined" || !PBApp.putJson) return;
-      await PBApp.putJson("assets/data/ship-co.json", { updated: new Date().toISOString(), def: d.def, companies: d.companies, sup: d.sup, cp: d.cp, nd: d.nd }, "أسعار شركات التوصيل (لمنتجات بشركة غير الافتراضية)");
+      await PBApp.putJson("assets/data/ship-co.json", { updated: new Date().toISOString(), def: d.def, noStop: d.noStop, companies: d.companies, sup: d.sup, cp: d.cp, nd: d.nd }, "أسعار شركات التوصيل (لمنتجات بشركة غير الافتراضية)");
     }catch(e){ console.warn("ship-co", e); }
   },
   /* خانة «شركة التوصيل لهذا المنتج» في تعديل المنتج */
@@ -8750,15 +8760,17 @@ const Admin = {
     for(let i=1;i<=m;i++) for(let j=1;j<=n;j++) d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1)); return d[m][n]; },
   _centersCache: null,
   async companyCenters(co, cfg){
-    if(this._centersCache) return this._centersCache;
-    try{ const c = JSON.parse(localStorage.getItem("alyssum_centers_v1") || "null"); if(c && c.length > 20){ this._centersCache = c; return c; } }catch(e){}
+    /* ذاكرة المراكز لكل شركة على حدة (كانت واحدة فتعيد مراكز ياليدين لشركة أخرى): ياليدين تحتفظ بمفتاحها القديم */
+    const ck = (co.name || "") === "Yalidine" || co === this.DELIVERY_COMPANIES.yalidine ? "alyssum_centers_v1" : "alyssum_centers_v2_" + String(co.name || "").replace(/\W+/g, "_");
+    this._centersMap = this._centersMap || {}; if(this._centersMap[ck]) return this._centersMap[ck];
+    try{ const c = JSON.parse(localStorage.getItem(ck) || "null"); if(c && c.length > 20){ this._centersMap[ck] = c; return c; } }catch(e){}
     let rows = [];
     for(let pg = 1; pg <= 5; pg++){
       const r = await this.courierFetch(co.centersRequest(cfg, pg));
       if(!r.ok) throw new Error("تعذّر جلب مراكز الشركة (رمز " + r.status + ")");
       const got = co.parseCenters(JSON.parse(r.text)); rows = rows.concat(got.rows); if(!got.more) break;
     }
-    if(rows.length){ this._centersCache = rows; try{ localStorage.setItem("alyssum_centers_v1", JSON.stringify(rows)); }catch(e){} }
+    if(rows.length){ this._centersMap[ck] = rows; try{ localStorage.setItem(ck, JSON.stringify(rows)); }catch(e){} }
     return rows;
   },
   askDesk(orderIndex, companyKey, list, order){
@@ -8770,7 +8782,7 @@ const Admin = {
       "<button class='small gold' type='button' onclick=\"Admin.pickDesk('" + order.id + "','" + companyKey + "')\">🚚 أرسل لهذا المركز</button>");
   },
   pickDesk(orderId, companyKey){
-    const v = Number(($f("pick-desk")||{}).value); if(!v) return;
+    const raw = String(($f("pick-desk")||{}).value || ""); if(!raw) return; const v = /^\d+$/.test(raw) ? Number(raw) : raw;
     this._deskOverride = this._deskOverride || {}; this._deskOverride[orderId] = v;
     document.getElementById("notice-modal-bg").classList.remove("open");
     const i = this.orders.findIndex(x=>x.id === orderId); if(i > -1) this.sendOrderToDelivery(i, companyKey);
@@ -8780,7 +8792,7 @@ const Admin = {
     const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
     if(!co || !co.centersRequest){ toast("هذه الشركة لا تدعم جلب المراكز"); return }
     try{
-      localStorage.removeItem("alyssum_centers_v1"); this._centersCache = null;
+      try{ Object.keys(localStorage).filter(k=>/^alyssum_centers_v[12]/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){} this._centersMap = {}; this._centersCache = null;
       const centers = await this.companyCenters(co, cfg);
       if(!centers.length) throw new Error("لم تُرجع الشركة أي مركز");
       this.fees = this.fees.map(w=>Object.assign({}, w, { desks: centers.filter(c=>c.wilaya_id === w.id).map(c=>({ id: c.id, name: c.name, address: c.address, commune: c.commune })) }));

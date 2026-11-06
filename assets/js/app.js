@@ -10,6 +10,7 @@ const fmt = n => n.toLocaleString("fr-DZ") + " " + (window.__STORE_CUR || "دج"
    w.xc = {بلدية:"all"|"home"} (all = لا توصيل نهائياً، home = لا توصيل للمنزل فقط ويبقى المكتب) */
 function shipBlocked(w, commune, type){
   if(!w) return "";
+  if(type === "stop" && __SHIPNOSTOP) return "التوصيل إلى مكتب (Stop Desk) غير متاح حالياً — اختر التوصيل إلى المنزل";
   if(w.xw) return "عذراً، لا يتوفر التوصيل إلى ولاية " + w.name + " حالياً";
   const m = w.xc && commune ? w.xc[commune] : "";
   if(m === "all") return "عذراً، لا يتوفر التوصيل إلى بلدية " + commune + " حالياً";
@@ -18,7 +19,7 @@ function shipBlocked(w, commune, type){
 }
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
-let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {};
+let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
 /* بلديات لا توصّل إليها شركة التوصيل الافتراضية (مثل تبلبالة عند ياليدين): تُعلَّم «غير متاح» بنفس آلية الاستثناءات w.xc */
 function applyShipNd(nd, def){
   if(!nd || def !== "yalidine" || typeof WILAYAS === "undefined") return;
@@ -36,7 +37,7 @@ function applyShipList(cos, def){
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPNOSTOP = !!j.noStop; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPNOSTOP || __SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
