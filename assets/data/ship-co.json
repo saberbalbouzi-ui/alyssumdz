@@ -1,7 +1,230 @@
 {
- "updated": "2026-11-06T10:39:47.525Z",
- "def": "",
- "companies": {},
+ "updated": "2026-11-06T10:39:55.591Z",
+ "def": "zrexpress_app",
+ "companies": {
+  "zrexpress_app": {
+   "name": "ZR Express",
+   "prices": {
+    "1": {
+     "home": 1400,
+     "stop": 980
+    },
+    "2": {
+     "home": 850,
+     "stop": 530
+    },
+    "3": {
+     "home": 950,
+     "stop": 630
+    },
+    "4": {
+     "home": 850,
+     "stop": 530
+    },
+    "5": {
+     "home": 900,
+     "stop": 530
+    },
+    "6": {
+     "home": 800,
+     "stop": 530
+    },
+    "7": {
+     "home": 950,
+     "stop": 630
+    },
+    "8": {
+     "home": 1200,
+     "stop": 980
+    },
+    "9": {
+     "home": 600,
+     "stop": 480
+    },
+    "10": {
+     "home": 700,
+     "stop": 530
+    },
+    "11": {
+     "home": 1600,
+     "stop": 1130
+    },
+    "12": {
+     "home": 900,
+     "stop": 530
+    },
+    "13": {
+     "home": 900,
+     "stop": 580
+    },
+    "14": {
+     "home": 850,
+     "stop": 530
+    },
+    "15": {
+     "home": 750,
+     "stop": 530
+    },
+    "16": {
+     "home": 500,
+     "stop": 380
+    },
+    "17": {
+     "home": 950,
+     "stop": 580
+    },
+    "18": {
+     "home": 900,
+     "stop": 530
+    },
+    "19": {
+     "home": 800,
+     "stop": 530
+    },
+    "20": {
+     "home": 900,
+     "stop": 580
+    },
+    "21": {
+     "home": 900,
+     "stop": 530
+    },
+    "22": {
+     "home": 900,
+     "stop": 530
+    },
+    "23": {
+     "home": 850,
+     "stop": 530
+    },
+    "24": {
+     "home": 900,
+     "stop": 530
+    },
+    "25": {
+     "home": 800,
+     "stop": 530
+    },
+    "26": {
+     "home": 800,
+     "stop": 530
+    },
+    "27": {
+     "home": 900,
+     "stop": 530
+    },
+    "28": {
+     "home": 850,
+     "stop": 580
+    },
+    "29": {
+     "home": 900,
+     "stop": 530
+    },
+    "30": {
+     "home": 950,
+     "stop": 680
+    },
+    "31": {
+     "home": 800,
+     "stop": 530
+    },
+    "32": {
+     "home": 1100,
+     "stop": 680
+    },
+    "34": {
+     "home": 800,
+     "stop": 530
+    },
+    "35": {
+     "home": 700,
+     "stop": 530
+    },
+    "36": {
+     "home": 850,
+     "stop": 530
+    },
+    "38": {
+     "home": 900,
+     "stop": 530
+    },
+    "39": {
+     "home": 950,
+     "stop": 680
+    },
+    "40": {
+     "home": 900,
+     "stop": 530
+    },
+    "41": {
+     "home": 900,
+     "stop": 530
+    },
+    "42": {
+     "home": 700,
+     "stop": 530
+    },
+    "43": {
+     "home": 900,
+     "stop": 530
+    },
+    "44": {
+     "home": 900,
+     "stop": 530
+    },
+    "45": {
+     "home": 1100,
+     "stop": 680
+    },
+    "46": {
+     "home": 900,
+     "stop": 530
+    },
+    "47": {
+     "home": 950,
+     "stop": 630
+    },
+    "48": {
+     "home": 900,
+     "stop": 530
+    },
+    "49": {
+     "home": 1400,
+     "stop": 980
+    },
+    "51": {
+     "home": 950,
+     "stop": 630
+    },
+    "52": {
+     "home": 1200,
+     "stop": 980
+    },
+    "53": {
+     "home": 1600,
+     "stop": 1130
+    },
+    "54": {
+     "home": 1600,
+     "stop": 10
+    },
+    "55": {
+     "home": 950,
+     "stop": 680
+    },
+    "57": {
+     "home": 950,
+     "stop": 10
+    },
+    "58": {
+     "home": 1000,
+     "stop": 680
+    }
+   },
+   "adj": 0
+  }
+ },
  "sup": {
   "1": {
    "tit": [
@@ -11294,131 +11517,5 @@
    ]
   }
  },
- "nd": {
-  "3": [
-   "ainsidiali",
-   "hadjmechri",
-   "taouiala",
-   "tadjrouna",
-   "ouedmorra"
-  ],
-  "6": [
-   "tamokra",
-   "tizinberber"
-  ],
-  "11": [
-   "abalessa",
-   "idles",
-   "tazrouk",
-   "inamguel"
-  ],
-  "12": [
-   "birelater"
-  ],
-  "14": [
-   "madna",
-   "nadorah",
-   "sidibakhti"
-  ],
-  "17": [
-   "ainchouhada",
-   "amourah",
-   "elkhemis",
-   "faidhelbotma",
-   "guernini",
-   "guettara",
-   "mliliha",
-   "oumlaadham",
-   "sedrahal",
-   "selmana",
-   "sidibaizid",
-   "tadmit",
-   "zaafrane"
-  ],
-  "18": [
-   "selmabenziada",
-   "boucifouledaskeur"
-  ],
-  "20": [
-   "ainsekhouna",
-   "hounet"
-  ],
-  "26": [
-   "ainouksir",
-   "cheniguel"
-  ],
-  "27": [
-   "ouledmaallah",
-   "sidibelattar"
-  ],
-  "32": [
-   "kraakda",
-   "elbnoud",
-   "cheguig",
-   "sidiameur",
-   "tousmouline",
-   "sidislimane"
-  ],
-  "33": [
-   "debdeb",
-   "bordjomardriss"
-  ],
-  "37": [
-   "oumelassel"
-  ],
-  "38": [
-   "benichaib",
-   "benilahcene",
-   "larbaa",
-   "sidiabed",
-   "sidiboutouchent"
-  ],
-  "40": [
-   "djellal",
-   "khirane"
-  ],
-  "41": [
-   "ouledmoumene",
-   "oumeladhaim",
-   "ainsoltane",
-   "safelelouiden",
-   "ouedkeberit",
-   "terraguelt"
-  ],
-  "44": [
-   "bathia",
-   "belaas",
-   "djemaaouledcheikh",
-   "elhassania",
-   "elmaine"
-  ],
-  "45": [
-   "kasdir"
-  ],
-  "50": [
-   "bordjbadjimokhtar",
-   "timiaouine"
-  ],
-  "51": [
-   "besbes",
-   "raselmiaad"
-  ],
-  "52": [
-   "tabelbala"
-  ],
-  "53": [
-   "inghar",
-   "foggaretezzaouia"
-  ],
-  "54": [
-   "inguezzam",
-   "tinzaouatine"
-  ],
-  "55": [
-   "elborma"
-  ],
-  "56": [
-   "bordjelhaouas"
-  ]
- }
+ "nd": {}
 }
