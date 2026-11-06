@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.846">
+<meta name="admin-version" content="1.89.847">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}html.au-boot #au-boot{display:flex}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -9622,11 +9622,11 @@ const Admin = {
     const cnt = {}; rows.forEach(r=>{ const k = r.status || "—"; cnt[k] = (cnt[k] || 0) + 1; });
     const mine = new Set(this.orders.map(o=>String(o.id)));
     c.style.display = "";
-    c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرود حسابك في ZR Express</b><span class="hint" style="margin:0">' + (P.at ? "آخر تحميل " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) + " · " + rows.length + " طرد" : "لم تُحمَّل بعد") + '</span><span style="flex:1"></span>' +
+    c.innerHTML = '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>📦 طرود حسابك في ZR Express</b><span class="hint" style="margin:0">' + (P.at ? "آخر تحميل " + new Date(P.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) + " · " + rows.length + " طرد (" + rows.filter(r=>r.ext && mine.has(r.ext)).length + " مرتبط بطلب" + (rows.some(r=>!(r.ext && mine.has(r.ext))) ? " · " + rows.filter(r=>!(r.ext && mine.has(r.ext))).length + " بلا طلب" : "") + ")" : "لم تُحمَّل بعد") + '</span><span style="flex:1"></span>' +
       '<button class="small gold" type="button" onclick="Admin.zrLoadParcels(true)"' + (P.busy ? " disabled" : "") + '>' + (P.busy ? "… جارٍ التحميل" : "🔄 تحميل / تحديث الطرود") + '</button></div>' +
       (rows.length ? '<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0">' + Object.keys(cnt).map(k=>'<span class="pill">' + e(k) + ' <b>' + cnt[k] + '</b></span>').join("") + '</div>' +
         '<div class="hs-wrap" style="overflow-x:auto"><table class="kv" style="width:100%;border-collapse:collapse;font-size:.88rem"><tr><th>Tracking</th><th>الحالة</th><th>الزبون</th><th>الولاية / البلدية</th><th>المبلغ</th><th>توصيل</th><th>إرجاع</th><th>الطلب</th></tr>' +
-        rows.slice(0, 100).map(r=>'<tr><td data-l="Tracking" dir="ltr">' + e(r.tracking) + '</td><td data-l="الحالة">' + e(r.status) + (r.isReturn ? " ↩" : "") + '</td><td data-l="الزبون">' + e(r.cust) + '</td><td data-l="الولاية / البلدية">' + e(r.city) + (r.dist && r.dist !== r.city ? " / " + e(r.dist) : "") + '</td><td data-l="المبلغ">' + n(r.amount) + ' دج</td><td data-l="توصيل">' + n(r.del) + ' دج</td><td data-l="إرجاع">' + n(r.ret) + ' دج</td><td data-l="الطلب" dir="ltr">' + (r.ext ? (mine.has(r.ext) ? "✓ " : "— ") + e(r.ext) : "—") + '</td></tr>').join("") + '</table></div>' : "");
+        rows.slice(0, 100).map(r=>'<tr><td data-l="Tracking" dir="ltr">' + e(r.tracking) + '</td><td data-l="الحالة">' + e(r.status) + (r.isReturn ? " ↩" : "") + '</td><td data-l="الزبون">' + e(r.cust) + '</td><td data-l="الولاية / البلدية">' + e(r.city) + (r.dist && r.dist !== r.city ? " / " + e(r.dist) : "") + '</td><td data-l="المبلغ">' + n(r.amount) + ' دج</td><td data-l="توصيل">' + n(r.del) + ' دج</td><td data-l="إرجاع">' + n(r.ret) + ' دج</td><td data-l="الطلب" dir="ltr">' + (r.ext && mine.has(r.ext) ? "✓ " + e(r.ext) : (r.ext ? "— " + e(r.ext) + " " : "") + '<button class="small gray" type="button" onclick="Admin.importTracking(\'' + e(r.tracking) + '\', \'zrexpress_app\')" title="هذا الطرد بلا طلب في اللوحة: اربطه بطلب أو احفظه كطرد خارجي">ربط</button>') + '</td></tr>').join("") + '</table></div>' : "");
   },
   /* تصديق طرد مسوّدة عند الشركة (NOEST): نعيد استدعاء postSend ثم نحدّث حالته */
   async coValidate(i){
@@ -9646,10 +9646,10 @@ const Admin = {
     const r = this.shipRaw[o.id]; return r && r.raw && co.isDraft(r.raw) ? '<button class="small green" type="button" onclick="Admin.coValidate(' + i + ')" title="الطرد عند الشركة مسوّدة: لا يراه المركز حتى يُصدَّق">✅ تصديق عند الشركة</button> ' : "";
   },
   /* إضافة طرد موجود عند الشركة (أُنشئ خارج المنصة) برقم تتبعه: نجلب بياناته وحالته ونربطه بالطلب المطابق (المرجع أو الهاتف والمبلغ) أو بطلب تختاره */
-  async importTracking(){
-    const key = this._shipCo || this.activeCompanyKey(), co = key && this.allDeliveryCompanies()[key], cfg = (key && this.deliveryCfg[key]) || {};
+  async importTracking(trkArg, keyArg){
+    const key = keyArg || this._shipCo || this.activeCompanyKey(), co = key && this.allDeliveryCompanies()[key], cfg = (key && this.deliveryCfg[key]) || {};
     if(!co || !co.trackRequest){ toast("اختر تبويب شركة تدعم التتبع أولاً"); return }
-    const trk = String(prompt("رقم التتبع عند " + co.name + ":") || "").replace(/[\s"']/g, ""); if(!trk) return;
+    const trk = String(trkArg || prompt("رقم التتبع عند " + co.name + ":") || "").replace(/[\s"']/g, ""); if(!trk) return;
     const known = this.orders.find(o=>{ const t = this.trackingOf(o); return t && t.tracking === trk; }); if(known){ toast("ℹ️ هذا الطرد مرتبط بالفعل بالطلب " + known.id); return }
     toast("⏳ جارِ جلب الطرد من " + co.name + "…");
     let json = null, raw = "", info = null;
