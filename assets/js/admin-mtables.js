@@ -66,10 +66,23 @@
     const h = document.documentElement, mob = MQP.matches && !!document.getElementById("app") && !document.getElementById("app").classList.contains("hidden");
     h.classList.toggle("m-page", mob && !PM.menu); h.classList.toggle("m-menu", mob && PM.menu);
     const old = document.getElementById("m-menubar"); if (old) old.remove();      // شريط «☰ القائمة» أُلغي: القوائم الأفقية للأقسام تكفي
+    /* شريط مضغوط للقسم المفتوح على الهاتف: زر رجوع + «المجموعة › القسم»، والباقي (الترويسة الكبيرة وأزرار المجموعات) مخفي ليحتل القسم الشاشة كلها */
+    try {
+      const app = document.getElementById("app"); let bar = document.getElementById("m-bar");
+      if (mob && !PM.menu && app) {
+        if (!bar) { bar = document.createElement("div"); bar.id = "m-bar"; bar.setAttribute("data-noco", ""); bar.innerHTML = '<button type="button" class="small gray" id="m-back" aria-label="رجوع إلى القائمة">→ رجوع</button><span id="m-bt"></span>'; app.insertBefore(bar, app.firstChild);
+          bar.querySelector("#m-back").onclick = () => { PM.menu = true; pmApply(); try { window.scrollTo({ top: 0 }); } catch (e) { } }; }
+        const g = document.querySelector("#nav-groups .ng.on"), t = document.getElementById("sec-title");
+        const txt = [g && g.textContent.trim(), t && t.textContent.replace(/^[•\s]+/, "").trim()].filter(Boolean).join(" › "), el = document.getElementById("m-bt"); if (el && el.textContent !== txt) el.textContent = txt;
+      } else if (bar) bar.remove();
+    } catch (e) { }
   }
   function pmInit() {
     if (!document.getElementById("pm-css")) { const st = document.createElement("style"); st.id = "pm-css"; st.textContent = `
-@media(max-width:900px){html.m-page nav.side-nav,html.m-page #stats{display:none!important}
+@media(max-width:900px){html.m-page nav.side-nav,html.m-page #stats{display:none!important}html.m-page:not(:has(#aly-hand.on)) #app .top,html.m-page:not(:has(#aly-hand.on)) #nav-groups{display:none!important}/* أثناء «اليد الافتراضية» تبقى أزرار التنقل ظاهرة لتضغطها */html.m-page:has(#aly-hand.on) #m-bar{display:none!important}
+html.m-page #m-bar{display:flex;position:sticky;top:0;z-index:60;align-items:center;gap:.6rem;margin:0 0 .5rem;padding:.5rem .6rem;background:var(--g-bg,#0b1f17);border-bottom:1px solid var(--g-line,rgba(255,255,255,.14))}
+html.m-page #m-bar #m-bt{font-weight:800;font-size:.95rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.m-page #m-bar #m-back{flex:0 0 auto;margin:0}
 html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
 .nav-groups{display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:.45rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}.nav-groups::-webkit-scrollbar{display:none}.nav-groups .ng{flex:0 0 auto;min-width:92px}}`; document.head.appendChild(st); }
     const wrap = () => {
