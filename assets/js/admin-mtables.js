@@ -124,19 +124,26 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
    نعطّل التمرير الأصلي الأفقي لهذه الجداول (touch-action:pan-y في CSS) ونحوّل حركة الإصبع الأفقية إلى scrollLeft بأنفسنا؛ الرأسي يبقى للمتصفح. */
 (function () {
   const SEL = ".hs-wrap,table.m-scroll,#ship-table", can = el => el && el.scrollWidth > el.clientWidth + 2;
-  let el = null, x0 = 0, y0 = 0, s0 = 0, mode = "";
+  let el = null, x0 = 0, y0 = 0, s0 = 0, mode = "", lx = 0, lt = 0, vx = 0, raf = 0;
+  const stop = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+  /* زخم بعد رفع الإصبع (سلاسة كالتمرير الأصلي): السرعة تتناقص بنسبة ثابتة لكل 16ms */
+  function fling(t, v) {
+    stop(); let last = performance.now();
+    const step = now => { const dt = Math.min(48, now - last); last = now; const before = t.scrollLeft; t.scrollLeft = before - v * dt; v *= Math.pow(0.94, dt / 16); if (Math.abs(v) < 0.03 || t.scrollLeft === before) { raf = 0; return; } raf = requestAnimationFrame(step); };
+    raf = requestAnimationFrame(step);
+  }
   document.addEventListener("touchstart", e => {
-    el = null; mode = ""; if (e.touches.length !== 1) return;
+    stop(); el = null; mode = ""; vx = 0; if (e.touches.length !== 1) return;
     let t = e.target && e.target.closest ? e.target.closest(SEL) : null;
     while (t && !can(t)) t = t.parentElement && t.parentElement.closest ? t.parentElement.closest(SEL) : null;
-    if (!t) return; el = t; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; s0 = el.scrollLeft;
+    if (!t) return; el = t; x0 = lx = e.touches[0].clientX; y0 = e.touches[0].clientY; s0 = el.scrollLeft; lt = e.timeStamp;
   }, { passive: true });
   document.addEventListener("touchmove", e => {
-    if (!el || !e.touches.length) return; const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
-    if (!mode) { if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return; mode = Math.abs(dx) > Math.abs(dy) ? "h" : "v"; }
-    if (mode === "h") { el.scrollLeft = s0 - dx; if (e.cancelable) e.preventDefault(); }
+    if (!el || !e.touches.length) return; const x = e.touches[0].clientX, dx = x - x0, dy = e.touches[0].clientY - y0;
+    if (!mode) { if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return; mode = Math.abs(dx) > Math.abs(dy) * 1.15 ? "h" : "v"; }
+    if (mode === "h") { el.scrollLeft = s0 - dx; const dt = Math.max(1, e.timeStamp - lt); vx = 0.8 * vx + 0.2 * ((x - lx) / dt) * 1; lx = x; lt = e.timeStamp; if (e.cancelable) e.preventDefault(); }
   }, { passive: false });
-  const end = () => { el = null; mode = ""; };
+  const end = e => { const t = el, v = vx, m = mode; el = null; mode = ""; if (t && m === "h" && Math.abs(v) > 0.08 && e && e.type === "touchend" && performance.now() - (lt || 0) < 120 + 0) fling(t, v); };
   document.addEventListener("touchend", end, { passive: true }); document.addEventListener("touchcancel", end, { passive: true });
 })();
 
