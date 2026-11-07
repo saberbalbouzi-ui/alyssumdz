@@ -134,9 +134,14 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
   }
   document.addEventListener("touchstart", e => {
     stop(); el = null; mode = ""; vx = 0; if (e.touches.length !== 1) return;
-    let t = e.target && e.target.closest ? e.target.closest(SEL) : null;
-    while (t && !can(t)) t = t.parentElement && t.parentElement.closest ? t.parentElement.closest(SEL) : null;
-    if (!t) return; el = t; x0 = lx = e.touches[0].clientX; y0 = e.touches[0].clientY; s0 = el.scrollLeft; lt = e.timeStamp;
+    /* أقرب حاوية تمرير أفقية فعلاً (أياً كان نوعها: .rt-table، حاوية جدول، جدول m-scroll…) وفي الطريق إليها يمنع touch-action التمرير الأصلي الأفقي ← نتولاه نحن؛ وإلا يتولاه المتصفح */
+    if (e.target && e.target.closest && e.target.closest("input,textarea,select,canvas,[contenteditable],#pb-app,#pbx-frame,.pbx-ep,.pbx,[data-nohs]")) return;
+    let t = e.target, blocked = false;
+    while (t && t.nodeType === 1 && t !== document.body) {
+      const cs = getComputedStyle(t); if (!/pan-x|^auto|manipulation/.test(cs.touchAction)) blocked = true;
+      if (/(auto|scroll)/.test(cs.overflowX) && can(t)) break; t = t.parentElement;
+    }
+    if (!t || t === document.body || !blocked) return; el = t; x0 = lx = e.touches[0].clientX; y0 = e.touches[0].clientY; s0 = el.scrollLeft; lt = e.timeStamp;
   }, { passive: true });
   document.addEventListener("touchmove", e => {
     if (!el || !e.touches.length) return; const x = e.touches[0].clientX, dx = x - x0, dy = e.touches[0].clientY - y0;
