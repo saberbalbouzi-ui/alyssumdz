@@ -135,7 +135,7 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
   document.addEventListener("touchstart", e => {
     stop(); el = null; mode = ""; vx = 0; if (e.touches.length !== 1) return;
     /* أقرب حاوية تمرير أفقية فعلاً (أياً كان نوعها: .rt-table، حاوية جدول، جدول m-scroll…) وفي الطريق إليها يمنع touch-action التمرير الأصلي الأفقي ← نتولاه نحن؛ وإلا يتولاه المتصفح */
-    if (e.target && e.target.closest && e.target.closest("input,textarea,select,canvas,[contenteditable],#pb-app,#pbx-frame,.pbx-ep,.pbx,[data-nohs]")) return;
+    if (e.target && e.target.closest && e.target.closest("input[type=range],canvas,[contenteditable],#pb-app,#pbx-frame,.pbx-ep,.pbx,[data-nohs]")) return;
     let t = e.target, blocked = false;
     while (t && t.nodeType === 1 && t !== document.body) {
       const cs = getComputedStyle(t); if (!/pan-x|^auto|manipulation/.test(cs.touchAction)) blocked = true;
