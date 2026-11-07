@@ -68,7 +68,7 @@ window.TableSel = (() => {
   function drawBar(t, sk, title) {
     const b = barOf(t, sk), S = sel[sk]; b.dataset.tsTitle = title; const n = S.size, ks = [...t.querySelectorAll("input.ts-ck[data-k]")], allOn = !!ks.length && ks.every(c => c.checked);
     b.classList.toggle("on", n > 0);
-    b.innerHTML = '<label class="ts-all"><input type="checkbox" class="ts-ck" data-barall="1"' + (allOn ? " checked" : "") + "> تحديد الكل</label><span>محدَّد: <b>" + n + "</b></span>" + menuHtml(t.querySelector("tr[data-trk]") ? [{ g: "كل الطرود المعروضة", k: "yd-gs", l: "📊 نسخ إلى Google Sheets" }, { g: "كل الطرود المعروضة", k: "yd-csv", l: "⬇ تصدير CSV" }].concat(BASE_ITEMS, [{ g: "طباعة", k: "bord", l: "🏷️ طباعة البوردرو الأصلي (PDF)" }]) : BASE_ITEMS, "data-ts", !n && !t.querySelector("tr[data-trk]")) + (n ? '<button type="button" class="ts-btn al" data-ts="clear">إلغاء التحديد</button>' : "");
+    b.innerHTML = '<label class="ts-all"><input type="checkbox" class="ts-ck" data-barall="1"' + (allOn ? " checked" : "") + "> تحديد الكل</label><span>محدَّد: <b>" + n + "</b></span>" + menuHtml(t.querySelector("tr[data-trk]") ? [{ g: "كل الطرود المعروضة", k: "yd-gs", l: "📊 نسخ إلى Google Sheets" }, { g: "كل الطرود المعروضة", k: "yd-csv", l: "⬇ تصدير CSV" }].concat(sk === "#cop-card table" ? [{ g: "كل الطرود المعروضة", k: "cop-bord", l: "🏷️ بوردرو الكل (4 في الورقة)" }] : [], BASE_ITEMS, [{ g: "طباعة", k: "bord", l: "🏷️ طباعة البوردرو الأصلي (PDF)" }]) : BASE_ITEMS, "data-ts", !n && !t.querySelector("tr[data-trk]")) + (n ? '<button type="button" class="ts-btn al" data-ts="clear">إلغاء التحديد</button>' : "");
     if (OPEN && OPEN === sk) { const mm = b.querySelector(".ts-menu"); if (mm) mm.hidden = false; }
   }
   function collect(t, sk) {
@@ -92,6 +92,7 @@ window.TableSel = (() => {
   document.addEventListener("click", e => {
     const b = e.target.closest(".ts-bar [data-ts]"); if (!b) return; const bar = b.closest(".ts-bar"), sk = bar.dataset.tsFor, t = document.querySelector('table[data-ts="' + sk.replace(/"/g, "") + '"]'), k = b.dataset.ts;
     if (k === "menu") return toggleMenu(b);
+    if (k === "cop-bord") { document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); const cf = (document.querySelector("#cop-card tr[data-co]") || {}).dataset; if (cf && typeof Admin !== "undefined" && Admin.coPrintAll) Admin.coPrintAll(cf.co); return; }
     if ((k === "yd-gs" || k === "yd-csv") && sk === "#cop-card table") { document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); const cf = (document.querySelector("#cop-card tr[data-co]") || {}).dataset; if (cf && typeof AdminCoP !== "undefined") AdminCoP.csvAll(cf.co); return; }
     if (k === "yd-gs" || k === "yd-csv") { document.querySelectorAll(".ts-menu").forEach(x => { x.hidden = true; }); if (typeof AdminYd !== "undefined") { if (k === "yd-gs") AdminYd.sheets(); else AdminYd.csv(); } return; }
     if (!t) return; const S = sel[sk];

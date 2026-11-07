@@ -45,9 +45,7 @@
     const chips = keys.map(k => '<span class="cop-chip ' + TN[tone(k)] + (s.st === k ? " on" : "") + '" data-cop-st="' + e(k) + '">' + e(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const inp = 'style="min-width:0;max-width:100%"';
     host.innerHTML =
-      '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>' + e(opts.title || "") + '</b><span class="hint" style="margin:0">' + (opts.at ? "آخر تحديث " + new Date(opts.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) + " · " : "") + rows.length + ' طرد</span><span style="flex:1"></span>' + (opts.head || "") +
-      (opts.busy ? '<span class="hint" style="margin:0">… جارٍ التحميل</span>' : "") +
-      '<button class="small gray" type="button" data-cop="csv">⬇ CSV</button></div>' +
+      '<div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><b>' + e(opts.title || "") + '</b><span class="hint" style="margin:0">' + (opts.at ? "آخر تحديث " + new Date(opts.at).toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }) + " · " : "") + rows.length + ' طرد</span><span style="flex:1"></span>' + (opts.busy ? '<span class="hint" style="margin:0">… جارٍ التحميل</span>' : "") + '</div>' +
       (opts.note ? '<div class="hint" style="margin:.3rem 0">' + opts.note + '</div>' : "") +
       (rows.length ? '<div class="cop-chips">' + (keys.length > 1 ? '<span class="cop-chip' + (!s.st ? " on" : "") + '" data-cop-st="">الكل <b>' + rows.length + '</b></span>' : "") + chips + '</div>' +
         '<div class="cop-f"><input type="search" data-cop-f="q" placeholder="🔍 بحث" value="' + e(s.q) + '" ' + inp + '>' +
