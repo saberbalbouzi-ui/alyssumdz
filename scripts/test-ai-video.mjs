@@ -13,6 +13,7 @@ globalThis.fetch = async (url, o = {}) => {
   const u = String(url); state.calls.push([u, o.method || "GET", o.body]);
   if (u.includes("/rpc/saas_ai_charge")) return new Response(JSON.stringify(state.charge), { status: 200 });
   if (u.includes("/rpc/saas_ai_refund")) { state.refunds++; return new Response("null", { status: 200 }); }
+  if (/\/v1beta\/models\?/.test(u)) return new Response(JSON.stringify({ models: [{ name: "models/veo-2.0-generate-001", supportedGenerationMethods: ["generateContent"] }, { name: "models/veo-3.0-generate-001", supportedGenerationMethods: ["predictLongRunning"] }, { name: "models/veo-3.1-fast-generate-preview", supportedGenerationMethods: ["predictLongRunning"] }, { name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] }] }), { status: 200 });
   if (u.includes(":predictLongRunning")) return state.veo === "ok" ? new Response(JSON.stringify({ name: "models/veo-3.1-fast-generate-preview/operations/op1" }), { status: 200 }) : new Response(JSON.stringify({ error: { message: "bad image" } }), { status: 400 });
   if (u.includes("/operations/op1")) return new Response(JSON.stringify(state.opFail ? { done: true, response: { generateVideoResponse: { raiMediaFilteredReasons: ["blocked"] } } } : state.opDone ? { done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: "https://generativelanguage.googleapis.com/v1beta/files/abc:download?alt=media" } }] } } } : { done: false }), { status: 200 });
   if (u.includes("/files/abc:download")) return new Response(new Uint8Array(1024), { status: 200, headers: { "content-type": "video/mp4" } });
@@ -25,6 +26,7 @@ ok("بلا رمز ولا جلسة ← 400", (await call({ action: "submit" })).s
 let r = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p", image_url: IMG, aspect_ratio: "9:16", duration: "5" } });
 ok("إرسال Veo ينجح ويعيد روابط veo-s/veo-r", r.s === 200 && r.j.status_url === "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" && r.j.left === 4, r);
 const pc = state.calls.find(c => c[0].includes(":predictLongRunning")), pb = JSON.parse(pc[2]);
+ok("الاكتشاف: يُجرَّب السريع الأحدث المدعوم فقط (لا veo-2 غير المدعوم)", pc[0].includes("veo-3.1-fast-generate-preview") && state.calls.some(c => /\/v1beta\/models\?/.test(c[0])), pc[0]);
 ok("الجسم: صورة base64 ونسبة 9:16 ومدة من {4,6,8}", pb.instances[0].image.bytesBase64Encoded === "iVBORw0KGgo=" && pb.instances[0].image.mimeType === "image/png" && pb.parameters.aspectRatio === "9:16" && [4, 6, 8].includes(pb.parameters.durationSeconds), pb);
 ok("المفتاح الخادمي في الترويسة لا في الرابط", pc[0].indexOf("GK") < 0);
 r = await call({ token: TOKEN, action: "get", url: "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" });

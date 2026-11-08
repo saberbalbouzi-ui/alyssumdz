@@ -9,6 +9,7 @@ const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FKEY = (Deno.env.get("FAL_KEY") ?? "").replace(/\s+/g, "");
 const GKEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const VEO = (Deno.env.get("AI_VIDEO_MODELS") ?? "veo-3.1-fast-generate-preview,veo-3.0-fast-generate-001,veo-2.0-generate-001").split(",").map((x) => x.trim()).filter(Boolean);
+const VEO_PINNED = !!Deno.env.get("AI_VIDEO_MODELS");
 const GAPI = "https://generativelanguage.googleapis.com/v1beta";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -54,6 +55,29 @@ function veoInstance(b: any, model: string) {
   const d = Math.max(3, Math.min(10, Number(b?.duration) || 5)), params: Record<string, unknown> = { aspectRatio: portrait ? "9:16" : "16:9" };
   params.durationSeconds = /veo-2/.test(model) ? Math.max(5, Math.min(8, Math.round(d))) : [4, 6, 8].reduce((a, c) => (Math.abs(c - d) < Math.abs(a - d) ? c : a), 6);
   return { instances: [inst], parameters: params };
+}
+
+// اكتشاف نماذج Veo المتاحة لمفتاحك فعلاً (ListModels: ما يدعم predictLongRunning): الأحدث أولاً، والسريع قبل العادي؛ تُخزَّن ساعة. سرّ AI_VIDEO_MODELS يثبّت القائمة يدوياً.
+let vcache: { at: number; list: string[] } | null = null;
+async function veoModels(): Promise<string[]> {
+  if (VEO_PINNED) return VEO;
+  if (vcache && Date.now() - vcache.at < 3_600_000) return vcache.list;
+  const found: string[] = [];
+  try {
+    let tok = "";
+    for (let i = 0; i < 6; i++) {
+      const r = await fetch(`${GAPI}/models?pageSize=100${tok ? "&pageToken=" + encodeURIComponent(tok) : ""}`, { headers: { "x-goog-api-key": GKEY }, signal: AbortSignal.timeout(20_000) });
+      if (!r.ok) break; const j: any = await r.json().catch(() => ({}));
+      for (const m of Array.isArray(j.models) ? j.models : []) {
+        const n = String(m?.name ?? "").replace(/^models\//, "");
+        if (/veo/i.test(n) && Array.isArray(m?.supportedGenerationMethods) && m.supportedGenerationMethods.includes("predictLongRunning")) found.push(n);
+      }
+      tok = String(j.nextPageToken ?? ""); if (!tok) break;
+    }
+  } catch { /* نستعمل الافتراضي */ }
+  const ver = (n: string) => Number((/veo-(\d+(?:\.\d+)?)/i.exec(n) ?? [])[1] ?? 0);
+  found.sort((a, b) => (/fast/i.test(a) ? 0 : 1) - (/fast/i.test(b) ? 0 : 1) || ver(b) - ver(a) || a.localeCompare(b));
+  const list = found.length ? found : VEO; vcache = { at: Date.now(), list }; return list;
 }
 
 Deno.serve(async (req) => {
@@ -108,14 +132,14 @@ Deno.serve(async (req) => {
       let j: any = {}; try { j = JSON.parse(text); } catch { /* */ }
       return json({ ...j, left: ch.left });
     }
-    let last = 502, msg = "";
-    for (const m of VEO) {
+    let last = 502, msg = ""; const tried: string[] = [];
+    for (const m of (await veoModels()).slice(0, 4)) {
       const r = await fetch(`${GAPI}/models/${m}:predictLongRunning`, { method: "POST", headers: GH, body: JSON.stringify(veoInstance(body, m)), signal: AbortSignal.timeout(110_000) }), j: any = await r.json().catch(() => ({}));
       if (r.ok && j?.name && OP_OK.test(j.name)) return json({ request_id: j.name, status_url: "veo-s:" + j.name, response_url: "veo-r:" + j.name, left: ch.left, model: m });
-      last = r.status; msg = String(j?.error?.message ?? "").slice(0, 200);
+      last = r.status; msg = String(j?.error?.message ?? "").slice(0, 200); tried.push(m + "=" + r.status + (msg ? " " + msg.slice(0, 80) : ""));
       if (r.status === 429 || r.status === 401 || r.status === 403) break;           // لا فائدة من تجربة نموذج آخر
     }
-    await refund(); return json({ error: "upstream_failed", status: last, message: "تعذّر إنشاء الفيديو" + (msg ? " — " + msg : "") + " — لم يُخصم من رصيدك" }, 502);
+    await refund(); return json({ error: "upstream_failed", status: last, tried, message: "تعذّر إنشاء الفيديو" + (msg ? " — " + msg : "") + " — لم يُخصم من رصيدك" }, 502);
   } catch {
     await refund(); return json({ error: "upstream_failed", message: "تعذّرت خدمة الفيديو مؤقتاً — لم يُخصم من رصيدك" }, 502);
   }
