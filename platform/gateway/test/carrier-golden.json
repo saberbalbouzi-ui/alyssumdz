@@ -3608,6 +3608,36 @@
             }
         },
         {
+            "name": "track_En Cours de Traitement",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En Cours de Traitement\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "En Cours de Traitement"
+            }
+        },
+        {
             "name": "track_Prêt à expédier",
             "op": "track",
             "arg": {

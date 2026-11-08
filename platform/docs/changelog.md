@@ -1444,3 +1444,6 @@
 
 ## 1.89.920 — حالات WeCan
 قاموس حالات WeCan صار خاصاً به (family `wecan` في `status-dict.json` ونسختي PHP/JS) وفق صفحة Expéditions عندهم (20 حالة): Pré-expédié = مؤكَّدة (لم تُسلَّم بعد)، Reçu à la Wilaya وEn localisation وEn attente du client = مُرسَلة، En alerte وTentative échouée وBloqué = تنبيه بلا تغيير، Échec de livraison وRetour/Retourné au centre/vendeur = فشل/مرتجع. في اللوحة: `DELIVERY_COMPANIES.wecan.mapStatus` يعالج هذه النصوص أولاً (كان «Échec de livraison» يُهمَل و«Pré-expédié» يُعدّ مُرسَلة). اللقطة الذهبية مُحدَّثة (test-carriers 240، parity ناجح، اختُبرت الحالات العشرون في اللوحة). **لم يُجرَّب** على حساب WeCan حقيقي؛ ولم تُنشر نسخ الباكند للعملاء.
+
+## 1.89.921 — حالة «En Cours de Traitement» عند WeCan
+قائمة «Commandes» عند WeCan تعرض حالة الطلب (En Cours de Traitement / Expédié) إلى جانب حالات الشحنة؛ أُضيفت En Cours de Traitement = مؤكَّدة (قيد التجهيز) في اللوحة وقاموس `wecan` (PHP/JS) واللقطة الذهبية. اختُبر: test-carriers 240، parity، الحالات في اللوحة. **لم يُجرَّب** على حساب حقيقي.
