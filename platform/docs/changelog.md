@@ -1447,3 +1447,6 @@
 
 ## 1.89.921 — حالة «En Cours de Traitement» عند WeCan
 قائمة «Commandes» عند WeCan تعرض حالة الطلب (En Cours de Traitement / Expédié) إلى جانب حالات الشحنة؛ أُضيفت En Cours de Traitement = مؤكَّدة (قيد التجهيز) في اللوحة وقاموس `wecan` (PHP/JS) واللقطة الذهبية. اختُبر: test-carriers 240، parity، الحالات في اللوحة. **لم يُجرَّب** على حساب حقيقي.
+
+## 1.89.922 — حالات طلبات WeCan (Commandes)
+لقطة «Commandes par statut» عند WeCan أظهرت حالات الطلب: En attente · Confirmée · En traitement · Expédiée · Livrée · Retournée · Échange. أُضيفت إلى اللوحة وقاموس `wecan` (PHP/JS): En attente/Confirmée/En traitement = مؤكَّدة، Expédiée = مُرسَلة، Livrée = مُسلَّمة، Retournée = مرتجع؛ وÉchange بلا تغيير. ملاحظة تشخيصية: طلبات `/parcels` تظهر عندهم في Commandes غالباً بحالة «Expédiée» مباشرة (4 من 5) لا «En traitement». **لم يُجرَّب** على حساب حقيقي. بقي غير محسوم: مجموع 1650 بدل 2500 (يُنتظر لقطة صفحة تفاصيل الطلب).

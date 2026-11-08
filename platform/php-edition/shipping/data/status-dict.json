@@ -17,7 +17,7 @@
   "wecan": {
     "verified": "screenshot:2026-11",
     "exact": {
-      "En préparation": "pending", "En Cours de Traitement": "pending", "Prêt à expédier": "pending", "Pré-expédié": "pending", "A vérifier": "pending", "Pas encore expédié": "pending",
+      "En préparation": "pending", "En Cours de Traitement": "pending", "En traitement": "pending", "Confirmée": "pending", "Expédiée": "shipped", "Livrée": "delivered", "Retournée": "returned", "Prêt à expédier": "pending", "Pré-expédié": "pending", "A vérifier": "pending", "Pas encore expédié": "pending",
       "Expédié": "shipped", "Transfert": "shipped", "Centre": "shipped", "Vers Wilaya": "shipped", "Reçu à la Wilaya": "shipped", "Reçu à Wilaya": "shipped", "En attente du client": "shipped", "En localisation": "shipped", "Ramassé": "shipped", "Bloqué": "shipped", "Débloqué": "shipped",
       "Sorti en livraison": "out_for_delivery", "Prêt pour livreur": "out_for_delivery",
       "En alerte": "failed_attempt", "Tentative échouée": "failed_attempt", "Échec de livraison": "failed_attempt", "Echec livraison": "failed_attempt",
