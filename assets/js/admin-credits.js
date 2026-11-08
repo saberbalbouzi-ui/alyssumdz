@@ -28,6 +28,7 @@ const Credits = (() => {
   let depth = 0;
   const siteOn = () => { try { return (typeof CONFIG !== "undefined" && (!!CONFIG.HUB_SITE || !!CONFIG.CREDITS_ON)); } catch (e) { return false; } };
   const on = () => siteOn() || LS.get(KEY) != null;
+  const hubOwner = () => { try { return typeof CONFIG !== "undefined" && !!CONFIG.HUB_SITE; } catch (e) { return false; } };       // موقع المالك فقط (لا يظهر للعملاء)
   function load() {
     let o = null; try { o = JSON.parse(LS.get(KEY) || "null"); } catch (e) { }
     if (!o || typeof o !== "object") o = { total: siteOn() ? START : 0, left: siteOn() ? START : 0, log: [] };
@@ -133,12 +134,14 @@ const Credits = (() => {
 <div class="cr-big">${fmt(s.left)} / ${fmt(s.total)}</div><div class="cr-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
 <div style="font-size:.8rem;opacity:.85">1$ = ${PER_USD} رصيد · الرصيد لا ينتهي · أدوات الاستوديو المحلية (حواف، تمويه، بازل، ماسك، كولاج، باركود، استوديو 3D…) مجانية.</div>
 <b style="display:block;margin-top:.8rem">شراء رصيد</b><div class="cr-packs">${PACKS.map(p => `<button type="button" class="cr-btn" data-cr="buy" data-u="${p[0]}" data-c="${p[1]}">${p[0]}$<small>${p[1]} رصيد${p[1] > p[0] * PER_USD ? " <span dir=\"ltr\">(+" + Math.round((p[1] / (p[0] * PER_USD) - 1) * 100) + "%)</span>" : ""}</small></button>`).join("")}</div>
+${hubOwner() ? `<div style="margin-top:.6rem"><button type="button" class="cr-btn" data-cr="own" title="للمالك فقط: لا طلب دعم ولا دفع">إضافة ${START} رصيد للمالك (تجريبي)</button></div>` : ""}
 <details><summary>أسعار الأدوات</summary><table>${rows}</table></details>
 ${hist ? `<details><summary>آخر العمليات</summary><table>${hist}</table></details>` : ""}</div>`;
     document.body.appendChild(bg);
     bg.addEventListener("click", async e => {
       if (e.target === bg) return close(); const el = e.target.closest("[data-cr]"); if (!el) return; const a = el.dataset.cr;
       if (a === "x") close();
+      else if (a === "own") { if (hubOwner() && topup(START, "شحن المالك")) { toast("✅ أُضيف " + START + " رصيد"); close(); open(); } }
       else if (a === "buy") {
         const u = +el.dataset.u, c = +el.dataset.c; if (!confirm("إرسال طلب شحن " + c + " رصيد (" + u + " $) إلى فريق الدعم؟")) return;
         try { const N = typeof AdminStores !== "undefined" && AdminStores.notify; if (!N) throw new Error("تعذّر الاتصال بالدعم — حاول لاحقاً"); await AdminStores.notify("طلب شحن رصيد الأدوات\nالرصيد: " + c + "\nالمبلغ: " + u + " $", "billing", { credits: c, usd: u }, "طلب شحن رصيد: " + c); el.innerHTML = "أُرسل الطلب<small>يُضاف الرصيد بعد تأكيد الدعم</small>"; }
