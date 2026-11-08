@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.895">
+<meta name="admin-version" content="1.89.896">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -2758,7 +2758,7 @@ const Admin = {
     try{ localStorage.setItem("alyssum_admin_on","1"); }catch(e){}
     this.loadDeliveryCfg();
     this.loadBlacklist();
-    this.startAlerts(); this.startShipAutoSync(); setTimeout(()=>{ try{ this.fetchCommuneFees({ auto:true }).then(()=>this.ensureCompanyPrices()); }catch(e){} }, 12000);
+    this.startAlerts(); this.startShipAutoSync(); setTimeout(()=>{ try{ this.fetchCommuneFees({ auto:true }).then(()=>this.ensureCompanyPrices()).then(()=>this.refreshStalePrices()); }catch(e){} }, 12000);
     try{ Updater.init(); }catch(e){}
     fetch("version.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ const h=document.querySelector(".top h1"); if(j&&j.version&&h) h.title="الإصدار "+j.version; }).catch(()=>{});
     await Promise.all([this.loadPixels(), this.loadQA(), this.loadTheme(), this.loadCoupons(), this.loadLoyalty(), this.loadWelcome(), this.loadCollections(), this.loadRepeat(), this.loadAttrLib(), this.loadNotify(), this.loadCheckoutSettings(), this.loadFinance()]);
@@ -7572,7 +7572,7 @@ const Admin = {
         if(stop){ const w = Admin.wCo(order.wilaya); const d = w && (w.desks||[]).find(x=>x.name === order.desk); deskId = order.__deskId || (d ? d.id : null);
           if(!deskId) { const err = new Error("مكتب Stop Desk «" + (order.desk || "؟") + "» غير معروف لدى ياليدين — اختر مكتباً من القائمة أو حوّل التوصيل إلى المنزل"); throw err; } }
         /* إعدادات صاحب المتجر: التأمين دائماً مفعّل، السعر بدون التوصيل = القيمة المصرَّح بها للتأمين، لا أبعاد ولا وزن، فتح الطرد مسموح، والمنتجات بلا أسعار */
-        const total = Math.max(0, Math.round(Number(order.total) || 0)), price = Math.max(0, total - Math.round(Number(order.fee) || 0));
+        const total = Math.max(0, Math.round(Number(order.total) || 0)), fee0 = Math.round(Number(order.fee) || 0), cf = fee0 > 0 ? Admin.carrierFee("yalidine", order) : 0, price = Math.max(0, total - (cf || fee0));       // ياليدين تضيف تعريفتها هي فوق price: نخصم رسمها لا رسم المتجر ليطابق مجموعها ما دفعه الزبون
         const products = String(order.items || "").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250);
         const body = {
           order_id: String(order.__ydId || order.id),
@@ -7883,7 +7883,7 @@ const Admin = {
         let ph = String(order.phone || "").replace(/\D/g, ""); if(ph.startsWith("213")) ph = "0" + ph.slice(3); else if(ph.length === 9) ph = "0" + ph;
         const stop = order.dtype === "stop", desk = Number(order.__wcDesk || order.__deskId || 0); if(stop && !desk) throw new Error("لم يُحلّ مكتب Stop Desk عند WeCan لهذا الطلب");
         const total = Math.max(0, Math.round(Number(order.total) || 0)); let fee = Math.max(0, Math.round(Number(order.fee) || 0));
-        { const wid = Number(order.__coWid || order.__wid0 || (Admin.wCo(order.wilaya) || {}).id), t = Admin.parsePriceFix(cfg.priceFix || this.tariff)[wid]; if(t){ const tf = stop ? (t.stop || t.home) : t.home; if(tf > 0) fee = tf; } }       // WeCan تحسب التوصيل من تعريفتها وحدها: نرسل رسمها هي كي يطابق مجموعهم ما دفعه الزبون
+        { const cf = Admin.carrierFee("wecan", order); if(cf > 0) fee = cf; }       // WeCan تحسب التوصيل من تعريفتها وحدها: نرسل رسمها هي كي يطابق مجموعها ما دفعه الزبون
         const price = Math.max(0, total - fee);       // «Total des produits» عندهم = بلا التوصيل؛ التوصيل يُسعَّر من تعريفتهم (نرسل رسمه ونوعه أيضاً)
         const products = String(order.items || "").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250) || "Produit";
         let p2 = String((order.extra && order.extra["📞 هاتف 2"]) || "").replace(/\D/g, ""); if(p2.startsWith("213")) p2 = "0" + p2.slice(3); else if(p2.length === 9) p2 = "0" + p2;
@@ -8206,13 +8206,40 @@ const Admin = {
       (all[k].feesDetailRequest ? '<button class="small gold" type="button" style="margin-top:.3rem" onclick="Admin.fetchCommuneFees({force:true})" title="يجلب سعر التوصيل لكل بلدية (إضافة البلدية) ليُحسب في المتجر كما تحسبه الشركة">⬇️ جلب إضافة البلديات من ' + all[k].name + '</button> ' : "") +
       (all[k].centersRequest ? '<button class="small blue" type="button" style="margin-top:.3rem" onclick="Admin.syncDesksFromCompany(\'' + k + '\')">🏢 مزامنة مكاتب Stop Desk من ' + all[k].name + '</button>' : "") + '</div>').join("");
   },
+  /* رسم الشركة نفسها (تعريفتها هي، بلا نقص صاحب المتجر adj) لولاية/بلدية/نوع الطلب: الشركات التي تحسب التوصيل بنفسها وتضيفه فوق «price» (ياليدين، WeCan) يجب أن يُخصم من مجموع الزبون رسمها هي لا رسم المتجر
+     كي يطابق ما تحصّله ما دفعه الزبون (وإلا اختلف المجموع كلما خفّض صاحب المتجر السعر أو اختلفت التعريفتان). 0 = غير معروف ⟵ يُستعمل رسم الطلب. */
+  carrierFee(key, order){
+    try{
+      if(typeof ShipTable === "undefined" || !order) return 0;
+      const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {}; let pr = cfg.prices; if(co && co.tariff) pr = this.applyPriceFix(pr || {}, cfg, key);
+      if(!pr || !Object.keys(pr).length) return 0;
+      const wc = this.wCo(order.wilaya), wid = Number(order.__coWid || order.__wid0 || (wc || {}).id); if(!wid) return 0;
+      const own = !!(co && co.ownTariff);          // تعريفة الشركة كاملة منها: بلا إضافات بلديات ياليدين
+      const v = ShipTable.fee({ id: wid, name: (wc && wc.name) || order.wilaya, par: 0, home: 0, stop: 0 }, order.commune || "", order.dtype === "stop" ? "stop" : "home", { def: key, companies: { [key]: { prices: pr, adj: 0 } }, sup: own ? {} : this.communeSup(), cp: own ? {} : this.communeCp() });
+      return v > 0 ? Math.round(v) : 0;
+    }catch(e){ return 0; }
+  },
+  /* تجديد أسعار الشركات المفعّلة دورياً (كل 3 أيام) بدل أن تبقى قديمة إلى أن يضغط صاحب المتجر «جلب الأسعار»؛ الشركات ذات التعريفة المدمجة (WeCan) لا تحتاج جلباً */
+  async refreshStalePrices(){
+    try{
+      const all = this.allDeliveryCompanies();
+      for(const k of this.enabledCompanyKeys()){
+        const co = all[k], cfg = this.deliveryCfg[k] || {};
+        if(!co || !co.feesRequest || co.tariff || !(cfg.apiId || cfg.apiToken || cfg.apiKey)) continue;
+        if(Object.keys(cfg.prices || {}).length && cfg.pricesAt && Date.now() - cfg.pricesAt < 3 * 86400000) continue;
+        if(cfg.pricesTry && Date.now() - cfg.pricesTry < 6 * 3600000) continue;
+        this.deliveryCfg[k] = Object.assign({}, cfg, { pricesTry: Date.now() }); this.saveDeliveryCfgToStorage();
+        await this.fetchCompanyPrices(k, { auto:true }); await new Promise(r=>setTimeout(r, 1500));
+      }
+    }catch(e){ console.warn("refreshStalePrices", e); }
+  },
   /* تصحيحات يدوية لأسعار ولايات بعينها تبقى بعد «جلب الأسعار» (حين تُخطئ الشركة في تعريفتها): نصّ «42=650/500, 35=540/400» = رقم الولاية = منزل/مكتب */
   parsePriceFix(txt){ const m = {}; String(txt || "").split(/[,;\n،]+/).forEach(x=>{ const r = /^\s*(\d{1,2})\s*[=:]\s*(\d{2,5})\s*(?:[\/|-]\s*(\d{2,5}))?\s*$/.exec(x); if(r && +r[1] >= 1 && +r[1] <= 58){ const h = +r[2], d = r[3] ? +r[3] : 0; m[+r[1]] = { home: h, stop: d || h }; } }); return m; },
   applyPriceFix(prices, cfg, key){ const co = key && this.DELIVERY_COMPANIES[key], fx = this.parsePriceFix((cfg && cfg.priceFix) || (co && co.tariff) || ""); const out = Object.assign({}, prices || {}); Object.keys(fx).forEach(k=>{ out[k] = Object.assign({}, out[k] || {}, fx[k]); }); return out; },
   async fetchCompanyPrices(key, opts){
     const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
     if(!co || !co.feesRequest){ toast("هذه الشركة لا تدعم الجلب التلقائي"); return }
-    toast("⏳ جارِ جلب التعريفة من " + co.name + "...");
+    if(!(opts && opts.auto)) toast("⏳ جارِ جلب التعريفة من " + co.name + "...");
     try{
       const prices = {}; let sample = "";
       for(let page = 1; page <= (co.feesPages || 6); page++){
@@ -8229,7 +8256,7 @@ const Admin = {
       if(key !== "yalidine" && (n < 30 || Object.values(prices).some(v=>(v.home && (v.home < 100 || v.home > 6000)) || (v.stop && v.stop > 6000)))) throw new Error("ردّ الشركة لا يحوي تعريفة مفهومة (" + n + " ولاية) — لم تُعتمد؛ تبقى أسعار المناطق");
       this.deliveryCfg[key] = Object.assign({}, cfg, { prices: this.applyPriceFix(prices, cfg, key), pricesAt: Date.now(), pricesSrc:"api", pricesErr:"" });
       this.saveDeliveryCfgToStorage();
-      toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name + " تلقائياً");
+      if(!(opts && opts.auto)) toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name + " تلقائياً");
       this.publishShipCo();
       if(co.feesDetailRequest) this.fetchCommuneFees({ auto:true });
       this.renderDelivery(); if(this.editingDeliveryKey === key) this.renderDeliveryPriceBox(key);
