@@ -17,7 +17,7 @@ final class RecSim implements HttpClient
     public function request(string $method, string $url, array $headers = [], ?string $body = null): HttpResponse
     {
         $r = $this->sim->request($method, $url, $headers, $body);
-        $this->rec[] = ['m' => $method, 'u' => $url, 'h' => $headers, 'b' => $body, 's' => $r->status, 'r' => (string)$r->body];
+        $this->rec[] = ['m' => $method, 'u' => $url, 'h' => $headers, 'b' => $body === null ? null : preg_replace('/"customerId":"[0-9a-f-]{36}"/', '"customerId":"<uuid>"', $body), 's' => $r->status, 'r' => (string)$r->body, 'rh' => $r->headers];
         return $r;
     }
 }
@@ -28,6 +28,7 @@ function carrier_golden(): array
     $cfg = [
         'yalidine'  => ['sim' => fn() => new YalidineSim(), 'good' => ['apiId' => 'AID', 'apiToken' => 'TOK'], 'bad' => ['apiId' => 'AID', 'apiToken' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'yalidine'],
         'wecan'     => ['sim' => fn() => new WeCanSim(), 'good' => ['apiKey' => 'KEY', 'apiSecret' => 'SEC'], 'bad' => ['apiKey' => 'KEY', 'apiSecret' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'yalidine'],
+        'zrexpress_app' => ['sim' => fn() => new ZRAppSim(), 'good' => ['apiKey' => 'ZKEY', 'tenant' => 'TEN'], 'bad' => ['apiKey' => 'NOPE', 'tenant' => 'TEN'], 'deskKey' => 'desk_code', 'deskVal' => '00000000-0000-4000-a000-000000000001', 'fam' => 'zrexpress'],
         'dhd'       => ['sim' => fn() => new EcotrackSim(), 'good' => ['token' => 'TOK'], 'bad' => ['token' => 'NOPE'], 'deskKey' => 'desk_code', 'deskVal' => '16000', 'fam' => 'ecotrack'],
         'noest'     => ['sim' => fn() => new NoestSim(), 'good' => ['apiToken' => 'TOK', 'userGuid' => 'GUID'], 'bad' => ['apiToken' => 'NOPE', 'userGuid' => 'GUID'], 'deskKey' => 'desk_code', 'deskVal' => '16A', 'fam' => 'noest'],
         'maystro'   => ['sim' => fn() => new MaystroSim(), 'good' => ['apiKey' => 'TOK'], 'bad' => ['apiKey' => 'NOPE'], 'deskKey' => null, 'deskVal' => null, 'fam' => 'maystro'],
@@ -96,13 +97,20 @@ function carrier_golden(): array
         }
         $run('track_rate_limited', 'track', ['tracking' => $trk], function ($ad, $s) use ($trk) { $s->rateLimit = true; return ['status' => $ad->trackParcel($trk)->status]; }, $c['good'], $sim);
 
+        /* بوليصة الشركة الأصلية (رابط من الشركة؛ NOEST عبر تحويل 302) */
+        if (in_array($code, ['yalidine', 'wecan', 'noest', 'zrexpress_app'], true)) {
+            $sim = ($c['sim'])(); [, , $ad0] = $mk($c['good'], $sim);
+            $t5 = $ad0->createParcel($P(['order_ref' => 'G-lbl']))->tracking;
+            $run('label', 'label', ['tracking' => $t5], fn($ad) => ['url' => $ad->labelUrl($t5)], $c['good'], $sim);
+        }
+
         /* إلغاء */
         $sim = ($c['sim'])(); [, , $ad0] = $mk($c['good'], $sim);
         $t2 = $ad0->createParcel($P(['order_ref' => 'G-can', 'phone' => '0661112233', 'name' => 'Yacine Cancel']))->tracking;
         $run('cancel_fresh', 'cancel', ['tracking' => $t2], fn($ad) => $ad->cancelParcel($t2), $c['good'], $sim);
         $sim = ($c['sim'])(); [, , $ad0] = $mk($c['good'], $sim);
         $t3 = $ad0->createParcel($P(['order_ref' => 'G-can2', 'phone' => '0661112244', 'name' => 'Amine Cancel']))->tracking;
-        $after = ['yalidine' => 'Expédié', 'wecan' => 'Expédié', 'maystro' => '31'][$code] ?? null;
+        $after = ['yalidine' => 'Expédié', 'wecan' => 'Expédié', 'zrexpress_app' => 'Dispatch', 'maystro' => '31'][$code] ?? null;
         if ($after !== null) { $sim->setStatus($t3, $after); }
         $run('cancel_after_dispatch', 'cancel', ['tracking' => $t3], fn($ad) => $ad->cancelParcel($t3), $c['good'], $sim);
         if ($code === 'dhd' || $code === 'noest') {

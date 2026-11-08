@@ -16,6 +16,7 @@ function throws(callable $f): ?Throwable { try { $f(); } catch (Throwable $e) { 
 $CARRIERS = [
     'yalidine'  => ['sim' => fn() => new YalidineSim(), 'good' => ['apiId' => 'AID', 'apiToken' => 'TOK'], 'bad' => ['apiId' => 'AID', 'apiToken' => 'NOPE'], 'desk' => ['deskId' => 161601], 'needsDesk' => true,  'resolver' => false, 'dupSim' => true,  'cancelAfter' => 'Expédié', 'pend' => 'En préparation'],
     'wecan'     => ['sim' => fn() => new WeCanSim(), 'good' => ['apiKey' => 'KEY', 'apiSecret' => 'SEC'], 'bad' => ['apiKey' => 'KEY', 'apiSecret' => 'NOPE'], 'desk' => ['deskId' => 161601], 'needsDesk' => true,  'resolver' => false, 'dupSim' => true,  'cancelAfter' => 'Expédié', 'pend' => 'En préparation'],
+    'zrexpress_app' => ['sim' => fn() => new ZRAppSim(), 'good' => ['apiKey' => 'ZKEY', 'tenant' => 'TEN'], 'bad' => ['apiKey' => 'NOPE', 'tenant' => 'TEN'], 'desk' => ['deskCode' => '00000000-0000-4000-a000-000000000001'], 'needsDesk' => true, 'resolver' => true, 'dupSim' => true, 'cancelAfter' => 'Dispatch', 'pend' => 'Commande reçue'],
     'dhd'       => ['sim' => fn() => new EcotrackSim(), 'good' => ['token' => 'TOK'], 'bad' => ['token' => 'NOPE'], 'desk' => ['deskCode' => '16000'], 'needsDesk' => true,  'resolver' => true,  'dupSim' => true,  'cancelAfter' => null, 'pend' => 'order_information_received_by_carrier'],
     'noest'     => ['sim' => fn() => new NoestSim(),    'good' => ['apiToken' => 'TOK', 'userGuid' => 'GUID'], 'bad' => ['apiToken' => 'NOPE', 'userGuid' => 'GUID'], 'desk' => ['deskCode' => '16A'], 'needsDesk' => true,  'resolver' => true,  'dupSim' => false, 'cancelAfter' => null, 'pend' => 'upload'],
     'maystro'   => ['sim' => fn() => new MaystroSim(),  'good' => ['apiKey' => 'TOK'], 'bad' => ['apiKey' => 'NOPE'], 'desk' => [], 'needsDesk' => false, 'resolver' => true,  'dupSim' => true,  'cancelAfter' => '50', 'pend' => '4'],
@@ -89,7 +90,7 @@ foreach ($CARRIERS as $code => $c) {
     $n0 = count($sim->log);
     $r = $ad->createParcel(parcel(['stop_desk' => true]));
     if ($c['needsDesk']) {
-        ok("$code: مكتب بلا رمز ← خطأ واضح بلا طلب إنشاء", !$r->ok && $r->error !== '' && $sim->violations === [] && !array_filter(array_slice($sim->log, $n0), fn($l) => $l[0] === 'POST'), [$r->error, $sim->violations]);
+        ok("$code: مكتب بلا رمز ← خطأ واضح بلا طلب إنشاء", !$r->ok && $r->error !== '' && $sim->violations === [] && !array_filter(array_slice($sim->log, $n0), fn($l) => $l[0] === 'POST' && !str_ends_with($l[1], '/search')), [$r->error, $sim->violations]);
         [$sim, $ad] = $new();
         $dk = []; foreach ($c['desk'] as $k => $v) { $dk[$k === 'deskId' ? 'desk_id' : 'desk_code'] = $v; }
         $r = $ad->createParcel(parcel(['stop_desk' => true] + $dk));
@@ -105,7 +106,7 @@ foreach ($CARRIERS as $code => $c) {
     ok("$code: بلدية مجهولة ← فشل مقروء", !$r->ok && $r->error !== '' && !str_contains($r->error, 'SIM VIOLATION'), $r->error);
     ok("$code: بلا مخالفة صيغة", $sim->violations === [], $sim->violations);
     if ($c['resolver']) {
-        ok("$code: مجهولة ← بلا طلب إنشاء + اقتراحات", !array_filter(array_slice($sim->log, $n0), fn($l) => $l[0] === 'POST') && str_contains($r->error, 'الأقرب'), $r->error);
+        ok("$code: مجهولة ← بلا طلب إنشاء + اقتراحات", !array_filter(array_slice($sim->log, $n0), fn($l) => $l[0] === 'POST' && !str_ends_with($l[1], '/search')) && str_contains($r->error, 'الأقرب'), $r->error);
     }
 
     /* 6) التكرار */
@@ -133,7 +134,7 @@ foreach ($CARRIERS as $code => $c) {
     [$sim, $ad] = $new();
     $tk = $ad->createParcel(parcel())->tracking;
     $entries = [];
-    $famKey = $code === 'dhd' ? 'ecotrack' : $code;
+    $famKey = ['dhd' => 'ecotrack', 'wecan' => 'yalidine', 'zrexpress_app' => 'zrexpress'][$code] ?? $code;
     if ($code === 'maystro') {                                          // ردّ ميسترو الحقيقي رقمي؛ الأسماء الفرنسية للويب هوك فتُفحص عبر المحوّل مباشرة
         $lbl = []; foreach ($dict['maystro']['exact'] as $raw => $exp) { if ($ad->mapStatus($raw) !== $exp) { $lbl[] = $raw; } }
         ok('maystro: تسميات الحالة النصية تُترجم صحيحاً', $lbl === [], $lbl);
@@ -183,13 +184,29 @@ $tk = $ad->createParcel(parcel())->tracking;
 $sim->history[$tk] = ['upload', 'validation_reception', 'fdr_activated', 'livre', 'verssement_admin_cust'];
 ok('NOEST: حدث مالي بعد التسليم لا يمحو «delivered»', $ad->trackParcel($tk)->status === Status::DELIVERED);
 
+
+/* ───── ZR Express الجديدة: الإشعارات (أنواع الأحداث، isReturn) وتوقيع Svix ───── */
+$ad = mk('zrexpress_app', new ZRAppSim(), ['apiKey' => 'ZKEY', 'tenant' => 'TEN']);
+$ev = $ad->parseWebhook(['eventType' => 'parcel.state.updated', 'data' => ['trackingNumber' => 'ZR1', 'externalId' => 'M1', 'state' => ['description' => 'Livré']]], []);
+ok('ZR webhook: parcel.state.updated ← delivered', count($ev) === 1 && $ev[0]->status === Status::DELIVERED && $ev[0]->orderRef === 'M1');
+ok('ZR webhook: الحالة الفرعية (situation) لا تغيّر الحالة', $ad->parseWebhook(['eventType' => 'parcel.state.situation.created', 'data' => ['trackingNumber' => 'ZR1', 'state' => ['name' => 'X']]], []) === []);
+$ev = $ad->parseWebhook(['eventType' => 'parcel.isReturn.updated', 'data' => ['trackingNumber' => 'ZR1', 'isReturn' => true, 'state' => ['name' => 'Dispatch']]], []);
+ok('ZR webhook: isReturn=true ← returned', count($ev) === 1 && $ev[0]->status === Status::RETURNED);
+$key = random_bytes(24); $sec = 'whsec_' . base64_encode($key); $body = '{"eventType":"parcel.state.updated"}'; $ts = (string)time();
+$adS = mk('zrexpress_app', new ZRAppSim(), ['apiKey' => 'ZKEY', 'tenant' => 'TEN', 'webhookSecret' => $sec]);
+$sig = 'v1,' . base64_encode(hash_hmac('sha256', "id1.$ts.$body", $key, true));
+ok('ZR Svix: توقيع صحيح ← true', $adS->verifyWebhook($body, ['svix-id' => 'id1', 'svix-timestamp' => $ts, 'svix-signature' => $sig]) === true);
+ok('ZR Svix: توقيع خاطئ ← false', $adS->verifyWebhook($body, ['svix-id' => 'id1', 'svix-timestamp' => $ts, 'svix-signature' => 'v1,xxx']) === false);
+ok('ZR Svix: طابع قديم ← false', $adS->verifyWebhook($body, ['svix-id' => 'id1', 'svix-timestamp' => (string)(time() - 4000), 'svix-signature' => $sig]) === false);
+ok('ZR Svix: بلا سرّ ← null', $ad->verifyWebhook($body, []) === null);
+
 /* ───── عام: كل ملف قاموس يغطي مفاتيح الحالة الموحدة فقط ───── */
 $allowed = array_merge(Status::ALL, ['ignore']);
 $badVals = [];
 foreach ($dict as $fam => $d) { if (!is_array($d)) { continue; } foreach (['exact', 'codes', 'event_key'] as $k) { foreach (($d[$k] ?? []) as $raw => $v) { if (!in_array($v, $allowed, true)) { $badVals[] = "$fam/$k/$raw=$v"; } } } }
 ok('القواميس: كل القيم حالات موحّدة صحيحة', $badVals === [], $badVals);
 foreach (array_keys(array_filter($CARRIERS, fn($c, $k) => true, ARRAY_FILTER_USE_BOTH)) as $code) {
-    $fam = ['dhd' => 'ecotrack', 'wecan' => 'yalidine'][$code] ?? $code;
+    $fam = ['dhd' => 'ecotrack', 'wecan' => 'yalidine', 'zrexpress_app' => 'zrexpress'][$code] ?? $code;
     ok("القاموس يغطي الشركة $fam", isset($dict[$fam]));
 }
 

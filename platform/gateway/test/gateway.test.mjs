@@ -286,4 +286,23 @@ await call("POST", "/v1/orders", { ...order({ reference: "BN1" }), ...yal }, kN)
 ok("ناقل: مستأجر بلا site_ref لا يُصدر", sql("SELECT COUNT(*) n FROM gw_bus WHERE tenant_id=?", tN).n === 0);
 ok("التوقيع مطابق للصيغة", (await Dispatcher.sign("s", 1, "{}")).startsWith("t=1,v1="));
 
+
+/* ───── ZR Express الجديدة: الإشعارات وتوقيع Svix (مطابقة لنسخة PHP) ───── */
+{
+  const { makeAdapter } = await import("../src/carriers.js");
+  const zr = makeAdapter("zrexpress_app", async () => ({ status: 0 })).authenticate({ apiKey: "K", tenant: "T" });
+  const e1 = zr.parseWebhook({ eventType: "parcel.state.updated", data: { trackingNumber: "ZR1", externalId: "M1", state: { description: "Livré" } } });
+  ok("ZR webhook: state.updated ← delivered", e1.length === 1 && e1[0].status === "delivered" && e1[0].orderRef === "M1");
+  ok("ZR webhook: الحالة الفرعية لا تغيّر الحالة", zr.parseWebhook({ eventType: "parcel.state.situation.created", data: { trackingNumber: "ZR1", state: { name: "X" } } }).length === 0);
+  const e2 = zr.parseWebhook({ eventType: "parcel.isReturn.updated", data: { trackingNumber: "ZR1", isReturn: true, state: { name: "Dispatch" } } });
+  ok("ZR webhook: isReturn ← returned", e2.length === 1 && e2[0].status === "returned");
+  const key = Buffer.from("0123456789abcdef01234567"), sec = "whsec_" + key.toString("base64"), body = '{"eventType":"parcel.state.updated"}', ts = String(Math.floor(Date.now() / 1000));
+  const zs = makeAdapter("zrexpress_app", async () => ({ status: 0 })).authenticate({ apiKey: "K", tenant: "T", webhookSecret: sec });
+  const sig = "v1," + createHmac("sha256", key).update(`id1.${ts}.${body}`).digest("base64");
+  ok("ZR Svix: صحيح", (await zs.verifyWebhook(body, { "svix-id": "id1", "svix-timestamp": ts, "svix-signature": sig })) === true);
+  ok("ZR Svix: خاطئ", (await zs.verifyWebhook(body, { "svix-id": "id1", "svix-timestamp": ts, "svix-signature": "v1,xxx" })) === false);
+  ok("ZR Svix: طابع قديم", (await zs.verifyWebhook(body, { "svix-id": "id1", "svix-timestamp": String(+ts - 4000), "svix-signature": sig })) === false);
+  ok("ZR Svix: بلا سرّ ← null", (await zr.verifyWebhook(body, {})) === null);
+}
+
 console.log(fails ? `\n✗ ${fails} من ${total} فشل` : `✓ ${total} فحصاً ناجحاً`); process.exit(fails ? 1 : 0);

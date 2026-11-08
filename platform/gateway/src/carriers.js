@@ -1,4 +1,4 @@
-import { hmacHex, pick, safeEq, safeHttpsUrl } from "./util.js";
+import { b64, enc, hmacHex, pick, safeEq, safeHttpsUrl, unb64 } from "./util.js";
 import { ALL, explain, mapStatus, normText, S } from "./status.js";
 import { best as bestCommune, suggest as suggestCommunes, normalize as ck } from "./commune.js";
 
@@ -15,7 +15,8 @@ export function makeHttp(fetchFn = fetch) {
     try {
       const r = await fetchFn(url, { method, headers: { "User-Agent": "Mozilla/5.0 (compatible; ShippingGateway/1.0)", Accept: "application/json", ...headers }, body: body == null ? undefined : (typeof body === "string" ? body : JSON.stringify(body)), redirect: "manual", signal: ctl.signal });
       const text = (await r.text()).slice(0, 2_000_000);
-      return { status: r.status, body: text, error: "", ok: r.status >= 200 && r.status < 300, json: () => { try { const j = JSON.parse(text); return j && typeof j === "object" ? j : null; } catch { return null; } } };
+      const loc = r.headers?.get?.("location") ?? "";
+      return { status: r.status, body: text, error: "", ok: r.status >= 200 && r.status < 300, headers: { location: loc }, json: () => { try { const j = JSON.parse(text); return j && typeof j === "object" ? j : null; } catch { return null; } } };
     } catch (e) { return { status: 0, body: "", error: String(e.message || e), ok: false, json: () => null }; }
     finally { clearTimeout(t); }
   };
@@ -266,7 +267,19 @@ class ZRExpressApp extends Adapter {
   static BASE = "https://api.zrexpress.app/api/v1";
   static fields() {
     return [{ key: "apiKey", label: "X-Api-Key (اللوحة ← API Rest ← Token API)", secret: true }, { key: "tenant", label: "X-Tenant (معرّف الحساب)", secret: false },
-      { key: "autoDispatch", label: "جعل الطرد «جاهز للإرسال» تلقائياً بعد إنشائه (1 افتراضي، 0 يبقى «استلام الطلب»)", secret: false, required: false }];
+      { key: "autoDispatch", label: "جعل الطرد «جاهز للإرسال» تلقائياً بعد إنشائه (1 افتراضي، 0 يبقى «استلام الطلب»)", secret: false, required: false },
+      { key: "webhookSecret", label: "سرّ توقيع الـwebhook (whsec_… من لوحة ZR، اختياري — للتحقق من توقيع الإشعارات)", secret: true, required: false }];
+  }
+  family() { return "zrexpress"; }
+  /** توقيع Svix: HMAC-SHA256(مفتاح whsec مفكوك base64، `${id}.${ts}.${body}`) ← "v1,<base64>"؛ المهلة 10 دقائق ضد إعادة الإرسال. null = لا سرّ مضبوط. */
+  async verifyWebhook(raw, headers = {}) {
+    const secret = String(this.cred.webhookSecret ?? ""); if (!secret) return null;
+    const id = String(headers["svix-id"] ?? ""), ts = String(headers["svix-timestamp"] ?? ""), sigs = String(headers["svix-signature"] ?? "");
+    if (!id || !ts || !sigs || Math.abs(Date.now() / 1000 - Number(ts)) > 600) return false;
+    let key; try { key = unb64(secret.replace(/^whsec_/, "")); } catch { return false; }
+    const k = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const mac = b64(await crypto.subtle.sign("HMAC", k, enc.encode(`${id}.${ts}.${raw}`)));
+    return sigs.split(" ").some((x) => safeEq(x.replace(/^v1,/, ""), mac));
   }
   h() { return { "X-Api-Key": this.cred.apiKey, "X-Tenant": this.cred.tenant, "Content-Type": "application/json", Accept: "application/json" }; }
   async ping() {
@@ -302,11 +315,46 @@ class ZRExpressApp extends Adapter {
     return ws.find((t) => +t.code === +p.wilayaCode) ?? ws.find((t) => +t.code === +p.legacyWilaya) ?? ws.find((t) => ck(t.name) === ck(p.wilayaName)) ?? null;
   }
   async discover(wilayas, want = {}) {
-    const d = Adapter.emptyDiscovery(["ZR Express الجديدة: الأقاليم تُجلب بطلب واحد؛ التعريفة والطرود غير مقروءة بعد (تجريبي)"]);
+    const d = Adapter.emptyDiscovery(["ZR Express الجديدة: الأقاليم تُجلب بطلب واحد؛ الطرود غير مقروءة بعد (تجريبي)"]);
     try {
       if (want.communes) { const ts = await this.territories(); for (const w of wilayas) { const wt = ts.find((t) => this.isWilaya(t) && +t.code === +w); if (wt) d.communes[+w] = ts.filter((t) => t.parentId === wt.id).map((t) => ({ name: t.name, id: t.id })); } }
+      if (want.desks) {                                                                       // نقاط الاستلام: POST /hubs/search (id من نوع UUID يُرسل hubId)
+        const ts = await this.territories(), ws = ts.filter((t) => this.isWilaya(t));
+        for (const h of await this.hubs()) {
+          const a = h.address ?? {}, t = ts.find((x) => x.id === String(a.cityTerritoryId ?? "")), w = (t && +t.code >= 1 && +t.code <= 58 ? t : ws.find((x) => ck(x.name) === ck(String(a.city ?? ""))));
+          const wid = w ? +w.code : 0; if (!(wid >= 1 && wid <= 58) || (wilayas.length && !wilayas.map(Number).includes(wid))) continue;
+          (d.desks[wid] ??= []).push({ id: String(h.id), name: String(h.name ?? ""), commune: String(a.district ?? a.city ?? "") });
+        }
+      }
+      if (want.fees) {                                                                        // تعريفة الحساب: GET /delivery-pricing/rates (مستوى الولاية؛ الجزائر 16 تُسعَّر ببلدياتها)
+        const j = (await this.send("GET", ZRExpressApp.BASE + "/delivery-pricing/rates", this.h())).json() ?? {}, communes = new Set();
+        const px = (r, t) => { const x = (r.deliveryPrices ?? []).find((y) => y && y.deliveryType === t); const v = x ? +(x.discountedPrice ?? x.price) : 0; return Number.isFinite(v) && v > 0 ? v : 0; };
+        for (const r of Array.isArray(j.rates) ? j.rates : []) {
+          const lv = String(r?.toTerritoryLevel ?? "").toLowerCase();
+          if (lv === "commune") { communes.add(px(r, "home") + "/" + px(r, "pickup-point")); continue; }
+          if (lv !== "wilaya") continue;
+          const id = +r.toTerritoryCode; if (!(id >= 1 && id <= 58)) continue;
+          const home = px(r, "home"), stop = px(r, "pickup-point"); if (home || stop) d.fees[id] = { home: home || stop, stop: stop || 0 };
+        }
+        if (!d.fees[16] && communes.size === 1) { const [h, s] = [...communes][0].split("/").map(Number); if (h || s) d.fees[16] = { home: h || s, stop: s || 0 }; }
+      }
     } catch (e) { if (e instanceof ApiError) d.notes.push(e.message); else throw e; }
     return d;
+  }
+  /** نقاط الاستلام المرئية (Stop Desk): POST /hubs/search بصفحات 100 */
+  async hubs() {
+    const rows = [];
+    for (let page = 1; page <= 10; page++) {
+      const j = (await this.send("POST", ZRExpressApp.BASE + "/hubs/search", this.h(), { pageNumber: page, pageSize: 100 })).json() ?? {};
+      for (const h of Array.isArray(j.items) ? j.items : []) if (h && h.id && h.isPickupPoint !== false && h.isVisible !== false && h.address) rows.push(h);
+      if (!j.hasNext || !Array.isArray(j.items) || !j.items.length) break; await this.breath(150);
+    }
+    return rows;
+  }
+  /** بوردرو ZR الأصلي: POST /parcels/labels/individual ← {parcelLabelFiles:[{fileUrl}]} (ملف رسمي بـ4 بطاقات A6 في A4) */
+  async labelUrl(trk) {
+    const j = (await this.send("POST", ZRExpressApp.BASE + "/parcels/labels/individual", this.h(), { trackingNumbers: [String(trk)] })).json() ?? {};
+    const f = Array.isArray(j.parcelLabelFiles) ? j.parcelLabelFiles[0] : null; return httpsOnly(f ? f.fileUrl : null);
   }
   /** معرّف الحالة «جاهز للإرسال» من سير العمل الافتراضي، أو null إن لم يُعثر عليه (يُنشأ الطرد عندئذٍ «استلام الطلب» مع تنبيه) */
   async readyStateId() {
@@ -325,7 +373,7 @@ class ZRExpressApp extends Adapter {
     return this._rs;
   }
   async create(p) {
-    if (p.stopDesk) return fail("التسليم لنقطة استلام (Stop Desk) غير مدعوم بعد في ZR Express الجديدة — اختر التوصيل إلى المنزل");
+    if (p.stopDesk && !p.deskCode) return fail("لم يُحدَّد مكتب Stop Desk لـZR Express — اختر نقطة استلام من قائمتها أو حوّل التوصيل إلى المنزل");
     if (Math.round(p.total) > 150000) return fail("ZR Express تقبل 150,000 دج كحدّ أقصى للطرد (شاملاً التوصيل)");
     const ts = await this.territories();
     if (!ts.length) return fail("تعذّر جلب أقاليم ZR Express (راجع المفتاح ومعرّف الحساب أو أعد المحاولة)");
@@ -335,8 +383,9 @@ class ZRExpressApp extends Adapter {
     const items = p.productsText(250) || "Produit", price = p.priceWithoutShipping() || Math.round(p.total);
     const body = { customer: { customerId: crypto.randomUUID(), name: p.name, phone: { number1: "+213" + p.localPhone().slice(1), ...(p.phone2 ? { number2: "+213" + p.localPhone(p.phone2).slice(1) } : {}) } },
       deliveryAddress: { cityTerritoryId: w.id, districtTerritoryId: m.id, street: clip(p.address || p.commune, 250) },
-      orderedProducts: [{ productName: clip(items, 100), unitPrice: price, quantity: 1, stockType: "none" }], deliveryType: "home",
+      orderedProducts: [{ productName: clip(items, 100), unitPrice: price, quantity: 1, stockType: "none" }], deliveryType: p.stopDesk ? "pickup-point" : "home",
       description: clip(`${items}${p.note ? " — " + p.note : ""}`, 250).padEnd(2, "."), amount: Math.round(p.total), ExternalId: clip(p.orderRef, 100) };
+    if (p.stopDesk) body.hubId = p.deskCode;                                       // نقطة الاستلام (UUID من hubs/search)
     let warn = "";
     if ((this.cred.autoDispatch ?? "1") !== "0") { const sid = await this.readyStateId(); if (sid) body.stateId = sid; else warn = "أُنشئ الطرد بحالة «استلام الطلب» — حوّله إلى «جاهز للإرسال» من لوحة ZR ليقبله المركز"; }
     const r = await this.send("POST", ZRExpressApp.BASE + "/parcels", this.h(), body); const j = r.json() ?? {};
@@ -357,8 +406,10 @@ class ZRExpressApp extends Adapter {
     return (await this.send("DELETE", `${ZRExpressApp.BASE}/parcels/${encodeURIComponent(id)}`, this.h())).ok;
   }
   parseWebhook(payload) {
+    const evt = String(payload?.eventType ?? "");
+    if (evt && !["parcel.state.updated", "parcel.isReturn.updated"].includes(evt)) return [];    // الحالات الفرعية (parcel.state.situation.created) لا تغيّر الحالة
     const d = payload?.data && typeof payload.data === "object" ? payload.data : payload; if (!d || typeof d !== "object") return [];
-    const st = d.state && typeof d.state === "object" ? d.state : {}, raw = String(st.description || st.name || "").trim(), trk = pick(d, "trackingNumber");
+    const st = d.state && typeof d.state === "object" ? d.state : {}, raw = (String(st.description || st.name || "").trim() + (d.isReturn === true ? " retour" : "")).trim(), trk = pick(d, "trackingNumber");
     return trk && raw ? [{ tracking: trk, rawStatus: raw, status: this.mapStatus(raw), orderRef: pick(d, "externalId") }] : [];
   }
 }
@@ -433,15 +484,29 @@ class Noest extends Adapter {
     return (this._c[w] = (Array.isArray(j) ? j : []).filter((c) => c && typeof c === "object" && c.nom !== undefined).map((c) => ({ id: String(c.nom), name: String(c.nom) })));
   }
   async discover(wilayas, want = {}) {
-    const d = Adapter.emptyDiscovery(["NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة"]);
+    const d = Adapter.emptyDiscovery(["NOEST لا تعرض مكاتبها ولا قائمة طرودها عبر الواجهة العامة"]);
     try {
       if (want.communes) for (const w of wilayas) {
         await this.breath(); const j = await this.getJson(`${Noest.BASE}/get/communes/${+w}`, this.h()); const list = [];
         for (const c of Array.isArray(j) ? j : []) { if (!c || typeof c !== "object" || c.nom === undefined) continue; const on = c.is_active ?? 1; list.push({ name: String(c.nom), deliverable: !(on === 0 || on === false || on === "0") }); }
         d.communes[+w] = list;
       }
+      if (want.fees) {                                                                          // تعريفة الحساب: GET /fees ← tarifs.delivery (لا «return»)
+        const f = await this.getJson(Noest.BASE + "/fees", this.h());
+        for (const [k, r] of Object.entries(f?.tarifs?.delivery ?? {})) {
+          if (!r || typeof r !== "object") continue;
+          const id = +(r.wilaya_id ?? k), home = +(r.tarif ?? 0) || 0, stop = +(r.tarif_stopdesk ?? 0) || 0;
+          if (id >= 1 && id <= 58 && (home > 0 || stop > 0)) d.fees[id] = { home: home > 0 ? home : stop, stop: stop > 0 ? stop : 0 };
+        }
+      }
     } catch (e) { if (e instanceof ApiError) d.notes.push(e.message); else throw e; }
     return d;
+  }
+  /** بوردرو NOEST الأصلي: GET get/order/label يحوّل (302) إلى رابط PDF موقَّع قصير العمر؛ المفاتيح تبقى في الخادم. */
+  async labelUrl(trk) {
+    const q = new URLSearchParams({ api_token: this.cred.apiToken, user_guid: this.cred.userGuid, tracking: trk }).toString();
+    const r = await this.send("GET", `${Noest.BASE}/get/order/label?${q}`, this.h()); const loc = String(r.headers?.location ?? "");
+    return r.status >= 300 && r.status < 400 ? httpsOnly(loc) : null;
   }
   async create(p) {
     if (p.stopDesk && p.deskCode === "") return fail("NOEST يحتاج رمز مكتب Stop Desk (station_code مثل 16A) — اختر المكتب أو أرسل للمنزل");
@@ -566,6 +631,8 @@ export const CARRIERS = {
   anderson: E("Anderson Delivery"), ecom_delivery: E("E-com Delivery"), elogistia: E("Elogistia"), "48h": E("48H Express"),
   mylers: { label: "Mylers", cls: null, maturity: "planned" },
 };
+/** يفرّغ الذاكرة المشتركة بين الطلبات (للاختبارات). */
+export function resetCaches() { ZRExpressApp.memo.clear(); }
 export function resolveCarrier(code) {
   const c = String(code ?? "").toLowerCase().trim(); if (CARRIERS[c]) return c;
   for (const [k, m] of Object.entries(CARRIERS)) if ((m.aliases ?? []).includes(c)) return k; return null;

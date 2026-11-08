@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Alyssum\Shipping;
 
-use Alyssum\Shipping\Adapters\{EcotrackAdapter, MaystroAdapter, NoestAdapter, WecanAdapter, YalidineAdapter, ZRExpressAdapter};
+use Alyssum\Shipping\Adapters\{EcotrackAdapter, MaystroAdapter, NoestAdapter, WecanAdapter, YalidineAdapter, ZRExpressAdapter, ZRExpressAppAdapter};
 
 /**
  * سجلّ الشركات: ما تدعمه المنصة وكيف يُوجَّه كل منها. يستعمله المصنع وواجهة «وسائل التوصيل» عند عرض القائمة.
@@ -15,6 +15,7 @@ final class CarrierRegistry
     public const CARRIERS = [
         'yalidine'      => ['label' => 'Yalidine',                 'adapter' => YalidineAdapter::class,   'maturity' => 'documented'],
         'zrexpress'     => ['label' => 'ZR Express',               'adapter' => ZRExpressAdapter::class,  'maturity' => 'experimental', 'aliases' => ['zr', 'procolis']],
+        'zrexpress_app' => ['label' => 'ZR Express (المنصة الجديدة)', 'adapter' => ZRExpressAppAdapter::class, 'maturity' => 'experimental', 'aliases' => ['zr2', 'zrexpress-app', 'zrexpress_new', 'zr_app']],
         'maystro'       => ['label' => 'Maystro Delivery',         'adapter' => MaystroAdapter::class,    'maturity' => 'experimental'],
         'noest'         => ['label' => 'NOEST Express',            'adapter' => NoestAdapter::class,      'maturity' => 'experimental'],
         // عائلة Ecotrack: محوّل واحد، رابط مختلف لكل شركة

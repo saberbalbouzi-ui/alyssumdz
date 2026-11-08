@@ -92,6 +92,74 @@ final class WeCanSim extends Sim
     }
 }
 
+/** ZR Express (المنصة الجديدة): X-Api-Key/X-Tenant، territories/search بصفحات (UUID)، parcels بعناوين UUID وhubId لنقاط الاستلام، 201 يعيد id فقط، workflows/hubs/rates/labels. */
+final class ZRAppSim extends Sim
+{
+    private int $n = 0; public array $ids = []; public array $ext = []; public int $pageSize = 250;
+    private function wid(int $w): string { return sprintf('00000000-0000-4000-8000-%012d', $w); }
+    private function cid(int $w, string $c): string { return sprintf('00000000-0000-4000-9000-%012d', $w * 1000 + (int)array_search($c, $this->cat()[$w], true) + 1); }
+    private function terr(): array
+    {
+        $all = [];
+        foreach ($this->cat() as $w => $cs) {
+            $all[] = ['id' => $this->wid($w), 'code' => $w, 'name' => [16 => 'Alger', 31 => 'Oran', 32 => 'El Bayadh', 17 => 'Djelfa'][$w] ?? 'W' . $w, 'level' => 'wilaya', 'parentId' => null, 'delivery' => ['hasHomeDelivery' => true]];
+            foreach ($cs as $c) { $all[] = ['id' => $this->cid($w, $c), 'code' => null, 'name' => $c, 'level' => 'commune', 'parentId' => $this->wid($w), 'delivery' => ['hasHomeDelivery' => true]]; }
+        }
+        return $all;
+    }
+    private function hubList(): array { return [['id' => '00000000-0000-4000-a000-000000000001', 'name' => 'Bab Ezzouar Desk', 'isPickupPoint' => true, 'isVisible' => true, 'address' => ['street' => 'x', 'city' => 'Alger', 'district' => 'Bab Ezzouar', 'cityTerritoryId' => $this->wid(16)]], ['id' => '00000000-0000-4000-a000-000000000002', 'name' => 'Hidden', 'isPickupPoint' => true, 'isVisible' => false, 'address' => ['city' => 'Oran', 'cityTerritoryId' => $this->wid(31)]]]; }
+    private function page(array $rows, mixed $d): HttpResponse
+    {
+        $size = min($this->pageSize, (int)($d['pageSize'] ?? 100)); $pg = max(1, (int)($d['pageNumber'] ?? 1));
+        return $this->js(200, ['items' => array_slice($rows, ($pg - 1) * $size, $size), 'hasNext' => $pg * $size < count($rows), 'pageNumber' => $pg]);
+    }
+    protected function handle(string $m, string $path, array $q, array $h, mixed $d, ?string $raw): HttpResponse
+    {
+        if (($h['x-api-key'] ?? '') !== 'ZKEY' || ($h['x-tenant'] ?? '') !== 'TEN') { return $this->js(401, ['title' => 'Unauthorized']); }
+        $p = preg_replace('#^/api/v1#', '', $path);
+        if ($m === 'POST' && $p === '/territories/search') { return $this->page($this->terr(), $d); }
+        if ($m === 'POST' && $p === '/hubs/search') { return $this->page($this->hubList(), $d); }
+        if ($m === 'POST' && $p === '/workflows/search') { return $this->js(200, ['items' => [['id' => 'wf1', 'states' => [['id' => 'st-recv', 'name' => 'OrderReceived', 'description' => 'Commande reçue'], ['id' => 'st-ready', 'name' => 'ReadyToDispatch', 'description' => 'Prêt à expédier']]]]]); }
+        if ($m === 'GET' && $p === '/delivery-pricing/rates') {
+            return $this->js(200, ['rates' => [['toTerritoryCode' => 31, 'toTerritoryLevel' => 'wilaya', 'deliveryPrices' => [['deliveryType' => 'home', 'price' => 700], ['deliveryType' => 'pickup-point', 'price' => 450], ['deliveryType' => 'return', 'price' => 300]]],
+                ['toTerritoryCode' => 'x', 'toTerritoryLevel' => 'commune', 'deliveryPrices' => [['deliveryType' => 'home', 'price' => 500], ['deliveryType' => 'pickup-point', 'price' => 350]]]]]);
+        }
+        if ($m === 'POST' && $p === '/parcels/labels/individual') {
+            $t = (string)(($d['trackingNumbers'] ?? [])[0] ?? ''); if (!isset($this->state[$t])) { return $this->js(404, ['title' => 'not found']); }
+            return $this->js(200, ['parcelLabelFiles' => [['trackingNumber' => $t, 'fileUrl' => 'https://zr-files.example.com/labels/' . $t . '.html']]]);
+        }
+        if ($m === 'POST' && $p === '/parcels') {
+            if (!is_array($d)) { return $this->bad('ZR: الجسم مطلوب'); }
+            $c = $d['customer'] ?? null;
+            if (!is_array($c) || !preg_match('/^[0-9a-f-]{36}$/', (string)($c['customerId'] ?? '')) || !is_string($c['name'] ?? null) || !preg_match('/^\+213[567]\d{8}$/', (string)($c['phone']['number1'] ?? ''))) { return $this->bad('ZR: customer{customerId(uuid),name,phone.number1(+213…)} غير صالح'); }
+            $a = $d['deliveryAddress'] ?? null;
+            if (!is_array($a) || !preg_match('/^[0-9a-f-]{36}$/', (string)($a['cityTerritoryId'] ?? '')) || !preg_match('/^[0-9a-f-]{36}$/', (string)($a['districtTerritoryId'] ?? '')) || !is_string($a['street'] ?? null)) { return $this->bad('ZR: deliveryAddress غير صالح'); }
+            if (!is_array($d['orderedProducts'] ?? null) || !$d['orderedProducts'] || !isset($d['orderedProducts'][0]['productName'], $d['orderedProducts'][0]['unitPrice'], $d['orderedProducts'][0]['quantity'], $d['orderedProducts'][0]['stockType'])) { return $this->bad('ZR: orderedProducts غير صالح'); }
+            if (!in_array($d['deliveryType'] ?? '', ['home', 'pickup-point'], true)) { return $this->bad('ZR: deliveryType يجب home|pickup-point'); }
+            if ($d['deliveryType'] === 'pickup-point' && !preg_match('/^[0-9a-f-]{36}$/', (string)($d['hubId'] ?? ''))) { return $this->bad('ZR: hubId (uuid) مطلوب مع pickup-point'); }
+            if ($d['deliveryType'] === 'home' && isset($d['hubId'])) { return $this->bad('ZR: hubId مع home'); }
+            if (!is_int($d['amount'] ?? null) || strlen((string)($d['description'] ?? '')) < 2 || !is_string($d['ExternalId'] ?? null)) { return $this->bad('ZR: amount(int)/description/ExternalId غير صالح'); }
+            $okc = false; foreach ($this->cat() as $w => $cs) { foreach ($cs as $cm) { if ($this->cid($w, $cm) === $a['districtTerritoryId'] && $this->wid($w) === $a['cityTerritoryId']) { $okc = true; } } }
+            if (!$okc) { return $this->js(400, ['errors' => [['description' => 'Territory mismatch']]]); }
+            if (isset($this->ext[$d['ExternalId']])) { return $this->js(409, ['errors' => [['description' => 'ExternalId already exists']]]); }
+            $id = 'zid-' . (++$this->n); $trk = 'ZR' . $this->n . 'AB'; $this->ids[$id] = $trk; $this->ext[$d['ExternalId']] = $id;
+            $this->state[$trk] = ($d['stateId'] ?? '') === 'st-ready' ? 'Prêt à expédier' : 'Commande reçue';
+            return $this->js(201, ['id' => $id]);
+        }
+        if ($m === 'GET' && preg_match('#^/parcels/([^/]+)$#', $p, $mm)) {
+            $trk = $this->ids[$mm[1]] ?? $mm[1]; if (!isset($this->state[$trk])) { return $this->js(404, ['title' => 'not found']); }
+            $id = array_search($trk, $this->ids, true);
+            return $this->js(200, ['id' => $id, 'trackingNumber' => $trk, 'state' => ['name' => 'S', 'description' => $this->state[$trk]], 'situation' => ['name' => 'Normal']]);
+        }
+        if ($m === 'DELETE' && preg_match('#^/parcels/([^/]+)$#', $p, $mm)) {
+            $trk = $this->ids[$mm[1]] ?? null; if ($trk === null || !isset($this->state[$trk])) { return $this->js(404, ['title' => 'not found']); }
+            if (!in_array($this->state[$trk], ['Commande reçue', 'Prêt à expédier'], true)) { return $this->js(409, ['errors' => [['description' => 'cannot delete']]]); }
+            unset($this->state[$trk], $this->ids[$mm[1]]); return $this->js(204, []);
+        }
+        return $this->bad("ZR: مسار غير موثّق $m $p", 404);
+    }
+}
+
 /** ياليدين: X-API-ID/X-API-TOKEN، POST /v1/parcels/ مصفوفة طرود، الردّ مفتاحه order_id (مُتحقَّق على حساب حقيقي). */
 final class YalidineSim extends Sim
 {
@@ -213,6 +281,12 @@ final class NoestSim extends Sim
         if ($m === 'GET' && preg_match('#^/get/communes/(\d+)$#', $p, $mm)) {
             $out = []; foreach ($this->cat()[(int)$mm[1]] ?? [] as $c) { $out[] = ['nom' => $c, 'wilaya_id' => (int)$mm[1], 'code_postal' => '16000', 'is_active' => 1]; }
             return $this->js(200, $out);
+        }
+        if ($m === 'GET' && $p === '/fees') { return $this->js(200, ['tarifs' => ['delivery' => ['16' => ['wilaya_id' => 16, 'tarif' => 400, 'tarif_stopdesk' => 250], '31' => ['tarif' => 600, 'tarif_stopdesk' => 0]], 'return' => ['16' => ['tarif' => 100]]]]); }
+        if ($m === 'GET' && $p === '/get/order/label') {
+            if (($q['api_token'] ?? '') !== 'TOK' || ($q['user_guid'] ?? '') !== 'GUID') { return $this->js(422, ['success' => false, 'message' => 'user guid']); }
+            $t = (string)($q['tracking'] ?? ''); if (!isset($this->state[$t])) { return $this->js(404, ['message' => 'not found']); }
+            return new HttpResponse(302, '', '', ['location' => 'https://noest-dz.s3.eu-west-3.amazonaws.com/labels/' . $t . '.pdf?X-Amz-Signature=abc']);
         }
         if ($m !== 'POST') { return $this->bad("NOEST: $m $p غير موثّق", 404); }
         if (!is_array($d) || ($d['api_token'] ?? '') !== 'TOK' || ($d['user_guid'] ?? '') !== 'GUID') { return $this->js(422, ['success' => false, 'message' => 'Le champ user guid est obligatoire.']); }

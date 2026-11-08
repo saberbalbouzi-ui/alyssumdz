@@ -19,18 +19,19 @@ final class CurlHttpClient implements HttpClient
         $port = (int)($p['port'] ?? ($scheme === 'https' ? 443 : 80));
         $h = [];
         foreach ($headers as $k => $v) { if (preg_match('/^[A-Za-z0-9-]{1,60}$/', (string)$k) && !preg_match("/[\r\n]/", (string)$v)) { $h[] = "$k: $v"; } }
-        $buf = '';
+        $buf = ''; $rh = [];
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_CUSTOMREQUEST => strtoupper($method), CURLOPT_HTTPHEADER => $h, CURLOPT_TIMEOUT => $this->timeout, CURLOPT_CONNECTTIMEOUT => 10,
             CURLOPT_FOLLOWLOCATION => false, CURLOPT_RESOLVE => ["$host:$port:$ip"],
             CURLOPT_PROTOCOLS => $local ? CURLPROTO_HTTP | CURLPROTO_HTTPS : CURLPROTO_HTTPS,
+            CURLOPT_HEADERFUNCTION => function ($c, $line) use (&$rh) { $i = strpos($line, ':'); if ($i > 0) { $rh[strtolower(trim(substr($line, 0, $i)))] = trim(substr($line, $i + 1)); } return strlen($line); },
             CURLOPT_WRITEFUNCTION => function ($c, $d) use (&$buf) { $buf .= $d; return strlen($buf) > $this->maxBytes ? 0 : strlen($d); },
         ]);
         if ($body !== null) { curl_setopt($ch, CURLOPT_POSTFIELDS, $body); }
         curl_exec($ch);
         $err = curl_error($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
-        return new HttpResponse($code, $buf, $err);
+        return new HttpResponse($code, $buf, $err, $rh);
     }
 }

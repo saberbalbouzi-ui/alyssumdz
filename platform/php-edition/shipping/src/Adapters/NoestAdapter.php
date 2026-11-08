@@ -52,7 +52,7 @@ final class NoestAdapter extends AbstractAdapter
 
     public function discover(array $wilayas, array $want = []): array
     {
-        $d = self::emptyDiscovery(['NOEST لا تعرض مكاتبها ولا تعريفتها ولا قائمة طرودها عبر الواجهة العامة']);
+        $d = self::emptyDiscovery(['NOEST لا تعرض مكاتبها ولا قائمة طرودها عبر الواجهة العامة']);
         try {
             if ($want['communes'] ?? false) {
                 foreach ($wilayas as $w) {
@@ -67,8 +67,25 @@ final class NoestAdapter extends AbstractAdapter
                     $d['communes'][(int)$w] = $list;
                 }
             }
+            if ($want['fees'] ?? false) {                                                       // تعريفة الحساب: GET /fees ← tarifs.delivery (لا «return»)
+                $f = $this->getJson(self::BASE . '/fees', $this->h());
+                foreach ((array)($f['tarifs']['delivery'] ?? []) as $k => $r) {
+                    if (!is_array($r)) { continue; }
+                    $id = (int)($r['wilaya_id'] ?? $k); $home = (int)($r['tarif'] ?? 0); $stop = (int)($r['tarif_stopdesk'] ?? 0);
+                    if ($id >= 1 && $id <= 58 && ($home > 0 || $stop > 0)) { $d['fees'][$id] = ['home' => $home > 0 ? $home : $stop, 'stop' => $stop > 0 ? $stop : 0]; }
+                }
+            }
         } catch (CarrierApiException $e) { $d['notes'][] = $e->getMessage(); }
         return $d;
+    }
+
+    /** بوردرو NOEST الأصلي: GET get/order/label يحوّل (302) إلى رابط PDF موقَّع قصير العمر؛ المفاتيح تبقى في الخادم ولا تصل المتصفح. */
+    public function labelUrl(string $tracking): ?string
+    {
+        $q = http_build_query(['api_token' => $this->cred['apiToken'], 'user_guid' => $this->cred['userGuid'], 'tracking' => $tracking]);
+        $r = $this->send('GET', self::BASE . '/get/order/label?' . $q, $this->h());
+        $loc = (string)($r->headers['location'] ?? '');
+        return $r->status >= 300 && $r->status < 400 && str_starts_with($loc, 'https://') ? $loc : null;
     }
 
     public function createParcel(Parcel $p): ShipmentResult

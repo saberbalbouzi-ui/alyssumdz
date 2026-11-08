@@ -3,7 +3,7 @@
      node --no-warnings platform/gateway/test/carriers.parity.test.mjs */
 import { readFileSync } from "node:fs";
 import { isDeepStrictEqual } from "node:util";
-import { makeAdapter, CredentialsError, ApiError } from "../src/carriers.js";
+import { makeAdapter, resetCaches, CredentialsError, ApiError } from "../src/carriers.js";
 import { makeParcel } from "../src/parcel.js";
 import { Geo } from "../src/geo.js";
 import DICT from "../src/status-dict.js";
@@ -19,7 +19,8 @@ ok("قاموس JS المولَّد مطابق للأصل المشترك", isDeep
 
 const parseUrl = (u) => { const x = new URL(u); const q = {}; for (const [k, v] of x.searchParams) q[k] = v; return { base: x.origin + x.pathname, q }; };
 const lowerH = (h) => Object.fromEntries(Object.entries(h ?? {}).map(([k, v]) => [k.toLowerCase(), String(v)]));
-const asBody = (b) => (b == null ? null : (typeof b === "string" ? JSON.parse(b) : b));
+/* customerId (ZR الجديدة) UUID عشوائي في كل طلب: يُوحَّد قبل المقارنة */
+const asBody = (b) => { if (b == null) return null; const o = typeof b === "string" ? JSON.parse(b) : b; if (o?.customer?.customerId) return { ...o, customer: { ...o.customer, customerId: "<uuid>" } }; return o; };
 
 /* PHP لا يفرّق بين المصفوفة الفارغة والكائن الفارغ في JSON: نوحّدهما، ونحذف الطوابع الزمنية */
 const canon = (x) => Array.isArray(x) ? x.map(canon) : x && typeof x === "object" ? (Object.keys(x).length ? Object.fromEntries(Object.entries(x).filter(([k]) => k !== "at").map(([k, v]) => [k, canon(v)])) : []) : x;
@@ -29,7 +30,7 @@ const COMMON = (a) => ({ orderRef: a.order_ref, name: a.name, phone: a.phone, wi
 for (const [code, steps] of Object.entries(golden)) {
   let bad = 0;
   for (const st of steps) {
-    const diffs = []; let i = 0;
+    const diffs = []; let i = 0; resetCaches();
     const http = async (method, url, headers, body) => {
       const rec = st.calls[i++];
       if (!rec) { diffs.push("طلب زائد " + method + " " + url); return { status: 0, body: "", error: "extra", ok: false, json: () => null }; }
@@ -40,7 +41,7 @@ for (const [code, steps] of Object.entries(golden)) {
       if (!isDeepStrictEqual(lowerH(headers), lowerH(rec.h))) diffs.push(`الترويسات ${JSON.stringify(lowerH(headers))} ≠ ${JSON.stringify(lowerH(rec.h))}`);
       if (!isDeepStrictEqual(asBody(body), asBody(rec.b))) diffs.push(`الجسم ${JSON.stringify(asBody(body))} ≠ ${JSON.stringify(asBody(rec.b))}`);
       const text = rec.r;
-      return { status: rec.s, body: text, error: "", ok: rec.s >= 200 && rec.s < 300, json: () => { try { const j = JSON.parse(text); return j && typeof j === "object" ? j : null; } catch { return null; } } };
+      return { status: rec.s, body: text, error: "", headers: rec.rh ?? {}, ok: rec.s >= 200 && rec.s < 300, json: () => { try { const j = JSON.parse(text); return j && typeof j === "object" ? j : null; } catch { return null; } } };
     };
     let got, exc = null;
     try {
@@ -51,6 +52,7 @@ for (const [code, steps] of Object.entries(golden)) {
         got = st.op === "create" ? await one() : [await one(), await one()];
       } else if (st.op === "track") { const r = await ad.track(st.arg.tracking); got = { status: r.status, rawStatus: r.rawStatus }; }
       else if (st.op === "cancel") got = await ad.cancel(st.arg.tracking);
+      else if (st.op === "label") got = { url: await ad.labelUrl(st.arg.tracking) };
       else if (st.op === "calibrate") {
         const o = st.arg.ours; const ours = { wilayas: () => Object.keys(o).map(Number).sort((a, b) => a - b), communes: (w) => o[w] ?? [] };
         got = canon(await Cal.run(ad, ours, st.arg.chunk)); st.result = canon(st.result);
