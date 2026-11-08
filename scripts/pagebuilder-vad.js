@@ -83,7 +83,8 @@ ${warn.length ? `<div class="ep-n" style="color:#b45309">⚠️ عبارات ت�
   const errText = e => e && e.code === "NOKEY" ? "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم" : e && e.code === "OFF" ? "الأداة معطّلة من الإعدادات" : "❌ " + (e && e.message || e);
   const prodCtx = () => { const p = storeProds().find(x => x.cover === S.src || (x.images || []).includes(S.src)); return p ? "Store listing: " + p.title + (p.desc ? " — " + String(p.desc).slice(0, 300) : "") + "." : ""; };
   async function recognize() {
-    if (S.busy) return; S.busy = true; say("⏳ نتعرّف على المنتج…");
+    if (S.busy) return; let cr = null; try { cr = crText(1, "التعرّف على المنتج"); } catch (e) { say("⛔ " + e.message); return; }
+    S.busy = true; say("⏳ نتعرّف على المنتج…"); let okRec = false;
     try {
       const blobs = []; for (const u of allPics()) blobs.push(await blobOf(u));
       let j = null;
@@ -91,20 +92,24 @@ ${warn.length ? `<div class="ep-n" style="color:#b45309">⚠️ عبارات ت�
       let cat = j && CATS[j.category] ? j.category : guessCat(prodCtx() || ""), rc = recommend(cat);
       S.rec = { name: j && j.name || "", category: cat, points: j && Array.isArray(j.points) ? j.points.slice(0, 3).map(String) : [], type: j && ["ugc", "product", "trend"].includes(j.type) ? j.type : rc.type, length: j && LENGTHS.includes(+j.length) ? +j.length : rc.length };
       S.type = S.rec.type; S.length = S.rec.length; if (S.type === "product") S.actor = "none"; else if (S.actor === "none") S.actor = "woman";
-      const r = $("pbvad"); if (r) { const h = r.parentNode; refresh(h); } say("✅ اخترنا لك الإعدادات المقترحة — غيّر ما تشاء");
-    } catch (e) { say(errText(e)); } finally { S.busy = false; }
+      okRec = true; const r = $("pbvad"); if (r) { const h = r.parentNode; refresh(h); } say("✅ اخترنا لك الإعدادات المقترحة — غيّر ما تشاء");
+    } catch (e) { say(errText(e)); } finally { S.busy = false; crDone(cr, okRec); }
   }
+  /* رصيد المحلي لخطوتَي النص (تعرّف 1 / خطة 2): كان النص «مجانياً» رغم أنه يكلّف فعلاً عند المزوّد (الخطة بصورتين ≈ 0.03–0.09$)؛ يُخصم مسبقاً ويُثبَّت بالنجاح ويُردّ بالفشل أو الإلغاء */
+  const crText = (n, label) => { try { return (typeof Credits !== "undefined" && Credits.take) ? Credits.take("text", { n, label, pending: true }) : null; } catch (e) { throw e; } };
+  const crDone = (c, ok) => { try { if (!c) return; if (ok) { if (c.commit) c.commit(); } else c.refund(); } catch (e) { } };
   async function makePlan() {
     if (S.busy) return; if (S.type === "free" && !S.free.trim()) { say("اكتب وصف الإعلان"); return; } if (!S.langs.length) { say("اختر لغة واحدة على الأقل"); return; }
-    S.busy = true; say("⏳ نكتب خطة الإعلان…");
+    let cr = null; try { cr = crText(2, "خطة إعلان فيديو"); } catch (e) { say("⛔ " + e.message); return; }
+    S.busy = true; say("⏳ نكتب خطة الإعلان…"); let okPlan = false;
     try {
       const blobs = []; for (const u of allPics().slice(0, 2)) blobs.push(await blobOf(u));
       const L = S.langs.map(l => (LANGS.find(x => x[0] === l) || LANGS[0])), act = ACTORS.find(x => x[0] === S.actor) || ACTORS[0];
       const j = await ImgGen.text({ blobs, json: true, temp: .8, noThink: true, maxTokens: 4096, timeoutMs: 60000, maxModels: 4, prompt: "You are an e-commerce video-ad director for an Algerian online store (cash on delivery, delivery to all wilayas). Plan a " + S.length + "-second " + (S.ratio === "16:9" ? "horizontal" : S.ratio === "1:1" ? "square" : "vertical") + " ad: " + TYPE_BRIEF[S.type] + ". " + (S.rec && S.rec.name ? "Product: " + S.rec.name + ". " : "") + prodCtx() + (S.free ? " Owner's brief: " + S.free + "." : "") + (act[2] && S.type !== "product" ? " On-screen person: " + act[2] + "." : " No on-screen person.")
         + " Answer in JSON only: {\"title\": short Arabic title, \"shots\": [{\"seconds\": int, \"visual\": what we see, \"camera\": camera move}] (3 to 5 shots whose seconds add up to " + S.length + "), \"script\": {" + L.map(x => "\"" + x[0] + "\": voiceover text in " + x[2]).join(", ") + "} (each voiceover must be speakable within " + S.length + " seconds, hook in the first sentence, one clear call to action to order now, no fake testimonials or statistics, NO medical claims or guaranteed results)}." });
       S.plan = parsePlan(j, { langs: S.langs }); if (!S.plan.shots.length) throw new Error("لم نتمكن من إنتاج خطة — أعد المحاولة");
-      refresh($("pbvad").parentNode); say("✅ الخطة جاهزة — عدّلها ثم أنشئ الإعلان");
-    } catch (e) { say(errText(e)); } finally { S.busy = false; }
+      okPlan = true; refresh($("pbvad").parentNode); say("✅ الخطة جاهزة — عدّلها ثم أنشئ الإعلان");
+    } catch (e) { say(errText(e)); } finally { S.busy = false; crDone(cr, okPlan); }
   }
   async function generate() {
     if (S.busy || !S.plan) return; syncPlan(); S.busy = true; const ver = ++S.ver; S.res.forEach(r => URL.revokeObjectURL(r.url)); S.res = [];

@@ -34,4 +34,5 @@ description: العمل على منصة SaaS (متعددة المستأجرين)
 
 - **(v1.89.279) المسارات:** شيفرة المنصة صارت تحت `platform/` (`api`، `gateway`، `worker`، `functions`، `tools`، `supabase`، `sql`، `php-edition`، `extension`، `docs`)؛ راجع `platform/README.md`. صفحات `saas/` العامة بقيت في مكانها.
 - (v1.89.900) **الفيديو/المجسّمات عبر المنصة:** دالة `ai-video` (الفيديو بنفس مفتاح الصور `GEMINI_API_KEY` عبر Veo؛ 3D بسرّ اختياري `FAL_KEY`؛ رصيد `video` في `saas_ai_charge` من `platform/sql/ai-video.sql`)، والواجهة `ImgGen.video/model3d` تمرّ بها حين لا مفتاح محلي. النشر والـSQL بموافقة المالك فقط. الاختبارات `scripts/test-vplat.js` و`scripts/test-ai-video.mjs`.
+- (v1.89.913) تكلفة الفيديو/الخطة الفعلية وقياساتها في `platform/docs/ai-costs.md` (فيديو Omni 5 ث = 0.37$)؛ حدّثه مع كل قياس جديد واضبط التسعير عليه.
 
