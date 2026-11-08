@@ -431,7 +431,7 @@
   }
   function topupModal(id) {
     const x = byId(S.si, id); if (!x) return;
-    modal('<h3>شحن رصيد API: ' + esc(x.name) + '</h3><p class="mut sm">الرصيد الحالي: نص ' + infin(x.ai_text_left) + ' · صور ' + infin(x.ai_image_left) + ' (الرصيد غير المحدود لا يتأثر بالشحن)</p><div class="fr"><div><label class="f">إضافة رصيد نص</label><input data-f="t" type="number" value="0"></div><div><label class="f">إضافة رصيد صور</label><input data-f="i" type="number" value="0"></div></div><div class="act" style="margin-top:1rem"><button class="btn" data-a="dotopup" data-v="' + id + '">شحن</button><button class="btn g" data-a="close">إغلاق</button></div>');
+    modal('<h3>شحن رصيد API: ' + esc(x.name) + '</h3><p class="mut sm">الرصيد الحالي: نص ' + infin(x.ai_text_left) + ' · صور ' + infin(x.ai_image_left) + ' · فيديو ' + infin(x.ai_video_left == null && !('ai_video_left' in x) ? 0 : x.ai_video_left) + ' (الرصيد غير المحدود لا يتأثر بالشحن)</p><div class="fr"><div><label class="f">إضافة رصيد نص</label><input data-f="t" type="number" value="0"></div><div><label class="f">إضافة رصيد صور</label><input data-f="i" type="number" value="0"></div><div><label class="f">إضافة رصيد فيديو/مجسّمات</label><input data-f="v" type="number" value="0"></div></div><div class="act" style="margin-top:1rem"><button class="btn" data-a="dotopup" data-v="' + id + '">شحن</button><button class="btn g" data-a="close">إغلاق</button></div>');
   }
   /* ── الإشعارات الصادرة ── */
   function outbox() {
@@ -498,7 +498,7 @@
     if (a === "cptok") { const x = byId(S.si, v); try { await navigator.clipboard.writeText(x.api_token || ""); toast("تم النسخ", "رمز API للموقع " + x.name); } catch (er) { toast("تعذّر النسخ", "", true); } return; }
     if (a === "rottok") { const x = byId(S.si, v); if (!confirm("تدوير رمز API لموقع «" + x.name + "»؟ سيتوقف الرمز القديم.")) return; const r = await sb.rpc("saas_rotate_token", { p_site: v }); if (r.error) toast("تعذّر", r.error.message, true); else toast("تم تدوير الرمز", ""); return load(); }
     if (a === "topup") return topupModal(v);
-    if (a === "dotopup") { const g = {}; $("mod").querySelectorAll("[data-f]").forEach(e2 => { g[e2.dataset.f] = parseInt(e2.value, 10) || 0; }); const r = await sb.rpc("saas_ai_topup", { p_site: v, p_text: g.t, p_image: g.i }); if (r.error) return toast("تعذّر الشحن", r.error.message, true); closeModal(); toast("تم الشحن", ""); return load(); }
+    if (a === "dotopup") { const g = {}; $("mod").querySelectorAll("[data-f]").forEach(e2 => { g[e2.dataset.f] = parseInt(e2.value, 10) || 0; }); const r = await sb.rpc("saas_ai_topup", { p_site: v, p_text: g.t, p_image: g.i }); if (r.error) return toast("تعذّر الشحن", r.error.message, true); if (g.v) { const rv = await sb.rpc("saas_ai_topup_video", { p_site: v, p_video: g.v }); if (rv.error) return toast("تعذّر شحن الفيديو", rv.error.message, true); } closeModal(); toast("تم الشحن", ""); return load(); }
     if (a === "resetcr") { const x = byId(S.si, v), p = planOf(x.plan); if (!p || !confirm("إعادة رصيد «" + x.name + "» إلى رصيد خطته؟")) return; await updSite(v, { ai_text_left: p.text_credits, ai_image_left: p.image_credits }); return load(); }
     if (a === "of") { S.of = v; return render(); }
     if (a === "obsent") { obSet(v, { status: "sent", sent_at: new Date().toISOString() }); return; }

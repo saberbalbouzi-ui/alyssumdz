@@ -9,6 +9,17 @@ const ImgGen = (() => {
   /* ينظّف مفتاح الاتصال الثاني (معرّف:سرّ): يزيل الفراغات والأسطر والمحارف الخفية والاقتباس وكلمة «Key» إن لُصقت معه (كانت تسبب 401 «Authentication is required») */
   const cleanFal = v => String(v || "").replace(/^\s*key\s+/i, "").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, "");
   const falOk = k => /^[^:]{8,}:[^:]{8,}$/.test(k);
+  /* مسار المنصة للفيديو/المجسّمات: المزوّد يوفّر المفتاح في الخادم (دالة ai-video) والزبون يشتري الرصيد؛ يُستعمل حين لا يوجد مفتاح محلي صالح (رمز الموقع أو جلسة المدير) */
+  const platOn = () => { try { return typeof AiProxy !== "undefined" && !!AiProxy.on(); } catch (e) { return false; } };
+  const platUrl = () => { try { return String(AiProxy.url()).replace(/\/ai$/, "/ai-video"); } catch (e) { return ""; } };
+  async function platCall(payload) {
+    const au = {}; try { const tk = AiProxy.token(); if (tk) au.token = tk; else au.jwt = await API.sb.token(); } catch (e) { }
+    if (!au.token && !au.jwt) return new Response(JSON.stringify({ message: "انتهت جلسة الدخول — أعد تسجيل الدخول" }), { status: 401 });
+    try { return await fetch(platUrl(), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({}, payload, au)) }); }
+    catch (e) { return new Response(JSON.stringify({ message: "تعذّر الاتصال بخدمة الفيديو — تحقق من الشبكة" }), { status: 503 }); }
+  }
+  /* يرسل/يقرأ من طابور الخدمة: مباشرة بالمفتاح المحلي إن وُجد، وإلا عبر المنصة */
+  const falRoute = (direct, H, m) => (url, init) => direct ? fetch(url, Object.assign({ headers: H }, init || {})) : platCall(init && init.method === "POST" ? { action: "submit", model: m, body: JSON.parse(init.body) } : { action: "get", url });
   /* ── المقاسات: [المعرّف، التسمية، العرض، الارتفاع] مجمّعة بالمنصة ── */
   const SIZES = [
     ["المتجر", [["shop", "صورة منتج للمتجر (مربّعة)", 1000, 1000], ["shop43", "صورة منتج 4:5", 1000, 1250]]],
@@ -396,7 +407,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
      نفس ضوابط التكلفة: تأكيد قبل التنفيذ، حدّ إنفاق، لا إعادة محاولة تلقائية. النموذج والسعر قابلان للضبط (alyssum_vg_model / alyssum_vg_price)
      لأن مواصفات الخدمة لم تُثبَّت بعد؛ الطلب يمرّ بطابور الخدمة: إرسال ← استعلام الحالة ← جلب الفيديو. o = {images:[blob], prompt, ratio:"9:16|1:1|16:9|4:5", dur, confirm} ← {blob, type, cost} أو null */
   const vcfg = { model: () => (LS.get("alyssum_vg_model", "") || "fal-ai/kling-video/v2.1/standard/image-to-video").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_vg_price", "0.5")) || 0.5, dur: () => Math.max(3, Math.min(10, Number(LS.get("alyssum_vg_dur", "5")) || 5)) };
-  const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = cleanFal(LS.get(FALKEY, "")); return { ok: !!key && !off, off, nokey: !key, price: vcfg.price(), model: vcfg.model() }; };
+  const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = cleanFal(LS.get(FALKEY, "")); const pl = platOn(); return { ok: (!!key || pl) && !off, off, nokey: !key && !pl, price: vcfg.price(), model: vcfg.model() }; };
   function videoBody(o, urls) {
     const body = { prompt: String(o.prompt || "").trim(), aspect_ratio: o.ratio || "9:16", duration: String(o.dur || vcfg.dur()) };
     if (o.audio) { body.generate_audio = true; if (o.script) body.audio_script = String(o.script).slice(0, 1500); if (o.lang) body.audio_language = o.lang; if (o.voice) body.voice = o.voice; if (o.seed) body.seed = o.seed; }
@@ -414,10 +425,10 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
     if (o.confirm !== false && !confirm(useMsg(o.title || "توليد فيديو", "النسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق."))) return null;
     const key = cleanFal(LS.get(FALKEY, "")), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
-    if (!falOk(key)) throw new Error("مفتاح الاتصال الثاني ناقص أو بصيغة خاطئة — يجب أن يكون «معرّف:سرّ» كاملاً (انسخه كله من لوحة المزوّد) — افتح إعدادات مولّد الصور وأعد لصقه");
-    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
+    const direct = falOk(key); if (!direct && !platOn()) throw new Error("خدمة الفيديو غير مفعّلة لموقعك — تواصل مع الدعم، أو الصق مفتاحاً بصيغة «معرّف:سرّ» كاملاً في إعدادات مولّد الصور");
+    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { }), falf = falRoute(direct, H, m);
     say("إرسال الطلب إلى خدمة الفيديو…");
-    const r = await fetch("https://queue.fal.run/" + m, { method: "POST", headers: H, body: JSON.stringify(videoBody(o, urls)) }), j = await r.json().catch(() => ({}));
+    const r = await falf("https://queue.fal.run/" + m, { method: "POST", body: JSON.stringify(videoBody(o, urls)) }), j = await r.json().catch(() => ({}));
     if (!r.ok && billingHit(r.status, JSON.stringify(j))) credit.flagOut();
     if (!r.ok) { const d = j.detail; throw new Error("Alyssum API (فيديو) " + r.status + ": " + (typeof d === "string" ? d : Array.isArray(d) && d[0] ? (d[0].msg || JSON.stringify(d[0])) : (j.message || "خطأ")) + (r.status === 401 || r.status === 403 ? " — تحقق من المفتاح" : "")); }
     const sUrl = j.status_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id + "/status"), rUrl = j.response_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id);
@@ -426,10 +437,10 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     while (!res) {
       if (Date.now() - t0 > max) throw new Error("استغرق التوليد أكثر من المتوقع — راجع حسابك لاحقاً قبل إعادة المحاولة كي لا تتكرر التكلفة.");
       if (gap) await new Promise(x => setTimeout(x, gap));
-      const sr = await fetch(sUrl, { headers: H }), sj = await sr.json().catch(() => ({}));
+      const sr = await falf(sUrl), sj = await sr.json().catch(() => ({}));
       if (!sr.ok) throw new Error("تعذّر قراءة حالة الفيديو (" + sr.status + ")");
       const stt = String(sj.status || "").toUpperCase(); say(stt === "IN_QUEUE" ? "في الطابور" + (sj.queue_position != null ? " (" + sj.queue_position + ")" : "") + "…" : "جارٍ التوليد…");
-      if (stt === "COMPLETED") { const rr = await fetch(rUrl, { headers: H }), rj = await rr.json().catch(() => ({})); if (!rr.ok) throw new Error("تعذّر جلب نتيجة الفيديو (" + rr.status + ")"); res = rj; }
+      if (stt === "COMPLETED") { const rr = await falf(rUrl), rj = await rr.json().catch(() => ({})); if (!rr.ok) throw new Error("تعذّر جلب نتيجة الفيديو (" + rr.status + ")"); res = rj; }
       else if (stt === "FAILED" || stt === "ERROR" || sj.error) throw new Error("فشل التوليد: " + (sj.error || sj.detail || "رفضت الخدمة الطلب") + " — لم تُحتسب تكلفة غالباً.");
     }
     const u = ((res.video || (res.data && res.data.video) || {}).url); if (!u) throw new Error("لم تُرجع الخدمة فيديو — لم تُحتسب تكلفة غالباً.");
@@ -441,7 +452,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
      نفس ضوابط التكلفة: تأكيد، حدّ إنفاق، لا إعادة محاولة. النموذج والسعر قابلان للضبط (alyssum_i3d_model / alyssum_i3d_price) لأن مواصفات الخدمة غير مثبَّتة.
      o = {front, side, back, onStatus, confirm} (Blobs) ← {blob (GLB), cost} أو null */
   const icfg = { model: () => (LS.get("alyssum_i3d_model", "") || "fal-ai/hunyuan3d/v2/multi-view").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_i3d_price", "0.4")) || 0.4 };
-  const model3dReady = () => { const off = LS.get("alyssum_ai_3d", "1") === "0", key = cleanFal(LS.get(FALKEY, "")); return { ok: !!key && !off, off, nokey: !key, price: icfg.price(), model: icfg.model() }; };
+  const model3dReady = () => { const off = LS.get("alyssum_ai_3d", "1") === "0", key = cleanFal(LS.get(FALKEY, "")); const pl = platOn(); return { ok: (!!key || pl) && !off, off, nokey: !key && !pl, price: icfg.price(), model: icfg.model() }; };
   function glbUrl(j) {
     const seen = []; (function walk(v) { if (!v || seen.length > 40) return; if (typeof v === "string") { if (/^https?:\/\/.+\.(glb|gltf)(\?|$)/i.test(v)) seen.push(v); return; } if (typeof v === "object") for (const k in v) walk(v[k]); })(j);
     const o = (j.model_mesh || j.model_glb || j.glb || j.mesh || (j.data && (j.data.model_mesh || j.data.glb)) || {}); return (o && o.url) || seen[0] || "";
@@ -458,9 +469,10 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const key = cleanFal(LS.get(FALKEY, "")), m = icfg.model(), urls = {}; for (const [k, b] of views) urls[k] = "data:image/jpeg;base64," + await b64(await shrink(b, 1536));
     const body = { image_url: urls.front || urls.side || urls.back, input_image_url: urls.front || urls.side || urls.back, image_urls: Object.values(urls) };
     if (urls.front) body.front_image_url = urls.front; if (urls.side) { body.left_image_url = urls.side; body.side_image_url = urls.side; } if (urls.back) body.back_image_url = urls.back;
-    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
+    const direct = falOk(key); if (!direct && !platOn()) throw new Error("خدمة المجسّمات غير مفعّلة لموقعك — تواصل مع الدعم، أو الصق مفتاحاً بصيغة «معرّف:سرّ» كاملاً في إعدادات مولّد الصور");
+    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { }), falf = falRoute(direct, H, m);
     say("إرسال الصور إلى خدمة المجسّمات…");
-    const r = await fetch("https://queue.fal.run/" + m, { method: "POST", headers: H, body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
+    const r = await falf("https://queue.fal.run/" + m, { method: "POST", body: JSON.stringify(body) }), j = await r.json().catch(() => ({}));
     if (!r.ok && billingHit(r.status, JSON.stringify(j))) credit.flagOut();
     if (!r.ok) { const d = j.detail; throw new Error("Alyssum API (3D) " + r.status + ": " + (typeof d === "string" ? d : Array.isArray(d) && d[0] ? (d[0].msg || JSON.stringify(d[0])) : (j.message || "خطأ")) + (r.status === 401 || r.status === 403 ? " — تحقق من المفتاح" : "")); }
     const sUrl = j.status_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id + "/status"), rUrl = j.response_url || ("https://queue.fal.run/" + m + "/requests/" + j.request_id);
@@ -469,10 +481,10 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     while (!res) {
       if (Date.now() - t0 > max) throw new Error("استغرق التوليد أكثر من المتوقع — راجع حسابك لاحقاً قبل إعادة المحاولة كي لا تتكرر التكلفة.");
       if (gap) await new Promise(x => setTimeout(x, gap));
-      const sr = await fetch(sUrl, { headers: H }), sj = await sr.json().catch(() => ({}));
+      const sr = await falf(sUrl), sj = await sr.json().catch(() => ({}));
       if (!sr.ok) throw new Error("تعذّر قراءة حالة المجسّم (" + sr.status + ")");
       const stt = String(sj.status || "").toUpperCase(); say(stt === "IN_QUEUE" ? "في الطابور" + (sj.queue_position != null ? " (" + sj.queue_position + ")" : "") + "…" : "جارٍ بناء المجسّم…");
-      if (stt === "COMPLETED") { const rr = await fetch(rUrl, { headers: H }), rj = await rr.json().catch(() => ({})); if (!rr.ok) throw new Error("تعذّر جلب نتيجة المجسّم (" + rr.status + ")"); res = rj; }
+      if (stt === "COMPLETED") { const rr = await falf(rUrl), rj = await rr.json().catch(() => ({})); if (!rr.ok) throw new Error("تعذّر جلب نتيجة المجسّم (" + rr.status + ")"); res = rj; }
       else if (stt === "FAILED" || stt === "ERROR" || sj.error) throw new Error("فشل التوليد: " + (sj.error || sj.detail || "رفضت الخدمة الطلب") + " — لم تُحتسب تكلفة غالباً.");
     }
     const u = glbUrl(res); if (!u) throw new Error("لم تُرجع الخدمة ملف مجسّم — لم تُحتسب تكلفة غالباً.");
@@ -718,7 +730,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     bgm(v) { LS.set("alyssum_ig_bgm", v); const b = $("ig-bgcbox"); if (b) b.style.display = v === "solid" ? "flex" : "none"; }, bgc(v) { LS.set("alyssum_ig_bgc", v); }, lang(v) { LS.set("alyssum_ig_lang", v); },
     /* صندوق مفتاح الفيديو داخل أدوات الفيديو نفسها (بدل البحث عنه في إعدادات المولّد): يظهر إن لم يوجد مفتاح صالح بصيغة «معرّف:سرّ» */
     videoKeyBox() {
-      if (falOk(cleanFal(LS.get(FALKEY, "")))) return "";
+      if (platOn() || falOk(cleanFal(LS.get(FALKEY, "")))) return "";
       return `<div class="ep-n" id="vkb" style="border:1px dashed #b45309;border-radius:10px;padding:.5rem;margin:.4rem 0"><b>مفتاح توليد الفيديو</b> (الاتصال الثاني — الصيغة <span dir="ltr">key_id:key_secret</span> كاملةً)<div style="display:flex;gap:.4rem;margin-top:.3rem"><input id="vkb-i" type="password" dir="ltr" autocomplete="off" placeholder="key_id:key_secret" style="flex:1"><button type="button" class="pbx-small pz-go" onclick="ImgGen.saveVideoKey()">حفظ</button></div><div class="hint">يُحفظ في هذا المتصفح فقط.</div></div>`;
     },
     saveVideoKey() {
