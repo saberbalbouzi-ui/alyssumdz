@@ -24,8 +24,10 @@ const call = async (b) => { const r = await handler(new Request("https://x.test/
 const TOKEN = "b".repeat(40), IMG = "data:image/png;base64,iVBORw0KGgo=";
 ok("بلا رمز ولا جلسة ← 400", (await call({ action: "submit" })).s === 400);
 let r = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p", image_url: IMG, aspect_ratio: "9:16", duration: "5" } });
-ok("إرسال Veo ينجح ويعيد روابط veo-s/veo-r", r.s === 200 && r.j.status_url === "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" && r.j.left === 4, r);
+ok("إرسال Veo ينجح ويعيد روابط veo-s/veo-r", r.s === 200 && r.j.status_url === "veo-s:models/veo-3.1-fast-generate-preview/operations/op1#5" && r.j.left === 4, r);
 const pc = state.calls.find(c => c[0].includes(":predictLongRunning")), pb = JSON.parse(pc[2]);
+const chg = state.calls.find(c => c[0].includes("/rpc/saas_ai_charge_n"));
+ok("التسعير بالثواني: يُخصم n = مدة الفيديو (5 وحدات) عبر saas_ai_charge_n", chg && JSON.parse(chg[2]).p_n === 5 && JSON.parse(chg[2]).p_kind === "video", chg && chg[2]);
 ok("الاكتشاف: يُجرَّب السريع الأحدث المدعوم فقط (لا veo-2 غير المدعوم)", pc[0].includes("veo-3.1-fast-generate-preview") && state.calls.some(c => /\/v1beta\/models\?/.test(c[0])), pc[0]);
 ok("الجسم: صورة base64 ونسبة 9:16 ومدة من {4,6,8}", pb.instances[0].image.bytesBase64Encoded === "iVBORw0KGgo=" && pb.instances[0].image.mimeType === "image/png" && pb.parameters.aspectRatio === "9:16" && [4, 6, 8].includes(pb.parameters.durationSeconds), pb);
 ok("المفتاح الخادمي في الترويسة لا في الرابط", pc[0].indexOf("GK") < 0);

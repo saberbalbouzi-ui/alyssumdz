@@ -431,7 +431,7 @@
   }
   function topupModal(id) {
     const x = byId(S.si, id); if (!x) return;
-    modal('<h3>شحن رصيد API: ' + esc(x.name) + '</h3><p class="mut sm">الرصيد الحالي: نص ' + infin(x.ai_text_left) + ' · صور ' + infin(x.ai_image_left) + ' · فيديو ' + infin(x.ai_video_left == null && !('ai_video_left' in x) ? 0 : x.ai_video_left) + ' (الرصيد غير المحدود لا يتأثر بالشحن)</p><div class="fr"><div><label class="f">إضافة رصيد نص</label><input data-f="t" type="number" value="0"></div><div><label class="f">إضافة رصيد صور</label><input data-f="i" type="number" value="0"></div><div><label class="f">إضافة رصيد فيديو/مجسّمات</label><input data-f="v" type="number" value="0"></div></div><div class="act" style="margin-top:1rem"><button class="btn" data-a="dotopup" data-v="' + id + '">شحن</button><button class="btn g" data-a="close">إغلاق</button></div>');
+    modal('<h3>شحن رصيد API: ' + esc(x.name) + '</h3><p class="mut sm">الرصيد الحالي: نص ' + infin(x.ai_text_left) + ' · صور ' + infin(x.ai_image_left) + ' · فيديو (ث) ' + infin(x.ai_video_left == null && !('ai_video_left' in x) ? 0 : x.ai_video_left) + ' (الرصيد غير المحدود لا يتأثر بالشحن)</p><div class="fr"><div><label class="f">إضافة رصيد نص</label><input data-f="t" type="number" value="0"></div><div><label class="f">إضافة رصيد صور</label><input data-f="i" type="number" value="0"></div><div><label class="f">إضافة رصيد فيديو (بالثواني؛ المجسّم = 5)</label><input data-f="v" type="number" value="0"></div></div><div class="act" style="margin-top:1rem"><button class="btn" data-a="dotopup" data-v="' + id + '">شحن</button><button class="btn g" data-a="close">إغلاق</button></div>');
   }
   /* ── الإشعارات الصادرة ── */
   function outbox() {

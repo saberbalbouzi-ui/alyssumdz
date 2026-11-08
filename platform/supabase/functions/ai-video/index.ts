@@ -147,13 +147,13 @@ Deno.serve(async (req) => {
   if (action === "get") {
     const u = String(b.url ?? "");
     if (/^veo-[sr]:/.test(u)) {
-      if (!GKEY) return NOCFG(); const name = u.slice(6); if (!OP_OK.test(name)) return json({ error: "bad_url" }, 400);
+      if (!GKEY) return NOCFG(); const [name, un] = u.slice(6).split("#"), pUnits = Math.max(1, Math.min(15, Math.round(Number(un) || 1))); if (!OP_OK.test(name)) return json({ error: "bad_url" }, 400);
       try {
         const r = await fetch(`${GAPI}/${name}`, { headers: GH(), signal: AbortSignal.timeout(60_000) }), j: any = await r.json().catch(() => ({}));
         if (!r.ok) return oBody(JSON.stringify({ error: j?.error?.message ?? "status_failed" }), r.status === 401 || r.status === 403 ? 502 : r.status);
         const gv = j?.response?.generateVideoResponse, samples = gv?.generatedSamples, uri = samples?.[0]?.video?.uri;
         const fail = j?.error?.message || (j?.done && !uri ? (Array.isArray(gv?.raiMediaFilteredReasons) && gv.raiMediaFilteredReasons[0] ? "حجبت الخدمة المحتوى: " + gv.raiMediaFilteredReasons[0] : "لم تُنتج الخدمة فيديو") : "");
-        if (fail && !admin && !refunded.has(name)) { refunded.add(name); if (refunded.size > 2000) refunded.clear(); await rpc("saas_ai_refund", { p_token: token, p_kind: "video" }); }
+        if (fail && !admin && !refunded.has(name)) { refunded.add(name); if (refunded.size > 2000) refunded.clear(); await rpc("saas_ai_refund_n", { p_token: token, p_kind: "video", p_n: pUnits }); }
         if (u.startsWith("veo-s:")) return json(fail ? { status: "FAILED", error: fail + " — لم يُخصم من رصيدك" } : { status: j?.done ? "COMPLETED" : "IN_PROGRESS" });
         return json(uri ? { video: { url: "plat:" + uri } } : { error: fail || "no_video" }, uri ? 200 : 502);
       } catch { return json({ error: "upstream_unreachable" }, 504); }
@@ -167,10 +167,12 @@ Deno.serve(async (req) => {
   if (isFal ? !FKEY : !GKEY) return NOCFG();
   const body = b.body ?? {}; if (JSON.stringify(body).length > 12_000_000) return json({ error: "too_large" }, 413);
   if (limited(token)) return json({ error: "rate_limited", message: MSG.rate_limited }, 429);
-  const ch = admin ? { ok: true, left: null } : await rpc("saas_ai_charge", { p_token: token, p_kind: "video" });
+  // التسعير بالثواني: وحدة رصيد الفيديو = ثانية؛ مجسّم/خدمة fal غير الفيديو = 5 وحدات
+  const units = isFal && !/video/i.test(model) ? 5 : Math.max(1, Math.min(15, Math.round(Number((body as any)?.duration) || 5)));
+  const ch = admin ? { ok: true, left: null } : await rpc("saas_ai_charge_n", { p_token: token, p_kind: "video", p_n: units });
   if (!ch) return json({ error: "billing_unavailable", message: "تعذّر التحقق من الرصيد — حاول لاحقاً" }, 502);
   if (!ch.ok) return json({ error: ch.reason, message: MSG[ch.reason] ?? "مرفوض" }, ch.reason === "unknown_token" ? 401 : 402);
-  const refund = async () => { if (!admin) await rpc("saas_ai_refund", { p_token: token, p_kind: "video" }); };      // لا يُحاسَب الموقع على طلب لم يصل
+  const refund = async () => { if (!admin) await rpc("saas_ai_refund_n", { p_token: token, p_kind: "video", p_n: units }); };      // لا يُحاسَب الموقع على طلب لم يصل
   try {
     if (isFal) {
       const r = await fetch("https://queue.fal.run/" + model, { method: "POST", headers: FH, body: JSON.stringify(body), signal: AbortSignal.timeout(110_000) }), text = await r.text();
@@ -190,7 +192,7 @@ Deno.serve(async (req) => {
     }
     for (const m of (vHasVeo ? vm : []).slice(0, 4)) {
       const r = await fetch(`${GAPI}/models/${m}:predictLongRunning`, { method: "POST", headers: GH(), body: JSON.stringify(veoInstance(body, m)), signal: AbortSignal.timeout(110_000) }), j: any = await r.json().catch(() => ({}));
-      if (r.ok && j?.name && OP_OK.test(j.name)) return json({ request_id: j.name, status_url: "veo-s:" + j.name, response_url: "veo-r:" + j.name, left: ch.left, model: m });
+      if (r.ok && j?.name && OP_OK.test(j.name)) return json({ request_id: j.name, status_url: "veo-s:" + j.name + "#" + units, response_url: "veo-r:" + j.name + "#" + units, left: ch.left, model: m });
       last = r.status; msg = String(j?.error?.message ?? "").slice(0, 200); tried.push(m + "=" + r.status + (msg ? " " + msg.slice(0, 80) : ""));
       if (r.status === 429 || r.status === 401 || r.status === 403) break;           // لا فائدة من تجربة نموذج آخر
     }

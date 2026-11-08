@@ -9,9 +9,9 @@ function make(cfg, ls) {
   vm.runInContext(src + "\nthis.Credits = Credits;", ctx); return { C: ctx.Credits, store, toasts };
 }
 (async () => {
-  // موقع المالك: يبدأ بـ110 (10$)
+  // موقع المالك: يبدأ بـ220 (10$ بسعر 20 رصيداً للدولار)
   let { C, store, toasts } = make({ HUB_SITE: "alyssum" });
-  ok(C.on() && C.left() === 110 && C.total() === 110, "بداية 110/110");
+  ok(C.on() && C.left() === 220 && C.total() === 220, "بداية 220/220"); C.set(110, 110);
   // صورة = 2
   let t = C.take("img"); ok(t.n === 2 && C.left() === 108, "صورة = 2"); t.refund(); ok(C.left() === 110, "استرداد كامل");
   t.refund(); ok(C.left() === 110, "لا استرداد مزدوج");

@@ -1,10 +1,11 @@
-/* رصيد أدوات «ستوديو ديزاين» (Credits): 1$ = 10 رصيد. يعرض الرصيد المتبقي أعلى اللوحة (متبقٍ/الإجمالي) وتكلفة كل أداة داخل نافذتها،
+/* رصيد أدوات «ستوديو ديزاين» (Credits): 1$ = 20 رصيد (كانت 10؛ رُفع لتخفيض هامش الربح إلى ≈2.7× على تكلفة المزوّد للصور والفيديو معاً — انظر platform/docs/ai-costs.md). يعرض الرصيد المتبقي أعلى اللوحة (متبقٍ/الإجمالي) وتكلفة كل أداة داخل نافذتها،
    ويخصم عند كل عملية فعلية (صورة واحدة = 2 رصيد، فيديو 4 رصيد للثانية، مجسّم 3D = 15، نزع الخلفية/التقاط العناصر = 1، صفحة كاملة = 40، A/B = 70).
    الدفتر يُحفظ في المتصفح ويتزامن بين أجهزة المالك عبر PrivSync (s_credits). **مهم:** هذا حسّاب واجهة (لا يمنع تلاعباً من المتصفح)؛ الإلزام الحقيقي لمواقع العملاء
    على الخادم (saas_ai_charge). لا يعمل إلا في موقع المالك (CONFIG.HUB_SITE) أو إن ضُبط `alyssum_credits` أو CONFIG.CREDITS_ON، وإلا يبقى خاملاً بلا أثر.
    الاستعمال: Credits.take(kind,{n}) ← {refund()} · Credits.bundle(id,{n},fn) · Credits.chip(id) · Credits.left()/total() · الاختبار: scripts/test-credits.js */
 const Credits = (() => {
-  const KEY = "alyssum_credits", START = 110;               // 10$ = 110 رصيد (حزمة «أساسية» بونص 10%)
+  const PER_USD = 20;                                       // رصيد لكل دولار (تسعير الزبون): نفس النسبة للصور والفيديو والنص فهامش الربح ≈2.7× لا 5×
+  const KEY = "alyssum_credits", START = 11 * PER_USD;     // 10$ = 220 رصيد (حزمة «أساسية» بونص 10%)
   const KIND = { img: 2, text: 0, model3d: 15 };            // صورة واحدة = 2؛ الفيديو يُحسب بالثواني؛ النص مجاني
   const VIDEO_PER_SEC = 4;
   /* تكلفة كل أداة كما تظهر في نافذتها: n = رقم للمقارنة (اختياري) و t = نص العرض */
@@ -21,7 +22,7 @@ const Credits = (() => {
   };
   /* مفتاح لوحة المحرر (EP_TABS) ← معرّف الأداة */
   const EP = { up: "up", fa: "fashion", to: "tryon", ps: "st", bgn: "st", v3: "v360", rc: "recolor", rl: "relight", tr: "textrm", uc: "uncrop", bf: "beautify", bg: "bg", cap: "cap", st: "st", xp: "xp", ai: "ai", sl: "sl", vg: "vgen", vad: "vad", er: "erase" };
-  const PACKS = [[5, 50], [10, 110], [25, 300], [50, 650], [100, 1400]];     // [دولار, رصيد]
+  const PACKS = [[5, 50], [10, 110], [25, 300], [50, 650], [100, 1400]].map(p => [p[0], p[1] * PER_USD / 10]);     // [دولار, رصيد] (البونص 0/10/20/30/40% كما كان)
   const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   let depth = 0;
@@ -130,8 +131,8 @@ const Credits = (() => {
     const bg = document.createElement("div"); bg.id = "cr-bg";
     bg.innerHTML = `<div id="cr-box" role="dialog" aria-modal="true"><button type="button" class="cr-x" data-cr="x" aria-label="إغلاق">✕</button><h3>رصيد الأدوات</h3>
 <div class="cr-big">${fmt(s.left)} / ${fmt(s.total)}</div><div class="cr-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
-<div style="font-size:.8rem;opacity:.85">1$ = 10 رصيد · الرصيد لا ينتهي · أدوات الاستوديو المحلية (حواف، تمويه، بازل، ماسك، كولاج، باركود، استوديو 3D…) مجانية.</div>
-<b style="display:block;margin-top:.8rem">شراء رصيد</b><div class="cr-packs">${PACKS.map(p => `<button type="button" class="cr-btn" data-cr="buy" data-u="${p[0]}" data-c="${p[1]}">${p[0]}$<small>${p[1]} رصيد${p[1] > p[0] * 10 ? " <span dir=\"ltr\">(+" + Math.round((p[1] / (p[0] * 10) - 1) * 100) + "%)</span>" : ""}</small></button>`).join("")}</div>
+<div style="font-size:.8rem;opacity:.85">1$ = ${PER_USD} رصيد · الرصيد لا ينتهي · أدوات الاستوديو المحلية (حواف، تمويه، بازل، ماسك، كولاج، باركود، استوديو 3D…) مجانية.</div>
+<b style="display:block;margin-top:.8rem">شراء رصيد</b><div class="cr-packs">${PACKS.map(p => `<button type="button" class="cr-btn" data-cr="buy" data-u="${p[0]}" data-c="${p[1]}">${p[0]}$<small>${p[1]} رصيد${p[1] > p[0] * PER_USD ? " <span dir=\"ltr\">(+" + Math.round((p[1] / (p[0] * PER_USD) - 1) * 100) + "%)</span>" : ""}</small></button>`).join("")}</div>
 <details><summary>أسعار الأدوات</summary><table>${rows}</table></details>
 ${hist ? `<details><summary>آخر العمليات</summary><table>${hist}</table></details>` : ""}</div>`;
     document.body.appendChild(bg);
