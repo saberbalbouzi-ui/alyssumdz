@@ -59,17 +59,18 @@ function veoInstance(b: any, model: string) {
 
 // اكتشاف نماذج Veo المتاحة لمفتاحك فعلاً (ListModels: ما يدعم predictLongRunning): الأحدث أولاً، والسريع قبل العادي؛ تُخزَّن ساعة. سرّ AI_VIDEO_MODELS يثبّت القائمة يدوياً.
 let vcache: { at: number; list: string[] } | null = null;
+let vdiag = "";
 async function veoModels(): Promise<string[]> {
   if (VEO_PINNED) return VEO;
   if (vcache && Date.now() - vcache.at < 3_600_000) return vcache.list;
-  const found: string[] = [];
+  const found: string[] = []; const seen: string[] = []; let lst = 0; vdiag = "";
   try {
     let tok = "";
     for (let i = 0; i < 6; i++) {
       const r = await fetch(`${GAPI}/models?pageSize=100${tok ? "&pageToken=" + encodeURIComponent(tok) : ""}`, { headers: { "x-goog-api-key": GKEY }, signal: AbortSignal.timeout(20_000) });
-      if (!r.ok) break; const j: any = await r.json().catch(() => ({}));
+      lst = r.status; if (!r.ok) break; const j: any = await r.json().catch(() => ({}));
       for (const m of Array.isArray(j.models) ? j.models : []) {
-        const n = String(m?.name ?? "").replace(/^models\//, "");
+        const n = String(m?.name ?? "").replace(/^models\//, ""); if (/veo|video|imagen/i.test(n)) seen.push(n + ":" + (m?.supportedGenerationMethods ?? []).join("+"));
         if (/veo/i.test(n) && Array.isArray(m?.supportedGenerationMethods) && m.supportedGenerationMethods.includes("predictLongRunning")) found.push(n);
       }
       tok = String(j.nextPageToken ?? ""); if (!tok) break;
@@ -77,6 +78,7 @@ async function veoModels(): Promise<string[]> {
   } catch { /* نستعمل الافتراضي */ }
   const ver = (n: string) => Number((/veo-(\d+(?:\.\d+)?)/i.exec(n) ?? [])[1] ?? 0);
   found.sort((a, b) => (/fast/i.test(a) ? 0 : 1) - (/fast/i.test(b) ? 0 : 1) || ver(b) - ver(a) || a.localeCompare(b));
+  vdiag = found.length ? "" : (lst && lst !== 200 ? "ListModels=" + lst : "لا نموذج Veo يدعم الإنشاء في حسابك" + (seen.length ? " (المرئي: " + seen.slice(0, 6).join("، ") + ")" : ""));
   const list = found.length ? found : VEO; vcache = { at: Date.now(), list }; return list;
 }
 
@@ -139,7 +141,7 @@ Deno.serve(async (req) => {
       last = r.status; msg = String(j?.error?.message ?? "").slice(0, 200); tried.push(m + "=" + r.status + (msg ? " " + msg.slice(0, 80) : ""));
       if (r.status === 429 || r.status === 401 || r.status === 403) break;           // لا فائدة من تجربة نموذج آخر
     }
-    await refund(); return json({ error: "upstream_failed", status: last, tried, message: "تعذّر إنشاء الفيديو" + (msg ? " — " + msg : "") + " — لم يُخصم من رصيدك" }, 502);
+    await refund(); return json({ error: "upstream_failed", status: last, tried, message: "تعذّر إنشاء الفيديو" + (vdiag ? " — " + vdiag : "") + (msg ? " — " + msg : "") + " — لم يُخصم من رصيدك" }, 502);
   } catch {
     await refund(); return json({ error: "upstream_failed", message: "تعذّرت خدمة الفيديو مؤقتاً — لم يُخصم من رصيدك" }, 502);
   }
