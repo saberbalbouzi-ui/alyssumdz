@@ -64,7 +64,8 @@
   /* أول صفحة على الهاتف = قائمة الأقسام (الترويسة + المجموعات + الأقسام) لا صفحة «لوحة التحكم»؛ تبقى كذلك حتى أول لمسة من المستخدم (فتح الأقسام الآلي عند الإقلاع لا يُخفيها) ما لم يكن في الرابط وجهة مباشرة (#…) */
   const DEEP = () => /^#(?!$)/.test(location.hash || "");
   const PM = { menu: !!MQP.matches && !DEEP(), grp: false, on: false, touched: false };
-  document.addEventListener("pointerdown", () => { PM.touched = true; }, true);
+  /* «لمسة المستخدم» = ضغطه على زر قسم/مجموعة فقط (لا أي لمسة: لمس الشاشة أثناء التحميل كان يفتح «لوحة التحكم» بدل القائمة) */
+  document.addEventListener("click", e => { try { if (e.target && e.target.closest && e.target.closest(".nav-btn,.ng,#nav-groups,nav.side-nav,#sec-search,.sg-item")) PM.touched = true; } catch (x) { } }, true);
   function pmApply() {
     const h = document.documentElement, mob = MQP.matches && !!document.getElementById("app") && !document.getElementById("app").classList.contains("hidden");
     h.classList.toggle("m-page", mob && !PM.menu); h.classList.toggle("m-menu", mob && PM.menu);
