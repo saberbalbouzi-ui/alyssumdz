@@ -193,3 +193,7 @@ html.glass #dispatch-content details>summary{color:var(--g-mint,#e2fe17);font-we
 /* v1.89.759: حقل «اسألني» (لوحة بيضاء) نصّه داكن وخلفيته بيضاء في كل المظاهر، فلا يختفي النص المكتوب */
 html .ah-f input#ah-in,html.glass .ah-f input#ah-in{color:#173f35!important;background:#fff!important;-webkit-text-fill-color:#173f35!important;caret-color:#173f35}
 html .ah-f input#ah-in::placeholder{color:#8a8f8c!important;-webkit-text-fill-color:#8a8f8c!important;opacity:1}
+
+/* نافذة الرصيد: تفاصيل الباقة (عدد الرصيد والبونص) داخل الزر الليموني كانت بلون فاتح غير مقروء (small يرث لوناً عاماً) */
+html:is(.glass,.white) body #cr-box .cr-btn:not(#_) small,
+html:is(.glass,.white) body #cr-box .cr-btn:not(#_) small span{color:#1f2123!important;opacity:.85}
