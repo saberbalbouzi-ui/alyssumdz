@@ -14,6 +14,18 @@
       "Annulé": "cancelled"
     }
   },
+  "wecan": {
+    "verified": "screenshot:2026-11",
+    "exact": {
+      "En préparation": "pending", "Prêt à expédier": "pending", "Pré-expédié": "pending", "A vérifier": "pending", "Pas encore expédié": "pending",
+      "Expédié": "shipped", "Transfert": "shipped", "Centre": "shipped", "Vers Wilaya": "shipped", "Reçu à la Wilaya": "shipped", "Reçu à Wilaya": "shipped", "En attente du client": "shipped", "En localisation": "shipped", "Ramassé": "shipped", "Bloqué": "shipped", "Débloqué": "shipped",
+      "Sorti en livraison": "out_for_delivery", "Prêt pour livreur": "out_for_delivery",
+      "En alerte": "failed_attempt", "Tentative échouée": "failed_attempt", "Échec de livraison": "failed_attempt", "Echec livraison": "failed_attempt",
+      "Livré": "delivered",
+      "Retourné au centre": "returned", "Retour au centre": "returned", "Retour vers centre": "returned", "Retourné au vendeur": "returned", "Retour au vendeur": "returned", "Retour vers vendeur": "returned",
+      "Annulé": "cancelled"
+    }
+  },
   "zrexpress": {
     "verified": "third-party:procolis-legacy",
     "exact": {

@@ -3578,66 +3578,6 @@
             }
         },
         {
-            "name": "track_Pas encore expédié",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Pas encore expédié\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "pending",
-                "rawStatus": "Pas encore expédié"
-            }
-        },
-        {
-            "name": "track_A vérifier",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"A vérifier\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "pending",
-                "rawStatus": "A vérifier"
-            }
-        },
-        {
             "name": "track_En préparation",
             "op": "track",
             "arg": {
@@ -3665,36 +3605,6 @@
             "result": {
                 "status": "pending",
                 "rawStatus": "En préparation"
-            }
-        },
-        {
-            "name": "track_Pas encore ramassé",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Pas encore ramassé\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "pending",
-                "rawStatus": "Pas encore ramassé"
             }
         },
         {
@@ -3728,7 +3638,7 @@
             }
         },
         {
-            "name": "track_En attente",
+            "name": "track_Pré-expédié",
             "op": "track",
             "arg": {
                 "tracking": "wc-1AB"
@@ -3748,13 +3658,313 @@
                     },
                     "b": null,
                     "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En attente\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Pré-expédié\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
                     "rh": []
                 }
             ],
             "result": {
                 "status": "pending",
-                "rawStatus": "En attente"
+                "rawStatus": "Pré-expédié"
+            }
+        },
+        {
+            "name": "track_A vérifier",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"A vérifier\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "A vérifier"
+            }
+        },
+        {
+            "name": "track_Pas encore expédié",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Pas encore expédié\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "Pas encore expédié"
+            }
+        },
+        {
+            "name": "track_Expédié",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Expédié\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Expédié"
+            }
+        },
+        {
+            "name": "track_Transfert",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Transfert\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Transfert"
+            }
+        },
+        {
+            "name": "track_Centre",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Centre"
+            }
+        },
+        {
+            "name": "track_Vers Wilaya",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Vers Wilaya\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Vers Wilaya"
+            }
+        },
+        {
+            "name": "track_Reçu à la Wilaya",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Reçu à la Wilaya\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Reçu à la Wilaya"
+            }
+        },
+        {
+            "name": "track_Reçu à Wilaya",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Reçu à Wilaya\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Reçu à Wilaya"
+            }
+        },
+        {
+            "name": "track_En attente du client",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En attente du client\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "En attente du client"
+            }
+        },
+        {
+            "name": "track_En localisation",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En localisation\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "En localisation"
             }
         },
         {
@@ -3848,7 +4058,7 @@
             }
         },
         {
-            "name": "track_Transfert",
+            "name": "track_Sorti en livraison",
             "op": "track",
             "arg": {
                 "tracking": "wc-1AB"
@@ -3868,193 +4078,13 @@
                     },
                     "b": null,
                     "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Transfert\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Sorti en livraison\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
                     "rh": []
                 }
             ],
             "result": {
-                "status": "shipped",
-                "rawStatus": "Transfert"
-            }
-        },
-        {
-            "name": "track_Expédié",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Expédié\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "shipped",
-                "rawStatus": "Expédié"
-            }
-        },
-        {
-            "name": "track_Centre",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "shipped",
-                "rawStatus": "Centre"
-            }
-        },
-        {
-            "name": "track_En localisation",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En localisation\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "shipped",
-                "rawStatus": "En localisation"
-            }
-        },
-        {
-            "name": "track_Vers Wilaya",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Vers Wilaya\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "shipped",
-                "rawStatus": "Vers Wilaya"
-            }
-        },
-        {
-            "name": "track_Reçu à Wilaya",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Reçu à Wilaya\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "shipped",
-                "rawStatus": "Reçu à Wilaya"
-            }
-        },
-        {
-            "name": "track_En attente du client",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En attente du client\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "shipped",
-                "rawStatus": "En attente du client"
+                "status": "out_for_delivery",
+                "rawStatus": "Sorti en livraison"
             }
         },
         {
@@ -4085,36 +4115,6 @@
             "result": {
                 "status": "out_for_delivery",
                 "rawStatus": "Prêt pour livreur"
-            }
-        },
-        {
-            "name": "track_Sorti en livraison",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Sorti en livraison\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "out_for_delivery",
-                "rawStatus": "Sorti en livraison"
             }
         },
         {
@@ -4178,7 +4178,7 @@
             }
         },
         {
-            "name": "track_Echèc livraison",
+            "name": "track_Échec de livraison",
             "op": "track",
             "arg": {
                 "tracking": "wc-1AB"
@@ -4198,13 +4198,13 @@
                     },
                     "b": null,
                     "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Echèc livraison\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Échec de livraison\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
                     "rh": []
                 }
             ],
             "result": {
                 "status": "failed_attempt",
-                "rawStatus": "Echèc livraison"
+                "rawStatus": "Échec de livraison"
             }
         },
         {
@@ -4268,36 +4268,6 @@
             }
         },
         {
-            "name": "track_Retour vers centre",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour vers centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "returned",
-                "rawStatus": "Retour vers centre"
-            }
-        },
-        {
             "name": "track_Retourné au centre",
             "op": "track",
             "arg": {
@@ -4328,7 +4298,7 @@
             }
         },
         {
-            "name": "track_Retour transfert",
+            "name": "track_Retour au centre",
             "op": "track",
             "arg": {
                 "tracking": "wc-1AB"
@@ -4348,17 +4318,17 @@
                     },
                     "b": null,
                     "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour transfert\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour au centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
                     "rh": []
                 }
             ],
             "result": {
                 "status": "returned",
-                "rawStatus": "Retour transfert"
+                "rawStatus": "Retour au centre"
             }
         },
         {
-            "name": "track_Retour groupé",
+            "name": "track_Retour vers centre",
             "op": "track",
             "arg": {
                 "tracking": "wc-1AB"
@@ -4378,73 +4348,13 @@
                     },
                     "b": null,
                     "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour groupé\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour vers centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
                     "rh": []
                 }
             ],
             "result": {
                 "status": "returned",
-                "rawStatus": "Retour groupé"
-            }
-        },
-        {
-            "name": "track_Retour à retirer",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour à retirer\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "returned",
-                "rawStatus": "Retour à retirer"
-            }
-        },
-        {
-            "name": "track_Retour vers vendeur",
-            "op": "track",
-            "arg": {
-                "tracking": "wc-1AB"
-            },
-            "cred": {
-                "apiKey": "KEY",
-                "apiSecret": "SEC"
-            },
-            "calls": [
-                {
-                    "m": "GET",
-                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
-                    "h": {
-                        "X-API-Key": "KEY",
-                        "X-API-Secret": "SEC",
-                        "Accept": "application/json"
-                    },
-                    "b": null,
-                    "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour vers vendeur\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
-                    "rh": []
-                }
-            ],
-            "result": {
-                "status": "returned",
-                "rawStatus": "Retour vers vendeur"
+                "rawStatus": "Retour vers centre"
             }
         },
         {
@@ -4478,7 +4388,7 @@
             }
         },
         {
-            "name": "track_Echange échoué",
+            "name": "track_Retour au vendeur",
             "op": "track",
             "arg": {
                 "tracking": "wc-1AB"
@@ -4498,13 +4408,43 @@
                     },
                     "b": null,
                     "s": 200,
-                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Echange échoué\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour au vendeur\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
                     "rh": []
                 }
             ],
             "result": {
                 "status": "returned",
-                "rawStatus": "Echange échoué"
+                "rawStatus": "Retour au vendeur"
+            }
+        },
+        {
+            "name": "track_Retour vers vendeur",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour vers vendeur\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}",
+                    "rh": []
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retour vers vendeur"
             }
         },
         {

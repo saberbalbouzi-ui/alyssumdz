@@ -192,7 +192,7 @@ class WeCan extends Adapter {
   static BASE = "https://wecanservices.com/api/v1";
   static fields() { return [{ key: "apiKey", label: "X-API-Key", secret: false }, { key: "apiSecret", label: "X-API-Secret", secret: true }, { key: "fromWilaya", label: "ولاية الانطلاق (مثال: Alger)", secret: false, required: false },
     { key: "webhookSecret", label: "سرّ توقيع الـwebhook (اختياري)", secret: true, required: false }]; }
-  family() { return "yalidine"; }
+  family() { return "wecan"; }
   h(json = false) { const h = { "X-API-Key": this.cred.apiKey, "X-API-Secret": this.cred.apiSecret, Accept: "application/json" }; return json ? { ...h, "Content-Type": "application/json" } : h; }
   async ping() {
     return this.probe(async () => { const r = await this.send("GET", WeCan.BASE + "/locations/states", this.h()); return r.ok ? [true, "المفاتيح صالحة"] : [null, `ردّ غير متوقع (HTTP ${r.status})`]; });

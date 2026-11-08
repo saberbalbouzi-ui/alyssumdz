@@ -134,7 +134,7 @@ foreach ($CARRIERS as $code => $c) {
     [$sim, $ad] = $new();
     $tk = $ad->createParcel(parcel())->tracking;
     $entries = [];
-    $famKey = ['dhd' => 'ecotrack', 'wecan' => 'yalidine', 'zrexpress_app' => 'zrexpress'][$code] ?? $code;
+    $famKey = ['dhd' => 'ecotrack', 'wecan' => 'wecan', 'zrexpress_app' => 'zrexpress'][$code] ?? $code;
     if ($code === 'maystro') {                                          // ردّ ميسترو الحقيقي رقمي؛ الأسماء الفرنسية للويب هوك فتُفحص عبر المحوّل مباشرة
         $lbl = []; foreach ($dict['maystro']['exact'] as $raw => $exp) { if ($ad->mapStatus($raw) !== $exp) { $lbl[] = $raw; } }
         ok('maystro: تسميات الحالة النصية تُترجم صحيحاً', $lbl === [], $lbl);
@@ -206,7 +206,7 @@ $badVals = [];
 foreach ($dict as $fam => $d) { if (!is_array($d)) { continue; } foreach (['exact', 'codes', 'event_key'] as $k) { foreach (($d[$k] ?? []) as $raw => $v) { if (!in_array($v, $allowed, true)) { $badVals[] = "$fam/$k/$raw=$v"; } } } }
 ok('القواميس: كل القيم حالات موحّدة صحيحة', $badVals === [], $badVals);
 foreach (array_keys(array_filter($CARRIERS, fn($c, $k) => true, ARRAY_FILTER_USE_BOTH)) as $code) {
-    $fam = ['dhd' => 'ecotrack', 'wecan' => 'yalidine', 'zrexpress_app' => 'zrexpress'][$code] ?? $code;
+    $fam = ['dhd' => 'ecotrack', 'wecan' => 'wecan', 'zrexpress_app' => 'zrexpress'][$code] ?? $code;
     ok("القاموس يغطي الشركة $fam", isset($dict[$fam]));
 }
 

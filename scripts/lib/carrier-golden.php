@@ -27,7 +27,7 @@ function carrier_golden(): array
     $dict = json_decode((string)file_get_contents(__DIR__ . '/../../platform/php-edition/shipping/data/status-dict.json'), true);
     $cfg = [
         'yalidine'  => ['sim' => fn() => new YalidineSim(), 'good' => ['apiId' => 'AID', 'apiToken' => 'TOK'], 'bad' => ['apiId' => 'AID', 'apiToken' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'yalidine'],
-        'wecan'     => ['sim' => fn() => new WeCanSim(), 'good' => ['apiKey' => 'KEY', 'apiSecret' => 'SEC'], 'bad' => ['apiKey' => 'KEY', 'apiSecret' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'yalidine'],
+        'wecan'     => ['sim' => fn() => new WeCanSim(), 'good' => ['apiKey' => 'KEY', 'apiSecret' => 'SEC'], 'bad' => ['apiKey' => 'KEY', 'apiSecret' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'wecan'],
         'zrexpress_app' => ['sim' => fn() => new ZRAppSim(), 'good' => ['apiKey' => 'ZKEY', 'tenant' => 'TEN'], 'bad' => ['apiKey' => 'NOPE', 'tenant' => 'TEN'], 'deskKey' => 'desk_code', 'deskVal' => '00000000-0000-4000-a000-000000000001', 'fam' => 'zrexpress'],
         'dhd'       => ['sim' => fn() => new EcotrackSim(), 'good' => ['token' => 'TOK'], 'bad' => ['token' => 'NOPE'], 'deskKey' => 'desk_code', 'deskVal' => '16000', 'fam' => 'ecotrack'],
         'noest'     => ['sim' => fn() => new NoestSim(), 'good' => ['apiToken' => 'TOK', 'userGuid' => 'GUID'], 'bad' => ['apiToken' => 'NOPE', 'userGuid' => 'GUID'], 'deskKey' => 'desk_code', 'deskVal' => '16A', 'fam' => 'noest'],

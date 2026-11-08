@@ -14,7 +14,7 @@ final class WecanAdapter extends AbstractAdapter
     public const BASE = 'https://wecanservices.com/api/v1';
 
     public function code(): string { return 'wecan'; }
-    protected function statusFamily(): string { return 'yalidine'; }
+    protected function statusFamily(): string { return 'wecan'; }
 
     public static function credentialFields(): array
     {
