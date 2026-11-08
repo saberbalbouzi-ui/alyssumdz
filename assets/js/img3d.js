@@ -352,7 +352,7 @@ const Img3D = (() => {
   async function viaApi() {
     if (!S.f && !S.s && !S.b) { msg("أضف صورة واحدة على الأقل", true); return; }
     if (typeof ImgGen === "undefined" || !ImgGen.model3d) { msg("⚠️ خدمة المجسّمات غير متاحة في هذه النسخة", true); return; }
-    const kEl = $("i3-key"); if (kEl && kEl.value.trim()) LS.set("alyssum_fal_key", kEl.value.trim());
+    const kEl = $("i3-key"); if (kEl && kEl.value.trim()) LS.set("alyssum_fal_key", kEl.value.replace(/^\s*key\s+/i, "").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""));
     const white = async v => { if (!v) return null; const c = canv(v.cut.width, v.cut.height), x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(v.cut, 0, 0); return toBlob(c, "image/jpeg", 0.92); };
     $("i3-api").disabled = true; msg("جارٍ الاتصال بـ Alyssum API…");
     try {

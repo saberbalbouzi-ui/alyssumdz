@@ -6,6 +6,9 @@ const ImgGen = (() => {
   const toast = m => { try { (typeof toast2 === "function" ? toast2 : window.toast)(m); } catch (e) { } };
   const LS = { get: (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) { } } };
   const KEY = "alyssum_gp_gkey", FALKEY = "alyssum_fal_key";
+  /* ينظّف مفتاح الاتصال الثاني (معرّف:سرّ): يزيل الفراغات والأسطر والمحارف الخفية والاقتباس وكلمة «Key» إن لُصقت معه (كانت تسبب 401 «Authentication is required») */
+  const cleanFal = v => String(v || "").replace(/^\s*key\s+/i, "").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, "");
+  const falOk = k => /^[^:]{8,}:[^:]{8,}$/.test(k);
   /* ── المقاسات: [المعرّف، التسمية، العرض، الارتفاع] مجمّعة بالمنصة ── */
   const SIZES = [
     ["المتجر", [["shop", "صورة منتج للمتجر (مربّعة)", 1000, 1000], ["shop43", "صورة منتج 4:5", 1000, 1250]]],
@@ -347,9 +350,9 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   function askKey(kind) { return Promise.resolve(kind !== "f" && typeof AiProxy !== "undefined" && !!AiProxy.mark()); }
   /* توليد صورة واحدة دون واجهة المولّد (يستعمله تبويب السوشيال): o = {blob مرجع, name, desc, goal, W, H, label} ← {blob, model, cost} أو null إن ألغى المستخدم */
   async function quick0(o) {
-    const fal = cfg.provider() === "fal"; let key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
+    const fal = cfg.provider() === "fal"; let key = (fal ? cleanFal(LS.get(FALKEY, "")) : LS.get(KEY, "").trim());
     if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
-    if (!key && await askKey(fal ? "f" : "g")) key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
+    if (!key && await askKey(fal ? "f" : "g")) key = (fal ? cleanFal(LS.get(FALKEY, "")) : LS.get(KEY, "").trim());
     if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
     if (!o || !o.blob) throw new Error("اختر صورة المنتج المرجعية أولاً");
     const est = fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
@@ -364,7 +367,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   /* هل الخدمة جاهزة؟ يستعملها محرّر الصور لإظهار الحالة بلا استدعاء: {ok, off, nokey} */
   function ready() {
     try { if (typeof AiProxy !== "undefined") AiProxy.mark(); } catch (e) { }
-    const fal = cfg.provider() === "fal", key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim(), off = LS.get("alyssum_ai_img", "1") === "0";
+    const fal = cfg.provider() === "fal", key = (fal ? cleanFal(LS.get(FALKEY, "")) : LS.get(KEY, "").trim()), off = LS.get("alyssum_ai_img", "1") === "0";
     return { ok: !!key && !off, off, nokey: !key };
   }
   /* تعديل صورة بتعليمات حرّة (توسيع الخلفية، تعديل بالوصف…) بنفس خدمة التوليد وضوابط التكلفة: o = {blob, prompt, W, H, confirm, extra: [blob…]} ← {blob, model, cost} أو null إن ألغى المستخدم.
@@ -372,9 +375,9 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   /* تقدير تكلفة طلب واحد والمتبقي من الحدّ (لأدوات تُرسل أكثر من طلب بموافقة واحدة) */
   function estimate() { const fal = cfg.provider() === "fal"; return { cost: fal ? cfg.falPrice() : (cfg.model() === "auto" ? PRICE[PREF[0]] : priceOf(cfg.model())), left: cfg.budget() ? cfg.budget() - cfg.spent() : Infinity, fmt: () => "", can: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * unitCost() }; }
   async function edit0(o) {
-    const fal = cfg.provider() === "fal"; let key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
+    const fal = cfg.provider() === "fal"; let key = (fal ? cleanFal(LS.get(FALKEY, "")) : LS.get(KEY, "").trim());
     if (LS.get("alyssum_ai_img", "1") === "0") { const e = new Error("OFF"); e.code = "OFF"; throw e; }
-    if (!key && await askKey(fal ? "f" : "g")) key = (fal ? LS.get(FALKEY, "") : LS.get(KEY, "")).trim();
+    if (!key && await askKey(fal ? "f" : "g")) key = (fal ? cleanFal(LS.get(FALKEY, "")) : LS.get(KEY, "").trim());
     if (!key) { const e = new Error("NOKEY"); e.code = "NOKEY"; throw e; }
     if (!o || (!o.blob && !o.textOnly) || !o.prompt) throw new Error("الصورة والتعليمات مطلوبتان");
     if (o.textOnly && fal) throw new Error("التوليد من وصف نصي فقط متاح مع الاتصال الأول (أ) — بدّل الاتصال من إعدادات مولّد الصور");
@@ -393,7 +396,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
      نفس ضوابط التكلفة: تأكيد قبل التنفيذ، حدّ إنفاق، لا إعادة محاولة تلقائية. النموذج والسعر قابلان للضبط (alyssum_vg_model / alyssum_vg_price)
      لأن مواصفات الخدمة لم تُثبَّت بعد؛ الطلب يمرّ بطابور الخدمة: إرسال ← استعلام الحالة ← جلب الفيديو. o = {images:[blob], prompt, ratio:"9:16|1:1|16:9|4:5", dur, confirm} ← {blob, type, cost} أو null */
   const vcfg = { model: () => (LS.get("alyssum_vg_model", "") || "fal-ai/kling-video/v2.1/standard/image-to-video").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_vg_price", "0.5")) || 0.5, dur: () => Math.max(3, Math.min(10, Number(LS.get("alyssum_vg_dur", "5")) || 5)) };
-  const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = (LS.get(FALKEY, "") || "").trim(); return { ok: !!key && !off, off, nokey: !key, price: vcfg.price(), model: vcfg.model() }; };
+  const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = cleanFal(LS.get(FALKEY, "")); return { ok: !!key && !off, off, nokey: !key, price: vcfg.price(), model: vcfg.model() }; };
   function videoBody(o, urls) {
     const body = { prompt: String(o.prompt || "").trim(), aspect_ratio: o.ratio || "9:16", duration: String(o.dur || vcfg.dur()) };
     if (o.audio) { body.generate_audio = true; if (o.script) body.audio_script = String(o.script).slice(0, 1500); if (o.lang) body.audio_language = o.lang; if (o.voice) body.voice = o.voice; if (o.seed) body.seed = o.seed; }
@@ -410,7 +413,8 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const est = vcfg.price(), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
     if (o.confirm !== false && !confirm(useMsg(o.title || "توليد فيديو", "النسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق."))) return null;
-    const key = LS.get(FALKEY, "").trim(), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
+    const key = cleanFal(LS.get(FALKEY, "")), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
+    if (!falOk(key)) throw new Error("مفتاح الاتصال الثاني ناقص أو بصيغة خاطئة — يجب أن يكون «معرّف:سرّ» كاملاً (انسخه كله من لوحة المزوّد) — افتح إعدادات مولّد الصور وأعد لصقه");
     const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
     say("إرسال الطلب إلى خدمة الفيديو…");
     const r = await fetch("https://queue.fal.run/" + m, { method: "POST", headers: H, body: JSON.stringify(videoBody(o, urls)) }), j = await r.json().catch(() => ({}));
@@ -437,7 +441,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
      نفس ضوابط التكلفة: تأكيد، حدّ إنفاق، لا إعادة محاولة. النموذج والسعر قابلان للضبط (alyssum_i3d_model / alyssum_i3d_price) لأن مواصفات الخدمة غير مثبَّتة.
      o = {front, side, back, onStatus, confirm} (Blobs) ← {blob (GLB), cost} أو null */
   const icfg = { model: () => (LS.get("alyssum_i3d_model", "") || "fal-ai/hunyuan3d/v2/multi-view").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_i3d_price", "0.4")) || 0.4 };
-  const model3dReady = () => { const off = LS.get("alyssum_ai_3d", "1") === "0", key = (LS.get(FALKEY, "") || "").trim(); return { ok: !!key && !off, off, nokey: !key, price: icfg.price(), model: icfg.model() }; };
+  const model3dReady = () => { const off = LS.get("alyssum_ai_3d", "1") === "0", key = cleanFal(LS.get(FALKEY, "")); return { ok: !!key && !off, off, nokey: !key, price: icfg.price(), model: icfg.model() }; };
   function glbUrl(j) {
     const seen = []; (function walk(v) { if (!v || seen.length > 40) return; if (typeof v === "string") { if (/^https?:\/\/.+\.(glb|gltf)(\?|$)/i.test(v)) seen.push(v); return; } if (typeof v === "object") for (const k in v) walk(v[k]); })(j);
     const o = (j.model_mesh || j.model_glb || j.glb || j.mesh || (j.data && (j.data.model_mesh || j.data.glb)) || {}); return (o && o.url) || seen[0] || "";
@@ -451,7 +455,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const est = icfg.price(), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
     if (o.confirm !== false && !confirm(useMsg(o.title || "تحويل الصور إلى مجسّم 3D", "صور: " + views.length + "\nقد يستغرق التوليد دقائق."))) return null;
-    const key = LS.get(FALKEY, "").trim(), m = icfg.model(), urls = {}; for (const [k, b] of views) urls[k] = "data:image/jpeg;base64," + await b64(await shrink(b, 1536));
+    const key = cleanFal(LS.get(FALKEY, "")), m = icfg.model(), urls = {}; for (const [k, b] of views) urls[k] = "data:image/jpeg;base64," + await b64(await shrink(b, 1536));
     const body = { image_url: urls.front || urls.side || urls.back, input_image_url: urls.front || urls.side || urls.back, image_urls: Object.values(urls) };
     if (urls.front) body.front_image_url = urls.front; if (urls.side) { body.left_image_url = urls.side; body.side_image_url = urls.side; } if (urls.back) body.back_image_url = urls.back;
     const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { });
@@ -712,10 +716,10 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     cus() { LS.set("alyssum_ig_w", $("ig-w").value); LS.set("alyssum_ig_h", $("ig-h").value); api.size("custom"); },
     txtm(v) { LS.set("alyssum_ig_txtm", v); $("ig-txtbox").style.display = v === "none" ? "none" : "block"; }, tog, txtEdited() { S.txtDirty = true; },
     bgm(v) { LS.set("alyssum_ig_bgm", v); const b = $("ig-bgcbox"); if (b) b.style.display = v === "solid" ? "flex" : "none"; }, bgc(v) { LS.set("alyssum_ig_bgc", v); }, lang(v) { LS.set("alyssum_ig_lang", v); },
-    saveFalKey() { const k = ($("ig-fkey") || {}).value; if (k && k.trim()) { LS.set(FALKEY, k.trim()); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
+    saveFalKey() { const k = cleanFal(($("ig-fkey") || {}).value); if (k) { LS.set(FALKEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, askKey, ensure: async kind => { const f = kind === "f"; const ok = () => f ? !!(LS.get(FALKEY, "") || "").trim() : ready().ok; return ok() || (await askKey(kind || "g") && ok()); }, estimate, video, videoReady, model3d, model3dReady, credit, renewLocal: () => { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); }, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, askKey, ensure: async kind => { const f = kind === "f"; const ok = () => f ? !!cleanFal(LS.get(FALKEY, "")) : ready().ok; return ok() || (await askKey(kind || "g") && ok()); }, estimate, video, videoReady, model3d, model3dReady, credit, renewLocal: () => { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); }, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

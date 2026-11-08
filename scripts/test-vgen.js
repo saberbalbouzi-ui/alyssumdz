@@ -36,7 +36,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   /* ── جاهزية الخدمة ── */
   ok("بلا مفتاح: videoReady.nokey", await T(() => { localStorage.removeItem("alyssum_fal_key"); const r = ImgGen.videoReady(); return !r.ok && r.nokey; }));
   ok("بلا مفتاح: video يرمي NOKEY", await T(async () => { try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { return e.code === "NOKEY"; } }));
-  ok("معطّل من الإعدادات: OFF", await T(async () => { localStorage.setItem("alyssum_fal_key", "k"); localStorage.setItem("alyssum_ai_vid", "0"); try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { localStorage.removeItem("alyssum_ai_vid"); return e.code === "OFF"; } }));
+  ok("معطّل من الإعدادات: OFF", await T(async () => { localStorage.setItem("alyssum_fal_key", "abcdefgh:12345678"); localStorage.setItem("alyssum_ai_vid", "0"); try { await ImgGen.video({ images: [await __png()], prompt: "x" }); return false; } catch (e) { localStorage.removeItem("alyssum_ai_vid"); return e.code === "OFF"; } }));
   ok("بلا وصف: يرفض", await T(async () => { try { await ImgGen.video({ images: [await __png()], prompt: " " }); return false; } catch (e) { return /وصف/.test(e.message); } }));
   ok("بلا صورة: يرفض", await T(async () => { try { await ImgGen.video({ images: [], prompt: "x" }); return false; } catch (e) { return /صورة/.test(e.message); } }));
   /* حُذف فحص السقف المحلي (قرار صاحب المتجر v1.89.435: لا سقف محلي؛ الرصيد الفعلي عند المزوّد وعدّاد الأدوات في Credits) */
@@ -49,7 +49,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     return { size: r.blob.size, cost: r.cost, spent: localStorage.getItem("alyssum_ig_spent"), n: localStorage.getItem("alyssum_ig_count"), body: sub && sub[2], auth: sub && sub[3], url: sub && sub[0], st };
   });
   ok("التدفق: ينتهي بفيديو ويُحتسب مرة واحدة", flow.size === 2048 && flow.spent === "0.5" && flow.n === "1", flow);
-  ok("التدفق: المفتاح في الترويسة لا في الرابط", flow.auth === "Key k" && !/k$/.test(flow.url.replace("queue.fal.run", "")), flow.auth);
+  ok("التدفق: المفتاح في الترويسة لا في الرابط", flow.auth === "Key abcdefgh:12345678" && !/12345678$/.test(flow.url.replace("queue.fal.run", "")), flow.auth);
   ok("التدفق: الجسم (نسبة، مدة نص، صورة أولى، 4 صور بحد أقصى)", flow.body.aspect_ratio === "1:1" && flow.body.duration === "7" && /^data:image\/jpeg/.test(flow.body.image_url) && flow.body.image_urls.length === 4 && flow.body.prompt === "test prompt", Object.keys(flow.body));
   ok("التدفق: رسائل الحالة", flow.st.some(x => /الطابور|إرسال الطلب/.test(x)) && flow.st.some(x => /التوليد/.test(x)), flow.st);
   ok("فشل الخدمة: لا يُحتسب إنفاق", await T(async () => { const f0 = window.fetch; localStorage.setItem("alyssum_ig_spent", "0"); window.fetch = async (u, o) => /queue\.fal\.run/.test(String(u)) && o && o.method === "POST" ? new Response(JSON.stringify({ detail: "bad key" }), { status: 401 }) : f0(u, o); try { await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0 }); return false; } catch (e) { return /401/.test(e.message) && /تحقق من المفتاح/.test(e.message) && localStorage.getItem("alyssum_ig_spent") === "0"; } finally { window.fetch = f0; } }));
@@ -64,7 +64,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
     out.noNum = msgs.every(m => !/[$]|\d\.\d/.test(m));
     ImgGen.set("budget", 50); out.s3 = ImgGen.credit.state(); out.cleared = localStorage.getItem("alyssum_ai_alert");
     /* رفض المزوّد بسبب الرصيد (402) يعلّم النفاد */
-    localStorage.setItem("alyssum_ig_spent", "0"); localStorage.setItem("alyssum_fal_key", "k"); const f0 = window.fetch; window.fetch = async (u, o) => /queue\.fal\.run/.test(String(u)) && o && o.method === "POST" ? new Response(JSON.stringify({ detail: "Insufficient balance" }), { status: 402 }) : f0(u, o);
+    localStorage.setItem("alyssum_ig_spent", "0"); localStorage.setItem("alyssum_fal_key", "abcdefgh:12345678"); const f0 = window.fetch; window.fetch = async (u, o) => /queue\.fal\.run/.test(String(u)) && o && o.method === "POST" ? new Response(JSON.stringify({ detail: "Insufficient balance" }), { status: 402 }) : f0(u, o);
     try { await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0, confirm: false }); } catch (e) { out.err = e.message; } window.fetch = f0; out.s4 = ImgGen.credit.state();
     ImgGen.credit.renew(); out.s5 = ImgGen.credit.state();
     out.est = ImgGen.estimate().fmt(1);

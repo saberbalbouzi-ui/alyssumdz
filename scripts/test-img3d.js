@@ -91,7 +91,7 @@ const load = (p, src) => p.evaluate(s => new Promise(r => { const e = document.c
       return real(url, o); };
     const pollMs = 0; localStorage.removeItem("alyssum_fal_key");
     const r0 = await (async () => { try { await ImgGen.model3d({ front: new Blob([1]) }); return "no"; } catch (e) { return e.code; } })();
-    localStorage.setItem("alyssum_fal_key", "k"); localStorage.setItem("alyssum_ig_budget", "0");
+    localStorage.setItem("alyssum_fal_key", "abcdefgh:12345678"); localStorage.setItem("alyssum_ig_budget", "0");
     const r1 = await ImgGen.model3d({ front: await (await fetch(__img.front.toDataURL("image/png"))).blob(), side: await (await fetch(__img.side.toDataURL("image/png"))).blob(), pollMs: 0 });
     return { r0, size: r1 && r1.blob.size, reqs: window.__reqs.filter(x => /queue\.fal\.run/.test(x[0])).map(x => [x[1], x[0].replace("https://queue.fal.run/", "").slice(0, 40), x[2] && Object.keys(x[2])]) };
   }, glbBytes);
