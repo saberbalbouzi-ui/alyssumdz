@@ -35,7 +35,7 @@ final class WecanAdapter extends AbstractAdapter
     public function createParcel(Parcel $p): ShipmentResult
     {
         [$first, $family] = $p->nameParts();
-        $price = $p->priceWithoutShipping();
+        $price = (int)round($p->total);                                          // WeCan تحصّل price كما أُرسل (لا تضيف التوصيل فوقه): المجموع كاملاً
         if ($p->stopDesk && !$p->deskId) { return new ShipmentResult(false, error: 'مكتب Stop Desk غير محدد'); }
         $pc = $this->profileCommune($p->legacyWilaya(), $p->commune, $p->wilayaName());
         if ($pc['block'] !== null) { return new ShipmentResult(false, error: $pc['block']); }
@@ -44,7 +44,7 @@ final class WecanAdapter extends AbstractAdapter
             'address' => $p->address !== '' ? $p->address : $p->commune . '، ' . $p->wilayaName(),
             'to_commune_name' => $pc['name'] ?? $p->commune, 'to_wilaya_name' => WilayaCatalog::name($p->legacyWilaya()),
             'product_list' => $p->productsText(), 'price' => $price, 'do_insurance' => false, 'declared_value' => $price,
-            'freeshipping' => $p->shippingFee <= 0, 'delivery_fee' => max(0, (int)$p->shippingFee), 'shipping_type' => $p->stopDesk ? 'express_desk' : 'express_home',
+            'freeshipping' => true, 'shipping_type' => $p->stopDesk ? 'express_desk' : 'express_home',
             'is_stopdesk' => $p->stopDesk, 'has_exchange' => false, 'length' => 10, 'width' => 10, 'height' => 10, 'weight' => 1,
             'from_wilaya_name' => $this->cred['fromWilaya'] ?? 'Alger',
         ];

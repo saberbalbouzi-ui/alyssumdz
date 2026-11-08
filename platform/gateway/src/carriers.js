@@ -198,12 +198,12 @@ class WeCan extends Adapter {
     return this.probe(async () => { const r = await this.send("GET", WeCan.BASE + "/locations/states", this.h()); return r.ok ? [true, "المفاتيح صالحة"] : [null, `ردّ غير متوقع (HTTP ${r.status})`]; });
   }
   async create(p) {
-    const [first, family] = p.nameParts(), price = p.priceWithoutShipping();
+    const [first, family] = p.nameParts(), price = Math.round(p.total);   // WeCan تحصّل price كما أُرسل (لا تضيف التوصيل فوقه): المجموع كاملاً
     if (p.stopDesk && !p.deskId) return fail("مكتب Stop Desk غير محدد");
     const pc = this.profileCommune(p.legacyWilaya, p.commune, p.wilayaName); if (pc.block !== null) return fail(pc.block);
     const body = { order_id: p.orderRef, firstname: first, familyname: family, contact_phone: p.localPhone(), address: p.address || `${p.commune}، ${p.wilayaName}`,
       to_commune_name: pc.name ?? p.commune, to_wilaya_name: p.legacyName, product_list: p.productsText(), price, do_insurance: false, declared_value: price,
-      freeshipping: p.shippingFee <= 0, delivery_fee: Math.max(0, Math.trunc(p.shippingFee)), shipping_type: p.stopDesk ? "express_desk" : "express_home",
+      freeshipping: true, shipping_type: p.stopDesk ? "express_desk" : "express_home",
       is_stopdesk: p.stopDesk, has_exchange: false, length: 10, width: 10, height: 10, weight: 1, from_wilaya_name: this.cred.fromWilaya || "Alger" };
     if (p.stopDesk) body.stopdesk_id = +p.deskId;
     const r = await this.send("POST", WeCan.BASE + "/parcels", this.h(true), [body]); const j = r.json() ?? {};

@@ -3078,7 +3078,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G1\":{\"success\":true,\"order_id\":\"G1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3118,7 +3118,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-ph0\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-ph0\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-ph0\":{\"success\":true,\"order_id\":\"G-ph0\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3158,7 +3158,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-ph1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-ph1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-ph1\":{\"success\":true,\"order_id\":\"G-ph1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3200,7 +3200,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-b\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"kouba، Alger\",\"to_commune_name\":\"kouba\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-b\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"kouba، Alger\",\"to_commune_name\":\"kouba\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-b\":{\"success\":true,\"order_id\":\"G-b\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3240,7 +3240,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-65\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Aïn Oussera\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-65\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Aïn Oussera\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-65\":{\"success\":true,\"order_id\":\"G-65\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3280,7 +3280,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-69\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"El Abiodh Sidi Cheikh\",\"to_wilaya_name\":\"El Bayadh\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-69\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"El Abiodh Sidi Cheikh\",\"to_wilaya_name\":\"El Bayadh\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-69\":{\"success\":true,\"order_id\":\"G-69\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3320,7 +3320,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-65b\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Ain Oussera\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-65b\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Ain Oussera\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-65b\":{\"success\":false,\"message\":\"Commune introuvable\"}}",
                     "rh": []
@@ -3388,7 +3388,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-sd1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_desk\",\"is_stopdesk\":true,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\",\"stopdesk_id\":161601}]",
+                    "b": "[{\"order_id\":\"G-sd1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_desk\",\"is_stopdesk\":true,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\",\"stopdesk_id\":161601}]",
                     "s": 200,
                     "r": "{\"G-sd1\":{\"success\":true,\"order_id\":\"G-sd1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3428,7 +3428,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-unk\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Zzyzx Qwerty\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-unk\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Zzyzx Qwerty\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-unk\":{\"success\":false,\"message\":\"Commune introuvable\"}}",
                     "rh": []
@@ -3468,7 +3468,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G1\":{\"success\":true,\"order_id\":\"G1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -3482,7 +3482,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G1\":{\"success\":false,\"message\":\"Duplicate order_id\"}}",
                     "rh": []
@@ -3529,7 +3529,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 429,
                     "r": "{\"message\":\"Too Many Attempts.\"}",
                     "rh": []
@@ -3567,7 +3567,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 401,
                     "r": "{\"message\":\"Unauthenticated.\"}",
                     "rh": []
@@ -4808,7 +4808,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-cal0\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab-Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-cal0\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab-Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-cal0\":{\"success\":false,\"message\":\"Commune introuvable\"}}",
                     "rh": []
@@ -4875,7 +4875,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-cal1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bordj El Kiffan\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-cal1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bordj El Kiffan\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-cal1\":{\"success\":false,\"message\":\"Commune introuvable\"}}",
                     "rh": []
@@ -4942,7 +4942,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-cal2\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Zeralda\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-cal2\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Zeralda\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-cal2\":{\"success\":false,\"message\":\"Commune introuvable\"}}",
                     "rh": []
@@ -5009,7 +5009,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-cal3\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"El Harrach\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-cal3\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"El Harrach\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-cal3\":{\"success\":true,\"order_id\":\"G-cal3\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}",
                     "rh": []
@@ -5076,7 +5076,7 @@
                         "Accept": "application/json",
                         "Content-Type": "application/json"
                     },
-                    "b": "[{\"order_id\":\"G-cal4\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Ain Ouessara\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "b": "[{\"order_id\":\"G-cal4\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Ain Ouessara\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":4200,\"do_insurance\":false,\"declared_value\":4200,\"freeshipping\":true,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
                     "s": 200,
                     "r": "{\"G-cal4\":{\"success\":false,\"message\":\"Commune introuvable\"}}",
                     "rh": []
