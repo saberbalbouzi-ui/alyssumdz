@@ -134,13 +134,14 @@ const Credits = (() => {
 <div class="cr-big">${fmt(s.left)} / ${fmt(s.total)}</div><div class="cr-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
 <div style="font-size:.8rem;opacity:.85">1$ = ${PER_USD} رصيد · الرصيد لا ينتهي · أدوات الاستوديو المحلية (حواف، تمويه، بازل، ماسك، كولاج، باركود، استوديو 3D…) مجانية.</div>
 <b style="display:block;margin-top:.8rem">شراء رصيد</b><div class="cr-packs">${PACKS.map(p => `<button type="button" class="cr-btn" data-cr="buy" data-u="${p[0]}" data-c="${p[1]}">${p[0]}$<small>${p[1]} رصيد${p[1] > p[0] * PER_USD ? " <span dir=\"ltr\">(+" + Math.round((p[1] / (p[0] * PER_USD) - 1) * 100) + "%)</span>" : ""}</small></button>`).join("")}</div>
-${hubOwner() ? `<div style="margin-top:.6rem"><button type="button" class="cr-btn" data-cr="own" title="للمالك فقط: لا طلب دعم ولا دفع">إضافة ${START} رصيد للمالك (تجريبي)</button></div>` : ""}
+${hubOwner() ? `<div style="margin-top:.6rem"><button type="button" class="cr-btn" data-cr="own" title="للمالك فقط: لا طلب دعم ولا دفع">إضافة ${START} رصيد للمالك (تجريبي)</button> <button type="button" class="cr-btn" data-cr="usd" title="للمالك فقط: يضبط العدّاد على رصيدك الفعلي عند المزوّد">ضبط الرصيد من رصيد المزوّد ($)</button></div>` : ""}
 <details><summary>أسعار الأدوات</summary><table>${rows}</table></details>
 ${hist ? `<details><summary>آخر العمليات</summary><table>${hist}</table></details>` : ""}</div>`;
     document.body.appendChild(bg);
     bg.addEventListener("click", async e => {
       if (e.target === bg) return close(); const el = e.target.closest("[data-cr]"); if (!el) return; const a = el.dataset.cr;
       if (a === "x") close();
+      else if (a === "usd") { if (!hubOwner()) return; const v = parseFloat(String(prompt("رصيدك الحالي عند المزوّد بالدولار (مثال 3.60):", "") || "").replace(",", ".")); if (!(v >= 0)) return; { const L = Math.round(v * PER_USD * 100) / 100; set(L, L); } toast("✅ ضُبط الرصيد على " + fmt(v * PER_USD) + " رصيد (" + v + " $)"); close(); open(); }
       else if (a === "own") { if (hubOwner() && topup(START, "شحن المالك")) { toast("✅ أُضيف " + START + " رصيد"); close(); open(); } }
       else if (a === "buy") {
         const u = +el.dataset.u, c = +el.dataset.c; if (!confirm("إرسال طلب شحن " + c + " رصيد (" + u + " $) إلى فريق الدعم؟")) return;
