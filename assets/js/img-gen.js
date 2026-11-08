@@ -520,12 +520,12 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (!o || !String(o.prompt || "").trim()) throw new Error("التعليمات مطلوبة");
     /* النص زهيد: لا يُحجب بسقف الصور المحلي (المزوّد يفرض الحدّ الفعلي ويُعلَّم النفاد عند رفضه) */
     const parts = [{ text: String(o.prompt) }]; for (const b of (o.blobs || []).slice(0, 4)) parts.push({ inline_data: { mime_type: "image/jpeg", data: await b64(await shrink(b, Math.max(512, Math.min(2048, Number(o.edge) || 1024)))) } });
-    let last = null, queue = await textModels(key); const tried = new Set(), errs = [], maxM = Number(o.maxModels) || 14;
+    let last = null, queue = await textModels(key); const tried = new Set(), errs = [], text503 = new Set(), maxM = Number(o.maxModels) || 14;
     if (Array.isArray(o.models) && o.models.length) queue = o.models.concat(queue.filter(m => !o.models.includes(m)));      // نماذج مفضّلة أولاً (مثل التجزئة) ثم الاحتياط
     for (let qi = 0; qi < queue.length && tried.size < maxM; qi++) {
       const m = queue[qi]; if (tried.has(m)) continue; tried.add(m);
       let sig = o.signal, tm = null, timedOut = false; if (o.timeoutMs) { const ac = new AbortController(); tm = setTimeout(() => { timedOut = true; ac.abort(); }, o.timeoutMs); if (o.signal) o.signal.addEventListener("abort", () => ac.abort()); sig = ac.signal; }      // مهلة لكل نموذج فلا ينتظر المستخدم طويلاً
-      let r; try { r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: Math.max(256, Math.min(16384, Number(o.maxTokens) || 3072)) }, o.json || o.mime ? { responseMimeType: "application/json" } : {}, o.noThink ? { thinkingConfig: { thinkingBudget: 0 } } : {}) }), signal: sig }); } catch (e) { if (timedOut) { last = new Error("انتهت مهلة الخدمة (" + Math.round(o.timeoutMs / 1000) + "ث)"); errs.push(m + "=timeout"); continue; } if (tm) clearTimeout(tm); throw e; }
+      let r; try { r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + m + ":generateContent", { method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": key }, body: JSON.stringify({ contents: [{ parts }], generationConfig: Object.assign({ temperature: o.temp == null ? .7 : o.temp, maxOutputTokens: Math.max(256, Math.min(16384, Number(o.maxTokens) || 3072)) }, o.json || o.mime ? { responseMimeType: "application/json" } : {}, o.noThink && /gemini-2\.5/.test(m) ? { thinkingConfig: { thinkingBudget: 0 } } : {}) }), signal: sig }); } catch (e) { if (timedOut) { last = new Error("انتهت مهلة الخدمة (" + Math.round(o.timeoutMs / 1000) + "ث)"); errs.push(m + "=timeout"); continue; } if (tm) clearTimeout(tm); throw e; }
       const j = await r.json().catch(() => ({}));
       if (r.ok) {
         const t = (((((j.candidates || [])[0] || {}).content || {}).parts) || []).map(x => x.text || "").join("").trim(); if (!t) { last = new Error("ردّ فارغ"); continue; }
@@ -533,6 +533,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
         if (!o.json) return t.replace(/^```[a-z]*\n?|```$/g, "").trim();
         try { return JSON.parse(t.replace(/^```[a-z]*\n?|```$/g, "").trim()); } catch (e) { last = new Error("ناتج غير صالح"); continue; }
       }
+      if (r.status === 503 && !text503.has(m)) { text503.add(m); tried.delete(m); await new Promise(x => setTimeout(x, 2500)); qi--; continue; }      // ازدحام مؤقت عند المزوّد: محاولة ثانية للنموذج نفسه بعد ثانيتين ونصف
       const em = (j.error && j.error.message) || ""; if (billingHit(r.status, em)) credit.flagOut(); last = new Error("Alyssum API (نص) [" + m + "] " + r.status + (em ? ": " + em.slice(0, 200) : "")); errs.push(m + "=" + r.status);
       if (r.status === 404) { const sg = /models\/(gemini-[a-z0-9.\-]*[a-z0-9])/g; let mm; while ((mm = sg.exec(em))) if (!tried.has(mm[1])) queue.splice(qi + 1, 0, mm[1]); }
       if ([401, 402].includes(r.status)) break;

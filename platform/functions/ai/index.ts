@@ -5,10 +5,11 @@
 // الأمان: التوكن سرّي لكل موقع؛ لا يُخصم رصيد طلب فشل عند Google؛ تُمرَّر مفاتيح إعداد محدّدة فقط.
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GKEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+// اسم السرّ قد يكون GEMINI_API_KEY أو «Gemini API Key» أو GEMINI_KEY (كما في ai-video)
+const GKEY = [Deno.env.get("GEMINI_API_KEY"), Deno.env.get("Gemini API Key"), Deno.env.get("GEMINI_KEY")].map((x) => String(x ?? "").trim()).find(Boolean) ?? "";
 const list = (v: string | undefined, d: string) => (v ?? d).split(",").map((s) => s.trim()).filter(Boolean);
 const MODELS: Record<string, string[]> = {
-  text: list(Deno.env.get("AI_TEXT_MODELS"), "gemini-2.5-flash,gemini-flash-latest,gemini-3.8-flash"),
+  text: list(Deno.env.get("AI_TEXT_MODELS"), "gemini-flash-latest,gemini-3.8-flash,gemini-2.5-flash"),
   image: list(Deno.env.get("AI_IMAGE_MODELS"), "gemini-2.5-flash-image"),
 };
 const CFG_KEYS = ["temperature", "responseMimeType", "responseModalities", "imageConfig", "maxOutputTokens", "topP", "thinkingConfig"];
@@ -86,10 +87,13 @@ Deno.serve(async (req) => {
   let last = 0;
   for (const m of MODELS[kind]) {
     try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+      const gc: Record<string, unknown> = { ...cfg }; if (!/gemini-2\.5/.test(m)) delete gc.thinkingConfig;        // ميزانية التفكير لنماذج 2.5 فقط (3.x ترفضها بـ400)
+      const call = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
         method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": GKEY },
-        body: JSON.stringify({ contents: [{ parts }], generationConfig: cfg }), signal: AbortSignal.timeout(kind === "text" ? 50_000 : 110_000),
+        body: JSON.stringify({ contents: [{ parts }], generationConfig: gc }), signal: AbortSignal.timeout(kind === "text" ? 50_000 : 110_000),
       });
+      let r = await call();
+      if (r.status === 503) { await new Promise((x) => setTimeout(x, 1500)); r = await call(); }          // ازدحام مؤقت: محاولة ثانية للنموذج نفسه
       if (r.ok) return json({ ok: true, left: ch.left, model: m, data: await r.json() });
       last = r.status;
     } catch { last = 504; }
