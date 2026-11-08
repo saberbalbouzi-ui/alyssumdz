@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.892">
+<meta name="admin-version" content="1.89.893">
 <script>/* v1.89.704: لا تبقى نسخة admin.html قديمة في كاش المتصفح/الحافة (max-age=600) — عند اختلافها عن VERSION تُجلب من جديد وتُعاد مرة واحدة لكل نسخة */(function(){try{var m=document.querySelector('meta[name="admin-version"]'),cur=m&&m.content;if(!cur||location.protocol==="file:")return;var k="au_auto_"+cur;if(sessionStorage.getItem(k))return;fetch("VERSION?_="+Date.now(),{cache:"no-store"}).then(function(r){return r.ok?r.text():""}).then(function(v){v=String(v).trim();if(!v||v===cur||!/^[0-9.]+$/.test(v))return;sessionStorage.setItem(k,"1");return fetch(location.href.split("#")[0],{cache:"reload"}).then(function(){location.reload()})}).catch(function(){})}catch(e){}})();</script>
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -175,6 +175,7 @@ tr:hover td{background:#FAF7F0}
 /* بطاقات الطرود (ZR/Noest/المضافة): جدول أفقي بعناوين وخانات في سطر واحد، يُسحب أفقياً على الهاتف */
 #zr-card table,#ext-card table,#noc-card table{width:max-content;min-width:100%}
 #zr-card th,#zr-card td,#ext-card th,#ext-card td,#noc-card th,#noc-card td{white-space:nowrap;padding:.35rem .7rem;text-align:start}
+html,body{overscroll-behavior-y:none}   /* منع «اسحب للأسفل لتحديث المتصفح» العرضي على الهاتف: كان يعيد تحميل اللوحة كلها ببطء عند أي سحب لأسفل من أعلى الصفحة */
 .hs-wrap,table.m-scroll,#ship-table{touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain}   /* التمرير الأفقي باللمس يتولاه admin-mtables.js */
 @media(max-width:700px){#ship-table,#cop-card .rt,#yd-card table{scroll-margin-top:72px}}   /* مساحة تمرير تحت الجدول: ليصعد الطلب إلى أعلى الشاشة مهما قلّ عدد الطلبات */
 @media(max-width:700px){.hs-nav{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.2rem 0 .3rem;font-size:.72rem;opacity:.85}.hs-nav button{min-width:44px;padding:.25rem .6rem}.hs-nav span{flex:1;text-align:center}}.modal.lg{width:min(900px,100%)}
@@ -7870,7 +7871,7 @@ const Admin = {
         { key:"apiSecret", label:"X-API-Secret", type:"password" },
         { key:"sandbox", label:"وضع التجربة (sandbox): اكتب 1 للتجربة، واتركه فارغاً للحقيقي", type:"text", required:false },
         { key:"fromWilayaName", label:"ولاية الانطلاق (ولاية مستودعك عند WeCan)", type:"select", options:"wilayas", required:false },
-        { key:"priceFix", label:"تصحيح أسعار ولايات (اختياري): رقم الولاية=منزل/مكتب مفصولة بفاصلة، مثال 42=650/500", type:"text", required:false },
+        { key:"priceFix", label:"تعديل أسعار ولايات (اختياري — تعريفة WeCan مدمجة تلقائياً): رقم الولاية=منزل/مكتب، مثال 42=650/550", type:"text", required:false },
       ],
       cl(v){ return String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); },
       baseOf(cfg){ return "https://wecanservices.com/api/v1" + (String(cfg.sandbox || "").trim() === "1" ? "/sandbox" : ""); },
@@ -7882,7 +7883,9 @@ const Admin = {
         const parts = String(order.name || "").trim().split(/\s+/).filter(Boolean), first = parts[0] || ".", family = parts.slice(1).join(" ") || ".";
         let ph = String(order.phone || "").replace(/\D/g, ""); if(ph.startsWith("213")) ph = "0" + ph.slice(3); else if(ph.length === 9) ph = "0" + ph;
         const stop = order.dtype === "stop", desk = Number(order.__wcDesk || order.__deskId || 0); if(stop && !desk) throw new Error("لم يُحلّ مكتب Stop Desk عند WeCan لهذا الطلب");
-        const total = Math.max(0, Math.round(Number(order.total) || 0)), fee = Math.max(0, Math.round(Number(order.fee) || 0)), price = Math.max(0, total - fee);       // «Total des produits» عندهم = بلا التوصيل؛ التوصيل يُسعَّر من تعريفتهم (نرسل رسمه ونوعه أيضاً)
+        const total = Math.max(0, Math.round(Number(order.total) || 0)); let fee = Math.max(0, Math.round(Number(order.fee) || 0));
+        { const wid = Number(order.__coWid || order.__wid0 || (Admin.wCo(order.wilaya) || {}).id), t = Admin.parsePriceFix(cfg.priceFix || this.tariff)[wid]; if(t){ const tf = stop ? (t.stop || t.home) : t.home; if(tf > 0) fee = tf; } }       // WeCan تحسب التوصيل من تعريفتها وحدها: نرسل رسمها هي كي يطابق مجموعهم ما دفعه الزبون
+        const price = Math.max(0, total - fee);       // «Total des produits» عندهم = بلا التوصيل؛ التوصيل يُسعَّر من تعريفتهم (نرسل رسمه ونوعه أيضاً)
         const products = String(order.items || "").split(/\n/).map(l=>l.replace(/\s*=\s*\d+\s*DA\s*$/i, "").trim()).filter(Boolean).join("، ").slice(0, 250) || "Produit";
         let p2 = String((order.extra && order.extra["📞 هاتف 2"]) || "").replace(/\D/g, ""); if(p2.startsWith("213")) p2 = "0" + p2.slice(3); else if(p2.length === 9) p2 = "0" + p2;
         const body = { order_id: String(order.__ydId || order.id), firstname: first, familyname: family, contact_phone: ph, address: String(order.address || [order.commune, order.wilaya].filter(Boolean).join("، ")).slice(0, 250),
@@ -7906,6 +7909,8 @@ const Admin = {
       parseCenters(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r.center_id != null).map(r=>({ id: Number(r.center_id), name: String(r.name||""), address: String(r.address||""), commune: String(r.commune_name||""), wilaya_id: Number(r.wilaya_id) })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* تعريفة WeCan (express) من ولاية انطلاق المتجر إلى كل ولاية: GET /fees?from_wilaya_id=&to_wilaya_id= ⟵ {per_commune:{id:{express_home, express_desk,…}}}؛ سعر الولاية = الأكثر شيوعاً بين بلدياتها؛ نداء لكل ولاية (feesPages=58) */
       ownTariff: true, feesPages: 58,
+      /* تعريفة متجرنا عند WeCan (من ملف أسعارهم الرسمي shipping-prices): تُعتمد افتراضياً للمنصة كلها، ويتجاوزها «تصحيح أسعار ولايات» إن كُتب. رقم الولاية = منزل/مكتب */
+      tariff: "1=1000/800, 2=850/600, 3=900/700, 4=850/600, 5=850/600, 6=850/600, 7=900/700, 8=1000/800, 9=650/550, 10=850/600, 11=1550/1350, 12=900/700, 13=850/600, 14=850/600, 15=850/600, 16=540/400, 17=900/700, 18=850/600, 19=850/600, 20=850/600, 21=850/600, 22=850/600, 23=850/600, 24=850/600, 25=850/600, 26=850/600, 27=850/600, 28=850/600, 29=850/600, 30=900/700, 31=850/600, 32=1000/800, 33=1550/1350, 34=850/600, 35=650/550, 36=850/600, 37=1550/1350, 38=850/600, 39=900/700, 40=850/600, 41=850/600, 42=650/550, 43=850/600, 44=850/600, 45=1000/800, 46=850/600, 47=900/700, 48=850/600, 49=1000/800, 50=1000/800, 51=900/700, 52=1000/800, 53=1550/1350, 54=1550/1350, 55=900/700, 56=1550/1350, 57=900/700, 58=900/700",
       fromName(cfg){ const y = (Admin.deliveryCfg && Admin.deliveryCfg.yalidine) || {}; return String(cfg.fromWilayaName || y.fromWilayaName || "Alger"); },
       feesRequest(cfg, page){ const nn = x=>Admin.normName(x), fw = (typeof WILAYAS !== "undefined" ? WILAYAS : []).find(w=>!w.par && nn(w.name) === nn(this.fromName(cfg))), from = fw ? fw.id : 16; return { url: this.baseOf(cfg) + "/fees?from_wilaya_id=" + from + "&to_wilaya_id=" + (page || 1), method: "GET", headers: this.hdr(cfg) }; },
       parseFees(json){
@@ -7980,6 +7985,7 @@ const Admin = {
   loadDeliveryCfg(){
     try{ this.deliveryCfg = JSON.parse(localStorage.getItem("alyssum_delivery_cfg") || "{}") || {}; }
     catch(e){ this.deliveryCfg = {}; }
+    try{ Object.keys(this.DELIVERY_COMPANIES || {}).forEach(k=>{ const co = this.DELIVERY_COMPANIES[k], c = this.deliveryCfg[k]; if(co && co.tariff && c && (c.enabled || c.apiKey) && (!c.prices || !Object.keys(c.prices).length)) c.prices = this.applyPriceFix({}, c, k); }); }catch(e){}
     try{ this.customDeliveryCompanies = JSON.parse(localStorage.getItem("alyssum_custom_delivery") || "{}") || {}; }
     catch(e){ this.customDeliveryCompanies = {}; }
     try{ this.deliveryPriceSource = localStorage.getItem("alyssum_delivery_price_source") || "manual"; }
@@ -8202,7 +8208,7 @@ const Admin = {
   },
   /* تصحيحات يدوية لأسعار ولايات بعينها تبقى بعد «جلب الأسعار» (حين تُخطئ الشركة في تعريفتها): نصّ «42=650/500, 35=540/400» = رقم الولاية = منزل/مكتب */
   parsePriceFix(txt){ const m = {}; String(txt || "").split(/[,;\n،]+/).forEach(x=>{ const r = /^\s*(\d{1,2})\s*[=:]\s*(\d{2,5})\s*(?:[\/|-]\s*(\d{2,5}))?\s*$/.exec(x); if(r && +r[1] >= 1 && +r[1] <= 58){ const h = +r[2], d = r[3] ? +r[3] : 0; m[+r[1]] = { home: h, stop: d || h }; } }); return m; },
-  applyPriceFix(prices, cfg){ const fx = this.parsePriceFix(cfg && cfg.priceFix); const out = Object.assign({}, prices || {}); Object.keys(fx).forEach(k=>{ out[k] = Object.assign({}, out[k] || {}, fx[k]); }); return out; },
+  applyPriceFix(prices, cfg, key){ const co = key && this.DELIVERY_COMPANIES[key], fx = this.parsePriceFix((cfg && cfg.priceFix) || (co && co.tariff) || ""); const out = Object.assign({}, prices || {}); Object.keys(fx).forEach(k=>{ out[k] = Object.assign({}, out[k] || {}, fx[k]); }); return out; },
   async fetchCompanyPrices(key, opts){
     const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
     if(!co || !co.feesRequest){ toast("هذه الشركة لا تدعم الجلب التلقائي"); return }
@@ -8221,7 +8227,7 @@ const Admin = {
       const n = Object.keys(prices).length;
       if(!n) throw new Error("لم تُرجع الشركة تعريفة مفهومة — عيّنة الردّ: " + sample);
       if(key !== "yalidine" && (n < 30 || Object.values(prices).some(v=>(v.home && (v.home < 100 || v.home > 6000)) || (v.stop && v.stop > 6000)))) throw new Error("ردّ الشركة لا يحوي تعريفة مفهومة (" + n + " ولاية) — لم تُعتمد؛ تبقى أسعار المناطق");
-      this.deliveryCfg[key] = Object.assign({}, cfg, { prices: this.applyPriceFix(prices, cfg), pricesAt: Date.now(), pricesSrc:"api", pricesErr:"" });
+      this.deliveryCfg[key] = Object.assign({}, cfg, { prices: this.applyPriceFix(prices, cfg, key), pricesAt: Date.now(), pricesSrc:"api", pricesErr:"" });
       this.saveDeliveryCfgToStorage();
       toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name + " تلقائياً");
       this.publishShipCo();
@@ -8565,7 +8571,7 @@ const Admin = {
       toast("⚠️ أكمل الحقول التالية قبل الاستمرار: " + missing.map(f=>f.label).join("، "));
       cfg.enabled = false;
     }
-    if(cfg.priceFix && cfg.prices && Object.keys(cfg.prices).length) cfg.prices = this.applyPriceFix(cfg.prices, cfg);       // تصحيحات الأسعار تُطبَّق فوراً
+    if(cfg.priceFix || co.tariff) cfg.prices = this.applyPriceFix(cfg.prices, cfg, key);       // تصحيحات الأسعار تُطبَّق فوراً
     this.deliveryCfg[key] = cfg;
     this.saveDeliveryCfgToStorage();
     document.getElementById("delivery-modal-bg").classList.remove("open");
