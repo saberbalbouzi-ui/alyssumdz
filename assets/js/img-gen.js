@@ -19,7 +19,7 @@ const ImgGen = (() => {
     catch (e) { return new Response(JSON.stringify({ message: "تعذّر الاتصال بخدمة الفيديو — تحقق من الشبكة" }), { status: 503 }); }
   }
   /* يرسل/يقرأ من طابور الخدمة: مباشرة بالمفتاح المحلي إن وُجد، وإلا عبر المنصة */
-  const falRoute = (direct, H, m) => (url, init) => direct ? fetch(url, Object.assign({ headers: H }, init || {})) : platCall(init && init.method === "POST" ? { action: "submit", model: m, body: JSON.parse(init.body) } : { action: "get", url });
+  const falRoute = (direct, H, m, pm) => (url, init) => direct ? fetch(url, Object.assign({ headers: H }, init || {})) : platCall(init && init.method === "POST" ? { action: "submit", model: pm || m, body: JSON.parse(init.body) } : { action: "get", url });
   /* ── المقاسات: [المعرّف، التسمية، العرض، الارتفاع] مجمّعة بالمنصة ── */
   const SIZES = [
     ["المتجر", [["shop", "صورة منتج للمتجر (مربّعة)", 1000, 1000], ["shop43", "صورة منتج 4:5", 1000, 1250]]],
@@ -426,7 +426,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     if (o.confirm !== false && !confirm(useMsg(o.title || "توليد فيديو", "النسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق."))) return null;
     const key = cleanFal(LS.get(FALKEY, "")), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
     const direct = falOk(key); if (!direct && !platOn()) throw new Error("خدمة الفيديو غير مفعّلة لموقعك — تواصل مع الدعم، أو الصق مفتاحاً بصيغة «معرّف:سرّ» كاملاً في إعدادات مولّد الصور");
-    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { }), falf = falRoute(direct, H, m);
+    const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { }), falf = falRoute(direct, H, m, "veo");      // عبر المنصة: الفيديو بمفتاح الصور (Veo) في الخادم
     say("إرسال الطلب إلى خدمة الفيديو…");
     const r = await falf("https://queue.fal.run/" + m, { method: "POST", body: JSON.stringify(videoBody(o, urls)) }), j = await r.json().catch(() => ({}));
     if (!r.ok && billingHit(r.status, JSON.stringify(j))) credit.flagOut();
@@ -444,7 +444,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
       else if (stt === "FAILED" || stt === "ERROR" || sj.error) throw new Error("فشل التوليد: " + (sj.error || sj.detail || "رفضت الخدمة الطلب") + " — لم تُحتسب تكلفة غالباً.");
     }
     const u = ((res.video || (res.data && res.data.video) || {}).url); if (!u) throw new Error("لم تُرجع الخدمة فيديو — لم تُحتسب تكلفة غالباً.");
-    const vr = await fetch(u); if (!vr.ok) throw new Error("تعذّر تنزيل الفيديو الناتج"); const blob = await vr.blob();
+    const vr = String(u).startsWith("plat:") ? await platCall({ action: "dl", uri: String(u).slice(5) }) : await fetch(u); if (!vr.ok) throw new Error("تعذّر تنزيل الفيديو الناتج"); const blob = await vr.blob();
     LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
     return { blob, type: blob.type || "video/mp4", cost: est, model: "fal:" + m };
   }

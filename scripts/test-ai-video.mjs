@@ -1,0 +1,52 @@
+/* اختبار دالة ai-video (Veo بمفتاح الصور + رصيد الفيديو) بمحاكاة Deno وGemini وSupabase — بلا شبكة:
+     NODE_PATH=/opt/node-tools/node_modules node scripts/test-ai-video.mjs */
+import { createRequire } from "node:module"; import { readFileSync, writeFileSync, mkdtempSync } from "node:fs"; import { tmpdir } from "node:os"; import { join } from "node:path"; import { pathToFileURL, fileURLToPath } from "node:url";
+const require = createRequire(import.meta.url); const ts = require("typescript");
+let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; console.log("✗", n, x === undefined ? "" : JSON.stringify(x)); } else console.log("✓", n); };
+const src = readFileSync(new URL("../platform/supabase/functions/ai-video/index.ts", import.meta.url), "utf8");
+const js = ts.transpileModule(src, { compilerOptions: { target: "ES2022", module: "ESNext" } }).outputText;
+const dir = mkdtempSync(join(tmpdir(), "aiv-")), file = join(dir, "f.mjs"); writeFileSync(file, js);
+const ENV = { SUPABASE_URL: "https://sb.test", SUPABASE_SERVICE_ROLE_KEY: "srk", GEMINI_API_KEY: "GK" }; let handler;
+globalThis.Deno = { env: { get: k => ENV[k] }, serve: h => { handler = h; } };
+const state = { calls: [], charge: { ok: true, left: 4 }, refunds: 0, veo: "ok", opDone: false, opFail: false };
+globalThis.fetch = async (url, o = {}) => {
+  const u = String(url); state.calls.push([u, o.method || "GET", o.body]);
+  if (u.includes("/rpc/saas_ai_charge")) return new Response(JSON.stringify(state.charge), { status: 200 });
+  if (u.includes("/rpc/saas_ai_refund")) { state.refunds++; return new Response("null", { status: 200 }); }
+  if (u.includes(":predictLongRunning")) return state.veo === "ok" ? new Response(JSON.stringify({ name: "models/veo-3.1-fast-generate-preview/operations/op1" }), { status: 200 }) : new Response(JSON.stringify({ error: { message: "bad image" } }), { status: 400 });
+  if (u.includes("/operations/op1")) return new Response(JSON.stringify(state.opFail ? { done: true, response: { generateVideoResponse: { raiMediaFilteredReasons: ["blocked"] } } } : state.opDone ? { done: true, response: { generateVideoResponse: { generatedSamples: [{ video: { uri: "https://generativelanguage.googleapis.com/v1beta/files/abc:download?alt=media" } }] } } } : { done: false }), { status: 200 });
+  if (u.includes("/files/abc:download")) return new Response(new Uint8Array(1024), { status: 200, headers: { "content-type": "video/mp4" } });
+  return new Response("{}", { status: 404 });
+};
+await import(pathToFileURL(file).href);
+const call = async (b) => { const r = await handler(new Request("https://x.test/", { method: "POST", body: JSON.stringify(b) })); const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { } return { s: r.status, j, len: t.length, h: r.headers.get("content-type") }; };
+const TOKEN = "b".repeat(40), IMG = "data:image/png;base64,iVBORw0KGgo=";
+ok("بلا رمز ولا جلسة ← 400", (await call({ action: "submit" })).s === 400);
+let r = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p", image_url: IMG, aspect_ratio: "9:16", duration: "5" } });
+ok("إرسال Veo ينجح ويعيد روابط veo-s/veo-r", r.s === 200 && r.j.status_url === "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" && r.j.left === 4, r);
+const pc = state.calls.find(c => c[0].includes(":predictLongRunning")), pb = JSON.parse(pc[2]);
+ok("الجسم: صورة base64 ونسبة 9:16 ومدة من {4,6,8}", pb.instances[0].image.bytesBase64Encoded === "iVBORw0KGgo=" && pb.instances[0].image.mimeType === "image/png" && pb.parameters.aspectRatio === "9:16" && [4, 6, 8].includes(pb.parameters.durationSeconds), pb);
+ok("المفتاح الخادمي في الترويسة لا في الرابط", pc[0].indexOf("GK") < 0);
+r = await call({ token: TOKEN, action: "get", url: "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" });
+ok("الحالة: قيد التنفيذ", r.j.status === "IN_PROGRESS", r);
+state.opDone = true; r = await call({ token: TOKEN, action: "get", url: "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" });
+ok("الحالة: مكتمل", r.j.status === "COMPLETED", r);
+r = await call({ token: TOKEN, action: "get", url: "veo-r:models/veo-3.1-fast-generate-preview/operations/op1" });
+ok("النتيجة: رابط plat: للتنزيل عبر الدالة", /^plat:https:\/\/generativelanguage\.googleapis\.com\/v1beta\/files\/abc:download/.test(r.j.video.url), r);
+r = await call({ token: TOKEN, action: "dl", uri: "https://generativelanguage.googleapis.com/v1beta/files/abc:download?alt=media" });
+ok("التنزيل يعيد ملف الفيديو", r.s === 200 && r.len === 1024 && r.h === "video/mp4", r);
+ok("رابط تنزيل غريب مرفوض", (await call({ token: TOKEN, action: "dl", uri: "https://evil.test/x" })).s === 400);
+ok("اسم عملية غريب مرفوض", (await call({ token: TOKEN, action: "get", url: "veo-s:../../secrets" })).s === 400);
+ok("رابط طابور غريب مرفوض", [400, 503].includes((await call({ token: TOKEN, action: "get", url: "https://evil.test/x" })).s));
+state.veo = "bad"; state.refunds = 0; r = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p" } });
+ok("فشل الإنشاء ← 502 ويُردّ الرصيد", r.s === 502 && state.refunds === 1 && /لم يُخصم/.test(r.j.message), [r, state.refunds]);
+state.veo = "ok"; state.charge = { ok: false, reason: "no_credits" }; r = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p" } });
+ok("انتهاء الرصيد ← 402 برسالة شراء رصيد", r.s === 402 && /رصيد/.test(r.j.message), r);
+state.charge = { ok: true, left: 1 }; state.opDone = true; state.opFail = true; state.refunds = 0;
+r = await call({ token: TOKEN, action: "get", url: "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" }); await call({ token: TOKEN, action: "get", url: "veo-s:models/veo-3.1-fast-generate-preview/operations/op1" });
+ok("فشل المهمة (حجب) ← FAILED ويُردّ الرصيد مرة واحدة فقط", r.j.status === "FAILED" && state.refunds === 1, [r, state.refunds]);
+r = await call({ token: TOKEN, action: "submit", model: "fal-ai/hunyuan3d", body: {} });
+ok("نموذج 3D بلا FAL_KEY ← not_configured", r.s === 503 && r.j.error === "not_configured", r);
+r = await call({ token: TOKEN, action: "submit", model: "evil/x", body: {} });
+ok("نموذج غير مسموح مرفوض", r.s === 400, r);
+console.log(fails ? `\n✗ فشل ${fails} من ${total}` : `\nنجح ${total} من ${total}`); process.exit(fails ? 1 : 0);

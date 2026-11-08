@@ -16,9 +16,10 @@ const TOKEN = "a".repeat(40);
       if (u === "https://srv.test/functions/v1/ai-video") {
         const b = JSON.parse(o.body); window.__srv.push(b);
         if (window.__mode === "nocredit") return new Response(JSON.stringify({ error: "no_credits", message: "انتهى رصيد الفيديو — اشترِ رصيداً إضافياً لمتابعة الاستعمال" }), { status: 402 });
+        if (b.action === "dl") return new Response(new Blob([new Uint8Array(2048)], { type: "video/mp4" }), { status: 200 });
         if (b.action === "submit") return new Response(JSON.stringify({ request_id: "r1", status_url: "https://queue.fal.run/fal-ai/x/requests/r1/status", response_url: "https://queue.fal.run/fal-ai/x/requests/r1", left: 4 }), { status: 200 });
         if (/status$/.test(b.url)) { polls++; return new Response(JSON.stringify({ status: polls < 2 ? "IN_QUEUE" : "COMPLETED" }), { status: 200 }); }
-        return new Response(JSON.stringify({ video: { url: "https://cdn.test/v.mp4" } }), { status: 200 });
+        return new Response(JSON.stringify({ video: { url: "plat:https://generativelanguage.googleapis.com/v1beta/files/abc:download?alt=media" } }), { status: 200 });
       }
       if (/queue\.fal\.run/.test(u)) return new Response("direct-should-not-happen", { status: 500 });
       if (u === "https://cdn.test/v.mp4") return new Response(new Blob([new Uint8Array(2048)], { type: "video/mp4" }), { status: 200 });
@@ -33,7 +34,7 @@ const TOKEN = "a".repeat(40);
   ok("برمز الموقع: الفيديو جاهز بلا مفتاح محلي ولا صندوق", await T(() => { const r = ImgGen.videoReady(); return r.ok && !r.nokey && ImgGen.videoKeyBox() === ""; }));
   const r1 = await T(async () => { try { const v = await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0, confirm: false }); return { size: v.blob.size, srv: __srv.map(x => [x.action, x.model || x.url, !!x.token, !!x.jwt]) }; } catch (e) { return { err: e.message }; } });
   ok("التوليد عبر المنصة ينجح ويعيد الفيديو", r1.size === 2048, r1);
-  ok("الطلبات كلها إلى ai-video بالرمز (submit ثم get)", r1.srv && r1.srv[0][0] === "submit" && r1.srv.slice(1).every(x => x[0] === "get" && x[1].startsWith("https://queue.fal.run/")) && r1.srv.every(x => x[2] && !x[3]), r1.srv);
+  ok("الطلبات كلها إلى ai-video بالرمز (submit ثم get)", r1.srv && r1.srv[0][0] === "submit" && r1.srv.slice(1).every(x => (x[0] === "get" && x[1].startsWith("https://queue.fal.run/")) || x[0] === "dl") && r1.srv.every(x => x[2] && !x[3]), r1.srv);
   ok("لا مفتاح خدمة يخرج من المتصفح ولا اتصال مباشر", await T(() => !__srv.some(x => JSON.stringify(x).includes("Key ")) && !localStorage.getItem("alyssum_fal_key")));
   const r2 = await T(async () => { __mode = "nocredit"; try { await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0, confirm: false }); return {}; } catch (e) { return { err: e.message }; } });
   ok("انتهاء الرصيد: رسالة شراء رصيد واضحة", /اشترِ رصيداً/.test(r2.err || ""), r2);
