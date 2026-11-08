@@ -716,6 +716,15 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     cus() { LS.set("alyssum_ig_w", $("ig-w").value); LS.set("alyssum_ig_h", $("ig-h").value); api.size("custom"); },
     txtm(v) { LS.set("alyssum_ig_txtm", v); $("ig-txtbox").style.display = v === "none" ? "none" : "block"; }, tog, txtEdited() { S.txtDirty = true; },
     bgm(v) { LS.set("alyssum_ig_bgm", v); const b = $("ig-bgcbox"); if (b) b.style.display = v === "solid" ? "flex" : "none"; }, bgc(v) { LS.set("alyssum_ig_bgc", v); }, lang(v) { LS.set("alyssum_ig_lang", v); },
+    /* صندوق مفتاح الفيديو داخل أدوات الفيديو نفسها (بدل البحث عنه في إعدادات المولّد): يظهر إن لم يوجد مفتاح صالح بصيغة «معرّف:سرّ» */
+    videoKeyBox() {
+      if (falOk(cleanFal(LS.get(FALKEY, "")))) return "";
+      return `<div class="ep-n" id="vkb" style="border:1px dashed #b45309;border-radius:10px;padding:.5rem;margin:.4rem 0"><b>مفتاح توليد الفيديو</b> (الاتصال الثاني — الصيغة <span dir="ltr">key_id:key_secret</span> كاملةً)<div style="display:flex;gap:.4rem;margin-top:.3rem"><input id="vkb-i" type="password" dir="ltr" autocomplete="off" placeholder="key_id:key_secret" style="flex:1"><button type="button" class="pbx-small pz-go" onclick="ImgGen.saveVideoKey()">حفظ</button></div><div class="hint">يُحفظ في هذا المتصفح فقط.</div></div>`;
+    },
+    saveVideoKey() {
+      const i = $("vkb-i"), k = cleanFal(i && i.value); if (!falOk(k)) { toast("المفتاح ناقص أو بصيغة خاطئة — الصق «معرّف:سرّ» كاملاً"); return; }
+      LS.set(FALKEY, k); try { credit.renew(); } catch (e) { } toast("حُفظ مفتاح الفيديو في هذا المتصفح"); const b = $("vkb"); if (b) b.innerHTML = "✅ حُفظ مفتاح الفيديو — اضغط «أنشئ» الآن";
+    },
     saveFalKey() { const k = cleanFal(($("ig-fkey") || {}).value); if (k) { LS.set(FALKEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
