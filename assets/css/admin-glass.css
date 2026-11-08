@@ -541,3 +541,9 @@ html.glass .pbx-ip .g button:hover{background:#2f3641!important}
 /* v1.89.760: كل سطح عائم معتم تماماً (لا شفافية ولا تمويه) — أشرطة المنشئ وقوائم Action */
 html.glass .pbx-qbar,html.glass .pbx-ft,html.glass .pbx-sb,html.glass .pbx-mwbar{background:#12181c!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 html.glass .ts-menu,html.glass .ts-bar{background:#0b1f17!important;backdrop-filter:none!important}
+/* مفتاح تفعيل الشركات: المفعّلة بالأخضر (الداكن والفاتح) */
+.dlv-sw input:checked + i{background:#22c55e!important;border-color:#16a34a!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 3px rgba(34,197,94,.18)}
+.dlv-sw input:checked ~ span{color:#4ade80}
+html.white .dlv-sw i{background:#e2e8f0;border-color:#cbd5e1;box-shadow:inset 0 1px 2px rgba(15,23,42,.12)}
+html.white .dlv-sw input:checked + i{background:#22c55e!important;border-color:#15803d!important}
+html.white .dlv-sw span{color:#0f172a}html.white .dlv-sw input:checked ~ span{color:#15803d}
