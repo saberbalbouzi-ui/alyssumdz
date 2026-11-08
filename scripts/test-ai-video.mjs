@@ -51,4 +51,11 @@ r = await call({ token: TOKEN, action: "submit", model: "fal-ai/hunyuan3d", body
 ok("نموذج 3D بلا FAL_KEY ← not_configured", r.s === 503 && r.j.error === "not_configured", r);
 r = await call({ token: TOKEN, action: "submit", model: "evil/x", body: {} });
 ok("نموذج غير مسموح مرفوض", r.s === 400, r);
+
+/* بديل fal عند غياب Veo: نسخة ثانية من الوحدة بسرّ FAL_KEY مضبوط */
+ENV.FAL_KEY = "fk"; state.veo = "bad"; state.charge = { ok: true, left: 3 };
+const f0 = globalThis.fetch; globalThis.fetch = async (url, o = {}) => /queue\.fal\.run/.test(String(url)) ? new Response(JSON.stringify({ request_id: "q1", status_url: "https://queue.fal.run/fal-ai/kling-video/requests/q1/status", response_url: "https://queue.fal.run/fal-ai/kling-video/requests/q1" }), { status: 200 }) : f0(url, o);
+await import(pathToFileURL(file).href + "?fal=1");
+r = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p" } });
+ok("Veo غير متاح + FAL_KEY ← بديل fal ينجح بصيغة الطابور", r.s === 200 && r.j.request_id === "q1" && /kling/.test(r.j.model), r);
 console.log(fails ? `\n✗ فشل ${fails} من ${total}` : `\nنجح ${total} من ${total}`); process.exit(fails ? 1 : 0);

@@ -141,6 +141,14 @@ Deno.serve(async (req) => {
       last = r.status; msg = String(j?.error?.message ?? "").slice(0, 200); tried.push(m + "=" + r.status + (msg ? " " + msg.slice(0, 80) : ""));
       if (r.status === 429 || r.status === 401 || r.status === 403) break;           // لا فائدة من تجربة نموذج آخر
     }
+    if (FKEY) {                                  // Veo غير متاح لهذا المفتاح: بديل تلقائي بخدمة الفيديو المستقلة إن وُجد سرّ FAL_KEY (جسم الواجهة بصيغتها أصلاً)
+      const fm = (Deno.env.get("FAL_VIDEO_MODEL") ?? "fal-ai/kling-video/v2.1/standard/image-to-video").trim();
+      if (MODEL_OK.test(fm)) {
+        const r = await fetch("https://queue.fal.run/" + fm, { method: "POST", headers: FH, body: JSON.stringify(body), signal: AbortSignal.timeout(110_000) }), text = await r.text();
+        if (r.ok) { let j: any = {}; try { j = JSON.parse(text); } catch { /* */ } return json({ ...j, left: ch.left, model: fm }); }
+        tried.push(fm + "=" + r.status);
+      }
+    }
     await refund(); return json({ error: "upstream_failed", status: last, tried, message: "تعذّر إنشاء الفيديو" + (vdiag ? " — " + vdiag + (admin ? " — المفتاح المضبوط في الخادم ينتهي بـ" + GKEY.slice(-4) : "") : "") + (msg ? " — " + msg : "") + " — لم يُخصم من رصيدك" }, 502);
   } catch {
     await refund(); return json({ error: "upstream_failed", message: "تعذّرت خدمة الفيديو مؤقتاً — لم يُخصم من رصيدك" }, 502);
