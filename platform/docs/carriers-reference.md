@@ -52,3 +52,12 @@
 2. أضف/عدّل محاكيها في `scripts/lib/carrier-sims.php` (القواعد من وثيقة الشركة، لا من المحوّل) وأدرجها في مصفوفة `test-carriers.php` و`carrier-golden.php`.
 3. `php scripts/test-carriers.php` ثم `php scripts/gen-carrier-golden.php` ثم `node platform/gateway/tools/gen-status-dict.mjs`.
 4. انقل المنطق نفسه إلى `platform/gateway/src/carriers.js` وشغّل `node --no-warnings platform/gateway/test/carriers.parity.test.mjs` حتى يتطابق.
+
+
+## WeCan Service (محوّل أصلي منذ 1.89.891)
+- الأساس `https://wecanservices.com/api/v1`، الترويسات `X-API-Key` و`X-API-Secret`.
+- الإنشاء `POST /parcels` (مصفوفة بصيغة ياليدين) فيدخل الطلب «Commandes» عندهم؛ **لا** يُستعمل `POST /orders` (ينشئ «Commandes d'entrepôt»).
+- حقول إلزامية اكتُشفت من أخطاء التحقق: `order_id, from_wilaya_name, length, width, height, weight`. نرسل `delivery_fee` و`shipping_type` (`express_home|express_desk`)؛ تعرفة المتجر عندهم تُحسب على جانبهم وقد تختلف عن `/fees` العامة.
+- التتبع `GET /parcels/{tracking}` (`last_status` بقاموس ياليدين)، الإلغاء `DELETE /parcels/{tracking}`، البوليصة من حقل `label` ولا تظهر إلا بعد أن تؤكد الشركة الطلب وتسند الشحنة.
+- الإشعارات: صيغة JSON:API (`data.attributes`) أو صيغة ياليدين.
+- لم يُجرَّب على حساب إنتاج حقيقي من هذا الباكند؛ المطابقة مع محاكٍ صارم فقط (`WeCanSim`).

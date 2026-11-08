@@ -15,6 +15,7 @@ function throws(callable $f): ?Throwable { try { $f(); } catch (Throwable $e) { 
 /** إعداد كل شركة: المحاكي، مفتاح المصنع، بيانات الدخول الصحيحة/الخاطئة، وقدراتها. */
 $CARRIERS = [
     'yalidine'  => ['sim' => fn() => new YalidineSim(), 'good' => ['apiId' => 'AID', 'apiToken' => 'TOK'], 'bad' => ['apiId' => 'AID', 'apiToken' => 'NOPE'], 'desk' => ['deskId' => 161601], 'needsDesk' => true,  'resolver' => false, 'dupSim' => true,  'cancelAfter' => 'Expédié', 'pend' => 'En préparation'],
+    'wecan'     => ['sim' => fn() => new WeCanSim(), 'good' => ['apiKey' => 'KEY', 'apiSecret' => 'SEC'], 'bad' => ['apiKey' => 'KEY', 'apiSecret' => 'NOPE'], 'desk' => ['deskId' => 161601], 'needsDesk' => true,  'resolver' => false, 'dupSim' => true,  'cancelAfter' => 'Expédié', 'pend' => 'En préparation'],
     'dhd'       => ['sim' => fn() => new EcotrackSim(), 'good' => ['token' => 'TOK'], 'bad' => ['token' => 'NOPE'], 'desk' => ['deskCode' => '16000'], 'needsDesk' => true,  'resolver' => true,  'dupSim' => true,  'cancelAfter' => null, 'pend' => 'order_information_received_by_carrier'],
     'noest'     => ['sim' => fn() => new NoestSim(),    'good' => ['apiToken' => 'TOK', 'userGuid' => 'GUID'], 'bad' => ['apiToken' => 'NOPE', 'userGuid' => 'GUID'], 'desk' => ['deskCode' => '16A'], 'needsDesk' => true,  'resolver' => true,  'dupSim' => false, 'cancelAfter' => null, 'pend' => 'upload'],
     'maystro'   => ['sim' => fn() => new MaystroSim(),  'good' => ['apiKey' => 'TOK'], 'bad' => ['apiKey' => 'NOPE'], 'desk' => [], 'needsDesk' => false, 'resolver' => true,  'dupSim' => true,  'cancelAfter' => '50', 'pend' => '4'],
@@ -188,7 +189,7 @@ $badVals = [];
 foreach ($dict as $fam => $d) { if (!is_array($d)) { continue; } foreach (['exact', 'codes', 'event_key'] as $k) { foreach (($d[$k] ?? []) as $raw => $v) { if (!in_array($v, $allowed, true)) { $badVals[] = "$fam/$k/$raw=$v"; } } } }
 ok('القواميس: كل القيم حالات موحّدة صحيحة', $badVals === [], $badVals);
 foreach (array_keys(array_filter($CARRIERS, fn($c, $k) => true, ARRAY_FILTER_USE_BOTH)) as $code) {
-    $fam = $code === 'dhd' ? 'ecotrack' : $code;
+    $fam = ['dhd' => 'ecotrack', 'wecan' => 'yalidine'][$code] ?? $code;
     ok("القاموس يغطي الشركة $fam", isset($dict[$fam]));
 }
 

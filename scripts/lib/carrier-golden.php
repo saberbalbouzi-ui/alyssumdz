@@ -27,6 +27,7 @@ function carrier_golden(): array
     $dict = json_decode((string)file_get_contents(__DIR__ . '/../../platform/php-edition/shipping/data/status-dict.json'), true);
     $cfg = [
         'yalidine'  => ['sim' => fn() => new YalidineSim(), 'good' => ['apiId' => 'AID', 'apiToken' => 'TOK'], 'bad' => ['apiId' => 'AID', 'apiToken' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'yalidine'],
+        'wecan'     => ['sim' => fn() => new WeCanSim(), 'good' => ['apiKey' => 'KEY', 'apiSecret' => 'SEC'], 'bad' => ['apiKey' => 'KEY', 'apiSecret' => 'NOPE'], 'deskKey' => 'desk_id', 'deskVal' => 161601, 'fam' => 'yalidine'],
         'dhd'       => ['sim' => fn() => new EcotrackSim(), 'good' => ['token' => 'TOK'], 'bad' => ['token' => 'NOPE'], 'deskKey' => 'desk_code', 'deskVal' => '16000', 'fam' => 'ecotrack'],
         'noest'     => ['sim' => fn() => new NoestSim(), 'good' => ['apiToken' => 'TOK', 'userGuid' => 'GUID'], 'bad' => ['apiToken' => 'NOPE', 'userGuid' => 'GUID'], 'deskKey' => 'desk_code', 'deskVal' => '16A', 'fam' => 'noest'],
         'maystro'   => ['sim' => fn() => new MaystroSim(), 'good' => ['apiKey' => 'TOK'], 'bad' => ['apiKey' => 'NOPE'], 'deskKey' => null, 'deskVal' => null, 'fam' => 'maystro'],
@@ -101,7 +102,7 @@ function carrier_golden(): array
         $run('cancel_fresh', 'cancel', ['tracking' => $t2], fn($ad) => $ad->cancelParcel($t2), $c['good'], $sim);
         $sim = ($c['sim'])(); [, , $ad0] = $mk($c['good'], $sim);
         $t3 = $ad0->createParcel($P(['order_ref' => 'G-can2', 'phone' => '0661112244', 'name' => 'Amine Cancel']))->tracking;
-        $after = ['yalidine' => 'Expédié', 'maystro' => '31'][$code] ?? null;
+        $after = ['yalidine' => 'Expédié', 'wecan' => 'Expédié', 'maystro' => '31'][$code] ?? null;
         if ($after !== null) { $sim->setStatus($t3, $after); }
         $run('cancel_after_dispatch', 'cancel', ['tracking' => $t3], fn($ad) => $ad->cancelParcel($t3), $c['good'], $sim);
         if ($code === 'dhd' || $code === 'noest') {

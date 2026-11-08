@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Alyssum\Shipping;
 
-use Alyssum\Shipping\Adapters\{EcotrackAdapter, MaystroAdapter, NoestAdapter, YalidineAdapter, ZRExpressAdapter};
+use Alyssum\Shipping\Adapters\{EcotrackAdapter, MaystroAdapter, NoestAdapter, WecanAdapter, YalidineAdapter, ZRExpressAdapter};
 
 /**
  * سجلّ الشركات: ما تدعمه المنصة وكيف يُوجَّه كل منها. يستعمله المصنع وواجهة «وسائل التوصيل» عند عرض القائمة.
@@ -24,7 +24,7 @@ final class CarrierRegistry
         'zimou'         => ['label' => 'Zimou Express',            'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         'hhd'           => ['label' => 'HHD Express',              'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         'anderson'      => ['label' => 'Anderson Delivery',        'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
-        'wecan'         => ['label' => 'WeCan Service',            'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false, 'aliases' => ['wecanservice', 'wecan_service', 'wecan-service']],
+        'wecan'         => ['label' => 'WeCan Service',            'adapter' => WecanAdapter::class,      'maturity' => 'experimental', 'aliases' => ['wecanservice', 'wecan_service', 'wecan-service']],
         'ecom_delivery' => ['label' => 'E-com Delivery',           'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         'elogistia'     => ['label' => 'Elogistia',                'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],
         '48h'           => ['label' => '48H Express',              'adapter' => EcotrackAdapter::class,   'maturity' => 'experimental', 'base' => null,                          'base_verified' => false],

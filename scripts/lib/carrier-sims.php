@@ -55,6 +55,43 @@ abstract class Sim implements HttpClient
     /** @return list<string> */ public function created(): array { return array_keys($this->state); }
 }
 
+/** WeCan Service: X-API-Key/X-API-Secret، POST /api/v1/parcels مصفوفة بصيغة ياليدين (تدخل «Commandes»)، الردّ مفتاحه order_id؛ حقول الأبعاد/الوزن وولاية الانطلاق إلزامية (اكتُشفت من أخطاء تحقق حسابهم). */
+final class WeCanSim extends Sim
+{
+    private int $n = 0; public array $orders = [];
+    protected function handle(string $m, string $path, array $q, array $h, mixed $d, ?string $raw): HttpResponse
+    {
+        if (($h['x-api-key'] ?? '') !== 'KEY' || ($h['x-api-secret'] ?? '') !== 'SEC') { return $this->js(401, ['message' => 'Unauthenticated.']); }
+        if ($m === 'GET' && $path === '/api/v1/locations/states') { return $this->js(200, ['data' => [['id' => 16, 'name' => 'Alger']]]); }
+        if ($m === 'POST' && $path === '/api/v1/parcels') {
+            if (!is_array($d) || !array_is_list($d) || !$d) { return $this->bad('WeCan: الجسم يجب أن يكون مصفوفة طرود'); }
+            $out = [];
+            foreach ($d as $p) {
+                if ($e = $this->check($p, ['order_id' => 'str', 'from_wilaya_name' => 'str', 'firstname' => 'str', 'familyname' => 'str', 'contact_phone' => 'phone', 'address' => 'str', 'to_commune_name' => 'str', 'to_wilaya_name' => 'str', 'product_list' => 'str', 'price' => 'num', 'length' => 'num', 'width' => 'num', 'height' => 'num', 'weight' => 'num'])) { return $this->bad('WeCan: ' . $e); }
+                if (!is_bool($p['is_stopdesk'] ?? null)) { return $this->bad('WeCan: is_stopdesk يجب أن يكون منطقياً'); }
+                if ($p['is_stopdesk'] && !isset($p['stopdesk_id'])) { return $this->bad('WeCan: stopdesk_id مطلوب مع is_stopdesk'); }
+                if (!in_array($p['shipping_type'] ?? '', ['express_home', 'express_desk'], true)) { return $this->bad('WeCan: shipping_type غير صالح'); }
+                $wilCode = ['Alger' => 16, 'Oran' => 31, 'El Bayadh' => 32, 'Djelfa' => 17][$p['to_wilaya_name']] ?? 0;
+                if (!$wilCode) { return $this->bad('WeCan: to_wilaya_name غير معروف: ' . $p['to_wilaya_name']); }
+                if (!$this->communeKnown($wilCode, $p['to_commune_name'], false)) { $out[$p['order_id']] = ['success' => false, 'message' => 'Commune introuvable']; continue; }
+                if (isset($this->orders[$p['order_id']])) { $out[$p['order_id']] = ['success' => false, 'message' => 'Duplicate order_id']; continue; }
+                $trk = 'wc-' . (++$this->n . 'AB'); $this->orders[$p['order_id']] = $trk; $this->state[$trk] = 'En préparation';
+                $out[$p['order_id']] = ['success' => true, 'order_id' => $p['order_id'], 'tracking' => $trk, 'label' => 'https://wecanservices.com/label/' . $trk];
+            }
+            return $this->js(200, $out);
+        }
+        if ($m === 'GET' && preg_match('#^/api/v1/parcels/([^/]+)$#', $path, $mm)) {
+            return isset($this->state[$mm[1]]) ? $this->js(200, ['data' => [['tracking' => $mm[1], 'last_status' => $this->state[$mm[1]], 'label' => 'https://wecanservices.com/label/' . $mm[1]]]]) : $this->js(404, ['message' => 'not found']);
+        }
+        if ($m === 'DELETE' && preg_match('#^/api/v1/parcels/([^/]+)$#', $path, $mm)) {
+            if (!isset($this->state[$mm[1]])) { return $this->js(404, ['message' => 'not found']); }
+            if (!in_array($this->state[$mm[1]], ['En préparation', 'A vérifier'], true)) { return $this->js(422, ['message' => 'cannot delete']); }
+            unset($this->state[$mm[1]]); return $this->js(200, ['success' => true]);
+        }
+        return $this->bad("WeCan: مسار غير موثّق $m $path", 404);
+    }
+}
+
 /** ياليدين: X-API-ID/X-API-TOKEN، POST /v1/parcels/ مصفوفة طرود، الردّ مفتاحه order_id (مُتحقَّق على حساب حقيقي). */
 final class YalidineSim extends Sim
 {

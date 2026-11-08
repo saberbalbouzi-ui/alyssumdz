@@ -2897,6 +2897,2016 @@
             ]
         }
     ],
+    "wecan": [
+        {
+            "name": "ping_ok",
+            "op": "ping",
+            "arg": [],
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/locations/states",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"id\":16,\"name\":\"Alger\"}]}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "message": "المفاتيح صالحة"
+            }
+        },
+        {
+            "name": "ping_bad",
+            "op": "ping",
+            "arg": [],
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "NOPE"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/locations/states",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "NOPE",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 401,
+                    "r": "{\"message\":\"Unauthenticated.\"}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "message": "رفضت الشركة المفاتيح (HTTP 401)"
+            }
+        },
+        {
+            "name": "create_home",
+            "op": "create",
+            "arg": {
+                "order_ref": "G1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G1\":{\"success\":true,\"order_id\":\"G1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_phone_0550123456",
+            "op": "create",
+            "arg": {
+                "phone": "0550123456",
+                "order_ref": "G-ph0",
+                "name": "Karim Benali",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-ph0\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-ph0\":{\"success\":true,\"order_id\":\"G-ph0\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_phone_550123456",
+            "op": "create",
+            "arg": {
+                "phone": "550123456",
+                "order_ref": "G-ph1",
+                "name": "Karim Benali",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-ph1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-ph1\":{\"success\":true,\"order_id\":\"G-ph1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_blank_address_phone2_note",
+            "op": "create",
+            "arg": {
+                "commune": "kouba",
+                "address": "",
+                "phone2": "0661234567",
+                "note": "اتصل قبل الوصول",
+                "order_ref": "G-b",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-b\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"kouba، Alger\",\"to_commune_name\":\"kouba\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-b\":{\"success\":true,\"order_id\":\"G-b\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_new_wilaya_65",
+            "op": "create",
+            "arg": {
+                "wilaya": 65,
+                "commune": "Aïn Oussera",
+                "order_ref": "G-65",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-65\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Aïn Oussera\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-65\":{\"success\":true,\"order_id\":\"G-65\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_new_wilaya_69",
+            "op": "create",
+            "arg": {
+                "wilaya": 69,
+                "commune": "El Abiodh Sidi Cheikh",
+                "order_ref": "G-69",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-69\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"El Abiodh Sidi Cheikh\",\"to_wilaya_name\":\"El Bayadh\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-69\":{\"success\":true,\"order_id\":\"G-69\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_commune_spelling",
+            "op": "create",
+            "arg": {
+                "wilaya": 65,
+                "commune": "Ain Oussera",
+                "order_ref": "G-65b",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-65b\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Ain Oussera\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-65b\":{\"success\":false,\"message\":\"Commune introuvable\"}}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_stopdesk_without_code",
+            "op": "create",
+            "arg": {
+                "stop_desk": true,
+                "order_ref": "G-sd0",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "مكتب Stop Desk غير محدد"
+            }
+        },
+        {
+            "name": "create_stopdesk",
+            "op": "create",
+            "arg": {
+                "stop_desk": true,
+                "order_ref": "G-sd1",
+                "desk_id": 161601,
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-sd1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_desk\",\"is_stopdesk\":true,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\",\"stopdesk_id\":161601}]",
+                    "s": 200,
+                    "r": "{\"G-sd1\":{\"success\":true,\"order_id\":\"G-sd1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_unknown_commune",
+            "op": "create",
+            "arg": {
+                "commune": "Zzyzx Qwerty",
+                "order_ref": "G-unk",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-unk\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Zzyzx Qwerty\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-unk\":{\"success\":false,\"message\":\"Commune introuvable\"}}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_duplicate",
+            "op": "create2",
+            "arg": {
+                "order_ref": "G1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G1\":{\"success\":true,\"order_id\":\"G1\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                },
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G1\":{\"success\":false,\"message\":\"Duplicate order_id\"}}"
+                }
+            ],
+            "result": [
+                {
+                    "ok": true,
+                    "tracking": "wc-1AB",
+                    "error": ""
+                },
+                {
+                    "ok": false,
+                    "tracking": "",
+                    "error": "Duplicate order_id"
+                }
+            ]
+        },
+        {
+            "name": "create_rate_limited",
+            "op": "create",
+            "arg": {
+                "order_ref": "G1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 429,
+                    "r": "{\"message\":\"Too Many Attempts.\"}"
+                }
+            ],
+            "result": {
+                "exc": "api"
+            }
+        },
+        {
+            "name": "create_bad_credentials",
+            "op": "create",
+            "arg": {
+                "order_ref": "G1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "wilaya": 16,
+                "commune": "Bab Ezzouar",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "NOPE"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "NOPE",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 401,
+                    "r": "{\"message\":\"Unauthenticated.\"}"
+                }
+            ],
+            "result": {
+                "exc": "cred"
+            }
+        },
+        {
+            "name": "track_Pas encore expédié",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Pas encore expédié\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "Pas encore expédié"
+            }
+        },
+        {
+            "name": "track_A vérifier",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"A vérifier\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "A vérifier"
+            }
+        },
+        {
+            "name": "track_En préparation",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En préparation\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "En préparation"
+            }
+        },
+        {
+            "name": "track_Pas encore ramassé",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Pas encore ramassé\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "Pas encore ramassé"
+            }
+        },
+        {
+            "name": "track_Prêt à expédier",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Prêt à expédier\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "Prêt à expédier"
+            }
+        },
+        {
+            "name": "track_En attente",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En attente\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "pending",
+                "rawStatus": "En attente"
+            }
+        },
+        {
+            "name": "track_Ramassé",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Ramassé\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Ramassé"
+            }
+        },
+        {
+            "name": "track_Bloqué",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Bloqué\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Bloqué"
+            }
+        },
+        {
+            "name": "track_Débloqué",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Débloqué\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Débloqué"
+            }
+        },
+        {
+            "name": "track_Transfert",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Transfert\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Transfert"
+            }
+        },
+        {
+            "name": "track_Expédié",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Expédié\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Expédié"
+            }
+        },
+        {
+            "name": "track_Centre",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Centre"
+            }
+        },
+        {
+            "name": "track_En localisation",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En localisation\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "En localisation"
+            }
+        },
+        {
+            "name": "track_Vers Wilaya",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Vers Wilaya\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Vers Wilaya"
+            }
+        },
+        {
+            "name": "track_Reçu à Wilaya",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Reçu à Wilaya\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "Reçu à Wilaya"
+            }
+        },
+        {
+            "name": "track_En attente du client",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En attente du client\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "shipped",
+                "rawStatus": "En attente du client"
+            }
+        },
+        {
+            "name": "track_Prêt pour livreur",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Prêt pour livreur\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "out_for_delivery",
+                "rawStatus": "Prêt pour livreur"
+            }
+        },
+        {
+            "name": "track_Sorti en livraison",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Sorti en livraison\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "out_for_delivery",
+                "rawStatus": "Sorti en livraison"
+            }
+        },
+        {
+            "name": "track_En alerte",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"En alerte\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "failed_attempt",
+                "rawStatus": "En alerte"
+            }
+        },
+        {
+            "name": "track_Tentative échouée",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Tentative échouée\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "failed_attempt",
+                "rawStatus": "Tentative échouée"
+            }
+        },
+        {
+            "name": "track_Echèc livraison",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Echèc livraison\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "failed_attempt",
+                "rawStatus": "Echèc livraison"
+            }
+        },
+        {
+            "name": "track_Echec livraison",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Echec livraison\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "failed_attempt",
+                "rawStatus": "Echec livraison"
+            }
+        },
+        {
+            "name": "track_Livré",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Livré\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "delivered",
+                "rawStatus": "Livré"
+            }
+        },
+        {
+            "name": "track_Retour vers centre",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour vers centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retour vers centre"
+            }
+        },
+        {
+            "name": "track_Retourné au centre",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retourné au centre\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retourné au centre"
+            }
+        },
+        {
+            "name": "track_Retour transfert",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour transfert\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retour transfert"
+            }
+        },
+        {
+            "name": "track_Retour groupé",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour groupé\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retour groupé"
+            }
+        },
+        {
+            "name": "track_Retour à retirer",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour à retirer\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retour à retirer"
+            }
+        },
+        {
+            "name": "track_Retour vers vendeur",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retour vers vendeur\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retour vers vendeur"
+            }
+        },
+        {
+            "name": "track_Retourné au vendeur",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Retourné au vendeur\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Retourné au vendeur"
+            }
+        },
+        {
+            "name": "track_Echange échoué",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Echange échoué\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "returned",
+                "rawStatus": "Echange échoué"
+            }
+        },
+        {
+            "name": "track_Annulé",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"Annulé\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "cancelled",
+                "rawStatus": "Annulé"
+            }
+        },
+        {
+            "name": "track_حالة_غريبة_9981",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"tracking\":\"wc-1AB\",\"last_status\":\"حالة_غريبة_9981\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}]}"
+                }
+            ],
+            "result": {
+                "status": "unknown",
+                "rawStatus": "حالة_غريبة_9981"
+            }
+        },
+        {
+            "name": "track_rate_limited",
+            "op": "track",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 429,
+                    "r": "{\"message\":\"Too Many Attempts.\"}"
+                }
+            ],
+            "result": {
+                "exc": "api"
+            }
+        },
+        {
+            "name": "cancel_fresh",
+            "op": "cancel",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "DELETE",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"success\":true}"
+                }
+            ],
+            "result": true
+        },
+        {
+            "name": "cancel_after_dispatch",
+            "op": "cancel",
+            "arg": {
+                "tracking": "wc-1AB"
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "DELETE",
+                    "u": "https://wecanservices.com/api/v1/parcels/wc-1AB",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 422,
+                    "r": "{\"message\":\"cannot delete\"}"
+                }
+            ],
+            "result": false
+        },
+        {
+            "name": "calibrate",
+            "op": "calibrate",
+            "arg": {
+                "ours": {
+                    "16": [
+                        "Alger Centre",
+                        "Bab-Ezzouar",
+                        "Kouba",
+                        "Bordj El Kiffan",
+                        "El Harrach",
+                        "Zeralda"
+                    ],
+                    "31": [
+                        "Oran",
+                        "Es Senia"
+                    ],
+                    "32": [
+                        "El Bayadh"
+                    ],
+                    "17": [
+                        "Djelfa",
+                        "Ain Ouessara"
+                    ]
+                },
+                "chunk": 10
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "GET",
+                    "u": "https://wecanservices.com/api/v1/locations/states",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json"
+                    },
+                    "b": null,
+                    "s": 200,
+                    "r": "{\"data\":[{\"id\":16,\"name\":\"Alger\"}]}"
+                }
+            ],
+            "result": {
+                "v": 1,
+                "carrier": "wecan",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "الشركة لا توفّر واجهة قراءة للمعايرة"
+                ],
+                "done": true
+            }
+        },
+        {
+            "name": "create_calibrated_Bab-Ezzouar",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bab-Ezzouar",
+                "wilaya": 16,
+                "order_ref": "G-cal0",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "wecan",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "الشركة لا توفّر واجهة قراءة للمعايرة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal0\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bab-Ezzouar\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-cal0\":{\"success\":false,\"message\":\"Commune introuvable\"}}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_calibrated_Bordj El Kiffan",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Bordj El Kiffan",
+                "wilaya": 16,
+                "order_ref": "G-cal1",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "wecan",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "الشركة لا توفّر واجهة قراءة للمعايرة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal1\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Bordj El Kiffan\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-cal1\":{\"success\":false,\"message\":\"Commune introuvable\"}}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_calibrated_Zeralda",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Zeralda",
+                "wilaya": 16,
+                "order_ref": "G-cal2",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "wecan",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "الشركة لا توفّر واجهة قراءة للمعايرة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal2\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Zeralda\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-cal2\":{\"success\":false,\"message\":\"Commune introuvable\"}}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        },
+        {
+            "name": "create_calibrated_El Harrach",
+            "op": "create_profile",
+            "arg": {
+                "commune": "El Harrach",
+                "wilaya": 16,
+                "order_ref": "G-cal3",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "wecan",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "الشركة لا توفّر واجهة قراءة للمعايرة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal3\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"El Harrach\",\"to_wilaya_name\":\"Alger\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-cal3\":{\"success\":true,\"order_id\":\"G-cal3\",\"tracking\":\"wc-1AB\",\"label\":\"https:\\/\\/wecanservices.com\\/label\\/wc-1AB\"}}"
+                }
+            ],
+            "result": {
+                "ok": true,
+                "tracking": "wc-1AB",
+                "error": ""
+            }
+        },
+        {
+            "name": "create_calibrated_Ain Ouessara",
+            "op": "create_profile",
+            "arg": {
+                "commune": "Ain Ouessara",
+                "wilaya": 17,
+                "order_ref": "G-cal4",
+                "name": "Karim Benali",
+                "phone": "+213 550 12 34 56",
+                "address": "Cité 5 Juillet",
+                "total": 4200,
+                "fee": 400,
+                "products": "عسل ×2 = 3800 DA\nزيت ×1 = 400 DA"
+            },
+            "profile": {
+                "v": 1,
+                "carrier": "wecan",
+                "ping": {
+                    "ok": true,
+                    "message": "المفاتيح صالحة"
+                },
+                "phase": "done",
+                "pending": [],
+                "communes": [],
+                "desks": [],
+                "fees": [],
+                "statuses": [],
+                "status_overrides": [],
+                "verify": {
+                    "track": {
+                        "ok": 0,
+                        "fail": 0,
+                        "errors": []
+                    }
+                },
+                "warnings": [],
+                "notes": [
+                    "الشركة لا توفّر واجهة قراءة للمعايرة"
+                ],
+                "done": true
+            },
+            "cred": {
+                "apiKey": "KEY",
+                "apiSecret": "SEC"
+            },
+            "calls": [
+                {
+                    "m": "POST",
+                    "u": "https://wecanservices.com/api/v1/parcels",
+                    "h": {
+                        "X-API-Key": "KEY",
+                        "X-API-Secret": "SEC",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json"
+                    },
+                    "b": "[{\"order_id\":\"G-cal4\",\"firstname\":\"Karim\",\"familyname\":\"Benali\",\"contact_phone\":\"0550123456\",\"address\":\"Cité 5 Juillet\",\"to_commune_name\":\"Ain Ouessara\",\"to_wilaya_name\":\"Djelfa\",\"product_list\":\"عسل ×2، زيت ×1\",\"price\":3800,\"do_insurance\":false,\"declared_value\":3800,\"freeshipping\":false,\"delivery_fee\":400,\"shipping_type\":\"express_home\",\"is_stopdesk\":false,\"has_exchange\":false,\"length\":10,\"width\":10,\"height\":10,\"weight\":1,\"from_wilaya_name\":\"Alger\"}]",
+                    "s": 200,
+                    "r": "{\"G-cal4\":{\"success\":false,\"message\":\"Commune introuvable\"}}"
+                }
+            ],
+            "result": {
+                "ok": false,
+                "tracking": "",
+                "error": "Commune introuvable"
+            }
+        }
+    ],
     "dhd": [
         {
             "name": "ping_ok",

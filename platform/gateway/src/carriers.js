@@ -186,6 +186,49 @@ class Yalidine extends Adapter {
   }
 }
 
+/* ───── WeCan Service: POST /api/v1/parcels (مصفوفة بصيغة ياليدين) ← «Commandes»؛ POST /orders لا يُستعمل (Commandes d'entrepôt) ───── */
+class WeCan extends Adapter {
+  static BASE = "https://wecanservices.com/api/v1";
+  static fields() { return [{ key: "apiKey", label: "X-API-Key", secret: false }, { key: "apiSecret", label: "X-API-Secret", secret: true }, { key: "fromWilaya", label: "ولاية الانطلاق (مثال: Alger)", secret: false, required: false },
+    { key: "webhookSecret", label: "سرّ توقيع الـwebhook (اختياري)", secret: true, required: false }]; }
+  family() { return "yalidine"; }
+  h(json = false) { const h = { "X-API-Key": this.cred.apiKey, "X-API-Secret": this.cred.apiSecret, Accept: "application/json" }; return json ? { ...h, "Content-Type": "application/json" } : h; }
+  async ping() {
+    return this.probe(async () => { const r = await this.send("GET", WeCan.BASE + "/locations/states", this.h()); return r.ok ? [true, "المفاتيح صالحة"] : [null, `ردّ غير متوقع (HTTP ${r.status})`]; });
+  }
+  async create(p) {
+    const [first, family] = p.nameParts(), price = p.priceWithoutShipping();
+    if (p.stopDesk && !p.deskId) return fail("مكتب Stop Desk غير محدد");
+    const pc = this.profileCommune(p.legacyWilaya, p.commune, p.wilayaName); if (pc.block !== null) return fail(pc.block);
+    const body = { order_id: p.orderRef, firstname: first, familyname: family, contact_phone: p.localPhone(), address: p.address || `${p.commune}، ${p.wilayaName}`,
+      to_commune_name: pc.name ?? p.commune, to_wilaya_name: p.legacyName, product_list: p.productsText(), price, do_insurance: false, declared_value: price,
+      freeshipping: p.shippingFee <= 0, delivery_fee: Math.max(0, Math.trunc(p.shippingFee)), shipping_type: p.stopDesk ? "express_desk" : "express_home",
+      is_stopdesk: p.stopDesk, has_exchange: false, length: 10, width: 10, height: 10, weight: 1, from_wilaya_name: this.cred.fromWilaya || "Alger" };
+    if (p.stopDesk) body.stopdesk_id = +p.deskId;
+    const r = await this.send("POST", WeCan.BASE + "/parcels", this.h(true), [body]); const j = r.json() ?? {};
+    const row = j[p.orderRef] ?? (Array.isArray(j.data) ? j.data[0] : null) ?? {}; let trk = String(row.tracking ?? "");
+    if (!trk && row.success === true) trk = String(row.order_id ?? p.orderRef);   // «A vérifier»: بلا تتبع بعد ← نحفظ رقم الطلب
+    if (r.ok && row.success !== false && trk) return ok(trk, httpsOnly(row.label), j);
+    return fail(String(row.message || j.message || "") || "HTTP " + r.status, j);
+  }
+  async track(trk) {
+    const j = (await this.send("GET", `${WeCan.BASE}/parcels/${encodeURIComponent(trk)}`, this.h())).json() ?? {}; const d = j.data?.[0] ?? j; const raw = String(d.last_status ?? "").trim();
+    if (!raw) throw missing(); return { tracking: trk, rawStatus: raw, status: this.mapStatus(raw), raw: j };
+  }
+  async cancel(trk) { return (await this.send("DELETE", `${WeCan.BASE}/parcels/${encodeURIComponent(trk)}`, this.h())).ok; }
+  async labelUrl(trk) { const j = (await this.send("GET", `${WeCan.BASE}/parcels/${encodeURIComponent(trk)}`, this.h())).json() ?? {}; const d = j.data?.[0] ?? j; return httpsOnly(d.label); }
+  parseWebhook(payload) {
+    const items = payload?.data !== undefined ? (Array.isArray(payload.data) ? payload.data : [payload.data]) : Array.isArray(payload) ? payload : [payload];
+    const out = [];
+    for (const it of items) { if (!it || typeof it !== "object") continue;
+      const a = it.attributes && typeof it.attributes === "object" ? it.attributes : it;
+      const trk = pick(a, "tracking", "tracking_number") || pick(it, "tracking", "tracking_number");
+      const raw = String(a.last_status ?? a.status ?? it.last_status ?? "").trim();
+      if (trk && raw) out.push({ tracking: trk, rawStatus: raw, status: this.mapStatus(raw), orderRef: pick(a, "order_id", "external_id") }); }
+    return out;
+  }
+}
+
 /* ───── ZR Express (Procolis القديمة): ترويستا token/key، add_colis {Colis:[…]}، الرفض HTTP 200 + MessageRetour ───── */
 class ZRExpress extends Adapter {
   static BASE = "https://procolis.com/api_v1";
@@ -518,8 +561,9 @@ export const CARRIERS = {
   zrexpress_app: { label: "ZR Express (المنصة الجديدة)", cls: ZRExpressApp, maturity: "experimental", aliases: ["zr2", "zrexpress-app", "zrexpress_new", "zr_app"] },
   maystro: { label: "Maystro Delivery", cls: Maystro, maturity: "experimental" },
   noest: { label: "NOEST Express", cls: Noest, maturity: "experimental" },
+  wecan: { label: "WeCan Service", cls: WeCan, maturity: "experimental", aliases: ["wecanservice", "wecan_service", "wecan-service"] },
   ecotrack: E("Ecotrack (منصة عامة)"), dhd: E("DHD Livraison", "https://dhd.ecotrack.dz", true, ["dhd_livraison"]), conexlog: E("Conexlog"), zimou: E("Zimou Express"), hhd: E("HHD Express"),
-  anderson: E("Anderson Delivery"), wecan: E("WeCan Service", null, false, ["wecanservice", "wecan_service", "wecan-service"]), ecom_delivery: E("E-com Delivery"), elogistia: E("Elogistia"), "48h": E("48H Express"),
+  anderson: E("Anderson Delivery"), ecom_delivery: E("E-com Delivery"), elogistia: E("Elogistia"), "48h": E("48H Express"),
   mylers: { label: "Mylers", cls: null, maturity: "planned" },
 };
 export function resolveCarrier(code) {
