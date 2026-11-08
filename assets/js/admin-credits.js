@@ -31,6 +31,10 @@ const Credits = (() => {
     let o = null; try { o = JSON.parse(LS.get(KEY) || "null"); } catch (e) { }
     if (!o || typeof o !== "object") o = { total: siteOn() ? START : 0, left: siteOn() ? START : 0, log: [] };
     o.total = Math.max(0, +o.total || 0); o.left = Math.max(0, Math.min(+o.left || 0, 1e9)); if (!Array.isArray(o.log)) o.log = [];
+    if (o.pend && typeof o.pend === "object") {                       // معلّقة أقدم من 20 دقيقة لم تُثبَّت ولم تُردّ ⟵ أُغلقت الصفحة قبل انتهائها: تُردّ تلقائياً
+      let back = 0; for (const id of Object.keys(o.pend)) { const p = o.pend[id]; if (!p || Date.now() - (+p.t || 0) > 20 * 60000) { back += Math.max(0, +(p && p.n) || 0); o.log.push({ t: Date.now(), k: ((p && p.k) || "عملية") + " (استرداد تلقائي)", n: Math.max(0, +(p && p.n) || 0) }); delete o.pend[id]; } }
+      if (back > 0) { o.left = Math.min(Math.round((o.left + back) * 100) / 100, Math.max(o.total, o.left + back)); LS.set(KEY, JSON.stringify(o)); }
+    }
     return o;
   }
   const state = () => load();
@@ -44,9 +48,12 @@ const Credits = (() => {
     const noop = { n: 0, refund() { } }; if (!on() || depth > 0) return noop;
     const n = cost(kind, o); if (!n) return noop;
     const s = load(); if (s.left < n) throw mkErr(n, s.left);
-    const was = s.left / (s.total || 1); s.left = Math.round((s.left - n) * 100) / 100; s.log.push({ t: Date.now(), k: (o && o.label) || kind, n: -n }); save(s); lowNote(was, s);
+    const was = s.left / (s.total || 1); s.left = Math.round((s.left - n) * 100) / 100; s.log.push({ t: Date.now(), k: (o && o.label) || kind, n: -n });
+    /* عملية طويلة (فيديو/مجسّم/صورة): نسجّلها «معلّقة» كي تُردّ تلقائياً إن أُغلقت الصفحة أو حُدِّثت قبل انتهائها (كان الخصم المسبق يبقى بلا استرداد) */
+    const pid = o && o.pending ? "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) : ""; if (pid) { s.pend = s.pend || {}; s.pend[pid] = { n, t: Date.now(), k: (o && o.label) || kind }; }
+    save(s); lowNote(was, s);
     let back = 0;
-    return { n, refund(x) { const amt = Math.min(n - back, x == null ? n - back : Math.max(0, +x || 0)); if (!(amt > 0)) return; back += amt; const r = load(); r.left = Math.round((r.left + amt) * 100) / 100; r.log.push({ t: Date.now(), k: ((o && o.label) || kind) + " (استرداد)", n: amt }); save(r); } };
+    return { n, commit() { if (!pid) return; const r = load(); if (r.pend && r.pend[pid]) { delete r.pend[pid]; save(r); } }, refund(x) { const amt = Math.min(n - back, x == null ? n - back : Math.max(0, +x || 0)); if (!(amt > 0)) return; back += amt; const r = load(); if (pid && r.pend) delete r.pend[pid]; r.left = Math.round((r.left + amt) * 100) / 100; r.log.push({ t: Date.now(), k: ((o && o.label) || kind) + " (استرداد)", n: amt }); save(r); } };
   }
   /* عملية مركّبة بسعر واحد (صفحة كاملة، 4 خيارات…): تخصم n مرة واحدة وتتجاهل خصم الاستدعاءات الداخلية، وتسترد كاملة عند الفشل */
   async function bundle(label, o, fn) {

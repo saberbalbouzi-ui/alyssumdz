@@ -497,7 +497,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   /* نماذج النص المتاحة لهذا المفتاح: آخر نموذج نجح ثم الأحدث من قائمة الحساب (flash قبل lite) ثم احتياطي؛ الأسماء الثابتة تتقادم فلا نعتمد عليها وحدها */
   /* رصيد الأدوات (Credits): خصم مسبق يُسترد عند الفشل أو الإلغاء. بلا وحدة الرصيد (مواقع العملاء) لا أثر. */
   const crTake = (k, o) => (typeof Credits !== "undefined" && Credits.take) ? Credits.take(k, o) : { refund() { } };
-  const crWrap = (fn, kind, optsOf) => async o => { const c = crTake(kind, optsOf ? optsOf(o) : undefined); try { const r = await fn(o); if (r == null) c.refund(); return r; } catch (e) { c.refund(); throw e; } };
+  const crWrap = (fn, kind, optsOf) => async o => { const c = crTake(kind, Object.assign({}, optsOf ? optsOf(o) : {}, { pending: true })); try { const r = await fn(o); if (r == null) c.refund(); else if (c.commit) c.commit(); return r; } catch (e) { c.refund(); throw e; } };
   const quick = crWrap(quick0, "img"), edit = crWrap(edit0, "img"), video = crWrap(video0, "video", o => ({ dur: (o && o.dur) || vcfg.dur(), label: "فيديو" })), model3d = crWrap(model3d0, "model3d", () => ({ label: "مجسّم 3D" }));
   async function textModels(key) {
     const out = [], add = n => { if (n && !out.includes(n)) out.push(n); }; add(LS.get("alyssum_ig_tmodel", "")); textModels.seen = "";
