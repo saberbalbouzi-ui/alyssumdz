@@ -61,7 +61,10 @@
   /* ───── الهاتف: كل قسم صفحة وحده تحت الشريط العلوي (v1.89.758) ─────
      بدل أن تبقى قائمة الأقسام كلها فوق المحتوى: عند فتح قسم تُخفى القائمة وتبقى صفحة القسم وحدها مع شريط «☰ القائمة»؛ والزرّ يفتح القائمة وحدها (بلا محتوى) لاختيار قسم آخر. */
   const MQP = window.matchMedia ? window.matchMedia("(max-width:900px)") : { matches: false };
-  const PM = { menu: false, grp: false, on: false };
+  /* أول صفحة على الهاتف = قائمة الأقسام (الترويسة + المجموعات + الأقسام) لا صفحة «لوحة التحكم»؛ تبقى كذلك حتى أول لمسة من المستخدم (فتح الأقسام الآلي عند الإقلاع لا يُخفيها) ما لم يكن في الرابط وجهة مباشرة (#…) */
+  const DEEP = () => /^#(?!$)/.test(location.hash || "");
+  const PM = { menu: !!MQP.matches && !DEEP(), grp: false, on: false, touched: false };
+  document.addEventListener("pointerdown", () => { PM.touched = true; }, true);
   function pmApply() {
     const h = document.documentElement, mob = MQP.matches && !!document.getElementById("app") && !document.getElementById("app").classList.contains("hidden");
     h.classList.toggle("m-page", mob && !PM.menu); h.classList.toggle("m-menu", mob && PM.menu);
@@ -87,7 +90,7 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
 .nav-groups{display:flex!important;flex-wrap:nowrap;overflow-x:auto;gap:.45rem;scrollbar-width:none;-webkit-overflow-scrolling:touch}.nav-groups::-webkit-scrollbar{display:none}.nav-groups .ng{flex:0 0 auto;min-width:92px}}`; document.head.appendChild(st); }
     const wrap = () => {
       let ok = true;
-      if (typeof Admin !== "undefined" && Admin.tab && !Admin.__pmTab) { const o = Admin.tab; Admin.tab = function () { const r = o.apply(this, arguments); if (!PM.grp) { PM.menu = false; } setTimeout(pmApply, 0); setTimeout(pmApply, 400); if (MQP.matches && !PM.grp) { try { window.scrollTo({ top: 0 }); } catch (e) { } } return r; }; Admin.__pmTab = true; } else if (typeof Admin === "undefined") ok = false;
+      if (typeof Admin !== "undefined" && Admin.tab && !Admin.__pmTab) { const o = Admin.tab; Admin.tab = function () { const r = o.apply(this, arguments); if (!PM.grp) { PM.menu = !PM.touched && MQP.matches && !DEEP(); } setTimeout(pmApply, 0); setTimeout(pmApply, 400); if (MQP.matches && !PM.grp) { try { window.scrollTo({ top: 0 }); } catch (e) { } } return r; }; Admin.__pmTab = true; } else if (typeof Admin === "undefined") ok = false;
       if (typeof AdminNav !== "undefined" && AdminNav.group && !AdminNav.__pmG) { const g = AdminNav.group; AdminNav.group = function () { PM.grp = true; PM.menu = true; try { return g.apply(this, arguments); } finally { PM.grp = false; setTimeout(pmApply, 0); } }; AdminNav.__pmG = true; } else if (typeof AdminNav === "undefined") ok = false;
       return ok;
     };
