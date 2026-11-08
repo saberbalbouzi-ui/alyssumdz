@@ -7,7 +7,9 @@
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FKEY = (Deno.env.get("FAL_KEY") ?? "").replace(/\s+/g, "");
-const GKEY = Deno.env.get("GEMINI_API_KEY") ?? "";
+// قد يُسمّى السرّ GEMINI_API_KEY أو «Gemini API Key» أو GEMINI_KEY: تُجرَّب كلها ويُعتمد أول مفتاح يرى نماذج Veo فعلاً (مشاريع Google تختلف في ما تتيحه)
+const GKEYS = [...new Set([Deno.env.get("GEMINI_API_KEY"), Deno.env.get("Gemini API Key"), Deno.env.get("GEMINI_KEY")].map((x) => String(x ?? "").trim()).filter(Boolean))];
+let GKEY = GKEYS[0] ?? "";
 const VEO = (Deno.env.get("AI_VIDEO_MODELS") ?? "veo-3.1-fast-generate-preview,veo-3.0-fast-generate-001,veo-2.0-generate-001").split(",").map((x) => x.trim()).filter(Boolean);
 const VEO_PINNED = !!Deno.env.get("AI_VIDEO_MODELS");
 const GAPI = "https://generativelanguage.googleapis.com/v1beta";
@@ -60,26 +62,67 @@ function veoInstance(b: any, model: string) {
 // اكتشاف نماذج Veo المتاحة لمفتاحك فعلاً (ListModels: ما يدعم predictLongRunning): الأحدث أولاً، والسريع قبل العادي؛ تُخزَّن ساعة. سرّ AI_VIDEO_MODELS يثبّت القائمة يدوياً.
 let vcache: { at: number; list: string[] } | null = null;
 let vdiag = "";
+let vOmni: string[] = [];          // نماذج Gemini Omni (فيديو عبر Interactions API) المتاحة للمفتاح المعتمد
+let vHasVeo = false;               // هل وُجد Veo فعلاً (وإلا يُستعمل Omni)
 async function veoModels(): Promise<string[]> {
-  if (VEO_PINNED) return VEO;
+  if (VEO_PINNED) { vHasVeo = true; return VEO; }
   if (vcache && Date.now() - vcache.at < 3_600_000) return vcache.list;
-  const found: string[] = []; const seen: string[] = []; const all: string[] = []; let lst = 0; vdiag = "";
-  try {
-    let tok = "";
-    for (let i = 0; i < 6; i++) {
-      const r = await fetch(`${GAPI}/models?pageSize=100${tok ? "&pageToken=" + encodeURIComponent(tok) : ""}`, { headers: { "x-goog-api-key": GKEY }, signal: AbortSignal.timeout(20_000) });
-      lst = r.status; if (!r.ok) break; const j: any = await r.json().catch(() => ({}));
-      for (const m of Array.isArray(j.models) ? j.models : []) {
-        const n = String(m?.name ?? "").replace(/^models\//, ""); all.push(n); if (/veo|video|imagen/i.test(n)) seen.push(n + ":" + (m?.supportedGenerationMethods ?? []).join("+"));
-        if (/veo/i.test(n) && Array.isArray(m?.supportedGenerationMethods) && m.supportedGenerationMethods.includes("predictLongRunning")) found.push(n);
+  vdiag = ""; const notes: string[] = []; let omniKey = ""; let omniList: string[] = [];
+  for (const key of GKEYS) {
+    const found: string[] = []; const seen: string[] = []; const all: string[] = []; const omni: string[] = []; let lst = 0;
+    try {
+      let tok = "";
+      for (let i = 0; i < 6; i++) {
+        const r = await fetch(`${GAPI}/models?pageSize=100${tok ? "&pageToken=" + encodeURIComponent(tok) : ""}`, { headers: { "x-goog-api-key": key }, signal: AbortSignal.timeout(20_000) });
+        lst = r.status; if (!r.ok) break; const j: any = await r.json().catch(() => ({}));
+        for (const m of Array.isArray(j.models) ? j.models : []) {
+          const n = String(m?.name ?? "").replace(/^models\//, ""); all.push(n); if (/veo|video|imagen|omni/i.test(n)) seen.push(n + ":" + (m?.supportedGenerationMethods ?? []).join("+"));
+          if (/veo/i.test(n) && Array.isArray(m?.supportedGenerationMethods) && m.supportedGenerationMethods.includes("predictLongRunning")) found.push(n);
+          if (/^gemini-omni-[\d.]*-?flash/i.test(n) || /^gemini-omni-flash/i.test(n)) omni.push(n);
+        }
+        tok = String(j.nextPageToken ?? ""); if (!tok) break;
       }
-      tok = String(j.nextPageToken ?? ""); if (!tok) break;
+    } catch { /* الاحتياطي */ }
+    const ver = (n: string) => Number((/(?:veo|omni)-(\d+(?:\.\d+)?)/i.exec(n) ?? [])[1] ?? 0);
+    found.sort((a, b) => (/fast/i.test(a) ? 0 : 1) - (/fast/i.test(b) ? 0 : 1) || ver(b) - ver(a) || a.localeCompare(b));
+    omni.sort((a, b) => ver(b) - ver(a) || a.localeCompare(b));
+    if (found.length) { GKEY = key; vHasVeo = true; vOmni = omni; vcache = { at: Date.now(), list: found }; return found; }
+    if (omni.length && !omniKey) { omniKey = key; omniList = omni; }
+    notes.push("المفتاح …" + key.slice(-4) + ": " + (lst && lst !== 200 ? "ListModels=" + lst : all.length + " نموذجاً بلا Veo" + (seen.length ? " (المرئي: " + seen.slice(0, 4).join("، ") + ")" : "")));
+  }
+  if (omniKey) { GKEY = omniKey; vHasVeo = false; vOmni = omniList; vcache = { at: Date.now(), list: VEO }; return VEO; }
+  vHasVeo = false; vOmni = [];
+  vdiag = "لا نموذج فيديو (Veo أو Omni) متاح — " + (notes.join(" | ") || "لا مفتاح مضبوط");
+  vcache = { at: Date.now(), list: VEO }; return VEO;
+}
+
+// فيديو Gemini Omni عبر Interactions API (POST /v1beta/interactions): متزامن؛ نطلب التسليم برابط ملف (delivery:"uri") لتفادي base64 الضخم، وإلا نقبل data المضمّن
+async function omniGenerate(b: any, model: string): Promise<{ ok: boolean; url?: string; status: number; msg: string }> {
+  const im = /^data:(image\/(?:png|jpe?g));base64,([A-Za-z0-9+/=]+)$/.exec(String(b?.image_url ?? ""));
+  const input: unknown[] = [];
+  if (im) input.push({ type: "image", data: im[2], mime_type: im[1].replace("jpg", "jpeg") });
+  input.push({ type: "text", text: String(b?.prompt ?? "").trim().slice(0, 3000) || "Animate this product image with a smooth cinematic camera move." });
+  const [w, h] = String(b?.aspect_ratio ?? "9:16").split(":").map(Number), portrait = (h || 1) >= (w || 1);
+  const d = Math.max(3, Math.min(15, Math.round(Number(b?.duration) || 5)));
+  const attempts = [
+    { model, input, response_format: { type: "video", aspect_ratio: portrait ? "9:16" : "16:9", duration: d + "s", delivery: "uri" } },
+    { model, input, generation_config: { video_config: { task: im ? "image_to_video" : "text_to_video" } } },
+  ];
+  let last = 502, msg = "";
+  for (const a of attempts) {
+    let r: Response; try { r = await fetch(`${GAPI}/interactions`, { method: "POST", headers: { "x-goog-api-key": GKEY, "Content-Type": "application/json" }, body: JSON.stringify(a), signal: AbortSignal.timeout(140_000) }); } catch { return { ok: false, status: 504, msg: "انتهت مهلة الخدمة" }; }
+    const j: any = await r.json().catch(() => ({}));
+    if (r.ok) {
+      for (const st of Array.isArray(j?.steps) ? j.steps : []) if (st?.type === "model_output") for (const c of Array.isArray(st.content) ? st.content : []) if (c?.type === "video") {
+        if (typeof c.uri === "string" && DL_OK.test(c.uri)) return { ok: true, url: "plat:" + c.uri, status: 200, msg: "" };
+        if (typeof c.data === "string" && c.data.length > 100) return { ok: true, url: "data:" + String(c.mime_type || "video/mp4") + ";base64," + c.data, status: 200, msg: "" };
+      }
+      last = 502; msg = "لم يعد النموذج فيديو"; continue;
     }
-  } catch { /* نستعمل الافتراضي */ }
-  const ver = (n: string) => Number((/veo-(\d+(?:\.\d+)?)/i.exec(n) ?? [])[1] ?? 0);
-  found.sort((a, b) => (/fast/i.test(a) ? 0 : 1) - (/fast/i.test(b) ? 0 : 1) || ver(b) - ver(a) || a.localeCompare(b));
-  vdiag = found.length ? "" : (lst && lst !== 200 ? "ListModels=" + lst : "لا نموذج Veo يدعم الإنشاء لهذا المفتاح" + (seen.length ? " (المرئي: " + seen.slice(0, 6).join("، ") + ")" : "") + " — يرى المفتاح " + all.length + " نموذجاً" + (all.length ? " منها: " + all.slice(0, 5).join("، ") : ""));
-  const list = found.length ? found : VEO; vcache = { at: Date.now(), list }; return list;
+    last = r.status; msg = String(j?.error?.message ?? "").slice(0, 200);
+    if (r.status !== 400) break;                       // 400 فقط يستحق المحاولة التالية (صيغة أبسط)
+  }
+  return { ok: false, status: last, msg };
 }
 
 Deno.serve(async (req) => {
@@ -92,8 +135,9 @@ Deno.serve(async (req) => {
   if (!admin && !/^[a-f0-9]{32,80}$/.test(token)) return json({ error: "bad_request" }, 400);
   const NOCFG = () => json({ error: "not_configured", message: "خدمة الفيديو غير مفعّلة بعد في الخادم — تواصل مع المزوّد" }, 503);
   const FH = { Authorization: "Key " + FKEY, "Content-Type": "application/json", Accept: "application/json" };
-  const GH = { "x-goog-api-key": GKEY, "Content-Type": "application/json" };
+  const GH = () => ({ "x-goog-api-key": GKEY, "Content-Type": "application/json" });
 
+  if ((action === "dl" || action === "get") && !vcache) await veoModels();       // يحسم أي مفتاح يملك Veo قبل القراءة/التنزيل (الذاكرة تضيع بين النسخ)
   if (action === "dl") {                       // تنزيل فيديو Veo الناتج (يحتاج المفتاح فلا يُعطى للمتصفح)
     if (!GKEY) return NOCFG(); const u = String(b.uri ?? ""); if (!DL_OK.test(u)) return json({ error: "bad_url" }, 400);
     try { const r = await fetch(u, { headers: { "x-goog-api-key": GKEY }, signal: AbortSignal.timeout(100_000) }); if (!r.ok) return json({ error: "download_failed", status: r.status }, 502);
@@ -105,7 +149,7 @@ Deno.serve(async (req) => {
     if (/^veo-[sr]:/.test(u)) {
       if (!GKEY) return NOCFG(); const name = u.slice(6); if (!OP_OK.test(name)) return json({ error: "bad_url" }, 400);
       try {
-        const r = await fetch(`${GAPI}/${name}`, { headers: GH, signal: AbortSignal.timeout(60_000) }), j: any = await r.json().catch(() => ({}));
+        const r = await fetch(`${GAPI}/${name}`, { headers: GH(), signal: AbortSignal.timeout(60_000) }), j: any = await r.json().catch(() => ({}));
         if (!r.ok) return oBody(JSON.stringify({ error: j?.error?.message ?? "status_failed" }), r.status === 401 || r.status === 403 ? 502 : r.status);
         const gv = j?.response?.generateVideoResponse, samples = gv?.generatedSamples, uri = samples?.[0]?.video?.uri;
         const fail = j?.error?.message || (j?.done && !uri ? (Array.isArray(gv?.raiMediaFilteredReasons) && gv.raiMediaFilteredReasons[0] ? "حجبت الخدمة المحتوى: " + gv.raiMediaFilteredReasons[0] : "لم تُنتج الخدمة فيديو") : "");
@@ -135,8 +179,17 @@ Deno.serve(async (req) => {
       return json({ ...j, left: ch.left });
     }
     let last = 502, msg = ""; const tried: string[] = [];
-    for (const m of (await veoModels()).slice(0, 4)) {
-      const r = await fetch(`${GAPI}/models/${m}:predictLongRunning`, { method: "POST", headers: GH, body: JSON.stringify(veoInstance(body, m)), signal: AbortSignal.timeout(110_000) }), j: any = await r.json().catch(() => ({}));
+    const vm = await veoModels();
+    if (!vHasVeo && vOmni.length) {                          // لا Veo لهذا المفتاح: Gemini Omni (متزامن)
+      for (const m of vOmni.slice(0, 3)) {
+        const o = await omniGenerate(body, m);
+        if (o.ok) return json({ video: { url: o.url }, left: ch.left, model: m });
+        last = o.status; msg = o.msg; tried.push(m + "=" + o.status + (o.msg ? " " + o.msg.slice(0, 80) : ""));
+        if (o.status === 401 || o.status === 403 || o.status === 429) break;
+      }
+    }
+    for (const m of (vHasVeo ? vm : []).slice(0, 4)) {
+      const r = await fetch(`${GAPI}/models/${m}:predictLongRunning`, { method: "POST", headers: GH(), body: JSON.stringify(veoInstance(body, m)), signal: AbortSignal.timeout(110_000) }), j: any = await r.json().catch(() => ({}));
       if (r.ok && j?.name && OP_OK.test(j.name)) return json({ request_id: j.name, status_url: "veo-s:" + j.name, response_url: "veo-r:" + j.name, left: ch.left, model: m });
       last = r.status; msg = String(j?.error?.message ?? "").slice(0, 200); tried.push(m + "=" + r.status + (msg ? " " + msg.slice(0, 80) : ""));
       if (r.status === 429 || r.status === 401 || r.status === 403) break;           // لا فائدة من تجربة نموذج آخر
@@ -149,7 +202,7 @@ Deno.serve(async (req) => {
         tried.push(fm + "=" + r.status);
       }
     }
-    await refund(); return json({ error: "upstream_failed", status: last, tried, message: "تعذّر إنشاء الفيديو" + (vdiag ? " — " + vdiag + (admin ? " — المفتاح المضبوط في الخادم ينتهي بـ" + GKEY.slice(-4) : "") : "") + (msg ? " — " + msg : "") + " — لم يُخصم من رصيدك" }, 502);
+    await refund(); return json({ error: "upstream_failed", status: last, tried, message: "تعذّر إنشاء الفيديو" + (vdiag ? " — " + (admin ? vdiag : "الخدمة غير متاحة حالياً") : "") + (msg && admin ? " — " + msg : "") + " — لم يُخصم من رصيدك" }, 502);
   } catch {
     await refund(); return json({ error: "upstream_failed", message: "تعذّرت خدمة الفيديو مؤقتاً — لم يُخصم من رصيدك" }, 502);
   }

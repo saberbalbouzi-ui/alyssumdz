@@ -58,4 +58,27 @@ const f0 = globalThis.fetch; globalThis.fetch = async (url, o = {}) => /queue\.f
 await import(pathToFileURL(file).href + "?fal=1");
 r = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p" } });
 ok("Veo غير متاح + FAL_KEY ← بديل fal ينجح بصيغة الطابور", r.s === 200 && r.j.request_id === "q1" && /kling/.test(r.j.model), r);
+
+/* مفتاحان باسمين مختلفين: يُعتمد من يرى Veo منهما («Gemini API Key» هنا) ويُستعمل في الإرسال */
+{ ENV.FAL_KEY = ""; ENV.GEMINI_API_KEY = "BADKEY1111"; ENV["Gemini API Key"] = "GOODKEY2222"; state.veo = "ok"; state.charge = { ok: true, left: 2 }; const seenKeys = [];
+  const f1 = globalThis.fetch; globalThis.fetch = async (url, o = {}) => { const u = String(url), k = (o.headers || {})["x-goog-api-key"]; if (/\/v1beta\/models\?/.test(u)) { seenKeys.push(k); return k === "GOODKEY2222" ? f1(url, o) : new Response(JSON.stringify({ models: [{ name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] }] }), { status: 200 }); }
+    if (u.includes(":predictLongRunning")) seenKeys.push("P:" + k); return f1(url, o); };
+  await import(pathToFileURL(file).href + "?two=1");
+  const r2 = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p" } });
+  ok("مفتاحان: يُختار من يرى Veo ويُرسل به", r2.s === 200 && seenKeys.includes("GOODKEY2222") && seenKeys.includes("P:GOODKEY2222") && !seenKeys.includes("P:BADKEY1111"), [r2.s, seenKeys]); }
+
+/* Gemini Omni (بلا Veo): Interactions API متزامن بتسليم رابط ملف */
+{ ENV.FAL_KEY = ""; ENV.GEMINI_API_KEY = "OMNIKEY3333"; delete ENV["Gemini API Key"]; state.charge = { ok: true, left: 5 }; const reqs = [];
+  const f2 = globalThis.fetch; globalThis.fetch = async (url, o = {}) => { const u = String(url);
+    if (/\/v1beta\/models\?/.test(u)) return new Response(JSON.stringify({ models: [{ name: "models/gemini-omni-flash-preview", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-omni-1.2-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-omni-1.1-flash", supportedGenerationMethods: ["generateContent"] }, { name: "models/gemini-2.5-flash", supportedGenerationMethods: ["generateContent"] }] }), { status: 200 });
+    if (/\/v1beta\/interactions$/.test(u)) { const b = JSON.parse(o.body); reqs.push(b); if (b.response_format && globalThis.__omni400) return new Response(JSON.stringify({ error: { message: "bad response_format" } }), { status: 400 });
+      return new Response(JSON.stringify({ id: "v1_x", status: "completed", steps: [{ type: "user_input" }, { type: "model_output", content: [{ type: "video", mime_type: "video/mp4", uri: "https://generativelanguage.googleapis.com/v1beta/files/vid1:download?alt=media" }] }] }), { status: 200 }); }
+    return f2(url, o); };
+  await import(pathToFileURL(file).href + "?omni=1");
+  let ro = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p", image_url: IMG, aspect_ratio: "9:16", duration: "5" } });
+  ok("Omni: يُستعمل بلا Veo ويعيد رابط plat: للتنزيل", ro.s === 200 && /^plat:https:\/\/generativelanguage\.googleapis\.com\/v1beta\/files\/vid1:download/.test(ro.j?.video?.url) && /omni-1\.2/.test(ro.j.model), ro);
+  const b0 = reqs[0] || { input: [{}, {}], response_format: {} };
+  ok("Omni: الجسم input صورة+نص وresponse_format فيديو 9:16 و5s وdelivery uri", b0.input[0].type === "image" && b0.input[0].mime_type === "image/png" && b0.input[1].type === "text" && b0.response_format.aspect_ratio === "9:16" && b0.response_format.duration === "5s" && b0.response_format.delivery === "uri", b0);
+  globalThis.__omni400 = true; reqs.length = 0; ro = await call({ token: TOKEN, action: "submit", model: "veo", body: { prompt: "p", image_url: IMG } });
+  ok("Omni: رفض 400 لـresponse_format ← إعادة بصيغة أبسط (generation_config)", ro.s === 200 && reqs.length === 2 && reqs[1].generation_config.video_config.task === "image_to_video", [ro.s, reqs.length]); }
 console.log(fails ? `\n✗ فشل ${fails} من ${total}` : `\nنجح ${total} من ${total}`); process.exit(fails ? 1 : 0);
