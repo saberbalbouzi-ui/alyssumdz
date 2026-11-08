@@ -80,7 +80,10 @@
   css.textContent = '.cop-chips{display:flex;gap:6px;flex-wrap:wrap;margin:.6rem 0}.cop-chip{cursor:pointer;display:inline-flex;gap:6px;align-items:center;padding:5px 12px;border-radius:999px;font-weight:700;font-size:.82rem;border:1.5px solid rgba(255,255,255,.25);color:inherit;white-space:nowrap}.cop-chip.sm{cursor:default;padding:2px 9px;font-size:.75rem}.cop-chip b{background:rgba(255,255,255,.16);border-radius:999px;padding:0 8px}' +
     '.cop-chip.on{outline:2px solid var(--g-tx,#fff)}.cop-chip.ys-liv{background:var(--g-ok,#28a745);color:#1f2123;border-color:transparent}.cop-chip.ys-exp{background:var(--g-info,#007bff);color:#071a2e;border-color:transparent}.cop-chip.ys-ret{background:var(--g-err,#dc3545);color:#fff;border-color:transparent}.cop-chip.ys-go{background:transparent;color:var(--g-warn,#ffc107);border-color:var(--g-warn,#ffc107)}' +
     '.cop-f{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.3rem 0}.cop-f input[data-cop-f=q]{grid-column:1/-1}.cop-f input,.cop-f select{width:100%!important;min-width:0;padding:.45rem .6rem;min-height:0}.cop-f label{display:flex;gap:.3rem;align-items:center;font-size:.8rem;min-width:0}.cop-f label input{flex:1 1 auto}.cop-f .small{grid-column:1/-1;justify-self:start}.cop-pg{display:flex;gap:.6rem;align-items:center;justify-content:center;margin:.6rem 0}' +
-    '.act .small{margin:.1rem}';
+    '.act .small{margin:.1rem}' +
+    /* المظهر الفاتح: شرائح الحالات بتباين واضح (كانت نصّاً داكناً على أزرق/أخضر غامق) */
+    'html.white .cop-chip{border-color:rgba(15,23,42,.22)}html.white .cop-chip b{background:rgba(15,23,42,.08)}html.white .cop-chip.on{outline-color:#0f172a}' +
+    'html.white .cop-chip.ys-liv{background:#ecfccb;color:#365314;border-color:#a3c40a}html.white .cop-chip.ys-exp{background:#e0f2fe;color:#075985;border-color:#7dd3fc}html.white .cop-chip.ys-ret{background:#fee2e2;color:#991b1b;border-color:#fca5a5}html.white .cop-chip.ys-go{background:#fef3c7;color:#92400e;border-color:#f59e0b}';
   document.head.appendChild(css);
   const LAST = {};
   function csvAll(key) { const o = LAST[key]; if (o) csv(key, filtered(key, o.rows || []), o.title); }
