@@ -8,10 +8,10 @@ const SRK = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const GKEY = Deno.env.get("GEMINI_API_KEY") ?? "";
 const list = (v: string | undefined, d: string) => (v ?? d).split(",").map((s) => s.trim()).filter(Boolean);
 const MODELS: Record<string, string[]> = {
-  text: list(Deno.env.get("AI_TEXT_MODELS"), "gemini-flash-latest,gemini-3.8-flash,gemini-2.5-flash"),
+  text: list(Deno.env.get("AI_TEXT_MODELS"), "gemini-2.5-flash,gemini-flash-latest,gemini-3.8-flash"),
   image: list(Deno.env.get("AI_IMAGE_MODELS"), "gemini-2.5-flash-image"),
 };
-const CFG_KEYS = ["temperature", "responseMimeType", "responseModalities", "imageConfig", "maxOutputTokens", "topP"];
+const CFG_KEYS = ["temperature", "responseMimeType", "responseModalities", "imageConfig", "maxOutputTokens", "topP", "thinkingConfig"];
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -75,6 +75,7 @@ Deno.serve(async (req) => {
   const parts = cleanParts(b.parts); if (!parts) return json({ error: "bad_parts", message: "محتوى الطلب غير مقبول" }, 400);
   const cfg: Record<string, unknown> = {};
   for (const k of CFG_KEYS) if (b.cfg && k in b.cfg) cfg[k] = b.cfg[k];
+  if (cfg.thinkingConfig !== undefined) { const tb = Number((cfg.thinkingConfig as any)?.thinkingBudget); if (Number.isFinite(tb)) cfg.thinkingConfig = { thinkingBudget: Math.max(0, Math.min(8192, Math.round(tb))) }; else delete cfg.thinkingConfig; }      // تعطيل/تحديد «التفكير» فقط (يسرّع التخطيط)
   if (typeof cfg.maxOutputTokens === "number") cfg.maxOutputTokens = Math.max(1, Math.min(16384, cfg.maxOutputTokens));
   if (limited(token, kind)) return json({ error: "rate_limited", message: MSG.rate_limited }, 429);
 
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
     try {
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
         method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": GKEY },
-        body: JSON.stringify({ contents: [{ parts }], generationConfig: cfg }), signal: AbortSignal.timeout(110_000),
+        body: JSON.stringify({ contents: [{ parts }], generationConfig: cfg }), signal: AbortSignal.timeout(kind === "text" ? 50_000 : 110_000),
       });
       if (r.ok) return json({ ok: true, left: ch.left, model: m, data: await r.json() });
       last = r.status;
