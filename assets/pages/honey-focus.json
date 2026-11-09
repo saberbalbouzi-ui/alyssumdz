@@ -3358,7 +3358,10 @@
        "type": "orderorig",
        "set": {
         "prod": "tarkiz",
-        "auto": true
+        "auto": true,
+        "fcp": false,
+        "fgp": false,
+        "fwa": false
        }
       }
      ]
