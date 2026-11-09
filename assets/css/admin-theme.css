@@ -152,6 +152,7 @@ html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-
    والإعدادات القديمة للشريط (زيارة الموقع، المظهر، تحديث، مسح الكاش، خروج، الزوار) تُفتح من صورة الحساب داخل الشريط نفسه ── */
 #app .top>#top-more,#app .top>#top-menu,#app .top>#top-search,#app .top>#top-acct,#nav-bg{display:none!important}
 #app .side-nav>#nav-hd{display:none!important}
+#acct-dr{display:none!important}
 @media (max-width:760px){
   #app .top{display:flex!important;flex-wrap:wrap;gap:4px;align-items:center;padding:8px 8px!important;position:sticky;top:0;z-index:40;border-radius:16px}
   html.glass #app .top{background:#0b1210!important;backdrop-filter:none!important}
@@ -198,6 +199,21 @@ html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-
   #app .side-nav>#nav-hd span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #app .side-nav>#nav-hd #nav-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;border-radius:50%}
   #app .side-nav>.nav-q{order:-4}
+  /* قائمة الحساب كدرج جانبي من اليسار */
+  #acct-dr{display:flex!important;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:min(88vw,340px);z-index:1001;padding:.9rem;overflow-y:auto;transform:translateX(-110%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;box-shadow:10px 0 40px rgba(0,0,0,.45)}
+  body.acct-open #acct-dr{transform:none;visibility:visible;transition:transform .22s ease}
+  html.glass #acct-dr{background:#0b1210;color:#f4f9fc;border-inline-end:1px solid rgba(255,255,255,.14)}
+  html.white #acct-dr{background:#fff;color:#0f172a}
+  #acct-dr .acc-hd{display:flex;align-items:center;gap:.7rem;padding:.2rem .1rem .8rem;margin-bottom:.5rem;font-weight:800;border-bottom:1px solid rgba(128,128,128,.25)}
+  #acct-dr .acc-hd i{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-style:normal;background:rgba(128,128,128,.22);flex:none}
+  #acct-dr .acc-hd span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #acct-dr #acct-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;border-radius:50%}
+  #acct-dr .acc-list{display:flex;flex-direction:column;gap:.5rem}
+  #acct-dr .acc-row{width:100%;min-height:50px;display:flex;align-items:center;justify-content:flex-start;padding:.55rem .95rem;font-size:.95rem;white-space:nowrap}
+  #acct-dr .acc-seg{display:flex;gap:.5rem}
+  #acct-dr .acc-seg button{flex:1;min-height:46px;justify-content:center}
+  body.acct-open{overflow:hidden!important}
+  body.acct-open #nav-bg{display:block!important;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55)}
   body.nav-open{overflow:hidden!important}
   body.nav-open #nav-bg{display:block!important;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55)}
 }

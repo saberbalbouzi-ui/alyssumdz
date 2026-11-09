@@ -62,9 +62,24 @@
     var acct = mk("div", "top-acct", "", "");
     function paintAcct(){ var n = acctName() || "حسابي", ch = (n.trim().charAt(0) || "أ").toUpperCase(); more.textContent = ch; acct.innerHTML = "<i></i><span></span>"; acct.firstChild.textContent = ch; acct.lastChild.textContent = n; }
     paintAcct(); setTimeout(paintAcct, 1500); setTimeout(paintAcct, 5000);
-    more.addEventListener("click", function(){ paintAcct(); var on = top.classList.toggle("more-open"); more.setAttribute("aria-expanded", on ? "true" : "false"); });
+    /* قائمة الحساب درج جانبي من اليسار (#acct-dr): أزرار وكيلة تنقر الأزرار الأصلية المخفية في الشريط (فلا نحرّكها من مكانها) */
+    var dr = mk("div", "acct-dr", "", ""); document.body.appendChild(dr);
+    function acctOpen(on){ document.body.classList.toggle("acct-open", !!on); more.setAttribute("aria-expanded", on ? "true" : "false"); if(on){ document.body.classList.remove("nav-open"); build(); } }
+    function row(label, cls, fn){ var b = mk("button", "", "acc-row small " + (cls || ""), ""); b.textContent = label; b.addEventListener("click", function(){ acctOpen(false); setTimeout(fn, 0); }); return b; }
+    function build(){
+      var n = acctName() || "حسابي", ch = (n.trim().charAt(0) || "أ").toUpperCase();
+      dr.innerHTML = '<div class="acc-hd"><i></i><span></span></div><div class="acc-list"></div>';
+      dr.querySelector("i").textContent = ch; dr.querySelector("span").textContent = n;
+      var x = mk("button", "acct-x", "small gray", SV('<path d="M6 6l12 12M18 6L6 18"/>'), "إغلاق"); x.addEventListener("click", function(){ acctOpen(false); }); dr.querySelector(".acc-hd").appendChild(x);
+      var ls = dr.querySelector(".acc-list"), q = function(sel){ return top.querySelector(sel); };
+      var v = q('button[onclick*="SitePreview"]'); if(v) ls.appendChild(row((v.textContent || "زيارة الموقع").trim(), "", function(){ v.click(); }));
+      var sw = document.querySelectorAll("#theme-sw button"); if(sw.length){ var tr = document.createElement("div"); tr.className = "acc-seg"; sw.forEach(function(o){ var b = mk("button", "", "small " + (o.classList.contains("on") ? "" : "gray"), ""); b.textContent = (o.textContent || "").trim(); b.addEventListener("click", function(){ acctOpen(false); setTimeout(function(){ o.click(); }, 0); }); tr.appendChild(b); }); ls.appendChild(tr); }
+      [["#upd-btn", ""], ["#au-btn", ""], ["#au-cc", "gray"], [".logout", "warn"]].forEach(function(a){ var o = q(a[0]); if(o && !o.classList.contains("hidden")) ls.appendChild(row((o.textContent || "").replace(/\s+/g, " ").trim(), a[1], function(){ o.click(); })); });
+    }
+    more.addEventListener("click", function(){ acctOpen(!document.body.classList.contains("acct-open")); });
+    document.addEventListener("keydown", function(e){ if(String(e.key || "") === "Escape") acctOpen(false); });
     var h = top.querySelector("h1"); top.insertBefore(menu, top.firstChild); top.appendChild(sr); top.appendChild(more); top.appendChild(acct);
-    var bg = mk("div", "nav-bg", "", ""); bg.addEventListener("click", function(){ navOpen(false); }); document.body.appendChild(bg);
+    var bg = mk("div", "nav-bg", "", ""); bg.addEventListener("click", function(){ navOpen(false); acctOpen(false); }); document.body.appendChild(bg);
     mountAcc();
     var nv0 = document.querySelector(".side-nav");
     if(nv0 && !document.getElementById("nav-hd")){ var hd = mk("div", "nav-hd", "", '<i></i><span></span>'); var x = mk("button", "nav-x", "small gray", SV('<path d="M6 6l12 12M18 6L6 18"/>'), "إغلاق القائمة"); x.addEventListener("click", function(){ navOpen(false); }); hd.appendChild(x); nv0.insertBefore(hd, nv0.firstChild);
