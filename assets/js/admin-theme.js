@@ -44,6 +44,11 @@
     gs.forEach(function(o){ var c = o.cloneNode(true); c.classList.remove("ng", "on"); c.classList.add("nav-gh"); c.removeAttribute("id");
       c.addEventListener("click", function(){ var was = c.classList.contains("on"); nv.classList.toggle("acc-closed", was); }, true); nv.appendChild(c); });      // التقاط (capture) كي نقرأ حالة «on» قبل أن يبدّلها onclick المستنسَخ
     function sync(){ var cur = nv.dataset.g; var heads = nv.querySelectorAll(".nav-gh"); document.querySelectorAll("#nav-groups .ng").forEach(function(o, i){ var c = heads[i]; if(!c) return; c.classList.toggle("on", !nv.classList.contains("acc-closed") && o.dataset.g === cur); c.classList.toggle("rl-hid", o.classList.contains("rl-hid")); }); }
+    var home = [].slice.call(nv.querySelectorAll(".nav-btn")).filter(function(b){ return /'home'/.test(b.getAttribute("onclick") || ""); })[0];
+    if(home && !nv.querySelector(".nav-home")){ var hc = home.cloneNode(true); hc.classList.add("nav-home"); hc.classList.remove("on", "nav-hid"); hc.removeAttribute("data-grp"); hc.removeAttribute("onclick"); hc.removeAttribute("id");
+      var hb = hc.querySelector("b"); if(hb) hb.textContent = "الرئيسية";      // تُنقل «لوحة التحكم» خارج المجموعة العامة وتُسمّى «الرئيسية»
+      hc.addEventListener("click", function(){ home.click(); }); nv.appendChild(hc);
+      var oldSync = null; setInterval(function(){ hc.classList.toggle("on", home.classList.contains("on")); hc.classList.toggle("rl-hid", home.classList.contains("rl-hid")); }, 300); }
     new MutationObserver(sync).observe(nv, { attributes: true, attributeFilter: ["data-g", "class"] }); sync(); setInterval(sync, 1500);
   }
   function mountMore(){

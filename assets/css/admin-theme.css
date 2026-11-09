@@ -180,10 +180,15 @@ html.white .hint{color:#5b6677}
   #app .side-nav>.nav-gh::after{content:"";margin-inline-start:auto;width:9px;height:9px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg);transition:transform .2s}
   #app .side-nav>.nav-gh.on::after{transform:rotate(225deg)}
   html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important;border-color:transparent!important;box-shadow:none!important}
+  /* «الرئيسية» (لوحة التحكم) تُنزع من المجموعة العامة في الدرج وتُوضع أعلاه؛ المجموعة العامة (الإعدادات) آخر المجموعات */
+  #app .side-nav>.nav-btn[onclick*="'home'"]:not(.nav-home){display:none!important}
+  #app .side-nav>.nav-btn.nav-home{order:-1;display:flex!important;margin-inline-start:0;margin-top:.3rem}
+  #app .side-nav>.nav-btn.nav-home.rl-hid{display:none!important}
+  #app .side-nav.acc-closed>.nav-btn.nav-home{display:flex!important}
   #app .side-nav>.nav-q{order:-2}
   #app .side-nav>.side-nav-intro{order:-1}
-  #app .side-nav>.nav-gh[data-g="gen"]{order:0}#app .side-nav>.nav-gh[data-g="products"]{order:10}#app .side-nav>.nav-gh[data-g="shop"]{order:20}#app .side-nav>.nav-gh[data-g="look"]{order:30}#app .side-nav>.nav-gh[data-g="apps"]{order:40}
-  #app .side-nav>.nav-btn[data-grp="gen"]{order:1}#app .side-nav>.nav-btn[data-grp="products"]{order:11}#app .side-nav>.nav-btn[data-grp="shop"],#app .side-nav>.nav-sec{order:21}#app .side-nav>.nav-btn[data-grp="look"]{order:31}#app .side-nav>.nav-btn[data-grp="apps"]{order:41}
+  #app .side-nav>.nav-gh[data-g="gen"]{order:50}#app .side-nav>.nav-gh[data-g="products"]{order:10}#app .side-nav>.nav-gh[data-g="shop"]{order:20}#app .side-nav>.nav-gh[data-g="look"]{order:30}#app .side-nav>.nav-gh[data-g="apps"]{order:40}
+  #app .side-nav>.nav-btn[data-grp="gen"]{order:51}#app .side-nav>.nav-btn[data-grp="products"]{order:11}#app .side-nav>.nav-btn[data-grp="shop"],#app .side-nav>.nav-sec{order:21}#app .side-nav>.nav-btn[data-grp="look"]{order:31}#app .side-nav>.nav-btn[data-grp="apps"]{order:41}
   #app .side-nav.acc-closed>.nav-btn,#app .side-nav.acc-closed>.nav-sec{display:none!important}
   #app .side-nav>.nav-btn{margin-inline-start:.5rem}
   body.nav-open{overflow:hidden!important}
