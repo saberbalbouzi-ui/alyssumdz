@@ -1,6 +1,6 @@
 {
  "v": 1,
- "title": "عسل التركيز وتنشيط الذاكرة — ALYSSUM MEMORY FOCUS",
+ "title": " ALYSSUM MEMORY ",
  "slug": "honey-focus",
  "desc": "ALYSSUM MEMORY FOCUS عسل طبيعي بالجنكة وإكليل الجبل والريحان والزبيب والمكسرات ضمن روتين الدراسة اليومي. الدفع عند الاستلام والتوصيل حسب الولاية.",
  "bg": "transparent",
@@ -62,12 +62,19 @@
         "color": "#187a3b",
         "fw": "900",
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
         "cls": "tag-w",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "al": {
+         "m": "start"
+        },
+        "w": {
+         "m": 71.2
+        }
        }
       },
       {
@@ -82,7 +89,8 @@
         },
         "fw": "900",
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
         "color": "#123e72",
         "lh": {
@@ -106,7 +114,8 @@
         },
         "fw": "900",
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
         "color": "#f39a18",
         "lh": {
@@ -131,7 +140,8 @@
          "d": 1.9
         },
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
         "color": "#4c6278",
         "fw": "600",
@@ -228,7 +238,16 @@
         },
         "wsc": {
          "d": 151
-        }
+        },
+        "rad": {
+         "m": 7
+        },
+        "pfo": false,
+        "shold": true,
+        "shsave": true,
+        "bw": 0,
+        "bs": "solid",
+        "bgFixed": false
        }
       }
      ]
@@ -289,25 +308,30 @@
       "alt": "",
       "fit": "cover",
       "fx": {
-       "d": 0.8
+       "d": 0.8,
+       "m": 0
       },
       "fy": {
-       "d": 487
+       "d": 487,
+       "m": 890
       },
       "fwd": {
-       "d": 21.4
+       "d": 21.4,
+       "m": 46.3
       },
       "fh": {
-       "d": 140
+       "d": 140,
+       "m": 102
       },
       "zi": 1,
       "rad": {
-       "d": 39
+       "d": 39,
+       "m": 17
       },
       "crop": {
-       "x": 0,
+       "x": -6.4,
        "y": 0,
-       "w": 103
+       "w": 108.9
       }
      }
     }
@@ -357,13 +381,15 @@
        "id": "eixm461",
        "type": "html",
        "set": {
-        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M11 20A7 7 0 0 1 4 13c0-6 7-9 16-9 0 9-3 16-9 16z\"/><path d=\"M4 20c3-6 6-8 10-10\"/></svg></span><div><b>عسل ومستخلصات نباتية</b><small>التفاصيل على ملصق العبوة</small></div></div>",
+        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M11 20A7 7 0 0 1 4 13c0-6 7-9 16-9 0 9-3 16-9 16z\"></path><path d=\"M4 20c3-6 6-8 10-10\"></path></svg></span><div><b>عسل ومستخلصات نباتية</b><small></small></div></div>",
         "cls": "",
         "al": {
-         "d": "start"
+         "d": "start",
+         "m": "start"
         },
         "w": {
-         "d": 100
+         "d": 100,
+         "m": 100
         },
         "wsc": {
          "d": 136
@@ -386,7 +412,7 @@
        "id": "txfx59t",
        "type": "html",
        "set": {
-        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M13 2 4 14h7l-1 8 9-12h-7z\"/></svg></span><div><b>روتين يومي بسيط</b><small>ضمن نمط حياة متوازن</small></div></div>",
+        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M13 2 4 14h7l-1 8 9-12h-7z\"/></svg></span><div><b>روتين يومي بسيط</b><small></small></div></div>",
         "cls": "",
         "al": {
          "d": "start"
@@ -415,7 +441,7 @@
        "id": "c0sz4xg",
        "type": "html",
        "set": {
-        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m8 12 3 3 5-6\"/></svg></span><div><b>الدفع عند الاستلام</b><small>تدفع بعد أن تستلم طلبك</small></div></div>",
+        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m8 12 3 3 5-6\"/></svg></span><div><b>الدفع عند الاستلام</b><small></small></div></div>",
         "cls": "",
         "al": {
          "d": "start"
@@ -444,7 +470,7 @@
        "id": "b52zza5",
        "type": "html",
        "set": {
-        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z\"/></svg></span><div><b>للتلاميذ والعائلة</b><small>مع مراعاة العمر والإرشادات</small></div></div>",
+        "code": "<div class=\"stat\"><span class=\"stat-ic\"><svg viewBox=\"0 0 24 24\" width=\"23\" height=\"23\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 21s-7-4.5-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.5-9 9-9 9z\"/></svg></span><div><b>للتلاميذ والعائلة</b><small></small></div></div>",
         "cls": "",
         "al": {
          "d": "start"
@@ -508,7 +534,7 @@
         "html": "<p>فهم التحديات اليومية</p>",
         "fs": {
          "d": 26,
-         "m": 13
+         "m": 22
         },
         "color": "#187a3b",
         "fw": "900",
@@ -559,8 +585,8 @@
         "ta": {
          "d": "center"
         },
-        "color": "#627487",
-        "fw": "600",
+        "color": "#003975",
+        "fw": "700",
         "cls": "sub",
         "anim": "fadeUp",
         "animDur": 0.75,
@@ -590,7 +616,8 @@
     },
     "layout": "full",
     "mh": {
-     "d": 459
+     "d": 737,
+     "m": 1501
     },
     "pad": {
      "d": [
@@ -616,121 +643,36 @@
       "src": "/assets/img/tarkiz/lp/mf-girl-homework-card.webp",
       "alt": "طفلة تكتب واجباتها وتبدو متعبة من الدراسة",
       "fit": "cover",
-      "hauto": true,
       "rad": {
-       "d": 0
+       "d": 0,
+       "m": 45
       },
       "cls": "pc-img",
       "anim": "fadeUp",
       "animDur": 0.75,
       "animDelay": 0,
       "fx": {
-       "d": 74.5
+       "d": 74.5,
+       "m": 53
       },
       "fy": {
-       "d": 14
+       "d": 14,
+       "m": 106
       },
       "fwd": {
-       "d": 22.4
+       "d": 22.4,
+       "m": 43.1
       },
       "fh": {
-       "d": 217
+       "d": 217,
+       "m": 422
       },
-      "zi": 2
-     }
-    },
-    {
-     "id": "1ckjapd",
-     "type": "html",
-     "set": {
-      "code": "<div class=\"pc-num\">01</div>",
-      "cls": "",
-      "fx": {
-       "d": 74.7
-      },
-      "fy": {
-       "d": 222
-      },
-      "fwd": {
-       "d": 22.3
-      },
-      "fh": {
-       "d": 2
-      },
-      "zi": 3
-     }
-    },
-    {
-     "id": "004wim1",
-     "type": "heading",
-     "set": {
-      "text": "تشتّت أثناء الدراسة",
-      "tag": "h3",
-      "fs": {
-       "d": 18,
-       "m": 14
-      },
-      "fw": "900",
-      "ta": {
-       "d": "start"
-      },
-      "color": "#d84b37",
-      "lh": {
-       "d": 1.25
-      },
-      "cls": "pc-h",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0,
-      "fx": {
-       "d": 74.6
-      },
-      "fy": {
-       "d": 258
-      },
-      "fwd": {
-       "d": 22.3
-      },
-      "fh": {
-       "d": 25
-      },
-      "zi": 4
-     }
-    },
-    {
-     "id": "ow11yku",
-     "type": "text",
-     "set": {
-      "html": "تهيئة مكان هادئ وتقليل الملهيات يساعدان على تنظيم وقت التعلّم.",
-      "fs": {
-       "d": 15,
-       "m": 11
-      },
-      "lh": {
-       "d": 1.9
-      },
-      "ta": {
-       "d": "start"
-      },
-      "color": "#637386",
-      "fw": "600",
-      "cls": "pc-p",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0,
-      "fx": {
-       "d": 74.7
-      },
-      "fy": {
-       "d": 298
-      },
-      "fwd": {
-       "d": 22.3
-      },
-      "fh": {
-       "d": 52
-      },
-      "zi": 5
+      "zi": 2,
+      "crop": {
+       "x": -2.7,
+       "y": -0.6,
+       "w": 103.1
+      }
      }
     },
     {
@@ -740,121 +682,152 @@
       "src": "/assets/img/tarkiz/lp/mf-mother-boy-card.webp",
       "alt": "طفل يتعلم بمساعدة أمه المحجبة في منزل مضيء",
       "fit": "cover",
-      "hauto": true,
       "rad": {
-       "d": 0
+       "d": 0,
+       "m": 55
       },
       "cls": "pc-img",
       "anim": "fadeUp",
       "animDur": 0.75,
       "animDelay": 0.1,
       "fx": {
-       "d": 50.8
+       "d": 50.8,
+       "m": 4.6
       },
       "fy": {
-       "d": 11
+       "d": 11,
+       "m": 109
       },
       "fwd": {
-       "d": 22.3
+       "d": 22.3,
+       "m": 46.3
       },
       "fh": {
-       "d": 214
+       "d": 214,
+       "m": 419
       },
-      "zi": 2
+      "zi": 2,
+      "crop": {
+       "x": -6.9,
+       "y": -2.5,
+       "w": 106.9
+      }
      }
     },
     {
      "id": "arpchwk",
      "type": "html",
      "set": {
-      "code": "<div class=\"pc-num\">02</div>",
+      "code": "<div class=\"pc-num\">01\n</div>",
       "cls": "",
       "fx": {
-       "d": 50.8
+       "d": 50.8,
+       "m": 86.3
       },
       "fy": {
-       "d": 225
+       "d": 225,
+       "m": 391
       },
       "fwd": {
-       "d": 22.3
+       "d": 22.3,
+       "m": 13.7
       },
       "fh": {
-       "d": 0
+       "d": 0,
+       "m": 172
       },
-      "zi": 3
+      "zi": 3,
+      "wsc": {
+       "m": 91,
+       "d": 100
+      }
      }
     },
     {
-     "id": "znrj72e",
-     "type": "heading",
+     "id": "xoqnaah",
+     "type": "html",
      "set": {
-      "text": "الحاجة إلى روتين ثابت",
-      "tag": "h3",
-      "fs": {
-       "d": 18,
-       "m": 14
-      },
-      "fw": "900",
-      "ta": {
-       "d": "start"
-      },
-      "color": "#d84b37",
-      "lh": {
-       "d": 1.25
-      },
-      "cls": "pc-h",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
+      "code": "<div class=\"pc-num\">03\n</div>",
+      "cls": "",
       "fx": {
-       "d": 50.8
+       "d": 50.8,
+       "m": 85.4
       },
       "fy": {
-       "d": 257
+       "d": 225,
+       "m": 1039
       },
       "fwd": {
-       "d": 22.3
+       "d": 22.3,
+       "m": 13.7
       },
       "fh": {
-       "d": 23
+       "d": 0,
+       "m": 172
       },
-      "zi": 4
+      "zi": 4,
+      "wsc": {
+       "m": 91,
+       "d": 100
+      }
      }
     },
     {
-     "id": "x2inizg",
-     "type": "text",
+     "id": "pln2dpa",
+     "type": "html",
      "set": {
-      "html": "الخطوات الصغيرة والمتكررة تجعل وقت الدراسة أكثر انتظامًا.",
-      "fs": {
-       "d": 15,
-       "m": 11
-      },
-      "lh": {
-       "d": 1.9
-      },
-      "ta": {
-       "d": "start"
-      },
-      "color": "#637386",
-      "fw": "600",
-      "cls": "pc-p",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
+      "code": "<div class=\"pc-num\">02\n\n</div>",
+      "cls": "",
       "fx": {
-       "d": 50.8
+       "d": 50.8,
+       "m": 41.1
       },
       "fy": {
-       "d": 295
+       "d": 225,
+       "m": 390
       },
       "fwd": {
-       "d": 22.3
+       "d": 22.3,
+       "m": 13.7
       },
       "fh": {
-       "d": 49
+       "d": 0,
+       "m": 172
       },
-      "zi": 5
+      "zi": 4,
+      "wsc": {
+       "m": 91,
+       "d": 100
+      }
+     }
+    },
+    {
+     "id": "9hhuqkb",
+     "type": "html",
+     "set": {
+      "code": "<div class=\"pc-num\">04\n\n</div>",
+      "cls": "",
+      "fx": {
+       "d": 50.8,
+       "m": 40.2
+      },
+      "fy": {
+       "d": 225,
+       "m": 1038
+      },
+      "fwd": {
+       "d": 22.3,
+       "m": 13.7
+      },
+      "fh": {
+       "d": 0,
+       "m": 172
+      },
+      "zi": 5,
+      "wsc": {
+       "m": 91,
+       "d": 100
+      }
      }
     },
     {
@@ -864,121 +837,36 @@
       "src": "/assets/img/tarkiz/lp/mf-study-break-card.webp",
       "alt": "طفل يأخذ استراحة قصيرة بعد حل الواجب",
       "fit": "cover",
-      "hauto": true,
       "rad": {
-       "d": 0
+       "d": 0,
+       "m": 57
       },
       "cls": "pc-img",
       "anim": "fadeUp",
       "animDur": 0.75,
       "animDelay": 0.2,
       "fx": {
-       "d": 26.9
+       "d": 26.9,
+       "m": 52.1
       },
       "fy": {
-       "d": 11
+       "d": 11,
+       "m": 776
       },
       "fwd": {
-       "d": 22.3
+       "d": 22.3,
+       "m": 43.1
       },
       "fh": {
-       "d": 214
+       "d": 214,
+       "m": 393
       },
-      "zi": 2
-     }
-    },
-    {
-     "id": "dhundjb",
-     "type": "html",
-     "set": {
-      "code": "<div class=\"pc-num\">03</div>",
-      "cls": "",
-      "fx": {
-       "d": 26.9
-      },
-      "fy": {
-       "d": 225
-      },
-      "fwd": {
-       "d": 22.3
-      },
-      "fh": {
-       "d": 0
-      },
-      "zi": 3
-     }
-    },
-    {
-     "id": "si8lzze",
-     "type": "heading",
-     "set": {
-      "text": "الإرهاق من الجلوس الطويل",
-      "tag": "h3",
-      "fs": {
-       "d": 18,
-       "m": 14
-      },
-      "fw": "900",
-      "ta": {
-       "d": "start"
-      },
-      "color": "#d84b37",
-      "lh": {
-       "d": 1.25
-      },
-      "cls": "pc-h",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.2,
-      "fx": {
-       "d": 26.9
-      },
-      "fy": {
-       "d": 257
-      },
-      "fwd": {
-       "d": 22.3
-      },
-      "fh": {
-       "d": 23
-      },
-      "zi": 4
-     }
-    },
-    {
-     "id": "l9bzx35",
-     "type": "text",
-     "set": {
-      "html": "الاستراحات القصيرة والحركة والنوم الكافي عناصر لا غنى عنها.",
-      "fs": {
-       "d": 15,
-       "m": 11
-      },
-      "lh": {
-       "d": 1.9
-      },
-      "ta": {
-       "d": "start"
-      },
-      "color": "#637386",
-      "fw": "600",
-      "cls": "pc-p",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.2,
-      "fx": {
-       "d": 26.9
-      },
-      "fy": {
-       "d": 294
-      },
-      "fwd": {
-       "d": 22.3
-      },
-      "fh": {
-       "d": 49
-      },
-      "zi": 5
+      "zi": 2,
+      "crop": {
+       "x": 0,
+       "y": -2.7,
+       "w": 100
+      }
      }
     },
     {
@@ -988,121 +876,192 @@
       "src": "/assets/img/tarkiz/lp/mf-boy-jar-card.webp",
       "alt": "تلميذ يبتسم في مكتبه ومعه عبوة عسل أليسوم",
       "fit": "cover",
-      "hauto": true,
       "rad": {
-       "d": 0
+       "d": 0,
+       "m": 54
       },
       "cls": "pc-img",
       "anim": "fadeUp",
       "animDur": 0.75,
       "animDelay": 0.3,
       "fx": {
-       "d": 3.1
+       "d": 3.1,
+       "m": 4.4
       },
       "fy": {
-       "d": 11
+       "d": 11,
+       "m": 770
       },
       "fwd": {
-       "d": 22.3
+       "d": 22.3,
+       "m": 45.2
       },
       "fh": {
-       "d": 214
+       "d": 214,
+       "m": 399
       },
-      "zi": 2
+      "zi": 2,
+      "crop": {
+       "x": 0,
+       "y": -3.5,
+       "w": 103.4
+      }
      }
     },
     {
-     "id": "z7msyxj",
-     "type": "html",
+     "id": "9qfo6zy",
+     "type": "heading",
      "set": {
-      "code": "<div class=\"pc-num\">04</div>",
-      "cls": "",
+      "text": "الحاجة إلى روتين ثابت",
+      "tag": "h2",
+      "fs": {
+       "d": 38,
+       "m": 28
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
       "fx": {
-       "d": 3.1
+       "d": 50,
+       "m": 1.8
       },
       "fy": {
-       "d": 225
+       "d": 474,
+       "m": 539
       },
       "fwd": {
-       "d": 22.3
+       "d": 60,
+       "m": 45.7
       },
       "fh": {
-       "d": 0
+       "d": 70,
+       "m": 83
       },
-      "zi": 3
+      "zi": 5,
+      "hauto": false,
+      "color": "#f45252",
+      "wsc": {
+       "m": 147,
+       "d": 100
+      }
      }
     },
     {
-     "id": "55ozatp",
+     "id": "591snww",
      "type": "heading",
      "set": {
       "text": "دعم العادات الجيدة",
-      "tag": "h3",
+      "tag": "h2",
       "fs": {
-       "d": 18,
-       "m": 14
+       "d": 38,
+       "m": 28
       },
-      "fw": "900",
+      "fw": "800",
       "ta": {
-       "d": "start"
+       "d": "center"
       },
-      "color": "#d84b37",
-      "lh": {
-       "d": 1.25
-      },
-      "cls": "pc-h",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.3,
       "fx": {
-       "d": 3.1
+       "d": 50,
+       "m": 0.9
       },
       "fy": {
-       "d": 257
+       "d": 474,
+       "m": 1187
       },
       "fwd": {
-       "d": 22.3
+       "d": 60,
+       "m": 45.7
       },
       "fh": {
-       "d": 23
+       "d": 70,
+       "m": 83
       },
-      "zi": 4
+      "zi": 6,
+      "hauto": false,
+      "color": "#f45252",
+      "wsc": {
+       "m": 147,
+       "d": 100
+      }
      }
     },
     {
-     "id": "hnf7t5h",
-     "type": "text",
+     "id": "9uol35r",
+     "type": "heading",
      "set": {
-      "html": "الاعتماد على عسل التركيز و تنشيط الذاكرة أليسوم كمكمل غذائي فعال",
+      "text": "تشتّت أثناء الدراسة",
+      "tag": "h2",
       "fs": {
-       "d": 15,
-       "m": 11
+       "d": 38,
+       "m": 28
       },
-      "lh": {
-       "d": 1.9
-      },
+      "fw": "800",
       "ta": {
-       "d": "start"
+       "d": "center"
       },
-      "color": "#637386",
-      "fw": "600",
-      "cls": "pc-p",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.3,
       "fx": {
-       "d": 3.1
+       "d": 50,
+       "m": 51.6
       },
       "fy": {
-       "d": 294
+       "d": 474,
+       "m": 547
       },
       "fwd": {
-       "d": 22.3
+       "d": 60,
+       "m": 45.7
       },
       "fh": {
-       "d": 49
+       "d": 70,
+       "m": 83
       },
-      "zi": 5
+      "zi": 6,
+      "hauto": false,
+      "color": "#f45252",
+      "wsc": {
+       "m": 147,
+       "d": 100
+      }
+     }
+    },
+    {
+     "id": "cna9vu6",
+     "type": "heading",
+     "set": {
+      "text": "الإرهاق من الجلوس الطويل",
+      "tag": "h2",
+      "fs": {
+       "d": 38,
+       "m": 28
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 50,
+       "m": 51.8
+      },
+      "fy": {
+       "d": 474,
+       "m": 1199
+      },
+      "fwd": {
+       "d": 60,
+       "m": 45.7
+      },
+      "fh": {
+       "d": 70,
+       "m": 83
+      },
+      "zi": 7,
+      "hauto": false,
+      "color": "#f45252",
+      "wsc": {
+       "m": 147,
+       "d": 100
+      }
      }
     }
    ]
@@ -1120,7 +1079,8 @@
     },
     "layout": "full",
     "mh": {
-     "d": 769
+     "d": 769,
+     "m": 1194
     },
     "pad": {
      "d": [
@@ -1154,52 +1114,28 @@
       "animDur": 0.75,
       "animDelay": 0,
       "fx": {
-       "d": 56.2
+       "d": 56.2,
+       "m": 49.3
       },
       "fy": {
-       "d": 119
+       "d": 119,
+       "m": 121
       },
       "fwd": {
-       "d": 39.3
+       "d": 39.3,
+       "m": 48.6
       },
       "fh": {
-       "d": 482
+       "d": 482,
+       "m": 562
       },
       "zi": 2,
-      "grp": "gsetp4k6"
-     }
-    },
-    {
-     "id": "677o4xv",
-     "type": "text",
-     "set": {
-      "html": "<p>لماذا هذا العسل مميز ?</p>",
-      "fs": {
-       "d": 34,
-       "m": 13
-      },
-      "color": "#187a3b",
-      "fw": "900",
-      "ta": {
-       "d": "start"
-      },
-      "cls": "kick kick-s",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
-      "fx": {
-       "d": 1.2
-      },
-      "fy": {
-       "d": 119
-      },
-      "fwd": {
-       "d": 47
-      },
-      "fh": {
-       "d": 54
-      },
-      "zi": 2
+      "grp": "gsetp4k6",
+      "crop": {
+       "x": -0.6,
+       "y": -7.1,
+       "w": 100.6
+      }
      }
     },
     {
@@ -1224,18 +1160,117 @@
       "animDur": 0.75,
       "animDelay": 0.1,
       "fx": {
-       "d": 4.1
+       "d": 4.1,
+       "m": 9.1
       },
       "fy": {
-       "d": 169
+       "d": 169,
+       "m": 117
       },
       "fwd": {
-       "d": 47
+       "d": 47,
+       "m": 37.6
       },
       "fh": {
-       "d": 62
+       "d": 62,
+       "m": 60
       },
-      "zi": 3
+      "zi": 3,
+      "hauto": false,
+      "wsc": {
+       "m": 129,
+       "d": 100
+      }
+     }
+    },
+    {
+     "id": "eob7ixz",
+     "type": "text",
+     "set": {
+      "html": "<h2>لماذا هذا&nbsp; &nbsp;<span style=\"color:#f39a18\">العسل مميز</span></h2>",
+      "fs": {
+       "d": 48,
+       "m": 30
+      },
+      "lh": {
+       "d": 1.3
+      },
+      "ta": {
+       "d": "start"
+      },
+      "color": "#050300",
+      "fw": "900",
+      "cls": "title",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 4.1,
+       "m": 16.5
+      },
+      "fy": {
+       "d": 169,
+       "m": 0
+      },
+      "fwd": {
+       "d": 47,
+       "m": 58.5
+      },
+      "fh": {
+       "d": 62,
+       "m": 90
+      },
+      "zi": 4,
+      "hauto": false,
+      "wsc": {
+       "m": 227,
+       "d": 100
+      }
+     }
+    },
+    {
+     "id": "du3cmk1",
+     "type": "text",
+     "set": {
+      "html": "<h2>لماذا هذا&nbsp; &nbsp;<span style=\"color:#f39a18\">العسل مميز</span></h2>",
+      "fs": {
+       "d": 48,
+       "m": 30
+      },
+      "lh": {
+       "d": 1.3
+      },
+      "ta": {
+       "d": "start"
+      },
+      "color": "#050300",
+      "fw": "900",
+      "cls": "title",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 4.1,
+       "m": 65.3
+      },
+      "fy": {
+       "d": 169,
+       "m": -308
+      },
+      "fwd": {
+       "d": 47,
+       "m": 58.5
+      },
+      "fh": {
+       "d": 62,
+       "m": 90
+      },
+      "zi": 5,
+      "hauto": false,
+      "wsc": {
+       "m": 227,
+       "d": 100
+      }
      }
     },
     {
@@ -1260,21 +1295,30 @@
       "animDur": 0.75,
       "animDelay": 0.1,
       "fx": {
-       "d": 3
+       "d": 3,
+       "m": 3.1
       },
       "fy": {
-       "d": 242
+       "d": 242,
+       "m": 188
       },
       "fwd": {
-       "d": 47
+       "d": 47,
+       "m": 43.7
       },
       "fh": {
-       "d": 91
+       "d": 91,
+       "m": 381
       },
       "zi": 4,
       "stk": {
        "id": "5ffxdfe",
        "h": 62
+      },
+      "hauto": false,
+      "wsc": {
+       "m": 319,
+       "d": 100
       }
      }
     },
@@ -1309,18 +1353,26 @@
       "animDur": 0.75,
       "animDelay": 0.1,
       "fx": {
-       "d": 35.7
+       "d": 35.7,
+       "m": 62
       },
       "fy": {
-       "d": 682
+       "d": 682,
+       "m": 1001
       },
       "fwd": {
-       "d": 13.5
+       "d": 13.5,
+       "m": 33.5
       },
       "fh": {
-       "d": 61
+       "d": 61,
+       "m": 148
       },
-      "zi": 5
+      "zi": 5,
+      "wsc": {
+       "m": 248,
+       "d": 100
+      }
      }
     }
    ]
@@ -1372,7 +1424,7 @@
         "html": "<p>من الطبيعة إلى العبوة</p>",
         "fs": {
          "d": 13,
-         "m": 13
+         "m": 22
         },
         "color": "#187a3b",
         "fw": "900",
@@ -1484,7 +1536,8 @@
         "fit": "cover",
         "hauto": true,
         "rad": {
-         "d": 0
+         "d": 0,
+         "m": 28
         },
         "cls": "ing-feat",
         "anim": "fadeUp",
@@ -1507,7 +1560,7 @@
        "id": "wabwh3s",
        "type": "heading",
        "set": {
-        "text": "مظهر طبيعي، وتفاصيل تستحق القراءة",
+        "text": "مظهر طبيعي، وذوق لذيذ",
         "tag": "h3",
         "fs": {
          "d": 30,
@@ -1515,7 +1568,8 @@
         },
         "fw": "900",
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
         "color": "#123e72",
         "lh": {
@@ -1540,10 +1594,11 @@
          "d": 1.9
         },
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
-        "color": "#627487",
-        "fw": "600",
+        "color": "#113c6e",
+        "fw": "700",
         "cls": "",
         "anim": "fadeUp",
         "animDur": 0.75,
@@ -1554,31 +1609,18 @@
        "id": "txgujww",
        "type": "html",
        "set": {
-        "code": "<div class=\"pills\"><span>عسل طبيعي</span><span>الجنكة</span><span>إكليل الجبل</span><span>الريحان</span><span>الزبيب</span><span>مكسرات</span></div>",
-        "cls": ""
-       }
-      },
-      {
-       "id": "wd1n1zg",
-       "type": "text",
-       "set": {
-        "html": "ملاحظة: الصور توضيحية، والمرجع النهائي هو قائمة المكونات المطبوعة على العبوة.",
-        "fs": {
-         "d": 12,
-         "m": 11
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#8a7757",
-        "fw": "600",
+        "code": "<div class=\"pills\"><span>عسل طبيعي</span><span>الجنكة</span><span>إكليل الجبل</span><span>الريحان</span><span>الزبيب</span></div>",
         "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
+        "al": {
+         "m": "end"
+        },
+        "w": {
+         "m": 100
+        },
+        "wsc": {
+         "m": 76,
+         "d": 100
+        }
        }
       }
      ]
@@ -1686,14 +1728,23 @@
         "src": "/assets/img/tarkiz/lp/c-ginkgo.webp",
         "alt": "الجنكة",
         "fit": "cover",
-        "hauto": true,
         "rad": {
          "d": 200
         },
         "cls": "ing-img",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0.1
+        "animDelay": 0.1,
+        "al": {
+         "m": "end"
+        },
+        "w": {
+         "m": 53.8
+        },
+        "wsc": {
+         "m": 156,
+         "d": 100
+        }
        }
       },
       {
@@ -1984,7 +2035,7 @@
         "html": "<p>اختر ما يناسبك</p>",
         "fs": {
          "d": 13,
-         "m": 13
+         "m": 22
         },
         "color": "#187a3b",
         "fw": "900",
@@ -2024,7 +2075,7 @@
        "id": "s8x0kzv",
        "type": "text",
        "set": {
-        "html": "الأسعار بالدينار الجزائري، والدفع عند الاستلام. اختر العرض ثم أكمل الطلب في الأسفل.",
+        "html": "الدفع عند الاستلام. اختر العرض ثم أكمل الطلب في الأسفل.",
         "fs": {
          "d": 16,
          "m": 14
@@ -2035,8 +2086,8 @@
         "ta": {
          "d": "center"
         },
-        "color": "#627487",
-        "fw": "600",
+        "color": "#0c2a4f",
+        "fw": "700",
         "cls": "sub",
         "anim": "fadeUp",
         "animDur": 0.75,
@@ -2089,14 +2140,6 @@
      },
      "widgets": [
       {
-       "id": "m0ox3ld",
-       "type": "html",
-       "set": {
-        "code": "<div class=\"pack-vis\"><i>هدية مجانية</i><img src=\"/assets/img/pages/mf-jar-250g.webp\" alt=\"عبوة 250 غ\" loading=\"lazy\"><img src=\"/assets/img/pages/mf-jar-250g.webp\" alt=\"عبوة 250 غ ثانية\" loading=\"lazy\"><img src=\"/assets/img/pages/mf-bottle-160g.webp\" alt=\"قارورة هدية\" loading=\"lazy\"></div>",
-        "cls": ""
-       }
-      },
-      {
        "id": "1uw0xhi",
        "type": "text",
        "set": {
@@ -2117,34 +2160,10 @@
        }
       },
       {
-       "id": "0ka4753",
-       "type": "heading",
-       "set": {
-        "text": "عبوتان + قارورة هدية",
-        "tag": "h3",
-        "fs": {
-         "d": 23,
-         "m": 19
-        },
-        "fw": "900",
-        "ta": {
-         "d": "start"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
        "id": "p1h3txv",
        "type": "text",
        "set": {
-        "html": "عبوتان من ALYSSUM MEMORY FOCUS 250 غ مع قارورة إضافية هدية.",
+        "html": "<br>",
         "fs": {
          "d": 13,
          "m": 12
@@ -2160,15 +2179,49 @@
         "cls": "",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "bgImg": "assets/img/pages/pg-1794262392056-1.webp",
+        "hauto": false,
+        "mh": {
+         "m": 418
+        },
+        "al": {
+         "m": "start"
+        },
+        "w": {
+         "m": 99.6
+        },
+        "wsc": {
+         "m": 100,
+         "d": 100
+        },
+        "rad": {
+         "m": 38
+        }
        }
       },
       {
-       "id": "he105u5",
-       "type": "html",
+       "id": "gr7yucx",
+       "type": "text",
        "set": {
-        "code": "<div class=\"oprice\"><span data-offer3=\"1\">3200</span> <small>دج</small></div>",
-        "cls": ""
+        "html": "عبوتان من ALYSSUM MEMORY FOCUS 250 غ&nbsp;<p>مع قارورة إضافية هدية.</p>",
+        "fs": {
+         "d": 13,
+         "m": 17
+        },
+        "lh": {
+         "d": 1.9
+        },
+        "ta": {
+         "d": "start",
+         "m": "center"
+        },
+        "color": "#123e72",
+        "fw": "700",
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0
        }
       },
       {
@@ -2222,106 +2275,124 @@
        "id": "ltt6dk1",
        "type": "html",
        "set": {
-        "code": "<div class=\"sj\"><img src=\"/assets/img/pages/mf-jar-250g.webp\" alt=\"عبوة ALYSSUM MEMORY FOCUS 250 غ\" loading=\"lazy\"></div>",
-        "cls": ""
-       }
-      },
-      {
-       "id": "cxmcp05",
-       "type": "heading",
-       "set": {
-        "text": "عبوة واحدة · 250 غ",
-        "tag": "h3",
-        "fs": {
-         "d": 20,
-         "m": 18
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
+        "code": "<div class=\"sj\"><img src=\"/\" alt=\"\" loading=\"lazy\"></div>",
         "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      },
-      {
-       "id": "y9lv0di",
-       "type": "pprice",
-       "set": {
-        "fs": {
-         "d": 34,
-         "m": 28
-        }
-       }
-      },
-      {
-       "id": "j3myk3w",
-       "type": "text",
-       "set": {
-        "html": "تحقّق من السعر والتوفر قبل تأكيد الطلب.",
-        "fs": {
-         "d": 12,
-         "m": 12
+        "bgImg": "assets/img/pages/pg-1794262754727-3.webp",
+        "mh": {
+         "m": 358
         },
-        "lh": {
-         "d": 1.9
+        "rad": {
+         "m": 37
         },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#627487",
-        "fw": "600",
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      },
-      {
-       "id": "10s5uui",
-       "type": "button",
-       "set": {
-        "text": "اطلب عبوة ←",
-        "kind": "link",
-        "link": "#order",
-        "bgc": "#187a3b",
-        "color": "#fff",
-        "hbg": "#187a3b",
-        "fs": {
-         "d": 16,
-         "m": 15
-        },
-        "fw": "900",
-        "brad": {
-         "d": 999
-        },
-        "bpad": {
-         "d": [
-          14,
-          25,
-          14,
-          25
+        "mar": {
+         "m": [
+          0,
+          0,
+          0,
+          0
          ]
-        },
-        "al": {
-         "d": "start"
-        },
-        "cls": "btn-gr",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
+        }
        }
       }
      ]
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "cxmcp05",
+     "type": "heading",
+     "set": {
+      "text": "عبوة واحدة · 250 غ",
+      "tag": "h3",
+      "fs": {
+       "d": 20,
+       "m": 18
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "m": -7.9,
+       "d": 3.3
+      },
+      "fy": {
+       "m": 1109,
+       "d": 1069
+      },
+      "fwd": {
+       "m": 93.3,
+       "d": 93.3
+      },
+      "fh": {
+       "m": 23,
+       "d": 23
+      },
+      "zi": 4
+     }
+    },
+    {
+     "id": "10s5uui",
+     "type": "button",
+     "set": {
+      "text": "اطلب عبوة ←",
+      "kind": "link",
+      "link": "#order",
+      "bgc": "#187a3b",
+      "color": "#fff",
+      "hbg": "#187a3b",
+      "fs": {
+       "d": 16,
+       "m": 15
+      },
+      "fw": "900",
+      "brad": {
+       "d": 999
+      },
+      "bpad": {
+       "d": [
+        14,
+        25,
+        14,
+        25
+       ]
+      },
+      "cls": "btn-gr",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "m": 62.5,
+       "d": 60.2
+      },
+      "fy": {
+       "m": 1097,
+       "d": 1069
+      },
+      "fwd": {
+       "m": 33,
+       "d": 36.5
+      },
+      "fh": {
+       "m": 47,
+       "d": 59
+      },
+      "zi": 5,
+      "wsc": {
+       "m": 80,
+       "d": 100
+      }
+     }
+    }
+   ]
   },
   {
    "id": "yziy3ti",
@@ -2370,7 +2441,7 @@
         "html": "<p>قبل الاستخدام</p>",
         "fs": {
          "d": 13,
-         "m": 13
+         "m": 22
         },
         "color": "#187a3b",
         "fw": "900",
@@ -2387,7 +2458,7 @@
        "id": "5p6j6sx",
        "type": "text",
        "set": {
-        "html": "<h2>معلومات واضحة، <span style=\"color:#f39a18\">خطوة بخطوة</span></h2>",
+        "html": "<h2>معلومات واضحة&nbsp;</h2><h2><span style=\"color:#f39a18\">خطوة بخطوة</span></h2>",
         "fs": {
          "d": 48,
          "m": 30
@@ -2401,29 +2472,6 @@
         "color": "#123e72",
         "fw": "900",
         "cls": "title",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "h1t4008",
-       "type": "text",
-       "set": {
-        "html": "التزم بتعليمات الملصق الرسمي، ولا تعتمد على صور أو نصوص تسويقية لتحديد الكمية.",
-        "fs": {
-         "d": 16,
-         "m": 14
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#627487",
-        "fw": "600",
-        "cls": "sub",
         "anim": "fadeUp",
         "animDur": 0.75,
         "animDelay": 0
@@ -2483,20 +2531,13 @@
         "fit": "cover",
         "hauto": true,
         "rad": {
-         "d": 0
+         "d": 0,
+         "m": 32
         },
         "cls": "use-photo",
         "anim": "fadeUp",
         "animDur": 0.75,
         "animDelay": 0
-       }
-      },
-      {
-       "id": "r9kckc6",
-       "type": "html",
-       "set": {
-        "code": "نصيحة للعائلة<br><span style=\"font-weight:600;color:#718092\">الروتين الجيد يشمل النوم والراحة والغذاء المتنوع.</span>",
-        "cls": "use-tip"
        }
       }
      ]
@@ -2514,7 +2555,7 @@
        "id": "xmn7diu",
        "type": "html",
        "set": {
-        "code": "<div class=\"step\"><span class=\"step-n\">1</span><div><h3>اقرأ ملصق العبوة</h3><p>تأكد من المكونات، والفئة العمرية، والتحذيرات، وظروف الحفظ.</p></div></div>",
+        "code": "<div class=\"step\"><span class=\"step-n\">1</span><div><h3>من 5 الى 15 سنة</h3><p> ملعقة صغيرة . مرة أو مرتين في اليوم</p></div></div>",
         "cls": ""
        }
       },
@@ -2522,7 +2563,7 @@
        "id": "41ipty8",
        "type": "html",
        "set": {
-        "code": "<div class=\"step\"><span class=\"step-n\">2</span><div><h3>اتبع الإرشادات الرسمية</h3><p>استخدم المنتج فقط بالطريقة والكمية المذكورتين على العبوة.</p></div></div>",
+        "code": "<div class=\"step\"><span class=\"step-n\">2</span><div><h3>من 12 الى 18 سنة</h3><p>ملعقة صغيرة.&nbsp; مرتين أو ثلاث في اليوم</p></div></div>",
         "cls": ""
        }
       },
@@ -2530,7 +2571,7 @@
        "id": "is09rv7",
        "type": "html",
        "set": {
-        "code": "<div class=\"step\"><span class=\"step-n\">3</span><div><h3>استشر مختصًا عند الحاجة</h3><p>خصوصًا للأطفال أو عند وجود حساسية من العسل أو أي مكوّن.</p></div></div>",
+        "code": "<div class=\"step\"><span class=\"step-n\">3</span><div><h3>أكبر من 18 سنة</h3><p>ملعقة صغيرة&nbsp; ثلاث مرات في اليوم&nbsp;</p></div></div>",
         "cls": ""
        }
       },
@@ -2538,16 +2579,17 @@
        "id": "3z6oc3k",
        "type": "text",
        "set": {
-        "html": "تنبيه: لا يُعطى العسل للأطفال دون عمر سنة. هذا المنتج ليس بديلًا عن نظام غذائي متوازن أو استشارة مختص صحي.",
+        "html": "يستحسن عدم استعماله قبل النوم",
         "fs": {
          "d": 12,
-         "m": 11
+         "m": 15
         },
         "lh": {
          "d": 1.9
         },
         "ta": {
-         "d": "start"
+         "d": "start",
+         "m": "center"
         },
         "color": "#78684c",
         "fw": "600",
@@ -2609,7 +2651,7 @@
         "html": "<p>تجربة العميل مهمة</p>",
         "fs": {
          "d": 13,
-         "m": 13
+         "m": 22
         },
         "color": "#187a3b",
         "fw": "900",
@@ -2717,7 +2759,7 @@
        "id": "iuiqrak",
        "type": "image",
        "set": {
-        "src": "/assets/img/tarkiz/avis/avis02.webp",
+        "src": "assets/img/pages/pg-1794265923106-6.webp",
         "alt": "رأي زبون عن عسل التركيز",
         "fit": "cover",
         "hauto": true,
@@ -2727,30 +2769,74 @@
         "cls": "",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "bc": "#002feb",
+        "bs": "solid",
+        "bco": 1,
+        "bw": 1
        }
       },
       {
-       "id": "776ne98",
-       "type": "text",
+       "id": "rnlopri",
+       "type": "image",
        "set": {
-        "html": "رأي أم عن تجربتها",
-        "fs": {
-         "d": 12,
-         "m": 11
+        "src": "assets/img/pages/pg-1794265940491-7.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
         },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#84909b",
-        "fw": "600",
-        "cls": "shot-cap",
+        "cls": "",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
+       }
+      },
+      {
+       "id": "4tcbr1l",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1794266149319-8.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
+       }
+      },
+      {
+       "id": "9ebg3h7",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1794266149319-8.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
        }
       }
      ]
@@ -2769,7 +2855,7 @@
        "id": "99cc3rq",
        "type": "image",
        "set": {
-        "src": "/assets/img/tarkiz/avis/SmartSelect_20250225_231134_Messenger.webp",
+        "src": "assets/img/pages/pg-1794266231950-9.webp",
         "alt": "رأي زبون عن عسل التركيز",
         "fit": "cover",
         "hauto": true,
@@ -2779,7 +2865,95 @@
         "cls": "",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0.1
+        "animDelay": 0.1,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
+       }
+      },
+      {
+       "id": "p3l42i6",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1794266249164-10.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
+       }
+      },
+      {
+       "id": "7vwb5lx",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1794266264256-11.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
+       }
+      },
+      {
+       "id": "5xn5bb2",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1794266278415-12.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
+       }
+      },
+      {
+       "id": "2nb3imm",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1794266298766-13.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1,
+        "bw": 1,
+        "bs": "solid",
+        "bc": "#002feb",
+        "bco": 1
        }
       },
       {
@@ -2822,6 +2996,23 @@
        "type": "image",
        "set": {
         "src": "/assets/img/tarkiz/avis/avis03.webp",
+        "alt": "رأي زبون عن عسل التركيز",
+        "fit": "cover",
+        "hauto": true,
+        "rad": {
+         "d": 14
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.2
+       }
+      },
+      {
+       "id": "p611knv",
+       "type": "image",
+       "set": {
+        "src": "assets/img/pages/pg-1794263213564-5.webp",
         "alt": "رأي زبون عن عسل التركيز",
         "fit": "cover",
         "hauto": true,
@@ -2926,7 +3117,7 @@
        "id": "4rxoy6y",
        "type": "heading",
        "set": {
-        "text": "روتين دراسة أهدأ يبدأ بخطوة صغيرة",
+        "text": "نجاح ابنك يبدأ بخطوة صغيرة",
         "tag": "h2",
         "fs": {
          "d": 52,
@@ -2950,7 +3141,7 @@
        "id": "yh9ryz7",
        "type": "text",
        "set": {
-        "html": "اطلب عسل التركيز وتنشيط الذاكرة من متجر أليسوم. الدفع عند الاستلام والتوصيل حسب الولاية.",
+        "html": "اطلب عسل التركيز وتنشيط الذاكرة . واعط ابنك فرصة للتفوق&nbsp;",
         "fs": {
          "d": 16,
          "m": 14
@@ -3003,25 +3194,47 @@
         "animDur": 0.75,
         "animDelay": 0
        }
-      },
-      {
-       "id": "lnxbkuw",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/pages/mf-jar-250g.webp",
-        "alt": "عبوة ALYSSUM MEMORY FOCUS",
-        "fit": "contain",
-        "hauto": false,
-        "rad": {
-         "d": 0
-        },
-        "cls": "cta-jar"
-       }
       }
      ]
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "znbol5c",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794266716339-15.webp",
+      "alt": "",
+      "fit": "cover",
+      "fx": {
+       "d": 19.5,
+       "m": 4.6
+      },
+      "fy": {
+       "d": 296,
+       "m": 314
+      },
+      "fwd": {
+       "d": 30,
+       "m": 61.5
+      },
+      "fh": {
+       "d": 280,
+       "m": 239
+      },
+      "zi": 1,
+      "rad": {
+       "m": 36
+      },
+      "crop": {
+       "x": -1.1,
+       "y": 0,
+       "w": 101.1
+      },
+      "animDur": 1.3
+     }
+    }
+   ]
   },
   {
    "id": "7k7gfgd",
@@ -3152,58 +3365,6 @@
     }
    ],
    "free": []
-  },
-  {
-   "id": "1mgy7n8",
-   "set": {
-    "layout": "boxed",
-    "cw": {
-     "d": 1220
-    },
-    "pad": {
-     "d": [
-      36,
-      0,
-      36,
-      0
-     ],
-     "m": [
-      36,
-      0,
-      36,
-      0
-     ]
-    },
-    "gap": {
-     "d": 24
-    },
-    "va": {
-     "d": "center"
-    },
-    "cls": "ftr-sec"
-   },
-   "cols": [
-    {
-     "id": "gu50djv",
-     "set": {
-      "w": {
-       "d": 100,
-       "m": 100
-      }
-     },
-     "widgets": [
-      {
-       "id": "9k4obd0",
-       "type": "html",
-       "set": {
-        "code": "<div class=\"ftr-row\"><a class=\"hdr-logo\" href=\"/\"><span class=\"hdr-mark\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M11 20A7 7 0 0 1 4 13c0-6 7-9 16-9 0 9-3 16-9 16z\"/><path d=\"M4 20c3-6 6-8 10-10\"/></svg></span><span><b>ALYSSUM</b><small>Herbal Science</small></span></a>\n<p class=\"ftr-note\">المعلومات المعروضة للتعريف بالمنتج فقط. راجع الملصق الرسمي، واستشر مختصًا عند الحاجة. الصور توضيحية.<br>© 2026 أليسوم ALYSSUM — جميع الحقوق محفوظة</p>\n<div class=\"ftr-links\"><a href=\"/\">العودة للمتجر</a><a href=\"https://wa.me/213559237239\" target=\"_blank\" rel=\"noopener\">واتساب</a><a href=\"#product\">أعلى الصفحة ↑</a></div></div>\n<a class=\"float-wa\" href=\"https://wa.me/213559237239\" target=\"_blank\" rel=\"noopener\" aria-label=\"تواصل عبر واتساب\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.1c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z\"/></svg></a>\n<div class=\"buybar\" id=\"hfBuy\"><div><b><span data-price=\"1\">1800</span> دج</b><small>الدفع عند الاستلام</small></div><a href=\"#order\">اطلب الآن ←</a></div><script>(function(){function go(){try{var p=(window.PRODUCTS||[]).filter(function(x){return x.slug==='tarkiz'})[0];if(!p)return;var set=function(a,v){[].forEach.call(document.querySelectorAll('['+a+']'),function(n){n.textContent=v})};set('data-price',p.price);if(p.old&&p.old>p.price)set('data-old',p.old);var o=(p.offers||[]).filter(function(o){return o.qty>1}).sort(function(a,b){return b.qty-a.qty})[0];if(o)set('data-offer3',o.price)}catch(e){}}\nif(window.PRODUCTS)go();else{var s=document.createElement('script');s.src='/assets/js/data.js';s.onload=go;document.head.appendChild(s)}\nvar bar=document.getElementById('hfBuy'),hero=document.getElementById('product'),ord=document.getElementById('order');if(bar&&hero&&ord){var bb=function(){var y=window.scrollY,r=ord.getBoundingClientRect();bar.classList.toggle('on',y>hero.offsetHeight*.7&&!(r.top<innerHeight*.8&&r.bottom>0))};addEventListener('scroll',bb,{passive:true});bb()}})();</script>",
-        "cls": ""
-       }
-      }
-     ]
-    }
-   ],
-   "free": []
   }
  ],
  "seoTitle": "",
@@ -3211,6 +3372,19 @@
  "cover": "assets/img/tarkiz/lp/mf-family-jar.webp",
  "product": "tarkiz",
  "media": [
-  "assets/img/pages/pg-1793633039590-2.webp"
+  "assets/img/pages/pg-1793633039590-2.webp",
+  "assets/img/pages/pg-1794262392056-1.webp",
+  "assets/img/pages/pg-1794262754727-3.webp",
+  "assets/img/pages/pg-1794263213564-5.webp",
+  "assets/img/pages/pg-1794265923106-6.webp",
+  "assets/img/pages/pg-1794265940491-7.webp",
+  "assets/img/pages/pg-1794266149319-8.webp",
+  "assets/img/pages/pg-1794266231950-9.webp",
+  "assets/img/pages/pg-1794266249164-10.webp",
+  "assets/img/pages/pg-1794266264256-11.webp",
+  "assets/img/pages/pg-1794266278415-12.webp",
+  "assets/img/pages/pg-1794266298766-13.webp",
+  "assets/img/pages/pg-1794266487943-14.webp",
+  "assets/img/pages/pg-1794266716339-15.webp"
  ]
 }
