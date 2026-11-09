@@ -3361,8 +3361,7 @@
         "auto": true,
         "fcp": false,
         "fgp": false,
-        "fwa": false,
-        "fof": false
+        "fwa": false
        }
       }
      ]

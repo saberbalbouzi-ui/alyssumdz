@@ -653,6 +653,9 @@ body.pb-edit .aly-bn{display:none!important}
 /* نص زر التأكيد في سطر واحد (الإجمالي لا يلتف) ويصغر تلقائياً على العروض الضيقة */
 .btn-order{white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:.35em;padding-inline:.6rem;font-size:clamp(.8rem,4.3vw,1.15rem)}
 .btn-order #btn-total{white-space:nowrap}
+/* بطاقات العروض: عمودان متساويان 50% */
+#offers.offers{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px}
+#offers .offer{min-width:0;box-sizing:border-box}
 .order-wide .form .btn-order{font-size:1.1rem}
 .pb-sec .lp-btn-gold{background:rgba(255,255,255,.06)!important;color:#ecfdf5!important;border:1px solid rgba(134,239,172,.4)!important;box-shadow:none!important}
 .pb-sec .lp-btn-gold *{color:#ecfdf5!important}
