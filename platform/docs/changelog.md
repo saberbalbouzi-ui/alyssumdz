@@ -1549,3 +1549,6 @@
 
 ## 1.89.954 — WeCan: سبب فشل `legacy=4` (403) و`legacy=7` (تعديل الطرد نفسه)
 بعد إصلاح 1.89.953 وجد `legacy=4` معرّف الطلب الحقيقي فوصل PATCH لكنه ردّ **403 «Cannot update confirmed orders»** للتعديلين (نوع التوصيل وFragile/فتح الطرد): الطلب مؤكَّد تلقائياً لأن وحدة Confirmation غير مفعّلة، فلا يقبل `PATCH /orders`. وثائق WeCan: `PATCH /parcels/{tracking}` «Update parcel (only if in preparation)» وطردنا في التحضير. أُضيفت `legacy=7` = جسم 2 ثم `PATCH /parcels/{tracking}` (صيغة ياليدين) بـ`shipping_type` (`express_home`/`express_desk`) ثم بـ`is_fragile`/`allow_open`، وتعرض النافذة قبول/رفض كل واحد والسعر ورسم التوصيل المعادَين. اختُبر بمحاكاة. **لم يُجرَّب** على WeCan، والمجهول: الحقول المقبولة في `PATCH /parcels`. الافتراضي بلا تغيير (2).
+
+## 1.89.955 — حذف «NE PAS OUVRIR» من نص منتجات WeCan
+بطلب صاحب المتجر: لم يعد يُضاف `[NE PAS OUVRIR]` إلى `product_list` (كان يُضاف عند وسم «منع فتح الطرد»)؛ يبقى `[FRAGILE]` فقط عند وسم «قابل للكسر». اختُبر بالدالة الحقيقية: طلب موسوم بالاثنين يخرج `منتج×1 [FRAGILE]`. الطلبات المرسَلة سابقاً تبقى كما هي عند WeCan (لا يُعدَّل نصها).
