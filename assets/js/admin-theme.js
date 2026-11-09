@@ -104,6 +104,16 @@
   }
   rec(); window.addEventListener("load", rec);
   T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready); };
-  function boot(){ T.mountSwitch(); mountMore(); }
+  /* زر × ثابت أعلى كل نافذة منبثقة ثابتة (.modal-bg > .modal): كان الإغلاق «إلغاء» أسفل نافذة طويلة تُمرَّر داخلياً فلا يصل إليه المستخدم على الهاتف */
+  function mountModalX(){
+    document.querySelectorAll(".modal-bg > .modal").forEach(function(m){
+      if(m.querySelector(":scope > .modal-x")) return;
+      var b = document.createElement("button"); b.type = "button"; b.className = "modal-x"; b.setAttribute("aria-label", "إغلاق"); b.title = "إغلاق";
+      b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      b.addEventListener("click", function(){ var bg = m.parentNode; if(bg) bg.classList.remove("open"); });
+      m.insertBefore(b, m.firstChild);
+    });
+  }
+  function boot(){ T.mountSwitch(); mountMore(); mountModalX(); setTimeout(mountModalX, 1500); }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();

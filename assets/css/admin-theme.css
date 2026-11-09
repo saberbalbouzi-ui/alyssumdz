@@ -392,3 +392,8 @@ html:is(.glass,.white) .pill:is(.st-annulee,.st-echec){background:#dc3545;color:
 html.white #rt .rt-cnt{color:#fff!important}
 /* v1.89.761: الهاتف — أهداف لمس لا تقل عن 32px لأزرار الشرح «?» وعيّنات اللون في الإعدادات (كانت 15px و26px) */
 @media(max-width:900px){.ctl-q{min-width:32px!important;min-height:32px!important;display:inline-flex!important;align-items:center;justify-content:center;font-size:.9rem}.atm-sw{min-width:34px!important;min-height:34px!important}}
+
+/* ── زر × لإغلاق النوافذ المنبثقة: ثابت أعلى النافذة أثناء تمريرها ── */
+.modal-bg>.modal>.modal-x{position:sticky;top:0;z-index:6;float:left;width:38px;height:38px;min-height:38px;padding:0;margin:0 0 .2rem .4rem;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(128,128,128,.4)}
+html.glass .modal-bg>.modal>.modal-x{background:#1a2320;color:#f4f9fc}
+html.white .modal-bg>.modal>.modal-x{background:#eef1f6;color:#0f172a}
