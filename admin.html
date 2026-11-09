@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.949">
+<meta name="admin-version" content="1.89.950">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -7881,7 +7881,9 @@ const Admin = {
         { key:"apiKey", label:"X-API-Key", type:"password" },
         { key:"apiSecret", label:"X-API-Secret", type:"password" },
         { key:"sandbox", label:"وضع التجربة (sandbox): اكتب 1 للتجربة، واتركه فارغاً للحقيقي", type:"text", required:false },
-        { key:"legacy", label:"الصيغة الأولى (للتجربة): 1 = بلا رسم التوصيل ونوعه كما في أول يوم · 2 = كذلك مع إرسال المجموع كاملاً (شامل التوصيل) كسعر للطرد · 3 = كـ2 مع إرسال نوع التوصيل (منزل/مكتب) فقط (فشل في التجربة) · 4 = كـ2 ثم تعديل الطلب بعد إنشائه (PATCH) لتحديد نوع التوصيل", type:"text", required:false },
+        { key:"legacy", label:"الصيغة الأولى (للتجربة): 1 = بلا رسم التوصيل ونوعه كما في أول يوم · 2 = كذلك مع إرسال المجموع كاملاً (شامل التوصيل) كسعر للطرد · 3 = كـ2 مع إرسال نوع التوصيل (منزل/مكتب) فقط (فشل في التجربة) · 4 = كـ2 ثم تعديل الطلب بعد إنشائه (PATCH) لتحديد نوع التوصيل · 5 = كـ2 مع الحقل shipping_option (يحتاج معرّفي الشركة والتعريفة أدناه)", type:"text", required:false },
+        { key:"carrierUuid", label:"معرّف شركة التوصيل عند WeCan (carrier_uuid — ثابت لكل الولايات، يعطيه دعمهم؛ للقيمة 5)", type:"text", required:false },
+        { key:"tariffUuids", label:"معرّفات التعريفة لكل ولاية (tariff_uuid — سطر لكل ولاية بصيغة «اسم الولاية=المعرّف»، مثل باتنة=9a52…؛ للقيمة 5)", type:"text", required:false },
         { key:"fromWilayaName", label:"ولاية الانطلاق (ولاية مستودعك عند WeCan)", type:"select", options:"wilayas", required:false },
         { key:"priceFix", label:"تعديل أسعار ولايات (اختياري — تعريفة WeCan مدمجة تلقائياً): رقم الولاية=منزل/مكتب، مثال 42=650/550", type:"text", required:false },
       ],
@@ -7904,6 +7906,14 @@ const Admin = {
         Admin._wcPostNote = done ? ("حُدِّد نوع التوصيل (" + st + ") — المجموع الفرعي " + (a && a.subtotal) + " · رسم التوصيل " + (a && a.shipping_fee_amount) + " · الإجمالي " + (a && a.total_amount) + " · الحالة " + (a && (a.status || a.fulfillment_status))) : ("تعذّر تحديد نوع التوصيل: " + log.join(" | "));
         return { ok:true };
       },
+      /* legacy=5: جواب دعم WeCan — الحقل `shipping_option` بقيمة {carrier_uuid}:{home|stopdesk}:{tariff_uuid}؛ المعرّفان من الإعدادات (carrier_uuid ثابت، tariff_uuid لكل ولاية: «اسم الولاية=المعرّف» في سطر). لا يُضاف الحقل إن لم يوجد معرّف التعريفة لولاية الطلب */
+      addShippingOption(cfg, order, body, stop){
+        try{
+          const car = this.cl(cfg.carrierUuid), nm = v=>Admin.normName(v), w = Admin.wCo(order.wilaya) || {}; let tar = "";
+          String(cfg.tariffUuids || "").split(/[\n;،]+/).forEach(l=>{ const m = l.match(/^\s*(.+?)\s*[=:]\s*([0-9a-f-]{20,})\s*$/i); if(m && (nm(m[1]) === nm(order.wilaya) || (w.id && String(m[1]).trim() === String(w.id)))) tar = m[2]; });
+          if(car && tar) body.shipping_option = car + ":" + (stop ? "stopdesk" : "home") + ":" + tar; else Admin._wcOptMissing = !car ? "معرّف الشركة (carrier_uuid) غير مضبوط" : "لا معرّف تعريفة لولاية «" + (order.wilaya || "؟") + "»";
+        }catch(e){}
+      },
       recentRequest(cfg){ return { url: this.baseOf(cfg) + "/parcels?page_size=6", method: "GET", headers: this.hdr(cfg) }; },      // آخر الطرود (للمقارنة بين طلب أُضيف يدوياً عندهم وطلب أرسلناه)
       /* الإرسال عبر واجهة الطرود POST /parcels (بصيغة ياليدين، مصفوفة طرود) فيدخل الطلب «Commandes» عندهم (حالة «A vérifier» أو «En préparation» برقم تتبع)؛ أما POST /orders فينشئ طلبات مخزن «Commandes d'entrepôt».
          الردّ {order_id:{success,order_id,tracking,label,message}} */
@@ -7924,7 +7934,7 @@ const Admin = {
         if(p2 && p2 !== ph) body.contact_phone_2 = p2;
         if(body.has_exchange) body.product_to_collect = String(order.extra["🔄 استبدال"]).slice(0, 200);
         body.is_fragile = !!(order.extra && order.extra["📦 قابل للكسر"]); body.allow_open = !(order.extra && order.extra["🚫 منع فتح الطرد"]);       // FRAGILE وAUTORISER L'OUVERTURE عند WeCan
-        { const lg = String(cfg.legacy || "").trim(); if(lg === "1" || lg === "2" || lg === "3" || lg === "4"){ delete body.delivery_fee; if(lg !== "3") delete body.shipping_type; } if(lg === "2" || lg === "3" || lg === "4"){ body.price = total; body.declared_value = total; } }       // الصيغة الأولى (قبل 1.89.886): بلا رسم/نوع التوصيل — تجربة لمعرفة أيهما يُدخل الطلب «Commandes» بدل «En préparation»
+        { const lg = String(cfg.legacy || "").trim(); if(lg === "1" || lg === "2" || lg === "3" || lg === "4" || lg === "5"){ delete body.delivery_fee; if(lg !== "3") delete body.shipping_type; } if(lg === "2" || lg === "3" || lg === "4" || lg === "5"){ body.price = total; body.declared_value = total; } if(lg === "5") this.addShippingOption(cfg, order, body, stop); }       // الصيغة الأولى (قبل 1.89.886): بلا رسم/نوع التوصيل — تجربة لمعرفة أيهما يُدخل الطلب «Commandes» بدل «En préparation»
         body.from_wilaya_name = this.fromName(cfg);       // إلزامي في /parcels: ولاية انطلاق الطرد (إعداد WeCan، وإلا ولاية ياليدين الافتراضية، وإلا الجزائر)
         if(stop) body.stopdesk_id = desk;
         const nt = String(order.note || "").replace(/(📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🏠[✔⏳]|🔒\S+|🏢[a-z0-9_]+|🚚[^\s]+|📦|👤\S+)\s*/g, "").trim(); if(nt) body.notes = nt.slice(0, 250);
@@ -9186,6 +9196,7 @@ const Admin = {
         let wcNote = "";
         if(companyKey === "wecan" && json){ try{ const pick = x=>x && typeof x === "object" && !Array.isArray(x) && ("status" in x || "message" in x) ? x : null, k0 = String(ord.__ydId || order.id), it = pick(json) || pick(json[k0]) || (Array.isArray(json.data) ? pick(json.data[0]) : null) || pick(Object.values(json).find(v=>pick(v))); if(it){ const st = it.status ? String(it.status) : "", ms = it.message ? String(it.message) : "", tot = it.total_amount != null ? " · المبلغ " + it.total_amount : ""; wcNote = (st ? "الحالة عندهم: " + st : "") + tot + (ms ? " — " + ms : ""); } }catch(e){} }
         toast("✅ أُرسل الطلب #" + order.id + " إلى " + co.name + " — رقم التتبع " + tracking + (wcNote ? " (" + wcNote + ")" : ""));
+        if(companyKey === "wecan" && Admin._wcOptMissing){ toast("ℹ️ لم يُرسَل shipping_option: " + Admin._wcOptMissing); Admin._wcOptMissing = ""; }
         const wcPost = (companyKey === "wecan" && this._wcPostNote) ? this._wcPostNote : ""; this._wcPostNote = "";
         if((wcNote && /vérifier|setup|confirm/i.test(wcNote)) || wcPost) this.showNotice("ℹ️ ردّت " + nE(co.name) + " على الطلب " + nE(order.id), nE(wcNote || "") + (wcPost ? "<br><br><b>بعد الإنشاء:</b> " + nE(wcPost) : "") + "<br><br><small>«A vérifier» تعني أن الطلب دخل عندهم <b>ينتظر التأكيد</b> (من فريقهم أو من حسابك) ولم يُنشأ منه طرد بعد؛ وعبارة «shipping setup required» تعني أن إعداد الشحن غير مكتمل لهذا الطلب. هذا ما يجعله لا يظهر في «Expéditions».</small>");
         if(postWarn) this.showNotice("⚠️ أُنشئ الطرد لكن لم يُصدَّق عند " + nE(co.name), "الرقم <b dir=ltr>" + nE(tracking) + "</b> موجود عندهم <b>مسوّدة</b> ولا يظهر للمركز حتى يُصدَّق.<br>السبب: " + nE(postWarn) + "<br><br>اضغط «✅ تصديق عند الشركة» على الطلب في «الطلبات المسجلة» لإعادة المحاولة.");
