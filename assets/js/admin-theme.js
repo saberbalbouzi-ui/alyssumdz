@@ -53,8 +53,11 @@
       var hb = hc.querySelector("b"); if(hb) hb.textContent = "الرئيسية";      // تُنقل «لوحة التحكم» خارج المجموعة العامة وتُسمّى «الرئيسية»
       hc.addEventListener("click", function(){ home.click(); }); nv.appendChild(hc);
       var oldSync = null; setInterval(function(){ hc.classList.toggle("on", home.classList.contains("on")); hc.classList.toggle("rl-hid", home.classList.contains("rl-hid")); }, 300); }
-    new MutationObserver(sync).observe(nv, { attributes: true, attributeFilter: ["data-g", "class"] }); sync(); setInterval(sync, 1500);
+    var lastG = nv.dataset.g;
+    /* أي تبديل لمجموعة الأقسام (من الدرج أو برمجياً: اليد/الصوت/المسار) يفتح تلك المجموعة؛ والطيّ الصريح بنقر رأسها المفتوح لا يغيّر data-g فيبقى */
+    new MutationObserver(function(){ if(nv.dataset.g !== lastG){ lastG = nv.dataset.g; nv.classList.remove("acc-closed"); } sync(); }).observe(nv, { attributes: true, attributeFilter: ["data-g", "class"] }); sync(); setInterval(sync, 1500);
   }
+  T.navOpen = function(on){ navOpen(on); };      // يستعملها admin-hand.js لفتح/إغلاق الدرج على الهاتف
   function mountMore(){
     var top = document.querySelector("#app .top"); if(!top || document.getElementById("top-more")) return;
     var SV = function(d){ return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + d + '</svg>'; };

@@ -43,7 +43,16 @@ const AdminHand = (() => {
   /* يظهر العنصر في الشاشة: يفتح مجموعة القائمة الجانبية إن كان مخفياً ثم يمرّر إليه */
   async function reveal(e) {
     if (!e) return false;
-    if (!visible(e)) {
+    /* v1.89.943: المجموعات رؤوس أكورديون داخل الشريط الجانبي (.nav-gh) وصف التبويبات القديم .ng مخفي؛ وعلى الهاتف (≤760px) الشريط درج مغلق نفتحه أولاً */
+    const AT = window.AdminTheme, inNav = e.closest && (e.closest(".side-nav") || e.closest("#nav-groups"));
+    if (inNav) {
+      if (innerWidth <= 760 && AT && AT.navOpen && !document.body.classList.contains("nav-open")) { AT.navOpen(true); await sleep(280); }
+      if (!visible(e) && /'home'/.test((e.getAttribute && e.getAttribute("onclick")) || "")) { const hm = document.querySelector(".side-nav>.nav-home"); if (hm) await clickEl(hm, true); return false; }      // «لوحة التحكم» الأصلية مخفية في الشريط: تُنقر نسختها «الرئيسية»
+      const g0 = e.dataset && (e.dataset.grp || e.dataset.g), hd = g0 && document.querySelector('.side-nav>.nav-gh[data-g="' + g0 + '"]');
+      if (hd && !visible(e)) { await clickEl(hd, true); await sleep(260); }
+      if (e.classList && e.classList.contains("ng")) { if (hd) { await clickEl(hd, true); await sleep(200); } return false; }      // تبويب المجموعات القديم مخفي: يُنقر رأسه ثم يرجع النقر الأصلي إلى el.click()
+      if (!visible(e)) return false;
+    } else if (!visible(e)) {
       const g = e.dataset && e.dataset.grp, gb = g && document.querySelector('.ng[data-g="' + g + '"]');
       if (gb) { await clickEl(gb, true); await sleep(260); }
       if (!visible(e)) return false;
@@ -92,7 +101,8 @@ const AdminHand = (() => {
     if (!(await pointEl(e))) return false;
     el.classList.add("press"); ripple(x, y, 64); await sleep(reduced() ? 20 : 140);
     try { e.click(); } catch (er) { }
-    await sleep(reduced() ? 20 : 120); el.classList.remove("press"); if (!quiet) await sleep(reduced() ? 20 : 180);
+    await sleep(reduced() ? 20 : 120); el.classList.remove("press");
+    try { if (innerWidth <= 760 && window.AdminTheme && AdminTheme.navOpen && e.closest && e.closest(".side-nav") && !e.classList.contains("nav-gh")) AdminTheme.navOpen(false); } catch (er) { }      // بعد ضغط قسم من الدرج يُغلق if (!quiet) await sleep(reduced() ? 20 : 180);
     return true;
   }
   /* كتابة حرفاً حرفاً (input) أو اختيار قيمة (select)، مع أحداث input/change الحقيقية */
