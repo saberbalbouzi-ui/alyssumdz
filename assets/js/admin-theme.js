@@ -37,12 +37,16 @@
   /* الشريط العلوي على الهاتف (CSS فقط يُظهر هذه العناصر ≤760px): ☰ يفتح الدرج الجانبي، 🔍 يفتحه ويركّز البحث، وصورة الحساب تفتح/تغلق الإعدادات القديمة داخل الشريط */
   function acctName(){ try{ return (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || ""; }catch(e){ return ""; } }
   function mk(tag, id, cls, html, label){ var e = document.createElement(tag); e.id = id; if(cls) e.className = cls; if(tag === "button") e.type = "button"; if(html) e.innerHTML = html; if(label){ e.setAttribute("aria-label", label); e.title = label; } return e; }
-  function navOpen(on){ document.body.classList.toggle("nav-open", !!on); var m = document.getElementById("top-menu"); if(m) m.setAttribute("aria-expanded", on ? "true" : "false"); }
+  function navOpen(on){
+    /* عند الفتح: إن كانت «الرئيسية» هي الصفحة الحالية تبقى كل المجموعات مطويّة، وإلا تُفتح مجموعة القسم الحالي */
+    if(on){ var nv = document.querySelector(".side-nav"), hm = document.querySelector(".nav-home"); if(nv) nv.classList.toggle("acc-closed", !!(hm && hm.classList.contains("on"))); }
+    document.body.classList.toggle("nav-open", !!on); var m = document.getElementById("top-menu"); if(m) m.setAttribute("aria-expanded", on ? "true" : "false"); }
   /* أكورديون المجموعات في الدرج: نستنسخ أزرار #nav-groups داخل .side-nav (يخفيها CSS على الحاسوب)؛ الضغط على رأس المجموعة المفتوحة يطويها */
   function mountAcc(){
     var nv = document.querySelector(".side-nav"), gs = document.querySelectorAll("#nav-groups .ng"); if(!nv || !gs.length || nv.querySelector(".nav-gh")) return;
     gs.forEach(function(o){ var c = o.cloneNode(true); c.classList.remove("ng", "on"); c.classList.add("nav-gh"); c.removeAttribute("id");
       c.addEventListener("click", function(){ var was = c.classList.contains("on"); nv.classList.toggle("acc-closed", was); }, true); nv.appendChild(c); });      // التقاط (capture) كي نقرأ حالة «on» قبل أن يبدّلها onclick المستنسَخ
+    nv.classList.add("acc-closed");      // كل المجموعات مطويّة عند الإقلاع (الصفحة الأولى هي «الرئيسية»)
     function sync(){ var cur = nv.dataset.g; var heads = nv.querySelectorAll(".nav-gh"); document.querySelectorAll("#nav-groups .ng").forEach(function(o, i){ var c = heads[i]; if(!c) return; c.classList.toggle("on", !nv.classList.contains("acc-closed") && o.dataset.g === cur); c.classList.toggle("rl-hid", o.classList.contains("rl-hid")); }); }
     var home = [].slice.call(nv.querySelectorAll(".nav-btn")).filter(function(b){ return /'home'/.test(b.getAttribute("onclick") || ""); })[0];
     if(home && !nv.querySelector(".nav-home")){ var hc = home.cloneNode(true); hc.classList.add("nav-home"); hc.classList.remove("on", "nav-hid"); hc.removeAttribute("data-grp"); hc.removeAttribute("onclick"); hc.removeAttribute("id");
