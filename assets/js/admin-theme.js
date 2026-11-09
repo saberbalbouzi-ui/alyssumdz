@@ -34,6 +34,14 @@
           '<div class="atm-act">' + (on ? "" : '<button type="button" class="small" onclick="AdminTheme.set(\'' + m + '\')">تفعيل هذا المظهر</button>') + '<button type="button" class="small gray" onclick="AdminTheme.resetCfg(\'' + m + '\')">استرجاع الإعدادات الافتراضية</button></div></div>';
       }).join("") + '</div></div>';
   };
-  function boot(){ T.mountSwitch(); }
+  /* زر «⋯» في الشريط العلوي (يظهر على الهاتف فقط عبر CSS): يفتح/يغلق الأزرار النادرة داخل الشريط نفسه بلا نافذة عائمة */
+  function mountMore(){
+    var top = document.querySelector("#app .top"); if(!top || document.getElementById("top-more")) return;
+    var b = document.createElement("button"); b.type = "button"; b.id = "top-more"; b.className = "small gray"; b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-label", "المزيد"); b.title = "المزيد: المظهر، التحديث، مسح الكاش، الخروج";
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+    b.addEventListener("click", function(){ var on = top.classList.toggle("more-open"); b.setAttribute("aria-expanded", on ? "true" : "false"); });
+    var h = top.querySelector("h1"); if(h && h.nextSibling) top.insertBefore(b, h.nextSibling); else top.appendChild(b);
+  }
+  function boot(){ T.mountSwitch(); mountMore(); }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();
