@@ -66,6 +66,9 @@
     var h = top.querySelector("h1"); top.insertBefore(menu, top.firstChild); top.appendChild(sr); top.appendChild(more); top.appendChild(acct);
     var bg = mk("div", "nav-bg", "", ""); bg.addEventListener("click", function(){ navOpen(false); }); document.body.appendChild(bg);
     mountAcc();
+    var nv0 = document.querySelector(".side-nav");
+    if(nv0 && !document.getElementById("nav-hd")){ var hd = mk("div", "nav-hd", "", '<i></i><span></span>'); var x = mk("button", "nav-x", "small gray", SV('<path d="M6 6l12 12M18 6L6 18"/>'), "إغلاق القائمة"); x.addEventListener("click", function(){ navOpen(false); }); hd.appendChild(x); nv0.insertBefore(hd, nv0.firstChild);
+      var ph = function(){ var n = acctName() || "حسابي"; hd.firstChild.textContent = (n.trim().charAt(0) || "أ").toUpperCase(); hd.children[1].textContent = n; }; ph(); setTimeout(ph, 1500); setTimeout(ph, 5000); }
     var nv = document.querySelector(".side-nav"); if(nv) nv.addEventListener("click", function(e){ var b = e.target.closest && e.target.closest(".nav-btn"); if(e.isTrusted && b && !e.target.closest(".nav-car")) setTimeout(function(){ navOpen(false); }, 0); });
     document.addEventListener("keydown", function(e){ if(String(e.key || "") === "Escape" && document.body.classList.contains("nav-open")) navOpen(false); });
     window.addEventListener("resize", function(){ if(window.innerWidth > 760) navOpen(false); });
