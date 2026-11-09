@@ -126,35 +126,52 @@ html.white th{background:#eef1f6}
 html.white tbody tr:nth-child(even) td{background:#f7f9fb}
 html.white .hint{color:#5b6677}
 
-/* ── الهاتف (v1.89.923): شريط علوي مضغوط — سطر العنوان وزر «⋯»، ثم «اسألني» و«زيارة الموقع» والرصيد؛ والنادر (المظهر، تحديث، مسح الكاش، خروج، الزوار الآن) يظهر عند ضغط «⋯» ── */
-#app .top>#top-more{display:none!important}
+/* ── الهاتف (v1.89.924، على نمط WeCan): شريط علوي واحد [☰ · أليسوم · بحث · رصيد · اسألني · الصورة]؛ القائمة الجانبية ومجموعاتها درج يُفتح بـ☰؛
+   والإعدادات القديمة للشريط (زيارة الموقع، المظهر، تحديث، مسح الكاش، خروج، الزوار) تُفتح من صورة الحساب داخل الشريط نفسه ── */
+#app .top>#top-more,#app .top>#top-menu,#app .top>#top-search,#app .top>#top-acct,#nav-bg{display:none!important}
 @media (max-width:760px){
-  #app .top{display:flex!important;flex-wrap:wrap;gap:8px;align-items:center;padding:10px!important}
+  #app .top{display:flex!important;flex-wrap:wrap;gap:4px;align-items:center;padding:8px 8px!important;position:sticky;top:0;z-index:40;border-radius:16px}
+  html.glass #app .top{background:#0b1210!important;backdrop-filter:none!important}
+  html.white #app .top{background:#fff!important}
   #app .top>*{min-width:0;margin:0!important;box-sizing:border-box}
-  #app .top>#pending-badge:empty{display:none}
-  #app .top>h1{order:1;flex:1 1 0;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:start}
-  #app .top>#top-more{order:2;display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0;border-radius:14px;font-size:1.3rem;line-height:1}
-  #app .top>#ah-btn{order:3;flex:0 0 auto;min-height:44px;padding:.4rem 1rem .4rem .7rem}
-  #app .top>#ah-btn span.t{display:inline!important}
-  #app .top>button[onclick*="SitePreview"]{order:4;flex:1 1 auto;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;font-size:.9rem;padding:.45rem .6rem;white-space:nowrap}
-  #app .top>#cr-top{order:5;flex:0 0 auto;min-height:44px}
-  #app .top>#upd-btn{order:6;flex:1 1 100%;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  #app .top>h1{order:2;flex:1 1 0;font-size:0!important;line-height:1;white-space:nowrap;overflow:hidden;text-align:start;min-width:0}
+  #app .top>h1::before{content:"أليسوم";font-size:1.05rem;font-weight:900}
+  #app .top>#top-menu,#app .top>#top-search,#app .top>#top-more{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;border-radius:13px;line-height:1}
+  #app .top>#top-menu{order:1}
+  #app .top>#top-search{order:3}
+  #app .top>#cr-top{order:4;flex:0 0 auto;min-height:40px;padding-inline:.5rem;font-size:.82rem}
+  #app .top>#ah-btn{order:5;flex:0 0 40px;width:40px;min-height:40px;padding:0;justify-content:center}
+  #app .top>#ah-btn span.t{display:none!important}
+  #app .top>#top-more{order:6;border-radius:50%;font-weight:900;font-size:1rem}
+  #app .top>#upd-btn{order:7;flex:1 1 100%;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
   #app .top>#upd-btn.hidden{display:none!important}
-  #app .top>#pending-badge{order:7}
-  #app .top>#sec-title{order:8;flex:1 1 100%;text-align:center}
+  #app .top>#pending-badge{order:8}
+  #app .top>#pending-badge:empty{display:none}
+  #app .top>#sec-title{order:9;flex:1 1 100%;text-align:start;font-size:.82rem;opacity:.8}
   #app .top>#sec-title:empty{display:none}
   #app .top>#store-sw,#app .top>button[onclick*="previewHomeBuilder"]{display:none!important}
-  #app .top>button:not(#ah-btn):not(#top-more):not(#cr-top):not(#au-btn):not(#au-cc):not(#upd-btn):not([onclick*="SitePreview"]):not(.logout){order:9;flex:1 1 auto;min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:.4rem;font-size:.9rem;padding:.45rem .6rem;white-space:nowrap}
-  #app .top>button.hidden{display:none!important}
-  /* النادر: مخفي حتى يُضغط «⋯» */
-  #app .top>#theme-sw,#app .top>#au-btn,#app .top>#au-cc,#app .top>.logout,#app .top>#live-now{display:none!important}
-  #app .top.more-open>#theme-sw{order:10;display:flex!important;flex:1 1 100%;width:100%}
+  /* الإعدادات القديمة: تظهر من صورة الحساب فقط */
+  #app .top>button[onclick*="SitePreview"],#app .top>#theme-sw,#app .top>#au-btn,#app .top>#au-cc,#app .top>.logout,#app .top>#live-now{display:none!important}
+  #app .top.more-open>#top-acct{order:10;display:flex!important;flex:1 1 100%;align-items:center;gap:.6rem;padding:.2rem .1rem .5rem;font-weight:800;border-bottom:1px solid rgba(128,128,128,.25)}
+  #app .top.more-open>#top-acct i{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-style:normal;background:rgba(128,128,128,.22)}
+  #app .top.more-open>button[onclick*="SitePreview"]{order:11;display:inline-flex!important;flex:1 1 100%;min-height:44px;align-items:center;justify-content:center;gap:.4rem;font-size:.9rem;white-space:nowrap}
+  #app .top.more-open>#theme-sw{order:12;display:flex!important;flex:1 1 100%;width:100%}
   #app .top.more-open>#theme-sw button{flex:1;justify-content:center}
-  #app .top.more-open>#live-now{order:11;display:inline-flex!important;flex:1 1 100%;justify-content:center}
-  #app .top.more-open>#au-btn,#app .top.more-open>#au-cc,#app .top.more-open>.logout{display:inline-flex!important;align-items:center;justify-content:center;gap:.4rem;flex:1 1 calc(50% - 8px);min-height:44px;font-size:.9rem;padding:.45rem .6rem;white-space:nowrap}
-  #app .top.more-open>#au-btn{order:12}
-  #app .top.more-open>#au-cc{order:13}
-  #app .top.more-open>.logout{order:14;flex-basis:100%}
+  #app .top.more-open>#live-now{order:13;display:inline-flex!important;flex:1 1 100%;justify-content:center}
+  #app .top.more-open>#au-btn,#app .top.more-open>#au-cc,#app .top.more-open>.logout{display:inline-flex!important;align-items:center;justify-content:center;gap:.4rem;flex:1 1 calc(50% - 6px);min-height:44px;font-size:.9rem;padding:.45rem .6rem;white-space:nowrap}
+  #app .top.more-open>#au-btn{order:14}
+  #app .top.more-open>#au-cc{order:15}
+  #app .top.more-open>.logout{order:16;flex-basis:100%}
+  /* الدرج الجانبي: مجموعات الأقسام وقائمتها يخرجان من تدفق الصفحة ويُفتحان بـ☰ (أسطح عائمة بخلفية معتمة) */
+  #app .nav-groups,#app .side-nav{position:fixed!important;right:0;width:min(88vw,360px)!important;z-index:1001;border-radius:0!important;margin:0!important;transform:translateX(110%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;backdrop-filter:none!important;box-shadow:-10px 0 40px rgba(0,0,0,.45)!important}
+  #app .nav-groups{top:0;height:74px;padding:.5rem!important;overflow-x:auto;overflow-y:hidden}
+  #app .side-nav{top:74px;bottom:0;height:auto!important;max-height:none!important;overflow-y:auto!important;padding:.7rem!important;align-self:auto}
+  body.nav-open #app .nav-groups,body.nav-open #app .side-nav{transform:none;visibility:visible;transition:transform .22s ease}
+  html.glass #app .nav-groups,html.glass #app .side-nav{background:#0b1210!important;border:0!important;border-inline-start:1px solid rgba(255,255,255,.14)!important}
+  html.white #app .nav-groups,html.white #app .side-nav{background:#fff!important;border:0!important}
+  body{overflow-x:clip!important;overflow-y:visible!important}      /* hidden على body يجعله حاوية تمرير فيكسر position:sticky للشريط العلوي */
+  body.nav-open{overflow:hidden!important}
+  body.nav-open #nav-bg{display:block!important;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.55)}
 }
 
 /* ── محرّر رسالة إعادة الشراء: شرائح العناصر التلقائية غير القابلة للتعديل ── */

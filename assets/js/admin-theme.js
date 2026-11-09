@@ -34,13 +34,27 @@
           '<div class="atm-act">' + (on ? "" : '<button type="button" class="small" onclick="AdminTheme.set(\'' + m + '\')">تفعيل هذا المظهر</button>') + '<button type="button" class="small gray" onclick="AdminTheme.resetCfg(\'' + m + '\')">استرجاع الإعدادات الافتراضية</button></div></div>';
       }).join("") + '</div></div>';
   };
-  /* زر «⋯» في الشريط العلوي (يظهر على الهاتف فقط عبر CSS): يفتح/يغلق الأزرار النادرة داخل الشريط نفسه بلا نافذة عائمة */
+  /* الشريط العلوي على الهاتف (CSS فقط يُظهر هذه العناصر ≤760px): ☰ يفتح الدرج الجانبي، 🔍 يفتحه ويركّز البحث، وصورة الحساب تفتح/تغلق الإعدادات القديمة داخل الشريط */
+  function acctName(){ try{ return (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || ""; }catch(e){ return ""; } }
+  function mk(tag, id, cls, html, label){ var e = document.createElement(tag); e.id = id; if(cls) e.className = cls; if(tag === "button") e.type = "button"; if(html) e.innerHTML = html; if(label){ e.setAttribute("aria-label", label); e.title = label; } return e; }
+  function navOpen(on){ document.body.classList.toggle("nav-open", !!on); var m = document.getElementById("top-menu"); if(m) m.setAttribute("aria-expanded", on ? "true" : "false"); }
   function mountMore(){
     var top = document.querySelector("#app .top"); if(!top || document.getElementById("top-more")) return;
-    var b = document.createElement("button"); b.type = "button"; b.id = "top-more"; b.className = "small gray"; b.setAttribute("aria-expanded", "false"); b.setAttribute("aria-label", "المزيد"); b.title = "المزيد: المظهر، التحديث، مسح الكاش، الخروج";
-    b.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
-    b.addEventListener("click", function(){ var on = top.classList.toggle("more-open"); b.setAttribute("aria-expanded", on ? "true" : "false"); });
-    var h = top.querySelector("h1"); if(h && h.nextSibling) top.insertBefore(b, h.nextSibling); else top.appendChild(b);
+    var SV = function(d){ return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + d + '</svg>'; };
+    var menu = mk("button", "top-menu", "small gray", SV('<path d="M4 7h16M4 12h16M4 17h16"/>'), "القائمة"); menu.setAttribute("aria-expanded", "false");
+    menu.addEventListener("click", function(){ navOpen(!document.body.classList.contains("nav-open")); });
+    var sr = mk("button", "top-search", "small gray", SV('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>'), "بحث");
+    sr.addEventListener("click", function(){ navOpen(true); setTimeout(function(){ var q = document.getElementById("nav-q"); if(q) q.focus(); }, 260); });
+    var more = mk("button", "top-more", "small gray", "", "حسابي والإعدادات"); more.setAttribute("aria-expanded", "false");
+    var acct = mk("div", "top-acct", "", "");
+    function paintAcct(){ var n = acctName() || "حسابي", ch = (n.trim().charAt(0) || "أ").toUpperCase(); more.textContent = ch; acct.innerHTML = "<i></i><span></span>"; acct.firstChild.textContent = ch; acct.lastChild.textContent = n; }
+    paintAcct(); setTimeout(paintAcct, 1500); setTimeout(paintAcct, 5000);
+    more.addEventListener("click", function(){ paintAcct(); var on = top.classList.toggle("more-open"); more.setAttribute("aria-expanded", on ? "true" : "false"); });
+    var h = top.querySelector("h1"); top.insertBefore(menu, top.firstChild); top.appendChild(sr); top.appendChild(more); top.appendChild(acct);
+    var bg = mk("div", "nav-bg", "", ""); bg.addEventListener("click", function(){ navOpen(false); }); document.body.appendChild(bg);
+    var nv = document.querySelector(".side-nav"); if(nv) nv.addEventListener("click", function(e){ var b = e.target.closest && e.target.closest(".nav-btn"); if(b && !e.target.closest(".nav-car")) setTimeout(function(){ navOpen(false); }, 0); });
+    document.addEventListener("keydown", function(e){ if(String(e.key || "") === "Escape" && document.body.classList.contains("nav-open")) navOpen(false); });
+    window.addEventListener("resize", function(){ if(window.innerWidth > 760) navOpen(false); });
   }
   function boot(){ T.mountSwitch(); mountMore(); }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
