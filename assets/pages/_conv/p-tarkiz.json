@@ -717,7 +717,8 @@
      ]
     }
    ],
-   "aly": "trust"
+   "aly": "trust",
+   "free": []
   },
   {
    "id": "pyzpxjk",
@@ -1627,7 +1628,8 @@
         },
         "shadow": "md",
         "w": {
-         "d": 12
+         "d": 12,
+         "m": 61.9
         },
         "fw": "900",
         "mar": {
@@ -1637,6 +1639,9 @@
           25,
           0
          ]
+        },
+        "al": {
+         "m": "start"
         }
        }
       },
@@ -1854,83 +1859,7 @@
        "d": "start"
       }
      },
-     "widgets": [
-      {
-       "id": "kkqub2v",
-       "type": "image",
-       "set": {
-        "src": "assets/img/tarkiz/composants/مكسرات مطحونة.webp",
-        "alt": "مكسرات مطحونة",
-        "fit": "cover",
-        "rad": {
-         "d": 22
-        },
-        "mar": {
-         "d": [
-          0,
-          0,
-          18,
-          0
-         ]
-        }
-       }
-      },
-      {
-       "id": "a1uluao",
-       "type": "heading",
-       "set": {
-        "text": "مكسرات مطحونة",
-        "tag": "h3",
-        "fs": {
-         "d": 18,
-         "m": 18
-        },
-        "fw": "800",
-        "ta": {
-         "d": "start"
-        },
-        "bindTitle": false,
-        "prod": "tarkiz",
-        "color": "#f4f9f5",
-        "lh": {
-         "d": 1.7
-        },
-        "mar": {
-         "d": [
-          0,
-          0,
-          6,
-          0
-         ]
-        }
-       }
-      },
-      {
-       "id": "w2m7rwh",
-       "type": "text",
-       "set": {
-        "html": "<p>دعم غذائي تقليدي مرتبط بالتركيز والحيوية.</p>",
-        "fs": {
-         "d": 15
-        },
-        "lh": {
-         "d": 1.7
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#a9b7ae",
-        "mar": {
-         "d": [
-          0,
-          0,
-          0,
-          0
-         ]
-        }
-       }
-      }
-     ]
+     "widgets": []
     },
     {
      "id": "ml66gpx",
@@ -2970,7 +2899,8 @@
     }
    ],
    "aly": "buybar",
-   "grp": "bot"
+   "grp": "bot",
+   "free": []
   },
   {
    "id": "whc9i1p",
@@ -3052,7 +2982,8 @@
      ]
     }
    ],
-   "grp": "bot"
+   "grp": "bot",
+   "free": []
   }
  ],
  "seoTitle": "عسل التركيز وتنشيط الذاكرة للأطفال",
