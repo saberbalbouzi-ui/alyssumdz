@@ -338,6 +338,8 @@ body{overflow-x:hidden;margin:0}`;
     E.toolMode = null; $("pb-app").classList.remove("pbx-tool"); $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
+    /* مسودة محلية غير منشورة (تُحفظ في هذا المتصفح مع كل تعديل وتُحذف عند النشر): تُعرض للاسترجاع إن اختلفت عن الصفحة المفتوحة، فلا تضيع إضافات لم تُنشر بعد تحديث أو إعادة تحميل */
+    if (!isNew) try { const dr = localStorage.getItem(draftKey()); if (dr) { const dj = PB.migrate(JSON.parse(dr)); if (JSON.stringify(dj) !== JSON.stringify(E.page)) setTimeout(() => pbAsk("وُجدت مسودة تعديلات غير منشورة لهذه الصفحة محفوظة في هذا المتصفح. استرجاعها؟", "استرجاع المسودة", () => { E.page = dj; E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); renderCanvas(); renderInspector(); updateTop(); toast("♻️ استُرجعت المسودة — انشر لحفظها"); }, "تجاهل"), 900); } } catch (e) { }
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
     E.zoom = 1; ltab("add"); setDev(isMob() && !E.page.ad ? "m" : "d"); renderInspector(); updateTop();
     if (fdoc) renderCanvas();
