@@ -2102,6 +2102,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   const STYLE_SKIP = ["w", "mh", "al", "mar", "fx", "fy", "fwd", "fh", "zi", "rot", "locked"];
   const styleKeys = inf => ctlsFor(inf).filter(c => c.tab === "s" && !STYLE_SKIP.includes(c.k)).map(c => c.k);
+  /* v1.89.962: صور حرة ← «نسخ النمط» ينسخ أيضاً حجم الصورة (العرض والارتفاع) كي تتساوى الصور الصغيرة بنقرة نسخ ثم لصق؛ بقية العناصر والصور داخل الأعمدة كما كانت (الحجم مستثنى) */
+  const SIZE_KEYS = ["fwd", "fh"], sizeToo = inf => inf && inf.node && inf.node.type === "image" && !!inf.free;
   function copyStyle() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const keys = styleKeys(inf), st = {}; keys.forEach(k => { if (inf.set[k] !== undefined) st[k] = clone(inf.set[k]); });
     /* نص فيه تنسيق مضمَّن (من لصق خارجي): يُقرأ نمطه الفعلي الظاهر (الحجم/اللون/الوزن/ارتفاع السطر) لأن set فارغ منه */
     if (["text", "heading"].includes(inf.node.type)) { try {
@@ -2110,7 +2112,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (cs) { const fs = parseFloat(cs.fontSize), lh = parseFloat(cs.lineHeight);
         if (keys.includes("fs") && st.fs === undefined && fs) st.fs = { d: Math.round(fs) }; if (keys.includes("color") && st.color === undefined && hex(cs.color)) st.color = hex(cs.color); if (keys.includes("fw") && st.fw === undefined) st.fw = String(cs.fontWeight); if (keys.includes("lh") && st.lh === undefined && lh && fs) st.lh = { d: Math.round(lh / fs * 100) / 100 }; }
     } catch (x) { } }
-    E.styleClip = { keys, st }; toast("🎨 نُسخ نمط العنصر — حدّد عنصراً آخر وانقر «لصق النمط»"); }
+    if (sizeToo(inf)) SIZE_KEYS.forEach(k => { if (inf.set[k] !== undefined) { if (!keys.includes(k)) keys.push(k); st[k] = clone(inf.set[k]); } });
+    E.styleClip = { keys, st, size: sizeToo(inf) }; toast("🎨 نُسخ نمط العنصر" + (E.styleClip.size ? " وحجمه" : "") + " — حدّد عنصراً آخر وانقر «لصق النمط»"); }
   /* فرشاة النمط: انقر الأيقونة وعنصر محدَّد ← يُنسخ نمطه فوراً، ثم انقر أي عنصر آخر ← يُلصق عليه مباشرة (Esc أو الأيقونة ثانيةً للإلغاء) */
   function cancelPainter() { E.painter = null; E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
   function startPainter() {
@@ -2135,7 +2138,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function pasteStyle() {
     const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf));
-    E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else delete inf.set[k]; });
+    if (E.styleClip.size && sizeToo(inf)) SIZE_KEYS.forEach(k => have.add(k));      // الحجم يُلصق على صورة حرة فقط (داخل عمود يتحكم العمود بعرضها)
+    E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else if (!SIZE_KEYS.includes(k)) delete inf.set[k]; });
     if (inf.node.type === "text" && typeof inf.set.html === "string" && /\s(style|class|color|face|size)=|<font/i.test(inf.set.html)) inf.set.html = plainFmtHtml(inf.set.html);      // تنسيق مضمَّن (من لصق خارجي) يمنع ظهور النمط المنسوخ
     E.nextLabel = "لصق نمط"; afterEdit();
   }
