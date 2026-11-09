@@ -38,6 +38,14 @@
   function acctName(){ try{ return (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || ""; }catch(e){ return ""; } }
   function mk(tag, id, cls, html, label){ var e = document.createElement(tag); e.id = id; if(cls) e.className = cls; if(tag === "button") e.type = "button"; if(html) e.innerHTML = html; if(label){ e.setAttribute("aria-label", label); e.title = label; } return e; }
   function navOpen(on){ document.body.classList.toggle("nav-open", !!on); var m = document.getElementById("top-menu"); if(m) m.setAttribute("aria-expanded", on ? "true" : "false"); }
+  /* أكورديون المجموعات في الدرج: نستنسخ أزرار #nav-groups داخل .side-nav (يخفيها CSS على الحاسوب)؛ الضغط على رأس المجموعة المفتوحة يطويها */
+  function mountAcc(){
+    var nv = document.querySelector(".side-nav"), gs = document.querySelectorAll("#nav-groups .ng"); if(!nv || !gs.length || nv.querySelector(".nav-gh")) return;
+    gs.forEach(function(o){ var c = o.cloneNode(true); c.classList.remove("ng", "on"); c.classList.add("nav-gh"); c.removeAttribute("id");
+      c.addEventListener("click", function(){ var was = c.classList.contains("on"); nv.classList.toggle("acc-closed", was); }, true); nv.appendChild(c); });      // التقاط (capture) كي نقرأ حالة «on» قبل أن يبدّلها onclick المستنسَخ
+    function sync(){ var cur = nv.dataset.g; var heads = nv.querySelectorAll(".nav-gh"); document.querySelectorAll("#nav-groups .ng").forEach(function(o, i){ var c = heads[i]; if(!c) return; c.classList.toggle("on", !nv.classList.contains("acc-closed") && o.dataset.g === cur); c.classList.toggle("rl-hid", o.classList.contains("rl-hid")); }); }
+    new MutationObserver(sync).observe(nv, { attributes: true, attributeFilter: ["data-g", "class"] }); sync(); setInterval(sync, 1500);
+  }
   function mountMore(){
     var top = document.querySelector("#app .top"); if(!top || document.getElementById("top-more")) return;
     var SV = function(d){ return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">' + d + '</svg>'; };
@@ -52,7 +60,8 @@
     more.addEventListener("click", function(){ paintAcct(); var on = top.classList.toggle("more-open"); more.setAttribute("aria-expanded", on ? "true" : "false"); });
     var h = top.querySelector("h1"); top.insertBefore(menu, top.firstChild); top.appendChild(sr); top.appendChild(more); top.appendChild(acct);
     var bg = mk("div", "nav-bg", "", ""); bg.addEventListener("click", function(){ navOpen(false); }); document.body.appendChild(bg);
-    var nv = document.querySelector(".side-nav"); if(nv) nv.addEventListener("click", function(e){ var b = e.target.closest && e.target.closest(".nav-btn"); if(b && !e.target.closest(".nav-car")) setTimeout(function(){ navOpen(false); }, 0); });
+    mountAcc();
+    var nv = document.querySelector(".side-nav"); if(nv) nv.addEventListener("click", function(e){ var b = e.target.closest && e.target.closest(".nav-btn"); if(e.isTrusted && b && !e.target.closest(".nav-car")) setTimeout(function(){ navOpen(false); }, 0); });
     document.addEventListener("keydown", function(e){ if(String(e.key || "") === "Escape" && document.body.classList.contains("nav-open")) navOpen(false); });
     window.addEventListener("resize", function(){ if(window.innerWidth > 760) navOpen(false); });
   }
