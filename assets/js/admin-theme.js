@@ -76,6 +76,7 @@
       dr.querySelector("i").textContent = ch; dr.querySelector("span").textContent = n;
       var x = mk("button", "acct-x", "small gray", SV('<path d="M6 6l12 12M18 6L6 18"/>'), "إغلاق"); x.addEventListener("click", function(){ acctOpen(false); }); dr.querySelector(".acc-hd").appendChild(x);
       var ls = dr.querySelector(".acc-list"), q = function(sel){ return top.querySelector(sel); };
+      var lt = document.createElement("div"); lt.className = "acc-lt"; lt.textContent = (T.loadTimes ? T.loadTimes() : ""); dr.appendChild(lt);
       var v = q('button[onclick*="SitePreview"]'); if(v) ls.appendChild(row((v.textContent || "زيارة الموقع").trim(), "", function(){ v.click(); }));
       var sw = document.querySelectorAll("#theme-sw button"); if(sw.length){ var tr = document.createElement("div"); tr.className = "acc-seg"; sw.forEach(function(o){ var b = mk("button", "", "small " + (o.classList.contains("on") ? "" : "gray"), ""); b.textContent = (o.textContent || "").trim(); b.addEventListener("click", function(){ acctOpen(false); setTimeout(function(){ o.click(); }, 0); }); tr.appendChild(b); }); ls.appendChild(tr); }
       [["#upd-btn", ""], ["#au-btn", ""], ["#au-cc", "gray"], [".logout", "warn"]].forEach(function(a){ var o = q(a[0]); if(o && !o.classList.contains("hidden")) ls.appendChild(row((o.textContent || "").replace(/\s+/g, " ").trim(), a[1], function(){ o.click(); })); });
@@ -92,6 +93,17 @@
     document.addEventListener("keydown", function(e){ if(String(e.key || "") === "Escape" && document.body.classList.contains("nav-open")) navOpen(false); });
     window.addEventListener("resize", function(){ if(window.innerWidth > 760) navOpen(false); });
   }
+  /* زمن فتح اللوحة الفعلي على جهاز المستخدم (يظهر أسفل قائمة الحساب): وصول الصفحة، اكتمال الأدوات، ثم جاهزية اللوحة (أول قسم معروض) */
+  var LT = { html: 0, load: 0, ready: 0 };
+  function rec(){
+    try{ var n = performance.getEntriesByType("navigation")[0]; if(n && !LT.html) LT.html = Math.round(n.responseEnd);
+      if(n && n.loadEventEnd && !LT.load) LT.load = Math.round(n.loadEventEnd);
+      if(!LT.ready && document.querySelector(".nav-btn.on") && document.querySelector("#app:not(.hidden)")) LT.ready = Math.round(performance.now());
+    }catch(e){}
+    if(!LT.ready) setTimeout(rec, 400); else { try{ var a = JSON.parse(localStorage.getItem("adm_load") || "[]"); a.push({ t: Date.now(), html: LT.html, load: LT.load, ready: LT.ready }); localStorage.setItem("adm_load", JSON.stringify(a.slice(-5))); }catch(e){} }
+  }
+  rec(); window.addEventListener("load", rec);
+  T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready); };
   function boot(){ T.mountSwitch(); mountMore(); }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot); else boot();
 })();

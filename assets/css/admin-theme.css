@@ -215,6 +215,7 @@ html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-
   #acct-dr #acct-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;border-radius:50%}
   #acct-dr .acc-list{display:flex;flex-direction:column;gap:.5rem}
   #acct-dr .acc-row{width:100%;min-height:50px;display:flex;align-items:center;justify-content:flex-start;padding:.55rem .95rem;font-size:.95rem;white-space:nowrap}
+  #acct-dr .acc-lt{margin-top:auto;padding-top:1rem;font-size:.75rem;opacity:.65;line-height:1.7}
   #acct-dr .acc-seg{display:flex;gap:.5rem}
   #acct-dr .acc-seg button{flex:1;min-height:46px;justify-content:center}
   body.acct-open{overflow:hidden!important}
