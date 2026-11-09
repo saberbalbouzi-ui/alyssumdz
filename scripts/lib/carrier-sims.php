@@ -70,7 +70,7 @@ final class WeCanSim extends Sim
                 if ($e = $this->check($p, ['order_id' => 'str', 'from_wilaya_name' => 'str', 'firstname' => 'str', 'familyname' => 'str', 'contact_phone' => 'phone', 'address' => 'str', 'to_commune_name' => 'str', 'to_wilaya_name' => 'str', 'product_list' => 'str', 'price' => 'num', 'length' => 'num', 'width' => 'num', 'height' => 'num', 'weight' => 'num'])) { return $this->bad('WeCan: ' . $e); }
                 if (!is_bool($p['is_stopdesk'] ?? null)) { return $this->bad('WeCan: is_stopdesk يجب أن يكون منطقياً'); }
                 if ($p['is_stopdesk'] && !isset($p['stopdesk_id'])) { return $this->bad('WeCan: stopdesk_id مطلوب مع is_stopdesk'); }
-                if (!in_array($p['shipping_type'] ?? '', ['express_home', 'express_desk'], true)) { return $this->bad('WeCan: shipping_type غير صالح'); }
+                if (isset($p['shipping_type']) && !in_array($p['shipping_type'], ['express_home', 'express_desk'], true)) { return $this->bad('WeCan: shipping_type غير صالح'); }      /* اختياري منذ 1.89.952 (الصيغة المثبتة بلا shipping_type/delivery_fee) */
                 $wilCode = ['Alger' => 16, 'Oran' => 31, 'El Bayadh' => 32, 'Djelfa' => 17][$p['to_wilaya_name']] ?? 0;
                 if (!$wilCode) { return $this->bad('WeCan: to_wilaya_name غير معروف: ' . $p['to_wilaya_name']); }
                 if (!$this->communeKnown($wilCode, $p['to_commune_name'], false)) { $out[$p['order_id']] = ['success' => false, 'message' => 'Commune introuvable']; continue; }
