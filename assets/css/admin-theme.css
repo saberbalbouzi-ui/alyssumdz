@@ -187,7 +187,7 @@ html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-
   #app .top.more-open>#au-cc{order:15}
   #app .top.more-open>.logout{order:16;flex-basis:100%}
   /* الدرج الجانبي: مجموعات الأقسام وقائمتها يخرجان من تدفق الصفحة ويُفتحان بـ☰ (أسطح عائمة بخلفية معتمة) */
-  #app .nav-groups,#app .side-nav{position:fixed!important;right:0;width:min(88vw,360px)!important;z-index:1001;border-radius:0!important;margin:0!important;transform:translateX(110%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;backdrop-filter:none!important;box-shadow:-10px 0 40px rgba(0,0,0,.45)!important}
+  #app .nav-groups,#app .side-nav{position:fixed!important;right:0;width:min(78vw,300px)!important;z-index:1001;border-radius:0!important;margin:0!important;transform:translateX(110%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;backdrop-filter:none!important;box-shadow:-10px 0 40px rgba(0,0,0,.45)!important}
   #app .side-nav{top:0;bottom:0;height:auto!important;max-height:none!important;overflow-y:auto!important;padding:.7rem!important;align-self:auto}
   body.nav-open #app .nav-groups,body.nav-open #app .side-nav{transform:none;visibility:visible;transition:transform .22s ease}
   html.glass #app .nav-groups,html.glass #app .side-nav{background:#0b1210!important;border:0!important;border-inline-start:1px solid rgba(255,255,255,.14)!important}
@@ -200,7 +200,7 @@ html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-
   #app .side-nav>#nav-hd #nav-x{display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;border-radius:50%}
   #app .side-nav>.nav-q{order:-4}
   /* قائمة الحساب كدرج جانبي من اليسار */
-  #acct-dr{display:flex!important;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:min(88vw,340px);z-index:1001;padding:.9rem;overflow-y:auto;transform:translateX(-110%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;box-shadow:10px 0 40px rgba(0,0,0,.45)}
+  #acct-dr{display:flex!important;flex-direction:column;position:fixed;left:0;top:0;bottom:0;width:min(74vw,280px);z-index:1001;padding:.8rem;overflow-y:auto;transform:translateX(-110%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;box-shadow:10px 0 40px rgba(0,0,0,.45)}
   body.acct-open #acct-dr{transform:none;visibility:visible;transition:transform .22s ease}
   html.glass #acct-dr{background:#0b1210;color:#f4f9fc;border-inline-end:1px solid rgba(255,255,255,.14)}
   html.white #acct-dr{background:#fff;color:#0f172a}
