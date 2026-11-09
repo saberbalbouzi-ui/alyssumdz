@@ -192,6 +192,7 @@ html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-
   body.nav-open #app .nav-groups,body.nav-open #app .side-nav{transform:none;visibility:visible;transition:transform .22s ease}
   html.glass #app .nav-groups,html.glass #app .side-nav{background:#0b1210!important;border:0!important;border-inline-start:1px solid rgba(255,255,255,.14)!important}
   html.white #app .nav-groups,html.white #app .side-nav{background:#fff!important;border:0!important}
+  html{overscroll-behavior-y:none}      /* يعطّل «اسحب للتحديث» في المتصفح (كما WeCan) مع بقاء التمرير صعوداً ونزولاً؛ على html وحده لا body */
   body{overflow-x:clip!important;overflow-y:visible!important}      /* hidden على body يجعله حاوية تمرير فيكسر position:sticky للشريط العلوي */
   /* رأس الدرج (على نمط قائمة الإعدادات): حرف الحساب واسمه وزر × للإغلاق */
   #app .side-nav>#nav-hd{display:flex!important;order:-5;align-items:center;gap:.7rem;padding:.2rem .1rem .7rem;margin-bottom:.3rem;font-weight:800;border-bottom:1px solid rgba(128,128,128,.25)}
