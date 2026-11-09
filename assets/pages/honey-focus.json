@@ -3145,7 +3145,8 @@
        "type": "orderorig",
        "set": {
         "prod": "tarkiz",
-        "auto": true
+        "auto": true,
+        "fof": false
        }
       }
      ]
