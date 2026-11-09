@@ -79,7 +79,7 @@
       dr.querySelector("i").textContent = ch; dr.querySelector("span").textContent = n;
       var x = mk("button", "acct-x", "small gray", SV('<path d="M6 6l12 12M18 6L6 18"/>'), "إغلاق"); x.addEventListener("click", function(){ acctOpen(false); }); dr.querySelector(".acc-hd").appendChild(x);
       var ls = dr.querySelector(".acc-list"), q = function(sel){ return top.querySelector(sel); };
-      var lt = document.createElement("div"); lt.className = "acc-lt"; lt.textContent = (T.loadTimes ? T.loadTimes() : ""); dr.appendChild(lt);
+      var lt = document.createElement("div"); lt.className = "acc-lt"; lt.textContent = (T.loadTimes ? T.loadTimes() : ""); lt.style.whiteSpace = "pre-line"; dr.appendChild(lt);
       var v = q('button[onclick*="SitePreview"]'); if(v) ls.appendChild(row((v.textContent || "زيارة الموقع").trim(), "", function(){ v.click(); }));
       var sw = document.querySelectorAll("#theme-sw button"); if(sw.length){ var tr = document.createElement("div"); tr.className = "acc-seg"; sw.forEach(function(o){ var b = mk("button", "", "small " + (o.classList.contains("on") ? "" : "gray"), ""); b.textContent = (o.textContent || "").trim(); b.addEventListener("click", function(){ acctOpen(false); setTimeout(function(){ o.click(); }, 0); }); tr.appendChild(b); }); ls.appendChild(tr); }
       [["#upd-btn", ""], ["#au-btn", ""], ["#au-cc", "gray"], [".logout", "warn"]].forEach(function(a){ var o = q(a[0]); if(o && !o.classList.contains("hidden")) ls.appendChild(row((o.textContent || "").replace(/\s+/g, " ").trim(), a[1], function(){ o.click(); })); });
@@ -106,7 +106,7 @@
     if(!LT.ready) setTimeout(rec, 400); else { try{ var a = JSON.parse(localStorage.getItem("adm_load") || "[]"); a.push({ t: Date.now(), html: LT.html, load: LT.load, ready: LT.ready }); localStorage.setItem("adm_load", JSON.stringify(a.slice(-5))); }catch(e){} }
   }
   rec(); window.addEventListener("load", rec);
-  T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready); };
+  T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready) + ((window.__admPh && window.__admPh.length) ? "\nالمراحل: " + window.__admPh.map(function(x){ return x[0] + " " + (x[1] / 1000).toFixed(1); }).join(" · ") : ""); };
   /* زر × ثابت أعلى كل نافذة منبثقة ثابتة (.modal-bg > .modal): كان الإغلاق «إلغاء» أسفل نافذة طويلة تُمرَّر داخلياً فلا يصل إليه المستخدم على الهاتف */
   function mountModalX(){
     document.querySelectorAll(".modal-bg > .modal").forEach(function(m){
