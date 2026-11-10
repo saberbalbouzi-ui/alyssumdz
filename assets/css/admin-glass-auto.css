@@ -122,7 +122,7 @@ html.glass .pbx-qc label{background:rgba(255,255,255,.06);color:var(--g-mut);bor
 html.glass .pbx-q{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
 html.glass .pbx-qg>small{color:hsl(42,90%,70%)}
 html.glass .pbx-qk{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
-html.glass .pbx-qk.on{background:rgba(10,30,16,.66)}
+html.glass .pbx-qk.on{background:#e2fe17;color:#1f2123;border-color:#e2fe17}
 html.glass .pbx-crumb{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14)}
 html.glass .pbx-h{background:rgba(255,255,255,.06);color:hsl(218,90%,70%)}
 html.glass .pbx-box.column .pbx-h{color:hsl(282,90%,70%)}

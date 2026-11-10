@@ -266,6 +266,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-undo" onclick="PBApp.undo()" title="تراجع (Ctrl+Z)">${ico('undo',16)}</button>
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
   <button id="pbx-allfree" onclick="PBApp.convertAllFree()" title="يحوّل كل أقسام الصفحة وأكوادها إلى عناصر حرة قابلة للتعديل بنفس الشكل والمحتوى وتأثيرات الظهور (على عرض المكتب)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg> الكل حر</button>
+  <button id="pbx-allung" onclick="PBApp.ungroupAll()" title="يفكّ ربط كل العناصر في الصفحة فتصير مستقلة (يمكن التراجع)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1M3 3l18 18"/></svg> فك الكل</button>
   <button id="pbx-palb" onclick="PBPalette.open()" title="ألوان الصفحة: لوحات ألوان متناسقة حسب ألوان المنتج تغيّر الخلفيات والنصوص بضغطة واحدة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/></svg> ألوان</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button id="pbx-prev" onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
@@ -1012,12 +1013,16 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const free = [];
     sec.cols.forEach(col => {
       const g = "g" + P.uid(), colEl = d.querySelector(".pb-col.x-" + col.id), items = [];
-      const visBg = el => { if (!el) return false; const q = d.defaultView.getComputedStyle(el), qb = rgb(q.backgroundColor); return (q.backgroundImage && q.backgroundImage !== "none" && !/url\(/.test(q.backgroundImage)) || (qb && qb.o > 0.01) || (parseFloat(q.borderTopWidth) || 0) > 0; };
+      const visBg = el => { if (!el) return false; const q = d.defaultView.getComputedStyle(el), qb = rgb(q.backgroundColor); return (q.backgroundImage && q.backgroundImage !== "none") || (qb && qb.o > 0.01) || (parseFloat(q.borderTopWidth) || 0) > 0; };
       const cin0 = d.querySelector(".pb-col.x-" + col.id + ">.pb-colin"), cin = visBg(cin0) ? cin0 : (visBg(colEl) ? colEl : cin0);      // البطاقة قد تكون خلفيتها على العمود نفسه (صنف CSS) لا على الحاوية الداخلية
       if (cin) { const cs = d.defaultView.getComputedStyle(cin), bi = cs.backgroundImage, bc = rgb(cs.backgroundColor), bd = parseFloat(cs.borderTopWidth) || 0, hasBg = (bi && bi !== "none") || (bc && bc.o > 0.01);
         if (hasBg || bd > 0) { const r = cin.getBoundingClientRect(), sh = P.mkFree("shape", 0, 0, 1), st = (bi && bi !== "none" ? (bi.match(/rgba?\([^)]+\)/g) || []) : []).map(rgb).filter(Boolean);
+          const um = bi && /url\(["']?([^"')]+)["']?\)/.exec(bi);      // خلفية بصورة (صنف CSS): تصير عنصر صورة خلف الشكل بدل ضياعها
+          if (um) { let src = um[1]; try { const uu = new URL(src, d.baseURI); src = uu.origin === location.origin || /^\/assets\//.test(uu.pathname) ? uu.pathname.replace(/^\//, "") : uu.href; } catch (x) { } const im = P.mkFree("image", 0, 0, 1), rad0 = parseFloat(cs.borderTopLeftRadius) || 0;
+            Object.assign(im.set, { src, fit: "cover", rad: { d: Math.round(rad0) }, plock: true, fx: { d: r1((r.left - sr.left) / W * 100) }, fy: { d: Math.round(r.top - sr.top) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.round(r.height) }, zi: 1, grp: g }); items.push(im); }
           Object.assign(sh.set, { shape: "rect", keep: false, outline: false, fill: (st[0] || bc || { c: "#0c361d" }).c, rx: r1(Math.min(50, (parseFloat(cs.borderTopLeftRadius) || 0) / Math.max(1, r.width) * 100)), ry: r1(Math.min(50, (parseFloat(cs.borderTopLeftRadius) || 0) / Math.max(1, r.height) * 100)), fx: { d: r1((r.left - sr.left) / W * 100) }, fy: { d: Math.round(r.top - sr.top) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.round(r.height) }, zi: 1, grp: g, sh: "lg" });
-          if (st.length > 1) sh.set.fgr = { t: "linear", a: 145, s: st.slice(0, 3).map((x, i, a) => ({ c: x.c, o: x.o, p: Math.round(i / (a.length - 1) * 100) })) };
+          if (st.length === 1 && st[0].o < 0.99) { const hx = st[0].c.slice(1); sh.set.fill = "rgba(" + [0, 2, 4].map(i => parseInt(hx.slice(i, i + 2), 16)).join(",") + "," + st[0].o + ")"; }
+          if (st.length > 1) sh.set.fgr = { t: "linear", a: (/(-?\d+(?:\.\d+)?)deg/.exec(bi || "") || [0, 145])[1] * 1, s: st.slice(0, 3).map((x, i, a) => ({ c: x.c, o: x.o, p: Math.round(i / (a.length - 1) * 100) })) };
           if (bd > 0) { const b = rgb(cs.borderTopColor); sh.set.stroke = b ? b.c : "#86efac"; sh.set.sw = Math.max(1, Math.round(bd)); }
           items.push(sh); } }
       col.widgets.forEach((w, i) => { const el = d.querySelector('[data-pb="' + w.id + '"]'); if (!el) return; let r = el.getBoundingClientRect(); if (w.type === "button") { const ib = el.querySelector(".pb-btn"); if (ib) { const q = ib.getBoundingClientRect(); if (q.width > 4 && q.width < r.width) r = q; } }      // الزر: حجم الزر الظاهر لا حاوية العمود
@@ -3116,6 +3121,12 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const L = selIds().map(find).filter(Boolean); if (L.length < 2) { toast("حدّد عنصرين أو أكثر لربطهم"); return; } const g = "g" + uid(); L.forEach(i => { i.set.grp = g; });
     E.nextLabel = "ربط " + L.length + " عناصر"; afterEdit(); toast("🔗 رُبط " + L.length + " عناصر: يتحركون ويُحدَّدون معاً — للفك: Ctrl+Shift+G");
   }
+  /* تفكيك كل ربط في الصفحة: يزيل رابط المجموعات (grp) من كل العناصر فتصير مستقلة */
+  function ungroupAll() {
+    let n = 0; (E.page.sections || []).forEach(sec => [...(sec.cols || []).flatMap(c => c.widgets || []), ...(sec.free || [])].forEach(w => { if (w.set && w.set.grp) { delete w.set.grp; n++; } }));
+    if (!n) { toast("لا يوجد عناصر مربوطة في الصفحة"); return; }
+    E.multi = []; E.nextLabel = "تفكيك كل الربط"; afterEdit(); toast("⛓ فُكّ ربط " + n + " عنصراً في الصفحة كلها — صارت العناصر مستقلة (Ctrl+Z للتراجع)");
+  }
   function ungroupSel() {
     const L = selIds().map(find).filter(Boolean); let n = 0; L.forEach(i => { if (i.set.grp) { delete i.set.grp; n++; } }); if (!n) { toast("لا يوجد ربط لتفكيكه"); return; }
     E.nextLabel = "تفكيك ربط"; afterEdit(); toast("⛓ فُكّ الربط — صارت العناصر مستقلة");
@@ -3146,11 +3157,42 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
 <p style="color:#8a8472;font-size:.74rem;line-height:1.8;margin-top:.8rem">اختصارات: Delete حذف · Ctrl+C/V نسخ/لصق · Ctrl+D تكرار · Ctrl+G ربط · Ctrl+Shift+G تفكيك · Ctrl+A تحديد كل القسم · Esc إلغاء.</p>`;
     el.querySelectorAll("[data-ma]").forEach(b => { b.onclick = () => { const k = b.dataset.ma; if (["left", "right", "center", "middle", "top", "bottom"].includes(k)) alignMulti(k); else ma(k); }; });
   }
+  /* تغيير حجم مجموعة العناصر المحدّدة: كل عنصر يتناسب موضعه وحجمه مع إطار المجموعة؛ الزوايا بنسبة ثابتة ويكبر محتوى النصوص معها (Shift = حر) */
+  function startMultiResize(e, dir, ids) {
+    e.preventDefault(); e.stopPropagation();
+    const infs = ids.map(find).filter(i => i && i.free); if (infs.length < 2) return; const sec = infs[0].sec; ensureMobile(sec);
+    const dev = E.dev, els = infs.map(i => fdoc.querySelector(`[data-pb="${i.node.id}"]`)); if (els.some(x => !x)) return;
+    const cont = els[0].closest(".pb-in"), cr = cont.getBoundingClientRect(), u = uOf(sec, cr);
+    const R0 = infs.map((i, k) => { const r = layoutRect(els[k]); return { i, X: r.left - cr.left, Y: r.top - cr.top, W: r.width, H: r.height, ws: Number(eff(i.set, "wsc", dev)) || 100 }; });
+    const L0 = Math.min(...R0.map(q => q.X)), T0 = Math.min(...R0.map(q => q.Y)), Rr = Math.max(...R0.map(q => q.X + q.W)), Bb = Math.max(...R0.map(q => q.Y + q.H)), W0 = Math.max(1, Rr - L0), H0 = Math.max(1, Bb - T0);
+    const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), corner = hasW && hasH;
+    const tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
+    const cursor = dir.length === 1 ? (hasW ? "ew-resize" : "ns-resize") : (dir === "nw" || dir === "se" ? "nwse-resize" : "nesw-resize");
+    const mv = (dx, dy, ev) => {
+      let kx = 1, ky = 1;
+      if (hasW) kx = Math.max(.1, (W0 + (dir.includes("e") ? dx : -dx)) / W0); if (hasH) ky = Math.max(.1, (H0 + (dir.includes("s") ? dy : -dy)) / H0);
+      const uni = corner && !ev.shiftKey; if (uni) { kx = ky = Math.max(.1, Math.abs(dx) / W0 > Math.abs(dy) / H0 ? kx : ky); }
+      const aX = dir.includes("w") ? Rr : L0, aY = dir.includes("n") ? Bb : T0;      // الحافة المقابلة ثابتة
+      R0.forEach(q => {
+        const X = aX + (q.X - aX) * kx, Y = aY + (q.Y - aY) * ky, W = Math.max(4, q.W * kx), H = Math.max(4, q.H * ky), st = q.i.set;
+        setR(st, "fx", dev, Math.round(X / cr.width * 1000) / 10); setR(st, "fwd", dev, Math.round(W / cr.width * 1000) / 10); setR(st, "fy", dev, Math.max(0, Math.round(Y / u))); setR(st, "fh", dev, Math.max(4, Math.round(H / u)));
+        if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(st, k, "d") === undefined) setR(st, k, "d", eff(st, k, dev)); });
+        if (uni && !["image", "shape"].includes(q.i.node.type)) { setR(st, "wsc", dev, Math.max(20, Math.min(500, Math.round(q.ws * kx)))); if (dev !== "d" && own(st, "wsc", "d") === undefined) setR(st, "wsc", "d", q.ws); }
+        else if (hasH && !corner && ["text", "heading"].includes(q.i.node.type)) st.hauto = false;
+      });
+      tip.textContent = Math.round(W0 * kx) + "×" + Math.round(H0 * ky); const st0 = $("pbx-ovl").getBoundingClientRect(); tip.style.left = (ev.clientX - st0.left + 14) + "px"; tip.style.top = (ev.clientY - st0.top + 14) + "px";
+      renderCanvas(); positionOverlay(); $("pbx-ovl").appendChild(tip); growCanvas(sec);
+    };
+    E.nextLabel = "تغيير حجم مجموعة"; dragTrack(e, cursor, mv, () => { tip.remove(); commitHist(); renderInspector(); });
+  }
   function drawMulti(ovl) {
     const ids = selIds(), o = ovlOrigin(), s = o.s; let L = 1e9, T = 1e9, R = -1e9, B = -1e9, n = 0;
     ids.forEach(id => { const el = fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return; const r = layoutRect(el), l = o.ox + r.left * s, t = o.oy + r.top * s, w = r.width * s, h = r.height * s, b = document.createElement("div"); b.className = "pbx-box widget multi" + (find(id) && isLocked(find(id)) ? " lk" : "");
       b.style.cssText = `left:${l}px;top:${t}px;width:${w}px;height:${h}px`; ovl.appendChild(b); L = Math.min(L, l); T = Math.min(T, t); R = Math.max(R, l + w); B = Math.max(B, t + h); n++; });
     if (!n) return; const mb = document.createElement("div"); mb.className = "pbx-mbox"; mb.style.cssText = `left:${L - 4}px;top:${T - 4}px;width:${R - L + 8}px;height:${B - T + 8}px`; ovl.appendChild(mb);
+    { const mi = ids.map(find).filter(Boolean);      // إطار المجموعة: مقابض لتغيير حجم المجموعة كلها (العناصر الحرة غير المقفلة في قسم واحد)
+      if (!E.busy && !isMob() && mi.length > 1 && mi.every(i => i.free && !isLocked(i)) && new Set(mi.map(i => i.sec.id)).size === 1) {
+        mb.style.pointerEvents = "none"; ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(d => { const h = document.createElement("div"); h.className = "pbx-h pbx-mh d-" + d; h.title = d.length === 2 ? "اسحب لتكبير/تصغير المجموعة كلها بنسبة ثابتة (Shift = حر)" : "اسحب لتمديد المجموعة"; h.onmousedown = ev => { if (ev.button === 0) startMultiResize(ev, d, mi.map(i => i.node.id)); }; mb.appendChild(h); }); } }
     if (E.busy || isMob()) return;      // الهاتف: شريط الأسفل بدل الشريط العائم
     const g = grpState(), bar = document.createElement("div"); bar.className = "pbx-mt";
     bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"], ["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]].forEach(([k, t, tt, dis, dng]) => {
@@ -3727,7 +3769,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { convertAllFree: () => convertAllFree(), render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { convertAllFree: () => convertAllFree(), ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
