@@ -2422,7 +2422,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         if (hasH) { let H = r0.height + (dir.includes("s") ? dy : -dy); H = Math.max(10, Math.round(H)); setR(set, "mh", dev, H); if (dir.includes("n")) { const m = m0.slice(); m[0] = Math.max(0, (Number(m0[0]) || 0) + dy); setR(set, "mar", dev, m); }      /* لا هامش علوي سالب: كان يسحب العنصر تحت ما فوقه فيختفي جزؤه */ label += (label ? " × " : "") + H + "px"; }
         }
       } else if (inf.kind === "column") {
-        if (!set.pzoff && (hasW || hasH)) {      /* تكبير تناسبي: عناصر العمود تتبع حجم إطاره الجديد من الجهات الأربع */
+        if (!set.pzoff && hasW) {      /* تكبير تناسبي بالعرض فقط: سحب الحافة العليا/السفلى يغيّر الارتفاع الأدنى وحده (كان يصغّر المحتوى كله فلا يُنقَص الفراغ) */
           if (cc0 == null) cc0 = Number(eff(set, "ccl", dev)) || 100;
           const f = hasW ? (r0.width + (dir.includes("e") ? dx : -dx)) / r0.width : (r0.height + (dir.includes("s") ? dy : -dy)) / r0.height, v = Math.max(30, Math.min(300, Math.round(cc0 * Math.max(.1, f))));
           setR(set, "ccl", dev, v); if (dev !== "d" && own(set, "ccl", "d") === undefined) setR(set, "ccl", "d", cc0); label = "المحتوى " + v + "%";
