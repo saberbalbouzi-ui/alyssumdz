@@ -682,7 +682,13 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function mact(a) { if (a === "up") move(-1); else if (a === "down") move(1); else if (a === "dup") dup(); else if (a === "del") del(); else if (a === "undo") undo(); else if (a === "multi") toggleMM(); else if (a === "set") panel("r", true); }
   function updateMbar() { const app = $("pb-app"); if (!app) return; const mo = multiOn(); app.classList.toggle("pbx-ms", !!E.sel && !!selInfo() && !mo && !E.mm); app.classList.toggle("pbx-mm", !!E.mm || mo); const n = $("pbx-mmn"); if (n) n.textContent = "☑ " + selIds().length; }
-  function setZoom(z) { E.zoom = Math.max(E.page && E.page.ad ? .2 : .4, Math.min(E.page && E.page.ad ? 6 : 3, z)); fitStage(); positionOverlay(); }
+  function setZoom(z) {
+    const st = $("pbx-stage"), fw = $("pbx-fw"), old = E.scale || 1; let a = null;      // الزوم حول العنصر المحدّد (أو وسط الرؤية إن لم يُحدَّد شيء): نقطته تبقى في مكانها على الشاشة
+    try { if (st && fw && fdoc) { const f0 = fw.getBoundingClientRect(), el = E.sel && fdoc.querySelector(`[data-pb="${E.sel}"]`); if (el) { const r = el.getBoundingClientRect(); a = { fx: r.left + r.width / 2, fy: r.top + r.height / 2 }; } else { const s0 = st.getBoundingClientRect(); a = { fx: (s0.left + s0.width / 2 - f0.left) / old, fy: (s0.top + s0.height / 2 - f0.top) / old }; } a.sx = f0.left + a.fx * old; a.sy = f0.top + a.fy * old; } } catch (e) { a = null; }
+    E.zoom = Math.max(E.page && E.page.ad ? .2 : .4, Math.min(E.page && E.page.ad ? 6 : 3, z)); fitStage();
+    try { if (a) { const f1 = fw.getBoundingClientRect(), ns = E.scale || 1; st.scrollLeft += f1.left + a.fx * ns - a.sx; st.scrollTop += f1.top + a.fy * ns - a.sy; } } catch (e) { }
+    positionOverlay();
+  }
   /* عجلة الفأرة تكبّر/تصغّر مباشرة في «تصميم بمقاس» (وبـCtrl في الصفحات العادية)؛ والقرص بإصبعين على الهاتف */
   const wheelOn = e => e.ctrlKey || e.metaKey || !!(E.page && E.page.ad);
   const wheelStep = e => e.deltaY < 0 ? 1.1 : 1 / 1.1;
@@ -2292,7 +2298,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (E.styleClip.size && sizeToo(inf)) SIZE_KEYS.forEach(k => have.add(k));      // الحجم يُلصق على صورة حرة فقط (داخل عمود يتحكم العمود بعرضها)
     E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else if (!SIZE_KEYS.includes(k)) delete inf.set[k]; });
     if (inf.node.type === "text" && typeof inf.set.html === "string" && /\s(style|class|color|face|size)=|<font/i.test(inf.set.html)) inf.set.html = plainFmtHtml(inf.set.html);      // تنسيق مضمَّن (من لصق خارجي) يمنع ظهور النمط المنسوخ
-    E.nextLabel = "لصق نمط"; afterEdit();
+    E.nextLabel = "لصق نمط"; const aid = inf.node.id, el0 = fdoc.querySelector(`[data-pb="${aid}"]`), t0 = el0 ? el0.getBoundingClientRect().top : null; afterEdit();
+    try { const el1 = fdoc.querySelector(`[data-pb="${aid}"]`), stg = $("pbx-stage"); if (t0 != null && el1 && stg) { const d = (el1.getBoundingClientRect().top - t0) * (E.scale || 1); if (Math.abs(d) > 1) stg.scrollTop += d; } } catch (e) { }      // لصق النمط قد يغيّر طول العنصر فتزيح ما فوقه: يبقى العنصر في مكانه على الشاشة
   }
   /* محاذاة العنصر على القسم/الصفحة: أفقياً (يسار/وسط/يمين) أو عمودياً (أعلى/وسط/أسفل) */
   function alignPage(how) {
@@ -2390,6 +2397,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
 
   /* ───────────────── تحريك العنصر الحر (حر أو ملتصق) ───────────────── */
   /* القسم الحرّ المتناسب (scaled) يتبع تخطيط المكتب على التابلت والهاتف (قيمهما تُتجاهل)، فتحريك/تكبير عنصر فيه من هناك يُكتب في قيم المكتب كي يظهر أثره */
+  const cssPosSec = sec => (sec.cols || []).some(c => (c.widgets || []).some(w => { const el = fdoc && fdoc.querySelector(`[data-pb="${w.id}"]`); if (!el) return false; const ps = fdoc.defaultView.getComputedStyle(el).position; return ps === "absolute" || ps === "fixed"; }));      // قسم فيه عناصر موضعها من CSS: لا يُحوَّل كله إلى حر بسحب عنصر واحد
   const devOfFree = inf => { if (E.dev !== "d" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaled && inf.sec.set.kind === "canvas") { if (!E.scToast || Date.now() - E.scToast > 6000) { E.scToast = Date.now(); toast("هذا القسم متناسب: يتبع تخطيط المكتب على كل الأجهزة، فالتعديل هنا يسري على الجميع"); } return "d"; } return E.dev; };
   function startMove(e, inf, lazy, copy) {
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
@@ -2400,8 +2408,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
-      if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && E.dev !== "d") {      /* تحريك عنصر عادي من الهاتف/التابلت كان يحرّره وحده فيصير عنصراً حراً معلّقاً في قسم عادي (لا يتبع الصورة ولا الأعمدة ويختفي إن تغيّر ارتفاع القسم)؛ التحرير الحر يتم من المكتب للقسم كله */
-        if (!E.warnFreeT || Date.now() - E.warnFreeT > 4000) { E.warnFreeT = Date.now(); toast("أفلت العنصر قبل أي عنصر أو بعده لإعادة ترتيبه (الخط البنفسجي يبيّن الموضع). للتحريك الحر حوّل القسم إلى عناصر حرة من عرض المكتب."); }
+      if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && (E.dev !== "d" || cssPosSec(inf.sec))) {      /* تحريك عنصر عادي من الهاتف/التابلت كان يحرّره وحده فيصير عنصراً حراً معلّقاً في قسم عادي (لا يتبع الصورة ولا الأعمدة ويختفي إن تغيّر ارتفاع القسم)؛ التحرير الحر يتم من المكتب للقسم كله */
+        if (!E.warnFreeT || Date.now() - E.warnFreeT > 4000) { E.warnFreeT = Date.now(); toast(E.dev === "d" ? "عناصر هذا القسم موضعها من CSS الصفحة (مثل الهيرو) فتحويله إلى عناصر حرة يغيّر مظهره كله؛ أفلت العنصر قبل أي عنصر أو بعده لإعادة ترتيبه." : "أفلت العنصر قبل أي عنصر أو بعده لإعادة ترتيبه (الخط البنفسجي يبيّن الموضع). للتحريك الحر حوّل القسم إلى عناصر حرة من عرض المكتب."); }
         { /* بدل المنع: السحب على الهاتف/التابلت يعيد ترتيب العنصر بين العناصر العادية (خط بنفسجي يبيّن موضع الإفلات) */
           const pt = ptrFrame(ev), tgt = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest('[data-kind="widget"]')).find(n => n && n.dataset.pb !== id && !n.closest('[data-pb="' + id + '"]')), colEl = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);
           const ovl = $("pbx-ovl"), o = ovlOrigin(); ovl.querySelectorAll(".pbx-ro").forEach(n => n.remove()); ro = null;
