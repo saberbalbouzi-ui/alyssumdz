@@ -1118,7 +1118,10 @@ const PB = (() => {
   /* ═════════════════ المُصيِّر (Renderer): نفس الدالة للمحرر وللصفحة المنشورة ═════════════════ */
   /* تكييف الهاتف التلقائي لقسم حر: ترتيب عمودي بحسب القراءة (من الأعلى للأسفل ثم من اليمين) بعرض كامل تقريباً مع حفظ نسب الصور */
   function autoMobileLayout(sec) {
-    const fr = (sec.free || []).slice().sort((a, b) => (Number(eff(a.set, "fy", "d")) || 0) - (Number(eff(b.set, "fy", "d")) || 0) || (Number(eff(b.set, "fx", "d")) || 0) - (Number(eff(a.set, "fx", "d")) || 0));
+    /* ترتيب القراءة كما على المكتب: صفوف (عناصر يتداخل نطاقها العمودي أكثر من نصفه تُعدّ صفاً واحداً حتى لو اختلف ارتفاعها قليلاً) من الأعلى للأسفل، وداخل الصف من اليمين لليسار (الصفحات عربية) */
+    const T = w => Number(eff(w.set, "fy", "d")) || 0, H = w => Number(eff(w.set, "fh", "d")) || 100, X = w => Number(eff(w.set, "fx", "d")) || 0, rtl = sec.set.rtl !== false, rows = [];
+    (sec.free || []).slice().sort((p, q) => T(p) - T(q) || (rtl ? X(q) - X(p) : X(p) - X(q))).forEach(w => { const t = T(w), h = H(w), r = rows.find(r => Math.min(t + h, r.b) - Math.max(t, r.t) > 0.5 * Math.min(h, r.b - r.t)); if (r) { r.w.push(w); r.b = Math.max(r.b, t + h); } else rows.push({ t, b: t + h, w: [w] }); });
+    const fr = []; rows.sort((p, q) => p.t - q.t).forEach(r => r.w.sort((p, q) => rtl ? X(q) - X(p) : X(p) - X(q)).forEach(w => fr.push(w)));
     let y = 16; const DW = 1140, MW = 358, items = {};
     fr.forEach(w => {
       const wd = Number(eff(w.set, "fwd", "d")) || 30, hd = Number(eff(w.set, "fh", "d")) || 100, small = wd < 30 || ["button", "counter", "countdown", "spacer", "divider"].includes(w.type), wm = small ? Math.min(92, Math.max(60, wd * 2.4)) : 92;

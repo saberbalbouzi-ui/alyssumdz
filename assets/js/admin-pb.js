@@ -1119,7 +1119,10 @@ const PB = (() => {
   /* ═════════════════ المُصيِّر (Renderer): نفس الدالة للمحرر وللصفحة المنشورة ═════════════════ */
   /* تكييف الهاتف التلقائي لقسم حر: ترتيب عمودي بحسب القراءة (من الأعلى للأسفل ثم من اليمين) بعرض كامل تقريباً مع حفظ نسب الصور */
   function autoMobileLayout(sec) {
-    const fr = (sec.free || []).slice().sort((a, b) => (Number(eff(a.set, "fy", "d")) || 0) - (Number(eff(b.set, "fy", "d")) || 0) || (Number(eff(b.set, "fx", "d")) || 0) - (Number(eff(a.set, "fx", "d")) || 0));
+    /* ترتيب القراءة كما على المكتب: صفوف (عناصر يتداخل نطاقها العمودي أكثر من نصفه تُعدّ صفاً واحداً حتى لو اختلف ارتفاعها قليلاً) من الأعلى للأسفل، وداخل الصف من اليمين لليسار (الصفحات عربية) */
+    const T = w => Number(eff(w.set, "fy", "d")) || 0, H = w => Number(eff(w.set, "fh", "d")) || 100, X = w => Number(eff(w.set, "fx", "d")) || 0, rtl = sec.set.rtl !== false, rows = [];
+    (sec.free || []).slice().sort((p, q) => T(p) - T(q) || (rtl ? X(q) - X(p) : X(p) - X(q))).forEach(w => { const t = T(w), h = H(w), r = rows.find(r => Math.min(t + h, r.b) - Math.max(t, r.t) > 0.5 * Math.min(h, r.b - r.t)); if (r) { r.w.push(w); r.b = Math.max(r.b, t + h); } else rows.push({ t, b: t + h, w: [w] }); });
+    const fr = []; rows.sort((p, q) => p.t - q.t).forEach(r => r.w.sort((p, q) => rtl ? X(q) - X(p) : X(p) - X(q)).forEach(w => fr.push(w)));
     let y = 16; const DW = 1140, MW = 358, items = {};
     fr.forEach(w => {
       const wd = Number(eff(w.set, "fwd", "d")) || 30, hd = Number(eff(w.set, "fh", "d")) || 100, small = wd < 30 || ["button", "counter", "countdown", "spacer", "divider"].includes(w.type), wm = small ? Math.min(92, Math.max(60, wd * 2.4)) : 92;
@@ -3857,7 +3860,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* فصل جهاز عن المكتب في قسم حرّ متناسب (الهاتف: ترتيب متتابع تلقائي؛ التابلت: نسخة من المكتب بمقاسه) */
   function sepDevice(sec, dv) {
     if (dv === "m") { sec.set.scaledM = true; writeMobile(sec); } else { sec.set.scaledT = true; writeTablet(sec); }
-    renderCanvas(); toast("فُصل " + (dv === "m" ? "الهاتف" : "التابلت") + " عن المكتب في هذا القسم: يُعدَّل وحده الآن (Ctrl+Z للتراجع، ولإلغاء الفصل زر القسم)");
+    renderCanvas();
   }
   const devOfFree = inf => {
     if (E.dev !== "d" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaled && inf.sec.set.kind === "canvas") {
@@ -3876,13 +3879,14 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
       if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && (E.dev !== "d" || cssPosSec(inf.sec))) {      /* تحريك عنصر عادي من الهاتف/التابلت كان يحرّره وحده فيصير عنصراً حراً معلّقاً في قسم عادي (لا يتبع الصورة ولا الأعمدة ويختفي إن تغيّر ارتفاع القسم)؛ التحرير الحر يتم من المكتب للقسم كله */
-        if (!E.warnFreeT || Date.now() - E.warnFreeT > 4000) { E.warnFreeT = Date.now(); toast(E.dev === "d" ? "عناصر هذا القسم موضعها من CSS الصفحة (مثل الهيرو) فتحويله إلى عناصر حرة يغيّر مظهره كله؛ أفلت العنصر قبل أي عنصر أو بعده لإعادة ترتيبه." : "أفلت العنصر قبل أي عنصر أو بعده لإعادة ترتيبه (الخط البنفسجي يبيّن الموضع). للتحريك الحر حوّل القسم إلى عناصر حرة من عرض المكتب."); }
         { /* بدل المنع: السحب على الهاتف/التابلت يعيد ترتيب العنصر بين العناصر العادية (خط بنفسجي يبيّن موضع الإفلات) */
           const pt = ptrFrame(ev), tgt = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest('[data-kind="widget"]')).find(n => n && n.dataset.pb !== id && !n.closest('[data-pb="' + id + '"]')), colEl = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);
           const ovl = $("pbx-ovl"), o = ovlOrigin(); ovl.querySelectorAll(".pbx-ro").forEach(n => n.remove()); ro = null;
-          const mark = (r, after) => { const d = document.createElement("div"); d.className = "pbx-ro"; d.style.cssText = `position:absolute;left:${o.ox + r.left * o.s}px;top:${o.oy + (after ? r.bottom : r.top) * o.s - 2}px;width:${r.width * o.s}px;height:4px;border-radius:3px;background:#8b3dff;pointer-events:none;box-shadow:0 0 0 2px rgba(255,255,255,.6)`; ovl.appendChild(d); };
-          if (tgt) { const r = layoutRect(tgt), after = pt.y > r.top + r.height / 2; ro = { id: tgt.dataset.pb, after }; mark(r, after); }
-          else if (colEl && colEl.dataset.pb) { const ws = (find(colEl.dataset.pb) || { node: { widgets: [] } }).node.widgets || []; const last = ws.length ? fdoc.querySelector(`[data-pb="${ws[ws.length - 1].id}"]`) : null; ro = { col: colEl.dataset.pb }; if (last) mark(layoutRect(last), true); }
+          const meEl = fdoc.querySelector('[data-pb="' + id + '"]'), mr = meEl ? layoutRect(meEl) : null;
+          const mark = (r, after, vert, rtl) => { const d = document.createElement("div"); d.className = "pbx-ro"; const edgeX = rtl ? (after ? r.left : r.right) : (after ? r.right : r.left); d.style.cssText = vert ? `position:absolute;left:${o.ox + edgeX * o.s - 2}px;top:${o.oy + r.top * o.s}px;width:4px;height:${r.height * o.s}px;border-radius:3px;background:#8b3dff;pointer-events:none;box-shadow:0 0 0 2px rgba(255,255,255,.6)` : `position:absolute;left:${o.ox + r.left * o.s}px;top:${o.oy + (after ? r.bottom : r.top) * o.s - 2}px;width:${r.width * o.s}px;height:4px;border-radius:3px;background:#8b3dff;pointer-events:none;box-shadow:0 0 0 2px rgba(255,255,255,.6)`; ovl.appendChild(d); };
+          if (tgt) { const r = layoutRect(tgt), rtl = fdoc.defaultView.getComputedStyle(tgt).direction === "rtl", row = mr && Math.abs((mr.top + mr.height / 2) - (r.top + r.height / 2)) < Math.max(mr.height, r.height) / 2;      // عناصر في صف واحد (دوائر/بطاقات متجاورة): الموضع يُحدَّد بالأفقي لا بالعمودي
+            const after = row ? (rtl ? pt.x < r.left + r.width / 2 : pt.x > r.left + r.width / 2) : pt.y > r.top + r.height / 2; ro = { id: tgt.dataset.pb, after }; mark(r, after, row, rtl); }
+          else if (colEl && colEl.dataset.pb) { const ws = (find(colEl.dataset.pb) || { node: { widgets: [] } }).node.widgets || []; const last = ws.length ? fdoc.querySelector(`[data-pb="${ws[ws.length - 1].id}"]`) : null; ro = { col: colEl.dataset.pb }; if (last) mark(layoutRect(last), true, false, false); }
         }
         moved = true; E.roMode = true; return;
       }
@@ -3919,7 +3923,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); clearDrop(); clearGhost();
       if (E.roMode) { E.roMode = false; try { $("pbx-ovl").querySelectorAll(".pbx-ro").forEach(n => n.remove()); } catch (x) { } const me = find(id); let ok = false;
         if (me && ro) { const tn = ro.id ? find(ro.id) : find(ro.col); if (tn && me.list) { me.list.splice(me.list.indexOf(me.node), 1); let tl = null, at = 0; if (ro.id && tn.list) { tl = tn.list; at = tl.indexOf(tn.node) + (ro.after ? 1 : 0); } else if (tn.kind === "column") { tl = tn.node.widgets; at = tl.length; } if (tl) { tl.splice(at, 0, me.node); ok = true; } else me.list.push(me.node); } }
-        if (ok) { E.nextLabel = "إعادة ترتيب عنصر"; afterEdit(id); toast("↕ أُعيد ترتيب العنصر (الترتيب نفسه على المكتب والتابلت والهاتف)"); } else renderCanvas(); return; }
+        if (ok) { E.nextLabel = "إعادة ترتيب عنصر"; afterEdit(id); } else renderCanvas(); return; }
       if (moved && xfer) { const mm = new Map([[srcSec, mh0]]); if (xferFree([id].concat(peers.map(q => q.w.id)), xfer.sec, xfer.gx, xfer.gy, mm)) return; renderCanvas(); }
       if (moved && dropCol && ev && !(ev.ctrlKey || ev.metaKey) && dropCol !== origCol) {      // إفلات فوق عمود: يمتص العنصر تلقائياً (Ctrl يُبقيه حراً؛ ولا يُمتص فوراً في عموده الأصلي أثناء أول سحب)
         const me = find(id), tc = find(dropCol); if (me && tc && tc.kind === "column") {
@@ -4900,9 +4904,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     if (k === "mir-h" || k === "mir-v") return mirrorDup(k === "mir-h" ? "h" : "v");
     if (k === "sec-free") { const i0 = selInfo(), s0 = i0 && (i0.kind === "section" ? i0.node : i0.sec); return s0 && flowToFree(s0); }
     if (k === "sec-mstack" || k === "sec-tstack") { const i0 = selInfo(), s0 = i0 && (i0.kind === "section" ? i0.node : i0.sec); if (!s0 || s0.set.kind !== "canvas") return; const dv = k === "sec-mstack" ? "m" : "t", flag = dv === "m" ? "scaledM" : "scaledT";
-      if (s0.set[flag]) { delete s0.set[flag]; (s0.free || []).forEach(w => ["fx", "fy", "fwd", "fh", "fs"].forEach(q => { if (w.set[q] && typeof w.set[q] === "object") delete w.set[q][dv]; })); if (s0.set.mh && typeof s0.set.mh === "object") delete s0.set.mh[dv]; toast("أُلغي فصل " + (dv === "m" ? "الهاتف" : "التابلت") + ": يتبع المكتب مجدداً"); E.nextLabel = "إلغاء فصل الجهاز"; afterEdit(); return; }
+      if (s0.set[flag]) { delete s0.set[flag]; (s0.free || []).forEach(w => ["fx", "fy", "fwd", "fh", "fs"].forEach(q => { if (w.set[q] && typeof w.set[q] === "object") delete w.set[q][dv]; })); if (s0.set.mh && typeof s0.set.mh === "object") delete s0.set.mh[dv]; E.nextLabel = "إلغاء فصل الجهاز"; afterEdit(); return; }
       if (s0.set.scaled) { sepDevice(s0, dv); E.nextLabel = "فصل الجهاز عن المكتب"; afterEdit(); return; }
-      if (dv === "m") { writeMobile(s0); toast("رُتّب القسم للهاتف تلقائياً (Ctrl+Z للتراجع)"); E.nextLabel = "ترتيب الهاتف"; afterEdit(); } else toast("هذا القسم غير متناسب: التابلت يُعدَّل وحده أصلاً من عرض التابلت");
+      if (dv === "m") { writeMobile(s0); E.nextLabel = "ترتيب الهاتف"; afterEdit(); }
       return; }
     if (k === "sec-fit") { const i0 = selInfo(); return fitSection(i0 && (i0.kind === "section" ? i0.node : i0.sec)); }
     if (k === "html-free") { const i0 = selInfo(); return i0 && htmlToFree(i0.node.id); }
