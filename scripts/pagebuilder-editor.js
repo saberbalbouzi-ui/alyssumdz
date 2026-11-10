@@ -2635,9 +2635,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     set.zi = Math.max(0, ...(sec.free || []).map(w => Number(w.set.zi) || 0)) + 1; (sec.free = sec.free || []).push(inf.node); afterEdit(inf.node.id);
   }
   /* تكييف الهاتف: التصميم الحر يُرتَّب تلقائياً عند العرض (PB.autoMobileLayout)؛ هذا الزر يحوّله إلى قيم صريحة قابلة للتعديل */
-  /* التحديد المتعدد: القسم الحر الواحد الذي فيه كل المحدَّد ← زر «ترتيب الهاتف» يفصل الهاتف ويرتّبه تلقائياً ثم يعرضه */
-  function phoneSec(ids) { const L = (ids || []).map(find).filter(i => i && i.kind === "widget" && i.free); if (!L.length || L.length !== ids.length) return null; const sc = L[0].sec; return L.every(i => i.sec === sc) && sc.set.kind === "canvas" ? sc : null; }
-  function phoneAuto(sc) { if (sc.set.scaled) { sc.set.scaledM = true; sc.set.stackM = true; } writeMobile(sc); E.dev = "m"; updateTop(); fitStage(); E.nextLabel = "ترتيب الهاتف تلقائياً"; afterEdit(); toast("📲 رُتّب الهاتف تلقائياً — المكتب والتابلت كما هما؛ عدّل بالسحب بعد ذلك"); }
+  /* التحديد المتعدد: الأقسام الحرة التي فيها المحدَّد (ولو اختلط معها عنصر من قسم عادي) ← زر «ترتيب الهاتف» يفصل الهاتف ويرتّبه تلقائياً ثم يعرضه */
+  function phoneSec(ids) { const L = (ids || []).map(find).filter(i => i && i.kind === "widget" && i.sec), out = []; L.forEach(i => { if (i.sec.set.kind === "canvas" && !out.includes(i.sec)) out.push(i.sec); }); return out.length ? out : null; }
+  function phoneAuto(list) { (Array.isArray(list) ? list : [list]).forEach(sc => { if (sc.set.scaled) { sc.set.scaledM = true; sc.set.stackM = true; } writeMobile(sc); }); E.dev = "m"; updateTop(); fitStage(); E.nextLabel = "ترتيب الهاتف تلقائياً"; afterEdit(); toast("📲 رُتّب الهاتف تلقائياً (" + (Array.isArray(list) ? list.length : 1) + " قسم) — المكتب والتابلت كما هما؛ عدّل بالسحب بعد ذلك"); }
   function autoMobile(sec) { writeMobile(sec); E.dev = "m"; updateTop(); fitStage(); afterEdit(); toast("📲 ثُبّتت قيم الهاتف — عدّل أي عنصر بالسحب بعد ذلك"); }
   function writeMobile(sec) { const L = PB.autoMobileLayout(sec); (sec.free || []).forEach(w => { const a = L.items[w.id]; if (a) { setR(w.set, "fx", "m", a.fx); setR(w.set, "fwd", "m", a.fwd); setR(w.set, "fy", "m", a.fy); setR(w.set, "fh", "m", a.fh); } }); setR(sec.set, "mh", "m", L.h); }
   /* عند أول تعديل يدوي في عرض الهاتف نثبّت الترتيب التلقائي أولاً حتى لا تتبعثر بقية العناصر */
