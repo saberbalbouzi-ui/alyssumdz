@@ -2779,7 +2779,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const scr = ev => { const f = fw.getBoundingClientRect(); return inF(ev) ? { x: f.left + ev.clientX * s, y: f.top + ev.clientY * s } : { x: ev.clientX, y: ev.clientY }; };
     const doc = sp => { const f = fw.getBoundingClientRect(); return { x: (sp.x - f.left) / s, y: (sp.y - f.top) / s }; };
     const s0 = scr(e), d0 = doc(s0), shield = inF(e) ? null : mkShield(cursor); E.busy = true;      // أثناء السحب يختفي الشريط العائم وأزرار الجانب
-    const onEnd0 = onEnd; onEnd = ev => { E.busy = false; try { onEnd0(ev); } finally { positionOverlay(); } };
+    const onEnd0 = onEnd; onEnd = ev => { E.busy = false; try { onEnd0(ev); } finally { try { document.querySelectorAll(".pbx-ro").forEach(n => n.remove()); if (E.roMode) E.roMode = false; } catch (x) { } positionOverlay(); } };      /* خط موضع الإفلات (البنفسجي) لا يبقى بعد أي انتهاء للسحب */
     let last = null, raf = 0, moved = false;
     const run = () => { if (!last) return; const d = doc(last.sp); onMove(d.x - d0.x, d.y - d0.y, last.ev); };
     const mv = ev => { last = { sp: scr(ev), ev }; if (!moved && Math.abs(last.sp.x - s0.x) + Math.abs(last.sp.y - s0.y) > 4) moved = true; run(); if (moved && !raf) raf = requestAnimationFrame(auto); };
