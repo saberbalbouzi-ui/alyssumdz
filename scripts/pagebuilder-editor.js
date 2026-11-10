@@ -2308,7 +2308,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function startResize(e, dir, inf) {
     if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) inf.set.hauto = false;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
-    const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, dev = E.dev, r0 = layoutRect(el), set = inf.set;
+    const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, dev = devOfFree(inf), r0 = layoutRect(el), set = inf.set;
     const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), free = inf.kind === "widget" && inf.free;
     const cursor = dir.length === 1 ? (hasW ? "ew-resize" : "ns-resize") : (dir === "nw" || dir === "se" ? "nwse-resize" : "nesw-resize");
     const tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
@@ -2389,8 +2389,10 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
 
   /* ───────────────── تحريك العنصر الحر (حر أو ملتصق) ───────────────── */
+  /* القسم الحرّ المتناسب (scaled) يتبع تخطيط المكتب على التابلت والهاتف (قيمهما تُتجاهل)، فتحريك/تكبير عنصر فيه من هناك يُكتب في قيم المكتب كي يظهر أثره */
+  const devOfFree = inf => { if (E.dev !== "d" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaled && inf.sec.set.kind === "canvas") { if (!E.scToast || Date.now() - E.scToast > 6000) { E.scToast = Date.now(); toast("هذا القسم متناسب: يتبع تخطيط المكتب على كل الأجهزة، فالتعديل هنا يسري على الجميع"); } return "d"; } return E.dev; };
   function startMove(e, inf, lazy, copy) {
-    const id = inf.node.id, dev = E.dev; if (!lazy) ensureMobile(inf.sec);
+    const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
     let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
     let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null, ro = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
@@ -3379,9 +3381,11 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 500);
   }
   function quickHtml(inf) {
+    let padBox = "";
     const bgBtn = inf.kind === "section" && inf.node.set.bgImg ? `<div class="pbx-qg"><small>خلفية القسم</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="bg-restore" title="تعيد الصورة إلى مكانها كصورة عادية">↩ إرجاع الخلفية كصورة</button></div></div>` : "";
     const fitBtn = inf.kind === "section" ? `<div class="pbx-qg"><small>الفراغ</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-fit" title="يقصّ الفراغ الزائد أسفل القسم (الحر عند آخر عنصر، والعادي بإلغاء الارتفاع الأدنى وتخفيض الحشو السفلي)">↕ إزالة الفراغ</button></div></div>` : "";
-    if (inf.kind === "section" && inf.node.set.kind !== "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}<div class="pbx-qg"><small>التحريك الحر</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-free" title="يثبّت كل عناصر القسم بمواضعها فتتحرك بحرية دون أن يتأثر بعضها بحجم بعض (على عرض المكتب)">⤢ تحويل القسم كله إلى عناصر حرة</button></div></div>${(inf.node.free || []).length ? '<div class="pbx-qg"><small style="color:#ffb74d">فيه عناصر حرة داخل قسم عادي: لا تتبع الصور المجاورة. حوّل القسم كله ليتّسق.</small></div>' : ''}</div>`;
+    if (inf.kind === "section" && inf.node.set.kind !== "canvas") { const pd0 = eff(inf.node.set, "pad", E.dev) || [0, 0, 0, 0]; padBox = `<div class="pbx-qg"><small>فراغ القسم (px) على ${E.dev === "d" ? "المكتب" : E.dev === "t" ? "التابلت" : "الهاتف"}</small><div class="pbx-qr" style="width:100%;gap:.4rem"><label style="display:flex;gap:.25rem;align-items:center">من أعلى <input type="number" min="0" max="600" step="1" value="${Number(pd0[0]) || 0}" data-qpad="0" style="width:74px;padding:.25rem .3rem;text-align:center"></label><label style="display:flex;gap:.25rem;align-items:center">من أسفل <input type="number" min="0" max="600" step="1" value="${Number(pd0[2]) || 0}" data-qpad="2" style="width:74px;padding:.25rem .3rem;text-align:center"></label></div></div>`; }
+    if (inf.kind === "section" && inf.node.set.kind !== "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}${padBox}<div class="pbx-qg"><small>التحريك الحر</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-free" title="يثبّت كل عناصر القسم بمواضعها فتتحرك بحرية دون أن يتأثر بعضها بحجم بعض (على عرض المكتب)">⤢ تحويل القسم كله إلى عناصر حرة</button></div></div>${(inf.node.free || []).length ? '<div class="pbx-qg"><small style="color:#ffb74d">فيه عناصر حرة داخل قسم عادي: لا تتبع الصور المجاورة. حوّل القسم كله ليتّسق.</small></div>' : ''}</div>`;
     if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}<div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
     if (inf.kind !== "widget") return "";
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
@@ -3662,6 +3666,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.fxk !== undefined) { const it = (inf.set.fxs || [])[+t.dataset.fxi], pr = it && it.p && it.p[t.dataset.fxk]; if (pr) { pr.v = pr.t === "num" ? (t.value === "" ? 0 : Number(t.value)) : t.value; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); } return; }
     if (t.dataset.fxn) { const k = t.dataset.fxn; if (k === "anim") { if (t.value) inf.set.anim = t.value; else { delete inf.set.anim; delete inf.set.animDur; delete inf.set.animDelay; } } else inf.set[k] = t.value === "" ? 0 : Number(t.value); schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); if (k === "anim" && !t.value) renderInspector(); else { clearTimeout(E.animP); E.animP = setTimeout(() => playAnims(E.sel), 250); } return; }
     if (t.dataset.bc !== undefined) { const a = Array.isArray(inf.set.mcols) ? inf.set.mcols : (inf.set.mcols = []); a[Number(t.dataset.bc)] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
+    if (t.dataset.qpad !== undefined) { if (inf.kind !== "section") return; const pd = (eff(inf.node.set, "pad", E.dev) || [0, 0, 0, 0]).slice(); while (pd.length < 4) pd.push(0); pd[Number(t.dataset.qpad)] = Math.max(0, Math.min(600, Number(t.value) || 0)); setR(inf.node.set, "pad", E.dev, pd); if (E.dev !== "d" && own(inf.node.set, "pad", "d") === undefined) setR(inf.node.set, "pad", "d", (eff(inf.node.set, "pad", "d") || [0, 0, 0, 0]).slice()); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qsz) { const inf0 = selInfo(); if (inf0 && inf0.free) setFreeSize(inf0, t.dataset.qsz, Number(t.value)); return; }
     if (t.dataset.qrot) { const v = Number(t.value); setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); const b = t.parentNode.querySelector("b"); if (b) b.textContent = v + "°"; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
