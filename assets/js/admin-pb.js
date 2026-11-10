@@ -4252,14 +4252,22 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function upBadge() { const b = $("pbx-upb"); if (!b) return; b.style.display = E.upN ? "inline-block" : "none"; b.textContent = "⬆ " + (E.upN || 0) + " صورة تُحفظ في الموقع…"; }
   /* إعادة ضغط صور الصفحة المرفوعة سابقاً (أكبر من 1600px أو ثقيلة) وتبديل مساراتها */
+  const SLIM_SEEN = new Set();
   async function slim(auto) {
     if (!E.page || typeof Admin === "undefined") return false; const paths = [...new Set((JSON.stringify(E.page).match(/assets\/img\/pages\/[^"\\\s]+?\.(?:webp|jpe?g|png)/gi) || []))];
-    if (!paths.length) return auto ? false : toast("لا توجد صور مرفوعة في هذه الصفحة"); if (!auto) toast("⏳ فحص " + paths.length + " صورة…"); let saved = 0, n = 0, json = JSON.stringify(E.page);
-    for (const pth of paths) {
-      try { const r = await fetch(pth + "?t=" + Date.now()); if (!r.ok) continue; const blob = await r.blob(); if (blob.size < (auto ? 450 : 150) * 1024) continue;
+    const lim = (auto ? 450 : 150) * 1024, todo = auto ? paths.filter(x => !SLIM_SEEN.has(x)) : paths;      // في النشر التلقائي لا تُفحص مجدداً صورة فُحصت وهي خفيفة (وإلا يُعاد تنزيل كل الصور عند كل حفظ)
+    if (!paths.length) return auto ? false : toast("لا توجد صور مرفوعة في هذه الصفحة"); if (!todo.length) return false; if (!auto) toast("⏳ فحص " + paths.length + " صورة…"); let saved = 0, n = 0, json = JSON.stringify(E.page);
+    const swaps = [];
+    const one = async pth => {
+      try {
+        if (auto) { try { const h = await fetch(pth, { method: "HEAD" }); const sz = h.ok ? +h.headers.get("content-length") : 0; if (sz && sz < lim) { SLIM_SEEN.add(pth); return; } } catch (e) { } }      // حجم الملف من الترويسة دون تنزيله
+        const r = await fetch(pth + (auto ? "" : "?t=" + Date.now())); if (!r.ok) return; const blob = await r.blob(); if (blob.size < lim) { SLIM_SEEN.add(pth); return; }
         const p = await Admin.prepareImage(new File([blob], "x." + (blob.type.split("/")[1] || "png"), { type: blob.type }), "assets/img/pages", "pg-", { max: 1600, q: .8, noVariants: true, uniq: true });
-        if (p.blob.size > blob.size * .85) continue; saved += blob.size - p.blob.size; n++; Admin.localImg = Admin.localImg || {}; Admin.localImg[p.path] = URL.createObjectURL(p.blob); json = json.split(pth).join(p.path); queueCommit(p); } catch (e) { }
-    }
+        if (p.blob.size > blob.size * .85) { SLIM_SEEN.add(pth); return; } saved += blob.size - p.blob.size; n++; Admin.localImg = Admin.localImg || {}; Admin.localImg[p.path] = URL.createObjectURL(p.blob); swaps.push([pth, p.path]); SLIM_SEEN.add(p.path); queueCommit(p);
+      } catch (e) { }
+    };
+    { let k = 0; await Promise.all(Array.from({ length: Math.min(6, todo.length) }, async () => { while (k < todo.length) await one(todo[k++]); })); }      // 6 صور معاً بدل واحدة واحدة
+    swaps.forEach(([a, b]) => { json = json.split(a).join(b); });
     if (!n) return auto ? false : toast("✅ الصور خفيفة أصلاً — لا حاجة للتخفيف");
     E.page = JSON.parse(json); afterEdit(); toast("🪶 خُفّفت " + n + " صورة تلقائياً (وفّرت ‎" + Math.round(saved / 1024) + " ك.ب)"); return true;
   }
@@ -5076,19 +5084,22 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     const html = localize(PB.fullHtml(E.page, Object.assign({ base: "", baseHref: dir, demo: true }, siteCtx())));
     SitePreview.openHtml(html, { title: "معاينة قبل النشر", edit: () => SitePreview.close(), editLabel: "عودة للتعديل" });
   }
-  async function putJson(path, obj, msg) {
-    let sha; try { sha = (await GH.getFile(path)).sha; } catch (e) { sha = undefined; }
+  async function putJson(path, obj, msg, pre) {      // pre: وعد جُلب مسبقاً (رقم الملف الحالي) ليعمل القراءات بالتوازي بدل الانتظار قبل كل كتابة
+    let sha; try { sha = (await (pre || GH.getFile(path))).sha; } catch (e) { sha = undefined; }
     return GH.putFile(path, b64(typeof obj === "string" ? obj : JSON.stringify(obj, null, 1)), sha, msg);
   }
   /* كتابة ملفات صفحة هبوط (HTML + المصدر + الفهرس) — يستعملها النشر ونسخة ب لاختبار A/B */
   async function writeLp(P) {
-    const slug = P.slug, html = PB.fullHtml(typeof PBBind !== "undefined" ? PBBind.bakePage(P) : P, Object.assign({ base: "../../" }, siteCtx()));
-    await putJson("lp/" + slug + "/index.html", html, "نشر صفحة هبوط: " + P.title);
-    await putJson("assets/pages/" + slug + ".json", P, "مصدر صفحة هبوط: " + slug);
-    let idx = []; try { const f = await GH.getFile("assets/pages/index.json"); idx = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { }
+    const slug = P.slug, pH = "lp/" + slug + "/index.html", pJ = "assets/pages/" + slug + ".json", pI = "assets/pages/index.json";
+    const gH = GH.getFile(pH), gJ = GH.getFile(pJ), gI = GH.getFile(pI);      // القراءات الثلاث معاً
+    [gH, gJ, gI].forEach(p => p.catch(() => { }));
+    const html = PB.fullHtml(typeof PBBind !== "undefined" ? PBBind.bakePage(P) : P, Object.assign({ base: "../../" }, siteCtx()));
+    await putJson(pH, html, "نشر صفحة هبوط: " + P.title, gH);
+    await putJson(pJ, P, "مصدر صفحة هبوط: " + slug, gJ);
+    let idx = [], fI = null; try { const f = await gI; fI = f; idx = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { }
     const th = (JSON.stringify(P).match(/(?:assets\/img\/[^"\\\s]+?\.(?:webp|jpe?g|png))/i) || [])[0] || "", row = { slug, thumb: th, title: P.title, updated: new Date().toISOString().slice(0, 16).replace("T", " "), live: true };
     const i = idx.findIndex(x => x.slug === slug); if (i >= 0) idx[i] = row; else idx.push(row);
-    await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط");
+    await putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط", fI ? Promise.resolve(fI) : undefined);
   }
   /* اختبار A/B: صفحة ب جاهزة (E.ab) تُنشر مع نشر الصفحة أ ويُضبط المنتج {route: أ، ab: {b: ب، pct}} فيُوزَّع الزوار ويثبت اختيار كل زائر (app.js) */
   async function syncAB(P) {
@@ -5109,12 +5120,12 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     let P = E.page; const slug = P.slug; toast("⏳ جارِ النشر...");
     try {
       if (E.upq) { if (E.upN) toast("⏳ بانتظار انتهاء رفع الصور..."); await E.upq; if ((E.upFail || []).some(pth => JSON.stringify(P).includes(pth))) { toast("❌ صور لم تُرفع إلى الموقع — أعد رفعها قبل النشر"); return; } }
-      try { await slim(true); } catch (e) { }                                                         // تخفيف تلقائي للصور الثقيلة فقط (>450KB)
+      toast("⏳ جارِ النشر… فحص الصور"); try { await slim(true); } catch (e) { }                                                         // تخفيف تلقائي للصور الثقيلة فقط (>450KB)
       if (E.upq) await E.upq;
       P = E.page;
       if (P.demo) { P.demo = false; try { renderCanvas(); } catch (e) { } }      // النشر دائماً ببيانات المتجر الحقيقية لا بيانات القالب التجريبية
       if (mode === "direct") { await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); return; }
-      await writeLp(P);
+      toast("⏳ جارِ النشر… حفظ الصفحة"); await writeLp(P);
       if (typeof PBBind !== "undefined") await PBBind.commit();
       await syncRoute(P);
       await syncAB(P);
