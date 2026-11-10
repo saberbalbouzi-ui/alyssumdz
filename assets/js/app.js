@@ -946,7 +946,7 @@ function initProduct(slug){
       const d = document.createElement("div");
       d.className = "offer"+(i===offerIdx?" on":"");
       const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
-      const oimg = wantImg ? (p.cover||(p.images&&p.images[0])||"") : "";
+      const oimg = wantImg ? (o.img||p.cover||(p.images&&p.images[0])||"") : "";
       d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}${oimg?`<img class="oi" src="${REL}${oimg}" alt="" loading="lazy" decoding="async">`:""}
         <div class="q">${label}</div>
         <div class="p">${fmt(o.price)}</div>
