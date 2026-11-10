@@ -1144,7 +1144,7 @@ const PB = (() => {
     const renderW = (w, free) => {
       const def = WIDGETS[w.type]; if (!def) return ""; const wsx = `.pb-w.x-${w.id}`, s2 = w.set;
       boxStatic(css, wsx, s2);
-      const specs = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["rot", v => `rotate:${num(v) ?? 0}deg;`], ["zi", v => `z-index:${num(v)};`]];
+      const specs = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["rot", v => `rotate:${num(v) ?? 0}deg;`], ["zi", v => `z-index:${num(v)};`], ["tx", v => `--tx:${num(v) ?? 0}px;translate:var(--tx,0px) var(--ty,0px);`], ["ty", v => `--ty:${num(v) ?? 0}px;translate:var(--tx,0px) var(--ty,0px);`]];      // إزاحة بصرية لعنصر عادي (لا تُحرّك غيره)
       if (free) specs.push(["fx", v => `left:${num(v)}%;`], ["fy", px("top")], ["fwd", pc("width")], ["fh", v => `height:${U(num(v))};`]);
       else specs.push(["w", v => `width:${num(v)}%;`], ["mh", v => `${def.fit ? "height" : "min-height"}:${U(num(v))};`],
         ["al", v => (v === "center" ? "margin-left:auto;margin-right:auto;" : v === "end" ? "margin-inline-start:auto;margin-inline-end:0;" : "margin-inline-end:auto;margin-inline-start:0;") + `text-align:${v === "center" ? "center" : v === "end" ? "end" : "start"};`]);
@@ -3874,12 +3874,16 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
     let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
-    let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null, ro = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
+    let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null, ro = null, offBase = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
-      if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && (E.dev !== "d" || cssPosSec(inf.sec))) {      /* تحريك عنصر عادي من الهاتف/التابلت كان يحرّره وحده فيصير عنصراً حراً معلّقاً في قسم عادي (لا يتبع الصورة ولا الأعمدة ويختفي إن تغيّر ارتفاع القسم)؛ التحرير الحر يتم من المكتب للقسم كله */
+      if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && E.dev === "d" && cssPosSec(inf.sec)) {      /* قسم عناصره موضعها من CSS (الهيرو): تحريك العنصر إزاحة بصرية وحده بلا تحويل القسم */
+        if (!offBase) { offBase = { x: Number(eff(inf.set, "tx", "d")) || 0, y: Number(eff(inf.set, "ty", "d")) || 0 }; ["t", "m"].forEach(d2 => { if (own(inf.set, "tx", d2) === undefined) setR(inf.set, "tx", d2, 0); if (own(inf.set, "ty", d2) === undefined) setR(inf.set, "ty", d2, 0); }); }
+        setR(inf.set, "tx", "d", Math.round(offBase.x + dx)); setR(inf.set, "ty", "d", Math.round(offBase.y + dy)); renderCanvas(); positionOverlay(); return;
+      }
+      if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && E.dev !== "d") {      /* تحريك عنصر عادي من الهاتف/التابلت كان يحرّره وحده فيصير عنصراً حراً معلّقاً في قسم عادي (لا يتبع الصورة ولا الأعمدة ويختفي إن تغيّر ارتفاع القسم)؛ التحرير الحر يتم من المكتب للقسم كله */
         { /* بدل المنع: السحب على الهاتف/التابلت يعيد ترتيب العنصر بين العناصر العادية (خط بنفسجي يبيّن موضع الإفلات) */
           const pt = ptrFrame(ev), tgt = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest('[data-kind="widget"]')).find(n => n && n.dataset.pb !== id && !n.closest('[data-pb="' + id + '"]')), colEl = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);
           const ovl = $("pbx-ovl"), o = ovlOrigin(); ovl.querySelectorAll(".pbx-ro").forEach(n => n.remove()); ro = null;

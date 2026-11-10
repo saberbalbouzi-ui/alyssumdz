@@ -1143,7 +1143,7 @@ const PB = (() => {
     const renderW = (w, free) => {
       const def = WIDGETS[w.type]; if (!def) return ""; const wsx = `.pb-w.x-${w.id}`, s2 = w.set;
       boxStatic(css, wsx, s2);
-      const specs = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["rot", v => `rotate:${num(v) ?? 0}deg;`], ["zi", v => `z-index:${num(v)};`]];
+      const specs = [["mar", v => dimsDecl("margin", v)], ["pad", v => dimsDecl("padding", v)], ["rad", px("border-radius")], ["rot", v => `rotate:${num(v) ?? 0}deg;`], ["zi", v => `z-index:${num(v)};`], ["tx", v => `--tx:${num(v) ?? 0}px;translate:var(--tx,0px) var(--ty,0px);`], ["ty", v => `--ty:${num(v) ?? 0}px;translate:var(--tx,0px) var(--ty,0px);`]];      // إزاحة بصرية لعنصر عادي (لا تُحرّك غيره)
       if (free) specs.push(["fx", v => `left:${num(v)}%;`], ["fy", px("top")], ["fwd", pc("width")], ["fh", v => `height:${U(num(v))};`]);
       else specs.push(["w", v => `width:${num(v)}%;`], ["mh", v => `${def.fit ? "height" : "min-height"}:${U(num(v))};`],
         ["al", v => (v === "center" ? "margin-left:auto;margin-right:auto;" : v === "end" ? "margin-inline-start:auto;margin-inline-end:0;" : "margin-inline-end:auto;margin-inline-start:0;") + `text-align:${v === "center" ? "center" : v === "end" ? "end" : "start"};`]);
