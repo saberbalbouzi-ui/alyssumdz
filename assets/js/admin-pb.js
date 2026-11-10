@@ -3788,6 +3788,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const gridCell = inf.kind === "column" && inf.sec.set.kind === "grid";
     const m0 = ((own(set, "mar", dev) || eff(set, "mar", dev)) || [0, 0, 0, 0]).slice();
     let nb = null, pair = 0, sc0 = null, ws0 = null, cc0 = null;
+    let pd0 = null;      /* قسم عادي: سحب الحافة العليا/السفلى يغيّر الحشوة (والارتفاع الأدنى إن وُجد) فيمكن إنقاص الفراغ */
     const minW = 14;      // بلا حدّ أدنى فعلي: يمكن تضييق إطار النص كثيراً فتنكسر الحروف عمودياً
     let ic = null; if (free && inf.node.type === "image") { const im = el.querySelector("img.pb-im"); if (im && im.naturalWidth) {      /* قصّ الصورة: مستطيل الصورة داخل الإطار (px) */
       const q = im.naturalHeight / im.naturalWidth, c = set.crop, W0 = r0.width, H0 = r0.height;
@@ -3846,6 +3847,10 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         }
         if (hasW && !gridCell) { const W = r0.width + (dir.includes("e") ? dx : -dx), pct = Math.max(5, Math.min(100, Math.round(W / parentW * 100))); setR(set, "w", dev, pct); if (nb) setR(nb.set, "w", dev, Math.max(5, Math.round((pair - pct) * 10) / 10)); label = pct + "%"; }
         if (hasH) { const H = Math.max(0, Math.round(r0.height + (dir.includes("s") ? dy : -dy))); setR(set, "mh", dev, H); label += (label ? " × " : "") + H + "px"; }
+      } else if (hasH && !hasW && set.kind !== "canvas" && !set.pzoff) {
+        if (!pd0) { const pp = (eff(set, "pad", dev) || [0, 0, 0, 0]).map(v => Number(v) || 0); pd0 = { pad: pp, mh: Number(eff(set, "mh", dev)) || 0 }; }
+        const delta = dir.includes("s") ? dy : -dy, ix = dir.includes("s") ? 2 : 0, pp = pd0.pad.slice(); pp[ix] = Math.max(0, Math.round(pp[ix] + delta)); setR(set, "pad", dev, pp);
+        if (pd0.mh > 0) setR(set, "mh", dev, Math.max(0, Math.round(pd0.mh + delta))); label = (ix ? "حشوة سفلية " : "حشوة علوية ") + pp[ix] + "px";
       } else {
         if (!set.pzoff) {      /* قسم تناسبي: السحب يغيّر نسبة تكبير المحتوى كله (يتبعه كل ما بداخله) */
           if (sc0 == null) sc0 = Number(eff(set, "scl", dev)) || 100;
