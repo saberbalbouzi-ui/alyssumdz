@@ -878,10 +878,10 @@ function initProduct(slug){
   if(!p) return;
   /* تنبيه طبي لمنتجات الصحة (assets/data/med-notes.json): يظهر قبل نموذج الطلب */
   try{ fetch(REL + "assets/data/med-notes.json", {cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{
-    if(!j || !(j.slugs||[]).includes(p.slug) || document.getElementById("med-note")) return;
+    if(!j || p.medNoteOff || !(p.medNote || (j.slugs||[]).includes(p.slug)) || document.getElementById("med-note")) return;
     let f = document.getElementById("order-form") || document.getElementById("pb-order"); if(!f) return;
     { const of = document.getElementById("offers"), os = of && /[?&]embed=/.test(location.search) ? of : null; if(os) f = os; }   // داخل الإطار: التنبيه فوق العروض لتبقى العروض فوق النموذج مباشرة
-    const d = document.createElement("p"); d.id = "med-note"; d.textContent = j.text || "";
+    const d = document.createElement("p"); d.id = "med-note"; d.textContent = p.medNote || j.text || "";
     d.style.cssText = "margin:.8rem 0;padding:.7rem .9rem;border:1px solid rgba(251,191,36,.45);border-radius:12px;background:rgba(245,158,11,.12);color:#fde68a;font-size:.88rem;line-height:1.7";
     f.parentNode.insertBefore(d, f);
   }).catch(()=>{}); }catch(e){}
