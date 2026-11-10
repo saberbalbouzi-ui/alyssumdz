@@ -22,8 +22,15 @@ LEAN = ("body::before,body::after{background-image:none!important;content:none!i
         ".btn-order #btn-total{white-space:nowrap}.order-wide .form .btn-order{font-size:1.1rem}"
         "#offers.offers{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px}#offers .offer{min-width:0;box-sizing:border-box}"
         # تلقائي: المكتب والتابلت (عرض الإطار 560px فأكثر) قائمة، والهاتف بطاقات؛ html.ol-l يفرض القائمة وhtml.ol-c يفرض البطاقات (خيار «شكل العروض» في عنصر نموذج الطلب)
-        "@media(min-width:560px){" + _list_css("html:not(.ol-c) ") + "}"
-        + _list_css("html.ol-l "))
+        "@media(min-width:560px){" + _list_css("html:not(.ol-c):not(.ol-i) ") + "}"
+        + _list_css("html.ol-l ")
+        # «بطاقات بالصور»: صورة المنتج أعلى كل بطاقة
+        + "#offers .offer .oi{display:none}"
+        "html.ol-i #offers.offers{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))!important;gap:10px}"
+        "html.ol-i #offers .offer{display:flex!important;flex-direction:column;align-items:center;text-align:center!important;padding:.6rem .5rem!important;gap:.25rem}"
+        "html.ol-i #offers .offer::before{content:none!important}"
+        "html.ol-i #offers .offer .oi{display:block;width:100%;height:110px;object-fit:contain;border-radius:10px}"
+        "html.ol-i #offers .offer .best{position:absolute!important;top:6px;inset-inline-start:6px}html.ol-i #offers .offer{position:relative}")
 
 def offers_only(s):
     # نُبقي عنصر #offers وحده (بأنماط قسمه) بدل المعرض والنصوص حوله

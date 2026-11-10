@@ -937,6 +937,7 @@ function initProduct(slug){
   function buildOffers(){
     offersBox.innerHTML = ""; // تفريغ أي بطاقات عروض ثابتة مضمّنة في HTML (تفادي التكرار)
     const sc = (type==="variable" && state.variation && Number(p.price)>0) ? state.variation.price / p.price : 1;
+    const wantImg = (()=>{ try{ const m = location.search.match(/[?&]oc=([^&]+)/); return !!m && JSON.parse(decodeURIComponent(m[1])).ol === "i"; }catch(e){ return false; } })();      /* «بطاقات بالصور»: صورة المنتج في كل بطاقة عرض */
     (p.offers || []).forEach((o0,i)=>{
       const o = sc===1 ? o0 : Object.assign({}, o0, { price: Math.round(o0.price*sc) });
       const paid = o.qty - (o.free||0);
@@ -945,7 +946,8 @@ function initProduct(slug){
       const d = document.createElement("div");
       d.className = "offer"+(i===offerIdx?" on":"");
       const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
-      d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}
+      const oimg = wantImg ? (p.cover||(p.images&&p.images[0])||"") : "";
+      d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}${oimg?`<img class="oi" src="${REL}${oimg}" alt="" loading="lazy" decoding="async">`:""}
         <div class="q">${label}</div>
         <div class="p">${fmt(o.price)}</div>
         <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}${offerFreeShip(p,o)?'<br><b style="color:var(--ok)">🚚 شحن مجاني</b>':""}</div>`;
@@ -2110,7 +2112,7 @@ const PhoneDZ = {
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
   if(oc && typeof oc === "object"){
     if(oc.sc === "zones") __OCSC = "zones"; else if(oc.sc === "def") __OCSC = "";
-    if(oc.ol === "l" || oc.ol === "c") document.documentElement.classList.add("ol-"+oc.ol);      /* شكل العروض: قائمة / بطاقات (الافتراضي حسب عرض الإطار) */
+    if(oc.ol === "l" || oc.ol === "c" || oc.ol === "i") document.documentElement.classList.add("ol-"+oc.ol);      /* شكل العروض: قائمة / بطاقات (الافتراضي حسب عرض الإطار) */
     const ok = v=>/^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v||"").trim()) ? String(v).trim() : "";
     const V = {bg:"bg",tc:"tc",bd:"bd",ac:"ac",bt:"bt",fb:"fb",tb:"tb",cb:"cb",wb:"wb"}, r = Number(oc.r);
     const W = "#pb-embed-wrap ";
@@ -2120,7 +2122,7 @@ const PhoneDZ = {
     if(isFinite(r) && oc.r !== "" && oc.r != null) c += "#pb-embed-wrap{--o-r:"+Math.max(0,Math.min(60,r))+"px}";
     { const bw = Number(oc.bw); if(isFinite(bw) && oc.bw !== "" && oc.bw != null) c += W+".order-wide,"+W+"#order-form{border-width:"+Math.max(0,Math.min(40,bw))+"px!important}"; }
     if(vars) c += "#pb-embed-wrap{"+vars+"}html.pb-embed{--gold:"+(ok(oc.ac)||"#16a34a")+"}";
-    if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], gp:[".gp"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
+    if(Array.isArray(oc.x)){ const M = {of:["#offers"], cm:[".field:has(#commune)"], gp:[".gp"], dt:[".dtype"], cp:[".coupon-box","#prod-coupon-msg"], wa:[".btn-wa"], nt:[".cod-note"], ou:["#offers .offer .u"], ob:["#offers .offer .best"]}; const hs = []; oc.x.forEach(k=>{ (M[k]||[]).forEach(q=>hs.push(W+q)); }); if(hs.length) c += hs.join(",")+"{display:none!important}"; }
     if(oc.w === "100") c += W+".frow{grid-template-columns:1fr!important}"; else if(oc.w === "50") c += "@media(min-width:561px){"+W+".frow{grid-template-columns:1fr 1fr!important}}";
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
     const nz = t=>String(t).replace(/[^\p{L}\p{N}]/gu,""), same = (e,t)=>nz(e.textContent) === nz(t);
