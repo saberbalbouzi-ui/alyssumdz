@@ -2110,6 +2110,7 @@ const PhoneDZ = {
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
   if(oc && typeof oc === "object"){
     if(oc.sc === "zones") __OCSC = "zones"; else if(oc.sc === "def") __OCSC = "";
+    if(oc.ol === "l" || oc.ol === "c") document.documentElement.classList.add("ol-"+oc.ol);      /* شكل العروض: قائمة / بطاقات (الافتراضي حسب عرض الإطار) */
     const ok = v=>/^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v||"").trim()) ? String(v).trim() : "";
     const V = {bg:"bg",tc:"tc",bd:"bd",ac:"ac",bt:"bt",fb:"fb",tb:"tb",cb:"cb",wb:"wb"}, r = Number(oc.r);
     const W = "#pb-embed-wrap ";
