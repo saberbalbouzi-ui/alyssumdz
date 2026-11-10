@@ -1401,7 +1401,7 @@ ${page.css || ""}${page.tplCss || ""}</style></head>
 </body></html>`;
   }
 
-  return { FX_JS, fxCompile, galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, shapeThumb, svgShape, isVid, barRich, setChrome, ICONS, iconHtml, isIconTok, BMARKS, TPLS, CATS, SC_LIST, OF_KEYS, OF_THEMES, HIDE_OPTS, expandSC, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
+  return { FX_JS, fxCompile, galDims, galCells, TPRE, tprePreview, LMARKS, TFX, tfxStyle, FONT_FAMS, F_FONT, fontsHref, cairoFace, usedFonts, DFLT, DEVS, BP, DEVNAME, DEVIC, uid, esc, clone, isObj, num, own, eff, setR, WIDGETS, ORDER, BANIMS, ICON_GROUPS, shapeThumb, svgShape, isVid, barRich, setChrome, ICONS, iconHtml, isIconTok, BMARKS, TPLS, CATS, SC_LIST, OF_KEYS, OF_THEMES, HIDE_OPTS, expandSC, SEC_CTL, COL_CTL, common, mkW, mkC, mkS, newPage, migrate, autoMobileLayout, autoFlowFree, gradCss, GRAD_PRESETS, SHAPES, SHAPE_GROUPS, svgShape, mkFree, mkGrid, mkCanvas, FREE_SIZE, renderSections, fullHtml, BASE_CSS, RUNTIME_JS, productsHtml, cleanHtml };
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -2004,6 +2004,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (FREE_ONLY && !E.page.sections.length) E.page.sections.push(TPLS.canvas.f());      // صفحة فارغة ⟵ قماش حر واحد
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0, stg = $("pbx-stage"), stTop = stg ? stg.scrollTop : 0;      // الصفحة لا تتحرك أبداً بسبب إعادة الرسم: يُثبَّت موضع التمرير قبلها وبعدها (الصور المحمَّلة تغيّر الارتفاع لحظياً)
+    if (!fdoc.getElementById("pbcairo") && PB.cairoFace) { const s = fdoc.createElement("style"); s.id = "pbcairo"; s.textContent = PB.cairoFace(new URL("./", location.href).href); fdoc.head.appendChild(s); }      // نفس ملف خط Cairo المحلي الذي تستعمله الصفحة المنشورة: نفس المقاسات وبالتالي نفس التفاف الأسطر
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
     styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
@@ -2173,11 +2174,11 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function fitStage() {
     const st = $("pbx-stage"), sc = $("pbx-sc"), fw = $("pbx-fw"); if (!st || !sc || !fw) return;
     const isAd = !!(E.page && E.page.ad), gut = FREE_ONLY && !isMob() && !isAd ? 132 : 0; st.style.paddingRight = gut ? gut + "px" : ""; st.style.paddingTop = isAd ? "64px" : FREE_ONLY ? (gut ? "62px" : "56px") : ""; st.style.paddingBottom = isAd ? "0" : "";      // أعلى الصفحة مكان شريط الإعدادات السريعة      // يمين الصفحة: شريط القسم ومصغّرات الأقسام
-    const w = DEVW[E.dev];
+    const realM = E.dev === "m" && isMob() && !(E.page && E.page.ad), w = realM ? Math.max(320, Math.min(430, Math.round(st.clientWidth || window.innerWidth))) : DEVW[E.dev];      // على هاتف حقيقي: عرض الصفحة = عرض الجهاز نفسه (بدل 390 ثابتة تُصغَّر) فيطابق التفاف النص والتخطيط ما يظهره الهاتف في المعاينة
     let h = FREE_ONLY ? Math.max(200, root ? root.offsetHeight : 0) : Math.max(500, (root ? root.offsetHeight : 0) + 40);
     if (E.busy || editing) { if (E.holdH && E.holdFor === (E.busy ? "b" : "e")) h = Math.max(h, E.holdH); E.holdH = h; E.holdFor = E.busy ? "b" : "e"; } else E.holdH = 0;      // أثناء السحب أو الكتابة لا ينكمش طول الصفحة (يتذبذب لحظياً فيقفز التمرير)      // بلا أقسام عادية: لا شريط أبيض تحت آخر قسم
     /* «تصميم بمقاس»: تظهر الصفحة كاملة (العرض والارتفاع معاً) داخل مجال الرؤية مهما كان مقاسها، والتكبير/التصغير نسبة إليها؛ لا شريط فارغ أعلاها ولا فراغ تحتها */
-    const pad = isAd ? 16 : 0, fit = isAd ? Math.min(Math.max(120, st.clientWidth - 2 * pad) / w, Math.max(120, st.clientHeight - 64 - 2 * pad) / h) : Math.min(1, Math.max(300, st.clientWidth - gut - 40) / w), s = fit * (E.zoom || 1); E.scale = s;
+    const pad = isAd ? 16 : 0, fit = isAd ? Math.min(Math.max(120, st.clientWidth - 2 * pad) / w, Math.max(120, st.clientHeight - 64 - 2 * pad) / h) : (realM ? Math.min(1, (st.clientWidth || w) / w) : Math.min(1, Math.max(300, st.clientWidth - gut - 40) / w)), s = fit * (E.zoom || 1); E.scale = s;
     sc.style.margin = isAd ? Math.max(pad, Math.round((st.clientHeight - 64 - h * s) / 2)) + "px auto" : "";
     fw.style.width = w + "px"; fw.style.height = h + "px"; fw.style.transform = `scale(${s})`; frame.style.height = h + "px";
     sc.style.width = (w * s) + "px"; sc.style.height = (h * s) + "px";
