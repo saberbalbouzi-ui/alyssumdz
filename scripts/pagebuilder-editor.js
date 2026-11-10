@@ -2424,7 +2424,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* ───────────────── تحريك العنصر الحر (حر أو ملتصق) ───────────────── */
   /* القسم الحرّ المتناسب (scaled) يتبع تخطيط المكتب على التابلت والهاتف (قيمهما تُتجاهل)، فتحريك/تكبير عنصر فيه من هناك يُكتب في قيم المكتب كي يظهر أثره */
   const cssPosSec = sec => (sec.cols || []).some(c => (c.widgets || []).some(w => { const el = fdoc && fdoc.querySelector(`[data-pb="${w.id}"]`); if (!el) return false; const ps = fdoc.defaultView.getComputedStyle(el).position; return ps === "absolute" || ps === "fixed"; }));      // قسم فيه عناصر موضعها من CSS: لا يُحوَّل كله إلى حر بسحب عنصر واحد
-  const devOfFree = inf => { if (E.dev !== "d" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaled && inf.sec.set.kind === "canvas") { if (!E.scToast || Date.now() - E.scToast > 6000) { E.scToast = Date.now(); toast("هذا القسم متناسب: يتبع تخطيط المكتب على كل الأجهزة، فالتعديل هنا يسري على الجميع"); } ["fx", "fy", "fwd", "fh"].forEach(k => { const o = inf.set[k]; if (o && typeof o === "object") { delete o.t; if (!inf.sec.set.scaledM) delete o.m; } }); return "d"; } return E.dev; };
+  const devOfFree = inf => { if (E.dev === "m" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaledM) return "m"; if (E.dev !== "d" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaled && inf.sec.set.kind === "canvas") {      // هاتف مستقل مفعّل: التحريك يكتب في قيم الهاتف وحدها
+      if (!E.scToast || Date.now() - E.scToast > 6000) { E.scToast = Date.now(); toast("هذا القسم متناسب فيتبع تخطيط المكتب على الأجهزة، والتعديل هنا يغيّر المكتب أيضاً. لتحريك مستقل على الهاتف اضغط «ترتيب الهاتف تلقائياً (متتابع)» من لوحة القسم السريعة."); } ["fx", "fy", "fwd", "fh"].forEach(k => { const o = inf.set[k]; if (o && typeof o === "object") { delete o.t; if (!inf.sec.set.scaledM) delete o.m; } }); return "d"; } return E.dev; };
   function startMove(e, inf, lazy, copy) {
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
@@ -2646,7 +2647,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const tight = !!sec.set.tight, bot = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dev)) || 0) + hOf(w))), need = tight ? bot : bot + 40, cur = Number(eff(sec.set, "mh", dev)) || 0;      // الهيدر/الشريط: ارتفاع القسم = ارتفاع العنصر بالضبط (يكبر ويصغر معه)
     if (tight ? Math.abs(need - cur) > 0.5 : bot > cur + 0.5) setR(sec.set, "mh", dev, Math.round(need));      // الصفحة الطويلة تكبر فقط حين يتجاوز عنصر حدّها السفلي (فلا يعيد التكبير ما قصّه المستخدم)
   }
-  const uOf = (sec, cr) => sec.set.scaled ? cr.width / (num(sec.set.dw) || 1140) : 1;      // نسبة التكبير الفعلية للأقسام المتناسبة
+  const uOf = (sec, cr) => sec.set.scaled && !(sec.set.scaledM && E.dev === "m") ? cr.width / (num(sec.set.dw) || 1140) : 1;      // هاتف مستقل: وحدة التصميم بكسل حقيقي      // نسبة التكبير الفعلية للأقسام المتناسبة
   /* لوحة «إنشاء صور»: صورة مضافة أو مستبدلة تُوضع في الوسط بحيث يطابق جانبها الأطول الصفحة (طولها للصورة الطولية، عرضها للعريضة) دون قصّ؛ الصفحة المربعة + صورة مستطيلة = طول الصورة بطول الصفحة */
   function fitAdImage(id) {
     const q = find(id); if (!q || !q.node.set.src || !E.page.ad) return; const W = E.page.ad.w, H = E.page.ad.h;
