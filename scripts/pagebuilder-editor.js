@@ -1047,7 +1047,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; if (quiet) { E.covered = null; renderCanvas(); return; } afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
   }
   /* تنظيم الصفحة: لوحة خيارات (الافتراضي آمن: المكتب فقط بلا قص فراغات ولا لمس لما رتّبته على التابلت/الهاتف) ثم تمرّ على الأجهزة المختارة وتصلح: عناصر خارج حدود القسم، نصوص مقصوصة (يكبّر إطارها)، أقسام أقصر من محتواها، وتقصّ الفراغات الزائدة (اختياري)، وتُكمل تخطيط الهاتف الناقص (اختياري) */
-  const ORG = { clamp: true, text: true, grow: true, gap: false, fillM: false, devs: { d: true, t: false, m: false } };
+  const ORG = { clamp: true, text: true, grow: true, gap: false, fillM: false, fitM: false, devs: { d: true, t: false, m: false } };
   function organizePage() {
     const L = (E.page.sections || []).filter(sc => sc.set.kind === "canvas" && !isHF(sc)), Lf = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas" && !isHF(sc)); if (!L.length && !Lf.length) return toast("لا توجد أقسام لتنظيمها");
     document.getElementById("pbx-orgp") && document.getElementById("pbx-orgp").remove();
@@ -1056,7 +1056,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const ck = (k, t, on, sub) => `<label style="display:flex;gap:.45rem;align-items:flex-start;margin:.3rem 0;font-size:.8rem;line-height:1.55"><input type="checkbox" data-k="${k}"${on ? " checked" : ""} style="width:auto;margin-top:.2rem;accent-color:#e2fe17"><span><b>${t}</b>${sub ? `<br><small style="opacity:.72">${sub}</small>` : ""}</span></label>`;
     box.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;font-weight:800;margin-bottom:.3rem"><span>تنظيم الصفحة</span><button type="button" data-x="1" aria-label="إغلاق" style="background:transparent;border:0;color:inherit;font-size:1.2rem;cursor:pointer">×</button></div>
 <div style="font-size:.74rem;opacity:.78;line-height:1.7;margin-bottom:.4rem">اختر ما يُصلَح وعلى أي جهاز. لا يُحذف شيء، ويمكن التراجع بـ Ctrl+Z أو من «السجل» (الساعة).</div>
-${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها", ORG.clamp)}${ck("text", "تكبير إطارات النصوص المقصوصة", ORG.text)}${ck("grow", "تمديد الأقسام الأقصر من محتواها", ORG.grow)}${ck("gap", "قص الفراغات الزائدة أسفل الأقسام", ORG.gap, "يخفّض ارتفاع الأقسام الحرة وحشوة الأقسام العادية؛ قد يغيّر تباعدك المقصود")}${ck("fillM", "إكمال تخطيط الهاتف الناقص", ORG.fillM, "للأقسام الحرة التي لم يُضبط لها هاتف بعد فقط")}
+${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها", ORG.clamp)}${ck("text", "تكبير إطارات النصوص المقصوصة", ORG.text)}${ck("grow", "تمديد الأقسام الأقصر من محتواها", ORG.grow)}${ck("gap", "قص الفراغات الزائدة أسفل الأقسام", ORG.gap, "يخفّض ارتفاع الأقسام الحرة وحشوة الأقسام العادية؛ قد يغيّر تباعدك المقصود")}${ck("fillM", "إكمال تخطيط الهاتف الناقص", ORG.fillM, "للأقسام الحرة التي لم يُضبط لها هاتف بعد فقط")}${ck("fitM", "ضبط الأقسام الحرة المتناسبة للهاتف", ORG.fitM, "بدل تصغير شكل المكتب كما هو يُرتَّب القسم تلقائياً للهاتف (عناصره تتتابع بعرض الشاشة)؛ يلزم تفعيل الهاتف")}
 <div style="margin:.5rem 0 .2rem;font-size:.78rem;font-weight:800">الأجهزة</div><div style="display:flex;gap:.9rem;font-size:.8rem">${[["d", "المكتب"], ["t", "التابلت"], ["m", "الهاتف"]].map(([k, t]) => `<label style="display:flex;gap:.3rem;align-items:center"><input type="checkbox" data-d="${k}"${ORG.devs[k] ? " checked" : ""} style="width:auto;accent-color:#e2fe17">${t}</label>`).join("")}</div>
 <div style="font-size:.7rem;opacity:.7;margin:.3rem 0 .6rem;line-height:1.6">التابلت والهاتف مطفآن افتراضياً كي لا يُمسّ ما رتّبته عليهما يدوياً؛ فعّلهما إن أردت.</div>
 <button type="button" data-go="1" style="display:block;width:100%;background:#e2fe17;color:#1f2123;border:0;border-radius:14px;padding:.55rem;font:inherit;font-weight:800;cursor:pointer">تنظيم الآن</button>`;
@@ -1072,8 +1072,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       for (const dv of devs) {
         setDev(dv); await wait(1400);
         for (const sec of L) {
+          if (dv === "m" && sec.set.scaled && ORG.fitM) { delete sec.set.scaled; if (sec.set.autoM === false) delete sec.set.autoM; renderCanvas(); await wait(700); try { writeMobile(sec); } catch (e) { console.warn(e); } n.sec++; renderCanvas(); await wait(500); }      // القسم المتناسب يتبع شكل المكتب مصغّراً؛ هنا يصير بتخطيط هاتف خاص به
           if (dv !== "d" && sec.set.scaled) continue;      // الأقسام المتناسبة تتبع تخطيط المكتب على كل الأجهزة
-          if (dv === "m" && ORG.fillM) ensureMobile(sec);
+          if (dv === "m" && (ORG.fillM || ORG.fitM)) ensureMobile(sec);
           const se = fdoc.querySelector('[data-pb="' + sec.id + '"]'), pin = se && se.querySelector(".pb-in"); if (!pin) continue; const cr = pin.getBoundingClientRect(), u = uOf(sec, cr) || 1;
           (sec.free || []).forEach(w => {
             if (w.set.locked) return; const has = k => dv === "d" || own(w.set, k, dv) !== undefined; if (!has("fx") && !has("fwd")) return;
