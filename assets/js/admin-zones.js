@@ -53,7 +53,7 @@ const AdminZones = (() => {
   function zoneHtml(z) {
     const n = (z.wilayas || []).length, open = S.edit.includes(z.id), x = zex(z), m = v => Number(v || 0).toLocaleString("fr-DZ");
     const head = `<div class="zn-hd"><div><b>${esc(z.name)}</b> <span class="zn-tag">🏠 ${z.freeHome ? "مجاني" : m(z.home) + " دج"}</span><span class="zn-tag">🏢 ${z.freeStop ? "مجاني" : m(z.stop) + " دج"}</span>${Number(z.freeOver) > 0 ? `<span class="zn-tag">مجاني ≥ ${m(z.freeOver)}</span>` : ""}<span class="zn-tag">${n} ولاية</span>${x.whole.length + x.list.length ? `<span class="zn-tag rd">${x.whole.length ? x.whole.length + " ولاية و" : ""}${x.list.length} بلدية غير متاحة</span>` : ""}</div>
-<div class="zn-c" style="margin:0"><button type="button" class="small" data-zedit="${esc(z.id)}">${open ? "إغلاق التعديل" : "تعديل"}</button><button type="button" class="small warn" data-zdel="${esc(z.id)}">حذف</button></div></div>
+<div class="zn-c" style="margin:0"><button type="button" class="small" data-zedit="${esc(z.id)}">${open ? "إغلاق التعديل" : "تعديل المنطقة"}</button><button type="button" class="small warn" data-zdel="${esc(z.id)}">حذف</button></div></div>
 <div class="zn-ws">${(z.wilayas || []).map(wl).join("، ") || "لا ولايات بعد — اضغط «تعديل» لاختيارها."}</div>`;
     if (!open) return `<div class="zn-z" data-z="${esc(z.id)}">${head}</div>`;
     const ew = +S.exWil[z.id] || 0, w = (A().fees || []).find(q => q.id === ew), comm = (w && w.communes) || [], sel = S.exSel[z.id] || [];
@@ -62,7 +62,7 @@ const AdminZones = (() => {
 <div><label>مجاني عند طلب بقيمة ≥ (0 = لا)</label><input data-f="freeOver" type="number" min="0" value="${esc(z.freeOver || 0)}"></div></div>
 <div class="zn-c"><label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" data-f="freeHome" style="width:auto" ${z.freeHome ? "checked" : ""}> توصيل مجاني للمنزل دائماً</label>
 <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" data-f="freeStop" style="width:auto" ${z.freeStop ? "checked" : ""}> توصيل مجاني للمكتب دائماً</label></div>
-<details open data-zd="${esc(z.id)}"><summary>الولايات (${n})</summary><div class="zn-l">${(A().fees || []).map(q => { const o = zoneOf(q.id, z.id); return `<label class="${o ? "off" : ""}" title="${o ? "ضمن منطقة «" + esc(o.name) + "»" : ""}"><input type="checkbox" data-zw="${q.id}" ${(z.wilayas || []).includes(q.id) ? "checked" : ""} ${o ? "disabled" : ""}> <bdi>${pad(q.id)} ${esc(q.name)}</bdi>${o ? " ← " + esc(o.name) : ""}</label>`; }).join("")}</div></details>
+<details open data-zd="${esc(z.id)}"><summary>الولايات (${n})</summary><div class="zn-l">${(A().fees || []).map(q => { const o = zoneOf(q.id, z.id); return `<label class="${o ? "off" : ""}" title="${o ? "ضمن منطقة «" + esc(o.name) + "» — يمكنك تحديدها لنقلها إلى هذه المنطقة" : ""}"><input type="checkbox" data-zw="${q.id}" ${(z.wilayas || []).includes(q.id) ? "checked" : ""}> <bdi>${pad(q.id)} ${esc(q.name)}</bdi>${o ? " ← " + esc(o.name) : ""}</label>`; }).join("")}</div></details>
 <div class="zn-x"><b>التوصيل غير متوفر</b><div class="hint">اختر ولاية من هذه المنطقة ثم البلديات التي لا يصلها التوصيل، أو الولاية كلها.</div>
 ${n ? `<div class="zn-r" style="margin-top:8px"><div><label>الولاية</label><select data-xw><option value="">— اختر —</option>${(z.wilayas || []).map(id => { const q = (A().fees || []).find(t => t.id === id); return q ? `<option value="${q.id}" ${ew === q.id ? "selected" : ""}>${pad(q.id)} — ${esc(q.name)}</option>` : ""; }).join("")}</select></div>
 <div><label>نوع الاستثناء</label><select data-xm><option value="all">لا توصيل نهائياً (منزل ومكتب)</option><option value="home">لا توصيل للمنزل فقط (المكتب متاح)</option></select></div></div>` : '<div class="hint">أضف ولايات للمنطقة أولاً.</div>'}
@@ -70,15 +70,29 @@ ${w ? `<details open><summary>البلديات (${comm.length}) — حدّد غ�
 <div class="zn-c"><button type="button" class="small" data-xadd="1">إضافة البلديات المحددة</button><button type="button" class="small gray" data-xwhole="1">الولاية كلها غير متوفرة</button></div>` : ""}
 <div style="margin-top:8px">${x.whole.map(id => `<span class="zn-tag rd">${wl(id)} كلها<button type="button" data-xwdel="${id}" title="إزالة">×</button></span>`).join("")}${x.list.map(e => `<span class="zn-tag ${e.m === "all" ? "rd" : ""}">${wl(e.w)} / ${esc(e.c)} ${e.m === "home" ? "(منزل)" : ""}<button type="button" data-xdel="${S.ex.indexOf(e)}" title="إزالة">×</button></span>`).join("") || (x.whole.length ? "" : '<span class="hint">لا استثناءات في هذه المنطقة.</span>')}</div></div></div>`;
   }
+  /* حفظ مواضع التمرير (القوائم الداخلية وحاويات التمرير حول البطاقة والنافذة) قبل إعادة الرسم واستعادتها بعدها كي لا يقفز الجدول إلى الأعلى عند كل تحديد */
+  function zsnap(host) {
+    const lists = [...host.querySelectorAll(".zn-z")].map(z => [z.dataset.z, [...z.querySelectorAll(".zn-l")].map(e => e.scrollTop)]);
+    const anc = []; for (let e = host.parentElement; e; e = e.parentElement) { if (e.scrollTop > 0) anc.push([e, e.scrollTop]); }
+    return { lists, anc, x: window.scrollX, y: window.scrollY };
+  }
+  function zrest(host, s) {
+    const run = () => {
+      s.lists.forEach(([id, arr]) => { const z = id && host.querySelector('.zn-z[data-z="' + id + '"]'); if (!z) return; [...z.querySelectorAll(".zn-l")].forEach((e, i) => { if (arr[i]) e.scrollTop = arr[i]; }); });
+      s.anc.forEach(([e, y]) => { if (e.isConnected) e.scrollTop = y; }); if (window.scrollY !== s.y) window.scrollTo(s.x, s.y);
+    };
+    run(); requestAnimationFrame(run);
+  }
   function draw() {
     const host = $("zn-card"); if (!host) return; css(); const a = A(); if (!a || !a.fees || !a.fees.length) { host.innerHTML = ""; return; }
     const inZ = new Set(); S.zones.forEach(z => (z.wilayas || []).forEach(id => inZ.add(id))); const rest = a.fees.filter(w => !inZ.has(w.id));
+    const snap = zsnap(host);
     host.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem"><div><b style="color:var(--green)">مناطق التوصيل (Zones)</b>
-<div class="hint">كل منطقة: سعر للمنزل وسعر للمكتب، شحن مجاني اختياري، وبلديات أو ولايات «التوصيل غير متوفر». اضغط «تعديل» على المنطقة لتغيير ما فيها. الولايات الجديدة (59–69) تُرسَل لشركة التوصيل باسم ولايتها الأم.</div></div>
+<div class="hint">كل منطقة: سعر للمنزل وسعر للمكتب، شحن مجاني اختياري، وبلديات أو ولايات «التوصيل غير متوفر». اضغط «تعديل المنطقة» لتغيير ما فيها. الولايات الجديدة (59–69) تُرسَل لشركة التوصيل باسم ولايتها الأم.</div></div>
 <button type="button" class="small" data-zadd="1">+ منطقة جديدة</button></div><div class="hint" id="zn-st"></div>
 ${S.zones.length ? S.zones.map(zoneHtml).join("") : '<div class="hint" style="margin-top:10px">لا مناطق بعد — أضف منطقة.</div>'}
 ${rest.length ? `<div class="zn-z"><b>ولايات بلا منطقة (${rest.length})</b><div class="zn-ws">${rest.map(w => `<bdi>${pad(w.id)} ${esc(w.name)}</bdi>`).join("، ")} — تبقى بسعرها الفردي الحالي؛ أضفها إلى منطقة من زر «تعديل».</div></div>` : ""}`;
-    bind(host);
+    bind(host); zrest(host, snap);
   }
   function bind(host) {
     host.querySelector("[data-zadd]").onclick = () => { const z = { id: uid(), name: "منطقة " + (S.zones.length + 1), home: 600, stop: 400, freeHome: false, freeStop: false, freeOver: 0, wilayas: [] }; S.zones.push(z); S.edit.push(z.id); commit(true); };
@@ -87,7 +101,9 @@ ${rest.length ? `<div class="zn-z"><b>ولايات بلا منطقة (${rest.len
     host.querySelectorAll("[data-z]").forEach(card => {
       const z = S.zones.find(x => x.id === card.dataset.z); if (!z) return;
       card.querySelectorAll("[data-f]").forEach(i => i.onchange = () => { const f = i.dataset.f; z[f] = i.type === "checkbox" ? i.checked : (i.type === "number" ? Math.max(0, Number(i.value) || 0) : i.value.trim()); commit(f === "name" || f === "home" || f === "stop" || f === "freeOver" || f === "freeHome" || f === "freeStop"); });
-      card.querySelectorAll("[data-zw]").forEach(i => i.onchange = () => { const id = +i.dataset.zw; z.wilayas = (z.wilayas || []).filter(x => x !== id); if (i.checked) z.wilayas.push(id); commit(true); });
+      card.querySelectorAll("[data-zw]").forEach(i => i.onchange = () => { const id = +i.dataset.zw; const o = i.checked ? zoneOf(id, z.id) : null;
+        if (o) { const wn = ((A().fees || []).find(q => q.id === id) || {}).name || id; if (!confirm("الولاية «" + wn + "» ضمن المنطقة «" + o.name + "». عند التأكيد تُحذف منها وتُنقل إلى المنطقة «" + z.name + "».")) { i.checked = false; return; } o.wilayas = (o.wilayas || []).filter(x => x !== id); }
+        z.wilayas = (z.wilayas || []).filter(x => x !== id); if (i.checked) z.wilayas.push(id); commit(true); });
       const xw = card.querySelector("[data-xw]"); if (xw) xw.onchange = () => { S.exWil[z.id] = xw.value; S.exSel[z.id] = []; draw(); };
       card.querySelectorAll("[data-xc]").forEach(i => i.onchange = () => { const w = A().fees.find(x => x.id === +S.exWil[z.id]), c = w.communes[+i.dataset.xc], L = (S.exSel[z.id] || []).filter(x => x !== c); if (i.checked) L.push(c); S.exSel[z.id] = L; });
       const add = card.querySelector("[data-xadd]"); if (add) add.onclick = () => { const L = S.exSel[z.id] || []; if (!L.length) return toastMsg("حدّد بلدية واحدة على الأقل"); const m = card.querySelector("[data-xm]").value, w = +S.exWil[z.id]; L.forEach(c => { S.ex = S.ex.filter(e => !(e.w === w && e.c === c)); S.ex.push({ w, c, m }); }); S.exSel[z.id] = []; commit(true); };
