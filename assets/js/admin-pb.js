@@ -4057,6 +4057,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     set.zi = Math.max(0, ...(sec.free || []).map(w => Number(w.set.zi) || 0)) + 1; (sec.free = sec.free || []).push(inf.node); afterEdit(inf.node.id);
   }
   /* تكييف الهاتف: التصميم الحر يُرتَّب تلقائياً عند العرض (PB.autoMobileLayout)؛ هذا الزر يحوّله إلى قيم صريحة قابلة للتعديل */
+  /* التحديد المتعدد: القسم الحر الواحد الذي فيه كل المحدَّد ← زر «ترتيب الهاتف» يفصل الهاتف ويرتّبه تلقائياً ثم يعرضه */
+  function phoneSec(ids) { const L = (ids || []).map(find).filter(i => i && i.kind === "widget" && i.free); if (!L.length || L.length !== ids.length) return null; const sc = L[0].sec; return L.every(i => i.sec === sc) && sc.set.kind === "canvas" ? sc : null; }
+  function phoneAuto(sc) { if (sc.set.scaled) { sc.set.scaledM = true; sc.set.stackM = true; } writeMobile(sc); E.dev = "m"; updateTop(); fitStage(); E.nextLabel = "ترتيب الهاتف تلقائياً"; afterEdit(); toast("📲 رُتّب الهاتف تلقائياً — المكتب والتابلت كما هما؛ عدّل بالسحب بعد ذلك"); }
   function autoMobile(sec) { writeMobile(sec); E.dev = "m"; updateTop(); fitStage(); afterEdit(); toast("📲 ثُبّتت قيم الهاتف — عدّل أي عنصر بالسحب بعد ذلك"); }
   function writeMobile(sec) { const L = PB.autoMobileLayout(sec); (sec.free || []).forEach(w => { const a = L.items[w.id]; if (a) { setR(w.set, "fx", "m", a.fx); setR(w.set, "fwd", "m", a.fwd); setR(w.set, "fy", "m", a.fy); setR(w.set, "fh", "m", a.fh); } }); setR(sec.set, "mh", "m", L.h); }
   /* عند أول تعديل يدوي في عرض الهاتف نثبّت الترتيب التلقائي أولاً حتى لا تتبعثر بقية العناصر */
@@ -4774,9 +4777,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         mb.style.pointerEvents = "none"; ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(d => { const h = document.createElement("div"); h.className = "pbx-h pbx-mh d-" + d; h.title = d.length === 2 ? "اسحب لتكبير/تصغير المجموعة كلها بنسبة ثابتة (Shift = حر)" : "اسحب لتمديد المجموعة"; h.onmousedown = ev => { if (ev.button === 0) startMultiResize(ev, d, mi.map(i => i.node.id)); }; mb.appendChild(h); }); } }
     if (E.busy || isMob()) return;      // الهاتف: شريط الأسفل بدل الشريط العائم
     const g = grpState(), bar = document.createElement("div"); bar.className = "pbx-mt";
-    bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"], ["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]].forEach(([k, t, tt, dis, dng]) => {
+    bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"]].concat(phoneSec(ids) ? [["phone", "📲 ترتيب الهاتف", "يرتّب عناصر هذا القسم على الهاتف تلقائياً بالتتابع ويفصل الهاتف عن المكتب (لا يتغيّر المكتب ولا التابلت)"]] : [], [["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]]).forEach(([k, t, tt, dis, dng]) => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.title = tt; if (dis) b.disabled = true; if (dng) b.className = "dng";
-      b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else ma(k); }; bar.appendChild(b); });
+      b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else if (k === "phone") { const sc = phoneSec(ids); if (sc) phoneAuto(sc); } else ma(k); }; bar.appendChild(b); });
     ovl.appendChild(bar); const st = $("pbx-stage"), W = ovl.clientWidth, fw = bar.offsetWidth, fh = bar.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight;
     let top = T - fh - 14; if (top < vt + 4) { top = B + 18; if (top + fh > vb - 4) top = Math.max(vt + 4, T + 8); } bar.style.top = top + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4, (L + R) / 2 - fw / 2)) + "px";
     /* زرّا التدوير والتحريك للتحديد المتعدد (كانا يظهران لعنصر واحد فقط): التحريك يحرّك المجموعة كلها، والتدوير يدوّر كل عنصر حول مركزه بالزاوية نفسها */
