@@ -12,7 +12,14 @@ LEAN = ("body::before,body::after{background-image:none!important;content:none!i
         # زر التأكيد في سطر واحد، وبطاقات العروض عمودان متساويان 50% (تُولَّد هنا لأن seo.py يعيد توليد order-embed.html)
         ".btn-order{white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:.35em;padding-inline:.6rem;font-size:clamp(.8rem,4.3vw,1.15rem)}"
         ".btn-order #btn-total{white-space:nowrap}.order-wide .form .btn-order{font-size:1.1rem}"
-        "#offers.offers{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px}#offers .offer{min-width:0;box-sizing:border-box}")
+        "#offers.offers{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px}#offers .offer{min-width:0;box-sizing:border-box}"
+        # المكتب والتابلت (عرض الإطار 560px فأكثر): العروض قائمة بصفوف مع دائرة اختيار؛ الهاتف: بطاقات
+        "@media(min-width:560px){#offers.offers{grid-template-columns:1fr!important;gap:8px}"
+        "#offers .offer{display:flex!important;align-items:center;justify-content:space-between;gap:.7rem;text-align:start!important;padding:.7rem 1rem!important}"
+        "#offers .offer::before{content:'';width:18px;height:18px;border-radius:50%;border:2px solid var(--line,#cbd5e1);flex:none;box-sizing:border-box}"
+        "#offers .offer.on::before{border-color:var(--ok,#16a34a);background:radial-gradient(circle,var(--ok,#16a34a) 42%,transparent 46%)}"
+        "#offers .offer .q{order:1;flex:1;font-weight:800}#offers .offer .p{order:3;font-weight:800;color:var(--ok,#16a34a);white-space:nowrap}"
+        "#offers .offer .u{display:none}#offers .offer .best{position:static!important;transform:none!important;order:2;margin:0;font-size:.7rem;white-space:nowrap}}")
 
 def offers_only(s):
     # نُبقي عنصر #offers وحده (بأنماط قسمه) بدل المعرض والنصوص حوله
