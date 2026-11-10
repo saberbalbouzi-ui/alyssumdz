@@ -1051,8 +1051,15 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; if (quiet) { E.covered = null; renderCanvas(); return; } afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
   }
   /* قيم أجهزة شاذة في الأقسام الحرة المتناسبة: عنصر له موضع تابلت/هاتف وبقية عناصر القسم لا (ينزاح عن زملائه ويتعطّل تكبيره). تُنظَّف تلقائياً عند فتح أي صفحة وقبل نشرها فلا تتكرر في أي صفحة */
+  /* مجموعة عناصر ناتجة عن تحويل الكود: بطاقة (شكل) تعلو نصاً/صورة داخلها فتبتلع النقر فلا يتحرك العنصر؛ يُرفع العنصر فوق الأشكال التي تحتويه داخل مجموعته */
+  function fixGroupZ(P) {
+    let n = 0; (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas") return; const ws = (sec.free || []).filter(w => w.set && w.set.grp && !w.set.locked), v = (w, k) => Number(w.set[k] && typeof w.set[k] === "object" ? w.set[k].d : w.set[k]) || 0;
+      const sh = ws.filter(w => w.type === "shape"), els = ws.filter(w => w.type !== "shape"); if (!sh.length || !els.length) return;
+      for (let pass = 0; pass < 4; pass++) { let ch = 0; els.forEach(e => { const cx = v(e, "fx") + v(e, "fwd") / 2, cy = v(e, "fy") + (v(e, "fh") || 20) / 2; sh.forEach(q => { if (q.set.grp !== e.set.grp || q.set.fgr || Number(q.set.fillOp) < 1) return; if (cx >= v(q, "fx") && cx <= v(q, "fx") + v(q, "fwd") && cy >= v(q, "fy") && cy <= v(q, "fy") + v(q, "fh") && (Number(q.set.zi) || 0) >= (Number(e.set.zi) || 0)) { e.set.zi = (Number(q.set.zi) || 0) + 1; ch++; n++; } }); }); if (!ch) break; } });
+    return n;
+  }
   function cleanStrayAll(P) {
-    let n = 0; (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
+    let n = fixGroupZ(P); (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
       ["t", "m"].forEach(d2 => { if ((d2 === "m" && sec.set.scaledM) || (d2 === "t" && sec.set.scaledT)) return; const has = w => ks.some(k => w.set[k] && typeof w.set[k] === "object" && w.set[k][d2] !== undefined), c = ws.filter(has).length; if (c > 0 && c < ws.length) { ws.filter(has).forEach(w => ks.forEach(k => { if (w.set[k] && typeof w.set[k] === "object") delete w.set[k][d2]; })); n += c; } }); });
     return n;
   }
