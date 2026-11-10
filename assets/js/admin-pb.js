@@ -2457,9 +2457,9 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   /* تنظيم الصفحة بزر واحد: يمرّ على المكتب ثم التابلت ثم الهاتف ويصلح ما يفسده التحويل والتعديل: عناصر خارج حدود القسم، نصوص مقصوصة (يكبّر إطارها)، أقسام أقصر من محتواها، وتخطيط هاتف ناقص (يُشتقّ من المكتب). لا يحذف شيئاً ولا يلمس الألوان */
   async function organizePage() {
-    const L = (E.page.sections || []).filter(sc => sc.set.kind === "canvas" && !isHF(sc)); if (!L.length) return toast("لا توجد أقسام حرة لتنظيمها");
-    pbAsk("تنظيم الصفحة على المكتب والتابلت والهاتف: إعادة العناصر الخارجة عن حدود الأقسام، وتكبير إطارات النصوص المقصوصة، وتمديد الأقسام الأقصر من محتواها، وإكمال تخطيط الهاتف الناقص. لا يحذف شيئاً. يمكن التراجع بـCtrl+Z.", "تنظيم", async () => {
-      const wait = ms => new Promise(r => setTimeout(r, ms)), dev0 = E.dev, n = { clamp: 0, text: 0, sec: 0 }, sav = (set, k, dv, v) => { setR(set, k, dv, v); if (dv !== "d" && own(set, k, "d") === undefined) setR(set, k, "d", v); };
+    const L = (E.page.sections || []).filter(sc => sc.set.kind === "canvas" && !isHF(sc)), Lf = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas" && !isHF(sc)); if (!L.length && !Lf.length) return toast("لا توجد أقسام لتنظيمها");
+    pbAsk("تنظيم الصفحة على المكتب والتابلت والهاتف: إعادة العناصر الخارجة عن حدود الأقسام، وتكبير إطارات النصوص المقصوصة، وتمديد الأقسام الأقصر من محتواها، وقص الفراغات الزائدة أسفل الأقسام، وإكمال تخطيط الهاتف الناقص. لا يحذف سوى نصوص فارغة في آخر الأقسام العادية. يمكن التراجع بـCtrl+Z.", "تنظيم", async () => {
+      const wait = ms => new Promise(r => setTimeout(r, ms)), dev0 = E.dev, n = { clamp: 0, text: 0, sec: 0, gap: 0 }, sav = (set, k, dv, v) => { setR(set, k, dv, v); if (dv !== "d" && own(set, k, "d") === undefined) setR(set, k, "d", v); };
       toast("جارٍ تنظيم الصفحة… لا تلمس المحرر لحظات");
       try {
         for (const dv of ["d", "t", "m"]) {
@@ -2475,13 +2475,18 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
               if (ch) { sav(w.set, "fx", dv, fx); sav(w.set, "fwd", dv, fw); sav(w.set, "fy", dv, fy); n.clamp++; }
               if (["text", "heading"].includes(w.type) && has("fh")) { const el = fdoc.querySelector('[data-pb="' + w.id + '"]'); if (el && el.scrollHeight > el.clientHeight + 3) { sav(w.set, "fh", dv, Math.ceil(el.scrollHeight / u) + 2); n.text++; } }
             });
-            if (dv === "d" || own(sec.set, "mh", dv) !== undefined) { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))), cur = Number(eff(sec.set, "mh", dv)) || 0; if (need + 4 > cur) { setR(sec.set, "mh", dv, Math.round(need + 12)); n.sec++; } }
+            if (dv === "d" || own(sec.set, "mh", dv) !== undefined) { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))), cur = Number(eff(sec.set, "mh", dv)) || 0; if (need + 4 > cur) { setR(sec.set, "mh", dv, Math.round(need + 12)); n.sec++; } else if (cur > need + 28 && !sec.set.bgImg && !sec.set.bgVid && need > 0) { setR(sec.set, "mh", dv, Math.round(need + 12)); n.gap++; } }      // قص الفراغ أسفل آخر عنصر (إلا الأقسام بخلفية صورة/فيديو)
+          }
+          for (const sec of Lf) {      // الأقسام العادية: نصوص فارغة في آخرها وارتفاع أدنى زائد وحشوة سفلية كبيرة
+            if (dv === "d") sec.cols.forEach(c => { while (c.widgets.length > 1) { const w = c.widgets[c.widgets.length - 1], emp = (w.type === "text" && !String(w.set.html || "").replace(/<[^>]*>|&nbsp;|\s/g, "")) || (w.type === "heading" && !String(w.set.text || "").trim()); if (!emp) break; c.widgets.pop(); n.gap++; } });
+            if (own(sec.set, "mh", dv) !== undefined && !sec.set.bgImg && !sec.set.bgVid) { setR(sec.set, "mh", dv, undefined); n.gap++; }
+            const pd = own(sec.set, "pad", dv); if (Array.isArray(pd) && Number(pd[2]) > 24 && !sec.set.bgImg && !sec.set.bgVid) { const q = pd.slice(); q[2] = 24; setR(sec.set, "pad", dv, q); n.gap++; }
           }
           renderCanvas(); await wait(500);
         }
       } catch (e) { console.warn(e); }
       setDev(dev0); await wait(600); E.nextLabel = "تنظيم الصفحة"; afterEdit(null);
-      toast("✅ نُظّمت الصفحة: " + n.clamp + " عنصر أُعيد داخل الحدود، " + n.text + " نص كُبّر إطاره، " + n.sec + " قسم مُدّد" + (n.clamp + n.text + n.sec ? "" : " (لم أجد ما يحتاج إصلاحاً)") + " — Ctrl+Z للتراجع");
+      toast("✅ نُظّمت الصفحة: " + n.clamp + " عنصر أُعيد داخل الحدود، " + n.text + " نص كُبّر إطاره، " + n.sec + " قسم مُدّد، " + n.gap + " فراغ قُصّ" + (n.clamp + n.text + n.sec + n.gap ? "" : " (لم أجد ما يحتاج إصلاحاً)") + " — Ctrl+Z للتراجع");
     });
   }
   /* زر واحد: كل أقسام الصفحة (غير الحرة) تصير عناصر حرة بمواضعها الفعلية، بدل التحويل عند كل سحب */
