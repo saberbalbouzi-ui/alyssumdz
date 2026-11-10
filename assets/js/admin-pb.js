@@ -2288,7 +2288,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     fdoc.addEventListener("contextmenu", showCtx); fdoc.addEventListener("scroll", hideCtx, true);
     fdoc.addEventListener("dragover", onDragOver); fdoc.addEventListener("drop", onDrop); fdoc.addEventListener("dragleave", e => { if (!e.relatedTarget) hideDrop(); });
     fdoc.addEventListener("keydown", onKey);
-    fdoc.addEventListener("selectionchange", () => { const inf = selInfo(), bar = $("pbx-qbar"); if (!bar || !inf || inf.kind !== "widget" || !["text", "heading"].includes(inf.node.type)) return; const i = bar.querySelector('[data-qi="fs"]'); if (!i || document.activeElement === i) return; const cs = qFont(inf); if (cs) i.value = Math.round(parseFloat(cs.fontSize)); });      // حجم الخط في الشريط يتبع المحدَّد داخل النص
+    fdoc.addEventListener("selectionchange", () => { const inf = selInfo(), bar = $("pbx-qbar"); if (!bar || !inf || inf.kind !== "widget" || !["text", "heading"].includes(inf.node.type)) return; const i = bar.querySelector('[data-qi="fs"]'); if (!i || document.activeElement === i) return; const cs = qFont(inf); if (cs) i.value = Math.max(1, Math.round(parseFloat(cs.fontSize) / qU(inf))); });      // حجم الخط في الشريط يتبع المحدَّد داخل النص
     fdoc.defaultView.addEventListener("scroll", () => positionOverlay());
     new ResizeObserver(() => { fitStage(); positionOverlay(); }).observe(root);
   }
@@ -3144,12 +3144,14 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* حجم الخط الظاهر فعلاً (px على الشاشة): في قسم حرّ متناسب (scaled) على الهاتف يُصغَّر الخط بنسبة القسم u (≈0.3–0.5)، فالخانة تعرض الحجم الحقيقي المرسوم وتكتب في التصميم القيمة ÷ u كي يتطابق الرقم مع ما تراه وتتحرك الخطوة بنفس الحجم الظاهر */
   function qU(inf) { const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"); return pin ? (uOf(inf.sec, pin.getBoundingClientRect()) || 1) : 1; }
   function qFsNow(inf) { const cs = qFont(inf); return cs ? Math.round(parseFloat(cs.fontSize)) : 0; }
+  /* القيمة المعروضة في الشريط = حجم الخط المعتمد في التصميم (لا المرسوم على الشاشة): في الأقسام المتناسبة يُصغَّر المرسوم مع العرض فكان يظهر 8 لنص حجمه 24 */
+  function qFsDisp(inf) { const r = qFsNow(inf); return r ? Math.max(1, Math.round(r / qU(inf))) : 0; }
   const qDesignFs = (inf, real) => Math.max(4, Math.min(400, Math.round(real / qU(inf))));
   function qbarHtml(inf) {
     const t = inf.node.type, set = inf.set, dev = E.dev, isTx = t === "heading" || t === "text", isImg = t === "image", btn = (k, ic, tt, on, dis) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${ic}</button>`, tb = (k, label, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}><span class="ic">${QI[k] || QI.flip}</span><span class="tx">${label}</span></button>`, sep = '<span class="qsep"></span>';
     let h = "";
     if (isTx) {
-      const cs = qFont(inf), fs = qFsNow(inf) || Number(eff(set, "fs", dev)) || 17, fw = Number((cs && cs.fontWeight) || set.fw || 400), col = /^#[0-9a-f]{6}$/i.test(set.color || "") ? set.color : (cs ? "#" + (cs.color.match(/\d+/g) || [0, 0, 0]).slice(0, 3).map(n => Number(n).toString(16).padStart(2, "0")).join("") : "#000000");
+      const cs = qFont(inf), fs = qFsDisp(inf) || Number(eff(set, "fs", dev)) || 17, fw = Number((cs && cs.fontWeight) || set.fw || 400), col = /^#[0-9a-f]{6}$/i.test(set.color || "") ? set.color : (cs ? "#" + (cs.color.match(/\d+/g) || [0, 0, 0]).slice(0, 3).map(n => Number(n).toString(16).padStart(2, "0")).join("") : "#000000");
       const ff = (qDef(inf, "ff") || { o: [] }).o, ta = eff(set, "ta", dev) || "start";
       h += `<select data-qi="ff" title="الخط">${ff.map(([v, n]) => `<option value="${esc(v)}" style="font-family:${esc(v) || "inherit"}"${(set.ff || "") === v ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`
         + `<span class="qn"><button type="button" data-qb="fs-" title="تصغير الخط">−</button><input type="number" data-qi="fs" min="8" max="160" value="${fs}" title="حجم الخط"><button type="button" data-qb="fs+" title="تكبير الخط">+</button></span>`
@@ -3472,7 +3474,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       bar.addEventListener("mousedown", e => { if (editing && !e.target.closest("input,select,textarea,label")) e.preventDefault(); });      // أزرار الشريط لا تسحب التركيز من النص المُحرَّر فيبقى التحديد
       bar.addEventListener("click", e => { const b = e.target.closest("[data-qb]"); if (b) qAct(b.dataset.qb, b); });
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
-      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qSize(inf, qDesignFs(inf, Math.max(4, Math.min(300, Number(t.value) || 17))), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
+      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qSize(inf, Math.max(4, Math.min(400, Math.round(Number(t.value) || 17))), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
     if (!document.getElementById("pbfonts-a")) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
     const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget" && !multiOn(); if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null; bar.style.display = show ? "flex" : "none"; try { epSync(); } catch (x) { console.warn(x); } if (!show) return;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه
     bar.innerHTML = qbarHtml(inf); placeQbar();
@@ -3640,7 +3642,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
-    if (k === "fs-" || k === "fs+") { const cur = qFsNow(inf) || Math.round((Number(eff(set, "fs", dev)) || 17) * qU(inf)); return qSize(inf, qDesignFs(inf, Math.max(4, cur + (k === "fs+" ? 1 : -1))), true); }
+    if (k === "fs-" || k === "fs+") { const cur = qFsDisp(inf) || Math.round(Number(eff(set, "fs", dev)) || 17); return qSize(inf, Math.max(4, cur + (k === "fs+" ? 1 : -1)), true); }
     if (k === "clearfmt") { if (editing) { clearFmt(); return; } if (typeof set.html === "string") { set.html = plainFmtHtml(set.html); E.nextLabel = "مسح التنسيق"; afterEdit(); toast("تم مسح التنسيق المنسوخ"); } return; }
     if (["bold", "italic", "under", "strike"].includes(k) && qSel(k)) return;
     if (k === "bold") { const cs = qFont(inf), cur = Number(set.fw || (cs && cs.fontWeight) || 400); return qDone(inf, "fw", cur >= 600 ? "400" : (inf.node.type === "heading" ? "800" : "700")); }
