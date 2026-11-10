@@ -822,7 +822,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (cap && E.sel === wEl.dataset.pb) { e.preventDefault(); return startCapDrag(e, cap, wEl); }
       { const i1 = find(wEl.dataset.pb); if (i1 && isLocked(i1)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); return; } }      // العنصر المقفل يُحدَّد فقط
       if ((E.multi && E.multi.length > 1 && E.multi.includes(wEl.dataset.pb)) || grpOf(wEl.dataset.pb)) { const gi = find(wEl.dataset.pb); if (gi && !(E.dev === "m" && gi.sec.set.kind !== "canvas" && PB.autoFlowFree(gi.sec))) { if (!E.multi.includes(wEl.dataset.pb)) select(wEl.dataset.pb); if (E.multi.length > 1) { e.preventDefault(); return startMoveMulti(e); } } }      // سحب مجموعة/عدة عناصر معاً
-      { const i0 = find(wEl.dataset.pb); if (i0 && E.dev === "m" && i0.sec.set.kind !== "canvas" && (wEl.dataset.free ? PB.autoFlowFree(i0.sec) : true)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); if (!E.mToast) { E.mToast = 1; toast("📱 في الهاتف تُرتَّب العناصر تلقائياً داخل الأقسام العادية — حرّكها من عرض سطح المكتب أو استعمل إعدادات الشريط الجانبي"); } return; } }
+      { const i0 = find(wEl.dataset.pb); if (i0 && E.dev === "m" && i0.sec.set.kind !== "canvas" && (wEl.dataset.free ? PB.autoFlowFree(i0.sec) : true)) { if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb); if (!wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots,button,.pb-fz")) { e.preventDefault(); startMove(e, find(wEl.dataset.pb), true, false); return; }      // العنصر العادي على الهاتف/التابلت: سحبه يعيد ترتيبه بين العناصر
+        if (!E.mToast) { E.mToast = 1; toast("📱 في الهاتف تُرتَّب العناصر تلقائياً داخل الأقسام العادية — حرّكها من عرض سطح المكتب أو استعمل إعدادات الشريط الجانبي"); } return; } }
       if (wEl.dataset.free && !e.target.closest("input,select,textarea,.pb-sl-a,.pb-sl-dots")) {
         if (E.sel !== wEl.dataset.pb) select(wEl.dataset.pb);
         e.preventDefault(); let inf = find(wEl.dataset.pb); if (inf && e.altKey) { dup(); inf = selInfo(); } if (inf) startMove(e, inf, false, e.altKey);
@@ -2392,14 +2393,21 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const id = inf.node.id, dev = E.dev; if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
     let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
-    let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
+    let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null, ro = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
       if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && E.dev !== "d") {      /* تحريك عنصر عادي من الهاتف/التابلت كان يحرّره وحده فيصير عنصراً حراً معلّقاً في قسم عادي (لا يتبع الصورة ولا الأعمدة ويختفي إن تغيّر ارتفاع القسم)؛ التحرير الحر يتم من المكتب للقسم كله */
-        if (!E.warnFreeT || Date.now() - E.warnFreeT > 4000) { E.warnFreeT = Date.now(); toast("لتحريك عنصر بحرية حوّل القسم كله إلى عناصر حرة من عرض المكتب (زر «تحويل القسم إلى عناصر حرة» في إعدادات القسم). هنا يمكنك ترتيب العناصر بالأسهم مع Alt."); }
-        moved = false; return;
+        if (!E.warnFreeT || Date.now() - E.warnFreeT > 4000) { E.warnFreeT = Date.now(); toast("أفلت العنصر قبل أي عنصر أو بعده لإعادة ترتيبه (الخط البنفسجي يبيّن الموضع). للتحريك الحر حوّل القسم إلى عناصر حرة من عرض المكتب."); }
+        { /* بدل المنع: السحب على الهاتف/التابلت يعيد ترتيب العنصر بين العناصر العادية (خط بنفسجي يبيّن موضع الإفلات) */
+          const pt = ptrFrame(ev), tgt = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest('[data-kind="widget"]')).find(n => n && n.dataset.pb !== id && !n.closest('[data-pb="' + id + '"]')), colEl = fdoc.elementsFromPoint(pt.x, pt.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);
+          const ovl = $("pbx-ovl"), o = ovlOrigin(); ovl.querySelectorAll(".pbx-ro").forEach(n => n.remove()); ro = null;
+          const mark = (r, after) => { const d = document.createElement("div"); d.className = "pbx-ro"; d.style.cssText = `position:absolute;left:${o.ox + r.left * o.s}px;top:${o.oy + (after ? r.bottom : r.top) * o.s - 2}px;width:${r.width * o.s}px;height:4px;border-radius:3px;background:#8b3dff;pointer-events:none;box-shadow:0 0 0 2px rgba(255,255,255,.6)`; ovl.appendChild(d); };
+          if (tgt) { const r = layoutRect(tgt), after = pt.y > r.top + r.height / 2; ro = { id: tgt.dataset.pb, after }; mark(r, after); }
+          else if (colEl && colEl.dataset.pb) { const ws = (find(colEl.dataset.pb) || { node: { widgets: [] } }).node.widgets || []; const last = ws.length ? fdoc.querySelector(`[data-pb="${ws[ws.length - 1].id}"]`) : null; ro = { col: colEl.dataset.pb }; if (last) mark(layoutRect(last), true); }
+        }
+        moved = true; E.roMode = true; return;
       }
       if (!conv) {
         conv = true; E.sel = id;
@@ -2432,6 +2440,9 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     };
     dragTrack(e, "move", mv, ev => {
       document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); clearDrop(); clearGhost();
+      if (E.roMode) { E.roMode = false; try { $("pbx-ovl").querySelectorAll(".pbx-ro").forEach(n => n.remove()); } catch (x) { } const me = find(id); let ok = false;
+        if (me && ro) { const tn = ro.id ? find(ro.id) : find(ro.col); if (tn && me.list) { me.list.splice(me.list.indexOf(me.node), 1); let tl = null, at = 0; if (ro.id && tn.list) { tl = tn.list; at = tl.indexOf(tn.node) + (ro.after ? 1 : 0); } else if (tn.kind === "column") { tl = tn.node.widgets; at = tl.length; } if (tl) { tl.splice(at, 0, me.node); ok = true; } else me.list.push(me.node); } }
+        if (ok) { E.nextLabel = "إعادة ترتيب عنصر"; afterEdit(id); toast("↕ أُعيد ترتيب العنصر (الترتيب نفسه على المكتب والتابلت والهاتف)"); } else renderCanvas(); return; }
       if (moved && xfer) { const mm = new Map([[srcSec, mh0]]); if (xferFree([id].concat(peers.map(q => q.w.id)), xfer.sec, xfer.gx, xfer.gy, mm)) return; renderCanvas(); }
       if (moved && dropCol && ev && !(ev.ctrlKey || ev.metaKey) && dropCol !== origCol) {      // إفلات فوق عمود: يمتص العنصر تلقائياً (Ctrl يُبقيه حراً؛ ولا يُمتص فوراً في عموده الأصلي أثناء أول سحب)
         const me = find(id), tc = find(dropCol); if (me && tc && tc.kind === "column") {
