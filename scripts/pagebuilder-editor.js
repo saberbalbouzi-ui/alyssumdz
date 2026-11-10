@@ -1457,12 +1457,15 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const oo = ovlOrigin(), gh = document.createElement("div"); gh.className = "pbx-ghost"; gh.style.cssText = `left:${oo.ox + (tcr.left + gx) * oo.s}px;top:${oo.oy + (tcr.top + gy) * oo.s}px;width:${o.U.w * oo.s}px;height:${o.U.h * oo.s}px`; $("pbx-ovl").appendChild(gh);
     return { sec: o.tsec, gx, gy };
   }
+  /* نقل/لصق عنصر بين قسمين وحدتهما مختلفة (عرض تصميم أو حاوية مختلفة): قيم الخط بوحدات التصميم تُضرب بنسبة الوحدتين فيبقى حجمه الظاهر كما كان */
+  function scaleFs(set, k) { if (!set || set.fs === undefined || !k || Math.abs(k - 1) < 0.02) return; const f = set.fs; if (f && typeof f === "object") Object.keys(f).forEach(d => { if (typeof f[d] === "number") f[d] = Math.max(4, Math.round(f[d] * k)); }); else if (typeof f === "number") set.fs = Math.max(4, Math.round(f * k)); }
+  const secUnit = sec => { const c = sec && fdoc && fdoc.querySelector(`[data-pb="${sec.id}"] .pb-in`); if (!c) return null; const r = c.getBoundingClientRect(); return { u: uOf(sec, r) || 1, w: r.width || 1 }; };
   function xferFree(ids, ts, gx, gy, mhMap) {
     const infs = ids.map(find).filter(i => i && i.free && i.sec !== ts); if (!infs.length) return false;
     const tcont = fdoc.querySelector(`[data-pb="${ts.id}"] .pb-in`); if (!tcont) return false; const tcr = tcont.getBoundingClientRect(), ut = uOf(ts, tcr);
     const rs = infs.map(i => ({ i, r: layoutRect(fdoc.querySelector(`[data-pb="${i.node.id}"]`)) })), L = Math.min(...rs.map(q => q.r.left)), Tp = Math.min(...rs.map(q => q.r.top));
     const base = Math.max(0, ...(ts.free || []).map(w => Number(w.set.zi) || 0)) + 1; rs.sort((a, b) => (Number(a.i.set.zi) || 0) - (Number(b.i.set.zi) || 0));
-    rs.forEach((q, k) => { const st = q.i.node.set;
+    rs.forEach((q, k) => { const st = q.i.node.set; { const su = secUnit(q.i.sec); if (su && ut) scaleFs(st, su.u / ut); }
       /* القيم الجديدة تُكتب لكل الأجهزة (d و m عند النقل من الهاتف/التابلت) كي لا يبقى للعنصر موضع قديم من قسمه السابق يُخفيه، وتُحصر داخل القسم الهدف */
       const dv = E.dev === "d" ? ["d"] : ["d", E.dev], put = (key, v) => { st[key] = {}; dv.forEach(x => { st[key][x] = v; }); }, hT0 = Math.round(tcr.height / ut), hh = Math.round(q.r.height / ut);
       put("fx", Math.round(Math.max(-5, Math.min(100 - Math.min(90, q.r.width / tcr.width * 100), (gx + q.r.left - L) / tcr.width * 100)) * 10) / 10); put("fy", Math.max(0, Math.min(Math.max(0, hT0 - Math.min(hh, hT0)), Math.round((gy + q.r.top - Tp) / ut)))); put("fwd", Math.round(q.r.width / tcr.width * 1000) / 10); if (st.fh !== undefined) put("fh", hh); st.zi = base + k;
@@ -2286,12 +2289,12 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   const isLocked = inf => !!(inf && inf.kind === "widget" && (inf.set.locked || (inf.sec && inf.sec.set.locked)));
   function toggleLock() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; if (inf.sec.set.locked) { toast("🔒 القسم مقفل — افتح قفله من شريط القسم"); return; } if (inf.set.locked) delete inf.set.locked; else inf.set.locked = true; E.nextLabel = inf.set.locked ? "قفل عنصر" : "فتح قفل"; afterEdit(); toast(inf.set.locked ? "🔒 العنصر مقفل" : "🔓 فُتح القفل"); }
   /* نسخ/لصق العنصر ونمطه */
-  function copyEl() { if (multiOn()) return copyMulti(); const inf = selInfo(); if (!inf || inf.kind !== "widget") return; E.clipM = null; E.clip = clone(inf.node); toast("📋 نُسخ العنصر — الصقه بـ Ctrl+V"); }
+  function copyEl() { if (multiOn()) return copyMulti(); const inf = selInfo(); if (!inf || inf.kind !== "widget") return; E.clipM = null; E.clip = clone(inf.node); E.clipU = inf.free ? secUnit(inf.sec) : null; toast("📋 نُسخ العنصر — الصقه بـ Ctrl+V"); }
   function pasteEl() {
     if (!E.clip) { toast("لا يوجد عنصر منسوخ"); return; }
     const list = E.clipM && E.clipM.length > 1 && E.clipM[0] === E.clip ? E.clipM : [E.clip], gm = {}, ids = [], t = target();
     list.forEach(src => { const c = reId(clone(src), gm); delete c.set.locked; ids.push(c.id);
-      if (t.sec) { const sec = t.sec, fr = sec.free || [];
+      if (t.sec) { const sec = t.sec, fr = sec.free || []; { const du = secUnit(sec), su = E.clipU; if (du && su && src.set && src.set.fx !== undefined) { const kU = su.u / du.u, kW = su.w / du.w; scaleFs(c.set, kU); if (Math.abs(kU - 1) >= 0.02) ["fy", "fh"].forEach(k => { const v = c.set[k]; if (v && typeof v === "object") Object.keys(v).forEach(d => { if (typeof v[d] === "number") v[d] = Math.round(v[d] * kU); }); }); if (Math.abs(kW - 1) >= 0.02) ["fx", "fwd"].forEach(k => { const v = c.set[k]; if (v && typeof v === "object") Object.keys(v).forEach(d => { if (typeof v[d] === "number") v[d] = Math.round(Math.min(100, v[d] * kW) * 10) / 10; }); }); } }
         if (c.set.fx && c.set.fy) { setR(c.set, "fx", E.dev, (Number(eff(c.set, "fx", E.dev)) || 0) + 3); setR(c.set, "fy", E.dev, (Number(eff(c.set, "fy", E.dev)) || 0) + 30); c.set.zi = Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1; }
         else { const f = PB.mkFree(c.type, 6, 24, Math.max(0, ...fr.map(q => Number(q.set.zi) || 0)) + 1); ["fx", "fy", "fwd", "fh", "zi"].forEach(k => { c.set[k] = f.set[k]; }); delete c.set.w; delete c.set.mh; }
         (sec.free = sec.free || []).push(c); if (sec.set.kind === "canvas") { const need = (Number(eff(c.set, "fy", "d")) || 0) + (Number(eff(c.set, "fh", "d")) || 0) + 40; if (need > (Number(eff(sec.set, "mh", "d")) || 0)) setR(sec.set, "mh", "d", need); } }
@@ -2299,7 +2302,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     E.nextLabel = ids.length > 1 ? "لصق " + ids.length + " عناصر" : "لصق عنصر"; afterEdit(ids[ids.length - 1]); if (ids.length > 1) setMulti(ids);
   }
   const STYLE_SKIP = ["w", "mh", "al", "mar", "fx", "fy", "fwd", "fh", "zi", "rot", "locked"];
-  const styleKeys = inf => ctlsFor(inf).filter(c => c.tab === "s" && !STYLE_SKIP.includes(c.k)).map(c => c.k);
+  const STYLE_EXTRA = ["cls"], STYLE_EXTRA_TXT = ["tfx", "tpre", "tfxc", "tfxi", "tsh", "tcurve"];      /* مظهر عنصر لا يمرّ عبر أي حقل إعداد: صنف الصفحة (cls) — كالخطوط الملوّنة حول عنوان فرعي — وتأثيرات النص */
+  const styleKeys = inf => { const ks = ctlsFor(inf).filter(c => c.tab === "s" && !STYLE_SKIP.includes(c.k)).map(c => c.k); STYLE_EXTRA.concat(["text", "heading"].includes(inf.node.type) ? STYLE_EXTRA_TXT : []).forEach(k => { if (!ks.includes(k)) ks.push(k); }); return ks; };
   /* v1.89.962: صور حرة ← «نسخ النمط» ينسخ أيضاً حجم الصورة (العرض والارتفاع) كي تتساوى الصور الصغيرة بنقرة نسخ ثم لصق؛ بقية العناصر والصور داخل الأعمدة كما كانت (الحجم مستثنى) */
   const SIZE_KEYS = ["fwd", "fh"], sizeToo = inf => inf && inf.node && inf.node.type === "image" && !!inf.free;
   function copyStyle() { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const keys = styleKeys(inf), st = {}; keys.forEach(k => { if (inf.set[k] !== undefined) st[k] = clone(inf.set[k]); });
