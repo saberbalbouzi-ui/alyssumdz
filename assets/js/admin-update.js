@@ -30,14 +30,16 @@ const AdminUpdate = (() => {
       const st = { t: Date.now(), tab: "", pb: null }, on = document.querySelector(".nav-btn.on"), m = on && /Admin\.tab\('([^']+)'/.exec(on.getAttribute("onclick") || ""); if (m) st.tab = m[1];
       const app = document.getElementById("pb-app");
       if (typeof PBApp !== "undefined" && app && app.classList.contains("on") && PBApp.E && PBApp.E.page) { const E = PBApp.E; st.pb = { page: E.page, slug: E.slug || "", isNew: !!E.isNew, dirty: !!E.dirty, dev: E.dev, sel: E.sel, ltab: E.ltab }; PBApp.saveDraftNow && PBApp.saveDraftNow(); }
-      sessionStorage.setItem("au_state", JSON.stringify(st));
+      try { sessionStorage.setItem("au_state", JSON.stringify(st)); }
+      catch (e) { if (st.pb) { const p = st.pb.page; st.pb.page = null; st.pb.slim = true; try { PBApp.saveDraftNow && PBApp.saveDraftNow(); } catch (x) { } sessionStorage.setItem("au_state", JSON.stringify(st)); st.pb.page = p; } else throw e; }      // صفحة كبيرة لا تتّسع لمخزن الجلسة: تُحفظ مسودتها في المتصفح وتُستعاد منها
     } catch (e) { try { sessionStorage.removeItem("au_state"); } catch (x) { } }
   }
   function restoreState() {
-    let st = null; try { st = JSON.parse(sessionStorage.getItem("au_state") || "null"); sessionStorage.removeItem("au_state"); } catch (e) { } if (!st || Date.now() - st.t > 120000) return;
+    let st = null; try { st = JSON.parse(sessionStorage.getItem("au_state") || "null"); sessionStorage.removeItem("au_state"); } catch (e) { } if (!st || Date.now() - st.t > 600000) return;
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { }
     try { if (st.tab && typeof Admin !== "undefined") { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + st.tab + "'")); if (b) Admin.tab(st.tab, b); } } catch (e) { }
-    try { if (st.pb && typeof PBApp !== "undefined") { PBApp.open(st.pb.page, st.pb.slug, st.pb.isNew); const E = PBApp.E; E.dirty = st.pb.dirty; if (st.pb.dev && st.pb.dev !== "d") PBApp.setDev(st.pb.dev); if (st.pb.sel && E.page) { setTimeout(() => { try { if (PBApp.find(st.pb.sel)) { E.sel = st.pb.sel; PBApp.renderCanvas(); } } catch (e) { } }, 400); } } } catch (e) { console.warn(e); }
+    try { if (st.pb && st.pb.slim && !st.pb.page) { let d = null; try { d = JSON.parse(localStorage.getItem("pb_draft_" + (st.pb.slug || "new")) || "null"); } catch (e) { } if (d) st.pb.page = d; else if (st.pb.slug && typeof PBAdmin !== "undefined") { PBAdmin.edit(st.pb.slug); st.pb = null; } }
+      if (st.pb && st.pb.page && typeof PBApp !== "undefined") { PBApp.open(st.pb.page, st.pb.slug, st.pb.isNew); const E = PBApp.E; E.dirty = st.pb.dirty; if (st.pb.dev && st.pb.dev !== "d") PBApp.setDev(st.pb.dev); if (st.pb.sel && E.page) { setTimeout(() => { try { if (PBApp.find(st.pb.sel)) { E.sel = st.pb.sel; PBApp.renderCanvas(); } } catch (e) { } }, 400); } } } catch (e) { console.warn(e); }
     toast("✅ تم تحديث الصفحة");
   }
   /* نصوص الأزرار أثناء العمل: «جاري التحديث…» / «جاري مسح الكاش…» */
@@ -66,6 +68,25 @@ const AdminUpdate = (() => {
     try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.unregister())); } } catch (e) { }
     await reloadFresh("cc", Date.now().toString(36));
   }
+  /* أي إعادة تحميل (F5 أو إغلاق عرضي) تحفظ عمل المطوّر المفتوح فيعود كما كان؛ ولا يُحفظ شيء إن كان المطوّر مغلقاً */
+  const inEditor = () => { const app = document.getElementById("pb-app"); return typeof PBApp !== "undefined" && app && app.classList.contains("on") && PBApp.E && PBApp.E.page; };
+  window.addEventListener("pagehide", () => { try { if (inEditor()) saveState(); } catch (e) { } });
+  /* تحديث تلقائي: إن وُجدت نسخة أحدث والمطوّر مفتوح ولا نشاط منذ 45 ثانية (ولا رفع صور ولا نشر جارٍ) يُحفَظ العمل ويُحدَّث ثم يُعاد فتح الصفحة كما كانت. يظهر عدّاد 10 ثوانٍ مع زر إلغاء */
+  let lastAct = Date.now(), autoOff = "", cdTimer = 0; const seenDocs = new WeakSet();
+  const act = () => { lastAct = Date.now(); }, hookDoc = d => { if (!d || seenDocs.has(d)) return; seenDocs.add(d); ["pointerdown", "keydown", "wheel", "input"].forEach(ev => d.addEventListener(ev, act, true)); };
+  hookDoc(document);
+  function autoTick() {
+    try {
+      if (!avail || busy || autoOff === latest || cdTimer || !inEditor()) return; const E = PBApp.E, fr = document.getElementById("pbx-frame"); try { hookDoc(fr && fr.contentDocument); } catch (e) { }
+      if (Date.now() - lastAct < 45000 || E.upN || E.pubBusy || E.busy) return;
+      let n = 10; const d = document.createElement("div"); d.id = "au-auto"; d.style.cssText = "position:fixed;bottom:18px;inset-inline-start:18px;z-index:10090;background:#173f35;color:#fff;border-radius:14px;padding:.7rem 1rem;box-shadow:0 10px 34px rgba(0,0,0,.4);display:flex;gap:.8rem;align-items:center;font-family:inherit;direction:rtl;font-weight:800;font-size:.86rem";
+      d.innerHTML = '<span id="au-n"></span><button type="button" style="background:#c8a24b;color:#173f35;border:0;border-radius:10px;padding:.35rem .8rem;font-weight:900;cursor:pointer;font-family:inherit">إلغاء</button>'; document.body.appendChild(d);
+      const say = () => { d.querySelector("#au-n").textContent = "سيُحدَّث المطوّر تلقائياً بعد " + n + " ثوانٍ وتعود صفحتك كما هي"; }; say();
+      d.querySelector("button").onclick = () => { autoOff = latest; clearInterval(cdTimer); cdTimer = 0; d.remove(); };
+      cdTimer = setInterval(() => { if (Date.now() - lastAct < 3000 || E.pubBusy || E.upN) { autoOff = latest; clearInterval(cdTimer); cdTimer = 0; d.remove(); return; } n--; if (n <= 0) { clearInterval(cdTimer); cdTimer = 0; d.remove(); apply(); } else say(); }, 1000);
+    } catch (e) { }
+  }
+  setInterval(autoTick, 10000);
   /* بعد تحميل اللوحة (تنتهي Admin.load باستدعاء routeHash) نعيد التبويب وصفحة المطوّر */
   function hookRestore() {
     let has = false; try { has = !!sessionStorage.getItem("au_state"); } catch (e) { } if (!has) return;

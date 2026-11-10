@@ -3159,12 +3159,12 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   /* تفكيك كل ربط في الصفحة: يزيل رابط المجموعات (grp) من كل العناصر فتصير مستقلة */
   function ungroupAll() {
-    let n = 0; (E.page.sections || []).forEach(sec => [...(sec.cols || []).flatMap(c => c.widgets || []), ...(sec.free || [])].forEach(w => { if (w.set && w.set.grp) { delete w.set.grp; n++; } }));
+    let n = 0; (E.page.sections || []).forEach(sec => [...(sec.cols || []).flatMap(c => c.widgets || []), ...(sec.free || [])].forEach(w => { if (!w.set) return; if (w.set.grp) { delete w.set.grp; n++; } if (w.set.stk) { delete w.set.stk; n++; } }));      // الربط بمجموعة + التصاق العنصر بما فوقه (يتبعه عند تحريكه)
     if (!n) { toast("لا يوجد عناصر مربوطة في الصفحة"); return; }
     E.multi = []; E.nextLabel = "تفكيك كل الربط"; afterEdit(); toast("⛓ فُكّ ربط " + n + " عنصراً في الصفحة كلها — صارت العناصر مستقلة (Ctrl+Z للتراجع)");
   }
   function ungroupSel() {
-    const L = selIds().map(find).filter(Boolean); let n = 0; L.forEach(i => { if (i.set.grp) { delete i.set.grp; n++; } }); if (!n) { toast("لا يوجد ربط لتفكيكه"); return; }
+    const L = selIds().map(find).filter(Boolean); let n = 0; L.forEach(i => { if (i.set.grp) { delete i.set.grp; n++; } if (i.set.stk) { delete i.set.stk; n++; } }); if (!n) { toast("لا يوجد ربط لتفكيكه"); return; }
     E.nextLabel = "تفكيك ربط"; afterEdit(); toast("⛓ فُكّ الربط — صارت العناصر مستقلة");
   }
   /* محاذاة العناصر المحدّدة (في القسم نفسه) إلى حدودها المشتركة */
@@ -3177,7 +3177,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     E.nextLabel = "محاذاة عناصر"; afterEdit();
   }
   const alignItems = () => [["⇤", "يسار", () => alignMulti("left")], ["↔", "وسط أفقياً", () => alignMulti("center")], ["⇥", "يمين", () => alignMulti("right")], "-", ["⤒", "أعلى", () => alignMulti("top")], ["↕", "وسط عمودياً", () => alignMulti("middle")], ["⤓", "أسفل", () => alignMulti("bottom")]];
-  const grpState = () => { const L = selIds().map(find).filter(Boolean), gs = L.map(i => i.set.grp || ""); return { any: gs.some(Boolean), all: gs.every(Boolean) && new Set(gs).size === 1 }; };
+  const grpState = () => { const L = selIds().map(find).filter(Boolean), gs = L.map(i => i.set.grp || ""); return { any: gs.some(Boolean) || L.some(i => i.set.stk), all: gs.every(Boolean) && new Set(gs).size === 1 }; };
   function openMultiCtx(x, y) {
     const n = selIds().length, g = grpState();
     showMenu([["⧉", "نسخ (" + n + ")", copyMulti, "Ctrl+C"], ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", dupMulti, "Ctrl+D"], "-",
@@ -3193,9 +3193,30 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
 <p style="color:#8a8472;font-size:.74rem;line-height:1.8;margin-top:.8rem">اختصارات: Delete حذف · Ctrl+C/V نسخ/لصق · Ctrl+D تكرار · Ctrl+G ربط · Ctrl+Shift+G تفكيك · Ctrl+A تحديد كل القسم · Esc إلغاء.</p>`;
     el.querySelectorAll("[data-ma]").forEach(b => { b.onclick = () => { const k = b.dataset.ma; if (["left", "right", "center", "middle", "top", "bottom"].includes(k)) alignMulti(k); else ma(k); }; });
   }
+  /* مجموعة عناصر عادية (غير حرة) محدّدة معاً: السحب الأفقي يغيّر عرض كل عنصر (نسبة من حاويته) والعمودي ارتفاعه الأدنى؛ والزوايا تغيّر العرض مع حجم محتوى كل عنصر (Shift = بلا تغيير للمحتوى) */
+  function startMultiResizeFlow(e, dir, infs) {
+    const dev = E.dev, els = infs.map(i => fdoc.querySelector(`[data-pb="${i.node.id}"]`)); if (els.some(x => !x)) return;
+    const R0 = infs.map((i, k) => { const r = layoutRect(els[k]), par = els[k].parentElement ? els[k].parentElement.getBoundingClientRect().width : r.width; return { i, W: r.width, H: r.height, par: Math.max(1, par), L: r.left, T: r.top, R: r.right == null ? r.left + r.width : r.right, B: r.bottom == null ? r.top + r.height : r.bottom, ws: Number(eff(i.set, "wsc", dev)) || 100 }; });
+    const W0 = Math.max(1, Math.max(...R0.map(q => q.R)) - Math.min(...R0.map(q => q.L))), H0 = Math.max(1, Math.max(...R0.map(q => q.B)) - Math.min(...R0.map(q => q.T)));
+    const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), corner = hasW && hasH;
+    const tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip);
+    const cursor = dir.length === 1 ? (hasW ? "ew-resize" : "ns-resize") : (dir === "nw" || dir === "se" ? "nwse-resize" : "nesw-resize");
+    const mv = (dx, dy, ev) => {
+      let kx = hasW ? Math.max(.1, (W0 + (dir.includes("e") ? dx : -dx)) / W0) : 1, ky = hasH ? Math.max(.1, (H0 + (dir.includes("s") ? dy : -dy)) / H0) : 1;
+      const uni = corner && !ev.shiftKey; if (uni) kx = ky = Math.max(.1, Math.abs(dx) / W0 > Math.abs(dy) / H0 ? kx : ky);
+      R0.forEach(q => { const st = q.i.set;
+        if (hasW) { const al = eff(st, "al", dev); if (al !== "center") setR(st, "al", dev, dir.includes("e") ? "end" : "start"); setR(st, "w", dev, Math.max(5, Math.min(100, Math.round(q.W * kx / q.par * 1000) / 10))); }
+        if (hasH) setR(st, "mh", dev, Math.max(10, Math.round(q.H * ky)));
+        if (uni) { setR(st, "wsc", dev, Math.max(20, Math.min(500, Math.round(q.ws * kx)))); if (dev !== "d" && own(st, "wsc", "d") === undefined) setR(st, "wsc", "d", q.ws); } });
+      tip.textContent = Math.round(W0 * kx) + "×" + Math.round(H0 * ky); const st0 = $("pbx-ovl").getBoundingClientRect(); tip.style.left = (ev.clientX - st0.left + 14) + "px"; tip.style.top = (ev.clientY - st0.top + 14) + "px";
+      renderCanvas(); positionOverlay(); $("pbx-ovl").appendChild(tip);
+    };
+    e.preventDefault(); e.stopPropagation(); E.nextLabel = "تغيير حجم مجموعة"; dragTrack(e, cursor, mv, () => { tip.remove(); commitHist(); renderInspector(); });
+  }
   /* تغيير حجم مجموعة العناصر المحدّدة: كل عنصر يتناسب موضعه وحجمه مع إطار المجموعة؛ الزوايا بنسبة ثابتة ويكبر محتوى النصوص معها (Shift = حر) */
   function startMultiResize(e, dir, ids) {
     e.preventDefault(); e.stopPropagation();
+    { const all = ids.map(find).filter(Boolean); if (all.length > 1 && all.every(i => !i.free)) return startMultiResizeFlow(e, dir, all); }
     const infs = ids.map(find).filter(i => i && i.free); if (infs.length < 2) return; const sec = infs[0].sec; ensureMobile(sec);
     const dev = E.dev, els = infs.map(i => fdoc.querySelector(`[data-pb="${i.node.id}"]`)); if (els.some(x => !x)) return;
     const cont = els[0].closest(".pb-in"), cr = cont.getBoundingClientRect(), u = uOf(sec, cr);
@@ -3227,7 +3248,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       b.style.cssText = `left:${l}px;top:${t}px;width:${w}px;height:${h}px`; ovl.appendChild(b); L = Math.min(L, l); T = Math.min(T, t); R = Math.max(R, l + w); B = Math.max(B, t + h); n++; });
     if (!n) return; const mb = document.createElement("div"); mb.className = "pbx-mbox"; mb.style.cssText = `left:${L - 4}px;top:${T - 4}px;width:${R - L + 8}px;height:${B - T + 8}px`; ovl.appendChild(mb);
     { const mi = ids.map(find).filter(Boolean);      // إطار المجموعة: مقابض لتغيير حجم المجموعة كلها (العناصر الحرة غير المقفلة في قسم واحد)
-      if (!E.busy && !isMob() && mi.length > 1 && mi.every(i => i.free && !isLocked(i)) && new Set(mi.map(i => i.sec.id)).size === 1) {
+      if (!E.busy && !isMob() && mi.length > 1 && mi.every(i => !isLocked(i)) && ((mi.every(i => i.free) && new Set(mi.map(i => i.sec.id)).size === 1) || mi.every(i => !i.free))) {
         mb.style.pointerEvents = "none"; ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(d => { const h = document.createElement("div"); h.className = "pbx-h pbx-mh d-" + d; h.title = d.length === 2 ? "اسحب لتكبير/تصغير المجموعة كلها بنسبة ثابتة (Shift = حر)" : "اسحب لتمديد المجموعة"; h.onmousedown = ev => { if (ev.button === 0) startMultiResize(ev, d, mi.map(i => i.node.id)); }; mb.appendChild(h); }); } }
     if (E.busy || isMob()) return;      // الهاتف: شريط الأسفل بدل الشريط العائم
     const g = grpState(), bar = document.createElement("div"); bar.className = "pbx-mt";
@@ -3788,7 +3809,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
   async function publish(mode) {
     if (E.page.origin && !mode) return PBConvert.ask();      // صفحة قادمة من المنتج/الرئيسية: حفظ مباشر أو نسخة جديدة
     if (!validate(mode === "direct")) return;
-    let P = E.page; const slug = P.slug; toast("⏳ جارِ النشر...");
+    let P = E.page; const slug = P.slug; toast("⏳ جارِ النشر..."); E.pubBusy = true;      // يمنع التحديث التلقائي للوحة أثناء النشر
     try {
       if (E.upq) { if (E.upN) toast("⏳ بانتظار انتهاء رفع الصور..."); await E.upq; if ((E.upFail || []).some(pth => JSON.stringify(P).includes(pth))) { toast("❌ صور لم تُرفع إلى الموقع — أعد رفعها قبل النشر"); return; } }
       toast("⏳ جارِ النشر… فحص الصور"); try { await slim(true); } catch (e) { }                                                         // تخفيف تلقائي للصور الثقيلة فقط (>450KB)
@@ -3802,7 +3823,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       await syncAB(P);
       E.isNew = false; E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
       toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)");
-    } catch (err) { console.error(err); toast("❌ " + err.message); }
+    } catch (err) { console.error(err); toast("❌ " + err.message); } finally { E.pubBusy = false; }
   }
 
   return { convertAllFree: () => convertAllFree(), organizePage, ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
