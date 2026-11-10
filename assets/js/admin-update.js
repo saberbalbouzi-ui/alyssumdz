@@ -1,5 +1,7 @@
 /* تحديث لوحة الإدارة لآخر نسخة منشورة: زر «تحديث» في شريط اللوحة وفي شريط مطوّر الصفحات، وإشعار عند وجود نسخة أحدث.
    النسخة الحالية في <meta name="admin-version"> (يكتبها scripts/build-admin-pb.py من ملف VERSION)، والأحدث تُقرأ من /VERSION على الخادم. */
+/* غطاء «إكمال التحديث»: عند العودة من تحديث كان المحرر مفتوحاً فيه يُغطّى كل شيء فوراً (لا تظهر لوحة الإدارة بين الإغلاق وإعادة الفتح) حتى يُفتح المحرر بعمله */
+(function () { try { const st = JSON.parse(sessionStorage.getItem("au_state") || "null"); if (!st || !st.pb || Date.now() - st.t > 600000) return; const d = document.createElement("div"); d.id = "au-cover"; d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#0b1210;color:#f1f5f2;display:flex;flex-direction:column;gap:.9rem;align-items:center;justify-content:center;font-family:inherit;font-weight:800;direction:rtl"; d.innerHTML = '<span style="width:34px;height:34px;border:4px solid rgba(226,254,23,.25);border-top-color:#e2fe17;border-radius:50%;display:inline-block;animation:aucv .8s linear infinite"></span><span>تمّ التحديث… جارٍ إعادة فتح المحرر بعملك</span><style>@keyframes aucv{to{transform:rotate(360deg)}}</style>'; (document.body || document.documentElement).appendChild(d); setTimeout(() => { const c = document.getElementById("au-cover"); if (c) c.remove(); }, 40000); } catch (e) { } })();
 const AdminUpdate = (() => {
   const meta = document.querySelector('meta[name="admin-version"]'), cur = meta ? meta.content : "";
   let latest = "", avail = false, noted = "";
@@ -35,11 +37,12 @@ const AdminUpdate = (() => {
     } catch (e) { try { sessionStorage.removeItem("au_state"); } catch (x) { } }
   }
   function restoreState() {
-    let st = null; try { st = JSON.parse(sessionStorage.getItem("au_state") || "null"); sessionStorage.removeItem("au_state"); } catch (e) { } if (!st || Date.now() - st.t > 600000) return;
+    let st = null; try { st = JSON.parse(sessionStorage.getItem("au_state") || "null"); sessionStorage.removeItem("au_state"); } catch (e) { } if (!st || Date.now() - st.t > 600000) { try { const c = document.getElementById("au-cover"); if (c) c.remove(); } catch (e) { } return; }
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { }
     try { if (st.tab && typeof Admin !== "undefined") { const b = [...document.querySelectorAll(".nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + st.tab + "'")); if (b) Admin.tab(st.tab, b); } } catch (e) { }
     try { if (st.pb && st.pb.slim && !st.pb.page) { let d = null; try { d = JSON.parse(localStorage.getItem("pb_draft_" + (st.pb.slug || "new")) || "null"); } catch (e) { } if (d) st.pb.page = d; else if (st.pb.slug && typeof PBAdmin !== "undefined") { PBAdmin.edit(st.pb.slug); st.pb = null; } }
       if (st.pb && st.pb.page && typeof PBApp !== "undefined") { PBApp.open(st.pb.page, st.pb.slug, st.pb.isNew); const E = PBApp.E; E.dirty = st.pb.dirty; if (st.pb.dev && st.pb.dev !== "d") PBApp.setDev(st.pb.dev); if (st.pb.sel && E.page) { setTimeout(() => { try { if (PBApp.find(st.pb.sel)) { E.sel = st.pb.sel; PBApp.renderCanvas(); } } catch (e) { } }, 400); } } } catch (e) { console.warn(e); }
+    try { const c = document.getElementById("au-cover"); if (c) c.remove(); } catch (e) { }
     toast("✅ تم تحديث الصفحة");
   }
   /* نصوص الأزرار أثناء العمل: «جاري التحديث…» / «جاري مسح الكاش…» */
@@ -93,7 +96,7 @@ const AdminUpdate = (() => {
     let has = false; try { has = !!sessionStorage.getItem("au_state"); } catch (e) { } if (!has) return;
     let done = false; const run = () => { if (done) return; done = true; setTimeout(restoreState, 200); };
     const t0 = setInterval(() => { try { if (typeof Admin !== "undefined" && typeof Admin.routeHash === "function" && !Admin.__auHook) { Admin.__auHook = 1; const o = Admin.routeHash; Admin.routeHash = function () { const r = o.apply(this, arguments); run(); return r; }; clearInterval(t0); } } catch (e) { } }, 50);
-    setTimeout(() => { clearInterval(t0); if (!done) run(); }, 30000);
+    setTimeout(() => { clearInterval(t0); if (!done) run(); }, 12000);
   }
   const init = () => {
     const add = () => { const top = document.querySelector("#app .top"); if (!top || document.getElementById("au-btn")) return; const b = document.createElement("button"); b.id = "au-btn"; b.type = "button"; b.className = "small gold au-b"; b.setAttribute("data-au", "1"); b.innerHTML = '<span class="au-i">🔄</span> <span class="au-t">تحديث</span>'; b.onclick = apply; const lg = top.querySelector(".logout"); lg ? top.insertBefore(b, lg) : top.appendChild(b); const c = document.createElement("button"); c.id = "au-cc"; c.type = "button"; c.className = "small gray"; c.title = "مسح كاش المتصفح لهذا الموقع وإعادة تحميل الصفحة"; c.innerHTML = "🧹 مسح الكاش"; c.onclick = clearCache; b.after(c); paint(); };
