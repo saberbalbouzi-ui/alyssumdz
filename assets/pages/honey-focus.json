@@ -1916,7 +1916,6 @@
       "src": "/assets/img/tarkiz/lp/c-basil.webp",
       "alt": "الريحان",
       "fit": "cover",
-      "hauto": true,
       "rad": {
        "d": 200
       },
@@ -1925,18 +1924,23 @@
       "animDur": 0.75,
       "animDelay": 0.3,
       "fx": {
-       "d": 29.8
+       "d": 29.8,
+       "m": 30.7
       },
       "fy": {
-       "d": 4
+       "d": 4,
+       "m": 30
       },
       "fwd": {
-       "d": 11.8
+       "d": 11.8,
+       "m": 37.3
       },
       "fh": {
-       "d": 150
+       "d": 150,
+       "m": 466
       },
-      "zi": 2
+      "zi": 2,
+      "hm": true
      }
     },
     {
