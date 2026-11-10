@@ -2454,106 +2454,67 @@
          ]
         }
        }
+      },
+      {
+       "id": "cxmcp05",
+       "type": "heading",
+       "set": {
+        "text": "عبوة واحدة · 250 غ",
+        "tag": "h3",
+        "fs": {
+         "d": 20,
+         "m": 18
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "color": "#123e72",
+        "lh": {
+         "d": 1.25
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1
+       }
+      },
+      {
+       "id": "10s5uui",
+       "type": "button",
+       "set": {
+        "text": "اطلب عبوة ←",
+        "kind": "link",
+        "link": "#order",
+        "bgc": "#187a3b",
+        "color": "#fff",
+        "hbg": "#187a3b",
+        "fs": {
+         "d": 16,
+         "m": 15
+        },
+        "fw": "900",
+        "brad": {
+         "d": 999
+        },
+        "bpad": {
+         "d": [
+          14,
+          25,
+          14,
+          25
+         ]
+        },
+        "cls": "btn-gr",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1
+       }
       }
      ]
     }
    ],
-   "free": [
-    {
-     "id": "cxmcp05",
-     "type": "heading",
-     "set": {
-      "text": "عبوة واحدة · 250 غ",
-      "tag": "h3",
-      "fs": {
-       "d": 20,
-       "m": 18
-      },
-      "fw": "900",
-      "ta": {
-       "d": "center"
-      },
-      "color": "#123e72",
-      "lh": {
-       "d": 1.25
-      },
-      "cls": "",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
-      "fx": {
-       "m": -7.9,
-       "d": 10.2
-      },
-      "fy": {
-       "m": 1109,
-       "d": 699
-      },
-      "fwd": {
-       "m": 93.3,
-       "d": 39.8
-      },
-      "fh": {
-       "m": 23,
-       "d": 30
-      },
-      "zi": 4
-     }
-    },
-    {
-     "id": "10s5uui",
-     "type": "button",
-     "set": {
-      "text": "اطلب عبوة ←",
-      "kind": "link",
-      "link": "#order",
-      "bgc": "#187a3b",
-      "color": "#fff",
-      "hbg": "#187a3b",
-      "fs": {
-       "d": 16,
-       "m": 15
-      },
-      "fw": "900",
-      "brad": {
-       "d": 999
-      },
-      "bpad": {
-       "d": [
-        14,
-        25,
-        14,
-        25
-       ]
-      },
-      "cls": "btn-gr",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
-      "fx": {
-       "m": 62.5,
-       "d": 14.1
-      },
-      "fy": {
-       "m": 1097,
-       "d": 796
-      },
-      "fwd": {
-       "m": 33,
-       "d": 25
-      },
-      "fh": {
-       "m": 47,
-       "d": 59
-      },
-      "zi": 5,
-      "wsc": {
-       "m": 80,
-       "d": 100
-      }
-     }
-    }
-   ]
+   "free": []
   },
   {
    "id": "yziy3ti",
