@@ -21,7 +21,7 @@ const AdminUpdate = (() => {
     try { const urls = [location.pathname, ...[...document.scripts].map(x => x.src), ...[...document.querySelectorAll('link[rel="stylesheet"]')].map(x => x.href)].filter(Boolean); urls.forEach(u => fetch(u, { cache: "reload" }).catch(() => 0)); } catch (e) { }
   }
   async function check(force) {
-    try { const r = await fetch("VERSION?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) return; const v = (await r.text()).trim(); if (!/^\d+\.\d+\.\d+$/.test(v)) return; latest = v; avail = !!cur && cmp(v, cur) > 0; paint(); if (avail) banner(); else if (force) toast("✅ أنت على آخر نسخة (" + cur + ")"); } catch (e) { if (force) toast("تعذّر التحقق من وجود تحديث"); }
+    try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 6000); let r; try { r = await fetch("VERSION?t=" + Date.now(), { cache: "no-store", signal: ac.signal }); } finally { clearTimeout(tm); } if (!r.ok) return; const v = (await r.text()).trim(); if (!/^\d+\.\d+\.\d+$/.test(v)) return; latest = v; avail = !!cur && cmp(v, cur) > 0; paint(); if (avail) banner(); else if (force) toast("✅ أنت على آخر نسخة (" + cur + ")"); } catch (e) { if (force) toast("تعذّر التحقق من وجود تحديث"); }
   }
   const toast = m => { try { if (typeof Admin !== "undefined" && Admin.toast) return Admin.toast(m); } catch (e) { } const t = document.createElement("div"); t.className = "au-toast"; t.textContent = m; t.style.cssText = "position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10090;font-family:inherit"; document.body.appendChild(t); setTimeout(() => t.remove(), 3000); };
   /* حالة الصفحة قبل إعادة التحميل: التبويب المفتوح، وصفحة المطوّر المفتوحة بما فيها تعديلاتها غير المنشورة — فتعود كما كانت */
@@ -50,6 +50,7 @@ const AdminUpdate = (() => {
   }
   /* يجلب الصفحة وسكربتاتها وأنماطها من الخادم متجاوزاً الكاش ثم يعيد تحميل الصفحة نفسها (دون مغادرتها) */
   async function reloadFresh(param, val) {
+    { const u0 = new URL(location.href); u0.searchParams.set(param, val); setTimeout(() => { try { location.replace(u0.toString()); } catch (e) { location.reload(); } }, 12000); }      /* صمّام أمان: لا يبقى «جاري التحديث…» أكثر من 12 ثانية مهما حدث */
     saveState(); try { API.sb.dbg("update-reload " + param + " left=" + Math.round(((API.sb.session() || {}).expires_at - Date.now()) / 60000) + "m"); } catch (e) { }
     /* لا نخسر الدخول عند التحديث: نجدّد الجلسة الآن إن قاربت على الانتهاء ونوقف أي تجديد آخر قبل إعادة التحميل (ردّ تجديد ضائع يُبطل رمز التجديد القديم) */
     try { if (typeof API !== "undefined" && API.sb && API.sb.enabled() && API.sb.session()) { const s = API.sb.session(); if (s.expires_at - Date.now() < 4 * 60 * 1000) await Promise.race([API.sb.renew(), new Promise(r => setTimeout(r, 5000))]); API.sb._freeze = true; } } catch (e) { }
