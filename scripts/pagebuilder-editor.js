@@ -343,7 +343,7 @@ body{overflow-x:hidden;margin:0}`;
   /* ───────────────── فتح/إغلاق ───────────────── */
   function open(page, slug, isNew) {
     build();
-    E.page = PB.migrate(clone(page)); E.ab = null; E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
+    E.page = PB.migrate(clone(page)); try { cleanStrayAll(E.page); } catch (x) { } E.ab = null; E.sl = {}; E.slug = slug || ""; E.isNew = !!isNew; E.sel = null; E.last = null; E.multi = []; E.mm = false; E.dev = "d"; E.hist = []; E.hi = -1; E.dirty = false; E.tab = "c"; E.ltab = "add";
     E.toolMode = null; $("pb-app").classList.remove("pbx-tool"); $("pb-app").classList.add("on"); document.body.style.overflow = "hidden"; $("pb-app").classList.toggle("pbx-ad", !!E.page.ad);
     $("pbx-title").value = E.page.title || ""; E.log = []; E.nextLabel = null; commitHist(true);
     try { const fl = sessionStorage.getItem("pb_after_update"); if (fl !== null && fl === (E.slug || "new")) { sessionStorage.removeItem("pb_after_update"); const d = localStorage.getItem(draftKey()); if (d) { E.page = PB.migrate(JSON.parse(d)); E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); setTimeout(() => toast("♻️ حُدّثت اللوحة واستُعيدت مسودة تعديلاتك غير المنشورة"), 600); } } } catch (e) { }
@@ -1049,6 +1049,12 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     ["gap", "pad", "layout", "cw", "mh", "va"].forEach(k => delete sec.set[k]);
     Object.assign(sec.set, { kind: "canvas", scaled: true, dw: W, cw: { d: W }, layout: "full", mh: { d: Math.ceil(sr.height) }, pad: { d: [0, 0, 0, 0] } });
     sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; if (quiet) { E.covered = null; renderCanvas(); return; } afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
+  }
+  /* قيم أجهزة شاذة في الأقسام الحرة المتناسبة: عنصر له موضع تابلت/هاتف وبقية عناصر القسم لا (ينزاح عن زملائه ويتعطّل تكبيره). تُنظَّف تلقائياً عند فتح أي صفحة وقبل نشرها فلا تتكرر في أي صفحة */
+  function cleanStrayAll(P) {
+    let n = 0; (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
+      ["t", "m"].forEach(d2 => { if ((d2 === "m" && sec.set.scaledM) || (d2 === "t" && sec.set.scaledT)) return; const has = w => ks.some(k => w.set[k] && typeof w.set[k] === "object" && w.set[k][d2] !== undefined), c = ws.filter(has).length; if (c > 0 && c < ws.length) { ws.filter(has).forEach(w => ks.forEach(k => { if (w.set[k] && typeof w.set[k] === "object") delete w.set[k][d2]; })); n += c; } }); });
+    return n;
   }
   /* تنظيم الصفحة: لوحة خيارات (الافتراضي آمن: المكتب فقط بلا قص فراغات ولا لمس لما رتّبته على التابلت/الهاتف) ثم تمرّ على الأجهزة المختارة وتصلح: عناصر خارج حدود القسم، نصوص مقصوصة (يكبّر إطارها)، أقسام أقصر من محتواها، وتقصّ الفراغات الزائدة (اختياري)، وتُكمل تخطيط الهاتف الناقص (اختياري) */
   const ORG = { clamp: true, text: true, grow: true, gap: false, fillM: false, clean: true, devs: { d: true, t: false, m: false } };
@@ -2399,7 +2405,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
           const v = Math.max(20, Math.min(500, Math.round(ws0 * f))); setR(set, "wsc", dev, v); if (dev !== "d" && own(set, "wsc", "d") === undefined) setR(set, "wsc", "d", ws0); label = "المحتوى " + v + "%";
         } else {
         if (hasW) { let W = r0.width; if (al === "center") W += (dir.includes("e") ? 2 : -2) * dx; else { W += (dir.includes("e") ? 1 : -1) * dx; setR(set, "al", dev, dir.includes("e") ? "end" : "start"); } const pct = Math.max(5, Math.min(100, Math.round(W / parentW * 1000) / 10)); setR(set, "w", dev, pct); label = pct + "%"; }
-        if (hasH) { let H = r0.height + (dir.includes("s") ? dy : -dy); H = Math.max(10, Math.round(H)); setR(set, "mh", dev, H); if (dir.includes("n")) { const m = m0.slice(); m[0] = (Number(m0[0]) || 0) + dy; setR(set, "mar", dev, m); } label += (label ? " × " : "") + H + "px"; }
+        if (hasH) { let H = r0.height + (dir.includes("s") ? dy : -dy); H = Math.max(10, Math.round(H)); setR(set, "mh", dev, H); if (dir.includes("n")) { const m = m0.slice(); m[0] = Math.max(0, (Number(m0[0]) || 0) + dy); setR(set, "mar", dev, m); }      /* لا هامش علوي سالب: كان يسحب العنصر تحت ما فوقه فيختفي جزؤه */ label += (label ? " × " : "") + H + "px"; }
         }
       } else if (inf.kind === "column") {
         if (!set.pzoff && (hasW || hasH)) {      /* تكبير تناسبي: عناصر العمود تتبع حجم إطاره الجديد من الجهات الأربع */
@@ -3923,6 +3929,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     let P = E.page; const slug = P.slug, pb = pubBar(); E.pubBusy = true;      // يمنع التحديث التلقائي للوحة أثناء النشر
     try {
       if (E.upq) { if (E.upN) pb.say("بانتظار انتهاء رفع الصور…"); await E.upq; if ((E.upFail || []).some(pth => JSON.stringify(P).includes(pth))) { pb.end(false, "صور لم تُرفع إلى الموقع — أعد رفعها قبل النشر"); return; } }
+      try { cleanStrayAll(E.page); } catch (e) { }
       pb.say("فحص الصور…"); try { await slim(true); } catch (e) { }                                                         // تخفيف تلقائي للصور الثقيلة فقط (>450KB)
       if (E.upq) await E.upq;
       P = E.page;
