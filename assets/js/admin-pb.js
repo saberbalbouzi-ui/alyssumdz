@@ -4474,7 +4474,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       const sl = fdoc && fdoc.getSelection && fdoc.getSelection(); if (sl && sl.rangeCount && !sl.isCollapsed) { const rg = sl.getRangeAt(0).cloneRange(), an = rg.commonAncestorContainer, base = an && (an.nodeType === 1 ? an : an.parentElement), el = base && base.closest && base.closest("[data-edit]");
         if (el && el.closest('[data-kind="widget"]')) { e.preventDefault(); startEdit(el, rg); fdoc.execCommand(e.key === "Delete" ? "forwardDelete" : "delete"); return; } }
     }
-    const tag = (e.target.tagName || "").toLowerCase(); if (tag === "input" || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;
+    const tag = (e.target.tagName || "").toLowerCase(); if ((tag === "input" && !/^(checkbox|radio|range|color|button|file)$/i.test(e.target.type || "") ) || tag === "textarea" || tag === "select" || e.target.isContentEditable) return;      // الأسهم تعمل أيضاً والتركيز على خانة اختيار/منزلق/زر بعد استعمال اللوحة
     const mod = e.ctrlKey || e.metaKey;
     if (mod && String(e.key||"").toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if (mod && String(e.key||"").toLowerCase() === "y") { e.preventDefault(); redo(); }
@@ -4493,12 +4493,13 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     else if (/^Arrow/.test(e.key) && multiOn()) { e.preventDefault(); const st = e.shiftKey ? 10 : 1; nudgeMulti((e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0), (e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0)); }
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
       const inf = selInfo(); if (!inf) return; if (isLocked(inf)) return;
+      if (inf.free) e.preventDefault();      // لا تتمرّر الصفحة أثناء تحريك العنصر بالأسهم
       if (!inf.free) { e.preventDefault(); const d = (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : 0; if (d) { if (e.altKey) move(d); else nav(d); } return; }   // العناصر العادية: الأسهم تنقل التحديد (Alt = إعادة ترتيب)
       const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, st = e.shiftKey ? 10 : 1;
       let fx = Number(eff(inf.set, "fx", E.dev)) || 0, fy = Number(eff(inf.set, "fy", E.dev)) || 0;
       const u = uOf(inf.sec, { width: cw }); ensureMobile(inf.sec); fx = Number(eff(inf.set, "fx", E.dev)) || 0; fy = Number(eff(inf.set, "fy", E.dev)) || 0;
       if (e.key === "ArrowLeft") fx -= st / cw * 100; if (e.key === "ArrowRight") fx += st / cw * 100; if (e.key === "ArrowUp") fy -= st / u; if (e.key === "ArrowDown") fy += st / u;
-      setR(inf.set, "fx", E.dev, Math.round(fx * 10) / 10); setR(inf.set, "fy", E.dev, Math.round(fy)); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 400);
+      setR(inf.set, "fx", E.dev, Math.round(fx * 100) / 100); setR(inf.set, "fy", E.dev, Math.round(fy)); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 400);
     }
   }
 
