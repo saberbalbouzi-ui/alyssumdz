@@ -265,6 +265,7 @@ body{overflow-x:hidden;margin:0}`;
   <span class="pbx-zm" id="pbx-zm" title="تكبير القماش: Ctrl + عجلة الفأرة"><button type="button" data-z="-" title="تصغير" aria-label="تصغير">−</button><b id="pbx-zv">100%</b><button type="button" data-z="+" title="تكبير" aria-label="تكبير">+</button><button type="button" data-z="0" title="ملاءمة العرض" aria-label="ملاءمة العرض">⤢</button></span>
   <button id="pbx-undo" onclick="PBApp.undo()" title="تراجع (Ctrl+Z)">${ico('undo',16)}</button>
   <button id="pbx-redo" onclick="PBApp.redo()" title="إعادة (Ctrl+Y)">${ico('redo',16)}</button>
+  <button id="pbx-allfree" onclick="PBApp.convertAllFree()" title="يحوّل كل أقسام الصفحة وأكوادها إلى عناصر حرة قابلة للتعديل بنفس الشكل والمحتوى وتأثيرات الظهور (على عرض المكتب)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg> الكل حر</button>
   <button id="pbx-palb" onclick="PBPalette.open()" title="ألوان الصفحة: لوحات ألوان متناسقة حسب ألوان المنتج تغيّر الخلفيات والنصوص بضغطة واحدة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/></svg> ألوان</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button id="pbx-prev" onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
@@ -1010,14 +1011,17 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const rgb = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return null; const a = m[1].split(",").map(x => parseFloat(x)); const h = a.slice(0, 3).map(x => ("0" + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2)).join(""); return { c: "#" + h, o: a[3] == null || isNaN(a[3]) ? 1 : a[3] }; };
     const free = [];
     sec.cols.forEach(col => {
-      const g = "g" + P.uid(), cin = d.querySelector(".pb-col.x-" + col.id + ">.pb-colin"), items = [];
+      const g = "g" + P.uid(), colEl = d.querySelector(".pb-col.x-" + col.id), items = [];
+      const visBg = el => { if (!el) return false; const q = d.defaultView.getComputedStyle(el), qb = rgb(q.backgroundColor); return (q.backgroundImage && q.backgroundImage !== "none" && !/url\(/.test(q.backgroundImage)) || (qb && qb.o > 0.01) || (parseFloat(q.borderTopWidth) || 0) > 0; };
+      const cin0 = d.querySelector(".pb-col.x-" + col.id + ">.pb-colin"), cin = visBg(cin0) ? cin0 : (visBg(colEl) ? colEl : cin0);      // البطاقة قد تكون خلفيتها على العمود نفسه (صنف CSS) لا على الحاوية الداخلية
       if (cin) { const cs = d.defaultView.getComputedStyle(cin), bi = cs.backgroundImage, bc = rgb(cs.backgroundColor), bd = parseFloat(cs.borderTopWidth) || 0, hasBg = (bi && bi !== "none") || (bc && bc.o > 0.01);
         if (hasBg || bd > 0) { const r = cin.getBoundingClientRect(), sh = P.mkFree("shape", 0, 0, 1), st = (bi && bi !== "none" ? (bi.match(/rgba?\([^)]+\)/g) || []) : []).map(rgb).filter(Boolean);
           Object.assign(sh.set, { shape: "rect", keep: false, outline: false, fill: (st[0] || bc || { c: "#0c361d" }).c, rx: r1(Math.min(50, (parseFloat(cs.borderTopLeftRadius) || 0) / Math.max(1, r.width) * 100)), ry: r1(Math.min(50, (parseFloat(cs.borderTopLeftRadius) || 0) / Math.max(1, r.height) * 100)), fx: { d: r1((r.left - sr.left) / W * 100) }, fy: { d: Math.round(r.top - sr.top) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.round(r.height) }, zi: 1, grp: g, sh: "lg" });
           if (st.length > 1) sh.set.fgr = { t: "linear", a: 145, s: st.slice(0, 3).map((x, i, a) => ({ c: x.c, o: x.o, p: Math.round(i / (a.length - 1) * 100) })) };
           if (bd > 0) { const b = rgb(cs.borderTopColor); sh.set.stroke = b ? b.c : "#86efac"; sh.set.sw = Math.max(1, Math.round(bd)); }
           items.push(sh); } }
-      col.widgets.forEach((w, i) => { const el = d.querySelector('[data-pb="' + w.id + '"]'); if (!el) return; const r = el.getBoundingClientRect(); if (r.width < 1 && r.height < 1) return;
+      col.widgets.forEach((w, i) => { const el = d.querySelector('[data-pb="' + w.id + '"]'); if (!el) return; let r = el.getBoundingClientRect(); if (w.type === "button") { const ib = el.querySelector(".pb-btn"); if (ib) { const q = ib.getBoundingClientRect(); if (q.width > 4 && q.width < r.width) r = q; } }      // الزر: حجم الزر الظاهر لا حاوية العمود
+        if (r.width < 1 && r.height < 1) return;
         ["w", "mh", "mar", "al"].forEach(k => delete w.set[k]);
         Object.assign(w.set, { fx: { d: r1((r.left - sr.left) / W * 100) }, fy: { d: Math.round(r.top - sr.top) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.round(r.height) }, zi: 2 + i, grp: g }); items.push(w); });
       free.push(...items);
@@ -1027,11 +1031,44 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; if (quiet) { E.covered = null; renderCanvas(); return; } afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
   }
   /* زر واحد: كل أقسام الصفحة (غير الحرة) تصير عناصر حرة بمواضعها الفعلية، بدل التحويل عند كل سحب */
-  function convertAllFree() {
+  async function convertAllFree() {
     if (E.dev !== "d") return toast("حوّل إلى عرض المكتب أولاً ثم كرّر الأمر");
-    const L = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas" && !isHF(sc)), ok = L.filter(sc => { const se = fdoc.querySelector(`[data-pb="${sc.id}"]`); return se && se.getBoundingClientRect().width >= 1; });
-    if (!L.length) return toast("كل أقسام الصفحة حرّة أصلاً"); if (!ok.length) return toast("لا قسم ظاهر للتحويل");
-    ok.forEach(sc => flowToFree(sc, true)); E.nextLabel = "تحويل كل الأقسام إلى عناصر حرة"; afterEdit(null); toast("✅ صارت " + ok.length + " أقسام حرّة — اسحب أي عنصر بحرية وانقله بين الأقسام" + (ok.length < L.length ? " (" + (L.length - ok.length) + " مخفية لم تُحوَّل)" : ""));
+    const L = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas" && !isHF(sc)), htmlLeft = () => (E.page.sections || []).flatMap(s => [...(s.cols || []).flatMap(c => c.widgets || []), ...(s.free || [])]).filter(w => w.type === "html").map(w => w.id);
+    if (!L.length && !htmlLeft().length) return toast("كل عناصر الصفحة حرّة أصلاً");
+    pbAsk("تحويل كل عناصر الصفحة إلى عناصر حرة قابلة للتعديل (الأقسام العادية والأكواد) مع بقاء الشكل والمحتوى وتأثيرات الظهور؟ يمكن التراجع بـCtrl+Z.", "تحويل الكل", async () => {
+      const wait = ms => new Promise(r => setTimeout(r, ms)), rect = (el, sr) => { if (!el) return null; const r = el.getBoundingClientRect(); return [r.left - sr.left, r.top - sr.top, r.width, r.height]; };
+      toast("جارٍ تحويل الصفحة… لا تلمس المحرر لحظات");
+      /* أقسام فيها عناصر موضعها من CSS الصفحة (position:absolute/fixed بصنف) تبقى عادية: تحويلها يكسر شكلها لأن قواعد CSS تتغلّب على مواضع العنصر الحر */
+      const cssPos = sc => sc.cols.some(c => c.widgets.some(w => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`); if (!el) return false; const ps = fdoc.defaultView.getComputedStyle(el).position; return ps === "absolute" || ps === "fixed"; }));
+      const skipped = L.filter(cssPos), skipIds = new Set(skipped.map(s => s.id));
+      const ok = L.filter(sc => !skipIds.has(sc.id) && (() => { const se = fdoc.querySelector(`[data-pb="${sc.id}"]`); return se && se.getBoundingClientRect().width >= 1; })());
+      /* 1) قياس تخطيط الهاتف قبل التحويل (لتبقى مواضعه كما هي بعد التحويل) */
+      const mob = new Map(); setDev("m"); await wait(1500);
+      ok.forEach(sc => { const se = fdoc.querySelector(`[data-pb="${sc.id}"]`); if (!se) return; const sr = se.getBoundingClientRect(); mob.set(sc.id, { W: Math.round(sr.width), H: Math.ceil(sr.height), html: sc.cols.some(c => c.widgets.some(w => w.type === "html")), cols: sc.cols.map(col => ({ id: col.id, box: rect(fdoc.querySelector(".pb-col.x-" + col.id), sr), ws: Object.fromEntries(col.widgets.map(w => [w.id, rect(fdoc.querySelector(`[data-pb="${w.id}"]`), sr)])) })) }); });
+      setDev("d"); await wait(1500);
+      const meta = ok.map(sc => ({ id: sc.id, cols: sc.cols.map(c => ({ id: c.id, ws: c.widgets.map(w => w.id) })) }));
+      /* 2) تحويل الأقسام العادية إلى حرّة (المكتب) */
+      ok.forEach(sc => flowToFree(sc, true)); await wait(300);
+      /* 3) مواضع الهاتف: للأقسام بلا أكواد تُكتب قيم m المقيسة ويُلغى التصغير المتناسب ليبقى تخطيط الهاتف الأصلي */
+      const r1 = v => Math.round(v * 10) / 10;
+      meta.forEach(m => { const sc = E.page.sections.find(s => s.id === m.id), mm = mob.get(m.id); if (!sc || !mm) return;
+        const byId = Object.fromEntries((sc.free || []).map(f => [f.id, f])); let any = false;
+        m.cols.forEach(cm => { const cc = mm.cols.find(c => c.id === cm.id); if (!cc) return; const first = byId[cm.ws[0]], g = first && first.set.grp, sh = g && (sc.free || []).find(f => f.type === "shape" && f.set.grp === g);
+          const put = (f, b) => { if (!f || !b) return; f.set.fx = Object.assign({}, f.set.fx, { m: r1(b[0] / mm.W * 100) }); f.set.fy = Object.assign({}, f.set.fy, { m: Math.round(b[1]) }); f.set.fwd = Object.assign({}, f.set.fwd, { m: r1(b[2] / mm.W * 100) }); f.set.fh = Object.assign({}, f.set.fh, { m: Math.round(b[3]) }); any = true; };
+          put(sh, cc.box); cm.ws.forEach(wid => put(byId[wid], cc.ws[wid])); });
+        if (any) { sc.set.scaled = false; sc.set.mh = Object.assign({}, sc.set.mh, { m: mm.H }); } });
+      renderCanvas(); await wait(900);
+      /* 4) الأكواد (HTML) ← عناصر حرة (تأثيرات الظهور تنتقل للناتج)، ومواضع الهاتف لعناصرها بتصغير تخطيط الكود إلى عرض الكود على الهاتف */
+      const okIds = new Set(ok.map(s => s.id)); let htmlN = 0, items = 0;
+      for (const id of htmlLeft()) { const hf = find(id); if (!hf || !okIds.has(hf.sec.id)) continue; const res = htmlToFree(id, true); if (res && res.n) {
+        htmlN++; items += res.n; const mm = mob.get(hf.sec.id), mr = mm && (mm.cols.flatMap(c => Object.entries(c.ws)).find(([k]) => k === id) || [])[1];
+        if (mm && mr && res.rect.w > 0) { const k = Math.min(1, mr[2] / res.rect.w); res.items.forEach(q => { const dl = (Number(q.set.fx.d) / 100 * res.cw) - res.rect.l, dt = (Number(q.set.fy.d)) - res.rect.t; q.set.fx.m = r1((mr[0] + dl * k) / mm.W * 100); q.set.fy.m = Math.round(mr[1] + dt * k); q.set.fwd.m = r1(Number(q.set.fwd.d) / 100 * res.cw * k / mm.W * 100); q.set.fh.m = Math.max(4, Math.round(Number(q.set.fh.d) * k)); if (q.set.fs) q.set.fs.m = Math.max(6, Math.round(q.set.fs.d * k)); });
+          const sc2 = E.page.sections.find(s => s.id === hf.sec.id); if (sc2) { sc2.set.scaled = false; sc2.set.mh = Object.assign({}, sc2.set.mh, { m: mm.H }); } }
+        renderCanvas(); await wait(350); } }
+      E.nextLabel = "تحويل كل عناصر الصفحة إلى عناصر حرة"; afterEdit(null);
+      const left = htmlLeft().length;
+      toast("تم تحويل " + ok.length + " قسماً" + (skipped.length ? " (وبقي " + skipped.length + " قسماً عادياً لأن مواضع عناصره من CSS الصفحة: " + skipped.map(s => "#" + (E.page.sections.indexOf(s) + 1)).join("،") + ")" : "") + (htmlN ? " و" + htmlN + " كود (" + items + " عنصراً)" : "") + (left ? " — بقي " + left + " كود لا يحتوي نصاً أو صوراً" : "") + ". اسحب أي عنصر بحرية.");
+    }, "إلغاء");
   }
   /* وضع «صفحة هبوط»: يحذف الشريط العلوي والهيدر والفوتر (أقسام الموقع العامة) ويُلغي الترويسة/التذييل البسيطين؛ إلغاؤه يعيدها بأماكنها */
   const isHF = sec => sec.grp === "top" || sec.grp === "bot" || [].concat(...(sec.cols || []).map(c => c.widgets || []), sec.free || []).some(w => /^(shdr|sbar|sfoot)$/.test(w.type));
@@ -1166,18 +1203,22 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     E.nextLabel = "إزالة فراغ القسم"; afterEdit();
   }
   /* تحويل عنصر «كود HTML» إلى عناصر حرة أصلية (نص/عنوان/صورة/زر/شكل) بنفس مواضعها وأنماطها الظاهرة فيُعدَّل بلا كود؛ يفيد تحرير الصفحات المولَّدة. القسم العادي يُحوَّل أولاً إلى قسم حرّ */
-  function htmlToFree(id) {
+  function htmlToFree(id, quiet) {
     let inf = find(id); if (!inf || inf.kind !== "widget" || inf.node.type !== "html") return toast("حدّد عنصر كود HTML أولاً");
     if (E.dev !== "d") return toast("حوّل إلى عرض المكتب أولاً ثم كرّر الأمر");
     if (inf.sec.set.kind !== "canvas") { flowToFree(inf.sec, true); inf = find(id); if (!inf) return; }
     const el = fdoc.querySelector(`[data-pb="${id}"]`), pin = el && el.closest(".pb-in"); if (!el || !pin) return toast("تعذّر قياس العنصر");
+    { const rootX = el.querySelector(".pb-raw") || el, vw = fdoc.defaultView; if (/<script/i.test(String(inf.set.code || "")) || [...rootX.querySelectorAll("*")].some(n => vw.getComputedStyle(n).position === "fixed")) { if (!quiet) toast("هذا الكود فيه سكربت أو عناصر ثابتة (زر عائم، شريط شراء…) تتعطّل وظيفتها بالتحويل؛ أبقيته كما هو."); return 0; } }
     const root = el.querySelector(".pb-raw") || el, view = fdoc.defaultView, cr = pin.getBoundingClientRect(), u = uOf(inf.sec, cr) || 1, W = cr.width, P = PB, g = "g" + P.uid(), items = [], r1 = v => Math.round(v * 10) / 10;
     let z = (Number(inf.set.zi) || 2), shapeZ = z;
     const rgb = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return null; const a = m[1].split(",").map(x => parseFloat(x)); return { c: "#" + a.slice(0, 3).map(x => ("0" + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2)).join(""), o: a[3] == null || isNaN(a[3]) ? 1 : a[3] }; };
     const place = (set, r, zi) => Object.assign(set, { fx: { d: r1((r.left - cr.left) / W * 100) }, fy: { d: Math.round((r.top - cr.top) / u) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.max(4, Math.round(r.height / u)) }, zi, grp: g });
-    const add = (type, set, r, zi) => { const w = P.mkFree(type, 0, 0, zi); Object.assign(w.set, set); place(w.set, r, zi); items.push(w); return w; };
+    const add = (type, set, r, zi) => { const w = P.mkFree(type, 0, 0, zi); Object.assign(w.set, set);
+      if ((type === "text" || type === "heading") && set.fs && r.height / u < set.fs.d * ((set.lh && set.lh.d) || 1.5) * 1.5) { const ex = r.width * 0.12, rtl = view.getComputedStyle(root).direction === "rtl", ctr = set.ta && set.ta.d === "center"; r = { left: ctr ? r.left - ex / 2 : (rtl ? r.left - ex : r.left), top: r.top, width: r.width + ex, height: r.height }; }      // سطر واحد: هامش عرض صغير كي لا يلتف بسبب اختلاف القياس
+      place(w.set, r, zi); items.push(w); return w; };
     const px = v => parseFloat(v) || 0, hexOf = c => { const q = rgb(c); return q ? q.c : ""; };
-    const typo = cs => ({ fs: { d: Math.round(px(cs.fontSize) / u) }, fw: String(cs.fontWeight), color: hexOf(cs.color) || "#000000", lh: { d: Math.round(px(cs.lineHeight) / Math.max(1, px(cs.fontSize)) * 100) / 100 || 1.5 }, ta: { d: ({ left: "left", right: "right", center: "center", start: "start", end: "end", justify: "justify" }[cs.textAlign]) || "start" } });
+    const zk = (() => { const q = inf.set.wsc; const v = q && typeof q === "object" ? Number(q.d !== undefined ? q.d : q[E.dev]) : Number(q); return v > 0 ? v / 100 : 1; })();      // تكبير محتوى العنصر (wsc) لا يظهر في fontSize المحسوب
+    const typo = cs => ({ fs: { d: Math.round(px(cs.fontSize) / u * zk) }, fw: String(cs.fontWeight), color: hexOf(cs.color) || "#000000", lh: { d: Math.round(px(cs.lineHeight) / Math.max(1, px(cs.fontSize)) * 100) / 100 || 1.5 }, ta: { d: ({ left: "left", right: "right", center: "center", start: "start", end: "end", justify: "justify" }[cs.textAlign]) || "start" } });
     const inlineOnly = n => [...n.children].every(c => /^(B|STRONG|I|EM|U|S|SPAN|BR|A|SMALL|MARK|SUB|SUP)$/.test(c.tagName) && /^inline/.test(view.getComputedStyle(c).display) && inlineOnly(c));
     const visit = n => {
       if (n.nodeType !== 1 || /^(SCRIPT|STYLE|NOSCRIPT|LINK|META|TEMPLATE)$/i.test(n.tagName)) return;
@@ -1190,7 +1231,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
         const st = (grad ? (cs.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(rgb).filter(Boolean) : []), rr = px(cs.borderTopLeftRadius);
         if (!isBtn) { const sh = P.mkFree("shape", 0, 0, 1); Object.assign(sh.set, { shape: "rect", keep: false, outline: false, fill: (st[0] || bg || { c: "#ffffff" }).c, rx: r1(Math.min(50, rr / Math.max(1, r.width) * 100)), ry: r1(Math.min(50, rr / Math.max(1, r.height) * 100)) }); if (st.length > 1) sh.set.fgr = { t: "linear", a: 145, s: st.slice(0, 3).map((x, i, a) => ({ c: x.c, o: x.o, p: Math.round(i / (a.length - 1) * 100) })) }; if (bd > 0) { const b = rgb(cs.borderTopColor); sh.set.stroke = b ? b.c : "#cccccc"; sh.set.sw = Math.max(1, Math.round(bd)); } if (shadow) sh.set.sh = "md"; if (bg && bg.o < 1 && !st.length) sh.set.fillOp = bg.o; place(sh.set, r, ++shapeZ); items.unshift(sh); }
       }
-      if (isBtn) { const bgc = (grad ? ((cs.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(rgb).filter(Boolean)[0]) : bg) || { c: "#187a3b" }; add("button", { text, kind: "link", link: tag === "A" ? (n.getAttribute("href") || "#") : "#", bgc: bgc.c, hbg: bgc.c, color: hexOf(cs.color) || "#ffffff", fs: { d: Math.round(px(cs.fontSize) / u) }, fw: String(cs.fontWeight), brad: { d: Math.round(px(cs.borderTopLeftRadius)) }, bpad: { d: [0, 0, 0, 0] } }, r, ++z); return; }
+      if (isBtn) { const bgc = (grad ? ((cs.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(rgb).filter(Boolean)[0]) : bg) || { c: "#187a3b" }; add("button", { text, kind: "link", link: tag === "A" ? (n.getAttribute("href") || "#") : "#", bgc: bgc.c, hbg: bgc.c, color: hexOf(cs.color) || "#ffffff", fs: { d: Math.round(px(cs.fontSize) / u * zk) }, fw: String(cs.fontWeight), brad: { d: Math.round(px(cs.borderTopLeftRadius)) }, bpad: { d: [0, 0, 0, 0] } }, r, ++z); return; }
       const own = [...n.childNodes].some(c => c.nodeType === 3 && c.textContent.trim());
       if (own && inlineOnly(n)) {
         if (/^H[1-6]$/.test(tag) && !n.querySelector("*")) add("heading", Object.assign({ text, tag: tag.toLowerCase() }, typo(cs)), r, ++z);
@@ -1201,8 +1242,10 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     };
     [...root.childNodes].forEach(c => { if (c.nodeType === 1) visit(c); else if (c.nodeType === 3 && c.textContent.trim()) { const rg = fdoc.createRange(); rg.selectNodeContents(c); const rr = rg.getBoundingClientRect(); if (rr.width > 1) add("text", Object.assign({ html: c.textContent.trim() }, typo(view.getComputedStyle(root))), rr, ++z); } });
     const rcs = view.getComputedStyle(root), rbg = rgb(rcs.backgroundColor); if (rbg && rbg.o > 0.02 && !items.some(q => q.type === "shape")) { const rr = root.getBoundingClientRect(), sh = P.mkFree("shape", 0, 0, 1); Object.assign(sh.set, { shape: "rect", keep: false, outline: false, fill: rbg.c }); place(sh.set, rr, shapeZ); items.unshift(sh); }
-    if (!items.length) return toast("لم أجد في الكود ما يمكن تحويله (نص أو صورة أو زر)");
+    if (!items.length) { if (!quiet) toast("لم أجد في الكود ما يمكن تحويله (نص أو صورة أو زر)"); return 0; }
+    ["anim", "animDur", "animDelay", "hd", "ht", "hm"].forEach(k => { if (inf.set[k] !== undefined) items.forEach(q => { q.set[k] = clone(inf.set[k]); }); });      // تأثير الظهور وإخفاء الأجهزة ينتقلان لكل العناصر الناتجة
     const li = inf.list, ix = li.indexOf(inf.node); if (ix >= 0) li.splice(ix, 1); (inf.sec.free = inf.sec.free || []).push(...items);
+    if (quiet) { growCanvas(inf.sec); return { n: items.length, items, rect: { l: el.getBoundingClientRect().left - cr.left, t: el.getBoundingClientRect().top - cr.top, w: el.getBoundingClientRect().width, h: el.getBoundingClientRect().height }, cw: W }; }
     growCanvas(inf.sec); E.nextLabel = "تحويل الكود إلى عناصر حرة"; afterEdit(items[items.length - 1].id); toast("✅ صار الكود " + items.length + " عنصراً حراً قابلاً للتعديل (يتحرك معاً كمجموعة) — Ctrl+Z للتراجع");
   }
   function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
@@ -3673,7 +3716,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { convertAllFree: () => convertAllFree(), render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */

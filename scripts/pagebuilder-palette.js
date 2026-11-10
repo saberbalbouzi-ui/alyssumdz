@@ -86,13 +86,75 @@ const PBPalette = (() => {
       return out;
     };
   }
-  function apply(pal, clusters) {
+  /* ───── تنسيق التباين بين الخلفية والنص ───── */
+  const lum = (r, g, b) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  const ratio = (a, b) => { const l1 = lum(a.r, a.g, a.b), l2 = lum(b.r, b.g, b.b), hi = Math.max(l1, l2), lo = Math.min(l1, l2); return (hi + 0.05) / (lo + 0.05); };
+  const blend = (top, bot) => ({ r: Math.round(top.r * top.a + bot.r * (1 - top.a)), g: Math.round(top.g * top.a + bot.g * (1 - top.a)), b: Math.round(top.b * top.a + bot.b * (1 - top.a)), a: 1 });
+  const firstColor = s => { const m = String(s).match(/rgba?\([^)]+\)|#[0-9a-f]{3,8}/i); return m ? parseColor(m[0]) : null; };
+  /* لون الخلفية الفعلي خلف العنصر: يصعد في أجداده؛ وللعناصر الحرة يبحث عن شكل (بطاقة) تحتها؛ null إن كانت الخلفية صورة */
+  function effBg(fd, el, shapes) {
+    const win = fd.defaultView, r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let acc = null;
+    const push = c => { acc = acc ? blend(acc, c) : c; };
+    // أشكال حرة تحت العنصر (الأعلى ترتيباً أولاً)
+    if (el.classList.contains("pb-free")) {
+      const under = shapes.filter(s => s.z < (Number(el.style.zIndex) || Infinity) && cx >= s.l && cx <= s.l + s.w && cy >= s.t && cy <= s.t + s.h).sort((a, b) => b.z - a.z)[0];
+      if (under && under.c) { const q = under.c; if (q.a >= 0.99) return q; push(q); }
+    }
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const cs = win.getComputedStyle(n);
+      if (cs.backgroundImage && /url\(/.test(cs.backgroundImage)) return acc ? acc : null;
+      if (cs.backgroundImage && /gradient/.test(cs.backgroundImage)) { const q = firstColor(cs.backgroundImage); if (q) { push(q); if (q.a >= 0.99) return acc.a >= 0.99 ? acc : acc; } }
+      const q = parseColor(cs.backgroundColor); if (q && q.a > 0.02) { if (q.a >= 0.99) return acc ? blend(acc, q) : q; push(q); }
+      if (n.tagName === "HTML") break;
+    }
+    return acc ? blend(acc, { r: 255, g: 255, b: 255, a: 1 }) : { r: 255, g: 255, b: 255, a: 1 };
+  }
+  /* يعدّل لوناً (بحفظ الصبغة) حتى يبلغ نسبة التباين المطلوبة مع الخلفية */
+  function fitColor(c, bg, need) {
+    if (ratio(c, bg) >= need) return null; const t = r2hsl(c.r, c.g, c.b), goLight = lum(bg.r, bg.g, bg.b) < 0.4;
+    let best = null; for (let i = 1; i <= 40; i++) { const l = goLight ? clamp(t.l + i * 0.02, 0, 0.98) : clamp(t.l - i * 0.02, 0.03, 1); const [r, g, b] = hsl2r(t.h, clamp(t.s, 0, 0.9), l); if (ratio({ r, g, b }, bg) >= need + 0.2) { best = toHex(r, g, b); break; } }
+    if (!best) best = goLight ? "#f8fafc" : "#0f172a"; return best;
+  }
+  let LASTFAILS = [];
+  function fixContrast(dry) {
+    LASTFAILS = [];
+    const E = PBApp.E, fd = document.getElementById("pbx-frame") && document.getElementById("pbx-frame").contentDocument; if (!fd) return 0; let fixed = 0;
+    const win = fd.defaultView;
+    (E.page.sections || []).forEach(sec => {
+      const sEl = fd.querySelector('[data-pb="' + sec.id + '"]'); if (!sEl) return; const sr = sEl.getBoundingClientRect();
+      const shapes = (sec.free || []).filter(w => w.type === "shape").map(w => { const el = fd.querySelector('[data-pb="' + w.id + '"]'); if (!el) return null; const r = el.getBoundingClientRect(), fg = w.set.fgr && w.set.fgr.s && w.set.fgr.s[0], c = fg ? parseColor(fg.c) : parseColor(w.set.fill || ""); if (!c) return null; const op = w.set.fillOp !== undefined ? w.set.fillOp : (w.set.fgr ? 1 : 1); return { l: r.left, t: r.top, w: r.width, h: r.height, z: Number(w.set.zi) || 0, c: Object.assign({}, c, { a: (c.a === undefined ? 1 : c.a) * op }) }; }).filter(Boolean);
+      const all = [...(sec.cols || []).flatMap(c => c.widgets || []), ...(sec.free || [])];
+      all.forEach(w => {
+        const el = fd.querySelector('[data-pb="' + w.id + '"]'); if (!el) return; const cs0 = win.getComputedStyle(el); if (cs0.display === "none" || cs0.visibility === "hidden") return;
+        const r = el.getBoundingClientRect(); if (r.width < 4 || r.height < 4) return;
+        const bg = effBg(fd, el, shapes); if (!bg) return;
+        const big = fs => fs >= 24 || (fs >= 19 && true), need = fs => big(fs) ? 3.2 : 4.6;
+        if (w.type === "text" || w.type === "heading") {
+          const t = el.querySelector(".pb-t") || el, cs = win.getComputedStyle(t), fs = parseFloat(cs.fontSize) / (sec.set.scaled ? Math.max(0.2, r.width / Math.max(1, (parseFloat(w.set.fwd && (w.set.fwd.d || 0)) || 1) / 100 * 1280)) : 1) || parseFloat(cs.fontSize), c = parseColor(cs.color);
+          if (c) { const nc = fitColor(c, bg, need(Math.max(fs, 14))); if (nc) { (fixed++, dry && LASTFAILS.push(w.id + ":" + w.type)); if (!dry) w.set.color = nc; } }
+          if (typeof w.set.html === "string" && /color\s*:\s*#?[0-9a-f]{3,8}/i.test(w.set.html)) { const nh = w.set.html.replace(/color\s*:\s*(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\))/g, (m0, col) => { const q = parseColor(col); if (!q) return m0; const nc2 = fitColor(q, bg, 3.2); if (nc2) { (fixed++, dry && LASTFAILS.push(w.id + ":" + w.type)); return dry ? m0 : "color:" + nc2; } return m0; }); if (nh !== w.set.html && !dry) w.set.html = nh; }
+        } else if (w.type === "button") {
+          const c = parseColor(w.set.color || "#ffffff"), b = parseColor(w.set.bgc || ""); if (c && b) { const nc = fitColor(c, b, 4.2); if (nc) { (fixed++, dry && LASTFAILS.push(w.id + ":" + w.type)); if (!dry) w.set.color = nc; } }
+        } else if (w.type === "iconbox") {
+          [["tc", "h3"], ["xc", "p"]].forEach(([k, sel]) => { const q = parseColor(w.set[k] || ""); if (!q) return; const nc = fitColor(q, bg, k === "tc" ? 4.2 : 4.6); if (nc) { (fixed++, dry && LASTFAILS.push(w.id + ":" + w.type)); if (!dry) w.set[k] = nc; } });
+        } else if (w.type === "pprice") {
+          const q = parseColor(w.set.pc || ""); if (q) { const nc = fitColor(q, bg, 3.2); if (nc) { (fixed++, dry && LASTFAILS.push(w.id + ":" + w.type)); if (!dry) w.set.pc = nc; } }
+        }
+      });
+    });
+    return fixed;
+  }
+  async function apply(pal, clusters) {
     const E = PBApp.E, mp = mapper(pal, clusters); walkPage(E.page, c => mp(c));
+    if (pal.dark && typeof E.page.bg === "string" && /^(#fff|#ffffff|transparent|)$/i.test(E.page.bg)) E.page.bg = pal.sw.bg;
     /* ألوان افتراضية لا تُخزَّن في بيانات العنصر (سعر المنتج الأخضر الافتراضي) تُثبَّت بلون اللوحة كي تتغيّر معها */
     (E.page.sections || []).forEach(s => [...(s.cols || []).flatMap(c => c.widgets || []), ...(s.free || [])].forEach(w => { if (w.type === "pprice" && !w.set.pc) w.set.pc = mp("#157a55"); }));
-    if (pal.dark && typeof E.page.bg === "string" && /^(#fff|#ffffff|transparent|)$/i.test(E.page.bg)) E.page.bg = pal.sw.bg;
-    E.page.pal = pal.id; PBApp.afterEdit("ألوان الصفحة: " + pal.name);
-    try { PBApp.toast("طُبّقت لوحة «" + pal.name + "» — Ctrl+Z للتراجع"); } catch (e) { }
+    E.page.pal = pal.id;
+    /* مرحلة التنسيق: بعد رسم الألوان الجديدة يُقاس تباين كل نص مع خلفيته الفعلية ويُعدَّل لون النص (بحفظ صبغته) إن قلّ التباين عن 4.5 (3 للكبير) */
+    let fixed = 0; try { PBApp.render(); await new Promise(r => setTimeout(r, 900)); fixed = fixContrast(); if (fixed) { PBApp.render(); await new Promise(r => setTimeout(r, 300)); fixed += fixContrast(); } } catch (e) { console.warn(e); }
+    PBApp.afterEdit("ألوان الصفحة: " + pal.name);
+    try { PBApp.toast("طُبّقت لوحة «" + pal.name + "»" + (fixed ? " وضُبط تباين " + fixed + " لون نص مع خلفياتها" : "") + " — Ctrl+Z للتراجع"); } catch (e) { }
   }
   /* ───── الواجهة ───── */
   let st = null;
@@ -118,10 +180,10 @@ const PBPalette = (() => {
       (dom.length ? `<div class="pbpal-dom"><span>ألوان المنتج:</span>${dom.map(d => `<i style="background:${hslHex(d.h, clamp(d.s, 0.4, 0.9), clamp(d.l, 0.35, 0.6))}"></i>`).join("")}</div>` : `<div class="pbpal-dom"><span>لم تُستخرج ألوان المنتج؛ اللوحات مبنية على ألوان الصفحة الحالية.</span></div>`) +
       `<div class="pbpal-g">${list.map(card).join("")}</div>`;
     document.body.appendChild(box);
-    box.addEventListener("click", ev => { if (ev.target.closest("[data-x]")) return close(); const b = ev.target.closest("[data-pid]"); if (!b) return; const p = st.list.find(x => x.id === b.dataset.pid); if (p) { apply(p, st.clusters); st.clusters = stats(PBApp.E.page).clusters; } });
+    box.addEventListener("click", ev => { if (ev.target.closest("[data-x]")) return close(); const b = ev.target.closest("[data-pid]"); if (!b) return; const p = st.list.find(x => x.id === b.dataset.pid); if (p) { apply(p, st.clusters).then(() => { st.clusters = stats(PBApp.E.page).clusters; }); } });
     document.addEventListener("keydown", esc, true);
   }
   const esc = e => { if (String(e.key || "") === "Escape") close(); };
   function close() { const b = document.getElementById("pbx-pal"); if (b) b.remove(); document.removeEventListener("keydown", esc, true); }
-  return { open, close, apply, stats, palettes, mapper, dominant, productImage, _walk: walkPage };
+  return { open, close, apply, fixContrast, fails: () => LASTFAILS.slice(), stats, palettes, mapper, dominant, productImage, _walk: walkPage };
 })();
