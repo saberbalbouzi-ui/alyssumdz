@@ -1000,6 +1000,7 @@ const PB = (() => {
     ];
     if (kind === "widget") a.unshift({ k: "rot", l: "تدوير العنصر (درجة)", t: "num", r: 1, min: -360, max: 360, tab: "a" }, { k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "a" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "a", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "a" },
       { k: "fx", l: "الموضع الأفقي % (وضع حر)", t: "num", r: 1, min: -50, max: 150, step: .5, tab: "a", onlyFree: 1 }, { k: "fy", l: "الموضع العمودي px (وضع حر)", t: "num", r: 1, min: -500, max: 5000, tab: "a", onlyFree: 1 }, { k: "fwd", l: "العرض % (وضع حر)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "a", onlyFree: 1 }, { k: "fh", l: "الارتفاع px (وضع حر)", t: "num", r: 1, min: 10, max: 5000, tab: "a", onlyFree: 1 },
+      { k: "fwd", l: "الحجم: العرض % (الارتفاع يتبعه بنفس النسبة في الصور والأشكال)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "s", onlyFree: 1 }, { k: "fh", l: "الحجم: الارتفاع px (العرض يتبعه بنفس النسبة في الصور والأشكال)", t: "num", r: 1, min: 10, max: 5000, tab: "s", onlyFree: 1 },
       { k: "zi", l: "الترتيب (أمام/خلف) — الأكبر أمام", t: "num", min: -20, max: 200, tab: "a" });
     return a.concat([
       kind === "column" ? { k: "ccl", l: "حجم محتوى العمود % — يتغير بسحب إطار العمود (فأرة/إصبع) فتتبعه عناصره", t: "num", r: 1, min: 30, max: 300, tab: "a" }
@@ -4541,6 +4542,20 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   /* لوحة صغيرة للعناصر: الطبقة والوضع، وللعنصر الحر المحاذاة والإزاحة */
   const gemOn = () => { try { return localStorage.getItem("alyssum_pbs_gem") === "1"; } catch (e) { return false; } };
+  /* الحجم المنتظم للعنصر الحر: القياس بالبكسل التصميمي (عرض القسم الحرّ × النسبة)، وقفل النسبة افتراضي للصور والأشكال والأيقونات */
+  const sizeLocked = inf => E.szLock !== undefined ? !!E.szLock : ["image", "shape", "iconbox"].includes(inf.node.type);
+  function freeSize(inf) {
+    const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"); if (!el || !pin) return null;
+    const cr = pin.getBoundingClientRect(), u = uOf(inf.sec, cr) || 1, r = el.getBoundingClientRect(); return { u, cw: cr.width / u, w: Math.round(r.width / u), h: Math.round(r.height / u) };
+  }
+  function setFreeSize(inf, kk, v, step) {
+    const sz = freeSize(inf); if (!sz || !(v >= 10)) return; ensureMobile(inf.sec); const dev = E.dev, hAuto = inf.node.type === "image" && inf.set.hauto !== false;
+    let nw = sz.w, nh = sz.h; if (kk === "w") { nw = v; if (sizeLocked(inf) && sz.w > 0) nh = Math.round(sz.h * v / sz.w); } else if (kk === "h") { nh = v; if (sizeLocked(inf) && sz.h > 0) nw = Math.round(sz.w * v / sz.h); }
+    setR(inf.set, "fwd", dev, Math.round(nw / sz.cw * 1000) / 10); if (!(hAuto && kk !== "h")) setR(inf.set, "fh", dev, nh); if (hAuto && kk === "h") delete inf.set.hauto;
+    if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(q => { if (own(inf.set, q, "d") === undefined) setR(inf.set, q, "d", eff(inf.set, q, dev)); });
+    schedule(); positionOverlaySoon(); const sib = $("pbx-insp") && $("pbx-insp").querySelectorAll("[data-qsz]"); if (sib && !step) sib.forEach(i => { if (i.dataset.qsz !== kk) i.value = i.dataset.qsz === "w" ? nw : nh; });
+    clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 500);
+  }
   function quickHtml(inf) {
     const bgBtn = inf.kind === "section" && inf.node.set.bgImg ? `<div class="pbx-qg"><small>خلفية القسم</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="bg-restore" title="تعيد الصورة إلى مكانها كصورة عادية">↩ إرجاع الخلفية كصورة</button></div></div>` : "";
     if (inf.kind === "section" && inf.node.set.kind !== "canvas" && bgBtn) return `<div class="pbx-q">${bgBtn}</div>`;
@@ -4552,6 +4567,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     let h = `<div class="pbx-q">` + (isTx ? `<button type="button" class="pbx-mwbtn" data-q="mw" title="اكتب كلمات وسيحرّر لك وصفاً">${QI.mw}<span>كتابة سحرية</span></button>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
     { const rv = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); h += grp("التدوير", `<div class="pbx-qr" style="width:100%"><button class="pbx-qk" data-q="rot-m" title="تدوير -15°" style="flex:0 0 auto">↺</button><input type="range" min="-180" max="180" step="1" value="${rv}" data-qrot="1" title="اسحب لتدوير العنصر"><button class="pbx-qk" data-q="rot-p" title="تدوير +15°" style="flex:0 0 auto">↻</button><b>${rv}°</b><button class="pbx-qk" data-q="rot-0" title="إعادة التدوير" style="flex:0 0 auto">⟲</button></div>`); }
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
+    if (inf.free) { const sz = freeSize(inf); if (sz) { const lk = sizeLocked(inf); h += grp("الحجم (بكسل)", `<div class="pbx-qr" style="width:100%;gap:.3rem;flex-wrap:wrap"><label style="display:flex;gap:.25rem;align-items:center">عرض <input type="number" min="10" max="4000" step="1" value="${sz.w}" data-qsz="w" style="width:62px"></label><button type="button" class="pbx-qk${lk ? " on" : ""}" data-q="sz-lock" title="قفل النسبة: تغيير العرض أو الارتفاع يغيّر الآخر بنفس النسبة" style="flex:0 0 auto">${lk ? "🔗" : "⛓"}</button><label style="display:flex;gap:.25rem;align-items:center">ارتفاع <input type="number" min="10" max="5000" step="1" value="${sz.h}" data-qsz="h" style="width:62px"></label></div><div class="pbx-qb">` + q("sz-m", "− 10%", "تصغير العنصر 10% بنفس النسبة") + q("sz-p", "+ 10%", "تكبير العنصر 10% بنفس النسبة") + `</div>`); } }
     if (inf.free) h += `<div class="pbx-qrow">` + grp("محاذاة", q("al-left", "⇤", "محاذاة لأقصى اليسار") + q("al-center", "↔", "توسيط أفقي") + q("al-right", "⇥", "محاذاة لأقصى اليمين")) + grp("إزاحة", `<span class="pbx-dpad">${q("n-u", "↑", "للأعلى", false, "u")}${q("n-l", "←", "لليسار", false, "l")}${q("n-d", "↓", "للأسفل", false, "d")}${q("n-r", "→", "لليمين", false, "r")}</span>`) + `</div>`;
     if (inf.node.type === "image" && inf.set.crop) h += grp("قصّ الصورة", q("crop-reset", "↺ إلغاء القصّ", "إعادة الصورة لملء الإطار تلقائياً", false, "wide"));
     return h + `</div>`;
@@ -4580,6 +4596,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (k === "smart-magic") return PBSmart.captureElements(); if (k === "smart-import") return PBSmart.importImages();
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
     if (k === "mir-h" || k === "mir-v") return mirrorDup(k === "mir-h" ? "h" : "v");
+    if (k === "sz-lock") { const inf0 = selInfo(); if (inf0) { E.szLock = !sizeLocked(inf0); renderInspector(); } return; }
+    if (k === "sz-m" || k === "sz-p") { const inf0 = selInfo(), sz = inf0 && freeSize(inf0); if (sz) { const f = k === "sz-p" ? 1.1 : 1 / 1.1, keep = E.szLock; E.szLock = true; setFreeSize(inf0, "w", Math.max(10, Math.round(sz.w * f)), true); E.szLock = keep; } return; }
     if (k === "rot-p" || k === "rot-m" || k === "rot-0") { const inf = selInfo(); if (!inf) return; const cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); const v = k === "rot-0" ? undefined : ((cur + (k === "rot-p" ? 15 : -15) + 540) % 360) - 180; setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); afterEdit(); return; }
     if (k.startsWith("n-")) { const m = { l: [-4, 0], r: [4, 0], u: [0, -4], d: [0, 4] }[k[2]]; return nudge(m[0], m[1]); }
     if (d[k]) d[k]();
@@ -4794,6 +4812,14 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       const empty = arr.every(x => x === "" || x == null); if (c.r) setR(set, k, E.dev, empty ? undefined : arr); else { if (empty) delete set[k]; else set[k] = arr; } return;
     }
     if (c.t === "num") { val = val === "" ? undefined : Number(val); if (c.pct && val !== undefined) val = Math.round(Math.max(0, Math.min(100, val))) / 100; }      // الشفافية تُعرض 0–100 وتُخزَّن 0–1
+    /* تحجيم منتظم: تغيير عرض أو ارتفاع صورة/شكل/أيقونة حرّة يغيّر الآخر بنفس النسبة فلا تتشوّه النسبة (النص والأزرار مستقلان) */
+    if (inf.kind === "widget" && inf.free && c.t === "num" && (k === "fwd" || k === "fh") && val !== undefined && val > 0 && ["image", "shape", "iconbox"].includes(inf.node.type)) {
+      const w0 = Number(eff(set, "fwd", E.dev)) || 0, h0 = Number(eff(set, "fh", E.dev)) || 0;
+      if (w0 > 0 && h0 > 0 && !(inf.node.type === "image" && set.hauto !== false && k === "fh")) {
+        if (k === "fwd") setR(set, "fh", E.dev, Math.max(10, Math.round(h0 * val / w0))); else setR(set, "fwd", E.dev, Math.round(w0 * val / h0 * 10) / 10);
+        if (E.dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(q => { if (own(set, q, "d") === undefined) setR(set, q, "d", eff(set, q, E.dev)); });
+      }
+    }
     if (c.t === "switch") val = !!val;
     if (c.r) setR(set, k, E.dev, val); else if (val === "" || val === undefined) delete set[k]; else set[k] = val;
   }
@@ -4810,6 +4836,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.fxk !== undefined) { const it = (inf.set.fxs || [])[+t.dataset.fxi], pr = it && it.p && it.p[t.dataset.fxk]; if (pr) { pr.v = pr.t === "num" ? (t.value === "" ? 0 : Number(t.value)) : t.value; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); } return; }
     if (t.dataset.fxn) { const k = t.dataset.fxn; if (k === "anim") { if (t.value) inf.set.anim = t.value; else { delete inf.set.anim; delete inf.set.animDur; delete inf.set.animDelay; } } else inf.set[k] = t.value === "" ? 0 : Number(t.value); schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); if (k === "anim" && !t.value) renderInspector(); else { clearTimeout(E.animP); E.animP = setTimeout(() => playAnims(E.sel), 250); } return; }
     if (t.dataset.bc !== undefined) { const a = Array.isArray(inf.set.mcols) ? inf.set.mcols : (inf.set.mcols = []); a[Number(t.dataset.bc)] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
+    if (t.dataset.qsz) { const inf0 = selInfo(); if (inf0 && inf0.free) setFreeSize(inf0, t.dataset.qsz, Number(t.value)); return; }
     if (t.dataset.qrot) { const v = Number(t.value); setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); const b = t.parentNode.querySelector("b"); if (b) b.textContent = v + "°"; schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.qc) { inf.set[t.dataset.qc] = t.value; schedule(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); return; }
     if (t.dataset.repclr) { const items = inf.set[t.dataset.repclr] || []; if (items[t.dataset.i]) delete items[t.dataset.i][t.dataset.f]; afterEdit(); return; }

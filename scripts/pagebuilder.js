@@ -999,6 +999,7 @@ const PB = (() => {
     ];
     if (kind === "widget") a.unshift({ k: "rot", l: "تدوير العنصر (درجة)", t: "num", r: 1, min: -360, max: 360, tab: "a" }, { k: "w", l: "العرض (%)", t: "num", r: 1, min: 5, max: 100, tab: "a" }, { k: "mh", l: "الارتفاع الأدنى (px)", t: "num", r: 1, min: 0, max: 1200, tab: "a", skipFor: ["spacer", "image"] }, { k: "al", l: "موضع العنصر داخل العمود", t: "align", r: 1, tab: "a" },
       { k: "fx", l: "الموضع الأفقي % (وضع حر)", t: "num", r: 1, min: -50, max: 150, step: .5, tab: "a", onlyFree: 1 }, { k: "fy", l: "الموضع العمودي px (وضع حر)", t: "num", r: 1, min: -500, max: 5000, tab: "a", onlyFree: 1 }, { k: "fwd", l: "العرض % (وضع حر)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "a", onlyFree: 1 }, { k: "fh", l: "الارتفاع px (وضع حر)", t: "num", r: 1, min: 10, max: 5000, tab: "a", onlyFree: 1 },
+      { k: "fwd", l: "الحجم: العرض % (الارتفاع يتبعه بنفس النسبة في الصور والأشكال)", t: "num", r: 1, min: 2, max: 200, step: .5, tab: "s", onlyFree: 1 }, { k: "fh", l: "الحجم: الارتفاع px (العرض يتبعه بنفس النسبة في الصور والأشكال)", t: "num", r: 1, min: 10, max: 5000, tab: "s", onlyFree: 1 },
       { k: "zi", l: "الترتيب (أمام/خلف) — الأكبر أمام", t: "num", min: -20, max: 200, tab: "a" });
     return a.concat([
       kind === "column" ? { k: "ccl", l: "حجم محتوى العمود % — يتغير بسحب إطار العمود (فأرة/إصبع) فتتبعه عناصره", t: "num", r: 1, min: 30, max: 300, tab: "a" }
