@@ -11428,7 +11428,7 @@ const PBBind = (() => {
         if (po) { if (fill) { po.textContent = has ? fmt(p.old) : ""; po.style.display = has ? "" : "none"; } mk(po, o.slug); }
         if (ps) { if (fill) { ps.textContent = has ? "وفّر " + Math.round((1 - p.price / p.old) * 100) + "%" : ""; ps.style.display = has ? "" : "none"; } mk(ps, o.slug); }
       }
-      const of = root.querySelector("#offers"); if (of) { if (fill && (p.offers || []).length) of.innerHTML = offerCards(p); mk(of, o.slug); }
+      const of = [...root.querySelectorAll("#offers")].find(e => !e.matches("section,.pb-sec,.pb-col,.pb-colin,.pb-in,.pb-w")); if (of) {      /* قسم/عمود/عنصر معرّفه offers (مرساة) ليس حاوية العروض: كان يُربط بالمنتج ويُستبدل محتواه كله (عنوان ونص) ببطاقات العروض عند تعديل المنتج */ if (fill && (p.offers || []).length) of.innerHTML = offerCards(p); mk(of, o.slug); }
       /* صور المنتج لا تُربط هنا: تُختار من إعدادات المنتج فقط؛ صور الصفحة مستقلة عنها */
     } else {
       if (!o.mark && !Object.keys(cache).some(dirty)) return;      // عند الحفظ: لا تُثبَّت البطاقات إلا إن تغيّرت بيانات منتج

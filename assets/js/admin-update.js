@@ -47,8 +47,11 @@ const AdminUpdate = (() => {
   }
   /* نصوص الأزرار أثناء العمل: «جاري التحديث…» / «جاري مسح الكاش…» */
   let busy = false;
+  function showCover(msg) {      /* تغذية راجعة فورية مرئية في كل مكان (شريط المحرر أيقونات بلا نص) */
+    try { let d = document.getElementById("au-cover"); if (!d) { d = document.createElement("div"); d.id = "au-cover"; d.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:rgba(11,18,16,.92);color:#f1f5f2;display:flex;flex-direction:column;gap:.9rem;align-items:center;justify-content:center;font-family:inherit;font-weight:800;direction:rtl"; d.innerHTML = '<span style="width:34px;height:34px;border:4px solid rgba(226,254,23,.25);border-top-color:#e2fe17;border-radius:50%;display:inline-block;animation:aucv .8s linear infinite"></span><span id="au-cover-t"></span><style>@keyframes aucv{to{transform:rotate(360deg)}}</style>'; (document.body || document.documentElement).appendChild(d); } const t = document.getElementById("au-cover-t"); if (t) t.textContent = msg; } catch (e) { }
+  }
   function setBusy(kind) {
-    busy = true; const txt = kind === "cc" ? "جاري مسح الكاش…" : "جاري التحديث…";
+    busy = true; showCover(kind === "cc" ? "جارٍ مسح الكاش وإعادة التحميل…" : "جارٍ التحديث… سيُعاد فتح عملك تلقائياً"); const txt = kind === "cc" ? "جاري مسح الكاش…" : "جاري التحديث…";
     document.querySelectorAll("[data-au], #au-cc, #pbx-cc").forEach(b => { b.disabled = true; const isCC = b.id === "au-cc" || b.id === "pbx-cc"; if (isCC !== (kind === "cc")) return; const t = b.querySelector(".au-t") || b.querySelector("span:last-child"); if (t) t.textContent = txt; else b.textContent = "⏳ " + txt; });
   }
   /* يجلب الصفحة وسكربتاتها وأنماطها من الخادم متجاوزاً الكاش ثم يعيد تحميل الصفحة نفسها (دون مغادرتها) */
