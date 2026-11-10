@@ -1631,362 +1631,735 @@
   {
    "id": "4uls5wb",
    "set": {
-    "layout": "boxed",
+    "cls": "ing-sec",
+    "kind": "canvas",
+    "scaled": false,
+    "dw": 1280,
     "cw": {
-     "d": 1220
+     "d": 1280
+    },
+    "layout": "full",
+    "mh": {
+     "d": 315,
+     "m": 699
     },
     "pad": {
      "d": [
       0,
       0,
-      100,
-      0
-     ],
-     "m": [
       0,
-      0,
-      60,
       0
      ]
-    },
-    "gap": {
-     "d": 14
-    },
-    "va": {
-     "d": "start"
-    },
-    "cls": "ing-sec"
+    }
    },
    "cols": [
     {
-     "id": "xnxt7xm",
-     "set": {
-      "w": {
-       "d": 16.6,
-       "m": 50
-      },
-      "cls": "ing-card"
-     },
-     "widgets": [
-      {
-       "id": "r5405kf",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/lp/c-honey.webp",
-        "alt": "العسل الطبيعي",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 200
-        },
-        "cls": "ing-img",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "hx0n5hx",
-       "type": "heading",
-       "set": {
-        "text": "العسل الطبيعي",
-        "tag": "h3",
-        "fs": {
-         "d": 14,
-         "m": 12
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      }
-     ]
-    },
-    {
-     "id": "qo1ikuf",
-     "set": {
-      "w": {
-       "d": 16.6,
-       "m": 50
-      },
-      "cls": "ing-card"
-     },
-     "widgets": [
-      {
-       "id": "7jwvilz",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/lp/c-ginkgo.webp",
-        "alt": "الجنكة",
-        "fit": "cover",
-        "rad": {
-         "d": 200
-        },
-        "cls": "ing-img",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "al": {
-         "m": "end"
-        },
-        "w": {
-         "m": 53.8
-        },
-        "wsc": {
-         "m": 156,
-         "d": 100
-        }
-       }
-      },
-      {
-       "id": "h6hk90p",
-       "type": "heading",
-       "set": {
-        "text": "الجنكة",
-        "tag": "h3",
-        "fs": {
-         "d": 14,
-         "m": 12
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      }
-     ]
-    },
-    {
-     "id": "s2tvz9q",
-     "set": {
-      "w": {
-       "d": 16.6,
-       "m": 50
-      },
-      "cls": "ing-card"
-     },
-     "widgets": [
-      {
-       "id": "1o22v9d",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/lp/c-rosemary.webp",
-        "alt": "إكليل الجبل",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 200
-        },
-        "cls": "ing-img",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.2
-       }
-      },
-      {
-       "id": "o256y37",
-       "type": "heading",
-       "set": {
-        "text": "إكليل الجبل",
-        "tag": "h3",
-        "fs": {
-         "d": 14,
-         "m": 12
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.2
-       }
-      }
-     ]
-    },
-    {
-     "id": "19x6kco",
-     "set": {
-      "w": {
-       "d": 16.6,
-       "m": 50
-      },
-      "cls": "ing-card"
-     },
-     "widgets": [
-      {
-       "id": "lh4pexp",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/lp/c-basil.webp",
-        "alt": "الريحان",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 200
-        },
-        "cls": "ing-img",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.3
-       }
-      },
-      {
-       "id": "9mawv5j",
-       "type": "heading",
-       "set": {
-        "text": "الريحان",
-        "tag": "h3",
-        "fs": {
-         "d": 14,
-         "m": 12
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.3
-       }
-      }
-     ]
-    },
-    {
-     "id": "afv5ejt",
-     "set": {
-      "w": {
-       "d": 16.6,
-       "m": 50
-      },
-      "cls": "ing-card"
-     },
-     "widgets": [
-      {
-       "id": "djrdnck",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/lp/c-raisin.webp",
-        "alt": "الزبيب",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 200
-        },
-        "cls": "ing-img",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.4
-       }
-      },
-      {
-       "id": "6q5vfvo",
-       "type": "heading",
-       "set": {
-        "text": "الزبيب",
-        "tag": "h3",
-        "fs": {
-         "d": 14,
-         "m": 12
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.4
-       }
-      }
-     ]
-    },
-    {
-     "id": "twjkfsc",
-     "set": {
-      "w": {
-       "d": 16.6,
-       "m": 50
-      },
-      "cls": "ing-card"
-     },
-     "widgets": [
-      {
-       "id": "j11drww",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/lp/c-nuts.webp",
-        "alt": "المكسرات",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 200
-        },
-        "cls": "ing-img",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.5
-       }
-      },
-      {
-       "id": "n4t3oju",
-       "type": "heading",
-       "set": {
-        "text": "المكسرات",
-        "tag": "h3",
-        "fs": {
-         "d": 14,
-         "m": 12
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.5
-       }
-      }
-     ]
+     "id": "gvhfm8r",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "rxzrpe8",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#edf0e2",
+      "sw": 1,
+      "dash": "",
+      "rx": 11.9,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 81.8,
+       "m": 50
+      },
+      "fy": {
+       "d": 0,
+       "m": 0
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 215,
+       "m": 213
+      },
+      "zi": 1,
+      "ry": 11.2,
+      "grp": "gq847246",
+      "sh": "sm"
+     }
+    },
+    {
+     "id": "r5405kf",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/lp/c-honey.webp",
+      "alt": "العسل الطبيعي",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 200
+      },
+      "cls": "ing-img",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 83.9,
+       "m": 56
+      },
+      "fy": {
+       "d": 15,
+       "m": 15
+      },
+      "fwd": {
+       "d": 11.7,
+       "m": 38
+      },
+      "fh": {
+       "d": 150,
+       "m": 148
+      },
+      "zi": 2,
+      "grp": "gq847246"
+     }
+    },
+    {
+     "id": "hx0n5hx",
+     "type": "heading",
+     "set": {
+      "text": "العسل الطبيعي",
+      "tag": "h3",
+      "fs": {
+       "d": 14,
+       "m": 14
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 81.8,
+       "m": 50
+      },
+      "fy": {
+       "d": 178,
+       "m": 176
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 18,
+       "m": 18
+      },
+      "zi": 3,
+      "grp": "gq847246"
+     }
+    },
+    {
+     "id": "ha6i1o3",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#edf0e2",
+      "sw": 1,
+      "dash": "",
+      "rx": 11.9,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 66,
+       "m": 0
+      },
+      "fy": {
+       "d": 0,
+       "m": 0
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 215,
+       "m": 213
+      },
+      "zi": 1,
+      "ry": 11.2,
+      "grp": "gwz50mk9",
+      "sh": "sm"
+     }
+    },
+    {
+     "id": "7jwvilz",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/lp/c-ginkgo.webp",
+      "alt": "الجنكة",
+      "fit": "cover",
+      "rad": {
+       "d": 200
+      },
+      "cls": "ing-img",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "wsc": {
+       "m": 156,
+       "d": 100
+      },
+      "fx": {
+       "d": 68.1,
+       "m": 6
+      },
+      "fy": {
+       "d": 15,
+       "m": 15
+      },
+      "fwd": {
+       "d": 11.7,
+       "m": 38
+      },
+      "fh": {
+       "d": 150,
+       "m": 148
+      },
+      "zi": 2,
+      "grp": "gwz50mk9"
+     }
+    },
+    {
+     "id": "h6hk90p",
+     "type": "heading",
+     "set": {
+      "text": "الجنكة",
+      "tag": "h3",
+      "fs": {
+       "d": 14,
+       "m": 14
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 66,
+       "m": 0
+      },
+      "fy": {
+       "d": 178,
+       "m": 176
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 18,
+       "m": 18
+      },
+      "zi": 3,
+      "grp": "gwz50mk9"
+     }
+    },
+    {
+     "id": "nkymsjz",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#edf0e2",
+      "sw": 1,
+      "dash": "",
+      "rx": 11.9,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 50.2,
+       "m": 50
+      },
+      "fy": {
+       "d": 0,
+       "m": 213
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 215,
+       "m": 213
+      },
+      "zi": 1,
+      "ry": 11.2,
+      "grp": "g78qf0rt",
+      "sh": "sm"
+     }
+    },
+    {
+     "id": "1o22v9d",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/lp/c-rosemary.webp",
+      "alt": "إكليل الجبل",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 200
+      },
+      "cls": "ing-img",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.2,
+      "fx": {
+       "d": 52.2,
+       "m": 56
+      },
+      "fy": {
+       "d": 15,
+       "m": 228
+      },
+      "fwd": {
+       "d": 11.7,
+       "m": 38
+      },
+      "fh": {
+       "d": 150,
+       "m": 148
+      },
+      "zi": 2,
+      "grp": "g78qf0rt"
+     }
+    },
+    {
+     "id": "o256y37",
+     "type": "heading",
+     "set": {
+      "text": "إكليل الجبل",
+      "tag": "h3",
+      "fs": {
+       "d": 14,
+       "m": 14
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.2,
+      "fx": {
+       "d": 50.2,
+       "m": 50
+      },
+      "fy": {
+       "d": 178,
+       "m": 389
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 18,
+       "m": 18
+      },
+      "zi": 3,
+      "grp": "g78qf0rt"
+     }
+    },
+    {
+     "id": "xecgos3",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#edf0e2",
+      "sw": 1,
+      "dash": "",
+      "rx": 11.9,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 34.4,
+       "m": 0
+      },
+      "fy": {
+       "d": 0,
+       "m": 213
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 215,
+       "m": 213
+      },
+      "zi": 1,
+      "ry": 11.2,
+      "grp": "g10gkwsb",
+      "sh": "sm"
+     }
+    },
+    {
+     "id": "lh4pexp",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/lp/c-basil.webp",
+      "alt": "الريحان",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 200
+      },
+      "cls": "ing-img",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.3,
+      "fx": {
+       "d": 36.4,
+       "m": 6
+      },
+      "fy": {
+       "d": 15,
+       "m": 228
+      },
+      "fwd": {
+       "d": 11.7,
+       "m": 38
+      },
+      "fh": {
+       "d": 150,
+       "m": 148
+      },
+      "zi": 2,
+      "grp": "g10gkwsb"
+     }
+    },
+    {
+     "id": "9mawv5j",
+     "type": "heading",
+     "set": {
+      "text": "الريحان",
+      "tag": "h3",
+      "fs": {
+       "d": 14,
+       "m": 14
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.3,
+      "fx": {
+       "d": 34.4,
+       "m": 0
+      },
+      "fy": {
+       "d": 178,
+       "m": 389
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 18,
+       "m": 18
+      },
+      "zi": 3,
+      "grp": "g10gkwsb"
+     }
+    },
+    {
+     "id": "70y5qaa",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#edf0e2",
+      "sw": 1,
+      "dash": "",
+      "rx": 11.9,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 18.5,
+       "m": 50
+      },
+      "fy": {
+       "d": 0,
+       "m": 425
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 215,
+       "m": 213
+      },
+      "zi": 1,
+      "ry": 11.2,
+      "grp": "gbsu2p2a",
+      "sh": "sm"
+     }
+    },
+    {
+     "id": "djrdnck",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/lp/c-raisin.webp",
+      "alt": "الزبيب",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 200
+      },
+      "cls": "ing-img",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.4,
+      "fx": {
+       "d": 20.6,
+       "m": 56
+      },
+      "fy": {
+       "d": 15,
+       "m": 440
+      },
+      "fwd": {
+       "d": 11.7,
+       "m": 38
+      },
+      "fh": {
+       "d": 150,
+       "m": 148
+      },
+      "zi": 2,
+      "grp": "gbsu2p2a"
+     }
+    },
+    {
+     "id": "6q5vfvo",
+     "type": "heading",
+     "set": {
+      "text": "الزبيب",
+      "tag": "h3",
+      "fs": {
+       "d": 14,
+       "m": 14
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.4,
+      "fx": {
+       "d": 18.5,
+       "m": 50
+      },
+      "fy": {
+       "d": 178,
+       "m": 602
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 18,
+       "m": 18
+      },
+      "zi": 3,
+      "grp": "gbsu2p2a"
+     }
+    },
+    {
+     "id": "xqymyb1",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#edf0e2",
+      "sw": 1,
+      "dash": "",
+      "rx": 11.9,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 2.7,
+       "m": 0
+      },
+      "fy": {
+       "d": 0,
+       "m": 425
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 215,
+       "m": 213
+      },
+      "zi": 1,
+      "ry": 11.2,
+      "grp": "gbfdnedw",
+      "sh": "sm"
+     }
+    },
+    {
+     "id": "j11drww",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/lp/c-nuts.webp",
+      "alt": "المكسرات",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 200
+      },
+      "cls": "ing-img",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.5,
+      "fx": {
+       "d": 4.8,
+       "m": 6
+      },
+      "fy": {
+       "d": 15,
+       "m": 440
+      },
+      "fwd": {
+       "d": 11.7,
+       "m": 38
+      },
+      "fh": {
+       "d": 150,
+       "m": 148
+      },
+      "zi": 2,
+      "grp": "gbfdnedw"
+     }
+    },
+    {
+     "id": "n4t3oju",
+     "type": "heading",
+     "set": {
+      "text": "المكسرات",
+      "tag": "h3",
+      "fs": {
+       "d": 14,
+       "m": 14
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.5,
+      "fx": {
+       "d": 2.7,
+       "m": 0
+      },
+      "fy": {
+       "d": 178,
+       "m": 602
+      },
+      "fwd": {
+       "d": 15.8,
+       "m": 50
+      },
+      "fh": {
+       "d": 18,
+       "m": 18
+      },
+      "zi": 3,
+      "grp": "gbfdnedw"
+     }
+    }
+   ]
   },
   {
    "id": "q2yog5p",
@@ -2295,106 +2668,67 @@
          ]
         }
        }
+      },
+      {
+       "id": "cxmcp05",
+       "type": "heading",
+       "set": {
+        "text": "عبوة واحدة · 250 غ",
+        "tag": "h3",
+        "fs": {
+         "d": 20,
+         "m": 18
+        },
+        "fw": "900",
+        "ta": {
+         "d": "center"
+        },
+        "color": "#123e72",
+        "lh": {
+         "d": 1.25
+        },
+        "cls": "",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1
+       }
+      },
+      {
+       "id": "10s5uui",
+       "type": "button",
+       "set": {
+        "text": "اطلب عبوة ←",
+        "kind": "link",
+        "link": "#order",
+        "bgc": "#187a3b",
+        "color": "#fff",
+        "hbg": "#187a3b",
+        "fs": {
+         "d": 16,
+         "m": 15
+        },
+        "fw": "900",
+        "brad": {
+         "d": 999
+        },
+        "bpad": {
+         "d": [
+          14,
+          25,
+          14,
+          25
+         ]
+        },
+        "cls": "btn-gr",
+        "anim": "fadeUp",
+        "animDur": 0.75,
+        "animDelay": 0.1
+       }
       }
      ]
     }
    ],
-   "free": [
-    {
-     "id": "cxmcp05",
-     "type": "heading",
-     "set": {
-      "text": "عبوة واحدة · 250 غ",
-      "tag": "h3",
-      "fs": {
-       "d": 20,
-       "m": 18
-      },
-      "fw": "900",
-      "ta": {
-       "d": "center"
-      },
-      "color": "#123e72",
-      "lh": {
-       "d": 1.25
-      },
-      "cls": "",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
-      "fx": {
-       "m": -7.9,
-       "d": 1.1
-      },
-      "fy": {
-       "m": 1109,
-       "d": 535
-      },
-      "fwd": {
-       "m": 93.3,
-       "d": 39.8
-      },
-      "fh": {
-       "m": 23,
-       "d": 30
-      },
-      "zi": 4
-     }
-    },
-    {
-     "id": "10s5uui",
-     "type": "button",
-     "set": {
-      "text": "اطلب عبوة ←",
-      "kind": "link",
-      "link": "#order",
-      "bgc": "#187a3b",
-      "color": "#fff",
-      "hbg": "#187a3b",
-      "fs": {
-       "d": 16,
-       "m": 15
-      },
-      "fw": "900",
-      "brad": {
-       "d": 999
-      },
-      "bpad": {
-       "d": [
-        14,
-        25,
-        14,
-        25
-       ]
-      },
-      "cls": "btn-gr",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
-      "fx": {
-       "m": 62.5,
-       "d": 8.6
-      },
-      "fy": {
-       "m": 1097,
-       "d": 595
-      },
-      "fwd": {
-       "m": 33,
-       "d": 25
-      },
-      "fh": {
-       "m": 47,
-       "d": 59
-      },
-      "zi": 5,
-      "wsc": {
-       "m": 80,
-       "d": 100
-      }
-     }
-    }
-   ]
+   "free": []
   },
   {
    "id": "yziy3ti",
