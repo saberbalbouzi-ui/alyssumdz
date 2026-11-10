@@ -1276,7 +1276,9 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const rs = infs.map(i => ({ i, r: layoutRect(fdoc.querySelector(`[data-pb="${i.node.id}"]`)) })), L = Math.min(...rs.map(q => q.r.left)), Tp = Math.min(...rs.map(q => q.r.top));
     const base = Math.max(0, ...(ts.free || []).map(w => Number(w.set.zi) || 0)) + 1; rs.sort((a, b) => (Number(a.i.set.zi) || 0) - (Number(b.i.set.zi) || 0));
     rs.forEach((q, k) => { const st = q.i.node.set;
-      st.fx = { d: Math.round((gx + q.r.left - L) / tcr.width * 1000) / 10 }; st.fy = { d: Math.max(0, Math.round((gy + q.r.top - Tp) / ut)) }; st.fwd = { d: Math.round(q.r.width / tcr.width * 1000) / 10 }; if (st.fh !== undefined) st.fh = { d: Math.round(q.r.height / ut) }; st.zi = base + k;
+      /* القيم الجديدة تُكتب لكل الأجهزة (d و m عند النقل من الهاتف/التابلت) كي لا يبقى للعنصر موضع قديم من قسمه السابق يُخفيه، وتُحصر داخل القسم الهدف */
+      const dv = E.dev === "d" ? ["d"] : ["d", E.dev], put = (key, v) => { st[key] = {}; dv.forEach(x => { st[key][x] = v; }); }, hT0 = Math.round(tcr.height / ut), hh = Math.round(q.r.height / ut);
+      put("fx", Math.round(Math.max(-5, Math.min(100 - Math.min(90, q.r.width / tcr.width * 100), (gx + q.r.left - L) / tcr.width * 100)) * 10) / 10); put("fy", Math.max(0, Math.min(Math.max(0, hT0 - Math.min(hh, hT0)), Math.round((gy + q.r.top - Tp) / ut)))); put("fwd", Math.round(q.r.width / tcr.width * 1000) / 10); if (st.fh !== undefined) put("fh", hh); st.zi = base + k;
       const li = q.i.list, ix = li.indexOf(q.i.node); if (ix >= 0) li.splice(ix, 1); (ts.free = ts.free || []).push(q.i.node); });
     if (mhMap) mhMap.forEach((v, sc) => { if (v) setR(sc.set, "mh", "d", v); });
     growCanvas(ts); E.nextLabel = "نقل " + infs.length + " عناصر إلى قسم آخر"; afterEdit(); toast("↪ نُقل إلى القسم الآخر — Ctrl+Z للتراجع"); return true;
@@ -1537,11 +1539,10 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (!el) el = (function f(n) { for (const c of n.childNodes) { if (c.nodeType === 3 && c.textContent.trim()) return n; if (c.nodeType === 1) { const r = f(c); if (r) return r; } } return null; })(root) || root;
     return fdoc.defaultView.getComputedStyle(el);
   };
-  /* حجم الخط الحالي بوحدة التصميم: في قسم حرّ متناسب (scaled) يُقاس الخط المرسوم مصغَّراً بنسبة القسم (على الهاتف 0.3–0.5)، فيجب قسمته عليها وإلا يُكتب في الشريط رقم أصغر من حجم التصميم وتنعكس +/− */
-  function qFsNow(inf) {
-    const cs = qFont(inf); if (!cs) return 0; const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"), u = pin ? (uOf(inf.sec, pin.getBoundingClientRect()) || 1) : 1;
-    return Math.round(parseFloat(cs.fontSize) / u);
-  }
+  /* حجم الخط الظاهر فعلاً (px على الشاشة): في قسم حرّ متناسب (scaled) على الهاتف يُصغَّر الخط بنسبة القسم u (≈0.3–0.5)، فالخانة تعرض الحجم الحقيقي المرسوم وتكتب في التصميم القيمة ÷ u كي يتطابق الرقم مع ما تراه وتتحرك الخطوة بنفس الحجم الظاهر */
+  function qU(inf) { const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"); return pin ? (uOf(inf.sec, pin.getBoundingClientRect()) || 1) : 1; }
+  function qFsNow(inf) { const cs = qFont(inf); return cs ? Math.round(parseFloat(cs.fontSize)) : 0; }
+  const qDesignFs = (inf, real) => Math.max(4, Math.min(400, Math.round(real / qU(inf))));
   function qbarHtml(inf) {
     const t = inf.node.type, set = inf.set, dev = E.dev, isTx = t === "heading" || t === "text", isImg = t === "image", btn = (k, ic, tt, on, dis) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${ic}</button>`, tb = (k, label, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}><span class="ic">${QI[k] || QI.flip}</span><span class="tx">${label}</span></button>`, sep = '<span class="qsep"></span>';
     let h = "";
@@ -1869,7 +1870,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       bar.addEventListener("mousedown", e => { if (editing && !e.target.closest("input,select,textarea,label")) e.preventDefault(); });      // أزرار الشريط لا تسحب التركيز من النص المُحرَّر فيبقى التحديد
       bar.addEventListener("click", e => { const b = e.target.closest("[data-qb]"); if (b) qAct(b.dataset.qb, b); });
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
-      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qSize(inf, Math.max(8, Math.min(160, Number(t.value) || 17)), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
+      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "fs") qSize(inf, qDesignFs(inf, Math.max(4, Math.min(300, Number(t.value) || 17))), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
     if (!document.getElementById("pbfonts-a")) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
     const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget" && !multiOn(); if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null; bar.style.display = show ? "flex" : "none"; try { epSync(); } catch (x) { console.warn(x); } if (!show) return;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه
     bar.innerHTML = qbarHtml(inf); placeQbar();
@@ -2037,7 +2038,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
-    if (k === "fs-" || k === "fs+") { const cur = qFsNow(inf) || Number(eff(set, "fs", dev)) || 17; return qSize(inf, Math.max(8, Math.min(160, cur + (k === "fs+" ? 1 : -1))), true); }
+    if (k === "fs-" || k === "fs+") { const cur = qFsNow(inf) || Math.round((Number(eff(set, "fs", dev)) || 17) * qU(inf)); return qSize(inf, qDesignFs(inf, Math.max(4, cur + (k === "fs+" ? 1 : -1))), true); }
     if (k === "clearfmt") { if (editing) { clearFmt(); return; } if (typeof set.html === "string") { set.html = plainFmtHtml(set.html); E.nextLabel = "مسح التنسيق"; afterEdit(); toast("تم مسح التنسيق المنسوخ"); } return; }
     if (["bold", "italic", "under", "strike"].includes(k) && qSel(k)) return;
     if (k === "bold") { const cs = qFont(inf), cur = Number(set.fw || (cs && cs.fontWeight) || 400); return qDone(inf, "fw", cur >= 600 ? "400" : (inf.node.type === "heading" ? "800" : "700")); }
