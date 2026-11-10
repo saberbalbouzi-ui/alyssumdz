@@ -3396,7 +3396,10 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     else if (/^Arrow/.test(e.key) && E.sel) {                                                  // تحريك العنصر الحر بالأسهم (Shift = 10 بكسل)
       const inf = selInfo(); if (!inf) return; if (isLocked(inf)) return;
       if (inf.free) e.preventDefault();      // لا تتمرّر الصفحة أثناء تحريك العنصر بالأسهم
-      if (!inf.free) { e.preventDefault(); const d = (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : 0; if (d) { if (e.altKey) move(d); else nav(d); } return; }   // العناصر العادية: الأسهم تنقل التحديد (Alt = إعادة ترتيب)
+      if (!inf.free) { e.preventDefault(); const d = (e.key === "ArrowUp" || e.key === "ArrowLeft") ? -1 : (e.key === "ArrowDown" || e.key === "ArrowRight") ? 1 : 0; if (e.altKey || e.ctrlKey || e.metaKey) { if (d) { if (e.altKey) move(d); else nav(d); } return; }
+        const st = e.shiftKey ? 10 : 1, dx = e.key === "ArrowLeft" ? -st : e.key === "ArrowRight" ? st : 0, dy = e.key === "ArrowUp" ? -st : e.key === "ArrowDown" ? st : 0; if (!dx && !dy) return;      /* عنصر عادي: الأسهم تُزيحه بصرياً (tx/ty) على الجهاز الحالي؛ Alt+سهم = إعادة ترتيب، Ctrl+سهم = نقل التحديد */
+        const dv = E.dev; ["d", "t", "m"].forEach(d2 => { if (d2 !== dv) { if (own(inf.set, "tx", d2) === undefined) setR(inf.set, "tx", d2, 0); if (own(inf.set, "ty", d2) === undefined) setR(inf.set, "ty", d2, 0); } });
+        setR(inf.set, "tx", dv, Math.round((Number(eff(inf.set, "tx", dv)) || 0) + dx)); setR(inf.set, "ty", dv, Math.round((Number(eff(inf.set, "ty", dv)) || 0) + dy)); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => { commitHist(); renderInspector(); }, 400); return; }   // العناصر العادية
       const el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), cw = el.closest(".pb-in").getBoundingClientRect().width, st = e.shiftKey ? 10 : 1;
       let fx = Number(eff(inf.set, "fx", E.dev)) || 0, fy = Number(eff(inf.set, "fy", E.dev)) || 0;
       const u = uOf(inf.sec, { width: cw }); ensureMobile(inf.sec); fx = Number(eff(inf.set, "fx", E.dev)) || 0; fy = Number(eff(inf.set, "fy", E.dev)) || 0;
