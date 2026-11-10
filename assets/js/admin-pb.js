@@ -2347,6 +2347,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
       !canvas ? ["⤢", "تحويل القسم إلى عناصر حرة", () => flowToFree(inf.sec)] : null,
+      inf.node.type === "html" ? ["⤢", "تحويل الكود إلى عناصر حرة قابلة للتعديل", () => htmlToFree(inf.node.id)] : null,
       img && inf.set.src ? ["🖼️", "تحويل كخلفية للقسم", () => asBackground(inf)] : null, ["📐", "بحجم الصفحة (القسم كله)", () => fitPage(inf)], img ? ["↔", "بعرض الصفحة (بنسبة الصورة)", () => fitWidth(inf)] : null,
       ["↻", "تدوير 90°", () => { setR(inf.set, "rot", E.dev, ((cur + 90 + 180) % 360) - 180 || undefined); afterEdit(); }], cur ? ["⟲", "إعادة التدوير (" + cur + "°)", () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); }] : null,
       img && canvas && !EDB() && !WEAKDEV() ? "-" : null, img && canvas && !EDB() && !WEAKDEV() ? ["✨", "التقاط سحري", () => PBSmart.captureElements()] : null,
@@ -2456,6 +2457,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       has ? ["🗑", "حذف الخلفية", () => { if (lk) return toast("🔒 الخلفية مقفلة"); ["bgImg", "bgSize", "bgPos", "bgOrig"].forEach(k => delete set[k]); E.nextLabel = "حذف الخلفية"; afterEdit(); }, "Del", 1, 0, lk] : null, "-",
       has ? [lk ? "🔓" : "🔒", lk ? "فتح قفل الخلفية" : "قفل الخلفية", () => { if (lk) delete set.bgLocked; else set.bgLocked = true; afterEdit(); toast(lk ? "🔓 فُتحت الخلفية" : "🔒 الخلفية مقفلة"); }] : null,
       !canvas ? ["⤢", "تحويل القسم إلى عناصر حرة (تتحرك البطاقات مع محتواها)", () => flowToFree(sec)] : null,
+      ["↕", "إزالة الفراغ (ضبط الارتفاع على المحتوى)", () => fitSection(sec)],
       canvas ? ["✂", "قصّ الصفحة عند آخر عنصر", () => { trimLong(sec); toast("✂ قُصّت الصفحة عند آخر عنصر"); }] : null,
       canvas ? ["↕", "تغيير حجم الصفحة (الارتفاع)", () => { const v = Number(prompt("ارتفاع الصفحة بالبكسل:", Number(eff(set, "mh", E.dev)) || 520)); if (v >= 100) { setR(set, "mh", E.dev, Math.round(v)); afterEdit(); } }] : null,
       ["#", "الدلائل", null, "", 0, [[E.nogrid ? "▦" : "▧", E.nogrid ? "إظهار الشبكة" : "إخفاء الشبكة", () => setGrid(!!E.nogrid)], ["🧲", E.snap ? "إيقاف الالتصاق" : "تفعيل الالتصاق", toggleSnap]]],
@@ -2556,6 +2558,58 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const P = E.page; if (!P || P.ad || !P.sections || !P.sections.length) return null; if (isLong()) return P.sections[0];
     for (let i = P.sections.length - 1; i >= 0; i--) { const q = P.sections[i], st = q.set || {}; if (st.off || st.tight || q.grp === "bot" || q.grp === "top" || st.grp === "bot" || st.grp === "top") continue; const ws = (q.free || []).concat(...(q.cols || []).map(c => c.widgets || [])).filter(w => w.type !== "shape"); if (ws.length && ws.every(w => ["sfoot", "shdr", "sbar"].includes(w.type))) continue; return q; }
     return null;
+  }
+  /* إزالة فراغ القسم: الحرّ يُقصّ ارتفاعه عند آخر عنصر (+ هامش بسيط) لكل الأجهزة، والعادي يُلغى ارتفاعه الأدنى ويُخفَّض حشوه السفلي وتُحذف العناصر النصية الفارغة في آخر أعمدته */
+  function fitSection(sec) {
+    if (!sec) return toast("حدّد قسماً أولاً");
+    if (sec.set.kind === "canvas") { ["d", "t", "m"].forEach(dv => { const have = dv === "d" || own(sec.set, "mh", dv) !== undefined; if (!have) return; const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(40, Math.round(need + 12))); }); toast("↕ قُصّ الفراغ أسفل آخر عنصر"); }
+    else {
+      let n = 0; sec.cols.forEach(c => { while (c.widgets.length > 1) { const w = c.widgets[c.widgets.length - 1], emp = (w.type === "text" && !String(w.set.html || "").replace(/<[^>]*>|&nbsp;|\s/g, "")) || (w.type === "heading" && !String(w.set.text || "").trim()); if (!emp) break; c.widgets.pop(); n++; } });
+      ["d", "t", "m"].forEach(dv => { if (own(sec.set, "mh", dv) !== undefined) setR(sec.set, "mh", dv, undefined); const pd = own(sec.set, "pad", dv); if (Array.isArray(pd) && Number(pd[2]) > 24) { const q = pd.slice(); q[2] = 24; setR(sec.set, "pad", dv, q); } });
+      sec.cols.forEach(c => { if (own(c.set, "mh", E.dev) !== undefined && !c.widgets.length) setR(c.set, "mh", E.dev, undefined); });
+      toast("↕ أُزيل الفراغ" + (n ? " (وحُذف " + n + " عنصر نص فارغ)" : ""));
+    }
+    E.nextLabel = "إزالة فراغ القسم"; afterEdit();
+  }
+  /* تحويل عنصر «كود HTML» إلى عناصر حرة أصلية (نص/عنوان/صورة/زر/شكل) بنفس مواضعها وأنماطها الظاهرة فيُعدَّل بلا كود؛ يفيد تحرير الصفحات المولَّدة. القسم العادي يُحوَّل أولاً إلى قسم حرّ */
+  function htmlToFree(id) {
+    let inf = find(id); if (!inf || inf.kind !== "widget" || inf.node.type !== "html") return toast("حدّد عنصر كود HTML أولاً");
+    if (E.dev !== "d") return toast("حوّل إلى عرض المكتب أولاً ثم كرّر الأمر");
+    if (inf.sec.set.kind !== "canvas") { flowToFree(inf.sec, true); inf = find(id); if (!inf) return; }
+    const el = fdoc.querySelector(`[data-pb="${id}"]`), pin = el && el.closest(".pb-in"); if (!el || !pin) return toast("تعذّر قياس العنصر");
+    const root = el.querySelector(".pb-raw") || el, view = fdoc.defaultView, cr = pin.getBoundingClientRect(), u = uOf(inf.sec, cr) || 1, W = cr.width, P = PB, g = "g" + P.uid(), items = [], r1 = v => Math.round(v * 10) / 10;
+    let z = (Number(inf.set.zi) || 2), shapeZ = z;
+    const rgb = c => { const m = String(c).match(/rgba?\(([^)]+)\)/); if (!m) return null; const a = m[1].split(",").map(x => parseFloat(x)); return { c: "#" + a.slice(0, 3).map(x => ("0" + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2)).join(""), o: a[3] == null || isNaN(a[3]) ? 1 : a[3] }; };
+    const place = (set, r, zi) => Object.assign(set, { fx: { d: r1((r.left - cr.left) / W * 100) }, fy: { d: Math.round((r.top - cr.top) / u) }, fwd: { d: r1(r.width / W * 100) }, fh: { d: Math.max(4, Math.round(r.height / u)) }, zi, grp: g });
+    const add = (type, set, r, zi) => { const w = P.mkFree(type, 0, 0, zi); Object.assign(w.set, set); place(w.set, r, zi); items.push(w); return w; };
+    const px = v => parseFloat(v) || 0, hexOf = c => { const q = rgb(c); return q ? q.c : ""; };
+    const typo = cs => ({ fs: { d: Math.round(px(cs.fontSize) / u) }, fw: String(cs.fontWeight), color: hexOf(cs.color) || "#000000", lh: { d: Math.round(px(cs.lineHeight) / Math.max(1, px(cs.fontSize)) * 100) / 100 || 1.5 }, ta: { d: ({ left: "left", right: "right", center: "center", start: "start", end: "end", justify: "justify" }[cs.textAlign]) || "start" } });
+    const inlineOnly = n => [...n.children].every(c => /^(B|STRONG|I|EM|U|S|SPAN|BR|A|SMALL|MARK|SUB|SUP)$/.test(c.tagName) && /^inline/.test(view.getComputedStyle(c).display) && inlineOnly(c));
+    const visit = n => {
+      if (n.nodeType !== 1 || /^(SCRIPT|STYLE|NOSCRIPT|LINK|META|TEMPLATE)$/i.test(n.tagName)) return;
+      const cs = view.getComputedStyle(n), r = n.getBoundingClientRect(), tag = n.tagName.toUpperCase(); if (cs.display === "none" || cs.visibility === "hidden" || (r.width < 1 && r.height < 1)) return;
+      if (tag === "IMG") { const src = n.getAttribute("src") || ""; if (src) add("image", { src, alt: n.getAttribute("alt") || "", fit: cs.objectFit === "contain" ? "contain" : "cover", hauto: false, rad: { d: Math.min(500, Math.round(px(cs.borderTopLeftRadius))) } }, r, ++z); return; }
+      if (tag === "SVG") { const c = hexOf(cs.color) || "#000000", s = new XMLSerializer().serializeToString(n).replace(/currentColor/g, c).replace(/^<svg/, /xmlns=/.test(new XMLSerializer().serializeToString(n).slice(0, 200)) ? "<svg" : '<svg xmlns="http://www.w3.org/2000/svg"'); add("image", { src: "data:image/svg+xml;utf8," + encodeURIComponent(s), alt: "", fit: "contain", hauto: false }, r, ++z); return; }
+      const bg = rgb(cs.backgroundColor), grad = cs.backgroundImage && cs.backgroundImage !== "none" && /gradient/.test(cs.backgroundImage), bd = px(cs.borderTopWidth), shadow = cs.boxShadow && cs.boxShadow !== "none", text = (n.textContent || "").trim();
+      const isBtn = (tag === "BUTTON" || tag === "A") && text && ((bg && bg.o > 0.2) || grad || bd > 0) && inlineOnly(n);
+      if ((bg && bg.o > 0.02) || grad || bd > 0 || shadow) {
+        const st = (grad ? (cs.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(rgb).filter(Boolean) : []), rr = px(cs.borderTopLeftRadius);
+        if (!isBtn) { const sh = P.mkFree("shape", 0, 0, 1); Object.assign(sh.set, { shape: "rect", keep: false, outline: false, fill: (st[0] || bg || { c: "#ffffff" }).c, rx: r1(Math.min(50, rr / Math.max(1, r.width) * 100)), ry: r1(Math.min(50, rr / Math.max(1, r.height) * 100)) }); if (st.length > 1) sh.set.fgr = { t: "linear", a: 145, s: st.slice(0, 3).map((x, i, a) => ({ c: x.c, o: x.o, p: Math.round(i / (a.length - 1) * 100) })) }; if (bd > 0) { const b = rgb(cs.borderTopColor); sh.set.stroke = b ? b.c : "#cccccc"; sh.set.sw = Math.max(1, Math.round(bd)); } if (shadow) sh.set.sh = "md"; if (bg && bg.o < 1 && !st.length) sh.set.fillOp = bg.o; place(sh.set, r, ++shapeZ); items.unshift(sh); }
+      }
+      if (isBtn) { const bgc = (grad ? ((cs.backgroundImage.match(/rgba?\([^)]+\)/g) || []).map(rgb).filter(Boolean)[0]) : bg) || { c: "#187a3b" }; add("button", { text, kind: "link", link: tag === "A" ? (n.getAttribute("href") || "#") : "#", bgc: bgc.c, hbg: bgc.c, color: hexOf(cs.color) || "#ffffff", fs: { d: Math.round(px(cs.fontSize) / u) }, fw: String(cs.fontWeight), brad: { d: Math.round(px(cs.borderTopLeftRadius)) }, bpad: { d: [0, 0, 0, 0] } }, r, ++z); return; }
+      const own = [...n.childNodes].some(c => c.nodeType === 3 && c.textContent.trim());
+      if (own && inlineOnly(n)) {
+        if (/^H[1-6]$/.test(tag) && !n.querySelector("*")) add("heading", Object.assign({ text, tag: tag.toLowerCase() }, typo(cs)), r, ++z);
+        else add("text", Object.assign({ html: n.innerHTML.replace(/\s*(class|style|id)="[^"]*"/g, (m, k) => k === "style" ? m : "").trim() }, typo(cs)), r, ++z);
+        return;
+      }
+      [...n.childNodes].forEach(c => { if (c.nodeType === 1) visit(c); else if (c.nodeType === 3 && c.textContent.trim()) { const rg = fdoc.createRange(); rg.selectNodeContents(c); const rr = rg.getBoundingClientRect(); if (rr.width > 1) add("text", Object.assign({ html: c.textContent.trim().replace(/&/g, "&amp;").replace(/</g, "&lt;") }, typo(cs)), rr, ++z); } });
+    };
+    [...root.childNodes].forEach(c => { if (c.nodeType === 1) visit(c); else if (c.nodeType === 3 && c.textContent.trim()) { const rg = fdoc.createRange(); rg.selectNodeContents(c); const rr = rg.getBoundingClientRect(); if (rr.width > 1) add("text", Object.assign({ html: c.textContent.trim() }, typo(view.getComputedStyle(root))), rr, ++z); } });
+    const rcs = view.getComputedStyle(root), rbg = rgb(rcs.backgroundColor); if (rbg && rbg.o > 0.02 && !items.some(q => q.type === "shape")) { const rr = root.getBoundingClientRect(), sh = P.mkFree("shape", 0, 0, 1); Object.assign(sh.set, { shape: "rect", keep: false, outline: false, fill: rbg.c }); place(sh.set, rr, shapeZ); items.unshift(sh); }
+    if (!items.length) return toast("لم أجد في الكود ما يمكن تحويله (نص أو صورة أو زر)");
+    const li = inf.list, ix = li.indexOf(inf.node); if (ix >= 0) li.splice(ix, 1); (inf.sec.free = inf.sec.free || []).push(...items);
+    growCanvas(inf.sec); E.nextLabel = "تحويل الكود إلى عناصر حرة"; afterEdit(items[items.length - 1].id); toast("✅ صار الكود " + items.length + " عنصراً حراً قابلاً للتعديل (يتحرك معاً كمجموعة) — Ctrl+Z للتراجع");
   }
   function trimLong(sec) { ["d", "t", "m"].forEach(dv => { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(100, Math.round(need))); }); E.nextLabel = "قصّ الصفحة"; afterEdit(); }
   function select(id) {
@@ -3679,6 +3733,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } clearDrop(); dropCol = null; xfer = ghostMove({ tsec, U, pt, grab: { x: U.l - px0, y: U.t - py0 }, ev, ex: exSet() }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       let X = X0 + dx, Y = Y0 + dy, guides = [];
+      Y = Math.max(Y, -r0.height * 0.3);      // لا يخرج العنصر فوق حدّ قسمه فيختفي (قصّ القسم) إن أُفلت بلا قسم هدف
       let lnkId = null; if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; lnkId = sn.below; }
       if (inf.free && E.dev === "d") setStk(inf.node, inf.sec, lnkId);      // التصق تحت عنصر بفجوة 3 مم ← يتبعه؛ تحريك يدوي بلا التصاق يفكّ الربط
       const pzS = inf.set.pz && !ev.altKey ? PBPuzzle.snap(inf, X, Y, cr.width, u, dev) : null;      // تجاذب قطع البازل
@@ -4565,13 +4620,14 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   }
   function quickHtml(inf) {
     const bgBtn = inf.kind === "section" && inf.node.set.bgImg ? `<div class="pbx-qg"><small>خلفية القسم</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="bg-restore" title="تعيد الصورة إلى مكانها كصورة عادية">↩ إرجاع الخلفية كصورة</button></div></div>` : "";
-    if (inf.kind === "section" && inf.node.set.kind !== "canvas" && bgBtn) return `<div class="pbx-q">${bgBtn}</div>`;
-    if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q">${bgBtn}<div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
+    const fitBtn = inf.kind === "section" ? `<div class="pbx-qg"><small>الفراغ</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-fit" title="يقصّ الفراغ الزائد أسفل القسم (الحر عند آخر عنصر، والعادي بإلغاء الارتفاع الأدنى وتخفيض الحشو السفلي)">↕ إزالة الفراغ</button></div></div>` : "";
+    if (inf.kind === "section" && inf.node.set.kind !== "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}</div>`;
+    if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}<div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
     if (inf.kind !== "widget") return "";
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
     const grp = (cap, body) => `<div class="pbx-qg"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
     const isTx = inf.node.type === "heading" || inf.node.type === "text";
-    let h = `<div class="pbx-q">` + (isTx ? `<button type="button" class="pbx-mwbtn" data-q="mw" title="اكتب كلمات وسيحرّر لك وصفاً">${QI.mw}<span>كتابة سحرية</span></button>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
+    let h = `<div class="pbx-q">` + (inf.node.type === "html" ? `<div class="pbx-qg"><small>الكود</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="html-free" title="يحوّل هذا الكود إلى نصوص وصور وأزرار وأشكال حرة قابلة للتعديل بلا كود، بنفس شكلها ومواضعها">⤢ تحويل الكود إلى عناصر حرة</button></div></div>` : "") + (isTx ? `<button type="button" class="pbx-mwbtn" data-q="mw" title="اكتب كلمات وسيحرّر لك وصفاً">${QI.mw}<span>كتابة سحرية</span></button>` : "") + grp("الطبقة والوضع", q("front", "↥ أمام", "إحضار للأمام ( ] )") + q("back", "↧ خلف", "إرسال للخلف ( [ )") + (FREE_ONLY ? "" : q("free", inf.free ? "↩ إلى عمود" : "🕊️ حر", inf.free ? "تثبيت العنصر داخل عمود" : "تحرير العنصر ليتحرك بحرية", inf.free, "wide")));
     { const rv = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); h += grp("التدوير", `<div class="pbx-qr" style="width:100%"><button class="pbx-qk" data-q="rot-m" title="تدوير -15°" style="flex:0 0 auto">↺</button><input type="range" min="-180" max="180" step="1" value="${rv}" data-qrot="1" title="اسحب لتدوير العنصر"><button class="pbx-qk" data-q="rot-p" title="تدوير +15°" style="flex:0 0 auto">↻</button><b>${rv}°</b><button class="pbx-qk" data-q="rot-0" title="إعادة التدوير" style="flex:0 0 auto">⟲</button></div>`); }
     if (inf.free) h += grp("نسخة متناظرة (مرآة داخل القسم)", q("mir-h", "↔ أفقياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (يمين/يسار)") + q("mir-v", "↕ عمودياً", "ينسخ العنصر مقلوباً كمرآة حول منتصف القسم (أعلى/أسفل)"));
     if (inf.free) { const sz = freeSize(inf); if (sz) { const lk = sizeLocked(inf); h += grp("الحجم (بكسل)", `<div class="pbx-qr" style="width:100%;gap:.3rem;flex-wrap:wrap"><label style="display:flex;gap:.25rem;align-items:center">عرض <input type="number" min="10" max="4000" step="1" value="${sz.w}" data-qsz="w" style="width:84px;padding:.25rem .3rem;text-align:center"></label><button type="button" class="pbx-qk${lk ? " on" : ""}" data-q="sz-lock" title="قفل النسبة: تغيير العرض أو الارتفاع يغيّر الآخر بنفس النسبة" style="flex:0 0 auto">${lk ? "🔗" : "⛓"}</button><label style="display:flex;gap:.25rem;align-items:center">ارتفاع <input type="number" min="10" max="5000" step="1" value="${sz.h}" data-qsz="h" style="width:84px;padding:.25rem .3rem;text-align:center"></label></div><div class="pbx-qb">` + q("sz-m", "− 10%", "تصغير العنصر 10% بنفس النسبة") + q("sz-p", "+ 10%", "تكبير العنصر 10% بنفس النسبة") + `</div>`); } }
@@ -4603,6 +4659,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (k === "smart-magic") return PBSmart.captureElements(); if (k === "smart-import") return PBSmart.importImages();
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
     if (k === "mir-h" || k === "mir-v") return mirrorDup(k === "mir-h" ? "h" : "v");
+    if (k === "sec-fit") { const i0 = selInfo(); return fitSection(i0 && (i0.kind === "section" ? i0.node : i0.sec)); }
+    if (k === "html-free") { const i0 = selInfo(); return i0 && htmlToFree(i0.node.id); }
     if (k === "sz-lock") { const inf0 = selInfo(); if (inf0) { inf0.set.plock = !sizeLocked(inf0); schedule(); commitHist(); renderInspector(); } return; }
     if (k === "sz-m" || k === "sz-p") { const inf0 = selInfo(), sz = inf0 && freeSize(inf0); if (sz) { const f = k === "sz-p" ? 1.1 : 1 / 1.1, keep = inf0.set.plock; inf0.set.plock = true; setFreeSize(inf0, "w", Math.max(10, Math.round(sz.w * f)), true); if (keep === undefined) delete inf0.set.plock; else inf0.set.plock = keep; } return; }
     if (k === "rot-p" || k === "rot-m" || k === "rot-0") { const inf = selInfo(); if (!inf) return; const cur = Math.round(num(eff(inf.set, "rot", E.dev)) || 0); const v = k === "rot-0" ? undefined : ((cur + (k === "rot-p" ? 15 : -15) + 540) % 360) - 180; setR(inf.set, "rot", E.dev, v === 0 ? undefined : v); afterEdit(); return; }
@@ -5016,7 +5074,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); toast("❌ " + err.message); }
   }
 
-  return { drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
