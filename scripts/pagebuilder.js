@@ -1163,6 +1163,7 @@ const PB = (() => {
       SC = !!s.scaled; const dw = num(s.dw) || 1140; curAuto = null;
       if (kind === "canvas" && !s.scaled && s.autoM !== false && (sec.free || []).length && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined)) && own(s, "mh", "m") === undefined) curAuto = autoMobileLayout(sec);
       if (SC) { css.d.push(`${sx}{container-type:inline-size}`); css.d.push(`${inx}{--u:calc(${s.layout === "full" ? "100cqw" : "min(100cqw," + dw + "px)"}/${dw})}`); }
+      if (SC && s.scaledT) { css.t.push(`${inx}{--u:1px}`); if (!s.scaledM) css.m.push(`${inx}{--u:calc(${s.layout === "full" ? "100cqw" : "min(100cqw," + dw + "px)"}/${dw})}`); }      // تابلت مستقل: يُلغى التحجيم عليه ويعود للهاتف إن لم يكن مستقلاً
       if (SC && s.scaledM) css.m.push(`${inx}{--u:1px}`);      // هاتف مستقل: الوحدة بكسل حقيقي فتُقرأ قيم الهاتف كما هي
       if (curAuto) css.m.push(`${inx}{height:${curAuto.h}px}`);
       /* شفافية/تمويه صورة الخلفية: تُرسم الصورة في ::before فتتأثر هي وحدها لا محتوى القسم */
