@@ -3719,6 +3719,10 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
+      if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && E.dev !== "d") {      /* تحريك عنصر عادي من الهاتف/التابلت كان يحرّره وحده فيصير عنصراً حراً معلّقاً في قسم عادي (لا يتبع الصورة ولا الأعمدة ويختفي إن تغيّر ارتفاع القسم)؛ التحرير الحر يتم من المكتب للقسم كله */
+        if (!E.warnFreeT || Date.now() - E.warnFreeT > 4000) { E.warnFreeT = Date.now(); toast("لتحريك عنصر بحرية حوّل القسم كله إلى عناصر حرة من عرض المكتب (زر «تحويل القسم إلى عناصر حرة» في إعدادات القسم). هنا يمكنك ترتيب العناصر بالأسهم مع Alt."); }
+        moved = false; return;
+      }
       if (!conv) {
         conv = true; E.sel = id;
         const wasFlow = inf.sec.set.kind !== "canvas" && E.dev === "d";
@@ -4622,7 +4626,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   function quickHtml(inf) {
     const bgBtn = inf.kind === "section" && inf.node.set.bgImg ? `<div class="pbx-qg"><small>خلفية القسم</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="bg-restore" title="تعيد الصورة إلى مكانها كصورة عادية">↩ إرجاع الخلفية كصورة</button></div></div>` : "";
     const fitBtn = inf.kind === "section" ? `<div class="pbx-qg"><small>الفراغ</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-fit" title="يقصّ الفراغ الزائد أسفل القسم (الحر عند آخر عنصر، والعادي بإلغاء الارتفاع الأدنى وتخفيض الحشو السفلي)">↕ إزالة الفراغ</button></div></div>` : "";
-    if (inf.kind === "section" && inf.node.set.kind !== "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}</div>`;
+    if (inf.kind === "section" && inf.node.set.kind !== "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}<div class="pbx-qg"><small>التحريك الحر</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-free" title="يثبّت كل عناصر القسم بمواضعها فتتحرك بحرية دون أن يتأثر بعضها بحجم بعض (على عرض المكتب)">⤢ تحويل القسم كله إلى عناصر حرة</button></div></div>${(inf.node.free || []).length ? '<div class="pbx-qg"><small style="color:#ffb74d">فيه عناصر حرة داخل قسم عادي: لا تتبع الصور المجاورة. حوّل القسم كله ليتّسق.</small></div>' : ''}</div>`;
     if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}<div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
     if (inf.kind !== "widget") return "";
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
@@ -4660,6 +4664,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     if (k === "smart-magic") return PBSmart.captureElements(); if (k === "smart-import") return PBSmart.importImages();
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
     if (k === "mir-h" || k === "mir-v") return mirrorDup(k === "mir-h" ? "h" : "v");
+    if (k === "sec-free") { const i0 = selInfo(), s0 = i0 && (i0.kind === "section" ? i0.node : i0.sec); return s0 && flowToFree(s0); }
     if (k === "sec-fit") { const i0 = selInfo(); return fitSection(i0 && (i0.kind === "section" ? i0.node : i0.sec)); }
     if (k === "html-free") { const i0 = selInfo(); return i0 && htmlToFree(i0.node.id); }
     if (k === "sz-lock") { const inf0 = selInfo(); if (inf0) { inf0.set.plock = !sizeLocked(inf0); schedule(); commitHist(); renderInspector(); } return; }
