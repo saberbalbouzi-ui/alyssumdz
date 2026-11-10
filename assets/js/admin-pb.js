@@ -3767,6 +3767,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       if (c && c.w) ic = { x: c.x / 100 * W0, y: c.y / 100 * H0, w: c.w / 100 * W0, q };
       else { const k = Math.max(W0 / im.naturalWidth, H0 / im.naturalHeight), w = im.naturalWidth * k; ic = { x: (W0 - w) / 2, y: (H0 - w * q) / 2, w, q }; } } }
     if (inf.kind === "column" && hasW && !gridCell) { const sibs = inf.sec.cols, nbn = dir.includes("w") ? (sibs[inf.idx + 1] || sibs[inf.idx - 1]) : (sibs[inf.idx - 1] || sibs[inf.idx + 1]); if (nbn && eff(nbn.set, "w", dev) != null && eff(set, "w", dev) != null) { nb = nbn; pair = Number(eff(set, "w", dev)) + Number(eff(nbn.set, "w", dev)); } }
+    const topPush = free && dir.includes("n") && inf.sec.set.kind === "canvas" ? { base: new Map((inf.sec.free || []).filter(w => w !== inf.node).map(w => [w, Number(eff(w.set, "fy", dev)) || 0])), mh: Number(eff(inf.sec.set, "mh", dev)) || 0 } : null;      // تمديد العنصر للأعلى عند حدّ القسم: بدل قصّه خارج القسم يُزاح باقي القسم للأسفل ويكبر القسم
     let deps = null; const fh0 = free ? (Number(eff(set, "fh", dev)) || Math.round(r0.height / uOf(inf.sec, cr))) : 0;      // نموذج الطلب: تكبير ارتفاعه (المقبض السفلي) يُزيح معه كل ما تحته في القسم نفسه
     const fyf = w => Number(eff(w.set, "fy", dev)) || 0;
     if (free && dir.includes("s") && !inf.sec.set.tight && !(E.page && E.page.ad)) {      // كل عنصر حر: تكبيره للأسفل يُزيح معه ما تحته (المتداخل أفقياً معه ومع ما أُزيح) بالمسافة نفسها
@@ -3787,6 +3788,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         if (prop) { let w = R - L, h = B - T; if (Math.abs(dx) > Math.abs(dy)) h = w * H0 / W0; else w = h * W0 / H0; if (dir.includes("w")) L = R - w; else R = L + w; if (dir.includes("n")) T = B - h; else B = T + h; }
         else if (snap) { let g; if (dir.includes("e")) { [R, g] = snapEdge(R, pts.xs); if (g != null) guides.push({ x: g }); } if (dir.includes("w")) { [L, g] = snapEdge(L, pts.xs); if (g != null) guides.push({ x: g }); } if (dir.includes("s")) { [B, g] = snapEdge(B, pts.ys); if (g != null) guides.push({ y: g }); } if (dir.includes("n")) { [T, g] = snapEdge(T, pts.ys); if (g != null) guides.push({ y: g }); } }
         if (R - L < minW) { if (dir.includes("w")) L = R - minW; else R = L + minW; } if (B - T < 14) { if (dir.includes("n")) T = B - 14; else B = T + 14; }
+        let pushed = 0; if (topPush && T < 0) { pushed = -T; T = 0; B += pushed; }
         if (ic && !prop) {      // قصّ: حافة الإطار تتحرك والصورة ثابتة؛ وإن انكشف فراغ تكبر الصورة في نفس الاتجاه لتملأ الإطار
           const L0 = r0.left - cr.left, T0 = r0.top - cr.top, Wn = R - L, Hn = B - T, w = ic.w, h = ic.w * ic.q; let x = L0 - L + ic.x, y = T0 - T + ic.y, k = 1;
           const ax = dir.includes("e") ? 0 : dir.includes("w") ? Wn : Wn / 2, ay = dir.includes("s") ? 0 : dir.includes("n") ? Hn : Hn / 2;
@@ -3796,6 +3798,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         if (!ic && hasW && hasH && !ev.shiftKey) { if (ws0 == null) ws0 = Number(eff(set, "wsc", dev)) || 100; setR(set, "wsc", dev, Math.max(20, Math.min(500, Math.round(ws0 * (R - L) / W0)))); if (dev !== "d" && own(set, "wsc", "d") === undefined) setR(set, "wsc", "d", ws0); }      // زوايا العنصر الحر: نسبة ثابتة + المحتوى يكبر معه (Shift = تحجيم حر)
         setR(set, "fx", dev, Math.round(L / cr.width * 1000) / 10); setR(set, "fwd", dev, Math.round((R - L) / cr.width * 1000) / 10); setR(set, "fy", dev, Math.round(T / uOf(inf.sec, cr))); setR(set, "fh", dev, Math.round((B - T) / uOf(inf.sec, cr)));
         if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(set, k, "d") === undefined) setR(set, k, "d", eff(set, k, dev)); });
+        if (topPush) { const pu = pushed / (uOf(inf.sec, cr) || 1); topPush.base.forEach((y0, w) => { setR(w.set, "fy", dev, Math.round(y0 + pu)); if (dev !== "d" && own(w.set, "fy", "d") === undefined) setR(w.set, "fy", "d", y0); }); setR(inf.sec.set, "mh", dev, Math.round(topPush.mh + pu)); }
         label = Math.round((R - L)) + "×" + Math.round(B - T); pushDeps(); if (!dir.includes("s")) resyncStk(inf.sec, inf.node); growCanvas(inf.sec);
       } else if (inf.kind === "widget") {
         const al = eff(set, "al", dev);
@@ -3871,7 +3874,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } clearDrop(); dropCol = null; xfer = ghostMove({ tsec, U, pt, grab: { x: U.l - px0, y: U.t - py0 }, ev, ex: exSet() }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       let X = X0 + dx, Y = Y0 + dy, guides = [];
-      Y = Math.max(Y, -r0.height * 0.3);      // لا يخرج العنصر فوق حدّ قسمه فيختفي (قصّ القسم) إن أُفلت بلا قسم هدف
+      Y = Math.max(Y, 0);      // لا يخرج العنصر فوق حدّ قسمه فيختفي جزؤه (قصّ القسم)؛ للنقل لقسم آخر أفلته فوقه
       let lnkId = null; if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; lnkId = sn.below; }
       if (inf.free && E.dev === "d") setStk(inf.node, inf.sec, lnkId);      // التصق تحت عنصر بفجوة 3 مم ← يتبعه؛ تحريك يدوي بلا التصاق يفكّ الربط
       const pzS = inf.set.pz && !ev.altKey ? PBPuzzle.snap(inf, X, Y, cr.width, u, dev) : null;      // تجاذب قطع البازل
