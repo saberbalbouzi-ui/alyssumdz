@@ -5404,6 +5404,15 @@ const PBPalette = (() => {
       return out;
     };
   }
+  /* عكس اللوحة الداكنة: يعيد الألوان إلى فاتحة تقريباً (معكوس دالة mapper الداكنة) قبل تطبيق أي لوحة جديدة، وإلا بقيت الخلفيات الداكنة القديمة وتلوّنت فوقها اللوحة الجديدة */
+  function undark() {
+    return str => {
+      const q = parseColor(str); if (!q || q.a <= 0.01) return str; const t = r2hsl(q.r, q.g, q.b); const { h, s, l } = t; let nl = l;
+      if (t.c < 0.06 || l < 0.05 || l > 0.935 || s < 0.1) { nl = l >= 0.86 ? 0.4 - (l - 0.9) / 0.15 : l <= 0.135 ? 1 - (l - 0.07) / 0.6 : l <= 0.2 ? 0.9 - (l - 0.14) / 0.25 : l >= 0.3 && l <= 0.4 ? 0.7 - (l - 0.3) / 0.3 : l; nl = clamp(nl, 0.02, 0.985); }
+      else nl = l >= 0.78 ? clamp(0.4 - (l - 0.82) / 0.2, 0.12, 0.42) : l < 0.25 ? clamp(0.9 - (l - 0.16) / 0.2, 0.62, 0.95) : l;
+      const out = hslHex(h, s, nl); if (q.a < 1) { const r = h2r(out); return "rgba(" + r[0] + ", " + r[1] + ", " + r[2] + ", " + (Math.round(q.a * 100) / 100) + ")"; } return out;
+    };
+  }
   /* ───── تنسيق التباين بين الخلفية والنص ───── */
   const lum = (r, g, b) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
   const ratio = (a, b) => { const l1 = lum(a.r, a.g, a.b), l2 = lum(b.r, b.g, b.b), hi = Math.max(l1, l2), lo = Math.min(l1, l2); return (hi + 0.05) / (lo + 0.05); };
@@ -5464,11 +5473,11 @@ const PBPalette = (() => {
     return fixed;
   }
   async function apply(pal, clusters) {
-    const E = PBApp.E, mp = mapper(pal, clusters); walkPage(E.page, c => mp(c));
+    const E = PBApp.E, mp0 = mapper(pal, clusters), ud = E.page.palDark ? undark() : null, mp = ud ? (c => mp0(ud(c))) : mp0; walkPage(E.page, c => mp(c));
     if (pal.dark && typeof E.page.bg === "string" && /^(#fff|#ffffff|transparent|)$/i.test(E.page.bg)) E.page.bg = pal.sw.bg;
     /* ألوان افتراضية لا تُخزَّن في بيانات العنصر (سعر المنتج الأخضر الافتراضي) تُثبَّت بلون اللوحة كي تتغيّر معها */
     (E.page.sections || []).forEach(s => [...(s.cols || []).flatMap(c => c.widgets || []), ...(s.free || [])].forEach(w => { if (w.type === "pprice" && !w.set.pc) w.set.pc = mp("#157a55"); }));
-    E.page.pal = pal.id;
+    E.page.pal = pal.id; if (pal.dark) E.page.palDark = true; else delete E.page.palDark;
     /* مرحلة التنسيق: بعد رسم الألوان الجديدة يُقاس تباين كل نص مع خلفيته الفعلية ويُعدَّل لون النص (بحفظ صبغته) إن قلّ التباين عن 4.5 (3 للكبير) */
     let fixed = 0; try { PBApp.render(); await new Promise(r => setTimeout(r, 900)); fixed = fixContrast(); if (fixed) { PBApp.render(); await new Promise(r => setTimeout(r, 300)); fixed += fixContrast(); } } catch (e) { console.warn(e); }
     PBApp.afterEdit("ألوان الصفحة: " + pal.name);
