@@ -1774,7 +1774,7 @@ body{overflow-x:hidden;margin:0}`;
   function closeFloating() {
     try { if (typeof PBPalette !== "undefined") PBPalette.close(); } catch (x) { } try { if (typeof PBFx !== "undefined") PBFx.close(); } catch (x) { } try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
-    ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbs-bl", "pbs-af", "pbs-er", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
+    ["pbx-orgp", "pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbs-bl", "pbs-af", "pbs-er", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
   /* حوار تأكيد داخل الصفحة بدل نافذة المتصفح الأصلية (لا يعطّل الأتمتة ويطابق مظهر اللوحة) */
   function pbAsk(msg, okText, onOk, noText) {
@@ -2464,39 +2464,56 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     Object.assign(sec.set, { kind: "canvas", scaled: true, dw: W, cw: { d: W }, layout: "full", mh: { d: Math.ceil(sr.height) }, pad: { d: [0, 0, 0, 0] } });
     sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; if (quiet) { E.covered = null; renderCanvas(); return; } afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
   }
-  /* تنظيم الصفحة بزر واحد: يمرّ على المكتب ثم التابلت ثم الهاتف ويصلح ما يفسده التحويل والتعديل: عناصر خارج حدود القسم، نصوص مقصوصة (يكبّر إطارها)، أقسام أقصر من محتواها، وتخطيط هاتف ناقص (يُشتقّ من المكتب). لا يحذف شيئاً ولا يلمس الألوان */
-  async function organizePage() {
+  /* تنظيم الصفحة: لوحة خيارات (الافتراضي آمن: المكتب فقط بلا قص فراغات ولا لمس لما رتّبته على التابلت/الهاتف) ثم تمرّ على الأجهزة المختارة وتصلح: عناصر خارج حدود القسم، نصوص مقصوصة (يكبّر إطارها)، أقسام أقصر من محتواها، وتقصّ الفراغات الزائدة (اختياري)، وتُكمل تخطيط الهاتف الناقص (اختياري) */
+  const ORG = { clamp: true, text: true, grow: true, gap: false, fillM: false, devs: { d: true, t: false, m: false } };
+  function organizePage() {
     const L = (E.page.sections || []).filter(sc => sc.set.kind === "canvas" && !isHF(sc)), Lf = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas" && !isHF(sc)); if (!L.length && !Lf.length) return toast("لا توجد أقسام لتنظيمها");
-    pbAsk("تنظيم الصفحة على المكتب والتابلت والهاتف: إعادة العناصر الخارجة عن حدود الأقسام، وتكبير إطارات النصوص المقصوصة، وتمديد الأقسام الأقصر من محتواها، وقص الفراغات الزائدة أسفل الأقسام، وإكمال تخطيط الهاتف الناقص. لا يحذف سوى نصوص فارغة في آخر الأقسام العادية. يمكن التراجع بـCtrl+Z.", "تنظيم", async () => {
-      const wait = ms => new Promise(r => setTimeout(r, ms)), dev0 = E.dev, n = { clamp: 0, text: 0, sec: 0, gap: 0 }, sav = (set, k, dv, v) => { setR(set, k, dv, v); if (dv !== "d" && own(set, k, "d") === undefined) setR(set, k, "d", v); };
-      toast("جارٍ تنظيم الصفحة… لا تلمس المحرر لحظات");
-      try {
-        for (const dv of ["d", "t", "m"]) {
-          setDev(dv); await wait(1400);
-          for (const sec of L) {
-            if (dv !== "d" && sec.set.scaled) continue;      // الأقسام المتناسبة تتبع تخطيط المكتب على كل الأجهزة
-            if (dv === "m") ensureMobile(sec);
-            const se = fdoc.querySelector('[data-pb="' + sec.id + '"]'), pin = se && se.querySelector(".pb-in"); if (!pin) continue; const cr = pin.getBoundingClientRect(), u = uOf(sec, cr) || 1;
-            (sec.free || []).forEach(w => {
-              if (w.set.locked) return; const has = k => dv === "d" || own(w.set, k, dv) !== undefined; if (!has("fx") && !has("fwd")) return;
-              let fx = Number(eff(w.set, "fx", dv)) || 0, fw = Number(eff(w.set, "fwd", dv)) || 0, fy = Number(eff(w.set, "fy", dv)) || 0, ch = false;
+    document.getElementById("pbx-orgp") && document.getElementById("pbx-orgp").remove();
+    const box = document.createElement("div"); box.id = "pbx-orgp"; box.setAttribute("role", "dialog");
+    box.style.cssText = "position:fixed;z-index:100050;top:58px;inset-inline-start:12px;width:min(380px,94vw);background:#0f1d16;color:#f1f5f2;border:1px solid rgba(255,255,255,.2);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.55);padding:.8rem .9rem 1rem;direction:rtl;font-family:inherit";
+    const ck = (k, t, on, sub) => `<label style="display:flex;gap:.45rem;align-items:flex-start;margin:.3rem 0;font-size:.8rem;line-height:1.55"><input type="checkbox" data-k="${k}"${on ? " checked" : ""} style="width:auto;margin-top:.2rem;accent-color:#e2fe17"><span><b>${t}</b>${sub ? `<br><small style="opacity:.72">${sub}</small>` : ""}</span></label>`;
+    box.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;font-weight:800;margin-bottom:.3rem"><span>تنظيم الصفحة</span><button type="button" data-x="1" aria-label="إغلاق" style="background:transparent;border:0;color:inherit;font-size:1.2rem;cursor:pointer">×</button></div>
+<div style="font-size:.74rem;opacity:.78;line-height:1.7;margin-bottom:.4rem">اختر ما يُصلَح وعلى أي جهاز. لا يُحذف شيء، ويمكن التراجع بـ Ctrl+Z أو من «السجل» (الساعة).</div>
+${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها", ORG.clamp)}${ck("text", "تكبير إطارات النصوص المقصوصة", ORG.text)}${ck("grow", "تمديد الأقسام الأقصر من محتواها", ORG.grow)}${ck("gap", "قص الفراغات الزائدة أسفل الأقسام", ORG.gap, "يخفّض ارتفاع الأقسام الحرة وحشوة الأقسام العادية؛ قد يغيّر تباعدك المقصود")}${ck("fillM", "إكمال تخطيط الهاتف الناقص", ORG.fillM, "للأقسام الحرة التي لم يُضبط لها هاتف بعد فقط")}
+<div style="margin:.5rem 0 .2rem;font-size:.78rem;font-weight:800">الأجهزة</div><div style="display:flex;gap:.9rem;font-size:.8rem">${[["d", "المكتب"], ["t", "التابلت"], ["m", "الهاتف"]].map(([k, t]) => `<label style="display:flex;gap:.3rem;align-items:center"><input type="checkbox" data-d="${k}"${ORG.devs[k] ? " checked" : ""} style="width:auto;accent-color:#e2fe17">${t}</label>`).join("")}</div>
+<div style="font-size:.7rem;opacity:.7;margin:.3rem 0 .6rem;line-height:1.6">التابلت والهاتف مطفآن افتراضياً كي لا يُمسّ ما رتّبته عليهما يدوياً؛ فعّلهما إن أردت.</div>
+<button type="button" data-go="1" style="display:block;width:100%;background:#e2fe17;color:#1f2123;border:0;border-radius:14px;padding:.55rem;font:inherit;font-weight:800;cursor:pointer">تنظيم الآن</button>`;
+    document.body.appendChild(box);
+    box.addEventListener("change", ev => { const t = ev.target; if (t.dataset.k) ORG[t.dataset.k] = t.checked; else if (t.dataset.d) ORG.devs[t.dataset.d] = t.checked; });
+    box.addEventListener("click", ev => { if (ev.target.closest("[data-x]")) return box.remove(); if (ev.target.closest("[data-go]")) { box.remove(); runOrganize(L, Lf); } });
+  }
+  async function runOrganize(L, Lf) {
+    const wait = ms => new Promise(r => setTimeout(r, ms)), dev0 = E.dev, n = { clamp: 0, text: 0, sec: 0, gap: 0 }, sav = (set, k, dv, v) => { setR(set, k, dv, v); if (dv !== "d" && own(set, k, "d") === undefined) setR(set, k, "d", v); };
+    const devs = ["d", "t", "m"].filter(k => ORG.devs[k]); if (!devs.length) return toast("اختر جهازاً واحداً على الأقل");
+    toast("جارٍ تنظيم الصفحة… لا تلمس المحرر لحظات");
+    try {
+      for (const dv of devs) {
+        setDev(dv); await wait(1400);
+        for (const sec of L) {
+          if (dv !== "d" && sec.set.scaled) continue;      // الأقسام المتناسبة تتبع تخطيط المكتب على كل الأجهزة
+          if (dv === "m" && ORG.fillM) ensureMobile(sec);
+          const se = fdoc.querySelector('[data-pb="' + sec.id + '"]'), pin = se && se.querySelector(".pb-in"); if (!pin) continue; const cr = pin.getBoundingClientRect(), u = uOf(sec, cr) || 1;
+          (sec.free || []).forEach(w => {
+            if (w.set.locked) return; const has = k => dv === "d" || own(w.set, k, dv) !== undefined; if (!has("fx") && !has("fwd")) return;
+            if (ORG.clamp) { let fx = Number(eff(w.set, "fx", dv)) || 0, fw = Number(eff(w.set, "fwd", dv)) || 0, fy = Number(eff(w.set, "fy", dv)) || 0, ch = false;
               if (fw > 100) { fw = 100; ch = true; } if (fw > 0 && fx + fw > 100.5) { fx = Math.max(0, Math.round((100 - fw) * 10) / 10); ch = true; } if (fx < -0.5) { fx = 0; ch = true; } if (fy < 0) { fy = 0; ch = true; }
-              if (ch) { sav(w.set, "fx", dv, fx); sav(w.set, "fwd", dv, fw); sav(w.set, "fy", dv, fy); n.clamp++; }
-              if (["text", "heading"].includes(w.type) && has("fh")) { const el = fdoc.querySelector('[data-pb="' + w.id + '"]'); if (el && el.scrollHeight > el.clientHeight + 3) { sav(w.set, "fh", dv, Math.ceil(el.scrollHeight / u) + 2); n.text++; } }
-            });
-            if (dv === "d" || own(sec.set, "mh", dv) !== undefined) { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))), cur = Number(eff(sec.set, "mh", dv)) || 0; if (need + 4 > cur) { setR(sec.set, "mh", dv, Math.round(need + 12)); n.sec++; } else if (cur > need + 28 && !sec.set.bgImg && !sec.set.bgVid && need > 0) { setR(sec.set, "mh", dv, Math.round(need + 12)); n.gap++; } }      // قص الفراغ أسفل آخر عنصر (إلا الأقسام بخلفية صورة/فيديو)
-          }
-          for (const sec of Lf) {      // الأقسام العادية: نصوص فارغة في آخرها وارتفاع أدنى زائد وحشوة سفلية كبيرة
-            if (dv === "d") sec.cols.forEach(c => { while (c.widgets.length > 1) { const w = c.widgets[c.widgets.length - 1], emp = (w.type === "text" && !String(w.set.html || "").replace(/<[^>]*>|&nbsp;|\s/g, "")) || (w.type === "heading" && !String(w.set.text || "").trim()); if (!emp) break; c.widgets.pop(); n.gap++; } });
-            if (own(sec.set, "mh", dv) !== undefined && !sec.set.bgImg && !sec.set.bgVid) { setR(sec.set, "mh", dv, undefined); n.gap++; }
-            const pd = own(sec.set, "pad", dv); if (Array.isArray(pd) && Number(pd[2]) > 24 && !sec.set.bgImg && !sec.set.bgVid) { const q = pd.slice(); q[2] = 24; setR(sec.set, "pad", dv, q); n.gap++; }
-          }
-          renderCanvas(); await wait(500);
+              if (ch) { sav(w.set, "fx", dv, fx); sav(w.set, "fwd", dv, fw); sav(w.set, "fy", dv, fy); n.clamp++; } }
+            if (ORG.text && ["text", "heading"].includes(w.type) && has("fh")) { const el = fdoc.querySelector('[data-pb="' + w.id + '"]'); if (el && el.scrollHeight > el.clientHeight + 3) { sav(w.set, "fh", dv, Math.ceil(el.scrollHeight / u) + 2); n.text++; } }
+          });
+          if ((ORG.grow || ORG.gap) && (dv === "d" || own(sec.set, "mh", dv) !== undefined)) { const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))), cur = Number(eff(sec.set, "mh", dv)) || 0;
+            if (ORG.grow && need + 4 > cur) { setR(sec.set, "mh", dv, Math.round(need + 12)); n.sec++; } else if (ORG.gap && cur > need + 28 && !sec.set.bgImg && !sec.set.bgVid && need > 0) { setR(sec.set, "mh", dv, Math.round(need + 12)); n.gap++; } }
         }
-      } catch (e) { console.warn(e); }
-      setDev(dev0); await wait(600); E.nextLabel = "تنظيم الصفحة"; afterEdit(null);
-      toast("✅ نُظّمت الصفحة: " + n.clamp + " عنصر أُعيد داخل الحدود، " + n.text + " نص كُبّر إطاره، " + n.sec + " قسم مُدّد، " + n.gap + " فراغ قُصّ" + (n.clamp + n.text + n.sec + n.gap ? "" : " (لم أجد ما يحتاج إصلاحاً)") + " — Ctrl+Z للتراجع");
-    });
+        if (ORG.gap) for (const sec of Lf) {      // الأقسام العادية: نصوص فارغة في آخرها وارتفاع أدنى زائد وحشوة سفلية كبيرة
+          if (dv === "d") sec.cols.forEach(c => { while (c.widgets.length > 1) { const w = c.widgets[c.widgets.length - 1], emp = (w.type === "text" && !String(w.set.html || "").replace(/<[^>]*>|&nbsp;|\s/g, "")) || (w.type === "heading" && !String(w.set.text || "").trim()); if (!emp) break; c.widgets.pop(); n.gap++; } });
+          if (own(sec.set, "mh", dv) !== undefined && !sec.set.bgImg && !sec.set.bgVid) { setR(sec.set, "mh", dv, undefined); n.gap++; }
+          const pd = own(sec.set, "pad", dv); if (Array.isArray(pd) && Number(pd[2]) > 24 && !sec.set.bgImg && !sec.set.bgVid) { const q = pd.slice(); q[2] = 24; setR(sec.set, "pad", dv, q); n.gap++; }
+        }
+        renderCanvas(); await wait(500);
+      }
+    } catch (e) { console.warn(e); }
+    setDev(dev0); await wait(600); E.nextLabel = "تنظيم الصفحة"; afterEdit(null);
+    const tot = n.clamp + n.text + n.sec + n.gap;
+    toast("✅ نُظّمت الصفحة (" + devs.map(k => ({ d: "مكتب", t: "تابلت", m: "هاتف" }[k])).join(" + ") + "): " + n.clamp + " عنصر أُعيد داخل الحدود، " + n.text + " نص كُبّر إطاره، " + n.sec + " قسم مُدّد، " + n.gap + " فراغ قُصّ" + (tot ? "" : " (لم أجد ما يحتاج إصلاحاً)") + " — Ctrl+Z للتراجع");
   }
   /* زر واحد: كل أقسام الصفحة (غير الحرة) تصير عناصر حرة بمواضعها الفعلية، بدل التحويل عند كل سحب */
   async function convertAllFree() {
