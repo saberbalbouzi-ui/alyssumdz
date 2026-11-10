@@ -150,8 +150,9 @@ const PB = (() => {
   function finishCss(css, base) {
     return css.d.join("\n") + `\n@media(max-width:${BP.t}px){\n${css.t.join("\n")}\n}\n@media(max-width:${BP.m}px){\n.pb-sec .pb-col{width:100%;flex:0 0 100%;max-width:100%}\n${css.m.join("\n")}\n}`;
   }
-  const ANIMS = [["", "بدون"], ["fadeIn", "ظهور تدريجي"], ["fadeUp", "صعود"], ["fadeDown", "نزول"], ["zoomIn", "تكبير"], ["slideStart", "انزلاق من الجانب"]];
-  const animAttr = s => s.anim ? ` data-anim="${esc(s.anim)}" style="--ad:${num(s.animDur) ?? .6}s;--ade:${num(s.animDelay) ?? 0}s"` : "";
+  const ANIMS = [["", "بدون"], ["fadeIn", "ظهور تدريجي"], ["fadeUp", "صعود"], ["fadeDown", "نزول"], ["zoomIn", "تكبير"], ["slideStart", "انزلاق من الجانب"], ["slideEnd", "انزلاق من الجانب الآخر"], ["zoomOut", "تصغير من حجم كبير"], ["rotateIn", "دوران مع ظهور"], ["flipX", "قلب ثلاثي الأبعاد (أفقي)"], ["flipY", "قلب ثلاثي الأبعاد (عمودي)"], ["blurIn", "ظهور من ضبابية"], ["riseBlur", "صعود مع ضبابية"], ["skewUp", "صعود مائل"], ["pop", "قفزة نابضة"], ["wipeR", "كشف من اليمين"], ["wipeL", "كشف من اليسار"], ["wipeUp", "كشف من الأسفل"], ["curtain", "ستارة من الوسط"], ["words", "كلمة كلمة (للنصوص)"], ["chars", "حرفاً حرفاً (نص لاتيني)"]];
+  const animX = s => `${s.animEase ? ` data-ae="${esc(s.animEase)}"` : ""}${s.animTrig ? ` data-at="${esc(s.animTrig)}"` : ""}${s.animThr ? ` data-thr="${esc(s.animThr)}"` : ""}`;      // نعومة الحركة ومتى تظهر ونقطة الظهور
+  const animAttr = s => s.anim ? ` data-anim="${esc(s.anim)}"${animX(s)} style="--ad:${num(s.animDur) ?? .6}s;--ade:${num(s.animDelay) ?? 0}s${s.animSt ? ";--st:" + num(s.animSt) + "s" : ""}"` : "";
   const cleanHtml = html => {
     const d = new DOMParser().parseFromString("<body>" + String(html || "") + "</body>", "text/html");
     d.body.querySelectorAll("script,style,iframe,object,embed,link,meta,form").forEach(n => n.remove());
@@ -1007,6 +1008,7 @@ const PB = (() => {
         : kind === "section" ? { k: "scl", l: "حجم محتوى القسم % — يتغير بسحب إطار القسم (فأرة/إصبع) فتتبعه عناصره", t: "num", r: 1, min: 30, max: 300, tab: "a" }
         : { k: "wsc", l: "حجم محتوى العنصر % — يتغير بسحب زواياه (فأرة/إصبع) فيكبر المحتوى مع الإطار", t: "num", r: 1, min: 20, max: 500, tab: "a" },
       { k: "anim", l: "حركة الظهور", t: "select", o: ANIMS, tab: "a" }, { k: "animDur", l: "مدة الحركة (ثانية)", t: "num", min: .1, max: 3, step: .1, tab: "a" }, { k: "animDelay", l: "تأخير الحركة (ثانية)", t: "num", min: 0, max: 5, step: .1, tab: "a" },
+      { k: "animEase", l: "نعومة الحركة", t: "select", o: [["", "افتراضي"], ["out", "انسيابي (يبطئ بالنهاية)"], ["spring", "نابض (يتجاوز ثم يستقر)"], ["soft", "ناعم"], ["linear", "منتظم"]], tab: "a", showIf: ["anim", "*"] }, { k: "animTrig", l: "متى يظهر العنصر؟", t: "select", o: [["", "عند الوصول إليه بالتمرير"], ["load", "فور تحميل الصفحة"], ["repeat", "عند كل وصول إليه (يتكرر)"]], tab: "a", showIf: ["anim", "*"] }, { k: "animThr", l: "نقطة الظهور", t: "select", o: [["", "عند دخول 15% منه"], ["0.01", "بمجرد ظهور حافته"], ["0.4", "عند دخول 40% منه"], ["0.75", "عند دخول معظمه"]], tab: "a", showIf: ["anim", "*"] }, { k: "animSt", l: "الفاصل بين الكلمات أو الحروف (ثانية)", t: "num", min: .02, max: .5, step: .01, tab: "a", showIf: ["anim", "*"] },
       { k: "z", l: "z-index", t: "num", min: 0, max: 999, tab: "a" },
       { k: "cls", l: "CSS Class", t: "text", tab: "a" }, { k: "cid", l: "CSS ID", t: "text", tab: "a" },
       { k: "css", l: "CSS مخصص (استعمل selector)", t: "textarea", tab: "a" },
@@ -1133,7 +1135,7 @@ const PB = (() => {
     ctx = Object.assign({}, ctx, { demoOn: !!page.demo && (!!ctx.edit || ctx.demo === true) });      // بيانات القالب التجريبية: في التحرير والمعاينة فقط
     const css = newCss(); css.base = ctx.base;
     const edit = !!ctx.edit; let curAuto = null;
-    const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? (s.anim ? ` data-anim="${esc(s.anim)}" data-ad="${num(s.animDur) ?? .6}" data-ade="${num(s.animDelay) ?? 0}"` : "") : animAttr(s)}`;
+    const attrs = (n, kind, s) => `${edit ? ` data-pb="${n.id}" data-kind="${kind}"` : ""}${s.cid ? ` id="${esc(s.cid)}"` : ""}${edit ? (s.anim ? ` data-anim="${esc(s.anim)}" data-ad="${num(s.animDur) ?? .6}" data-ade="${num(s.animDelay) ?? 0}"${animX(s)}` : "") : animAttr(s)}`;
     const common2 = (sel, s, spec) => { boxStatic(css, sel, s); emit(css, sel, s, spec); hideRules(css, sel, s, edit); customCss(css, sel, s); };
     /* عنصر واحد: عادي (داخل عمود) أو حر (موضع مطلق فوق القسم) */
     const renderW = (w, free) => {
@@ -1266,9 +1268,13 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-btn>span{position:relative;z-index:1}
 @keyframes pbI-zin{from{transform:scale(1)}to{transform:scale(var(--is,1.2))}}@keyframes pbI-zout{from{transform:scale(var(--is,1.2))}to{transform:scale(1)}}@keyframes pbI-pulse{0%,100%{transform:scale(1)}50%{transform:scale(var(--is,1.2))}}@keyframes pbI-kb{from{transform:scale(1) translate(0,0)}to{transform:scale(var(--is,1.2)) translate(-3%,-2%)}}
 @keyframes pbI-float{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--ip,12px)*-1))}}@keyframes pbI-sway{0%,100%{transform:rotate(calc(var(--ir,6deg)*-1))}50%{transform:rotate(var(--ir,6deg))}}@keyframes pbI-spin{to{transform:rotate(360deg)}}@keyframes pbI-blink{0%,100%{opacity:1}50%{opacity:.2}}@keyframes pbI-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
-[data-anim]{opacity:0;transition:opacity var(--ad,.6s) ease var(--ade,0s),transform var(--ad,.6s) ease var(--ade,0s)}[data-anim=fadeUp]{transform:translateY(30px)}[data-anim=fadeDown]{transform:translateY(-30px)}[data-anim=zoomIn]{transform:scale(.88)}[data-anim=slideStart]{transform:translateX(40px)}[data-anim].pb-in-view{opacity:1;transform:none}
+[data-anim]{opacity:0;transition:opacity var(--ad,.6s) var(--aee,ease) var(--ade,0s),transform var(--ad,.6s) var(--aee,ease) var(--ade,0s),filter var(--ad,.6s) var(--aee,ease) var(--ade,0s),clip-path var(--ad,.6s) var(--aee,ease) var(--ade,0s)}[data-anim=fadeUp]{transform:translateY(30px)}[data-anim=fadeDown]{transform:translateY(-30px)}[data-anim=zoomIn]{transform:scale(.88)}[data-anim=slideStart]{transform:translateX(40px)}
+[data-anim=slideEnd]{transform:translateX(-40px)}[data-anim=zoomOut]{transform:scale(1.15)}[data-anim=rotateIn]{transform:rotate(-8deg) scale(.9)}[data-anim=flipX]{transform:perspective(900px) rotateX(65deg);transform-origin:50% 100%}[data-anim=flipY]{transform:perspective(900px) rotateY(-65deg)}[data-anim=blurIn]{filter:blur(14px);transform:scale(1.04)}[data-anim=riseBlur]{transform:translateY(34px);filter:blur(9px)}[data-anim=skewUp]{transform:translateY(36px) skewY(5deg)}[data-anim=pop]{transform:scale(.6);--aee:cubic-bezier(.34,1.56,.64,1)}[data-anim=wipeR]{clip-path:inset(0 0 0 100%)}[data-anim=wipeL]{clip-path:inset(0 100% 0 0)}[data-anim=wipeUp]{clip-path:inset(100% 0 0 0)}[data-anim=curtain]{clip-path:inset(0 50% 0 50%)}
+[data-anim].pb-in-view{opacity:1;transform:none}[data-anim=blurIn].pb-in-view,[data-anim=riseBlur].pb-in-view{filter:none}[data-anim=wipeR].pb-in-view,[data-anim=wipeL].pb-in-view,[data-anim=wipeUp].pb-in-view,[data-anim=curtain].pb-in-view{clip-path:inset(0)}[data-anim=wipeR].pb-done,[data-anim=wipeL].pb-done,[data-anim=wipeUp].pb-done,[data-anim=curtain].pb-done{clip-path:none!important}
+[data-ae=out]{--aee:cubic-bezier(.16,1,.3,1)}[data-ae=spring]{--aee:cubic-bezier(.34,1.56,.64,1)}[data-ae=soft]{--aee:cubic-bezier(.4,0,.2,1)}[data-ae=linear]{--aee:linear}
+[data-anim=words],[data-anim=chars]{opacity:1;transform:none;transition:none}.pb-sw{display:inline-block;opacity:0;transform:translateY(.7em);transition:opacity var(--ad,.6s) var(--aee,ease) calc(var(--ade,0s) + var(--i,0)*var(--st,.07s)),transform var(--ad,.6s) var(--aee,ease) calc(var(--ade,0s) + var(--i,0)*var(--st,.07s))}[data-anim=words].pb-in-view .pb-sw,[data-anim=chars].pb-in-view .pb-sw{opacity:1;transform:none}
 @media(max-width:${BP.m}px){.pb-hdr a.wa{display:none}}
-@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}.pb-im,.pb-btn,.pb-btn:before,.pb-btn:after{animation:none!important}}`;
+@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}[data-anim=blurIn],[data-anim=riseBlur]{filter:none!important}[data-anim=wipeR],[data-anim=wipeL],[data-anim=wipeUp],[data-anim=curtain]{clip-path:none!important}.pb-sw{opacity:1!important;transform:none!important;transition:none!important}.pb-im,.pb-btn,.pb-btn:before,.pb-btn:after{animation:none!important}}`;
 
   /* سكربت الصفحة المنشورة: حركات الظهور + العدّادات + العدّ التنازلي + تحديث الأسعار من data.js */
   /* تأثيرات تفاعلية للنسخ (تحويم البطاقات، سلايدر/تبويب، أكورديون/قوائم منسدلة، تثبيت، Parallax): تُشغَّل في الصفحة المنشورة وفي إطار المحرّر مباشرة
@@ -1301,7 +1307,12 @@ function rst(){clearInterval(o.t);if(o.ms>0)o.t=setInterval(function(){if(!docum
 var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 $('.pb-tp[data-rot],.pb-tp[data-hide],.pb-tp[data-close]').forEach(function(b){var k=b.getAttribute('data-close'),gone=0;var sc=b.closest('.pb-sec');function hid(a){if(a){b.style.maxHeight=b.offsetHeight+'px';void b.offsetHeight}b.classList.add('pb-tp-h');if(sc){sc.style.transition='min-height .35s,height .35s';sc.style.minHeight='0';sc.style.height='0';sc.style.overflow='hidden'}}try{if(k&&localStorage.getItem(k)){b.style.maxHeight='0px';b.classList.add('pb-tp-h');gone=1}}catch(e){}var x=b.querySelector('.pb-tp-x');if(x)x.onclick=function(e){e.preventDefault();e.stopPropagation();gone=1;try{localStorage.setItem(k,'1')}catch(_){}hid(1)};var r=+b.getAttribute('data-rot')||0;if(r>0){var it=[].slice.call(b.querySelectorAll('.pb-tp-i')),i=0;if(it.length>1)setInterval(function(){it[i].classList.remove('on');i=(i+1)%it.length;it[i].classList.add('on')},r*1000)}if(b.hasAttribute('data-hide')&&!gone){var hs=0;addEventListener('scroll',function(){var y=window.pageYOffset||document.documentElement.scrollTop||0;if(gone)return;if(y>80&&!hs){hs=1;hid(1)}else if(y<20&&hs){hs=0;b.classList.remove('pb-tp-h');b.style.maxHeight='';if(sc){sc.style.minHeight='';sc.style.height='';sc.style.overflow=''}}},{passive:true})}});
 $('.pb-hd[data-tr]').forEach(function(h){var sc=h.closest('.pb-sec');if(sc)sc.style.zIndex=60;var p=+h.getAttribute('data-trp');if(isNaN(p))p=30;function f(){h.classList.toggle('pb-sc',(window.pageYOffset||document.documentElement.scrollTop||0)>p)}f();addEventListener('scroll',f,{passive:true})});
-if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct,.pb-bl[data-ia]').forEach(function(n){io.observe(n)})}else{$('[data-anim],.pb-bl[data-ia]').forEach(function(n){n.classList.add('pb-in-view')})}
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('.pb-ct,.pb-bl[data-ia]').forEach(function(n){io.observe(n)});
+var ios={};function dn(x){var d=(parseFloat(x.style.getPropertyValue('--ad'))||.6)+(parseFloat(x.style.getPropertyValue('--ade'))||0)+.4;setTimeout(function(){x.classList.add('pb-done')},d*1000+(x.querySelector('.pb-sw')?2500:0))}
+function ob(n){var t=n.getAttribute('data-thr')||'d';if(!ios[t]){ios[t]=new IntersectionObserver(function(es){es.forEach(function(e){var x=e.target,r=x.getAttribute('data-at')==='repeat';if(e.isIntersecting){x.classList.remove('pb-done');x.classList.add('pb-in-view');if(!r)ios[t].unobserve(x);dn(x)}else if(r){x.classList.remove('pb-in-view');x.classList.remove('pb-done')}})},{threshold:t==='d'?.15:+t})}ios[t].observe(n)}
+function sp(el){var ch=el.getAttribute('data-anim')==='chars',ar=/[\u0600-\u06FF]/.test(el.textContent);if(ar)ch=false;var k=0;(function w(n){[].slice.call(n.childNodes).forEach(function(c){if(c.nodeType===3){var tx=c.nodeValue;if(!tx.replace(/ /g,'').length)return;var f=document.createDocumentFragment(),ps=ch?tx.split(''):tx.split(' ');ps.forEach(function(p,j){if(!ch&&p===''){return}var s=document.createElement('span');s.className='pb-sw';s.style.setProperty('--i',k++);s.textContent=(ch&&p===' ')?String.fromCharCode(160):p;f.appendChild(s);if(!ch&&j<ps.length-1)f.appendChild(document.createTextNode(' '))});n.replaceChild(f,c)}else if(c.nodeType===1&&c.tagName!=='BR'&&c.tagName!=='SCRIPT'&&c.tagName!=='STYLE')w(c)})})(el)}
+$('[data-anim=words],[data-anim=chars]').forEach(sp);
+$('[data-anim]').forEach(function(n){if(n.getAttribute('data-at')==='load'){setTimeout(function(){n.classList.add('pb-in-view');dn(n)},90)}else ob(n)})}else{$('[data-anim],.pb-bl[data-ia]').forEach(function(n){n.classList.add('pb-in-view')})}
 function tick(){$('.pb-cd').forEach(function(el){var end,md=el.dataset.mode;if(el.hasAttribute('data-off')){if(!document.body.classList.contains('pb-edit')&&!window.__pbEd){el.style.display='none';return}el.style.opacity='.4'}if(md==='dur'){var dr=(+el.dataset.dur||0)*1000,k='pbcd_'+(window.__pbSlug||location.pathname)+'_'+el.dataset.k,t0=0;try{t0=+localStorage.getItem(k)||0}catch(e){}if(!t0||(Date.now()-t0>dr&&el.dataset.rst!=='0')){t0=Date.now();try{localStorage.setItem(k,String(t0))}catch(e){}}end=t0+dr}else if((md==='date'||md==='product')&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else if(md==='product'){if(!document.body.classList.contains('pb-edit'))el.style.display='none';return}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
 tick();setInterval(tick,1000);
 $('.pb-p14').forEach(function(g){var mb=g.querySelector('.pb-pgm'),tb=[].slice.call(g.querySelectorAll('.pb-pgc')),all=[mb.firstElementChild].concat(tb.map(function(b){return b.firstElementChild})),k=0,t,snd=g.getAttribute('data-vs')==='1',va=g.getAttribute('data-va')!=='0',vl=g.getAttribute('data-vl')!=='0',vcl=g.getAttribute('data-vc')!=='0';function pl(n){if(n&&n.tagName==='VIDEO'){var q=n.play();if(q&&q.catch)q.catch(function(){if(!n.muted){n.muted=true;snd=false;var q2=n.play();if(q2&&q2.catch)q2.catch(function(){});ui()}})}}function mv(){return mb.querySelector('video')}function ui(){var v=mv();mb.classList.toggle('has-v',!!v);mb.classList.toggle('is-muted',!!v&&v.muted);mb.classList.toggle('is-paused',!!v&&v.paused)}function setup(){all.forEach(function(n){if(n&&n.tagName==='VIDEO'&&n.parentNode!==mb){n.muted=true;n.loop=true;n.controls=false;pl(n)}});var v=mv();if(v){v.controls=false;v.loop=vl;v.muted=!snd;if(va)pl(v);else v.pause();if(!v._pb){v._pb=1;['play','pause','volumechange','ended'].forEach(function(e){v.addEventListener(e,ui)});v.addEventListener('click',function(){if(!vcl)return;if(v.muted){snd=true;v.muted=false;pl(v)}else if(v.paused)pl(v);else v.pause()})}}ui()}function show(n){k=n;mb.appendChild(all[n]);var r=all.filter(function(_,j){return j!==n});tb.forEach(function(b,j){if(r[j])b.appendChild(r[j])});setup()}function run(){clearInterval(t);var a=+g.getAttribute('data-auto')||0;if(a>0&&all.length>1)t=setInterval(function(){show((k+1)%all.length)},a*1000)}tb.forEach(function(b){b.onclick=function(){var n=all.indexOf(b.firstElementChild);if(n>=0){show(n);run()}}});var bm=mb.querySelector('.pb-vm'),bp=mb.querySelector('.pb-vp');if(bm)bm.onclick=function(e){e.stopPropagation();var v=mv();if(v){snd=v.muted;v.muted=!v.muted;if(!v.muted&&v.paused)pl(v);ui()}};if(bp)bp.onclick=function(e){e.stopPropagation();var v=mv();if(v){if(v.paused)pl(v);else v.pause()}};setup();run()});
@@ -1391,7 +1402,7 @@ ${FX_JS}
 <link rel="icon" href="${esc(ctx.base)}assets/img/favicon.png">
 ${"<link rel=\"preload\" href=\"" + esc(ctx.base) + "assets/fonts/cairo-arabic.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>"}
 ${(() => { const u = fontsHref(usedFonts([page.sections, page.ff, page.css])); return u ? `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="${u}" rel="stylesheet" media="print" onload="this.media='all'">` : ""; })()}
-<noscript><style>[data-anim],.pb-bl[data-ia] .pb-bi{opacity:1!important;transform:none!important}</style></noscript>
+<noscript><style>[data-anim],.pb-bl[data-ia] .pb-bi,.pb-sw{opacity:1!important;transform:none!important}[data-anim=blurIn],[data-anim=riseBlur]{filter:none!important}[data-anim=wipeR],[data-anim=wipeL],[data-anim=wipeUp],[data-anim=curtain]{clip-path:none!important}</style></noscript>
 <style>${cairoFace(ctx.base)}${BASE_CSS}
 .pb-page{background:${esc(page.bg || "#fff")}${page.ff ? ";font-family:" + page.ff : ""}}
 ${r.css}
@@ -1437,7 +1448,7 @@ html,body{overflow-anchor:none}
 .pb-edit .k-canvas .pb-in{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px);background-size:20px 20px}
 .pb-edit .pb-sl-cap:not(.below){cursor:move}
 .pb-drop{position:absolute;background:#2d6cdf;height:4px;border-radius:2px;pointer-events:none;z-index:9999;box-shadow:0 0 0 2px rgba(45,108,223,.25)}
-.pb-edit:not(.pb-anim-play) [data-anim]{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp:not([data-live]).pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp:not([data-live]){overflow:visible!important}.pb-edit .pb-tp-r:not([data-live]) .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp:not([data-live])>.pb-tp-m{display:block}.pb-edit .pb-tp:not([data-live]) .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp:not([data-live]) .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t:not([data-live]) .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
+.pb-edit:not(.pb-anim-play) [data-anim]{opacity:1!important;transform:none!important}.pb-edit:not(.pb-anim-play) [data-anim=blurIn],.pb-edit:not(.pb-anim-play) [data-anim=riseBlur]{filter:none!important}.pb-edit:not(.pb-anim-play) [data-anim=wipeR],.pb-edit:not(.pb-anim-play) [data-anim=wipeL],.pb-edit:not(.pb-anim-play) [data-anim=wipeUp],.pb-edit:not(.pb-anim-play) [data-anim=curtain]{clip-path:none!important}.pb-edit .pb-sw{opacity:1!important;transform:none!important}.pb-edit .pb-bl[data-ia] .pb-bi{opacity:1!important;animation:none!important}.pb-edit .pb-tp:not([data-live]).pb-tp-r{display:flex!important;flex-direction:column;justify-content:center}.pb-edit .pb-tp:not([data-live]){overflow:visible!important}.pb-edit .pb-tp-r:not([data-live]) .pb-tp-i{display:block!important;visibility:visible!important;animation:none!important}.pb-edit .pb-tp:not([data-live])>.pb-tp-m{display:block}.pb-edit .pb-tp:not([data-live]) .pb-tp-mq{animation:none!important;width:auto}.pb-edit .pb-tp:not([data-live]) .pb-tp-dup{display:none!important}.pb-edit .pb-tp-t:not([data-live]) .pb-tp-i{display:block}.pb-edit .pb-tp-x{pointer-events:none}
 .pb-edit .pb-cf :is(input,textarea,select,button){pointer-events:none}.pb-edit .pb-cf-b span,.pb-edit [data-edit],.pb-edit [data-icon]{pointer-events:auto}.pb-edit [data-edit]:hover{outline:1.5px dashed #0d9488;outline-offset:2px;cursor:text}.pb-edit [data-icon]:hover{outline:1.5px dashed #0d9488;outline-offset:3px;cursor:pointer}
 body{overflow-x:hidden;margin:0}`;
 
@@ -1675,6 +1686,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-allfree" onclick="PBApp.convertAllFree()" title="يحوّل كل أقسام الصفحة وأكوادها إلى عناصر حرة قابلة للتعديل بنفس الشكل والمحتوى وتأثيرات الظهور (على عرض المكتب)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg> الكل حر</button>
   <button id="pbx-org" onclick="PBApp.organizePage()" title="تنظيم الصفحة بزر واحد على المكتب والتابلت والهاتف: يعيد العناصر الخارجة عن حدودها ويكبّر النصوص المقصوصة ويمدّد الأقسام ويكمل تخطيط الهاتف (لا يحذف شيئاً)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h10M4 18h16M18 10l3 2-3 2"/></svg> تنظيم</button>
   <button id="pbx-allung" onclick="PBApp.ungroupAll()" title="يفكّ ربط كل العناصر في الصفحة فتصير مستقلة (يمكن التراجع)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1M3 3l18 18"/></svg> فك الكل</button>
+  <button id="pbx-fxpb" onclick="PBFx.open()" title="تأثيرات حركة الصفحة كلها: أصناف حركات ظهور متقدمة للعناوين والنصوص والصور والأزرار والبطاقات، مع اختيار متى يظهر كل عنصر عند الوصول إليه"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg> تأثيرات</button>
   <button id="pbx-palb" onclick="PBPalette.open()" title="ألوان الصفحة: لوحات ألوان متناسقة حسب ألوان المنتج تغيّر الخلفيات والنصوص بضغطة واحدة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/></svg> ألوان</button>
   <button id="pbx-histb" onclick="PBApp.hist()" title="السجل (Historique): كل التغييرات ويمكن الرجوع لأي مرحلة"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <button id="pbx-prev" onclick="PBApp.preview()">${ico('eye',16)} معاينة</button>
@@ -1758,7 +1770,7 @@ body{overflow-x:hidden;margin:0}`;
   }
   /* النوافذ واللوحات العائمة الملحقة بالصفحة (لا بداخل #pb-app): تُغلق كلها مع المحرر وإلا بقيت ظاهرة فوق لوحة التحكم (مكتبة الصور، تحميل الصور، لوحة تعديل الصورة، القوائم، تغيير المقاس…) */
   function closeFloating() {
-    try { if (typeof PBPalette !== "undefined") PBPalette.close(); } catch (x) { } try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
+    try { if (typeof PBPalette !== "undefined") PBPalette.close(); } catch (x) { } try { if (typeof PBFx !== "undefined") PBFx.close(); } catch (x) { } try { epClose(); } catch (x) { } try { closePageImages(); } catch (x) { } try { closePop(); } catch (x) { } try { hideCtx(); } catch (x) { }
     try { if (typeof PBClone !== "undefined") PBClone.close(); } catch (x) { } try { const x = document.getElementById("pbs-x"); if (x) x.click(); } catch (x) { }      // نافذتا النسخ والالتقاط لهما إغلاقهما الخاص (يُنظّف مؤقتاتهما)
     ["pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbs-bl", "pbs-af", "pbs-er", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
@@ -5585,6 +5597,91 @@ const PBPalette = (() => {
   const esc = e => { if (String(e.key || "") === "Escape") close(); };
   function close() { const b = document.getElementById("pbx-pal"); if (b) b.remove(); document.removeEventListener("keydown", esc, true); }
   return { open, close, apply, fixContrast, fails: () => LASTFAILS.slice(), stats, palettes, mapper, dominant, productImage, _walk: walkPage };
+})();
+
+/* ═════════════════════════════════════════════════════════════════
+   PBFx — تأثيرات حركة الصفحة كلها بضغطة واحدة (مثل لوحة الألوان)
+   كل «صنف» تأثيرات يعيّن لكل نوع عنصر (عناوين/نصوص/صور/أزرار/بطاقات) حركة ظهور متقدمة ونعومة وتأخيراً متتابعاً،
+   وللصور حركة مستمرة (كين بيرنز/طفو) عند اللزوم. وخيارات «متى يظهر العنصر»: عند الوصول إليه بالتمرير (الافتراضي)
+   أو فور التحميل أو عند كل وصول، مع نقطة الظهور. القيم تُكتب في إعدادات كل عنصر فتبقى قابلة للتعديل منفردة.
+   ═════════════════════════════════════════════════════════════════ */
+const PBFx = (() => {
+  const KEYS = ["anim", "animDur", "animDelay", "animEase", "animTrig", "animThr", "animSt"];
+  /* الأصناف: لكل دور [حركة، مدة، نعومة، فاصل كلمات] + حركة مستمرة للصور + فاصل التتابع بين عناصر القسم */
+  const PRESETS = [
+    { id: "cine", name: "سينمائي", d: "ظهور من ضبابية وكشف صور من الأسفل مع تقريب بطيء", st: .12, h: ["blurIn", 1.1, "out"], t: ["riseBlur", .9, "out"], img: ["wipeUp", 1.1, "out"], btn: ["pop", .7, "spring"], card: ["flipX", .9, "out"], ia: ["kb", 12, "big"] },
+    { id: "soft", name: "ناعم هادئ", d: "صعود بطيء وتصغير لطيف للصور بلا مبالغة", st: .1, h: ["fadeUp", .9, "soft"], t: ["fadeUp", .9, "soft"], img: ["zoomOut", 1.2, "out"], btn: ["fadeUp", .8, "soft"], card: ["fadeUp", .9, "soft"] },
+    { id: "dyn", name: "ديناميكي", d: "العناوين كلمة كلمة، الصور بدوران نابض، البطاقات تنزلق بالتناوب", st: .1, h: ["words", .6, "spring", .09], t: ["skewUp", .7, "out"], img: ["rotateIn", .9, "spring"], btn: ["pop", .7, "spring"], card: ["slideStart", .8, "out", 0, "alt"] },
+    { id: "lux", name: "فخم", d: "كشف أنيق للعناوين والصور كستارة مع تقريب ناعم", st: .15, h: ["wipeR", 1, "out"], t: ["fadeIn", 1.2, "soft"], img: ["curtain", 1.2, "out"], btn: ["blurIn", .9, "out"], card: ["wipeUp", 1, "out"], ia: ["kb", 8, "big"] },
+    { id: "bold", name: "جريء", d: "قفزات نابضة وانزلاق سريع وقلب للصور", st: .08, h: ["pop", .6, "spring"], t: ["slideStart", .6, "out"], img: ["flipY", .9, "out"], btn: ["pop", .6, "spring"], card: ["zoomIn", .6, "spring"] },
+    { id: "depth", name: "ثلاثي الأبعاد", d: "قلب بمنظور للعناوين والنصوص والصور والبطاقات", st: .1, h: ["flipX", .9, "out"], t: ["flipX", .9, "out"], img: ["flipY", 1, "out"], btn: ["rotateIn", .7, "out"], card: ["flipY", .9, "out"] },
+    { id: "float", name: "طفو حي", d: "ظهور هادئ والصور الصغيرة تطفو باستمرار", st: .1, h: ["fadeUp", .8, "out"], t: ["fadeUp", .8, "out"], img: ["fadeUp", .9, "out"], btn: ["pop", .6, "spring"], card: ["fadeUp", .8, "out"], ia: ["float", 40, "small"] },
+    { id: "none", name: "بدون تأثيرات", d: "يزيل حركات الظهور من كل عناصر الصفحة", none: true }
+  ];
+  const ROLE = { heading: "h", text: "t", image: "img", pgal: "img", gallery: "img", slider: "img", video: "img", beforeafter: "img", button: "btn", iconbox: "card", bullets: "card", testimonial: "card", counter: "card", accordion: "card", tbadges: "card", progress: "card", iconlist: "card", social: "card", table: "card" };
+  const OPT = { trig: "", thr: "", speed: 1, stagger: true, first: true, roles: { h: true, t: true, img: true, btn: true, card: true } };
+  const num = v => Number(v) || 0;
+  const isHF = sec => sec.grp === "top" || sec.grp === "bot" || [].concat(...(sec.cols || []).map(c => c.widgets || []), sec.free || []).some(w => /^(shdr|sbar|sfoot)$/.test(w.type));
+  /* عناصر القسم بترتيب القراءة: العادية أولاً ثم الحرة من الأعلى للأسفل */
+  function targets(sec) {
+    const flow = (sec.cols || []).flatMap(c => c.widgets || []), free = (sec.free || []).filter(w => w.type !== "shape").slice().sort((a, b) => num(a.set && a.set.fy && a.set.fy.d) - num(b.set && b.set.fy && b.set.fy.d) || num(b.set && b.set.fx && b.set.fx.d) - num(a.set && a.set.fx && a.set.fx.d));
+    return flow.map(w => ({ w, free: false })).concat(free.map(w => ({ w, free: true }))).filter(x => ROLE[x.w.type]);
+  }
+  function clear(w) { KEYS.forEach(k => { delete w.set[k]; }); }
+  function apply(p) {
+    const E = PBApp.E; if (!E || !E.page) return; let n = 0, ia = 0, alt = 0, firstDone = false;
+    (E.page.sections || []).forEach(sec => {
+      if (isHF(sec)) return; const first = !firstDone && OPT.first; firstDone = true; let i = 0;
+      targets(sec).forEach(({ w, free }) => {
+        const role = ROLE[w.type]; if (!OPT.roles[role]) return; w.set = w.set || {};
+        if (p.none) { if (KEYS.some(k => w.set[k] !== undefined)) { clear(w); n++; } return; }
+        const spec = p[role]; if (!spec) return; clear(w);
+        const sp = OPT.speed || 1; w.set.anim = spec[0]; w.set.animDur = Math.round(spec[1] * sp * 100) / 100; if (spec[2]) w.set.animEase = spec[2]; if (spec[3]) w.set.animSt = spec[3];
+        if (spec[4] === "alt" && alt++ % 2) w.set.anim = "slideEnd";
+        const stp = OPT.stagger ? (p.st || .1) * sp : 0; w.set.animDelay = Math.min(1.1, Math.round(i * stp * 100) / 100); i++;
+        const trig = first && OPT.trig !== "repeat" ? "load" : OPT.trig; if (trig) w.set.animTrig = trig; if (OPT.thr) w.set.animThr = OPT.thr;
+        if (role === "img" && p.ia && w.type === "image" && !w.set.ianim) {      // حركة مستمرة للصور (لا تُكتب فوق حركة اختارها المستخدم)
+          const wd = free ? num(w.set.fwd && w.set.fwd.d) : 100, big = !free || wd >= 30; if ((p.ia[2] === "big" && big) || (p.ia[2] === "small" && !big)) { w.set.ianim = p.ia[0]; w.set.ianimAmt = p.ia[1]; ia++; } }
+        n++;
+      });
+    });
+    E.page.fxp = p.id; PBApp.afterEdit("تأثيرات الصفحة: " + p.name);
+    try { PBApp.toast(p.none ? "أُزيلت حركات الظهور من " + n + " عنصر — Ctrl+Z للتراجع" : "طُبّقت تأثيرات «" + p.name + "» على " + n + " عنصر" + (ia ? " (وحركة مستمرة لـ " + ia + " صورة)" : "") + " — Ctrl+Z للتراجع"); } catch (e) { }
+    if (!p.none) setTimeout(() => { try { PBApp.playAnims(); } catch (e) { } }, 450);
+  }
+  function css() {
+    if (document.getElementById("pbfx-css")) return; const el = document.createElement("style"); el.id = "pbfx-css";
+    el.textContent = `#pbx-fxp{position:fixed;z-index:100040;top:58px;inset-inline-start:12px;width:min(392px,94vw);max-height:min(680px,calc(100vh - 80px));overflow:auto;background:#0f1d16;color:#f1f5f2;border:1px solid rgba(255,255,255,.2);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.55);padding:.8rem .8rem 1rem;direction:rtl;font-family:inherit}
+#pbx-fxp .pbfx-h{display:flex;align-items:center;justify-content:space-between;gap:.5rem;font-weight:800;margin-bottom:.3rem}#pbx-fxp .pbfx-h button{background:transparent;border:0;color:inherit;font-size:1.2rem;cursor:pointer}
+#pbx-fxp .pbfx-s{font-size:.76rem;opacity:.78;line-height:1.7;margin-bottom:.5rem}
+#pbx-fxp .pbfx-o{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .5rem;margin-bottom:.6rem;background:#16291f;border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:.55rem}
+#pbx-fxp .pbfx-o label{display:flex;flex-direction:column;gap:.15rem;font-size:.72rem;opacity:.9}#pbx-fxp .pbfx-o select{background:#0f1d16;color:#f1f5f2;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:.3rem .35rem;font:inherit;font-size:.76rem;width:100%}
+#pbx-fxp .pbfx-ck{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:.25rem .8rem;font-size:.74rem}#pbx-fxp .pbfx-ck label{flex-direction:row;align-items:center;gap:.3rem}#pbx-fxp .pbfx-ck input{width:auto;accent-color:#e2fe17}
+#pbx-fxp .pbfx-g{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+#pbx-fxp .pbfx-c{display:block;text-align:start;background:#16291f;border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:.55rem .6rem;cursor:pointer;color:inherit;font:inherit}#pbx-fxp .pbfx-c:hover,#pbx-fxp .pbfx-c.on{border-color:#e2fe17;background:#1c3326}
+#pbx-fxp .pbfx-n{display:block;font-size:.86rem;font-weight:800}#pbx-fxp .pbfx-d{display:block;font-size:.7rem;opacity:.75;line-height:1.55;margin-top:.15rem}
+#pbx-fxp .pbfx-b{display:block;width:100%;margin-top:.6rem;background:#e2fe17;color:#1f2123;border:0;border-radius:14px;padding:.5rem;font:inherit;font-weight:800;cursor:pointer}`;
+    document.head.appendChild(el);
+  }
+  const sel = (id, label, opts, cur) => `<label>${label}<select data-o="${id}">${opts.map(([v, t]) => `<option value="${v}"${String(v) === String(cur) ? " selected" : ""}>${t}</option>`).join("")}</select></label>`;
+  function open() {
+    close(); css(); const E = PBApp.E; if (!E || !E.page) return;
+    const box = document.createElement("div"); box.id = "pbx-fxp"; box.setAttribute("role", "dialog");
+    const R = OPT.roles, ck = (k, t) => `<label><input type="checkbox" data-r="${k}"${R[k] ? " checked" : ""}> ${t}</label>`;
+    box.innerHTML = `<div class="pbfx-h"><span>تأثيرات الصفحة</span><button type="button" data-x="1" aria-label="إغلاق">×</button></div>
+<div class="pbfx-s">اختر صنف تأثيرات فتأخذ العناوين والنصوص والصور والأزرار والبطاقات حركات ظهور متقدمة متتابعة بضغطة واحدة (Ctrl+Z للتراجع). تبقى حركة كل عنصر قابلة للتعديل منفردة من تبويب «الحركة».</div>
+<div class="pbfx-o">${sel("trig", "متى يظهر العنصر؟", [["", "عند الوصول إليه بالتمرير"], ["load", "فور تحميل الصفحة"], ["repeat", "عند كل وصول إليه (يتكرر)"]], OPT.trig)}${sel("thr", "نقطة الظهور", [["", "عند دخول 15% منه"], ["0.01", "بمجرد ظهور حافته"], ["0.4", "عند دخول 40% منه"], ["0.75", "عند دخول معظمه"]], OPT.thr)}${sel("speed", "السرعة", [["1.4", "بطيئة"], ["1", "عادية"], ["0.7", "سريعة"]], OPT.speed)}${sel("stagger", "التتابع بين عناصر القسم", [["1", "متتابع"], ["0", "معاً"]], OPT.stagger ? "1" : "0")}
+<div class="pbfx-ck">${ck("h", "العناوين")}${ck("t", "النصوص")}${ck("img", "الصور")}${ck("btn", "الأزرار")}${ck("card", "البطاقات")}<label><input type="checkbox" data-f="1"${OPT.first ? " checked" : ""}> القسم الأول يظهر فوراً</label></div></div>
+<div class="pbfx-g">${PRESETS.map(p => `<button type="button" class="pbfx-c${E.page.fxp === p.id ? " on" : ""}" data-pid="${p.id}"><span class="pbfx-n">${p.name}</span><span class="pbfx-d">${p.d}</span></button>`).join("")}</div>
+<button type="button" class="pbfx-b" data-play="1">تشغيل المعاينة</button>`;
+    document.body.appendChild(box);
+    box.addEventListener("change", ev => { const t = ev.target, o = t.dataset.o; if (o) { OPT[o] = o === "speed" ? Number(t.value) : o === "stagger" ? t.value === "1" : t.value; } else if (t.dataset.r) OPT.roles[t.dataset.r] = t.checked; else if (t.dataset.f) OPT.first = t.checked; });
+    box.addEventListener("click", ev => { if (ev.target.closest("[data-x]")) return close(); if (ev.target.closest("[data-play]")) { try { PBApp.playAnims(); } catch (e) { } return; } const b = ev.target.closest("[data-pid]"); if (!b) return; const p = PRESETS.find(x => x.id === b.dataset.pid); if (p) { apply(p); box.querySelectorAll(".pbfx-c").forEach(c => c.classList.toggle("on", c === b)); } });
+    document.addEventListener("keydown", esc, true);
+  }
+  const esc = e => { if (String(e.key || "") === "Escape") close(); };
+  function close() { const b = document.getElementById("pbx-fxp"); if (b) b.remove(); document.removeEventListener("keydown", esc, true); }
+  return { open, close, apply, presets: PRESETS, opts: OPT };
 })();
 
 /* ══════════════════════════════════════════════════════════════════════════════
