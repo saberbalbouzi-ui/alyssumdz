@@ -1164,6 +1164,7 @@ const PB = (() => {
       SC = !!s.scaled; const dw = num(s.dw) || 1140; curAuto = null;
       if (kind === "canvas" && !s.scaled && s.autoM !== false && (sec.free || []).length && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined)) && own(s, "mh", "m") === undefined) curAuto = autoMobileLayout(sec);
       if (SC) { css.d.push(`${sx}{container-type:inline-size}`); css.d.push(`${inx}{--u:calc(${s.layout === "full" ? "100cqw" : "min(100cqw," + dw + "px)"}/${dw})}`); }
+      if (SC && s.scaledM) css.m.push(`${inx}{--u:1px}`);      // هاتف مستقل: الوحدة بكسل حقيقي فتُقرأ قيم الهاتف كما هي
       if (curAuto) css.m.push(`${inx}{height:${curAuto.h}px}`);
       /* شفافية/تمويه صورة الخلفية: تُرسم الصورة في ::before فتتأثر هي وحدها لا محتوى القسم */
       const bgo = num(s.bgOp), bgb = num(s.bgBlur) || 0, usePs = !!s.bgImg && ((bgo != null && bgo < 1) || bgb > 0), sBox = usePs ? Object.assign({}, s, { bgImg: "" }) : s;
@@ -2465,7 +2466,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     sec.cols = [P.mkC([])]; sec.free = free; E.nextLabel = "تحويل القسم إلى عناصر حرة"; if (quiet) { E.covered = null; renderCanvas(); return; } afterEdit(null); toast("✅ صار القسم حرّاً: حرّك أي عنصر أو بطاقة (تتحرك مع محتواها)، وعدّل خلفيتها بالنقر عليها");
   }
   /* تنظيم الصفحة: لوحة خيارات (الافتراضي آمن: المكتب فقط بلا قص فراغات ولا لمس لما رتّبته على التابلت/الهاتف) ثم تمرّ على الأجهزة المختارة وتصلح: عناصر خارج حدود القسم، نصوص مقصوصة (يكبّر إطارها)، أقسام أقصر من محتواها، وتقصّ الفراغات الزائدة (اختياري)، وتُكمل تخطيط الهاتف الناقص (اختياري) */
-  const ORG = { clamp: true, text: true, grow: true, gap: false, fillM: false, devs: { d: true, t: false, m: false } };
+  const ORG = { clamp: true, text: true, grow: true, gap: false, fillM: false, clean: true, devs: { d: true, t: false, m: false } };
   function organizePage() {
     const L = (E.page.sections || []).filter(sc => sc.set.kind === "canvas" && !isHF(sc)), Lf = (E.page.sections || []).filter(sc => sc.set.kind !== "canvas" && !isHF(sc)); if (!L.length && !Lf.length) return toast("لا توجد أقسام لتنظيمها");
     document.getElementById("pbx-orgp") && document.getElementById("pbx-orgp").remove();
@@ -2474,7 +2475,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const ck = (k, t, on, sub) => `<label style="display:flex;gap:.45rem;align-items:flex-start;margin:.3rem 0;font-size:.8rem;line-height:1.55"><input type="checkbox" data-k="${k}"${on ? " checked" : ""} style="width:auto;margin-top:.2rem;accent-color:#e2fe17"><span><b>${t}</b>${sub ? `<br><small style="opacity:.72">${sub}</small>` : ""}</span></label>`;
     box.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;font-weight:800;margin-bottom:.3rem"><span>تنظيم الصفحة</span><button type="button" data-x="1" aria-label="إغلاق" style="background:transparent;border:0;color:inherit;font-size:1.2rem;cursor:pointer">×</button></div>
 <div style="font-size:.74rem;opacity:.78;line-height:1.7;margin-bottom:.4rem">اختر ما يُصلَح وعلى أي جهاز. لا يُحذف شيء، ويمكن التراجع بـ Ctrl+Z أو من «السجل» (الساعة).</div>
-${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها", ORG.clamp)}${ck("text", "تكبير إطارات النصوص المقصوصة", ORG.text)}${ck("grow", "تمديد الأقسام الأقصر من محتواها", ORG.grow)}${ck("gap", "قص الفراغات الزائدة أسفل الأقسام", ORG.gap, "يخفّض ارتفاع الأقسام الحرة وحشوة الأقسام العادية؛ قد يغيّر تباعدك المقصود")}${ck("fillM", "إكمال تخطيط الهاتف الناقص", ORG.fillM, "للأقسام الحرة التي لم يُضبط لها هاتف بعد فقط")}
+${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها", ORG.clamp)}${ck("text", "تكبير إطارات النصوص المقصوصة", ORG.text)}${ck("grow", "تمديد الأقسام الأقصر من محتواها", ORG.grow)}${ck("gap", "قص الفراغات الزائدة أسفل الأقسام", ORG.gap, "يخفّض ارتفاع الأقسام الحرة وحشوة الأقسام العادية؛ قد يغيّر تباعدك المقصود")}${ck("clean", "تنظيف قيم التابلت/الهاتف الشاذة في الأقسام المتناسبة", ORG.clean, "عنصر له موضع هاتف وبقية العناصر لا (يظهر منزاحاً عن زملائه) يعود لتخطيط المكتب")}${ck("fillM", "إكمال تخطيط الهاتف الناقص", ORG.fillM, "للأقسام الحرة التي لم يُضبط لها هاتف بعد فقط")}
 <div style="margin:.5rem 0 .2rem;font-size:.78rem;font-weight:800">الأجهزة</div><div style="display:flex;gap:.9rem;font-size:.8rem">${[["d", "المكتب"], ["t", "التابلت"], ["m", "الهاتف"]].map(([k, t]) => `<label style="display:flex;gap:.3rem;align-items:center"><input type="checkbox" data-d="${k}"${ORG.devs[k] ? " checked" : ""} style="width:auto;accent-color:#e2fe17">${t}</label>`).join("")}</div>
 <div style="font-size:.7rem;opacity:.7;margin:.3rem 0 .6rem;line-height:1.6">التابلت والهاتف مطفآن افتراضياً كي لا يُمسّ ما رتّبته عليهما يدوياً؛ فعّلهما إن أردت.</div>
 <button type="button" data-go="1" style="display:block;width:100%;background:#e2fe17;color:#1f2123;border:0;border-radius:14px;padding:.55rem;font:inherit;font-weight:800;cursor:pointer">تنظيم الآن</button>`;
@@ -2486,6 +2487,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const wait = ms => new Promise(r => setTimeout(r, ms)), dev0 = E.dev, n = { clamp: 0, text: 0, sec: 0, gap: 0 }, sav = (set, k, dv, v) => { setR(set, k, dv, v); if (dv !== "d" && own(set, k, "d") === undefined) setR(set, k, "d", v); };
     const devs = ["d", "t", "m"].filter(k => ORG.devs[k]); if (!devs.length) return toast("اختر جهازاً واحداً على الأقل");
     toast("جارٍ تنظيم الصفحة… لا تلمس المحرر لحظات");
+    if (ORG.clean) (E.page.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
+      ["t", "m"].forEach(d2 => { if (d2 === "m" && sec.set.scaledM) return; const has = w => ks.some(k => w.set[k] && typeof w.set[k] === "object" && w.set[k][d2] !== undefined), c = ws.filter(has).length; if (c > 0 && c < ws.length) { ws.filter(has).forEach(w => ks.forEach(k => { if (w.set[k] && typeof w.set[k] === "object") delete w.set[k][d2]; })); n.gap += c; } }); });
     try {
       for (const dv of devs) {
         setDev(dv); await wait(1400);
@@ -2678,10 +2681,12 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* إزالة فراغ القسم: الحرّ يُقصّ ارتفاعه عند آخر عنصر (+ هامش بسيط) لكل الأجهزة، والعادي يُلغى ارتفاعه الأدنى ويُخفَّض حشوه السفلي وتُحذف العناصر النصية الفارغة في آخر أعمدته */
   function fitSection(sec) {
     if (!sec) return toast("حدّد قسماً أولاً");
-    if (sec.set.kind === "canvas") { ["d", "t", "m"].forEach(dv => { const have = dv === "d" || own(sec.set, "mh", dv) !== undefined; if (!have) return; const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(40, Math.round(need + 12))); }); toast("↕ قُصّ الفراغ أسفل آخر عنصر"); }
+    if (sec.set.kind === "canvas") { ["d", "t", "m"].forEach(dv => { const have = dv === "d" || own(sec.set, "mh", dv) !== undefined; if (!have) return;
+        { const ws = (sec.free || []).filter(w => !w.set.locked && (dv === "d" || own(w.set, "fy", dv) !== undefined)), mn = ws.length ? Math.min(...ws.map(w => Number(eff(w.set, "fy", dv)) || 0)) : 0; if (mn > 30) ws.forEach(w => setR(w.set, "fy", dv, Math.max(0, Math.round((Number(eff(w.set, "fy", dv)) || 0) - (mn - 12))))); }      // الفراغ العلوي: كل العناصر تصعد حتى يبقى 12px فوق أعلاها
+        const need = Math.max(0, ...(sec.free || []).map(w => (Number(eff(w.set, "fy", dv)) || 0) + freeH(sec, w, dv))); setR(sec.set, "mh", dv, Math.max(40, Math.round(need + 12))); }); toast("↕ قُصّ الفراغ أسفل آخر عنصر"); }
     else {
       let n = 0; sec.cols.forEach(c => { while (c.widgets.length > 1) { const w = c.widgets[c.widgets.length - 1], emp = (w.type === "text" && !String(w.set.html || "").replace(/<[^>]*>|&nbsp;|\s/g, "")) || (w.type === "heading" && !String(w.set.text || "").trim()); if (!emp) break; c.widgets.pop(); n++; } });
-      ["d", "t", "m"].forEach(dv => { if (own(sec.set, "mh", dv) !== undefined) setR(sec.set, "mh", dv, undefined); const pd = own(sec.set, "pad", dv); if (Array.isArray(pd) && Number(pd[2]) > 24) { const q = pd.slice(); q[2] = 24; setR(sec.set, "pad", dv, q); } });
+      ["d", "t", "m"].forEach(dv => { if (own(sec.set, "mh", dv) !== undefined) setR(sec.set, "mh", dv, undefined); const pd = own(sec.set, "pad", dv); if (Array.isArray(pd) && (Number(pd[2]) > 24 || Number(pd[0]) > 24)) { const q = pd.slice(); if (Number(q[2]) > 24) q[2] = 24; if (Number(q[0]) > 24) q[0] = 24; setR(sec.set, "pad", dv, q); } });      // الحشو العلوي والسفلي معاً (الفراغ فوق العنوان كان لا يُقصّ)
       sec.cols.forEach(c => { if (own(c.set, "mh", E.dev) !== undefined && !c.widgets.length) setR(c.set, "mh", E.dev, undefined); });
       toast("↕ أُزيل الفراغ" + (n ? " (وحُذف " + n + " عنصر نص فارغ)" : ""));
     }
@@ -3838,7 +3843,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* ───────────────── تحريك العنصر الحر (حر أو ملتصق) ───────────────── */
   /* القسم الحرّ المتناسب (scaled) يتبع تخطيط المكتب على التابلت والهاتف (قيمهما تُتجاهل)، فتحريك/تكبير عنصر فيه من هناك يُكتب في قيم المكتب كي يظهر أثره */
   const cssPosSec = sec => (sec.cols || []).some(c => (c.widgets || []).some(w => { const el = fdoc && fdoc.querySelector(`[data-pb="${w.id}"]`); if (!el) return false; const ps = fdoc.defaultView.getComputedStyle(el).position; return ps === "absolute" || ps === "fixed"; }));      // قسم فيه عناصر موضعها من CSS: لا يُحوَّل كله إلى حر بسحب عنصر واحد
-  const devOfFree = inf => { if (E.dev !== "d" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaled && inf.sec.set.kind === "canvas") { if (!E.scToast || Date.now() - E.scToast > 6000) { E.scToast = Date.now(); toast("هذا القسم متناسب: يتبع تخطيط المكتب على كل الأجهزة، فالتعديل هنا يسري على الجميع"); } return "d"; } return E.dev; };
+  const devOfFree = inf => { if (E.dev !== "d" && inf.kind === "widget" && inf.free && inf.sec && inf.sec.set.scaled && inf.sec.set.kind === "canvas") { if (!E.scToast || Date.now() - E.scToast > 6000) { E.scToast = Date.now(); toast("هذا القسم متناسب: يتبع تخطيط المكتب على كل الأجهزة، فالتعديل هنا يسري على الجميع"); } ["fx", "fy", "fwd", "fh"].forEach(k => { const o = inf.set[k]; if (o && typeof o === "object") { delete o.t; if (!inf.sec.set.scaledM) delete o.m; } }); return "d"; } return E.dev; };
   function startMove(e, inf, lazy, copy) {
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
@@ -4834,7 +4839,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const fitBtn = inf.kind === "section" ? `<div class="pbx-qg"><small>الفراغ</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-fit" title="يقصّ الفراغ الزائد أسفل القسم (الحر عند آخر عنصر، والعادي بإلغاء الارتفاع الأدنى وتخفيض الحشو السفلي)">↕ إزالة الفراغ</button></div></div>` : "";
     if (inf.kind === "section" && inf.node.set.kind !== "canvas") { const pd0 = eff(inf.node.set, "pad", E.dev) || [0, 0, 0, 0]; padBox = `<div class="pbx-qg"><small>فراغ القسم (px) على ${E.dev === "d" ? "المكتب" : E.dev === "t" ? "التابلت" : "الهاتف"}</small><div class="pbx-qr" style="width:100%;gap:.4rem"><label style="display:flex;gap:.25rem;align-items:center">من أعلى <input type="number" min="0" max="600" step="1" value="${Number(pd0[0]) || 0}" data-qpad="0" style="width:74px;padding:.25rem .3rem;text-align:center"></label><label style="display:flex;gap:.25rem;align-items:center">من أسفل <input type="number" min="0" max="600" step="1" value="${Number(pd0[2]) || 0}" data-qpad="2" style="width:74px;padding:.25rem .3rem;text-align:center"></label></div></div>`; }
     if (inf.kind === "section" && inf.node.set.kind !== "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}${padBox}<div class="pbx-qg"><small>التحريك الحر</small><div class="pbx-qb"><button class="pbx-qk wide" data-q="sec-free" title="يثبّت كل عناصر القسم بمواضعها فتتحرك بحرية دون أن يتأثر بعضها بحجم بعض (على عرض المكتب)">⤢ تحويل القسم كله إلى عناصر حرة</button></div></div>${(inf.node.free || []).length ? '<div class="pbx-qg"><small style="color:#ffb74d">فيه عناصر حرة داخل قسم عادي: لا تتبع الصور المجاورة. حوّل القسم كله ليتّسق.</small></div>' : ''}</div>`;
-    if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}<div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
+    if (inf.kind === "section" && inf.node.set.kind === "canvas") return `<div class="pbx-q">${bgBtn}${fitBtn}<div class="pbx-qg"><small>الهاتف</small><div class="pbx-qb"><button class="pbx-qk wide${inf.node.set.scaledM ? " on" : ""}" data-q="sec-mstack" title="يرتّب عناصر هذا القسم على الهاتف تلقائياً بالتتابع بدل تصغير شكل المكتب كما هو (لا يتغيّر المكتب ولا التابلت)">${inf.node.set.scaledM ? "إلغاء ترتيب الهاتف المستقل" : "ترتيب الهاتف تلقائياً (متتابع)"}</button></div></div><div class="pbx-qg"><small>أدوات القماش الحر</small><div class="pbx-magic" style="grid-template-columns:1fr"><button type="button" data-q="smart-import">${ico("t_import", 22)} جلب صور جاهزة</button></div></div></div>`;
     if (inf.kind !== "widget") return "";
     const q = (k, t, tt, on, cls) => `<button class="pbx-qk${on ? " on" : ""}${cls ? " " + cls : ""}" data-q="${k}" title="${tt}">${t}</button>`;
     const grp = (cap, body) => `<div class="pbx-qg"><small>${cap}</small><div class="pbx-qb">${body}</div></div>`;
@@ -4872,6 +4877,10 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const d = { front: () => zOrder(1), back: () => zOrder(-1), free: toggleFree, "al-left": () => alignFree("left"), "al-center": () => alignFree("center"), "al-right": () => alignFree("right") };
     if (k === "mir-h" || k === "mir-v") return mirrorDup(k === "mir-h" ? "h" : "v");
     if (k === "sec-free") { const i0 = selInfo(), s0 = i0 && (i0.kind === "section" ? i0.node : i0.sec); return s0 && flowToFree(s0); }
+    if (k === "sec-mstack") { const i0 = selInfo(), s0 = i0 && (i0.kind === "section" ? i0.node : i0.sec); if (!s0 || s0.set.kind !== "canvas") return;
+      if (s0.set.scaledM) { delete s0.set.scaledM; (s0.free || []).forEach(w => ["fx", "fy", "fwd", "fh"].forEach(q => { if (w.set[q] && typeof w.set[q] === "object") delete w.set[q].m; })); if (s0.set.mh && typeof s0.set.mh === "object") delete s0.set.mh.m; toast("أُلغي ترتيب الهاتف المستقل: يعود الهاتف لتصغير شكل المكتب"); }
+      else { if (s0.set.scaled) s0.set.scaledM = true; writeMobile(s0); toast("رُتّب القسم للهاتف تلقائياً بالتتابع (المكتب والتابلت كما هما) — Ctrl+Z للتراجع"); }
+      E.nextLabel = "ترتيب القسم للهاتف"; afterEdit(); return; }
     if (k === "sec-fit") { const i0 = selInfo(); return fitSection(i0 && (i0.kind === "section" ? i0.node : i0.sec)); }
     if (k === "html-free") { const i0 = selInfo(); return i0 && htmlToFree(i0.node.id); }
     if (k === "sz-lock") { const inf0 = selInfo(); if (inf0) { inf0.set.plock = !sizeLocked(inf0); schedule(); commitHist(); renderInspector(); } return; }
