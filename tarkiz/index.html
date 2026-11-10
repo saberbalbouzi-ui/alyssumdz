@@ -957,8 +957,8 @@ body.pb-page:before{content:"";position:fixed;inset:0;pointer-events:none;z-inde
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important}}
 
 /* خطوات الاستعمال كعناصر «صندوق أيقونة» قابلة للتعديل بنفس شكل بطاقة .step القديمة */
-.pb-w.step2{width:100%!important;align-self:stretch}
-.step2 .pb-ib{width:100%;box-sizing:border-box;display:grid;grid-template-columns:56px 1fr;column-gap:17px;align-items:center;padding:20px 23px;border-radius:22px;background:#fff;border:1px solid #e5eee1;box-shadow:0 10px 30px #264e2609;transition:.3s;margin:0 0 17px;text-align:start}
+.pb-w.step2{align-self:stretch!important;margin-bottom:17px;display:flex;flex-direction:column}.step2 .pb-ib{flex:1}
+.step2 .pb-ib{width:100%;box-sizing:border-box;display:grid;grid-template-columns:56px 1fr;column-gap:17px;align-items:center;padding:20px 23px;border-radius:22px;background:#fff;border:1px solid #e5eee1;box-shadow:0 10px 30px #264e2609;transition:.3s;margin:0;text-align:start}
 .step2 .pb-ib:hover{transform:translateX(-7px);box-shadow:var(--softshadow)}
 .step2 .pb-ibi{grid-row:1/3;width:56px;height:56px;border-radius:19px;display:grid;place-items:center;color:#fff;font-weight:900;background:linear-gradient(145deg,var(--orange),#e9780c);box-shadow:0 9px 18px #e98a1838;margin:0}
 .step2 .pb-ib h3{margin:0 0 4px;font-weight:800}
