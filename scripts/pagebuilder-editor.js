@@ -2449,7 +2449,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
     let pts = lazy ? null : snapPts(inf, cont), cr = lazy ? cont.getBoundingClientRect() : pts.cr, conv = !lazy;
-    let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null, ro = null, offBase = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
+    let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null, ro = null, offBase = null, roOff = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
     const mv = (dx, dy, ev) => {
@@ -2466,7 +2466,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
           const mark = (r, after, vert, rtl) => { const d = document.createElement("div"); d.className = "pbx-ro"; const edgeX = rtl ? (after ? r.left : r.right) : (after ? r.right : r.left); d.style.cssText = vert ? `position:absolute;left:${o.ox + edgeX * o.s - 2}px;top:${o.oy + r.top * o.s}px;width:4px;height:${r.height * o.s}px;border-radius:3px;background:#8b3dff;pointer-events:none;box-shadow:0 0 0 2px rgba(255,255,255,.6)` : `position:absolute;left:${o.ox + r.left * o.s}px;top:${o.oy + (after ? r.bottom : r.top) * o.s - 2}px;width:${r.width * o.s}px;height:4px;border-radius:3px;background:#8b3dff;pointer-events:none;box-shadow:0 0 0 2px rgba(255,255,255,.6)`; ovl.appendChild(d); };
           if (tgt) { const r = layoutRect(tgt), rtl = fdoc.defaultView.getComputedStyle(tgt).direction === "rtl", row = mr && Math.abs((mr.top + mr.height / 2) - (r.top + r.height / 2)) < Math.max(mr.height, r.height) / 2;      // عناصر في صف واحد (دوائر/بطاقات متجاورة): الموضع يُحدَّد بالأفقي لا بالعمودي
             const after = row ? (rtl ? pt.x < r.left + r.width / 2 : pt.x > r.left + r.width / 2) : pt.y > r.top + r.height / 2; ro = { id: tgt.dataset.pb, after }; mark(r, after, row, rtl); }
-          else if (colEl && colEl.dataset.pb) { const ws = (find(colEl.dataset.pb) || { node: { widgets: [] } }).node.widgets || []; const last = ws.length ? fdoc.querySelector(`[data-pb="${ws[ws.length - 1].id}"]`) : null; ro = { col: colEl.dataset.pb }; if (last) mark(layoutRect(last), true, false, false); }
+          else if (colEl && colEl.dataset.pb) { const ws = (find(colEl.dataset.pb) || { node: { widgets: [] } }).node.widgets || []; const last = ws.length ? fdoc.querySelector(`[data-pb="${ws[ws.length - 1].id}"]`) : null; if (last && pt.y > layoutRect(last).bottom) { ro = { col: colEl.dataset.pb }; mark(layoutRect(last), true, false, false); } }
+          roOff = { dx, dy }; if (meEl) meEl.style.translate = ro ? "" : dx + "px " + dy + "px";      /* لا موضع ترتيب تحت المؤشر: إزاحة بصرية حرة للعنصر (تُثبَّت عند الإفلات) */
         }
         moved = true; E.roMode = true; return;
       }
@@ -2503,7 +2504,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); clearDrop(); clearGhost();
       if (E.roMode) { E.roMode = false; try { $("pbx-ovl").querySelectorAll(".pbx-ro").forEach(n => n.remove()); } catch (x) { } const me = find(id); let ok = false;
         if (me && ro) { const tn = ro.id ? find(ro.id) : find(ro.col); if (tn && me.list) { me.list.splice(me.list.indexOf(me.node), 1); let tl = null, at = 0; if (ro.id && tn.list) { tl = tn.list; at = tl.indexOf(tn.node) + (ro.after ? 1 : 0); } else if (tn.kind === "column") { tl = tn.node.widgets; at = tl.length; } if (tl) { tl.splice(at, 0, me.node); ok = true; } else me.list.push(me.node); } }
-        if (ok) { E.nextLabel = "إعادة ترتيب عنصر"; afterEdit(id); } else renderCanvas(); return; }
+        if (ok) { E.nextLabel = "إعادة ترتيب عنصر"; afterEdit(id); }
+        else if (me && !ro && roOff && Math.abs(roOff.dx) + Math.abs(roOff.dy) > 6) { const dv2 = E.dev; ["t", "m", "d"].forEach(d2 => { if (own(me.set, "tx", d2) === undefined && d2 !== dv2) setR(me.set, "tx", d2, 0); if (own(me.set, "ty", d2) === undefined && d2 !== dv2) setR(me.set, "ty", d2, 0); }); setR(me.set, "tx", dv2, Math.round((Number(eff(me.set, "tx", dv2)) || 0) + roOff.dx)); setR(me.set, "ty", dv2, Math.round((Number(eff(me.set, "ty", dv2)) || 0) + roOff.dy)); E.nextLabel = "إزاحة عنصر"; afterEdit(id); }
+        else renderCanvas(); return; }
       if (moved && xfer) { const mm = new Map([[srcSec, mh0]]); if (xferFree([id].concat(peers.map(q => q.w.id)), xfer.sec, xfer.gx, xfer.gy, mm)) return; renderCanvas(); }
       if (moved && dropCol && ev && !(ev.ctrlKey || ev.metaKey) && dropCol !== origCol) {      // إفلات فوق عمود: يمتص العنصر تلقائياً (Ctrl يُبقيه حراً؛ ولا يُمتص فوراً في عموده الأصلي أثناء أول سحب)
         const me = find(id), tc = find(dropCol); if (me && tc && tc.kind === "column") {
