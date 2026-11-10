@@ -6,7 +6,7 @@
 <link rel="icon" href="../../assets/img/favicon.png">
 <link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
 
-<noscript><style>[data-anim],.pb-bl[data-ia] .pb-bi{opacity:1!important;transform:none!important}</style></noscript>
+<noscript><style>[data-anim],.pb-bl[data-ia] .pb-bi,.pb-sw{opacity:1!important;transform:none!important}[data-anim=blurIn],[data-anim=riseBlur]{filter:none!important}[data-anim=wipeR],[data-anim=wipeL],[data-anim=wipeUp],[data-anim=curtain]{clip-path:none!important}</style></noscript>
 <style>@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(../../assets/fonts/cairo-arabic.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(../../assets/fonts/cairo-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 
 *{box-sizing:border-box}
@@ -59,11 +59,15 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-btn>span{position:relative;z-index:1}
 @keyframes pbI-zin{from{transform:scale(1)}to{transform:scale(var(--is,1.2))}}@keyframes pbI-zout{from{transform:scale(var(--is,1.2))}to{transform:scale(1)}}@keyframes pbI-pulse{0%,100%{transform:scale(1)}50%{transform:scale(var(--is,1.2))}}@keyframes pbI-kb{from{transform:scale(1) translate(0,0)}to{transform:scale(var(--is,1.2)) translate(-3%,-2%)}}
 @keyframes pbI-float{0%,100%{transform:translateY(0)}50%{transform:translateY(calc(var(--ip,12px)*-1))}}@keyframes pbI-sway{0%,100%{transform:rotate(calc(var(--ir,6deg)*-1))}50%{transform:rotate(var(--ir,6deg))}}@keyframes pbI-spin{to{transform:rotate(360deg)}}@keyframes pbI-blink{0%,100%{opacity:1}50%{opacity:.2}}@keyframes pbI-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
-[data-anim]{opacity:0;transition:opacity var(--ad,.6s) ease var(--ade,0s),transform var(--ad,.6s) ease var(--ade,0s)}[data-anim=fadeUp]{transform:translateY(30px)}[data-anim=fadeDown]{transform:translateY(-30px)}[data-anim=zoomIn]{transform:scale(.88)}[data-anim=slideStart]{transform:translateX(40px)}[data-anim].pb-in-view{opacity:1;transform:none}
+[data-anim]{opacity:0;transition:opacity var(--ad,.6s) var(--aee,ease) var(--ade,0s),transform var(--ad,.6s) var(--aee,ease) var(--ade,0s),filter var(--ad,.6s) var(--aee,ease) var(--ade,0s),clip-path var(--ad,.6s) var(--aee,ease) var(--ade,0s)}[data-anim=fadeUp]{transform:translateY(30px)}[data-anim=fadeDown]{transform:translateY(-30px)}[data-anim=zoomIn]{transform:scale(.88)}[data-anim=slideStart]{transform:translateX(40px)}
+[data-anim=slideEnd]{transform:translateX(-40px)}[data-anim=zoomOut]{transform:scale(1.15)}[data-anim=rotateIn]{transform:rotate(-8deg) scale(.9)}[data-anim=flipX]{transform:perspective(900px) rotateX(65deg);transform-origin:50% 100%}[data-anim=flipY]{transform:perspective(900px) rotateY(-65deg)}[data-anim=blurIn]{filter:blur(14px);transform:scale(1.04)}[data-anim=riseBlur]{transform:translateY(34px);filter:blur(9px)}[data-anim=skewUp]{transform:translateY(36px) skewY(5deg)}[data-anim=pop]{transform:scale(.6);--aee:cubic-bezier(.34,1.56,.64,1)}[data-anim=wipeR]{clip-path:inset(0 0 0 100%)}[data-anim=wipeL]{clip-path:inset(0 100% 0 0)}[data-anim=wipeUp]{clip-path:inset(100% 0 0 0)}[data-anim=curtain]{clip-path:inset(0 50% 0 50%)}
+[data-anim].pb-in-view{opacity:1;transform:none}[data-anim=blurIn].pb-in-view,[data-anim=riseBlur].pb-in-view{filter:none}[data-anim=wipeR].pb-in-view,[data-anim=wipeL].pb-in-view,[data-anim=wipeUp].pb-in-view,[data-anim=curtain].pb-in-view{clip-path:inset(0)}[data-anim=wipeR].pb-done,[data-anim=wipeL].pb-done,[data-anim=wipeUp].pb-done,[data-anim=curtain].pb-done{clip-path:none!important}
+[data-ae=out]{--aee:cubic-bezier(.16,1,.3,1)}[data-ae=spring]{--aee:cubic-bezier(.34,1.56,.64,1)}[data-ae=soft]{--aee:cubic-bezier(.4,0,.2,1)}[data-ae=linear]{--aee:linear}
+[data-anim=words],[data-anim=chars]{opacity:1;transform:none;transition:none}.pb-sw{display:inline-block;opacity:0;transform:translateY(.7em);transition:opacity var(--ad,.6s) var(--aee,ease) calc(var(--ade,0s) + var(--i,0)*var(--st,.07s)),transform var(--ad,.6s) var(--aee,ease) calc(var(--ade,0s) + var(--i,0)*var(--st,.07s))}[data-anim=words].pb-in-view .pb-sw,[data-anim=chars].pb-in-view .pb-sw{opacity:1;transform:none}
 @media(max-width:767px){.pb-hdr a.wa{display:none}}
-@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}.pb-im,.pb-btn,.pb-btn:before,.pb-btn:after{animation:none!important}}
+@media(prefers-reduced-motion:reduce){[data-anim]{opacity:1!important;transform:none!important;transition:none}[data-anim=blurIn],[data-anim=riseBlur]{filter:none!important}[data-anim=wipeR],[data-anim=wipeL],[data-anim=wipeUp],[data-anim=curtain]{clip-path:none!important}.pb-sw{opacity:1!important;transform:none!important;transition:none!important}.pb-im,.pb-btn,.pb-btn:before,.pb-btn:after{animation:none!important}}
 .pb-page{background:transparent;font-family:Cairo}
-.pb-sec.x-t1df492{padding-top:58px;padding-right:0px;padding-bottom:66px;padding-left:0px;}
+.pb-sec.x-t1df492{padding-top:58px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-sec.x-t1df492>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-t1df492>.pb-in{max-width:1220px}
 .pb-sec.x-t1df492>.pb-in{max-width:1220px;}
@@ -143,12 +147,12 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-sec.x-wcuj071>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-wcuj071>.pb-in{max-width:none}
 .pb-sec.x-wcuj071>.pb-in{display:block}
-.pb-sec.x-wcuj071>.pb-in{height:calc(var(--u)*433);}
+.pb-sec.x-wcuj071>.pb-in{height:calc(var(--u)*355);}
 .pb-w.x-wmbacg9{z-index:2;left:4.6%;top:calc(var(--u)*99);width:93.9%;height:calc(var(--u)*42);}
 .pb-w.x-wmbacg9{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-wmbacg9 .pb-t{color:#187a3b;font-size:calc(var(--u)*26);font-weight:900;text-align:center;}
 .pb-w.x-wmbacg9{height:auto!important}
-.pb-w.x-l4qkisk{z-index:3;left:4.6%;top:calc(var(--u)*152);width:93.9%;height:calc(var(--u)*62);}
+.pb-w.x-l4qkisk{z-index:3;left:4.6%;top:calc(var(--u)*152);width:93.9%;height:calc(var(--u)*78);}
 .pb-w.x-l4qkisk{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-l4qkisk .pb-t{color:#123e72;font-size:calc(var(--u)*48);font-weight:900;line-height:1.3;text-align:center;}
 .pb-w.x-l4qkisk{height:auto!important}
@@ -162,7 +166,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-sec.x-qb9a8ky>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-qb9a8ky>.pb-in{max-width:none}
 .pb-sec.x-qb9a8ky>.pb-in{display:block}
-.pb-sec.x-qb9a8ky>.pb-in{height:calc(var(--u)*345);}
+.pb-sec.x-qb9a8ky>.pb-in{height:calc(var(--u)*306);}
 .pb-w.x-r27qjzw{border-radius:calc(var(--u)*25);z-index:2;left:74.5%;top:calc(var(--u)*14);width:22.4%;height:calc(var(--u)*217);}
 .pb-w.x-r27qjzw{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-r27qjzw .pb-im,.pb-w.x-r27qjzw .pb-cropbox{border-radius:calc(var(--u)*25);}
@@ -195,19 +199,19 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-fu0l27s .pb-im,.pb-w.x-fu0l27s .pb-cropbox{border-radius:calc(var(--u)*25);}
 .pb-w.x-fu0l27s .pb-im{width:100%;object-fit:cover;display:block}.pb-w.x-fu0l27s .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}
 .pb-w.x-fu0l27s{overflow:hidden}
-.pb-w.x-9qfo6zy{z-index:5;left:50.8%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*25);}
+.pb-w.x-9qfo6zy{z-index:5;left:50.8%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*33);}
 .pb-w.x-9qfo6zy>*{zoom:1;}
 .pb-w.x-9qfo6zy{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-9qfo6zy .pb-t{color:#123e72;font-size:calc(var(--u)*18);font-weight:800;line-height:1.6;text-align:center;}
-.pb-w.x-9uol35r{z-index:6;left:74.6%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*25);}
+.pb-w.x-9uol35r{z-index:6;left:74.6%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*33);}
 .pb-w.x-9uol35r>*{zoom:1;}
 .pb-w.x-9uol35r{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-9uol35r .pb-t{color:#123e72;font-size:calc(var(--u)*18);font-weight:800;text-align:center;}
-.pb-w.x-cna9vu6{z-index:7;left:26.9%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*25);}
+.pb-w.x-cna9vu6{z-index:7;left:26.9%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*33);}
 .pb-w.x-cna9vu6>*{zoom:1;}
 .pb-w.x-cna9vu6{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-cna9vu6 .pb-t{color:#123e72;font-size:calc(var(--u)*18);font-weight:800;line-height:1.6;text-align:center;}
-.pb-w.x-591snww{z-index:7;left:3.1%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*25);}
+.pb-w.x-591snww{z-index:7;left:3.1%;top:calc(var(--u)*261);width:22.3%;height:calc(var(--u)*33);}
 .pb-w.x-591snww>*{zoom:1;}
 .pb-w.x-591snww{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-591snww .pb-t{color:#123e72;font-size:calc(var(--u)*18);font-weight:800;line-height:1.6;text-align:center;}
@@ -217,25 +221,21 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-sec.x-vef1ojp>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-vef1ojp>.pb-in{max-width:none}
 .pb-sec.x-vef1ojp>.pb-in{display:block}
-.pb-sec.x-vef1ojp>.pb-in{height:calc(var(--u)*680);}
+.pb-sec.x-vef1ojp>.pb-in{height:calc(var(--u)*613);}
 .pb-w.x-uidzfda{border-radius:calc(var(--u)*125);z-index:2;left:56.2%;top:calc(var(--u)*119);width:39.3%;height:calc(var(--u)*482);}
 .pb-w.x-uidzfda{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-uidzfda .pb-im,.pb-w.x-uidzfda .pb-cropbox{border-radius:calc(var(--u)*125);}
 .pb-w.x-uidzfda .pb-im{width:100%;object-fit:cover;display:block}.pb-w.x-uidzfda .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}
 .pb-w.x-uidzfda{overflow:hidden}
-.pb-w.x-5ffxdfe{z-index:3;left:3%;top:calc(var(--u)*182);width:47%;height:calc(var(--u)*62);}
+.pb-w.x-5ffxdfe{z-index:3;left:3%;top:calc(var(--u)*182);width:47%;height:calc(var(--u)*78);}
 .pb-w.x-5ffxdfe>*{zoom:1;}
 .pb-w.x-5ffxdfe{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-5ffxdfe .pb-t{color:#123e72;font-size:calc(var(--u)*48);font-weight:900;line-height:1.3;text-align:start;}
-.pb-w.x-eob7ixz{z-index:4;left:3%;top:calc(var(--u)*112);width:47%;height:calc(var(--u)*62);}
+.pb-w.x-eob7ixz{z-index:4;left:3%;top:calc(var(--u)*112);width:47%;height:calc(var(--u)*78);}
 .pb-w.x-eob7ixz>*{zoom:1;}
 .pb-w.x-eob7ixz{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-eob7ixz .pb-t{color:#050300;font-size:calc(var(--u)*48);font-weight:900;line-height:1.3;text-align:start;}
-.pb-w.x-du3cmk1{z-index:5;left:4.1%;top:calc(var(--u)*-308);width:47%;height:calc(var(--u)*62);}
-.pb-w.x-du3cmk1>*{zoom:1;}
-.pb-w.x-du3cmk1{position:absolute!important;margin:0;max-width:none}
-.pb-w.x-du3cmk1 .pb-t{color:#050300;font-size:calc(var(--u)*48);font-weight:900;line-height:1.3;text-align:start;}
-.pb-w.x-dmpwk3c{z-index:4;left:3%;top:calc(var(--u)*262);width:47%;height:calc(var(--u)*91);}
+.pb-w.x-dmpwk3c{z-index:4;left:3%;top:calc(var(--u)*278);width:47%;height:calc(var(--u)*91);}
 .pb-w.x-dmpwk3c>*{zoom:1;}
 .pb-w.x-dmpwk3c{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-dmpwk3c .pb-t{color:#000000;font-size:calc(var(--u)*24);font-weight:700;line-height:1.9;text-align:start;}
@@ -263,7 +263,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-89qvngl{width:60%;margin-left:auto;margin-right:auto;text-align:center;}
 .pb-w.x-89qvngl .pb-t{color:#000000;font-size:36px;font-weight:600;line-height:1.9;text-align:center;}
 .pb-w.x-89qvngl{height:auto!important}
-.pb-sec.x-hjx76vk{padding-top:10px;padding-right:0px;padding-bottom:46px;padding-left:0px;}
+.pb-sec.x-hjx76vk{padding-top:10px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-sec.x-hjx76vk>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-hjx76vk>.pb-in{max-width:1220px}
 .pb-sec.x-hjx76vk>.pb-in{max-width:1220px;}
@@ -293,7 +293,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-sec.x-4uls5wb>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-4uls5wb>.pb-in{max-width:none}
 .pb-sec.x-4uls5wb>.pb-in{display:block}
-.pb-sec.x-4uls5wb>.pb-in{height:calc(var(--u)*817);}
+.pb-sec.x-4uls5wb>.pb-in{height:calc(var(--u)*301);}
 .pb-w.x-r5405kf{border-radius:calc(var(--u)*200);z-index:2;left:76.1%;top:calc(var(--u)*12);width:17.1%;height:calc(var(--u)*217);}
 .pb-w.x-r5405kf{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-r5405kf .pb-im,.pb-w.x-r5405kf .pb-cropbox{border-radius:calc(var(--u)*200);}
@@ -309,12 +309,12 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-7jwvilz .pb-im,.pb-w.x-7jwvilz .pb-cropbox{border-radius:calc(var(--u)*200);}
 .pb-w.x-7jwvilz .pb-im{width:100%;object-fit:cover;display:block}.pb-w.x-7jwvilz .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}
 .pb-w.x-7jwvilz{overflow:hidden}
-.pb-w.x-h6hk90p{z-index:3;left:61.5%;top:calc(var(--u)*231);width:10.5%;height:calc(var(--u)*97);}
+.pb-w.x-h6hk90p{z-index:3;left:61.5%;top:calc(var(--u)*231);width:10.5%;height:calc(var(--u)*42);}
 .pb-w.x-h6hk90p>*{zoom:2.35;}
 .pb-w.x-h6hk90p{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-h6hk90p .pb-t{color:#123e72;font-size:calc(var(--u)*11);font-weight:900;line-height:1.25;text-align:center;}
 .pb-w.x-h6hk90p{height:auto!important}
-.pb-w.x-fez2js4{z-index:4;left:77.1%;top:calc(var(--u)*240);width:13.3%;height:calc(var(--u)*65);}
+.pb-w.x-fez2js4{z-index:4;left:77.1%;top:calc(var(--u)*240);width:13.3%;height:calc(var(--u)*42);}
 .pb-w.x-fez2js4>*{zoom:2.35;}
 .pb-w.x-fez2js4{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-fez2js4 .pb-t{color:#123e72;font-size:calc(var(--u)*11);font-weight:900;line-height:1.25;text-align:center;}
@@ -324,7 +324,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-1o22v9d .pb-im,.pb-w.x-1o22v9d .pb-cropbox{border-radius:calc(var(--u)*200);}
 .pb-w.x-1o22v9d .pb-im{width:100%;object-fit:cover;display:block}.pb-w.x-1o22v9d .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}
 .pb-w.x-1o22v9d{overflow:hidden}
-.pb-w.x-o256y37{z-index:3;left:42.8%;top:calc(var(--u)*231);width:11.6%;height:calc(var(--u)*65);}
+.pb-w.x-o256y37{z-index:3;left:42.8%;top:calc(var(--u)*231);width:11.6%;height:calc(var(--u)*42);}
 .pb-w.x-o256y37>*{zoom:2.35;}
 .pb-w.x-o256y37{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-o256y37 .pb-t{color:#123e72;font-size:calc(var(--u)*11);font-weight:900;line-height:1.25;text-align:center;}
@@ -365,41 +365,53 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-s8x0kzv{width:60%;margin-left:auto;margin-right:auto;text-align:center;}
 .pb-w.x-s8x0kzv .pb-t{color:#0c2a4f;font-size:16px;font-weight:700;line-height:1.9;text-align:center;}
 .pb-w.x-s8x0kzv{height:auto!important}
-.pb-sec.x-3ih6ubv{padding-top:0px;padding-right:0px;padding-bottom:100px;padding-left:0px;}
+.pb-sec.x-3ih6ubv{container-type:inline-size}
+.pb-sec.x-3ih6ubv>.pb-in{--u:calc(100cqw/1274)}
+.pb-sec.x-3ih6ubv{padding-top:calc(var(--u)*0);padding-right:calc(var(--u)*0);padding-bottom:calc(var(--u)*0);padding-left:calc(var(--u)*0);}
 .pb-sec.x-3ih6ubv>.pb-in{margin:0 auto;width:100%;position:relative}
-.pb-sec.x-3ih6ubv>.pb-in{max-width:1220px}
-.pb-sec.x-3ih6ubv>.pb-in{max-width:1220px;}
-.pb-sec.x-3ih6ubv>.pb-in{display:flex;flex-wrap:wrap}
-.pb-sec.x-3ih6ubv>.pb-in{align-items:stretch;}
-.pb-sec.x-3ih6ubv>.pb-in>.pb-col{padding-left:12px;padding-right:12px;}
-.pb-col.x-hgiezn6{flex:1 1 0;min-width:0;display:flex}
-.pb-col.x-hgiezn6>.pb-colin{width:100%;display:flex;flex-direction:column}
-.pb-col.x-hgiezn6{flex:0 0 58%;width:58%;max-width:58%;}
-.pb-w.x-1uw0xhi .pb-t{color:#fff;font-size:12px;font-weight:900;text-align:start;}
+.pb-sec.x-3ih6ubv>.pb-in{max-width:none}
+.pb-sec.x-3ih6ubv>.pb-in{display:block}
+.pb-sec.x-3ih6ubv>.pb-in{height:calc(var(--u)*970);}
+.pb-w.x-7adjk10{z-index:1;left:42.5%;top:calc(var(--u)*0);width:55.5%;height:calc(var(--u)*891);}
+.pb-w.x-7adjk10{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-7adjk10 .pb-svg{width:100%;height:100%;display:block;overflow:visible}
+.pb-w.x-7adjk10 .pb-svg{filter:drop-shadow(0 16px 28px rgba(0,0,0,.35))}
+.pb-w.x-1uw0xhi{z-index:2;left:43.4%;top:calc(var(--u)*31);width:53.5%;height:calc(var(--u)*33);}
+.pb-w.x-1uw0xhi{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-1uw0xhi .pb-t{color:#fff;font-size:calc(var(--u)*12);font-weight:900;text-align:start;}
 .pb-w.x-1uw0xhi{height:auto!important}
 .pb-w.x-p1h3txv{background-image:url('../../assets/img/pages/pg-1794262392056-1.webp');background-size:cover;background-position:center;background-repeat:no-repeat;}
-.pb-w.x-p1h3txv{border-radius:102px;min-height:608px;}
+.pb-w.x-p1h3txv{border-radius:calc(var(--u)*102);z-index:3;left:43.4%;top:calc(var(--u)*80);width:53.5%;height:calc(var(--u)*608);}
 .pb-w.x-p1h3txv>*{zoom:1;}
-.pb-w.x-p1h3txv .pb-t{color:#6a6c5b;font-size:13px;font-weight:600;line-height:1.9;text-align:start;}
+.pb-w.x-p1h3txv{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-p1h3txv .pb-t{color:#6a6c5b;font-size:calc(var(--u)*13);font-weight:600;line-height:1.9;text-align:start;}
 :where(.pb-w.x-p1h3txv){padding-inline:14px}
 .pb-w.x-p1h3txv{overflow:hidden}
-.pb-w.x-gr7yucx{width:99.5%;margin-inline-end:auto;margin-inline-start:0;text-align:start;}
-.pb-w.x-gr7yucx .pb-t{color:#123e72;font-size:21px;font-weight:700;line-height:1.9;text-align:start;}
+.pb-w.x-gr7yucx{z-index:4;left:43.6%;top:calc(var(--u)*704);width:53.3%;height:calc(var(--u)*80);}
+.pb-w.x-gr7yucx{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-gr7yucx .pb-t{color:#123e72;font-size:calc(var(--u)*21);font-weight:700;line-height:1.9;text-align:start;}
 .pb-w.x-gr7yucx{height:auto!important}
-.pb-w.x-dd98yrn{margin-inline-end:auto;margin-inline-start:0;text-align:start;}
-.pb-w.x-dd98yrn .pb-btn{background:#f39a18;color:#fff;font-size:16px;font-weight:900;padding-top:14px;padding-right:25px;padding-bottom:14px;padding-left:25px;border-radius:999px;}
+.pb-w.x-sxhwdtr{z-index:5;left:6.4%;top:calc(var(--u)*704);width:33.1%;height:calc(var(--u)*40);}
+.pb-w.x-sxhwdtr{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-sxhwdtr .pb-t{color:#123e72;font-size:calc(var(--u)*21);font-weight:700;line-height:1.9;text-align:start;}
+.pb-w.x-sxhwdtr{height:auto!important}
+.pb-w.x-dd98yrn{z-index:5;left:82.2%;top:calc(var(--u)*800);width:14.7%;height:calc(var(--u)*61);}
+.pb-w.x-dd98yrn{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-dd98yrn .pb-btn{background:#f39a18;color:#fff;font-size:calc(var(--u)*16);font-weight:900;padding-top:calc(var(--u)*14);padding-right:calc(var(--u)*25);padding-bottom:calc(var(--u)*14);padding-left:calc(var(--u)*25);border-radius:calc(var(--u)*999);}
 .pb-w.x-dd98yrn .pb-btn{position:relative;overflow:hidden}
 .pb-w.x-dd98yrn .pb-btn:hover{background-color:#f39a18!important}
 .pb-w.x-dd98yrn .pb-btn{--fxd:2.6s}
-.pb-col.x-cbrkeye{flex:1 1 0;min-width:0;display:flex}
-.pb-col.x-cbrkeye>.pb-colin{width:100%;display:flex;flex-direction:column}
-.pb-col.x-cbrkeye{flex:0 0 42%;width:42%;max-width:42%;}
+.pb-w.x-fznpwc1{z-index:1;left:1.9%;top:calc(var(--u)*12);width:40.2%;height:calc(var(--u)*891);}
+.pb-w.x-fznpwc1{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-fznpwc1 .pb-svg{width:100%;height:100%;display:block;overflow:visible}
+.pb-w.x-fznpwc1 .pb-svg{filter:drop-shadow(0 16px 28px rgba(0,0,0,.35))}
 .pb-w.x-ltt6dk1{background-image:url('../../assets/img/pages/pg-1794262754727-3.webp');background-size:cover;background-position:center;background-repeat:no-repeat;}
-.pb-w.x-ltt6dk1{min-height:486px;}
+.pb-w.x-ltt6dk1{border-radius:calc(var(--u)*59);z-index:2;left:2.9%;top:calc(var(--u)*97);width:38.2%;height:calc(var(--u)*486);}
+.pb-w.x-ltt6dk1{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-ltt6dk1{overflow:hidden}
-.pb-w.x-cxmcp05 .pb-t{color:#123e72;font-size:20px;font-weight:900;line-height:1.25;text-align:center;}
-.pb-w.x-cxmcp05{height:auto!important}
-.pb-w.x-10s5uui .pb-btn{background:#187a3b;color:#fff;font-size:16px;font-weight:900;padding-top:14px;padding-right:25px;padding-bottom:14px;padding-left:25px;border-radius:999px;}
+.pb-w.x-10s5uui{z-index:4;left:27.5%;top:calc(var(--u)*810);width:11.7%;height:calc(var(--u)*55);}
+.pb-w.x-10s5uui{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-10s5uui .pb-btn{background:#187a3b;color:#fff;font-size:calc(var(--u)*16);font-weight:900;padding-top:calc(var(--u)*14);padding-right:calc(var(--u)*25);padding-bottom:calc(var(--u)*14);padding-left:calc(var(--u)*25);border-radius:calc(var(--u)*999);}
 .pb-w.x-10s5uui .pb-btn{position:relative;overflow:hidden}
 .pb-w.x-10s5uui .pb-btn:hover{background-color:#187a3b!important}
 .pb-w.x-10s5uui .pb-btn{--fxd:2.6s}
@@ -417,44 +429,44 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-rjm4av2{height:auto!important}
 .pb-w.x-5p6j6sx .pb-t{color:#123e72;font-size:48px;font-weight:900;line-height:1.3;text-align:center;}
 .pb-w.x-5p6j6sx{height:auto!important}
-.pb-sec.x-uuep26q{padding-top:0px;padding-right:0px;padding-bottom:100px;padding-left:0px;}
+.pb-sec.x-uuep26q{container-type:inline-size}
+.pb-sec.x-uuep26q>.pb-in{--u:calc(100cqw/1274)}
+.pb-sec.x-uuep26q{padding-top:calc(var(--u)*0);padding-right:calc(var(--u)*0);padding-bottom:calc(var(--u)*0);padding-left:calc(var(--u)*0);}
 .pb-sec.x-uuep26q>.pb-in{margin:0 auto;width:100%;position:relative}
-.pb-sec.x-uuep26q>.pb-in{max-width:1220px}
-.pb-sec.x-uuep26q>.pb-in{max-width:1220px;}
-.pb-sec.x-uuep26q>.pb-in{display:flex;flex-wrap:wrap}
-.pb-sec.x-uuep26q>.pb-in{align-items:center;}
-.pb-sec.x-uuep26q>.pb-in>.pb-col{padding-left:25px;padding-right:25px;}
-.pb-col.x-eub3csc{flex:1 1 0;min-width:0;display:flex}
-.pb-col.x-eub3csc>.pb-colin{width:100%;display:flex;flex-direction:column}
-.pb-col.x-eub3csc{flex:0 0 40%;width:40%;max-width:40%;}
-.pb-w.x-wr8j7cc{border-radius:0px;}
-.pb-w.x-wr8j7cc .pb-im,.pb-w.x-wr8j7cc .pb-cropbox{border-radius:0px;}
+.pb-sec.x-uuep26q>.pb-in{max-width:none}
+.pb-sec.x-uuep26q>.pb-in{display:block}
+.pb-sec.x-uuep26q>.pb-in{height:calc(var(--u)*566);}
+.pb-w.x-wr8j7cc{border-radius:calc(var(--u)*53);z-index:2;left:61.6%;top:calc(var(--u)*0);width:34.4%;height:calc(var(--u)*438);}
+.pb-w.x-wr8j7cc{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-wr8j7cc .pb-im,.pb-w.x-wr8j7cc .pb-cropbox{border-radius:calc(var(--u)*53);}
 .pb-w.x-wr8j7cc{height:auto!important}.pb-w.x-wr8j7cc.pb-sz .pb-im,.pb-w.x-wr8j7cc .pb-im{height:auto!important;object-fit:fill}
 .pb-w.x-wr8j7cc .pb-im{width:100%;object-fit:cover;display:block}.pb-w.x-wr8j7cc .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}
 .pb-w.x-wr8j7cc{overflow:hidden}
-.pb-col.x-vdgnzqk{flex:1 1 0;min-width:0;display:flex}
-.pb-col.x-vdgnzqk>.pb-colin{width:100%;display:flex;flex-direction:column}
-.pb-col.x-vdgnzqk{flex:0 0 60%;width:60%;max-width:60%;}
-.pb-w.x-xmn7diu{margin-inline-end:auto;margin-inline-start:0;text-align:start;}
-.pb-w.x-xmn7diu .pb-ibi{font-size:22px;}
-.pb-w.x-xmn7diu .pb-ib h3{font-size:17px;}
-.pb-w.x-xmn7diu .pb-ib p{font-size:13px;}
+.pb-w.x-xmn7diu{z-index:2;left:4.1%;top:calc(var(--u)*36);width:53.5%;height:calc(var(--u)*98);}
+.pb-w.x-xmn7diu{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-xmn7diu .pb-ibi{font-size:calc(var(--u)*22);}
+.pb-w.x-xmn7diu .pb-ib h3{font-size:calc(var(--u)*24);}
+.pb-w.x-xmn7diu .pb-ib p{font-size:calc(var(--u)*23);}
 .pb-w.x-xmn7diu .pb-ib h3{color:#123e72}
 .pb-w.x-xmn7diu .pb-ib p{color:#627487}
-.pb-w.x-41ipty8{margin-inline-end:auto;margin-inline-start:0;text-align:start;}
-.pb-w.x-41ipty8 .pb-ibi{font-size:22px;}
-.pb-w.x-41ipty8 .pb-ib h3{font-size:17px;}
-.pb-w.x-41ipty8 .pb-ib p{font-size:13px;}
+.pb-w.x-41ipty8{z-index:3;left:4.1%;top:calc(var(--u)*184);width:53.5%;height:calc(var(--u)*108);}
+.pb-w.x-41ipty8{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-41ipty8 .pb-ibi{font-size:calc(var(--u)*22);}
+.pb-w.x-41ipty8 .pb-ib h3{font-size:calc(var(--u)*24);}
+.pb-w.x-41ipty8 .pb-ib p{font-size:calc(var(--u)*23);}
 .pb-w.x-41ipty8 .pb-ib h3{color:#123e72}
 .pb-w.x-41ipty8 .pb-ib p{color:#627487}
-.pb-w.x-is09rv7{margin-inline-end:auto;margin-inline-start:0;text-align:start;}
-.pb-w.x-is09rv7 .pb-ibi{font-size:22px;}
-.pb-w.x-is09rv7 .pb-ib h3{font-size:17px;}
-.pb-w.x-is09rv7 .pb-ib p{font-size:13px;}
+.pb-w.x-3z6oc3k{z-index:5;left:32.5%;top:calc(var(--u)*470);width:24.7%;height:calc(var(--u)*25);}
+.pb-w.x-3z6oc3k>*{zoom:1.06;}
+.pb-w.x-3z6oc3k{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-3z6oc3k .pb-t{color:#78684c;font-size:calc(var(--u)*20);font-weight:600;line-height:1.9;text-align:start;}
+.pb-w.x-is09rv7{z-index:6;left:4.7%;top:calc(var(--u)*328);width:53.2%;height:calc(var(--u)*98);}
+.pb-w.x-is09rv7{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-is09rv7 .pb-ibi{font-size:calc(var(--u)*22);}
+.pb-w.x-is09rv7 .pb-ib h3{font-size:calc(var(--u)*24);}
+.pb-w.x-is09rv7 .pb-ib p{font-size:calc(var(--u)*23);}
 .pb-w.x-is09rv7 .pb-ib h3{color:#123e72}
 .pb-w.x-is09rv7 .pb-ib p{color:#627487}
-.pb-w.x-3z6oc3k .pb-t{color:#78684c;font-size:12px;font-weight:600;line-height:1.9;text-align:start;}
-.pb-w.x-3z6oc3k{height:auto!important}
 .pb-sec.x-2ct3xm3{container-type:inline-size}
 .pb-sec.x-2ct3xm3>.pb-in{--u:calc(100cqw/1274)}
 .pb-sec.x-2ct3xm3{padding-top:calc(var(--u)*0);padding-right:calc(var(--u)*0);padding-bottom:calc(var(--u)*0);padding-left:calc(var(--u)*0);}
@@ -466,7 +478,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-s0z9vnt{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-s0z9vnt .pb-t{color:#187a3b;font-size:calc(var(--u)*26);font-weight:900;line-height:1.6;text-align:center;}
 .pb-w.x-s0z9vnt{height:auto!important}
-.pb-w.x-w6csitv{z-index:3;left:3.2%;top:calc(var(--u)*155);width:93.9%;height:calc(var(--u)*62);}
+.pb-w.x-w6csitv{z-index:3;left:3.2%;top:calc(var(--u)*155);width:93.9%;height:calc(var(--u)*78);}
 .pb-w.x-w6csitv{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-w6csitv .pb-t{color:#123e72;font-size:calc(var(--u)*48);font-weight:900;line-height:1.3;text-align:center;}
 .pb-w.x-w6csitv{height:auto!important}
@@ -480,7 +492,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-sec.x-0m7epju>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-0m7epju>.pb-in{max-width:none}
 .pb-sec.x-0m7epju>.pb-in{display:block}
-.pb-sec.x-0m7epju>.pb-in{height:calc(var(--u)*1697);}
+.pb-sec.x-0m7epju>.pb-in{height:calc(var(--u)*925);}
 .pb-w.x-iuiqrak{border-width:0;outline:1px solid #002feb;outline-offset:0;border-color:#002feb;}
 .pb-w.x-iuiqrak{border-radius:calc(var(--u)*14);z-index:2;left:66.7%;top:calc(var(--u)*15);width:30.2%;height:calc(var(--u)*204);}
 .pb-w.x-iuiqrak{position:absolute!important;margin:0;max-width:none}
@@ -554,7 +566,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-q7q8nbz{position:absolute!important;margin:0;max-width:none}
 .pb-w.x-q7q8nbz .pb-t{color:#84909b;font-size:calc(var(--u)*12);font-weight:600;line-height:1.9;text-align:center;}
 .pb-w.x-q7q8nbz{height:auto!important}
-.pb-sec.x-3n8jrra{padding-top:0px;padding-right:0px;padding-bottom:90px;padding-left:0px;}
+.pb-sec.x-3n8jrra{padding-top:0px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-sec.x-3n8jrra>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-3n8jrra>.pb-in{max-width:1220px}
 .pb-sec.x-3n8jrra>.pb-in{max-width:1220px;}
@@ -564,22 +576,24 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-col.x-xc275b3{flex:1 1 0;min-width:0;display:flex}
 .pb-col.x-xc275b3>.pb-colin{width:100%;display:flex;flex-direction:column}
 .pb-col.x-xc275b3{flex:0 0 100%;width:100%;max-width:100%;}
-.pb-w.x-qia6tj5 .pb-t{color:#fff;font-size:13px;font-weight:900;text-align:start;}
+.pb-w.x-qia6tj5 .pb-t{color:#fff;font-size:23px;font-weight:900;text-align:start;}
 .pb-w.x-qia6tj5{height:auto!important}
 .pb-w.x-4rxoy6y .pb-t{color:#ffffff;font-size:52px;font-weight:900;line-height:1.25;text-align:start;}
 .pb-w.x-4rxoy6y{height:auto!important}
-.pb-w.x-yh9ryz7 .pb-t{color:#e8f2f7;font-size:16px;font-weight:600;line-height:1.9;text-align:start;}
+.pb-w.x-yh9ryz7 .pb-t{color:#e8f2f7;font-size:23px;font-weight:600;line-height:1.9;text-align:start;}
 .pb-w.x-yh9ryz7{height:auto!important}
-.pb-w.x-gtgaw88{margin-inline-end:auto;margin-inline-start:0;text-align:start;}
+.pb-w.x-gtgaw88{width:44.8%;height:60px;margin-inline-end:auto;margin-inline-start:0;text-align:start;}
+.pb-w.x-gtgaw88>*{zoom:1.53;}
 .pb-w.x-gtgaw88 .pb-btn{background:#f39a18;color:#fff;font-size:16px;font-weight:900;padding-top:14px;padding-right:25px;padding-bottom:14px;padding-left:25px;border-radius:999px;}
 .pb-w.x-gtgaw88 .pb-btn{position:relative;overflow:hidden}
 .pb-w.x-gtgaw88 .pb-btn:hover{background-color:#f39a18!important}
 .pb-w.x-gtgaw88 .pb-btn{--fxd:2.6s}
-.pb-w.x-znbol5c{z-index:1;left:19.5%;top:296px;width:30%;height:280px;}
+.pb-w.x-znbol5c{border-radius:54px;z-index:1;left:6.1%;top:86px;width:43.9%;height:409px;}
 .pb-w.x-znbol5c{position:absolute!important;margin:0;max-width:none}
+.pb-w.x-znbol5c .pb-im,.pb-w.x-znbol5c .pb-cropbox{border-radius:54px;}
 .pb-w.x-znbol5c .pb-im{width:100%;object-fit:cover;display:block}.pb-w.x-znbol5c .pb-cropbox{position:relative;width:100%;height:100%;overflow:hidden}
 .pb-w.x-znbol5c{overflow:hidden}
-.pb-sec.x-7k7gfgd{padding-top:80px;padding-right:0px;padding-bottom:70px;padding-left:0px;}
+.pb-sec.x-7k7gfgd{padding-top:80px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-sec.x-7k7gfgd>.pb-in{margin:0 auto;width:100%;position:relative}
 .pb-sec.x-7k7gfgd>.pb-in{max-width:780px}
 .pb-sec.x-7k7gfgd>.pb-in{max-width:780px;}
@@ -589,7 +603,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-col.x-1hximyk{flex:1 1 0;min-width:0;display:flex}
 .pb-col.x-1hximyk>.pb-colin{width:100%;display:flex;flex-direction:column}
 .pb-col.x-1hximyk{flex:0 0 100%;width:100%;max-width:100%;}
-.pb-w.x-ud2suzz .pb-t{color:#bfe8a8;font-size:13px;font-weight:900;text-align:center;}
+.pb-w.x-ud2suzz .pb-t{color:#ffffff;font-size:26px;font-weight:900;line-height:1.6;text-align:center;}
 .pb-w.x-ud2suzz{height:auto!important}
 .pb-w.x-9gjmibh .pb-t{color:#123e72;font-size:48px;font-weight:900;line-height:1.3;text-align:center;}
 .pb-w.x-9gjmibh{height:auto!important}
@@ -599,6 +613,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-col.x-tkg2hl8{flex:1 1 0;min-width:0;display:flex}
 .pb-col.x-tkg2hl8>.pb-colin{width:100%;display:flex;flex-direction:column}
 .pb-col.x-tkg2hl8{flex:0 0 100%;width:100%;max-width:100%;}
+.pb-w.x-3r7tkw8{width:100%;margin-inline-end:auto;margin-inline-start:0;text-align:start;}
 .pb-w.x-3r7tkw8 .pb-ofraw .total-box #fee{color:inherit!important}
 .pb-w.x-3r7tkw8 .pb-ofraw .gp,.pb-w.x-3r7tkw8 .pb-ofraw .coupon-box,.pb-w.x-3r7tkw8 .pb-ofraw #prod-coupon-msg,.pb-w.x-3r7tkw8 .pb-ofraw .btn-wa{display:none!important}
 @media(max-width:1024px){
@@ -617,7 +632,6 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-591snww>*{zoom:1}
 .pb-w.x-5ffxdfe>*{zoom:1}
 .pb-w.x-eob7ixz>*{zoom:1}
-.pb-w.x-du3cmk1>*{zoom:1}
 .pb-w.x-dmpwk3c>*{zoom:1}
 .pb-w.x-1ynbhwj>*{zoom:1}
 .pb-w.x-89qvngl{width:95%;}
@@ -629,11 +643,13 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-6q5vfvo>*{zoom:1}
 .pb-w.x-s8x0kzv{width:95%;}
 .pb-w.x-p1h3txv>*{zoom:1}
+.pb-w.x-3z6oc3k>*{zoom:1}
+.pb-w.x-gtgaw88>*{zoom:1}
 .pb-w.x-umwjbmj{width:95%;}
 }
 @media(max-width:767px){
 .pb-sec .pb-col{width:100%;flex:0 0 100%;max-width:100%}
-.pb-sec.x-t1df492{padding-top:30px;padding-right:0px;padding-bottom:60px;padding-left:0px;}
+.pb-sec.x-t1df492{padding-top:30px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-col.x-zht954v{flex:0 0 100%;width:100%;max-width:100%;}
 .pb-w.x-7rsxjo2{width:71.2%;margin-inline-end:auto;margin-inline-start:0;text-align:start;}
 .pb-w.x-7rsxjo2 .pb-t{font-size:13px;text-align:center;}
@@ -698,9 +714,6 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-eob7ixz{left:16.5%;top:calc(var(--u)*0);width:58.5%;height:calc(var(--u)*90);}
 .pb-w.x-eob7ixz>*{zoom:2.27;}
 .pb-w.x-eob7ixz .pb-t{font-size:calc(var(--u)*30);}
-.pb-w.x-du3cmk1{left:65.3%;top:calc(var(--u)*-308);width:58.5%;height:calc(var(--u)*90);}
-.pb-w.x-du3cmk1>*{zoom:2.27;}
-.pb-w.x-du3cmk1 .pb-t{font-size:calc(var(--u)*30);}
 .pb-w.x-dmpwk3c{left:3.1%;top:calc(var(--u)*188);width:43.7%;height:calc(var(--u)*381);}
 .pb-w.x-dmpwk3c>*{zoom:3.19;}
 .pb-w.x-dmpwk3c .pb-t{font-size:calc(var(--u)*14);}
@@ -713,7 +726,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-ycbx9wl .pb-t{font-size:30px;}
 .pb-w.x-89qvngl{width:100%;}
 .pb-w.x-89qvngl .pb-t{font-size:14px;}
-.pb-sec.x-hjx76vk{padding-top:6px;padding-right:0px;padding-bottom:30px;padding-left:0px;}
+.pb-sec.x-hjx76vk{padding-top:6px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-col.x-x2t3541{flex:0 0 100%;width:100%;max-width:100%;}
 .pb-w.x-o4rsldu{border-radius:28px;}
 .pb-w.x-o4rsldu .pb-im,.pb-w.x-o4rsldu .pb-cropbox{border-radius:28px;}
@@ -740,52 +753,48 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-w.x-qafgzmc .pb-t{font-size:30px;}
 .pb-w.x-s8x0kzv{width:100%;}
 .pb-w.x-s8x0kzv .pb-t{font-size:14px;}
-.pb-sec.x-3ih6ubv{padding-top:0px;padding-right:0px;padding-bottom:60px;padding-left:0px;}
-.pb-col.x-hgiezn6{flex:0 0 100%;width:100%;max-width:100%;}
-.pb-w.x-1uw0xhi .pb-t{font-size:12px;}
-.pb-w.x-p1h3txv{border-radius:38px;width:99.6%;min-height:418px;margin-inline-end:auto;margin-inline-start:0;text-align:start;}
+.pb-w.x-1uw0xhi .pb-t{font-size:calc(var(--u)*12);}
+.pb-w.x-p1h3txv{border-radius:calc(var(--u)*38);}
 .pb-w.x-p1h3txv>*{zoom:1;}
-.pb-w.x-p1h3txv .pb-t{font-size:12px;}
-.pb-w.x-gr7yucx .pb-t{font-size:17px;text-align:center;}
-.pb-w.x-dd98yrn .pb-btn{font-size:15px;}
-.pb-col.x-cbrkeye{flex:0 0 100%;width:100%;max-width:100%;}
-.pb-w.x-ltt6dk1{margin-top:0px;margin-right:0px;margin-bottom:0px;margin-left:0px;border-radius:37px;min-height:358px;}
-.pb-w.x-cxmcp05 .pb-t{font-size:18px;}
-.pb-w.x-10s5uui .pb-btn{font-size:15px;}
+.pb-w.x-p1h3txv .pb-t{font-size:calc(var(--u)*12);}
+.pb-w.x-gr7yucx .pb-t{font-size:calc(var(--u)*17);text-align:center;}
+.pb-w.x-sxhwdtr .pb-t{font-size:calc(var(--u)*17);text-align:center;}
+.pb-w.x-dd98yrn .pb-btn{font-size:calc(var(--u)*15);}
+.pb-w.x-ltt6dk1{border-radius:calc(var(--u)*37);}
+.pb-w.x-10s5uui .pb-btn{font-size:calc(var(--u)*15);}
 .pb-sec.x-yziy3ti{padding-top:70px;padding-right:0px;padding-bottom:10px;padding-left:0px;}
 .pb-col.x-8uau8f2{flex:0 0 100%;width:100%;max-width:100%;}
 .pb-w.x-rjm4av2 .pb-t{font-size:22px;}
 .pb-w.x-5p6j6sx .pb-t{font-size:30px;}
-.pb-sec.x-uuep26q{padding-top:0px;padding-right:0px;padding-bottom:60px;padding-left:0px;}
-.pb-col.x-eub3csc{flex:0 0 100%;width:100%;max-width:100%;}
-.pb-w.x-wr8j7cc{border-radius:32px;}
-.pb-w.x-wr8j7cc .pb-im,.pb-w.x-wr8j7cc .pb-cropbox{border-radius:32px;}
-.pb-col.x-vdgnzqk{flex:0 0 100%;width:100%;max-width:100%;}
-.pb-w.x-xmn7diu .pb-ibi{font-size:18px;}
-.pb-w.x-xmn7diu .pb-ib h3{font-size:16px;}
-.pb-w.x-xmn7diu .pb-ib p{font-size:13px;}
-.pb-w.x-41ipty8 .pb-ibi{font-size:18px;}
-.pb-w.x-41ipty8 .pb-ib h3{font-size:16px;}
-.pb-w.x-41ipty8 .pb-ib p{font-size:13px;}
-.pb-w.x-is09rv7 .pb-ibi{font-size:18px;}
-.pb-w.x-is09rv7 .pb-ib h3{font-size:16px;}
-.pb-w.x-is09rv7 .pb-ib p{font-size:13px;}
-.pb-w.x-3z6oc3k .pb-t{font-size:15px;text-align:center;}
+.pb-w.x-wr8j7cc{border-radius:calc(var(--u)*32);}
+.pb-w.x-wr8j7cc .pb-im,.pb-w.x-wr8j7cc .pb-cropbox{border-radius:calc(var(--u)*32);}
+.pb-w.x-xmn7diu .pb-ibi{font-size:calc(var(--u)*18);}
+.pb-w.x-xmn7diu .pb-ib h3{font-size:calc(var(--u)*16);}
+.pb-w.x-xmn7diu .pb-ib p{font-size:calc(var(--u)*13);}
+.pb-w.x-41ipty8 .pb-ibi{font-size:calc(var(--u)*18);}
+.pb-w.x-41ipty8 .pb-ib h3{font-size:calc(var(--u)*16);}
+.pb-w.x-41ipty8 .pb-ib p{font-size:calc(var(--u)*13);}
+.pb-w.x-3z6oc3k>*{zoom:1}
+.pb-w.x-3z6oc3k .pb-t{font-size:calc(var(--u)*15);text-align:center;}
+.pb-w.x-is09rv7 .pb-ibi{font-size:calc(var(--u)*18);}
+.pb-w.x-is09rv7 .pb-ib h3{font-size:calc(var(--u)*16);}
+.pb-w.x-is09rv7 .pb-ib p{font-size:calc(var(--u)*13);}
 .pb-w.x-s0z9vnt .pb-t{font-size:calc(var(--u)*22);}
 .pb-w.x-w6csitv .pb-t{font-size:calc(var(--u)*30);}
 .pb-w.x-chhrrra .pb-t{font-size:calc(var(--u)*14);}
 .pb-w.x-q7q8nbz .pb-t{font-size:calc(var(--u)*11);}
-.pb-sec.x-3n8jrra{padding-top:0px;padding-right:0px;padding-bottom:50px;padding-left:0px;}
+.pb-sec.x-3n8jrra{padding-top:0px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-col.x-xc275b3{flex:0 0 100%;width:100%;max-width:100%;}
 .pb-w.x-qia6tj5 .pb-t{font-size:13px;}
 .pb-w.x-4rxoy6y .pb-t{font-size:35px;}
 .pb-w.x-yh9ryz7 .pb-t{font-size:14px;}
+.pb-w.x-gtgaw88>*{zoom:1}
 .pb-w.x-gtgaw88 .pb-btn{font-size:15px;}
 .pb-w.x-znbol5c{border-radius:36px;left:4.6%;top:314px;width:61.5%;height:239px;}
 .pb-w.x-znbol5c .pb-im,.pb-w.x-znbol5c .pb-cropbox{border-radius:36px;}
-.pb-sec.x-7k7gfgd{padding-top:50px;padding-right:0px;padding-bottom:40px;padding-left:0px;}
+.pb-sec.x-7k7gfgd{padding-top:50px;padding-right:0px;padding-bottom:24px;padding-left:0px;}
 .pb-col.x-1hximyk{flex:0 0 100%;width:100%;max-width:100%;}
-.pb-w.x-ud2suzz .pb-t{font-size:13px;}
+.pb-w.x-ud2suzz .pb-t{font-size:22px;}
 .pb-w.x-9gjmibh .pb-t{font-size:30px;}
 .pb-w.x-umwjbmj{width:100%;}
 .pb-w.x-umwjbmj .pb-t{font-size:14px;}
@@ -963,13 +972,18 @@ body.pb-page:before{content:"";position:fixed;inset:0;pointer-events:none;z-inde
 
 </div></div></div><div class="pb-w x-9hhuqkb pb-free pb-sz" data-type="html" data-free="1"><div class="pb-raw"><div class="pc-num">04
 
-</div></div></div><div class="pb-w x-2qe8ury pb-free pb-sz pb-fit pc-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/lp/mf-study-break-card.webp" alt="طفل يأخذ استراحة قصيرة بعد حل الواجب" loading="lazy" decoding="async" style="position:absolute;left:0%;top:-2.7%;width:100%;height:auto!important;max-width:none"></div></div><div class="pb-w x-fu0l27s pb-free pb-sz pb-fit pc-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.3s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/lp/mf-boy-jar-card.webp" alt="تلميذ يبتسم في مكتبه ومعه عبوة عسل أليسوم" loading="lazy" decoding="async" style="position:absolute;left:0%;top:-3.5%;width:103.4%;height:auto!important;max-width:none"></div></div><div class="pb-w x-9qfo6zy pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">الحاجة إلى روتين ثابت</span></h2></div><div class="pb-w x-9uol35r pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">تشتّت أثناء الدراسة</span></h2></div><div class="pb-w x-cna9vu6 pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">الإرهاق من الجلوس الطويل</span></h2></div><div class="pb-w x-591snww pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">دعم العادات الجيدة</span></h2></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-vef1ojp sol-sec" id="solution"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-uidzfda pb-free pb-sz pb-fit sol-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/presentation/03.webp" alt="عبوة عسل التركيز وتنشيط الذاكرة وسط الأعشاب والزبيب" loading="lazy" decoding="async" style="position:absolute;left:-0.6%;top:-7.1%;width:100.6%;height:auto!important;max-width:none"></div></div><div class="pb-w x-5ffxdfe pb-free pb-sz title" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><h2>تعرّف على <span style="color:#f39a18">MEMORY FOCUS</span></h2></div></div><div class="pb-w x-eob7ixz pb-free pb-sz title" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><h2>لماذا هذا&nbsp; &nbsp;<span style="color:#f39a18">العسل مميز</span></h2></div></div><div class="pb-w x-du3cmk1 pb-free pb-sz title" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><h2>لماذا هذا&nbsp; &nbsp;<span style="color:#f39a18">العسل مميز</span></h2></div></div><div class="pb-w x-dmpwk3c pb-free pb-sz sub sub-s" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">عسل طبيعي بمستخلصات نباتية في عبوة 250 غ، بطعم محبّب للأطفال ليكون جزءًا من روتين الأسرة اليومي. .</div></div><div class="pb-w x-1ynbhwj pb-free pb-sz pb-fit btn-gr" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="button" data-free="1"><a class="pb-btn" href="#offers"><span data-edit="text">شاهد العروض ←</span></a></div></div></div></section><section class="pb-sec k-flow x-uh7aele ing-sec" id="ingredients"><div class="pb-in"><div class="pb-col x-o7zsq9t"><div class="pb-colin"><div class="pb-w x-iscrk3t kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>من الطبيعة إلى العبوة</p></div></div><div class="pb-w x-ycbx9wl title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>تفاصيل <span style="color:#f39a18">المكونات</span></h2></div></div><div class="pb-w x-89qvngl pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">اعتمد دائمًا على قائمة المكونات المطبوعة على عبوة المنتج لتأكيد التركيبة الدقيقة.</div></div></div></div></div></section><section class="pb-sec k-flow x-hjx76vk ing-sec"><div class="pb-in"><div class="pb-col x-x2t3541"><div class="pb-colin"><div class="pb-w x-o4rsldu pb-fit ing-feat" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image"><img class="pb-im" src="/assets/img/tarkiz/presentation/04.webp" alt="عبوة أليسوم محاطة بالجنكة والريحان والمكسرات والزبيب" loading="lazy" decoding="async"></div></div></div><div class="pb-col x-nvp67na"><div class="pb-colin"><div class="pb-w x-wabwh3s" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="heading"><h3 class="pb-t pb-hd"><span data-edit="text">مظهر طبيعي، وذوق لذيذ</span></h3></div><div class="pb-w x-fk44dx8" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text"><div class="pb-t pb-tx" data-edit="html">تجمع هوية المنتج بين لون العسل الذهبي ولمسات النباتات الخضراء. اقرأ ملصق العبوة للتعرّف على المكونات وطريقة الحفظ المناسبة.</div></div><div class="pb-w x-txgujww pb-sz" data-type="html"><div class="pb-raw"><div class="pills"><span>عسل طبيعي</span><span>الجنكة</span><span>إكليل الجبل</span><span>الريحان</span><span>الزبيب</span></div></div></div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-4uls5wb ing-sec"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-r5405kf pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-honey.webp" alt="العسل الطبيعي" loading="lazy" decoding="async"></div><div class="pb-w x-hx0n5hx pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">العسل الطبيعي</span></h3></div><div class="pb-w x-7jwvilz pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-ginkgo.webp" alt="الجنكة" loading="lazy" decoding="async"></div><div class="pb-w x-h6hk90p pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">الجنكة</span></h3></div><div class="pb-w x-fez2js4 pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">عسل طبيعي </span></h3></div><div class="pb-w x-1o22v9d pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-rosemary.webp" alt="إكليل الجبل" loading="lazy" decoding="async"></div><div class="pb-w x-o256y37 pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">إكليل الجبل</span></h3></div><div class="pb-w x-lh4pexp pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.3s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-basil.webp" alt="الريحان" loading="lazy" decoding="async"></div><div class="pb-w x-9mawv5j pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.3s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">الريحان</span></h3></div><div class="pb-w x-djrdnck pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.4s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/lp/c-raisin.webp" alt="الزبيب" loading="lazy" decoding="async" style="position:absolute;left:0%;top:0%;width:100%;height:auto!important;max-width:none"></div></div><div class="pb-w x-6q5vfvo pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.4s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">الزبيب</span></h3></div></div></div></section><section class="pb-sec k-flow x-q2yog5p offer-sec" id="offers"><div class="pb-in"><div class="pb-col x-k1dmsua"><div class="pb-colin"><div class="pb-w x-cu0a1ry kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>اختر ما يناسبك</p></div></div><div class="pb-w x-qafgzmc title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>عروض <span style="color:#f39a18">ALYSSUM</span></h2></div></div><div class="pb-w x-s8x0kzv pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">الدفع عند الاستلام. اختر العرض ثم أكمل الطلب في الأسفل.</div></div></div></div></div></section><section class="pb-sec k-flow x-3ih6ubv offer-sec"><div class="pb-in"><div class="pb-col x-hgiezn6 bundle"><div class="pb-colin"><div class="pb-w x-1uw0xhi ribbon" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>الأوفر</p></div></div><div class="pb-w x-p1h3txv pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><br></div></div><div class="pb-w x-gr7yucx pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">عبوتان من ALYSSUM MEMORY FOCUS&nbsp; غ&nbsp;<p>مع قارورة إضافية هدية.</p></div></div><div class="pb-w x-dd98yrn pb-fit btn-or shine" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="button"><a class="pb-btn" href="#order"><span data-edit="text">اطلب هذا العرض ↙</span></a></div></div></div><div class="pb-col x-cbrkeye single"><div class="pb-colin"><div class="pb-w x-ltt6dk1 pb-sz" data-type="html"><div class="pb-raw"><div class="sj"><img src="/" alt="" loading="lazy"></div></div></div><div class="pb-w x-cxmcp05" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="heading"><h3 class="pb-t pb-hd"><span data-edit="text">عبوة واحدة · 250 غ</span></h3></div><div class="pb-w x-10s5uui pb-fit btn-gr" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="button"><a class="pb-btn" href="#order"><span data-edit="text">اطلب عبوة ←</span></a></div></div></div></div></section><section class="pb-sec k-flow x-yziy3ti use-sec" id="usage"><div class="pb-in"><div class="pb-col x-8uau8f2"><div class="pb-colin"><div class="pb-w x-rjm4av2 kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>قبل الاستخدام</p></div></div><div class="pb-w x-5p6j6sx title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>معلومات واضحة&nbsp;</h2><h2><span style="color:#f39a18">خطوة بخطوة</span></h2></div></div></div></div></div></section><section class="pb-sec k-flow x-uuep26q use-sec"><div class="pb-in"><div class="pb-col x-eub3csc use-col"><div class="pb-colin"><div class="pb-w x-wr8j7cc pb-fit use-photo" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image"><img class="pb-im" src="/assets/img/tarkiz/presentation/01.webp" alt="طفلة تبتسم في مكتبها وبيدها عبوة عسل أليسوم" loading="lazy" decoding="async"></div></div></div><div class="pb-col x-vdgnzqk"><div class="pb-colin"><div class="pb-w x-xmn7diu step2" data-type="iconbox"><div class="pb-ib"><div class="pb-ibi" data-icon="icon">1</div><h3 data-edit="title">من 5 الى 15 سنة</h3><p data-edit="text">ملعقة صغيرة . مرة أو مرتين في اليوم</p></div></div><div class="pb-w x-41ipty8 step2" data-type="iconbox"><div class="pb-ib"><div class="pb-ibi" data-icon="icon">2</div><h3 data-edit="title">من 12 الى 18 سنة</h3><p data-edit="text">ملعقة صغيرة. مرتين أو ثلاث في اليوم</p></div></div><div class="pb-w x-is09rv7 step2" data-type="iconbox"><div class="pb-ib"><div class="pb-ibi" data-icon="icon">3</div><h3 data-edit="title">أكبر من 18 سنة</h3><p data-edit="text">ملعقة صغيرة ثلاث مرات في اليوم</p></div></div><div class="pb-w x-3z6oc3k" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text"><div class="pb-t pb-tx" data-edit="html">يستحسن عدم استعماله قبل النوم</div></div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-2ct3xm3 rev-sec" id="reviews"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-s0z9vnt pb-free pb-sz kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><p>تجربة العميل مهمة</p></div></div><div class="pb-w x-w6csitv pb-free pb-sz title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><h2>آراء <span style="color:#f39a18">زبائننا</span></h2></div></div><div class="pb-w x-chhrrra pb-free pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">رسائل حقيقية وصلتنا من زبائننا على ماسنجر.</div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-0m7epju rev-sec"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-iuiqrak pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794265923106-6.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-rnlopri pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794265940491-7.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-9ebg3h7 pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266149319-8.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-99cc3rq pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266231950-9.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-p3l42i6 pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266249164-10.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-7vwb5lx pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266264256-11.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-5xn5bb2 pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="../../assets/img/pages/pg-1794266278415-12.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async" style="position:absolute;left:-1.6%;top:0%;width:103.3%;height:auto!important;max-width:none"></div></div><div class="pb-w x-2nb3imm pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266298766-13.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-c1qwk4v pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/avis/avis03.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-p611knv pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794263213564-5.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-q7q8nbz pb-free pb-sz shot-cap" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">زبونة طلبت عبوة أخرى</div></div></div></div></section><section class="pb-sec k-flow x-3n8jrra cta-sec"><div class="pb-in"><div class="pb-col x-xc275b3 cta-col"><div class="pb-colin"><div class="pb-w x-qia6tj5 tag-w tag-d" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>ALYSSUM · MEMORY FOCUS</p></div></div><div class="pb-w x-4rxoy6y" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="heading"><h2 class="pb-t pb-hd"><span data-edit="text">نجاح ابنك يبدأ بخطوة صغيرة</span></h2></div><div class="pb-w x-yh9ryz7" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">اطلب عسل التركيز وتنشيط الذاكرة . واعط ابنك فرصة للتفوق&nbsp;</div></div><div class="pb-w x-gtgaw88 pb-fit btn-or shine" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="button"><a class="pb-btn" href="#order"><span data-edit="text">اطلب الآن ←</span></a></div></div></div><div class="pb-fz"><div class="pb-w x-znbol5c pb-free pb-sz pb-fit" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="../../assets/img/pages/pg-1794266716339-15.webp" alt="" loading="lazy" decoding="async" style="position:absolute;left:-1.1%;top:0%;width:101.1%;height:auto!important;max-width:none"></div></div></div></div></section><section class="pb-sec k-flow x-7k7gfgd order-sec" id="order"><div class="pb-in"><div class="pb-col x-1hximyk"><div class="pb-colin"><div class="pb-w x-ud2suzz kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>أكمل طلبك</p></div></div><div class="pb-w x-9gjmibh title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>اطلب <span style="color:#f39a18">الآن</span> · الدفع عند الاستلام</h2></div></div><div class="pb-w x-umwjbmj pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">اختر العرض وأدخل بياناتك، وسنتواصل معك لتأكيد الطلب.</div></div></div></div><div class="pb-col x-tkg2hl8"><div class="pb-colin"><div class="pb-w x-3r7tkw8 pb-fit" data-type="orderorig"><i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="1" scrolling="no" src="../../order-embed.html?p=tarkiz&embed=1&src=lp%2Fhoney-focus&oc=%7B%22x%22%3A%5B%22gp%22%2C%22cp%22%2C%22wa%22%5D%7D" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe></div></div></div></div></section></main>
+</div></div></div><div class="pb-w x-2qe8ury pb-free pb-sz pb-fit pc-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/lp/mf-study-break-card.webp" alt="طفل يأخذ استراحة قصيرة بعد حل الواجب" loading="lazy" decoding="async" style="position:absolute;left:0%;top:-2.7%;width:100%;height:auto!important;max-width:none"></div></div><div class="pb-w x-fu0l27s pb-free pb-sz pb-fit pc-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.3s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/lp/mf-boy-jar-card.webp" alt="تلميذ يبتسم في مكتبه ومعه عبوة عسل أليسوم" loading="lazy" decoding="async" style="position:absolute;left:0%;top:-3.5%;width:103.4%;height:auto!important;max-width:none"></div></div><div class="pb-w x-9qfo6zy pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">الحاجة إلى روتين ثابت</span></h2></div><div class="pb-w x-9uol35r pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">تشتّت أثناء الدراسة</span></h2></div><div class="pb-w x-cna9vu6 pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">الإرهاق من الجلوس الطويل</span></h2></div><div class="pb-w x-591snww pb-free pb-sz" data-type="heading" data-free="1"><h2 class="pb-t pb-hd"><span data-edit="text">دعم العادات الجيدة</span></h2></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-vef1ojp sol-sec" id="solution"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-uidzfda pb-free pb-sz pb-fit sol-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/presentation/03.webp" alt="عبوة عسل التركيز وتنشيط الذاكرة وسط الأعشاب والزبيب" loading="lazy" decoding="async" style="position:absolute;left:-0.6%;top:-7.1%;width:100.6%;height:auto!important;max-width:none"></div></div><div class="pb-w x-5ffxdfe pb-free pb-sz title" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><h2>تعرّف على <span style="color:#f39a18">MEMORY FOCUS</span></h2></div></div><div class="pb-w x-eob7ixz pb-free pb-sz title" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><h2>لماذا هذا&nbsp; &nbsp;<span style="color:#f39a18">العسل مميز</span></h2></div></div><div class="pb-w x-dmpwk3c pb-free pb-sz sub sub-s" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">عسل طبيعي بمستخلصات نباتية في عبوة 250 غ، بطعم محبّب للأطفال ليكون جزءًا من روتين الأسرة اليومي. .</div></div><div class="pb-w x-1ynbhwj pb-free pb-sz pb-fit btn-gr" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="button" data-free="1"><a class="pb-btn" href="#offers"><span data-edit="text">شاهد العروض ←</span></a></div></div></div></section><section class="pb-sec k-flow x-uh7aele ing-sec" id="ingredients"><div class="pb-in"><div class="pb-col x-o7zsq9t"><div class="pb-colin"><div class="pb-w x-iscrk3t kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>من الطبيعة إلى العبوة</p></div></div><div class="pb-w x-ycbx9wl title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>تفاصيل <span style="color:#f39a18">المكونات</span></h2></div></div><div class="pb-w x-89qvngl pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">اعتمد دائمًا على قائمة المكونات المطبوعة على عبوة المنتج لتأكيد التركيبة الدقيقة.</div></div></div></div></div></section><section class="pb-sec k-flow x-hjx76vk ing-sec"><div class="pb-in"><div class="pb-col x-x2t3541"><div class="pb-colin"><div class="pb-w x-o4rsldu pb-fit ing-feat" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image"><img class="pb-im" src="/assets/img/tarkiz/presentation/04.webp" alt="عبوة أليسوم محاطة بالجنكة والريحان والمكسرات والزبيب" loading="lazy" decoding="async"></div></div></div><div class="pb-col x-nvp67na"><div class="pb-colin"><div class="pb-w x-wabwh3s" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="heading"><h3 class="pb-t pb-hd"><span data-edit="text">مظهر طبيعي، وذوق لذيذ</span></h3></div><div class="pb-w x-fk44dx8" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text"><div class="pb-t pb-tx" data-edit="html">تجمع هوية المنتج بين لون العسل الذهبي ولمسات النباتات الخضراء. اقرأ ملصق العبوة للتعرّف على المكونات وطريقة الحفظ المناسبة.</div></div><div class="pb-w x-txgujww pb-sz" data-type="html"><div class="pb-raw"><div class="pills"><span>عسل طبيعي</span><span>الجنكة</span><span>إكليل الجبل</span><span>الريحان</span><span>الزبيب</span></div></div></div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-4uls5wb ing-sec"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-r5405kf pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-honey.webp" alt="العسل الطبيعي" loading="lazy" decoding="async"></div><div class="pb-w x-hx0n5hx pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">العسل الطبيعي</span></h3></div><div class="pb-w x-7jwvilz pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-ginkgo.webp" alt="الجنكة" loading="lazy" decoding="async"></div><div class="pb-w x-h6hk90p pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">الجنكة</span></h3></div><div class="pb-w x-fez2js4 pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">عسل طبيعي </span></h3></div><div class="pb-w x-1o22v9d pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-rosemary.webp" alt="إكليل الجبل" loading="lazy" decoding="async"></div><div class="pb-w x-o256y37 pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">إكليل الجبل</span></h3></div><div class="pb-w x-lh4pexp pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.3s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/lp/c-basil.webp" alt="الريحان" loading="lazy" decoding="async"></div><div class="pb-w x-9mawv5j pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.3s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">الريحان</span></h3></div><div class="pb-w x-djrdnck pb-free pb-sz pb-fit ing-img" data-anim="fadeUp" style="--ad:0.75s;--ade:0.4s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="/assets/img/tarkiz/lp/c-raisin.webp" alt="الزبيب" loading="lazy" decoding="async" style="position:absolute;left:0%;top:0%;width:100%;height:auto!important;max-width:none"></div></div><div class="pb-w x-6q5vfvo pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.4s" data-type="heading" data-free="1"><h3 class="pb-t pb-hd"><span data-edit="text">الزبيب</span></h3></div></div></div></section><section class="pb-sec k-flow x-q2yog5p offer-sec" id="offers"><div class="pb-in"><div class="pb-col x-k1dmsua"><div class="pb-colin"><div class="pb-w x-cu0a1ry kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>اختر ما يناسبك</p></div></div><div class="pb-w x-qafgzmc title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>عروض <span style="color:#f39a18">ALYSSUM</span></h2></div></div><div class="pb-w x-s8x0kzv pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">الدفع عند الاستلام. اختر العرض ثم أكمل الطلب في الأسفل.</div></div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-3ih6ubv offer-sec"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-7adjk10 pb-free pb-sz pb-fit" data-type="shape" data-free="1"><svg class="pb-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="gs7adjk10" gradientTransform="rotate(30 .5 .5)" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ffffff" stop-opacity="1"/><stop offset="100%" stop-color="#ffdf8c" stop-opacity="1"/></linearGradient></defs><rect x="1" y="1" width="98" height="98" rx="4.5" ry="3.6" fill="url(#gs7adjk10)" stroke="#f5d77f" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg></div><div class="pb-w x-1uw0xhi pb-free pb-sz ribbon" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><p>الأوفر</p></div></div><div class="pb-w x-p1h3txv pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><br></div></div><div class="pb-w x-gr7yucx pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">عبوتان من ALYSSUM MEMORY FOCUS&nbsp; غ&nbsp;<p>مع قارورة إضافية هدية.</p></div></div><div class="pb-w x-sxhwdtr pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">عبوة واحدة&nbsp; من ALYSSUM MEMORY FOCUS&nbsp;&nbsp;</div></div><div class="pb-w x-dd98yrn pb-free pb-sz pb-fit btn-or shine" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="button" data-free="1"><a class="pb-btn" href="#order"><span data-edit="text">اطلب هذا العرض ↙</span></a></div><div class="pb-w x-fznpwc1 pb-free pb-sz pb-fit" data-type="shape" data-free="1"><svg class="pb-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><rect x="1" y="1" width="98" height="98" rx="6.2" ry="3.6" fill="#ffffff" stroke="#f1e7d3" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg></div><div class="pb-w x-ltt6dk1 pb-free pb-sz" data-type="html" data-free="1"><div class="pb-raw"><div class="sj"><img src="/" alt="" loading="lazy"></div></div></div><div class="pb-w x-10s5uui pb-free pb-sz pb-fit btn-gr" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="button" data-free="1"><a class="pb-btn" href="#order"><span data-edit="text">اطلب عبوة ←</span></a></div></div></div></section><section class="pb-sec k-flow x-yziy3ti use-sec" id="usage"><div class="pb-in"><div class="pb-col x-8uau8f2"><div class="pb-colin"><div class="pb-w x-rjm4av2 kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>قبل الاستخدام</p></div></div><div class="pb-w x-5p6j6sx title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>معلومات واضحة&nbsp;</h2><h2><span style="color:#f39a18">خطوة بخطوة</span></h2></div></div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-uuep26q use-sec"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-wr8j7cc pb-free pb-sz pb-fit use-photo" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/presentation/01.webp" alt="طفلة تبتسم في مكتبها وبيدها عبوة عسل أليسوم" loading="lazy" decoding="async"></div><div class="pb-w x-xmn7diu pb-free pb-sz step2" data-type="iconbox" data-free="1"><div class="pb-ib"><div class="pb-ibi" data-icon="icon">1</div><h3 data-edit="title">من 5 الى 15 سنة</h3><p data-edit="text">ملعقة صغيرة . مرة أو مرتين في اليوم</p></div></div><div class="pb-w x-41ipty8 pb-free pb-sz step2" data-type="iconbox" data-free="1"><div class="pb-ib"><div class="pb-ibi" data-icon="icon">2</div><h3 data-edit="title">من 12 الى 18 سنة</h3><p data-edit="text">ملعقة صغيرة. مرتين أو ثلاث في اليوم</p></div></div><div class="pb-w x-3z6oc3k pb-free pb-sz" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">يستحسن عدم استعماله قبل النوم</div></div><div class="pb-w x-is09rv7 pb-free pb-sz step2" data-type="iconbox" data-free="1"><div class="pb-ib"><div class="pb-ibi" data-icon="icon">3</div><h3 data-edit="title">أكبر من 18 سنة</h3><p data-edit="text">ملعقة صغيرة ثلاث مرات في اليوم</p></div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-2ct3xm3 rev-sec" id="reviews"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-s0z9vnt pb-free pb-sz kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><p>تجربة العميل مهمة</p></div></div><div class="pb-w x-w6csitv pb-free pb-sz title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html"><h2>آراء <span style="color:#f39a18">زبائننا</span></h2></div></div><div class="pb-w x-chhrrra pb-free pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">رسائل حقيقية وصلتنا من زبائننا على ماسنجر.</div></div></div></div></section><section class="pb-sec k-canvas pb-scaled x-0m7epju rev-sec"><div class="pb-in"><div class="pb-fz"><div class="pb-w x-iuiqrak pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794265923106-6.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-rnlopri pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794265940491-7.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-9ebg3h7 pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266149319-8.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-99cc3rq pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266231950-9.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-p3l42i6 pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266249164-10.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-7vwb5lx pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266264256-11.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-5xn5bb2 pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="../../assets/img/pages/pg-1794266278415-12.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async" style="position:absolute;left:-1.6%;top:0%;width:103.3%;height:auto!important;max-width:none"></div></div><div class="pb-w x-2nb3imm pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.1s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794266298766-13.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-c1qwk4v pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><img class="pb-im" src="/assets/img/tarkiz/avis/avis03.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-p611knv pb-free pb-sz pb-fit" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="image" data-free="1"><img class="pb-im" src="../../assets/img/pages/pg-1794263213564-5.webp" alt="رأي زبون عن عسل التركيز" loading="lazy" decoding="async"></div><div class="pb-w x-q7q8nbz pb-free pb-sz shot-cap" data-anim="fadeUp" style="--ad:0.75s;--ade:0.2s" data-type="text" data-free="1"><div class="pb-t pb-tx" data-edit="html">زبونة طلبت عبوة أخرى</div></div></div></div></section><section class="pb-sec k-flow x-3n8jrra cta-sec"><div class="pb-in"><div class="pb-col x-xc275b3 cta-col"><div class="pb-colin"><div class="pb-w x-qia6tj5 tag-w tag-d" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>ALYSSUM · MEMORY FOCUS</p></div></div><div class="pb-w x-4rxoy6y" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="heading"><h2 class="pb-t pb-hd"><span data-edit="text">نجاح ابنك يبدأ بخطوة صغيرة</span></h2></div><div class="pb-w x-yh9ryz7" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">اطلب عسل التركيز وتنشيط الذاكرة . واعط ابنك فرصة للتفوق&nbsp;</div></div><div class="pb-w x-gtgaw88 pb-sz pb-fit btn-or shine" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="button"><a class="pb-btn" href="#order"><span data-edit="text">اطلب الآن ←</span></a></div></div></div><div class="pb-fz"><div class="pb-w x-znbol5c pb-free pb-sz pb-fit" data-type="image" data-free="1"><div class="pb-cropbox"><img class="pb-im" src="../../assets/img/pages/pg-1794266716339-15.webp" alt="" loading="lazy" decoding="async" style="position:absolute;left:-1.1%;top:0%;width:101.1%;height:auto!important;max-width:none"></div></div></div></div></section><section class="pb-sec k-flow x-7k7gfgd order-sec" id="order"><div class="pb-in"><div class="pb-col x-1hximyk"><div class="pb-colin"><div class="pb-w x-ud2suzz kick" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><p>أكمل طلبك</p></div></div><div class="pb-w x-9gjmibh title" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html"><h2>اطلب <span style="color:#f39a18">الآن</span> · الدفع عند الاستلام</h2></div></div><div class="pb-w x-umwjbmj pb-sz sub" data-anim="fadeUp" style="--ad:0.75s;--ade:0s" data-type="text"><div class="pb-t pb-tx" data-edit="html">اختر العرض وأدخل بياناتك، وسنتواصل معك لتأكيد الطلب.</div></div></div></div><div class="pb-col x-tkg2hl8"><div class="pb-colin"><div class="pb-w x-3r7tkw8 pb-sz pb-fit" data-type="orderorig"><i id="pb-order" class="pb-anc" style="display:block;height:0"></i><iframe class="pb-ofr" data-auto="1" scrolling="no" src="../../order-embed.html?p=tarkiz&embed=1&src=lp%2Fhoney-focus&oc=%7B%22sc%22%3A%22zones%22%2C%22x%22%3A%5B%22gp%22%2C%22cp%22%2C%22wa%22%5D%7D" loading="lazy" style="visibility:hidden" title="نموذج الطلب"></iframe><a class="pb-ofs" href="#pb-order" data-pbofs data-lg="الإجمالي" style="background:#16a34a;color:#fff;"><svg class="mi-ic" viewBox="0 0 24 24" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.4l3 3 5.4-6" fill="none"/></svg> تأكيد الطلب</a></div></div></div></div></section></main>
 <script src="../../assets/js/anti-copy.js?v=1" defer></script><script src="../../assets/js/data.js"></script>
 <script>var __pbBase="../../";var __pbSlug="honey-focus";var __pbMeta={"tabs":[{"key":"best","label":"🔥 الأكثر مبيعاً","title":"الأكثر مبيعاً","sub":"المنتجات المفضّلة لدى عملائنا","ribbon":"🔥 الأكثر مبيعاً","bg":"#F4EFE6","accent":"#8a6a1a","enabled":true},{"key":"hot","label":"⚡ الأكثر طلباً","title":"الأكثر طلباً","sub":"الأكثر طلباً هذه الأيام","ribbon":"⚡ الأكثر طلباً","bg":"#FBEBDD","accent":"#b4531a","enabled":true},{"key":"sale","label":"🏷️ التخفيضات","title":"التخفيضات","sub":"أسعار مخفّضة لفترة محدودة","ribbon":"🏷️ تخفيض","bg":"#FBE4E4","accent":"#b83232","enabled":true},{"key":"new","label":"✨ المنتجات الجديدة","title":"المنتجات الجديدة","sub":"وصل حديثاً إلى المتجر","ribbon":"✨ جديد","bg":"#E4F1EA","accent":"#157a55","enabled":true}],"cats":{"hair":"العناية بالشعر","skin":"العناية بالبشرة","honey":"العسل الطبيعي","health":"الصحة والعافية","roqia":"الرقية الشرعية","supplements":"مكملات غذائية"}};(function(){
 var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
 $('.pb-tp[data-rot],.pb-tp[data-hide],.pb-tp[data-close]').forEach(function(b){var k=b.getAttribute('data-close'),gone=0;var sc=b.closest('.pb-sec');function hid(a){if(a){b.style.maxHeight=b.offsetHeight+'px';void b.offsetHeight}b.classList.add('pb-tp-h');if(sc){sc.style.transition='min-height .35s,height .35s';sc.style.minHeight='0';sc.style.height='0';sc.style.overflow='hidden'}}try{if(k&&localStorage.getItem(k)){b.style.maxHeight='0px';b.classList.add('pb-tp-h');gone=1}}catch(e){}var x=b.querySelector('.pb-tp-x');if(x)x.onclick=function(e){e.preventDefault();e.stopPropagation();gone=1;try{localStorage.setItem(k,'1')}catch(_){}hid(1)};var r=+b.getAttribute('data-rot')||0;if(r>0){var it=[].slice.call(b.querySelectorAll('.pb-tp-i')),i=0;if(it.length>1)setInterval(function(){it[i].classList.remove('on');i=(i+1)%it.length;it[i].classList.add('on')},r*1000)}if(b.hasAttribute('data-hide')&&!gone){var hs=0;addEventListener('scroll',function(){var y=window.pageYOffset||document.documentElement.scrollTop||0;if(gone)return;if(y>80&&!hs){hs=1;hid(1)}else if(y<20&&hs){hs=0;b.classList.remove('pb-tp-h');b.style.maxHeight='';if(sc){sc.style.minHeight='';sc.style.height='';sc.style.overflow=''}}},{passive:true})}});
 $('.pb-hd[data-tr]').forEach(function(h){var sc=h.closest('.pb-sec');if(sc)sc.style.zIndex=60;var p=+h.getAttribute('data-trp');if(isNaN(p))p=30;function f(){h.classList.toggle('pb-sc',(window.pageYOffset||document.documentElement.scrollTop||0)>p)}f();addEventListener('scroll',f,{passive:true})});
-if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('[data-anim],.pb-ct,.pb-bl[data-ia]').forEach(function(n){io.observe(n)})}else{$('[data-anim],.pb-bl[data-ia]').forEach(function(n){n.classList.add('pb-in-view')})}
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('.pb-ct,.pb-bl[data-ia]').forEach(function(n){io.observe(n)});
+var ios={};function dn(x){var d=(parseFloat(x.style.getPropertyValue('--ad'))||.6)+(parseFloat(x.style.getPropertyValue('--ade'))||0)+.4;setTimeout(function(){x.classList.add('pb-done')},d*1000+(x.querySelector('.pb-sw')?2500:0))}
+function ob(n){var t=n.getAttribute('data-thr')||'d';if(!ios[t]){ios[t]=new IntersectionObserver(function(es){es.forEach(function(e){var x=e.target,r=x.getAttribute('data-at')==='repeat';if(e.isIntersecting){x.classList.remove('pb-done');x.classList.add('pb-in-view');if(!r)ios[t].unobserve(x);dn(x)}else if(r){x.classList.remove('pb-in-view');x.classList.remove('pb-done')}})},{threshold:t==='d'?.15:+t})}ios[t].observe(n)}
+function sp(el){var ch=el.getAttribute('data-anim')==='chars',ar=/[؀-ۿ]/.test(el.textContent);if(ar)ch=false;var k=0;(function w(n){[].slice.call(n.childNodes).forEach(function(c){if(c.nodeType===3){var tx=c.nodeValue;if(!tx.replace(/ /g,'').length)return;var f=document.createDocumentFragment(),ps=ch?tx.split(''):tx.split(' ');ps.forEach(function(p,j){if(!ch&&p===''){return}var s=document.createElement('span');s.className='pb-sw';s.style.setProperty('--i',k++);s.textContent=(ch&&p===' ')?String.fromCharCode(160):p;f.appendChild(s);if(!ch&&j<ps.length-1)f.appendChild(document.createTextNode(' '))});n.replaceChild(f,c)}else if(c.nodeType===1&&c.tagName!=='BR'&&c.tagName!=='SCRIPT'&&c.tagName!=='STYLE')w(c)})})(el)}
+$('[data-anim=words],[data-anim=chars]').forEach(sp);
+$('[data-anim]').forEach(function(n){if(n.getAttribute('data-at')==='load'){setTimeout(function(){n.classList.add('pb-in-view');dn(n)},90)}else ob(n)})}else{$('[data-anim],.pb-bl[data-ia]').forEach(function(n){n.classList.add('pb-in-view')})}
 function tick(){$('.pb-cd').forEach(function(el){var end,md=el.dataset.mode;if(el.hasAttribute('data-off')){if(!document.body.classList.contains('pb-edit')&&!window.__pbEd){el.style.display='none';return}el.style.opacity='.4'}if(md==='dur'){var dr=(+el.dataset.dur||0)*1000,k='pbcd_'+(window.__pbSlug||location.pathname)+'_'+el.dataset.k,t0=0;try{t0=+localStorage.getItem(k)||0}catch(e){}if(!t0||(Date.now()-t0>dr&&el.dataset.rst!=='0')){t0=Date.now();try{localStorage.setItem(k,String(t0))}catch(e){}}end=t0+dr}else if((md==='date'||md==='product')&&el.dataset.end){end=new Date(el.dataset.end).getTime()}else if(md==='product'){if(!document.body.classList.contains('pb-edit'))el.style.display='none';return}else{var d=new Date();d.setHours(23,59,59,999);end=d.getTime()}var s=Math.max(0,Math.floor((end-Date.now())/1000)),v={d:Math.floor(s/86400),h:Math.floor(s%86400/3600),m:Math.floor(s%3600/60),s:s%60};for(var k in v){var b=el.querySelector('[data-u='+k+']');if(b)b.textContent=('0'+v[k]).slice(-2)}})}
 tick();setInterval(tick,1000);
 $('.pb-p14').forEach(function(g){var mb=g.querySelector('.pb-pgm'),tb=[].slice.call(g.querySelectorAll('.pb-pgc')),all=[mb.firstElementChild].concat(tb.map(function(b){return b.firstElementChild})),k=0,t,snd=g.getAttribute('data-vs')==='1',va=g.getAttribute('data-va')!=='0',vl=g.getAttribute('data-vl')!=='0',vcl=g.getAttribute('data-vc')!=='0';function pl(n){if(n&&n.tagName==='VIDEO'){var q=n.play();if(q&&q.catch)q.catch(function(){if(!n.muted){n.muted=true;snd=false;var q2=n.play();if(q2&&q2.catch)q2.catch(function(){});ui()}})}}function mv(){return mb.querySelector('video')}function ui(){var v=mv();mb.classList.toggle('has-v',!!v);mb.classList.toggle('is-muted',!!v&&v.muted);mb.classList.toggle('is-paused',!!v&&v.paused)}function setup(){all.forEach(function(n){if(n&&n.tagName==='VIDEO'&&n.parentNode!==mb){n.muted=true;n.loop=true;n.controls=false;pl(n)}});var v=mv();if(v){v.controls=false;v.loop=vl;v.muted=!snd;if(va)pl(v);else v.pause();if(!v._pb){v._pb=1;['play','pause','volumechange','ended'].forEach(function(e){v.addEventListener(e,ui)});v.addEventListener('click',function(){if(!vcl)return;if(v.muted){snd=true;v.muted=false;pl(v)}else if(v.paused)pl(v);else v.pause()})}}ui()}function show(n){k=n;mb.appendChild(all[n]);var r=all.filter(function(_,j){return j!==n});tb.forEach(function(b,j){if(r[j])b.appendChild(r[j])});setup()}function run(){clearInterval(t);var a=+g.getAttribute('data-auto')||0;if(a>0&&all.length>1)t=setInterval(function(){show((k+1)%all.length)},a*1000)}tb.forEach(function(b){b.onclick=function(){var n=all.indexOf(b.firstElementChild);if(n>=0){show(n);run()}}});var bm=mb.querySelector('.pb-vm'),bp=mb.querySelector('.pb-vp');if(bm)bm.onclick=function(e){e.stopPropagation();var v=mv();if(v){snd=v.muted;v.muted=!v.muted;if(!v.muted&&v.paused)pl(v);ui()}};if(bp)bp.onclick=function(e){e.stopPropagation();var v=mv();if(v){if(v.paused)pl(v);else v.pause()}};setup();run()});

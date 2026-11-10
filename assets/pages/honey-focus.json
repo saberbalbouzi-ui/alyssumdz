@@ -20,13 +20,13 @@
      "d": [
       58,
       0,
-      66,
+      24,
       0
      ],
      "m": [
       30,
       0,
-      60,
+      24,
       0
      ]
     },
@@ -500,7 +500,7 @@
     },
     "layout": "full",
     "mh": {
-     "d": 433
+     "d": 355
     },
     "pad": {
      "d": [
@@ -583,7 +583,7 @@
        "d": 93.9
       },
       "fh": {
-       "d": 62
+       "d": 78
       },
       "zi": 3,
       "stk": {
@@ -646,7 +646,7 @@
     },
     "layout": "full",
     "mh": {
-     "d": 345,
+     "d": 306,
      "m": 1501
     },
     "pad": {
@@ -965,7 +965,7 @@
        "m": 45.7
       },
       "fh": {
-       "d": 25,
+       "d": 33,
        "m": 83
       },
       "zi": 5,
@@ -1007,7 +1007,7 @@
        "m": 45.7
       },
       "fh": {
-       "d": 25,
+       "d": 33,
        "m": 83
       },
       "zi": 6,
@@ -1046,7 +1046,7 @@
        "m": 45.7
       },
       "fh": {
-       "d": 25,
+       "d": 33,
        "m": 83
       },
       "zi": 7,
@@ -1088,7 +1088,7 @@
        "m": 45.7
       },
       "fh": {
-       "d": 25,
+       "d": 33,
        "m": 83
       },
       "zi": 7,
@@ -1118,7 +1118,7 @@
     },
     "layout": "full",
     "mh": {
-     "d": 680,
+     "d": 613,
      "m": 1194
     },
     "pad": {
@@ -1169,7 +1169,6 @@
        "m": 562
       },
       "zi": 2,
-      "grp": "gsetp4k6",
       "crop": {
        "x": -0.6,
        "y": -7.1,
@@ -1211,7 +1210,7 @@
        "m": 37.6
       },
       "fh": {
-       "d": 62,
+       "d": 78,
        "m": 60
       },
       "zi": 3,
@@ -1256,55 +1255,10 @@
        "m": 58.5
       },
       "fh": {
-       "d": 62,
+       "d": 78,
        "m": 90
       },
       "zi": 4,
-      "hauto": false,
-      "wsc": {
-       "m": 227,
-       "d": 100
-      }
-     }
-    },
-    {
-     "id": "du3cmk1",
-     "type": "text",
-     "set": {
-      "html": "<h2>لماذا هذا&nbsp; &nbsp;<span style=\"color:#f39a18\">العسل مميز</span></h2>",
-      "fs": {
-       "d": 48,
-       "m": 30
-      },
-      "lh": {
-       "d": 1.3
-      },
-      "ta": {
-       "d": "start"
-      },
-      "color": "#050300",
-      "fw": "900",
-      "cls": "title",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.1,
-      "fx": {
-       "d": 4.1,
-       "m": 65.3
-      },
-      "fy": {
-       "d": -308,
-       "m": -308
-      },
-      "fwd": {
-       "d": 47,
-       "m": 58.5
-      },
-      "fh": {
-       "d": 62,
-       "m": 90
-      },
-      "zi": 5,
       "hauto": false,
       "wsc": {
        "m": 227,
@@ -1338,7 +1292,7 @@
        "m": 3.1
       },
       "fy": {
-       "d": 262,
+       "d": 278,
        "m": 188
       },
       "fwd": {
@@ -1352,7 +1306,7 @@
       "zi": 4,
       "stk": {
        "id": "5ffxdfe",
-       "h": 62
+       "h": 78
       },
       "hauto": false,
       "wsc": {
@@ -1549,13 +1503,13 @@
      "d": [
       10,
       0,
-      46,
+      24,
       0
      ],
      "m": [
       6,
       0,
-      30,
+      24,
       0
      ]
     },
@@ -1692,7 +1646,7 @@
     },
     "layout": "full",
     "mh": {
-     "d": 817
+     "d": 301
     },
     "pad": {
      "d": [
@@ -1843,7 +1797,7 @@
        "d": 10.5
       },
       "fh": {
-       "d": 97
+       "d": 42
       },
       "zi": 3,
       "wsc": {
@@ -1883,7 +1837,7 @@
        "d": 13.3
       },
       "fh": {
-       "d": 65
+       "d": 42
       },
       "zi": 4,
       "wsc": {
@@ -1957,7 +1911,7 @@
        "d": 11.6
       },
       "fh": {
-       "d": 65
+       "d": 42
       },
       "zi": 3,
       "wsc": {
@@ -2254,267 +2208,386 @@
   {
    "id": "3ih6ubv",
    "set": {
-    "layout": "boxed",
+    "cls": "offer-sec",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1220
+     "d": 1274
+    },
+    "layout": "full",
+    "mh": {
+     "d": 970
     },
     "pad": {
      "d": [
       0,
       0,
-      100,
-      0
-     ],
-     "m": [
       0,
-      0,
-      60,
       0
      ]
-    },
-    "gap": {
-     "d": 24
-    },
-    "va": {
-     "d": "stretch"
-    },
-    "cls": "offer-sec"
+    }
    },
    "cols": [
     {
-     "id": "hgiezn6",
-     "set": {
-      "w": {
-       "d": 58,
-       "m": 100
-      },
-      "cls": "bundle"
-     },
-     "widgets": [
-      {
-       "id": "1uw0xhi",
-       "type": "text",
-       "set": {
-        "html": "<p>الأوفر</p>",
-        "fs": {
-         "d": 12,
-         "m": 12
-        },
-        "color": "#fff",
-        "fw": "900",
-        "ta": {
-         "d": "start"
-        },
-        "cls": "ribbon",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "p1h3txv",
-       "type": "text",
-       "set": {
-        "html": "<br>",
-        "fs": {
-         "d": 13,
-         "m": 12
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start"
-        },
-        "color": "#6a6c5b",
-        "fw": "600",
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "bgImg": "assets/img/pages/pg-1794262392056-1.webp",
-        "hauto": false,
-        "mh": {
-         "m": 418,
-         "d": 608
-        },
-        "al": {
-         "m": "start"
-        },
-        "w": {
-         "m": 99.6
-        },
-        "wsc": {
-         "m": 100,
-         "d": 100
-        },
-        "rad": {
-         "m": 38,
-         "d": 102
-        }
-       }
-      },
-      {
-       "id": "gr7yucx",
-       "type": "text",
-       "set": {
-        "html": "عبوتان من ALYSSUM MEMORY FOCUS&nbsp; غ&nbsp;<p>مع قارورة إضافية هدية.</p>",
-        "fs": {
-         "d": 21,
-         "m": 17
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start",
-         "m": "center"
-        },
-        "color": "#123e72",
-        "fw": "700",
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "al": {
-         "d": "start"
-        },
-        "w": {
-         "d": 99.5
-        }
-       }
-      },
-      {
-       "id": "dd98yrn",
-       "type": "button",
-       "set": {
-        "text": "اطلب هذا العرض ↙",
-        "kind": "link",
-        "link": "#order",
-        "bgc": "#f39a18",
-        "color": "#fff",
-        "hbg": "#f39a18",
-        "fs": {
-         "d": 16,
-         "m": 15
-        },
-        "fw": "900",
-        "brad": {
-         "d": 999
-        },
-        "bpad": {
-         "d": [
-          14,
-          25,
-          14,
-          25
-         ]
-        },
-        "al": {
-         "d": "start"
-        },
-        "cls": "btn-or shine",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      }
-     ]
-    },
-    {
-     "id": "cbrkeye",
-     "set": {
-      "w": {
-       "d": 42,
-       "m": 100
-      },
-      "cls": "single"
-     },
-     "widgets": [
-      {
-       "id": "ltt6dk1",
-       "type": "html",
-       "set": {
-        "code": "<div class=\"sj\"><img src=\"/\" alt=\"\" loading=\"lazy\"></div>",
-        "cls": "",
-        "bgImg": "assets/img/pages/pg-1794262754727-3.webp",
-        "mh": {
-         "m": 358,
-         "d": 486
-        },
-        "rad": {
-         "m": 37
-        },
-        "mar": {
-         "m": [
-          0,
-          0,
-          0,
-          0
-         ]
-        }
-       }
-      },
-      {
-       "id": "cxmcp05",
-       "type": "heading",
-       "set": {
-        "text": "عبوة واحدة · 250 غ",
-        "tag": "h3",
-        "fs": {
-         "d": 20,
-         "m": 18
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      },
-      {
-       "id": "10s5uui",
-       "type": "button",
-       "set": {
-        "text": "اطلب عبوة ←",
-        "kind": "link",
-        "link": "#order",
-        "bgc": "#187a3b",
-        "color": "#fff",
-        "hbg": "#187a3b",
-        "fs": {
-         "d": 16,
-         "m": 15
-        },
-        "fw": "900",
-        "brad": {
-         "d": 999
-        },
-        "bpad": {
-         "d": [
-          14,
-          25,
-          14,
-          25
-         ]
-        },
-        "cls": "btn-gr",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      }
-     ]
+     "id": "jfru8ge",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "7adjk10",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#f5d77f",
+      "sw": 1,
+      "dash": "",
+      "rx": 4.5,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 42.5
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 55.5
+      },
+      "fh": {
+       "d": 891
+      },
+      "zi": 1,
+      "ry": 3.6,
+      "sh": "lg",
+      "fgr": {
+       "t": "linear",
+       "a": 120,
+       "s": [
+        {
+         "c": "#ffffff",
+         "o": 1,
+         "p": 0
+        },
+        {
+         "c": "#ffdf8c",
+         "o": 1,
+         "p": 100
+        }
+       ]
+      }
+     }
+    },
+    {
+     "id": "1uw0xhi",
+     "type": "text",
+     "set": {
+      "html": "<p>الأوفر</p>",
+      "fs": {
+       "d": 12,
+       "m": 12
+      },
+      "color": "#fff",
+      "fw": "900",
+      "ta": {
+       "d": "start"
+      },
+      "cls": "ribbon",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 43.4
+      },
+      "fy": {
+       "d": 31
+      },
+      "fwd": {
+       "d": 53.5
+      },
+      "fh": {
+       "d": 33
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "p1h3txv",
+     "type": "text",
+     "set": {
+      "html": "<br>",
+      "fs": {
+       "d": 13,
+       "m": 12
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start"
+      },
+      "color": "#6a6c5b",
+      "fw": "600",
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "bgImg": "assets/img/pages/pg-1794262392056-1.webp",
+      "hauto": false,
+      "wsc": {
+       "m": 100,
+       "d": 100
+      },
+      "rad": {
+       "m": 38,
+       "d": 102
+      },
+      "fx": {
+       "d": 43.4
+      },
+      "fy": {
+       "d": 80
+      },
+      "fwd": {
+       "d": 53.5
+      },
+      "fh": {
+       "d": 608
+      },
+      "zi": 3
+     }
+    },
+    {
+     "id": "gr7yucx",
+     "type": "text",
+     "set": {
+      "html": "عبوتان من ALYSSUM MEMORY FOCUS&nbsp; غ&nbsp;<p>مع قارورة إضافية هدية.</p>",
+      "fs": {
+       "d": 21,
+       "m": 17
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "fw": "700",
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 43.6
+      },
+      "fy": {
+       "d": 704
+      },
+      "fwd": {
+       "d": 53.3
+      },
+      "fh": {
+       "d": 80
+      },
+      "zi": 4
+     }
+    },
+    {
+     "id": "sxhwdtr",
+     "type": "text",
+     "set": {
+      "html": "عبوة واحدة&nbsp; من ALYSSUM MEMORY FOCUS&nbsp;&nbsp;",
+      "fs": {
+       "d": 21,
+       "m": 17
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#123e72",
+      "fw": "700",
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 6.4
+      },
+      "fy": {
+       "d": 704
+      },
+      "fwd": {
+       "d": 33.1
+      },
+      "fh": {
+       "d": 40
+      },
+      "zi": 5
+     }
+    },
+    {
+     "id": "dd98yrn",
+     "type": "button",
+     "set": {
+      "text": "اطلب هذا العرض ↙",
+      "kind": "link",
+      "link": "#order",
+      "bgc": "#f39a18",
+      "color": "#fff",
+      "hbg": "#f39a18",
+      "fs": {
+       "d": 16,
+       "m": 15
+      },
+      "fw": "900",
+      "brad": {
+       "d": 999
+      },
+      "bpad": {
+       "d": [
+        14,
+        25,
+        14,
+        25
+       ]
+      },
+      "cls": "btn-or shine",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 82.2
+      },
+      "fy": {
+       "d": 800
+      },
+      "fwd": {
+       "d": 14.7
+      },
+      "fh": {
+       "d": 61
+      },
+      "zi": 5
+     }
+    },
+    {
+     "id": "fznpwc1",
+     "type": "shape",
+     "set": {
+      "shape": "rect",
+      "fill": "#ffffff",
+      "outline": false,
+      "stroke": "#f1e7d3",
+      "sw": 1,
+      "dash": "",
+      "rx": 6.2,
+      "keep": false,
+      "flip": "",
+      "al": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 1.9
+      },
+      "fy": {
+       "d": 12
+      },
+      "fwd": {
+       "d": 40.2
+      },
+      "fh": {
+       "d": 891
+      },
+      "zi": 1,
+      "ry": 3.6,
+      "sh": "lg"
+     }
+    },
+    {
+     "id": "ltt6dk1",
+     "type": "html",
+     "set": {
+      "code": "<div class=\"sj\"><img src=\"/\" alt=\"\" loading=\"lazy\"></div>",
+      "cls": "",
+      "bgImg": "assets/img/pages/pg-1794262754727-3.webp",
+      "rad": {
+       "m": 37,
+       "d": 59
+      },
+      "fx": {
+       "d": 2.9
+      },
+      "fy": {
+       "d": 97
+      },
+      "fwd": {
+       "d": 38.2
+      },
+      "fh": {
+       "d": 486
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "10s5uui",
+     "type": "button",
+     "set": {
+      "text": "اطلب عبوة ←",
+      "kind": "link",
+      "link": "#order",
+      "bgc": "#187a3b",
+      "color": "#fff",
+      "hbg": "#187a3b",
+      "fs": {
+       "d": 16,
+       "m": 15
+      },
+      "fw": "900",
+      "brad": {
+       "d": 999
+      },
+      "bpad": {
+       "d": [
+        14,
+        25,
+        14,
+        25
+       ]
+      },
+      "cls": "btn-gr",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 27.5
+      },
+      "fy": {
+       "d": 810
+      },
+      "fwd": {
+       "d": 11.7
+      },
+      "fh": {
+       "d": 55
+      },
+      "zi": 4
+     }
+    }
+   ]
   },
   {
    "id": "yziy3ti",
@@ -2610,181 +2683,219 @@
   {
    "id": "uuep26q",
    "set": {
-    "layout": "boxed",
+    "cls": "use-sec",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1220
+     "d": 1274
+    },
+    "layout": "full",
+    "mh": {
+     "d": 566
     },
     "pad": {
      "d": [
       0,
       0,
-      100,
-      0
-     ],
-     "m": [
       0,
-      0,
-      60,
       0
      ]
-    },
-    "gap": {
-     "d": 50
-    },
-    "va": {
-     "d": "center"
-    },
-    "cls": "use-sec"
+    }
    },
    "cols": [
     {
-     "id": "eub3csc",
-     "set": {
-      "w": {
-       "d": 40,
-       "m": 100
-      },
-      "cls": "use-col"
-     },
-     "widgets": [
-      {
-       "id": "wr8j7cc",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/presentation/01.webp",
-        "alt": "طفلة تبتسم في مكتبها وبيدها عبوة عسل أليسوم",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 0,
-         "m": 32
-        },
-        "cls": "use-photo",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      }
-     ]
-    },
-    {
-     "id": "vdgnzqk",
-     "set": {
-      "w": {
-       "d": 60,
-       "m": 100
-      }
-     },
-     "widgets": [
-      {
-       "id": "xmn7diu",
-       "type": "iconbox",
-       "set": {
-        "icon": "1",
-        "title": "من 5 الى 15 سنة",
-        "text": "ملعقة صغيرة . مرة أو مرتين في اليوم",
-        "al": {
-         "d": "start"
-        },
-        "isz": {
-         "d": 22,
-         "m": 18
-        },
-        "tc": "#123e72",
-        "xc": "#627487",
-        "tfs": {
-         "d": 17,
-         "m": 16
-        },
-        "xfs": {
-         "d": 13,
-         "m": 13
-        },
-        "cls": "step2"
-       }
-      },
-      {
-       "id": "41ipty8",
-       "type": "iconbox",
-       "set": {
-        "icon": "2",
-        "title": "من 12 الى 18 سنة",
-        "text": "ملعقة صغيرة. مرتين أو ثلاث في اليوم",
-        "al": {
-         "d": "start"
-        },
-        "isz": {
-         "d": 22,
-         "m": 18
-        },
-        "tc": "#123e72",
-        "xc": "#627487",
-        "tfs": {
-         "d": 17,
-         "m": 16
-        },
-        "xfs": {
-         "d": 13,
-         "m": 13
-        },
-        "cls": "step2"
-       }
-      },
-      {
-       "id": "is09rv7",
-       "type": "iconbox",
-       "set": {
-        "icon": "3",
-        "title": "أكبر من 18 سنة",
-        "text": "ملعقة صغيرة ثلاث مرات في اليوم",
-        "al": {
-         "d": "start"
-        },
-        "isz": {
-         "d": 22,
-         "m": 18
-        },
-        "tc": "#123e72",
-        "xc": "#627487",
-        "tfs": {
-         "d": 17,
-         "m": 16
-        },
-        "xfs": {
-         "d": 13,
-         "m": 13
-        },
-        "cls": "step2"
-       }
-      },
-      {
-       "id": "3z6oc3k",
-       "type": "text",
-       "set": {
-        "html": "يستحسن عدم استعماله قبل النوم",
-        "fs": {
-         "d": 12,
-         "m": 15
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "start",
-         "m": "center"
-        },
-        "color": "#78684c",
-        "fw": "600",
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      }
-     ]
+     "id": "5ydowrm",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "wr8j7cc",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/presentation/01.webp",
+      "alt": "طفلة تبتسم في مكتبها وبيدها عبوة عسل أليسوم",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 53,
+       "m": 32
+      },
+      "cls": "use-photo",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 61.6
+      },
+      "fy": {
+       "d": 0
+      },
+      "fwd": {
+       "d": 34.4
+      },
+      "fh": {
+       "d": 438
+      },
+      "zi": 2,
+      "grp": "gz9vo0ib"
+     }
+    },
+    {
+     "id": "xmn7diu",
+     "type": "iconbox",
+     "set": {
+      "icon": "1",
+      "title": "من 5 الى 15 سنة",
+      "text": "ملعقة صغيرة . مرة أو مرتين في اليوم",
+      "isz": {
+       "d": 22,
+       "m": 18
+      },
+      "tc": "#123e72",
+      "xc": "#627487",
+      "tfs": {
+       "d": 24,
+       "m": 16
+      },
+      "xfs": {
+       "d": 23,
+       "m": 13
+      },
+      "cls": "step2",
+      "fx": {
+       "d": 4.1
+      },
+      "fy": {
+       "d": 36
+      },
+      "fwd": {
+       "d": 53.5
+      },
+      "fh": {
+       "d": 98
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "41ipty8",
+     "type": "iconbox",
+     "set": {
+      "icon": "2",
+      "title": "من 12 الى 18 سنة",
+      "text": "ملعقة صغيرة. مرتين أو ثلاث في اليوم",
+      "isz": {
+       "d": 22,
+       "m": 18
+      },
+      "tc": "#123e72",
+      "xc": "#627487",
+      "tfs": {
+       "d": 24,
+       "m": 16
+      },
+      "xfs": {
+       "d": 23,
+       "m": 13
+      },
+      "cls": "step2",
+      "fx": {
+       "d": 4.1
+      },
+      "fy": {
+       "d": 184
+      },
+      "fwd": {
+       "d": 53.5
+      },
+      "fh": {
+       "d": 108
+      },
+      "zi": 3
+     }
+    },
+    {
+     "id": "3z6oc3k",
+     "type": "text",
+     "set": {
+      "html": "يستحسن عدم استعماله قبل النوم",
+      "fs": {
+       "d": 20,
+       "m": 15
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "start",
+       "m": "center"
+      },
+      "color": "#78684c",
+      "fw": "600",
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "d": 32.5
+      },
+      "fy": {
+       "d": 470
+      },
+      "fwd": {
+       "d": 24.7
+      },
+      "fh": {
+       "d": 25
+      },
+      "zi": 5,
+      "hauto": false,
+      "wsc": {
+       "d": 106
+      }
+     }
+    },
+    {
+     "id": "is09rv7",
+     "type": "iconbox",
+     "set": {
+      "icon": "3",
+      "title": "أكبر من 18 سنة",
+      "text": "ملعقة صغيرة ثلاث مرات في اليوم",
+      "isz": {
+       "d": 22,
+       "m": 18
+      },
+      "tc": "#123e72",
+      "xc": "#627487",
+      "tfs": {
+       "d": 24,
+       "m": 16
+      },
+      "xfs": {
+       "d": 23,
+       "m": 13
+      },
+      "cls": "step2",
+      "fx": {
+       "d": 4.7
+      },
+      "fy": {
+       "d": 328
+      },
+      "fwd": {
+       "d": 53.2
+      },
+      "fh": {
+       "d": 98
+      },
+      "zi": 6
+     }
+    }
+   ]
   },
   {
    "id": "2ct3xm3",
@@ -2851,8 +2962,7 @@
       "fh": {
        "d": 42
       },
-      "zi": 2,
-      "grp": "gc5nwxn3"
+      "zi": 2
      }
     },
     {
@@ -2886,10 +2996,9 @@
        "d": 93.9
       },
       "fh": {
-       "d": 62
+       "d": 78
       },
-      "zi": 3,
-      "grp": "gc5nwxn3"
+      "zi": 3
      }
     },
     {
@@ -2925,8 +3034,7 @@
       "fh": {
        "d": 30
       },
-      "zi": 4,
-      "grp": "gc5nwxn3"
+      "zi": 4
      }
     }
    ]
@@ -2943,7 +3051,7 @@
     },
     "layout": "full",
     "mh": {
-     "d": 1697
+     "d": 925
     },
     "pad": {
      "d": [
@@ -3289,8 +3397,7 @@
       "fh": {
        "d": 237
       },
-      "zi": 2,
-      "grp": "gmc59deo"
+      "zi": 2
      }
     },
     {
@@ -3324,8 +3431,7 @@
       "fh": {
        "d": 107
       },
-      "zi": 3,
-      "grp": "gmc59deo"
+      "zi": 3
      }
     },
     {
@@ -3361,8 +3467,7 @@
       "fh": {
        "d": 23
       },
-      "zi": 4,
-      "grp": "gmc59deo"
+      "zi": 4
      }
     }
    ]
@@ -3378,13 +3483,13 @@
      "d": [
       0,
       0,
-      90,
+      24,
       0
      ],
      "m": [
       0,
       0,
-      50,
+      24,
       0
      ]
     },
@@ -3413,7 +3518,7 @@
        "set": {
         "html": "<p>ALYSSUM · MEMORY FOCUS</p>",
         "fs": {
-         "d": 13,
+         "d": 23,
          "m": 13
         },
         "color": "#fff",
@@ -3457,7 +3562,7 @@
        "set": {
         "html": "اطلب عسل التركيز وتنشيط الذاكرة . واعط ابنك فرصة للتفوق&nbsp;",
         "fs": {
-         "d": 16,
+         "d": 23,
          "m": 14
         },
         "lh": {
@@ -3506,7 +3611,16 @@
         "cls": "btn-or shine",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "w": {
+         "d": 44.8
+        },
+        "wsc": {
+         "d": 153
+        },
+        "mh": {
+         "d": 60
+        }
        }
       }
      ]
@@ -3521,24 +3635,25 @@
       "alt": "",
       "fit": "cover",
       "fx": {
-       "d": 19.5,
+       "d": 6.1,
        "m": 4.6
       },
       "fy": {
-       "d": 296,
+       "d": 86,
        "m": 314
       },
       "fwd": {
-       "d": 30,
+       "d": 43.9,
        "m": 61.5
       },
       "fh": {
-       "d": 280,
+       "d": 409,
        "m": 239
       },
       "zi": 1,
       "rad": {
-       "m": 36
+       "m": 36,
+       "d": 54
       },
       "crop": {
        "x": -1.1,
@@ -3561,13 +3676,13 @@
      "d": [
       80,
       0,
-      70,
+      24,
       0
      ],
      "m": [
       50,
       0,
-      40,
+      24,
       0
      ]
     },
@@ -3596,10 +3711,10 @@
        "set": {
         "html": "<p>أكمل طلبك</p>",
         "fs": {
-         "d": 13,
-         "m": 13
+         "d": 26,
+         "m": 22
         },
-        "color": "#bfe8a8",
+        "color": "#ffffff",
         "fw": "900",
         "ta": {
          "d": "center"
@@ -3607,7 +3722,10 @@
         "cls": "kick",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "lh": {
+         "d": 1.6
+        }
        }
       },
       {
@@ -3683,7 +3801,15 @@
         "auto": true,
         "fcp": false,
         "fgp": false,
-        "fwa": false
+        "fwa": false,
+        "al": {
+         "d": "start"
+        },
+        "w": {
+         "d": 100
+        },
+        "stk": true,
+        "fsc": "zones"
        }
       }
      ]
