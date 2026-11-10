@@ -310,6 +310,7 @@ body{overflow-x:hidden;margin:0}`;
     frame.addEventListener("load", () => { let off = false; try { off = frame.contentWindow.location.href !== "about:srcdoc"; } catch (x) { off = true; } if (off) { frame.srcdoc = FRAMEDOC; return; }      // حماية: إن انتقل الإطار إلى صفحة أخرى يُعاد إلى إطار المحرر تلقائياً
       fdoc = frame.contentDocument; root = fdoc.getElementById("pbr"); styleEl = fdoc.getElementById("pbs"); wireFrame(); if (E.page) renderCanvas(); });
     $("pbx-stage").addEventListener("scroll", () => positionOverlay());
+    $("pbx-stage").addEventListener("mousedown", e => { if ((e.target === $("pbx-stage") || e.target.id === "pbx-sc" || e.target.id === "pbx-fw") && E.sel && !E.busy) select(null); });      // النقر على فراغ المنصة خارج الصفحة يزيل التحديد
     const wheelZoom = e => { if (wheelOn(e)) { e.preventDefault(); setZoom((E.zoom || 1) * wheelStep(e)); } };
     $("pbx-stage").addEventListener("wheel", wheelZoom, { passive: false });
     { let pz = null; const st = $("pbx-stage"), d2 = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
@@ -810,7 +811,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       }
       const ic = e.target.closest("[data-icon]"); if (ic && !(E.md && E.md.moved)) { const wI = ic.closest('[data-kind="widget"]'); if (wI) { select(wI.dataset.pb); e.preventDefault(); return openIconPicker(ic, wI.dataset.pb); } }
       const ed = e.target.closest("[data-edit]"); if (ed && !(E.md && E.md.moved)) { const wE = ed.closest('[data-kind="widget"]'); if (wE && E.md && E.md.sel === wE.dataset.pb) { e.preventDefault(); return startEdit(ed); } }      // نقرة على نص داخل عنصر محدَّد = تحرير مباشر
-      const el = e.target.closest("[data-pb]"); if (el) { const w = e.target.closest('[data-kind="widget"]'); if (FREE_ONLY && !w) select(null); else select((w || el).dataset.pb); } else select(null);
+      const el = e.target.closest("[data-pb]"); if (el) { const w = e.target.closest('[data-kind="widget"]'), cur = E.sel && find(E.sel); if (FREE_ONLY && !w) select(null); else if (!w && cur && cur.kind === "widget") select(null); else select((w || el).dataset.pb); } else select(null);      // نقرة على فراغ بينما عنصر محدَّد: يزول التحديد (لا ينتقل إلى القسم/العمود)
     }, true);
     fdoc.addEventListener("submit", e => e.preventDefault(), true);
     fdoc.addEventListener("mousemove", e => { if (E.busy || (e.buttons & 1)) return; const se = e.target.closest && e.target.closest(".pb-sec"); if (se && se.dataset.pb && se.dataset.pb !== E.hs) { E.hs = se.dataset.pb; positionOverlay(); } });      // شريط القسم يتبع القسم تحت المؤشر
