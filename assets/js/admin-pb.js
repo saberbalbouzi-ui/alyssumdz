@@ -3527,6 +3527,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       if (cs) { const fs = parseFloat(cs.fontSize), lh = parseFloat(cs.lineHeight);
         if (keys.includes("fs") && st.fs === undefined && fs) st.fs = { d: Math.round(fs) }; if (keys.includes("color") && st.color === undefined && hex(cs.color)) st.color = hex(cs.color); if (keys.includes("fw") && st.fw === undefined) st.fw = String(cs.fontWeight); if (keys.includes("lh") && st.lh === undefined && lh && fs) st.lh = { d: Math.round(lh / fs * 100) / 100 }; }
     } catch (x) { } }
+    if (!keys.includes("wsc")) keys.push("wsc"); if (inf.set.wsc !== undefined) st.wsc = clone(inf.set.wsc);      // «حجم محتوى العنصر %» (يكبّر النص بسحب الزوايا) جزء من النمط: يُنسخ، ومن لا يملكه يُزال عن الهدف فتتساوى أحجام الخطوط
     if (sizeToo(inf)) SIZE_KEYS.forEach(k => { if (inf.set[k] !== undefined) { if (!keys.includes(k)) keys.push(k); st[k] = clone(inf.set[k]); } });
     E.styleClip = { keys, st, size: sizeToo(inf) }; toast("🎨 نُسخ نمط العنصر" + (E.styleClip.size ? " وحجمه" : "") + " — حدّد عنصراً آخر وانقر «لصق النمط»"); }
   /* فرشاة النمط: انقر الأيقونة وعنصر محدَّد ← يُنسخ نمطه فوراً، ثم انقر أي عنصر آخر ← يُلصق عليه مباشرة (Esc أو الأيقونة ثانيةً للإلغاء) */
@@ -3552,7 +3553,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); toast("🎨 طُبِّق نمط النص");
   }
   function pasteStyle() {
-    const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf));
+    const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf)); have.add("wsc");
     if (E.styleClip.size && sizeToo(inf)) SIZE_KEYS.forEach(k => have.add(k));      // الحجم يُلصق على صورة حرة فقط (داخل عمود يتحكم العمود بعرضها)
     E.styleClip.keys.forEach(k => { if (!have.has(k)) return; if (k in E.styleClip.st) inf.set[k] = clone(E.styleClip.st[k]); else if (!SIZE_KEYS.includes(k)) delete inf.set[k]; });
     if (inf.node.type === "text" && typeof inf.set.html === "string" && /\s(style|class|color|face|size)=|<font/i.test(inf.set.html)) inf.set.html = plainFmtHtml(inf.set.html);      // تنسيق مضمَّن (من لصق خارجي) يمنع ظهور النمط المنسوخ
