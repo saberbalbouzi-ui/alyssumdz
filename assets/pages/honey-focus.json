@@ -491,118 +491,148 @@
   {
    "id": "wcuj071",
    "set": {
-    "layout": "boxed",
+    "cls": "prob-sec",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1220
+     "d": 1274
+    },
+    "layout": "full",
+    "mh": {
+     "d": 433
     },
     "pad": {
      "d": [
-      100,
       0,
-      20,
-      0
-     ],
-     "m": [
-      70,
       0,
-      10,
+      0,
       0
      ]
-    },
-    "gap": {
-     "d": 24
-    },
-    "va": {
-     "d": "center"
-    },
-    "cls": "prob-sec"
+    }
    },
    "cols": [
     {
-     "id": "50tn6jg",
-     "set": {
-      "w": {
-       "d": 100,
-       "m": 100
-      }
-     },
-     "widgets": [
-      {
-       "id": "wmbacg9",
-       "type": "text",
-       "set": {
-        "html": "<p>فهم التحديات اليومية</p>",
-        "fs": {
-         "d": 26,
-         "m": 22
-        },
-        "color": "#187a3b",
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "cls": "kick",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "l4qkisk",
-       "type": "text",
-       "set": {
-        "html": "<h2>كل طفل يتعلّم <span style=\"color:#f39a18\">بطريقته</span></h2>",
-        "fs": {
-         "d": 48,
-         "m": 30
-        },
-        "lh": {
-         "d": 1.3
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "fw": "900",
-        "cls": "title",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "1bu6q49",
-       "type": "text",
-       "set": {
-        "html": "تختلف أجواء الدراسة من يوم لآخر. تنظيم البيئة، والراحة، والتغذية المتوازنة خطوات مهمة لبناء روتين أكثر هدوءًا.",
-        "fs": {
-         "d": 31,
-         "m": 14
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#003975",
-        "fw": "700",
-        "cls": "sub",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "al": {
-         "d": "start"
-        },
-        "w": {
-         "d": 100
-        }
-       }
-      }
-     ]
+     "id": "z7z1wtl",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "wmbacg9",
+     "type": "text",
+     "set": {
+      "html": "<p>فهم التحديات اليومية</p>",
+      "fs": {
+       "d": 26,
+       "m": 22
+      },
+      "color": "#187a3b",
+      "fw": "900",
+      "ta": {
+       "d": "center"
+      },
+      "cls": "kick",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 4.6
+      },
+      "fy": {
+       "d": 99
+      },
+      "fwd": {
+       "d": 93.9
+      },
+      "fh": {
+       "d": 42
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "l4qkisk",
+     "type": "text",
+     "set": {
+      "html": "<h2>كل طفل يتعلّم <span style=\"color:#f39a18\">بطريقته</span></h2>",
+      "fs": {
+       "d": 48,
+       "m": 30
+      },
+      "lh": {
+       "d": 1.3
+      },
+      "ta": {
+       "d": "center"
+      },
+      "color": "#123e72",
+      "fw": "900",
+      "cls": "title",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 4.6
+      },
+      "fy": {
+       "d": 152
+      },
+      "fwd": {
+       "d": 93.9
+      },
+      "fh": {
+       "d": 62
+      },
+      "zi": 3,
+      "stk": {
+       "id": "wmbacg9",
+       "h": 42
+      }
+     }
+    },
+    {
+     "id": "1bu6q49",
+     "type": "text",
+     "set": {
+      "html": "تختلف أجواء الدراسة من يوم لآخر. تنظيم البيئة، والراحة، والتغذية المتوازنة خطوات مهمة لبناء روتين أكثر هدوءًا.",
+      "fs": {
+       "d": 31,
+       "m": 14
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "center"
+      },
+      "color": "#003975",
+      "fw": "700",
+      "cls": "sub",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 15.6
+      },
+      "fy": {
+       "d": 225
+      },
+      "fwd": {
+       "d": 71.8
+      },
+      "fh": {
+       "d": 177
+      },
+      "zi": 4,
+      "stk": {
+       "id": "l4qkisk",
+       "h": 62
+      }
+     }
+    }
+   ]
   },
   {
    "id": "qb9a8ky",
@@ -940,49 +970,13 @@
       },
       "zi": 5,
       "hauto": false,
-      "color": "#f45252",
+      "color": "#123e72",
       "wsc": {
        "m": 147,
        "d": 100
-      }
-     }
-    },
-    {
-     "id": "591snww",
-     "type": "heading",
-     "set": {
-      "text": "دعم العادات الجيدة",
-      "tag": "h2",
-      "fs": {
-       "d": 18,
-       "m": 28
       },
-      "fw": "800",
-      "ta": {
-       "d": "center"
-      },
-      "fx": {
-       "d": 3.1,
-       "m": 0.9
-      },
-      "fy": {
-       "d": 290,
-       "m": 1187
-      },
-      "fwd": {
-       "d": 22.3,
-       "m": 45.7
-      },
-      "fh": {
-       "d": 25,
-       "m": 83
-      },
-      "zi": 6,
-      "hauto": false,
-      "color": "#f45252",
-      "wsc": {
-       "m": 147,
-       "d": 100
+      "lh": {
+       "d": 1.6
       }
      }
     },
@@ -1018,7 +1012,7 @@
       },
       "zi": 6,
       "hauto": false,
-      "color": "#f45252",
+      "color": "#123e72",
       "wsc": {
        "m": 147,
        "d": 100
@@ -1057,10 +1051,13 @@
       },
       "zi": 7,
       "hauto": false,
-      "color": "#f45252",
+      "color": "#123e72",
       "wsc": {
        "m": 147,
        "d": 100
+      },
+      "lh": {
+       "d": 1.6
       }
      }
     }
@@ -1374,6 +1371,44 @@
        "d": 100
       }
      }
+    },
+    {
+     "id": "591snww",
+     "type": "heading",
+     "set": {
+      "text": "دعم العادات الجيدة",
+      "tag": "h2",
+      "fs": {
+       "d": 18,
+       "m": 28
+      },
+      "fw": "800",
+      "ta": {
+       "d": "center"
+      },
+      "fx": {
+       "d": 1.1
+      },
+      "fy": {
+       "d": 24
+      },
+      "fwd": {
+       "d": 22.3
+      },
+      "fh": {
+       "d": 25
+      },
+      "zi": 6,
+      "hauto": false,
+      "color": "#123e72",
+      "wsc": {
+       "m": 147,
+       "d": 100
+      },
+      "lh": {
+       "d": 1.6
+      }
+     }
     }
    ]
   },
@@ -1423,7 +1458,7 @@
        "set": {
         "html": "<p>من الطبيعة إلى العبوة</p>",
         "fs": {
-         "d": 13,
+         "d": 26,
          "m": 22
         },
         "color": "#187a3b",
@@ -1434,7 +1469,10 @@
         "cls": "kick",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "lh": {
+         "d": 1.6
+        }
        }
       },
       {
@@ -1466,7 +1504,7 @@
        "set": {
         "html": "اعتمد دائمًا على قائمة المكونات المطبوعة على عبوة المنتج لتأكيد التركيبة الدقيقة.",
         "fs": {
-         "d": 16,
+         "d": 36,
          "m": 14
         },
         "lh": {
@@ -1475,7 +1513,7 @@
         "ta": {
          "d": "center"
         },
-        "color": "#627487",
+        "color": "#000000",
         "fw": "600",
         "cls": "sub",
         "anim": "fadeUp",
@@ -1536,7 +1574,7 @@
         "fit": "cover",
         "hauto": true,
         "rad": {
-         "d": 0,
+         "d": 53,
          "m": 28
         },
         "cls": "ing-feat",
@@ -1563,7 +1601,7 @@
         "text": "مظهر طبيعي، وذوق لذيذ",
         "tag": "h3",
         "fs": {
-         "d": 30,
+         "d": 42,
          "m": 24
         },
         "fw": "900",
@@ -1587,7 +1625,7 @@
        "set": {
         "html": "تجمع هوية المنتج بين لون العسل الذهبي ولمسات النباتات الخضراء. اقرأ ملصق العبوة للتعرّف على المكونات وطريقة الحفظ المناسبة.",
         "fs": {
-         "d": 15,
+         "d": 26,
          "m": 14
         },
         "lh": {
@@ -1612,14 +1650,16 @@
         "code": "<div class=\"pills\"><span>عسل طبيعي</span><span>الجنكة</span><span>إكليل الجبل</span><span>الريحان</span><span>الزبيب</span></div>",
         "cls": "",
         "al": {
-         "m": "end"
+         "m": "end",
+         "d": "start"
         },
         "w": {
-         "m": 100
+         "m": 100,
+         "d": 100
         },
         "wsc": {
          "m": 76,
-         "d": 100
+         "d": 132
         }
        }
       }
@@ -1633,15 +1673,14 @@
    "set": {
     "cls": "ing-sec",
     "kind": "canvas",
-    "scaled": false,
-    "dw": 1280,
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1280
+     "d": 1274
     },
     "layout": "full",
     "mh": {
-     "d": 315,
-     "m": 699
+     "d": 817
     },
     "pad": {
      "d": [
@@ -1654,50 +1693,12 @@
    },
    "cols": [
     {
-     "id": "gvhfm8r",
+     "id": "0f22t3x",
      "set": {},
      "widgets": []
     }
    ],
    "free": [
-    {
-     "id": "rxzrpe8",
-     "type": "shape",
-     "set": {
-      "shape": "rect",
-      "fill": "#ffffff",
-      "outline": false,
-      "stroke": "#edf0e2",
-      "sw": 1,
-      "dash": "",
-      "rx": 11.9,
-      "keep": false,
-      "flip": "",
-      "al": {
-       "d": "center"
-      },
-      "fx": {
-       "d": 81.8,
-       "m": 50
-      },
-      "fy": {
-       "d": 0,
-       "m": 0
-      },
-      "fwd": {
-       "d": 15.8,
-       "m": 50
-      },
-      "fh": {
-       "d": 215,
-       "m": 213
-      },
-      "zi": 1,
-      "ry": 11.2,
-      "grp": "gq847246",
-      "sh": "sm"
-     }
-    },
     {
      "id": "r5405kf",
      "type": "image",
@@ -1714,23 +1715,19 @@
       "animDur": 0.75,
       "animDelay": 0,
       "fx": {
-       "d": 83.9,
-       "m": 56
+       "d": 84.1
       },
       "fy": {
-       "d": 15,
-       "m": 15
+       "d": 15
       },
       "fwd": {
-       "d": 11.7,
-       "m": 38
+       "d": 11.8
       },
       "fh": {
-       "d": 150,
-       "m": 148
+       "d": 150
       },
       "zi": 2,
-      "grp": "gq847246"
+      "grp": "g8rm5qg0"
      }
     },
     {
@@ -1741,12 +1738,11 @@
       "tag": "h3",
       "fs": {
        "d": 14,
-       "m": 14
+       "m": 12
       },
       "fw": "900",
       "ta": {
-       "d": "center",
-       "m": "center"
+       "d": "center"
       },
       "color": "#123e72",
       "lh": {
@@ -1757,61 +1753,19 @@
       "animDur": 0.75,
       "animDelay": 0,
       "fx": {
-       "d": 81.8,
-       "m": 50
+       "d": 85.9
       },
       "fy": {
-       "d": 178,
-       "m": 176
+       "d": 178
       },
       "fwd": {
-       "d": 15.8,
-       "m": 50
+       "d": 8.2
       },
       "fh": {
-       "d": 18,
-       "m": 18
+       "d": 18
       },
       "zi": 3,
-      "grp": "gq847246"
-     }
-    },
-    {
-     "id": "ha6i1o3",
-     "type": "shape",
-     "set": {
-      "shape": "rect",
-      "fill": "#ffffff",
-      "outline": false,
-      "stroke": "#edf0e2",
-      "sw": 1,
-      "dash": "",
-      "rx": 11.9,
-      "keep": false,
-      "flip": "",
-      "al": {
-       "d": "center"
-      },
-      "fx": {
-       "d": 66,
-       "m": 0
-      },
-      "fy": {
-       "d": 0,
-       "m": 0
-      },
-      "fwd": {
-       "d": 15.8,
-       "m": 50
-      },
-      "fh": {
-       "d": 215,
-       "m": 213
-      },
-      "zi": 1,
-      "ry": 11.2,
-      "grp": "gwz50mk9",
-      "sh": "sm"
+      "grp": "g8rm5qg0"
      }
     },
     {
@@ -1833,23 +1787,19 @@
        "d": 100
       },
       "fx": {
-       "d": 68.1,
-       "m": 6
+       "d": 68.2
       },
       "fy": {
-       "d": 15,
-       "m": 15
+       "d": 15
       },
       "fwd": {
-       "d": 11.7,
-       "m": 38
+       "d": 11.8
       },
       "fh": {
-       "d": 150,
-       "m": 148
+       "d": 150
       },
       "zi": 2,
-      "grp": "gwz50mk9"
+      "grp": "gsuw0cx5"
      }
     },
     {
@@ -1860,12 +1810,11 @@
       "tag": "h3",
       "fs": {
        "d": 14,
-       "m": 14
+       "m": 12
       },
       "fw": "900",
       "ta": {
-       "d": "center",
-       "m": "center"
+       "d": "center"
       },
       "color": "#123e72",
       "lh": {
@@ -1876,61 +1825,19 @@
       "animDur": 0.75,
       "animDelay": 0.1,
       "fx": {
-       "d": 66,
-       "m": 0
+       "d": 72.4
       },
       "fy": {
-       "d": 178,
-       "m": 176
+       "d": 178
       },
       "fwd": {
-       "d": 15.8,
-       "m": 50
+       "d": 3.4
       },
       "fh": {
-       "d": 18,
-       "m": 18
+       "d": 18
       },
       "zi": 3,
-      "grp": "gwz50mk9"
-     }
-    },
-    {
-     "id": "nkymsjz",
-     "type": "shape",
-     "set": {
-      "shape": "rect",
-      "fill": "#ffffff",
-      "outline": false,
-      "stroke": "#edf0e2",
-      "sw": 1,
-      "dash": "",
-      "rx": 11.9,
-      "keep": false,
-      "flip": "",
-      "al": {
-       "d": "center"
-      },
-      "fx": {
-       "d": 50.2,
-       "m": 50
-      },
-      "fy": {
-       "d": 0,
-       "m": 213
-      },
-      "fwd": {
-       "d": 15.8,
-       "m": 50
-      },
-      "fh": {
-       "d": 215,
-       "m": 213
-      },
-      "zi": 1,
-      "ry": 11.2,
-      "grp": "g78qf0rt",
-      "sh": "sm"
+      "grp": "gsuw0cx5"
      }
     },
     {
@@ -1949,23 +1856,19 @@
       "animDur": 0.75,
       "animDelay": 0.2,
       "fx": {
-       "d": 52.2,
-       "m": 56
+       "d": 52.3
       },
       "fy": {
-       "d": 15,
-       "m": 228
+       "d": 15
       },
       "fwd": {
-       "d": 11.7,
-       "m": 38
+       "d": 11.8
       },
       "fh": {
-       "d": 150,
-       "m": 148
+       "d": 150
       },
       "zi": 2,
-      "grp": "g78qf0rt"
+      "grp": "gh0v5l7k"
      }
     },
     {
@@ -1976,12 +1879,11 @@
       "tag": "h3",
       "fs": {
        "d": 14,
-       "m": 14
+       "m": 12
       },
       "fw": "900",
       "ta": {
-       "d": "center",
-       "m": "center"
+       "d": "center"
       },
       "color": "#123e72",
       "lh": {
@@ -1992,61 +1894,19 @@
       "animDur": 0.75,
       "animDelay": 0.2,
       "fx": {
-       "d": 50.2,
-       "m": 50
+       "d": 55.2
       },
       "fy": {
-       "d": 178,
-       "m": 389
+       "d": 178
       },
       "fwd": {
-       "d": 15.8,
-       "m": 50
+       "d": 5.9
       },
       "fh": {
-       "d": 18,
-       "m": 18
+       "d": 18
       },
       "zi": 3,
-      "grp": "g78qf0rt"
-     }
-    },
-    {
-     "id": "xecgos3",
-     "type": "shape",
-     "set": {
-      "shape": "rect",
-      "fill": "#ffffff",
-      "outline": false,
-      "stroke": "#edf0e2",
-      "sw": 1,
-      "dash": "",
-      "rx": 11.9,
-      "keep": false,
-      "flip": "",
-      "al": {
-       "d": "center"
-      },
-      "fx": {
-       "d": 34.4,
-       "m": 0
-      },
-      "fy": {
-       "d": 0,
-       "m": 213
-      },
-      "fwd": {
-       "d": 15.8,
-       "m": 50
-      },
-      "fh": {
-       "d": 215,
-       "m": 213
-      },
-      "zi": 1,
-      "ry": 11.2,
-      "grp": "g10gkwsb",
-      "sh": "sm"
+      "grp": "gh0v5l7k"
      }
     },
     {
@@ -2065,23 +1925,18 @@
       "animDur": 0.75,
       "animDelay": 0.3,
       "fx": {
-       "d": 36.4,
-       "m": 6
+       "d": 29.8
       },
       "fy": {
-       "d": 15,
-       "m": 228
+       "d": 4
       },
       "fwd": {
-       "d": 11.7,
-       "m": 38
+       "d": 11.8
       },
       "fh": {
-       "d": 150,
-       "m": 148
+       "d": 150
       },
-      "zi": 2,
-      "grp": "g10gkwsb"
+      "zi": 2
      }
     },
     {
@@ -2092,12 +1947,11 @@
       "tag": "h3",
       "fs": {
        "d": 14,
-       "m": 14
+       "m": 12
       },
       "fw": "900",
       "ta": {
-       "d": "center",
-       "m": "center"
+       "d": "center"
       },
       "color": "#123e72",
       "lh": {
@@ -2108,61 +1962,26 @@
       "animDur": 0.75,
       "animDelay": 0.3,
       "fx": {
-       "d": 34.4,
-       "m": 0
+       "d": 30.7
       },
       "fy": {
-       "d": 178,
-       "m": 389
+       "d": 207
       },
       "fwd": {
-       "d": 15.8,
-       "m": 50
+       "d": 8.9
       },
       "fh": {
-       "d": 18,
-       "m": 18
+       "d": 58
       },
       "zi": 3,
-      "grp": "g10gkwsb"
-     }
-    },
-    {
-     "id": "70y5qaa",
-     "type": "shape",
-     "set": {
-      "shape": "rect",
-      "fill": "#ffffff",
-      "outline": false,
-      "stroke": "#edf0e2",
-      "sw": 1,
-      "dash": "",
-      "rx": 11.9,
-      "keep": false,
-      "flip": "",
-      "al": {
-       "d": "center"
+      "hauto": false,
+      "wsc": {
+       "d": 245
       },
-      "fx": {
-       "d": 18.5,
-       "m": 50
-      },
-      "fy": {
-       "d": 0,
-       "m": 425
-      },
-      "fwd": {
-       "d": 15.8,
-       "m": 50
-      },
-      "fh": {
-       "d": 215,
-       "m": 213
-      },
-      "zi": 1,
-      "ry": 11.2,
-      "grp": "gbsu2p2a",
-      "sh": "sm"
+      "stk": {
+       "id": "lh4pexp",
+       "h": 150
+      }
      }
     },
     {
@@ -2181,23 +2000,18 @@
       "animDur": 0.75,
       "animDelay": 0.4,
       "fx": {
-       "d": 20.6,
-       "m": 56
+       "d": 7.4
       },
       "fy": {
-       "d": 15,
-       "m": 440
+       "d": 13
       },
       "fwd": {
-       "d": 11.7,
-       "m": 38
+       "d": 12
       },
       "fh": {
-       "d": 150,
-       "m": 148
+       "d": 153
       },
-      "zi": 2,
-      "grp": "gbsu2p2a"
+      "zi": 2
      }
     },
     {
@@ -2208,12 +2022,11 @@
       "tag": "h3",
       "fs": {
        "d": 14,
-       "m": 14
+       "m": 12
       },
       "fw": "900",
       "ta": {
-       "d": "center",
-       "m": "center"
+       "d": "center"
       },
       "color": "#123e72",
       "lh": {
@@ -2224,139 +2037,26 @@
       "animDur": 0.75,
       "animDelay": 0.4,
       "fx": {
-       "d": 18.5,
-       "m": 50
+       "d": 9.5
       },
       "fy": {
-       "d": 178,
-       "m": 602
+       "d": 175
       },
       "fwd": {
-       "d": 15.8,
-       "m": 50
+       "d": 7.5
       },
       "fh": {
-       "d": 18,
-       "m": 18
+       "d": 42
       },
       "zi": 3,
-      "grp": "gbsu2p2a"
-     }
-    },
-    {
-     "id": "xqymyb1",
-     "type": "shape",
-     "set": {
-      "shape": "rect",
-      "fill": "#ffffff",
-      "outline": false,
-      "stroke": "#edf0e2",
-      "sw": 1,
-      "dash": "",
-      "rx": 11.9,
-      "keep": false,
-      "flip": "",
-      "al": {
-       "d": "center"
+      "hauto": false,
+      "wsc": {
+       "d": 235
       },
-      "fx": {
-       "d": 2.7,
-       "m": 0
-      },
-      "fy": {
-       "d": 0,
-       "m": 425
-      },
-      "fwd": {
-       "d": 15.8,
-       "m": 50
-      },
-      "fh": {
-       "d": 215,
-       "m": 213
-      },
-      "zi": 1,
-      "ry": 11.2,
-      "grp": "gbfdnedw",
-      "sh": "sm"
-     }
-    },
-    {
-     "id": "j11drww",
-     "type": "image",
-     "set": {
-      "src": "/assets/img/tarkiz/lp/c-nuts.webp",
-      "alt": "المكسرات",
-      "fit": "cover",
-      "hauto": true,
-      "rad": {
-       "d": 200
-      },
-      "cls": "ing-img",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.5,
-      "fx": {
-       "d": 4.8,
-       "m": 6
-      },
-      "fy": {
-       "d": 15,
-       "m": 440
-      },
-      "fwd": {
-       "d": 11.7,
-       "m": 38
-      },
-      "fh": {
-       "d": 150,
-       "m": 148
-      },
-      "zi": 2,
-      "grp": "gbfdnedw"
-     }
-    },
-    {
-     "id": "n4t3oju",
-     "type": "heading",
-     "set": {
-      "text": "المكسرات",
-      "tag": "h3",
-      "fs": {
-       "d": 14,
-       "m": 14
-      },
-      "fw": "900",
-      "ta": {
-       "d": "center",
-       "m": "center"
-      },
-      "color": "#123e72",
-      "lh": {
-       "d": 1.25
-      },
-      "cls": "",
-      "anim": "fadeUp",
-      "animDur": 0.75,
-      "animDelay": 0.5,
-      "fx": {
-       "d": 2.7,
-       "m": 0
-      },
-      "fy": {
-       "d": 178,
-       "m": 602
-      },
-      "fwd": {
-       "d": 15.8,
-       "m": 50
-      },
-      "fh": {
-       "d": 18,
-       "m": 18
-      },
-      "zi": 3,
-      "grp": "gbfdnedw"
+      "stk": {
+       "id": "djrdnck",
+       "h": 153
+      }
      }
     }
    ]
@@ -2407,7 +2107,7 @@
        "set": {
         "html": "<p>اختر ما يناسبك</p>",
         "fs": {
-         "d": 13,
+         "d": 26,
          "m": 22
         },
         "color": "#187a3b",
@@ -2418,7 +2118,10 @@
         "cls": "kick",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "lh": {
+         "d": 1.6
+        }
        }
       },
       {
@@ -2557,7 +2260,7 @@
         "hauto": false,
         "mh": {
          "m": 418,
-         "d": 440
+         "d": 608
         },
         "al": {
          "m": "start"
@@ -2570,7 +2273,8 @@
          "d": 100
         },
         "rad": {
-         "m": 38
+         "m": 38,
+         "d": 102
         }
        }
       },
@@ -2578,9 +2282,9 @@
        "id": "gr7yucx",
        "type": "text",
        "set": {
-        "html": "عبوتان من ALYSSUM MEMORY FOCUS 250 غ&nbsp;<p>مع قارورة إضافية هدية.</p>",
+        "html": "عبوتان من ALYSSUM MEMORY FOCUS&nbsp; غ&nbsp;<p>مع قارورة إضافية هدية.</p>",
         "fs": {
-         "d": 13,
+         "d": 21,
          "m": 17
         },
         "lh": {
@@ -2595,7 +2299,13 @@
         "cls": "",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "al": {
+         "d": "start"
+        },
+        "w": {
+         "d": 99.5
+        }
        }
       },
       {
@@ -2668,67 +2378,106 @@
          ]
         }
        }
-      },
-      {
-       "id": "cxmcp05",
-       "type": "heading",
-       "set": {
-        "text": "عبوة واحدة · 250 غ",
-        "tag": "h3",
-        "fs": {
-         "d": 20,
-         "m": 18
-        },
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "lh": {
-         "d": 1.25
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      },
-      {
-       "id": "10s5uui",
-       "type": "button",
-       "set": {
-        "text": "اطلب عبوة ←",
-        "kind": "link",
-        "link": "#order",
-        "bgc": "#187a3b",
-        "color": "#fff",
-        "hbg": "#187a3b",
-        "fs": {
-         "d": 16,
-         "m": 15
-        },
-        "fw": "900",
-        "brad": {
-         "d": 999
-        },
-        "bpad": {
-         "d": [
-          14,
-          25,
-          14,
-          25
-         ]
-        },
-        "cls": "btn-gr",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
       }
      ]
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "cxmcp05",
+     "type": "heading",
+     "set": {
+      "text": "عبوة واحدة · 250 غ",
+      "tag": "h3",
+      "fs": {
+       "d": 20,
+       "m": 18
+      },
+      "fw": "900",
+      "ta": {
+       "d": "center"
+      },
+      "color": "#123e72",
+      "lh": {
+       "d": 1.25
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "m": -7.9,
+       "d": 10.2
+      },
+      "fy": {
+       "m": 1109,
+       "d": 699
+      },
+      "fwd": {
+       "m": 93.3,
+       "d": 39.8
+      },
+      "fh": {
+       "m": 23,
+       "d": 30
+      },
+      "zi": 4
+     }
+    },
+    {
+     "id": "10s5uui",
+     "type": "button",
+     "set": {
+      "text": "اطلب عبوة ←",
+      "kind": "link",
+      "link": "#order",
+      "bgc": "#187a3b",
+      "color": "#fff",
+      "hbg": "#187a3b",
+      "fs": {
+       "d": 16,
+       "m": 15
+      },
+      "fw": "900",
+      "brad": {
+       "d": 999
+      },
+      "bpad": {
+       "d": [
+        14,
+        25,
+        14,
+        25
+       ]
+      },
+      "cls": "btn-gr",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "fx": {
+       "m": 62.5,
+       "d": 14.1
+      },
+      "fy": {
+       "m": 1097,
+       "d": 796
+      },
+      "fwd": {
+       "m": 33,
+       "d": 25
+      },
+      "fh": {
+       "m": 47,
+       "d": 59
+      },
+      "zi": 5,
+      "wsc": {
+       "m": 80,
+       "d": 100
+      }
+     }
+    }
+   ]
   },
   {
    "id": "yziy3ti",
@@ -2776,7 +2525,7 @@
        "set": {
         "html": "<p>قبل الاستخدام</p>",
         "fs": {
-         "d": 13,
+         "d": 26,
          "m": 22
         },
         "color": "#187a3b",
@@ -2787,7 +2536,10 @@
         "cls": "kick",
         "anim": "fadeUp",
         "animDur": 0.75,
-        "animDelay": 0
+        "animDelay": 0,
+        "lh": {
+         "d": 1.6
+        }
        }
       },
       {
@@ -3000,451 +2752,583 @@
   {
    "id": "2ct3xm3",
    "set": {
-    "layout": "boxed",
+    "cls": "rev-sec",
+    "cid": "reviews",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1220
+     "d": 1274
+    },
+    "layout": "full",
+    "mh": {
+     "d": 287
     },
     "pad": {
      "d": [
-      100,
       0,
-      20,
-      0
-     ],
-     "m": [
-      70,
       0,
-      10,
+      0,
       0
      ]
-    },
-    "gap": {
-     "d": 24
-    },
-    "va": {
-     "d": "center"
-    },
-    "cls": "rev-sec",
-    "cid": "reviews"
+    }
    },
    "cols": [
     {
-     "id": "frsdxvm",
-     "set": {
-      "w": {
-       "d": 100,
-       "m": 100
-      }
-     },
-     "widgets": [
-      {
-       "id": "s0z9vnt",
-       "type": "text",
-       "set": {
-        "html": "<p>تجربة العميل مهمة</p>",
-        "fs": {
-         "d": 13,
-         "m": 22
-        },
-        "color": "#187a3b",
-        "fw": "900",
-        "ta": {
-         "d": "center"
-        },
-        "cls": "kick",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "w6csitv",
-       "type": "text",
-       "set": {
-        "html": "<h2>آراء <span style=\"color:#f39a18\">زبائننا</span></h2>",
-        "fs": {
-         "d": 48,
-         "m": 30
-        },
-        "lh": {
-         "d": 1.3
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#123e72",
-        "fw": "900",
-        "cls": "title",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      },
-      {
-       "id": "chhrrra",
-       "type": "text",
-       "set": {
-        "html": "رسائل حقيقية وصلتنا من زبائننا على ماسنجر.",
-        "fs": {
-         "d": 16,
-         "m": 14
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#627487",
-        "fw": "600",
-        "cls": "sub",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0
-       }
-      }
-     ]
+     "id": "7n8orme",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "s0z9vnt",
+     "type": "text",
+     "set": {
+      "html": "<p>تجربة العميل مهمة</p>",
+      "fs": {
+       "d": 26,
+       "m": 22
+      },
+      "color": "#187a3b",
+      "fw": "900",
+      "ta": {
+       "d": "center"
+      },
+      "cls": "kick",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "lh": {
+       "d": 1.6
+      },
+      "fx": {
+       "d": 3.2
+      },
+      "fy": {
+       "d": 97
+      },
+      "fwd": {
+       "d": 93.9
+      },
+      "fh": {
+       "d": 42
+      },
+      "zi": 2,
+      "grp": "gc5nwxn3"
+     }
+    },
+    {
+     "id": "w6csitv",
+     "type": "text",
+     "set": {
+      "html": "<h2>آراء <span style=\"color:#f39a18\">زبائننا</span></h2>",
+      "fs": {
+       "d": 48,
+       "m": 30
+      },
+      "lh": {
+       "d": 1.3
+      },
+      "ta": {
+       "d": "center"
+      },
+      "color": "#123e72",
+      "fw": "900",
+      "cls": "title",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 3.2
+      },
+      "fy": {
+       "d": 155
+      },
+      "fwd": {
+       "d": 93.9
+      },
+      "fh": {
+       "d": 62
+      },
+      "zi": 3,
+      "grp": "gc5nwxn3"
+     }
+    },
+    {
+     "id": "chhrrra",
+     "type": "text",
+     "set": {
+      "html": "رسائل حقيقية وصلتنا من زبائننا على ماسنجر.",
+      "fs": {
+       "d": 25,
+       "m": 14
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "center"
+      },
+      "color": "#000000",
+      "fw": "600",
+      "cls": "sub",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "fx": {
+       "d": 3.2
+      },
+      "fy": {
+       "d": 233
+      },
+      "fwd": {
+       "d": 93.9
+      },
+      "fh": {
+       "d": 30
+      },
+      "zi": 4,
+      "grp": "gc5nwxn3"
+     }
+    }
+   ]
   },
   {
    "id": "0m7epju",
    "set": {
-    "layout": "boxed",
+    "cls": "rev-sec",
+    "kind": "canvas",
+    "scaled": true,
+    "dw": 1274,
     "cw": {
-     "d": 1220
+     "d": 1274
+    },
+    "layout": "full",
+    "mh": {
+     "d": 1697
     },
     "pad": {
      "d": [
       0,
       0,
-      60,
-      0
-     ],
-     "m": [
       0,
-      0,
-      40,
       0
      ]
-    },
-    "gap": {
-     "d": 20
-    },
-    "va": {
-     "d": "start"
-    },
-    "cls": "rev-sec"
+    }
    },
    "cols": [
     {
-     "id": "m3dkdur",
-     "set": {
-      "w": {
-       "d": 33.3,
-       "m": 100
-      },
-      "cls": "shot"
-     },
-     "widgets": [
-      {
-       "id": "iuiqrak",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794265923106-6.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "bc": "#002feb",
-        "bs": "solid",
-        "bco": 1,
-        "bw": 1
-       }
-      },
-      {
-       "id": "rnlopri",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794265940491-7.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      },
-      {
-       "id": "4tcbr1l",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794266149319-8.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      },
-      {
-       "id": "9ebg3h7",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794266149319-8.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      }
-     ]
-    },
-    {
-     "id": "gjqlwk1",
-     "set": {
-      "w": {
-       "d": 33.3,
-       "m": 100
-      },
-      "cls": "shot"
-     },
-     "widgets": [
-      {
-       "id": "99cc3rq",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794266231950-9.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      },
-      {
-       "id": "p3l42i6",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794266249164-10.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      },
-      {
-       "id": "7vwb5lx",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794266264256-11.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      },
-      {
-       "id": "5xn5bb2",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794266278415-12.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      },
-      {
-       "id": "2nb3imm",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794266298766-13.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1,
-        "bw": 1,
-        "bs": "solid",
-        "bc": "#002feb",
-        "bco": 1
-       }
-      },
-      {
-       "id": "m0ixwcy",
-       "type": "text",
-       "set": {
-        "html": "زبون عاد لطلب المنتج",
-        "fs": {
-         "d": 12,
-         "m": 11
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#84909b",
-        "fw": "600",
-        "cls": "shot-cap",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.1
-       }
-      }
-     ]
-    },
-    {
-     "id": "zbtw67d",
-     "set": {
-      "w": {
-       "d": 33.3,
-       "m": 100
-      },
-      "cls": "shot"
-     },
-     "widgets": [
-      {
-       "id": "c1qwk4v",
-       "type": "image",
-       "set": {
-        "src": "/assets/img/tarkiz/avis/avis03.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.2
-       }
-      },
-      {
-       "id": "p611knv",
-       "type": "image",
-       "set": {
-        "src": "assets/img/pages/pg-1794263213564-5.webp",
-        "alt": "رأي زبون عن عسل التركيز",
-        "fit": "cover",
-        "hauto": true,
-        "rad": {
-         "d": 14
-        },
-        "cls": "",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.2
-       }
-      },
-      {
-       "id": "q7q8nbz",
-       "type": "text",
-       "set": {
-        "html": "زبونة طلبت عبوة أخرى",
-        "fs": {
-         "d": 12,
-         "m": 11
-        },
-        "lh": {
-         "d": 1.9
-        },
-        "ta": {
-         "d": "center"
-        },
-        "color": "#84909b",
-        "fw": "600",
-        "cls": "shot-cap",
-        "anim": "fadeUp",
-        "animDur": 0.75,
-        "animDelay": 0.2
-       }
-      }
-     ]
+     "id": "gzetpm1",
+     "set": {},
+     "widgets": []
     }
    ],
-   "free": []
+   "free": [
+    {
+     "id": "iuiqrak",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794265923106-6.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "bc": "#002feb",
+      "bs": "solid",
+      "bco": 1,
+      "bw": 1,
+      "fx": {
+       "d": 66.7
+      },
+      "fy": {
+       "d": 15
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 204
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "rnlopri",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794265940491-7.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 33.8
+      },
+      "fy": {
+       "d": 665
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 204
+      },
+      "zi": 3,
+      "stk": {
+       "id": "9ebg3h7",
+       "h": 204
+      }
+     }
+    },
+    {
+     "id": "9ebg3h7",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794266149319-8.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 34.3
+      },
+      "fy": {
+       "d": 450
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 204
+      },
+      "zi": 5,
+      "stk": {
+       "id": "p3l42i6",
+       "h": 204
+      }
+     }
+    },
+    {
+     "id": "99cc3rq",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794266231950-9.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 34.4
+      },
+      "fy": {
+       "d": 15
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 204
+      },
+      "zi": 2
+     }
+    },
+    {
+     "id": "p3l42i6",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794266249164-10.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 34.4
+      },
+      "fy": {
+       "d": 235
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 204
+      },
+      "zi": 3
+     }
+    },
+    {
+     "id": "7vwb5lx",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794266264256-11.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 2
+      },
+      "fy": {
+       "d": 424
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 204
+      },
+      "zi": 4,
+      "stk": {
+       "id": "q7q8nbz",
+       "h": 23
+      }
+     }
+    },
+    {
+     "id": "5xn5bb2",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794266278415-12.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 65.9
+      },
+      "fy": {
+       "d": 230
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 639
+      },
+      "zi": 5,
+      "stk": {
+       "id": "iuiqrak",
+       "h": 204
+      },
+      "crop": {
+       "x": -1.6,
+       "y": 0,
+       "w": 103.3
+      }
+     }
+    },
+    {
+     "id": "2nb3imm",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794266298766-13.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.1,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 2
+      },
+      "fy": {
+       "d": 639
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 274
+      },
+      "zi": 6,
+      "stk": {
+       "id": "7vwb5lx",
+       "h": 204
+      }
+     }
+    },
+    {
+     "id": "c1qwk4v",
+     "type": "image",
+     "set": {
+      "src": "/assets/img/tarkiz/avis/avis03.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.2,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 2
+      },
+      "fy": {
+       "d": 15
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 237
+      },
+      "zi": 2,
+      "grp": "gmc59deo"
+     }
+    },
+    {
+     "id": "p611knv",
+     "type": "image",
+     "set": {
+      "src": "assets/img/pages/pg-1794263213564-5.webp",
+      "alt": "رأي زبون عن عسل التركيز",
+      "fit": "cover",
+      "hauto": true,
+      "rad": {
+       "d": 14
+      },
+      "cls": "",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.2,
+      "bw": 1,
+      "bs": "solid",
+      "bc": "#002feb",
+      "bco": 1,
+      "fx": {
+       "d": 2
+      },
+      "fy": {
+       "d": 267
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 107
+      },
+      "zi": 3,
+      "grp": "gmc59deo"
+     }
+    },
+    {
+     "id": "q7q8nbz",
+     "type": "text",
+     "set": {
+      "html": "زبونة طلبت عبوة أخرى",
+      "fs": {
+       "d": 12,
+       "m": 11
+      },
+      "lh": {
+       "d": 1.9
+      },
+      "ta": {
+       "d": "center"
+      },
+      "color": "#84909b",
+      "fw": "600",
+      "cls": "shot-cap",
+      "anim": "fadeUp",
+      "animDur": 0.75,
+      "animDelay": 0.2,
+      "fx": {
+       "d": 2
+      },
+      "fy": {
+       "d": 390
+      },
+      "fwd": {
+       "d": 30.2
+      },
+      "fh": {
+       "d": 23
+      },
+      "zi": 4,
+      "grp": "gmc59deo"
+     }
+    }
+   ]
   },
   {
    "id": "3n8jrra",
