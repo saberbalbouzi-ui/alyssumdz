@@ -19,6 +19,8 @@ function shipBlocked(w, commune, type){
 }
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
+/* __OCSC: تكاليف الشحن لنموذج الطلب المضمَّن في صفحة هبوط (oc.sc): "" = الشركة الافتراضية، "zones" = مناطق التوصيل؛ null = حسب إعداد المنتج */
+let __OCSC = null; const pshipCo = p => __OCSC !== null ? __OCSC : (p && p.shipCo);
 let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
 /* بلديات لا توصّل إليها شركة التوصيل الافتراضية (مثل تبلبالة عند ياليدين): تُعلَّم «غير متاح» بنفس آلية الاستثناءات w.xc */
 function applyShipNd(nd, def){
@@ -1173,9 +1175,9 @@ function initProduct(slug){
   const bumpAmt = ()=> bumpSel ? bumpSel.price * bumpSel.qty : 0;
   function update(){
     const freeShip = offerFreeShip(p, state.offer) || couponFreeShip();
-    const sq = (state.wilaya && !p.digital) ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p), prodShipAdj(p)) : null;
+    const sq = (state.wilaya && !p.digital) ? shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, pshipCo(p), prodShipPf(p), prodShipAdj(p)) : null;
     const fee = p.digital ? 0 : (freeShip ? 0 : (sq ? sq.fee : null));
-    if(!p.digital && state.wilaya) labelCommunes(communeSel, state.wilaya, (ww, c)=>{ const q = shipQuote(ww, c, state.dtype, state.offer.price, p.shipCo, prodShipPf(p), prodShipAdj(p)); return q.blocked ? null : ((freeShip || q.free) ? 0 : q.fee); });
+    if(!p.digital && state.wilaya) labelCommunes(communeSel, state.wilaya, (ww, c)=>{ const q = shipQuote(ww, c, state.dtype, state.offer.price, pshipCo(p), prodShipPf(p), prodShipAdj(p)); return q.blocked ? null : ((freeShip || q.free) ? 0 : q.fee); });
     feeEl.textContent = p.digital ? "—" : freeShip ? "مجاني 🚚" : (sq && sq.blocked ? "غير متاح ⛔" : (sq && sq.free ? "مجاني 🚚" : (fee!=null ? fmt(fee) : "اختر الولاية")));
     let sm = document.getElementById("ship-msg");
     if(!sm){ sm = document.createElement("div"); sm.id = "ship-msg"; sm.style.cssText = "color:var(--red,#c0392b);font-size:.88rem;margin:.4rem 0;font-weight:700"; const tb = feeEl.closest(".total-box"); if(tb) tb.parentNode.insertBefore(sm, tb); }
@@ -1220,7 +1222,7 @@ function initProduct(slug){
     if(type==="variable" && !state.variation){ toast("اختر " + (missingAttrs().join(" و ") || "خياراً متوفراً")); const vb = document.getElementById("variants"); if(vb) vb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(type==="grouped" && !(state.offer && state.offer.qty>0)){ toast("اختر كمية منتج واحد على الأقل"); const gb = document.getElementById("group-box"); if(gb) gb.scrollIntoView({behavior:"smooth", block:"center"}); return }
     if(!p.digital && !state.wilaya){ toast("يرجى اختيار الولاية"); sel.focus(); return }
-    const __sq = p.digital ? { fee:0 } : shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, p.shipCo, prodShipPf(p), prodShipAdj(p)); if(!p.digital && __sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
+    const __sq = p.digital ? { fee:0 } : shipQuote(state.wilaya, communeSel ? communeSel.value : "", state.dtype, state.offer.price, pshipCo(p), prodShipPf(p), prodShipAdj(p)); if(!p.digital && __sq.blocked && !offerFreeShip(p, state.offer)){ toast(__sq.msg); return }
     if(!p.digital && state.dtype==="stop" && deskSel && !deskSel.value){ toast("يرجى اختيار المكتب"); deskSel.focus(); return }
     // جمع قيم الحقول الإضافية المخصّصة (لوحة التحكم ⟵ نموذج الطلب) — تُرفق في رسالة واتساب وفي الطلب المُسجَّل
     const extraValues = {};
@@ -2107,6 +2109,7 @@ const PhoneDZ = {
   /* إعدادات نموذج الطلب القادمة من عنصر «نموذج الطلب» في مطوّر الصفحات (متغيّر oc): ألوان وعنوان ونص الزر */
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
   if(oc && typeof oc === "object"){
+    if(oc.sc === "zones") __OCSC = "zones"; else if(oc.sc === "def") __OCSC = "";
     const ok = v=>/^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v||"").trim()) ? String(v).trim() : "";
     const V = {bg:"bg",tc:"tc",bd:"bd",ac:"ac",bt:"bt",fb:"fb",tb:"tb",cb:"cb",wb:"wb"}, r = Number(oc.r);
     const W = "#pb-embed-wrap ";
