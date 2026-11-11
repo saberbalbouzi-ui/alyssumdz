@@ -32,6 +32,12 @@
   <span><b>اسحب</b> الخلفية لتدوير الاسطوانة</span><span>اختر قسماً ← تخرج لوحته</span><span><b>ارمِ</b> اللوحة نحو الحافة لإغلاقها</span><span><b>Shift+اسحب</b> لتدوير القاعة كلها</span>
   <button type="button" id="hud-orbit" class="hbtn" aria-pressed="true">المدار: يعمل</button><button type="button" id="hud-reset" class="hbtn">إعادة ترتيب</button>
 </div>
+<div class="modebar" id="modebar" role="toolbar" aria-label="أوضاع التعامل">
+  <div class="mgrp" role="group" aria-label="الوضع"><button type="button" data-m="world" aria-pressed="true" title="العالم (W): دوّر البيئة كلها"><kbd>W</kbd>العالم</button><button type="button" data-m="object" aria-pressed="false" title="الكائن (O): تحكّم بلوح واحد"><kbd>O</kbd>الكائن</button><button type="button" data-m="focus" aria-pressed="false" title="التركيز (F): وسّع اللوح المحدَّد"><kbd>F</kbd>التركيز</button></div>
+  <div class="mtools" role="group" aria-label="أداة الكائن"><button type="button" data-t="move" aria-pressed="true" title="تحريك (M)"><kbd>M</kbd>تحريك</button><button type="button" data-t="rot" aria-pressed="false" title="تدوير أفقي/رأسي (R)"><kbd>R</kbd>تدوير</button><button type="button" data-t="depth" aria-pressed="false" title="أقرب/أبعد (Z)"><kbd>Z</kbd>عمق</button><button type="button" data-t="roll" aria-pressed="false" title="ميل (T)"><kbd>T</kbd>ميل</button></div>
+  <span class="mread" id="mread" aria-live="polite"></span>
+</div>
+<div class="edgeglow" id="edgeglow" aria-hidden="true"></div>
 <div class="active" id="active" aria-live="polite"></div>
 <button type="button" class="yawchip" id="yawchip"></button>
 <div class="note" role="note">معاينة تفاعلية — بيانات تجريبية، معزولة عن لوحة التحكم الحقيقية</div>
