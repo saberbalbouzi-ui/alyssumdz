@@ -265,7 +265,7 @@ begin
   if not found then return jsonb_build_object('linked', false); end if;
   return jsonb_build_object('linked', true, 'name', v_b.name, 'region', coalesce(v_b.commune, ''),
     'visits', coalesce((select jsonb_agg(jsonb_build_object('day', v.day, 'slot', v.slot, 'progress', v.progress, 'note', v.note, 'followup', v.followup) order by v.day desc, v.slot desc nulls last)
-                         from public.ruqya_visits v where v.booking_id = v_b.id and v.shared), '[]'::jsonb));
+                         from public.ruqya_visits v where v.shared and v.booking_id in (select id from public.ruqya_bookings where phone = v_b.phone)), '[]'::jsonb));      -- ملف واحد لكل مريض (بالهاتف)
 end $$;
 revoke all on function public.ruqya_portal_me() from public, anon;
 grant execute on function public.ruqya_portal_me() to authenticated;

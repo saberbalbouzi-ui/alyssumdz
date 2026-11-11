@@ -88,7 +88,8 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
 
   /* وضع المدير: يفتح أي ملف مريض ويسجّل المتابعة (كل الزيارات، المشارَكة وغير المشارَكة) */
   async function rest(path, tok, opt){ opt = opt || {}; var r = await fetch(SB + "/rest/v1/" + path, { method: opt.method || "GET", headers: Object.assign(hdr(tok), opt.method && opt.method !== "GET" ? { Prefer: "return=representation" } : {}), body: opt.body ? JSON.stringify(opt.body) : undefined }); var j = await r.json().catch(function(){ return null; }); if(!r.ok) throw new Error((j && (j.message || j.msg)) || ("HTTP " + r.status)); return j; }
-  var AD = { tok: "", pat: null, visits: [] };
+  var AD = { tok: "", pat: null, visits: [], bk: [] };
+  function pids(){ return (AD.bk && AD.bk.length ? AD.bk : [AD.pat]).map(function(x){ return encodeURIComponent(x.id); }).join(","); }
   function adHead(){ return '<div class="card"><b>وضع المدير</b> <span class="tag">كل الحسابات</span><p class="sub" style="margin:4px 0 8px">ابحث عن أي مريض بالاسم أو الهاتف لفتح ملفه وتسجيل المتابعة.</p><input type="text" id="aq" placeholder="الاسم أو رقم الهاتف (3 أحرف على الأقل)" autocomplete="off"><button class="btn pri" id="ago" type="button">بحث</button><div id="ares"></div></div>'; }
   function adVisits(){
     var h = '<div class="card"><div class="hd"><div class="av">' + esc(String(AD.pat.name || "؟").trim().charAt(0)) + '</div><div><b style="font-size:1.15rem">' + esc(AD.pat.name) + '</b><div class="sub" style="margin:0;direction:ltr;text-align:right">' + esc(AD.pat.phone || "") + (AD.pat.commune ? " · " + esc(AD.pat.commune) : "") + '</div></div></div></div>';
@@ -109,14 +110,15 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
       box._rows = out;
     }catch(e){ msg(errTxt(e), "err"); } }
   async function adOpen(id, rows){ var r = (rows || []).filter(function(x){ return String(x.id) === String(id); })[0]; if(!r) return; AD.pat = r;
-    try{ AD.visits = await rest("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(r.id) + "&order=day.desc,slot.desc.nullslast&limit=300", AD.tok); }catch(e){ AD.visits = []; msg(errTxt(e), "err"); }
+    try{ AD.bk = await rest("ruqya_bookings?select=id,day,slot,sessions,status&phone=eq." + encodeURIComponent(r.phone) + "&order=day.desc&limit=100", AD.tok); }catch(e){ AD.bk = [r]; }
+    try{ AD.visits = await rest("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc.nullslast&limit=300", AD.tok); }catch(e){ AD.visits = []; msg(errTxt(e), "err"); }
     var qv = $("aq").value, res = $("ares").innerHTML; adDraw(); $("aq").value = qv; $("ares").innerHTML = res; $("ares")._rows = rows; $("apat").scrollIntoView({ behavior: "smooth", block: "start" }); }
   async function adAdd(){
     var day = $("vd").value; if(!day){ msg("اختر التاريخ.", "err"); return; }
     var body = { booking_id: AD.pat.id, day: day, slot: $("vt").value || null, progress: $("vp").value, note: $("vn").value.trim().slice(0, 4000), followup: $("vf").value.trim().slice(0, 2000), shared: $("vs").checked };
     if(!body.note && !body.followup && !body.progress){ msg("اكتب ملاحظة أو متابعة أو اختر تطور الحالة.", "err"); return; }
     $("vadd").disabled = true;
-    try{ await rest("ruqya_visits", AD.tok, { method: "POST", body: body }); AD.visits = await rest("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(AD.pat.id) + "&order=day.desc,slot.desc.nullslast&limit=300", AD.tok); var rows = $("ares")._rows, qv = $("aq").value, res = $("ares").innerHTML; adDraw(); $("aq").value = qv; $("ares").innerHTML = res; $("ares")._rows = rows; msg("✅ سُجّلت المتابعة.", "ok"); }catch(e){ msg(errTxt(e), "err"); $("vadd").disabled = false; } }
+    try{ await rest("ruqya_visits", AD.tok, { method: "POST", body: body }); AD.visits = await rest("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc.nullslast&limit=300", AD.tok); var rows = $("ares")._rows, qv = $("aq").value, res = $("ares").innerHTML; adDraw(); $("aq").value = qv; $("ares").innerHTML = res; $("ares")._rows = rows; msg("✅ سُجّلت المتابعة.", "ok"); }catch(e){ msg(errTxt(e), "err"); $("vadd").disabled = false; } }
   document.addEventListener("click", function(e){ var t = e.target.closest && e.target.closest("#adm button"); if(!t) return;
     if(t.id === "ago") adSearch(); else if(t.id === "vadd") adAdd(); else if(t.classList.contains("pt")) adOpen(t.getAttribute("data-id"), $("ares")._rows); });
   document.addEventListener("keydown", function(e){ if(e.target && e.target.id === "aq" && String(e.key || "") === "Enter"){ e.preventDefault(); adSearch(); } });
