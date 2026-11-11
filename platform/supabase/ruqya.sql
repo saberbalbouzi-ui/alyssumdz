@@ -343,3 +343,49 @@ begin
 end $$;
 revoke all on function public.ruqya_config() from public;
 grant execute on function public.ruqya_config() to anon, authenticated;
+
+
+-- ═══ رابط التأكيد + رمز تحقق (v1.89.1081): الرابط وحده لا يكفي؛ يصل المريض رمز من 6 أرقام في رسالة منفصلة، و5 محاولات خاطئة تُبطل الرابط ═══
+alter table public.ruqya_portal_links add column if not exists pin_hash text, add column if not exists attempts int not null default 0;
+update public.ruqya_portal_links set expires_at = now() where used_at is null and pin_hash is null and expires_at > now();
+
+create or replace function public.ruqya_portal_invite2(p_booking_id bigint) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_tok text := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''); v_pin text := lpad((floor(random() * 1000000))::int::text, 6, '0');
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  if not exists (select 1 from public.ruqya_bookings where id = p_booking_id) then raise exception 'not_found'; end if;
+  insert into public.ruqya_portal_links (booking_id, token_hash, pin_hash, expires_at)
+    values (p_booking_id, encode(digest(v_tok, 'sha256'), 'hex'), encode(digest(v_tok || ':' || v_pin, 'sha256'), 'hex'), now() + interval '14 days');
+  return jsonb_build_object('token', v_tok, 'pin', v_pin);
+end $$;
+revoke all on function public.ruqya_portal_invite2(bigint) from public, anon;
+grant execute on function public.ruqya_portal_invite2(bigint) to authenticated;
+
+create or replace function public.ruqya_portal_claim2(p_token text, p_pin text) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare v_uid uuid := auth.uid(); v_l public.ruqya_portal_links; v_old bigint; v_prov text;
+begin
+  if v_uid is null then raise exception 'not_signed_in'; end if;
+  perform public._rl_hit('ruqya_claim', 10, interval '10 minutes');
+  select * into v_l from public.ruqya_portal_links where token_hash = encode(digest(coalesce(p_token, ''), 'sha256'), 'hex') for update;
+  if not found or v_l.used_at is not null or v_l.expires_at < now() or v_l.attempts >= 5 or v_l.pin_hash is null then raise exception 'invalid_link'; end if;
+  if v_l.pin_hash is distinct from encode(digest(coalesce(p_token, '') || ':' || regexp_replace(coalesce(p_pin, ''), '[^0-9]', '', 'g'), 'sha256'), 'hex') then
+    update public.ruqya_portal_links set attempts = attempts + 1, expires_at = case when attempts + 1 >= 5 then now() else expires_at end where id = v_l.id;
+    return jsonb_build_object('ok', false, 'error', 'bad_pin', 'left', greatest(0, 5 - (v_l.attempts + 1)));
+  end if;
+  select booking_id into v_old from public.ruqya_portal_accounts where user_id = v_uid;
+  if v_old is not null and v_old <> v_l.booking_id then raise exception 'account_already_linked'; end if;
+  select coalesce(raw_app_meta_data ->> 'provider', '') into v_prov from auth.users where id = v_uid;
+  insert into public.ruqya_portal_accounts (user_id, booking_id, provider) values (v_uid, v_l.booking_id, v_prov) on conflict (user_id) do nothing;
+  update public.ruqya_portal_links set used_at = now(), used_by = v_uid where id = v_l.id;
+  return jsonb_build_object('ok', true);
+end $$;
+revoke all on function public.ruqya_portal_claim2(text, text) from public, anon;
+grant execute on function public.ruqya_portal_claim2(text, text) to authenticated;
+
+-- الدالتان القديمتان (بلا رمز) معطَّلتان
+create or replace function public.ruqya_portal_invite(p_booking_id bigint) returns text
+language plpgsql security definer set search_path = public as $$ begin raise exception 'use_invite2'; end $$;
+create or replace function public.ruqya_portal_claim(p_token text) returns jsonb
+language plpgsql security definer set search_path = public as $$ begin raise exception 'pin_required'; end $$;

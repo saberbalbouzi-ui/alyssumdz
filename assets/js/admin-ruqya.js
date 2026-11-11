@@ -143,7 +143,7 @@ const AdminRuqya = (() => {
         const n = S.accts.length, shared = vs.filter(x => x.shared).length;
         return '<h3 style="margin:18px 0 6px">🔐 بوابة المريض</h3><div class="card" style="padding:12px"><div class="hint">' + (n ? "✅ المريض مربوط بحساب (" + n + ") — يطّلع على الزيارات المشارَكة فقط (" + shared + " من " + vs.length + ")." : "المريض لم يربط حسابه بعد. أرسل له رابط التأكيد على واتساب: يفتحه، يسجّل الدخول بـ Google أو Apple أو البريد، فيُربط حسابه بملفه.") + '</div>' +
           '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" data-rq="pinv">📲 إرسال رابط التأكيد بواتساب</button><button class="btn gray" data-rq="pshare">إظهار كل الزيارات للمريض</button>' + (n ? '<button class="btn warn" data-rq="punl">فصل الحساب</button>' : "") + '</div>' +
-          (S.link ? '<div class="hint" style="margin-top:8px">الرابط (صالح 14 يوماً، يُستعمل مرة واحدة): <input readonly dir="ltr" value="' + esc(S.link) + '" style="width:100%" onclick="this.select()"> <a class="btn" target="_blank" rel="noopener" href="' + esc(S.wa) + '" style="display:inline-block;margin-top:6px">فتح واتساب لإرساله</a></div>' : "") + '</div>';
+          (S.link ? '<div class="hint" style="margin-top:8px">الرابط (صالح 14 يوماً، يُستعمل مرة واحدة): <input readonly dir="ltr" value="' + esc(S.link) + '" style="width:100%" onclick="this.select()"> <a class="btn" target="_blank" rel="noopener" href="' + esc(S.wa) + '" style="display:inline-block;margin-top:6px">فتح واتساب لإرسال الرابط</a></div><div class="hint" style="margin-top:8px">رمز التحقق (يُرسَل في رسالة منفصلة، 5 محاولات خاطئة تُبطل الرابط): <b dir="ltr" style="font-size:1.2rem;letter-spacing:.2em">' + esc(S.pin || "") + '</b> <a class="btn" target="_blank" rel="noopener" href="' + esc(S.wa2 || "") + '" style="display:inline-block;margin-top:6px">إرسال الرمز في رسالة منفصلة</a></div>' : "") + '</div>';
       })() +
       (function () {
         const W = wOf(S.pat.phone), ban = W.length >= WMAX;
@@ -196,9 +196,10 @@ const AdminRuqya = (() => {
     else if (a === "imp") { const fi = $("rq-file"); if (fi) fi.click(); }
     else if (a === "pat") { e.preventDefault(); openPatient(b.getAttribute("data-id")); }
     else if (a === "pinv") {
-      try { const tok = await call("rpc/ruqya_portal_invite", { method: "POST", body: JSON.stringify({ p_booking_id: S.pat.id }) }); S.link = location.origin + "/ruqya-patient/?t=" + tok; S.perr = "";
-        const txt = "السلام عليكم " + S.pat.name + "، هذا رابط ملفك في مواعيد الرقية الشرعية (أليسوم). افتحه وسجّل الدخول بحساب Google أو Apple أو بريدك لتطّلع على ملفك وتطور حالتك:\n" + S.link;
-        S.wa = "https://wa.me/213" + String(S.pat.whatsapp || S.pat.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(txt); try { window.open(S.wa, "_blank", "noopener"); } catch (_) { } } catch (er) { S.perr = er.message; } draw();
+      try { const inv = await call("rpc/ruqya_portal_invite2", { method: "POST", body: JSON.stringify({ p_booking_id: S.pat.id }) }); S.link = location.origin + "/ruqya-patient/?t=" + inv.token; S.pin = inv.pin; S.perr = "";
+        const num = "https://wa.me/213" + String(S.pat.whatsapp || S.pat.phone).replace(/^0/, "");
+        const txt = "السلام عليكم " + S.pat.name + "، هذا رابط ملفك في مواعيد الرقية الشرعية (أليسوم). افتحه وسجّل الدخول بحساب Google أو Apple أو بريدك، وسيطلب منك رمز التحقق الذي نرسله لك في رسالة منفصلة:\n" + S.link;
+        S.wa = num + "?text=" + encodeURIComponent(txt); S.wa2 = num + "?text=" + encodeURIComponent("رمز التحقق لربط ملفك في مواعيد الرقية الشرعية (أليسوم): " + S.pin + "\nلا تشاركه مع أحد."); try { window.open(S.wa, "_blank", "noopener"); } catch (_) { } } catch (er) { S.perr = er.message; } draw();
     } else if (a === "pshare") {
       try { await call("ruqya_visits?booking_id=in.(" + pids() + ")", { method: "PATCH", body: JSON.stringify({ shared: true }) }); S.visits = await call("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc&limit=500"); S.msg = "✅ صارت كل الزيارات ظاهرة للمريض"; } catch (er) { S.perr = er.message; } draw();
     } else if (a === "punl") {

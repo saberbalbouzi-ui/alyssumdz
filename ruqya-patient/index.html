@@ -33,6 +33,7 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
   <input id="em" type="email" placeholder="name@email.com" autocomplete="email">
   <button class="btn pri" id="be" type="button">أرسل لي رابط التأكيد</button>
 </div>
+<div id="pinbox" class="card hide"><b>رمز التحقق</b><p class="sub" style="margin:4px 0 8px">أرسلت لك العيادة رمزاً من 6 أرقام في رسالة منفصلة عن الرابط. اكتبه لربط حسابك بملفك.</p><input id="pin" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" style="width:100%;min-height:50px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;direction:ltr;text-align:center;letter-spacing:.4em;font-size:1.3rem"><button class="btn pri" id="pgo" type="button">ربط ملفي</button></div>
 <div id="file" class="hide"></div>
 <div id="adm" class="adm hide"></div>
 <div id="unlinked" class="card hide"><b>حسابك غير مربوط بملف بعد</b><p class="sub">لربط حسابك بملفك افتح رابط التأكيد الذي أرسلته لك العيادة على واتساب (من نفس هذا الحساب). إن لم يصلك رابط فراسلنا.</p></div>
@@ -60,7 +61,7 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
       save({ access_token: j.access_token, refresh_token: j.refresh_token || s.refresh_token, expires_at: Date.now() + (j.expires_in || 3600) * 1000 }); return j.access_token; }catch(e){ return s.access_token; }
   }
   async function rpc(name, body, tok){ var r = await fetch(SB + "/rest/v1/rpc/" + name, { method: "POST", headers: hdr(tok), body: JSON.stringify(body || {}) }); var j = await r.json().catch(function(){ return null; }); if(!r.ok) throw new Error((j && (j.message || j.msg)) || ("HTTP " + r.status)); return j; }
-  var ERR = { invalid_link: "رابط التأكيد غير صالح أو انتهت صلاحيته أو استُعمل. اطلب رابطاً جديداً من العيادة.", account_already_linked: "هذا الحساب مربوط بملف آخر.", not_signed_in: "سجّل الدخول أولاً." };
+  var ERR = { pin_required: "الرابط قديم. اطلب رابطاً جديداً من العيادة.", invalid_link: "رابط التأكيد غير صالح أو انتهت صلاحيته أو استُعمل. اطلب رابطاً جديداً من العيادة.", account_already_linked: "هذا الحساب مربوط بملف آخر.", not_signed_in: "سجّل الدخول أولاً." };
   function errTxt(e){ var m = String(e && e.message || e); return ERR[m] || ("تعذّر الإكمال: " + m); }
   async function providerOn(p){ try{ var r = await fetch(SB + "/auth/v1/settings", { headers: { apikey: KEY } }); var j = await r.json(); return !!(j.external && j.external[p]); }catch(e){ return true; } }
   async function oauth(p){
@@ -132,11 +133,21 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
     if(!t){ $("login").classList.remove("hide"); if(inv) $("loginHint").textContent = "سجّل الدخول لربط ملفك برابط التأكيد الذي وصلك"; return; }
     $("so").classList.remove("hide");
     if(await adminMode(t)) return;
-    try{
-      if(inv){ try{ await rpc("ruqya_portal_claim", { p_token: inv }, t); msg("✅ تم ربط حسابك بملفك.", "ok"); }catch(e){ msg(errTxt(e), "err"); } try{ sessionStorage.removeItem(IK); }catch(e){} }
-      var me = await rpc("ruqya_portal_me", {}, t);
-      if(me && me.linked) render(me); else $("unlinked").classList.remove("hide");
-    }catch(e){ msg(errTxt(e), "err"); }
+    async function showMe(){ try{ var me = await rpc("ruqya_portal_me", {}, t); if(me && me.linked) render(me); else $("unlinked").classList.remove("hide"); }catch(e){ msg(errTxt(e), "err"); } }
+    if(inv){      /* رابط التأكيد وحده لا يكفي: يلزم رمز التحقق الذي يصل المريض في رسالة منفصلة */
+      $("pinbox").classList.remove("hide");
+      $("pgo").onclick = async function(){
+        var pin = $("pin").value.replace(/[^0-9]/g, ""); if(pin.length < 6){ msg("اكتب رمز التحقق المكوَّن من 6 أرقام.", "err"); return; }
+        $("pgo").disabled = true;
+        try{ var r = await rpc("ruqya_portal_claim2", { p_token: inv, p_pin: pin }, t);
+          if(r && r.ok){ try{ sessionStorage.removeItem(IK); }catch(e){} $("pinbox").classList.add("hide"); msg("✅ تم ربط حسابك بملفك.", "ok"); await showMe(); return; }
+          if(r && r.left === 0){ try{ sessionStorage.removeItem(IK); }catch(e){} $("pinbox").classList.add("hide"); msg("أُبطل الرابط بعد محاولات خاطئة. اطلب رابطاً جديداً من العيادة.", "err"); return; }
+          msg("الرمز غير صحيح. المحاولات المتبقية: " + (r ? r.left : ""), "err");
+        }catch(e){ msg(errTxt(e), "err"); }
+        $("pgo").disabled = false; };
+      return;
+    }
+    await showMe();
   }
   $("bg").onclick = function(){ oauth("google"); }; $("ba").onclick = function(){ oauth("apple"); }; $("be").onclick = mail;
   $("so").onclick = function(){ save(null); try{ sessionStorage.removeItem(IK); }catch(e){} location.replace(location.pathname); };
