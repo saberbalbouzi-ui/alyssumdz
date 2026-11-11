@@ -99,9 +99,9 @@
       if (mode === "move" && now - tap < 320 && Math.abs(e.clientX - tapX) < 24) { tap = 0; toggleBig(p); return; } tap = now; tapX = e.clientX;
       el.classList.remove("tr", "tr2"); const g = { mode, id: e.pointerId, x: e.clientX, y: e.clientY, s: [] }; h._g = g; try { h.setPointerCapture(e.pointerId); } catch (_) { }
     });
-    h.addEventListener("pointermove", e => { const g = h._g; if (!g || g.id !== e.pointerId) return; const dx = e.clientX - g.x, dy = e.clientY - g.y; g.x = e.clientX; g.y = e.clientY; const t = performance.now(); g.s.push([t, e.clientX, e.clientY]); while (g.s.length > 2 && t - g.s[0][0] > 110) g.s.shift();
+    h.addEventListener("pointermove", e => { const g = h._g; if (!g || g.id !== e.pointerId) return; const dx = e.clientX - g.x, dy = e.clientY - g.y; g.x = e.clientX; g.y = e.clientY; const t = performance.now(); let co = []; try { co = e.getCoalescedEvents ? e.getCoalescedEvents() : []; } catch (_) { } if (co.length > 1) co.forEach(c => g.s.push([c.timeStamp || t, c.clientX, c.clientY])); else g.s.push([t, e.clientX, e.clientY]); while (g.s.length > 2 && t - g.s[0][0] > 170) g.s.shift();
       p.user = true; if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; } else { p.st.ry = clamp(p.st.ry + dx * .35, -38, 38); p.st.rx = clamp(p.st.rx - dy * .3, -30, 30); } apply(p); });
-    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; if (g.mode !== "move") return; release(p, g); };
+    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; if (g.mode !== "move") return; g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
     h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
     /* تحجيم بمقبض الزاوية */
     rs.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); el.classList.remove("tr", "tr2"); rs._g = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { rs.setPointerCapture(e.pointerId); } catch (_) { } focus(p.id); });
@@ -119,7 +119,7 @@
     const s = g.s, n = s.length; let vx = 0, vy = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); vx = (b[1] - a[1]) / dt; vy = (b[2] - a[2]) / dt; }
     const sp = Math.hypot(vx, vy), pos = Math.hypot(p.st.x, p.st.y) || 1, out = (vx * p.st.x + vy * p.st.y) / pos, beyond = Math.abs(p.st.x) > W() / 2 + p.st.w * p.st.s * .15 || Math.abs(p.st.y) > H() / 2 + p.st.h * p.st.s * .15;
     SpatialOS.lastRelease = { sp: +sp.toFixed(2), out: +out.toFixed(2), beyond, n };
-    if ((sp > .85 && out > .15 * sp) || beyond) return throwAway(p, vx || p.st.x / 400, vy || p.st.y / 400);
+    if ((sp > .5 && out > .15 * sp) || beyond) return throwAway(p, vx || p.st.x / 400, vy || p.st.y / 400);
     resolve(p);
   }
   function throwAway(p, vx, vy) {
