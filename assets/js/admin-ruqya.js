@@ -110,10 +110,13 @@ const AdminRuqya = (() => {
   /* ── صفحة المريض: الاسم والمنطقة والزيارات (تاريخ، تطور الحالة، المتابعة) ── */
   const PROG = { "": "—", new: "زيارة أولى", better: "تحسّن", same: "مستقرة", worse: "تراجع", done: "انتهت الحالة" };
   const PCOL = { new: "#60a5fa", better: "#86efac", same: "#fde047", worse: "#fca5a5", done: "#c4b5fd" };
+  const pids = () => (S.pbk && S.pbk.length ? S.pbk : [S.pat]).map(x => encodeURIComponent(x.id)).join(",");
   async function openPatient(id) {
     const r = (S.found || []).concat(S.rows).find(x => String(x.id) === String(id)); if (!r) return;
-    S.pat = r; S.visits = []; S.perr = ""; S.accts = []; S.link = ""; S.wa = ""; draw();
-    try { S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(r.id) + "&order=day.desc,slot.desc&limit=500"); S.accts = await call("ruqya_portal_accounts?select=user_id,provider,linked_at&booking_id=eq." + encodeURIComponent(r.id)); } catch (e) { S.perr = e.message; } draw();
+    S.pat = r; S.visits = []; S.perr = ""; S.accts = []; S.link = ""; S.wa = ""; S.pbk = [r]; draw();
+    /* ملف واحد لكل مريض (برقم الهاتف): تُجمع كل مواعيده وزياراته مهما تعدّد حجزه */
+    try { S.pbk = await call("ruqya_bookings?select=id,day,slot,slots,sessions,kind,status,created_at&phone=eq." + encodeURIComponent(r.phone) + "&order=day.desc,slot.desc&limit=200"); if (!S.pbk.some(x => String(x.id) === String(r.id))) S.pbk.push(r); } catch (e) { S.pbk = [r]; }
+    try { S.visits = await call("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc&limit=500"); S.accts = await call("ruqya_portal_accounts?select=user_id,provider,linked_at&booking_id=in.(" + pids() + ")"); } catch (e) { S.perr = e.message; } draw();
   }
   function patientHtml() {
     const r = S.pat, vs = S.visits, first = vs.length ? vs[vs.length - 1].day : r.day, last = vs.length ? vs[0].day : r.day;
@@ -128,6 +131,7 @@ const AdminRuqya = (() => {
       '<h2 style="margin:12px 0 4px">ملف المريض</h2>' + (S.perr ? '<div class="warn" style="margin:8px 0">' + esc(S.perr) + '</div>' : "") + (S.msg ? '<div class="hint">' + esc(S.msg) + '</div>' : "") +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0"><div><label style="font-weight:700">الاسم</label><input id="rq-pn" value="' + esc(r.name) + '"></div><div><label style="font-weight:700">المنطقة</label><input id="rq-pr" value="' + esc(r.commune || "") + '" placeholder="البلدية / الولاية"></div><div><label style="font-weight:700">الهاتف</label><div dir="ltr" style="padding:8px 0"><b>' + esc(r.phone) + '</b> · <a target="_blank" rel="noopener" href="' + wa + '">واتساب' + (r.whatsapp && r.whatsapp !== r.phone ? ' ' + esc(r.whatsapp) : '') + '</a></div></div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn" data-rq="psave">حفظ بيانات المريض</button><span class="hint">أول زيارة: ' + esc(first) + ' · آخر زيارة: ' + esc(last) + ' · عدد الزيارات: ' + vs.length + '</span></div>' +
+      '<h3 style="margin:18px 0 6px">📅 مواعيد المريض (' + (S.pbk || []).length + ')</h3><div class="card" style="padding:10px">' + ((S.pbk || []).map(b => '<div style="display:flex;gap:10px;flex-wrap:wrap;padding:5px 0;border-bottom:1px dashed #ffffff22"><b>' + esc(dayName(b.day)) + (b.slot ? " · " + esc(b.slot) : "") + '</b><span>' + (b.sessions || 1) + ' جلسة</span><span class="hint">' + esc(ST[b.status] || b.status || "") + '</span></div>').join("") || '<div class="hint">لا مواعيد.</div>') + '</div>' +
       (function () {
         const n = S.accts.length, shared = vs.filter(x => x.shared).length;
         return '<h3 style="margin:18px 0 6px">🔐 بوابة المريض</h3><div class="card" style="padding:12px"><div class="hint">' + (n ? "✅ المريض مربوط بحساب (" + n + ") — يطّلع على الزيارات المشارَكة فقط (" + shared + " من " + vs.length + ")." : "المريض لم يربط حسابه بعد. أرسل له رابط التأكيد على واتساب: يفتحه، يسجّل الدخول بـ Google أو Apple أو البريد، فيُربط حسابه بملفه.") + '</div>' +
@@ -189,10 +193,10 @@ const AdminRuqya = (() => {
         const txt = "السلام عليكم " + S.pat.name + "، هذا رابط ملفك في مواعيد الرقية الشرعية (أليسوم). افتحه وسجّل الدخول بحساب Google أو Apple أو بريدك لتطّلع على ملفك وتطور حالتك:\n" + S.link;
         S.wa = "https://wa.me/213" + String(S.pat.whatsapp || S.pat.phone).replace(/^0/, "") + "?text=" + encodeURIComponent(txt); try { window.open(S.wa, "_blank", "noopener"); } catch (_) { } } catch (er) { S.perr = er.message; } draw();
     } else if (a === "pshare") {
-      try { await call("ruqya_visits?booking_id=eq." + encodeURIComponent(S.pat.id), { method: "PATCH", body: JSON.stringify({ shared: true }) }); S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); S.msg = "✅ صارت كل الزيارات ظاهرة للمريض"; } catch (er) { S.perr = er.message; } draw();
+      try { await call("ruqya_visits?booking_id=in.(" + pids() + ")", { method: "PATCH", body: JSON.stringify({ shared: true }) }); S.visits = await call("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc&limit=500"); S.msg = "✅ صارت كل الزيارات ظاهرة للمريض"; } catch (er) { S.perr = er.message; } draw();
     } else if (a === "punl") {
       if (!confirm("فصل حساب المريض؟ لن يعود يرى ملفه حتى يُرسَل له رابط جديد.")) return;
-      try { await call("rpc/ruqya_portal_unlink", { method: "POST", body: JSON.stringify({ p_booking_id: S.pat.id }) }); S.accts = []; S.link = ""; S.wa = ""; S.msg = "تم فصل الحساب"; } catch (er) { S.perr = er.message; } draw();
+      try { for (const bid of (S.pbk || [S.pat]).map(x => x.id)) await call("rpc/ruqya_portal_unlink", { method: "POST", body: JSON.stringify({ p_booking_id: bid }) }); S.accts = []; S.link = ""; S.wa = ""; S.msg = "تم فصل الحساب"; } catch (er) { S.perr = er.message; } draw();
     }
     else if (a === "noshow") {
       if (!confirm("تعليم هذا الحجز «غاب بلا إخطار» وتسجيل إنذار في ملف صاحبه؟")) return;
@@ -211,13 +215,13 @@ const AdminRuqya = (() => {
       try { await call("ruqya_bookings?id=eq." + encodeURIComponent(S.pat.id), { method: "PATCH", body: JSON.stringify({ name: nm.slice(0, 120), commune: rg.slice(0, 120) || null }) }); S.pat.name = nm; S.pat.commune = rg; S.perr = ""; S.msg = "✅ حُفظت بيانات المريض"; await load(); } catch (er) { S.perr = er.message; } draw();
     } else if (a === "vadd") {
       const day = $("rq-vd").value; if (!day) { S.perr = "اختر تاريخ الزيارة"; draw(); return; }
-      try { await call("ruqya_visits", { method: "POST", body: JSON.stringify({ booking_id: S.pat.id, day, slot: $("rq-vt").value || null, progress: $("rq-vp").value, note: $("rq-vn").value.trim().slice(0, 4000), followup: $("rq-vf").value.trim().slice(0, 2000), shared: $("rq-vs").checked }) }); S.perr = ""; S.msg = "✅ أُضيفت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
+      try { await call("ruqya_visits", { method: "POST", body: JSON.stringify({ booking_id: S.pat.id, day, slot: $("rq-vt").value || null, progress: $("rq-vp").value, note: $("rq-vn").value.trim().slice(0, 4000), followup: $("rq-vf").value.trim().slice(0, 2000), shared: $("rq-vs").checked }) }); S.perr = ""; S.msg = "✅ أُضيفت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
     } else if (a === "vsave") {
       const card = b.closest("[data-vid]"), g = k => card.querySelector('[data-vf="' + k + '"]').value;
-      try { await call("ruqya_visits?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "PATCH", body: JSON.stringify({ progress: g("progress"), note: g("note").trim().slice(0, 4000), followup: g("followup").trim().slice(0, 2000), shared: card.querySelector('[data-vf="shared"]').checked }) }); S.perr = ""; S.msg = "✅ حُفظت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
+      try { await call("ruqya_visits?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "PATCH", body: JSON.stringify({ progress: g("progress"), note: g("note").trim().slice(0, 4000), followup: g("followup").trim().slice(0, 2000), shared: card.querySelector('[data-vf="shared"]').checked }) }); S.perr = ""; S.msg = "✅ حُفظت الزيارة"; S.visits = await call("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
     } else if (a === "vdel") {
       if (!confirm("حذف هذه الزيارة نهائياً؟")) return;
-      try { await call("ruqya_visits?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "DELETE" }); S.perr = ""; S.visits = await call("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(S.pat.id) + "&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
+      try { await call("ruqya_visits?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "DELETE" }); S.perr = ""; S.visits = await call("ruqya_visits?select=*&booking_id=in.(" + pids() + ")&order=day.desc,slot.desc&limit=500"); } catch (er) { S.perr = er.message; } draw();
     }
     else if (a === "st") {
       const v = b.getAttribute("data-v"); if (v === "cancelled" && !confirm("إلغاء هذا الحجز؟ سيتحرر الموعد.")) return;
