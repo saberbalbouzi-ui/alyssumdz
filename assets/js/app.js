@@ -20,7 +20,7 @@ function shipBlocked(w, commune, type){
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
 /* __OCSC: تكاليف الشحن لنموذج الطلب المضمَّن في صفحة هبوط (oc.sc): "" = الشركة الافتراضية، "zones" = مناطق التوصيل؛ null = حسب إعداد المنتج */
-let __OCSC = null; const pshipCo = p => __OCSC !== null ? __OCSC : (p && p.shipCo);
+let __OCSC = null, __OCPF = null; const pshipCo = p => __OCSC !== null ? __OCSC : (p && p.shipCo);
 let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
 /* بلديات لا توصّل إليها شركة التوصيل الافتراضية (مثل تبلبالة عند ياليدين): تُعلَّم «غير متاح» بنفس آلية الاستثناءات w.xc */
 function applyShipNd(nd, def){
@@ -45,7 +45,8 @@ document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e)
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ ["wilaya","cwilaya"].forEach(id=>{ const sel = document.getElementById(id); if(!sel || typeof WILAYAS === "undefined") return; Array.from(sel.options).forEach(o=>{ const w = o.value && WILAYAS.find(x=>x.id == o.value); if(w && w.hide) o.remove(); }); }); }catch(e){} });
 /* سعر المنتج الحر: يُرجع {home,stop} (قيمة فارغة = null) أو null */
-function prodShipPf(p){ if(!p || p.shipCo !== "free") return null; const n = v=>(v === undefined || v === null || v === "" || isNaN(Number(v))) ? null : Number(v); const pf = { home:n(p.shipFreeHome), stop:n(p.shipFreeStop) }; return (pf.home === null && pf.stop === null) ? null : pf; }
+function prodShipPf(p){ if(__OCSC !== null) return (__OCSC === "free" && __OCPF && (__OCPF.home !== null || __OCPF.stop !== null)) ? __OCPF : null;   /* صفحة هبوط حدّدت أسعار توصيلها (oc.sc): تتجاوز المنتج */
+  if(!p || p.shipCo !== "free") return null; const n = v=>(v === undefined || v === null || v === "" || isNaN(Number(v))) ? null : Number(v); const pf = { home:n(p.shipFreeHome), stop:n(p.shipFreeStop) }; return (pf.home === null && pf.stop === null) ? null : pf; }
 /* مصدر تسعير بنود السلة: إن اتفقت كلها على مصدر واحد فهو، وإلا (مختلطة) التسعير الافتراضي */
 function cartShipCo(items){
   const set = new Set((items||[]).map(it=>{ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; return (p && p.shipCo) || ""; }));
@@ -2112,6 +2113,8 @@ const PhoneDZ = {
   let oc = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); if(m) oc = JSON.parse(decodeURIComponent(m[1])); }catch(e){}
   if(oc && typeof oc === "object"){
     if(oc.sc === "zones") __OCSC = "zones"; else if(oc.sc === "def") __OCSC = "";
+    else if(oc.sc === "free"){ const nn = v=>(v === undefined || v === null || v === "" || isNaN(Number(v)) || Number(v) < 0) ? null : Math.round(Number(v)); __OCSC = "free"; __OCPF = { home:nn(oc.sh), stop:nn(oc.ss) }; }      /* سعر حر ثابت لهذه الصفحة فقط */
+    else if(typeof oc.sc === "string" && /^[a-z0-9_]{2,24}$/i.test(oc.sc)) __OCSC = oc.sc;      /* مفتاح شركة توصيل (تعريفتها من ship-co.json) لهذه الصفحة فقط */
     if(oc.ol === "l" || oc.ol === "c" || oc.ol === "i") document.documentElement.classList.add("ol-"+oc.ol);      /* شكل العروض: قائمة / بطاقات (الافتراضي حسب عرض الإطار) */
     const ok = v=>/^(#[0-9a-f]{3,8}|rgba?\([0-9 .,%]+\)|[a-z]{3,20})$/i.test(String(v||"").trim()) ? String(v).trim() : "";
     const V = {bg:"bg",tc:"tc",bd:"bd",ac:"ac",bt:"bt",fb:"fb",tb:"tb",cb:"cb",wb:"wb"}, r = Number(oc.r);
