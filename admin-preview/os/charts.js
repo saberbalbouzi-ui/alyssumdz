@@ -33,25 +33,25 @@
 
   SalesChart.prototype.draw = function () {
     var cx = this.cx, W = this.W, H = this.H, n = this.cur.length; cx.clearRect(0, 0, W, H); if (!n) return;
-    var L = 14, R = 62, T = 18, B = 34, pw = W - L - R, ph = H - T - B, base = T + ph, F = this.fc.length, S = n + F, g = ease(this.grow);
+    var L = 18, R = 76, T = 38, B = 46, pw = W - L - R, ph = H - T - B, base = T + ph, F = this.fc.length, S = n + F, g = ease(this.grow);
     var mx = Math.max.apply(null, this.cur.concat(this.prev, this.fc)) * 1.12 || 1, step = nice(mx / 4), top = step * 4;
     var DX = -12, DY = -10;                       /* متجه العمق */
     var xs = function (s) { return L + pw - (S === 1 ? pw / 2 : s / (S - 1) * pw); }, ys = function (v) { return base - v / top * ph * g; };
-    cx.font = "600 12.5px Cairo, sans-serif"; cx.textBaseline = "middle"; cx.lineJoin = "round"; cx.lineCap = "round";
+    cx.font = "700 14px Cairo, sans-serif"; cx.textBaseline = "middle"; cx.lineJoin = "round"; cx.lineCap = "round";
     /* أرضية بمنظور + شبكة */
     var fg = cx.createLinearGradient(0, base - 6, 0, base + 14); fg.addColorStop(0, "rgba(43,228,255,.16)"); fg.addColorStop(1, "rgba(43,228,255,0)");
     cx.fillStyle = fg; cx.beginPath(); cx.moveTo(L, base); cx.lineTo(L + pw, base); cx.lineTo(L + pw + DX * 2.2, base + DY * -1.4); cx.lineTo(L + DX * 2.2, base + DY * -1.4); cx.closePath(); cx.fill();
     for (var k = 0; k <= 4; k++) {
       var y = base - k * step / top * ph; cx.strokeStyle = "rgba(98,226,240," + (k ? .13 : .3) + ")"; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(L, y); cx.lineTo(L + pw, y); cx.stroke();
-      cx.fillStyle = "rgba(226,244,240,.72)"; cx.textAlign = "start"; cx.direction = "ltr"; cx.fillText(this.fmtAxis(k * step), L + pw + 10, y);
+      cx.fillStyle = "rgba(236,248,245,.92)"; cx.textAlign = "start"; cx.direction = "ltr"; cx.fillText(this.fmtAxis(k * step), L + pw + 12, y);
     }
     cx.direction = "rtl"; cx.textAlign = "center";
-    var self = this; this.labels.forEach(function (lb, i) { if (n > 9 && i % 2) return; cx.fillStyle = i === self.focus ? "#dcff1f" : "rgba(226,244,240,.75)"; cx.fillText(lb, xs(i), base + 20); });
+    var self = this; this.labels.forEach(function (lb, i) { if (n > 9 && i % 2) return; cx.fillStyle = i === self.focus ? "#dcff1f" : "rgba(236,248,245,.88)"; cx.fillText(lb, xs(i), base + 24); });
     cx.direction = "ltr";
     /* السطح الخلفي: الفترة السابقة (بنفسجي) */
     if (this.prev.length) this.layer(this.prev, xs, ys, base, DX, DY, "165,139,255", .55, 2);
     /* السطح الأمامي: الفترة الحالية (ليموني/سماوي) مع عمق مبثوق */
-    this.layer(this.cur, xs, ys, base, 0, 0, "220,255,31", 1, 11, true);
+    this.layer(this.cur, xs, ys, base, 0, 0, "220,255,31", 1, 16, true);
     /* التوقّع */
     if (F) {
       var p0 = [xs(n - 1), ys(this.cur[n - 1])], q = [p0].concat(this.fc.map(function (v, j) { return [xs(n + j), ys(v)]; }));
@@ -63,12 +63,14 @@
     if (!this.reduced && n > 1) { var u = (this.t * .11) % 1, f2 = u * (n - 1), i0 = Math.min(n - 2, Math.floor(f2)), kk = f2 - i0, sx = xs(i0) + (xs(i0 + 1) - xs(i0)) * kk, sy = ys(this.cur[i0]) + (ys(this.cur[i0 + 1]) - ys(this.cur[i0])) * kk, sg = cx.createRadialGradient(sx, sy, 0, sx, sy, 13); sg.addColorStop(0, "rgba(255,255,255,.95)"); sg.addColorStop(1, "rgba(43,228,255,0)"); cx.fillStyle = sg; cx.beginPath(); cx.arc(sx, sy, 13, 0, TAU); cx.fill(); }
     /* عقد الفترة الحالية */
     this.pts = [];
+    var pk = this.cur.indexOf(Math.max.apply(null, this.cur));
     for (var i = 0; i < n; i++) {
       var px = xs(i), py = ys(this.cur[i]), hot = i === this.hover, foc = i === this.focus; this.pts.push({ x: px, y: py });
       if (hot || foc) { var bg = cx.createLinearGradient(0, py, 0, base); bg.addColorStop(0, "rgba(220,255,31,.85)"); bg.addColorStop(1, "rgba(220,255,31,0)"); cx.strokeStyle = bg; cx.lineWidth = hot ? 2 : 1.4; cx.beginPath(); cx.moveTo(px, py); cx.lineTo(px, base); cx.stroke(); }
       var rad = hot ? 8 : foc ? 6.5 : 4.2, gg = cx.createRadialGradient(px, py, 0, px, py, rad * 2.6); gg.addColorStop(0, "rgba(255,255,255,1)"); gg.addColorStop(.3, "rgba(220,255,31,.95)"); gg.addColorStop(1, "rgba(220,255,31,0)");
       cx.fillStyle = gg; cx.beginPath(); cx.arc(px, py, rad * 2.6, 0, TAU); cx.fill();
       if (foc) { cx.strokeStyle = "#dcff1f"; cx.lineWidth = 1.6; cx.beginPath(); cx.arc(px, py, 11, 0, TAU); cx.stroke(); }
+      if (i === pk) { cx.font = "800 15px Cairo, sans-serif"; cx.textAlign = "center"; cx.direction = "ltr"; var tx = this.fmtAxis(this.cur[i]), tw = cx.measureText(tx).width + 20; cx.fillStyle = "rgba(2,14,18,.88)"; cx.beginPath(); (cx.roundRect ? cx.roundRect(px - tw / 2, py - 40, tw, 24, 12) : cx.rect(px - tw / 2, py - 40, tw, 24)); cx.fill(); cx.strokeStyle = "rgba(220,255,31,.7)"; cx.lineWidth = 1.2; cx.stroke(); cx.fillStyle = "#dcff1f"; cx.fillText(tx, px, py - 27); cx.font = "700 14px Cairo, sans-serif"; cx.textAlign = "center"; }
       if (!this.reduced && (i === n - 1 || hot || foc)) { var ph = ((this.t * .9 + i * .3) % 1), pr = 8 + ph * 16; cx.strokeStyle = "rgba(220,255,31," + (.7 * (1 - ph)).toFixed(2) + ")"; cx.lineWidth = 1.6; cx.beginPath(); cx.arc(px, py, pr, 0, TAU); cx.stroke(); }
     }
   };
@@ -77,9 +79,12 @@
     var cx = this.cx, n = vals.length, pts = vals.map(function (v, i) { return [xs(i) + ox, ys(v) + oy]; }), d, k;
     var path = function (dx, dy) { cx.beginPath(); pts.forEach(function (p, i) { var x = p[0] + dx, y = p[1] + dy; if (!i) cx.moveTo(x, y); else { var q = pts[i - 1], mx = (q[0] + dx + x) / 2; cx.bezierCurveTo(mx, q[1] + dy, mx, y, x, y); } }); };
     for (k = depth; k >= 1; k--) {
-      d = k / depth; path(-k * 2.1, -k * 1.5); cx.lineTo(pts[n - 1][0] - k * 2.1, base + oy - k * 1.5); cx.lineTo(pts[0][0] - k * 2.1, base + oy - k * 1.5); cx.closePath();
+      d = k / depth; path(-k * 1.7, -k * 1.2); cx.lineTo(pts[n - 1][0] - k * 1.7, base + oy - k * 1.2); cx.lineTo(pts[0][0] - k * 1.7, base + oy - k * 1.2); cx.closePath();
       cx.fillStyle = "rgba(" + rgb + "," + (.035 * alpha * (1 - d * .5)).toFixed(3) + ")"; cx.fill();
-      cx.strokeStyle = "rgba(" + rgb + "," + (.26 * alpha * (1 - d)).toFixed(3) + ")"; cx.lineWidth = 1; path(-k * 2.1, -k * 1.5); cx.stroke();
+      cx.strokeStyle = "rgba(" + rgb + "," + (.26 * alpha * (1 - d)).toFixed(3) + ")"; cx.lineWidth = 1; path(-k * 1.7, -k * 1.2); cx.stroke();
+    }
+    if (glow) { /* ستارة عمودية تحت المنحنى: تعطي الإحساس بحجم السطح */
+      cx.strokeStyle = "rgba(" + rgb + ",.1)"; cx.lineWidth = 1; var xa = pts[n - 1][0], xb = pts[0][0], gx; for (gx = xa; gx <= xb; gx += 11) { var f = 0, ii = 0; for (ii = 0; ii < n - 1; ii++) if (gx >= pts[n - 1 - ii - 1][0] && gx <= pts[n - 1 - ii][0]) { f = (gx - pts[n - 1 - ii - 1][0]) / ((pts[n - 1 - ii][0] - pts[n - 1 - ii - 1][0]) || 1); var y0 = pts[n - 1 - ii - 1][1], y1 = pts[n - 1 - ii][1], yy = y0 + (y1 - y0) * (1 - Math.cos(f * Math.PI)) / 2; cx.beginPath(); cx.moveTo(gx, yy); cx.lineTo(gx, base + oy); cx.stroke(); break; } }
     }
     path(0, 0); cx.lineTo(pts[n - 1][0], base + oy); cx.lineTo(pts[0][0], base + oy); cx.closePath();
     var gr = cx.createLinearGradient(0, 0, 0, base); gr.addColorStop(0, "rgba(" + rgb + "," + (.42 * alpha).toFixed(2) + ")"); gr.addColorStop(.7, "rgba(" + (glow ? "25,224,138" : rgb) + "," + (.12 * alpha).toFixed(2) + ")"); gr.addColorStop(1, "rgba(" + rgb + ",0)"); cx.fillStyle = gr; cx.fill();

@@ -106,10 +106,10 @@
     var tip = $("#cv-tip"); if (i < 0 || !pos) { tip.hidden = true; return; } var cur = series(S.p, false, S.m), prv = series(S.p, true, S.m), v = cur[i], pv = prv[i] || 0, d = pv ? Math.round((v - pv) / pv * 100) : 0, wr = $("#cv-wrap").getBoundingClientRect();
     tip.innerHTML = labels(S.p)[i] + "<b>" + fmt(v) + (S.m === "orders" ? " طلب" : " دج") + '</b><em class="' + (d >= 0 ? "up" : "dn") + '">' + (d >= 0 ? "▲" : "▼") + " " + Math.abs(d) + "% عن السابقة</em>"; tip.style.left = (pos.x - wr.left) + "px"; tip.style.top = (pos.y - wr.top) + "px"; tip.hidden = false;
   }, onPick: function (i) { S.focus = S.focus === i ? -1 : i; renderFocus(); renderCenter(); renderDeck(); } });
-  var core = new OSCharts.AICore($("#aicore"), { reduced: REDUCED, size: 220 });
+  var core = new OSCharts.AICore($("#aicore"), { reduced: REDUCED, size: 170 });
 
   function renderIns() { var cur = series(S.p, false, S.m), lb = labels(S.p), mx = Math.max.apply(null, cur), bi = cur.indexOf(mx), av = cur.reduce(function (a, b) { return a + b; }, 0) / (cur.length || 1), u = S.m === "orders" ? " طلب" : " دج"; $("#chart-ins").innerHTML = '<span>الذروة: ' + lb[bi] + ' <b class="ltr">' + fmt(mx) + "</b>" + u + '</span><span>المتوسط: <b class="ltr">' + fmt(av) + "</b>" + u + "</span>"; }
-  function renderIns2() { var cur = series(S.p, false, S.m), n = cur.length, avg = (cur[n - 1] + cur[n - 2] + cur[n - 3]) / 3 || 0, fc = Math.round(avg * 1.09), el = $("#ins-r"); if (!el) { el = document.createElement("div"); el.id = "ins-r"; el.className = "ins-r"; $("#pn-chart").appendChild(el); } el.innerHTML = 'توقّع الفترة القادمة <b class="ltr">' + fmt(fc) + "</b>" + (S.m === "orders" ? " طلب" : " دج") + "<small style=\"color:var(--dim)\">تقدير تجريبي</small>"; }
+  function renderIns2() { var cur = series(S.p, false, S.m), n = cur.length, avg = (cur[n - 1] + cur[n - 2] + cur[n - 3]) / 3 || 0, fc = Math.round(avg * 1.09), el = $("#ins-r"); if (!el) { el = document.createElement("div"); el.id = "ins-r"; el.className = "ins-r"; $("#cv-legend").appendChild(el); } el.innerHTML = 'توقّع الفترة القادمة <b class="ltr">' + fmt(fc) + "</b>" + (S.m === "orders" ? " طلب" : " دج") + "<small style=\"color:var(--dim)\">تقدير تجريبي</small>"; }
   function renderChart() {
     renderIns(); renderIns2();
     var cur = series(S.p, false, S.m), prv = series(S.p, true, S.m), n = cur.length, avg = (cur[n - 1] + cur[n - 2] + cur[n - 3]) / 3 || 0;
@@ -132,7 +132,8 @@
     requestAnimationFrame(function () {
       var rg = $("#ring3d"), body = $(".rad-body"); if (!rg || !body) return; var b = body.getBoundingClientRect(), r = rg.getBoundingClientRect(), cx = r.left - b.left + r.width / 2, cy = r.top - b.top + r.height / 2, rx = r.width / 2 * (94 / 130), ry = rx * Math.cos(46 * Math.PI / 180) * .98, ang = -Math.PI / 2, h = "";
       ST_KEYS.forEach(function (k) { if (!c[k]) return; var span = c[k] / tot * Math.PI * 2, mid = ang + span / 2; ang += span; h += '<i class="rg-badge" style="left:' + (cx + Math.cos(mid) * rx).toFixed(1) + "px;top:" + (cy + Math.sin(mid) * ry - 6).toFixed(1) + "px;--c:" + ST[k].c + '">' + c[k] + "</i>"; });
-      $("#rg-badges").innerHTML = h + '<i class="rg-floor"></i>';
+      $("#rg-badges").innerHTML = h + '<i class="rg-floor" style="left:' + (cx - r.width * .42).toFixed(1) + "px;top:" + (cy + ry + 6).toFixed(1) + "px;width:" + (r.width * .84).toFixed(1) + 'px"></i>';
+      var rc = $("#rg-c"); if (rc) { rc.style.left = cx.toFixed(1) + "px"; rc.style.top = (cy - 4).toFixed(1) + "px"; }
     });
   }
   window.addEventListener("resize", function () { if (S.p) renderRadial(); });
