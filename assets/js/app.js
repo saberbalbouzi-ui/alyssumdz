@@ -118,8 +118,7 @@ function labelCommunes(sel, w, fn){
   if(!sel || !w || !sel.options) return;
   for(let i = 0; i < sel.options.length; i++){
     const o = sel.options[i]; if(!o.value) continue; if(o.dataset.t === undefined) o.dataset.t = o.textContent; if(o.disabled) continue;
-    const ww = o.dataset.w ? (WILAYAS.find(x=>x.id == o.dataset.w) || w) : w; let f = null; try{ f = fn(ww, o.value); }catch(e){}
-    o.textContent = o.dataset.t + (f === null || f === undefined ? "" : " — " + (f === 0 ? "مجاني" : fmt(f)));
+    o.textContent = o.dataset.t;      /* بلا سعر في أسماء البلديات (طلب المتجر): رسم التوصيل يظهر في ملخّص الطلب لا في القائمة */
   }
 }
 /* إن كانت البلدية المختارة تابعة لولاية جديدة: بدّل قائمة الولاية إليها وأعد ملء بلدياتها وأبقِ البلدية محدّدة */
