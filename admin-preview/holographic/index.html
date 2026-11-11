@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ALYSSUM — لوحة هولوغرافية (معاينة تجريبية)</title>
+<link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="holo.css">
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-aurora" aria-hidden="true"></div>
+
+<div class="shell">
+  <!-- الشريط العلوي -->
+  <header class="top" role="banner">
+    <div class="top-r">
+      <button class="chip ask" id="btn-ask" type="button"><span class="bot" aria-hidden="true"></span>اسألني</button>
+      <button class="chip" id="btn-upd" type="button"><span data-i="bell"></span>تحديث متاح</button>
+      <a class="chip" href="../../" id="btn-visit" target="_blank" rel="noopener"><span data-i="eye"></span>زيارة الموقع</a>
+      <div class="seg" role="group" aria-label="المظهر">
+        <button type="button" data-theme-set="light" aria-pressed="false"><span data-i="sun"></span>فاتح</button>
+        <button type="button" data-theme-set="dark" aria-pressed="true" class="on"><span data-i="moon"></span>داكن</button>
+      </div>
+      <button class="chip" id="btn-ver" type="button">تحديث <span class="ltr">v1.89.1050</span><span data-i="refresh"></span></button>
+      <button class="chip" id="btn-cache" type="button"><span data-i="drop"></span>مسرح الكاش</button>
+    </div>
+    <div class="top-l">
+      <button class="chip rose" id="btn-out" type="button">خروج</button>
+      <span class="chip coin" title="رصيد الخدمة الذكية"><b id="credits">10</b><i class="coin-i" aria-hidden="true"></i></span>
+    </div>
+  </header>
+
+  <!-- الشريط الجانبي -->
+  <aside class="side" aria-label="القائمة">
+    <label class="search"><span data-i="search"></span><input id="q" type="search" placeholder="بحث سريع عن أي إعداد..." autocomplete="off" aria-label="بحث سريع"></label>
+    <section class="guide card">
+      <div class="guide-t"><span data-i="book"></span>دليل الاستخدام</div>
+      <p>اختر قسماً من القائمة، ثم استعمل الأزرار داخل كل قسم للإضافة أو التعديل أو نشر التغييرات. أو زيارة الموقع، وعلى الصفحة تفتح معاينة الموقع وفيها زر «تعديل».</p>
+      <i class="hand" aria-hidden="true"></i>
+    </section>
+    <nav id="nav" class="nav" aria-label="الأقسام"></nav>
+    <div class="empty" id="nav-empty" hidden>لا نتائج مطابقة</div>
+  </aside>
+
+  <!-- المحتوى -->
+  <main class="main" id="main">
+    <section class="hero">
+      <div class="hero-txt">
+        <h1>صباح الخير، لوحة تحكم منصة <span class="brand">ALYSSUM</span></h1>
+        <p>نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p>
+      </div>
+      <div class="hero-vis" aria-hidden="true">
+        <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+        <div class="panels"><i></i><i></i><i></i><i></i></div>
+        <svg class="jar" viewBox="0 0 220 240" width="220" height="240">
+          <defs>
+            <linearGradient id="jg" x1="0" x2="1"><stop offset="0" stop-color="#0b4d2a"/><stop offset=".45" stop-color="#1ef06a"/><stop offset="1" stop-color="#0a5a2d"/></linearGradient>
+            <linearGradient id="jl" x1="0" x2="1"><stop offset="0" stop-color="#16382a"/><stop offset=".5" stop-color="#2d6b4a"/><stop offset="1" stop-color="#12301f"/></linearGradient>
+            <radialGradient id="jgl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e2fe17" stop-opacity=".5"/><stop offset="1" stop-color="#e2fe17" stop-opacity="0"/></radialGradient>
+          </defs>
+          <ellipse cx="110" cy="218" rx="92" ry="16" fill="url(#jgl)"/>
+          <rect x="38" y="92" width="144" height="118" rx="30" fill="url(#jg)" stroke="#9ff7c0" stroke-opacity=".55" stroke-width="2"/>
+          <rect x="30" y="58" width="160" height="40" rx="16" fill="url(#jl)" stroke="#bfffd6" stroke-opacity=".5" stroke-width="2"/>
+          <rect x="62" y="116" width="96" height="62" rx="14" fill="#04170e" fill-opacity=".72" stroke="#e2fe17" stroke-opacity=".5"/>
+          <path d="M110 128c-8-2-16 4-14 12 6 0 12-3 14-12zm0 0c8-2 16 4 14 12-6 0-12-3-14-12z" fill="#7dff9a"/>
+          <text x="110" y="156" text-anchor="middle" fill="#fff" font-size="13" font-weight="800" letter-spacing="1.2" font-family="Cairo,sans-serif">ALYSSUM</text>
+          <text x="110" y="169" text-anchor="middle" fill="#bfe9cf" font-size="6.5" font-family="Cairo,sans-serif">Herbal Science</text>
+          <path d="M52 110c8-8 18-12 30-12" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round" fill="none"/>
+        </svg>
+        <div class="pedestal"></div>
+      </div>
+      <div class="hero-geo" aria-hidden="true">
+        <div class="globe"><i class="land"></i><i class="grid"></i><i class="shade"></i></div>
+        <div class="dz">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <path class="dz-p" d="M28 18 38 12 52 10 64 13 76 9 84 20 80 34 86 52 72 66 66 80 56 94 44 90 34 80 14 68 8 56 20 44 22 30Z"/>
+            <circle class="dz-d" cx="52" cy="14" r="3"/><circle class="dz-ping" cx="52" cy="14" r="3"/>
+            <circle class="dz-d" cx="30" cy="22" r="1.6"/><circle class="dz-d" cx="74" cy="24" r="1.6"/><circle class="dz-d" cx="46" cy="56" r="1.6"/>
+          </svg>
+          <div class="dz-t"><b>الجزائر</b><span id="geo-count">30 طلب اليوم</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div class="periods" role="tablist" aria-label="الفترة">
+        <button type="button" role="tab" data-p="today" aria-selected="false">اليوم</button>
+        <button type="button" role="tab" data-p="week" aria-selected="true" class="on">7 أيام</button>
+        <button type="button" role="tab" data-p="month" aria-selected="false">30 يوماً</button>
+      </div>
+      <div class="acts">
+        <button type="button" class="btn ghost" id="btn-newp">منتج جديد</button>
+        <button type="button" class="btn lime" id="btn-all">كل الطلبات</button>
+      </div>
+    </div>
+
+    <section class="kpis" id="kpis" aria-label="المؤشرات"></section>
+
+    <section class="panels2">
+      <article class="card status" id="status">
+        <header><h2>الطلبات حسب الحالة</h2><span class="sub" id="status-sub">آخر 7 أيام</span></header>
+        <div class="status-body">
+          <div class="donut-w"><svg id="donut" viewBox="0 0 200 200" role="img" aria-label="توزيع الطلبات"></svg><div class="donut-c"><b id="donut-n">0</b><span>طلب</span></div><i class="donut-base" aria-hidden="true"></i></div>
+          <ul class="legend" id="legend"></ul>
+        </div>
+      </article>
+      <article class="card chart" id="chart-card">
+        <header>
+          <h2>مخطط المبيعات</h2>
+          <div class="tabs" role="tablist" aria-label="نوع العرض">
+            <button type="button" role="tab" data-t="sales" class="on" aria-selected="true"><span data-i="trend"></span>المبيعات</button>
+            <button type="button" role="tab" data-t="orders" aria-selected="false"><span data-i="cube"></span>الطلبات</button>
+            <button type="button" role="tab" data-t="table" aria-selected="false"><span data-i="table"></span>عرض جدول</button>
+          </div>
+        </header>
+        <div class="chart-w" id="chart-w"><div class="cplot" id="plot"><svg id="chart" viewBox="0 0 800 300" preserveAspectRatio="none" role="img" aria-label="مخطط"></svg><div class="tip" id="tip" hidden></div></div></div>
+        <div class="table-w" id="table-w" hidden></div>
+        <i class="stage-base" aria-hidden="true"></i>
+      </article>
+    </section>
+    <footer class="note">معاينة تجريبية معزولة — كل الأرقام وهمية ولا يوجد اتصال بالمتجر أو الطلبات.</footer>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="holo.js"></script>
+</body>
+</html>
