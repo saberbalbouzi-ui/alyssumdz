@@ -338,6 +338,7 @@ begin
     'closed', coalesce(v -> 'closed', '[]'::jsonb),
     'disabled', coalesce((v ->> 'disabled')::boolean, false),
     'msg', coalesce(v ->> 'msg', ''),
+    'info', jsonb_build_object('address', left(coalesce(v ->> 'address', ''), 300), 'phones', left(coalesce(v ->> 'phones', ''), 200), 'map', left(coalesce(v ->> 'map', ''), 300)),
     'products', coalesce(v -> 'products', '[]'::jsonb));
 end $$;
 revoke all on function public.ruqya_config() from public;
