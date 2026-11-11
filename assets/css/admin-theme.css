@@ -158,8 +158,9 @@ html:is(.glass,.white) body #app .side-nav>.nav-gh.on:not(#_){background:linear-
   html.glass #app .top{background:#0b1210!important;backdrop-filter:none!important}
   html.white #app .top{background:#fff!important}
   #app .top>*{min-width:0;margin:0!important;box-sizing:border-box}
-  #app .top>h1{order:2;flex:1 1 0;font-size:0!important;line-height:1;white-space:nowrap;overflow:hidden;text-align:start;min-width:0}
-  #app .top>h1::before{content:"أليسوم";font-size:1.05rem;font-weight:900}
+  #app .top>h1{order:2;flex:1 1 0!important;font-size:0!important;line-height:1;white-space:nowrap;overflow:hidden;text-align:start;min-width:0!important}      /* !important لتتغلّب على «#app .top>*{flex:0 0 auto!important}» في admin.html */
+  #app .top>h1{display:block!important}      /* قاعدة «.top h1{display:none}» في admin.html كانت تُخفيه فيضيع الفاصل المرن ويلتصق الجميع باليمين والصورة بجانب الأزرار؛ بظهوره تذهب الصورة لأقصى اليسار */
+  #app .top>h1::before{content:attr(data-brand);font-size:1.05rem;font-weight:900}
   #app .top>#top-menu,#app .top>#top-search,#app .top>#top-more{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;min-height:40px;padding:0;border-radius:13px;line-height:1}
   #app .top>#top-menu{order:1}
   #app .top>#top-search{order:3}

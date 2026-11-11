@@ -7,7 +7,7 @@ const AdminPayments = (() => {
   const today = () => new Date().toISOString().slice(0, 10);
   const labels = { unpaid:"غير مدفوع", paid:"مدفوع", refunded:"مستردّ" };
   const methods = { cod:"الدفع عند الاستلام", ccp:"CCP", baridimob:"بريدي موب", cash:"نقداً" };
-  const S = { fetchedCo:false, byOrder:{}, manual:[], sha:null, loaded:false, loading:false, saving:false, localOnly:false, filter:"all", query:"", selected:new Set(), drafts:{}, err:"", add:null, addOpen:false };
+  const S = { fetchedCo:false, byOrder:{}, manual:[], sha:null, loaded:false, loading:false, saving:false, localOnly:false, filter:"all", co:"all", query:"", selected:new Set(), drafts:{}, err:"", add:null, addOpen:false };
 
   function decode(raw) { return JSON.parse(decodeURIComponent(escape(atob(String(raw || "").replace(/\s/g, ""))))); }
   function encode(value) { return btoa(unescape(encodeURIComponent(JSON.stringify(value, null, 2)))); }
@@ -52,6 +52,8 @@ const AdminPayments = (() => {
     }
   }
   function id(o) { return String(o&&(o.id||o.orderId||o.number)||""); }
+  const coOf = o => (typeof AdminCoStats!=="undefined"?AdminCoStats.keyOf(o):((A().trackingOf&&A().trackingOf(o)||{}).company||"none"));
+  const coName = k => (typeof AdminCoStats!=="undefined"?AdminCoStats.nameOf(k):k);
   function status(o) { return String(o&&o.status||"").toLowerCase(); }
   function productOf(o) { try { const L=A().orderLines&&A().orderLines(o)||[]; if(L.length) return L.map(l=>(l.p&&l.p.title||"")+(l.qty>1?" ×"+l.qty:"")).join("، "); } catch (_) { } return String(o.product||o.items||""); }
   /* الجدول يضم الطلبات المسجَّلة عند شركة التوصيل فقط: لها رقم تتبع وحالتها مؤكَّد/في الطريق/مسلَّم/مرتجع،
@@ -59,6 +61,7 @@ const AdminPayments = (() => {
   function inCo(o) {
     const A_=A(), st=status(o); if(!["confirmee","expediee","livree","echec"].includes(st)) return false;
     const t=A_.trackingOf?A_.trackingOf(o):null; if(!t) return false;
+    if(t.company&&t.company!=="yalidine") return true;   /* شركة أخرى (WeCan وغيرها): يكفي رقم التتبع؛ قائمة طرود ياليدين لا تخصها */
     if(A_.ydActual&&A_.ydActual[t.tracking]) return true;
     const rows=(typeof AdminYd!=="undefined"&&AdminYd.S&&AdminYd.S.rows)||[];
     if(!rows.length) return A_.listCompanyKey&&A_.listCompanyKey() ? false : true;   /* شركة قراءة الطرود مفعّلة ولم تُحمَّل قائمتها: لا نخمّن، نخفي حتى تُجلب */
@@ -66,8 +69,8 @@ const AdminPayments = (() => {
   }
   /* عناصر الجدول: طلبات الموقع + المدفوعات اليدوية (m…) بنفس الشكل */
   function items() {
-    const os=(A().orders||[]).filter(o=>o&&id(o)&&inCo(o)).map(o=>({ o, id:id(o), date:o.date||"", name:o.name||"", phone:o.phone||"", product:productOf(o), total:Number(o.total)||0, ship:status(o), manual:false }));
-    const cutA=(typeof AdminArchive!=="undefined"&&AdminArchive.cut())||0,ms=(S.manual||[]).filter(m=>{if(!cutA)return true;const t=new Date(String(m.date||"").replace(" ","T")).getTime();return !(t&&t<cutA);}).map(m=>({ o:m, id:String(m.id), date:m.date||"", name:m.name||"", phone:m.phone||"", product:m.product||"", total:Number(m.total)||0, ship:"", manual:true }));
+    const os=(A().orders||[]).filter(o=>o&&id(o)&&inCo(o)).map(o=>({ o, id:id(o), date:o.date||"", name:o.name||"", phone:o.phone||"", product:productOf(o), total:Number(o.total)||0, ship:status(o), manual:false, co:coOf(o) }));
+    const cutA=(typeof AdminArchive!=="undefined"&&AdminArchive.cut())||0,ms=(S.manual||[]).filter(m=>{if(!cutA)return true;const t=new Date(String(m.date||"").replace(" ","T")).getTime();return !(t&&t<cutA);}).map(m=>({ o:m, id:String(m.id), date:m.date||"", name:m.name||"", phone:m.phone||"", product:m.product||"", total:Number(m.total)||0, ship:"", manual:true, co:"manual" }));
     return os.concat(ms);
   }
   /* السجلّ الفعّال: يدوي إن وُجد (status محفوظ) وإلا تلقائي من شركة التوصيل: تسليم = مدفوع */
@@ -117,7 +120,7 @@ const AdminPayments = (() => {
   function sumSettle(list) {
     const T={ grp:{}, got:0, net:0, netDone:0, netExp:0, retLoss:0, del:0, cod:0, ins:0, ret:0, cogs:0, pack:0, n:0, nDone:0, nExp:0, nRet:0, nFile:0 };
     const pk=Number(A().fin&&A().fin.set&&A().fin.set.packaging)||0;
-    list.forEach(it=>{ const x=settle(it); if(!x)return; T.n++; if(x.src==="file")T.nFile++; if(x.pend&&x.kind!=="exp"){ const G=T.grp[x.pend]||(T.grp[x.pend]={ n:0, net:0 }); G.n++; G.net+=x.net; }
+    list.forEach(it=>{ if(it.co&&it.co!=="yalidine")return; const x=settle(it); if(!x)return; T.n++; if(x.src==="file")T.nFile++; if(x.pend&&x.kind!=="exp"){ const G=T.grp[x.pend]||(T.grp[x.pend]={ n:0, net:0 }); G.n++; G.net+=x.net; }
       if(x.kind==="exp"){ T.netExp+=x.net; T.nExp++; return; }
       T.net+=x.net; T.del+=x.del; T.cod+=x.cod; T.ins+=x.ins; T.ret+=x.ret;
       if(x.kind==="ret"){ T.nRet++; T.retLoss+=x.ret; } else { T.nDone++; T.netDone+=x.net; T.got+=x.got; T.cogs+=cogs(it); T.pack+=pk; } });
@@ -125,6 +128,7 @@ const AdminPayments = (() => {
   }
   const dz=n=>Math.round(Number(n)||0).toLocaleString("fr-DZ");
   function settleCells(it) {
+    if(it.co&&!it.manual&&it.co!=="yalidine") return '<td class="pm-note" title="التسوية التقديرية خاصة بياليدين">—</td><td>—</td>';
     const x=settle(it); if(!x) return '<td class="pm-note">—</td><td>—</td>';
     const tip=`المحصَّل ${dz(x.got)} − توصيل ${dz(x.del)} − COD ${dz(x.cod)}`+(x.ins?` − تأمين ${dz(x.ins)}`:"")+(x.ret?` − إرجاع ${dz(x.ret)}`:"")+(x.src==="file"?" (من كشف ياليدين)":" (تقدير من التعريفة)");
     const parts=x.kind==="ret"?[`إرجاع ${dz(x.ret)}`]:[`توصيل ${dz(x.del)}`,`COD ${dz(x.cod)}`].concat(x.ins?[`تأمين ${dz(x.ins)}`]:[]);
@@ -140,15 +144,15 @@ const AdminPayments = (() => {
   const baseList = () => S.all ? items() : items().filter(inNext);
   function filtered() {
     const q=S.query.trim().toLowerCase(), qd=q.replace(/\D/g, "");
-    return baseList().filter(it=>{ const r=record(it), v=view(it), m=S.filter==="all"||r.status===S.filter; return m&&(!q||it.id.toLowerCase().includes(q)||trkOf(it).toLowerCase().includes(q)||String(v.name).toLowerCase().includes(q)||String(v.product).toLowerCase().includes(q)||String(v.phone).toLowerCase().includes(q)||(qd&&String(v.phone).replace(/\D/g, "").includes(qd))); });
+    return baseList().filter(it=>{ if(S.co!=="all"&&it.co!==S.co) return false; const r=record(it), v=view(it), m=S.filter==="all"||r.status===S.filter; return m&&(!q||it.id.toLowerCase().includes(q)||trkOf(it).toLowerCase().includes(q)||String(v.name).toLowerCase().includes(q)||String(v.product).toLowerCase().includes(q)||String(v.phone).toLowerCase().includes(q)||(qd&&String(v.phone).replace(/\D/g, "").includes(qd))); });
   }
-  function totals() {
-    const is=items();
+  function totals(co) {
+    const is=items().filter(it=>!co||co==="all"||it.co===co);
     return { received:is.filter(it=>record(it).status==="paid").reduce((n,it)=>n+amount(it,record(it)),0), pending:is.filter(it=>it.ship==="expediee"&&record(it).status==="unpaid").reduce((n,it)=>n+view(it).total,0), refunded:is.filter(it=>record(it).status==="refunded").reduce((n,it)=>n+amount(it,record(it)),0) };
   }
   function draftFor(it) { return S.drafts[it.id] || Object.assign({},record(it),{ name:view(it).name, phone:view(it).phone, product:view(it).product, total:view(it).total }); }
   function csv() {
-    const rows=[["tracking","id","date","name","phone","product","shipStatus","paymentStatus","amount","method","source","note"],...filtered().map(it=>{const r=draftFor(it);return[trkOf(it),it.id,it.date||"",r.name,r.phone,r.product,it.manual?"manual":it.ship,r.status,r.amount,r.method,it.manual?"manual":(isMan(it)?"edited":"auto"),r.note||""];})];
+    const rows=[["company","tracking","id","date","name","phone","product","shipStatus","paymentStatus","amount","method","source","note"],...filtered().map(it=>{const r=draftFor(it);return[coName(it.co),trkOf(it),it.id,it.date||"",r.name,r.phone,r.product,it.manual?"manual":it.ship,r.status,r.amount,r.method,it.manual?"manual":(isMan(it)?"edited":"auto"),r.note||""];})];
     const body="﻿"+rows.map(row=>row.map(v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"').join(",")).join("\r\n");
     const a=document.createElement("a"), u=URL.createObjectURL(new Blob([body],{type:"text/csv;charset=utf-8"})); a.href=u; a.download="payments.csv"; a.click(); setTimeout(()=>URL.revokeObjectURL(u),1000);
   }
@@ -158,7 +162,7 @@ const AdminPayments = (() => {
   }
   function row(it) {
     const r=draftFor(it), oid=esc(it.id), src=it.manual?'<span class="pm-src pm-man">يدوي</span>':(isMan(it)?'<span class="pm-src pm-man" title="عُدّل يدوياً؛ زر ↺ يعيده للتلقائي">معدَّل</span>':'<span class="pm-src pm-auto" title="من حالة شحن شركة التوصيل">⚡ تلقائي</span>');
-    return `<tr data-id="${oid}"><td><input class="pm-check" type="checkbox" data-id="${oid}"${S.selected.has(it.id)?" checked":""}></td><td dir="ltr" title="طلب #${oid.replace(/^m/,"M")}">${trkOf(it)?esc(trkOf(it)):"#"+oid.replace(/^m/,"M")} · ${esc(String(it.date||"").slice(0,10))}</td><td><input class="pm-name" data-id="${oid}" type="text" value="${esc(r.name)}"></td><td><input class="pm-phone" data-id="${oid}" dir="ltr" type="text" value="${esc(r.phone)}"></td><td><input class="pm-prod" data-id="${oid}" type="text" value="${esc(r.product)}"></td><td>${it.manual?"—":esc((A().ST_AR&&A().ST_AR[it.ship])||it.ship||"—")}</td><td>${it.manual?`<input class="pm-total" data-id="${oid}" type="number" min="1" value="${Math.max(0,Number(r.total)||0)}" style="width:95px">`:money(r.total)}</td>${settleCells(it)}<td>${src}</td><td><select class="pm-status" data-id="${oid}">${Object.keys(labels).map(k=>`<option value="${k}"${k===r.status?" selected":""}>${labels[k]}</option>`).join("")}</select></td><td><input class="pm-amount" data-id="${oid}" type="number" min="0" step="1" value="${Math.max(0,Number(r.amount)||0)}"></td><td><select class="pm-method" data-id="${oid}">${Object.keys(methods).map(k=>`<option value="${k}"${k===(r.method||"cod")?" selected":""}>${methods[k]}</option>`).join("")}</select></td><td><input class="pm-date" data-id="${oid}" type="date" value="${esc(String(r.date||"").slice(0,10))}"></td><td><input class="pm-note-input" data-id="${oid}" type="text" maxlength="300" value="${esc(r.note||"")}"></td><td><button class="pm-btn pm-mini pm-save" type="button" data-id="${oid}" ${S.saving?"disabled":""}>حفظ</button>${it.manual?` <button class="pm-btn pm-mini pm-del" type="button" data-id="${oid}" title="حذف">🗑</button>`:(isMan(it)?` <button class="pm-btn pm-mini pm-reset" type="button" data-id="${oid}" title="إعادة للتلقائي">↺</button>`:"")}</td></tr>`;
+    return `<tr data-id="${oid}"><td><input class="pm-check" type="checkbox" data-id="${oid}"${S.selected.has(it.id)?" checked":""}></td><td dir="ltr" title="طلب #${oid.replace(/^m/,"M")}">${trkOf(it)?esc(trkOf(it)):"#"+oid.replace(/^m/,"M")} · ${esc(String(it.date||"").slice(0,10))}${it.manual?"":`<br><small class="pm-note">${esc(coName(it.co))}</small>`}</td><td><input class="pm-name" data-id="${oid}" type="text" value="${esc(r.name)}"></td><td><input class="pm-phone" data-id="${oid}" dir="ltr" type="text" value="${esc(r.phone)}"></td><td><input class="pm-prod" data-id="${oid}" type="text" value="${esc(r.product)}"></td><td>${it.manual?"—":esc((A().ST_AR&&A().ST_AR[it.ship])||it.ship||"—")}</td><td>${it.manual?`<input class="pm-total" data-id="${oid}" type="number" min="1" value="${Math.max(0,Number(r.total)||0)}" style="width:95px">`:money(r.total)}</td>${settleCells(it)}<td>${src}</td><td><select class="pm-status" data-id="${oid}">${Object.keys(labels).map(k=>`<option value="${k}"${k===r.status?" selected":""}>${labels[k]}</option>`).join("")}</select></td><td><input class="pm-amount" data-id="${oid}" type="number" min="0" step="1" value="${Math.max(0,Number(r.amount)||0)}"></td><td><select class="pm-method" data-id="${oid}">${Object.keys(methods).map(k=>`<option value="${k}"${k===(r.method||"cod")?" selected":""}>${methods[k]}</option>`).join("")}</select></td><td><input class="pm-date" data-id="${oid}" type="date" value="${esc(String(r.date||"").slice(0,10))}"></td><td><input class="pm-note-input" data-id="${oid}" type="text" maxlength="300" value="${esc(r.note||"")}"></td><td><button class="pm-btn pm-mini pm-save" type="button" data-id="${oid}" ${S.saving?"disabled":""}>حفظ</button>${it.manual?` <button class="pm-btn pm-mini pm-del" type="button" data-id="${oid}" title="حذف">🗑</button>`:(isMan(it)?` <button class="pm-btn pm-mini pm-reset" type="button" data-id="${oid}" title="إعادة للتلقائي">↺</button>`:"")}</td></tr>`;
   }
 
   function totRow(list) {
@@ -187,7 +191,7 @@ const AdminPayments = (() => {
   /* علامة «مدفوع» اليدوية تُستثنى من التسوية إلا إن قالت الشركة إن الطرد ما زال Pas prêt / Prêt à payer (الشركة هي المرجع) */
   const coPending = it => { try{ const A_=A(), ps=A_.payState?A_.payState(((A_.shipRaw||{})[it.o&&it.o.id]||{}).pay):""; return ps==="notready"||ps==="ready"; }catch(_){ return false; } };
   const manPaid = it => isMan(it) && record(it).status === "paid" && !coPending(it);
-  const sItems = () => items().filter(it => !manPaid(it) && !inFile(it));
+  const sItems = () => items().filter(it => (it.manual||it.co==="yalidine") && !manPaid(it) && !inFile(it));      /* تسوية ياليدين لطرود ياليدين فقط */
   const pnum = v => Number(String(v).replace(/[\s\u00a0\u202f]/g,"").replace(",",".")) || 0;
   function parseDetail(txt) {
     const t=String(txt||"").replace(/\u00a0|\u202f/g," "), amt=l=>{ const m=t.match(new RegExp(l+"[^\\d\\-=]*([-=]?\\s*-?\\s*\\d[\\d\\s]*[,.]\\d{2})","i")); return m?pnum(m[1].replace(/[=\s]/g,"")):null; };
@@ -298,12 +302,30 @@ const AdminPayments = (() => {
         ${c("صافٍ متوقع (في الطريق: "+T.nExp+")",dz(T.netExp)+" دج","#fde047")}
       </div></section>`;
   }
+  /* ملخص كل شركة: عدد الطلبات، المدفوع (العدد والمبلغ)، قيد التوصيل، المستردّ، المرتجع */
+  function coStats() {
+    const by={}, seen=[];
+    items().forEach(it=>{ const k=it.co||"none"; if(!by[k]){ by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; seen.push(k); } const g=by[k], r=record(it);
+      g.n++; if(r.status==="paid"){ g.paidN++; g.received+=amount(it,r); } if(it.ship==="expediee"&&r.status==="unpaid") g.pending+=view(it).total; if(r.status==="refunded") g.refunded+=amount(it,r); if(it.ship==="echec") g.retN++; });
+    const real=seen.filter(k=>k!=="manual"&&k!=="none"), keys=(typeof AdminCoStats!=="undefined"?AdminCoStats.keysFor(real).filter(k=>k!=="none"):real); keys.forEach(k=>{ if(!by[k]) by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; });
+    if(by.manual) keys.push("manual"); return { by, keys };
+  }
+  function coBar() {
+    const C=coStats(), tot={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; C.keys.forEach(k=>{ const g=C.by[k]; Object.keys(tot).forEach(f=>{ tot[f]+=g[f]; }); });
+    const chip=(k,l,n)=>`<button type="button" class="pm-btn pm-cochip${S.co===k?" pm-primary":""}" data-co="${esc(k)}">${esc(l)} <small>(${n})</small></button>`;
+    const tr=(l,g,strong)=>`<tr style="${strong?"font-weight:800;border-top:2px solid rgba(255,255,255,.3)":""}"><td style="text-align:start;white-space:nowrap">${esc(l)}</td><td>${g.n}</td><td>${g.paidN}</td><td style="color:#d4ff4d">${money(g.received)}</td><td style="color:#fde047">${money(g.pending)}</td><td style="color:#fca5a5">${money(g.refunded)}</td><td>${g.retN}</td></tr>`;
+    return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🚚 المدفوعات حسب شركة التوصيل</b><div class="pm-note">اختر شركة لعرض مدفوعاتها وإحصائياتها وحدها، أو «الكل» للخلاصة العامة. الشركة = التي أُرسل إليها الطلب فعلاً.</div></div></div>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem">${chip("all","الكل",tot.n)}${C.keys.map(k=>chip(k,coName(k),C.by[k].n)).join("")}</div>
+      <div style="overflow:auto"><table style="border-collapse:collapse;min-width:520px"><thead><tr style="opacity:.75"><th style="text-align:start;padding:.3rem .5rem">الشركة</th><th>الطلبات</th><th>مدفوعة</th><th>المبالغ المستلمة</th><th>قيد التوصيل</th><th>المستردّة</th><th>مرتجعة</th></tr></thead><tbody>${C.keys.map(k=>tr(coName(k),C.by[k])).join("")}${tr("الخلاصة العامة",tot,true)}</tbody></table></div></section>`;
+  }
+  /* تسوية ياليدين وبطاقة المقارنة تُعرضان مع «الكل» أو «ياليدين» وعند وجود طرود/كشوف ياليدين */
+  function showYd() { if(S.co!=="all"&&S.co!=="yalidine") return false; try{ return items().some(it=>it.co==="yalidine")||(YP.list||[]).length>0||!!ydReal(); }catch(_){ return true; } }
   function draw() {
     const host=$("payments-content"); if(!host)return;
-    const t=totals(), list=filtered();
+    const t=totals(S.co), list=filtered();
     host.innerHTML=`<style>#pm{display:grid;gap:14px;color:#fff}#pm *{box-sizing:border-box}#pm .pm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}#pm .pm-card{padding:15px;border:1px solid rgba(255,255,255,.14);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 10px 24px rgba(0,0,0,.22)}#pm .pm-stat small{display:block;color:#b4c9be}#pm .pm-stat b{display:block;margin-top:5px;font-size:1.2rem}#pm .pm-head,#pm .pm-tools{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}#pm input,#pm select,#pm textarea{padding:8px 10px;border:1px solid rgba(255,255,255,.17);border-radius:10px;color:#fff;background:rgba(255,255,255,.07);font:inherit}#pm select option{background:#10231b;color:#fff}#pm input[type=checkbox]{width:18px;height:18px}#pm .pm-tools input[type=search]{min-width:200px;flex:1}#pm .pm-btn{padding:9px 13px;border-radius:12px;color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -5px 9px rgba(0,0,0,.2),0 5px 13px rgba(0,0,0,.22);backdrop-filter:blur(8px);font:inherit;font-weight:800;cursor:pointer;transition:transform .18s,background .18s}#pm .pm-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.13)}#pm .pm-primary{background:rgba(226,254,23,.18);border-color:rgba(226,254,23,.42)}#pm .pm-table{overflow:auto}#pm table{width:100%;min-width:1500px;border-collapse:collapse}#pm td,#pm th{white-space:nowrap}#pm th,#pm td{text-align:start;padding:8px;border-bottom:1px solid rgba(255,255,255,.1);vertical-align:middle}#pm th{color:#b4c9be;font-size:.84rem}#pm td input[type=number]{width:105px}#pm td input[type=date]{width:145px}#pm td input[type=text]{width:130px}#pm td input.pm-name{width:140px}#pm td input.pm-phone{width:112px}#pm td input.pm-prod{width:170px}#pm td input.pm-note-input{width:150px}#pm td select{max-width:130px}#pm .pm-src{font-size:.78rem;font-weight:800;padding:3px 8px;border-radius:99px;border:1px solid rgba(255,255,255,.2)}#pm .pm-auto{color:#d4ff4d;border-color:rgba(226,254,23,.45)}#pm .pm-man{color:#fcd34d;border-color:rgba(252,211,77,.45)}#pm .pm-add{display:flex;gap:8px;align-items:center;flex-wrap:nowrap;overflow:auto;padding:10px;border:1px dashed rgba(226,254,23,.4);border-radius:14px;margin-top:10px}#pm .pm-add input,#pm .pm-add select{flex:none}#pm .pm-add .pm-n{width:150px}#pm .pm-add .pm-p{width:115px}#pm .pm-add .pm-pr{width:180px}#pm .pm-add .pm-a{width:105px}#pm .pm-add .pm-d{width:145px}#pm .pm-add .pm-nt{width:150px}#pm .pm-del{background:rgba(244,63,94,.16);border-color:rgba(253,164,175,.45)}#pm .pm-mini{padding:6px 10px}#pm td input,#pm td select{height:36px;padding:4px 8px}#pm td select.pm-status{width:125px;max-width:none}#pm td select.pm-method{width:150px;max-width:none}#pm td input[type=checkbox]{height:18px;padding:0}#pm .pm-badge{display:inline-block;padding:4px 9px;border-radius:99px;font-weight:800;background:rgba(255,255,255,.1)}#pm .pm-paid{color:#d4ff4d}#pm .pm-refunded{color:#fda4af}#pm .pm-error{color:#ff9aa2}#pm .pm-note{color:#b4c9be;font-size:.88rem}@media(max-width:700px){#pm .pm-grid{grid-template-columns:1fr!important}#pm .pm-stat{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:.6rem}#pm .pm-stat small{display:inline;overflow:visible;text-overflow:clip}#pm .pm-stat b{font-size:1.05rem;margin:0;white-space:nowrap}}#pm h2,#pm h3,#pm th,#pm .pm-head b,#pm .pm-card>b,#pm .pm-stat small{white-space:nowrap}#pm .pm-stat small{overflow:hidden;text-overflow:ellipsis;font-size:.78rem}#pm .pm-card{min-width:0}#pm .pm-dl{display:flex;justify-content:space-between;gap:.6rem;padding:.38rem .2rem;border-bottom:1px solid rgba(255,255,255,.08);font-size:.9rem;max-width:520px}#pm .pm-dl span:first-child{white-space:nowrap}#pm .pm-dl span:last-child{font-weight:700;white-space:nowrap}</style>
       <div id="pm"><div class="pm-head"><div><h2>المدفوعات</h2><div class="pm-note">⚡ تلقائية من شركة التوصيل: الطلب المسلَّم = مدفوع. عدّل أي صف يدوياً أو أضف دفعة يدوية.</div></div><div><button id="pm-add-btn" type="button" class="pm-btn pm-primary">＋ دفعة يدوية</button> <button id="pm-export" type="button" class="pm-btn">تصدير CSV</button></div></div>
-      ${settleCard()}${cmpCard()}<div class="pm-grid"><div class="pm-card pm-stat"><small>المبالغ المستلمة</small><b>${money(t.received)}</b></div><div class="pm-card pm-stat"><small>مبالغ لدى شركة التوصيل (قيد التوصيل)</small><b>${money(t.pending)}</b></div><div class="pm-card pm-stat"><small>المبالغ المستردّة</small><b>${money(t.refunded)}</b></div></div>
+      ${coBar()}${showYd()?settleCard()+cmpCard():""}<div class="pm-grid"><div class="pm-card pm-stat"><small>المبالغ المستلمة</small><b>${money(t.received)}</b></div><div class="pm-card pm-stat"><small>مبالغ لدى شركة التوصيل (قيد التوصيل)</small><b>${money(t.pending)}</b></div><div class="pm-card pm-stat"><small>المبالغ المستردّة</small><b>${money(t.refunded)}</b></div></div>
       <section class="pm-card"><div class="pm-tools"><input id="pm-search" type="search" placeholder="بحث برقم الطلب أو الاسم أو الهاتف أو المنتج" value="${esc(S.query)}"><select id="pm-filter"><option value="all"${S.filter==="all"?" selected":""}>كل الحالات</option><option value="unpaid"${S.filter==="unpaid"?" selected":""}>غير مدفوع</option><option value="paid"${S.filter==="paid"?" selected":""}>مدفوع</option><option value="refunded"${S.filter==="refunded"?" selected":""}>مسترد</option></select><button id="pm-bulk-paid" type="button" class="pm-btn pm-primary" ${S.selected.size?"":"disabled"}>تعليم المحدّد كمدفوع (${S.selected.size})</button><button id="pm-export2" type="button" class="pm-btn">تصدير CSV</button>${(()=>{ const hid=items().length-items().filter(inNext).length; return hid>0||S.all?`<button id="pm-showall" type="button" class="pm-btn">${S.all?"إخفاء ما خرج من الحساب":"عرض المخفي ("+hid+")"}</button>`:""; })()}</div>${S.addOpen?addForm():""}${S.err?`<p class="pm-error">${esc(S.err)}</p>`:""}<div class="pm-table"><table><thead><tr><th><input id="pm-all" type="checkbox" aria-label="تحديد الكل"></th><th>رقم / تاريخ</th><th>الاسم</th><th>الهاتف</th><th>المنتج</th><th>الشحن</th><th>المبلغ</th><th>تفصيل ياليدين</th><th>الصافي لك</th><th>المصدر</th><th>حالة الدفع</th><th>المسجّل</th><th>الطريقة</th><th>تاريخ الدفع</th><th>ملاحظة</th><th></th></tr></thead><tbody>${list.length?list.map(row).join(""):`<tr><td colspan="16" class="pm-note">لا توجد مدفوعات تطابق البحث.</td></tr>`}</tbody>${list.length?totRow(list):""}</table></div><p class="pm-note">تغيير حالة الدفع لا يغيّر حالة الشحن أو المخزون. الاسترداد يُسجَّل يدوياً لطلب مدفوع أو مسلَّم.</p></section></div>`;
     const search=$("pm-search"); if(search)search.oninput=()=>{const pos=search.selectionStart;S.query=search.value;draw();const n=$("pm-search");if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(_){}}};
     const filter=$("pm-filter"); if(filter)filter.onchange=()=>{S.filter=filter.value;S.selected.clear();draw();};
@@ -322,6 +344,7 @@ const AdminPayments = (() => {
     host.querySelectorAll(".pm-ydel").forEach(el=>el.onclick=async()=>{ YP.list.splice(+el.dataset.i,1); await ydSave(); draw(); });
     const ist=$("pm-impst");if(ist)ist.onchange=()=>{ S.impState=ist.value; };const imp=$("pm-imp");if(imp)imp.onclick=()=>{const f=document.getElementById("fin-import");if(f)f.click();else S.err="تعذّر فتح نافذة الاستيراد.";};
     const bulk=$("pm-bulk-paid");if(bulk)bulk.onclick=bulkPaid;
+    host.querySelectorAll(".pm-cochip").forEach(el=>el.onclick=()=>{ S.co=el.dataset.co||"all"; S.selected.clear(); draw(); });
     const sa=$("pm-showall");if(sa)sa.onclick=()=>{S.all=!S.all;S.selected.clear();draw();};
     [$("pm-export"),$("pm-export2")].filter(Boolean).forEach(el=>el.onclick=csv);
     const ab=$("pm-add-btn");if(ab)ab.onclick=()=>{S.addOpen=!S.addOpen;draw();};

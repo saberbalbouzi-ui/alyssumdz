@@ -43,6 +43,7 @@
     document.body.classList.toggle("nav-open", !!on); var m = document.getElementById("top-menu"); if(m) m.setAttribute("aria-expanded", on ? "true" : "false"); }
   /* أكورديون المجموعات في الدرج: نستنسخ أزرار #nav-groups داخل .side-nav (يخفيها CSS على الحاسوب)؛ الضغط على رأس المجموعة المفتوحة يطويها */
   function mountAcc(){
+    try{ var h1 = document.querySelector("#app .top>h1"); if(h1) h1.setAttribute("data-brand", acctName()); }catch(e){}      /* اسم المتجر في الشريط العلوي للهاتف (بدل نص ثابت) */
     var nv = document.querySelector(".side-nav"), gs = document.querySelectorAll("#nav-groups .ng"); if(!nv || !gs.length || nv.querySelector(".nav-gh")) return;
     gs.forEach(function(o){ var c = o.cloneNode(true); c.classList.remove("ng", "on"); c.classList.add("nav-gh"); c.removeAttribute("id");
       c.addEventListener("click", function(){ var was = c.classList.contains("on"); nv.classList.toggle("acc-closed", was); }, true); nv.appendChild(c); });      // التقاط (capture) كي نقرأ حالة «on» قبل أن يبدّلها onclick المستنسَخ
