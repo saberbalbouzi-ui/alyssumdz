@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ALYSSUM 2030 — مركز القيادة المكاني (معاينة تجريبية)</title>
+<link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="spatial.css">
+</head>
+<body>
+<!-- البيئة: ضباب وأشعة وأرضية بمنظور -->
+<div class="env" aria-hidden="true">
+  <i class="beam b1"></i><i class="beam b2"></i><i class="beam b3"></i>
+  <i class="floor"></i><i class="fog"></i>
+  <canvas id="dust"></canvas>
+</div>
+
+<div class="stage" id="stage">
+  <svg class="links" id="links" aria-hidden="true"></svg>
+
+  <!-- الطبقة العليا: شريط عائم رفيع -->
+  <header class="bar" data-d="0.25" role="banner">
+    <div class="id"><i class="mark" aria-hidden="true"></i><b>ALYSSUM</b><span>2030</span></div>
+    <div class="sys" role="status"><i class="led"></i><span>النظام يعمل</span><em>بيانات تجريبية</em></div>
+    <div class="acts">
+      <button type="button" class="ib" id="b-bell" aria-label="الإشعارات"><span data-i="bell"></span><i class="cnt" id="bell-n">3</i></button>
+      <button type="button" class="ib" id="b-visit" aria-label="زيارة الموقع"><span data-i="eye"></span></button>
+      <button type="button" class="ask" id="b-ask"><i class="orb-mini" aria-hidden="true"></i>اسألني</button>
+    </div>
+  </header>
+
+  <!-- النواة: قلب المشهد -->
+  <section class="core" id="coreWrap" data-d="0.6" aria-label="نواة ALYSSUM — نشاط المتجر الحيّ">
+    <canvas id="core"></canvas>
+    <div class="core-hud" aria-hidden="true"><b class="live"><i></i>LIVE</b><span id="clock" class="ltr">00:00:00</span><em>SYNC 100%</em></div>
+    <div class="core-read" aria-live="polite">
+      <small id="core-cap">طلبات الفترة</small>
+      <b id="core-n">0</b>
+    </div>
+  </section>
+
+  <!-- التحية والفترة -->
+  <div class="greet" data-d="1">
+    <small>صباح الخير</small>
+    <h1>لوحة تحكم منصة <em>ALYSSUM</em></h1>
+    <p>بيئة قيادة ذكية لمتجرك — الأرقام الآتية بيانات تجريبية للمعاينة.</p>
+    <div class="periods" role="tablist" aria-label="الفترة">
+      <button type="button" role="tab" data-p="today" aria-selected="false">اليوم</button>
+      <button type="button" role="tab" data-p="week" aria-selected="true" class="on">7 أيام</button>
+      <button type="button" role="tab" data-p="month" aria-selected="false">30 يوماً</button>
+    </div>
+  </div>
+
+  <!-- اللوحة اليسرى: المبيعات والعائد (سطح مائل بمنظور) -->
+  <aside class="plane sales" data-d="1.4" aria-label="المبيعات والعائد">
+    <div class="plane-in">
+      <header><span>المبيعات</span><i class="up" id="s-delta">▲ 25%</i></header>
+      <div class="big"><b id="s-val">0</b><small>دج</small></div>
+      <svg class="spk" id="spk" viewBox="0 0 220 56" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="rev">
+        <div class="rev-h"><span>العائد حسب الفترة</span><em id="rev-avg">—</em></div>
+        <div class="bars3d" id="bars3d" aria-hidden="true"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- مؤشرات صغيرة عائمة على أعماق مختلفة -->
+  <div class="orb o-orders" data-d="1.9"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="t" cx="40" cy="40" r="32"/><circle class="v" id="o1" cx="40" cy="40" r="32"/></svg><b id="o1-n">0</b><small>طلبات</small></div>
+  <div class="orb o-conv" data-d="0.9"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="t" cx="40" cy="40" r="32"/><circle class="v cy" id="o2" cx="40" cy="40" r="32"/></svg><b>3.4%</b><small>تحويل · تجريبي</small></div>
+  <div class="orb o-stock" data-d="2.2"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="t" cx="40" cy="40" r="32"/><circle class="v vi" id="o3" cx="40" cy="40" r="32"/></svg><b>5</b><small>مخزون منخفض</small></div>
+
+  <!-- المعلّق: مؤشر هولوغرافي مخصص -->
+  <div class="pending" id="pending" data-d="1.7" aria-live="polite">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="r1" cx="60" cy="60" r="52"/><circle class="r2" cx="60" cy="60" r="40"/><circle class="r3" cx="60" cy="60" r="28"/><i class="sweep"></i></svg>
+    <b id="pend-n">0</b><small id="pend-t">في انتظار التأكيد</small>
+  </div>
+
+  <!-- مفتاح الحالات حول النواة -->
+  <ul class="legend" id="legend" data-d="1.1" aria-label="حالات الطلبات"></ul>
+
+  <!-- التضاريس: سطح الطاقة للمبيعات والطلبات -->
+  <section class="terrain" id="terrain-wrap" data-d="0.8" aria-label="سطح المبيعات">
+    <canvas id="terrain"></canvas>
+    <div class="t-head">
+      <h2 id="t-title">مشهد المبيعات</h2>
+      <div class="tabs" role="tablist" aria-label="نوع العرض">
+        <button type="button" role="tab" data-t="sales" class="on" aria-selected="true">المبيعات</button>
+        <button type="button" role="tab" data-t="orders" aria-selected="false">الطلبات</button>
+      </div>
+    </div>
+    <div class="t-axis" id="t-axis" aria-hidden="true"></div>
+  </section>
+
+  <!-- الشريط الجانبي: سكّة ملاحة نحيلة -->
+  <nav class="rail" id="rail" data-d="0.35" aria-label="القائمة"></nav>
+  <div class="fly" id="fly" hidden></div>
+
+  <div class="tip" id="tip" hidden role="tooltip"></div>
+  <footer class="foot">معاينة تجريبية معزولة — كل الأرقام وهمية ولا اتصال بالمتجر.</footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="core.js"></script>
+<script src="terrain.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
