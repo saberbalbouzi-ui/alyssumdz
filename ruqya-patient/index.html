@@ -122,7 +122,10 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
   document.addEventListener("click", function(e){ var t = e.target.closest && e.target.closest("#adm button"); if(!t) return;
     if(t.id === "ago") adSearch(); else if(t.id === "vadd") adAdd(); else if(t.classList.contains("pt")) adOpen(t.getAttribute("data-id"), $("ares")._rows); });
   document.addEventListener("keydown", function(e){ if(e.target && e.target.id === "aq" && String(e.key || "") === "Enter"){ e.preventDefault(); adSearch(); } });
-  async function adminMode(t){ var ok = false; try{ ok = (await rpc("is_admin", {}, t)) === true; }catch(e){} if(!ok) return false; AD.tok = t; adDraw(); $("adm").classList.remove("hide"); $("sub0").textContent = "وضع المدير: افتح أي ملف وسجّل المتابعة."; return true; }
+  async function adminMode(t){ var ok = false; try{ ok = (await rpc("is_admin", {}, t)) === true; }catch(e){} if(!ok) return false; AD.tok = t; adDraw(); $("adm").classList.remove("hide"); $("sub0").textContent = "وضع المدير: افتح أي ملف وسجّل المتابعة."; 
+    /* ?p=<رقم الحجز>: فتح ملف مريض بعينه مباشرة من لوحة المواعيد */
+    try{ var m = /[?&]p=([0-9]{1,12})/.exec(location.search); if(m){ var rows = await rest("ruqya_bookings?select=id,name,phone,commune,day&id=eq." + m[1] + "&limit=1", t); if(rows && rows.length){ await adOpen(rows[0].id, rows); } } }catch(e){}
+    return true; }
   async function start(){
     if(!SB || !KEY){ msg("الخدمة غير مهيّأة.", "err"); return; }
     var t = await token(), inv = ""; try{ inv = sessionStorage.getItem(IK) || ""; }catch(e){}
