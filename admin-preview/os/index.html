@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ALYSSUM OS — نظام تشغيل التجارة (معاينة تجريبية)</title>
+<link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="os.css">
+</head>
+<body>
+<div class="env" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="gridfloor"></i><svg class="hudring" viewBox="0 0 1000 1000" aria-hidden="true"><g class="r1"><circle cx="500" cy="500" r="470"/><circle cx="500" cy="500" r="380" stroke-dasharray="2 14"/></g><g class="r2"><circle cx="500" cy="500" r="300"/><circle cx="500" cy="500" r="232" stroke-dasharray="40 10 6 10"/></g><g class="ticks"></g></svg><canvas id="dust"></canvas></div>
+
+<div class="os" id="os">
+
+  <!-- شريط النظام -->
+  <header class="sysbar" role="banner">
+    <div class="brand"><i class="mk" aria-hidden="true"></i><b>ALYSSUM</b><span class="os-tag">OS</span></div>
+    <div class="health" id="health" title="حالة النظام (تجريبية)"></div>
+    <button type="button" class="store-tog on" id="store-tog" aria-pressed="true"><i class="dot"></i><span id="store-lb">المتجر مفتوح</span></button>
+    <span class="demo-chip">بيانات تجريبية</span>
+    <div class="sp"></div>
+    <button type="button" class="sb-btn" id="b-search" aria-label="بحث سريع (/)"><span data-i="search"></span><kbd>/</kbd></button>
+    <div class="menu-wrap">
+      <button type="button" class="sb-btn" id="b-bell" aria-label="الإشعارات" aria-haspopup="true"><span data-i="bell"></span><i class="cnt" id="bell-n">0</i></button>
+      <div class="dd" id="dd-bell" hidden></div>
+    </div>
+    <button type="button" class="ai-btn" id="b-ai"><i class="ai-dot" aria-hidden="true"></i>مساعد ALYSSUM</button>
+    <div class="menu-wrap">
+      <button type="button" class="acct" id="b-acct" aria-haspopup="true"><i class="av">م</i><span>مدير المتجر</span></button>
+      <div class="dd" id="dd-acct" hidden></div>
+    </div>
+  </header>
+
+  <!-- الملاحة الفضائية (يمين) -->
+  <nav class="nav" id="nav" aria-label="القائمة الرئيسية"></nav>
+
+  <!-- منطقة الذكاء التجاري (يسار): مؤشرات عائمة -->
+  <aside class="intel" id="intel" aria-label="مؤشرات الأداء"></aside>
+
+  <!-- مساحة العمل المركزية -->
+  <main class="center" id="center">
+    <div class="ctx" id="ctx" aria-live="polite">
+      <div class="crumb" id="crumb"><b>الرئيسية</b></div>
+      <div class="per" role="tablist" aria-label="الفترة" id="per">
+        <button type="button" role="tab" data-p="today">اليوم</button>
+        <button type="button" role="tab" data-p="week" class="on" aria-selected="true">7 أيام</button>
+        <button type="button" role="tab" data-p="month">30 يوماً</button>
+      </div>
+      <div class="focus-chip" id="focus-chip" hidden></div>
+    </div>
+
+    <section class="pn chart" id="pn-chart" aria-label="منحنى المبيعات">
+      <header class="ph"><h2>المبيعات عبر الزمن</h2><div class="seg" role="tablist" id="seg-metric"><button type="button" class="on" data-m="sales">الإيراد</button><button type="button" data-m="orders">الطلبات</button></div><button type="button" class="xp" data-xp="analytics" aria-label="توسيع"><span data-i="expand"></span></button></header>
+      <div class="chart-ins" id="chart-ins"></div><div class="cv-wrap" id="cv-wrap"><canvas id="sales-cv"></canvas><div class="cv-tip" id="cv-tip" hidden></div></div>
+      <div class="legend-inline" id="cv-legend"><span><i style="--c:#dcff1f"></i>الفترة الحالية</span><span><i style="--c:#a58bff"></i>الفترة السابقة</span><span><i class="dash" style="--c:#27e6ff"></i>توقّع تجريبي</span></div>
+    </section>
+
+    <section class="pn radial" id="pn-radial" aria-label="تحليل الطلبات">
+      <header class="ph"><h2>مسار الطلبات</h2><button type="button" class="xp" data-xp="orders" aria-label="توسيع"><span data-i="expand"></span></button></header>
+      <div class="rad-body"><svg id="radial" viewBox="0 0 260 260" role="img" aria-label="توزيع الطلبات حسب الحالة"></svg><ul class="rad-leg" id="rad-leg"></ul></div>
+    </section>
+
+    <section class="pn funnel" id="pn-funnel" aria-label="قمع التحويل">
+      <header class="ph"><h2>قمع التحويل</h2><span class="sub" id="conv-sub">—</span></header>
+      <div class="fn" id="fn"></div>
+    </section>
+
+    <section class="pn aim" id="pn-ai" aria-label="ذكاء المتجر">
+      <header class="ph"><h2>ذكاء المتجر</h2><span class="live"><i></i>نشط</span></header>
+      <div class="aim-body">
+        <div class="core-w"><canvas id="aicore" width="170" height="170"></canvas><ul class="orbit-chips" id="orbit"></ul></div>
+        <div class="aim-side"><div class="sugg-h">اقتراحات سياقية</div><ul class="sugg" id="sugg"></ul><button type="button" class="ask-line" id="ask-open"><span data-i="chat"></span>اسأل المساعد عن متجرك…</button></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- طبقة النشاط السفلية -->
+  <section class="deck" id="deck" aria-label="النشاط التشغيلي">
+    <div class="dk orders" id="dk-orders"></div>
+    <div class="dk feed" id="dk-feed"></div>
+    <div class="dk stock" id="dk-stock"></div>
+  </section>
+</div>
+
+<!-- طبقات: مساحات العمل الموسّعة والمساعد -->
+<div class="layer" id="layer" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script src="charts.js"></script>
+<script src="os.js"></script>
+</body>
+</html>
