@@ -277,3 +277,44 @@ body.many .panel .face{backdrop-filter:blur(7px) saturate(1.2);-webkit-backdrop-
 .panel .vol.v1{opacity:calc(var(--op) * .9)}.panel .vol.v2{opacity:calc(var(--op) * .6)}
 .panel .slab.s1{opacity:calc(var(--op) * .9)}.panel .slab.s2{opacity:calc(var(--op) * .7)}.panel .slab.s3{opacity:var(--op)}
 .panel .eg{opacity:var(--op)}.panel.back .eg{opacity:calc(var(--op) * .7)}
+
+/* ===== ألواح هولوغرافية رقيقة جداً (v2): شاشة زجاجية شبه مسطّحة بحواف مضيئة دقيقة ===== */
+/* السُمك الفيزيائي −81% (42px ← 8px)؛ العمق الحقيقي يأتي من المنظور والإمالة والحجوم المتتالية الرقيقة لا من الهندسة */
+.panel{--T:8px}
+.panel .slab{border-radius:16px;background:none;border:1px solid rgba(120,245,255,.22)}
+.panel .slab.s1{transform:translateZ(-2px);opacity:calc(var(--op) * .55)}
+.panel .slab.s2{transform:translateZ(-5px);opacity:calc(var(--op) * .3)}
+.panel .slab.s3{transform:translateZ(-8px);background:linear-gradient(160deg,rgba(60,200,220,.05),rgba(0,20,30,.10));border-color:rgba(120,245,255,.32);opacity:var(--op)}
+.panel .vol{border:0;background:repeating-linear-gradient(0deg,rgba(43,228,255,.035) 0 1px,transparent 1px 18px),repeating-linear-gradient(90deg,rgba(43,228,255,.03) 0 1px,transparent 1px 18px)}
+.panel .vol.v1{transform:translateZ(-1px);opacity:calc(var(--op) * .8)}.panel .vol.v2{transform:translateZ(-3px);opacity:calc(var(--op) * .4)}
+/* الحواف: خيوط انعكاس دقيقة بدل أوجه جانبية سميكة */
+.panel .eg{border:0;box-shadow:none;opacity:calc(var(--op) * .9)}
+.panel .eg.t{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(120,245,255,.35) 45%,rgba(120,245,255,0))}
+.panel .eg.b{background:linear-gradient(0deg,rgba(255,255,255,.85),rgba(120,245,255,.30) 45%,rgba(120,245,255,0))}
+.panel .eg.l{background:linear-gradient(90deg,rgba(255,255,255,.95),rgba(120,245,255,.35) 45%,rgba(120,245,255,0))}
+.panel .eg.r{background:linear-gradient(270deg,rgba(255,255,255,.85),rgba(120,245,255,.30) 45%,rgba(120,245,255,0))}
+.panel.focus .eg{box-shadow:none;background-blend-mode:screen}
+/* الوجه: زجاج شبه شفاف بحافة مضيئة رفيعة وانكسار/انعكاس خفيف */
+.panel .face{
+  background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.015) 38%,rgba(120,245,255,.05)),linear-gradient(135deg,rgba(255,120,200,.035),transparent 30%,rgba(90,255,220,.04) 70%,transparent),rgba(6,22,32,.34);
+  border:1px solid rgba(150,250,255,.78);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.45),inset -1px -1px 0 rgba(43,228,255,.22),0 0 14px rgba(43,228,255,.22),0 14px 34px rgba(0,0,0,.16);
+  backdrop-filter:blur(9px) saturate(1.45) contrast(1.05);-webkit-backdrop-filter:blur(9px) saturate(1.45) contrast(1.05)}
+.panel .face::after{background:linear-gradient(115deg,transparent calc(30% + var(--gx,0%)),rgba(255,255,255,.12) calc(40% + var(--gx,0%)),transparent calc(50% + var(--gx,0%))),linear-gradient(180deg,rgba(255,255,255,.07),transparent 9%),radial-gradient(120% 60% at 0% 0%,rgba(255,255,255,.10),transparent 45%)}
+.panel.focus .face{border-color:rgba(220,255,31,.95);box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),inset -1px -1px 0 rgba(220,255,31,.22),0 0 18px rgba(220,255,31,.3),0 16px 38px rgba(0,0,0,.18)}
+.panel.dragging .face{border-color:rgba(43,228,255,1);box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),0 0 26px rgba(43,228,255,.5),0 22px 46px rgba(0,0,0,.2)}
+.panel.gest .face{border-color:rgba(220,255,31,1);box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),0 0 0 2px rgba(220,255,31,.3),0 0 30px rgba(220,255,31,.5)}
+.panel[data-state=expanded] .face{box-shadow:inset 1px 1px 0 rgba(255,255,255,.5),inset -1px -1px 0 rgba(43,228,255,.22),0 0 26px rgba(43,228,255,.3),0 24px 56px rgba(0,0,0,.22)}
+/* المحتوى مدمج في سطح الزجاج (لا ارتفاع عن السطح) */
+.pn-h{transform:translateZ(1px);border-bottom:1px solid rgba(150,250,255,.14)}
+.pn-b{transform:translateZ(1px)}
+.pn-rs{transform:translateZ(1px)}
+.pn-h h3{text-shadow:0 0 10px rgba(43,228,255,.45)}
+.pn-b{text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.row,.kpi,.pcard{background:rgba(255,255,255,.035);border-color:rgba(150,250,255,.14)}
+body.many .panel .face{backdrop-filter:blur(6px) saturate(1.3)}
+body.many .panel:not(.focus) .face{filter:brightness(.92)}
+/* توازن القراءة فوق الخلفيات المضيئة: تعتيم زجاجي أخف وتمويه أنعم */
+.panel .face{background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.015) 38%,rgba(120,245,255,.05)),linear-gradient(135deg,rgba(255,120,200,.03),transparent 30%,rgba(90,255,220,.035) 70%,transparent),rgba(5,20,30,.46);backdrop-filter:blur(12px) saturate(1.3) contrast(1.05);-webkit-backdrop-filter:blur(12px) saturate(1.3) contrast(1.05)}
+/* ترتيب طبقات المحتوى فوق السطح بفروق ميكرونية (يمنع تساوي العمق في الفرز ثلاثي الأبعاد فتُلتقط المقابض) */
+.pn-b{transform:translateZ(2px)}.pn-h{transform:translateZ(3px)}.pn-rs{transform:translateZ(5px)}
