@@ -947,8 +947,8 @@ function initProduct(slug){
       const d = document.createElement("div");
       d.className = "offer"+(i===offerIdx?" on":"");
       const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
-      const oimg = wantImg ? ((ocI.oi && ocI.oi[i]) || o.img || p.cover || (p.images&&p.images[0]) || "") : "";
-      d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}${oimg?`<img class="oi" src="${/^(https?:|data:|\/)/.test(oimg)?"":REL}${oimg}" alt="" loading="lazy" decoding="async">`:""}
+      const cov0 = p.cover || (p.images&&p.images[0]) || "", oimg = wantImg ? String((ocI.oi && ocI.oi[i]) || o.img || cov0).trim().replace(/^(\.\.?\/)+/, "") : "";      /* مسار نسبي بالنسبة لصفحة الهبوط (../../) يُقصّ لأن الإطار في الجذر */
+      d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}${oimg?`<img class="oi" src="${/^(https?:|data:|\/)/.test(oimg)?"":REL}${oimg}" onerror="if(!this.dataset.f&&this.dataset.c){this.dataset.f=1;this.src=this.dataset.c}else{this.style.display='none'}" data-c="${REL}${cov0}" alt="" loading="lazy" decoding="async">`:""}
         <div class="q">${label}</div>
         <div class="p">${fmt(o.price)}</div>
         <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}${offerFreeShip(p,o)?'<br><b style="color:var(--ok)">🚚 شحن مجاني</b>':""}</div>`;
