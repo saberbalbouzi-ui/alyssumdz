@@ -64,13 +64,15 @@
   function setYaw(v) { yaw = clamp(v, -50, 50); stage.style.setProperty("--yaw", yaw.toFixed(1) + "deg"); const c = document.getElementById("yawchip"); if (c) { c.classList.toggle("on", Math.abs(yaw) > 1); c.textContent = "القاعة ↻ " + Math.round(yaw) + "° — انقر للتصفير"; } }
   /* مدار الألواح: كل لوح لم يمسكه المستخدم يدور حول الاسطوانة (pa = زاوية المدار، pt = انتقال لتقديم لوح جديد، hov = ألواح تحت المؤشر فيتوقف الدوران) */
   let orbitMode = innerWidth > 820, pa = 0, pt = null, hov = 0, pprev = 20, draggingPanel = false;
+  /* مرحلة 5: ثلاثة أوضاع منفصلة — العالم (لا لوح محدّد)، الكائن (لوح صغير محدّد)، التركيز (اللوح المحدّد موسَّع) */
+  let objSel = null, tool = "move";
   /* تدوير الاسطوانة لتقديم عقدة قسم إلى مقدمة المشهد (أقصر دوران) */
   function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step - yaw; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
   function frame(t) {
     const rdt = Math.min(250, t - (frame.t || t)), dt = Math.min(50, rdt); frame.t = t; const ek = 1 - Math.exp(-rdt / 150); /* تسهيل مبني على الزمن الحقيقي (مستقل عن معدل الإطارات) */
-    if (tw) { ang += (tw.to - ang) * ek; if (Math.abs(tw.to - ang) < .15) { ang = tw.to; tw = null; } } else if (!drag) { const f = rdt / 16.7; ang += va * f; va *= Math.pow(.94, f); if (!RM && Math.abs(va) < .02 && t - lastInput > 2500) ang += rdt * .004; }
+    if (tw) { ang += (tw.to - ang) * ek; if (Math.abs(tw.to - ang) < .15) { ang = tw.to; tw = null; } } else if (!drag) { const f = rdt / 16.7; ang += va * f; va *= Math.pow(.94, f); if (!RM && !objSel && Math.abs(va) < .02 && t - lastInput > 2500) ang += rdt * .004; }
     const dA = ang - pprev; pprev = ang;
-    if (orbitMode) { if (pt) { pa += (pt.to - pa) * ek; if (Math.abs(pt.to - pa) < .15) { pa = pt.to; pt = null; } } else if (!layer.querySelector(".panel:hover") && !draggingPanel) pa += dA + (RM ? 0 : rdt * .006); orbitFrame(t, ek); }
+    if (orbitMode) { if (pt) { pa += (pt.to - pa) * ek; if (Math.abs(pt.to - pa) < .15) { pa = pt.to; pt = null; } } else if (!layer.querySelector(".panel:hover") && !draggingPanel) pa += dA + (RM || objSel ? 0 : rdt * .006); orbitFrame(t, ek); }
     if (((frame.n = (frame.n || 0) + 1) & 1) === 0) open.forEach(p => { if (p.origin && !p.min && t - p.born < 900) { const r = p.el.getBoundingClientRect(); FX.stream(p.origin.x, p.origin.y, r.left + r.width / 2, r.top + r.height / 2, 3); } });
     const a = ang % 360; cyl.style.transform = `rotateY(${a}deg)`; cylIn.style.transform = `rotateY(${-a * 1.6}deg)`;
     gl.forEach((g, i) => { const th = (-a * 1.3 + i * 360 / gl.length) * Math.PI / 180, y = -110 + (i % 4) * 62 + Math.sin(t / 900 + i) * 6; g.style.transform = `translate3d(${(Math.sin(th) * 92).toFixed(1)}px,${y.toFixed(1)}px,${(Math.cos(th) * 92).toFixed(1)}px)`; });
@@ -85,7 +87,7 @@
   /* السحب يدوّر من أي نقطة، حتى فوق عقدة قسم أو زر المركز: الضغط على زر «ينتظر» حتى يتحرك المؤشر 6px فيتحوّل إلى تدوير ويُلغى النقر؛ أما النقر العادي فيعمل كما هو */
   let pendDrag = null, noClick = false; const sp = new Set();
   const beginDrag = (e, x) => { tw = null; drag = { x, id: e.pointerId, t: performance.now(), v: 0, yaw: e.shiftKey }; try { stage.setPointerCapture(e.pointerId); } catch (_) { } stage.classList.add("grab"); lastInput = performance.now(); };
-  stage.addEventListener("pointerdown", e => { sp.add(e.pointerId); if (sp.size > 1) { drag = null; pendDrag = null; return; } if (e.target.closest("button,.wcard")) { pendDrag = { x: e.clientX, id: e.pointerId, shift: e.shiftKey }; return; } beginDrag(e, e.clientX); });
+  stage.addEventListener("pointerdown", e => { clearSel(); sp.add(e.pointerId); if (sp.size > 1) { drag = null; pendDrag = null; return; } if (e.target.closest("button,.wcard")) { pendDrag = { x: e.clientX, id: e.pointerId, shift: e.shiftKey }; return; } beginDrag(e, e.clientX); });
   stage.addEventListener("pointermove", e => {
     if (pendDrag && e.pointerId === pendDrag.id && !drag && Math.abs(e.clientX - pendDrag.x) > 6) { beginDrag(e, pendDrag.x); drag.yaw = pendDrag.shift; noClick = true; pendDrag = null; }
     if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x, now = performance.now(); if (drag.yaw) setYaw(yaw + dx * .22); else { ang += dx * .35; drag.v = dx * .35 * .6 + drag.v * .4; } drag.x = e.clientX; lastInput = now; });
@@ -105,7 +107,8 @@
   const step = d => { const i = secs.findIndex(s => s.id === sel), j = i < 0 ? 0 : (i + d + secs.length) % secs.length; select(secs[j].id); };
   document.addEventListener("keydown", e => { const k = String(e.key || ""), tg = e.target || {}, inPanel = tg.closest && tg.closest(".panel");
     if (/INPUT|TEXTAREA/.test(tg.tagName || "")) { if (k === "Escape") tg.blur(); return; }
-    if (k === "Escape" && focused) { dismiss(focused, "close"); return; } if (inPanel) return;
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) { const kl = k.toLowerCase(); if (kl === "w") { clearSel(); return; } if (kl === "o") { toObject(); return; } if (kl === "f") { toFocus(); return; } if (objSel && modeOf() === "object" && TOOLS[kl]) { setTool(TOOLS[kl]); return; } }
+    if (k === "Escape" && (focused || objSel)) { const bp = objSel && open.get(objSel), fp = bp && bp.big ? bp : open.get(focused); if (fp && fp.big) toggleBig(fp); else if (fp) dismiss(fp.id, "close"); return; } if (inPanel) return;
     if (k === "[") setYaw(yaw - 10); else if (k === "]") setYaw(yaw + 10); else if (k === "0") setYaw(0); else if (k === "ArrowRight") { e.preventDefault(); step(1); } else if (k === "ArrowLeft") { e.preventDefault(); step(-1); }
     else if ((k === "Enter" || k === " ") && sel && !/BUTTON/.test(tg.tagName || "")) { e.preventDefault(); openSection(sel); } });
 
@@ -115,7 +118,7 @@
   function remember(p) { memo[p.id] = { content: JSON.parse(JSON.stringify(p.content || {})), size: { w: p.big && p.prev ? p.prev.w : p.st.w, h: p.big && p.prev ? p.prev.h : p.st.h } }; }
   const fz = p => 1 - 0; /* موضع للتوسّع المستقبلي */
   function persp(tz) { return PERSP / (PERSP - tz); }
-  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${(s.rx + (p.bk ? p.bk.x : 0)).toFixed(1)}deg) rotateY(${(s.ry + (p.bk ? p.bk.y : 0)).toFixed(1)}deg) rotateZ(${(s.rz || 0).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--gx", ((s.ry + (p.bk ? p.bk.y : 0)) * 1.5).toFixed(1) + "%"); p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
+  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${(s.rx + (p.bk ? p.bk.x : 0)).toFixed(1)}deg) rotateY(${(s.ry + (p.bk ? p.bk.y : 0)).toFixed(1)}deg) rotateZ(${(s.rz || 0).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--gx", ((s.ry + (p.bk ? p.bk.y : 0)) * 1.5).toFixed(1) + "%"); p.el.style.setProperty("--zp", clamp((s.z - ZMIN) / (ZMAX - ZMIN), 0, 1).toFixed(3)); p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
   /* تخطيط تلقائي: أماكن لكل عدد من الألواح (كسور من أبعاد الشاشة)؛ [x, y, مقياس, ry, rx, z] */
   const LAY = {
     1: [[.275, -.02, 1, -15, 0, 0]],
@@ -174,7 +177,7 @@
     if (ex) { if (ex.min) { ex.min = false; ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } faceFront(ex); focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
     const sz = sizeFor(sec); if (memo[id] && memo[id].size) { sz.w = Math.min(memo[id].size.w, W() - 24); sz.h = Math.min(memo[id].size.h, H() - 80); }
     const sl = { x: 0, y: 0, z: 0, rx: 0, ry: 0 }, el = document.createElement("section"); el.className = "panel"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", sec.name); el.tabIndex = -1;
-    el.innerHTML = '<i class="face"></i><i class="vol v2"></i><i class="vol v1"></i><i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><i class="eg t"></i><i class="eg b"></i><i class="eg l"></i><i class="eg r"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><button type="button" class="pn-dep" aria-label="تحريك في العمق (اسحب عمودياً)" title="اسحب عمودياً: أقرب/أبعد">&#8661;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><div class="gbadge" aria-hidden="true"></div><i class="pn-rs" aria-hidden="true"></i>';
+    el.innerHTML = '<i class="face"></i><i class="vol v2"></i><i class="vol v1"></i><i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><i class="eg t"></i><i class="eg b"></i><i class="eg l"></i><i class="eg r"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><button type="button" class="pn-dep" aria-label="تحريك في العمق (اسحب عمودياً)" title="اسحب عمودياً: أقرب/أبعد">&#8661;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><div class="gbadge" aria-hidden="true"></div><i class="pn-z" aria-hidden="true"><b></b></i><i class="pn-br" aria-hidden="true"></i><i class="pn-rs" aria-hidden="true"></i>';
     el.querySelector("h3").textContent = sec.name;
     const content = memo[id] && sec.st ? JSON.parse(JSON.stringify(memo[id].content)) : sec.st ? JSON.parse(JSON.stringify(sec.st)) : {}, p = { id, content, sec: Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }), el, body: el.querySelector(".pn-b"), min: false, big: false, keep: null, st: { x: sl.x, y: sl.y, z: sl.z, rx: sl.rx, ry: sl.ry, s: 1, w: sz.w, h: sz.h } };
     setState(p, "opening"); p.born = performance.now(); p.origin = { x: from.x + W() / 2, y: from.y + H() / 2 }; layer.appendChild(el); open.set(id, p); wire(p); arrange(p); if (sec.bind) sec.bind(p.body, { st: content }, all => all ? refreshAll() : render(p)); render(p, false);
@@ -206,32 +209,76 @@
   function settleRz(p) { if (p.st.rz) { p.el.classList.add("tr2"); p.st.rz = 0; apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); } }
   /* تقديم لوح المدار المحدَّد نحو المستخدم */
   function faceFront(p) { if (!orbitMode || p.user || p.big || p.off == null) return; let to = -p.off - yaw; to += Math.round((pa - to) / 360) * 360; pt = { to }; }
+
+  /* ───── مرحلة 5: الأوضاع الثلاثة ─────
+     العالم: لا لوح محدَّد — سحب الخلفية/Shift/التواء يدوّر البيئة كلها.
+     الكائن: لوح صغير محدَّد — كل الإيماءات تخصّه وحده والبيئة ثابتة (لا دوران تلقائي ولا قصور).
+     التركيز: اللوح المحدَّد موسَّع في مركز مساحة العمل، مثبَّت حتى نقرتين/Esc. */
+  const TOOLS = { m: "move", r: "rot", z: "depth", t: "roll" }, TOOL_NAME = { move: "تحريك", rot: "تدوير", depth: "عمق", roll: "ميل" }, ACT_NAME = { move: "يتحرك", rot: "يدور", depth: "يتحرك في العمق", roll: "يميل", focus: "مثبّت للتركيز", resize: "يتغيّر حجمه", pinch: "قرص/التواء" };
+  function modeOf() { const p = objSel && open.get(objSel); return !p || p.min ? "world" : p.big ? "focus" : "object"; }
+  function setRead(txt) {
+    const r = document.getElementById("mread"); if (!r) return; const m = modeOf(), p = objSel && open.get(objSel), nm = p ? p.sec.name : "";
+    r.textContent = txt || (m === "world" ? "العالم — اسحب الخلفية لتدوير البيئة كلها" : m === "object" ? "الكائن · " + nm + " — الأداة: " + TOOL_NAME[tool] : "التركيز · " + nm + " — نقرتان أو Esc للعودة");
+  }
+  function syncMode() {
+    const m = modeOf(); document.body.dataset.mode = m;
+    document.querySelectorAll("#modebar [data-m]").forEach(b => { const on = b.dataset.m === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
+    document.querySelectorAll("#modebar [data-t]").forEach(b => { const on = b.dataset.t === tool; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
+    open.forEach(p => p.el.classList.toggle("objsel", p.id === objSel && !p.min)); setRead();
+  }
+  /* بعد إزالة اللوح المحدَّد: إن كان لوح آخر موسَّعاً يعود التحديد إليه (وضع التركيز) وإلا يعود وضع العالم */
+  const bigSel = skip => { const q = [...open.values()].find(o => o.id !== skip && o.big && !o.min); return q ? q.id : null; };
+  function selectObj(id) { if (objSel === id) { syncMode(); return; } objSel = id; va = 0; syncMode(); }
+  function clearSel() { if (!objSel) return; objSel = null; syncMode(); }
+  function setTool(t) { tool = t; syncMode(); }
+  const livePanel = () => { const a = objSel && open.get(objSel); if (a && !a.min) return a; const f = focused && open.get(focused); if (f && !f.min) return f; return [...open.values()].filter(q => !q.min).pop() || null; };
+  function toObject() { const p = livePanel(); if (!p) return; if (p.big) { toggleBig(p); return; } focus(p.id); selectObj(p.id); }
+  function toFocus() { const p = livePanel(); if (!p) return; if (!p.big) { focus(p.id); toggleBig(p); } }
+  /* تغذية بصرية: ما الذي يفعله اللوح الآن (تحريك/تدوير/عمق/ميل/تحجيم) + إمكان الرمي */
+  function act(p, a) {
+    if (a) p.el.dataset.act = a; else { delete p.el.dataset.act; p.el.classList.remove("can-dismiss"); document.body.classList.remove("throwzone"); }
+    setRead(a ? "الكائن · " + p.sec.name + " · " + (ACT_NAME[a] || a) : null);
+  }
+  /* نيّة الرمي: سرعة شعاعية نحو الخارج (تُعتمد فقط حين يبتعد اللوح عن المركز فلا يُعدّ عبور المركز رمياً) أو تجاوز الحافة؛ تُستعمل للتلميح قبل الإفلات وللقرار عند الإفلات معاً */
+  function throwIntent(p, s) {
+    const n = s.length; let vx = 0, vy = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); vx = (b[1] - a[1]) / dt; vy = (b[2] - a[2]) / dt; }
+    const sp = Math.hypot(vx, vy), pos = Math.hypot(p.st.x, p.st.y) || 1, out = (vx * p.st.x + vy * p.st.y) / pos, beyond = Math.abs(p.st.x) > W() / 2 + p.st.w * p.st.s * .15 || Math.abs(p.st.y) > H() / 2 + p.st.h * p.st.s * .15;
+    return { vx, vy, sp, out, beyond, n, can: (sp > .5 && out > .15 * sp && pos > Math.min(W(), H()) * .14) || beyond };
+  }
+  function dismissHint(p, g) {
+    const can = throwIntent(p, g.s).can;
+    p.el.classList.toggle("can-dismiss", can); document.body.classList.toggle("throwzone", can); if (can) badge(p, "حرّر للرمي"); else if (p.el.querySelector(".gbadge").textContent === "حرّر للرمي") badge(p, "");
+  }
+  function settleRoll(p) { const rz = clamp(p.st.rz || 0, -12, 12); if (rz !== p.st.rz) { p.st.rz = rz; p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); } }
+  document.querySelectorAll("#modebar [data-m]").forEach(b => b.addEventListener("click", () => { const m = b.dataset.m; if (m === "world") clearSel(); else if (m === "object") toObject(); else toFocus(); }));
+  document.querySelectorAll("#modebar [data-t]").forEach(b => b.addEventListener("click", () => { if (modeOf() !== "object") toObject(); setTool(b.dataset.t); }));
   function wire(p) {
     const el = p.el, h = el.querySelector(".pn-h"), rot = el.querySelector(".pn-rot"), rs = el.querySelector(".pn-rs");
-    el.addEventListener("pointerdown", () => { if (focused !== p.id) focus(p.id); });
+    el.addEventListener("pointerdown", () => { if (focused !== p.id) focus(p.id); selectObj(p.id); });
     el.addEventListener("pointerenter", () => { hov++; }); el.addEventListener("pointerleave", () => { hov = Math.max(0, hov - 1); });
     el.querySelector(".pn-orb").onclick = () => snapOrbit(p, true); el.querySelector(".pn-x").onclick = () => dismiss(p.id, "close"); el.querySelector(".pn-min").onclick = () => dismiss(p.id, "min"); el.querySelector(".pn-max").onclick = () => toggleBig(p);
     let tap = 0, tapX = 0;
     h.addEventListener("pointerdown", e => {
-      if (e.target.closest(".pn-min,.pn-max,.pn-x,.pn-orb")) return; e.preventDefault(); const mode = e.target.closest(".pn-rot") || e.shiftKey ? "rot" : (e.target.closest(".pn-dep") || e.altKey) ? "depth" : "move", now = performance.now();
-      if (mode === "move" && !e.target.closest(".pn-dep") && now - tap < 520 && Math.abs(e.clientX - tapX) < 30) { tap = 0; toggleBig(p); return; } tap = now; tapX = e.clientX;
+      if (e.target.closest(".pn-min,.pn-max,.pn-x,.pn-orb")) return; e.preventDefault(); const mode = e.target.closest(".pn-rot") ? "rot" : e.target.closest(".pn-dep") ? "depth" : e.shiftKey ? "rot" : e.altKey ? "depth" : (e.ctrlKey || e.metaKey) ? "roll" : tool, now = performance.now();
+      if ((mode === "move" || p.big) && !e.target.closest(".pn-dep,.pn-rot") && now - tap < 520 && Math.abs(e.clientX - tapX) < 30) { tap = 0; toggleBig(p); return; } tap = now; tapX = e.clientX;
+      if (p.big) { act(p, "focus"); return; } /* وضع التركيز: اللوح ثابت في مركز مساحة العمل (نقرتان أو Esc للعودة) */
       cancelGlide(p); el.classList.remove("tr", "tr2", "gliding"); el.classList.add("dragging"); const g = { mode, id: e.pointerId, x: e.clientX, y: e.clientY, s: [] }; h._g = g; try { h.setPointerCapture(e.pointerId); } catch (_) { }
     });
     h.addEventListener("pointermove", e => { const g = h._g; if (!g || g.id !== e.pointerId) return; const dx = e.clientX - g.x, dy = e.clientY - g.y; g.x = e.clientX; g.y = e.clientY; const t = performance.now(); let co = []; try { co = e.getCoalescedEvents ? e.getCoalescedEvents() : []; } catch (_) { } if (co.length > 1) co.forEach(c => g.s.push([c.timeStamp || t, c.clientX, c.clientY])); else g.s.push([t, e.clientX, e.clientY]); while (g.s.length > 2 && t - g.s[0][0] > 170) g.s.shift();
-      userize(p); draggingPanel = true; if (g.mode === "depth") { p.st.z = clamp(p.st.z - dy * 1.15, ZMIN, ZMAX); badge(p, "عمق " + Math.round(p.st.z)); } else if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; p.bk = { y: clamp(((p.bk && p.bk.y) || 0) * .5 + dx * .45, -9, 9), x: clamp(((p.bk && p.bk.x) || 0) * .5 - dy * .35, -7, 7) }; } else { p.st.ry = clamp(p.st.ry + dx * .35 * (1 - Math.abs(p.st.ry) / 75), -34, 34); p.st.rx = clamp(p.st.rx - dy * .3 * (1 - Math.abs(p.st.rx) / 65), -26, 26); badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); } apply(p); });
-    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; el.classList.remove("dragging"); lastPanelDrag = performance.now(); if (g.mode === "depth") { badge(p, ""); resolve(p); return; } if (g.mode === "rot") { const s = g.s, n = s.length; let wy = 0, wx = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); wy = (b[1] - a[1]) / dt * .3; wx = -(b[2] - a[2]) / dt * .25; } if (Math.hypot(wy, wx) > .03) spin(p, wy, wx); else settleRot(p); return; } p.bk = null; el.classList.add("tr2"); setTimeout(() => el.classList.remove("tr2"), 400); g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
+      userize(p); draggingPanel = true; act(p, g.mode); if (g.mode === "roll") { p.st.rz = clamp((p.st.rz || 0) + dx * .22, -35, 35); badge(p, "ميل " + Math.round(p.st.rz) + "°"); } else if (g.mode === "depth") { p.st.z = clamp(p.st.z - dy * 1.15, ZMIN, ZMAX); badge(p, "عمق " + Math.round(p.st.z)); } else if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; p.bk = { y: clamp(((p.bk && p.bk.y) || 0) * .5 + dx * .45, -9, 9), x: clamp(((p.bk && p.bk.x) || 0) * .5 - dy * .35, -7, 7) }; } else { p.st.ry = clamp(p.st.ry + dx * .35 * (1 - Math.abs(p.st.ry) / 75), -34, 34); p.st.rx = clamp(p.st.rx - dy * .3 * (1 - Math.abs(p.st.rx) / 65), -26, 26); badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); } if (g.mode === "move") dismissHint(p, g); apply(p); });
+    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; el.classList.remove("dragging"); lastPanelDrag = performance.now(); act(p, ""); if (g.mode === "roll") { badge(p, ""); settleRoll(p); return; } if (g.mode === "depth") { badge(p, ""); resolve(p); return; } if (g.mode === "rot") { const s = g.s, n = s.length; let wy = 0, wx = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); wy = (b[1] - a[1]) / dt * .3; wx = -(b[2] - a[2]) / dt * .25; } if (Math.hypot(wy, wx) > .03) spin(p, wy, wx); else settleRot(p); return; } p.bk = null; el.classList.add("tr2"); setTimeout(() => el.classList.remove("tr2"), 400); g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
     h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
     /* تحجيم بمقبض الزاوية */
-    rs.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("dragging"); rs._g = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { rs.setPointerCapture(e.pointerId); } catch (_) { } focus(p.id); });
+    rs.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("dragging"); rs._g = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { rs.setPointerCapture(e.pointerId); } catch (_) { } focus(p.id); selectObj(p.id); act(p, "resize"); });
     rs.addEventListener("pointermove", e => { const g = rs._g; if (!g || g.id !== e.pointerId) return; const f = persp(p.st.z) * p.st.s, dx = (e.clientX - g.x) / f, dy = (e.clientY - g.y) / f; g.x = e.clientX; g.y = e.clientY; const nw = clamp(p.st.w - dx, 300, Math.min(920, W() - 16)), nh = clamp(p.st.h + dy, 240, Math.min(720, H() - 60)), dw = nw - p.st.w, dh = nh - p.st.h; userize(p); p.st.w = nw; p.st.h = nh; p.st.x -= dw * p.st.s / 2; p.st.y += dh * p.st.s / 2; badge(p, Math.round(nw) + "×" + Math.round(nh)); apply(p); });
-    const rsUp = e => { if (rs._g) { rs._g = null; el.classList.remove("dragging"); badge(p, ""); lastPanelDrag = performance.now(); resolve(p); } }; rs.addEventListener("pointerup", rsUp); rs.addEventListener("pointercancel", rsUp);
+    const rsUp = e => { if (rs._g) { rs._g = null; act(p, ""); el.classList.remove("dragging"); badge(p, ""); lastPanelDrag = performance.now(); resolve(p); } }; rs.addEventListener("pointerup", rsUp); rs.addEventListener("pointercancel", rsUp);
     /* عجلة الفأرة: تكبير اللوح (إلا إن كان المحتوى قابلاً للتمرير) */
     el.addEventListener("wheel", e => { if (e.shiftKey) { e.preventDefault(); userize(p); const d = e.deltaY || e.deltaX; p.st.z = clamp(p.st.z + (d < 0 ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); return; } const b = e.target.closest(".pn-b"); if (b && !e.ctrlKey && b.scrollHeight > b.clientHeight + 2) return; e.preventDefault(); userize(p); p.st.s = clamp(p.st.s * (e.deltaY < 0 ? 1.06 : .943), .5, 1.9); apply(p); }, { passive: false });
     /* قرص + التواء بإصبعين مع تغذية بصرية (يعود الالتواء تلقائياً لتبقى القراءة سهلة) */
     let pd = 0, ps = 1, a0 = 0, rz0 = 0; const ang2 = ts => Math.atan2(ts[1].clientY - ts[0].clientY, ts[1].clientX - ts[0].clientX) * 180 / Math.PI, dist2 = ts => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
-    el.addEventListener("touchstart", e => { if (e.touches.length === 2) { pd = dist2(e.touches); ps = p.st.s; a0 = ang2(e.touches); rz0 = p.st.rz || 0; cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("gest"); } }, { passive: true });
+    el.addEventListener("touchstart", e => { if (e.touches.length === 2) { pd = dist2(e.touches); ps = p.st.s; a0 = ang2(e.touches); rz0 = p.st.rz || 0; cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("gest"); selectObj(p.id); act(p, "pinch"); } }, { passive: true });
     el.addEventListener("touchmove", e => { if (e.touches.length === 2 && pd) { e.preventDefault(); let da = ang2(e.touches) - a0; da = ((da + 540) % 360) - 180; userize(p); p.st.s = clamp(ps * dist2(e.touches) / pd, .5, 1.9); p.st.rz = clamp(rz0 + da, -22, 22); badge(p, "×" + p.st.s.toFixed(2) + "  ↻ " + Math.round(p.st.rz) + "°"); apply(p); } }, { passive: false });
-    el.addEventListener("touchend", e => { if (e.touches.length < 2 && pd) { pd = 0; el.classList.remove("gest"); badge(p, ""); lastPanelDrag = performance.now(); settleRz(p); resolve(p); } }, { passive: true });
+    el.addEventListener("touchend", e => { if (e.touches.length < 2 && pd) { pd = 0; el.classList.remove("gest"); act(p, ""); badge(p, ""); lastPanelDrag = performance.now(); settleRz(p); resolve(p); } }, { passive: true });
     /* لوحة المفاتيح: أسهم = تحريك، Alt+أسهم = إمالة، PageUp/PageDown = عمق، Home = عودة للمدار، Delete = رمي مع تلاشٍ */
     el.addEventListener("keydown", e => { const tg = e.target; if (/INPUT|TEXTAREA/.test(tg.tagName || "") || !(tg === el || (tg.closest && tg.closest(".pn-h")))) return; const k = String(e.key || ""), d = e.shiftKey ? 64 : 26; let used = true;
       if (/^Arrow/.test(k)) { userize(p); cancelGlide(p); if (e.altKey) { p.st.ry = clamp(p.st.ry + (k === "ArrowRight" ? 4 : k === "ArrowLeft" ? -4 : 0), -24, 24); p.st.rx = clamp(p.st.rx + (k === "ArrowUp" ? 3 : k === "ArrowDown" ? -3 : 0), -18, 18); } else { p.st.x += k === "ArrowRight" ? d : k === "ArrowLeft" ? -d : 0; p.st.y += k === "ArrowDown" ? d : k === "ArrowUp" ? -d : 0; } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 300); }
@@ -242,31 +289,30 @@
   }
   /* رفع الإصبع: رمي نحو الحافة = تلاشٍ بجسيمات؛ وإلا تثبيت/إزاحة لتفادي التراكب */
   function release(p, g) {
-    const s = g.s, n = s.length; let vx = 0, vy = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); vx = (b[1] - a[1]) / dt; vy = (b[2] - a[2]) / dt; }
-    const sp = Math.hypot(vx, vy), pos = Math.hypot(p.st.x, p.st.y) || 1, out = (vx * p.st.x + vy * p.st.y) / pos, beyond = Math.abs(p.st.x) > W() / 2 + p.st.w * p.st.s * .15 || Math.abs(p.st.y) > H() / 2 + p.st.h * p.st.s * .15;
-    SpatialOS.lastRelease = { sp: +sp.toFixed(2), out: +out.toFixed(2), beyond, n };
-    if ((sp > .5 && out > .15 * sp) || beyond) return throwAway(p, vx || p.st.x / 400, vy || p.st.y / 400);
+    const t = throwIntent(p, g.s), vx = t.vx, vy = t.vy, sp = t.sp;
+    SpatialOS.lastRelease = { sp: +sp.toFixed(2), out: +t.out.toFixed(2), beyond: t.beyond, n: t.n };
+    if (t.can) return throwAway(p, vx || p.st.x / 400, vy || p.st.y / 400);
     if (sp > .08) { const m = Math.min(1, 2.4 / sp) * .6; glide(p, vx * m, vy * m); return; }
     if (snapOrbit(p)) return; resolve(p);
   }
   function throwAway(p, vx, vy) {
-    hov = 0; setState(p, "dismissing"); remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false, acc = 1; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1; cancelGlide(p); p.el.classList.add("dragging");
+    hov = 0; act(p, ""); setState(p, "dismissing"); remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; if (objSel === id) objSel = bigSel(id); syncMode(); if (objSel && open.get(objSel)) focus(objSel); markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false, acc = 1; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1; cancelGlide(p); p.el.classList.add("dragging");
     const step = t => { const dt = Math.min(250, t - last); last = t; acc *= Math.pow(1.05, dt / 16); /* يتسارع نحو الخارج */ p.st.x += vx * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.setProperty("--op", Math.max(0, op).toFixed(2)); apply(p);
       if (!burst && op < .55) { burst = true; const r = p.el.getBoundingClientRect(); FX.dissolve(r, null); }
       if (op > 0) requestAnimationFrame(step); else p.el.remove(); };
     requestAnimationFrame(step);
   }
   function dismiss(id, how) {
-    const p = open.get(id); if (!p) return; hov = 0; const to = nodePos(id); p.el.classList.remove("tr"); p.el.classList.add("tr2"); p.keep = Object.assign({}, p.st);
+    const p = open.get(id); if (!p) return; hov = 0; act(p, ""); if (objSel === id) objSel = bigSel(id); const to = nodePos(id); p.el.classList.remove("tr"); p.el.classList.add("tr2"); p.keep = Object.assign({}, p.st);
     if (focused === id) focused = null; Object.assign(p.st, { x: to.x * .35, y: to.y * .35, z: -380, s: .1 }); apply(p); p.el.style.setProperty("--op", 0);
     const r = p.el.getBoundingClientRect(); if (how === "close") { setState(p, "dismissing"); remember(p); open.delete(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
-    markNodes(); select(id); setTimeout(() => arrange(), 60);
+    markNodes(); select(id); setTimeout(() => arrange(), 60); syncMode();
   }
   function toggleBig(p) {
     p.el.classList.remove("tr"); p.el.classList.add("tr2"); focus(p.id);
     if (!p.big) { p.prev = Object.assign({}, p.st); const w = Math.min(920, W() - 24), h = Math.min(660, H() - 92); Object.assign(p.st, { x: 0, y: isMob() ? -6 : -10, z: 110, rx: 0, ry: 0, s: 1, w, h }); p.big = true; setState(p, "expanded"); setLayer(p, false); p.el.style.setProperty("--op", 1); p.el.style.zIndex = ++zc; }
     else { Object.assign(p.st, p.prev); p.big = false; setState(p, focused === p.id ? "focused" : "floating"); }
-    p.el.classList.toggle("is-big", p.big); const top = p.body.scrollTop; render(p); p.body.scrollTop = top; apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420);
+    p.el.classList.toggle("is-big", p.big); const top = p.body.scrollTop; render(p); p.body.scrollTop = top; apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420); objSel = p.id; va = 0; syncMode();
   }
   /* منع التراكب: إزاحة اللوح الساقط عن لوح يخفي أكثر من 35% + مغناطيس لأقرب موضع حرّ */
   function resolve(p) {
@@ -286,6 +332,6 @@
   addEventListener("resize", () => { const kx = W() / vw0, ky = H() / vh0; vw0 = W(); vh0 = H();
     open.forEach(p => { if (p.min) return; if (p.big) { Object.assign(p.st, { w: Math.min(920, W() - 24), h: Math.min(660, H() - 92) }); } else { if (isMob()) { const m = sizeFor(p.sec); p.st.w = m.w; p.st.h = m.h; } if (!orbitMode || p.user) { p.st.x *= kx; p.st.y *= ky; } } apply(p); });
     if (!orbitMode) arrange(); });
-  window.SpatialOS = { stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll };
-  setTimeout(() => openSection("ord"), 700);
+  window.SpatialOS = { stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
+  syncMode(); setTimeout(() => openSection("ord"), 700);
 })();
