@@ -1166,7 +1166,7 @@ const PB = (() => {
       SC = !!s.scaled; const dw = num(s.dw) || 1140; curAuto = null;
       if (kind === "canvas" && !s.scaled && s.autoM !== false && (sec.free || []).length && !(sec.free || []).some(w => ["fx", "fy", "fwd", "fh"].some(k => own(w.set, k, "m") !== undefined)) && own(s, "mh", "m") === undefined) curAuto = autoMobileLayout(sec);
       if (SC) { css.d.push(`${sx}{container-type:inline-size}`); css.d.push(`${inx}{--u:calc(${s.layout === "full" ? "100cqw" : "min(100cqw," + dw + "px)"}/${dw})}`); }
-      if (SC && s.stackM) css.m.push(`${inx}{--u:1px}`);      // ترتيب الهاتف المتتابع التلقائي: وحدة التصميم بكسل حقيقي (الفصل العادي للجهاز يبقى متناسباً)      // هاتف مستقل: الوحدة بكسل حقيقي فتُقرأ قيم الهاتف كما هي
+      if (SC && s.stackM) css.m.push(`${inx}{--u:calc(100cqw/390)}`);      /* وحدة الهاتف = بكسل حقيقي عند عرض المحرر (390) وتتناسب مع عرض الشاشة: صور hauto ارتفاعها يتبع العرض فكانت تتزاحم وتتراكب على الشاشات الأعرض (412/430) لأن مواضع fy بكسلات ثابتة */      // ترتيب الهاتف المتتابع التلقائي: وحدة التصميم بكسل حقيقي (الفصل العادي للجهاز يبقى متناسباً)      // هاتف مستقل: الوحدة بكسل حقيقي فتُقرأ قيم الهاتف كما هي
       if (curAuto) css.m.push(`${inx}{height:${curAuto.h}px}`);
       /* شفافية/تمويه صورة الخلفية: تُرسم الصورة في ::before فتتأثر هي وحدها لا محتوى القسم */
       const bgo = num(s.bgOp), bgb = num(s.bgBlur) || 0, usePs = !!s.bgImg && ((bgo != null && bgo < 1) || bgb > 0), sBox = usePs ? Object.assign({}, s, { bgImg: "" }) : s;
