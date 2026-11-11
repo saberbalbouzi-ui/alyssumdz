@@ -48,7 +48,7 @@
   function build(key) {
     var c = PERIODS[key], r = rng(c.seed), sales = [], orders = [], i;
     for (i = 0; i < c.n; i++) {
-      var wave = 0.55 + 0.35 * Math.sin(i * 0.9 + c.seed) + r() * 0.25;
+      var x = c.n > 1 ? i / (c.n - 1) : 0.5, wave = 0.07 + 0.78 * Math.exp(-Math.pow((x - 0.33) / 0.13, 2)) + 0.98 * Math.exp(-Math.pow((x - 0.72) / 0.1, 2)) + r() * 0.07;
       var s = Math.max(0.12, wave) * 24000 * c.scale / (key === "month" ? 2 : 1) * (key === "today" ? 2.2 : 1);
       sales.push(Math.round(s / 100) * 100); orders.push(Math.max(1, Math.round(s / 3400)));
     }
@@ -100,7 +100,7 @@
   function sparkSvg(vals, col, id) {
     var w = 120, h = 44, mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals), pts = vals.map(function (v, i) { return [i / (vals.length - 1) * w, h - 4 - (v - mn) / ((mx - mn) || 1) * (h - 10)]; });
     var d = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
-    return '<svg class="spark" viewBox="0 0 ' + w + " " + h + '" style="--c:' + col + ';--len:' + Math.round(w * 1.6) + '" aria-hidden="true"><defs><linearGradient id="sg' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + col + '" stop-opacity=".5"/><stop offset="1" stop-color="' + col + '" stop-opacity="0"/></linearGradient></defs><path class="ar" d="' + d + " L" + w + " " + h + " L0 " + h + 'Z" style="fill:url(#sg' + id + ')"/><path class="ln" d="' + d + '"/></svg>';
+    return '<svg class="spark" viewBox="0 0 ' + w + " " + h + '" style="--c:' + col + ';--len:' + Math.round(w * 1.6) + '" aria-hidden="true"><defs><linearGradient id="sg' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + col + '" stop-opacity=".5"/><stop offset="1" stop-color="' + col + '" stop-opacity="0"/></linearGradient></defs><path class="ar" d="' + d + " L" + w + " " + h + " L0 " + h + 'Z" style="fill:url(#sg' + id + ')"/><path class="ln" d="' + d + '"/>' + pts.map(function (q) { return '<circle cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2.6" fill="#7fc4ff" style="filter:drop-shadow(0 0 4px #2f9bff)"/>'; }).join("") + '</svg>';
   }
   function countUp(el) {
     var to = Number(el.dataset.v), suf = el.dataset.s, t0 = performance.now(), dur = REDUCED ? 1 : 900;
@@ -110,10 +110,10 @@
   function renderKpis() {
     var d = state.data, base = $("#kpis"), bars = d.sales.slice(-7).map(function (v, i, a) { var m = Math.max.apply(null, a); return '<i style="height:' + Math.max(18, v / m * 100) + '%;animation-delay:' + i * 60 + 'ms"></i>'; }).join("");
     var k = [
-      { t: "المبيعات", i: "trend", v: Math.round(d.tS), s: "دج", d: d.c.seed % 2 ? 25 : -8, vis: '<div class="kpi-bars" aria-hidden="true">' + bars + "</div>" },
+      { t: "المبيعات", i: "trend", v: Math.round(d.tS), s: "دج", d: d.c.seed % 2 ? 25 : -8, vis: '<img class="kpi-art bars" src="img/bars.webp" width="140" height="84" alt="" aria-hidden="true">' },
       { t: "الطلبات", i: "cube", v: d.tO, d: -6, vis: sparkSvg(d.orders, "#22e7ff", "o") },
-      { t: "في انتظار التأكيد", i: "clock", v: d.pend, d: null, vis: '<i class="kpi-clip" aria-hidden="true"></i>' },
-      { t: "متوسط قيمة الطلب", i: "layers", v: Math.round(d.avg), s: "دج", d: -30, vis: '<div class="kpi-coins" aria-hidden="true"><i></i><i></i><i></i><i></i></div>' }
+      { t: "في انتظار التأكيد", i: "clock", v: d.pend, d: null, vis: '<img class="kpi-art clip" src="img/clip.webp" width="128" height="92" alt="" aria-hidden="true">' },
+      { t: "متوسط قيمة الطلب", i: "layers", v: Math.round(d.avg), s: "دج", d: -30, vis: '<img class="kpi-art coins" src="img/coins.webp" width="144" height="94" alt="" aria-hidden="true">' }
     ];
     base.innerHTML = k.map(kpiHtml).join(""); paintIcons(base); $$(".kpi-v", base).forEach(countUp);
     $("#geo-count").textContent = fmt(d.tO) + " " + d.c.geo;
@@ -152,8 +152,12 @@
     var pts = vals.map(function (v, i) { return [xs(i), ys(v)]; }), line = smooth(pts);
     var area = line + " L" + pts[n - 1][0].toFixed(1) + " " + (H - PADB) + " L" + pts[0][0].toFixed(1) + " " + (H - PADB) + "Z";
     var grid = ""; for (var g = 0; g <= 4; g++) { var y = ys(step * g); grid += '<line class="gl" x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '"/>'; }
-    $("#chart").innerHTML = '<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2fe17" stop-opacity=".5"/><stop offset=".6" stop-color="#19e08a" stop-opacity=".16"/><stop offset="1" stop-color="#19e08a" stop-opacity="0"/></linearGradient></defs>' + grid + '<path class="ar" d="' + area + '" fill="url(#ag)"/><path class="ln" d="' + line + '"/><line class="cur" id="cur" x1="0" x2="0" y1="0" y2="' + H + '" style="display:none"/>';
-    var wrap = $("#plot"); $$(".ylab,.xlab,.dot", wrap).forEach(function (e) { e.remove(); });
+    var base = H - PADB, wires = "", hatch = "", k, hx;
+    for (k = 1; k <= 11; k++) { var f = 1 - k / 12, wp = pts.map(function (q) { return [q[0], base - (base - q[1]) * f]; }); wires += '<path class="wire" d="' + smooth(wp) + '" stroke="url(#wg)" stroke-width="1" opacity="' + (0.62 - k * 0.04).toFixed(2) + '"/>'; }
+    for (hx = 4; hx < W; hx += 6) hatch += '<line class="vh" x1="' + hx + '" x2="' + hx + '" y1="0" y2="' + H + '"/>';
+    $("#chart").innerHTML = '<defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4ff1a" stop-opacity=".62"/><stop offset=".55" stop-color="#19e08a" stop-opacity=".26"/><stop offset="1" stop-color="#22e7ff" stop-opacity=".04"/></linearGradient><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2fe17"/><stop offset="1" stop-color="#22e7ff"/></linearGradient><clipPath id="clipA"><path d="' + area + '"/></clipPath></defs>' + grid + '<path class="ar" d="' + area + '" fill="url(#ag)"/><g clip-path="url(#clipA)" opacity=".75">' + hatch + '</g>' + wires + '<path class="ln" d="' + line + '"/><line class="cur" id="cur" x1="0" x2="0" y1="0" y2="' + H + '" style="display:none"/>';
+    var wrap = $("#plot"); $$(".ylab,.xlab,.dot,.pn", wrap).forEach(function (e) { e.parentNode.removeChild(e); });
+    pts.forEach(function (q) { var nd = document.createElement("i"); nd.className = "pn"; nd.style.left = (q[0] / W * 100) + "%"; nd.style.top = (q[1] / H * 100) + "%"; wrap.appendChild(nd); });
     for (g = 0; g <= 4; g++) { var l = document.createElement("span"); l.className = "ylab"; l.style.top = (ys(step * g) / H * 100) + "%"; l.textContent = step * g >= 1000 ? Math.round(step * g / 1000) + " ألف" : step * g; wrap.appendChild(l); }
     var every = n > 9 ? 2 : 1; pts.forEach(function (p, i) { if (i % every) return; var x = document.createElement("span"); x.className = "xlab"; x.style.left = (p[0] / W * 100) + "%"; x.style.transform = "translateX(-50%)"; x.textContent = d.c.lab[i]; wrap.appendChild(x); });
     var dot = document.createElement("i"); dot.className = "dot"; dot.hidden = true; dot.style.transform = "translate(-50%,-50%)"; wrap.appendChild(dot);
