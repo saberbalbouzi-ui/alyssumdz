@@ -238,7 +238,9 @@ const AdminRuqya = (() => {
         await saveCfg(patch); if (!patch.products) prods.length = (S.cfg.products || []).length;
         /* تحقّق بالقراءة من الخادم أن ما حُفظ هو ما أُدخل */
         const back = await call("admin_kv?select=value&key=eq.ruqya"), v = back && back[0] && back[0].value || {};
-        if (JSON.stringify(v.prices) !== JSON.stringify(prices) || (v.products || []).length !== prods.length) throw new Error("لم يتطابق المحفوظ مع المُدخل، أعد المحاولة");
+        /* مقارنة بالقيم لا بنص JSON: قاعدة البيانات تُعيد ترتيب مفاتيح الكائن فكان النص يختلف دائماً والحفظ يُعدّ فاشلاً رغم نجاحه */
+        const vp = v.prices || {}, pOk = Object.keys(prices).every(k => Number(vp[k]) === prices[k]), vq = v.products || [];
+        if (!pOk || vq.length !== prods.length || prods.some(x => { const y = vq.find(z => z.slug === x.slug); return !y || Number(y.price) !== x.price; })) throw new Error("لم يتطابق المحفوظ مع المُدخل، أعد المحاولة");
         S.err = ""; S.msg = "✅ حُفظت الإعدادات (" + prods.length + " منتج، " + closed.length + " عطلة)"; S.view = ""; note("حُفظت الإعدادات", true);
       } catch (er) { S.err = er.message || String(er); note("تعذّر الحفظ: " + S.err, false); try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (_) { } }
       draw(); try { window.scrollTo({ top: 0 }); } catch (_) { }
