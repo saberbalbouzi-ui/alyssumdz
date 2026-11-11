@@ -444,7 +444,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       r.has = !!bg.querySelector("#mo-ps") && bg.querySelectorAll("#mo-ps option").length === 2; set("mo-wil", W.name); set("mo-com", W.communes.find(c => /sma/i.test(c))); r.co = bg.querySelector("#mo-fee").value; r.coNote = bg.querySelector("#mo-fh").textContent;
       set("mo-ps", "zones"); r.zn = bg.querySelector("#mo-fee").value; set("mo-ps", "co"); r.back = bg.querySelector("#mo-fee").value;
       bg.remove(); A.ydFees = f0; A.deliveryCfg.yalidine = c0; A._supPub = s0; return r; });
-    ok("طلب يدوي: خيار مصدر السعر (أسعار الشركة المفعّلة الافتراضية ⟷ أسعار المناطق): عين السمار 750+50 = 800 ثم المناطق 800 ثم العودة", ps.has && ps.co === "800" && /سعر الولاية 750/.test(ps.coNote) && /سعر البلدية : 50/.test(ps.coNote) && ps.zn === "800" && ps.back === "800", ps); }
+    ok("طلب يدوي: خيار مصدر السعر (أسعار الشركة المفعّلة الافتراضية ⟷ أسعار المناطق): عين السمار 750+50 = 800 ثم المناطق 700 (سعر المنطقة فقط بلا إضافة بلدية، v1.89.1051) ثم العودة", ps.has && ps.co === "800" && /سعر الولاية 750/.test(ps.coNote) && /سعر البلدية : 50/.test(ps.coNote) && ps.zn === "700" && ps.back === "800", ps); }
   { const ql = await p.evaluate(async () => { ManualOrder.open({ mode: "new" }); await new Promise(z => setTimeout(z, 500)); const bg = document.getElementById("mo-bg"), r = {};
       const sel = bg.querySelector('select[data-f="sel"]'); sel.value = sel.options[1].value; sel.dispatchEvent(new Event("change", { bubbles: true }));
       const of = bg.querySelector('select[data-f="offer"]'); of.value = "2"; of.dispatchEvent(new Event("change", { bubbles: true })); r.offerLine = bg.querySelector('tr[data-i] input[data-f="amt"]').value;

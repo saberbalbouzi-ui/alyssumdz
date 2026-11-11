@@ -1151,6 +1151,11 @@ const PB = (() => {
       /* تكبير تناسبي للعنصر: يُضبط بسحب زواياه فيكبر محتواه كله مع إطاره */
       emit(css, wsx + ">*", s2, [["wsc", v => `zoom:${Math.max(.2, Math.min(5, (num(v) || 100) / 100))};`]]);
       ["t", "m"].forEach(dv => { if (own(s2, "wsc", dv) === undefined && own(s2, "wsc", "d") !== undefined) css[dv].push(`${wsx}>*{zoom:1}`); });
+      /* النص والزر المكبَّران بـzoom يحملان حجم خط مُحتسَباً صغيراً (مثلاً 4px × zoom 2.3): متصفحات التطبيقات (ماسنجر) تفرض حداً أدنى لحجم الخط على القيمة المُحتسَبة قبل الـzoom فتتضخم النصوص وتتراكب. نُدمج المعامل في الخط نفسه (fs×wsc) ونلغي zoom فيبقى الشكل نفسه والحجم المُحتسَب هو الفعلي. */
+      if (w.type === "text" || w.type === "heading" || w.type === "button") {
+        const zOf = dv => dv === "d" ? (num(own(s2, "wsc", "d")) || 100) / 100 : (own(s2, "wsc", dv) !== undefined ? (num(own(s2, "wsc", dv)) || 100) / 100 : 1), zs = DEVS.map(zOf), fs = DEVS.map(dv => num(eff(s2, "fs", dv)));
+        if (zs.some(z => Math.abs(z - 1) > .01) && fs.every(f => f != null && f > 0)) DEVS.forEach((dv, i) => css[dv].push(`${wsx}>*{zoom:1}${wsx} .pb-t.pb-t,${wsx} .pb-btn.pb-btn{font-size:${U(Math.round(fs[i] * zs[i] * 100) / 100)};}`));
+      }
       if (free) css.d.push(`${wsx}{position:absolute!important;margin:0;max-width:none}`);      // مهم: قوالب التأثيرات (لمعة…) تضع position:relative على العنصر فتُفسد الموضع الحر وتقذفه بعيداً
       if (free && curAuto && curAuto.items[w.id]) { const a = curAuto.items[w.id]; css.m.push(`${wsx}{left:${a.fx}%;top:${a.fy}px;width:${a.fwd}%;height:${a.fh}px}`); }
       def.css(css, wsx, s2);
