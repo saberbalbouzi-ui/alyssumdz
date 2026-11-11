@@ -59,11 +59,13 @@
     b.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(s.id); }); b.addEventListener("focus", () => select(s.id)); orbit.appendChild(b); nodes.set(s.id, b);
     const d = document.createElement("button"); d.type = "button"; d.dataset.id = s.id; d.innerHTML = svg(s.icon) + "<span>" + s.name + "</span>"; d.addEventListener("click", () => openSection(s.id)); dock.appendChild(d);
   });
-  let ang = 20, va = 0, drag = null, lastInput = 0, tw = null;
+  let ang = 20, va = 0, drag = null, lastInput = 0, tw = null, yaw = 0;
+  /* تدوير القاعة كلها حول الاسطوانة (الكاميرا المدارية): Shift+سحب أو التواء بإصبعين على الخلفية أو المفتاحان [ ] */
+  function setYaw(v) { yaw = clamp(v, -50, 50); stage.style.setProperty("--yaw", yaw.toFixed(1) + "deg"); const c = document.getElementById("yawchip"); if (c) { c.classList.toggle("on", Math.abs(yaw) > 1); c.textContent = "القاعة ↻ " + Math.round(yaw) + "° — انقر للتصفير"; } }
   /* مدار الألواح: كل لوح لم يمسكه المستخدم يدور حول الاسطوانة (pa = زاوية المدار، pt = انتقال لتقديم لوح جديد، hov = ألواح تحت المؤشر فيتوقف الدوران) */
   let orbitMode = innerWidth > 820, pa = 0, pt = null, hov = 0, pprev = 20, draggingPanel = false;
   /* تدوير الاسطوانة لتقديم عقدة قسم إلى مقدمة المشهد (أقصر دوران) */
-  function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
+  function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step - yaw; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
   function frame(t) {
     const rdt = Math.min(250, t - (frame.t || t)), dt = Math.min(50, rdt); frame.t = t; const ek = 1 - Math.exp(-rdt / 150); /* تسهيل مبني على الزمن الحقيقي (مستقل عن معدل الإطارات) */
     if (tw) { ang += (tw.to - ang) * ek; if (Math.abs(tw.to - ang) < .15) { ang = tw.to; tw = null; } } else if (!drag) { const f = rdt / 16.7; ang += va * f; va *= Math.pow(.94, f); if (!RM && Math.abs(va) < .02 && t - lastInput > 2500) ang += rdt * .004; }
@@ -74,21 +76,27 @@
     gl.forEach((g, i) => { const th = (-a * 1.3 + i * 360 / gl.length) * Math.PI / 180, y = -110 + (i % 4) * 62 + Math.sin(t / 900 + i) * 6; g.style.transform = `translate3d(${(Math.sin(th) * 92).toFixed(1)}px,${y.toFixed(1)}px,${(Math.cos(th) * 92).toFixed(1)}px)`; });
     secs.forEach((s, i) => {
       const th = (a + i * 360 / secs.length) * Math.PI / 180, x = Math.sin(th) * RO, z = Math.cos(th) * RO, y = Math.sin(i * 1.9) * 72, n = nodes.get(s.id), f = (z + RO) / (2 * RO);
-      n.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px)`; n.style.opacity = (.42 + .58 * f).toFixed(2); n.style.zIndex = Math.round(z + RO);
+      n.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px)`; { const zy = Math.cos(th + yaw * Math.PI / 180) * RO, fy = (zy + RO) / (2 * RO); n.style.opacity = (.42 + .58 * fy).toFixed(2); n.style.zIndex = Math.round(zy + RO); }
     });
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
   /* تدوير الاسطوانة بسحب الخلفية (فأرة/لمس) مع قصور ذاتي */
   /* السحب يدوّر من أي نقطة، حتى فوق عقدة قسم أو زر المركز: الضغط على زر «ينتظر» حتى يتحرك المؤشر 6px فيتحوّل إلى تدوير ويُلغى النقر؛ أما النقر العادي فيعمل كما هو */
-  let pendDrag = null, noClick = false;
-  const beginDrag = (e, x) => { tw = null; drag = { x, id: e.pointerId, t: performance.now(), v: 0 }; try { stage.setPointerCapture(e.pointerId); } catch (_) { } stage.classList.add("grab"); lastInput = performance.now(); };
-  stage.addEventListener("pointerdown", e => { if (e.target.closest("button,.wcard")) { pendDrag = { x: e.clientX, id: e.pointerId }; return; } beginDrag(e, e.clientX); });
+  let pendDrag = null, noClick = false; const sp = new Set();
+  const beginDrag = (e, x) => { tw = null; drag = { x, id: e.pointerId, t: performance.now(), v: 0, yaw: e.shiftKey }; try { stage.setPointerCapture(e.pointerId); } catch (_) { } stage.classList.add("grab"); lastInput = performance.now(); };
+  stage.addEventListener("pointerdown", e => { sp.add(e.pointerId); if (sp.size > 1) { drag = null; pendDrag = null; return; } if (e.target.closest("button,.wcard")) { pendDrag = { x: e.clientX, id: e.pointerId, shift: e.shiftKey }; return; } beginDrag(e, e.clientX); });
   stage.addEventListener("pointermove", e => {
-    if (pendDrag && e.pointerId === pendDrag.id && !drag && Math.abs(e.clientX - pendDrag.x) > 6) { beginDrag(e, pendDrag.x); noClick = true; pendDrag = null; }
-    if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x, now = performance.now(); ang += dx * .35; drag.v = dx * .35 * .6 + drag.v * .4; drag.x = e.clientX; lastInput = now; });
+    if (pendDrag && e.pointerId === pendDrag.id && !drag && Math.abs(e.clientX - pendDrag.x) > 6) { beginDrag(e, pendDrag.x); drag.yaw = pendDrag.shift; noClick = true; pendDrag = null; }
+    if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x, now = performance.now(); if (drag.yaw) setYaw(yaw + dx * .22); else { ang += dx * .35; drag.v = dx * .35 * .6 + drag.v * .4; } drag.x = e.clientX; lastInput = now; });
   stage.addEventListener("click", e => { if (noClick) { e.stopPropagation(); e.preventDefault(); noClick = false; } }, true);
-  document.addEventListener("pointerup", () => { pendDrag = null; setTimeout(() => { noClick = false; }, 60); }, true);
+  document.addEventListener("pointerup", e => { sp.delete(e.pointerId); pendDrag = null; setTimeout(() => { noClick = false; }, 60); }, true); document.addEventListener("pointercancel", e => sp.delete(e.pointerId), true);
+  /* التواء بإصبعين على الخلفية = تدوير القاعة كلها */
+  let ty0 = 0, ya0 = 0, tw2 = false; const tang = ts => Math.atan2(ts[1].clientY - ts[0].clientY, ts[1].clientX - ts[0].clientX) * 180 / Math.PI;
+  stage.addEventListener("touchstart", e => { if (e.touches.length === 2 && !e.target.closest(".wcard,.node")) { tw2 = true; ty0 = tang(e.touches); ya0 = yaw; drag = null; stage.classList.add("grab"); } }, { passive: true });
+  stage.addEventListener("touchmove", e => { if (tw2 && e.touches.length === 2) { e.preventDefault(); let da = tang(e.touches) - ty0; da = ((da + 540) % 360) - 180; setYaw(ya0 + da); } }, { passive: false });
+  stage.addEventListener("touchend", e => { if (e.touches.length < 2 && tw2) { tw2 = false; stage.classList.remove("grab"); } }, { passive: true });
+  $("#yawchip").addEventListener("click", () => setYaw(0));
   const endDrag = e => { if (!drag) return; va = clamp(drag.v, -14, 14); drag = null; stage.classList.remove("grab"); };
   stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
   /* تحديد قسم: تظليل العقدة + تدوير سلس لتقديمها نحو المستخدم */
@@ -98,7 +106,7 @@
   document.addEventListener("keydown", e => { const k = String(e.key || ""), tg = e.target || {}, inPanel = tg.closest && tg.closest(".panel");
     if (/INPUT|TEXTAREA/.test(tg.tagName || "")) { if (k === "Escape") tg.blur(); return; }
     if (k === "Escape" && focused) { dismiss(focused, "close"); return; } if (inPanel) return;
-    if (k === "ArrowRight") { e.preventDefault(); step(1); } else if (k === "ArrowLeft") { e.preventDefault(); step(-1); }
+    if (k === "[") setYaw(yaw - 10); else if (k === "]") setYaw(yaw + 10); else if (k === "0") setYaw(0); else if (k === "ArrowRight") { e.preventDefault(); step(1); } else if (k === "ArrowLeft") { e.preventDefault(); step(-1); }
     else if ((k === "Enter" || k === " ") && sel && !/BUTTON/.test(tg.tagName || "")) { e.preventDefault(); openSection(sel); } });
 
   /* ───── مدير الألواح ───── */
@@ -107,7 +115,7 @@
   function remember(p) { memo[p.id] = { content: JSON.parse(JSON.stringify(p.content || {})), size: { w: p.big && p.prev ? p.prev.w : p.st.w, h: p.big && p.prev ? p.prev.h : p.st.h } }; }
   const fz = p => 1 - 0; /* موضع للتوسّع المستقبلي */
   function persp(tz) { return PERSP / (PERSP - tz); }
-  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${s.rx.toFixed(1)}deg) rotateY(${s.ry.toFixed(1)}deg) rotateZ(${(s.rz || 0).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
+  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${(s.rx + (p.bk ? p.bk.x : 0)).toFixed(1)}deg) rotateY(${(s.ry + (p.bk ? p.bk.y : 0)).toFixed(1)}deg) rotateZ(${(s.rz || 0).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--gx", ((s.ry + (p.bk ? p.bk.y : 0)) * 1.5).toFixed(1) + "%"); p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
   /* تخطيط تلقائي: أماكن لكل عدد من الألواح (كسور من أبعاد الشاشة)؛ [x, y, مقياس, ry, rx, z] */
   const LAY = {
     1: [[.275, -.02, 1, -15, 0, 0]],
@@ -125,15 +133,15 @@
   /* ───── المدار ───── */
   const orbList = () => [...open.values()].filter(p => !p.min && !p.user && !p.big);
   const OS = () => clamp(W() / 2400, .45, .6);
-  function orbState(thDeg, i) { const th = thDeg * Math.PI / 180, c = Math.cos(th), s = Math.sin(th); return { c, st: { x: s * W() * .335, y: -H() * .04 + Math.sin(th * 2 + (i || 0)) * 14, z: c * 340, rx: -3, ry: -s * 30, s: OS() } }; }
+  function orbState(thDeg, i, k) { const th = thDeg * Math.PI / 180, c = Math.cos(th), s = Math.sin(th); return { c, st: { x: s * W() * .335, y: -H() * .04 + Math.sin(th * 2 + (i || 0)) * 14, z: c * 340, rx: -3, ry: -s * 30, s: OS() * (k || 1) } }; }
   const wrap = d => ((d % 360) + 540) % 360 - 180;
   function setLayer(p, back) { if (!!p.inBack === back) return; p.inBack = back; p.el.classList.toggle("back", back); (back ? layerBack : layer).appendChild(p.el); }
   function orbitFrame(now, ek) {
     const list = orbList(), n = list.length, step = 360 / Math.max(n, 1);
     list.forEach((p, i) => {
       if (p.off == null) p.off = i * step; p.off += wrap(i * step - p.off) * (ek || .1) * .7;
-      const o = orbState(pa + p.off, i); Object.assign(p.st, o.st);
-      const born = now - (p.born || 0) < 1000; if (!born) p.el.style.opacity = (.42 + .58 * (o.c + 1) / 2).toFixed(2);
+      const o = orbState(pa + p.off + yaw, i, n <= 4 ? 1 : Math.max(.74, 4 / n)); Object.assign(p.st, o.st);
+      const born = now - (p.born || 0) < 1000; if (!born) p.el.style.setProperty("--op", (.42 + .58 * (o.c + 1) / 2).toFixed(2));
       p.el.style.zIndex = Math.round(o.c * 100 + 200); setLayer(p, o.c < (p.inBack ? .05 : -.18) && p.id !== focused);
       apply(p);
     });
@@ -142,9 +150,9 @@
   function snapOrbit(p, force) {
     if (!orbitMode || !p.user || p.big) return false; const nx = p.st.x / (W() * .335), nz = p.st.z / 340, th = Math.atan2(nx, nz) * 180 / Math.PI, ideal = orbState(th, 0).st;
     if (!force && Math.hypot(p.st.x - ideal.x, p.st.y - ideal.y) > 70) return false;
-    p.user = false; p.off = wrap(th - pa); p.el.classList.remove("free"); p.el.classList.add("tr2"); setTimeout(() => p.el.classList.remove("tr2"), 700); return true;
+    p.user = false; p.off = wrap(th - pa - yaw); p.el.classList.remove("free"); p.el.classList.add("tr2"); setTimeout(() => p.el.classList.remove("tr2"), 700); return true;
   }
-  function userize(p) { if (p.user) return; p.el.classList.add("free"); p.user = true; setLayer(p, false); p.el.style.opacity = 1; p.el.classList.remove("back"); }
+  function userize(p) { if (p.user) return; p.el.classList.add("free"); p.user = true; setLayer(p, false); p.el.style.setProperty("--op", 1); p.el.classList.remove("back"); }
   /* يعيد ترتيب الألواح التي لم يحرّكها المستخدم؛ الجديد يأخذ مكانه فوراً والباقي ينزلق بسلاسة */
   function arrange(fresh) {
     if (orbitMode) { const list = orbList(); if (fresh) { const i = list.indexOf(fresh), step = 360 / list.length; fresh.off = i * step; let to = -i * step; to += Math.round((pa - to) / 360) * 360; pt = { to }; Object.assign(fresh.st, orbState(0, i).st); } return; }
@@ -166,34 +174,38 @@
     if (ex) { if (ex.min) { ex.min = false; ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } faceFront(ex); focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
     const sz = sizeFor(sec); if (memo[id] && memo[id].size) { sz.w = Math.min(memo[id].size.w, W() - 24); sz.h = Math.min(memo[id].size.h, H() - 80); }
     const sl = { x: 0, y: 0, z: 0, rx: 0, ry: 0 }, el = document.createElement("section"); el.className = "panel"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", sec.name); el.tabIndex = -1;
-    el.innerHTML = '<i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><div class="gbadge" aria-hidden="true"></div><i class="pn-rs" aria-hidden="true"></i>';
+    el.innerHTML = '<i class="face"></i><i class="vol v2"></i><i class="vol v1"></i><i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><i class="eg t"></i><i class="eg b"></i><i class="eg l"></i><i class="eg r"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><button type="button" class="pn-dep" aria-label="تحريك في العمق (اسحب عمودياً)" title="اسحب عمودياً: أقرب/أبعد">&#8661;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><div class="gbadge" aria-hidden="true"></div><i class="pn-rs" aria-hidden="true"></i>';
     el.querySelector("h3").textContent = sec.name;
     const content = memo[id] && sec.st ? JSON.parse(JSON.stringify(memo[id].content)) : sec.st ? JSON.parse(JSON.stringify(sec.st)) : {}, p = { id, content, sec: Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }), el, body: el.querySelector(".pn-b"), min: false, big: false, keep: null, st: { x: sl.x, y: sl.y, z: sl.z, rx: sl.rx, ry: sl.ry, s: 1, w: sz.w, h: sz.h } };
-    p.born = performance.now(); p.origin = { x: from.x + W() / 2, y: from.y + H() / 2 }; layer.appendChild(el); open.set(id, p); wire(p); arrange(p); if (sec.bind) sec.bind(p.body, { st: content }, all => all ? refreshAll() : render(p)); render(p, false);
+    setState(p, "opening"); p.born = performance.now(); p.origin = { x: from.x + W() / 2, y: from.y + H() / 2 }; layer.appendChild(el); open.set(id, p); wire(p); arrange(p); if (sec.bind) sec.bind(p.body, { st: content }, all => all ? refreshAll() : render(p)); render(p, false);
     p.keep = Object.assign({}, p.st);
-    Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1, rx: 0, ry: 0 }); apply(p); el.style.opacity = 0; el.classList.add("tr"); void el.offsetWidth;
-    Object.assign(p.st, p.keep); focus(id); apply(p); el.style.opacity = 1; if (RM) { el.classList.remove("tr"); }
-    setTimeout(() => el.classList.remove("tr"), 950); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "43,228,255", 40, 4.5); markNodes(); setTimeout(() => { try { el.focus({ preventScroll: true }); } catch (e) { } }, 60);
+    Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1, rx: 0, ry: 0 }); apply(p); el.style.setProperty("--op", 0); el.classList.add("tr"); void el.offsetWidth;
+    Object.assign(p.st, p.keep); focus(id); apply(p); el.style.setProperty("--op", 1); if (RM) { el.classList.remove("tr"); }
+    setTimeout(() => { el.classList.remove("tr"); if (p.state === "opening") setState(p, focused === id ? "focused" : "floating"); }, 950); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "43,228,255", 40, 4.5); markNodes(); setTimeout(() => { try { el.focus({ preventScroll: true }); } catch (e) { } }, 60);
   }
-  function setPos(p, s, from) { if (from) { Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1 }); apply(p); p.el.style.opacity = 0; void p.el.offsetWidth; } Object.assign(p.st, s); apply(p); p.el.style.opacity = 1; }
-  function focus(id) { focused = id; open.forEach(p => { p.el.classList.toggle("focus", p.id === id); if (p.id === id) { p.el.style.zIndex = ++zc; } apply(p); }); }
+  function setPos(p, s, from) { if (from) { Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1 }); apply(p); p.el.style.setProperty("--op", 0); void p.el.offsetWidth; } Object.assign(p.st, s); apply(p); p.el.style.setProperty("--op", 1); }
+  function focus(id) { focused = id; open.forEach(p => { p.el.classList.toggle("focus", p.id === id); if (!p.min && p.state !== "opening" && p.state !== "expanded" && p.state !== "dismissing") setState(p, p.id === id ? "focused" : "floating"); if (p.id === id) { p.el.style.zIndex = ++zc; } apply(p); }); }
   /* ───── مرحلة 3: قصور ذاتي، تثبيت التدوير، تغذية بصرية، عمق، مفاتيح ───── */
-  let lastPanelDrag = 0;
+  const ZMIN = -260, ZMAX = 300, stLog = []; let lastPanelDrag = 0;
+  /* آلة حالات اللوح: opening → floating ⇄ focused ⇄ expanded، minimized، dismissing (ثم يُزال)؛ كل انتقال يُسجَّل ويظهر في data-state */
+  function setState(p, s) { if (p.state === s) return; p.state = s; p.el.dataset.state = s; stLog.push([p.id, s, Math.round(performance.now())]); if (stLog.length > 300) stLog.shift(); }
+  /* قصور ذاتي دوراني بعد تدوير اللوح: يستمر الدوران ثم يتباطأ بالاحتكاك ويستقر على زاوية مقروءة */
+  function spin(p, wy, wx) { cancelGlide(p); let last = performance.now(); const step = t => { const dt = Math.min(100, t - last); last = t; p.st.ry = clamp(p.st.ry + wy * dt, -34, 34); p.st.rx = clamp(p.st.rx + wx * dt, -26, 26); const k = Math.exp(-dt / 260); wy *= k; wx *= k; badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); apply(p); if (Math.hypot(wy, wx) > .006) p.glide = requestAnimationFrame(step); else { p.glide = 0; settleRot(p); } }; p.glide = requestAnimationFrame(step); }
   const badge = (p, txt) => { const b = p.el.querySelector(".gbadge"); if (b) { b.textContent = txt || ""; b.classList.toggle("on", !!txt); } };
   function cancelGlide(p) { if (p.glide) { cancelAnimationFrame(p.glide); p.glide = 0; } }
   /* انزلاق بعد الإفلات بقصور ذاتي واحتكاك (يرتدّ برفق عن حدود مساحة العمل) ثم تثبيت على المدار أو إزاحة لتفادي التراكب */
   function glide(p, vx, vy) {
     cancelGlide(p); let last = performance.now(); p.el.classList.add("gliding");
     const step = t => { const dt = Math.min(100, t - last); last = t; const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += vx * dt / f; p.st.y += vy * dt / f; const k = Math.exp(-dt / 240); vx *= k; vy *= k;
-      const mx = W() / 2 - p.st.w * p.st.s / 3, my = H() / 2 - p.st.h * p.st.s / 3; if (Math.abs(p.st.x) > mx) { p.st.x = clamp(p.st.x, -mx, mx); vx *= -.35; } if (Math.abs(p.st.y) > my) { p.st.y = clamp(p.st.y, -my, my); vy *= -.35; } apply(p);
-      if (Math.hypot(vx, vy) > .02) p.glide = requestAnimationFrame(step); else { p.glide = 0; p.el.classList.remove("gliding"); if (!snapOrbit(p)) resolve(p); } };
+      p.bk = { y: clamp(vx * 5, -9, 9), x: clamp(-vy * 4, -7, 7) }; const mx = W() / 2 - p.st.w * p.st.s / 3, my = H() / 2 - p.st.h * p.st.s / 3; if (Math.abs(p.st.x) > mx) { p.st.x = clamp(p.st.x, -mx, mx); vx *= -.35; } if (Math.abs(p.st.y) > my) { p.st.y = clamp(p.st.y, -my, my); vy *= -.35; } apply(p);
+      if (Math.hypot(vx, vy) > .02) p.glide = requestAnimationFrame(step); else { p.glide = 0; p.bk = null; p.el.classList.remove("gliding"); p.el.classList.add("tr2"); setTimeout(() => p.el.classList.remove("tr2"), 400); if (!snapOrbit(p)) resolve(p); } };
     p.glide = requestAnimationFrame(step);
   }
   /* بعد تدوير اللوح: يرجع تلقائياً إلى زاوية مقروءة (≤24° أفقياً و≤18° رأسياً) */
   function settleRot(p) { badge(p, ""); if (Math.abs(p.st.ry) > 24 || Math.abs(p.st.rx) > 18) { p.st.ry = clamp(p.st.ry, -24, 24); p.st.rx = clamp(p.st.rx, -18, 18); p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); } }
   function settleRz(p) { if (p.st.rz) { p.el.classList.add("tr2"); p.st.rz = 0; apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); } }
   /* تقديم لوح المدار المحدَّد نحو المستخدم */
-  function faceFront(p) { if (!orbitMode || p.user || p.big || p.off == null) return; let to = -p.off; to += Math.round((pa - to) / 360) * 360; pt = { to }; }
+  function faceFront(p) { if (!orbitMode || p.user || p.big || p.off == null) return; let to = -p.off - yaw; to += Math.round((pa - to) / 360) * 360; pt = { to }; }
   function wire(p) {
     const el = p.el, h = el.querySelector(".pn-h"), rot = el.querySelector(".pn-rot"), rs = el.querySelector(".pn-rs");
     el.addEventListener("pointerdown", () => { if (focused !== p.id) focus(p.id); });
@@ -201,20 +213,20 @@
     el.querySelector(".pn-orb").onclick = () => snapOrbit(p, true); el.querySelector(".pn-x").onclick = () => dismiss(p.id, "close"); el.querySelector(".pn-min").onclick = () => dismiss(p.id, "min"); el.querySelector(".pn-max").onclick = () => toggleBig(p);
     let tap = 0, tapX = 0;
     h.addEventListener("pointerdown", e => {
-      if (e.target.closest(".pn-min,.pn-max,.pn-x,.pn-orb")) return; e.preventDefault(); const mode = e.target.closest(".pn-rot") || e.shiftKey ? "rot" : "move", now = performance.now();
-      if (mode === "move" && now - tap < 520 && Math.abs(e.clientX - tapX) < 30) { tap = 0; toggleBig(p); return; } tap = now; tapX = e.clientX;
+      if (e.target.closest(".pn-min,.pn-max,.pn-x,.pn-orb")) return; e.preventDefault(); const mode = e.target.closest(".pn-rot") || e.shiftKey ? "rot" : (e.target.closest(".pn-dep") || e.altKey) ? "depth" : "move", now = performance.now();
+      if (mode === "move" && !e.target.closest(".pn-dep") && now - tap < 520 && Math.abs(e.clientX - tapX) < 30) { tap = 0; toggleBig(p); return; } tap = now; tapX = e.clientX;
       cancelGlide(p); el.classList.remove("tr", "tr2", "gliding"); el.classList.add("dragging"); const g = { mode, id: e.pointerId, x: e.clientX, y: e.clientY, s: [] }; h._g = g; try { h.setPointerCapture(e.pointerId); } catch (_) { }
     });
     h.addEventListener("pointermove", e => { const g = h._g; if (!g || g.id !== e.pointerId) return; const dx = e.clientX - g.x, dy = e.clientY - g.y; g.x = e.clientX; g.y = e.clientY; const t = performance.now(); let co = []; try { co = e.getCoalescedEvents ? e.getCoalescedEvents() : []; } catch (_) { } if (co.length > 1) co.forEach(c => g.s.push([c.timeStamp || t, c.clientX, c.clientY])); else g.s.push([t, e.clientX, e.clientY]); while (g.s.length > 2 && t - g.s[0][0] > 170) g.s.shift();
-      userize(p); draggingPanel = true; if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; } else { p.st.ry = clamp(p.st.ry + dx * .35 * (1 - Math.abs(p.st.ry) / 75), -34, 34); p.st.rx = clamp(p.st.rx - dy * .3 * (1 - Math.abs(p.st.rx) / 65), -26, 26); badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); } apply(p); });
-    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; el.classList.remove("dragging"); lastPanelDrag = performance.now(); if (g.mode !== "move") { settleRot(p); return; } g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
+      userize(p); draggingPanel = true; if (g.mode === "depth") { p.st.z = clamp(p.st.z - dy * 1.15, ZMIN, ZMAX); badge(p, "عمق " + Math.round(p.st.z)); } else if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; p.bk = { y: clamp(((p.bk && p.bk.y) || 0) * .5 + dx * .45, -9, 9), x: clamp(((p.bk && p.bk.x) || 0) * .5 - dy * .35, -7, 7) }; } else { p.st.ry = clamp(p.st.ry + dx * .35 * (1 - Math.abs(p.st.ry) / 75), -34, 34); p.st.rx = clamp(p.st.rx - dy * .3 * (1 - Math.abs(p.st.rx) / 65), -26, 26); badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); } apply(p); });
+    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; el.classList.remove("dragging"); lastPanelDrag = performance.now(); if (g.mode === "depth") { badge(p, ""); resolve(p); return; } if (g.mode === "rot") { const s = g.s, n = s.length; let wy = 0, wx = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); wy = (b[1] - a[1]) / dt * .3; wx = -(b[2] - a[2]) / dt * .25; } if (Math.hypot(wy, wx) > .03) spin(p, wy, wx); else settleRot(p); return; } p.bk = null; el.classList.add("tr2"); setTimeout(() => el.classList.remove("tr2"), 400); g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
     h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
     /* تحجيم بمقبض الزاوية */
     rs.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("dragging"); rs._g = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { rs.setPointerCapture(e.pointerId); } catch (_) { } focus(p.id); });
     rs.addEventListener("pointermove", e => { const g = rs._g; if (!g || g.id !== e.pointerId) return; const f = persp(p.st.z) * p.st.s, dx = (e.clientX - g.x) / f, dy = (e.clientY - g.y) / f; g.x = e.clientX; g.y = e.clientY; const nw = clamp(p.st.w - dx, 300, Math.min(920, W() - 16)), nh = clamp(p.st.h + dy, 240, Math.min(720, H() - 60)), dw = nw - p.st.w, dh = nh - p.st.h; userize(p); p.st.w = nw; p.st.h = nh; p.st.x -= dw * p.st.s / 2; p.st.y += dh * p.st.s / 2; badge(p, Math.round(nw) + "×" + Math.round(nh)); apply(p); });
     const rsUp = e => { if (rs._g) { rs._g = null; el.classList.remove("dragging"); badge(p, ""); lastPanelDrag = performance.now(); resolve(p); } }; rs.addEventListener("pointerup", rsUp); rs.addEventListener("pointercancel", rsUp);
     /* عجلة الفأرة: تكبير اللوح (إلا إن كان المحتوى قابلاً للتمرير) */
-    el.addEventListener("wheel", e => { if (e.shiftKey) { e.preventDefault(); userize(p); const d = e.deltaY || e.deltaX; p.st.z = clamp(p.st.z + (d < 0 ? 34 : -34), -240, 260); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); return; } const b = e.target.closest(".pn-b"); if (b && !e.ctrlKey && b.scrollHeight > b.clientHeight + 2) return; e.preventDefault(); userize(p); p.st.s = clamp(p.st.s * (e.deltaY < 0 ? 1.06 : .943), .5, 1.9); apply(p); }, { passive: false });
+    el.addEventListener("wheel", e => { if (e.shiftKey) { e.preventDefault(); userize(p); const d = e.deltaY || e.deltaX; p.st.z = clamp(p.st.z + (d < 0 ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); return; } const b = e.target.closest(".pn-b"); if (b && !e.ctrlKey && b.scrollHeight > b.clientHeight + 2) return; e.preventDefault(); userize(p); p.st.s = clamp(p.st.s * (e.deltaY < 0 ? 1.06 : .943), .5, 1.9); apply(p); }, { passive: false });
     /* قرص + التواء بإصبعين مع تغذية بصرية (يعود الالتواء تلقائياً لتبقى القراءة سهلة) */
     let pd = 0, ps = 1, a0 = 0, rz0 = 0; const ang2 = ts => Math.atan2(ts[1].clientY - ts[0].clientY, ts[1].clientX - ts[0].clientX) * 180 / Math.PI, dist2 = ts => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
     el.addEventListener("touchstart", e => { if (e.touches.length === 2) { pd = dist2(e.touches); ps = p.st.s; a0 = ang2(e.touches); rz0 = p.st.rz || 0; cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("gest"); } }, { passive: true });
@@ -223,7 +235,7 @@
     /* لوحة المفاتيح: أسهم = تحريك، Alt+أسهم = إمالة، PageUp/PageDown = عمق، Home = عودة للمدار، Delete = رمي مع تلاشٍ */
     el.addEventListener("keydown", e => { const tg = e.target; if (/INPUT|TEXTAREA/.test(tg.tagName || "") || !(tg === el || (tg.closest && tg.closest(".pn-h")))) return; const k = String(e.key || ""), d = e.shiftKey ? 64 : 26; let used = true;
       if (/^Arrow/.test(k)) { userize(p); cancelGlide(p); if (e.altKey) { p.st.ry = clamp(p.st.ry + (k === "ArrowRight" ? 4 : k === "ArrowLeft" ? -4 : 0), -24, 24); p.st.rx = clamp(p.st.rx + (k === "ArrowUp" ? 3 : k === "ArrowDown" ? -3 : 0), -18, 18); } else { p.st.x += k === "ArrowRight" ? d : k === "ArrowLeft" ? -d : 0; p.st.y += k === "ArrowDown" ? d : k === "ArrowUp" ? -d : 0; } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 300); }
-      else if (k === "PageUp" || k === "PageDown") { userize(p); p.st.z = clamp(p.st.z + (k === "PageUp" ? 34 : -34), -240, 260); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); }
+      else if (k === "PageUp" || k === "PageDown") { userize(p); p.st.z = clamp(p.st.z + (k === "PageUp" ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); }
       else if (k === "Home") { if (!snapOrbit(p, true)) arrange(); }
       else if (k === "Delete" || k === "Backspace") { const n = Math.hypot(p.st.x, p.st.y) || 1; throwAway(p, (p.st.x || 1) / n * 1.6, p.st.y / n * 1.6); }
       else used = false; if (used) e.preventDefault(); });
@@ -238,22 +250,22 @@
     if (snapOrbit(p)) return; resolve(p);
   }
   function throwAway(p, vx, vy) {
-    hov = 0; remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false, acc = 1; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1; cancelGlide(p); p.el.classList.add("dragging");
-    const step = t => { const dt = Math.min(250, t - last); last = t; acc *= Math.pow(1.05, dt / 16); /* يتسارع نحو الخارج */ p.st.x += vx * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.opacity = Math.max(0, op).toFixed(2); apply(p);
+    hov = 0; setState(p, "dismissing"); remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false, acc = 1; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1; cancelGlide(p); p.el.classList.add("dragging");
+    const step = t => { const dt = Math.min(250, t - last); last = t; acc *= Math.pow(1.05, dt / 16); /* يتسارع نحو الخارج */ p.st.x += vx * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.setProperty("--op", Math.max(0, op).toFixed(2)); apply(p);
       if (!burst && op < .55) { burst = true; const r = p.el.getBoundingClientRect(); FX.dissolve(r, null); }
       if (op > 0) requestAnimationFrame(step); else p.el.remove(); };
     requestAnimationFrame(step);
   }
   function dismiss(id, how) {
     const p = open.get(id); if (!p) return; hov = 0; const to = nodePos(id); p.el.classList.remove("tr"); p.el.classList.add("tr2"); p.keep = Object.assign({}, p.st);
-    if (focused === id) focused = null; Object.assign(p.st, { x: to.x * .35, y: to.y * .35, z: -380, s: .1 }); apply(p); p.el.style.opacity = 0;
-    const r = p.el.getBoundingClientRect(); if (how === "close") { remember(p); open.delete(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
+    if (focused === id) focused = null; Object.assign(p.st, { x: to.x * .35, y: to.y * .35, z: -380, s: .1 }); apply(p); p.el.style.setProperty("--op", 0);
+    const r = p.el.getBoundingClientRect(); if (how === "close") { setState(p, "dismissing"); remember(p); open.delete(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
     markNodes(); select(id); setTimeout(() => arrange(), 60);
   }
   function toggleBig(p) {
     p.el.classList.remove("tr"); p.el.classList.add("tr2"); focus(p.id);
-    if (!p.big) { p.prev = Object.assign({}, p.st); const w = Math.min(920, W() - 24), h = Math.min(660, H() - 92); Object.assign(p.st, { x: 0, y: isMob() ? -6 : -10, z: 110, rx: 0, ry: 0, s: 1, w, h }); p.big = true; setLayer(p, false); p.el.style.opacity = 1; p.el.style.zIndex = ++zc; }
-    else { Object.assign(p.st, p.prev); p.big = false; }
+    if (!p.big) { p.prev = Object.assign({}, p.st); const w = Math.min(920, W() - 24), h = Math.min(660, H() - 92); Object.assign(p.st, { x: 0, y: isMob() ? -6 : -10, z: 110, rx: 0, ry: 0, s: 1, w, h }); p.big = true; setState(p, "expanded"); setLayer(p, false); p.el.style.setProperty("--op", 1); p.el.style.zIndex = ++zc; }
+    else { Object.assign(p.st, p.prev); p.big = false; setState(p, focused === p.id ? "focused" : "floating"); }
     p.el.classList.toggle("is-big", p.big); const top = p.body.scrollTop; render(p); p.body.scrollTop = top; apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420);
   }
   /* منع التراكب: إزاحة اللوح الساقط عن لوح يخفي أكثر من 35% + مغناطيس لأقرب موضع حرّ */
@@ -261,12 +273,12 @@
     if (p.big) return; const me = rectOf(p); let moved = false;
     open.forEach(o => { if (o === p || o.min || o.big) return; const r = overlap(me, rectOf(o)); if (r && r.a > .35 * Math.min(me.w * me.h, rectOf(o).w * rectOf(o).h)) { if (r.ox < r.oy) p.st.x += (me.x >= o.st.x ? 1 : -1) * (r.ox + 14); else p.st.y += (me.y >= o.st.y ? 1 : -1) * (r.oy + 14); moved = true; me.x = p.st.x; me.y = p.st.y; } });
     const mx = W() / 2 - me.w / 3, my = H() / 2 - me.h / 3; p.st.x = clamp(p.st.x, -mx, mx); p.st.y = clamp(p.st.y, -my, my);
-    if (!moved) { const near = layoutFor(6).find(c => Math.hypot(c.x - p.st.x, c.y - p.st.y) < 55 && ![...open.values()].some(o => o !== p && !o.min && overlap({ x: c.x, y: c.y, w: me.w, h: me.h }, rectOf(o)))); if (near) { Object.assign(p.st, { x: near.x, y: near.y, z: near.z, rx: near.rx, ry: near.ry }); moved = true; } }
+    if (!moved) { const near = layoutFor(6).find(c => Math.hypot(c.x - p.st.x, c.y - p.st.y) < 55 && ![...open.values()].some(o => o !== p && !o.min && overlap({ x: c.x, y: c.y, w: me.w, h: me.h }, rectOf(o)))); if (near) { Object.assign(p.st, { x: near.x, y: near.y }); moved = true; }   /* المغناطيس موضعي فقط: لا يمسّ العمق ولا الإمالة التي ضبطها المستخدم */ }
     p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420);
   }
   core.addEventListener("click", () => openSection("ai")); document.body.classList.toggle("orbit-on", orbitMode);
   function setOrbit(on) { orbitMode = on && !isMob(); document.body.classList.toggle("orbit-on", orbitMode); const bt = $("#hud-orbit"); if (bt) { bt.textContent = orbitMode ? "المدار: يعمل" : "المدار: متوقف"; bt.setAttribute("aria-pressed", orbitMode); }
-    if (!orbitMode) { open.forEach(p => { setLayer(p, false); p.el.classList.remove("back"); p.el.style.opacity = 1; p.el.style.zIndex = ++zc; }); arrange(); } else open.forEach(p => { p.off = null; }); }
+    if (!orbitMode) { open.forEach(p => { setLayer(p, false); p.el.classList.remove("back"); p.el.style.setProperty("--op", 1); p.el.style.zIndex = ++zc; }); arrange(); } else open.forEach(p => { p.off = null; }); }
   $("#hud-orbit").addEventListener("click", () => setOrbit(!orbitMode));
   $("#hud-reset").addEventListener("click", () => { open.forEach(p => { p.user = false; p.el.classList.remove("free", "is-big"); p.big = false; const s = sizeFor(p.sec); p.st.w = s.w; p.st.h = s.h; p.off = null; }); if (orbitMode) { pt = null; } arrange(); });
   let vw0 = W(), vh0 = H();
@@ -274,6 +286,6 @@
   addEventListener("resize", () => { const kx = W() / vw0, ky = H() / vh0; vw0 = W(); vh0 = H();
     open.forEach(p => { if (p.min) return; if (p.big) { Object.assign(p.st, { w: Math.min(920, W() - 24), h: Math.min(660, H() - 92) }); } else { if (isMob()) { const m = sizeFor(p.sec); p.st.w = m.w; p.st.h = m.h; } if (!orbitMode || p.user) { p.st.x *= kx; p.st.y *= ky; } } apply(p); });
     if (!orbitMode) arrange(); });
-  window.SpatialOS = { open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll };
+  window.SpatialOS = { stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll };
   setTimeout(() => openSection("ord"), 700);
 })();
