@@ -19,8 +19,11 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
 .lbl{font-weight:800;color:var(--gd);font-size:.85rem;margin-top:6px}.txt{white-space:pre-wrap;margin:0 0 4px}
 .hide{display:none!important}.out{background:none;border:0;color:var(--mut);text-decoration:underline;cursor:pointer;font:inherit;margin-top:14px}
 .sep{text-align:center;color:var(--mut);margin:10px 0}
+.adm input[type=text],.adm input[type=date],.adm input[type=time],.adm select,.adm textarea{width:100%;min-height:46px;border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;font:inherit;margin:4px 0;background:#fff}
+.adm textarea{min-height:84px}.adm .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pt{display:flex;justify-content:space-between;gap:10px;align-items:center;border:1.5px solid var(--line);border-radius:14px;padding:10px 14px;margin:8px 0;cursor:pointer;font-weight:800;background:#fff;width:100%;font-family:inherit;font-size:1rem}.pt:hover{border-color:var(--g)}.pt small{color:var(--mut);direction:ltr;font-weight:700}
+.tag{display:inline-block;background:#fff3d6;color:#7a5200;border-radius:999px;padding:0 10px;font-weight:800;font-size:.78rem}
 </style></head><body><div class="wrap">
-<h1>ملفي</h1><p class="sub">مواعيد الرقية الشرعية · أليسوم — اطّلع على ملفك وتطور حالتك بعد كل زيارة.</p>
+<h1>ملفي</h1><p class="sub" id="sub0">مواعيد الرقية الشرعية · أليسوم — اطّلع على ملفك وتطور حالتك بعد كل زيارة.</p>
 <div id="msg"></div>
 <div id="login" class="card hide">
   <b id="loginHint">سجّل الدخول لعرض ملفك</b>
@@ -31,6 +34,7 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
   <button class="btn pri" id="be" type="button">أرسل لي رابط التأكيد</button>
 </div>
 <div id="file" class="hide"></div>
+<div id="adm" class="adm hide"></div>
 <div id="unlinked" class="card hide"><b>حسابك غير مربوط بملف بعد</b><p class="sub">لربط حسابك بملفك افتح رابط التأكيد الذي أرسلته لك العيادة على واتساب (من نفس هذا الحساب). إن لم يصلك رابط فراسلنا.</p></div>
 <button class="out hide" id="so" type="button">تسجيل الخروج</button>
 </div>
@@ -81,11 +85,48 @@ input[type=email]{width:100%;min-height:50px;border:1.5px solid var(--line);bord
       (x.note ? '<div class="lbl">تطور الحالة</div><p class="txt">' + esc(x.note) + "</p>" : "") + (x.followup ? '<div class="lbl">المتابعة</div><p class="txt">' + esc(x.followup) + "</p>" : "") + "</div>"; });
     f.innerHTML = h + "</div>"; f.classList.remove("hide");
   }
+
+  /* وضع المدير: يفتح أي ملف مريض ويسجّل المتابعة (كل الزيارات، المشارَكة وغير المشارَكة) */
+  async function rest(path, tok, opt){ opt = opt || {}; var r = await fetch(SB + "/rest/v1/" + path, { method: opt.method || "GET", headers: Object.assign(hdr(tok), opt.method && opt.method !== "GET" ? { Prefer: "return=representation" } : {}), body: opt.body ? JSON.stringify(opt.body) : undefined }); var j = await r.json().catch(function(){ return null; }); if(!r.ok) throw new Error((j && (j.message || j.msg)) || ("HTTP " + r.status)); return j; }
+  var AD = { tok: "", pat: null, visits: [] };
+  function adHead(){ return '<div class="card"><b>وضع المدير</b> <span class="tag">كل الحسابات</span><p class="sub" style="margin:4px 0 8px">ابحث عن أي مريض بالاسم أو الهاتف لفتح ملفه وتسجيل المتابعة.</p><input type="text" id="aq" placeholder="الاسم أو رقم الهاتف (3 أحرف على الأقل)" autocomplete="off"><button class="btn pri" id="ago" type="button">بحث</button><div id="ares"></div></div>'; }
+  function adVisits(){
+    var h = '<div class="card"><div class="hd"><div class="av">' + esc(String(AD.pat.name || "؟").trim().charAt(0)) + '</div><div><b style="font-size:1.15rem">' + esc(AD.pat.name) + '</b><div class="sub" style="margin:0;direction:ltr;text-align:right">' + esc(AD.pat.phone || "") + (AD.pat.commune ? " · " + esc(AD.pat.commune) : "") + '</div></div></div></div>';
+    h += '<div class="card"><b>تسجيل متابعة جديدة</b><div class="row"><div><div class="lbl">التاريخ</div><input type="date" id="vd" value="' + new Date().toISOString().slice(0, 10) + '"></div><div><div class="lbl">الساعة (اختياري)</div><input type="time" id="vt"></div></div><div class="lbl">تطور الحالة</div><select id="vp"><option value="">— غير محدد —</option><option value="new">زيارة أولى</option><option value="better">تحسّن</option><option value="same">مستقرة</option><option value="worse">تراجع</option><option value="done">انتهت الحالة</option></select><div class="lbl">ملاحظات الزيارة</div><textarea id="vn"></textarea><div class="lbl">المتابعة القادمة</div><textarea id="vf"></textarea><label style="display:flex;gap:8px;align-items:center;font-weight:700;margin:6px 0"><input type="checkbox" id="vs"> إظهارها للمريض في صفحته</label><button class="btn pri" id="vadd" type="button">حفظ المتابعة</button></div>';
+    h += '<div class="card"><b>سجل الزيارات (' + AD.visits.length + ')</b>';
+    if(!AD.visits.length) h += '<p class="sub">لا زيارات مسجَّلة بعد.</p>';
+    AD.visits.forEach(function(x){ var pg = PROG[x.progress]; h += '<div class="visit" style="border-color:' + (pg ? pg[1] : "#c9d3cc") + '"><h3>' + esc(new Date(x.day + "T12:00:00").toLocaleDateString("ar-DZ", { weekday: "long", day: "numeric", month: "long", year: "numeric" })) + (x.slot ? " · " + esc(String(x.slot).slice(0, 5)) : "") + (pg ? '<span class="badge" style="background:' + pg[1] + '">' + pg[0] + "</span>" : "") + (x.shared ? ' <span class="tag">ظاهرة للمريض</span>' : ' <span class="tag" style="background:#eef0ee;color:#566">خاصة</span>') + "</h3>" + (x.note ? '<div class="lbl">تطور الحالة</div><p class="txt">' + esc(x.note) + "</p>" : "") + (x.followup ? '<div class="lbl">المتابعة</div><p class="txt">' + esc(x.followup) + "</p>" : "") + "</div>"; });
+    return h + "</div>";
+  }
+  function adDraw(){ $("adm").innerHTML = adHead() + (AD.pat ? '<div id="apat">' + adVisits() + "</div>" : ""); }
+  async function adSearch(){
+    var q = $("aq").value.trim().replace(/[(),*%]/g, " ").trim(), box = $("ares"); box.innerHTML = ""; if(q.length < 3){ msg("اكتب 3 أحرف أو أرقام على الأقل.", "inf"); return; } msg("");
+    try{ var d = q.replace(/[^0-9]/g, ""), c = ["name.ilike.*" + q + "*"]; if(d.length >= 3) c.push("phone.ilike.*" + d + "*");
+      var rows = await rest("ruqya_bookings?select=id,name,phone,commune,day&or=" + encodeURIComponent("(" + c.join(",") + ")") + "&order=day.desc&limit=60", AD.tok), seen = {}, out = [];
+      rows.forEach(function(r){ var k = String(r.phone || r.name); if(!seen[k]){ seen[k] = 1; out.push(r); } });
+      if(!out.length){ box.innerHTML = '<p class="sub">لا نتائج.</p>'; return; }
+      box.innerHTML = out.slice(0, 20).map(function(r){ return '<button type="button" class="pt" data-id="' + esc(r.id) + '"><span>' + esc(r.name) + '</span><small>' + esc(r.phone || "") + "</small></button>"; }).join("");
+      box._rows = out;
+    }catch(e){ msg(errTxt(e), "err"); } }
+  async function adOpen(id, rows){ var r = (rows || []).filter(function(x){ return String(x.id) === String(id); })[0]; if(!r) return; AD.pat = r;
+    try{ AD.visits = await rest("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(r.id) + "&order=day.desc,slot.desc.nullslast&limit=300", AD.tok); }catch(e){ AD.visits = []; msg(errTxt(e), "err"); }
+    var qv = $("aq").value, res = $("ares").innerHTML; adDraw(); $("aq").value = qv; $("ares").innerHTML = res; $("ares")._rows = rows; $("apat").scrollIntoView({ behavior: "smooth", block: "start" }); }
+  async function adAdd(){
+    var day = $("vd").value; if(!day){ msg("اختر التاريخ.", "err"); return; }
+    var body = { booking_id: AD.pat.id, day: day, slot: $("vt").value || null, progress: $("vp").value, note: $("vn").value.trim().slice(0, 4000), followup: $("vf").value.trim().slice(0, 2000), shared: $("vs").checked };
+    if(!body.note && !body.followup && !body.progress){ msg("اكتب ملاحظة أو متابعة أو اختر تطور الحالة.", "err"); return; }
+    $("vadd").disabled = true;
+    try{ await rest("ruqya_visits", AD.tok, { method: "POST", body: body }); AD.visits = await rest("ruqya_visits?select=*&booking_id=eq." + encodeURIComponent(AD.pat.id) + "&order=day.desc,slot.desc.nullslast&limit=300", AD.tok); var rows = $("ares")._rows, qv = $("aq").value, res = $("ares").innerHTML; adDraw(); $("aq").value = qv; $("ares").innerHTML = res; $("ares")._rows = rows; msg("✅ سُجّلت المتابعة.", "ok"); }catch(e){ msg(errTxt(e), "err"); $("vadd").disabled = false; } }
+  document.addEventListener("click", function(e){ var t = e.target.closest && e.target.closest("#adm button"); if(!t) return;
+    if(t.id === "ago") adSearch(); else if(t.id === "vadd") adAdd(); else if(t.classList.contains("pt")) adOpen(t.getAttribute("data-id"), $("ares")._rows); });
+  document.addEventListener("keydown", function(e){ if(e.target && e.target.id === "aq" && String(e.key || "") === "Enter"){ e.preventDefault(); adSearch(); } });
+  async function adminMode(t){ var ok = false; try{ ok = (await rpc("is_admin", {}, t)) === true; }catch(e){} if(!ok) return false; AD.tok = t; adDraw(); $("adm").classList.remove("hide"); $("sub0").textContent = "وضع المدير: افتح أي ملف وسجّل المتابعة."; return true; }
   async function start(){
     if(!SB || !KEY){ msg("الخدمة غير مهيّأة.", "err"); return; }
     var t = await token(), inv = ""; try{ inv = sessionStorage.getItem(IK) || ""; }catch(e){}
     if(!t){ $("login").classList.remove("hide"); if(inv) $("loginHint").textContent = "سجّل الدخول لربط ملفك برابط التأكيد الذي وصلك"; return; }
     $("so").classList.remove("hide");
+    if(await adminMode(t)) return;
     try{
       if(inv){ try{ await rpc("ruqya_portal_claim", { p_token: inv }, t); msg("✅ تم ربط حسابك بملفك.", "ok"); }catch(e){ msg(errTxt(e), "err"); } try{ sessionStorage.removeItem(IK); }catch(e){} }
       var me = await rpc("ruqya_portal_me", {}, t);
