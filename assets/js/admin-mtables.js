@@ -128,7 +128,7 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
 /* سحب الجداول الأفقية باللمس (v1.89.845): بعض الهواتف لا تمرّر الجدول الأفقي داخل حاويات التمرير الرأسية فيعلق المستخدم.
    نعطّل التمرير الأصلي الأفقي لهذه الجداول (touch-action:pan-y في CSS) ونحوّل حركة الإصبع الأفقية إلى scrollLeft بأنفسنا؛ الرأسي يبقى للمتصفح. */
 (function () {
-  const SEL = ".hs-wrap,table.m-scroll,#ship-table", can = el => el && el.scrollWidth > el.clientWidth + 2;
+  const SEL = ".hs-wrap,.pm-table,table.m-scroll,#ship-table", can = el => el && el.scrollWidth > el.clientWidth + 2;
   let el = null, x0 = 0, y0 = 0, s0 = 0, mode = "", lx = 0, lt = 0, vx = 0, raf = 0;
   const stop = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
   /* زخم بعد رفع الإصبع (سلاسة كالتمرير الأصلي): السرعة تتناقص بنسبة ثابتة لكل 16ms */
@@ -159,7 +159,7 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
 
 /* أزرار أسهم ◀ ▶ فوق كل جدول أفقي على الهاتف (v1.89.849): تمرير بالنقر إن تعذّر السحب على جهاز المستخدم */
 (function () {
-  const MQ = window.matchMedia("(max-width:700px)"), SEL = ".hs-wrap,table.m-scroll,#ship-table", M = new WeakMap();
+  const MQ = window.matchMedia("(max-width:700px)"), SEL = ".hs-wrap,.pm-table,table.m-scroll,#ship-table", M = new WeakMap();
   function nav() {
     if (!MQ.matches) { document.querySelectorAll(".hs-nav").forEach(n => n.remove()); return; }
     document.querySelectorAll(SEL).forEach(t => {
