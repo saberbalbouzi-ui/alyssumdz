@@ -937,7 +937,8 @@ function initProduct(slug){
   function buildOffers(){
     offersBox.innerHTML = ""; // تفريغ أي بطاقات عروض ثابتة مضمّنة في HTML (تفادي التكرار)
     const sc = (type==="variable" && state.variation && Number(p.price)>0) ? state.variation.price / p.price : 1;
-    const wantImg = (()=>{ try{ const m = location.search.match(/[?&]oc=([^&]+)/); return !!m && JSON.parse(decodeURIComponent(m[1])).ol === "i"; }catch(e){ return false; } })();      /* «بطاقات بالصور»: صورة المنتج في كل بطاقة عرض */
+    let ocI = null; try{ const m = location.search.match(/[?&]oc=([^&]+)/); ocI = m ? JSON.parse(decodeURIComponent(m[1])) : null; }catch(e){}
+    const wantImg = !!ocI && ocI.ol === "i";      /* «بطاقات بالصور»: صورة المنتج في كل بطاقة عرض */
     (p.offers || []).forEach((o0,i)=>{
       const o = sc===1 ? o0 : Object.assign({}, o0, { price: Math.round(o0.price*sc) });
       const paid = o.qty - (o.free||0);
@@ -946,8 +947,8 @@ function initProduct(slug){
       const d = document.createElement("div");
       d.className = "offer"+(i===offerIdx?" on":"");
       const label = o.free ? "قطعتان + الثالثة 🎁" : (o.qty===1?"قطعة واحدة":o.qty===2?"قطعتان":o.qty+" قطع");
-      const oimg = wantImg ? (o.img||p.cover||(p.images&&p.images[0])||"") : "";
-      d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}${oimg?`<img class="oi" src="${REL}${oimg}" alt="" loading="lazy" decoding="async">`:""}
+      const oimg = wantImg ? ((ocI.oi && ocI.oi[i]) || o.img || p.cover || (p.images&&p.images[0]) || "") : "";
+      d.innerHTML = `${i===bestIdx?'<span class="best">الأكثر طلباً 🔥</span>':""}${oimg?`<img class="oi" src="${/^(https?:|data:|\/)/.test(oimg)?"":REL}${oimg}" alt="" loading="lazy" decoding="async">`:""}
         <div class="q">${label}</div>
         <div class="p">${fmt(o.price)}</div>
         <div class="u">${fmt(unit)} للقطعة ${disc>0?`· وفر ${disc}%`:""}${o.free?'<br><b style="color:var(--ok)">مجاناً داخل العرض</b>':""}${offerFreeShip(p,o)?'<br><b style="color:var(--ok)">🚚 شحن مجاني</b>':""}</div>`;
