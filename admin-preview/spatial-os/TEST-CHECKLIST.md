@@ -2,7 +2,7 @@
 
 **آلي:** `python3 -m http.server 8765` من جذر المشروع ثم
 `NODE_PATH=/opt/node-tools/node_modules node admin-preview/spatial-os/test/run.js [desktop|mobile]`
-(102 فحص؛ آخر تشغيل: كلها نجحت، مرتين متتاليتين). الوسم بين [ ] هو **طريقة** الاختبار: `mouse`/`keyboard` فأرة ولوحة مفاتيح حقيقيتان، `cdp-touch` لمس حقيقي عبر بروتوكول المتصفح، `synthetic` أحداث Pointer مُنشأة برمجياً (لا تثبت سلوك إصبع حقيقي)، `api` قراءة حالة التطبيق.
+(144 فحصاً؛ آخر تشغيل: كلها نجحت، مرتين متتاليتين). الوسم بين [ ] هو **طريقة** الاختبار: `mouse`/`keyboard` فأرة ولوحة مفاتيح حقيقيتان، `cdp-touch` لمس حقيقي عبر بروتوكول المتصفح، `synthetic` أحداث Pointer مُنشأة برمجياً (لا تثبت سلوك إصبع حقيقي)، `api` قراءة حالة التطبيق.
 **تسجيل:** `node admin-preview/spatial-os/test/record.js <مجلد>` ← `desktop.webm` و`mobile.webm` بعنوان لكل تفاعل.
 
 | # | التفاعل | الطريقة | آلي | يدوي (على جهازك) |
@@ -50,3 +50,18 @@
 | إعادة الفتح من الشريط بعد الرمي، وعدم تمرير/تكبير الصفحة | cdp-touch | J |
 
 لم يعد يُستعمل أي حدث مصطنع في المرحلة 3. **التسجيلات الثمانية** (`test/record.js`): dragging، rotation، pinch-resize، throw-dismiss، restore، multiple-panels، cylinder، mobile-touch.
+
+## مرحلة 4 (القسمان K و M في run.js؛ كل اختبار مستقل ويفتح لوحه بنفسه؛ إدخال حقيقي)
+| الميزة | الفحص | الطريقة |
+|---|---|---|
+| سُمك الزجاج | حواف مرئية عند الإمالة؛ s3 أصغر من الواجهة؛ 10 مستويات؛ هيكل غير مسطَّح؛ يبقى ثلاثي الأبعاد في المدار | mouse + api |
+| X/Y/Z | سحب XY؛ مقبض ⇕ (Z) مع شارة؛ المنظور يكبّر القريب؛ حد −260؛ Alt+سحب؛ داخل الشاشة | mouse |
+| الميل والقصور | banking أثناء السحب ثم يزول؛ قصور دوراني ثم استقرار ≤24° | mouse |
+| الرمي | يتسارع، يصغر، يبهت، يُزال | mouse (عينات زمنية) |
+| تدوير القاعة | Shift+سحب، مصفوفة الكاميرا، الألواح تتبع، شريحة التصفير، `[` `]` `0` | mouse + keyboard |
+| الترتيب الذكي | يصغر المقياس مع 6 ألواح؛ زوايا متساوية؛ المُركَّز مضيء؛ خلفية ظاهرة | api |
+| الحالات | مسار opening→focused→expanded→focused→floating→minimized→focused→dismissing + سجلّ | mouse |
+| القراءة | أقصى إمالة: المحتوى كامل والعرض ≥70% | api |
+| لمس حقيقي (CDP) | مقبض ⇕ باللمس؛ التواء بإصبعين على الخلفية يدوّر القاعة؛ الصفحة لا تتكبّر | cdp-touch |
+
+**تسجيلات المرحلة 4** (`test/record4.js`): glass-thickness، xyz-drag، inertia-banking، throw-dismiss، touch-pinch-twist، workspace-rotation، arrangement، states.
