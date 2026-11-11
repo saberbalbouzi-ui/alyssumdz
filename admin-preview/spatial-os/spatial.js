@@ -9,19 +9,42 @@
   /* ───── الاسطوانة ───── */
   const cols = ["#2be4ff", "#dcff1f", "#a58bff", "#2be4ff"];
   function slats(host, n, bars) { for (let i = 0; i < n; i++) { const s = document.createElement("div"); s.className = "slat"; s.style.setProperty("--i", i); s.style.setProperty("--R", "152px"); for (let k = 0; k < bars; k++) { const b = document.createElement("i"); b.style.top = (14 + ((i * 37 + k * 71) % 300)) + "px"; b.style.width = (8 + ((i * 13 + k * 29) % 26)) + "px"; b.style.setProperty("--c", cols[(i + k) % cols.length]); b.style.setProperty("--d", ((i * .21 + k * .37) % 3).toFixed(2) + "s"); s.appendChild(b); } host.appendChild(s); } }
-  slats(cyl, 24, isMob() ? 3 : 6); slats(cylIn, 16, 2);
+  slats(cyl, 16, isMob() ? 3 : 6); slats(cylIn, 10, 2);
   [[-150, 152, "#2be4ff"], [-60, 160, "#dcff1f"], [20, 154, "#2be4ff"], [100, 160, "#a58bff"], [160, 152, "#dcff1f"]].forEach(([y, r, c]) => { const e = document.createElement("div"); e.className = "ring"; e.style.setProperty("--y", y + "px"); e.style.setProperty("--r", r + "px"); e.style.setProperty("--c", c); cyl.appendChild(e); });
 
   /* ───── القاعة: شاشات جدارية + لوحيّات أرضية + أيقونات عائمة داخل الاسطوانة ───── */
   const room = $("#room"), kinds = ["a", "b", "c", "d"];
   function wall(cls, n) { const w = document.createElement("div"); w.className = "wall " + cls; for (let i = 0; i < n; i++) { const s = document.createElement("i"); s.className = "scr " + kinds[(i * 3 + n) % 4]; s.style.setProperty("--d", (i * .7 % 6) + "s"); w.appendChild(s); } room.appendChild(w); }
-  wall("b", 12);
-  /* بطاقات جانبية حقيقية شفافة: معاينة حيّة لمحتوى الأقسام الفعلي (من البيانات نفسها)، والنقر يفتح اللوح الكامل */
-  const WL = ["dash", "ana", "ord", "prod", "inv", "cus"], WR = ["store", "mkt", "ana2", "look", "ext", "set"];
-  function sidewall(cls, ids) { const w = document.createElement("div"); w.className = "wall " + cls; ids.forEach(id => { const real = id.replace(/\d+$/, ""), sec = SEC.find(s => s.id === real), d = document.createElement("div"); d.className = "wcard"; d.dataset.id = real; d.dataset.card = id; d.innerHTML = '<div class="wh">' + svg(sec.icon) + "<b>" + sec.name + '</b></div><div class="wbw"><div class="wb"></div></div>'; d.addEventListener("click", () => openSection(real)); w.appendChild(d); }); room.appendChild(w); }
-  sidewall("l", WL); sidewall("r", WR);
-  const tabSpec = [["الإيراد", () => dz(revenue()) + " دج"], ["بانتظار التأكيد", () => pend()], ["التحويل", () => "2.9%"], ["الزيارات", () => "1 085"], ["مخزون منخفض", () => D.stock.filter(s => s.q < 10).length], ["متوسط الطلب", () => "2 750"], ["الطلبات", () => D.orders.length]];
-  [[-520, 330, -18], [-330, 380, 12], [450, 340, 20], [300, 400, -10], [-60, 430, 4], [600, 160, 40], [-640, 150, -35]].forEach(([x, z, r], i) => { const d = document.createElement("i"); d.className = "tab"; d.style.setProperty("--x", x + "px"); d.style.setProperty("--z", z + "px"); d.style.setProperty("--r", r + "deg"); d.dataset.k = i; room.appendChild(d); });
+  /* قاعة كاملة بحسب صورة المرجع: جدار خلفي بنيوي + مجموعتا شاشات خلفيتان + جداران جانبيان (كلها بطاقات حيّة شفافة) + أعمدة وعوارض إضاءة */
+  /* الأرضية كلها لوحة Canvas واحدة تُرسم مرة واحدة: بلاط + أشعة + حلقات + منصة + خطوط ضوء + توهّج (أقل بكثير من عشرات الطبقات) */
+  (function drawFloor() {
+    const cv = document.getElementById("floorcv"), g = cv.getContext("2d"), N = 2048, k = N / 2400, C = N / 2; g.clearRect(0, 0, N, N); g.save(); g.translate(C, C); g.scale(k, k);
+    const rg = (r0, r1, stops) => { const gr = g.createRadialGradient(0, 0, r0, 0, 0, r1); stops.forEach(([o, c]) => gr.addColorStop(o, c)); return gr; };
+    g.fillStyle = rg(0, 1200, [[0, "rgba(34,120,150,.8)"], [.14, "rgba(14,58,78,.82)"], [.34, "rgba(8,32,46,.9)"], [.6, "rgba(4,17,26,.95)"], [1, "rgba(3,13,21,1)"]]); g.fillRect(-1200, -1200, 2400, 2400);
+    g.lineWidth = 2; g.strokeStyle = "rgba(43,228,255,.32)"; g.beginPath(); for (let v = -1200; v <= 1200; v += 150) { g.moveTo(v, -1200); g.lineTo(v, 1200); g.moveTo(-1200, v); g.lineTo(1200, v); } g.stroke();
+    g.lineWidth = 1; g.strokeStyle = "rgba(43,228,255,.09)"; g.beginPath(); for (let v = -1200; v <= 1200; v += 37.5) { g.moveTo(v, -1200); g.lineTo(v, 1200); g.moveTo(-1200, v); g.lineTo(1200, v); } g.stroke();
+    g.fillStyle = rg(0, 760, [[0, "rgba(43,228,255,.5)"], [.3, "rgba(43,228,255,.22)"], [.55, "rgba(120,255,160,.08)"], [1, "rgba(43,228,255,0)"]]); g.fillRect(-800, -800, 1600, 1600);
+    for (let a = 0; a < 360; a += 7.5) { const r = a * Math.PI / 180, lime = a % 30 === 0; g.strokeStyle = lime ? "rgba(220,255,31,.28)" : "rgba(43,228,255,.2)"; g.lineWidth = lime ? 1.6 : 1; g.beginPath(); g.moveTo(Math.cos(r) * 380, Math.sin(r) * 380); g.lineTo(Math.cos(r) * 950, Math.sin(r) * 950); g.stroke(); }
+    const ring = (r, w, col, dash, glow) => { g.save(); g.lineWidth = w; g.strokeStyle = col; g.setLineDash(dash || []); if (glow) { g.shadowColor = glow; g.shadowBlur = 24; } g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.stroke(); g.restore(); };
+    ring(1700 / 2, 12, "rgba(165,139,255,.32)", [26, 18]); ring(700, 3, "rgba(43,228,255,.6)", [], "#2be4ff"); ring(590, 26, "rgba(43,228,255,.38)", [4, 16]); ring(500, 2, "rgba(220,255,31,.75)", [], "#dcff1f"); ring(430, 16, "rgba(43,228,255,.5)", [22, 14], "#2be4ff");
+    ring(310, 1.5, "rgba(220,255,31,.4)", [6, 8]);
+    /* المنصة */
+    g.fillStyle = rg(0, 350, [[0, "#0b3346"], [.4, "#082635"], [.78, "#04141d"], [1, "#020b11"]]); g.beginPath(); g.arc(0, 0, 350, 0, 6.2832); g.fill();
+    g.lineWidth = 1.2; g.strokeStyle = "rgba(43,228,255,.2)"; for (let r = 24; r < 350; r += 24) { g.beginPath(); g.arc(0, 0, r, 0, 6.2832); g.stroke(); }
+    ring(350, 4, "rgba(110,240,255,.95)", [], "#2be4ff"); ring(358, 2, "rgba(220,255,31,.6)", [], "#dcff1f"); ring(366, 2, "rgba(43,228,255,.5)"); ring(374, 2, "rgba(43,228,255,.35)");
+    g.fillStyle = rg(0, 210, [[0, "rgba(220,255,31,.55)"], [.38, "rgba(43,228,255,.35)"], [1, "rgba(43,228,255,0)"]]); g.beginPath(); g.arc(0, 0, 210, 0, 6.2832); g.fill();
+    /* خطوط ضوء أرضية تتقارب نحو المنصة */
+    [[-430, 1], [430, 1], [-780, .6], [780, .6], [-150, .55], [150, .55]].forEach(([x, o]) => { const gr = g.createLinearGradient(0, -750, 0, 750); gr.addColorStop(0, "rgba(120,240,255,0)"); gr.addColorStop(.42, `rgba(120,240,255,${.7 * o})`); gr.addColorStop(.5, `rgba(235,255,255,${.9 * o})`); gr.addColorStop(.58, `rgba(120,240,255,${.7 * o})`); gr.addColorStop(1, "rgba(120,240,255,0)"); g.fillStyle = gr; g.shadowColor = "#2be4ff"; g.shadowBlur = 18; g.fillRect(x - 3.5, -750, 7, 1500); g.shadowBlur = 0; });
+    g.restore(); g.globalCompositeOperation = "destination-out"; g.fillStyle = (() => { const gr = g.createRadialGradient(C, C, C * .62, C, C, C); gr.addColorStop(0, "rgba(0,0,0,0)"); gr.addColorStop(1, "rgba(0,0,0,1)"); return gr; })(); g.fillRect(0, 0, N, N); g.globalCompositeOperation = "source-over";
+  })();
+  const hall = document.createElement("div"); hall.className = "hall"; room.appendChild(hall);
+  [[-880, -50, -380], [880, -50, -380], [-100, -120, -1100], [100, -120, -1100]].forEach(([x, y, z]) => { const p = document.createElement("i"); p.className = "pillar"; p.style.transform = `translate3d(${x}px,${y}px,${z}px)`; room.appendChild(p); });
+  [[0, -345, -840, 1500, 0], [-640, -330, -330, 600, 50], [640, -330, -330, 600, -50]].forEach(([x, y, z, w, ry]) => { const s = document.createElement("i"); s.className = "strip"; s.style.width = w + "px"; s.style.marginLeft = (-w / 2) + "px"; s.style.transform = `translate3d(${x}px,${y}px,${z}px) rotateY(${ry}deg)`; room.appendChild(s); });
+  const WL = ["dash", "ana", "ord", "prod", "inv", "cus", "mkt", "store", "ana2", "ord2", "look", "ext"], WR = ["store2", "mkt2", "ana3", "look2", "ext2", "set", "dash2", "inv2", "cus2", "prod2", "ord3", "set2"], BL = ["ana4", "dash3", "ord4", "inv3", "prod3", "mkt3", "cus3", "store3", "ext3"], BR = ["dash4", "ana5", "ord5", "prod4", "inv4", "set3", "look3", "mkt4", "cus4"];
+  function sidewall(cls, ids) { const w = document.createElement("div"); w.className = "wall " + cls; ids.forEach(id => { const real = id.replace(/\d+$/, ""), sec = SEC.find(s => s.id === real), d = document.createElement("div"); d.className = "wcard"; d.dataset.id = real; d.dataset.card = id; d.innerHTML = '<div class="wh">' + svg(sec.icon) + "<b>" + sec.name + '</b></div><div class="wbw"><div class="wb"></div></div>'; d.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(real); }); w.appendChild(d); }); room.appendChild(w); }
+  sidewall("l", WL.slice(0, 9)); sidewall("r", WR.slice(0, 9)); sidewall("bl", BL); sidewall("br", BR);
+  const tabSpec = [["الإيراد", () => dz(revenue()) + " دج"], ["بانتظار التأكيد", () => pend()], ["التحويل", () => "2.9%"], ["الزيارات", () => "1 085"], ["مخزون منخفض", () => D.stock.filter(s => s.q < 10).length], ["متوسط الطلب", () => "2 750"], ["الطلبات", () => D.orders.length], ["مؤكَّدة", () => D.orders.filter(o => o.s === "ok").length], ["في الطريق", () => D.orders.filter(o => o.s === "ship").length], ["مسلَّمة", () => D.orders.filter(o => o.s === "done").length], ["الأصناف", () => D.stock.length]];
+  [[-520, 330, -18], [-330, 380, 12], [450, 340, 20], [300, 400, -10], [-60, 430, 4], [600, 160, 40], [-640, 150, -35], [-720, 300, 22], [700, 300, -24], [130, 470, -8], [-190, 470, 10]].forEach(([x, z, r], i) => { const d = document.createElement("i"); d.className = "tab"; d.style.setProperty("--x", x + "px"); d.style.setProperty("--z", z + "px"); d.style.setProperty("--r", r + "deg"); d.dataset.k = i; room.appendChild(d); });
   function fillWalls() {
     room.querySelectorAll(".wcard").forEach(d => { const sec = SEC.find(s => s.id === d.dataset.id), st = sec.st ? JSON.parse(JSON.stringify(sec.st)) : {}; if (d.dataset.card === "ana2") D.__w = 1; d.querySelector(".wb").innerHTML = sec.html({ st, big: false }); });
     room.querySelectorAll(".tab").forEach(d => { const s = tabSpec[+d.dataset.k]; d.innerHTML = "<small>" + s[0] + "</small><b>" + s[1]() + "</b>"; });
@@ -33,7 +56,7 @@
   const secs = SEC.filter(s => !s.hidden), nodes = new Map(), RO = 310;
   secs.forEach((s, i) => {
     const b = document.createElement("button"); b.type = "button"; b.className = "node"; b.dataset.id = s.id; b.setAttribute("aria-label", "فتح " + s.name); b.innerHTML = svg(s.icon) + "<span>" + s.name + "</span>";
-    b.addEventListener("click", () => openSection(s.id)); b.addEventListener("focus", () => select(s.id)); orbit.appendChild(b); nodes.set(s.id, b);
+    b.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(s.id); }); b.addEventListener("focus", () => select(s.id)); orbit.appendChild(b); nodes.set(s.id, b);
     const d = document.createElement("button"); d.type = "button"; d.dataset.id = s.id; d.innerHTML = svg(s.icon) + "<span>" + s.name + "</span>"; d.addEventListener("click", () => openSection(s.id)); dock.appendChild(d);
   });
   let ang = 20, va = 0, drag = null, lastInput = 0, tw = null;
@@ -46,6 +69,7 @@
     if (tw) { ang += (tw.to - ang) * ek; if (Math.abs(tw.to - ang) < .15) { ang = tw.to; tw = null; } } else if (!drag) { const f = rdt / 16.7; ang += va * f; va *= Math.pow(.94, f); if (!RM && Math.abs(va) < .02 && t - lastInput > 2500) ang += rdt * .004; }
     const dA = ang - pprev; pprev = ang;
     if (orbitMode) { if (pt) { pa += (pt.to - pa) * ek; if (Math.abs(pt.to - pa) < .15) { pa = pt.to; pt = null; } } else if (!layer.querySelector(".panel:hover") && !draggingPanel) pa += dA + (RM ? 0 : rdt * .006); orbitFrame(t, ek); }
+    if (((frame.n = (frame.n || 0) + 1) & 1) === 0) open.forEach(p => { if (p.origin && !p.min && t - p.born < 900) { const r = p.el.getBoundingClientRect(); FX.stream(p.origin.x, p.origin.y, r.left + r.width / 2, r.top + r.height / 2, 3); } });
     const a = ang % 360; cyl.style.transform = `rotateY(${a}deg)`; cylIn.style.transform = `rotateY(${-a * 1.6}deg)`;
     gl.forEach((g, i) => { const th = (-a * 1.3 + i * 360 / gl.length) * Math.PI / 180, y = -110 + (i % 4) * 62 + Math.sin(t / 900 + i) * 6; g.style.transform = `translate3d(${(Math.sin(th) * 92).toFixed(1)}px,${y.toFixed(1)}px,${(Math.cos(th) * 92).toFixed(1)}px)`; });
     secs.forEach((s, i) => {
@@ -69,7 +93,7 @@
   stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
   /* تحديد قسم: تظليل العقدة + تدوير سلس لتقديمها نحو المستخدم */
   let sel = null;
-  function select(id, rotate) { sel = id; nodes.forEach((n, k) => { n.classList.toggle("sel", k === id); n.setAttribute("aria-current", k === id ? "true" : "false"); }); dock.querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.id === id)); if (rotate !== false && nodes.has(id)) spinTo(id); }
+  function select(id, rotate) { sel = id; { const a = document.getElementById("active"), sc = SEC.find(s => s.id === id); if (a && sc) { a.textContent = sc.name; a.classList.add("on"); } } nodes.forEach((n, k) => { n.classList.toggle("sel", k === id); n.setAttribute("aria-current", k === id ? "true" : "false"); }); dock.querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.id === id)); if (rotate !== false && nodes.has(id)) spinTo(id); }
   const step = d => { const i = secs.findIndex(s => s.id === sel), j = i < 0 ? 0 : (i + d + secs.length) % secs.length; select(secs[j].id); };
   document.addEventListener("keydown", e => { const k = String(e.key || ""), tg = e.target || {}, inPanel = tg.closest && tg.closest(".panel");
     if (/INPUT|TEXTAREA/.test(tg.tagName || "")) { if (k === "Escape") tg.blur(); return; }
@@ -83,7 +107,7 @@
   function remember(p) { memo[p.id] = { content: JSON.parse(JSON.stringify(p.content || {})), size: { w: p.big && p.prev ? p.prev.w : p.st.w, h: p.big && p.prev ? p.prev.h : p.st.h } }; }
   const fz = p => 1 - 0; /* موضع للتوسّع المستقبلي */
   function persp(tz) { return PERSP / (PERSP - tz); }
-  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${s.rx.toFixed(1)}deg) rotateY(${s.ry.toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
+  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${s.rx.toFixed(1)}deg) rotateY(${s.ry.toFixed(1)}deg) rotateZ(${(s.rz || 0).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
   /* تخطيط تلقائي: أماكن لكل عدد من الألواح (كسور من أبعاد الشاشة)؛ [x, y, مقياس, ry, rx, z] */
   const LAY = {
     1: [[.275, -.02, 1, -15, 0, 0]],
@@ -133,19 +157,19 @@
   function nodePos(id) { const n = id === "ai" ? core : nodes.get(id); if (!n) return { x: 0, y: 0 }; const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2 - W() / 2, y: r.top + r.height / 2 - H() / 2 }; }
   function render(p, keep) { const b = p.body, top = b.scrollTop; b.innerHTML = p.sec.html(p); if (keep !== false) b.scrollTop = top; }
   const refreshAll = () => { open.forEach(p => { if (!p.min) render(p); }); fillWalls(); };
-  function markNodes() { nodes.forEach((n, id) => { const p = open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); dock.querySelectorAll("button").forEach(b => { const p = open.get(b.dataset.id); b.classList.toggle("open", !!p && !p.min); }); }
+  function markNodes() { document.body.classList.toggle("many", open.size > 3); nodes.forEach((n, id) => { const p = open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); dock.querySelectorAll("button").forEach(b => { const p = open.get(b.dataset.id); b.classList.toggle("open", !!p && !p.min); }); }
   function pulse(id) { const n = nodes.get(id); if (n) { n.classList.remove("hot"); void n.offsetWidth; n.classList.add("hot"); } core.classList.remove("pulse"); void core.offsetWidth; core.classList.add("pulse"); }
 
   function openSection(id) {
     const sec = SEC.find(s => s.id === id); if (!sec) return;
     const ex = open.get(id), from = nodePos(id); select(id);
-    if (ex) { if (ex.min) { ex.min = false; ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
+    if (ex) { if (ex.min) { ex.min = false; ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } faceFront(ex); focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
     const sz = sizeFor(sec); if (memo[id] && memo[id].size) { sz.w = Math.min(memo[id].size.w, W() - 24); sz.h = Math.min(memo[id].size.h, H() - 80); }
     const sl = { x: 0, y: 0, z: 0, rx: 0, ry: 0 }, el = document.createElement("section"); el.className = "panel"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", sec.name); el.tabIndex = -1;
-    el.innerHTML = '<i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><i class="pn-rs" aria-hidden="true"></i>';
+    el.innerHTML = '<i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><div class="gbadge" aria-hidden="true"></div><i class="pn-rs" aria-hidden="true"></i>';
     el.querySelector("h3").textContent = sec.name;
     const content = memo[id] && sec.st ? JSON.parse(JSON.stringify(memo[id].content)) : sec.st ? JSON.parse(JSON.stringify(sec.st)) : {}, p = { id, content, sec: Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }), el, body: el.querySelector(".pn-b"), min: false, big: false, keep: null, st: { x: sl.x, y: sl.y, z: sl.z, rx: sl.rx, ry: sl.ry, s: 1, w: sz.w, h: sz.h } };
-    p.born = performance.now(); layer.appendChild(el); open.set(id, p); wire(p); arrange(p); if (sec.bind) sec.bind(p.body, { st: content }, all => all ? refreshAll() : render(p)); render(p, false);
+    p.born = performance.now(); p.origin = { x: from.x + W() / 2, y: from.y + H() / 2 }; layer.appendChild(el); open.set(id, p); wire(p); arrange(p); if (sec.bind) sec.bind(p.body, { st: content }, all => all ? refreshAll() : render(p)); render(p, false);
     p.keep = Object.assign({}, p.st);
     Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1, rx: 0, ry: 0 }); apply(p); el.style.opacity = 0; el.classList.add("tr"); void el.offsetWidth;
     Object.assign(p.st, p.keep); focus(id); apply(p); el.style.opacity = 1; if (RM) { el.classList.remove("tr"); }
@@ -153,6 +177,23 @@
   }
   function setPos(p, s, from) { if (from) { Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1 }); apply(p); p.el.style.opacity = 0; void p.el.offsetWidth; } Object.assign(p.st, s); apply(p); p.el.style.opacity = 1; }
   function focus(id) { focused = id; open.forEach(p => { p.el.classList.toggle("focus", p.id === id); if (p.id === id) { p.el.style.zIndex = ++zc; } apply(p); }); }
+  /* ───── مرحلة 3: قصور ذاتي، تثبيت التدوير، تغذية بصرية، عمق، مفاتيح ───── */
+  let lastPanelDrag = 0;
+  const badge = (p, txt) => { const b = p.el.querySelector(".gbadge"); if (b) { b.textContent = txt || ""; b.classList.toggle("on", !!txt); } };
+  function cancelGlide(p) { if (p.glide) { cancelAnimationFrame(p.glide); p.glide = 0; } }
+  /* انزلاق بعد الإفلات بقصور ذاتي واحتكاك (يرتدّ برفق عن حدود مساحة العمل) ثم تثبيت على المدار أو إزاحة لتفادي التراكب */
+  function glide(p, vx, vy) {
+    cancelGlide(p); let last = performance.now(); p.el.classList.add("gliding");
+    const step = t => { const dt = Math.min(100, t - last); last = t; const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += vx * dt / f; p.st.y += vy * dt / f; const k = Math.exp(-dt / 240); vx *= k; vy *= k;
+      const mx = W() / 2 - p.st.w * p.st.s / 3, my = H() / 2 - p.st.h * p.st.s / 3; if (Math.abs(p.st.x) > mx) { p.st.x = clamp(p.st.x, -mx, mx); vx *= -.35; } if (Math.abs(p.st.y) > my) { p.st.y = clamp(p.st.y, -my, my); vy *= -.35; } apply(p);
+      if (Math.hypot(vx, vy) > .02) p.glide = requestAnimationFrame(step); else { p.glide = 0; p.el.classList.remove("gliding"); if (!snapOrbit(p)) resolve(p); } };
+    p.glide = requestAnimationFrame(step);
+  }
+  /* بعد تدوير اللوح: يرجع تلقائياً إلى زاوية مقروءة (≤24° أفقياً و≤18° رأسياً) */
+  function settleRot(p) { badge(p, ""); if (Math.abs(p.st.ry) > 24 || Math.abs(p.st.rx) > 18) { p.st.ry = clamp(p.st.ry, -24, 24); p.st.rx = clamp(p.st.rx, -18, 18); p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); } }
+  function settleRz(p) { if (p.st.rz) { p.el.classList.add("tr2"); p.st.rz = 0; apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); } }
+  /* تقديم لوح المدار المحدَّد نحو المستخدم */
+  function faceFront(p) { if (!orbitMode || p.user || p.big || p.off == null) return; let to = -p.off; to += Math.round((pa - to) / 360) * 360; pt = { to }; }
   function wire(p) {
     const el = p.el, h = el.querySelector(".pn-h"), rot = el.querySelector(".pn-rot"), rs = el.querySelector(".pn-rs");
     el.addEventListener("pointerdown", () => { if (focused !== p.id) focus(p.id); });
@@ -162,22 +203,30 @@
     h.addEventListener("pointerdown", e => {
       if (e.target.closest(".pn-min,.pn-max,.pn-x,.pn-orb")) return; e.preventDefault(); const mode = e.target.closest(".pn-rot") || e.shiftKey ? "rot" : "move", now = performance.now();
       if (mode === "move" && now - tap < 520 && Math.abs(e.clientX - tapX) < 30) { tap = 0; toggleBig(p); return; } tap = now; tapX = e.clientX;
-      el.classList.remove("tr", "tr2"); const g = { mode, id: e.pointerId, x: e.clientX, y: e.clientY, s: [] }; h._g = g; try { h.setPointerCapture(e.pointerId); } catch (_) { }
+      cancelGlide(p); el.classList.remove("tr", "tr2", "gliding"); el.classList.add("dragging"); const g = { mode, id: e.pointerId, x: e.clientX, y: e.clientY, s: [] }; h._g = g; try { h.setPointerCapture(e.pointerId); } catch (_) { }
     });
     h.addEventListener("pointermove", e => { const g = h._g; if (!g || g.id !== e.pointerId) return; const dx = e.clientX - g.x, dy = e.clientY - g.y; g.x = e.clientX; g.y = e.clientY; const t = performance.now(); let co = []; try { co = e.getCoalescedEvents ? e.getCoalescedEvents() : []; } catch (_) { } if (co.length > 1) co.forEach(c => g.s.push([c.timeStamp || t, c.clientX, c.clientY])); else g.s.push([t, e.clientX, e.clientY]); while (g.s.length > 2 && t - g.s[0][0] > 170) g.s.shift();
-      userize(p); draggingPanel = true; if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; } else { p.st.ry = clamp(p.st.ry + dx * .35, -38, 38); p.st.rx = clamp(p.st.rx - dy * .3, -30, 30); } apply(p); });
-    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; if (g.mode !== "move") return; g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
+      userize(p); draggingPanel = true; if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; } else { p.st.ry = clamp(p.st.ry + dx * .35 * (1 - Math.abs(p.st.ry) / 75), -34, 34); p.st.rx = clamp(p.st.rx - dy * .3 * (1 - Math.abs(p.st.rx) / 65), -26, 26); badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); } apply(p); });
+    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; el.classList.remove("dragging"); lastPanelDrag = performance.now(); if (g.mode !== "move") { settleRot(p); return; } g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
     h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
     /* تحجيم بمقبض الزاوية */
-    rs.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); el.classList.remove("tr", "tr2"); rs._g = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { rs.setPointerCapture(e.pointerId); } catch (_) { } focus(p.id); });
-    rs.addEventListener("pointermove", e => { const g = rs._g; if (!g || g.id !== e.pointerId) return; const f = persp(p.st.z) * p.st.s, dx = (e.clientX - g.x) / f, dy = (e.clientY - g.y) / f; g.x = e.clientX; g.y = e.clientY; const nw = clamp(p.st.w - dx, 300, Math.min(920, W() - 16)), nh = clamp(p.st.h + dy, 240, Math.min(720, H() - 60)), dw = nw - p.st.w, dh = nh - p.st.h; userize(p); p.st.w = nw; p.st.h = nh; p.st.x -= dw * p.st.s / 2; p.st.y += dh * p.st.s / 2; apply(p); });
-    const rsUp = e => { if (rs._g) { rs._g = null; resolve(p); } }; rs.addEventListener("pointerup", rsUp); rs.addEventListener("pointercancel", rsUp);
+    rs.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("dragging"); rs._g = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { rs.setPointerCapture(e.pointerId); } catch (_) { } focus(p.id); });
+    rs.addEventListener("pointermove", e => { const g = rs._g; if (!g || g.id !== e.pointerId) return; const f = persp(p.st.z) * p.st.s, dx = (e.clientX - g.x) / f, dy = (e.clientY - g.y) / f; g.x = e.clientX; g.y = e.clientY; const nw = clamp(p.st.w - dx, 300, Math.min(920, W() - 16)), nh = clamp(p.st.h + dy, 240, Math.min(720, H() - 60)), dw = nw - p.st.w, dh = nh - p.st.h; userize(p); p.st.w = nw; p.st.h = nh; p.st.x -= dw * p.st.s / 2; p.st.y += dh * p.st.s / 2; badge(p, Math.round(nw) + "×" + Math.round(nh)); apply(p); });
+    const rsUp = e => { if (rs._g) { rs._g = null; el.classList.remove("dragging"); badge(p, ""); lastPanelDrag = performance.now(); resolve(p); } }; rs.addEventListener("pointerup", rsUp); rs.addEventListener("pointercancel", rsUp);
     /* عجلة الفأرة: تكبير اللوح (إلا إن كان المحتوى قابلاً للتمرير) */
-    el.addEventListener("wheel", e => { const b = e.target.closest(".pn-b"); if (b && !e.ctrlKey && b.scrollHeight > b.clientHeight + 2) return; e.preventDefault(); userize(p); p.st.s = clamp(p.st.s * (e.deltaY < 0 ? 1.06 : .943), .5, 1.9); apply(p); }, { passive: false });
-    /* قرص بإصبعين */
-    let pd = 0, ps = 1; el.addEventListener("touchstart", e => { if (e.touches.length === 2) { pd = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); ps = p.st.s; el.classList.remove("tr", "tr2"); } }, { passive: true });
-    el.addEventListener("touchmove", e => { if (e.touches.length === 2 && pd) { e.preventDefault(); const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); userize(p); p.st.s = clamp(ps * d / pd, .5, 1.9); apply(p); } }, { passive: false });
-    el.addEventListener("touchend", e => { if (e.touches.length < 2 && pd) { pd = 0; resolve(p); } }, { passive: true });
+    el.addEventListener("wheel", e => { if (e.shiftKey) { e.preventDefault(); userize(p); const d = e.deltaY || e.deltaX; p.st.z = clamp(p.st.z + (d < 0 ? 34 : -34), -240, 260); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); return; } const b = e.target.closest(".pn-b"); if (b && !e.ctrlKey && b.scrollHeight > b.clientHeight + 2) return; e.preventDefault(); userize(p); p.st.s = clamp(p.st.s * (e.deltaY < 0 ? 1.06 : .943), .5, 1.9); apply(p); }, { passive: false });
+    /* قرص + التواء بإصبعين مع تغذية بصرية (يعود الالتواء تلقائياً لتبقى القراءة سهلة) */
+    let pd = 0, ps = 1, a0 = 0, rz0 = 0; const ang2 = ts => Math.atan2(ts[1].clientY - ts[0].clientY, ts[1].clientX - ts[0].clientX) * 180 / Math.PI, dist2 = ts => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
+    el.addEventListener("touchstart", e => { if (e.touches.length === 2) { pd = dist2(e.touches); ps = p.st.s; a0 = ang2(e.touches); rz0 = p.st.rz || 0; cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("gest"); } }, { passive: true });
+    el.addEventListener("touchmove", e => { if (e.touches.length === 2 && pd) { e.preventDefault(); let da = ang2(e.touches) - a0; da = ((da + 540) % 360) - 180; userize(p); p.st.s = clamp(ps * dist2(e.touches) / pd, .5, 1.9); p.st.rz = clamp(rz0 + da, -22, 22); badge(p, "×" + p.st.s.toFixed(2) + "  ↻ " + Math.round(p.st.rz) + "°"); apply(p); } }, { passive: false });
+    el.addEventListener("touchend", e => { if (e.touches.length < 2 && pd) { pd = 0; el.classList.remove("gest"); badge(p, ""); lastPanelDrag = performance.now(); settleRz(p); resolve(p); } }, { passive: true });
+    /* لوحة المفاتيح: أسهم = تحريك، Alt+أسهم = إمالة، PageUp/PageDown = عمق، Home = عودة للمدار، Delete = رمي مع تلاشٍ */
+    el.addEventListener("keydown", e => { const tg = e.target; if (/INPUT|TEXTAREA/.test(tg.tagName || "") || !(tg === el || (tg.closest && tg.closest(".pn-h")))) return; const k = String(e.key || ""), d = e.shiftKey ? 64 : 26; let used = true;
+      if (/^Arrow/.test(k)) { userize(p); cancelGlide(p); if (e.altKey) { p.st.ry = clamp(p.st.ry + (k === "ArrowRight" ? 4 : k === "ArrowLeft" ? -4 : 0), -24, 24); p.st.rx = clamp(p.st.rx + (k === "ArrowUp" ? 3 : k === "ArrowDown" ? -3 : 0), -18, 18); } else { p.st.x += k === "ArrowRight" ? d : k === "ArrowLeft" ? -d : 0; p.st.y += k === "ArrowDown" ? d : k === "ArrowUp" ? -d : 0; } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 300); }
+      else if (k === "PageUp" || k === "PageDown") { userize(p); p.st.z = clamp(p.st.z + (k === "PageUp" ? 34 : -34), -240, 260); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); }
+      else if (k === "Home") { if (!snapOrbit(p, true)) arrange(); }
+      else if (k === "Delete" || k === "Backspace") { const n = Math.hypot(p.st.x, p.st.y) || 1; throwAway(p, (p.st.x || 1) / n * 1.6, p.st.y / n * 1.6); }
+      else used = false; if (used) e.preventDefault(); });
   }
   /* رفع الإصبع: رمي نحو الحافة = تلاشٍ بجسيمات؛ وإلا تثبيت/إزاحة لتفادي التراكب */
   function release(p, g) {
@@ -185,11 +234,12 @@
     const sp = Math.hypot(vx, vy), pos = Math.hypot(p.st.x, p.st.y) || 1, out = (vx * p.st.x + vy * p.st.y) / pos, beyond = Math.abs(p.st.x) > W() / 2 + p.st.w * p.st.s * .15 || Math.abs(p.st.y) > H() / 2 + p.st.h * p.st.s * .15;
     SpatialOS.lastRelease = { sp: +sp.toFixed(2), out: +out.toFixed(2), beyond, n };
     if ((sp > .5 && out > .15 * sp) || beyond) return throwAway(p, vx || p.st.x / 400, vy || p.st.y / 400);
+    if (sp > .08) { const m = Math.min(1, 2.4 / sp) * .6; glide(p, vx * m, vy * m); return; }
     if (snapOrbit(p)) return; resolve(p);
   }
   function throwAway(p, vx, vy) {
-    hov = 0; remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1;
-    const step = t => { const dt = Math.min(250, t - last); last = t; p.st.x += vx * dt * 1.15 * k * 1.4 / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.opacity = Math.max(0, op).toFixed(2); apply(p);
+    hov = 0; remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false, acc = 1; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1; cancelGlide(p); p.el.classList.add("dragging");
+    const step = t => { const dt = Math.min(250, t - last); last = t; acc *= Math.pow(1.05, dt / 16); /* يتسارع نحو الخارج */ p.st.x += vx * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.opacity = Math.max(0, op).toFixed(2); apply(p);
       if (!burst && op < .55) { burst = true; const r = p.el.getBoundingClientRect(); FX.dissolve(r, null); }
       if (op > 0) requestAnimationFrame(step); else p.el.remove(); };
     requestAnimationFrame(step);
@@ -219,7 +269,11 @@
     if (!orbitMode) { open.forEach(p => { setLayer(p, false); p.el.classList.remove("back"); p.el.style.opacity = 1; p.el.style.zIndex = ++zc; }); arrange(); } else open.forEach(p => { p.off = null; }); }
   $("#hud-orbit").addEventListener("click", () => setOrbit(!orbitMode));
   $("#hud-reset").addEventListener("click", () => { open.forEach(p => { p.user = false; p.el.classList.remove("free", "is-big"); p.big = false; const s = sizeFor(p.sec); p.st.w = s.w; p.st.h = s.h; p.off = null; }); if (orbitMode) { pt = null; } arrange(); });
-  addEventListener("resize", () => { open.forEach(p => { if (p.min) return; const m = isMob() ? sizeFor(p.sec) : null; if (m && !p.big) { p.st.w = m.w; p.st.h = m.h; } apply(p); }); });
+  let vw0 = W(), vh0 = H();
+  /* عند تغيير حجم النافذة: تُحفظ المواضع النسبية للألواح الحرة (والمدار يُعاد حسابه من الأبعاد الجديدة) */
+  addEventListener("resize", () => { const kx = W() / vw0, ky = H() / vh0; vw0 = W(); vh0 = H();
+    open.forEach(p => { if (p.min) return; if (p.big) { Object.assign(p.st, { w: Math.min(920, W() - 24), h: Math.min(660, H() - 92) }); } else { if (isMob()) { const m = sizeFor(p.sec); p.st.w = m.w; p.st.h = m.h; } if (!orbitMode || p.user) { p.st.x *= kx; p.st.y *= ky; } } apply(p); });
+    if (!orbitMode) arrange(); });
   window.SpatialOS = { open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll };
   setTimeout(() => openSection("ord"), 700);
 })();
