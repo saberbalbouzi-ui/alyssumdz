@@ -81,7 +81,7 @@ function shipQuote(w, commune, type, sub, co, pf, pa){
   if(cpd && (type === "stop" ? cpd[1] : cpd[0]) > 0){      // سعر البلدية المستقل عند الشركة (مطلق) — منفصل عن سعر الولاية؛ يبقى تعديل السعر المعروض (adj) مطبَّقاً عليه
     const wb = base, aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[ckey] && __SHIPCO[ckey].adj) || 0), nb = Math.max(0, Number(type === "stop" ? cpd[1] : cpd[0]) - aj);
     supAdd = nb - wb; adjApplied = aj ? Number(type === "stop" ? cpd[1] : cpd[0]) - nb : 0; base = nb;
-  } else if(src !== "free" && !adjOnly){            // إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
+  } else if(src !== "free" && src !== "zones" && !adjOnly){            // (أسعار المناطق = سعر الولاية فقط بلا إضافة بلدية) إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
     const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
     if(d){ const add = Number(type === "stop" ? d[1] : d[0]) || 0; if(add){ const nb = Math.max(0, base + add); supAdd = nb - base; base = nb; } }
   }
