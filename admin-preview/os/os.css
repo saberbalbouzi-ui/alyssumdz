@@ -442,4 +442,3 @@ body{perspective:2200px;perspective-origin:50% 38%}
 .bokeh{filter:blur(22px)}
 @media (max-width:1280px){.os>*{rotate:none;translate:none}.sheet,.scene{display:none}.nav,.kp,.pn.violet{rotate:none}.deck{rotate:none}}
 @media (prefers-reduced-motion:reduce){.os{transform:none}.s-ring{animation:none}}
-html{overflow-x:clip}
