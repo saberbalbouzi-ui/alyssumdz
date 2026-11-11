@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ALYSSUM — شاشات هولوغرافية (معاينة المظهر)</title>
+<link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="depth.css">
+</head>
+<body>
+<div class="env" aria-hidden="true"><i class="bgimg"></i><i class="haze"></i><canvas id="net"></canvas><i class="vig"></i></div>
+<div class="fit" id="fit">
+  <div class="world" id="world">
+
+    <!-- صفحة شفافة ضخمة في الخلف: تُرى من خلالها بقية الشاشات -->
+    <section class="pane back" data-z="-560" data-d="0.15" aria-hidden="true">
+      <div class="ghost-top"><b>ALYSSUM</b><i></i><i></i><i></i><span class="gh-sp"></span><i class="gh-av"></i></div>
+      <div class="ghost-rail"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="ghost-body" id="ghost-body"></div>
+    </section>
+
+    <!-- يسار: مؤشرات -->
+    <section class="pane side left" data-z="-70" data-d="0.5" id="p-left">
+      <header><span class="ttl">مؤشرات الأداء</span><span class="tag">مباشر</span></header>
+      <div class="kpi"><small>الإيراد</small><b>88&nbsp;000 <u>دج</u></b><em class="up">▲ 12%</em><svg viewBox="0 0 200 50" class="spark"><path class="area" d="M0 40 L30 30 L60 36 L95 14 L130 24 L165 8 L200 18 V50 H0Z"/><path class="ln" d="M0 40 L30 30 L60 36 L95 14 L130 24 L165 8 L200 18"/></svg></div>
+      <div class="kpi"><small>معدل التحويل</small><b>2.9%</b><em class="dn">▼ 0.4</em><svg viewBox="0 0 200 50" class="spark cy"><path class="area" d="M0 14 L40 30 L80 22 L120 38 L160 20 L200 30 V50 H0Z"/><path class="ln" d="M0 14 L40 30 L80 22 L120 38 L160 20 L200 30"/></svg></div>
+      <div class="kpi"><small>متوسط الطلب</small><b>2&nbsp;750 <u>دج</u></b><em class="up">▲ 5%</em><svg viewBox="0 0 200 50" class="spark vi"><path class="area" d="M0 30 L40 20 L80 34 L120 16 L160 26 L200 10 V50 H0Z"/><path class="ln" d="M0 30 L40 20 L80 34 L120 16 L160 26 L200 10"/></svg></div>
+    </section>
+
+    <!-- الوسط: شاشة المبيعات المضيئة -->
+    <section class="pane main" data-z="30" data-d="1" id="p-main">
+      <header><span class="ttl">المبيعات عبر الزمن</span><span class="seg"><i>الطلبات</i><i class="on">الإيراد</i></span></header>
+      <div class="meta"><span>الذروة <b>16&nbsp;300 دج</b></span><span>المتوسط <b>12&nbsp;571 دج</b></span><span class="demo">بيانات تجريبية</span></div>
+      <svg class="chart" viewBox="0 0 560 230" preserveAspectRatio="none" id="chart">
+        <defs>
+          <linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6ff1f" stop-opacity=".55"/><stop offset="1" stop-color="#7bd10f" stop-opacity="0"/></linearGradient>
+          <filter id="gl" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g class="gridl"></g>
+        <path id="c-area" fill="url(#ga)"/><path id="c-line" fill="none" stroke="#e3ff3a" stroke-width="3" filter="url(#gl)"/>
+        <g id="c-dots"></g>
+      </svg>
+      <div class="xs"><i>السبت</i><i>الأحد</i><i>الاثنين</i><i>الثلاثاء</i><i>الأربعاء</i><i>الخميس</i><i>الجمعة</i></div>
+    </section>
+
+    <!-- يمين: مسار الطلبات + شبكة -->
+    <section class="pane side right" data-z="-70" data-d="0.5" id="p-right">
+      <header><span class="ttl">مسار الطلبات</span><span class="tag cy">38 طلباً</span></header>
+      <div class="ring"><svg viewBox="0 0 120 120"><circle class="rb" cx="60" cy="60" r="46"/><circle class="r1" cx="60" cy="60" r="46" pathLength="100"/><circle class="r2" cx="60" cy="60" r="46" pathLength="100"/><circle class="r3" cx="60" cy="60" r="46" pathLength="100"/></svg><div><b>38</b><small>طلب</small></div></div>
+      <ul class="legend"><li><i style="--c:#4aa3ff"></i>بانتظار التأكيد<b>1</b></li><li><i style="--c:#ffb340"></i>قيد التجهيز<b>4</b></li><li><i style="--c:#2cf0a0"></i>في الطريق<b>3</b></li><li><i style="--c:#d6ff1f"></i>تم التسليم<b>24</b></li><li><i style="--c:#ff6b8b"></i>فشل / ملغاة<b>6</b></li></ul>
+    </section>
+
+    <!-- أسفل: مقاييس التحويل (مائلة كأرضية عائمة) -->
+    <section class="pane floor" data-z="150" data-d="1.3" id="p-floor">
+      <header><span class="ttl">مقاييس التحويل</span><span class="seg"><i>7 أيام</i><i class="on">30 يوماً</i></span></header>
+      <div class="floor-body"><svg class="bars" viewBox="0 0 300 110" preserveAspectRatio="none" id="bars"></svg><div class="heat" id="heat" aria-hidden="true"></div></div>
+    </section>
+
+    <!-- بطاقات تخرج من الشاشات (ارتفاع حقيقي عن سطح الشاشة + ساق ضوئية ثلاثية الأبعاد) -->
+    <article class="pop order" data-z="230" data-d="1.5" data-dz="200" id="pop-order" tabindex="0"><div class="card">
+      <small>طلب جديد · قبل دقيقة</small><b>#A1182 · ليلى ب.</b><span>3&nbsp;200 دج · بانتظار التأكيد</span><em>تأكيد</em></div><i class="stem"></i></article>
+    <article class="pop product" data-z="260" data-d="1.7" data-dz="230" id="pop-prod" tabindex="0"><div class="card">
+      <img src="img/p1.webp" alt=""><div><small>الأكثر مبيعاً</small><b>عسل التركيز 500غ</b><span>18 قطعة · مخزون جيد</span></div></div><i class="stem"></i></article>
+    <article class="pop chip ctr" data-z="210" data-d="1.4" data-dz="180" id="pop-ctr" tabindex="0"><div class="card"><small>CTR</small><b>4.8%</b></div><i class="stem"></i></article>
+    <article class="pop chip aov" data-z="250" data-d="1.6" data-dz="220" id="pop-aov" tabindex="0"><div class="card"><small>AOV</small><b>2&nbsp;750</b></div><i class="stem"></i></article>
+    <article class="pop alert" data-z="190" data-d="1.3" data-dz="260" id="pop-alert" tabindex="0"><div class="card"><small>تنبيه مخزون</small><b>عسل السدر · 4 فقط</b><em>إعادة طلب</em></div><i class="stem"></i></article>
+  </div>
+</div>
+<div class="note" role="note">معاينة مظهر فقط — بيانات تجريبية، لا ترتبط بلوحة التحكم الحقيقية</div>
+<script src="depth.js"></script>
+</body>
+</html>
