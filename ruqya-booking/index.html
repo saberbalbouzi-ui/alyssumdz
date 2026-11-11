@@ -228,7 +228,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
 </div>
 <script>
 (function(){
-var SB="https://qvdaiundlkfbmjlummni.supabase.co",KEY="sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h",WA="213559237239",SL=["09:00","09:30","10:00","10:30","11:00","11:30","12:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30"];
+var SB="https://qvdaiundlkfbmjlummni.supabase.co",KEY="sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h",WA="213541138189",SL=["09:00","09:30","10:00","10:30","11:00","11:30","12:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30"];
 var PRICE={single:1500,couple:2000,family:2000},PACK=3000,KID=500,DAYN=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"],MON=["جانفي","فيفري","مارس","أفريل","ماي","جوان","جويلية","أوت","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 var ST={per:"",reg:0,picked:null,kind:"single",day:"",slot:"",taken:{},tk:{},days:[],cart:{},prods:[],closed:[]};
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
@@ -369,7 +369,7 @@ function book(){
  var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===String(id.wilaya)})[0];
  rpc("ruqya_book",{p:{day:ST.day,slot:ST.slot,kind:ST.kind,persons:persons(),sessions:sessions(),name:id.name,phone:ph,whatsapp:waNum(),pack:!!ST.packUser,items:Object.keys(ST.cart).map(function(k){return{slug:k,qty:ST.cart[k]}}),second_name:secOn()?$("sName").value.trim():"",second_phone:secOn()?normPh($("sPhone").value):"",pack2:!!ST.pack2User,registered:!!ST.reg,wilaya:w?w.name:"",commune:id.commune||"",terms:$("t1").checked&&$("t2").checked}}).then(function(r){
   var d=new Date(ST.day+"T12:00:00"),msg="السلام عليكم، حجزت موعد رقية شرعية:\nالرقم: "+r.id+"\nالاسم: "+id.name+"\nالهاتف: "+ph+"\nالواتساب: "+waNum()+"\nالموعد: "+dayLabel(d)+" · "+perLbl(ST.per)+(secOn()?"\nالفرد الآخر: "+$("sName").value.trim()+" - "+normPh($("sPhone").value):"")+"\nعدد الجلسات: "+sessions()+" - عدد الأفراد: "+persons()+"";
-  var inf=ST.info||{},phs=String(inf.phones||"").split(/\n+/).map(function(x){return x.trim()}).filter(Boolean);if(!phs.length)phs=["0559 23 72 39"];
+  var inf=ST.info||{},phs=String(inf.phones||"").split(/\n+/).map(function(x){return x.trim()}).filter(Boolean);if(!phs.length)phs=["0541 13 81 89"];
   var kn={single:"جلسة فردية",couple:"زوج وزوجة",kids:"أبناء ("+persons()+")",family:"جماعية للعائلة ("+persons()+" أفراد)"}[ST.kind];
   var rows=function(a){return a.map(function(x){return '<div class="rq-ln" style="border-color:#d9e8dc;color:#16324c"><span>'+x[0]+'</span><span>'+x[1]+'</span></div>'}).join("")};
   var h='<h2>تم تسجيل طلب الموعد</h2><p class="rq-note" style="margin:0 0 10px">رقم الحجز <b>'+r.id+'</b></p><div style="text-align:right;background:#f1f8f2;border:1px solid #cfe5d3;border-radius:16px;padding:6px 16px;margin:8px 0">'+rows([["الاسم",esc(id.name)],["الهاتف",'<bdi dir="ltr">'+esc(ph0)+'</bdi>'],["الموعد",dayLabel(d)],["الفترة",perLbl(ST.per)],["نوع الجلسة",kn],["عدد الجلسات",'<bdi>'+sessions()+'</bdi>']].concat(secOn()?[["الفرد الآخر",esc($("sName").value.trim())]]:[]))+'</div>'+
