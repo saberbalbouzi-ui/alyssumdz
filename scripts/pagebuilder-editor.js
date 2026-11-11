@@ -170,6 +170,34 @@ body{overflow-x:hidden;margin:0}`;
  .pbx-h{width:22px;height:22px}.pbx-bar button,.pbx-bar span{padding:.4rem .6rem;font-size:.82rem}
  .pbx-ah{padding:.9rem .8rem!important}
 }
+.pbx-eg,.pbx-mmb,.pbx-mm,.pbx-mmbg{display:none}
+.pbx-top #pbx-mmb{display:none}
+/* الهاتف أولاً: شريط علوي مختصر (☰ + العنوان + تراجع/إعادة + حفظ ونشر) وكل بقية الإعدادات في قائمة بأسمائها؛ سهم على حافة اليسار يفتح الإعدادات وسهم على اليمين يفتح العناصر */
+@media(max-width:820px){
+ .pbx-tga{display:none!important}
+ .pbx-top{flex-wrap:nowrap!important;overflow:hidden!important;gap:.35rem;align-items:center}
+ .pbx-top>*:not(#pbx-mmb):not(#pbx-title):not(#pbx-undo):not(#pbx-redo):not(#pbx-pubb){position:absolute!important;left:-9999px!important;top:0!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important}
+ .pbx-top #pbx-mmb{display:inline-flex!important;align-items:center;justify-content:center;flex:none;width:44px;height:44px;padding:0!important;border-radius:13px;font-size:initial!important}
+ .pbx-top #pbx-title{display:block!important;flex:1 1 0;min-width:0!important;width:auto!important;text-overflow:ellipsis;overflow:hidden}
+ .pbx-top #pbx-undo,.pbx-top #pbx-redo{flex:none;width:42px;height:42px;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center}
+ .pbx-top #pbx-pubb{flex:none;white-space:nowrap;padding:.55rem .75rem!important;font-size:.9rem!important}
+ .pbx-eg{display:flex;position:fixed;top:62%;transform:translateY(-50%);z-index:10045;width:30px;height:88px;align-items:center;justify-content:center;border:1px solid rgba(226,254,23,.45);background:linear-gradient(160deg,#1f5a4b,#173f35);color:#e2fe17;box-shadow:0 6px 22px rgba(0,0,0,.42);cursor:pointer;padding:0;transition:left .25s,right .25s}
+ .pbx-eg svg{width:22px;height:22px;transition:transform .25s}
+ .pbx-eg-set{left:0;border-radius:0 18px 18px 0;border-left:0}.pbx-eg-els{right:0;border-radius:18px 0 0 18px;border-right:0}
+ .pbx-eg-els svg{transform:rotate(180deg)}
+ #pb-app:not(.pbx-hr) .pbx-eg-set{left:min(86vw,340px)}#pb-app:not(.pbx-hr) .pbx-eg-set svg{transform:rotate(180deg)}
+ #pb-app:not(.pbx-hl) .pbx-eg-els{right:min(86vw,340px)}#pb-app:not(.pbx-hl) .pbx-eg-els svg{transform:none}
+ #pb-app.pbx-tool .pbx-eg{display:none}
+ .pbx-mmbg.on{display:block;position:fixed;inset:0;z-index:10069;background:rgba(0,0,0,.45)}
+ .pbx-mm.on{display:block;position:fixed;top:58px;inset-inline:10px;max-height:calc(100vh - 72px);overflow:auto;z-index:10070;background:#10231b;color:#fff;border:1px solid rgba(226,254,23,.3);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.6);padding:.4rem .4rem .6rem;direction:rtl}
+ .pbx-mm .pbx-mh{margin:.7rem .6rem .25rem;font-size:.74rem;font-weight:900;color:#e2fe17;opacity:.9;letter-spacing:.3px}
+ .pbx-mm .pbx-mi{display:flex;align-items:center;gap:.75rem;width:100%;min-height:50px;padding:.4rem .7rem;border:0;border-radius:13px;background:transparent;color:#fff;font:inherit;font-weight:800;font-size:.95rem;text-align:start;cursor:pointer}
+ .pbx-mm .pbx-mi:active,.pbx-mm .pbx-mi:hover{background:rgba(255,255,255,.1)}
+ .pbx-mm .pbx-mi.on{background:rgba(226,254,23,.16);color:#e2fe17}.pbx-mm .pbx-mi.dng{color:#ff8a8a}
+ .pbx-mm .pbx-mi .mi-ic{flex:none;width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.1);display:inline-flex;align-items:center;justify-content:center}.pbx-mm .pbx-mi .mi-ic svg{width:19px;height:19px}
+ .pbx-mm .pbx-mi small{margin-inline-start:auto;font-weight:600;opacity:.65;font-size:.72rem}
+ .pbx-mm .pbx-mz{display:flex;align-items:center;gap:.5rem;padding:.4rem .7rem;min-height:50px}.pbx-mm .pbx-mz b{flex:1;font-size:.95rem}.pbx-mm .pbx-mz button{width:44px;height:44px;border:0;border-radius:12px;background:rgba(255,255,255,.12);color:#fff;font-size:1.25rem;font-weight:900;cursor:pointer}.pbx-mm .pbx-mz span{min-width:48px;text-align:center;font-weight:900}
+}
 @media(pointer:coarse){.pbx-h{width:20px;height:20px}.pbx-rot,.pbx-rad{transform:scale(1.25)}}
 /* ── عناصر على نمط Canva: إطار بنفسجي، مقابض دائرية، شريط عائم، زرّا تدوير/تحريك ── */
 .pbx-box.widget{border-color:#8b3dff}.pbx-box.widget.lk{border-style:dashed}
@@ -252,6 +280,7 @@ body{overflow-x:hidden;margin:0}`;
     const d = document.createElement("div"); d.id = "pb-app";
     d.innerHTML = `
 <div class="pbx-top">
+  <button type="button" id="pbx-mmb" class="pbx-mmb" onclick="PBApp.mm()" aria-haspopup="true" aria-expanded="false" aria-label="قائمة الإعدادات" title="القائمة: كل الإعدادات بأسمائها"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <button onclick="PBApp.close()" title="إغلاق المحرر">${ico('close',16)} إغلاق</button>
   <button class="pbx-tg" id="pbx-tgl" onclick="PBApp.panel('l')" title="إظهار/إخفاء شريط الأدوات">${ico('tab_add',16)} الأدوات</button>
   <button class="pbx-tg" id="pbx-tgr" onclick="PBApp.panel('r')" title="إظهار/إخفاء شريط الإعدادات">${ico('tab_pg',16)} الإعدادات</button>
@@ -275,7 +304,7 @@ body{overflow-x:hidden;margin:0}`;
   <button id="pbx-prev" onclick="PBApp.preview()" title="معاينة" aria-label="معاينة">${ico('eye',16)}<span class="tbt"> معاينة</span></button>
   <button class="pub pbx-adsz" id="pbx-adsz" type="button" onclick="PBApp.adResizeUi()" title="تغيير مقاس التصميم: مع تحجيم العناصر أو تغيير مقاس الصفحة فقط">📐 المقاس</button>
   <button class="pub pbx-adx" id="pbx-adx" type="button" onclick="ImgGen.exportAd()" title="يحوّل التصميم إلى صورة بمقاس المنصة بالبكسل للتنزيل أو الحفظ في المكتبة">⬇ تصدير الصورة</button>
-  <button class="pub" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
+  <button class="pub" id="pbx-pubb" onclick="PBApp.publish()">${ico('rocket',16)} حفظ ونشر</button>
 </div>
 <div class="pbx-main">
   <aside class="pbx-left" id="pbx-lside">
@@ -303,6 +332,9 @@ body{overflow-x:hidden;margin:0}`;
 </div>
 <div class="pbx-histbox" id="pbx-hist" style="display:none"></div>
 <div class="pbx-msg" id="pbx-msg"></div>
+<button type="button" class="pbx-eg pbx-eg-set" id="pbx-eg-set" onclick="PBApp.panel('r')" aria-label="شريط الإعدادات" title="إعدادات العنصر المحدّد: افتح/أغلق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+<button type="button" class="pbx-eg pbx-eg-els" id="pbx-eg-els" onclick="PBApp.panel('l')" aria-label="شريط العناصر" title="العناصر والأدوات: افتح/أغلق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+<div class="pbx-mmbg" id="pbx-mmbg" onclick="PBApp.mm(false)"></div><div class="pbx-mm" id="pbx-mm" role="menu" aria-label="قائمة الإعدادات"></div>
 <button type="button" class="pbx-tga" id="pbx-tga" onclick="PBApp.togglePanels()" title="إخفاء/إظهار الشريطين الجانبيين"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>`;
     document.body.appendChild(d);
     frame = $("pbx-frame");
@@ -695,6 +727,27 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   /* عجلة الفأرة تكبّر/تصغّر مباشرة في «تصميم بمقاس» (وبـCtrl في الصفحات العادية)؛ والقرص بإصبعين على الهاتف */
   const wheelOn = e => e.ctrlKey || e.metaKey || !!(E.page && E.page.ad);
   const wheelStep = e => e.deltaY < 0 ? 1.1 : 1 / 1.1;
+  /* قائمة الهاتف: تُبنى من أزرار الشريط العلوي نفسها (فأي زر جديد يظهر فيها تلقائياً) بأسماء عربية واضحة؛ الضغط على البند يضغط الزر الأصلي */
+  const MM_NAMES = { "pbx-mmb": "", "pbx-rn": "تعديل اسم الصفحة", "pbx-clb": "نسخ قالب من موقع أو صورة", "pbx-undo": "تراجع", "pbx-redo": "إعادة", "pbx-allfree": "تحويل كل الأقسام إلى عناصر حرة", "pbx-org": "تنظيم الصفحة بزر واحد", "pbx-allung": "فكّ ربط كل العناصر", "pbx-fxpb": "تأثيرات حركة الصفحة", "pbx-palb": "ألوان الصفحة", "pbx-updb": "تحديث اللوحة لآخر نسخة", "pbx-histb": "السجل: الرجوع لأي مرحلة", "pbx-prev": "معاينة الصفحة", "pbx-adsz": "تغيير مقاس التصميم", "pbx-adx": "تصدير الصورة", "pbx-pubb": "حفظ ونشر", "pbx-anim": "تشغيل حركات الظهور" };
+  const MM_GROUPS = [["العرض", ["d", "t", "m"]], ["الصفحة", ["pbx-rn", "pbx-clb", "pbx-prev", "pbx-histb", "pbx-undo", "pbx-redo"]], ["الأدوات", ["pbx-allfree", "pbx-org", "pbx-allung", "pbx-fxpb", "pbx-palb", "pbx-adsz", "pbx-adx"]], ["النشر والنظام", ["pbx-pubb", "pbx-updb"]]];
+  function mmLabel(b) { if (b.dataset && b.dataset.dv) return { d: "عرض المكتب", t: "عرض التابلت", m: "عرض الهاتف" }[b.dataset.dv] || b.title; if (MM_NAMES[b.id]) return MM_NAMES[b.id]; const t = b.querySelector && b.querySelector(".tbt"); if (t && t.textContent.trim()) return t.textContent.trim(); const a = (b.getAttribute("aria-label") || "").trim(); if (a) return a; const ti = (b.getAttribute("title") || "").split(/[:：(（—]/)[0].trim(); return (ti || (b.textContent || "").trim()).slice(0, 44); }
+  const mmShown = b => { try { return !!b && getComputedStyle(b).display !== "none"; } catch (e) { return false; } };
+  function mmBuild() {
+    const top = document.querySelector("#pb-app .pbx-top"), box = $("pbx-mm"); if (!top || !box) return; const used = new Set(); let h = "";
+    const item = (b, key) => { used.add(b); const svg = b.querySelector("svg"), on = b.classList.contains("on") || (b.dataset && b.dataset.dv && b.classList.contains("on")); return `<button type="button" class="pbx-mi${on ? " on" : ""}" role="menuitem" data-mmk="${esc(key)}"><span class="mi-ic">${svg ? svg.outerHTML : '<b>•</b>'}</span><span>${esc(mmLabel(b))}</span></button>`; };
+    const map = {}; [...top.children].forEach(c => { if (c.id) map[c.id] = c; if (c.dataset && c.dataset.dv) map[c.dataset.dv] = c; });
+    const more = $("pbx-moremenu"); if (more) [...more.querySelectorAll("button")].forEach(c => { if (c.id) map[c.id] = c; });
+    const keys = {}; MM_GROUPS.forEach(([name, ids]) => { let g = ""; ids.forEach(id => { const b = map[id]; if (b && mmShown(b)) { g += item(b, id); keys[id] = b; } });
+      if (name === "العرض") { const zm = $("pbx-zm"); if (zm && mmShown(zm)) { g += `<div class="pbx-mz" data-mmz="1"><b>تكبير القماش</b><button type="button" data-z="-" aria-label="تصغير">−</button><span id="pbx-mzv">${($("pbx-zv") || {}).textContent || "100%"}</span><button type="button" data-z="+" aria-label="تكبير">+</button><button type="button" data-z="0" aria-label="ملاءمة العرض">⤢</button></div>`; } }
+      if (g) h += `<div class="pbx-mh">${name}</div>` + g; });
+    let rest = ""; [...top.children, ...(more ? [...more.querySelectorAll("button")] : [])].forEach(c => { if (c.tagName !== "BUTTON" || used.has(c) || !c.id || c.id === "pbx-mmb" || c.classList.contains("pbx-tg") || c.id === "pbx-moreb" || !mmShown(c)) return; rest += item(c, c.id); keys[c.id] = c; });
+    if (rest) h += `<div class="pbx-mh">أخرى</div>` + rest;
+    const cl = [...top.children].find(c => c.tagName === "BUTTON" && /PBApp\.close\(\)/.test(c.getAttribute("onclick") || "")); if (cl) { used.add(cl); keys.__close = cl; h += `<div class="pbx-mh">الخروج</div><button type="button" class="pbx-mi dng" role="menuitem" data-mmk="__close"><span class="mi-ic">${cl.querySelector("svg") ? cl.querySelector("svg").outerHTML : "✕"}</span><span>إغلاق المحرر</span></button>`; }
+    box.innerHTML = h; box._keys = keys;
+    box.onclick = e => { const z = e.target.closest && e.target.closest(".pbx-mz button"); if (z) { const o = document.querySelector('#pbx-zm button[data-z="' + z.dataset.z + '"]'); if (o) o.click(); setTimeout(() => { const v = $("pbx-mzv"); if (v) v.textContent = ($("pbx-zv") || {}).textContent || ""; }, 60); return; }
+      const mi = e.target.closest && e.target.closest(".pbx-mi"); if (!mi) return; const b = box._keys[mi.dataset.mmk]; mm(false); if (b) setTimeout(() => b.click(), 30); };
+  }
+  function mm(force) { const box = $("pbx-mm"), bg = $("pbx-mmbg"), btn = $("pbx-mmb"); if (!box) return; const on = force == null ? !box.classList.contains("on") : !!force; if (on) mmBuild(); box.classList.toggle("on", on); if (bg) bg.classList.toggle("on", on); if (btn) btn.setAttribute("aria-expanded", on ? "true" : "false"); }
   function togglePanels() { const app = $("pb-app"), anyOn = !app.classList.contains("pbx-hl") || !app.classList.contains("pbx-hr"); if (anyOn) { panel("l", false); panel("r", false); } else { panel("r", true); if (!isMob()) panel("l", true); } }
   function placeTga() { const t = document.querySelector("#pb-app .pbx-top"), a = $("pbx-tga"); if (a && t) a.style.top = t.offsetHeight + "px"; }
   function syncPanels() { const app = $("pb-app"); placeTga(); { const a = $("pbx-tga"); if (a) a.classList.toggle("off", app.classList.contains("pbx-hl") && app.classList.contains("pbx-hr")); } [["l", "pbx-hl"], ["r", "pbx-hr"]].forEach(([w, c]) => { const b = $("pbx-tg" + w); if (b) b.classList.toggle("off", app.classList.contains(c)); }); }
@@ -3968,7 +4021,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); pb.end(false, err.message || "تعذّر الحفظ"); toast("❌ " + err.message); } finally { E.pubBusy = false; }
   }
 
-  return { convertAllFree: () => convertAllFree(), togglePanels, organizePage, ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { convertAllFree: () => convertAllFree(), togglePanels, mm, organizePage, ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
