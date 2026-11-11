@@ -5,19 +5,23 @@ window.SeoBox = (() => {
   const LIM = { title: { min: 40, max: 60 }, desc: { min: 120, max: 160 } };
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const CSS = `.sbx{display:grid;gap:.7rem;padding:.9rem;border:1px solid rgba(255,255,255,.16);border-radius:16px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.025));text-align:start}
-.sbx *{box-sizing:border-box}.sbx .sbx-l{display:grid;gap:.3rem;font-weight:800;font-size:.88rem}.sbx .sbx-l small{font-weight:400;color:#b4c9be;line-height:1.5}
-.sbx input[type=text],.sbx textarea,.sbx select{width:100%;padding:.55rem .7rem;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(255,255,255,.07);color:inherit;font:inherit}
-.sbx textarea{min-height:76px;resize:vertical}.sbx select option{background:#10231b;color:#fff}
-.sbx .sbx-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}.sbx .sbx-bar i{display:block;height:100%;width:0;border-radius:99px;background:#f59e0b;transition:width .2s,background .2s}
-.sbx .sbx-bar.ok i{background:#22c55e}.sbx .sbx-cnt{display:flex;justify-content:space-between;gap:.5rem;font-size:.78rem;color:#f5b04a}.sbx .sbx-cnt.ok{color:#d4ff4d}
-.sbx .sbx-help{padding:.55rem .7rem;border-radius:10px;border:1px dashed rgba(226,254,23,.4);color:#c7d9ce;font-size:.82rem;line-height:1.7}
-.sbx .sbx-chk{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.8rem}.sbx .sbx-chk span{color:#f5b04a}.sbx .sbx-chk span.ok{color:#d4ff4d}
-.sbx .sbx-img{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.sbx .sbx-th{width:86px;height:58px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06) center/cover no-repeat;display:grid;place-items:center;font-size:1.3rem;flex:none}
-.sbx .sbx-btn{padding:.45rem .8rem;border-radius:11px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-weight:800;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -4px 8px rgba(0,0,0,.2),0 4px 10px rgba(0,0,0,.2);backdrop-filter:blur(6px);transition:transform .18s,background .18s}
-.sbx .sbx-btn:hover{transform:translateY(-2px);background:rgba(255,255,255,.16)}.sbx .sbx-btn.g{background:rgba(74,222,128,.2);border-color:rgba(226,254,23,.5)}
+  /* ألوان المربع متغيّرات تتبع مظهر اللوحة: الافتراضي للمظهر الفاتح (نص أخضر داكن)، وhtml.glass يعيد القيم الفاتحة على الزجاج الداكن — لا ألوان بيضاء ثابتة تختفي على خلفية فاتحة */
+  const CSS = `.sbx{--sx-tx:var(--green,#173f35);--sx-line:rgba(23,63,53,.24);--sx-bg:rgba(23,63,53,.045);--sx-bg2:rgba(23,63,53,.09);--sx-mut:#4f635b;--sx-warn:#b45309;--sx-ok:#15803d;--sx-sec:#15803d;--sx-help-bd:rgba(21,128,61,.45);--sx-help-tx:#3b5249;--sx-opt-bg:#fff;--sx-opt-tx:#173f35;--sx-btn-sh:0 1px 2px rgba(23,63,53,.12);--sx-g-bg:rgba(34,197,94,.16);--sx-g-bd:rgba(21,128,61,.55);--sx-bar:rgba(23,63,53,.12)}
+html.glass .sbx{--sx-tx:var(--g-tx,#eef3f6);--sx-line:rgba(255,255,255,.2);--sx-bg:rgba(255,255,255,.07);--sx-bg2:rgba(255,255,255,.16);--sx-mut:#b4c9be;--sx-warn:#f5b04a;--sx-ok:#d4ff4d;--sx-sec:#d4ff4d;--sx-help-bd:rgba(226,254,23,.4);--sx-help-tx:#c7d9ce;--sx-opt-bg:#10231b;--sx-opt-tx:#fff;--sx-btn-sh:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -4px 8px rgba(0,0,0,.2),0 4px 10px rgba(0,0,0,.2);--sx-g-bg:rgba(74,222,128,.2);--sx-g-bd:rgba(226,254,23,.5);--sx-bar:rgba(255,255,255,.12)}
+.sbx{display:grid;gap:.7rem;padding:.9rem;border:1px solid var(--sx-line);border-radius:16px;background:var(--sx-bg);color:var(--sx-tx);text-align:start}
+.sbx *{box-sizing:border-box}.sbx .sbx-l{display:grid;gap:.3rem;font-weight:800;font-size:.88rem;color:var(--sx-tx)}.sbx .sbx-l small{font-weight:400;color:var(--sx-mut);line-height:1.5}
+.sbx input[type=text],.sbx textarea,.sbx select{width:100%;padding:.55rem .7rem;border:1px solid var(--sx-line);border-radius:10px;background:var(--sx-bg);color:var(--sx-tx);font:inherit}
+.sbx input::placeholder,.sbx textarea::placeholder{color:var(--sx-mut);opacity:.75}
+.sbx textarea{min-height:76px;resize:vertical}.sbx select option{background:var(--sx-opt-bg);color:var(--sx-opt-tx)}
+.sbx .sbx-bar{height:8px;border-radius:99px;background:var(--sx-bar);overflow:hidden}.sbx .sbx-bar i{display:block;height:100%;width:0;border-radius:99px;background:#f59e0b;transition:width .2s,background .2s}
+.sbx .sbx-bar.ok i{background:#22c55e}.sbx .sbx-cnt{display:flex;justify-content:space-between;gap:.5rem;font-size:.78rem;color:var(--sx-warn)}.sbx .sbx-cnt.ok{color:var(--sx-ok)}
+.sbx .sbx-help{padding:.55rem .7rem;border-radius:10px;border:1px dashed var(--sx-help-bd);color:var(--sx-help-tx);font-size:.82rem;line-height:1.7}
+.sbx .sbx-chk{display:flex;gap:.8rem;flex-wrap:wrap;font-size:.8rem}.sbx .sbx-chk span{color:var(--sx-warn)}.sbx .sbx-chk span.ok{color:var(--sx-ok)}
+.sbx .sbx-img{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.sbx .sbx-th{width:86px;height:58px;border-radius:10px;border:1px solid var(--sx-line);background:var(--sx-bg) center/cover no-repeat;display:grid;place-items:center;font-size:1.3rem;flex:none}
+.sbx .sbx-btn{padding:.45rem .8rem;border-radius:11px;border:1px solid var(--sx-line);background:var(--sx-bg);color:var(--sx-tx);font:inherit;font-weight:800;cursor:pointer;box-shadow:var(--sx-btn-sh);transition:transform .18s,background .18s}
+.sbx .sbx-btn:hover{transform:translateY(-2px);background:var(--sx-bg2)}.sbx .sbx-btn.g{background:var(--sx-g-bg);border-color:var(--sx-g-bd)}
 .sbx .sbx-pv{padding:.7rem .8rem;border-radius:12px;background:#fff;color:#202124;direction:rtl}.sbx .sbx-pv .u{font-size:.74rem;color:#188038;direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sbx .sbx-pv .t{font-size:1.02rem;color:#1a0dab;font-weight:600;line-height:1.35}.sbx .sbx-pv .d{font-size:.8rem;color:#4d5156;line-height:1.5}
-.sbx .sbx-sec{font-weight:900;color:#d4ff4d}`;
+.sbx .sbx-sec{font-weight:900;color:var(--sx-sec)}`;
   function css() { if (!$("sbx-css")) { const s = document.createElement("style"); s.id = "sbx-css"; s.textContent = CSS; document.head.appendChild(s); } }
   function html(p, v, o) {
     css(); v = v || {}; o = o || {};
