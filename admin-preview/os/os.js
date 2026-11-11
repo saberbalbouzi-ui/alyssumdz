@@ -73,7 +73,7 @@
   function ago(ts) { var m = Math.max(0, Math.round((NOW - ts) / 6e4)); if (m < 1) return "الآن"; if (m < 60) return "منذ " + m + " د"; var h = Math.round(m / 60); if (h < 24) return "منذ " + h + " س"; return "منذ " + Math.round(h / 24) + " يوماً"; }
   function stockC(s) { return s.q <= s.min * .5 ? "#ff6b8b" : s.q <= s.min ? "#ffb340" : "#2cf0a0"; }
   function lowStock() { return stock.filter(function (s) { return s.q <= s.min; }); }
-  function addFeed(t, c) { feed.unshift({ id: ++fid, t: t, c: c || "#2be4ff", ts: Date.now(), un: true, fresh: true }); }
+  function addFeed(t, c) { try { core.burst(14); } catch (e) { } feed.unshift({ id: ++fid, t: t, c: c || "#2be4ff", ts: Date.now(), un: true, fresh: true }); }
   function funnelData(m) { var V = m.visits, st = [["الزيارات", V], ["مشاهدة المنتج", Math.round(V * .58)], ["إضافة للسلة", Math.round(V * .16)], ["بدء الدفع", Math.round(V * .075)], ["طلبات مؤكدة", m.na]]; return st; }
 
   /* ───────── الملاحة ───────── */
@@ -106,24 +106,41 @@
     var tip = $("#cv-tip"); if (i < 0 || !pos) { tip.hidden = true; return; } var cur = series(S.p, false, S.m), prv = series(S.p, true, S.m), v = cur[i], pv = prv[i] || 0, d = pv ? Math.round((v - pv) / pv * 100) : 0, wr = $("#cv-wrap").getBoundingClientRect();
     tip.innerHTML = labels(S.p)[i] + "<b>" + fmt(v) + (S.m === "orders" ? " طلب" : " دج") + '</b><em class="' + (d >= 0 ? "up" : "dn") + '">' + (d >= 0 ? "▲" : "▼") + " " + Math.abs(d) + "% عن السابقة</em>"; tip.style.left = (pos.x - wr.left) + "px"; tip.style.top = (pos.y - wr.top) + "px"; tip.hidden = false;
   }, onPick: function (i) { S.focus = S.focus === i ? -1 : i; renderFocus(); renderCenter(); renderDeck(); } });
-  var core = new OSCharts.AICore($("#aicore"), { reduced: REDUCED, size: 158 });
+  var core = new OSCharts.AICore($("#aicore"), { reduced: REDUCED, size: 220 });
 
   function renderIns() { var cur = series(S.p, false, S.m), lb = labels(S.p), mx = Math.max.apply(null, cur), bi = cur.indexOf(mx), av = cur.reduce(function (a, b) { return a + b; }, 0) / (cur.length || 1), u = S.m === "orders" ? " طلب" : " دج"; $("#chart-ins").innerHTML = '<span>الذروة: ' + lb[bi] + ' <b class="ltr">' + fmt(mx) + "</b>" + u + '</span><span>المتوسط: <b class="ltr">' + fmt(av) + "</b>" + u + "</span>"; }
+  function renderIns2() { var cur = series(S.p, false, S.m), n = cur.length, avg = (cur[n - 1] + cur[n - 2] + cur[n - 3]) / 3 || 0, fc = Math.round(avg * 1.09), el = $("#ins-r"); if (!el) { el = document.createElement("div"); el.id = "ins-r"; el.className = "ins-r"; $("#pn-chart").appendChild(el); } el.innerHTML = 'توقّع الفترة القادمة <b class="ltr">' + fmt(fc) + "</b>" + (S.m === "orders" ? " طلب" : " دج") + "<small style=\"color:var(--dim)\">تقدير تجريبي</small>"; }
   function renderChart() {
-    renderIns();
+    renderIns(); renderIns2();
     var cur = series(S.p, false, S.m), prv = series(S.p, true, S.m), n = cur.length, avg = (cur[n - 1] + cur[n - 2] + cur[n - 3]) / 3 || 0;
     chart.setData({ cur: cur, prev: prv, fc: [Math.round(avg * 1.05), Math.round(avg * 1.09)], labels: labels(S.p), focus: S.focus });
   }
   function renderRadial() {
-    var a = focusOrders(win(S.p)), c = counts(a), tot = a.length || 1, svg = $("#radial"), Rr = 94, C = 2 * Math.PI * Rr, off = 0, gap = 5, html = '<circle class="ring-t" cx="130" cy="130" r="' + (Rr + 14) + '"/><circle class="ring-t" cx="130" cy="130" r="' + (Rr - 14) + '"/>';
-    ST_KEYS.forEach(function (k) { var len = Math.max(0, c[k] / tot * C - gap); html += '<circle class="seg-p' + (S.st && S.st !== k ? " dim" : "") + (S.st === k ? " hot" : "") + '" data-k="' + k + '" cx="130" cy="130" r="' + Rr + '" stroke="' + ST[k].c + '" style="color:' + ST[k].c + '" stroke-dasharray="' + len + " " + C + '" stroke-dashoffset="' + (-off - gap / 2) + '" transform="rotate(-90 130 130)"/>'; off += c[k] / tot * C; });
-    var ang = -Math.PI / 2, i2; for (i2 = 0; i2 < 60; i2++) { var aa = i2 / 60 * Math.PI * 2, r0 = 118, r1 = i2 % 5 ? 121 : 125; html += '<line class="tick" x1="' + (130 + Math.cos(aa) * r0).toFixed(1) + '" y1="' + (130 + Math.sin(aa) * r0).toFixed(1) + '" x2="' + (130 + Math.cos(aa) * r1).toFixed(1) + '" y2="' + (130 + Math.sin(aa) * r1).toFixed(1) + '"/>'; }
-    html += '<path class="scan" d="M130 8 A122 122 0 0 1 216 44"/>';
-    ang = -Math.PI / 2; ST_KEYS.forEach(function (k) { if (!c[k]) return; var span = c[k] / tot * Math.PI * 2, mid = ang + span / 2; ang += span; var bx = 130 + Math.cos(mid) * 71, by = 130 + Math.sin(mid) * 71; html += '<g class="badge"><circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="10" stroke="' + ST[k].c + '"/><text x="' + bx.toFixed(1) + '" y="' + (by + 4).toFixed(1) + '">' + c[k] + "</text></g>"; });
-    html += '<text x="130" y="128" font-size="40" font-weight="900">' + a.length + '</text><text x="130" y="152" font-size="14" font-weight="700" style="fill:var(--mut)">طلب' + (S.focus >= 0 ? " · مُصفّى" : "") + "</text>";
-    svg.innerHTML = html;
+    var a = focusOrders(win(S.p)), c = counts(a), tot = a.length || 1, Rr = 94, C = 2 * Math.PI * Rr, off = 0, gap = 5, segs = "", i2;
+    ST_KEYS.forEach(function (k) { var len = Math.max(0, c[k] / tot * C - gap); segs += '<circle class="seg-p' + (S.st && S.st !== k ? " dim" : "") + (S.st === k ? " hot" : "") + '" data-k="' + k + '" cx="130" cy="130" r="' + Rr + '" stroke="' + ST[k].c + '" style="color:' + ST[k].c + '" stroke-dasharray="' + len + " " + C + '" stroke-dashoffset="' + (-off - gap / 2) + '" transform="rotate(-90 130 130)"/>'; off += c[k] / tot * C; });
+    var flat = ""; ST_KEYS.forEach(function (k, ix) { var o2 = 0, q; for (q = 0; q < ix; q++) o2 += c[ST_KEYS[q]] / tot * C; flat += '<circle cx="130" cy="130" r="' + Rr + '" stroke="' + ST[k].c + '" stroke-dasharray="' + Math.max(0, c[k] / tot * C - gap) + " " + C + '" stroke-dashoffset="' + (-o2 - gap / 2) + '" transform="rotate(-90 130 130)"/>'; });
+    var ticks = ""; for (i2 = 0; i2 < 60; i2++) { var aa = i2 / 60 * Math.PI * 2, r0 = 118, r1 = i2 % 5 ? 121 : 126; ticks += '<line class="tick" x1="' + (130 + Math.cos(aa) * r0).toFixed(1) + '" y1="' + (130 + Math.sin(aa) * r0).toFixed(1) + '" x2="' + (130 + Math.cos(aa) * r1).toFixed(1) + '" y2="' + (130 + Math.sin(aa) * r1).toFixed(1) + '"/>'; }
+    $("#radial").innerHTML = '<circle class="ring-t" cx="130" cy="130" r="' + (Rr + 14) + '"/><circle class="ring-t" cx="130" cy="130" r="' + (Rr - 14) + '"/>' + segs + ticks + '<path class="scan" d="M130 6 A124 124 0 0 1 218 42"/>';
+    /* سُمك الحلقة: طبقات مكدّسة على محور Z */
+    var st = "", L; for (L = 1; L <= 7; L++) st += '<svg viewBox="0 0 260 260" style="transform:translateZ(-' + L * 2.6 + 'px)">' + flat + "</svg>"; $("#rg-stack").innerHTML = st;
+    $("#rg-c").innerHTML = "<b>" + a.length + "</b><span>طلب" + (S.focus >= 0 ? " · مُصفّى" : "") + "</span>";
     $("#rad-leg").innerHTML = ST_KEYS.map(function (k) { return '<li data-k="' + k + '" class="' + (S.st === k ? "on" : "") + '" style="--c:' + ST[k].c + '"><i></i>' + ST[k].l + "<b>" + c[k] + "</b></li>"; }).join("");
+    placeBadges(c, tot);
   }
+  /* شارات الأعداد تبقى قائمة (غير مائلة): تُسقَط يدوياً على إهليلج الحلقة المائلة */
+  function placeBadges(c, tot) {
+    requestAnimationFrame(function () {
+      var rg = $("#ring3d"), body = $(".rad-body"); if (!rg || !body) return; var b = body.getBoundingClientRect(), r = rg.getBoundingClientRect(), cx = r.left - b.left + r.width / 2, cy = r.top - b.top + r.height / 2, rx = r.width / 2 * (94 / 130), ry = rx * Math.cos(46 * Math.PI / 180) * .98, ang = -Math.PI / 2, h = "";
+      ST_KEYS.forEach(function (k) { if (!c[k]) return; var span = c[k] / tot * Math.PI * 2, mid = ang + span / 2; ang += span; h += '<i class="rg-badge" style="left:' + (cx + Math.cos(mid) * rx).toFixed(1) + "px;top:" + (cy + Math.sin(mid) * ry - 6).toFixed(1) + "px;--c:" + ST[k].c + '">' + c[k] + "</i>"; });
+      $("#rg-badges").innerHTML = h + '<i class="rg-floor"></i>';
+    });
+  }
+  window.addEventListener("resize", function () { if (S.p) renderRadial(); });
+  function renderTimeline() {
+    var cur = series(S.p, false, S.m), lb = labels(S.p), mx = Math.max.apply(null, cur) || 1;
+    $("#tl").innerHTML = cur.map(function (v, i) { return '<button type="button" data-ti="' + i + '" class="' + (S.focus === i ? "on" : "") + '" title="' + lb[i] + ": " + fmt(v) + '" aria-label="' + lb[i] + '"><i style="height:' + Math.max(8, v / mx * 100) + '%"></i></button>'; }).join("");
+  }
+  $("#tl").addEventListener("click", function (e) { var b = e.target.closest("button[data-ti]"); if (!b) return; var i = Number(b.dataset.ti); S.focus = S.focus === i ? -1 : i; renderFocus(); renderCenter(); renderDeck(); });
   function renderFunnel() {
     var m = metrics(S.p), f = funnelData(m), mx = f[0][1] || 1;
     $("#conv-sub").textContent = "التحويل " + m.conv + "% · تقدير تجريبي";
@@ -161,14 +178,14 @@
     for (i = 1; i < f.length; i++) { var d = 1 - f[i][1] / (f[i - 1][1] || 1); if (d > wd) { wd = d; worst = i; } }
     out.push({ i: "funnel", t: "أكبر تسرّب عند «" + f[worst][0] + "» (" + Math.round(wd * 100) + "%)", b: "حلّل", fn: function () { openAI("حلّل التحويل"); } });
     out.push({ i: "trend", t: "الإيراد " + (m.revD >= 0 ? "أعلى" : "أقل") + " بـ" + Math.abs(m.revD) + "% عن الفترة السابقة", b: "عرض", fn: function () { S.kp = "rev"; openWs("analytics"); } });
-    return out.slice(0, 4);
+    return out.slice(0, 3);
   }
   var SUG = [];
   function renderAIM() {
     SUG = suggestions(); var pend = win("month").filter(function (o) { return o.st === "pending"; }).length, m = metrics(S.p);
     $("#sugg").innerHTML = SUG.map(function (s, i) { return '<li data-ix="' + i + '" tabindex="0" role="button">' + icon(s.i) + "<span>" + s.t + "</span><em>" + s.b + "</em></li>"; }).join("");
     $("#orbit").innerHTML = '<li>طلبات <b>' + m.orders + "</b></li><li>تنبيه مخزون <b>" + lowStock().length + "</b></li><li>تحويل <b>" + m.conv + "%</b></li><li>معلّقة <b>" + pend + "</b></li>";
-    core.setLoad(.3 + Math.min(.7, pend / 10));
+    core.setLoad(.3 + Math.min(.7, pend / 10)); core.setWarn(lowStock().length > 1 || pend > 5);
   }
   $("#sugg").addEventListener("click", function (e) { var li = e.target.closest("li"); if (li) SUG[Number(li.dataset.ix)].fn(); });
   $("#sugg").addEventListener("keydown", function (e) { if (String(e.key || "") === "Enter") { var li = e.target.closest("li"); if (li) li.click(); } });
@@ -206,7 +223,7 @@
 
   function renderFocus() { var c = $("#focus-chip"); if (S.focus < 0) { c.hidden = true; return; } c.hidden = false; c.innerHTML = "تصفية: " + labels(S.p)[S.focus] + ' <button type="button" aria-label="إلغاء التصفية">✕</button>'; }
   $("#focus-chip").addEventListener("click", function () { S.focus = -1; renderFocus(); renderCenter(); renderDeck(); });
-  function renderCenter() { renderChart(); renderRadial(); renderFunnel(); renderAIM(); chart.setFocus(S.focus); }
+  function renderCenter() { renderChart(); renderTimeline(); renderRadial(); renderFunnel(); renderAIM(); chart.setFocus(S.focus); }
   function refresh() { renderNav(); renderIntel(); renderCenter(); renderDeck(); renderBell(); if (S.view) renderWs(); }
   $("#per").addEventListener("click", function (e) { var b = e.target.closest("button[data-p]"); if (!b) return; S.p = b.dataset.p; S.focus = -1; $$("#per button").forEach(function (x) { var on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-selected", on); }); renderFocus(); refresh(); });
   $("#seg-metric").addEventListener("click", function (e) { var b = e.target.closest("button[data-m]"); if (!b) return; S.m = b.dataset.m; $$("#seg-metric button").forEach(function (x) { x.classList.toggle("on", x === b); }); renderChart(); });
@@ -309,6 +326,8 @@
   /* بارالاكس خفيف لخلفية البيئة */
   if (!REDUCED) window.addEventListener("pointermove", function (e) { document.documentElement.style.setProperty("--mx", ((e.clientX / innerWidth - .5) * 2).toFixed(3)); document.documentElement.style.setProperty("--my", ((e.clientY / innerHeight - .5) * 2).toFixed(3)); });
   (function dust() { var cv = $("#dust"), cx = cv.getContext("2d"), w, h, ps = [], raf = 0, last = 0, dpr = Math.min(2, devicePixelRatio || 1); function size() { w = cv.clientWidth; h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0); var n = Math.round(Math.min(60, w * h / 30000)), r = rng(3), i; ps = []; for (i = 0; i < n; i++) ps.push({ x: r() * w, y: r() * h, vy: -.06 - r() * .18, r: .5 + r() * 1.2, a: .12 + r() * .35, c: r() > .5 ? "220,255,31" : "43,228,255" }); } function draw(t) { raf = requestAnimationFrame(draw); if (t - last < 40) return; last = t; cx.clearRect(0, 0, w, h); ps.forEach(function (p) { p.y += p.vy; if (p.y < -3) { p.y = h + 3; p.x = Math.random() * w; } cx.fillStyle = "rgba(" + p.c + "," + p.a + ")"; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.283); cx.fill(); }); } size(); addEventListener("resize", size); if (!REDUCED) { raf = requestAnimationFrame(draw); document.addEventListener("visibilitychange", function () { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else if (!raf) raf = requestAnimationFrame(draw); }); } })();
+
+  (function net() { var svg = $("#net"), W = 1920, H = 1100, r = rng(21), pts = [], i, h = ""; svg.setAttribute("viewBox", "0 0 " + W + " " + H); svg.setAttribute("preserveAspectRatio", "xMidYMid slice"); for (i = 0; i < 46; i++) pts.push([r() * W, r() * H]); pts.forEach(function (p, a) { pts.forEach(function (q, b) { if (b > a && Math.hypot(p[0] - q[0], p[1] - q[1]) < 230) h += '<line x1="' + p[0].toFixed(0) + '" y1="' + p[1].toFixed(0) + '" x2="' + q[0].toFixed(0) + '" y2="' + q[1].toFixed(0) + '"/>'; }); }); pts.forEach(function (p) { h += '<circle cx="' + p[0].toFixed(0) + '" cy="' + p[1].toFixed(0) + '" r="' + (1.5 + r() * 2).toFixed(1) + '"/>'; }); svg.innerHTML = h; })();
 
   /* ───────── تشغيل ───────── */
   renderHealth(); renderNav(); renderIntel(); renderCenter(); renderDeck(); renderBell(); core.start(); chart.start(); paintIcons(document);

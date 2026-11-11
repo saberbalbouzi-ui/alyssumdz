@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="os.css">
 </head>
 <body>
-<div class="env" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="gridfloor"></i><svg class="hudring" viewBox="0 0 1000 1000" aria-hidden="true"><g class="r1"><circle cx="500" cy="500" r="470"/><circle cx="500" cy="500" r="380" stroke-dasharray="2 14"/></g><g class="r2"><circle cx="500" cy="500" r="300"/><circle cx="500" cy="500" r="232" stroke-dasharray="40 10 6 10"/></g><g class="ticks"></g></svg><canvas id="dust"></canvas></div>
+<div class="env" aria-hidden="true"><i class="glow g1"></i><i class="glow g2"></i><i class="gridfloor"></i><svg class="net" id="net" aria-hidden="true"></svg><i class="bokeh b1"></i><i class="bokeh b2"></i><i class="bokeh b3"></i><svg class="hudring" viewBox="0 0 1000 1000" aria-hidden="true"><g class="r1"><circle cx="500" cy="500" r="470"/><circle cx="500" cy="500" r="380" stroke-dasharray="2 14"/></g><g class="r2"><circle cx="500" cy="500" r="300"/><circle cx="500" cy="500" r="232" stroke-dasharray="40 10 6 10"/></g><g class="ticks"></g></svg><canvas id="dust"></canvas></div>
 
 <div class="os" id="os">
 
@@ -50,26 +50,27 @@
       <div class="focus-chip" id="focus-chip" hidden></div>
     </div>
 
-    <section class="pn chart" id="pn-chart" aria-label="منحنى المبيعات">
+    <section class="pn chart hero lit" id="pn-chart" aria-label="منحنى المبيعات">
       <header class="ph"><h2>المبيعات عبر الزمن</h2><div class="seg" role="tablist" id="seg-metric"><button type="button" class="on" data-m="sales">الإيراد</button><button type="button" data-m="orders">الطلبات</button></div><button type="button" class="xp" data-xp="analytics" aria-label="توسيع"><span data-i="expand"></span></button></header>
       <div class="chart-ins" id="chart-ins"></div><div class="cv-wrap" id="cv-wrap"><canvas id="sales-cv"></canvas><div class="cv-tip" id="cv-tip" hidden></div></div>
+      <div class="tl" id="tl" role="group" aria-label="خط زمني تفاعلي"></div>
       <div class="legend-inline" id="cv-legend"><span><i style="--c:#dcff1f"></i>الفترة الحالية</span><span><i style="--c:#a58bff"></i>الفترة السابقة</span><span><i class="dash" style="--c:#27e6ff"></i>توقّع تجريبي</span></div>
     </section>
 
-    <section class="pn radial" id="pn-radial" aria-label="تحليل الطلبات">
+    <section class="pn radial free" id="pn-radial" aria-label="تحليل الطلبات">
       <header class="ph"><h2>مسار الطلبات</h2><button type="button" class="xp" data-xp="orders" aria-label="توسيع"><span data-i="expand"></span></button></header>
-      <div class="rad-body"><svg id="radial" viewBox="0 0 260 260" role="img" aria-label="توزيع الطلبات حسب الحالة"></svg><ul class="rad-leg" id="rad-leg"></ul></div>
+      <div class="rad-body"><div class="ring3d" id="ring3d"><div class="rg-stack" id="rg-stack" aria-hidden="true"></div><svg id="radial" viewBox="0 0 260 260" role="img" aria-label="توزيع الطلبات حسب الحالة"></svg></div><div class="rg-c" id="rg-c" aria-hidden="true"></div><div id="rg-badges"></div><ul class="rad-leg" id="rad-leg"></ul></div>
     </section>
 
-    <section class="pn funnel" id="pn-funnel" aria-label="قمع التحويل">
+    <section class="pn funnel smoke lit" id="pn-funnel" aria-label="قمع التحويل">
       <header class="ph"><h2>قمع التحويل</h2><span class="sub" id="conv-sub">—</span></header>
       <div class="fn" id="fn"></div>
     </section>
 
-    <section class="pn aim" id="pn-ai" aria-label="ذكاء المتجر">
+    <section class="pn aim violet lit" id="pn-ai" aria-label="ذكاء المتجر">
       <header class="ph"><h2>ذكاء المتجر</h2><span class="live"><i></i>نشط</span></header>
       <div class="aim-body">
-        <div class="core-w"><canvas id="aicore" width="170" height="170"></canvas><ul class="orbit-chips" id="orbit"></ul></div>
+        <div class="core-w"><canvas id="aicore" width="220" height="220"></canvas><ul class="orbit-chips" id="orbit"></ul></div>
         <div class="aim-side"><div class="sugg-h">اقتراحات سياقية</div><ul class="sugg" id="sugg"></ul><button type="button" class="ask-line" id="ask-open"><span data-i="chat"></span>اسأل المساعد عن متجرك…</button></div>
       </div>
     </section>
