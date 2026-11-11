@@ -236,7 +236,7 @@ hero = [H("حجز موعد الرقية الشرعية", 42, 28, NAVY, tag="h1")
 secs = [SEC([COL(hero)], "", pad=(60, 0, 14, 0), padm=(36, 0, 10, 0), cid="top"),
         SEC([COL([W("html", code="<style>%s</style>%s<script>%s</script>" % (CSS_APP, HTML_APP, JS_APP))])], "", pad=(6, 0, 60, 0), padm=(4, 14, 40, 14), cw=800, cid="booking")]
 page = {"v": 1, "title": "حجز موعد الرقية الشرعية — أليسوم", "slug": "ruqya-booking",
-        "desc": "احجز موعد الرقية الشرعية ليوم السبت: جلسة فردية أو زوج وزوجة أو أبناء أو عائلة، مع عرض السعر قبل التأكيد.",
+        "desc": "احجز موعد الرقية الشرعية ليوم السبت: جلسة فردية أو زوج وزوجة أو أبناء أو عائلة، مع اختيار الفترة صباحاً أو بعد الظهر.",
         "bg": "transparent", "ff": "Cairo", "header": True, "footer": True, "css": CSS_PAGE, "sections": secs,
         "seoTitle": "حجز موعد الرقية الشرعية", "kw": "الرقية الشرعية, حجز موعد, أليسوم", "cover": ""}
 json.dump(page, open(os.path.join(ROOT, "assets/pages/ruqya-booking.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

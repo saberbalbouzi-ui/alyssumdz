@@ -19,7 +19,7 @@ const AdminRuqya = (() => {
       S.rows = await call("ruqya_bookings?select=*&order=day.asc,slot.asc&limit=500");
       try { S.blocks = await call("ruqya_blocks?select=phone,reason&limit=5000"); } catch (_) { S.blocks = []; }
       try { S.warn = await call("ruqya_warnings?select=id,phone,day,note,created_at&order=id.desc&limit=5000"); } catch (_) { S.warn = []; }
-      const k = await call("admin_kv?select=value&key=eq.ruqya"); S.cfg = (k && k[0] && k[0].value) || {}; S.cap = Math.max(1, Number(S.cfg.cap) || 1); S.max = Math.max(1, Number(k && k[0] && k[0].value && k[0].value.maxday) || 15);
+      const k = await call("admin_kv?select=value&key=eq.ruqya"); S.cfg = (k && k[0] && k[0].value) || {}; S.cap = Math.max(1, Number(S.cfg.cap) || 1); S.max = Math.max(1, Number(k && k[0] && k[0].value && k[0].value.maxday) || 15); S.pcap = Math.max(1, Number(S.cfg.pcap) || 5);
     } catch (e) { S.err = e.message; }
   }
   const today = () => new Date(Date.now() + 36e5).toISOString().slice(0, 10);
@@ -156,7 +156,7 @@ const AdminRuqya = (() => {
     let h = '<div class="card" style="padding:16px"><h2 style="margin:0 0 6px">مواعيد الرقية الشرعية</h2><div class="hint">الحجوزات القادمة من صفحة الحجز العامة. اضغط «تأكيد» ثم راسل صاحب الحجز بواتساب.</div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0"><input id="rq-q" type="search" placeholder="🔍 ابحث بالاسم أو رقم الهاتف في كل السجل" value="' + esc(S.q) + '" style="flex:1;min-width:220px"><button class="btn gray" data-rq="cfg">⚙️ الإعدادات والأسعار والمنتجات</button><button class="btn gray" data-rq="imp"' + (S.busy ? ' disabled' : '') + '>📥 استيراد من تقويم Google</button><input type="file" id="rq-file" accept=".ics,.zip" class="hidden"></div>' + (S.msg ? '<div class="hint" style="margin:6px 0">' + esc(S.msg) + '</div>' : '') + (S.found ? '<div class="hint" style="margin:6px 0">نتائج البحث: ' + S.found.length + (S.found.length >= 300 ? ' (أول 300)' : '') + '</div>' : '') +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">' + f("up", "القادمة (" + up.length + ")") + f("pending", "بانتظار التأكيد (" + pend + ")") + f("past", "السابقة") + f("all", "الكل") +
-      '<span style="flex:1"></span><label style="display:flex;align-items:center;gap:6px;font-weight:700">الحجوزات في الساعة الواحدة <input type="number" id="rq-cap" min="1" max="20" value="' + S.cap + '" style="width:70px"></label><label style="display:flex;align-items:center;gap:6px;font-weight:700">أقصى جلسات في السبت <input type="number" id="rq-max" min="1" max="60" value="' + S.max + '" style="width:70px"></label><button class="btn" data-rq="cap">حفظ</button></div>';
+      '<span style="flex:1"></span><label style="display:flex;align-items:center;gap:6px;font-weight:700">الحجوزات في الساعة الواحدة <input type="number" id="rq-cap" min="1" max="20" value="' + S.cap + '" style="width:70px"></label><label style="display:flex;align-items:center;gap:6px;font-weight:700">أقصى جلسات في السبت <input type="number" id="rq-max" min="1" max="60" value="' + S.max + '" style="width:70px"></label><label style="display:flex;align-items:center;gap:6px;font-weight:700">جلسات كل فترة (صباحاً / مساءً) <input type="number" id="rq-pcap" min="1" max="30" value="' + S.pcap + '" style="width:70px"></label><button class="btn" data-rq="cap">حفظ</button></div>';
     if (S.err) h += '<div class="warn" style="margin:8px 0">' + esc(S.err) + '</div>';
     if (!list.length) h += '<div class="hint">لا توجد حجوزات هنا.</div>';
     else {
@@ -223,8 +223,8 @@ const AdminRuqya = (() => {
       const v = b.getAttribute("data-v"); if (v === "cancelled" && !confirm("إلغاء هذا الحجز؟ سيتحرر الموعد.")) return;
       try { await call("ruqya_bookings?id=eq." + encodeURIComponent(b.getAttribute("data-id")), { method: "PATCH", body: JSON.stringify({ status: v }) }); await load(); draw(); } catch (er) { S.err = er.message; draw(); }
     } else if (a === "cap") {
-      const n = Math.max(1, Math.min(20, parseInt($("rq-cap").value, 10) || 1)), mx = Math.max(1, Math.min(60, parseInt($("rq-max").value, 10) || 15));
-      try { await saveCfg({ cap: n, maxday: mx }); S.cap = n; S.max = mx; S.err = ""; S.msg = "✅ حُفظ"; note("حُفظت الإعدادات", true); draw(); } catch (er) { S.err = er.message; note("تعذّر الحفظ: " + er.message, false); draw(); }
+      const n = Math.max(1, Math.min(20, parseInt($("rq-cap").value, 10) || 1)), mx = Math.max(1, Math.min(60, parseInt($("rq-max").value, 10) || 15)), pc = Math.max(1, Math.min(30, parseInt($("rq-pcap").value, 10) || 5));
+      try { await saveCfg({ cap: n, maxday: mx, pcap: pc }); S.cap = n; S.max = mx; S.pcap = pc; S.err = ""; S.msg = "✅ حُفظ"; note("حُفظت الإعدادات", true); draw(); } catch (er) { S.err = er.message; note("تعذّر الحفظ: " + er.message, false); draw(); }
     } else if (a === "cfg") { S.view = "cfg"; draw(); }
     else if (a === "cfgback") { S.view = ""; draw(); }
     else if (a === "cfgsave") {

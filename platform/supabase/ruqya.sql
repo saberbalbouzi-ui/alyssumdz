@@ -1,4 +1,4 @@
--- مواعيد الرقية الشرعية (صفحة /ruqya-booking/): السبت فقط، فترتان 09:00–12:30 و13:30–17:00.
+-- مواعيد الرقية الشرعية (صفحة /ruqya-booking/): السبت فقط، فترتان 09:00–12:30 و13:30–17:00، 5 جلسات كحد أقصى لكل فترة (pcap).
 -- الأسعار تُحسب في الخادم دائماً. البحث لا يكشف بيانات: أسماء مقنَّعة وآخر أرقام الهاتف فقط.
 -- idempotent: يمكن إعادة تشغيله.
 
@@ -34,11 +34,20 @@ create or replace function public._ruqya_slots() returns text[] language sql imm
   select array['09:00','09:30','10:00','10:30','11:00','11:30','12:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
 $$;
 
+-- سقف الجلسات في كل فترة (صباحاً / مساءً): افتراضياً 5 (admin_kv 'ruqya'.pcap)
+create or replace function public._rq_pcap() returns int
+language sql stable security definer set search_path = public as $$
+  select greatest(coalesce((select (value ->> 'pcap')::int from public.admin_kv where key = 'ruqya'), 5), 1)
+$$;
+
 -- الأماكن المحجوزة ليوم سبت: [{slot,n}] (عدّاد فقط)
 create or replace function public.ruqya_taken(p_day date) returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object('slot', s, 'n', c, 'cap', greatest(coalesce((select (value ->> 'cap')::int from public.admin_kv where key = 'ruqya'), 1), 1))), '[]'::jsonb)
-    || jsonb_build_array(jsonb_build_object('slot', '_total', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled'), 0), 'cap', greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1))) from (
+    || jsonb_build_array(
+      jsonb_build_object('slot', '_total', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled'), 0), 'cap', greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1)),
+      jsonb_build_object('slot', '_am', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled' and slot < '13:00'), 0), 'cap', public._rq_pcap()),
+      jsonb_build_object('slot', '_pm', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled' and slot >= '13:00'), 0), 'cap', public._rq_pcap())) from (
     select x.s, count(*) c from public.ruqya_bookings b
     cross join lateral unnest(public._ruqya_slots()) with ordinality as x(s, i)
     where b.day = p_day and b.status <> 'cancelled'
@@ -109,6 +118,8 @@ begin
         and array_position(v_all, v_all[v_i + v_k]) >= array_position(v_all, b.slot) and array_position(v_all, v_all[v_i + v_k]) < array_position(v_all, b.slot) + b.slots;
     if not v_ok then raise exception 'slot_taken'; end if;
   end loop;
+  -- سقف الجلسات في الفترة (5 صباحاً و5 مساءً افتراضياً)
+  if coalesce((select sum(sessions) from public.ruqya_bookings where day = v_day and status <> 'cancelled' and (slot < '13:00') = (v_slot < '13:00')), 0) + v_s > public._rq_pcap() then raise exception 'period_full'; end if;
   -- السعر لكل جلسة
   -- سقف الجلسات في اليوم (افتراضياً 15)؛ بعده يتحول التسجيل إلى السبت المقبل
   if coalesce((select sum(sessions) from public.ruqya_bookings where day = v_day and status <> 'cancelled'), 0) + v_s > greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1) then raise exception 'day_full'; end if;
@@ -323,6 +334,7 @@ begin
   return jsonb_build_object(
     'prices', jsonb_build_object('single', public._rq_price('single', 1500), 'couple', public._rq_price('couple', 2000), 'kid', public._rq_price('kid', 500), 'family', public._rq_price('family', 2000), 'pack', public._rq_price('pack', 3000)),
     'maxday', greatest(coalesce((v ->> 'maxday')::int, 15), 1),
+    'pcap', public._rq_pcap(),
     'closed', coalesce(v -> 'closed', '[]'::jsonb),
     'disabled', coalesce((v ->> 'disabled')::boolean, false),
     'msg', coalesce(v ->> 'msg', ''),
