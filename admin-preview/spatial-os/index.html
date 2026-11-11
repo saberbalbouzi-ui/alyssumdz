@@ -12,6 +12,8 @@
 <canvas id="fx" aria-hidden="true"></canvas>
 <main id="stage" aria-label="البيئة الفضائية">
   <div class="floor" aria-hidden="true"></div>
+  <button type="button" class="core" id="core" aria-label="مساعد ALYSSUM الذكي"><i></i><b>ALYSSUM</b><small>OS</small></button>
+  <div class="room" id="room" aria-hidden="true"></div>
   <div class="cam" id="cam">
     <div class="cyl-wrap" aria-hidden="true">
       <div class="disc d1"></div><div class="disc d2"></div><div class="disc d3"></div>
@@ -22,13 +24,13 @@
     </div>
     <div class="orbit" id="orbit"></div>
   </div>
-  <button type="button" class="core" id="core" aria-label="مساعد ALYSSUM الذكي"><i></i><b>ALYSSUM</b><small>OS</small></button>
 </main>
+<div id="panels-back" aria-hidden="true"></div>
 <div id="panels" aria-live="polite"></div>
 <nav class="dock" id="dock" aria-label="الأقسام (تنقل بديل)"></nav>
 <div class="hud" id="hud">
   <span><b>اسحب</b> الخلفية لتدوير الاسطوانة</span><span>اختر قسماً ← تخرج لوحته</span><span><b>ارمِ</b> اللوحة نحو الحافة لإغلاقها</span>
-  <button type="button" id="hud-reset" class="hbtn">إعادة ترتيب</button>
+  <button type="button" id="hud-orbit" class="hbtn" aria-pressed="true">المدار: يعمل</button><button type="button" id="hud-reset" class="hbtn">إعادة ترتيب</button>
 </div>
 <div class="note" role="note">معاينة تفاعلية — بيانات تجريبية، معزولة عن لوحة التحكم الحقيقية</div>
 <script src="fx.js"></script>

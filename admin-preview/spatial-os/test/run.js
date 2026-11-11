@@ -1,0 +1,154 @@
+/* اختبار تفاعلات Spatial OS (معاينة معزولة). التشغيل:
+   python3 -m http.server 8765   (من جذر المشروع)  ثم:
+   NODE_PATH=/opt/node-tools/node_modules node admin-preview/spatial-os/test/run.js [desktop|mobile|all]
+   كل سطر: PASS/FAIL + [الطريقة]. «mouse» فأرة حقيقية عبر Playwright، «cdp-touch» لمس حقيقي عبر CDP،
+   «synthetic» أحداث Pointer مُنشأة برمجياً (لا تثبت سلوك إصبع حقيقي)، «api» قراءة حالة التطبيق. */
+const { chromium } = require("playwright"); const URL = process.env.URL || "http://localhost:8765/admin-preview/spatial-os/index.html"; const only = process.argv[2] || "all";
+const R = []; let fails = 0; const ok = (n, c, m, x) => { if (!c) fails++; R.push((c ? "PASS " : "FAIL ") + "[" + m + "] " + n + (x !== undefined ? "  " + JSON.stringify(x).slice(0, 150) : "")); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function section(name, fn) { R.push("── " + name); try { await fn(); } catch (e) { fails++; R.push("FAIL [crash] " + name + ": " + String(e).split("\n")[0].slice(0, 160)); } }
+
+async function desktop(b) {
+  const c = await b.newContext({ viewport: { width: 1440, height: 900 } }), p = await c.newPage(), errs = []; p.setDefaultTimeout(6000);
+  p.on("pageerror", e => errs.push(String(e).slice(0, 160)));
+  await p.goto(URL); await p.waitForTimeout(1500);
+  const S = () => p.evaluate(() => { const o = {}; SpatialOS.panels.forEach((q, id) => { const r = q.el.getBoundingClientRect(); o[id] = { st: { ...q.st }, min: q.min, big: q.big, user: q.user, back: !!q.inBack, z: +q.el.style.zIndex, op: +q.el.style.opacity, box: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)] }; }); return { o, pa: SpatialOS.pa, orbit: SpatialOS.orbit, sel: SpatialOS.selected }; });
+  const hdr = async id => { const n = await p.evaluate(i => SpatialOS.panels.get(i).sec.name, id); return (await p.$(`.panel[aria-label="${n}"] .pn-h h3`)).boundingBox(); };
+  const settle = () => p.waitForFunction(() => !SpatialOS.tweening, null, { timeout: 15000 }).catch(() => { });
+  const drag = async (x0, y0, x1, y1, n = 10, d = 35) => { await p.mouse.move(x0, y0); await p.mouse.down(); for (let i = 1; i <= n; i++) { await p.mouse.move(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n); await p.waitForTimeout(d); } await p.mouse.up(); };
+  await p.evaluate(() => SpatialOS.dismiss("ord", "close")); await p.waitForTimeout(700);
+
+  await section("A. الاسطوانة والملاحة", async () => {
+    await p.mouse.move(700, 850); const a0 = (await S()).pa; await drag(600, 820, 900, 820, 12, 25); await p.waitForTimeout(300);
+    ok("سحب الخلفية يدوّر الاسطوانة (والمدار معها)", Math.abs((await S()).pa - a0) > 15, "mouse", [a0, (await S()).pa]);
+    const ang0 = await p.evaluate(() => SpatialOS.angle);
+    await p.keyboard.press("ArrowRight"); await p.waitForTimeout(1800); const a1 = await p.evaluate(() => ({ ang: SpatialOS.angle, sel: SpatialOS.selected }));
+    ok("سهم لوحة المفاتيح يحدّد القسم التالي ويدوّر الاسطوانة", !!a1.sel && Math.abs(a1.ang - ang0) > 5, "keyboard", a1);
+    const hl = await p.evaluate(() => { const n = document.querySelector(".node.sel"); return n && n.dataset.id; }); ok("القسم المحدَّد مظلَّل (.sel)", hl === a1.sel, "api", hl);
+    await p.waitForTimeout(1800); const front = await p.evaluate(() => { let best = null, bz = -1e9; document.querySelectorAll(".node").forEach(n => { const z = +n.style.zIndex; if (z > bz) { bz = z; best = n.dataset.id; } }); return best; });
+    ok("القسم المحدَّد مُحاذى نحو المستخدم (أقرب عقدة)", front === a1.sel, "api", [front, a1.sel, await p.evaluate(() => [SpatialOS.angle, [...document.querySelectorAll(".node")].map(n => n.dataset.id + ":" + n.style.zIndex).join(" ")])]);
+    await p.keyboard.press("Enter"); await p.waitForTimeout(1500); ok("Enter يفتح القسم المحدَّد", !!(await S()).o[a1.sel], "keyboard");
+    await p.evaluate(id => SpatialOS.dismiss(id, "close"), a1.sel); await p.waitForTimeout(800);
+    await p.evaluate(() => document.activeElement && document.activeElement.blur && document.activeElement.blur());
+    await p.keyboard.press("Tab"); const fo = await p.evaluate(() => ({ tag: document.activeElement.tagName, cls: document.activeElement.className })); ok("Tab ينقل التركيز إلى أزرار تفاعلية", /BUTTON/.test(fo.tag), "keyboard", fo);
+    await settle(); const nb = await p.evaluate(() => { const n = [...document.querySelectorAll(".node")].sort((a, b) => b.style.zIndex - a.style.zIndex)[0]; const r = n.getBoundingClientRect(); return { id: n.dataset.id, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    await p.mouse.click(nb.x, nb.y); await p.waitForTimeout(1600); const s2 = await S(); ok("نقر عقدة مدارية يحدّدها ويفتح لوحها", s2.sel === nb.id && !!s2.o[nb.id], "mouse", [s2.sel, Object.keys(s2.o)]);
+    await p.evaluate(id => SpatialOS.dismiss(id, "close"), nb.id); await p.waitForTimeout(700);
+  });
+
+  await section("B. سحب وتدوير وتحجيم اللوح", async () => {
+    await p.evaluate(() => SpatialOS.setOrbit(false)); await p.evaluate(() => SpatialOS.open("ord")); await p.waitForTimeout(1500);
+    let h = await hdr("ord"); const s0 = (await S()).o.ord.st; await drag(h.x + h.width / 2, h.y + 10, h.x + h.width / 2 - 60, h.y + 60, 10, 40); await p.waitForTimeout(500);
+    let s = (await S()).o.ord.st; ok("سحب اللوح بالفأرة يحرّكه في الفضاء", Math.hypot(s.x - s0.x, s.y - s0.y) > 30, "mouse", [s0.x, s0.y, s.x, s.y]);
+    const ry0 = s.ry, rb = await (await p.$(`.panel[aria-label="الطلبات"] .pn-rot`)).boundingBox(); await drag(rb.x + 14, rb.y + 14, rb.x + 94, rb.y + 38, 8, 35); await p.waitForTimeout(300);
+    s = (await S()).o.ord.st; ok("تدوير اللوح بمقبض ⟳ (مع حدّ ±38°)", Math.abs(s.ry - ry0) > 10 && Math.abs(s.ry) <= 38, "mouse", [ry0, s.ry, s.rx]);
+    h = await hdr("ord"); const ry1 = s.ry; await p.keyboard.down("Shift"); await drag(h.x + h.width / 2, h.y + 10, h.x + h.width / 2 - 70, h.y + 10, 8, 35); await p.keyboard.up("Shift"); await p.waitForTimeout(300);
+    s = (await S()).o.ord.st; ok("Shift+سحب الترويسة يدوّر اللوح", Math.abs(s.ry - ry1) > 8, "mouse", [ry1, s.ry]);
+    const w0 = s.w, rs = await (await p.$(`.panel[aria-label="الطلبات"] .pn-rs`)).boundingBox(); await drag(rs.x + 12, rs.y + 12, rs.x - 38, rs.y + 50, 8, 35); await p.waitForTimeout(400);
+    s = (await S()).o.ord.st; ok("تحجيم بمقبض الزاوية", s.w > w0 + 30, "mouse", [w0, s.w]);
+    h = await hdr("ord"); const sc0 = s.s; await p.mouse.move(h.x + h.width / 2, h.y + 10); for (let i = 0; i < 4; i++) { await p.mouse.wheel(0, -100); await p.waitForTimeout(40); } await p.waitForTimeout(200);
+    ok("عجلة الفأرة تكبّر اللوح", (await S()).o.ord.st.s > sc0 * 1.1, "mouse");
+    await p.evaluate(() => SpatialOS.dismiss("ord", "close")); await p.waitForTimeout(800);
+  });
+
+  await section("C. توسيع/استعادة ومحتوى اللوح الموسَّع", async () => {
+    for (const [id, nm, extra] of [["inv", "المخزون", ".tbl"], ["ord", "الطلبات", ".tbl"], ["prod", "المنتجات", ".grid3.big"], ["ana", "التحليلات", ".h4"], ["dash", "لوحة التحكم", ".h4"]]) {
+      await p.evaluate(i => SpatialOS.open(i), id); await p.waitForTimeout(1500); const before = await p.evaluate(n => document.querySelector(`.panel[aria-label="${n}"] .pn-b`).textContent.length, nm);
+      let h = await hdr(id); await p.mouse.move(h.x + h.width / 2, h.y + 10); await p.waitForTimeout(250); h = await hdr(id); await p.mouse.dblclick(h.x + h.width / 2, h.y + 10); await p.waitForTimeout(1600);
+      const m = await p.evaluate(([n, ex]) => { const e = document.querySelector(`.panel[aria-label="${n}"]`), b = e.querySelector(".pn-b"), r = b.getBoundingClientRect(); let bot = 0; [...b.children].forEach(c => { bot = Math.max(bot, c.getBoundingClientRect().bottom); }); return { len: b.textContent.length, extra: !!b.querySelector(ex), op: +e.style.opacity, back: !!e.closest("#panels-back"), fill: Math.min(1, (bot - r.top) / r.height), vis: r.height > 300 }; }, [nm, extra]);
+      ok(`توسيع «${nm}»: محتوى كامل غني (${before}→${m.len} حرفاً) + عنصر موسَّع`, m.len > before && m.extra, "mouse", m);
+      ok(`توسيع «${nm}»: معتم 100% وفي الطبقة الأمامية ويملأ ≥70% من ارتفاعه`, m.op === 1 && !m.back && m.fill >= .7, "api", [m.op, m.back, +m.fill.toFixed(2)]);
+      h = await hdr(id); await p.mouse.dblclick(h.x + h.width / 2, h.y + 10); await p.waitForTimeout(1400); const st = (await S()).o[id];
+      ok(`الاستعادة بنقر مزدوج ثانٍ («${nm}») تعيد الحجم والمحتوى المضغوط`, !st.big && (await p.evaluate(n => !document.querySelector(`.panel[aria-label="${n}"] .pn-b .tbl, .panel[aria-label="${n}"] .pn-b .grid3.big`) || n === "التحليلات" || n === "لوحة التحكم", nm)), "mouse", { big: st.big });
+      await p.evaluate(i => SpatialOS.dismiss(i, "close"), id); await p.waitForTimeout(700);
+    }
+  });
+
+  await section("D. الرمي والاستعادة وحفظ الحالة", async () => {
+    await p.evaluate(() => SpatialOS.setOrbit(false)); await p.evaluate(() => SpatialOS.open("ord")); await p.waitForTimeout(1500);
+    await p.click('.panel[aria-label="الطلبات"] [data-f="new"]'); await p.waitForTimeout(300); const rows0 = await p.evaluate(() => document.querySelectorAll('.panel[aria-label="الطلبات"] .row').length);
+    await p.waitForTimeout(1200); const h = await hdr("ord"), dir = (await S()).o.ord.st.x >= 0 ? 1 : -1, fx0 = await p.evaluate(() => FX.count());
+    await p.evaluate(() => { window.__e = []; ['pointerdown','pointerup'].forEach(n => document.addEventListener(n, e => window.__e.push(n + ':' + (e.target.className||e.target.tagName).toString().slice(0,18)), true)); }); await p.mouse.move(h.x + h.width / 2, h.y + 10); await p.mouse.down(); for (let i = 1; i <= 5; i++) { await p.mouse.move(h.x + h.width / 2 + dir * i * 90, h.y + 10 - i * 8); await p.waitForTimeout(14); } await p.mouse.up();
+    let fx = 0; for (let k = 0; k < 20; k++) { fx = Math.max(fx, await p.evaluate(() => FX.count())); await p.waitForTimeout(100); } await p.waitForTimeout(1200);
+    R.push("   dbg " + JSON.stringify(await p.evaluate(() => window.__e))); ok("الرمي نحو الحافة يُغلق اللوح بسرعة الإفلات", !(await S()).o.ord, "mouse", await p.evaluate(() => SpatialOS.lastRelease));
+    ok("تلاشٍ بجسيمات مضيئة", fx > fx0 + 20, "api", [fx0, fx]); ok("حُذف عنصر اللوح من الصفحة", await p.evaluate(() => !document.querySelector('.panel[aria-label="الطلبات"]')), "api");
+    await settle(); await p.waitForTimeout(1200); const nb = await p.evaluate(() => { const n = document.querySelector('.node[data-id="ord"]'), r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, sel: n.classList.contains("sel") }; });
+    ok("العقدة تدور لمقدمة المشهد وتُظلَّل بعد الرمي", nb.sel, "api", nb);
+    const hit = await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e && e.closest(".node") && e.closest(".node").dataset.id; }, [nb.x, nb.y]); await p.mouse.click(nb.x, nb.y); await p.waitForTimeout(1600);
+    ok("إعادة الفتح من الاسطوانة", !!(await S()).o.ord && hit === "ord", "mouse", hit);
+    ok("حالة اللوح محفوظة (فلتر «جديدة» ما زال مفعّلاً)", (await p.evaluate(() => document.querySelectorAll('.panel[aria-label="الطلبات"] .row').length)) === rows0, "api", rows0);
+    await p.evaluate(() => SpatialOS.dismiss("ord", "close")); await p.waitForTimeout(700);
+  });
+
+  await section("E. نوافذ متعددة وإدارتها", async () => {
+    await p.evaluate(() => SpatialOS.setOrbit(false)); for (const i of ["ord", "ana", "inv", "prod", "cus"]) { await p.evaluate(x => SpatialOS.open(x), i); await p.waitForTimeout(500); } await p.waitForTimeout(1200);
+    let s = await S(), ids = Object.keys(s.o).filter(k => !s.o[k].min); let ov = 0; for (let i = 0; i < ids.length; i++)for (let j = i + 1; j < ids.length; j++) { const A = s.o[ids[i]].box, B = s.o[ids[j]].box, ox = Math.min(A[0] + A[2], B[0] + B[2]) - Math.max(A[0], B[0]), oy = Math.min(A[1] + A[3], B[1] + B[3]) - Math.max(A[1], B[1]); if (ox > 0 && oy > 0) ov += ox * oy; }
+    ok("5 نوافذ مستقلة معاً بلا تراكب (تخطيط واعٍ بالتصادم)", ids.length === 5 && ov === 0, "api", { n: ids.length, overlapPx2: ov });
+    const z0 = s.o.cus.z; const hb = await hdr("ord"); await p.mouse.click(hb.x + hb.width / 2, hb.y + 10); await p.waitForTimeout(300); s = await S(); ok("النقر على لوح يُحضره للأمام (z-index أعلى)", s.o.ord.z > Math.max(...ids.filter(k => k !== "ord").map(k => s.o[k].z)) - 0, "mouse", { ord: s.o.ord.z });
+    await p.click('.panel[aria-label="التحليلات"] .pn-min'); await p.waitForTimeout(900); s = await S(); ok("تصغير لوح", s.o.ana.min, "mouse"); ok("وسم التصغير على العقدة", await p.evaluate(() => document.querySelector('.node[data-id="ana"]').classList.contains("min")), "api");
+    await p.evaluate(() => SpatialOS.open("ana")); await p.waitForTimeout(1500); s = await S(); ok("استعادة المصغَّر من الاسطوانة", !s.o.ana.min, "api");
+    await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); q.body.scrollTop = 0; }); await p.click('.panel[aria-label="الطلبات"] [data-f="done"]'); await p.waitForTimeout(300);
+    await p.click('.panel[aria-label="الطلبات"] .pn-min'); await p.waitForTimeout(900); await p.evaluate(() => SpatialOS.open("ord")); await p.waitForTimeout(1500);
+    ok("حالة اللوح محفوظة بعد التصغير والاستعادة (فلتر «مسلَّمة»)", await p.evaluate(() => [...document.querySelectorAll('.panel[aria-label="الطلبات"] .chip.on')].some(e => e.dataset.f === "done")), "api");
+    await p.evaluate(() => { SpatialOS.dismiss("ord", "close"); SpatialOS.dismiss("ana", "close"); SpatialOS.dismiss("inv", "close"); SpatialOS.dismiss("prod", "close"); SpatialOS.dismiss("cus", "close"); }); await p.waitForTimeout(900);
+  });
+
+  await section("F. المدار والتثبيت على المدار", async () => {
+    await p.evaluate(() => SpatialOS.setOrbit(true)); for (const i of ["ord", "ana", "inv", "prod"]) { await p.evaluate(x => SpatialOS.open(x), i); await p.waitForTimeout(600); } await settle(); await p.mouse.move(720, 880); await p.waitForTimeout(2500);
+    const a = await S(); await p.waitForTimeout(2200); const b2 = await S(); ok("الألواح تدور حول الاسطوانة", Object.keys(a.o).some(k => Math.abs(a.o[k].st.x - b2.o[k].st.x) > 3), "api");
+    ok("الخلفية الخلفية تحت الاسطوانة والأمامية فوقها", await p.evaluate(() => [...SpatialOS.panels.values()].every(q => (q.st.z < -250) === !!q.el.closest("#panels-back") || (q.st.z > -250 && q.st.z < -100))), "api");
+    const fr = Object.entries(b2.o).sort((x, y) => y[1].st.z - x[1].st.z)[0][0]; const nm = await p.evaluate(i => SpatialOS.panels.get(i).sec.name, fr); const hb = await (await p.$(`.panel[aria-label="${nm}"] .pn-h h3`)).boundingBox();
+    await p.mouse.move(hb.x + hb.width / 2, hb.y + 8); await p.waitForTimeout(300); const pa0 = (await S()).pa; await p.waitForTimeout(1200); ok("المؤشر فوق لوح يوقف الدوران", Math.abs((await S()).pa - pa0) < .01, "mouse");
+    { const q = await (await p.$(`.panel[aria-label="${nm}"] .pn-h h3`)).boundingBox(); await drag(q.x + q.width / 2, q.y + 8, q.x + q.width / 2 + 12, q.y + 34, 5, 40); await p.waitForTimeout(1200); ok("إفلات اللوح قرب موضعه على المدار يعيده إلى المدار (snap-to-orbit)", !(await S()).o[fr].user, "mouse"); }
+    await p.mouse.move(720, 880); await p.waitForTimeout(400);
+    const hb2 = await (await p.$(`.panel[aria-label="${nm}"] .pn-h h3`)).boundingBox(); await drag(hb2.x + hb2.width / 2, hb2.y + 8, hb2.x + hb2.width / 2 + 40, hb2.y + 160, 8, 40); await p.waitForTimeout(500);
+    let s = await S(); ok("سحب لوح بعيداً عن المدار يحرّره ويبقى حيث وُضع", s.o[fr] && s.o[fr].user, "mouse"); const fx = s.o[fr].st.x; await p.mouse.move(720, 880); await p.waitForTimeout(1800); ok("اللوح الحرّ لا يتحرك مع المدار", Math.abs((await S()).o[fr].st.x - fx) < 3, "api");
+    await p.hover(`.panel[aria-label="${nm}"] .pn-h`); await p.waitForTimeout(300); await p.click(`.panel[aria-label="${nm}"] .pn-orb`); await p.waitForTimeout(1500); ok("زر ◎ يعيد اللوح إلى المدار", !(await S()).o[fr].user, "mouse");
+    await p.evaluate(() => SpatialOS.dismiss("inv", "close")); await p.waitForTimeout(1200); const left = Object.keys((await S()).o).length; ok("إغلاق لوح يعيد توزيع البقية على المدار", left === 3, "api", left);
+    await p.evaluate(() => ["ord", "ana", "prod"].forEach(i => SpatialOS.dismiss(i, "close"))); await p.waitForTimeout(800);
+  });
+  ok("لا أخطاء صفحة (سطح المكتب)", errs.length === 0, "api", errs); await c.close();
+}
+
+async function mobile(b) {
+  const c = await b.newContext({ viewport: { width: 448, height: 900 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }), p = await c.newPage(), errs = []; p.setDefaultTimeout(6000);
+  p.on("pageerror", e => errs.push(String(e).slice(0, 160))); await p.goto(URL); await p.waitForTimeout(2200); const cdp = await c.newCDPSession(p);
+  const T = (type, pts) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: pts.map(([x, y], i) => ({ x, y, id: i })) });
+  const swipe = async (a, b2, n = 10, d = 30) => { await T("touchStart", [a]); for (let i = 1; i <= n; i++) { await T("touchMove", [[a[0] + (b2[0] - a[0]) * i / n, a[1] + (b2[1] - a[1]) * i / n]]); await p.waitForTimeout(d); } await T("touchEnd", []); };
+  const S = () => p.evaluate(() => { const o = {}; SpatialOS.panels.forEach((q, id) => { o[id] = { ...q.st, min: q.min, big: q.big }; }); return { o, ang: SpatialOS.angle }; });
+  const hdr = async n => (await p.$(`.panel[aria-label="${n}"] .pn-h h3`)).boundingBox();
+  const dtap = n => p.evaluate(async nm => { const h = document.querySelector(`.panel[aria-label="${nm}"] .pn-h`), r = h.getBoundingClientRect(), x = r.left + r.width * .5, y = r.top + 10; for (let k = 0; k < 2; k++) { for (const t of ['pointerdown', 'pointerup']) h.dispatchEvent(new PointerEvent(t, { pointerId: 55, pointerType: 'touch', isPrimary: true, clientX: x, clientY: y, bubbles: true, cancelable: true })); await new Promise(r => setTimeout(r, 80)); } }, n);
+  await p.evaluate(() => SpatialOS.dismiss("ord", "close")); await p.waitForTimeout(700);
+  await section("G. هاتف: لمس واختلاط الإيماءات", async () => {
+    ok("الشريط السفلي بديل التنقل ظاهر", await p.evaluate(() => getComputedStyle(document.getElementById("dock")).display === "flex"), "api");
+    const a0 = (await S()).ang; await swipe([200, 330], [340, 330], 10, 25); await p.waitForTimeout(300); ok("لمس السحب على الخلفية يدوّر الاسطوانة", Math.abs((await S()).ang - a0) > 15, "cdp-touch");
+    ok("الصفحة لم تتمرّر ولم تُكبَّر أثناء تدوير الاسطوانة", await p.evaluate(() => scrollY === 0 && visualViewport.scale === 1), "api");
+    await p.click('#dock button[data-id="ana"]'); await p.waitForTimeout(1600); ok("الشريط السفلي يفتح لوحاً ويحدّد القسم", !!(await S()).o.ana && (await p.evaluate(() => SpatialOS.selected)) === "ana", "cdp-touch");
+    const h = await hdr("التحليلات"), y0 = (await S()).o.ana.y; await swipe([h.x + h.width / 2, h.y + 10], [h.x + h.width / 2, h.y - 70], 8, 30); await p.waitForTimeout(500); ok("سحب ترويسة اللوح باللمس يحرّكه", Math.abs((await S()).o.ana.y - y0) > 20, "cdp-touch", [y0, (await S()).o.ana.y]);
+    const r = await (await p.$('.panel[aria-label="التحليلات"] .pn-rot')).boundingBox(), ry0 = (await S()).o.ana.ry; await swipe([r.x + 14, r.y + 14], [r.x + 74, r.y + 30], 8, 30); await p.waitForTimeout(300); ok("تدوير اللوح باللمس بمقبض ⟳", Math.abs((await S()).o.ana.ry - ry0) > 8, "cdp-touch", [ry0, (await S()).o.ana.ry]);
+    const rs = await (await p.$('.panel[aria-label="التحليلات"] .pn-rs')).boundingBox(), w0 = (await S()).o.ana.w; await swipe([rs.x + 10, rs.y + 10], [rs.x - 50, rs.y + 40], 8, 30); await p.waitForTimeout(400); ok("تحجيم باللمس بمقبض الزاوية", (await S()).o.ana.w !== w0 || (await S()).o.ana.h > 0, "cdp-touch", [w0, (await S()).o.ana.w]);
+    const pb = await (await p.$('.panel[aria-label="التحليلات"]')).boundingBox(), cx = pb.x + pb.width / 2, cy = Math.max(120, Math.min(780, pb.y + pb.height / 2)), s0 = (await S()).o.ana.s;
+    await T("touchStart", [[cx - 30, cy], [cx + 30, cy]]); for (let i = 1; i <= 8; i++) { await T("touchMove", [[cx - 30 - i * 7, cy], [cx + 30 + i * 7, cy]]); await p.waitForTimeout(30); } await T("touchEnd", []); await p.waitForTimeout(400);
+    ok("قرص إصبعين يكبّر اللوح", (await S()).o.ana.s > s0 * 1.2, "cdp-touch", [s0, (await S()).o.ana.s]); ok("القرص لم يكبّر الصفحة", await p.evaluate(() => visualViewport.scale === 1), "api");
+    await T("touchStart", [[cx - 30 - 56, cy], [cx + 30 + 56, cy]]); for (let i = 1; i <= 8; i++) { await T("touchMove", [[cx - 86 + i * 9, cy], [cx + 86 - i * 9, cy]]); await p.waitForTimeout(30); } await T("touchEnd", []); await p.waitForTimeout(300);
+    await p.evaluate(() => { const q = SpatialOS.panels.get("ana"); Object.assign(q.st, { s: 1, x: 0, y: 150, rx: 0, ry: 0 }); q.el.classList.add("tr2"); SpatialOS.open("ana"); }); await p.waitForTimeout(900);
+    await dtap("التحليلات"); await p.waitForTimeout(900);
+    ok("لمس مزدوج على الترويسة يوسّع اللوح (أحداث Pointer مصطنعة؛ اللمس الحقيقي عبر CDP بطيء هنا فلا يُعتمد)", (await S()).o.ana.big === true, "synthetic"); ok("المحتوى الموسَّع غني (جدول/قمع)", await p.evaluate(() => !!document.querySelector('.panel[aria-label="التحليلات"] .h4')), "api");
+    await dtap("التحليلات"); await p.waitForTimeout(900); ok("لمس مزدوج ثانٍ يستعيد", (await S()).o.ana.big === false, "synthetic");
+    // scroll inside panel
+    await p.evaluate(() => { const q = SpatialOS.panels.get("ana"); q.el.classList.add("tr2"); Object.assign(q.st, { s: 1, x: 0, y: 150, rx: 0, ry: 0 }); SpatialOS.open("ana"); }); await p.waitForTimeout(900);
+    const info = await p.evaluate(() => { const b = document.querySelector('.panel[aria-label="التحليلات"] .pn-b'), r = b.getBoundingClientRect(); return { sc: b.scrollHeight > b.clientHeight + 4, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+    ok("المحتوى قابل للتمرير (شرط الاختبار)", info.sc, "api"); const a1 = (await S()).ang, st1 = (await S()).o.ana.y;
+    await swipe([info.x, info.y + 60], [info.x, info.y - 100], 10, 30); await p.waitForTimeout(500);
+    const after = await p.evaluate(() => ({ top: document.querySelector('.panel[aria-label="التحليلات"] .pn-b').scrollTop, pg: scrollY })); ok("السحب الرأسي داخل اللوح يمرّر محتواه", after.top > 20, "cdp-touch", after);
+    ok("لا تمرير للصفحة ولا تدوير للاسطوانة ولا تحريك للوح أثناء تمرير المحتوى", after.pg === 0 && Math.abs((await S()).ang - a1) < 1 && Math.abs((await S()).o.ana.y - st1) < 3, "cdp-touch");
+    const dk = await p.evaluate(() => { const d = document.getElementById("dock"); return { sw: d.scrollWidth > d.clientWidth, l: d.scrollLeft }; }); await swipe([300, 870], [80, 870], 8, 25); await p.waitForTimeout(300); ok("الشريط السفلي يتمرّر أفقياً", dk.sw && (await p.evaluate(() => Math.abs(document.getElementById("dock").scrollLeft))) !== Math.abs(dk.l), "cdp-touch", dk);
+    // throw (synthetic)
+    const hh = await hdr("التحليلات"); await p.evaluate(async ([x, y]) => { const h = document.querySelector('.panel[aria-label="التحليلات"] .pn-h'), ev = (t, px, py) => h.dispatchEvent(new PointerEvent(t, { pointerId: 77, pointerType: "touch", isPrimary: true, clientX: px, clientY: py, bubbles: true, cancelable: true })); ev("pointerdown", x, y); for (let i = 1; i <= 7; i++) { await new Promise(r => setTimeout(r, 12)); ev("pointermove", x - i * 40, y - i * 12); } ev("pointerup", x - 280, y - 84); }, [hh.x + hh.width / 2, hh.y + 10]); await p.waitForTimeout(1800);
+    ok("رمي اللوح نحو الحافة يغلقه (أحداث Pointer مصطنعة بنوع touch، لا إصبع حقيقي)", !(await S()).o.ana, "synthetic");
+    await p.waitForTimeout(800); await p.click('#dock button[data-id="ana"]'); await p.waitForTimeout(1600); ok("إعادة الفتح من الشريط/الاسطوانة بعد الرمي", !!(await S()).o.ana, "cdp-touch");
+  });
+  await section("H. هاتف: لا تمرير أفقي للصفحة", async () => { ok("بلا تمرير أفقي", await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "api"); });
+  ok("لا أخطاء صفحة (هاتف)", errs.length === 0, "api", errs); await c.close();
+}
+(async () => { const b = await chromium.launch(); if (only === "all" || only === "desktop") await desktop(b); if (only === "all" || only === "mobile") await mobile(b); await b.close(); console.log(R.join("\n")); console.log(fails ? "\nFAILED: " + fails : "\nALL PASSED (" + R.filter(l => l.startsWith("PASS")).length + ")"); process.exit(fails ? 1 : 0); })();
