@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>ALYSSUM — نظام فضائي (معاينة تفاعلية)</title>
+<link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="spatial.css">
+</head>
+<body>
+<canvas id="fx" aria-hidden="true"></canvas>
+<main id="stage" aria-label="البيئة الفضائية">
+  <div class="floor" aria-hidden="true"></div>
+  <div class="cam" id="cam">
+    <div class="cyl-wrap" aria-hidden="true">
+      <div class="disc d1"></div><div class="disc d2"></div><div class="disc d3"></div>
+      <div class="orbitpath"></div>
+      <div class="beam b1"></div><div class="beam b2"></div>
+      <div class="cyl inner" id="cyl-in"></div>
+      <div class="cyl" id="cyl"></div>
+    </div>
+    <div class="orbit" id="orbit"></div>
+  </div>
+  <button type="button" class="core" id="core" aria-label="مساعد ALYSSUM الذكي"><i></i><b>ALYSSUM</b><small>OS</small></button>
+</main>
+<div id="panels" aria-live="polite"></div>
+<nav class="dock" id="dock" aria-label="الأقسام (تنقل بديل)"></nav>
+<div class="hud" id="hud">
+  <span><b>اسحب</b> الخلفية لتدوير الاسطوانة</span><span>اختر قسماً ← تخرج لوحته</span><span><b>ارمِ</b> اللوحة نحو الحافة لإغلاقها</span>
+  <button type="button" id="hud-reset" class="hbtn">إعادة ترتيب</button>
+</div>
+<div class="note" role="note">معاينة تفاعلية — بيانات تجريبية، معزولة عن لوحة التحكم الحقيقية</div>
+<script src="fx.js"></script>
+<script src="panels.js"></script>
+<script src="spatial.js"></script>
+</body>
+</html>
