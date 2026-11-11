@@ -642,3 +642,6 @@ body{font-size:16.5px;line-height:1.65}
 .pn.aim{translate:calc(var(--mx)*-10px) calc(var(--my)*-6px) 70px}
 .os{grid-template-rows:76px 1150px 440px}
 .intel{margin-bottom:34px}
+.ctx{translate:none}
+@media (max-width:1280px){.os{padding:20px 24px 60px;gap:28px}.intel{margin-bottom:0}}
+@media (max-width:820px){.os{padding:10px 10px 40px;gap:20px}.center{gap:20px}.deck{gap:20px}.os>*{translate:none!important;rotate:none!important}}
