@@ -4490,10 +4490,11 @@
         "fsc": "zones",
         "lofr": "قطعتان + الثالثة هدية 🎁",
         "fou": false,
-        "fob": false,
+        "fob": true,
         "oofl": "i",
         "oim1": "assets/img/pages/pg-1794356399993-1.webp",
-        "oim2": "assets/img/pages/pg-1794356408645-2.webp"
+        "oim2": "assets/img/pages/pg-1794356408645-2.webp",
+        "foq": false
        }
       }
      ]
