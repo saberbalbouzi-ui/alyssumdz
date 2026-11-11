@@ -21,8 +21,13 @@ async function desktop(b) {
   await section("A. الاسطوانة والملاحة", async () => {
     await p.mouse.move(700, 850); const a0 = (await S()).pa; await drag(600, 820, 900, 820, 12, 25); await p.waitForTimeout(300);
     ok("سحب الخلفية يدوّر الاسطوانة (والمدار معها)", Math.abs((await S()).pa - a0) > 15, "mouse", [a0, (await S()).pa]);
+    { const nb0 = await p.evaluate(() => { const n = [...document.querySelectorAll(".node")].sort((x, y) => y.style.zIndex - x.style.zIndex)[0], q = n.getBoundingClientRect(); return { id: n.dataset.id, x: q.left + q.width / 2, y: q.top + q.height / 2 }; }), g0 = await p.evaluate(() => SpatialOS.angle);
+      await p.mouse.move(nb0.x, nb0.y); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(nb0.x + i * 20, nb0.y); await p.waitForTimeout(30); } await p.mouse.up(); await p.waitForTimeout(500);
+      ok("السحب يدوّر الاسطوانة حتى لو بدأ فوق عقدة قسم", Math.abs((await p.evaluate(() => SpatialOS.angle)) - g0) > 15, "mouse"); ok("ولا يفتح لوح القسم بالخطأ بعد السحب", !(await S()).o[nb0.id], "mouse");
+      const co = await (await p.$("#core")).boundingBox(), g1 = await p.evaluate(() => SpatialOS.angle); await p.mouse.move(co.x + co.width / 2, co.y + co.height / 2); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(co.x + co.width / 2 - i * 20, co.y + co.height / 2); await p.waitForTimeout(30); } await p.mouse.up(); await p.waitForTimeout(500);
+      ok("السحب يدوّر الاسطوانة حتى لو بدأ فوق زر المركز (ولا يفتح المساعد)", Math.abs((await p.evaluate(() => SpatialOS.angle)) - g1) > 15 && !(await S()).o.ai, "mouse"); }
     const ang0 = await p.evaluate(() => SpatialOS.angle);
-    await p.keyboard.press("ArrowRight"); await p.waitForTimeout(1800); const a1 = await p.evaluate(() => ({ ang: SpatialOS.angle, sel: SpatialOS.selected }));
+    await p.evaluate(() => document.activeElement && document.activeElement.blur && document.activeElement.blur()); await p.keyboard.press("ArrowRight"); await p.waitForTimeout(1800); const a1 = await p.evaluate(() => ({ ang: SpatialOS.angle, sel: SpatialOS.selected }));
     ok("سهم لوحة المفاتيح يحدّد القسم التالي ويدوّر الاسطوانة", !!a1.sel && Math.abs(a1.ang - ang0) > 5, "keyboard", a1);
     const hl = await p.evaluate(() => { const n = document.querySelector(".node.sel"); return n && n.dataset.id; }); ok("القسم المحدَّد مظلَّل (.sel)", hl === a1.sel, "api", hl);
     await p.waitForTimeout(1800); const front = await p.evaluate(() => { let best = null, bz = -1e9; document.querySelectorAll(".node").forEach(n => { const z = +n.style.zIndex; if (z > bz) { bz = z; best = n.dataset.id; } }); return best; });
@@ -34,6 +39,25 @@ async function desktop(b) {
     await settle(); const nb = await p.evaluate(() => { const n = [...document.querySelectorAll(".node")].sort((a, b) => b.style.zIndex - a.style.zIndex)[0]; const r = n.getBoundingClientRect(); return { id: n.dataset.id, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     await p.mouse.click(nb.x, nb.y); await p.waitForTimeout(1600); const s2 = await S(); ok("نقر عقدة مدارية يحدّدها ويفتح لوحها", s2.sel === nb.id && !!s2.o[nb.id], "mouse", [s2.sel, Object.keys(s2.o)]);
     await p.evaluate(id => SpatialOS.dismiss(id, "close"), nb.id); await p.waitForTimeout(700);
+  });
+
+  await section("A2. بطاقات الجدران الحقيقية (الجانبان)", async () => {
+    const fl = await p.evaluate(() => { const g = s => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { w: Math.round(r.width), cx: Math.round(r.left + r.width / 2), top: Math.round(r.top), bot: Math.round(r.bottom) }; }; return { plat: g(".plat"), tiles: g(".tiles"), cyl: g(".cyl-wrap .cyl .ring:last-child"), core: g("#core") }; });
+    ok("أرضية بلاط ومنصة دائرية مضيئة تخرج منها الاسطوانة", !!fl.plat && !!fl.tiles && fl.plat.w > 500 && Math.abs(fl.plat.cx - fl.core.cx) < 40 && fl.plat.bot > fl.core.bot, "api", fl);
+    const n = await p.evaluate(() => ({ l: document.querySelectorAll(".wall.l .wcard").length, r: document.querySelectorAll(".wall.r .wcard").length, txt: [...document.querySelectorAll(".wcard")].every(c => c.querySelector(".wb").textContent.trim().length > 15) }));
+    ok("6 بطاقات على كل جانب بمحتوى فعلي لا زينة", n.l === 6 && n.r === 6 && n.txt, "api", n);
+    const bg = await p.evaluate(() => { const c = document.querySelector(".wcard"), s = getComputedStyle(c); return { bd: s.backdropFilter, a: /rgba\(.*0?\.\d+\)/.test(s.backgroundImage) }; }); ok("البطاقات شفافة (خلفية متدرّجة نصف شفافة + تمويه)", /blur/.test(bg.bd) && bg.a, "api", bg);
+    const dash = await p.evaluate(() => document.querySelector('.wcard[data-id="dash"] .wb').textContent); ok("بطاقة لوحة التحكم تعرض أرقام البيانات الفعلية (بانتظار التأكيد/الإيراد)", /بانتظار التأكيد/.test(dash) && /\d/.test(dash), "api");
+    const bb = await p.evaluate(() => { const c = document.querySelector('.wcard[data-id="inv"]'), r = c.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+    const hit = await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e && e.closest(".wcard") && e.closest(".wcard").dataset.id; }, bb); ok("بطاقة الجدار قابلة للنقر في الفضاء ثلاثي الأبعاد", !!hit, "api", hit);
+    await p.mouse.click(bb[0], bb[1]); await p.waitForTimeout(1600); const sid = hit && (await S()).o[hit]; ok("النقر على بطاقة جانبية يفتح لوح القسم الكامل", !!sid, "mouse", hit);
+    if (hit) { await p.evaluate(i => SpatialOS.dismiss(i, "close"), hit); await p.waitForTimeout(700); }
+    const g0 = await p.evaluate(() => SpatialOS.angle); const wc = await p.evaluate(() => { const c = [...document.querySelectorAll('.wall.r .wcard')].map(e => e.getBoundingClientRect()).find(r => r.left + r.width / 2 > 1000 && r.left + r.width / 2 < 1380 && r.top > 40); return [c.left + c.width / 2, c.top + c.height / 2]; });
+    await p.mouse.move(wc[0], wc[1]); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(wc[0] - i * 20, wc[1]); await p.waitForTimeout(30); } await p.mouse.up(); await p.waitForTimeout(500);
+    ok("السحب فوق بطاقة جانبية يدوّر الاسطوانة ولا يفتحها", Math.abs((await p.evaluate(() => SpatialOS.angle)) - g0) > 15 && Object.keys((await S()).o).length === 0, "mouse", [g0, await p.evaluate(() => SpatialOS.angle), Object.keys((await S()).o), wc]);
+    const p0 = await p.evaluate(() => document.querySelector('.wcard[data-id="dash"] .wb').textContent.match(/بانتظار التأكيد\s*(\d+)/)); await p.evaluate(() => { SpatialOS.setOrbit(false); SpatialOS.open("ord"); }); await p.waitForTimeout(1500);
+    await p.click('.panel[aria-label="الطلبات"] [data-ok]'); await p.waitForTimeout(500); const p1 = await p.evaluate(() => document.querySelector('.wcard[data-id="dash"] .wb').textContent.match(/بانتظار التأكيد\s*(\d+)/));
+    ok("بطاقة الجدار تتحدّث حيّةً عند تأكيد طلب في لوح الطلبات", p0 && p1 && +p1[1] === +p0[1] - 1, "mouse", [p0 && p0[1], p1 && p1[1]]); await p.evaluate(() => SpatialOS.dismiss("ord", "close")); await p.waitForTimeout(700);
   });
 
   await section("B. سحب وتدوير وتحجيم اللوح", async () => {

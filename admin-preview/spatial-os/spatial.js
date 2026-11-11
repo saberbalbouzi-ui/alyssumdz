@@ -15,8 +15,18 @@
   /* ───── القاعة: شاشات جدارية + لوحيّات أرضية + أيقونات عائمة داخل الاسطوانة ───── */
   const room = $("#room"), kinds = ["a", "b", "c", "d"];
   function wall(cls, n) { const w = document.createElement("div"); w.className = "wall " + cls; for (let i = 0; i < n; i++) { const s = document.createElement("i"); s.className = "scr " + kinds[(i * 3 + n) % 4]; s.style.setProperty("--d", (i * .7 % 6) + "s"); w.appendChild(s); } room.appendChild(w); }
-  wall("l", 6); wall("r", 6); wall("b", 16);
-  [[-520, 330, -18], [-330, 380, 12], [450, 340, 20], [300, 400, -10], [-60, 430, 4], [600, 160, 40], [-640, 150, -35]].forEach(([x, z, r]) => { const d = document.createElement("i"); d.className = "tab"; d.style.setProperty("--x", x + "px"); d.style.setProperty("--z", z + "px"); d.style.setProperty("--r", r + "deg"); room.appendChild(d); });
+  wall("b", 12);
+  /* بطاقات جانبية حقيقية شفافة: معاينة حيّة لمحتوى الأقسام الفعلي (من البيانات نفسها)، والنقر يفتح اللوح الكامل */
+  const WL = ["dash", "ana", "ord", "prod", "inv", "cus"], WR = ["store", "mkt", "ana2", "look", "ext", "set"];
+  function sidewall(cls, ids) { const w = document.createElement("div"); w.className = "wall " + cls; ids.forEach(id => { const real = id.replace(/\d+$/, ""), sec = SEC.find(s => s.id === real), d = document.createElement("div"); d.className = "wcard"; d.dataset.id = real; d.dataset.card = id; d.innerHTML = '<div class="wh">' + svg(sec.icon) + "<b>" + sec.name + '</b></div><div class="wbw"><div class="wb"></div></div>'; d.addEventListener("click", () => openSection(real)); w.appendChild(d); }); room.appendChild(w); }
+  sidewall("l", WL); sidewall("r", WR);
+  const tabSpec = [["الإيراد", () => dz(revenue()) + " دج"], ["بانتظار التأكيد", () => pend()], ["التحويل", () => "2.9%"], ["الزيارات", () => "1 085"], ["مخزون منخفض", () => D.stock.filter(s => s.q < 10).length], ["متوسط الطلب", () => "2 750"], ["الطلبات", () => D.orders.length]];
+  [[-520, 330, -18], [-330, 380, 12], [450, 340, 20], [300, 400, -10], [-60, 430, 4], [600, 160, 40], [-640, 150, -35]].forEach(([x, z, r], i) => { const d = document.createElement("i"); d.className = "tab"; d.style.setProperty("--x", x + "px"); d.style.setProperty("--z", z + "px"); d.style.setProperty("--r", r + "deg"); d.dataset.k = i; room.appendChild(d); });
+  function fillWalls() {
+    room.querySelectorAll(".wcard").forEach(d => { const sec = SEC.find(s => s.id === d.dataset.id), st = sec.st ? JSON.parse(JSON.stringify(sec.st)) : {}; if (d.dataset.card === "ana2") D.__w = 1; d.querySelector(".wb").innerHTML = sec.html({ st, big: false }); });
+    room.querySelectorAll(".tab").forEach(d => { const s = tabSpec[+d.dataset.k]; d.innerHTML = "<small>" + s[0] + "</small><b>" + s[1]() + "</b>"; });
+  }
+  fillWalls();
   const glyphs = document.createElement("div"); glyphs.className = "glyphs"; const gl = [];
   SEC.filter(s => !s.hidden).forEach((s, i) => { const g = document.createElement("div"); g.className = "glyph"; g.innerHTML = svg(s.icon); glyphs.appendChild(g); gl.push(g); }); room.appendChild(glyphs);
   /* ───── عقد الأقسام على المدار ───── */
@@ -46,8 +56,15 @@
   }
   requestAnimationFrame(frame);
   /* تدوير الاسطوانة بسحب الخلفية (فأرة/لمس) مع قصور ذاتي */
-  stage.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; tw = null; drag = { x: e.clientX, id: e.pointerId, t: performance.now(), v: 0 }; try { stage.setPointerCapture(e.pointerId); } catch (_) { } stage.classList.add("grab"); lastInput = performance.now(); });
-  stage.addEventListener("pointermove", e => { if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x, now = performance.now(); ang += dx * .35; drag.v = dx * .35 * .6 + drag.v * .4; drag.x = e.clientX; lastInput = now; });
+  /* السحب يدوّر من أي نقطة، حتى فوق عقدة قسم أو زر المركز: الضغط على زر «ينتظر» حتى يتحرك المؤشر 6px فيتحوّل إلى تدوير ويُلغى النقر؛ أما النقر العادي فيعمل كما هو */
+  let pendDrag = null, noClick = false;
+  const beginDrag = (e, x) => { tw = null; drag = { x, id: e.pointerId, t: performance.now(), v: 0 }; try { stage.setPointerCapture(e.pointerId); } catch (_) { } stage.classList.add("grab"); lastInput = performance.now(); };
+  stage.addEventListener("pointerdown", e => { if (e.target.closest("button,.wcard")) { pendDrag = { x: e.clientX, id: e.pointerId }; return; } beginDrag(e, e.clientX); });
+  stage.addEventListener("pointermove", e => {
+    if (pendDrag && e.pointerId === pendDrag.id && !drag && Math.abs(e.clientX - pendDrag.x) > 6) { beginDrag(e, pendDrag.x); noClick = true; pendDrag = null; }
+    if (!drag || e.pointerId !== drag.id) return; const dx = e.clientX - drag.x, now = performance.now(); ang += dx * .35; drag.v = dx * .35 * .6 + drag.v * .4; drag.x = e.clientX; lastInput = now; });
+  stage.addEventListener("click", e => { if (noClick) { e.stopPropagation(); e.preventDefault(); noClick = false; } }, true);
+  document.addEventListener("pointerup", () => { pendDrag = null; setTimeout(() => { noClick = false; }, 60); }, true);
   const endDrag = e => { if (!drag) return; va = clamp(drag.v, -14, 14); drag = null; stage.classList.remove("grab"); };
   stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
   /* تحديد قسم: تظليل العقدة + تدوير سلس لتقديمها نحو المستخدم */
@@ -115,7 +132,7 @@
   function sizeFor(sec) { const mw = W(), mh = H(); return isMob() ? { w: Math.min(sec.w, mw - 24), h: Math.min(sec.h, Math.round(mh * .42)) } : { w: Math.min(sec.w, mw - 60), h: Math.min(sec.h, mh - 120) }; }
   function nodePos(id) { const n = id === "ai" ? core : nodes.get(id); if (!n) return { x: 0, y: 0 }; const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2 - W() / 2, y: r.top + r.height / 2 - H() / 2 }; }
   function render(p, keep) { const b = p.body, top = b.scrollTop; b.innerHTML = p.sec.html(p); if (keep !== false) b.scrollTop = top; }
-  const refreshAll = () => open.forEach(p => { if (!p.min) render(p); });
+  const refreshAll = () => { open.forEach(p => { if (!p.min) render(p); }); fillWalls(); };
   function markNodes() { nodes.forEach((n, id) => { const p = open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); dock.querySelectorAll("button").forEach(b => { const p = open.get(b.dataset.id); b.classList.toggle("open", !!p && !p.min); }); }
   function pulse(id) { const n = nodes.get(id); if (n) { n.classList.remove("hot"); void n.offsetWidth; n.classList.add("hot"); } core.classList.remove("pulse"); void core.offsetWidth; core.classList.add("pulse"); }
 
@@ -172,7 +189,7 @@
   }
   function throwAway(p, vx, vy) {
     hov = 0; remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1;
-    const step = t => { const dt = Math.min(40, t - last); last = t; p.st.x += vx * dt * 1.15 * k * 1.4 / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.opacity = Math.max(0, op).toFixed(2); apply(p);
+    const step = t => { const dt = Math.min(250, t - last); last = t; p.st.x += vx * dt * 1.15 * k * 1.4 / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.opacity = Math.max(0, op).toFixed(2); apply(p);
       if (!burst && op < .55) { burst = true; const r = p.el.getBoundingClientRect(); FX.dissolve(r, null); }
       if (op > 0) requestAnimationFrame(step); else p.el.remove(); };
     requestAnimationFrame(step);
