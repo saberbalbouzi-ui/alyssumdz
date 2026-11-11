@@ -4503,6 +4503,63 @@
     }
    ],
    "free": []
+  },
+  {
+   "id": "cprt9sx",
+   "set": {
+    "layout": "boxed",
+    "cw": {
+     "d": 1220
+    },
+    "pad": {
+     "d": [
+      14,
+      16,
+      14,
+      16
+     ],
+     "m": [
+      12,
+      12,
+      12,
+      12
+     ]
+    },
+    "cls": "copy-sec"
+   },
+   "cols": [
+    {
+     "id": "cprt9cl",
+     "set": {
+      "w": {
+       "d": 100,
+       "m": 100
+      }
+     },
+     "widgets": [
+      {
+       "id": "cprt9tx",
+       "type": "text",
+       "set": {
+        "html": "<p><bdi dir=\"ltr\">alyssumdz.com 2026</bdi> - كل الحقوق محفوظة</p>",
+        "fs": {
+         "d": 15,
+         "m": 13
+        },
+        "color": "#5f6f68",
+        "fw": "600",
+        "ta": {
+         "d": "center"
+        },
+        "lh": {
+         "d": 1.7
+        }
+       }
+      }
+     ]
+    }
+   ],
+   "free": []
   }
  ],
  "seoTitle": "",
