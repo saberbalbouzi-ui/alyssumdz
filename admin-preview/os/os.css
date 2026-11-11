@@ -565,3 +565,80 @@ body{font-size:16.5px;line-height:1.65}
 /* ارتفاعات: مساحة كافية لوحدة الذكاء والطبقة السفلية */
 .os{grid-template-rows:72px 1110px 390px}
 .center{grid-template-rows:48px 540px 480px}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   جولة العمق الحقيقي: بطاقات عائمة على أعماق متباعدة، وطبقات تتراجع إلى الخلف
+   وفراغات أوسع (أقل ازدحاماً). بصري فقط — لا تغيير في البنية أو الوظائف.
+   ═══════════════════════════════════════════════════════════════════════ */
+.os{perspective:1500px;perspective-origin:50% 30%;gap:46px;padding:26px 40px 70px;grid-template-columns:232px minmax(0,1fr) 360px;grid-template-rows:76px 1150px 420px}
+.center{gap:46px;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);grid-template-rows:52px 580px 480px}
+.intel{gap:34px}
+.deck{gap:46px}
+.nav .nv-foot{display:none}
+
+/* ── طبقات الخلفية المتراجعة (نفق من الألواح الشفافة خلف مساحة العمل) ── */
+.s-st1,.s-st2,.s-st3{inset:8% 17% 16% 18%;border-radius:34px;border:1px solid rgba(43,228,255,.3);background:linear-gradient(160deg,rgba(43,228,255,.07),rgba(43,228,255,.015) 60%,transparent)}
+.s-st1{translate:0 0 -160px;opacity:.9}
+.s-st2{translate:0 0 -320px;opacity:.7;border-color:rgba(165,139,255,.3)}
+.s-st3{translate:0 0 -480px;opacity:.5;border-color:rgba(220,255,31,.22)}
+.s-back{translate:0 0 -640px;opacity:.5}
+
+/* ── بطاقات عائمة: عمق Z حقيقي لكل بطاقة + مواضع تظهر الفراغ خلفها ── */
+.sysbar{translate:calc(var(--mx)*-6px) calc(var(--my)*-4px) 90px}
+.nav{translate:calc(var(--mx)*-14px) calc(var(--my)*-8px) 120px;rotate:y -12deg}
+.intel{translate:calc(var(--mx)*-18px) calc(var(--my)*-10px) 150px}
+.kp{rotate:y 12deg}
+.pn.hero{translate:calc(var(--mx)*-9px) calc(var(--my)*-5px) 70px}
+.pn.aim{translate:calc(var(--mx)*-12px) calc(var(--my)*-7px) 100px;rotate:y -4deg}
+.pn.funnel{translate:calc(var(--mx)*-3px) calc(var(--my)*-2px) -70px}
+.pn.radial{translate:calc(var(--mx)*-2px) calc(var(--my)*-1px) -130px}
+.deck{translate:calc(var(--mx)*-6px) calc(var(--my)*-4px) 30px;rotate:x 4deg}
+.dk.feed{translate:0 0 -50px}
+.center{translate:none}
+.ctx{translate:0 0 40px}
+
+/* ── طبقات خلف كل بطاقة: ألواح مكدّسة بإزاحة قطرية + ظل ساقط عميق (بلا clip-path) ── */
+.pn,.dk,.kp,.nav{clip-path:none!important}
+.pn.hero,.pn.funnel,.pn.violet,.dk.orders,.dk.stock{border-radius:22px 40px 22px 40px}
+.pn.smoke{border-radius:14px 44px 14px 14px}
+.kp:nth-child(1){border-radius:14px 40px 14px 14px}.kp:nth-child(2){border-radius:40px 14px 14px 14px;margin-inline-start:28px}.kp:nth-child(3){border-radius:14px 14px 40px 14px;margin-inline-start:6px}.kp:nth-child(4){border-radius:14px 14px 14px 40px;margin-inline-start:34px}
+.pn.hero{box-shadow:0 1px 0 rgba(255,255,255,.3) inset,0 -16px 40px rgba(220,255,31,.07) inset,-16px 18px 0 -4px rgba(34,96,84,.34),-32px 36px 0 -10px rgba(26,74,72,.24),-46px 54px 0 -18px rgba(20,56,60,.16),0 -10px 36px rgba(220,255,31,.2),0 60px 90px -20px rgba(0,0,0,.7)}
+.pn.funnel{box-shadow:0 1px 0 rgba(255,255,255,.18) inset,-14px 16px 0 -4px rgba(30,70,80,.3),-28px 32px 0 -10px rgba(24,56,66,.2),0 50px 80px -20px rgba(0,0,0,.65)}
+.pn.violet{box-shadow:0 1px 0 rgba(255,255,255,.34) inset,-14px 18px 0 -4px rgba(70,54,150,.34),-28px 36px 0 -10px rgba(54,42,120,.24),-42px 54px 0 -18px rgba(40,32,96,.16),0 0 46px rgba(165,139,255,.18),0 56px 86px -20px rgba(0,0,0,.7)}
+.dk.orders{box-shadow:0 1px 0 rgba(255,255,255,.24) inset,-12px 14px 0 -4px rgba(24,76,92,.32),-24px 28px 0 -10px rgba(18,58,72,.22),0 -8px 28px rgba(43,228,255,.14),0 44px 70px -18px rgba(0,0,0,.65)}
+.dk.stock{box-shadow:0 1px 0 rgba(255,255,255,.24) inset,-12px 14px 0 -4px rgba(20,84,66,.32),-24px 28px 0 -10px rgba(16,64,52,.22),0 8px 30px rgba(44,240,160,.12),0 44px 70px -18px rgba(0,0,0,.65)}
+.kp{box-shadow:0 1px 0 rgba(255,255,255,.22) inset,-14px 16px 0 -4px rgba(28,74,86,.34),-28px 32px 0 -10px rgba(22,58,68,.22),-24px 44px 60px -10px rgba(0,0,0,.6)}
+.kp.sel{box-shadow:0 0 0 1px var(--k) inset,0 0 26px color-mix(in srgb,var(--k) 28%,transparent),-14px 16px 0 -4px rgba(28,74,86,.34),-24px 44px 60px -10px rgba(0,0,0,.6)}
+.nav{box-shadow:0 1px 0 rgba(255,255,255,.26) inset,12px 14px 0 -4px rgba(24,70,80,.34),24px 28px 0 -10px rgba(18,54,64,.22),30px 46px 60px -10px rgba(0,0,0,.6)}
+
+/* عمق جوّي: الأبعد أخفت قليلاً والأقرب أنصع */
+.pn.radial,.pn.funnel{filter:saturate(.9) brightness(.94)}
+.pn.hero,.pn.violet,.kp,.nav{filter:none}
+
+/* ── تخفيف الازدحام: كل بطاقة تُظهر الأهم وتبقى البقية بالتمرير/التوسيع ── */
+.legend-inline{padding-bottom:18px}
+.chart-ins{padding-top:10px}
+.tl{height:46px;padding-bottom:6px}
+.sugg li:nth-child(n+3){display:none}
+.aim-body{gap:18px}
+.dk-b{padding:0 24px 22px}
+.od{padding:.75rem .8rem}
+.fd{padding:.8rem .6rem}
+.sk{padding:.7rem .8rem}
+.kp{padding:24px 30px 18px}
+.kp-sp{opacity:.9}
+.ph{padding:26px 32px 10px}
+.rad-leg li{padding:.5rem .9rem}
+.fn{padding:10px 30px 26px}
+@media (max-width:1280px){.os{perspective:none}.s-st1,.s-st2,.s-st3{display:none}.os>*{translate:none!important;rotate:none!important}.kp{rotate:none}}
+
+/* ضبط: إزاحات Z أخفّ للأطراف كي لا تتجاوز الحواف ولا تتراكب مع الطبقة السفلية */
+.os{padding:26px 64px 80px}
+.sysbar{translate:calc(var(--mx)*-6px) calc(var(--my)*-4px) 40px}
+.nav{translate:calc(var(--mx)*-12px) calc(var(--my)*-8px) 60px;rotate:y -10deg}
+.intel{translate:calc(var(--mx)*-14px) calc(var(--my)*-8px) 70px}
+.kp{rotate:y 10deg}
+.pn.hero{translate:calc(var(--mx)*-9px) calc(var(--my)*-5px) 50px}
+.pn.aim{translate:calc(var(--mx)*-10px) calc(var(--my)*-6px) 70px}
+.os{grid-template-rows:76px 1150px 440px}
+.intel{margin-bottom:34px}
