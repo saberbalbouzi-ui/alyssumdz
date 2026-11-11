@@ -35,7 +35,9 @@ const PB = (() => {
       if (d) css[dev].push(`${sel}{${d}}`);
     });
   }
-  const px = p => v => num(v) == null ? "" : `${p}:${U(num(v))};`;
+  /* حد أدنى 8px لحجم الخط المُحتسَب: متصفحات كثيرة (ماسنجر/WebView ومتصفحات أخرى) تفرضه على القيمة المُحتسَبة قبل أي zoom فتتضخم النصوص التي صُمّمت أصغر منه وتتراكب، بينما يعرضها المحرر وكروم كما صُمّمت. بتطبيقه في الناتج يتطابق المحرر والصفحة على كل المتصفحات (ولا أثر على أي نص ≥8px). */
+  const FSZ = n => SC ? `max(8px,calc(var(--u)*${n}))` : `${Math.max(8, n)}px`;
+  const px = p => v => num(v) == null ? "" : (p === "font-size" ? `font-size:${FSZ(num(v))};` : `${p}:${U(num(v))};`);
   const pc = p => v => num(v) == null ? "" : `${p}:${num(v)}%;`;
   const raw = p => v => `${p}:${v};`;
   const SHADOWS = { "": "", sm: "0 2px 8px rgba(0,0,0,.12)", md: "0 8px 24px rgba(0,0,0,.16)", lg: "0 18px 48px rgba(0,0,0,.22)", glow: "0 0 24px rgba(200,162,75,.6)" };
@@ -1156,8 +1158,8 @@ const PB = (() => {
       if (w.type === "text" || w.type === "heading" || w.type === "button" || w.type === "bullets") {
         const zOf = dv => dv === "d" ? (num(own(s2, "wsc", "d")) || 100) / 100 : (own(s2, "wsc", dv) !== undefined ? (num(own(s2, "wsc", dv)) || 100) / 100 : 1), zs = DEVS.map(zOf), fs = DEVS.map(dv => num(eff(s2, "fs", dv))), r2 = v => Math.round(v * 100) / 100;
         if (zs.some(z => Math.abs(z - 1) > .01) && fs.every(f => f != null && f > 0)) {
-          if (w.type === "bullets") DEVS.forEach((dv, i) => { const z = zs[i], g = num(eff(s2, "gap", dv)) || 0, m = num(eff(s2, "ms", dv)) || 18; css[dv].push(`${wsx}>*{zoom:1}${wsx} .pb-bl{font-size:${U(r2(fs[i] * z))};}${wsx} .pb-bl li{margin-bottom:${U(r2(g * z))};padding-inline-start:calc(${U(r2(m * z))}*1.9);}${wsx} .pb-bl li .pb-bi{font-size:${U(r2(m * z))};}`); });      // القائمة: كل أطوالها em/U فيُدمج المعامل في الخط والفجوة وحجم العلامة بدقة
-          else DEVS.forEach((dv, i) => css[dv].push(`${wsx}>*{zoom:1}${wsx} .pb-t.pb-t,${wsx} .pb-btn.pb-btn{font-size:${U(r2(fs[i] * zs[i]))};}`));
+          if (w.type === "bullets") DEVS.forEach((dv, i) => { const z = zs[i], g = num(eff(s2, "gap", dv)) || 0, m = num(eff(s2, "ms", dv)) || 18; css[dv].push(`${wsx}>*{zoom:1}${wsx} .pb-bl{font-size:${FSZ(r2(fs[i] * z))};}${wsx} .pb-bl li{margin-bottom:${U(r2(g * z))};padding-inline-start:calc(${U(r2(m * z))}*1.9);}${wsx} .pb-bl li .pb-bi{font-size:${FSZ(r2(m * z))};}`); });      // القائمة: كل أطوالها em/U فيُدمج المعامل في الخط والفجوة وحجم العلامة بدقة
+          else DEVS.forEach((dv, i) => css[dv].push(`${wsx}>*{zoom:1}${wsx} .pb-t.pb-t,${wsx} .pb-btn.pb-btn{font-size:${FSZ(r2(fs[i] * zs[i]))};}`));
         }
       }
       if (free) css.d.push(`${wsx}{position:absolute!important;margin:0;max-width:none}`);      // مهم: قوالب التأثيرات (لمعة…) تضع position:relative على العنصر فتُفسد الموضع الحر وتقذفه بعيداً
