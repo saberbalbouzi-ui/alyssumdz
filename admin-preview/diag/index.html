@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>فحص المتصفح</title>
+<style>
+body{margin:0;padding:16px;font:16px/1.7 Cairo,Arial,sans-serif;background:#fff;color:#111}
+h1{font-size:20px;margin:0 0 12px}
+table{width:100%;border-collapse:collapse}
+td{border-bottom:1px solid #ddd;padding:7px 4px;vertical-align:top;word-break:break-word}
+td:first-child{font-weight:700;width:46%}
+.p{position:absolute;left:-9999px;top:0;white-space:nowrap;visibility:hidden}
+small{color:#666}
+</style>
+</head>
+<body>
+<h1>فحص المتصفح — صوّر هذه الشاشة وأرسلها</h1>
+<table id="t"></table>
+<p><small>لا تُرسل هذه الصفحة أي بيانات؛ كل القيم تُحسب داخل متصفحك فقط.</small></p>
+<script>
+(function(){
+  var rows=[],d=document;
+  function add(k,v){rows.push([k,String(v)]);}
+  function box(px,fam){var s=d.createElement("span");s.className="p";s.style.fontSize=px+"px";s.style.fontFamily=fam||"Arial,sans-serif";s.textContent="mmmmmmmmmm";d.body.appendChild(s);var r=s.getBoundingClientRect();var cs=getComputedStyle(s).fontSize;d.body.removeChild(s);return {w:r.width,h:r.height,cs:cs};}
+  add("User-Agent",navigator.userAgent);
+  add("innerWidth × innerHeight",innerWidth+" × "+innerHeight);
+  add("screen.width × height",screen.width+" × "+screen.height);
+  add("devicePixelRatio",devicePixelRatio);
+  add("visualViewport.scale",window.visualViewport?visualViewport.scale:"غير متاح");
+  add("وحدات الحاوية cqw",(window.CSS&&CSS.supports&&CSS.supports("width","1cqw"))?"مدعومة":"غير مدعومة");
+  add("zoom",(window.CSS&&CSS.supports&&CSS.supports("zoom","1.2"))?"مدعوم":"غير مدعوم");
+  var c=d.createElement("canvas").getContext("2d");c.font="100px Arial,sans-serif";var cw=c.measureText("mmmmmmmmmm").width;
+  var b100=box(100);
+  add("نسبة تكبير الخط (DOM÷canvas) — يجب 1",(b100.w/cw).toFixed(3));
+  add("عرض نص 100px في DOM / canvas",Math.round(b100.w)+" / "+Math.round(cw));
+  [4,6,8,10,12,16].forEach(function(px){var b=box(px);var ex=cw*px/100;add("خط "+px+"px: العرض الفعلي ÷ المتوقع",(b.w/ex).toFixed(2)+"  (computed "+b.cs+")");});
+  var x=d.createElement("div");x.style.cssText="position:absolute;left:-9999px;width:100px;height:100px;font-size:16px;-webkit-text-size-adjust:100%;text-size-adjust:100%";d.body.appendChild(x);
+  add("text-size-adjust",getComputedStyle(x).webkitTextSizeAdjust||getComputedStyle(x).textSizeAdjust||"—");d.body.removeChild(x);
+  var h=rows.map(function(r){return "<tr><td></td><td dir=ltr></td></tr>";}).join("");
+  var t=d.getElementById("t");t.innerHTML=h;
+  var tr=t.rows;for(var i=0;i<rows.length;i++){tr[i].cells[0].textContent=rows[i][0];tr[i].cells[1].textContent=rows[i][1];}
+})();
+</script>
+</body>
+</html>
