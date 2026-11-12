@@ -262,6 +262,7 @@ exec(open(os.path.join(HERE, "gen-templates-contact.py"), encoding="utf-8").read
 exec(open(os.path.join(HERE, "gen-templates-order.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-store.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-niche.py"), encoding="utf-8").read())
+exec(open(os.path.join(HERE, "gen-templates-wave2.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-alyssum.py"), encoding="utf-8").read())
 
 json.dump(TEMPLATES, open(os.path.join(OUT, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
