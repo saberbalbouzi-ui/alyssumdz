@@ -76,6 +76,13 @@ def cp(rel, dest=None):
 for rel in ["admin.html", "assets/css", "assets/js", "assets/data", ("platform/supabase", "supabase"), "p/_template", "assets/img/placeholder", "assets/img/stickers", "assets/img/tools", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", ".github/workflows/speed-test.yml", "scripts/speed-run.mjs", "assets/ext"]:
     cp(*rel) if isinstance(rel, tuple) else cp(rel)
 
+# مواعيد الرقية والحجز خاصة بموقع البائع فقط: لا تدخل أي حزمة عميل (لوحة/إعدادات/مساعدة/قاعدة بيانات/بيانات صفحات)
+_adm = OUT / "admin.html"; _t = _adm.read_text(encoding="utf-8")
+_t = re.sub(r"<!--RUQYA:start-->.*?<!--RUQYA:end-->\n?", "", _t, flags=re.S); _t = re.sub(r"^[ \t]*ruqya:'[^\n]*\n", "", _t, flags=re.M); _adm.write_text(_t, encoding="utf-8")
+for _f in ("assets/js/admin-ruqya.js", "assets/data/ruqya-avis.json", "supabase/ruqya.sql"): (OUT / _f).unlink(missing_ok=True)
+_hp = OUT / "assets/data/admin-help.json"; _h = json.loads(_hp.read_text(encoding="utf-8"))
+_hp.write_text(json.dumps([x for x in _h if "ruqya" not in json.dumps(x, ensure_ascii=False).lower()], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
 vals = {"SITE_NAME": a.name, "SITE_EN": a.name, "WA": a.wa, "YEAR": str(datetime.date.today().year)}
 fill = lambda t: re.sub(r"\{\{([A-Z_]+)\}\}", lambda m: vals.get(m.group(1), m.group(0)), t)
 

@@ -118,14 +118,14 @@ const AdminHome = (() => {
     });
     return `<svg viewBox="0 0 170 170" role="img" aria-label="توزيع الطلبات حسب الحالة">${out}<text x="${C}" y="${C - 2}" text-anchor="middle" style="fill:#fff;font-size:24px;font-weight:900">${num(total)}</text><text x="${C}" y="${C + 16}" text-anchor="middle" style="fill:${MUT};font-size:11px">طلب</text></svg>`;
   }
-  const hasTab = k => [...document.querySelectorAll(".nav-btn")].some(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
+  const hasTab = k => [...document.querySelectorAll(".nav-btn")].some(b => (b.getAttribute("onclick") || "").includes("'" + k + "'")), hasRuqya = () => typeof AdminRuqya !== "undefined" && hasTab("ruqya");   /* مواعيد الرقية خاصة بموقع البائع فقط */
   /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
   function quickBar(waiting) {
-    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasTab("ruqya")], ["ruqya", "مواعيد الرقية", hasTab("ruqya")], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
+    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
     return '<div class="ah-quick">' + Q.filter(q => q[2]).map(q => '<button type="button" class="ah-btn gh" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>';
   }
   function ruqyaCard() {
-    if (typeof AdminRuqya === "undefined" || !hasTab("ruqya")) return "";
+    if (!hasRuqya()) return "";
     const r = AdminRuqya.summary();
     if (!r.loaded) { AdminRuqya.warm(refreshSoft); return '<div class="ah-card" style="margin:0 0 14px"><h3>مواعيد الرقية <small>جارٍ التحميل…</small></h3></div>'; }
     if (r.err) return "";
