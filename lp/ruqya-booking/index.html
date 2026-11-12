@@ -151,7 +151,7 @@ body.pb-page{background:linear-gradient(180deg,#f7fbf3,#fff 40%,#f4f9f1);color:#
   <div class="rq-hd">أيام العمل: <b>السبت فقط</b></div>
   <div class="rq-hr"><div><small>الفترة الصباحية</small><span>من <bdi>09:00</bdi> إلى <bdi>12:30</bdi></span></div><div><small>الفترة المسائية</small><span>من <bdi>13:30</bdi> إلى <bdi>17:00</bdi></span></div></div>
   <div class="rq-hn">الحجز مسبق، وسيتم تأكيد الموعد معك.</div>
-  <div class="rq-hn rq-ad"><b>العنوان:</b> <span id="adTxt">مركز نور الشفاء، وسط مدينة حمادي، ولاية بومرداس</span> <a id="adMap" href="#" target="_blank" rel="noopener" hidden>الموقع على الخريطة</a></div>
+  <div class="rq-hn rq-ad"><b>العنوان:</b> <span id="adTxt">وسط مدينة حمادي</span></div>
  </div>
  <div id="offBox" class="rq-warn" hidden></div>
  <div style="height:14px"></div>
@@ -301,7 +301,7 @@ function renderProds(){var P=ST.prods||[],bx=$("shopBox");if(!bx)return;if(!P.le
  P.forEach(function(p){var q=ST.cart[p.slug]||0;h+='<div class="rq-prod">'+(p.img?'<img src="/'+esc(p.img)+'" alt="'+esc(p.title)+'" loading="lazy">':'')+'<b>'+esc(p.title)+'</b><p>'+esc(p.desc)+'</p><div class="rq-pp">'+fmtH(p.price)+'</div>'+(q?'<div class="rq-qty"><button type="button" data-cq="-1" data-cs="'+esc(p.slug)+'">&minus;</button><span>'+q+'</span><button type="button" data-cq="1" data-cs="'+esc(p.slug)+'">+</button></div>':'<button type="button" class="rq-btn" data-cadd="'+esc(p.slug)+'">احجز الآن</button>')+'</div>'});
  $("prods").innerHTML=h}
 function cartTotal(){var t=0;(ST.prods||[]).forEach(function(p){t+=(ST.cart[p.slug]||0)*p.price});return t}
-function loadCfg(){rpc("ruqya_config",{}).then(function(c){if(!c)return;var p=c.prices||{};PRICE={single:p.single||PRICE.single,couple:p.couple||PRICE.couple,family:p.family||PRICE.family};PACK=p.pack||PACK;KID=p.kid||KID;ST.closed=c.closed||[];ST.disabled=!!c.disabled;ST.offMsg=c.msg||"";ST.prods=c.products||[];ST.info=c.info||{};try{var _i=ST.info;if(_i.address)$("adTxt").textContent=_i.address;if(/^https:\/\//.test(_i.map||"")){$("adMap").href=_i.map;$("adMap").hidden=false}}catch(e){}
+function loadCfg(){rpc("ruqya_config",{}).then(function(c){if(!c)return;var p=c.prices||{};PRICE={single:p.single||PRICE.single,couple:p.couple||PRICE.couple,family:p.family||PRICE.family};PACK=p.pack||PACK;KID=p.kid||KID;ST.closed=c.closed||[];ST.disabled=!!c.disabled;ST.offMsg=c.msg||"";ST.prods=c.products||[];ST.info=c.info||{};try{var _i=ST.info;if(_i.address)$("adTxt").textContent=_i.address;}catch(e){}
   if(ST.disabled){$("offBox").hidden=false;$("offBox").innerHTML="<b>المواعيد متوقفة مؤقتاً</b>"+(ST.offMsg?"<div style=\"margin-top:4px\">"+esc(ST.offMsg)+"</div>":"")}
   renderProds()}).catch(function(){}).then(function(){initDays();sum()})}
 function initDays(){
