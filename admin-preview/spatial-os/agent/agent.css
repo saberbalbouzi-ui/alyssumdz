@@ -40,3 +40,14 @@ body[data-agent=thinking] .core,body[data-agent=executing] .core{box-shadow:0 0 
 body[data-agent=success] .core{box-shadow:0 0 50px rgba(44,240,160,.85)}body[data-agent=error] .core{box-shadow:0 0 50px rgba(255,107,139,.85)}body[data-agent=awaiting] .core{box-shadow:0 0 50px rgba(255,179,64,.85)}
 body[data-agent=thinking] .core i,body[data-agent=executing] .core i{animation-duration:1.4s}
 @media (prefers-reduced-motion:reduce){.ag-orb i,.ag-step .ag-si,.ag-mic.on{animation:none!important}}
+
+/* المرحلة 11: الصوت والتوسيع */
+.ag-vstat{padding:5px 10px;border-radius:10px;background:rgba(43,228,255,.10);border:1px solid rgba(43,228,255,.3);font-size:12px;line-height:1.5}.ag-vstat[data-k=error]{background:rgba(255,107,139,.14);border-color:rgba(255,107,139,.5);color:#ffd0da}.ag-vstat[data-k=warn]{background:rgba(255,179,64,.12);border-color:rgba(255,179,64,.5)}.ag-vstat[data-k=ok]{background:rgba(44,240,160,.10);border-color:rgba(44,240,160,.4)}.ag-vstat[hidden]{display:none}
+.ag-vtools{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.ag-vtools .ag-caps{font-size:10.5px;color:var(--mu)}.ag-lang{padding:3px 6px;border-radius:99px;border:1px solid rgba(170,255,240,.3);background:rgba(2,18,28,.75);color:var(--ti);font:700 11px Cairo,system-ui,sans-serif}
+.ag-mini[aria-pressed=true]{background:rgba(220,255,31,.2);border-color:rgba(220,255,31,.7)}
+.ag-mic{position:relative;--lv:0;transition:box-shadow .08s}.ag-mic.on{background:rgba(43,228,255,.3);box-shadow:0 0 0 calc(2px + var(--lv)*9px) rgba(43,228,255,.45);animation:none}.ag-mic:disabled{opacity:.4;cursor:not-allowed}.ag-mic[data-mode=processing]{opacity:.7}
+.ag-b.llm{background:rgba(165,139,255,.09);border-inline-start:3px solid var(--vi)}.ag-b.llm .ag-tag{background:rgba(165,139,255,.25);color:var(--vi)}
+/* المرحلة 11: الحوار الطويل لا يدفع حقل الإدخال/الميكروفون خارج اللوح — يمرَّر السجل وحده */
+.ag-slot{height:100%;min-height:0;display:flex;flex-direction:column}.ag-slot>.ag{flex:1;min-height:0}
+.pn-b:has(>.ag-slot){overflow:hidden}
+.ag-log{min-height:60px}

@@ -31,7 +31,7 @@ async function startStore(opts = {}) {
   /* المعاينة الفضائية داخل نفس الأصل (بلا اختبارات/تسجيلات) */
   const dst = path.join(tmp, "admin-preview", "spatial-os"); fs.mkdirSync(dst, { recursive: true });
   for (const f of fs.readdirSync(path.join(ROOT, "admin-preview", "spatial-os"))) { if (["test", "compare", "recordings"].includes(f)) continue; fs.cpSync(path.join(ROOT, "admin-preview", "spatial-os", f), path.join(dst, f), { recursive: true }); }
-  const php = spawn("php", ["-S", "127.0.0.1:" + port, "-t", tmp], { stdio: "ignore" });
+  const php = spawn("php", ["-S", "127.0.0.1:" + port, "-t", tmp], { stdio: "ignore", env: Object.assign({}, process.env, { NO_PROXY: "127.0.0.1,localhost", no_proxy: "127.0.0.1,localhost" }, opts.env || {}) });
   const stop = () => { try { php.kill(); } catch (e) { } fs.rmSync(tmp, { recursive: true, force: true }); };
   process.on("exit", stop);
   await new Promise(r => setTimeout(r, 1500));
