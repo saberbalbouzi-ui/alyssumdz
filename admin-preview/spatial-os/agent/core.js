@@ -25,6 +25,7 @@
   const redact = a => { const o = {}; Object.keys(a || {}).forEach(k => { const v = a[k]; o[k] = typeof v === "string" ? (/\d{6,}/.test(v) ? "[رقم]" : k === "q" ? "[نص:" + v.length + "]" : v.slice(0, 40)) : v; }); return o; };
 
   /* ───── مدير الصلاحيات: الخادم هو المصدر ───── */
+  const PERM_AR = { orders: "الطلبات", "orders.write": "تعديل حالة الطلبات", customers: "العملاء", analytics: "التحليلات", products: "المنتجات", finance: "المالية" };
   const AUTH = { me: null, at: 0, key: "" };
   async function authz(fresh) {
     if (!fresh && AUTH.me && Date.now() - AUTH.at < 15000) return AUTH.me;
@@ -33,7 +34,7 @@
     AUTH.me = me; AUTH.at = Date.now(); AUTH.key = key; return me;
   }
   const canDo = (me, p) => !!me && (me.admin || me.perms.includes("*") || me.perms.includes(p));
-  function allowed(me, tool) { if (!me || !me.authed) return { ok: false, code: "unauthorized", why: "الجلسة غير صالحة — سجّل الدخول" }; if (tool.owner && !me.admin) return { ok: false, code: "forbidden", why: "هذه المعلومة متاحة لمالك المتجر فقط" }; const miss = (tool.perms || []).find(p => !canDo(me, p)); if (miss) return { ok: false, code: "forbidden", why: "ليست لديك صلاحية «" + miss + "»", perm: miss }; return { ok: true }; }
+  function allowed(me, tool) { if (!me || !me.authed) return { ok: false, code: "unauthorized", why: "الجلسة غير صالحة — سجّل الدخول" }; if (tool.owner && !me.admin) return { ok: false, code: "forbidden", why: "هذه المعلومة متاحة لمالك المتجر فقط" }; const miss = (tool.perms || []).find(p => !canDo(me, p)); if (miss) return { ok: false, code: "forbidden", why: "ليست لديك صلاحية «" + (PERM_AR[miss] || miss) + "»", perm: miss }; return { ok: true }; }
 
   /* ───── مدير السياق ───── */
   let CTX = null, PENDING = null, BUSY = false, STATE = "idle", RUNS = [], PLANNER = null;
@@ -188,7 +189,7 @@
       let r; try { r = await step(run, "orders.confirm", P0.args, { fresh: true, timeout: 60000 }); } catch (e) { run.result.blocks = fmtErr(e, lang).concat([X(tr(lang, "لم أُبلغ بنجاح لأن الخادم لم يؤكد.", "Pas de succès annoncé : le serveur n'a pas confirmé."))]); run.result.error = e.code; return finish(run, "error"); }
       const okEv = r.event && r.event.type === "order.confirmed", settled = r.settle && r.settle.ok;
       const b = [F(tr(lang, "تم — الخادم أكّد الطلب " + r.id + ": الحالة الآن «" + S(r.server.status, lang) + "».", "Fait — le serveur confirme " + r.id + " : statut « " + S(r.server.status, lang) + " »."))];
-      b.push(F(tr(lang, okEv ? "نُشر حدث order.confirmed عبر المركز (" + (r.event.via === "agent" ? "من الوكيل بعد نجاح الخادم" : "من جسر اللوح بعد نجاح الخادم") + ")." : "لم يُنشر حدث المركز — ستتحدّث الألواح بالتحديث الدوري فقط.", okEv ? "Événement order.confirmed publié." : "Événement non publié.")));
+      b.push(F(tr(lang, okEv ? "نُشر حدث «تأكيد طلب» عبر مركز الأحداث (" + (r.event.via === "agent" ? "من الوكيل بعد نجاح الخادم" : "من جسر اللوح بعد نجاح الخادم") + ")." : "لم يُنشر حدث التأكيد في مركز الأحداث — ستتحدّث الألواح بالتحديث الدوري فقط.", okEv ? "Événement de confirmation publié." : "Événement non publié.")));
       b.push(okEv && settled ? F(tr(lang, "تزامنت الألواح المرتبطة (" + Object.keys(r.panels).filter(k => r.panels[k]).join("، ") + ") خلال " + r.ms + " مللي ثانية.", "Panneaux synchronisés en " + r.ms + " ms.")) : { k: "error", t: tr(lang, "تحذير: لم تكتمل مزامنة الألواح بعد — حدّثها يدوياً إن لزم.", "Attention : synchronisation incomplète.") });
       b.push(F(tr(lang, "حالة الطلب في لوح الطلبات: " + S(r.orderPanelStatus || "؟", lang), "Statut dans le panneau : " + S(r.orderPanelStatus || "?", lang))));
       run.result.blocks = b; run.result.data = r; run.result.verified = true; run.result.eventOk = okEv; run.result.syncOk = !!settled; return finish(run, "success");

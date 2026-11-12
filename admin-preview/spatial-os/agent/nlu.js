@@ -18,7 +18,7 @@
     howmuch: mk(["كم", "شحال", "قداش", "combien", "how much", "how many", "قدّاش", "كيفاش"]),
     top: mk(["اكثر", "اكتر", "افضل", "احسن", "اعلي", "اعلى", "الاكثر", "plus", "meilleur", "meilleurs", "top", "best", "bezzaf", "بزاف", "ياكثر"]),
     product: mk(["منتج", "منتجات", "بضاعه", "سلعه", "produit", "produits", "article", "articles", "product", "products", "تباع", "يتباع", "نباع", "vend", "vendu"]),
-    price: mk(["سعر", "اسعار", "ثمن", "بشحال", "بقداش", "prix", "tarif", "price", "cout", "combien coute", "شحال سعر"]),
+    price: mk(["سعر", "اسعار", "ثمن", "بشحال", "بقداش", "prix", "tarif", "price", "cout", "coute", "combien coute", "شحال سعر"]),
     stock: mk(["مخزون", "المخزون", "ستوك", "stock", "inventaire", "بقي", "بقى", "باقي", "ما بقي", "نفد", "نفاد", "نفذ", "نفدت", "rupture", "reste", "disponible", "dispo", "متوفر", "متوفره", "كميه", "الكميه", "quantite"]),
     low: mk(["منخفض", "قليل", "ناقص", "قارب", "bas", "faible", "low", "critique", "نفد", "نفاد", "rupture", "ينفد"]),
     search: mk(["ابحث", "دور", "دورلي", "ابحثلي", "لقي", "لقى", "cherche", "recherche", "trouve", "search", "find", "اعطني", "عن"]),
@@ -54,6 +54,7 @@
 
   const lev1 = (a, b) => { if (a === b) return true; if (Math.abs(a.length - b.length) > 1) return false; let i = 0, j = 0, e = 0; while (i < a.length && j < b.length) { if (a[i] === b[j]) { i++; j++; continue; } if (++e > 1) return false; if (a.length > b.length) i++; else if (a.length < b.length) j++; else { i++; j++; } } return e + (a.length - i) + (b.length - j) <= 1; };
   const STOPTOK = new Set(("ال في من على الى عن مع او و ثم هل ما ماذا كيف هو هي هذا هذه ذلك ان انا انت لا نعم لي لك لنا له لها كل بعد قبل عند اذا كان كانت يكون تكون اي ايه le la les de du des un une et ou est que qui quoi pour avec sur dans ce cet cette ces je tu il elle nous vous au aux en a the of to and is are 500g 250g 1kg 500 250").split(" "));
+  const QW = new Set(["شنو", "واش", "ايش", "اش", "ماهو", "ماهي", "قداش", "شحال", "quel", "quelle", "est", "combien", "quoi", "what", "how", "much", "son", "sa", "ses", "il", "elle", "du", "de"]);
   const GENERIC = new Set(["منتج", "منتجات", "produit", "produits", "product", "products", "سعر", "ثمن", "prix", "price", "عرض", "عروض", "offre"]);
   const toks = s => N(s).split(" ").filter(w => w.length > 1 && !STOPTOK.has(w)).map(w => w.replace(/^(?:ال|لل|وال|بال)/, ""));
   /* مطابقة منتج من الفهرس الحقيقي: أفضل تغطية لرموز العنوان/المعرّف في الجملة (تحمّل خطأ إملائي واحد) */
@@ -120,11 +121,13 @@
     if (isStock || isLow) { if (pm) return out("inventory.read", { slug: pm.slug }); if (isLow || /(?:المنخفض|منخفض|bas|low)/.test(n)) return out("inventory.read", { low: true }); if (ctx.focusProduct && (demo || tk.length <= 5)) return out("inventory.read", { slug: ctx.focusProduct }, { follow: true }); return out("inventory.read", {}); }
     if (pm || isProd || isPrice) {
       if (pm) return out(isPrice || /(?:ثمن|prix)/.test(n) ? "products.get" : (any(n, W.search) || isShow || isProd ? "products.get" : "products.get"), { slug: pm.slug }, { conf: pm.score >= 1 ? 0.95 : 0.8 });
-      if (ctx.focusProduct && (demo || isPrice || tk.length <= 4)) return out("products.get", { slug: ctx.focusProduct }, { follow: true });
+      const resid = tk.filter(w => w.length > 2 && !STOPTOK.has(w) && !GENERIC.has(w) && !QW.has(w) && !any(w, W.show) && !any(w, W.search) && !any(w, W.product) && !any(w, W.price) && !any(w, W.demo));
+      if (ctx.focusProduct && !resid.length && (demo || isPrice || tk.length <= 4)) return out("products.get", { slug: ctx.focusProduct }, { follow: true }); /* متابعة فقط إن لم تُذكر كلمات جديدة تدل على منتج آخر */
       const q = tk.filter(w => !any(w, W.show) && !any(w, W.search) && !any(w, W.product) && !any(w, W.price) && w.length > 2).join(" ").slice(0, 60); return out("products.search", { q: q || "" });
     }
     if (any(n, W.settings)) return out("settings.read", { key: /(?:حمايه|guard|protection)/.test(n) ? "guard" : /(?:مخزون|stock)/.test(n) ? "stock" : "guard" });
     if (any(n, W.panel) || (isShow && /(?:لوحه|panneau|panel)/.test(n))) { const pn = /(?:طلب|commande|order)/.test(n) ? "ord" : /(?:منتج|produit|product)/.test(n) ? "prod" : /(?:مخزون|stock)/.test(n) ? "inv" : /(?:تحليل|analyse|analytic|احصاء|stat)/.test(n) ? "ana" : null; if (pn) return out("ui.open_panel", { panel: pn }); }
+    if (any(n, W.search) && !isOrder && !isSales && !isCust && tk.length >= 2) { const q = tk.filter(w => !any(w, W.show) && !any(w, W.search) && !any(w, W.product) && !any(w, W.price) && w.length > 2).join(" ").slice(0, 60); if (q) return out("products.search", { q }); }
     if (any(n, W.help)) return out("help"); if (any(n, W.thanks)) return out("thanks"); if (any(n, W.hello) && tk.length <= 4) return out("hello");
     /* 5) متابعات قصيرة تعتمد السياق */
     if (tk.length <= 7 && ctx.lastIntent) {

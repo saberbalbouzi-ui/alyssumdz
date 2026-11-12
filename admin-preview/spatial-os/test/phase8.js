@@ -5,7 +5,7 @@
 const PW = require("playwright"), chromium = PW[process.env.BROWSER || "chromium"]; const { startStore } = require("./harness"); const only = process.argv[2] || "all"; const SHOTS = process.env.SHOTS || "";
 const R = []; const BROWSER = process.env.BROWSER || "chromium"; let fails = 0; const ok = (n, c, m, x) => { if (!c) fails++; R.push((c ? "PASS " : "FAIL ") + "[" + m + "] " + n + (x !== undefined ? "  " + JSON.stringify(x).slice(0, 190) : "")); };
 async function section(name, fn) { R.push("── " + name); try { await fn(); } catch (e) { fails++; R.push("FAIL [crash] " + name + ": " + String(e).split("\n").filter(l => l.trim()).slice(0, 7).join(" | ").slice(0, 700)); } }
-const near = (a, b, e = .5) => Math.abs((a || 0) - (b || 0)) <= e, NAME = { ord: "الطلبات", prod: "المنتجات", ana: "التحليلات", inv: "المخزون", ai: "مساعد ALYSSUM" };
+const near = (a, b, e = .5) => Math.abs((a || 0) - (b || 0)) <= e, NAME = { ord: "الطلبات", prod: "المنتجات", ana: "التحليلات", inv: "المخزون", ai: "مساعد ALYSSUM", help: "دليل المساعدة" };
 
 async function mk(b, store, vp, touch) {
   const c = await b.newContext({ viewport: vp, deviceScaleFactor: touch ? 2 : 1, isMobile: !!touch, hasTouch: !!touch }), p = await c.newPage(), errs = []; p.setDefaultTimeout(9000);
@@ -177,11 +177,11 @@ async function desktop(b, store) {
     ok("المنتجات: تبويب products ظاهر داخل اللوح والواجهة تقرأ منتجات المتجر الحقيقية", tabs[0].includes("tab-products") && prodN >= 1, "real-ui", [tabs[0], prodN]);
     ok("التحليلات: تبويب analytics ظاهر مع مؤشرات حقيقية من الطلبات", tabs[1].includes("tab-analytics") && /12|طلب/.test(await fev("ana", () => document.getElementById("tab-analytics").innerText)), "real-ui", tabs[1]);
     ok("المخزون: تبويب inventory ظاهر", tabs[2].includes("tab-inventory"), "real-ui", tabs[2]);
-    await p.evaluate(() => SpatialOS.open("ai")); await H.ready("ai"); await p.waitForTimeout(1200);
-    const ai = await fev("ai", () => { const a = document.getElementById("ah-panel"); return { on: a && a.classList.contains("on"), w: a && Math.round(a.getBoundingClientRect().width), vw: innerWidth }; });
-    ok("المساعد: لوحة «اسألني» الحقيقية تفتح داخل اللوح وتملؤه", ai.on && ai.w >= ai.vw - 20, "real-ui", ai);
-    await FL("ai").locator("#ah-in").fill("كيف أضيف منتجاً جديداً"); await FL("ai").locator("#ah-in").press("Enter"); await p.waitForTimeout(2500);
-    const msgs = await fev("ai", () => [...document.querySelectorAll("#ah-m > *")].map(e => e.innerText.trim()).filter(Boolean));
+    await p.evaluate(() => SpatialOS.open("help")); await H.ready("help"); await p.waitForTimeout(1200);
+    const ai = await fev("help", () => { const a = document.getElementById("ah-panel"); return { on: a && a.classList.contains("on"), w: a && Math.round(a.getBoundingClientRect().width), vw: innerWidth }; });
+    ok("دليل المساعدة (المرحلة 10: «اسألني» القديم صار لوح «help»): لوحة «اسألني» الحقيقية تفتح داخل اللوح وتملؤه", ai.on && ai.w >= ai.vw - 20, "real-ui", ai);
+    await FL("help").locator("#ah-in").fill("كيف أضيف منتجاً جديداً"); await FL("help").locator("#ah-in").press("Enter"); await p.waitForTimeout(2500);
+    const msgs = await fev("help", () => [...document.querySelectorAll("#ah-m > *")].map(e => e.innerText.trim()).filter(Boolean));
     ok("ويجيب عن سؤال حقيقي من قاعدة معرفة اللوحة (دون اتصال خارجي)", msgs.length >= 2 && msgs[msgs.length - 1].length > 20, "real-ui", msgs.slice(-1).map(x => x.slice(0, 60)));
     await shot("q10-assistant");
   });
