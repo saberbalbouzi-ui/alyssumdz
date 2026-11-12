@@ -158,6 +158,7 @@ const AdminHome = (() => {
     const sales = sum(ok.map(o => Number(o.total) || 0)), salesP = sum(okp.map(o => Number(o.total) || 0));
     const od = a.overdueList ? a.overdueList().length : 0;
     const waiting = all.filter(o => o.status === "nouvelle" || !o.status).length;
+    try { localStorage.setItem("adm_snap", JSON.stringify({ t: Date.now(), name: (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "", per: days === 1 ? "اليوم" : days === 7 ? "7 أيام" : days + " يوماً", sales: money(sales), orders: num(cur.length), wait: num(waiting), pack: S.packN == null ? null : num(S.packN) })); } catch (e) { }   /* لقطة تُعرض فور فتح اللوحة التالي قبل اكتمال التحميل */
     const avg = ok.length ? sales / ok.length : 0, avgP = okp.length ? salesP / okp.length : 0;
     const sb = hourly ? bucket(all, day0(Date.now()) - 6 * DAY, t1, DAY, o => okOrder(o) ? Number(o.total) || 0 : 0) : bucket(all, f1, t1, step, o => okOrder(o) ? Number(o.total) || 0 : 0);
     const ob = hourly ? bucket(all, day0(Date.now()) - 6 * DAY, t1, DAY, () => 1) : bucket(all, f1, t1, step, () => 1);
