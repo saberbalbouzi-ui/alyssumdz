@@ -121,7 +121,8 @@ const AdminHome = (() => {
   const hasTab = k => [...document.querySelectorAll(".nav-btn")].some(b => (b.getAttribute("onclick") || "").includes("'" + k + "'")), hasRuqya = () => typeof AdminRuqya !== "undefined" && hasTab("ruqya");   /* مواعيد الرقية خاصة بموقع البائع فقط */
   /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
   function quickBar(waiting) {
-    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
+    let toPack = 0; try { toPack = orders().filter(o => o.status === "confirmee").length; } catch (e) { }   /* المؤكَّدة غير المرسَلة فقط = ما ينتظر التجهيز */
+    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack")], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
     return '<div class="ah-quick">' + Q.filter(q => q[2]).map(q => '<button type="button" class="ah-btn gh" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>';
   }
   function ruqyaCard() {
