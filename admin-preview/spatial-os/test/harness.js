@@ -40,9 +40,22 @@ async function startStore(opts = {}) {
   if (!/تم التثبيت/.test(inst)) { stop(); throw new Error("فشل تثبيت المتجر المحلي"); }
   /* طلبات حقيقية عبر مسار الطلب العام ثم حالاتها عبر واجهة اللوحة */
   const lg = await J(base, "login", { password: PW }), cookie = (lg.headers.getSetCookie ? lg.headers.getSetCookie() : []).map(c => c.split(";")[0]).join("; ");
+  /* المرحلة 9 (opts.stock): منتجات بمخزون محدود تطابق عناصر الطلبات، تُكتب عبر مسار الملفات الحقيقي (PUT assets/js/data.js)، مع بداية مخزون قديمة كي يعمل منطق المخزون الحالي */
+  if (opts.stock) {
+    await J(base, "kv", { k: "stockcfg", v: { since: "2020-01-01T00:00:00.000Z" } }, cookie);
+    const f = await (await fetch(base + "/api/index.php?r=file&path=assets/js/data.js", { headers: { "X-Requested-With": "XMLHttpRequest", Cookie: cookie } })).json();
+    const raw = Buffer.from(f.content, "base64").toString("utf8"), ip = raw.indexOf("var PRODUCTS = "), ic = raw.indexOf("var CATEGORIES = "), old = { c: JSON.parse(raw.slice(ic + 17, raw.lastIndexOf(";\n", ip))), p: JSON.parse(raw.slice(ip + 15, raw.lastIndexOf(";"))) };
+    const mk = (slug, title, price, stock) => ({ slug, title, price, old: Math.round(price * 1.3), images: ["assets/img/demo/0.svg"], desc: title, cat: "general", active: true, stock, seoTitle: "", seoDesc: "", offers: [{ qty: 1, price }] });
+    const P = old.p.concat([mk("miel-sidr", "عسل السدر الجبلي 500غ", 3200, 40), mk("tarkiz", "قطرات التركيز", 1800, 30), mk("huile-a-barbe", "زيت اللحية الفاخر", 2100, 25), mk("pack4", "باقة العناية الأربعة", 4900, 20), mk("memory-drops", "قطرات الذاكرة", 1500, 35)]);
+    const txt = "var CATEGORIES = " + JSON.stringify(old.c) + ";\nvar PRODUCTS = " + JSON.stringify(P) + ";\n";
+    const r = await fetch(base + "/api/index.php?r=file", { method: "PUT", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", Cookie: cookie }, body: JSON.stringify({ path: "assets/js/data.js", content: Buffer.from(txt, "utf8").toString("base64"), sha: f.sha, message: "seed" }) });
+    if (!r.ok) { stop(); throw new Error("فشل بذر المنتجات: " + r.status); }
+  }
   const ids = [];
+  let seeded = 0;
   for (const o of (opts.orders || ORDERS)) {
-    const subtotal = o.items.reduce((a, i) => a + i.price * i.qty, 0), r = await (await J(base, "order", { order: { name: o.name, phone: o.phone, wilaya: o.wilaya, commune: o.commune, dtype: o.dtype, desk: o.desk || "", items: o.items, subtotal, fee: o.fee, total: subtotal + o.fee } })).json();
+    /* حدّ الطلب العام: 20 طلباً/ساعة لكل IP؛ ما زاد يُضاف عبر مسار «طلب يدوي» الحقيقي لمدير اللوحة */
+    const manual = seeded++ >= 19, subtotal = o.items.reduce((a, i) => a + i.price * i.qty, 0), r = await (await J(base, "order", { order: Object.assign({ name: o.name, phone: o.phone, wilaya: o.wilaya, commune: o.commune, dtype: o.dtype, desk: o.desk || "", items: o.items, subtotal, fee: o.fee, total: subtotal + o.fee }, manual ? { manual: true } : {}) }, manual ? cookie : undefined)).json();
     if (!r.ok) { stop(); throw new Error("رُفض طلب البذر: " + JSON.stringify(r)); } ids.push({ id: r.id, status: o.status, name: o.name, total: subtotal + o.fee });
     if (o.status !== "nouvelle") await J(base, "order_update", { id: r.id, status: o.status }, cookie);
   }
