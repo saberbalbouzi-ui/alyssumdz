@@ -47,7 +47,7 @@ def offer(k, th, fxs_box, ctx="#ffffff", ctxm="#e2e8f0", cd=None):
     ], w=100)], cw={"d": 860}, pad=dm([54, 28, 54, 28], [34, 18, 34, 18]), fxs=fxs_box, mar=dm([20, 20, 20, 20], [14, 12, 14, 12]), rad=dm(34))
 def faq(th, fxs, acc_fx):
     return S([C([W("heading", text="أسئلة شائعة", tag="h2", fs=dm(38, 28), fw="900", ta={"d": "center"}, color=th["h"], **anim("fadeUp")),
-                 W("accordion", items=FAQ, first=True, qbg=th["card"], qc=th["h"], ac=th["m"], qfs=dm(18, 16), fxs=acc_fx, **anim("fadeUp", .7, .1))], w=100)],
+                 W("accordion", items=[dict(x) for x in FAQ], first=True, qbg=th["card"], qc=th["h"], ac=th["m"], qfs=dm(18, 16), fxs=acc_fx, **anim("fadeUp", .7, .1))], w=100)],
              cw={"d": 820}, pad=dm([60, 20, 70, 20], [40, 16, 48, 16]), fxs=fxs)
 def mq(txt, bg, c, k=""):
     return S([C([W("marquee", mqt=txt, mqs=26, mqd="rtl", mqg=dm(56), mqp=True, mqbg=bg, mqc=c, fs=dm(18), fw="800", fxs=[marqueefx()])], w=100)], layout="full", pad=dm([0, 0, 0, 0]))
@@ -80,7 +80,7 @@ th = dict(h="#ffffff", m="#cbd5e1", a="#a78bfa", card="#ffffff10",
           hfx=lambda s: [gradtext(k + s, "#a78bfa", "#22d3ee", "#f472b6", 7)],
           bgA=lambda s: [FX("خلفية داكنة ببقع ضوء", "selector{background:radial-gradient(60% 70% at 10% 0%,rgba(124,58,237,.22),transparent 60%),radial-gradient(50% 60% at 95% 100%,rgba(6,182,212,.14),transparent 60%),#070b18}")],
           bgB=lambda s: [FX("خلفية داكنة ببقع ضوء", "selector{background:radial-gradient(55% 70% at 90% 0%,rgba(219,39,119,.14),transparent 60%),radial-gradient(60% 60% at 5% 100%,rgba(124,58,237,.18),transparent 60%),#080c1b}")],
-          cats=dict(imgs=["it_laptop", "it_pc", "it_dark"], ov="#0b1020", ovo=45, rad=24, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(124,58,237,.4)", -8, 4)]),
+          cats=dict(imgs=["gad_watch", "gad_earbuds", "acc_sunglasses"], ov="#0b1020", ovo=45, rad=24, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(124,58,237,.4)", -8, 4)]),
           prods=dict(cbg="#ffffff", bbg="#7c3aed", rad=22, fxs=[lift(".pb-pc", "rgba(124,58,237,.45)", -10, 3)]),
           fcard=lambda i: [cardgrid(), sheen(k + str(i), ".pb-ib"), lift(".pb-ib", "rgba(124,58,237,.35)", -6, 4), floaty(k + "f" + str(i), ".pb-ibi", 6, 4 + i * .5)],
           ctr=[ctrcolor("#a78bfa", "#22d3ee")], tsfx=[tscard("rgba(255,255,255,.07)", "rgba(255,255,255,.2)", 22, "#f1f5f9"), lift(".pb-ts", "rgba(124,58,237,.4)", -8)],
@@ -169,7 +169,7 @@ th = dict(h="#111111", m="#333333", a="#ff3d81", card="#ffffff",
           mqc=("#ff3d81", "#ffffff"),
           hfx=lambda s: [FX("نص بحدّ وظلّ صلب", "selector .pb-t{color:#fff!important;-webkit-text-stroke:2px #111;text-shadow:5px 5px 0 #111;letter-spacing:1px}")],
           bgA=POPBG, bgB=POPBG2,
-          cats=dict(imgs=["fashion_sneakers", "acc_pink", "fashion_shoe"], ov="#111111", ovo=25, rad=20, cols=3, fxs=[hardshadow("#111111", 7, 3, 20)]),
+          cats=dict(imgs=["shoe_sneaker", "acc_pink", "fashion_shirts"], ov="#111111", ovo=25, rad=20, cols=3, fxs=[hardshadow("#111111", 7, 3, 20)]),
           prods=dict(cbg="#ffffff", bbg="#ff3d81", rad=20, fxs=[FX("بطاقة بظلّ صلب", "selector .pb-pc{border:3px solid #111;border-radius:20px;box-shadow:7px 7px 0 #111;transition:transform .18s,box-shadow .18s}selector .pb-pc:hover{transform:translate(-4px,-4px);box-shadow:11px 11px 0 #111}")]),
           fcard=lambda i: [FX("بطاقة بظلّ صلب", "selector .pb-ib{background:%s;border:3px solid #111;border-radius:20px;box-shadow:6px 6px 0 #111;padding:24px;height:100%%;box-sizing:border-box;transition:transform .18s,box-shadow .18s}selector .pb-ib:hover{transform:translate(-4px,-4px) rotate(-1.5deg);box-shadow:10px 10px 0 #111}" % ["#a5f3fc", "#fbcfe8", "#bbf7d0", "#fed7aa"][i % 4]), floaty(k + "f" + str(i), ".pb-ibi", 6, 3.6 + i * .4)],
           ctr=[FX("أرقام بحدّ صلب", "selector .pb-ctn{color:#fff;-webkit-text-stroke:2px #111;text-shadow:4px 4px 0 #111;font-weight:900}")], tsfx=[FX("رأي بظلّ صلب", "selector .pb-ts{background:#fff!important;border:3px solid #111;border-radius:20px;box-shadow:7px 7px 0 #111}"), lift(".pb-ts", "rgba(0,0,0,.2)", -6, 0)],
