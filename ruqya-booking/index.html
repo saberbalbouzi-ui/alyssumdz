@@ -244,10 +244,11 @@ function num(i,a,b){var v=parseInt($(i).value,10);if(isNaN(v))v=a;return Math.ma
 function persons(){var k=ST.kind;return k==="single"?1:k==="couple"?2:num("persons",k==="family"?2:1,k==="family"?3:10)}
 function sessions(){return num("sessions",1,8)}
 function perSession(){var k=ST.kind;return k==="kids"?KID*persons():PRICE[k]}
-function first(){return !(ST.reg&&ST.picked)&&!ST.known}
+function first(){return !ST.reg&&ST.kn===false}/* جديد مؤكَّد فقط؛ المسجَّل أو غير المتحقَّق منه لا تُفرض عليه الباقة هنا (الخادم هو من يقرّر عند التأكيد) */
+function packPending(){return !ST.reg&&ST.kn===undefined&&(ST.kind==="single"||ST.kind==="couple")}
 function packForced(){return first()&&(ST.kind==="single"||ST.kind==="couple")}
 function packOn(){return packForced()||!!ST.packUser}
-function packUi(){var f=packForced(),o=$("packOpt"),b=$("boxPack");if(!b)return;o.checked=f?true:!!ST.packUser;o.disabled=f;b.classList.toggle("rq-forced",f);$("packLbl").textContent=f?"مُضافة تلقائياً لأول تسجيل":"أضف الباقة";$("packSmall").textContent=f?"ضرورية في الجلسة الأولى مع البرنامج العلاجي":"مجموعة أعشاب وعسل وزيوت داعمة للعلاج"}
+function packUi(){var f=packForced(),o=$("packOpt"),b=$("boxPack");if(!b)return;o.checked=f?true:!!ST.packUser;o.disabled=f;b.classList.toggle("rq-forced",f);$("packLbl").textContent=f?"مُضافة تلقائياً لأول تسجيل":"أضف الباقة";$("packSmall").textContent=f?"ضرورية في الجلسة الأولى مع البرنامج العلاجي":(packPending()?"تُضاف تلقائياً لأول تسجيل فقط، ويمكن للمسجَّل إضافتها باختياره":"مجموعة أعشاب وعسل وزيوت داعمة للعلاج")}
 function ymd(d){return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2)}
 function dayLabel(d){return DAYN[d.getDay()]+" "+d.getDate()+" "+MON[d.getMonth()]}
 function periodOf(s){return s<"13:00"?0:1}
@@ -259,7 +260,7 @@ function freeAt(tk,day,i,n){/* هل n جلسات متتالية تبدأ من ا
 function slotFree(i,n){return freeAt(ST.taken,ST.day,i,n)}
 function dayFull(day,n){if((ST.closed||[]).indexOf(day)>=0)return true;var tk=ST.tk[day];if(!tk)return false;for(var i=0;i<SL.length;i++){if(freeAt(tk,day,i,n))return false}return true}
 function secOn(){return ST.who==="other"&&sessions()>=2&&(ST.kind==="single"||ST.kind==="couple")}
-function pack2Forced(){return secOn()&&!ST.known2}
+function pack2Forced(){return secOn()&&ST.kn2===false}
 function pack2On(){return pack2Forced()||(secOn()&&!!ST.pack2User)}
 function secUi(){var can=sessions()>=2&&(ST.kind==="single"||ST.kind==="couple"),bx=$("boxSecond");if(!bx)return;bx.hidden=!can;if(!can)ST.who="same";
  [].forEach.call(document.querySelectorAll("#rq [data-who]"),function(b){b.classList.toggle("rq-on",b.getAttribute("data-who")===(ST.who||"same"))});
@@ -273,7 +274,7 @@ function sum(){
  var kn={single:"جلسة فردية",couple:"جلسة زوج وزوجة",kids:"جلسة أبناء ("+persons()+" "+(persons()===1?"طفل":"أطفال")+")",family:"جلسة جماعية للعائلة ("+persons()+" أفراد)"}[ST.kind];
  h+='<div class="rq-ln"><span>'+kn+'</span><span></span></div>';
  h+='<div class="rq-ln"><span>عدد الجلسات</span><span><bdi class="rq-n">'+s+'</bdi></span></div>';
- if(packOn())h+='<div class="rq-ln"><span>الباقة العلاجية 4</span><span>مضافة</span></div>';
+ if(packOn())h+='<div class="rq-ln"><span>الباقة العلاجية 4</span><span>'+(first()?'مضافة (أول تسجيل)':'مضافة (باختيارك)')+'</span></div>';else if(packPending())h+='<div class="rq-ln"><span>الباقة العلاجية 4</span><span>تُضاف لأول تسجيل فقط</span></div>';
  if(pack2On())h+='<div class="rq-ln"><span>الباقة العلاجية 4 (للفرد الآخر)</span><span>مضافة</span></div>';
  (ST.prods||[]).forEach(function(p){var q=ST.cart[p.slug]||0;if(q)h+='<div class="rq-ln"><span>'+esc(p.title)+'</span><span><bdi class="rq-n">&times; '+q+'</bdi></span></div>'});
  if(ST.day)h+='<div class="rq-ln"><span>الموعد</span><span>'+dayLabel(new Date(ST.day+"T12:00:00"))+(ST.per?" · "+(ST.per==="am"?"صباحاً":"بعد الظهر"):"")+'</span></div>';
@@ -281,6 +282,11 @@ function sum(){
 function ident(){
  if(ST.reg){return ST.picked?{name:$("pName").value.trim(),phone:$("pPhone").value.trim()}:null}
  return{name:$("nName").value.trim(),phone:$("nPhone").value.trim(),wilaya:$("nWil").value,commune:$("nCom").value}}
+var _kt={};
+function chk(w,now){/* يتحقق من تسجيل الرقم (جديد/مسجَّل) بعد اكتمال 10 أرقام؛ الفشل (حدّ المحاولات) يُبقي الحالة غير محسومة */
+ clearTimeout(_kt[w]);var el=$(w==="n"?"nPhone":"sPhone"),v=normPh(el&&el.value);
+ if(!/^0[5-7][0-9]{8}$/.test(v)){sum();return}
+ _kt[w]=setTimeout(function(){rpc("ruqya_lookup",{p_q:v}).then(function(r){var kw=!!(r&&r.found&&(r.matches||[]).length);if(normPh($(w==="n"?"nPhone":"sPhone").value)!==v)return;if(w==="n")ST.kn=kw;else ST.kn2=kw;/* true = مسجَّل، false = جديد */sum()}).catch(function(){})},now?0:500);sum()}
 function waNum(){return normPh($("waSame").checked?(ident()||{phone:""}).phone:$("wa").value)}
 function normPh(v){var d=String(v||"").replace(/[^0-9]/g,"");if(/^00213/.test(d))d="0"+d.slice(5);else if(/^213/.test(d)&&d.length>=12)d="0"+d.slice(3);else if(d.length===9&&/^[567]/.test(d))d="0"+d;return d}
 function ready(){
@@ -348,11 +354,11 @@ document.addEventListener("click",function(e){
  else if(t.hasAttribute("data-p")){if(t.disabled)return;ST.per=t.getAttribute("data-p");drawSlots();sum()}
  else if(t.classList.contains("rq-m")){ST.picked=t.getAttribute("data-n");[].forEach.call(document.querySelectorAll("#rq .rq-m"),function(b){b.classList.toggle("rq-on",b===t)});$("boxPick").hidden=false;sum()}
 });
-document.addEventListener("input",function(e){if(e.target.closest&&e.target.closest("#rq")){if(e.target.id==="nPhone")ST.known=false;if(e.target.id==="sPhone")ST.known2=false;if(e.target.id==="pack2Opt"&&!e.target.disabled)ST.pack2User=e.target.checked;if(e.target.id==="packOpt"&&!e.target.disabled)ST.packUser=e.target.checked;if(e.target.id==="sessions"){autoDay()}sum()}});
+document.addEventListener("input",function(e){if(e.target.closest&&e.target.closest("#rq")){if(e.target.id==="nPhone"){ST.kn=undefined;chk("n")}if(e.target.id==="sPhone"){ST.kn2=undefined;chk("s")}if(e.target.id==="pack2Opt"&&!e.target.disabled)ST.pack2User=e.target.checked;if(e.target.id==="packOpt"&&!e.target.disabled)ST.packUser=e.target.checked;if(e.target.id==="sessions"){autoDay()}sum()}});
 document.addEventListener("change",function(e){if(!e.target.closest||!e.target.closest("#rq"))return;
  if(e.target.id==="packOpt"&&!e.target.disabled){ST.packUser=e.target.checked}
- if(e.target.id==="sPhone"){var sp=normPh(e.target.value);if(/^0[5-7][0-9]{8}$/.test(sp)){rpc("ruqya_lookup",{p_q:sp}).then(function(r){ST.known2=!!(r&&r.found&&(r.matches||[]).length);sum()}).catch(function(){})}}
- if(e.target.id==="nPhone"){var pn=normPh(e.target.value);if(/^0[5-7][0-9]{8}$/.test(pn)){rpc("ruqya_lookup",{p_q:pn}).then(function(r){ST.known=!!(r&&r.found&&(r.matches||[]).length);sum()}).catch(function(){})}}
+ if(e.target.id==="sPhone"){var sp=normPh(e.target.value);if(/^0[5-7][0-9]{8}$/.test(sp)){chk("s",1)}}
+ if(e.target.id==="nPhone"){var pn=normPh(e.target.value);if(/^0[5-7][0-9]{8}$/.test(pn)){chk("n",1)}}
  if(e.target.id==="waSame"){$("wa").hidden=e.target.checked;if(!e.target.checked)$("wa").focus()}
  if(e.target.id==="nWil"){var W=window.__rqW||[],w=W.filter(function(x){return String(x.id)===e.target.value})[0],o='<option value="">اختر البلدية</option>';((w&&w.communes)||[]).forEach(function(c){o+='<option>'+c+'</option>'});$("nCom").innerHTML=o}
  sum()});
