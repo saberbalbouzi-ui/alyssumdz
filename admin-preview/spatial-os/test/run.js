@@ -3,7 +3,7 @@
    NODE_PATH=/opt/node-tools/node_modules node admin-preview/spatial-os/test/run.js [desktop|mobile|all]
    كل سطر: PASS/FAIL + [الطريقة]. «mouse» فأرة حقيقية عبر Playwright، «cdp-touch» لمس حقيقي عبر CDP،
    «synthetic» أحداث Pointer مُنشأة برمجياً (لا تثبت سلوك إصبع حقيقي)، «api» قراءة حالة التطبيق. */
-const { chromium } = require("playwright"); const URL = process.env.URL || "http://localhost:8765/admin-preview/spatial-os/index.html"; const only = process.argv[2] || "all";
+const PWm = require("playwright"), chromium = PWm[process.env.BROWSER || "chromium"]; const URL = process.env.URL || "http://localhost:8765/admin-preview/spatial-os/index.html"; const only = process.argv[2] || "all";
 const R = []; let fails = 0; const ok = (n, c, m, x) => { if (!c) fails++; R.push((c ? "PASS " : "FAIL ") + "[" + m + "] " + n + (x !== undefined ? "  " + JSON.stringify(x).slice(0, 150) : "")); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function section(name, fn) { R.push("── " + name); try { await fn(); } catch (e) { fails++; R.push("FAIL [crash] " + name + ": " + String(e).split("\n")[0].slice(0, 160)); } }
@@ -298,8 +298,9 @@ async function mobile(b) {
     await p.evaluate(() => { const q = SpatialOS.panels.get("ana"); q.el.classList.add("tr2"); Object.assign(q.st, { s: 1, x: 0, y: 150, rx: 0, ry: 0 }); SpatialOS.open("ana"); }); await p.waitForTimeout(900);
     const info = await p.evaluate(() => { const b = document.querySelector('.panel[aria-label="التحليلات"] .pn-b'), r = b.getBoundingClientRect(); return { sc: b.scrollHeight > b.clientHeight + 4, x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     ok("المحتوى قابل للتمرير (شرط الاختبار)", info.sc, "api"); const a1 = (await S()).ang, st1 = (await S()).o.ana.y;
+    const hitEl = await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? e.tagName + "." + String(e.className).slice(0, 30) + " in " + ((e.closest(".panel") || {}).ariaLabel || "-") + "|" + getComputedStyle(e).touchAction : null; }, [info.x, info.y + 60]);
     await swipe([info.x, info.y + 60], [info.x, info.y - 100], 10, 30); await p.waitForTimeout(500);
-    const after = await p.evaluate(() => ({ top: document.querySelector('.panel[aria-label="التحليلات"] .pn-b').scrollTop, pg: scrollY })); ok("السحب الرأسي داخل اللوح يمرّر محتواه", after.top > 20, "cdp-touch", after);
+    const after = await p.evaluate(() => ({ top: document.querySelector('.panel[aria-label="التحليلات"] .pn-b').scrollTop, pg: scrollY })); ok("السحب الرأسي داخل اللوح يمرّر محتواه", after.top > 20, "cdp-touch", { ...after, hitEl, info });
     ok("لا تمرير للصفحة ولا تدوير للاسطوانة ولا تحريك للوح أثناء تمرير المحتوى", after.pg === 0 && Math.abs((await S()).ang - a1) < 1 && Math.abs((await S()).o.ana.y - st1) < 3, "cdp-touch");
     const dk = await p.evaluate(() => { const d = document.getElementById("dock"); return { sw: d.scrollWidth > d.clientWidth, l: d.scrollLeft }; }); await swipe([300, 870], [80, 870], 8, 25); await p.waitForTimeout(300); ok("الشريط السفلي يتمرّر أفقياً", dk.sw && (await p.evaluate(() => Math.abs(document.getElementById("dock").scrollLeft))) !== Math.abs(dk.l), "cdp-touch", dk);
     // throw (synthetic)

@@ -66,6 +66,11 @@
   let orbitMode = innerWidth > 820, pa = 0, pt = null, hov = 0, pprev = 20, draggingPanel = false;
   /* مرحلة 5: ثلاثة أوضاع منفصلة — العالم (لا لوح محدّد)، الكائن (لوح صغير محدّد)، التركيز (اللوح المحدّد موسَّع) */
   let objSel = null, tool = "move";
+  /* ───── مرحلة 8: لوحة التحكم الحقيقية داخل الألواح ─────
+     عند التشغيل من متجر حقيقي (نسخة PHP محلية فيها admin.html وapi) تصير ألواح الطلبات/المنتجات/التحليلات/المخزون/المساعد إطاراً (iframe) يحمّل admin.html الحقيقي نفسه
+     (نفس الأصل: لا تعديل على ملف إنتاج) فتعمل منطق الأعمال والصلاحيات وواجهة الـAPI كما هي. وإلا (خادم ملفات عادي) تبقى بيانات العرض التجريبية. */
+  let REAL = false;
+  const FRAME = { ord: { tab: "orders", w: 660, h: 580 }, prod: { tab: "products", w: 660, h: 560 }, ana: { tab: "analytics", w: 640, h: 540 }, inv: { tab: "inventory", w: 640, h: 540 }, ai: { tab: "ask", w: 480, h: 560 } };
   /* تدوير الاسطوانة لتقديم عقدة قسم إلى مقدمة المشهد (أقصر دوران) */
   function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step - yaw; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
   function frame(t) {
@@ -107,7 +112,7 @@
   const step = d => { const i = secs.findIndex(s => s.id === sel), j = i < 0 ? 0 : (i + d + secs.length) % secs.length; select(secs[j].id); };
   document.addEventListener("keydown", e => { const k = String(e.key || ""), tg = e.target || {}, inPanel = tg.closest && tg.closest(".panel");
     if (/INPUT|TEXTAREA/.test(tg.tagName || "")) { if (k === "Escape") tg.blur(); return; }
-    if (!e.ctrlKey && !e.metaKey && !e.altKey) { const kl = k.toLowerCase(); if (kl === "w") { clearSel(); return; } if (kl === "o") { toObject(); return; } if (kl === "f") { toFocus(); return; } if (objSel && modeOf() === "object" && TOOLS[kl]) { setTool(TOOLS[kl]); return; } }
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) { const kl = k.toLowerCase(); if (kl === "w") { clearSel(); return; } if (kl === "o") { toObject(); return; } if (kl === "c") { toCylinder(); return; } if (kl === "a") { tileAll(); return; } if (kl === "f") { toFocus(); return; } if (objSel && modeOf() === "object" && TOOLS[kl]) { setTool(TOOLS[kl]); return; } }
     if (k === "Escape" && (focused || objSel)) { const bp = objSel && open.get(objSel), fp = bp && bp.big ? bp : open.get(focused); if (fp && fp.big) toggleBig(fp); else if (fp) dismiss(fp.id, "close"); return; } if (inPanel) return;
     if (k === "[") setYaw(yaw - 10); else if (k === "]") setYaw(yaw + 10); else if (k === "0") setYaw(0); else if (k === "ArrowRight") { e.preventDefault(); step(1); } else if (k === "ArrowLeft") { e.preventDefault(); step(-1); }
     else if ((k === "Enter" || k === " ") && sel && !/BUTTON/.test(tg.tagName || "")) { e.preventDefault(); openSection(sel); } });
@@ -115,7 +120,7 @@
   /* ───── مدير الألواح ───── */
   const open = new Map(), memo = {}; let zc = 10, focused = null;
   /* حفظ حالة اللوح عند الإغلاق/الرمي ليعود بمحتواه (فلتر الطلبات، محادثة المساعد…) وحجمه */
-  function remember(p) { memo[p.id] = { content: JSON.parse(JSON.stringify(p.content || {})), size: { w: p.big && p.prev ? p.prev.w : p.st.w, h: p.big && p.prev ? p.prev.h : p.st.h } }; }
+  function remember(p, pose) { if (p.frame) snapFrame(p); const q = pose || p.st; memo[p.id] = { pos: p.frame ? { x: q.x, y: q.y, z: q.z, rx: q.rx, ry: q.ry, rz: q.rz || 0, s: q.s } : null, content: JSON.parse(JSON.stringify(p.content || {})), size: { w: p.big && p.prev ? p.prev.w : p.st.w, h: p.big && p.prev ? p.prev.h : p.st.h } }; }
   const fz = p => 1 - 0; /* موضع للتوسّع المستقبلي */
   function persp(tz) { return PERSP / (PERSP - tz); }
   function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0) + (p.lift || 0), hx = (p.bk ? p.bk.x : 0) + (p.hold ? p.hold.x : 0), hy = (p.bk ? p.bk.y : 0) + (p.hold ? p.hold.y : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${(s.rx + hx).toFixed(1)}deg) rotateY(${(s.ry + hy).toFixed(1)}deg) rotateZ(${(s.rz || 0).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--gx", ((s.ry + hy) * 1.5).toFixed(1) + "%"); p.el.style.setProperty("--zp", clamp((s.z - ZMIN) / (ZMAX - ZMIN), 0, 1).toFixed(3)); p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
@@ -138,7 +143,7 @@
   const OS = () => clamp(W() / 2400, .45, .6);
   function orbState(thDeg, i, k) { const th = thDeg * Math.PI / 180, c = Math.cos(th), s = Math.sin(th); return { c, st: { x: s * W() * .335, y: -H() * .04 + Math.sin(th * 2 + (i || 0)) * 14, z: c * 340, rx: -3, ry: -s * 30, s: OS() * (k || 1) } }; }
   const wrap = d => ((d % 360) + 540) % 360 - 180;
-  function setLayer(p, back) { if (!!p.inBack === back) return; p.inBack = back; p.el.classList.toggle("back", back); (back ? layerBack : layer).appendChild(p.el); }
+  function setLayer(p, back) { if (p.frame) return; if (!!p.inBack === back) return; p.inBack = back; p.el.classList.toggle("back", back); (back ? layerBack : layer).appendChild(p.el); }
   function orbitFrame(now, ek) {
     const list = orbList(), n = list.length, step = 360 / Math.max(n, 1);
     list.forEach((p, i) => {
@@ -151,14 +156,14 @@
   }
   /* خروج لوح من المدار عند إمساك المستخدم به: يبقى حيث هو أمام الاسطوانة */
   function snapOrbit(p, force) {
-    if (!orbitMode || !p.user || p.big) return false; const nx = p.st.x / (W() * .335), nz = p.st.z / 340, th = Math.atan2(nx, nz) * 180 / Math.PI, ideal = orbState(th, 0).st;
+    if (!orbitMode || !p.user || p.big || p.frame) return false; const nx = p.st.x / (W() * .335), nz = p.st.z / 340, th = Math.atan2(nx, nz) * 180 / Math.PI, ideal = orbState(th, 0).st;
     if (!force && Math.hypot(p.st.x - ideal.x, p.st.y - ideal.y) > 70) return false;
     p.user = false; p.off = wrap(th - pa - yaw); p.el.classList.remove("free"); p.el.classList.add("tr2"); setTimeout(() => p.el.classList.remove("tr2"), 700); return true;
   }
   function userize(p) { if (p.user) return; p.el.classList.add("free"); p.user = true; setLayer(p, false); p.el.style.setProperty("--op", 1); p.el.classList.remove("back"); }
   /* يعيد ترتيب الألواح التي لم يحرّكها المستخدم؛ الجديد يأخذ مكانه فوراً والباقي ينزلق بسلاسة */
   function arrange(fresh) {
-    if (orbitMode) { const list = orbList(); if (fresh) { const i = list.indexOf(fresh), step = 360 / list.length; fresh.off = i * step; let to = -i * step; to += Math.round((pa - to) / 360) * 360; pt = { to }; Object.assign(fresh.st, orbState(0, i).st); } return; }
+    if (orbitMode) { const list = orbList(); if (fresh && !fresh.user) { const i = list.indexOf(fresh), step = 360 / list.length; fresh.off = i * step; let to = -i * step; to += Math.round((pa - to) / 360) * 360; pt = { to }; Object.assign(fresh.st, orbState(0, i).st); } return; }
     const list = [...open.values()].filter(p => !p.min && !p.user && !p.big), L = layoutFor(list.length);
     list.forEach((p, i) => { const c = L[i]; if (p === fresh) { Object.assign(p.st, { x: c.x, y: c.y, z: c.z, rx: c.rx, ry: c.ry, s: c.s }); return; } p.el.classList.remove("tr"); p.el.classList.add("tr2"); Object.assign(p.st, { x: c.x, y: c.y, z: c.z, rx: c.rx, ry: c.ry, s: c.s }); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); });
   }
@@ -166,7 +171,7 @@
   function overlap(a, b) { const ox = (a.w + b.w) / 2 - Math.abs(a.x - b.x), oy = (a.h + b.h) / 2 - Math.abs(a.y - b.y); return ox > 0 && oy > 0 ? { ox, oy, a: ox * oy } : null; }
   function sizeFor(sec) { const mw = W(), mh = H(); return isMob() ? { w: Math.min(sec.w, mw - 24), h: Math.min(sec.h, Math.round(mh * .42)) } : { w: Math.min(sec.w, mw - 60), h: Math.min(sec.h, mh - 120) }; }
   function nodePos(id) { const n = id === "ai" ? core : nodes.get(id); if (!n) return { x: 0, y: 0 }; const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2 - W() / 2, y: r.top + r.height / 2 - H() / 2 }; }
-  function render(p, keep) { const b = p.body, top = b.scrollTop; b.innerHTML = p.sec.html(p); if (keep !== false) b.scrollTop = top; }
+  function render(p, keep) { if (p.frame) return; const b = p.body, top = b.scrollTop; b.innerHTML = p.sec.html(p); if (keep !== false) b.scrollTop = top; }
   const refreshAll = () => { open.forEach(p => { if (!p.min) render(p); }); fillWalls(); };
   function markNodes() { document.body.classList.toggle("many", open.size > 3); nodes.forEach((n, id) => { const p = open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); dock.querySelectorAll("button").forEach(b => { const p = open.get(b.dataset.id); b.classList.toggle("open", !!p && !p.min); }); }
   function pulse(id) { const n = nodes.get(id); if (n) { n.classList.remove("hot"); void n.offsetWidth; n.classList.add("hot"); } core.classList.remove("pulse"); void core.offsetWidth; core.classList.add("pulse"); }
@@ -174,13 +179,15 @@
   function openSection(id) {
     const sec = SEC.find(s => s.id === id); if (!sec) return;
     const ex = open.get(id), from = nodePos(id); select(id);
-    if (ex) { if (ex.min) { ex.min = false; ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } faceFront(ex); focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
-    const sz = sizeFor(sec); if (memo[id] && memo[id].size) { sz.w = Math.min(memo[id].size.w, W() - 24); sz.h = Math.min(memo[id].size.h, H() - 80); }
+    if (ex) { if (ex.min) { ex.min = false; ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); if (ex.user && ex.keep) Object.assign(ex.st, ex.keep); /* مواضع الألواح الحرة تُستعاد كما كانت قبل التصغير */ arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } faceFront(ex); focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
+    const fr = REAL ? FRAME[id] : null, sz = fr ? sizeFor(Object.assign({}, sec, { w: clamp(W() * .44, 460, fr.w), h: fr.h })) : sizeFor(sec); if (memo[id] && memo[id].size) { sz.w = Math.min(memo[id].size.w, W() - 24); sz.h = Math.min(memo[id].size.h, H() - 80); }
     const sl = { x: 0, y: 0, z: 0, rx: 0, ry: 0 }, el = document.createElement("section"); el.className = "panel"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", sec.name); el.tabIndex = -1;
     el.innerHTML = '<i class="face"></i><i class="vol v2"></i><i class="vol v1"></i><i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><i class="pn-ac"></i><i class="eg t"></i><i class="eg b"></i><i class="eg l"></i><i class="eg r"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><button type="button" class="pn-dep" aria-label="تحريك في العمق (اسحب عمودياً)" title="اسحب عمودياً: أقرب/أبعد">&#8661;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><div class="gbadge" aria-hidden="true"></div><i class="pn-z" aria-hidden="true"><b></b></i><i class="pn-br" aria-hidden="true"></i><i class="pn-rs" aria-hidden="true"></i>';
     el.querySelector("h3").textContent = sec.name;
-    const content = memo[id] && sec.st ? JSON.parse(JSON.stringify(memo[id].content)) : sec.st ? JSON.parse(JSON.stringify(sec.st)) : {}, p = { id, content, sec: Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }), el, body: el.querySelector(".pn-b"), min: false, big: false, keep: null, st: { x: sl.x, y: sl.y, z: sl.z, rx: sl.rx, ry: sl.ry, s: 1, w: sz.w, h: sz.h } };
-    setState(p, "opening"); p.born = performance.now(); p.origin = { x: from.x + W() / 2, y: from.y + H() / 2 }; layer.appendChild(el); open.set(id, p); wire(p); arrange(p); if (sec.bind) sec.bind(p.body, { st: content }, all => all ? refreshAll() : render(p)); render(p, false);
+    const content = memo[id] ? JSON.parse(JSON.stringify(memo[id].content || (sec.st || {}))) : sec.st ? JSON.parse(JSON.stringify(sec.st)) : {}, p = { id, frame: fr || null, content, sec: Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }), el, body: el.querySelector(".pn-b"), min: false, big: false, keep: null, st: { x: sl.x, y: sl.y, z: sl.z, rx: sl.rx, ry: sl.ry, s: 1, w: sz.w, h: sz.h } };
+    setState(p, "opening"); p.born = performance.now(); p.origin = { x: from.x + W() / 2, y: from.y + H() / 2 }; if (REAL) el.dataset.real = fr ? "1" : "0"; layer.appendChild(el); open.set(id, p); wire(p);
+    if (fr) { p.user = true; el.classList.add("free"); placeFrame(p); } else if (memo[id] && memo[id].pos) { p.user = true; el.classList.add("free"); Object.assign(p.st, memo[id].pos); } /* المواضع تُحفظ طوال الجلسة */
+    arrange(p); if (sec.bind && !fr) sec.bind(p.body, { st: content }, all => all ? refreshAll() : render(p)); render(p, false); if (fr) mountFrame(p);
     p.keep = Object.assign({}, p.st);
     Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1, rx: 0, ry: 0 }); apply(p); el.style.setProperty("--op", 0); el.classList.add("tr"); void el.offsetWidth;
     Object.assign(p.st, p.keep); focus(id); apply(p); el.style.setProperty("--op", 1); if (RM) { el.classList.remove("tr"); }
@@ -225,7 +232,10 @@
     document.querySelectorAll("#modebar [data-m]").forEach(b => { const on = b.dataset.m === m; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
     document.querySelectorAll("#modebar [data-t]").forEach(b => { const on = b.dataset.t === tool; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
     open.forEach(p => p.el.classList.toggle("objsel", p.id === objSel && !p.min)); setRead();
+    const mb = document.getElementById("modebar"); if (mb) mb.classList.toggle("mini", isMob() && !mbXp); /* على الهاتف في وضع العالم يتقلّص الشريط إلى شريحة صغيرة كي لا يغطي المحتوى (اضغطها للتوسيع) */
   }
+  let mbXp = false, mbT = 0; const mbKeep = () => { clearTimeout(mbT); if (mbXp) mbT = setTimeout(() => { mbXp = false; syncMode(); }, 7000); };
+  { const r = document.getElementById("mread"), mb = document.getElementById("modebar"); if (r) r.addEventListener("click", () => { if (isMob()) { mbXp = !mbXp; mbKeep(); syncMode(); } }); if (mb) mb.addEventListener("click", () => { if (mbXp) mbKeep(); }, true); }
   /* بعد إزالة اللوح المحدَّد: إن كان لوح آخر موسَّعاً يعود التحديد إليه (وضع التركيز) وإلا يعود وضع العالم */
   const bigSel = skip => { const q = [...open.values()].find(o => o.id !== skip && o.big && !o.min); return q ? q.id : null; };
   function selectObj(id) { if (objSel === id) { syncMode(); return; } objSel = id; va = 0; syncMode(); }
@@ -251,12 +261,13 @@
   }
   /* ───── مرحلة 7: فيزياء طبيعية — قصور في العمق، مغناطيس ناعم نحو المواضع المفضَّلة، رفع/إمالة عند الإمساك ───── */
   const SLOT_R = 110;
-  function dropHold(p, mode) { ghost(null); if (!p.lift && !p.hold) return; p.lift = 0; p.hold = null; if (mode !== "rot") { p.el.classList.add("tr2"); setTimeout(() => p.el.classList.remove("tr2"), 420); } apply(p); }
+  function lift0(p) { if (!p.lift && !p.hold) return; p.lift = 0; p.hold = null; ghost(null); p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420); }
+  function dropHold(p, mode) { ghost(null); if (!p.lift && !p.hold) return; p.lift = 0; p.hold = null; if (mode !== "rot") { p.el.classList.add("tr2"); setTimeout(() => p.el.classList.remove("tr2"), 260); } apply(p); }
   /* مواضع العمل المفضَّلة = شبكة التخطيط الذكي؛ لا مغناطيس في المدار (للمدار تثبيته الخاص) ولا للوح الموسَّع، ولا إن كان الموضع محجوزاً بلوح آخر */
   /* الموضع «حرّ» إن لم يحجب أكثر من 35% من لوح آخر */
   function slotFree(p, c) { const me = { x: c.x, y: c.y, w: p.st.w * p.st.s, h: p.st.h * p.st.s }; for (const o of open.values()) if (o !== p && !o.min && !o.big) { const r = overlap(me, rectOf(o)); if (r && r.a > .35 * Math.min(me.w * me.h, rectOf(o).w * rectOf(o).h)) return false; } return true; }
   function magnetFor(p) {
-    if (orbitMode || p.big || isMob()) return null; let best = null; layoutFor(6).forEach(c => { const d = Math.hypot(c.x - p.st.x, c.y - p.st.y); if (d < SLOT_R && (!best || d < best.d)) best = { c, d }; }); if (!best) return null;
+    if ((orbitMode && !p.frame) || p.big || isMob()) return null; let best = null; layoutFor(6).forEach(c => { const d = Math.hypot(c.x - p.st.x, c.y - p.st.y); if (d < SLOT_R && (!best || d < best.d)) best = { c, d }; }); if (!best) return null;
     return slotFree(p, best.c) ? best : null;
   }
   function ghost(p, m) {
@@ -274,23 +285,91 @@
   function settleRoll(p) { const rz = clamp(p.st.rz || 0, -12, 12); if (rz !== p.st.rz) { p.st.rz = rz; p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 450); } }
   document.querySelectorAll("#modebar [data-m]").forEach(b => b.addEventListener("click", () => { const m = b.dataset.m; if (m === "world") clearSel(); else if (m === "object") toObject(); else toFocus(); }));
   document.querySelectorAll("#modebar [data-t]").forEach(b => b.addEventListener("click", () => { if (modeOf() !== "object") toObject(); setTool(b.dataset.t); }));
+
+  /* ───── مرحلة 8: الإطار الحقيقي وإدارة مساحة العمل ───── */
+  const EMBED_CSS = "html,body{background:rgba(6,16,24,.95)!important;margin:0!important;touch-action:pan-x pan-y!important;overscroll-behavior:contain}#app{max-width:none!important;margin:0!important;padding:6px 8px 14px!important}#app>.top,#nav-groups,#stats,.side-nav,#cs-svc,.wa-float,#hand-fab,.hand-fab,.ask-fab,#ah-btn,#ah-hand,.ah-x{display:none!important}#ah-panel{position:fixed!important;inset:0!important;top:0!important;right:0!important;width:auto!important;height:auto!important;max-height:none!important;border-radius:0!important;box-shadow:none!important}.admin-body{display:block!important}.admin-main{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;min-width:0!important}";
+  async function detectReal() { if (/[?&]demo=1/.test(location.search)) return false; try { const r = await fetch("../../api/index.php?r=me", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }); return /json/.test(r.headers.get("content-type") || ""); } catch (_) { return false; } }
+  function placeFrame(p) {
+    const m = memo[p.id] && memo[p.id].pos; if (m) { Object.assign(p.st, m); p.st.x = clamp(p.st.x, -(W() / 2 - 80), W() / 2 - 80); p.st.y = clamp(p.st.y, -(H() / 2 - 80), H() / 2 - 80); p.st.s = clamp(p.st.s, .5, 1.9); return; }
+    const n = [...open.values()].filter(q => !q.min).length, L = layoutFor(Math.min(6, Math.max(2, n))), c = L.find(x => slotFree(p, x)) || L[(n - 1) % L.length];
+    Object.assign(p.st, { x: c.x, y: c.y, z: c.z, rx: c.rx, ry: c.ry, rz: 0, s: Math.min(c.s, 1) });
+    if (n === 1 && !isMob()) p.st.x = Math.min(p.st.x, W() / 2 - p.st.w / 2 - 70); /* اللوح الوحيد لا يخرج من حافة الشاشة مع ميلانه */
+  }
+  function mountFrame(p) {
+    const b = p.body; b.classList.add("fr"); p.el.classList.add("framed");
+    b.innerHTML = '<iframe class="pn-frame" title=""></iframe><div class="pn-shield" aria-hidden="true"><span>انقر على اللوح لتفعيله</span></div><div class="fr-load"><i></i><span>جارٍ تحميل لوحة التحكم…</span></div>';
+    const f = b.querySelector("iframe"); f.title = p.sec.name; p.fr = f; p.frReady = false; f.addEventListener("load", () => initFrame(p)); f.src = "../../admin.html";
+  }
+  function hookFrame(p, d) {
+    const sc = e => [...e.touches].slice(0, 2).map(t => [t.screenX, t.screenY]);
+    d.addEventListener("pointerdown", () => { p.frTouched = true; if (focused !== p.id) focus(p.id); selectObj(p.id); }, true);
+    d.addEventListener("wheel", e => { if (e.shiftKey) { e.preventDefault(); userize(p); p.st.z = clamp(p.st.z + (e.deltaY < 0 ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); } }, { passive: false });
+    d.addEventListener("touchstart", e => { if (e.touches.length === 2) p.pinch.start(sc(e)); }, { passive: true });
+    d.addEventListener("touchmove", e => { if (e.touches.length === 2 && p.pinch.active()) { e.preventDefault(); p.pinch.move(sc(e)); } }, { passive: false });
+    d.addEventListener("touchend", e => { if (e.touches.length < 2 && p.pinch.active()) p.pinch.end(); }, { passive: true });
+  }
+  const OF = { q: "order-filter-q", status: "order-filter-status", wilaya: "order-filter-wilaya", from: "order-filter-from", to: "order-filter-to" };
+  function snapFrame(p) {
+    if (!p.fr || !p.frReady) return; try {
+      const w = p.fr.contentWindow, d = w.document, fs = { tab: p.frame.tab, scroll: Math.round(w.scrollY) };
+      if (p.frame.tab === "orders") { fs.f = {}; for (const k in OF) { const e = d.getElementById(OF[k]); fs.f[k] = e ? e.value : ""; } const sh = d.getElementById("order-show-shipped"); fs.f.shipped = !!(sh && sh.checked); }
+      p.content.fs = fs;
+    } catch (_) { }
+  }
+  function restoreFrame(p, w, d) {
+    const fs = p.content && p.content.fs; if (!fs) return;
+    try { if (fs.f) { for (const k in OF) { const e = d.getElementById(OF[k]); if (e && fs.f[k] != null) e.value = fs.f[k]; } const sh = d.getElementById("order-show-shipped"); if (sh) sh.checked = !!fs.f.shipped; if (p.frA && p.frA.applyOrderFilters) p.frA.applyOrderFilters(); } if (fs.scroll) setTimeout(() => { try { w.scrollTo(0, fs.scroll); } catch (_) { } }, 120); } catch (_) { }
+  }
+  function initFrame(p) {
+    const f = p.fr; if (!f || !f.isConnected) return; clearTimeout(p._fi); let n = 0;
+    const tick = () => {
+      if (!f.isConnected || p.fr !== f) return; let w, d; try { w = f.contentWindow; d = w.document; } catch (_) { return; }
+      if (d.head && !d.getElementById("__spEmbed")) { const st = d.createElement("style"); st.id = "__spEmbed"; st.textContent = EMBED_CSS; d.head.appendChild(st); hookFrame(p, d); }
+      const app = d.getElementById("app"), ld = p.body.querySelector(".fr-load");
+      let A = null; try { A = w.eval('typeof Admin !== "undefined" ? Admin : null'); } catch (_) { } /* Admin وAdminHelp ثوابت عامة وليست على window */
+      if (A && app && !app.classList.contains("hidden") && typeof A.tab === "function") {
+        if (!p.frReady) { p.frReady = true; p.frA = A; p.frTry = 0; }
+        /* اللوحة تنهي تهيئتها بعد ظهورها وقد تعيد التبويب الرئيسي: نثبّت التبويب المطلوب حتى يظهر فعلاً */
+        const tgt = d.getElementById("tab-" + p.frame.tab), ahp = d.getElementById("ah-panel"), shown = p.frame.tab === "ask" ? !!(ahp && ahp.classList.contains("on")) : tgt && !tgt.classList.contains("hidden");
+        if (!p.frGuard) p.frGuard = Date.now() + 14000; /* اللوحة قد تعود إلى «الرئيسية» عند اكتمال تهيئتها: نُبقي التبويب المطلوب 14ث الأولى ما لم يلمس المستخدم الإطار */
+        if (!shown && !p.frTouched && p.frTry < 40) { p.frTry++; try { if (p.frame.tab === "ask") { const H = w.eval('typeof AdminHelp !== "undefined" ? AdminHelp : null'); if (H && !(ahp && ahp.classList.contains("on"))) H.show(); } else A.tab(p.frame.tab); } catch (_) { } p._fi = setTimeout(tick, 500); return; }
+        if (!p.frDone) { p.frDone = true; setTimeout(() => restoreFrame(p, w, d), 400); if (ld) ld.remove(); p.el.dataset.frame = "ready"; }
+        if (Date.now() < p.frGuard && !p.frTouched) p._fi = setTimeout(tick, 700);
+        return;
+      }
+      if (ld && n > 3) ld.classList.add("login"); /* شاشة الدخول الحقيقية ظاهرة داخل اللوح */
+      if (++n < 900) p._fi = setTimeout(tick, 600);
+    };
+    tick();
+  }
+  /* إدارة مساحة العمل: ترتيب، عودة للاسطوانة، استعادة الكل */
+  function tileAll() {
+    const L = [...open.values()].filter(q => !q.min && !q.big); if (!L.length) return; const slots = layoutFor(Math.min(6, Math.max(2, L.length)));
+    L.forEach((q, i) => { const c = slots[i % slots.length]; if (!q.user) { q.user = true; q.el.classList.add("free"); setLayer(q, false); q.el.style.setProperty("--op", 1); q.el.classList.remove("back"); } cancelGlide(q); q.bk = null; q.hold = null; Object.assign(q.st, { x: c.x, y: c.y, z: c.z, rx: c.rx, ry: c.ry, rz: 0, s: c.s }); q.el.classList.add("tr2"); apply(q); setTimeout(() => q.el.classList.remove("tr2"), 450); });
+  }
+  function toCylinder() { open.forEach(q => { if (q.big) toggleBig(q); }); clearSel(); [...open.values()].filter(q => !q.min).forEach(q => dismiss(q.id, "min")); focused = null; }
+  function restoreAll() { [...open.values()].filter(q => q.min).forEach((q, i) => setTimeout(() => openSection(q.id), i * 140)); }
+  document.querySelectorAll("#modebar [data-w]").forEach(b => b.addEventListener("click", () => { const w = b.dataset.w; if (w === "tile") tileAll(); else if (w === "cyl") toCylinder(); else restoreAll(); }));
   function wire(p) {
     const el = p.el, h = el.querySelector(".pn-h"), rot = el.querySelector(".pn-rot"), rs = el.querySelector(".pn-rs");
     el.addEventListener("pointerdown", () => { if (focused !== p.id) focus(p.id); selectObj(p.id); });
     el.addEventListener("pointerenter", () => { hov++; }); el.addEventListener("pointerleave", () => { hov = Math.max(0, hov - 1); });
     el.querySelector(".pn-orb").onclick = () => snapOrbit(p, true); el.querySelector(".pn-x").onclick = () => dismiss(p.id, "close"); el.querySelector(".pn-min").onclick = () => dismiss(p.id, "min"); el.querySelector(".pn-max").onclick = () => toggleBig(p);
-    let tap = 0, tapX = 0;
+    let tapUp = 0, tapX = 0;
     h.addEventListener("pointerdown", e => {
       if (e.target.closest(".pn-min,.pn-max,.pn-x,.pn-orb")) return; e.preventDefault(); const mode = e.target.closest(".pn-rot") ? "rot" : e.target.closest(".pn-dep") ? "depth" : e.shiftKey ? "rot" : e.altKey ? "depth" : (e.ctrlKey || e.metaKey) ? "roll" : tool, now = performance.now();
-      if ((mode === "move" || p.big) && !e.target.closest(".pn-dep,.pn-rot") && now - tap < 520 && Math.abs(e.clientX - tapX) < 30) { tap = 0; toggleBig(p); return; } tap = now; tapX = e.clientX;
-      if (p.big) { act(p, "focus"); return; } /* وضع التركيز: اللوح ثابت في مركز مساحة العمل (نقرتان أو Esc للعودة) */
-      cancelGlide(p); el.classList.remove("tr", "tr2", "gliding"); el.classList.add("dragging"); const g = { mode, id: e.pointerId, x: e.clientX, y: e.clientY, s: [] }; h._g = g; try { h.setPointerCapture(e.pointerId); } catch (_) { }
-      /* استجابة فيزيائية للإمساك: يرتفع اللوح نحو الكاميرا قليلاً ويميل بحسب موضع الإمساك (كأن الإصبع يثبّت نقطة منه) */
-      { const r = el.getBoundingClientRect(), gx = clamp((e.clientX - (r.left + r.width / 2)) / Math.max(1, r.width / 2), -1, 1), gy = clamp((e.clientY - (r.top + r.height / 2)) / Math.max(1, r.height / 2), -1, 1); p.lift = 22; p.hold = mode === "rot" ? null : { x: -gy * 3 - 1, y: gx * 4.5 }; el.classList.add("tr2"); apply(p); setTimeout(() => { if (h._g === g) el.classList.remove("tr2"); }, 240); }
+      /* نقرتان = توسيع/استعادة، لكن تُحسب نقرة ثانية فقط إن كانت «نقرة» (دون سحب) خلال 520ms من نقرة أولى؛ فالضغط للتحديد ثم السحب فوراً لا يوسّع اللوح بالخطأ */
+      const maybeDouble = (mode === "move" || p.big) && !e.target.closest(".pn-dep,.pn-rot") && now - tapUp < 520 && Math.abs(e.clientX - tapX) < 30;
+      if (p.big && !maybeDouble) { act(p, "focus"); } /* وضع التركيز: اللوح ثابت في مركز مساحة العمل (نقرتان أو Esc للعودة) */
+      cancelGlide(p); el.classList.remove("tr", "tr2", "gliding"); el.classList.add("dragging"); const g = { mode, id: e.pointerId, x: e.clientX, y: e.clientY, s: [], t0: now, moved: 0, dbl: maybeDouble, x0: e.clientX }; h._g = g; if (!p.big) p.pre = { x: p.st.x, y: p.st.y, z: p.st.z, rx: p.st.rx, ry: p.st.ry, rz: p.st.rz || 0, s: p.st.s }; try { h.setPointerCapture(e.pointerId); } catch (_) { }
+      /* استجابة فيزيائية للإمساك: عند بدء السحب فعلاً (لا عند النقرة) يرتفع اللوح نحو الكاميرا قليلاً ويميل بحسب موضع الإمساك (كأن الإصبع يثبّت نقطة منه) */
+      { const r = el.getBoundingClientRect(); g.gx = clamp((e.clientX - (r.left + r.width / 2)) / Math.max(1, r.width / 2), -1, 1); g.gy = clamp((e.clientY - (r.top + r.height / 2)) / Math.max(1, r.height / 2), -1, 1); }
     });
-    h.addEventListener("pointermove", e => { const g = h._g; if (!g || g.id !== e.pointerId) return; const dx = e.clientX - g.x, dy = e.clientY - g.y; g.x = e.clientX; g.y = e.clientY; const t = performance.now(); let co = []; try { co = e.getCoalescedEvents ? e.getCoalescedEvents() : []; } catch (_) { } if (co.length > 1) co.forEach(c => g.s.push([c.timeStamp || t, c.clientX, c.clientY])); else g.s.push([t, e.clientX, e.clientY]); while (g.s.length > 2 && t - g.s[0][0] > 170) g.s.shift();
-      userize(p); draggingPanel = true; act(p, g.mode); if (g.mode === "roll") { p.st.rz = clamp((p.st.rz || 0) + dx * .22, -35, 35); badge(p, "ميل " + Math.round(p.st.rz) + "°"); } else if (g.mode === "depth") { p.st.z = clamp(p.st.z - dy * 1.15, ZMIN, ZMAX); badge(p, "عمق " + Math.round(p.st.z)); } else if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; { const m = magnetFor(p); if (m) { const k = (1 - m.d / SLOT_R) * .18; p.st.x += (m.c.x - p.st.x) * k; p.st.y += (m.c.y - p.st.y) * k; } ghost(p, m); } p.bk = { y: clamp(((p.bk && p.bk.y) || 0) * .5 + dx * .45, -9, 9), x: clamp(((p.bk && p.bk.x) || 0) * .5 - dy * .35, -7, 7) }; } else { p.st.ry = clamp(p.st.ry + dx * .35 * (1 - Math.abs(p.st.ry) / 75), -34, 34); p.st.rx = clamp(p.st.rx - dy * .3 * (1 - Math.abs(p.st.rx) / 65), -26, 26); badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); } if (g.mode === "move") dismissHint(p, g); apply(p); });
-    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; el.classList.remove("dragging"); lastPanelDrag = performance.now(); act(p, ""); dropHold(p, g.mode); if (g.mode === "roll") { badge(p, ""); settleRoll(p); return; } if (g.mode === "depth") { const vz = zIntent(g.s); if (Math.abs(vz) > .05) zglide(p, vz); else { badge(p, ""); resolve(p); } return; } if (g.mode === "rot") { const s = g.s, n = s.length; let wy = 0, wx = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); wy = (b[1] - a[1]) / dt * .3; wx = -(b[2] - a[2]) / dt * .25; } if (Math.hypot(wy, wx) > .03) spin(p, wy, wx); else settleRot(p); return; } p.bk = null; el.classList.add("tr2"); setTimeout(() => el.classList.remove("tr2"), 400); g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
+    h.addEventListener("pointermove", e => { const g = h._g; if (!g || g.id !== e.pointerId) return; const dx = e.clientX - g.x, dy = e.clientY - g.y; g.x = e.clientX; g.y = e.clientY; g.moved += Math.abs(dx) + Math.abs(dy); if (p.big) return; const t = performance.now(); let co = []; try { co = e.getCoalescedEvents ? e.getCoalescedEvents() : []; } catch (_) { } if (co.length > 1) co.forEach(c => g.s.push([c.timeStamp || t, c.clientX, c.clientY])); else g.s.push([t, e.clientX, e.clientY]); while (g.s.length > 2 && t - g.s[0][0] > 170) g.s.shift();
+      userize(p); draggingPanel = true; act(p, g.mode); if (!g.held) { g.held = true; p.lift = 22; p.hold = g.mode === "rot" ? null : { x: -g.gy * 2.2 - .6, y: g.gx * 3 }; el.classList.add("tr2"); apply(p); setTimeout(() => { if (h._g === g) el.classList.remove("tr2"); }, 200); } if (g.mode === "roll") { p.st.rz = clamp((p.st.rz || 0) + dx * .22, -35, 35); badge(p, "ميل " + Math.round(p.st.rz) + "°"); } else if (g.mode === "depth") { p.st.z = clamp(p.st.z - dy * 1.15, ZMIN, ZMAX); badge(p, "عمق " + Math.round(p.st.z)); } else if (g.mode === "move") { const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += dx / f; p.st.y += dy / f; { const m = magnetFor(p); if (m) { const k = (1 - m.d / SLOT_R) * .18; p.st.x += (m.c.x - p.st.x) * k; p.st.y += (m.c.y - p.st.y) * k; } ghost(p, m); } p.bk = { y: clamp(((p.bk && p.bk.y) || 0) * .5 + dx * .45, -9, 9), x: clamp(((p.bk && p.bk.x) || 0) * .5 - dy * .35, -7, 7) }; } else { p.st.ry = clamp(p.st.ry + dx * .35 * (1 - Math.abs(p.st.ry) / 75), -34, 34); p.st.rx = clamp(p.st.rx - dy * .3 * (1 - Math.abs(p.st.rx) / 65), -26, 26); badge(p, "⟲ " + Math.round(p.st.ry) + "° / " + Math.round(p.st.rx) + "°"); } if (g.mode === "move") dismissHint(p, g); apply(p); });
+    const up = e => { const g = h._g; if (!g || g.id !== e.pointerId) return; h._g = null; draggingPanel = false; el.classList.remove("dragging");
+      if (g.moved < 6 && performance.now() - g.t0 < 450) { /* نقرة (لا سحب) */ el.classList.remove("tr2"); lift0(p); if (g.dbl) { tapUp = 0; toggleBig(p); return; } tapUp = performance.now(); tapX = e.clientX; act(p, ""); if (p.big) return; }
+      if (p.big) { act(p, ""); lift0(p); return; } lastPanelDrag = performance.now(); act(p, ""); dropHold(p, g.mode); if (g.mode === "roll") { badge(p, ""); settleRoll(p); return; } if (g.mode === "depth") { const vz = zIntent(g.s); if (Math.abs(vz) > .05) zglide(p, vz); else { badge(p, ""); resolve(p); } return; } if (g.mode === "rot") { const s = g.s, n = s.length; let wy = 0, wx = 0; if (n >= 2) { const a = s[0], b = s[n - 1], dt = Math.max(1, b[0] - a[0]); wy = (b[1] - a[1]) / dt * .3; wx = -(b[2] - a[2]) / dt * .25; } if (Math.hypot(wy, wx) > .03) spin(p, wy, wx); else settleRot(p); return; } p.bk = null; el.classList.add("tr2"); setTimeout(() => el.classList.remove("tr2"), 400); g.s.push([performance.now(), e.clientX, e.clientY]); release(p, g); };
     h.addEventListener("pointerup", up); h.addEventListener("pointercancel", up);
     /* تحجيم بمقبض الزاوية */
     rs.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("dragging"); rs._g = { id: e.pointerId, x: e.clientX, y: e.clientY }; try { rs.setPointerCapture(e.pointerId); } catch (_) { } focus(p.id); selectObj(p.id); act(p, "resize"); });
@@ -298,17 +377,21 @@
     const rsUp = e => { if (rs._g) { rs._g = null; act(p, ""); el.classList.remove("dragging"); badge(p, ""); lastPanelDrag = performance.now(); resolve(p); } }; rs.addEventListener("pointerup", rsUp); rs.addEventListener("pointercancel", rsUp);
     /* عجلة الفأرة: تكبير اللوح (إلا إن كان المحتوى قابلاً للتمرير) */
     el.addEventListener("wheel", e => { if (e.shiftKey) { e.preventDefault(); userize(p); const d = e.deltaY || e.deltaX; p.st.z = clamp(p.st.z + (d < 0 ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); return; } const b = e.target.closest(".pn-b"); if (b && !e.ctrlKey && b.scrollHeight > b.clientHeight + 2) return; e.preventDefault(); userize(p); p.st.s = clamp(p.st.s * (e.deltaY < 0 ? 1.06 : .943), .5, 1.9); apply(p); }, { passive: false });
-    /* قرص + التواء بإصبعين مع تغذية بصرية (يعود الالتواء تلقائياً لتبقى القراءة سهلة) */
-    let pd = 0, ps = 1, a0 = 0, rz0 = 0; const ang2 = ts => Math.atan2(ts[1].clientY - ts[0].clientY, ts[1].clientX - ts[0].clientX) * 180 / Math.PI, dist2 = ts => Math.hypot(ts[0].clientX - ts[1].clientX, ts[0].clientY - ts[1].clientY);
-    el.addEventListener("touchstart", e => { if (e.touches.length === 2) { pd = dist2(e.touches); ps = p.st.s; a0 = ang2(e.touches); rz0 = p.st.rz || 0; cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("gest"); selectObj(p.id); act(p, "pinch"); } }, { passive: true });
-    el.addEventListener("touchmove", e => { if (e.touches.length === 2 && pd) { e.preventDefault(); let da = ang2(e.touches) - a0; da = ((da + 540) % 360) - 180; userize(p); p.st.s = clamp(ps * dist2(e.touches) / pd, .5, 1.9); p.st.rz = clamp(rz0 + da, -22, 22); badge(p, "×" + p.st.s.toFixed(2) + "  ↻ " + Math.round(p.st.rz) + "°"); apply(p); } }, { passive: false });
-    el.addEventListener("touchend", e => { if (e.touches.length < 2 && pd) { pd = 0; el.classList.remove("gest"); act(p, ""); badge(p, ""); lastPanelDrag = performance.now(); settleRz(p); resolve(p); } }, { passive: true });
+    /* قرص + التواء بإصبعين مع تغذية بصرية (يعود الالتواء تلقائياً لتبقى القراءة سهلة)؛ دوال بدء/حركة/نهاية تأخذ نقاطاً فيُعاد استعمالها للمس داخل الإطار الحقيقي (iframe) بإحداثيات الشاشة */
+    let pd = 0, ps = 1, a0 = 0, rz0 = 0; const ang2 = t => Math.atan2(t[1][1] - t[0][1], t[1][0] - t[0][0]) * 180 / Math.PI, dist2 = t => Math.hypot(t[0][0] - t[1][0], t[0][1] - t[1][1]), pts = e => [...e.touches].slice(0, 2).map(t => [t.clientX, t.clientY]);
+    const pStart = t => { pd = dist2(t) || 1; ps = p.st.s; a0 = ang2(t); rz0 = p.st.rz || 0; cancelGlide(p); el.classList.remove("tr", "tr2"); el.classList.add("gest"); selectObj(p.id); act(p, "pinch"); };
+    const pMove = t => { let da = ang2(t) - a0; da = ((da + 540) % 360) - 180; userize(p); p.st.s = clamp(ps * dist2(t) / pd, .5, 1.9); p.st.rz = clamp(rz0 + da, -22, 22); badge(p, "×" + p.st.s.toFixed(2) + "  ↻ " + Math.round(p.st.rz) + "°"); apply(p); };
+    const pEnd = () => { pd = 0; el.classList.remove("gest"); act(p, ""); badge(p, ""); lastPanelDrag = performance.now(); settleRz(p); resolve(p); };
+    el.addEventListener("touchstart", e => { if (e.touches.length === 2) pStart(pts(e)); }, { passive: true });
+    el.addEventListener("touchmove", e => { if (e.touches.length === 2 && pd) { e.preventDefault(); pMove(pts(e)); } }, { passive: false });
+    el.addEventListener("touchend", e => { if (e.touches.length < 2 && pd) pEnd(); }, { passive: true });
+    p.pinch = { start: pStart, move: pMove, end: pEnd, active: () => !!pd };
     /* لوحة المفاتيح: أسهم = تحريك، Alt+أسهم = إمالة، PageUp/PageDown = عمق، Home = عودة للمدار، Delete = رمي مع تلاشٍ */
     el.addEventListener("keydown", e => { const tg = e.target; if (/INPUT|TEXTAREA/.test(tg.tagName || "") || !(tg === el || (tg.closest && tg.closest(".pn-h")))) return; const k = String(e.key || ""), d = e.shiftKey ? 64 : 26; let used = true;
       if (/^Arrow/.test(k)) { userize(p); cancelGlide(p); if (e.altKey) { p.st.ry = clamp(p.st.ry + (k === "ArrowRight" ? 4 : k === "ArrowLeft" ? -4 : 0), -24, 24); p.st.rx = clamp(p.st.rx + (k === "ArrowUp" ? 3 : k === "ArrowDown" ? -3 : 0), -18, 18); } else { p.st.x += k === "ArrowRight" ? d : k === "ArrowLeft" ? -d : 0; p.st.y += k === "ArrowDown" ? d : k === "ArrowUp" ? -d : 0; } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 300); }
       else if (k === "PageUp" || k === "PageDown") { userize(p); p.st.z = clamp(p.st.z + (k === "PageUp" ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); }
       else if (k === "Home") { if (!snapOrbit(p, true)) arrange(); }
-      else if (k === "Delete" || k === "Backspace") { const n = Math.hypot(p.st.x, p.st.y) || 1; throwAway(p, (p.st.x || 1) / n * 1.6, p.st.y / n * 1.6); }
+      else if (k === "Delete" || k === "Backspace") { p.pre = null; const n = Math.hypot(p.st.x, p.st.y) || 1; throwAway(p, (p.st.x || 1) / n * 1.6, p.st.y / n * 1.6); }
       else used = false; if (used) e.preventDefault(); });
   }
   /* رفع الإصبع: رمي نحو الحافة = تلاشٍ بجسيمات؛ وإلا تثبيت/إزاحة لتفادي التراكب */
@@ -320,7 +403,7 @@
     if (snapOrbit(p)) return; resolve(p);
   }
   function throwAway(p, vx, vy) {
-    hov = 0; act(p, ""); setState(p, "dismissing"); remember(p); const id = p.id; open.delete(id); if (focused === id) focused = null; if (objSel === id) objSel = bigSel(id); syncMode(); if (objSel && open.get(objSel)) focus(objSel); markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false, acc = 1; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1; cancelGlide(p); p.el.classList.add("dragging");
+    hov = 0; act(p, ""); setState(p, "dismissing"); remember(p, p.pre); const id = p.id; open.delete(id); if (focused === id) focused = null; if (objSel === id) objSel = bigSel(id); syncMode(); if (objSel && open.get(objSel)) focus(objSel); markNodes(); select(id); setTimeout(() => arrange(), 60); p.el.classList.remove("tr", "tr2"); let last = performance.now(), op = 1, burst = false, acc = 1; const sp = Math.max(.9, Math.hypot(vx, vy)), k = Math.min(2.2, 1.4 / sp * 1) || 1; cancelGlide(p); p.el.classList.add("dragging");
     const step = t => { const dt = Math.min(250, t - last); last = t; acc *= Math.pow(1.05, dt / 16); /* يتسارع نحو الخارج */ p.st.x += vx * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.y += vy * dt * 1.15 * k * 1.4 * acc / persp(p.st.z); p.st.s *= Math.pow(.965, dt / 16); p.st.ry += vx * dt * .05; op -= dt / 520; p.el.style.setProperty("--op", Math.max(0, op).toFixed(2)); apply(p);
       if (!burst && op < .55) { burst = true; const r = p.el.getBoundingClientRect(); FX.dissolve(r, null); }
       if (op > 0) requestAnimationFrame(step); else p.el.remove(); };
@@ -329,7 +412,7 @@
   function dismiss(id, how) {
     const p = open.get(id); if (!p) return; hov = 0; act(p, ""); if (objSel === id) objSel = bigSel(id); const to = nodePos(id); p.el.classList.remove("tr"); p.el.classList.add("tr2"); p.keep = Object.assign({}, p.st);
     if (focused === id) focused = null; Object.assign(p.st, { x: to.x * .35, y: to.y * .35, z: -380, s: .1 }); apply(p); p.el.style.setProperty("--op", 0);
-    const r = p.el.getBoundingClientRect(); if (how === "close") { setState(p, "dismissing"); remember(p); open.delete(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
+    const r = p.el.getBoundingClientRect(); if (how === "close") { setState(p, "dismissing"); remember(p, p.keep); open.delete(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
     markNodes(); select(id); setTimeout(() => arrange(), 60); syncMode();
   }
   function toggleBig(p) {
@@ -356,6 +439,6 @@
   addEventListener("resize", () => { const kx = W() / vw0, ky = H() / vh0; vw0 = W(); vh0 = H();
     open.forEach(p => { if (p.min) return; if (p.big) { Object.assign(p.st, { w: Math.min(920, W() - 24), h: Math.min(660, H() - 92) }); } else { if (isMob()) { const m = sizeFor(p.sec); p.st.w = m.w; p.st.h = m.h; } if (!orbitMode || p.user) { p.st.x *= kx; p.st.y *= ky; } } apply(p); });
     if (!orbitMode) arrange(); });
-  window.SpatialOS = { stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
-  syncMode(); setTimeout(() => openSection("ord"), 700);
+  window.SpatialOS = { stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get real() { return REAL; }, tileAll, toCylinder, restoreAll, snapFrame, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
+  mbXp = false; syncMode(); detectReal().then(r => { REAL = r; document.body.classList.toggle("real", r); setTimeout(() => openSection("ord"), 700); });
 })();
