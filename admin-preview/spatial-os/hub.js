@@ -19,7 +19,9 @@
   const ID_RE = /^[\p{L}\p{N}_.:\-]{1,120}$/u, EID_RE = /^ev_[a-f0-9]{8,40}$/, REQ_RE = /^rq_[a-f0-9]{8,30}$/, REV_RE = /^[\w.\-]{1,64}$/;
   const panels = new Map(), ver = { orders: 0, products: 0, analytics: 0 }, seen = new Map(), trace = [];
   const stats = { accepted: 0, dup: 0, rejected: {}, echoDropped: 0, rateLimited: 0, refreshes: 0, refreshOk: 0, refreshFail: 0, noop: 0, skippedHidden: 0, deferred: 0, reconciles: 0, bytes: 0 };
-  let tenant = null, authAt = 0, authOk = false;
+  let tenant = null, authAt = 0, authOk = false, agentTaken = false;
+  const observers = new Set(), expects = new Set(); /* مرحلة 10: مراقبون للقراءة فقط + «توقّعات» يعتمدها وكيل الذكاء للتحقق من وصول الحدث بعد نجاح الخادم */
+  function notify(rec) { observers.forEach(f => { try { f(Object.assign({}, rec)); } catch (_) { } }); expects.forEach(x => x.test(rec)); }
   const log = (k, o) => { trace.push(Object.assign({ t: now(), k }, o || {})); if (trace.length > 400) trace.shift(); };
   const reject = (why, o) => { stats.rejected[why] = (stats.rejected[why] || 0) + 1; log("reject", Object.assign({ why }, o || {})); };
   const plain = v => v && typeof v === "object" && !Array.isArray(v) && (Object.getPrototypeOf(v) === Object.prototype || Object.getPrototypeOf(v) === null);
@@ -111,9 +113,10 @@
   /* ── سياسة المزامنة ── */
   function apply(src, d) {
     const res = TYPE_RES[d.type]; ver[res]++; /* كل نوع يرفع نسخة موردِه فقط؛ التحليلات تتبع الطلبات والمنتجات باشتراك لا بإعادة جلب إضافية */
-    if (res !== "analytics") { /* اللوح المصدر نفّذ الكتابة فبياناته الأساسية حديثة */ src.synced[res] = ver[res]; src.lastSync = now(); }
-    log("accept", { type: d.type, res: d.resource.id, src: src.id, ver: Object.assign({}, ver) });
+    if (src && res !== "analytics") { /* اللوح المصدر نفّذ الكتابة فبياناته الأساسية حديثة */ src.synced[res] = ver[res]; src.lastSync = now(); }
+    log("accept", { type: d.type, res: d.resource.id, src: src ? src.id : "agent", ver: Object.assign({}, ver) });
     panels.forEach(p => { if (p !== src || res === "analytics") if (stale(p).length) schedule(p, "event"); });
+    notify({ id: d.id, type: d.type, kind: d.resource.kind, resource: d.resource.id, src: src ? src.id : "agent", meta: d.meta, rev: d.rev, t: now() });
     /* لا «فحص متأخر» تخميني للمخزون: حركة المخزون تُنفَّذ بمنطق اللوحة نفسه وتُكتب في data.js فتصدر كحدث inventory.updated من اللوح المصدر بعد نجاح الخادم */
     paintAll();
   }
@@ -139,7 +142,7 @@
     if (!p.req || p.req.reqId !== reqId) return; clearTimeout(p.ackT); const rq = p.req; p.req = null; p.refreshing = false; stats.refreshFail++; log("refresh.fail", { id: p.id, error });
     rq.res.forEach(r => p.pending.add(r));
     if (error === "busy") { p.timer = setTimeout(() => run(p, "retry"), 600); return; }
-    if (p.retry++ < MAX_RETRY) p.timer = setTimeout(() => run(p, "retry"), 1000 * Math.pow(3, p.retry - 1)); else { p.degraded = true; p.retry = 0; log("degraded", { id: p.id }); }
+    if (p.retry++ < MAX_RETRY) p.timer = setTimeout(() => run(p, "retry"), 1000 * Math.pow(3, p.retry - 1)); else { p.degraded = true; p.retry = 0; log("degraded", { id: p.id }); const wl = p.waiters || []; p.waiters = []; wl.forEach(w => w.resolve({ ok: false, error })); }
     paint(p);
   }
   function onAck(p, d) {
@@ -147,7 +150,7 @@
     if (d.tenant !== tenant) return reject("tenant", { id: p.id });
     const rq = p.req; clearTimeout(p.ackT);
     if (!d.ok) return ackFail(p, d.reqId, String(d.error || "error"));
-    p.req = null; p.refreshing = false; p.retry = 0; p.degraded = false; p.lastSync = now(); stats.refreshOk++;
+    p.req = null; p.refreshing = false; p.retry = 0; p.degraded = false; p.lastSync = now(); stats.refreshOk++; const wl = p.waiters || []; p.waiters = []; wl.forEach(w => w.resolve({ ok: true, results: d.results || {} }));
     const r = d.results || {}; let applied = 0, deferred = false;
     ["orders", "products", "analytics"].forEach(k => { if (r[k] && r[k].applied) applied++; if (r[k] && r[k].deferred) deferred = true; });
     if (!applied) stats.noop++; if (deferred) stats.deferred++;
@@ -162,7 +165,39 @@
     if (want.length) { log("activate", { id, want }); schedule(p, "activate", want); }
   }
   addEventListener("pageshow", () => panels.forEach(p => { if (p.vis) activate(p.id); }));
+  /* ── مرحلة 10: واجهات للوكيل (متوافقة خلفياً؛ العقد وأنواع الأحداث لم تتغيّر) ── */
+  /* توقّع حدث: يُحلّ عند قبول حدث مطابق من أي لوح بعد نجاح الخادم؛ ينتهي بمهلة */
+  function expect(spec) {
+    const types = Array.isArray(spec.types) ? spec.types : [spec.type], res = spec.resource, ms = Math.min(60000, Math.max(500, spec.timeout || 15000)); let done = false, x;
+    const p = new Promise((resolve, reject) => { const timer = setTimeout(() => { if (!done) { done = true; expects.delete(x); reject(new Error("timeout")); } }, ms); x = { test: rec => { if (!done && types.indexOf(rec.type) >= 0 && (res == null || rec.resource === res)) { done = true; clearTimeout(timer); expects.delete(x); resolve(rec); } } }; expects.add(x); });
+    return { promise: p, cancel: () => { done = true; expects.delete(x); } };
+  }
+  function onAccepted(fn) { observers.add(fn); return () => observers.delete(fn); }
+  /* تحديث فوري موجَّه للوح (يستعمله الوكيل بعد كتابة موثَّقة)؛ يعيد وعداً بنتيجة الجسر */
+  function refreshNow(id, resources) {
+    const p = get(id); if (!p || !p.ready || !live(p)) return Promise.resolve({ ok: false, error: "not-live" });
+    const allowed = (resources || SUBS[id] || []).filter(r => ["orders", "products", "analytics"].indexOf(r) >= 0); if (!allowed.length) return Promise.resolve({ ok: true, results: {} });
+    return new Promise(resolve => { (p.waiters = p.waiters || []).push({ resolve }); allowed.forEach(r => p.pending.add(r)); clearTimeout(p.timer); if (p.refreshing) p.again = true; else run(p, "agent"); setTimeout(() => resolve({ ok: false, error: "timeout" }), ACK_TIMEOUT + 2000); });
+  }
+  /* ينتظر هدوء الألواح المرئية: لا تحديث جارٍ ولا مورد قديم ولا معلَّق */
+  function settle(ms) {
+    const max = ms || 15000, t0 = now();
+    return new Promise(resolve => { const tick = () => { const bad = [...panels.values()].filter(p => p.ready && live(p) && (p.refreshing || p.pending.size || stale(p).length)).map(p => p.id); if (!bad.length) return resolve({ ok: true, ms: now() - t0 }); if (now() - t0 > max) return resolve({ ok: false, busy: bad, ms: now() - t0 }); setTimeout(tick, 120); }; setTimeout(tick, 60); });
+  }
+  /* قدرة نشر محلية: تُمنح مرة واحدة فقط (لوكيل الذكاء في الصفحة الأم قبل تحميل أي إطار)؛ تمرّ بنفس التحقق والحدود والتوزيع ولا تُقبل إلا بعد أن يكون المركز مصادَقاً ومثبَّتاً المستأجر */
+  function registerAgent() {
+    if (agentTaken) return null; agentTaken = true;
+    return Object.freeze({ publish(spec) {
+      if (tenant === null) return { ok: false, why: "no-tenant" };
+      const d = { spatialHub: V, kind: "event", id: "ev_" + hex(10), type: spec && spec.type, resource: spec && spec.resource, ts: now(), rev: spec && spec.rev != null ? spec.rev : null, tenant, meta: (spec && spec.meta) || {} };
+      const why = validEvent(d); if (why) { reject("agent-" + why); return { ok: false, why }; }
+      const t = now(), a = panels; const key = { id: "agent", rate: pseudo.rate }; pseudo.rate = pseudo.rate.filter(x => t - x < RATE_MS); if (pseudo.rate.length >= RATE_N) { stats.rateLimited++; return { ok: false, why: "rate" }; } pseudo.rate.push(t);
+      seen.set(d.id, t); stats.accepted++; apply(null, d); return { ok: true, id: d.id };
+    } });
+  }
+  const pseudo = { rate: [] };
   const api = {
+    expect, onAccepted, refreshNow, settle, registerAgent,
     attach, detach, reload, setVisible, activate, version: V,
     stats: () => JSON.parse(JSON.stringify(stats)), versions: () => Object.assign({}, ver), trace: () => trace.slice(),
     state: id => { const p = get(id); return p ? { ready: p.ready, vis: p.vis, refreshing: p.refreshing, stale: stale(p), synced: Object.assign({}, p.synced), degraded: p.degraded, events: p.events, lastSync: p.lastSync, sync: p.el && p.el.dataset.sync } : null; },
