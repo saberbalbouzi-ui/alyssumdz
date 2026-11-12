@@ -27,7 +27,7 @@ const AdminHome = (() => {
 #ahome .ah-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #ahome .ah-seg{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}#ahome .ah-seg button{border:0;background:transparent;color:${MUT};padding:7px 14px;border-radius:999px;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer;transition:background .2s,color .2s}#ahome .ah-seg button.on{background:rgba(226,254,23,.2);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
 #ahome .ah-btn{padding:9px 16px;border-radius:12px;font:inherit;font-weight:800;color:#fff;cursor:pointer;background:rgba(226,254,23,.2);border:1px solid rgba(226,254,23,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -6px 10px rgba(0,0,0,.2),0 6px 16px rgba(0,0,0,.25);backdrop-filter:blur(8px);transition:transform .2s,background .2s}#ahome .ah-btn:hover{transform:translateY(-2px);background:rgba(226,254,23,.32)}#ahome .ah-btn.gh{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.22)}
-#ahome .ah-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+#ahome .ah-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}#ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{flex:0 1 auto;text-align:center;font-size:.88rem!important;padding:6px 12px!important;min-height:36px!important;height:auto!important;line-height:1.3!important;border-radius:11px!important}#ahome .ah-rqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 12px}#ahome .ah-rqs>div{padding:8px 10px!important;min-height:0!important;height:auto!important;line-height:1.35;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}#ahome .ah-rqs b{display:block;font-size:1.3rem;font-weight:900;color:#fff;line-height:1.3}#ahome .ah-rqs span{font-size:.82rem;color:${MUT}}#ahome .ah-rqb{display:flex;flex-wrap:wrap;gap:8px}
 #ahome .ah-card{padding:16px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 14px 34px rgba(0,0,0,.35);color:#fff;min-width:0}
 #ahome .ah-card h3{margin:0 0 10px;font-size:1rem;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px}#ahome .ah-card h3 small{font-weight:600;color:${MUT};font-size:.78rem}
 #ahome .kpi{position:relative;overflow:hidden}#ahome .kpi .lb{display:flex;align-items:center;gap:8px;color:${MUT};font-size:.88rem}#ahome .kpi .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}#ahome .kpi .ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -118,6 +118,23 @@ const AdminHome = (() => {
     });
     return `<svg viewBox="0 0 170 170" role="img" aria-label="توزيع الطلبات حسب الحالة">${out}<text x="${C}" y="${C - 2}" text-anchor="middle" style="fill:#fff;font-size:24px;font-weight:900">${num(total)}</text><text x="${C}" y="${C + 16}" text-anchor="middle" style="fill:${MUT};font-size:11px">طلب</text></svg>`;
   }
+  const hasTab = k => [...document.querySelectorAll(".nav-btn")].some(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
+  /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
+  function quickBar(waiting) {
+    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasTab("ruqya")], ["ruqya", "مواعيد الرقية", hasTab("ruqya")], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
+    return '<div class="ah-quick">' + Q.filter(q => q[2]).map(q => '<button type="button" class="ah-btn gh" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>';
+  }
+  function ruqyaCard() {
+    if (typeof AdminRuqya === "undefined" || !hasTab("ruqya")) return "";
+    const r = AdminRuqya.summary();
+    if (!r.loaded) { AdminRuqya.warm(refreshSoft); return '<div class="ah-card" style="margin:0 0 14px"><h3>مواعيد الرقية <small>جارٍ التحميل…</small></h3></div>'; }
+    if (r.err) return "";
+    const nd = r.nextDay ? new Date(r.nextDay + "T12:00:00").toLocaleDateString("ar-DZ", { weekday: "long", day: "numeric", month: "long" }) : "لا مواعيد قادمة";
+    return '<div class="ah-card" style="margin:0 0 14px"><h3>مواعيد الرقية <small>' + nd + '</small></h3><div class="ah-rqs">' +
+      '<div><b>' + num(r.pending) + '</b><span>بانتظار التأكيد</span></div><div><b>' + num(r.today) + '</b><span>مواعيد اليوم</span></div>' +
+      '<div><b>' + num(r.am) + '/' + r.cap + '</b><span>جلسات صباحاً</span></div><div><b>' + num(r.pm) + '/' + r.cap + '</b><span>جلسات مساءً</span></div></div>' +
+      '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button><button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
+  }
   function render() {
     const root = $("ahome"); if (!root) return;
     css(); const a = A(), all = orders(), days = S.days, hourly = days === 1;
@@ -156,6 +173,8 @@ const AdminHome = (() => {
 <div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
 <div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div>
 <button type="button" class="ah-btn" data-go="neword">+ طلب</button><button type="button" class="ah-btn gh" data-go="orders">كل الطلبات</button></div></div>
+${quickBar(waiting)}
+${ruqyaCard()}
 <div class="ah-kpis">
 ${kpi("sales", "المبيعات", money(sales), delta(sales, salesP), sb, MINT)}
 ${kpi("orders", "الطلبات", num(cur.length), delta(cur.length, prev.length), ob, "#3987e5")}
@@ -217,6 +236,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   function go(w) {
     const a = A(), btn = k => [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
     if (w === "neword") { try { if (typeof ManualOrder !== "undefined") ManualOrder.open({ mode: "new" }); } catch (e) { } return; }
+    if (w === "ruqya-new" || w === "ruqya-pending" || w === "ruqya") { try { AdminRuqya.queue(w === "ruqya-new" ? { view: "man" } : w === "ruqya-pending" ? { filter: "pending" } : { filter: "up" }); } catch (e) { } const rb = btn("ruqya"); if (rb) a.tab("ruqya", rb); return; }
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
     if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }

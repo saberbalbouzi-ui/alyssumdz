@@ -216,7 +216,14 @@ const AdminRuqya = (() => {
     }
     host.innerHTML = h + '</div><style>.rq-fb{border:1px solid #ffffff44;background:transparent;color:inherit;border-radius:12px;padding:8px 14px;font:inherit;font-weight:800;cursor:pointer}.rq-fb.on{background:var(--g-mint,#e2fe17);color:#1f2123;border-color:transparent}#ruqya-content table.rt td{white-space:nowrap;vertical-align:middle;font-size:1.08rem;line-height:1.7}#ruqya-content table.rt th{font-size:1rem}#ruqya-content table.rt tr.rq-dh td{font-size:1.25rem;font-weight:900;background:rgba(226,254,23,.12);padding:12px 14px;border-block:1px solid rgba(226,254,23,.35)}#ruqya-content table.rt td small{font-size:.85rem}#ruqya-content table.rt td[data-l="إجراء"] .btn{min-height:34px;padding:4px 12px;font-size:.86rem;border-radius:10px}#ruqya-content ul.rq-pl{margin:4px 0 0;padding:0;list-style:none;font-size:.82rem}#ruqya-content ul.rq-pl li{padding:1px 0}#ruqya-content ul.rq-pl li::before{content:"\2022";margin-inline-end:6px;opacity:.6}</style>';
   }
-  async function render() { const host = $("ruqya-content"); if (!host) return; host.innerHTML = '<div class="hint">جارٍ التحميل…</div>'; await load(); draw(); }
+  async function render() { const host = $("ruqya-content"); if (!host) return; host.innerHTML = '<div class="hint">جارٍ التحميل…</div>'; await load(); S._loaded = 1; const nx = S.next; S.next = null; if (nx) { if (nx.filter) { S.filter = nx.filter; S.found = null; S.pat = null; S.q = ""; S.view = ""; } if (nx.view === "man") { S.view = "man"; S.err = ""; S.man = null; S._af = {}; S.pat = null; } } draw(); }
+  /* للصفحة الرئيسية: ملخص سريع (يُحمَّل مرة واحدة عند الحاجة) وتهيئة العرض التالي قبل فتح التبويب */
+  function summary() {
+    const t = today(), live = S.rows.filter(r => r.status !== "cancelled" && r.status !== "noshow"), up = live.filter(r => r.day >= t).sort((x, y) => (x.day + x.slot).localeCompare(y.day + y.slot)), nd = up.length ? up[0].day : "", sess = (am) => live.filter(r => r.day === nd && ((r.slot < "13:00") === am)).reduce((n, r) => n + (Number(r.sessions) || 1), 0);
+    return { loaded: !!S._loaded, err: S.err, pending: S.rows.filter(r => r.status === "pending" && r.day >= t).length, today: live.filter(r => r.day === t).length, nextDay: nd, am: nd ? sess(true) : 0, pm: nd ? sess(false) : 0, cap: S.pcap || 5, nextN: live.filter(r => r.day === nd).length };
+  }
+  async function warm(done) { if (S._w) return; S._w = 1; await load(); S._loaded = 1; if (done) done(); }
+  function queue(o) { S.next = o || null; }
   document.addEventListener("click", async e => {
     const b = e.target.closest && e.target.closest("[data-rq]"); if (!b || !$("ruqya-content") || !$("ruqya-content").contains(b)) return;
     const a = b.getAttribute("data-rq");
@@ -332,5 +339,5 @@ const AdminRuqya = (() => {
     Admin.tab = function (t, btn) { const r = original.call(this, t, btn); const el = $("tab-ruqya"); if (el) el.classList.toggle("hidden", t !== "ruqya"); if (t === "ruqya") render(); return r; };
     Admin._ruqyaTabWrapped = true;
   });
-  return { render, parseIcs, unzipIcs, rows: () => S.rows, pending: () => S.rows.filter(r => r.status === "pending").length };
+  return { render, summary, warm, queue, parseIcs, unzipIcs, rows: () => S.rows, pending: () => S.rows.filter(r => r.status === "pending").length };
 })();
