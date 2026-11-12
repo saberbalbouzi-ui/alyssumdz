@@ -1,0 +1,353 @@
+{
+ "version": 1,
+ "tools": [
+  {
+   "name": "sales.summary",
+   "risk": "read",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "period": {
+      "type": "string",
+      "enum": [
+       "today",
+       "yesterday",
+       "week",
+       "month",
+       "all"
+      ]
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "sales.top_product",
+   "risk": "read",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "period": {
+      "type": "string",
+      "enum": [
+       "today",
+       "yesterday",
+       "week",
+       "month",
+       "all"
+      ]
+     },
+     "by": {
+      "type": "string",
+      "enum": [
+       "qty",
+       "revenue"
+      ]
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "orders.list",
+   "risk": "read",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "nouvelle",
+       "confirmee",
+       "expediee",
+       "livree",
+       "annulee",
+       "echec"
+      ]
+     },
+     "wilaya": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "q": {
+      "type": "string",
+      "maxLength": 60
+     },
+     "period": {
+      "type": "string",
+      "enum": [
+       "today",
+       "yesterday",
+       "week",
+       "month",
+       "all"
+      ]
+     },
+     "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "orders.get",
+   "risk": "read",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,3}\\d{4,8}-[A-Z0-9]{3,8}$|^[A-Za-z0-9_\\-]{4,40}$"
+     }
+    },
+    "required": [
+     "id"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "products.search",
+   "risk": "read",
+   "perms": [],
+   "owner": true,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "q": {
+      "type": "string",
+      "maxLength": 60
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "products.get",
+   "risk": "read",
+   "perms": [],
+   "owner": true,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "slug": {
+      "type": "string",
+      "pattern": "^[\\p{L}\\p{N}_.\\-]{1,80}$"
+     }
+    },
+    "required": [
+     "slug"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "inventory.read",
+   "risk": "read",
+   "perms": [],
+   "owner": true,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "slug": {
+      "type": "string",
+      "pattern": "^[\\p{L}\\p{N}_.\\-]{1,80}$"
+     },
+     "low": {
+      "type": "boolean"
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "customers.find",
+   "risk": "read",
+   "perms": [
+    "customers"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "q": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 60
+     }
+    },
+    "required": [
+     "q"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "settings.read",
+   "risk": "read",
+   "perms": [],
+   "owner": true,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "key": {
+      "type": "string",
+      "enum": [
+       "guard",
+       "stock"
+      ]
+     }
+    },
+    "required": [
+     "key"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "ui.open_panel",
+   "risk": "ui",
+   "perms": [],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "panel": {
+      "type": "string",
+      "enum": [
+       "ord",
+       "prod",
+       "inv",
+       "ana"
+      ]
+     }
+    },
+    "required": [
+     "panel"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "ui.filter_orders",
+   "risk": "ui",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "nouvelle",
+       "confirmee",
+       "expediee",
+       "livree",
+       "annulee",
+       "echec"
+      ]
+     },
+     "wilaya": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "q": {
+      "type": "string",
+      "maxLength": 60
+     }
+    },
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "ui.show_order",
+   "risk": "ui",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,3}\\d{4,8}-[A-Z0-9]{3,8}$|^[A-Za-z0-9_\\-]{4,40}$"
+     }
+    },
+    "required": [
+     "id"
+    ],
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "ui.current_order",
+   "risk": "ui",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "analytics.refresh",
+   "risk": "ui",
+   "perms": [
+    "orders"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+   }
+  },
+  {
+   "name": "orders.confirm",
+   "risk": "write",
+   "perms": [
+    "orders",
+    "orders.write"
+   ],
+   "owner": false,
+   "schema": {
+    "type": "object",
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,3}\\d{4,8}-[A-Z0-9]{3,8}$|^[A-Za-z0-9_\\-]{4,40}$"
+     }
+    },
+    "required": [
+     "id"
+    ],
+    "additionalProperties": false
+   }
+  }
+ ]
+}

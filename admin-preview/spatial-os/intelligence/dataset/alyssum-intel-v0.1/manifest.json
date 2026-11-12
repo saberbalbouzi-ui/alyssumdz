@@ -1,0 +1,136 @@
+{
+ "name": "alyssum-intel",
+ "version": "0.1.0",
+ "seed": 1109,
+ "generator": "gen_dataset.py",
+ "registry": "registry.json",
+ "counts": {
+  "train": 3238,
+  "val": 186,
+  "test": 919
+ },
+ "dropped_near_dups": {
+  "train<-train": 3343,
+  "val<-val": 88,
+  "val<=text=train": 5,
+  "test<-test": 409,
+  "test<=text=train": 57,
+  "test<=text=val": 3,
+  "test<-train": 5,
+  "train/val<-hand": 20
+ },
+ "files": {
+  "train.jsonl": "af7deea1db0cbfa0912f5b0500c7a5732f4b58f00bc8df3bdf17eeac56054c39",
+  "val.jsonl": "5fceaec53c9755133e96a2105f8f9e94f4c14028107b8c398477f78ae9e4fd9c",
+  "test.jsonl": "210d7674cb08b8947c4ab1a7691cad021f8704cd3cd2b94d0580d9cc3436044b"
+ },
+ "stats": {
+  "train": {
+   "by_category": {
+    "orders": 436,
+    "ui": 184,
+    "multistep": 280,
+    "chat": 32,
+    "confirm": 211,
+    "unauthorized": 528,
+    "followup": 414,
+    "inventory": 240,
+    "products": 125,
+    "sales": 191,
+    "clarify": 181,
+    "customers": 359,
+    "adversarial": 30,
+    "settings": 27
+   },
+   "by_lang": {
+    "ar": 911,
+    "fr": 793,
+    "dz": 637,
+    "mix": 514,
+    "msa": 383
+   },
+   "by_action": {
+    "tool": 2467,
+    "chat": 32,
+    "refuse": 558,
+    "clarify": 181
+   },
+   "families": 110
+  },
+  "val": {
+   "by_category": {
+    "adversarial": 8,
+    "inventory": 10,
+    "sales": 14,
+    "settings": 6,
+    "orders": 56,
+    "ui": 7,
+    "products": 13,
+    "unauthorized": 16,
+    "followup": 23,
+    "customers": 14,
+    "confirm": 16,
+    "clarify": 3
+   },
+   "by_lang": {
+    "fr": 61,
+    "msa": 31,
+    "mix": 34,
+    "dz": 45,
+    "ar": 15
+   },
+   "by_action": {
+    "refuse": 24,
+    "tool": 159,
+    "clarify": 3
+   },
+   "families": 20
+  },
+  "test": {
+   "by_category": {
+    "unauthorized": 178,
+    "followup": 103,
+    "products": 94,
+    "clarify": 57,
+    "inventory": 48,
+    "sales": 128,
+    "orders": 88,
+    "confirm": 59,
+    "chat": 26,
+    "customers": 29,
+    "multistep": 57,
+    "settings": 13,
+    "ui": 24,
+    "adversarial": 15
+   },
+   "by_lang": {
+    "msa": 263,
+    "dz": 163,
+    "mix": 152,
+    "fr": 166,
+    "ar": 175
+   },
+   "by_action": {
+    "refuse": 193,
+    "tool": 643,
+    "clarify": 57,
+    "chat": 26
+   },
+   "families": 64
+  }
+ },
+ "leakage_checks": {
+  "family_overlap": {
+   "train&val": 0,
+   "train&test": 0,
+   "val&test": 0
+  },
+  "exact_text_overlap": {
+   "train&val": 0,
+   "train&test": 0,
+   "val&test": 0
+  },
+  "max_jaccard_val_test_vs_train": 0.783,
+  "pairs_ge_0.8": 0
+ }
+}
