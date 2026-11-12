@@ -59,7 +59,7 @@
     b.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(s.id); }); b.addEventListener("focus", () => select(s.id)); orbit.appendChild(b); nodes.set(s.id, b);
     const d = document.createElement("button"); d.type = "button"; d.dataset.id = s.id; d.innerHTML = svg(s.icon) + "<span>" + s.name + "</span>"; d.addEventListener("click", () => openSection(s.id)); dock.appendChild(d);
   });
-  let ang = 20, va = 0, drag = null, lastInput = 0, tw = null, yaw = 0;
+  let spinK = 1, spinT = 1, ang = 20, va = 0, drag = null, lastInput = 0, tw = null, yaw = 0;
   /* تدوير القاعة كلها حول الاسطوانة (الكاميرا المدارية): Shift+سحب أو التواء بإصبعين على الخلفية أو المفتاحان [ ] */
   function setYaw(v) { yaw = clamp(v, -50, 50); stage.style.setProperty("--yaw", yaw.toFixed(1) + "deg"); const c = document.getElementById("yawchip"); if (c) { c.classList.toggle("on", Math.abs(yaw) > 1); c.textContent = "القاعة ↻ " + Math.round(yaw) + "° — انقر للتصفير"; } }
   /* مدار الألواح: كل لوح لم يمسكه المستخدم يدور حول الاسطوانة (pa = زاوية المدار، pt = انتقال لتقديم لوح جديد، hov = ألواح تحت المؤشر فيتوقف الدوران) */
@@ -74,10 +74,10 @@
   /* تدوير الاسطوانة لتقديم عقدة قسم إلى مقدمة المشهد (أقصر دوران) */
   function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step - yaw; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
   function frame(t) {
-    const rdt = Math.min(250, t - (frame.t || t)), dt = Math.min(50, rdt); frame.t = t; const ek = 1 - Math.exp(-rdt / 150); /* تسهيل مبني على الزمن الحقيقي (مستقل عن معدل الإطارات) */
-    if (tw) { ang += (tw.to - ang) * ek; if (Math.abs(tw.to - ang) < .15) { ang = tw.to; tw = null; } } else if (!drag) { const f = rdt / 16.7; ang += va * f; va *= Math.pow(.94, f); if (!RM && !objSel && Math.abs(va) < .02 && t - lastInput > 2500) ang += rdt * .004; }
+    const rdt = Math.min(250, t - (frame.t || t)), dt = Math.min(50, rdt); frame.t = t; const ek = 1 - Math.exp(-rdt / 150); spinK += (spinT - spinK) * (1 - Math.exp(-rdt / 400)); /* سرعة الدوران التلقائي (يبطئها الوكيل أثناء الصوت) */ /* تسهيل مبني على الزمن الحقيقي (مستقل عن معدل الإطارات) */
+    if (tw) { ang += (tw.to - ang) * ek; if (Math.abs(tw.to - ang) < .15) { ang = tw.to; tw = null; } } else if (!drag) { const f = rdt / 16.7; ang += va * f; va *= Math.pow(.94, f); if (!RM && !objSel && Math.abs(va) < .02 && t - lastInput > 2500) ang += rdt * .004 * spinK; }
     const dA = ang - pprev; pprev = ang;
-    if (orbitMode) { if (pt) { pa += (pt.to - pa) * ek; if (Math.abs(pt.to - pa) < .15) { pa = pt.to; pt = null; } } else if (!layer.querySelector(".panel:hover") && !draggingPanel) pa += dA + (RM || objSel ? 0 : rdt * .006); orbitFrame(t, ek); }
+    if (orbitMode) { if (pt) { pa += (pt.to - pa) * ek; if (Math.abs(pt.to - pa) < .15) { pa = pt.to; pt = null; } } else if (!layer.querySelector(".panel:hover") && !draggingPanel) pa += dA + (RM || objSel ? 0 : rdt * .006 * spinK); orbitFrame(t, ek); }
     if (((frame.n = (frame.n || 0) + 1) & 1) === 0) open.forEach(p => { if (p.origin && !p.min && t - p.born < 900) { const r = p.el.getBoundingClientRect(); FX.stream(p.origin.x, p.origin.y, r.left + r.width / 2, r.top + r.height / 2, 3); } });
     const a = ang % 360; cyl.style.transform = `rotateY(${a}deg)`; cylIn.style.transform = `rotateY(${-a * 1.6}deg)`;
     gl.forEach((g, i) => { const th = (-a * 1.3 + i * 360 / gl.length) * Math.PI / 180, y = -110 + (i % 4) * 62 + Math.sin(t / 900 + i) * 6; g.style.transform = `translate3d(${(Math.sin(th) * 92).toFixed(1)}px,${y.toFixed(1)}px,${(Math.cos(th) * 92).toFixed(1)}px)`; });
@@ -439,6 +439,6 @@
   addEventListener("resize", () => { const kx = W() / vw0, ky = H() / vh0; vw0 = W(); vh0 = H();
     open.forEach(p => { if (p.min) return; if (p.big) { Object.assign(p.st, { w: Math.min(920, W() - 24), h: Math.min(660, H() - 92) }); } else { if (isMob()) { const m = sizeFor(p.sec); p.st.w = m.w; p.st.h = m.h; } if (!orbitMode || p.user) { p.st.x *= kx; p.st.y *= ky; } } apply(p); });
     if (!orbitMode) arrange(); });
-  window.SpatialOS = { stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get real() { return REAL; }, tileAll, toCylinder, restoreAll, snapFrame, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
+  window.SpatialOS = { setSpin: v => { spinT = clamp(+v || 0, 0, 1); }, get spin() { return spinK; }, get spinTarget() { return spinT; }, stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get real() { return REAL; }, tileAll, toCylinder, restoreAll, snapFrame, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
   mbXp = false; syncMode(); detectReal().then(r => { REAL = r; document.body.classList.toggle("real", r); setTimeout(() => openSection("ord"), 700); });
 })();

@@ -38,7 +38,7 @@
 
   /* ───── مدير السياق ───── */
   let CTX = null, PENDING = null, BUSY = false, STATE = "idle", RUNS = [], PLANNER = null;
-  function resetContext(why) { CTX = { lastIntent: null, lastArgs: null, lastListIds: [], lastCount: null, focusOrder: null, focusProduct: null, awaiting: null, catalog: [], wilayas: [], names: [], catAt: 0, lang: "ar" }; if (PENDING && PENDING.state === "pending") { PENDING.state = "cancelled"; aud({ kind: "confirm", ok: false, code: "cancelled", why: why || "reset", token: PENDING.token }); } PENDING = null; if (why) emit({ type: "context", why }); }
+  function resetContext(why) { CTX = { lastIntent: null, lastArgs: null, lastListIds: [], lastCount: null, focusOrder: null, focusProduct: null, awaiting: null, catalog: [], wilayas: [], names: [], catAt: 0, lang: "ar", hist: [] }; if (PENDING && PENDING.state === "pending") { PENDING.state = "cancelled"; aud({ kind: "confirm", ok: false, code: "cancelled", why: why || "reset", token: PENDING.token }); } PENDING = null; if (why) emit({ type: "context", why }); }
   resetContext();
   async function refreshNames(me) { /* أسماء للتعرّف: منتجات (مالك)، ولايات من الطلبات، وأسماء الزبائن فقط لمن يملك «العملاء» */
     if (Date.now() - CTX.catAt < 30000) return; CTX.catAt = Date.now();
@@ -113,11 +113,64 @@
     return {};
   }
 
+
+  /* ───── مسار نموذج اللغة (المرحلة 11) ─────
+     النموذج يقترح استدعاءات أدوات فقط؛ كل استدعاء يمر على: قائمة السماح ← مخطط صارم ← صلاحيات الجلسة (step) ← الموافقة الصريحة للكتابة (makeConfirmation).
+     لا يرى النموذج أسماء/هواتف الزبائن (تُحذف من نتائج الأدوات)، ولا ينفّذ كتابة أبداً، وحدّه جولات واستدعاءات ومهلة. */
+  const LLM_TOOLS = new Set(["orders.list", "orders.get", "sales.summary", "sales.top_product", "products.search", "products.get", "inventory.read", "customers.find", "settings.read", "ui.open_panel", "ui.filter_orders", "ui.show_order", "orders.confirm"]);
+  const LLM_ROUNDS = 4, LLM_CALLS = 6, LLM_DEADLINE = 50000; let LLMMODE = "fallback", LLMSTAT = { used: 0, rounds: 0, lastError: null, lastRun: null };
+  const maskText = t => String(t == null ? "" : t).replace(/\d{8,}/g, "[رقم]").slice(0, 300); /* أرقام هواتف (8+ خانات) فقط؛ معرّفات الطلب تحوي 6 خانات تاريخ ويحتاجها النموذج */
+  const llmReady = () => typeof AgentLLM !== "undefined" && AgentLLM.available() && LLMMODE !== "off";
+  const llmWanted = ps => llmReady() && (ps.intent === "unknown" || (LLMMODE === "always" && !["hello", "thanks", "help", "approve", "reject"].includes(ps.intent)));
+  function redactForLLM(name, r) { const strip = o => { const x = Object.assign({}, o); ["name", "phone", "commune", "note", "desk"].forEach(k => delete x[k]); return x; };
+    if (name === "orders.list") return { count: r.count, total: r.total, items: r.items.slice(0, 8).map(strip), filter: r.filter }; if (name === "orders.get") return strip(r); if (name === "customers.find") return { count: r.count, spent: r.spent, items: r.items.slice(0, 8).map(strip) };
+    if (name === "products.search") return { count: r.count, items: r.items.slice(0, 8) }; return JSON.parse(JSON.stringify(r)); }
+  async function rawStep(run, tool, title, risk, fn, sum) { const st = { id: run.steps.length + 1, tool, title, risk, status: "running", ms: 0, args: {} }; run.steps.push(st); emit({ type: "step", run: run.id, step: st }); const t0 = performance.now(); let out;
+    try { out = await fn(); st.status = out && out.ok === false ? "error" : "ok"; if (out && out.ok === false) { st.code = out.error; st.error = out.error; } else st.summary = sum ? sum(out) : ""; } catch (e) { st.status = "error"; st.code = "internal"; st.error = String(e && e.message || e).slice(0, 80); out = { ok: false, error: "internal" }; }
+    st.ms = Math.round(performance.now() - t0); aud({ kind: "tool", run: run.id, tool, risk, ok: st.status === "ok", code: st.code || null, ms: st.ms }); emit({ type: "step", run: run.id, step: st }); return out; }
+  function updateCtxFrom(name, a, r) { if (name === "orders.list") { CTX.lastListIds = r.items.map(x => x.id); CTX.lastCount = r.count; CTX.focusOrder = r.count === 1 ? r.items[0].id : null; } else if (name === "orders.get") CTX.focusOrder = r.id; else if (name === "products.get") CTX.focusProduct = r.slug; else if (name === "inventory.read" && a && a.slug) CTX.focusProduct = a.slug; }
+  function factsFor(name, r, a, lang) { switch (name) { case "sales.summary": return fmtSales(r, lang); case "sales.top_product": return fmtTop(r, lang); case "orders.list": return fmtOrdersList(r, lang, a); case "orders.get": return fmtOrder(r, lang); case "products.search": return fmtProducts(r, lang); case "products.get": return fmtProduct(r, lang); case "inventory.read": return fmtInv(r, lang);
+    case "customers.find": return [F(tr(lang, r.count + " طلب لهذا الزبون — مجموع غير الملغاة: " + money(r.spent), r.count + " commande(s)", r.count + " order(s) for this customer — total excluding cancelled: " + money(r.spent)))];
+    case "settings.read": { const v = r.value; return [F(r.key === "guard" ? tr(lang, "حماية الطلبات — مضاد الروبوت: " + (v.antibot ? "مفعّل" : "غير مفعّل") + "، منع التكرار: " + (v.dup ? "مفعّل" : "غير مفعّل"), "Protection — antibot : " + (v.antibot ? "oui" : "non") + ", doublons : " + (v.dup ? "oui" : "non"), "Order protection — anti-bot: " + (v.antibot ? "on" : "off") + ", duplicate blocking: " + (v.dup ? "on" : "off")) : tr(lang, "إعداد المخزون — يبدأ التتبع من: " + (v.since || "غير محدد"), "Stock suivi depuis : " + (v.since || "n/d"), "Stock settings — tracking since: " + (v.since || "not set")))]; }
+    default: return []; } }
+  async function runModelCall(run, c, lang, executed) {
+    const name = String(c && c.name || ""), tool = T.get(name); setState("executing", run);
+    if (!tool || !LLM_TOOLS.has(name)) { aud({ kind: "llm-call", ok: false, code: "not_allowed", tool: name.slice(0, 30) }); return { error: "tool_not_allowed" }; }
+    try {
+      if (name === "orders.confirm") { const v = T.validate(tool.schema, c.args || {}); if (!v.ok) throw new ToolError("invalid_args", "معطيات غير صالحة (" + v.error + ")"); run.llmConfirm = await makeConfirmation(run, v.value.id, lang); aud({ kind: "llm-call", ok: true, tool: name, code: "approval-requested" }); return { status: "awaiting_user_approval", executed: false, order: { id: v.value.id, total: run.confirm.summary.total } }; }
+      const r = await step(run, name, c.args || {}); executed.push({ name, args: c.args || {}, result: r }); updateCtxFrom(name, c.args, r); aud({ kind: "llm-call", ok: true, tool: name }); return redactForLLM(name, r);
+    } catch (e) { const te = e instanceof ToolError ? e : new ToolError("internal", "خطأ داخلي"); aud({ kind: "llm-call", ok: false, tool: name, code: te.code }); return { error: te.code, message: te.message }; }
+  }
+  async function handleLLM(run, ps, lang, done) {
+    const me = await authz(), t0 = performance.now(), TT = { ar: "استشارة النموذج", fr: "Consulter le modèle", en: "Ask the model" };
+    const decl = T.registry().filter(t => LLM_TOOLS.has(t.name) && allowed(me, t).ok).map(t => ({ name: t.name, description: ((t.title && t.title.en) || t.name) + " — " + String(t.desc).slice(0, 220), parameters: t.schema }));
+    const messages = CTX.hist.slice(-12).map(h => ({ role: h.role, text: h.text })).concat([{ role: "user", text: maskText(run.text) }]);
+    const executed = []; let calls = 0, finalText = "", limit = false, err = null; LLMSTAT.used++;
+    for (let round = 0; round < LLM_ROUNDS; round++) {
+      if (performance.now() - t0 > LLM_DEADLINE) { err = "timeout"; break; }
+      setState("thinking", run); const j = await rawStep(run, "llm.chat", TT, "model", () => AgentLLM.chat(messages, decl), r => (r.calls && r.calls.length ? r.calls.length + " ⇢ أدوات" : "رد"));
+      LLMSTAT.rounds++; if (!j.ok) { err = j.error || "llm"; break; }
+      if (!j.calls || !j.calls.length) { finalText = j.text || ""; break; }
+      messages.push({ role: "model", calls: j.calls.map(c => ({ name: c.name, args: c.args })) });
+      const results = []; for (const c of j.calls) { if (calls >= LLM_CALLS) { limit = true; results.push({ name: c.name, response: { error: "tool_call_limit_reached" } }); continue; } calls++; results.push({ name: c.name, response: await runModelCall(run, c, lang, executed) }); }
+      messages.push({ role: "tool", results }); if (j.text) finalText = j.text; if (round === LLM_ROUNDS - 1) { limit = true; }
+    }
+    LLMSTAT.lastError = err; LLMSTAT.lastRun = { rounds: run.steps.filter(s => s.tool === "llm.chat").length, calls, limit, err };
+    const blocks = []; executed.forEach(e => blocks.push(...factsFor(e.name, e.result, e.args, lang))); if (run.llmConfirm) blocks.push(...run.llmConfirm);
+    if (finalText) blocks.push({ k: "llm", t: finalText.slice(0, 600) });
+    if (limit) blocks.push(X(tr(lang, "بلغتُ حدّ جولات/استدعاءات الأدوات المسموح بها فتوقفت.", "Limite de tours/appels d'outils atteinte — arrêt.", "I reached the tool-call/round limit and stopped.")));
+    const EM = { timeout: ["انتهت مهلة النموذج", "Délai du modèle dépassé", "The model timed out"], network: ["تعذّر الاتصال بخدمة النموذج", "Service du modèle injoignable", "Could not reach the model service"], unauthorized: ["الجلسة غير صالحة", "Session invalide", "Session not valid"], rate_limited: ["تجاوزتَ حدّ الطلبات للنموذج — انتظر دقيقة", "Trop de requêtes au modèle", "Model rate limit reached — wait a minute"], llm_not_configured: ["خدمة النموذج غير مُهيّأة", "Service du modèle non configuré", "Model service is not configured"] };
+    if (err) { const m = EM[err] || ["تعذّر الحصول على رد من النموذج", "Pas de réponse du modèle", "No reply from the model"]; blocks.push({ k: "error", t: tr(lang, m[0], m[1], m[2]) }); }
+    if (!blocks.length) blocks.push(X(tr(lang, "لم أفهم الطلب تماماً.", "Je n'ai pas compris.", "I did not understand the request.")));
+    run.result.llmText = finalText; return done(blocks, { llm: true, needApproval: !!run.confirm, unknown: !executed.length && !finalText && !run.confirm && !err, error: err && !executed.length && !finalText && !run.confirm ? "llm_" + err : undefined });
+  }
+
   /* ───── المنسّق ───── */
   async function handle(run, ps) {
     const lang = ps.lang === "fr" || ps.lang === "en" ? ps.lang : "ar", a = ps.args || {}, out = run.result;
     const done = (blocks, extra) => { out.blocks = blocks; Object.assign(out, extra || {}); };
     const needPanelUI = async (fn) => { if (typeof SpatialOS === "undefined" || !SpatialOS.real) return null; try { return await fn(); } catch (e) { run.notes.push(tr(lang, "تعذّر إجراء الواجهة: " + e.message, "UI: " + e.message, "UI action failed: " + e.message)); return null; } };
+    if (llmWanted(ps)) return handleLLM(run, ps, lang, done);
     switch (ps.intent) {
       case "hello": return done([X(tr(lang, "أهلاً — أنا وكيل أليسوم. اسألني عن المبيعات، الطلبات، المخزون أو المنتجات، أو اطلب تأكيد طلب.", "Bonjour — je suis l'agent Alyssum. Demandez-moi ventes, commandes, stock ou produits.", "Hello — I am the Alyssum agent. Ask me about sales, orders, stock or products, or ask me to confirm an order."))]);
       case "thanks": return done([X(tr(lang, "على الرحب والسعة.", "Avec plaisir.", "You're welcome."))]);
@@ -163,15 +216,19 @@
       return done(r.count ? [X(tr(lang, "أي طلب تريد تأكيده؟ (قل الرقم الترتيبي أو معرّف الطلب)", "Quelle commande confirmer ?", "Which order do you want to confirm? (say its position or order ID)"))].concat(r.items.map((x, i) => F((i + 1) + ". " + x.id + " — " + x.name + " — " + money(x.total)))) : [X(tr(lang, "لا توجد طلبات في انتظار التأكيد.", "Aucune commande à confirmer.", "There are no orders awaiting confirmation."))], { needInput: !!r.count });
     }
     CTX.awaiting = null;
-    /* تحضير بلا كتابة + عرض الطلب في اللوح كي يرى المستخدم الطلب المقصود بالضبط */
-    let prep; try { prep = await step(run, "orders.confirm", { id: t.id }, { prepare: true, fresh: true }); } catch (e) { return done(fmtErr(e, lang), { error: e.code, blocked: /^blocked/.test(e.code) }); }
-    CTX.focusOrder = t.id; if (typeof SpatialOS !== "undefined" && SpatialOS.real) { try { await step(run, "ui.show_order", { id: t.id }); } catch (_) { } }
+    try { return done(await makeConfirmation(run, t.id, lang), { needApproval: true }); } catch (e) { if (!(e instanceof ToolError)) throw e; return done(fmtErr(e, lang), { error: e.code, blocked: /^blocked/.test(e.code) }); }
+  }
+
+  /* تجهيز موافقة لطلب محدد: قراءة الخادم + فحص المخاطر (بلا أي كتابة) ثم بطاقة موافقة بمهلة؛ يرمي ToolError عند الحجب */
+  async function makeConfirmation(run, id, lang) {
+    const prep = await step(run, "orders.confirm", { id }, { prepare: true, fresh: true }); /* يرمي ToolError عند الحجب/الخطأ */
+    CTX.focusOrder = id; if (typeof SpatialOS !== "undefined" && SpatialOS.real) { try { await step(run, "ui.show_order", { id: id }); } catch (_) { } }
     if (PENDING && PENDING.state === "pending") { PENDING.state = "cancelled"; aud({ kind: "confirm", ok: false, code: "superseded", token: PENDING.token }); }
-    PENDING = { token: hex(12), tool: "orders.confirm", args: { id: t.id }, summary: prep.summary, exp: Date.now() + TTL, state: "pending", lang, run: run.id };
-    aud({ kind: "confirm", ok: true, code: "requested", tool: "orders.confirm", token: PENDING.token, args: { id: t.id } });
+    PENDING = { token: hex(12), tool: "orders.confirm", args: { id: id }, summary: prep.summary, exp: Date.now() + TTL, state: "pending", lang, run: run.id };
+    aud({ kind: "confirm", ok: true, code: "requested", tool: "orders.confirm", token: PENDING.token, args: { id: id } });
     const tk = PENDING.token; setTimeout(() => { if (PENDING && PENDING.token === tk && PENDING.state === "pending") { PENDING.state = "expired"; aud({ kind: "confirm", ok: false, code: "expired", token: tk }); PENDING = null; emit({ type: "expired", token: tk }); if (STATE === "awaiting") setState("idle"); } }, TTL + 250);
     const s = prep.summary; run.confirm = { token: PENDING.token, exp: PENDING.exp, summary: s, title: tr(lang, "تأكيد الطلب " + s.id, "Confirmer " + s.id, "Confirm order " + s.id) };
-    return done([X(tr(lang, "سأؤكد هذا الطلب تحديداً — بانتظار موافقتك الصريحة:", "Je vais confirmer cette commande — en attente de votre accord :", "I will confirm exactly this order — waiting for your explicit approval:")), F(s.id + " — " + s.name + " — " + money(s.total)), F(s.items), X(tr(lang, "الإجراء: تغيير الحالة من «في الانتظار» إلى «مؤكدة». لن يُنفَّذ شيء قبل موافقتك.", "Action : statut « en attente » → « confirmée ». Rien n'est exécuté avant votre accord.", "Action: change the status from \"pending\" to \"confirmed\". Nothing is executed before your approval."))], { needApproval: true });
+    return ([X(tr(lang, "سأؤكد هذا الطلب تحديداً — بانتظار موافقتك الصريحة:", "Je vais confirmer cette commande — en attente de votre accord :", "I will confirm exactly this order — waiting for your explicit approval:")), F(s.id + " — " + s.name + " — " + money(s.total)), F(s.items), X(tr(lang, "الإجراء: تغيير الحالة من «في الانتظار» إلى «مؤكدة». لن يُنفَّذ شيء قبل موافقتك.", "Action : statut « en attente » → « confirmée ». Rien n'est exécuté avant votre accord.", "Action: change the status from \"pending\" to \"confirmed\". Nothing is executed before your approval."))])  ;
   }
 
   async function doApprove(token) {
@@ -224,15 +281,19 @@
       /* الموافقة/الرفض بالنص: تُقبل فقط إن جاءت عبر واجهة الوكيل (opts.cap) */
       if (ps.intent === "approve" || ps.intent === "reject") {
         if (!opts.cap) { run.result.blocks = [{ k: "error", t: "الموافقة تُمنح من واجهة الوكيل فقط (زر الموافقة أو الإدخال فيها)." }]; run.result.error = "approval_channel"; aud({ kind: "approve", ok: false, code: "approval_channel" }); return { ok: false, run: finish(run, "error") }; }
+        if (ps.intent === "approve" && opts.via === "voice") { run.result.blocks = [{ k: "error", t: tr(run.lang, "لأسباب أمان لا أقبل الموافقة على الكتابة بالصوت (خطأ تعرّف محتمل) — انقر زر «موافقة وتنفيذ» في البطاقة.", "Par sécurité, l'accord vocal est refusé pour une écriture — cliquez sur le bouton d'accord.", "For safety, voice approval of a write is not accepted (possible mis-hearing) — click the approval button on the card.") }]; run.result.error = "approval_voice"; aud({ kind: "approve", ok: false, code: "approval_voice" }); return { ok: false, run: finish(run, "error") }; }
         BUSY = false; const tok = PENDING && PENDING.token; return { ok: true, run: ps.intent === "approve" ? await doApprove(tok) : doReject(tok) };
       }
       if (PENDING && PENDING.state === "pending") { PENDING.state = "cancelled"; aud({ kind: "confirm", ok: false, code: "superseded-by-message", token: PENDING.token }); run.notes.push("أُلغي طلب التأكيد السابق لأنك طلبت شيئاً آخر."); PENDING = null; }
-      setState("executing", run);
+      setState(llmWanted(ps) ? "thinking" : "executing", run);
       try { await handle(run, ps); } catch (e) { const te = e instanceof ToolError ? e : new ToolError("internal", "تعذّر إكمال الطلب"); if (!(e instanceof ToolError)) console.error("agent", e); run.result.blocks = fmtErr(te, run.lang); run.result.error = te.code; aud({ kind: "error", run: run.id, code: te.code }); }
       if (!["unknown", "count", "select_order", "hello", "thanks", "help"].includes(ps.intent) && !run.result.error && !run.result.needInput) { CTX.lastIntent = ps.intent; CTX.lastArgs = ps.args; } /* العدّ والانتقاء متابعتان للقائمة: لا تُبدّلان نيتها */
-      return { ok: !run.result.error, run: finish(run, "success") };
+      pushHist(run, ps); return { ok: !run.result.error, run: finish(run, "success") };
     } finally { BUSY = false; }
   }
+
+  /* سجل المحادثة للنموذج: نص المستخدم مقنَّع الأرقام الطويلة، وللردود الحتمية وسمها فقط (بلا أسماء زبائن) */
+  function pushHist(run, ps) { if (["approve", "reject"].includes(ps.intent)) return; CTX.hist.push({ role: "user", text: maskText(run.text) }); CTX.hist.push({ role: "model", text: run.result.llmText ? String(run.result.llmText).slice(0, 300) : "(" + ((run.understood && run.understood.label) || "…") + (run.result.error ? ": فشل" : ": تم") + ")" }); if (CTX.hist.length > 16) CTX.hist.splice(0, CTX.hist.length - 16); }
 
   /* ───── الواجهة العامة ───── */
   let uiCap = null;
@@ -244,9 +305,10 @@
     audit: () => AUD.slice(), runs: () => RUNS.map(snap), registry: () => T.registry(),
     context: () => ({ lastIntent: CTX.lastIntent, lastCount: CTX.lastCount, focusOrder: CTX.focusOrder, focusProduct: CTX.focusProduct, awaiting: CTX.awaiting && CTX.awaiting.kind, lastListIds: CTX.lastListIds.slice() }),
     on: fn => { listeners.add(fn); return () => listeners.delete(fn); },
+    setLLMMode: m => { if (["fallback", "always", "off"].includes(m)) LLMMODE = m; }, llm: () => ({ mode: LLMMODE, ready: llmReady(), used: LLMSTAT.used, rounds: LLMSTAT.rounds, lastError: LLMSTAT.lastError, lastRun: LLMSTAT.lastRun, history: CTX.hist.length }), history: () => CTX.hist.slice(),
     reset: () => resetContext("manual"), setPlanner: fn => { PLANNER = typeof fn === "function" ? fn : null; },
     /* قدرة واجهة الوكيل: مرة واحدة فقط (أول من يطلبها) — تمنح submit مع الموافقة، approve، reject، وتغيير حالة العرض (listening/speaking) */
-    registerUI() { if (uiCap) return null; uiCap = Object.freeze({ submit: t => submit(t, { cap: true }), approve: tok => doApprove(tok), reject: tok => doReject(tok), setState: s => { if (["listening", "speaking", "idle"].includes(s) && !BUSY) setState(s); } }); return uiCap; },
+    registerUI() { if (uiCap) return null; uiCap = Object.freeze({ submit: (t, via) => submit(t, { cap: true, via }), approve: tok => doApprove(tok), reject: tok => doReject(tok), setState: s => { if (["listening", "speaking", "idle"].includes(s) && !BUSY) setState(s); } }); return uiCap; },
     _t: { authz, resolveOrder, ctx: () => CTX },
   };
   Object.freeze(pub); window.AlyssumAgent = pub;
