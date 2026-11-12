@@ -352,6 +352,26 @@ const nouv = list => list.filter(o => o.status === "nouvelle");
       await M.c.close(); CUR = X;
     });
 
+    await section("T12b الإنجليزية: فهم ورد كامل بالإنجليزية", async () => {
+      const os = await X.api(), rev = os.filter(o => !["annulee", "echec"].includes(o.status)).reduce((s, o) => s + o.total, 0), money = n => Math.round(n).toLocaleString("fr-FR").replace(/[  ]/g, " ") + " DA";
+      let r = await X.say("how much did we sell today?");
+      ok("الإنجليزية: مبيعات اليوم بالإنجليزية وبنفس رقم الخادم", /Sales summary/.test(r.und) && r.blocks[0].t.includes(money(rev)) && /order\(s\)/.test(r.blocks[0].t) && !/[؀-ۿ]/.test(r.blocks[0].t), "en", r.blocks[0].t);
+      ok("  وصف المبيعات بتوصية/حقائق إنجليزية فقط", r.blocks.every(b => !/[؀-ۿ]/.test(b.t)), "en", r.blocks.map(b => b.t.slice(0, 60)));
+      const pend = os.filter(o => o.status === "nouvelle").length;
+      r = await X.say("show me the pending orders");
+      ok("«pending orders»: قراءة + لوح مفلتر بنفس العدد", r.steps.map(s => s.tool + ":" + s.status).join() === "orders.list:ok,ui.filter_orders:ok" && r.blocks[0].t.includes(pend + " matching order(s)"), "en", r.blocks[0].t);
+      r = await X.say("what is the best selling product?"); ok("أكثر المنتجات مبيعاً بالإنجليزية", /Best seller/.test(r.blocks[0].t), "en", r.blocks[0].t);
+      r = await X.say("what is the price of miel-sidr?"); ok("سعر منتج بالإنجليزية (من data.js)", /Price: 3 200 DA/.test(r.text) && /stock: \d+/.test(r.text), "en", r.text.slice(0, 160));
+      r = await X.say("what is the low stock?"); ok("المخزون المنخفض بالإنجليزية", /Tracked: \d+ — low: \d+/.test(r.blocks[0].t), "en", r.blocks[0].t);
+      r = await X.say("show order S000000-ZZZZZ"); ok("خطأ دقيق بالإنجليزية (لا طلب بهذا المعرّف)", r.status === "error" && /No order\/product with that identifier/.test(r.text), "en", r.text);
+      const le = os.find(o => o.status === "nouvelle"); const W0 = X.reqs.length;
+      r = await X.say("confirm order " + le.id);
+      ok("بطاقة موافقة بالإنجليزية للطلب المحدد، بلا كتابة", r.confirm && /waiting for your explicit approval/.test(r.text) && r.text.includes(le.id) && X.writes(W0) === 0, "en", r.text.slice(0, 120));
+      r = await X.say("no"); ok("«no» تلغي التأكيد بالإنجليزية ولا تغيّر الخادم", /Confirmation cancelled/.test(r.text) && (await X.api()).find(o => o.id === le.id).status === "nouvelle" && X.writes(W0) === 0, "en", r.text);
+      r = await X.say("what can you do?"); ok("المساعدة بالإنجليزية: أسماء الأدوات بالإنجليزية", /Sales summary/.test(r.text) && /Confirm an order/.test(r.text) && /needs your approval/.test(r.text), "en", r.text.replace(/\s+/g, " ").slice(0, 160));
+      r = await X.say("combien on a vendu aujourd'hui ?"); ok("الفرنسية ما زالت تعمل بجانب الإنجليزية", /Résumé des ventes/.test(r.und) && /commande\(s\)/.test(r.blocks[0].t), "en", r.blocks[0].t);
+    });
+
     await section("T13 الأداء", async () => {
       const lat = {}; const qs = { "مبيعات": "شحال بعنا اليوم؟", "قائمة+لوح": "وريني الطلبات غير المؤكدة", "منتج": "شنو سعر عسل السدر؟", "مخزون": "كم المخزون المنخفض؟" };
       const heap0 = await X.p.evaluate(() => performance.memory ? performance.memory.usedJSHeapSize : null); await X.p.evaluate(() => { window.__lt.length = 0; });

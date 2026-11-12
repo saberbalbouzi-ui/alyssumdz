@@ -14,7 +14,7 @@
   const W = {
     show: mk(["وريني", "ورني", "ورّيني", "اعرض", "اعرضلي", "افتح", "افتحلي", "جيب", "جيبلي", "وين", "فين", "اظهر", "شوف", "ابغي نشوف", "حاب نشوف", "نحب نشوف", "قولي", "montre", "montre moi", "affiche", "ouvre", "liste", "donne", "voir", "show", "list", "open", "display", "اعطني", "اعطيني", "اريد", "ابي", "ابغي", "عندي"]),
     order: mk(["طلب", "طلبات", "طلبيه", "طلبيات", "كوموند", "كومند", "commande", "commandes", "order", "orders"]),
-    sales: mk(["مبيعات", "مبيع", "بعنا", "بيعنا", "بعت", "بيع", "المبيعات", "مداخيل", "مدخول", "دخل", "ارباح", "ربح", "رقم الاعمال", "chiffre", "ventes", "vendu", "vendus", "revenu", "revenus", "ca", "sales", "revenue", "sold", "كسبنا", "خدمنا"]),
+    sales: mk(["مبيعات", "مبيع", "بعنا", "بيعنا", "بعت", "بيع", "المبيعات", "مداخيل", "مدخول", "دخل", "ارباح", "ربح", "رقم الاعمال", "chiffre", "ventes", "vendu", "vendus", "revenu", "revenus", "ca", "sales", "revenue", "sold", "sell", "selling", "turnover", "كسبنا", "خدمنا"]),
     howmuch: mk(["كم", "شحال", "قداش", "combien", "how much", "how many", "قدّاش", "كيفاش"]),
     top: mk(["اكثر", "اكتر", "افضل", "احسن", "اعلي", "اعلى", "الاكثر", "plus", "meilleur", "meilleurs", "top", "best", "bezzaf", "بزاف", "ياكثر"]),
     product: mk(["منتج", "منتجات", "بضاعه", "سلعه", "produit", "produits", "article", "articles", "product", "products", "تباع", "يتباع", "نباع", "vend", "vendu"]),
@@ -23,15 +23,15 @@
     low: mk(["منخفض", "قليل", "ناقص", "قارب", "bas", "faible", "low", "critique", "نفد", "نفاد", "rupture", "ينفد"]),
     search: mk(["ابحث", "دور", "دورلي", "ابحثلي", "لقي", "لقى", "cherche", "recherche", "trouve", "search", "find", "اعطني", "عن"]),
     confirm: mkx(["اكد", "اكدلي", "اكدو", "تاكيد", "اكّد", "تاكد", "اكدي", "صادق", "وافق", "validate", "valide", "valider", "confirme", "confirmer", "confirmez", "confirm", "approuve", "approuver"]),
-    yes: mkx(["نعم", "ايه", "اه", "ايوه", "واه", "اي", "اكيد", "موافق", "تمام", "اوكي", "اوك", "ok", "okay", "oui", "ouais", "d accord", "yes", "yep", "sure", "تفضل", "كمل", "ايه اكد", "نعم اكد"]),
+    yes: mkx(["نعم", "ايه", "اه", "ايوه", "واه", "اي", "اكيد", "موافق", "تمام", "اوكي", "اوك", "ok", "okay", "oui", "ouais", "d accord", "yes", "yep", "sure", "go ahead", "do it", "proceed", "تفضل", "كمل", "ايه اكد", "نعم اكد"]),
     no: mkx(["لا", "لأ", "لاه", "non", "no", "الغ", "الغي", "الغاء", "ارجع", "وقف", "قف", "stop", "annule", "annuler", "cancel", "ما تاكدش", "لا تؤكد", "ماشي", "رفض", "ارفض"]),
     cust: mk(["زبون", "الزبون", "زبائن", "عميل", "العميل", "عملاء", "client", "clients", "customer", "customers", "كليون", "كليان"]),
     settings: mk(["اعدادات", "الاعدادات", "اعداد", "حمايه", "حمايه الطلبات", "guard", "protection", "parametre", "parametres", "settings", "config", "تكوين", "ضبط"]),
     panel: mk(["لوحه", "لوحة", "panneau", "panel", "نافذه", "نافذة"]),
-    help: mk(["مساعده", "ساعدني", "ماذا تستطيع", "وش تقدر", "واش تقدر", "شو تقدر", "كيفاش نستعملك", "aide", "aidemoi", "help", "que sais tu faire", "que peux tu", "capacites", "اوامر", "ماذا تفعل"]),
+    help: mk(["مساعده", "ساعدني", "ماذا تستطيع", "وش تقدر", "واش تقدر", "شو تقدر", "كيفاش نستعملك", "aide", "aidemoi", "help", "que sais tu faire", "que peux tu", "capacites", "اوامر", "ماذا تفعل", "what can you do", "what can i ask", "capabilities", "what do you do"]),
     hello: mk(["مرحبا", "اهلا", "السلام", "سلام", "صباح الخير", "مساء الخير", "هلا", "salut", "bonjour", "bonsoir", "coucou", "hello", "hi", "hey"]),
     thanks: mk(["شكرا", "شكراً", "بارك الله فيك", "يعطيك الصحه", "جزاك الله", "merci", "thanks", "thx", "الله يعطيك الصحه"]),
-    demo: mkx(["هذا", "هذه", "هاد", "هاذ", "هاذا", "هاذي", "هادي", "هده", "هدا", "ce", "cette", "celui", "celle", "celui ci", "celle ci", "ذلك", "ذاك", "نفسه", "نفسها"]),
+    demo: mkx(["هذا", "هذه", "هاد", "هاذ", "هاذا", "هاذي", "هادي", "هده", "هدا", "ce", "cette", "celui", "celle", "celui ci", "celle ci", "ذلك", "ذاك", "نفسه", "نفسها", "this", "that", "it", "same"]),
     dz: mk(["واش", "شحال", "وريني", "ورني", "بزاف", "علاش", "فين", "كاش", "ماشي", "حاب", "نحب", "ابغي", "راه", "لي", "ديال", "دوك", "غدوه", "برك", "هاذ", "هاد", "نهار", "قداش", "وش", "شو", "نبغي", "كيفاش", "ديما", "تاع", "ماتاكدش", "ما تاكدش", "تاكدو", "لقيتو", "بعنا", "نباع", "يتباع"]),
     fr: mk(["le", "la", "les", "des", "du", "est", "que", "combien", "montre", "commande", "commandes", "produit", "aujourd hui", "hier", "semaine", "mois", "quel", "quelle", "qui", "non", "oui", "stock", "prix"]),
   };
@@ -76,7 +76,8 @@
     const one = [...new Set((names || []).filter(nm => N(nm).split(" ").some(w => w.length >= 4 && !STOPTOK.has(w) && !GENERIC.has(w) && ut.has(w))))];
     return one.length === 1 ? one[0] : null;
   }
-  const detectLang = (raw, n) => { const lat = (String(raw).match(/[A-Za-z]/g) || []).length, ar = (String(raw).match(/[؀-ۿ]/g) || []).length; if (lat > ar) return "fr"; return any(n, W.dz) ? "dz" : "ar"; };
+  const FRW = /\b(le|la|les|des|du|un|une|est|sont|combien|commandes?|montre|montrez|confirme|confirmer|aujourd|hui|ventes?|vendu|vendus|produits?|prix|quel|quelle|quels|mes|moi|je|pour|avec|dans|cette|oui|merci|bonjour|salut|derniere|dernieres|non|attente|annulees?|livrees?|expediees?)\b/g, ENW = /\b(the|show|me|how|many|much|what|which|orders?|sales?|today|yesterday|confirm|confirmed|unconfirmed|pending|price|prices|product|products|stock|inventory|low|best|selling|seller|top|please|thanks|thank|hello|hi|my|is|are|of|for|in|this|that|customer|customers|status|open|panel|week|month|did|we|sell|sold|revenue|how|any|list|find|search|cost|costs|settings|protection|can|you|do|help|yes|no|cancel|cancelled|delivered|shipped|failed|first|second|third|last)\b/g;
+  const detectLang = (raw, n) => { const lat = (String(raw).match(/[A-Za-z]/g) || []).length, ar = (String(raw).match(/[\u0600-\u06FF]/g) || []).length; if (lat > ar) { const low = String(raw).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), f = (low.match(FRW) || []).length + (/[éèêàçùâîôû]/i.test(String(raw)) ? 1 : 0), e = (low.match(ENW) || []).length; return e > f ? "en" : "fr"; } return any(n, W.dz) ? "dz" : "ar"; };
   const orderId = raw => { const m = /\b([SM]\d{6}-[A-Z0-9]{4,6})\b/i.exec(String(raw)); return m ? m[1].toUpperCase() : null; };
   const period = n => any(n, P.yesterday) ? "yesterday" : any(n, P.today) ? "today" : any(n, P.week) ? "week" : any(n, P.month) ? "month" : any(n, P.all) ? "all" : null;
   const status = n => { for (const [k, r] of ST) if (any(n, r)) return k; return null; };
@@ -85,10 +86,10 @@
   const limitOf = n => { const m = /(?:اخر|dernier|derniers|last|top|اول)\s*(\d{1,2})\b/.exec(n) || /\b(\d{1,2})\s*(?:طلبات|طلب|commandes|orders)\b/.exec(n); return m ? Math.min(50, Math.max(1, +m[1])) : null; };
 
   const LABEL = {
-    "sales.summary": { ar: "ملخّص المبيعات", fr: "Résumé des ventes" }, "sales.top_product": { ar: "المنتج الأكثر مبيعاً", fr: "Produit le plus vendu" }, "orders.list": { ar: "عرض الطلبات", fr: "Afficher les commandes" },
-    "orders.get": { ar: "تفاصيل طلب", fr: "Détails d'une commande" }, "orders.confirm": { ar: "تأكيد طلب", fr: "Confirmer une commande" }, "products.search": { ar: "البحث عن منتج", fr: "Chercher un produit" }, "products.get": { ar: "تفاصيل منتج", fr: "Détails d'un produit" },
-    "inventory.read": { ar: "قراءة المخزون", fr: "Lire le stock" }, "customers.find": { ar: "طلبات زبون", fr: "Commandes d'un client" }, "settings.read": { ar: "قراءة إعداد", fr: "Lire un réglage" }, "ui.open_panel": { ar: "فتح لوحة", fr: "Ouvrir un panneau" },
-    "select_order": { ar: "تحديد طلب", fr: "Sélectionner une commande" }, "approve": { ar: "موافقة", fr: "Approbation" }, "reject": { ar: "رفض", fr: "Refus" }, "help": { ar: "ما أستطيع فعله", fr: "Mes capacités" }, "hello": { ar: "تحية", fr: "Salutation" }, "thanks": { ar: "شكر", fr: "Remerciement" }, "count": { ar: "عدد النتائج", fr: "Nombre de résultats" },
+    "sales.summary": { ar: "ملخّص المبيعات", fr: "Résumé des ventes", en: "Sales summary" }, "sales.top_product": { ar: "المنتج الأكثر مبيعاً", fr: "Produit le plus vendu", en: "Best-selling product" }, "orders.list": { ar: "عرض الطلبات", fr: "Afficher les commandes", en: "List orders" },
+    "orders.get": { ar: "تفاصيل طلب", fr: "Détails d'une commande", en: "Order details" }, "orders.confirm": { ar: "تأكيد طلب", fr: "Confirmer une commande", en: "Confirm an order" }, "products.search": { ar: "البحث عن منتج", fr: "Chercher un produit", en: "Search products" }, "products.get": { ar: "تفاصيل منتج", fr: "Détails d'un produit", en: "Product details" },
+    "inventory.read": { ar: "قراءة المخزون", fr: "Lire le stock", en: "Read stock" }, "customers.find": { ar: "طلبات زبون", fr: "Commandes d'un client", en: "Customer orders" }, "settings.read": { ar: "قراءة إعداد", fr: "Lire un réglage", en: "Read a setting" }, "ui.open_panel": { ar: "فتح لوحة", fr: "Ouvrir un panneau", en: "Open a panel" },
+    "select_order": { ar: "تحديد طلب", fr: "Sélectionner une commande", en: "Select an order" }, "approve": { ar: "موافقة", fr: "Approbation", en: "Approval" }, "reject": { ar: "رفض", fr: "Refus", en: "Rejection" }, "help": { ar: "ما أستطيع فعله", fr: "Mes capacités", en: "What I can do" }, "hello": { ar: "تحية", fr: "Salutation", en: "Greeting" }, "thanks": { ar: "شكر", fr: "Remerciement", en: "Thanks" }, "count": { ar: "عدد النتائج", fr: "Nombre de résultats", en: "Result count" },
   };
   /* ───── التحليل الرئيس ───── */
   function parse(raw, ctx) {
@@ -105,16 +106,16 @@
     /* 3) تأكيد طلب */
     if (any(n, W.confirm) && st !== "nouvelle" && (isOrder || oid || demo || ord || nm || tk.length <= 4)) { const a = oid ? { id: oid } : ord ? { ordinal: ord } : nm ? { name: nm } : {}; if (demo && !oid && !ord) a.demonstrative = true; return out("orders.confirm", a); }
     /* 4) أدوات القراءة بالكلمات المفتاحية */
-    if (any(n, W.panel)) { const pn = /(?:طلب|commande|order)/.test(n) ? "ord" : /(?:منتج|produit|product)/.test(n) ? "prod" : /(?:مخزون|stock)/.test(n) ? "inv" : /(?:تحليل|analyse|analytic|احصاء|stat)/.test(n) ? "ana" : null; if (pn) return out("ui.open_panel", { panel: pn }); }
+    if (any(n, W.panel)) { const pn = /(?:طلب|commande|order)/.test(n) ? "ord" : /(?:منتج|produit|product)/.test(n) ? "prod" : /(?:مخزون|stock|inventory)/.test(n) ? "inv" : /(?:تحليل|analyse|analytic|احصاء|stat)/.test(n) ? "ana" : null; if (pn) return out("ui.open_panel", { panel: pn }); }
     if (/(?:حمايه|guard|protection)/.test(n) || (any(n, W.settings) && !isOrder)) return out("settings.read", { key: /(?:مخزون|stock)/.test(n) && !/(?:حمايه|guard|protection)/.test(n) ? "stock" : "guard" });
     if (isTop && (isProd || isSales || any(n, W.howmuch) || /(?:مبيعا|تباع|vend)/.test(n))) return out("sales.top_product", { period: per || "all", by: /ايراد|دخل|revenu|chiffre|ca\b/.test(n) ? "revenue" : "qty" });
-    if (isSales || (isHow && /(?:بعنا|باع|vendu|sold|دخل|ربح)/.test(n))) return out("sales.summary", { period: per || "today" });
+    if (isSales || (isHow && /(?:بعنا|باع|vendu|sold|sell|دخل|ربح)/.test(n))) return out("sales.summary", { period: per || "today" });
     if (isCust && (nm || /\d{9,10}/.test(n) || tk.length > 2)) return out("customers.find", { q: (nm || (n.match(/\d{9,10}/) || [""])[0] || tk.filter(w => !any(w, W.cust) && !any(w, W.show) && w.length > 2).slice(-2).join(" ")).slice(0, 60) });
     if (isOrder || (st && (isShow || tk.length <= 4)) || oid) {
       if (oid && !isShow && !st && !isOrder) return out("orders.get", { id: oid });
       if (oid) return out("orders.get", { id: oid });
       const a = {}; if (st) a.status = st; if (wil) a.wilaya = wil; if (per && per !== "all") a.period = per; if (lim) a.limit = lim; if (nm) a.q = nm; else if (pm && !st) a.q = pm.title.split(" ")[0];
-      if ((ord || demo) && !st && ctx.lastListIds && ctx.lastListIds.length) return out("select_order", ord ? { ordinal: ord } : { demonstrative: true });
+      if ((ord || demo) && !st && !lim && ctx.lastListIds && ctx.lastListIds.length) return out("select_order", ord ? { ordinal: ord } : { demonstrative: true });
       if (isHow && !isShow && !st && ctx.lastListIds && ctx.lastListIds.length && /(?:عدد|كم|combien)/.test(n)) return out("count", {});
       return out("orders.list", a);
     }
@@ -126,7 +127,7 @@
       const q = tk.filter(w => !any(w, W.show) && !any(w, W.search) && !any(w, W.product) && !any(w, W.price) && w.length > 2).join(" ").slice(0, 60); return out("products.search", { q: q || "" });
     }
     if (any(n, W.settings)) return out("settings.read", { key: /(?:حمايه|guard|protection)/.test(n) ? "guard" : /(?:مخزون|stock)/.test(n) ? "stock" : "guard" });
-    if (any(n, W.panel) || (isShow && /(?:لوحه|panneau|panel)/.test(n))) { const pn = /(?:طلب|commande|order)/.test(n) ? "ord" : /(?:منتج|produit|product)/.test(n) ? "prod" : /(?:مخزون|stock)/.test(n) ? "inv" : /(?:تحليل|analyse|analytic|احصاء|stat)/.test(n) ? "ana" : null; if (pn) return out("ui.open_panel", { panel: pn }); }
+    if (any(n, W.panel) || (isShow && /(?:لوحه|panneau|panel)/.test(n))) { const pn = /(?:طلب|commande|order)/.test(n) ? "ord" : /(?:منتج|produit|product)/.test(n) ? "prod" : /(?:مخزون|stock|inventory)/.test(n) ? "inv" : /(?:تحليل|analyse|analytic|احصاء|stat)/.test(n) ? "ana" : null; if (pn) return out("ui.open_panel", { panel: pn }); }
     if (any(n, W.search) && !isOrder && !isSales && !isCust && tk.length >= 2) { const q = tk.filter(w => !any(w, W.show) && !any(w, W.search) && !any(w, W.product) && !any(w, W.price) && w.length > 2).join(" ").slice(0, 60); if (q) return out("products.search", { q }); }
     if (any(n, W.help)) return out("help"); if (any(n, W.thanks)) return out("thanks"); if (any(n, W.hello) && tk.length <= 4) return out("hello");
     /* 5) متابعات قصيرة تعتمد السياق */
@@ -141,6 +142,6 @@
     }
     return out("unknown", {}, { conf: 0.1, reason: "no-intent" });
   }
-  const label = (intent, lang) => (LABEL[intent] || {})[lang === "fr" ? "fr" : "ar"] || intent;
+  const label = (intent, lang) => (LABEL[intent] || {})[lang === "fr" ? "fr" : lang === "en" ? "en" : "ar"] || intent;
   window.AgentNLU = Object.freeze({ parse, normalize: N, matchProduct, matchName, label, version: 1 });
 })();

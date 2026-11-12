@@ -9,7 +9,7 @@
   const h = (tag, cls, txt, attrs) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; if (attrs) Object.keys(attrs).forEach(k => e.setAttribute(k, attrs[k])); return e; };
   const STATE_AR = { idle: "جاهز", listening: "أستمع…", thinking: "أحلّل الطلب…", executing: "أنفّذ…", speaking: "أتحدث…", awaiting: "بانتظار ردّك", success: "تم", error: "تعذّر" };
   const RISK_AR = { read: "قراءة", ui: "واجهة", write: "كتابة" }, ST_ICON = { running: "◌", ok: "✓", error: "✕", skipped: "–" };
-  const TAG = { fact: "حقيقة", estimate: "تقدير", rec: "توصية" };
+  const TAGL = { ar: { fact: "حقيقة", estimate: "تقدير", rec: "توصية" }, fr: { fact: "Fait", estimate: "Estimation", rec: "Conseil" }, en: { fact: "Fact", estimate: "Estimate", rec: "Recommendation" } }, UND = { ar: "فهمت", fr: "Compris", en: "Understood" }, TSK = { ar: "المهمة", fr: "Tâche", en: "Task" };
   const ARGS_AR = { status: "الحالة", wilaya: "الولاية", period: "الفترة", id: "الطلب", ordinal: "الترتيب", q: "بحث", slug: "المنتج", limit: "الحد", panel: "اللوح", key: "الإعداد", by: "حسب", low: "المنخفض" };
   const STATUS_AR = { nouvelle: "في الانتظار", confirmee: "مؤكدة", expediee: "مرسلة", livree: "مسلَّمة", annulee: "ملغاة", echec: "فاشلة" };
   const PER_AR = { today: "اليوم", yesterday: "أمس", week: "آخر 7 أيام", month: "هذا الشهر", all: "الكل" };
@@ -21,12 +21,13 @@
 
   const blocks = {}; /* run.id → عناصر الحوار */
   const scroll = () => { log.scrollTop = log.scrollHeight; };
-  const argText = a => Object.keys(a || {}).filter(k => a[k] !== undefined && a[k] !== "").map(k => (ARGS_AR[k] || k) + "=" + (k === "status" ? STATUS_AR[a[k]] || a[k] : k === "period" ? PER_AR[a[k]] || a[k] : String(a[k]))).join(" · ");
+  const ST_EN = { nouvelle: "pending", confirmee: "confirmed", expediee: "shipped", livree: "delivered", annulee: "cancelled", echec: "failed" }, PER_EN = { today: "today", yesterday: "yesterday", week: "last 7 days", month: "this month", all: "all" };
+  const argText = (a, lang) => Object.keys(a || {}).filter(k => a[k] !== undefined && a[k] !== "").map(k => lang === "ar" || !lang ? (ARGS_AR[k] || k) + "=" + (k === "status" ? STATUS_AR[a[k]] || a[k] : k === "period" ? PER_AR[a[k]] || a[k] : String(a[k])) : k + "=" + (k === "status" ? ST_EN[a[k]] || a[k] : k === "period" ? PER_EN[a[k]] || a[k] : String(a[k]))).join(" · ");
   function runBox(id, text) {
     if (blocks[id]) return blocks[id];
     while (log.children.length >= 40) { const o = log.firstElementChild; delete blocks[o.dataset.run]; o.remove(); } /* سقف للذاكرة: آخر 40 تشغيلاً */
     const box = h("div", "ag-run"); box.dataset.run = id;
-    const isSys = /^\(/.test(text || ""); if (!isSys) box.appendChild(h("div", "ag-msg u", text));
+    const isSys = /^\(/.test(text || ""); if (!isSys) { const um = h("div", "ag-msg u", text); um.dir = "auto"; box.appendChild(um); }
     const und = h("div", "ag-und"), steps = h("ul", "ag-steps"), res = h("div", "ag-res"); box.append(und, steps, res); log.appendChild(box);
     return (blocks[id] = { box, und, steps, res, rows: {} });
   }
@@ -39,7 +40,7 @@
   }
   function renderResult(b, run) {
     b.res.textContent = "";
-    (run.result.blocks || []).forEach(x => { const d = h("div", "ag-b " + x.k); if (TAG[x.k]) d.appendChild(h("span", "ag-tag", TAG[x.k])); d.appendChild(h("span", "ag-t", x.t)); b.res.appendChild(d); });
+    (run.result.blocks || []).forEach(x => { const d = h("div", "ag-b " + x.k); d.dir = "auto"; const tg = (TAGL[run.lang] || TAGL.ar)[x.k]; if (tg) d.appendChild(h("span", "ag-tag", tg)); d.appendChild(h("span", "ag-t", x.t)); b.res.appendChild(d); });
     (run.notes || []).forEach(n => b.res.appendChild(h("div", "ag-b note", n)));
     if (run.result.verified) b.box.classList.add("verified");
     if (run.confirm) confirmCard(b, run);
@@ -59,9 +60,9 @@
     if (ev.type === "state") { setView(ev.state); if (ev.state === "success" || ev.state === "error") { clearTimeout(setView.t); setView.t = setTimeout(() => { if (A.state() === ev.state && !A.pending()) { cap.setState("idle"); } }, 6000); } }
     else if (ev.type === "expired") { log.querySelectorAll(".ag-confirm:not([data-done])").forEach(c => { c.dataset.done = "1"; c.querySelectorAll("button").forEach(x => { x.disabled = true; }); }); }
     else if (ev.type === "run" && ev.phase === "start") { log.querySelectorAll(".ag-confirm:not([data-done])").forEach(c => { c.dataset.done = "1"; c.querySelectorAll("button").forEach(x => { x.disabled = true; }); }); runBox(ev.run.id, ev.run.text); scroll(); }
-    else if (ev.type === "understood") { const b = blocks[ev.run]; if (b) { b.und.textContent = ""; b.und.append(h("span", "ag-uk", "فهمت"), h("b", "ag-ul", ev.understood.label), h("span", "ag-ua", argText(ev.understood.args))); b.und.title = ev.understood.intent + " · ثقة " + Math.round((ev.understood.conf || 0) * 100) + "%"; } scroll(); }
+    else if (ev.type === "understood") { const b = blocks[ev.run]; if (b) { b.und.textContent = ""; b.und.append(h("span", "ag-uk", UND[ev.understood.lang] || UND.ar), h("b", "ag-ul", ev.understood.label), h("span", "ag-ua", argText(ev.understood.args, ev.understood.lang))); b.und.title = ev.understood.intent + " · ثقة " + Math.round((ev.understood.conf || 0) * 100) + "%"; } scroll(); }
     else if (ev.type === "step") { const b = blocks[ev.run]; if (b) stepRow(b, ev.step); scroll(); }
-    else if (ev.type === "run" && ev.phase === "end") { const b = runBox(ev.run.id, ev.run.text); if (ev.run.understood && !b.und.textContent) b.und.append(h("span", "ag-uk", "المهمة"), h("b", "ag-ul", ev.run.understood.label)); ev.run.steps.forEach(s => stepRow(b, s)); renderResult(b, ev.run); b.box.dataset.status = ev.run.status; scroll(); speak(ev.run); }
+    else if (ev.type === "run" && ev.phase === "end") { const b = runBox(ev.run.id, ev.run.text); if (ev.run.understood && !b.und.textContent) b.und.append(h("span", "ag-uk", TSK[ev.run.lang] || TSK.ar), h("b", "ag-ul", ev.run.understood.label)); ev.run.steps.forEach(s => stepRow(b, s)); renderResult(b, ev.run); b.box.dataset.status = ev.run.status; scroll(); speak(ev.run); }
   });
 
   /* ───── إرسال ───── */
@@ -85,7 +86,7 @@
   if (!window.speechSynthesis) sp.style.display = "none"; else sp.addEventListener("click", e => { if (!e.isTrusted) return; speakOn = !speakOn; sp.textContent = "صوت: " + (speakOn ? "مفعّل" : "مغلق"); if (!speakOn) try { speechSynthesis.cancel(); } catch (_) { } });
   function speak(run) {
     if (!speakOn || !window.speechSynthesis || !run.result.blocks) return;
-    try { const first = run.result.blocks.filter(b => b.k !== "rec").slice(0, 2).map(b => b.t).join(". "); const u = new SpeechSynthesisUtterance(first); u.lang = run.lang === "fr" ? "fr-FR" : "ar"; u.onstart = () => { setView("speaking"); cap.setState("speaking"); }; u.onend = () => { setView("idle"); cap.setState("idle"); }; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (_) { }
+    try { const first = run.result.blocks.filter(b => b.k !== "rec").slice(0, 2).map(b => b.t).join(". "); const u = new SpeechSynthesisUtterance(first); u.lang = run.lang === "fr" ? "fr-FR" : run.lang === "en" ? "en-US" : "ar"; u.onstart = () => { setView("speaking"); cap.setState("speaking"); }; u.onend = () => { setView("idle"); cap.setState("idle"); }; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (_) { }
   }
 
   /* ───── الإلحاق باللوح الفضائي ───── */
