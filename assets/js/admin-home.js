@@ -121,7 +121,7 @@ const AdminHome = (() => {
   const hasTab = k => [...document.querySelectorAll(".nav-btn")].some(b => (b.getAttribute("onclick") || "").includes("'" + k + "'")), hasRuqya = () => typeof AdminRuqya !== "undefined" && hasTab("ruqya");   /* مواعيد الرقية خاصة بموقع البائع فقط */
   /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
   function quickBar(waiting) {
-    let toPack = 0; try { toPack = orders().filter(o => o.status === "confirmee").length; } catch (e) { }   /* المؤكَّدة غير المرسَلة فقط = ما ينتظر التجهيز */
+    let toPack = 0; try { if (typeof AdminPack !== "undefined" && AdminPack.count && hasTab("pack")) { toPack = S.packN || 0; AdminPack.count().then(n => { if (n !== null && n !== S.packN) { S.packN = n; refreshSoft(); } }); } } catch (e) { }   /* العدد من قائمة التجهيز نفسها (دالة الخادم) لا من حالة الطلبات */
     const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack")], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
     return '<div class="ah-quick">' + Q.filter(q => q[2]).map(q => '<button type="button" class="ah-btn gh" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>';
   }
@@ -269,14 +269,34 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
     document.addEventListener("pointerdown", mark, { capture: true, once: true }); document.addEventListener("keydown", mark, { capture: true, once: true });
     [1200, 3000].forEach(ms => setTimeout(() => { if (touched || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); const land = (typeof AdminEdition !== "undefined" && AdminEdition.edition() === "design") ? "builder" : (typeof AdminKind !== "undefined" && AdminKind.landing() === "digital") ? "digital" : "home"; if (on && !new RegExp("'" + land + "'").test(on.getAttribute("onclick") || "")) open(); }, ms));
   }
+  /* زر/سحب الرجوع (من حافة الشاشة) لا يغلق اللوحة: يغلق النافذة المفتوحة أولاً، ثم يعود للقسم السابق، وعلى الرئيسية يحذّر مرة قبل الخروج.
+     مدخل سجلّ «حارس» يُعاد دفعه بعد كل رجوع (الاستوديو وروابط الأدوات تدفع مداخلها الخاصة فلا يتعارض معها: لا نتصرف إلا عند بلوغ المدخل الأساسي). */
+  const TABS = ["home"];
+  function trackTab(t) { if (S.popping || !t) return; if (t === "home") { TABS.length = 0; TABS.push("home"); return; } if (TABS[TABS.length - 1] !== t) { TABS.push(t); if (TABS.length > 30) TABS.shift(); } }
+  function backGuard() {
+    if (S.bg) return; S.bg = 1;
+    try { history.pushState({ adm: 1 }, "", location.href); } catch (e) { return; }
+    window.addEventListener("popstate", e => {
+      if (e.state && e.state.adm) return;                                   // رجوع من مدخل خاص (استوديو/أداة) إلى الحارس: لا شيء
+      const a = A(); let did = false;
+      const mb = [...document.querySelectorAll(".modal-bg.open")], pb = document.getElementById("pb-app"), spv = document.getElementById("spv");
+      if (mb.length) { mb.forEach(x => x.classList.remove("open")); did = true; }
+      else if (pb && pb.classList.contains("on") && typeof PBApp !== "undefined" && PBApp.close) { try { PBApp.close(); } catch (x) { } did = true; }
+      else if (spv && spv.classList.contains("on") && typeof SitePreview !== "undefined" && SitePreview.close) { try { SitePreview.close(); } catch (x) { } did = true; }
+      else if (TABS.length > 1 && a && a.tab) { TABS.pop(); S.popping = true; try { a.tab(TABS[TABS.length - 1]); } catch (x) { } S.popping = false; did = true; }
+      if (did) { try { history.pushState({ adm: 1 }, "", location.href); } catch (x) { } S.exitT = 0; return; }
+      if (S.exitT && Date.now() - S.exitT < 2500) { S.exitT = 0; history.back(); return; }          // ثاني رجوع خلال ثانيتين: خروج فعلي
+      S.exitT = Date.now(); try { toast("اسحب مرة أخرى للخروج من اللوحة"); } catch (x) { } try { history.pushState({ adm: 1 }, "", location.href); } catch (x) { }
+    });
+  }
   function init() {
     const a = A(); if (!a || a.__homeWrap || typeof a.renderAll !== "function") return setTimeout(init, 400);
     a.__homeWrap = 1; const o = a.renderAll;
     /* الرئيسية تُفتح حتى لو تعثّر رسم قسم آخر (finally) وفور إظهار اللوحة دون انتظار أي رسم: كان تعثّر renderAll يترك «الطلبات» ظاهرة طويلاً */
-    a.renderAll = function () { try { return o.apply(this, arguments); } finally { try { render(); if (!S.shown) { S.shown = true; open(); guard(); } } catch (e) { console.warn("AdminHome", e); } } };
-    { const app = $("app"); if (app && app.classList.contains("hidden")) { const ob = new MutationObserver(() => { if (app.classList.contains("hidden")) return; ob.disconnect(); if (!S.shown) { S.shown = true; try { open(); guard(); } catch (e) { console.warn("AdminHome", e); } } }); ob.observe(app, { attributes: true, attributeFilter: ["class"] }); } }
-    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); return r; };
-    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); } }
+    a.renderAll = function () { try { return o.apply(this, arguments); } finally { try { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } } catch (e) { console.warn("AdminHome", e); } } };
+    { const app = $("app"); if (app && app.classList.contains("hidden")) { const ob = new MutationObserver(() => { if (app.classList.contains("hidden")) return; ob.disconnect(); if (!S.shown) { S.shown = true; try { open(); guard(); backGuard(); } catch (e) { console.warn("AdminHome", e); } } }); ob.observe(app, { attributes: true, attributeFilter: ["class"] }); } }
+    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); try { trackTab(t); } catch (e) { } return r; };
+    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } }
   }
   window.addEventListener("alyssum:ai-credit", () => refreshSoft());
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
