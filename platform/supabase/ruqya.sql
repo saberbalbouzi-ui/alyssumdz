@@ -389,3 +389,8 @@ create or replace function public.ruqya_portal_invite(p_booking_id bigint) retur
 language plpgsql security definer set search_path = public as $$ begin raise exception 'use_invite2'; end $$;
 create or replace function public.ruqya_portal_claim(p_token text) returns jsonb
 language plpgsql security definer set search_path = public as $$ begin raise exception 'pin_required'; end $$;
+
+
+-- ═══ موعد سري (v1.89.1089): يحجز مكاناً في الفترة ويراه المدير وحده؛ لا يظهر في بحث الزوار ═══
+alter table public.ruqya_bookings add column if not exists secret boolean not null default false;
+-- ruqya_lookup يستثني الحجوزات السرية (not secret في src)

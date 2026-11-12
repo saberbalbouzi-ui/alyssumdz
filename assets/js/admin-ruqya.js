@@ -157,16 +157,29 @@ const AdminRuqya = (() => {
       '<textarea id="rq-vn" rows="3" style="width:100%;margin-top:8px" placeholder="تطور الحالة في هذه الزيارة…"></textarea><textarea id="rq-vf" rows="2" style="width:100%;margin-top:8px" placeholder="المتابعة: التوصيات والموعد القادم…"></textarea><label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:700"><input type="checkbox" id="rq-vs" checked> إظهارها للمريض في بوابته</label><button class="btn" data-rq="vadd" style="margin-top:8px">إضافة الزيارة</button></div>' +
       '<h3 style="margin:18px 0 6px">سجل الزيارات (' + vs.length + ')</h3>' + (vs.length ? vs.map(card).join("") : '<div class="hint">لا زيارات مسجّلة بعد.</div>') + '</div>';
   }
+  /* موعد سري: يحجز مكاناً في الفترة (فيُحسب في سقف الجلسات فلا يحجزه الزوار) ولا يراه إلا المدير: الجدول لا يُقرأ إلا بجلسة المدير، والزوار لا يرون غير أعداد مجرّدة */
+  const SLOTS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"];
+  function secHtml() {
+    const sats = nextSaturdays(12);
+    return '<div class="card" style="padding:16px"><button class="btn gray" data-rq="secback">← رجوع</button><h2 style="margin:12px 0 4px">موعد سري</h2>' + (S.err ? '<div class="warn" style="margin:8px 0">' + esc(S.err) + '</div>' : "") +
+      '<div class="hint">يحجز مكاناً في الجدول فلا يستطيع الزوار حجزه، ولا يراه أحد غير المدير: لا يظهر في صفحة الحجز العامة ولا في بحث المرضى ولا له ملف أو واتساب.</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0"><div><label style="font-weight:700">اليوم</label><input type="date" id="sc-day" value="' + (sats[0] || "") + '"></div>' +
+      '<div><label style="font-weight:700">الساعة</label><select id="sc-slot">' + SLOTS.map(t => '<option>' + t + '</option>').join("") + '</select></div>' +
+      '<div><label style="font-weight:700">عدد الجلسات</label><input type="number" id="sc-n" min="1" max="5" value="1"></div></div>' +
+      '<label style="font-weight:700">ملاحظة خاصة بك (اختياري، لا يراها أحد)</label><input id="sc-note" maxlength="120" placeholder="مثال: زيارة خاصة" style="width:100%;margin-top:4px">' +
+      '<div style="margin-top:14px"><button class="btn" data-rq="secsave">حفظ الموعد السري</button></div></div>';
+  }
   function draw() {
     const host = $("ruqya-content"); if (!host) return;
     if (S.view === "cfg") { host.innerHTML = cfgHtml(); return; }
+    if (S.view === "sec") { host.innerHTML = secHtml(); return; }
     if (S.pat) { host.innerHTML = patientHtml(); return; }
     const up = S.rows.filter(r => r.day >= today() && r.status !== "cancelled" && r.status !== "noshow"), pend = S.rows.filter(r => r.status === "pending").length;
     let list = S.found || S.rows;
     if (S.found) { /* نتائج البحث في كل السجل */ } else if (S.filter === "up") list = up; else if (S.filter === "pending") list = S.rows.filter(r => r.status === "pending"); else if (S.filter === "past") list = S.rows.filter(r => r.day < today());
     const f = (k, n) => '<button class="rq-fb' + (S.filter === k ? " on" : "") + '" data-rq="f" data-k="' + k + '">' + n + '</button>';
     let h = '<div class="card" style="padding:16px"><h2 style="margin:0 0 6px">مواعيد الرقية الشرعية</h2><div class="hint">الحجوزات القادمة من صفحة الحجز العامة. اضغط «تأكيد» ثم راسل صاحب الحجز بواتساب.</div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0"><input id="rq-q" type="search" placeholder="🔍 ابحث بالاسم أو رقم الهاتف في كل السجل" value="' + esc(S.q) + '" style="flex:1;min-width:220px"><button class="btn gray" data-rq="cfg">⚙️ الإعدادات والأسعار والمنتجات</button><button class="btn gray" data-rq="ptpage">صفحة المرضى (دخول مباشر)</button></div>' + (S.msg ? '<div class="hint" style="margin:6px 0">' + esc(S.msg) + '</div>' : '') + (S.found ? '<div class="hint" style="margin:6px 0">نتائج البحث: ' + S.found.length + (S.found.length >= 300 ? ' (أول 300)' : '') + '</div>' : '') +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 0"><input id="rq-q" type="search" placeholder="🔍 ابحث بالاسم أو رقم الهاتف في كل السجل" value="' + esc(S.q) + '" style="flex:1;min-width:220px"><button class="btn gray" data-rq="cfg">⚙️ الإعدادات والأسعار والمنتجات</button><button class="btn gray" data-rq="ptpage">صفحة المرضى (دخول مباشر)</button><button class="btn gray" data-rq="secnew">إضافة موعد سري (يراه الشيخ فقط)</button></div>' + (S.msg ? '<div class="hint" style="margin:6px 0">' + esc(S.msg) + '</div>' : '') + (S.found ? '<div class="hint" style="margin:6px 0">نتائج البحث: ' + S.found.length + (S.found.length >= 300 ? ' (أول 300)' : '') + '</div>' : '') +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">' + f("up", "القادمة (" + up.length + ")") + f("pending", "بانتظار التأكيد (" + pend + ")") + f("past", "السابقة") + f("all", "الكل") +
       '<span style="flex:1"></span><label style="display:flex;align-items:center;gap:6px;font-weight:700">الحجوزات في الساعة الواحدة <input type="number" id="rq-cap" min="1" max="20" value="' + S.cap + '" style="width:70px"></label><label style="display:flex;align-items:center;gap:6px;font-weight:700">أقصى جلسات في السبت <input type="number" id="rq-max" min="1" max="60" value="' + S.max + '" style="width:70px"></label><label style="display:flex;align-items:center;gap:6px;font-weight:700">جلسات كل فترة (صباحاً / مساءً) <input type="number" id="rq-pcap" min="1" max="30" value="' + S.pcap + '" style="width:70px"></label><button class="btn" data-rq="cap">حفظ</button></div>';
     if (S.err) h += '<div class="warn" style="margin:8px 0">' + esc(S.err) + '</div>';
@@ -175,6 +188,10 @@ const AdminRuqya = (() => {
       h += '<div style="overflow-x:auto"><table class="rt" style="min-width:880px"><thead><tr><th>الموعد</th><th>الاسم</th><th>الهاتف</th><th>البلدية</th><th>الجلسة</th><th>المبلغ</th><th>الحالة</th><th></th></tr></thead><tbody>';
       list.forEach(r => {
         const wa = "https://wa.me/213" + String(r.whatsapp || r.phone).replace(/^0/, "") + "?text=" + encodeURIComponent("السلام عليكم " + r.name + "، بخصوص موعدك للرقية الشرعية يوم " + dayName(r.day) + (r.status === "confirmed" ? " (مؤكَّد)." : ".") + " أوقات الحضور: الفترة الصباحية 09:00-12:30 والمسائية 13:30-17:00.");
+        if (r.secret) {
+          h += '<tr><td data-l="الموعد"><b>' + esc(dayName(r.day)) + '</b><br>' + esc(r.slot) + (r.slots > 1 ? ' (' + r.slots + ' جلسات)' : '') + '</td><td data-l="الاسم"><span class="hint" style="font-weight:800">موعد سري</span>' + (r.name && r.name !== "موعد سري" ? '<br><small>' + esc(r.name) + '</small>' : '') + '</td><td data-l="الهاتف">—</td><td data-l="البلدية">—</td><td data-l="الجلسة">' + r.sessions + ' جلسة</td><td data-l="المبلغ">—</td><td data-l="الحالة">سري</td><td data-l="إجراء"><button class="btn warn" data-rq="secdel" data-id="' + r.id + '">حذف</button></td></tr>';
+          return;
+        }
         h += '<tr><td data-l="الموعد"><b>' + esc(dayName(r.day)) + '</b><br>' + esc(r.slot) + (r.slots > 1 ? ' (' + r.slots + ' جلسات)' : '') + '</td><td data-l="الاسم"><a href="#" data-rq="pat" data-id="' + r.id + '" style="font-weight:800;color:inherit;text-decoration:underline">' + esc(r.name) + '</a> <a href="#" data-rq="ptfile" data-id="' + r.id + '" title="فتح ملفه مباشرة في صفحة المرضى" style="font-size:.8rem;font-weight:700;white-space:nowrap">فتح الملف</a>' + wBadge(r.phone) + '<br><small>' + (r.first_time ? "أول مرة" : "مسجَّل") + '</small></td>' +
           '<td data-l="الهاتف" dir="ltr">' + esc(r.phone) + '</td><td data-l="البلدية">' + esc(r.commune || "—") + (r.wilaya ? '<br><small>' + esc(r.wilaya) + '</small>' : '') + '</td>' +
           '<td data-l="الجلسة">' + esc(KIND[r.kind] || r.kind) + '<br><small>' + r.persons + ' أفراد · ' + r.sessions + ' جلسة</small>' + (r.second_name ? '<br><small>+ فرد آخر: ' + esc(r.second_name) + ' <bdi dir="ltr">' + esc(r.second_phone || "") + '</bdi></small>' : '') + '</td>' +
@@ -240,6 +257,17 @@ const AdminRuqya = (() => {
       try { await saveCfg({ cap: n, maxday: mx, pcap: pc }); S.cap = n; S.max = mx; S.pcap = pc; S.err = ""; S.msg = "✅ حُفظ"; note("حُفظت الإعدادات", true); draw(); } catch (er) { S.err = er.message; note("تعذّر الحفظ: " + er.message, false); draw(); }
     } else if (a === "cfg") { S.view = "cfg"; draw(); }
     else if (a === "cfgback") { S.view = ""; draw(); }
+    else if (a === "secnew") { S.view = "sec"; S.err = ""; draw(); }
+    else if (a === "secback") { S.view = ""; draw(); }
+    else if (a === "secsave") {
+      const day = $("sc-day").value, slot = $("sc-slot").value, n = Math.max(1, Math.min(5, parseInt($("sc-n").value, 10) || 1)), note = cut($("sc-note").value.trim(), 120);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) { S.err = "اختر اليوم"; draw(); return; }
+      const i = SLOTS.indexOf(slot); if (i + n > SLOTS.length || (slot < "13:00") !== (SLOTS[i + n - 1] < "13:00")) { S.err = "الجلسات لا تتسع في هذه الفترة، قلّل العدد أو اختر ساعة أبكر"; draw(); return; }
+      b.disabled = true;
+      try { await call("ruqya_bookings", { method: "POST", body: JSON.stringify({ day, slot, slots: n, name: note.length >= 2 ? note : "موعد سري", phone: "0000000000", kind: "single", persons: 1, sessions: n, session_price: 0, pack_price: 0, total: 0, terms: true, status: "confirmed", secret: true, registered: false, first_time: false }) }); S.view = ""; S.err = ""; S.msg = "تم حفظ الموعد السري"; await load(); } catch (er) { S.err = er.message; }
+      draw();
+    }
+    else if (a === "secdel") { if (!confirm("حذف هذا الموعد السري؟")) return; try { await call("ruqya_bookings?id=eq." + encodeURIComponent(b.getAttribute("data-id")) + "&secret=eq.true", { method: "DELETE" }); await load(); S.msg = "حُذف الموعد السري"; } catch (er) { S.err = er.message; } draw(); }
     else if (a === "ptpage") { openPt(""); }
     else if (a === "ptfile") { e.preventDefault(); openPt(b.getAttribute("data-id")); }
     else if (a === "cfgsave") {
