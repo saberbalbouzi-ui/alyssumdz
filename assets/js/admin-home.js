@@ -155,7 +155,7 @@ const AdminHome = (() => {
     root.innerHTML = `
 <div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
 <div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div>
-<button type="button" class="ah-btn" data-go="newp">منتج جديد</button><button type="button" class="ah-btn gh" data-go="orders">كل الطلبات</button></div></div>
+<button type="button" class="ah-btn" data-go="neword">+ طلب</button><button type="button" class="ah-btn gh" data-go="orders">كل الطلبات</button></div></div>
 <div class="ah-kpis">
 ${kpi("sales", "المبيعات", money(sales), delta(sales, salesP), sb, MINT)}
 ${kpi("orders", "الطلبات", num(cur.length), delta(cur.length, prev.length), ob, "#3987e5")}
@@ -216,6 +216,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   }
   function go(w) {
     const a = A(), btn = k => [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
+    if (w === "neword") { try { if (typeof ManualOrder !== "undefined") ManualOrder.open({ mode: "new" }); } catch (e) { } return; }
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
     if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }
