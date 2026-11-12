@@ -16,7 +16,8 @@ const AdminRuqya = (() => {
   async function load() {
     S.err = "";
     try {
-      S.rows = await call("ruqya_bookings?select=*&order=day.asc,slot.asc&limit=500");
+      /* الأحدث أولاً ثم يُعكس: كان الجلب بترتيب تصاعدي بحدّ 500 فيعيد أقدم السجلات ولا تصل الحجوزات الجديدة بعد أن كثر المستورد؛ الأقدم تجده بالبحث */
+      S.rows = (await call("ruqya_bookings?select=*&order=day.desc,slot.desc&limit=800")).reverse();
       try { S.blocks = await call("ruqya_blocks?select=phone,reason&limit=5000"); } catch (_) { S.blocks = []; }
       try { S.warn = await call("ruqya_warnings?select=id,phone,day,note,created_at&order=id.desc&limit=5000"); } catch (_) { S.warn = []; }
       const k = await call("admin_kv?select=value&key=eq.ruqya"); S.cfg = (k && k[0] && k[0].value) || {}; S.cap = Math.max(1, Number(S.cfg.cap) || 1); S.max = Math.max(1, Number(k && k[0] && k[0].value && k[0].value.maxday) || 15); S.pcap = Math.max(1, Number(S.cfg.pcap) || 5);
