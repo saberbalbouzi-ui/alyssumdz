@@ -8,7 +8,7 @@
 .core3d[data-state=awaiting] canvas{filter:drop-shadow(0 0 24px rgba(255,179,64,.35))}
 body.core-expanded .cyl-wrap{opacity:.55;transition:opacity .8s}.cyl-wrap{transition:opacity .8s}
 /* زر النواة يبقى هدف نقر/لوحة مفاتيح بلا مظهر قديم */
-body.core3d-on .core{background:none;border-color:transparent;box-shadow:none;backdrop-filter:none;z-index:6;color:transparent}
+body.core3d-on .core{background:none;border-color:transparent;box-shadow:none;backdrop-filter:none;color:transparent}
 body.core3d-on .core i,body.core3d-on .core b,body.core3d-on .core small{opacity:0}
 body.core3d-on .core:hover,body.core3d-on .core:focus-visible{transform:none;box-shadow:none}
 body.core3d-on .core:focus-visible{outline:2px dashed rgba(220,255,31,.85);outline-offset:6px}
