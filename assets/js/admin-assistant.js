@@ -97,7 +97,7 @@ const AdminHelp = (() => {
   async function show() { build(); await load(); open = true; $("ah-panel").classList.add("on"); setTimeout(() => { const i = $("ah-in"); if (i) i.focus(); }, 50); }
   function close() { open = false; const p = $("ah-panel"); if (p) p.classList.remove("on"); }
   function send(ev) { ev.preventDefault(); const i = $("ah-in"), v = i.value; i.value = ""; ask(v); }
-  const init = () => { const tryB = () => { if (document.querySelector("#app .top")) { build(); load(); } else setTimeout(tryB, 400); }; tryB(); };
+  const init = () => { const tryB = () => { if (document.querySelector("#app .top")) { build(); setTimeout(load, 15000); } else setTimeout(tryB, 400);   /* فهرسة قاعدة المساعدة (299 مقالاً) تكلّف معالج الهاتف عند فتح اللوحة: تُؤجَّل لما بعد الجاهزية، وتُحمَّل فوراً عند أول فتح للمساعد (show) */ }; tryB(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   function post(cls, text, list, err) { build(); const d = bubble(cls === "u" ? "u" : "a", esc(text).replace(/\n/g, "<br>")); if (err) d.style.color = "#b42318"; if (list && list.length) chips(list, d); }
   return { post, ask, send, close, toggle, show, decide: q => { const r = KB ? search(q, 4) : []; if (!r.length || r[0].sc < 6 || r[0].cov < .6) return 'REPHRASE'; const c = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01); return c.length ? 'AMBIG:' + [r[0]].concat(c).map(x => x.e.id).join('+') : 'OK:' + r[0].e.id; }, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };
