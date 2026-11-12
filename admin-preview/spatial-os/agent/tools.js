@@ -86,7 +86,7 @@
   const O_STAT = { type: "string", enum: STATUSES }, O_PER = { type: "string", enum: PERIODS };
   const pb = p => ({ slug: p.slug, title: p.title, price: p.price, old: p.old || null, stock: p.stock == null ? null : p.stock, active: p.active !== false, cat: p.cat || "", offers: (p.offers || []).map(o => ({ qty: o.qty, price: o.price })), variations: Array.isArray(p.variations) ? p.variations.length : 0 });
 
-  def("sales.summary", { risk: "read", perms: ["orders"], title: { ar: "ملخّص المبيعات", fr: "Résumé des ventes" }, endpoint: "GET orders", desc: "يحسب من طلبات الخادم الفعلية: عدد الطلبات، المبيعات غير الملغاة (تعريف اللوحة)، التوزيع بالحالة.",
+  def("sales.summary", { risk: "read", perms: ["orders"], title: { ar: "ملخّص المبيعات", fr: "Résumé des ventes", en: "Sales summary" }, endpoint: "GET orders", desc: "يحسب من طلبات الخادم الفعلية: عدد الطلبات، المبيعات غير الملغاة (تعريف اللوحة)، التوزيع بالحالة.",
     schema: { type: "object", properties: { period: O_PER }, additionalProperties: false },
     async run(a) {
       const all = await getOrders(), now = new Date(), per = a.period || "today", sel = all.filter(o => inPeriod(o.date, per, now)), valid = sel.filter(VALID), by = {}; STATUSES.forEach(s => by[s] = 0); sel.forEach(o => { by[o.status] = (by[o.status] || 0) + 1; });
@@ -95,7 +95,7 @@
       let est = null; if (per === "today") { const days = []; for (let i = 1; i <= 7; i++) { const d = new Date(+startOfDay(now) - i * 864e5), ds = all.filter(o => VALID(o) && startOfDay(o.date).getTime() === d.getTime()); if (ds.length) days.push(ds.reduce((s, o) => s + (Number(o.total) || 0), 0)); } if (days.length >= 2) est = { avgDailyRevenue: Math.round(days.reduce((x, y) => x + y, 0) / days.length), days: days.length }; }
       return { period: per, orders: sel.length, validOrders: valid.length, revenue, delivered, byStatus: by, pending: by.nouvelle, estimate: est, total: all.length };
     } });
-  def("sales.top_product", { risk: "read", perms: ["orders"], title: { ar: "المنتج الأكثر مبيعاً", fr: "Produit le plus vendu" }, endpoint: "GET orders", desc: "يجمع بنود الطلبات غير الملغاة من الخادم حسب المنتج (الكمية والإيراد).",
+  def("sales.top_product", { risk: "read", perms: ["orders"], title: { ar: "المنتج الأكثر مبيعاً", fr: "Produit le plus vendu", en: "Best-selling product" }, endpoint: "GET orders", desc: "يجمع بنود الطلبات غير الملغاة من الخادم حسب المنتج (الكمية والإيراد).",
     schema: { type: "object", properties: { period: O_PER, by: { type: "string", enum: ["qty", "revenue"] } }, additionalProperties: false },
     async run(a) {
       const all = await getOrders(), now = new Date(), sel = all.filter(o => VALID(o) && inPeriod(o.date, a.period || "all", now)), m = new Map(); let unparsed = 0;
@@ -103,19 +103,19 @@
       const by = a.by || "qty", rows = [...m.values()].map(e => ({ title: e.title, qty: e.qty, revenue: e.revenue, orders: e.orders.size })).sort((x, y) => y[by] - x[by] || y.qty - x.qty);
       return { period: a.period || "all", by, top: rows.slice(0, 3), count: rows.length, ordersCounted: sel.length, unparsed };
     } });
-  def("orders.list", { risk: "read", perms: ["orders"], title: { ar: "عرض الطلبات", fr: "Afficher les commandes" }, endpoint: "GET orders", desc: "يقرأ الطلبات من الخادم ويصفّيها (حالة/ولاية/بحث/فترة). لا هواتف في النتائج.",
+  def("orders.list", { risk: "read", perms: ["orders"], title: { ar: "عرض الطلبات", fr: "Afficher les commandes", en: "List orders" }, endpoint: "GET orders", desc: "يقرأ الطلبات من الخادم ويصفّيها (حالة/ولاية/بحث/فترة). لا هواتف في النتائج.",
     schema: { type: "object", properties: { status: O_STAT, wilaya: { type: "string", maxLength: 40 }, q: { type: "string", maxLength: 60 }, period: O_PER, limit: { type: "integer", minimum: 1, maximum: 50 } }, additionalProperties: false },
     async run(a) { const all = await getOrders(), r = filterOrders(all, a, new Date()), lim = a.limit || 20; return { count: r.length, shown: Math.min(lim, r.length), items: r.slice(0, lim).map(brief), filter: a, total: all.length }; } });
-  def("orders.get", { risk: "read", perms: ["orders"], title: { ar: "تفاصيل طلب", fr: "Détails d'une commande" }, endpoint: "GET orders", desc: "تفاصيل طلب بمعرّفه؛ الهاتف مقنَّع ما لم تكن مخوَّلاً بـ«العملاء».",
+  def("orders.get", { risk: "read", perms: ["orders"], title: { ar: "تفاصيل طلب", fr: "Détails d'une commande", en: "Order details" }, endpoint: "GET orders", desc: "تفاصيل طلب بمعرّفه؛ الهاتف مقنَّع ما لم تكن مخوَّلاً بـ«العملاء».",
     schema: { type: "object", properties: { id: { type: "string", pattern: ID_RE } }, required: ["id"], additionalProperties: false },
     async run(a, c) { const o = (await getOrders()).find(x => x.id === a.id); if (!o) throw new ToolError("not_found", "لا يوجد طلب بهذا المعرّف"); const full = c.can("customers"); return Object.assign(brief(o), { phone: full ? o.phone : maskPhone(o.phone), phoneMasked: !full, commune: o.commune, fee: o.fee, subtotal: o.subtotal }); } });
-  def("products.search", { risk: "read", perms: [], owner: true, title: { ar: "البحث عن منتج", fr: "Chercher un produit" }, endpoint: "GET file?path=assets/js/data.js", desc: "بحث في منتجات المتجر الفعلية (data.js).",
+  def("products.search", { risk: "read", perms: [], owner: true, title: { ar: "البحث عن منتج", fr: "Chercher un produit", en: "Search products" }, endpoint: "GET file?path=assets/js/data.js", desc: "بحث في منتجات المتجر الفعلية (data.js).",
     schema: { type: "object", properties: { q: { type: "string", maxLength: 60 } }, additionalProperties: false },
     async run(a) { const P = await getProducts(), q = norm(a.q || ""), r = (q ? P.filter(p => norm(p.title + " " + p.slug + " " + (p.desc || "")).includes(q)) : P).slice(0, 8); return { count: r.length, total: P.length, items: r.map(pb) }; } });
-  def("products.get", { risk: "read", perms: [], owner: true, title: { ar: "تفاصيل منتج", fr: "Détails d'un produit" }, endpoint: "GET file?path=assets/js/data.js", desc: "تفاصيل منتج بمعرّفه من data.js الفعلي.",
+  def("products.get", { risk: "read", perms: [], owner: true, title: { ar: "تفاصيل منتج", fr: "Détails d'un produit", en: "Product details" }, endpoint: "GET file?path=assets/js/data.js", desc: "تفاصيل منتج بمعرّفه من data.js الفعلي.",
     schema: { type: "object", properties: { slug: { type: "string", pattern: SLUG_RE } }, required: ["slug"], additionalProperties: false },
     async run(a) { const p = (await getProducts()).find(x => x.slug === a.slug); if (!p) throw new ToolError("not_found", "لا يوجد منتج بهذا المعرّف"); return pb(p); } });
-  def("inventory.read", { risk: "read", perms: [], owner: true, title: { ar: "قراءة المخزون", fr: "Lire le stock" }, endpoint: "GET file?path=assets/js/data.js + assets/data/inventory.json", desc: "مخزون المنتجات (أو منتج واحد، أو المنخفض فقط) مع عتبة التنبيه من inventory.json إن وُجدت.",
+  def("inventory.read", { risk: "read", perms: [], owner: true, title: { ar: "قراءة المخزون", fr: "Lire le stock", en: "Read stock" }, endpoint: "GET file?path=assets/js/data.js + assets/data/inventory.json", desc: "مخزون المنتجات (أو منتج واحد، أو المنخفض فقط) مع عتبة التنبيه من inventory.json إن وُجدت.",
     schema: { type: "object", properties: { slug: { type: "string", pattern: SLUG_RE }, low: { type: "boolean" } }, additionalProperties: false },
     async run(a) {
       const P = await getProducts(); let low = 5, lowKnown = false; try { const j = JSON.parse(await getFile("assets/data/inventory.json")); if (Number.isFinite(+j.low)) { low = +j.low; lowKnown = true; } } catch (_) { }
@@ -124,18 +124,18 @@
       let sel = rows; if (a.slug) { sel = rows.filter(r => r.slug === a.slug); if (!sel.length) throw new ToolError("not_found", "لا يوجد منتج بهذا المعرّف"); } else if (a.low) sel = rows.filter(r => ["low", "out"].includes(state(r)));
       return { threshold: low, thresholdConfigured: lowKnown, items: sel.map(r => Object.assign({}, r, { state: state(r) })).slice(0, 30), counts: { tracked: rows.filter(r => r.stock != null).length, low: rows.filter(r => state(r) === "low").length, out: rows.filter(r => state(r) === "out").length, untracked: rows.filter(r => r.stock == null).length }, filter: a };
     } });
-  def("customers.find", { risk: "read", perms: ["customers"], title: { ar: "طلبات زبون", fr: "Commandes d'un client" }, endpoint: "GET orders", desc: "طلبات زبون (اسم/هاتف) من الخادم؛ لا يعمل إلا لمن يملك صلاحية «العملاء».",
+  def("customers.find", { risk: "read", perms: ["customers"], title: { ar: "طلبات زبون", fr: "Commandes d'un client", en: "Customer orders" }, endpoint: "GET orders", desc: "طلبات زبون (اسم/هاتف) من الخادم؛ لا يعمل إلا لمن يملك صلاحية «العملاء».",
     schema: { type: "object", properties: { q: { type: "string", minLength: 2, maxLength: 60 } }, required: ["q"], additionalProperties: false },
     async run(a) { const q = norm(a.q), digits = a.q.replace(/\D/g, ""), r = (await getOrders()).filter(o => norm(o.name).includes(q) || (digits.length >= 6 && String(o.phone).replace(/\D/g, "").includes(digits))); return { count: r.length, spent: r.filter(VALID).reduce((s, o) => s + (Number(o.total) || 0), 0), items: r.slice(0, 20).map(brief) }; } });
-  def("settings.read", { risk: "read", perms: [], owner: true, title: { ar: "قراءة إعداد", fr: "Lire un réglage" }, endpoint: "GET kv?k=guard|stockcfg", desc: "إعدادات للقراءة فقط: حماية الطلبات (guard) وإعداد المخزون (stock).",
+  def("settings.read", { risk: "read", perms: [], owner: true, title: { ar: "قراءة إعداد", fr: "Lire un réglage", en: "Read a setting" }, endpoint: "GET kv?k=guard|stockcfg", desc: "إعدادات للقراءة فقط: حماية الطلبات (guard) وإعداد المخزون (stock).",
     schema: { type: "object", properties: { key: { type: "string", enum: ["guard", "stock"] } }, required: ["key"], additionalProperties: false },
     async run(a) { const v = await getKv(a.key === "guard" ? "guard" : "stockcfg"); return { key: a.key, value: a.key === "guard" ? { antibot: !!(v && v.antibot), dup: !!(v && v.dup), phoneDz: v ? v.phoneDz !== false : true } : { since: (v && v.since) || null }, configured: v != null }; } });
 
   /* ── أدوات الواجهة (مدير الألواح الفضائي الموجود) ── */
-  def("ui.open_panel", { risk: "ui", perms: [], title: { ar: "فتح لوحة", fr: "Ouvrir un panneau" }, endpoint: "SpatialOS.open", desc: "يفتح لوحاً حقيقياً عبر مدير الألواح.",
+  def("ui.open_panel", { risk: "ui", perms: [], title: { ar: "فتح لوحة", fr: "Ouvrir un panneau", en: "Open a panel" }, endpoint: "SpatialOS.open", desc: "يفتح لوحاً حقيقياً عبر مدير الألواح.",
     schema: { type: "object", properties: { panel: { type: "string", enum: ["ord", "prod", "inv", "ana"] } }, required: ["panel"], additionalProperties: false },
     async run(a) { const q = await ensurePanel(a.panel); SpatialOS.open(a.panel); return { panel: a.panel, ready: !!q.frDone }; } });
-  def("ui.filter_orders", { risk: "ui", perms: ["orders"], title: { ar: "تصفية لوح الطلبات", fr: "Filtrer le panneau des commandes" }, endpoint: "SpatialOS.open + Admin.applyOrderFilters", desc: "يفتح لوح الطلبات ويطبّق مرشّحاته الحقيقية (الحالة/الولاية/البحث) ثم يقارن عدد الصفوف بالخادم.",
+  def("ui.filter_orders", { risk: "ui", perms: ["orders"], title: { ar: "تصفية لوح الطلبات", fr: "Filtrer le panneau des commandes", en: "Filter the Orders panel" }, endpoint: "SpatialOS.open + Admin.applyOrderFilters", desc: "يفتح لوح الطلبات ويطبّق مرشّحاته الحقيقية (الحالة/الولاية/البحث) ثم يقارن عدد الصفوف بالخادم.",
     schema: { type: "object", properties: { status: O_STAT, wilaya: { type: "string", maxLength: 40 }, q: { type: "string", maxLength: 60 } }, additionalProperties: false },
     async run(a) {
       const q = await ensurePanel("ord"); SpatialOS.open("ord"); await refreshOrd();
@@ -143,22 +143,22 @@
       await sleep(250); const rows = fx(q, () => document.querySelectorAll("#orders-table tr").length - 1), expected = filterOrders(await getOrders(), a, null).length;
       return { applied: res, rows, expected, match: rows === expected, filter: a };
     } });
-  def("ui.show_order", { risk: "ui", perms: ["orders"], title: { ar: "عرض طلب في اللوح", fr: "Montrer une commande" }, endpoint: "SpatialOS.open + Admin.openOrderPreview", desc: "يفتح معاينة الطلب الحقيقية داخل لوح الطلبات (فيصير «هذا الطلب» في السياق).",
+  def("ui.show_order", { risk: "ui", perms: ["orders"], title: { ar: "عرض طلب في اللوح", fr: "Montrer une commande", en: "Show an order" }, endpoint: "SpatialOS.open + Admin.openOrderPreview", desc: "يفتح معاينة الطلب الحقيقية داخل لوح الطلبات (فيصير «هذا الطلب» في السياق).",
     schema: { type: "object", properties: { id: { type: "string", pattern: ID_RE } }, required: ["id"], additionalProperties: false },
     async run(a) {
       const q = await ensurePanel("ord"); SpatialOS.open("ord"); await refreshOrd();
       const ok = fx(q, id => { const A = Admin, i = A.orders.findIndex(x => x.id === id); if (i < 0) return false; A.openOrderPreview(i); return true; }, a.id); if (!ok) throw new ToolError("not_in_panel", "الطلب غير موجود في لوح الطلبات الحالي");
       await sleep(300); const shown = fx(q, id => { const m = document.getElementById("ord-prev-bg"); return !!m && m.classList.contains("open") && m.innerText.indexOf(id) >= 0; }, a.id); return { id: a.id, shown };
     } });
-  def("ui.current_order", { risk: "ui", perms: ["orders"], title: { ar: "الطلب المفتوح في اللوح", fr: "Commande ouverte dans le panneau" }, endpoint: "قراءة معاينة لوح الطلبات (#ord-prev-bg)", desc: "يقرأ معرّف الطلب المفتوح في معاينة لوح الطلبات إن وُجد (لتفسير «هذا الطلب»)؛ لا يمنح أي صلاحية: المعرّف يُتحقَّق منه من الخادم ويُعرض للموافقة.",
+  def("ui.current_order", { risk: "ui", perms: ["orders"], title: { ar: "الطلب المفتوح في اللوح", fr: "Commande ouverte dans le panneau", en: "Order open in the panel" }, endpoint: "قراءة معاينة لوح الطلبات (#ord-prev-bg)", desc: "يقرأ معرّف الطلب المفتوح في معاينة لوح الطلبات إن وُجد (لتفسير «هذا الطلب»)؛ لا يمنح أي صلاحية: المعرّف يُتحقَّق منه من الخادم ويُعرض للموافقة.",
     schema: { type: "object", properties: {}, additionalProperties: false },
     async run() { if (typeof SpatialOS === "undefined" || !SpatialOS.real) return { id: null }; const q = SpatialOS.panels.get("ord"); if (!q || !q.frDone || q.min) return { id: null }; const id = fx(q, () => { const m = document.getElementById("ord-prev-bg"); return m && m.classList.contains("open") && m.dataset.oid ? String(m.dataset.oid) : null; }); return { id: id && /^[A-Za-z0-9_\-]{4,40}$/.test(id) ? id : null }; } });
-  def("analytics.refresh", { risk: "ui", perms: ["orders"], title: { ar: "تحديث التحليلات", fr: "Actualiser les analyses" }, endpoint: "GET orders + Hub analytics.invalidate", desc: "يتحقق من أن الخادم يردّ بالطلبات ثم ينشر analytics.invalidate عبر مركز الأحداث.",
+  def("analytics.refresh", { risk: "ui", perms: ["orders"], title: { ar: "تحديث التحليلات", fr: "Actualiser les analyses", en: "Refresh analytics" }, endpoint: "GET orders + Hub analytics.invalidate", desc: "يتحقق من أن الخادم يردّ بالطلبات ثم ينشر analytics.invalidate عبر مركز الأحداث.",
     schema: { type: "object", properties: {}, additionalProperties: false },
     async run(a, c) { const n = (await getOrders()).length; if (!c.publish) throw new ToolError("no_publish", "لا قدرة نشر"); const r = c.publish({ type: "analytics.invalidate", resource: { kind: "analytics", id: "all" } }); if (!r.ok) throw new ToolError("publish_failed", "رفض المركز الحدث: " + r.why); return { orders: n, eventId: r.id }; } });
 
   /* ── الكتابة الوحيدة: تأكيد طلب ── */
-  def("orders.confirm", { risk: "write", perms: ["orders", "orders.write"], title: { ar: "تأكيد طلب", fr: "Confirmer une commande" }, endpoint: "POST order_update {id,status:confirmee} (عبر Admin.confirmOrder)",
+  def("orders.confirm", { risk: "write", perms: ["orders", "orders.write"], title: { ar: "تأكيد طلب", fr: "Confirmer une commande", en: "Confirm an order" }, endpoint: "POST order_update {id,status:confirmee} (عبر Admin.confirmOrder)",
     desc: "يؤكد طلباً في انتظار التأكيد عبر منطق لوح الطلبات الحقيقي بعد موافقة صريحة، ثم يتحقق من حالته في الخادم. يُحجَب إن كان الإرسال التلقائي لشركة التوصيل سيُطلَق أو المخزون لا يكفي.",
     schema: { type: "object", properties: { id: { type: "string", pattern: ID_RE } }, required: ["id"], additionalProperties: false },
     /* تحضير بلا أي كتابة: قراءة الخادم + فحص الخطر عبر اللوح */
