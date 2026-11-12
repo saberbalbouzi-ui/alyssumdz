@@ -82,11 +82,13 @@ const SEC = [
     html: () => [["sound", "صوت الإشعارات"], ["notif", "الإشعارات"], ["auto", "إرسال تلقائي للشركة"]].map(([k, v]) => `<div class="row"><div class="grow"><b>${v}</b></div><button type="button" class="tg${D.set[k] ? " on" : ""}" data-st="${k}" aria-label="${v}"></button></div>`).join(""),
     bind(r, p, rf) { r.onclick = e => { const b = e.target.closest("[data-st]"); if (b) { D.set[b.dataset.st] = !D.set[b.dataset.st]; rf(true); } }; } },
   { id: "ai", name: "مساعد ALYSSUM", icon: IC.ai, w: 430, h: 470, hidden: true, st: { m: [{ a: 1, t: "مرحباً، أنا مساعد ALYSSUM. ما الذي تريد معرفته؟" }] },
-    html: p => `<div class="ai-core"><i></i><i></i><i></i></div><div class="msgs">${p.st.m.map(m => `<div class="msg ${m.a ? "a" : "u"}">${m.t}</div>`).join("")}</div><div class="chips">${["كم طلباً ينتظر التأكيد؟", "ما حالة المخزون؟", "كيف المبيعات؟"].map(s => `<button type="button" class="chip" data-q="${s}">${s}</button>`).join("")}</div><div class="ask"><input id="ai-in" placeholder="اسأل المساعد..." aria-label="سؤال"><button type="button" class="btn" data-send>إرسال</button></div>`,
+    html: p => (window.AgentPanel && window.SpatialOS && SpatialOS.real) ? AgentPanel.html() : `<div class="ai-core"><i></i><i></i><i></i></div><div class="msgs">${p.st.m.map(m => `<div class="msg ${m.a ? "a" : "u"}">${m.t}</div>`).join("")}</div><div class="chips">${["كم طلباً ينتظر التأكيد؟", "ما حالة المخزون؟", "كيف المبيعات؟"].map(s => `<button type="button" class="chip" data-q="${s}">${s}</button>`).join("")}</div><div class="ask"><input id="ai-in" placeholder="اسأل المساعد..." aria-label="سؤال"><button type="button" class="btn" data-send>إرسال</button></div>`,
     bind(r, p, rf) {
+      if (window.AgentPanel && window.SpatialOS && SpatialOS.real) return; /* المرحلة 10: الوكيل التنفيذي الأصلي يحلّ محلّ المحاكاة في الوضع الحقيقي */
       const send = async q => { q = (q || "").trim(); if (!q) return; p.st.m.push({ t: q }); rf(); const a = await AI.ask(q); p.st.m.push({ a: 1, t: a }); rf(); const b = r.querySelector(".pn-bodywrap") || r; b.scrollTop = b.scrollHeight; };
       r.onclick = e => { const c = e.target.closest("[data-q]"); if (c) send(c.dataset.q); if (e.target.closest("[data-send]")) send(r.querySelector("#ai-in").value); };
       r.onkeydown = e => { if (e.key === "Enter" && e.target.id === "ai-in") send(e.target.value); };
     } },
+  { id: "help", name: "دليل المساعدة", icon: IC.ai, w: 430, h: 470, hidden: true, html: () => '<div class="empty">دليل المساعدة متاح في الوضع الحقيقي فقط.</div>' },
 ];
 function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2500); }

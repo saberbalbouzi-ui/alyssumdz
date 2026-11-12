@@ -70,7 +70,7 @@
      عند التشغيل من متجر حقيقي (نسخة PHP محلية فيها admin.html وapi) تصير ألواح الطلبات/المنتجات/التحليلات/المخزون/المساعد إطاراً (iframe) يحمّل admin.html الحقيقي نفسه
      (نفس الأصل: لا تعديل على ملف إنتاج) فتعمل منطق الأعمال والصلاحيات وواجهة الـAPI كما هي. وإلا (خادم ملفات عادي) تبقى بيانات العرض التجريبية. */
   let REAL = false;
-  const FRAME = { ord: { tab: "orders", w: 660, h: 580 }, prod: { tab: "products", w: 660, h: 560 }, ana: { tab: "analytics", w: 640, h: 540 }, inv: { tab: "inventory", w: 640, h: 540 }, ai: { tab: "ask", w: 480, h: 560 } };
+  const FRAME = { ord: { tab: "orders", w: 660, h: 580 }, prod: { tab: "products", w: 660, h: 560 }, ana: { tab: "analytics", w: 640, h: 540 }, inv: { tab: "inventory", w: 640, h: 540 }, help: { tab: "ask", w: 480, h: 560 } };
   /* تدوير الاسطوانة لتقديم عقدة قسم إلى مقدمة المشهد (أقصر دوران) */
   function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step - yaw; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
   function frame(t) {
