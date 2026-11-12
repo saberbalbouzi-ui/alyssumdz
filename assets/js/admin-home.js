@@ -256,7 +256,9 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   function init() {
     const a = A(); if (!a || a.__homeWrap || typeof a.renderAll !== "function") return setTimeout(init, 400);
     a.__homeWrap = 1; const o = a.renderAll;
-    a.renderAll = function () { const r = o.apply(this, arguments); try { render(); if (!S.shown) { S.shown = true; open(); guard(); } } catch (e) { console.warn("AdminHome", e); } return r; };
+    /* الرئيسية تُفتح حتى لو تعثّر رسم قسم آخر (finally) وفور إظهار اللوحة دون انتظار أي رسم: كان تعثّر renderAll يترك «الطلبات» ظاهرة طويلاً */
+    a.renderAll = function () { try { return o.apply(this, arguments); } finally { try { render(); if (!S.shown) { S.shown = true; open(); guard(); } } catch (e) { console.warn("AdminHome", e); } } };
+    { const app = $("app"); if (app && app.classList.contains("hidden")) { const ob = new MutationObserver(() => { if (app.classList.contains("hidden")) return; ob.disconnect(); if (!S.shown) { S.shown = true; try { open(); guard(); } catch (e) { console.warn("AdminHome", e); } } }); ob.observe(app, { attributes: true, attributeFilter: ["class"] }); } }
     const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); return r; };
     if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); } }
   }
