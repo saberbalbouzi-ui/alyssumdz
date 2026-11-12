@@ -135,7 +135,7 @@ const AdminRuqya = (() => {
       '<label style="display:block;margin-top:8px;font-weight:700">المتابعة (التوصيات والموعد القادم)</label><textarea data-vf="followup" rows="2" style="width:100%">' + esc(v.followup) + '</textarea>' +
       '<label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-weight:700"><input type="checkbox" data-vf="shared"' + (v.shared ? " checked" : "") + '> إظهار هذه الزيارة للمريض في بوابته</label>' +
       '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" data-rq="vsave" data-id="' + v.id + '">حفظ</button><button class="btn warn" data-rq="vdel" data-id="' + v.id + '">حذف الزيارة</button></div></div>';
-    return '<div class="card" style="padding:16px"><button class="btn gray" data-rq="pback">← رجوع للمواعيد</button> <button class="btn gray" data-rq="ptfile" data-id="' + r.id + '">فتح ملفه في صفحة المرضى</button>' +
+    return '<div class="card" style="padding:16px"><button class="btn gray" data-rq="pback">← رجوع للمواعيد</button> <button class="btn" data-rq="mannew" data-id="' + r.id + '">حجز موعد آخر لهذا المريض</button> <button class="btn gray" data-rq="ptfile" data-id="' + r.id + '">فتح ملفه في صفحة المرضى</button>' +
       '<h2 style="margin:12px 0 4px">ملف المريض</h2>' + (S.perr ? '<div class="warn" style="margin:8px 0">' + esc(S.perr) + '</div>' : "") + (S.msg ? '<div class="hint">' + esc(S.msg) + '</div>' : "") +
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:10px 0"><div><label style="font-weight:700">الاسم</label><input id="rq-pn" value="' + esc(r.name) + '"></div><div><label style="font-weight:700">المنطقة</label><input id="rq-pr" value="' + esc(r.commune || "") + '" placeholder="البلدية / الولاية"></div><div><label style="font-weight:700">الهاتف</label><div dir="ltr" style="padding:8px 0"><b>' + esc(r.phone) + '</b> · <a target="_blank" rel="noopener" href="' + wa + '">واتساب' + (r.whatsapp && r.whatsapp !== r.phone ? ' ' + esc(r.whatsapp) : '') + '</a></div></div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn" data-rq="psave">حفظ بيانات المريض</button><span class="hint">أول زيارة: ' + esc(first) + ' · آخر زيارة: ' + esc(last) + ' · عدد الزيارات: ' + vs.length + '</span></div>' +
@@ -203,7 +203,7 @@ const AdminRuqya = (() => {
           '<td data-l="الجلسة">' + esc(KIND[r.kind] || r.kind) + '<br><small>' + r.persons + ' أفراد · ' + r.sessions + ' جلسة</small>' + (r.second_name ? '<br><small>+ فرد آخر: ' + esc(r.second_name) + ' <bdi dir="ltr">' + esc(r.second_phone || "") + '</bdi></small>' : '') + '</td>' +
           '<td data-l="المبلغ">' + (Number(r.total) > 0 ? '<bdi dir="ltr">' + money(r.total) + '</bdi>' : "—") + (Array.isArray(r.products) && r.products.length ? '<br><small>منتجات: ' + r.products.map(x => esc(x.title) + ' ×' + x.qty).join('، ') + '</small>' : '') + (r.pack_price ? '<br><small>يشمل الباقة 4: <bdi dir="ltr">' + money(r.pack_price) + '</bdi></small>' : '') + '</td><td data-l="الحالة">' + esc(ST[r.status] || r.status) + '</td>' +
           '<td data-l="إجراء" style="display:flex;flex-wrap:wrap;gap:6px;min-width:230px"><a class="btn gray" target="_blank" rel="noopener" href="' + wa + '">واتساب</a> ' +
-          (isBlocked(r.phone) ? '<button class="btn gray" data-rq="unblock" data-ph="' + esc(r.phone) + '">رفع الحظر</button> ' : '<button class="btn warn" data-rq="block" data-ph="' + esc(r.phone) + '" title="يمنع هذا الرقم من الحجز">حظر</button> ') + (r.status !== "cancelled" && r.status !== "done" && r.status !== "noshow" ? '<button class="btn warn" data-rq="st" data-id="' + r.id + '" data-v="cancelled" title="يلغي الموعد ويحرّر مكانه">إلغاء الموعد</button> ' : '') + ((r.status === "pending" || r.status === "confirmed") && r.day <= today() ? '<button class="btn warn" data-rq="noshow" data-id="' + r.id + '" title="يسجَّل إنذار في ملفه">غاب بلا إخطار</button> ' : '') +
+          (isBlocked(r.phone) ? '<button class="btn gray" data-rq="unblock" data-ph="' + esc(r.phone) + '">رفع الحظر</button> ' : '<button class="btn warn" data-rq="block" data-ph="' + esc(r.phone) + '" title="يمنع هذا الرقم من الحجز">حظر</button> ') + (r.status !== "cancelled" && r.status !== "done" && r.status !== "noshow" ? '<button class="btn warn" data-rq="st" data-id="' + r.id + '" data-v="cancelled" title="يلغي الموعد ويحرّر مكانه">إلغاء الموعد</button> ' : '') + '<button class="btn gray" data-rq="mannew" data-id="' + r.id + '" title="حجز موعد آخر لهذا المريض">موعد آخر</button> ' + ((r.status === "pending" || r.status === "confirmed") && r.day <= today() ? '<button class="btn warn" data-rq="noshow" data-id="' + r.id + '" title="يسجَّل إنذار في ملفه">غاب بلا إخطار</button> ' : '') +
           (r.status === "pending" ? '<button class="btn" data-rq="st" data-id="' + r.id + '" data-v="confirmed">تأكيد</button> ' : '') +
           (r.status === "confirmed" ? '<button class="btn" data-rq="st" data-id="' + r.id + '" data-v="done">تمت</button> ' : '') +
           '</td></tr>';
@@ -263,7 +263,12 @@ const AdminRuqya = (() => {
       try { await saveCfg({ cap: n, maxday: mx, pcap: pc }); S.cap = n; S.max = mx; S.pcap = pc; S.err = ""; S.msg = "✅ حُفظ"; note("حُفظت الإعدادات", true); draw(); } catch (er) { S.err = er.message; note("تعذّر الحفظ: " + er.message, false); draw(); }
     } else if (a === "cfg") { S.view = "cfg"; draw(); }
     else if (a === "cfgback") { S.view = ""; draw(); }
-    else if (a === "mannew") { S.view = "man"; S.err = ""; S.man = null; draw(); }
+    else if (a === "mannew") {
+      S.view = "man"; S.err = ""; S.man = null; S._af = {};
+      const id = b.getAttribute("data-id"), r = id ? (S.rows.concat(S.found || [], S.pat ? [S.pat] : [])).find(x => String(x.id) === String(id)) : null;
+      if (r) { S.man = { phone: r.phone || "", name: r.name || "", commune: r.commune || "", kind: r.kind || "single", per: r.persons || 1, known: "مريض مسجَّل: " + (r.name || "") }; S._af = { name: r.name || "", com: r.commune || "" }; }
+      draw(); try { window.scrollTo({ top: 0 }); } catch (_) { }
+    }
     else if (a === "manback") { S.view = ""; S.err = ""; draw(); }
     else if (a === "mansave") {
       manKeep(); const M = S.man, ph = normPh(M.phone), name = cut(M.name.trim(), 120), n = Math.max(1, Math.min(8, parseInt(M.n, 10) || 1));
@@ -276,7 +281,7 @@ const AdminRuqya = (() => {
       if (used + n > cap && !confirm("هذه الفترة فيها " + used + " من " + cap + " جلسات؛ إضافة " + n + " تتجاوز الحد. هل تحجز رغم ذلك؟")) return;
       const P = Object.assign({}, DEFP, (S.cfg && S.cfg.prices) || {}), unit = kind === "kids" ? (P.kid || 0) * per : (P[kind] || 0), known = S.rows.some(r => normPh(r.phone) === ph && r.status !== "cancelled");
       b.disabled = true;
-      try { await call("ruqya_bookings", { method: "POST", body: JSON.stringify({ day: M.day, slot: M.slot, slots: n, name, phone: ph, whatsapp: /^0[5-7][0-9]{8}$/.test(ph) ? ph : null, commune: cut(M.commune.trim(), 120) || null, kind, persons: per, sessions: n, session_price: unit, pack_price: 0, total: unit * n, terms: true, status: $("mn-st").value, registered: known, first_time: !known }) }); S.view = ""; S.err = ""; S.man = null; S.msg = "تم حفظ الحجز اليدوي"; await load(); } catch (er) { S.err = er.message; }
+      try { await call("ruqya_bookings", { method: "POST", body: JSON.stringify({ day: M.day, slot: M.slot, slots: n, name, phone: ph, whatsapp: /^0[5-7][0-9]{8}$/.test(ph) ? ph : null, commune: cut(M.commune.trim(), 120) || null, kind, persons: per, sessions: n, session_price: unit, pack_price: 0, total: unit * n, terms: true, status: $("mn-st").value, registered: known, first_time: !known }) }); S.view = ""; S.err = ""; S.man = null; S.msg = "تم حفظ الحجز اليدوي"; await load(); if (S.pat) { const pid = S.pat.id; S.pat = null; await openPatient(pid); } } catch (er) { S.err = er.message; }
       draw();
     }
     else if (a === "ptpage") { openPt(""); }
