@@ -79,7 +79,7 @@ th = TH(k, True, "#ffffff", "#9ca3af", "#a3e635", "#22d3ee", "#ffffff10", NAVY, 
         dict(hbg="#05070d", hbr="#ffffff1a", lc="#ffffff", lac="#a3e635", mc="#e5e7eb", cbg="#65a30d"),
         ("⚡ شحن مجاني فوق 6000 دج  ·  منتجات أصلية ومرخّصة  ·  الدفع عند الاستلام", "#a3e635", "#0b1220", "#0b1220"), ("#0b1220", "#a3e635"),
         prods=dict(cbg="#ffffff", bbg="#65a30d", rad=18, fxs=[lift(".pb-pc", "rgba(163,230,53,.35)", -10, 3)]),
-        cats=dict(imgs=["supp_caps", "supp_smoothie", "supp_veg"], ov="#05070d", ovo=40, rad=18, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(163,230,53,.35)", -8, 3)]), cdc="#a3e635")
+        cats=dict(imgs=["supp_veg", "supp_caps", "supp_smoothie"], ov="#05070d", ovo=40, rad=18, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(163,230,53,.35)", -8, 3)]), cdc="#a3e635")
 hero = S([
     C([T("⚡ طاقة · تركيز · تعافٍ", 15, "#a3e635", "start", fw="900", **anim("fadeDown")),
        W("heading", text="أداء بلا حدود، من أول جرعة", tag="h1", fs=dm(64, 36), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.15}, fxs=[gradtext(k, "#a3e635", "#22d3ee", "#a3e635", 5)], **anim("fadeUp", .8)),
@@ -112,7 +112,7 @@ th = TH(k, False, "#5a3411", "#8a6a3c", "#d97706", "#92400e", "#ffffff", HONEY, 
         ("🍯 عسل طبيعي مفحوص  ·  توصيل لكل الولايات  ·  الدفع عند الاستلام", "#5a3411", "#fef3c7", "#fbbf24"), ("#d97706", "#fffbeb"),
         hfx=lambda s: [gradtext(k + s, "#5a3411", "#d97706", "#5a3411", 8)],
         prods=dict(cbg="#fffdf6", bbg="#d97706", rad=26, fxs=[lift(".pb-pc", "rgba(217,119,6,.35)", -10, 2), FX("بطاقة عسلية", "selector .pb-pc{border:1.5px solid #fde68a;box-shadow:0 14px 36px rgba(217,119,6,.14)}")]),
-        cats=dict(imgs=["honey_dipper", "honey_bee", "honey_jar"], ov="#5a3411", ovo=35, rad=30, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(217,119,6,.35)", -8, 3)]), cdc="#fbbf24")
+        cats=dict(imgs=["honey_comb", "honey_dipper", "honey_bee"], ov="#5a3411", ovo=35, rad=30, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(217,119,6,.35)", -8, 3)]), cdc="#fbbf24")
 hero = S([
     C([T("🍯 من الخلية مباشرة", 15, "#b45309", "start", fw="800", **anim("fadeDown")),
        W("heading", text="ذهبٌ سائل من قلب الطبيعة", tag="h1", fs=dm(62, 36), fw="900", ta={"d": "start"}, color="#5a3411", lh={"d": 1.2}, fxs=[gradtext(k, "#5a3411", "#d97706", "#5a3411", 8)], **anim("fadeUp", .8)),
@@ -139,7 +139,7 @@ th = TH(k, False, "#2f4a12", "#6b5b3a", "#4d7c0f", "#78350f", "#fffaf0", PAPER, 
         ("🌿 أعشاب وزيوت نقية  ·  بلا إضافات كيميائية  ·  الدفع عند الاستلام", "#2f4a12", "#f3ead7", "#bef264"), ("#4d7c0f", "#f3ead7"),
         hfx=lambda s: [gradtext(k + s, "#3f6212", "#78350f", "#3f6212", 9)],
         prods=dict(cbg="#fffaf0", bbg="#4d7c0f", rad=14, fxs=[lift(".pb-pc", "rgba(77,124,15,.3)", -8, 2), FX("بطاقة ورقية", "selector .pb-pc{border:1.5px solid #d6c9a2;box-shadow:0 10px 28px rgba(80,60,20,.12)}")]),
-        cats=dict(imgs=["herb_rosemary", "oil_olive", "herb_tea"], ov="#2f4a12", ovo=35, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(77,124,15,.35)", -8, 2)]), cdc="#bef264", offc="#f3ead7", offm="#e5e7d0")
+        cats=dict(imgs=["herb_tea", "oil_olive", "herb_rosemary"], ov="#2f4a12", ovo=35, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(77,124,15,.35)", -8, 2)]), cdc="#bef264", offc="#f3ead7", offm="#e5e7d0")
 label_fx = FX("لصيقة صيدلية عشبية", "selector{background:#fffaf0;border:2px solid #3f6212;outline:1px solid #3f6212;outline-offset:-10px;border-radius:6px;box-shadow:0 30px 60px rgba(60,50,20,.25);text-align:center}selector::before{content:\"✦ ✦ ✦\";position:absolute;top:14px;inset-inline:0;text-align:center;color:#78350f;letter-spacing:12px;font-size:14px}")
 hero = S([C([
     T("— صيدلية الطبيعة —", 15, "#78350f", "center", fw="800", **anim("fadeDown")),
@@ -171,7 +171,7 @@ th = TH(k, False, "#111111", "#6b6b6b", "#111111", "#7c3aed", "#ffffff", WH, GR,
         ctr=[FX("أرقام مفرّغة", "selector .pb-ctn{color:transparent!important;-webkit-text-stroke:2px #111;font-weight:900}")],
         fcard=lambda i: [FX("بطاقة خطّية", "selector .pb-ib{border:1px solid #111;border-radius:0;padding:26px;height:100%;box-sizing:border-box;background:#fff;transition:background .3s,color .3s,transform .3s}selector .pb-ib:hover{background:#111;transform:translateY(-6px)}selector .pb-ib:hover *{color:#fff!important}")],
         prods=dict(cbg="#ffffff", bbg="#111111", rad=0, fxs=[FX("بطاقة تحريرية", "selector .pb-pc{border:0;border-radius:0;box-shadow:none;transition:transform .5s cubic-bezier(.2,.8,.2,1)}selector .pb-pc:hover{transform:translateY(-8px)}selector .pb-pc:hover img{transform:scale(1.06)}selector .pb-pc img{transition:transform .8s}")]),
-        cats=dict(imgs=["fashion_shoe", "fashion_rack", "fashion_knit"], ov="#111111", ovo=25, rad=0, cols=3, fxs=[zoomcol("rgba(0,0,0,.3)")]), accfx=[accfx("#ffffff", "#111111", 0)],
+        cats=dict(imgs=["fashion_shirts", "fashion_shoe", "fashion_man"], ov="#111111", ovo=25, rad=0, cols=3, fxs=[zoomcol("rgba(0,0,0,.3)")]), accfx=[accfx("#ffffff", "#111111", 0)],
         tsfx=[FX("رأي مربّع", "selector .pb-ts{background:#fff!important;border:1px solid #111;border-radius:0;box-shadow:8px 8px 0 #111}"), lift(".pb-ts", "rgba(0,0,0,.2)", -6)])
 hero = S([
     C([W("heading", text="NEW", tag="h1", fs=dm(128, 64), fw="900", ta={"d": "start"}, color="#111111", lh={"d": .95}, fxs=[outlinetext("#111111", 2)], **anim("slideStart", .9)),
@@ -202,7 +202,7 @@ th = TH(k, True, "#e2e8f0", "#94a3b8", "#38bdf8", "#818cf8", "#ffffff10", SL, SL
         dict(hbg="#0b1220", hbr="#ffffff1a", lc="#ffffff", lac="#38bdf8", mc="#e2e8f0", cbg="#0284c7"),
         ("💻 ضمان رسمي على كل الأجهزة  ·  تقسيط مرن  ·  توصيل سريع  ·  الدفع عند الاستلام", "#0284c7", "#ffffff", "#bae6fd"), ("#0f172a", "#38bdf8"),
         prods=dict(cbg="#ffffff", bbg="#0284c7", rad=16, fxs=[lift(".pb-pc", "rgba(56,189,248,.4)", -10, 3)]),
-        cats=dict(imgs=["it_pc", "it_laptop", "it_color"], ov="#0b1220", ovo=40, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(56,189,248,.35)", -8, 3)]), cdc="#38bdf8")
+        cats=dict(imgs=["it_pc", "it_circuit", "it_code"], ov="#0b1220", ovo=40, rad=16, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(56,189,248,.35)", -8, 3)]), cdc="#38bdf8")
 term = W("text", html="<p style='font-family:monospace;direction:ltr;text-align:left;margin:0'><span style='color:#22c55e'>$</span> specs --best<br><span style='color:#38bdf8'>CPU</span>&nbsp;&nbsp;Core i7 · 14 cores<br><span style='color:#38bdf8'>RAM</span>&nbsp;&nbsp;32 GB DDR5<br><span style='color:#38bdf8'>SSD</span>&nbsp;&nbsp;1 TB NVMe<br><span style='color:#38bdf8'>GPU</span>&nbsp;&nbsp;RTX 4060 8GB<br><span style='color:#22c55e'>$</span> order --now</p>", fs=dm(18, 15), lh={"d": 1.9}, color="#e2e8f0", fw="600", fxs=[cursor(k)], **anim("fadeUp", .8, .2))
 hero = S([
     C([T("▍ تقنية بلا حدود", 15, "#38bdf8", "start", fw="800", **anim("fadeDown")),
@@ -228,7 +228,7 @@ th = TH(k, True, "#ffffff", "#c4b5fd", "#c084fc", "#f472b6", "#ffffff10", PUR, P
         dict(hbg="#0a0614", hbr="#ffffff1a", lc="#ffffff", lac="#c084fc", mc="#e9d5ff", cbg="#9333ea"),
         ("⚡ تسليم فوري بعد الدفع  ·  تحديثات مدى الحياة  ·  ضمان استرجاع 14 يوماً", "#7e22ce", "#ffffff", "#f5d0fe"), ("#1e1b4b", "#e9d5ff"),
         prods=dict(cbg="#ffffff", bbg="#9333ea", rad=24, fxs=[lift(".pb-pc", "rgba(168,85,247,.45)", -10, 3)]),
-        cats=dict(imgs=["dig_code", "dig_server", "dig_earth"], ov="#0a0614", ovo=40, rad=24, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(168,85,247,.4)", -8, 3)]), cdc="#f0abfc")
+        cats=dict(imgs=["dig_dash", "dig_analytics", "dig_code"], ov="#0a0614", ovo=40, rad=24, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(168,85,247,.4)", -8, 3)]), cdc="#f0abfc")
 hero = S([C([
     W("tbadges", items="⚡ تسليم فوري\nتحديثات مدى الحياة\nدعم مباشر", live=False, cbg="#ffffff14", cc="#e9d5ff", cbc="#ffffff30", crad=dm(999), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeDown")),
     W("heading", text="منتجات رقمية تبني دخلك وتختصر وقتك", tag="h1", fs=dm(64, 34), fw="900", ta={"d": "center"}, color="#ffffff", lh={"d": 1.2}, fxs=[gradtext(k, "#c084fc", "#f472b6", "#38bdf8", 5)], **anim("fadeUp", .8)),
@@ -266,7 +266,7 @@ th = TH(k, False, "#0f172a", "#64748b", "#f97316", "#ef4444", "#ffffff", LG, WHT
         dict(hbg="#ffffff", hbr="#e2e8f0", lc="#0f172a", lac="#f97316", mc="#0f172a", cbg="#f97316"),
         ("🏪 آلاف المنتجات من بائعين موثوقين  ·  دفع عند الاستلام  ·  توصيل لكل الولايات", "#f97316", "#ffffff", "#fff7ed"), ("#0f172a", "#fb923c"),
         prods=dict(cbg="#ffffff", bbg="#f97316", rad=14, fxs=[lift(".pb-pc", "rgba(249,115,22,.3)", -8, 2), FX("بطاقة سوق", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06)}")]),
-        cats=dict(imgs=["it_laptop", "fashion_rack", "skin_dropper"], ov="#0f172a", ovo=30, rad=14, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(249,115,22,.3)", -6, 2)]), cdc="#fde047")
+        cats=dict(imgs=["mkt_bags", "fashion_rack", "mkt_open"], ov="#0f172a", ovo=30, rad=14, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(249,115,22,.3)", -6, 2)]), cdc="#fde047")
 def tile(t, x, c1, c2, w, h=250, btn="تسوّق الآن", img="mkt_bags"):
     return C([W("heading", text=t, tag="h2", fs=dm(30, 24), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")), T(x, 16, "#ffffffdd", "start", **anim("fadeUp", .7, .1)),
               BTN(btn, bg="#ffffff", color="#111", al="start", link="#products", fxs=[FX("زر أبيض", "selector .pb-btn{border-radius:999px!important}"), shine(k + t[:2])], **anim("fadeUp", .7, .2))],
