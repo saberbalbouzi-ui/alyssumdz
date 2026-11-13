@@ -1,0 +1,10 @@
+{
+ "nlu_unknown_share": 0.202,
+ "hybrid_escalation_share": 0.072,
+ "escalation_note": "حصة الخطط غير الصالحة/المختلقة/المخالفة للمخطط (2.2%) + هامش 5% لانخفاض الثقة (لم تُقَس الثقة على الاختبار الكامل)",
+ "local_cpu_ms_per_request_bs1": 973,
+ "local_cpu_req_per_s_batched": 3.25,
+ "ft_prompt_tokens": 109,
+ "ft_out_tokens": 45,
+ "wrong_plan_share_local": 0.332
+}

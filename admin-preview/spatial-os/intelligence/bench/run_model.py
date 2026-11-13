@@ -5,7 +5,7 @@
 import os, sys, json, time, argparse, re, resource
 os.environ.setdefault("HF_HOME", "/tmp/hf"); os.environ["TOKENIZERS_PARALLELISM"] = "false"
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.dirname(HERE)); sys.path.insert(0, HERE)
-from common import SYSTEM, user_text, plan_text, parse_plan, REG
+from common import SYSTEM, SYSTEM_FT, user_text, plan_text, parse_plan, REG
 from score import load, stratified
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -19,7 +19,7 @@ def fewshot_msgs(case):
     m = [{"role": "system", "content": SYSTEM}]
     for c, t, g in SHOTS: m += [{"role": "user", "content": user_text({"ctx": c, "text": t})}, {"role": "assistant", "content": plan_text(g)}]
     return m + [{"role": "user", "content": user_text(case)}]
-def ft_msgs(case): return [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user_text(case)}]
+def ft_msgs(case): return [{"role": "system", "content": SYSTEM_FT}, {"role": "user", "content": user_text(case)}]
 def fg_tools():
     out = []
     for n, t in REG.items():

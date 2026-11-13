@@ -43,6 +43,7 @@
     (run.result.blocks || []).forEach(x => { const d = h("div", "ag-b " + x.k); d.dir = "auto"; const tg = (TAGL[run.lang] || TAGL.ar)[x.k]; if (tg) d.appendChild(h("span", "ag-tag", tg)); d.appendChild(h("span", "ag-t", x.t)); b.res.appendChild(d); });
     (run.notes || []).forEach(n => b.res.appendChild(h("div", "ag-b note", n)));
     if (run.result.verified) b.box.classList.add("verified");
+    if (run.route) { const rt = h("div", "ag-route", ({ local: "محلي", external: "خارجي", fallback: "احتياطي" })[run.route.source] + (run.route.conf != null ? " · ثقة " + Math.round(run.route.conf * 100) + "%" : "") + (run.route.ms ? " · " + run.route.ms + "ms" : "") + (run.route.reason ? " · " + run.route.reason : "")); rt.dataset.src = run.route.source; b.res.appendChild(rt); }
     if (run.confirm) confirmCard(b, run);
   }
   function confirmCard(b, run) {

@@ -165,11 +165,70 @@
     run.result.llmText = finalText; return done(blocks, { llm: true, needApproval: !!run.confirm, unknown: !executed.length && !finalText && !run.confirm && !err, error: err && !executed.length && !finalText && !run.confirm ? "llm_" + err : undefined });
   }
 
+
+  /* ───── طبقة التوجيه الهجينة التجريبية (المرحلة 11A) ─────
+     off: السلوك الحالي كما هو · hybrid: NLU الحتمي أولاً ← المحرّك المحلي للنيات المجهولة ← النموذج الخارجي (اختياري) عند الفشل/ضعف الثقة/الغموض المتكرر ← احتياطي حتمي
+     local: المحرّك المحلي أولاً لكل شيء (عدا التحية/الموافقة) · external: مسار النموذج الخارجي فقط.
+     لا نموذج ينفّذ شيئاً: كل خطة تمر على التحقق (قائمة السماح، المخطط، التأصيل: المعرّفات من السياق/النص فقط، الصلاحيات) ثم runModelCall نفسه (خطوات السجل/بطاقة الموافقة/المحقِّق). */
+  let ROUTE = "off", ROUTESTAT = { local: 0, external: 0, nlu: 0, fallback: 0, escalations: 0, rejected: 0, clarifyStreak: 0 }; const ROUTE_TAU = .8, ROUTE_MINP = .3;
+  const localReady = () => typeof AgentLLM !== "undefined" && AgentLLM.localAvailable && AgentLLM.localAvailable();
+  const routeWanted = ps => ROUTE !== "off" && ROUTE !== "external" && localReady() && (ps.intent === "unknown" || (ROUTE === "local" && !["hello", "thanks", "help", "approve", "reject"].includes(ps.intent)));
+  function ctxFor(me, text) {
+    const perms = []; if (canDo(me, "orders")) perms.push("orders"); if (canDo(me, "orders.write")) perms.push("write"); if (canDo(me, "customers")) perms.push("customers"); if (me.admin) perms.push("owner");
+    const known = T.get(CTX.lastIntent || ""), last = known && CTX.lastArgs ? { tool: CTX.lastIntent, args: CTX.lastArgs } : null; let cands = [];
+    try { const best = NLU.matchProduct(text, CTX.catalog); cands = CTX.catalog.slice().sort((a, b) => (best && a.slug === best.slug ? -1 : 0) - (best && b.slug === best.slug ? -1 : 0)).slice(0, 5).map(p => ({ slug: p.slug, title: p.title, fr: p.title })); } catch (_) { }
+    return { perms, last, ids: CTX.lastListIds.slice(0, 8), focus: CTX.focusOrder || null, prod: CTX.focusProduct || null, cands };
+  }
+  const ID_RX = /[A-Za-z]\d{6}-[A-Za-z0-9]{4,6}/g;
+  function groundId(id, text) { return !!id && (CTX.lastListIds.includes(id) || CTX.focusOrder === id || (String(text).match(ID_RX) || []).includes(id)); }
+  /* يتحقق من خطة الجهاز المحلي قبل أي تنفيذ: يعيد {ok, why} */
+  function vetPlan(plan, me, text) {
+    if (!plan || typeof plan !== "object") return { ok: false, why: "no-plan" };
+    if (plan.t !== "tool") return { ok: ["chat", "clarify", "refuse"].includes(plan.t), why: "action" };
+    if (!Array.isArray(plan.c) || !plan.c.length || plan.c.length > 3) return { ok: false, why: "calls" };
+    for (const x of plan.c) {
+      const t = T.get(x && x.n); if (!t || !LLM_TOOLS.has(x.n)) return { ok: false, why: "tool-not-allowed:" + String(x && x.n).slice(0, 24), halluc: !t };
+      const v = T.validate(t.schema, x.a || {}); if (!v.ok) return { ok: false, why: "schema:" + v.error };
+      const al = allowed(me, t); if (!al.ok) return { ok: false, why: "forbidden:" + al.code, perm: true };
+      if (["orders.get", "ui.show_order", "orders.confirm"].includes(x.n) && !groundId(v.value.id, text)) return { ok: false, why: "ungrounded-id" };
+      if (["products.get"].includes(x.n) || (x.n === "inventory.read" && v.value.slug)) { if (!CTX.catalog.some(p => p.slug === v.value.slug)) return { ok: false, why: "unknown-slug" }; }
+    }
+    return { ok: true };
+  }
+  const CLQ = { order: ["أي طلب تقصد؟ اذكر رقمه أو اطلب القائمة أولاً.", "Quelle commande ? Donnez son numéro.", "Which order do you mean? Give its number or ask for the list first."], product: ["أي منتج تقصد؟ اذكر اسمه.", "Quel produit ? Donnez son nom.", "Which product do you mean? Give its name."], wilaya: ["أي ولاية تقصد؟", "Quelle wilaya ?", "Which wilaya?"], period: ["لأي فترة؟ (اليوم/أمس/الأسبوع/الشهر)", "Quelle période ?", "For which period?"], what: ["ماذا تريد أن أعرض؟ مثلاً المبيعات أو الطلبات أو المخزون.", "Que voulez-vous voir ? Ventes, commandes ou stock.", "What would you like to see? Sales, orders or stock?"] };
+  const RFQ = { perm: ["ليست لديك صلاحية لهذا الطلب.", "Vous n'avez pas l'autorisation pour cela.", "You do not have permission for this request."], unsupported: ["هذه العملية غير مدعومة في الوكيل (أقرأ وأعرض وأؤكد طلباً بموافقتك فقط).", "Opération non prise en charge (je lis, j'affiche et je confirme une commande avec votre accord).", "That operation is not supported (I can read, show, and confirm one order with your approval)."], bulk: ["لا أنفّذ عمليات جماعية — أؤكد طلباً واحداً في كل مرة بموافقتك.", "Pas d'opérations en masse — une seule commande à la fois, avec votre accord.", "No bulk operations — I confirm one order at a time with your approval."], unsafe: ["لا أستطيع تنفيذ هذا الطلب.", "Je ne peux pas faire cela.", "I can't do that."] };
+  async function executePlan(run, plan, lang, done, src) {
+    const L = lang === "fr" ? 1 : lang === "en" ? 2 : 0;
+    if (plan.t === "chat") return done([X(tr(lang, "أهلاً — اسألني عن المبيعات، الطلبات، المخزون أو المنتجات.", "Bonjour — ventes, commandes, stock ou produits ?", "Hello — ask me about sales, orders, stock or products."))], { routed: src });
+    if (plan.t === "clarify") { ROUTESTAT.clarifyStreak++; if (plan.k === "order") CTX.awaiting = { kind: "order_for_confirm" }; return done([X((CLQ[plan.k] || CLQ.what)[L])], { needInput: true, routed: src }); }
+    if (plan.t === "refuse") return done([{ k: "error", t: (RFQ[plan.k] || RFQ.unsafe)[L] }], { routed: src, refused: plan.k });
+    ROUTESTAT.clarifyStreak = 0; const executed = []; let n = 0;
+    for (const x of plan.c) { n++; await runModelCall(run, { name: x.n, args: x.a || {} }, lang, executed); }
+    const blocks = []; executed.forEach(e => blocks.push(...factsFor(e.name, e.result, e.args, lang))); if (run.llmConfirm) blocks.push(...run.llmConfirm);
+    if (!blocks.length) blocks.push(X(tr(lang, "لم أفهم الطلب تماماً.", "Je n'ai pas compris.", "I did not understand the request.")));
+    return done(blocks, { routed: src, needApproval: !!run.confirm });
+  }
+  async function handleRouted(run, ps, lang, done) {
+    const me = await authz(), t0 = performance.now(), why = []; let plan = null;
+    setState("thinking", run); const r = await rawStep(run, "local.plan", { ar: "المحرّك المحلي", fr: "Moteur local", en: "Local engine" }, "model", () => AgentLLM.plan(maskText(run.text), ctxFor(me, run.text)), x => x.ok ? "ثقة " + Math.round((x.conf || 0) * 100) + "%" : x.error);
+    if (!r.ok) why.push("local:" + (r.error || "fail")); else if (!r.valid || !r.plan) why.push("invalid-plan"); else if (r.conf < ROUTE_TAU || r.minp < ROUTE_MINP) why.push("low-confidence"); else {
+      const v = vetPlan(r.plan, me, run.text); if (!v.ok) { why.push("vet:" + v.why); ROUTESTAT.rejected++; aud({ kind: "route", ok: false, source: "local", code: "rejected", why: v.why, tool: String(r.plan && r.plan.c && r.plan.c[0] && r.plan.c[0].n || "").slice(0, 30) }); }
+      else if (r.plan.t === "refuse" && r.plan.k === "perm") { why.push("perm-claim-unverified"); }
+      else if (r.plan.t === "clarify" && ROUTESTAT.clarifyStreak >= 2) why.push("clarify-streak"); else plan = r.plan;
+    }
+    if (plan) { ROUTESTAT.local++; run.route = { source: "local", conf: r.conf, ms: r.ms, relay_ms: r.relay_ms }; aud({ kind: "route", ok: true, source: "local", conf: r.conf, ms: r.ms, plan: plan.t }); return executePlan(run, plan, lang, done, "local"); }
+    /* تصعيد اختياري: النموذج الخارجي قابل للاستبدال ومعطَّل افتراضياً إن لم يُهيَّأ */
+    if (ROUTE === "hybrid" && llmReady()) { ROUTESTAT.escalations++; ROUTESTAT.external++; run.route = { source: "external", reason: why[0], conf: r && r.conf }; aud({ kind: "route", ok: true, source: "external", why: why[0] }); return handleLLM(run, ps, lang, done); }
+    ROUTESTAT.fallback++; run.route = { source: "fallback", reason: why[0] }; aud({ kind: "route", ok: false, source: "fallback", why: why[0] });
+    return done([X(tr(lang, "لم أفهم الطلب تماماً. جرّب صياغة أخرى.", "Je n'ai pas compris. Reformulez.", "I did not understand. Please rephrase.")), { k: "error", t: tr(lang, "(المحرّك المحلي لم يعطِ خطة موثوقة: " + why[0] + ")", "(moteur local : " + why[0] + ")", "(local engine gave no reliable plan: " + why[0] + ")") }], { unknown: true, routed: "fallback" });
+  }
+
   /* ───── المنسّق ───── */
   async function handle(run, ps) {
     const lang = ps.lang === "fr" || ps.lang === "en" ? ps.lang : "ar", a = ps.args || {}, out = run.result;
     const done = (blocks, extra) => { out.blocks = blocks; Object.assign(out, extra || {}); };
     const needPanelUI = async (fn) => { if (typeof SpatialOS === "undefined" || !SpatialOS.real) return null; try { return await fn(); } catch (e) { run.notes.push(tr(lang, "تعذّر إجراء الواجهة: " + e.message, "UI: " + e.message, "UI action failed: " + e.message)); return null; } };
+    if (routeWanted(ps)) return handleRouted(run, ps, lang, done);
     if (llmWanted(ps)) return handleLLM(run, ps, lang, done);
     switch (ps.intent) {
       case "hello": return done([X(tr(lang, "أهلاً — أنا وكيل أليسوم. اسألني عن المبيعات، الطلبات، المخزون أو المنتجات، أو اطلب تأكيد طلب.", "Bonjour — je suis l'agent Alyssum. Demandez-moi ventes, commandes, stock ou produits.", "Hello — I am the Alyssum agent. Ask me about sales, orders, stock or products, or ask me to confirm an order."))]);
@@ -261,7 +320,7 @@
 
   /* ───── دورة التشغيل ───── */
   const newRun = (text, lang) => ({ id: "rn_" + hex(4), text, lang: lang || "ar", t0: performance.now(), understood: null, steps: [], notes: [], result: { blocks: [] }, confirm: null, status: "thinking" });
-  const snap = r => JSON.parse(JSON.stringify({ id: r.id, text: r.text, lang: r.lang, understood: r.understood, steps: r.steps, notes: r.notes, result: { blocks: r.result.blocks, error: r.result.error, verified: r.result.verified, needApproval: r.result.needApproval, needInput: r.result.needInput, unknown: r.result.unknown, eventOk: r.result.eventOk, syncOk: r.result.syncOk }, confirm: r.confirm, status: r.status, ms: r.ms }));
+  const snap = r => JSON.parse(JSON.stringify({ id: r.id, text: r.text, lang: r.lang, understood: r.understood, steps: r.steps, notes: r.notes, result: { blocks: r.result.blocks, error: r.result.error, verified: r.result.verified, needApproval: r.result.needApproval, needInput: r.result.needInput, unknown: r.result.unknown, eventOk: r.result.eventOk, syncOk: r.result.syncOk }, confirm: r.confirm, route: r.route, status: r.status, ms: r.ms }));
   function setState(s, run) { if (STATE === s) return; STATE = s; emit({ type: "state", state: s, run: run && run.id }); }
   function finish(run, state) { run.ms = Math.round(performance.now() - run.t0); run.status = run.result.error ? "error" : state === "idle" ? "done" : state; RUNS.push(run); if (RUNS.length > 20) RUNS.shift(); const s = run.result.error ? "error" : (run.result.needApproval || run.result.needInput) ? "awaiting" : (state === "idle" || run.result.unknown) ? "idle" : "success"; setState(s, run); emit({ type: "run", phase: "end", run: snap(run) }); return snap(run); }
 
@@ -285,7 +344,7 @@
         BUSY = false; const tok = PENDING && PENDING.token; return { ok: true, run: ps.intent === "approve" ? await doApprove(tok) : doReject(tok) };
       }
       if (PENDING && PENDING.state === "pending") { PENDING.state = "cancelled"; aud({ kind: "confirm", ok: false, code: "superseded-by-message", token: PENDING.token }); run.notes.push("أُلغي طلب التأكيد السابق لأنك طلبت شيئاً آخر."); PENDING = null; }
-      setState(llmWanted(ps) ? "thinking" : "executing", run);
+      setState(llmWanted(ps) || routeWanted(ps) ? "thinking" : "executing", run);
       try { await handle(run, ps); } catch (e) { const te = e instanceof ToolError ? e : new ToolError("internal", "تعذّر إكمال الطلب"); if (!(e instanceof ToolError)) console.error("agent", e); run.result.blocks = fmtErr(te, run.lang); run.result.error = te.code; aud({ kind: "error", run: run.id, code: te.code }); }
       if (!["unknown", "count", "select_order", "hello", "thanks", "help"].includes(ps.intent) && !run.result.error && !run.result.needInput) { CTX.lastIntent = ps.intent; CTX.lastArgs = ps.args; } /* العدّ والانتقاء متابعتان للقائمة: لا تُبدّلان نيتها */
       pushHist(run, ps); return { ok: !run.result.error, run: finish(run, "success") };
@@ -305,6 +364,7 @@
     audit: () => AUD.slice(), runs: () => RUNS.map(snap), registry: () => T.registry(),
     context: () => ({ lastIntent: CTX.lastIntent, lastCount: CTX.lastCount, focusOrder: CTX.focusOrder, focusProduct: CTX.focusProduct, awaiting: CTX.awaiting && CTX.awaiting.kind, lastListIds: CTX.lastListIds.slice() }),
     on: fn => { listeners.add(fn); return () => listeners.delete(fn); },
+    setRouteMode: m => { if (['off', 'hybrid', 'local', 'external'].includes(m)) { ROUTE = m; if (m === 'external') LLMMODE = LLMMODE === 'off' ? 'fallback' : LLMMODE; } }, route: () => Object.assign({ mode: ROUTE, localReady: localReady() }, ROUTESTAT),
     setLLMMode: m => { if (["fallback", "always", "off"].includes(m)) LLMMODE = m; }, llm: () => ({ mode: LLMMODE, ready: llmReady(), used: LLMSTAT.used, rounds: LLMSTAT.rounds, lastError: LLMSTAT.lastError, lastRun: LLMSTAT.lastRun, history: CTX.hist.length }), history: () => CTX.hist.slice(),
     reset: () => resetContext("manual"), setPlanner: fn => { PLANNER = typeof fn === "function" ? fn : null; },
     /* قدرة واجهة الوكيل: مرة واحدة فقط (أول من يطلبها) — تمنح submit مع الموافقة، approve، reject، وتغيير حالة العرض (listening/speaking) */

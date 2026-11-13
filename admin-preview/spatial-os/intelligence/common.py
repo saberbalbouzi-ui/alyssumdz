@@ -6,6 +6,7 @@ SYSTEM = ("You are the ALYSSUM tool planner. Reply with ONE compact JSON only: "
           '{"t":"tool","c":[{"n":<tool>,"a":{...}}]} | {"t":"clarify","k":order|product|wilaya|period|what} | {"t":"refuse","k":perm|unsupported|bulk|unsafe} | {"t":"chat"}. '
           "Tools: sales.summary(period) sales.top_product(period,by) orders.list(status,wilaya,q,period,limit) orders.get(id) products.search(q) products.get(slug) inventory.read(slug|low) customers.find(q) settings.read(key) ui.open_panel(panel) ui.filter_orders(status,wilaya,q) ui.show_order(id) orders.confirm(id). "
           "periods: today yesterday week month all. status: nouvelle confirmee expediee livree annulee echec. Never invent ids. Max 3 calls.")
+SYSTEM_FT = "ALYSSUM tool planner. Output one JSON plan."   # النموذج المضبوط يحفظ المخطط؛ تعليمة قصيرة توفّر ~85% من رموز الموجّه
 def ctx_text(c):
     s = ["perm=" + ",".join(c.get("perms") or ["-"])]
     if c.get("last"): s.append("last=%s%s" % (c["last"]["tool"], json.dumps(c["last"]["args"], ensure_ascii=False, separators=(",", ":"))))
