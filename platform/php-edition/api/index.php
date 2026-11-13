@@ -177,9 +177,16 @@ function ipHash(): string { return substr(hash_hmac('sha256', clientIp(), guardS
 /* حدّ معدّل بسيط لكل مفتاح (IP+نوع العملية) */
 function rateLimit(string $key, int $max, int $win): void {
     $d = db(); $now = time();
-    $st = $d->prepare('SELECT COUNT(*) FROM rl WHERE k = ? AND t > ?'); $st->execute([$key, $now - $win]);
-    if ((int)$st->fetchColumn() >= $max) out(429, ['error' => 'rate_limited']);
-    $d->prepare('INSERT INTO rl (k, t) VALUES (?, ?)')->execute([$key, $now]);
+    try {
+        $st = $d->prepare('SELECT COUNT(*) FROM rl WHERE k = ? AND t > ?'); $st->execute([$key, $now - $win]);
+        $cnt = (int)$st->fetchColumn(); $st->closeCursor();                  // يُنهي القراءة قبل الكتابة: لا ترقية قفل تفشل فوراً تحت التزامن (12B.1)
+        if ($cnt >= $max) out(429, ['error' => 'rate_limited']);
+        $d->prepare('INSERT INTO rl (k, t) VALUES (?, ?)')->execute([$key, $now]);
+    } catch (PDOException $e) {
+        $ec = (int)($e->errorInfo[1] ?? 0);
+        if ($ec === 5 || $ec === 6) { header('Retry-After: 1'); out(503, ['error' => 'busy']); }       // قفل مؤقت: خطأ قابل للإعادة لا 500؛ الحدّ نفسه لم يُخفَّف
+        throw $e;
+    }
     if (random_int(1, 200) === 1) {                                  // تنظيف دوري
         $d->prepare('DELETE FROM rl WHERE t < ?')->execute([$now - 7200]);
         $d->prepare('DELETE FROM presence WHERE seen_at < ?')->execute([$now - 86400]);
@@ -564,7 +571,8 @@ switch ($route) {
         $canon = function ($v) use (&$canon) { if (is_array($v)) { if (array_is_list($v)) return array_map($canon, $v); ksort($v); return array_map($canon, $v); } return is_float($v) || is_int($v) ? (float)$v : (is_string($v) ? trim($v) : $v); };
         $ex = is_array($o['extra'] ?? null) ? $o['extra'] : []; unset($ex['🔗 مرجع'], $ex['🧺 مجموعة']);   /* متقلّبان: مرجع المنصة ومعرّف مجموعة الـUpsell (يتولّد لكل محاولة) */
         $its = array_map(fn($i) => is_array($i) ? [trim((string)($i['slug'] ?? '')), trim((string)($i['title'] ?? '')), (int)($i['qty'] ?? 1), (float)($i['price'] ?? 0)] : null, $items); usort($its, fn($x, $y) => strcmp(json_encode($x, JSON_UNESCAPED_UNICODE), json_encode($y, JSON_UNESCAPED_UNICODE)));
-        $reqHash = hash('sha256', json_encode($canon([$name, $phone, $o['wilaya'] ?? '', $o['commune'] ?? '', $o['dtype'] ?? '', $o['desk'] ?? '', $total, (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), (float)($o['discount'] ?? 0), strtoupper(trim((string)($o['coupon'] ?? ''))), strtoupper(trim((string)($o['promo'] ?? ''))), $manual, $its, $ex]), JSON_UNESCAPED_UNICODE));
+        $ph = preg_replace('/\D/', '', $phone); if (strpos($ph, '00213') === 0) $ph = substr($ph, 2); if (strpos($ph, '213') === 0 && strlen($ph) >= 11) $ph = '0' . substr($ph, 3);   /* تطبيع للبصمة فقط (لا يمسّ المخزَّن) */
+        $reqHash = hash('sha256', json_encode($canon([preg_replace('/\s+/u', ' ', $name), $ph, $o['wilaya'] ?? '', $o['commune'] ?? '', $o['dtype'] ?? '', $o['desk'] ?? '', $total, (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), (float)($o['discount'] ?? 0), strtoupper(trim((string)($o['coupon'] ?? ''))), strtoupper(trim((string)($o['promo'] ?? ''))), $manual, $its, $ex]), JSON_UNESCAPED_UNICODE));
         if ($idem !== '') { $rep = idemLookup($d, $idem, $reqHash); if ($rep !== null) out($rep['conflict'] ? 409 : 200, $rep['conflict'] ? ['error' => 'idempotency_key_reuse'] : ['ok' => true, 'id' => $rep['id'], 'duplicate' => true]); }
         $ip = clientIp(); if (!$manual) rateLimit('ord' . $ip, 20, 3600);
         /* حماية الطلبات: روبوتات وتكرار حسب IP — تُفعَّل من لوحة الإدارة ← نموذج الطلب */
