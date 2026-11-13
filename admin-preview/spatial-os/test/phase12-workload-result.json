@@ -11,7 +11,7 @@
  "security_failures": [],
  "page_errors": [],
  "audit_entries": 112,
- "duration_s": 145,
+ "duration_s": 71,
  "results": [
   {
    "n": 1,
@@ -23,7 +23,7 @@
      "ui.filter_orders:ok"
     ],
     "api_pending": 3,
-    "text": "حقيقةعدد الطلبات المطابقة: 3\nحقيقة1. S261113-CA0A9 — يوسف زروقي — 5 350 DA — في انتظار الت"
+    "text": "حقيقةعدد الطلبات المطابقة: 3\nحقيقة1. S261113-87304998 — يوسف زروقي — 5 350 DA — في انتظار "
    }
   },
   {
@@ -91,7 +91,7 @@
      "customers.find:ok"
     ],
     "phone_in_output": false,
-    "text": "حقيقة1 طلب لهذا الزبون — مجموع غير الملغاة: 5 450 DA\nحقيقة1. S261113-28EB6 — 5 450 DA — مؤ"
+    "text": "حقيقة1 طلب لهذا الزبون — مجموع غير الملغاة: 5 450 DA\nحقيقة1. S261113-40A1BA3B — 5 450 DA —"
    }
   },
   {
@@ -165,8 +165,8 @@
      "ref": 10
     },
     "hub_after": {
-     "acc": 8,
-     "ref": 18
+     "acc": 7,
+     "ref": 15
     },
     "id_visible_in_ord_frame": null
    }
@@ -263,7 +263,7 @@
      "أكد كل الطلبات→success/orders.list:ok",
      "أكد الطلب→success/orders.list:ok",
      "أكد الطلب رقم 99999999→success/orders.list:ok",
-     "امسح الطلب S261113-CA0→error/orders.confirm:error"
+     "امسح الطلب S261113-873→error/orders.confirm:error"
     ],
     "forged_hub_accepted": false,
     "unchanged": true
