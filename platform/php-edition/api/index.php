@@ -67,7 +67,6 @@ function db(): PDO {
         coupon TEXT, discount REAL NOT NULL DEFAULT 0, extra TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'nouvelle', note TEXT NOT NULL DEFAULT '');
       CREATE INDEX IF NOT EXISTS orders_created ON orders(created_at);
       CREATE INDEX IF NOT EXISTS orders_phone ON orders(phone, created_at);
-      CREATE INDEX IF NOT EXISTS orders_created_id ON orders(created_at, id);
       CREATE INDEX IF NOT EXISTS orders_status_created ON orders(status, created_at);
       CREATE TABLE IF NOT EXISTS order_idem (k TEXT PRIMARY KEY, order_id TEXT NOT NULL, req_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS customers (id INTEGER PRIMARY KEY, phone TEXT NOT NULL UNIQUE, name TEXT NOT NULL, wilaya TEXT, commune TEXT, pass_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
@@ -154,12 +153,12 @@ function orderOut(array $r): array {
         'dtype' => $r['dtype'], 'desk' => $r['desk'], 'items' => $r['items_text'], 'subtotal' => (float)$r['subtotal'], 'fee' => (float)$r['fee'], 'total' => (float)$r['total'],
         'coupon' => $r['coupon'], 'discount' => (float)$r['discount'], 'extra' => json_decode($r['extra'], true) ?: new stdClass, 'status' => $r['status'], 'note' => $r['note']];
 }
-/* مؤشر ترقيم مبهم ثابت الترتيب: (created_at, id) */
-function cursorEnc(array $r): string { return rtrim(strtr(base64_encode(json_encode([(int)$r['created_at'], (string)$r['id']])), '+/', '-_'), '='); }
+/* مؤشر ترقيم مبهم ثابت الترتيب: (created_at, rowid). التعادل بـrowid (ترتيب الإدراج) لا بـid لأن المعرّفات عشوائية: ترتيب الطلبات المتزامنة في الثانية نفسها يبقى حتمياً ومطابقاً للسلوك القديم */
+function cursorEnc(array $r): string { return rtrim(strtr(base64_encode(json_encode([(int)$r['created_at'], (int)$r['_rid']])), '+/', '-_'), '='); }
 function cursorDec(string $c): ?array {
     if ($c === '') return null;
     $j = json_decode((string)base64_decode(strtr($c, '-_', '+/'), true), true);
-    return (is_array($j) && count($j) === 2 && is_int($j[0]) && is_string($j[1]) && strlen($j[1]) <= 40) ? [$j[0], $j[1]] : null;
+    return (is_array($j) && count($j) === 2 && is_int($j[0]) && is_int($j[1]) && $j[1] > 0) ? [$j[0], $j[1]] : null;
 }
 /* معرّف الطلب العام: S|M + yymmdd + '-' + hex عشوائي آمن (8 رموز = 32 بتاً، يطول 2 مع كل تصادم). الشكل القديم (5 رموز) يبقى مقروءاً.
    خطّاف الاختبار الوحيد: ALYSSUM_TEST_MODE=1 مع ALYSSUM_TEST_FORCE_IDS="ID1,ID2" يفرض معرّفات للمحاولة الأولى فقط (لا أثر في الإنتاج لأنه لا يُضبط). */
@@ -844,7 +843,7 @@ switch ($route) {
         needPerm('orders');
         /* العقد القديم محفوظ (نفس الحقول، آخر 2000 طلب تنازلياً) + حقول إضافية لا يتأثر بها العملاء القدامى (المرحلة 12B):
            total_count = العدد الكلي، truncated = هل القائمة مقتطعة، has_more/next_cursor = للمتابعة عبر orders_page. */
-        $d = db(); $LIM = 2000; $rows = $d->query('SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT ' . $LIM)->fetchAll(); $tc = (int)$d->query('SELECT COUNT(*) FROM orders')->fetchColumn();
+        $d = db(); $LIM = 2000; $rows = $d->query('SELECT rowid AS _rid, * FROM orders ORDER BY created_at DESC, rowid DESC LIMIT ' . $LIM)->fetchAll(); $tc = (int)$d->query('SELECT COUNT(*) FROM orders')->fetchColumn();
         $trunc = $tc > count($rows);
         out(200, ['ok' => true, 'orders' => array_map('orderOut', $rows), 'total_count' => $tc, 'returned' => count($rows), 'window' => $LIM, 'truncated' => $trunc, 'has_more' => $trunc, 'next_cursor' => ($trunc && $rows) ? cursorEnc(end($rows)) : null]);
 
@@ -861,8 +860,8 @@ switch ($route) {
         if (($q = trim((string)($_GET['q'] ?? ''))) !== '') { $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr($q, 0, 60)) . '%'; $w[] = "(name LIKE ? ESCAPE '\\' OR id LIKE ? ESCAPE '\\' OR phone LIKE ? ESCAPE '\\' OR items_text LIKE ? ESCAPE '\\')"; array_push($a, $like, $like, $like, $like); }
         $cs = (string)($_GET['cursor'] ?? ''); $cur = cursorDec($cs); if ($cs !== '' && $cur === null) out(422, ['error' => 'invalid_cursor']);
         $cn = $d->prepare('SELECT COUNT(*) FROM orders' . ($w ? ' WHERE ' . implode(' AND ', $w) : '')); $cn->execute($a); $total = (int)$cn->fetchColumn();
-        $w2 = $w; $a2 = $a; if ($cur) { $w2[] = '(created_at < ? OR (created_at = ? AND id < ?))'; array_push($a2, $cur[0], $cur[0], $cur[1]); }
-        $st = $d->prepare('SELECT * FROM orders' . ($w2 ? ' WHERE ' . implode(' AND ', $w2) : '') . ' ORDER BY created_at DESC, id DESC LIMIT ' . ($lim + 1)); $st->execute($a2); $rows = $st->fetchAll();
+        $w2 = $w; $a2 = $a; if ($cur) { $w2[] = '(created_at < ? OR (created_at = ? AND rowid < ?))'; array_push($a2, $cur[0], $cur[0], $cur[1]); }
+        $st = $d->prepare('SELECT rowid AS _rid, * FROM orders' . ($w2 ? ' WHERE ' . implode(' AND ', $w2) : '') . ' ORDER BY created_at DESC, rowid DESC LIMIT ' . ($lim + 1)); $st->execute($a2); $rows = $st->fetchAll();
         $more = count($rows) > $lim; if ($more) array_pop($rows);
         out(200, ['ok' => true, 'orders' => array_map('orderOut', $rows), 'total' => $total, 'limit' => $lim, 'has_more' => $more, 'next_cursor' => ($more && $rows) ? cursorEnc(end($rows)) : null]);
 
