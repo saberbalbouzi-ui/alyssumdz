@@ -1,11 +1,11 @@
 /* جسيمات: خلفية + دفقات ظهور + تلاشٍ؛ تُرسم بتوهّج إضافي (lighter) من لوحات ضوء جاهزة لأداء أفضل، مع ذيول وجاذبية خفيفة */
 const FX = (() => {
   const cv = document.getElementById("fx"), g = cv.getContext("2d"), RM = matchMedia("(prefers-reduced-motion:reduce)").matches;
-  let W = 0, H = 0, dpr = 1, amb = [], bursts = [], run = true;
+  let W = 0, H = 0, dpr = 1, amb = [], bursts = [], run = true, bud = 1;
   const mobile = () => innerWidth <= 820, rnd = (a, b) => a + Math.random() * (b - a);
   const sprites = {};
   function sprite(rgb) { if (sprites[rgb]) return sprites[rgb]; const c = document.createElement("canvas"); c.width = c.height = 48; const x = c.getContext("2d"), gr = x.createRadialGradient(24, 24, 0, 24, 24, 24); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.25, `rgba(${rgb},.9)`); gr.addColorStop(1, `rgba(${rgb},0)`); x.fillStyle = gr; x.fillRect(0, 0, 48, 48); return (sprites[rgb] = c); }
-  function size() { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0); const n = RM ? 12 : mobile() ? 34 : 80; amb = Array.from({ length: n }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(3, 9), vy: -rnd(.08, .35), vx: rnd(-.08, .08), a: rnd(.25, .8), c: Math.random() < .3 ? "220,255,31" : "43,228,255" })); }
+  function size() { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0); const n = Math.max(6, Math.round((RM ? 12 : mobile() ? 34 : 80) * bud)); amb = Array.from({ length: n }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(3, 9), vy: -rnd(.08, .35), vx: rnd(-.08, .08), a: rnd(.25, .8), c: Math.random() < .3 ? "220,255,31" : "43,228,255" })); }
   const cap = () => (document.body.classList.contains("many") ? 140 : 360);
   function push(o) { if (bursts.length < cap()) bursts.push(o); }
   function burst(x, y, color, count, spread) {
@@ -28,5 +28,7 @@ const FX = (() => {
   }
   addEventListener("resize", size); document.addEventListener("visibilitychange", () => { run = !document.hidden; if (run) requestAnimationFrame(tick); });
   size(); requestAnimationFrame(tick);
-  return { burst, dissolve, stream, count: () => bursts.length };
+  /* ميزانية الجسيمات المحيطة (تضبطها SceneQuality): تُعيد بناء المصفوفة فقط عند تغيّر المستوى */
+  function budget(b) { if (b === bud) return; bud = b; size(); }
+  return { burst, dissolve, stream, budget, count: () => bursts.length };
 })();

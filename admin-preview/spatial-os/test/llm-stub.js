@@ -41,6 +41,14 @@ function startStub() {
     if (/bad-args/i.test(userText)) return call("orders.get", { id: "x" });
     if (/extra-arg/i.test(userText)) return call("orders.list", { status: "nouvelle", hack: 1 });
     if (/unknown-tool/i.test(userText)) return call("system.exec", { cmd: "ls" });
+    /* مرحلة 12: مخرجات مشوّهة يتحقق منها الوسيط والنواة (للاختبار فقط) */
+    if (/malformed-nocand/i.test(userText)) return { candidates: [] };
+    if (/malformed-noparts/i.test(userText)) return { candidates: [{ content: { role: "model", parts: [] }, finishReason: "STOP" }] };
+    if (/malformed-argstr/i.test(userText)) return { candidates: [{ content: { role: "model", parts: [{ functionCall: { name: "orders.list", args: "status=nouvelle; DROP TABLE" } }] }, finishReason: "STOP" }] };
+    if (/malformed-name/i.test(userText)) return call("../../etc/passwd", { id: "1" });
+    if (/malformed-huge/i.test(userText)) return txt("x".repeat(200000));
+    if (/malformed-many/i.test(userText)) return { candidates: [{ content: { role: "model", parts: Array.from({ length: 8 }, () => ({ functionCall: { name: "orders.list", args: { status: "nouvelle" } } })) }, finishReason: "STOP" }] };
+    if (/malformed-nested/i.test(userText)) return call("orders.get", { id: { $ne: null } });
     if (/loop/i.test(userText)) return call("sales.summary", { period: "today" });
     if (/slow/i.test(userText)) return "SLOW";
     if (/secret|مفتاح|api key/i.test(userText)) return txt("لا أملك أي أسرار.");
