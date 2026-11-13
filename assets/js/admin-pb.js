@@ -252,7 +252,7 @@ const PB = (() => {
   const fontsHref = names => names.length ? "https://fonts.googleapis.com/css2?" + names.map(n => { const f = FONT_FAMS.find(x => x[0] === n); return "family=" + n.replace(/ /g, "+") + (f && f[1] ? ":wght@" + f[1] : ""); }).join("&") + "&display=swap" : "";
   const cairoFace = base => { const u = f => "url(" + esc(base) + "assets/fonts/" + f + ".woff2) format('woff2')"; return "@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:" + u("cairo-arabic") + ";unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:" + u("cairo-latin") + ";unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}\n"; };
   const usedFonts = obj => { const str = JSON.stringify(obj || ""), pf = Object.keys(TPRE).filter(k => str.includes('"tpre":"' + k + '"')).map(k => TPRE[k][1]); return FONT_FAMS.filter(([n]) => str.includes("'" + n + "'") || pf.includes(n)).map(x => x[0]); };
-  const F_W = [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "أسود"]];
+  const F_W = [["", "افتراضي"], ["400", "عادي (400)"], ["600", "متوسط (600)"], ["700", "عريض (700)"], ["800", "عريض جداً (800)"], ["900", "ثقيل جداً (900) — وزن الخط لا لونه"]];
   const AL = [["start", "⇥ بداية"], ["center", "↔ وسط"], ["end", "⇤ نهاية"]];
   const typoCtl = (extra) => [
     { k: "color", l: "لون النص", t: "color", tab: "s" },
@@ -424,13 +424,13 @@ const PB = (() => {
       label: "عنوان", ic: "🔠", def: { text: "عنوان رائع هنا", tag: "h2", fs: { d: 38, m: 28 }, fw: "800", ta: { d: "center" } },
       ctl: [{ k: "text", l: "النص", t: "text", tab: "c" }, { k: "bindTitle", l: "مرتبط باسم المنتج (يتغيّر باسم المنتج وبالعكس)", t: "switch", tab: "c" }, { k: "tag", l: "وسم HTML", t: "select", o: [["h1", "H1"], ["h2", "H2"], ["h3", "H3"], ["h4", "H4"], ["div", "DIV"], ["p", "P"]], tab: "c" }, { k: "link", l: "رابط (اختياري)", t: "text", tab: "c" }].concat(typoCtl([{ k: "tcurve", l: "انحناء النص", t: "num", min: -100, max: 100, step: 1, tab: "s" }, { k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }].concat(SLC)), [TGR]),
       html: (s, id, ctx) => { const t = ["h1", "h2", "h3", "h4", "h5", "h6", "div", "p"].includes(s.tag) ? s.tag : "h2"; const bp = s.bindTitle && ctx && ctx.products ? ctx.products.find(x => x.slug === (s.prod || ctx.pageProduct)) : null; if (bp) return `<${t} class="pb-t pb-hd${ctx.edit ? " pbbind" : ""}"${ctx.edit ? ` data-pbbind="${esc(bp.slug)}" title="مرتبط باسم المنتج — انقر لتعديل بيانات المنتج"` : ""}><span>${esc(bp.title)}</span></${t}>`; const inner = num(s.tcurve) ? curveSvg(s, id) : s.lm ? `<span data-edit="text">${String(s.text).split("\n").map(l => `<span class="pb-li">${esc(l)}</span>`).join("")}</span>` : `<span data-edit="text">${esc(s.text)}</span>`; return `<${t} class="pb-t pb-hd">${s.link ? `<a href="${esc(s.link)}" style="color:inherit">${inner}</a>` : inner}</${t}>`; },
-      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); bgPadDef(c, sel, s); sideLinesCss(c, sel, s); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },
+      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); bgPadDef(c, sel, s); sideLinesCss(c, sel, s); if (s.colorF && s.color) c.d.push(`${sel} .pb-t{color:${s.color}!important}`); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },
     },
     text: {
       label: "نص", ic: "📝", def: { html: "<p>اكتب نصك هنا. انقر مرتين على النص لتعديله مباشرة وتنسيقه (عريض، رابط، قائمة...).</p>", fs: { d: 17 }, lh: { d: 1.8 }, ta: { d: "start" } },
       ctl: [{ k: "html", l: "المحتوى", t: "rich", tab: "c" }].concat(typoCtl([{ k: "lm", l: "رمز القائمة", t: "text", tab: "s" }, { k: "lmc", l: "لون رمز القائمة", t: "color", tab: "s" }, { k: "lmd", l: "المسافة بين الرمز والنص", t: "num", min: 0.3, max: 6, step: 0.1, tab: "s" }, { k: "lms", l: "حجم الرمز %", t: "num", min: 50, max: 300, step: 5, tab: "s" }, { k: "lmfx", l: "تطبيق تأثيرات النص على الرمز", t: "select", o: [["", "نعم"], ["0", "لا"]], tab: "s" }].concat(SLC)), [TGR]),
       html: s => `<div class="pb-t pb-tx" data-edit="html">${cleanHtml(s.html)}</div>`,
-      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); bgPadDef(c, sel, s); sideLinesCss(c, sel, s); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },      // الإطار = خلفية النص ويتوسّع تلقائياً مع الأسطر (يُعطَّل بتغيير الارتفاع بالسحب)
+      css: (c, sel, s) => { emit(c, sel + " .pb-t", s, TYPO); textGrad(c, sel, s); bgPadDef(c, sel, s); sideLinesCss(c, sel, s); if (s.colorF && s.color) c.d.push(`${sel} .pb-t{color:${s.color}!important}`); if (s.hauto !== false) c.d.push(`${sel}{height:auto!important}`); },      // الإطار = خلفية النص ويتوسّع تلقائياً مع الأسطر (يُعطَّل بتغيير الارتفاع بالسحب)
     },
     image: {
       label: "صورة", ic: "🖼️", fit: 1, groups: { s: [["ie", "🎨 تحسين الصورة"], ["is", "✨ ظل وحدود وانعكاس"]] }, def: { src: "", alt: "", fit: "cover" },
@@ -2139,7 +2139,14 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     root.querySelectorAll(".pb-tp").forEach(b => { const w = b.closest("[data-pb]"); if (w && w.dataset.pb === E.sel) { b.removeAttribute("data-live"); return; } b.setAttribute("data-live", "1"); const r = +b.getAttribute("data-rot") || 0, it = [].slice.call(b.querySelectorAll(".pb-tp-i")); if (r > 0 && it.length > 1) { let i = Math.max(0, it.findIndex(x => x.classList.contains("on"))); E.liveT.push(setInterval(() => { it[i].classList.remove("on"); i = (i + 1) % it.length; it[i].classList.add("on"); }, r * 1000)); } });
   }
   function fixCountdown() { root.querySelectorAll(".pb-cd").forEach(el => { const v = { d: "00", h: "23", m: "59", s: "59" }; for (const k in v) { const b = el.querySelector(`[data-u=${k}]`); if (b) b.textContent = v[k]; } }); }
-  function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { renderCanvas(); updPend(); }); }
+  /* لون النص الذي يضبطه المستخدم (الشريط العلوي أو اللوحة) لا يظهر إن كان CSS الصفحة أقوى منه (مثل .order-sec .title .pb-t{color:#fff})؛ بعد الرسم نقارن اللون الظاهر باللون المضبوط، وإن اختلفا نفرض لون الحقل (colorF) تلقائياً فيتغيّر فوراً */
+  function colorGuard() {
+    const id = E.colChk; E.colChk = null; if (!id || !fdoc) return; const inf = find(id); if (!inf || inf.kind !== "widget" || !["text", "heading"].includes(inf.node.type)) return;
+    const st = inf.set, want = String(st.color || ""); if (!/^#[0-9a-f]{6}$/i.test(want) || st.colorF) return; const el = fdoc.querySelector(`[data-pb="${id}"] .pb-t`); if (!el) return;
+    const m = fdoc.defaultView.getComputedStyle(el).color.match(/\d+(\.\d+)?/g); if (!m) return; const hx = "#" + m.slice(0, 3).map(v => ("0" + Math.round(Number(v)).toString(16)).slice(-2)).join("");
+    if (hx.toLowerCase() !== want.toLowerCase()) { st.colorF = true; renderCanvas(); if (!E.colTip) { E.colTip = 1; toast("🎨 لون الصفحة كان يتجاوز لون هذا النص، فُرض اللون الذي اخترته"); } }
+  }
+  function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { renderCanvas(); updPend(); try { colorGuard(); } catch (x) { } }); }
   /* «التغيير الحي»: كل تعديل في الإعدادات يظهر فوراً على الصفحة، وشريط أعلى اللوحة يتيح تأكيد النتيجة (تثبيتها كنقطة رجوع جديدة) أو إلغاء كل تعديلات هذا العنصر منذ تحديده/آخر تأكيد */
   function updPend() {
     const bar = $("pbx-pend"); if (!bar) return; const inf = !multiOn() && E.sel ? selInfo() : null;
@@ -3278,6 +3285,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   const qDef = (inf, k) => { const c = ctlsFor(inf).find(x => x.k === k); return c; };
   /* تعيين قيمة خاصية (متجاوبة حسب الجهاز الحالي أو ثابتة) */
   function qSet(inf, k, v, r) {
+    if (k === "color" && inf && inf.kind === "widget") E.colChk = inf.node.id;
     const set = inf.set; if (v === "" || v === undefined || v === null || (typeof v === "number" && isNaN(v))) { if (r) setR(set, k, E.dev, undefined); else delete set[k]; } else if (r) setR(set, k, E.dev, v); else set[k] = v;
   }
   const qLive = (inf, k, v, r) => { qSet(inf, k, v, r); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); };
@@ -5270,7 +5278,11 @@ ${E.tab === "f" ? fxTabHtml(inf) : inspGroups(all, inf)}`;
       case "pgcells": { const L = Array.isArray(set.cells) ? set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); const lk = !!set.prod, sl = i => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-pgu="${i}" title="${L[i] ? "استبدال هذه الصورة" : "اختيار صورة"}">${L[i] ? (/\.(mp4|webm)$/i.test(L[i]) ? `<video src="${esc(localize(L[i]))}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>` : `<img src="${esc(localize(L[i]))}" alt="">`) : "＋"}</button>${L[i] && !(i === 0 && lk) ? `<i data-pgx="${i}" title="إزالة الصورة">✕</i>` : ""}</div>`;
         b = `<div class="pbx-gcg" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div style="grid-column:1/-1;max-width:55%;margin:0 auto;width:100%">${sl(0)}</div>${[1, 2, 3, 4].map(sl).join("")}</div>` + (lk ? '<p style="font-size:.74rem;color:#7a6a2c;margin:.3rem 0 0">🔗 الصورة الأولى مرتبطة بالمنتج: تتبع صورته ولا تتغيّر من هنا.</p>' : ""); break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
-      case "color": { const shownV = ownV || c.dv || ""; b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(shownV) ? shownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || (c.dv ? c.dv + " (افتراضي)" : "—"))}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; } break;
+      case "color": { const shownV = ownV || c.dv || ""; b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(shownV) ? shownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || (c.dv ? c.dv + " (افتراضي)" : "—"))}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; 
+        /* تحذير: اللون المضبوط هنا يخالف اللون الظاهر فعلاً (CSS الصفحة أقوى منه) */
+        if (k === "color" && ownV && ["text", "heading"].includes(E.curType) && fdoc && E.sel) { try { const el = fdoc.querySelector(`[data-pb="${E.sel}"] .pb-t`), cs = el && fdoc.defaultView.getComputedStyle(el).color, m = cs && cs.match(/\d+(\.\d+)?/g), hx = m ? "#" + m.slice(0, 3).map(v => ("0" + Math.round(Number(v)).toString(16)).slice(-2)).join("") : "";
+          if (hx && /^#[0-9a-f]{6}$/i.test(ownV) && hx.toLowerCase() !== ownV.toLowerCase() && !set.colorF) b += `<div class="hint" style="margin:.4rem 0;padding:.45rem .55rem;border-radius:8px;background:#fff5e0;color:#7a5200;font-size:.74rem;line-height:1.7">⚠ اللون الظاهر في الصفحة <b dir="ltr">${hx}</b> يختلف عن اللون هنا (<b dir="ltr">${esc(ownV)}</b>) لأن CSS الصفحة يتجاوزه. <button class="pbx-small" type="button" data-clrfix="adopt" data-v="${hx}">اعتمد الظاهر</button> <button class="pbx-small" type="button" data-clrfix="force">فرض لون هذا الحقل</button></div>`; } catch (e) { } }
+      } break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
       case "align": b = `<div class="pbx-al">${AL3.map(([v, t]) => `<button data-al="${k}" data-v="${v}" class="${(effV || "") === v ? "on" : ""}">${t}</button>`).join("")}</div>`; break;
       case "image": b = `<div class="pbx-row"><input type="text" ${a} value="${esc(ownV ?? "")}" placeholder="مسار/رابط الصورة"><button class="pbx-small sm" data-up="${k}">⬆ رفع</button><button class="pbx-small sm" data-lib="${k}">📚</button>${c.gif ? `<button class="pbx-small sm" data-gif="${k}" title="إضافة GIF متحرك (ملف أو رابط)">GIF</button>` : ""}</div>${ownV ? `<img src="${esc(localize(ownV))}" style="max-width:100%;max-height:80px;margin-top:.3rem;border-radius:6px">` : ""}`; break;
@@ -5312,6 +5324,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
 
   function applyVal(inf, c, val, idx) {
     const set = inf.set, k = c.k; if (inf.kind === "widget" && inf.free && /^(fx|fy|fwd|fh)$/.test(k)) ensureMobile(inf.sec);
+    if (k === "color" && inf.kind === "widget") E.colChk = inf.node.id;
     if (c.t === "dims") {
       let arr = (c.r ? (own(set, k, E.dev) || eff(set, k, E.dev)) : set[k]) || ["", "", "", ""]; arr = arr.slice(); arr[idx] = val === "" ? "" : Number(val);
       const empty = arr.every(x => x === "" || x == null); if (c.r) setR(set, k, E.dev, empty ? undefined : arr); else { if (empty) delete set[k]; else set[k] = arr; } return;
@@ -5392,6 +5405,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.gpre) { inf.set[t.dataset.gpre] = JSON.parse(JSON.stringify(PB.GRAD_PRESETS[Number(t.dataset.gi)][1])); afterEdit(); return; }
     if (t.dataset.rs) { const c = ctlByKey(inf, t.dataset.rs); if (c.r) setR(inf.set, c.k, E.dev, undefined); else delete inf.set[c.k]; afterEdit(); return; }
     if (t.dataset.bcclr !== undefined) { if (Array.isArray(inf.set.mcols)) { inf.set.mcols[Number(t.dataset.bcclr)] = ""; } afterEdit(); return; }
+    if (t.dataset.clrfix) { if (t.dataset.clrfix === "adopt") inf.set.color = t.dataset.v; else inf.set.colorF = true; afterEdit(); return; }
     if (t.dataset.clr) { delete inf.set[t.dataset.clr]; afterEdit(); return; }
     if (t.dataset.al) { const c = ctlByKey(inf, t.dataset.al); applyVal(inf, c, t.dataset.v); afterEdit(); return; }
     if (t.dataset.gif) {

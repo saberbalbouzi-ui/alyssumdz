@@ -693,7 +693,14 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     root.querySelectorAll(".pb-tp").forEach(b => { const w = b.closest("[data-pb]"); if (w && w.dataset.pb === E.sel) { b.removeAttribute("data-live"); return; } b.setAttribute("data-live", "1"); const r = +b.getAttribute("data-rot") || 0, it = [].slice.call(b.querySelectorAll(".pb-tp-i")); if (r > 0 && it.length > 1) { let i = Math.max(0, it.findIndex(x => x.classList.contains("on"))); E.liveT.push(setInterval(() => { it[i].classList.remove("on"); i = (i + 1) % it.length; it[i].classList.add("on"); }, r * 1000)); } });
   }
   function fixCountdown() { root.querySelectorAll(".pb-cd").forEach(el => { const v = { d: "00", h: "23", m: "59", s: "59" }; for (const k in v) { const b = el.querySelector(`[data-u=${k}]`); if (b) b.textContent = v[k]; } }); }
-  function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { renderCanvas(); updPend(); }); }
+  /* لون النص الذي يضبطه المستخدم (الشريط العلوي أو اللوحة) لا يظهر إن كان CSS الصفحة أقوى منه (مثل .order-sec .title .pb-t{color:#fff})؛ بعد الرسم نقارن اللون الظاهر باللون المضبوط، وإن اختلفا نفرض لون الحقل (colorF) تلقائياً فيتغيّر فوراً */
+  function colorGuard() {
+    const id = E.colChk; E.colChk = null; if (!id || !fdoc) return; const inf = find(id); if (!inf || inf.kind !== "widget" || !["text", "heading"].includes(inf.node.type)) return;
+    const st = inf.set, want = String(st.color || ""); if (!/^#[0-9a-f]{6}$/i.test(want) || st.colorF) return; const el = fdoc.querySelector(`[data-pb="${id}"] .pb-t`); if (!el) return;
+    const m = fdoc.defaultView.getComputedStyle(el).color.match(/\d+(\.\d+)?/g); if (!m) return; const hx = "#" + m.slice(0, 3).map(v => ("0" + Math.round(Number(v)).toString(16)).slice(-2)).join("");
+    if (hx.toLowerCase() !== want.toLowerCase()) { st.colorF = true; renderCanvas(); if (!E.colTip) { E.colTip = 1; toast("🎨 لون الصفحة كان يتجاوز لون هذا النص، فُرض اللون الذي اخترته"); } }
+  }
+  function schedule() { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => { renderCanvas(); updPend(); try { colorGuard(); } catch (x) { } }); }
   /* «التغيير الحي»: كل تعديل في الإعدادات يظهر فوراً على الصفحة، وشريط أعلى اللوحة يتيح تأكيد النتيجة (تثبيتها كنقطة رجوع جديدة) أو إلغاء كل تعديلات هذا العنصر منذ تحديده/آخر تأكيد */
   function updPend() {
     const bar = $("pbx-pend"); if (!bar) return; const inf = !multiOn() && E.sel ? selInfo() : null;
@@ -1832,6 +1839,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   const qDef = (inf, k) => { const c = ctlsFor(inf).find(x => x.k === k); return c; };
   /* تعيين قيمة خاصية (متجاوبة حسب الجهاز الحالي أو ثابتة) */
   function qSet(inf, k, v, r) {
+    if (k === "color" && inf && inf.kind === "widget") E.colChk = inf.node.id;
     const set = inf.set; if (v === "" || v === undefined || v === null || (typeof v === "number" && isNaN(v))) { if (r) setR(set, k, E.dev, undefined); else delete set[k]; } else if (r) setR(set, k, E.dev, v); else set[k] = v;
   }
   const qLive = (inf, k, v, r) => { qSet(inf, k, v, r); schedule(); positionOverlaySoon(); clearTimeout(hT); hT = setTimeout(() => commitHist(), 500); };
@@ -3824,7 +3832,11 @@ ${E.tab === "f" ? fxTabHtml(inf) : inspGroups(all, inf)}`;
       case "pgcells": { const L = Array.isArray(set.cells) ? set.cells.slice(0, 5) : []; while (L.length < 5) L.push(""); const lk = !!set.prod, sl = i => `<div class="gc${L[i] ? " has" : ""}"><button type="button" data-pgu="${i}" title="${L[i] ? "استبدال هذه الصورة" : "اختيار صورة"}">${L[i] ? (/\.(mp4|webm)$/i.test(L[i]) ? `<video src="${esc(localize(L[i]))}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>` : `<img src="${esc(localize(L[i]))}" alt="">`) : "＋"}</button>${L[i] && !(i === 0 && lk) ? `<i data-pgx="${i}" title="إزالة الصورة">✕</i>` : ""}</div>`;
         b = `<div class="pbx-gcg" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div style="grid-column:1/-1;max-width:55%;margin:0 auto;width:100%">${sl(0)}</div>${[1, 2, 3, 4].map(sl).join("")}</div>` + (lk ? '<p style="font-size:.74rem;color:#7a6a2c;margin:.3rem 0 0">🔗 الصورة الأولى مرتبطة بالمنتج: تتبع صورته ولا تتغيّر من هنا.</p>' : ""); break; }
       case "badgecolors": b = `<div data-bcwrap="1">${bcHtml(set)}</div>`; break;
-      case "color": { const shownV = ownV || c.dv || ""; b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(shownV) ? shownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || (c.dv ? c.dv + " (افتراضي)" : "—"))}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; } break;
+      case "color": { const shownV = ownV || c.dv || ""; b = `<div class="pbx-row"><input type="color" ${a} value="${/^#[0-9a-f]{6}$/i.test(shownV) ? shownV : "#ffffff"}" class="sm"><span style="font-size:.75rem;color:#888">${esc(ownV || (c.dv ? c.dv + " (افتراضي)" : "—"))}</span>${ownV ? `<button class="pbx-small sm" data-clr="${k}">مسح</button>` : ""}</div>`; 
+        /* تحذير: اللون المضبوط هنا يخالف اللون الظاهر فعلاً (CSS الصفحة أقوى منه) */
+        if (k === "color" && ownV && ["text", "heading"].includes(E.curType) && fdoc && E.sel) { try { const el = fdoc.querySelector(`[data-pb="${E.sel}"] .pb-t`), cs = el && fdoc.defaultView.getComputedStyle(el).color, m = cs && cs.match(/\d+(\.\d+)?/g), hx = m ? "#" + m.slice(0, 3).map(v => ("0" + Math.round(Number(v)).toString(16)).slice(-2)).join("") : "";
+          if (hx && /^#[0-9a-f]{6}$/i.test(ownV) && hx.toLowerCase() !== ownV.toLowerCase() && !set.colorF) b += `<div class="hint" style="margin:.4rem 0;padding:.45rem .55rem;border-radius:8px;background:#fff5e0;color:#7a5200;font-size:.74rem;line-height:1.7">⚠ اللون الظاهر في الصفحة <b dir="ltr">${hx}</b> يختلف عن اللون هنا (<b dir="ltr">${esc(ownV)}</b>) لأن CSS الصفحة يتجاوزه. <button class="pbx-small" type="button" data-clrfix="adopt" data-v="${hx}">اعتمد الظاهر</button> <button class="pbx-small" type="button" data-clrfix="force">فرض لون هذا الحقل</button></div>`; } catch (e) { } }
+      } break;
       case "switch": b = `<label style="font-weight:600"><input type="checkbox" ${a} ${effV ? "checked" : ""}> مفعّل</label>`; break;
       case "align": b = `<div class="pbx-al">${AL3.map(([v, t]) => `<button data-al="${k}" data-v="${v}" class="${(effV || "") === v ? "on" : ""}">${t}</button>`).join("")}</div>`; break;
       case "image": b = `<div class="pbx-row"><input type="text" ${a} value="${esc(ownV ?? "")}" placeholder="مسار/رابط الصورة"><button class="pbx-small sm" data-up="${k}">⬆ رفع</button><button class="pbx-small sm" data-lib="${k}">📚</button>${c.gif ? `<button class="pbx-small sm" data-gif="${k}" title="إضافة GIF متحرك (ملف أو رابط)">GIF</button>` : ""}</div>${ownV ? `<img src="${esc(localize(ownV))}" style="max-width:100%;max-height:80px;margin-top:.3rem;border-radius:6px">` : ""}`; break;
@@ -3866,6 +3878,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
 
   function applyVal(inf, c, val, idx) {
     const set = inf.set, k = c.k; if (inf.kind === "widget" && inf.free && /^(fx|fy|fwd|fh)$/.test(k)) ensureMobile(inf.sec);
+    if (k === "color" && inf.kind === "widget") E.colChk = inf.node.id;
     if (c.t === "dims") {
       let arr = (c.r ? (own(set, k, E.dev) || eff(set, k, E.dev)) : set[k]) || ["", "", "", ""]; arr = arr.slice(); arr[idx] = val === "" ? "" : Number(val);
       const empty = arr.every(x => x === "" || x == null); if (c.r) setR(set, k, E.dev, empty ? undefined : arr); else { if (empty) delete set[k]; else set[k] = arr; } return;
@@ -3946,6 +3959,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     if (t.dataset.gpre) { inf.set[t.dataset.gpre] = JSON.parse(JSON.stringify(PB.GRAD_PRESETS[Number(t.dataset.gi)][1])); afterEdit(); return; }
     if (t.dataset.rs) { const c = ctlByKey(inf, t.dataset.rs); if (c.r) setR(inf.set, c.k, E.dev, undefined); else delete inf.set[c.k]; afterEdit(); return; }
     if (t.dataset.bcclr !== undefined) { if (Array.isArray(inf.set.mcols)) { inf.set.mcols[Number(t.dataset.bcclr)] = ""; } afterEdit(); return; }
+    if (t.dataset.clrfix) { if (t.dataset.clrfix === "adopt") inf.set.color = t.dataset.v; else inf.set.colorF = true; afterEdit(); return; }
     if (t.dataset.clr) { delete inf.set[t.dataset.clr]; afterEdit(); return; }
     if (t.dataset.al) { const c = ctlByKey(inf, t.dataset.al); applyVal(inf, c, t.dataset.v); afterEdit(); return; }
     if (t.dataset.gif) {
