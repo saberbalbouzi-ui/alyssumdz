@@ -43,8 +43,16 @@ ${typeof Credits !== "undefined" ? Credits.chip(S.id) : ""}
 <div class="tw-row">${prods.length ? `<select id="tw-prod"><option value="">أو اختر صورة منتج من متجرك…</option>${prods.map(p => `<option value="${esc(p.slug)}">${esc(p.title || p.slug)}</option>`).join("")}</select>` : ""}<button type="button" class="tw-b" data-tw="go" ${n && !S.busy ? "" : "disabled"}>${S.busy ? "⏳ جارٍ الفتح…" : "ابدأ التعديل"}</button></div>
 <div class="tw-n">تُفتح الأداة على صورتك مباشرة. عند الانتهاء اضغط «تصدير الصورة» لتنزيلها أو حفظها في المكتبة، أو «حفظ ونشر»، أو تابع التعديل في المطوّر.</div>`;
   }
+  const natKey = f => String(f.name || "").replace(/[0-9]+/g, d => d.padStart(6, "0"));
   async function go() {
-    if (S.busy || !S.files.length) return; S.busy = true; draw();
+    if (S.busy || !S.files.length) return;
+    if (S.id === "v360" && S.files.length >= 2) {      /* عرض 360° بصورك: صفحة جديدة في مطوّر الصفحات بكل الإطارات (6–36) مع المعاينة، بلا رصيد */
+      if (S.files.length < 6) { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast("⚠️ اختر 6 صور على الأقل من زوايا متتالية (أو صورة واحدة ليولّد الذكاء الزوايا)"); return; }
+      S.busy = true; draw(); const fl = S.files.slice().sort((a, b) => natKey(a) < natKey(b) ? -1 : 1);
+      try { const ok = await PBApp.view360Session(fl); S.busy = false; if (ok !== false) close(); else draw(); } catch (e) { S.busy = false; draw(); if (typeof Admin !== "undefined" && Admin.toast) Admin.toast("⚠️ " + (e && e.message || e)); }
+      return;
+    }
+    S.busy = true; draw();
     try { const ok = await PBApp.toolSession(S.files.slice(), S.id, info(S.id).name); S.busy = false; if (ok !== false) close(); else draw(); } catch (e) { S.busy = false; draw(); if (typeof Admin !== "undefined" && Admin.toast) Admin.toast("⚠️ " + (e && e.message || e)); }
   }
   async function pickProduct(slug) {
