@@ -27,6 +27,8 @@ jobs:
           git diff --quiet -- admin.html || { echo "::error file=admin.html::admin.html غير محدَّث من المصادر — شغّل python3 scripts/build-admin-pb.py وأضفه للإيداع"; exit 1; }
       - name: الأوامر الصوتية
         run: node scripts/test-voice.js
+      - name: مكتبة القوالب (صياغة + صور + معاينات + تنوّع الأسئلة)
+        run: node scripts/test-templates.js
       - name: المخزون
         run: node scripts/test-stock.js
       - name: المدفوعات

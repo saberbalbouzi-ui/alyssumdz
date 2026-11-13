@@ -28,6 +28,12 @@ PPAL = {
  "s-watches": _pal(True, "radial-gradient(70% 60% at 50% 0%,rgba(201,153,46,.14),transparent 60%),#050505", "#f5d77a", "#b9ae8f", "#c9992e", "#f5d77a", "#1a1409", rad=4, card="outline", layout="mirror", bar="bar", btn="flat", cardbg="linear-gradient(160deg,#121008,#070605)", line="rgba(201,153,46,.5)", shadow="0 24px 60px rgba(0,0,0,.6)", opt="#14100a"),
  "s-jewelry": _pal(False, "linear-gradient(180deg,#fff7ef,#f8e6dc)", "#4a1c2b", "#8a6270", "#b76e79", "#d4a373", "#ffffff", rad=28, card="solid", layout="stack", bar="pill", btn="grad", line="#ecc9c2", shadow="0 16px 44px rgba(183,110,121,.16)"),
  "s-accessories": _pal(False, "linear-gradient(180deg,#fffdf7,#f5efe2)", "#1f1147", "#6b5fa0", "#8b5cf6", "#ec4899", "#ffffff", rad=22, card="hard", layout="wide", bar="pill", btn="grad", line="#1f1147", shadow="5px 5px 0 rgba(31,17,71,.9)"),
+ "s-perfume": _pal(True, "radial-gradient(70% 60% at 82% 0%,rgba(212,162,78,.13),transparent 60%),#120a06", "#f2dfb8", "#b8a284", "#d4a24e", "#8b5a2b", "#120a06", rad=14, card="outline", layout="mirror", bar="bar", btn="flat", cardbg="linear-gradient(160deg,#1c1006,#120a06)", line="rgba(212,162,78,.45)", shadow="0 24px 60px rgba(0,0,0,.55)", opt="#160d07"),
+ "s-skincare": _pal(False, "linear-gradient(180deg,#f8fbfb,#eef6f7)", "#123d47", "#5b7a82", "#0e7490", "#14b8a6", "#ffffff", rad=22, card="solid", layout="classic", bar="pill", btn="grad", line="#d7ecef", shadow="0 14px 40px rgba(14,116,144,.1)"),
+ "s-makeup": _pal(True, "radial-gradient(60% 55% at 88% 0%,rgba(255,45,85,.12),transparent 60%),#0d0a0c", "#ffffff", "#c9a9b5", "#ff2d55", "#f5c518", "#0d0a0c", rad=4, card="outline", layout="stack", bar="bar", btn="flat", cardbg="#160d12", line="rgba(255,45,85,.4)", shadow="0 26px 56px rgba(0,0,0,.5)", opt="#160d12"),
+ "s-women": _pal(False, "linear-gradient(180deg,#f7f1e8,#f1e7da)", "#5b2333", "#8a6a72", "#862c4a", "#c99e6f", "#ffffff", rad=2, card="solid", layout="stack", bar="bar", btn="grad", line="#e5d3c2", shadow="0 18px 44px rgba(91,35,51,.12)"),
+ "s-men": _pal(True, "#0e1116", "#e8e4da", "#9aa3ad", "#c8a24b", "#64748b", "#0e1116", rad=2, card="outline", layout="wide", bar="bar", btn="flat", cardbg="#12151b", line="rgba(200,162,75,.4)", shadow="0 24px 60px rgba(0,0,0,.5)", opt="#12151b"),
+ "s-kids": _pal(False, "#fff9ec radial-gradient(#ff5d8f14 2px,transparent 2px) 0 0/34px 34px", "#3d2c10", "#7a6a4a", "#ff5d8f", "#38bdf8", "#ffffff", rad=26, card="hard", layout="classic", bar="pill", btn="hard", line="#3d2c10", shadow="6px 6px 0 #ffd6a5"),
 }
 
 _NOHF = ":not(:has(header.pb-hd,.pb-sf,.pb-tp))"
@@ -104,6 +110,21 @@ def _has(n, ty):
     if isinstance(n, list): return any(_has(v, ty) for v in n)
     return False
 
+def _prod_mobile_fit(top):
+    """صفحة المنتج على الهاتف: اسم المتجر يحلّ محل الشعار (قد يطول) + برغر + مشاركة + سلة —
+    أيقونات التواصل في الهيدر تزاحم فتُخرج زر السلة خارج الشاشة؛ نخفيها على الهاتف (≤767px) فقط،
+    وتبقى ظاهرة على التابلت/الحاسوب وفي الفوتر. لا تمسّ قالب الرئيسية."""
+    def walk(n):
+        if isinstance(n, dict):
+            if n.get("type") == "shdr":
+                s = n.setdefault("set", {})
+                if s.get("son") and not s.get("soh"): s["soh"] = "m"
+            for v in n.values():
+                if isinstance(v, (dict, list)): walk(v)
+        elif isinstance(n, list):
+            for v in n: walk(v)
+    for sec in top: walk(sec)
+
 def build_product_skins(out_dir):
     ns = {}
     exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen-templates-copy.py"), encoding="utf-8").read(), ns)
@@ -114,6 +135,7 @@ def build_product_skins(out_dir):
         tpl = json.load(open(f, encoding="utf-8"))
         secs = tpl["sections"]
         top = [s for s in secs if _has(s, "sbar") or _has(s, "shdr")]
+        _prod_mobile_fit(top)
         foot = [s for s in secs if _has(s, "sfoot")]
         if not top or not foot: continue
         pk = PK.get(tid, {})

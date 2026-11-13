@@ -111,12 +111,27 @@ let page;
     catch (e) { const ok = await page.evaluate(s => { const el = document.querySelector(s); if (el) { el.click(); return true; } return false; }, sel); return ok ? "dom" : "missing"; }
   };
 
+  // v3.2: the canvas iframe is taller than the viewport and the OUTER admin page is the
+  // scroller — Playwright's scrollIntoViewIfNeeded only shifts the iframe box, so a widget
+  // far above/below the current scroll stays off-screen (bbox.y negative) and mouse clicks
+  // miss it. Scroll the outer page explicitly to the widget's absolute position.
+  const scrollToWidget = async id => {
+    await page.evaluate(wid => {
+      const f = document.getElementById("pbx-frame");
+      const el = f && f.contentDocument && f.contentDocument.querySelector(`[data-kind="widget"][data-pb="${wid}"]`);
+      if (!el) return;
+      const fr = f.getBoundingClientRect(), er = el.getBoundingClientRect();
+      window.scrollTo(0, Math.max(0, window.scrollY + fr.top + er.top - window.innerHeight * 0.25));
+    }, id);
+    await sleep(350);
+  };
   // click a widget in the canvas with selection verification + retries at alternate points
   const clickWidget = async id => {
     await clearSel(); // v3: no float bars → no stray lock/dup clicks on adjacent elements
     const fr = page.locator("#pbx-frame").contentFrame();
     const el = fr.locator(`[data-kind="widget"][data-pb="${id}"]`);
     for (const [fx, fy] of [[0.5, 0.5], [0.3, 0.5], [0.7, 0.5], [0.5, 0.3]]) {
+      await scrollToWidget(id);
       await el.scrollIntoViewIfNeeded().catch(() => {});
       await sleep(250);
       const bb = await el.boundingBox();
@@ -479,7 +494,10 @@ let page;
         const sec0 = m0.secs.find(s => s.kind !== "canvas" && s.cols.length > 0);
         // v3: in FREE_ONLY canvas clicks can't select sections — select a widget, Esc×2 (proven in T13)
         let selKind = "";
-        const firstW = sec0.cols[0] && sec0.cols[0].id;
+        // v3.3: never enter the section through a spacer — spacer boxes let clicks fall
+        // through to the section background (deselects in FREE_ONLY) by design
+        const firstWObj = sec0.cols.find(w => w.type !== "spacer") || sec0.cols[0];
+        const firstW = firstWObj && firstWObj.id;
         if (firstW && await clickWidget(firstW)) {
           // v3.1: adaptive — the widget→column→section chain length/timing varies per template
           for (let k = 0; k < 3 && selKind !== "section"; k++) {
@@ -588,7 +606,8 @@ let page;
       await page.waitForFunction(() => { const a = document.getElementById("pb-app"); return a && !a.classList.contains("on"); }, null, { timeout: 15000 }).catch(() => {});
 
       // ── T19: storefront preview desktop + mobile ──
-      const tplJson = JSON.parse(fs.readFileSync(`/mnt/agents/alyssum/assets/pages/templates/${tpl}.json`, "utf8"));
+      const tplDir = process.env.EQA_TPLDIR || require("path").join(__dirname, "..", "assets", "pages", "templates");
+      const tplJson = JSON.parse(fs.readFileSync(require("path").join(tplDir, tpl + ".json"), "utf8"));
       const tplAnims = (JSON.stringify(tplJson).match(/"anim":\s*"[^"]+"/g) || []).length;
       for (const [mode, vp] of [["d", { width: 1360, height: 900 }], ["m", { width: 390, height: 844 }]]) {
         const c2 = await newQAContext(browser, { viewport: vp, isMobile: mode === "m", hasTouch: mode === "m", userAgent: mode === "m" ? UA_M : UA_D });

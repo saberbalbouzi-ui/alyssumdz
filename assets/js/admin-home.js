@@ -27,7 +27,7 @@ const AdminHome = (() => {
 #ahome .ah-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #ahome .ah-seg{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}#ahome .ah-seg button{border:0;background:transparent;color:${MUT};padding:7px 14px;border-radius:999px;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer;transition:background .2s,color .2s}#ahome .ah-seg button.on{background:rgba(226,254,23,.2);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
 #ahome .ah-btn{padding:9px 16px;border-radius:12px;font:inherit;font-weight:800;color:#fff;cursor:pointer;background:rgba(226,254,23,.2);border:1px solid rgba(226,254,23,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -6px 10px rgba(0,0,0,.2),0 6px 16px rgba(0,0,0,.25);backdrop-filter:blur(8px);transition:transform .2s,background .2s}#ahome .ah-btn:hover{transform:translateY(-2px);background:rgba(226,254,23,.32)}#ahome .ah-btn.gh{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.22)}
-#ahome .ah-ads{display:flex;flex-direction:column;gap:8px}#ahome .ah-ad{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05)}#ahome .ah-ad.off{opacity:.65}#ahome .ah-adt{flex:1;min-width:0;display:flex;flex-direction:column}#ahome .ah-adt b{font-size:1.05rem}#ahome .ah-adt span{font-size:.85rem;opacity:.7}#ahome .ah-adp{font-weight:800;font-size:.9rem;padding:3px 10px;border-radius:999px;background:rgba(226,254,23,.2);white-space:nowrap}#ahome .ah-ad.off .ah-adp{background:rgba(255,255,255,.12)}#ahome .ah-ad .ah-btn{flex:none;min-width:84px}#ahome .ah-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}#ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{flex:0 1 auto;text-align:center;font-size:.88rem!important;padding:6px 12px!important;min-height:36px!important;height:auto!important;line-height:1.3!important;border-radius:11px!important}#ahome .ah-rqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 12px}#ahome .ah-rqs>div{padding:8px 10px!important;min-height:0!important;height:auto!important;line-height:1.35;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}#ahome .ah-rqs b{display:block;font-size:1.3rem;font-weight:900;color:#fff;line-height:1.3}#ahome .ah-rqs span{font-size:.82rem;color:${MUT}}#ahome .ah-rqb{display:flex;flex-wrap:wrap;gap:8px}
+#ahome .ah-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}#ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{flex:0 1 auto;text-align:center;font-size:.88rem!important;padding:6px 12px!important;min-height:36px!important;height:auto!important;line-height:1.3!important;border-radius:11px!important}#ahome .ah-rqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 12px}#ahome .ah-rqs>div{padding:8px 10px!important;min-height:0!important;height:auto!important;line-height:1.35;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}#ahome .ah-rqs b{display:block;font-size:1.3rem;font-weight:900;color:#fff;line-height:1.3}#ahome .ah-rqs span{font-size:.82rem;color:${MUT}}#ahome .ah-rqb{display:flex;flex-wrap:wrap;gap:8px}
 #ahome .ah-card{padding:16px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 14px 34px rgba(0,0,0,.35);color:#fff;min-width:0}
 #ahome .ah-card h3{margin:0 0 10px;font-size:1rem;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px}#ahome .ah-card h3 small{font-weight:600;color:${MUT};font-size:.78rem}
 #ahome .kpi{position:relative;overflow:hidden}#ahome .kpi .lb{display:flex;align-items:center;gap:8px;color:${MUT};font-size:.88rem}#ahome .kpi .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}#ahome .kpi .ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -121,8 +121,7 @@ const AdminHome = (() => {
   const hasTab = k => [...document.querySelectorAll(".nav-btn")].some(b => (b.getAttribute("onclick") || "").includes("'" + k + "'")), hasRuqya = () => typeof AdminRuqya !== "undefined" && hasTab("ruqya");   /* مواعيد الرقية خاصة بموقع البائع فقط */
   /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
   function quickBar(waiting) {
-    let toPack = 0; try { if (typeof AdminPack !== "undefined" && AdminPack.count && hasTab("pack")) { toPack = S.packN || 0; AdminPack.count().then(n => { if (n !== null && n !== S.packN) { S.packN = n; refreshSoft(); } }); } } catch (e) { }   /* العدد من قائمة التجهيز نفسها (دالة الخادم) لا من حالة الطلبات */
-    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack")], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
+    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
     return '<div class="ah-quick">' + Q.filter(q => q[2]).map(q => '<button type="button" class="ah-btn gh" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>';
   }
   function ruqyaCard() {
@@ -135,19 +134,6 @@ const AdminHome = (() => {
       '<div><b>' + num(r.pending) + '</b><span>بانتظار التأكيد</span></div><div><b>' + num(r.today) + '</b><span>مواعيد اليوم</span></div>' +
       '<div><b>' + num(r.am) + '/' + r.cap + '</b><span>جلسات صباحاً</span></div><div><b>' + num(r.pm) + '/' + r.cap + '</b><span>جلسات مساءً</span></div></div>' +
       '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button><button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
-  }
-  /* الحملات الإعلانية الحالية (حملة لكل منتج) مع تفعيل/تعطيل مباشر؛ المنتهية بتاريخ «إلى» لا تظهر */
-  function adsCard() {
-    const a = A(); if (!a || !a.fin || !a.fin.ads || typeof a.adAllCamps !== "function") return "";
-    const today = a.isoDay ? a.isoDay() : new Date().toISOString().slice(0, 10), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    let L; try { L = a.adAllCamps(); } catch (e) { return ""; }
-    L = L.filter(c => c.cur && !(c.cfg.to && c.cfg.to < today) && (a.products || []).some(p => p.slug === c.slug));
-    if (!L.length) return "";
-    const on = L.filter(c => !c.cfg.off).length;
-    return '<div class="ah-card" style="margin:0 0 14px"><h3>الحملات الإعلانية <small>' + num(on) + ' نشطة من ' + num(L.length) + '</small></h3><div class="ah-ads">' + L.map(c => {
-      const p = (a.products || []).find(x => x.slug === c.slug), off = !!c.cfg.off;
-      return '<div class="ah-ad' + (off ? " off" : "") + '"><div class="ah-adt"><b>' + esc(p ? p.title : c.slug) + '</b><span>' + esc(c.cfg.name || "") + (c.cfg.from ? ' · منذ ' + esc(c.cfg.from) : "") + '</span></div><span class="ah-adp">' + (off ? "معطّلة" : "نشطة") + '</span><button type="button" class="ah-btn' + (off ? "" : " gh") + '" data-adt="' + esc(c.slug) + '">' + (off ? "تفعيل" : "تعطيل") + '</button></div>';
-    }).join("") + '</div></div>';
   }
   function render() {
     const root = $("ahome"); if (!root) return;
@@ -189,7 +175,6 @@ const AdminHome = (() => {
 <button type="button" class="ah-btn" data-go="neword">+ طلب</button><button type="button" class="ah-btn gh" data-go="orders">كل الطلبات</button></div></div>
 ${quickBar(waiting)}
 ${ruqyaCard()}
-${adsCard()}
 <div class="ah-kpis">
 ${kpi("sales", "المبيعات", money(sales), delta(sales, salesP), sb, MINT)}
 ${kpi("orders", "الطلبات", num(cur.length), delta(cur.length, prev.length), ob, "#3987e5")}
@@ -234,7 +219,6 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
     root.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { S.metric = b.dataset.m; render(); });
     root.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { S.table = !S.table; render(); });
     root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
-    root.querySelectorAll("[data-adt]").forEach(b => b.onclick = async () => { b.disabled = true; try { await A().toggleAdSlug(b.dataset.adt); } catch (e) { console.warn("AdminHome", e); } render(); });
     root.querySelectorAll("tr[data-o]").forEach(tr => tr.onclick = () => { const o = tr._o, ix = (A().orders || []).indexOf(o); if (ix >= 0 && A().openOrderPreview) { try { A().openOrderPreview(ix); return; } catch (e) { } } go("orders"); const q = $("order-filter-q"); if (q) { q.value = o.phone || o.id || ""; try { A().applyOrderFilters(); } catch (e) { } } });
     const box = $("ah-ch"), svg = box && box.querySelector("svg"); if (!svg) return;
     const tip = $("ah-tip"), cx = $("ah-cx");
@@ -269,34 +253,12 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
     document.addEventListener("pointerdown", mark, { capture: true, once: true }); document.addEventListener("keydown", mark, { capture: true, once: true });
     [1200, 3000].forEach(ms => setTimeout(() => { if (touched || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); const land = (typeof AdminEdition !== "undefined" && AdminEdition.edition() === "design") ? "builder" : (typeof AdminKind !== "undefined" && AdminKind.landing() === "digital") ? "digital" : "home"; if (on && !new RegExp("'" + land + "'").test(on.getAttribute("onclick") || "")) open(); }, ms));
   }
-  /* زر/سحب الرجوع (من حافة الشاشة) لا يغلق اللوحة: يغلق النافذة المفتوحة أولاً، ثم يعود للقسم السابق، وعلى الرئيسية يحذّر مرة قبل الخروج.
-     مدخل سجلّ «حارس» يُعاد دفعه بعد كل رجوع (الاستوديو وروابط الأدوات تدفع مداخلها الخاصة فلا يتعارض معها: لا نتصرف إلا عند بلوغ المدخل الأساسي). */
-  const TABS = ["home"];
-  function trackTab(t) { if (S.popping || !t) return; if (t === "home") { TABS.length = 0; TABS.push("home"); return; } if (TABS[TABS.length - 1] !== t) { TABS.push(t); if (TABS.length > 30) TABS.shift(); } }
-  function backGuard() {
-    if (S.bg) return; S.bg = 1;
-    try { history.pushState({ adm: 1 }, "", location.href); } catch (e) { return; }
-    window.addEventListener("popstate", e => {
-      if (e.state && e.state.adm) return;                                   // رجوع من مدخل خاص (استوديو/أداة) إلى الحارس: لا شيء
-      const a = A(); let did = false;
-      const mb = [...document.querySelectorAll(".modal-bg.open")], pb = document.getElementById("pb-app"), spv = document.getElementById("spv");
-      if (mb.length) { mb.forEach(x => x.classList.remove("open")); did = true; }
-      else if (pb && pb.classList.contains("on") && typeof PBApp !== "undefined" && PBApp.close) { try { PBApp.close(); } catch (x) { } did = true; }
-      else if (spv && spv.classList.contains("on") && typeof SitePreview !== "undefined" && SitePreview.close) { try { SitePreview.close(); } catch (x) { } did = true; }
-      else if (TABS.length > 1 && a && a.tab) { TABS.pop(); S.popping = true; try { a.tab(TABS[TABS.length - 1]); } catch (x) { } S.popping = false; did = true; }
-      if (did) { try { history.pushState({ adm: 1 }, "", location.href); } catch (x) { } S.exitT = 0; return; }
-      if (S.exitT && Date.now() - S.exitT < 2500) { S.exitT = 0; history.back(); return; }          // ثاني رجوع خلال ثانيتين: خروج فعلي
-      S.exitT = Date.now(); try { toast("اسحب مرة أخرى للخروج من اللوحة"); } catch (x) { } try { history.pushState({ adm: 1 }, "", location.href); } catch (x) { }
-    });
-  }
   function init() {
     const a = A(); if (!a || a.__homeWrap || typeof a.renderAll !== "function") return setTimeout(init, 400);
     a.__homeWrap = 1; const o = a.renderAll;
-    /* الرئيسية تُفتح حتى لو تعثّر رسم قسم آخر (finally) وفور إظهار اللوحة دون انتظار أي رسم: كان تعثّر renderAll يترك «الطلبات» ظاهرة طويلاً */
-    a.renderAll = function () { try { return o.apply(this, arguments); } finally { try { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } } catch (e) { console.warn("AdminHome", e); } } };
-    { const app = $("app"); if (app && app.classList.contains("hidden")) { const ob = new MutationObserver(() => { if (app.classList.contains("hidden")) return; ob.disconnect(); if (!S.shown) { S.shown = true; try { open(); guard(); backGuard(); } catch (e) { console.warn("AdminHome", e); } } }); ob.observe(app, { attributes: true, attributeFilter: ["class"] }); } }
-    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); try { trackTab(t); } catch (e) { } return r; };
-    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } }
+    a.renderAll = function () { const r = o.apply(this, arguments); try { render(); if (!S.shown) { S.shown = true; open(); guard(); } } catch (e) { console.warn("AdminHome", e); } return r; };
+    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); return r; };
+    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); } }
   }
   window.addEventListener("alyssum:ai-credit", () => refreshSoft());
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();

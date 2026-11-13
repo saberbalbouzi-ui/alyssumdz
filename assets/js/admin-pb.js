@@ -3108,7 +3108,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const sb = mk("pbx-sb", [["rot", FIC.rot, "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)", null], ["move", FIC.move, "اسحب لتحريك العنصر", null]]);
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
     sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMove(ev, inf, !inf.free, false); };
-    const sw = sb.offsetWidth; let sl = bx.r + 12; if (sl + sw > W - 4) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
+    const sw = sb.offsetWidth, rg = (FREE_ONLY && !isMob()) ? 88 : 0;      // عمود مصغّرات الأقسام (.pbx-thumbs، ‏z-index:20‏) يغطي يمين طبقة الغطاء في وضع العناصر الحرة — يُطرح من الحد الأيمن كي لا تُدفن أزرار التدوير/التحريك تحته
+    let sl = bx.r + 12; if (sl + sw > W - 4 - rg) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
     sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(bx.t, vb - sb.offsetHeight - 4)) + "px";      // داخل مجال الرؤية دائماً (كان يُقصّ عند أسفل المنطقة المرئية)
   }
 
@@ -4854,7 +4855,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     if (ids.some(id => { const i = find(id); return i && i.kind === "widget" && !isLocked(i); })) {
       const sb = document.createElement("div"); sb.className = "pbx-sb"; sb.innerHTML = `<button type="button" title="اسحب لتدوير العناصر المحدّدة (Shift = خطوات 15°)" data-k="rot">${FIC.rot}</button><button type="button" title="اسحب لتحريك العناصر المحدّدة معاً" data-k="move">${FIC.move}</button>`; ovl.appendChild(sb);
       sb.children[0].onmousedown = ev => { if (ev.button) return; startRotateMulti(ev); }; sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMoveMulti(ev); };
-      let sl = R + 12; if (sl + sb.offsetWidth > W - 4) sl = Math.max(4, L - sb.offsetWidth - 12); sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(T, vb - sb.offsetHeight - 4)) + "px";
+      let sl = R + 12; if (sl + sb.offsetWidth > W - 4 - ((FREE_ONLY && !isMob()) ? 88 : 0)) sl = Math.max(4, L - sb.offsetWidth - 12); sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(T, vb - sb.offsetHeight - 4)) + "px";
     }
   }
   function startRotateMulti(e) {
