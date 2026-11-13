@@ -36,7 +36,8 @@ const PBVGen = (() => {
     ["energy", "طاقة وحركة رياضية", "dynamic energetic motion with fast light streaks and a quick camera push around the sports product, bold contrast lighting", "رياضة"],
     ["herb", "أعشاب وطبيعة", "dried and fresh herbs drift softly beside the product on a natural wooden surface, calm apothecary mood", "صحة"]
   ];
-  const RATIOS = [["9:16", "طولي 9:16 (ريلز/ستوري)"], ["1:1", "مربع 1:1"], ["4:5", "عمودي 4:5"], ["16:9", "عريض 16:9"]];
+  const RATIOS = [["9:16", "طولي 9:16 (ريلز/ستوري)"], ["1:1", "مربع 1:1"], ["4:5", "عمودي 4:5"], ["16:9", "عريض 16:9"]];      // احتياطي؛ القائمة الكاملة من ImgGen.videoFormats()
+  const ratios = () => (typeof ImgGen !== "undefined" && ImgGen.videoFormats) ? ImgGen.videoFormats().map(f => [f.id, f.label]) : RATIOS;
   const GUARD = " Keep the product exactly as in the reference photo(s): same shape, proportions, colors, packaging and label artwork. Do not add text, subtitles, logos or watermarks. No distortion or morphing of the product. Realistic physics, smooth natural motion, no sound needed.";
   /* نقية: تركّب التعليمات من القالب والوصف الحر */
   function buildPrompt(tpl, text) {
@@ -53,7 +54,7 @@ const PBVGen = (() => {
 <label class="fl" style="display:block;margin:.4rem 0">وصف الحركة (اختياري مع القالب، إلزامي بدونه)<textarea id="pbvg-t" rows="3" style="width:100%" placeholder="مثال: تقترب الكاميرا ببطء من العبوة بينما تتساقط بتلات وردية حولها">${esc(S.text)}</textarea></label>
 <div class="ep-n"><b>صور المنتج</b> (<span id="pbvg-n">${1 + S.picks.length}</span> من 4) — الصورة المحدّدة دائماً مضمَّنة</div>
 <div id="pbvg-pool" style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-height:96px;overflow:auto">${S.pool.map((u, i) => `<img src="${esc(A().localize(u))}" data-vg="pick" data-i="${i}" alt="" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;cursor:pointer;outline:${S.picks.includes(u) ? "3px solid #7c3aed" : "none"}">`).join("") || '<span class="ep-n">لا صور أخرى في الصفحة</span>'}</div>
-<div class="pbrt-row"><select id="pbvg-r" class="pbx-small">${RATIOS.map(([k, t]) => `<option value="${k}"${S.ratio === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
+<div class="pbrt-row"><select id="pbvg-r" class="pbx-small">${ratios().map(([k, t]) => `<option value="${k}"${S.ratio === k ? " selected" : ""}>${t}</option>`).join("")}</select></div>
 <div class="rt-g"><label>المدة (ثانية) <b id="pbvg-dv">${S.dur}</b><input type="range" id="pbvg-d" min="3" max="10" value="${S.dur}"></label></div>
 <div class="ep-n" id="pbvg-cost">${rdy.ok ? "يستهلك من رصيد Alyssum API — تُطلب موافقتك قبل التنفيذ" : "الخدمة غير مفعّلة لموقعك — تواصل مع الدعم"}</div>
 <div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vg="go">🎬 أنشئ الفيديو</button></div>

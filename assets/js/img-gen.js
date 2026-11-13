@@ -406,10 +406,66 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
   /* ───────── توليد فيديو من صورة (1–4) ووصف أو قالب — عبر خدمة فيديو خارجية بمفتاح الاتصال الثاني (fal) ─────────
      نفس ضوابط التكلفة: تأكيد قبل التنفيذ، حدّ إنفاق، لا إعادة محاولة تلقائية. النموذج والسعر قابلان للضبط (alyssum_vg_model / alyssum_vg_price)
      لأن مواصفات الخدمة لم تُثبَّت بعد؛ الطلب يمرّ بطابور الخدمة: إرسال ← استعلام الحالة ← جلب الفيديو. o = {images:[blob], prompt, ratio:"9:16|1:1|16:9|4:5", dur, confirm} ← {blob, type, cost} أو null */
+
+  /* ───────── مقاسات الفيديو لمنصات التواصل + إلزام النموذج بها ─────────
+     الخدمة تولّد 9:16 و16:9 و1:1 فقط؛ لأي مقاس آخر: (1) نقصّ صور المنتج على أقرب نسبة مدعومة قبل الإرسال، (2) نضيف للتعليمات مقاساً صريحاً ومناطق آمنة ومنع الأشرطة السوداء،
+     (3) بعد التوليد نقيس الفيديو الناتج ونقصّه/نضبطه على المقاس المطلوب بدقة إن اختلف (تسجيل عبر canvas) ونُبلغ بالنتيجة. */
+  const VFORMATS = [
+    { id: "9:16", w: 1080, h: 1920, label: "9:16 — 1080×1920 · تيك توك، ريلز إنستغرام وفيسبوك، ستوري، يوتيوب شورتس، سناب شات" },
+    { id: "4:5", w: 1080, h: 1350, label: "4:5 — 1080×1350 · منشور إنستغرام وفيسبوك العمودي (الأفضل في التغذية)" },
+    { id: "1:1", w: 1080, h: 1080, label: "1:1 — 1080×1080 · منشور مربع (إنستغرام، فيسبوك، X، لينكدإن)" },
+    { id: "3:4", w: 1080, h: 1440, label: "3:4 — 1080×1440 · شبكة إنستغرام الحديثة وتيك توك الصور" },
+    { id: "2:3", w: 1000, h: 1500, label: "2:3 — 1000×1500 · بنترست" },
+    { id: "16:9", w: 1920, h: 1080, label: "16:9 — 1920×1080 · يوتيوب، فيسبوك، X، لينكدإن، الموقع" },
+    { id: "4:3", w: 1440, h: 1080, label: "4:3 — 1440×1080 · عرض كلاسيكي (فيسبوك، موقع)" },
+    { id: "1.91:1", w: 1200, h: 628, label: "1.91:1 — 1200×628 · إعلانات الروابط (فيسبوك، لينكدإن، X)" },
+  ];
+  const VGEN = [["9:16", 9 / 16], ["1:1", 1], ["16:9", 16 / 9]];      // ما يولّده النموذج فعلاً
+  const vfmt = id => VFORMATS.find(x => x.id === String(id)) || VFORMATS[0];
+  const vnum = id => { const f = vfmt(id); return f.w / f.h; };
+  const vgenOf = id => { const r = vnum(id); let best = VGEN[0], bd = 9; VGEN.forEach(g => { const d = Math.abs(Math.log(r / g[1])); if (d < bd - 1e-9) { bd = d; best = g; } }); return best[0]; };
+  const vword = id => { const r = vnum(id); return r > 1.2 ? "horizontal (landscape)" : r < 0.95 ? "vertical (portrait)" : "square"; };
+  /* مناطق آمنة عامّة: الحواف السفلية/العلوية تغطيها واجهات المنصات والحواف الجانبية قد تُقصّ */
+  const vdirective = id => { const f = vfmt(id); return " OUTPUT FORMAT (mandatory, do not deviate): a " + vword(id) + " video framed exactly " + f.id + " (" + f.w + "x" + f.h + " px), full-frame, filling the entire canvas edge to edge. NO letterboxing, pillarboxing, black bars, blurred side padding, borders, phone mockups or frames around the picture. Compose for this exact aspect ratio from the first frame: keep the product, faces and key action inside the central 80% of the frame, leave the top 12% and bottom 18% free of important details (platform UI overlaps them), keep any spoken-word focus away from the extreme edges."; };
+  async function coverBlob(blob, ratio, max) {      // قصّ مركزي (cover) على نسبة معيّنة
+    const u = URL.createObjectURL(blob), im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; }); URL.revokeObjectURL(u);
+    const r = (VGEN.find(g => g[0] === ratio) || [0, vnum(ratio)])[1], iw = im.naturalWidth, ih = im.naturalHeight; let sw = iw, sh = ih;
+    if (iw / ih > r) sw = Math.round(ih * r); else sh = Math.round(iw / r);
+    const k = Math.min(1, max / Math.max(sw, sh)), c = document.createElement("canvas"); c.width = Math.max(2, Math.round(sw * k)); c.height = Math.max(2, Math.round(sh * k));
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, c.width, c.height);
+    return new Promise(res => c.toBlob(res, "image/jpeg", .9));
+  }
+  /* ضبط فيديو جاهز على مقاس المنصة بدقة (قصّ مركزي + تحجيم) بتسجيل canvas مع الصوت؛ يعيد {blob, type, w, h, fitted, reason} ولا يرمي: عند العجز يُرجع الأصل */
+  async function fitVideo(blob, id, say) {
+    const f = vfmt(id), out = { blob, type: blob.type || "video/mp4", w: 0, h: 0, fitted: false, reason: "" };
+    try {
+      const v = document.createElement("video"); v.playsInline = true; v.preload = "auto"; const url = URL.createObjectURL(blob); v.src = url;
+      await new Promise((res, rej) => { v.onloadedmetadata = res; v.onerror = () => rej(new Error("تعذّر قراءة الفيديو")); });
+      const sw = v.videoWidth, sh = v.videoHeight; out.w = sw; out.h = sh;
+      if (Math.abs(sw / sh - f.w / f.h) / (f.w / f.h) < 0.015) { URL.revokeObjectURL(url); out.fitted = true; out.reason = "exact"; return out; }
+      if (typeof MediaRecorder === "undefined" || !HTMLCanvasElement.prototype.captureStream) { URL.revokeObjectURL(url); out.reason = "norecorder"; return out; }
+      if (say) say("نضبط الفيديو على مقاس " + f.id + " (" + f.w + "×" + f.h + ")…");
+      const cv = document.createElement("canvas"); cv.width = f.w; cv.height = f.h; const x = cv.getContext("2d");
+      let cw = sw, ch = sh; if (sw / sh > f.w / f.h) cw = Math.round(sh * f.w / f.h); else ch = Math.round(sw * f.h / f.w); const cx = (sw - cw) / 2, cy = (sh - ch) / 2;
+      const stream = cv.captureStream(30); let ac = null;
+      try { const AC = window.AudioContext || window.webkitAudioContext; if (AC) { ac = new AC(); const src = ac.createMediaElementSource(v), dst = ac.createMediaStreamDestination(); src.connect(dst); dst.stream.getAudioTracks().forEach(t => stream.addTrack(t)); } } catch (e) { ac = null; }
+      const mimes = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"], mime = mimes.find(m => MediaRecorder.isTypeSupported(m)) || "";
+      const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : { videoBitsPerSecond: 6e6 }), chunks = []; rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+      const done = new Promise(res => { rec.onstop = res; });
+      let raf = 0; const draw = () => { x.drawImage(v, cx, cy, cw, ch, 0, 0, f.w, f.h); if (!v.ended) raf = requestAnimationFrame(draw); }; 
+      v.onended = () => { cancelAnimationFrame(raf); x.drawImage(v, cx, cy, cw, ch, 0, 0, f.w, f.h); setTimeout(() => { try { rec.stop(); } catch (e) { } }, 150); };
+      rec.start(250);
+      try { await v.play(); } catch (e) { try { rec.stop(); } catch (_) { } URL.revokeObjectURL(url); if (ac) try { ac.close(); } catch (_) { } out.reason = "autoplay"; return out; }
+      draw(); await done; URL.revokeObjectURL(url); if (ac) try { ac.close(); } catch (e) { }
+      const nb = new Blob(chunks, { type: (rec.mimeType || mime || "video/webm").split(";")[0] });
+      if (nb.size < 2000) { out.reason = "empty"; return out; }
+      return { blob: nb, type: nb.type, w: f.w, h: f.h, fitted: true, reason: "cropped" };
+    } catch (e) { out.reason = String(e && e.message || e); return out; }
+  }
   const vcfg = { model: () => (LS.get("alyssum_vg_model", "") || "fal-ai/kling-video/v2.1/standard/image-to-video").trim().replace(/^\/+|\/+$/g, ""), price: () => Number(LS.get("alyssum_vg_price", "0.5")) || 0.5, dur: () => Math.max(3, Math.min(10, Number(LS.get("alyssum_vg_dur", "5")) || 5)) };
   const videoReady = () => { const off = LS.get("alyssum_ai_vid", "1") === "0", key = cleanFal(LS.get(FALKEY, "")); const pl = platOn(); return { ok: (!!key || pl) && !off, off, nokey: !key && !pl, price: vcfg.price(), model: vcfg.model() }; };
   function videoBody(o, urls) {
-    const body = { prompt: String(o.prompt || "").trim(), aspect_ratio: o.ratio || "9:16", duration: String(o.dur || vcfg.dur()) };
+    const T = o.ratio || "9:16", body = { prompt: (String(o.prompt || "").trim() + vdirective(T)).slice(0, 4800), aspect_ratio: vgenOf(T), duration: String(o.dur || vcfg.dur()) };
     if (o.audio) { body.generate_audio = true; if (o.script) body.audio_script = String(o.script).slice(0, 1500); if (o.lang) body.audio_language = o.lang; if (o.voice) body.voice = o.voice; if (o.seed) body.seed = o.seed; }
     if (urls.length === 1) body.image_url = urls[0]; else if (urls.length > 1) { body.image_url = urls[0]; body.image_urls = urls; }
     return body;
@@ -424,7 +480,7 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const est = vcfg.price(), left = cfg.budget() ? cfg.budget() - cfg.spent() : Infinity;
     if (cfg.budget() && left < est) { credit.note(); throw new Error(lowMsg); }
     if (o.confirm !== false && !confirm(useMsg(o.title || "توليد فيديو", "النسبة: " + (o.ratio || "9:16") + " · المدة: " + (o.dur || vcfg.dur()) + " ث · صور: " + imgs.length + "\nقد يستغرق التوليد دقائق."))) return null;
-    const key = cleanFal(LS.get(FALKEY, "")), m = vcfg.model(), urls = []; for (const b of imgs) urls.push("data:image/jpeg;base64," + await b64(await shrink(b, 1280)));
+    const key = cleanFal(LS.get(FALKEY, "")), m = vcfg.model(), urls = []; const G = vgenOf(o.ratio || "9:16"); for (const b of imgs) { let c; try { c = await coverBlob(b, G, 1280); } catch (e) { c = await shrink(b, 1280); } urls.push("data:image/jpeg;base64," + await b64(c)); }
     const direct = !platOn() && falOk(key); if (!direct && !platOn()) throw new Error("خدمة الفيديو غير مفعّلة لموقعك — تواصل مع الدعم، أو الصق مفتاحاً بصيغة «معرّف:سرّ» كاملاً في إعدادات مولّد الصور");
     const H = { "Content-Type": "application/json", "Authorization": "Key " + key }, say = o.onStatus || (() => { }), falf = falRoute(direct, H, m, "veo");      // عبر المنصة: الفيديو بمفتاح الصور (Veo) في الخادم
     say("إرسال الطلب إلى خدمة الفيديو…");
@@ -446,7 +502,8 @@ ${typeof AiProxy !== "undefined" && !fal ? AiProxy.html() : ""}
     const u = ((res.video || (res.data && res.data.video) || {}).url); if (!u) throw new Error("لم تُرجع الخدمة فيديو — لم تُحتسب تكلفة غالباً.");
     const vr = String(u).startsWith("plat:") ? await platCall({ action: "dl", uri: String(u).slice(5) }) : await fetch(u); if (!vr.ok) throw new Error("تعذّر تنزيل الفيديو الناتج"); const blob = await vr.blob();
     LS.set("alyssum_ig_spent", String(cfg.spent() + est)); LS.set("alyssum_ig_count", String(cfg.count() + 1)); LS.set(AIOUT, "0"); credit.note();
-    return { blob, type: blob.type || "video/mp4", cost: est, model: "fal:" + m };
+    const T = o.ratio || "9:16", fit = await fitVideo(blob, T, say), tf = vfmt(T);
+    return { blob: fit.blob, type: fit.type || blob.type || "video/mp4", cost: est, model: "fal:" + m, format: { id: T, w: tf.w, h: tf.h, gen: vgenOf(T), fitted: fit.fitted, reason: fit.reason, srcW: fit.fitted && fit.reason === "cropped" ? 0 : fit.w, srcH: fit.fitted && fit.reason === "cropped" ? 0 : fit.h } };
   }
   /* ───────── تحويل صور 2D (1–3) إلى مجسّم 3D (GLB) عبر الخدمة الخارجية — بديل حين لا يكفي التجميع المحلي (img3d.js)
      نفس ضوابط التكلفة: تأكيد، حدّ إنفاق، لا إعادة محاولة. النموذج والسعر قابلان للضبط (alyssum_i3d_model / alyssum_i3d_price) لأن مواصفات الخدمة غير مثبَّتة.
@@ -741,7 +798,7 @@ ${PUB.items.length ? `<div class="pub-g">النتائج (${PUB.items.length}) �
     saveFalKey() { const k = cleanFal(($("ig-fkey") || {}).value); if (k) { LS.set(FALKEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); },
     saveKey() { const k = getKey(); if (k) { LS.set(KEY, k); credit.renew(); askNotify(); } toast("حُفظ المفتاح في هذا المتصفح"); }, test,
     set(k, v) { LS.set("alyssum_ig_" + k, String(v)); if (k === "budget") credit.renew(); paintEst(); }, resetSpent() { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); render(); },
-    sizes: () => SIZES, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, askKey, ensure: async kind => { const f = kind === "f"; const ok = () => f ? !!cleanFal(LS.get(FALKEY, "")) : ready().ok; return ok() || (await askKey(kind || "g") && ok()); }, estimate, video, videoReady, model3d, model3dReady, credit, renewLocal: () => { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); }, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
+    sizes: () => SIZES, videoFormats: () => VFORMATS.slice(), videoFormat: vfmt, fitVideo, pickKey, pubPane: () => '<div id="pub-root"></div>', pubBind: r => pubBind(r.querySelector ? (r.querySelector("#pub-root") || r) : r), pubState: PUB, scaledPage, generate, quick, edit, ready, askKey, ensure: async kind => { const f = kind === "f"; const ok = () => f ? !!cleanFal(LS.get(FALKEY, "")) : ready().ok; return ok() || (await askKey(kind || "g") && ok()); }, estimate, video, videoReady, model3d, model3dReady, credit, renewLocal: () => { LS.set("alyssum_ig_spent", "0"); LS.set("alyssum_ig_count", "0"); credit.renew(); }, text, textModels, canVideo: n => !cfg.budget() || (cfg.budget() - cfg.spent()) >= (n || 1) * vcfg.price(), openSized: m => openAd(m), toEditor, toLibrary: () => toLibrary(false), download: f => download(f), openAd: () => openAd(), blank: () => openAd(true), exportAd, renderAd, copyPrompt,
     _t: { adPage, adLayout, buildPrompt, nearAr, fit, sizeOf, SIZES, S }
   };
   return api;

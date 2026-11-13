@@ -50,7 +50,7 @@ let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; 
   });
   ok("التدفق: ينتهي بفيديو ويُحتسب مرة واحدة", flow.size === 2048 && flow.spent === "0.5" && flow.n === "1", flow);
   ok("التدفق: المفتاح في الترويسة لا في الرابط", flow.auth === "Key abcdefgh:12345678" && !/12345678$/.test(flow.url.replace("queue.fal.run", "")), flow.auth);
-  ok("التدفق: الجسم (نسبة، مدة نص، صورة أولى، 4 صور بحد أقصى)", flow.body.aspect_ratio === "1:1" && flow.body.duration === "7" && /^data:image\/jpeg/.test(flow.body.image_url) && flow.body.image_urls.length === 4 && flow.body.prompt === "test prompt", Object.keys(flow.body));
+  ok("التدفق: الجسم (نسبة، مدة نص، صورة أولى، 4 صور بحد أقصى)", flow.body.aspect_ratio === "1:1" && flow.body.duration === "7" && /^data:image\/jpeg/.test(flow.body.image_url) && flow.body.image_urls.length === 4 && /^test prompt/.test(flow.body.prompt) && /OUTPUT FORMAT/.test(flow.body.prompt), Object.keys(flow.body));
   ok("التدفق: رسائل الحالة", flow.st.some(x => /الطابور|إرسال الطلب/.test(x)) && flow.st.some(x => /التوليد/.test(x)), flow.st);
   ok("فشل الخدمة: لا يُحتسب إنفاق", await T(async () => { const f0 = window.fetch; localStorage.setItem("alyssum_ig_spent", "0"); window.fetch = async (u, o) => /queue\.fal\.run/.test(String(u)) && o && o.method === "POST" ? new Response(JSON.stringify({ detail: "bad key" }), { status: 401 }) : f0(u, o); try { await ImgGen.video({ images: [await __png()], prompt: "x", pollMs: 0 }); return false; } catch (e) { return /401/.test(e.message) && /تحقق من المفتاح/.test(e.message) && localStorage.getItem("alyssum_ig_spent") === "0"; } finally { window.fetch = f0; } }));
   /* ── رصيد Alyssum API: لا أرقام، وتنبيه تلقائي عند الاقتراب من النفاد وعند النفاد ── */
