@@ -23,7 +23,10 @@
     return j;
   }
   async function getMe() { const j = await call("me"); const perms = Array.isArray(j.perms) ? j.perms.map(String) : []; return { admin: !!j.admin, role: String(j.role || ""), perms, authed: !!(j.admin || j.role), name: String(j.name || "") }; }
-  async function getOrders() { const j = await call("orders"); if (!j.ok || !Array.isArray(j.orders)) throw new ToolError("bad_response", "ردّ الطلبات غير صالح"); return j.orders; }
+  /* مرحلة 12: الخادم يعيد آخر 2000 طلب كحد أقصى؛ نعلّم القائمة بذلك كي لا تُعرض أعداد ناقصة كأنها كاملة */
+  const ORDERS_WINDOW = 2000;
+  async function getOrders() { const j = await call("orders"); if (!j.ok || !Array.isArray(j.orders)) throw new ToolError("bad_response", "ردّ الطلبات غير صالح"); if (j.orders.length >= ORDERS_WINDOW) j.orders.truncated = true; return j.orders; }
+  const winOf = all => all && all.truncated ? all.length : 0;
   async function getFile(path) { const j = await call("file", { query: "&path=" + encodeURIComponent(path) }); if (typeof j.content !== "string") throw new ToolError("bad_response", "ملف غير صالح"); try { return decodeURIComponent(escape(atob(j.content.replace(/\s/g, "")))); } catch (_) { throw new ToolError("bad_response", "ترميز الملف غير صالح"); } }
   async function getProducts() { const txt = await getFile("assets/js/data.js"), i = txt.indexOf("var PRODUCTS = "); if (i < 0) throw new ToolError("bad_response", "تنسيق المنتجات غير معروف"); try { const v = JSON.parse(txt.slice(i + 15, txt.lastIndexOf(";"))); if (!Array.isArray(v)) throw 0; return v; } catch (_) { throw new ToolError("bad_response", "تعذّرت قراءة المنتجات"); } }
   async function getKv(k) { const j = await call("kv", { query: "&k=" + encodeURIComponent(k) }); return j.v == null ? null : j.v; }
@@ -93,7 +96,7 @@
       const revenue = valid.reduce((s, o) => s + (Number(o.total) || 0), 0), delivered = sel.filter(o => o.status === "livree").reduce((s, o) => s + (Number(o.total) || 0), 0);
       /* تقدير (يُصنَّف «تقدير» في الواجهة): متوسط مبيعات الأيام السابقة التي فيها طلبات (حتى 7) */
       let est = null; if (per === "today") { const days = []; for (let i = 1; i <= 7; i++) { const d = new Date(+startOfDay(now) - i * 864e5), ds = all.filter(o => VALID(o) && startOfDay(o.date).getTime() === d.getTime()); if (ds.length) days.push(ds.reduce((s, o) => s + (Number(o.total) || 0), 0)); } if (days.length >= 2) est = { avgDailyRevenue: Math.round(days.reduce((x, y) => x + y, 0) / days.length), days: days.length }; }
-      return { period: per, orders: sel.length, validOrders: valid.length, revenue, delivered, byStatus: by, pending: by.nouvelle, estimate: est, total: all.length };
+      return { period: per, orders: sel.length, validOrders: valid.length, revenue, delivered, byStatus: by, pending: by.nouvelle, estimate: est, total: all.length, window: winOf(all) };
     } });
   def("sales.top_product", { risk: "read", perms: ["orders"], title: { ar: "المنتج الأكثر مبيعاً", fr: "Produit le plus vendu", en: "Best-selling product" }, endpoint: "GET orders", desc: "يجمع بنود الطلبات غير الملغاة من الخادم حسب المنتج (الكمية والإيراد).",
     schema: { type: "object", properties: { period: O_PER, by: { type: "string", enum: ["qty", "revenue"] } }, additionalProperties: false },
@@ -101,11 +104,11 @@
       const all = await getOrders(), now = new Date(), sel = all.filter(o => VALID(o) && inPeriod(o.date, a.period || "all", now)), m = new Map(); let unparsed = 0;
       sel.forEach(o => lines(o).forEach(l => { if (!l) { unparsed++; return; } const k = norm(l.title), e = m.get(k) || { title: l.title, qty: 0, revenue: 0, orders: new Set() }; e.qty += l.qty; e.revenue += l.rev; e.orders.add(o.id); m.set(k, e); }));
       const by = a.by || "qty", rows = [...m.values()].map(e => ({ title: e.title, qty: e.qty, revenue: e.revenue, orders: e.orders.size })).sort((x, y) => y[by] - x[by] || y.qty - x.qty);
-      return { period: a.period || "all", by, top: rows.slice(0, 3), count: rows.length, ordersCounted: sel.length, unparsed };
+      return { period: a.period || "all", by, top: rows.slice(0, 3), count: rows.length, ordersCounted: sel.length, unparsed, window: winOf(all) };
     } });
   def("orders.list", { risk: "read", perms: ["orders"], title: { ar: "عرض الطلبات", fr: "Afficher les commandes", en: "List orders" }, endpoint: "GET orders", desc: "يقرأ الطلبات من الخادم ويصفّيها (حالة/ولاية/بحث/فترة). لا هواتف في النتائج.",
     schema: { type: "object", properties: { status: O_STAT, wilaya: { type: "string", maxLength: 40 }, q: { type: "string", maxLength: 60 }, period: O_PER, limit: { type: "integer", minimum: 1, maximum: 50 } }, additionalProperties: false },
-    async run(a) { const all = await getOrders(), r = filterOrders(all, a, new Date()), lim = a.limit || 20; return { count: r.length, shown: Math.min(lim, r.length), items: r.slice(0, lim).map(brief), filter: a, total: all.length }; } });
+    async run(a) { const all = await getOrders(), r = filterOrders(all, a, new Date()), lim = a.limit || 20; return { count: r.length, shown: Math.min(lim, r.length), items: r.slice(0, lim).map(brief), filter: a, total: all.length, window: winOf(all) }; } });
   def("orders.get", { risk: "read", perms: ["orders"], title: { ar: "تفاصيل طلب", fr: "Détails d'une commande", en: "Order details" }, endpoint: "GET orders", desc: "تفاصيل طلب بمعرّفه؛ الهاتف مقنَّع ما لم تكن مخوَّلاً بـ«العملاء».",
     schema: { type: "object", properties: { id: { type: "string", pattern: ID_RE } }, required: ["id"], additionalProperties: false },
     async run(a, c) { const o = (await getOrders()).find(x => x.id === a.id); if (!o) throw new ToolError("not_found", "لا يوجد طلب بهذا المعرّف"); const full = c.can("customers"); return Object.assign(brief(o), { phone: full ? o.phone : maskPhone(o.phone), phoneMasked: !full, commune: o.commune, fee: o.fee, subtotal: o.subtotal }); } });
