@@ -1,0 +1,42 @@
+{
+ "date": "2026-11-13",
+ "renderer": "SwiftShader (software)",
+ "results": [
+  {
+   "scenario": "S4m-four-two-minimized",
+   "label": "after2",
+   "reps": 2,
+   "cpu_pct": 14.5,
+   "script_pct": 2,
+   "layout_pct": 0.05,
+   "style_pct": 0.5,
+   "heap_mb": 36.95,
+   "nodes": 89146.5,
+   "layouts_per_s": 0.55,
+   "restyle_per_s": 6.85,
+   "panels": 4,
+   "minimized": 2,
+   "suspended": 2,
+   "discarded": 2,
+   "frame_nodes": 13522.5
+  },
+  {
+   "scenario": "S4m-after-40s",
+   "label": "after2",
+   "reps": 2,
+   "cpu_pct": 12.5,
+   "script_pct": 1,
+   "layout_pct": 0,
+   "style_pct": 0.35,
+   "heap_mb": 28.25,
+   "nodes": 64931,
+   "layouts_per_s": 0,
+   "restyle_per_s": 6.25,
+   "panels": 4,
+   "minimized": 2,
+   "suspended": 2,
+   "discarded": 2,
+   "frame_nodes": 13516
+  }
+ ]
+}
