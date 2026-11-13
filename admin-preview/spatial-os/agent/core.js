@@ -183,7 +183,7 @@
     try { const best = NLU.matchProduct(text, CTX.catalog); cands = CTX.catalog.slice().sort((a, b) => (best && a.slug === best.slug ? -1 : 0) - (best && b.slug === best.slug ? -1 : 0)).slice(0, 5).map(p => ({ slug: p.slug, title: p.title, fr: p.title })); } catch (_) { }
     return { perms, last, ids: CTX.lastListIds.slice(0, 8), focus: CTX.focusOrder || null, prod: CTX.focusProduct || null, cands };
   }
-  const ID_RX = /[A-Za-z]\d{6}-[A-Za-z0-9]{4,6}/g;
+  const ID_RX = /[A-Za-z]\d{6}-[A-Za-z0-9]{4,16}/g;
   function groundId(id, text) { return !!id && (CTX.lastListIds.includes(id) || CTX.focusOrder === id || (String(text).match(ID_RX) || []).includes(id)); }
   /* يتحقق من خطة الجهاز المحلي قبل أي تنفيذ: يعيد {ok, why} */
   function vetPlan(plan, me, text) {

@@ -17,7 +17,11 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? ''; if ($origin !== '' && parse_url($origin
 /* ── المصادقة بجلسة اللوحة (قراءة فقط، بلا قفل) ── */
 session_name('store_admin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'httponly' => true, 'samesite' => 'Strict']);
+/* عزل الجلسات بين التثبيتات (المرحلة 12B): نفس مسار الجلسات الخاص وختم التثبيت المعتمدين في api/index.php */
+$apiData = dirname(__DIR__, 3) . '/api/_data'; ini_set('session.use_strict_mode', '1');
+if (is_dir($apiData . '/sessions') && is_readable($apiData . '/sessions')) session_save_path($apiData . '/sessions');
 session_start(['read_and_close' => true]);
+if (($_SESSION['inst'] ?? '') !== hash_hmac('sha256', 'alyssum-install-v1', (string)@file_get_contents($apiData . '/inst.key'))) $_SESSION = [];
 $actor = null;
 if (!empty($_SESSION['admin'])) $actor = 'owner';
 elseif (!empty($_SESSION['staff'])) {

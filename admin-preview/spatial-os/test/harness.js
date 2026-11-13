@@ -59,6 +59,6 @@ async function startStore(opts = {}) {
     if (!r.ok) { stop(); throw new Error("رُفض طلب البذر: " + JSON.stringify(r)); } ids.push({ id: r.id, status: o.status, name: o.name, total: subtotal + o.fee });
     if (o.status !== "nouvelle") await J(base, "order_update", { id: r.id, status: o.status }, cookie);
   }
-  return { base, port, pw: PW, ids, stop, spatial: base + "/admin-preview/spatial-os/index.html", cookie };
+  return { base, port, pw: PW, ids, stop, spatial: base + "/admin-preview/spatial-os/index.html", cookie, dir: tmp };
 }
 module.exports = { startStore, PW, ORDERS };
