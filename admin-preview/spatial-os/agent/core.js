@@ -130,7 +130,10 @@
     try { out = await fn(); st.status = out && out.ok === false ? "error" : "ok"; if (out && out.ok === false) { st.code = out.error; st.error = out.error; } else st.summary = sum ? sum(out) : ""; } catch (e) { st.status = "error"; st.code = "internal"; st.error = String(e && e.message || e).slice(0, 80); out = { ok: false, error: "internal" }; }
     st.ms = Math.round(performance.now() - t0); aud({ kind: "tool", run: run.id, tool, risk, ok: st.status === "ok", code: st.code || null, ms: st.ms }); emit({ type: "step", run: run.id, step: st }); return out; }
   function updateCtxFrom(name, a, r) { if (name === "orders.list") { CTX.lastListIds = r.items.map(x => x.id); CTX.lastCount = r.count; CTX.focusOrder = r.count === 1 ? r.items[0].id : null; } else if (name === "orders.get") CTX.focusOrder = r.id; else if (name === "products.get") CTX.focusProduct = r.slug; else if (name === "inventory.read" && a && a.slug) CTX.focusProduct = a.slug; }
-  function factsFor(name, r, a, lang) { switch (name) { case "sales.summary": return fmtSales(r, lang); case "sales.top_product": return fmtTop(r, lang); case "orders.list": return fmtOrdersList(r, lang, a); case "orders.get": return fmtOrder(r, lang); case "products.search": return fmtProducts(r, lang); case "products.get": return fmtProduct(r, lang); case "inventory.read": return fmtInv(r, lang);
+  /* مرحلة 12: تنبيه صريح حين تُحسب الأعداد من آخر 2000 طلب فقط (حد الخادم) */
+  const withWin = (blocks, r, lang) => (r && r.window > 0 && Array.isArray(blocks)) ? blocks.concat([E(tr(lang, "تنبيه: يعيد الخادم آخر " + r.window + " طلب فقط، لذا قد تكون الأعداد والمبالغ أعلاه ناقصة.", "Attention : le serveur ne renvoie que les " + r.window + " dernières commandes ; les chiffres ci-dessus peuvent être incomplets.", "Note: the server returns only the latest " + r.window + " orders, so the figures above may be incomplete."))]) : blocks;
+  function factsFor(name, r, a, lang) { return withWin(factsFor0(name, r, a, lang), r, lang); }
+  function factsFor0(name, r, a, lang) { switch (name) { case "sales.summary": return fmtSales(r, lang); case "sales.top_product": return fmtTop(r, lang); case "orders.list": return fmtOrdersList(r, lang, a); case "orders.get": return fmtOrder(r, lang); case "products.search": return fmtProducts(r, lang); case "products.get": return fmtProduct(r, lang); case "inventory.read": return fmtInv(r, lang);
     case "customers.find": return [F(tr(lang, r.count + " طلب لهذا الزبون — مجموع غير الملغاة: " + money(r.spent), r.count + " commande(s)", r.count + " order(s) for this customer — total excluding cancelled: " + money(r.spent)))];
     case "settings.read": { const v = r.value; return [F(r.key === "guard" ? tr(lang, "حماية الطلبات — مضاد الروبوت: " + (v.antibot ? "مفعّل" : "غير مفعّل") + "، منع التكرار: " + (v.dup ? "مفعّل" : "غير مفعّل"), "Protection — antibot : " + (v.antibot ? "oui" : "non") + ", doublons : " + (v.dup ? "oui" : "non"), "Order protection — anti-bot: " + (v.antibot ? "on" : "off") + ", duplicate blocking: " + (v.dup ? "on" : "off")) : tr(lang, "إعداد المخزون — يبدأ التتبع من: " + (v.since || "غير محدد"), "Stock suivi depuis : " + (v.since || "n/d"), "Stock settings — tracking since: " + (v.since || "not set")))]; }
     default: return []; } }
@@ -227,7 +230,7 @@
   /* ───── المنسّق ───── */
   async function handle(run, ps) {
     const lang = ps.lang === "fr" || ps.lang === "en" ? ps.lang : "ar", a = ps.args || {}, out = run.result;
-    const done = (blocks, extra) => { out.blocks = blocks; Object.assign(out, extra || {}); };
+    const done = (blocks, extra) => { out.blocks = withWin(blocks, extra && extra.data, lang); Object.assign(out, extra || {}); };
     const needPanelUI = async (fn) => { if (typeof SpatialOS === "undefined" || !SpatialOS.real) return null; try { return await fn(); } catch (e) { run.notes.push(tr(lang, "تعذّر إجراء الواجهة: " + e.message, "UI: " + e.message, "UI action failed: " + e.message)); return null; } };
     if (routeWanted(ps)) return handleRouted(run, ps, lang, done);
     if (llmWanted(ps)) return handleLLM(run, ps, lang, done);

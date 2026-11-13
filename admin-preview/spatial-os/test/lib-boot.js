@@ -32,7 +32,7 @@ async function boot(b, store, o = {}) {
     /* مراقب انتقالات: يسجّل (زمن، مصدر، حالة) لكل تغيّر في حالة الوكيل/الحالة البصرية/الصوت؛ يُقرأ لاحقاً لقياس تأخر التزامن */
     watch: () => p.evaluate(() => { window.__tl = []; const t0 = performance.now(); window.__tlOrigin = Date.now() - (performance.now() - t0); const push = (src, v) => window.__tl.push({ t: Math.round(performance.now() - t0), src, v }); let lv = null, sh = 0, ep = 0; AlyssumAgent.on(e => { if (e.type === "state") push("agent", e.state); }); AgentVoice.on(e => { if (e.type === "state") push("voice", e.mode); }); setInterval(() => { const s = Core3D.state(); if (s.visual !== lv) { lv = s.visual; push("visual", s.visual); } if (s.shocks !== sh) { sh = s.shocks; push("shock", s.shocks); } if (s.errPulses !== ep) { ep = s.errPulses; push("errpulse", s.errPulses); } }, 8); }),
     tl: () => p.evaluate(() => window.__tl.slice()),
-    quiet: async (ms = 1200, max = 30000) => { const t0 = Date.now(); let since = 0; while (Date.now() - t0 < max) { const bad = await p.evaluate(() => SpatialHub.ids().map(i => SpatialHub.state(i)).filter(s => s && s.vis && (s.refreshing || s.stale)).length); if (!bad) { if (!since) since = Date.now(); if (Date.now() - since >= ms) return true; } else since = 0; await sleep(150); } return false; },
+    quiet: async (ms = 1200, max = 30000) => { const t0 = Date.now(); let since = 0; while (Date.now() - t0 < max) { const bad = await p.evaluate(() => SpatialHub.ids().map(i => SpatialHub.state(i)).filter(s => s && s.vis && (s.refreshing || (s.stale && s.stale.length))).length); if (!bad) { if (!since) since = Date.now(); if (Date.now() - since >= ms) return true; } else since = 0; await sleep(150); } return false; },
   };
   return X;
 }
