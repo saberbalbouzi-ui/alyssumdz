@@ -131,7 +131,6 @@ const Credits = (() => {
     const hist = s.log.slice(-8).reverse().map(l => `<tr><td>${esc(l.k)}</td><td style="direction:ltr">${l.n > 0 ? "+" : ""}${fmt(l.n)}</td></tr>`).join("");
     const bg = document.createElement("div"); bg.id = "cr-bg";
     bg.innerHTML = `<div id="cr-box" role="dialog" aria-modal="true"><button type="button" class="cr-x" data-cr="x" aria-label="إغلاق">✕</button><h3>رصيد الأدوات</h3>
-<div data-aisw-card></div>
 <div class="cr-big">${fmt(s.left)} / ${fmt(s.total)}</div><div class="cr-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
 <div style="font-size:.8rem;opacity:.85">1$ = ${PER_USD} رصيد · الرصيد لا ينتهي · أدوات الاستوديو المحلية (حواف، تمويه، بازل، ماسك، كولاج، باركود، استوديو 3D…) مجانية.</div>
 <b style="display:block;margin-top:.8rem">شراء رصيد</b><div class="cr-packs">${PACKS.map(p => `<button type="button" class="cr-btn" data-cr="buy" data-u="${p[0]}" data-c="${p[1]}">${p[0]}$<small>${p[1]} رصيد${p[1] > p[0] * PER_USD ? " <span dir=\"ltr\">(+" + Math.round((p[1] / (p[0] * PER_USD) - 1) * 100) + "%)</span>" : ""}</small></button>`).join("")}</div>

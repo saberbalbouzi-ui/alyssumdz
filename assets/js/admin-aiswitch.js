@@ -1,13 +1,13 @@
 /* مفتاح تفعيل/تعطيل أدوات الذكاء (Alyssum API) لحماية الرصيد أثناء التجريب: عند التعطيل يُمنع كل طلب إلى خدمة التوليد
    (نص/صورة/فيديو/مجسّم) فلا يُستهلك أي رصيد ولو ضغطت زراً بالخطأ؛ الأدوات المحلية المجانية (قص، تمويه، بازل، ماسك، كولاج…) تعمل كالمعتاد.
-   مفعّل افتراضياً؛ يُحفظ على هذا الجهاز (alyssum_ai_master = "0" يعني معطّل). بطاقة التبديل في «رصيد الأدوات» وإعدادات مولّد الصور (أي عنصر [data-aisw-card])
+   مفعّل افتراضياً؛ يُحفظ على هذا الجهاز (alyssum_ai_master = "0" يعني معطّل). بطاقة التبديل في «إعدادات الموقع» (الإعدادات العامة؛ أي عنصر [data-aisw-card]) ويُزامَن بين أجهزة المالك (s_ai_master)
    وشريط تنبيه ثابت أثناء التعطيل. يعترض window.fetch خارجياً (بعد ai-proxy.js). الاختبار: scripts/test-aiswitch.js */
 const AiSwitch = (() => {
   const K = "alyssum_ai_master";
   const enabled = () => { try { return localStorage.getItem(K) !== "0"; } catch (e) { return true; } };
   const BLOCK = [/^https:\/\/generativelanguage\.googleapis\.com\//i, /^https:\/\/(queue\.fal\.run|fal\.run|rest\.alpha\.fal\.ai)\//i, /\/functions\/v1\/ai(-video)?([?\/]|$)/i];
   const blocked = u => !enabled() && BLOCK.some(r => r.test(String(u || "")));
-  const MSG = "⛔ أدوات الذكاء معطّلة من الإعدادات — لم يُستهلك أي رصيد. فعّلها من «رصيد الأدوات» أو إعدادات مولّد الصور.";
+  const MSG = "⛔ أدوات الذكاء معطّلة من الإعدادات — لم يُستهلك أي رصيد. فعّلها من «إعدادات الموقع».";
   const orig = window.fetch.bind(window);
   window.fetch = function (input, init) {
     try { const u = typeof input === "string" ? input : (input && input.url) || ""; if (blocked(u)) { const e = new Error(MSG); e.code = "OFF"; return Promise.reject(e); } } catch (e) { }
@@ -29,7 +29,7 @@ const AiSwitch = (() => {
   function set(v) { try { localStorage.setItem(K, v ? "1" : "0"); } catch (e) { } paint(); try { document.querySelectorAll("[data-aisw-card]").forEach(h => { delete h.dataset.sig; }); cards(); if (typeof toast === "function") toast(v ? "✅ فُعّلت أدوات الذكاء" : "⛔ عُطّلت أدوات الذكاء — لن يُستهلك رصيد"); } catch (e) { } }
   document.addEventListener("click", e => { const t = e.target.closest && e.target.closest("[data-aisw]"); if (t && t.dataset.aisw === "on") set(true); });
   document.addEventListener("change", e => { const t = e.target; if (t && t.dataset && t.dataset.aisw === "toggle") set(!!t.checked); });
-  let q = 0; const sched = () => { if (q) return; q = setTimeout(() => { q = 0; cards(); }, 80); };
+  let q = 0; const sched = () => { if (q) return; q = setTimeout(() => { q = 0; paint(); }, 80); };
   function init() { paint(); try { new MutationObserver(sched).observe(document.body, { childList: true, subtree: true }); } catch (e) { } }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   return { enabled, set, blocked, paint, MSG };
