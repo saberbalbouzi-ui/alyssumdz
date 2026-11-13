@@ -28,7 +28,8 @@
   const PERM_AR = { orders: "الطلبات", "orders.write": "تعديل حالة الطلبات", customers: "العملاء", analytics: "التحليلات", products: "المنتجات", finance: "المالية" };
   const AUTH = { me: null, at: 0, key: "" };
   async function authz(fresh) {
-    if (!fresh && AUTH.me && Date.now() - AUTH.at < 15000) return AUTH.me;
+    /* مرحلة 12: لا يُخزَّن غير الموثَّق (فشل آمن لكن بلا تأخير استرجاع 15ث بعد إعادة الدخول)؛ الموثَّق يُخزَّن كما كان */
+    if (!fresh && AUTH.me && AUTH.me.authed && Date.now() - AUTH.at < 15000) return AUTH.me;
     const me = await T.getMe(); const key = me.authed ? (me.role + "|" + me.name) : "";
     if (AUTH.key && key !== AUTH.key) resetContext("user-changed");
     AUTH.me = me; AUTH.at = Date.now(); AUTH.key = key; return me;
