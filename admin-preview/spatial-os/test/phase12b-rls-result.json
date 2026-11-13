@@ -1,0 +1,50 @@
+{
+ "phase": "12B",
+ "workstream": "WS3-rls",
+ "date": "2026-11-13",
+ "status": "PARTIAL",
+ "environment": "PostgreSQL 16 محلي معزول (مقبس محلي) + هيكل Supabase أدنى مبنيّ يدوياً (auth.jwt/uid، extensions/pgcrypto، storage.buckets، auth.mfa_factors)؛ **ليس مشروع Supabase الحقيقي** ولا GoTrue/PostgREST",
+ "applied_sql": [
+  "supabase/schema.sql",
+  "sql/schema.sql",
+  "supabase/roles.sql",
+  "supabase/hub.sql",
+  "supabase/editor.sql",
+  "supabase/experts.sql",
+  "supabase/ruqya.sql",
+  "supabase/pixabay-cache.sql",
+  "supabase/hardening-v01.sql",
+  "supabase/hardening-v01b.sql"
+ ],
+ "public_tables": 40,
+ "read_probe_v01": {
+  "probes": 106,
+  "leaks": [],
+  "owner_errors": [],
+  "customer": {
+   "cust.A.sees_A": "true",
+   "cust.A.sees_B": "false",
+   "cust.B.sees_A": "false",
+   "cust.B.link_A_order": "false",
+   "cust.A_order_owner": true
+  },
+  "checks": {
+   "no_read_leaks": true,
+   "anon_all_blocked": true,
+   "owner_ok": true,
+   "A_sees_A": true,
+   "A_not_see_B": true,
+   "B_not_see_A": true,
+   "B_cannot_link_A_order": true,
+   "A_unchanged_by_B": true
+  },
+  "all_pass": true
+ },
+ "no_rls_tables_with_privileges": [],
+ "open_write_policies": "لا سياسة كتابة بشرط true (سياستا INSERT تقيّدان بـ is_admin()/has_perm)",
+ "write_probes": {
+  "anon": "كل insert/update/delete/truncate على orders/customers/admins/saas_sites/staff/admin_kv ← permission denied",
+  "authenticated_attacker": "delete/update = 0 صف أو permission denied؛ insert ← انتهاك سياسة RLS أو permission denied؛ truncate ← permission denied"
+ },
+ "caveat": "الفحوص الأصلية للكتابة داخل v01-rls-test.sql غير صالحة بنيوياً في PostgreSQL (WITH data-modifying داخل select) فتعيد ERR دائماً؛ استُبدلت بـ dml.sql/dml2.sql الصالحة. النتيجة لا تغني عن تشغيل الاختبار على مشروع Supabase مُنشأ لهذا الغرض (BLOCKED لأن لا مشروع اختبار معزول متاح؛ المشروع الإنتاجي محظور)."
+}
