@@ -1,36 +1,36 @@
 {
- "when": "2026-11-12T22:53:31.828Z",
+ "when": "2026-11-13T02:00:18.446Z",
  "note": "Chromium برسم برمجي (SwiftShader) بلا GPU: إطارات الصفحة/ث (fps) يهيمن عليها تبليط CSS 3D للمشهد كله (~3-4) وليست كلفة النواة؛ كلفة النواة الفعلية في drawMs",
  "fps": {
-  "high": 3,
-  "canvas2d": 2.3,
-  "reducedMotion": 2
+  "high": 5,
+  "canvas2d": 3,
+  "reducedMotion": 2.7
  },
  "drawMs": {
   "high": {
    "tier": "high",
-   "ms": 7.03,
+   "ms": 5.84,
    "n": 20,
    "buf": 260,
    "webgl": true
   },
   "mid": {
    "tier": "mid",
-   "ms": 5.61,
+   "ms": 4.68,
    "n": 20,
    "buf": 260,
    "webgl": true
   },
   "low": {
    "tier": "low",
-   "ms": 4.87,
+   "ms": 4.59,
    "n": 20,
    "buf": 260,
    "webgl": true
   },
   "canvas2d": {
    "tier": "static",
-   "ms": 0.08,
+   "ms": 0.04,
    "n": 20,
    "buf": 260,
    "webgl": false
@@ -47,15 +47,15 @@
   ]
  },
  "latencyMs": {
-  "clickToListening": 727,
-  "sttRoundTrip": 19,
-  "transcriptToFirstTool": 27,
-  "transcriptToRunEnd": 37,
-  "runEndToSpeech": 26
+  "clickToListening": 525,
+  "sttRoundTrip": 31,
+  "transcriptToFirstTool": 47,
+  "transcriptToRunEnd": 68,
+  "runEndToSpeech": 29
  },
  "longTasks": {
   "count": 0,
   "maxMs": 0
  },
- "heapMB": 45.2
+ "heapMB": 28
 }

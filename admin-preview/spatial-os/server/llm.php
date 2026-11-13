@@ -27,10 +27,10 @@ elseif (!empty($_SESSION['staff'])) {
 if ($actor === null) $out(401, ['ok' => false, 'error' => 'unauthorized']);
 
 /* ── الإعداد ── */
-$cfg = ['key' => (string)getenv('ALYSSUM_LLM_KEY'), 'base' => rtrim((string)(getenv('ALYSSUM_LLM_BASE') ?: 'https://generativelanguage.googleapis.com'), '/'), 'chat' => (string)(getenv('ALYSSUM_LLM_MODEL') ?: 'gemini-2.5-flash'), 'stt' => (string)(getenv('ALYSSUM_LLM_STT_MODEL') ?: ''), 'tts' => (string)(getenv('ALYSSUM_LLM_TTS_MODEL') ?: 'gemini-2.5-flash-preview-tts'), 'voice' => (string)(getenv('ALYSSUM_LLM_VOICE') ?: 'Kore')];
+$cfg = ['key' => (string)getenv('ALYSSUM_LLM_KEY'), 'base' => rtrim((string)(getenv('ALYSSUM_LLM_BASE') ?: 'https://generativelanguage.googleapis.com'), '/'), 'chat' => (string)(getenv('ALYSSUM_LLM_MODEL') ?: 'gemini-2.5-flash'), 'stt' => (string)(getenv('ALYSSUM_LLM_STT_MODEL') ?: ''), 'tts' => (string)(getenv('ALYSSUM_LLM_TTS_MODEL') ?: 'gemini-2.5-flash-preview-tts'), 'voice' => (string)(getenv('ALYSSUM_LLM_VOICE') ?: 'Kore'), 'local' => (string)getenv('ALYSSUM_LOCAL_URL')];
 if (is_file(__DIR__ . '/llm-config.php')) { $x = include __DIR__ . '/llm-config.php'; if (is_array($x)) $cfg = array_merge($cfg, array_intersect_key($x, $cfg)); }
 if ($cfg['stt'] === '') $cfg['stt'] = $cfg['chat'];
-$ready = $cfg['key'] !== '';
+$ready = $cfg['key'] !== ''; $localReady = preg_match('#^http://(127\.0\.0\.1|localhost)(:\d{2,5})?$#', rtrim($cfg['local'], '/')) === 1; /* المحرّك المحلي: محلي فقط (لا عنوان خارجي) */
 
 $raw = file_get_contents('php://input', false, null, 0, MAX_BODY + 1); if ($raw === false || strlen($raw) > MAX_BODY) $out(413, ['ok' => false, 'error' => 'too_large']);
 $in = json_decode($raw, true); if (!is_array($in)) $out(400, ['ok' => false, 'error' => 'bad_json']);
@@ -53,9 +53,31 @@ function call(array $cfg, string $model, array $body, int $timeout): array {
 }
 function logq(string $actor, string $action, int $ms, string $res): void { @file_put_contents(sys_get_temp_dir() . '/alyssum-llm.log', date('c') . " $action $res {$ms}ms " . substr(md5($actor), 0, 6) . "\n", FILE_APPEND | LOCK_EX); }
 
-if ($action === 'caps') $out(200, ['ok' => true, 'configured' => $ready, 'chat' => $ready, 'stt' => $ready, 'tts' => $ready, 'provider' => 'gemini', 'limits' => ['messages' => 24, 'tools' => 16, 'rounds' => 4, 'audioSec' => 30, 'ttsChars' => 500]]);
-if (!$ready) $out(503, ['ok' => false, 'error' => 'llm_not_configured']);
+if ($action === 'caps') $out(200, ['ok' => true, 'configured' => $ready, 'chat' => $ready, 'stt' => $ready, 'tts' => $ready, 'local' => $localReady, 'provider' => 'gemini', 'limits' => ['messages' => 24, 'tools' => 16, 'rounds' => 4, 'audioSec' => 30, 'ttsChars' => 500]]);
 $t0 = microtime(true);
+
+/* ───────────── plan: المحرّك المحلي المفتوح الأوزان (خطة أدوات مُنمَّطة) — تجريبي بعلم ميزة ───────────── */
+if ($action === 'plan') {
+    if (!$localReady) $out(503, ['ok' => false, 'error' => 'local_not_configured']);
+    if (!rate($actor, 'plan', 90)) $out(429, ['ok' => false, 'error' => 'rate_limited']);
+    $tx = trim((string)($in['text'] ?? '')); if ($tx === '' || mb_strlen($tx) > 400) $out(400, ['ok' => false, 'error' => 'bad_text']);
+    $c = $in['ctx'] ?? []; if (!is_array($c)) $out(400, ['ok' => false, 'error' => 'bad_ctx']);
+    $perms = array_values(array_filter(array_map('strval', (array)($c['perms'] ?? [])), fn($p) => in_array($p, ['orders', 'write', 'customers', 'owner'], true)));
+    $ctx = ['perms' => $perms, 'last' => null, 'ids' => [], 'focus' => null, 'prod' => null, 'cands' => []];
+    if (isset($c['last']['tool']) && preg_match('/^[a-z]{2,12}\.[a-z_]{2,24}$/', (string)$c['last']['tool'])) { $la = []; foreach ((array)($c['last']['args'] ?? []) as $k => $v) if (preg_match('/^[a-z]{1,12}$/', (string)$k) && (is_string($v) || is_int($v) || is_bool($v))) $la[$k] = is_string($v) ? mb_substr($v, 0, 40) : $v; $ctx['last'] = ['tool' => $c['last']['tool'], 'args' => $la ?: new stdClass]; }
+    foreach (array_slice((array)($c['ids'] ?? []), 0, 8) as $i) if (is_string($i) && preg_match('/^[A-Za-z0-9_\-]{4,40}$/', $i)) $ctx['ids'][] = $i;
+    if (is_string($c['focus'] ?? null) && preg_match('/^[A-Za-z0-9_\-]{4,40}$/', $c['focus'])) $ctx['focus'] = $c['focus'];
+    if (is_string($c['prod'] ?? null) && preg_match('/^[\p{L}\p{N}_.\-]{1,80}$/u', $c['prod'])) $ctx['prod'] = $c['prod'];
+    foreach (array_slice((array)($c['cands'] ?? []), 0, 6) as $p) if (is_array($p) && preg_match('/^[\p{L}\p{N}_.\-]{1,80}$/u', (string)($p['slug'] ?? ''))) $ctx['cands'][] = ['slug' => $p['slug'], 'title' => mb_substr((string)($p['title'] ?? ''), 0, 40), 'fr' => mb_substr((string)($p['fr'] ?? ''), 0, 40)];
+    $ch = curl_init(rtrim($cfg['local'], '/') . '/plan'); curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 2, CURLOPT_TIMEOUT => 12, CURLOPT_HTTPHEADER => ['Content-Type: application/json'], CURLOPT_POSTFIELDS => json_encode(['text' => $tx, 'ctx' => $ctx], JSON_UNESCAPED_UNICODE)]);
+    $res = curl_exec($ch); $err = curl_errno($ch); $code = (int)curl_getinfo($ch, CURLINFO_RESPONSE_CODE); curl_close($ch); $ms = (int)((microtime(true) - $t0) * 1000);
+    if ($err) { logq($actor, 'plan', $ms, (string)$err); $out(502, ['ok' => false, 'error' => $err === 28 ? 'timeout' : 'local_unreachable']); }
+    $j = json_decode((string)$res, true); if ($code !== 200 || !is_array($j) || empty($j['ok'])) { logq($actor, 'plan', $ms, (string)$code); $out(502, ['ok' => false, 'error' => 'local_error']); }
+    $p = $j['plan'] ?? null; $okp = is_array($p) && in_array($p['t'] ?? '', ['tool', 'clarify', 'refuse', 'chat'], true);
+    if ($okp && $p['t'] === 'tool') { $cs = $p['c'] ?? null; $okp = is_array($cs) && count($cs) >= 1 && count($cs) <= 3; if ($okp) foreach ($cs as $x) if (!is_array($x) || !preg_match('/^[a-z]{2,12}\.[a-z_]{2,24}$/', (string)($x['n'] ?? '')) || (isset($x['a']) && !is_array($x['a'])) || strlen((string)json_encode($x['a'] ?? [])) > 600) { $okp = false; break; } }
+    logq($actor, 'plan', $ms, $okp ? 'ok' : 'badplan'); $out(200, ['ok' => true, 'valid' => $okp, 'plan' => $okp ? $p : null, 'conf' => (float)($j['conf'] ?? 0), 'minp' => (float)($j['minp'] ?? 0), 'ms' => (int)($j['ms'] ?? 0), 'relay_ms' => $ms, 'source' => 'local']);
+}
+if (!$ready) $out(503, ['ok' => false, 'error' => 'llm_not_configured']);
 
 /* ───────────── chat: استدعاء الدوال ───────────── */
 if ($action === 'chat') {

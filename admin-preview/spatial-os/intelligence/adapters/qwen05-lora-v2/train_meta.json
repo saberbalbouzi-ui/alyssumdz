@@ -1,0 +1,13 @@
+{
+ "model": "Qwen/Qwen2.5-0.5B-Instruct",
+ "examples": 3238,
+ "steps_done": 264,
+ "steps_planned": 304,
+ "bs": 8,
+ "lr": 0.0001,
+ "r": 16,
+ "train_seconds": 1806,
+ "final_loss_avg10": 0.0023,
+ "tokens_mean": 81,
+ "note": "استئناف من v1 (الخطوة 300) بمعدل تعلم 1e-4 وبذرة 4 لمدة 264 خطوة إضافية؛ المجموع ≈564 خطوة ≈1.39 حقبة"
+}

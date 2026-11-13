@@ -1,0 +1,14 @@
+{
+ "model": "AISA-Framework/AISA-AR-FunctionCall-FT",
+ "mode": "native-fg",
+ "adapter": null,
+ "n": 240,
+ "batch": 8,
+ "load_s": 1.6,
+ "max_rss_mb": 2089,
+ "prompt_tokens_mean": 1191,
+ "threads": 4,
+ "params_m": 268,
+ "bs1_ms_p50": 1964,
+ "bs1_ms_p95": 3468
+}

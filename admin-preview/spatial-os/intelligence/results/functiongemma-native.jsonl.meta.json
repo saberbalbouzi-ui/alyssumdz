@@ -1,0 +1,14 @@
+{
+ "model": "unsloth/functiongemma-270m-it",
+ "mode": "native-fg",
+ "adapter": null,
+ "n": 240,
+ "batch": 8,
+ "load_s": 1.6,
+ "max_rss_mb": 2101,
+ "prompt_tokens_mean": 1191,
+ "threads": 4,
+ "params_m": 268,
+ "bs1_ms_p50": 1870,
+ "bs1_ms_p95": 1981
+}

@@ -51,3 +51,4 @@ body[data-agent=thinking] .core i,body[data-agent=executing] .core i{animation-d
 .ag-slot{height:100%;min-height:0;display:flex;flex-direction:column}.ag-slot>.ag{flex:1;min-height:0}
 .pn-b:has(>.ag-slot){overflow:hidden}
 .ag-log{min-height:60px}
+.ag-route{font-size:10.5px;color:var(--mu);padding:0 6px}.ag-route[data-src=local]{color:var(--ok)}.ag-route[data-src=external]{color:var(--vi)}.ag-route[data-src=fallback]{color:var(--wa)}

@@ -1,0 +1,14 @@
+{
+ "model": "Qwen/Qwen2.5-0.5B-Instruct",
+ "mode": "ft",
+ "adapter": "adapters/qwen05-lora-v1",
+ "n": 919,
+ "batch": 8,
+ "load_s": 63.5,
+ "max_rss_mb": 1811,
+ "prompt_tokens_mean": 109,
+ "threads": 4,
+ "params_m": 494,
+ "bs1_ms_p50": 847,
+ "bs1_ms_p95": 1338
+}

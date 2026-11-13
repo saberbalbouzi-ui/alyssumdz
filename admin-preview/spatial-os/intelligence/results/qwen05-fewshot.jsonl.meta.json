@@ -1,0 +1,14 @@
+{
+ "model": "Qwen/Qwen2.5-0.5B-Instruct",
+ "mode": "fewshot",
+ "adapter": null,
+ "n": 240,
+ "batch": 8,
+ "load_s": 1.6,
+ "max_rss_mb": 2063,
+ "prompt_tokens_mean": 616,
+ "threads": 4,
+ "params_m": 494,
+ "bs1_ms_p50": 1769,
+ "bs1_ms_p95": 4791
+}
