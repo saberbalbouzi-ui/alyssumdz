@@ -1,0 +1,26 @@
+{
+ "phase": 12,
+ "workstream": "WS1",
+ "date": "2026-11-13",
+ "provider": "Google Gemini (generateContent REST)",
+ "model": "gemini-2.5-flash",
+ "base_host": "generativelanguage.googleapis.com",
+ "key_source": "none (proxy-injected key may exist)",
+ "prompts_defined": 34,
+ "status": "BLOCKED",
+ "preflight": {
+  "http": 401,
+  "ok": false,
+  "status": "UNAUTHENTICATED",
+  "reason": "API_KEY_SERVICE_BLOCKED",
+  "curlErr": null
+ },
+ "reason": "المزوّد رفض المفتاح/لم يقبل الطلب (preflight http 401 / API_KEY_SERVICE_BLOCKED). لا اختبار حقيقي ممكن؛ لم يُستبدل المزوّد بالمحاكي.",
+ "requests_made": 1,
+ "counts": {
+  "pass": 0,
+  "fail": 0,
+  "not_tested": 34
+ },
+ "unblock": "وفّر مفتاحاً صالحاً (مع تفعيل Generative Language API لهذا المفتاح) في ALYSSUM_LLM_KEY ثم شغّل: node test/real-provider.js"
+}
