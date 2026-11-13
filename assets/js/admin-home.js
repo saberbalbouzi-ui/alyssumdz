@@ -143,6 +143,7 @@ const AdminHome = (() => {
     if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>جارٍ التحميل…</small></h3></div>'; }
     let L; try { L = P.coNets(); } catch (e) { return ""; }
     try { const en = A().enabledCompanyKeys ? A().enabledCompanyKeys() : null; if (Array.isArray(en)) L = L.filter(g => en.indexOf(g.k) >= 0); } catch (e) { }      /* الشركات المفعّلة فقط */
+    L = L.filter(g => g.net !== 0 || g.got !== 0);      /* بلا الشركات التي مدفوعها 0 */
     if (!L.length) return "";
     const nm = k => (typeof AdminCoStats !== "undefined" ? AdminCoStats.nameOf(k) : k), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const tot = L.reduce((t, g) => t + g.net, 0);
