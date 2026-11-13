@@ -179,7 +179,7 @@
   function openSection(id) {
     const sec = SEC.find(s => s.id === id); if (!sec) return;
     const ex = open.get(id), from = nodePos(id); select(id);
-    if (ex) { if (ex.min) { ex.min = false; if (window.SpatialHub) SpatialHub.setVisible(id, true); ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); if (ex.user && ex.keep) Object.assign(ex.st, ex.keep); /* مواضع الألواح الحرة تُستعاد كما كانت قبل التصغير */ arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } faceFront(ex); focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
+    if (ex) { if (ex.min) { ex.min = false; resumePanel(ex); if (window.SpatialHub) SpatialHub.setVisible(id, true); ex.el.style.display = ""; setTimeout(() => { ex.body.scrollTop = ex.scroll || 0; }, 30); ex.el.classList.add("tr"); if (ex.user && ex.keep) Object.assign(ex.st, ex.keep); /* مواضع الألواح الحرة تُستعاد كما كانت قبل التصغير */ arrange(ex); ex.keep = Object.assign({}, ex.st); setPos(ex, ex.keep, from); setTimeout(() => ex.el.classList.remove("tr"), 900); } faceFront(ex); focus(id); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "220,255,31", 26, 3.5); markNodes(); return; }
     const fr = REAL ? FRAME[id] : null, sz = fr ? sizeFor(Object.assign({}, sec, { w: clamp(W() * .44, 460, fr.w), h: fr.h })) : sizeFor(sec); if (memo[id] && memo[id].size) { sz.w = Math.min(memo[id].size.w, W() - 24); sz.h = Math.min(memo[id].size.h, H() - 80); }
     const sl = { x: 0, y: 0, z: 0, rx: 0, ry: 0 }, el = document.createElement("section"); el.className = "panel"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", sec.name); el.tabIndex = -1;
     el.innerHTML = '<i class="face"></i><i class="vol v2"></i><i class="vol v1"></i><i class="slab s3"></i><i class="slab s2"></i><i class="slab s1"></i><i class="pn-ac"></i><i class="eg t"></i><i class="eg b"></i><i class="eg l"></i><i class="eg r"></i><header class="pn-h"><button type="button" class="pn-rot" aria-label="تدوير اللوح (اسحب)" title="اسحب لتدوير اللوح">&#10227;</button><button type="button" class="pn-dep" aria-label="تحريك في العمق (اسحب عمودياً)" title="اسحب عمودياً: أقرب/أبعد">&#8661;</button><h3></h3><button type="button" class="pn-orb" aria-label="إرجاع إلى المدار" title="إرجاع إلى المدار">&#9678;</button><button type="button" class="pn-min" aria-label="تصغير" title="تصغير">&#8211;</button><button type="button" class="pn-max" aria-label="تكبير/استعادة" title="تكبير">&#9633;</button><button type="button" class="pn-x" aria-label="إغلاق" title="إغلاق">&#10005;</button></header><div class="pn-b"></div><div class="gbadge" aria-hidden="true"></div><i class="pn-z" aria-hidden="true"><b></b></i><i class="pn-br" aria-hidden="true"></i><i class="pn-rs" aria-hidden="true"></i>';
@@ -298,11 +298,14 @@
   function mountFrame(p) {
     const b = p.body; b.classList.add("fr"); p.el.classList.add("framed");
     b.innerHTML = '<iframe class="pn-frame" title=""></iframe><div class="pn-shield" aria-hidden="true"><span>انقر على اللوح لتفعيله</span></div><div class="fr-load"><i></i><span>جارٍ تحميل لوحة التحكم…</span></div>';
-    const f = b.querySelector("iframe"); f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = true; f.addEventListener("load", () => { if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); f.src = "../../admin.html";
+    const f = b.querySelector("iframe"); f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = true; f.addEventListener("load", () => { if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); f.src = "../../admin.html";
   }
   function hookFrame(p, d) {
     const sc = e => [...e.touches].slice(0, 2).map(t => [t.screenX, t.screenY]);
     d.addEventListener("pointerdown", () => { p.frTouched = true; if (focused !== p.id) focus(p.id); selectObj(p.id); }, true);
+    /* المرحلة 12B: تفاعل مستخدم حقيقي (isTrusted) داخل اللوح خارج مرشحات الطلبات = «عمل قائم» فلا يُفرَّغ الإطار أبداً (الاستعادة تعيد التبويب/التمرير/المرشحات فقط) */
+    const userAct = e => { if (!e.isTrusted) return; const t = e.target; if (t && t.closest && t.closest("#order-filter-q,#order-filter-status,#order-filter-wilaya,#order-filter-from,#order-filter-to,#order-show-shipped")) return; p.frUser = true; };
+    d.addEventListener("pointerdown", userAct, true); d.addEventListener("keydown", userAct, true); d.addEventListener("paste", userAct, true);
     d.addEventListener("wheel", e => { if (e.shiftKey) { e.preventDefault(); userize(p); p.st.z = clamp(p.st.z + (e.deltaY < 0 ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); } }, { passive: false });
     d.addEventListener("touchstart", e => { if (e.touches.length === 2) p.pinch.start(sc(e)); }, { passive: true });
     d.addEventListener("touchmove", e => { if (e.touches.length === 2 && p.pinch.active()) { e.preventDefault(); p.pinch.move(sc(e)); } }, { passive: false });
@@ -315,6 +318,45 @@
       if (p.frame.tab === "orders") { fs.f = {}; for (const k in OF) { const e = d.getElementById(OF[k]); fs.f[k] = e ? e.value : ""; } const sh = d.getElementById("order-show-shipped"); fs.f.shipped = !!(sh && sh.checked); }
       p.content.fs = fs;
     } catch (_) { }
+  }
+  /* ───── المرحلة 12B: تجميد الألواح المصغّرة ─────
+     فوري وخفيف: الحركات تتوقف وdocument.hidden=true داخل الإطار (فتتوقف الوحدات التي تحترمه) ويُعاد كل شيء عند الفتح — الحالة لا تُمَس.
+     بعد DISCARD_MS (?discard=ms، 0 = تعطيل) يُفرَّغ الإطار فعلاً (تحرير DOM/ذاكرة) إن كان اللوح «نظيفاً»: لا حقل معدَّل ولا تبويب غير الأصلي ولا تحميل ملف؛
+     وإلا يبقى مجمَّداً خفيفاً فقط (لا نخسر عملاً غير محفوظ أبداً). الاستعادة: إعادة تحميل اللوح ثم تطبيق (تبويب/تمرير/فلاتر) المحفوظة + مصالحة Hub. */
+  const DISCARD_MS = (m => m ? +m[1] : 60000)(/[?&]discard=(\d+)/.exec(location.search));
+  const SUSP_CSS = "html.sp-susp *,html.sp-susp *::before,html.sp-susp *::after{animation-play-state:paused!important;transition:none!important}";
+  function frameDirty(p) {
+    try {
+      if (p.frUser) return true;                                                                /* تفاعل مستخدم حقيقي داخل اللوح ← عمل قائم لا نفرّغه */
+      const w = p.fr.contentWindow, d = w.document;
+      const tgt = d.getElementById("tab-" + p.frame.tab), ahp = d.getElementById("ah-panel"), onTab = p.frame.tab === "ask" ? !!(ahp && ahp.classList.contains("on")) : !!(tgt && !tgt.classList.contains("hidden"));
+      if (!onTab) return true;                                                                  /* تنقّل داخل اللوح إلى تبويب آخر: لا نعرف كيف نعيده ← لا تفريغ */
+      for (const e of d.querySelectorAll('input[type="file"]')) if (e.files && e.files.length) return true;
+      if (d.querySelector('[contenteditable="true"]:focus') || (w.getSelection && String(w.getSelection()).length)) return true;
+      return false;
+    } catch (_) { return true; }                                                                /* تعذّر الفحص ← الأحوط عدم التفريغ */
+  }
+  function softSuspend(p, on) {
+    try {
+      const w = p.fr.contentWindow, d = w.document; if (!d || !d.head) return;
+      if (!d.getElementById("__spSusp")) { const st = d.createElement("style"); st.id = "__spSusp"; st.textContent = SUSP_CSS; d.head.appendChild(st); }
+      d.documentElement.classList.toggle("sp-susp", !!on); p.suspended = !!on;
+      if (on && !p._hid) { p._hid = true; Object.defineProperty(d, "hidden", { configurable: true, get: () => true }); Object.defineProperty(d, "visibilityState", { configurable: true, get: () => "hidden" }); }
+      else if (!on && p._hid) { p._hid = false; delete d.hidden; delete d.visibilityState; }
+      d.dispatchEvent(new w.Event("visibilitychange"));
+    } catch (_) { }
+  }
+  function discardFrame(p) {
+    if (!p.min || p.discarded || p.blank || !p.fr || !p.frDone) return;
+    if (frameDirty(p)) { p.discardSkipped = (p.discardSkipped || 0) + 1; return; }
+    p.blank = true; try { p.fr.src = "about:blank"; }   /* الحالة (تبويب/تمرير/مرشحات) حُفظت لحظة التصغير في suspendPanel: بعد إخفاء الإطار يصير التمرير 0 فلا نُعيد اللقطة */ catch (_) { p.blank = false; return; }
+    p.discardedAt = Date.now(); p.el.dataset.frame = "discarded"; p.frDone = false; p.frReady = false; clearTimeout(p._fi);
+  }
+  function suspendPanel(p) { if (!p.fr) return; snapFrame(p); softSuspend(p, true); clearTimeout(p._dis); if (DISCARD_MS > 0) p._dis = setTimeout(() => discardFrame(p), DISCARD_MS); }
+  function resumePanel(p) {
+    if (!p.fr) return; clearTimeout(p._dis);
+    if (p.discarded || p.blank) { p.discarded = false; p.blank = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; p.suspended = false; p._hid = false; p.el.dataset.frame = "restoring"; if (!p.body.querySelector(".fr-load")) p.body.insertAdjacentHTML("beforeend", '<div class="fr-load"><i></i><span>جارٍ استعادة اللوح…</span></div>'); p.fr.src = "../../admin.html"; }
+    else { softSuspend(p, false); setTimeout(() => { try { if (!p.min && p.frDone) restoreFrame(p, p.fr.contentWindow, p.fr.contentWindow.document); } catch (_) { } }, 280); }   /* التمرير/المرشحات تضيع عند إخفاء الإطار: نعيدها */
   }
   function restoreFrame(p, w, d) {
     const fs = p.content && p.content.fs; if (!fs) return;
@@ -412,7 +454,7 @@
   function dismiss(id, how) {
     const p = open.get(id); if (!p) return; hov = 0; act(p, ""); if (objSel === id) objSel = bigSel(id); const to = nodePos(id); p.el.classList.remove("tr"); p.el.classList.add("tr2"); p.keep = Object.assign({}, p.st);
     if (focused === id) focused = null; Object.assign(p.st, { x: to.x * .35, y: to.y * .35, z: -380, s: .1 }); apply(p); p.el.style.setProperty("--op", 0);
-    const r = p.el.getBoundingClientRect(); if (how === "close") { setState(p, "dismissing"); remember(p, p.keep); open.delete(id); if (window.SpatialHub) SpatialHub.detach(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; if (window.SpatialHub) SpatialHub.setVisible(id, false); setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
+    const r = p.el.getBoundingClientRect(); if (how === "close") { setState(p, "dismissing"); remember(p, p.keep); open.delete(id); if (window.SpatialHub) SpatialHub.detach(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; if (window.SpatialHub) SpatialHub.setVisible(id, false); suspendPanel(p); setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
     markNodes(); select(id); setTimeout(() => arrange(), 60); syncMode();
   }
   function toggleBig(p) {

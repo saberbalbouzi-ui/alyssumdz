@@ -1,0 +1,167 @@
+{
+ "phase": "12B",
+ "workstream": "WS4",
+ "date": "2026-11-13",
+ "isolation": "متجر PHP محلي؛ ألواح iframe حقيقية؛ ?discard=4000 لتسريع الاختبار",
+ "pass": 15,
+ "fail": 0,
+ "duration_s": 55,
+ "results": [
+  {
+   "n": "تجميد خفيف فوري عند التصغير: document.hidden=true داخل الإطار وصنف sp-susp",
+   "pass": true,
+   "x": {
+    "min": true,
+    "susp": true,
+    "discarded": false,
+    "skipped": 0,
+    "frDone": true,
+    "hid": true,
+    "cls": true,
+    "src": "admin"
+   }
+  },
+  {
+   "n": "الفتح قبل انقضاء المهلة: يعود كل شيء (hidden=false، بلا sp-susp، بلا إعادة تحميل)",
+   "pass": true,
+   "x": {
+    "min": false,
+    "susp": false,
+    "discarded": false,
+    "skipped": 0,
+    "frDone": true,
+    "hid": false,
+    "cls": false,
+    "src": "admin"
+   }
+  },
+  {
+   "n": "بعد المهلة: اللوح النظيف يُفرَّغ فعلاً (الإطار about:blank، discarded=true)",
+   "pass": true,
+   "x": {
+    "min": true,
+    "susp": true,
+    "discarded": true,
+    "skipped": 0,
+    "frDone": false,
+    "hid": false,
+    "cls": false,
+    "src": "blank"
+   }
+  },
+  {
+   "n": "التفريغ حرّر عقد DOM الإطار (من 6209 إلى 4)",
+   "pass": true,
+   "x": {
+    "frame_nodes_before": 6209,
+    "after": 4
+   }
+  },
+  {
+   "n": "الاستعادة: اللوح يعود حيّاً (admin.html، frDone) على التبويب نفسه",
+   "pass": true,
+   "x": {
+    "min": false,
+    "susp": false,
+    "discarded": false,
+    "skipped": 0,
+    "frDone": true,
+    "hid": false,
+    "cls": false,
+    "src": "admin"
+   }
+  },
+  {
+   "n": "الاستعادة: الفلتر النصي محفوظ (\"سلمى\") والصفوف المعروضة كما كانت",
+   "pass": true,
+   "x": {
+    "filter": "سلمى",
+    "rows": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "n": "الاستعادة: موضع التمرير محفوظ (±25px)",
+   "pass": true,
+   "x": {
+    "before": 140,
+    "after": 140
+   }
+  },
+  {
+   "n": "بعد الاستعادة تظهر بيانات الخادم الحديثة (طلب أُنشئ أثناء التفريغ)",
+   "pass": true,
+   "x": {
+    "newId": "M261113-E30E908A"
+   }
+  },
+  {
+   "n": "مصالحة Hub بعد الاستعادة: جاهز ومرئي وبلا تدهور",
+   "pass": true,
+   "x": {
+    "ready": true,
+    "vis": true,
+    "sync": "synced",
+    "degraded": false
+   }
+  },
+  {
+   "n": "كتابة حساسة بعد الاستعادة: تُنفَّذ بموافقة وتنعكس في اللوح المستعاد",
+   "pass": true,
+   "x": {
+    "server": "confirmee"
+   }
+  },
+  {
+   "n": "لوح تفاعل معه المستخدم (نقر حقيقي): لا يُفرَّغ (تجميد خفيف فقط) ويُسجَّل أن التفريغ تُخطّي",
+   "pass": true,
+   "x": {
+    "frUser": true,
+    "min": true,
+    "susp": true,
+    "discarded": false,
+    "skipped": 1,
+    "frDone": true,
+    "hid": true,
+    "cls": true,
+    "src": "admin"
+   }
+  },
+  {
+   "n": "اللوح المتفاعَل معه يعود بنفس المستند (لا إعادة تحميل: العلامة باقية)",
+   "pass": true,
+   "x": {
+    "mark": "alive"
+   }
+  },
+  {
+   "n": "لوح انتقل المستخدم داخله إلى تبويب آخر: لا يُفرَّغ",
+   "pass": true,
+   "x": {
+    "min": true,
+    "susp": true,
+    "discarded": false,
+    "skipped": 2,
+    "frDone": true,
+    "hid": true,
+    "cls": true,
+    "src": "admin"
+   }
+  },
+  {
+   "n": "لا أخطاء صفحة في كل المسارات",
+   "pass": true,
+   "x": []
+  },
+  {
+   "n": "?discard=0: لا تفريغ أبداً (التجميد الخفيف فقط)",
+   "pass": true,
+   "x": {
+    "discarded": false,
+    "susp": true
+   }
+  }
+ ]
+}

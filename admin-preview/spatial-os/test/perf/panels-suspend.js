@@ -7,7 +7,7 @@ const SC = [{ n: "S0-no-panels", open: [] }, { n: "S2-two-visible", open: ["ord"
 (async () => {
   const store = await startStore({ stock: true }), b = await launch(), out = [];
   try { for (const sc of SC) { const runs = [];
-    for (let i = 0; i < REP; i++) { const X = await boot(b, store, { tier: "high", noOrd: true, query: "q=3" }), p = X.p;
+    for (let i = 0; i < REP; i++) { const X = await boot(b, store, { tier: "high", noOrd: true, query: "q=3" + (process.env.DISCARD ? "&discard=" + process.env.DISCARD : "") }), p = X.p;
       if (sc.open.length) { await p.evaluate(ids => ids.forEach(i => SpatialOS.open(i)), sc.open); await p.waitForFunction(ids => ids.every(i => { const q = SpatialOS.panels.get(i); return q && q.frDone; }), sc.open, { timeout: 120000 }).catch(() => { }); }
       if (sc.tile) await p.evaluate(() => { SpatialOS.panels.forEach(q => { if (q.frame) { q.st.w = 520; q.st.h = 420; } }); SpatialOS.tileAll(); });
       if (sc.min) { for (const id of sc.min) await p.evaluate(i => { const q = SpatialOS.panels.get(i); q.el.querySelector(".pn-min").click(); }, id); }
