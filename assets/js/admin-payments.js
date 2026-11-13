@@ -287,6 +287,12 @@ const AdminPayments = (() => {
     return keys.filter(k=>S.co==="all"||S.co===k).map(k=>{ const L=sItems(k); if(!L.length) return ""; const T=sumSettle(L,k), R=rates(k), nm=esc(coName(k));
       return `<section class="pm-card" data-noco><div class="pm-head" style="margin:0 0 8px"><div><b>🧾 تسوية ${nm}</b><div class="pm-note">الصافي = المحصَّل من الزبون − رسم التوصيل − عمولة التحصيل (${R.cod}% من سعر المنتج) − رسم الإرجاع (${R.ret} دج لكل مرتجع). غيّر النسبتين من شركات التوصيل ← ⚙️ إعداد ${nm}. المتبقي عند الشركة: ${T.n} طرد (تقدير).</div></div></div>${detailBlock(T)}</section>`; }).join("");
   }
+  /* «الصافي» لكل شركة (كما في «تفاصيل الدفع»): المحصَّل − العمولة − التوصيل − الإرجاع − التأمين؛ للصفحة الرئيسية */
+  function coNets() {
+    let ks=[]; try{ ks=Object.keys((A().allDeliveryCompanies&&A().allDeliveryCompanies())||{}); }catch(_){}
+    if(ks.indexOf("yalidine")<0) ks.unshift("yalidine"); else ks=["yalidine"].concat(ks.filter(k=>k!=="yalidine"));
+    return ks.map(k=>{ const y=k==="yalidine", L=sItems(y?undefined:k); if(!L.length) return null; const T=y?sumSettle(L):sumSettle(L,k); return { k, net:T.net, got:T.got, n:T.n, nDone:T.nDone, nRet:T.nRet, netExp:T.netExp, nExp:T.nExp }; }).filter(Boolean);
+  }
   function settleCard() {
     let T=sumSettle(sItems()); const R=ydReal();
     /* كشوف الشركة الحقيقية الملصوقة تحلّ محل التقدير في كل الأرقام (المحصَّل، التوصيل، COD، الإرجاع، الصافي، عدد الطرود) */
@@ -403,5 +409,5 @@ const AdminPayments = (() => {
     if(typeof Admin==="undefined"||Admin._paymentsTabWrapped)return;
     const original=Admin.tab;Admin.tab=function(t,btn){const result=original.call(this,t,btn),el=$("tab-payments");if(el)el.classList.toggle("hidden",t!=="payments");if(t==="payments")AdminPayments.render();return result;};Admin._paymentsTabWrapped=true;
   });
-  return { render, items, record, view, autoRec, settle, sumSettle, detailBlock, parseDetail, totals, coStats, load, S, DEF_COD, DEF_RET, YP, cmpCard, trkOf };
+  return { render, items, record, view, autoRec, settle, sumSettle, detailBlock, parseDetail, totals, coStats, coNets, load, S, DEF_COD, DEF_RET, YP, cmpCard, trkOf };
 })();

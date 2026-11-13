@@ -136,17 +136,16 @@ const AdminHome = (() => {
       '<div><b>' + num(r.am) + '/' + r.cap + '</b><span>جلسات صباحاً</span></div><div><b>' + num(r.pm) + '/' + r.cap + '</b><span>جلسات مساءً</span></div></div>' +
       '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button><button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
   }
-  /* المدفوعات لكل شركة توصيل: المستلَم، قيد التحصيل (مرسَل لم يُدفع)، المستردّ */
+  /* صافي كل شركة توصيل (ما يخصّك بعد العمولة والتوصيل والإرجاع) كما في «تفاصيل الدفع» */
   function payCard() {
     if (typeof AdminPayments === "undefined" || !hasTab("payments")) return "";
     const P = AdminPayments;
-    if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px"><h3>المدفوعات حسب الشركة <small>جارٍ التحميل…</small></h3></div>'; }
-    let C; try { C = P.coStats(); } catch (e) { return ""; }
-    const nm = k => (typeof AdminCoStats !== "undefined" ? AdminCoStats.nameOf(k) : k), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-    const L = C.keys.filter(k => C.by[k] && (C.by[k].received || C.by[k].pending || C.by[k].refunded || C.by[k].paidN));
+    if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>جارٍ التحميل…</small></h3></div>'; }
+    let L; try { L = P.coNets(); } catch (e) { return ""; }
     if (!L.length) return "";
-    const tot = L.reduce((t, k) => t + C.by[k].received, 0);
-    return '<div class="ah-card" style="margin:0 0 14px"><h3>المدفوعات حسب الشركة <small>المستلَم ' + money(tot) + '</small></h3><div class="ah-pay">' + L.map(k => { const g = C.by[k]; return '<div class="ah-pc" data-noco><b>' + esc(nm(k)) + '</b><strong>' + money(g.received) + '</strong><span>مستلَم · ' + num(g.paidN) + ' طلب</span>' + (g.pending ? '<span class="w">قيد التحصيل ' + money(g.pending) + '</span>' : "") + (g.refunded ? '<span class="r">مستردّ ' + money(g.refunded) + '</span>' : "") + '</div>'; }).join("") + '</div><div class="ah-rqb"><button type="button" class="ah-btn gh" data-go="payments">فتح المدفوعات</button></div></div>';
+    const nm = k => (typeof AdminCoStats !== "undefined" ? AdminCoStats.nameOf(k) : k), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const tot = L.reduce((t, g) => t + g.net, 0);
+    return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>المجموع ' + money(tot) + '</small></h3><div class="ah-pay">' + L.map(g => '<div class="ah-pc" data-noco><b>' + esc(nm(g.k)) + '</b><strong' + (g.net < 0 ? ' style="color:#fca5a5"' : "") + '>' + money(g.net) + '</strong><span>الصافي · ' + num(g.nDone) + ' مسلَّم' + (g.nRet ? ' · ' + num(g.nRet) + ' مرتجع' : "") + '</span><span>المحصَّل ' + money(g.got) + '</span>' + (g.nExp ? '<span class="w">في الطريق ' + num(g.nExp) + ' · متوقع ' + money(g.netExp) + '</span>' : "") + '</div>').join("") + '</div><div class="ah-rqb"><button type="button" class="ah-btn gh" data-go="payments">تفاصيل الدفع</button></div></div>';
   }
   /* الحملات الإعلانية الحالية (حملة لكل منتج) مع تفعيل/تعطيل مباشر؛ المنتهية بتاريخ «إلى» لا تظهر */
   function adsCard() {
