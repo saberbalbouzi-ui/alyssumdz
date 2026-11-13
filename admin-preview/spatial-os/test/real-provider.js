@@ -43,7 +43,7 @@ const SET = [
 function preflight() { /* فحص مباشر لقبول المفتاح عبر curl (يحترم وكيل البيئة)؛ لا يطبع المفتاح */
   const f = path.join(require("os").tmpdir(), "alyssum-pf-" + process.pid + ".json");
   const body = JSON.stringify({ contents: [{ role: "user", parts: [{ text: "ping" }] }], generationConfig: { maxOutputTokens: 8 } });
-  const args = ["-sS", "-m", "30", "-o", f, "-w", "%{http_code}", "-H", "Content-Type: application/json"]; if (KEY) args.push("-H", "x-goog-api-key: " + KEY); args.push("-d", body, BASE + "/v1beta/models/" + encodeURIComponent(MODEL) + ":generateContent");
+  const args = ["-sS", "-m", "30", "-o", f, "-w", "%{http_code}", "-H", "Content-Type: application/json"]; if (SELF) args.push("--noproxy", "*"); if (KEY) args.push("-H", "x-goog-api-key: " + KEY); args.push("-d", body, BASE + "/v1beta/models/" + encodeURIComponent(MODEL) + ":generateContent");
   const r = cp.spawnSync("curl", args, { encoding: "utf8" }); let j = null; try { j = JSON.parse(fs.readFileSync(f, "utf8")); } catch (_) { } try { fs.unlinkSync(f); } catch (_) { }
   const code = +r.stdout || 0, e = (j && j.error) || {}; const reason = ((e.details || []).find(d => d && d.reason) || {}).reason || null;
   return { http: code, ok: code === 200, status: e.status || null, reason, curlErr: r.status ? String(r.stderr || "").slice(0, 120) : null };
