@@ -56,6 +56,7 @@ const AdminUpdate = (() => {
   }
   /* يجلب الصفحة وسكربتاتها وأنماطها من الخادم متجاوزاً الكاش ثم يعيد تحميل الصفحة نفسها (دون مغادرتها) */
   async function reloadFresh(param, val) {
+    window.__auReload = true;      /* إعادة التحميل للتحديث تحفظ حالة المطوّر وتعيد فتحها: لا نافذة «مغادرة الموقع؟» */
     { const u0 = new URL(location.href); u0.searchParams.set(param, val); setTimeout(() => { try { location.replace(u0.toString()); } catch (e) { location.reload(); } }, 12000); }      /* صمّام أمان: لا يبقى «جاري التحديث…» أكثر من 12 ثانية مهما حدث */
     saveState(); try { API.sb.dbg("update-reload " + param + " left=" + Math.round(((API.sb.session() || {}).expires_at - Date.now()) / 60000) + "m"); } catch (e) { }
     /* لا نخسر الدخول عند التحديث: نجدّد الجلسة الآن إن قاربت على الانتهاء ونوقف أي تجديد آخر قبل إعادة التحميل (ردّ تجديد ضائع يُبطل رمز التجديد القديم) */

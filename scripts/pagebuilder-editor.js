@@ -485,7 +485,7 @@ body{overflow-x:hidden;margin:0}`;
     const kd = e => { if (e.key === "Enter") { e.preventDefault(); i.blur(); } else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); i.removeEventListener("blur", bl); end(false); i.blur(); } };
     const bl = () => end(true); i.addEventListener("keydown", kd); i.addEventListener("blur", bl);
   }
-  try { window.addEventListener("beforeunload", e => { if (E.dirty && document.querySelector("#pb-app.on")) { e.preventDefault(); e.returnValue = ""; } }); } catch (e) { }
+  try { window.addEventListener("beforeunload", e => { if (!window.__auReload && E.dirty && document.querySelector("#pb-app.on")) { e.preventDefault(); e.returnValue = ""; } }); } catch (e) { }
   function meta(k, v) { E.page[k] = v; if (k === "title" && E.isNew && !E.slugTouched) { E.page.slug = slugify(v); } E.dirty = true; clearTimeout(saveT); saveT = setTimeout(() => { commitHist(); saveDraft(); }, 600); if (k === "title") { updateTop(); if (E.ltab === "pg") { const s = $("pg-slug"); if (s && E.isNew && !E.slugTouched) s.value = E.page.slug; } } else renderCanvas(); }
   const slugify = t => String(t || "").toLowerCase().trim().replace(/[^a-z0-9؀-ۿ]+/g, "-").replace(/[؀-ۿ]+/g, "").replace(/^-+|-+$/g, "") || "page-" + Date.now().toString(36).slice(-4);
 
