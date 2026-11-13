@@ -15,7 +15,7 @@ const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); return s[Math.mi
       st = await startStore({ stock: true, orders: [] }); const db = path.join(st.dir, "api", "_data", "store.db");
       execFileSync("php", [path.join(__dirname, "seed_orders.php"), db, String(N)]);
       const H = { "X-Requested-With": "XMLHttpRequest", Cookie: st.cookie }, g = async (q, h) => { const t = Date.now(); const r = await fetch(st.base + "/api/index.php?r=" + q, { headers: h || H }); const j = await r.json().catch(() => null); return { s: r.status, j, ms: Date.now() - t }; };
-      const truthRows = sqlq(st, "select id, created_at, status, total, wilaya, name, items from orders order by created_at desc, id desc"), allIds = truthRows.map(r => r.id);
+      const truthRows = sqlq(st, "select id, created_at, status, total, wilaya, name, items from orders order by created_at desc, rowid desc"), allIds = truthRows.map(r => r.id);
       /* 1) عقد orders القديم + بيانات الاقتطاع */
       const o = await g("orders"); const exp = allIds.slice(0, 2000);
       ok(`[${N}] orders: العقد القديم محفوظ (نفس أول ${Math.min(N, 2000)} معرّفاً بنفس الترتيب)`, o.s === 200 && o.j.ok && JSON.stringify(o.j.orders.map(x => x.id)) === JSON.stringify(exp), { returned: o.j.returned });

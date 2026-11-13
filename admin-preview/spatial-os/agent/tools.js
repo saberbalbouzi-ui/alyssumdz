@@ -30,12 +30,13 @@
   /* المرحلة 12B: نقطتا الخادم الإضافيتان orders_stats (تجميع كامل) وorders_page (ترقيم بمؤشر). على متجر أقدم بلا هاتين النقطتين (404) نرجع للمسار القديم
      مع الإفصاح عن اقتطاع 2000. أي خطأ آخر (جلسة/صلاحية/شبكة) يُرمى كما هو ولا يُخفى بالرجوع للقديم. */
   let SRV = null;
-  async function srvCall(route, query) { if (SRV === false) return null; try { const j = await call(route, { query: query }); if (!j || j.ok !== true) return null; SRV = true; return j; } catch (e) { if (e && e.code === "http_404") { SRV = false; return null; } throw e; } }
+  async function srvCall(route, query, shape) { if (SRV === false) return null; try { const j = await call(route, { query: query }); if (!j || j.ok !== true) return null; if (shape && !shape(j)) throw new ToolError("bad_response", "ردّ الطلبات غير صالح"); SRV = true; return j; } catch (e) { if (e && e.code === "http_404") { SRV = false; return null; } throw e; } }
   function periodRange(per, now) {
     const s = startOfDay(now || new Date()), sec = d => Math.floor(+d / 1000);
     if (per === "today") return [sec(s), sec(+s + 864e5)]; if (per === "yesterday") return [sec(+s - 864e5), sec(s)]; if (per === "week") return [sec(+s - 6 * 864e5), sec(+s + 864e5)];
     if (per === "month") return [sec(new Date(s.getFullYear(), s.getMonth(), 1)), sec(new Date(s.getFullYear(), s.getMonth() + 1, 1))]; return [0, 4102444800];
   }
+  const SH_STATS = j => typeof j.orders === "number" && j.by_status && typeof j.by_status === "object", SH_PAGE = j => Array.isArray(j.orders) && typeof j.total === "number";
   const tzMin = () => -new Date().getTimezoneOffset(), qs = o => Object.keys(o).filter(k => o[k] !== undefined && o[k] !== "" && o[k] !== null).map(k => "&" + k + "=" + encodeURIComponent(o[k])).join("");
   async function getFile(path) { const j = await call("file", { query: "&path=" + encodeURIComponent(path) }); if (typeof j.content !== "string") throw new ToolError("bad_response", "ملف غير صالح"); try { return decodeURIComponent(escape(atob(j.content.replace(/\s/g, "")))); } catch (_) { throw new ToolError("bad_response", "ترميز الملف غير صالح"); } }
   async function getProducts() { const txt = await getFile("assets/js/data.js"), i = txt.indexOf("var PRODUCTS = "); if (i < 0) throw new ToolError("bad_response", "تنسيق المنتجات غير معروف"); try { const v = JSON.parse(txt.slice(i + 15, txt.lastIndexOf(";"))); if (!Array.isArray(v)) throw 0; return v; } catch (_) { throw new ToolError("bad_response", "تعذّرت قراءة المنتجات"); } }
@@ -103,9 +104,9 @@
     schema: { type: "object", properties: { period: O_PER }, additionalProperties: false },
     async run(a) {
       { /* مسار الخادم (تجميع كامل صحيح مهما كان الحجم) */
-        const now0 = new Date(), per0 = a.period || "today", [s0, u0] = periodRange(per0, now0), st = await srvCall("orders_stats", qs({ since: s0, until: u0, tz: tzMin(), top: 1 }));
+        const now0 = new Date(), per0 = a.period || "today", [s0, u0] = periodRange(per0, now0), st = await srvCall("orders_stats", qs({ since: s0, until: u0, tz: tzMin(), top: 1 }), SH_STATS);
         if (st) {
-          let est = null; if (per0 === "today") { const sd = Math.floor(+startOfDay(now0) / 1000), p7 = await srvCall("orders_stats", qs({ since: sd - 7 * 86400, until: sd, tz: tzMin(), top: 1 })), days = ((p7 && p7.by_day) || []).filter(d => d.revenue > 0).map(d => d.revenue); if (days.length >= 2) est = { avgDailyRevenue: Math.round(days.reduce((x, y) => x + y, 0) / days.length), days: days.length }; }
+          let est = null; if (per0 === "today") { const sd = Math.floor(+startOfDay(now0) / 1000), p7 = await srvCall("orders_stats", qs({ since: sd - 7 * 86400, until: sd, tz: tzMin(), top: 1 }), SH_STATS), days = ((p7 && p7.by_day) || []).filter(d => d.revenue > 0).map(d => d.revenue); if (days.length >= 2) est = { avgDailyRevenue: Math.round(days.reduce((x, y) => x + y, 0) / days.length), days: days.length }; }
           return { period: per0, orders: st.orders, validOrders: st.valid_orders, revenue: st.revenue, delivered: st.delivered_revenue, byStatus: st.by_status, pending: st.by_status.nouvelle, estimate: est, total: st.orders, window: 0, source: "server" };
         }
       }
@@ -118,7 +119,7 @@
   def("sales.top_product", { risk: "read", perms: ["orders"], title: { ar: "المنتج الأكثر مبيعاً", fr: "Produit le plus vendu", en: "Best-selling product" }, endpoint: "GET orders", desc: "يجمع بنود الطلبات غير الملغاة من الخادم حسب المنتج (الكمية والإيراد).",
     schema: { type: "object", properties: { period: O_PER, by: { type: "string", enum: ["qty", "revenue"] } }, additionalProperties: false },
     async run(a) {
-      { const now0 = new Date(), per0 = a.period || "all", [s0, u0] = periodRange(per0, now0), by0 = a.by || "qty", st = await srvCall("orders_stats", qs({ since: s0, until: u0, tz: tzMin(), top: 3, sort: by0 === "revenue" ? "revenue" : "qty" }));
+      { const now0 = new Date(), per0 = a.period || "all", [s0, u0] = periodRange(per0, now0), by0 = a.by || "qty", st = await srvCall("orders_stats", qs({ since: s0, until: u0, tz: tzMin(), top: 3, sort: by0 === "revenue" ? "revenue" : "qty" }), SH_STATS);
         if (st) return { period: per0, by: by0, top: st.top_products.map(p => ({ title: p.title, qty: p.qty, revenue: p.revenue, orders: p.orders })), count: st.products_distinct, ordersCounted: st.valid_orders, unparsed: st.unparsed_items, window: 0, source: "server" }; }
       const all = await getOrders(), now = new Date(), sel = all.filter(o => VALID(o) && inPeriod(o.date, a.period || "all", now)), m = new Map(); let unparsed = 0;
       sel.forEach(o => lines(o).forEach(l => { if (!l) { unparsed++; return; } const k = norm(l.title), e = m.get(k) || { title: l.title, qty: 0, revenue: 0, orders: new Set() }; e.qty += l.qty; e.revenue += l.rev; e.orders.add(o.id); m.set(k, e); }));
@@ -128,13 +129,13 @@
   def("orders.list", { risk: "read", perms: ["orders"], title: { ar: "عرض الطلبات", fr: "Afficher les commandes", en: "List orders" }, endpoint: "GET orders", desc: "يقرأ الطلبات من الخادم ويصفّيها (حالة/ولاية/بحث/فترة). لا هواتف في النتائج.",
     schema: { type: "object", properties: { status: O_STAT, wilaya: { type: "string", maxLength: 40 }, q: { type: "string", maxLength: 60 }, period: O_PER, limit: { type: "integer", minimum: 1, maximum: 50 } }, additionalProperties: false },
     async run(a) {
-      const lim = a.limit || 20, [s0, u0] = periodRange(a.period, new Date()), pg = await srvCall("orders_page", qs({ limit: lim, status: a.status, wilaya: a.wilaya, q: a.q, since: a.period && a.period !== "all" ? s0 : "", until: a.period && a.period !== "all" ? u0 : "" }));
+      const lim = a.limit || 20, [s0, u0] = periodRange(a.period, new Date()), pg = await srvCall("orders_page", qs({ limit: lim, status: a.status, wilaya: a.wilaya, q: a.q, since: a.period && a.period !== "all" ? s0 : "", until: a.period && a.period !== "all" ? u0 : "" }), SH_PAGE);
       if (pg) return { count: pg.total, shown: Math.min(lim, pg.total), items: pg.orders.map(brief), filter: a, total: pg.total, window: 0, source: "server" };
       const all = await getOrders(), r = filterOrders(all, a, new Date()); return { count: r.length, shown: Math.min(lim, r.length), items: r.slice(0, lim).map(brief), filter: a, total: all.length, window: winOf(all) };
     } });
   def("orders.get", { risk: "read", perms: ["orders"], title: { ar: "تفاصيل طلب", fr: "Détails d'une commande", en: "Order details" }, endpoint: "GET orders", desc: "تفاصيل طلب بمعرّفه؛ الهاتف مقنَّع ما لم تكن مخوَّلاً بـ«العملاء».",
     schema: { type: "object", properties: { id: { type: "string", pattern: ID_RE } }, required: ["id"], additionalProperties: false },
-    async run(a, c) { const pg0 = await srvCall("orders_page", qs({ id: a.id, limit: 1 })), o = pg0 ? pg0.orders.find(x => x.id === a.id) : (await getOrders()).find(x => x.id === a.id); if (!o) throw new ToolError("not_found", "لا يوجد طلب بهذا المعرّف"); const full = c.can("customers"); return Object.assign(brief(o), { phone: full ? o.phone : maskPhone(o.phone), phoneMasked: !full, commune: o.commune, fee: o.fee, subtotal: o.subtotal }); } });
+    async run(a, c) { const pg0 = await srvCall("orders_page", qs({ id: a.id, limit: 1 }), SH_PAGE), o = pg0 ? pg0.orders.find(x => x.id === a.id) : (await getOrders()).find(x => x.id === a.id); if (!o) throw new ToolError("not_found", "لا يوجد طلب بهذا المعرّف"); const full = c.can("customers"); return Object.assign(brief(o), { phone: full ? o.phone : maskPhone(o.phone), phoneMasked: !full, commune: o.commune, fee: o.fee, subtotal: o.subtotal }); } });
   def("products.search", { risk: "read", perms: [], owner: true, title: { ar: "البحث عن منتج", fr: "Chercher un produit", en: "Search products" }, endpoint: "GET file?path=assets/js/data.js", desc: "بحث في منتجات المتجر الفعلية (data.js).",
     schema: { type: "object", properties: { q: { type: "string", maxLength: 60 } }, additionalProperties: false },
     async run(a) { const P = await getProducts(), q = norm(a.q || ""), r = (q ? P.filter(p => norm(p.title + " " + p.slug + " " + (p.desc || "")).includes(q)) : P).slice(0, 8); return { count: r.length, total: P.length, items: r.map(pb) }; } });
@@ -155,7 +156,7 @@
     async run(a) {
       { /* مسار الخادم: بحث LIKE على الاسم/الهاتف عبر الصفحات (حتى 4×500 صفاً) لئلا تُفقد طلبات أقدم من نافذة 2000؛ يُفصح إن بقي المزيد */
         const digits0 = a.q.replace(/\D/g, ""), key = digits0.length >= 6 ? digits0 : a.q; let cur = "", pages = 0, rows = [], pg = null;
-        for (; pages < 4; pages++) { pg = await srvCall("orders_page", qs({ q: key, limit: 500, cursor: cur })); if (!pg) break; rows = rows.concat(pg.orders); if (!pg.has_more) break; cur = pg.next_cursor; }
+        for (; pages < 4; pages++) { pg = await srvCall("orders_page", qs({ q: key, limit: 500, cursor: cur }), SH_PAGE); if (!pg) break; rows = rows.concat(pg.orders); if (!pg.has_more) break; cur = pg.next_cursor; }
         if (pg) { const q0 = norm(a.q), r0 = rows.filter(o => norm(o.name).includes(q0) || (digits0.length >= 6 && String(o.phone).replace(/\D/g, "").includes(digits0))); return { count: r0.length, spent: r0.filter(VALID).reduce((s, o) => s + (Number(o.total) || 0), 0), items: r0.slice(0, 20).map(brief), window: pg.has_more ? rows.length : 0, source: "server" }; }
       }
       const q = norm(a.q), digits = a.q.replace(/\D/g, ""), r = (await getOrders()).filter(o => norm(o.name).includes(q) || (digits.length >= 6 && String(o.phone).replace(/\D/g, "").includes(digits))); return { count: r.length, spent: r.filter(VALID).reduce((s, o) => s + (Number(o.total) || 0), 0), items: r.slice(0, 20).map(brief) }; } });
