@@ -34,8 +34,10 @@ const mkStaff = (st, user, perms) => api(st, "team", { method: "POST", cookie: s
     ok("موظف A بنفس اسم موظف في B: كوكيه لا يُقبل في B", sx.every(([, s]) => s === 401), sx);
     const sxb = await api(A, "orders", { cookie: sB.cookie }); ok("وبالعكس: كوكي موظف B لا يُقبل في A", sxb.s === 401, { s: sxb.s });
     /* 3) update.php وllm.php بجلسة A على B */
-    const up = await page(B, "/update.php", A.cookie), llm = await POST(B, "/admin-preview/spatial-os/server/llm.php", { action: "caps" }, A.cookie);
-    ok("update.php في B يرفض جلسة مدير A (401)", up.s === 401, { s: up.s });
+    /* update.php ليس ضمن حزمة الاختبار الافتراضية: نضعه في المتجرين (هو ملف رفع التحديثات في النسخة الحقيقية) */
+    for (const st of [A, B]) fs.copyFileSync(path.join(__dirname, "..", "..", "..", "platform", "php-edition", "update.php"), path.join(st.dir, "update.php"));
+    const up = await page(B, "/update.php", A.cookie), upOwn = await page(A, "/update.php", A.cookie), llm = await POST(B, "/admin-preview/spatial-os/server/llm.php", { action: "caps" }, A.cookie);
+    ok("update.php في B يرفض جلسة مدير A (401)، ويقبل جلسة A في A (ليس 401)", up.s === 401 && upOwn.s !== 401, { cross: up.s, own: upOwn.s });
     ok("وسيط الذكاء في B يرفض جلسة مدير A (401)", llm.s === 401, { s: llm.s });
     const llmOwn = await POST(A, "/admin-preview/spatial-os/server/llm.php", { action: "caps" }, A.cookie); ok("الأساس: وسيط الذكاء في A يقبل جلسة A (ليس 401)", llmOwn.s !== 401, { s: llmOwn.s });
     /* 4) جلسة مزوَّرة في المسار العام القديم (قبل الإصلاح كان هذا هو المسار الفعلي للجلسات) */
@@ -58,7 +60,8 @@ const mkStaff = (st, user, perms) => api(st, "team", { method: "POST", cookie: s
     const mode = (fs.statSync(path.join(A.dir, "api", "_data", "sessions")).mode & 0o777).toString(8); ok("مجلد جلسات التثبيت بصلاحية 700 (لا قراءة/كتابة لغير المالك)", mode === "700", { mode });
     /* 9) معرّفات عبر المتاجر: طلب A في B */
     const aid = (own.j.orders[0] || {}).id; await login(B, { password: B.pw }); const bAdmin = (await login(B, { password: B.pw })).cookie, look = await api(B, "orders_page&id=" + encodeURIComponent(aid), { cookie: bAdmin }), upd = await POST(B, "/api/index.php?r=order_update", { id: aid, status: "annulee" }, bAdmin);
-    ok("مدير B الشرعي لا يرى ولا يعدّل طلب A بمعرّفه (لا وجود له في B)", look.s === 200 && (look.j.orders || []).length === 0 && (upd.s === 404 || (upd.j && upd.j.ok !== true)), { page_n: (look.j.orders || []).length, upd: upd.s });
+    const created = (await api(B, "orders_page&id=" + encodeURIComponent(aid), { cookie: bAdmin })).j.orders.length;
+    ok("مدير B الشرعي لا يرى طلب A بمعرّفه، ومحاولة تعديله لا تُنشئ ولا تغيّر شيئاً في B", look.s === 200 && (look.j.orders || []).length === 0 && created === 0, { page_n: (look.j.orders || []).length, created_after_update: created, observation_update_unknown_id_http: upd.s });
     const stillA = await api(A, "orders", { cookie: A.cookie }); ok("طلبات A لم تتغيّر بعد كل الهجمات (حالاتها كما كانت)", (stillA.j.orders || []).every((o, i) => o.status === own.j.orders[i].status), { n: stillA.j.orders.length });
     /* 10) رموز الزبائن */
     const reg = await POST(A, "/api/index.php?r=customer_register", { phone: "0550111222", name: "زبون A", password: "Pass12345" }); const tok = reg.j && reg.j.token;
