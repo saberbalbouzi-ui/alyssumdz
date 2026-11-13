@@ -857,6 +857,7 @@ switch ($route) {
         if (($_GET['since'] ?? '') !== '') { $w[] = 'created_at >= ?'; $a[] = (int)$_GET['since']; }
         if (($_GET['until'] ?? '') !== '') { $w[] = 'created_at < ?'; $a[] = (int)$_GET['until']; }
         if (($wl = trim((string)($_GET['wilaya'] ?? ''))) !== '') { $w[] = 'wilaya = ?'; $a[] = mb_substr($wl, 0, 80); }
+        if (($oid = trim((string)($_GET['id'] ?? ''))) !== '') { $w[] = 'id = ?'; $a[] = mb_substr($oid, 0, 40); }
         if (($q = trim((string)($_GET['q'] ?? ''))) !== '') { $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr($q, 0, 60)) . '%'; $w[] = "(name LIKE ? ESCAPE '\\' OR id LIKE ? ESCAPE '\\' OR phone LIKE ? ESCAPE '\\' OR items_text LIKE ? ESCAPE '\\')"; array_push($a, $like, $like, $like, $like); }
         $cs = (string)($_GET['cursor'] ?? ''); $cur = cursorDec($cs); if ($cs !== '' && $cur === null) out(422, ['error' => 'invalid_cursor']);
         $cn = $d->prepare('SELECT COUNT(*) FROM orders' . ($w ? ' WHERE ' . implode(' AND ', $w) : '')); $cn->execute($a); $total = (int)$cn->fetchColumn();
@@ -880,7 +881,7 @@ switch ($route) {
             foreach ($its as $it) { if (!is_array($it)) { $unparsed++; continue; } $t = trim((string)($it['title'] ?? '')); if ($t === '') { $unparsed++; continue; } $k = mb_strtolower($t); $qy = max(1, (int)($it['qty'] ?? 1));
                 if (!isset($prod[$k])) $prod[$k] = ['title' => $t, 'slug' => (string)($it['slug'] ?? ''), 'qty' => 0, 'revenue' => 0.0, 'orders' => 0]; $prod[$k]['qty'] += $qy; $prod[$k]['revenue'] += $qy * (float)($it['price'] ?? 0); $prod[$k]['orders']++; }
         }
-        uasort($prod, fn($x, $y) => [$y['qty'], $y['revenue']] <=> [$x['qty'], $x['revenue']]);
+        if (($_GET['sort'] ?? '') === 'revenue') uasort($prod, fn($x, $y) => [$y['revenue'], $y['qty']] <=> [$x['revenue'], $x['qty']]); else uasort($prod, fn($x, $y) => [$y['qty'], $y['revenue']] <=> [$x['qty'], $x['revenue']]);
         out(200, ['ok' => true, 'scope' => 'server', 'range' => ['since' => $since, 'until' => $until, 'tz' => $tz], 'orders' => $cnt, 'valid_orders' => $valid, 'revenue' => $rev, 'delivered_revenue' => $deliv, 'by_status' => $by, 'by_day' => $days, 'top_products' => array_slice(array_values($prod), 0, $topN), 'products_distinct' => count($prod), 'unparsed_items' => $unparsed]);
 
     /* أمين المخزن (v1.89.239): قائمة تجهيز بلا هاتف ولا أسعار ولا مالية — الطلبات المؤكَّدة/المرسَلة فقط، وعلامة 🧰 في الملاحظة تعني «جُهِّز» */
