@@ -5,16 +5,13 @@
  "isolation": "متجر PHP محلي معزول + بيانات اصطناعية؛ لا إنتاج",
  "mocked": "المزوّد البعيد فقط في السيناريو 19 (llm-stub)",
  "scenarios": 20,
- "pass": 16,
+ "pass": 18,
  "partial": 2,
- "fail": 2,
- "security_failures": [
-  "16 جلسة منتهية: لا بيانات، ثم استرجاع بعد الدخول",
-  "17 تزامن: نقر مزدوج على الموافقة ينفّذ كتابة واحدة فقط"
- ],
+ "fail": 0,
+ "security_failures": [],
  "page_errors": [],
  "audit_entries": 112,
- "duration_s": 144,
+ "duration_s": 145,
  "results": [
   {
    "n": 1,
@@ -26,7 +23,7 @@
      "ui.filter_orders:ok"
     ],
     "api_pending": 3,
-    "text": "حقيقةعدد الطلبات المطابقة: 3\nحقيقة1. S261113-59A76 — يوسف زروقي — 5 350 DA — في انتظار الت"
+    "text": "حقيقةعدد الطلبات المطابقة: 3\nحقيقة1. S261113-CA0A9 — يوسف زروقي — 5 350 DA — في انتظار الت"
    }
   },
   {
@@ -94,7 +91,7 @@
      "customers.find:ok"
     ],
     "phone_in_output": false,
-    "text": "حقيقة1 طلب لهذا الزبون — مجموع غير الملغاة: 5 450 DA\nحقيقة1. S261113-69428 — 5 450 DA — مؤ"
+    "text": "حقيقة1 طلب لهذا الزبون — مجموع غير الملغاة: 5 450 DA\nحقيقة1. S261113-28EB6 — 5 450 DA — مؤ"
    }
   },
   {
@@ -204,7 +201,7 @@
   {
    "n": 16,
    "name": "جلسة منتهية: لا بيانات، ثم استرجاع بعد الدخول",
-   "verdict": "FAIL",
+   "verdict": "PASS",
    "evidence": {
     "expired": {
      "status": "error",
@@ -212,15 +209,17 @@
      "text": "الجلسة غير صالحة — سجّل الدخول لاستعمال الوكيل"
     },
     "relogin": 200,
-    "after": []
+    "after": [
+     "sales.summary:ok"
+    ]
    }
   },
   {
    "n": 17,
    "name": "تزامن: نقر مزدوج على الموافقة ينفّذ كتابة واحدة فقط",
-   "verdict": "FAIL",
+   "verdict": "PASS",
    "evidence": {
-    "order_update_requests": 3
+    "status_update_requests": 1
    }
   },
   {
@@ -264,7 +263,7 @@
      "أكد كل الطلبات→success/orders.list:ok",
      "أكد الطلب→success/orders.list:ok",
      "أكد الطلب رقم 99999999→success/orders.list:ok",
-     "امسح الطلب S261113-59A→error/orders.confirm:error"
+     "امسح الطلب S261113-CA0→error/orders.confirm:error"
     ],
     "forged_hub_accepted": false,
     "unchanged": true
