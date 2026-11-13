@@ -9,7 +9,7 @@
    "orders": 100,
    "status": "PASS",
    "notes": [],
-   "seed_s": 8.8,
+   "seed_s": 8.1,
    "seed_retries": 0,
    "truth": {
     "total": 100,
@@ -28,20 +28,20 @@
     },
     "visible_pending": 60
    },
-   "boot_s": 1.7,
+   "boot_s": 1.8,
    "ord_panel_ready": {
     "ok": true,
-    "s": 2
+    "s": 2.1
    },
    "main_thread_longtasks": {
-    "count": 6,
-    "max_ms": 161,
-    "total_ms": 612
+    "count": 5,
+    "max_ms": 124,
+    "total_ms": 410
    },
    "agent": {
     "orders.list": {
-     "p50_ms": 895,
-     "max_ms": 1105,
+     "p50_ms": 814,
+     "max_ms": 935,
      "results": [
       "ok",
       "ok",
@@ -49,8 +49,8 @@
      ]
     },
     "sales.summary": {
-     "p50_ms": 662,
-     "max_ms": 882,
+     "p50_ms": 682,
+     "max_ms": 762,
      "results": [
       "ok",
       "ok",
@@ -58,8 +58,8 @@
      ]
     },
     "sales.top_product": {
-     "p50_ms": 524,
-     "max_ms": 626,
+     "p50_ms": 430,
+     "max_ms": 435,
      "results": [
       "ok",
       "ok",
@@ -67,8 +67,8 @@
      ]
     },
     "inventory.read": {
-     "p50_ms": 470,
-     "max_ms": 499,
+     "p50_ms": 453,
+     "max_ms": 458,
      "results": [
       "ok",
       "ok",
@@ -84,14 +84,14 @@
     "agent_discloses_truncation": false,
     "api_pending": 60,
     "api_confirmed": 30,
-    "agent_list_text": "حقيقةعدد الطلبات المطابقة: 60 (أعرض أول 20)\nحقيقة1. M261113-2D873 — زبون اختبار 96 — 6 700 DA — في انتظار التأكيد\nحقيقة2. M261113-541B7 — زبون اختبار 95 — 4 000",
+    "agent_list_text": "حقيقةعدد الطلبات المطابقة: 60 (أعرض أول 20)\nحقيقة1. M261113-FCB64182 — زبون اختبار 93 — 6 700 DA — في انتظار التأكيد\nحقيقة2. M261113-F958778F — زبون اختبار 85 —",
     "agent_numbers": [
      60,
      20,
      1,
      261113,
-     2,
-     873
+     64182,
+     93
     ],
     "pending_in_agent_numbers": true
    },
@@ -99,7 +99,7 @@
    "write_confirmed": true,
    "hub": {
     "settled": true,
-    "settle_s": 3.7,
+    "settle_s": 3.8,
     "accepted_delta": 3,
     "refreshOk_delta": 3,
     "refreshFail_delta": 0
@@ -112,7 +112,7 @@
    "recovery": {
     "failed_status": "error",
     "recovered_ok": true,
-    "recover_ms": 719
+    "recover_ms": 875
    },
    "page_errors": []
   },
@@ -120,8 +120,8 @@
    "orders": 1000,
    "status": "PASS",
    "notes": [],
-   "seed_s": 15.4,
-   "seed_retries": 1,
+   "seed_s": 13.4,
+   "seed_retries": 0,
    "truth": {
     "total": 1000,
     "pending": 600,
@@ -132,27 +132,27 @@
     "ok": true,
     "truncated_vs_truth": false,
     "cap_note": null,
-    "payload_kb": 301,
+    "payload_kb": 304,
     "latency_ms": {
-     "p50": 11,
-     "max": 12
+     "p50": 8,
+     "max": 9
     },
     "visible_pending": 600
    },
-   "boot_s": 1.6,
+   "boot_s": 1.7,
    "ord_panel_ready": {
     "ok": true,
-    "s": 2.4
+    "s": 2.2
    },
    "main_thread_longtasks": {
-    "count": 11,
-    "max_ms": 213,
-    "total_ms": 1176
+    "count": 10,
+    "max_ms": 240,
+    "total_ms": 888
    },
    "agent": {
     "orders.list": {
-     "p50_ms": 875,
-     "max_ms": 1378,
+     "p50_ms": 898,
+     "max_ms": 1078,
      "results": [
       "ok",
       "ok",
@@ -160,8 +160,8 @@
      ]
     },
     "sales.summary": {
-     "p50_ms": 610,
-     "max_ms": 798,
+     "p50_ms": 614,
+     "max_ms": 985,
      "results": [
       "ok",
       "ok",
@@ -169,8 +169,8 @@
      ]
     },
     "sales.top_product": {
-     "p50_ms": 664,
-     "max_ms": 667,
+     "p50_ms": 456,
+     "max_ms": 513,
      "results": [
       "ok",
       "ok",
@@ -178,8 +178,8 @@
      ]
     },
     "inventory.read": {
-     "p50_ms": 493,
-     "max_ms": 634,
+     "p50_ms": 445,
+     "max_ms": 500,
      "results": [
       "ok",
       "ok",
@@ -195,127 +195,14 @@
     "agent_discloses_truncation": false,
     "api_pending": 600,
     "api_confirmed": 300,
-    "agent_list_text": "حقيقةعدد الطلبات المطابقة: 600 (أعرض أول 20)\nحقيقة1. M261113-38858 — زبون اختبار 996 — 6 700 DA — في انتظار التأكيد\nحقيقة2. M261113-3854A — زبون اختبار 995 — 4 ",
+    "agent_list_text": "حقيقةعدد الطلبات المطابقة: 600 (أعرض أول 20)\nحقيقة1. M261113-FFAAD9A8 — زبون اختبار 972 — 6 700 DA — في انتظار التأكيد\nحقيقة2. M261113-FF9A320B — زبون اختبار 99",
     "agent_numbers": [
      600,
      20,
      1,
      261113,
-     38858,
-     996
-    ],
-    "pending_in_agent_numbers": true
-   },
-   "write_card": true,
-   "write_confirmed": true,
-   "hub": {
-    "settled": true,
-    "settle_s": 4,
-    "accepted_delta": 3,
-    "refreshOk_delta": 3,
-    "refreshFail_delta": 0
-   },
-   "memory_mb": {
-    "before": 20.8,
-    "after_20_queries": 21.2,
-    "growth": 0.4
-   },
-   "recovery": {
-    "failed_status": "error",
-    "recovered_ok": true,
-    "recover_ms": 814
-   },
-   "page_errors": []
-  },
-  {
-   "orders": 10000,
-   "status": "PARTIAL",
-   "notes": [
-    "الخادم يقتطع عند 2000 طلب: الوكيل يفصح عن ذلك لكن الأعداد ناقصة (حد منصة قائم، غير معدَّل)"
-   ],
-   "seed_s": 62.3,
-   "seed_retries": 53,
-   "truth": {
-    "total": 10000,
-    "pending": 6000,
-    "confirmed": 3000
-   },
-   "api": {
-    "orders_returned": 2000,
-    "ok": false,
-    "truncated_vs_truth": true,
-    "cap_note": "الخادم يعيد آخر 2000 طلب فقط (LIMIT 2000) — أي حساب في الوكيل/اللوحة على هذه القائمة ناقص عند أحجام أكبر",
-    "payload_kb": 604,
-    "latency_ms": {
-     "p50": 20,
-     "max": 22
-    },
-    "visible_pending": 1200
-   },
-   "boot_s": 1.8,
-   "ord_panel_ready": {
-    "ok": true,
-    "s": 2.4
-   },
-   "main_thread_longtasks": {
-    "count": 13,
-    "max_ms": 334,
-    "total_ms": 1335
-   },
-   "agent": {
-    "orders.list": {
-     "p50_ms": 967,
-     "max_ms": 1165,
-     "results": [
-      "ok",
-      "ok",
-      "ok"
-     ]
-    },
-    "sales.summary": {
-     "p50_ms": 697,
-     "max_ms": 809,
-     "results": [
-      "ok",
-      "ok",
-      "ok"
-     ]
-    },
-    "sales.top_product": {
-     "p50_ms": 561,
-     "max_ms": 633,
-     "results": [
-      "ok",
-      "ok",
-      "ok"
-     ]
-    },
-    "inventory.read": {
-     "p50_ms": 436,
-     "max_ms": 452,
-     "results": [
-      "ok",
-      "ok",
-      "ok"
-     ]
-    }
-   },
-   "consistency": {
-    "true_pending": 6000,
-    "api_visible_pending": 1200,
-    "agent_matches_truth": false,
-    "agent_matches_visible": true,
-    "agent_discloses_truncation": true,
-    "api_pending": 1200,
-    "api_confirmed": 600,
-    "agent_list_text": "حقيقةعدد الطلبات المطابقة: 1200 (أعرض أول 20)\nحقيقة1. M261113-59B7F — زبون اختبار 9996 — 6 700 DA — في انتظار التأكيد\nحقيقة2. M261113-3142F — زبون اختبار 9995 —",
-    "agent_numbers": [
-     1200,
-     20,
-     1,
-     261113,
-     59,
-     7
+     9,
+     8
     ],
     "pending_in_agent_numbers": true
    },
@@ -329,6 +216,119 @@
     "refreshFail_delta": 0
    },
    "memory_mb": {
+    "before": 20.7,
+    "after_20_queries": 21.1,
+    "growth": 0.4
+   },
+   "recovery": {
+    "failed_status": "error",
+    "recovered_ok": true,
+    "recover_ms": 726
+   },
+   "page_errors": []
+  },
+  {
+   "orders": 10000,
+   "status": "PASS",
+   "notes": [
+    "الخادم يقتطع قائمة orders عند 2000 لكن الوكيل يستعمل تجميع الخادم (orders_stats/orders_page) فأعداده تطابق الحقيقة"
+   ],
+   "seed_s": 51.6,
+   "seed_retries": 0,
+   "truth": {
+    "total": 10000,
+    "pending": 6000,
+    "confirmed": 3000
+   },
+   "api": {
+    "orders_returned": 2000,
+    "ok": false,
+    "truncated_vs_truth": true,
+    "cap_note": "الخادم يعيد آخر 2000 طلب فقط (LIMIT 2000) — أي حساب في الوكيل/اللوحة على هذه القائمة ناقص عند أحجام أكبر",
+    "payload_kb": 610,
+    "latency_ms": {
+     "p50": 17,
+     "max": 20
+    },
+    "visible_pending": 1205
+   },
+   "boot_s": 1.4,
+   "ord_panel_ready": {
+    "ok": true,
+    "s": 1.8
+   },
+   "main_thread_longtasks": {
+    "count": 10,
+    "max_ms": 202,
+    "total_ms": 1006
+   },
+   "agent": {
+    "orders.list": {
+     "p50_ms": 842,
+     "max_ms": 943,
+     "results": [
+      "ok",
+      "ok",
+      "ok"
+     ]
+    },
+    "sales.summary": {
+     "p50_ms": 531,
+     "max_ms": 887,
+     "results": [
+      "ok",
+      "ok",
+      "ok"
+     ]
+    },
+    "sales.top_product": {
+     "p50_ms": 489,
+     "max_ms": 539,
+     "results": [
+      "ok",
+      "ok",
+      "ok"
+     ]
+    },
+    "inventory.read": {
+     "p50_ms": 461,
+     "max_ms": 469,
+     "results": [
+      "ok",
+      "ok",
+      "ok"
+     ]
+    }
+   },
+   "consistency": {
+    "true_pending": 6000,
+    "api_visible_pending": 1205,
+    "agent_matches_truth": true,
+    "agent_matches_visible": true,
+    "agent_discloses_truncation": false,
+    "api_pending": 1205,
+    "api_confirmed": 595,
+    "agent_list_text": "حقيقةعدد الطلبات المطابقة: 6000 (أعرض أول 20)\nحقيقة1. M261113-F7BE7662 — زبون اختبار 9785 — 4 000 DA — في انتظار التأكيد\nحقيقة2. M261113-F61ED974 — زبون اختبار ",
+    "agent_numbers": [
+     6000,
+     20,
+     1,
+     261113,
+     7,
+     7662
+    ],
+    "pending_in_agent_numbers": true
+   },
+   "write_card": true,
+   "write_confirmed": true,
+   "hub": {
+    "settled": true,
+    "settle_s": 4.4,
+    "accepted_delta": 3,
+    "refreshOk_delta": 3,
+    "refreshFail_delta": 0
+   },
+   "memory_mb": {
     "before": 21.8,
     "after_20_queries": 22.2,
     "growth": 0.4
@@ -336,7 +336,7 @@
    "recovery": {
     "failed_status": "error",
     "recovered_ok": true,
-    "recover_ms": 884
+    "recover_ms": 860
    },
    "page_errors": []
   }

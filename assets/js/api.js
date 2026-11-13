@@ -69,9 +69,19 @@ const API = {
 
   /* مصدر الطلبات حسب CONFIG.ORDERS_BACKEND: sheets | both | supabase */
   ordersBackend() { const b = (typeof CONFIG !== "undefined" && CONFIG.ORDERS_BACKEND) || "sheets"; return (b !== "sheets" && !this.sb.enabled()) ? "sheets" : b; },
+  /* المرحلة 12B: مفتاح idempotency لكل محاولة إتمام (يُحفظ 10 دقائق في sessionStorage بحسب محتوى الطلب فتُعاد المحاولة/النقر المتكرر بنفس المفتاح فلا يُنشأ طلب ثانٍ؛ يُحذف عند النجاح فيبقى الطلب المتطابق اللاحق مشروعاً) */
+  _idem(order) {
+    try {
+      const sig = [order.name, order.phone, order.total, JSON.stringify((order.items || []).map(i => [i.slug, i.qty, i.price]))].join("|"); let h = 5381; for (let i = 0; i < sig.length; i++) h = ((h << 5) + h + sig.charCodeAt(i)) | 0;
+      const slot = "alyssum_idem_" + (h >>> 0).toString(36), now = Date.now(); let v = null; try { v = JSON.parse(sessionStorage.getItem(slot) || "null"); } catch (_) { }
+      if (!v || now - v.t > 600000) { v = { k: (window.crypto && crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "") : (Math.random().toString(36).slice(2) + now.toString(36) + Math.random().toString(36).slice(2)).padEnd(24, "0")), t: now }; try { sessionStorage.setItem(slot, JSON.stringify(v)); } catch (_) { } }
+      return { key: v.k, slot };
+    } catch (_) { return null; }
+  },
+  _idemDone(i) { try { if (i) sessionStorage.removeItem(i.slot); } catch (_) { } },
   submitOrder(order) {
     const ct = this.cust.token();                    // طلب زبون مسجّل ⟵ يُربط بحسابه (لا يُرسل الرمز إلى Google Sheets أبداً)
-    if (this.php.on()) return this.php.send("order", { order: ct ? Object.assign({}, order, { ctoken: ct }) : order });
+    if (this.php.on()) { const ik = this._idem(order); return this.php.send("order", { order: Object.assign({}, order, ct ? { ctoken: ct } : {}, ik ? { idem: ik.key } : {}) }); }
     const b = this.ordersBackend();
     if (b !== "supabase") this.post({ type: "order", order });
     if (b !== "sheets") this.sb.publicRpc("submit_order", { p: ct ? Object.assign({}, order, { ctoken: ct }) : order });
@@ -108,8 +118,14 @@ const API = {
     const ct = this.cust.token(), o = ct ? Object.assign({}, order, { ctoken: ct }) : order, GUARD = ["duplicate_order", "bot", "rate_limited", "invalid_phone", "blocked"];
     try {
       if (this.php.on()) {
-        const r = await fetch(this.php.url("order"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ order: o }), credentials: "same-origin" });
+        const ik = this._idem(order); let r = null;
+        for (let a = 0; a < 3; a++) {   /* أعطال الخادم/الشبكة (5xx أو انقطاع) تُعاد حتى 3 مرات بنفس المفتاح فلا يتكرر الطلب؛ أخطاء الحماية (4xx) لا تُعاد */
+          try { r = await fetch(this.php.url("order"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ order: ik ? Object.assign({}, o, { idem: ik.key }) : o }), credentials: "same-origin" }); } catch (e) { r = null; }
+          if ((r && r.status < 500) || a === 2) break; await new Promise(res => setTimeout(res, 400 * (a + 1)));
+        }
+        if (!r) throw new Error("network");
         const j = await r.json().catch(() => ({}));
+        if (r.ok) this._idemDone(ik);
         return r.ok ? { ok: true } : (GUARD.includes(j.error) ? { ok: false, error: j.error } : { ok: true });
       }
       const b = this.ordersBackend();
@@ -292,11 +308,20 @@ const API = {
   },
 
   /* ── لوحة التحكم ── */
+  /* المرحلة 12B: لا نخلط قائمة مقتطعة بنتيجة كاملة — إن اقتطع الخادم الطلبات (آخر 2000) تظهر لافتة صريحة في أعلى اللوحة */
+  _ordersWindowNote(r) {
+    try {
+      const app = document.getElementById("app"); if (!app) return; let n = document.getElementById("orders-window-note");
+      if (!(r && r.ok && r.truncated)) { if (n) n.remove(); return; }
+      if (!n) { n = document.createElement("div"); n.id = "orders-window-note"; n.setAttribute("role", "status"); n.style.cssText = "margin:8px 12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(var(--g-warn-rgb),.45);background:rgba(var(--g-warn-rgb),.12);font-size:13px;line-height:1.6"; app.insertBefore(n, app.firstChild); }
+      n.textContent = "تنبيه: تعرض اللوحة آخر " + r.window + " طلب" + (r.total_count ? " من أصل " + r.total_count : " (قد توجد طلبات أقدم)") + "؛ فالأعداد والمبالغ في هذه الأقسام قد تكون ناقصة.";
+    } catch (_) { }
+  },
   async orders(key) {
-    if (this.php.on()) return this.php.get("orders");
+    if (this.php.on()) { const r = await this.php.get("orders"); this._ordersWindowNote(r); return r; }
     if (this.ordersBackend() !== "supabase") return this.get("orders", { key });
     const rows = await this.sb.adminFetch("/rest/v1/orders?order=created_at.desc&limit=2000");
-    return Array.isArray(rows) ? { ok: true, orders: rows.map(r => ({ id: r.id, date: r.created_at, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, dtype: r.dtype, desk: r.desk,
+    return Array.isArray(rows) ? { ok: true, truncated: rows.length >= 2000, window: 2000, orders: rows.map(r => ({ id: r.id, date: r.created_at, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, dtype: r.dtype, desk: r.desk,
       items: r.items_text, subtotal: r.subtotal, fee: r.fee, total: Number(r.total), coupon: r.coupon, discount: r.discount, extra: r.extra, status: r.status, note: r.note })) } : null;
   },
   /* حذف طلب: يُرجع true إن حُذف فعلاً من قاعدة البيانات (وإلا يستعمل المدير الإخفاء بوسم في الملاحظة) */
