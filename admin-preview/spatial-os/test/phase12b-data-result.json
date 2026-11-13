@@ -18,25 +18,25 @@
    "walk_page_p95_ms": 3
   },
   "1000": {
-   "page100_p50_ms": 2,
-   "stats_p50_ms": 3,
-   "orders_legacy_p50_ms": 8,
+   "page100_p50_ms": 3,
+   "stats_p50_ms": 4,
+   "orders_legacy_p50_ms": 10,
    "walk_pages": 2,
-   "walk_page_p95_ms": 7
+   "walk_page_p95_ms": 6
   },
   "10000": {
    "page100_p50_ms": 3,
-   "stats_p50_ms": 29,
-   "orders_legacy_p50_ms": 16,
+   "stats_p50_ms": 21,
+   "orders_legacy_p50_ms": 14,
    "walk_pages": 20,
    "walk_page_p95_ms": 8
   },
   "50000": {
    "page100_p50_ms": 3,
-   "stats_p50_ms": 103,
-   "orders_legacy_p50_ms": 16,
+   "stats_p50_ms": 96,
+   "orders_legacy_p50_ms": 20,
    "walk_pages": 100,
-   "walk_page_p95_ms": 11
+   "walk_page_p95_ms": 12
   }
  },
  "pass": 53,
@@ -194,7 +194,7 @@
     "pages": 2,
     "got": 1000,
     "uniq": 1000,
-    "p95_ms": 7
+    "p95_ms": 6
    }
   },
   {
@@ -422,7 +422,7 @@
     "pages": 100,
     "got": 50000,
     "uniq": 50000,
-    "p95_ms": 11
+    "p95_ms": 12
    }
   },
   {
