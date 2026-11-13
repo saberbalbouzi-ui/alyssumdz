@@ -2002,6 +2002,7 @@ const Thanks = {
       document.body.appendChild(el);
       try{ if(document.documentElement.classList.contains("pb-embed") && window.frameElement){ const r = window.frameElement.getBoundingClientRect(), pv = window.parent.innerHeight, top = Math.max(0, -r.top), vis = Math.max(320, Math.min(r.height - top, pv - Math.max(r.top, 0))); el.style.cssText += ";position:absolute;inset:auto;left:0;right:0;top:" + top + "px;height:" + vis + "px;align-items:flex-start;overflow-y:auto;overscroll-behavior:contain"; } }catch(_){}      /* داخل إطار صفحة الهبوط: يتوسّط الجزء الظاهر من الشاشة لا الإطار الطويل كله */
       try{ if(o.up && window.Upsell) Upsell.mountPost(el, o.up); }catch(_){}      // Upsell بعد الشراء (assets/js/upsell.js)
+      try{ if(document.documentElement.classList.contains("pb-embed")){ const topIt = ()=>el.querySelectorAll("a[href]:not([target])").forEach(a=>{ a.target = "_top"; }); topIt(); setTimeout(topIt, 800); setTimeout(topIt, 2500); } }catch(_){}      /* داخل إطار صفحة الهبوط: «متابعة التسوق» وروابط الاقتراحات تفتح في الصفحة الكاملة لا داخل الإطار */
       const close = ()=>{ el.remove(); document.removeEventListener("keydown", kd); }, kd = ev=>{ if(ev.key === "Escape") close(); };
       document.addEventListener("keydown", kd); el.querySelector("#thx-x").onclick = close; el.addEventListener("mousedown", ev=>{ if(ev.target === el) close(); });
       try{ if(navigator.vibrate) navigator.vibrate(30); }catch(_){}
