@@ -15,33 +15,33 @@
    "stats_p50_ms": 2,
    "orders_legacy_p50_ms": 2,
    "walk_pages": 1,
-   "walk_page_p95_ms": 3
+   "walk_page_p95_ms": 2
   },
   "1000": {
-   "page100_p50_ms": 3,
+   "page100_p50_ms": 2,
    "stats_p50_ms": 4,
    "orders_legacy_p50_ms": 10,
    "walk_pages": 2,
-   "walk_page_p95_ms": 6
+   "walk_page_p95_ms": 5
   },
   "10000": {
    "page100_p50_ms": 3,
-   "stats_p50_ms": 21,
+   "stats_p50_ms": 22,
    "orders_legacy_p50_ms": 14,
    "walk_pages": 20,
-   "walk_page_p95_ms": 8
+   "walk_page_p95_ms": 25
   },
   "50000": {
    "page100_p50_ms": 3,
-   "stats_p50_ms": 96,
-   "orders_legacy_p50_ms": 20,
+   "stats_p50_ms": 97,
+   "orders_legacy_p50_ms": 13,
    "walk_pages": 100,
-   "walk_page_p95_ms": 12
+   "walk_page_p95_ms": 9
   }
  },
  "pass": 53,
  "fail": 0,
- "duration_s": 39,
+ "duration_s": 37,
  "results": [
   {
    "n": "[100] orders: العقد القديم محفوظ (نفس أول 100 معرّفاً بنفس الترتيب)",
@@ -66,7 +66,7 @@
     "pages": 1,
     "got": 100,
     "uniq": 100,
-    "p95_ms": 3
+    "p95_ms": 2
    }
   },
   {
@@ -194,7 +194,7 @@
     "pages": 2,
     "got": 1000,
     "uniq": 1000,
-    "p95_ms": 6
+    "p95_ms": 5
    }
   },
   {
@@ -308,7 +308,7 @@
     "pages": 20,
     "got": 10000,
     "uniq": 10000,
-    "p95_ms": 8
+    "p95_ms": 25
    }
   },
   {
@@ -422,7 +422,7 @@
     "pages": 100,
     "got": 50000,
     "uniq": 50000,
-    "p95_ms": 12
+    "p95_ms": 9
    }
   },
   {
