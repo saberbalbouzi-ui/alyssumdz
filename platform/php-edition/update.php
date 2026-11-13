@@ -10,7 +10,12 @@ header('Content-Type: text/html; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
 session_name('store_admin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'httponly' => true, 'samesite' => 'Strict']);
+/* عزل الجلسات بين التثبيتات (المرحلة 12B): نفس مسار الجلسات الخاص وختم التثبيت المعتمدين في api/index.php */
+$sessDir = __DIR__ . '/api/_data/sessions'; ini_set('session.use_strict_mode', '1');
+if (is_dir($sessDir) && is_writable($sessDir)) session_save_path($sessDir);
 session_start();
+$instStamp = hash_hmac('sha256', 'alyssum-install-v1', (string)@file_get_contents(__DIR__ . '/api/_data/inst.key'));
+if (($_SESSION['inst'] ?? '') !== $instStamp) { $_SESSION = []; }
 function h(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 function page(string $body): never { echo '<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>تحديث الموقع</title><style>body{font-family:Tahoma,Arial,sans-serif;background:#f6f3ec;padding:1.2rem}.c{max-width:520px;margin:2rem auto;background:#fff;border-radius:16px;padding:1.6rem;box-shadow:0 8px 30px rgba(0,0,0,.08)}.e{background:#fde8e8;color:#9b2c2c;padding:.8rem;border-radius:10px}.ok{background:#e6f4ea;color:#1e6b3a;padding:1rem;border-radius:10px}</style></head><body><div class="c">' . $body . '</div></body></html>'; exit; }
 

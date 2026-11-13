@@ -20,7 +20,17 @@ $cfg = require $cfgFile;                      // ['admin_hash' => ..., 'max_uplo
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
 session_name('store_admin');
 session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
+/* عزل الجلسات بين التثبيتات (المرحلة 12B): مسار جلسات خاص بهذا التثبيت + ختم تثبيت يُفحص عند كل طلب.
+   قبل ذلك كانت الجلسات في المسار العام للخادم بلا ربط، فكانت جلسة مدير متجر تُقبل في متجر آخر على نفس الخادم. الجلسات القديمة تُبطَل (إعادة دخول واحدة). */
+ensureData($dataDir);
+ini_set('session.use_strict_mode', '1');   // معرّف جلسة غير معروف يُستبدل بجديد (لا تثبيت جلسة)
+$sessDir = $dataDir . '/sessions'; if (!is_dir($sessDir)) @mkdir($sessDir, 0700, true);
+if (is_dir($sessDir) && is_writable($sessDir)) { session_save_path($sessDir); ini_set('session.gc_probability', '1'); ini_set('session.gc_divisor', '100'); ini_set('session.gc_maxlifetime', '86400'); }
+$instKeyFile = $dataDir . '/inst.key';
+if (!is_file($instKeyFile)) { @file_put_contents($instKeyFile, bin2hex(random_bytes(32)), LOCK_EX); @chmod($instKeyFile, 0600); }
+$instStamp = hash_hmac('sha256', 'alyssum-install-v1', (string)@file_get_contents($instKeyFile));
 session_start();
+if (($_SESSION['inst'] ?? '') !== $instStamp) { $_SESSION = []; $_SESSION['inst'] = $instStamp; }   // جلسة بلا ختم هذا التثبيت (قديمة أو من تثبيت آخر) = بلا صلاحيات
 
 $route = $_GET['r'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
@@ -57,6 +67,9 @@ function db(): PDO {
         coupon TEXT, discount REAL NOT NULL DEFAULT 0, extra TEXT NOT NULL DEFAULT '{}', status TEXT NOT NULL DEFAULT 'nouvelle', note TEXT NOT NULL DEFAULT '');
       CREATE INDEX IF NOT EXISTS orders_created ON orders(created_at);
       CREATE INDEX IF NOT EXISTS orders_phone ON orders(phone, created_at);
+      CREATE INDEX IF NOT EXISTS orders_created_id ON orders(created_at, id);
+      CREATE INDEX IF NOT EXISTS orders_status_created ON orders(status, created_at);
+      CREATE TABLE IF NOT EXISTS order_idem (k TEXT PRIMARY KEY, order_id TEXT NOT NULL, req_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS customers (id INTEGER PRIMARY KEY, phone TEXT NOT NULL UNIQUE, name TEXT NOT NULL, wilaya TEXT, commune TEXT, pass_hash TEXT NOT NULL, created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS customer_sessions (token_hash TEXT PRIMARY KEY, customer_id INTEGER NOT NULL, created_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS customer_fails (phone TEXT NOT NULL, at INTEGER NOT NULL);
@@ -135,6 +148,32 @@ function guardSecret(): string {
     $s2 = kvGet('guard_secret'); return is_string($s2) ? $s2 : $s;
 }
 function guardSig(string $t): string { return hash_hmac('sha256', $t, guardSecret()); }
+/* صف الطلب كما يعيده المسار القديم (نفس الحقول بالضبط) — مشترك بين orders وorders_page */
+function orderOut(array $r): array {
+    return ['id' => $r['id'], 'date' => iso((int)$r['created_at']), 'name' => $r['name'], 'phone' => $r['phone'], 'wilaya' => $r['wilaya'], 'commune' => $r['commune'],
+        'dtype' => $r['dtype'], 'desk' => $r['desk'], 'items' => $r['items_text'], 'subtotal' => (float)$r['subtotal'], 'fee' => (float)$r['fee'], 'total' => (float)$r['total'],
+        'coupon' => $r['coupon'], 'discount' => (float)$r['discount'], 'extra' => json_decode($r['extra'], true) ?: new stdClass, 'status' => $r['status'], 'note' => $r['note']];
+}
+/* مؤشر ترقيم مبهم ثابت الترتيب: (created_at, id) */
+function cursorEnc(array $r): string { return rtrim(strtr(base64_encode(json_encode([(int)$r['created_at'], (string)$r['id']])), '+/', '-_'), '='); }
+function cursorDec(string $c): ?array {
+    if ($c === '') return null;
+    $j = json_decode((string)base64_decode(strtr($c, '-_', '+/'), true), true);
+    return (is_array($j) && count($j) === 2 && is_int($j[0]) && is_string($j[1]) && strlen($j[1]) <= 40) ? [$j[0], $j[1]] : null;
+}
+/* معرّف الطلب العام: S|M + yymmdd + '-' + hex عشوائي آمن (8 رموز = 32 بتاً، يطول 2 مع كل تصادم). الشكل القديم (5 رموز) يبقى مقروءاً.
+   خطّاف الاختبار الوحيد: ALYSSUM_TEST_MODE=1 مع ALYSSUM_TEST_FORCE_IDS="ID1,ID2" يفرض معرّفات للمحاولة الأولى فقط (لا أثر في الإنتاج لأنه لا يُضبط). */
+function newOrderId(bool $manual, int $attempt): string {
+    if ($attempt === 0 && getenv('ALYSSUM_TEST_MODE') === '1' && ($f = getenv('ALYSSUM_TEST_FORCE_IDS'))) { $l = array_values(array_filter(array_map('trim', explode(',', (string)$f)))); if ($l) return $l[random_int(0, count($l) - 1)]; }
+    $len = min(14, 8 + 2 * $attempt);
+    return ($manual ? 'M' : 'S') . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes((int)ceil($len / 2))), 0, $len));
+}
+/* بحث مفتاح idempotency: null = جديد؛ ['id'=>…] = نفس المحتوى (إعادة)؛ ['conflict'=>true] = نفس المفتاح بمحتوى مختلف */
+function idemLookup(PDO $d, string $k, string $hash): ?array {
+    $st = $d->prepare('SELECT order_id, req_hash FROM order_idem WHERE k = ?'); $st->execute([$k]); $r = $st->fetch();
+    if (!$r) return null;
+    return hash_equals((string)$r['req_hash'], $hash) ? ['id' => (string)$r['order_id'], 'conflict' => false] : ['conflict' => true];
+}
 function ipHash(): string { return substr(hash_hmac('sha256', clientIp(), guardSecret()), 0, 24); }
 /* حدّ معدّل بسيط لكل مفتاح (IP+نوع العملية) */
 function rateLimit(string $key, int $max, int $win): void {
@@ -510,7 +549,6 @@ switch ($route) {
         if ($method !== 'POST') out(405, ['error' => 'method']);
         $o = body()['order'] ?? [];
         $manual = can('orders.create') && !empty($o['manual']);          // طلب يدوي من لوحة المدير: بلا حمايات الزوار
-        $ip = clientIp(); if (!$manual) rateLimit('ord' . $ip, 20, 3600);
         $name = cut($o['name'] ?? '', 120); $phone = preg_replace('/[^0-9+]/', '', (string)($o['phone'] ?? ''));
         $items = is_array($o['items'] ?? null) ? array_slice($o['items'], 0, 50) : [];
         $total = is_numeric($o['total'] ?? null) ? (float)$o['total'] : -1;
@@ -519,6 +557,13 @@ switch ($route) {
         if (count($items) < 1) out(422, ['error' => 'invalid_items']);
         if ($total < 0 || $total > 10000000) out(422, ['error' => 'invalid_total']);
         $d = db();
+        /* مفتاح idempotency (المرحلة 12B): ترويسة Idempotency-Key أو order.idem. نفس المفتاح ونفس المحتوى ← يُعاد الطلب الأول دون إنشاء آخر
+           (قبل الحراس وحدّ المعدّل: فإعادة شبكة مشروعة لا تُرفض 409/429). نفس المفتاح بمحتوى مختلف ← 409. بلا مفتاح: السلوك السابق. */
+        $idem = trim((string)($_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? ($o['idem'] ?? '')));
+        if ($idem !== '' && !preg_match('/^[A-Za-z0-9_\-]{16,64}$/', $idem)) out(422, ['error' => 'invalid_idem']);
+        $reqHash = hash('sha256', json_encode([$name, $phone, $o['wilaya'] ?? '', $o['commune'] ?? '', $o['dtype'] ?? '', $o['desk'] ?? '', $total, $o['subtotal'] ?? 0, $o['fee'] ?? 0, $o['coupon'] ?? '', $o['promo'] ?? '', $manual, array_map(fn($i) => is_array($i) ? [$i['slug'] ?? '', $i['qty'] ?? 1, $i['price'] ?? 0] : null, $items)], JSON_UNESCAPED_UNICODE));
+        if ($idem !== '') { $rep = idemLookup($d, $idem, $reqHash); if ($rep !== null) out($rep['conflict'] ? 409 : 200, $rep['conflict'] ? ['error' => 'idempotency_key_reuse'] : ['ok' => true, 'id' => $rep['id'], 'duplicate' => true]); }
+        $ip = clientIp(); if (!$manual) rateLimit('ord' . $ip, 20, 3600);
         /* حماية الطلبات: روبوتات وتكرار حسب IP — تُفعَّل من لوحة الإدارة ← نموذج الطلب */
         $g = kvGet('guard') ?: []; $iph = ipHash();
         /* رقم جزائري صحيح فقط (جوال 10 أرقام 05/06/07 أو ثابت 9 أرقام 02/03/04) إلا إن عُطِّل phoneDz — يسري على كل الطلبات */
@@ -556,21 +601,41 @@ switch ($route) {
             $lines[] = "$title ×$qty = " . round($price * $qty) . ' DA';
             $clean[] = ['slug' => cut($i['slug'] ?? '', 80), 'title' => $title, 'qty' => $qty, 'price' => $price];
         }
-        $id = ($manual ? 'M' : 'S') . date('ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 5));
         $cust = custFromToken((string)($o['ctoken'] ?? ''));
-        /* كود تخفيض شخصي: يُستهلك مرة واحدة ولصاحب الهاتف؛ إن لم يصلح لا يُرفض الطلب بل يُعلَّم ليراه المدير */
         $promo = strtoupper(trim((string)($o['promo'] ?? '')));
-        if ($promo !== '') {
-            $u = $d->prepare('UPDATE promo_codes SET used_order = ?, used_at = ? WHERE code = ? AND used_order IS NULL AND expires > ? AND phone = ?');
-            $u->execute([$id, time(), $promo, time(), custPhone($phone)]);
-            if ($u->rowCount() < 1) { $ex = is_array($o['extra'] ?? null) ? $o['extra'] : []; $ex['promo_invalid'] = $promo; $o['extra'] = $ex; }
+        /* إنشاء الطلب بمعاملة واحدة (المرحلة 12B): كود التخفيض + الإدراج + الملاحظة اليدوية + سجل idempotency إما كلها أو لا شيء.
+           تصادم المعرّف (مخالفة تفرّد orders.id فقط) يُعاد بمعرّف جديد (حدّ 5 محاولات، يطول المعرّف)؛ أي خطأ آخر لا يُعاد كأنه تصادم. */
+        $attempt = 0; $id = '';
+        while (true) {
+            $id = newOrderId($manual, $attempt);
+            try {
+                $d->exec('BEGIN IMMEDIATE');
+                if ($idem !== '') { $rep = idemLookup($d, $idem, $reqHash); if ($rep !== null) { $d->exec('ROLLBACK'); out($rep['conflict'] ? 409 : 200, $rep['conflict'] ? ['error' => 'idempotency_key_reuse'] : ['ok' => true, 'id' => $rep['id'], 'duplicate' => true]); } }
+                $ex = is_array($o['extra'] ?? null) ? $o['extra'] : null;
+                /* كود تخفيض شخصي: يُستهلك مرة واحدة ولصاحب الهاتف؛ إن لم يصلح لا يُرفض الطلب بل يُعلَّم ليراه المدير */
+                if ($promo !== '') {
+                    $u = $d->prepare('UPDATE promo_codes SET used_order = ?, used_at = ? WHERE code = ? AND used_order IS NULL AND expires > ? AND phone = ?');
+                    $u->execute([$id, time(), $promo, time(), custPhone($phone)]);
+                    if ($u->rowCount() < 1) { $ex = $ex ?? []; $ex['promo_invalid'] = $promo; }
+                }
+                $extra = is_array($ex) ? json_encode($ex, JSON_UNESCAPED_UNICODE) : '{}';
+                if (strlen($extra) > 4000) $extra = '{}';
+                $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra, customer_id, ip_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+                  ->execute([$id, time(), $name, $phone, cut($o['wilaya'] ?? '', 80), cut($o['commune'] ?? '', 120), cut($o['dtype'] ?? '', 10), cut($o['desk'] ?? '', 160),
+                    implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust, $iph]);
+                if ($manual && trim((string)($o['note'] ?? '')) !== '') $d->prepare('UPDATE orders SET note = ? WHERE id = ?')->execute([cut($o['note'], 500), $id]);
+                if ($idem !== '') $d->prepare('INSERT INTO order_idem (k, order_id, req_hash, created_at) VALUES (?,?,?,?)')->execute([$idem, $id, $reqHash, time()]);
+                $d->exec('COMMIT');
+                break;
+            } catch (PDOException $e) {
+                try { $d->exec('ROLLBACK'); } catch (Throwable $_) { }   // غير مشروط: PDO::inTransaction() لا يعكس معاملة بدأت بـ exec('BEGIN') الخام (خطأ «لا معاملة نشطة» مقبول)
+                $m = $e->getMessage(); $ec = (int)($e->errorInfo[1] ?? 0);
+                if ($ec === 19 && stripos($m, 'orders.id') !== false) { if (++$attempt >= 5) { header('Retry-After: 1'); out(503, ['error' => 'try_again']); } continue; }   // تصادم معرّف مؤكَّد فقط
+                if ($ec === 19 && stripos($m, 'order_idem') !== false) { $rep = idemLookup($d, $idem, $reqHash); if ($rep !== null) out($rep['conflict'] ? 409 : 200, $rep['conflict'] ? ['error' => 'idempotency_key_reuse'] : ['ok' => true, 'id' => $rep['id'], 'duplicate' => true]); header('Retry-After: 1'); out(503, ['error' => 'try_again']); }
+                if ($ec === 5 || $ec === 6) { header('Retry-After: 1'); out(503, ['error' => 'busy']); }                        // قاعدة مشغولة: ليست تصادماً
+                error_log('order_create_failed: ' . substr($m, 0, 200)); out(500, ['error' => 'server_error']);
+            }
         }
-        $extra = is_array($o['extra'] ?? null) ? json_encode($o['extra'], JSON_UNESCAPED_UNICODE) : '{}';
-        if (strlen($extra) > 4000) $extra = '{}';
-        $d->prepare('INSERT INTO orders (id, created_at, name, phone, wilaya, commune, dtype, desk, items_text, items, subtotal, fee, total, coupon, discount, extra, customer_id, ip_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-          ->execute([$id, time(), $name, $phone, cut($o['wilaya'] ?? '', 80), cut($o['commune'] ?? '', 120), cut($o['dtype'] ?? '', 10), cut($o['desk'] ?? '', 160),
-            implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust, $iph]);
-        if ($manual && trim((string)($o['note'] ?? '')) !== '') $d->prepare('UPDATE orders SET note = ? WHERE id = ?')->execute([cut($o['note'], 500), $id]);
         if ($manual) audit('order.create', $id, ['source' => 'manual']);
         out(200, ['ok' => true, 'id' => $id]);
 
@@ -777,11 +842,46 @@ switch ($route) {
     /* ── قراءات وتعديلات المدير ── */
     case 'orders':
         needPerm('orders');
-        $rows = db()->query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 2000')->fetchAll();
-        out(200, ['ok' => true, 'orders' => array_map(fn($r) => [
-            'id' => $r['id'], 'date' => iso((int)$r['created_at']), 'name' => $r['name'], 'phone' => $r['phone'], 'wilaya' => $r['wilaya'], 'commune' => $r['commune'],
-            'dtype' => $r['dtype'], 'desk' => $r['desk'], 'items' => $r['items_text'], 'subtotal' => (float)$r['subtotal'], 'fee' => (float)$r['fee'], 'total' => (float)$r['total'],
-            'coupon' => $r['coupon'], 'discount' => (float)$r['discount'], 'extra' => json_decode($r['extra'], true) ?: new stdClass, 'status' => $r['status'], 'note' => $r['note']], $rows)]);
+        /* العقد القديم محفوظ (نفس الحقول، آخر 2000 طلب تنازلياً) + حقول إضافية لا يتأثر بها العملاء القدامى (المرحلة 12B):
+           total_count = العدد الكلي، truncated = هل القائمة مقتطعة، has_more/next_cursor = للمتابعة عبر orders_page. */
+        $d = db(); $LIM = 2000; $rows = $d->query('SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT ' . $LIM)->fetchAll(); $tc = (int)$d->query('SELECT COUNT(*) FROM orders')->fetchColumn();
+        $trunc = $tc > count($rows);
+        out(200, ['ok' => true, 'orders' => array_map('orderOut', $rows), 'total_count' => $tc, 'returned' => count($rows), 'window' => $LIM, 'truncated' => $trunc, 'has_more' => $trunc, 'next_cursor' => ($trunc && $rows) ? cursorEnc(end($rows)) : null]);
+
+    /* ترقيم الطلبات بمؤشر (المرحلة 12B): ترتيب ثابت (created_at DESC, id DESC)، فلاتر محفوظة عبر الصفحات، total صريح بنفس الفلاتر، حدّ صفحة آمن (≤500) */
+    case 'orders_page':
+        needPerm('orders');
+        $d = db(); $lim = max(1, min(500, (int)($_GET['limit'] ?? 100))); $w = []; $a = [];
+        $sts = array_values(array_filter(array_map('trim', explode(',', (string)($_GET['status'] ?? ''))), fn($x) => in_array($x, ['nouvelle', 'confirmee', 'expediee', 'livree', 'annulee', 'echec'], true)));
+        if ($sts) { $w[] = 'status IN (' . implode(',', array_fill(0, count($sts), '?')) . ')'; foreach ($sts as $x) $a[] = $x; }
+        if (($_GET['since'] ?? '') !== '') { $w[] = 'created_at >= ?'; $a[] = (int)$_GET['since']; }
+        if (($_GET['until'] ?? '') !== '') { $w[] = 'created_at < ?'; $a[] = (int)$_GET['until']; }
+        if (($wl = trim((string)($_GET['wilaya'] ?? ''))) !== '') { $w[] = 'wilaya = ?'; $a[] = mb_substr($wl, 0, 80); }
+        if (($q = trim((string)($_GET['q'] ?? ''))) !== '') { $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_substr($q, 0, 60)) . '%'; $w[] = "(name LIKE ? ESCAPE '\\' OR id LIKE ? ESCAPE '\\' OR phone LIKE ? ESCAPE '\\' OR items_text LIKE ? ESCAPE '\\')"; array_push($a, $like, $like, $like, $like); }
+        $cs = (string)($_GET['cursor'] ?? ''); $cur = cursorDec($cs); if ($cs !== '' && $cur === null) out(422, ['error' => 'invalid_cursor']);
+        $cn = $d->prepare('SELECT COUNT(*) FROM orders' . ($w ? ' WHERE ' . implode(' AND ', $w) : '')); $cn->execute($a); $total = (int)$cn->fetchColumn();
+        $w2 = $w; $a2 = $a; if ($cur) { $w2[] = '(created_at < ? OR (created_at = ? AND id < ?))'; array_push($a2, $cur[0], $cur[0], $cur[1]); }
+        $st = $d->prepare('SELECT * FROM orders' . ($w2 ? ' WHERE ' . implode(' AND ', $w2) : '') . ' ORDER BY created_at DESC, id DESC LIMIT ' . ($lim + 1)); $st->execute($a2); $rows = $st->fetchAll();
+        $more = count($rows) > $lim; if ($more) array_pop($rows);
+        out(200, ['ok' => true, 'orders' => array_map('orderOut', $rows), 'total' => $total, 'limit' => $lim, 'has_more' => $more, 'next_cursor' => ($more && $rows) ? cursorEnc(end($rows)) : null]);
+
+    /* تجميعات الطلبات على الخادم (المرحلة 12B): صحيحة مهما كان الحجم (لا تعتمد على قائمة مقتطعة). since/until بالثواني، tz بالدقائق لتجميع الأيام */
+    case 'orders_stats':
+        needPerm('orders');
+        $d = db(); $since = (int)($_GET['since'] ?? 0); $until = ($_GET['until'] ?? '') !== '' ? (int)$_GET['until'] : 4102444800; $tz = max(-840, min(840, (int)($_GET['tz'] ?? 0))); $topN = max(1, min(20, (int)($_GET['top'] ?? 10)));
+        $by = ['nouvelle' => 0, 'confirmee' => 0, 'expediee' => 0, 'livree' => 0, 'annulee' => 0, 'echec' => 0]; $rev = 0.0; $deliv = 0.0; $cnt = 0; $valid = 0;
+        $q1 = $d->prepare('SELECT status, COUNT(*) n, COALESCE(SUM(total),0) t FROM orders WHERE created_at >= ? AND created_at < ? GROUP BY status'); $q1->execute([$since, $until]);
+        foreach ($q1->fetchAll() as $r) { $by[$r['status']] = (int)$r['n']; $cnt += (int)$r['n']; if ($r['status'] !== 'annulee' && $r['status'] !== 'echec') { $valid += (int)$r['n']; $rev += (float)$r['t']; } if ($r['status'] === 'livree') $deliv += (float)$r['t']; }
+        $q2 = $d->prepare("SELECT strftime('%Y-%m-%d', created_at + ? * 60, 'unixepoch') dd, COUNT(*) n, COALESCE(SUM(CASE WHEN status NOT IN ('annulee','echec') THEN total ELSE 0 END),0) t FROM orders WHERE created_at >= ? AND created_at < ? GROUP BY dd ORDER BY dd DESC LIMIT 400"); $q2->execute([$tz, $since, $until]);
+        $days = array_map(fn($r) => ['day' => $r['dd'], 'orders' => (int)$r['n'], 'revenue' => (float)$r['t']], $q2->fetchAll());
+        $prod = []; $unparsed = 0; $q3 = $d->prepare("SELECT items FROM orders WHERE created_at >= ? AND created_at < ? AND status NOT IN ('annulee','echec')"); $q3->execute([$since, $until]);
+        while (($r = $q3->fetch(PDO::FETCH_NUM)) !== false) {
+            $its = json_decode((string)$r[0], true); if (!is_array($its)) { $unparsed++; continue; }
+            foreach ($its as $it) { if (!is_array($it)) { $unparsed++; continue; } $t = trim((string)($it['title'] ?? '')); if ($t === '') { $unparsed++; continue; } $k = mb_strtolower($t); $qy = max(1, (int)($it['qty'] ?? 1));
+                if (!isset($prod[$k])) $prod[$k] = ['title' => $t, 'slug' => (string)($it['slug'] ?? ''), 'qty' => 0, 'revenue' => 0.0, 'orders' => 0]; $prod[$k]['qty'] += $qy; $prod[$k]['revenue'] += $qy * (float)($it['price'] ?? 0); $prod[$k]['orders']++; }
+        }
+        uasort($prod, fn($x, $y) => [$y['qty'], $y['revenue']] <=> [$x['qty'], $x['revenue']]);
+        out(200, ['ok' => true, 'scope' => 'server', 'range' => ['since' => $since, 'until' => $until, 'tz' => $tz], 'orders' => $cnt, 'valid_orders' => $valid, 'revenue' => $rev, 'delivered_revenue' => $deliv, 'by_status' => $by, 'by_day' => $days, 'top_products' => array_slice(array_values($prod), 0, $topN), 'products_distinct' => count($prod), 'unparsed_items' => $unparsed]);
 
     /* أمين المخزن (v1.89.239): قائمة تجهيز بلا هاتف ولا أسعار ولا مالية — الطلبات المؤكَّدة/المرسَلة فقط، وعلامة 🧰 في الملاحظة تعني «جُهِّز» */
     case 'pack_orders':

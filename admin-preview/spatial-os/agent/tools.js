@@ -48,7 +48,7 @@
     return { ok: true, value: out };
   }
   const STATUSES = ["nouvelle", "confirmee", "expediee", "livree", "annulee", "echec"], PERIODS = ["today", "yesterday", "week", "month", "all"];
-  const ID_RE = "^[A-Z]{1,3}\\d{4,8}-[A-Z0-9]{3,8}$|^[A-Za-z0-9_\\-]{4,40}$", SLUG_RE = "^[\\p{L}\\p{N}_.\\-]{1,80}$";
+  const ID_RE = "^[A-Z]{1,3}\\d{4,8}-[A-Z0-9]{3,16}$|^[A-Za-z0-9_\\-]{4,40}$", SLUG_RE = "^[\\p{L}\\p{N}_.\\-]{1,80}$";
   const norm = s => String(s == null ? "" : s).toLowerCase().normalize("NFKD").replace(/[ً-ٰٟـ̀-ͯ]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/ؤ/g, "و").replace(/ئ/g, "ي").replace(/\s+/g, " ").trim();
 
   /* ── مساعدات بيانات ── */
