@@ -252,7 +252,7 @@ const PB = (() => {
   const fontsHref = names => names.length ? "https://fonts.googleapis.com/css2?" + names.map(n => { const f = FONT_FAMS.find(x => x[0] === n); return "family=" + n.replace(/ /g, "+") + (f && f[1] ? ":wght@" + f[1] : ""); }).join("&") + "&display=swap" : "";
   const cairoFace = base => { const u = f => "url(" + esc(base) + "assets/fonts/" + f + ".woff2) format('woff2')"; return "@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:" + u("cairo-arabic") + ";unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:" + u("cairo-latin") + ";unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}\n"; };
   const usedFonts = obj => { const str = JSON.stringify(obj || ""), pf = Object.keys(TPRE).filter(k => str.includes('"tpre":"' + k + '"')).map(k => TPRE[k][1]); return FONT_FAMS.filter(([n]) => str.includes("'" + n + "'") || pf.includes(n)).map(x => x[0]); };
-  const F_W = [["", "افتراضي"], ["400", "عادي (400)"], ["600", "متوسط (600)"], ["700", "عريض (700)"], ["800", "عريض جداً (800)"], ["900", "ثقيل جداً (900) — وزن الخط لا لونه"]];
+  const F_W = [["", "افتراضي"], ["400", "عادي"], ["600", "متوسط"], ["700", "عريض"], ["800", "عريض جداً"], ["900", "ثقيل جداً"]];
   const AL = [["start", "⇥ بداية"], ["center", "↔ وسط"], ["end", "⇤ نهاية"]];
   const typoCtl = (extra) => [
     { k: "color", l: "لون النص", t: "color", tab: "s" },
