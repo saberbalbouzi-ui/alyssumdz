@@ -333,11 +333,15 @@ const API = {
       this.post({ type: "order", order }); return { ok: true, id: "" };
     } catch (e) { return { ok: false }; }
   },
+  /* تحديثات الطلب الواحد تُرسَل بالتتابع (طابور لكل طلب): كانت كل كتابة (الحالة ثم بصمة المتصل ثم وسم السلة 🗑) تنطلق متوازية بلا انتظار فقد يصل الخادمَ القديمُ بعد الأحدث
+     فيُمحى وسم السلة وتعود الطلبات الملغاة إلى القائمة بعد إعادة التحميل. */
+  _uq: {},
+  _serial(id, fn) { const q = this._uq, p = (q[id] || Promise.resolve()).catch(() => {}).then(fn); q[id] = p; p.catch(() => {}).then(() => { if (q[id] === p) delete q[id]; }); return p; },
   updateOrder(key, id, status, note) {
-    if (this.php.on()) { const body = { id, status }; if (note !== undefined) body.note = note; return this.php.send("order_update", body); }
+    if (this.php.on()) { const body = { id, status }; if (note !== undefined) body.note = note; return this._serial(id, () => this.php.send("order_update", body)); }
     const b = this.ordersBackend();
     if (b !== "supabase") this.post({ type: "update_order", key, id, status, note });
-    if (b !== "sheets") { const body = { status }; if (note !== undefined) body.note = note; this.sb.adminFetch("/rest/v1/orders?id=eq." + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(body) }); }
+    if (b !== "sheets") { const body = { status }; if (note !== undefined) body.note = note; return this._serial(id, () => this.sb.adminFetch("/rest/v1/orders?id=eq." + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify(body) })); }
   },
 };
 
