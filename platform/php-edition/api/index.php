@@ -560,7 +560,11 @@ switch ($route) {
            (قبل الحراس وحدّ المعدّل: فإعادة شبكة مشروعة لا تُرفض 409/429). نفس المفتاح بمحتوى مختلف ← 409. بلا مفتاح: السلوك السابق. */
         $idem = trim((string)($_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? ($o['idem'] ?? '')));
         if ($idem !== '' && !preg_match('/^[A-Za-z0-9_\-]{16,64}$/', $idem)) out(422, ['error' => 'invalid_idem']);
-        $reqHash = hash('sha256', json_encode([$name, $phone, $o['wilaya'] ?? '', $o['commune'] ?? '', $o['dtype'] ?? '', $o['desk'] ?? '', $total, $o['subtotal'] ?? 0, $o['fee'] ?? 0, $o['coupon'] ?? '', $o['promo'] ?? '', $manual, array_map(fn($i) => is_array($i) ? [$i['slug'] ?? '', $i['qty'] ?? 1, $i['price'] ?? 0] : null, $items)], JSON_UNESCAPED_UNICODE));
+        /* بصمة الطلب القانونية (12B.1): كل ما يغيّر المعنى التجاري — الاسم/الهاتف/الولاية/البلدية/نوع التوصيل/المكتب/البنود (slug+عنوان[التنويع]+كمية+سعر، مرتّبة)/المجاميع/الخصم/الكوبون/الترويج/extra (مفاتيح مرتّبة) — بلا حقول مكافحة الروبوت ولا الرمز ولا الملاحظة */
+        $canon = function ($v) use (&$canon) { if (is_array($v)) { if (array_is_list($v)) return array_map($canon, $v); ksort($v); return array_map($canon, $v); } return is_float($v) || is_int($v) ? (float)$v : (is_string($v) ? trim($v) : $v); };
+        $ex = is_array($o['extra'] ?? null) ? $o['extra'] : []; unset($ex['🔗 مرجع'], $ex['🧺 مجموعة']);   /* متقلّبان: مرجع المنصة ومعرّف مجموعة الـUpsell (يتولّد لكل محاولة) */
+        $its = array_map(fn($i) => is_array($i) ? [trim((string)($i['slug'] ?? '')), trim((string)($i['title'] ?? '')), (int)($i['qty'] ?? 1), (float)($i['price'] ?? 0)] : null, $items); usort($its, fn($x, $y) => strcmp(json_encode($x, JSON_UNESCAPED_UNICODE), json_encode($y, JSON_UNESCAPED_UNICODE)));
+        $reqHash = hash('sha256', json_encode($canon([$name, $phone, $o['wilaya'] ?? '', $o['commune'] ?? '', $o['dtype'] ?? '', $o['desk'] ?? '', $total, (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), (float)($o['discount'] ?? 0), strtoupper(trim((string)($o['coupon'] ?? ''))), strtoupper(trim((string)($o['promo'] ?? ''))), $manual, $its, $ex]), JSON_UNESCAPED_UNICODE));
         if ($idem !== '') { $rep = idemLookup($d, $idem, $reqHash); if ($rep !== null) out($rep['conflict'] ? 409 : 200, $rep['conflict'] ? ['error' => 'idempotency_key_reuse'] : ['ok' => true, 'id' => $rep['id'], 'duplicate' => true]); }
         $ip = clientIp(); if (!$manual) rateLimit('ord' . $ip, 20, 3600);
         /* حماية الطلبات: روبوتات وتكرار حسب IP — تُفعَّل من لوحة الإدارة ← نموذج الطلب */
@@ -623,7 +627,7 @@ switch ($route) {
                   ->execute([$id, time(), $name, $phone, cut($o['wilaya'] ?? '', 80), cut($o['commune'] ?? '', 120), cut($o['dtype'] ?? '', 10), cut($o['desk'] ?? '', 160),
                     implode("\n", $lines), json_encode($clean, JSON_UNESCAPED_UNICODE), (float)($o['subtotal'] ?? 0), (float)($o['fee'] ?? 0), $total, cut($o['coupon'] ?? '', 40), (float)($o['discount'] ?? 0), $extra, $cust, $iph]);
                 if ($manual && trim((string)($o['note'] ?? '')) !== '') $d->prepare('UPDATE orders SET note = ? WHERE id = ?')->execute([cut($o['note'], 500), $id]);
-                if ($idem !== '') $d->prepare('INSERT INTO order_idem (k, order_id, req_hash, created_at) VALUES (?,?,?,?)')->execute([$idem, $id, $reqHash, time()]);
+                if ($idem !== '') { $d->prepare('INSERT INTO order_idem (k, order_id, req_hash, created_at) VALUES (?,?,?,?)')->execute([$idem, $id, $reqHash, time()]); if (random_int(1, 50) === 1) $d->prepare('DELETE FROM order_idem WHERE created_at < ?')->execute([time() - 7 * 86400]); }   /* احتفاظ 7 أيام (العميل 30 دقيقة) */
                 $d->exec('COMMIT');
                 break;
             } catch (PDOException $e) {

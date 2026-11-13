@@ -1,0 +1,774 @@
+{
+ "phase": "12B.1",
+ "suite": "client",
+ "date": "2026-11-13",
+ "mocked": "fetch والمتصفح فقط",
+ "pass": 101,
+ "fail": 0,
+ "results": [
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف خادم صالح ← CONFIRMED",
+   "pass": true,
+   "x": {
+    "state": "CONFIRMED",
+    "ok": true,
+    "id": "S261113-AABBCCDD",
+    "err": "",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] تكرار مؤكَّد + معرّف الطلب الأصلي ← DUPLICATE_CONFIRMED",
+   "pass": true,
+   "x": {
+    "state": "DUPLICATE_CONFIRMED",
+    "ok": true,
+    "id": "M261113-0A1B2C3D4E",
+    "err": "",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:false + error ← REJECTED",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "ok": false,
+    "id": "",
+    "err": "invalid_phone",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:false بلا error ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "ok_false_no_error",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true بلا معرّف ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "missing_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه \"abc\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه \"\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "missing_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه \"<script>alert(1)</scr ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه \"xxxxxxxxxxxxxxxxxxxxx ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه \"S26-AB\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه \"S261113-GHIJKLMN!\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه 12345678 ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "missing_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه null ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "missing_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true + معرّف مشوَّه \"1234567890\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + ok:true مع error (متناقض) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "contradictory",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + duplicate غير منطقي ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "contradictory",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + جسم فارغ ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "bad_body",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + JSON تالف ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "bad_body",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 200 + مصفوفة لا كائن ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "bad_body",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 204 بلا جسم ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "bad_body",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] 3xx ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "ok": false,
+    "id": "",
+    "err": "unexpected_status",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 400 ← REJECTED (لا نجاح أبداً) ولا إعادة تلقائية",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 401 ← REJECTED (لا نجاح أبداً) ولا إعادة تلقائية",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 403 ← REJECTED (لا نجاح أبداً) ولا إعادة تلقائية",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 409 ← REJECTED (لا نجاح أبداً) ولا إعادة تلقائية",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 422 ← REJECTED (لا نجاح أبداً) ولا إعادة تلقائية",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 429 ← REJECTED (لا نجاح أبداً) ولا إعادة تلقائية",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 500 ← SERVER_ERROR وليس نجاحاً؛ 3 محاولات بنفس المفتاح",
+   "pass": true,
+   "x": {
+    "calls": 3
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 502 ← SERVER_ERROR وليس نجاحاً؛ 3 محاولات بنفس المفتاح",
+   "pass": true,
+   "x": {
+    "calls": 3
+   }
+  },
+  {
+   "n": "[ردّ] HTTP 503 ← SERVER_ERROR وليس نجاحاً؛ 3 محاولات بنفس المفتاح",
+   "pass": true,
+   "x": {
+    "calls": 3
+   }
+  },
+  {
+   "n": "[ردّ] 500 بجسم HTML ← SERVER_ERROR",
+   "pass": true
+  },
+  {
+   "n": "[شبكة] انقطاع قبل الحفظ ← UNKNOWN (لا نجاح)، 3 محاولات بنفس المفتاح، والمفتاح محفوظ للإعادة",
+   "pass": true,
+   "x": {
+    "calls": 3,
+    "kept": 1
+   }
+  },
+  {
+   "n": "[مهلة] مهلة بلا ردّ ← UNKNOWN بسبب timeout (لا نجاح)",
+   "pass": true,
+   "x": {
+    "err": "timeout"
+   }
+  },
+  {
+   "n": "[شبكة] انقطاع بعد الحفظ (ضاع الردّ الأول) ← إعادة تلقائية بنفس المفتاح تعيد الأصلي DUPLICATE_CONFIRMED وبطلب واحد فقط",
+   "pass": true,
+   "x": {
+    "state": "DUPLICATE_CONFIRMED",
+    "orders": 1
+   }
+  },
+  {
+   "n": "[شبكة] ضاعت كل الردود بعد الحفظ ← UNKNOWN (لا نجاح كاذب) والخادم حفظ طلباً واحداً",
+   "pass": true,
+   "x": {
+    "state": "UNKNOWN",
+    "orders": 1
+   }
+  },
+  {
+   "n": "[إعادة] «إعادة المحاولة» اليدوية بعد UNKNOWN تستعمل نفس المفتاح فتعيد الطلب الأصلي (DUPLICATE_CONFIRMED) بلا طلب ثانٍ",
+   "pass": true,
+   "x": {
+    "first": "UNKNOWN",
+    "second": "DUPLICATE_CONFIRMED",
+    "orders": 1
+   }
+  },
+  {
+   "n": "[مفتاح] تغيّر الإجمالي بعد نجاح سابق ← مفتاح جديد وطلب جديد مشروع (لا استعمال مفتاح غير متوافق)",
+   "pass": true
+  },
+  {
+   "n": "[مفتاح] الخادم الوهمي يرفض نفس المفتاح بمحتوى مختلف (409) والعميل يصنّفه REJECTED",
+   "pass": true
+  },
+  {
+   "n": "[بصمة] تغيير «الاسم» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «الهاتف» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «الولاية» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «البلدية» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «نوع التوصيل» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «مكتب التوصيل» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «تنويع المنتج» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «المنتج (slug)» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «الكمية» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «سعر الوحدة» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «المجموع الفرعي» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «رسوم التوصيل» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «الكوبون» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «الخصم» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «الإجمالي النهائي» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «حقل extra تجاري» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «حذف بند» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تغيير «ترويج شخصي» وحده ← مفتاح جديد",
+   "pass": true,
+   "x": {
+    "same": false
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «ترتيب البنود» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «مسافات زائدة/متعددة في الاسم» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «تنسيق الهاتف +213» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «تنسيق الهاتف 00213» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «حروف الكوبون» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «ترتيب مفاتيح extra» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «مرجع المنصة المتقلّب» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «معرّف مجموعة Upsell المتقلّب» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «حقول مكافحة الروبوت hp/ftok» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «رمز الزبون ctoken» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[بصمة] تكافؤ «أرقام كسرية متكافئة 1800 و1800.0» ← نفس المفتاح بعد التطبيع",
+   "pass": true,
+   "x": {
+    "reused": true
+   }
+  },
+  {
+   "n": "[عزل] تبويبان (تخزينان منفصلان) لنفس المحتوى لا يتشاركان مفتاحاً",
+   "pass": true
+  },
+  {
+   "n": "[بصمة] التسلسل القانوني حتمي (استدعاءان = نص واحد) ويبدأ بإصدار",
+   "pass": true
+  },
+  {
+   "n": "[حياة] يُمسح المفتاح عند CONFIRMED؛ طلب متطابق لاحق مشروع بمفتاح جديد",
+   "pass": true,
+   "x": {
+    "left": 0,
+    "orders": 2
+   }
+  },
+  {
+   "n": "[حياة] يُمسح المفتاح عند REJECTED (لا حفظ حدث)",
+   "pass": true
+  },
+  {
+   "n": "[حياة] يُحتفَظ بالمفتاح عند UNKNOWN (قد يكون الطلب حُفظ)",
+   "pass": true,
+   "x": {
+    "left": 1
+   }
+  },
+  {
+   "n": "[حياة] UNKNOWN: مفتاح واحد محفوظ للإعادة",
+   "pass": true,
+   "x": {
+    "left": 1
+   }
+  },
+  {
+   "n": "[حياة] يُحتفَظ بالمفتاح عند SERVER_ERROR (قد يكون الطلب حُفظ)",
+   "pass": true,
+   "x": {
+    "left": 1
+   }
+  },
+  {
+   "n": "[حياة] SERVER_ERROR: مفتاح واحد محفوظ للإعادة",
+   "pass": true,
+   "x": {
+    "left": 1
+   }
+  },
+  {
+   "n": "[حياة] يُحتفَظ بالمفتاح عند INVALID_RESPONSE (قد يكون الطلب حُفظ)",
+   "pass": true,
+   "x": {
+    "left": 1
+   }
+  },
+  {
+   "n": "[حياة] INVALID_RESPONSE: مفتاح واحد محفوظ للإعادة",
+   "pass": true,
+   "x": {
+    "left": 1
+   }
+  },
+  {
+   "n": "[حياة] انتهاء TTL (30 دقيقة) ← مفتاح جديد؛ وتُنظَّف المنتهية عند الاستعمال",
+   "pass": true,
+   "x": {
+    "ttl_min": 30
+   }
+  },
+  {
+   "n": "[حياة] التنظيف purge يحذف كل المفاتيح المنتهية",
+   "pass": true,
+   "x": {
+    "left": 0
+   }
+  },
+  {
+   "n": "[عشوائية] غياب crypto ← فشل آمن بلا أي إرسال (لا Math.random)",
+   "pass": true,
+   "x": {
+    "calls": 0
+   }
+  },
+  {
+   "n": "[عشوائية] getRandomValues وحده كافٍ (بلا randomUUID) والمفتاح 32 hex",
+   "pass": true,
+   "x": {
+    "key_len": 32
+   }
+  },
+  {
+   "n": "[عشوائية] وحدة OrderTruth لا تستعمل Math.random أبداً (فحص المصدر)",
+   "pass": true
+  },
+  {
+   "n": "[PII] لا اسم ولا هاتف ولا عنوان في التخزين (تجزئات مملّحة فقط)",
+   "pass": true,
+   "x": {
+    "store": "[[\"alyssum_idem_salt\",\"0326daab973947b2a5e48c0d01547ab9\"],[\"alyssum_idem_c19cdc3d091b6a995fbef891436d73d58558314169f865a"
+   }
+  },
+  {
+   "n": "[SHA-256] البديل النقي = WebCrypto = Node على متجهات NIST ونص عربي",
+   "pass": true
+  },
+  {
+   "n": "[SHA-256] بلا crypto.subtle يعمل البديل النقي والمفتاح صالح",
+   "pass": true
+  },
+  {
+   "n": "[Supabase] ردّ 200 بنص معرّف صالح ← CONFIRMED؛ ويُرسل idem داخل الحمولة",
+   "pass": true,
+   "x": {
+    "backend": "supabase"
+   }
+  },
+  {
+   "n": "[Supabase] 200 معرّف مشوَّه ← INVALID_RESPONSE؛ محاولة واحدة (لا إعادة تلقائية دون SB_IDEMPOTENT)",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[Supabase] 200 JSON كائن ← INVALID_RESPONSE؛ محاولة واحدة (لا إعادة تلقائية دون SB_IDEMPOTENT)",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[Supabase] 400 invalid_phone ← REJECTED؛ محاولة واحدة (لا إعادة تلقائية دون SB_IDEMPOTENT)",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[Supabase] 409 تصادم مفتاح ← REJECTED؛ محاولة واحدة (لا إعادة تلقائية دون SB_IDEMPOTENT)",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[Supabase] 500 ← SERVER_ERROR؛ محاولة واحدة (لا إعادة تلقائية دون SB_IDEMPOTENT)",
+   "pass": true,
+   "x": {
+    "state": "SERVER_ERROR",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[Supabase] شبكة ← UNKNOWN؛ محاولة واحدة (لا إعادة تلقائية دون SB_IDEMPOTENT)",
+   "pass": true,
+   "x": {
+    "state": "UNKNOWN",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[Supabase] مع SB_IDEMPOTENT=true: إعادة تلقائية بنفس المفتاح حتى 3",
+   "pass": true,
+   "x": {
+    "calls": 3
+   }
+  },
+  {
+   "n": "[Sheets] ردّ معتم (no-cors) ← UNKNOWN دائماً (لا CONFIRMED أبداً) ولا طلب شبكة قابل للقراءة",
+   "pass": true,
+   "x": {
+    "state": "UNKNOWN"
+   }
+  },
+  {
+   "n": "[both] إرسال Sheets لا يجعل الطلب CONFIRMED: النتيجة من Supabase وحدها (فشلها ← SERVER_ERROR)",
+   "pass": true
+  },
+  {
+   "n": "[توافق] submitOrderChecked وsubmitOrder تعيدان العقد الجديد (لا {ok:true} مفترض عند الفشل)",
+   "pass": true
+  },
+  {
+   "n": "[addOrder] php: تأكيد + معرّف خادم صالح، ويُرسل manual:true ومفتاح idem",
+   "pass": true
+  },
+  {
+   "n": "[addOrder] php: 200 بلا معرّف ← ليس نجاحاً ولا معرّف مختلق",
+   "pass": true
+  },
+  {
+   "n": "[addOrder] sheets: UNKNOWN بلا معرّف (لا يُختلق M+Date.now)",
+   "pass": true
+  },
+  {
+   "n": "[addOrder] supabase: يُقرأ الصف المُدرَج للتأكيد؛ المعرّف عشوائي آمن (10 hex)",
+   "pass": true,
+   "x": {
+    "id": "M261113-0D37923F60"
+   }
+  },
+  {
+   "n": "[addOrder] supabase: ردّ بلا الصف المُدرَج ← INVALID_RESPONSE لا نجاح",
+   "pass": true
+  }
+ ]
+}

@@ -80,7 +80,7 @@
     return '<div class="dgi"><div>حوّل إلى حساب <b>CCP</b>:</div><code>' + esc(d.account) + (d.key ? " clé " + esc(d.key) : "") + '</code>' + who + '<div>المبلغ: <b>' + esc(money(o.total)) + '</b></div></div>';
   }
   function proofModal(o, pay) {
-    var m = open('<h2>💳 أكمل الدفع</h2><div>رقم طلبك: <b dir="ltr">' + esc(o.ref) + '</b></div>' + instructions(o, pay) +
+    var m = open('<h2>💳 أكمل الدفع</h2><div>مرجع الدفع: <b dir="ltr">' + esc(o.ref) + '</b></div>' + instructions(o, pay) +
       '<div class="dgi">بعد التحويل ارفع <b>لقطة شاشة</b> تثبت العملية. يراجعها البائع ويصلك المنتج ' + (o.email ? 'على <b dir="ltr">' + esc(o.email) + '</b>' : 'على واتساب') + ' بمجرد التأكد.</div>' +
       '<input id="dg-file" type="file" accept="image/*"><div class="dgm" id="dg-msg"></div><button class="dgbtn" id="dg-send">إرسال إثبات الدفع</button><button class="dgbtn g" id="dg-later">سأرسله لاحقاً</button>');
     var msg = function (t, bad) { var e = document.getElementById("dg-msg"); if (e) { e.textContent = t; e.style.color = bad ? "#fca5a5" : "#86efac"; } };
@@ -119,15 +119,16 @@
       if (method === "chargily" && !email) { say("البريد الإلكتروني مطلوب ليصلك المنتج بعد الدفع بالبطاقة"); return; }
       if (!(window.PFOrder && PFOrder.on())) { say("الدفع المسبق غير مهيّأ في هذا المتجر — اطلب عبر واتساب"); return; }
       order.extra = Object.assign({}, order.extra, { "💾 منتج رقمي": "نعم", "💳 طريقة الدفع": LBL[method], "📧 البريد": email || "—" });
-      var ref = PFOrder.prep(order), btn = document.querySelector("#order-form .btn-order"); if (btn) btn.disabled = true;
+      var btn = document.querySelector("#order-form .btn-order"); if (btn) btn.disabled = true;
       var fail = function (m) { if (btn) btn.disabled = false; say(m); };
-      var pre = (typeof Guard !== "undefined" && Guard.active()) ? Guard.submit(order) : (function () { try { API.submitOrder(order); } catch (e) { } return Promise.resolve({ ok: true }); })();
-      return pre.then(function (gr) {
-        if (gr && gr.ok === false) return fail(gr.msg || "تعذّر إرسال الطلب");
+      return API.orderKey(order).then(function (seed) {
+      var ref = PFOrder.prep(order, seed);
+      return Guard.submit(order).then(function (gr) {      // 12B.1: لا نجاح بلا تأكيد خادم (Guard دائماً فعّال؛ حُذف مسار الإرسال بلا انتظار)
+        if (!gr || gr.ok !== true) return fail((gr && gr.msg) || "تعذّر تأكيد تسجيل الطلب — أعد المحاولة (لن يتكرر الطلب)");
         var lines = order.items.map(function (x) { return Object.assign({}, x); });
         return PFOrder.send(order, ref, lines, { email: email, pay: method }).then(function (r) {
           if (btn) btn.disabled = false;
-          if (!r || !r.ok) return say(r && r.msg ? r.msg + " (رقم طلبك: " + ref + ")" : "تعذّر ربط الدفع بطلبك، تواصل مع المتجر عبر واتساب (رقم طلبك: " + ref + ")");
+          if (!r || !r.ok) return say(r && r.msg ? r.msg + " (مرجع الدفع: " + ref + ")" : "تعذّر ربط الدفع بطلبك، تواصل مع المتجر عبر واتساب (رقم طلبك: " + ref + ")");
           var rec = { ref: ref, method: method, total: o.total, email: email, name: order.name, at: Date.now() };
           if (method === "chargily") {
             keep(rec); return call("/v1/payments/pay", { order_id: ref, method: "edahabia", locale: "ar", return_url: location.origin + location.pathname }).then(function (p) {
@@ -135,6 +136,7 @@
           }
           keep(rec); proofModal(rec, pay);
         });
+      });
       });
     });
   }

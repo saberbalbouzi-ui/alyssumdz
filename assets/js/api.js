@@ -1,4 +1,82 @@
 /* أليسوم — طبقة الاتصال بـ Google Sheets (JSONP للقراءة، POST بلا CORS للكتابة) */
+/* ═══ المرحلة 12B.1 — صدق إرسال الطلب ═══
+   عقد موحّد: CONFIRMED | DUPLICATE_CONFIRMED | REJECTED | UNKNOWN | SERVER_ERROR | INVALID_RESPONSE.
+   النجاح (ok:true) لا يكون إلا بتأكيد صريح من الخادم + رقم طلب صالح صادر عنه. HTTP 2xx وحده، وواتساب، وأي معرّف مولَّد محلياً، ليست إثباتاً.
+   البصمة القانونية SHA-256 كاملة بملح لكل تبويب (لا PII خام في التخزين)، والمفتاح عشوائي آمن (randomUUID/getRandomValues) — لا Math.random أبداً. */
+const OrderTruth = (() => {
+  "use strict";
+  const ST = Object.freeze({ CONFIRMED: "CONFIRMED", DUPLICATE_CONFIRMED: "DUPLICATE_CONFIRMED", REJECTED: "REJECTED", UNKNOWN: "UNKNOWN", SERVER_ERROR: "SERVER_ERROR", INVALID_RESPONSE: "INVALID_RESPONSE" });
+  const ID_RX = /^[A-Za-z]{1,3}\d{6}-[A-Za-z0-9]{5,16}$/, TTL = 30 * 60 * 1000, PFX = "alyssum_idem_", SALT = "alyssum_idem_salt", VOLATILE = ["🔗 مرجع", "🧺 مجموعة"];
+  const okState = x => x === ST.CONFIRMED || x === ST.DUPLICATE_CONFIRMED;
+  const res = (state, o) => Object.assign({ state, ok: okState(state), id: "", error: "", status: 0, retryable: false, key: "", backend: "" }, o || {});
+  const g = () => (typeof globalThis !== "undefined" ? globalThis : (typeof window !== "undefined" ? window : {}));
+  /* ── تصنيف الردّ (دالة نقية) ── */
+  function classify(status, text, backend) {
+    status = +status || 0; let j, parsed = false; const t = typeof text === "string" ? text.trim() : "";
+    if (t) { try { j = JSON.parse(t); parsed = true; } catch (_) { } }
+    const code = x => (x && typeof x === "object" && typeof x.error === "string" && x.error) ? x.error : (x && typeof x === "object" && typeof x.message === "string" ? x.message : "");
+    if (status >= 200 && status < 300) {
+      if (backend === "supabase" && parsed && typeof j === "string") return ID_RX.test(j.trim()) ? res(ST.CONFIRMED, { id: j.trim(), status }) : res(ST.INVALID_RESPONSE, { status, error: "invalid_id" });
+      if (!parsed || j === null || typeof j !== "object" || Array.isArray(j)) return res(ST.INVALID_RESPONSE, { status, error: "bad_body" });
+      if (j.ok === false) return (typeof j.error === "string" && j.error) ? res(ST.REJECTED, { status, error: j.error }) : res(ST.INVALID_RESPONSE, { status, error: "ok_false_no_error" });
+      if (j.ok !== true) return res(ST.INVALID_RESPONSE, { status, error: "no_success_flag" });
+      if (j.error != null && j.error !== "") return res(ST.INVALID_RESPONSE, { status, error: "contradictory" });
+      if (j.duplicate != null && typeof j.duplicate !== "boolean") return res(ST.INVALID_RESPONSE, { status, error: "contradictory" });
+      const id = typeof j.id === "string" ? j.id.trim() : ""; if (!ID_RX.test(id)) return res(ST.INVALID_RESPONSE, { status, error: id ? "invalid_id" : "missing_id" });
+      return res(j.duplicate === true ? ST.DUPLICATE_CONFIRMED : ST.CONFIRMED, { id, status });
+    }
+    if (status >= 400 && status < 500) return res(ST.REJECTED, { status, error: (parsed && code(j)) || ("http_" + status), retryable: status === 429 || status === 408 });
+    if (status >= 500 && status < 600) return res(ST.SERVER_ERROR, { status, error: (parsed && code(j)) || ("http_" + status), retryable: status === 500 || status === 502 || status === 503 || status === 504 });
+    return res(ST.INVALID_RESPONSE, { status, error: "unexpected_status" });
+  }
+  /* ── البصمة القانونية ── */
+  const sp = v => String(v == null ? "" : v).replace(/\s+/g, " ").trim();
+  const phoneN = v => { let d = String(v == null ? "" : v).replace(/\D/g, ""); if (d.startsWith("00213")) d = "0" + d.slice(5); else if (d.startsWith("213") && d.length > 10) d = "0" + d.slice(3); return d.slice(0, 14); };
+  const num = v => { const n = Number(v); return isFinite(n) ? n : 0; };
+  const deep = v => { if (Array.isArray(v)) return v.map(deep); if (v && typeof v === "object") { const o = {}; Object.keys(v).sort().forEach(k => { o[k] = deep(v[k]); }); return o; } return typeof v === "string" ? sp(v) : (typeof v === "number" ? num(v) : v); };
+  function canon(o) {
+    o = o || {}; const items = (Array.isArray(o.items) ? o.items : []).map(i => [sp(i && i.slug), sp(i && i.title), num(i && i.qty), num(i && i.price)]).sort((a, b) => { const x = JSON.stringify(a), y = JSON.stringify(b); return x < y ? -1 : x > y ? 1 : 0; });
+    const ex = {}; Object.keys(o.extra && typeof o.extra === "object" ? o.extra : {}).forEach(k => { if (VOLATILE.indexOf(k) < 0) ex[k] = o.extra[k]; });
+    return JSON.stringify(["v1", sp(o.name), phoneN(o.phone), sp(o.wilaya), sp(o.commune), sp(o.dtype), sp(o.desk), items, num(o.subtotal), num(o.fee), num(o.discount), num(o.total), sp(o.coupon).toUpperCase(), sp(o.promo).toUpperCase(), o.manual === true, deep(ex)]);
+  }
+  /* SHA-256 كاملة: WebCrypto، وبديل نقي حين يغيب crypto.subtle (سياق غير آمن) */
+  function sha256js(str) {
+    const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    const b = []; const enc = unescape(encodeURIComponent(str)); for (let i = 0; i < enc.length; i++) b.push(enc.charCodeAt(i));
+    const l = b.length * 8; b.push(0x80); while (b.length % 64 !== 56) b.push(0); for (let i = 7; i >= 0; i--) b.push(i >= 4 ? 0 : (l >>> (i * 8)) & 0xff);
+    let h = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]; const rr = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let o = 0; o < b.length; o += 64) {
+      const w = new Array(64); for (let i = 0; i < 16; i++) w[i] = (b[o + i * 4] << 24) | (b[o + i * 4 + 1] << 16) | (b[o + i * 4 + 2] << 8) | b[o + i * 4 + 3];
+      for (let i = 16; i < 64; i++) { const s0 = rr(w[i - 15], 7) ^ rr(w[i - 15], 18) ^ (w[i - 15] >>> 3), s1 = rr(w[i - 2], 17) ^ rr(w[i - 2], 19) ^ (w[i - 2] >>> 10); w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0; }
+      let [a, bb, c, d, e, f, gg, hh] = h;
+      for (let i = 0; i < 64; i++) { const S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25), ch = (e & f) ^ (~e & gg), t1 = (hh + S1 + ch + K[i] + w[i]) | 0, S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22), mj = (a & bb) ^ (a & c) ^ (bb & c), t2 = (S0 + mj) | 0; hh = gg; gg = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0; }
+      h = [(h[0] + a) | 0, (h[1] + bb) | 0, (h[2] + c) | 0, (h[3] + d) | 0, (h[4] + e) | 0, (h[5] + f) | 0, (h[6] + gg) | 0, (h[7] + hh) | 0];
+    }
+    return h.map(x => (x >>> 0).toString(16).padStart(8, "0")).join("");
+  }
+  async function sha256Hex(str) {
+    try { const c = g().crypto; if (c && c.subtle && typeof TextEncoder !== "undefined") { const d = await c.subtle.digest("SHA-256", new TextEncoder().encode(str)); return Array.prototype.map.call(new Uint8Array(d), x => x.toString(16).padStart(2, "0")).join(""); } } catch (_) { }
+    return sha256js(str);
+  }
+  /* عشوائية آمنة فقط: تعذّرها ← استثناء (لا إرسال، لا تدهور صامت إلى Math.random) */
+  function secureKey() {
+    const c = g().crypto;
+    if (c && typeof c.randomUUID === "function") return c.randomUUID().replace(/-/g, "");
+    if (c && typeof c.getRandomValues === "function") { const a = new Uint8Array(16); c.getRandomValues(a); return Array.prototype.map.call(a, x => x.toString(16).padStart(2, "0")).join(""); }
+    throw new Error("secure_random_unavailable");
+  }
+  /* تخزين لكل تبويب (sessionStorage) وبديل ذاكرة؛ لا PII: المفاتيح تجزئات مملّحة والقيم مفتاح عشوائي + زمن */
+  const mem = new Map(); const st = { get(k) { try { const v = g().sessionStorage.getItem(k); return v; } catch (_) { return mem.has(k) ? mem.get(k) : null; } }, set(k, v) { try { g().sessionStorage.setItem(k, v); } catch (_) { mem.set(k, v); } }, del(k) { try { g().sessionStorage.removeItem(k); } catch (_) { } mem.delete(k); }, keys() { const o = []; try { const s = g().sessionStorage; for (let i = 0; i < s.length; i++) o.push(s.key(i)); } catch (_) { } mem.forEach((_, k) => o.push(k)); return o; } };
+  function purge() { const now = Date.now(); st.keys().forEach(k => { if (k.indexOf(PFX) === 0 && k !== SALT) { try { const v = JSON.parse(st.get(k) || "null"); if (!v || now - v.t > TTL) st.del(k); } catch (_) { st.del(k); } } }); }
+  async function keyFor(order) {
+    purge(); let salt = st.get(SALT); if (!salt) { salt = secureKey(); st.set(SALT, salt); }
+    const slot = PFX + await sha256Hex(salt + "|" + canon(order)), now = Date.now(); let v = null; try { v = JSON.parse(st.get(slot) || "null"); } catch (_) { }
+    let reused = !!(v && v.k && now - v.t <= TTL); if (!reused) { v = { k: secureKey(), t: now }; st.set(slot, JSON.stringify(v)); }
+    return { key: v.k, slot, reused };
+  }
+  const done = slot => { if (slot) st.del(slot); };
+  return { STATES: ST, ID_RX, TTL_MS: TTL, classify, canon, sha256Hex, sha256js, secureKey, keyFor, done, purge, okState, res };
+})();
 const API = {
   liveProducts: null,
   liveFees: null,
@@ -69,23 +147,55 @@ const API = {
 
   /* مصدر الطلبات حسب CONFIG.ORDERS_BACKEND: sheets | both | supabase */
   ordersBackend() { const b = (typeof CONFIG !== "undefined" && CONFIG.ORDERS_BACKEND) || "sheets"; return (b !== "sheets" && !this.sb.enabled()) ? "sheets" : b; },
-  /* المرحلة 12B: مفتاح idempotency لكل محاولة إتمام (يُحفظ 10 دقائق في sessionStorage بحسب محتوى الطلب فتُعاد المحاولة/النقر المتكرر بنفس المفتاح فلا يُنشأ طلب ثانٍ؛ يُحذف عند النجاح فيبقى الطلب المتطابق اللاحق مشروعاً) */
-  _idem(order) {
-    try {
-      const sig = [order.name, order.phone, order.total, JSON.stringify((order.items || []).map(i => [i.slug, i.qty, i.price]))].join("|"); let h = 5381; for (let i = 0; i < sig.length; i++) h = ((h << 5) + h + sig.charCodeAt(i)) | 0;
-      const slot = "alyssum_idem_" + (h >>> 0).toString(36), now = Date.now(); let v = null; try { v = JSON.parse(sessionStorage.getItem(slot) || "null"); } catch (_) { }
-      if (!v || now - v.t > 600000) { v = { k: (window.crypto && crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "") : (Math.random().toString(36).slice(2) + now.toString(36) + Math.random().toString(36).slice(2)).padEnd(24, "0")), t: now }; try { sessionStorage.setItem(slot, JSON.stringify(v)); } catch (_) { } }
-      return { key: v.k, slot };
-    } catch (_) { return null; }
+  /* ── المرحلة 12B.1: إرسال طلب بعقد صدق موحّد (انظر OrderTruth أعلاه) ── */
+  /* طلب واحد بمهلة: يعيد {status,text} أو {net:true,err}. لا يحوّل أي فشل إلى نجاح. */
+  async _postOnce(url, headers, bodyStr, ms) {
+    const ac = typeof AbortController !== "undefined" ? new AbortController() : null, t = ac ? setTimeout(() => ac.abort(), ms || this.orderTimeout || 15000) : 0;
+    try { const r = await fetch(url, { method: "POST", headers, body: bodyStr, credentials: "same-origin", signal: ac ? ac.signal : undefined }); const text = await r.text().catch(() => ""); return { status: r.status, text }; }
+    catch (e) { return { net: true, err: (e && e.name === "AbortError") ? "timeout" : "network" }; } finally { if (t) clearTimeout(t); }
   },
-  _idemDone(i) { try { if (i) sessionStorage.removeItem(i.slot); } catch (_) { } },
-  submitOrder(order) {
-    const ct = this.cust.token();                    // طلب زبون مسجّل ⟵ يُربط بحسابه (لا يُرسل الرمز إلى Google Sheets أبداً)
-    if (this.php.on()) { const ik = this._idem(order); return this.php.send("order", { order: Object.assign({}, order, ct ? { ctoken: ct } : {}, ik ? { idem: ik.key } : {}) }); }
-    const b = this.ordersBackend();
-    if (b !== "supabase") this.post({ type: "order", order });
-    if (b !== "sheets") this.sb.publicRpc("submit_order", { p: ct ? Object.assign({}, order, { ctoken: ct }) : order });
+  /* مفتاح idempotency الحالي لهذا الطلب (للمرجع المستقر في مرآة المنصة)؛ "" إن تعذّرت العشوائية الآمنة */
+  async orderKey(order) { try { return (await OrderTruth.keyFor(order)).key; } catch (e) { return ""; } },
+  /* يعيد دائماً نتيجة بالعقد الموحّد؛ ok:true فقط لـCONFIRMED/DUPLICATE_CONFIRMED بمعرّف خادم صالح. لا يُرمى استثناء ولا يُختلق نجاح. */
+  async submitOrderTruth(order) {
+    const T = OrderTruth, backend = this.php.on() ? "php" : this.ordersBackend(); let ik;
+    try { ik = await T.keyFor(order); } catch (e) { return T.res(T.STATES.REJECTED, { error: "secure_random_unavailable", backend }); }   /* فشل آمن: لا إرسال */
+    const ct = this.cust.token(), body = ct ? Object.assign({}, order, { ctoken: ct }) : order; let r;
+    if (backend === "php") r = await this._submitPhp(body, ik);
+    else if (backend === "supabase" || backend === "both") { if (backend === "both") this.post({ type: "order", order }); r = await this._submitSb(body, ik); }
+    else { this.post({ type: "order", order }); r = T.res(T.STATES.UNKNOWN, { error: "unverifiable_backend" }); }   /* Google Sheets (no-cors): الردّ معتم ← لا إثبات ممكن */
+    r.key = ik.key; r.backend = backend; if (r.state === T.STATES.CONFIRMED || r.state === T.STATES.DUPLICATE_CONFIRMED || r.state === T.STATES.REJECTED) T.done(ik.slot);
+    return r;
   },
+  /* إعادة المحاولة بنفس المفتاح (آمنة على PHP: الخادم يعيد الطلب الأول). أي محاولة انتهت بعدم يقين تُنزل أي فشل لاحق إلى UNKNOWN (قد يكون حُفظ). */
+  async _submitPhp(body, ik) {
+    const T = OrderTruth, MAX = 3; let uncertain = false, last = null;
+    for (let a = 0; a < MAX; a++) {
+      const o = await this._postOnce(this.php.url("order"), { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", "Idempotency-Key": ik.key }, JSON.stringify({ order: Object.assign({}, body, { idem: ik.key }) }));
+      last = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "php");
+      if (last.state === T.STATES.UNKNOWN) uncertain = true;
+      if (!(last.state === T.STATES.UNKNOWN || (last.state === T.STATES.SERVER_ERROR && last.retryable)) || a === MAX - 1) break;
+      await new Promise(rs => setTimeout(rs, 400 * (a + 1)));
+    }
+    if (uncertain && (last.state === T.STATES.SERVER_ERROR || last.state === T.STATES.INVALID_RESPONSE)) last = T.res(T.STATES.UNKNOWN, { error: last.error, status: last.status, retryable: true });
+    return last;
+  },
+  /* Supabase: الدالة submit_order تعيد رقم الطلب (نصاً). الإعادة التلقائية معطّلة ما لم يؤكَّد أن المخطط يدعم idem (CONFIG.SB_IDEMPOTENT) كي لا يتكرر الطلب */
+  async _submitSb(body, ik) {
+    const T = OrderTruth, auto = typeof CONFIG !== "undefined" && CONFIG && CONFIG.SB_IDEMPOTENT === true, MAX = auto ? 3 : 1; let uncertain = false, last = null;
+    for (let a = 0; a < MAX; a++) {
+      const o = await this._postOnce(this.sb.url("/rest/v1/rpc/submit_order"), this.sb.headers(), JSON.stringify({ p: Object.assign({}, body, { idem: ik.key }) }));
+      last = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "supabase");
+      if (last.state === T.STATES.UNKNOWN) uncertain = true;
+      if (!(last.state === T.STATES.UNKNOWN || (last.state === T.STATES.SERVER_ERROR && last.retryable)) || a === MAX - 1) break;
+      await new Promise(rs => setTimeout(rs, 400 * (a + 1)));
+    }
+    if (uncertain && (last.state === T.STATES.SERVER_ERROR || last.state === T.STATES.INVALID_RESPONSE)) last = T.res(T.STATES.UNKNOWN, { error: last.error, status: last.status, retryable: true });
+    return last;
+  },
+  /* واجهتان قديمتان تبقيان للتوافق وتعيدان الآن نتيجة العقد (لا فرع نجاح مفترض بلا انتظار) */
+  submitOrder(order) { return this.submitOrderTruth(order); },
+  async submitOrderChecked(order) { return this.submitOrderTruth(order); },
 
   /* كود تخفيض شخصي (إعادة الشراء): {ok, type, value, minOrder} | {ok:false, error} | null إن لم تتوفر خلفية */
   async promoCheck(code, phone) {
@@ -114,30 +224,6 @@ const API = {
     return "";
   },
   /* إرسال الطلب مع انتظار ردّ الخادم (عند تفعيل الحماية): يُرجع {ok} أو {ok:false, error} بأحد رموز الحماية فقط؛ أي خطأ آخر لا يمنع الطلب */
-  async submitOrderChecked(order) {
-    const ct = this.cust.token(), o = ct ? Object.assign({}, order, { ctoken: ct }) : order, GUARD = ["duplicate_order", "bot", "rate_limited", "invalid_phone", "blocked"];
-    try {
-      if (this.php.on()) {
-        const ik = this._idem(order); let r = null;
-        for (let a = 0; a < 3; a++) {   /* أعطال الخادم/الشبكة (5xx أو انقطاع) تُعاد حتى 3 مرات بنفس المفتاح فلا يتكرر الطلب؛ أخطاء الحماية (4xx) لا تُعاد */
-          try { r = await fetch(this.php.url("order"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ order: ik ? Object.assign({}, o, { idem: ik.key }) : o }), credentials: "same-origin" }); } catch (e) { r = null; }
-          if ((r && r.status < 500) || a === 2) break; await new Promise(res => setTimeout(res, 400 * (a + 1)));
-        }
-        if (!r) throw new Error("network");
-        const j = await r.json().catch(() => ({}));
-        if (r.ok) this._idemDone(ik);
-        return r.ok ? { ok: true } : (GUARD.includes(j.error) ? { ok: false, error: j.error } : { ok: true });
-      }
-      const b = this.ordersBackend();
-      if (b !== "supabase") this.post({ type: "order", order });
-      if (b !== "sheets") {
-        const r = await fetch(this.sb.url("/rest/v1/rpc/submit_order"), { method: "POST", headers: this.sb.headers(), body: JSON.stringify({ p: o }) });
-        if (!r.ok) { const j = await r.json().catch(() => ({})); const m = String(j.message || ""); return GUARD.includes(m) ? { ok: false, error: m } : { ok: true }; }
-      }
-      return { ok: true };
-    } catch (e) { return { ok: true }; }        // عطل شبكة/خادم لا يمنع الطلب (يبقى يصل عبر واتساب)
-  },
-
   /* ── حساب الزبون («حسابي»): تسجيل برقم الهاتف + كلمة سر. الخلفية: php (SQLite) | sb (Supabase RPC) | local (على الجهاز فقط) ── */
   cust: {
     mode() { return API.php.on() ? "php" : ((API.sb.enabled() && API.ordersBackend() !== "sheets") ? "sb" : "local"); },
@@ -344,19 +430,24 @@ const API = {
     } catch (e) { }
     return false;
   },
-  /* إضافة طلب يدوي من لوحة المدير: {ok,id} (id فارغ مع sheets). supabase: إدراج بجلسة المدير؛ php: نقطة order بعلم manual (مدير فقط) */
+  /* إضافة طلب يدوي من لوحة المدير — عقد 12B.1: {ok,state,id,error}؛ ok:true فقط بتأكيد الخادم ومعرّف طلب صالح (لا معرّف مختلَق محلياً أبداً).
+     php: نقطة order بعلم manual + مفتاح idempotency (إعادة آمنة)؛ supabase: إدراج بجلسة المدير مع قراءة الصف المُدرَج للتأكيد؛ sheets: ردّ معتم ← UNKNOWN. */
   async addOrder(order) {
+    const T = OrderTruth, ord = Object.assign({}, order, { manual: true });
     try {
-      if (this.php.on()) { const r = await fetch(this.php.url("order"), { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ order: Object.assign({}, order, { manual: true }) }), credentials: "same-origin" }); const j = await r.json().catch(() => ({})); return r.ok && j.ok ? { ok: true, id: j.id } : { ok: false }; }
+      if (this.php.on()) { let ik; try { ik = await T.keyFor(ord); } catch (e) { return T.res(T.STATES.REJECTED, { error: "secure_random_unavailable" }); }
+        const o = await this._postOnce(this.php.url("order"), { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", "Idempotency-Key": ik.key }, JSON.stringify({ order: Object.assign({}, ord, { idem: ik.key }) }));
+        const r = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "php"); if (r.state !== T.STATES.UNKNOWN && r.state !== T.STATES.SERVER_ERROR && r.state !== T.STATES.INVALID_RESPONSE) T.done(ik.slot); return r; }
       const b = this.ordersBackend();
       if (b !== "sheets" && this.sb.enabled()) {
-        const id = "M" + (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0"); })() + "-" + Math.random().toString(36).slice(2, 7).toUpperCase();
-        const row = { id, name: order.name, phone: order.phone, wilaya: order.wilaya || null, commune: order.commune || null, dtype: order.dtype || null, desk: order.desk || null, items: order.items || [], items_text: (order.items || []).map(l => l.title + " ×" + l.qty + " = " + Math.round(l.qty * l.price) + " DA").join("\n"), subtotal: order.subtotal || 0, fee: order.fee || 0, total: order.total || 0, coupon: null, discount: order.discount || 0, extra: order.extra || {}, status: "nouvelle", note: order.note || "", source: "manual" };
-        const r = await this.sb.adminFetch("/rest/v1/orders", { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify(row) });
-        return r === null ? { ok: false } : { ok: true, id };
+        let id; try { const d = new Date(), hx = T.secureKey().slice(0, 10).toUpperCase(); id = "M" + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "-" + hx; } catch (e) { return T.res(T.STATES.REJECTED, { error: "secure_random_unavailable" }); }
+        const row = { id, name: order.name, phone: order.phone, wilaya: order.wilaya || null, commune: order.commune || null, dtype: order.dtype || null, desk: order.desk || null, items: order.items || [], items_text: (order.items || []).map(l => l.title + " ×" + l.qty + " = " + Math.round(l.qty * l.price) + " DA").join("\n"), subtotal: order.subtotal || 0, fee: order.fee || 0, total: order.total || 0, coupon: null, discount: order.discount || 0, extra: order.extra || {}, status: "nouvelle", note: order.note || "" };
+        const r = await this.sb.adminFetch("/rest/v1/orders", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(row) });
+        if (r === null) return T.res(T.STATES.UNKNOWN, { error: "no_confirmation", retryable: false });   /* adminFetch يخفي رمز HTTP: لا نخمّن */
+        const back = Array.isArray(r) ? r[0] : null; return (back && back.id === id && T.ID_RX.test(id)) ? T.res(T.STATES.CONFIRMED, { id, status: 201 }) : T.res(T.STATES.INVALID_RESPONSE, { error: "no_row_returned" });
       }
-      this.post({ type: "order", order }); return { ok: true, id: "" };
-    } catch (e) { return { ok: false }; }
+      this.post({ type: "order", order }); return T.res(T.STATES.UNKNOWN, { error: "unverifiable_backend" });
+    } catch (e) { return T.res(T.STATES.UNKNOWN, { error: "network", retryable: true }); }
   },
   updateOrder(key, id, status, note) {
     if (this.php.on()) { const body = { id, status }; if (note !== undefined) body.note = note; return this.php.send("order_update", body); }

@@ -250,7 +250,7 @@ const Cart = {
     const disc = currentCartDiscount(sub, couponCartItems());
     const discount = disc.discount;
     const total = Math.max(0, sub - discount) + fee;
-    const __cgrp = (window.Upsell && Upsell.hasType("post")) ? Upsell.gid() : "";
+    let __cgrp = (window.Upsell && Upsell.hasType("post")) ? Upsell.gid() : "";
     // Enregistrement dans Google Sheets
     const __pre = (Guard.active() && waAutoOn()) ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
     const __order = {
@@ -261,8 +261,12 @@ const Cart = {
       coupon: AppliedCoupon.record && (disc.couponDiscount > 0 || couponFreeShip() || couponGiftTitle()) ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && disc.couponDiscount > 0 && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, disc.autoDiscount > 0 ? { "🤖 خصم تلقائي": disc.message } : {}, items.some(it=>it.up) ? { "➕ إضافة سريعة": (items.find(it=>it.up).upt || ""), "🆔 قاعدة العرض": items.find(it=>it.up).up } : {}, __cgrp ? { "🧺 مجموعة": __cgrp } : {}, PageSrc ? { "📄 الصفحة": PageSrc } : {}, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (fee > 0 && __sq.adj && fee === __sq.fee) ? { "🎁 دعم الشحن": String(__sq.adj) } : {}, (window.GeoPin && GeoPin.link()) ? { "📍 الموقع": GeoPin.link() } : {}, Attrib),
     };
-    const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
-    if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
+    const __ik = await API.orderKey(__order);        // مفتاح idempotency (المرجع ومعرّف المجموعة مستثنيان من البصمة) — يثبّتهما عبر إعادة المحاولة فلا يتغيّر المفتاح
+    if(__cgrp){ __cgrp = Upsell.gid(__ik); __order.extra["🧺 مجموعة"] = __cgrp; }
+    const __pfr = window.PFOrder ? PFOrder.prep(__order, __ik) : "";
+    const __waFail = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`السلام عليكم ${SITE_NAME}، حاولت تسجيل طلب عبر الموقع ولم يصلني تأكيد التسجيل.\nالاسم: ${name}\nالهاتف: ${phone}\nالإجمالي: ${fmt(total)}`)}`;
+    const gr = await Guard.submit(__order);
+    if(!gr.ok){ if(__pre) __pre.close(); Guard.fail(gr, { retry: ()=>Cart.checkout(), wa: __waFail }); return }     // لا نجاح بلا تأكيد خادم: بيانات النموذج تبقى
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
     try{ if(window.PFOrder) PFOrder.send(__order, __pfr, items.map(it=>({ slug: it.slug, vid: it.vid || "", qty: it.qty, price: it.price, title: it.slug }))); }catch(e){}
     let msg = `السلام عليكم ${SITE_NAME}، أريد تأكيد طلبي:\n`;
@@ -277,9 +281,10 @@ const Cart = {
     msg += `\nالتوصيل (${dtype==="stop"?"مكتب":"للمنزل"} - ${wl.name}${commune?" / "+commune:""}): ${fmt(fee)}`;
     msg += `\n*الإجمالي: ${fmt(total)}*`;
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
+    if(gr.id) msg += `\nرقم الطلب: ${gr.id}`;
     try{ const f0 = items[0] && (PRODUCTS.find(x=>x.slug===items[0].slug) || items[0]); trackEvent("Lead", { slug: items[0] && items[0].slug, title: f0 && f0.title, qty: items.reduce((a,i)=>a+i.qty,0), value: total }); if(f0) firePixelPurchase(f0, total, items.reduce((a,i)=>a+i.qty,0)); }catch(e){}
     if(waAutoOn()) Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
-    Thanks.show({ name, total, up: { customer:{ name, phone, wilaya: wl.name, commune, dtype }, slugs: items.map(i=>i.slug), cats: items.map(i=>{ const q = PRODUCTS.find(x=>x.slug===i.slug); return q ? q.cat : ""; }), total, grp: __cgrp, page: PageSrc || "" }, lines: items.map(it=>{ const q = PRODUCTS.find(x=>x.slug===it.slug)||it; return q.title + (it.qty>1?" ×"+it.qty:""); }), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
+    Thanks.show({ name, total, id: gr.id, duplicate: gr.duplicate, up: { customer:{ name, phone, wilaya: wl.name, commune, dtype }, slugs: items.map(i=>i.slug), cats: items.map(i=>{ const q = PRODUCTS.find(x=>x.slug===i.slug); return q ? q.cat : ""; }), total, grp: __cgrp, page: PageSrc || "" }, lines: items.map(it=>{ const q = PRODUCTS.find(x=>x.slug===it.slug)||it; return q.title + (it.qty>1?" ×"+it.qty:""); }), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   }
 };
 
@@ -1249,7 +1254,7 @@ function initProduct(slug){
       return DigitalCheckout.submit({ order: __dOrder, total: __dOrder.total });
     }
     const desk = (state.dtype==="stop" && deskSel) ? deskSel.value : "";
-    const __grp = (bumpSel || (window.Upsell && Upsell.hasType("post"))) ? Upsell.gid() : "";    // مجموعة الطلب: تربط طلب «بعد الشراء» بهذا الطلب ليُدمجا في شحنة واحدة
+    let __grp = (bumpSel || (window.Upsell && Upsell.hasType("post"))) ? Upsell.gid() : "";    // مجموعة الطلب: تربط طلب «بعد الشراء» بهذا الطلب ليُدمجا في شحنة واحدة
     // Enregistrement dans Google Sheets
     const __pre = (Guard.active() && waAutoOn()) ? window.open("", "_blank") : null;      // يُفتح فوراً (ضمن نقرة الزبون) قبل انتظار فحص الخادم
     const __order = {
@@ -1260,13 +1265,17 @@ function initProduct(slug){
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, (state.offer.qty > 1 || state.offer.free) ? { "🎁 العرض": "عرض " + state.offer.qty + " قطع" + (state.offer.free ? " (" + (state.offer.qty - state.offer.free) + " + " + state.offer.free + " مجاناً)" : "") + " بسعر " + fmt(state.offer.price) } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title, "🆔 قاعدة العرض": bumpSel.rule.id } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (fee > 0 && __sq.adj && fee === __sq.fee) ? { "🎁 دعم الشحن": String(__sq.adj) } : {}, Attrib),
     };
-    const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
+    const __ik = await API.orderKey(__order);
+    if(__grp){ __grp = Upsell.gid(__ik); __order.extra["🧺 مجموعة"] = __grp; }
+    const __pfr = window.PFOrder ? PFOrder.prep(__order, __ik) : "";
     if(p.mpId){       // منتج التسويق بالعمولة: لا يُقبل الطلب إلا إن حجز المورّد عمولته وكميته (فحص متزامن عند المنصة)
       __order.extra["🛒 سوق التوريد"] = "1";
       const __hold = window.PFOrder ? await PFOrder.hold(__order, __pfr, __order.items.map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" }))) : { ok:false, msg:"حاول بعد لحظات" };
       if(!__hold.ok){ if(__pre) __pre.close(); toast(__hold.msg); return }
     }
-    if(Guard.active()){ const gr = await Guard.submit(__order); if(!gr.ok){ if(__pre) __pre.close(); toast(gr.msg); return } } else API.submitOrder(__order);
+    const __waFail = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`السلام عليكم ${SITE_NAME}، حاولت تسجيل طلب عبر الموقع ولم يصلني تأكيد التسجيل.\nالاسم: ${name}\nالهاتف: ${phone}\nالإجمالي: ${fmt(total)}`)}`;
+    const gr = await Guard.submit(__order);
+    if(!gr.ok){ if(__pre) __pre.close(); Guard.fail(gr, { retry: ()=>document.getElementById("order-form").requestSubmit(), wa: __waFail }); return }     // لا نجاح بلا تأكيد خادم: بيانات النموذج تبقى
     Gifts.markUsed(AppliedCoupon.record); markCouponPhoneUsed(AppliedCoupon.record, phone);
     try{ if(window.PFOrder) PFOrder.send(__order, __pfr, __order.items.map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" }))); }catch(e){}
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
@@ -1286,8 +1295,9 @@ function initProduct(slug){
     msg += `\n\nالاسم: ${name}\nالهاتف: ${phone}`;
     Object.entries(extraValues).forEach(([label,val])=>{ msg += `\n${label}: ${val}`; });
     msg += `\n\n💵 الدفع عند الاستلام`;
+    if(gr.id) msg += `\nرقم الطلب: ${gr.id}`;
     if(waAutoOn()) Guard.openWa(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, __pre);
-    Thanks.show({ name, total, up: { customer:{ name, phone, wilaya: state.wilaya.name, commune, dtype: state.dtype, desk }, slugs: __order.items.map(x=>x.slug), cats:[p.cat], total, grp: __grp, page: PageSrc || ("p/" + slug) }, lines: (type==="grouped" ? state.group.kids.filter((c,i)=>state.group.qty[i]).map(c=>c.title) : [p.title + (state.offer.qty>1?" ×"+state.offer.qty:"")]).concat(bumpSel ? [bumpSel.title] : []), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
+    Thanks.show({ name, total, id: gr.id, duplicate: gr.duplicate, up: { customer:{ name, phone, wilaya: state.wilaya.name, commune, dtype: state.dtype, desk }, slugs: __order.items.map(x=>x.slug), cats:[p.cat], total, grp: __grp, page: PageSrc || ("p/" + slug) }, lines: (type==="grouped" ? state.group.kids.filter((c,i)=>state.group.qty[i]).map(c=>c.title) : [p.title + (state.offer.qty>1?" ×"+state.offer.qty:"")]).concat(bumpSel ? [bumpSel.title] : []), wa: `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}` });
   });
 
   // أضف إلى السلة
@@ -1990,15 +2000,25 @@ const Thanks = {
     st.textContent = "#thx{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(2,8,5,.8);backdrop-filter:blur(7px);animation:thxIn .35s ease}@keyframes thxIn{from{opacity:0}to{opacity:1}}#thx .thx-box{width:min(480px,100%);max-height:92vh;overflow:auto;text-align:center;color:#ecfdf5;background:linear-gradient(145deg,rgba(12,54,29,.99),rgba(3,16,9,.99));border:1px solid rgba(134,239,172,.32);border-radius:26px;padding:28px 22px 22px;box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14);animation:thxUp .45s cubic-bezier(.2,.8,.2,1)}@keyframes thxUp{from{transform:translateY(24px) scale(.97);opacity:0}to{transform:none;opacity:1}}#thx .thx-ic{width:74px;height:74px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;background:rgba(74,222,128,.18);border:1px solid rgba(134,239,172,.5);box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}#thx .thx-ic svg{width:38px;height:38px;stroke:#bef264;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:thxCk .6s .25s ease forwards}@keyframes thxCk{to{stroke-dashoffset:0}}#thx h2{margin:.2rem 0 .3rem;font-size:1.5rem;color:#fff}#thx p{margin:.2rem 0;color:#c5dccd;font-size:.97rem;line-height:1.7}#thx .thx-sum{margin:14px 0;padding:12px 14px;text-align:start;background:rgba(255,255,255,.06);border:1px solid rgba(134,239,172,.22);border-radius:16px}#thx .thx-sum li{list-style:none;padding:3px 0;color:#ecfdf5;font-weight:700}#thx .thx-sum b{color:#bef264}#thx .thx-tot{display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(134,239,172,.3);font-weight:900}#thx .thx-st{display:grid;gap:6px;margin:10px 0 16px;text-align:start;font-size:.9rem;color:#c5dccd}#thx .thx-st span{display:flex;gap:8px;align-items:flex-start}#thx .thx-st i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:900;font-size:.8rem;background:rgba(74,222,128,.2);border:1px solid rgba(134,239,172,.4);color:#d9f99d}#thx .thx-act{display:flex;gap:10px;flex-wrap:wrap}#thx .thx-act a,#thx .thx-act button{flex:1 1 140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:13px 14px;border-radius:14px;font:inherit;font-weight:900;text-decoration:none;cursor:pointer;color:#fff;background:rgba(255,255,255,.07);border:1px solid rgba(134,239,172,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -6px 12px rgba(0,0,0,.2),0 6px 16px rgba(0,0,0,.25);backdrop-filter:blur(8px);transition:transform .2s,background .2s}#thx .thx-act a:hover,#thx .thx-act button:hover{transform:translateY(-2px);background:rgba(74,222,128,.22)}#thx .thx-act .pri{background:rgba(74,222,128,.24);border-color:#86efac}";
     document.head.appendChild(st);
   },
+  /* نافذة «لم يُؤكَّد التسجيل» (12B.1): لا تقول «تم» أبداً؛ إعادة المحاولة تعيد إرسال الطلب نفسه بنفس المفتاح (بيانات النموذج باقية)؛ واتساب رسالة فقط ولا يُسجّل الطلب */
+  fail(o){
+    try{
+      this.css(); const old = document.getElementById("thx"); if(old) old.remove(); const e = this.esc, el = document.createElement("div"); el.id = "thx"; el.setAttribute("role","alertdialog"); el.setAttribute("aria-label","لم يُؤكَّد تسجيل الطلب"); el.dataset.state = o.state || "UNKNOWN";
+      el.innerHTML = '<div class="thx-box"><div class="thx-ic" style="background:#b45309"><svg viewBox="0 0 24 24"><path d="M12 7v6M12 17h.01"/></svg></div><h2>لم يُؤكَّد تسجيل طلبك بعد</h2><p id="thx-msg">' + e(o.msg || "") + '</p><p style="font-weight:800">بياناتك محفوظة في النموذج ولم نمسحها.</p>' +
+        '<div class="thx-act">' + (o.retry ? '<button type="button" class="pri" id="thx-retry">إعادة المحاولة (نفس الطلب)</button>' : "") + (o.wa ? '<a href="' + e(o.wa) + '" target="_blank" rel="noopener" id="thx-wa">راسلنا على واتساب (رسالة فقط — لا تُسجّل الطلب)</a>' : "") + '<button type="button" id="thx-x">إغلاق</button></div></div>';
+      document.body.appendChild(el); const close = ()=>{ el.remove(); document.removeEventListener("keydown", kd); }, kd = ev=>{ if(ev.key === "Escape") close(); };
+      document.addEventListener("keydown", kd); el.querySelector("#thx-x").onclick = close; const rb = el.querySelector("#thx-retry"); if(rb) rb.onclick = ()=>{ close(); try{ o.retry(); }catch(err){ console.warn("retry", err); } };
+    }catch(err){ console.warn("Thanks.fail", err); }
+  },
   show(o){
     try{
       this.css(); const old = document.getElementById("thx"); if(old) old.remove();
       const e = this.esc, el = document.createElement("div"); el.id = "thx"; el.setAttribute("role","dialog"); el.setAttribute("aria-label","شكراً لطلبك");
       const L = (o.lines || []).slice(0, 6).map(x=>"<li>• " + e(x) + "</li>").join(""), tot = (typeof fmt === "function" && o.total != null) ? fmt(o.total) : "";
-      el.innerHTML = '<div class="thx-box"><div class="thx-ic"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>شكراً لك' + (o.name ? " " + e(String(o.name).split(" ")[0]) : "") + '، تم استلام طلبك</h2><p>طلبك مسجَّل لدينا، وسنتصل بك لتأكيده خلال ساعات قليلة.</p>' +
+      el.innerHTML = '<div class="thx-box"><div class="thx-ic"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><h2>شكراً لك' + (o.name ? " " + e(String(o.name).split(" ")[0]) : "") + '، تم تسجيل طلبك</h2>' + (o.id ? '<p class="thx-id" style="font-weight:800">رقم طلبك: <b dir="ltr" data-oid="' + e(o.id) + '">' + e(o.id) + '</b>' + (o.duplicate ? " — سبق تسجيله" : "") + '</p>' : "") + '<p>طلبك مسجَّل لدينا، وسنتصل بك لتأكيده خلال ساعات قليلة.</p>' +
         (L ? '<ul class="thx-sum" style="margin-inline:0;padding-inline:14px">' + L + (tot ? '<div class="thx-tot"><span>الإجمالي (الدفع عند الاستلام)</span><b>' + e(tot) + '</b></div>' : "") + "</ul>" : "") +
         '<div class="thx-st"><span><i>1</i>سنؤكّد معك الطلب هاتفياً أو عبر واتساب.</span><span><i>2</i>نجهّز طلبك ونشحنه إلى ولايتك.</span><span><i>3</i>تعاين وتدفع عند الاستلام فقط.</span></div>' +
-        '<div class="thx-act"><a class="pri" href="' + (typeof REL !== "undefined" ? REL : "") + 'index.html">متابعة التسوق</a>' + (o.wa ? '<a href="' + e(o.wa) + '" target="_blank" rel="noopener">إرسال الطلب على واتساب</a>' : "") + '<button type="button" id="thx-x">إغلاق</button></div></div>';
+        '<div class="thx-act"><a class="pri" href="' + (typeof REL !== "undefined" ? REL : "") + 'index.html">متابعة التسوق</a>' + (o.wa ? '<a href="' + e(o.wa) + '" target="_blank" rel="noopener">إرسال رسالة على واتساب</a>' : "") + '<button type="button" id="thx-x">إغلاق</button></div></div>';
       document.body.appendChild(el);
       try{ if(o.up && window.Upsell) Upsell.mountPost(el, o.up); }catch(_){}      // Upsell بعد الشراء (assets/js/upsell.js)
       const close = ()=>{ el.remove(); document.removeEventListener("keydown", kd); }, kd = ev=>{ if(ev.key === "Escape") close(); };
@@ -2011,7 +2031,13 @@ const Guard = {
   cfg: null, tok: "",
   /* دائماً فعّال: الخادم يفحص قائمة الحظر (من لوحة الإدارة) عند كل طلب؛ أي عطل شبكة لا يمنع الطلب */
   active(){ return true; },
-  MSG: { duplicate_order:"لقد أرسلتَ طلباً لهذا المنتج مؤخراً ✅ سنتواصل معك قريباً. إن أردت تعديله راسلنا على واتساب.", bot:"تعذّر إرسال الطلب. أعد تحميل الصفحة وحاول مرة أخرى.", rate_limited:"طلبات كثيرة من نفس الجهاز — حاول لاحقاً أو راسلنا على واتساب.", invalid_phone:"رقم الهاتف أو الاسم غير صالح — تأكد منهما.", blocked:"تعذّر قبول هذا الطلب حالياً. للاستفسار راسلنا على واتساب." },
+  MSG: { duplicate_order:"لم نسجّل هذا الطلب لأنك أرسلتَ طلباً لهذا المنتج مؤخراً — سنتواصل معك بخصوصه. لتعديله راسلنا على واتساب.", bot:"تعذّر إرسال الطلب. أعد تحميل الصفحة وحاول مرة أخرى.", rate_limited:"طلبات كثيرة من نفس الجهاز — لم يُسجَّل الطلب. حاول لاحقاً أو راسلنا على واتساب.", invalid_phone:"رقم الهاتف أو الاسم غير صالح — تأكد منهما.", blocked:"تعذّر قبول هذا الطلب حالياً. للاستفسار راسلنا على واتساب.",
+    invalid_name:"الاسم غير صالح — تأكد منه ثم أعد الإرسال.", invalid_items:"سلة الطلب غير صالحة — أعد اختيار المنتج ثم أعد الإرسال.", invalid_total:"قيمة الطلب غير صالحة — أعد المحاولة بعد تحديث الصفحة.", idempotency_key_reuse:"تغيّر محتوى الطلب بعد محاولة سابقة — أعد الإرسال.", invalid_idem:"تعذّر إرسال الطلب. أعد تحميل الصفحة وحاول مرة أخرى.", secure_random_unavailable:"متصفحك لا يدعم الإرسال الآمن — جرّب متصفحاً أحدث." },
+  /* رسائل الحالات غير المؤكَّدة (12B.1): لا نقول «سُجّل» ولا نطلب طلباً جديداً؛ الإعادة بنفس الطلب آمنة (لا تكرار) */
+  MSGS: { UNKNOWN:"تعذّر الحصول على تأكيد بتسجيل طلبك. قد يكون وصلنا وقد لا يكون — لا ترسل طلباً جديداً. اضغط «إعادة المحاولة» (تعيد إرسال الطلب نفسه ولا تُنشئ طلباً مكرراً).", SERVER_ERROR:"الخادم يواجه عطلاً مؤقتاً ولم يؤكد تسجيل طلبك. أعد المحاولة بعد لحظات (نفس الطلب، بلا تكرار).", INVALID_RESPONSE:"ردّ الخادم غير مفهوم ولم يُؤكَّد تسجيل طلبك. أعد المحاولة بعد لحظات (نفس الطلب، بلا تكرار)." },
+  UNVERIFIABLE:"هذا المتجر لا يستطيع تأكيد تسجيل الطلب تلقائياً. أُرسل طلبك للتسجيل لكن لم يصلنا تأكيد — راسلنا على واتساب (رسالة فقط) للتأكد.",
+  /* يعرض نتيجة غير ناجحة: REJECTED ← رسالة سبب قصيرة (بيانات النموذج باقية)؛ غير المؤكَّد ← نافذة صريحة بإعادة محاولة بنفس المفتاح ورابط واتساب «رسالة فقط» */
+  fail(gr, ctx){ ctx = ctx || {}; if(!gr || gr.ok) return; if(gr.state === "REJECTED"){ toast(gr.msg); return; } Thanks.fail({ state: gr.state, msg: gr.msg, retry: ctx.retry, wa: ctx.wa, id: "" }); },
   async init(g){
     this.cfg = g || {}; if(!this.active()) return;
     if(this.cfg.antibot){
@@ -2032,14 +2058,17 @@ const Guard = {
     const slugs = (order.items || []).map(i=>i.slug).filter(Boolean), hrs = Math.max(1, Number(this.cfg.hours) || 24);
     if(this.cfg.dup){                                              // فحص محلي (يغطي من لا خلفية له)
       const r = this.recent(), now = Date.now();
-      if(slugs.some(sl=>r[sl] && now - r[sl] < hrs * 3600000)) return { ok:false, msg: this.MSG.duplicate_order };
+      if(slugs.some(sl=>r[sl] && now - r[sl] < hrs * 3600000)) return { ok:false, state:"REJECTED", error:"duplicate_order", msg: this.MSG.duplicate_order };
     }
     if(this.cfg.antibot && !this.tok) await this.refreshToken();
-    const res = await API.submitOrderChecked(Object.assign({}, order, this.cfg.antibot ? { hp: this.hp(), ftok: this.tok } : {}));
-    if(res && res.error && this.MSG[res.error]) { if(res.error === "bot") this.refreshToken(); return { ok:false, msg: this.MSG[res.error] }; }
-    const r = this.recent(), now = Date.now(); slugs.forEach(sl=>{ r[sl] = now; }); try{ localStorage.setItem("alyssum_recent_orders", JSON.stringify(r)); }catch(e){}
-    if(this.cfg.antibot) this.refreshToken();
-    return { ok:true };
+    const res = await API.submitOrderTruth(Object.assign({}, order, this.cfg.antibot ? { hp: this.hp(), ftok: this.tok } : {}));
+    if(res.ok){          // تأكيد صريح من الخادم + رقم طلب صالح فقط؛ علامة الحارس المحلي لا تُكتب إلا هنا
+      const r = this.recent(), now = Date.now(); slugs.forEach(sl=>{ r[sl] = now; }); try{ localStorage.setItem("alyssum_recent_orders", JSON.stringify(r)); }catch(e){}
+      if(this.cfg.antibot) this.refreshToken();
+      return { ok:true, state: res.state, id: res.id, duplicate: res.state === "DUPLICATE_CONFIRMED" };
+    }
+    if(res.state === "REJECTED"){ if(res.error === "bot") this.refreshToken(); return { ok:false, state:"REJECTED", error: res.error, retryable: !!res.retryable, msg: this.MSG[res.error] || ("رفض الخادم الطلب (" + (res.error || "خطأ") + ") ولم يُسجَّل. راجع بياناتك ثم أعد المحاولة.") }; }
+    return { ok:false, state: res.state, error: res.error, retryable:true, msg: res.error === "unverifiable_backend" ? this.UNVERIFIABLE : this.MSGS[res.state] };
   },
   openWa(url, pre){ if(pre){ try{ pre.location.href = url; return; }catch(e){} } open(url, "_blank"); },
 };
