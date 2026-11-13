@@ -377,8 +377,9 @@ html:is(.glass,.white) .pill:is(.st-annulee,.st-echec){background:#dc3545;color:
   .pbx-pth{width:56px;height:56px}
   .pbx-pin{min-width:0;flex:none}
   .pbx-pin b{overflow-wrap:anywhere}
-  .pbx-pact{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:.35rem}
-  .pbx-pact .small{flex:1 1 auto;justify-content:center;min-height:38px;padding:.35rem .55rem;font-size:.8rem;margin:0}
+  .pbx-pact{grid-column:1/-1;display:flex;flex-wrap:nowrap;gap:.35rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 22px);mask-image:linear-gradient(to right,transparent 0,#000 22px)}
+  .pbx-pact::-webkit-scrollbar{display:none}
+  .pbx-pact .small{flex:0 0 auto;white-space:nowrap;justify-content:center;min-height:38px;padding:.35rem .7rem;font-size:.8rem;margin:0}
   .pbx-pact .small.ico{flex:0 0 42px}
 }
 
