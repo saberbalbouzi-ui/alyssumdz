@@ -2975,15 +2975,22 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   function pushRestore(C) { if (!C || C.off) return; C.others.forEach(o => setR(o.w.set, "fy", C.dev, o.fy)); setR(C.sec.set, "mh", C.dev, C.mh0); }
   function pushApply(C, ddy, ddx) {
-    if (!C || C.off) return; const dev = C.dev, M = C.movers, t0 = Math.min(...M.map(q => q.fy)), b0 = Math.max(...M.map(q => q.fy + q.h));
+    if (!C || C.off) return; const dev = C.dev, M = C.movers, t0 = Math.min(...M.map(q => q.fy)), b0 = Math.max(...M.map(q => q.fy + q.h)), Ol = Math.min(...M.map(q => q.fx)), Or = Math.max(...M.map(q => q.fx + q.fw));
     let Rt = Infinity, Rb = -Infinity, Rl = Infinity, Rr = -Infinity; M.forEach(q => { Rt = Math.min(Rt, q.fy + ddy); Rb = Math.max(Rb, q.fy + q.h + ddy); Rl = Math.min(Rl, q.fx + ddx); Rr = Math.max(Rr, q.fx + q.fw + ddx); });
-    const shift = new Map(), hz = o => o.fx < Rr && o.fx + o.fw > Rl, free = o => !C.fixed.includes(o.w.id);
-    const closeGrp = (set, d) => { const gs = new Set(set.filter(o => o.grp).map(o => o.grp)); C.others.forEach(o => { if (o.grp && gs.has(o.grp) && free(o)) shift.set(o.w.id, d); }); };
-    if (ddy > 0) { const ahead = C.others.filter(o => o.fy >= t0 - 1 && free(o)), hits = ahead.filter(o => o.w.type !== "shape" && hz(o) && o.fy < Rb + GAP_D && o.fy + o.h > Rt);
-      if (hits.length) { const top = Math.min(...hits.map(o => o.fy)), d = Rb + GAP_D - top; if (d > 0) { const set = ahead.filter(o => o.fy >= top - 1); set.forEach(o => shift.set(o.w.id, d)); closeGrp(set, d); } } }
-    else if (ddy < 0) { const behind = C.others.filter(o => o.fy + o.h <= b0 + 1 && free(o)), hits = behind.filter(o => o.w.type !== "shape" && hz(o) && o.fy + o.h > Rt - GAP_D && o.fy < Rb);
-      if (hits.length) { const bot = Math.max(...hits.map(o => o.fy + o.h)), d = bot - (Rt - GAP_D); if (d > 0) { const set = behind.filter(o => o.fy + o.h <= bot + 1); set.forEach(o => shift.set(o.w.id, -d)); closeGrp(set, -d); } } }
-    const nf = new Map(); C.others.forEach(o => nf.set(o.w.id, o.fy + (shift.get(o.w.id) || 0))); M.forEach(q => nf.set(q.w.id, q.fy + ddy));
+    const shift = new Map(), hz = o => o.fx < Rr && o.fx + o.fw > Rl, free = o => !C.fixed.includes(o.w.id), base = new Map(C.others.map(o => [o.w.id, o.fy])), yb = o => base.get(o.w.id);
+    const closeGrp = (set, d, tgt) => { const gs = new Set(set.filter(o => o.grp).map(o => o.grp)); C.others.forEach(o => { if (o.grp && gs.has(o.grp) && free(o)) tgt.set(o.w.id, d); }); };
+    /* الـ3 مم تتبع العنصر المتحرك: إذا غادر مكانه الأصلي يُغلَق فراغه (العناصر المتراصّة تحته بفجوة قريبة تصعد إلى موضعه فتبقى فجوتها بما فوقه كما كانت)، وحيث يصل يُفتح له مكان بفجوة 3 مم (الإزاحة أدناه) */
+    const leaving = !(Rl < Or && Rr > Ol && Rb > t0 && Rt < b0);
+    if (leaving) {
+      const CH = [], cand = C.others.filter(o => o.fy >= t0 - 1 && free(o) && o.w.type !== "shape").sort((x, y) => x.fy - y.fy); let bot = b0, bl = Ol, br = Or;
+      cand.forEach(o => { if (o.fx < br && o.fx + o.fw > bl && o.fy > t0 + 1 && o.fy - bot <= 3 * GAP_D) { CH.push(o); bot = Math.max(bot, o.fy + o.h); bl = Math.min(bl, o.fx); br = Math.max(br, o.fx + o.fw); } });
+      if (CH.length) { const d = CH[0].fy - t0, up = new Map(); if (d > 0) { CH.forEach(o => up.set(o.w.id, -d)); closeGrp(CH, -d, up); up.forEach((v, id) => base.set(id, base.get(id) + v)); } }
+    }
+    if (ddy > 0) { const ahead = C.others.filter(o => yb(o) >= t0 - 1 && free(o)), hits = ahead.filter(o => o.w.type !== "shape" && hz(o) && yb(o) < Rb + GAP_D && yb(o) + o.h > Rt);
+      if (hits.length) { const top = Math.min(...hits.map(yb)), d = Rb + GAP_D - top; if (d > 0) { const set = ahead.filter(o => yb(o) >= top - 1); set.forEach(o => shift.set(o.w.id, d)); closeGrp(set, d, shift); } } }
+    else if (ddy < 0) { const behind = C.others.filter(o => yb(o) + o.h <= b0 + 1 && free(o)), hits = behind.filter(o => o.w.type !== "shape" && hz(o) && yb(o) + o.h > Rt - GAP_D && yb(o) < Rb);
+      if (hits.length) { const bot = Math.max(...hits.map(o => yb(o) + o.h)), d = bot - (Rt - GAP_D); if (d > 0) { const set = behind.filter(o => yb(o) + o.h <= bot + 1); set.forEach(o => shift.set(o.w.id, -d)); closeGrp(set, -d, shift); } } }
+    const nf = new Map(); C.others.forEach(o => nf.set(o.w.id, yb(o) + (shift.get(o.w.id) || 0))); M.forEach(q => nf.set(q.w.id, q.fy + ddy));
     const minY = Math.min(...nf.values()), off = minY < 0 ? -minY : 0;      // خرج شيء فوق القسم ⟵ كل المحتوى ينزل ويكبر القسم من الأعلى
     let bot = 0; M.concat(C.others).forEach(q => { const y = nf.get(q.w.id) + off; setR(q.w.set, "fy", dev, Math.round(y)); bot = Math.max(bot, y + q.h); });
     setR(C.sec.set, "mh", dev, Math.round(Math.max(C.mh0 + off, bot + 40 > C.mh0 ? bot + 40 : C.mh0)));
