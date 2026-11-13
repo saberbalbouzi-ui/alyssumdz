@@ -403,5 +403,5 @@ const AdminPayments = (() => {
     if(typeof Admin==="undefined"||Admin._paymentsTabWrapped)return;
     const original=Admin.tab;Admin.tab=function(t,btn){const result=original.call(this,t,btn),el=$("tab-payments");if(el)el.classList.toggle("hidden",t!=="payments");if(t==="payments")AdminPayments.render();return result;};Admin._paymentsTabWrapped=true;
   });
-  return { render, items, record, view, autoRec, settle, sumSettle, detailBlock, parseDetail, totals, S, DEF_COD, DEF_RET, YP, cmpCard, trkOf };
+  return { render, items, record, view, autoRec, settle, sumSettle, detailBlock, parseDetail, totals, coStats, load, S, DEF_COD, DEF_RET, YP, cmpCard, trkOf };
 })();
