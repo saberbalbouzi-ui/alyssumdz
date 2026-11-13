@@ -52,7 +52,7 @@ function preflight() { /* فحص مباشر لقبول المفتاح عبر cur
 (async () => {
   if (SELF) { const { startStub, KEY: SK } = require("./llm-stub"); stubH = await startStub(); KEY = SK; BASE = stubH.base; MODEL = "stub"; }
   const res = { phase: 12, workstream: "WS1", date: new Date().toISOString().slice(0, 10), provider: SELF ? "LOCAL STUB (SELFTEST — NOT a real provider)" : "Google Gemini (generateContent REST)", model: MODEL, base_host: new URL(BASE).host, key_source: KEY ? "env ALYSSUM_LLM_KEY (not recorded)" : "none (proxy-injected key may exist)", prompts_defined: SET.length, status: null };
-  const pf = preflight(); res.preflight = pf;
+  const pf = SELF ? { http: 200, ok: true, note: "skipped in SELFTEST (in-process stub; spawnSync would block the stub)" } : preflight(); res.preflight = pf;
   if (!pf.ok) { res.status = "BLOCKED"; res.reason = "المزوّد رفض المفتاح/لم يقبل الطلب (preflight http " + pf.http + (pf.reason ? " / " + pf.reason : "") + "). لا اختبار حقيقي ممكن؛ لم يُستبدل المزوّد بالمحاكي."; res.requests_made = 1; res.counts = { pass: 0, fail: 0, not_tested: SET.length };
     res.unblock = "وفّر مفتاحاً صالحاً (مع تفعيل Generative Language API لهذا المفتاح) في ALYSSUM_LLM_KEY ثم شغّل: node test/real-provider.js";
     fs.writeFileSync(OUT, JSON.stringify(res, null, 1)); console.log("BLOCKED —", res.reason); return; }
@@ -68,7 +68,7 @@ function preflight() { /* فحص مباشر لقبول المفتاح عبر cur
     for (const [kind, text0, ex] of SET.slice(0, N)) {
       const text = text0.replace("{ID}", ID), t0 = Date.now(), W0 = X.reqs.length; let r = null, err = null;
       try { r = await X.say(text, 70000); } catch (e) { err = String(e).slice(0, 80); }
-      const ms = Date.now() - t0, tools = r ? r.steps.map(s => s.tool) : [], llmReq = X.reqs.slice(W0).filter(q => /server\/llm\.php/.test(q.u)).length;
+      const ms = Date.now() - t0, tools = r ? r.steps.map(s => s.tool).filter(t => t !== "llm.chat") : [] /* llm.chat = خطوة استشارة النموذج لا أداة أعمال */, llmReq = X.reqs.slice(W0).filter(q => /server\/llm\.php/.test(q.u)).length;
       let pass = !!r && !err, why = err || "";
       if (r) {
         if (ex.tools) { const has = ex.all ? ex.tools.every(t => tools.includes(t)) : ex.tools.some(t => tools.includes(t)); if (!has) { pass = false; why = "tools=" + tools.join(","); } }
@@ -89,6 +89,6 @@ function preflight() { /* فحص مباشر لقبول المفتاح عبر cur
     const lat = rows.map(r => r.ms), ok = rows.filter(r => r.pass).length, errs = rows.filter(r => /timeout|provider|network/i.test(r.why)).length;
     Object.assign(res, { status: SELF ? "SELFTEST (harness only, stub provider — not validation)" : ok === rows.length && noDirectWrite && !leak && !reqLeak ? "PASS" : "FAIL", requests_made: rows.reduce((s, r) => s + r.llm_requests, 1), prompts_run: rows.length, success: ok, success_rate: +(ok / rows.length).toFixed(3), latency_ms: { p50: pct(lat, 50), p95: pct(lat, 95), max: Math.max(...lat) }, by_kind: [...new Set(rows.map(r => r.kind))].map(k => ({ kind: k, n: rows.filter(r => r.kind === k).length, pass: rows.filter(r => r.kind === k && r.pass).length })), no_direct_write: noDirectWrite, key_leak_in_frontend: !!leak, key_leak_in_requests: reqLeak, provider_errors: errs, rows });
     res.limitations = ["الحالة 'malformed output' الحقيقي لا يمكن إجبار المزوّد عليه؛ مغطّى بالمحاكي في phase11 (ليس مزوّداً حقيقياً)", "نتائج النموذج غير حتمية: تُكرَّر الجولة قبل أي ادعاء ثبات", "حدود المعدّل لدى المزوّد قد تُظهر 429؛ تُحتسب أخطاء مزوّد لا فشل أمان"];
-  } finally { await b.close().catch(() => { }); await store.stop().catch(() => { }); }
+  } finally { await b.close().catch(() => { }); try { store.stop(); } catch (_) { } }
   fs.writeFileSync(OUT, JSON.stringify(res, null, 1)); console.log(res.status, res.success + "/" + res.prompts_run, JSON.stringify(res.latency_ms));
 })().catch(e => { console.error("harness error:", String(e.stack || e).replace(KEY || "\u0000", "[KEY]").slice(0, 400)); process.exit(2); });
