@@ -43,7 +43,17 @@ const AdminHome = (() => {
 #ahome .at{display:grid;gap:8px}#ahome .at button{display:flex;align-items:center;gap:10px;text-align:start;padding:11px 13px;border-radius:14px;font:inherit;color:#fff;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);transition:transform .2s,background .2s}#ahome .at button:hover{transform:translateY(-2px);background:rgba(255,255,255,.1)}#ahome .at b{font-size:1.15rem;min-width:30px}#ahome .at span{color:${MUT};font-size:.86rem}#ahome .at .w{border-color:rgba(251,146,60,.5)}#ahome .at .w b{color:#fdba74}#ahome .at .ok b{color:#e2fe17}
 #ahome .em{padding:24px;text-align:center;color:${MUT}}
 @media(max-width:1100px){#ahome .ah-kpis{grid-template-columns:repeat(2,1fr)}#ahome .ah-row,#ahome .ah-row2{grid-template-columns:1fr}}
-@media(max-width:520px){#ahome .ah-kpis{grid-template-columns:1fr 1fr;gap:10px}#ahome .kpi .v{font-size:1.25rem}#ahome .ah-card{padding:12px}}`;
+@media(max-width:520px){#ahome .ah-kpis{grid-template-columns:1fr 1fr;gap:10px}#ahome .kpi .v{font-size:1.25rem}#ahome .ah-card{padding:12px}}
+#ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.25}
+@media(max-width:700px){
+#ahome .ah-hd{flex-direction:column;align-items:stretch;gap:10px}
+#ahome .ah-act{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+#ahome .ah-act .ah-seg{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:3px}#ahome .ah-act .ah-seg button{padding:9px 6px;text-align:center}
+#ahome .ah-act>.ah-btn{width:100%;display:inline-flex;align-items:center;justify-content:center;min-height:46px}
+#ahome .ah-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}#ahome .ah-quick .ah-btn{width:100%;padding:8px 10px;font-size:.9rem}
+#ahome .ah-rqb{display:grid;grid-template-columns:1fr 1fr;gap:8px}#ahome .ah-rqb .ah-btn{width:100%;padding:8px 10px;font-size:.9rem}
+}
+`;
     document.head.appendChild(st);
   };
   const ICONS = {
