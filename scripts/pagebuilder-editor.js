@@ -2767,7 +2767,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   function addFree(type, sec, x, y, init, noRev) {
     if (type === "shdr" || type === "sbar") return addTopPart(type);
     const adFull = !!(E.page.ad && type === "image" && x == null && y == null && sec.set.kind === "canvas");      // لوحة التصميم: مربع الصورة بمقاس الصفحة المختار
-    if (x == null && y == null && !E.page.ad) {      // العنصر الجديد (بالنقر) يدخل مباشرة تحت آخر عنصر في الصفحة بفجوة ثابتة ومحاذٍ لآخر عنصر غير شكل
+    if (x == null && y == null && !E.page.ad && sec.set.kind !== "canvas") { x = 6; y = 24; }      // قسم عادي بأعمدة: أعلى القسم (لا تحت آخر عنصر حر فقد يقع خارج حدود القسم)
+    else if (x == null && y == null && !E.page.ad) {      // العنصر الجديد (بالنقر) يدخل مباشرة تحت آخر عنصر في الصفحة بفجوة ثابتة ومحاذٍ لآخر عنصر غير شكل
       const f0 = sec.free || [], bOf = q => (Number(eff(q.set, "fy", "d")) || 0) + freeH(sec, q, "d"); let lb = -1, ln = null, lnb = -1;
       f0.forEach(q => { const b = bOf(q); if (b > lb) lb = b; if (q.type !== "shape" && b > lnb) { lnb = b; ln = q; } });
       if (lb >= 0) { x = ln ? (Number(eff(ln.set, "fx", "d")) || 6) : 6; y = lb + GAP_D; if (ln && lnb >= lb - 1) { const lk = ln; init = (i0 => w => { if (i0) i0(w); setStk(w, sec, lk.id); })(init); } }
@@ -2849,7 +2850,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* وجهة الإضافة: قسم حر/عنصر حر ⟵ طبقة حرة، وإلا عمود */
   function target() {
     if (FREE_ONLY) {      // كل عنصر جديد حر: في آخر قسم محتوى بالصفحة (تحت آخر عنصر)، وإلا قسم العنصر المحدد، وإلا آخر قماش، وإلا قماش جديد
-      if (!E.page.ad) { const ls = lengthSec(); if (ls && ls.set.kind === "canvas") return { sec: ls };
+      if (!E.page.ad) { const s0 = selInfo(); if (s0 && s0.sec && !isHF(s0.sec)) return { sec: s0.sec };      // عنصر محدد ⟵ العنصر الجديد يدخل قسمه (كان يذهب دائماً لآخر قسم فيتعذّر وضعه في القسم الأول)
+        const ls = lengthSec(); if (ls && ls.set.kind === "canvas") return { sec: ls };
         if (ls) { const ns = TPLS.canvas.f(); ns.set.mh = { d: 60 }; ns.set.fresh = true; E.page.sections.splice(E.page.sections.indexOf(ls) + 1, 0, ns); return { sec: ns }; } }      // آخر قسم في الصفحة ليس حراً: يُضاف بعده قسم حر جديد (قبل الفوتر) فيدخل العنصر تحته مباشرة
       const inf = selInfo() || (E.last ? find(E.last) : null); if (inf && inf.sec) return { sec: inf.sec };
       let sec = (E.page.sections.find(x => x.id === E.hs && x.set.kind === "canvas")) || E.page.sections.slice().reverse().find(x => x.set.kind === "canvas"); if (!sec) { sec = TPLS.canvas.f(); E.page.sections.push(sec); }
