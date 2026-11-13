@@ -1540,7 +1540,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
 .pbx-h.d-ne{top:-7px;right:-7px;cursor:nesw-resize}.pbx-h.d-nw{top:-7px;left:-7px;cursor:nwse-resize}.pbx-h.d-se{bottom:-7px;right:-7px;cursor:nwse-resize}.pbx-h.d-sw{bottom:-7px;left:-7px;cursor:nesw-resize}
-.pbx-sdiv{position:absolute;height:14px;pointer-events:auto;cursor:ns-resize;z-index:5}.pbx-sdiv:before{content:"";position:absolute;left:0;right:0;top:6px;border-top:2px dashed transparent;transition:border-color .12s}.pbx-sdiv:hover:before,.pbx-sdiv.on:before{border-top-color:#8b3dff}.pbx-sdiv-h{position:absolute;left:50%;top:-3px;transform:translateX(-50%);background:#8b3dff;color:#fff;font:800 .68rem Cairo,sans-serif;padding:.12rem .7rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none;opacity:0;transition:opacity .12s;pointer-events:none}.pbx-sdiv:hover .pbx-sdiv-h,.pbx-sdiv.on .pbx-sdiv-h{opacity:1}.pbx-pgend{position:absolute;height:0;border:0!important;border-top:2px solid #8b3dff!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
+.pbx-lay .pbx-sdt{box-shadow:inset 0 3px 0 #8b3dff}.pbx-lay .pbx-sdb{box-shadow:inset 0 -3px 0 #8b3dff}.pbx-sdiv{position:absolute;height:14px;pointer-events:auto;cursor:ns-resize;z-index:5}.pbx-sdiv:before{content:"";position:absolute;left:0;right:0;top:6px;border-top:2px dashed transparent;transition:border-color .12s}.pbx-sdiv:hover:before,.pbx-sdiv.on:before{border-top-color:#8b3dff}.pbx-sdiv-h{position:absolute;left:50%;top:-3px;transform:translateX(-50%);background:#8b3dff;color:#fff;font:800 .68rem Cairo,sans-serif;padding:.12rem .7rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none;opacity:0;transition:opacity .12s;pointer-events:none}.pbx-sdiv:hover .pbx-sdiv-h,.pbx-sdiv.on .pbx-sdiv-h{opacity:1}.pbx-pgend{position:absolute;height:0;border:0!important;border-top:2px solid #8b3dff!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
 .pbx-gapb{background:rgba(233,30,99,.32)!important;border:1px solid #e91e63;box-sizing:border-box;z-index:6!important}.pbx-gapb b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:800 11px Cairo,sans-serif;color:#fff;background:#e91e63;padding:1px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .pbx-guide{position:absolute;background:repeating-linear-gradient(var(--gd,180deg),#e91e63 0 6px,transparent 6px 10px);pointer-events:none;z-index:4}
 .pbx-ghost{position:absolute;border:2px dashed #19c37d;background:rgba(25,195,125,.14);border-radius:6px;pointer-events:none;z-index:5}
@@ -1799,6 +1799,12 @@ body{overflow-x:hidden;margin:0}`;
     layLongPress(lp);
     lp.addEventListener("click", e => { const t = e.target.closest("[data-imgt],[data-imgs],[data-imgm],[data-imgx]"); if (t) imgPaneClick(t); });
     lp.addEventListener("dragstart", e => { const it = e.target.closest("[data-lay]"); if (it) { layDrag = it.dataset.lay; e.dataTransfer.setData("text/plain", "lay"); } });
+    /* نقل قسم كامل بالسحب في قائمة الطبقات: يظهر خط بنفسجي أعلى/أسفل القسم الهدف */
+    let secDrag = null; const clrSd = () => lp.querySelectorAll(".pbx-sdt,.pbx-sdb").forEach(n => n.classList.remove("pbx-sdt", "pbx-sdb"));
+    lp.addEventListener("dragstart", e => { const it = e.target.closest("[data-sdrag]"); if (it) { secDrag = it.dataset.sdrag; e.dataTransfer.setData("text/plain", "sec"); e.dataTransfer.effectAllowed = "move"; } });
+    lp.addEventListener("dragover", e => { const it = secDrag && e.target.closest("[data-sdrag],[data-hs]"); if (!it) return; e.preventDefault(); clrSd(); const r = it.getBoundingClientRect(); it.classList.add(e.clientY < r.top + r.height / 2 ? "pbx-sdt" : "pbx-sdb"); });
+    lp.addEventListener("dragend", () => { secDrag = null; clrSd(); });
+    lp.addEventListener("drop", e => { const it = secDrag && e.target.closest("[data-sdrag],[data-hs]"); if (!it) return; e.preventDefault(); const r = it.getBoundingClientRect(), before = e.clientY < r.top + r.height / 2, tid = it.dataset.sdrag || it.dataset.hs, did = secDrag; secDrag = null; clrSd(); secReorder(did, tid, before); });
     lp.addEventListener("dragover", e => { if (layDrag && e.target.closest("[data-lay]")) e.preventDefault(); });
     lp.addEventListener("drop", e => { const it = e.target.closest("[data-lay]"); if (!layDrag || !it) return; e.preventDefault(); layerReorder(layDrag, it.dataset.lay); layDrag = null; });
     new ResizeObserver(() => { fitStage(); positionOverlay(); }).observe($("pbx-stage"));
@@ -2008,7 +2014,7 @@ body{overflow-x:hidden;margin:0}`;
         if (FREE_ONLY) {      // بلا أعمدة: كل العناصر في قائمة واحدة (الحرة مرتبة بالأمام/الخلف ثم ما بقي داخل أعمدة قديمة)
           const fz = (sec.free || []).slice().sort((a, b) => (Number(b.set.zi) || 0) - (Number(a.set.zi) || 0));
           if (i === 0) h += `<div class="pbx-lcv"><div style="color:#8a8472;font-size:.72rem;line-height:1.6">اسحب أي عنصر لأعلى أو أسفل: الأعلى = الأمام</div><button type="button" class="pbx-small" data-cover>🔍 اكشف العناصر المغطاة</button>${E.covered && E.covered.size ? `<button type="button" class="pbx-small" data-covfwd>⬆ أحضر المغطاة للأمام (${E.covered.size})</button><button type="button" class="pbx-small" data-covclr>إخفاء الإشارات</button>` : ""}</div>`;
-          if (E.page.sections.length > 1) h += `<div data-hs="${sec.id}" style="font-weight:800;color:#8a8472;cursor:pointer;${E.hs === sec.id ? "background:#f1ebdd;" : ""}">▤ قسم ${i + 1}${sec.set.off ? " (مخفي)" : ""}${sec.set.locked ? " 🔒" : ""}</div>`;
+          if (E.page.sections.length > 1) h += `<div data-hs="${sec.id}"${isHF(sec) ? "" : ` draggable="true" data-sdrag="${sec.id}" title="اضغط واسحب لأعلى أو أسفل لنقل القسم كله"`} style="font-weight:800;color:#8a8472;cursor:${isHF(sec) ? "pointer" : "grab"};${E.hs === sec.id ? "background:#f1ebdd;" : ""}">${isHF(sec) ? "" : ico('grip', 14) + " "}▤ قسم ${i + 1}${sec.set.off ? " (مخفي)" : ""}${sec.set.locked ? " 🔒" : ""}</div>`;
           h += fz.map(w => `<div draggable="true" data-lay="${w.id}" data-sel="${w.id}" class="${E.sel === w.id ? "on" : ""}">${ico('grip',14)} ${ico(w.type,16)} ${WIDGETS[w.type].label}${E.covered && E.covered.has(w.id) ? ' <b style="color:#b83232" title="مغطّى بعناصر أخرى">⚠ مغطّى</b>' : ""}</div>`).join("");
           sec.cols.forEach(col => col.widgets.forEach(w => { h += `<div data-sel="${w.id}" data-lk="w" class="${E.sel === w.id ? "on" : ""}">${ico(w.type,16)} ${WIDGETS[w.type].label}</div>`; })); return;
         }
@@ -4167,6 +4173,14 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const n = ids.size; E.covered = null; E.nextLabel = "إحضار المغطاة للأمام"; afterEdit(); toast("⬆ أُحضر " + n + " عنصر مغطّى إلى أول الواجهة");
   }
   /* إعادة ترتيب الطبقات بالسحب في اللوحة: العنصر المسحوب يوضع قبل (أمام) العنصر الهدف ثم تُعاد أرقام zi */
+  function secReorder(dragId, targetId, before) {
+    const L = E.page.sections, a = L.find(x => x.id === dragId), b = L.find(x => x.id === targetId); if (!a || !b || a === b || isHF(a)) return;
+    if (a.set.locked) { toast("🔒 القسم مقفل — افتح قفله أولاً"); return; }
+    L.splice(L.indexOf(a), 1); let at = L.indexOf(b) + (before ? 0 : 1);
+    const lo = L.findIndex(x => !(x.grp === "top" || (x.set && x.set.grp === "top"))), hi = (() => { for (let i = L.length - 1; i >= 0; i--) if (!(L[i].grp === "bot" || (L[i].set && L[i].set.grp === "bot"))) return i + 1; return L.length; })();
+    at = Math.max(lo < 0 ? 0 : lo, Math.min(hi, at)); L.splice(at, 0, a); E.hs = a.id; E.nextLabel = "نقل قسم"; afterEdit(null);
+    setTimeout(() => { const e = fdoc && fdoc.querySelector(`[data-pb="${a.id}"]`); if (e) e.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, 50); toast("↕ نُقل القسم — Ctrl+Z للتراجع");
+  }
   function layerReorder(dragId, targetId) {
     const a = find(dragId), b = find(targetId); if (!a || !b || !a.free || !b.free || a.sec !== b.sec || dragId === targetId) return;
     const arr = a.sec.free.slice().sort((x, y) => (Number(y.set.zi) || 0) - (Number(x.set.zi) || 0)).filter(w => w.id !== dragId), at = arr.findIndex(w => w.id === targetId);
@@ -4826,7 +4840,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   /* محاذاة العناصر المحدّدة (في القسم نفسه) إلى حدودها المشتركة */
   function alignMulti(how) {
-    const infs = selIds().map(find).filter(i => i && i.free && !isLocked(i)); if (infs.length < 2) { toast("المحاذاة للعناصر الحرة غير المقفلة"); return; } if (new Set(infs.map(i => i.sec.id)).size > 1) { toast("حدّد عناصر من القسم نفسه للمحاذاة"); return; }
+    const infs = multiFree().filter(i => i && i.free && !isLocked(i)); if (infs.length < 2) { toast("المحاذاة للعناصر الحرة غير المقفلة"); return; }      // العناصر العادية (أعمدة) تتحوّل لحرة أولاً كما عند التحريك if (new Set(infs.map(i => i.sec.id)).size > 1) { toast("حدّد عناصر من القسم نفسه للمحاذاة"); return; }
     const dev = E.dev, sec = infs[0].sec; ensureMobile(sec); const R = infs.map(i => { const el = fdoc.querySelector(`[data-pb="${i.node.id}"]`), cont = el.closest(".pb-in"), cr = cont.getBoundingClientRect(), r = layoutRect(el); return { i, cr, X: r.left - cr.left, Y: r.top - cr.top, W: r.width, H: r.height }; });
     const cr = R[0].cr, u = uOf(sec, cr), minX = Math.min(...R.map(q => q.X)), maxX = Math.max(...R.map(q => q.X + q.W)), minY = Math.min(...R.map(q => q.Y)), maxY = Math.max(...R.map(q => q.Y + q.H));
     R.forEach(q => { let X = q.X, Y = q.Y; if (how === "left") X = minX; else if (how === "right") X = maxX - q.W; else if (how === "center") X = (minX + maxX) / 2 - q.W / 2; else if (how === "top") Y = minY; else if (how === "bottom") Y = maxY - q.H; else if (how === "middle") Y = (minY + maxY) / 2 - q.H / 2;
