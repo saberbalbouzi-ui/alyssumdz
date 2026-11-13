@@ -553,7 +553,7 @@ const PB = (() => {
         { k: "prod", g: "p1", l: "المنتج (فارغ = منتج الصفحة)", t: "select", o: () => [["", "— منتج الصفحة —"]].concat((((typeof Admin !== "undefined" && Admin.products) || [])).map(p => [p.slug, p.title])), tab: "c", showIf: ["psrc", "!"] },
         { k: "cnow", g: "p1", l: "السعر الحالي (نص حرّ مع العملة)", t: "text", tab: "c", showIf: ["psrc", "custom"] }, { k: "cold", g: "p1", l: "السعر قبل التخفيض", t: "text", tab: "c", showIf: ["psrc", "custom"] }, { k: "csave", g: "p1", l: "نص التخفيض (مثل: وفّر 20%)", t: "text", tab: "c", showIf: ["psrc", "custom"] },
         { k: "pfo", g: "p1", l: "اجعل السعر يتبع العرض المختار (يتغيّر عند اختيار عرض في العروض أو النموذج)", t: "switch", tab: "c", showIf: ["psrc", "!"] }, { k: "shold", g: "p2", l: "إظهار السعر قبل التخفيض", t: "switch", tab: "c" }, { k: "shsave", g: "p2", l: "إظهار شارة التخفيض", t: "switch", tab: "c" }, { k: "pst", g: "p1", l: "كلمة شارة التخفيض (قبل النسبة)", t: "text", tab: "c", showIf: ["psrc", "!"], showIf2: ["shsave", "*"] },
-        { k: "pc", g: "q1", l: "لون السعر الحالي", t: "color", tab: "s" }, { k: "fs", l: "حجم السعر الحالي (px)", t: "num", r: 1, min: 14, max: 90, tab: "s" },
+        { k: "pc", g: "q1", l: "لون السعر الحالي", t: "color", tab: "s" }, { k: "fs", g: "q1", l: "حجم السعر الحالي (px)", t: "num", r: 1, min: 14, max: 90, tab: "s" },
         { k: "oc", g: "q1", l: "لون السعر قبل التخفيض", t: "color", tab: "s", showIf: ["shold", "*"] }, { k: "os", g: "q1", l: "حجم السعر قبل التخفيض (px)", t: "num", r: 1, min: 10, max: 60, tab: "s", showIf: ["shold", "*"] },
         { k: "sbg", g: "q2", l: "خلفية شارة التخفيض", t: "color", tab: "s", showIf: ["shsave", "*"] }, { k: "sc", g: "q2", l: "لون نص الشارة", t: "color", tab: "s", showIf: ["shsave", "*"] }, { k: "ss", g: "q2", l: "حجم نص الشارة (px)", t: "num", r: 1, min: 9, max: 40, tab: "s", showIf: ["shsave", "*"] }, { k: "sr", g: "q2", l: "تدوير الشارة (px)", t: "num", r: 1, min: 0, max: 40, tab: "s", showIf: ["shsave", "*"] },
         { k: "pgp", g: "q1", l: "التباعد بين العناصر (px)", t: "num", r: 1, min: 0, max: 40, tab: "s" }, { k: "pjc", g: "q1", l: "المحاذاة", t: "select", o: [["", "يمين (البداية)"], ["center", "وسط"], ["flex-end", "يسار (النهاية)"]], tab: "s" }],
@@ -2932,9 +2932,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   const unionRect = rs => { const l = Math.min(...rs.map(r => r.left)), t = Math.min(...rs.map(r => r.top)), rr = Math.max(...rs.map(r => r.left + r.width)), b = Math.max(...rs.map(r => r.top + r.height)); return { l, t, w: rr - l, h: b - t }; };
   function secBoxes() { const sy = fdoc.defaultView.scrollY; return [...fdoc.querySelectorAll(".pb-sec[data-pb]")].map(se => { const q = find(se.dataset.pb); if (!q || q.kind !== "section") return null; const r = se.getBoundingClientRect(); return { sec: q.node, l: r.left, r: r.right, t: r.top + sy, b: r.bottom + sy }; }).filter(Boolean); }
   function secUnder(x, yDoc, boxes, src) {
-    if (E.dev !== "d" || (E.page && E.page.ad) || !src || src.set.kind !== "canvas" || src.set.tight || isHF(src)) return null;
+    if (E.dev !== "d" || (E.page && E.page.ad) || !src || src.set.tight || isHF(src)) return null;      // المصدر والهدف: أي قسم غير الترويسة/التذييل (الهدف العادي بأعمدة كالهيرو يستقبل العنصر كطبقة حرة)
     const b = boxes.find(q => x >= q.l && x <= q.r && yDoc >= q.t && yDoc <= q.b); if (!b || b.sec === src) return null;
-    const sc = b.sec; return sc.set.kind === "canvas" && !sc.set.tight && !isHF(sc) ? sc : null;
+    const sc = b.sec; return !sc.set.tight && !isHF(sc) ? sc : null;
   }
   const ptrFrame = ev => { if (ev.target && ev.target.ownerDocument === fdoc) return { x: ev.clientX, y: ev.clientY }; const r = $("pbx-fw").getBoundingClientRect(); return { x: (ev.clientX - r.left) / E.scale, y: (ev.clientY - r.top) / E.scale }; };      // موضع المؤشر الحالي في إحداثيات الصفحة (يتحمّل تمرير المنصة أثناء السحب)
   function clearGhost() { document.querySelectorAll(".pbx-ghost").forEach(n => n.remove()); if (fdoc) fdoc.querySelectorAll(".pbx-dropsec").forEach(n => n.classList.remove("pbx-dropsec")); E._ghp = null; }
@@ -2964,6 +2964,30 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     growCanvas(ts); E.nextLabel = "نقل " + infs.length + " عناصر إلى قسم آخر"; afterEdit(); toast("↪ نُقل إلى القسم الآخر — Ctrl+Z للتراجع"); return true;
   }
   /* إدراج بين عنصرين: ما تحت نقطة الإدراج يهبط ليتسع للعنصر الجديد وتكبر الصفحة تلقائياً */
+  /* تحريك عنصر/مجموعة حرة داخل قسم قماش: العناصر التي أمام اتجاه الحركة تُزاح (ومعها مجموعاتها)، ويتّسع القسم من الأعلى أو الأسفل بدل قصّ العنصر.
+     تُحسب المواضع كل إطار من نسخة أساس (idempotent) فيرجع كل شيء إن ابتعد المسحوب. الحمل (Alt/Ctrl أو اللمس) يلغيها ويسمح بالتراكب والنقل بين الأقسام. */
+  function pushCtx(sec, moverIds, dev) {
+    if (E.page.ad || !sec || sec.set.kind !== "canvas" || sec.set.tight || isHF(sec)) return { off: true };
+    const cont = fdoc.querySelector(`[data-pb="${sec.id}"] .pb-in`); if (!cont) return { off: true }; const cr = cont.getBoundingClientRect(), u = uOf(sec, cr) || 1, ids = new Set(moverIds);
+    const mk = w => { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), r = el ? layoutRect(el) : null; return { w, fy: Number(eff(w.set, "fy", dev)) || 0, fx: Number(eff(w.set, "fx", dev)) || 0, fw: Number(eff(w.set, "fwd", dev)) || (r ? r.width / Math.max(1, cr.width) * 100 : 10), h: freeH(sec, w, dev) || (r ? r.height / u : 40), grp: w.set.grp || null }; };
+    const all = (sec.free || []).map(mk), movers = all.filter(q => ids.has(q.w.id)); if (!movers.length) return { off: true };
+    return { sec, dev, mh0: Number(eff(sec.set, "mh", dev)) || 0, movers, others: all.filter(q => !ids.has(q.w.id)), fixed: all.filter(q => isLocked({ kind: "widget", set: q.w.set, sec })).map(q => q.w.id) };
+  }
+  function pushRestore(C) { if (!C || C.off) return; C.others.forEach(o => setR(o.w.set, "fy", C.dev, o.fy)); setR(C.sec.set, "mh", C.dev, C.mh0); }
+  function pushApply(C, ddy, ddx) {
+    if (!C || C.off) return; const dev = C.dev, M = C.movers, t0 = Math.min(...M.map(q => q.fy)), b0 = Math.max(...M.map(q => q.fy + q.h));
+    let Rt = Infinity, Rb = -Infinity, Rl = Infinity, Rr = -Infinity; M.forEach(q => { Rt = Math.min(Rt, q.fy + ddy); Rb = Math.max(Rb, q.fy + q.h + ddy); Rl = Math.min(Rl, q.fx + ddx); Rr = Math.max(Rr, q.fx + q.fw + ddx); });
+    const shift = new Map(), hz = o => o.fx < Rr && o.fx + o.fw > Rl, free = o => !C.fixed.includes(o.w.id);
+    const closeGrp = (set, d) => { const gs = new Set(set.filter(o => o.grp).map(o => o.grp)); C.others.forEach(o => { if (o.grp && gs.has(o.grp) && free(o)) shift.set(o.w.id, d); }); };
+    if (ddy > 0) { const ahead = C.others.filter(o => o.fy >= t0 - 1 && free(o)), hits = ahead.filter(o => o.w.type !== "shape" && hz(o) && o.fy < Rb + GAP_D && o.fy + o.h > Rt);
+      if (hits.length) { const top = Math.min(...hits.map(o => o.fy)), d = Rb + GAP_D - top; if (d > 0) { const set = ahead.filter(o => o.fy >= top - 1); set.forEach(o => shift.set(o.w.id, d)); closeGrp(set, d); } } }
+    else if (ddy < 0) { const behind = C.others.filter(o => o.fy + o.h <= b0 + 1 && free(o)), hits = behind.filter(o => o.w.type !== "shape" && hz(o) && o.fy + o.h > Rt - GAP_D && o.fy < Rb);
+      if (hits.length) { const bot = Math.max(...hits.map(o => o.fy + o.h)), d = bot - (Rt - GAP_D); if (d > 0) { const set = behind.filter(o => o.fy + o.h <= bot + 1); set.forEach(o => shift.set(o.w.id, -d)); closeGrp(set, -d); } } }
+    const nf = new Map(); C.others.forEach(o => nf.set(o.w.id, o.fy + (shift.get(o.w.id) || 0))); M.forEach(q => nf.set(q.w.id, q.fy + ddy));
+    const minY = Math.min(...nf.values()), off = minY < 0 ? -minY : 0;      // خرج شيء فوق القسم ⟵ كل المحتوى ينزل ويكبر القسم من الأعلى
+    let bot = 0; M.concat(C.others).forEach(q => { const y = nf.get(q.w.id) + off; setR(q.w.set, "fy", dev, Math.round(y)); bot = Math.max(bot, y + q.h); });
+    setR(C.sec.set, "mh", dev, Math.round(Math.max(C.mh0 + off, bot + 40 > C.mh0 ? bot + 40 : C.mh0)));
+  }
   function pushDown(sec, px, py, wPct, hd) {
     const fr = sec.free || [], fyOf = w => Number(eff(w.set, "fy", "d")) || 0, fxOf = w => Number(eff(w.set, "fx", "d")) || 0, fwOf = w => Number(eff(w.set, "fwd", "d")) || 0, need = py + hd + GAP_D;
     const hit = fr.filter(w => fxOf(w) < px + wPct && fxOf(w) + fwOf(w) > px && fyOf(w) >= py - 2 && fyOf(w) < need); if (!hit.length) return 0;
@@ -3966,6 +3990,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     let u = uOf(inf.sec, cr), X0 = r0.left - cr.left, Y0 = r0.top - cr.top, peers = []; let moved = false, dropCol = null, ptr = null, U = null, xfer = null, ro = null, offBase = null, roOff = null; const srcSec = inf.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes(), exSet = () => new Set([id].concat(peers.map(q => q.w.id))); E._ghp = null; const origCol = lazy && inf.col ? inf.col.id : null;
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
     const clearDrop = () => fdoc.querySelectorAll(".pbx-dropcol").forEach(c => c.classList.remove("pbx-dropcol"));
+    /* إزاحة العناصر أمام العنصر المسحوب وتوسعة القسم (انظر pushCtx)؛ الحمل (Alt/Ctrl) يُلغيها */
+    let PC = null; const mkPush = () => inf.free ? pushCtx(inf.sec, [id].concat(peers.map(q => q.w.id)), dev) : { off: true }, restoreBase = () => pushRestore(PC), pushLayout = (Xpx, Ypx) => { const S0 = PC.movers.find(q => q.w.id === id); if (S0) pushApply(PC, Math.round(Ypx / u) - S0.fy, Xpx / cr.width * 100 - S0.fx); };
     const mv = (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < (lazy ? 5 : 3)) return; moved = true;
       if (!conv && !inf.free && inf.sec.set.kind !== "canvas" && E.dev === "d" && cssPosSec(inf.sec)) {      /* قسم عناصره موضعها من CSS (الهيرو): تحريك العنصر إزاحة بصرية وحده بلا تحويل القسم */
@@ -3996,11 +4022,13 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       }
       if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }                       // Shift = حركة في محور واحد
       if (!U) U = unionRect([id].concat(peers.map(q => q.w.id)).map(i => fdoc.querySelector(`[data-pb="${i}"]`)).filter(Boolean).map(layoutRect));
-      const pt = ptrFrame(ev), tsec = inf.free ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // المؤشر فوق قسم حر آخر: شبح الإفلات بدل تحريك العنصر
+      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch"), pt = ptrFrame(ev), tsec = inf.free && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل (Alt/Ctrl أو اللمس) ⟵ فوق عنصر آخر أو قسم آخر؛ بدونه يزيح العنصرَ الذي أمامه ويتّسع القسم      // المؤشر فوق قسم حر آخر: شبح الإفلات بدل تحريك العنصر
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } clearDrop(); dropCol = null; xfer = ghostMove({ tsec, U, pt, grab: { x: U.l - px0, y: U.t - py0 }, ev, ex: exSet() }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       let X = X0 + dx, Y = Y0 + dy, guides = [];
-      Y = Math.max(Y, 0);      // لا يخرج العنصر فوق حدّ قسمه فيختفي جزؤه (قصّ القسم)؛ للنقل لقسم آخر أفلته فوقه
+      try { if (!carry && !localStorage.getItem("pbx_carry_tip")) { localStorage.setItem("pbx_carry_tip", "1"); toast("💡 العنصر يزيح ما أمامه ويتّسع القسم. اضغط Alt أو Ctrl أثناء السحب لحمله فوق عنصر آخر أو إلى قسم آخر"); } } catch (e) { }
+      const PCc = carry ? null : (PC || (PC = mkPush()));
+      if (carry || !PCc || PCc.off) Y = Math.max(Y, 0);      // الحمل: لا يخرج العنصر فوق حدّ قسمه فيختفي جزؤه (للنقل لقسم آخر أفلته فوقه)؛ بدونه يتّسع القسم للأعلى
       let lnkId = null; if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; lnkId = sn.below; }
       if (inf.free && E.dev === "d") setStk(inf.node, inf.sec, lnkId);      // التصق تحت عنصر بفجوة 3 مم ← يتبعه؛ تحريك يدوي بلا التصاق يفكّ الربط
       const pzS = inf.set.pz && !ev.altKey ? PBPuzzle.snap(inf, X, Y, cr.width, u, dev) : null;      // تجاذب قطع البازل
@@ -4008,6 +4036,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       setR(inf.set, "fx", dev, pzS ? Math.round(pzS.fx * 1000) / 1000 : Math.round(X / cr.width * 1000) / 10); setR(inf.set, "fy", dev, pzS ? Math.round(pzS.fy * 1000) / 1000 : Math.round(Y / u)); growCanvas(inf.sec);
       if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(inf.set, k, "d") === undefined) setR(inf.set, k, "d", eff(inf.set, k, dev)); });
       if (peers.length) { const ddx = (X - X0) / cr.width * 100, ddy = (Y - Y0) / u; peers.forEach(q => { setR(q.w.set, "fx", "d", Math.round((q.fx + ddx) * 10) / 10); setR(q.w.set, "fy", "d", Math.round(q.fy + ddy)); }); }      // أعضاء المجموعة (خلفية البطاقة وبقية عناصرها) تتحرك معه
+      if (PC && !PC.off) { if (carry) restoreBase(); else pushLayout(X, Y); growCanvas(inf.sec); }
       renderCanvas(); positionOverlay(); drawGuides(guides, pts.cr);
       ptr = { x: px0 + dx, y: py0 + dy }; let col = fdoc.elementsFromPoint(ptr.x, ptr.y).map(n => n.closest && n.closest(".pb-col[data-pb]")).find(Boolean);       // العمود تحت المؤشر
       if (FREE_ONLY) col = null;
@@ -4715,15 +4744,16 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const ids = new Set(st.map(q => q.i.node.id)), oneSec = new Set(st.map(q => q.i.sec)).size === 1, srcSec = st[0].i.sec, mh0 = Number(eff(srcSec.set, "mh", "d")) || 0, sy0 = fdoc.defaultView.scrollY, boxes = secBoxes();
     const cont = st[0].el.closest(".pb-in"), pts = oneSec ? snapPts({ node: st[0].i.node }, cont, ids) : null, ccr = pts ? pts.cr : null, U0 = unionRect(st.map(q => layoutRect(q.el))), u0 = st[0].u;      // مغناطيس بفجوة للمجموعة كلها كصندوق واحد
     const f0 = $("pbx-fw").getBoundingClientRect(), inF = e.target && e.target.ownerDocument === fdoc, px0 = inF ? e.clientX : (e.clientX - f0.left) / E.scale, py0 = inF ? e.clientY : (e.clientY - f0.top) / E.scale;
-    let moved = false, xfer = null; E._ghp = null;
+    let moved = false, xfer = null, PCm = null; E._ghp = null;
     dragTrack(e, "move", (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return; if (!moved) st.forEach(q => { delete q.i.set.stk; }); moved = true; if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
-      const pt = ptrFrame(ev), tsec = oneSec ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;
+      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch"), pt = ptrFrame(ev), tsec = oneSec && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل ⟵ نقل لقسم آخر/تراكب؛ بدونه إزاحة وتوسعة
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } xfer = ghostMove({ tsec, U: U0, pt, grab: { x: U0.l - px0, y: U0.t - py0 }, ev, ex: ids }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
-      dy = clampGroupDy(st, dy); let guides = [];
-      if (pts && E.snap && !ev.altKey) { const X0 = U0.l - ccr.left, Y0 = U0.t - ccr.top, mg = magnetBox(X0 + dx, Y0 + dy, U0.w, U0.h, pts, GAP_D * u0); dx = mg.x - X0; dy = clampGroupDy(st, mg.y - Y0); guides = mg.guides; }
-      st.forEach(q => { setR(q.i.set, "fx", dev, Math.round((q.fx + dx / q.cw * 100) * 10) / 10); setR(q.i.set, "fy", dev, Math.max(0, Math.round(q.fy + dy / q.u))); if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(q.i.set, k, "d") === undefined) setR(q.i.set, k, "d", eff(q.i.set, k, dev)); }); });
+      if (!carry && oneSec && !PCm) PCm = pushCtx(srcSec, st.map(q => q.i.node.id), dev); const push = !carry && PCm && !PCm.off; if (!push) dy = clampGroupDy(st, dy); let guides = [];
+      if (pts && E.snap && !ev.altKey) { const X0 = U0.l - ccr.left, Y0 = U0.t - ccr.top, mg = magnetBox(X0 + dx, Y0 + dy, U0.w, U0.h, pts, GAP_D * u0); dx = mg.x - X0; dy = push ? mg.y - Y0 : clampGroupDy(st, mg.y - Y0); guides = mg.guides; }
+      st.forEach(q => { setR(q.i.set, "fx", dev, Math.round((q.fx + dx / q.cw * 100) * 10) / 10); if (!push) setR(q.i.set, "fy", dev, Math.max(0, Math.round(q.fy + dy / q.u))); if (dev !== "d") ["fx", "fy"].forEach(k => { if (own(q.i.set, k, "d") === undefined) setR(q.i.set, k, "d", eff(q.i.set, k, dev)); }); });
+      if (PCm && !PCm.off) { if (push) pushApply(PCm, Math.round(dy / u0), dx / st[0].cw * 100); else pushRestore(PCm); }
       new Set(st.map(q => q.i.sec)).forEach(growCanvas); renderCanvas(); positionOverlay(); drawGuides(guides, ccr || { left: 0, top: 0, height: 0 });
     }, () => { document.querySelectorAll(".pbx-guide").forEach(g => g.remove()); clearGhost();
       if (moved && xfer && xferFree([...ids], xfer.sec, xfer.gx, xfer.gy, new Map([[srcSec, mh0]]))) return;
