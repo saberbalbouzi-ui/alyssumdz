@@ -134,7 +134,7 @@ const AdminHome = (() => {
     return '<div class="ah-card" style="margin:0 0 14px"><h3>مواعيد الرقية <small>' + nd + '</small></h3><div class="ah-rqs">' +
       '<div><b>' + num(r.pending) + '</b><span>بانتظار التأكيد</span></div><div><b>' + num(r.today) + '</b><span>مواعيد اليوم</span></div>' +
       '<div><b>' + num(r.am) + '/' + r.cap + '</b><span>جلسات صباحاً</span></div><div><b>' + num(r.pm) + '/' + r.cap + '</b><span>جلسات مساءً</span></div></div>' +
-      '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button><button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
+      '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button>' + (r.uv ? '<button type="button" class="ah-btn" data-go="ruqya-uv">واتساب غير مؤكَّد (' + num(r.uv) + ')</button>' : '') + '<button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
   }
   /* صافي كل شركة توصيل (ما يخصّك بعد العمولة والتوصيل والإرجاع) كما في «تفاصيل الدفع» */
   function payCard() {
@@ -266,7 +266,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   function go(w) {
     const a = A(), btn = k => [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
     if (w === "neword") { try { if (typeof ManualOrder !== "undefined") ManualOrder.open({ mode: "new" }); } catch (e) { } return; }
-    if (w === "ruqya-new" || w === "ruqya-pending" || w === "ruqya") { try { AdminRuqya.queue(w === "ruqya-new" ? { view: "man" } : w === "ruqya-pending" ? { filter: "pending" } : { filter: "up" }); } catch (e) { } const rb = btn("ruqya"); if (rb) a.tab("ruqya", rb); return; }
+    if (w === "ruqya-new" || w === "ruqya-pending" || w === "ruqya-uv" || w === "ruqya") { try { AdminRuqya.queue(w === "ruqya-new" ? { view: "man" } : w === "ruqya-pending" ? { filter: "pending" } : w === "ruqya-uv" ? { filter: "uv" } : { filter: "up" }); } catch (e) { } const rb = btn("ruqya"); if (rb) a.tab("ruqya", rb); return; }
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
     if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }
