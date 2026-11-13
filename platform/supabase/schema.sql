@@ -195,11 +195,28 @@ drop policy if exists "admin update orders" on public.orders;
 create policy "admin update orders" on public.orders for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 -- إرسال طلب من الموقع: تحقق + حدّ للتكرار (5 طلبات لنفس الهاتف خلال 10 دقائق) ثم يُرجع رقم الطلب
+-- سجل idempotency للطلبات (12B.1): بلا سياسات = محجوب عن anon/authenticated؛ تصل إليه الدالة (security definer) فقط. احتفاظ 7 أيام.
+create table if not exists public.order_idem (k text primary key, order_id text not null, req_hash text not null, created_at timestamptz not null default now());
+alter table public.order_idem enable row level security;
+revoke all on table public.order_idem from anon, authenticated;
+
 create or replace function public.submit_order(p jsonb) returns text
 language plpgsql security definer set search_path = public as $$
 declare
   v_id text; v_phone text; v_name text; v_items jsonb; v_text text; v_cust uuid; v_promo text; v_extra jsonb; g jsonb; v_ip text; v_iph text; v_ts bigint; v_slugs text[]; bl jsonb;
+  v_idem text; v_hash text; v_prev record; v_try int := 0; v_cn text;
 begin
+  -- idempotency (12B.1): نفس المفتاح ونفس المحتوى ← يعيد رقم الطلب الأول؛ محتوى مختلف ← idempotency_key_reuse؛ قفل استشاري يسلسل الطلبات المتزامنة بنفس المفتاح
+  v_idem := nullif(btrim(coalesce(p ->> 'idem', '')), '');
+  if v_idem is not null then
+    if v_idem !~ '^[A-Za-z0-9_-]{16,64}$' then raise exception 'invalid_idem'; end if;
+    perform pg_advisory_xact_lock(hashtext('order_idem:' || v_idem));
+    v_hash := encode(extensions.digest(jsonb_build_array(btrim(coalesce(p ->> 'name', '')), regexp_replace(coalesce(p ->> 'phone', ''), '[^0-9+]', '', 'g'), btrim(coalesce(p ->> 'wilaya', '')), btrim(coalesce(p ->> 'commune', '')), btrim(coalesce(p ->> 'dtype', '')), btrim(coalesce(p ->> 'desk', '')),
+      coalesce((select jsonb_agg(jsonb_build_array(btrim(coalesce(it ->> 'slug', '')), btrim(coalesce(it ->> 'title', '')), coalesce((it ->> 'qty')::numeric, 1), coalesce((it ->> 'price')::numeric, 0)) order by btrim(coalesce(it ->> 'slug', '')), btrim(coalesce(it ->> 'title', '')), coalesce((it ->> 'qty')::numeric, 1), coalesce((it ->> 'price')::numeric, 0)) from jsonb_array_elements(coalesce(p -> 'items', '[]'::jsonb)) it), '[]'::jsonb),
+      coalesce((p ->> 'subtotal')::numeric, 0), coalesce((p ->> 'fee')::numeric, 0), coalesce((p ->> 'discount')::numeric, 0), coalesce((p ->> 'total')::numeric, 0), upper(btrim(coalesce(p ->> 'coupon', ''))), upper(btrim(coalesce(p ->> 'promo', ''))), coalesce(p -> 'extra', '{}'::jsonb) - '🔗 مرجع' - '🧺 مجموعة')::text::bytea, 'sha256'), 'hex');
+    select order_id, req_hash into v_prev from public.order_idem where k = v_idem;
+    if found then if v_prev.req_hash = v_hash then return v_prev.order_id; else raise exception 'idempotency_key_reuse'; end if; end if;
+  end if;
   v_name := btrim(coalesce(p ->> 'name', ''));
   v_phone := regexp_replace(coalesce(p ->> 'phone', ''), '[^0-9+]', '', 'g');
   v_items := coalesce(p -> 'items', '[]'::jsonb);
@@ -240,20 +257,34 @@ begin
 
   select string_agg((i ->> 'title') || ' ×' || coalesce(i ->> 'qty', '1') || ' = ' || round(coalesce((i ->> 'price')::numeric, 0) * coalesce((i ->> 'qty')::numeric, 1)) || ' DA', E'\n')
     into v_text from jsonb_array_elements(v_items) i;
-  v_id := 'S' || to_char(now(), 'YYMMDD') || '-' || upper(substr(md5(gen_random_uuid()::text), 1, 5));
-  v_extra := coalesce(p -> 'extra', '{}'::jsonb);
-  -- كود تخفيض شخصي: يُستهلك مرة واحدة فقط ولصاحب الهاتف نفسه؛ إن لم يصلح لا يُرفض الطلب بل يُعلَّم في extra ليراه المدير
-  v_promo := upper(btrim(coalesce(p ->> 'promo', '')));
-  if v_promo <> '' then
-    update public.promo_codes set used_order = v_id, used_at = now()
-     where code = v_promo and used_order is null and expires_at > now() and phone = public._cust_phone(v_phone);
-    if not found then v_extra := v_extra || jsonb_build_object('promo_invalid', v_promo); end if;
-  end if;
   v_cust := public._cust_from_token(p ->> 'ctoken');                      -- null إن لم يكن الزبون مسجّلاً
-  insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra, customer_id, ip_hash)
-  values (v_id, v_name, v_phone, left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), left(p ->> 'dtype', 10), left(p ->> 'desk', 160),
-          v_items, coalesce(v_text, ''), coalesce((p ->> 'subtotal')::numeric, 0), coalesce((p ->> 'fee')::numeric, 0), (p ->> 'total')::numeric,
-          left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), v_extra, v_cust, v_iph);
+  v_promo := upper(btrim(coalesce(p ->> 'promo', '')));
+  -- المعرّف: 8 رموز (تطول 2 مع كل تصادم)، وإعادة محاولة محدودة (5) على تصادم orders_pkey فقط؛ كود التخفيض والإدراج داخل نفس الكتلة فيتراجعان معاً
+  loop
+    v_id := 'S' || to_char(now(), 'YYMMDD') || '-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, least(14, 8 + 2 * v_try)));
+    v_extra := coalesce(p -> 'extra', '{}'::jsonb);
+    begin
+      -- كود تخفيض شخصي: يُستهلك مرة واحدة فقط ولصاحب الهاتف نفسه؛ إن لم يصلح لا يُرفض الطلب بل يُعلَّم في extra ليراه المدير
+      if v_promo <> '' then
+        update public.promo_codes set used_order = v_id, used_at = now()
+         where code = v_promo and used_order is null and expires_at > now() and phone = public._cust_phone(v_phone);
+        if not found then v_extra := v_extra || jsonb_build_object('promo_invalid', v_promo); end if;
+      end if;
+      insert into public.orders (id, name, phone, wilaya, commune, dtype, desk, items, items_text, subtotal, fee, total, coupon, discount, extra, customer_id, ip_hash)
+      values (v_id, v_name, v_phone, left(p ->> 'wilaya', 80), left(p ->> 'commune', 120), left(p ->> 'dtype', 10), left(p ->> 'desk', 160),
+              v_items, coalesce(v_text, ''), coalesce((p ->> 'subtotal')::numeric, 0), coalesce((p ->> 'fee')::numeric, 0), (p ->> 'total')::numeric,
+              left(p ->> 'coupon', 40), coalesce((p ->> 'discount')::numeric, 0), v_extra, v_cust, v_iph);
+      exit;
+    exception when unique_violation then
+      get stacked diagnostics v_cn = constraint_name;
+      if v_cn is distinct from 'orders_pkey' then raise; end if;
+      v_try := v_try + 1; if v_try >= 5 then raise exception 'try_again'; end if;
+    end;
+  end loop;
+  if v_idem is not null then
+    insert into public.order_idem (k, order_id, req_hash) values (v_idem, v_id, v_hash);
+    if random() < 0.02 then delete from public.order_idem where created_at < now() - interval '7 days'; end if;
+  end if;
   return v_id;
 end $$;
 revoke all on function public.submit_order(jsonb) from public;

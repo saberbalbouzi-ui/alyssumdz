@@ -52,7 +52,8 @@
   function fmtP(n) { try { return typeof fmt === "function" ? fmt(n) : n + " دج"; } catch (e) { return n + " دج"; } }
   function img(p) { var s = p.cover || (p.images && p.images[0]) || ""; return s ? ((typeof REL !== "undefined" ? REL : "") + s) : ""; }
   function prods() { try { return typeof PRODUCTS !== "undefined" ? PRODUCTS : []; } catch (e) { return []; } }
-  function gid() { return "G" + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 5); }
+  /* معرّف مجموعة الطلب (يربط طلب «بعد الشراء» بالأول): مشتق من مفتاح idempotency (seed) فيثبت عبر إعادة المحاولة؛ دونه عشوائي آمن عند توفره */
+  function gid(seed) { seed = String(seed || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 10); if (seed) return "G" + seed; try { var c = window.crypto; if (c && c.getRandomValues) { var a = new Uint8Array(5); c.getRandomValues(a); return "G" + Array.prototype.map.call(a, function (x) { return ("0" + x.toString(16)).slice(-2); }).join(""); } } catch (e) { } return "G" + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 5); }
   function hasType(type) { return S.rules.some(function (r) { return r.type === type && isActive(r); }); }
 
   function css() {
@@ -155,10 +156,11 @@
     var order = { name: cu.name, phone: cu.phone, wilaya: cu.wilaya, commune: cu.commune || "", dtype: cu.dtype || "home", desk: cu.desk || "",
       items: [{ slug: c.product.slug, title: c.product.title, qty: 1, price: c.price }], subtotal: c.price, fee: 0, total: c.price, coupon: "", discount: 0, extra: extra };
     try {
-      if (typeof Guard !== "undefined" && Guard.active()) { var g = await Guard.submit(order); if (!g.ok) return { ok: false, msg: g.msg }; }
-      else API.submitOrder(order);
+      /* 12B.1: لا نجاح بلا تأكيد خادم + رقم طلب صالح (لا مسار إرسال بلا انتظار) */
+      var g = (typeof Guard !== "undefined") ? await Guard.submit(order) : await API.submitOrderTruth(order).then(function (r) { return { ok: r.ok, id: r.id, state: r.state, msg: r.ok ? "" : "لم يُؤكَّد تسجيل الطلب — أعد المحاولة (لن يتكرر)" }; });
+      if (!g.ok) return { ok: false, msg: g.msg || "لم يُؤكَّد تسجيل الطلب", state: g.state };
       try { if (typeof trackEvent === "function") trackEvent("Lead", { slug: c.product.slug, title: c.product.title, qty: 1, value: c.price }); } catch (e) { }
-      return { ok: true };
+      return { ok: true, id: g.id };
     } catch (e) { return { ok: false, msg: "تعذّر إرسال الطلب" }; }
   }
 

@@ -1,0 +1,2 @@
+set client_min_messages = warning; set role anon; select set_config('request.jwt.claims','{"role":"anon"}',false);
+select public.submit_order(jsonb_build_object('name','زبون متزامن','phone','0550300001','wilaya','الجزائر','commune','مركز','dtype','home','items',jsonb_build_array(jsonb_build_object('slug','tarkiz','title','قطرات','qty',1,'price',1800)),'subtotal',1800,'fee',400,'total',2200,'idem','kconcccccccccccccccc'));
