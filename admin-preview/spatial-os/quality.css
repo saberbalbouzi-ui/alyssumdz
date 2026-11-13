@@ -1,19 +1,14 @@
 /* جودة المشهد التكيّفية (المرحلة 12): data-q على <html> = 3 كامل | 2 متوازن | 1 خفيف | 0 أدنى.
-   القياس أثبت أن الاختناق في تركيب طبقات كبيرة متراكبة (لا في الظلال/الضبابية/JS)، لذا تُخفَّض طبقات القاعة المساندة الكبيرة تدريجياً.
-   الاسطوانة والنواة الحيّة والبطاقات المدارية والألواح الحقيقية تبقى في كل المستويات. */
-/* 2: بلا الجدارين الجانبيين المائلين والأيقونات المعلّقة، وبلا ضبابية/وميض/توهج الأعمدة */
-html[data-q="2"] .wall.l,html[data-q="2"] .wall.r,html[data-q="2"] .glyphs,html[data-q="2"] .tab{display:none}
-html[data-q="2"] .wcard{backdrop-filter:none;-webkit-backdrop-filter:none}
-html[data-q="2"] .scr::after,html[data-q="2"] .wcard::after{animation:none}
-html[data-q="2"] .pillar,html[data-q="2"] .strip,html[data-q="2"] .beam{box-shadow:none;filter:none}
-/* 1: + بلا لوحة الأرضية الكبيرة (تبقى المنصة تحت الاسطوانة) */
-html[data-q="1"] .wall.l,html[data-q="1"] .wall.r,html[data-q="1"] .glyphs,html[data-q="1"] .tab,html[data-q="1"] #floorcv{display:none}
-html[data-q="1"] .wcard{backdrop-filter:none;-webkit-backdrop-filter:none}
-html[data-q="1"] .scr::after,html[data-q="1"] .wcard::after{animation:none}
-html[data-q="1"] .pillar,html[data-q="1"] .strip,html[data-q="1"] .beam{box-shadow:none;filter:none}
-html[data-q="1"] .scr{box-shadow:none}
-/* 0: + بلا القاعة الخلفية (hall) والجدران الخلفية والأعمدة؛ يبقى الاسطوانة + النواة + البطاقات + الألواح */
-html[data-q="0"] .wall,html[data-q="0"] .glyphs,html[data-q="0"] .tab,html[data-q="0"] #floorcv,html[data-q="0"] .hall,html[data-q="0"] .pillar,html[data-q="0"] .strip,html[data-q="0"] .beam{display:none}
-html[data-q="0"] .wcard{backdrop-filter:none;-webkit-backdrop-filter:none}
+   القياس أثبت أن الاختناق في تركيب طبقات كبيرة متراكبة (لا في الظلال/الضبابية/JS)، لذا تُخفَّض طبقات القاعة **الزخرفية** فقط.
+   قاعدة ثابتة: لا يُخفى أي عنصر تفاعلي (بطاقات الجدران القابلة للنقر، عقد الأقسام، الألواح، النواة) في أي مستوى؛ الاسطوانة والنواة الحيّة تبقى دائماً. */
+/* 2: بلا ضبابية خلفية البطاقات ولا وميضها، وبلا توهّج الأعمدة والعوارض */
+html[data-q="2"] .wcard,html[data-q="1"] .wcard,html[data-q="0"] .wcard{backdrop-filter:none;-webkit-backdrop-filter:none}
+html[data-q="2"] .scr::after,html[data-q="2"] .wcard::after,html[data-q="1"] .scr::after,html[data-q="1"] .wcard::after,html[data-q="0"] .scr::after,html[data-q="0"] .wcard::after{animation:none}
+html[data-q="2"] .pillar,html[data-q="2"] .strip,html[data-q="2"] .beam,html[data-q="1"] .pillar,html[data-q="1"] .strip,html[data-q="1"] .beam{box-shadow:none;filter:none}
+/* 1: + بلا لوحة الأرضية الكبيرة (زخرفية؛ تبقى المنصة تحت الاسطوانة) */
+html[data-q="1"] #floorcv,html[data-q="0"] #floorcv{display:none}
+html[data-q="1"] .scr,html[data-q="0"] .scr{box-shadow:none}
+/* 0: + بلا القاعة الخلفية الزخرفية (hall) والأعمدة والعوارض */
+html[data-q="0"] .hall,html[data-q="0"] .pillar,html[data-q="0"] .strip,html[data-q="0"] .beam{display:none}
 /* تُوقَف حركة الخلفية حين تكون النافذة مخفية */
 html.q-paused .scr::after,html.q-paused .wcard::after,html.q-paused .slat *{animation-play-state:paused}
