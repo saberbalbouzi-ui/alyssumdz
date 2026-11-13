@@ -17,6 +17,7 @@ const AiSwitch = (() => {
     let b = document.getElementById("ais-bar");
     if (enabled()) { if (b) b.remove(); return; }
     if (!b) { b = document.createElement("div"); b.id = "ais-bar"; b.setAttribute("role", "status"); b.style.cssText = "position:fixed;z-index:99990;left:50%;transform:translateX(-50%);bottom:12px;max-width:calc(100vw - 24px);display:flex;gap:.6rem;align-items:center;padding:.45rem .9rem;border-radius:999px;background:#92400e;color:#fff;font-weight:800;font-size:.85rem;box-shadow:0 6px 18px rgba(0,0,0,.4)"; document.body.appendChild(b); }
+    if (b.dataset.sig === "1") return; b.dataset.sig = "1";
     b.innerHTML = '<span>⛔ أدوات الذكاء معطّلة — لا استهلاك للرصيد</span><button type="button" data-aisw="on" style="border:0;border-radius:999px;padding:.25rem .7rem;font:inherit;font-weight:800;cursor:pointer;background:#fff;color:#92400e">تفعيل</button>';
   }
   function cards() {
@@ -34,13 +35,15 @@ const AiSwitch = (() => {
       if (cr && cr.parentNode) cr.parentNode.insertBefore(b, cr.nextSibling); else if (th && th.parentNode === host) host.insertBefore(b, th); else host.appendChild(b);
     }
     { const cr2 = document.getElementById("cr-top"); if (cr2 && cr2.parentNode && b.previousElementSibling !== cr2) cr2.parentNode.insertBefore(b, cr2.nextSibling); if (cr2) b.style.order = getComputedStyle(cr2).order; }      /* عدّاد الرصيد يُركَّب متأخراً: ننقل الزر بجانبه */
+    const sig = o ? "1" : "0"; if (b.dataset.sig === sig && b.firstChild) return; b.dataset.sig = sig;
     b.innerHTML = PWR; b.style.color = o ? "#22c55e" : "#f59e0b"; b.title = o ? "أدوات الذكاء مفعّلة — اضغط للتعطيل (لحماية الرصيد أثناء التجريب)" : "أدوات الذكاء معطّلة — اضغط للتفعيل"; b.setAttribute("aria-pressed", o ? "true" : "false"); b.setAttribute("aria-label", b.title);
   }
   function paint() { bar(); cards(); top(); }
   function set(v) { try { localStorage.setItem(K, v ? "1" : "0"); } catch (e) { } paint(); try { document.querySelectorAll("[data-aisw-card]").forEach(h => { delete h.dataset.sig; }); cards(); if (typeof toast === "function") toast(v ? "✅ فُعّلت أدوات الذكاء" : "⛔ عُطّلت أدوات الذكاء — لن يُستهلك رصيد"); } catch (e) { } }
   document.addEventListener("click", e => { const t = e.target.closest && e.target.closest("[data-aisw]"); if (t && t.dataset.aisw === "on") set(true); else if (t && t.dataset.aisw === "flip") set(!enabled()); });
   document.addEventListener("change", e => { const t = e.target; if (t && t.dataset && t.dataset.aisw === "toggle") set(!!t.checked); });
-  let q = 0; const sched = () => { if (q) return; q = setTimeout(() => { q = 0; paint(); }, 80); };
+  let q = 0; const own = n => { const el = n && (n.nodeType === 1 ? n : n.parentElement); return !!(el && el.closest && el.closest("#ais-top,#ais-bar,[data-aisw-card]")); };
+  const sched = ms => { if (ms && ms.length && ms.every(m => own(m.target) && [...m.addedNodes, ...m.removedNodes].every(own))) return; if (q) return; q = setTimeout(() => { q = 0; paint(); }, 200); };
   function init() { paint(); try { new MutationObserver(sched).observe(document.body, { childList: true, subtree: true }); } catch (e) { } }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   return { enabled, set, blocked, paint, MSG };

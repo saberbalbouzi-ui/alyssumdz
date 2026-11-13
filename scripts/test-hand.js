@@ -1410,7 +1410,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const small = await dim(await PBAI._t.polish(await mkB(300, 200), 1280)), big = await dim(await PBAI._t.polish(await mkB(1400, 900), 1280));
     return { head, row, soon, file, calls: calls.length, ex: calls.map(c => c.extra).join(), nc: calls.every(c => c.conf === false || c.conf === undefined), thumbs, has, lines, up: paths.length, T: /90 degrees/.test(T) && /SAME product/.test(T) && /No people/.test(T), small, big };
   });
-  ok("عرض 360°: الصف مفعّل ويفتح لوحته (بلا خيار رفع مجاني)", /360/.test(v3.head) && v3.row && !v3.soon && !v3.file, v3);
+  ok("عرض 360°: الصف مفعّل ويفتح لوحته (مع خيار رفع الصور الحقيقية المجاني)", /360/.test(v3.head) && v3.row && !v3.soon && v3.file, v3);
   ok("عرض 360° بالذكاء: 6 إطارات = 5 توليدات بموافقة واحدة (الأول الأصل)، ثم تُرفع ويُضاف عنصر view360 بـ6 أسطر", v3.calls === 5 && v3.thumbs === 6 && v3.has && v3.lines === 6 && v3.up === 6 && v3.T, v3);
   ok("تحسين الجودة قبل الاستعمال: الصورة الصغيرة تُكبَّر (≥1280) والكبيرة تبقى كما هي", v3.small[0] >= 1280 && v3.big[0] === 1400, v3);
   const vr = await (async () => {
