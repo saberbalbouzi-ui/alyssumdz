@@ -103,7 +103,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
 .pbx-h.d-ne{top:-7px;right:-7px;cursor:nesw-resize}.pbx-h.d-nw{top:-7px;left:-7px;cursor:nwse-resize}.pbx-h.d-se{bottom:-7px;right:-7px;cursor:nwse-resize}.pbx-h.d-sw{bottom:-7px;left:-7px;cursor:nesw-resize}
-.pbx-pgend{position:absolute;height:0;border:0!important;border-top:2px solid #8b3dff!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
+.pbx-sdiv{position:absolute;height:14px;pointer-events:auto;cursor:ns-resize;z-index:5}.pbx-sdiv:before{content:"";position:absolute;left:0;right:0;top:6px;border-top:2px dashed transparent;transition:border-color .12s}.pbx-sdiv:hover:before,.pbx-sdiv.on:before{border-top-color:#8b3dff}.pbx-sdiv-h{position:absolute;left:50%;top:-3px;transform:translateX(-50%);background:#8b3dff;color:#fff;font:800 .68rem Cairo,sans-serif;padding:.12rem .7rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none;opacity:0;transition:opacity .12s;pointer-events:none}.pbx-sdiv:hover .pbx-sdiv-h,.pbx-sdiv.on .pbx-sdiv-h{opacity:1}.pbx-pgend{position:absolute;height:0;border:0!important;border-top:2px solid #8b3dff!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
 .pbx-gapb{background:rgba(233,30,99,.32)!important;border:1px solid #e91e63;box-sizing:border-box;z-index:6!important}.pbx-gapb b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:800 11px Cairo,sans-serif;color:#fff;background:#e91e63;padding:1px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .pbx-guide{position:absolute;background:repeating-linear-gradient(var(--gd,180deg),#e91e63 0 6px,transparent 6px 10px);pointer-events:none;z-index:4}
 .pbx-ghost{position:absolute;border:2px dashed #19c37d;background:rgba(25,195,125,.14);border-radius:6px;pointer-events:none;z-index:5}
@@ -1607,6 +1607,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const ovl = $("pbx-ovl"); if (!ovl) return; ovl.innerHTML = "";
     if (E.mwp && E.mwp.id !== E.sel) { mwRestore(); toast("↩ أُلغيت مسوّدة الكتابة السحرية"); setTimeout(() => { renderCanvas(); renderInspector(); }, 0); }      // تغيير التحديد قبل الإدراج = إلغاء
     try { drawSecBar(ovl); markThumbs(); } catch (x) { console.warn(x); }
+    try { drawSecDividers(ovl); } catch (x) { console.warn(x); }
     try { drawPageEnd(ovl); } catch (x) { console.warn(x); }
     if (E.covered && E.covered.size && fdoc) { const o0 = ovlOrigin(); E.covered.forEach(id => { const el = fdoc.querySelector(`[data-pb="${id}"]`); if (!el) return; const r = layoutRect(el), d = document.createElement("div"); d.className = "pbx-cov"; d.style.cssText = `left:${o0.ox + r.left * o0.s}px;top:${o0.oy + r.top * o0.s}px;width:${r.width * o0.s}px;height:${r.height * o0.s}px`; ovl.appendChild(d); }); }
     if (E.marqEl) ovl.appendChild(E.marqEl);
@@ -1721,6 +1722,30 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       };
       dragTrack(e, "ns-resize", mv, () => { E.nextLabel = "ضبط طول الصفحة"; afterEdit(); });
     };
+  }
+  /* فواصل بين الأقسام: اسحب الحافة السفلية لأي قسم بالفأرة لتنقيص ارتفاعه أو زيادته (قسم قماش: ارتفاعه لا يقصّ عنصراً؛ قسم عادي بأعمدة: التباعد السفلي). آخر قسم له خط «نهاية الصفحة» الخاص */
+  function drawSecDividers(ovl) {
+    if (!fdoc || !root || (E.page && E.page.ad) || E.busy) return; const last = lengthSec(), o = ovlOrigin(), s = o.s;
+    (E.page.sections || []).forEach(sec => {
+      const st0 = sec.set || {}; if (sec === last || st0.tight || st0.off || st0.locked || isHF(sec)) return;
+      const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return; const r = layoutRect(el); if (r.width < 2) return;
+      const canvas = st0.kind === "canvas", dev = E.dev, y = o.oy + (r.top + r.height) * s, d = document.createElement("div");
+      d.className = "pbx-sdiv"; d.style.cssText = `left:${o.ox + r.left * s}px;top:${y - 7}px;width:${r.width * s}px`; d.title = "اسحب بالفأرة لتنقيص ارتفاع القسم أو زيادته";
+      const h = document.createElement("div"); h.className = "pbx-sdiv-h"; h.textContent = "↕ ارتفاع القسم"; d.appendChild(h); ovl.appendChild(d);
+      d.onmousedown = e => {
+        if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); d.classList.add("on");
+        const tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip); const top = r.top;
+        const mh0 = Number(eff(st0, "mh", dev)) || r.height, k = mh0 / (r.height || 1), pad0 = (eff(st0, "pad", dev) || [0, 0, 0, 0]).map(v => Number(v) || 0), u = uOf(sec, { width: (el.querySelector(".pb-in") || el).getBoundingClientRect().width }) || 1;
+        const eb0 = Math.max(0, ...Array.from(el.querySelectorAll('[data-kind="widget"]')).map(q => { const b = layoutRect(q); return b.top + b.height - top; })), lowest = () => eb0;      // أسفل أدنى عنصر (يُقاس مرة قبل السحب: عنصر DOM يُعاد بناؤه أثناء الرسم)
+        const mv = (dx, dy, ev) => {
+          let txt;
+          if (canvas) { let hh = r.height + dy; const eb = lowest(); if (hh < eb + 10) hh = eb; const H = Math.max(40, Math.round(hh * k)); setR(st0, "mh", dev, H); txt = H + "px"; }
+          else { const b = Math.max(0, Math.round(pad0[2] + dy / u)); setR(st0, "pad", dev, [pad0[0], pad0[1], b, pad0[3]]); txt = "تباعد سفلي " + b + "px"; }
+          tip.textContent = txt; renderCanvas(); positionOverlay(); const sb = $("pbx-ovl").getBoundingClientRect(); $("pbx-ovl").appendChild(tip); tip.style.left = (ev.clientX - sb.left + 14) + "px"; tip.style.top = (ev.clientY - sb.top + 14) + "px";
+        };
+        dragTrack(e, "ns-resize", mv, () => { tip.remove(); E.nextLabel = "ضبط ارتفاع قسم"; afterEdit(); });
+      };
+    });
   }
   function drawSecBar(ovl) {
     if (E.page && E.page.ad) return;
@@ -2436,7 +2461,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
   function startResize(e, dir, inf) {
-    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) inf.set.hauto = false;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
+    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading", "countdown", "counter"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) inf.set.hauto = false;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
     const dev = devOfFree(inf), el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, r0 = layoutRect(el), set = inf.set;
     const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), free = inf.kind === "widget" && inf.free;
@@ -2766,7 +2791,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   /* بلا أقسام: القماش يكبر تلقائياً ليتسع لأسفل عنصر حر (لا مقبض لتحجيم القسم) */
   /* ارتفاع عنصر حر: الفعلي المقيس للنص/العنوان بارتفاع تلقائي (للجهاز الحالي فقط) وإلا fh المحفوظ */
-  function freeH(sec, w, dev) { if (dev === E.dev && (["text", "heading"].includes(w.type) || (w.type === "html" && w.set.src !== "orig" && /<script|<style|<link/i.test(String(w.set.code || "")))) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; }
+  function freeH(sec, w, dev) { if (dev === E.dev && (["text", "heading", "countdown", "counter"].includes(w.type) || (w.type === "html" && w.set.src !== "orig" && /<script|<style|<link/i.test(String(w.set.code || "")))) && w.set.hauto !== false && fdoc) { const el = fdoc.querySelector(`[data-pb="${w.id}"]`), pin = el && el.closest(".pb-in"); if (el && pin) return Math.round(el.offsetHeight / uOf(sec, pin.getBoundingClientRect())); } return Number(eff(w.set, "fh", dev)) || 0; }
   /* ربط العنصر بما فوقه (الفجوة 3 مم): إن تغيّر ارتفاع «الإطار البنفسجي» لما فوقه (تكبير/تصغير/تمدّد النص) يتبعه العنصر بالفرق نفسه، إلا إن حُرِّك يدوياً بعدها (يُفكّ الربط) */
   function setStk(w, sec, anchorId) { const a = anchorId && (sec.free || []).find(q => q.id === anchorId); if (a && a !== w) w.set.stk = { id: anchorId, h: Math.round(freeH(sec, a, "d")) }; else delete w.set.stk; }
   function applyStack(sec) {
