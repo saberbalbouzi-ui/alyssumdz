@@ -10,7 +10,7 @@ const CoName = (() => {
     try {
       if (typeof Admin === "undefined" || typeof Admin.activeCompanyKey !== "function") return BASE;
       const all = Admin.allDeliveryCompanies(), k = Admin.activeCompanyKey();
-      return k && all[k] ? short(all[k].name) : "شركة التوصيل";
+      return k === "yalidine" ? BASE : (k && all[k] ? short(all[k].name) : "شركة التوصيل");      /* اسم ياليدين المعروض «Yalidine»؛ النصوص العربية تبقى «ياليدين» */
     } catch (e) { return BASE; }
   }
   const rep = s => (s.indexOf(BASE) < 0 ? s : s.split(BASE).join(cur));
