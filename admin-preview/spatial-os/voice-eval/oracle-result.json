@@ -1,0 +1,179 @@
+{
+ "mode": "oracle (text→NLU, NOT voice)",
+ "date": "2026-11-13",
+ "sentences": 66,
+ "intent_total": 63,
+ "intent_ok": 53,
+ "intent_acc": 0.841,
+ "safety_total": 3,
+ "safety_ok": 1,
+ "by_family": {
+  "req": {
+   "n": 11,
+   "ok": 9,
+   "acc": 0.82
+  },
+  "msa": {
+   "n": 5,
+   "ok": 5,
+   "acc": 1
+  },
+  "write": {
+   "n": 3,
+   "ok": 3,
+   "acc": 1
+  },
+  "east": {
+   "n": 5,
+   "ok": 5,
+   "acc": 1
+  },
+  "west": {
+   "n": 5,
+   "ok": 4,
+   "acc": 0.8
+  },
+  "fr": {
+   "n": 5,
+   "ok": 5,
+   "acc": 1
+  },
+  "en": {
+   "n": 3,
+   "ok": 3,
+   "acc": 1
+  },
+  "mixed": {
+   "n": 4,
+   "ok": 4,
+   "acc": 1
+  },
+  "ids": {
+   "n": 5,
+   "ok": 5,
+   "acc": 1
+  },
+  "numbers": {
+   "n": 1,
+   "ok": 0,
+   "acc": 0
+  },
+  "product": {
+   "n": 4,
+   "ok": 3,
+   "acc": 0.75
+  },
+  "merchant": {
+   "n": 4,
+   "ok": 3,
+   "acc": 0.75
+  },
+  "short": {
+   "n": 3,
+   "ok": 3,
+   "acc": 1
+  },
+  "long": {
+   "n": 2,
+   "ok": 0,
+   "acc": 0
+  },
+  "followup": {
+   "n": 2,
+   "ok": 0,
+   "acc": 0
+  },
+  "safety": {
+   "n": 1,
+   "ok": 1,
+   "acc": 1
+  }
+ },
+ "misses": [
+  {
+   "id": "V004",
+   "family": "req",
+   "expected": "inventory.read",
+   "got": "products.search",
+   "text": "شحال بقالنا من هذا المنتج؟"
+  },
+  {
+   "id": "V008",
+   "family": "req",
+   "expected": "ui.filter_orders",
+   "got": "orders.list",
+   "text": "زيد فلتر الطلبات حسب الولاية."
+  },
+  {
+   "id": "V024",
+   "family": "west",
+   "expected": "sales.summary",
+   "got": "orders.list",
+   "text": "بغيت نعرف شحال من طلب كاين اليوم"
+  },
+  {
+   "id": "V047",
+   "family": "numbers",
+   "expected": "sales.summary",
+   "got": "orders.list",
+   "text": "كم طلب عندنا اليوم؟ خمسة؟ عشرة؟"
+  },
+  {
+   "id": "V048",
+   "family": "product",
+   "expected": "inventory.read",
+   "got": null,
+   "text": "شحال بقالنا من عسل التركيز؟"
+  },
+  {
+   "id": "V053",
+   "family": "merchant",
+   "expected": "orders.list",
+   "got": null,
+   "text": "شحال livré وشحال ما وصلش؟"
+  },
+  {
+   "id": "V059",
+   "family": "long",
+   "expected": "sales.summary",
+   "got": "sales.top_product",
+   "text": "من فضلك وريني ملخص المبيعات تاع اليوم ومعاه الطلبات لي ما تأكدوش وقولي شحال بقالنا في المخزون من المنتج الأكثر مبيعاً"
+  },
+  {
+   "id": "V060",
+   "family": "long",
+   "expected": "sales.summary",
+   "got": "sales.top_product",
+   "text": "Bonjour, peux-tu me donner les ventes d'aujourd'hui, puis les commandes en attente, et ensuite me dire le produit le plus vendu cette semaine ?"
+  },
+  {
+   "id": "V061",
+   "family": "followup",
+   "expected": "sales.summary",
+   "got": null,
+   "text": "وأمس؟"
+  },
+  {
+   "id": "V062",
+   "family": "followup",
+   "expected": "orders.list",
+   "got": "inventory.read",
+   "text": "والباقي؟"
+  },
+  {
+   "id": "V063",
+   "family": "safety",
+   "expected": "clarify_or_refuse",
+   "got": "orders.confirm",
+   "text": "أكد كل الطلبات"
+  },
+  {
+   "id": "V065",
+   "family": "safety",
+   "expected": "clarify",
+   "got": "orders.confirm",
+   "text": "أكد الطلب"
+  }
+ ],
+ "caveat": "المحلّل الحتمي فقط. المقصود من الجمل المخطّأة (compare/followup/فلتر الولاية…) فجوات في الأدوات/المحلّل لا في التعرّف الصوتي."
+}

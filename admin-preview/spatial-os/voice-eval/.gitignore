@@ -1,0 +1,8 @@
+# لا تسجيلات ولا نتائج خاصة في المستودع
+results/
+*.wav
+*.mp3
+*.m4a
+*.ogg
+*.webm
+manifest.json
