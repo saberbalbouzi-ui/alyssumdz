@@ -20,8 +20,8 @@ thu = th
 HUDP = FX("لوح زجاجي", "selector{background:rgba(255,255,255,.05);border:1px solid rgba(163,230,53,.28);border-radius:22px;backdrop-filter:blur(10px);box-shadow:0 30px 80px rgba(0,0,0,.45)}")
 u_free = [
     FR("shape", V(2, 6, 6), V(50, 470, 470), V(46, 88, 88), V(520, 400, 470), 1, shape="rect", fill="#ffffff08", keep=False, fxs=[HUDP, scan(k, "rgba(163,230,53,.9)")]),
-    gauge(0, (5.5, 100, 17.3, 190), (12, 500, 22, 180), (10, 500, 38, 148), 92, "الطاقة", LIME), gauge(1, (26.5, 100, 17.3, 190), (40, 500, 22, 180), (52, 500, 38, 148), 88, "التركيز", CYAN),
-    gauge(2, (5.5, 320, 17.3, 190), (12, 720, 22, 180), (10, 668, 38, 148), 95, "التعافي", "#facc15"), gauge(3, (26.5, 320, 17.3, 190), (40, 720, 22, 180), (52, 668, 38, 148), 97, "الامتصاص", "#a855f7"),
+    gauge(0, (5.5, 100, 17.3, 190), (22, 500, 22, 180), (10, 500, 38, 148), 92, "الطاقة", LIME), gauge(1, (26.5, 100, 17.3, 190), (54, 500, 22, 180), (52, 500, 38, 148), 88, "التركيز", CYAN),
+    gauge(2, (5.5, 320, 17.3, 190), (22, 720, 22, 180), (10, 668, 38, 148), 95, "التعافي", "#facc15"), gauge(3, (26.5, 320, 17.3, 190), (54, 720, 22, 180), (52, 668, 38, 148), 97, "الامتصاص", "#a855f7"),
     FT("⚡ طاقة · تركيز · تعافٍ", V(52, 6, 6), V(90, 24, 40), V(46, 88, 88), V(15, 14, 15), LIME, "start", 6, "900", **anim("fadeDown", .7)),
     FR("heading", V(52, 6, 6), V(124, 54, 72), V(46, 88, 88), None, 6, text="أداء بلا حدود، من أول جرعة", tag="h1", fs=V(58, 36, 50), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.15}, fxs=[gradtext(k, LIME, CYAN, LIME, 5)], **anim("fadeUp", .8)),
     FT("مكمّلات غذائية موثوقة بتركيبات مدروسة تدعم نشاطك الرياضي واليومي. شهادات جودة وتوصيل سريع.", V(52, 6, 6), V(320, 170, 190), V(44, 88, 88), V(18, 15, 17), "#9ca3af", "start", 6, "500", **anim("fadeUp", .8, .1)),
@@ -46,9 +46,9 @@ def u_goal(i, name, desc, val, pd):
     return S([C([W("heading", text=name, tag="h3", fs=dm(26, 22), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")),
                  T(desc, 15, "#9ca3af", "start", **anim("fadeUp", .7, .1)),
                  W("progress", pl="ملاءمة الهدف", pv=val, pc=LIME, pbg="#ffffff1a", ph=dm(10), color="#e5e7eb", fxs=[barfx(LIME, CYAN)], **anim("fadeUp", .7, .2))],
-                w=dm(32, 100), va="center", pad=dm([26, 26, 26, 26], [20, 18, 20, 18]), fxs=[HUDP]),
-              C([W("products", mode="all", limit=2, btn="اطلب الآن", showOld=True, cardw=dm(300, 150), gap=dm(18, 12), rad=dm(18), cbg="#ffffff", bbg="#65a30d", pdemo=pd,
-                   fxs=[lift(".pb-pc", "rgba(163,230,53,.35)", -8, 3), cardratio("1/1")])], w=dm(68, 100))],
+                w=dm(32, 100, 100), va="center", pad=dm([26, 26, 26, 26], [20, 18, 20, 18]), fxs=[HUDP]),
+              C([W("products", mode="all", limit=2, btn="اطلب الآن", showOld=True, cardw=dm(300, 150, 250), gap=dm(18, 12), rad=dm(18), cbg="#ffffff", bbg="#65a30d", pdemo=pd,
+                   fxs=[lift(".pb-pc", "rgba(163,230,53,.35)", -8, 3), cardratio("1/1")])], w=dm(68, 100, 100))],
              pad=dm([14, 20, 14, 20], [10, 16, 10, 16]), gap={"d": 22, "m": 12}, fxs=NAVY("g%d" % i))
 u_goals = [S([C([W("anchor", aid="products", aoff=dm(80)), *title("الأكثر طلباً", "تشكيلة موثوقة من المكملات حسب هدفك", k, thu, thu["hfx"]("p"))["widgets"]], w=100)], pad=dm([50, 20, 14, 20], [34, 16, 10, 16]), fxs=NAVY("pt")),
            u_goal(0, "بروتين وعضلات", "بناء وتعافٍ لعضلات أقوى", 95, "a"), u_goal(1, "فيتامينات ومناعة", "دعم يومي لجسم متوازن", 90, "b"), u_goal(2, "طاقة وتركيز", "نشاط يدوم لساعات التدريب", 92, "c"),
@@ -140,7 +140,7 @@ i_free = [
        fxs=[btngrad("#0284c7", "#6366f1", "rgba(56,189,248,.45)"), shine(k), pulse(k, "56,189,248", 2.2)], **anim("zoomIn", .8, .2)),
     FR("tbadges", V(52, 6, 6), V(490, 356, 360), V(46, 88, 88), None, 6, items="ضمان رسمي\nتقسيط مرن\nدعم فني", live=True, liveText="يتصفّحون الآن", lmin=16, lmax=57, cbg="#ffffff12", cc="#e2e8f0", cbc="#ffffff30", crad=dm(8), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3)),
 ]
-i_hero = canvas(i_free, dm(620, 1000, 600), SL("h"), PH("it_circuit", "rgba(8,15,30,.55)", "rgba(8,15,30,.9)"))
+i_hero = canvas(i_free, dm(620, 1000, 600), [FX("شبكة مخطط فوق الصورة", "selector::before{content:\"\";position:absolute;inset:0;background-image:linear-gradient(rgba(56,189,248,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(56,189,248,.07) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}selector::after{content:\"\";position:absolute;inset:0;background:radial-gradient(60% 80% at 80% 0%,rgba(56,189,248,.14),transparent 60%);pointer-events:none}")], PH("it_circuit", "rgba(8,15,30,.55)", "rgba(8,15,30,.9)"))
 i_brands = mq("HP   ✦   DELL   ✦   ASUS   ✦   LENOVO   ✦   ACER   ✦   MSI   ✦   LOGITECH   ✦   KINGSTON   ✦   SAMSUNG   ✦   NVIDIA", *thi["mqc"])
 i_cats = S([C([*title("الأقسام", "كل ما تحتاجه من عتاد وملحقات", k, thi, thi["hfx"]("c"))["widgets"],
                W("shopcats", items=[{"cat": "skin", "label": "", "img": IMG("it_pc"), "dl": "حواسيب وقطع"}, {"cat": "hair", "label": "", "img": IMG("it_circuit"), "dl": "دوائر ولوحات"}, {"cat": "honey", "label": "", "img": IMG("it_code"), "dl": "لوازم المبرمجين"}],
