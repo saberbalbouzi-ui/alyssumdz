@@ -1,6 +1,6 @@
 {
  "v": 1,
- "title": "ALYSSUM MEMORY 1",
+ "title": "ALYSSUM MEMORY",
  "slug": "honey-focus-copy",
  "desc": "ALYSSUM MEMORY FOCUS عسل طبيعي بالجنكة وإكليل الجبل والريحان والزبيب والمكسرات ضمن روتين الدراسة اليومي. الدفع عند الاستلام والتوصيل حسب الولاية.",
  "bg": "transparent",
@@ -1935,7 +1935,7 @@
      "id": "emnsx9h",
      "type": "text",
      "set": {
-      "html": "<h2>اطلب <span style=\"color:#f39a18\">الآن</span> · الدفع عند الاستلام</h2>",
+      "html": "<h2>اطلب <span style=\"color: rgb(0, 0, 0);\">الآن</span> · الدفع عند الاستلام</h2>",
       "fs": {
        "d": 48,
        "m": 18,
@@ -1999,7 +1999,7 @@
        "d": "center"
       },
       "color": "#ffffff",
-      "fw": "400",
+      "fw": "700",
       "cls": "sub",
       "anim": "fadeUp",
       "animDur": 0.75,
