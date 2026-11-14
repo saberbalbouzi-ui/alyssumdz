@@ -1991,7 +1991,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   const curTabName = () => { try { const b = document.querySelector(".nav-btn.on"), m = b && /tab\(['"](\w+)['"]/.exec(b.getAttribute("onclick") || ""); return m ? m[1] : ""; } catch (e) { return ""; } };
   /* عرض 360° من صور المستخدم (6–36) من «ستوديو ديزاين»: صفحة جديدة في مطوّر الصفحات فيها عنصر عرض 360° بكل الإطارات ثم تُفتح المعاينة مباشرة */
-  async function view360Session(blobs) {
+  async function view360Session(blobs, opts) {
     blobs = (Array.isArray(blobs) ? blobs : [blobs]).filter(Boolean).slice(0, 36);
     if (blobs.length < 6) { toast("اختر 6 صور على الأقل من زوايا متتالية حول المنتج"); return false; }
     if (typeof PBAI === "undefined" || !PBAI.addView360) { toast("أداة 360° غير متاحة"); return false; }
@@ -2000,7 +2000,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     let t = 0; while (t++ < 50 && !(E.page && $("pb-app") && $("pb-app").classList.contains("on"))) await new Promise(r => setTimeout(r, 200));
     if (!E.page) { toast("تعذّر فتح مطوّر الصفحات"); return false; }
     toast("⏳ تحسين " + blobs.length + " إطاراً ورفعها…");
-    try { const n = await PBAI.addView360(blobs, "عرض 360° من صور حقيقية"); toast("✅ أُضيف عرض 360° (" + n + " إطاراً) — هذه معاينته؛ اسحب المنتج ليدور"); } catch (e) { toast("⚠️ " + (e.message || e)); return false; }
+    try { const n = await PBAI.addView360(blobs, "عرض 360° من صور حقيقية", opts); toast("✅ أُضيف عرض 360° (" + n + " إطاراً) — هذه معاينته؛ اسحب المنتج ليدور"); } catch (e) { toast("⚠️ " + (e.message || e)); return false; }
     setTimeout(() => { try { preview(); } catch (x) { } }, 700); return true;
   }
   async function toolSession(blobs, tool, nm) {

@@ -56,6 +56,7 @@
     "assets/js/admin-wallet.js",
     "assets/js/admin-studio.js",
     "assets/js/admin-toolwin.js",
+    "assets/js/admin-v360.js",
     "assets/js/admin-agency.js",
     "assets/js/admin-speed.js",
     "assets/js/speed-core.js",

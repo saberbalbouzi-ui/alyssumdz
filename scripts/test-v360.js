@@ -1,0 +1,37 @@
+/* معاينة عرض 360° داخل الأداة والتنزيل: تشغيل: python3 -m http.server 8765 & NODE_PATH=/opt/node-tools/node_modules node scripts/test-v360.js */
+const { chromium } = require("playwright"); const fs = require("fs"), path = require("path"), os = require("os");
+(async () => {
+  const b = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] }), ctx = await b.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 900 } }), p = await ctx.newPage(); let pass = 0, fail = 0; const ok = (n, c, x) => { if (c) pass++; else fail++; console.log((c ? "✓ " : "✗ ") + n + (c ? "" : " " + JSON.stringify(x || ""))); };
+  const errs = []; p.on("pageerror", e => { if (!/PB is not defined/.test(String(e))) errs.push(String(e)); });
+  const F = [1, 2, 3, 4, 5, 6].map(i => path.join(__dirname, "fixtures", "v360-f" + i + ".png"));
+  await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(6000);
+  await p.evaluate(() => { const o = document.getElementById("acg-ov"); if (o) o.remove(); window.__paths = []; PBApp.uploadBlob = async (bl, n) => { const pth = "assets/img/pages/" + n + ".png"; window.__paths.push(pth); return pth; }; });
+  await p.evaluate(() => ToolWin.open("v360")); await p.waitForTimeout(500); await p.setInputFiles("#tw-file", F); await p.waitForTimeout(300);
+  await p.evaluate(() => document.querySelector('[data-tw="go"]').click()); await p.waitForTimeout(1500);
+  const st0 = await p.evaluate(() => ({ modal: !!document.getElementById("v3-bg"), toolwin: !!document.getElementById("tw-bg"), builder: !!(document.getElementById("pb-app") && document.getElementById("pb-app").classList.contains("on")), n: V360.state.bms.length, fr: (document.getElementById("v3-fr") || {}).textContent }));
+  ok("6 صور ← تُفتح معاينة الأداة (لا المطوّر مباشرة) بـ6 إطارات", st0.modal && !st0.builder && st0.n === 6, st0);
+  const px = (x, y) => p.evaluate(([x, y]) => { const c = document.getElementById("v3-cv"), d = c.getContext("2d").getImageData(x, y, 1, 1).data; return [d[0], d[1], d[2]]; }, [x, y]);
+  await p.evaluate(() => { V360.state.auto = false; V360.state.p = 0; const z = document.getElementById("v3-z"); z.value = 100; z.dispatchEvent(new Event("input", { bubbles: true })); }); await p.waitForTimeout(200);
+  const full = await px(4, 4); ok("بُعد الكاميرا 100%: المنتج يملأ الإطار", full[0] > 200 && full[1] < 100, full);
+  await p.evaluate(() => { const z = document.getElementById("v3-z"); z.value = 50; z.dispatchEvent(new Event("input", { bubbles: true })); }); await p.waitForTimeout(200);
+  const far = await px(4, 4), mid = await px(360, 360); ok("بُعد الكاميرا 50%: هامش أبيض حول المنتج والمنتج وسط الإطار", far[0] > 240 && far[1] > 240 && far[2] > 240 && mid[0] > 200 && mid[1] < 100, { far, mid });
+  await p.evaluate(() => { const c = document.getElementById("v3-col"); c.value = "#112233"; c.dispatchEvent(new Event("input", { bubbles: true })); }); await p.waitForTimeout(200);
+  const bgc = await px(2, 2); ok("لون الخلفية يتغيّر من منتقي الألوان (هامش #112233)", Math.abs(bgc[0] - 17) < 4 && Math.abs(bgc[2] - 51) < 4, bgc);
+  await p.evaluate(() => { const c = document.getElementById("v3-col"); c.value = "#ffffff"; c.dispatchEvent(new Event("input", { bubbles: true })); });
+  const box = await (await p.$("#v3-st")).boundingBox(); await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await p.mouse.down(); await p.mouse.move(box.x + box.width / 2 + 150, box.y + box.height / 2, { steps: 8 }); await p.mouse.up();
+  const fr1 = await p.evaluate(() => document.getElementById("v3-fr").textContent); ok("السحب يدوّر الإطارات", !/إطار 1 \//.test(fr1), fr1);
+  const dlOf = async sel => { const [d] = await Promise.all([p.waitForEvent("download", { timeout: 45000 }), p.evaluate(s => document.querySelector(s).click(), sel)]); const f = path.join(os.tmpdir(), "v3dl-" + Date.now() + "-" + d.suggestedFilename()); await d.saveAs(f); return { name: d.suggestedFilename(), f, size: fs.statSync(f).size }; };
+  const z1 = await dlOf('[data-v3="zpng"]'); const buf = fs.readFileSync(z1.f), eocd = buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06])), cnt = buf.readUInt16LE(eocd + 10); ok("ZIP إطارات PNG: 6 ملفات", cnt === 6 && /zip$/.test(z1.name), { cnt, name: z1.name });
+  const png0 = buf.indexOf(Buffer.from([0x89, 0x50, 0x4e, 0x47])), w = buf.readUInt32BE(png0 + 16), h = buf.readUInt32BE(png0 + 20); ok("إطارات ZIP بمقاس الإخراج 1080×1080", w === 1080 && h === 1080, { w, h });
+  const fj = await dlOf('[data-v3="fjpg"]'); ok("الإطار الحالي JPG", /jpg$/.test(fj.name) && fj.size > 1000, fj);
+  const sp = await dlOf('[data-v3="sprite"]'); ok("شريط الإطارات صورة واحدة", sp.size > 1000 && /sprite/.test(sp.name), sp);
+  const hv = await dlOf('[data-v3="html"]'); const ht = fs.readFileSync(hv.f, "utf8"); ok("عارض HTML مستقل بـ6 إطارات مضمَّنة وتدوير بالسحب", (ht.match(/data:image\/jpeg;base64/g) || []).length === 6 && /pointermove/.test(ht), { n: (ht.match(/data:image\/jpeg/g) || []).length });
+  await p.evaluate(() => { const s = document.getElementById("v3-s"); s.value = 100; s.dispatchEvent(new Event("input", { bubbles: true })); const t = document.getElementById("v3-t"); t.value = "1"; t.dispatchEvent(new Event("change", { bubbles: true })); });
+  const vd = await dlOf('[data-v3="vid"]'); ok("فيديو الدوران يُنزَّل (WebM) بحجم معقول", /webm|mp4/.test(vd.name) && vd.size > 3000, vd);
+  await p.evaluate(() => { V360.state.auto = true; V360.state.ms = 300; V360.state.inv = true; const z = document.getElementById("v3-z"); z.value = 70; z.dispatchEvent(new Event("input", { bubbles: true })); });
+  await p.evaluate(() => document.querySelector('[data-v3="builder"]').click()); await p.waitForTimeout(9000);
+  const bd = await p.evaluate(() => { const js = JSON.stringify(PBApp.E.page.sections), m = js.match(/"imgs":"([^"]*)"/); const o = {}; ["v360z", "v360a", "v360i"].forEach(k => { const r = new RegExp('"' + k + '":([^,}]+)').exec(js); o[k] = r ? r[1] : null; }); return { builder: !!(document.getElementById("pb-app") && document.getElementById("pb-app").classList.contains("on")), frames: m ? m[1].split("\\n").length : 0, modal: !!document.getElementById("v3-bg"), o }; });
+  ok("«فتح في المطوّر» يحفظ الإعدادات (بُعد 70، سرعة 300، عكس) بـ6 إطارات", bd.builder && bd.frames === 6 && !bd.modal && bd.o.v360z === "70" && bd.o.v360a === "300" && bd.o.v360i === "true", bd);
+  ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
+  console.log(fail ? "فشل " + fail + " من " + (pass + fail) : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
+})();

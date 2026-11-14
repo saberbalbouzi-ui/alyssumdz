@@ -49,7 +49,7 @@ ${typeof Credits !== "undefined" ? Credits.chip(S.id) : ""}
     if (S.id === "v360" && S.files.length >= 2) {      /* عرض 360° بصورك: صفحة جديدة في مطوّر الصفحات بكل الإطارات (6–36) مع المعاينة، بلا رصيد */
       if (S.files.length < 6) { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast("⚠️ اختر 6 صور على الأقل من زوايا متتالية (أو صورة واحدة ليولّد الذكاء الزوايا)"); return; }
       S.busy = true; draw(); const fl = S.files.slice().sort((a, b) => natKey(a) < natKey(b) ? -1 : 1);
-      try { const ok = await PBApp.view360Session(fl); S.busy = false; if (ok !== false) close(); else draw(); } catch (e) { S.busy = false; draw(); if (typeof Admin !== "undefined" && Admin.toast) Admin.toast("⚠️ " + (e && e.message || e)); }
+      try { const ok = (typeof V360 !== "undefined" && V360.open) ? await V360.open(fl) : await PBApp.view360Session(fl); S.busy = false; if (ok !== false) close(); else draw(); }      /* المعاينة والتنزيل داخل الأداة (V360) ثم «فتح في المطوّر» منها */ catch (e) { S.busy = false; draw(); if (typeof Admin !== "undefined" && Admin.toast) Admin.toast("⚠️ " + (e && e.message || e)); }
       return;
     }
     S.busy = true; draw();

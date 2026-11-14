@@ -238,9 +238,9 @@ const PBAI = (() => {
     try { if (typeof ImgUpscale === "undefined") return blob; const im = await new Promise((ok, no) => { const u = URL.createObjectURL(blob), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); ok(i); }; i.onerror = no; i.src = u; }), side = Math.max(im.naturalWidth, im.naturalHeight), t = minSide || 1280; if (side >= t) return blob; const r = await ImgUpscale.run(blob, { scale: "w" + Math.round(im.naturalWidth * t / side), sharp: 35, fmt: "webp", q: 92 }); return r && r.blob ? r.blob : blob; } catch (e) { return blob; }
   }
   const natKey = f => f.name.replace(/[0-9]+/g, d => d.padStart(6, "0"));
-  async function addView360(blobs, label) {
+  async function addView360(blobs, label, opts) {
     const paths = []; for (const b of blobs) { const q = await polish(b, 1280), pth = await A().uploadBlob(q, "v360-" + Date.now().toString(36) + "-" + paths.length, { max: 2048, q: .92 }); if (!pth) throw new Error("تعذّر رفع إطار"); paths.push(pth); }
-    A().insertSections([PB.mkS([PB.mkC([PB.mkW("view360", { imgs: paths.join("\n") })])], { pad: { d: [20, 20, 20, 20], m: [14, 12, 14, 12] } })], label || "عرض 360°"); return paths.length;
+    A().insertSections([PB.mkS([PB.mkC([PB.mkW("view360", Object.assign({ imgs: paths.join("\n") }, opts || {}))])], { pad: { d: [20, 20, 20, 20], m: [14, 12, 14, 12] } })], label || "عرض 360°"); return paths.length;
   }
   const blobOf = (c, type) => new Promise(r => c.toBlob(r, type || "image/webp", .93));
   const readForm = () => {
