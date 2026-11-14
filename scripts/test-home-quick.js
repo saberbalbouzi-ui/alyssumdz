@@ -10,7 +10,7 @@ const { chromium } = require("playwright");
     AdminHome.render(); const gs = () => [...document.querySelectorAll("#ahome .ah-quick")].map(g => [...g.querySelectorAll("button")].map(x => x.dataset.go));
     const out = { with: gs(), hdBtns: [...document.querySelectorAll("#ahome .ah-hd [data-go]")].map(x => x.dataset.go) };
     return out; });
-  ok("المجموعات بالترتيب: الطلبات ← الأرباح ← المنتج والعملاء ← الرقية (للبائع)", JSON.stringify(r.with.map(g => g.filter(x => !/^ruqya/.test(x))).filter(g => g.length)) === JSON.stringify([["neword", "orders", "orders-new", "pack", "shipped"], ["finance"], ["newp", "customers"]]) && !r.with.some(g => g.some(x => /^ruqya/.test(x))), r.with);
+  ok("المجموعات: الطلبات ← المنتج والعملاء (بلا مخزون/أرباح ولا مسجلة ولا رقية)", JSON.stringify(r.with.map(g => g.filter(x => !/^ruqya/.test(x))).filter(g => g.length)) === JSON.stringify([["neword", "orders", "orders-new", "pack"], ["newp", "customers"]]) && !r.with.some(g => g.some(x => /^ruqya/.test(x))), r.with);
   ok("أزرار الطلب خرجت من ترويسة الصفحة", r.hdBtns.length === 0, r.hdBtns);
   ok("لا أزرار رقية في الاختصارات", !r.with.some(g => g.some(x => /^ruqya/.test(x))), r.with);
   const r2 = await p.evaluate(() => { document.querySelectorAll('.nav-btn[onclick*="\'ruqya\'"]').forEach(x => x.remove()); AdminHome.render(); const hasBtn = [...document.querySelectorAll("#ahome [data-go^=ruqya]")].length, card = /مواعيد الرقية/.test(document.getElementById("ahome").innerText); return { hasBtn, card }; });
