@@ -71,7 +71,7 @@ thw = TH(k, True, GOLD2, MUTE, GOLD, GOLD2, "#ffffff08", BLKW, BLKW,
 
 import math
 ARCH = "50% 50% 0 0/34% 34% 0 0"
-def archx(y, top=96, wpct=40, h=560, left=30, W=1100):
+def archx(y, top=60, wpct=40, h=660, left=30, W=1100):
     """x (٪ من عرض القسم) لحافة القوس عند الارتفاع y — لتلامس خطوط الوصل الحافة تماماً"""
     rv = .34 * h
     if y >= top + rv: return left
@@ -87,37 +87,49 @@ def callout(i, y, title, text, mx, my, mw):
     ]
 hero_free = [
     FR("heading", 0, V(40, 280), 100, None, 1, text="CHRONOS", tag="p", fs=V(230, 104), fw="900", ta={"d": "center"}, color=GOLD, op=.07, lh={"d": 1}, hm=True, **anim("fadeIn", 1.4)),
-    FR("shape", 28, 110, 44, 500, 2, shape="ellipse", fill=GOLD, keep=False, op=.2, hm=True, fxs=[FX("هالة ضوء ذهبية", "selector{filter:blur(70px)}")]),
-    FR("image", V(30, 12, 27), V(96, 336, 100), V(40, 76, 46), V(560, 380, 470), 3, src=IMG("men_watch"), alt="ساعة كرونوغراف بسوار جلدي على خلفية سوداء", fit="cover", hauto=False,
+    FR("shape", 28, 90, 44, 560, 2, shape="ellipse", fill=GOLD, keep=False, op=.2, hm=True, fxs=[FX("هالة ضوء ذهبية", "selector{filter:blur(70px)}")]),
+    FR("image", V(30, 12, 27), V(60, 336, 100), V(40, 76, 46), V(660, 444, 565), 3, src=IMG("men_watch"), alt="ساعة كرونوغراف بسوار جلدي على خلفية سوداء", fit="cover", hauto=False,
        fxs=[FX("قوس الصورة وإطاره الذهبي", "selector{overflow:hidden;border-radius:%s}selector .pb-im{width:100%%;height:100%%;object-fit:cover;object-position:[[p]];transform:scale([[z]]);transition:transform 1.4s cubic-bezier(.2,.8,.2,1)}selector:hover .pb-im{transform:scale(calc([[z]] + .06))}selector::after{content:\"\";position:absolute;inset:12px;border:1px solid rgba(201,153,46,.65);border-radius:%s;pointer-events:none}" % (ARCH, ARCH),
-               p=("نقطة التركيز (س% ص%)", "text", "50% 60%"), z=("تقريب الصورة داخل القوس", "num", 1.12)),
+               p=("نقطة التركيز (س% ص%)", "text", "50% 50%"), z=("تقريب الصورة داخل القوس", "num", 1)),
             FX("طفو هادئ", "selector{animation:nwFl 7s ease-in-out infinite}@keyframes nwFl{50%{transform:translateY(-10px)}}")], **anim("zoomIn", 1.1, .1)),
     FT("— SWISS INSPIRED —", V(68, 6), V(116, 28), V(30, 88), V(15, 14), GOLD, "start", 6, "800", **anim("fadeDown", .7)),
     FR("heading", V(66, 6), V(150, 52), V(32, 88), None, 6, text="الوقت يليق بمن يقدّره", tag="h1", fs=V(54, 40, 44), fw="900", ta={"d": "start"}, color=GOLD2, lh={"d": 1.2}, fxs=[goldshimmer(k, 5)], **anim("fadeUp", .9)),
     FT("ساعة بحركة دقيقة ومواد متينة، صُمّمت لترافقك سنوات. ضمان دولي وتغليف هدايا فاخر.", V(66, 6), V(330, 150), V(32, 88), V(17, 15), MUTE, "start", 6, "500", **anim("fadeUp", .9, .1)),
     FR("button", V(66, 6), V(442, 262), V(21, 88), V(56, 54), 6, text="اكتشف المجموعة", kind="link", link="#products", bgc="#b8860b", color="#1a1409", hbg="#b8860b", fs=V(18, 16), fw="800", brad={"d": 6},
        fxs=[btngrad("#b8860b", GOLD2, "rgba(201,153,46,.55)", -3), shine(k, 3)], **anim("zoomIn", .9, .2)),
-    FR("tbadges", V(66, 6), V(530, 950), V(32, 88), None, 6, items="ضمان سنتان\nزجاج سافير\nمقاومة 100م", cbg="#00000050", cc=GOLD2, cbc=GOLD, crad=dm(6), cfs=dm(13), gap=dm(8), jc="flex-start", **anim("fadeUp", .9, .3)),
+    FR("tbadges", V(66, 6), V(560, 1014), V(32, 88), None, 6, items="ضمان سنتان\nزجاج سافير\nمقاومة 100م", cbg="#00000050", cc=GOLD2, cbc=GOLD, crad=dm(6), cfs=dm(13), gap=dm(8), jc="flex-start", **anim("fadeUp", .9, .3)),
 ]
-hero_free += callout(0, 130, "زجاج سافير", "مضاد للخدش وللانعكاس", 52, 746, 44) + callout(1, 290, "حركة أوتوماتيكية", "احتياطي طاقة 72 ساعة", 4, 746, 44) + callout(2, 450, "مقاومة الماء 100م", "فولاذ 316L وتاج مبرغى", 4, 856, 92)
+hero_free += callout(0, 150, "زجاج سافير", "مضاد للخدش وللانعكاس", 52, 810, 44) + callout(1, 340, "حركة أوتوماتيكية", "احتياطي طاقة 72 ساعة", 4, 810, 44) + callout(2, 530, "مقاومة الماء 100م", "فولاذ 316L وتاج مبرغى", 4, 920, 92)
 hero_free = hero_free[1:] + hero_free[:1]      # كلمة الخلفية الكبيرة (zi=1) آخر القائمة: الترتيب البصري بـzi لا بالموضع، وأول عنوان في القائمة هو عنوان الهيرو الظاهر
-w_hero = canvas(hero_free, dm(690, 1000, 700), BLKW("h") + [spotlight(k, "rgba(201,153,46,.16)")])
+w_hero = canvas(hero_free, dm(780, 1064, 760), BLKW("h") + [spotlight(k, "rgba(201,153,46,.16)")])
 
-def chapter(num, kick, title, text, items, img, alt, img_first, ratio, tilt=0):
-    txt = C([
-        W("heading", text=num, tag="p", fs=dm(120, 80), fw="900", ta={"d": "start"}, color="transparent", lh={"d": 1}, fxs=[outlinetext(GOLD, 2)], **anim("fadeIn", 1)),
-        T("— %s —" % kick, 14, GOLD, "start", fw="800", **anim("fadeDown")),
-        W("heading", text=title, tag="h2", fs=dm(44, 30), fw="900", ta={"d": "start"}, color=GOLD2, lh={"d": 1.25}, fxs=[goldshimmer(k + "t" + num, 6)], **anim("fadeUp")),
-        T(text, 18, MUTE, "start", **anim("fadeUp", .7, .1)),
-        bullets(items, "check-circle", GOLD, TXT, 17, **anim("fadeUp", .7, .2))], w=46, va="center", pad=dm([0, 0, 0, 0], [20, 0, 0, 0]))
-    pic = C([PIC(img, alt, 4, hauto=False, fxs=[ratioframe(ratio), FX("رفع ناعم بالمرور", "selector{transition:transform .6s cubic-bezier(.2,.8,.2,1)}selector:hover{transform:translateY(-8px)}"), FX("إطار ذهبي خارجي", "selector .pb-im{outline:1px solid rgba(201,153,46,.6);outline-offset:14px;transition:outline-offset .5s,outline-color .5s}selector:hover .pb-im{outline-offset:22px;outline-color:#f5d77a}")], **anim("zoomIn", .9))],
-            w=50, va="center", pad=dm([0, 0, 0, 0]))
-    cols = [pic, txt] if img_first else [txt, pic]
-    return S(cols, pad=dm([90, 20, 90, 20], [50, 16, 56, 16]), gap={"d": 64, "m": 28}, fxs=BLKW(num))
-w_c1 = chapter("01", "الحرفة", "تصنيع بدقة لا تقبل التقريب", "كل قطعة تُجمَّع وتُفحص يدوياً قبل أن تصل إليك: الحركة والزجاج والعلبة والسوار، لتبقى دقيقة سنوات طويلة.",
-               "حركة أوتوماتيكية مضبوطة\nزجاج سافير مضاد للخدش\nعلبة فولاذ 316L", "watch_hand", "ساعة بقرص أبيض بيد تحملها", False, "800/581")
-w_c2 = chapter("02", "الإرث", "إرث يتوارثه الأجيال", "الساعة الجيدة لا تنتهي بانتهاء الموضة. نختار تصاميم كلاسيكية تبقى أنيقة، ونقدّم خدمة ضبط وصيانة بعد البيع.",
-               "تصاميم كلاسيكية خالدة\nضبط السوار مجاناً\nخدمة ما بعد البيع", "watch_pocket", "ساعة جيب عتيقة معلّقة بسلسلة", True, "4/5")
+def _num(num, al="start"):
+    return W("heading", text=num, tag="p", fs=dm(120, 80), fw="900", ta={"d": al}, color="transparent", lh={"d": 1}, fxs=[outlinetext(GOLD, 2)], **anim("fadeIn", 1))
+def chapter_ledger(num, kick, title, text, rows):
+    """فصل نصّي: عنوان وفقرة على جهة، و«دفتر» من ثلاثة بنود بخطوط ذهبية رفيعة على الجهة الأخرى"""
+    left = C([_num(num), T("— %s —" % kick, 14, GOLD, "start", fw="800", **anim("fadeDown")),
+              W("heading", text=title, tag="h2", fs=dm(44, 30), fw="900", ta={"d": "start"}, color=GOLD2, lh={"d": 1.25}, fxs=[goldshimmer(k + "t" + num, 6)], **anim("fadeUp")),
+              T(text, 18, MUTE, "start", **anim("fadeUp", .7, .1))], w=44, va="center", pad=dm([0, 0, 0, 0], [20, 0, 0, 0]))
+    ws = []
+    for i, (t, x) in enumerate(rows):
+        ws += [W("heading", text=t, tag="h3", fs=dm(24, 20), fw="900", ta={"d": "start"}, color=GOLD2, lh={"d": 1.3},
+                 fxs=[FX("خط ذهبي علوي", "selector{border-top:1px solid rgba(201,153,46,.45);padding-top:20px;margin-top:10px}")], **anim("fadeUp", .7, .1 + i * .12)),
+               T(x, 16, MUTE, "start", **anim("fadeUp", .7, .2 + i * .12))]
+    right = C(ws, w=52, va="center", pad=dm([0, 0, 0, 0]))
+    return S([left, right], pad=dm([90, 20, 90, 20], [50, 16, 56, 16]), gap={"d": 64, "m": 28}, fxs=BLKW(num))
+def chapter_quote(num, kick, quote, text, chips):
+    """فصل نصّي: اقتباس كبير محاط بقاعدتين ذهبيتين وشارات تحته"""
+    c = C([_num(num, "center"), T("— %s —" % kick, 14, GOLD, "center", fw="800", **anim("fadeDown")),
+           W("heading", text=quote, tag="h2", fs=dm(44, 28), fw="900", ta={"d": "center"}, color=GOLD2, lh={"d": 1.3}, fxs=[goldshimmer(k + "q" + num, 6)], **anim("fadeUp")),
+           T(text, 18, MUTE, "center", **anim("fadeUp", .7, .1)),
+           W("tbadges", items=chips, cbg="#00000050", cc=GOLD2, cbc=GOLD, crad=dm(6), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeUp", .7, .2))],
+          w=100, pad=dm([54, 30, 54, 30], [34, 14, 34, 14]),
+          fxs=[FX("قاعدتان تحريريتان", "selector{border-top:1px solid rgba(201,153,46,.45);border-bottom:1px solid rgba(201,153,46,.45)}")])
+    return S([c], cw={"d": 1000}, pad=dm([90, 20, 90, 20], [50, 16, 56, 16]), fxs=BLKW(num))
+w_c1 = chapter_ledger("01", "الحرفة", "تصنيع بدقة لا تقبل التقريب", "كل قطعة تُجمَّع وتُفحص يدوياً قبل أن تصل إليك، لتبقى دقيقة سنوات طويلة.",
+                      [("حركة أوتوماتيكية مضبوطة", "تعمل بحركة معصمك وتُضبط قبل الشحن."), ("زجاج سافير مضاد للخدش", "شفافية عالية ومقاومة للخدوش اليومية."), ("علبة فولاذ 316L", "فولاذ متين لا يتأثر بالاستعمال اليومي.")])
+w_c2 = chapter_quote("02", "الإرث", "الساعة الجيدة لا تنتهي بانتهاء الموضة", "نختار تصاميم كلاسيكية تبقى أنيقة جيلاً بعد جيل، ونقدّم خدمة ضبط وصيانة بعد البيع.",
+                     "تصاميم كلاسيكية خالدة\nضبط السوار مجاناً\nخدمة ما بعد البيع")
 w_stats = S([C([W("counter", n=n, pre=p, suf=s, label=l, fs=dm(52, 34), color=GOLD2, lc=MUTE, fxs=[goldshimmer(k + "n" + str(i), 6)], **anim("zoomIn", .7, .1 + i * .1))], w=dm(25, 50), pad=dm([0, 0, 0, 0]),
               fxs=[FX("فاصل ذهبي", "@media(min-width:768px){selector{border-inline-start:1px solid #c9992e55}}")] if i else [])
              for i, (n, p, s, l) in enumerate([(21, "", "", "حجراً كريماً"), (100, "", "م", "مقاومة الماء"), (72, "", "h", "احتياطي الطاقة"), (2, "", " سنة", "ضمان دولي")])],
