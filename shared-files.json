@@ -32,6 +32,7 @@
     "assets/js/admin-zones.js",
     "assets/js/admin-zones-io.js",
     "assets/js/admin-yalidine.js",
+    "assets/js/admin-busy.js",
     "assets/js/admin-returns.js",
     "assets/js/admin-costats.js",
     "assets/js/admin-payments.js",
