@@ -7,14 +7,14 @@ function make(script) {
   const store = new Map(), ss = { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) }, calls = []; let i = 0;
   const bodyEl = { id: "", children: [], style: {}, textContent: "", setAttribute() { }, remove() { this.gone = true; } }; const app = { firstChild: null, insertBefore(n) { this.first = n; } };
   const sb = { CONFIG: { BACKEND: "php", PHP_API: "/api/index.php" }, REL: "", sessionStorage: ss, localStorage: ss, crypto: webcrypto, window: { crypto: webcrypto }, console, setTimeout: (f) => setTimeout(f, 1), Date, JSON, Math, Promise, document: { getElementById: id => id === "app" ? app : (app.first && app.first.id === id ? app.first : null), createElement: () => Object.assign({}, bodyEl, { style: {} }) },
-    fetch: async (url, o) => { const body = JSON.parse(o.body); calls.push({ url, body }); const r = script[Math.min(i++, script.length - 1)]; if (r === "net") throw new Error("net"); return { ok: r < 400, status: r, json: async () => (r === 422 ? { error: "invalid_phone" } : r === 409 ? { error: "duplicate_order" } : { ok: r < 400, id: "S1" }) }; } };
+    fetch: async (url, o) => { const body = JSON.parse(o.body); calls.push({ url, body }); const r = script[Math.min(i++, script.length - 1)]; if (r === "net") throw new Error("net"); return { ok: r < 400, status: r, json: async () => (r === 422 ? { error: "invalid_phone" } : r === 409 ? { error: "duplicate_order" } : { ok: r < 400, id: "S261113-ABCDE" }) }; } };
   vm.createContext(sb); vm.runInContext(src + "\nthis.API = API;", sb); return { API: sb.API, calls, ss: store, app };
 }
 const O = (o = {}) => Object.assign({ name: "زبون", phone: "0550123456", total: 2200, items: [{ slug: "a", qty: 1, price: 1800 }] }, o);
 (async () => {
   let t = make([200]), r = await t.API.submitOrderChecked(O());
   ok("إرسال ناجح: مفتاح idempotency صالح (16–64 حرفاً) يُرسل مرة واحدة", r.ok && t.calls.length === 1 && /^[A-Za-z0-9_\-]{16,64}$/.test(t.calls[0].body.order.idem), { len: (t.calls[0].body.order.idem || "").length });
-  ok("النجاح يمسح المفتاح (طلب متطابق لاحق مشروع بمفتاح جديد)", t.ss.size === 0);
+  ok("النجاح يمسح المفتاح (طلب متطابق لاحق مشروع بمفتاح جديد)", [...t.ss.keys()].filter(k => k.startsWith("alyssum_idem_") && k !== "alyssum_idem_salt").length === 0);
   t = make([500, 500, 200]); r = await t.API.submitOrderChecked(O());
   ok("500 مرتين ثم 200: يُعاد الإرسال 3 مرات بنفس المفتاح بالضبط وتنجح", r.ok && t.calls.length === 3 && new Set(t.calls.map(c => c.body.order.idem)).size === 1, { calls: t.calls.length });
   t = make(["net", 200]); r = await t.API.submitOrderChecked(O());
