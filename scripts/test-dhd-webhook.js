@@ -36,5 +36,10 @@ let pass = 0, fail = 0; const ok = (n, v, x) => { if (v) pass++; else fail++; co
   r = await h.post("?s=" + SEC, body, { Signature: good }); ok("توقيع صحيح ← مقبول", r.status === 200 && db.orders[0].status === "expediee");
   r = await h.post("?s=" + SEC, body, { Signature: "sha256=00" }); ok("توقيع خاطئ ← 401", r.status === 401);
   r = await h.post("?s=" + SEC, body); ok("بلا ترويسة توقيع ← مقبول (السرّ في الرابط)", r.status === 200);
+  const LONG = "1d0afc7b" + "a".repeat(56); db = mkdb(); db.secret = LONG; h = await run({ SUPABASE_URL: "https://x.supabase.co", SUPABASE_SERVICE_ROLE_KEY: "k" }, db);
+  r = await h.post("?s=" + LONG, ev("DHDNGNS111", 5)); ok("السرّ الكامل (64) مقبول", r.status === 200);
+  r = await h.post("?s=" + LONG.slice(0, 24), ev("DHDNGNS111", 5)); ok("أول 24 حرفاً من السرّ مقبولة (الرابط القصير)", r.status === 200);
+  r = await h.post("?s=" + LONG.slice(0, 8) + ",,,,,,,,,,,,,,,", ev("DHDNGNS111", 5)); ok("8 حروف وفواصل (الرابط المقطوع) مرفوض", r.status === 401);
+  r = await h.post("?s=" + LONG.slice(0, 20), ev("DHDNGNS111", 5)); ok("أقل من 24 حرفاً مرفوض", r.status === 401);
   console.log(fail ? "فشل " + fail + " من " + (pass + fail) : "نجح " + pass + " من " + pass); process.exit(fail ? 1 : 0);
 })();

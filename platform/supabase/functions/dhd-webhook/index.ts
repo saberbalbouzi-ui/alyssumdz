@@ -53,7 +53,8 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") return new Response("method", { status: 405 });
   const raw = (await req.text()).slice(0, 1_000_000), tok = q.get("s") ?? "";
   const known = await storedSecret();
-  if (!(eqSafe(tok, known) || eqSafe(tok, ENV_SECRET))) return reply({ error: "unauthorized" }, 401);
+  const shortTok = known.length > 24 ? known.slice(0, 24) : "";      // رابط أقصر: أول 24 حرفاً من السرّ (96 بت) يكفي ويتفادى قصّ الروابط الطويلة عند النسخ على الهاتف
+  if (!(eqSafe(tok, known) || (shortTok !== "" && eqSafe(tok, shortTok)) || eqSafe(tok, ENV_SECRET))) return reply({ error: "unauthorized" }, 401);
   const sig = req.headers.get("signature") ?? req.headers.get("x-signature") ?? "";
   if (SIGNING && sig && !eqSafe(sig.replace(/^sha256=/, ""), await hmacHex(SIGNING, raw))) return reply({ error: "bad_signature" }, 401);
   let j: any; try { j = JSON.parse(raw); } catch { return reply({ error: "bad_json" }, 400); }
