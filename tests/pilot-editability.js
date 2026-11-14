@@ -7,6 +7,7 @@
 const { chromium } = require("playwright");
 const BASE = process.env.EQA_BASE || "http://127.0.0.1:8391";
 const PW = process.env.EQA_PASS || "TestPass12345";
+const SEC_MODE = !!process.env.PILOT_SEC;   // أقسام اتصال/طلب (c-*/o-*): تُفتح بـ«تعديل القالب» لا بالتثبيت على الرئيسية
 const TEMPLATES = process.env.PILOT_TPLS ? process.env.PILOT_TPLS.split(",") : ["s-watches", "s-tech"];
 const UA_D = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -81,7 +82,7 @@ const check = (tpl, name, cond, extra) => {
   for (const tpl of TEMPLATES) {
     console.log("\n════════ " + tpl + " ════════");
     try {
-      const inst = await page.evaluate(async id => { try { if (typeof AdminNav.libOpen === "function") { await AdminNav.libOpen(); AdminNav.libClose(); } await AdminNav.tplInstallHome(id); return true; } catch (e) { return e.message; } }, tpl);
+      const inst = await page.evaluate(async ([id, process_edit]) => { try { if (typeof AdminNav.libOpen === "function") { await AdminNav.libOpen(); AdminNav.libClose(); } await (process_edit ? AdminNav.tplEdit(id) : AdminNav.tplInstallHome(id)); return true; } catch (e) { return e.message; } }, [tpl, SEC_MODE]);
       check(tpl, "install opens editor", inst === true, inst);
       await page.waitForFunction(() => typeof PBApp !== "undefined" && PBApp.E && PBApp.E.page && document.getElementById("pbx-frame"), null, { timeout: 40000 });
       await page.waitForFunction(() => { const f = document.getElementById("pbx-frame"); return f && f.contentDocument && f.contentDocument.querySelector('[data-kind="widget"]'); }, null, { timeout: 40000 }); await sleep(700);
@@ -89,7 +90,7 @@ const check = (tpl, name, cond, extra) => {
 
       const m0 = await model(); const W = all(m0);
       const nFree = W.filter(w => w.free).length;
-      check(tpl, `inventory: ${W.length} elements (${nFree} free, ${W.length - nFree} flow)`, W.length >= 30 && nFree >= 2 && W.every(w => w.type), `types=${[...new Set(W.map(w => w.type))].join(",")}`);
+      check(tpl, `inventory: ${W.length} elements (${nFree} free, ${W.length - nFree} flow)`, (SEC_MODE ? W.length >= 5 : (W.length >= 30 && nFree >= 2)) && W.every(w => w.type), `types=${[...new Set(W.map(w => w.type))].join(",")}`);
 
       // ── 1) تحديد كل عنصر بالفأرة ──
       const picked = {}, miss = [];

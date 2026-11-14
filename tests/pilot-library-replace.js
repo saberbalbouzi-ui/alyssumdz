@@ -13,6 +13,7 @@ const SPEC = {
   "s-watches": { img: "men_watch", bg: "watch_rock" }, "s-tech": { img: "it_color" },
   "s-jewelry": { img: "jewel_ring", bg: "jewel_pearl" }, "s-supplements": { bg: "supp_green" }, "s-accessories": { img: "acc_pink" }, "s-it": { bg: "it_circuit" }, "s-digital": { img: "dig_dash" }, "s-marketplace": { col: "mkt_bags" }, "s-cosmetics": { bg: "cosm_terra" }, "s-honey": { img: "honey_amber" }, "s-herbs": { img: "herb_jars" }, "s-fashion": { img: "fashion_man" },
   "s-aurora": { img: "it_color" }, "s-gold": { bg: "jewel_dark" }, "s-fresh": { img: "skin_oil" }, "s-pop": { img: "fashion_sneakers" },
+  "c-aurora": { img: "dig_code" }, "c-neon": { img: "it_dark" }, "c-gold": { img: "jewel_pearl" }, "c-soft": { img: "cosm_pink" }, "c-steps": { img: "mkt_open" }, "o-flash": { img: "mkt_bags" }, "o-lux": { img: "jewel_ring" }, "o-steps": { img: "mkt_open" },
 };
 const TPLS = process.env.LIB_TPLS ? process.env.LIB_TPLS.split(",") : ["s-watches", "s-tech"];
 const results = []; let page;
@@ -62,7 +63,7 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
   for (const tpl of TPLS) {
     console.log("\n════════ " + tpl + " ════════");
     try {
-      await page.evaluate(async id => { if (typeof AdminNav.libOpen === "function") { await AdminNav.libOpen(); AdminNav.libClose(); } await AdminNav.tplInstallHome(id); }, tpl);
+      await page.evaluate(async ([id, sec]) => { if (typeof AdminNav.libOpen === "function") { await AdminNav.libOpen(); AdminNav.libClose(); } await (sec ? AdminNav.tplEdit(id) : AdminNav.tplInstallHome(id)); }, [tpl, !!process.env.PILOT_SEC]);
       await page.waitForFunction(() => { const f = document.getElementById("pbx-frame"); return f && f.contentDocument && f.contentDocument.querySelector('[data-kind="widget"]'); }, null, { timeout: 40000 }); await sleep(900);
       if (await page.locator("#pbx-ask").count()) await page.click('#pbx-ask [data-k="no"]').catch(() => {}); await sleep(300);
       const sp = SPEC[tpl] || {}; const S0 = await secs(); let hero = null;

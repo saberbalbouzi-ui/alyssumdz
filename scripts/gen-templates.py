@@ -268,6 +268,7 @@ exec(open(os.path.join(HERE, "gen-templates-pilots.py"), encoding="utf-8").read(
 exec(open(os.path.join(HERE, "gen-templates-batch1.py"), encoding="utf-8").read())      # الدفعة 1: s-jewelry s-cosmetics s-honey s-herbs s-fashion (هوية وتركيب جديدان بالصور الأصلية نفسها)
 exec(open(os.path.join(HERE, "gen-templates-batch2.py"), encoding="utf-8").read())      # الدفعة 2: s-supplements s-accessories s-it s-digital s-marketplace
 exec(open(os.path.join(HERE, "gen-templates-batch3.py"), encoding="utf-8").read())      # الدفعة 3: s-aurora s-gold s-fresh s-pop
+exec(open(os.path.join(HERE, "gen-templates-batch4.py"), encoding="utf-8").read())      # الدفعة 4: c-aurora c-neon c-gold c-soft c-steps o-flash o-lux o-steps o-bundle o-proof
 
 json.dump(TEMPLATES, open(os.path.join(OUT, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 exec(open(os.path.join(HERE, "gen-template-products.py"), encoding="utf-8").read())
