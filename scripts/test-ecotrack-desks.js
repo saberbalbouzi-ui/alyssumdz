@@ -1,0 +1,28 @@
+/* مكاتب Stop Desk لـ Ecotrack/DHD من get/communes: python3 -m http.server 8765 & NODE_PATH=/opt/node-tools/node_modules node scripts/test-ecotrack-desks.js */
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage(); let pass = 0, fail = 0; const ok = (n, v, x) => { if (v) pass++; else fail++; console.log((v ? "✓ " : "✗ ") + n + (v ? "" : " " + JSON.stringify(x || ""))); };
+  await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+  const errs = []; p.on("pageerror", e => errs.push(String(e)));
+  await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); } catch (e) { } });
+  await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(6000);
+  const r = await p.evaluate(async () => {
+    const A = Admin, co = A.allDeliveryCompanies().dhd, cfg = { baseUrl: "https://platform.dhd-dz.com/", token: "T" }; const out = {};
+    out.hasCenters = typeof co.centersRequest === "function"; out.url5 = co.centersRequest(cfg, 33).url; out.auth = co.centersRequest(cfg, 1).headers.Authorization;
+    /* ردّ يحاكي شكل get/communes: كائن بلديات {nom, has_stop_desk, code_postal} */
+    const resp = w => ({ "1": { nom: "Alpha" + w, has_stop_desk: 1, code_postal: (w < 10 ? "0" : "") + w + "001" }, "2": { nom: "Beta" + w, has_stop_desk: 0, code_postal: "99999" }, "3": { nom: "Gamma" + w, has_stop_desk: "1", code_postal: "" } });
+    out.parsed = co.parseCenters(resp(33), 33); const calls = []; localStorage.removeItem(A.centersKey(co)); A._centersMap = {};
+    A.courierFetch = async req => { const w = Number(new URL(req.url).searchParams.get("wilaya_id")); calls.push(w); if (w === 20) return { ok: false, status: 500, text: "" }; return { ok: true, status: 200, text: JSON.stringify(resp(w)) }; };
+    const rows = await A.companyCenters(co, cfg); out.n = rows.length; out.calls = calls.length; out.first = rows[0]; out.w9 = rows.find(x => x.wilaya_id === 9); out.noW20 = !rows.some(x => x.wilaya_id === 20);
+    const w = A.wCo("Oran") || { id: 31 }; out.req = co.buildRequest(cfg, { id: "T1", name: "x", phone: "0551234567", wilaya: "Oran", commune: "Oran", dtype: "stop", __deskId: "31001", total: 3000, items: "x" }).body;
+    out.reqHome = co.buildRequest(cfg, { id: "T2", name: "x", phone: "0551234567", wilaya: "Oran", commune: "Oran", dtype: "home", __deskId: "31001", total: 3000, items: "x" }).body;
+    return out; });
+  ok("الشركة تدعم جلب المراكز (get/communes?wilaya_id=33) بتوكن Bearer", r.hasCenters && /\/api\/v1\/get\/communes\?wilaya_id=33$/.test(r.url5) && r.auth === "Bearer T", r);
+  ok("البلدية ذات has_stop_desk فقط ولها code_postal تصبح مكتباً (رمزه code_postal)", r.parsed.rows.length === 1 && r.parsed.rows[0].id === "33001" && r.parsed.rows[0].wilaya_id === 33, r.parsed);
+  ok("يُجلب 58 ولاية وفشل ولاية واحدة (20) لا يُسقط الباقي", r.calls === 58 && r.n === 57 && r.noW20, { calls: r.calls, n: r.n });
+  ok("الرمز بصفر في أوله يبقى نصاً (09001)", r.w9 && r.w9.id === "09001", r.w9);
+  ok("طلب Stop Desk يرسل code_postal = رمز المكتب و stop_desk=1", /"stop_desk":1/.test(r.req) && /"code_postal":"31001"/.test(r.req), r.req);
+  ok("طلب المنزل لا يرسل رمز مكتب", /"stop_desk":0/.test(r.reqHome) && /"code_postal":""/.test(r.reqHome), r.reqHome);
+  ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
+  console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
+})();
