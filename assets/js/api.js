@@ -151,7 +151,7 @@ const API = {
   /* طلب واحد بمهلة: يعيد {status,text} أو {net:true,err}. لا يحوّل أي فشل إلى نجاح. */
   async _postOnce(url, headers, bodyStr, ms) {
     const ac = typeof AbortController !== "undefined" ? new AbortController() : null, t = ac ? setTimeout(() => ac.abort(), ms || this.orderTimeout || 15000) : 0;
-    try { const r = await fetch(url, { method: "POST", headers, body: bodyStr, credentials: "same-origin", signal: ac ? ac.signal : undefined }); const text = await r.text().catch(() => ""); return { status: r.status, text }; }
+    try { const r = await fetch(url, { method: "POST", headers, body: bodyStr, credentials: "same-origin", signal: ac ? ac.signal : undefined }); let text = ""; try { text = typeof r.text === "function" ? await r.text() : JSON.stringify(await r.json()); } catch (e) { text = ""; } return { status: r.status, text }; }
     catch (e) { return { net: true, err: (e && e.name === "AbortError") ? "timeout" : "network" }; } finally { if (t) clearTimeout(t); }
   },
   /* مفتاح idempotency الحالي لهذا الطلب (للمرجع المستقر في مرآة المنصة)؛ "" إن تعذّرت العشوائية الآمنة */
