@@ -115,6 +115,8 @@ const { chromium } = require("playwright");
     const st = id => (A.orders.find(o => o.id === id) || {}).status, ext = (A.extAll().dhd || []).map(x => x.tracking), tr = id => (A.trackingOf(A.orders.find(o => o.id === id)) || {}).tracking;
     return { s1: st("S1"), s2: st("S2"), s3: tr("S3"), ext, raw1: (A.shipRaw.S1 || {}).raw }; });
   ok("تحديث الحالة لـDHD من قائمة الطرود: الحالات تتحدّث (Vers hub/En livraison ← في الطريق)، ويُربط الطلب بالمرجع، ويُضاف الطرد الخامس (من موقع DHD) خارجياً", r17.s1 === "expediee" && r17.s2 === "expediee" && r17.s3 === "DHDNGNS26111422000010" && r17.ext.includes("DHDNGNS26111422000009") && r17.raw1 === "vers_hub", r17);
+  const r18 = await p.evaluate(() => { const A = Admin; return { a: A.coStatusLabel("dhd", "prete_a_expedier"), b: A.coStatusLabel("dhd", "vers_hub"), c: A.coStatusLabel("dhd", "???"), d: A.coStatusLabel("yalidine", "Livré") }; });
+  ok("أسماء حالات DHD كما في لوحتهم (Prêt à expédier / Vers Station) وغير المعروفة والشركات الأخرى كما هي", r18.a === "Prêt à expédier" && r18.b === "Vers Station" && r18.c === "???" && r18.d === "Livré", r18);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
