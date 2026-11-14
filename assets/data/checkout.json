@@ -4,7 +4,7 @@
   "waAuto": true,
   "showAddToCart": true,
   "showOffers": true,
-  "steps": false,
+  "steps": true,
   "phoneDz": true,
   "guard": {
     "antibot": true,
@@ -16,9 +16,9 @@
   "whatsappBtnText": "💬 اطلب مباشرة عبر واتساب",
   "cartBtnText": "🛒 أضف إلى السلة",
   "fieldLabels": {
-    "name": "الاسم الكامل",
-    "phone": "رقم الهاتف",
-    "commune": "البلدية"
+    "name": "ادخل الاسم الكامل",
+    "phone": "ادخل رقم الهاتف",
+    "commune": "ادخل البلدية"
   },
   "extraFields": [],
   "colors": {
