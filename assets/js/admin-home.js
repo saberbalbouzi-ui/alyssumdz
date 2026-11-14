@@ -132,13 +132,12 @@ const AdminHome = (() => {
   /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
   function quickBar(waiting) {
     let toPack = 0; try { if (typeof AdminPack !== "undefined" && AdminPack.count && hasTab("pack")) { toPack = S.packN || 0; AdminPack.count().then(n => { if (n !== null && n !== S.packN) { S.packN = n; refreshSoft(); } }); } } catch (e) { }   /* العدد من قائمة التجهيز نفسها (دالة الخادم) لا من حالة الطلبات */
-    /* ترتيب الاختصارات (طلب صاحب المتجر): الطلبات معاً ثم الأرباح ثم المنتج والعملاء ثم الرقية؛ كل مجموعة في صفها وما لا قسم له في هذه النسخة يُخفى */
+    /* ترتيب الاختصارات (طلب صاحب المتجر): الطلبات معاً ثم الأرباح ثم المنتج والعملاء (والرقية لها بطاقتها)؛ كل مجموعة في صفها وما لا قسم له في هذه النسخة يُخفى */
     const G = [
       [["neword", "+ طلب", hasTab("orders"), 1], ["orders", "كل الطلبات", hasTab("orders"), 0], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1, 0], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack"), 0], ["shipped", "الطلبات المسجلة", hasTab("shipped"), 0]],
       [["finance", "المخزون والأرباح", hasTab("finance"), 0]],
-      [["newp", "+ منتج", 1, 1], ["customers", "العملاء", hasTab("customers"), 0]],
-      [["ruqya-new", "حجز موعد رقية", hasRuqya(), 0], ["ruqya", "مواعيد الرقية", hasRuqya(), 0]]
-    ];
+      [["newp", "+ منتج", 1, 1], ["customers", "العملاء", hasTab("customers"), 0]]
+    ];      /* أزرار الرقية حُذفت من الاختصارات (طلب صاحب المتجر): تبقى في بطاقة «مواعيد الرقية» أسفلها */
     return G.map(g => g.filter(q => q[2])).filter(g => g.length).map(g => '<div class="ah-quick">' + g.map(q => '<button type="button" class="ah-btn' + (q[3] ? "" : " gh") + '" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>').join("");
   }
   function ruqyaCard() {
@@ -197,7 +196,7 @@ const AdminHome = (() => {
     const ch = chartSvg(series, labels, fmt);
     const counts = GROUPS.map((g, i) => cur.filter(o => stOf(o.status).g === i).length);
     const last = all.slice().sort((p, q) => new Date(q.date) - new Date(p.date)).slice(0, 8), lastSt = last.map(realSt);
-    const prodMap = {}; cur.filter(okOrder).forEach(o => (a.parseOrderItems ? a.parseOrderItems(o.items) : []).forEach(it => { prodMap[it.title] = (prodMap[it.title] || 0) + it.qty; }));
+    const prodMap = {}; cur.filter(okOrder).forEach(o => (a.orderItemsCanon ? a.orderItemsCanon(o) : a.parseOrderItems ? a.parseOrderItems(o.items) : []).forEach(it => { prodMap[it.title] = (prodMap[it.title] || 0) + it.qty; }));
     const top = Object.entries(prodMap).sort((p, q) => q[1] - p[1]).slice(0, 5), topMax = top.length ? top[0][1] : 1;
     const prods = (a.products || []).filter(p => p.active !== false), low = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) > 0 && Number(p.stock) <= 5), out = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) <= 0);
     const fail = all.filter(o => o.status === "echec").length;
