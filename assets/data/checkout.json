@@ -1,12 +1,14 @@
 {
   "waNumber": "213559237239",
   "showWhatsappBtn": true,
+  "waAuto": true,
   "showAddToCart": true,
   "showOffers": true,
+  "steps": false,
   "phoneDz": true,
   "guard": {
-    "antibot": false,
-    "dup": false,
+    "antibot": true,
+    "dup": true,
     "hours": 24,
     "phoneDz": true
   },
