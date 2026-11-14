@@ -4264,7 +4264,12 @@ ${this.quickImg(this.q.cover)}
   async init() { await this.refresh(); },
   async refresh() {
     const box = document.getElementById("pb-list"); if (!box) return;
-    try { const f = await GH.getFile("assets/pages/index.json"); this.list = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { this.list = []; }
+    try { const f = await GH.getFile("assets/pages/index.json"); this.list = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); this.listErr = ""; }
+    catch (e) {      /* تعذّرت القراءة من المستودع (توكن/شبكة/حدّ طلبات): نعرض فهرس الصفحات المنشور علناً بدل «لا توجد صفحات» الخادعة، مع تنبيه */
+      this.listErr = String((e && e.message) || e); this.list = [];
+      try { const r = await fetch("assets/pages/index.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); if (Array.isArray(j)) this.list = j; } } catch (e2) { }
+      if (this.list.length) { try { toast("⚠️ تعذّر قراءة قائمة الصفحات من المستودع (" + this.listErr.slice(0, 70) + ") — عُرضت الصفحات المنشورة؛ إن تكرر راجع «ربط النشر» قبل أن تنشر"); } catch (e3) { } }
+    }
     const cta = document.getElementById("pb-cta"); if (cta) cta.innerHTML = this.list.length ? "" : `<div style="background:linear-gradient(135deg,#173f35,#2a6b58);color:#fff;border-radius:14px;padding:1.2rem;margin:.8rem 0;display:flex;gap:1rem;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:240px"><b style="font-size:1.05rem">🪄 ابدأ بالمولّد</b><p style="margin:.3rem 0 0;opacity:.9;line-height:1.8">لا توجد صفحات بعد. أسرع طريقة: ولّد تصميماً بصورة واحدة ثم حوّله إلى صفحة قابلة للتعديل في ثلاث خطوات.</p></div><button class="small gold" onclick="PBAdmin.openGen()">فتح المولّد ←</button></div>`;
     const dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host;
     const RES = new Set(["p","lp","assets","admin","api","supabase","scripts","releases","platform","php-edition","sales","dist","apps-script","blog","policy","editor","extension","docs","saas","node_modules","cart","shop","account","index"]);
