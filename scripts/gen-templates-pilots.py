@@ -68,6 +68,8 @@ thw = TH(k, True, GOLD2, MUTE, GOLD, GOLD2, "#ffffff08", BLKW, BLKW,
          cats=dict(imgs=[], ov="#0a0a0a", ovo=35, rad=6, cols=3, tc=GOLD2, fxs=[]),
          offc=GOLD2, offm=TXT, cdc=GOLD2)
 # المنتجات التجريبية الستة الأصلية (PACKS["s-watches"]["dp"]) تبقى كما هي بصورها وأسمائها وأسعارها
+# تصحيح خطأ بيانات في الأصل: عنوانا بلاطتين مقلوبان (watch_pocket كانت «ساعات رياضية» وwatch_wrist «ساعات جيب»)؛ الصور وترتيبها كما هي
+PACKS["s-watches"] = dict(PACKS["s-watches"], dc=["ساعات كلاسيكية", "ساعات جيب", "ساعات رياضية"])
 
 import math
 ARCH = "50% 50% 0 0/34% 34% 0 0"

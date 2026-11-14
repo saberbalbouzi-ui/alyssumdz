@@ -266,6 +266,7 @@ exec(open(os.path.join(HERE, "gen-templates-wave2.py"), encoding="utf-8").read()
 exec(open(os.path.join(HERE, "gen-templates-alyssum.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-pilots.py"), encoding="utf-8").read())      # تجربتا التصميم (s-watches وs-tech): تستبدل ناتجهما فقط بمولّد عشوائي معزول
 exec(open(os.path.join(HERE, "gen-templates-batch1.py"), encoding="utf-8").read())      # الدفعة 1: s-jewelry s-cosmetics s-honey s-herbs s-fashion (هوية وتركيب جديدان بالصور الأصلية نفسها)
+exec(open(os.path.join(HERE, "gen-templates-batch2.py"), encoding="utf-8").read())      # الدفعة 2: s-supplements s-accessories s-it s-digital s-marketplace
 
 json.dump(TEMPLATES, open(os.path.join(OUT, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 exec(open(os.path.join(HERE, "gen-template-products.py"), encoding="utf-8").read())

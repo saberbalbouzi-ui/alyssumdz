@@ -22,6 +22,8 @@ def widgets(pg):
             for v in n: walk(v)
     walk(pg["sections"]); return out
 def imgs(pg): return re.findall(r'assets/img/tpl/([a-z0-9_\-]+)\.webp', json.dumps(pg, ensure_ascii=False))
+# إصلاحات بيانات معلنة وحيدة مسموحة لعناوين البلاطات (الصور وترتيبها كما هي): عناوين الأصل كانت مقلوبة
+LABEL_FIX = {"s-watches": ["ساعات كلاسيكية", "ساعات جيب", "ساعات رياضية"], "s-accessories": ["إطلالات", "سماعات", "حقائب"]}
 for t in IDS:
     o = json.loads(git(f"assets/pages/templates/{t}.json")); n = json.load(open(f"assets/pages/templates/{t}.json", encoding="utf-8"))
     co, cn = collections.Counter(imgs(o)), collections.Counter(imgs(n))
@@ -35,8 +37,9 @@ for t in IDS:
     check(t, f"المنتجات التجريبية الأصلية ({len(op)}) محفوظة بالاسم والسعر والصورة", not lost, lost)
     dupn = [k for k, v in collections.Counter(d["i"] for d in npd).items() if v > 1]; check(t, "لا منتج تجريبي مكرّر", not dupn, dupn)
     oc = [w["set"]["items"] for w in ow if w["type"] == "shopcats"]; nc = [w["set"]["items"] for w in nw if w["type"] == "shopcats"]
-    ok = bool(oc) and bool(nc) and [(i["img"], i.get("dl")) for i in oc[0]] == [(i["img"], i.get("dl")) for i in nc[0]]
-    check(t, "بلاطات الفئات الأصلية (صورة + عنوان + ترتيب) محفوظة", ok, [(i["img"].split("/")[-1], i.get("dl")) for i in nc[0]] if nc else "لا قسم فئات")
+    if t in LABEL_FIX: ok = bool(oc) and bool(nc) and [i["img"] for i in oc[0]] == [i["img"] for i in nc[0]] and [i.get("dl") for i in nc[0]] == LABEL_FIX[t]
+    else: ok = bool(oc) and bool(nc) and [(i["img"], i.get("dl")) for i in oc[0]] == [(i["img"], i.get("dl")) for i in nc[0]]
+    check(t, "بلاطات الفئات الأصلية (صورة + ترتيب + عنوان" + (" بعد إصلاح الخطأ المعلن" if t in LABEL_FIX else "") + ") محفوظة", ok, [(i["img"].split("/")[-1], i.get("dl")) for i in nc[0]] if nc else "لا قسم فئات")
     for w in nw:
         for fx in w["set"].get("fxs", []) if w["type"] == "image" else []:
             if fx["n"].startswith("إطار الصورة"):
