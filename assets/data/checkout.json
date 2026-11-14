@@ -18,7 +18,7 @@
   "fieldLabels": {
     "name": "ادخل الاسم الكامل",
     "phone": "ادخل رقم الهاتف",
-    "commune": "ادخل البلدية"
+    "commune": "اختر  البلدية"
   },
   "extraFields": [],
   "colors": {
