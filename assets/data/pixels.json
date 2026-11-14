@@ -1,1 +1,13 @@
-[]
+[
+  {
+    "id": "px_1794666024189",
+    "platform": "facebook",
+    "label": "Facebook — حملة",
+    "pixelId": "766336011123196",
+    "conversionLabel": "",
+    "currency": "DZD",
+    "valueMode": "total",
+    "scope": "all",
+    "active": true
+  }
+]
