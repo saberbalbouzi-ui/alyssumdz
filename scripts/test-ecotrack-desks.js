@@ -104,6 +104,17 @@ const { chromium } = require("playwright");
     A.tab("shipped"); await new Promise(r => setTimeout(r, 400)); const vis = k => { A._shipCo = k; A.renderShipped(); const f = document.getElementById("ship-fees-btn"), r = document.getElementById("ship-recent-btn"); return { fees: f && f.style.display !== "none", recent: r && r.style.display !== "none" }; };
     return { dhd: vis("dhd"), wecan: vis("wecan"), yal: vis("yalidine") }; });
   ok("«تعريفة WeCan لولاية» تظهر في تبويب WeCan فقط، و«آخر الطرود» لـWeCan وDHD لا ياليدين", !r16.dhd.fees && r16.dhd.recent && r16.wecan.fees && r16.wecan.recent && !r16.yal.fees && !r16.yal.recent, r16);
+  const r17 = await p.evaluate(async () => { const A = Admin; const mk = (id, note, ph, total) => ({ id, note, status: "confirmee", date: new Date().toISOString(), name: "x", phone: ph || "0551234567", wilaya: "Alger", commune: "Alger", dtype: "home", items: "x", total: total || 2000, fee: 400 });
+    A.orders = [mk("S1", "🚚dhd:DHDNGNS26111422000001"), mk("S2", "🚚dhd:DHDNGNS26111422000002"), mk("S3", "", "0661112233", 3000)];
+    A.deliveryCfg = Object.assign({}, A.deliveryCfg, { dhd: { enabled: true, isDefault: true, token: "T", baseUrl: "https://platform.dhd-dz.com" } }); try { localStorage.removeItem("alyssum_ext_parcels"); } catch (e) { }
+    const L = { data: { data: [{ tracking: "DHDNGNS26111422000001", reference: "S1", nom_client: "a", telephone: "0551234567", montant: 2000, status: "vers_hub" }, { tracking: "DHDNGNS26111422000002", reference: "S2", nom_client: "b", telephone: "0551234567", montant: 2000, status: "en_livraison" },
+      { tracking: "DHDNGNS26111422000009", reference: "", nom_client: "mounir", telephone: "0668147092", commune: "Abou El Hassan", montant: 2500, status: "prete_a_expedier" }, { tracking: "DHDNGNS26111422000010", reference: "S3", nom_client: "z", telephone: "0661112233", montant: 3000, status: "vers_wilaya" }] } };
+    A.courierFetch = async req => { if (/get\/orders\?page=1/.test(req.url)) return { ok: true, status: 200, text: JSON.stringify(L) }; if (/get\/orders\?page=/.test(req.url)) return { ok: true, status: 200, text: JSON.stringify({ data: { data: [] } }) };
+      return { ok: true, status: 200, text: JSON.stringify({ activity: [{ status: "order_information_received_by_carrier" }] }) }; };
+    A._shipSync = null; A._syncing = false; await A.syncShipping({ silent: true });
+    const st = id => (A.orders.find(o => o.id === id) || {}).status, ext = (A.extAll().dhd || []).map(x => x.tracking), tr = id => (A.trackingOf(A.orders.find(o => o.id === id)) || {}).tracking;
+    return { s1: st("S1"), s2: st("S2"), s3: tr("S3"), ext, raw1: (A.shipRaw.S1 || {}).raw }; });
+  ok("تحديث الحالة لـDHD من قائمة الطرود: الحالات تتحدّث (Vers hub/En livraison ← في الطريق)، ويُربط الطلب بالمرجع، ويُضاف الطرد الخامس (من موقع DHD) خارجياً", r17.s1 === "expediee" && r17.s2 === "expediee" && r17.s3 === "DHDNGNS26111422000010" && r17.ext.includes("DHDNGNS26111422000009") && r17.raw1 === "vers_hub", r17);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
