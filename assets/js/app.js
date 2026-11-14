@@ -554,6 +554,49 @@ function applyCheckout(cfg){
    طبقة فوق نموذج الطلب الحالي بلا إعادة رسم: تُخفي/تُظهر مجموعات الحقول نفسها (فلا تضيع أي بيانات عند الرجوع، ولا تُعاد الصفحة):
    1) الولاية ثم البلدية (ونوع التوصيل/المكتب)  2) اختيار العرض + رسوم التوصيل والمجموع فوراً  3) الاسم والهاتف  4) مراجعة ثم تأكيد الطلب.
    «اطلب الآن» يمرّر بسلاسة إلى المرحلة الحالية. لا تعمل مع المنتجات المتغيّرة/المجمَّعة/الرقمية أو النافدة (يبقى النموذج العادي). الاختبار: scripts/test-order-steps.js */
+/* أخطاء الحقول داخل النموذج: الخانة تحمرّ فوراً مع رسالة واضحة تحتها (بدل رسالة المتصفح أو التنبيه العابر) — تُستعمل في النموذج العادي والطلب بمراحل */
+const FieldErr = (() => {
+  const CSS = `.fe-bad.fe-bad.fe-bad{border-color:#d92d20!important;background-color:rgba(217,45,32,.07)!important;box-shadow:0 0 0 3px rgba(217,45,32,.16)!important}
+.fe-box{outline:2px solid #d92d20;outline-offset:3px;border-radius:14px}
+.fe-msg{display:flex;align-items:flex-start;gap:.4rem;margin:.35rem 0 .1rem;padding:.3rem .6rem;border-radius:8px;background:#fef3f2;border:1px solid #fecdca;color:#b42318;font-size:.84rem;font-weight:700;line-height:1.55}
+.fe-msg::before{content:"!";flex:none;width:17px;height:17px;margin-top:.1rem;border-radius:50%;background:#d92d20;color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center}
+.fe-shake{animation:fesh .35s}@keyframes fesh{20%{transform:translateX(5px)}40%{transform:translateX(-5px)}60%{transform:translateX(3px)}80%{transform:translateX(-3px)}}
+.field:has(>.fe-msg) .phone-hint{display:none}
+@media(prefers-reduced-motion:reduce){.fe-shake{animation:none}}`;
+  let inj = false; const css = () => { if (inj) return; inj = true; try { const st = document.createElement("style"); st.id = "fe-css"; st.textContent = CSS; document.head.appendChild(st); } catch (e) { } };
+  const host = el => el.closest(".field") || el.parentNode;
+  function clear(el) { if (!el) return; el.classList.remove("fe-bad", "fe-box", "fe-shake"); el.removeAttribute("aria-invalid"); if (el._fe) { try { el._fe.remove(); } catch (e) { } el._fe = null; } }
+  function mark(el, msg, box) {
+    if (!el) return; css(); clear(el); el.classList.add(box ? "fe-box" : "fe-bad"); void el.offsetWidth; el.classList.add("fe-shake"); if (!box) el.setAttribute("aria-invalid", "true");
+    const m = document.createElement("div"); m.className = "fe-msg"; m.setAttribute("role", "alert"); m.textContent = msg;
+    if (box) el.insertAdjacentElement("afterend", m); else host(el).appendChild(m); el._fe = m;
+    if (!el._feL) { el._feL = 1; const c = () => clear(el); ["input", "change"].forEach(ev => el.addEventListener(ev, c)); if (box) el.addEventListener("click", c); }
+  }
+  function clearAll(root) { try { (root || document).querySelectorAll(".fe-bad,.fe-box").forEach(clear); } catch (e) { } }
+  function show(errs) {
+    if (!errs || !errs.length) return; errs.forEach(x => mark(x.el, x.msg, x.box));
+    const f = errs[0].el; try { f.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "center" }); if (!errs[0].box && f.focus) f.focus({ preventScroll: true }); } catch (e) { }
+  }
+  return { mark, clear, clearAll, show };
+})();
+/* قواعد التحقق المشتركة: scope = 0 (الكل) أو رقم المرحلة 1 / 3؛ opt.ship=false لمنتج رقمي بلا توصيل */
+const FormCheck = {
+  list(form, scope, opt) {
+    const q = id => form.querySelector("#" + id), out = [], add = (el, msg) => { if (el) out.push({ el, msg }); }, all = !scope, ship = !(opt && opt.ship === false);
+    if (ship && (all || scope === 1)) {
+      const w = q("wilaya"); if (w && !w.value) add(w, "ادخل الولاية — اختر ولايتك من القائمة");
+      const dw = q("desk-wrap"), dk = q("desk"); if (dw && dk && dw.style.display !== "none" && !dk.value) add(dk, "اختر مكتب التوصيل");
+      const c = q("commune"); if (c && c.required && !c.value) add(c, "اختر البلدية");
+    }
+    if (all || scope === 3) {
+      const nm = q("name"), ph = q("phone");
+      if (nm && nm.value.trim().length < 2) add(nm, nm.value.trim() ? "الاسم قصير — اكتب اسمك الكامل" : "ادخل الاسم الكامل");
+      if (ph) { const v = ph.value.trim(); if (!v) add(ph, "ادخل رقم الهاتف"); else if (typeof PhoneDZ !== "undefined" && PhoneDZ.on) { if (!PhoneDZ.ok(PhoneDZ.norm(v))) add(ph, "رقم الهاتف خاطئ — 10 أرقام تبدأ بـ 05 أو 06 أو 07 (أرقام فقط)"); } else if (v.replace(/\D/g, "").length < 9) add(ph, "رقم الهاتف خاطئ"); }
+      form.querySelectorAll('[id^="extra-"]').forEach(e => { if ((e.required || e.dataset.req) && !String(e.value).trim()) add(e, "هذا الحقل مطلوب"); });
+    }
+    return out;
+  }
+};
 const OrderSteps = (() => {
   const $ = id => document.getElementById(id);
   const S = { on: false, step: 1, max: 1, form: null, groups: [], bar: null, top: null, hint: null, offs: null, rev: null, nav: null, back: null, next: null, done: false, why: "" };
@@ -614,15 +657,9 @@ const OrderSteps = (() => {
   const txt = (id) => { const e = $(id); return e ? e.textContent.replace(/\s+/g, " ").trim() : ""; };
   function offerLabel() { const o = document.querySelector("#offers .offer.on"); return o ? o.textContent.replace(/\s+/g, " ").trim() : ""; }
   function validate(n) {
-    const bad = (m, el) => ({ ok: false, msg: m, el });
-    if (n === 1) { const w = $("wilaya"); if (!w || !w.value) return bad("يرجى اختيار الولاية", w); const dw = $("desk-wrap"), dk = $("desk"); if (dw && dw.style.display !== "none" && dk && !dk.value) return bad("يرجى اختيار مكتب التوصيل", dk); const c = $("commune"); if (c && c.required && !c.value) return bad("يرجى اختيار البلدية", c); }
-    if (n === 2) { const of = $("offers"); if (of && (of.style.display !== "none" || S.origHidden) && of.querySelector(".offer") && !of.querySelector(".offer.on")) return bad("اختر العرض المناسب", null); }
-    if (n === 3) {
-      const nm = $("name"), ph = $("phone"); if (!nm || nm.value.trim().length < 2) return bad("يرجى كتابة الاسم الكامل", nm);
-      const v = ph ? ph.value.trim() : ""; if (typeof PhoneDZ !== "undefined" && PhoneDZ.on) { if (!PhoneDZ.ok(PhoneDZ.norm(v))) return bad(PhoneDZ.MSG, ph); } else if (v.replace(/\D/g, "").length < 9) return bad("يرجى كتابة رقم هاتف صحيح", ph);
-      for (const e of S.form.querySelectorAll('[id^="extra-"]')) { if ((e.required || e.dataset.req) && !String(e.value).trim()) return bad("يرجى ملء الحقل المطلوب", e); }
-    }
-    return { ok: true };
+    const errs = FormCheck.list(S.form, n);
+    if (n === 2) { const of = $("offers"); if (of && (of.style.display !== "none" || S.origHidden) && of.querySelector(".offer") && !of.querySelector(".offer.on")) errs.push({ el: S.offs, msg: "اختر العرض المناسب", box: true }); }
+    return errs.length ? { ok: false, msg: errs[0].msg, el: errs[0].el, all: errs } : { ok: true, all: [] };
   }
   const warn = (m) => { try { toast(m); } catch (e) { } };
   function syncOffers() {
@@ -655,7 +692,7 @@ const OrderSteps = (() => {
     S.top.classList.remove("os-fade"); void S.top.offsetWidth; S.top.classList.add("os-fade");
     if (!(opt && opt.noScroll)) { try { const r = S.bar.getBoundingClientRect(); if (r.top < 0 || r.top > innerHeight * .5) S.bar.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }); } catch (e) { } }
   }
-  function next() { const v = validate(S.step); if (!v.ok) { warn(v.msg); if (v.el && v.el.focus) try { v.el.focus(); } catch (e) { } return false; } show(S.step + 1); return true; }
+  function next() { const v = validate(S.step); if (!v.ok) { FieldErr.show(v.all); return false; } FieldErr.clearAll(S.form); show(S.step + 1); return true; }
   function goTo(n) { if (n <= S.step) return show(n); while (S.step < n) { if (!next()) return; } }
   function build(form) {
     const groups = classify(form); if (!groups) { S.why = "mixed"; return false; } if (!groups.some(g => g.steps.indexOf(4) >= 0) || !groups.some(g => g.steps.indexOf(3) >= 0) || !groups.some(g => g.steps.indexOf(1) >= 0)) { S.why = "incomplete"; return false; }
@@ -675,7 +712,7 @@ const OrderSteps = (() => {
     S.back.addEventListener("click", () => show(S.step - 1)); S.next.addEventListener("click", next);
     form.addEventListener("click", e => { const a = e.target.closest && e.target.closest("[data-os-go]"); if (a) { e.preventDefault(); goTo(+a.dataset.osGo); } });
     form.addEventListener("keydown", e => { if (String(e.key || "") === "Enter" && S.step < 4 && /^(INPUT|SELECT)$/.test(e.target.tagName)) { e.preventDefault(); next(); } });
-    form.addEventListener("submit", e => { if (S.step < 4) { e.preventDefault(); e.stopImmediatePropagation(); next(); } else { const v = [1, 2, 3].map(validate).find(x => !x.ok); if (v) { e.preventDefault(); e.stopImmediatePropagation(); warn(v.msg); const k = [1, 2, 3].find(i => !validate(i).ok); show(k); } } }, true);
+    form.addEventListener("submit", e => { if (S.step < 4) { e.preventDefault(); e.stopImmediatePropagation(); next(); } else { const k = [1, 2, 3].find(i => !validate(i).ok); if (k) { e.preventDefault(); e.stopImmediatePropagation(); show(k, { noScroll: true }); FieldErr.show(validate(k).all); } } }, true);
     ["wilaya", "commune", "desk", "name", "phone"].forEach(id => { const el = $(id); if (el) { el.addEventListener("change", () => { if (S.step === 4) review(); }); el.addEventListener("input", () => { if (S.step === 4) review(); }); } });
     try { new MutationObserver(() => { syncOffers(); if (S.step === 4) review(); }).observe($("offers") || form, { attributes: true, subtree: true, attributeFilter: ["class"], childList: true, characterData: true }); const g = $("grand"); if (g) new MutationObserver(() => { if (S.step === 4) review(); }).observe(g, { childList: true, characterData: true, subtree: true }); } catch (e) { }
     /* «اطلب الآن»: تمرير سلس إلى المرحلة الحالية دون تحميل صفحة */
@@ -1364,6 +1401,11 @@ function initProduct(slug){
     return [{ slug: p.slug, title, qty: state.offer.qty, price: Math.round(state.offer.price / state.offer.qty * 100) / 100 }];
   }
 
+  /* تحقق مرئي قبل أي إرسال: الخانة الناقصة أو الخاطئة تحمرّ مع رسالتها (يُعطَّل تحقق المتصفح الأصلي ليحلّ محلّه) */
+  { const __f = document.getElementById("order-form"); if(__f){ __f.noValidate = true; __f.addEventListener("submit", e=>{
+    if(typeof OrderSteps !== "undefined" && OrderSteps.state.on) return;
+    FieldErr.clearAll(__f); const __er = FormCheck.list(__f, 0, { ship: !p.digital }); if(__er.length){ e.preventDefault(); e.stopImmediatePropagation(); FieldErr.show(__er); }
+  }, true); } }
   // تأكيد الطلب — واتساب
   document.getElementById("order-form").addEventListener("submit", async e=>{
     e.preventDefault();
