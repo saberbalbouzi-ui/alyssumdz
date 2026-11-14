@@ -40,6 +40,12 @@ def FT(text, x, y, w, fs, color, ta="start", z=5, fw="500", lh=1.8, **s):
     return FR("text", x, y, w, None, z, html="<p>%s</p>" % text, fs=_v(fs), lh={"d": lh}, ta={"d": ta}, color=color, fw=fw, **s)
 def FH(text, x, y, w, fs, color, ta="start", z=5, fw="900", tag="h2", **s):
     return FR("heading", x, y, w, None, z, text=text, tag=tag, fs=_v(fs), fw=fw, ta={"d": ta}, color=color, lh={"d": 1.25}, **s)
+def focus(pos="50% 50%", sel=".pb-im"):
+    """نقطة تركيز الصورة: تُبقي الإطار ونسبته ثابتين وتغيّر الجزء الظاهر عند استبدال الصورة بأي أبعاد (وسيط قابل للتعديل)"""
+    return FX("نقطة تركيز الصورة", "selector %s{object-fit:cover;object-position:[[p]]}" % sel, p=("نقطة التركيز (س%% ص%%)", "text", pos))
+def cardratio(r="4/5"):
+    """نسبة صورة بطاقة المنتج ثابتة: أي صورة منتج تُقصّ بالتغطية فتتساوى البطاقات"""
+    return FX("نسبة صورة البطاقة", "selector .pb-pci{aspect-ratio:[[r]];position:relative;overflow:hidden}selector .pb-pci img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}", r=("النسبة", "text", r))
 def canvas(free, mh, fxs, bg_set=None, cw=1100):
     sec = S([C([])], kind="canvas", layout="boxed", cw={"d": cw}, mh=mh, pad=dm([0, 0, 0, 0]), fxs=fxs, **(bg_set or {}))
     sec["free"] = free; return sec
@@ -61,19 +67,28 @@ thw = TH(k, True, GOLD2, MUTE, GOLD, GOLD2, "#ffffff08", BLKW, BLKW,
 PACKS["s-watches"] = dict(PACKS["s-watches"], dp=[
     _P("ساعة رياضية مقاومة للماء", 12800, 0, "watch_wrist"), _P("ساعة بيضاء أنيقة", 14200, 0, "watch_white"), _P("ساعة ذكية هجينة", 26000, 0, "gad_watch")])
 
+import math
+ARCH = "50% 50% 0 0/34% 34% 0 0"
+def archx(y, top=96, wpct=42, h=488, left=29, W=1100):
+    """x (٪ من عرض القسم) لحافة القوس عند الارتفاع y — لتلامس خطوط الوصل الحافة تماماً"""
+    rv = .34 * h
+    if y >= top + rv: return left
+    d = (top + rv - y) / rv; return left + (wpct / 100 * W / 2) * (1 - math.sqrt(max(0, 1 - d * d))) / W * 100
 def callout(i, y, title, text, mx, my, mw):
-    """مواصفة حول الساعة: عنوان + شرح + خط وصل ونقطة (الخط والنقطة يختفيان على الجوال). mx,my,mw = موضع الجوال"""
+    """مواصفة حول الساعة: عنوان + شرح + خط وصل ونقطة تلامس إطار القوس (الخط والنقطة يختفيان على الجوال). mx,my,mw = موضع الجوال"""
+    ex = archx(y + 14) - .3
     return [
         FR("heading", V(1.5, mx), V(y, my), V(21, mw), None, 6, text=title, tag="h3", fs=V(22, 18), fw="900", ta={"d": "end", "m": "start"}, color=GOLD2, lh={"d": 1.25}, fxs=[goldshimmer(k + "c%d" % i, 6)], **anim("fadeUp", .7, .35 + i * .12)),
         FR("text", V(1.5, mx), V(y + 34, my + 30), V(21, mw), None, 6, html="<p>%s</p>" % text, fs=V(15, 14), lh={"d": 1.7}, ta={"d": "end", "m": "start"}, color=MUTE, fw="500", **anim("fadeUp", .7, .45 + i * .12)),
-        FR("shape", 23, y + 14, 9.5, 2, 4, shape="rect", fill=GOLD, keep=False, hm=True, **anim("fadeIn", .8, .6 + i * .12)),
-        FR("shape", 32.6, y + 9, 1, 12, 4, shape="ellipse", fill=GOLD2, keep=False, hm=True, fxs=[pulse(k + "d%d" % i, "245,215,122", 2.6)]),
+        FR("shape", 23, y + 14, round(ex - 23, 1), 2, 4, shape="rect", fill=GOLD, keep=False, hm=True, **anim("fadeIn", .8, .6 + i * .12)),
+        FR("shape", round(ex - .5, 1), y + 9, 1, 12, 4, shape="ellipse", fill=GOLD2, keep=False, hm=True, fxs=[pulse(k + "d%d" % i, "245,215,122", 2.6)]),
     ]
 hero_free = [
     FR("heading", 0, V(40, 280), 100, None, 1, text="CHRONOS", tag="p", fs=V(230, 104), fw="900", ta={"d": "center"}, color=GOLD, op=.07, lh={"d": 1}, hm=True, **anim("fadeIn", 1.4)),
     FR("shape", 27, 110, 46, 440, 2, shape="ellipse", fill=GOLD, keep=False, op=.2, hm=True, fxs=[FX("هالة ضوء ذهبية", "selector{filter:blur(70px)}")]),
-    FR("image", V(29, 6, 27), V(96, 336, 100), V(42, 88, 46), V(488, 362, 400), 3, src=IMG("men_watch"), alt="ساعة كرونوغراف بسوار جلدي على خلفية سوداء", fit="cover", hauto=False, crop={"x": 0, "y": -66.7, "w": 117.6, "h": 166.7},
-       fxs=[FX("حواف تذوب في الخلفية", "selector{-webkit-mask-image:radial-gradient(closest-side,#000 62%,transparent 100%);mask-image:radial-gradient(closest-side,#000 62%,transparent 100%)}"),
+    FR("image", V(29, 6, 27), V(96, 336, 100), V(42, 88, 46), V(488, 362, 400), 3, src=IMG("men_watch"), alt="ساعة كرونوغراف بسوار جلدي على خلفية سوداء", fit="cover", hauto=False,
+       fxs=[FX("قوس الصورة وإطاره الذهبي", "selector{overflow:hidden;border-radius:%s}selector .pb-im{width:100%%;height:100%%;object-fit:cover;object-position:[[p]];transform:scale([[z]]);transition:transform 1.4s cubic-bezier(.2,.8,.2,1)}selector:hover .pb-im{transform:scale(calc([[z]] + .06))}selector::after{content:\"\";position:absolute;inset:12px;border:1px solid rgba(201,153,46,.65);border-radius:%s;pointer-events:none}" % (ARCH, ARCH),
+               p=("نقطة التركيز (س% ص%)", "text", "50% 74%"), z=("تقريب الصورة داخل القوس", "num", 1.12)),
             FX("طفو هادئ", "selector{animation:nwFl 7s ease-in-out infinite}@keyframes nwFl{50%{transform:translateY(-10px)}}")], **anim("zoomIn", 1.1, .1)),
     FT("— SWISS INSPIRED —", V(68, 6), V(116, 28), V(30, 88), V(15, 14), GOLD, "start", 6, "800", **anim("fadeDown", .7)),
     FR("heading", V(66, 6), V(150, 52), V(32, 88), None, 6, text="الوقت يليق بمن يقدّره", tag="h1", fs=V(54, 40, 44), fw="900", ta={"d": "start"}, color=GOLD2, lh={"d": 1.2}, fxs=[goldshimmer(k, 5)], **anim("fadeUp", .9)),
@@ -93,7 +108,7 @@ def chapter(num, kick, title, text, items, img, alt, img_first, tilt=0):
         W("heading", text=title, tag="h2", fs=dm(44, 30), fw="900", ta={"d": "start"}, color=GOLD2, lh={"d": 1.25}, fxs=[goldshimmer(k + "t" + num, 6)], **anim("fadeUp")),
         T(text, 18, MUTE, "start", **anim("fadeUp", .7, .1)),
         bullets(items, "check-circle", GOLD, TXT, 17, **anim("fadeUp", .7, .2))], w=46, va="center", pad=dm([0, 0, 0, 0], [20, 0, 0, 0]))
-    pic = C([PIC(img, alt, 4, fxs=[FX("إطار ذهبي مزاح", "selector{position:relative}selector::before{content:\"\";position:absolute;inset:18px -18px -18px 18px;border:1px solid #c9992e;border-radius:4px;z-index:0;pointer-events:none}selector .pb-im{position:relative;z-index:1}"), zoomcol("rgba(201,153,46,.3)")], **anim("zoomIn", .9))],
+    pic = C([PIC(img, alt, 4, hauto=False, mh=dm(470, 340), fxs=[focus(), FX("رفع ناعم بالمرور", "selector{transition:transform .6s cubic-bezier(.2,.8,.2,1)}selector:hover{transform:translateY(-8px)}"), FX("إطار ذهبي خارجي", "selector .pb-im{outline:1px solid rgba(201,153,46,.6);outline-offset:14px;transition:outline-offset .5s,outline-color .5s}selector:hover .pb-im{outline-offset:22px;outline-color:#f5d77a}")], **anim("zoomIn", .9))],
             w=50, va="center", pad=dm([0, 0, 0, 0]))
     cols = [pic, txt] if img_first else [txt, pic]
     return S(cols, pad=dm([90, 20, 90, 20], [50, 16, 56, 16]), gap={"d": 64, "m": 28}, fxs=BLKW(num))
@@ -110,7 +125,7 @@ w_banner = S([C([T("— 03 —", 14, GOLD, "center", fw="800"),
                  BTN("شاهد المجموعة", bg="#b8860b", color="#1a1409", link="#products", fxs=[btngrad("#b8860b", GOLD2, "rgba(201,153,46,.55)", -3), shine(k, 3)], **anim("zoomIn", .9, .2))], w=100)],
            cw={"d": 860}, pad=dm([170, 20, 170, 20], [100, 16, 100, 16]), **PH("watch_rock", "rgba(10,10,10,.5)", "rgba(10,10,10,.82)"))
 w_prod = S([C([W("anchor", aid="products", aoff=dm(80)), *title("المجموعة", "قطع مختارة بعناية — مرّر لتكتشف المزيد", k, thw, thw["hfx"]("p"))["widgets"],
-               W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, slider=True, slauto=5, cardw=dm(330, 240), gap=dm(22), rad=dm(6), cbg="#14100a", bbg="#b8860b", pdemo="a", fxs=thw["prods"]["fxs"])], w=100)],
+               W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, slider=True, slauto=5, cardw=dm(330, 240), gap=dm(22), rad=dm(6), cbg="#14100a", bbg="#b8860b", pdemo="a", fxs=thw["prods"]["fxs"] + [cardratio("4/5")])], w=100)],
            pad=dm([70, 20, 80, 20], [44, 16, 52, 16]), fxs=BLKW("p"))
 w_serv = S([C([IB(ic, t, x, tc=GOLD2, xc=TXT, isz=38, fxs=[glass("rgba(10,10,10,.55)", "rgba(201,153,46,.35)", 14, 8), lift(".pb-ib", "rgba(201,153,46,.25)", -8), floaty(k + "sv" + str(i), ".pb-ibi", 5, 5 + i * .4)], **anim("fadeUp", .7, .1 + i * .12))], w=33, pad=dm([0, 0, 0, 0]))
             for i, (ic, t, x) in enumerate([("gift", "تغليف هدايا فاخر", "علبة مخملية مع بطاقة إهداء"), ("shield-check", "ضمان دولي سنتان", "على الحركة، مع شهادة ضمان"), ("target", "ضبط السوار مجاناً", "نضبطه على معصمك قبل الشحن")])],
@@ -153,21 +168,27 @@ t_hero = S([
        BTN("تصفّح المنتجات", bg=BLUE, al="start", link="#products", fxs=[btngrad(BLUE, "#7c3aed", "rgba(37,99,235,.45)"), shine(k), pulse(k, "37,99,235", 2.4)], **anim("zoomIn", .8, .2)),
        BTN("اختر حسب الاستعمال", bg="#e0e7ff", color="#1d4ed8", al="start", link="#use", fxs=[lift(".pb-btn", "rgba(37,99,235,.3)", -3, 0)], **anim("zoomIn", .8, .3)),
        W("tbadges", items="ضمان سنة\nدفع عند الاستلام\nدعم على واتساب", cbg="#ffffff", cc=DARK, cbc="#e2e8f0", crad=dm(999), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .4))], w=50, va="center"),
-    C([PIC("it_color", "حاسوب محمول بإضاءة ملوّنة على لوحة المفاتيح", 28, fxs=[FX("طفو الصورة", "selector img{animation:stPf 6s ease-in-out infinite}@keyframes stPf{50%{transform:translateY(-12px)}}"), FX("ظل ناعم", "selector{filter:drop-shadow(0 40px 60px rgba(37,99,235,.3))}")], **anim("fadeUp", .9, .3))],
+    C([PIC("it_color", "حاسوب محمول بإضاءة ملوّنة على لوحة المفاتيح", 28, hauto=False, mh=dm(470, 300), fxs=[focus(), FX("طفو الصورة", "selector{animation:stPf 6s ease-in-out infinite}@keyframes stPf{50%{transform:translateY(-12px)}}"), FX("ظل ناعم", "selector .pb-im{box-shadow:0 40px 60px -20px rgba(37,99,235,.35)}")], **anim("fadeUp", .9, .3))],
       w=50, va="center", pad=dm([26, 26, 26, 26], [14, 14, 14, 14]), fxs=[FX("لوحة تدرّج", "selector{background:linear-gradient(145deg,#e0e7ff,#f5f3ff);border-radius:36px}")]),
 ], pad=dm([90, 20, 80, 20], [50, 16, 50, 16]), gap={"d": 44, "m": 26}, fxs=[gridbg(k, "rgba(37,99,235,.08)", 46), spotlight(k, "rgba(37,99,235,.18)")])
 
-def usecard(img, alt, kick, title, desc, link):
-    return C([W("spacer", mh=dm(200, 130)), T(kick, 13, "#bfdbfe", "start", fw="800"),
+def usepill(text, link):
+    return C([BTN(text, bg="#ffffff", color=DARK, al="center", link=link, brad={"d": 999}, fxs=[FX("حبّة استعمال", "selector .pb-btn{border:1px solid #cbd5e1;box-shadow:0 6px 18px rgba(15,23,42,.06);transition:transform .3s,box-shadow .3s,background .3s,color .3s}selector .pb-btn:hover{transform:translateY(-4px);background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 16px 34px rgba(37,99,235,.35)}")])], w=dm(20, 50), pad=dm([0, 0, 0, 0]))
+t_pills = S([C([T("ابحث بالاستعمال:", 17, DARK, "start", fw="900")], w=dm(14, 100), va="center", pad=dm([0, 0, 0, 0]))] +
+            [usepill(t, "#use") for t in ("ألعاب وترفيه", "عمل ودراسة", "إبداع وتصميم", "تصفّح وبثّ")],
+            pad=dm([34, 20, 34, 20], [22, 16, 22, 16]), gap={"d": 14, "m": 10}, fxs=[FX("شريط أبيض", "selector{background:#ffffff;border-bottom:1px solid #e2e8f0}")])
+
+def usecard(img, alt, kick, title, desc, link, num="01"):
+    return C([W("heading", text=num, tag="p", fs=dm(64, 48), fw="900", ta={"d": "start"}, color="transparent", lh={"d": 1}, fxs=[outlinetext("#ffffff", 2)]), W("spacer", mh=dm(150, 90)), T(kick, 13, "#bfdbfe", "start", fw="800"),
               W("heading", text=title, tag="h3", fs=dm(30, 26), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.2}),
               T(desc, 16, "#e2e8f0", "start"),
               BTN("اعرض الخيارات", bg="#ffffff", color=DARK, al="start", link=link, fxs=[lift(".pb-btn", "rgba(255,255,255,.35)", -3, 0)])],
              w=33, pad=dm([30, 28, 30, 28], [24, 20, 24, 20]), fxs=[FX("زوايا مدوّرة", "selector{border-radius:26px;overflow:hidden}"), zoomcol("rgba(37,99,235,.35)")],
              **PH(img, "rgba(15,23,42,.05)", "rgba(15,23,42,.9)"))
 t_use = S([C([W("anchor", aid="use", aoff=dm(80)), *title("تسوّق حسب استعمالك", "قل لنا ماذا ستفعل بالجهاز، ونرشّح لك الأنسب", k, tht, tht["hfx"]("u"))["widgets"]], w=100),
-           usecard("gad_vr2", "رجل بنظارة واقع افتراضي", "ألعاب وترفيه", "للّعب والترفيه", "أداء رسومي وتجربة غامرة بلا تقطيع.", "#products"),
-           usecard("dig_code", "حاسوب محمول على مكتب عمل", "عمل ودراسة", "للعمل والدراسة", "خفة وبطارية تدوم ولوحة مفاتيح مريحة.", "#products"),
-           usecard("it_dark", "حاسوب محمول مضيء في العتمة", "إبداع وتصميم", "للإبداع والتصميم", "شاشة دقيقة الألوان وقوة معالجة للمشاريع الثقيلة.", "#products")],
+           usecard("gad_vr2", "رجل بنظارة واقع افتراضي", "ألعاب وترفيه", "للّعب والترفيه", "أداء رسومي وتجربة غامرة بلا تقطيع.", "#products", "01"),
+           usecard("dig_code", "حاسوب محمول على مكتب عمل", "عمل ودراسة", "للعمل والدراسة", "خفة وبطارية تدوم ولوحة مفاتيح مريحة.", "#products", "02"),
+           usecard("it_dark", "حاسوب محمول مضيء في العتمة", "إبداع وتصميم", "للإبداع والتصميم", "شاشة دقيقة الألوان وقوة معالجة للمشاريع الثقيلة.", "#products", "03")],
           pad=dm([70, 20, 70, 20], [44, 16, 44, 16]), gap={"d": 22}, fxs=tht["bgB"]("u"))
 
 def tier(name, tag, bars, desc, best=False):
@@ -176,22 +197,22 @@ def tier(name, tag, bars, desc, best=False):
     ws += [T(desc, 15, SLATE, "center"), BTN("اعرض الخيارات", bg=BLUE if best else DARK, al="center", link="#products", fxs=[lift(".pb-btn", "rgba(37,99,235,.3)", -3, 0)])]
     fx = ([FX("بطاقة الأنسب", "@media(min-width:768px){selector{transform:translateY(-14px)}}selector{border:2px solid #2563eb;box-shadow:0 30px 70px rgba(37,99,235,.22)}"), ribbon("الأنسب", BLUE, "#ffffff")]
           if best else [softcard("#ffffff", "rgba(15,23,42,.08)", 24, 30, "#e2e8f0"), lift(".pb-col", "rgba(15,23,42,.18)", -8, 0)])
-    return C(ws, w=33, pad=dm([34, 28, 34, 28], [26, 20, 26, 20]), fxs=[softcard("#ffffff", "rgba(15,23,42,.08)", 24, 30, "#e2e8f0")] + fx if best else fx)
-t_cmp = S([C([*title("قارن بنظرة واحدة", "ثلاث فئات تغطي أغلب الاحتياجات (المؤشرات توضيحية — عدّلها بحسب منتجاتك)", k, tht, tht["hfx"]("m"))["widgets"]], w=100),
+    return C(ws, w=33, pad=dm([34, 28, 34, 28], [26, 20, 26, 20], [56, 16, 30, 16]), fxs=[softcard("#ffffff", "rgba(15,23,42,.08)", 24, 30, "#e2e8f0")] + fx if best else fx)
+t_cmp = S([C([*title("قارن بنظرة واحدة", "ثلاث فئات تغطي أغلب الاحتياجات (المؤشرات توضيحية — عدّلها بحسب منتجاتك)", k, tht, tht["hfx"]("m"))["widgets"], W("spacer", mh=dm(26, 4))], w=100),
            tier("اقتصادي", "للاستعمال اليومي", [("الأداء", 55), ("البطارية", 70), ("السعر", 90)], "يكفي للتصفح والمتابعة والمهام الخفيفة."),
-           tier("متوازن", "الأنسب لمعظم الناس", [("الأداء", 78), ("البطارية", 80), ("السعر", 70)], "توازن ممتاز بين السرعة والسعر والعمر.", True),
+           tier("متوازن", "للجميع", [("الأداء", 78), ("البطارية", 80), ("السعر", 70)], "توازن ممتاز بين السرعة والسعر والعمر.", True),
            tier("احترافي", "للأعمال الثقيلة", [("الأداء", 96), ("البطارية", 65), ("السعر", 45)], "أقصى قوة للتصميم والبرمجة والألعاب.")],
           pad=dm([80, 20, 80, 20], [50, 16, 50, 16]), gap={"d": 24}, fxs=[gridbg(k + "m", "rgba(37,99,235,.05)", 46)])
 t_featured = S([C([W("anchor", aid="products", aoff=dm(80)), *title("الأكثر طلباً", "اختيارات زبائننا هذا الأسبوع", k, tht, tht["hfx"]("f"))["widgets"],
                    W("products", mode="all", limit=4, btn="اطلب الآن", showOld=True, cardw=dm(250, 160), cols=dm(4, 2), gap=dm(20), rad=dm(20), cbg="#ffffff", bbg=BLUE, pdemo="a",
-                     fxs=[lift(".pb-pc", "rgba(37,99,235,.28)", -10, 2), FX("بطاقة بحد خفيف", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 10px 30px rgba(15,23,42,.06)}")])], w=100)],
+                     fxs=[lift(".pb-pc", "rgba(37,99,235,.28)", -10, 2), FX("بطاقة بحد خفيف", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 10px 30px rgba(15,23,42,.06)}"), cardratio("1/1")])], w=100)],
                pad=dm([70, 20, 40, 20], [44, 16, 24, 16]), fxs=tht["bgB"]("f"))
 t_browse = S([C([*title("تصفّح بحسب الفئة", "بدّل بين الفئات لترى كل ما يخصّها", k, tht, tht["hfx"]("b"))["widgets"],
                  W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, tabs="cats", cardw=dm(250, 160), cols=dm(4, 2), gap=dm(20), rad=dm(20), cbg="#ffffff", bbg=BLUE, pdemo="b",
-                   fxs=[lift(".pb-pc", "rgba(37,99,235,.28)", -10, 2), FX("بطاقة بحد خفيف", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 10px 30px rgba(15,23,42,.06)}")])], w=100)],
+                   fxs=[lift(".pb-pc", "rgba(37,99,235,.28)", -10, 2), FX("بطاقة بحد خفيف", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 10px 30px rgba(15,23,42,.06)}"), cardratio("1/1")])], w=100)],
              pad=dm([30, 20, 70, 20], [20, 16, 44, 16]), fxs=tht["bgB"]("b"))
 t_secs = [bar(*tht["bar"]), hdr(**tht["hdr"]), t_hero, mq("توصيل لكل الولايات   ✦   الدفع عند الاستلام   ✦   ضمان على الأجهزة   ✦   استبدال خلال 7 أيام   ✦   دعم على واتساب", *tht["mqc"]),
-          t_use, t_cmp, t_featured, t_browse, S(feat4(k, tht, ICONS4, tht["fcard"]), pad=dm([50, 20, 60, 20], [30, 16, 40, 16]), gap={"d": 18}, fxs=tht["bgA"]("c")),
+          t_pills, t_use, t_cmp, t_featured, t_browse, S(feat4(k, tht, ICONS4, tht["fcard"]), pad=dm([50, 20, 60, 20], [30, 16, 40, 16]), gap={"d": 18}, fxs=tht["bgA"]("c")),
           S(tests(tht, tht["tsfx"]), pad=dm([40, 20, 60, 20], [30, 16, 40, 16]), gap={"d": 20}, fxs=tht["bgB"]("e")),
           offer(k, tht, tht["offfx"], "#ffffff", "#e2e8f0"), faq(tht, tht["bgA"]("q"), tht["accfx"]), foot(**tht["foot"])]
 _pilot_reg("s-tech", "store", "إلكترونيات", "متجر تقني بسيط",
