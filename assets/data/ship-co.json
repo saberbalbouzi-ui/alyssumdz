@@ -1,7 +1,7 @@
 {
- "updated": "2026-11-14T09:38:55.314Z",
- "def": "wecan",
- "noStop": false,
+ "updated": "2026-11-14T10:12:07.891Z",
+ "def": "dhd",
+ "noStop": true,
  "companies": {
   "yalidine": {
    "name": "Yalidine",
@@ -1205,6 +1205,232 @@
      1
     ]
    }
+  },
+  "dhd": {
+   "name": "DHD Express (Ecotrack)",
+   "prices": {
+    "1": {
+     "home": 1100,
+     "stop": 600
+    },
+    "2": {
+     "home": 700,
+     "stop": 400
+    },
+    "3": {
+     "home": 900,
+     "stop": 500
+    },
+    "4": {
+     "home": 800,
+     "stop": 400
+    },
+    "5": {
+     "home": 800,
+     "stop": 400
+    },
+    "6": {
+     "home": 700,
+     "stop": 400
+    },
+    "7": {
+     "home": 900,
+     "stop": 500
+    },
+    "8": {
+     "home": 1100,
+     "stop": 600
+    },
+    "9": {
+     "home": 500,
+     "stop": 250
+    },
+    "10": {
+     "home": 650,
+     "stop": 400
+    },
+    "11": {
+     "home": 1300,
+     "stop": 800
+    },
+    "12": {
+     "home": 800,
+     "stop": 500
+    },
+    "13": {
+     "home": 800,
+     "stop": 400
+    },
+    "14": {
+     "home": 800,
+     "stop": 400
+    },
+    "15": {
+     "home": 650,
+     "stop": 400
+    },
+    "16": {
+     "home": 400,
+     "stop": 200
+    },
+    "17": {
+     "home": 900,
+     "stop": 500
+    },
+    "18": {
+     "home": 700,
+     "stop": 400
+    },
+    "19": {
+     "home": 700,
+     "stop": 400
+    },
+    "20": {
+     "home": 800,
+     "stop": 400
+    },
+    "21": {
+     "home": 700,
+     "stop": 400
+    },
+    "22": {
+     "home": 700,
+     "stop": 400
+    },
+    "23": {
+     "home": 700,
+     "stop": 400
+    },
+    "24": {
+     "home": 800,
+     "stop": 400
+    },
+    "25": {
+     "home": 700,
+     "stop": 400
+    },
+    "26": {
+     "home": 600,
+     "stop": 400
+    },
+    "27": {
+     "home": 700,
+     "stop": 400
+    },
+    "28": {
+     "home": 800,
+     "stop": 500
+    },
+    "29": {
+     "home": 700,
+     "stop": 400
+    },
+    "30": {
+     "home": 1000,
+     "stop": 500
+    },
+    "31": {
+     "home": 700,
+     "stop": 400
+    },
+    "32": {
+     "home": 1000,
+     "stop": 500
+    },
+    "33": {
+     "home": 1300,
+     "stop": 600
+    },
+    "34": {
+     "home": 700,
+     "stop": 400
+    },
+    "35": {
+     "home": 600,
+     "stop": 350
+    },
+    "36": {
+     "home": 800,
+     "stop": 400
+    },
+    "37": {
+     "home": 1300,
+     "stop": 600
+    },
+    "38": {
+     "home": 800,
+     "stop": 400
+    },
+    "39": {
+     "home": 900,
+     "stop": 500
+    },
+    "40": {
+     "home": 800,
+     "stop": 500
+    },
+    "41": {
+     "home": 800,
+     "stop": 500
+    },
+    "42": {
+     "home": 600,
+     "stop": 350
+    },
+    "43": {
+     "home": 700,
+     "stop": 400
+    },
+    "44": {
+     "home": 600,
+     "stop": 400
+    },
+    "45": {
+     "home": 1000,
+     "stop": 500
+    },
+    "46": {
+     "home": 700,
+     "stop": 400
+    },
+    "47": {
+     "home": 1000,
+     "stop": 500
+    },
+    "48": {
+     "home": 700,
+     "stop": 400
+    },
+    "49": {
+     "home": 1300,
+     "stop": 600
+    },
+    "51": {
+     "home": 900,
+     "stop": 500
+    },
+    "52": {
+     "home": 1300,
+     "stop": 1300
+    },
+    "53": {
+     "home": 1300,
+     "stop": 600
+    },
+    "55": {
+     "home": 900,
+     "stop": 500
+    },
+    "57": {
+     "home": 900,
+     "stop": 900
+    },
+    "58": {
+     "home": 1000,
+     "stop": 500
+    }
+   },
+   "adj": 0
   },
   "wecan": {
    "name": "WeCan Service",
@@ -12974,44 +13200,20 @@
  "nd": {
   "3": [
    "ainsidiali",
-   "beidha",
-   "brida",
    "hadjmechri",
-   "ouedmorra",
-   "sebgag",
-   "sidibouzid",
+   "taouiala",
    "tadjrouna",
-   "taouiala"
-  ],
-  "5": [
-   "gosbat",
-   "larbaa",
-   "ouledammar"
+   "ouedmorra"
   ],
   "6": [
    "tamokra",
    "tizinberber"
   ],
-  "10": [
-   "bordjokhriss",
-   "boukram",
-   "dechmia",
-   "dirrah",
-   "elhakimia",
-   "guerrouma",
-   "hadjerazerga",
-   "maala",
-   "maamora",
-   "mezdour",
-   "ridane",
-   "taguedit",
-   "zbarbar"
-  ],
   "11": [
    "abalessa",
    "idles",
-   "inamguel",
-   "tazrouk"
+   "tazrouk",
+   "inamguel"
   ],
   "12": [
    "birelater"
@@ -13021,12 +13223,10 @@
    "nadorah",
    "sidibakhti"
   ],
-  "15": [
-   "zekri"
-  ],
   "17": [
    "ainchouhada",
    "amourah",
+   "elkhemis",
    "faidhelbotma",
    "guernini",
    "guettara",
@@ -13039,8 +13239,8 @@
    "zaafrane"
   ],
   "18": [
-   "boucifouledaskeur",
-   "selmabenziada"
+   "selmabenziada",
+   "boucifouledaskeur"
   ],
   "20": [
    "ainsekhouna",
@@ -13054,15 +13254,39 @@
    "ouledmaallah",
    "sidibelattar"
   ],
-  "43": [
-   "chigara",
-   "derradjibousselah",
-   "elayadibarbes",
-   "minarzarza",
-   "tassadanehaddada",
-   "terraibainen",
-   "tessalalemtai",
-   "tiberguent"
+  "32": [
+   "kraakda",
+   "elbnoud",
+   "cheguig",
+   "sidiameur",
+   "tousmouline",
+   "sidislimane"
+  ],
+  "33": [
+   "debdeb",
+   "bordjomardriss"
+  ],
+  "37": [
+   "oumelassel"
+  ],
+  "38": [
+   "benichaib",
+   "benilahcene",
+   "larbaa",
+   "sidiabed",
+   "sidiboutouchent"
+  ],
+  "40": [
+   "djellal",
+   "khirane"
+  ],
+  "41": [
+   "ouledmoumene",
+   "oumeladhaim",
+   "ainsoltane",
+   "safelelouiden",
+   "ouedkeberit",
+   "terraguelt"
   ],
   "44": [
    "bathia",
@@ -13071,10 +13295,33 @@
    "elhassania",
    "elmaine"
   ],
+  "45": [
+   "kasdir"
+  ],
+  "50": [
+   "bordjbadjimokhtar",
+   "timiaouine"
+  ],
+  "51": [
+   "besbes",
+   "raselmiaad"
+  ],
+  "52": [
+   "tabelbala"
+  ],
+  "53": [
+   "inghar",
+   "foggaretezzaouia"
+  ],
+  "54": [
+   "inguezzam",
+   "tinzaouatine"
+  ],
   "55": [
-   "elallia",
-   "elborma",
-   "elhadjira"
+   "elborma"
+  ],
+  "56": [
+   "bordjelhaouas"
   ]
  }
 }
