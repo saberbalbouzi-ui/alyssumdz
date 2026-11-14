@@ -2232,6 +2232,21 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       const clean = () => { clearTimeout(tm); tg.removeEventListener("touchmove", mv); tg.removeEventListener("touchend", fin); tg.removeEventListener("touchcancel", fin); };
       tg.addEventListener("touchmove", mv, { passive: false }); tg.addEventListener("touchend", fin); tg.addEventListener("touchcancel", fin);
     }, { passive: true });
+    /* الهاتف: لمستان سريعتان على نص = تحرير مباشر (النقر المزدوج لا يصل باللمس لأن السحب يستحوذ على اللمسة الأولى) ويُحدَّد الكلمة الملموسة لتلوينها */
+    if (isFrame) doc.addEventListener("touchstart", e => {
+      if (e.touches.length !== 1 || E.mm) return; const tg = e.target, ed = tg && tg.closest && tg.closest("[data-edit]"); if (!ed || tg.closest("[contenteditable=true]")) { E.lastTap = null; return; }
+      const t = e.touches[0], now = Date.now(), L = E.lastTap; E.lastTap = { t: now, x: t.clientX, y: t.clientY, ed };
+      if (!(L && L.ed === ed && now - L.t < 420 && Math.hypot(t.clientX - L.x, t.clientY - L.y) < 28)) return;
+      E.lastTap = null; e.preventDefault(); e.stopImmediatePropagation();
+      const w0 = ed.closest('[data-kind="widget"]'), key = w0 ? w0.dataset.pb : "", fld = ed.dataset.edit, idx = ed.dataset.idx;
+      const fresh = () => ed.isConnected ? ed : fdoc.querySelector('[data-pb="' + key + '"] [data-edit="' + fld + '"]' + (idx != null ? '[data-idx="' + idx + '"]' : ""));      // اللمسة الأولى قد تحدّد العنصر فتُعاد رسمه: نعيد إيجاد عنصر النص الحيّ
+      const go = () => { tg.removeEventListener("touchend", go); tg.removeEventListener("touchcancel", go); if (key && E.sel !== key) select(key);
+        setTimeout(() => { const el = fresh(); if (!el) return; startEdit(el);      // يبدأ التحرير (وقد يعيد رسم الصفحة)، ثم نحدّد الكلمة الملموسة على العنصر الحيّ
+          try { const live = editing && editing.el, sl = fdoc.getSelection(); if (!live) return; let rng = fdoc.caretRangeFromPoint ? fdoc.caretRangeFromPoint(t.clientX, t.clientY) : null;
+            if (rng && live.contains(rng.startContainer) && rng.startContainer.nodeType === 3 && sl.modify) { sl.removeAllRanges(); sl.addRange(rng); sl.modify("move", "backward", "word"); sl.modify("extend", "forward", "word"); }
+            if (!sl.rangeCount || (sl.isCollapsed && (live.textContent || "").trim())) { const r2 = fdoc.createRange(); r2.selectNodeContents(live); sl.removeAllRanges(); sl.addRange(r2); } } catch (x) { } }, 80); };
+      tg.addEventListener("touchend", go); tg.addEventListener("touchcancel", go);
+    }, { passive: false, capture: true });
     const mk = (type, t) => new MouseEvent(type, { bubbles: true, cancelable: true, clientX: t.clientX, clientY: t.clientY, button: 0, view: doc.defaultView });
     /* أحداث اللمس تبقى موجّهة إلى العنصر الذي بدأ عنده اللمس حتى لو أُعيد رسم الصفحة وحُذف من المستند أثناء السحب؛ لذا نربط الحركة والنهاية بالعنصر نفسه لا بالمستند (وإلا يتوقف السحب بعد أول حركة ويبقى المحرر «مشغولاً» فتتعطل الإعدادات) */
     doc.addEventListener("touchstart", e => {
@@ -2699,13 +2714,18 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   let editing = null;
   function startEdit(el, rng) {
     if (editing && editing.el === el) return;                                  // نقرة مزدوجة بعد نقرة بدأت التحرير فعلاً
+    const wEl0 = el.closest('[data-kind="widget"]'); if (!wEl0) return;
+    const fld0 = el.dataset.edit, idx0 = el.dataset.idx; select(wEl0.dataset.pb);
+    if (!el.isConnected) { const e2 = fdoc.querySelector('[data-pb="' + wEl0.dataset.pb + '"] [data-edit="' + fld0 + '"]' + (idx0 != null ? '[data-idx="' + idx0 + '"]' : "")); if (!e2) return; el = e2; }      // التحديد قد يعيد رسم الصفحة فيُستبدل عنصر النص: نعمل على الحيّ
     const wEl = el.closest('[data-kind="widget"]'); if (!wEl) return;
-    select(wEl.dataset.pb);
     const field = el.dataset.edit, rich = field === "html"; editing = { el, id: wEl.dataset.pb, field, rich, idx: el.dataset.idx }; if ($("pb-app")) $("pb-app").classList.add("pbx-ed");
     el.setAttribute("contenteditable", "true"); { const st0 = $("pbx-stage"), t0 = st0 ? st0.scrollTop : 0; try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); } if (st0 && Math.abs(st0.scrollTop - t0) > 1) st0.scrollTop = t0; }
     const r = rng || fdoc.createRange(); if (!rng) r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
-    el.addEventListener("blur", endEdit, { once: true });
+    /* منتقي الألوان الأصلي في الهاتف (نافذة النظام) يسحب التركيز من النص فكان التحرير ينتهي ويُلوَّن العنصر كله بدل الكلمة المحدَّدة: نُبقي التحرير والتحديد ما دام المنتقي مفتوحاً (E.pickHold) وننهيه بأول لمسة خارج النص */
+    const onBlur = () => { if (editing && editing.el === el && E.pickHold && Date.now() - E.pickHold < 90000) { el.addEventListener("blur", onBlur, { once: true }); return; } endEdit(); };
+    el.addEventListener("blur", onBlur, { once: true });
+    { const out = ev => { if (!editing || editing.el !== el) { fdoc.removeEventListener("pointerdown", out, true); document.removeEventListener("pointerdown", out, true); return; } const t = ev.target; if (t && t.closest && (el.contains(t) || t.closest("#pbx-qbar,#pbx-pop"))) return; if (E.pickHold) { E.pickHold = 0; try { el.blur(); } catch (x) { } endEdit(); } }; fdoc.addEventListener("pointerdown", out, true); document.addEventListener("pointerdown", out, true); }
     el.addEventListener("mouseup", () => setTimeout(() => applyRangePaint(el), 0));      // فرشاة نمط النص: بعد التحديد
     /* لصق نص خارجي: نصٌّ خام بلا أي تنسيق (حجم/لون/خط الموقع المنسوخ منه) فيأخذ نمط النص الأصلي ويبقى قابلاً للتعديل */
     el.addEventListener("paste", ev => {
@@ -3267,6 +3287,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
 
   /* ───────────────── شريط الإعدادات السريعة أعلى الصفحة (نمط Canva): يتغيّر حسب نوع العنصر المحدد ───────────────── */
   const QI = {
+    txedit: SVG('<path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
     undo: SVG('<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>'), redo: SVG('<path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 000 12h3"/>'),
     B: '<b style="font-size:1.05rem">B</b>', I: '<i style="font-size:1.05rem;font-family:serif">I</i>', U: '<u style="font-size:1rem">U</u>', S: '<s style="font-size:1rem">S</s>', case: '<span style="font-size:.95rem">aA</span>',
     al: { start: SVG('<path d="M4 6h16M4 12h10M4 18h14"/>'), center: SVG('<path d="M4 6h16M7 12h10M5 18h14"/>'), end: SVG('<path d="M4 6h16M10 12h10M6 18h14"/>') },
@@ -3309,6 +3330,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const t = inf.node.type, set = inf.set, dev = E.dev, isTx = t === "heading" || t === "text", isImg = t === "image", btn = (k, ic, tt, on, dis) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${ic}</button>`, tb = (k, label, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}><span class="ic">${QI[k] || QI.flip}</span><span class="tx">${label}</span></button>`, sep = '<span class="qsep"></span>';
     let h = "";
     if (isTx) {
+      h += tb("txedit", "تحرير", "تحرير النص مباشرة (على الهاتف: بدل النقر المزدوج). حدّد كلمة ثم غيّر لونها من «A»", !!editing) + sep;
       const cs = qFont(inf), fs = qFsDisp(inf) || Number(eff(set, "fs", dev)) || 17, fw = Number((cs && cs.fontWeight) || set.fw || 400), col = /^#[0-9a-f]{6}$/i.test(set.color || "") ? set.color : (cs ? "#" + (cs.color.match(/\d+/g) || [0, 0, 0]).slice(0, 3).map(n => Number(n).toString(16).padStart(2, "0")).join("") : "#000000");
       const ff = (qDef(inf, "ff") || { o: [] }).o, ta = eff(set, "ta", dev) || "start";
       h += `<select data-qi="ff" title="الخط">${ff.map(([v, n]) => `<option value="${esc(v)}" style="font-family:${esc(v) || "inherit"}"${(set.ff || "") === v ? " selected" : ""}>${esc(n)}</option>`).join("")}</select>`
@@ -3647,7 +3669,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       /* لون كلمة أو جزء داخل نص منسّق: حدّد الكلمة أثناء التحرير (نقر مزدوج على النص) ثم اختر اللون من الشريط فيُطبَّق على المحدَّد فقط */
       const selRange = () => { if (!editing || !editing.rich || !fdoc) return null; const sl = fdoc.getSelection(); return sl && sl.rangeCount && !sl.isCollapsed && editing.el.contains(sl.getRangeAt(0).commonAncestorContainer) ? sl.getRangeAt(0).cloneRange() : null; };
       bar.addEventListener("mousedown", () => { E.lastRange = selRange(); }, true);
-      const wordColor = v => { const r = selRange() || E.lastRange; if (!r || r.collapsed || !editing || !editing.rich || !editing.el.isConnected) return false; const sl = fdoc.getSelection(); try { editing.el.focus({ preventScroll: true }); } catch (x) { } sl.removeAllRanges(); sl.addRange(r); fdoc.execCommand("styleWithCSS", false, true); fdoc.execCommand("foreColor", false, v); if (sl.rangeCount) E.lastRange = sl.getRangeAt(0).cloneRange(); editing.el.dispatchEvent(new Event("input", { bubbles: true })); return true; };
+      const holdPick = ev => { if (editing && editing.rich && ev.target.closest && ev.target.closest("label.qa,input[type=color]")) { E.lastRange = selRange() || E.lastRange; E.pickHold = Date.now(); } };
+      ["pointerdown", "touchstart", "click"].forEach(n => bar.addEventListener(n, holdPick, { capture: true, passive: true }));
+      const wordColor = v => { const r = selRange() || E.lastRange; if (!r || r.collapsed || !editing || !editing.rich || !editing.el.isConnected) return false; const sl = fdoc.getSelection(); try { editing.el.focus({ preventScroll: true }); } catch (x) { } sl.removeAllRanges(); sl.addRange(r); fdoc.execCommand("styleWithCSS", false, true); fdoc.execCommand("foreColor", false, v); if (sl.rangeCount) E.lastRange = sl.getRangeAt(0).cloneRange(); editing.el.dispatchEvent(new Event("input", { bubbles: true })); E.pickHold = 0; return true; };
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { if (wordColor(t.value)) { const i0 = t.parentNode.querySelector("i"); if (i0) i0.style.background = t.value; return; } qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
       bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "color" && editing && editing.rich && E.lastRange && !E.lastRange.collapsed) { commitHist(); return; }      /* تلوين كلمة محدَّدة: لا يُكتب لون العنصر كله عند تثبيت اللون */ if (k === "fs") qSize(inf, Math.max(4, Math.min(400, Math.round(Number(t.value) || 17))), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
     if (!document.getElementById("pbfonts-a")) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
@@ -3818,6 +3842,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
     if (k === "fs-" || k === "fs+") { const cur = qFsDisp(inf) || Math.round(Number(eff(set, "fs", dev)) || 17); return qSize(inf, Math.max(4, cur + (k === "fs+" ? 1 : -1)), true); }
+    if (k === "txedit") { if (editing) { try { editing.el.blur(); } catch (x) { } E.pickHold = 0; try { endEdit(); } catch (x) { } return; } const el = fdoc.querySelector('[data-pb="' + inf.node.id + '"] [data-edit]'); if (el) startEdit(el); else toast("هذا العنصر لا يُحرَّر نصه مباشرة — عدّل نصه من الإعدادات"); return; }
     if (k === "clearfmt") { if (editing) { clearFmt(); return; } if (typeof set.html === "string") { set.html = plainFmtHtml(set.html); E.nextLabel = "مسح التنسيق"; afterEdit(); toast("تم مسح التنسيق المنسوخ"); } return; }
     if (["bold", "italic", "under", "strike"].includes(k) && qSel(k)) return;
     if (k === "bold") { const cs = qFont(inf), cur = Number(set.fw || (cs && cs.fontWeight) || 400); return qDone(inf, "fw", cur >= 600 ? "400" : (inf.node.type === "heading" ? "800" : "700")); }
