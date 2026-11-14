@@ -8,7 +8,7 @@ const V360 = (() => {
   const FALLBACK = [{ id: "1:1", w: 1080, h: 1080, label: "1:1 — 1080×1080" }, { id: "4:5", w: 1080, h: 1350, label: "4:5 — 1080×1350" }, { id: "9:16", w: 1080, h: 1920, label: "9:16 — 1080×1920" }, { id: "16:9", w: 1920, h: 1080, label: "16:9 — 1920×1080" }];
   const fmts = () => (typeof ImgGen !== "undefined" && ImgGen.videoFormats) ? ImgGen.videoFormats() : FALLBACK;
   const fmtOf = id => fmts().find(f => f.id === id) || fmts()[0];
-  const S = { files: [], bms: [], p: 0, auto: true, ms: 450, inv: false, zoom: 80, bg: "#ffffff", tr: false, fmt: "1:1", smooth: false, turns: 2, busy: false, raf: 0, last: 0, drag: null, msg: "", resume: 0 };
+  const S = { files: [], bms: [], p: 0, auto: true, ms: 450, inv: false, zoom: 80, bg: "#ffffff", tr: false, fmt: "1:1", smooth: false, turns: 2, gifPx: 480, busy: false, raf: 0, last: 0, drag: null, msg: "", resume: 0 };
   let bg = null;
   const CSS = `#v3-bg{position:fixed;inset:0;z-index:100020;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:10px}
 #v3-box{width:min(940px,100%);max-height:96vh;overflow:auto;background:rgba(9,24,18,.99);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:1rem 1.1rem;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.6)}
@@ -58,6 +58,54 @@ const V360 = (() => {
   async function sprite() {
     if (S.busy) return; S.busy = true; setBusy(); try { const f = fmtOf(S.fmt), w = 360, h = Math.round(360 * f.h / f.w), cv = document.createElement("canvas"); cv.width = w * N(); cv.height = h; const cx = cv.getContext("2d"), tmp = document.createElement("canvas"); tmp.width = w; tmp.height = h; for (let k = 0; k < N(); k++) { paint(tmp.getContext("2d"), w, h, k, false); cx.drawImage(tmp, k * w, 0); } dl(await toBlob(cv, S.tr ? "image/png" : "image/jpeg", .92), "alyssum-360-sprite." + (S.tr ? "png" : "jpg")); say("تم تنزيل شريط الإطارات (" + N() + " إطاراً أفقياً)"); } catch (e) { say("تعذّر: " + (e.message || e)); } S.busy = false; setBusy();
   }
+
+  /* ترميز GIF محلي: لوحة ألوان عامة (median cut على عيّنة من كل الإطارات) + بحث أقرب لون بذاكرة 15-بت + LZW؛ شفافية 1-بت اختيارية (فهرس 0) */
+  function gifPalette(frames, transp) {
+    const hist = new Uint32Array(32768); let step = Math.max(1, Math.floor(frames.reduce((a, f) => a + f.length / 4, 0) / 150000));
+    frames.forEach(d => { for (let i = 0, k = 0; i < d.length; i += 4, k++) { if (k % step) continue; if (transp && d[i + 3] < 128) continue; hist[((d[i] >> 3) << 10) | ((d[i + 1] >> 3) << 5) | (d[i + 2] >> 3)]++; } });
+    const bins = []; for (let c = 0; c < 32768; c++) if (hist[c]) bins.push(c);
+    const target = transp ? 255 : 256; let boxes = [{ b: bins, pop: bins.reduce((a, c) => a + hist[c], 0) }];
+    const rng = (b, ch) => { let lo = 31, hi = 0; for (const c of b) { const v = ch === 0 ? c >> 10 : ch === 1 ? (c >> 5) & 31 : c & 31; if (v < lo) lo = v; if (v > hi) hi = v; } return hi - lo; };
+    while (boxes.length < target) {
+      let bi = -1, bs = 0; boxes.forEach((x, i) => { if (x.b.length > 1) { const sc = Math.max(rng(x.b, 0), rng(x.b, 1), rng(x.b, 2)) * Math.sqrt(x.pop); if (sc > bs) { bs = sc; bi = i; } } }); if (bi < 0) break;
+      const x = boxes[bi], r = [rng(x.b, 0), rng(x.b, 1), rng(x.b, 2)], ch = r.indexOf(Math.max(...r)), key = c => ch === 0 ? c >> 10 : ch === 1 ? (c >> 5) & 31 : c & 31;
+      x.b.sort((a, c) => key(a) - key(c)); let acc = 0, cut = 1; const half = x.pop / 2; for (let i = 0; i < x.b.length - 1; i++) { acc += hist[x.b[i]]; cut = i + 1; if (acc >= half) break; }
+      const A = x.b.slice(0, cut), B = x.b.slice(cut); boxes.splice(bi, 1, { b: A, pop: A.reduce((a, c) => a + hist[c], 0) }, { b: B, pop: B.reduce((a, c) => a + hist[c], 0) });
+    }
+    const pal = new Uint8Array(256 * 3); let n = transp ? 1 : 0;
+    boxes.forEach(x => { let r = 0, g = 0, bl = 0, t = 0; for (const c of x.b) { const w = hist[c]; r += (c >> 10) * w; g += ((c >> 5) & 31) * w; bl += (c & 31) * w; t += w; } t = t || 1; pal[n * 3] = Math.min(255, Math.round(r / t * 8 + 4)); pal[n * 3 + 1] = Math.min(255, Math.round(g / t * 8 + 4)); pal[n * 3 + 2] = Math.min(255, Math.round(bl / t * 8 + 4)); n++; });
+    return { pal, n };
+  }
+  function gifLzw(idx, out) {
+    out.push(8); const CLEAR = 256, EOI = 257; let size = 9, next = 258, dict = new Map(), buf = 0, bits = 0, blk = [];
+    const put = c => { buf |= c << bits; bits += size; while (bits >= 8) { blk.push(buf & 255); buf >>>= 8; bits -= 8; if (blk.length === 255) { out.push(255); for (const v of blk) out.push(v); blk = []; } } };
+    put(CLEAR); let w = idx[0];
+    for (let i = 1; i < idx.length; i++) { const c = idx[i], k = (w << 8) | c, f = dict.get(k); if (f !== undefined) { w = f; continue; } put(w); if (next < 4096) { dict.set(k, next++); if (next > (1 << size) && size < 12) size++; } else { put(CLEAR); dict = new Map(); next = 258; size = 9; } w = c; }
+    put(w); put(EOI); if (bits > 0) blk.push(buf & 255); if (blk.length) { out.push(blk.length); for (const v of blk) out.push(v); } out.push(0);
+  }
+  function gifEncode(frames, w, h, delayCs, transp) {
+    const { pal } = gifPalette(frames, transp), cache = new Int16Array(32768).fill(-1), start = transp ? 1 : 0, cnt = (() => { let n = 0; for (let i = start; i < 256; i++) if (pal[i * 3] || pal[i * 3 + 1] || pal[i * 3 + 2] || i === start) n = i + 1; return Math.max(n, start + 1); })();
+    const near = (r, g, b) => { const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3); let v = cache[key]; if (v >= 0) return v; let best = start, bd = 1e9; for (let i = start; i < cnt; i++) { const dr = pal[i * 3] - r, dg = pal[i * 3 + 1] - g, db = pal[i * 3 + 2] - b, d = dr * dr * 3 + dg * dg * 4 + db * db * 2; if (d < bd) { bd = d; best = i; } } cache[key] = best; return best; };
+    const out = []; const w16 = v => { out.push(v & 255, (v >> 8) & 255); };
+    "GIF89a".split("").forEach(c => out.push(c.charCodeAt(0))); w16(w); w16(h); out.push(0xF7, 0, 0); for (let i = 0; i < 768; i++) out.push(pal[i]);
+    out.push(0x21, 0xFF, 11); "NETSCAPE2.0".split("").forEach(c => out.push(c.charCodeAt(0))); out.push(3, 1, 0, 0, 0);
+    for (const d of frames) {
+      const idx = new Uint8Array(w * h); for (let i = 0, k = 0; k < idx.length; i += 4, k++) idx[k] = transp && d[i + 3] < 128 ? 0 : near(d[i], d[i + 1], d[i + 2]);
+      out.push(0x21, 0xF9, 4, transp ? 0x09 : 0x04, delayCs & 255, (delayCs >> 8) & 255, 0, 0); out.push(0x2C); w16(0); w16(0); w16(w); w16(h); out.push(0); gifLzw(idx, out);
+    }
+    out.push(0x3B); return new Blob([new Uint8Array(out)], { type: "image/gif" });
+  }
+  async function gif() {
+    if (S.busy) return; S.busy = true; setBusy();
+    try {
+      const f = fmtOf(S.fmt), k0 = Math.min(1, S.gifPx / Math.max(f.w, f.h)), w = Math.max(16, Math.round(f.w * k0)), h = Math.max(16, Math.round(f.h * k0)), sub = S.smooth ? 3 : 1, total = N() * sub, cv = document.createElement("canvas"); cv.width = w; cv.height = h; const cx = cv.getContext("2d", { willReadFrequently: true }), frames = [];
+      for (let k = 0; k < total; k++) { const pos = (S.inv ? -1 : 1) * k / sub; paint(cx, w, h, wrap(pos, N()), S.smooth); frames.push(new Uint8ClampedArray(cx.getImageData(0, 0, w, h).data)); if (k % 4 === 3) { say("تجهيز GIF… " + Math.round(100 * k / total) + "%"); await new Promise(r => setTimeout(r, 0)); } }
+      say("ترميز GIF…"); await new Promise(r => setTimeout(r, 30));
+      const blob = gifEncode(frames, w, h, Math.max(2, Math.round(Math.max(20, S.ms) / sub / 10)), S.tr);
+      dl(blob, "alyssum-360-" + w + "x" + h + ".gif"); say("تم تنزيل GIF متحرّك (" + w + "×" + h + "، " + total + " إطاراً، " + Math.round(blob.size / 1024) + " ك.ب)");
+    } catch (e) { say("تعذّر إنشاء GIF: " + (e.message || e)); }
+    S.busy = false; setBusy();
+  }
   async function video(mime) {
     if (S.busy) return; if (typeof MediaRecorder === "undefined" || !HTMLCanvasElement.prototype.captureStream) { say("متصفحك لا يدعم تسجيل الفيديو — نزّل الإطارات أو افتح في المطوّر"); return; }
     S.busy = true; setBusy(); const f = fmtOf(S.fmt), k0 = Math.min(1, 1920 / Math.max(f.w, f.h)), W = Math.round(f.w * k0 / 2) * 2, H = Math.round(f.h * k0 / 2) * 2, keepTr = S.tr; S.tr = false;
@@ -99,12 +147,13 @@ const V360 = (() => {
 <label class="v3-ck"><input type="checkbox" id="v3-tr"${S.tr ? " checked" : ""}> خلفية شفافة (PNG/WebP وشريط الإطارات)</label>
 <label class="v3-ck"><input type="checkbox" id="v3-inv"${S.inv ? " checked" : ""}> عكس اتجاه الدوران</label>
 <label class="v3-ck"><input type="checkbox" id="v3-sm"${S.smooth ? " checked" : ""}> تنعيم الانتقال بين الإطارات (مزج)</label>
+<label>حجم GIF (أطول ضلع)<select id="v3-g">${[320, 480, 640].map(n => `<option value="${n}"${S.gifPx === n ? " selected" : ""}>${n} بكسل</option>`).join("")}</select></label>
 <label>عدد الدورات في الفيديو<select id="v3-t">${[1, 2, 3].map(n => `<option value="${n}"${S.turns === n ? " selected" : ""}>${n}</option>`).join("")}</select></label></div></div>
 <div class="v3-s">تنزيل</div><div class="v3-dl">
 <button type="button" class="v3-b" data-v3="vid">فيديو دوران (WebM)</button>${vm ? '<button type="button" class="v3-b" data-v3="vidmp4">فيديو دوران (MP4)</button>' : ""}
 <button type="button" class="v3-b" data-v3="zpng">كل الإطارات PNG (ZIP)</button><button type="button" class="v3-b" data-v3="zwebp">كل الإطارات WebP (ZIP)</button><button type="button" class="v3-b" data-v3="zjpg">كل الإطارات JPG (ZIP)</button>
 <button type="button" class="v3-b" data-v3="fpng">الإطار الحالي PNG</button><button type="button" class="v3-b" data-v3="fwebp">الإطار الحالي WebP</button><button type="button" class="v3-b" data-v3="fjpg">الإطار الحالي JPG</button>
-<button type="button" class="v3-b" data-v3="sprite">شريط الإطارات (صورة واحدة)</button><button type="button" class="v3-b" data-v3="html">عارض HTML مستقل (ملف واحد)</button></div>
+<button type="button" class="v3-b" data-v3="gif">GIF متحرّك</button><button type="button" class="v3-b" data-v3="sprite">شريط الإطارات (صورة واحدة)</button><button type="button" class="v3-b" data-v3="html">عارض HTML مستقل (ملف واحد)</button></div>
 <div class="v3-dl" style="margin-top:.7rem"><button type="button" class="v3-b p" data-v3="builder" style="grid-column:1/-1">فتح في مطوّر الصفحات (بهذه الإعدادات)</button></div>
 <div class="v3-msg" id="v3-msg">${esc(S.msg)}</div>`;
   }
@@ -119,7 +168,7 @@ const V360 = (() => {
     const r = (id, fn) => { const el = $(id); if (el) el.addEventListener("input", () => { fn(el); redraw(); }); };
     r("v3-z", el => { S.zoom = +el.value; $("v3-zv").textContent = S.zoom + "%"; }); r("v3-s", el => { S.ms = +el.value; $("v3-sv").textContent = S.ms; });
     r("v3-col", el => { S.bg = el.value; }); r("v3-tr", el => { S.tr = el.checked; }); r("v3-inv", el => { S.inv = el.checked; }); r("v3-sm", el => { S.smooth = el.checked; });
-    const sel = (id, fn) => { const el = $(id); if (el) el.addEventListener("change", () => { fn(el); redraw(); }); }; sel("v3-f", el => { S.fmt = el.value; }); sel("v3-t", el => { S.turns = +el.value; });
+    const sel = (id, fn) => { const el = $(id); if (el) el.addEventListener("change", () => { fn(el); redraw(); }); }; sel("v3-f", el => { S.fmt = el.value; }); sel("v3-t", el => { S.turns = +el.value; }); sel("v3-g", el => { S.gifPx = +el.value; });
   }
   async function open(files) {
     files = (Array.isArray(files) ? files : [files]).filter(Boolean).slice(0, 36).sort((a, b) => natKey(a) < natKey(b) ? -1 : 1);
@@ -133,9 +182,9 @@ const V360 = (() => {
       if (e.target === bg) return close(); const el = e.target.closest("[data-v3]"); if (!el) return; const a = el.dataset.v3;
       if (a === "x") close(); else if (a === "play") { S.auto = !S.auto; el.textContent = S.auto ? "إيقاف الدوران" : "تشغيل الدوران"; } else if (a === "prev") { S.auto = false; S.p = wrap(Math.round(S.p) - 1, N()); redraw(); const pb = bg.querySelector('[data-v3="play"]'); if (pb) pb.textContent = "تشغيل الدوران"; } else if (a === "next") { S.auto = false; S.p = wrap(Math.round(S.p) + 1, N()); redraw(); const pb = bg.querySelector('[data-v3="play"]'); if (pb) pb.textContent = "تشغيل الدوران"; }
       else if (a === "vid") video(""); else if (a === "vidmp4") video("video/mp4"); else if (a === "zpng") zipFrames("image/png"); else if (a === "zwebp") zipFrames("image/webp"); else if (a === "zjpg") zipFrames("image/jpeg");
-      else if (a === "fpng") oneFrame("image/png"); else if (a === "fwebp") oneFrame("image/webp"); else if (a === "fjpg") oneFrame("image/jpeg"); else if (a === "sprite") sprite(); else if (a === "html") viewerHtml(); else if (a === "builder") toBuilder();
+      else if (a === "fpng") oneFrame("image/png"); else if (a === "fwebp") oneFrame("image/webp"); else if (a === "fjpg") oneFrame("image/jpeg"); else if (a === "gif") gif(); else if (a === "sprite") sprite(); else if (a === "html") viewerHtml(); else if (a === "builder") toBuilder();
     });
     S.last = 0; S.raf = requestAnimationFrame(tick); return true;
   }
-  return { open, close, state: S, _t: { paint, frameBlob } };
+  return { open, close, state: S, _t: { paint, frameBlob, gifEncode } };
 })();
