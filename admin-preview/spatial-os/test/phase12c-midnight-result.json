@@ -1,0 +1,13 @@
+{
+ "phase": "12C-E",
+ "suite": "midnight idempotency (vm)",
+ "zones": [
+  "UTC",
+  "Africa/Algiers",
+  "Pacific/Kiritimati",
+  "Pacific/Pago_Pago"
+ ],
+ "total": 44,
+ "failed": 0,
+ "failedZones": []
+}

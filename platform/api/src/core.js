@@ -156,7 +156,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       }
       let res;
       if (rt.opts.idem && m !== "GET" && req.tenant && hd["idempotency-key"]) {
-        const ik = String(hd["idempotency-key"]).slice(0, 80); if (!/^[A-Za-z0-9._:-]{1,80}$/.test(ik)) throw new HttpError(400, "validation_error", "Idempotency-Key غير صالح");
+        const ik = String(hd["idempotency-key"]); if (ik.length > 80 || !/^[A-Za-z0-9._:-]{1,80}$/.test(ik)) throw new HttpError(400, "validation_error", "Idempotency-Key غير صالح");
         const h = await sha256Hex(m + p + raw), ex = await db.one("SELECT * FROM pf_idem WHERE tenant_id=? AND k=?", req.tenant.id, ik);
         if (ex) { if (ex.hash !== h) throw new HttpError(409, "idempotency_conflict", "المفتاح استُعمل لطلب مختلف"); return { status: ex.status, headers: { "Idempotent-Replayed": "true" }, body: ex.body }; }
         res = await rt.handler(req, ctx);

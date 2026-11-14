@@ -1,0 +1,1 @@
+{"outcome":"BLOCKED_BY_AUTOMATION_GUARD_OVERLAY_PRESENT_CLICK_TIMED_OUT","guardOverlay":true,"note":"إن كان INTERCEPTED فاختبار «نقرة المستخدم الحقيقية» NOT TESTABLE في Playwright؛ اختبارات DOM (element.click/requestSubmit) تغطي المنطق لا حماية الواجهة"}

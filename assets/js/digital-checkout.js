@@ -102,8 +102,9 @@
   /** العودة من صفحة الدفع الإلكتروني: ?pay=ok|fail&order=… */
   function onReturn() {
     var q; try { q = new URLSearchParams(location.search); } catch (e) { return; } var st = q.get("pay"), ord = q.get("order"); if (!st || !ord) return;
-    css(); if (st === "ok") { drop(); open('<h2>✅ تم الدفع</h2><div class="dgi">شكراً! سيصلك المنتج خلال لحظات على بريدك أو واتساب.<br>رقم الطلب: <b dir="ltr">' + esc(ord) + '</b></div><button class="dgbtn g" id="dg-x">إغلاق</button>'); }
-    else open('<h2>لم يكتمل الدفع</h2><div class="dgi">لم تُخصم أي مبالغ. يمكنك إعادة المحاولة من صفحة المنتج.</div><button class="dgbtn g" id="dg-x">إغلاق</button>');
+    css(); /* 12C: العودة من بوابة الدفع تأتي بمعاملات في الرابط (?pay=ok|fail&order=…) يستطيع أي أحد كتابتها؛ لا تُعرض كتأكيد دفع. التأكيد الحقيقي إشعار موقَّع من المزوّد إلى الخادم (والتسليم يتبعه). */
+    if (st === "ok") { drop(); open('<h2>عدتَ من صفحة الدفع</h2><div class="dgi">لم يصلنا بعدُ تأكيد الدفع من المزوّد. بعد تأكيده يصلك المنتج تلقائياً على بريدك أو واتساب.<br>مرجع الدفع: <b dir="ltr">' + esc(ord) + '</b></div><button class="dgbtn g" id="dg-x">إغلاق</button>'); }
+    else open('<h2>لم يُؤكَّد الدفع</h2><div class="dgi">لم يصلنا تأكيد دفع لهذا الطلب. إن خُصم منك مبلغ فسيصلك المنتج بعد تأكيد المزوّد، وإلا يمكنك إعادة المحاولة من صفحة المنتج.</div><button class="dgbtn g" id="dg-x">إغلاق</button>');
     var x = document.getElementById("dg-x"); if (x) x.onclick = close;
     try { history.replaceState(null, "", location.pathname + location.hash); } catch (e) { }
   }

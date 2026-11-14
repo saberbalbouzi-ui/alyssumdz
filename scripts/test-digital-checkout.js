@@ -77,7 +77,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.click(".btn-order"); await page.waitForURL(/pay\.chargily\.dz/, { timeout: 8000 });
   const pp = PF.calls.find(c => c.p === "/v1/payments/pay").b; ok("الدفع بالبطاقة: يطلب الدفع بمرجع الطلب وعنوان العودة من نفس الموقع (المبلغ لا يُرسل)", /^[A-Za-z0-9]/.test(pp.order_id) && pp.return_url.startsWith("http://localhost:8794/p/anti-acne") && pp.amount === undefined, pp);
   /* العودة من الدفع */
-  await page.goto("http://localhost:8794/p/anti-acne/index.html?pay=ok&order=W123", { waitUntil: "load" }); await page.waitForSelector("#dg-modal"); ok("صفحة العودة: تم الدفع", /تم الدفع/.test(await page.innerText("#dg-modal")) && !/pay=ok/.test(page.url()));
+  await page.goto("http://localhost:8794/p/anti-acne/index.html?pay=ok&order=W123", { waitUntil: "load" }); await page.waitForSelector("#dg-modal"); ok("صفحة العودة: لا تدّعي تأكيد الدفع (12C: التأكيد من إشعار المزوّد للخادم لا من الرابط)", !/تم الدفع/.test(await page.innerText("#dg-modal")) && /لم يصلنا/.test(await page.innerText("#dg-modal")) && !/pay=ok/.test(page.url()));
   /* لا طرق دفع */
   PAY = {}; await page.reload({ waitUntil: "load" }); await page.waitForSelector("#dg-pm"); ok("بلا طرق دفع: رسالة بدل خيارات", /غير مفعّل/.test(await page.innerText("#dg-pm")));
   /* منتج عادي لا يتأثر */

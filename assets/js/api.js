@@ -91,7 +91,7 @@ const OrderTruth = (() => {
     purge(); let salt = st.get(SALT); if (!salt) { salt = secureKey(); st.set(SALT, salt); }
     const slot = PFX + await sha256Hex(salt + "|" + canon(order)), now = Date.now(); let v = null; try { v = JSON.parse(st.get(slot) || "null"); } catch (_) { }
     let reused = !!(v && v.k && now - v.t <= TTL); if (!reused) { v = { k: secureKey(), t: now }; st.set(slot, JSON.stringify(v)); }
-    return { key: v.k, slot, reused };
+    return { key: v.k, slot, reused, t: v.t };
   }
   const done = slot => { if (slot) st.del(slot); };
   return { STATES: ST, ID_RX, TTL_MS: TTL, classify, classifySb, canon, sha256Hex, sha256js, secureKey, keyFor, done, purge, okState, res };
@@ -197,7 +197,7 @@ const API = {
     const T = OrderTruth, MAX = 3; let uncertain = false, last = null;
     for (let a = 0; a < MAX; a++) {
       const o = await this._postOnce(this.php.url("order"), { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", "Idempotency-Key": ik.key }, JSON.stringify({ order: Object.assign({}, body, { idem: ik.key }) }));
-      last = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "php");
+      last = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : o.redirected ? T.res(T.STATES.INVALID_RESPONSE, { status: o.status, error: "unexpected_origin" }) : T.classify(o.status, o.text, "php");   /* إعادة توجيه غير متوقعة (12C): الردّ ليس من نقطة الطلب المحدَّدة */
       if (last.state === T.STATES.UNKNOWN) uncertain = true;
       if (!(last.state === T.STATES.UNKNOWN || (last.state === T.STATES.SERVER_ERROR && last.retryable)) || a === MAX - 1) break;
       await new Promise(rs => setTimeout(rs, 400 * (a + 1)));
@@ -465,13 +465,13 @@ const API = {
     try {
       if (this.php.on()) { let ik; try { ik = await T.keyFor(ord); } catch (e) { return T.res(T.STATES.REJECTED, { error: "secure_random_unavailable" }); }
         const o = await this._postOnce(this.php.url("order"), { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest", "Idempotency-Key": ik.key }, JSON.stringify({ order: Object.assign({}, ord, { idem: ik.key }) }));
-        const r = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "php"); if (r.state !== T.STATES.UNKNOWN && r.state !== T.STATES.SERVER_ERROR && r.state !== T.STATES.INVALID_RESPONSE) T.done(ik.slot); return r; }
+        const r = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "php"); if (r.state !== T.STATES.UNKNOWN && r.state !== T.STATES.SERVER_ERROR && r.state !== T.STATES.INVALID_RESPONSE) T.done(ik.slot); r.key = ik.key; return r; }
       const b = this.ordersBackend();
       if (b !== "sheets" && this.sb.enabled()) {
         /* Supabase: معرّف الطلب اليدوي يولّده **العميل** (لا الخادم) من مفتاح idempotency العشوائي الآمن ⇒ إعادة المحاولة بعد ضياع الردّ تستعمل المعرّف نفسه فتصطدم بالمفتاح الأساسي (409) ولا تُنشئ صفاً ثانياً.
-           لا نجاح إلا بقراءة الصف المحفوظ والتحقق من معرّفه ومحتواه الأساسي؛ والنتيجة تحمل idOrigin:"client". (حدّ معروف: إعادة بعد منتصف الليل تغيّر بادئة التاريخ ← معرّف آخر؛ نافذة المفتاح 30 دقيقة.) */
+           لا نجاح إلا بقراءة الصف المحفوظ والتحقق من معرّفه ومحتواه الأساسي؛ والنتيجة تحمل idOrigin:"client". (التاريخ في المعرّف تنسيق لا هوية: يُؤخذ من لحظة إنشاء المفتاح المخزَّنة لا من ساعة كل محاولة، فيثبت المعرّف عبر منتصف الليل وانحراف الساعة وإعادة تحميل الصفحة داخل نافذة المفتاح؛ جلسة/تبويب جديد = مفتاح جديد.) */
         let ik; try { ik = await T.keyFor(ord); } catch (e) { return T.res(T.STATES.REJECTED, { error: "secure_random_unavailable" }); }
-        const d = new Date(), id = "M" + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "-" + ik.key.slice(0, 10).toUpperCase();
+        const d = new Date(ik.t || Date.now()), id = "M" + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "-" + ik.key.slice(0, 10).toUpperCase();
         if (!T.ID_RX.test(id)) return T.res(T.STATES.REJECTED, { error: "invalid_local_id" });
         const row = { id, name: order.name, phone: order.phone, wilaya: order.wilaya || null, commune: order.commune || null, dtype: order.dtype || null, desk: order.desk || null, items: order.items || [], items_text: (order.items || []).map(l => l.title + " ×" + l.qty + " = " + Math.round(l.qty * l.price) + " DA").join("\n"), subtotal: order.subtotal || 0, fee: order.fee || 0, total: order.total || 0, coupon: null, discount: order.discount || 0, extra: order.extra || {}, status: "nouvelle", note: order.note || "" };
         const same = x => !!x && typeof x === "object" && x.id === id && String(x.name || "").trim() === String(row.name || "").trim() && String(x.phone || "") === String(row.phone || "") && Number(x.total) === Number(row.total) && Number(x.subtotal) === Number(row.subtotal);
@@ -487,7 +487,7 @@ const API = {
           r = g.net ? T.res(T.STATES.UNKNOWN, { error: g.err, retryable: true }) : (g.rows && g.rows.length === 1 && same(g.rows[0])) ? T.res(T.STATES.DUPLICATE_CONFIRMED, { id, status: 409 }) : T.res(T.STATES.REJECTED, { status: 409, error: "id_conflict" });
         }
         else { let msg = ""; try { const j = JSON.parse(o.text); msg = (j && (j.message || j.error)) || ""; } catch (e) { } r = o.status >= 400 && o.status < 500 ? T.res(T.STATES.REJECTED, { status: o.status, error: msg || ("http_" + o.status) }) : o.status >= 500 ? T.res(T.STATES.SERVER_ERROR, { status: o.status, error: msg || ("http_" + o.status), retryable: true }) : T.res(T.STATES.INVALID_RESPONSE, { status: o.status, error: "unexpected_status" }); }
-        r.idOrigin = r.ok ? "client" : ""; r.safeRetry = true;
+        r.idOrigin = r.ok ? "client" : ""; r.safeRetry = true; r.key = ik.key;
         if (r.state === T.STATES.CONFIRMED || r.state === T.STATES.DUPLICATE_CONFIRMED || r.state === T.STATES.REJECTED) T.done(ik.slot);
         return r;
       }

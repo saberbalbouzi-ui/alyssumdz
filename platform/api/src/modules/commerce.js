@@ -187,7 +187,7 @@ export const commerce = {
         await db.run("INSERT OR REPLACE INTO cm_coupons (tenant_id,code,type,value,min,active,from_at,to_at) VALUES (?,?,?,?,?,?,?,?)", req.tenant.id, code, type, Math.max(0, int(c.value)), Math.max(0, int(c.min)), c.active === false ? 0 : 1, c.from ? int(c.from) : null, c.to ? int(c.to) : null); n++; }
       return ok({ ok: true, coupons: n });
     });
-    r.post("/v1/orders", { scope: "order:create", limit: { key: "ord", max: 30, win: 60 }, summary: "إنشاء طلب بتحقق خادمي من الأسعار والمخزون (ref فريد من المتجر)" }, async (req) => {
+    r.post("/v1/orders", { scope: "order:create", idem: true, limit: { key: "ord", max: 30, win: 60 }, summary: "إنشاء طلب بتحقق خادمي من الأسعار والمخزون (ref فريد من المتجر)" }, async (req) => {
       const b = req.json(), tid = req.tenant.id, ref = String(b.ref ?? "").slice(0, 80); if (!/^[A-Za-z0-9._:-]{6,80}$/.test(ref)) throw new HttpError(400, "validation_error", "ref (6–80 حرفاً) مطلوب");
       const phone = localPhone(b.customer?.phone); if (!phone) throw new HttpError(422, "invalid_phone", "رقم هاتف جزائري غير صالح"); if (!ctx.vault) throw new HttpError(503, "vault_unavailable", "تخزين الأسرار غير مضبوط");
       const lines = (Array.isArray(b.items) ? b.items : []).slice(0, 30).map((i) => ({ slug: clean(i?.slug, 80), vkey: clean(i?.vid ?? i?.vkey ?? "", 60), qty: int(i?.qty), rawQty: Number(i?.qty), unit: +i?.price || 0, title: clean(i?.title, 160) }));

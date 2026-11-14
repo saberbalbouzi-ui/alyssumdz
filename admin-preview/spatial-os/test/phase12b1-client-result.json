@@ -659,7 +659,7 @@
    "n": "[PII] لا اسم ولا هاتف ولا عنوان في التخزين (تجزئات مملّحة فقط)",
    "pass": true,
    "x": {
-    "store": "[[\"alyssum_idem_salt\",\"4673f02fe4f544508d20bf227b002df2\"],[\"alyssum_idem_987daaf0aeaa102b4d35f052e4901611fe0e4370da4abf5"
+    "store": "[[\"alyssum_idem_salt\",\"ffa89cef595842359236db9e9ff5663f\"],[\"alyssum_idem_1af67332bba7e11af3feba2616ce247ec7830721ab7f203"
    }
   },
   {
@@ -763,7 +763,7 @@
    "n": "[addOrder] supabase: يُقرأ الصف المُدرَج للتأكيد؛ المعرّف عميلي من المفتاح الآمن (10 hex) ويُوسَم idOrigin=client",
    "pass": true,
    "x": {
-    "id": "M261114-5665DF71AD"
+    "id": "M700101-CAFA4995B8"
    }
   },
   {
