@@ -1,12 +1,14 @@
 {
   "waNumber": "213559237239",
   "showWhatsappBtn": true,
+  "waAuto": true,
   "showAddToCart": true,
   "showOffers": true,
+  "steps": true,
   "phoneDz": true,
   "guard": {
-    "antibot": false,
-    "dup": false,
+    "antibot": true,
+    "dup": true,
     "hours": 24,
     "phoneDz": true
   },
@@ -14,9 +16,9 @@
   "whatsappBtnText": "💬 اطلب مباشرة عبر واتساب",
   "cartBtnText": "🛒 أضف إلى السلة",
   "fieldLabels": {
-    "name": "الاسم الكامل",
-    "phone": "رقم الهاتف",
-    "commune": "البلدية"
+    "name": "ادخل الاسم الكامل",
+    "phone": "ادخل رقم الهاتف",
+    "commune": "ادخل البلدية"
   },
   "extraFields": [],
   "colors": {
