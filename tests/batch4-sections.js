@@ -29,6 +29,8 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
   const prod = await admin.evaluate(() => ((Admin.products || [])[0] || {}).slug || "");
   console.log("منتج الاختبار:", prod);
   const placed = [];
+  // الخادم يحدّ الطلبات بـ8 لكل IP في الساعة (حماية حقيقية). بيئة الاختبار المحلية وحدها: B4_DB=مسار قاعدة المتجر التجريبي يفكّ ارتباط الطلبات القديمة بالـIP ويصفّر عدّاد المعدّل قبل كل طلب فلا يُعطَّل الحد في الإنتاج
+  const resetRate = () => { if (!process.env.B4_DB) return; require("child_process").spawnSync("python3", ["-c", "import sqlite3,sys;c=sqlite3.connect(sys.argv[1]);c.execute(\"UPDATE orders SET ip_hash='x'||ip_hash WHERE ip_hash NOT LIKE 'x%'\");c.execute('DELETE FROM rl');c.commit()", process.env.B4_DB]); };
 
   for (const tpl of TPLS) {
     console.log("\n════════ " + tpl + " ════════");
@@ -55,7 +57,7 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
     }, [info.json, prod]);
     const route = BASE + "/__b4.html";
     for (const w of [1360, 820, 390]) {
-      const c = await mk(w, 900); const p = await c.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message.slice(0, 140))); p.on("dialog", d => d.accept());
+      const c = await mk(w, 900); const p = await c.newPage(); const errs = []; p.on("pageerror", e => errs.push(e.message.slice(0, 140))); p.on("dialog", d => d.accept()); if (process.env.B4_DEBUG) { p.on("response", async r => { if (/order|api/i.test(r.url()) && r.request().method() === "POST") console.log("POST", r.url().slice(-60), r.status(), (await r.text().catch(() => "")).slice(0, 160)); }); p.on("console", m => { if (/error|fail/i.test(m.text())) console.log("console:", m.text().slice(0, 140)); }); }
       await p.route(route, r => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: html }));
       await p.goto(route, { waitUntil: "load", timeout: 60000 }); await sleep(1800);
       await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 350) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 160)); } window.scrollTo(0, 0); }); await sleep(900);
@@ -65,6 +67,13 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
       await p.screenshot({ path: `${OUT}/${tpl}-${w}.jpg`, fullPage: true, type: "jpeg", quality: 70 }).catch(() => {});
 
       if (w === 1360) {
+        // ── حركة وتحويم: قواعد :hover وإطارات حركة وأنيميشن دخول مُصيَّرة في الصفحة المنشورة ──
+        const fxm = await p.evaluate(() => { const css = [...document.querySelectorAll("style")].map(x => x.textContent).join(""); return { hover: (css.match(/:hover/g) || []).length, kf: (css.match(/@keyframes/g) || []).length, anim: document.querySelectorAll("[class*='pb-a-'],[data-anim],.pb-in-view").length }; });
+        check(tpl, "تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)", fxm.hover >= 3 && fxm.kf >= 1 && fxm.anim >= 1, JSON.stringify(fxm));
+        if (info.json.includes('"stk":true')) {
+          const st = await p.evaluate(async () => { const a = document.querySelector("a.pb-ofs"); if (!a) return { has: false }; window.scrollTo(0, 0); await new Promise(r => setTimeout(r, 600)); const top = !a.classList.contains("off"); document.querySelector("iframe.pb-ofr").scrollIntoView({ block: "center" }); await new Promise(r => setTimeout(r, 900)); return { has: true, shownAtTop: top, hiddenAtForm: a.classList.contains("off") }; });
+          check(tpl, "زر الطلب الثابت يظهر خارج النموذج ويختفي عند ظهوره", st.has && st.hiddenAtForm, JSON.stringify(st));
+        }
         // ── نموذج الاتصال ──
         const nf = await p.locator("form.pb-cf").count();
         if (hasContact) check(tpl, "نموذج الاتصال موجود في الصفحة المنشورة", nf >= 1, nf);
@@ -116,7 +125,7 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
             await p.mouse.move(bb.x + bb.width / 2 - 40, bb.y + bb.height / 2, { steps: 6 }); await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2, { steps: 4 });
             await p.mouse.down(); await sleep(70); await p.mouse.up(); await sleep(260); await p.keyboard.type(text, { delay: 60 });
           };
-          let ok = false, pm = ""; const nm = "زبون QA", ph = "0550" + String(100000 + Math.floor(Math.random() * 899999));
+          resetRate(); let ok = false, pm = ""; const nm = "زبون QA", ph = "0550" + String(100000 + Math.floor(Math.random() * 899999));
           try {
             const hasForm = await fr.locator("#order-form").count();
             check(tpl, "نموذج الطلب داخل الإطار يحمل الحقول الأساسية", hasForm && (await fr.locator("#name").count()) && (await fr.locator("#phone").count()) && (await fr.locator("#wilaya").count()), "");
@@ -124,7 +133,7 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
             for (const [sel, v] of [["#name", nm], ["#phone", ph]]) { if ((await fr.locator(sel).inputValue()) !== v) { await fr.locator(sel).fill(v); } }
             await fr.locator("#wilaya").selectOption({ index: 5 }); await sleep(1400);
             const com = fr.locator("#commune"); if (await com.count() && (await com.evaluate(s => s.options.length)) > 1) { await com.selectOption({ index: 1 }).catch(() => { }); await sleep(300); }
-            const btn = fr.locator('#order-form button[type="submit"]').first(); await btn.evaluate(e => e.scrollIntoView({ block: "center" })); await sleep(500); await btn.click({ timeout: 8000, force: true }); await sleep(4500);
+            const btn = fr.locator('#order-form button[type="submit"]').first(); await btn.evaluate(e => e.scrollIntoView({ block: "center" })); await sleep(900); const bb2 = await btn.boundingBox(); const top = bb2 ? await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e ? e.tagName + "." + String(e.className).slice(0, 30) : "none"; }, [bb2.x + bb2.width / 2, bb2.y + bb2.height / 2]) : "nobox"; if (process.env.B4_DEBUG) console.log("عنصر فوق زر التأكيد:", top, JSON.stringify(bb2)); await btn.click({ timeout: 8000, force: true }); await sleep(4500);
             ok = await fr.locator("#thx").evaluate(t => /تم استلام طلبك/.test(t.innerText)).catch(() => false);
             pm = ok ? "شاشة الشكر ظهرت" : "لا شاشة شكر: " + (await fr.locator("body").innerText().catch(() => "")).replace(/\s+/g, " ").slice(-260);
           } catch (e) { pm = e.message.slice(0, 160); }

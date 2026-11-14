@@ -118,7 +118,7 @@ def cs_card(i, ic, t, x, btn, link, bg):
               BTN(btn, bg=bg, al="center", link=link, brad={"d": 999}, bpad={"d": [12, 28, 12, 28]}, fs=dm(16, 15), fxs=[btngrad(bg, "#ec4899", "rgba(139,92,246,.4)", -3), shine(k + "b" + str(i), 4)])], w=dm(33, 100), pad=dm([0, 0, 24, 0]))
 cs_cards = S([cs_card(0, "chat", "دردشة سريعة", "نردّ على واتساب خلال دقائق", "افتح واتساب", WA, "#8b5cf6"), cs_card(1, "phone", "اتصال هاتفي", "كل يوم 9 ص — 9 م", "اتصل: 0555 00 00 00", PHONE, "#a855f7"), cs_card(2, "mail", "بريد إلكتروني", "للاستفسارات التفصيلية", "اكتب لنا بالبريد", MAIL, "#c026d3")],
              pad=dm([20, 20, 30, 20], [14, 16, 20, 16]), gap={"d": 22}, fxs=CSBG("c"))
-cs_form = contact("اكتب لنا", "نقرأ كل رسالة بأنفسنا — تصلنا مباشرة.", fld4(message="ما الذي تودّ إخبارنا به؟"), btn="أرسل الآن", consent="أوافق على التواصل معي بخصوص رسالتي",
+cs_form = contact("اكتب لنا", "نقرأ كل رسالة بأنفسنا — تصلنا مباشرة.", fld4([("موضوع الرسالة", "اختر الموضوع", TOPICS)], message="ما الذي تودّ إخبارنا به؟"), btn="أرسل الآن", consent="أوافق على التواصل معي بخصوص رسالتي",
                   fbg="#ffffff", fbc="#ffffff", tcol="#4c1d95", lcol="#6b5b95", ibg="#f5f3ff", ibc="#ddd6fe", bbg="#8b5cf6", bcol="#ffffff", frad=dm(34), irad=dm(999), brad=dm(999), bfull=True, fpad=dm([38, 34, 38, 34]),
                   fxs=[FX("ظلّ ناعم", "selector .pb-cf{box-shadow:0 40px 90px rgba(139,92,246,.25),0 8px 24px rgba(139,92,246,.12)}selector .pb-cf textarea{border-radius:22px}"), inputs(k, "139,92,246", bg="#f5f3ff", color="#3b0764"), btngrad("#8b5cf6", "#ec4899", "rgba(139,92,246,.45)", -3, sel=".pb-cf-b"), shine(k, 3.6, sel=".pb-cf-b")], **anim("zoomIn", .9))
 cs_s3 = S([C([cs_form], w=100)], cw={"d": 760}, pad=dm([20, 20, 70, 20], [14, 16, 40, 16]), fxs=CSBG("f"))
@@ -137,7 +137,7 @@ ct_s1 = S([C([PIC("mkt_open", "متجرنا", 22, w=dm(52, 100), al={"d": "cente
               T("ثلاث خطوات واضحة من رسالتك إلى باب بيتك.", 17, "#475569", **anim("fadeUp", .7, .1))], w=100, pad=dm([0, 0, 24, 0])),
            ct_step(0, "chat", "1 · أرسل رسالتك", "املأ النموذج أو راسلنا على واتساب"), ct_step(1, "headset", "2 · نتّصل بك", "يتواصل معك مستشارنا في أقرب وقت"), ct_step(2, "gift", "3 · نسلّمك الطلب", "توصيل لباب بيتك والدفع عند الاستلام")],
           pad=dm([70, 20, 70, 20], [44, 16, 34, 16]), bg="#ecfdf5", gap={"d": 20}, fxs=[blobs(k, "#6ee7b7", "#a7f3d0", 320, .5)])
-ct_form = contact("أو اترك رسالتك هنا", "نرسلها لك على واتساب برقم طلبك إن وُجد.", fld4(order_no=True, message="اكتب سؤالك أو ملاحظتك"), btn="أرسل عبر واتساب", consent="أوافق على التواصل معي عبر واتساب",
+ct_form = contact("أو اترك رسالتك هنا", "نرسلها لك على واتساب برقم طلبك إن وُجد.", fld4([("موضوع الرسالة", "اختر الموضوع", "سؤال عن طلب,سؤال عن منتج,توصيل,أخرى")], order_no=True, message="اكتب سؤالك أو ملاحظتك"), btn="أرسل عبر واتساب", consent="أوافق على التواصل معي عبر واتساب",
                   fbg="#ffffff14", fbc="#ffffff40", tcol="#ffffff", lcol="#d1fae5", ibg="#ffffff22", ibc="#ffffff55", bbg="#22c55e", bcol="#052e16", frad=dm(26), irad=dm(14), brad=dm(14), bfull=True, fpad=dm([30, 28, 30, 28]),
                   fxs=[glass("rgba(255,255,255,.1)", "rgba(255,255,255,.3)", 16, 26), inputs(k, "187,247,208", bg="rgba(255,255,255,.14)", color="#ffffff", ph="rgba(255,255,255,.7)"), pulse(k, "34,197,94", 2, sel=".pb-cf-b"), shine(k, 3, sel=".pb-cf-b")], **anim("fadeUp", .8, .1))
 ct_wa = C([T("الطريق الأسرع", 14, "#bbf7d0", "start", fw="800", **anim("fadeDown")),
@@ -145,6 +145,7 @@ ct_wa = C([T("الطريق الأسرع", 14, "#bbf7d0", "start", fw="800", **an
            T("اضغط الزر وستفتح المحادثة مباشرة — أرسل سؤالك أو رقم طلبك ويردّ عليك فريقنا.", 18, "#d1fae5", "start", **anim("fadeUp", .7, .1)),
            BTN("افتح محادثة واتساب", bg="#22c55e", color="#052e16", al="start", link=WA, fxs=[pulse(k + "w", "34,197,94", 2, sel=".pb-btn"), shine(k + "w", 3), lift(".pb-btn", "rgba(34,197,94,.5)", -3, 0)], **anim("zoomIn", .8, .2)),
            BTN("أو اتصل: 0555 00 00 00", bg="transparent", color="#d1fae5", al="start", link=PHONE, fxs=[FX("زر ثانوي", "selector .pb-btn{background:transparent;border:1.5px solid rgba(209,250,229,.6)}selector .pb-btn:hover{background:rgba(255,255,255,.12)}")], **anim("fadeUp", .7, .3)),
+           BTN("أو راسلنا بالبريد", bg="transparent", color="#d1fae5", al="start", link=MAIL, fxs=[FX("رابط ثانوي", "selector .pb-btn{background:transparent;text-decoration:underline;text-underline-offset:5px}selector .pb-btn:hover{background:rgba(255,255,255,.1)}")], **anim("fadeUp", .7, .35)),
            W("tbadges", items="رد خلال 15 دقيقة\nخصوصية تامة", live=False, cbg="#ffffff22", cc="#ffffff", cbc="#ffffff44", crad=dm(999), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3))], w=dm(44, 100), va="center", pad=dm([0, 0, 0, 0], [0, 0, 24, 0]))
 ct_s2 = S([ct_wa, C([ct_form], w=dm(56, 100), va="center")], pad=dm([70, 20, 70, 20], [44, 16, 44, 16]), gap={"d": 44}, fxs=[aurora(k, "#064e3b", "#10b98199", "#06b6d466", "#a3e63555", 16), wave(k, "#ecfdf5", "top")])
 ct_s3 = vsec(faq4(CFAQ, "#064e3b", "#475569", "#ffffff", "#d1fae5", 16, title="أسئلة سريعة", tcol="#064e3b"), k, [FX("خلفية", "selector{background:#ecfdf5}")], cw=820)
@@ -239,8 +240,8 @@ op_head = C([H("آلاف الزبائن وثقوا بنا", 46, 30, "#ffffff", f
 op_s1 = S([op_head] + op_cnt, pad=dm([80, 20, 20, 20], [48, 16, 14, 16]), fxs=PRF("a"))
 op_tes = C([W("testimonial", name=n, role=r, text=t, img=IMG(["av_m1", "av_m2", "av_m3"][i]), stars=5, tbg="#ffffff14", rad=dm(22), fxs=[tscard("rgba(255,255,255,.08)", "rgba(255,255,255,.2)", 22, "#f1f5f9"), lift(".pb-ts", "rgba(124,58,237,.4)", -8)], **anim("fadeUp", .7, .1 + i * .12))
             for i, (n, r, t) in enumerate([("ياسين ب.", "وهران", "طلبت صباحاً ووصلني بعد يومين، الجودة فاقت توقعاتي بكثير."), ("كريم ع.", "قسنطينة", "تعامل راقٍ وسرعة في التأكيد، والدفع عند الاستلام أراحني."), ("أمين ر.", "الجزائر العاصمة", "أنصح الجميع، المنتج أصلي والخدمة ممتازة.")])],
-           w=dm(42, 100), pad=dm([0, 0, 0, 0], [0, 0, 24, 0]), gap=dm(16, 14))
-op_ord = C([orderw(stk=True, stkt="اطلب الآن — الدفع عند الاستلام", ottl="انضمّ إلى زبائننا — بياناتك فقط", fxs=[rotborder(k, "#a78bfa", "#f472b6", 3, 6, 34), FX("بطاقة بنفسجية داكنة", "selector{background:linear-gradient(145deg,#2e1065,#1e1b4b);border-radius:34px;padding:24px;box-shadow:0 30px 80px rgba(124,58,237,.45)}")], **anim("fadeUp", .8))], w=dm(58, 100), fxs=[sticky(80)])
+           w=dm(42, 100), pad=dm([0, 0, 0, 0], [0, 0, 24, 0]), gap=dm(16, 14), fxs=[sticky(80)])
+op_ord = C([orderw(stk=True, stkt="اطلب الآن — الدفع عند الاستلام", ottl="انضمّ إلى زبائننا — بياناتك فقط", fxs=[rotborder(k, "#a78bfa", "#f472b6", 3, 6, 34), FX("بطاقة بنفسجية داكنة", "selector{background:linear-gradient(145deg,#2e1065,#1e1b4b);border-radius:34px;padding:24px;box-shadow:0 30px 80px rgba(124,58,237,.45)}")], **anim("fadeUp", .8))], w=dm(58, 100))
 op_s2 = S([op_ord, op_tes], pad=dm([20, 20, 70, 20], [14, 16, 40, 16]), gap={"d": 36}, fxs=PRF("b"))
 op_cta = S([C([W("addcart", t="اطلب الآن — الدفع عند الاستلام", dest="page", abg="#7c3aed", atc="#ffffff", afs=dm(20, 17), apad=dm([16, 34, 16, 34]), arad=dm(16), ashine=True, al={"d": "center"}, fxs=[pulse(k, "124,58,237", 2.2, sel=".pb-ac"), btngrad("#7c3aed", "#db2777", "rgba(124,58,237,.5)", sel=".pb-ac")], **anim("zoomIn", .8))], w=100)],
             pad=dm([0, 20, 30, 20], [0, 16, 20, 16]), fxs=PRF("c"))

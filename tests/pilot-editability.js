@@ -131,6 +131,7 @@ const check = (tpl, name, cond, extra) => {
         const back = snap(await model()); const restored = Object.keys(back).every(id => back[id] === before[id]);
         if (only && restored) okDrag++; else bad.push(`${w.type}:${w.id} moved=${changed.length}[${changed.map(c => c + ":" + before[c] + "→" + after[c]).join(" ; ")}] multi=${await page.evaluate(() => (PBApp.E.multi || []).length)} restored=${restored}`);
       }
+      if (SEC_MODE && tried === 0) console.log(`N/A  [${tpl}] T2 لا عناصر حرة في هذا القسم بالتصميم (قسم متدفق) — سحب العنصر الحر مغطّى في بطارية free-elements-qa على قوالب المتاجر`); else
       check(tpl, `T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: ${okDrag}/${tried} (منها ${nudged} رفيعة حُرّكت بالأسهم)`, tried > 0 && okDrag === tried, bad.slice(0, 4).join("; "));
 
       // ── 3) عمليات على عنصر البطل (أكبر صورة حرة) ──
