@@ -294,7 +294,8 @@ html.white .sa-mod{background:#fff;color:#0f172a;border-color:#d2d9e3}html.white
       try {
         const o = Admin.orders && Admin.orders[i], a = $("ord-prev-a");
         if (o && a && S.on.length && !/🚚[a-z0-9_]+:/i.test(String(o.note || "")) && !["annulee", "livree"].includes(o.status)) {
-          S.on.forEach(c => { const lab = (S.cat.find(x => x.code === c.carrier_code) || {}).label || c.carrier_code; const b = document.createElement("button"); b.type = "button"; b.className = "small green"; b.textContent = "🚚 إرسال عبر " + lab; b.onclick = () => send(o.id, c.carrier_code); a.insertBefore(b, a.firstChild); });
+          const built = (() => { try { return Admin.allDeliveryCompanies() || {}; } catch (e) { return {}; } })();       /* شركة مدمجة في اللوحة (زر «إرسال» والتحويل يتولّيانها) لا يُكرَّر لها زر هنا فيظنّه صاحب المتجر الشركة الافتراضية */
+          S.on.filter(c => !built[c.carrier_code]).forEach(c => { const lab = (S.cat.find(x => x.code === c.carrier_code) || {}).label || c.carrier_code; const b = document.createElement("button"); b.type = "button"; b.className = "small green"; b.textContent = "🚚 إرسال عبر " + lab; b.onclick = () => send(o.id, c.carrier_code); a.insertBefore(b, a.firstChild); });
         }
       } catch (e) { }
       return rv;
