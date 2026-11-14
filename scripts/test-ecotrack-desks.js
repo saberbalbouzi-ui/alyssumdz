@@ -51,6 +51,8 @@ const { chromium } = require("playwright");
   ok("بلا قيم: لا gps_link/fragile، والوزن الافتراضي 1، والعنوان الافتراضي بلدية، ولاية", r4.bare.gps_link === undefined && r4.bare.weight === 1 && r4.bare.fragile === undefined && /Alger Centre/.test(r4.bare.adresse), r4.bare);
   ok("نموذج الطلب اليدوي مع DHD: العنوان ورابط الموقع والوزن وقابل للكسر (بلا خيار فتح الطرد)", r4.dhd.addr && r4.dhd.gps && r4.dhd.wt && r4.dhd.frag && !r4.dhd.open, r4.dhd);
   ok("مع WeCan: لا حقول DHD (عنوان/موقع/وزن)", !r4.wecan.addr && !r4.wecan.gps && !r4.wecan.wt && r4.wecan.frag && r4.wecan.open, r4.wecan);
+  const r5 = await p.evaluate(() => { const co = Admin.allDeliveryCompanies().dhd, P = j => co.parseSent(j); return { a: P({ tracking: "DHDNGNS26111422079207" }), b: P({ success: true, data: { tracking_number: "DHDNGNS1" } }), c: P({ success: true, message: "ok", colis: { code: "DHDNGNS26111422079207", n: 3 } }), d: P({ success: false, tracking: "DHDX12345678901" }), e: P({ message: "Commande ajoutée" }), f: P({ message: "erreur", errors: {} , error: "x", tracking: "DHDX12345678901" }) }; });
+  ok("رقم التتبع يُقرأ من الأشكال المعروفة وبحث عميق، ولا يُقرأ من ردّ success=false أو error", r5.a === "DHDNGNS26111422079207" && r5.b === "DHDNGNS1" && r5.c === "DHDNGNS26111422079207" && r5.d === "" && r5.e === "" && r5.f === "", r5);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
