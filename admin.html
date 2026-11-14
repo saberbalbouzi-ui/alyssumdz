@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.1165">
+<meta name="admin-version" content="1.89.1166">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -638,8 +638,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-del-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من رسوم الجدول</option><option value="val">قيمة ثابتة لكل طلب (دج)</option></select><input id="fin-del" type="number" min="0" placeholder="100" style="max-width:130px"></div>
         </div>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
-          <div><b>↩️ تكلفة الإرجاع</b><div class="hint" style="margin:.15rem 0 0">تُخصم عند فشل التوصيل: نسبة من تكلفة التوصيل، أو قيمة ثابتة لكل طلب مُرجَع.</div></div>
-          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ret-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من تكلفة التوصيل</option><option value="val">قيمة ثابتة لكل مرتجع (دج)</option></select><input id="fin-ret" type="number" min="0" placeholder="100" style="max-width:130px"></div>
+          <div><b>↩️ تكلفة الإرجاع</b><div class="hint" style="margin:.15rem 0 0">تُخصم عند فشل التوصيل. اتركها <b>0</b> لتُحتسب من أرقام شركة التوصيل نفسها (رسم الإرجاع المضبوط لها في «شركات التوصيل ← إعداد»، أو الفعلي من كشفها). اكتب رقماً فقط لتطبيق قيمة ثابتة عند غياب أرقام الشركة.</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center"><span class="hint" style="margin:0">قيمة ثابتة لكل مرتجع (دج)</span><input id="fin-ret" type="number" min="0" placeholder="0" style="max-width:130px"></div>
         </div>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
           <div><b>🛡️ التأمين</b><div class="hint" style="margin:.15rem 0 0">نسبة من قيمة الطلب، أو قيمة ثابتة لكل طلب. اتركه 0 إن لم تدفع تأميناً.</div></div>
@@ -1790,7 +1790,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-callcenter.js?v=1abc1d1c"></script>
 <script src="assets/js/admin-callsync.js?v=17265a9a"></script>
 <script src="assets/js/admin-dispatch.js?v=db412635"></script>
-<script src="assets/js/admin-profit.js?v=ca5d90d2"></script>
+<script src="assets/js/admin-profit.js?v=cbe34c28"></script>
 <script src="assets/js/admin-wallet.js?v=5827c8ee"></script>
 <script src="assets/js/admin-edition.js?v=ef57eac5"></script>
 <script src="assets/js/admin-kind.js?v=5dec6f2b"></script>
@@ -5598,9 +5598,9 @@ const Admin = {
   /* ════════ المخزون الحي + الأرباح الحقيقية ════════
      المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
      علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
-  finDefaults(){ return { packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }; },
+  finDefaults(){ return { packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"val", retVal:0, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }; },
   wh: { cfg:{ on:false, main:"المستودع الرئيسي", list:[], routing:{}, retPolicy:"received" }, stock:{} },
-  fin: { costs:{}, ads:{}, set:{ packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }, cfg:{ since:null }, log:[] },
+  fin: { costs:{}, ads:{}, set:{ packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"val", retVal:0, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }, cfg:{ since:null }, log:[] },
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
     this.ydFees = (await Priv.get("ydfees", {})) || {};
@@ -5608,6 +5608,7 @@ const Admin = {
     const old = set || {}, S0 = Object.assign(this.finDefaults(), old);
     if(old.delVal == null && old.carrierPct != null) S0.delVal = old.carrierPct;      // ترحيل الإعدادات القديمة
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
+    if(S0.retMode !== "val"){ S0.retMode = "val"; S0.retVal = 0; }      /* تكلفة الإرجاع: لا نسبة ولا ثابت مفترض — أرقام الشركة نفسها، وإلا ما يكتبه صاحب المتجر (0 افتراضياً) */
     if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
     try{ if(window.AdminWh && AdminWh.load) this.wh = await AdminWh.load(); }catch(e){}
     this.fin = { costs: costs || {}, oc: (await Priv.get("offercosts", {})) || {}, ads: (await Priv.get("adcfg", {})) || {}, adh: (await Priv.get("adhist", [])) || [], pw: (await Priv.get("profwant", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
@@ -5833,7 +5834,7 @@ const Admin = {
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    this.fin.set = { packaging: n("fin-pack", 0), ad: this.fin.set.ad || { method:"fixed", a:0 }, delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: this.fin.set.profMode || "pct", profVal: this.fin.set.profVal == null ? 30 : this.fin.set.profVal };
+    this.fin.set = { packaging: n("fin-pack", 0), ad: this.fin.set.ad || { method:"fixed", a:0 }, delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: "val", retVal: n("fin-ret", 0), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: this.fin.set.profMode || "pct", profVal: this.fin.set.profVal == null ? 30 : this.fin.set.profVal };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
   /* ════════ استيراد كشف دفع ياليدين: أرقام فعلية لكل طرد (توصيل، إرجاع، COD، تأمين) تحلّ محلّ التقدير ════════ */
@@ -5954,10 +5955,9 @@ const Admin = {
     return Math.round(base * ((Number(S.delVal) || 0) / 100));
   },
   insCost(price){ const S = this.fin.set; return S.insMode === "val" ? (Number(S.insVal) || 0) : Math.round(price * (Number(S.insVal) || 0) / 100); },
-  /* رسم الإرجاع عند ياليدين 250 دج ثابتة (لا يُحسب معه رسم التوصيل)؛ يُحترم رقم يدخله المستخدم في الإعدادات بنمط «مبلغ» فقط */
   retCo(o){ try{ const k = o ? this.orderCoKey(o) : ""; return k && k !== "none" ? k : ""; }catch(e){ return ""; } },
-  /* رقم «رسم الإرجاع» المضبوط لشركة الطلب في «شركات التوصيل ← إعداد» (مثلاً DHD = 50) يسبق الثابت 250؛ والثابت وغرامة التأخر خاصان بياليدين */
-  retCost(est, o){ const S = this.fin.set, k = this.retCo(o); if(k && k !== "yalidine"){ const c = ((this.deliveryCfg || {})[k] || {}).retFee, r = Number(c); if(c !== undefined && c !== null && c !== "" && isFinite(r) && r >= 0) return r; } return S.retMode === "val" && Number(S.retVal) > 0 ? Number(S.retVal) : 250; },
+  /* رقم «رسم الإرجاع» المضبوط لشركة الطلب في «شركات التوصيل ← إعداد» (مثلاً DHD = 50) ← قيمة الإعدادات ← 0 (لا ثابت مفترض)؛ وغرامة التأخر لياليدين */
+  retCost(est, o){ const S = this.fin.set, k = this.retCo(o); if(k){ const c = ((this.deliveryCfg || {})[k] || {}).retFee, r = Number(c); if(c !== undefined && c !== null && c !== "" && isFinite(r) && r >= 0) return r; } return S.retMode === "val" && Number(S.retVal) > 0 ? Number(S.retVal) : 0; },
   /* حساب الأرباح لكل منتج في فترة: livree = محقق، echec = خسارة (توصيل + إرجاع + تغليف؛ البضاعة تعود للمخزون)، confirmee/expediee = متوقع */
   /* تكلفة بند في الطلب: إن عُرّفت للمنتج «تكلفة عرض» لهذا العدد من القطع (مثلاً عرض 2+1 = علبتان + قارورة) تُستعمل كما هي، وإلا سعر الشراء × الكمية */
   lineCogs(slug, qty){ const oc = (this.fin && this.fin.oc && this.fin.oc[slug]) || null, q = Number(qty) || 0, v = oc ? oc[q] : undefined; if(v != null && v !== "" && isFinite(Number(v)) && Number(v) >= 0) return Number(v); return (Number(this.fin && this.fin.costs && this.fin.costs[slug]) || 0) * q; },
@@ -6693,7 +6693,7 @@ const Admin = {
     if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
     if(typeof AdminReturns !== "undefined" && AdminReturns.ensure && !AdminReturns.loaded()){ AdminReturns.ensure().then(()=>{ if(AdminReturns.items().length) this.renderFinance(true); }); }
     const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
-    if(!document.activeElement || !["fin-pack","fin-del","fin-ret","fin-ins","fin-low"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret-mode").value = S.retMode; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; }
+    if(!document.activeElement || !["fin-pack","fin-del","fin-ret","fin-ins","fin-low"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; }
     this.finExample(); this.renderAds();
     const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
     this.orders.forEach(o=>{ if(!["confirmee","expediee","livree"].includes(o.status) || !(new Date(o.date).getTime() >= since14)) return; this.orderLines(o).forEach(l=>{ sold14[l.p.slug] = (sold14[l.p.slug] || 0) + l.qty; }); });
