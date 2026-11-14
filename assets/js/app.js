@@ -361,7 +361,10 @@ function injectPixelBase(px){
     gtag("config", px.pixelId);
   }
 }
+/* داخل إطار نموذج صفحة الهبوط: إن كانت الصفحة الأم تتولّى البكسلات (lp-pixels.js) نمرّر الأحداث إليها بدل تحميل البكسل هنا (يمنع تكرار PageView والأحداث) */
+function __pxParent(){ try{ return window.parent !== window && /[?&]embed=1/.test(location.search) && window.parent.__pbPx === true; }catch(e){ return false; } }
 async function initPixels(){
+  if(__pxParent()){ window.__activePixels = []; window.__pxReady = true; const q0 = window.__pxq || []; window.__pxq = []; q0.forEach(x=>trackEvent(x[0], x[1])); return; }
   try{
     const pixels = await loadPixels();
     const slug = currentProductSlugFromUrl();
@@ -382,6 +385,7 @@ const __PX_EVENTS = {
 function trackEvent(name, d){
   if(!window.__pxReady){ (window.__pxq = window.__pxq || []).push([name, d]); return }
   d = d || {};
+  if(__pxParent()){ try{ window.parent.postMessage({ pbPx: { name, d: JSON.parse(JSON.stringify(d)) } }, location.origin); }catch(e){} return; }
   (window.__activePixels || []).forEach(px=>{
     try{
       const m = __PX_EVENTS[name]; if(!m) return;
@@ -398,6 +402,7 @@ function trackEvent(name, d){
 }
 /* يُستدعى عند نجاح تأكيد الطلب (زر «تأكيد الطلب») في initProduct أدناه */
 function firePixelPurchase(p, total, qty, orderId){
+  if(__pxParent()){ try{ window.parent.postMessage({ pbPx: { name: "Purchase", d: { slug: p && p.slug, title: p && p.title, value: total, qty, orderId } } }, location.origin); }catch(e){} return; }
   (window.__activePixels||[]).forEach(px=>{
     try{
       const currency = px.currency || "DZD";
