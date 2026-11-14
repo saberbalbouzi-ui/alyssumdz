@@ -226,7 +226,7 @@ _pilot_begin("s-marketplace")
 _theme_chunk('k = "nm"', 'hero = S(')
 ORG, RED = "#f97316", "#ef4444"
 thm = th
-m_rail = C([W("heading", text="الأقسام", tag="h3", fs=dm(18, 16), fw="900", ta={"d": "start"}, color="#0f172a", **anim("fadeUp")),
+m_rail = C([T("الأقسام", 18, "#0f172a", "start", fw="900", **anim("fadeUp")),
             W("bullets", items="إلكترونيات\nأزياء\nالمنزل والمطبخ\nجمال وعناية\nأطفال\nرياضة\nكتب\nسيارات", micon="ic:tag", mc=ORG, ms=dm(18), gap=dm(8), fs=dm(15, 15), color="#0f172a", **anim("fadeUp", .7, .1))],
            w=dm(18, 100), pad=dm([20, 18, 20, 18], [16, 14, 16, 14]), hm=False,
            fxs=[FX("قائمة الأقسام", "selector{background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,.06)}@media(max-width:1023px){selector{display:none}}")])
