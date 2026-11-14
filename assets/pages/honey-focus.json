@@ -1935,7 +1935,7 @@
      "id": "emnsx9h",
      "type": "text",
      "set": {
-      "html": "<h2>اطلب <span style=\"color:#f39a18\">الآن</span> · الدفع عند الاستلام</h2>",
+      "html": "<h2>اطلب الآن · الدفع عند الاستلام</h2>",
       "fs": {
        "d": 48,
        "m": 18,
@@ -1998,8 +1998,8 @@
       "ta": {
        "d": "center"
       },
-      "color": "#ea1f1f",
-      "fw": "400",
+      "color": "#fafafa",
+      "fw": "700",
       "cls": "sub",
       "anim": "fadeUp",
       "animDur": 0.75,
@@ -2020,7 +2020,8 @@
        "d": 42,
        "m": 27
       },
-      "zi": 4
+      "zi": 4,
+      "colorF": true
      }
     },
     {
