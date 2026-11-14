@@ -85,6 +85,8 @@ const { chromium } = require("playwright");
   const r12 = await p.evaluate(async () => { const A = Admin; for (const id of ["wh-url", "wh-hint"]) if (!document.getElementById(id)) { const e = document.createElement("input"); e.id = id; document.body.appendChild(e); }
     A.editingDeliveryKey = "dhd"; await A.genWebhook(); const u = document.getElementById("wh-url").value, h = document.getElementById("wh-hint").value || document.getElementById("wh-hint").textContent; return { u, h }; });
   ok("رابط webhook لـ DHD يشير إلى دالة dhd-webhook مع السرّ ويشرح خطوات لوحتهم", /\/functions\/v1\/dhd-webhook\?s=[A-Za-z0-9_-]{8,}/.test(r12.u) && /Webhooks par/.test(r12.h), r12);
+  const r13 = await p.evaluate(() => { const A = Admin; A.deliveryCfg = Object.assign({}, A.deliveryCfg, { dhd: { enabled: true, isDefault: true, token: "T" } }); const h = A.fetchPricesButtonHtml(); return { prices: /جلب أسعار DHD Express/.test(h), desks: /مزامنة مكاتب Stop Desk من DHD Express/.test(h) }; });
+  ok("قسم DHD يظهر في «مصدر أسعار التوصيل»: جلب الأسعار ومزامنة مكاتب Stop Desk (المفتاح token)", r13.prices && r13.desks, r13);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
