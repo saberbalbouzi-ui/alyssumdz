@@ -7,7 +7,9 @@
     "conversionLabel": "",
     "currency": "DZD",
     "valueMode": "total",
-    "scope": "all",
+    "scope": [
+      "tarkiz"
+    ],
     "active": true
   }
 ]
