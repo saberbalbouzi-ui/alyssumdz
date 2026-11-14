@@ -79,6 +79,12 @@ const { chromium } = require("playwright");
     [...document.querySelectorAll("#ship-raw-chips button")].find(b => /Vers Station/.test(b.textContent)).click(); const rows1 = document.querySelectorAll("#ship-table tr[data-trk]").length;
     [...document.querySelectorAll("#ship-raw-chips button")][0].click(); const rows2 = document.querySelectorAll("#ship-table tr[data-trk]").length; return { chips, rows0, rows1, rows2 }; });
   ok("حالات تتبع DHD تظهر أزرار تصفية بعدّادها وتصفّي الجدول", r10.chips.length === 3 && /كل الحالات 3/.test(r10.chips[0]) && r10.chips.some(c => /Vers Station 2/.test(c)) && r10.rows0 === 3 && r10.rows1 === 2 && r10.rows2 === 3, r10);
+  const r11 = await p.evaluate(() => { const co = Admin.allDeliveryCompanies().dhd, P = a => co.parseStatus({ activity: a.map(s => ({ status: s })) }); const old2new = ["order_information_received_by_carrier", "notification_on_order", "prete_a_expedier", "vers_hub"], rev = old2new.slice().reverse();
+    return { a: P(old2new), b: P(rev), c: P(["order_information_received_by_carrier", "vers_hub", "en_hub", "vers_wilaya", "en_livraison"]), d: P(["en_livraison", "livre_non_encaisse"]), e: P(["notification_on_order"]), f: co.parseStatus({ status: "En Station" }), g: P(["vers_hub", "retour_recu"]) }; });
+  ok("الحالة الحالية = الأبعد تقدماً بأي ترتيب للسجل (لا أول حدث)", r11.a === "vers_hub" && r11.b === "vers_hub" && r11.c === "en_livraison" && r11.d === "livre_non_encaisse" && r11.e === "" && r11.f === "En Station" && r11.g === "retour_recu", r11);
+  const r12 = await p.evaluate(async () => { const A = Admin; for (const id of ["wh-url", "wh-hint"]) if (!document.getElementById(id)) { const e = document.createElement("input"); e.id = id; document.body.appendChild(e); }
+    A.editingDeliveryKey = "dhd"; await A.genWebhook(); const u = document.getElementById("wh-url").value, h = document.getElementById("wh-hint").value || document.getElementById("wh-hint").textContent; return { u, h }; });
+  ok("رابط webhook لـ DHD يشير إلى دالة dhd-webhook مع السرّ ويشرح خطوات لوحتهم", /\/functions\/v1\/dhd-webhook\?s=[A-Za-z0-9_-]{8,}/.test(r12.u) && /Webhooks par/.test(r12.h), r12);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
