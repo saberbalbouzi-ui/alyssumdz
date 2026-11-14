@@ -1,0 +1,433 @@
+{
+ "phase": "12B.1-closure",
+ "suite": "supabase-contract+manual-id (vm)",
+ "status": "PARTIAL: خادم Supabase/PostgREST وهمي؛ الحقيقي BLOCKED",
+ "date": "2026-11-14",
+ "pass": 56,
+ "fail": 0,
+ "results": [
+  {
+   "n": "[SB-RPC] 200 + نص معرّف صالح من RPC المحدَّد ← CONFIRMED",
+   "pass": true,
+   "x": {
+    "state": "CONFIRMED",
+    "id": "S261113-3D323D5C",
+    "err": "",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + نص فارغ \"\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "missing_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + جسم فارغ تماماً ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "bad_body",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + نص مشوَّه \"hello\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + نص مشوَّه \"S26-AB\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + نص مشوَّه \"S261113-ZZ!!ZZ\" ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + نص مشوَّه \"xxxxxxxxxxxxxxxxxxxxxxx ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + نص مشوَّه \"<b>S261113-3D323D5C</b> ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + نص مشوَّه \"S261113-3D323D5C\\n; dro ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "invalid_id",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + JSON غير متوقع (كائن {ok:true,id}) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_shape",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + JSON غير متوقع (مصفوفة) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_shape",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + JSON غير متوقع (رقم) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_shape",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + JSON غير متوقع (null) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_shape",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + JSON غير متوقع (كائن {id}) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_shape",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + JSON غير متوقع (صف جدول) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_shape",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + JSON تالف ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "bad_body",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 204 بلا جسم ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "bad_body",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + معرّف صالح لكن الردّ من RPC آخر (ليس submit_order) ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_origin",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] 200 + إعادة توجيه ← INVALID_RESPONSE",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "unexpected_origin",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 401 (JWT expired) ← REJECTED، بلا نجاح، محاولة واحدة",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 403 (permission denied) ← REJECTED، بلا نجاح، محاولة واحدة",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 409 (duplicate key value vi) ← REJECTED، بلا نجاح، محاولة واحدة",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 422 (invalid) ← REJECTED، بلا نجاح، محاولة واحدة",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 429 (rate_limited) ← REJECTED، بلا نجاح، محاولة واحدة",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 400 (invalid_phone) ← REJECTED، بلا نجاح، محاولة واحدة",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 400 (idempotency_key_reuse) ← REJECTED، بلا نجاح، محاولة واحدة",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "calls": 1
+   }
+  },
+  {
+   "n": "[SB-RPC] HTTP 500 ← SERVER_ERROR بلا نجاح",
+   "pass": true
+  },
+  {
+   "n": "[SB-RPC] HTTP 502 ← SERVER_ERROR بلا نجاح",
+   "pass": true
+  },
+  {
+   "n": "[SB-RPC] HTTP 503 ← SERVER_ERROR بلا نجاح",
+   "pass": true
+  },
+  {
+   "n": "[SB-RPC] 400 try_again (استنفاد تصادم المعرّف) ← SERVER_ERROR قابل للإعادة لا رفض",
+   "pass": true
+  },
+  {
+   "n": "[SB-قطع] المعاملة نُفِّذت ثم ضاع الردّ ← UNKNOWN (لا نجاح) ومحاولة واحدة (SB_IDEMPOTENT=false) وطلب واحد في الخادم",
+   "pass": true,
+   "x": {
+    "state": "UNKNOWN",
+    "orders": 1,
+    "safeRetry": false
+   }
+  },
+  {
+   "n": "[SB-قطع] إعادة بنفس المفتاح (الدالة المحدَّثة) ← معرّف الطلب الأصلي ذاته بلا طلب ثانٍ",
+   "pass": true,
+   "x": {
+    "id": "S261113-00000001",
+    "orders": 1,
+    "same_key": true
+   }
+  },
+  {
+   "n": "[SB-قطع] مع SB_IDEMPOTENT=true: إعادة تلقائية بنفس المفتاح تعيد الأصل وطلب واحد فقط",
+   "pass": true,
+   "x": {
+    "calls": 2,
+    "orders": 1
+   }
+  },
+  {
+   "n": "[SB-مفتاح] نجاح يمسح المفتاح؛ تغيير الإجمالي يعطي مفتاحاً جديداً",
+   "pass": true
+  },
+  {
+   "n": "[SB-مفتاح] محتوى مختلف ← مفتاح مختلف وطلب جديد",
+   "pass": true
+  },
+  {
+   "n": "[SB-مفتاح] نفس المفتاح بمحتوى مختلف ← الدالة ترفض idempotency_key_reuse والعميل يصنّفه REJECTED",
+   "pass": true
+  },
+  {
+   "n": "[SB] الحمولة تحمل idem (32 hex) في p.idem",
+   "pass": true
+  },
+  {
+   "n": "[SB] UNKNOWN بلا إعادة آمنة ← safeRetry=false (واجهة المتجر تخفي «إعادة المحاولة» وتنهى عن طلب جديد)",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-SB] نجاح: يُقرأ الصف المحفوظ ويُطابق (معرّف+اسم+هاتف+مجموع)؛ idOrigin=client ولا adminFetch",
+   "pass": true,
+   "x": {
+    "id": "M261114-2410CCED30",
+    "origin": "client"
+   }
+  },
+  {
+   "n": "[يدوي-SB] 500 ← SERVER_ERROR بلا نجاح ولا معرّف معروض كمسجَّل",
+   "pass": true,
+   "x": {
+    "state": "SERVER_ERROR",
+    "id": "",
+    "err": "boom"
+   }
+  },
+  {
+   "n": "[يدوي-SB] 503 ← SERVER_ERROR بلا نجاح ولا معرّف معروض كمسجَّل",
+   "pass": true,
+   "x": {
+    "state": "SERVER_ERROR",
+    "id": "",
+    "err": "boom"
+   }
+  },
+  {
+   "n": "[يدوي-SB] صفّ مُدرَج غير مُعاد ([]) ← INVALID_RESPONSE بلا نجاح ولا معرّف معروض كمسجَّل",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "row_mismatch"
+   }
+  },
+  {
+   "n": "[يدوي-SB] جسم فارغ بعد 201 ← INVALID_RESPONSE بلا نجاح ولا معرّف معروض كمسجَّل",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "no_row_returned"
+   }
+  },
+  {
+   "n": "[يدوي-SB] ردّ كائن بدل مصفوفة ← INVALID_RESPONSE بلا نجاح ولا معرّف معروض كمسجَّل",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "no_row_returned"
+   }
+  },
+  {
+   "n": "[يدوي-SB] صف بمحتوى مختلف (إجمالي) ← INVALID_RESPONSE بلا نجاح ولا معرّف معروض كمسجَّل",
+   "pass": true,
+   "x": {
+    "state": "INVALID_RESPONSE",
+    "id": "",
+    "err": "row_mismatch"
+   }
+  },
+  {
+   "n": "[يدوي-SB] HTTP 401 ← REJECTED بلا نجاح",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-SB] HTTP 403 ← REJECTED بلا نجاح",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-SB] HTTP 422 ← REJECTED بلا نجاح",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-SB] بلا جلسة مدير ← REJECTED unauthorized ولا طلب شبكة",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-SB] ضاع الردّ بعد الإدراج ← UNKNOWN (لا معرّف مختلق)",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-SB] إعادة المحاولة تستعمل المعرّف نفسه ← 409 ← قراءة ← DUPLICATE_CONFIRMED وصف واحد في القاعدة",
+   "pass": true,
+   "x": {
+    "state": "DUPLICATE_CONFIRMED",
+    "rows": 1,
+    "id": "M261114-73E7FA06D6"
+   }
+  },
+  {
+   "n": "[يدوي-SB] محتوى مختلف ← معرّف جديد وصف جديد (لا اصطدام بمفتاح قديم)",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-SB] 409 والصف الموجود بمحتوى مختلف ← REJECTED id_conflict (لا DUPLICATE كاذب)",
+   "pass": true,
+   "x": {
+    "state": "REJECTED",
+    "err": "id_conflict"
+   }
+  },
+  {
+   "n": "[يدوي-SB] 409 ثم تعذّر القراءة التأكيدية ← UNKNOWN (لا نجاح)",
+   "pass": true
+  },
+  {
+   "n": "[يدوي-Sheets] UNKNOWN بلا معرّف مختلق",
+   "pass": true
+  },
+  {
+   "n": "[يدوي] لا معرّف بديل مختلق في واجهة اللوحة (لا Date.now() لبناء معرّف)",
+   "pass": true
+  }
+ ]
+}

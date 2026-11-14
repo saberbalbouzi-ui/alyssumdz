@@ -2035,9 +2035,10 @@ const Guard = {
     invalid_name:"الاسم غير صالح — تأكد منه ثم أعد الإرسال.", invalid_items:"سلة الطلب غير صالحة — أعد اختيار المنتج ثم أعد الإرسال.", invalid_total:"قيمة الطلب غير صالحة — أعد المحاولة بعد تحديث الصفحة.", idempotency_key_reuse:"تغيّر محتوى الطلب بعد محاولة سابقة — أعد الإرسال.", invalid_idem:"تعذّر إرسال الطلب. أعد تحميل الصفحة وحاول مرة أخرى.", secure_random_unavailable:"متصفحك لا يدعم الإرسال الآمن — جرّب متصفحاً أحدث." },
   /* رسائل الحالات غير المؤكَّدة (12B.1): لا نقول «سُجّل» ولا نطلب طلباً جديداً؛ الإعادة بنفس الطلب آمنة (لا تكرار) */
   MSGS: { UNKNOWN:"تعذّر الحصول على تأكيد بتسجيل طلبك. قد يكون وصلنا وقد لا يكون — لا ترسل طلباً جديداً. اضغط «إعادة المحاولة» (تعيد إرسال الطلب نفسه ولا تُنشئ طلباً مكرراً).", SERVER_ERROR:"الخادم يواجه عطلاً مؤقتاً ولم يؤكد تسجيل طلبك. أعد المحاولة بعد لحظات (نفس الطلب، بلا تكرار).", INVALID_RESPONSE:"ردّ الخادم غير مفهوم ولم يُؤكَّد تسجيل طلبك. أعد المحاولة بعد لحظات (نفس الطلب، بلا تكرار)." },
+  NOSAFE:"لم يُؤكَّد تسجيل طلبك، وقد يكون وصلنا. لا ترسل طلباً جديداً قبل التأكد: راسلنا على واتساب (رسالة فقط) لنتأكد من حالة طلبك. بياناتك محفوظة في النموذج.",
   UNVERIFIABLE:"هذا المتجر لا يستطيع تأكيد تسجيل الطلب تلقائياً. أُرسل طلبك للتسجيل لكن لم يصلنا تأكيد — راسلنا على واتساب (رسالة فقط) للتأكد.",
   /* يعرض نتيجة غير ناجحة: REJECTED ← رسالة سبب قصيرة (بيانات النموذج باقية)؛ غير المؤكَّد ← نافذة صريحة بإعادة محاولة بنفس المفتاح ورابط واتساب «رسالة فقط» */
-  fail(gr, ctx){ ctx = ctx || {}; if(!gr || gr.ok) return; if(gr.state === "REJECTED"){ toast(gr.msg); return; } Thanks.fail({ state: gr.state, msg: gr.msg, retry: ctx.retry, wa: ctx.wa, id: "" }); },
+  fail(gr, ctx){ ctx = ctx || {}; if(!gr || gr.ok) return; if(gr.state === "REJECTED"){ toast(gr.msg); return; } Thanks.fail({ state: gr.state, msg: gr.msg, retry: gr.safeRetry === false ? null : ctx.retry, wa: ctx.wa, id: "" }); },
   async init(g){
     this.cfg = g || {}; if(!this.active()) return;
     if(this.cfg.antibot){
@@ -2068,7 +2069,8 @@ const Guard = {
       return { ok:true, state: res.state, id: res.id, duplicate: res.state === "DUPLICATE_CONFIRMED" };
     }
     if(res.state === "REJECTED"){ if(res.error === "bot") this.refreshToken(); return { ok:false, state:"REJECTED", error: res.error, retryable: !!res.retryable, msg: this.MSG[res.error] || ("رفض الخادم الطلب (" + (res.error || "خطأ") + ") ولم يُسجَّل. راجع بياناتك ثم أعد المحاولة.") }; }
-    return { ok:false, state: res.state, error: res.error, retryable:true, msg: res.error === "unverifiable_backend" ? this.UNVERIFIABLE : this.MSGS[res.state] };
+    const safe = res.safeRetry !== false && res.error !== "unverifiable_backend";   // الإعادة «الآمنة» تُعرض فقط حيث يضمن الخادم عدم التكرار (PHP أو Supabase بمفتاح مفعَّل)
+    return { ok:false, state: res.state, error: res.error, retryable: safe, safeRetry: safe, msg: res.error === "unverifiable_backend" ? this.UNVERIFIABLE : (safe ? this.MSGS[res.state] : this.NOSAFE) };
   },
   openWa(url, pre){ if(pre){ try{ pre.location.href = url; return; }catch(e){} } open(url, "_blank"); },
 };

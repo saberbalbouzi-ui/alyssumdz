@@ -158,7 +158,7 @@
     try {
       /* 12B.1: لا نجاح بلا تأكيد خادم + رقم طلب صالح (لا مسار إرسال بلا انتظار) */
       var g = (typeof Guard !== "undefined") ? await Guard.submit(order) : await API.submitOrderTruth(order).then(function (r) { return { ok: r.ok, id: r.id, state: r.state, msg: r.ok ? "" : "لم يُؤكَّد تسجيل الطلب — أعد المحاولة (لن يتكرر)" }; });
-      if (!g.ok) return { ok: false, msg: g.msg || "لم يُؤكَّد تسجيل الطلب", state: g.state };
+      if (!g.ok) return { ok: false, state: g.state, msg: (g.state === "REJECTED" || g.safeRetry === false) ? (g.msg || "لم يُؤكَّد تسجيل الطلب الإضافي") : "لم يُؤكَّد تسجيل الطلب الإضافي — اضغط «نعم، أضفه إلى طلبي» مجدداً (نفس الطلب، بلا تكرار)" };
       try { if (typeof trackEvent === "function") trackEvent("Lead", { slug: c.product.slug, title: c.product.title, qty: 1, value: c.price }); } catch (e) { }
       return { ok: true, id: g.id };
     } catch (e) { return { ok: false, msg: "تعذّر إرسال الطلب" }; }

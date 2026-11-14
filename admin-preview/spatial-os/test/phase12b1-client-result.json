@@ -659,7 +659,7 @@
    "n": "[PII] لا اسم ولا هاتف ولا عنوان في التخزين (تجزئات مملّحة فقط)",
    "pass": true,
    "x": {
-    "store": "[[\"alyssum_idem_salt\",\"d4cdc70deb1e4b05854f7d75d2f4e7d8\"],[\"alyssum_idem_3628a8e162cdb49eb11016d16f2dc0d73329f8001faa043"
+    "store": "[[\"alyssum_idem_salt\",\"28c27156be06497cbd8c75de08472ac4\"],[\"alyssum_idem_020508943a4ae3567cae2429f2be82b92e4ddaef91d125c"
    }
   },
   {
@@ -760,14 +760,14 @@
    "pass": true
   },
   {
-   "n": "[addOrder] supabase: يُقرأ الصف المُدرَج للتأكيد؛ المعرّف عشوائي آمن (10 hex)",
+   "n": "[addOrder] supabase: يُقرأ الصف المُدرَج للتأكيد؛ المعرّف عميلي من المفتاح الآمن (10 hex) ويُوسَم idOrigin=client",
    "pass": true,
    "x": {
-    "id": "M261114-FC47FECD25"
+    "id": "M261114-2912C77E11"
    }
   },
   {
-   "n": "[addOrder] supabase: ردّ بلا الصف المُدرَج ← INVALID_RESPONSE لا نجاح",
+   "n": "[addOrder] supabase: ردّ بلا الصف المُدرَج ← INVALID_RESPONSE لا نجاح (تغطية أوسع في phase12b1c-client)",
    "pass": true
   }
  ]

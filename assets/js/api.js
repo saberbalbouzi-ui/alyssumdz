@@ -16,7 +16,7 @@ const OrderTruth = (() => {
     if (t) { try { j = JSON.parse(t); parsed = true; } catch (_) { } }
     const code = x => (x && typeof x === "object" && typeof x.error === "string" && x.error) ? x.error : (x && typeof x === "object" && typeof x.message === "string" ? x.message : "");
     if (status >= 200 && status < 300) {
-      if (backend === "supabase" && parsed && typeof j === "string") return ID_RX.test(j.trim()) ? res(ST.CONFIRMED, { id: j.trim(), status }) : res(ST.INVALID_RESPONSE, { status, error: "invalid_id" });
+      if (backend === "supabase") return classifySb(status, text);
       if (!parsed || j === null || typeof j !== "object" || Array.isArray(j)) return res(ST.INVALID_RESPONSE, { status, error: "bad_body" });
       if (j.ok === false) return (typeof j.error === "string" && j.error) ? res(ST.REJECTED, { status, error: j.error }) : res(ST.INVALID_RESPONSE, { status, error: "ok_false_no_error" });
       if (j.ok !== true) return res(ST.INVALID_RESPONSE, { status, error: "no_success_flag" });
@@ -27,6 +27,25 @@ const OrderTruth = (() => {
     }
     if (status >= 400 && status < 500) return res(ST.REJECTED, { status, error: (parsed && code(j)) || ("http_" + status), retryable: status === 429 || status === 408 });
     if (status >= 500 && status < 600) return res(ST.SERVER_ERROR, { status, error: (parsed && code(j)) || ("http_" + status), retryable: status === 500 || status === 502 || status === 503 || status === 504 });
+    return res(ST.INVALID_RESPONSE, { status, error: "unexpected_status" });
+  }
+  /* ── عقد Supabase (مستقل عن عقد PHP) ──
+     الدالة public.submit_order(p jsonb) returns text تعيد نص معرّف الطلب فقط (PostgREST: HTTP 200 وجسم JSON نصّي مثل "S261113-3D323D5C").
+     لا يوجد حقل ok ولا duplicate: إعادة الطلب بنفس المفتاح تعيد معرّف الطلب الأصلي نفسه (⇒ CONFIRMED بالمعرّف الأصلي؛ لا تمييز عميل لـ«تكرار» هنا).
+     أخطاء الدالة (raise exception) تصل HTTP 400 بجسم {code,message,...} (message = رمز الخطأ مثل invalid_phone)؛ 401/403 صلاحيات/JWT؛ 409 تعارض قيد؛ 5xx عطل.
+     النجاح: 2xx + جسم JSON نصّي فقط (كائن/مصفوفة/رقم/فارغ/مشوَّه ≠ نجاح) + معرّف مطابق للصيغة المعتمدة. try_again (استنفاد محاولات التصادم) عطل مؤقت لا رفض. */
+  function classifySb(status, text) {
+    status = +status || 0; let j, parsed = false; const t = typeof text === "string" ? text.trim() : "";
+    if (t) { try { j = JSON.parse(t); parsed = true; } catch (_) { } }
+    const code = x => (x && typeof x === "object" && !Array.isArray(x)) ? (typeof x.message === "string" && x.message ? x.message : (typeof x.error === "string" ? x.error : "")) : "";
+    if (status >= 200 && status < 300) {
+      if (!parsed) return res(ST.INVALID_RESPONSE, { status, error: "bad_body" });
+      if (typeof j !== "string") return res(ST.INVALID_RESPONSE, { status, error: "unexpected_shape" });
+      const id = j.trim(); return ID_RX.test(id) ? res(ST.CONFIRMED, { id, status }) : res(ST.INVALID_RESPONSE, { status, error: id ? "invalid_id" : "missing_id" });
+    }
+    const c = (parsed && code(j)) || ("http_" + status);
+    if (status >= 400 && status < 500) { if (c === "try_again") return res(ST.SERVER_ERROR, { status, error: c, retryable: true }); return res(ST.REJECTED, { status, error: c, retryable: status === 429 || status === 408 }); }
+    if (status >= 500 && status < 600) return res(ST.SERVER_ERROR, { status, error: c, retryable: status === 500 || status === 502 || status === 503 || status === 504 });
     return res(ST.INVALID_RESPONSE, { status, error: "unexpected_status" });
   }
   /* ── البصمة القانونية ── */
@@ -75,7 +94,7 @@ const OrderTruth = (() => {
     return { key: v.k, slot, reused };
   }
   const done = slot => { if (slot) st.del(slot); };
-  return { STATES: ST, ID_RX, TTL_MS: TTL, classify, canon, sha256Hex, sha256js, secureKey, keyFor, done, purge, okState, res };
+  return { STATES: ST, ID_RX, TTL_MS: TTL, classify, classifySb, canon, sha256Hex, sha256js, secureKey, keyFor, done, purge, okState, res };
 })();
 const API = {
   liveProducts: null,
@@ -151,7 +170,12 @@ const API = {
   /* طلب واحد بمهلة: يعيد {status,text} أو {net:true,err}. لا يحوّل أي فشل إلى نجاح. */
   async _postOnce(url, headers, bodyStr, ms) {
     const ac = typeof AbortController !== "undefined" ? new AbortController() : null, t = ac ? setTimeout(() => ac.abort(), ms || this.orderTimeout || 15000) : 0;
-    try { const r = await fetch(url, { method: "POST", headers, body: bodyStr, credentials: "same-origin", signal: ac ? ac.signal : undefined }); let text = ""; try { text = typeof r.text === "function" ? await r.text() : JSON.stringify(await r.json()); } catch (e) { text = ""; } return { status: r.status, text }; }
+    try { const r = await fetch(url, { method: "POST", headers, body: bodyStr, credentials: "same-origin", signal: ac ? ac.signal : undefined }); let text = ""; try { text = typeof r.text === "function" ? await r.text() : JSON.stringify(await r.json()); } catch (e) { text = ""; } return { status: r.status, text, url: String(r.url || ""), redirected: r.redirected === true }; }
+    catch (e) { return { net: true, err: (e && e.name === "AbortError") ? "timeout" : "network" }; } finally { if (t) clearTimeout(t); }
+  },
+  async _getRows(url, headers, ms) {
+    const ac = typeof AbortController !== "undefined" ? new AbortController() : null, t = ac ? setTimeout(() => ac.abort(), ms || this.orderTimeout || 15000) : 0;
+    try { const r = await fetch(url, { method: "GET", headers, credentials: "same-origin", signal: ac ? ac.signal : undefined }); if (!r.ok) return { rows: null, status: r.status }; let j = null; try { j = JSON.parse(await r.text()); } catch (e) { } return { rows: Array.isArray(j) ? j : null, status: r.status }; }
     catch (e) { return { net: true, err: (e && e.name === "AbortError") ? "timeout" : "network" }; } finally { if (t) clearTimeout(t); }
   },
   /* مفتاح idempotency الحالي لهذا الطلب (للمرجع المستقر في مرآة المنصة)؛ "" إن تعذّرت العشوائية الآمنة */
@@ -164,6 +188,7 @@ const API = {
     if (backend === "php") r = await this._submitPhp(body, ik);
     else if (backend === "supabase" || backend === "both") { if (backend === "both") this.post({ type: "order", order }); r = await this._submitSb(body, ik); }
     else { this.post({ type: "order", order }); r = T.res(T.STATES.UNKNOWN, { error: "unverifiable_backend" }); }   /* Google Sheets (no-cors): الردّ معتم ← لا إثبات ممكن */
+    r.idOrigin = r.ok ? "server" : ""; if (r.safeRetry === undefined) r.safeRetry = backend === "php";   /* المعرّف يولّده الخادم (PHP/دالة SQL)؛ الإعادة الآمنة مضمونة على PHP فقط */
     r.key = ik.key; r.backend = backend; if (r.state === T.STATES.CONFIRMED || r.state === T.STATES.DUPLICATE_CONFIRMED || r.state === T.STATES.REJECTED) T.done(ik.slot);
     return r;
   },
@@ -185,13 +210,16 @@ const API = {
     const T = OrderTruth, auto = typeof CONFIG !== "undefined" && CONFIG && CONFIG.SB_IDEMPOTENT === true, MAX = auto ? 3 : 1; let uncertain = false, last = null;
     for (let a = 0; a < MAX; a++) {
       const o = await this._postOnce(this.sb.url("/rest/v1/rpc/submit_order"), this.sb.headers(), JSON.stringify({ p: Object.assign({}, body, { idem: ik.key }) }));
-      last = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "supabase");
+      if (o.net) last = T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true });
+      else if (o.redirected || (o.url && !/\/rest\/v1\/rpc\/submit_order(\?|$)/.test(o.url))) last = T.res(T.STATES.INVALID_RESPONSE, { status: o.status, error: "unexpected_origin" });   /* الردّ ليس من RPC submit_order المحدَّد */
+      else last = T.classifySb(o.status, o.text);
       if (last.state === T.STATES.UNKNOWN) uncertain = true;
       if (!(last.state === T.STATES.UNKNOWN || (last.state === T.STATES.SERVER_ERROR && last.retryable)) || a === MAX - 1) break;
       await new Promise(rs => setTimeout(rs, 400 * (a + 1)));
     }
     if (uncertain && (last.state === T.STATES.SERVER_ERROR || last.state === T.STATES.INVALID_RESPONSE)) last = T.res(T.STATES.UNKNOWN, { error: last.error, status: last.status, retryable: true });
-    return last;
+    /* الإعادة «الآمنة» تشترط أن الدالة المنشورة تعرف المفتاح (schema المحدَّث)؛ لا نفترض ذلك ما لم يُفعَّل CONFIG.SB_IDEMPOTENT */
+    last.safeRetry = auto; return last;
   },
   /* واجهتان قديمتان تبقيان للتوافق وتعيدان الآن نتيجة العقد (لا فرع نجاح مفترض بلا انتظار) */
   submitOrder(order) { return this.submitOrderTruth(order); },
@@ -440,13 +468,30 @@ const API = {
         const r = o.net ? T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true }) : T.classify(o.status, o.text, "php"); if (r.state !== T.STATES.UNKNOWN && r.state !== T.STATES.SERVER_ERROR && r.state !== T.STATES.INVALID_RESPONSE) T.done(ik.slot); return r; }
       const b = this.ordersBackend();
       if (b !== "sheets" && this.sb.enabled()) {
-        let id; try { const d = new Date(), hx = T.secureKey().slice(0, 10).toUpperCase(); id = "M" + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "-" + hx; } catch (e) { return T.res(T.STATES.REJECTED, { error: "secure_random_unavailable" }); }
+        /* Supabase: معرّف الطلب اليدوي يولّده **العميل** (لا الخادم) من مفتاح idempotency العشوائي الآمن ⇒ إعادة المحاولة بعد ضياع الردّ تستعمل المعرّف نفسه فتصطدم بالمفتاح الأساسي (409) ولا تُنشئ صفاً ثانياً.
+           لا نجاح إلا بقراءة الصف المحفوظ والتحقق من معرّفه ومحتواه الأساسي؛ والنتيجة تحمل idOrigin:"client". (حدّ معروف: إعادة بعد منتصف الليل تغيّر بادئة التاريخ ← معرّف آخر؛ نافذة المفتاح 30 دقيقة.) */
+        let ik; try { ik = await T.keyFor(ord); } catch (e) { return T.res(T.STATES.REJECTED, { error: "secure_random_unavailable" }); }
+        const d = new Date(), id = "M" + String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0") + "-" + ik.key.slice(0, 10).toUpperCase();
+        if (!T.ID_RX.test(id)) return T.res(T.STATES.REJECTED, { error: "invalid_local_id" });
         const row = { id, name: order.name, phone: order.phone, wilaya: order.wilaya || null, commune: order.commune || null, dtype: order.dtype || null, desk: order.desk || null, items: order.items || [], items_text: (order.items || []).map(l => l.title + " ×" + l.qty + " = " + Math.round(l.qty * l.price) + " DA").join("\n"), subtotal: order.subtotal || 0, fee: order.fee || 0, total: order.total || 0, coupon: null, discount: order.discount || 0, extra: order.extra || {}, status: "nouvelle", note: order.note || "" };
-        const r = await this.sb.adminFetch("/rest/v1/orders", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(row) });
-        if (r === null) return T.res(T.STATES.UNKNOWN, { error: "no_confirmation", retryable: false });   /* adminFetch يخفي رمز HTTP: لا نخمّن */
-        const back = Array.isArray(r) ? r[0] : null; return (back && back.id === id && T.ID_RX.test(id)) ? T.res(T.STATES.CONFIRMED, { id, status: 201 }) : T.res(T.STATES.INVALID_RESPONSE, { error: "no_row_returned" });
+        const same = x => !!x && typeof x === "object" && x.id === id && String(x.name || "").trim() === String(row.name || "").trim() && String(x.phone || "") === String(row.phone || "") && Number(x.total) === Number(row.total) && Number(x.subtotal) === Number(row.subtotal);
+        const rows = txt => { try { const j = JSON.parse(txt); return Array.isArray(j) ? j : null; } catch (e) { return null; } };
+        const tok = await this.sb.token(); if (!tok) return T.res(T.STATES.REJECTED, { error: "unauthorized", status: 401 });   /* لا جلسة مدير ← لم يُرسَل شيء */
+        const H = this.sb.headers(tok); let r;
+        const o = await this._postOnce(this.sb.url("/rest/v1/orders"), Object.assign({}, H, { Prefer: "return=representation" }), JSON.stringify(row));
+        if (o.net) r = T.res(T.STATES.UNKNOWN, { error: o.err, retryable: true });
+        else if (o.redirected || (o.url && !/\/rest\/v1\/orders(\?|$)/.test(o.url))) r = T.res(T.STATES.INVALID_RESPONSE, { status: o.status, error: "unexpected_origin" });
+        else if (o.status >= 200 && o.status < 300) { const a = rows(o.text); r = (a && a.length === 1 && same(a[0])) ? T.res(T.STATES.CONFIRMED, { id, status: o.status }) : T.res(T.STATES.INVALID_RESPONSE, { status: o.status, error: a ? "row_mismatch" : "no_row_returned" }); }
+        else if (o.status === 409) {   /* المعرّف موجود: إن كان صفّنا نفسه (إعادة بعد ضياع الردّ) فهو تكرار مؤكَّد، وإلا تعارض حقيقي */
+          const g = await this._getRows(this.sb.url("/rest/v1/orders?id=eq." + encodeURIComponent(id) + "&select=id,name,phone,total,subtotal"), H);
+          r = g.net ? T.res(T.STATES.UNKNOWN, { error: g.err, retryable: true }) : (g.rows && g.rows.length === 1 && same(g.rows[0])) ? T.res(T.STATES.DUPLICATE_CONFIRMED, { id, status: 409 }) : T.res(T.STATES.REJECTED, { status: 409, error: "id_conflict" });
+        }
+        else { let msg = ""; try { const j = JSON.parse(o.text); msg = (j && (j.message || j.error)) || ""; } catch (e) { } r = o.status >= 400 && o.status < 500 ? T.res(T.STATES.REJECTED, { status: o.status, error: msg || ("http_" + o.status) }) : o.status >= 500 ? T.res(T.STATES.SERVER_ERROR, { status: o.status, error: msg || ("http_" + o.status), retryable: true }) : T.res(T.STATES.INVALID_RESPONSE, { status: o.status, error: "unexpected_status" }); }
+        r.idOrigin = r.ok ? "client" : ""; r.safeRetry = true;
+        if (r.state === T.STATES.CONFIRMED || r.state === T.STATES.DUPLICATE_CONFIRMED || r.state === T.STATES.REJECTED) T.done(ik.slot);
+        return r;
       }
-      this.post({ type: "order", order }); return T.res(T.STATES.UNKNOWN, { error: "unverifiable_backend" });
+      this.post({ type: "order", order }); return T.res(T.STATES.UNKNOWN, { error: "unverifiable_backend", safeRetry: false });
     } catch (e) { return T.res(T.STATES.UNKNOWN, { error: "network", retryable: true }); }
   },
   updateOrder(key, id, status, note) {
