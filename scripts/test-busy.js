@@ -21,6 +21,13 @@ const { chromium } = require("playwright");
   /* دالة تفشل: يختفي الشريط أيضاً */
   const f = await p.evaluate(async () => { Admin.syncDesksFromCompany = Admin.syncDesksFromCompany; let boxes = []; const orig = Admin.fetchCompanyPrices; Admin.courierFetch = async () => { throw new Error("boom"); }; try { document.querySelector("#tbox button[onclick*=fetchCompanyPrices]").click(); } catch (e) { } boxes.push(!!document.getElementById("busy-box")); await new Promise(r => setTimeout(r, 400)); boxes.push(!!document.getElementById("busy-box")); return boxes; });
   ok("جلب الأسعار: الشريط يظهر عند الضغط ويختفي بعد انتهاء العملية (حتى عند الفشل)", f[0] === true && f[1] === false, f);
+  /* زر واحد يبدأ عمليتين متداخلتين: شريط واحد فقط (لا تكرار) ويبقى حتى تنتهي الاثنتان */
+  const g = await p.evaluate(async () => { const A = Admin; try { Object.keys(localStorage).filter(k => /^alyssum_centers_v/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) { } A._centersMap = {};
+    let n = 0; A.courierFetch = async req => { n++; await new Promise(r => setTimeout(r, 30)); return { ok: true, status: 200, text: JSON.stringify(/get\/fees/.test(req.url) ? { livraison: [{ wilaya_id: 1, tarif: "900", tarif_stopdesk: "500" }] } : { "1": { nom: "A", has_stop_desk: 1, code_postal: "00" + n } }) }; };
+    const b = document.createElement("button"); b.setAttribute("onclick", "Admin.fetchCompanyPrices('dhd');Admin.syncDesksFromCompany('dhd')"); document.body.appendChild(b); b.click(); await new Promise(r => setTimeout(r, 300));
+    const pills = document.querySelectorAll(".busy-pill").length; return { pills }; });
+  ok("زر واحد يبدأ عمليتين: شريط واحد لا شريطان", g.pills === 1, g);
+  await p.waitForFunction(() => !document.getElementById("busy-box"), null, { timeout: 30000 });
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();

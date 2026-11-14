@@ -11,7 +11,8 @@
     publishProduct: ["جارٍ نشر المنتج"], publishCategory: ["جارٍ نشر التصنيف"], publishTheme: ["جارٍ نشر المظهر"], publishCheckout: ["جارٍ نشر إعدادات الطلب"], publishPixels: ["جارٍ نشر البيكسلات"], publishQA: ["جارٍ نشر الأسئلة"], publishCoupons: ["جارٍ نشر الأكواد"], publishStockNow: ["جارٍ نشر المخزون"], publishWilayasJs: ["جارٍ نشر الولايات"], publishDataJs: ["جارٍ نشر بيانات المتجر"],
     importOrders: ["جارٍ استيراد الطلبات", 1], exportOrdersToSheets: ["جارٍ تصدير الطلبات", 1], returnsSweep: ["جارٍ فحص المرتجعات", 1], importYdPayment: ["جارٍ استيراد المدفوعات", 1], ensureYdFees: ["جارٍ جلب أسعار الشركة", 1]
   };
-  const items = {}, order = []; let box = null, timer = null, inClick = false, seq = 0;
+  /* شريط واحد لكل ضغطة زر: ما يبدأه الزر من دوال متداخلة (تحديث الحالات ثم جلب الطرود…) ينضمّ إلى الشريط نفسه ويبقى حتى تنتهي كلها */
+  const groups = {}, order = []; let box = null, timer = null, inClick = false, seq = 0, clickId = 0, curClick = 0;
   const css = () => { if (document.getElementById("busy-css")) return; const s = document.createElement("style"); s.id = "busy-css";
     s.textContent = '#busy-box{position:fixed;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);z-index:100050;display:flex;flex-direction:column;gap:.4rem;align-items:center;max-width:calc(100vw - 24px);pointer-events:none}' +
       '.busy-pill{pointer-events:auto;display:flex;align-items:center;gap:.6rem;padding:.55rem 1rem;border-radius:999px;background:#0a1f16;color:#effe17;border:1.5px solid #5a7d12;box-shadow:0 8px 24px rgba(0,0,0,.45);font:800 .88rem/1.4 inherit;direction:rtl;max-width:100%}' +
@@ -22,22 +23,27 @@
   function draw() {
     if (!order.length) { if (box) { box.remove(); box = null; } if (timer) { clearInterval(timer); timer = null; } return; }
     css(); if (!box) { box = document.createElement("div"); box.id = "busy-box"; box.setAttribute("role", "status"); box.setAttribute("aria-live", "polite"); document.body.appendChild(box); }
-    const now = Date.now(); box.innerHTML = order.map(id => { const it = items[id], sec = Math.floor((now - it.t0) / 1000); return '<div class="busy-pill"><span class="busy-sp"></span><span>' + it.label.replace(/[<>&]/g, "") + '…</span><small>' + (it.detail ? it.detail.replace(/[<>&]/g, "") + " · " : "") + sec + ' ث</small></div>'; }).join("");
+    const now = Date.now(); box.innerHTML = order.map(id => { const it = groups[id], sec = Math.floor((now - it.t0) / 1000); return '<div class="busy-pill"><span class="busy-sp"></span><span>' + it.label.replace(/[<>&]/g, "") + '…</span><small>' + (it.detail ? it.detail.replace(/[<>&]/g, "") + " · " : "") + sec + ' ث</small></div>'; }).join("");
     if (!timer) timer = setInterval(draw, 1000);
   }
   const Busy = {
-    start(key, label) { const id = ++seq; items[id] = { key, label, t0: Date.now(), detail: "" }; order.push(id); draw(); return { id, end() { if (items[id]) { delete items[id]; const i = order.indexOf(id); if (i >= 0) order.splice(i, 1); draw(); } } }; },
-    tick(key, detail) { order.forEach(id => { if (items[id].key === key) items[id].detail = String(detail || ""); }); draw(); },
-    active(key) { return order.some(id => items[id].key === key); },
+    start(key, label) {
+      let gid = inClick ? curClick : (order.length ? order[order.length - 1] : 0); if (!gid) return null;
+      let g = groups[gid]; if (!g) { g = groups[gid] = { label, t0: Date.now(), detail: "", n: 0, keys: {} }; order.push(gid); }
+      g.n++; g.keys[key] = (g.keys[key] || 0) + 1; draw();
+      return { end() { if (!groups[gid]) return; g.n--; if (g.n <= 0) { delete groups[gid]; const k = order.indexOf(gid); if (k >= 0) order.splice(k, 1); } draw(); } };
+    },
+    tick(key, detail) { order.forEach(id => { if (groups[id].keys[key]) groups[id].detail = String(detail || ""); }); draw(); },
+    active(key) { return order.some(id => groups[id].keys[key]); },
     _L: L
   };
   window.Busy = Busy;
-  document.addEventListener("click", () => { inClick = true; setTimeout(() => { inClick = false; }, 0); }, true);
+  document.addEventListener("click", () => { inClick = true; curClick = ++clickId; setTimeout(() => { inClick = false; }, 0); }, true);
   function wrap(A) {
     Object.keys(L).forEach(k => { const f = A[k]; if (typeof f !== "function" || f.__busy) return; const [label, once] = L[k]; let flight = null;
       const w = function () {
         if (once && flight) { try { if (typeof toast === "function") toast("⏳ " + label + " — قيد التنفيذ بالفعل"); } catch (e) { } return flight; }
-        const show = inClick || order.length > 0; const h = show ? Busy.start(k, label) : null; let r;
+        const h = Busy.start(k, label); let r;
         const fin = () => { if (h) h.end(); flight = null; };
         try { r = f.apply(this, arguments); } catch (e) { fin(); throw e; }
         if (r && typeof r.then === "function") { const p = r.then(v => { fin(); return v; }, e => { fin(); throw e; }); if (once) flight = p; return p; }
