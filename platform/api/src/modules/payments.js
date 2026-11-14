@@ -124,8 +124,9 @@ export const payments = {
       const co = await db.one("SELECT id,order_id,amount,status FROM pay_checkouts WHERE tenant_id=? AND provider='chargily' AND ext_id=?", row.tenant_id, String(ev.data.id));
       if (!co) return ok({ ok: true, ignored: "unknown_checkout" });
       if (co.status === "paid") return ok({ ok: true, duplicate: true });       // المدفوع نهائي
-      const cur = String(ev.data.currency ?? "dzd").toLowerCase();      // الجلسة تُنشأ دائماً بالدينار؛ عملة أخرى (حتى بالمبلغ نفسه) ليست دفعاً للطلب
-      if (m[0] === "paid" && (cur !== "dzd" || Math.round(+ev.data.amount) !== co.amount)) { await ctx.emit(row.tenant_id, "payment.mismatch", { order_id: co.order_id, expected: co.amount, received: Math.round(+ev.data.amount) || 0, ...(cur !== "dzd" ? { currency: cur } : {}), provider: "chargily" }, `chargily:${ev.id ?? ev.data.id}:mismatch`); return ok({ ok: true, mismatch: true }); }
+      /* العملة إلزامية وصريحة لإشعار «مدفوع» (12C): نصّ غير فارغ يساوي "dzd" بعد تحويل الحالة فقط (بلا قصّ مسافات: « dzd » مرفوض). الغائب/null/الفارغ/غير النصّي/غير DZD ← لا تأكيد أبداً (الجلسة تُنشأ دائماً بالدينار). لا يُسجَّل في الحدث إلا رمز عملة قصير منقّى (لا الجسم ولا أي سرّ). */
+      const curRaw = ev.data.currency, curStr = typeof curRaw === "string" ? curRaw.toLowerCase() : "", curOk = curStr === "dzd", curSeen = typeof curRaw === "string" ? (curStr.replace(/[^a-z]/g, "").slice(0, 8) || "empty") : (curRaw == null ? "missing" : "invalid_type");
+      if (m[0] === "paid" && (!curOk || Math.round(+ev.data.amount) !== co.amount)) { await ctx.emit(row.tenant_id, "payment.mismatch", { order_id: co.order_id, expected: co.amount, received: Math.round(+ev.data.amount) || 0, ...(!curOk ? { currency: curSeen } : {}), provider: "chargily" }, `chargily:${ev.id ?? ev.data.id}:mismatch`); return ok({ ok: true, mismatch: true }); }
       await db.run("UPDATE pay_checkouts SET status=?, updated_at=? WHERE id=?", m[0], ctx.nowS(), co.id);
       const fresh = await ctx.emit(row.tenant_id, m[1], { order_id: co.order_id, amount: co.amount, currency: "DZD", provider: "chargily", checkout_id: String(ev.data.id) }, `chargily:${ev.id ?? ev.data.id}:${m[0]}`);
       if (fresh && m[0] === "paid") { try { await ctx.flush(row.tenant_id, `chargily:${ev.id ?? ev.data.id}:${m[0]}`); } catch { /* cron */ } }

@@ -26,7 +26,7 @@ await adm("PUT", `/admin/wallet/${A.id}/settings`, { fee_pct: 10 });
 await call("PUT", "/v1/integrations/chargily", { config: { mode: "test" }, secrets: { secret_key: "sk_test_abcdef" } }, A.key);
 const [, st] = await call("POST", "/v1/payments/setup", {}, A.key); const hook = st.webhook_url.split("/").pop();
 let chk = 0; fake.handler = (url) => /\/checkouts$/.test(url) ? (chk++, [200, { id: "chk_" + chk, checkout_url: "https://pay.chargily.net/test/checkouts/chk_" + chk }]) : [200, {}];
-const pay = async (oid, amount) => { await call("POST", "/v1/payments/checkouts", { order_id: oid, amount, success_url: "https://shop.example/ok" }, A.key); const id = "chk_" + chk, body = JSON.stringify({ id: "ev_" + id, type: "checkout.paid", data: { id, amount } }); await call("POST", `/v1/payments/hook/${hook}`, body, null, {}, { signature: createHmac("sha256", "sk_test_abcdef").update(body).digest("hex") }); await cron(); };
+const pay = async (oid, amount) => { await call("POST", "/v1/payments/checkouts", { order_id: oid, amount, success_url: "https://shop.example/ok" }, A.key); const id = "chk_" + chk, body = JSON.stringify({ id: "ev_" + id, type: "checkout.paid", data: { id, amount, currency: "dzd" } }); await call("POST", `/v1/payments/hook/${hook}`, body, null, {}, { signature: createHmac("sha256", "sk_test_abcdef").update(body).digest("hex") }); await cron(); };
 await pay("P1", 1000);
 let w = await bal(A.key); ok("P1 محجوز", w.escrow.DZD === 1000, w);
 await call("POST", "/v1/events", { type: "order.delivered", id: "P1", data: { order_id: "P1" } }, A.key); await cron();

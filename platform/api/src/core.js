@@ -157,10 +157,25 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       let res;
       if (rt.opts.idem && m !== "GET" && req.tenant && hd["idempotency-key"]) {
         const ik = String(hd["idempotency-key"]); if (ik.length > 80 || !/^[A-Za-z0-9._:-]{1,80}$/.test(ik)) throw new HttpError(400, "validation_error", "Idempotency-Key غير صالح");
-        const h = await sha256Hex(m + p + raw), ex = await db.one("SELECT * FROM pf_idem WHERE tenant_id=? AND k=?", req.tenant.id, ik);
-        if (ex) { if (ex.hash !== h) throw new HttpError(409, "idempotency_conflict", "المفتاح استُعمل لطلب مختلف"); return { status: ex.status, headers: { "Idempotent-Replayed": "true" }, body: ex.body }; }
-        res = await rt.handler(req, ctx);
-        if (res.status < 500 && typeof res.body === "string") await db.run("INSERT OR IGNORE INTO pf_idem (tenant_id,k,hash,status,body,at) VALUES (?,?,?,?,?,?)", req.tenant.id, ik, h, res.status, res.body, Math.floor(clock() / 1000));
+        /* ادّعاء ذرّي (12C): الخطوة الأولى INSERT OR IGNORE لسطر مطالبة status=0 على المفتاح الأساسي (tenant_id,k)؛ D1/SQLite تُسلسل الكتابة، فينجح (changes=1) طلب واحد فقط وهو وحده ينفّذ المعالج.
+           (النمط القديم SELECT ← المعالج ← INSERT كان check-then-act: كل المتزامنة ترى «لا مفتاح» وتنفّذ المعالج). لا يلزم ترحيل: status=0 قيمة جديدة في العمود نفسه، والأسطر القديمة (status≥200) تُعاد كما هي.
+           الخاسر: محتوى مختلف ← 409 idempotency_conflict؛ نفس المحتوى والمالك يعمل ← 409 idempotency_in_progress (+Retry-After)؛ بعد الإنجاز ← إعادة الردّ المخزَّن. مالك انهار (مطالبة أقدم من IDEM_CLAIM_TTL ثانية) ← استيلاء ذرّي بشرط التحديث. */
+        const h = await sha256Hex(m + p + raw), IDEM_CLAIM_TTL = 60, release = () => db.run("DELETE FROM pf_idem WHERE tenant_id=? AND k=? AND hash=? AND status=0", req.tenant.id, ik, h).catch(() => { });
+        let owned = false;
+        for (let tries = 0; tries < 3 && !owned; tries++) {
+          const now0 = Math.floor(clock() / 1000), claim = await db.run("INSERT OR IGNORE INTO pf_idem (tenant_id,k,hash,status,body,at) VALUES (?,?,?,0,'',?)", req.tenant.id, ik, h, now0);
+          if (claim.changes === 1) { owned = true; break; }
+          const ex = await db.one("SELECT hash,status,body,at FROM pf_idem WHERE tenant_id=? AND k=?", req.tenant.id, ik);
+          if (!ex) continue;                                                                                       // حُرِّرت المطالبة بين الخطوتين: نعيد الادّعاء
+          if (ex.hash !== h) throw new HttpError(409, "idempotency_conflict", "المفتاح استُعمل لطلب مختلف");
+          if (ex.status !== 0) return { status: ex.status, headers: { "Idempotent-Replayed": "true" }, body: ex.body };
+          if (ex.at <= now0 - IDEM_CLAIM_TTL && (await db.run("UPDATE pf_idem SET at=? WHERE tenant_id=? AND k=? AND hash=? AND status=0 AND at<=?", now0, req.tenant.id, ik, h, now0 - IDEM_CLAIM_TTL)).changes === 1) { owned = true; break; }   // استيلاء على مطالبة مالك منهار
+          throw new HttpError(409, "idempotency_in_progress", "طلب بنفس المفتاح قيد المعالجة — أعد المحاولة بعد لحظات", null, { "Retry-After": "1" });
+        }
+        if (!owned) throw new HttpError(409, "idempotency_in_progress", "طلب بنفس المفتاح قيد المعالجة — أعد المحاولة بعد لحظات", null, { "Retry-After": "1" });
+        try { res = await rt.handler(req, ctx); } catch (e) { await release(); throw e; }                           // فشل/رفض المالك لا يُخزَّن: تُحرَّر المطالبة فتُقبل إعادة المحاولة
+        if (res.status < 500 && typeof res.body === "string") await db.run("UPDATE pf_idem SET status=?, body=?, at=? WHERE tenant_id=? AND k=? AND hash=? AND status=0", res.status, res.body, Math.floor(clock() / 1000), req.tenant.id, ik, h);
+        else await release();
       } else res = await rt.handler(req, ctx);
       if (req.origin) res = { ...res, headers: { ...res.headers, "Access-Control-Allow-Origin": req.origin, Vary: "Origin" } };
       return res;

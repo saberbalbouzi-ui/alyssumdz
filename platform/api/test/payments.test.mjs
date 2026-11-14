@@ -19,7 +19,7 @@ fake.handler = () => [401, { message: "bad key" }]; [c, b] = await call("POST", 
 fake.handler = () => [200, { id: "x", checkout_url: "http://evil.example/pay" }]; [c] = await call("POST", "/v1/payments/checkouts", { ...body, order_id: "O-102" }, A.key); ok("رابط دفع غير https من المزوّد مرفوض", c === 502);
 /* الإشعارات */
 const hookUrl = (await call("POST", "/v1/payments/setup", {}, A.key))[1].webhook_url, hp = new URL(hookUrl).pathname;
-const ev = (type, id, amount, eid) => JSON.stringify({ id: eid, entity: "event", type, data: { id, entity: "checkout", amount, status: type.split(".")[1] } });
+const ev = (type, id, amount, eid) => JSON.stringify({ id: eid, entity: "event", type, data: { id, entity: "checkout", amount, currency: "dzd", status: type.split(".")[1] } });   /* 12C: العملة الصريحة إلزامية لإشعار مدفوع */
 const post = async (raw, sigOverride, path = hp) => { const sig = sigOverride ?? await hmacHex("test_sk_abc", raw); return call("POST", path, raw, null, {}, { signature: sig, "content-type": "application/json" }); };
 [c] = await call("POST", hp, ev("checkout.paid", "chk_2", 5000, "e1"), null); ok("بلا signature 400", c === 400);
 [c] = await post(ev("checkout.paid", "chk_2", 5000, "e1"), "deadbeef"); ok("توقيع خاطئ 403", c === 403);

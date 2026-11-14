@@ -27,7 +27,9 @@ for (const bad of ["bad key with spaces", "x".repeat(81), "مفتاح"]) { const
 const K2 = "idem-key-0002-" + Date.now(), REF2 = "IDEM-REF-0002", before = cnt(A.id), stk = stock(A.id);
 const rs = await Promise.all(Array.from({ length: 10 }, () => call("POST", "/v1/orders", mk(REF2), pkA, {}, H(K2))));
 ok("[W5] 10 طلبات متزامنة بنفس المفتاح ← طلب واحد فقط وخصم مخزون واحد", cnt(A.id) === before + 1 && stock(A.id) === stk - 2, { delta: cnt(A.id) - before, stock: stock(A.id), codes: rs.map(r => r[0]) });
-ok("[W5] كل الردود نجاح (200/201) بالمرجع نفسه (لا أخطاء 5xx/409)", rs.every(r => (r[0] === 201 || r[0] === 200) && r[1].ref === REF2), rs.map(r => [r[0], r[1].duplicate]));
+ok("[W5] (بعد رقعة الادّعاء الذرّي) كل الردود ضمن المصفوفة الموثَّقة: 201 بالمرجع نفسه أو 409 idempotency_in_progress — لا 5xx ولا طلب ثانٍ", rs.every(r => (r[0] === 201 && r[1].ref === REF2) || (r[0] === 409 && r[1].error?.code === "idempotency_in_progress")) && rs.filter(r => r[0] === 201).length >= 1, rs.map(r => [r[0], r[1].error?.code]));
+const rs2 = await Promise.all(Array.from({ length: 10 }, () => call("POST", "/v1/orders", mk(REF2), pkA, {}, H(K2)))); ok("[W5] وإعادة المحاولة بعد الإنجاز ← كلها 201 بالمرجع نفسه (Idempotent-Replayed) بلا طلب ثانٍ", rs2.every(r => r[0] === 201 && r[1].ref === REF2) && cnt(A.id) === before + 1, rs2.map(r => r[0]));
+E.clock.t += 120000;   /* حدّ الطلب 30/دقيقة لكل مستأجر: نتجاوز النافذة بين المجموعات المتزامنة */
 /* عزل المستأجرين: نفس المفتاح عند B مستقل */
 const [cb, bb] = await call("POST", "/v1/orders", mk(REF1), pkB, {}, H(K1)); ok("[W6] نفس المفتاح عند مستأجر آخر ← طلب مستقل (201)، لا تسرّب ولا تكرار عابر", cb === 201 && !bb.duplicate && cnt(B.id) === 1 && stock(B.id) === 48, { cb, bb });
 const [cb2] = await call("POST", "/v1/orders", mk(REF1, 9), pkB, {}, H(K1)); ok("[W6] وتعارض المفتاح يُقاس داخل كل مستأجر (409 في B بمحتوى B)", cb2 === 409);

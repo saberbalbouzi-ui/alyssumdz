@@ -36,7 +36,7 @@ await call("PUT", "/v1/integrations/chargily", { config: { mode: "test" }, secre
 const [, st] = await call("POST", "/v1/payments/setup", {}, A.key); const hook = st.webhook_url.split("/").pop();
 let chk = 0; fake.handler = (url) => /\/checkouts$/.test(url) ? (chk++, [200, { id: "chk_" + chk, checkout_url: "https://pay.chargily.net/test/checkouts/chk_" + chk }]) : [200, {}];
 await call("POST", "/v1/payments/checkouts", { order_id: "W1", amount: 5000, success_url: "https://shop.example/ok" }, A.key);
-const hookEv = (id, amount, type = "checkout.paid", eid = "ev1") => { const body = JSON.stringify({ id: eid, type, data: { id, amount } }); return call("POST", `/v1/payments/hook/${hook}`, body, null, {}, { signature: createHmac("sha256", "sk_test_abcdef").update(body).digest("hex") }); };
+const hookEv = (id, amount, type = "checkout.paid", eid = "ev1") => { const body = JSON.stringify({ id: eid, type, data: { id, amount, currency: "dzd" } }); return call("POST", `/v1/payments/hook/${hook}`, body, null, {}, { signature: createHmac("sha256", "sk_test_abcdef").update(body).digest("hex") }); };
 [c] = await hookEv("chk_1", 5000); ok("إشعار دفع صحيح", c === 200); await cron();
 let es = (await call("GET", "/v1/wallet/escrow", null, A.key))[1].escrow; ok("الضمان يُحجز 5000", es.length === 1 && es[0].order_id === "W1" && es[0].amount === 5000, es);
 B1 = await bal(A.key); ok("escrow=5000 والمتاح لم يتغير", B1.escrow.DZD === 5000 && B1.available.DZD === 50000);
