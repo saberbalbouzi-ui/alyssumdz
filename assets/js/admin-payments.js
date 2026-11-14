@@ -108,7 +108,7 @@ const AdminPayments = (() => {
       got=Math.round((net+del+cod+ins+ret)*1000)/1000;
     } else {
       const rf=A_.realFees?A_.realFees(o):null, fin=((A_.shipRaw||{})[o.id]||{}).fin||null, RT=rates(it.co), tp=fin&&fin.tp>0?fin.tp:RT.cod; price=fin&&fin.price>0?Number(fin.price):Math.max(0,total-fee);      // أرقام الطرد الفعلية من قائمة الشركة تسبق التعريفة
-      if (st==="echec") { ret=(fin&&fin.tr>0?fin.tr:RT.ret)+(it.co==='yalidine'&&A_.retLate?A_.retLate(o):0); got=0; }      // رسم الإرجاع 250 ثابت + غرامة تأخر سحب المرتجع (10 دج لكل يوم بعد 10 أيام عند الشركة)
+      if (st==="echec") { ret=(fin&&fin.tr>0?fin.tr:RT.ret)+(A_.retLate?A_.retLate(o):0); got=0; }      // رسم الإرجاع 250 ثابت + غرامة تأخر سحب المرتجع (10 دج لكل يوم بعد 10 أيام عند الشركة)
       else {
         del=fin&&fin.fee!=null&&fin.fee>=0?Number(fin.fee):(rf&&rf.delivery!=null?Number(rf.delivery):(A_.carrierCost?A_.carrierCost(o):fee));
         cod=price*tp/100; ins=0; got=fin&&fin.price>0?price+(fin.free?0:del):total;      // الشركة: المحصَّل = سعر المنتج + رسم التوصيل (إلا الشحن المجاني)
