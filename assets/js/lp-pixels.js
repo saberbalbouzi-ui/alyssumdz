@@ -26,7 +26,7 @@
   }
   function purchase(d) {
     if (!ready) { q.push(["Purchase", d]); return; } d = d || {};
-    pixels.forEach(px => { try { const cur = px.currency || "DZD", total = Number(d.value) || 0, qty = Number(d.qty) || 1, slug = d.slug || prod;
+    pixels.forEach(px => { try { const cur = px.currency || "DZD", total = px.valueMode === "products" ? Math.max(0, (Number(d.value) || 0) - (Number(d.fee) || 0)) : (Number(d.value) || 0), qty = Number(d.qty) || 1, slug = d.slug || prod;      /* قيمة الشراء حسب إعداد البكسل */
       if (px.platform === "facebook" && window.fbq) fbq("track", "Purchase", { value: total, currency: cur, content_ids: [slug], content_type: "product", contents: [{ id: slug, quantity: qty }] });
       else if (px.platform === "tiktok" && window.ttq) ttq.track("CompletePayment", { value: total, currency: cur, content_id: slug, content_type: "product", quantity: qty });
       else if (px.platform === "google_ads" && window.gtag) gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? "/" + px.conversionLabel : ""), value: total, currency: cur, transaction_id: String(d.orderId || Date.now()) });

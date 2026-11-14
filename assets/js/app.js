@@ -401,19 +401,21 @@ function trackEvent(name, d){
   });
 }
 /* يُستدعى عند نجاح تأكيد الطلب (زر «تأكيد الطلب») في initProduct أدناه */
-function firePixelPurchase(p, total, qty, orderId){
-  if(__pxParent()){ try{ window.parent.postMessage({ pbPx: { name: "Purchase", d: { slug: p && p.slug, title: p && p.title, value: total, qty, orderId } } }, location.origin); }catch(e){} return; }
+/* قيمة حدث الشراء حسب إعداد البكسل: إجمالي الطلب (افتراضي) أو سعر المنتجات بدون رسوم التوصيل */
+function pxPurchaseValue(px, total, fee){ const t = Number(total) || 0; return px && px.valueMode === "products" ? Math.max(0, t - (Number(fee) || 0)) : t; }
+function firePixelPurchase(p, total, qty, orderId, fee){
+  if(__pxParent()){ try{ window.parent.postMessage({ pbPx: { name: "Purchase", d: { slug: p && p.slug, title: p && p.title, value: total, qty, orderId, fee: Number(fee) || 0 } } }, location.origin); }catch(e){} return; }
   (window.__activePixels||[]).forEach(px=>{
     try{
-      const currency = px.currency || "DZD";
+      const currency = px.currency || "DZD", val = pxPurchaseValue(px, total, fee);
       if(px.platform === "facebook" && window.fbq){
-        fbq("track", "Purchase", { value: total, currency, content_ids:[p.slug], content_type:"product", contents:[{id:p.slug, quantity: qty}] });
+        fbq("track", "Purchase", { value: val, currency, content_ids:[p.slug], content_type:"product", contents:[{id:p.slug, quantity: qty}] });
       } else if(px.platform === "tiktok" && window.ttq){
-        ttq.track("CompletePayment", { value: total, currency, content_id: p.slug, content_type:"product", quantity: qty });
+        ttq.track("CompletePayment", { value: val, currency, content_id: p.slug, content_type:"product", quantity: qty });
       } else if(px.platform === "google_ads" && window.gtag){
-        gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? ("/" + px.conversionLabel) : ""), value: total, currency, transaction_id: String(orderId || Date.now()) });
+        gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? ("/" + px.conversionLabel) : ""), value: val, currency, transaction_id: String(orderId || Date.now()) });
       } else if(px.platform === "ga4" && window.gtag){
-        gtag("event", "purchase", { value: total, currency, transaction_id: String(orderId || Date.now()), items:[{item_id:p.slug, item_name:p.title, quantity: qty, price: total}] });
+        gtag("event", "purchase", { value: val, currency, transaction_id: String(orderId || Date.now()), items:[{item_id:p.slug, item_name:p.title, quantity: qty, price: val}] });
       }
     }catch(e){ console.error("pixel purchase error", px.id, e); }
   });
@@ -1467,7 +1469,7 @@ function initProduct(slug){
     try{ if(window.PFOrder) PFOrder.send(__order, __pfr, __order.items.map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" }))); }catch(e){}
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     try{ trackEvent("Lead", { slug: p.slug, title: p.title, qty: state.offer.qty, value: total }); }catch(e){}
-    firePixelPurchase(p, total, state.offer.qty);
+    firePixelPurchase(p, total, state.offer.qty, undefined, fee);
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n` + (type==="grouped"
       ? state.group.kids.map((c,i)=> state.group.qty[i] ? `\n• ${c.title}\n  الكمية: ${state.group.qty[i]} × ${fmt(c.price)} = ${fmt(state.group.qty[i]*c.price)}` : "").join("")
       : `\n• ${p.title}${state.variation?" — "+variationLabel(p,state.variation):""}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`);

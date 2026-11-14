@@ -20,6 +20,21 @@ const { chromium } = require("playwright");
   const q2 = await p.evaluate(() => [...window.fbq.queue].map(a => Array.from(a)[0] + ":" + Array.from(a)[1]));
   ok("حدثا Lead وPurchase من الإطار يصلان إلى بكسل الصفحة الأم", q2.includes("track:Lead") && q2.includes("track:Purchase"), q2);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2)); await c.close();
+  /* قيمة الشراء: الافتراضي إجمالي الطلب، و valueMode=products بدون التوصيل (الصفحة الأم) */
+  for (const [mode, want] of [[undefined, 2200], ["products", 1800]]) {
+    ({ p, c, errs, fr } = await run([{ id: "pv", platform: "facebook", pixelId: "555", scope: "all", active: true, currency: "DZD", ...(mode ? { valueMode: mode } : {}) }]));
+    await fr.evaluate(() => firePixelPurchase({ slug: "anti-acne", title: "x" }, 2200, 1, undefined, 400)); await p.waitForTimeout(400);
+    const pv = await p.evaluate(() => { const a = [...window.fbq.queue].find(z => Array.from(z)[1] === "Purchase"); return a ? Array.from(a)[2] : null; });
+    ok("قيمة Purchase في صفحة الهبوط (" + (mode || "total") + ") = " + want + " DZD", pv && pv.value === want && pv.currency === "DZD", pv); await c.close();
+  }
+  /* صفحة المنتج نفسها (بلا إطار) */
+  { const c3 = await b.newContext(), p3 = await c3.newPage();
+    await p3.route(/assets\/data\/pixels\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([{ id: "pp", platform: "facebook", pixelId: "777", scope: "all", active: true, valueMode: "products" }]) }));
+    await p3.route(/connect\.facebook\.net/, r => r.fulfill({ status: 200, contentType: "application/javascript", body: "" })); await p3.route(/supabase\.co|script\.google\.com/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+    await p3.goto("http://localhost:8765/p/anti-acne/", { waitUntil: "load" }); await p3.waitForTimeout(3500);
+    await p3.evaluate(() => firePixelPurchase({ slug: "anti-acne", title: "x" }, 2200, 1, undefined, 400));
+    const pv2 = await p3.evaluate(() => { const a = [...window.fbq.queue].find(z => Array.from(z)[1] === "Purchase"); return a ? Array.from(a)[2] : null; });
+    ok("صفحة المنتج: valueMode=products ← 1800 بدون التوصيل", pv2 && pv2.value === 1800, pv2); await c3.close(); }
   /* 2) نطاق منتج آخر: لا يُطبَّق */
   ({ p, c, errs, fr } = await run([{ id: "px2", platform: "facebook", pixelId: "999", scope: ["other-product"], active: true }]));
   ok("بكسل لمنتج آخر لا يُطبَّق على الصفحة", (await p.evaluate(() => typeof window.fbq)) === "undefined"); await c.close();
