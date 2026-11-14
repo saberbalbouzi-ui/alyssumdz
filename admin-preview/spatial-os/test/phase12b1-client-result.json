@@ -1,7 +1,7 @@
 {
  "phase": "12B.1",
  "suite": "client",
- "date": "2026-11-13",
+ "date": "2026-11-14",
  "mocked": "fetch والمتصفح فقط",
  "pass": 101,
  "fail": 0,
@@ -659,7 +659,7 @@
    "n": "[PII] لا اسم ولا هاتف ولا عنوان في التخزين (تجزئات مملّحة فقط)",
    "pass": true,
    "x": {
-    "store": "[[\"alyssum_idem_salt\",\"0326daab973947b2a5e48c0d01547ab9\"],[\"alyssum_idem_c19cdc3d091b6a995fbef891436d73d58558314169f865a"
+    "store": "[[\"alyssum_idem_salt\",\"d4cdc70deb1e4b05854f7d75d2f4e7d8\"],[\"alyssum_idem_3628a8e162cdb49eb11016d16f2dc0d73329f8001faa043"
    }
   },
   {
@@ -763,7 +763,7 @@
    "n": "[addOrder] supabase: يُقرأ الصف المُدرَج للتأكيد؛ المعرّف عشوائي آمن (10 hex)",
    "pass": true,
    "x": {
-    "id": "M261113-0D37923F60"
+    "id": "M261114-FC47FECD25"
    }
   },
   {
