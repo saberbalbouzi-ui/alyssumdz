@@ -13,13 +13,7 @@ const AiSwitch = (() => {
     try { const u = typeof input === "string" ? input : (input && input.url) || ""; if (blocked(u)) { const e = new Error(MSG); e.code = "OFF"; return Promise.reject(e); } } catch (e) { }
     return orig(input, init);
   };
-  function bar() {
-    let b = document.getElementById("ais-bar");
-    if (enabled()) { if (b) b.remove(); return; }
-    if (!b) { b = document.createElement("div"); b.id = "ais-bar"; b.setAttribute("role", "status"); b.style.cssText = "position:fixed;z-index:99990;left:50%;transform:translateX(-50%);bottom:12px;max-width:calc(100vw - 24px);display:flex;gap:.6rem;align-items:center;padding:.45rem .9rem;border-radius:999px;background:#92400e;color:#fff;font-weight:800;font-size:.85rem;box-shadow:0 6px 18px rgba(0,0,0,.4)"; document.body.appendChild(b); }
-    if (b.dataset.sig === "1") return; b.dataset.sig = "1";
-    b.innerHTML = '<span>⛔ أدوات الذكاء معطّلة — لا استهلاك للرصيد</span><button type="button" data-aisw="on" style="border:0;border-radius:999px;padding:.25rem .7rem;font:inherit;font-weight:800;cursor:pointer;background:#fff;color:#92400e">تفعيل</button>';
-  }
+  function bar() { const b = document.getElementById("ais-bar"); if (b) b.remove(); }      /* لا شريط تنبيه عائم: حالة التعطيل ظاهرة في زر الطاقة بالشريط العلوي */
   function cards() {
     document.querySelectorAll("[data-aisw-card]").forEach(h => {
       const o = enabled(), sig = o ? "1" : "0"; if (h.dataset.sig === sig && h.firstChild) return; h.dataset.sig = sig;
