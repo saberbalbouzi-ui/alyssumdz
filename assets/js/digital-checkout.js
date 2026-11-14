@@ -124,7 +124,11 @@
       return API.orderKey(order).then(function (seed) {
       var ref = PFOrder.prep(order, seed);
       return Guard.submit(order).then(function (gr) {      // 12B.1: لا نجاح بلا تأكيد خادم (Guard دائماً فعّال؛ حُذف مسار الإرسال بلا انتظار)
-        if (!gr || gr.ok !== true) return fail((gr && gr.msg) || "تعذّر تأكيد تسجيل الطلب — أعد المحاولة (لن يتكرر الطلب)");
+        if (!gr || gr.ok !== true) {
+          if (btn) btn.disabled = false;   // النموذج وبياناته باقية؛ غير المؤكَّد ← نافذة صريحة بإعادة المحاولة بنفس المفتاح (لا «تم» ولا مسار دفع)
+          if (gr && typeof Guard !== "undefined" && Guard.fail) return Guard.fail(gr, { retry: function () { var f = document.getElementById("order-form"); if (f && f.requestSubmit) f.requestSubmit(); else if (btn) btn.click(); } });
+          return fail((gr && gr.msg) || "تعذّر تأكيد تسجيل الطلب — لم يُسجَّل");
+        }
         var lines = order.items.map(function (x) { return Object.assign({}, x); });
         return PFOrder.send(order, ref, lines, { email: email, pay: method }).then(function (r) {
           if (btn) btn.disabled = false;
