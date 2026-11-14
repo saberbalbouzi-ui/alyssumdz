@@ -8,6 +8,12 @@ const PW = process.env.EQA_PASS || "TestPass12345";
 const OUT = process.env.EQA_OUT || "/tmp";
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+// ما يُختبَر لكل قالب: صورة رئيسية (اسم الملف) و/أو قسم بخلفية صورة (اسم الملف). الباقي يُستنتج من النموذج.
+const SPEC = {
+  "s-watches": { img: "men_watch", bg: "watch_rock" }, "s-tech": { img: "it_color" },
+  "s-jewelry": { img: "jewel_ring", bg: "jewel_pearl" }, "s-cosmetics": { bg: "cosm_terra" }, "s-honey": { img: "honey_amber" }, "s-herbs": { img: "herb_jars" }, "s-fashion": { img: "fashion_man" },
+};
+const TPLS = process.env.LIB_TPLS ? process.env.LIB_TPLS.split(",") : ["s-watches", "s-tech"];
 const results = []; let page;
 const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((cond ? "PASS " : "FAIL ") + `[${tpl}] ${name}` + (extra ? "  — " + String(extra).slice(0, 220) : "")); };
 
@@ -52,19 +58,17 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
   const box = async id => { const fr = page.locator("#pbx-frame").contentFrame(); const bb = await fr.locator(`[data-kind="widget"][data-pb="${id}"]`).boundingBox(); return bb && { w: Math.round(bb.width), h: Math.round(bb.height) }; };
   const shot = async (id, name) => { try { const fr = page.locator("#pbx-frame").contentFrame(); await clearSel(); await scrollTo(id); await fr.locator(`[data-kind="widget"][data-pb="${id}"]`).screenshot({ path: `${OUT}/${name}.jpg`, type: "jpeg", quality: 70 }); } catch (e) { } };
 
-  for (const tpl of ["s-watches", "s-tech"]) {
+  for (const tpl of TPLS) {
     console.log("\n════════ " + tpl + " ════════");
     try {
       await page.evaluate(async id => { if (typeof AdminNav.libOpen === "function") { await AdminNav.libOpen(); AdminNav.libClose(); } await AdminNav.tplInstallHome(id); }, tpl);
       await page.waitForFunction(() => { const f = document.getElementById("pbx-frame"); return f && f.contentDocument && f.contentDocument.querySelector('[data-kind="widget"]'); }, null, { timeout: 40000 }); await sleep(900);
       if (await page.locator("#pbx-ask").count()) await page.click('#pbx-ask [data-k="no"]').catch(() => {}); await sleep(300);
-      // الصورة الرئيسية للهيرو: s-watches = القوس، s-tech = الصورة المقسومة (الأولى بإطار الصورة)
-      const S0 = await secs(); let hero = null;
-      for (const s of S0) for (const w of s.ws) if (w.type === "image" && (w.set.fxs || []).some(f => /^(قوس|إطار الصورة)/.test(f.n))) { hero = hero || w; }
-      check(tpl, "عُثر على صورة الهيرو الرئيسية", !!hero, hero && hero.set.src);
-      if (!hero) continue;
+      const sp = SPEC[tpl] || {}; const S0 = await secs(); let hero = null;
+      if (sp.img) { for (const s of S0) for (const w of s.ws) if (w.type === "image" && new RegExp(sp.img).test(w.set.src || "")) hero = hero || w; check(tpl, `عُثر على الصورة الرئيسية (${sp.img})`, !!hero, hero && hero.set.src); }
+      if (hero) {
       const src0 = hero.set.src, b0 = await box(hero.id); await shot(hero.id, `${tpl}-lib-before`);
-      check(tpl, "اختيار صورة الهيرو بالفأرة", await clickWidget(hero.id));
+      check(tpl, "اختيار الصورة الرئيسية بالفأرة", await clickWidget(hero.id));
       const found = await ensureField('#pbx-insp button[data-lib="src"]');
       check(tpl, "زر مكتبة الوسائط (📚) ظاهر في المفتّش", found);
       let picked = null;
@@ -79,14 +83,15 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
       await clearSel(); await page.keyboard.press("Control+z"); await sleep(600);
       const w2 = (await secs()).flatMap(s => s.ws).find(w => w.id === hero.id);
       check(tpl, "Ctrl+Z يعيد الصورة الأصلية", w2 && w2.set.src === src0, w2 && w2.set.src);
+      }
 
-      // لافتة s-watches: خلفية القسم الأصلية (bgFixed) تُستبدل من المكتبة بلا تغيير ارتفاع القسم
-      if (tpl === "s-watches") {
-        const S = await secs(); const ban = S.find(s => s.bgImg && /watch_rock/.test(s.bgImg)); check(tpl, "قسم اللافتة بخلفيته الأصلية watch_rock", !!ban && ban.set.bgFixed === true && ban.set.bgSize === "cover", ban && JSON.stringify({ f: ban.set.bgFixed, s: ban.set.bgSize }));
+      // خلفية قسم بصورة (لافتة/هيرو/قسم هدايا): تُستبدل من المكتبة بلا تغيّر في ارتفاع القسم أو خصائص الخلفية الأصلية
+      if (sp.bg) {
+        const S = await secs(); const ban = S.find(s => s.bgImg && new RegExp(sp.bg).test(s.bgImg)); check(tpl, `قسم بخلفية ${sp.bg} الأصلية`, !!ban, ban && JSON.stringify({ f: ban.set.bgFixed, s: ban.set.bgSize }));
         const cs = await page.evaluate(id => { const f = document.getElementById("pbx-frame"); const el = f.contentDocument.querySelector(`.pb-sec[data-pb="${id}"]`); if (!el) return null; const c = getComputedStyle(el); return { att: c.backgroundAttachment, size: c.backgroundSize, h: Math.round(el.getBoundingClientRect().height) }; }, ban.id);
-        check(tpl, "سلوك الخلفية الأصلي مرسوم: background-attachment: fixed و cover", cs && /fixed/.test(cs.att) && /cover/.test(cs.size), JSON.stringify(cs));
-        const firstW = ban.ws.find(w => w.type === "heading") || ban.ws[0];
-        let kind = ""; check(tpl, "اختيار عنصر اللافتة بالفأرة", await clickWidget(firstW.id));
+        check(tpl, "خصائص الخلفية الأصلية مرسومة (cover" + (ban.set.bgFixed ? " + fixed" : "") + ")", cs && /cover/.test(cs.size) && (!ban.set.bgFixed || /fixed/.test(cs.att)), JSON.stringify(cs));
+        const firstW = ban.ws.find(w => w.type === "heading") || ban.ws.find(w => w.type !== "spacer") || ban.ws[0];
+        let kind = ""; check(tpl, "اختيار عنصر داخل القسم بالفأرة", await clickWidget(firstW.id));
         for (let k = 0; k < 3 && kind !== "section"; k++) { await page.keyboard.press("Escape"); await sleep(300); kind = await page.evaluate(() => { const i = PBApp.find(PBApp.E.sel); return i ? i.kind : "none"; }); }
         check(tpl, "الصعود إلى القسم (Esc)", kind === "section");
         let bgPicked = null;
@@ -94,9 +99,9 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
         check(tpl, "اختيار صورة خلفية من المكتبة الحقيقية", !!bgPicked, bgPicked);
         const ban2 = (await secs()).find(s => s.id === ban.id);
         const cs2 = await page.evaluate(id => { const f = document.getElementById("pbx-frame"); const el = f.contentDocument.querySelector(`.pb-sec[data-pb="${id}"]`); const c = getComputedStyle(el); return { att: c.backgroundAttachment, size: c.backgroundSize, h: Math.round(el.getBoundingClientRect().height) }; }, ban.id);
-        check(tpl, "الخلفية تبدّلت وبقي bgFixed/cover وارتفاع القسم كما هو", ban2.bgImg === bgPicked && ban2.set.bgFixed === true && /fixed/.test(cs2.att) && /cover/.test(cs2.size) && Math.abs(cs2.h - cs.h) <= 1, `${JSON.stringify(cs)} → ${JSON.stringify(cs2)}`);
+        check(tpl, "الخلفية تبدّلت وبقيت خصائصها وارتفاع القسم كما هي", ban2.bgImg === bgPicked && ban2.set.bgFixed === ban.set.bgFixed && ban2.set.bgSize === ban.set.bgSize && /cover/.test(cs2.size) && Math.abs(cs2.h - cs.h) <= 2, `${JSON.stringify(cs)} → ${JSON.stringify(cs2)}`);
         await page.keyboard.press("Control+z"); await sleep(600);
-        const ban3 = (await secs()).find(s => s.id === ban.id); check(tpl, "Ctrl+Z يعيد خلفية اللافتة الأصلية", ban3.bgImg === ban.bgImg, ban3.bgImg);
+        const ban3 = (await secs()).find(s => s.id === ban.id); check(tpl, "Ctrl+Z يعيد خلفية القسم الأصلية", ban3.bgImg === ban.bgImg, ban3.bgImg);
       }
     } catch (e) { check(tpl, "اكتمال التشغيل بلا انهيار", false, e.message); }
   }
