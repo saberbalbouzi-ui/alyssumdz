@@ -35,9 +35,15 @@ const AdminPack = (() => {
     return "";
   }
   function findRow(rows, code) { const k = normScan(code); if (!k) return null; return (rows || []).find(r => normScan(r.tracking) === k || normScan(r.id) === k) || null; }
+  /* ترتيب التجهيز: الطلبات المتشابهة تحت بعض دائماً (نفس المنتجات أولاً ثم نفس الكميات)، والمجموعة الأكثر طلباً أولاً، ويبقى ترتيب الطلبات داخل المجموعة كما وصل */
+  function groupSimilar(list) {
+    const sigT = r => parseItems(r.items).map(i => i.title).sort().join("|"), sigQ = r => parseItems(r.items).map(i => i.title + "×" + i.qty).sort().join("|");
+    const cnt = new Map(); list.forEach(r => { const k = sigT(r); cnt.set(k, (cnt.get(k) || 0) + 1); });
+    return list.map((r, i) => ({ r, i, t: sigT(r), q: sigQ(r) })).sort((a, b) => (cnt.get(b.t) - cnt.get(a.t)) || a.t.localeCompare(b.t) || a.q.localeCompare(b.q) || a.i - b.i).map(x => x.r);
+  }
   function filter(rows, f, q) {
     q = String(q || "").trim().toLowerCase();
-    return (rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q)));
+    return groupSimilar((rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q))));
   }
 
   /* ── الخادم ── */
