@@ -684,7 +684,12 @@ const OrderSteps = (() => {
     S.on = true; show(1, { noScroll: true }); return true;
   }
   function init(cfg) {
-    if (S.done || !cfg || cfg.steps !== true) return; S.done = true; let tries = 0;
+    if (S.done || !cfg) return;
+    /* تفضيل الصفحة (مطوّر الصفحات): "1" مفعّل، "0" معطّل، وإلا فإعداد المتجر */
+    let ov = ""; try { const m = location.search.match(/[?&]oc=([^&]+)/); if (m) ov = String((JSON.parse(decodeURIComponent(m[1])) || {}).st || ""); } catch (e) { }
+    if (!ov) { try { const fm = document.getElementById("order-form"), w = fm && fm.closest("[data-ost]"); if (w) ov = w.getAttribute("data-ost") || ""; } catch (e) { } }
+    const want = ov === "1" ? true : ov === "0" ? false : cfg.steps === true;
+    if (!want) return; S.done = true; let tries = 0;
     const attempt = () => {
       const f = $("order-form"), w = $("wilaya"); const ready = f && w && w.options.length > 1 && (!$("offers") || $("offers").querySelector(".offer"));
       if (!ready) { if (++tries < 40) return setTimeout(attempt, 150); S.why = "timeout"; return; }

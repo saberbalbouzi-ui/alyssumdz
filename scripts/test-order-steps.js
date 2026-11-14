@@ -53,6 +53,19 @@ const { chromium, devices } = require("playwright");
   const e2 = await q.evaluate(() => ({ step: OrderSteps.state.step, offs: document.querySelectorAll(".os-off").length, vis: (() => { const r = document.querySelector(".os-offs").getBoundingClientRect(); return r.height > 50; })() }));
   ok("داخل الإطار: المرحلة 2 تعرض العروض", e2.step === 2 && e2.offs >= 2 && e2.vis, e2);
   ok("ارتفاع الإطار يُبلَّغ للأب عند تغيّر المرحلة", hs.length >= 2 && new Set(hs).size >= 2, hs);
+  /* تفضيل الصفحة من مطوّر الصفحات: st=0 يعطّل رغم تفعيل المتجر، st=1 يفعّل رغم تعطيله */
+  for (const [glob, st, want] of [[true, "0", false], [false, "1", true], [true, "", true]]) {
+    const c3 = await b.newContext({ ...devices["iPhone 13"] }), r3 = await c3.newPage();
+    await r3.route(/assets\/data\/checkout\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ steps: glob, phoneDz: true }) }));
+    await r3.goto("http://localhost:8765/order-embed.html?p=anti-acne&embed=1" + (st ? "&oc=" + encodeURIComponent(JSON.stringify({ st })) : ""), { waitUntil: "load" }); await r3.waitForTimeout(3200);
+    const on = await r3.evaluate(() => !!OrderSteps.state.on);
+    ok("تفضيل الصفحة: المتجر=" + glob + " والصفحة=" + (st || "افتراضي") + " ← " + (want ? "مراحل" : "نموذج عادي"), on === want, { on }); await c3.close();
+  }
+  { const c4 = await b.newContext({ ...devices["iPhone 13"] }), r4 = await c4.newPage();
+    await r4.route(/assets\/data\/checkout\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ steps: false, phoneDz: true }) }));
+    await r4.goto("http://localhost:8765/p/anti-acne/", { waitUntil: "load" }); await r4.evaluate(() => { const f = document.getElementById("order-form"), d = document.createElement("div"); d.setAttribute("data-ost", "1"); f.parentNode.insertBefore(d, f); d.appendChild(f); });
+    await r4.evaluate(() => { try { if (typeof initCheckout === "function") initCheckout(); } catch (e) { } }); await r4.waitForTimeout(3500);
+    ok("تفضيل الصفحة على صفحة المنتج (data-ost=1) يفعّل المراحل رغم تعطيل المتجر", await r4.evaluate(() => !!OrderSteps.state.on)); await c4.close(); }
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail + " من " + (pass + fail) : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
