@@ -1,7 +1,7 @@
 {
- "updated": "2026-11-14T10:11:32.798Z",
- "def": "wecan",
- "noStop": false,
+ "updated": "2026-11-14T10:12:07.891Z",
+ "def": "dhd",
+ "noStop": true,
  "companies": {
   "yalidine": {
    "name": "Yalidine",
@@ -13200,44 +13200,20 @@
  "nd": {
   "3": [
    "ainsidiali",
-   "beidha",
-   "brida",
    "hadjmechri",
-   "ouedmorra",
-   "sebgag",
-   "sidibouzid",
+   "taouiala",
    "tadjrouna",
-   "taouiala"
-  ],
-  "5": [
-   "gosbat",
-   "larbaa",
-   "ouledammar"
+   "ouedmorra"
   ],
   "6": [
    "tamokra",
    "tizinberber"
   ],
-  "10": [
-   "bordjokhriss",
-   "boukram",
-   "dechmia",
-   "dirrah",
-   "elhakimia",
-   "guerrouma",
-   "hadjerazerga",
-   "maala",
-   "maamora",
-   "mezdour",
-   "ridane",
-   "taguedit",
-   "zbarbar"
-  ],
   "11": [
    "abalessa",
    "idles",
-   "inamguel",
-   "tazrouk"
+   "tazrouk",
+   "inamguel"
   ],
   "12": [
    "birelater"
@@ -13247,12 +13223,10 @@
    "nadorah",
    "sidibakhti"
   ],
-  "15": [
-   "zekri"
-  ],
   "17": [
    "ainchouhada",
    "amourah",
+   "elkhemis",
    "faidhelbotma",
    "guernini",
    "guettara",
@@ -13265,8 +13239,8 @@
    "zaafrane"
   ],
   "18": [
-   "boucifouledaskeur",
-   "selmabenziada"
+   "selmabenziada",
+   "boucifouledaskeur"
   ],
   "20": [
    "ainsekhouna",
@@ -13280,15 +13254,39 @@
    "ouledmaallah",
    "sidibelattar"
   ],
-  "43": [
-   "chigara",
-   "derradjibousselah",
-   "elayadibarbes",
-   "minarzarza",
-   "tassadanehaddada",
-   "terraibainen",
-   "tessalalemtai",
-   "tiberguent"
+  "32": [
+   "kraakda",
+   "elbnoud",
+   "cheguig",
+   "sidiameur",
+   "tousmouline",
+   "sidislimane"
+  ],
+  "33": [
+   "debdeb",
+   "bordjomardriss"
+  ],
+  "37": [
+   "oumelassel"
+  ],
+  "38": [
+   "benichaib",
+   "benilahcene",
+   "larbaa",
+   "sidiabed",
+   "sidiboutouchent"
+  ],
+  "40": [
+   "djellal",
+   "khirane"
+  ],
+  "41": [
+   "ouledmoumene",
+   "oumeladhaim",
+   "ainsoltane",
+   "safelelouiden",
+   "ouedkeberit",
+   "terraguelt"
   ],
   "44": [
    "bathia",
@@ -13297,10 +13295,33 @@
    "elhassania",
    "elmaine"
   ],
+  "45": [
+   "kasdir"
+  ],
+  "50": [
+   "bordjbadjimokhtar",
+   "timiaouine"
+  ],
+  "51": [
+   "besbes",
+   "raselmiaad"
+  ],
+  "52": [
+   "tabelbala"
+  ],
+  "53": [
+   "inghar",
+   "foggaretezzaouia"
+  ],
+  "54": [
+   "inguezzam",
+   "tinzaouatine"
+  ],
   "55": [
-   "elallia",
-   "elborma",
-   "elhadjira"
+   "elborma"
+  ],
+  "56": [
+   "bordjelhaouas"
   ]
  }
 }
