@@ -15,6 +15,13 @@ const { chromium, devices } = require("playwright");
   await p.touchscreen.tap(i.x, i.y); await p.waitForTimeout(150); await p.touchscreen.tap(i.x, i.y); await p.waitForTimeout(500);
   const a = await info(); ok("لمستان سريعتان على النص تبدآن التحرير", a.n === 1 && a.editing, a);
   ok("حُدّدت كلمة (التحديد غير فارغ)", await p.evaluate(() => { const s = document.getElementById("pbx-frame").contentDocument.getSelection(); return !!s && String(s).trim().length > 0; }));
+  /* لوحة الألوان داخل الصفحة (بدل منتقي النظام) تُطبَّق على الكلمة المحدَّدة */
+  await p.evaluate(() => document.querySelector('#pbx-qbar label.qa').click()); await p.waitForTimeout(300);
+  const sh = await p.evaluate(() => ({ pop: !!document.querySelector("#pbx-pop .cg"), n: document.querySelectorAll("#pbx-pop .cgb").length, title: (document.querySelector("#pbx-pop h6") || {}).textContent }));
+  ok("لوحة ألوان داخل الصفحة تظهر بدل منتقي النظام (24 لوناً) وتخص الكلمة المحدَّدة", sh.pop && sh.n >= 24 && /الكلمة/.test(sh.title || ""), sh);
+  await p.evaluate(() => document.querySelector('#pbx-pop [data-cc="#ef4444"]').click()); await p.waitForTimeout(300);
+  const wc = await p.evaluate(() => { const e = document.getElementById("pbx-frame").contentDocument.querySelector("[contenteditable=true]"); return { editing: !!e, ok: !!e && /color:\s*(rgb\(239, 68, 68\)|#ef4444)/i.test(e.innerHTML), popClosed: !document.querySelector("#pbx-pop") }; });
+  ok("اللون يُطبَّق على الكلمة المحدَّدة ويبقى التحرير وتُغلق اللوحة", wc.editing && wc.ok && wc.popClosed, wc);
   /* منتقي ألوان يسحب التركيز: نحاكيه بنقل التركيز إلى خانة اللون ثم إطلاق input */
   const res = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)), d = document.getElementById("pbx-frame").contentDocument, lab = document.querySelector('#pbx-qbar label.qa'), inp = lab && lab.querySelector('input[type=color]'); if (!inp) return { err: "no color input" };
@@ -29,6 +36,11 @@ const { chromium, devices } = require("playwright");
   ok("اللون طُبّق على الكلمة المحدَّدة فقط (span)", res.spans, res);
   await p.touchscreen.tap(10, 700); await p.waitForTimeout(600);
   ok("اللمس خارج النص ينهي التحرير", (await info()).n === 0);
+  await p.evaluate(() => { const el = document.getElementById("pbx-frame").contentDocument.querySelector('[data-kind="widget"] [data-edit]'); el.closest('[data-kind="widget"]').click(); }); await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector('#pbx-qbar label.qa').click()); await p.waitForTimeout(300);
+  ok("بلا تحرير: اللوحة تخص النص كله", await p.evaluate(() => /النص كله/.test((document.querySelector("#pbx-pop h6") || {}).textContent || "")));
+  await p.evaluate(() => document.querySelector('#pbx-pop [data-cc="#3b82f6"]').click()); await p.waitForTimeout(500);
+  ok("لون النص كله يتغيّر في بيانات العنصر", await p.evaluate(() => { const f = document.getElementById("pbx-frame").contentDocument, e = f.querySelector('[data-kind="widget"] .pb-t'); return !!e && /rgb\(59, 130, 246\)/.test(getComputedStyle(e).color); }));
   /* زر «تحرير» في الشريط */
   await p.evaluate(() => { const el = document.getElementById("pbx-frame").contentDocument.querySelector('[data-kind="widget"] [data-edit]'); el.closest('[data-kind="widget"]').click(); }); await p.waitForTimeout(500);
   const hasBtn = await p.evaluate(() => !!document.querySelector('#pbx-qbar [data-qb="txedit"]')); ok("زر «تحرير» ظاهر في شريط النص", hasBtn);

@@ -570,7 +570,7 @@ const FieldErr = (() => {
     if (!el) return; css(); clear(el); el.classList.add(box ? "fe-box" : "fe-bad"); void el.offsetWidth; el.classList.add("fe-shake"); if (!box) el.setAttribute("aria-invalid", "true");
     const m = document.createElement("div"); m.className = "fe-msg"; m.setAttribute("role", "alert"); m.textContent = msg;
     if (box) el.insertAdjacentElement("afterend", m); else host(el).appendChild(m); el._fe = m;
-    if (!el._feL) { el._feL = 1; const c = () => clear(el); ["input", "change"].forEach(ev => el.addEventListener(ev, c)); if (box) el.addEventListener("click", c); }
+    if (!el._feL) { el._feL = 1; const c = () => clear(el); (el.tagName === "SELECT" ? ["input", "change"] : ["input"]).forEach(ev => el.addEventListener(ev, c)); /* حقل نصي: حدث change يُطلَق عند فقدان التركيز فقط (لا يُزيل الخطأ) */ if (box) el.addEventListener("click", c); }
   }
   function clearAll(root) { try { (root || document).querySelectorAll(".fe-bad,.fe-box").forEach(clear); } catch (e) { } }
   function show(errs) {
@@ -581,12 +581,13 @@ const FieldErr = (() => {
 })();
 /* قواعد التحقق المشتركة: scope = 0 (الكل) أو رقم المرحلة 1 / 3؛ opt.ship=false لمنتج رقمي بلا توصيل */
 const FormCheck = {
+  star(form) { try { const l = form.querySelector('label[for="commune"]'); if (l && !/\*/.test(l.textContent)) l.textContent = l.textContent.trim() + " *"; } catch (e) { } },
   list(form, scope, opt) {
     const q = id => form.querySelector("#" + id), out = [], add = (el, msg) => { if (el) out.push({ el, msg }); }, all = !scope, ship = !(opt && opt.ship === false);
     if (ship && (all || scope === 1)) {
       const w = q("wilaya"); if (w && !w.value) add(w, "ادخل الولاية — اختر ولايتك من القائمة");
       const dw = q("desk-wrap"), dk = q("desk"); if (dw && dk && dw.style.display !== "none" && !dk.value) add(dk, "اختر مكتب التوصيل");
-      const c = q("commune"); if (c && c.required && !c.value) add(c, "اختر البلدية");
+      const c = q("commune"); if (c && !c.value && c.options.length > 1 && c.getClientRects().length) add(c, "اختر البلدية");      // البلدية إجبارية متى وُجدت قائمتها
     }
     if (all || scope === 3) {
       const nm = q("name"), ph = q("phone");
@@ -603,7 +604,7 @@ const OrderSteps = (() => {
   const S = { on: false, step: 1, max: 1, form: null, groups: [], bar: null, top: null, hint: null, hint2: null, offs: null, nav: null, next: null, stage2: [], done: false, why: "" };
   const LBL = ["السعر والتوصيل", "بياناتك"];
   const HINT = [
-    "اختر <b>ولايتك</b> و<b>بلديتك</b> ثم <b>العرض المناسب</b>، ويظهر <b>السعر مع تكلفة التوصيل</b> فوراً. ويمكنك اختيار التوصيل إلى المنزل أو إلى مكتب شركة التوصيل (غالباً أرخص).",
+    "بعد اختيار <b>الولاية والبلدية والعرض</b> يظهر <b>السعر مع تكلفة التوصيل</b> فوراً. ويمكنك التوصيل إلى المنزل أو إلى مكتب شركة التوصيل (غالباً أرخص).",
     "اكتب <b>اسمك</b> و<b>رقم هاتفك</b> (10 أرقام تبدأ بـ 05 أو 06 أو 07) ليتصل بك فريقنا لتأكيد الطلب. تدفع عند الاستلام ولا نطلب أي دفع مسبق."
   ];
   const SEL1 = '#wilaya,#commune,#desk,#desk-wrap,input[name="dtype"],.dtype,.geopin,[data-geopin]';
@@ -620,6 +621,7 @@ const OrderSteps = (() => {
 .os-st.on{opacity:1}.os-st.on i{background:var(--os-ac,#d4af37);border-color:var(--os-ac,#d4af37);color:var(--os-ac-t,#1a1a1a);box-shadow:0 0 0 4px rgba(255,255,255,.12)}
 .os-ln{flex:0 0 14px;height:2px;background:currentColor;opacity:.3;margin-bottom:1rem}
 .os-hint{margin:.2rem 0 .8rem;padding:.6rem .8rem;border-radius:12px;border:1px dashed rgba(255,255,255,.35);font-size:.92rem;line-height:1.8}
+.os-h{font-weight:800;font-size:1.02rem;margin:.5rem 0 .35rem}
 .os-offs{display:grid;gap:.5rem;margin:.3rem 0 .8rem}
 .os-off{display:flex;gap:.7rem;align-items:center;text-align:start;padding:.75rem .9rem;border-radius:14px;border:2px solid rgba(255,255,255,.28);background:transparent;color:inherit;font:inherit;cursor:pointer;width:100%}
 .os-off i{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid currentColor;position:relative}
@@ -661,7 +663,7 @@ const OrderSteps = (() => {
     if (!S.offs) return; const src = document.querySelectorAll("#offers .offer"); S.offs.querySelectorAll(".os-off").forEach((b, i) => b.classList.toggle("on", !!(src[i] && src[i].classList.contains("on"))));
   }
   function buildOffers() {
-    S.sig = sigOf(); const of = $("offers"); if (of && of.style.display === "none" && !S.origHidden) { S.offs.innerHTML = ""; return; }
+    S.sig = sigOf(); const of = $("offers"); if (of && of.style.display === "none" && !S.origHidden) { S.offs.innerHTML = ""; if (S.h2) S.h2.classList.add("os-hide"); return; } if (S.h2) S.h2.classList.remove("os-hide");
     const src = document.querySelectorAll("#offers .offer"); S.offs.innerHTML = "";
     src.forEach((o, i) => {
       const q = o.querySelector(".q"), p = o.querySelector(".p"), b = document.createElement("button"); b.type = "button"; b.className = "os-off";
@@ -695,13 +697,14 @@ const OrderSteps = (() => {
     S.hint = document.createElement("div"); S.hint.className = "os-hint"; S.hint.innerHTML = HINT[0];
     S.hint2 = document.createElement("div"); S.hint2.className = "os-hint"; S.hint2.innerHTML = HINT[1];
     S.offs = document.createElement("div"); S.offs.className = "os-offs"; top.append(S.bar, S.hint);
+    S.h1 = document.createElement("div"); S.h1.className = "os-h"; S.h1.textContent = "اختر ولايتك"; S.h2 = document.createElement("div"); S.h2.className = "os-h"; S.h2.textContent = "اختر العرض المناسب"; FormCheck.star(form);
     S.nav = document.createElement("div"); S.nav.className = "os-nav"; S.next = document.createElement("button"); S.next.type = "button"; S.next.className = "os-next"; S.next.textContent = "متابعة: أدخل بياناتك ↓"; S.nav.appendChild(S.next);
     try { const cs = getComputedStyle(sb || S.next); S.next.style.backgroundColor = cs.backgroundColor; if (cs.backgroundImage && cs.backgroundImage !== "none") S.next.style.backgroundImage = cs.backgroundImage; S.next.style.color = cs.color; S.next.style.border = cs.border; S.next.style.borderRadius = cs.borderRadius; S.next.style.boxShadow = cs.boxShadow; S.next.style.fontFamily = cs.fontFamily; } catch (e) { }
     /* إعادة ترتيب النموذج: العنوان ← الشريط ← [ولاية/بلدية] ← العروض ← بقية المرحلة 1 (توصيل، كوبون، السعر مع التوصيل) ← زر المتابعة ← [اسم/هاتف ← تأكيد] */
     const t = groups.find(g => g.title); if (t) t.el.insertAdjacentElement("afterend", top); else form.insertBefore(top, form.firstChild);
     let ref = top; const place = el => { ref.insertAdjacentElement("afterend", el); ref = el; };
-    const cg = s1.find(g => has(g.el, "#commune")) || s1.find(g => has(g.el, "#wilaya"));
-    s1.forEach(g => { place(g.el); if (g === cg) place(S.offs); });
+    const cg = s1.find(g => has(g.el, "#commune")) || s1.find(g => has(g.el, "#wilaya")), wg = s1.find(g => has(g.el, "#wilaya"));
+    s1.forEach(g => { if (g === wg) place(S.h1); place(g.el); if (g === cg) { place(S.h2); place(S.offs); } });
     place(S.nav); place(S.hint2); s2.forEach(g => place(g.el));
     S.stage2 = [S.hint2].concat(s2.map(g => g.el));
     S.next.addEventListener("click", next);
@@ -1398,7 +1401,7 @@ function initProduct(slug){
   }
 
   /* تحقق مرئي قبل أي إرسال: الخانة الناقصة أو الخاطئة تحمرّ مع رسالتها (يُعطَّل تحقق المتصفح الأصلي ليحلّ محلّه) */
-  { const __f = document.getElementById("order-form"); if(__f){ __f.noValidate = true; __f.addEventListener("submit", e=>{
+  { const __f = document.getElementById("order-form"); if(__f){ __f.noValidate = true; FormCheck.star(__f); __f.addEventListener("submit", e=>{
     if(typeof OrderSteps !== "undefined" && OrderSteps.state.on) return;
     FieldErr.clearAll(__f); const __er = FormCheck.list(__f, 0, { ship: !p.digital }); if(__er.length){ e.preventDefault(); e.stopImmediatePropagation(); FieldErr.show(__er); }
   }, true); } }
