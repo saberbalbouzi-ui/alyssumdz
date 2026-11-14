@@ -1,4 +1,4 @@
--- V01-06 (v1.89.689): حدّ معدّل لكل IP للدوال العامة + تضييق ruqya_lookup. idempotent.
+-- V01-06 (v1.89.689): حدّ معدّل لكل IP للدوال العامة. idempotent.
 -- التطبيق: SQL Editor أو Management API. لا يغيّر صلاحيات الدوال القائمة (create or replace يحفظها).
 -- التراجع: أعد تعريف الدوال الأربع من الإصدار السابق (git) ؛ الجدول rate_hits والدالة _rl_hit لا يضرّان.
 
@@ -51,6 +51,7 @@ begin
   return jsonb_build_object('found', true, 'status', o.status, 'date', o.created_at, 'wilaya', coalesce(o.wilaya, ''), 'commune', coalesce(o.commune, ''), 'dtype', coalesce(o.dtype, ''));
 end $$;
 
+-- RUQYA:start (للبائع فقط — تُحذف من حزمة العميل في make-template)
 create or replace function public.ruqya_lookup(p_q text) returns jsonb
 language plpgsql security definer set search_path = public as $$
 declare q text := btrim(coalesce(p_q,'')); d text := public._ruqya_norm(p_q); r jsonb;
@@ -119,3 +120,4 @@ begin
   returning id into v_id;
   return jsonb_build_object('ok', true, 'id', v_id, 'total', v_price * v_s + v_pack, 'session_price', v_price, 'pack_price', v_pack, 'first_time', not v_known);
 end $$;
+-- RUQYA:end

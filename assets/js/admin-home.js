@@ -50,7 +50,7 @@ const AdminHome = (() => {
 #ahome .ah-act{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
 #ahome .ah-act .ah-seg{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:3px}#ahome .ah-act .ah-seg button{padding:9px 6px;text-align:center}
 #ahome .ah-act>.ah-btn{width:100%;display:inline-flex;align-items:center;justify-content:center;min-height:46px}
-#ahome .ah-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}#ahome .ah-quick .ah-btn{width:100%;padding:8px 10px;font-size:.9rem}
+#ahome .ah-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}#ahome .ah-quick+.ah-quick{margin-top:-2px}#ahome .ah-quick .ah-btn{width:100%;padding:8px 10px;font-size:.9rem}
 #ahome .ah-rqb{display:grid;grid-template-columns:1fr 1fr;gap:8px}#ahome .ah-rqb .ah-btn{width:100%;padding:8px 10px;font-size:.9rem}
 }
 `;
@@ -132,8 +132,14 @@ const AdminHome = (() => {
   /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
   function quickBar(waiting) {
     let toPack = 0; try { if (typeof AdminPack !== "undefined" && AdminPack.count && hasTab("pack")) { toPack = S.packN || 0; AdminPack.count().then(n => { if (n !== null && n !== S.packN) { S.packN = n; refreshSoft(); } }); } } catch (e) { }   /* العدد من قائمة التجهيز نفسها (دالة الخادم) لا من حالة الطلبات */
-    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack")], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
-    return '<div class="ah-quick">' + Q.filter(q => q[2]).map(q => '<button type="button" class="ah-btn gh" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>';
+    /* ترتيب الاختصارات (طلب صاحب المتجر): الطلبات معاً ثم الأرباح ثم المنتج والعملاء ثم الرقية؛ كل مجموعة في صفها وما لا قسم له في هذه النسخة يُخفى */
+    const G = [
+      [["neword", "+ طلب", hasTab("orders"), 1], ["orders", "كل الطلبات", hasTab("orders"), 0], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1, 0], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack"), 0], ["shipped", "الطلبات المسجلة", hasTab("shipped"), 0]],
+      [["finance", "المخزون والأرباح", hasTab("finance"), 0]],
+      [["newp", "+ منتج", 1, 1], ["customers", "العملاء", hasTab("customers"), 0]],
+      [["ruqya-new", "حجز موعد رقية", hasRuqya(), 0], ["ruqya", "مواعيد الرقية", hasRuqya(), 0]]
+    ];
+    return G.map(g => g.filter(q => q[2])).filter(g => g.length).map(g => '<div class="ah-quick">' + g.map(q => '<button type="button" class="ah-btn' + (q[3] ? "" : " gh") + '" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>').join("");
   }
   function ruqyaCard() {
     if (!hasRuqya()) return "";
@@ -209,8 +215,7 @@ const AdminHome = (() => {
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
     root.innerHTML = `
 <div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
-<div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div>
-<button type="button" class="ah-btn" data-go="neword">+ طلب</button><button type="button" class="ah-btn gh" data-go="orders">كل الطلبات</button></div></div>
+<div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div></div></div>
 ${quickBar(waiting)}
 ${ruqyaCard()}
 ${payCard()}
