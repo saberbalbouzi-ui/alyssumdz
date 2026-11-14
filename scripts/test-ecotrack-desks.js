@@ -48,7 +48,7 @@ const { chromium } = require("playwright");
     A.enabledCompanyKeys = () => ["dhd", "wecan"]; let act = "dhd"; A.activeCompanyKey = () => act; const has = () => { ManualOrder.open({ mode: "new" }); const e = { addr: !!document.getElementById("mo-addr"), gps: !!document.getElementById("mo-gps"), wt: !!document.getElementById("mo-wt"), frag: !!document.getElementById("mo-frag"), open: !!document.getElementById("mo-open") }; try { document.getElementById("mo-bg").remove(); } catch (x) { } return e; };
     return { full, bare, dhd: has(), wecan: (act = "wecan", has()) }; });
   ok("طلب DHD يحمل العنوان ورابط الموقع والوزن وقابل للكسر", r4.full.adresse === "حي النصر 12" && r4.full.gps_link === "https://maps.google.com/?q=36.7,3.0" && r4.full.weight === 1.5 && r4.full.fragile === 1, r4.full);
-  ok("بلا قيم: لا gps_link/weight/fragile والعنوان الافتراضي بلدية، ولاية", r4.bare.gps_link === undefined && r4.bare.weight === undefined && r4.bare.fragile === undefined && /Alger Centre/.test(r4.bare.adresse), r4.bare);
+  ok("بلا قيم: لا gps_link/fragile، والوزن الافتراضي 1، والعنوان الافتراضي بلدية، ولاية", r4.bare.gps_link === undefined && r4.bare.weight === 1 && r4.bare.fragile === undefined && /Alger Centre/.test(r4.bare.adresse), r4.bare);
   ok("نموذج الطلب اليدوي مع DHD: العنوان ورابط الموقع والوزن وقابل للكسر (بلا خيار فتح الطرد)", r4.dhd.addr && r4.dhd.gps && r4.dhd.wt && r4.dhd.frag && !r4.dhd.open, r4.dhd);
   ok("مع WeCan: لا حقول DHD (عنوان/موقع/وزن)", !r4.wecan.addr && !r4.wecan.gps && !r4.wecan.wt && r4.wecan.frag && r4.wecan.open, r4.wecan);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));

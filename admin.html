@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.1173">
+<meta name="admin-version" content="1.89.1174">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -1752,7 +1752,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stockcheck.js?v=29b40c15"></script>
 <script src="assets/js/admin-orderedit.js?v=7e1815fd"></script>
 <script src="assets/js/admin-wilkids.js?v=f737668d"></script>
-<script src="assets/js/admin-manualorder.js?v=f1785afc"></script>
+<script src="assets/js/admin-manualorder.js?v=997401a7"></script>
 <script src="assets/js/admin-stores.js?v=7c65d115"></script>
 <script src="assets/js/float-icons.js?v=1"></script>
 <script src="assets/js/admin-float.js?v=6063c915"></script>
@@ -2552,7 +2552,7 @@ function ecotrackCompany(name, defaultBase){
           code_postal: stop ? String(order.__deskId || "") : "", commune: order.commune || "", code_wilaya: w ? w.id : "", montant: price, remarque: String(order.note || "").replace(/\s+/g, " ").trim().slice(0, 250), ...((()=>{ let p2 = String((order.extra && order.extra["📞 هاتف 2"]) || "").replace(/\D/g, ""); if(!p2) return {}; if(p2.startsWith("213")) p2 = "0" + p2.slice(3); else if(p2.length === 9) p2 = "0" + p2; return p2 === String(order.phone||"").replace(/\D/g, "") ? {} : { telephone_2: p2 }; })()), produit: String(order.items||"").replace(/\s*=\s*\d+\s*DA/gi, "").replace(/\n/g, "، ").slice(0, 250),
           boutique: cfg.boutique || "", type: 1, stop_desk: stop ? 1 : 0, quantite: 1,
           /* حقول إضافية في نموذج الشركة: رابط الموقع (Localisation adresse de livraison)، الوزن (Poids)، قابل للكسر (Colis fragile) — أسماؤها gps_link/weight/fragile بحسب واجهة Ecotrack ولم تُتحقَّق بعد من وثيقة الشركة */
-          ...((()=>{ const ex = order.extra || {}, g = String(ex["📍 الموقع"] || "").trim(), wt = Number(String(ex["⚖️ الوزن (كغ)"] || "").replace(",", ".")), o = {}; if(/^https:\/\//i.test(g)) o.gps_link = g.slice(0, 300); if(isFinite(wt) && wt > 0) o.weight = wt; if(ex["📦 قابل للكسر"]) o.fragile = 1; return o; })()) }) };
+          ...((()=>{ const ex = order.extra || {}, g = String(ex["📍 الموقع"] || "").trim(), wt = Number(String(ex["⚖️ الوزن (كغ)"] || "").replace(",", ".")), o = {}; if(/^https:\/\//i.test(g)) o.gps_link = g.slice(0, 300); o.weight = isFinite(wt) && wt > 0 ? wt : 1;      /* نموذج DHD يملأ Poids = 1 افتراضياً (كان طردنا 0.00 كغ) */ if(ex["📦 قابل للكسر"]) o.fragile = 1; return o; })()) }) };
     },
     parseSent(json){ const t = json && (json.tracking || json.tracking_number || (json.data && json.data.tracking)); return t ? String(t) : ""; },
     parseError(json){ try{ if(json && json.message) return String(json.message) + (json.errors ? " — " + JSON.stringify(json.errors) : ""); }catch(e){} return ""; },

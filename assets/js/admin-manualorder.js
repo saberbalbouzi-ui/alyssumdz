@@ -185,7 +185,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
     const f = coFields(ad); if (mode === "edit" || !f.length) return ""; const ex = (src && src.extra) || {}; let h = "";
     if (f.indexOf("address") >= 0) h += fld("العنوان (الحي / الشارع) — اختياري", `<input id="mo-addr" maxlength="200" value="${esc(ex["🏠 العنوان"] || "")}" placeholder="يظهر في خانة Adresse عند الشركة">`);
     if (f.indexOf("gps") >= 0) h += fld("رابط الموقع على الخريطة — اختياري", `<input id="mo-gps" dir="ltr" inputmode="url" value="${esc(/^https:\/\//.test(ex["📍 الموقع"] || "") ? ex["📍 الموقع"] : "")}" placeholder="https://maps.google.com/…">`);
-    if (f.indexOf("weight") >= 0) h += fld("الوزن (كغ) — اختياري", `<input id="mo-wt" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(ex["⚖️ الوزن (كغ)"] || "")}" placeholder="0">`);
+    if (f.indexOf("weight") >= 0) h += fld("الوزن (كغ) — افتراضي 1", `<input id="mo-wt" type="number" min="0" step="0.1" inputmode="decimal" value="${esc(ex["⚖️ الوزن (كغ)"] || "")}" placeholder="1">`);
     return h ? `<div class="mo-g" style="display:grid;grid-template-columns:1fr 1fr;gap:0 .7rem">${h}</div>` : "";
   }
   function optHtml(ad, mode) {
