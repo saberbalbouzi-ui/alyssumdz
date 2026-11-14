@@ -72,3 +72,7 @@
 - وحدات المتجر عندهم: Expédition **مفعّلة**، Fulfilment وConfirmation وInventaire **غير مفعّلة**.
 - **تحقق:** قارنتُ الجدول بالتعريفة المدمجة في اللوحة (`DELIVERY_COMPANIES.wecan.tariff`، 58 ولاية منزل/مكتب) فتطابقت كلها بلا فرق (1.89.950). من الفروق السابقة المنتهية: تيبازة 650/550 (لا 850).
 - أسعار الزيادة بالكيلوغرام (للتوسعة لاحقاً): 100 = 1–7,9–10,12–29(عدا 8,11,30…)… التفصيل في الملف المرفق؛ الأوزان الافتراضية للطرد 1 كغ فلا تُطبَّق.
+
+## Ecotrack — `GET /api/v1/get/fees` (من وثيقة الشركة الرسمية)
+الردّ: `{livraison, pickup, echnage (كذا بالإملاء)، recouvrement, retours}`، وكل مصفوفة صفوفها `{wilaya_id, tarif, tarif_stopdesk}` (نصوص). **للتسعير يُقرأ `livraison` فقط**؛ `tarif_stopdesk = "0"` تعني لا يوجد مكتب Stop Desk في تلك الولاية؛ الولايات غير المفعّلة لا تُرجَع. `GET /api/v1/get/products/list` (بتوكن Bearer) يُرجع منتجات المخزون عند الشركة `{reference, barcode, title, is_active, image, stock_disponible, stock_reserve, stock_phisique}` مع `pagination` — غير مستعمل حالياً (مرجع لو أُضيفت مزامنة مخزون Ecotrack).
+
