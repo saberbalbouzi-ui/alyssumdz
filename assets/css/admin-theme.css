@@ -270,6 +270,9 @@ html.white #ord-prev-b .kv td{border-bottom-color:#dde3ec}
 /* ── الطلبات: صف مضغوط بسطر واحد على الشاشات الكبيرة + زر إغلاق المعاينة ── */
 .orders-compact td.nm{max-width:210px}.orders-compact td.c-items{max-width:260px}
 .orders-compact .o-wil{color:#8a8f8c;font-weight:600}
+.o-src{display:inline-block;padding:.05rem .45rem;border-radius:99px;font-size:.68rem;font-weight:800;line-height:1.5;vertical-align:middle;white-space:nowrap;border:1px solid transparent}
+.o-src.man{background:rgba(var(--g-amber-rgb),.18);color:var(--g-amber);border-color:rgba(var(--g-amber-rgb),.4)}
+.o-src.web{background:rgba(var(--g-blue-rgb),.16);color:var(--g-blue);border-color:rgba(var(--g-blue-rgb),.38)}
 .orders-compact td.o-btns{white-space:nowrap}.orders-compact td.o-btns .small{padding:.28rem .6rem;margin:0 .1rem}
 .orders-compact .ord-sent{font-weight:800}
 .ord-x{position:absolute;top:.7rem;inset-inline-end:.8rem;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font-size:1rem;cursor:pointer;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);transition:transform .15s,background .15s}

@@ -297,7 +297,7 @@ const API = {
     if (this.ordersBackend() !== "supabase") return this.get("orders", { key });
     const rows = await this.sb.adminFetch("/rest/v1/orders?order=created_at.desc&limit=2000");
     return Array.isArray(rows) ? { ok: true, orders: rows.map(r => ({ id: r.id, date: r.created_at, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, dtype: r.dtype, desk: r.desk,
-      items: r.items_text, subtotal: r.subtotal, fee: r.fee, total: Number(r.total), coupon: r.coupon, discount: r.discount, extra: r.extra, status: r.status, note: r.note })) } : null;
+      items: r.items_text, subtotal: r.subtotal, fee: r.fee, total: Number(r.total), coupon: r.coupon, discount: r.discount, extra: r.extra, status: r.status, note: r.note, source: r.source })) } : null;
   },
   /* حذف طلب: يُرجع true إن حُذف فعلاً من قاعدة البيانات (وإلا يستعمل المدير الإخفاء بوسم في الملاحظة) */
   async deleteOrder(key, id) {
