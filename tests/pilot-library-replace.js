@@ -12,6 +12,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const SPEC = {
   "s-watches": { img: "men_watch", bg: "watch_rock" }, "s-tech": { img: "it_color" },
   "s-jewelry": { img: "jewel_ring", bg: "jewel_pearl" }, "s-supplements": { bg: "supp_green" }, "s-accessories": { img: "acc_pink" }, "s-it": { bg: "it_circuit" }, "s-digital": { img: "dig_dash" }, "s-marketplace": { col: "mkt_bags" }, "s-cosmetics": { bg: "cosm_terra" }, "s-honey": { img: "honey_amber" }, "s-herbs": { img: "herb_jars" }, "s-fashion": { img: "fashion_man" },
+  "s-aurora": { img: "it_color" }, "s-gold": { bg: "jewel_dark" }, "s-fresh": { img: "skin_oil" }, "s-pop": { img: "fashion_sneakers" },
 };
 const TPLS = process.env.LIB_TPLS ? process.env.LIB_TPLS.split(",") : ["s-watches", "s-tech"];
 const results = []; let page;
