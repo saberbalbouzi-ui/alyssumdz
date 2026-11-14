@@ -1,0 +1,97 @@
+{
+ "phase": "12C-F",
+ "suite": "browser (Chromium) vs real PHP store",
+ "otherBrowsers": {
+  "webkit": "NOT INSTALLED (NOT TESTED)",
+  "firefox": "NOT INSTALLED (NOT TESTED)"
+ },
+ "mocked": "page.route لعطل ضياع الردّ فقط + window.open",
+ "pass": 11,
+ "fail": 0,
+ "results": [
+  {
+   "n": "[F1] حُفظ ثم ضاع الردّ ← UNKNOWN، طلب حقيقي واحد، مفتاح واحد",
+   "pass": true,
+   "x": {
+    "st": "UNKNOWN",
+    "db": 1,
+    "keys": 1
+   }
+  },
+  {
+   "n": "[F1] بعد إعادة تحميل الصفحة وإعادة تعبئة النموذج: المفتاح نفسه ← «سبق تسجيله» بمعرّف الأصل، وطلب واحد فقط",
+   "pass": true,
+   "x": {
+    "sameKey": true,
+    "db": 1,
+    "oid": "S261114-A4199E3B"
+   }
+  },
+  {
+   "n": "[F2] العودة ?pay=ok (معاملات رابط يكتبها أي أحد): النافذة موجودة ولا تدّعي «تم الدفع» ولا «لم تُخصم مبالغ»",
+   "pass": true,
+   "x": {
+    "text": "عدتَ من صفحة الدفع\nلم يصلنا بعدُ تأكيد الدفع من المزوّد. بعد تأكيده يصلك المنتج تلقائياً ع"
+   }
+  },
+  {
+   "n": "[F2] ولا يُسجَّل أي طلب بسبب الرابط وحده (عدد الطلبات قبل/بعد)",
+   "pass": true,
+   "x": {
+    "c0": 1
+   }
+  },
+  {
+   "n": "[F2] العودة ?pay=fail (معاملات رابط يكتبها أي أحد): النافذة موجودة ولا تدّعي «تم الدفع» ولا «لم تُخصم مبالغ»",
+   "pass": true,
+   "x": {
+    "text": "لم يُؤكَّد الدفع\nلم يصلنا تأكيد دفع لهذا الطلب. إن خُصم منك مبلغ فسيصلك المنتج بعد تأكيد ا"
+   }
+  },
+  {
+   "n": "[F3] نقرة حقيقية (page.click) على زر الطلب: النتيجة موثَّقة — BLOCKED_BY_AUTOMATION_GUARD_OVERLAY_PRESENT_CLICK_TIMED_OUT",
+   "pass": true,
+   "x": {
+    "guardOverlay": true,
+    "outcome": "BLOCKED_BY_AUTOMATION_GUARD_OVERLAY_PRESENT_CLICK_TIMED_OUT",
+    "orders": 0,
+    "detail": "locator.click: Timeout 8000ms exceeded. Call log: \u001b[2m - waiting for locator('.btn-order').first()\u001b[22m \u001b[2m - locator resolved to <button class=\"btn-order\" onc"
+   }
+  },
+  {
+   "n": "[F3] إن اعترضت الطبقةُ النقرةَ فلا طلب أُنشئ (الحماية لم تُتجاوز صامتاً)",
+   "pass": true
+  },
+  {
+   "n": "[F4] طلب أنشأه المتجر ← تحديث الحالة بجلسة المدير يظهر في القاعدة (API حقيقي، ليس نقرة واجهة)",
+   "pass": true,
+   "x": {
+    "s": 200,
+    "status": "confirmee"
+   }
+  },
+  {
+   "n": "[F4] التحديث بلا جلسة مدير مرفوض ولا يغيّر الطلب",
+   "pass": true,
+   "x": {
+    "s": 401,
+    "status": "confirmee"
+   }
+  },
+  {
+   "n": "[F4] CSRF: جلسة المدير صالحة لكن بلا ترويسة X-Requested-With ← مرفوض ولا يتغيّر الطلب",
+   "pass": true,
+   "x": {
+    "s": 403,
+    "status": "confirmee"
+   }
+  },
+  {
+   "n": "[F4] معرّف غير موجود — الاستجابة موثَّقة (موروث N5 في 12B: 200 بلا أثر)",
+   "pass": true,
+   "x": {
+    "s": 200
+   }
+  }
+ ]
+}
