@@ -23,6 +23,22 @@ const { chromium } = require("playwright");
   ok("الرمز بصفر في أوله يبقى نصاً (09001)", r.w9 && r.w9.id === "09001", r.w9);
   ok("طلب Stop Desk يرسل code_postal = رمز المكتب و stop_desk=1", /"stop_desk":1/.test(r.req) && /"code_postal":"31001"/.test(r.req), r.req);
   ok("طلب المنزل لا يرسل رمز مكتب", /"stop_desk":0/.test(r.reqHome) && /"code_postal":""/.test(r.reqHome), r.reqHome);
+  /* بلديات الشركة الحقيقية + خيارات نموذج الطلب اليدوي بحسب الشركة الفعّالة */
+  const r2 = await p.evaluate(async () => {
+    const A = Admin, co = A.allDeliveryCompanies().dhd, cfg = { baseUrl: "https://platform.dhd-dz.com", token: "T" }; const out = {};
+    out.cReq = co.communesRequest(cfg, 16).url; out.parsed = co.parseCommunes({ "1": { nom: "Bab Ezzouar", has_stop_desk: 1, code_postal: "16001" }, "2": { nom: "Alger Centre" }, "x": 5 }).names;
+    A.courierFetch = async req => ({ ok: true, status: 200, text: JSON.stringify({ "1": { nom: "Bab Ezzouar" }, "2": { nom: "Alger Centre" } }) });
+    try { Object.keys(localStorage).filter(k => /^alyssum_communes_/.test(k)).forEach(k => localStorage.removeItem(k)); } catch (e) { } A._communesCache = {}; A._communesNeg = {};
+    const fix = await A.resolveCommune(co, cfg, { id: "Z1", wilaya: "Alger", commune: "bab ezzouar" }); out.fix = fix;
+    const bad = await A.resolveCommune(co, cfg, { id: "Z2", wilaya: "Alger", commune: "Xyzxyz" }); out.bad = { ok: bad.ok, n: (bad.list || []).length };
+    /* خيارات اليدوي: DHD فعّالة وWeCan وياليدين مفعّلتان فقط */
+    const en = ["dhd", "wecan", "yalidine"]; A.enabledCompanyKeys = () => en; let act = "dhd"; A.activeCompanyKey = () => act; const open = () => { ManualOrder.open({ mode: "new" }); const e = { frag: !!document.getElementById("mo-frag"), open: !!document.getElementById("mo-open"), xch: !!document.getElementById("mo-xch") }; document.querySelectorAll('[id^="mo-"]').forEach(x => { }); const bg = document.querySelector(".mo-bg, #mo-bg"); try { (bg || document.getElementById("mo-name").closest('[class*="bg"],[id*="bg"]')).remove(); } catch (x) { } return e; };
+    out.dhd = open(); act = "wecan"; out.wecan = open(); act = "yalidine"; out.yal = open(); return out; });
+  ok("بلديات DHD الحقيقية: طلب get/communes?wilaya_id=16 وقراءة الأسماء", /\/api\/v1\/get\/communes\?wilaya_id=16$/.test(r2.cReq) && r2.parsed.length === 2 && r2.parsed[0] === "Bab Ezzouar", r2);
+  ok("اسم البلدية يُطبَّع على اسم الشركة (bab ezzouar ← Bab Ezzouar)، وغير الموجودة تُعرض قائمة الشركة لاختيارها", r2.fix.ok && r2.fix.name === "Bab Ezzouar" && r2.bad.ok === false && r2.bad.n === 2, r2);
+  ok("DHD فعّالة: لا خيارات WeCan (كسر/فتح) ولا استبدال (حتى لو WeCan وياليدين مفعّلتان)", !r2.dhd.frag && !r2.dhd.open && !r2.dhd.xch, r2.dhd);
+  ok("WeCan فعّالة: كسر وفتح واستبدال", r2.wecan.frag && r2.wecan.open && r2.wecan.xch, r2.wecan);
+  ok("ياليدين فعّالة: استبدال فقط", !r2.yal.frag && r2.yal.xch, r2.yal);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();

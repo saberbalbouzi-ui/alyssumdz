@@ -177,12 +177,14 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
   /* خيارات الطرد عند WeCan (أعمدة FRAGILE وAUTORISER L'OUVERTURE في لوحتهم): قابل للكسر، والسماح بفتح الطرد (الافتراضي مسموح)؛ تظهر حين تكون WeCan مفعّلة وفي الطلب الجديد */
   /* صف خيار موحَّد (مربع + نص + شرح اختياري) ليستقيم الاستبدال والكسر والفتح في عمود واحد بالمحاذاة نفسها */
   const optRow = (id, checked, text, hint) => `<label style="display:flex;gap:.6rem;align-items:${hint ? "flex-start" : "center"};margin:.4rem 0;font-weight:800;cursor:pointer"><input type="checkbox" id="${id}"${checked ? " checked" : ""} style="width:20px;height:20px;flex:none;margin:${hint ? ".1rem" : "0"} 0 0"><span style="flex:1;min-width:0">${text}${hint ? `<small class="hint" style="display:block;font-weight:400;margin-top:.1rem">${hint}</small>` : ""}</span></label>`;
+  /* خيارات خاصة بشركات معيّنة تظهر حين تكون إحداها شركة التوصيل الفعّالة للطلب (الافتراضية)، لا لمجرد تفعيلها بين الشركات (كانت تظهر خيارات WeCan وياليدين مع DHD) */
+  function coIs(ad, keys) { const k = ad.activeCompanyKey ? ad.activeCompanyKey() : ""; if (k) return keys.indexOf(k) >= 0; return !!ad.enabledCompanyKeys && keys.some(x => ad.enabledCompanyKeys().indexOf(x) >= 0); }
   function optHtml(ad, mode) {
-    if (mode === "edit" || !ad.enabledCompanyKeys || ad.enabledCompanyKeys().indexOf("wecan") < 0) return "";
+    if (mode === "edit" || !ad.enabledCompanyKeys || !coIs(ad, ["wecan"])) return "";
     return `<div style="margin:.2rem 0 .5rem">${optRow("mo-frag", false, "📦 قابل للكسر (Fragile)")}${optRow("mo-open", true, "🔓 السماح بفتح الطرد")}</div>`;
   }
   function xchHtml(ad, mode, fld) {
-    if (mode === "edit" || !ad.enabledCompanyKeys || !["yalidine", "wecan"].some(k => ad.enabledCompanyKeys().indexOf(k) >= 0)) return "";
+    if (mode === "edit" || !ad.enabledCompanyKeys || !coIs(ad, ["yalidine", "wecan"])) return "";
     return `<div style="margin:.2rem 0 0">${optRow("mo-xch", false, "🔄 طلب استبدال بعد التسليم", "يُنشئ بوردرو ثانياً لاسترجاع القطعة من الزبون مع بوردرو هذا الطلب")}</div><div id="mo-xchw" class="hidden">${fld("القطعة المراد استرجاعها", `<input id="mo-xcht" maxlength="200" placeholder="مثال: كريم قديم عبوة 50 مل">`)}</div>`;
   }
   /* رقم جزائري صحيح فقط: جوال 10 أرقام (05/06/07) أو ثابت 9 أرقام (02/03/04)؛ أي طول آخر يُرفض (كان يُقبل أي نص بين 6 و20 رقماً) */
