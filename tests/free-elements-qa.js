@@ -209,7 +209,8 @@ let page;
       await acceptPbAsk("no");
 
       const m0 = await model();
-      const wtype = t => { for (const s of m0.secs) { for (const w of s.cols) if (w.type === t) return { id: w.id, free: false, sec: s.id }; for (const w of s.free) if (w.type === t) return { id: w.id, free: true, sec: s.id }; } return null; };
+      // يفضَّل العنصر المتدفق في أي قسم (T5/T13 تفترض عنواناً متدفقاً)، ثم الحر؛ كان البحث قسماً بقسم فيلتقط عنواناً حراً في هيرو حر قبل أي متدفق
+      const wtype = t => { for (const s of m0.secs) for (const w of s.cols) if (w.type === t) return { id: w.id, free: false, sec: s.id }; for (const s of m0.secs) for (const w of s.free) if (w.type === t) return { id: w.id, free: true, sec: s.id }; return null; };
       const sbar = wtype("sbar"), shdr = wtype("shdr"), heading = wtype("heading"), textW = wtype("text"), testi = wtype("testimonial"), products = wtype("products"), countdown = wtype("countdown"), coupon = wtype("coupon");
       await check(tpl, "inventory: 2 free (sbar+shdr)", !!(sbar && sbar.free && shdr && shdr.free), JSON.stringify({ sbar: sbar && sbar.id, shdr: shdr && shdr.id }));
       await check(tpl, "inventory: commerce widgets present", !!(products && countdown && coupon), JSON.stringify({ products: !!products, countdown: !!countdown, coupon: !!coupon }));
