@@ -76,3 +76,4 @@
 ## Ecotrack — `GET /api/v1/get/fees` (من وثيقة الشركة الرسمية)
 الردّ: `{livraison, pickup, echnage (كذا بالإملاء)، recouvrement, retours}`، وكل مصفوفة صفوفها `{wilaya_id, tarif, tarif_stopdesk}` (نصوص). **للتسعير يُقرأ `livraison` فقط**؛ `tarif_stopdesk = "0"` تعني لا يوجد مكتب Stop Desk في تلك الولاية؛ الولايات غير المفعّلة لا تُرجَع. `GET /api/v1/get/products/list` (بتوكن Bearer) يُرجع منتجات المخزون عند الشركة `{reference, barcode, title, is_active, image, stock_disponible, stock_reserve, stock_phisique}` مع `pagination` — غير مستعمل حالياً (مرجع لو أُضيفت مزامنة مخزون Ecotrack).
 
+**رابط منصة DHD عند صاحب المتجر:** `https://platform.dhd-dz.com` (نطاق `dhd-dz.com`) — أُضيف إلى قائمة وسيط `courier` وصار الافتراضي في اللوحة؛ وقائمة الوسيط تجمع الافتراضي مع `COURIER_HOSTS` بدل أن تحلّ محلّه.
