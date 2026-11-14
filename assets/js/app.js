@@ -598,14 +598,13 @@ const FormCheck = {
   }
 };
 const OrderSteps = (() => {
+  /* الطلب بمرحلتين تراكميتين: (1) الولاية + البلدية + العرض + السعر مع التوصيل  (2) الاسم والهاتف وزر التأكيد تُضاف تحت الأولى ولا تحجبها */
   const $ = id => document.getElementById(id);
-  const S = { on: false, step: 1, max: 1, form: null, groups: [], bar: null, top: null, hint: null, offs: null, rev: null, nav: null, back: null, next: null, done: false, why: "" };
-  const LBL = ["التوصيل", "العرض", "بياناتك", "التأكيد"];
+  const S = { on: false, step: 1, max: 1, form: null, groups: [], bar: null, top: null, hint: null, hint2: null, offs: null, nav: null, next: null, stage2: [], done: false, why: "" };
+  const LBL = ["السعر والتوصيل", "بياناتك"];
   const HINT = [
-    "اختر <b>ولايتك</b> ثم <b>بلديتك</b>. ويمكنك اختيار التوصيل إلى المنزل أو إلى مكتب شركة التوصيل (غالباً أرخص).",
-    "اختر <b>العرض المناسب</b> لك: كلما زادت الكمية قلّ سعر القطعة. وستظهر <b>تكلفة التوصيل والمجموع</b> فوراً بعد الاختيار.",
-    "اكتب <b>اسمك</b> و<b>رقم هاتفك</b> (10 أرقام تبدأ بـ 05 أو 06 أو 07) ليتصل بك فريقنا لتأكيد الطلب.",
-    "راجع طلبك ثم اضغط <b>تأكيد الطلب</b>. تدفع عند الاستلام ولا نطلب أي دفع مسبق. يمكنك تعديل أي مرحلة بالضغط على «تعديل»."
+    "اختر <b>ولايتك</b> و<b>بلديتك</b> ثم <b>العرض المناسب</b>، ويظهر <b>السعر مع تكلفة التوصيل</b> فوراً. ويمكنك اختيار التوصيل إلى المنزل أو إلى مكتب شركة التوصيل (غالباً أرخص).",
+    "اكتب <b>اسمك</b> و<b>رقم هاتفك</b> (10 أرقام تبدأ بـ 05 أو 06 أو 07) ليتصل بك فريقنا لتأكيد الطلب. تدفع عند الاستلام ولا نطلب أي دفع مسبق."
   ];
   const SEL1 = '#wilaya,#commune,#desk,#desk-wrap,input[name="dtype"],.dtype,.geopin,[data-geopin]';
   const SEL3 = '#name,#phone,[id^="extra-"]';
@@ -626,26 +625,23 @@ const OrderSteps = (() => {
 .os-off i{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid currentColor;position:relative}
 .os-off.on{border-color:var(--os-ac,#d4af37);box-shadow:0 0 0 2px var(--os-ac,#d4af37) inset}.os-off.on i::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--os-ac,#d4af37)}
 .os-off span{flex:1;min-width:0;display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap;align-items:center}.os-off b{white-space:nowrap}
-.os-rev{margin:.3rem 0 .8rem;border:1px solid rgba(255,255,255,.28);border-radius:14px;overflow:hidden}
-.os-rv{display:flex;gap:.6rem;justify-content:space-between;align-items:center;padding:.6rem .8rem;border-bottom:1px solid rgba(255,255,255,.15)}.os-rv:last-child{border-bottom:0}
-.os-rv span{opacity:.75;font-size:.85rem}.os-rv b{flex:1;text-align:end;overflow-wrap:anywhere}.os-rv a{color:var(--os-ac,#d4af37);font-size:.82rem;font-weight:800;cursor:pointer;white-space:nowrap;text-decoration:underline}
 .os-nav{display:flex;gap:.6rem;margin-top:.9rem;direction:rtl}.os-nav button{flex:1;padding:.85rem 1rem;font:inherit;font-weight:800;cursor:pointer;border-radius:12px}
-.os-nav .os-back{flex:0 0 32%;background:transparent;border:2px solid currentColor;color:inherit;opacity:.85}
 .os-fade{animation:osf .28s ease}@keyframes osf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.os-fade{animation:none}}`;
-  /* تصنيف أبناء النموذج المباشرين إلى مراحل؛ يعيد null إن اختلطت مراحل في عنصر واحد (فيُترك النموذج العادي) */
+  /* تصنيف أبناء النموذج المباشرين إلى مرحلتين (1: توصيل/عرض/سعر، 2: بيانات/تأكيد)؛ يعيد null إن اختلطتا في عنصر واحد (فيُترك النموذج العادي) */
   function classify(form) {
-    const out = []; let last = [1], mixed = false;
+    const out = []; let last = 1, mixed = false;
     Array.from(form.children).forEach(c => {
-      if (c.classList.contains("os-top") || c.classList.contains("os-nav")) return;
+      if (c.classList.contains("os-top") || c.classList.contains("os-nav") || c.classList.contains("os-offs") || c.classList.contains("os-hint")) return;
       if (c.tagName === "INPUT" && c.type === "hidden") return;
-      const st = new Set();
-      if (has(c, SEL1)) st.add(1); if (has(c, SEL3)) st.add(3); if (has(c, SEL2)) st.add(2); if (c.matches(SEL4) || c.querySelector('.btn-order,button[type="submit"]')) st.add(4);
-      if (!st.size && /^(INPUT|SELECT|TEXTAREA)$/.test(c.tagName) || (!st.size && c.querySelector("input:not([type=hidden]),select,textarea"))) st.add(3);
-      if (st.size > 1) { if (st.has(2) && st.size === 2 && st.has(4)) { /* مجموع + أزرار في عنصر واحد */ } mixed = true; }
-      if (!st.size) { if (/^H[1-6]$/.test(c.tagName)) { out.push({ el: c, steps: [1, 2, 3, 4], title: true }); return; } out.push({ el: c, steps: last.slice() }); return; }
-      let steps = [...st]; if (steps.length === 1 && steps[0] === 2) steps = c.matches(".coupon-box,.ups-bump") ? [2] : [2, 4];      // المجموع يظهر في المرحلتين 2 و4، والكوبون وعرض الإضافة في المرحلة 2 فقط
-      last = steps; out.push({ el: c, steps });
+      const a = has(c, SEL1) || has(c, SEL2), z = has(c, SEL3) || c.matches(SEL4) || !!c.querySelector('.btn-order,button[type="submit"]');
+      if (a && z) mixed = true;
+      if (!a && !z) {
+        if (/^H[1-6]$/.test(c.tagName)) { out.push({ el: c, stage: 0, title: true }); return; }
+        if (/^(INPUT|SELECT|TEXTAREA)$/.test(c.tagName) || c.querySelector("input:not([type=hidden]),select,textarea")) { last = 2; out.push({ el: c, stage: 2 }); return; }
+        out.push({ el: c, stage: last }); return;      // نص/ملاحظة تتبع ما قبلها
+      }
+      last = a ? 1 : 2; out.push({ el: c, stage: last });
     });
     return mixed ? null : out;
   }
@@ -653,19 +649,19 @@ const OrderSteps = (() => {
     if (!$("order-form") || !$("wilaya")) return "no-form"; if (document.querySelector(".oos-warning")) return "oos"; if ($("variants") || $("group-box")) return "variants";
     if (document.querySelector('[data-digital],#digital-pay,.digital-checkout')) return "digital"; return "";
   }
-  const sel = (id) => { const e = $(id); return e && e.selectedOptions && e.selectedOptions[0] ? e.selectedOptions[0].textContent.trim() : ""; };
-  const txt = (id) => { const e = $(id); return e ? e.textContent.replace(/\s+/g, " ").trim() : ""; };
-  function offerLabel() { const o = document.querySelector("#offers .offer.on"); return o ? o.textContent.replace(/\s+/g, " ").trim() : ""; }
+  /* n=1: الولاية/البلدية/المكتب + العرض؛ n=2: الاسم والهاتف والحقول الإضافية */
   function validate(n) {
-    const errs = FormCheck.list(S.form, n);
-    if (n === 2) { const of = $("offers"); if (of && (of.style.display !== "none" || S.origHidden) && of.querySelector(".offer") && !of.querySelector(".offer.on")) errs.push({ el: S.offs, msg: "اختر العرض المناسب", box: true }); }
+    const errs = FormCheck.list(S.form, n === 2 ? 3 : 1);
+    if (n === 1) { const of = $("offers"); if (of && (of.style.display !== "none" || S.origHidden) && of.querySelector(".offer") && !of.querySelector(".offer.on")) errs.push({ el: S.offs, msg: "اختر العرض المناسب", box: true }); }
     return errs.length ? { ok: false, msg: errs[0].msg, el: errs[0].el, all: errs } : { ok: true, all: [] };
   }
-  const warn = (m) => { try { toast(m); } catch (e) { } };
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const sigOf = () => Array.from(document.querySelectorAll("#offers .offer")).map(o => o.textContent.replace(/\s+/g, " ").trim()).join("|");
   function syncOffers() {
     if (!S.offs) return; const src = document.querySelectorAll("#offers .offer"); S.offs.querySelectorAll(".os-off").forEach((b, i) => b.classList.toggle("on", !!(src[i] && src[i].classList.contains("on"))));
   }
   function buildOffers() {
+    S.sig = sigOf(); const of = $("offers"); if (of && of.style.display === "none" && !S.origHidden) { S.offs.innerHTML = ""; return; }
     const src = document.querySelectorAll("#offers .offer"); S.offs.innerHTML = "";
     src.forEach((o, i) => {
       const q = o.querySelector(".q"), p = o.querySelector(".p"), b = document.createElement("button"); b.type = "button"; b.className = "os-off";
@@ -675,50 +671,50 @@ const OrderSteps = (() => {
       b.addEventListener("click", () => { o.click(); setTimeout(syncOffers, 30); }); S.offs.appendChild(b);
     }); syncOffers();
   }
-  function review() {
-    const rows = [["العرض", offerLabel() || "—", 2], ["الولاية", sel("wilaya") || "—", 1], ["البلدية", sel("commune") && !/^—/.test(sel("commune")) ? sel("commune") : "—", 1]];
-    const dk = $("desk"), dw = $("desk-wrap"); if (dw && dw.style.display !== "none" && dk && dk.value) rows.push(["مكتب التوصيل", sel("desk"), 1]);
-    rows.push(["الاسم", ($("name") || {}).value || "—", 3], ["الهاتف", ($("phone") || {}).value || "—", 3], ["رسوم التوصيل", txt("fee") || "—", 1], ["الإجمالي", txt("grand") || "—", 2]);
-    S.rev.innerHTML = rows.map(r => '<div class="os-rv"><span>' + r[0] + "</span><b>" + esc(r[1]) + "</b>" + (r[0] === "رسوم التوصيل" || r[0] === "الإجمالي" ? "" : '<a data-os-go="' + r[2] + '">تعديل</a>') + "</div>").join("");
-  }
-  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function show(n, opt) {
-    n = Math.max(1, Math.min(4, n)); const first = !S.started; S.started = true; S.step = n; S.max = Math.max(S.max, n);
-    S.groups.forEach(g => g.el.classList.toggle("os-hide", g.steps.indexOf(n) < 0));
-    S.offs.classList.toggle("os-hide", n !== 2); S.rev.classList.toggle("os-hide", n !== 4); S.hint.innerHTML = HINT[n - 1];
+    n = n >= 2 ? 2 : 1; const was = S.step; S.started = true; S.step = n; S.max = Math.max(S.max, n);
+    S.stage2.forEach(el => { el.classList.toggle("os-hide", n < 2); if (n === 2 && was < 2) { el.classList.remove("os-fade"); void el.offsetWidth; el.classList.add("os-fade"); } });
+    S.nav.classList.toggle("os-hide", n >= 2);
     S.bar.querySelectorAll(".os-st").forEach((b, i) => { b.classList.toggle("on", i + 1 === n); b.classList.toggle("done", i + 1 < n); b.setAttribute("aria-current", i + 1 === n ? "step" : "false"); });
-    S.back.classList.toggle("os-hide", n === 1); S.next.classList.toggle("os-hide", n === 4); S.next.textContent = n === 3 ? "مراجعة الطلب ←" : "التالي ←";
-    if (n === 2) { if ($("offers") && $("offers").style.display === "none" && !S.origHidden) S.offs.innerHTML = ""; else buildOffers(); } if (n === 4) review();
-    S.top.classList.remove("os-fade"); void S.top.offsetWidth; S.top.classList.add("os-fade");
-    if (!(opt && opt.noScroll)) { try { const r = S.bar.getBoundingClientRect(); if (r.top < 0 || r.top > innerHeight * .5) S.bar.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }); } catch (e) { } }
+    if (n === 2 && was < 2 && !(opt && opt.noScroll)) { try { S.hint2.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }); } catch (e) { } }
   }
-  function next() { const v = validate(S.step); if (!v.ok) { FieldErr.show(v.all); return false; } FieldErr.clearAll(S.form); show(S.step + 1); return true; }
-  function goTo(n) { if (n <= S.step) return show(n); while (S.step < n) { if (!next()) return; } }
+  function next() { const v = validate(1); if (!v.ok) { FieldErr.show(v.all); return false; } FieldErr.clearAll(S.form); show(2); return true; }
+  function goTo(n) { if (n <= 1) { if (S.step >= 2) { try { S.bar.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { } } return; } if (S.step < 2) return next(); }
   function build(form) {
-    const groups = classify(form); if (!groups) { S.why = "mixed"; return false; } if (!groups.some(g => g.steps.indexOf(4) >= 0) || !groups.some(g => g.steps.indexOf(3) >= 0) || !groups.some(g => g.steps.indexOf(1) >= 0)) { S.why = "incomplete"; return false; }
+    const groups = classify(form); if (!groups) { S.why = "mixed"; return false; }
+    const s1 = groups.filter(g => g.stage === 1), s2 = groups.filter(g => g.stage === 2);
+    if (!s1.some(g => has(g.el, "#wilaya")) || !s2.some(g => has(g.el, "#name,#phone")) || !s2.some(g => g.el.matches(SEL4) || g.el.querySelector('.btn-order,button[type="submit"]'))) { S.why = "incomplete"; return false; }
     S.form = form; S.groups = groups;
     if (!$("os-css")) { const st = document.createElement("style"); st.id = "os-css"; st.textContent = CSS; document.head.appendChild(st); }
     const sb = form.querySelector(".btn-order,button[type=submit]"); const accent = () => { try { const cs = getComputedStyle(sb); if (cs.backgroundColor && cs.backgroundColor !== "rgba(0, 0, 0, 0)" && cs.backgroundColor !== "transparent") return cs.backgroundColor; const m = String(cs.backgroundImage).match(/rgba?\([^)]*\)|#[0-9a-fA-F]{3,8}/); return m ? m[0] : "#d4af37"; } catch (e) { return "#d4af37"; } };
     if (sb) { try { form.style.setProperty("--os-ac", accent()); form.style.setProperty("--os-ac-t", getComputedStyle(sb).color || "#1a1a1a"); } catch (e) { } }
+    /* قائمة العروض الأصلية داخل إطار صفحة الهبوط تُستبدل بقائمة المرحلة 1 */
+    { const eo = $("offers"); if (eo && /[?&]embed=/.test(location.search) && eo.style.display !== "none") { eo.style.setProperty("display", "none", "important"); S.origHidden = true; } }
     const top = document.createElement("div"); top.className = "os-top"; S.top = top;
     S.bar = document.createElement("div"); S.bar.className = "os-bar"; S.bar.innerHTML = LBL.map((l, i) => '<button type="button" class="os-st" data-os-go="' + (i + 1) + '"><i>' + (i + 1) + "</i><small>" + l + "</small></button>").join('<span class="os-ln"></span>');
-    S.hint = document.createElement("div"); S.hint.className = "os-hint"; S.offs = document.createElement("div"); S.offs.className = "os-offs"; S.rev = document.createElement("div"); S.rev.className = "os-rev";
-    top.append(S.bar, S.hint, S.offs, S.rev);
-    const t = groups.find(g => g.title); if (t) t.el.insertAdjacentElement("afterend", top); else form.insertBefore(top, form.firstChild);
-    S.nav = document.createElement("div"); S.nav.className = "os-nav"; S.back = document.createElement("button"); S.back.type = "button"; S.back.className = "os-back"; S.back.textContent = "→ رجوع";
-    S.next = document.createElement("button"); S.next.type = "button"; S.next.className = "os-next";
+    S.hint = document.createElement("div"); S.hint.className = "os-hint"; S.hint.innerHTML = HINT[0];
+    S.hint2 = document.createElement("div"); S.hint2.className = "os-hint"; S.hint2.innerHTML = HINT[1];
+    S.offs = document.createElement("div"); S.offs.className = "os-offs"; top.append(S.bar, S.hint);
+    S.nav = document.createElement("div"); S.nav.className = "os-nav"; S.next = document.createElement("button"); S.next.type = "button"; S.next.className = "os-next"; S.next.textContent = "متابعة: أدخل بياناتك ↓"; S.nav.appendChild(S.next);
     try { const cs = getComputedStyle(sb || S.next); S.next.style.backgroundColor = cs.backgroundColor; if (cs.backgroundImage && cs.backgroundImage !== "none") S.next.style.backgroundImage = cs.backgroundImage; S.next.style.color = cs.color; S.next.style.border = cs.border; S.next.style.borderRadius = cs.borderRadius; S.next.style.boxShadow = cs.boxShadow; S.next.style.fontFamily = cs.fontFamily; } catch (e) { }
-    S.nav.append(S.back, S.next); form.appendChild(S.nav);
-    S.back.addEventListener("click", () => show(S.step - 1)); S.next.addEventListener("click", next);
+    /* إعادة ترتيب النموذج: العنوان ← الشريط ← [ولاية/بلدية] ← العروض ← بقية المرحلة 1 (توصيل، كوبون، السعر مع التوصيل) ← زر المتابعة ← [اسم/هاتف ← تأكيد] */
+    const t = groups.find(g => g.title); if (t) t.el.insertAdjacentElement("afterend", top); else form.insertBefore(top, form.firstChild);
+    let ref = top; const place = el => { ref.insertAdjacentElement("afterend", el); ref = el; };
+    const cg = s1.find(g => has(g.el, "#commune")) || s1.find(g => has(g.el, "#wilaya"));
+    s1.forEach(g => { place(g.el); if (g === cg) place(S.offs); });
+    place(S.nav); place(S.hint2); s2.forEach(g => place(g.el));
+    S.stage2 = [S.hint2].concat(s2.map(g => g.el));
+    S.next.addEventListener("click", next);
     form.addEventListener("click", e => { const a = e.target.closest && e.target.closest("[data-os-go]"); if (a) { e.preventDefault(); goTo(+a.dataset.osGo); } });
-    form.addEventListener("keydown", e => { if (String(e.key || "") === "Enter" && S.step < 4 && /^(INPUT|SELECT)$/.test(e.target.tagName)) { e.preventDefault(); next(); } });
-    form.addEventListener("submit", e => { if (S.step < 4) { e.preventDefault(); e.stopImmediatePropagation(); next(); } else { const k = [1, 2, 3].find(i => !validate(i).ok); if (k) { e.preventDefault(); e.stopImmediatePropagation(); show(k, { noScroll: true }); FieldErr.show(validate(k).all); } } }, true);
-    ["wilaya", "commune", "desk", "name", "phone"].forEach(id => { const el = $(id); if (el) { el.addEventListener("change", () => { if (S.step === 4) review(); }); el.addEventListener("input", () => { if (S.step === 4) review(); }); } });
-    try { new MutationObserver(() => { syncOffers(); if (S.step === 4) review(); }).observe($("offers") || form, { attributes: true, subtree: true, attributeFilter: ["class"], childList: true, characterData: true }); const g = $("grand"); if (g) new MutationObserver(() => { if (S.step === 4) review(); }).observe(g, { childList: true, characterData: true, subtree: true }); } catch (e) { }
-    /* «اطلب الآن»: تمرير سلس إلى المرحلة الحالية دون تحميل صفحة */
-    document.addEventListener("click", e => { const a = e.target.closest && e.target.closest('a[href="#order-form"],a[href="#pb-order"],.aly-buybar .bb-btn'); if (!a || !S.on) return; if (form.contains(a)) return; e.preventDefault(); show(S.started ? S.step : 1, { noScroll: true }); try { S.bar.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (x) { location.hash = "#order-form"; } }, true);
-    { const eo = $("offers"); if (eo && /[?&]embed=/.test(location.search) && eo.style.display !== "none") { eo.style.setProperty("display", "none", "important"); S.origHidden = true; } }      /* داخل إطار صفحة الهبوط: قائمة العروض الأصلية تُستبدل بقائمة المرحلة 2 */
-    S.on = true; show(1, { noScroll: true }); return true;
+    form.addEventListener("keydown", e => { if (String(e.key || "") === "Enter" && S.step < 2 && /^(INPUT|SELECT)$/.test(e.target.tagName)) { e.preventDefault(); next(); } });
+    form.addEventListener("submit", e => {
+      if (S.step < 2) { e.preventDefault(); e.stopImmediatePropagation(); next(); return; }
+      const errs = validate(1).all.concat(validate(2).all); if (errs.length) { e.preventDefault(); e.stopImmediatePropagation(); FieldErr.show(errs); }
+    }, true);
+    try { const of = $("offers"); if (of) new MutationObserver(() => { if (sigOf() !== S.sig) buildOffers(); else syncOffers(); }).observe(of, { attributes: true, subtree: true, attributeFilter: ["class"], childList: true, characterData: true }); } catch (e) { }
+    /* «اطلب الآن»: تمرير سلس إلى النموذج دون تحميل صفحة */
+    document.addEventListener("click", e => { const a = e.target.closest && e.target.closest('a[href="#order-form"],a[href="#pb-order"],.aly-buybar .bb-btn'); if (!a || !S.on) return; if (form.contains(a)) return; e.preventDefault(); try { S.bar.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (x) { location.hash = "#order-form"; } }, true);
+    buildOffers(); S.on = true; show(1, { noScroll: true }); return true;
   }
   function init(cfg) {
     if (S.done || !cfg) return;
