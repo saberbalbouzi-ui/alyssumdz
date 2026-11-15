@@ -674,8 +674,8 @@ const OrderSteps = (() => {
     const src = document.querySelectorAll("#offers .offer"); S.offs.innerHTML = "";
     src.forEach((o, i) => {
       const q = o.querySelector(".q"), p = o.querySelector(".p"), b = document.createElement("button"); b.type = "button"; b.className = "os-off";
-      const t = q ? q.textContent.replace(/\s+/g, " ").trim() : o.textContent.replace(/\s+/g, " ").trim(), pr = p ? p.textContent.replace(/\s+/g, " ").trim() : "";
-      const bd = o.querySelector(".badge,.tag,.best,.save,small"); const extra = bd && bd !== q && bd !== p ? bd.textContent.replace(/\s+/g, " ").trim() : "";
+      const ws = x => x.replace(/[ \t\r\n\f]+/g, " ").trim(), t = q ? ws(q.textContent) : ws(o.textContent), pr = p ? ws(p.textContent) : "";      /* لا نحوّل المسافة الضيّقة U+202F في «1 800» إلى مسافة عادية: تفصل الرقم في اتجاه RTL فيظهر «800 1» */
+      const bd = o.querySelector(".badge,.tag,.best,.save,small"); const extra = bd && bd !== q && bd !== p ? ws(bd.textContent) : "";
       b.innerHTML = "<i></i><span><span>" + esc(t) + (extra ? ' <small style="opacity:.8">' + esc(extra) + "</small>" : "") + "</span><b>" + esc(pr) + "</b></span>";
       b.addEventListener("click", () => { o.click(); setTimeout(syncOffers, 30); }); S.offs.appendChild(b);
     }); syncOffers();
