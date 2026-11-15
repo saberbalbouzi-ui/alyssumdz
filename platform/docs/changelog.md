@@ -1903,3 +1903,4 @@
 - **Worker:** مطالبات Idempotency بملكية (رمز عشوائي في `pf_idem.body`) بلا استيلاء تلقائي؛ المطالبة الأقدم من 60ث «عالقة» (409 `idempotency_claim_stuck` + حدث `idempotency.stuck`) والاسترداد إداري (`/admin/idempotency/{stuck,release,resolve}`)؛ عملة DZD صريحة إلزامية في إشعارات «مدفوع» لـ`payments.js` و`wallet.js`. **لا ترحيل D1.** كلها LOCAL ONLY؛ D1 وChargily الحقيقيان BLOCKED.
 - **المتجر:** مسار المنتج الرقمي يتابع إلى منصة الطلبات حين تكون خلفية الطلب غير قابلة للتأكيد (Sheets) ولا يعرض نافذة الدفع إلا بتأكيدها الصريح.
 - التفاصيل والأدلة: `docs/FINAL-ENGINEERING-AND-SECURITY-REPORT.md` و`docs/FINAL-TEST-RESULTS.md`.
+- **Spatial OS:** `agent/nlu.js` — «قاربت/قاربو» (مخزون منخفض)، «شنو تقدر دير» (مساعدة)، «salam/slm» (تحية)؛ اختبارا `nlu-eval.js` (73/73 ضمن النطاق المعلن؛ Arabizi خارجه) و`spatial-viewports.js` (66/66).
