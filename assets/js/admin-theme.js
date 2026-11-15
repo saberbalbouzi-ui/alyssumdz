@@ -113,7 +113,10 @@
     var slow = e.slice().sort(function(a, b){ return b.duration - a.duration; }).slice(0, 3).map(function(x){ return x.name.split("/").pop().split("?")[0] + " " + (x.duration / 1000).toFixed(1); }).join("، ");
     return "\nالملفات: " + e.length + " · من الشبكة " + net.length + " (" + kb + " ك.ب) · عامل الخدمة " + ((navigator.serviceWorker && navigator.serviceWorker.controller) ? "مفعّل" : "غير مفعّل") + " · الأبطأ: " + slow;
   }catch(x){ return ""; } };
-  T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready) + T.netInfo() + ((window.__admPh && window.__admPh.length) ? "\nالمراحل: " + window.__admPh.map(function(x){ return x[0] + " " + (x[1] / 1000).toFixed(1); }).join(" · ") : ""); };
+  T.coreInfo = function(){ try{ var c = window.__cm || [], l = window.__lt || [], f = function(x){ return (x / 1000).toFixed(1) + " ث"; }, sum = l.reduce(function(a, x){ return a + x; }, 0);
+    return "\nالكود الرئيسي: وصول " + (c[0] != null ? f(c[0]) : "—") + " · تحليل " + (c[1] != null && c[0] != null ? f(c[1] - c[0]) : "—") + " · تشغيل " + (c[2] != null && c[1] != null ? f(c[2] - c[1]) : "—") + " · مهام طويلة " + l.length + " (" + f(sum) + ")";
+  }catch(x){ return ""; } };
+  T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready) + T.coreInfo() + T.netInfo() + ((window.__admPh && window.__admPh.length) ? "\nالمراحل: " + window.__admPh.map(function(x){ return x[0] + " " + (x[1] / 1000).toFixed(1); }).join(" · ") : ""); };
   /* زر × ثابت أعلى كل نافذة منبثقة ثابتة (.modal-bg > .modal): كان الإغلاق «إلغاء» أسفل نافذة طويلة تُمرَّر داخلياً فلا يصل إليه المستخدم على الهاتف */
   function mountModalX(){
     document.querySelectorAll(".modal-bg > .modal").forEach(function(m){
