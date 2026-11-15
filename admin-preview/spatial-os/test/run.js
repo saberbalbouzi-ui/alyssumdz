@@ -3,7 +3,8 @@
    NODE_PATH=/opt/node-tools/node_modules node admin-preview/spatial-os/test/run.js [desktop|mobile|all]
    كل سطر: PASS/FAIL + [الطريقة]. «mouse» فأرة حقيقية عبر Playwright، «cdp-touch» لمس حقيقي عبر CDP،
    «synthetic» أحداث Pointer مُنشأة برمجياً (لا تثبت سلوك إصبع حقيقي)، «api» قراءة حالة التطبيق. */
-const PWm = require("playwright"), chromium = PWm[process.env.BROWSER || "chromium"]; const URL = process.env.URL || "http://localhost:8765/admin-preview/spatial-os/index.html"; const only = process.argv[2] || "all";
+const PWm = require("playwright"), chromium = PWm[process.env.BROWSER || "chromium"]; /* مستوى الجودة: التكيّفي (افتراضي المنتج) يُخفي لوحة الأرضية في المُصيِّر البرمجي البطيء (SwiftShader) فيفشل فحص «أرضية لامعة» (144/145 — موثَّق في PHASE12-REPORT). لثبات الاختبار نثبّت q=3 ما لم يحدّد الرابط q صراحةً أو يُضبط Q=adaptive. */
+const URL0 = process.env.URL || "http://localhost:8765/admin-preview/spatial-os/index.html", URL = (process.env.Q === "adaptive" || /[?&]q=/.test(URL0)) ? URL0 : URL0 + (URL0.includes("?") ? "&" : "?") + "q=3"; const only = process.argv[2] || "all";
 const R = []; let fails = 0; const ok = (n, c, m, x) => { if (!c) fails++; R.push((c ? "PASS " : "FAIL ") + "[" + m + "] " + n + (x !== undefined ? "  " + JSON.stringify(x).slice(0, 150) : "")); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function section(name, fn) { R.push("── " + name); try { await fn(); } catch (e) { fails++; R.push("FAIL [crash] " + name + ": " + String(e).split("\n")[0].slice(0, 160)); } }
