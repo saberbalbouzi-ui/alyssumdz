@@ -1,0 +1,215 @@
+
+════════ s-aurora ════════
+PASS [s-aurora] install opens editor  — true
+PASS [s-aurora] inventory: 43 elements (11 free, 32 flow)  — types=sbar,shdr,text,heading,button,tbadges,image,iconbox,marquee,anchor,products,html,bullets,shopcats,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-aurora] T1 كل العناصر قابلة للتحديد: 43/43 بالفأرة  — بالفأرة=43
+PASS [s-aurora] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-aurora] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 11/11 (منها 0 رفيعة حُرّكت بالأسهم)
+PASS [s-aurora] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 32,→39.9,548
+PASS [s-aurora] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-aurora] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-aurora] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-aurora] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-gold ════════
+PASS [s-gold] install opens editor  — true
+PASS [s-gold] inventory: 41 elements (9 free, 32 flow)  — types=sbar,shdr,shape,text,heading,button,marquee,shopcats,anchor,products,html,table,iconbox,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-gold] T1 كل العناصر قابلة للتحديد: 41/41 بالفأرة  — بالفأرة=41
+PASS [s-gold] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-gold] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 9/9 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-gold] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-fresh ════════
+PASS [s-fresh] install opens editor  — true
+PASS [s-fresh] inventory: 44 elements (11 free, 33 flow)  — types=sbar,shdr,shape,image,iconbox,text,heading,button,tbadges,marquee,shopcats,anchor,products,html,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-fresh] T1 كل العناصر قابلة للتحديد: 43/44 بالفأرة  — بالفأرة=43
+PASS [s-fresh] T1b ما لم يُحدَّد بالفأرة (1) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات  — shape:pait9y0←yy1enog
+PASS [s-fresh] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 10/10 (منها 0 رفيعة حُرّكت بالأسهم)
+PASS [s-fresh] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 26,→33.9,559
+PASS [s-fresh] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-fresh] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-fresh] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-fresh] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-pop ════════
+PASS [s-pop] install opens editor  — true
+PASS [s-pop] inventory: 38 elements (9 free, 29 flow)  — types=sbar,shdr,heading,shape,image,text,button,stock,countdown,marquee,shopcats,anchor,products,html,bullets,iconbox,counter,testimonial,coupon,accordion,sfoot
+PASS [s-pop] T1 كل العناصر قابلة للتحديد: 38/38 بالفأرة  — بالفأرة=38
+PASS [s-pop] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-pop] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 9/9 (منها 0 رفيعة حُرّكت بالأسهم)
+PASS [s-pop] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 26,→33.9,466
+PASS [s-pop] T3b تدوير عنصر البطل بالمقبض  — rot=42
+PASS [s-pop] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-pop] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-pop] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-tech ════════
+PASS [s-tech] install opens editor  — true
+PASS [s-tech] inventory: 86 elements (2 free, 84 flow)  — types=sbar,shdr,text,heading,button,tbadges,image,marquee,anchor,spacer,shopcats,progress,products,html,iconbox,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-tech] T1 كل العناصر قابلة للتحديد: 86/86 بالفأرة  — بالفأرة=86
+PASS [s-tech] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-tech] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-tech] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-cosmetics ════════
+PASS [s-cosmetics] install opens editor  — true
+PASS [s-cosmetics] inventory: 50 elements (2 free, 48 flow)  — types=sbar,shdr,text,heading,button,tbadges,iconbox,marquee,shopcats,anchor,products,html,bullets,progress,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-cosmetics] T1 كل العناصر قابلة للتحديد: 50/50 بالفأرة  — بالفأرة=50
+PASS [s-cosmetics] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-cosmetics] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-cosmetics] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-supplements ════════
+PASS [s-supplements] install opens editor  — true
+PASS [s-supplements] inventory: 57 elements (12 free, 45 flow)  — types=sbar,shdr,shape,counter,text,heading,button,tbadges,marquee,iconbox,shopcats,anchor,progress,products,html,table,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-supplements] T1 كل العناصر قابلة للتحديد: 57/57 بالفأرة  — بالفأرة=57
+PASS [s-supplements] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-supplements] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 12/12 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-supplements] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-honey ════════
+PASS [s-honey] install opens editor  — true
+PASS [s-honey] inventory: 45 elements (11 free, 34 flow)  — types=sbar,shdr,text,heading,button,tbadges,image,iconbox,marquee,shopcats,anchor,products,html,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-honey] T1 كل العناصر قابلة للتحديد: 45/45 بالفأرة  — بالفأرة=45
+PASS [s-honey] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-honey] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 11/11 (منها 0 رفيعة حُرّكت بالأسهم)
+PASS [s-honey] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 38,500→45.9,603
+PASS [s-honey] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-honey] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-honey] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-honey] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-herbs ════════
+PASS [s-herbs] install opens editor  — true
+PASS [s-herbs] inventory: 42 elements (2 free, 40 flow)  — types=sbar,shdr,text,heading,button,image,tbadges,marquee,iconbox,shopcats,anchor,products,html,accordion,counter,testimonial,countdown,coupon,sfoot
+PASS [s-herbs] T1 كل العناصر قابلة للتحديد: 42/42 بالفأرة  — بالفأرة=42
+PASS [s-herbs] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-herbs] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-herbs] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-fashion ════════
+PASS [s-fashion] install opens editor  — true
+PASS [s-fashion] inventory: 45 elements (9 free, 36 flow)  — types=sbar,shdr,heading,image,text,button,shape,marquee,anchor,products,html,table,shopcats,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-fashion] T1 كل العناصر قابلة للتحديد: 45/45 بالفأرة  — بالفأرة=45
+PASS [s-fashion] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-fashion] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 9/9 (منها 1 رفيعة حُرّكت بالأسهم)
+PASS [s-fashion] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 26,520→33.9,677
+PASS [s-fashion] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-fashion] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-fashion] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-fashion] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-it ════════
+PASS [s-it] install opens editor  — true
+PASS [s-it] inventory: 47 elements (11 free, 36 flow)  — types=sbar,shdr,text,heading,button,tbadges,marquee,shopcats,anchor,products,html,iconbox,table,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-it] T1 كل العناصر قابلة للتحديد: 47/47 بالفأرة  — بالفأرة=47
+PASS [s-it] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-it] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 11/11 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-it] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-digital ════════
+PASS [s-digital] install opens editor  — true
+PASS [s-digital] inventory: 55 elements (10 free, 45 flow)  — types=sbar,shdr,tbadges,heading,text,button,image,iconbox,marquee,bullets,counter,anchor,products,html,shopcats,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-digital] T1 كل العناصر قابلة للتحديد: 55/55 بالفأرة  — بالفأرة=55
+PASS [s-digital] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-digital] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 10/10 (منها 0 رفيعة حُرّكت بالأسهم)
+PASS [s-digital] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 72,→79.9,627
+PASS [s-digital] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-digital] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-digital] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-digital] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-marketplace ════════
+PASS [s-marketplace] install opens editor  — true
+PASS [s-marketplace] inventory: 55 elements (2 free, 53 flow)  — types=sbar,shdr,text,bullets,heading,button,tbadges,progress,countdown,anchor,products,html,iconbox,shopcats,counter,testimonial,coupon,accordion,sfoot
+PASS [s-marketplace] T1 كل العناصر قابلة للتحديد: 54/55 بالفأرة  — بالفأرة=54
+PASS [s-marketplace] T1b ما لم يُحدَّد بالفأرة (1) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات  — tbadges:mukjxu5←a94b0uo
+PASS [s-marketplace] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-marketplace] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-watches ════════
+PASS [s-watches] install opens editor  — true
+PASS [s-watches] inventory: 67 elements (22 free, 45 flow)  — types=sbar,shdr,shape,image,text,heading,button,tbadges,marquee,counter,anchor,products,html,shopcats,iconbox,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-watches] T1 كل العناصر قابلة للتحديد: 66/67 بالفأرة  — بالفأرة=66
+PASS [s-watches] T1b ما لم يُحدَّد بالفأرة (1) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات  — shape:jhkfldq←nwb17ww
+PASS [s-watches] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 21/21 (منها 6 رفيعة حُرّكت بالأسهم)
+PASS [s-watches] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 40,660→47.9,790
+PASS [s-watches] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-watches] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-watches] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-watches] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-jewelry ════════
+PASS [s-jewelry] install opens editor  — true
+PASS [s-jewelry] inventory: 47 elements (15 free, 32 flow)  — types=sbar,shdr,text,heading,button,shape,image,marquee,anchor,shopcats,products,html,tbadges,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-jewelry] T1 كل العناصر قابلة للتحديد: 47/47 بالفأرة  — بالفأرة=47
+PASS [s-jewelry] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-jewelry] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 15/15 (منها 2 رفيعة حُرّكت بالأسهم)
+PASS [s-jewelry] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 30,330→37.9,416
+PASS [s-jewelry] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-jewelry] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-jewelry] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-jewelry] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-accessories ════════
+PASS [s-accessories] install opens editor  — true
+PASS [s-accessories] inventory: 46 elements (15 free, 31 flow)  — types=sbar,shdr,text,heading,button,image,marquee,iconbox,shopcats,anchor,products,html,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-accessories] T1 كل العناصر قابلة للتحديد: 46/46 بالفأرة  — بالفأرة=46
+PASS [s-accessories] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-accessories] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 15/15 (منها 0 رفيعة حُرّكت بالأسهم)
+PASS [s-accessories] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 20,250→27.9,348
+PASS [s-accessories] T3b تدوير عنصر البطل بالمقبض  — rot=44
+PASS [s-accessories] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-accessories] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-accessories] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-perfume ════════
+PASS [s-perfume] install opens editor  — true
+PASS [s-perfume] inventory: 45 elements (2 free, 43 flow)  — types=sbar,shdr,text,heading,button,tbadges,spacer,marquee,iconbox,shopcats,products,html,bullets,progress,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-perfume] T1 كل العناصر قابلة للتحديد: 45/45 بالفأرة  — بالفأرة=45
+PASS [s-perfume] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-perfume] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-perfume] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-skincare ════════
+PASS [s-skincare] install opens editor  — true
+PASS [s-skincare] inventory: 46 elements (2 free, 44 flow)  — types=sbar,shdr,spacer,text,heading,button,tbadges,marquee,iconbox,products,html,shopcats,bullets,progress,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-skincare] T1 كل العناصر قابلة للتحديد: 46/46 بالفأرة  — بالفأرة=46
+PASS [s-skincare] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-skincare] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-skincare] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-makeup ════════
+PASS [s-makeup] install opens editor  — true
+PASS [s-makeup] inventory: 37 elements (2 free, 35 flow)  — types=sbar,shdr,heading,text,button,marquee,products,html,countdown,coupon,iconbox,shopcats,counter,testimonial,accordion,sfoot
+PASS [s-makeup] T1 كل العناصر قابلة للتحديد: 37/37 بالفأرة  — بالفأرة=37
+PASS [s-makeup] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-makeup] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-makeup] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-women ════════
+PASS [s-women] install opens editor  — true
+PASS [s-women] inventory: 41 elements (2 free, 39 flow)  — types=sbar,shdr,text,heading,button,tbadges,spacer,marquee,shopcats,products,html,iconbox,table,counter,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-women] T1 كل العناصر قابلة للتحديد: 41/41 بالفأرة  — بالفأرة=41
+PASS [s-women] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-women] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-women] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-men ════════
+PASS [s-men] install opens editor  — true
+PASS [s-men] inventory: 33 elements (2 free, 31 flow)  — types=sbar,shdr,text,heading,button,tbadges,spacer,marquee,products,html,table,shopcats,iconbox,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-men] T1 كل العناصر قابلة للتحديد: 33/33 بالفأرة  — بالفأرة=33
+PASS [s-men] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-men] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-men] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+
+════════ s-kids ════════
+PASS [s-kids] install opens editor  — true
+PASS [s-kids] inventory: 44 elements (2 free, 42 flow)  — types=sbar,shdr,text,heading,button,tbadges,spacer,marquee,iconbox,shopcats,products,html,bullets,stock,countdown,counter,testimonial,coupon,accordion,sfoot
+PASS [s-kids] T1 كل العناصر قابلة للتحديد: 44/44 بالفأرة  — بالفأرة=44
+PASS [s-kids] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-kids] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+N/A  [s-kids] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+PASS [all] لا أخطاء JS في الصفحة
+
+156/156 PASS — 0 FAILURES

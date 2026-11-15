@@ -216,3 +216,4 @@ alysum_secs = [hdr_s, hero, sec_head("تسوّق حسب الفئة", "عرض ج�
 reg("s-alyssum", "store", "أليسوم", "أليسوم — زجاج أخضر داكن", "قالب الرئيسية الكامل بتصميم الزجاج الأخضر الداكن: هيرو بمنتج وسط ومزايا وشريط ثقة، فئات بصور، منتجات بطاقات زجاجية، بانر، عدّادات وآراء — بتأثيرات متطورة.", alysum_secs,
     {"ff": "'Tajawal',sans-serif", "bg": "#020a06", "css": ALY_CSS.replace("LEAF1", LEAF1).replace("LEAF2", LEAF2)})
 TEMPLATES[-1]["alyssum"] = True
+TEMPLATES[-1]["owner"] = True      # قالب البائع: لا يظهر في مكتبة العميل ولا يُشحن إليه (shared-files.json: owner_only)

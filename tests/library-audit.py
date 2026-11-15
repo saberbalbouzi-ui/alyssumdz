@@ -21,12 +21,12 @@ def tid(f):
     return b[5:] if b and b.startswith("prod-") else b
 touched = {tid(f) for f in changed if f.endswith(".json") and not f.endswith("index.json")}
 check("scope", "لا قالب خارج الدفعات الأربع تغيّر ملفه أو جلد منتجه", touched <= BATCH, sorted(touched - BATCH))
-check("scope", "s-alyssum وملفاته (قالب وجلد منتج) غير ممسوسة", not any("alyssum" in f for f in changed), [f for f in changed if "alyssum" in f])
+check("scope", "s-alyssum وملفاته (قالب وجلد وصور وCSS) غير ممسوسة (الفهرس فقط يحمل علم owner)", not any("alyssum" in f and not f.endswith("index.json") for f in changed), [f for f in changed if "alyssum" in f])
 thumbs_changed = {os.path.basename(f).replace("-full", "")[:-4] for f in changed if "/thumbs/" in f}
 check("scope", "لا معاينة مصغّرة خارج الدفعات تغيّرت", thumbs_changed <= BATCH, sorted(thumbs_changed - BATCH))
 check("scope", "الفهرس بالمعرّفات والترتيب نفسهما (33)", ids == [x["id"] for x in oidx], len(ids))
 od = {x["id"]: x for x in oidx}
-diff_other = [x["id"] for x in idx if x["id"] not in BATCH and x != od[x["id"]]]
+diff_other = [x["id"] for x in idx if x["id"] not in BATCH and {k: v for k, v in x.items() if k != "owner"} != od[x["id"]]]
 check("scope", "مداخل الفهرس خارج الدفعات متطابقة مع الأصل", not diff_other, diff_other)
 chg_fields = collections.Counter(k for x in idx if x["id"] in BATCH for k in x if x[k] != od[x["id"]].get(k))
 check("scope", "تغيّر في مداخل الدفعات وصف القالب فقط (لا معرّف/تصنيف/ميدان/اسم)", set(chg_fields) <= {"d"}, dict(chg_fields))
@@ -76,6 +76,18 @@ for x in idx:
     if x["cat"] == "store" and t != "s-alyssum": check(t, "جلد صفحة المنتج prod-<id>.json موجود", os.path.exists(f"{T}/prod-{t}.json"))
     if os.path.exists(th): sigs[t] = aHash(th)
     rows.append((t, x["cat"], len(secs), sum(types.values()), len(imgs), t in BATCH))
+# 4ب) لا أثر لهوية البائع في أي قالب يصل العميل (كل الملفات خارج owner_only، بما فيها جلود المنتجات والفهرس)
+own = json.load(open("shared-files.json", encoding="utf-8")).get("owner_only", {}); own_ids = set(own.get("template_ids", [])); own_files = {os.path.basename(f) for f in own.get("files", [])}
+OWNER_RE = re.compile(r"0559|237239|alyssumdz|saberbalbouzi|ALYSSUM|أليسوم|alyssum", re.I)
+leak = []
+for f in sorted(os.listdir(T)):
+    if f in own_files or not f.endswith((".json", ".css")): continue
+    txt = open(f"{T}/{f}", encoding="utf-8").read()
+    if f == "index.json":
+        txt = json.dumps([x for x in json.loads(txt) if x["id"] not in own_ids], ensure_ascii=False)
+    for m in OWNER_RE.finditer(txt): leak.append(f"{f}: …{txt[max(0, m.start() - 20):m.end() + 20]}…")
+check("owner", "لا أثر لهوية البائع (اسم/رقم/حساب) في أي ملف قالب يصل العميل", not leak, leak[:3])
+check("owner", "قوالب البائع مسجَّلة owner_only وغير مدرجة في القائمة المشتركة", all(f not in set(json.load(open("shared-files.json", encoding="utf-8"))["shared"]) for f in own.get("files", [])) and {"s-alyssum", "p-focus-honey"} <= own_ids)
 # 5) تمايز المعاينات
 names = sorted(sigs); mind = []
 for i, a in enumerate(names):

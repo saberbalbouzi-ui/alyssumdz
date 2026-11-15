@@ -14,14 +14,15 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const results = []; const notes = [];
 const check = (id, name, cond, extra) => { results.push(!!cond); console.log((cond ? "PASS " : "FAIL ") + `[${id}] ${name}` + (extra !== undefined && extra !== "" ? "  — " + String(extra).slice(0, 240) : "")); };
 // قيم تعدٍّ أفقي على الجوال موجودة في الأصل c83b917 بالقيمة نفسها (موثّقة في docs/batches/batch3): لا تُعدّ إخفاقاً جديداً لكنها تُسجَّل
-const KNOWN_OVERFLOW = { "s-watches": 3, "s-cosmetics": 4 };
+// assets/data/checkout.json يحذفه make-template عمداً (إعدادات دفع خاصة بكل متجر تُنشأ عند الحفظ): غيابه في متجر جديد مقصود وتتعامل معه app.js بالافتراضي فلا يُعدّ خطأً
+const KNOWN_OVERFLOW = {};     // أُصلح تعدٍّ s-watches/s-cosmetics (3/4px) بتقليص فجوة الترويسة على الجوال في المطوّر المشترك
 
 (async () => {
   const browser = await chromium.launch();
   const mk = async (w = 1360, h = 900) => { const c = await browser.newContext({ userAgent: UA, viewport: { width: w, height: h } }); await c.addInitScript(() => { Object.defineProperty(navigator, "webdriver", { get: () => undefined }); }); return c; };
   const ctx = await mk(); const admin = await ctx.newPage(); admin.on("dialog", d => d.accept());
   const jsErrs = []; admin.on("pageerror", e => jsErrs.push(e.message.slice(0, 160)));
-  const bad404 = new Set(); admin.on("response", r => { if (r.status() >= 400 && r.url().startsWith(BASE) && /\/assets\/(img|pages|css|js)\//.test(r.url())) bad404.add(r.status() + " " + r.url().replace(BASE, "")); });
+  const bad404 = new Set(); admin.on("response", r => { if (r.status() >= 400 && r.url().startsWith(BASE) && /\/assets\/(img|pages|css|js|fonts)\//.test(r.url())) bad404.add(r.status() + " " + r.url().replace(BASE, "")); });
   await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000);
   await admin.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
   await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 });
@@ -57,6 +58,18 @@ const KNOWN_OVERFLOW = { "s-watches": 3, "s-cosmetics": 4 };
   check("lib", "البحث بالاسم يجد كل قالب", sOk, sMiss.join(","));
   await admin.evaluate(() => { AdminNav.libSet("q", ""); AdminNav.libClose(); }); await sleep(300);
 
+  // ── 1ب) مكتبة نظيفة: لا قالب/نص/ملف خاص بمتجر أليسوم عند العميل ──
+  if (!process.env.LR_SELLER) {
+    const own = await admin.evaluate(() => ({ aly: !!AdminNav.tplFind("s-alyssum"), foc: !!AdminNav.tplFind("p-focus-honey"), legacy: AdminNav.libItems().map(x => x.id) }));
+    check("clean", "قالب أليسوم وهبوط عسل التركيز غير موجودين في مكتبة العميل", !own.aly && !own.foc && !own.legacy.includes("p-focus-honey"), JSON.stringify(own));
+    await admin.evaluate(async () => { await AdminNav.libOpen(); }); await sleep(600);
+    const txt = await admin.evaluate(() => document.getElementById("tl-lib").innerText);
+    check("clean", "نصوص نافذة المكتبة بلا اسم البائع أو رقمه", !/أليسوم|ALYSSUM|alyssum|0559|213559237239/i.test(txt), (txt.match(/.{0,20}(أليسوم|ALYSSUM|0559).{0,20}/i) || [""])[0]);
+    const body = await admin.evaluate(async () => { const idx = await (await fetch("assets/pages/templates/index.json", { cache: "no-store" })).json(); return JSON.stringify(idx); });
+    check("clean", "فهرس القوالب بلا علم/اسم للبائع", !/alyssum|owner|أليسوم/i.test(body));
+    await admin.evaluate(() => AdminNav.libClose());
+  }
+
   // ── 2) كل قالب: محرّر + عرض منشور + معاينة حقيقية + نافذة التثبيت ──
   const wTypes = await admin.evaluate(() => Object.keys(PB.WIDGETS));
   const perId = [];
@@ -79,7 +92,7 @@ const KNOWN_OVERFLOW = { "s-watches": 3, "s-cosmetics": 4 };
     const route = BASE + "/__lr.html"; const pw = {};
     for (const w of [1360, 820, 390]) {
       const c = await mk(w, 900); const p = await c.newPage(); const errs = [], miss = []; p.on("pageerror", e => errs.push(e.message.slice(0, 120)));
-      p.on("response", r => { if (r.status() >= 400 && r.url().startsWith(BASE) && !r.url().endsWith("__lr.html") && !/favicon|\/api\//.test(r.url())) miss.push(r.status() + " " + r.url().replace(BASE, "").slice(0, 70)); });
+      p.on("response", r => { if (r.status() >= 400 && r.url().startsWith(BASE) && !r.url().endsWith("__lr.html") && !/favicon|\/api\/|\/assets\/data\/checkout\.json/.test(r.url())) miss.push(r.status() + " " + r.url().replace(BASE, "").slice(0, 70)); });
       await p.route(route, r => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: html }));
       await p.goto(route, { waitUntil: "load", timeout: 60000 }); await sleep(1500);
       await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 130)); } window.scrollTo(0, 0); }); await sleep(600);
@@ -115,10 +128,7 @@ const KNOWN_OVERFLOW = { "s-watches": 3, "s-cosmetics": 4 };
     perId.push({ id, cat: it.cat, secs: info.secs, widgets: info.types.length, h1360: pw[1360].h, h390: pw[390].h });
   }
   console.log("\nملفات assets مفقودة أثناء الجلسة (لوحة الإدارة):", bad404.size ? [...bad404].slice(0, 8).join(" | ") : "لا شيء");
-  // قائم في الأصل (c83b917) وخارج النطاق (s-alyssum لا يُمسّ): في حزمة العميل تُعاد تسمية علم alyssum إلى store في الكود لا في index.json، فيُجرَّب لقالب أليسوم جلد منتج غير موجود
-  const knownS = [...bad404].filter(u => /prod-s-alyssum\.json/.test(u)); knownS.forEach(u => notes.push("معروف وخارج النطاق: " + u));
-  const real404 = [...bad404].filter(u => !/prod-s-alyssum\.json/.test(u));
-  check("session", "لا طلبات 404 لملفات assets أثناء مراجعة المكتبة (عدا المعروف أعلاه)", real404.length === 0, real404.slice(0, 5).join(" | "));
+  check("session", "لا طلبات 404 لملفات assets أثناء مراجعة المكتبة", bad404.size === 0, [...bad404].slice(0, 5).join(" | "));
   fs.writeFileSync(OUT + "/library-review-results.json", JSON.stringify({ results, perId, notes, jsErrs: jsErrs.slice(0, 20) }, null, 1));
   console.log("\nJS errors (admin):", jsErrs.length); [...new Set(jsErrs)].slice(0, 6).forEach(e => console.log("   " + e));
   if (notes.length) console.log("ملاحظات:", notes.join(" ; "));

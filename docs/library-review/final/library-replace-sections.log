@@ -1,0 +1,87 @@
+
+════════ c-aurora ════════
+PASS [c-aurora] عُثر على الصورة الرئيسية (dig_code)  — assets/img/tpl/dig_code.webp
+PASS [c-aurora] اختيار الصورة الرئيسية بالفأرة
+PASS [c-aurora] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [c-aurora] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [c-aurora] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/dig_code.webp → assets/img/demo/0.svg
+PASS [c-aurora] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [c-aurora] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":203,"h":135} → {"w":203,"h":135}
+PASS [c-aurora] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/dig_code.webp
+
+════════ c-neon ════════
+PASS [c-neon] عُثر على الصورة الرئيسية (it_dark)  — assets/img/tpl/it_dark.webp
+PASS [c-neon] اختيار الصورة الرئيسية بالفأرة
+PASS [c-neon] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [c-neon] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [c-neon] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/it_dark.webp → assets/img/demo/0.svg
+PASS [c-neon] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [c-neon] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":319,"h":226} → {"w":319,"h":226}
+PASS [c-neon] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/it_dark.webp
+
+════════ c-gold ════════
+PASS [c-gold] عُثر على الصورة الرئيسية (jewel_pearl)  — assets/img/tpl/jewel_pearl.webp
+PASS [c-gold] اختيار الصورة الرئيسية بالفأرة
+PASS [c-gold] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [c-gold] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [c-gold] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/jewel_pearl.webp → assets/img/demo/0.svg
+PASS [c-gold] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [c-gold] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":212,"h":141} → {"w":212,"h":141}
+PASS [c-gold] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/jewel_pearl.webp
+
+════════ c-soft ════════
+PASS [c-soft] عُثر على الصورة الرئيسية (cosm_pink)  — assets/img/tpl/cosm_pink.webp
+PASS [c-soft] اختيار الصورة الرئيسية بالفأرة
+PASS [c-soft] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [c-soft] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [c-soft] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/cosm_pink.webp → assets/img/demo/0.svg
+PASS [c-soft] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [c-soft] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":134,"h":134} → {"w":134,"h":134}
+PASS [c-soft] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/cosm_pink.webp
+
+════════ c-steps ════════
+PASS [c-steps] عُثر على الصورة الرئيسية (mkt_open)  — assets/img/tpl/mkt_open.webp
+PASS [c-steps] اختيار الصورة الرئيسية بالفأرة
+PASS [c-steps] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [c-steps] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [c-steps] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/mkt_open.webp → assets/img/demo/0.svg
+PASS [c-steps] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [c-steps] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":269,"h":180} → {"w":269,"h":180}
+PASS [c-steps] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/mkt_open.webp
+
+════════ o-flash ════════
+PASS [o-flash] عُثر على الصورة الرئيسية (mkt_bags)  — assets/img/tpl/mkt_bags.webp
+PASS [o-flash] اختيار الصورة الرئيسية بالفأرة
+PASS [o-flash] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [o-flash] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [o-flash] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/mkt_bags.webp → assets/img/demo/0.svg
+PASS [o-flash] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [o-flash] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":205,"h":137} → {"w":205,"h":137}
+PASS [o-flash] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/mkt_bags.webp
+
+════════ o-lux ════════
+PASS [o-lux] عُثر على الصورة الرئيسية (jewel_ring)  — assets/img/tpl/jewel_ring.webp
+PASS [o-lux] اختيار الصورة الرئيسية بالفأرة
+PASS [o-lux] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [o-lux] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [o-lux] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/jewel_ring.webp → assets/img/demo/0.svg
+PASS [o-lux] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [o-lux] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":192,"h":128} → {"w":192,"h":128}
+PASS [o-lux] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/jewel_ring.webp
+
+════════ o-steps ════════
+PASS [o-steps] عُثر على الصورة الرئيسية (mkt_open)  — assets/img/tpl/mkt_open.webp
+PASS [o-steps] اختيار الصورة الرئيسية بالفأرة
+PASS [o-steps] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [o-steps] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [o-steps] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/mkt_open.webp → assets/img/demo/0.svg
+PASS [o-steps] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [o-steps] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":257,"h":172} → {"w":257,"h":172}
+PASS [o-steps] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/mkt_open.webp
+
+════════ o-bundle ════════
+
+════════ o-proof ════════
+PASS [all] لا أخطاء JS
+
+65/65 PASS — 0 FAILURES
