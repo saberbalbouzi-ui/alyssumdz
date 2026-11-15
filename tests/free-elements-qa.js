@@ -659,7 +659,7 @@ let page;
     await p3.goto(BASE + "/p/prod-a/", { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
     await p3.waitForTimeout(4200); // Guard token issued on load must be ≥3s old at submit time
     const gated = await p3.evaluate(() => !!document.getElementById("acg-ov"));
-    await check("commerce", "T20a0 bot gate passes real-browser profile (protection ON)", !gated, gated ? "acg-ov overlay present" : "clean");
+    await check("commerce", "T20a0 no acg-ov overlay under the declared tool protection config (bots:false; blocking itself is tested in scripts/test-protect-bots.js)", !gated, gated ? "acg-ov overlay present" : "clean");
     const or0 = await p3.evaluate(() => {
       const f = document.getElementById("order-form");
       return { hasForm: !!f, fields: ["name", "phone", "wilaya", "commune"].filter(id => !!document.getElementById(id)) };
