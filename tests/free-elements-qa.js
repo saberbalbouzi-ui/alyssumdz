@@ -16,22 +16,20 @@
 // - التدوير زاوي حول مركز العنصر (startRotate) — السحب الخطي المستقيم قد يصفّر المحصلة؛ يُسحب قوساً.
 // - التحديد يُمسح (Escape×4) قبل كل نقرة على اللوحة حتى لا تلتقط أشرطة عائمة قديمة نقرات شاردة.
 // - الإخفاء عبر button[data-vis="hd|ht|hm"] في اللوحة السريعة؛ الألوان/المقاسات عبر المفتّش.
-// - سياقات المتصفح ببصمة متصفح حقيقي (UA قياسي + إخفاء webdriver) لتمرير بوابة مكافحة الروبوتات
-//   (assets/js/anti-copy.js cfg.bots) كما يمرّ زائر حقيقي — الحماية تبقى مفعّلة ولا تُعطَّل.
+// - بوابة مكافحة الروبوتات (assets/js/anti-copy.js cfg.bots): لا انتحال UA ولا إخفاء webdriver؛ يُستعمل إعداد حماية معلن للأداة فقط (tests/_declared-protect.js).
 // - نموذج الطلب: حقول بالمعرفات (#name/#phone/#wilaya/#commune)، رمز النموذج يحتاج ≥3 ثوانٍ،
 //   وإشارة النجاح الصارمة هي ستارة #thx ثم ظهور الطلب في لوحة المدير.
 const { chromium } = require("playwright");
+const declareProtect = require("./_declared-protect");
 const fs = require("fs");
 const BASE = process.env.EQA_BASE || "http://127.0.0.1:8391";
 const STORE = process.env.EQA_STORE || "/tmp/store";
 const PW = process.env.EQA_PASS || "TestPass12345";
 const OUT = process.env.EQA_OUT || (require("path").join(__dirname, "out"));
 const TEMPLATES = process.env.EQA_TPLS ? process.env.EQA_TPLS.split(",") : ["s-perfume", "s-skincare", "s-makeup", "s-women", "s-men", "s-kids"];
-const UA_D = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-const UA_M = "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36";
 const newQAContext = async (br, opts) => {
-  const c = await br.newContext(Object.assign({ userAgent: UA_D }, opts || {}));
-  await c.addInitScript(() => { Object.defineProperty(navigator, "webdriver", { get: () => undefined }); });
+  const c = await br.newContext(opts || {});
+  await declareProtect(c);
   return c;
 };
 
@@ -611,7 +609,7 @@ let page;
       const tplJson = JSON.parse(fs.readFileSync(require("path").join(tplDir, tpl + ".json"), "utf8"));
       const tplAnims = (JSON.stringify(tplJson).match(/"anim":\s*"[^"]+"/g) || []).length;
       for (const [mode, vp] of [["d", { width: 1360, height: 900 }], ["m", { width: 390, height: 844 }]]) {
-        const c2 = await newQAContext(browser, { viewport: vp, isMobile: mode === "m", hasTouch: mode === "m", userAgent: mode === "m" ? UA_M : UA_D });
+        const c2 = await newQAContext(browser, { viewport: vp, isMobile: mode === "m", hasTouch: mode === "m" });
         const p2 = await c2.newPage();
         await p2.goto(BASE + "/index.html", { waitUntil: "networkidle", timeout: 60000 }).catch(() => {});
         await p2.waitForTimeout(1500);
@@ -652,8 +650,7 @@ let page;
   }
 
   // ── T20: native commerce engine — product page order form end-to-end (once) ──
-  // Real-browser profile (UA + no webdriver) so anti-copy.js cfg.bots treats the visit as a
-  // human visitor — the protection stays fully ON. Form token must age ≥3s before submit
+  // Declared protection config for this tool only (no UA/webdriver spoofing; see tests/_declared-protect.js). Form token must age ≥3s before submit
   // (server rule), honeypot untouched, DZ phone format, strict success = #thx overlay.
   {
     const c3 = await newQAContext(browser, { viewport: { width: 1360, height: 900 } });

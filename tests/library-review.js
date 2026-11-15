@@ -5,11 +5,11 @@
 //   4) نافذة «تثبيت القالب» تعرض الخيارات الصحيحة لنوعه
 // التشغيل: EQA_BASE EQA_PASS EQA_OUT ، LR_IDS=… لتحديد قوالب بعينها
 const { chromium } = require("playwright");
+const declareProtect = require("./_declared-protect");
 const fs = require("fs");
 const BASE = process.env.EQA_BASE || "http://127.0.0.1:8391";
 const PW = process.env.EQA_PASS || "TestPass12345";
 const OUT = process.env.EQA_OUT || "/tmp";
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const results = []; const notes = [];
 const check = (id, name, cond, extra) => { results.push(!!cond); console.log((cond ? "PASS " : "FAIL ") + `[${id}] ${name}` + (extra !== undefined && extra !== "" ? "  — " + String(extra).slice(0, 240) : "")); };
@@ -19,7 +19,7 @@ const KNOWN_OVERFLOW = {};     // أُصلح تعدٍّ s-watches/s-cosmetics (3
 
 (async () => {
   const browser = await chromium.launch();
-  const mk = async (w = 1360, h = 900) => { const c = await browser.newContext({ userAgent: UA, viewport: { width: w, height: h } }); await c.addInitScript(() => { Object.defineProperty(navigator, "webdriver", { get: () => undefined }); }); return c; };
+  const mk = async (w = 1360, h = 900) => { const c = await browser.newContext({ viewport: { width: w, height: h } }); await declareProtect(c); return c; };
   const ctx = await mk(); const admin = await ctx.newPage(); admin.on("dialog", d => d.accept());
   const jsErrs = []; admin.on("pageerror", e => jsErrs.push(e.message.slice(0, 160)));
   const bad404 = new Set(); admin.on("response", r => { if (r.status() >= 400 && r.url().startsWith(BASE) && /\/assets\/(img|pages|css|js|fonts)\//.test(r.url())) bad404.add(r.status() + " " + r.url().replace(BASE, "")); });

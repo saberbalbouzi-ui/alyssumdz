@@ -3,10 +3,10 @@
 // (3) لافتة s-watches: استبدال خلفية القسم لا يغيّر ارتفاعه ويبقى bgFixed/cover (4) Ctrl+Z يعيد الأصل.
 // التشغيل: نفس متغيرات البطارية EQA_BASE EQA_STORE EQA_PASS EQA_OUT. ينتج لقطات قبل/بعد في EQA_OUT.
 const { chromium } = require("playwright");
+const declareProtect = require("./_declared-protect");
 const BASE = process.env.EQA_BASE || "http://127.0.0.1:8391";
 const PW = process.env.EQA_PASS || "TestPass12345";
 const OUT = process.env.EQA_OUT || "/tmp";
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 // ما يُختبَر لكل قالب: صورة رئيسية (اسم الملف) و/أو قسم بخلفية صورة (اسم الملف). الباقي يُستنتج من النموذج.
 const SPEC = {
@@ -21,8 +21,8 @@ const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((c
 
 (async () => {
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ userAgent: UA, viewport: { width: 1360, height: 900 } });
-  await ctx.addInitScript(() => { Object.defineProperty(navigator, "webdriver", { get: () => undefined }); });
+  const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 } });
+  await declareProtect(ctx);
   page = await ctx.newPage(); page.on("dialog", d => d.accept());
   const jsErrs = []; page.on("pageerror", e => jsErrs.push(e.message.slice(0, 160)));
   await page.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000);

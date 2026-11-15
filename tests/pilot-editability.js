@@ -5,11 +5,11 @@
 //   3) على عنصر البطل الحر: تحجيم بالمقبض، تدوير زاوي، تكرار ثم حذف، إخفاء/إظهار، قفل/فك قفل
 // التشغيل: نفس متغيرات البطارية: EQA_BASE EQA_STORE EQA_PASS EQA_OUT، و PILOT_TPLS=s-watches,s-tech
 const { chromium } = require("playwright");
+const declareProtect = require("./_declared-protect");
 const BASE = process.env.EQA_BASE || "http://127.0.0.1:8391";
 const PW = process.env.EQA_PASS || "TestPass12345";
 const SEC_MODE = !!process.env.PILOT_SEC;   // أقسام اتصال/طلب (c-*/o-*): تُفتح بـ«تعديل القالب» لا بالتثبيت على الرئيسية
 const TEMPLATES = process.env.PILOT_TPLS ? process.env.PILOT_TPLS.split(",") : ["s-watches", "s-tech"];
-const UA_D = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const results = [];
 let page;
@@ -20,8 +20,8 @@ const check = (tpl, name, cond, extra) => {
 
 (async () => {
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || undefined });
-  const ctx = await browser.newContext({ userAgent: UA_D, viewport: { width: 1360, height: 900 } });
-  await ctx.addInitScript(() => { Object.defineProperty(navigator, "webdriver", { get: () => undefined }); });
+  const ctx = await browser.newContext({ viewport: { width: 1360, height: 900 } });
+  await declareProtect(ctx);
   page = await ctx.newPage(); page.on("dialog", d => d.accept());
   const jsErrs = []; page.on("pageerror", e => jsErrs.push(e.message.slice(0, 160)));
   await page.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000);

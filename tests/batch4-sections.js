@@ -5,6 +5,7 @@
 // يُشغَّل على الأصل (c83b917) ثم على القوالب الجديدة بالمعايير نفسها (لا يُضعف شيء بين التشغيلين).
 // التشغيل: EQA_BASE EQA_PASS EQA_OUT و B4_TPLS=c-aurora,o-flash  و B4_NEW=1 لفحوص الميزات المضافة (قنوات اتصال بروابط حقيقية…)
 const { chromium } = require("playwright");
+const declareProtect = require("./_declared-protect");
 const fs = require("fs");
 const BASE = process.env.EQA_BASE || "http://127.0.0.1:8391";
 const PW = process.env.EQA_PASS || "TestPass12345";
@@ -12,14 +13,13 @@ const OUT = process.env.EQA_OUT || "/tmp";
 const NEW = !!process.env.B4_NEW;
 const ALL = ["c-aurora", "c-neon", "c-gold", "c-soft", "c-steps", "o-flash", "o-lux", "o-steps", "o-bundle", "o-proof"];
 const TPLS = process.env.B4_TPLS ? process.env.B4_TPLS.split(",") : ALL;
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const results = [];
 const check = (tpl, name, cond, extra) => { results.push(!!cond); console.log((cond ? "PASS " : "FAIL ") + `[${tpl}] ${name}` + (extra !== undefined && extra !== "" ? "  — " + String(extra).slice(0, 240) : "")); };
 
 (async () => {
   const browser = await chromium.launch();
-  const mk = async (w = 1360, h = 900) => { const c = await browser.newContext({ userAgent: UA, viewport: { width: w, height: h } }); await c.addInitScript(() => { Object.defineProperty(navigator, "webdriver", { get: () => undefined }); }); return c; };
+  const mk = async (w = 1360, h = 900) => { const c = await browser.newContext({ viewport: { width: w, height: h } }); await declareProtect(c); return c; };
   const ctx = await mk(); const admin = await ctx.newPage(); admin.on("dialog", d => d.accept());
   const jsErrs = []; admin.on("pageerror", e => jsErrs.push(e.message.slice(0, 160)));
   await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000);
