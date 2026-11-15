@@ -242,7 +242,7 @@ thf = TH(k, False, INK, GRY, INK, "#7c3aed", "#ffffff", WH, GR,
          accfx=[accfx("#ffffff", "#111111", 0)],
          tsfx=[FX("رأي مربّع", "selector .pb-ts{background:#fff!important;border:1px solid #111;border-radius:0;box-shadow:8px 8px 0 #111}"), lift(".pb-ts", "rgba(0,0,0,.2)", -6)])
 f_hero_free = [
-    FR("heading", V(0, 3, 3), V(40, 24, 24), V(68, 94, 94), None, 1, text="SEASON", tag="div", fs=V(170, 62, 120), fw="900", ta={"d": "start"}, color="transparent", lh={"d": 1}, fxs=[outlinetext(INK, 2)], **anim("slideStart", 1)),
+    FR("heading", V(0, 3, 3), V(60, 24, 24), V(68, 94, 94), None, 1, text="SEASON", tag="div", fs=V(170, 62, 120), fw="900", ta={"d": "start"}, color="transparent", lh={"d": 1}, fxs=[outlinetext(INK, 2)], **anim("slideStart", 1)),
     FR("image", V(44, 22, 30), V(120, 110, 150), V(26, 56, 40), V(520, 327, 492), 3, src=IMG("fashion_man"), alt="موديل بإطلالة مسائية", fit="cover", hauto=False,
        fxs=[FX("كتلة سوداء مزاحة", "selector{box-shadow:20px 20px 0 #111;overflow:hidden}selector .pb-im{object-fit:cover;width:100%;height:100%;object-position:[[p]];transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}selector:hover .pb-im{transform:scale(1.04)}", p=("نقطة التركيز (س% ص%)", "text", "50% 50%"))], **anim("fadeUp", .9, .1)),
     FR("heading", V(8, 6, 6), V(290, 460, 640), V(44, 70, 60), None, 5, text="NEW", tag="h1", fs=V(190, 84, 130), fw="900", ta={"d": "start"}, color=INK, lh={"d": .9}, **anim("slideStart", .9, .2)),
