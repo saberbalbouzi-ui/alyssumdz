@@ -71,3 +71,26 @@
 | اختبار اللوحة في متصفح حقيقي | `VERIFIED` نجح (42 خطوة، `test-hand` 5د16ث) | ~13د | Chromium 153 |
 | Spatial OS (الجديد) | `VERIFIED` نجح: nlu 75 · viewports 66 · run 145 · phase9 95 · phase10 136 · phase11 96 · 12b 11 · 12b1 101 · 12b1c 56 = **781 / 0** | 25.5د | المدد: 1/42/293/475/387/331/0/1/0 ث؛ artifact `spatial-os-logs` رُفع |
 **قيود صريحة:** تشغيل واحد (لا إثبات ثبات)؛ أعداد المنطق والمتصفح استُنتجت من حالة الخطوات (نجاح/فشل) لا من قراءة سجل كل خطوة؛ أعداد Spatial OS قُرئت من سجل الخطوة. تنظيف `pf_idem` يُختبر في CI على SQLite لا D1. لا يعني هذا جاهزية للإنتاج.
+
+## G) جولة تجهيز Beta ومراجعة pf_idem — الانحدار المحلي الكامل (على التعديلات غير المدفوعة)
+**البيئة:** نفسها أعلاه + miniflare 4 (workerd المحلي) لاختبار D1. **لم يُدفَع شيء ولم يُشغَّل CI على GitHub لهذه التعديلات.** 56 خطوة، كلها rc=0.
+| المجموعة | الأمر | الأعداد | النوع | الحالة |
+|---|---|---|---|---|
+| Worker (39 ملفاً) | `node --no-warnings platform/api/test/<اسم>.test.mjs` | **1892 فحصاً ناجحاً، 0 فاشل** | محلي (node:sqlite ≠ D1) | `PARTIALLY VERIFIED` |
+| البوابة (3 ملفات) | `node --no-warnings platform/gateway/test/*.test.mjs` | 155 (139 + 8 + 8) | محلي | `PARTIALLY VERIFIED` |
+| مراجعة pf_idem | `…/idem-review.test.mjs` | 34/34 | محلي | `PARTIALLY VERIFIED` |
+| pf_idem على D1 المحلي (workerd) | `MF_DIR=… N=20000 node platform/api/test/d1/idem-d1-local.mjs` | 14/14، 17ث | محرك D1 محلي (**ليس الخدمة البعيدة**) | `PARTIALLY VERIFIED`؛ D1 بعيد `BLOCKED` |
+| حارس البيئات | `…/envguard.test.mjs` | 41/41 | منطق نقي | `VERIFIED` |
+| عزل Beta (نقطة دخول Worker) | `…/beta-isolation.test.mjs` | 31/31 | Worker حقيقي + D1 محاكى + fetch مسجَّل | `PARTIALLY VERIFIED` |
+| وحدة Beta | `…/beta-module.test.mjs` | 37/37 | نفسه | `PARTIALLY VERIFIED` |
+| ملكية الجداول | `…/boundaries.test.mjs` | 282/282 | ثابت | `VERIFIED` |
+| إقلاع البوابة Beta | `…/beta-boot.test.mjs` | 8/8 | Worker حقيقي + D1 محاكى | `PARTIALLY VERIFIED` |
+| أدوات النشر (dry-run بلا شبكة) | `node scripts/test-beta-deploy.js` | 40/40 | بلا شبكة | `VERIFIED` (لا Cloudflare حقيقي) |
+| سياسة workflows | `python3 scripts/test-workflow-policy.py` | 31/31 + اختبار سلبي (rc=1 مع workflow سيئ) | ثابت | `VERIFIED` |
+| بناء Beta | `node scripts/test-beta-build.js` | 18/18، 19ث | ملفات | `PARTIALLY VERIFIED` (Supabase Beta وهمي) |
+| Beta في Chromium | `NODE_PATH=… node scripts/test-beta-browser.js` | 29/29، 22ث | متصفح حقيقي، شبكة مقطوعة | `PARTIALLY VERIFIED` |
+| حزمة القالب (+ payments.json فارغ) | `node scripts/test-template-pack.js` | 9/9 | ملفات | `VERIFIED` |
+| سجل البيئات متزامن · E-07 · admin-sync · roles | `sync.mjs --check` · `build-admin-pb.py + git diff` · `test-admin-sync` · `test-roles` | ✓ · ✓ · ✓ · 49 | | `VERIFIED` |
+| متصفح المتجر/PHP حقيقي | `test-hand` · `test-edition` · `test-edition-real` · `test-digital-checkout` | 322/322 (325ث) · 19/19 · ALL OK (27ث) · ✓ (18ث) | حقيقي-محلي | `VERIFIED` (محلياً) |
+**نتائج اختبار سلبي موثَّقة:** بناء Beta بمشروع/مفتاح Production، أو مفتاح سرّي، أو رابط غير صالح، أو بلا مشروع ⇒ رفض (rc=2)؛ `workflow` يخرق السياسة ⇒ فشل.
+**لم يُعَد تشغيله في هذه الجولة:** بقية خطوات job المتصفح وSpatial OS (لم يتغير `assets/` ولا Spatial OS؛ نجحت في CI 4289) — ما زال `PARTIALLY VERIFIED` على الالتزام الجديد حتى يُشغَّل CI.

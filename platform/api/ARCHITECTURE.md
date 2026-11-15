@@ -87,3 +87,8 @@ Router (core.js) ─► وحدة.routes ─► خدمة نقية (دوال بل�
 `commerce` يملك `cm_meta` و`cm_price_hist` و`cm_calc` (بادئة `cm_` ضمن خريطة الملكية). `payments` لا يقرأ جداول `commerce`؛ يتلقى مستوى الثقة في حدث `order.created` (توقيع HMAC بسرّ المنصة). التفاصيل والتفعيل والرجوع: `platform/docs/strict-pricing.md`.
 
 - **دفتر حجز المخزون (A-05)**: `cm_resv` (وحدة `commerce`) سطر لكل (طلب، صنف): `pending` (مهلة `settings.hold_hours`، الافتراضي 72س) ← `committed` عند `order.confirmed|delivered` | `released` عند `order.cancelled` أو انتهاء المهلة (cron). كل انتقال مشروط بالحالة ولا يُعاد المخزون إلا إن تغيّر السطر؛ التأكيد المتأخر يعيد الحجز كل-أو-لا-شيء ويوسم `reservation_lost` عند النقص.
+
+## بيئات Beta/Local وحدة `beta` (حدود معمارية)
+- `ENVIRONMENT` (`production|beta|local`) يُقرأ في `src/index.js` (إقلاع محروس): التحقق من الإعدادات (`envguard.js`)، حارس الخروج `guardFetch` على `ctx.fetchFn` في غير الإنتاج، وهوية القاعدة `pf_meta('environment')`. الإنتاج بلا تغيير (`environment=null`).
+- وحدة `beta` **لا تُحمَّل في الإنتاج**، تملك الجداول `beta_*`، وتصل لإعداداتها العامة عبر `ctx.meta` (pf_meta) ولإعدادات المستأجر عبر `ctx.provision.mergeSettings` — لا كتابة مباشرة في جداول النواة (تفرضه `boundaries.test.mjs`).
+- `ctx.requestGate` خطّاف اختياري بعد مصادقة المستأجر (حدود استخدام Beta اليومية الذرّية).

@@ -60,3 +60,6 @@ INSERT OR IGNORE INTO gw_plans (id,name,orders_hour,orders_day,track_min,vault_m
  ('free','مجانية',20,100,30,0,0,NULL),
  ('pro','احترافية',200,2000,120,5,1,NULL),
  ('business','أعمال',1000,10000,600,50,1,NULL);
+
+-- هوية البيئة وإصدار المخطط (يكتبها deploy db؛ يرفض الـWorker الإقلاع بهوية مخالفة): انظر platform/api/schema.sql
+CREATE TABLE IF NOT EXISTS pf_meta (k TEXT PRIMARY KEY, v TEXT NOT NULL, at TEXT NOT NULL);

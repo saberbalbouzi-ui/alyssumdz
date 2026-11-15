@@ -1,4 +1,5 @@
 import { actorOf, nowStr, randHex, resolvesPublic, safeEq, sha256Hex } from "./util.js";
+import { guardFetch } from "./envguard.js";
 
 /** أخطاء HTTP موحّدة: { error: { code, message, fields? } } */
 export class HttpError extends Error {
@@ -39,8 +40,11 @@ export const CORE_MODULES = ["admin", "platform"];
 /** هل عُطّلت الوحدة لهذا المستأجر؟ (settings.modules_off) — الوحدات تعمل مستقلة: تعطيل واحدة لا يمسّ البقية */
 export const moduleOff = (settings, id) => !CORE_MODULES.includes(id) && Array.isArray(settings?.modules_off) && settings.modules_off.includes(id);
 
-export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn = (...a) => fetch(...a) }) {
+export function createPlatform({ d1, modules = [], secret, adminToken = "", vault = null, files = null, baseUrl = "", config = {}, clock = () => Date.now(), fetchFn: rawFetch = (...a) => fetch(...a), environment = null }) {
   if (!secret || String(secret).length < 16) throw new Error("PLATFORM_SECRET مطلوب (16 حرفاً فأكثر)");
+  /* بيئة غير الإنتاج (Beta/Local): كل اتصال صادر يمرّ بقائمة سماح صارمة (envguard.guardFetch) فلا يصل Beta لمضيفي الإنتاج ولا لمزوّدي دفع/رسائل حيّين ولو أخطأ الإعداد. الإنتاج: environment=null ← بلا أي تغيير. */
+  const egress = environment?.egressStats ?? { blocked: 0, last: null };                                           // العدّاد على مستوى الـisolate (يمرّره index.js) لأن كل طلب يبني نسخة منصة جديدة
+  const fetchFn = environment?.egress ? guardFetch(rawFetch, environment.egress, (h) => { egress.blocked++; egress.last = h; if (egress.blocked <= 20) ctx.audit("system:egress", "egress.blocked", h, { env: environment.name }).catch(() => { }); }) : rawFetch;   // أول 20 حجباً تُدقَّق (كشف خطأ إعداد) دون إغراق
   const db = new DB(d1), routes = [];
   const ctx = { authProviders: [], orderGuards: [], db, clock, fetchFn, secret, vault, files, config, baseUrl: String(baseUrl).replace(/\/+$/, ""), sha: sha256Hex, now: () => nowStr(clock()), nowS: () => Math.floor(clock() / 1000),
     /** يضيف حدثاً لصندوق الأحداث. extId اختياري: نفس (مستأجر، extId) لا يُدرج مرتين ← يُرجع false */
@@ -65,15 +69,27 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
   const compile = (p) => new RegExp("^" + p.replace(/:([a-z]+)/g, "(?<$1>[^/]+)") + "$");
   let curMod = "";
   /** تجهيز مستأجر/مفتاح كخدمة نواة (استثناء موثّق): تستعملها وحدة السوق عند اعتماد مورّد من الخارج. المفتاح يظهر لمن يستدعيها مرة واحدة فقط */
+  /** مخزن مفاتيح/قيم النواة (pf_meta): تستعمله الوحدات بدل الكتابة المباشرة في جداول النواة (قاعدة boundaries) */
+  ctx.meta = {
+    async get(k, d = null) { return (await db.val("SELECT v FROM pf_meta WHERE k=?", k).catch(() => null)) ?? d; },
+    async set(k, v) { await db.run("INSERT INTO pf_meta (k,v,at) VALUES (?,?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, at=excluded.at", String(k), String(v), nowStr(clock())); },
+  };
+  ctx.environment = environment; ctx.egressStats = egress; ctx.requestGate = null;                                   // requestGate: خطّاف اختياري (وحدة Beta) لحدود الاستخدام لكل مستأجر
   ctx.provision = {
     async createTenant({ name, settings = {}, actor = "system" }) {
       const x = await db.run("INSERT INTO pf_tenants (name,site_ref,status,settings,created_at) VALUES (?,?,?,?,?)", String(name).slice(0, 120), null, "active", JSON.stringify(settings), ctx.now()); await ctx.audit(actor, "tenant.create", x.id, { via: "provision" }); return x.id;
     },
-    async issueKey(tenantId, { scopes, label = "", actor = "system", revokeOthers = false }) {
-      if (!Array.isArray(scopes) || !scopes.length || !scopes.every((q) => /^[a-z]+:[a-z]+$/.test(q))) throw new HttpError(400, "validation_error", "scopes غير صالحة");
+    async issueKey(tenantId, { scopes, label = "", actor = "system", revokeOthers = false, mode = "live", allowWildcard = false }) {
+      if (!["live", "test"].includes(mode)) throw new HttpError(400, "validation_error", "mode: live|test");
+      if (!Array.isArray(scopes) || !scopes.length || !scopes.every((q) => /^[a-z]+:[a-z]+$/.test(q) || (allowWildcard && q === "*"))) throw new HttpError(400, "validation_error", "scopes غير صالحة");
       if (revokeOthers) await db.run("UPDATE pf_keys SET revoked_at=? WHERE tenant_id=? AND revoked_at IS NULL", ctx.now(), tenantId);
-      const key = `pk_live_${randHex(20)}`; await db.run("INSERT INTO pf_keys (tenant_id,prefix,key_hash,scopes,label,created_at) VALUES (?,?,?,?,?,?)", tenantId, key.slice(0, 12), await sha256Hex(key), scopes.join(","), String(label).slice(0, 60), ctx.now());
+      const key = `pk_${mode}_${randHex(20)}`; await db.run("INSERT INTO pf_keys (tenant_id,prefix,key_hash,scopes,label,created_at) VALUES (?,?,?,?,?,?)", tenantId, key.slice(0, 12), await sha256Hex(key), scopes.join(","), String(label).slice(0, 60), ctx.now());
       await ctx.audit(actor, "key.issue", tenantId, { scopes, via: "provision" }); return key;
+    },
+    /** دمج سطحي في settings المستأجر (للوحدات: حدود Beta مثلاً) — يُدقَّق؛ لا يمسّ status ولا المفاتيح */
+    async mergeSettings(tenantId, patch, actor = "system") {
+      const t = await db.one("SELECT settings FROM pf_tenants WHERE id=?", tenantId); if (!t) throw new HttpError(404, "not_found", "مستأجر غير موجود");
+      const st = { ...JSON.parse(t.settings || "{}"), ...patch }; await db.run("UPDATE pf_tenants SET settings=? WHERE id=?", JSON.stringify(st), tenantId); await ctx.audit(actor, "tenant.settings", tenantId, { keys: Object.keys(patch) }); return st;
     },
     async setStatus(tenantId, status, actor = "system") {
       if (!["active", "suspended"].includes(status)) throw new HttpError(400, "validation_error", "status: active|suspended");
@@ -143,7 +159,14 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     }
     if (raw.length > 262144) throw new HttpError(413, "payload_too_large", "الطلب أكبر من 256KB");
     const w = await ctx.window("ip:" + ip, 600, 60); if (w !== null) throw new HttpError(429, "rate_limited", "طلبات كثيرة", null, { "Retry-After": String(w) });
-    if (m === "GET" && p === "/health") return ok({ ok: true, modules: modules.map((x) => x.id) });
+    if (m === "GET" && p === "/health") {
+      const h = { ok: true, modules: modules.map((x) => x.id) };
+      if (environment && environment.name !== "production") {                                                         // بيئات غير الإنتاج فقط: الهوية والإصدار (لا أسرار) — الإنتاج يبقى كما هو
+        const row = async (k) => (await db.val("SELECT v FROM pf_meta WHERE k=?", k).catch(() => null)) ?? null;
+        Object.assign(h, { environment: environment.name, version: environment.version ?? null, sha: environment.sha ?? null, schema: { expected: environment.schemaHash ?? null, actual: await row("schema_hash") }, db_environment: await row("environment"), egress_blocked: egress.blocked });
+      }
+      return ok(h);
+    }
     if (m === "GET" && p === "/openapi.json") return { status: 200, headers: { "Cache-Control": "public, max-age=300" }, body: JSON.stringify(openapi()) };
     if (m === "POST" && p === "/admin/cron") { const actor = await authAdmin(hd); const out = await cron(); await ctx.audit(actor, "cron.manual", null, out); return ok({ ok: true, ...out }); }   // تشغيل يدوي/تشخيص
     for (const rt of candidates(m, p)) {
@@ -153,6 +176,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       else if (rt.opts.auth === "tenant") {
         const a = await authTenant(hd, rt.opts.scope, ip); if (moduleOff(a.tenant.settings, rt.mod)) throw new HttpError(403, "module_disabled", `وحدة ${rt.mod} معطّلة لهذا المستأجر`); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin; req.app = a.app ?? null;
         const lim = rt.opts.limit; if (lim) { const wt = await ctx.window(`t${a.tenant.id}:${lim.key}`, lim.max, lim.win); if (wt !== null) throw new HttpError(429, "rate_limited", "تجاوزت الحدّ المسموح", null, { "Retry-After": String(wt) }); }
+        if (ctx.requestGate) await ctx.requestGate(req, rt);
       }
       let res;
       if (rt.opts.idem && m !== "GET" && req.tenant && hd["idempotency-key"]) {

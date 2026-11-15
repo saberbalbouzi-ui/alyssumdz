@@ -63,8 +63,16 @@ jobs:
           node scripts/test-toolpages.js
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
+          node --no-warnings platform/gateway/test/beta-boot.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership idem-prune idem-review; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership idem-prune idem-review envguard beta-isolation beta-module; do node --no-warnings platform/api/test/$t.test.mjs; done
+      - name: عزل Beta عن Production (سجل البيئات، النشر، الـworkflows، بناء Beta الساكن)
+        run: |
+          node platform/env/sync.mjs --check
+          node scripts/test-beta-deploy.js
+          python3 -c "import yaml" 2>/dev/null || pip install --user pyyaml
+          python3 scripts/test-workflow-policy.py
+          node scripts/test-beta-build.js
       - name: pf_idem على محرك D1 المحلي (workerd/miniflare — ليس D1 البعيد)
         run: |
           mkdir -p /tmp/mf && cd /tmp/mf && npm init -y >/dev/null
@@ -173,6 +181,8 @@ jobs:
         run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-beta-browser.js
 
   spatial-os:
     name: Spatial OS (معاينة معزولة — Chromium برمجي، بلا GPU/ميكروفون حقيقي)

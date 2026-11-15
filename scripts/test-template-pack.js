@@ -21,6 +21,9 @@ try {
   ok(!fs.existsSync(path.join(sb, "apply-pending.sql")), "لا supabase/apply-pending.sql (يحمل بريد المالك)");
   ok(fs.existsSync(path.join(sb, "schema.sql")), "schema.sql ما زال في الحزمة (يحتاجه setup-supabase.sh)");
 
+  // بيانات أعمال المتجر الأصلي لا تنتقل: payments.json فارغ (كان يحمل أرقام طلبات ومبالغ حقيقية)
+  { const pj = path.join(OUT, "assets/data/payments.json"); const d = fs.existsSync(pj) ? JSON.parse(fs.readFileSync(pj, "utf8")) : null; const prod = JSON.parse(fs.readFileSync(path.join(ROOT, "assets/data/payments.json"), "utf8")); const ids = Object.keys(prod.byOrder || {});
+    ok("payments.json في الحزمة فارغ ولا يحوي أي رقم طلب من المتجر الأصلي", !!d && Object.keys(d.byOrder || {}).length === 0 && (d.manual || []).length === 0 && !ids.some((i) => fs.readFileSync(pj, "utf8").includes(i)), d); }
   // anti-copy.js: الفرق الوحيد المسموح = alyssum_ → store_ (مفاتيح التخزين المحلي)
   const src = fs.readFileSync(path.join(ROOT, "assets/js/anti-copy.js"), "utf8");
   const pkgF = path.join(OUT, "assets/js/anti-copy.js");
