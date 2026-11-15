@@ -1491,7 +1491,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-top button:hover{background:rgba(255,255,255,.22)}.pbx-top button.on{background:#c8a24b;color:#173f35}.pbx-top button.pub{background:#c8a24b;color:#173f35}.pbx-top button:disabled{opacity:.35;cursor:default}
 .pbx-top .sp{margin-inline-start:auto}@media(max-width:1650px){.pbx-top .tbt{display:none}}.pbx-top button.pub{position:sticky;inset-inline-end:0;z-index:3}      /* ضاق الشريط العلوي: النصوص تختفي وتبقى الأيقونات بتلميحاتها، وزر النشر يبقى ظاهراً دائماً */.pbx-dirty{font-size:.78rem;opacity:.8}
 .pbx-main{flex:1;display:flex;min-height:0}
-.pbx-left{width:210px;flex:0 0 auto;max-width:50vw;background:#fff;border-inline-end:1px solid #ddd;display:flex;flex-direction:column;min-height:0}
+.pbx-left{width:236px;flex:0 0 auto;max-width:50vw;background:#fff;border-inline-end:1px solid #ddd;display:flex;flex-direction:column;min-height:0}
 .pbx-right{width:330px;flex:0 0 auto;max-width:60vw;background:#fff;border-inline-start:1px solid #ddd;overflow:auto;padding:.7rem}
 #pbx-lside .pbx-tabs,#pbx-insp{padding-bottom:96px}
 .pbx-tabs{display:block;overflow:auto;flex:1;min-height:0}.pbx-tabs button.pbx-ah{display:flex;align-items:center;gap:.5rem;width:100%;text-align:start;border:0;border-bottom:1px solid #eee;background:#fff;padding:.75rem .8rem;font-weight:800;cursor:pointer;font-family:inherit;font-size:.86rem;color:#33403b;border-inline-start:3px solid transparent}.pbx-tabs button.pbx-ah:hover{background:#faf6ec}.pbx-tabs button.pbx-ah.on{color:#173f35;background:#f3ede0;border-inline-start-color:#c8a24b}.pbx-tabs button.pbx-ah::after{content:"▾";margin-inline-start:auto;font-size:.7rem;color:#999}.pbx-tabs button.pbx-ah.on::after{content:"▴";color:#173f35}

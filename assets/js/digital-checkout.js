@@ -125,7 +125,9 @@
       return API.orderKey(order).then(function (seed) {
       var ref = PFOrder.prep(order, seed);
       return Guard.submit(order).then(function (gr) {      // 12B.1: لا نجاح بلا تأكيد خادم (Guard دائماً فعّال؛ حُذف مسار الإرسال بلا انتظار)
-        if (!gr || gr.ok !== true) {
+        /* متجر بلا خلفية طلبات قابلة للتأكيد (Google Sheets no-cors ← unverifiable_backend): سجلّ الطلب الأصلي للدفع هو منصة الطلبات؛ نتابع إلى PFOrder.send ولا تُعرض نافذة الدفع إلا بعد تأكيدها الصريح (ok:true) — لا نجاح مفترض. أي حالة أخرى غير مؤكَّدة تتوقف هنا. */
+        var __unver = !!(gr && gr.ok !== true && gr.error === "unverifiable_backend");
+        if ((!gr || gr.ok !== true) && !__unver) {
           if (btn) btn.disabled = false;   // النموذج وبياناته باقية؛ غير المؤكَّد ← نافذة صريحة بإعادة المحاولة بنفس المفتاح (لا «تم» ولا مسار دفع)
           if (gr && typeof Guard !== "undefined" && Guard.fail) return Guard.fail(gr, { retry: function () { var f = document.getElementById("order-form"); if (f && f.requestSubmit) f.requestSubmit(); else if (btn) btn.click(); } });
           return fail((gr && gr.msg) || "تعذّر تأكيد تسجيل الطلب — لم يُسجَّل");

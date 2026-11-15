@@ -2,10 +2,10 @@
 const fs = require("fs"), vm = require("vm");
 let total = 0, fails = 0; const ok = (n, c, x) => { total++; if (!c) { fails++; console.log("✗ " + n + (x === undefined ? "" : " " + JSON.stringify(x))); } };
 const src = fs.readFileSync(__dirname + "/../assets/js/admin-shipagg.js", "utf8");
-const calls = [], tracked = [], updates = [], notices = [], slip = [];
+const calls = [], tracked = [], updates = [], notices = [], slip = [], toasts = [];
 let gwReply = (m, p, b, q) => ({ status: 200, data: {} });
 const ctx = {
-  console, setInterval: () => 0, clearInterval() {}, alert() {}, confirm: () => true, toast() {},
+  console, setInterval: () => 0, clearInterval() {}, alert() {}, confirm: () => true, toast(m) { toasts.push(String(m)); },
   document: { readyState: "complete", getElementById: () => null, addEventListener() {}, createElement: () => ({ style: {}, classList: { remove() {} } }), head: { appendChild() {} }, body: { appendChild() {} } },
   window: {}, PHPAPI: { on: () => false },
   API: { sb: { enabled: () => true, token: async () => "tok", url: (p) => "https://x.supabase.co" + p, headers: (t) => ({ Authorization: "Bearer " + t }) }, ordersBackend: () => "supabase", updateOrder: (...a) => updates.push(a) },
@@ -50,7 +50,11 @@ const SA = ctx.ShipAgg; (async () => {
     await ctx.Admin.unsendOrder(0); ok("التراجع المقبول ينزع التتبع", !o2.note.includes("🚚"), o2.note);
     o2.note = "🚚noest:xx"; ok("طرد شركة غير مفعّلة في البوابة يمرّ للأصل", (await ctx.Admin.unsendOrder(0)) === "orig-unsend");
     o2.note = "🚚yalidine:yal-ZZ"; gwReply = (m, path) => path === "/v1/label" ? { status: 404, data: { error: { code: "label_unavailable", message: "x" } } } : { status: 200, data: {} };
-    await ctx.Admin.openLabel(0); ok("بوليصة غير متاحة ← وصل الطلب", slip.length === 1); }
+    let closed = 0; ctx.window.open = () => ({ location: {}, close() { closed++; } }); const t0 = toasts.length;
+    await ctx.Admin.openLabel(0);
+    /* v1.89.874 (3bc84ee3): أُزيل «وصل الطلب» المخترَع؛ البوليصة غير المتاحة ← إغلاق النافذة المفتوحة + رسالة تدلّ على بوليصة الشركة الأصلية، بلا طباعة بديلة */
+    ok("بوليصة غير متاحة ← رسالة بوليصة الشركة الأصلية (لا وصل مخترَع)", slip.length === 0 && toasts.slice(t0).some(m => /بوليصة هذه الشركة غير متاحة/.test(m)), { slip: slip.length, toasts: toasts.slice(t0) });
+    ok("بوليصة غير متاحة ← تُغلَق النافذة الفارغة المفتوحة", closed === 1, { closed }); }
   /* دالة غير منشورة */
   ctx.fetch = async () => ({ status: 404, ok: false, json: async () => ({}) }); SA.S.noGw = false;
   ok("404 ← تُخفى البطاقة", (await SA.load()) === false && SA.S.noGw === true && SA.mode() === null);

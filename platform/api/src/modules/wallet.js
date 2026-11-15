@@ -175,7 +175,9 @@ export const wallet = {
       const ev = req.json(), id = String(ev?.data?.id ?? ""); if (!id || !["checkout.paid", "checkout.failed", "checkout.canceled"].includes(ev.type)) return ok({ ok: true, ignored: true });
       const dep = await db.one("SELECT * FROM wl_deposits WHERE chargily_checkout_id=?", id); if (!dep) return ok({ ok: true, ignored: "unknown_checkout" }); if (dep.status !== "pending") return ok({ ok: true, duplicate: true });
       if (ev.type !== "checkout.paid") { await db.run("UPDATE wl_deposits SET status='failed', updated_at=? WHERE id=? AND status='pending'", ctx.nowS(), dep.id); return ok({ ok: true, status: "failed" }); }
-      if (Math.round(+ev.data.amount) !== dep.amount) { await ctx.emit(dep.tenant_id, "wallet.deposit_mismatch", { id: dep.id, expected: dep.amount, received: Math.round(+ev.data.amount) || 0 }, `wl:depmm:${dep.id}`); return ok({ ok: true, ignored: "amount_mismatch" }); }
+      /* العملة الصريحة DZD إلزامية لإشعار «مدفوع» (رقعة التدقيق): نصّ غير فارغ يساوي "dzd" بعد تحويل الحالة فقط؛ الغائب/null/الفارغ/غير النصّي/غير DZD ← لا قيد (الشحن يُنشأ دائماً بالدينار). لا يُسجَّل إلا رمز منقّى قصير. */
+      const curRaw = ev.data.currency, curOk = typeof curRaw === "string" && curRaw.toLowerCase() === "dzd", curSeen = typeof curRaw === "string" ? (curRaw.toLowerCase().replace(/[^a-z]/g, "").slice(0, 8) || "empty") : (curRaw == null ? "missing" : "invalid_type");
+      if (!curOk || Math.round(+ev.data.amount) !== dep.amount) { await ctx.emit(dep.tenant_id, "wallet.deposit_mismatch", { id: dep.id, expected: dep.amount, received: Math.round(+ev.data.amount) || 0, ...(!curOk ? { currency: curSeen } : {}) }, `wl:depmm:${dep.id}:${curOk ? "amt" : curSeen}`); return ok({ ok: true, ignored: curOk ? "amount_mismatch" : "currency_mismatch" }); }
       await creditDeposit(dep, null); return ok({ ok: true, status: "approved" });
     });
 

@@ -20,10 +20,10 @@ fake.handler = (u, i) => { fake.last = { u, i, body: JSON.parse(i.body ?? "{}") 
 ok("جلسة دفع على حساب المنصة بالمبلغ والبيانات", c === 201 && b.checkout_url.includes("chk_1") && fake.last.i.headers.Authorization === "Bearer " + SECRET && fake.last.body.amount === 5000 && fake.last.body.currency === "dzd" && fake.last.body.payment_method === "cib" && fake.last.body.metadata.deposit_id === b.id && fake.last.u.startsWith("https://pay.chargily.net/test/api/v2/checkouts") && fake.last.body.webhook_endpoint === "https://api.example/v1/wallet/chargily-webhook", [c, fake.last]);
 const dep1 = b.id;
 ok("pending ولا رصيد قبل الدفع", sql("SELECT status s, chargily_checkout_id c FROM wl_deposits WHERE id=?", dep1).s === "pending" && sql("SELECT chargily_checkout_id c FROM wl_deposits WHERE id=?", dep1).c === "chk_1" && bal(T.id) === 0);
-const paid = { id: "ev1", type: "checkout.paid", data: { id: "chk_1", amount: 5000 } };
+const paid = { id: "ev1", type: "checkout.paid", data: { id: "chk_1", amount: 5000, currency: "dzd" } };   /* العملة الصريحة إلزامية (رقعة التدقيق) */
 [c] = await hook(paid, ""); ok("إشعار بلا توقيع 400", c === 400);
 [c] = await hook(paid, "deadbeef"); ok("توقيع خاطئ 403", c === 403 && bal(T.id) === 0);
-[c, b] = await hook({ ...paid, data: { id: "chk_1", amount: 1 } }); ok("مبلغ مختلف يُتجاهل ولا يُقيَّد", c === 200 && b.ignored === "amount_mismatch" && bal(T.id) === 0 && sql("SELECT status s FROM wl_deposits WHERE id=?", dep1).s === "pending");
+[c, b] = await hook({ ...paid, data: { id: "chk_1", amount: 1, currency: "dzd" } }); ok("مبلغ مختلف يُتجاهل ولا يُقيَّد", c === 200 && b.ignored === "amount_mismatch" && bal(T.id) === 0 && sql("SELECT status s FROM wl_deposits WHERE id=?", dep1).s === "pending");
 [c, b] = await hook(paid); ok("إشعار صحيح ← approved ورصيد 5000", c === 200 && b.status === "approved" && bal(T.id) === 5000 && sql("SELECT status s FROM wl_deposits WHERE id=?", dep1).s === "approved", b);
 [c, b] = await hook(paid); ok("إعادة الإشعار لا تقيّد مرتين", c === 200 && b.duplicate === true && bal(T.id) === 5000);
 [c, b] = await hook({ id: "ev2", type: "checkout.paid", data: { id: "unknown", amount: 5000 } }); ok("جلسة مجهولة تُتجاهل", b.ignored === "unknown_checkout");

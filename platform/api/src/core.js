@@ -157,24 +157,34 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       let res;
       if (rt.opts.idem && m !== "GET" && req.tenant && hd["idempotency-key"]) {
         const ik = String(hd["idempotency-key"]); if (ik.length > 80 || !/^[A-Za-z0-9._:-]{1,80}$/.test(ik)) throw new HttpError(400, "validation_error", "Idempotency-Key غير صالح");
-        /* ادّعاء ذرّي (12C): الخطوة الأولى INSERT OR IGNORE لسطر مطالبة status=0 على المفتاح الأساسي (tenant_id,k)؛ D1/SQLite تُسلسل الكتابة، فينجح (changes=1) طلب واحد فقط وهو وحده ينفّذ المعالج.
-           (النمط القديم SELECT ← المعالج ← INSERT كان check-then-act: كل المتزامنة ترى «لا مفتاح» وتنفّذ المعالج). لا يلزم ترحيل: status=0 قيمة جديدة في العمود نفسه، والأسطر القديمة (status≥200) تُعاد كما هي.
-           الخاسر: محتوى مختلف ← 409 idempotency_conflict؛ نفس المحتوى والمالك يعمل ← 409 idempotency_in_progress (+Retry-After)؛ بعد الإنجاز ← إعادة الردّ المخزَّن. مالك انهار (مطالبة أقدم من IDEM_CLAIM_TTL ثانية) ← استيلاء ذرّي بشرط التحديث. */
-        const h = await sha256Hex(m + p + raw), IDEM_CLAIM_TTL = 60, release = () => db.run("DELETE FROM pf_idem WHERE tenant_id=? AND k=? AND hash=? AND status=0", req.tenant.id, ik, h).catch(() => { });
+        /* ادّعاء ذرّي بملكية صريحة (12C + رقعة التدقيق): الخطوة الأولى INSERT OR IGNORE لسطر مطالبة على PRIMARY KEY (tenant_id,k) بحالة status=0 و**رمز ملكية عشوائي في عمود body**
+           (لا ترحيل D1: العمود موجود NOT NULL، وكان فارغاً لسطر قيد التنفيذ). D1/SQLite تُسلسل الكتابة فينجح (changes=1) طلب واحد فقط وهو وحده ينفّذ المعالج.
+           الحالات: status>0 = مكتمل (يُعاد الردّ المخزَّن)؛ 0 = قيد التنفيذ؛ -1 = «عالق» (تجاوز IDEM_STUCK_AFTER ثانية دون إنجاز).
+           **لا استيلاء تلقائي إطلاقاً:** مطالبة قديمة لا تُسلَّم لمالك ثانٍ ولا يُعاد تنفيذ المعالج لمجرد انتهاء المهلة (قد يكون المالك الأول أتمّ أثراً مالياً ولم يكتب ردّه بعد)؛ تُوسَم عالقة ويُصدَر حدث idempotency.stuck، والاسترداد إداري مضبوط (/admin/idempotency/*) بعد تحقق المشغّل من الأثر الفعلي.
+           كل UPDATE/DELETE مشروط برمز الملكية: مالك قديم لا يستطيع إكمال أو حذف مطالبة ليست له. مالك بطيء أتمّ العمل فعلاً يُغلق سطره (0 أو -1) بردّه الحقيقي فيُحلّ العالق تلقائياً دون إعادة تنفيذ.
+           الخاسر: محتوى مختلف ← 409 idempotency_conflict؛ نفس المحتوى والمالك يعمل ← 409 idempotency_in_progress (+Retry-After)؛ عالق ← 409 idempotency_claim_stuck؛ بعد الإنجاز ← إعادة الردّ المخزَّن. */
+        const h = await sha256Hex(m + p + raw), IDEM_STUCK_AFTER = 60, token = randHex(16), tid = req.tenant.id;
+        const release = () => db.run("DELETE FROM pf_idem WHERE tenant_id=? AND k=? AND hash=? AND status IN (0,-1) AND body=?", tid, ik, h, token).catch(() => { });
+        const busy = () => new HttpError(409, "idempotency_in_progress", "طلب بنفس المفتاح قيد المعالجة — أعد المحاولة بعد لحظات", null, { "Retry-After": "1" });
+        const stuck = () => new HttpError(409, "idempotency_claim_stuck", "عملية بنفس المفتاح لم تُكمَل وقد يكون جزء منها نُفِّذ — لا تُعِد الإرسال بمفتاح جديد؛ تواصل مع الدعم للتحقق منها", null, { "Retry-After": "30" });
         let owned = false;
         for (let tries = 0; tries < 3 && !owned; tries++) {
-          const now0 = Math.floor(clock() / 1000), claim = await db.run("INSERT OR IGNORE INTO pf_idem (tenant_id,k,hash,status,body,at) VALUES (?,?,?,0,'',?)", req.tenant.id, ik, h, now0);
+          const now0 = Math.floor(clock() / 1000), claim = await db.run("INSERT OR IGNORE INTO pf_idem (tenant_id,k,hash,status,body,at) VALUES (?,?,?,0,?,?)", tid, ik, h, token, now0);
           if (claim.changes === 1) { owned = true; break; }
-          const ex = await db.one("SELECT hash,status,body,at FROM pf_idem WHERE tenant_id=? AND k=?", req.tenant.id, ik);
+          const ex = await db.one("SELECT hash,status,body,at FROM pf_idem WHERE tenant_id=? AND k=?", tid, ik);
           if (!ex) continue;                                                                                       // حُرِّرت المطالبة بين الخطوتين: نعيد الادّعاء
           if (ex.hash !== h) throw new HttpError(409, "idempotency_conflict", "المفتاح استُعمل لطلب مختلف");
-          if (ex.status !== 0) return { status: ex.status, headers: { "Idempotent-Replayed": "true" }, body: ex.body };
-          if (ex.at <= now0 - IDEM_CLAIM_TTL && (await db.run("UPDATE pf_idem SET at=? WHERE tenant_id=? AND k=? AND hash=? AND status=0 AND at<=?", now0, req.tenant.id, ik, h, now0 - IDEM_CLAIM_TTL)).changes === 1) { owned = true; break; }   // استيلاء على مطالبة مالك منهار
-          throw new HttpError(409, "idempotency_in_progress", "طلب بنفس المفتاح قيد المعالجة — أعد المحاولة بعد لحظات", null, { "Retry-After": "1" });
+          if (ex.status > 0) return { status: ex.status, headers: { "Idempotent-Replayed": "true" }, body: ex.body };
+          if (ex.status === 0 && ex.at <= now0 - IDEM_STUCK_AFTER) {                                                // تجاوزت المهلة: عالقة (لا استيلاء)
+            await db.run("UPDATE pf_idem SET status=-1 WHERE tenant_id=? AND k=? AND hash=? AND status=0 AND at<=?", tid, ik, h, now0 - IDEM_STUCK_AFTER);
+            await ctx.emit(tid, "idempotency.stuck", { route: m + " " + p, key: ik, claimed_at: ex.at }, "idem:stuck:" + tid + ":" + ik).catch(() => { });
+            throw stuck();
+          }
+          throw ex.status === -1 ? stuck() : busy();
         }
-        if (!owned) throw new HttpError(409, "idempotency_in_progress", "طلب بنفس المفتاح قيد المعالجة — أعد المحاولة بعد لحظات", null, { "Retry-After": "1" });
-        try { res = await rt.handler(req, ctx); } catch (e) { await release(); throw e; }                           // فشل/رفض المالك لا يُخزَّن: تُحرَّر المطالبة فتُقبل إعادة المحاولة
-        if (res.status < 500 && typeof res.body === "string") await db.run("UPDATE pf_idem SET status=?, body=?, at=? WHERE tenant_id=? AND k=? AND hash=? AND status=0", res.status, res.body, Math.floor(clock() / 1000), req.tenant.id, ik, h);
+        if (!owned) throw busy();
+        try { res = await rt.handler(req, ctx); } catch (e) { await release(); throw e; }                           // فشل/رفض المالك لا يُخزَّن: يحرّر مطالبته هو فقط
+        if (res.status < 500 && typeof res.body === "string") await db.run("UPDATE pf_idem SET status=?, body=?, at=? WHERE tenant_id=? AND k=? AND hash=? AND status IN (0,-1) AND body=?", res.status, res.body, Math.floor(clock() / 1000), tid, ik, h, token);
         else await release();
       } else res = await rt.handler(req, ctx);
       if (req.origin) res = { ...res, headers: { ...res.headers, "Access-Control-Allow-Origin": req.origin, Vary: "Origin" } };
@@ -233,6 +243,23 @@ export const adminModule = {
       const b = req.json(); if (!String(b.name ?? "").trim()) throw new HttpError(400, "validation_error", "name مطلوب");
       try { const x = await db.run("INSERT INTO pf_tenants (name,site_ref,status,settings,created_at) VALUES (?,?,?,?,?)", String(b.name).slice(0, 120), b.site_ref ?? null, "active", JSON.stringify(b.settings ?? {}), ctx.now()); await ctx.audit(req.actor, "tenant.create", x.id, { site_ref: b.site_ref ?? null }); return ok({ id: x.id }, 201); }
       catch (e) { if (DB.isUnique(e)) throw new HttpError(409, "site_ref_taken", "هذا الموقع مرتبط بمستأجر آخر"); throw e; }
+    });
+    /* استرداد مطالبات Idempotency العالقة (إدارياً فقط، بعد تحقق المشغّل من الأثر الفعلي للعملية): قائمة، تحرير (لم يحدث أثر)، حسم بردّ (حدث الأثر) */
+    r.get("/admin/idempotency/stuck", { auth: "admin" }, async (req) => {
+      const lim = Math.min(200, Math.max(1, +req.query.limit || 50)), tid = req.query.tenant_id ? +req.query.tenant_id : null, old = ctx.nowS() - 60;
+      const rows = await db.all("SELECT tenant_id,k,status,at FROM pf_idem WHERE (status=-1 OR (status=0 AND at<=?))" + (tid ? " AND tenant_id=?" : "") + " ORDER BY at LIMIT ?", ...(tid ? [old, tid, lim] : [old, lim]));
+      return ok({ stuck: rows.map((x) => ({ tenant_id: x.tenant_id, key: x.k, claimed_at: x.at, state: x.status === -1 ? "stuck" : "overdue" })) });
+    });
+    r.post("/admin/idempotency/release", { auth: "admin" }, async (req) => {
+      const b = req.json(), tid = +b.tenant_id, k = String(b.key ?? ""); if (!tid || !k) throw new HttpError(400, "validation_error", "tenant_id وkey مطلوبان");
+      if (b.confirm !== "no-side-effect") throw new HttpError(400, "validation_error", "confirm=\"no-side-effect\" إلزامي: يؤكّد المشغّل أن العملية لم تُنتج أي أثر (تحقق بالمرجع/الجداول) قبل التحرير");
+      const x = await db.run("DELETE FROM pf_idem WHERE tenant_id=? AND k=? AND status IN (0,-1)", tid, k); if (!x.changes) throw new HttpError(404, "not_found", "لا مطالبة عالقة بهذا المفتاح");
+      await ctx.audit(req.actor, "idempotency.release", tid, { key: k }); return ok({ ok: true, released: true });
+    });
+    r.post("/admin/idempotency/resolve", { auth: "admin" }, async (req) => {
+      const b = req.json(), tid = +b.tenant_id, k = String(b.key ?? ""), st = +b.status; if (!tid || !k || !Number.isInteger(st) || st < 200 || st > 499 || typeof b.body !== "object" || b.body === null) throw new HttpError(400, "validation_error", "tenant_id وkey وstatus(200..499) وbody(كائن) مطلوبة");
+      const x = await db.run("UPDATE pf_idem SET status=?, body=?, at=? WHERE tenant_id=? AND k=? AND status IN (0,-1)", st, JSON.stringify(b.body), ctx.nowS(), tid, k); if (!x.changes) throw new HttpError(404, "not_found", "لا مطالبة عالقة بهذا المفتاح");
+      await ctx.audit(req.actor, "idempotency.resolve", tid, { key: k, status: st }); return ok({ ok: true, resolved: true });
     });
     r.post("/admin/tenants/:id/keys", { auth: "admin" }, async (req) => {
       const b = req.json(), id = +req.params.id, scopes = Array.isArray(b.scopes) && b.scopes.length ? b.scopes.map(String) : ["*"], mode = ["test", "pub"].includes(b.mode) ? b.mode : "live";

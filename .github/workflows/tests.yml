@@ -62,20 +62,44 @@ jobs:
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts tryon payments sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet agency appstore logistics digital-vault boundaries hardening reservations isolation isolation-fuzz; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership; do node --no-warnings platform/api/test/$t.test.mjs; done
   ui:
     name: اختبار اللوحة في متصفح حقيقي
-    runs-on: ubuntu-latest
+    # نسخة المشغّل مثبّتة صراحةً (لا ubuntu-latest المتحرّك): Playwright لا يدعم كل إصدارات Ubuntu فور صدورها، وتغيّر latest يكسر `install --with-deps` (إخفاق تثبيت Chromium قبل أي اختبار).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      PLAYWRIGHT_VERSION: '1.63.0'          # نفس النسخة المُتحقَّق منها محلياً (اختبارات المتصفح تمرّ بها)
     # كل خطوة تعمل حتى لو فشلت سابقتها (لا يحجب test-hand بقية الاختبارات) والمهمة تفشل إن فشلت أي خطوة؛ continue-on-error أُزيل بعد إصلاح الاختبارات
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with: { node-version: '22' }
       - uses: shivammathur/setup-php@v2
         with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
       - name: poppler-utils (pdfinfo/pdftoppm لاختبارات PDF)
-        run: sudo apt-get update && sudo apt-get install -y poppler-utils
-      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+        run: |
+          for i in 1 2 3; do sudo apt-get update && sudo apt-get install -y poppler-utils && break; echo "محاولة $i فشلت"; sleep $((i*10)); done
+          command -v pdfinfo >/dev/null || { echo "::error::تعذّر تثبيت poppler-utils"; exit 1; }
+      - name: تثبيت Playwright (حزمة npm)
+        run: npm i --no-save playwright@${PLAYWRIGHT_VERSION}
+      - name: ذاكرة متصفحات Playwright
+        id: pwcache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - name: تثبيت Chromium (بإعادة محاولة — إخفاق التثبيت يُفصل عن إخفاق الاختبارات)
+        run: |
+          ok=0; for i in 1 2 3; do npx playwright install chromium && ok=1 && break; echo "::warning::فشل تنزيل Chromium (محاولة $i)"; sleep $((i*15)); done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تنزيل Chromium بعد 3 محاولات (إخفاق بيئة لا اختبار)"; exit 1; }
+      - name: اعتماديات النظام لـChromium (بإعادة محاولة)
+        run: |
+          ok=0; for i in 1 2 3; do sudo env "PATH=$PATH" npx playwright install-deps chromium && ok=1 && break; echo "::warning::فشل تثبيت اعتماديات النظام (محاولة $i)"; sleep $((i*15)); done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت اعتماديات النظام لـChromium (إخفاق بيئة لا اختبار)"; exit 1; }
+      - name: فحص تشغيل Chromium (يُثبت سلامة التثبيت قبل الاختبارات)
+        run: |
+          NODE_PATH=$PWD/node_modules node -e "const {chromium}=require('playwright');(async()=>{const b=await chromium.launch({args:['--no-sandbox']});const p=await b.newPage();await p.setContent('<p>ok</p>');console.log('chromium',b.version(),'OK');await b.close()})().catch(e=>{console.error('::error::Chromium لا يعمل: '+e.message.split(String.fromCharCode(10))[0]);process.exit(1)})"
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
       - if: ${{ !cancelled() }}

@@ -102,14 +102,17 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 200));
       const r = { has, own, wil: w.value, com: c.value, still: Array.from(c.options).some(o => o.value === "Barika") }; bg.remove(); return r; });
     ok("بلدية بريكة تظهر مع بلديات باتنة وتحوّل الولاية عند اختيارها", wk.has && wk.own > 10 && wk.wil === "Barika" && wk.com === "Barika" && wk.still, wk); }
-  { const sp = await p.context().newPage(); await sp.goto(base + "/index.html"); await sp.waitForTimeout(800);
+  { const bctx = await p.context().browser().newContext({ serviceWorkers: "block" }), sp = await bctx.newPage();   // service worker المتجر قد يخدم ship-co.json من ذاكرته فلا تصل الاعتراضات
+    /* القاعدة تخص شركة التوصيل الافتراضية ياليدين (applyShipList لا يعمل إلا لها). ship-co.json بيانات حيّة يغيّرها صاحب المتجر (def الآن wecan) فكان الاختبار يتبع إعداده لا القاعدة: نثبّت def=yalidine فوق البيانات الحقيقية (قائمة wl نفسها) ليختبر القاعدة نفسها بلا اعتماد على إعداد المتجر. */
+    await sp.route(/assets\/data\/ship-co\.json/, async rt => { const r = await rt.fetch(); const j = await r.json(); j.def = "yalidine"; await rt.fulfill({ response: r, json: j }); });
+    await sp.goto(base + "/index.html"); await sp.waitForTimeout(800);
     const sk = await sp.evaluate(() => { const slug = PRODUCTS.find(x => x.active !== false).slug; return slug; }); await sp.goto(base + "/p/" + sk + "/"); await sp.waitForTimeout(1500);
     const st = await sp.evaluate(async () => { const w = document.getElementById("wilaya"), c = document.getElementById("commune"); if (!w || !c) return { none: true };
       w.value = "5"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
       const has = Array.from(c.options).some(o => o.value === "Barika" && o.dataset.w == "60"); c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
       return { has, wil: w.value, com: c.value, kept: Array.from(c.options).some(o => o.value === "Barika") }; });
     /* قاعدة v1.89.649: الولاية الجديدة لا تُعرض ولاية ما لم تعدّها قائمة ولايات الشركة؛ بريكة بلدية تابعة لباتنة وتُرسل الولاية الأم (5) */
-    ok("المتجر: بريكة بلدية تابعة لباتنة والولاية الأم تبقى (قاعدة v1.89.649)", !st.has && st.wil === "5" && st.com === "Barika" && st.kept, st); await sp.close(); }
+    ok("المتجر: بريكة بلدية تابعة لباتنة والولاية الأم تبقى (قاعدة v1.89.649)", !st.has && st.wil === "5" && st.com === "Barika" && st.kept, st); await sp.close(); await bctx.close(); }
   await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; window.__sodReal = Admin.sendOrderToDelivery; });
   // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
   await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);

@@ -26,7 +26,7 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".
 const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split("?")[0]); if (u.endsWith("/")) u += "index.html"; const f = path.join(root, u); if (!f.startsWith(root) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": MIME[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(r); });
 (async () => {
   await new Promise(r => srv.listen(8792, r));
-  const br0 = await chromium.launch(), br = await br0.newContext({ serviceWorkers: "block" }), page = await br.newPage({ viewport: { width: 420, height: 900 } }), errs = []; page.on("pageerror", e => errs.push(String(e)));
+  const br0 = await chromium.launch(), br = await (async () => { const c = await br0.newContext({ serviceWorkers: "block" }); await c.addInitScript(() => { try { localStorage.setItem("alyssum_guard_off", "1"); } catch (e) { } }); return c; })(),   /* assets/data/protect.json الحيّ يفعّل «bots» (يحجب المتصفحات الآلية بـ#acg-ov)؛ نستعمل مفتاح المالك الموثَّق في anti-copy.js (localStorage.alyssum_guard_off) على أصل الاختبار فقط — لا تعطيل للحماية في الإنتاج ولا تعديل لإعداد المتجر */ page = await br.newPage({ viewport: { width: 420, height: 900 } }), errs = []; page.on("pageerror", e => errs.push(String(e)));
   const rules = { rules: [
     { id: "b1", on: true, type: "bump", title: "أضف مضاد التساقط", text: "بـ {price} بدل {old} ({pct})", offer: "anti-chute", mode: "pct", value: 50, trigger: {} },
     { id: "p1", on: true, type: "post", title: "عرض خاص بعد طلبك", offer: "anti-colon", mode: "pct", value: 40, trigger: {} }] };
@@ -34,7 +34,8 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
   await page.addInitScript(() => { window.__orders = []; window.open = () => null; });
   await page.goto("http://localhost:8792/p/anti-acne/index.html", { waitUntil: "load" });
-  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  /* 12B.1: المتجر يرسل عبر API.submitOrderTruth (عقد صدق الإرسال) لا API.submitOrder القديم؛ نلتقط الحمولة بمحاكاة رد خادم مؤكَّد (محاكاة موسومة — ليست خلفية حقيقية) */
+  await page.evaluate(() => { let n = 0; API.submitOrderTruth = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true, state: "CONFIRMED", id: "S261114-TEST" + String(++n).padStart(4, "0"), error: "", status: 200, retryable: false, key: "k" + n, backend: "mock", safeRetry: true, idOrigin: "server" }; }; });
   await page.waitForSelector(".ups-bump:not([hidden])", { timeout: 10000 });
   const base = await page.evaluate(() => document.getElementById("grand").textContent);
   ok("خانة Order Bump تظهر مع السعر الخاص", /anti|مضاد|التساقط/.test(await page.innerText(".ups-bump")) && /دج/.test(await page.innerText(".ups-bump")));

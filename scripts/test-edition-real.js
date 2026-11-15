@@ -44,7 +44,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const tab = p => p.evaluate(() => { const b = document.querySelector(".nav-btn.on .nav-txt b"); return b ? Array.from(b.childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join("").trim() : ""; });
 
   const { p, errs } = await open({ viewport: { width: 1280, height: 800 } });
-  const vis = () => p.evaluate(() => { const v = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return cs.display !== "none" && cs.visibility !== "hidden" && (r.width > 0 || r.height > 0); }; return { groups: v(document.getElementById("nav-groups")), nav: [...document.querySelectorAll(".side-nav .nav-btn")].filter(v).map(b => (b.getAttribute("onclick") || "").slice(0, 40)), cls: document.documentElement.className.split(" ").filter(c => /^ed-/.test(c)), ed: AdminEdition.edition() }; });
+  const vis = () => p.evaluate(() => { const v = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return cs.display !== "none" && cs.visibility !== "hidden" && (r.width > 0 || r.height > 0); }; return { acc: [...document.querySelectorAll(".side-nav > .nav-gh")].filter(v).length, groups: v(document.getElementById("nav-groups")), nav: [...document.querySelectorAll(".side-nav .nav-btn")].filter(v).map(b => (b.getAttribute("onclick") || "").slice(0, 40)), cls: document.documentElement.className.split(" ").filter(c => /^ed-/.test(c)), ed: AdminEdition.edition() }; });
   console.log("قبل:", JSON.stringify(await vis()).slice(0, 300));
   await p.evaluate(() => Admin.tab("store", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'store'")))); await p.waitForTimeout(1500);
   ok("البطاقة ظاهرة", await p.evaluate(() => !!document.querySelector('#stores-app input[name="stp-edition"]')));
@@ -59,7 +59,8 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => Admin.tab("store", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'store'")))); await p.waitForTimeout(1200);
   await p.evaluate(() => document.querySelector('input[name="stp-edition"][value="basic"]').click()); await p.waitForTimeout(1200);
   const bs = await vis(); console.log("basic:", JSON.stringify(bs).slice(0, 300));
-  ok("basic: لا studio", !bs.nav.some(x => x.includes("'studio'") || x.includes("'imggen'")) && bs.groups === true);
+  /* v1.89.928 (087ea3c7): صف تبويبات المجموعات القديم (#nav-groups) أُخفي وحلّت محلّه رؤوس أكورديون المجموعات داخل الشريط الجانبي (5) — يطابق ذلك اختبار test-hand «المجموعات رؤوس أكورديون…» */
+  ok("basic: لا studio", !bs.nav.some(x => x.includes("'studio'") || x.includes("'imggen'")) && bs.acc === 5 && bs.groups === false);
   await p.evaluate(() => Admin.tab("builder", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'builder'")))); await p.waitForTimeout(1200);
   ok("basic: بطاقة اختيار (صفحة ويب/صور إشهارية) مخفية في الصفحات", await p.evaluate(() => { const m = document.getElementById("pb-modes"); return !m || m.offsetParent === null || getComputedStyle(m.parentElement).display === "none"; }));
   await p.evaluate(() => PBAdmin.newPage({ title: "اختبار" })); await p.waitForSelector("#pbx-frame, .pbx-tabs", { timeout: 15000 }); await p.waitForTimeout(1500);
@@ -70,7 +71,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { try { PBApp.close(); } catch (e) { } }); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll("dialog,.modal-bg").forEach(x => x.remove()); });
   await p.evaluate(() => Admin.tab("store", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'store'")))); await p.waitForTimeout(1000);
   await p.evaluate(() => document.querySelector('input[name="stp-edition"][value="pro"]').click()); await p.waitForTimeout(1200);
-  const r = await vis(); ok("pro: كل شيء", r.cls.length === 0 && r.groups === true);
+  const r = await vis(); ok("pro: كل شيء (رؤوس المجموعات الخمسة ظاهرة وصف التبويبات القديم مخفي)", r.cls.length === 0 && r.acc === 5 && r.groups === false);
   ok("لا أخطاء JS", errs.length === 0, errs);
   await browser.close(); console.log(fails ? "FAILED " + fails : "ALL OK"); process.exit(fails ? 1 : 0);
 })();

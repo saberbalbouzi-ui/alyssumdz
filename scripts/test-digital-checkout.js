@@ -8,7 +8,7 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
 (async () => {
   await new Promise(r => srv.listen(8794, r));
-  const br0 = await chromium.launch(), br = await br0.newContext({ serviceWorkers: "block" }), page = await br.newPage({ viewport: { width: 420, height: 1000 } }), errs = [];
+  const br0 = await chromium.launch(), br = await (async () => { const c = await br0.newContext({ serviceWorkers: "block" }); await c.addInitScript(() => { try { localStorage.setItem("alyssum_guard_off", "1"); } catch (e) { } }); return c; })(),   /* assets/data/protect.json الحيّ يفعّل «bots» (يحجب المتصفحات الآلية بـ#acg-ov)؛ نستعمل مفتاح المالك الموثَّق في anti-copy.js (localStorage.alyssum_guard_off) على أصل الاختبار فقط — لا تعطيل للحماية في الإنتاج ولا تعديل لإعداد المتجر */ page = await br.newPage({ viewport: { width: 420, height: 1000 } }), errs = [];
   page.on("pageerror", e => errs.push(String(e))); page.on("dialog", d => d.accept());
   const PF = { calls: [], order: { ok: true, verified: true }, proof: { status: 201, body: { ok: true, id: 9 } }, pay: { status: 201, body: { checkout_url: "https://pay.chargily.dz/test/checkouts/c1/pay" } } };
   await page.route("https://platform.test/**", async r => {
@@ -27,7 +27,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
   await page.addInitScript(() => { window.__orders = []; window.open = () => null; });
   await page.goto("http://localhost:8794/p/anti-acne/index.html", { waitUntil: "load" });
-  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.evaluate(() => { let n = 0; API.submitOrderTruth = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true, state: "CONFIRMED", id: "S261114-DGTE" + String(++n).padStart(4, "0"), error: "", status: 200, retryable: false, key: "k" + n, backend: "mock", safeRetry: true, idOrigin: "server" }; };   /* 12B.1: عقد صدق الإرسال؛ محاكاة موسومة لخادم الطلبات */ });
   await page.waitForSelector("#dg-box", { timeout: 10000 }); await page.waitForSelector('input[name="dg-method"]', { timeout: 5000 });
   const vis = sel => page.evaluate(s => { const e = document.querySelector(s); return !!e && !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length); }, sel);
   ok("حقول الولاية والبلدية والتوصيل والمكتب مخفية", !(await vis("#wilaya")) && !(await vis("#commune")) && !(await vis(".dtype")) && !(await vis("#desk-wrap")));
@@ -60,7 +60,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   /* فشل الإرسال يُظهر الخطأ ويسمح بالمحاولة */
   await page.evaluate(() => document.getElementById("dg-x").click());
   PF.proof = { status: 404, body: { error: { code: "order_not_found", message: "x" } } };
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { let n = 0; API.submitOrderTruth = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true, state: "CONFIRMED", id: "S261114-DGTE" + String(++n).padStart(4, "0"), error: "", status: 200, retryable: false, key: "k" + n, backend: "mock", safeRetry: true, idOrigin: "server" }; };   /* 12B.1: عقد صدق الإرسال؛ محاكاة موسومة لخادم الطلبات */ });
   await page.fill("#name", "سعيد"); await page.fill("#phone", "0661234567"); await page.check('input[name="dg-method"][value="ccp"]'); await page.click(".btn-order"); await page.waitForSelector("#dg-file");
   ok("تعليمات CCP", /1234567/.test(await page.innerText("#dg-modal")) && /89/.test(await page.innerText("#dg-modal")));
   await page.setInputFiles("#dg-file", { name: "t.png", mimeType: "image/png", buffer: PNG }); await page.click("#dg-send"); await page.waitForFunction(() => /لم يُسجَّل طلبك/.test((document.getElementById("dg-msg") || {}).textContent || ""));
@@ -71,7 +71,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.waitForFunction(() => /استلمنا/.test(document.getElementById("dg-modal").textContent)); ok("إكمال الإرسال من الشريط", true);
   await page.evaluate(() => document.getElementById("dg-x").click());
   /* بطاقة: يوجّه لصفحة الدفع بلا طلب إثبات */
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { let n = 0; API.submitOrderTruth = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true, state: "CONFIRMED", id: "S261114-DGTE" + String(++n).padStart(4, "0"), error: "", status: 200, retryable: false, key: "k" + n, backend: "mock", safeRetry: true, idOrigin: "server" }; };   /* 12B.1: عقد صدق الإرسال؛ محاكاة موسومة لخادم الطلبات */ });
   PF.calls.length = 0; await page.fill("#name", "كريم"); await page.fill("#phone", "0771234567"); await page.fill("#dg-email", "k@example.com"); await page.check('input[name="dg-method"][value="chargily"]');
   await page.route("https://pay.chargily.dz/**", r => r.fulfill({ status: 200, contentType: "text/html", body: "<title>pay</title>" }));
   await page.click(".btn-order"); await page.waitForURL(/pay\.chargily\.dz/, { timeout: 8000 });
@@ -82,6 +82,19 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   PAY = {}; await page.reload({ waitUntil: "load" }); await page.waitForSelector("#dg-pm"); ok("بلا طرق دفع: رسالة بدل خيارات", /غير مفعّل/.test(await page.innerText("#dg-pm")));
   /* منتج عادي لا يتأثر */
   await page.goto("http://localhost:8794/p/anti-colon/index.html", { waitUntil: "load" }); await page.waitForTimeout(1200); ok("منتج غير رقمي: النموذج كما هو", !(await vis("#dg-box")) && (await vis("#wilaya")));
+  /* 12B.1+: صدق الإرسال في مسار الرقمي — ثلاث حالات للردّ على الطلب الأصلي (محاكاة موسومة لخادم الطلبات):
+     (أ) خلفية غير قابلة للتأكيد (Sheets) ← نتابع، ولا نافذة دفع إلا بعد تأكيد المنصة الصريح؛ (ب) المنصة ترفض ← لا نافذة؛ (ج) فشل خادم الطلبات الأصلي (5xx) ← يتوقف قبل أي استدعاء للمنصة ويعرض نافذة «لم يُؤكَّد» */
+  PAY = { baridimob: { on: true, rip: "00799999001234567890", name: "علي بن" }, ccp: { on: true, account: "1234567", key: "89", name: "علي بن" }, chargily: { on: true } };
+  const scenario = async (label, truth, order, expectModal, expectOrderCall, expectDialog) => {
+    PF.calls.length = 0; PF.order = order; await page.goto("http://localhost:8794/p/anti-acne/index.html", { waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]');
+    await page.evaluate(t => { API.submitOrderTruth = async () => t; }, truth); await page.fill("#name", "كريم"); await page.fill("#phone", "0662345678"); await page.fill("#dg-email", "k@example.com"); await page.check('input[name="dg-method"][value="baridimob"]'); await page.click(".btn-order"); await page.waitForTimeout(1800);
+    const st = await page.evaluate(() => ({ modal: !!document.getElementById("dg-file"), thx: (document.getElementById("thx") || {}).dataset ? document.getElementById("thx").dataset.state : "" })); const called = PF.calls.some(c => c.p === "/v1/orders");
+    ok(label, st.modal === expectModal && called === expectOrderCall && (expectDialog ? st.thx === expectDialog : true), { st, called });
+  };
+  const T0 = { ok: false, state: "UNKNOWN", id: "", error: "unverifiable_backend", status: 0, retryable: false, key: "k", backend: "sheets", safeRetry: false };
+  await scenario("[رقمي] خلفية غير قابلة للتأكيد + المنصة تؤكد ← نافذة الدفع (التأكيد من المنصة)", T0, { ok: true, verified: true }, true, true, "");
+  await scenario("[رقمي] خلفية غير قابلة للتأكيد + المنصة ترفض (500) ← لا نافذة دفع", T0, { ok: false }, false, true, "");
+  await scenario("[رقمي] فشل خادم الطلبات الأصلي (SERVER_ERROR) ← لا استدعاء للمنصة ولا نافذة دفع، ونافذة «لم يُؤكَّد»", { ok: false, state: "SERVER_ERROR", id: "", error: "http_503", status: 503, retryable: true, key: "k", backend: "php", safeRetry: true }, { ok: true, verified: true }, false, false, "SERVER_ERROR");
   ok("بلا أخطاء جافاسكربت", errs.length === 0, errs);
   await br0.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })();

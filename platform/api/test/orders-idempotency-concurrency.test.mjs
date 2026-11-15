@@ -33,14 +33,15 @@ tick();
   const rs = await Promise.all(Array.from({ length: 10 }, () => call("POST", "/v1/orders", mk(REF, 2), PKA, {}, H(K))));
   ok("[T3] بعد ضياع الردّ الأول: 10 إعادات متزامنة ← كلها إعادة الردّ الأصلي (201 Idempotent-Replayed) بلا طلب ثانٍ ولا خصم ثانٍ", rs.every(r => r[0] === 201 && r[1].ref === REF && r[2]["Idempotent-Replayed"] === "true") && cnt(A.id) - before[0] === 1 && before[1] - stock(A.id) === 2, rs.map(r => r[0])); }
 tick();
-/* T4: مالك انهار (سطر مطالبة قديم بلا ردّ) — الاستيلاء ذرّي: واحد فقط ينفّذ؛ ومطالبة حديثة ← in_progress */
+/* T4: مالك انهار (سطر مطالبة قديم بلا ردّ) — بعد رقعة التدقيق: لا استيلاء تلقائي؛ المطالبة العالقة ترفض 409 claim_stuck بلا تنفيذ، والاسترداد إداري (راجع idempotency-claim-ownership.test.mjs) */
 { const K = "idem-race-0004-" + Date.now(), REF = "RACE-CRASH-" + rid(), body = mk(REF, 3), raw = JSON.stringify(body); const { createHash } = await import("node:crypto");
   const h = createHash("sha256").update("POST" + "/v1/orders" + raw).digest("hex"), now = Math.floor(clock.t / 1000);
-  db.prepare("INSERT INTO pf_idem (tenant_id,k,hash,status,body,at) VALUES (?,?,?,0,'',?)").run(A.id, K, h, now);
+  db.prepare("INSERT INTO pf_idem (tenant_id,k,hash,status,body,at) VALUES (?,?,?,0,'dead-owner-token',?)").run(A.id, K, h, now);
   const before = [cnt(A.id), stock(A.id)]; const fresh = await call("POST", "/v1/orders", raw, PKA, {}, H(K)); ok("[T4] مطالبة حديثة (مالك ما زال يعمل) ← 409 idempotency_in_progress مع Retry-After ولا تنفيذ", fresh[0] === 409 && fresh[1].error?.code === "idempotency_in_progress" && !!fresh[2]["Retry-After"] && cnt(A.id) === before[0], { c: fresh[0] });
   clock.t += 61000; const rs = await Promise.all(Array.from({ length: 10 }, () => call("POST", "/v1/orders", raw, PKA, {}, H(K))));
-  ok("[T4] مالك انهار (مطالبة أقدم من 60ث): 10 متزامنة ← استيلاء واحد، طلب واحد وخصم واحد", cnt(A.id) - before[0] === 1 && before[1] - stock(A.id) === 3, { made: cnt(A.id) - before[0], codes: rs.map(r => r[0] + ":" + (r[1].error?.code || "ok")) });
-  ok("[T4] نتائج حتمية: 201 (مالك/إعادة) أو 409 in_progress فقط", rs.every(r => r[0] === 201 || (r[0] === 409 && r[1].error?.code === "idempotency_in_progress"))); }
+  ok("[T4] مالك انهار (مطالبة أقدم من 60ث): 10 متزامنة ← كلها 409 idempotency_claim_stuck، لا استيلاء ولا طلب ولا خصم", rs.every((r) => r[0] === 409 && r[1].error?.code === "idempotency_claim_stuck") && cnt(A.id) === before[0] && stock(A.id) === before[1], { made: cnt(A.id) - before[0], codes: rs.map((r) => r[0] + ":" + (r[1].error?.code || "ok")) });
+  const [rl] = await adm("POST", "/admin/idempotency/release", { tenant_id: A.id, key: K, confirm: "no-side-effect" }); const rs2 = await Promise.all(Array.from({ length: 10 }, () => call("POST", "/v1/orders", raw, PKA, {}, H(K))));
+  ok("[T4] بعد التحرير الإداري المؤكَّد: 10 متزامنة ← طلب واحد وخصم واحد (3)", rl === 200 && cnt(A.id) - before[0] === 1 && before[1] - stock(A.id) === 3 && rs2.every((r) => r[0] === 201 || (r[0] === 409 && r[1].error?.code === "idempotency_in_progress")), { rl, made: cnt(A.id) - before[0], codes: rs2.map((r) => r[0]) }); }
 tick();
 /* T5: عزل المستأجرين: نفس المفتاح متزامناً عند A وB */
 { const K = "idem-race-0005-" + Date.now(), bA = [cnt(A.id), stock(A.id)], bB = [cnt(B.id), stock(B.id)]; const rs = await Promise.all([...Array.from({ length: 5 }, (_, i) => call("POST", "/v1/orders", mk("T5-A-" + i + rid(), 2 + i), PKA, {}, H(K))), ...Array.from({ length: 5 }, (_, i) => call("POST", "/v1/orders", mk("T5-B-" + i + rid(), 2 + i), PKB, {}, H(K)))]);
