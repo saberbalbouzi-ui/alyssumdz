@@ -87,13 +87,19 @@ ${fld("رسم التوصيل (دج)", `<input id="oe-fee" type="number" min="0" 
       let msg = saved ? "تم الحفظ." : "تم الحفظ في اللوحة.";
       if (t) {
         b.textContent = "تحديث شركة التوصيل…";
-        const r = await ad.updateAtCompany(ad.orders.indexOf(o));
+        const r = await safeCo(ad, ad.orders.indexOf(o));
         msg += r.ok ? " وتحدّث الطرد لدى شركة التوصيل." : (r.skipped ? "" : " لكن تعذّر تحديث الشركة: " + r.msg);
         if (!r.ok && !r.skipped) ad.showNotice("تعذّر تحديث الطرد لدى شركة التوصيل", esc(r.msg) + "<br><small>تم حفظ التعديل في اللوحة؛ عدّل الطرد " + esc(t.tracking) + " يدوياً من حساب الشركة.</small>");
       }
-      close(); try { ad.renderOrders(); ad.openOrderPreview(ad.orders.indexOf(o)); } catch (e) { } toast("✅ " + msg);
+      close(); try { ad.renderOrders(); } catch (e) { } try { ad.openOrderPreview(ad.orders.indexOf(o)); } catch (e) { } toast("✅ " + msg);
     };
   }
   const stash = (id, f) => { const ed = load(); ed[id] = f; save(ed); }, unstash = id => { const ed = load(); delete ed[id]; save(ed); };
-  return { open, apply, canEdit, load, stash, unstash };
+  /* تحديث الطرد لدى الشركة بلا تعليق النافذة: أي استثناء (حجب المتصفح/انقطاع) أو تأخّر فوق 25ث يعود كنتيجة فشل عادية فتُغلق نافذة التعديل وتُعاد المعاينة دائماً (كانت تبقى «تحديث شركة التوصيل…» إلى الأبد) */
+  const safeCo = async (ad, i, opt) => {
+    let timer; try { return await Promise.race([ad.updateAtCompany(i, opt), new Promise(res => { timer = setTimeout(() => res({ ok: false, msg: "انتهت مهلة الشركة (25 ث) — تحقق من الطرد عندها" }), 25000); })]); }
+    catch (e) { return { ok: false, msg: e && e.cors ? "الشركة لا تقبل الاتصال من المتصفح" : String((e && e.message) || e).slice(0, 140) }; }
+    finally { clearTimeout(timer); }
+  };
+  return { open, apply, canEdit, load, stash, unstash, safeCo };
 })();
