@@ -11,6 +11,8 @@ const { chromium } = require("playwright");
   ok("مصفوفة المهام الطويلة موجودة", Array.isArray(r.lt), r.lt);
   ok("نص التشخيص يعرض الكود الرئيسي (تحليل/تشغيل/مهام طويلة)", /الكود الرئيسي: وصول [\d.]+ ث · تحليل [\d.]+ ث · تشغيل [\d.]+ ث · مهام طويلة \d+/.test(r.txt), r.txt);
   ok("النص القديم سليم (الصفحة/الأدوات/الجاهزية)", /زمن فتح اللوحة: الصفحة .* الأدوات .* الجاهزية/.test(r.txt), r.txt);
+  const h = await p.evaluate(() => { localStorage.setItem("adm_load", JSON.stringify([{ ready: 1800, v: "1.0.1" }, { ready: 7200, v: "1.0.2" }, { ready: 1700, v: "1.0.2" }])); return AdminTheme.loadTimes(); });
+  ok("سجل الفتحات: علامة * عند أول فتح بعد تحديث فقط", /آخر الفتحات \(الجاهزية\): 1\.8 · 7\.2\* · 1\.7 \(\* أول فتح بعد تحديث\)/.test(h), h);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();

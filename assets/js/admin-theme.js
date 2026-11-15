@@ -104,7 +104,7 @@
       if(n && n.loadEventEnd && !LT.load) LT.load = Math.round(n.loadEventEnd);
       if(!LT.ready && document.querySelector(".nav-btn.on") && document.querySelector("#app:not(.hidden)")) LT.ready = Math.round(performance.now());
     }catch(e){}
-    if(!LT.ready) setTimeout(rec, 400); else { try{ var a = JSON.parse(localStorage.getItem("adm_load") || "[]"); a.push({ t: Date.now(), html: LT.html, load: LT.load, ready: LT.ready }); localStorage.setItem("adm_load", JSON.stringify(a.slice(-5))); }catch(e){} }
+    if(!LT.ready) setTimeout(rec, 400); else { try{ var a = JSON.parse(localStorage.getItem("adm_load") || "[]"); var mv = document.querySelector('meta[name="admin-version"]'); a.push({ t: Date.now(), html: LT.html, load: LT.load, ready: LT.ready, v: mv ? mv.content : "" }); localStorage.setItem("adm_load", JSON.stringify(a.slice(-5))); }catch(e){} }
   }
   rec(); window.addEventListener("load", rec);
   /* تشخيص التحميل: كم ملفاً جاء من الشبكة فعلاً (وحجمه) وكم من ذاكرة عامل الخدمة، وأبطأ ثلاثة ملفات، وهل عامل الخدمة مفعّل */
@@ -116,7 +116,10 @@
   T.coreInfo = function(){ try{ var c = window.__cm || [], l = window.__lt || [], f = function(x){ return (x / 1000).toFixed(1) + " ث"; }, sum = l.reduce(function(a, x){ return a + x; }, 0);
     return "\nالكود الرئيسي: وصول " + (c[0] != null ? f(c[0]) : "—") + " · تحليل " + (c[1] != null && c[0] != null ? f(c[1] - c[0]) : "—") + " · تشغيل " + (c[2] != null && c[1] != null ? f(c[2] - c[1]) : "—") + " · مهام طويلة " + l.length + " (" + f(sum) + ")";
   }catch(x){ return ""; } };
-  T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready) + T.coreInfo() + T.netInfo() + ((window.__admPh && window.__admPh.length) ? "\nالمراحل: " + window.__admPh.map(function(x){ return x[0] + " " + (x[1] / 1000).toFixed(1); }).join(" · ") : ""); };
+  T.histInfo = function(){ try{ var a = JSON.parse(localStorage.getItem("adm_load") || "[]"); if(a.length < 2) return "";
+    return "\nآخر الفتحات (الجاهزية): " + a.map(function(x, i){ return (x.ready / 1000).toFixed(1) + (i && a[i - 1].v && x.v && x.v !== a[i - 1].v ? "*" : ""); }).join(" · ") + " (* أول فتح بعد تحديث)";
+  }catch(e){ return ""; } };
+  T.loadTimes = function(){ var f = function(x){ return x ? (x / 1000).toFixed(1) + " ث" : "—"; }; return "زمن فتح اللوحة: الصفحة " + f(LT.html) + " · الأدوات " + f(LT.load) + " · الجاهزية " + f(LT.ready) + T.coreInfo() + T.histInfo() + T.netInfo() + ((window.__admPh && window.__admPh.length) ? "\nالمراحل: " + window.__admPh.map(function(x){ return x[0] + " " + (x[1] / 1000).toFixed(1); }).join(" · ") : ""); };
   /* زر × ثابت أعلى كل نافذة منبثقة ثابتة (.modal-bg > .modal): كان الإغلاق «إلغاء» أسفل نافذة طويلة تُمرَّر داخلياً فلا يصل إليه المستخدم على الهاتف */
   function mountModalX(){
     document.querySelectorAll(".modal-bg > .modal").forEach(function(m){
