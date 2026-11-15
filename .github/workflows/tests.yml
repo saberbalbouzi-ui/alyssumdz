@@ -135,6 +135,9 @@ jobs:
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js
       - if: ${{ !cancelled() }}
+        name: حماية الموقع (حجب المتصفح الآلي في حزمة عميل نظيفة) — مستقل عن الوظائف
+        run: NODE_PATH=$PWD/node_modules node scripts/test-protect-bots.js
+      - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-digital-checkout.js
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-upsell.js

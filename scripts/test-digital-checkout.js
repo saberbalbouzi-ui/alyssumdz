@@ -24,10 +24,17 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.route("**/assets/js/data.js*", async r => { const t = await (await r.fetch()).text(); r.fulfill({ contentType: "text/javascript", body: t + '\nPRODUCTS.forEach(function(p){ if(p.slug==="anti-acne") p.digital=true; });' }); });
   let PAY = { baridimob: { on: true, rip: "00799999001234567890", name: "علي بن" }, ccp: { on: true, account: "1234567", key: "89", name: "علي بن" }, chargily: { on: true } };
   await page.route("**/assets/data/pay-methods.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(PAY) }));
-  await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
-  await page.addInitScript(() => { window.__orders = []; window.open = () => null; });
+  /* إعداد حماية معلن ومحدد لهذا الاختبار فقط: إعدادات المستودع كما هي عدا bots:false كي لا تحجب شاشة الحماية المتصفح الآلي
+     (الحجب نفسه مُختبَر مستقلاً في scripts/test-protect-bots.js). لا انتحال User-Agent ولا إخفاء webdriver، ولا تغيير في protect.json المستودع ولا في حزمة العميل. */
+  const TEST_PROTECT = Object.assign({}, JSON.parse(fs.readFileSync(path.join(root, "assets/data/protect.json"), "utf8")), { bots: false });
+  console.log("إعداد الحماية المعلن للاختبار فقط:", JSON.stringify(TEST_PROTECT));
+  await br.route("**/assets/data/protect.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(TEST_PROTECT) }));
+  /* مسار الطلب حقيقي: Guard.submit ← API.submitOrderChecked ← fetch؛ ويُلتقط الطلب على مستوى الشبكة (rpc/submit_order) لا بتبديل دوال التطبيق */
+  const NET = { orders: [] };
+  const netRoute = r => { const q = r.request(); if (/rpc\/submit_order/.test(q.url()) && q.method() === "POST") { try { NET.orders.push(JSON.parse(q.postData()).p); } catch (e) { } } return r.fulfill({ status: 200, body: "{}" }); };
+  await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, netRoute);
+  await page.addInitScript(() => { window.open = () => null; });
   await page.goto("http://localhost:8794/p/anti-acne/index.html", { waitUntil: "load" });
-  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
   await page.waitForSelector("#dg-box", { timeout: 10000 }); await page.waitForSelector('input[name="dg-method"]', { timeout: 5000 });
   const vis = sel => page.evaluate(s => { const e = document.querySelector(s); return !!e && !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length); }, sel);
   ok("حقول الولاية والبلدية والتوصيل والمكتب مخفية", !(await vis("#wilaya")) && !(await vis("#commune")) && !(await vis(".dtype")) && !(await vis("#desk-wrap")));
@@ -39,13 +46,13 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   /* تحقق: البريد مطلوب للبطاقة */
   await page.fill("#name", "أحمد"); await page.fill("#phone", "0550123456");
   await page.check('input[name="dg-method"][value="chargily"]'); await page.click(".btn-order");
-  await page.waitForTimeout(400); ok("البطاقة بلا بريد: لا يُرسل طلب", (await page.evaluate(() => window.__orders.length)) === 0 && !PF.calls.some(c => c.p === "/v1/orders"), PF.calls.map(c => c.p));
+  await page.waitForTimeout(400); ok("البطاقة بلا بريد: لا يُرسل طلب", NET.orders.length === 0 && !PF.calls.some(c => c.p === "/v1/orders"), PF.calls.map(c => c.p));
   /* بريد غير صالح */
-  await page.fill("#dg-email", "not-an-email"); await page.click(".btn-order"); await page.waitForTimeout(300); ok("بريد غير صالح مرفوض", (await page.evaluate(() => window.__orders.length)) === 0);
+  await page.fill("#dg-email", "not-an-email"); await page.click(".btn-order"); await page.waitForTimeout(300); ok("بريد غير صالح مرفوض", NET.orders.length === 0);
   /* BaridiMob + إثبات */
   await page.fill("#dg-email", "buyer@example.com"); await page.check('input[name="dg-method"][value="baridimob"]'); await page.click(".btn-order");
   await page.waitForSelector("#dg-modal #dg-file", { timeout: 8000 });
-  const ord = await page.evaluate(() => window.__orders[0]), po = PF.calls.find(c => c.p === "/v1/orders").b;
+  const ord = NET.orders[0], po = PF.calls.find(c => c.p === "/v1/orders").b;
   ok("الطلب المحلي رقمي بلا ولاية وبوسم", ord.wilaya === "رقمي" && ord.fee === 0 && ord.extra["💾 منتج رقمي"] === "نعم" && /BaridiMob/.test(ord.extra["💳 طريقة الدفع"]) && ord.total > 0, ord);
   ok("طلب المنصة: بريد ووسيلة دفع ومرجع ومفتاح عام", po.customer.email === "buyer@example.com" && po.pay === "baridimob" && po.ref === ord.extra["🔗 مرجع"] && PF.calls.find(c => c.p === "/v1/orders").auth === "Bearer pk_pub_test", po);
   ok("سطر الطلب يحمل vid (فارغ لغير المتغيّر) ليُسلَّم مفتاح التنويع المختار", po.items.length >= 1 && "vid" in po.items[0], po.items);
@@ -60,7 +67,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   /* فشل الإرسال يُظهر الخطأ ويسمح بالمحاولة */
   await page.evaluate(() => document.getElementById("dg-x").click());
   PF.proof = { status: 404, body: { error: { code: "order_not_found", message: "x" } } };
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); NET.orders.length = 0;
   await page.fill("#name", "سعيد"); await page.fill("#phone", "0661234567"); await page.check('input[name="dg-method"][value="ccp"]'); await page.click(".btn-order"); await page.waitForSelector("#dg-file");
   ok("تعليمات CCP", /1234567/.test(await page.innerText("#dg-modal")) && /89/.test(await page.innerText("#dg-modal")));
   await page.setInputFiles("#dg-file", { name: "t.png", mimeType: "image/png", buffer: PNG }); await page.click("#dg-send"); await page.waitForFunction(() => /لم يُسجَّل طلبك/.test((document.getElementById("dg-msg") || {}).textContent || ""));
@@ -71,7 +78,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.waitForFunction(() => /استلمنا/.test(document.getElementById("dg-modal").textContent)); ok("إكمال الإرسال من الشريط", true);
   await page.evaluate(() => document.getElementById("dg-x").click());
   /* بطاقة: يوجّه لصفحة الدفع بلا طلب إثبات */
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); NET.orders.length = 0;
   PF.calls.length = 0; await page.fill("#name", "كريم"); await page.fill("#phone", "0771234567"); await page.fill("#dg-email", "k@example.com"); await page.check('input[name="dg-method"][value="chargily"]');
   await page.route("https://pay.chargily.dz/**", r => r.fulfill({ status: 200, contentType: "text/html", body: "<title>pay</title>" }));
   await page.click(".btn-order"); await page.waitForURL(/pay\.chargily\.dz/, { timeout: 8000 });

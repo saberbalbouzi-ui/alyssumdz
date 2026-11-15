@@ -31,10 +31,17 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
     { id: "b1", on: true, type: "bump", title: "أضف مضاد التساقط", text: "بـ {price} بدل {old} ({pct})", offer: "anti-chute", mode: "pct", value: 50, trigger: {} },
     { id: "p1", on: true, type: "post", title: "عرض خاص بعد طلبك", offer: "anti-colon", mode: "pct", value: 40, trigger: {} }] };
   await page.route("**/assets/data/upsell.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(rules) }));
-  await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
-  await page.addInitScript(() => { window.__orders = []; window.open = () => null; });
+  /* إعداد حماية معلن ومحدد لهذا الاختبار فقط: إعدادات المستودع كما هي عدا bots:false كي لا تحجب شاشة الحماية المتصفح الآلي
+     (الحجب نفسه مُختبَر مستقلاً في scripts/test-protect-bots.js). لا انتحال User-Agent ولا إخفاء webdriver، ولا تغيير في protect.json المستودع ولا في حزمة العميل. */
+  const TEST_PROTECT = Object.assign({}, JSON.parse(fs.readFileSync(path.join(root, "assets/data/protect.json"), "utf8")), { bots: false });
+  console.log("إعداد الحماية المعلن للاختبار فقط:", JSON.stringify(TEST_PROTECT));
+  await br.route("**/assets/data/protect.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(TEST_PROTECT) }));
+  /* مسار الطلب حقيقي: Guard.submit ← API.submitOrderChecked ← fetch؛ ويُلتقط الطلب على مستوى الشبكة (rpc/submit_order) لا بتبديل دوال التطبيق */
+  const NET = { orders: [] };
+  const netRoute = r => { const q = r.request(); if (/rpc\/submit_order/.test(q.url()) && q.method() === "POST") { try { NET.orders.push(JSON.parse(q.postData()).p); } catch (e) { } } return r.fulfill({ status: 200, body: "{}" }); };
+  await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, netRoute);
+  await page.addInitScript(() => { window.open = () => null; });
   await page.goto("http://localhost:8792/p/anti-acne/index.html", { waitUntil: "load" });
-  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
   await page.waitForSelector(".ups-bump:not([hidden])", { timeout: 10000 });
   const base = await page.evaluate(() => document.getElementById("grand").textContent);
   ok("خانة Order Bump تظهر مع السعر الخاص", /anti|مضاد|التساقط/.test(await page.innerText(".ups-bump")) && /دج/.test(await page.innerText(".ups-bump")));
@@ -50,26 +57,26 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   ok("إلغاء التحديد يعيد الإجمالي", (await page.evaluate(() => document.getElementById("grand").textContent)) === t0);
   await page.check(".ups-bump input"); await page.waitForTimeout(150);
   await page.click("#order-form button[type=submit]"); await page.waitForSelector("#thx", { timeout: 8000 });
-  const o1 = await page.evaluate(() => window.__orders[0]);
+  const o1 = NET.orders[0];
   ok("الطلب يحمل بند الإضافة والإجمالي ووسم المجموعة", o1 && o1.items.length === 2 && o1.items[1].slug === "anti-chute" && o1.items[1].price === bumpPrice && o1.total === num(t1) && o1.subtotal === o1.items.reduce((s, i) => s + i.price * i.qty, 0), o1);
   ok("وسم «إضافة سريعة» و«مجموعة»", o1.extra["➕ إضافة سريعة"] && /^G/.test(o1.extra["🧺 مجموعة"]), o1.extra);
   await page.waitForSelector(".ups-post");
   ok("بطاقة Upsell بعد الشراء في صفحة الشكر", /anti|قولون|عرض خاص/.test(await page.innerText(".ups-post")));
   await page.click(".ups-post .yes"); await page.waitForSelector(".ups-post .ok", { timeout: 5000 });
-  const o2 = await page.evaluate(() => window.__orders[1]);
+  const o2 = NET.orders[1];
   const postPrice = await page.evaluate(() => Math.round(PRODUCTS.find(p => p.slug === "anti-colon").price * .6));
   ok("الطلب الثاني: نفس الزبون، بلا توصيل، بالسعر الخاص", o2 && o2.phone === o1.phone && o2.name === o1.name && o2.wilaya === o1.wilaya && o2.fee === 0 && o2.total === postPrice && o2.items[0].slug === "anti-colon", o2);
   ok("نفس مجموعة الطلب الأول ووسم العرض", o2.extra["🧺 مجموعة"] === o1.extra["🧺 مجموعة"] && o2.extra["🔼 عرض بعد الشراء"], o2.extra);
-  ok("لا طلب ثالث (لا تكرار)", (await page.evaluate(() => window.__orders.length)) === 2);
+  ok("لا طلب ثالث (لا تكرار)", NET.orders.length === 2);
   /* بلا قواعد ← لا شيء يظهر */
   rules.rules = []; const p2 = await br.newPage({ viewport: { width: 420, height: 900 } }); await p2.route("**/assets/data/upsell.json*", r => r.fulfill({ contentType: "application/json", body: "{\"rules\":[]}" })); await p2.route(/script\.google|supabase\.co|alyssumhub|wa\.me/, r => r.fulfill({ status: 200, body: "{}" }));
   await p2.goto("http://localhost:8792/p/anti-acne/index.html"); await p2.waitForTimeout(1500);
   ok("بلا قواعد: لا خانة", !(await p2.$(".ups-bump:not([hidden])")));
   /* السلة */
   const p3 = await br.newPage({ viewport: { width: 420, height: 900 } }); await p3.route("**/assets/data/upsell.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify({ rules: [{ id: "b1", on: true, type: "bump", offer: "anti-chute", mode: "price", value: 300, trigger: {} }] }) })); await p3.route(/script\.google|supabase\.co|alyssumhub|wa\.me/, r => r.fulfill({ status: 200, body: "{}" }));
-  await p3.addInitScript(() => { window.__orders = []; window.open = () => null; });
+  await p3.addInitScript(() => { window.open = () => null; });
   await p3.goto("http://localhost:8792/index.html"); await p3.waitForTimeout(800);
-  await p3.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); Cart.add("anti-acne", 1, 2400); });
+  await p3.evaluate(() => { Cart.add("anti-acne", 1, 2400); });
   await p3.waitForSelector("#ups-cartbump:not([hidden])", { timeout: 6000 });
   await p3.evaluate(() => document.querySelector("#ups-cartbump input").click()); await p3.waitForTimeout(300);
   const cart = await p3.evaluate(() => Cart.all());
