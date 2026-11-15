@@ -255,7 +255,7 @@ html.white .sp-box,html.white .sp-eng label,html.white .sp-iss{border-color:#d2d
   async function showFull() {
     const d = S.res && S.res.devices[S.cur]; const box = $("sp-full"); if (!d || !d.lhr || !box) return;
     try {
-      if (!window.__LHR) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "assets/js/vendor/lighthouse-report.js?v=1"; s.onload = ok; s.onerror = () => no(new Error("تعذّر تحميل عارض التقرير")); document.head.append(s); });
+      if (!window.__LHR) await new Promise((ok, no) => { const s = document.createElement("script"); s.src = "assets/js/vendor/lighthouse-report.js?v=6feabc37"; s.onload = ok; s.onerror = () => no(new Error("تعذّر تحميل عارض التقرير")); document.head.append(s); });
       const el = window.__LHR.renderReport(d.lhr, { omitTopbar: true, disableFireworks: true, disableDarkMode: true });
       el.setAttribute("dir", "rtl"); box.replaceChildren(el);
     } catch (e) { box.textContent = e.message; }

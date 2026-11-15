@@ -20,5 +20,24 @@ def stamp(tag):      # ختم كل سكربت ببصمة محتواه هو (لا
     return hashlib.sha1(f.read_bytes()).hexdigest()[:8] if f.exists() else ver
 ver = (root / "VERSION").read_text(encoding="utf-8").strip()
 s = re.sub(r'<meta name="admin-version" content="[^"]*">', '<meta name="admin-version" content="%s">' % ver, s, count=1)
-s = re.sub(r'(<script src="assets/js/(?:admin-[a-z0-9-]+|chrome-admin|ctl-help|img-gen|barcode-tool|magic-layers|pack3d|box-designer|box-profiles|box-studio|mockup-studio|mockup-models|img3d|studio3d|img-upscale|seo-box|saas-client|hub|ai-proxy|ai-capture|speed-core|speed-fix)\.js)(?:\?v=[^"]*)?(")', lambda m: m.group(1) + "?v=" + stamp(m.group(1)) + m.group(2), s)      # كسر كاش السكربتات عند كل إصدار
+# v1.89.1206: كل سكربت/ورقة نمط محلية (assets/js|css) تُختم ببصمة محتواها (8 أحرف) فيخدمها عامل الخدمة من الذاكرة بلا شبكة؛ كانت 17 ملفاً (config/data/api وأوراق CSS الأربع وغيرها) بأرقام يدوية (?v=49) أو بلا ختم فتُراجَع مع الشبكة في كل فتح (مسار حرج على الهاتف: ورقة النمط والسكربت المتزامن ينتظران رحلة شبكة كاملة).
+# المستثناة: ملفات تعدّلها اللوحة نفسها بالنشر عبر المستودع (بياناتها تتغيّر دون تشغيل هذا البناء): data.js وwilayas.js، وconfig.js (يعدّله تجهيز كل عميل)
+MUTABLE = {"data.js", "wilayas.js", "config.js"}
+def stamp_path(path):
+    f = root / path
+    if path.rsplit("/", 1)[-1] in MUTABLE or not f.exists(): return None
+    return hashlib.sha1(f.read_bytes()).hexdigest()[:8]
+def restamp_refs(text):          # مراجع التحميل الديناميكي: "assets/js/x.js?v=2"
+    def r(m):
+        h = stamp_path(m.group(2)); return m.group(0) if h is None else m.group(1) + m.group(2) + "?v=" + h + m.group(1)
+    return re.sub(r'(["\'])(assets/js/[A-Za-z0-9_./-]+\.js)\?v=[^"\']*\1', r, text)
+# 1) مراجع داخل ملفات اللوحة (تُحدَّث أولاً كي تدخل في بصمة الملف الحاوي)
+for jf in sorted((root / "assets/js").glob("admin-*.js")):
+    if jf.name == "admin-pb.js": continue
+    t0 = jf.read_text(encoding="utf-8"); t1 = restamp_refs(t0)
+    if t1 != t0: jf.write_text(t1, encoding="utf-8")
+s = restamp_refs(s)
+def tagstamp(m):
+    h = stamp_path(m.group(2)); return m.group(0) if h is None else m.group(1) + m.group(2) + "?v=" + h + m.group(3)
+s = re.sub(r'(<(?:script|link)\b[^>]*?\b(?:src|href)=")(assets/(?:js|css)/[A-Za-z0-9_./-]+\.(?:js|css))(?:\?v=[^"]*)?(")', tagstamp, s)      # كسر كاش كل الملفات المحلية عند تغيّر محتواها
 p.write_text(s, encoding="utf-8"); print("ok", len(src), "bytes")
