@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-15T13:37:19.189Z",
+ "updated": "2026-11-15T17:22:18.912Z",
  "def": "wecan",
  "noStop": false,
  "companies": {
@@ -13292,6 +13292,14 @@
    "sidislimane",
    "tousmouline"
   ],
+  "41": [
+   "ainsoltane",
+   "ouedkeberit",
+   "ouledmoumene",
+   "oumeladhaim",
+   "safelelouiden",
+   "terraguelt"
+  ],
   "43": [
    "chigara",
    "derradjibousselah",
@@ -13308,6 +13316,10 @@
    "djemaaouledcheikh",
    "elhassania",
    "elmaine"
+  ],
+  "51": [
+   "besbes",
+   "raselmiaad"
   ],
   "55": [
    "elallia",
