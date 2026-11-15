@@ -214,6 +214,17 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
   /** مهلة لكل معالج/مهمة (E-02/E-05): مزوّد بطيء لا يحجز بقية الدورة */
   const withTimeout = (p, ms, what) => { let t; return Promise.race([p, new Promise((_, rej) => { t = setTimeout(() => rej(new Error("timeout:" + what)), ms); })]).finally(() => clearTimeout(t)); };
   const EVENT_BATCH = 50, EVENT_ROUNDS = 6, EVENT_PAR = 4, MOD_TIMEOUT_MS = 25000;
+  const IDEM_RETENTION_S = 7 * 86400, IDEM_PRUNE_BATCH = 500, IDEM_PRUNE_ROUNDS = 4;
+  async function pruneIdem() {
+    const nowS = Math.floor(clock() / 1000); if (Math.floor(nowS / 60) % 60 !== 0) return null;                  // خارج موعد الساعة: لا شيء
+    const cutoff = nowS - IDEM_RETENTION_S; let pruned = 0;
+    for (let i = 0; i < IDEM_PRUNE_ROUNDS; i++) {
+      const x = await db.run("DELETE FROM pf_idem WHERE rowid IN (SELECT rowid FROM pf_idem WHERE status>0 AND at<? ORDER BY at LIMIT ?)", cutoff, IDEM_PRUNE_BATCH);
+      pruned += x.changes || 0; if ((x.changes || 0) < IDEM_PRUNE_BATCH) break;
+    }
+    const a = await db.one("SELECT COUNT(*) AS n FROM pf_idem WHERE status=-1 OR (status=0 AND at<=?)", nowS - 60);
+    return { pruned, attention: a?.n ?? 0, retention_days: IDEM_RETENTION_S / 86400 };                          // attention = عالقة/متروكة تحتاج مشغّلاً (لا تُحذف)
+  }
   async function cron() {
     const out = { events: 0, failed: 0 }, handlers = handlersMap(), offFor = offCacheFor(), t0 = Date.now();
     /* الأحداث: حتى EVENT_ROUNDS دفعات من 50 في الدورة؛ كل مستأجر تسلسلياً (الترتيب) والمستأجرون بالتوازي المحدود. المعالجة تتوقف عند نفاد المعلّق أو ميزانية الوقت */
@@ -226,6 +237,9 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     /* مهام الوحدات: كل مهمة معزولة بمهلة وخطأ مستقل — فشل واحدة لا يوقف الباقي */
     out.mods = {};
     for (const m of modules) if (m.cron) { const t = Date.now(); try { Object.assign(out, { [m.id]: await withTimeout(m.cron(ctx), MOD_TIMEOUT_MS, m.id) }); } catch (x) { out[m.id] = { error: String(x?.message || x).slice(0, 120) }; out.failed++; } out.mods[m.id] = Date.now() - t; }
+    /* تنظيف pf_idem (مرة كل ساعة عند الدقيقة 0 — لا مسح للجدول كل دقيقة). السياسة: يُحذف **فقط** سطر مكتمل (status>0) أقدم من IDEM_RETENTION_S (7 أيام: أضعاف مهلة العميل 30د ومثل order_idem في Supabase)
+       بلا أي مسّ بـstatus=0 (قيد التنفيذ، وقد يكون المالك انهار بعد أثر مالي) ولا status=-1 (عالق: يحتاج قراراً إدارياً). الحذف جملة واحدة ذرّية بدفعة محدودة وعدد جولات محدود؛ كل مالك/استرداد يعمل على status IN (0,-1) فلا تعارض معه؛ تكراره/توازيه آمن. */
+    try { out.idem = await pruneIdem(); } catch (x) { out.idem = { error: String(x?.message || x).slice(0, 120) }; }
     /* قياسات (observability): عمق الطابور وأقدم معلّق */
     try { const q = await db.one("SELECT COUNT(*) AS n, MIN(created_at) AS o FROM pf_events WHERE state='pending'"); out.backlog = { pending: q?.n ?? 0, oldest: q?.o ?? null }; } catch { /* اختياري */ }
     out.ms = Date.now() - t0;

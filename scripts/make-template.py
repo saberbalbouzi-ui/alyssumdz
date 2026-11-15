@@ -76,6 +76,11 @@ def cp(rel, dest=None):
 for rel in ["admin.html", "assets/css", "assets/js", "assets/data", ("platform/supabase", "supabase"), "p/_template", "assets/img/placeholder", "assets/img/stickers", "assets/img/tools", "scripts/rebrand.py", "scripts/build-page-template.py", "scripts/setup-supabase.sh", "scripts/clone-render.js", ".github/workflows/clone-page.yml", ".github/workflows/speed-test.yml", "scripts/speed-run.mjs", "assets/ext"]:
     cp(*rel) if isinstance(rel, tuple) else cp(rel)
 
+# ما يخص البائع أو الاختبار لا يدخل حزمة العميل: إعداد منصة البائع (hub/apply-pending يحملان بريد المالك) وتثبيتات الاختبار (ببيانات منتجاتنا). العميل يحتاج schema.sql وما يستدعيه setup-supabase.sh فقط (E-10).
+for _x in ("supabase/tests", "supabase/hub.sql", "supabase/apply-pending.sql"):
+    _p = OUT / _x
+    shutil.rmtree(_p) if _p.is_dir() else _p.unlink(missing_ok=True)
+
 vals = {"SITE_NAME": a.name, "SITE_EN": a.name, "WA": a.wa, "YEAR": str(datetime.date.today().year)}
 fill = lambda t: re.sub(r"\{\{([A-Z_]+)\}\}", lambda m: vals.get(m.group(1), m.group(0)), t)
 

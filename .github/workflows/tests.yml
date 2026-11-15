@@ -25,6 +25,8 @@ jobs:
           python3 scripts/build-admin-pb.py >/dev/null
           git diff --stat -- admin.html
           git diff --quiet -- admin.html || { echo "::error file=admin.html::admin.html غير محدَّث من المصادر — شغّل python3 scripts/build-admin-pb.py وأضفه للإيداع"; exit 1; }
+      - name: حزمة القالب نظيفة بلا تسرّب ولا انجراف (E-10)
+        run: node scripts/test-template-pack.js
       - name: الأوامر الصوتية
         run: node scripts/test-voice.js
       - name: المخزون
@@ -62,7 +64,7 @@ jobs:
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership idem-prune; do node --no-warnings platform/api/test/$t.test.mjs; done
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     # نسخة المشغّل مثبّتة صراحةً (لا ubuntu-latest المتحرّك): Playwright لا يدعم كل إصدارات Ubuntu فور صدورها، وتغيّر latest يكسر `install --with-deps` (إخفاق تثبيت Chromium قبل أي اختبار).
@@ -164,3 +166,52 @@ jobs:
         run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js
+
+  spatial-os:
+    name: Spatial OS (معاينة معزولة — Chromium برمجي، بلا GPU/ميكروفون حقيقي)
+    # يشغّل admin-preview/spatial-os/test/ci-run.sh: NLU (73 حالة) + Viewports (11 عرضاً) + run.js + phase9 + phase10 + phase11 (ميكروفون **وهمي**) + عقود العميل (Node).
+    # WebGL هنا محاكاة برمجية (SwiftShader) لا GPU حقيقي؛ لا يُختبَر هنا: phase11a (نموذج Qwen+LoRA)، GPU/ميكروفون/STT/TTS حقيقية، WebKit/Firefox، مزوّد LLM، Supabase/D1/Chargily — تبقى NOT TESTED/BLOCKED.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      PLAYWRIGHT_VERSION: '1.63.0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
+      - name: تثبيت Playwright (حزمة npm)
+        run: npm i --no-save playwright@${PLAYWRIGHT_VERSION}
+      - name: ذاكرة متصفحات Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ env.PLAYWRIGHT_VERSION }}
+      - name: تثبيت Chromium (بإعادة محاولة — إخفاق التثبيت يُفصل عن إخفاق الاختبارات)
+        run: |
+          ok=0; for i in 1 2 3; do npx playwright install chromium && ok=1 && break; echo "::warning::فشل تنزيل Chromium (محاولة $i)"; sleep $((i*15)); done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تنزيل Chromium بعد 3 محاولات (إخفاق بيئة لا اختبار)"; exit 1; }
+      - name: اعتماديات النظام لـChromium (بإعادة محاولة)
+        run: |
+          ok=0; for i in 1 2 3; do sudo env "PATH=$PATH" npx playwright install-deps chromium && ok=1 && break; echo "::warning::فشل تثبيت اعتماديات النظام (محاولة $i)"; sleep $((i*15)); done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت اعتماديات النظام لـChromium (إخفاق بيئة لا اختبار)"; exit 1; }
+      - name: فحص تشغيل Chromium
+        run: |
+          NODE_PATH=$PWD/node_modules node -e "const {chromium}=require('playwright');(async()=>{const b=await chromium.launch();const p=await b.newPage();await p.setContent('<p>ok</p>');console.log('Chromium',b.version());await b.close()})().catch(e=>{console.error(e);process.exit(1)})"
+      - name: اختبارات Spatial OS
+        run: bash admin-preview/spatial-os/test/ci-run.sh
+      - name: ملخص الأعداد والنتائج
+        if: ${{ !cancelled() }}
+        run: |
+          { echo "### Spatial OS — نتائج CI (Chromium برمجي؛ ليس GPU/ميكروفون/WebKit/Firefox حقيقياً)"; echo; echo "| الاختبار | rc | ناجح | فاشل | ثوانٍ |"; echo "|---|---|---|---|---|"
+            [ -f spatial-logs/summary.tsv ] && awk -F'\t' '{printf "| %s | %s | %s | %s | %s |\n",$1,$2,$3,$4,$5}' spatial-logs/summary.tsv
+            echo; echo "**NOT TESTED / BLOCKED في CI:** phase11a (نموذج محلي)، GPU حقيقي، ميكروفون/STT/TTS حقيقي، WebKit/Firefox، مزوّد LLM حقيقي، Supabase/D1/Chargily الحقيقية."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: سجلات الاختبارات (للتشخيص)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: spatial-os-logs
+          path: spatial-logs/
+          retention-days: 14
