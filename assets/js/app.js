@@ -25,7 +25,10 @@ let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNO
 /* مكاتب Stop Desk: تُعرض مكاتب شركة التوصيل الافتراضية (أو شركة المنتج) فقط؛ المكتب بلا وسم شركة (قديم) يبقى ظاهراً. وسم الشركة: d.co (يكتبه تحميل المراكز في اللوحة) أو «[Yalidine]/[EasyAndSpeed]» في اسم مراكز ياليدين */
 let __SHIPDK = "";
 const deskCo = d => (d && d.co) || (/\[(?:Yalidine|EasyAndSpeed)\]\s*$/i.test(String((d && d.name) || "")) ? "yalidine" : "");
-const shipDesks = (w, p) => { const all = (w && w.desks) ? w.desks : [], k = (typeof pshipCo === "function" && pshipCo(p)) || __SHIPDK; return k ? all.filter(d => { const c = deskCo(d); return !c || c === k; }) : all; };     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
+/* الاحتياط: إن لم تُحمَّل مراكز هذه الشركة في أي ولاية بعد (لا مكتب موسوم بها في كل الولايات) لا نُرشّح فتبقى كل المكاتب كما كانت ولا يتعطّل خيار المكتب؛ وبعد تحميلها يُعرض لكل ولاية مكاتب الشركة فقط */
+const shipDesks = (w, p) => { const all = (w && w.desks) ? w.desks : [], k = (typeof pshipCo === "function" && pshipCo(p)) || __SHIPDK; if(!k) return all;
+  let synced = false; try{ synced = (typeof WILAYAS !== "undefined" ? WILAYAS : []).some(x => (x.desks || []).some(d => deskCo(d) === k)); }catch(e){}
+  return synced ? all.filter(d => { const c = deskCo(d); return !c || c === k; }) : all; };     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
 /* بلديات لا توصّل إليها شركة التوصيل الافتراضية (مثل تبلبالة عند ياليدين): تُعلَّم «غير متاح» بنفس آلية الاستثناءات w.xc */
 function applyShipNd(nd, def){
   if(!nd || def !== "yalidine" || typeof WILAYAS === "undefined") return;

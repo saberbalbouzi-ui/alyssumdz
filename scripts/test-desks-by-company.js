@@ -3,25 +3,26 @@ const { chromium, devices } = require("playwright");
 (async () => {
   const b = await chromium.launch(); let pass = 0, fail = 0; const ok = (n, v, x) => { if (v) pass++; else fail++; console.log((v ? "✓ " : "✗ ") + n + (v ? "" : " " + JSON.stringify(x || ""))); };
   const errs = [];
-  const run = async (dk, extra) => {
+  const run = async (dk, extra, other) => {
     const c = await b.newContext({ ...devices["iPhone 13"] }), p = await c.newPage(); p.on("pageerror", e => errs.push(String(e)));
     await p.route(/assets\/data\/checkout\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ steps: false, showOffers: true, phoneDz: true, guard: {} }) }));
     await p.route(/assets\/data\/ship-co\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ def: "", dk, noStop: false, companies: { x: { name: "x", prices: {}, adj: 0 } }, sup: {}, cp: {}, nd: {} }) }));
     await p.route(/supabase\.co|script\.google\.com|\/functions\/v1\//, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
     await p.goto("http://localhost:8765/p/anti-acne/", { waitUntil: "load" }); await p.waitForTimeout(3000);
     await p.evaluate(() => { document.getElementById("acg-ov")?.remove(); });
-    const r = await p.evaluate(async (extra) => {
-      const w = WILAYAS.find(x => x.id === 8); if (extra) w.desks = w.desks.concat(extra);
+    const r = await p.evaluate(async ([extra, other]) => {
+      const w = WILAYAS.find(x => x.id === 8); if (extra) w.desks = w.desks.concat(extra); if (other) { const o = WILAYAS.find(x => x.id === 16); o.desks = (o.desks || []).concat([{ id: 7, name: "Wecan Alger", address: "x", commune: o.name, co: "wecan" }]); }
       const sel = document.getElementById("wilaya"); sel.value = "8"; sel.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 400));
       const st = document.querySelector('input[name="dtype"][value="stop"]'); const dis = st ? st.disabled : null; if (st && !st.disabled) { st.checked = true; st.dispatchEvent(new Event("change", { bubbles: true })); } await new Promise(r => setTimeout(r, 400));
-      const ds = document.getElementById("desk"); return { dis, opts: ds ? [...ds.options].map(o => o.textContent).filter(t => !/اختر/.test(t)) : null }; }, extra);
+      const ds = document.getElementById("desk"); return { dis, opts: ds ? [...ds.options].map(o => o.textContent).filter(t => !/اختر/.test(t)) : null }; }, [extra, !!other]);
     await c.close(); return r;
   };
   const W = [{ id: 1, name: "Agence Wecan Béchar", address: "x", commune: "Béchar", co: "wecan" }];
-  const a = await run("", null), y = await run("yalidine", null), w0 = await run("wecan", null), w1 = await run("wecan", W), w2 = await run("yalidine", W);
+  const a = await run("", null), y = await run("yalidine", null), w0 = await run("wecan", null), w1 = await run("wecan", W), w2 = await run("yalidine", W), w3 = await run("wecan", null, true);
   ok("بلا شركة افتراضية معلنة (ship-co قديم): تبقى كل المكاتب كما كانت", a.opts && a.opts.length === 2, a);
   ok("الافتراضية ياليدين: مكتبا ياليدين فقط", y.opts && y.opts.length === 2 && y.opts.every(t => /\[(Yalidine|EasyAndSpeed)\]/.test(t)), y);
-  ok("الافتراضية WeCan بلا مكاتب موسومة لها: لا مكاتب ياليدين (الخيار معطَّل)", w0.dis === true || (w0.opts && w0.opts.length === 0), w0);
+  ok("الافتراضية WeCan لم تُحمَّل مراكزها بعد في أي ولاية: احتياطاً تبقى كل المكاتب فلا يتعطّل الخيار", w0.opts && w0.opts.length === 2 && w0.dis === false, w0);
+  ok("مراكز WeCan محمَّلة لولاية أخرى فقط: لا تُعرض مكاتب ياليدين في بشار (الخيار معطَّل)", w3.dis === true || (w3.opts && w3.opts.length === 0), w3);
   ok("الافتراضية WeCan مع مكتب WeCan موسوم: يظهر مكتبها فقط", w1.opts && w1.opts.length === 1 && /Wecan/.test(w1.opts[0]), w1);
   ok("الافتراضية ياليدين مع مكتب WeCan موسوم: لا يظهر مكتب WeCan", w2.opts && w2.opts.length === 2 && !w2.opts.some(t => /Wecan/.test(t)), w2);
   { const c = await b.newContext(), p = await c.newPage(); p.on("pageerror", e => errs.push(String(e)));
