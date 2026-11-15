@@ -49,6 +49,6 @@ const toMidHour = () => { toHourStart(); clock.t += 17 * 60000; };
 /* P9: عزل المستأجرين: التنظيف لا يغيّر شيئاً عبر المستأجرين إلا بالسياسة نفسها */
 { toHourStart(); ins(A, "p9-same", 201, 9 * DAY); ins(B, "p9-same", 201, 9 * DAY); ins(B, "p9-b-live", 0, 9 * DAY, "tok"); await app.cron();
   ok("[P9] المكتمل القديم يُحذف لدى المستأجرين كليهما والحي (0) لدى B يبقى", !has(A, "p9-same") && !has(B, "p9-same") && has(B, "p9-b-live")); }
-/* P10: مخطط الفهرس موجود (يحمي التنظيف من مسح كامل) */
-{ const ix = sqlAll("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='pf_idem'").map((x) => x.name); ok("[P10] فهرس على pf_idem(at) موجود في schema.sql", ix.includes("ix_pf_idem_at"), ix); }
+/* P10: فهرس (status,at) موجود (قراءة الشاذ بلا مسح كامل)؛ فهرس (at) اختياري غير مفعّل افتراضياً */
+{ const ix = sqlAll("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='pf_idem'").map((x) => x.name); ok("[P10] ix_pf_idem_st موجود وix_pf_idem_at غير مفعّل افتراضياً (تكلفة كتابة)", ix.includes("ix_pf_idem_st") && !ix.includes("ix_pf_idem_at"), ix); }
 done();

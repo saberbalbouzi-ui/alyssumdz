@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS pf_integrations (     -- إعداد كل مزوّد �
 CREATE TABLE IF NOT EXISTS pf_idem (             -- Idempotency-Key للطلبات المعدِّلة (تطبيق الجوال يعيد الإرسال عند ضعف الشبكة)
   tenant_id INTEGER NOT NULL, k TEXT NOT NULL, hash TEXT NOT NULL, status INTEGER NOT NULL, body TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (tenant_id, k)
 );
-CREATE INDEX IF NOT EXISTS ix_pf_idem_at ON pf_idem (at);   -- تنظيف pf_idem الدوري (نبضة الساعة) يمسح بترتيب at بدل مسح الجدول
+-- فهرس اختياري لأحجام ضخمة فقط (≳300 ألف صف مكتمل): CREATE INDEX IF NOT EXISTS ix_pf_idem_at ON pf_idem (at);  — يجعل اختيار التنظيف 500 صف بدل مسح الفهرس، لكنه يضيف كتابتين لكل طلب (قياس D1 المحلي في docs/FINAL-NEXT-PHASE-REPORT.md §10). غير مفعّل افتراضياً.
+CREATE INDEX IF NOT EXISTS ix_pf_idem_st ON pf_idem (status, at);   -- مراجعة الـ15 دقيقة: عدّ العالق/المتجاوز/الحديث بالفهرس (≈16–122 صفاً مقروءاً بدل N)؛ والتنظيف يقرأ فهرس status>0 مرة كل ساعة
+CREATE TABLE IF NOT EXISTS pf_idem_review (slot TEXT PRIMARY KEY, kind TEXT NOT NULL, at INTEGER NOT NULL, data TEXT NOT NULL);   -- سجل دورات مراجعة pf_idem (c:<شريحة 15د>) والتقارير اليومية (d:<يوم>)
+CREATE INDEX IF NOT EXISTS ix_pf_idem_review_at ON pf_idem_review (kind, at);   -- تنظيف pf_idem الدوري (نبضة الساعة) يمسح بترتيب at بدل مسح الجدول
 CREATE TABLE IF NOT EXISTS pf_audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, action TEXT NOT NULL, target TEXT NULL, detail TEXT NULL);
 CREATE TABLE IF NOT EXISTS pf_rl (k TEXT NOT NULL, t INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS ix_pf_rl ON pf_rl (k, t);

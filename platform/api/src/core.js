@@ -163,7 +163,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
            **لا استيلاء تلقائي إطلاقاً:** مطالبة قديمة لا تُسلَّم لمالك ثانٍ ولا يُعاد تنفيذ المعالج لمجرد انتهاء المهلة (قد يكون المالك الأول أتمّ أثراً مالياً ولم يكتب ردّه بعد)؛ تُوسَم عالقة ويُصدَر حدث idempotency.stuck، والاسترداد إداري مضبوط (/admin/idempotency/*) بعد تحقق المشغّل من الأثر الفعلي.
            كل UPDATE/DELETE مشروط برمز الملكية: مالك قديم لا يستطيع إكمال أو حذف مطالبة ليست له. مالك بطيء أتمّ العمل فعلاً يُغلق سطره (0 أو -1) بردّه الحقيقي فيُحلّ العالق تلقائياً دون إعادة تنفيذ.
            الخاسر: محتوى مختلف ← 409 idempotency_conflict؛ نفس المحتوى والمالك يعمل ← 409 idempotency_in_progress (+Retry-After)؛ عالق ← 409 idempotency_claim_stuck؛ بعد الإنجاز ← إعادة الردّ المخزَّن. */
-        const h = await sha256Hex(m + p + raw), IDEM_STUCK_AFTER = 60, token = randHex(16), tid = req.tenant.id;
+        const h = await sha256Hex(m + p + raw), token = randHex(16), tid = req.tenant.id;
         const release = () => db.run("DELETE FROM pf_idem WHERE tenant_id=? AND k=? AND hash=? AND status IN (0,-1) AND body=?", tid, ik, h, token).catch(() => { });
         const busy = () => new HttpError(409, "idempotency_in_progress", "طلب بنفس المفتاح قيد المعالجة — أعد المحاولة بعد لحظات", null, { "Retry-After": "1" });
         const stuck = () => new HttpError(409, "idempotency_claim_stuck", "عملية بنفس المفتاح لم تُكمَل وقد يكون جزء منها نُفِّذ — لا تُعِد الإرسال بمفتاح جديد؛ تواصل مع الدعم للتحقق منها", null, { "Retry-After": "30" });
@@ -225,6 +225,85 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     const a = await db.one("SELECT COUNT(*) AS n FROM pf_idem WHERE status=-1 OR (status=0 AND at<=?)", nowS - 60);
     return { pruned, attention: a?.n ?? 0, retention_days: IDEM_RETENTION_S / 86400 };                          // attention = عالقة/متروكة تحتاج مشغّلاً (لا تُحذف)
   }
+  /* مراجعة pf_idem الآلية (كل 15 دقيقة عند الدقائق 0/15/30/45) + تقرير يومي مرة واحدة + تنبيهات.
+     **لا تحذف شيئاً أبداً** (الحذف الوحيد في pruneIdem للمكتمل القديم). الفعل الوحيد على مطالبة: وسم status 0→-1 («عالقة») لمطالبة تجاوزت IDEM_STUCK_AFTER، شرطياً بنفس
+     (المستأجر، المفتاح، رمز الملكية body، at المرصود) فلا يمسّ مطالبة أنهاها مالكها أو حُرِّرت وأُعيد ادّعاؤها برمز آخر؛ والمالك البطيء يُنهي سطره العالق بردّه كالمعتاد (UPDATE مالكه على IN (0,-1)).
+     كل دورة تأخذ «شريحة» ذرّية INSERT OR IGNORE بمفتاح slot فتعمل دورة واحدة فقط لو تزامن أكثر من cron؛ نتيجة كل دورة (أو خطؤها) تُسجَّل في pf_idem_review (تُحفظ 30 يوماً).
+     كل استعلامات الدورة تمسح الشاذ فقط عبر الفهرس ix_pf_idem_st لا الجدول كله (المسح الكامل مرة يومياً في التقرير) (كلفة D1 تُحسب بالصفوف المقروءة). التنبيهات: حدث idempotency.alert (tenant 0) بمفتاح تفرّد يومي لكل (رمز، مستوى) + سطر تدقيق + تُعاد في مخرجات cron. */
+  const IDEM_STUCK_AFTER = 60, IDEM_REVIEW_S = 900, IDEM_LOG_KEEP_S = 30 * 86400, IDEM_PROMOTE_MAX = 200, IDEM_REPORT_TOP = 20;
+  const IDEM_THRESHOLDS = { stuck: [5, 20], overdue: [5, 20], stuck_age_h: [24, 72], future: [1, 10], token_missing: [1, 5], retention_backlog: [10000, 100000], table_rows: [200000, 1000000] };   // [تحذير، حرج]
+  const idemLevel = (code, v) => { const t = IDEM_THRESHOLDS[code]; return v >= t[1] ? "crit" : v >= t[0] ? "warn" : null; };
+  async function reviewIdem() {
+    const nowS = Math.floor(clock() / 1000); if (Math.floor(nowS / 60) % 15 !== 0) return null;                 // خارج موعد الدورة: لا شيء
+    const slot = "c:" + Math.floor(nowS / IDEM_REVIEW_S);
+    const claim = await db.run("INSERT OR IGNORE INTO pf_idem_review (slot,kind,at,data) VALUES (?,?,?,?)", slot, "cycle", nowS, "{}");
+    if (claim.changes !== 1) return { skipped: "slot_taken", slot };                                              // دورة أخرى تولّت هذه الشريحة
+    const rec = { slot, at: nowS }; const day = new Date(nowS * 1000).toISOString().slice(0, 10);
+    try {
+      const cut = nowS - IDEM_STUCK_AFTER;
+      const st = await db.one("SELECT COUNT(*) AS n, MIN(at) AS o FROM pf_idem WHERE status=-1");
+      const od = await db.one("SELECT COUNT(*) AS n, MIN(at) AS o FROM pf_idem WHERE status=0 AND at<=?", cut);
+      rec.fresh = (await db.val("SELECT COUNT(*) FROM pf_idem WHERE status=0 AND at>?", cut)) ?? 0;
+      rec.token_missing = (await db.val("SELECT COUNT(*) FROM pf_idem WHERE status=0 AND body=''")) ?? 0;
+      rec.overdue = od?.n ?? 0;
+      /* وسم المتجاوزة: دفعة محدودة، شرطي بالمالك (رمز + at) — لا حذف */
+      let promoted = 0;
+      if (rec.overdue > 0) {
+        const rows = await db.all("SELECT tenant_id,k,body,at FROM pf_idem WHERE status=0 AND at<=? ORDER BY at LIMIT ?", cut, IDEM_PROMOTE_MAX);
+        for (const r of rows) {
+          const x = await db.run("UPDATE pf_idem SET status=-1 WHERE tenant_id=? AND k=? AND status=0 AND body=? AND at=?", r.tenant_id, r.k, r.body, r.at);
+          if (x.changes === 1) { promoted++; await ctx.emit(r.tenant_id, "idempotency.stuck", { key: r.k, claimed_at: r.at, via: "review" }, "idem:stuck:" + r.tenant_id + ":" + r.k).catch(() => { }); }
+        }
+      }
+      rec.promoted = promoted;
+      const st2 = promoted ? await db.one("SELECT COUNT(*) AS n, MIN(at) AS o FROM pf_idem WHERE status=-1") : st;     // بعد الوسم
+      rec.stuck = st2?.n ?? 0; rec.oldest_stuck_age_s = st2?.o != null ? Math.max(0, nowS - st2.o) : 0;
+      rec.top_tenants = await db.all("SELECT tenant_id, COUNT(*) AS n FROM (SELECT tenant_id FROM pf_idem WHERE status=-1 UNION ALL SELECT tenant_id FROM pf_idem WHERE status=0 AND at<=?) GROUP BY tenant_id ORDER BY n DESC LIMIT 5", cut);
+      /* تنبيهات */
+      const al = []; const add = (code, v, msg) => { const level = idemLevel(code, v); if (level) al.push({ code, level, value: v, threshold: IDEM_THRESHOLDS[code][level === "crit" ? 1 : 0], msg }); };
+      add("stuck", rec.stuck, "مطالبات عالقة (-1) متراكمة تحتاج مراجعة مشغّل"); add("overdue", rec.overdue, "مطالبات قيد التنفيذ تجاوزت المهلة (معالج/وحدة تنهار؟)");
+      add("stuck_age_h", Math.floor(rec.oldest_stuck_age_s / 3600), "أقدم مطالبة عالقة مضى عليها ساعات");
+      add("token_missing", rec.token_missing, "مطالبات قيد التنفيذ بلا رمز ملكية (إصدار قديم مختلط؟)");
+      rec.alerts = al;
+      for (const a of al) {
+        const fresh = await ctx.emit(0, "idempotency.alert", { ...a, slot, day }, "idem:alert:" + a.code + ":" + a.level + ":" + day).catch(() => false);
+        if (fresh) await ctx.audit("system:idem-review", "idem.alert", null, a).catch(() => { });
+      }
+    } catch (x) { rec.error = String(x?.message || x).slice(0, 160); }
+    await db.run("UPDATE pf_idem_review SET data=? WHERE slot=?", JSON.stringify(rec), slot).catch(() => { });
+    /* احتفاظ سجل الدورات 30 يوماً (محدود) */
+    await db.run("DELETE FROM pf_idem_review WHERE rowid IN (SELECT rowid FROM pf_idem_review WHERE kind='cycle' AND at<? ORDER BY at LIMIT 500)", nowS - IDEM_LOG_KEEP_S).catch(() => { });
+    const out = { slot, ...(rec.error ? { error: rec.error } : {}), stuck: rec.stuck, overdue: rec.overdue, promoted: rec.promoted, alerts: (rec.alerts || []).map((a) => a.code + ":" + a.level) };
+    try { out.daily = await dailyIdemReport(nowS, day); } catch (x) { out.daily = { error: String(x?.message || x).slice(0, 120) }; }
+    return out;
+  }
+  /** تقرير يومي: يُنشأ مرة واحدة لكل يوم UTC (شريحة d:YYYY-MM-DD بتفرّد ذرّي) عن اليوم السابق + لقطة حالية للحالات الاستثنائية */
+  async function dailyIdemReport(nowS, day) {
+    const claim = await db.run("INSERT OR IGNORE INTO pf_idem_review (slot,kind,at,data) VALUES (?,?,?,?)", "d:" + day, "daily", nowS, "{}");
+    if (claim.changes !== 1) return { skipped: "already_today" };
+    const dayStart = Date.parse(day + "T00:00:00Z") / 1000, prev = day;
+    const cycles = (await db.all("SELECT data FROM pf_idem_review WHERE kind='cycle' AND at>=? AND at<?", dayStart - 86400, dayStart)).map((r) => { try { return JSON.parse(r.data); } catch { return {}; } });
+    const max = (k) => cycles.reduce((m, c) => Math.max(m, c[k] || 0), 0), al = {};
+    for (const c of cycles) for (const a of c.alerts || []) al[a.code + ":" + a.level] = (al[a.code + ":" + a.level] || 0) + 1;
+    const cutoff = nowS - IDEM_RETENTION_S, cut = nowS - IDEM_STUCK_AFTER;
+    const rep = {
+      for_day: new Date((dayStart - 86400) * 1000).toISOString().slice(0, 10), generated_for: prev,
+      cycles: cycles.length, cycles_with_error: cycles.filter((c) => c.error).length, max_stuck: max("stuck"), max_overdue: max("overdue"), promoted_total: cycles.reduce((n, c) => n + (c.promoted || 0), 0),
+      max_token_missing: max("token_missing"), alerts: al,
+      snapshot: {
+        total_rows: (await db.val("SELECT COUNT(*) FROM pf_idem")) ?? 0,                                              // مرة واحدة يومياً فقط (مسح كامل مقصود)
+        retention_backlog: (await db.val("SELECT COUNT(*) FROM pf_idem WHERE status>0 AND at<?", cutoff)) ?? 0,
+        future: (await db.val("SELECT COUNT(*) FROM pf_idem WHERE at>?", nowS + 300)) ?? 0,                           // مسح كامل مرة يومياً فقط (لا كل 15 دقيقة)
+        exceptional: (await db.all("SELECT tenant_id,k,status,at FROM (SELECT tenant_id,k,status,at FROM pf_idem WHERE status=-1 UNION ALL SELECT tenant_id,k,status,at FROM pf_idem WHERE status=0 AND at<=?) ORDER BY at LIMIT ?", cut, IDEM_REPORT_TOP))
+          .map((r) => ({ tenant_id: r.tenant_id, key: String(r.k).slice(0, 12) + "…", state: r.status === -1 ? "stuck" : "overdue", age_s: Math.max(0, nowS - r.at) })),
+      },
+    };
+    const sn = rep.snapshot; rep.alerts_snapshot = [];
+    for (const [code, v] of [["table_rows", sn.total_rows], ["retention_backlog", sn.retention_backlog], ["future", sn.future]]) { const level = idemLevel(code, v); if (level) { const a = { code, level, value: v, threshold: IDEM_THRESHOLDS[code][level === "crit" ? 1 : 0], msg: code === "table_rows" ? "حجم pf_idem كبير (التنظيف لا يواكب؟)" : code === "future" ? "مطالبات بتوقيت مستقبلي (انحراف ساعة؟)" : "مكتمل أقدم من الاحتفاظ ينتظر التنظيف" }; rep.alerts_snapshot.push(a); if (await ctx.emit(0, "idempotency.alert", { ...a, day }, "idem:alert:" + code + ":" + level + ":" + day).catch(() => false)) await ctx.audit("system:idem-review", "idem.alert", null, a).catch(() => { }); } }
+    await db.run("UPDATE pf_idem_review SET data=? WHERE slot=?", JSON.stringify(rep), "d:" + day);
+    return { report: "d:" + day, cycles: rep.cycles, exceptional: sn.exceptional.length };
+  }
+  ctx.idemReview = reviewIdem; ctx.idemPrune = pruneIdem;
   async function cron() {
     const out = { events: 0, failed: 0 }, handlers = handlersMap(), offFor = offCacheFor(), t0 = Date.now();
     /* الأحداث: حتى EVENT_ROUNDS دفعات من 50 في الدورة؛ كل مستأجر تسلسلياً (الترتيب) والمستأجرون بالتوازي المحدود. المعالجة تتوقف عند نفاد المعلّق أو ميزانية الوقت */
@@ -239,6 +318,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     for (const m of modules) if (m.cron) { const t = Date.now(); try { Object.assign(out, { [m.id]: await withTimeout(m.cron(ctx), MOD_TIMEOUT_MS, m.id) }); } catch (x) { out[m.id] = { error: String(x?.message || x).slice(0, 120) }; out.failed++; } out.mods[m.id] = Date.now() - t; }
     /* تنظيف pf_idem (مرة كل ساعة عند الدقيقة 0 — لا مسح للجدول كل دقيقة). السياسة: يُحذف **فقط** سطر مكتمل (status>0) أقدم من IDEM_RETENTION_S (7 أيام: أضعاف مهلة العميل 30د ومثل order_idem في Supabase)
        بلا أي مسّ بـstatus=0 (قيد التنفيذ، وقد يكون المالك انهار بعد أثر مالي) ولا status=-1 (عالق: يحتاج قراراً إدارياً). الحذف جملة واحدة ذرّية بدفعة محدودة وعدد جولات محدود؛ كل مالك/استرداد يعمل على status IN (0,-1) فلا تعارض معه؛ تكراره/توازيه آمن. */
+    try { out.idem_review = await reviewIdem(); } catch (x) { out.idem_review = { error: String(x?.message || x).slice(0, 120) }; }
     try { out.idem = await pruneIdem(); } catch (x) { out.idem = { error: String(x?.message || x).slice(0, 120) }; }
     /* قياسات (observability): عمق الطابور وأقدم معلّق */
     try { const q = await db.one("SELECT COUNT(*) AS n, MIN(created_at) AS o FROM pf_events WHERE state='pending'"); out.backlog = { pending: q?.n ?? 0, oldest: q?.o ?? null }; } catch { /* اختياري */ }
@@ -259,6 +339,17 @@ export const adminModule = {
       catch (e) { if (DB.isUnique(e)) throw new HttpError(409, "site_ref_taken", "هذا الموقع مرتبط بمستأجر آخر"); throw e; }
     });
     /* استرداد مطالبات Idempotency العالقة (إدارياً فقط، بعد تحقق المشغّل من الأثر الفعلي للعملية): قائمة، تحرير (لم يحدث أثر)، حسم بردّ (حدث الأثر) */
+    /* سجل مراجعة pf_idem: آخر الدورات والتنبيهات، والتقرير اليومي (قراءة فقط) */
+    const jp = (t) => { try { return JSON.parse(t); } catch { return {}; } };
+    r.get("/admin/idempotency/review", { auth: "admin" }, async (req) => {
+      const lim = Math.min(200, Math.max(1, +req.query.limit || 20)), rows = await db.all("SELECT slot,at,data FROM pf_idem_review WHERE kind='cycle' ORDER BY at DESC LIMIT ?", lim);
+      const cycles = rows.map((x) => ({ slot: x.slot, at: x.at, ...jp(x.data) })); return ok({ cycles, active_alerts: (cycles[0]?.alerts) ?? [] });
+    });
+    r.get("/admin/idempotency/report", { auth: "admin" }, async (req) => {
+      const day = String(req.query.day || ""); if (day && !/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new HttpError(400, "validation_error", "day بصيغة YYYY-MM-DD");
+      const x = day ? await db.one("SELECT slot,at,data FROM pf_idem_review WHERE slot=?", "d:" + day) : await db.one("SELECT slot,at,data FROM pf_idem_review WHERE kind='daily' ORDER BY at DESC LIMIT 1");
+      if (!x) throw new HttpError(404, "not_found", "لا تقرير"); return ok({ slot: x.slot, at: x.at, ...jp(x.data) });
+    });
     r.get("/admin/idempotency/stuck", { auth: "admin" }, async (req) => {
       const lim = Math.min(200, Math.max(1, +req.query.limit || 50)), tid = req.query.tenant_id ? +req.query.tenant_id : null, old = ctx.nowS() - 60;
       const rows = await db.all("SELECT tenant_id,k,status,at FROM pf_idem WHERE (status=-1 OR (status=0 AND at<=?))" + (tid ? " AND tenant_id=?" : "") + " ORDER BY at LIMIT ?", ...(tid ? [old, tid, lim] : [old, lim]));

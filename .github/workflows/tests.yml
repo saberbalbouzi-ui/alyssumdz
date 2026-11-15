@@ -64,7 +64,14 @@ jobs:
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership idem-prune; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership idem-prune idem-review; do node --no-warnings platform/api/test/$t.test.mjs; done
+      - name: pf_idem على محرك D1 المحلي (workerd/miniflare — ليس D1 البعيد)
+        run: |
+          mkdir -p /tmp/mf && cd /tmp/mf && npm init -y >/dev/null
+          ok=0; for i in 1 2 3; do npm i miniflare@4 >/dev/null 2>&1 && ok=1 && break; echo "::warning::فشل تثبيت miniflare (محاولة $i)"; sleep $((i*10)); done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت miniflare (إخفاق بيئة لا اختبار)"; exit 1; }
+          cd "$GITHUB_WORKSPACE" && MF_DIR=/tmp/mf N=20000 node platform/api/test/d1/idem-d1-local.mjs
+
   ui:
     name: اختبار اللوحة في متصفح حقيقي
     # نسخة المشغّل مثبّتة صراحةً (لا ubuntu-latest المتحرّك): Playwright لا يدعم كل إصدارات Ubuntu فور صدورها، وتغيّر latest يكسر `install --with-deps` (إخفاق تثبيت Chromium قبل أي اختبار).
