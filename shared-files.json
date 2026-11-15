@@ -2,6 +2,7 @@
   "_doc": "المصدر الوحيد لما يُنشر للجميع (shared) وما يبقى خاصاً بكل موقع (local). التحديث لا يكتب إلا الملفات المشتركة؛ والمحدِّث على مواقع الزبائن يحمل القائمة نفسها ويرفض أي ملف خارجها.",
   "shared": [
     "admin.html",
+    "manifest-admin.webmanifest",
     "assets/css/style.css",
     "assets/css/admin-glass.css",
     "assets/css/admin-theme.css",

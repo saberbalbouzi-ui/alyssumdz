@@ -119,6 +119,7 @@ mf = json.loads((ROOT / "manifest.webmanifest").read_text(encoding="utf-8"))
 mf["name"] = a.name; mf["short_name"] = a.name.split()[0][:12]; mf["description"] = a.name
 (OUT / "manifest.webmanifest").write_text(json.dumps(mf, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 shutil.copy2(ROOT / "sw.js", OUT / "sw.js")
+shutil.copy2(ROOT / "manifest-admin.webmanifest", OUT / "manifest-admin.webmanifest")      # لوحة التحكم قابلة للتثبيت كتطبيق (اسم عام بلا هوية)
 for fn, sz in (("icon-192.png", 192), ("icon-512.png", 512), ("icon-maskable-512.png", 512), ("apple-touch-icon.png", 180)):
     (OUT / "assets/img" / fn).write_bytes(png(sz, sz, (23, 63, 53)))
 
