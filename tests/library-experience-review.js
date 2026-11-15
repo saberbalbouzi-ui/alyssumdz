@@ -55,7 +55,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       await c.route("**/assets/data/protect.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(REVIEW_PROTECT) }));
       await p.route(base + "/__exr.html", r => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: html }));
       await p.goto(base + "/__exr.html", { waitUntil: "load", timeout: 60000 }); await sleep(1200);
-      await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 450) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); } window.scrollTo(0, 0); }); await sleep(700);
+      await p.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 300) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 200)); } await new Promise(r => setTimeout(r, 1200)); }); const hid = await p.evaluate(() => [...document.querySelectorAll("body *")].filter(e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.height > 60 && r.width > 100 && +cs.opacity < 0.05 && cs.display !== "none"; }).slice(0, 6).map(e => e.tagName + "." + String(e.className).slice(0, 40))); row["hid" + w] = hid; await p.evaluate(() => window.scrollTo(0, 0)); await sleep(700);
       const m = await p.evaluate(() => {
         const vis = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none" && +cs.opacity > 0; };
         const txtEls = [...document.querySelectorAll("h1,h2,h3,h4,p,span,a,button,li,label,small")].filter(e => vis(e) && e.childElementCount === 0 && (e.textContent || "").trim().length > 1);
