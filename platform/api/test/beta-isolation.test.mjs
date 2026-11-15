@@ -46,19 +46,33 @@ const tenant = async (env, tok, name) => { const [, t] = await adm(env, tok, "PO
   ok("[I4] جلسات/مفاتيح: مستأجر Production لا يظهر في قاعدة Beta", BETA.db.prepare("SELECT COUNT(*) n FROM pf_tenants WHERE name LIKE '%الإنتاج%'").get().n === 0 && BETA.db.prepare("SELECT COUNT(*) n FROM pf_keys WHERE key_hash IN (SELECT key_hash FROM pf_keys)").get().n >= 1);
   /* مفتاح Production مُسرَّب إلى Beta: يُرفض ولا يعمل (لا يُدرَج هناك) */
   const leaked = await call(benv, "POST", "/v1/payments/checkout", { order_id: "x" }, tp.key); ok("[I4] مفتاح Production المسرَّب إلى Beta ← 401", leaked[0] === 401); }
-/* I5: لا دفع حيّ ولا رسائل من Beta — السيناريو الأسوأ: مفتاح Chargily حيّ ووضع live مخزَّنان **داخل بيانات Beta** (لا متغيرات) */
+/* I5: لا دفع حيّ ولا رسائل من Beta — ثلاث طبقات: (1) الـAPI يرفض تخزين تكامل حيّ، (2) الوحدة ترفض استعمال صفّ حيّ دخل القاعدة بغير الـAPI (استعادة نسخة إنتاج)، (3) حارس الخروج يحجب أي اتصال خارج السماح */
 { const tb = await tenant(benv, ADM_B, "Beta pay"), tp = await tenant(penv, ADM_P, "Prod pay control"); const co = { order_id: "O-9", amount: 1000, success_url: "https://shop.example/thanks" };
   const put = (env, T, cfg, sk) => call(env, "PUT", "/v1/integrations/chargily", { config: cfg, secrets: { secret_key: sk } }, T.key);
-  ok("[I5] (مقدّمة) تخزين التكامل ينجح في البيئتين", (await put(benv, tb, { mode: "live" }, "live_sk_FAKE_TEST_ONLY"))[0] === 200 && (await put(penv, tp, { mode: "live" }, "live_sk_FAKE_TEST_ONLY"))[0] === 200);
+  ok("[I5] (1) Beta ترفض تخزين وضع live (400 live_mode_forbidden) ومفتاح حيّ (400 live_credential_forbidden) ومفتاحاً غير test_", (await put(benv, tb, { mode: "live" }, "test_sk_FAKE"))[1].error?.code === "live_mode_forbidden" && (await put(benv, tb, { mode: "test" }, "live_sk_FAKE_TEST_ONLY"))[1].error?.code === "live_credential_forbidden" && (await put(benv, tb, { mode: "test" }, "sk_whatever_not_test"))[1].error?.code === "live_credential_forbidden");
+  ok("[I5] (1) مزوّد غير مسموح (email/sms/meta/whatsapp…) ← 403 provider_not_allowed_in_beta", (await Promise.all(["email", "meta", "whatsapp", "sheets", "tiktok", "llm"].map((p) => call(benv, "PUT", `/v1/integrations/${p}`, { config: {}, secrets: { api_key: "x" } }, tb.key)))).every((r) => r[0] === 403 && r[1].error?.code === "provider_not_allowed_in_beta"));
+  ok("[I5] (1) وضع test بمفتاح test_ يُقبل في Beta، والإنتاج يقبل live (شاهد ضابط: سلوك الإنتاج لم يتغير)", (await put(benv, tb, { mode: "test" }, "test_sk_FAKE_TEST_ONLY"))[0] === 200 && (await put(penv, tp, { mode: "live" }, "live_sk_FAKE_TEST_ONLY"))[0] === 200);
+  /* (2) صفّ حيّ مستعاد من «نسخة إنتاج» مباشرة في قاعدة Beta (بتشفير مفتاح Beta كأن الاستعادة أُعيد تشفيرها) */
+  const { Vault } = await import("../src/crypto.js"); const enc = await Vault.fromEnv({ APP_ENCRYPTION_KEY: KEY_B }).encrypt({ secret_key: "live_sk_RESTORED_FROM_PROD" }, `pf:${tb.id}:chargily`);
+  BETA.db.prepare("UPDATE pf_integrations SET config=?, secret_enc=? WHERE tenant_id=? AND provider='chargily'").run(JSON.stringify({ mode: "live" }), enc, tb.id);
   OUT.length = 0; const live = await call(benv, "POST", "/v1/payments/checkouts", co, tb.key);
-  ok("[I5] Beta + مفتاح/وضع حيّ مخزَّن: الطلب يُحجب (502 provider_unreachable) ولا يخرج شيء إلى pay.chargily.net", live[0] === 502 && live[1].error?.code === "provider_unreachable" && !OUT.some((u) => /chargily/.test(u)), { live: live[0], code: live[1].error?.code, OUT });
-  const hb = (await call(benv, "GET", "/health"))[1]; ok("[I5] وسُجِّل الحجب فعلياً: egress_blocked ≥ 1 (الحجب هو السبب لا غياب الاتصال)", hb.egress_blocked >= 1, hb.egress_blocked);
-  ok("[I5] وكُتب أثر تدقيق دائم لكل حجب (egress.blocked بالمضيف فقط، بلا URL) في قاعدة Beta", (() => { const r = BETA.db.prepare("SELECT target,detail FROM pf_audit WHERE action='egress.blocked'").all(); return r.length >= 1 && r.every((x) => x.target === "pay.chargily.net" || /\./.test(x.target)) && !JSON.stringify(r).includes("checkouts"); })());
+  ok("[I5] (2) صفّ live مستعاد داخل القاعدة: الوحدة ترفض (409 live_payments_forbidden) قبل أي اتصال، ولا يخرج شيء", live[0] === 409 && live[1].error?.code === "live_payments_forbidden" && OUT.length === 0, { st: live[0], code: live[1].error?.code, OUT });
+  BETA.db.prepare("UPDATE pf_integrations SET config=? WHERE tenant_id=? AND provider='chargily'").run(JSON.stringify({ mode: "test" }), tb.id);
+  const encLive = await Vault.fromEnv({ APP_ENCRYPTION_KEY: KEY_B }).encrypt({ secret_key: "live_sk_RESTORED_FROM_PROD" }, `pf:${tb.id}:chargily`); BETA.db.prepare("UPDATE pf_integrations SET secret_enc=? WHERE tenant_id=? AND provider='chargily'").run(encLive, tb.id);
+  OUT.length = 0; const live2 = await call(benv, "POST", "/v1/payments/checkouts", { ...co, order_id: "O-9b" }, tb.key);
+  ok("[I5] (2) وضع test لكن مفتاح حيّ مستعاد ← يُرفض أيضاً (409)", live2[0] === 409 && OUT.length === 0, { st: live2[0], OUT });
   OUT.length = 0; const ctl = await call(penv, "POST", "/v1/payments/checkouts", co, tp.key);
-  ok("[I5] (شاهد ضابط) Production بالتكامل نفسه يصل لواجهة Chargily الحيّة (على stub) — فالحجب في Beta ناتج عن الحارس لا عن الاختبار", OUT.some((u) => u === "https://pay.chargily.net/api/v2/checkouts"), { OUT, st: ctl[0] });
-  await put(benv, tb, { mode: "test" }, "test_sk_FAKE_TEST_ONLY"); OUT.length = 0; const tst = await call(benv, "POST", "/v1/payments/checkouts", { ...co, order_id: "O-10" }, tb.key);
-  ok("[I5] Beta + وضع test: يمرّ إلى واجهة Chargily التجريبية فقط (السماح ليس مفرطاً)", tst[0] === 201 && OUT.length === 1 && OUT[0] === "https://pay.chargily.net/test/api/v2/checkouts", { st: tst[0], OUT });
-  OUT.length = 0; const inv = await adm(benv, ADM_B, "POST", "/admin/beta/invites", { note: "x", email: "someone@example.com" }); ok("[I5] إنشاء دعوة Beta لا يرسل بريداً/رسالة (لا اتصال صادر)", inv[0] === 201 && OUT.length === 0, { OUT }); }
+  ok("[I5] (شاهد ضابط) Production بالتكامل الحيّ نفسه يصل لواجهة Chargily الحيّة (على stub) — فالرفض في Beta ناتج عن الحارس لا عن الاختبار", OUT.some((u) => u === "https://pay.chargily.net/api/v2/checkouts"), { OUT, st: ctl[0] });
+  const encTest = await Vault.fromEnv({ APP_ENCRYPTION_KEY: KEY_B }).encrypt({ secret_key: "test_sk_FAKE_TEST_ONLY" }, `pf:${tb.id}:chargily`); BETA.db.prepare("UPDATE pf_integrations SET secret_enc=? WHERE tenant_id=? AND provider='chargily'").run(encTest, tb.id);
+  OUT.length = 0; const tst = await call(benv, "POST", "/v1/payments/checkouts", { ...co, order_id: "O-10" }, tb.key);
+  ok("[I5] (3) Beta + وضع test بمفتاح test_: يمرّ إلى واجهة Chargily التجريبية فقط (السماح ليس مفرطاً)", tst[0] === 201 && OUT.length === 1 && OUT[0] === "https://pay.chargily.net/test/api/v2/checkouts", { st: tst[0], OUT });
+  OUT.length = 0; const inv = await adm(benv, ADM_B, "POST", "/admin/beta/invites", { note: "x", email: "someone@example.com" }); ok("[I5] إنشاء دعوة Beta لا يرسل بريداً/رسالة (لا اتصال صادر)", inv[0] === 201 && OUT.length === 0, { OUT });
+  { const dep = (envx) => call(envx, "POST", "/v1/wallet/deposits", { amount: 1000, method: "chargily", payment_method: "edahabia", return_url: "https://shop.example/back" }, tb.key);
+    OUT.length = 0; const w1 = await dep({ ...benv, CHARGILY_SECRET_KEY: "sk_not_a_test_prefix_1234567890" });
+    ok("[I5] (محفظة) مفتاح منصة Chargily بلا بادئة test_ في Beta ← 409 live_payments_forbidden قبل أي اتصال", w1[0] === 409 && w1[1].error?.code === "live_payments_forbidden" && OUT.length === 0, { st: w1[0], code: w1[1].error?.code, OUT });
+    OUT.length = 0; const w2 = await dep({ ...benv, CHARGILY_SECRET_KEY: "test_sk_platform_wallet_FAKE" });
+    ok("[I5] (محفظة) مفتاح test_ ← يصل لواجهة Chargily التجريبية فقط", OUT.length === 1 && OUT[0] === "https://pay.chargily.net/test/api/v2/checkouts", { st: w2[0], OUT }); }
+}
 /* I6: webhooks الصادرة: لا تصل لمضيف خارجي ولا للإنتاج */
 { const tb = await tenant(benv, ADM_B, "Beta hooks"); const mkEp = async (url) => { const [c, j] = await call(benv, "POST", "/v1/hooks/endpoints", { url, events: ["platform.ping"] }, tb.key); if (c === 201) await call(benv, "POST", `/v1/hooks/endpoints/${j.id}/test`, null, tb.key); return c; };
   const c1 = await mkEp("https://example.com/hook"), c2 = await mkEp("https://api.alyssumhub.fyi/admin/events"); const blocked0 = (await call(benv, "GET", "/health"))[1].egress_blocked; OUT.length = 0;

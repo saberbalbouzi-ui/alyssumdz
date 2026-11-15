@@ -1,0 +1,429 @@
+{
+  "version": 1,
+  "environment": "beta",
+  "_note": "قائمة موارد Beta وأسماء الأسرار (بلا أي قيمة سرّية). المصدر الذي يُولَّد منه platform/env/beta.env.example ويتحقق منه scripts/test-beta-resources.js. 'approval' = إنشاء المورد يتطلب موافقتك الصريحة؛ 'status' = حالته اليوم.",
+  "decisions_pending": [
+    {
+      "id": "D1",
+      "decision": "حساب Cloudflare: مشترك مع Production أم مستقل لـBeta",
+      "recommendation": "حساب مستقل (رمز D1/Workers على مستوى الحساب لا يمكن حصره بقاعدة واحدة؛ رمز Beta على حساب مشترك يستطيع نظرياً لمس قواعد Production)"
+    },
+    {
+      "id": "D2",
+      "decision": "منطقة DNS لـbeta.alyssumdz.com: هل alyssumdz.com على Cloudflare؟ (لا يُعرف من المستودع)",
+      "recommendation": "إن لم تكن على Cloudflare فاستعمل نطاقاً فرعياً مفوَّضاً أو pages.dev مؤقتاً"
+    },
+    {
+      "id": "D3",
+      "decision": "بريد مدير Beta (غير بريد المالك الإنتاجي) وكلمة مروره تُدخَل مباشرة في لوحة Supabase/GitHub Secrets",
+      "recommendation": "بريد مخصص مثل beta-admin@<نطاقك>"
+    },
+    {
+      "id": "D4",
+      "decision": "منطقة (Region) وخطة مشروع Supabase",
+      "recommendation": "منطقة أوروبية قريبة؛ الخطة المجانية تكفي للاختبار لكنها تتوقف عند الخمول"
+    },
+    {
+      "id": "D5",
+      "decision": "حسابا Chargily: حساب اختبار مستقل ومفتاح test_ مخصص لـBeta (لا مفتاح الإنتاج)",
+      "recommendation": "مفتاح test_sk_… جديد"
+    },
+    {
+      "id": "D6",
+      "decision": "حماية GitHub Environment 'beta': مراجعون مطلوبون وتقييد الفروع",
+      "recommendation": "مراجع واحد على الأقل (أنت) + فروع claude/* وmain فقط"
+    }
+  ],
+  "cloudflare": {
+    "api_token_scopes": {
+      "beta_deploy_token": {
+        "where": "جهازك/بيئة نشر خارج GitHub — لا يُوضع في GitHub",
+        "permissions": [
+          "Account: Workers Scripts: Edit",
+          "Account: D1: Edit",
+          "Account: Cloudflare Pages: Edit",
+          "Zone: Workers Routes: Edit (منطقة Beta فقط)",
+          "Account: Account Settings: Read"
+        ],
+        "excluded": [
+          "DNS: Edit (يُمنح لاحقاً بموافقة مستقلة وبنطاق المنطقة)",
+          "أي صلاحية على مناطق Production"
+        ]
+      },
+      "beta_test_token": {
+        "where": "GitHub Environment 'beta' (BETA_CF_API_TOKEN)",
+        "permissions": [
+          "Account: D1: Edit"
+        ],
+        "excluded": [
+          "Workers Scripts",
+          "Pages",
+          "DNS",
+          "Routes"
+        ],
+        "note": "اختبارات D1 البعيدة فقط. على حساب مشترك لا يمكن حصره بقاعدة واحدة (D1)"
+      }
+    },
+    "resources": [
+      {
+        "id": "cf-d1-api",
+        "type": "d1_database",
+        "name": "alyssum-platform-api-beta",
+        "purpose": "قاعدة منصة API لـBeta",
+        "created_by": "node platform/api/tools/deploy.mjs --env beta db",
+        "approval": true,
+        "status": "NOT CREATED"
+      },
+      {
+        "id": "cf-d1-gateway",
+        "type": "d1_database",
+        "name": "alyssum-shipping-gateway-beta",
+        "purpose": "قاعدة بوابة الشحن لـBeta",
+        "created_by": "node platform/gateway/tools/deploy.mjs --env beta db",
+        "approval": true,
+        "status": "NOT CREATED"
+      },
+      {
+        "id": "cf-worker-api",
+        "type": "worker",
+        "name": "alyssum-platform-api-beta",
+        "purpose": "منصة API (Workers + cron كل دقيقة)",
+        "created_by": "deploy.mjs --env beta worker",
+        "approval": true,
+        "status": "NOT CREATED"
+      },
+      {
+        "id": "cf-worker-gateway",
+        "type": "worker",
+        "name": "alyssum-shipping-gateway-beta",
+        "purpose": "بوابة الشحن (ربط الخدمة PLATFORM بمنصة Beta)",
+        "created_by": "gateway deploy.mjs --env beta worker",
+        "approval": true,
+        "status": "NOT CREATED"
+      },
+      {
+        "id": "cf-route-api",
+        "type": "worker_route",
+        "name": "beta-api.alyssumhub.fyi/*",
+        "purpose": "مسار API Beta",
+        "created_by": "deploy.mjs --env beta route",
+        "approval": true,
+        "status": "NOT CREATED",
+        "depends_on": [
+          "D2",
+          "DNS record (approval)"
+        ]
+      },
+      {
+        "id": "cf-route-gateway",
+        "type": "worker_route",
+        "name": "beta-shipping.alyssumhub.fyi/*",
+        "purpose": "مسار بوابة الشحن Beta",
+        "created_by": "gateway deploy.mjs --env beta route",
+        "approval": true,
+        "status": "NOT CREATED",
+        "depends_on": [
+          "DNS record (approval)"
+        ]
+      },
+      {
+        "id": "cf-pages",
+        "type": "pages_project",
+        "name": "alyssum-beta-web",
+        "purpose": "الواجهة الساكنة (ناتج scripts/build-beta.py)",
+        "created_by": "npx wrangler pages deploy dist/beta --project-name alyssum-beta-web",
+        "approval": true,
+        "status": "NOT CREATED"
+      },
+      {
+        "id": "cf-pages-domain",
+        "type": "pages_custom_domain",
+        "name": "beta.alyssumdz.com",
+        "purpose": "نطاق الواجهة (+ شهادة Universal SSL)",
+        "created_by": "لوحة Cloudflare Pages ← Custom domains",
+        "approval": true,
+        "status": "NOT CREATED",
+        "depends_on": [
+          "D2"
+        ]
+      },
+      {
+        "id": "cf-dns",
+        "type": "dns_records",
+        "name": "beta / beta-api / beta-shipping",
+        "purpose": "سجلات CNAME لـBeta فقط",
+        "created_by": "يدوي (أنت) أو رمز DNS مؤقت بموافقة",
+        "approval": true,
+        "status": "NOT CREATED — لا نعدّل DNS"
+      }
+    ]
+  },
+  "supabase": {
+    "project": {
+      "name": "alyssum-beta",
+      "region": "قرار D4",
+      "status": "NOT CREATED",
+      "approval": true,
+      "must_not_equal": [
+        "qvdaiundlkfbmjlummni",
+        "ALYSSUMDZ",
+        "imaginia-staging"
+      ]
+    },
+    "auth": {
+      "public_signup": "OFF (إلزامي)",
+      "email_confirm": "Auto Confirm لمستخدم المدير فقط",
+      "site_url": "https://beta.alyssumdz.com",
+      "redirect_allow_list": [
+        "https://beta.alyssumdz.com/**"
+      ],
+      "users": [
+        "مدير Beta واحد (D3)"
+      ],
+      "jwt_expiry": "الافتراضي"
+    },
+    "storage_buckets": [
+      {
+        "id": "tenants",
+        "public": true,
+        "created_by": "platform/sql/schema.sql",
+        "note": "قراءة عامة؛ لا سياسة كتابة (service_role حصراً)"
+      },
+      {
+        "id": "editor",
+        "public": true,
+        "created_by": "platform/supabase/editor.sql",
+        "note": "قراءة عامة؛ الرفع للمجهول فقط بمنحة editor.upload_grants وأنواع صور محدّدة"
+      }
+    ],
+    "sql_apply_order": {
+      "_note": "الترتيب هو المُتحقَّق منه على PostgreSQL 16 محلي (platform/supabase/tests/local/run-local.sh). مستبعَد عمداً: apply-pending.sql (يكرر ويزرع بريد المالك). hub.sql مطلوب لأن hardening-v01 يعتمد على hub_my_sites لكن تُحذف منه بذرة مستودع Production (آخر 4 أسطر: hub_sites/hub_members). experts/ruqya/pixabay-cache مطلوبة لأن hardening-v01 يعتمد على جداولها — كل ذلك اكتُشف بتدريب PostgreSQL المحلي.",
+      "required": [
+        "platform/supabase/schema.sql",
+        "platform/sql/schema.sql",
+        "platform/supabase/roles.sql",
+        "platform/supabase/hub.sql",
+        "platform/supabase/editor.sql",
+        "platform/supabase/experts.sql",
+        "platform/supabase/ruqya.sql",
+        "platform/supabase/pixabay-cache.sql",
+        "platform/supabase/hardening-v01.sql",
+        "platform/supabase/hardening-v01b.sql"
+      ],
+      "optional": [],
+      "excluded": [
+        "platform/supabase/apply-pending.sql"
+      ],
+      "substitutions": {
+        "platform/sql/schema.sql": [
+          "البريد الإنتاجي للمالك ← BETA_ADMIN_EMAIL",
+          "اسم المالك ← 'Beta Admin'",
+          "اسم العميل التجريبي ← 'Beta Owner'"
+        ],
+        "platform/supabase/hub.sql": [
+          "حذف بذرة hub_sites (مستودع Production) وبذرة hub_members (من admins)"
+        ]
+      }
+    },
+    "edge_functions": {
+      "_note": "لا تُنشر وظائف في المرحلة الأولى. إن لزم نشرها: تُضبط أسرارها على مشروع Beta بقيم Beta/sandbox فقط، ولا تُنسخ دالة domains (رمز Cloudflare).",
+      "deploy_later_if_needed": [
+        "courier",
+        "ship-gateway",
+        "platform-proxy"
+      ],
+      "never_copy_secrets": [
+        "CF_API_TOKEN",
+        "GATEWAY_KEY (gk_live_)",
+        "PLATFORM_KEY (pk_live_)",
+        "RESEND_API_KEY",
+        "WA_TOKEN"
+      ]
+    },
+    "rules": [
+      "service_role لا يُخزَّن في GitHub ولا في أي ملف؛ يبقى داخل Supabase فقط",
+      "الاختبارات تستعمل جلسة المدير (Auth) ومفتاح PAT لاستعلامات SQL لا service_role"
+    ]
+  },
+  "chargily": {
+    "mode": "sandbox/test فقط",
+    "api_base": "https://pay.chargily.net/test/api/v2",
+    "secret_key": "test_sk_… مخصص لـBeta (D5)",
+    "webhook": "https://beta-api.alyssumhub.fyi/v1/payments/hook/<hook_id> يُسجَّل يدوياً في لوحة Chargily التجريبية بعد نشر Beta",
+    "status": "NOT CONFIGURED"
+  },
+  "github": {
+    "environment": "beta",
+    "workflow": ".github/workflows/beta-integration.yml (workflow_dispatch فقط، بلا نشر)",
+    "variables": [
+      {
+        "name": "BETA_CF_ACCOUNT_ID",
+        "kind": "variable",
+        "purpose": "معرّف حساب Cloudflare الخاص بـBeta",
+        "required_for": [
+          "d1"
+        ],
+        "enter": "GitHub ← Settings ← Environments ← beta ← Variables"
+      },
+      {
+        "name": "BETA_D1_NAME",
+        "kind": "variable",
+        "purpose": "اسم قاعدة D1 (يجب = alyssum-platform-api-beta)",
+        "required_for": [
+          "d1"
+        ],
+        "enter": "Environments ← beta ← Variables"
+      },
+      {
+        "name": "BETA_API_URL",
+        "kind": "variable",
+        "purpose": "عنوان منصة Beta بعد النشر (https://beta-api.alyssumhub.fyi)",
+        "required_for": [
+          "api-smoke"
+        ],
+        "enter": "Environments ← beta ← Variables"
+      },
+      {
+        "name": "BETA_SUPABASE_URL",
+        "kind": "variable",
+        "purpose": "https://<beta-ref>.supabase.co",
+        "required_for": [
+          "supabase"
+        ],
+        "enter": "Environments ← beta ← Variables"
+      },
+      {
+        "name": "BETA_SUPABASE_REF",
+        "kind": "variable",
+        "purpose": "مرجع مشروع Beta (يُقارَن بالرابط والسجل)",
+        "required_for": [
+          "supabase"
+        ],
+        "enter": "Environments ← beta ← Variables"
+      },
+      {
+        "name": "BETA_SUPABASE_ANON_KEY",
+        "kind": "public",
+        "purpose": "المفتاح العام (publishable/anon) — يصل المتصفح بطبيعته",
+        "required_for": [
+          "supabase",
+          "build"
+        ],
+        "enter": "Environments ← beta ← Variables"
+      },
+      {
+        "name": "BETA_ADMIN_EMAIL",
+        "kind": "variable",
+        "purpose": "بريد مدير Beta (D3؛ ≠ بريد المالك)",
+        "required_for": [
+          "supabase"
+        ],
+        "enter": "Environments ← beta ← Variables"
+      }
+    ],
+    "secrets": [
+      {
+        "name": "BETA_CF_API_TOKEN",
+        "kind": "secret",
+        "purpose": "رمز اختبار D1 البعيد (صلاحية D1:Edit فقط)",
+        "required_for": [
+          "d1"
+        ],
+        "enter": "gh secret set BETA_CF_API_TOKEN --env beta   (يُطلَب منك لصق القيمة محلياً؛ لا تكتبها في المحادثة)",
+        "rotate": "عند أي اشتباه + كل 90 يوماً"
+      },
+      {
+        "name": "BETA_SUPABASE_PAT",
+        "kind": "secret",
+        "purpose": "Personal Access Token لاستعلامات إدارة قاعدة Beta (فحص RLS/Storage). يُنشأ بحساب/منظمة لا تملك مشروع Production إن أمكن",
+        "required_for": [
+          "supabase"
+        ],
+        "enter": "gh secret set BETA_SUPABASE_PAT --env beta",
+        "rotate": "كل 90 يوماً"
+      },
+      {
+        "name": "BETA_ADMIN_PASSWORD",
+        "kind": "secret",
+        "purpose": "كلمة مرور مدير Beta (اختبار Auth)",
+        "required_for": [
+          "supabase"
+        ],
+        "enter": "gh secret set BETA_ADMIN_PASSWORD --env beta",
+        "rotate": "عند تغييرها"
+      },
+      {
+        "name": "BETA_API_ADMIN_TOKEN",
+        "kind": "secret",
+        "purpose": "ADMIN_TOKEN الخاص بمنصة Beta (يولّده deploy.mjs secrets؛ يُنسخ من الملف خارج المستودع)",
+        "required_for": [
+          "api-smoke"
+        ],
+        "enter": "gh secret set BETA_API_ADMIN_TOKEN --env beta < /secure/beta-secrets.json-extract (أو لصق يدوي)",
+        "rotate": "عند التدوير"
+      },
+      {
+        "name": "BETA_CHARGILY_TEST_SECRET_KEY",
+        "kind": "secret",
+        "purpose": "مفتاح Chargily التجريبي test_sk_… حصراً",
+        "required_for": [
+          "chargily"
+        ],
+        "enter": "gh secret set BETA_CHARGILY_TEST_SECRET_KEY --env beta",
+        "rotate": "عند التدوير",
+        "must_match": "^test_"
+      }
+    ]
+  },
+  "worker_secrets": {
+    "_note": "أسرار Workers Beta: يولّدها node platform/api/tools/deploy.mjs --env beta secrets وتُحفظ خارج المستودع (--save-secrets). لا تُدخَل في GitHub إلا ADMIN_TOKEN (للاختبارات).",
+    "api": [
+      "APP_ENCRYPTION_KEY",
+      "ADMIN_TOKEN",
+      "PLATFORM_SECRET"
+    ],
+    "gateway": [
+      "APP_ENCRYPTION_KEY",
+      "ADMIN_TOKEN",
+      "PLATFORM_ADMIN_TOKEN (= ADMIN_TOKEN لمنصة Beta، يدوي)"
+    ],
+    "optional_api": [
+      "CHARGILY_SECRET_KEY (test_ فقط، للمحفظة)",
+      "CHARGILY_WEBHOOK_SECRET",
+      "CHARGILY_MODE=test"
+    ]
+  },
+  "integration_tests": [
+    {
+      "id": "d1",
+      "file": "platform/api/test/integration/d1-beta.integration.mjs",
+      "requires": [
+        "BETA_CF_ACCOUNT_ID",
+        "BETA_CF_API_TOKEN",
+        "BETA_D1_NAME"
+      ],
+      "local_rehearsal": "--local (miniflare)"
+    },
+    {
+      "id": "supabase",
+      "file": "platform/supabase/tests/beta/beta-supabase.integration.mjs",
+      "requires": [
+        "BETA_SUPABASE_URL",
+        "BETA_SUPABASE_REF",
+        "BETA_SUPABASE_ANON_KEY",
+        "BETA_SUPABASE_PAT",
+        "BETA_ADMIN_EMAIL",
+        "BETA_ADMIN_PASSWORD"
+      ],
+      "local_rehearsal": "--selfcheck (الحراسة) + scripts/test-supabase-beta.js (PostgreSQL محلي)"
+    },
+    {
+      "id": "chargily",
+      "file": "platform/api/test/integration/chargily-sandbox.integration.mjs",
+      "requires": [
+        "BETA_CHARGILY_TEST_SECRET_KEY"
+      ],
+      "local_rehearsal": "--stub"
+    }
+  ]
+}

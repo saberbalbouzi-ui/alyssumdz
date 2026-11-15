@@ -18,7 +18,10 @@ export default {
         "email": "live",
         "carriers": "live"
       },
-      "egress": null
+      "egress": null,
+      "pages_project": null,
+      "supabase_project_name": "ALYSSUMDZ",
+      "github_environment": null
     },
     "beta": {
       "label": "Beta",
@@ -43,7 +46,11 @@ export default {
           "cloudflare-dns.com/dns-query"
         ],
         "note": "قائمة سماح صارمة؛ كل ما عداها محجوب. الدفع: واجهة Chargily التجريبية فقط؛ وDNS-over-HTTPS لاستعلامات التحقق العام (بلا بيانات مستأجر)"
-      }
+      },
+      "pages_project": "alyssum-beta-web",
+      "supabase_project_name": "alyssum-beta",
+      "github_environment": "beta",
+      "chargily_api": "https://pay.chargily.net/test/api/v2"
     },
     "local": {
       "label": "Local Development",
@@ -64,7 +71,10 @@ export default {
       "egress": {
         "allow": [],
         "note": "لا اتصال خارجي افتراضياً"
-      }
+      },
+      "pages_project": null,
+      "supabase_project_name": null,
+      "github_environment": null
     }
   },
   "never_outside_production": {
@@ -95,6 +105,10 @@ export default {
       "saber.balbouzi@gmail.com",
       "saberbalbouzi",
       "AKfycb"
+    ],
+    "other_project_names": [
+      "ALYSSUMDZ",
+      "imaginia-staging"
     ]
   }
 };

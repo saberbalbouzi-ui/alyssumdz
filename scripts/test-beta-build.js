@@ -34,6 +34,7 @@ try {
   ok("[B5] لا أنماط أسرار (مفاتيح حيّة/خاصة/توكنات/JWT service_role) في ملفات المتصفح بالناتج", sec.length === 0, sec.slice(0, 5));
   /* الفهرسة والنطاق */
   ok("[B6] لا CNAME ولا sitemap؛ robots.txt = Disallow الكل", !fs.existsSync(path.join(O, "CNAME")) && !fs.existsSync(path.join(O, "sitemap.xml")) && /Disallow: \/\s*$/.test(fs.readFileSync(path.join(O, "robots.txt"), "utf8")));
+  { const h = fs.existsSync(path.join(O, "_headers")) ? fs.readFileSync(path.join(O, "_headers"), "utf8") : ""; ok("[B6] _headers (Pages): X-Robots-Tag noindex على كل المسارات + nosniff + عدم تخزين version/beta-build", /^\/\*\n(?:  .*\n)*?  X-Robots-Tag: noindex, nofollow/m.test(h) && /X-Content-Type-Options: nosniff/.test(h) && /\/version\.json\n  Cache-Control: no-store/.test(h) && /\/beta-build\.json\n  Cache-Control: no-store/.test(h) && !/Content-Security-Policy/i.test(h), h.slice(0, 120)); }
   const htmls = files.filter((f) => f.endsWith(".html")), noidx = htmls.filter((f) => !/<meta name="robots" content="noindex,nofollow">/i.test(fs.readFileSync(f, "utf8")));
   ok("[B6] كل صفحة HTML (" + htmls.length + ") تحمل noindex,nofollow", noidx.length === 0, noidx.slice(0, 3));
   const nb = htmls.filter((f) => !/beta-banner\.js/.test(fs.readFileSync(f, "utf8")) && fs.readFileSync(f, "utf8").includes("</body>")); ok("[B7] شريط Beta محقون في كل صفحة تحوي body", nb.length === 0 && fs.existsSync(path.join(O, "assets/js/beta-banner.js")), nb.slice(0, 3));

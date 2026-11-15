@@ -65,7 +65,7 @@ jobs:
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node --no-warnings platform/gateway/test/beta-boot.test.mjs
           node scripts/test-shipagg.js
-          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership idem-prune idem-review envguard beta-isolation beta-module; do node --no-warnings platform/api/test/$t.test.mjs; done
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments payments-12c payments-currency sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet wallet-currency deposits agency appstore logistics digital-vault boundaries hardening reservations suppliers marketplace isolation isolation-fuzz orders-concurrency-isolation orders-idempotency orders-idempotency-concurrency idempotency-claim-ownership idem-prune idem-review envguard beta-isolation beta-module migrations; do node --no-warnings platform/api/test/$t.test.mjs; done
       - name: عزل Beta عن Production (سجل البيئات، النشر، الـworkflows، بناء Beta الساكن)
         run: |
           node platform/env/sync.mjs --check
@@ -73,12 +73,18 @@ jobs:
           python3 -c "import yaml" 2>/dev/null || pip install --user pyyaml
           python3 scripts/test-workflow-policy.py
           node scripts/test-beta-build.js
+          node scripts/test-beta-resources.js
+      - name: Supabase Beta — حزمة SQL + حراسات + تدريب PostgreSQL محلي (ليس Supabase الحقيقي)
+        run: |
+          export PGBIN=$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)
+          echo "PGBIN=$PGBIN"; node scripts/test-supabase-beta.js
       - name: pf_idem على محرك D1 المحلي (workerd/miniflare — ليس D1 البعيد)
         run: |
           mkdir -p /tmp/mf && cd /tmp/mf && npm init -y >/dev/null
           ok=0; for i in 1 2 3; do npm i miniflare@4 >/dev/null 2>&1 && ok=1 && break; echo "::warning::فشل تثبيت miniflare (محاولة $i)"; sleep $((i*10)); done
           [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت miniflare (إخفاق بيئة لا اختبار)"; exit 1; }
           cd "$GITHUB_WORKSPACE" && MF_DIR=/tmp/mf N=20000 node platform/api/test/d1/idem-d1-local.mjs
+          MF_DIR=/tmp/mf node platform/api/test/integration/d1-beta.integration.mjs --local
 
   ui:
     name: اختبار اللوحة في متصفح حقيقي

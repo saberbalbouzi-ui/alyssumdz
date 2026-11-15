@@ -86,6 +86,8 @@ for f in OUT.rglob("*.html"):
         t = t[:i] + f'<script src="{rel}" defer></script>' + t[i:]
     if t != o: f.write_text(t, encoding="utf-8"); n_html += 1
 (OUT / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+# ترويسات Cloudflare Pages (ملف _headers): منع الفهرسة على مستوى HTTP أيضاً (تشمل *.pages.dev)، وعدم تخزين ملفات الإصدار، وترويسات أمان أساسية. لا CSP هنا عمداً (لم تُجرَّب على اللوحة).
+(OUT / "_headers").write_text("/*\n  X-Robots-Tag: noindex, nofollow\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  X-Frame-Options: SAMEORIGIN\n/version.json\n  Cache-Control: no-store\n/beta-build.json\n  Cache-Control: no-store\n/sw.js\n  Cache-Control: no-cache\n", encoding="utf-8")
 
 # ── 4) هوية البناء
 def sh(*cmd):

@@ -27,8 +27,14 @@ node scripts/test-beta-deploy.js && python3 scripts/test-workflow-policy.py && n
 
 ## 2) 🟡 مشروع Supabase لـBeta (قاعدة المتجر/الدخول)
 1. أنشئ المشروع من لوحة Supabase (أو بإذنك عبر الأداة) واحفظ `<beta-ref>` والمفتاح العام. عطّل **Auth public sign-up** يدوياً.
-2. طبّق المخطط: `SUPABASE_PAT=<رمز> ./scripts/setup-supabase.sh <beta-ref> <بريد-مدير-beta>` (يطبّق `schema.sql` فقط). **بريد مدير Beta غير بريد المالك.**
-3. بقية ملفات SQL تُطبَّق يدوياً بالترتيب الموثَّق في `platform/supabase/README.md` (`hub.sql`, `roles.sql`, `hardening-v01*.sql`, `editor.sql`, …). **لا تطبّق `apply-pending.sql` ولا `platform/sql/schema.sql` كما هما:** يزرعان بريد المالك كمدير؛ استبدل البريد في نسخة مؤقتة خارج المستودع. *(الترتيب الدقيق لم يُجرَّب — NOT TESTED.)*
+2. طبّق كل ملفات SQL **بأداة واحدة مُتحقَّق منها** (ترتيب مُجرَّب على PostgreSQL 16 محلي، بذور مالك Production مستبدلة ببريد Beta، `apply-pending.sql` مستبعَد، بلا `service_role`):
+   ```bash
+   node scripts/supabase-beta-apply.mjs --dry-run                       # يبني الحزمة ويفحصها (بلا شبكة)
+   BETA_SUPABASE_REF=<beta-ref> BETA_SUPABASE_PAT=<رمز> BETA_ADMIN_EMAIL=<بريد-beta> \
+     node scripts/supabase-beta-apply.mjs --apply --confirm-ref <beta-ref>
+   ```
+   تتوقف الأداة قبل أي كتابة إن: المرجع = Production/مشروع محمي، أو `--confirm-ref` لا يطابق، أو اسم المشروع المُسترجَع ≠ `alyssum-beta`، أو بريد المدير = بريد المالك. **أدخل PAT محلياً كمتغير بيئة (لا في المحادثة)**. بريد مدير Beta غير بريد المالك.
+3. بعد التطبيق شغّل اختبار التكامل: `node platform/supabase/tests/beta/beta-supabase.integration.mjs --require` (Auth + RLS + Storage؛ راجع `docs/BETA-INTEGRATION-READINESS.md`).
 4. أسرار Edge Functions تُضبط **على مشروع Beta** (قيم Beta فقط): `supabase secrets set … --project-ref <beta-ref>`. لا تنسخ `CF_API_TOKEN` (دالة `domains`) ولا `GATEWAY_KEY`/`PLATFORM_KEY` الحيّة.
 **تحقق:** `curl -s https://<beta-ref>.supabase.co/rest/v1/ -H "apikey: <beta-publishable>"` يردّ؛ ولا يوجد أي صف للإنتاج (`select count(*) from orders` = 0).
 **تراجع:** احذف مشروع Beta (لا أثر على Production).
@@ -46,6 +52,9 @@ BETA_SUPABASE_URL=https://<beta-ref>.supabase.co BETA_SUPABASE_ANON_KEY=<beta-pu
 export CF_ACCOUNT_ID=<id> CF_ZONE_ID=<zone> CF_API_TOKEN=<رمز-Beta>      # من بيئتك لا من الملفات
 node platform/api/tools/deploy.mjs --env beta --dry-run all                # يطبع الخطة بلا شبكة: راجع الأسماء
 node platform/api/tools/deploy.mjs --env beta db                           # D1 + المخطط + هوية القاعدة (beta)
+node platform/api/tools/d1-migrate.mjs --env beta --status             # الهجرات (platform/api/migrations): اقرأ الحالة أولاً (يتطلب CF_* أعلاه)
+node platform/api/tools/d1-migrate.mjs --env beta                      # يطبّق الناقص فقط؛ يرفض غير Beta، ويتحقق من pf_meta وchecksum كل هجرة
+node platform/api/test/integration/d1-beta.integration.mjs --require   # اختبار D1 البعيد (BETA_CF_ACCOUNT_ID/BETA_D1_NAME/BETA_CF_API_TOKEN)
 node platform/api/tools/deploy.mjs --env beta secrets --save-secrets /secure/beta-secrets.json   # أسرار جديدة لـBeta (الملف خارج المستودع)
 node platform/api/tools/deploy.mjs --env beta worker                       # الكود + ENVIRONMENT/GIT_SHA/APP_VERSION/SCHEMA_HASH + cron
 node platform/api/tools/deploy.mjs --env beta route                        # مسار beta-api.alyssumhub.fyi/* (🔴 يعتمد DNS)

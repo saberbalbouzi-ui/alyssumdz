@@ -42,7 +42,7 @@ async function boot(env) {
   const vars = {}; for (const [k, v] of Object.entries(env ?? {})) if (typeof v === "string") vars[k] = v;
   const g = validateEnvironment(REGISTRY, vars); if (g.errors.length) throw new Error("env_guard:" + g.errors.map((x) => x.code + (x.var ? "@" + x.var : "")).join(","));
   const nonProd = g.name !== "production";
-  const environment = nonProd ? { name: g.name, egressStats, egress: egressPolicy(REGISTRY, vars), version: vars.APP_VERSION || null, sha: vars.GIT_SHA || null, schemaHash: vars.SCHEMA_HASH || null } : null;
+  const environment = nonProd ? { name: g.name, egressStats, egress: egressPolicy(REGISTRY, vars), livePrefixes: REGISTRY.never_outside_production?.live_credential_prefixes ?? [], allowProviders: ["chargily", ...String(vars.BETA_ALLOW_PROVIDERS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean)], version: vars.APP_VERSION || null, sha: vars.GIT_SHA || null, schemaHash: vars.SCHEMA_HASH || null } : null;
   const app = build0(env, { environment, modules: nonProd ? [...MODULES, beta] : MODULES });
   const dbKey = env?.DB && typeof env.DB === "object" ? env.DB : null;
   if (!dbKey || identityOk.get(dbKey) !== g.name) { await checkIdentity(app.db, g.name, nonProd); if (dbKey) identityOk.set(dbKey, g.name); }
