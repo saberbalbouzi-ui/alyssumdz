@@ -1,7 +1,7 @@
 # سجل اختبارات المرحلة التالية
 
 **البيئة المحلية لكل ما يلي:** حاوية Linux (4 أنوية، 16GB)، Node (`/opt/node-tools`)، Chromium من `/opt/pw-browsers` (Playwright)، PHP محلي لمتجر معزول، **SwiftShader (WebGL برمجي)**، بيانات اصطناعية فقط. **النوع** = `محلي` (هذه الحاوية) / `CI` (GitHub Actions) / `تكامل حقيقي`. **لا اختبار هنا من نوع «تكامل حقيقي»** (لا D1/Chargily/Supabase/GPU/ميكروفون حقيقي).
-**SHA وقت التشغيل:** `ac88e69d` + تعديلات هذه المرحلة غير المُودَعة بعد (تُودَع محلياً بعد هذا السجل). **لم يُدفَع شيء ولم يُشغَّل CI على هذه التعديلات.**
+**SHA وقت التشغيل المحلي:** `ac88e69d` + تعديلات هذه المرحلة؛ أُودعت لاحقاً كـ`f91e5b37856b8d0699f052fec1397a6dd405d7d2` وشُغِّل عليها **CI على GitHub (التشغيل 4289) فنجحت مهامه الثلاث** (انظر القسم F). لا دمج ولا نشر.
 **الحالات:** `VERIFIED` أُثبت كما هو موصوف · `PARTIALLY VERIFIED` أُثبت جزئياً/محلياً فقط · `BLOCKED` لا بيئة · `NOT TESTED` لم يُشغَّل.
 
 ## A) اختبارات المهام الأربع (جديدة/معدّلة)
@@ -29,7 +29,7 @@
 | `phase12b-client.js` | 11 / 0 | <1ث | 0 | `VERIFIED` (محلي، vm + fetch وهمي) |
 | `phase12b1-client.js` | 101 / 0 | 1ث | 0 | `VERIFIED` (محلي، vm) |
 | `phase12b1c-client.js` | 56 / 0 | <1ث | 0 | `VERIFIED` (محلي، vm؛ **ليس** PostgREST حقيقياً) |
-| **المجموع** | **781 PASS / 0 FAIL** | **1585ث (≈26.4د)** | 0 | job `spatial-os` في الـWorkflow: **`PARTIALLY VERIFIED`** (لم يُشغَّل على GitHub) |
+| **المجموع** | **781 PASS / 0 FAIL** | **1585ث (≈26.4د)** | 0 | job `spatial-os` على GitHub (التشغيل 4289): **`VERIFIED`** بأعداد مطابقة، 25.5د |
 
 ## C) انحدار Worker (Idempotency والمدفوعات/Webhook) — بعد تعديل `core.js`
 أمر كل منها: `node --no-warnings platform/api/test/<الاسم>.test.mjs` — كلها **ناجحة، 0 فاشل**، محلي node:sqlite (**ليس D1**)، الحالة `PARTIALLY VERIFIED`:
@@ -55,10 +55,19 @@
 | البند | الحالة | السبب |
 |---|---|---|
 | بقية خطوات job المتصفح (saas-wallet/-e2e، agency، speed، appstore×3، digital-ui، kind، assets، vgen، vad، pagerater، edition/-live، barcode، pack3d، mockup، boxdesigner/profiles/3d/studio، fashion، tryon-shopper، upsell-admin/-follow) واختبارات PHP (`test-gateway.php`، وحدة الشحن) | `PARTIALLY VERIFIED` | نجحت في CI التشغيل 4266 عند `ac88e69d`؛ **لم أُعدها على الشجرة الجديدة** ولم يتغير `assets/` ولا الشيفرة التي تختبرها؛ لم يُشغَّل CI على التعديلات |
-| CI على GitHub لهذه التعديلات (job `spatial-os`، خطوة `test-template-pack`، تسجيل `idem-prune`) | `NOT TESTED` | لا دفع بلا موافقة |
+| بقية الخطوات (كل ما في A–D غير المذكور في F) على مشغّل GitHub | — | انظر F: job المتصفح (42 خطوة) والمنطق نجحا على `f91e5b37` |
 | `phase11a` في CI | `NOT TESTED` | يحتاج Qwen+LoRA وPyTorch (~5.6GB) |
 | D1 الحقيقي (تنظيف pf_idem والفهرس والتزامن) | `BLOCKED` | لا D1 اختباري |
 | Chargily/Supabase الحقيقيان | `BLOCKED` | لا بيئات اختبارية |
 | WebGL على GPU حقيقي، ميكروفون/STT/TTS حقيقي | `NOT TESTED` | SwiftShader وجهاز وهمي |
 | WebKit / Firefox / Safari | `NOT TESTED` | غير مثبتة |
 | تثبيت حزمة github فعلياً عند عميل (`setup-supabase.sh`) | `NOT TESTED` | يحتاج مشروع Supabase اختباري |
+
+
+## F) نتيجة CI على GitHub Actions — التشغيل 4289 (`f91e5b37856b8d0699f052fec1397a6dd405d7d2`، push على الفرع)
+| Job | النتيجة | المدة | ملاحظات |
+|---|---|---|---|
+| اختبارات المنطق (بلا متصفح) | `VERIFIED` نجح (كل الخطوات، منها E-07 وE-10 `test-template-pack` 7ث وWorker وبوابة الشحن) | ~50ث | `idem-prune` ضمن حلقة Worker |
+| اختبار اللوحة في متصفح حقيقي | `VERIFIED` نجح (42 خطوة، `test-hand` 5د16ث) | ~13د | Chromium 153 |
+| Spatial OS (الجديد) | `VERIFIED` نجح: nlu 75 · viewports 66 · run 145 · phase9 95 · phase10 136 · phase11 96 · 12b 11 · 12b1 101 · 12b1c 56 = **781 / 0** | 25.5د | المدد: 1/42/293/475/387/331/0/1/0 ث؛ artifact `spatial-os-logs` رُفع |
+**قيود صريحة:** تشغيل واحد (لا إثبات ثبات)؛ أعداد المنطق والمتصفح استُنتجت من حالة الخطوات (نجاح/فشل) لا من قراءة سجل كل خطوة؛ أعداد Spatial OS قُرئت من سجل الخطوة. تنظيف `pf_idem` يُختبر في CI على SQLite لا D1. لا يعني هذا جاهزية للإنتاج.
