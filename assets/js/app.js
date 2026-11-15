@@ -14,14 +14,18 @@ function shipBlocked(w, commune, type){
   if(w.xw) return "عذراً، لا يتوفر التوصيل إلى ولاية " + w.name + " حالياً";
   const m = w.xc && commune ? w.xc[commune] : "";
   if(m === "all") return "عذراً، لا يتوفر التوصيل إلى بلدية " + commune + " حالياً";
-  if(m === "home" && type !== "stop") return "التوصيل للمنزل غير متاح في بلدية " + commune + ((w.desks||[]).some(d=>d.commune===commune) ? " — اختر التوصيل إلى مكتب Stop Desk" : "");
+  if(m === "home" && type !== "stop") return "التوصيل للمنزل غير متاح في بلدية " + commune + (shipDesks(w, null).some(d=>d.commune===commune) ? " — اختر التوصيل إلى مكتب Stop Desk" : "");
   return "";
 }
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
 /* __OCSC: تكاليف الشحن لنموذج الطلب المضمَّن في صفحة هبوط (oc.sc): "" = الشركة الافتراضية، "zones" = مناطق التوصيل؛ null = حسب إعداد المنتج */
 let __OCSC = null, __OCPF = null; const pshipCo = p => __OCSC !== null ? __OCSC : (p && p.shipCo);
-let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
+let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;
+/* مكاتب Stop Desk: تُعرض مكاتب شركة التوصيل الافتراضية (أو شركة المنتج) فقط؛ المكتب بلا وسم شركة (قديم) يبقى ظاهراً. وسم الشركة: d.co (يكتبه تحميل المراكز في اللوحة) أو «[Yalidine]/[EasyAndSpeed]» في اسم مراكز ياليدين */
+let __SHIPDK = "";
+const deskCo = d => (d && d.co) || (/\[(?:Yalidine|EasyAndSpeed)\]\s*$/i.test(String((d && d.name) || "")) ? "yalidine" : "");
+const shipDesks = (w, p) => { const all = (w && w.desks) ? w.desks : [], k = (typeof pshipCo === "function" && pshipCo(p)) || __SHIPDK; return k ? all.filter(d => { const c = deskCo(d); return !c || c === k; }) : all; };     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
 /* بلديات لا توصّل إليها شركة التوصيل الافتراضية (مثل تبلبالة عند ياليدين): تُعلَّم «غير متاح» بنفس آلية الاستثناءات w.xc */
 function applyShipNd(nd, def){
   if(!nd || def !== "yalidine" || typeof WILAYAS === "undefined") return;
@@ -39,7 +43,7 @@ function applyShipList(cos, def){
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPNOSTOP = !!j.noStop; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPNOSTOP || __SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPDK = j.dk || ""; __SHIPNOSTOP = !!j.noStop; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPNOSTOP || __SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
@@ -1309,7 +1313,7 @@ function initProduct(slug){
   function setDesks(w){
     if(!deskSel) return;
     const commune = communeSel ? communeSel.value : "";
-    const allDesks = (w && w.desks) ? w.desks : [];
+    const allDesks = shipDesks(w, typeof p !== "undefined" ? p : null);
     const desks = commune ? allDesks.filter(d=>d.commune===commune) : allDesks;
     deskSel.innerHTML = '<option value="">— اختر أقرب مكتب —</option>';
     desks.forEach(d=>{
@@ -1717,7 +1721,7 @@ function fillCartWilayas(){
   function updateCartStop(){
     const w = WILAYAS.find(x=>x.id==sel.value);
     const commune = cSel ? cSel.value : "";
-    const allDesks = (w && w.desks) ? w.desks : [];
+    const allDesks = shipDesks(w, null);
     const hasDesk = (commune ? allDesks.filter(d=>d.commune===commune) : allDesks).length > 0;
     document.querySelectorAll('input[name="cdtype"]').forEach(r=>{
       if(r.value === "stop"){
