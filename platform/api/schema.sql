@@ -307,3 +307,15 @@ CREATE TABLE IF NOT EXISTS pay_manual (
 );
 CREATE INDEX IF NOT EXISTS ix_pay_manual ON pay_manual (tenant_id, state, id);
 CREATE INDEX IF NOT EXISTS ix_pay_manual_order ON pay_manual (tenant_id, order_id);
+
+-- هوية البيئة وإصدار المخطط: pf_meta('environment') يُكتب عند تجهيز قاعدة غير الإنتاج (deploy db)؛ يرفض Worker الإقلاع إن لم تطابق ENVIRONMENT (يمنع ربط Worker Beta بقاعدة Production وبالعكس)
+CREATE TABLE IF NOT EXISTS pf_meta (k TEXT PRIMARY KEY, v TEXT NOT NULL, at TEXT NOT NULL);
+-- إدارة مستخدمي Beta (وحدة beta: لا تُحمَّل في الإنتاج)
+CREATE TABLE IF NOT EXISTS beta_invites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, code_hash TEXT NOT NULL UNIQUE, email_h TEXT NULL, note TEXT NOT NULL DEFAULT '', internal INTEGER NOT NULL DEFAULT 0,
+  max_uses INTEGER NOT NULL DEFAULT 1, uses INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0, expires_at INTEGER NULL, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS beta_feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, message TEXT NOT NULL, page TEXT NULL, contact TEXT NULL, tenant_id INTEGER NULL, version TEXT NULL, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS beta_usage (tenant_id INTEGER NOT NULL, day TEXT NOT NULL, requests INTEGER NOT NULL DEFAULT 0, orders INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, day));

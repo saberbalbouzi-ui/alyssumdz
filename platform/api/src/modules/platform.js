@@ -39,6 +39,13 @@ export function platformModule(providers) {
       r.put("/v1/integrations/:provider", { scope: "integrations:write", summary: "ضبط مزوّد: config علني + secrets مشفّرة (لا تُعرض بعد الحفظ)" }, async (req) => {
         const prov = req.params.provider; if (!providers.includes(prov)) throw new HttpError(400, "unknown_provider", "مزوّد غير مدعوم", { provider: providers });
         const b = req.json(), cfg = b.config && typeof b.config === "object" && !Array.isArray(b.config) ? b.config : {}, hasNew = b.secrets && typeof b.secrets === "object" && Object.keys(b.secrets).length;
+        /* بيئة غير الإنتاج (Beta/Local): لا تُخزَّن بيانات اعتماد حيّة ولا مزوّد خارج القائمة المسموحة (chargily الاختبار فقط افتراضياً) — حتى لا تتحول Beta إلى مسار مالي/رسائل حقيقي بخطأ إدخال */
+        const E = ctx.environment; if (E && E.name !== "production") {
+          if (!(E.allowProviders ?? []).includes(prov)) throw new HttpError(403, "provider_not_allowed_in_beta", `المزوّد ${prov} غير مسموح في بيئة ${E.name} (المسموح: ${(E.allowProviders ?? []).join(", ") || "لا شيء"})`);
+          if (prov === "chargily" && b.config && String(cfg.mode ?? "test").toLowerCase() !== "test") throw new HttpError(400, "live_mode_forbidden", `وضع الدفع الحيّ ممنوع في ${E.name}: الوضع test فقط`);
+          for (const v of Object.values(b.secrets && typeof b.secrets === "object" ? b.secrets : {})) if ((E.livePrefixes ?? []).some((x) => String(v).toLowerCase().startsWith(x))) throw new HttpError(400, "live_credential_forbidden", `مفتاح حيّ مرفوض في ${E.name}`);
+          if (prov === "chargily" && hasNew && b.secrets.secret_key != null && !/^test_/i.test(String(b.secrets.secret_key))) throw new HttpError(400, "live_credential_forbidden", "مفتاح Chargily يجب أن يكون تجريبياً (test_…)");
+        }
         if (JSON.stringify(cfg).length > 8000) throw new HttpError(413, "payload_too_large", "config كبير");
         const ex = await ctx.integration(req.tenant.id, prov); let enc = null;
         if (hasNew || (ex && Object.keys(ex.secrets).length)) {
