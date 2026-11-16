@@ -49,7 +49,7 @@ export default {
       },
       "pages_project": "alyssum-beta-web",
       "supabase_project_name": "alyssum-beta",
-      "github_environment": "beta",
+      "github_environment": "alyssumdz-beta",
       "chargily_api": "https://pay.chargily.net/test/api/v2"
     },
     "local": {

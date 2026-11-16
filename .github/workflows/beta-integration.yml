@@ -1,5 +1,5 @@
 # اختبارات تكامل Beta الحقيقية — يدوية فقط (workflow_dispatch)، للقراءة والتحقق: لا نشر ولا DNS ولا تغيير إنتاجي ولا تطبيق هجرات.
-# تعمل داخل GitHub Environment «beta» (أسرارها BETA_* فقط؛ راجع platform/env/beta-resources.json و docs/BETA-INTEGRATION-READINESS.md).
+# تعمل داخل GitHub Environment «alyssumdz-beta» (أسرارها BETA_* فقط؛ راجع platform/env/beta-resources.json و docs/BETA-INTEGRATION-READINESS.md).
 # أي سرّ ناقص ← الاختبار يخرج SKIPPED (وبـrequire=true يفشل بالرمز 3 فلا يمرّ كنجاح). لا مفاتيح Production هنا ولا service_role.
 name: beta-integration
 on:
@@ -34,7 +34,7 @@ jobs:
     if: contains(inputs.suites, 'd1')
     needs: static
     runs-on: ubuntu-latest
-    environment: beta
+    environment: alyssumdz-beta
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,7 +50,7 @@ jobs:
     if: contains(inputs.suites, 'supabase')
     needs: static
     runs-on: ubuntu-latest
-    environment: beta
+    environment: alyssumdz-beta
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -69,7 +69,7 @@ jobs:
     if: contains(inputs.suites, 'chargily')
     needs: static
     runs-on: ubuntu-latest
-    environment: beta
+    environment: alyssumdz-beta
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

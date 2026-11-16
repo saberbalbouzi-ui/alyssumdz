@@ -30,7 +30,7 @@
     },
     {
       "id": "D6",
-      "decision": "حماية GitHub Environment 'beta': مراجعون مطلوبون وتقييد الفروع",
+      "decision": "حماية GitHub Environment 'alyssumdz-beta': مراجعون مطلوبون وتقييد الفروع",
       "recommendation": "مراجع واحد على الأقل (أنت) + فروع claude/* وmain فقط"
     }
   ],
@@ -51,7 +51,7 @@
         ]
       },
       "beta_test_token": {
-        "where": "GitHub Environment 'beta' (BETA_CF_API_TOKEN)",
+        "where": "GitHub Environment 'alyssumdz-beta' (BETA_CF_API_TOKEN)",
         "permissions": [
           "Account: D1: Edit"
         ],
@@ -329,7 +329,7 @@
         "required_for": [
           "d1"
         ],
-        "enter": "gh secret set BETA_CF_API_TOKEN --env beta   (يُطلَب منك لصق القيمة محلياً؛ لا تكتبها في المحادثة)",
+        "enter": "gh secret set BETA_CF_API_TOKEN --env alyssumdz-beta   (يُطلَب منك لصق القيمة محلياً؛ لا تكتبها في المحادثة)",
         "rotate": "عند أي اشتباه + كل 90 يوماً"
       },
       {
@@ -339,7 +339,7 @@
         "required_for": [
           "supabase"
         ],
-        "enter": "gh secret set BETA_SUPABASE_PAT --env beta",
+        "enter": "gh secret set BETA_SUPABASE_PAT --env alyssumdz-beta",
         "rotate": "كل 90 يوماً"
       },
       {
@@ -349,7 +349,7 @@
         "required_for": [
           "supabase"
         ],
-        "enter": "gh secret set BETA_ADMIN_PASSWORD --env beta",
+        "enter": "gh secret set BETA_ADMIN_PASSWORD --env alyssumdz-beta",
         "rotate": "عند تغييرها"
       },
       {
@@ -359,7 +359,7 @@
         "required_for": [
           "api-smoke"
         ],
-        "enter": "gh secret set BETA_API_ADMIN_TOKEN --env beta < /secure/beta-secrets.json-extract (أو لصق يدوي)",
+        "enter": "gh secret set BETA_API_ADMIN_TOKEN --env alyssumdz-beta < /secure/beta-secrets.json-extract (أو لصق يدوي)",
         "rotate": "عند التدوير"
       },
       {
@@ -369,7 +369,7 @@
         "required_for": [
           "chargily"
         ],
-        "enter": "gh secret set BETA_CHARGILY_TEST_SECRET_KEY --env beta",
+        "enter": "gh secret set BETA_CHARGILY_TEST_SECRET_KEY --env alyssumdz-beta",
         "rotate": "عند التدوير",
         "must_match": "^test_"
       }

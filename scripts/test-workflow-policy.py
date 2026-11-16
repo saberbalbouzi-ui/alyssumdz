@@ -5,8 +5,8 @@
  W2  لا workflow يذكر نطاق/موارد Beta (beta.alyssumdz.com، beta-api/beta-shipping.alyssumhub.fyi، *-beta، --env beta) إلا ملف يبدأ بـ beta- (غير موجود حالياً) — فلا يُنشَر Beta من مسار Production.
  W3  أي workflow بصلاحية contents: write لا يُشغَّل على push/pull_request إلا بـ push إلى main فقط (لا فروع Beta/تجارب تدفع تلقائياً للإنتاج).
  W4  tests.yml (الذي يعمل على كل فرع) بلا contents: write ولا أي سرّ (secrets.*) فلا يستطيع نشراً ولا دفعاً.
- W6  workflow من ملف beta-*: workflow_dispatch وحده، contents: read فقط، كل job بـenvironment: beta، لا أسرار إلا secrets.BETA_* (ولا GITHUB_TOKEN)، لا git push، لا نشر. (يُستثنى من W1 اسما BETA_CF_API_TOKEN/BETA_CF_ACCOUNT_ID فقط لاختبار D1 للقراءة)
- W7  لا workflow غير beta-* يستعمل environment: beta ولا secrets.BETA_*/vars.BETA_*  (تتحقق بدوال تُختبر سلباً على عيّنات مخالِفة أيضاً)
+ W6  workflow من ملف beta-*: workflow_dispatch وحده، contents: read فقط، كل job بـenvironment: alyssumdz-beta، لا أسرار إلا secrets.BETA_* (ولا GITHUB_TOKEN)، لا git push، لا نشر. (يُستثنى من W1 اسما BETA_CF_API_TOKEN/BETA_CF_ACCOUNT_ID فقط لاختبار D1 للقراءة)
+ W7  لا workflow غير beta-* يستعمل environment: alyssumdz-beta ولا secrets.BETA_*/vars.BETA_*  (تتحقق بدوال تُختبر سلباً على عيّنات مخالِفة أيضاً)
  W5  لا workflow يدفع إلى فرع غير الافتراضي بصيغة git push origin HEAD:<فرع> غير main/${GITHUB_REF_NAME} (لا دفع لفروع إنتاج بديلة).
 """
 import glob, os, re, sys, yaml
@@ -22,7 +22,7 @@ def _on(y):
 def beta_violations(name, text):
     """مخالفات W6/W7 لنص workflow (دالة نقية قابلة للاختبار السلبي)."""
     v = []; y = yaml.safe_load(text) or {}; on = _on(y); jobs = y.get("jobs") or {}; is_beta = name.startswith("beta-")
-    uses_beta = bool(re.search(r"environment:\s*beta|secrets\.BETA_|vars\.BETA_|\bBETA_[A-Z_]+", text))
+    uses_beta = bool(re.search(r"environment:\s*['\x22]?(?:alyssumdz-)?beta\b|secrets\.BETA_|vars\.BETA_|\bBETA_[A-Z_]+", text))
     if not is_beta:
         if uses_beta: v.append("W7: استعمال بيئة/أسرار Beta خارج ملف beta-*")
         return v
@@ -32,7 +32,7 @@ def beta_violations(name, text):
     if any(isinstance(p, dict) and (p.get("contents") == "write" or any(x == "write" for x in p.values())) for p in perms) or "write-all" in perms: v.append("W6: صلاحية كتابة")
     for k, j in jobs.items():
         uses_sec = re.search(r"secrets\.|vars\.", yaml.safe_dump(j)); env = j.get("environment")
-        if uses_sec and env != "beta": v.append(f"W6: job '{k}' يستعمل أسراراً بلا environment: beta")
+        if uses_sec and env != "alyssumdz-beta": v.append(f"W6: job '{k}' يستعمل أسراراً بلا environment: alyssumdz-beta")
     stripped = text
     for n in BETA_OK_NAMES: stripped = stripped.replace(n, "")
     if re.search(DEPLOY_RX, stripped): v.append("W6/W1: أداة/رمز نشر Cloudflare: " + ",".join(re.findall(DEPLOY_RX, stripped)[:3]))
@@ -71,12 +71,14 @@ for f in files:
         ok(f"[W5] {name}: دفع إلى الفرع الحالي/main/فرع التشغيل فقط", bool(allowed), m.group(0))
 
 # ── اختبارات سلبية: السياسة تلتقط المخالفات فعلاً (عيّنات اصطناعية، لا تُكتب في المستودع) ──
-GOOD = "on:\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n  a:\n    environment: beta\n    runs-on: ubuntu-latest\n    steps:\n      - run: node x.js\n        env: { T: '${{ secrets.BETA_X }}' }\n"
+GOOD = "on:\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n  a:\n    environment: alyssumdz-beta\n    runs-on: ubuntu-latest\n    steps:\n      - run: node x.js\n        env: { T: '${{ secrets.BETA_X }}' }\n"
 def bad(name, text, rx): vs = beta_violations(name, text); ok(f"[NEG] {rx[:40]} يُلتقط", any(re.search(rx, x) for x in vs), vs)
 ok("[NEG] عيّنة سليمة تمرّ", beta_violations("beta-x.yml", GOOD) == [], beta_violations("beta-x.yml", GOOD))
 bad("beta-x.yml", GOOD.replace("workflow_dispatch:", "push:\n    branches: ['**']"), r"workflow_dispatch فقط")
 bad("beta-x.yml", GOOD.replace("contents: read", "contents: write"), r"permissions|كتابة")
-bad("beta-x.yml", GOOD.replace("    environment: beta\n", ""), r"بلا environment")
+bad("beta-x.yml", GOOD.replace("    environment: alyssumdz-beta\n", ""), r"بلا environment")
+bad("deploy-x.yml", GOOD, r"W7")                       # بيئة alyssumdz-beta في workflow غير beta-* تُلتقط
+bad("deploy-x.yml", GOOD.replace("alyssumdz-beta", "beta"), r"W7")   # والاسم القديم أيضاً
 bad("beta-x.yml", GOOD.replace("BETA_X", "CF_API_TOKEN"), r"نشر Cloudflare|BETA_")
 bad("beta-x.yml", GOOD.replace("secrets.BETA_X", "secrets.PROD_KEY"), r"سرّ غير BETA_")
 bad("beta-x.yml", GOOD.replace("node x.js", "npx wrangler deploy"), r"نشر|دفع")

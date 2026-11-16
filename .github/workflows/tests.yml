@@ -78,6 +78,7 @@ jobs:
         run: |
           export PGBIN=$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)
           echo "PGBIN=$PGBIN"; node scripts/test-supabase-beta.js
+          node platform/supabase/tests/beta/beta-no-fallback.test.mjs
       - name: pf_idem على محرك D1 المحلي (workerd/miniflare — ليس D1 البعيد)
         run: |
           mkdir -p /tmp/mf && cd /tmp/mf && npm init -y >/dev/null

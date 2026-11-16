@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* اختبار تكامل Supabase **Beta** (Auth + Database/RLS + Storage). يعمل على مشروع Beta فقط؛ لم يُشغَّل على أي مشروع حقيقي بعد (المشروع لم يُنشأ) ← الحالة BLOCKED حتى تتوفر بيانات الاعتماد.
-   المتغيّرات (من بيئة الصدفة/GitHub Environment 'beta' فقط؛ لا تُكتب في ملفات ولا تُطبع):
+   المتغيّرات (من بيئة الصدفة/GitHub Environment 'alyssumdz-beta' فقط؛ لا تُكتب في ملفات ولا تُطبع):
      BETA_SUPABASE_URL=https://<ref>.supabase.co  BETA_SUPABASE_REF=<ref>  BETA_SUPABASE_ANON_KEY (عام)  BETA_SUPABASE_PAT  BETA_ADMIN_EMAIL  BETA_ADMIN_PASSWORD
    الأوضاع: --selfcheck (الحراسات فقط، بلا شبكة) | افتراضي: الاختبار الحقيقي — ناقص المتغيرات ← "RESULT: SKIPPED" (رمز 0؛ مع --require رمز 3). SKIPPED ≠ نجاح.
    الحراسات (قبل أي اتصال): المرجع ≠ مرجع Production/مشاريع محمية؛ الرابط = https://<ref>.supabase.co؛ مفتاح anon ليس service_role ولا sb_secret_ وإن كان JWT فـref/role يطابقان؛ بريد المدير ≠ هوية المالك؛ اسم المشروع المُسترجَع = alyssum-beta.
@@ -21,6 +21,7 @@ export function guard(env) {
   if (REG.environments.beta.supabase_ref && ref !== REG.environments.beta.supabase_ref) bad.push("BETA_SUPABASE_REF لا يطابق المرجع المسجَّل لـBeta في platform/env/environments.json");
   const m = /^https:\/\/([a-z0-9]{20})\.supabase\.co\/?$/.exec(url); if (!m) bad.push("BETA_SUPABASE_URL غير صالح (https://<ref>.supabase.co)"); else if (m[1] !== ref) bad.push("الرابط لا يطابق BETA_SUPABASE_REF");
   if (!key) bad.push("BETA_SUPABASE_ANON_KEY مفقود");
+  else if ((REG.never_outside_production.public_key_markers ?? []).some((k) => k && key.includes(k))) bad.push("BETA_SUPABASE_ANON_KEY هو المفتاح العام لمشروع Production — مرفوض");
   else if (/^sb_secret_/.test(key)) bad.push("المفتاح سرّي (sb_secret_) — يُسمح بالمفتاح العام فقط");
   else if (key.split(".").length === 3) { const p = b64(key.split(".")[1]); if (!p) bad.push("المفتاح JWT غير مقروء"); else { if (p.role !== "anon") bad.push(`دور المفتاح '${p.role}' ≠ anon (مرفوض: service_role وغيره)`); if (p.ref && p.ref !== ref) bad.push("مفتاح anon يخص مشروعاً آخر (ref لا يطابق)"); } }
   else if (!/^sb_publishable_/.test(key)) bad.push("صيغة المفتاح غير معروفة");
@@ -46,6 +47,7 @@ async function main() {
     ok("[G7] مفتاح anon بنفس المشروع مقبول", !guard({ ...good, BETA_SUPABASE_ANON_KEY: jwt({ role: "anon", ref }) }).length);
     ok("[G8] بريد مدير = هوية المالك مرفوض", has({ ...good, BETA_ADMIN_EMAIL: "saber.balbouzi@gmail.com" }, /هوية المالك/));
     ok("[G10] مرجع آخر غير المسجَّل لـBeta مرفوض", !REG.environments.beta.supabase_ref || has({ ...good, BETA_SUPABASE_REF: "zzzzzzzzzzzzzzzzzzzz", BETA_SUPABASE_URL: "https://zzzzzzzzzzzzzzzzzzzz.supabase.co" }, /المسجَّل/));
+    ok("[G11] المفتاح العام لمشروع Production مرفوض حتى مع رابط Beta", has({ ...good, BETA_SUPABASE_ANON_KEY: (REG.never_outside_production.public_key_markers ?? ["sb_publishable_PRODKEY"])[0] }, /Production/));
     ok("[G9] بلا PAT/كلمة مرور مرفوض", has({ ...good, BETA_SUPABASE_PAT: "" }, /PAT/) && has({ ...good, BETA_ADMIN_PASSWORD: "" }, /PASSWORD/));
     end(`${pass} pass / ${fail} fail (selfcheck — حراسات فقط، بلا شبكة)`, fail ? 1 : 0);
   }
@@ -56,7 +58,7 @@ async function main() {
   const mg = async (p, o = {}) => { const r = await fetch(MGMT + p, { ...o, headers: { Authorization: "Bearer " + E.BETA_SUPABASE_PAT, "Content-Type": "application/json" } }); return { status: r.status, body: await r.json().catch(() => null) }; };
   const sql = async (query) => { const r = await mg("/database/query", { method: "POST", body: JSON.stringify({ query }) }); if (r.status >= 300) throw new Error("sql HTTP " + r.status); return r.body; };
   const api = async (p, { token, method = "GET", body, headers = {} } = {}) => { const r = await fetch(URLB + p, { method, headers: { apikey: ANON, Authorization: "Bearer " + (token || ANON), "Content-Type": "application/json", ...headers }, body: body === undefined ? undefined : typeof body === "string" ? body : JSON.stringify(body) }); const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch { } return { status: r.status, json: j, text: t }; };
-  const PHONE = "0550990001"; let token = null;
+  const PHONE = "0550990001"; let token = null, probe = null;
   try {
     /* P: هوية المشروع قبل أي كتابة */
     const pj = await mg(""); ok("[P1] المشروع المُسترجَع اسمه = " + BETA_NAME + " وليس مشروعاً محمياً", pj.status === 200 && pj.body?.name === BETA_NAME && !PROTECTED_NAMES.has(pj.body?.name), { status: pj.status, name: pj.body?.name });
@@ -82,6 +84,15 @@ async function main() {
     const s1b = await api("/rest/v1/rpc/submit_order", { method: "POST", body: { p: pl } }); const id1 = typeof s1b.json === "string" ? s1b.json : null;
     ok("[S1] anon يرسل طلباً اصطناعياً فيُقبل (معرّف S######-XXXXXXXX)", /^S\d{6}-[0-9A-F]{8}$/.test(id1 || ""), { status: s1b.status, body: s1b.text?.slice(0, 120) });
     if (id1) { const s2 = await api("/rest/v1/rpc/submit_order", { method: "POST", body: { p: pl } }); ok("[S2] إعادة نفس المفتاح تعيد المعرّف نفسه (بلا طلب مكرر)", s2.json === id1 && +(await sql(`select count(*) n from public.orders where phone='${PHONE}'`))[0].n === 1, { status: s2.status }); }
+    /* RO: عزل الطلبات والمديرين عبر الجلسات (مدير Beta مقابل المجهول) */
+    if (token && id1) {
+      const ordA = await api(`/rest/v1/orders?select=phone&phone=eq.${PHONE}`, { token }), ordN = await api(`/rest/v1/orders?select=phone&phone=eq.${PHONE}`);
+      ok("[RO1] مدير Beta يقرأ الطلب الاصطناعي عبر جلسته (سياسة admin read orders)", ordA.status === 200 && Array.isArray(ordA.json) && ordA.json.length === 1, { status: ordA.status, n: Array.isArray(ordA.json) ? ordA.json.length : null });
+      ok("[RO2] المجهول لا يرى الطلب نفسه", ordN.status >= 400 || (Array.isArray(ordN.json) && ordN.json.length === 0), { status: ordN.status });
+      const allO = await api("/rest/v1/orders?select=id&limit=50", { token }); ok("[RO3] طلبات Beta تحوي الطلب الاصطناعي فقط (لا بيانات مستوردة من Production)", allO.status === 200 && Array.isArray(allO.json) && allO.json.length === 1, { status: allO.status, n: Array.isArray(allO.json) ? allO.json.length : null });
+      const adA = await api("/rest/v1/admins?select=email", { token }); ok("[RO4] جدول admins لا يُظهر عبر الـAPI غير مدير Beta (≤1 صف)", adA.status >= 400 || (Array.isArray(adA.json) && adA.json.length <= 1 && adA.json.every((r) => String(r.email).toLowerCase() === E.BETA_ADMIN_EMAIL.toLowerCase())), { status: adA.status, n: Array.isArray(adA.json) ? adA.json.length : null });
+      const saA = await api("/rest/v1/saas_admins?select=email", { token }); ok("[RO5] saas_admins مغلق حتى للمدير عبر الـAPI (يُدار من SQL فقط)", saA.status >= 400 || (Array.isArray(saA.json) && saA.json.length === 0), { status: saA.status });
+    } else ok("[RO] فحوص العزل بالجلسات لم تُجرَ (لا جلسة مدير أو لا طلب اصطناعي)", false, { token: !!token, id1: !!id1 });
     /* ST: Storage */
     const bk = await sql("select id, public from storage.buckets order by id"), ids = bk.map((b) => b.id); ok("[ST1] الحاويتان tenants وeditor موجودتان", ids.includes("tenants") && ids.includes("editor"), ids);
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==", "base64");
@@ -92,8 +103,18 @@ async function main() {
     const u3 = await up("editor", `${stamp}/c.png`); ok("[ST4] anon لا يرفع إلى editor بلا منحة رفع (editor.upload_grants)", u3.status >= 400, u3);
     const u4 = await up("editor", `${stamp}/d.txt`, null, "text/plain"); ok("[ST5] نوع غير مسموح (text/plain) مرفوض", u4.status >= 400, u4);
     const left = await sql(`select count(*) n from storage.objects where name like '${stamp}%'`); ok("[ST6] لا كائنات تُركت من محاولات الرفع المرفوضة", +left[0].n === 0, left);
+    /* ST7-9: دورة رفع/قراءة حقيقية في حاوية editor بمنحة صالحة (المنحة تُنشأ بـSQL على Beta، فلا حاجة لمفتاح المحرّر ولا service_role) */
+    probe = `projects/00000000-0000-4000-8000-000000000b3a/${stamp}.png`;
+    await sql(`insert into editor.upload_grants (path, project_id, expires_at) values ('${probe}', '00000000-0000-4000-8000-000000000b3a', now() + interval '10 minutes')`);
+    const g1 = await up("editor", probe); ok("[ST7] anon يرفع PNG إلى editor بمنحة صالحة", g1.status === 200, g1);
+    const rd = await fetch(`${URLB}/storage/v1/object/public/editor/${probe}`); const rb = Buffer.from(await rd.arrayBuffer());
+    ok("[ST8] قراءة الملف من Storage Beta عبر الرابط العام (نفس البايتات والنوع)", rd.status === 200 && /image\/png/.test(rd.headers.get("content-type") || "") && rb.equals(png), { status: rd.status, ct: rd.headers.get("content-type"), len: rb.length });
+    const g2 = await up("editor", probe); ok("[ST9] إعادة الرفع على المسار نفسه مرفوضة (لا استبدال)", g2.status >= 400, g2);
+    const rdT = await fetch(`${URLB}/storage/v1/object/public/tenants/${stamp}/none.png`); ok("[ST10] حاوية tenants عامة القراءة (الجواب 404 لملف غير موجود وليس 401/403)", rdT.status === 404 || rdT.status === 400, { status: rdT.status });
+    /* ملاحظة صدق: كتابة/قراءة كائن في tenants غير مجرَّبة (الكتابة service_role حصراً ولا نستعمله) */
   } catch (e) { ok("[X] استثناء غير متوقع: " + String(e.message).slice(0, 160), false); }
   finally {
+    if (probe) { try { await sql(`delete from editor.upload_grants where path='${probe}'`); const d = await sql(`set local storage.allow_delete_query = 'true'; delete from storage.objects where bucket_id='editor' and name='${probe}' returning 1`); console.log("تنظيف Storage: حُذف سجل", d.length, "كائن اختبار (قد يبقى بايت الملف اليتيم 70 بايتاً داخل Beta؛ لا يمكن حذفه دون service_role)"); } catch (e) { console.log("تنظيف Storage فشل:", String(e.message).slice(0, 80)); } }
     try { const d = await sql(`delete from public.orders where phone='${PHONE}' returning 1`); console.log("تنظيف: حُذف", d.length, "طلب اصطناعي"); } catch (e) { console.log("تنظيف فشل:", String(e.message).slice(0, 80)); }
   }
   end(`${pass} pass / ${fail} fail`, fail ? 1 : 0);
