@@ -1320,7 +1320,7 @@ function initProduct(slug){
     if(!deskSel) return;
     const commune = communeSel ? communeSel.value : "";
     const allDesks = shipDesks(w, typeof p !== "undefined" ? p : null);
-    const desks0 = commune ? allDesks.filter(d=>d.commune===commune) : allDesks, pk0 = typeof pshipCo === "function" ? pshipCo(typeof p !== "undefined" ? p : null) : "", desks = (!pk0 || pk0 === "zones" || pk0 === "free" || pk0 === "def") ? preferDesks(desks0) : desks0;      /* التفضيل للشركة الافتراضية فقط */
+    const desks0 = commune ? allDesks.filter(d=>d.commune===commune) : allDesks, pk0 = typeof pshipCo === "function" ? pshipCo(typeof p !== "undefined" ? p : null) : "", desks = ((!pk0 || pk0 === "zones" || pk0 === "free" || pk0 === "def") && /[?&]embed=1/.test(location.search)) ? preferDesks(desks0) : desks0;      /* «الأرخص أولاً» لنموذج صفحة الهبوط (الإطار المضمَّن embed=1) وللشركة الافتراضية فقط؛ صفحات المنتجات العادية واللوحة تعرض كل المكاتب */
     deskSel.innerHTML = '<option value="">— اختر أقرب مكتب —</option>';
     desks.forEach(d=>{
       const o = document.createElement("option");
