@@ -28,6 +28,7 @@ on:
       - 'platform/api/test/integration/**'
       - 'platform/gateway/test/beta-boot.test.mjs'
       - 'scripts/test-beta-deploy.js'
+      - 'scripts/test-beta-resources.js'
       - 'scripts/test-workflow-policy.py'
       - '.github/workflows/**'
   pull_request:
@@ -53,6 +54,7 @@ on:
       - 'platform/api/test/integration/**'
       - 'platform/gateway/test/beta-boot.test.mjs'
       - 'scripts/test-beta-deploy.js'
+      - 'scripts/test-beta-resources.js'
       - 'scripts/test-workflow-policy.py'
       - '.github/workflows/**'
   workflow_dispatch:
@@ -96,6 +98,7 @@ jobs:
           node --no-warnings platform/api/test/migrations.test.mjs
           node --no-warnings platform/gateway/test/beta-boot.test.mjs
           node scripts/test-beta-deploy.js
+          node scripts/test-beta-resources.js
       - name: D1 على محرك محلي (workerd/miniflare — ليس D1 البعيد)
         run: |
           mkdir -p /tmp/mf && cd /tmp/mf && npm init -y >/dev/null
