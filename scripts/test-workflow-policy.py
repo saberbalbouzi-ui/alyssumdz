@@ -6,6 +6,7 @@
  W3  أي workflow بصلاحية contents: write لا يُشغَّل على push/pull_request إلا بـ push إلى main فقط (لا فروع Beta/تجارب تدفع تلقائياً للإنتاج).
  W4  tests.yml (الذي يعمل على كل فرع) بلا contents: write ولا أي سرّ (secrets.*) فلا يستطيع نشراً ولا دفعاً.
  W6  workflow من ملف beta-*: workflow_dispatch وحده، contents: read فقط، كل job بـenvironment: alyssumdz-beta، لا أسرار إلا secrets.BETA_* (ولا GITHUB_TOKEN)، لا git push، لا نشر. (يُستثنى من W1 اسما BETA_CF_API_TOKEN/BETA_CF_ACCOUNT_ID فقط لاختبار D1 للقراءة)
+ W6s workflow من ملف beta-* **بلا بيئة ولا أسرار ولا vars** (صنف «ساكن»: اختبارات بلا شبكة/اعتماد): مشغّلاته ⊆ {push, pull_request, workflow_dispatch} وكل push/pull_request بـpaths محدَّدة، contents: read فقط، لا نشر/دفع/pull_request_target.
  W7  لا workflow غير beta-* يستعمل environment: alyssumdz-beta ولا secrets.BETA_*/vars.BETA_*  (تتحقق بدوال تُختبر سلباً على عيّنات مخالِفة أيضاً)
  W5  لا workflow يدفع إلى فرع غير الافتراضي بصيغة git push origin HEAD:<فرع> غير main/${GITHUB_REF_NAME} (لا دفع لفروع إنتاج بديلة).
 """
@@ -26,7 +27,13 @@ def beta_violations(name, text):
     if not is_beta:
         if uses_beta: v.append("W7: استعمال بيئة/أسرار Beta خارج ملف beta-*")
         return v
-    if set(on) != {"workflow_dispatch"}: v.append("W6: المشغّلات يجب أن تكون workflow_dispatch فقط: " + ",".join(map(str, on)))
+    manual = bool(re.search(r"secrets\.|vars\.|environment:", text))          # يستعمل بيئة/أسراراً ⇒ صنف التكامل الحقيقي (يدوي فقط)
+    if manual:
+        if set(on) != {"workflow_dispatch"}: v.append("W6: المشغّلات يجب أن تكون workflow_dispatch فقط: " + ",".join(map(str, on)))
+    else:                                                                       # صنف ساكن: يعمل تلقائياً لكن بلا أي اعتماد، ومحصور بمسارات
+        if not set(on) <= {"push", "pull_request", "workflow_dispatch"}: v.append("W6s: مشغّل غير مسموح للصنف الساكن: " + ",".join(map(str, set(on) - {"push", "pull_request", "workflow_dispatch"})))
+        for trig in ("push", "pull_request"):
+            if trig in on and not ((on[trig] or {}).get("paths")): v.append(f"W6s: {trig} بلا paths محدَّدة (يجب حصر التشغيل بمسارات Beta)")
     perms = [y.get("permissions")] + [j.get("permissions") for j in jobs.values()]
     if y.get("permissions") != {"contents": "read"}: v.append("W6: permissions العلوية يجب أن تكون contents: read فقط")
     if any(isinstance(p, dict) and (p.get("contents") == "write" or any(x == "write" for x in p.values())) for p in perms) or "write-all" in perms: v.append("W6: صلاحية كتابة")
@@ -57,7 +64,7 @@ for f in files:
         for n_ in BETA_OK_NAMES: scan = scan.replace(n_, "")
     ok(f"[W1] {name}: لا نشر Cloudflare/أسرار Cloudflare", not re.search(DEPLOY_RX, scan), re.findall(DEPLOY_RX, scan)[:3])
     bv = beta_violations(name, text)
-    ok(f"[W6/W7] {name}: " + ("سياسة Beta (يدوي، قراءة فقط، بيئة beta، أسرار BETA_ فقط)" if name.startswith("beta-") else "لا استعمال لبيئة/أسرار Beta"), not bv, bv)
+    ok(f"[W6/W7] {name}: " + ("سياسة Beta (ساكن: paths وبلا أسرار؛ أو تكامل: يدوي وبيئة alyssumdz-beta وأسرار BETA_ فقط)" if name.startswith("beta-") else "لا استعمال لبيئة/أسرار Beta"), not bv, bv)
     ok(f"[W2] {name}: لا ذكر لموارد Beta خارج ملف beta-*", name.startswith("beta-") or not re.search(r"beta\.alyssumdz\.com|beta-api\.|beta-shipping\.|-platform-api-beta|-gateway-beta|--env\s+beta", text), re.findall(r"beta[-.][a-z.]+", text)[:3])
     if writes:
         push = on.get("push") if isinstance(on, dict) else None
@@ -84,6 +91,16 @@ bad("beta-x.yml", GOOD.replace("secrets.BETA_X", "secrets.PROD_KEY"), r"سرّ �
 bad("beta-x.yml", GOOD.replace("node x.js", "npx wrangler deploy"), r"نشر|دفع")
 bad("beta-x.yml", GOOD.replace("node x.js", "git push origin HEAD:main"), r"دفع")
 bad("beta-x.yml", GOOD.replace("node x.js", "node platform/api/tools/deploy.mjs --env beta worker"), r"نشر Cloudflare")
+STATIC = "on:\n  push:\n    paths: ['platform/env/**']\n  pull_request:\n    paths: ['platform/env/**']\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - run: node x.js\n"
+ok("[NEG-S] عيّنة ساكنة سليمة (push/PR بـpaths، بلا أسرار) تمرّ", beta_violations("beta-static-x.yml", STATIC) == [], beta_violations("beta-static-x.yml", STATIC))
+bad("beta-static-x.yml", STATIC.replace("  push:\n    paths: ['platform/env/**']\n", "  push:\n"), r"push بلا paths")
+bad("beta-static-x.yml", STATIC.replace("  pull_request:\n    paths: ['platform/env/**']\n", "  pull_request:\n    branches: ['**']\n"), r"pull_request بلا paths")
+bad("beta-static-x.yml", STATIC.replace("  workflow_dispatch:\n", "  schedule:\n    - cron: '0 * * * *'\n"), r"مشغّل غير مسموح")
+bad("beta-static-x.yml", STATIC.replace("  workflow_dispatch:\n", "  pull_request_target:\n    paths: ['x']\n"), r"pull_request_target|مشغّل غير مسموح")
+bad("beta-static-x.yml", STATIC.replace("contents: read", "contents: write"), r"permissions|كتابة")
+bad("beta-static-x.yml", STATIC.replace("node x.js", "npx wrangler deploy"), r"نشر|دفع")
+bad("beta-static-x.yml", STATIC.replace("node x.js", "git push origin HEAD:main"), r"دفع")
+bad("beta-static-x.yml", STATIC.replace("      - run: node x.js\n", "      - run: node x.js\n        env: { T: '${{ secrets.BETA_X }}' }\n"), r"بلا environment|workflow_dispatch فقط")   # أي سرّ يحوّله إلى الصنف اليدوي الصارم
 bad("tests.yml", GOOD, r"W7")
 bad("release.yml", GOOD, r"W7")
 t = open(os.path.join(ROOT, ".github/workflows/tests.yml"), encoding="utf-8").read(); ty = yaml.safe_load(t)
