@@ -231,16 +231,16 @@ m_rail = C([T("الأقسام", 18, "#0f172a", "start", fw="900", **anim("fadeUp
            w=dm(18, 100), pad=dm([20, 18, 20, 18], [16, 14, 16, 14]), hm=False,
            fxs=[FX("قائمة الأقسام", "selector{background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,.06)}@media(max-width:1023px){selector{display:none}}")])
 m_hero = S([m_rail,
-            tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(239,68,68,.88)", dm(44, 100, 100), 300, "تسوّق الآن", "mkt_bags"),
+            tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(239,68,68,.88)", dm(44, 100, 100), 300, "تسوّق الآن", "mkt_bags", tag="h1"),
             tile("وصل حديثاً", "اكتشف أحدث العروض", "rgba(99,102,241,.5)", "rgba(6,182,212,.88)", dm(19, 100, 50), 300, "اكتشف", "fashion_shirts"),
             tile("توصيل مجاني", "فوق 6000 دج", "rgba(16,185,129,.5)", "rgba(21,128,61,.9)", dm(19, 100, 50), 300, "التفاصيل", "mkt_open")],
            pad=dm([24, 20, 16, 20], [16, 12, 12, 12]), gap={"d": 12, "m": 10}, fxs=LG("h"), cw={"d": 1240})
 m_chips = S([C([W("tbadges", items="إلكترونيات\nأزياء\nالمنزل والمطبخ\nجمال وعناية\nأطفال\nرياضة\nكتب\nسيارات", live=True, liveText="مستخدم متصل", lmin=120, lmax=480, cbg="#ffffff", cc="#0f172a", cbc="#e2e8f0", crad=dm(999), cfs=dm(15), gap=dm(10), jc="center", hd=True, **anim("fadeUp"))], w=100)],
             pad=dm([8, 20, 18, 20], [8, 12, 12, 12]), fxs=LG("c") + [FX("إخفاء الشريط على سطح المكتب", "@media(min-width:1024px){selector{display:none}}")])
 m_flash = S([C([W("heading", text="⚡ عروض فلاش", tag="h2", fs=dm(34, 24), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")),
-                W("progress", pl="تم بيع 82% من الكمية", pv=82, pc=ORG, pbg="#ffffff33", ph=dm(12), color="#ffffff", fxs=[barfx("#fde047", RED)], **anim("fadeUp", .7, .1)),
-                W("progress", pl="تم بيع 64% من الكمية", pv=64, pc=ORG, pbg="#ffffff33", ph=dm(12), color="#ffffff", fxs=[barfx(RED, "#fde047")], **anim("fadeUp", .7, .2))], w=dm(56, 100), va="center"),
-             C([T("ينتهي العرض خلال", 15, "#ffffffdd", "center"), W("countdown", mode="daily", cbg="#00000055", color="#fde047", fs=dm(34, 24), crad=dm(10), al={"d": "center"}, fxs=[cdglow(k, "#fde047")], **anim("zoomIn"))], w=dm(44, 100), va="center")],
+                W("progress", on=False, pl="تم بيع 82% من الكمية", pv=82, pc=ORG, pbg="#ffffff33", ph=dm(12), color="#ffffff", fxs=[barfx("#fde047", RED)], **anim("fadeUp", .7, .1)),
+                W("progress", on=False, pl="تم بيع 64% من الكمية", pv=64, pc=ORG, pbg="#ffffff33", ph=dm(12), color="#ffffff", fxs=[barfx(RED, "#fde047")], **anim("fadeUp", .7, .2))], w=dm(56, 100), va="center"),
+             C([W("countdown", mode="date", on=False, end="", cbg="#00000055", color="#fde047", fs=dm(34, 24), crad=dm(10), al={"d": "center"}, fxs=[cdglow(k, "#fde047")], **anim("zoomIn"))], w=dm(44, 100), va="center")],
             pad=dm([28, 32, 28, 32], [20, 16, 20, 16]), cw={"d": 1140}, mar=dm([8, 20, 0, 20], [8, 12, 0, 12]), rad=dm(18, 14), gap={"d": 26, "m": 12},
             fxs=[aurora(k + "fl", "#9a3412", "#f9731699", "#ef444488", "#facc1555", 8), FX("حدّ لامع", "selector{box-shadow:0 20px 60px rgba(249,115,22,.35)}")])
 m_prod = S([C([W("anchor", aid="products", aoff=dm(80)), *title("الأكثر مبيعاً", "اختيارات المتسوّقين", k, thm, thm["hfx"]("p"))["widgets"],

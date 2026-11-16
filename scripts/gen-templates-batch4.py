@@ -2,8 +2,11 @@
 # تُنفَّذ بعد gen-templates-batch3.py. هذه أقسام تُدرج في صفحات: لا نكتفي بتجميل النموذج بل نبني تجربة اتصال/طلب متكاملة حوله
 # (قنوات مباشرة بروابط حقيقية، موضوع الرسالة، وعد بالرد، أسئلة سريعة، ضمانات، ملخص للعرض وزر طلب ثابت…) وتبقى وظائف
 # النموذجين الأصليين كما هي: `contact` (تحقق/Honeypot/مهلة/واتساب-بريد-رابط) و`orderorig` (نموذج الطلب الحقيقي بكل عروضه وتكاملاته).
-# المكوّنات كلها أصلية في المطوّر؛ الصور الأصلية فقط (لا صور مضافة)؛ الأرقام والبريد قيم نموذجية تُعدَّل (0555 00 00 00).
-PHONE, WA, MAIL = "tel:0555000000", "https://wa.me/213555000000", "mailto:contact@example.com"
+# المكوّنات كلها أصلية في المطوّر؛ الصور الأصلية فقط (لا صور مضافة)؛ الأرقام والبريد قيم نموذجية تُعدَّل (05XX XX XX XX).
+# بيانات التواصل: واتساب يُربط برقم المتجر تلقائياً (زر kind=whatsapp بلا رقم ← رقم واتساب المتجر)؛ الهاتف والبريد حقلان قابلان للتعديل بقيم مؤشَّرة بوضوح كنموذجية (05XX / your-domain)
+# يرصدها المطوّر عند النشر ويُنبّه التاجر (غير مانع). لا أرقام وهمية تبدو حقيقية.
+PHONE, WA, MAIL = "tel:05XXXXXXXX", "https://wa.me/213555000000", "mailto:name@your-domain.com"
+PHONE_TXT = "05XX XX XX XX"
 TOPICS = "استفسار عن منتج,متابعة طلب,استبدال أو إرجاع,تعاون وشراكة,أخرى"
 def fld4(extra_select=None, order_no=False, message="كيف نساعدك؟", email=True):
     """حقول النموذج: الاسم والهاتف ثم (بريد اختياري) ثم قائمة موضوع/خدمة ثم الرسالة. الحقول كلها حقول `contact` الأصلية (تحقق وإجبار)"""
@@ -47,7 +50,7 @@ ca_left = [T("✦ مركز الدعم", 14, "#c4b5fd", "start", fw="800", **anim
            PIC("dig_code", "مكتب الدعم", 26, fxs=[ratioframe("1000/666"), FX("إطار متوهج", "selector img{box-shadow:0 30px 70px rgba(124,58,237,.35);border:1px solid rgba(255,255,255,.2)}")], **anim("zoomIn", .8, .1)),
            W("tbadges", items="رد خلال ساعات العمل\nخصوصية تامة", live=False, cbg="#ffffff14", cc="#e2e8f0", cbc="#ffffff30", crad=dm(999), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3))]
 ca_s1 = S([C(ca_left, w=dm(42, 100), pad=dm([0, 0, 0, 0], [0, 0, 28, 0])), C([ca_form], w=dm(58, 100), va="center")], pad=dm([90, 20, 40, 20], [56, 16, 30, 16]), gap={"d": 40}, fxs=[aurora(k), blobs(k, "#7c3aed", "#06b6d4", 380, .35)])
-ca_s2 = S([ca_chan(0, "phone", "اتصل بنا", "كل يوم من 9 صباحاً إلى 9 مساءً", "اتصل: 0555 00 00 00", PHONE, "rgba(124,58,237,.35)"),
+ca_s2 = S([ca_chan(0, "phone", "اتصل بنا", "كل يوم من 9 صباحاً إلى 9 مساءً", "اتصل: 05XX XX XX XX", PHONE, "rgba(124,58,237,.35)"),
            ca_chan(1, "chat", "واتساب مباشر", "ردّ سريع على رسائلك", "ابدأ محادثة واتساب", WA, "rgba(34,211,238,.3)"),
            ca_chan(2, "mail", "البريد الإلكتروني", "للاستفسارات التفصيلية", "راسلنا بالبريد", MAIL, "rgba(244,114,182,.3)")], pad=dm([20, 20, 40, 20], [14, 16, 24, 16]), gap={"d": 20}, fxs=[FX("خلفية داكنة", "selector{background:linear-gradient(180deg,#0b1020,#070b18)}")])
 ca_s3 = vsec(faq4(CFAQ, "#ffffff", "#cbd5e1", "#ffffff10", "rgba(255,255,255,.2)", 16, title="قبل أن تكتب", sub="إجابات سريعة لأكثر الأسئلة تكراراً"), k, [FX("خلفية داكنة", "selector{background:#070b18}")], cw=820)
@@ -66,7 +69,7 @@ def cn_chan(i, t, x, btn, link):
     return C([W("heading", text=t, tag="h3", fs=dm(22, 20), fw="900", ta={"d": "start"}, color="#22d3ee", **anim("fadeUp", .6, .1 + i * .1)), T(x, 15, "#94a3b8", "start", **anim("fadeUp", .6, .15 + i * .1)),
               chan_btn(btn, link, "#0891b2", "#a21caf", "#67e8f9", "rgba(34,211,238,.6)", "rgba(34,211,238,.4)", 10)], w=dm(33, 100), pad=dm([22, 22, 14, 22], [18, 18, 8, 18]),
              fxs=[FX("لوح طرفية", "selector{background:#05070f;border:1px solid #0e7490;border-radius:12px;box-shadow:inset 0 0 30px rgba(34,211,238,.06);transition:box-shadow .3s,border-color .3s}selector:hover{border-color:#22d3ee;box-shadow:0 0 28px rgba(34,211,238,.25)}")])
-cn_chs = S([cn_chan(0, "اتصال صوتي", "كل يوم من 9 صباحاً إلى 9 مساءً", "اتصل: 0555 00 00 00", PHONE), cn_chan(1, "قناة واتساب", "أسرع طريق لردّ فوري", "ابدأ المحادثة", WA), cn_chan(2, "بريد إلكتروني", "للاستفسارات التفصيلية", "أرسل بريداً", MAIL)],
+cn_chs = S([cn_chan(0, "اتصال صوتي", "كل يوم من 9 صباحاً إلى 9 مساءً", "اتصل: 05XX XX XX XX", PHONE), cn_chan(1, "قناة واتساب", "أسرع طريق لردّ فوري", "ابدأ المحادثة", WA), cn_chan(2, "بريد إلكتروني", "للاستفسارات التفصيلية", "أرسل بريداً", MAIL)],
            pad=dm([20, 20, 30, 20], [14, 16, 20, 16]), gap={"d": 18}, fxs=[FX("خلفية", "selector{background:#03060d}")])
 cn_form = contact("اتصال آمن", "قناة مباشرة معنا — نردّ على رسالتك فور وصولها.", fld4([("نوع الطلب", "اختر نوع الطلب", "دعم فني,متابعة طلب,شكوى,اقتراح,أخرى")], order_no=True, message="صف طلبك بإيجاز"), btn="إرسال ◂", consent="أوافق على معالجة بياناتي للردّ على طلبي",
                   fbg="#05070f", fbc="#0e7490", tcol="#22d3ee", lcol="#67e8f9", ibg="#0a1224", ibc="#0e7490", bbg="#0891b2", bcol="#021014", frad=dm(18), irad=dm(10), brad=dm(10), bfull=True, fpad=dm([34, 30, 34, 30]),
@@ -98,7 +101,7 @@ def cg_col(i, t, x, btn, link):
     return C([W("heading", text=t, tag="h3", fs=dm(22, 20), fw="900", ta={"d": "start"}, color="#f5d77a", fxs=[goldshimmer(k + "c" + str(i), 6)], **anim("fadeUp", .7, .1 + i * .1)), T(x, 16, "#e7ddc0", "start", lh=2, **anim("fadeUp", .7, .15 + i * .1)),
               chan_btn(btn, link, "#b8860b", "#f5d77a", "#f5d77a", "#c9992e", "rgba(201,153,46,.4)", 3)], w=dm(33, 100), pad=dm([24, 8, 10, 8], [20, 0, 10, 0]),
              fxs=[FX("خط ذهبي علوي", "selector{border-top:1px solid rgba(201,153,46,.6)}")] + ([] if i == 0 else []))
-cg_s2 = S([cg_col(0, "الهاتف", "السبت – الخميس<br>9:00 صباحاً — 6:00 مساءً", "اتصل: 0555 00 00 00", PHONE), cg_col(1, "واتساب", "متاح دائماً لرسائلك<br>نردّ في أقرب وقت", "ابدأ محادثة خاصة", WA), cg_col(2, "البريد", "للطلبات الخاصة والمجموعات<br>نردّ خلال يوم عمل", "راسل الكونسيرج", MAIL)],
+cg_s2 = S([cg_col(0, "الهاتف", "السبت – الخميس<br>9:00 صباحاً — 6:00 مساءً", "اتصل: 05XX XX XX XX", PHONE), cg_col(1, "واتساب", "متاح دائماً لرسائلك<br>نردّ في أقرب وقت", "ابدأ محادثة خاصة", WA), cg_col(2, "البريد", "للطلبات الخاصة والمجموعات<br>نردّ خلال يوم عمل", "راسل الكونسيرج", MAIL)],
           pad=dm([30, 20, 60, 20], [20, 16, 36, 16]), gap={"d": 40}, fxs=GDK)
 cg_s3 = vsec(faq4(CFAQ, "#f5d77a", "#cbbf9c", "#14100a", "#c9992e66", 4, title="أسئلة تهمّ ضيوفنا", tcol="#f5d77a"), k, GDK, cw=820)
 _pilot_reg("c-gold", "contact", "فخامة", "اتصال فخامة ذهبية",
@@ -116,7 +119,7 @@ cs_head = S([C([PIC("cosm_pink", "عناية", 999, w=dm(26, 52), al={"d": "cent
 def cs_card(i, ic, t, x, btn, link, bg):
     return C([IB(ic, t, x, tc="#4c1d95", xc="#6b5b95", isz=36, fxs=[softcard("#ffffffcc", "rgba(139,92,246,.18)", 26, 22), lift(".pb-ib", "rgba(139,92,246,.3)", -8, 5), floaty(k + str(i), ".pb-ibi", 8, 4 + i)], **anim("fadeUp", .7, .1 + i * .12)),
               BTN(btn, bg=bg, al="center", link=link, brad={"d": 999}, bpad={"d": [12, 28, 12, 28]}, fs=dm(16, 15), fxs=[btngrad(bg, "#ec4899", "rgba(139,92,246,.4)", -3), shine(k + "b" + str(i), 4)])], w=dm(33, 100), pad=dm([0, 0, 24, 0]))
-cs_cards = S([cs_card(0, "chat", "دردشة سريعة", "نردّ على واتساب خلال دقائق", "افتح واتساب", WA, "#8b5cf6"), cs_card(1, "phone", "اتصال هاتفي", "كل يوم 9 ص — 9 م", "اتصل: 0555 00 00 00", PHONE, "#a855f7"), cs_card(2, "mail", "بريد إلكتروني", "للاستفسارات التفصيلية", "اكتب لنا بالبريد", MAIL, "#c026d3")],
+cs_cards = S([cs_card(0, "chat", "دردشة سريعة", "نردّ على واتساب خلال دقائق", "افتح واتساب", WA, "#8b5cf6"), cs_card(1, "phone", "اتصال هاتفي", "كل يوم 9 ص — 9 م", "اتصل: 05XX XX XX XX", PHONE, "#a855f7"), cs_card(2, "mail", "بريد إلكتروني", "للاستفسارات التفصيلية", "اكتب لنا بالبريد", MAIL, "#c026d3")],
              pad=dm([20, 20, 30, 20], [14, 16, 20, 16]), gap={"d": 22}, fxs=CSBG("c"))
 cs_form = contact("اكتب لنا", "نقرأ كل رسالة بأنفسنا — تصلنا مباشرة.", fld4([("موضوع الرسالة", "اختر الموضوع", TOPICS)], message="ما الذي تودّ إخبارنا به؟"), btn="أرسل الآن", consent="أوافق على التواصل معي بخصوص رسالتي",
                   fbg="#ffffff", fbc="#ffffff", tcol="#4c1d95", lcol="#6b5b95", ibg="#f5f3ff", ibc="#ddd6fe", bbg="#8b5cf6", bcol="#ffffff", frad=dm(34), irad=dm(999), brad=dm(999), bfull=True, fpad=dm([38, 34, 38, 34]),
@@ -144,7 +147,7 @@ ct_wa = C([T("الطريق الأسرع", 14, "#bbf7d0", "start", fw="800", **an
            W("heading", text="راسلنا الآن على واتساب", tag="h2", fs=dm(40, 28), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.25}, **anim("fadeUp")),
            T("اضغط الزر وستفتح المحادثة مباشرة — أرسل سؤالك أو رقم طلبك ويردّ عليك فريقنا.", 18, "#d1fae5", "start", **anim("fadeUp", .7, .1)),
            BTN("افتح محادثة واتساب", bg="#22c55e", color="#052e16", al="start", link=WA, fxs=[pulse(k + "w", "34,197,94", 2, sel=".pb-btn"), shine(k + "w", 3), lift(".pb-btn", "rgba(34,197,94,.5)", -3, 0)], **anim("zoomIn", .8, .2)),
-           BTN("أو اتصل: 0555 00 00 00", bg="transparent", color="#d1fae5", al="start", link=PHONE, fxs=[FX("زر ثانوي", "selector .pb-btn{background:transparent;border:1.5px solid rgba(209,250,229,.6)}selector .pb-btn:hover{background:rgba(255,255,255,.12)}")], **anim("fadeUp", .7, .3)),
+           BTN("أو اتصل: 05XX XX XX XX", bg="transparent", color="#d1fae5", al="start", link=PHONE, fxs=[FX("زر ثانوي", "selector .pb-btn{background:transparent;border:1.5px solid rgba(209,250,229,.6)}selector .pb-btn:hover{background:rgba(255,255,255,.12)}")], **anim("fadeUp", .7, .3)),
            BTN("أو راسلنا بالبريد", bg="transparent", color="#d1fae5", al="start", link=MAIL, fxs=[FX("رابط ثانوي", "selector .pb-btn{background:transparent;text-decoration:underline;text-underline-offset:5px}selector .pb-btn:hover{background:rgba(255,255,255,.1)}")], **anim("fadeUp", .7, .35)),
            W("tbadges", items="رد خلال 15 دقيقة\nخصوصية تامة", live=False, cbg="#ffffff22", cc="#ffffff", cbc="#ffffff44", crad=dm(999), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3))], w=dm(44, 100), va="center", pad=dm([0, 0, 0, 0], [0, 0, 24, 0]))
 ct_s2 = S([ct_wa, C([ct_form], w=dm(56, 100), va="center")], pad=dm([70, 20, 70, 20], [44, 16, 44, 16]), gap={"d": 44}, fxs=[aurora(k, "#064e3b", "#10b98199", "#06b6d466", "#a3e63555", 16), wave(k, "#ecfdf5", "top")])
@@ -158,11 +161,11 @@ _pilot_begin("o-flash")
 k = "of"; ICC[0] = "#fde047"
 FIRE = lambda s: [aurora(k + s, "#450a0a", "#ef444499", "#f9731699", "#facc1566", 12), blobs(k + s, "#f97316", "#e11d48", 320, .45)]
 of_left = C([PIC("mkt_bags", "عرض فلاش", 24, fxs=[ratioframe("1000/667"), FX("وهج برتقالي", "selector img{box-shadow:0 30px 80px rgba(249,115,22,.45)}")], **anim("zoomIn", .8)),
-             W("heading", text="عرض فلاش — ينتهي قريباً", tag="h2", fs=dm(42, 30), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.3}, fxs=[gradtext(k, "#fde047", "#fb923c", "#f43f5e", 4)], **anim("fadeDown", .7)),
+             W("heading", text="عرض فلاش", tag="h2", fs=dm(42, 30), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.3}, fxs=[gradtext(k, "#fde047", "#fb923c", "#f43f5e", 4)], **anim("fadeDown", .7)),
              T("خصم حصري على الطلبات اليوم فقط — أكمل بياناتك في النموذج وادفع عند الاستلام.", 18, "#fecaca", "start", **anim("fadeUp", .7, .1)),
-             W("countdown", mode="daily", cbg="#00000055", color="#fde047", fs=dm(38, 21), crad=dm(14), al={"d": "start"}, fxs=[cdglow(k, "#f97316")], **anim("zoomIn", .7, .2)),
-             W("stock", smode="manual", sn=9, smax=40, stx="🔥 بقيت {n} قطع فقط بسعر العرض!", color="#ffffff", sbgc="#ffffff22", fs=dm(18, 15), fxs=[stockbar(k)], **anim("fadeUp", .7, .3)),
-             W("coupon", cpcode="FLASH20", cpt="كود خصم إضافي 20% لأول طلب", cpbtn="نسخ الكود", cpbg="#ffffff14", cpbc="#fde047", cpc="#ffffff", cpb="#f97316", fxs=[couponfx("#fde047")], **anim("fadeUp", .7, .4))],
+             W("countdown", mode="date", on=False, end="", cbg="#00000055", color="#fde047", fs=dm(38, 21), crad=dm(14), al={"d": "start"}, fxs=[cdglow(k, "#f97316")], **anim("zoomIn", .7, .2)),
+             W("stock", smode="product", sn=9, smax=40, stx="🔥 بقيت {n} قطع فقط بسعر العرض!", color="#ffffff", sbgc="#ffffff22", fs=dm(18, 15), fxs=[stockbar(k)], **anim("fadeUp", .7, .3)),
+             W("coupon", on=False, cpcode="YOURCODE", cpt="كود خصم إضافي 20% لأول طلب", cpbtn="نسخ الكود", cpbg="#ffffff14", cpbc="#fde047", cpc="#ffffff", cpb="#f97316", fxs=[couponfx("#fde047")], **anim("fadeUp", .7, .4))],
             w=dm(42, 100), pad=dm([0, 0, 0, 0], [0, 0, 24, 0]), fxs=[sticky(80)])
 of_right = C([orderw(stk=True, stkt="اطلب الآن بسعر العرض", ottl="🔥 املأ بياناتك — الدفع عند الاستلام", fxs=[rotborder(k, "#fde047", "#f43f5e", 4, 3, 28), FX("بطاقة نارية داكنة", "selector{background:linear-gradient(145deg,#7c2d12,#3b0a0a);border-radius:28px;padding:20px;box-shadow:0 30px 80px rgba(249,115,22,.4)}")], **anim("fadeUp", .8, .1)),
               W("tbadges", items="دفع عند الاستلام\nمعاينة قبل الدفع\nتوصيل لكل الولايات", live=False, cbg="#ffffff14", cc="#fecaca", cbc="#ffffff30", crad=dm(999), cfs=dm(14), gap=dm(10), jc="center", **anim("fadeUp", .8, .3))], w=dm(58, 100))
@@ -221,7 +224,7 @@ ob_head = S([C([H("اختر باقتك ووفّر أكثر", 46, 30, "#ffffff", 
             pad=dm([80, 20, 30, 20], [48, 16, 20, 16]), fxs=BUN("a"))
 ob_left = C([W("heading", text="ماذا تحصل عليه؟", tag="h2", fs=dm(34, 26), fw="900", ta={"d": "start"}, color="#ffffff", fxs=[gradtext(k + "w", "#86efac", "#67e8f9", "#fde68a", 6)], **anim("fadeUp")),
              W("bullets", items="سعر أقل كلما زادت الكمية\nتوصيل لباب بيتك في كل الولايات\nالدفع عند الاستلام بعد المعاينة\nاستبدال سهل خلال 7 أيام", micon="ic:check-circle", mc="#86efac", ms=dm(24), gap=dm(12), fs=dm(18, 16), color="#ecfdf5", manim="pop", **anim("fadeUp", .7, .1)),
-             W("coupon", cpcode="PACK15", cpt="وفّر 15% عند اختيار أي باقة", cpbtn="نسخ الكود", cpbg="#ffffff18", cpbc="#86efac", cpc="#ffffff", cpb="#16a34a", fxs=[couponfx("#86efac")], **anim("zoomIn", .7, .2))], w=dm(38, 100), pad=dm([0, 0, 0, 0], [0, 0, 24, 0]), fxs=[sticky(80)])
+             W("coupon", on=False, cpcode="YOURCODE", cpt="وفّر 15% عند اختيار أي باقة", cpbtn="نسخ الكود", cpbg="#ffffff18", cpbc="#86efac", cpc="#ffffff", cpb="#16a34a", fxs=[couponfx("#86efac")], **anim("zoomIn", .7, .2))], w=dm(38, 100), pad=dm([0, 0, 0, 0], [0, 0, 24, 0]), fxs=[sticky(80)])
 ob_ord = C([orderw(stk=True, stkt="اطلب باقتك الآن", ottl="أكمل طلب باقتك — الدفع عند الاستلام", fxs=[rotborder(k, "#16a34a", "#fde047", 3, 5, 18), FX("بطاقة خضراء عميقة", "selector{background:linear-gradient(160deg,#064e3b,#022c22);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.4)}")], **anim("fadeUp", .8, .1))], w=dm(62, 100))
 ob_s2 = S([ob_ord, ob_left], pad=dm([30, 20, 50, 20], [20, 16, 30, 16]), gap={"d": 36}, fxs=BUN("b"))
 ob_faq = vsec(faq4(FAQ, "#ffffff", "#bbf7d0", "#ffffff12", "rgba(134,239,172,.35)", 16, title="أسئلة قبل الطلب", tcol="#86efac"), k, BUN("c"), cw=820)

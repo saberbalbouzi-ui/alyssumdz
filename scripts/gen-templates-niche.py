@@ -267,8 +267,8 @@ th = TH(k, False, "#0f172a", "#64748b", "#f97316", "#ef4444", "#ffffff", LG, WHT
         ("🏪 آلاف المنتجات من بائعين موثوقين  ·  دفع عند الاستلام  ·  توصيل لكل الولايات", "#f97316", "#ffffff", "#fff7ed"), ("#0f172a", "#fb923c"),
         prods=dict(cbg="#ffffff", bbg="#f97316", rad=14, fxs=[lift(".pb-pc", "rgba(249,115,22,.3)", -8, 2), FX("بطاقة سوق", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06)}")]),
         cats=dict(imgs=["mkt_bags", "fashion_rack", "mkt_open"], ov="#0f172a", ovo=30, rad=14, cols=3, fxs=[lift(".pb-sc,.pb-cat,a", "rgba(249,115,22,.3)", -6, 2)]), cdc="#fde047")
-def tile(t, x, c1, c2, w, h=250, btn="تسوّق الآن", img="mkt_bags"):
-    return C([W("heading", text=t, tag="h2", fs=dm(30, 24), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")), T(x, 16, "#ffffffdd", "start", **anim("fadeUp", .7, .1)),
+def tile(t, x, c1, c2, w, h=250, btn="تسوّق الآن", img="mkt_bags", tag="h2"):
+    return C([W("heading", text=t, tag=tag, fs=dm(30, 24), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")), T(x, 16, "#ffffffdd", "start", **anim("fadeUp", .7, .1)),
               BTN(btn, bg="#ffffff", color="#111", al="start", link="#products", fxs=[FX("زر أبيض", "selector .pb-btn{border-radius:999px!important}"), shine(k + t[:2])], **anim("fadeUp", .7, .2))],
              w=w, va="flex-end", pad=dm([h, 24, 24, 24]), rad=dm(18), **PH(img, c1, c2, 150), fxs=[zoomcol("rgba(0,0,0,.3)")])
 hero = S([tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(239,68,68,.88)", 50, 260, "تسوّق الآن", "mkt_bags"),
@@ -278,10 +278,10 @@ hero = S([tile("خصومات تصل إلى 60%", "على آلاف المنتجا
 chips = S([C([W("tbadges", items="إلكترونيات\nأزياء\nالمنزل والمطبخ\nجمال وعناية\nأطفال\nرياضة\nكتب\nسيارات", live=True, liveText="مستخدم متصل", lmin=120, lmax=480, cbg="#ffffff", cc="#0f172a", cbc="#e2e8f0", crad=dm(999), cfs=dm(15), gap=dm(10), jc="center", **anim("fadeUp"))], w=100)],
          pad=dm([14, 20, 20, 20], [10, 12, 14, 12]), fxs=LG("c"))
 flash = S([C([W("heading", text="⚡ عروض فلاش", tag="h2", fs=dm(34, 24), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp"))], w=40, va="center"),
-           C([W("countdown", mode="daily", cbg="#00000055", color="#fde047", fs=dm(34, 24), crad=dm(10), al={"d": "end"}, fxs=[cdglow(k, "#fde047")], **anim("zoomIn"))], w=60, va="center")],
+           C([W("countdown", mode="date", on=False, end="", cbg="#00000055", color="#fde047", fs=dm(34, 24), crad=dm(10), al={"d": "end"}, fxs=[cdglow(k, "#fde047")], **anim("zoomIn"))], w=60, va="center")],
           pad=dm([28, 28, 28, 28], [20, 16, 20, 16]), cw={"d": 1140}, mar=dm([20, 20, 0, 20], [14, 12, 0, 12]), rad=dm(18, 14), fxs=[aurora(k + "fl", "#9a3412", "#f9731699", "#ef444488", "#facc1555", 8)])
-deals = S([C([W("progress", pl="تم بيع 82% من الكمية", pv=82, pc="#f97316", pbg="#fed7aa", ph=dm(12), color="#0f172a", fxs=[barfx("#f97316", "#ef4444")], **anim("fadeUp")),
-              W("progress", pl="تم بيع 64% من الكمية", pv=64, pc="#f97316", pbg="#fed7aa", ph=dm(12), color="#0f172a", fxs=[barfx("#ef4444", "#f97316")], **anim("fadeUp", .7, .1))], w=100)],
+deals = S([C([W("progress", on=False, pl="تم بيع 82% من الكمية", pv=82, pc="#f97316", pbg="#fed7aa", ph=dm(12), color="#0f172a", fxs=[barfx("#f97316", "#ef4444")], **anim("fadeUp")),
+              W("progress", on=False, pl="تم بيع 64% من الكمية", pv=64, pc="#f97316", pbg="#fed7aa", ph=dm(12), color="#0f172a", fxs=[barfx("#ef4444", "#f97316")], **anim("fadeUp", .7, .1))], w=100)],
           cw={"d": 760}, pad=dm([30, 20, 10, 20]), fxs=WHT("d"))
 sell = S([C([W("heading", text="بائعون مميّزون", tag="h2", fs=dm(34, 26), fw="900", ta={"d": "center"}, color="#0f172a", fxs=[gradtext(k + "s", "#f97316", "#ef4444", "#f97316", 6)], **anim("fadeUp")), T("متاجر موثوقة بتقييمات حقيقية من الزبائن.", 17, "#64748b", **anim("fadeUp", .7, .1))], w=100, pad=dm([0, 0, 24, 0]))]
          + [C([IB("user", n, "★ %s · %s منتج" % (r, c), tc="#0f172a", xc="#64748b", isz=36, fxs=[softcard("#ffffff", "rgba(15,23,42,.08)", 16, 22, "#e2e8f0"), lift(".pb-ib", "rgba(249,115,22,.25)", -6, 2), ribbon("موثّق", "#10b981", "#fff") if i == 0 else FX("بدون", "selector{}")], **anim("fadeUp", .7, .1 + i * .1))], w=25, pad=dm([0, 0, 18, 0])) for i, (n, r, c) in enumerate([("متجر الأناقة", "4.9", 320), ("عالم التقنية", "4.8", 540), ("بيت الجمال", "4.9", 210), ("أسرة سعيدة", "4.7", 380)])],

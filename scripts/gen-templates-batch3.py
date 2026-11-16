@@ -200,8 +200,8 @@ p_free = [
     FR("button", V(70, 6, 6), V(340, 690, 880), V(28, 88, 44), V(60, 56, 58), 6, text="اطلب قبل نفاد الكمية", kind="link", link="#products", bgc=PINK, color="#ffffff", hbg=PINK, fs=V(19, 17, 18), fw="900", brad={"d": 14},
        fxs=[FX("زر بظلّ صلب", "selector .pb-btn{border:3px solid #111;box-shadow:6px 6px 0 #111;transition:transform .15s,box-shadow .15s}selector .pb-btn:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 #111}selector .pb-btn:active{transform:translate(4px,4px);box-shadow:2px 2px 0 #111}"), shine(k, 2.6)], **anim("fadeUp", .8, .2)),
     # تذكرة: مخزون + عدّاد (عنصران أصليان) على لوح أبيض بحدّ مسنّن
-    FRW(W("stock", smode="manual", sn=11, smax=40, stx="⚡ بقيت {n} قطع فقط!", color=INK, sbgc="#ffffff", fs=dm(20, 16), fxs=[stockbar(k), FX("لوحة", "selector{background:#fff;border:3px solid #111;border-radius:18px;box-shadow:6px 6px 0 #111;padding:16px}")], **anim("zoomIn", .8, .3)), V(52, 6, 6), V(430, 760, 970), V(44, 88, 88), None, 6),
-    FRW(W("countdown", mode="daily", cbg="#111111", color=YEL, fs=dm(38, 26), crad=dm(12), al={"d": "center"}, fxs=[cdglow(k, PINK)], **anim("zoomIn", .8, .4)), V(52, 6, 6), V(530, 860, 1060), V(44, 88, 88), None, 6),
+    FRW(W("stock", smode="product", sn=11, smax=40, stx="⚡ بقيت {n} قطع فقط!", color=INK, sbgc="#ffffff", fs=dm(20, 16), fxs=[stockbar(k), FX("لوحة", "selector{background:#fff;border:3px solid #111;border-radius:18px;box-shadow:6px 6px 0 #111;padding:16px}")], **anim("zoomIn", .8, .3)), V(52, 6, 6), V(430, 760, 970), V(44, 88, 88), None, 6),
+    FRW(W("countdown", mode="date", on=False, end="", cbg="#111111", color=YEL, fs=dm(38, 26), crad=dm(12), al={"d": "center"}, fxs=[cdglow(k, PINK)], **anim("zoomIn", .8, .4)), V(52, 6, 6), V(530, 860, 1060), V(44, 88, 88), None, 6),
 ]
 p_hero = canvas3(p_free, dm(660, 1010, 1160), POPBG("h") + [FX("قصّ الدوران", "selector{overflow:hidden}")])
 def p_tape():
