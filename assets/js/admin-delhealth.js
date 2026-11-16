@@ -27,7 +27,7 @@ const AdminDelHealth = (() => {
       const dn = co.centersRequest ? desksOf(k) : -1;
       if (k === def && co.centersRequest && dn === 0) issues.push({ k: "warn", t: "مكاتب Stop Desk لم تُحمَّل بعد", act: "desks" });
       const level = issues.some(i => i.k === "bad") ? "bad" : issues.length ? "warn" : "ok";
-      out.push({ key: k, name: co.name || k, def: k === def, level, issues, nP, desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api });
+      const nO = optCount(cfg); out.push({ key: k, name: co.name || k, def: k === def, level, issues, nP, nO, canProbe: !!PROBE[k] && hasCreds(cfg), desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api });
     });
     return out;
   }
@@ -72,12 +72,62 @@ const AdminDelHealth = (() => {
     lines.push({ t: "سعر الولاية المعتمد", v: base ? base + " دج — المصدر: " + origin : "لا سعر لهذه الولاية ⟵ تُعتمد أسعار المناطق" });
     if (ap && Number(ap[type]) !== base) lines.push({ t: "سعر حسابك الخام", v: (Number(ap[type]) || 0) + " دج (يختلف عمّا يعرضه متجرك)" });
     if (bt && fx === undefined && bt[type] !== undefined && Number(bt[type]) !== base) lines.push({ t: "جدولك المحفوظ", v: bt[type] + " دج" });
+    try { const ox = (a.optionsOf(cfg) || {})[id]; if (ox && ox.length) { const c = a.cheapestOf(ox); lines.push({ t: "خيارات الناقلين لهذه الولاية", v: ox.map(x => x.b + " " + x.h + "/" + x.s).join(" — ") + " ⟵ المعتمد الأرخص: منزل " + c.home + " ومكتب " + c.stop }); } } catch (e) { }
     const adj = Number(cfg.adj) || 0;
     if (adj) lines.push({ t: "تعديل السعر المعروض", v: "- " + adj + " دج (يُخصم من سعر الشركة؛ يتخطّاه إن كان تعديل البلدية فعّالاً)" });
     lines.push({ t: "سعر المناطق للمقارنة", v: zone + " دج" });
     const fin = base ? Math.max(0, base - adj) : zone;
     return { final: fin, key, lines };
   }
+
+  /* ── خيارات الناقلين داخل شركة واحدة (WeCan: ZR وWeCanServices…) ── */
+  const PROBE = { wecan: ["/shipping-options", "/shipping_options", "/delivery-options", "/shipping-methods", "/tariffs", "/rates", "/carriers", "/options", "/fees"] };
+  const num = v => { const n = Number(String(v == null ? "" : v).replace(/[^0-9.]/g, "")); return isFinite(n) ? n : 0; };
+  const NAMEK = ["carrier_name", "carrier", "provider_name", "provider", "company", "name", "label", "title"];
+  const brandOf = o => { for (const k of NAMEK) { const v = o[k]; if (typeof v === "string" && v.trim() && v.length < 40) return v.trim(); if (v && typeof v === "object" && typeof v.name === "string") return v.name.trim(); } return ""; };
+  const modeNum = a => { if (!a.length) return 0; const c = {}; a.forEach(x => { c[x] = (c[x] || 0) + 1; }); return Number(Object.keys(c).sort((x, y) => c[y] - c[x] || x - y)[0]); };
+  /* يستخرج [{b,h,s}] من ردّ JSON مجهول البنية: (1) حقول <ناقل>_home/_desk داخل per_commune، (2) مصفوفة كائنات لكل ناقل، (3) خريطة ناقل ← {home,desk} */
+  function extractOptions(json) {
+    const by = {}, add = (b, kind, v) => { b = String(b || "").trim(); if (!b || !(v > 0)) return; const o = by[b] || (by[b] = { b, h: 0, s: 0 }); if (kind === "h") o.h = o.h || v; else o.s = o.s || v; };
+    const kindOf = k => { k = String(k).toLowerCase(); if (/(^|_)(home|domicile)($|_)/.test(k)) return "h"; if (/(desk|stop|bureau|retrait|pickup|relay)/.test(k)) return "s"; return ""; };
+    const comm = []; (function walk(o, d) { if (!o || typeof o !== "object" || d > 6) return; if (o.per_commune && typeof o.per_commune === "object") Object.values(o.per_commune).forEach(c => comm.push(c)); Object.values(o).forEach(v => walk(v, d + 1)); })(json, 0);
+    if (comm.length) { const cols = {}; comm.forEach(c => Object.keys(c || {}).forEach(k => { const m = /^(.+?)_(home|domicile|desk|stopdesk|stop_desk|bureau)$/i.exec(k); if (m && typeof c[k] !== "object") { const b = m[1], kd = kindOf(m[2]); (cols[b] = cols[b] || { h: [], s: [] })[kd].push(num(c[k])); } })); Object.keys(cols).forEach(b => { add(b.replace(/^express$/i, "Express"), "h", modeNum(cols[b].h.filter(x => x > 0))); add(b.replace(/^express$/i, "Express"), "s", modeNum(cols[b].s.filter(x => x > 0))); }); }
+    (function walk(o, d) {
+      if (!o || typeof o !== "object" || d > 6) return;
+      if (Array.isArray(o)) { o.forEach(e => { if (e && typeof e === "object" && !Array.isArray(e)) { const b = brandOf(e); if (b) { let any = false; Object.keys(e).forEach(k => { const kd = kindOf(k); if (kd && typeof e[k] !== "object" && num(e[k]) > 0 && !/^(has|is|allow)/i.test(k)) { add(b, kd, num(e[k])); any = true; } }); const t = String(e.type || e.shipping_type || e.mode || e.delivery_type || "").toLowerCase(), pv = num(e.price != null ? e.price : e.fee != null ? e.fee : e.amount != null ? e.amount : e.cost != null ? e.cost : e.tariff != null ? e.tariff : e.tarif); if (!any && t && pv > 0) add(b, /home|domicile/.test(t) ? "h" : "s", pv); } } walk(e, d + 1); }); return; }
+      Object.keys(o).forEach(k => { const v = o[k]; if (v && typeof v === "object" && !Array.isArray(v)) { const hk = Object.keys(v).find(x => kindOf(x) === "h" && typeof v[x] !== "object" && num(v[x]) > 0), sk = Object.keys(v).find(x => kindOf(x) === "s" && typeof v[x] !== "object" && num(v[x]) > 0); if ((hk || sk) && !/^(per_commune|data|fees|tarifs?)$/i.test(k) && !/^\d+$/.test(k)) { add(k, "h", hk ? num(v[hk]) : 0); add(k, "s", sk ? num(v[sk]) : 0); } } walk(v, d + 1); });
+    })(json, 0);
+    return Object.keys(by).map(k => by[k]).filter(x => x.h > 0 || x.s > 0);
+  }
+  const fromId = (a, co, cfg) => { try { const nn = x => a.normName(x), fw = (typeof WILAYAS !== "undefined" ? WILAYAS : []).find(w => !w.par && nn(w.name) === nn(co.fromName ? co.fromName(cfg) : "Alger")); return fw ? fw.id : 16; } catch (e) { return 16; } };
+  const pathReq = (a, co, cfg, path, from, to) => ({ url: co.baseOf(cfg) + path + (path === "/carriers" ? "" : "?from_wilaya_id=" + from + "&to_wilaya_id=" + to), method: "GET", headers: co.hdr(cfg) });
+  /* اكتشاف: يجرّب مسارات محتملة لولاية عيّنة، يحفظ ما رجع (بلا مفاتيح) في إعدادات المتجر الخاصة للتشخيص، وإن وجد خيارات يملأ بقية الولايات */
+  async function discover(key, opts) {
+    const a = A(); if (!a || S.running["opt" + key]) return null; const co = (a.allDeliveryCompanies() || {})[key], cfg = a.deliveryCfg[key] || {}, paths = PROBE[key];
+    if (!co || !paths || !co.baseOf || !co.hdr || !hasCreds(cfg)) return null; S.running["opt" + key] = 1;
+    const from = fromId(a, co, cfg), sampleTo = (opts && opts.to) || 30, doc = { at: Date.now(), key, from, to: sampleTo, results: [] }; let found = null;
+    try {
+      for (const path of paths) {
+        let r; try { r = await a.courierFetch(pathReq(a, co, cfg, path, from, sampleTo)); } catch (e) { doc.results.push({ p: path, err: String(e.message || e).slice(0, 80) }); continue; }
+        const row = { p: path, st: r.status, len: String(r.text || "").length }; let j = null; try { j = JSON.parse(r.text); } catch (e) { }
+        if (j) { row.sample = String(r.text).replace(/\s+/g, " ").slice(0, 1400); const ex = extractOptions(j); row.opts = ex.length; if (ex.length > 1 && !found) found = { path, list: ex }; } else row.sample = String(r.text || "").slice(0, 120);
+        doc.results.push(row); await new Promise(res => setTimeout(res, 200));
+      }
+      const cur = Object.assign({}, a.deliveryCfg[key] || cfg, { optProbeAt: Date.now() });
+      if (found) {
+        doc.found = { path: found.path, sample: found.list };
+        const options = Object.assign({}, cur.options || {}); options[sampleTo] = found.list;
+        for (let to = 1; to <= 58; to++) { if (to === sampleTo) continue; try { const r = await a.courierFetch(pathReq(a, co, cfg, found.path, from, to)); const ex = extractOptions(JSON.parse(r.text)); if (ex.length) options[to] = ex; } catch (e) { } await new Promise(res => setTimeout(res, 220)); }
+        cur.options = options; cur.optionsAt = Date.now();
+      }
+      a.deliveryCfg[key] = cur;
+      const prices = a.applyPriceFix(cur.prices || {}, cur, key); a.deliveryCfg[key].prices = prices; a.saveDeliveryCfgToStorage();
+      try { if (typeof Priv !== "undefined" && Priv.set) await Priv.set("delprobe", doc); } catch (e) { }
+      try { a.publishShipCo(); } catch (e) { }
+    } catch (e) { console.warn("delhealth discover", e); }
+    S.running["opt" + key] = 0; render(); return doc;
+  }
+  const optCount = cfg => Object.keys(((typeof Admin !== "undefined" && Admin.optionsOf) ? Admin.optionsOf(cfg) : {}) || {}).length;
 
   const LV = { ok: ["ok", "سليم"], warn: ["w", "يحتاج انتباهاً"], bad: ["r", "مشكلة"] };
   function css() {
@@ -99,9 +149,10 @@ const AdminDelHealth = (() => {
     const R = rows(), keepX = document.getElementById("dh-w") ? { w: document.getElementById("dh-w").value, t: document.getElementById("dh-t").value, o: document.getElementById("dh-o").value, out: document.getElementById("dh-out").innerHTML } : null;
     box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap"><b style="color:var(--green)">صحة التوصيل</b><span class="hint" style="margin:0">يفحص النظام أسعار شركاتك تلقائياً كل أسبوع عند فتح اللوحة وينبّهك إن اختلف حسابك عمّا يعرضه متجرك</span></div>' +
       (R.length ? R.map(r => '<div class="dh-r" data-k="' + esc(r.key) + '"><div class="dh-n">' + esc(r.name) + (r.def ? ' <small>(الافتراضية)</small>' : "") + '<span class="dh-c ' + LV[r.level][0] + '">' + LV[r.level][1] + '</span></div><div class="dh-m">' +
-        "الأسعار: " + r.nP + " ولاية — المصدر: " + esc(r.src) + " — آخر فحص: " + esc(ageTxt(r.last)) + (r.desks >= 0 ? " — مكاتب Stop Desk المحمَّلة: " + r.desks : "") +
+        "الأسعار: " + r.nP + " ولاية — المصدر: " + esc(r.src) + " — آخر فحص: " + esc(ageTxt(r.last)) + (r.desks >= 0 ? " — مكاتب Stop Desk المحمَّلة: " + r.desks : "") + (r.nO ? " — خيارات الناقلين: " + r.nO + " ولاية (يُعتمد الأرخص)" : "") +
         r.issues.map(i => '<br><span class="dh-i ' + (i.k === "warn" ? "w" : "") + '">' + esc(i.t) + "</span>").join("") +
         '</div><div>' + (r.canCheck ? '<button class="small gray" type="button" data-dh="check" data-k="' + esc(r.key) + '">فحص الآن</button> ' : "") +
+        (r.canProbe ? '<button class="small gray" type="button" data-dh="opts" data-k="' + esc(r.key) + '">اكتشاف خيارات الناقلين</button> ' : "") +
         (r.issues.some(i => i.act === "approve") ? '<button class="small gold" type="button" data-dh="approve" data-k="' + esc(r.key) + '">اعتمد أسعار حسابك</button> <button class="small gray" type="button" data-dh="ignore" data-k="' + esc(r.key) + '">تجاهل</button> ' : "") +
         (r.issues.some(i => i.act === "desks") ? '<button class="small gray" type="button" data-dh="desks" data-k="' + esc(r.key) + '">حمّل المكاتب</button>' : "") + "</div></div>").join("") : '<p class="hint">لا شركة توصيل مفعّلة بعد.</p>') + explainHtml();
     if (keepX) { document.getElementById("dh-w").value = keepX.w; document.getElementById("dh-t").value = keepX.t; document.getElementById("dh-o").value = keepX.o; document.getElementById("dh-out").innerHTML = keepX.out; }
@@ -112,6 +163,7 @@ const AdminDelHealth = (() => {
         if (act === "check") { b.disabled = true; b.textContent = "جارٍ الفحص…"; await check(k); }
         else if (act === "approve") { if (window.confirm("اعتماد أسعار حسابك لهذه الشركة؟ ستُطبَّق على متجرك فوراً وتنتهي أولويّة جدولك المحفوظ لها.")) { approve(k); render(); } }
         else if (act === "ignore") ignore(k);
+        else if (act === "opts") { b.disabled = true; b.textContent = "جارٍ الاكتشاف…"; await discover(k); }
         else if (act === "desks") { try { await a.syncDesksFromCompany(k); } catch (e) { } render(); }
         else if (act === "why") { const r = explain($("dh-w").value, $("dh-t").value, $("dh-o").value), out = $("dh-out"); out.innerHTML = r ? '<div class="dh-o"><b>السعر النهائي: ' + r.final + " دج</b><br>" + r.lines.map(l => esc(l.t) + ": " + esc(l.v)).join("<br>") + "</div>" : ""; }
       });
@@ -125,6 +177,7 @@ const AdminDelHealth = (() => {
     try {
       const all = a.allDeliveryCompanies();
       for (const k of a.enabledCompanyKeys()) { const co = all[k], cfg = a.deliveryCfg[k] || {}; if (!co || !co.feesRequest || !hasCreds(cfg)) continue; if (cfg.checkedAt && Date.now() - cfg.checkedAt < EVERY) continue; n++; await check(k, true); }
+      for (const k of a.enabledCompanyKeys()) { const cfg = a.deliveryCfg[k] || {}; if (!PROBE[k] || !hasCreds(cfg) || cfg.optionsFix) continue; if (cfg.optProbeAt && Date.now() - cfg.optProbeAt < 14 * DAY) continue; n++; await discover(k); }      /* اكتشاف خيارات الناقلين مرة كل 14 يوماً (لا يعمل إن كتبتَ خياراتك يدوياً) */
     } catch (e) { console.warn("delhealth auto", e); }
     notify(); return n;
   }
@@ -138,5 +191,5 @@ const AdminDelHealth = (() => {
     S.timer = setTimeout(autoCheck, 30000);
   }
   const t0 = setInterval(() => { if (typeof Admin !== "undefined" && Admin.renderDelivery) { clearInterval(t0); boot(); } }, 400);
-  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, _S: S };
+  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, discover, extractOptions, _S: S };
 })();

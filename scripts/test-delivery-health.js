@@ -28,7 +28,7 @@ const { chromium } = require("playwright");
     const e3 = H.explain(8, "stop", ""); out.e3 = { final: e3.final, txt: e3.lines.map(l => l.t + ":" + l.v).join(" || ") };
     out.r3 = H.rows().find(r => r.key === "wecan").level;
     /* 5) الفحص التلقائي: لا يجلب إن كان الفحص حديثاً، ويجلب إن مرّ أكثر من 7 أيام */
-    calls = 0; const n1 = await H.autoCheck(); out.autoRecent = { ran: n1, calls };
+    A.deliveryCfg.wecan.optProbeAt = Date.now(); calls = 0; const n1 = await H.autoCheck(); out.autoRecent = { ran: n1, calls };
     A.deliveryCfg.wecan.checkedAt = Date.now() - 9 * 86400000; calls = 0; const n2 = await H.autoCheck(); out.autoOld = { ran: n2, calls: calls > 0 };
     /* 6) فشل الجلب يظهر أحمر ويُحتسب في تنبيه الرئيسية */
     A.courierFetch = async () => ({ ok: false, status: 401, text: "" }); A.deliveryCfg.wecan.checkedAt = 0; await H.check("wecan");
