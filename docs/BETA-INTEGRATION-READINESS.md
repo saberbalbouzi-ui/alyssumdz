@@ -49,11 +49,11 @@
 | المشروع | اسمه **`alyssum-beta`** حصراً. أُنشئ بحساب Supabase مستقل، مرجعه `xhdnqnxmcmfhrgctlkzy` (غير سرّي، مثبَّت في السجل؛ **تحقق منه الـAPI فعلاً**: الاسم `alyssum-beta`، المنطقة `eu-west-1`، `ACTIVE_HEALTHY`، والـPAT يرى هذا المشروع وحده)؛ ممنوع الخلط مع `ALYSSUMDZ` (Production) و`imaginia-staging` (منتج آخر) — تتحقق منه الأداة والاختبار |
 | Auth | التسجيل العام **OFF** (إلزامي؛ الاختبار `[A1]` يفشل إن بقي مفعّلاً)، مستخدم واحد: مدير Beta ببريد مخصص ≠ بريد المالك، Site URL `https://beta.alyssumdz.com`، Redirect `https://beta.alyssumdz.com/**` |
 | Storage | `tenants` (قراءة عامة، لا سياسة كتابة) و`editor` (رفع للمجهول بمنحة `editor.upload_grants` وأنواع صور فقط) — تُنشأ بـSQL لا يدوياً |
-| SQL | 10 ملفات بترتيب مُجرَّب: `supabase/schema` ← `sql/schema` ← `roles` ← `hub` ← `editor` ← `experts` ← `ruqya` ← `pixabay-cache` ← `hardening-v01` ← `hardening-v01b` + صف `admins` لبريد Beta (مولَّد). مستبعَد: `apply-pending.sql` |
+| SQL | **9 ملفات** + صف `admins` لبريد Beta (مولَّد): `supabase/schema` ← `sql/schema` ← `roles` ← `hub` ← `editor` ← `experts` ← `pixabay-cache` ← `hardening-v01` ← `hardening-v01b` (**بعد تجريد كتلة RUQYA**). مستبعَد: `apply-pending.sql` و**`ruqya.sql`** (الرقية وحجز المواعيد وظيفة موقع ALYSSUM فقط). القاعدة القائمة طُبِّق عليها سابقاً ما قبل هذا الاستثناء: انظر `docs/BETA-RUQYA-OBJECTS-REPORT.md` |
 | Edge Functions | لا تُنشر الآن؛ إن لزم: `courier`/`ship-gateway`/`platform-proxy` بأسرار Beta فقط، **لا `domains` ولا مفاتيح `*_live_`** |
 | `service_role` | **لا يُخزَّن في GitHub ولا في أي ملف**؛ الاختبارات تستعمل جلسة المدير + PAT لاستعلامات SQL |
 
-> **ثلاثة أخطاء في خطتي الأولى اكتشفها تدريب PostgreSQL المحلي وصُحِّحت قبل أي تطبيق حقيقي:** (1) `hardening-v01.sql` يعتمد على `hub_my_sites` فلا يصح استبعاد `hub.sql` (يُضمَّن الآن **بعد حذف بذرة مستودع Production منه**)؛ (2) يعتمد على جداول `experts`/`ruqya`/`pixabay_cache` فلم تكن «اختيارية»؛ (3) سجل الموارد وصف حاوية `editor` عامةً/خاصةً خطأً. لولا التدريب لانهار `hardening-v01` على Beta أثناء التطبيق.
+> **ثلاثة أخطاء في خطتي الأولى اكتشفها تدريب PostgreSQL المحلي وصُحِّحت قبل أي تطبيق حقيقي:** (1) `hardening-v01.sql` يعتمد على `hub_my_sites` فلا يصح استبعاد `hub.sql` (يُضمَّن الآن **بعد حذف بذرة مستودع Production منه**)؛ (2) يعتمد على جداول `experts`/`pixabay_cache` (لا الرقية؛ تصحيح لاحق: `hardening-v01` يذكر الرقية 0 مرة) فلم تكن «اختيارية»؛ (3) سجل الموارد وصف حاوية `editor` عامةً/خاصةً خطأً. لولا التدريب لانهار `hardening-v01` على Beta أثناء التطبيق.
 
 ## 4) إعدادات GitHub وأسماء الأسرار (دون أي قيمة في المستودع)
 
@@ -86,7 +86,7 @@ gh variable set BETA_ADMIN_EMAIL --env alyssumdz-beta     # بريد مدير Be
 
 ## 6) اختبارات Supabase Beta (Auth وStorage وDatabase)
 
-`platform/supabase/tests/beta/beta-supabase.integration.mjs` (حقيقي؛ `--selfcheck` للحراسات فقط):
+`platform/supabase/tests/beta/beta-supabase.integration.mjs` (حقيقي؛ `--selfcheck` للحراسات فقط؛ **`--group core|store|all`**، انظر `docs/BETA-TEST-GROUPS.md`):
 
 | المحور | الفحوص |
 |---|---|
@@ -204,3 +204,8 @@ gh variable set BETA_ADMIN_EMAIL --env alyssumdz-beta     # بريد مدير Be
 
 - **اختبار الطلب [S2]** صار يكتشف وجود عقد المفتاح الاعتمادي (12B.1) في `submit_order`: إن غاب (كما في `main` حالياً) يُبلَّغ `NOT TESTED` لا فشلاً. قاعدة Beta الحقيقية الحالية **مبنية على نسخة الفرع القديم** من `platform/supabase/schema.sql` (فيها 12B.1، وليست على `main`)، وعلى نسخ أقدم من `ruqya.sql` و`hardening-v01b.sql` مما على `main`؛ فإعادة بناء Beta من ملفات `main` ستعطي حزمة مختلفة عن المطبَّقة (3 ملفات SQL من 10).
 - لا ملف إنتاجي معدَّل: كل ملفات الفرع **مضافة** (جديدة)، و`VERSION` ولا ملفات الموقع ولا `admin.html` ولا كود Worker الإنتاجي لم تُمَس.
+
+## 13) فصل المنتجات (مرحلة لاحقة، محلي)
+- **A. الرقية:** `ruqya.sql` مستبعَد من حزمة Beta وكتلة `RUQYA` تُجرَّد من `hardening-v01b` (`beta-bundle.test.mjs` 19/19). **لم يُحذف شيء من `alyssum-beta`**؛ جرد كائنات الرقية وخطة التنظيف المقترحة (غير منفَّذة) في `docs/BETA-RUQYA-OBJECTS-REPORT.md`.
+- **B. المجموعتان:** Platform Core وStore/Commerce مستقلتان في الاختبار الحقيقي وفي CI (`beta-integration.yml`: Store بـ`continue-on-error`). التبعيات في `docs/BETA-TEST-GROUPS.md`.
+- **نتائج حقيقية حديثة على `alyssum-beta` من هذا الفرع:** Core **31/31** (يشمل فحص الهوية) · Store **14/14** (يشمل فحص الهوية). لا علاقة لها بنتيجة 34/34 القديمة.

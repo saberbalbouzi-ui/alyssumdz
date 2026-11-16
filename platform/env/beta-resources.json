@@ -197,7 +197,7 @@
       }
     ],
     "sql_apply_order": {
-      "_note": "الترتيب هو المُتحقَّق منه على PostgreSQL 16 محلي (platform/supabase/tests/local/run-local.sh). مستبعَد عمداً: apply-pending.sql (يكرر ويزرع بريد المالك). hub.sql مطلوب لأن hardening-v01 يعتمد على hub_my_sites لكن تُحذف منه بذرة مستودع Production (آخر 4 أسطر: hub_sites/hub_members). experts/ruqya/pixabay-cache مطلوبة لأن hardening-v01 يعتمد على جداولها — كل ذلك اكتُشف بتدريب PostgreSQL المحلي.",
+      "_note": "الترتيب مأخوذ من platform/supabase/tests/local/run-local.sh (غير موجود في هذا الفرع) بعد استثناء ما يخص موقع ALYSSUM فقط. مستبعَد عمداً: apply-pending.sql (يكرر ويزرع بريد المالك) وruqya.sql (الرقية وحجز المواعيد وظيفة موقع ALYSSUM الشخصي لا المنصة؛ وتُجرَّد كتلة RUQYA من hardening-v01b عبر strip_blocks). hub.sql مطلوب لأن hardening-v01 يعتمد على hub_my_sites لكن تُحذف منه بذرة مستودع Production. experts/pixabay-cache مطلوبة لأن hardening-v01 يعتمد على جداولها. تصحيح: hardening-v01 لا يعتمد على الرقية إطلاقاً (0 إشارات).",
       "required": [
         "platform/supabase/schema.sql",
         "platform/sql/schema.sql",
@@ -205,15 +205,19 @@
         "platform/supabase/hub.sql",
         "platform/supabase/editor.sql",
         "platform/supabase/experts.sql",
-        "platform/supabase/ruqya.sql",
         "platform/supabase/pixabay-cache.sql",
         "platform/supabase/hardening-v01.sql",
         "platform/supabase/hardening-v01b.sql"
       ],
       "optional": [],
       "excluded": [
-        "platform/supabase/apply-pending.sql"
+        "platform/supabase/apply-pending.sql",
+        "platform/supabase/ruqya.sql"
       ],
+      "strip_blocks": {
+        "_note": "كتل تُجرَّد من الملف قبل التطبيق بين علامتي -- <NAME>:start و-- <NAME>:end (الآلية نفسها التي يستعملها make-template لحزمة العميل). وجود العلامات إلزامي، وبعد التجريد يُرفض أي أثر للكلمة في الحزمة.",
+        "platform/supabase/hardening-v01b.sql": "RUQYA"
+      },
       "substitutions": {
         "platform/sql/schema.sql": [
           "البريد الإنتاجي للمالك ← BETA_ADMIN_EMAIL",

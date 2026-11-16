@@ -30,7 +30,13 @@ export function guard(env) {
   return bad;
 }
 const NEED = ["BETA_SUPABASE_URL", "BETA_SUPABASE_REF", "BETA_SUPABASE_ANON_KEY", "BETA_SUPABASE_PAT", "BETA_ADMIN_EMAIL", "BETA_ADMIN_PASSWORD"];
-let pass = 0, fail = 0, nt = 0; const skip = (m, why) => { nt++; console.log("○ " + m + " — NOT TESTED: " + why); }; const ok = (m, c, x) => { c ? pass++ : fail++; console.log((c ? "✓ " : "✗ ") + m + (c || x === undefined ? "" : "  " + String(JSON.stringify(x)).slice(0, 240))); };
+/* المجموعات: core = وظائف المنصة الأساسية (هوية وAuth وRLS وجداول saas وStorage) · store = المتجر/التجارة (الطلبات والموظفون وadmins) · guard = حراسة الهوية (تُحتسب دائماً).
+   --group core|store|all (الافتراضي all). المجموعتان مستقلتان: فشل store لا يُسقط core، ويُشغَّل كلٌّ في job منفصل في CI. التبعيات: docs/BETA-TEST-GROUPS.md */
+const GRP = (() => { const i = process.argv.indexOf("--group"); return i > -1 ? String(process.argv[i + 1] || "") : "all"; })();
+if (!["core", "store", "all"].includes(GRP)) { console.log("✖ --group يجب أن يكون core|store|all"); process.exit(2); }
+let G = "guard"; const on = (g) => GRP === "all" || GRP === g; const counted = () => G === "guard" || on(G);
+const CNT = { guard: { p: 0, f: 0 }, core: { p: 0, f: 0 }, store: { p: 0, f: 0 } };
+let pass = 0, fail = 0, nt = 0; const skip = (m, why) => { if (!counted()) return; nt++; console.log("○ " + m + " — NOT TESTED: " + why); }; const ok = (m, c, x) => { if (!counted()) return; c ? (pass++, CNT[G].p++) : (fail++, CNT[G].f++); console.log((c ? "✓ " : "✗ ") + m + (c || x === undefined ? "" : "  " + String(JSON.stringify(x)).slice(0, 240))); };
 const end = (r, code) => { console.log("RESULT: " + r); process.exit(code); };
 
 async function main() {
@@ -61,27 +67,39 @@ async function main() {
   const PHONE = "0550990001"; let token = null, probe = null;
   try {
     /* P: هوية المشروع قبل أي كتابة */
+    G = "guard";
     const pj = await mg(""); ok("[P1] المشروع المُسترجَع اسمه = " + BETA_NAME + " وليس مشروعاً محمياً", pj.status === 200 && pj.body?.name === BETA_NAME && !PROTECTED_NAMES.has(pj.body?.name), { status: pj.status, name: pj.body?.name });
     if (!(pj.status === 200 && pj.body?.name === BETA_NAME)) end("FAIL: هوية المشروع لا تطابق Beta — أُوقف قبل أي كتابة", 2);
     /* DB: بنية وعزل */
+    G = "core";
     const noRls = await sql("select tablename from pg_tables where schemaname='public' and not rowsecurity"); ok("[D1] RLS مفعّل على كل جداول public", noRls.length === 0, noRls);
     const adm = await sql("select (select count(*) from public.saas_admins) a, (select count(*) from public.saas_admins where lower(email)=lower('" + E.BETA_ADMIN_EMAIL.replace(/'/g, "''") + "')) b, (select count(*) from public.saas_customers) c, (select count(*) from public.saas_sites) s, (select count(*) from public.hub_sites) h, (select count(*) from public.orders where coalesce(phone,'') <> '" + PHONE + "') o");
     ok("[D2] مدير Beta فقط؛ لا عملاء/مواقع/مستودعات Production", +adm[0].a === 1 && +adm[0].b === 1 && +adm[0].c === 0 && +adm[0].s === 0 && +adm[0].h === 0, adm[0]);
-    const idn = await sql("select count(*) n from (select email e from public.admins union all select email from public.saas_admins) t where " + (MARKERS.length ? MARKERS.map((m) => `e ilike '%${m.replace(/'/g, "''")}%'`).join(" or ") : "false")); ok("[D3] لا أثر لبريد/هوية المالك الإنتاجية في جداول المديرين", +idn[0].n === 0, idn);
+    const idnW = MARKERS.length ? MARKERS.map((m) => `e ilike '%${m.replace(/'/g, "''")}%'`).join(" or ") : "false";
+    const idnA = await sql("select count(*) n from (select email e from public.saas_admins) t where " + idnW); ok("[D3a] لا أثر لبريد/هوية المالك الإنتاجية في saas_admins", +idnA[0].n === 0, idnA[0]);
+    G = "store"; const idnB = await sql("select count(*) n from (select email e from public.admins) t where " + idnW); ok("[D3b] لا أثر لبريد/هوية المالك الإنتاجية في admins (المتجر)", +idnB[0].n === 0, idnB[0]); G = "core";
     /* A: Auth */
     const cfg = await mg("/config/auth"); const signupOff = cfg.status === 200 && cfg.body?.disable_signup === true; ok("[A1] التسجيل العام معطَّل (disable_signup=true)", signupOff, { status: cfg.status, disable_signup: cfg.body?.disable_signup });
-    if (signupOff) { const rnd = "beta-probe-" + Math.random().toString(36).slice(2, 10) + "@example.test", su = await api("/auth/v1/signup", { method: "POST", body: { email: rnd, password: "Pr0be-" + Math.random().toString(36).slice(2) } }); ok("[A2] محاولة تسجيل مستخدم جديد مرفوضة", su.status >= 400 && !su.json?.access_token, { status: su.status }); }
-    else ok("[A2] لم تُجرَّ محاولة التسجيل لأن التسجيل العام غير معطَّل (لا ننشئ مستخدمين في Beta)", false, "فعّل disable_signup أولاً");
+    if (on("core")) { if (signupOff) { const rnd = "beta-probe-" + Math.random().toString(36).slice(2, 10) + "@example.test", su = await api("/auth/v1/signup", { method: "POST", body: { email: rnd, password: "Pr0be-" + Math.random().toString(36).slice(2) } }); ok("[A2] محاولة تسجيل مستخدم جديد مرفوضة", su.status >= 400 && !su.json?.access_token, { status: su.status }); }
+    else ok("[A2] لم تُجرَّ محاولة التسجيل لأن التسجيل العام غير معطَّل (لا ننشئ مستخدمين في Beta)", false, "فعّل disable_signup أولاً"); }
     const wrong = await api("/auth/v1/token?grant_type=password", { method: "POST", body: { email: E.BETA_ADMIN_EMAIL, password: E.BETA_ADMIN_PASSWORD + "_x" } }); ok("[A3] كلمة مرور خاطئة مرفوضة", wrong.status === 400 && !wrong.json?.access_token, { status: wrong.status });
     const li = await api("/auth/v1/token?grant_type=password", { method: "POST", body: { email: E.BETA_ADMIN_EMAIL, password: E.BETA_ADMIN_PASSWORD } }); token = li.json?.access_token; ok("[A4] دخول مدير Beta ينجح ويُصدِر جلسة", li.status === 200 && !!token, { status: li.status });
     if (token) { const me = await api("/auth/v1/user", { token }); ok("[A5] الجلسة تعود ببريد مدير Beta", me.json?.email?.toLowerCase() === E.BETA_ADMIN_EMAIL.toLowerCase(), { status: me.status }); }
     /* R: RLS عبر PostgREST */
+    G = "store";
     const isA = await api("/rest/v1/rpc/is_admin", { token, method: "POST", body: {} }); ok("[R1] is_admin() = true للمدير", token && isA.json === true, { status: isA.status, v: isA.json });
     const isAnon = await api("/rest/v1/rpc/is_admin", { method: "POST", body: {} }); ok("[R2] anon لا ينفّذ is_admin() (مرفوض)", isAnon.status >= 400 && isAnon.json !== true, { status: isAnon.status });
-    for (const t of ["orders", "staff", "saas_admins", "audit_log", "pixabay_cache", "admins"]) { const r = await api(`/rest/v1/${t}?select=*&limit=1`); ok(`[R3] anon لا يقرأ ${t}`, r.status >= 400 || (Array.isArray(r.json) && r.json.length === 0), { status: r.status }); }
+    for (const t of ["orders", "staff", "saas_admins", "audit_log", "pixabay_cache", "admins"]) { G = ["saas_admins", "pixabay_cache"].includes(t) ? "core" : "store"; const r = await api(`/rest/v1/${t}?select=*&limit=1`); ok(`[R3] anon لا يقرأ ${t}`, r.status >= 400 || (Array.isArray(r.json) && r.json.length === 0), { status: r.status }); }
+    /* C: وظائف المنصة الأساسية عبر PostgREST (saas_* وexperts) */
+    G = "core";
+    const ec = await api("/rest/v1/rpc/experts_categories", { method: "POST", body: {} }); ok("[C1] anon يستدعي دالة المنصة العامة experts_categories() بنجاح", ec.status === 200, { status: ec.status });
+    for (const tb of ["saas_customers", "saas_sites", "saas_tickets", "saas_outbox", "saas_messages", "saas_ai_usage", "saas_settings", "expert_contacts"]) { const r = await api(`/rest/v1/${tb}?select=*&limit=1`); ok(`[C2] anon لا يقرأ ${tb} (جدول منصة حساس)`, r.status >= 400 || (Array.isArray(r.json) && r.json.length === 0), { status: r.status }); }
+    if (token) { const sa = await api("/rest/v1/saas_admins?select=email", { token }); ok("[C3] saas_admins مغلق حتى للمدير عبر الـAPI (يُدار من SQL فقط)", sa.status >= 400 || (Array.isArray(sa.json) && sa.json.length === 0), { status: sa.status }); }
+    else ok("[C3] فحص saas_admins بجلسة المدير لم يُجرَ (لا جلسة)", false);
     /* S: submit_order الاصطناعي (يكتب في Beta فقط) + منع التكرار */
+    G = "store"; let id1 = null; if (on("store")) {
     const key = "betaprobe" + Math.random().toString(36).slice(2, 14), pl = { name: "اختبار Beta اصطناعي", phone: PHONE, wilaya: "الجزائر", commune: "مركز", dtype: "home", items: [{ slug: "beta-probe", title: "منتج اصطناعي", qty: 1, price: 1000 }], subtotal: 1000, fee: 0, total: 1000, idem: key };
-    const s1b = await api("/rest/v1/rpc/submit_order", { method: "POST", body: { p: pl } }); const id1 = typeof s1b.json === "string" ? s1b.json : null;
+    const s1b = await api("/rest/v1/rpc/submit_order", { method: "POST", body: { p: pl } }); id1 = typeof s1b.json === "string" ? s1b.json : null;
     ok("[S1] anon يرسل طلباً اصطناعياً فيُقبل (معرّف S######-XXXXXXXX)", /^S\d{6}-[0-9A-F]{8}$/.test(id1 || ""), { status: s1b.status, body: s1b.text?.slice(0, 120) });
     /* S2 يعتمد على عقد المفتاح الاعتمادي في submit_order (12B.1)؛ إن لم يكن في مخطط هذه القاعدة فهو NOT TESTED لا فشل */
     const hasIdem = +(await sql("select count(*) n from pg_proc where proname='submit_order' and prosrc ilike '%idem%'"))[0].n > 0;
@@ -94,9 +112,11 @@ async function main() {
       ok("[RO2] المجهول لا يرى الطلب نفسه", ordN.status >= 400 || (Array.isArray(ordN.json) && ordN.json.length === 0), { status: ordN.status });
       const allO = await api("/rest/v1/orders?select=id&limit=50", { token }); ok("[RO3] طلبات Beta تحوي الطلب الاصطناعي فقط (لا بيانات مستوردة من Production)", allO.status === 200 && Array.isArray(allO.json) && allO.json.length === 1, { status: allO.status, n: Array.isArray(allO.json) ? allO.json.length : null });
       const adA = await api("/rest/v1/admins?select=email", { token }); ok("[RO4] جدول admins لا يُظهر عبر الـAPI غير مدير Beta (≤1 صف)", adA.status >= 400 || (Array.isArray(adA.json) && adA.json.length <= 1 && adA.json.every((r) => String(r.email).toLowerCase() === E.BETA_ADMIN_EMAIL.toLowerCase())), { status: adA.status, n: Array.isArray(adA.json) ? adA.json.length : null });
-      const saA = await api("/rest/v1/saas_admins?select=email", { token }); ok("[RO5] saas_admins مغلق حتى للمدير عبر الـAPI (يُدار من SQL فقط)", saA.status >= 400 || (Array.isArray(saA.json) && saA.json.length === 0), { status: saA.status });
     } else ok("[RO] فحوص العزل بالجلسات لم تُجرَ (لا جلسة مدير أو لا طلب اصطناعي)", false, { token: !!token, id1: !!id1 });
+    }   // نهاية مجموعة store
     /* ST: Storage */
+    G = "core";
+    if (on("core")) {   // Storage يكتب في Beta (ملف اختبار + منحة): لا يُنفَّذ في تشغيل store
     const bk = await sql("select id, public from storage.buckets order by id"), ids = bk.map((b) => b.id); ok("[ST1] الحاويتان tenants وeditor موجودتان", ids.includes("tenants") && ids.includes("editor"), ids);
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==", "base64");
     const up = async (bucket, name, tok, ctype = "image/png") => { const r = await fetch(`${URLB}/storage/v1/object/${bucket}/${name}`, { method: "POST", headers: { apikey: ANON, Authorization: "Bearer " + (tok || ANON), "Content-Type": ctype, "x-upsert": "false" }, body: png }); return { status: r.status, text: (await r.text()).slice(0, 120) }; };
@@ -115,11 +135,13 @@ async function main() {
     const g2 = await up("editor", probe); ok("[ST9] إعادة الرفع على المسار نفسه مرفوضة (لا استبدال)", g2.status >= 400, g2);
     const rdT = await fetch(`${URLB}/storage/v1/object/public/tenants/${stamp}/none.png`); ok("[ST10] حاوية tenants عامة القراءة (الجواب 404 لملف غير موجود وليس 401/403)", rdT.status === 404 || rdT.status === 400, { status: rdT.status });
     /* ملاحظة صدق: كتابة/قراءة كائن في tenants غير مجرَّبة (الكتابة service_role حصراً ولا نستعمله) */
+    }   // نهاية Storage
   } catch (e) { ok("[X] استثناء غير متوقع: " + String(e.message).slice(0, 160), false); }
   finally {
     if (probe) { try { await sql(`delete from editor.upload_grants where path='${probe}'`); const d = await sql(`set local storage.allow_delete_query = 'true'; delete from storage.objects where bucket_id='editor' and name='${probe}' returning 1`); console.log("تنظيف Storage: حُذف سجل", d.length, "كائن اختبار (قد يبقى بايت الملف اليتيم 70 بايتاً داخل Beta؛ لا يمكن حذفه دون service_role)"); } catch (e) { console.log("تنظيف Storage فشل:", String(e.message).slice(0, 80)); } }
     try { const d = await sql(`delete from public.orders where phone='${PHONE}' returning 1`); console.log("تنظيف: حُذف", d.length, "طلب اصطناعي"); } catch (e) { console.log("تنظيف فشل:", String(e.message).slice(0, 80)); }
   }
-  end(`${pass} pass / ${fail} fail` + (nt ? ` / ${nt} not-tested` : ""), fail ? 1 : 0);
+  console.log(`  [مجموعات] guard ${CNT.guard.p}/${CNT.guard.p + CNT.guard.f} · core ${CNT.core.p}/${CNT.core.p + CNT.core.f} · store ${CNT.store.p}/${CNT.store.p + CNT.store.f}`);
+  end(`[group=${GRP}] ${pass} pass / ${fail} fail` + (nt ? ` / ${nt} not-tested` : ""), fail ? 1 : 0);
 }
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) await main();

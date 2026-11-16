@@ -15,6 +15,12 @@ export function loadConfig(root = ROOT) {
   const R = JSON.parse(readFileSync(path.join(root, "platform/env/environments.json"), "utf8")), M = JSON.parse(readFileSync(path.join(root, "platform/env/beta-resources.json"), "utf8"));
   return { R, M, B: R.environments.beta, N: R.never_outside_production };
 }
+/** يجرّد كتلة -- NAME:start … -- NAME:end (مع السطر الأخير) من نص SQL. يعيد { sql, n } — n = عدد الكتل المجرَّدة. بقية الملف (الحماية الأخرى) تبقى حرفياً. */
+export function stripBlock(sql, name) {
+  const rx = new RegExp("-- " + name + ":start[\\s\\S]*?-- " + name + ":end[^\\n]*\\n?", "g");
+  let n = 0; const out = sql.replace(rx, () => { n++; return ""; });
+  return { sql: out, n };
+}
 /** يبني الحزمة: [{ path, sql, sha }] + problems[] — يفشل (problems غير فارغة) إن بقي أي أثر هوية إنتاجية بعد الاستبدال */
 export function buildBundle({ root = ROOT, adminEmail, withOptional = false } = {}) {
   const { M, N } = loadConfig(root), problems = [], files = [], order = M.supabase.sql_apply_order;
@@ -24,6 +30,8 @@ export function buildBundle({ root = ROOT, adminEmail, withOptional = false } = 
   for (const rel of [...order.required, ...(withOptional ? order.optional : [])]) {
     if (order.excluded.includes(rel)) { problems.push("ملف مستبعَد في القائمة المطلوبة: " + rel); continue; }
     let sql; try { sql = readFileSync(path.join(root, rel), "utf8"); } catch { problems.push("ملف مفقود: " + rel); continue; }
+    const sb = order.strip_blocks?.[rel];
+    if (sb) { const r = stripBlock(sql, sb); if (r.n !== 1) { problems.push(`${rel}: كتلة ${sb} يجب أن توجد مرة واحدة بعلامتيها (وُجدت ${r.n})`); continue; } sql = r.sql; }
     if (rel === "platform/sql/schema.sql") {
       const before = sql;
       sql = sql.replace(/do \$\$ declare cid uuid; begin\s*if not exists \(select 1 from public\.saas_sites where origin = 'https:\/\/alyssumdz\.com'\) then[\s\S]*?end \$\$;/, "-- (حُذف: عميل/موقع Production الأول لا يُزرَع في Beta)")
@@ -36,6 +44,7 @@ export function buildBundle({ root = ROOT, adminEmail, withOptional = false } = 
     }
     files.push({ path: rel, sql, sha: sha(sql) });
   }
+  for (const f of files) if (/ruqya|رقية/i.test(f.sql)) problems.push(`${f.path}: بقي أثر للرقية (وظيفة موقع ALYSSUM فقط) في حزمة Beta`);
   const markers = [...(N.identity_markers ?? []), ...(N.hosts ?? []), ...(N.supabase_refs ?? []), ...(N.public_key_markers ?? [])];
   for (const f of files) for (const m of markers) if (f.sql.toLowerCase().includes(m.toLowerCase())) problems.push(`${f.path}: أثر هوية إنتاجية «${m.slice(0, 12)}…»`);
   /* بصمة التسجيل في المدير: صف public.admins لبريد Beta (اختياري لكن لازم لدخول لوحة المتجر) */
