@@ -21,7 +21,8 @@ const AdminDelHealth = (() => {
       const generic = !!co.feesGeneric, d = !generic && cfg.drift && cfg.drift.n ? cfg.drift : null, ign = d && cfg.driftIgnore === sig(d);
       if (cfg.pricesErr) issues.push({ k: "bad", t: "آخر جلب لأسعارها فشل: " + String(cfg.pricesErr).replace(/CORS_BLOCKED/g, "الاتصال بالشركة محجوب من المتصفح").slice(0, 140), act: "check" });
       if (d && !ign) { const x = d.list[0]; issues.push({ k: "warn", t: d.n + " ولاية تختلف أسعارها في حسابك عمّا يعرضه متجرك" + (x ? " (مثلاً " + wname(x.id) + ": متجرك " + x.cur[0] + "/" + x.cur[1] + " وحسابك " + x.api[0] + "/" + x.api[1] + ")" : ""), act: "approve" }); }
-      if (generic) issues.push({ k: "info", t: "أسعارك التعاقدية لا يعرضها الـAPI (يعرض تعريفة عامة تخالف نموذج الشركة)، فأدخل أسعار ولاياتك من جدول الشركة بالاستيراد أدناه أو «تعديل أسعار ولايات»", act: "grid" });
+      if (generic) issues.push({ k: "info", t: "هذه الشركة لا تتيح قراءة أسعار عقدك من الخارج، فألصق جدولك مرة واحدة أدناه ويُحفظ ويُنشر لمتجرك (أو استعمل «تعديل أسعار ولايات»). ونراقب فواتيرها الفعلية على طرودك المسلَّمة وننبّهك إن خالفت أسعارك", act: "grid" });
+      if (generic) { const iv = invoice(k), isg = JSON.stringify(iv.map(x => [x.id, x.type, x.real])); if (iv.length && cfg.invIgnore !== isg) { const x = iv[0]; issues.push({ k: "warn", t: "فواتير الشركة تخالف أسعارك في " + iv.length + " ولاية/نوع، مثلاً " + wname(x.id) + " (" + (x.type === "stop" ? "مكتب" : "منزل") + "): جدولك " + x.exp + " وفوترت " + x.real + " في " + x.n + " طرود", act: "invoice" }); } }
       if (api && !generic && !cfg.pricesErr && last && Date.now() - last > STALE) issues.push({ k: "warn", t: "لم تُفحص أسعارها " + ageTxt(last), act: "check" });
       if (api && !generic && !last) issues.push({ k: "warn", t: "لم تُفحص أسعارها بعد", act: "check" });
       if (co.feesRequest && !nP) issues.push({ k: "warn", t: "لا أسعار محفوظة لها" + (api ? "" : " — أدخل مفاتيح الحساب لجلبها"), act: api ? "check" : "" });
@@ -159,14 +160,42 @@ const AdminDelHealth = (() => {
     });
     return out;
   }
+  const nrm = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  /* الرسم الذي فوترته الشركة فعلاً على الطرود المسلَّمة (fin.fee) مقابل سعر الولاية المعتمد: ولاية+نوع يتكرر فيها الرسم نفسه في طردين فأكثر ويخالف الجدول */
+  function invoice(key) {
+    const a = A(); if (!a || !a.orderCoKey || !a.wCo) return []; const cfg = a.deliveryCfg[key] || {}, by = {};
+    (a.orders || []).forEach(o => {
+      try {
+        const r = (a.shipRaw || {})[o.id], f = r && r.fin; if (!f || f.free || !(Number(f.fee) > 0)) return;
+        const rw = nrm(r.raw); if (!/^(livr|delivered)/.test(rw) || /partial|partiel/.test(rw)) return;
+        if (a.orderCoKey(o) !== key) return;
+        const w = a.wCo(o.wilaya); if (!w) return; const type = o.dtype === "stop" ? "stop" : "home", p = (cfg.prices || {})[w.id]; if (!p) return;
+        const exp = Number(type === "stop" && p.stop > 0 ? p.stop : p.home) || 0; if (!exp) return;
+        const g = by[w.id + "|" + type] || (by[w.id + "|" + type] = { id: w.id, type, exp, fees: [] }); g.fees.push(Math.round(Number(f.fee)));
+      } catch (e) { }
+    });
+    const out = []; Object.keys(by).forEach(k => { const g = by[k], real = modeNum(g.fees), n = g.fees.filter(x => x === real).length; if (n >= 2 && real !== g.exp) out.push({ id: g.id, type: g.type, exp: g.exp, real, n }); });
+    return out.sort((x, y) => y.n - x.n || x.id - y.id);
+  }
+  function savePriceFix(key, merged) {
+    const a = A(), cfg = a.deliveryCfg[key], fix = Object.keys(merged).sort((x, y) => x - y).map(k => k + "=" + merged[k].h + "/" + merged[k].s).join(", ");
+    const c2 = Object.assign({}, cfg, { priceFix: fix }); a.deliveryCfg[key] = Object.assign({}, c2, { prices: a.applyPriceFix(c2.prices || {}, c2, key) });
+    a.saveDeliveryCfgToStorage(); try { a.publishShipCo(); } catch (e) { } try { a.renderDelivery(); } catch (e) { }
+    return fix;
+  }
+  const curFix = (a, cfg) => { const cur = a.parsePriceFix(cfg.priceFix || ""), m = {}; Object.keys(cur).forEach(k => { m[k] = { h: cur[k].home, s: cur[k].stop }; }); return m; };
+  /* اعتماد أسعار الفواتير: يضيف الرسم الفعلي إلى «تعديل أسعار ولايات» (يبقى النوع الآخر كما هو) */
+  function applyInvoice(key) {
+    const a = A(), cfg = a && a.deliveryCfg[key]; if (!cfg) return 0; const d = invoice(key); if (!d.length) return 0; const m = curFix(a, cfg);
+    d.forEach(x => { const p = (cfg.prices || {})[x.id] || {}, e = m[x.id] || { h: Number(p.home) || 0, s: Number(p.stop) || 0 }; if (x.type === "stop") e.s = x.real; else e.h = x.real; if (!e.s) e.s = e.h; if (!e.h) e.h = e.s; m[x.id] = e; });
+    savePriceFix(key, m); return d.length;
+  }
+  function ignoreInvoice(key) { const a = A(), cfg = a && a.deliveryCfg[key]; if (!cfg) return false; a.deliveryCfg[key] = Object.assign({}, cfg, { invIgnore: JSON.stringify(invoice(key).map(x => [x.id, x.type, x.real])) }); a.saveDeliveryCfgToStorage(); render(); return true; }
   function importGrid(key, txt) {
     const a = A(), cfg = a && a.deliveryCfg[key]; if (!cfg) return { n: 0 };
     const g = parseGrid(txt), ids = Object.keys(g); if (!ids.length) return { n: 0 };
-    const cur = a.parsePriceFix(cfg.priceFix || ""), merged = {}; Object.keys(cur).forEach(k => { merged[k] = cur[k].home + "/" + cur[k].stop; }); ids.forEach(k => { merged[k] = g[k].h + "/" + g[k].s; });
-    const fix = Object.keys(merged).sort((x, y) => x - y).map(k => k + "=" + merged[k]).join(", ");
-    const c2 = Object.assign({}, cfg, { priceFix: fix }); a.deliveryCfg[key] = Object.assign({}, c2, { prices: a.applyPriceFix(c2.prices || {}, c2, key) });
-    a.saveDeliveryCfgToStorage(); try { a.publishShipCo(); } catch (e) { } try { a.renderDelivery(); } catch (e) { }
-    return { n: ids.length, fix };
+    const m = curFix(a, cfg); ids.forEach(k => { m[k] = { h: g[k].h, s: g[k].s }; });
+    return { n: ids.length, fix: savePriceFix(key, m) };
   }
   const LV = { ok: ["ok", "سليم"], warn: ["w", "يحتاج انتباهاً"], bad: ["r", "مشكلة"] };
   function css() {
@@ -193,6 +222,7 @@ const AdminDelHealth = (() => {
         '</div><div>' + (r.canCheck ? '<button class="small gray" type="button" data-dh="check" data-k="' + esc(r.key) + '">فحص الآن</button> ' : "") +
         (r.canProbe ? '<button class="small gray" type="button" data-dh="opts" data-k="' + esc(r.key) + '">اكتشاف خيارات الناقلين</button> ' : "") +
         (r.issues.some(i => i.act === "approve") ? '<button class="small gold" type="button" data-dh="approve" data-k="' + esc(r.key) + '">اعتمد أسعار حسابك</button> <button class="small gray" type="button" data-dh="ignore" data-k="' + esc(r.key) + '">تجاهل</button> ' : "") +
+        (r.issues.some(i => i.act === "invoice") ? '<button class="small gold" type="button" data-dh="invoice" data-k="' + esc(r.key) + '">اعتمد أسعار الفواتير</button> <button class="small gray" type="button" data-dh="invignore" data-k="' + esc(r.key) + '">تجاهل</button> ' : "") +
         (r.issues.some(i => i.act === "desks") ? '<button class="small gray" type="button" data-dh="desks" data-k="' + esc(r.key) + '">حمّل المكاتب</button>' : "") + "</div>" + (r.generic ? '<div style="flex-basis:100%"><textarea id="dh-g-' + esc(r.key) + '" rows="3" placeholder="ألصق جدول الأسعار: سطر لكل ولاية «رقم الولاية  منزل  مكتب» مثل: 21 650 450" style="width:100%"></textarea><button class="small gold" type="button" data-dh="grid" data-k="' + esc(r.key) + '">استيراد الأسعار</button> <span class="hint" id="dh-gm-' + esc(r.key) + '" style="margin:0"></span></div>' : "") + "</div>").join("") : '<p class="hint">لا شركة توصيل مفعّلة بعد.</p>') + explainHtml();
     if (keepX) { document.getElementById("dh-w").value = keepX.w; document.getElementById("dh-t").value = keepX.t; document.getElementById("dh-o").value = keepX.o; document.getElementById("dh-out").innerHTML = keepX.out; }
     if (!box._bound) {
@@ -202,6 +232,8 @@ const AdminDelHealth = (() => {
         if (act === "check") { b.disabled = true; b.textContent = "جارٍ الفحص…"; await check(k); }
         else if (act === "approve") { if (window.confirm("اعتماد أسعار حسابك لهذه الشركة؟ ستُطبَّق على متجرك فوراً وتنتهي أولويّة جدولك المحفوظ لها.")) { approve(k); render(); } }
         else if (act === "ignore") ignore(k);
+        else if (act === "invoice") { const n = applyInvoice(k); if (typeof toast === "function") toast(n ? "✅ اعتُمدت أسعار الفواتير لـ" + n + " ولاية/نوع" : "لا فروق"); render(); }
+        else if (act === "invignore") ignoreInvoice(k);
         else if (act === "grid") { const ta = document.getElementById("dh-g-" + k), r = importGrid(k, ta ? ta.value : ""), m = document.getElementById("dh-gm-" + k); if (m) m.textContent = r.n ? "✅ استُوردت أسعار " + r.n + " ولاية" : "لم أجد أسطراً بصيغة «رقم الولاية منزل مكتب»"; if (r.n) { ta.value = ""; if (typeof toast === "function") toast("✅ استُوردت أسعار " + r.n + " ولاية"); } }
         else if (act === "opts") { b.disabled = true; b.textContent = "جارٍ الاكتشاف…"; await discover(k); }
         else if (act === "desks") { try { await a.syncDesksFromCompany(k); } catch (e) { } render(); }
@@ -231,5 +263,5 @@ const AdminDelHealth = (() => {
     S.timer = setTimeout(autoCheck, 30000);
   }
   const t0 = setInterval(() => { if (typeof Admin !== "undefined" && Admin.renderDelivery) { clearInterval(t0); boot(); } }, 400);
-  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, discover, extractOptions, parseGrid, importGrid, PROBE, _S: S };
+  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, discover, extractOptions, parseGrid, importGrid, invoice, applyInvoice, ignoreInvoice, PROBE, _S: S };
 })();

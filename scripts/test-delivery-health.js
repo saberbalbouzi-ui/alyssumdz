@@ -65,6 +65,27 @@ const { chromium } = require("playwright");
   ok("تحليل الجدول الملصوق: رقم الولاية أو اسمها، وصيغة 1300/1100، ويتجاهل المرفوض", G.parse[21] && G.parse[21].h === 650 && G.parse[21].s === 450 && G.parse[30] && G.parse[30].h === 900 && G.parse[30].s === 650 && G.parse[8] && G.parse[8].h === 1300 && G.parse[8].s === 1100 && !G.parse[0], G.parse);
   ok("الاستيراد: يحفظ ولايتين في priceFix ويصيران سعر المتجر (21 ⟵ 650/450)", G.im.n === 2 && G.im.p21.home === 650 && G.im.p21.stop === 450 && G.im.p30.stop === 650 && /21=650\/450/.test(G.im.fix), G.im);
   ok("خانة لصق الجدول تظهر لشركة تعريفتها عامة", G.ta, G.ta);
+  const I = await p.evaluate(async () => {
+    const A = Admin, H = AdminDelHealth, out = {}; A.DELIVERY_COMPANIES.wecan.feesGeneric = true; A.publishShipCo = () => { }; A.saveDeliveryCfgToStorage = () => { }; A.renderDelivery = () => { }; window.toast = () => { };
+    A.deliveryCfg.wecan = { enabled: true, isDefault: true, apiKey: "k", apiSecret: "s", prices: { 21: { home: 850, stop: 600 }, 8: { home: 1000, stop: 800 } }, priceBase: "21=850/600, 8=1000/800" };
+    const mk = (id, wil, dt) => ({ id, date: new Date().toISOString(), name: "x", phone: "0550000000", wilaya: wil, commune: "c", dtype: dt, items: "p", subtotal: 3000, fee: 0, total: 3000, extra: {}, status: "livree", note: "" });
+    A.orders = [mk("A1", "Skikda", "home"), mk("A2", "Skikda", "home"), mk("A3", "Skikda", "home"), mk("B1", "Béchar", "home"), mk("B2", "Béchar", "home"), mk("C1", "Skikda", "stop"), mk("D1", "Skikda", "home")];
+    A.orderCoKey = () => "wecan"; A.shipRaw = {};
+    const fin = (fee, free) => ({ fee, price: 3000, tp: 0, tr: 0, free: !!free });
+    A.shipRaw.A1 = { raw: "delivered", fin: fin(650) }; A.shipRaw.A2 = { raw: "Livré", fin: fin(650) }; A.shipRaw.A3 = { raw: "delivered", fin: fin(650) };
+    A.shipRaw.B1 = { raw: "delivered", fin: fin(1000) }; A.shipRaw.B2 = { raw: "delivered", fin: fin(1000) };   /* مطابقان */
+    A.shipRaw.C1 = { raw: "delivered", fin: fin(450) };      /* طرد واحد فقط */
+    A.shipRaw.D1 = { raw: "partially_returned", fin: fin(970) };
+    const iv = H.invoice("wecan"); out.iv = iv;
+    const r = H.rows().find(x => x.key === "wecan"); out.row = { level: r.level, acts: r.issues.map(i => i.act), txt: r.issues.map(i => i.t).join(" | ") };
+    const n = H.applyInvoice("wecan"), c = A.deliveryCfg.wecan; out.ap = { n, fix: c.priceFix, p21: c.prices[21], p8: c.prices[8] };
+    out.after = H.invoice("wecan").length; out.rowAfter = H.rows().find(x => x.key === "wecan").level;
+    A.shipRaw.A1.fin = fin(700); A.shipRaw.A2.fin = fin(700); A.shipRaw.A3.fin = fin(700); const iv2 = H.invoice("wecan").length; H.ignoreInvoice("wecan"); out.ign = { iv2, acts: H.rows().find(x => x.key === "wecan").issues.map(i => i.act) };
+    return out; });
+  ok("فواتير WeCan: سكيكدة منزل 650 مقابل جدولك 850 في 3 طرود تُرصد فقط (بشار مطابقة، طرد مكتب واحد وجزئي مستبعدان)", I.iv.length === 1 && I.iv[0].id === 21 && I.iv[0].type === "home" && I.iv[0].exp === 850 && I.iv[0].real === 650 && I.iv[0].n === 3, I.iv);
+  ok("الصف ينبّه «يحتاج انتباهاً» بنص الفرق وإجراء الفاتورة، والرسالة بلا ذكر API", I.row.level === "warn" && I.row.acts.includes("invoice") && /سكيكدة|Skikda/.test(I.row.txt) && /850/.test(I.row.txt) && /650/.test(I.row.txt) && !/API/.test(I.row.txt), I.row);
+  ok("اعتماد أسعار الفواتير: سكيكدة منزل 650 ويبقى المكتب 600، وبقية الجدول كما هي، ولا فروق بعدها", I.ap.n === 1 && I.ap.p21.home === 650 && I.ap.p21.stop === 600 && I.ap.p8.home === 1000 && I.after === 0 && I.rowAfter === "ok", I.ap);
+  ok("تجاهل الفرق يخفي التنبيه ويعود إن تغيّر الرسم", I.ign.iv2 === 1 && !I.ign.acts.includes("invoice"), I.ign);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
