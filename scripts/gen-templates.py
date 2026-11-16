@@ -256,11 +256,13 @@ def reg(id, cat, fld, n, d, sections, page_extra=None):
     if page_extra: pg.update(page_extra)
     if id not in ("s-alyssum", "p-focus-honey"): pg["sample"] = 1      # علامة «محتوى نموذجي»: يعرض المطوّر تنبيهاً غير مانع للتاجر لمراجعته (آراء/أرقام/عبارات/بيانات تواصل) قبل النشر
     if cat == "store" and "localize_copy" in globals(): localize_copy(id, pg)      # نصوص وبيانات تجريبية خاصة بكل ثيم (gen-templates-copy.py)
+    if cat == "store" and "variety" in globals(): variety(id, pg)      # تنويع الأرقام والأسماء وترتيب كتل النهاية بين القوالب (gen-templates-variety.py)
     TEMPLATES.append({"id": id, "cat": cat, "fld": fld, "n": n, "d": d, "kind": "page" if cat == "store" else "sec"})
     os.makedirs(OUT, exist_ok=True)
     json.dump(pg, open(os.path.join(OUT, id + ".json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 
 exec(open(os.path.join(HERE, "gen-templates-copy.py"), encoding="utf-8").read())
+exec(open(os.path.join(HERE, "gen-templates-variety.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-contact.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-order.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-store.py"), encoding="utf-8").read())

@@ -43,6 +43,47 @@ def same5(f):
     except Exception: return False
 bad_scope = sorted(t for t in (touched - BATCH) if not all(same5(f) for f in changed if f.endswith(".json") and tid(f) == t))
 check("scope", "لا قالب خارج الدفعات الأربع تغيّر ملفه أو جلد منتجه (عدا تسوية حقول مرحلة القبول: عدّاد/كود/كمية/مخزون/علم نموذجي)", not bad_scope, bad_scope)
+# ── التنويع بعد قبول القوالب: تبقى العناصر التسويقية بأعدادها وتتفرّد الأرقام والأسماء وتتنوّع كتل النهاية ──
+BASE_OK = "4ef7fe63"      # الالتزام المقبول قبل مرحلة التنويع
+def _vw(n, out):
+    for k in ("cols", "widgets", "free"):
+        for c in n.get(k, []) or []:
+            if k == "cols": _vw(c, out)
+            else: out.append(c)
+    return out
+def _wcount(pg):
+    ws = [w for sc in pg.get("sections", []) for w in _vw(sc, [])]; return collections.Counter(w["type"] for w in ws)
+lost = {}; names = collections.Counter(); gen_stats = []; orders = set(); fem_img = []
+for it in idx:
+    if it.get("kind") != "page" or it["id"] not in BATCH: continue      # الستة خارج الدفعات استثناء محدود لا يُنوَّع
+    pg = json.load(open(f"{T}/{it['id']}.json", encoding="utf-8"))
+    try: old = json.loads(subprocess.run(["git", "show", f"{BASE_OK}:{T}/{it['id']}.json"], capture_output=True, check=True).stdout)
+    except Exception: old = None
+    if old is not None:
+        a_, b_ = _wcount(old), _wcount(pg); d_ = {k: (a_[k], b_[k]) for k in ("counter", "testimonial", "accordion", "iconbox", "heading", "text", "image", "button", "products") if b_[k] < a_[k]}
+        if d_: lost[it["id"]] = d_
+    seq = ""
+    for sc in pg["sections"]:
+        ws = _vw(sc, []); ty = [w["type"] for w in ws]
+        if ty.count("counter") >= 3 and len(sc.get("cols", [])) >= 3 and not ty.count("testimonial"):
+            vals = [(w["set"].get("n"), w["set"].get("pre", ""), w["set"].get("suf", "")) for w in ws if w["type"] == "counter"]
+            if vals == [(12000, "+", ""), (58, "", ""), (98, "", "%"), (24, "", "h")]: gen_stats.append(it["id"])
+            seq += "S"
+        elif ty.count("testimonial") >= 3:
+            seq += "T"
+            for w in ws:
+                if w["type"] == "testimonial":
+                    names[w["set"].get("name")] += 1
+                    if re.match(r"^(سارة|ليلى|مريم|إيمان|نادية|هناء|آسيا|سمية|فاطمة|خديجة|ريم|نسرين|وفاء|سلمى|أميرة|جيهان|حنان|سهام|لمياء|شيماء)\b", w["set"].get("name", "")) and w["set"].get("img"): fem_img.append(it["id"])
+        elif "coupon" in ty: seq += "P"
+        elif "accordion" in ty and "sfoot" not in ty: seq += "F"
+    orders.add(seq[-4:])
+lost.pop("s-marketplace", None) if lost.get("s-marketplace") == {"text": (10, 9)} else None      # مقصود: حُذف نص «ينتهي العرض خلال» اليتيم بعد تعطيل العدّاد (مرحلة القبول)
+check("variety", "العناصر التسويقية والتصميمية لا تنقص عن الأساس المقبول (عدّادات/آراء/أسئلة/بطاقات/عناوين/نصوص/صور/أزرار/منتجات) عدا نص «ينتهي العرض خلال» اليتيم في s-marketplace", not lost, lost)
+check("variety", "لا اسم رأي يتكرر بين القوالب", not [n for n, c in names.items() if c > 1], [n for n, c in names.items() if c > 1])
+check("variety", "مجموعة الأرقام المتطابقة (12000/58/98/24) لم تعد تتكرر", len(gen_stats) == 0, gen_stats)
+check("variety", "ترتيب كتل النهاية يتنوّع بين القوالب (4 أنماط على الأقل)", len(orders) >= 4, sorted(orders))
+check("variety", "لا صورة رجل تُعرض مع اسم أنثوي", not fem_img, fem_img)
 check("scope", "s-alyssum وملفاته (قالب وجلد وصور وCSS) غير ممسوسة (الفهرس فقط يحمل علم owner)", not any("alyssum" in f and not f.endswith("index.json") for f in changed), [f for f in changed if "alyssum" in f])
 thumbs_changed = {os.path.basename(f).replace("-full", "")[:-4] for f in changed if "/thumbs/" in f}
 P5_OK = (touched - BATCH) - set(bad_scope)      # قوالب خارج الدفعات عُدّلت بحقول مرحلة القبول فقط ⟵ أُعيدت معاينتاها
