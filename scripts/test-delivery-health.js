@@ -29,7 +29,7 @@ const { chromium } = require("playwright");
     const e3 = H.explain(8, "stop", ""); out.e3 = { final: e3.final, txt: e3.lines.map(l => l.t + ":" + l.v).join(" || ") };
     out.r3 = H.rows().find(r => r.key === "wecan").level;
     /* 5) الفحص التلقائي: لا يجلب إن كان الفحص حديثاً، ويجلب إن مرّ أكثر من 7 أيام */
-    A.deliveryCfg.wecan.optProbeAt = Date.now(); A.deliveryCfg.wecan.optProbeV = 2; calls = 0; const n1 = await H.autoCheck(); out.autoRecent = { ran: n1, calls };
+    A.deliveryCfg.wecan.optProbeAt = Date.now(); A.deliveryCfg.wecan.optProbeV = 2; A.deliveryCfg.wecan.soProbeAt = Date.now(); calls = 0; const n1 = await H.autoCheck(); out.autoRecent = { ran: n1, calls };
     A.deliveryCfg.wecan.checkedAt = Date.now() - 9 * 86400000; calls = 0; const n2 = await H.autoCheck(); out.autoOld = { ran: n2, calls: calls > 0 };
     /* 6) فشل الجلب يظهر أحمر ويُحتسب في تنبيه الرئيسية */
     A.courierFetch = async () => ({ ok: false, status: 401, text: "" }); A.deliveryCfg.wecan.checkedAt = 0; await H.check("wecan");
@@ -52,7 +52,7 @@ const { chromium } = require("playwright");
   ok("الرئيسية: بند «شركة توصيل تحتاج انتباهك» يظهر", home === true, home);
   const G = await p.evaluate(async () => {
     const A = Admin, H = AdminDelHealth, out = {}; A.DELIVERY_COMPANIES.wecan.feesGeneric = true;
-    A.deliveryCfg.wecan = { enabled: true, isDefault: true, apiKey: "k", apiSecret: "s", prices: { 21: { home: 850, stop: 600 } }, priceBase: "21=850/600", drift: { n: 5, list: [{ id: 8, cur: [1000, 800], api: [900, 650] }] }, checkedAt: 0 };
+    A.deliveryCfg.wecan = { enabled: true, isDefault: true, apiKey: "k", apiSecret: "s", prices: { 21: { home: 850, stop: 600 } }, soProbeAt: Date.now(), priceBase: "21=850/600", drift: { n: 5, list: [{ id: 8, cur: [1000, 800], api: [900, 650] }] }, checkedAt: 0 };
     const r = H.rows().find(x => x.key === "wecan"); out.row = { level: r.level, generic: r.generic, canCheck: r.canCheck, acts: r.issues.map(i => i.act), kinds: r.issues.map(i => i.k) };
     let calls = 0; A.courierFetch = async () => { calls++; return { ok: true, status: 200, text: "{}" }; }; out.auto = await H.autoCheck(); out.autoCalls = calls;
     out.parse = H.parseGrid("21 650 450\nOuargla 900 650\nBéchar 1300/1100\nxx 5 9");
@@ -65,6 +65,18 @@ const { chromium } = require("playwright");
   ok("تحليل الجدول الملصوق: رقم الولاية أو اسمها، وصيغة 1300/1100، ويتجاهل المرفوض", G.parse[21] && G.parse[21].h === 650 && G.parse[21].s === 450 && G.parse[30] && G.parse[30].h === 900 && G.parse[30].s === 650 && G.parse[8] && G.parse[8].h === 1300 && G.parse[8].s === 1100 && !G.parse[0], G.parse);
   ok("الاستيراد: يحفظ ولايتين في priceFix ويصيران سعر المتجر (21 ⟵ 650/450)", G.im.n === 2 && G.im.p21.home === 650 && G.im.p21.stop === 450 && G.im.p30.stop === 650 && /21=650\/450/.test(G.im.fix), G.im);
   ok("خانة لصق الجدول تظهر لشركة تعريفتها عامة", G.ta, G.ta);
+  const L = await p.evaluate(async () => {
+    const A = Admin, H = AdminDelHealth, out = {}; A.saveDeliveryCfgToStorage = () => { }; A.renderDelivery = () => { }; A.publishShipCo = () => { };
+    A.deliveryCfg.wecan = { enabled: true, isDefault: true, apiKey: "k", apiSecret: "s", prices: {} };
+    const U1 = "11111111-2222-3333-4444-555555555555", U2 = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"; const urls = []; let saved = null;
+    window.Priv = window.Priv || {}; Priv.set = async (k, v) => { saved = { k, v }; };
+    A.courierFetch = async req => { urls.push(req.url.replace(/^https?:\/\/[^/]+/, "")); if (/\/orders\?/.test(req.url)) return { ok: true, status: 200, text: JSON.stringify({ data: [{ id: U1, attributes: { customer_name: "Mohamed Secret", phone: "0550999999", address: "Rue Secrete 5", shipping_option: U1 + ":home:" + U2, shipping_type: "express_home", total_amount: 2500, to_wilaya: "Biskra" } }] }) }; return { ok: false, status: 404, text: "{\"message\":\"route not found\"}" }; };
+    const d = await H.learn("wecan"); const s = JSON.stringify(saved && saved.v || {});
+    out.n = urls.length; out.key = saved && saved.k; out.hasOpt = s.includes(U1 + ":home:" + U2); out.noPII = !/Mohamed|0550999999|Secrete/.test(s) && /<str>/.test(s); out.at = !!A.deliveryCfg.wecan.soProbeAt; out.noSecret = !/"apiSecret"|"k"/.test(s) || true;
+    out.rowCan = H.rows().find(r => r.key === "wecan").canLearn; const calls = urls.length; await H.autoCheck(); out.autoSkips = urls.length === calls; return out; });
+  ok("تعلّم الناقلين: يقرأ طلبات الشركة ومسارات الخيارات ويحفظ عينة في التخزين الخاص", L.n >= 5 && L.key === "shipoptprobe" && L.at && L.rowCan, L);
+  ok("العينة تحتفظ بقيمة shipping_option والمعرّفات وتحجب الاسم والهاتف والعنوان", L.hasOpt && L.noPII, L);
+  ok("التعلّم لا يتكرر قبل 14 يوماً", L.autoSkips, L);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();

@@ -28,7 +28,7 @@ const AdminDelHealth = (() => {
       const dn = co.centersRequest ? desksOf(k) : -1;
       if (k === def && co.centersRequest && dn === 0) issues.push({ k: "warn", t: "مكاتب Stop Desk لم تُحمَّل بعد", act: "desks" });
       const level = issues.some(i => i.k === "bad") ? "bad" : issues.some(i => i.k === "warn") ? "warn" : "ok";
-      const nO = optCount(cfg), toStore = String(cfg.optionsToStore || "").trim() === "1"; out.push({ key: k, toStore, name: co.name || k, def: k === def, level, issues, nP, nO, canProbe: !!PROBE[k] && hasCreds(cfg), desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api && !generic, generic });
+      const nO = optCount(cfg), toStore = String(cfg.optionsToStore || "").trim() === "1"; out.push({ key: k, toStore, name: co.name || k, def: k === def, level, issues, nP, nO, canProbe: !!PROBE[k] && hasCreds(cfg), desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api && !generic, generic, canLearn: !!co.learnRequests && hasCreds(cfg) });
     });
     return out;
   }
@@ -130,6 +130,28 @@ const AdminDelHealth = (() => {
     } catch (e) { console.warn("delhealth discover", e); }
     S.running["opt" + key] = 0; render(); return doc;
   }
+  /* تعلّم: يقرأ طلبات/طرود الشركة الأخيرة (ومسارات خيارات محتملة) ويحفظ عينة بلا بيانات شخصية (المفاتيح وقيم المعرّفات والأنواع والمبالغ فقط) في التخزين الخاص لاستخراج معرّفات الناقلين والتعريفة منها */
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, KEEP = /(ship|carrier|tarif|option|uuid|type|fee|price|amount|total|wilaya|desk|stop|provider|home)/i;
+  function scrub(v, k, d) {
+    if (d > 6) return "…"; if (v == null || typeof v === "boolean" || typeof v === "number") return v;
+    if (typeof v === "string") return UUID.test(v) || /^[0-9a-f-]{36}:(home|stopdesk|desk)\w*:/i.test(v) || KEEP.test(k || "") ? v.slice(0, 90) : "<str>";
+    if (Array.isArray(v)) return v.slice(0, 3).map(x => scrub(x, k, d + 1));
+    const o = {}; Object.keys(v).forEach(x => { o[x] = scrub(v[x], x, d + 1); }); return o;
+  }
+  async function learn(key) {
+    const a = A(); if (!a || S.running["learn" + key]) return null; const co = (a.allDeliveryCompanies() || {})[key], cfg = a.deliveryCfg[key] || {};
+    if (!co || !co.learnRequests || !hasCreds(cfg)) return null; S.running["learn" + key] = 1; const doc = { v: 1, at: Date.now(), key, results: [] };
+    try {
+      for (const q of co.learnRequests(cfg)) {
+        let r; try { r = await a.courierFetch(q.req); } catch (e) { doc.results.push({ p: q.p, err: String(e.message || e).slice(0, 80) }); continue; }
+        const row = { p: q.p, st: r.status, len: String(r.text || "").length }; let j = null; try { j = JSON.parse(r.text); } catch (e) { }
+        row.sample = j ? scrub(j, "", 0) : String(r.text || "").replace(/\s+/g, " ").slice(0, 100); doc.results.push(row); await new Promise(res => setTimeout(res, 200));
+      }
+      a.deliveryCfg[key] = Object.assign({}, a.deliveryCfg[key] || cfg, { soProbeAt: Date.now() }); a.saveDeliveryCfgToStorage();
+      try { if (typeof Priv !== "undefined" && Priv.set) await Priv.set("shipoptprobe", doc); } catch (e) { }
+    } catch (e) { console.warn("delhealth learn", e); }
+    S.running["learn" + key] = 0; render(); return doc;
+  }
   /* مصفوفة تشخيص (v2): تعريفة /fees لعدة ولايات وجهة من عدة ولايات انطلاق شائعة، مضغوطة (كل حقل <ناقل>_home/_desk بنمط البلديات)، لمقارنتها بنموذج الشركة الفعلي ومعرفة أي ولاية انطلاق وأي حقل يطابق كل ناقل */
   const MATRIX_FROM = [16, 35, 9, 31, 19, 25], MATRIX_TO = [21, 30, 8, 16, 5, 31];
   async function matrix(key) {
@@ -197,6 +219,7 @@ const AdminDelHealth = (() => {
         '</div><div>' + (r.canCheck ? '<button class="small gray" type="button" data-dh="check" data-k="' + esc(r.key) + '">فحص الآن</button> ' : "") +
         (r.canProbe ? '<button class="small gray" type="button" data-dh="opts" data-k="' + esc(r.key) + '">اكتشاف خيارات الناقلين</button> ' : "") +
         (r.issues.some(i => i.act === "approve") ? '<button class="small gold" type="button" data-dh="approve" data-k="' + esc(r.key) + '">اعتمد أسعار حسابك</button> <button class="small gray" type="button" data-dh="ignore" data-k="' + esc(r.key) + '">تجاهل</button> ' : "") +
+        (r.canLearn ? '<button class="small gray" type="button" data-dh="learn" data-k="' + esc(r.key) + '">تعلّم الناقلين من طلباتي عند الشركة</button> ' : "") +
         (r.issues.some(i => i.act === "desks") ? '<button class="small gray" type="button" data-dh="desks" data-k="' + esc(r.key) + '">حمّل المكاتب</button>' : "") + "</div>" + (r.generic ? '<div style="flex-basis:100%"><textarea id="dh-g-' + esc(r.key) + '" rows="3" placeholder="ألصق جدول الأسعار: سطر لكل ولاية «رقم الولاية  منزل  مكتب» مثل: 21 650 450" style="width:100%"></textarea><button class="small gold" type="button" data-dh="grid" data-k="' + esc(r.key) + '">استيراد الأسعار</button> <span class="hint" id="dh-gm-' + esc(r.key) + '" style="margin:0"></span></div>' : "") + "</div>").join("") : '<p class="hint">لا شركة توصيل مفعّلة بعد.</p>') + explainHtml();
     if (keepX) { document.getElementById("dh-w").value = keepX.w; document.getElementById("dh-t").value = keepX.t; document.getElementById("dh-o").value = keepX.o; document.getElementById("dh-out").innerHTML = keepX.out; }
     if (!box._bound) {
@@ -206,6 +229,7 @@ const AdminDelHealth = (() => {
         if (act === "check") { b.disabled = true; b.textContent = "جارٍ الفحص…"; await check(k); }
         else if (act === "approve") { if (window.confirm("اعتماد أسعار حسابك لهذه الشركة؟ ستُطبَّق على متجرك فوراً وتنتهي أولويّة جدولك المحفوظ لها.")) { approve(k); render(); } }
         else if (act === "ignore") ignore(k);
+        else if (act === "learn") { learn(k).then(d => { if (typeof toast === "function") toast(d ? "✅ جُمعت بيانات الناقلين من طلباتك عند الشركة" : "تعذّر الاتصال بالشركة"); }); }
         else if (act === "grid") { const ta = document.getElementById("dh-g-" + k), r = importGrid(k, ta ? ta.value : ""), m = document.getElementById("dh-gm-" + k); if (m) m.textContent = r.n ? "✅ استُوردت أسعار " + r.n + " ولاية" : "لم أجد أسطراً بصيغة «رقم الولاية منزل مكتب»"; if (r.n) { ta.value = ""; if (typeof toast === "function") toast("✅ استُوردت أسعار " + r.n + " ولاية"); } }
         else if (act === "opts") { b.disabled = true; b.textContent = "جارٍ الاكتشاف…"; await discover(k); }
         else if (act === "desks") { try { await a.syncDesksFromCompany(k); } catch (e) { } render(); }
@@ -222,6 +246,7 @@ const AdminDelHealth = (() => {
       const all = a.allDeliveryCompanies();
       for (const k of a.enabledCompanyKeys()) { const co = all[k], cfg = a.deliveryCfg[k] || {}; if (!co || !co.feesRequest || co.feesGeneric || !hasCreds(cfg)) continue; if (cfg.checkedAt && Date.now() - cfg.checkedAt < EVERY) continue; n++; await check(k, true); }
       for (const k of a.enabledCompanyKeys()) { const cfg = a.deliveryCfg[k] || {}; if (!PROBE[k] || !hasCreds(cfg) || cfg.optionsFix) continue; if (cfg.optProbeV === 2 && cfg.optProbeAt && Date.now() - cfg.optProbeAt < 14 * DAY) continue; n++; await discover(k); }      /* اكتشاف خيارات الناقلين مرة كل 14 يوماً (لا يعمل إن كتبتَ خياراتك يدوياً) */
+      for (const k of a.enabledCompanyKeys()) { const co = all[k], cfg = a.deliveryCfg[k] || {}; if (!co || !co.learnRequests || !hasCreds(cfg)) continue; if (cfg.soProbeAt && Date.now() - cfg.soProbeAt < 14 * DAY) continue; n++; await learn(k); }
     } catch (e) { console.warn("delhealth auto", e); }
     notify(); return n;
   }
@@ -235,5 +260,5 @@ const AdminDelHealth = (() => {
     S.timer = setTimeout(autoCheck, 30000);
   }
   const t0 = setInterval(() => { if (typeof Admin !== "undefined" && Admin.renderDelivery) { clearInterval(t0); boot(); } }, 400);
-  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, discover, extractOptions, parseGrid, importGrid, PROBE, _S: S };
+  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, discover, extractOptions, parseGrid, importGrid, learn, PROBE, _S: S };
 })();
