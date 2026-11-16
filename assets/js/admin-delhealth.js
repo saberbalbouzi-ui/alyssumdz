@@ -105,7 +105,7 @@ const AdminDelHealth = (() => {
   async function discover(key, opts) {
     const a = A(); if (!a || S.running["opt" + key]) return null; const co = (a.allDeliveryCompanies() || {})[key], cfg = a.deliveryCfg[key] || {}, paths = PROBE[key];
     if (!co || !paths || !co.baseOf || !co.hdr || !hasCreds(cfg)) return null; S.running["opt" + key] = 1;
-    const from = fromId(a, co, cfg), sampleTo = (opts && opts.to) || 30, doc = { at: Date.now(), key, from, to: sampleTo, results: [] }; let found = null;
+    const from = fromId(a, co, cfg), sampleTo = (opts && opts.to) || 30, doc = { v: 2, at: Date.now(), key, from, cfgFrom: String(cfg.fromWilayaName || ""), to: sampleTo, results: [] }; let found = null;
     try {
       for (const path of paths) {
         let r; try { r = await a.courierFetch(pathReq(a, co, cfg, path, from, sampleTo)); } catch (e) { doc.results.push({ p: path, err: String(e.message || e).slice(0, 80) }); continue; }
@@ -113,7 +113,8 @@ const AdminDelHealth = (() => {
         if (j) { row.sample = String(r.text).replace(/\s+/g, " ").slice(0, 1400); const ex = extractOptions(j); row.opts = ex.length; if (ex.length > 1 && !found) found = { path, list: ex }; } else row.sample = String(r.text || "").slice(0, 120);
         doc.results.push(row); await new Promise(res => setTimeout(res, 200));
       }
-      const cur = Object.assign({}, a.deliveryCfg[key] || cfg, { optProbeAt: Date.now() });
+      try { doc.matrix = await matrix(key); } catch (e) { doc.matrixErr = String(e.message || e).slice(0, 80); }
+      const cur = Object.assign({}, a.deliveryCfg[key] || cfg, { optProbeAt: Date.now(), optProbeV: 2 });
       if (found) {
         doc.found = { path: found.path, sample: found.list };
         const options = Object.assign({}, cur.options || {}); options[sampleTo] = found.list;
@@ -126,6 +127,22 @@ const AdminDelHealth = (() => {
       try { a.publishShipCo(); } catch (e) { }
     } catch (e) { console.warn("delhealth discover", e); }
     S.running["opt" + key] = 0; render(); return doc;
+  }
+  /* مصفوفة تشخيص (v2): تعريفة /fees لعدة ولايات وجهة من عدة ولايات انطلاق شائعة، مضغوطة (كل حقل <ناقل>_home/_desk بنمط البلديات)، لمقارنتها بنموذج الشركة الفعلي ومعرفة أي ولاية انطلاق وأي حقل يطابق كل ناقل */
+  const MATRIX_FROM = [16, 35, 9, 31, 19, 25], MATRIX_TO = [21, 30, 8, 16, 5, 31];
+  async function matrix(key) {
+    const a = A(), co = (a.allDeliveryCompanies() || {})[key], cfg = a.deliveryCfg[key] || {}, out = [];
+    for (const f of MATRIX_FROM) for (const t of MATRIX_TO) {
+      let r; try { r = await a.courierFetch(pathReq(a, co, cfg, "/fees", f, t)); } catch (e) { out.push({ f, t, err: String(e.message || e).slice(0, 60) }); continue; }
+      let j = null; try { j = JSON.parse(r.text); } catch (e) { }
+      if (!j) { out.push({ f, t, st: r.status }); continue; }
+      const pc = j.per_commune && typeof j.per_commune === "object" ? Object.values(j.per_commune) : [], cols = {};
+      pc.forEach(c => Object.keys(c || {}).forEach(k => { if (/_(home|desk)$/i.test(k)) (cols[k] = cols[k] || []).push(num(c[k])); }));
+      const row = { f, t, from: j.from_wilaya_name, n: pc.length, zone: j.zone, ret: j.retour_fee };
+      Object.keys(cols).forEach(k => { row[k] = modeNum(cols[k].filter(x => x > 0)) + (cols[k].some(x => x === 0) ? "*" : ""); });
+      out.push(row); await new Promise(res => setTimeout(res, 200));
+    }
+    return out;
   }
   const optCount = cfg => Object.keys(((typeof Admin !== "undefined" && Admin.optionsOf) ? Admin.optionsOf(cfg) : {}) || {}).length;
 
@@ -177,7 +194,7 @@ const AdminDelHealth = (() => {
     try {
       const all = a.allDeliveryCompanies();
       for (const k of a.enabledCompanyKeys()) { const co = all[k], cfg = a.deliveryCfg[k] || {}; if (!co || !co.feesRequest || !hasCreds(cfg)) continue; if (cfg.checkedAt && Date.now() - cfg.checkedAt < EVERY) continue; n++; await check(k, true); }
-      for (const k of a.enabledCompanyKeys()) { const cfg = a.deliveryCfg[k] || {}; if (!PROBE[k] || !hasCreds(cfg) || cfg.optionsFix) continue; if (cfg.optProbeAt && Date.now() - cfg.optProbeAt < 14 * DAY) continue; n++; await discover(k); }      /* اكتشاف خيارات الناقلين مرة كل 14 يوماً (لا يعمل إن كتبتَ خياراتك يدوياً) */
+      for (const k of a.enabledCompanyKeys()) { const cfg = a.deliveryCfg[k] || {}; if (!PROBE[k] || !hasCreds(cfg) || cfg.optionsFix) continue; if (cfg.optProbeV === 2 && cfg.optProbeAt && Date.now() - cfg.optProbeAt < 14 * DAY) continue; n++; await discover(k); }      /* اكتشاف خيارات الناقلين مرة كل 14 يوماً (لا يعمل إن كتبتَ خياراتك يدوياً) */
     } catch (e) { console.warn("delhealth auto", e); }
     notify(); return n;
   }
