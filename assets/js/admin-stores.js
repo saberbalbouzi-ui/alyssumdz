@@ -25,9 +25,16 @@ const AdminStores = (() => {
     _tzl = ids.map(z => { const o = off(z); return { id: z, o, v: val(o), l: "(" + o + ") " + (TZAR[z] ? TZAR[z] + " — " : "") + z.replace(/_/g, " ") }; }).sort((x, y) => x.v - y.v || x.id.localeCompare(y.id));
     return _tzl;
   }
+  /* قائمة المناطق الزمنية الكاملة (400+ منطقة، حساب كل واحدة مكلف على الهاتف) لا تُبنى عند فتح اللوحة: يُعرض الأكثر استعمالاً مع المنطقة الحالية فقط، وتُستبدل بالكاملة عند أول لمس للقائمة */
+  const tzOne = z => { const L0 = (_tzl || []).find(x => x.id === z); if (L0) return L0; let o = "GMT"; try { const p = new Intl.DateTimeFormat("en", { timeZone: z, timeZoneName: "longOffset" }).formatToParts(new Date()).find(x => x.type === "timeZoneName"); o = (p && p.value) || "GMT"; if (o === "GMT") o = "GMT+00:00"; } catch (e) { return null; } return { id: z, o, l: "(" + o + ") " + (TZAR[z] ? TZAR[z] + " — " : "") + z.replace(/_/g, " ") }; };
+  const tzOptOne = (x, cur) => '<option value="' + esc(x.id) + '"' + (x.id === cur ? " selected" : "") + '>' + esc(x.l) + '</option>';
   function tzOpts(cur) {
-    const L = tzList(), common = Object.keys(TZAR).map(z => L.find(x => x.id === z)).filter(Boolean), one = x => '<option value="' + esc(x.id) + '"' + (x.id === cur ? " selected" : "") + '>' + esc(x.l) + '</option>';
-    return '<optgroup label="الأكثر استعمالاً">' + common.map(one).join("") + '</optgroup><optgroup label="كل المناطق الزمنية">' + L.map(one).join("") + '</optgroup>';
+    const common = Object.keys(TZAR).map(tzOne).filter(Boolean); if (cur && !common.some(x => x.id === cur)) { const c = tzOne(cur); if (c) common.push(c); }
+    return '<optgroup label="الأكثر استعمالاً">' + common.map(x => tzOptOne(x, cur)).join("") + '</optgroup>';
+  }
+  function tzFull(sel) {
+    if (!sel || sel.dataset.full) return; sel.dataset.full = "1"; const cur = sel.value, L = tzList(), common = Object.keys(TZAR).map(z => L.find(x => x.id === z)).filter(Boolean);
+    sel.innerHTML = '<optgroup label="الأكثر استعمالاً">' + common.map(x => tzOptOne(x, cur)).join("") + '</optgroup><optgroup label="كل المناطق الزمنية">' + L.map(x => tzOptOne(x, cur)).join("") + '</optgroup>'; sel.value = cur;
   }
   let _cl = null;
   function curList() {
@@ -446,7 +453,7 @@ const AdminStores = (() => {
       '</div>' + backupCard() + supCard() + '</div>';
     if (S.nw && S.nw.n) nwCheck(S.nw.n);
     if (window.SaasClient && S.sup === undefined && !S.supGo) { S.supGo = true; supLoad(); subLoad(); }
-    const t = $("stp-tz"); if (t) t.onchange = tick; tick(); clearInterval(S.clock); S.clock = setInterval(() => { if (!$("stp-clock")) return clearInterval(S.clock); tick(); }, 1000);
+    const t = $("stp-tz"); if (t) { t.onchange = tick; ["pointerdown", "focus", "keydown"].forEach(ev => t.addEventListener(ev, () => tzFull(t), { once: true })); setTimeout(() => { try { tzFull($("stp-tz")); } catch (e) { } }, 9000); } tick(); clearInterval(S.clock); S.clock = setInterval(() => { if (!$("stp-clock")) return clearInterval(S.clock); tick(); }, 1000);
   }
   function tog(id) { if ($("stp-name")) collect(); S.open = S.open === id ? "" : id; renderAll(); }
   function dm() { document.querySelectorAll('input[name="stp-dm"]').forEach(r => { const b = $("stp-dvb-" + r.value); if (b) b.hidden = !r.checked; }); }

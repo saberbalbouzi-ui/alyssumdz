@@ -14,14 +14,24 @@ function shipBlocked(w, commune, type){
   if(w.xw) return "عذراً، لا يتوفر التوصيل إلى ولاية " + w.name + " حالياً";
   const m = w.xc && commune ? w.xc[commune] : "";
   if(m === "all") return "عذراً، لا يتوفر التوصيل إلى بلدية " + commune + " حالياً";
-  if(m === "home" && type !== "stop") return "التوصيل للمنزل غير متاح في بلدية " + commune + ((w.desks||[]).some(d=>d.commune===commune) ? " — اختر التوصيل إلى مكتب Stop Desk" : "");
+  if(m === "home" && type !== "stop") return "التوصيل للمنزل غير متاح في بلدية " + commune + (shipDesks(w, null).some(d=>d.commune===commune) ? " — اختر التوصيل إلى مكتب Stop Desk" : "");
   return "";
 }
 /* تسعير التوصيل: الافتراضي أسعار المناطق (WILAYAS)؛ إن فُعّلت شركة تجلب أسعارها فـ ship-co.json (`def` + `companies`) يعتمد أسعارها تلقائياً.
    وللمنتج اختيار خاص: shipCo = مفتاح شركة | "zones" (أسعار المناطق) | "free" (سعر حر ثابت shipFreeHome/shipFreeStop) */
 /* __OCSC: تكاليف الشحن لنموذج الطلب المضمَّن في صفحة هبوط (oc.sc): "" = الشركة الافتراضية، "zones" = مناطق التوصيل؛ null = حسب إعداد المنتج */
 let __OCSC = null, __OCPF = null; const pshipCo = p => __OCSC !== null ? __OCSC : (p && p.shipCo);
-let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
+let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;
+/* مكاتب Stop Desk: تُعرض مكاتب شركة التوصيل الافتراضية (أو شركة المنتج) فقط؛ المكتب بلا وسم شركة (قديم) يبقى ظاهراً. وسم الشركة: d.co (يكتبه تحميل المراكز في اللوحة) أو «[Yalidine]/[EasyAndSpeed]» في اسم مراكز ياليدين */
+let __SHIPDK = "", __SHIPDP = [];
+const deskCo = d => (d && d.co) || (/\[(?:Yalidine|EasyAndSpeed)\]\s*$/i.test(String((d && d.name) || "")) ? "yalidine" : "");
+/* الاحتياط: إن لم تُحمَّل مراكز هذه الشركة في أي ولاية بعد (لا مكتب موسوم بها في كل الولايات) لا نُرشّح فتبقى كل المكاتب كما كانت ولا يتعطّل خيار المكتب؛ وبعد تحميلها يُعرض لكل ولاية مكاتب الشركة فقط */
+/* الأرخص أولاً: شركة تجمع مكاتب شركات عدة (WeCan): أول كلمة مفضّلة (dp من ship-co.json) تطابق مكتباً في هذه البلدية يُعرض ما يطابقها فقط، وإلا الكلمة التالية، وإلا الكل */
+const preferDesks = list => { if(!__SHIPDP.length) return list; const by = {}; list.forEach(d => { (by[(d && d.commune) || ""] = by[(d && d.commune) || ""] || []).push(d); });
+  return [].concat(...Object.keys(by).map(k => { const g = by[k]; for(const t of __SHIPDP){ const m = g.filter(d => String((d && d.name) || "").toLowerCase().includes(t)); if(m.length) return m; } return g; })); };      /* لكل بلدية على حدة */
+const shipDesks = (w, p) => { const all = (w && w.desks) ? w.desks : [], pk = typeof pshipCo === "function" ? pshipCo(p) : "", k = (pk && pk !== "zones" && pk !== "free" && pk !== "def") ? pk : __SHIPDK; if(!k) return all;      /* «zones/free/def» مصدر تسعير للصفحة لا شركة: المكاتب تبقى للشركة الافتراضية (كانت «zones» تُعامَل كشركة فتُعرض كل المكاتب) */
+  let synced = false; try{ synced = (typeof WILAYAS !== "undefined" ? WILAYAS : []).some(x => (x.desks || []).some(d => deskCo(d) === k)); }catch(e){}
+  return synced ? all.filter(d => { const c = deskCo(d); return !c || c === k; }) : all; };     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
 /* بلديات لا توصّل إليها شركة التوصيل الافتراضية (مثل تبلبالة عند ياليدين): تُعلَّم «غير متاح» بنفس آلية الاستثناءات w.xc */
 function applyShipNd(nd, def){
   if(!nd || def !== "yalidine" || typeof WILAYAS === "undefined") return;
@@ -39,7 +49,7 @@ function applyShipList(cos, def){
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPNOSTOP = !!j.noStop; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPNOSTOP || __SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPDK = j.dk || ""; __SHIPDP = String(j.dp || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean); __SHIPNOSTOP = !!j.noStop; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPNOSTOP || __SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
@@ -82,7 +92,7 @@ function shipQuote(w, commune, type, sub, co, pf, pa){
   if(cpd && (type === "stop" ? cpd[1] : cpd[0]) > 0){      // سعر البلدية المستقل عند الشركة (مطلق) — منفصل عن سعر الولاية؛ يبقى تعديل السعر المعروض (adj) مطبَّقاً عليه
     const wb = base, aj = (pa !== undefined && pa !== null) ? pa : (Number(__SHIPCO[ckey] && __SHIPCO[ckey].adj) || 0), nb = Math.max(0, Number(type === "stop" ? cpd[1] : cpd[0]) - aj);
     supAdd = nb - wb; adjApplied = aj ? Number(type === "stop" ? cpd[1] : cpd[0]) - nb : 0; base = nb;
-  } else if(src !== "free" && src !== "zones" && !adjOnly){            // (أسعار المناطق = سعر الولاية فقط بلا إضافة بلدية) إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
+  } else if(src !== "free" && src !== "zones" && !adjOnly && !(ckey && __SHIPCO && __SHIPCO[ckey] && __SHIPCO[ckey].own)){      /* شركة تعريفتها كاملة (DHD وZR وWeCan…): لا تُضاف إليها إضافات بلديات ياليدين */            // (أسعار المناطق = سعر الولاية فقط بلا إضافة بلدية) إضافة البلدية (Supplément commune) عند شركة التوصيل: تُضاف لسعر الولاية
     const cs = __SHIPSUP[w.par || w.id], k = String(commune || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), d = cs && k && cs[k];
     if(d){ const add = Number(type === "stop" ? d[1] : d[0]) || 0; if(add){ const nb = Math.max(0, base + add); supAdd = nb - base; base = nb; } }
   }
@@ -361,7 +371,10 @@ function injectPixelBase(px){
     gtag("config", px.pixelId);
   }
 }
+/* داخل إطار نموذج صفحة الهبوط: إن كانت الصفحة الأم تتولّى البكسلات (lp-pixels.js) نمرّر الأحداث إليها بدل تحميل البكسل هنا (يمنع تكرار PageView والأحداث) */
+function __pxParent(){ try{ return window.parent !== window && /[?&]embed=1/.test(location.search) && window.parent.__pbPx === true; }catch(e){ return false; } }
 async function initPixels(){
+  if(__pxParent()){ window.__activePixels = []; window.__pxReady = true; const q0 = window.__pxq || []; window.__pxq = []; q0.forEach(x=>trackEvent(x[0], x[1])); return; }
   try{
     const pixels = await loadPixels();
     const slug = currentProductSlugFromUrl();
@@ -382,6 +395,7 @@ const __PX_EVENTS = {
 function trackEvent(name, d){
   if(!window.__pxReady){ (window.__pxq = window.__pxq || []).push([name, d]); return }
   d = d || {};
+  if(__pxParent()){ try{ window.parent.postMessage({ pbPx: { name, d: JSON.parse(JSON.stringify(d)) } }, location.origin); }catch(e){} return; }
   (window.__activePixels || []).forEach(px=>{
     try{
       const m = __PX_EVENTS[name]; if(!m) return;
@@ -397,18 +411,21 @@ function trackEvent(name, d){
   });
 }
 /* يُستدعى عند نجاح تأكيد الطلب (زر «تأكيد الطلب») في initProduct أدناه */
-function firePixelPurchase(p, total, qty, orderId){
+/* قيمة حدث الشراء حسب إعداد البكسل: إجمالي الطلب (افتراضي) أو سعر المنتجات بدون رسوم التوصيل */
+function pxPurchaseValue(px, total, fee){ const t = Number(total) || 0; return px && px.valueMode === "products" ? Math.max(0, t - (Number(fee) || 0)) : t; }
+function firePixelPurchase(p, total, qty, orderId, fee){
+  if(__pxParent()){ try{ window.parent.postMessage({ pbPx: { name: "Purchase", d: { slug: p && p.slug, title: p && p.title, value: total, qty, orderId, fee: Number(fee) || 0 } } }, location.origin); }catch(e){} return; }
   (window.__activePixels||[]).forEach(px=>{
     try{
-      const currency = px.currency || "DZD";
+      const currency = px.currency || "DZD", val = pxPurchaseValue(px, total, fee);
       if(px.platform === "facebook" && window.fbq){
-        fbq("track", "Purchase", { value: total, currency, content_ids:[p.slug], content_type:"product", contents:[{id:p.slug, quantity: qty}] });
+        fbq("track", "Purchase", { value: val, currency, content_ids:[p.slug], content_type:"product", contents:[{id:p.slug, quantity: qty}] });
       } else if(px.platform === "tiktok" && window.ttq){
-        ttq.track("CompletePayment", { value: total, currency, content_id: p.slug, content_type:"product", quantity: qty });
+        ttq.track("CompletePayment", { value: val, currency, content_id: p.slug, content_type:"product", quantity: qty });
       } else if(px.platform === "google_ads" && window.gtag){
-        gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? ("/" + px.conversionLabel) : ""), value: total, currency, transaction_id: String(orderId || Date.now()) });
+        gtag("event", "conversion", { send_to: px.pixelId + (px.conversionLabel ? ("/" + px.conversionLabel) : ""), value: val, currency, transaction_id: String(orderId || Date.now()) });
       } else if(px.platform === "ga4" && window.gtag){
-        gtag("event", "purchase", { value: total, currency, transaction_id: String(orderId || Date.now()), items:[{item_id:p.slug, item_name:p.title, quantity: qty, price: total}] });
+        gtag("event", "purchase", { value: val, currency, transaction_id: String(orderId || Date.now()), items:[{item_id:p.slug, item_name:p.title, quantity: qty, price: val}] });
       }
     }catch(e){ console.error("pixel purchase error", px.id, e); }
   });
@@ -550,12 +567,198 @@ function applyCheckout(cfg){
     applyCheckoutColors(cfg.colors);
   }catch(e){ /* تجاهل — إعدادات نموذج الطلب ليست حرجة لعمل الموقع */ }
 }
+/* ═══ الطلب بمراحل (مساعد تسهيل ملء النموذج) — يُفعَّل من لوحة التحكم ⟵ نموذج الطلب (checkout.json: steps:true) ═══
+   طبقة فوق نموذج الطلب الحالي بلا إعادة رسم: تُخفي/تُظهر مجموعات الحقول نفسها (فلا تضيع أي بيانات عند الرجوع، ولا تُعاد الصفحة):
+   1) الولاية ثم البلدية (ونوع التوصيل/المكتب)  2) اختيار العرض + رسوم التوصيل والمجموع فوراً  3) الاسم والهاتف  4) مراجعة ثم تأكيد الطلب.
+   «اطلب الآن» يمرّر بسلاسة إلى المرحلة الحالية. لا تعمل مع المنتجات المتغيّرة/المجمَّعة/الرقمية أو النافدة (يبقى النموذج العادي). الاختبار: scripts/test-order-steps.js */
+/* أخطاء الحقول داخل النموذج: الخانة تحمرّ فوراً مع رسالة واضحة تحتها (بدل رسالة المتصفح أو التنبيه العابر) — تُستعمل في النموذج العادي والطلب بمراحل */
+const FieldErr = (() => {
+  const CSS = `.fe-bad.fe-bad.fe-bad{border-color:#d92d20!important;background-color:rgba(217,45,32,.07)!important;box-shadow:0 0 0 3px rgba(217,45,32,.16)!important}
+.fe-box{outline:2px solid #d92d20;outline-offset:3px;border-radius:14px}
+.fe-msg{display:flex;align-items:flex-start;gap:.4rem;margin:.35rem 0 .1rem;padding:.3rem .6rem;border-radius:8px;background:#fef3f2;border:1px solid #fecdca;color:#b42318;font-size:.84rem;font-weight:700;line-height:1.55}
+.fe-msg::before{content:"!";flex:none;width:17px;height:17px;margin-top:.1rem;border-radius:50%;background:#d92d20;color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center}
+.fe-shake{animation:fesh .35s}@keyframes fesh{20%{transform:translateX(5px)}40%{transform:translateX(-5px)}60%{transform:translateX(3px)}80%{transform:translateX(-3px)}}
+.field:has(>.fe-msg) .phone-hint{display:none}
+@media(prefers-reduced-motion:reduce){.fe-shake{animation:none}}`;
+  let inj = false; const css = () => { if (inj) return; inj = true; try { const st = document.createElement("style"); st.id = "fe-css"; st.textContent = CSS; document.head.appendChild(st); } catch (e) { } };
+  const host = el => el.closest(".field") || el.parentNode;
+  function clear(el) { if (!el) return; el.classList.remove("fe-bad", "fe-box", "fe-shake"); el.removeAttribute("aria-invalid"); if (el._fe) { try { el._fe.remove(); } catch (e) { } el._fe = null; } }
+  function mark(el, msg, box) {
+    if (!el) return; css(); clear(el); el.classList.add(box ? "fe-box" : "fe-bad"); void el.offsetWidth; el.classList.add("fe-shake"); if (!box) el.setAttribute("aria-invalid", "true");
+    const m = document.createElement("div"); m.className = "fe-msg"; m.setAttribute("role", "alert"); m.textContent = msg;
+    if (box) el.insertAdjacentElement("afterend", m); else host(el).appendChild(m); el._fe = m;
+    if (!el._feL) { el._feL = 1; const c = () => clear(el); (el.tagName === "SELECT" ? ["input", "change"] : ["input"]).forEach(ev => el.addEventListener(ev, c)); /* حقل نصي: حدث change يُطلَق عند فقدان التركيز فقط (لا يُزيل الخطأ) */ if (box) el.addEventListener("click", c); }
+  }
+  function clearAll(root) { try { (root || document).querySelectorAll(".fe-bad,.fe-box").forEach(clear); } catch (e) { } }
+  function show(errs) {
+    if (!errs || !errs.length) return; errs.forEach(x => mark(x.el, x.msg, x.box));
+    const f = errs[0].el; try { f.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "center" }); if (!errs[0].box && f.focus) f.focus({ preventScroll: true }); } catch (e) { }
+  }
+  return { mark, clear, clearAll, show };
+})();
+/* قواعد التحقق المشتركة: scope = 0 (الكل) أو رقم المرحلة 1 / 3؛ opt.ship=false لمنتج رقمي بلا توصيل */
+const FormCheck = {
+  star(form) { try { const l = form.querySelector('label[for="commune"]'); if (l && !/\*/.test(l.textContent)) l.textContent = l.textContent.trim() + " *"; } catch (e) { } },
+  list(form, scope, opt) {
+    const q = id => form.querySelector("#" + id), out = [], add = (el, msg) => { if (el) out.push({ el, msg }); }, all = !scope, ship = !(opt && opt.ship === false);
+    if (ship && (all || scope === 1)) {
+      const w = q("wilaya"); if (w && !w.value) add(w, "ادخل الولاية — اختر ولايتك من القائمة");
+      const dw = q("desk-wrap"), dk = q("desk"); if (dw && dk && dw.style.display !== "none" && !dk.value) add(dk, "اختر مكتب التوصيل");
+      const c = q("commune"); if (c && !c.value && c.options.length > 1 && c.getClientRects().length) add(c, "اختر البلدية");      // البلدية إجبارية متى وُجدت قائمتها
+    }
+    if (all || scope === 3) {
+      const nm = q("name"), ph = q("phone");
+      if (nm && nm.value.trim().length < 2) add(nm, nm.value.trim() ? "الاسم قصير — اكتب اسمك الكامل" : "ادخل الاسم الكامل");
+      if (ph) { const v = ph.value.trim(); if (!v) add(ph, "ادخل رقم الهاتف"); else if (typeof PhoneDZ !== "undefined" && PhoneDZ.on) { if (!PhoneDZ.ok(PhoneDZ.norm(v))) add(ph, "رقم الهاتف خاطئ — 10 أرقام تبدأ بـ 05 أو 06 أو 07 (أرقام فقط)"); } else if (v.replace(/\D/g, "").length < 9) add(ph, "رقم الهاتف خاطئ"); }
+      form.querySelectorAll('[id^="extra-"]').forEach(e => { if ((e.required || e.dataset.req) && !String(e.value).trim()) add(e, "هذا الحقل مطلوب"); });
+    }
+    return out;
+  }
+};
+const OrderSteps = (() => {
+  /* الطلب بمرحلتين تراكميتين: (1) الولاية + البلدية + العرض + السعر مع التوصيل  (2) الاسم والهاتف وزر التأكيد تُضاف تحت الأولى ولا تحجبها */
+  const $ = id => document.getElementById(id);
+  const S = { on: false, step: 1, max: 1, form: null, groups: [], bar: null, top: null, hint: null, hint2: null, offs: null, nav: null, next: null, stage2: [], done: false, why: "" };
+  const LBL = ["السعر والتوصيل", "بياناتك"];
+  const HINT = [
+    "بعد اختيار <b>الولاية والبلدية والعرض</b> يظهر <b>السعر مع تكلفة التوصيل</b> فوراً. ويمكنك التوصيل إلى المنزل أو إلى مكتب شركة التوصيل (غالباً أرخص).",
+    "اكتب <b>اسمك</b> و<b>رقم هاتفك</b> (10 أرقام تبدأ بـ 05 أو 06 أو 07) ليتصل بك فريقنا لتأكيد الطلب. تدفع عند الاستلام ولا نطلب أي دفع مسبق."
+  ];
+  const SEL1 = '#wilaya,#commune,#desk,#desk-wrap,input[name="dtype"],.dtype,.geopin,[data-geopin]';
+  const SEL3 = '#name,#phone,[id^="extra-"]';
+  const SEL2 = '.coupon-box,.total-box,#fee,#grand,.bump,.ups-bump,[id^="bump"]';
+  const SEL4 = 'button[type="submit"],.btn-order,.btn-wa,.btn-cart2,#add-cart,.cod-note';
+  const has = (c, sel) => c.matches(sel) || !!c.querySelector(sel);
+  const CSS = `.os-hide{display:none!important}
+.os-bar{display:flex;gap:.35rem;align-items:center;justify-content:space-between;margin:.6rem 0 .5rem;direction:rtl}
+.os-st{flex:1;display:flex;flex-direction:column;align-items:center;gap:.2rem;background:none;border:0;cursor:pointer;font:inherit;color:inherit;opacity:.55;padding:0;min-width:0}
+.os-st i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:.9rem;border:2px solid currentColor}
+.os-st small{font-size:.74rem;font-weight:700;white-space:nowrap}
+.os-st.done{opacity:.9}.os-st.done i{background:var(--os-ac,#d4af37);border-color:var(--os-ac,#d4af37);color:var(--os-ac-t,#1a1a1a)}
+.os-st.on{opacity:1}.os-st.on i{background:var(--os-ac,#d4af37);border-color:var(--os-ac,#d4af37);color:var(--os-ac-t,#1a1a1a);box-shadow:0 0 0 4px rgba(255,255,255,.12)}
+.os-ln{flex:0 0 14px;height:2px;background:currentColor;opacity:.3;margin-bottom:1rem}
+.os-hint{margin:.2rem 0 .8rem;padding:.6rem .8rem;border-radius:12px;border:1px dashed rgba(255,255,255,.35);font-size:.92rem;line-height:1.8}
+.os-h{font-weight:800;font-size:1.02rem;margin:.5rem 0 .35rem}
+.os-offs{display:grid;gap:.5rem;margin:.3rem 0 .8rem}
+.os-off{display:flex;gap:.7rem;align-items:center;text-align:start;padding:.75rem .9rem;border-radius:14px;border:2px solid rgba(255,255,255,.28);background:transparent;color:inherit;font:inherit;cursor:pointer;width:100%}
+.os-off i{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid currentColor;position:relative}
+.os-off.on{border-color:var(--os-ac,#d4af37);box-shadow:0 0 0 2px var(--os-ac,#d4af37) inset}.os-off.on i::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--os-ac,#d4af37)}
+.os-off span{flex:1;min-width:0;display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap;align-items:center}.os-off b{white-space:nowrap}
+.os-nav{display:flex;gap:.6rem;margin-top:.9rem;direction:rtl}.os-nav button{flex:1;padding:.85rem 1rem;font:inherit;font-weight:800;cursor:pointer;border-radius:12px}
+.os-fade{animation:osf .28s ease}@keyframes osf{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.os-fade{animation:none}}`;
+  /* تصنيف أبناء النموذج المباشرين إلى مرحلتين (1: توصيل/عرض/سعر، 2: بيانات/تأكيد)؛ يعيد null إن اختلطتا في عنصر واحد (فيُترك النموذج العادي) */
+  function classify(form) {
+    const out = []; let last = 1, mixed = false;
+    Array.from(form.children).forEach(c => {
+      if (c.classList.contains("os-top") || c.classList.contains("os-nav") || c.classList.contains("os-offs") || c.classList.contains("os-hint")) return;
+      if (c.tagName === "INPUT" && c.type === "hidden") return;
+      const a = has(c, SEL1) || has(c, SEL2), z = has(c, SEL3) || c.matches(SEL4) || !!c.querySelector('.btn-order,button[type="submit"]');
+      if (a && z) mixed = true;
+      if (!a && !z) {
+        if (/^H[1-6]$/.test(c.tagName)) { out.push({ el: c, stage: 0, title: true }); return; }
+        if (/^(INPUT|SELECT|TEXTAREA)$/.test(c.tagName) || c.querySelector("input:not([type=hidden]),select,textarea")) { last = 2; out.push({ el: c, stage: 2 }); return; }
+        out.push({ el: c, stage: last }); return;      // نص/ملاحظة تتبع ما قبلها
+      }
+      last = a ? 1 : 2; out.push({ el: c, stage: last });
+    });
+    return mixed ? null : out;
+  }
+  function unsupported() {
+    if (!$("order-form") || !$("wilaya")) return "no-form"; if (document.querySelector(".oos-warning")) return "oos"; if ($("variants") || $("group-box")) return "variants";
+    if (document.querySelector('[data-digital],#digital-pay,.digital-checkout')) return "digital"; return "";
+  }
+  /* n=1: الولاية/البلدية/المكتب + العرض؛ n=2: الاسم والهاتف والحقول الإضافية */
+  function validate(n) {
+    const errs = FormCheck.list(S.form, n === 2 ? 3 : 1);
+    if (n === 1) { const of = $("offers"); if (of && (of.style.display !== "none" || S.origHidden) && of.querySelector(".offer") && !of.querySelector(".offer.on")) errs.push({ el: S.offs, msg: "اختر العرض المناسب", box: true }); }
+    return errs.length ? { ok: false, msg: errs[0].msg, el: errs[0].el, all: errs } : { ok: true, all: [] };
+  }
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const sigOf = () => Array.from(document.querySelectorAll("#offers .offer")).map(o => o.textContent.replace(/\s+/g, " ").trim()).join("|");
+  function syncOffers() {
+    if (!S.offs) return; const src = document.querySelectorAll("#offers .offer"); S.offs.querySelectorAll(".os-off").forEach((b, i) => b.classList.toggle("on", !!(src[i] && src[i].classList.contains("on"))));
+  }
+  function buildOffers() {
+    S.sig = sigOf(); const of = $("offers"); if (of && of.style.display === "none" && !S.origHidden) { S.offs.innerHTML = ""; if (S.h2) S.h2.classList.add("os-hide"); return; } if (S.h2) S.h2.classList.remove("os-hide");
+    const src = document.querySelectorAll("#offers .offer"); S.offs.innerHTML = "";
+    src.forEach((o, i) => {
+      const q = o.querySelector(".q"), p = o.querySelector(".p"), b = document.createElement("button"); b.type = "button"; b.className = "os-off";
+      const ws = x => x.replace(/[ \t\r\n\f]+/g, " ").trim(), t = q ? ws(q.textContent) : ws(o.textContent), pr = p ? ws(p.textContent) : "";      /* لا نحوّل المسافة الضيّقة U+202F في «1 800» إلى مسافة عادية: تفصل الرقم في اتجاه RTL فيظهر «800 1» */
+      const bd = o.querySelector(".badge,.tag,.best,.save,small"); const extra = bd && bd !== q && bd !== p ? ws(bd.textContent) : "";
+      b.innerHTML = "<i></i><span><span>" + esc(t) + (extra ? ' <small style="opacity:.8">' + esc(extra) + "</small>" : "") + "</span><b>" + esc(pr) + "</b></span>";
+      b.addEventListener("click", () => { o.click(); setTimeout(syncOffers, 30); }); S.offs.appendChild(b);
+    }); syncOffers();
+  }
+  function show(n, opt) {
+    n = n >= 2 ? 2 : 1; const was = S.step; S.started = true; S.step = n; S.max = Math.max(S.max, n);
+    S.stage2.forEach(el => { el.classList.toggle("os-hide", n < 2); if (n === 2 && was < 2) { el.classList.remove("os-fade"); void el.offsetWidth; el.classList.add("os-fade"); } });
+    S.nav.classList.toggle("os-hide", n >= 2);
+    S.bar.querySelectorAll(".os-st").forEach((b, i) => { b.classList.toggle("on", i + 1 === n); b.classList.toggle("done", i + 1 < n); b.setAttribute("aria-current", i + 1 === n ? "step" : "false"); });
+    if (n === 2 && was < 2 && !(opt && opt.noScroll)) { try { S.hint2.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth", block: "start" }); } catch (e) { } }
+  }
+  function next() { const v = validate(1); if (!v.ok) { FieldErr.show(v.all); return false; } FieldErr.clearAll(S.form); show(2); return true; }
+  function goTo(n) { if (n <= 1) { if (S.step >= 2) { try { S.bar.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (e) { } } return; } if (S.step < 2) return next(); }
+  function build(form) {
+    const groups = classify(form); if (!groups) { S.why = "mixed"; return false; }
+    const s1 = groups.filter(g => g.stage === 1), s2 = groups.filter(g => g.stage === 2);
+    if (!s1.some(g => has(g.el, "#wilaya")) || !s2.some(g => has(g.el, "#name,#phone")) || !s2.some(g => g.el.matches(SEL4) || g.el.querySelector('.btn-order,button[type="submit"]'))) { S.why = "incomplete"; return false; }
+    S.form = form; S.groups = groups;
+    if (!$("os-css")) { const st = document.createElement("style"); st.id = "os-css"; st.textContent = CSS; document.head.appendChild(st); }
+    const sb = form.querySelector(".btn-order,button[type=submit]"); const accent = () => { try { const cs = getComputedStyle(sb); if (cs.backgroundColor && cs.backgroundColor !== "rgba(0, 0, 0, 0)" && cs.backgroundColor !== "transparent") return cs.backgroundColor; const m = String(cs.backgroundImage).match(/rgba?\([^)]*\)|#[0-9a-fA-F]{3,8}/); return m ? m[0] : "#d4af37"; } catch (e) { return "#d4af37"; } };
+    if (sb) { try { form.style.setProperty("--os-ac", accent()); form.style.setProperty("--os-ac-t", getComputedStyle(sb).color || "#1a1a1a"); } catch (e) { } }
+    /* قائمة العروض الأصلية داخل إطار صفحة الهبوط تُستبدل بقائمة المرحلة 1 */
+    { const eo = $("offers"); if (eo && /[?&]embed=/.test(location.search) && eo.style.display !== "none") { eo.style.setProperty("display", "none", "important"); S.origHidden = true; } }
+    const top = document.createElement("div"); top.className = "os-top"; S.top = top;
+    S.bar = document.createElement("div"); S.bar.className = "os-bar"; S.bar.innerHTML = LBL.map((l, i) => '<button type="button" class="os-st" data-os-go="' + (i + 1) + '"><i>' + (i + 1) + "</i><small>" + l + "</small></button>").join('<span class="os-ln"></span>');
+    S.hint = document.createElement("div"); S.hint.className = "os-hint"; S.hint.innerHTML = HINT[0];
+    S.hint2 = document.createElement("div"); S.hint2.className = "os-hint"; S.hint2.innerHTML = HINT[1];
+    S.offs = document.createElement("div"); S.offs.className = "os-offs"; top.append(S.bar, S.hint);
+    S.h1 = document.createElement("div"); S.h1.className = "os-h"; S.h1.textContent = "اختر ولايتك"; S.h2 = document.createElement("div"); S.h2.className = "os-h"; S.h2.textContent = "اختر العرض المناسب"; FormCheck.star(form);
+    S.nav = document.createElement("div"); S.nav.className = "os-nav"; S.next = document.createElement("button"); S.next.type = "button"; S.next.className = "os-next"; S.next.textContent = "متابعة: أدخل بياناتك ↓"; S.nav.appendChild(S.next);
+    try { const cs = getComputedStyle(sb || S.next); S.next.style.backgroundColor = cs.backgroundColor; if (cs.backgroundImage && cs.backgroundImage !== "none") S.next.style.backgroundImage = cs.backgroundImage; S.next.style.color = cs.color; S.next.style.border = cs.border; S.next.style.borderRadius = cs.borderRadius; S.next.style.boxShadow = cs.boxShadow; S.next.style.fontFamily = cs.fontFamily; } catch (e) { }
+    /* إعادة ترتيب النموذج: العنوان ← الشريط ← [ولاية/بلدية] ← العروض ← بقية المرحلة 1 (توصيل، كوبون، السعر مع التوصيل) ← زر المتابعة ← [اسم/هاتف ← تأكيد] */
+    const t = groups.find(g => g.title); if (t) t.el.insertAdjacentElement("afterend", top); else form.insertBefore(top, form.firstChild);
+    let ref = top; const place = el => { ref.insertAdjacentElement("afterend", el); ref = el; };
+    const cg = s1.find(g => has(g.el, "#commune")) || s1.find(g => has(g.el, "#wilaya")), wg = s1.find(g => has(g.el, "#wilaya"));
+    s1.forEach(g => { if (g === wg) place(S.h1); place(g.el); if (g === cg) { place(S.h2); place(S.offs); } });
+    place(S.nav); place(S.hint2); s2.forEach(g => place(g.el));
+    S.stage2 = [S.hint2].concat(s2.map(g => g.el));
+    S.next.addEventListener("click", next);
+    form.addEventListener("click", e => { const a = e.target.closest && e.target.closest("[data-os-go]"); if (a) { e.preventDefault(); goTo(+a.dataset.osGo); } });
+    form.addEventListener("keydown", e => { if (String(e.key || "") === "Enter" && S.step < 2 && /^(INPUT|SELECT)$/.test(e.target.tagName)) { e.preventDefault(); next(); } });
+    form.addEventListener("submit", e => {
+      if (S.step < 2) { e.preventDefault(); e.stopImmediatePropagation(); next(); return; }
+      const errs = validate(1).all.concat(validate(2).all); if (errs.length) { e.preventDefault(); e.stopImmediatePropagation(); FieldErr.show(errs); }
+    }, true);
+    try { const of = $("offers"); if (of) new MutationObserver(() => { if (sigOf() !== S.sig) buildOffers(); else syncOffers(); }).observe(of, { attributes: true, subtree: true, attributeFilter: ["class"], childList: true, characterData: true }); } catch (e) { }
+    /* «اطلب الآن»: تمرير سلس إلى النموذج دون تحميل صفحة */
+    document.addEventListener("click", e => { const a = e.target.closest && e.target.closest('a[href="#order-form"],a[href="#pb-order"],.aly-buybar .bb-btn'); if (!a || !S.on) return; if (form.contains(a)) return; e.preventDefault(); try { S.bar.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (x) { location.hash = "#order-form"; } }, true);
+    buildOffers(); S.on = true; show(1, { noScroll: true }); return true;
+  }
+  function init(cfg) {
+    if (S.done || !cfg) return;
+    /* تفضيل الصفحة (مطوّر الصفحات): "1" مفعّل، "0" معطّل، وإلا فإعداد المتجر */
+    let ov = ""; try { const m = location.search.match(/[?&]oc=([^&]+)/); if (m) ov = String((JSON.parse(decodeURIComponent(m[1])) || {}).st || ""); } catch (e) { }
+    if (!ov) { try { const fm = document.getElementById("order-form"), w = fm && fm.closest("[data-ost]"); if (w) ov = w.getAttribute("data-ost") || ""; } catch (e) { } }
+    const want = ov === "1" ? true : ov === "0" ? false : cfg.steps === true;
+    if (!want) return; S.done = true; let tries = 0;
+    const attempt = () => {
+      const f = $("order-form"), w = $("wilaya"); const ready = f && w && w.options.length > 1 && (!$("offers") || $("offers").querySelector(".offer"));
+      if (!ready) { if (++tries < 40) return setTimeout(attempt, 150); S.why = "timeout"; return; }
+      const why = unsupported(); if (why) { S.why = why; return; } try { build(f); } catch (e) { S.why = "error:" + (e && e.message); S.on = false; }
+    }; attempt();
+  }
+  return { init, go: goTo, state: S, _t: { classify } };
+})();
+
 async function initCheckout(){
   try{
     const cfg = await loadCheckout();
     applyCheckout(cfg);
     Guard.init(cfg && cfg.guard);
     PhoneDZ.setup(cfg);
+    try{ OrderSteps.init(cfg); }catch(e){ /* الطلب بمراحل اختياري */ }
   }catch(e){ /* تجاهل */ }
   try{ applyStore(await loadStore()); }catch(e){ /* تجاهل */ }
   try{ siteGate(); }catch(e){ /* تجاهل */ }
@@ -1116,8 +1319,8 @@ function initProduct(slug){
   function setDesks(w){
     if(!deskSel) return;
     const commune = communeSel ? communeSel.value : "";
-    const allDesks = (w && w.desks) ? w.desks : [];
-    const desks = commune ? allDesks.filter(d=>d.commune===commune) : allDesks;
+    const allDesks = shipDesks(w, typeof p !== "undefined" ? p : null);
+    const desks0 = commune ? allDesks.filter(d=>d.commune===commune) : allDesks, pk0 = typeof pshipCo === "function" ? pshipCo(typeof p !== "undefined" ? p : null) : "", desks = ((!pk0 || pk0 === "zones" || pk0 === "free" || pk0 === "def") && /[?&]embed=1/.test(location.search)) ? preferDesks(desks0) : desks0;      /* «الأرخص أولاً» لنموذج صفحة الهبوط (الإطار المضمَّن embed=1) وللشركة الافتراضية فقط؛ صفحات المنتجات العادية واللوحة تعرض كل المكاتب */
     deskSel.innerHTML = '<option value="">— اختر أقرب مكتب —</option>';
     desks.forEach(d=>{
       const o = document.createElement("option");
@@ -1214,6 +1417,11 @@ function initProduct(slug){
     return [{ slug: p.slug, title, qty: state.offer.qty, price: Math.round(state.offer.price / state.offer.qty * 100) / 100 }];
   }
 
+  /* تحقق مرئي قبل أي إرسال: الخانة الناقصة أو الخاطئة تحمرّ مع رسالتها (يُعطَّل تحقق المتصفح الأصلي ليحلّ محلّه) */
+  { const __f = document.getElementById("order-form"); if(__f){ __f.noValidate = true; FormCheck.star(__f); __f.addEventListener("submit", e=>{
+    if(typeof OrderSteps !== "undefined" && OrderSteps.state.on) return;
+    FieldErr.clearAll(__f); const __er = FormCheck.list(__f, 0, { ship: !p.digital }); if(__er.length){ e.preventDefault(); e.stopImmediatePropagation(); FieldErr.show(__er); }
+  }, true); } }
   // تأكيد الطلب — واتساب
   document.getElementById("order-form").addEventListener("submit", async e=>{
     e.preventDefault();
@@ -1271,7 +1479,7 @@ function initProduct(slug){
     try{ if(window.PFOrder) PFOrder.send(__order, __pfr, __order.items.map(x=>Object.assign({}, x, { vid: (type!=="grouped" && state.variation) ? state.variation.id : "" }))); }catch(e){}
     // حدث «شراء» لكل بكسل تتبع مفعّل على هذا المنتج (فيسبوك/تيك توك/جوجل) — لوحة التحكم ⟵ البكسلات
     try{ trackEvent("Lead", { slug: p.slug, title: p.title, qty: state.offer.qty, value: total }); }catch(e){}
-    firePixelPurchase(p, total, state.offer.qty);
+    firePixelPurchase(p, total, state.offer.qty, undefined, fee);
     let msg = `السلام عليكم ${SITE_NAME}،\nأريد طلب:\n` + (type==="grouped"
       ? state.group.kids.map((c,i)=> state.group.qty[i] ? `\n• ${c.title}\n  الكمية: ${state.group.qty[i]} × ${fmt(c.price)} = ${fmt(state.group.qty[i]*c.price)}` : "").join("")
       : `\n• ${p.title}${state.variation?" — "+variationLabel(p,state.variation):""}\n  الكمية: ${state.offer.qty} × ${fmt(Math.round(state.offer.price/(state.offer.qty-(state.offer.free||0))))} = ${fmt(state.offer.price)}`);
@@ -1519,7 +1727,7 @@ function fillCartWilayas(){
   function updateCartStop(){
     const w = WILAYAS.find(x=>x.id==sel.value);
     const commune = cSel ? cSel.value : "";
-    const allDesks = (w && w.desks) ? w.desks : [];
+    const allDesks = shipDesks(w, null);
     const hasDesk = (commune ? allDesks.filter(d=>d.commune===commune) : allDesks).length > 0;
     document.querySelectorAll('input[name="cdtype"]').forEach(r=>{
       if(r.value === "stop"){
@@ -2000,7 +2208,9 @@ const Thanks = {
         '<div class="thx-st"><span><i>1</i>سنؤكّد معك الطلب هاتفياً أو عبر واتساب.</span><span><i>2</i>نجهّز طلبك ونشحنه إلى ولايتك.</span><span><i>3</i>تعاين وتدفع عند الاستلام فقط.</span></div>' +
         '<div class="thx-act"><a class="pri" href="' + (typeof REL !== "undefined" ? REL : "") + 'index.html">متابعة التسوق</a>' + (o.wa ? '<a href="' + e(o.wa) + '" target="_blank" rel="noopener">إرسال الطلب على واتساب</a>' : "") + '<button type="button" id="thx-x">إغلاق</button></div></div>';
       document.body.appendChild(el);
+      try{ if(document.documentElement.classList.contains("pb-embed") && window.frameElement){ const r = window.frameElement.getBoundingClientRect(), pv = window.parent.innerHeight, top = Math.max(0, -r.top), vis = Math.max(320, Math.min(r.height - top, pv - Math.max(r.top, 0))); el.style.cssText += ";position:absolute;inset:auto;left:0;right:0;top:" + top + "px;height:" + vis + "px;align-items:flex-start;overflow-y:auto;overscroll-behavior:contain"; } }catch(_){}      /* داخل إطار صفحة الهبوط: يتوسّط الجزء الظاهر من الشاشة لا الإطار الطويل كله */
       try{ if(o.up && window.Upsell) Upsell.mountPost(el, o.up); }catch(_){}      // Upsell بعد الشراء (assets/js/upsell.js)
+      try{ if(document.documentElement.classList.contains("pb-embed")){ const topIt = ()=>el.querySelectorAll("a[href]:not([target])").forEach(a=>{ a.target = "_top"; }); topIt(); setTimeout(topIt, 800); setTimeout(topIt, 2500); } }catch(_){}      /* داخل إطار صفحة الهبوط: «متابعة التسوق» وروابط الاقتراحات تفتح في الصفحة الكاملة لا داخل الإطار */
       const close = ()=>{ el.remove(); document.removeEventListener("keydown", kd); }, kd = ev=>{ if(ev.key === "Escape") close(); };
       document.addEventListener("keydown", kd); el.querySelector("#thx-x").onclick = close; el.addEventListener("mousedown", ev=>{ if(ev.target === el) close(); });
       try{ if(navigator.vibrate) navigator.vibrate(30); }catch(_){}
@@ -2089,7 +2299,7 @@ const PhoneDZ = {
   document.documentElement.classList.add("pb-embed");
   const st = document.createElement("style");
   const WW = "#pb-embed-wrap ", FF = WW+".order-wide,"+WW+"#order-form";
-  st.textContent = "html.pb-embed,html.pb-embed body{overflow:hidden!important}html.pb-embed body>*:not(#pb-embed-wrap):not(script):not(style){display:none!important}html.pb-embed,html.pb-embed body{background:transparent!important;background-image:none!important;color-scheme:light}html.pb-embed body::before,html.pb-embed body::after{display:none!important;content:none!important;background:none!important}html.pb-embed body{padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px;--o-bg:#ffffff;--o-tc:#1f2937;--o-bd:#e5e7eb;--o-ac:#16a34a;--o-bt:#ffffff;--o-fb:#f9fafb;--o-tb:#e5e7eb;--o-cb:#f9fafb;--o-wb:#25d366;--o-r:14px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}"
+  st.textContent = "html.pb-embed,html.pb-embed body{overflow:hidden!important}html.pb-embed body>*:not(#pb-embed-wrap):not(#thx):not(script):not(style){display:none!important}html.pb-embed,html.pb-embed body{background:transparent!important;background-image:none!important;color-scheme:light}html.pb-embed body::before,html.pb-embed body::after{display:none!important;content:none!important;background:none!important}html.pb-embed body{padding:0!important;margin:0!important}#pb-embed-wrap{padding:6px;--o-bg:#ffffff;--o-tc:#1f2937;--o-bd:#e5e7eb;--o-ac:#16a34a;--o-bt:#ffffff;--o-fb:#f9fafb;--o-tb:#e5e7eb;--o-cb:#f9fafb;--o-wb:#25d366;--o-r:14px}#pb-embed-wrap .order-wide{margin-top:.6rem}#pb-embed-wrap #add-cart,#pb-embed-wrap .cart-btn{display:none!important}"
   /* الشكل الافتراضي: ألوان طبيعية فاتحة؛ كل لون متغيّر o-* يغيّره المستعمل من إعدادات العنصر */
   + FF+"{background:var(--o-bg)!important;background-image:none!important;color:var(--o-tc)!important;border:1px solid var(--o-bd)!important;border-radius:var(--o-r)!important;box-shadow:none!important}"
   + WW+"label,"+WW+"h3,"+WW+".field,"+WW+"#prod-coupon-msg,"+WW+".total-box small,"+WW+".total-box b,"+WW+".total-box #fee,"+WW+".dtype label,"+WW+".dtype span{color:var(--o-tc)!important}"
@@ -2130,8 +2340,8 @@ const PhoneDZ = {
     if(c){ const s2 = document.createElement("style"); s2.textContent = c; document.head.appendChild(s2); }
     const nz = t=>String(t).replace(/[^\p{L}\p{N}]/gu,""), same = (e,t)=>nz(e.textContent) === nz(t);
     const txt = ()=>{ try{
-      if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && h.textContent !== oc.t) h.textContent = String(oc.t); }
-      { const bn = document.querySelector(W+".btn-order"); if(bn){ const sp = bn.querySelector("#btn-total"), noT = Array.isArray(oc.x) && oc.x.indexOf("bt") > -1, gl = (oc.L && oc.L.gt) ? String(oc.L.gt) : "الإجمالي"; if(noT){ if(sp){ const t = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "")).trim(); bn.textContent = t; } } else if(sp && (oc.b || oc.L)){ const lead = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "").trim()) + " — " + gl + ": "; if(bn.__oc !== lead || bn.firstChild === sp || (bn.firstChild && bn.firstChild.textContent !== lead)){ while(bn.firstChild && bn.firstChild !== sp) bn.removeChild(bn.firstChild); bn.insertBefore(document.createTextNode(lead), sp); bn.__oc = lead; } } } }
+      if(oc.t){ const h = document.querySelector(W+"#order-form h3, "+W+".order-wide h3"); if(h && !same(h, oc.t)) h.textContent = String(oc.t); }
+      { const bn = document.querySelector(W+".btn-order"); if(bn){ const sp = bn.querySelector("#btn-total"), noT = Array.isArray(oc.x) && oc.x.indexOf("bt") > -1, gl = (oc.L && oc.L.gt) ? String(oc.L.gt) : "الإجمالي"; if(noT){ if(sp){ const t = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "")).trim(); bn.textContent = t; } } else if(sp && (oc.b || oc.L)){ const lead = (oc.b ? String(oc.b) : bn.textContent.replace(/\s*—[\s\S]*$/, "").trim()) + " — " + gl + ": "; if(bn.__oc !== lead || bn.firstChild === sp || (()=>{ let cur = ""; for(let n = bn.firstChild; n && n !== sp; n = n.nextSibling) cur += n.textContent; return nz(cur) !== nz(lead); })()){ while(bn.firstChild && bn.firstChild !== sp) bn.removeChild(bn.firstChild); bn.insertBefore(document.createTextNode(lead), sp); bn.__oc = lead; } } } }
       if(oc.L && typeof oc.L === "object"){
         const L = oc.L, lab = (id,t)=>{ const e = document.querySelector(W+'label[for="'+id+'"]'); if(e && t){ const nt = String(t) + (/\*\s*$/.test(e.textContent) ? " *" : ""); if(e.textContent !== nt) e.textContent = nt; } };
         lab("name", L.nm); lab("phone", L.ph); lab("wilaya", L.wl); lab("commune", L.cm);

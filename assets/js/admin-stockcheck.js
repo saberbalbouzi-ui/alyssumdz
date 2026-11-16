@@ -73,7 +73,7 @@ window.StockCheck = (function () {
   let lastN = -1;
   function notify() {
     const s = summary();
-    if (lastN >= 0 && s.orders > lastN && typeof toast === "function") toast("⚠️ " + s.orders + " طلب يفوق المخزون المتاح — راجع المخزون قبل الاتصال");
+    if (lastN >= 0 && s.orders > lastN && typeof toast === "function") toast("⚠️ " + s.orders + " طلب جديد (قيد التأكيد) يحتاج أكثر من المتاح — المخزون ليس صفراً بالضرورة، راجع الأعداد قبل الاتصال");
     lastN = s.orders; return s;
   }
   return { plan, direct, summary, shortOf, directOf, badge, ask, notify, live, _keyOf: keyOf };

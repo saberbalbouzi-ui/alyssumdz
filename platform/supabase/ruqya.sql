@@ -34,6 +34,10 @@ create or replace function public._ruqya_slots() returns text[] language sql imm
   select array['09:00','09:30','10:00','10:30','11:00','11:30','12:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
 $$;
 
+-- حجز «غير مؤكَّد» (لم يُثبَت واتساب صاحبه): يحجز المكان 30 دقيقة فقط ثم يُهمَل في كل العدّ
+create or replace function public._rq_live(s text, c timestamptz) returns boolean
+language sql stable as $$ select s <> 'cancelled' and (s <> 'unverified' or c > now() - interval '30 minutes') $$;
+
 -- سقف الجلسات في كل فترة (صباحاً / مساءً): افتراضياً 5 (admin_kv 'ruqya'.pcap)
 create or replace function public._rq_pcap() returns int
 language sql stable security definer set search_path = public as $$
@@ -45,12 +49,12 @@ create or replace function public.ruqya_taken(p_day date) returns jsonb
 language sql stable security definer set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object('slot', s, 'n', c, 'cap', greatest(coalesce((select (value ->> 'cap')::int from public.admin_kv where key = 'ruqya'), 1), 1))), '[]'::jsonb)
     || jsonb_build_array(
-      jsonb_build_object('slot', '_total', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled'), 0), 'cap', greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1)),
-      jsonb_build_object('slot', '_am', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled' and slot < '13:00'), 0), 'cap', public._rq_pcap()),
-      jsonb_build_object('slot', '_pm', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and status <> 'cancelled' and slot >= '13:00'), 0), 'cap', public._rq_pcap())) from (
+      jsonb_build_object('slot', '_total', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and public._rq_live(status, created_at)), 0), 'cap', greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1)),
+      jsonb_build_object('slot', '_am', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and public._rq_live(status, created_at) and slot < '13:00'), 0), 'cap', public._rq_pcap()),
+      jsonb_build_object('slot', '_pm', 'n', coalesce((select sum(sessions) from public.ruqya_bookings where day = p_day and public._rq_live(status, created_at) and slot >= '13:00'), 0), 'cap', public._rq_pcap())) from (
     select x.s, count(*) c from public.ruqya_bookings b
     cross join lateral unnest(public._ruqya_slots()) with ordinality as x(s, i)
-    where b.day = p_day and b.status <> 'cancelled'
+    where b.day = p_day and public._rq_live(b.status, b.created_at)
       and x.i >= array_position(public._ruqya_slots(), b.slot) and x.i < array_position(public._ruqya_slots(), b.slot) + b.slots
     group by x.s) t;
 $$;
@@ -71,7 +75,7 @@ begin
   perform public._rl_hit('ruqya_lookup', 15, interval '10 minutes');
   if q !~ '[^0-9+ ]' and char_length(d) < 8 then return '{"found":false,"matches":[]}'::jsonb; end if;
   with src as (
-    select name, public._ruqya_norm(phone) ph from public.ruqya_bookings where status <> 'cancelled'
+    select name, public._ruqya_norm(phone) ph from public.ruqya_bookings where status not in ('cancelled','unverified')
     union select name, public._ruqya_norm(phone) from public.orders
     union select name, public._ruqya_norm(phone) from public.customers
   ), m as (
@@ -92,7 +96,7 @@ declare
   v_n int := coalesce((p ->> 'persons')::int, 0); v_s int := coalesce((p ->> 'sessions')::int, 0);
   v_ph text := public._ruqya_norm(p ->> 'phone'); v_name text := btrim(left(coalesce(p ->> 'name',''), 120));
   v_reg boolean := coalesce((p ->> 'registered')::boolean, false); v_known boolean; v_price int; v_pack int; v_id bigint;
-  v_all text[] := public._ruqya_slots(); v_sn text; v_sp text; v_k2 boolean; v_pack2 int := 0; v_items jsonb := '[]'::jsonb; v_it jsonb; v_pr jsonb; v_pt int := 0; v_q int; v_i int; v_k int; v_cap int := 1; v_ok boolean;
+  v_all text[] := public._ruqya_slots(); v_sn text; v_sp text; v_k2 boolean; v_pack2 int := 0; v_items jsonb := '[]'::jsonb; v_it jsonb; v_pr jsonb; v_pt int := 0; v_q int; v_i int; v_k int; v_cap int := 1; v_ok boolean; v_wa text; v_code text;
 begin
   perform public._rl_hit('ruqya_book', 10, interval '1 hour');
   if not coalesce((p ->> 'terms')::boolean, false) then raise exception 'terms_required'; end if;
@@ -104,6 +108,7 @@ begin
   if v_ph !~ '^0[1-9][0-9]{7,8}$' then raise exception 'invalid_phone'; end if;
   if (select count(*) from public.ruqya_warnings where phone = v_ph) >= 3 or exists (select 1 from public.ruqya_blocks where phone = v_ph) then raise exception 'banned'; end if;      -- 3 إنذارات غياب = حظر من الحجز
   if v_name !~ '[[:alpha:]]' or char_length(v_name) < 2 then raise exception 'invalid_name'; end if;
+  delete from public.ruqya_bookings where status = 'unverified' and phone = v_ph;      -- محاولة سابقة لم يُثبَت واتسابها
   if v_s < 1 or v_s > 8 then raise exception 'invalid_sessions'; end if;
   v_i := array_position(v_all, v_slot);
   if v_i is null then raise exception 'invalid_slot'; end if;
@@ -114,22 +119,22 @@ begin
   v_cap := greatest(coalesce(v_cap, 1), 1);
   for v_k in 0 .. v_s - 1 loop
     select count(*) < v_cap into v_ok from public.ruqya_bookings b
-      where b.day = v_day and b.status <> 'cancelled'
+      where b.day = v_day and public._rq_live(b.status, b.created_at)
         and array_position(v_all, v_all[v_i + v_k]) >= array_position(v_all, b.slot) and array_position(v_all, v_all[v_i + v_k]) < array_position(v_all, b.slot) + b.slots;
     if not v_ok then raise exception 'slot_taken'; end if;
   end loop;
   -- سقف الجلسات في الفترة (5 صباحاً و5 مساءً افتراضياً)
-  if coalesce((select sum(sessions) from public.ruqya_bookings where day = v_day and status <> 'cancelled' and (slot < '13:00') = (v_slot < '13:00')), 0) + v_s > public._rq_pcap() then raise exception 'period_full'; end if;
+  if coalesce((select sum(sessions) from public.ruqya_bookings where day = v_day and public._rq_live(status, created_at) and (slot < '13:00') = (v_slot < '13:00')), 0) + v_s > public._rq_pcap() then raise exception 'period_full'; end if;
   -- السعر لكل جلسة
   -- سقف الجلسات في اليوم (افتراضياً 15)؛ بعده يتحول التسجيل إلى السبت المقبل
-  if coalesce((select sum(sessions) from public.ruqya_bookings where day = v_day and status <> 'cancelled'), 0) + v_s > greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1) then raise exception 'day_full'; end if;
+  if coalesce((select sum(sessions) from public.ruqya_bookings where day = v_day and public._rq_live(status, created_at)), 0) + v_s > greatest(coalesce((select (value ->> 'maxday')::int from public.admin_kv where key = 'ruqya'), 15), 1) then raise exception 'day_full'; end if;
   if v_kind = 'single' then v_n := 1; v_price := public._rq_price('single', 1500);
   elsif v_kind = 'couple' then v_n := 2; v_price := public._rq_price('couple', 2000);
   elsif v_kind = 'kids' then if v_n < 1 or v_n > 10 then raise exception 'invalid_persons'; end if; v_price := public._rq_price('kid', 500) * v_n;
   elsif v_kind = 'family' then if v_n < 2 or v_n > 3 or v_s < 2 then raise exception 'invalid_persons'; end if; v_price := public._rq_price('family', 2000);
   else raise exception 'invalid_kind'; end if;
   -- مسجَّل؟ (له حجز سابق أو طلب أو حساب)
-  select exists (select 1 from public.ruqya_bookings where public._ruqya_norm(phone) = v_ph and status <> 'cancelled')
+  select exists (select 1 from public.ruqya_bookings where public._ruqya_norm(phone) = v_ph and status not in ('cancelled','unverified'))
       or exists (select 1 from public.orders where public._ruqya_norm(phone) = v_ph)
       or exists (select 1 from public.customers where public._ruqya_norm(phone) = v_ph) into v_known;
   if v_reg and not v_known then raise exception 'not_registered'; end if;
@@ -140,7 +145,7 @@ begin
     v_sp := public._ruqya_norm(p ->> 'second_phone');
     if v_s < 2 or v_kind not in ('single', 'couple') or v_sn !~ '[[:alpha:]]' or v_sp !~ '^0[5-7][0-9]{8}$' then raise exception 'invalid_second'; end if;
     if (select count(*) from public.ruqya_warnings where phone = v_sp) >= 3 or exists (select 1 from public.ruqya_blocks where phone = v_sp) then raise exception 'banned'; end if;
-    select exists (select 1 from public.ruqya_bookings where public._ruqya_norm(phone) = v_sp and status <> 'cancelled')
+    select exists (select 1 from public.ruqya_bookings where public._ruqya_norm(phone) = v_sp and status not in ('cancelled','unverified'))
         or exists (select 1 from public.orders where public._ruqya_norm(phone) = v_sp)
         or exists (select 1 from public.customers where public._ruqya_norm(phone) = v_sp) into v_k2;
     v_pack2 := case when not v_k2 or coalesce((p ->> 'pack2')::boolean, false) then public._rq_price('pack', 3000) else 0 end;
@@ -156,11 +161,13 @@ begin
       v_pt := v_pt + v_q * (v_pr ->> 'price')::int;
     end loop;
   end if;
-  if coalesce(p ->> 'whatsapp', '') <> '' and public._ruqya_norm(p ->> 'whatsapp') !~ '^0[5-7][0-9]{8}$' then raise exception 'invalid_whatsapp'; end if;
-  insert into public.ruqya_bookings (day, slot, slots, registered, first_time, name, phone, whatsapp, commune, wilaya, kind, persons, sessions, session_price, pack_price, total, terms, second_name, second_phone, products, products_total)
-  values (v_day, v_slot, v_s, v_known, not v_known, v_name, v_ph, (case when coalesce(p ->> 'whatsapp', '') = '' then (case when v_ph ~ '^0[5-7][0-9]{8}$' then v_ph else null end) else public._ruqya_norm(p ->> 'whatsapp') end), left(p ->> 'commune', 120), left(p ->> 'wilaya', 80), v_kind, v_n, v_s, v_price, v_pack + v_pack2, v_price * v_s + v_pack + v_pack2 + v_pt, true, v_sn, v_sp, v_items, v_pt)
+  v_wa := public._ruqya_norm(coalesce(nullif(p ->> 'whatsapp', ''), v_ph));
+  if v_wa !~ '^0[5-7][0-9]{8}$' then raise exception 'invalid_whatsapp'; end if;      -- لا موعد بلا رقم واتساب صالح لتأكيده
+  v_code := lpad((floor(random() * 10000))::int::text, 4, '0');
+  insert into public.ruqya_bookings (status, wa_code, day, slot, slots, registered, first_time, name, phone, whatsapp, commune, wilaya, kind, persons, sessions, session_price, pack_price, total, terms, second_name, second_phone, products, products_total)
+  values ('unverified', v_code, v_day, v_slot, v_s, v_known, not v_known, v_name, v_ph, v_wa, left(p ->> 'commune', 120), left(p ->> 'wilaya', 80), v_kind, v_n, v_s, v_price, v_pack + v_pack2, v_price * v_s + v_pack + v_pack2 + v_pt, true, v_sn, v_sp, v_items, v_pt)
   returning id into v_id;
-  return jsonb_build_object('ok', true, 'id', v_id, 'total', v_price * v_s + v_pack + v_pack2 + v_pt, 'session_price', v_price, 'pack_price', v_pack + v_pack2, 'products_total', v_pt, 'first_time', not v_known);
+  return jsonb_build_object('ok', true, 'id', v_id, 'total', v_price * v_s + v_pack + v_pack2 + v_pt, 'session_price', v_price, 'pack_price', v_pack + v_pack2, 'products_total', v_pt, 'first_time', not v_known, 'code', v_code, 'wa', v_wa, 'hold_min', 30);
 end $$;
 revoke all on function public.ruqya_book(jsonb) from public;
 grant execute on function public.ruqya_book(jsonb) to anon, authenticated;
@@ -277,7 +284,9 @@ do $$ declare c text; begin
   for c in select conname from pg_constraint where conrelid = 'public.ruqya_bookings'::regclass and contype = 'c' and pg_get_constraintdef(oid) like '%status%pending%' loop
     execute format('alter table public.ruqya_bookings drop constraint %I', c);
   end loop;
-  alter table public.ruqya_bookings add constraint ruqya_bookings_status_check check (status in ('pending','confirmed','done','cancelled','noshow'));
+  alter table public.ruqya_bookings add constraint ruqya_bookings_status_check check (status in ('pending','confirmed','done','cancelled','noshow','unverified'));
+  alter table public.ruqya_bookings add column if not exists wa_code text;
+  alter table public.ruqya_bookings add column if not exists wa_verified_at timestamptz;
 end $$;
 
 create table if not exists public.ruqya_warnings (
@@ -389,3 +398,28 @@ create or replace function public.ruqya_portal_invite(p_booking_id bigint) retur
 language plpgsql security definer set search_path = public as $$ begin raise exception 'use_invite2'; end $$;
 create or replace function public.ruqya_portal_claim(p_token text) returns jsonb
 language plpgsql security definer set search_path = public as $$ begin raise exception 'pin_required'; end $$;
+
+
+-- ═══ تأكيد رقم الواتساب: لا يُسجَّل الموعد (pending) إلا بعد أن يرسل صاحبه الرمز من رقمه ويؤكّده المدير ═══
+create or replace function public.ruqya_wa_verify(p_id bigint) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare b public.ruqya_bookings; v_all text[] := public._ruqya_slots(); v_i int; v_k int; v_cap int; v_ok boolean;
+begin
+  if not public.is_admin() then raise exception 'forbidden'; end if;
+  select * into b from public.ruqya_bookings where id = p_id for update;
+  if not found then raise exception 'not_found'; end if;
+  if b.status <> 'unverified' then raise exception 'not_unverified'; end if;
+  v_i := array_position(v_all, b.slot);
+  select (value ->> 'cap')::int into v_cap from public.admin_kv where key = 'ruqya'; v_cap := greatest(coalesce(v_cap, 1), 1);
+  for v_k in 0 .. b.sessions - 1 loop
+    select count(*) < v_cap into v_ok from public.ruqya_bookings x
+      where x.day = b.day and x.id <> b.id and public._rq_live(x.status, x.created_at)
+        and array_position(v_all, v_all[v_i + v_k]) >= array_position(v_all, x.slot) and array_position(v_all, v_all[v_i + v_k]) < array_position(v_all, x.slot) + x.slots;
+    if not v_ok then raise exception 'slot_taken'; end if;
+  end loop;
+  if coalesce((select sum(sessions) from public.ruqya_bookings x where x.day = b.day and x.id <> b.id and public._rq_live(x.status, x.created_at) and (x.slot < '13:00') = (b.slot < '13:00')), 0) + b.sessions > public._rq_pcap() then raise exception 'period_full'; end if;
+  update public.ruqya_bookings set status = 'pending', wa_verified_at = now() where id = b.id;
+  return jsonb_build_object('ok', true, 'id', b.id);
+end $$;
+revoke all on function public.ruqya_wa_verify(bigint) from public, anon;
+grant execute on function public.ruqya_wa_verify(bigint) to authenticated;

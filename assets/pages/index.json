@@ -7,27 +7,6 @@
   "live": true
  },
  {
-  "slug": "honey-focus",
-  "thumb": "assets/img/tarkiz/presentation/03.webp",
-  "title": "ALYSSUM MEMORY",
-  "updated": "2026-11-11 13:48",
-  "live": true
- },
- {
-  "slug": "honey-focus-flow",
-  "thumb": "assets/img/tarkiz/presentation/03.webp",
-  "title": "ALYSSUM MEMORY — نسخة الهاتف المرنة",
-  "updated": "2026-11-11 12:40",
-  "live": false
- },
- {
-  "slug": "honey-focus-free",
-  "thumb": "assets/img/tarkiz/presentation/03.webp",
-  "title": "عسل التركيز وتنشيط الذاكرة — نسخة عناصر حرة",
-  "updated": "2026-11-09 21:58",
-  "live": false
- },
- {
   "slug": "ruqya-avis",
   "thumb": "assets/img/ruqya/avis/r01.webp",
   "title": "تجارب  الباقة العلاجية ",
@@ -35,10 +14,24 @@
   "live": true
  },
  {
-  "slug": "ruqya-booking",
+  "slug": "rdv",
   "thumb": "assets/img/ruqya/avis/r01.webp",
   "title": "حجز موعد الرقية الشرعية",
-  "updated": "2026-10-31 18:00",
+  "updated": "2026-11-13 18:03",
+  "live": true
+ },
+ {
+  "slug": "honey-focus",
+  "thumb": "assets/img/tarkiz/presentation/03.webp",
+  "title": "ALYSSUM MEMORY 1",
+  "updated": "2026-11-15 23:52",
+  "live": true
+ },
+ {
+  "slug": "honey-focus-copy",
+  "thumb": "assets/img/tarkiz/presentation/03.webp",
+  "title": "ALYSSUM MEMORY",
+  "updated": "2026-11-15 23:44",
   "live": true
  }
 ]

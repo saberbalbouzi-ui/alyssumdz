@@ -35,9 +35,15 @@ const AdminPack = (() => {
     return "";
   }
   function findRow(rows, code) { const k = normScan(code); if (!k) return null; return (rows || []).find(r => normScan(r.tracking) === k || normScan(r.id) === k) || null; }
+  /* ترتيب التجهيز: الطلبات المتشابهة تحت بعض دائماً (نفس المنتجات أولاً ثم نفس الكميات)، والمجموعة الأكثر طلباً أولاً، ويبقى ترتيب الطلبات داخل المجموعة كما وصل */
+  function groupSimilar(list) {
+    const sigT = r => parseItems(r.items).map(i => i.title).sort().join("|"), sigQ = r => parseItems(r.items).map(i => i.title + "×" + i.qty).sort().join("|");
+    const cnt = new Map(); list.forEach(r => { const k = sigT(r); cnt.set(k, (cnt.get(k) || 0) + 1); });
+    return list.map((r, i) => ({ r, i, t: sigT(r), q: sigQ(r) })).sort((a, b) => (cnt.get(b.t) - cnt.get(a.t)) || a.t.localeCompare(b.t) || a.q.localeCompare(b.q) || a.i - b.i).map(x => x.r);
+  }
   function filter(rows, f, q) {
     q = String(q || "").trim().toLowerCase();
-    return (rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q)));
+    return groupSimilar((rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q))));
   }
 
   /* ── الخادم ── */
@@ -58,14 +64,20 @@ const AdminPack = (() => {
       const p = rows.find(x => String(x.tracking) === String(r.tracking)); if (!p || !p.status) return false;
       return !/preparation|prepar|pret a expedier|en attente/.test(String(p.status).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()); } catch (e) { return false; }
   }
+  /* عدّاد «بانتظار التجهيز» للرئيسية بلا فتح القسم: من دالة الخادم نفسها (كاش دقيقة) كي يطابق القائمة تماماً */
+  const CNT = { t: 0, n: null, busy: false };
+  async function count(force) {
+    if (CNT.busy || (!force && CNT.n !== null && Date.now() - CNT.t < 60000)) return CNT.n;
+    CNT.busy = true; try { const rows = ((await call("pack_orders")) || []).filter(r => r.status !== "expediee" && !outOfPrep(r)); CNT.n = rows.filter(r => !r.packed).length; CNT.t = Date.now(); } catch (e) { } CNT.busy = false; return CNT.n;
+  }
   async function load() {
     S.busy = true; draw();
-    try { S.rows = ((await call("pack_orders")) || []).filter(r => r.status !== "expediee" && !outOfPrep(r)); /* v1.89.694: المرسَلة للزبون لا تُجهَّز ثانية (الخادم يستبعدها أيضاً) */ S.err = ""; } catch (e) { S.err = /42501|forbidden|unauthorized|401|403/.test(String(e.message)) ? "ليس لديك صلاحية «تجهيز الطلبات»." : "تعذّر تحميل الطلبات: " + e.message; }
+    try { S.rows = ((await call("pack_orders")) || []).filter(r => r.status !== "expediee" && !outOfPrep(r)); /* v1.89.694: المرسَلة للزبون لا تُجهَّز ثانية (الخادم يستبعدها أيضاً) */ S.err = ""; CNT.n = S.rows.filter(r => !r.packed).length; CNT.t = Date.now(); } catch (e) { S.err = /42501|forbidden|unauthorized|401|403/.test(String(e.message)) ? "ليس لديك صلاحية «تجهيز الطلبات»." : "تعذّر تحميل الطلبات: " + e.message; }
     S.busy = false; draw();
   }
   async function mark(ids, undo) {
     let n = 0; for (const id of ids) { try { await call("pack_mark", backend() === "sb" ? { p_id: id, p_undo: !!undo } : { id, undo: !!undo }); const r = S.rows.find(x => x.id === id); if (r) r.packed = !undo; n++; } catch (e) { if (typeof toast === "function") toast("تعذّر تعليم " + id + ": " + e.message); break; } }
-    S.sel = {}; draw(); return n;
+    S.sel = {}; CNT.t = 0; draw(); return n;
   }
 
   /* ── وصل التجهيز A6 ── */
@@ -160,6 +172,6 @@ const AdminPack = (() => {
     h.addEventListener("input", e => { if (e.target.id === "pk-q") { S.q = e.target.value; const pos = e.target.selectionStart; draw(); const q = $("pk-q"); if (q) { q.focus(); try { q.setSelectionRange(pos, pos); } catch (x) { } } } });
   }
   function init(hostId) { S.host = $(hostId || "tab-pack"); if (!S.host) return false; S.host._pk = S.host._pk || 0; load(); return true; }
-  return { init, load, parseItems, shortName, printTable, pickList, filter, slip, normScan, findRow, onScan, draw, noParcel, _S: S };
+  return { init, load, count, parseItems, shortName, printTable, pickList, filter, slip, normScan, findRow, onScan, draw, noParcel, _S: S };
 })();
 document.addEventListener("DOMContentLoaded", () => { if (typeof Admin === "undefined" || Admin._packTabWrapped) return; const original = Admin.tab; Admin.tab = function (t, btn) { const r = original.call(this, t, btn), el = document.getElementById("tab-pack"); if (el) el.classList.toggle("hidden", t !== "pack"); if (t === "pack") AdminPack.init("tab-pack"); return r; }; Admin._packTabWrapped = true; });

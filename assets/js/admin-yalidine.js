@@ -7,8 +7,16 @@ const AdminYd = (() => {
   const KEY = "alyssum_yd_parcels", DKEY = "alyssum_yd_det", PER = 50;
   /* سجلّ ما أرسلناه (تتبع ← الطلب والاسم والهاتف الحقيقيان): يبقى الطرد مرتبطاً بطلبه حتى لو ضاع وسم التتبع من ملاحظة الطلب */
   let REG = {}; try { REG = JSON.parse(localStorage.getItem("alyssum_yd_sent") || "{}") || {}; } catch (e) { }
-  function noteSent(o, co, tr) { if (!o || !tr) return; REG[tr] = { id: o.id, name: o.name || "", phone: o.phone || "", co: co || "", at: Date.now() }; const ks = Object.keys(REG); if (ks.length > 400) ks.sort((a, b) => REG[a].at - REG[b].at).slice(0, ks.length - 400).forEach(k => delete REG[k]); try { localStorage.setItem("alyssum_yd_sent", JSON.stringify(REG)); } catch (e) { } }
-  function forget(tr) { if (REG[tr]) { delete REG[tr]; try { localStorage.setItem("alyssum_yd_sent", JSON.stringify(REG)); } catch (e) { } } }
+  function noteSent(o, co, tr) { if (!o || !tr) return; if (NOFZ.o[String(o.id)]) { delete NOFZ.o[String(o.id)]; saveNofz(); } delete NOFZ.t[tr]; REG[tr] = { id: o.id, name: o.name || "", phone: o.phone || "", co: co || "", at: Date.now() }; const ks = Object.keys(REG); if (ks.length > 400) ks.sort((a, b) => REG[a].at - REG[b].at).slice(0, ks.length - 400).forEach(k => delete REG[k]); try { localStorage.setItem("alyssum_yd_sent", JSON.stringify(REG)); } catch (e) { } }
+  /* ما أزال المستخدم ربطه صراحةً: لا يُعاد ربطه تلقائياً (لا بسجلّ الإرسال ولا بالمطابقة بالاسم والهاتف المقنَّع) */
+  let NOFZ = { o: {}, t: {} }; try { NOFZ = Object.assign({ o: {}, t: {} }, JSON.parse(localStorage.getItem("alyssum_yd_nofz") || "{}")); } catch (e) { }
+  const saveNofz = () => { try { localStorage.setItem("alyssum_yd_nofz", JSON.stringify(NOFZ)); } catch (e) { } };
+  function forget(tr, oid) {
+    const id = oid != null ? String(oid) : (REG[tr] ? String(REG[tr].id) : "");
+    Object.keys(REG).forEach(k => { if (k === tr || (id && String(REG[k].id) === id)) delete REG[k]; });
+    try { localStorage.setItem("alyssum_yd_sent", JSON.stringify(REG)); } catch (e) { }
+    if (tr) NOFZ.t[tr] = Date.now(); if (id) NOFZ.o[id] = Date.now(); saveNofz();
+  }
   let DET = {}; try { DET = JSON.parse(localStorage.getItem(DKEY) || "{}") || {}; } catch (e) { }
   const saveDet = () => { try { localStorage.setItem(DKEY, JSON.stringify(DET)); } catch (e) { } };
   const masked = v => /\*/.test(String(v || ""));
@@ -63,10 +71,10 @@ const AdminYd = (() => {
   /* طرد جديد بلا وسم تتبع في أي طلب (أُرسل من نافذة أخرى أو ضاع الوسم): نربطه بالطلب الوحيد الذي يطابق هاتفه المقنَّع واسمه وولايته */
   let FZ = { k: "", m: {} };
   function fuzzyLinks(a, m) {
-    const k = S.rows.length + ":" + a.orders.length + ":" + Object.keys(m).length; if (FZ.k === k) return FZ.m;
-    const out = {}, free = a.orders.filter(o => !a.trackingOf(o) && ["nouvelle", "confirmee", "expediee"].includes(o.status));
+    const k = S.rows.length + ":" + a.orders.length + ":" + Object.keys(m).length + ":" + Object.keys(NOFZ.o).length + ":" + Object.keys(NOFZ.t).length; if (FZ.k === k) return FZ.m;
+    const out = {}, free = a.orders.filter(o => !a.trackingOf(o) && !NOFZ.o[String(o.id)] && ["nouvelle", "confirmee", "expediee"].includes(o.status));
     S.rows.forEach(r => {
-      if (m[r.tracking] || !masked(r.phone) || !free.length) return;
+      if (m[r.tracking] || NOFZ.t[r.tracking] || !masked(r.phone) || !free.length) return;
       const c = free.filter(o => mmPhone(r.phone, o.phone) && mmName(r.name, o.name) && (!r.wilaya || !o.wilaya || norm(o.wilaya) === norm(r.wilaya) || norm(a.coOrder ? a.coOrder(o).wilaya : o.wilaya) === norm(r.wilaya)));
       if (c.length === 1) out[r.tracking] = c[0];
     });
@@ -197,7 +205,7 @@ const AdminYd = (() => {
     const chips = dupChip + keys.map(k => '<span class="yd-chip ' + tone(k) + ' ' + ys(k) + (S.st === k ? " on" : "") + '" data-yd-st="' + esc(k) + '">' + esc(k) + ' <b>' + cn[k] + '</b></span>').join("");
     const rows = list.slice((S.page - 1) * PER, S.page * PER).map(r => {
       const o = tm[r.tracking];
-      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + (tone(r.status) === 'y' ? contact(real(r, o).phone) : '') + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + '</td><td dir="auto" style="max-width:240px">' + (o ? esc(ptxt(o)) || "—" : "—") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + ' ' + ys(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
+      return '<tr data-trk="' + esc(r.tracking) + '"><td class="m">' + esc(r.tracking) + (dmp[r.tracking] ? ' <span class="yd-b r" title="يوجد طرد آخر مطابق له — احذف الزائد من المعاينة">⚠️ مكرّر</span>' : "") + '</td><td>' + esc(String(r.date).slice(0, 10)) + '</td><td dir="auto" style="unicode-bidi:plaintext">' + esc(real(r, o).name) + '</td><td class="m">' + esc(real(r, o).phone) + (tone(r.status) === 'y' ? contact(real(r, o).phone) : '') + '</td><td>' + esc(r.wilaya) + (r.commune ? " / " + esc(r.commune) : "") + (r.stop || (o && o.dtype === "stop") ? ' <b class="o-sd" title="توصيل إلى مكتب (Stop Desk)">SD</b>' : "") + '</td><td dir="auto" style="max-width:240px">' + (o ? esc(ptxt(o)) || "—" : "—") + '</td><td>' + (r.price || "") + '</td><td><span class="yd-b ' + tone(r.status) + ' ' + ys(r.status) + (/^[yar]$/.test(tone(r.status)) ? ' ydc" data-ydd="' + esc(r.tracking) + '" title="اضغط لعرض سبب الحالة وهاتف الموزّع' : '') + '">' + esc(r.status || "—") + '</span></td><td>' + (o ? "#" + esc(String(o.id).slice(-6)) : "—") + '</td><td><button class="small blue" type="button" data-ydp="' + esc(r.tracking) + '">👁️ معاينة</button></td></tr>';
     }).join("") || '<tr><td colspan="10" style="text-align:center;opacity:.7">لا توجد طرود مطابقة</td></tr>';
     c.innerHTML = '<div class="yd-top"><b>📦 طرود حسابك في ياليدين</b><span class="hint" style="margin:0">' + stamp() + (S.partial ? " — جزء من الطرود فقط" : "") + '</span><span style="flex:1"></span>' +
       '<button class="small" type="button" data-yd="load"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ " + esc(S.prog || "جارِ التحميل…") : "🔄 تحميل / تحديث الطرود") + '</button>' +
@@ -379,5 +387,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, csv, sheets, setQuery, noteSent, forget, prepOpen, prepOpenWith, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
+  return { set, draw, load, S, csv, sheets, setQuery, noteSent, forget, orderOf: tr => trackMap()[tr] || null, prepOpen, prepOpenWith, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
 })();

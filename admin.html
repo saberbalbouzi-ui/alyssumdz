@@ -4,14 +4,17 @@
 <meta charset="UTF-8">
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="admin-version" content="1.89.1101">
+<link rel="manifest" href="manifest-admin.webmanifest"><meta name="theme-color" content="#0b1210"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="اللوحة">
+<meta name="admin-version" content="1.89.1232">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
-<style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
+<style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
 .of-more{display:contents}.of-tg{display:none!important}
 @media(max-width:900px){#tab-orders .of-tg{display:inline-flex!important;width:100%;justify-content:center}#tab-orders .of-more{display:none;flex-wrap:wrap;gap:.5rem;width:100%}#tab-orders .of-more.open{display:flex}}
 </style>
 <script>(function(){try{var l=localStorage;if(l.getItem("alyssum_admin_on")==="1"||l.getItem("alyssum_sb_session")||l.getItem("alyssum_admin_key")){document.documentElement.classList.add("au-boot");setTimeout(function(){document.documentElement.classList.remove("au-boot")},30000)}}catch(e){}})()</script>
+<script>/* مهام طويلة (>50ms) أثناء فتح اللوحة لقراءة التشخيص */try{window.__lt=[];new PerformanceObserver(function(l){l.getEntries().forEach(function(e){window.__lt.push(Math.round(e.duration))})}).observe({type:"longtask",buffered:true})}catch(e){}</script>
+<script>/* عامل الخدمة للوحة أيضاً: سكربتاتها المختومة (?v=هاش) تُخدم من الذاكرة المحفوظة بلا شبكة بعد أول زيارة (كان لا يُسجَّل إلا من صفحات المتجر فتُحمَّل 5MB من الشبكة في كل مرة) */try{if("serviceWorker" in navigator&&location.protocol!=="file:")navigator.serviceWorker.register(new URL("sw.js",location.href).href).catch(function(){})}catch(e){}</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -264,10 +267,10 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 .ca-ord{display:flex;flex-wrap:wrap;gap:.45rem}.ca-chip{display:inline-flex;align-items:center;gap:.2rem;background:#f4efe6;border-radius:999px;padding:.2rem .3rem .2rem .7rem;font-weight:800;font-size:.85rem;color:var(--green)}.ca-chip small{color:#999;font-weight:600}
 @media(max-width:700px){.ca-row,.ca-soc{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=5">
-<link rel="stylesheet" href="assets/css/admin-glass.css?v=49">
-<link rel="stylesheet" href="assets/css/admin-theme.css?v=32">
-<link rel="stylesheet" href="assets/css/admin-lime.css?v=17">
+<link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=d53a4274">
+<link rel="stylesheet" href="assets/css/admin-glass.css?v=3fc3ac64">
+<link rel="stylesheet" href="assets/css/admin-theme.css?v=bf4fdd7f">
+<link rel="stylesheet" href="assets/css/admin-lime.css?v=b229d577">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#e2fe17",fs:15},white:{accent:"#059669",fs:15}},
 mode:function(){var m=null;try{m=localStorage.getItem(this.K)}catch(e){}return(m==="white"||m==="classic")?"white":"dark"},
 cfg:function(){var c={};try{c=JSON.parse(localStorage.getItem(this.C)||"{}")||{}}catch(e){}return{dark:Object.assign({},this.D.dark,c.dark||{}),white:Object.assign({},this.D.white,c.white||{})}},
@@ -280,7 +283,8 @@ resetCfg:function(m){var c=this.cfg();c[m]=Object.assign({},this.D[m]);try{local
 <body>
 <div id="toast2" role="status" aria-live="polite"></div>
 
-<div id="au-boot"><i></i></div>
+<div id="au-boot"><div id="au-snap"></div><i></i></div>
+<script>/* آخر حالة محفوظة للرئيسية تظهر فور وصول الصفحة (قبل تحميل الأدوات) مع «جارٍ التحديث…»؛ تُزال حين تصير اللوحة جاهزة */(function(){try{var h=document.documentElement;if(!h.classList.contains("au-boot"))return;var s=JSON.parse(localStorage.getItem("adm_snap")||"null");if(!s||!s.t||Date.now()-s.t>864e5*3)return;var e=document.getElementById("au-snap"),m=Math.max(1,Math.round((Date.now()-s.t)/6e4)),ago=m<60?m+" د":Math.round(m/60)+" س";var mk=function(t,x,c){var d=document.createElement(t);if(c)d.className=c;d.textContent=x;return d};e.appendChild(mk("h2",s.name||"لوحة التحكم"));e.appendChild(mk("p","آخر حالة محفوظة منذ "+ago+" — جارٍ التحديث…"));var g=mk("div","","k");[[s.sales,"المبيعات"+(s.per?" ("+s.per+")":"")],[s.orders,"الطلبات"+(s.per?" ("+s.per+")":"")],[s.wait,"في انتظار التأكيد"],[s.pack,"بانتظار التجهيز"]].forEach(function(r){if(r[0]==null||r[0]==="")return;var d=document.createElement("div");d.appendChild(mk("b",String(r[0])));d.appendChild(mk("span",r[1]));g.appendChild(d)});e.appendChild(g);h.classList.add("au-snap")}catch(x){}})()</script>
 <div class="login" id="login-box">
   <h1>🌿 لوحة تحكم أليسوم</h1>
   <p id="login-hint">سجّل الدخول بحساب المدير</p>
@@ -480,15 +484,16 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <option value="annulee">ملغاة</option>
           <option value="echec">فشل التوصيل</option>
         </select>
+        <button class="small gray" style="order:-1" type="button" id="trash-btn" onclick="Admin.openTrash()" title="الطلبات المحذوفة: إعادة إدراج أو حذف نهائي أو تفريغ السلة">🗑 سلة المهملات <b id="trash-count"></b></button>
         <button class="small gray of-tg" type="button" id="of-tg" onclick="var m=document.getElementById('of-more');m.classList.toggle('open');this.textContent=m.classList.contains('open')?'▲ إخفاء الفلاتر والأدوات':'⚙ المزيد من الفلاتر والأدوات'">⚙ المزيد من الفلاتر والأدوات</button>
         <div class="of-more" id="of-more">
         <button class="small gray hidden" id="import-orders-btn" onclick="Admin.importOrders()" title="ينسخ طلباتك القديمة إلى متجرك مرة واحدة (بدون تكرار)">⬆️ استيراد الطلبات القديمة</button>
         <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
+        <select id="order-filter-src" onchange="Admin.applyOrderFilters()" title="مصدر الطلب"><option value="">كل المصادر</option><option value="site">من الموقع</option><option value="manual">يدوية</option></select>
         <label class="date-field">من<input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ"></label>
         <label class="date-field">إلى<input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ"></label>
         <label class="date-field" style="white-space:nowrap"><input id="order-show-shipped" type="checkbox" onchange="Admin.applyOrderFilters()" style="width:auto"> إظهار المسجلة</label>
         <button class="small gray" type="button" onclick="Admin.resetOrderFilters()">↩️ مسح الفلاتر</button>
-        <button class="small gray" type="button" id="trash-btn" onclick="Admin.openTrash()" title="الطلبات المحذوفة: إعادة إدراج أو حذف نهائي أو تفريغ السلة">🗑 سلة المهملات <b id="trash-count"></b></button>
         <button class="small gold" type="button" onclick="Admin.exportOrdersCsv()">⬇️ تصدير CSV</button>
         <button class="small blue" type="button" onclick="Admin.exportOrdersToSheets()">📊 نسخ لـ Google Sheets</button>
         <button class="small" type="button" id="sync-btn" onclick="Admin.syncShipping()" title="يجلب حالة كل طرد مرسَل إلى شركة التوصيل ويحدّث حالات الطلبات">🔄 تحديث حالات الشحن</button>
@@ -519,6 +524,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <option value="">كل الحالات</option><option value="confirmee">قيد التجهيز</option><option value="expediee">في الطريق</option><option value="livree">تم التسليم</option><option value="echec">فشل / مرتجع</option>
         </select>
         <button class="small gold" type="button" id="ship-sync-btn" onclick="Admin.refreshShipped()" title="يحدّث حالات الطرود ويعيد تحميل طرود الشركة المعروضة">🔄 تحديث الحالة</button>
+        <button class="small gray" type="button" id="ship-csv-btn" onclick="Admin.exportShippedCsv()" title="ينزّل نسخة (ملف CSV يفتح في Excel) من الطلبات المسجلة المعروضة حسب البحث والفلاتر الحالية">⬇️ نسخة CSV</button>
         <button class="small green" type="button" id="ship-prep-btn" onclick="Admin.prepOrders()" title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button>
         <button class="small green" type="button" id="ship-bord-btn" onclick="Admin.printBordereaux()" title="يجلب بوردرو كل الطرود المعروضة (قيد التجهيز افتراضياً) كما تصدره شركة التوصيل ويفتحها في صفحة واحدة للطباعة">🖨 طباعة البوردرو</button>
         <button class="small gray" type="button" id="ship-imp-btn" data-noco style="display:none" onclick="Admin.importTracking()" title="أدخل رقم تتبع طرد موجود عند الشركة (مثلاً أنشأته من لوحتها) فتجلب المنصة بياناته وحالته وتربطه بالطلب المطابق">➕ إضافة طرد بالتتبع</button>
@@ -636,8 +642,8 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
           <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-del-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من رسوم الجدول</option><option value="val">قيمة ثابتة لكل طلب (دج)</option></select><input id="fin-del" type="number" min="0" placeholder="100" style="max-width:130px"></div>
         </div>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
-          <div><b>↩️ تكلفة الإرجاع</b><div class="hint" style="margin:.15rem 0 0">تُخصم عند فشل التوصيل: نسبة من تكلفة التوصيل، أو قيمة ثابتة لكل طلب مُرجَع.</div></div>
-          <div style="display:flex;gap:.4rem;flex-wrap:wrap"><select id="fin-ret-mode" style="min-width:250px;flex:1"><option value="pct">نسبة % من تكلفة التوصيل</option><option value="val">قيمة ثابتة لكل مرتجع (دج)</option></select><input id="fin-ret" type="number" min="0" placeholder="100" style="max-width:130px"></div>
+          <div><b>↩️ تكلفة الإرجاع</b><div class="hint" style="margin:.15rem 0 0">تُخصم عند فشل التوصيل. اتركها <b>0</b> لتُحتسب من أرقام شركة التوصيل نفسها (رسم الإرجاع المضبوط لها في «شركات التوصيل ← إعداد»، أو الفعلي من كشفها). اكتب رقماً فقط لتطبيق قيمة ثابتة عند غياب أرقام الشركة.</div></div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center"><span class="hint" style="margin:0">قيمة ثابتة لكل مرتجع (دج)</span><input id="fin-ret" type="number" min="0" placeholder="0" style="max-width:130px"></div>
         </div>
         <div style="display:grid;grid-template-columns:minmax(190px,1.1fr) minmax(220px,1.4fr);gap:.6rem;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--line)">
           <div><b>🛡️ التأمين</b><div class="hint" style="margin:.15rem 0 0">نسبة من قيمة الطلب، أو قيمة ثابتة لكل طلب. اتركه 0 إن لم تدفع تأميناً.</div></div>
@@ -1094,6 +1100,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
       <label class="small" style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
         <input type="checkbox" id="co-show-offers" style="width:auto">إظهار بطاقات العروض (قطعة / قطعتان / 3 قطع...) في صفحة المنتج
       </label>
+      <label class="small" style="display:flex;align-items:flex-start;gap:.5rem;cursor:pointer;margin-top:.7rem">
+        <input type="checkbox" id="co-steps" style="width:auto;margin-top:.3rem"><span><b>الطلب بمراحل (مساعد تسهيل ملء النموذج)</b><br><small style="color:#777">بدل نموذج واحد طويل يمرّ الزبون بمرحلتين تُضافان تحت بعضهما دون تحميل صفحة: (1) الولاية والبلدية ثم العروض ثم السعر مع تكلفة التوصيل فوراً، ثم «متابعة» فتظهر (2) الاسم والهاتف وزر «تأكيد الطلب» تحت المرحلة الأولى (تبقى ظاهرة وقابلة للتعديل). لا شاشة مراجعة، وأي خانة ناقصة أو خاطئة تحمرّ برسالة واضحة. «اطلب الآن» ينقله بسلاسة إلى النموذج. لا يعمل مع المنتجات المتغيّرة أو الرقمية (يبقى النموذج العادي لها).</small></span>
+      </label>
       <div class="hint">عند إلغاء إظهار زر واتساب يبقى الرقم مستعملاً في رسالة تأكيد الطلب عبر زر «تأكيد الطلب» العادي. وعند إخفاء العروض يبقى العرض «الأكثر طلباً» محتسباً تلقائياً في السعر النهائي دون عرض بطاقات الاختيار.</div>
     </div>
 
@@ -1448,6 +1457,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div class="hint" id="px-id-hint">مثال فيسبوك: 123456789012345</div>
     <input id="px-conv-label" class="hidden" placeholder="Conversion Label (خاص بإعلانات جوجل)" dir="ltr">
     <input id="px-currency" placeholder="العملة" value="DZD" dir="ltr">
+    <label for="px-value-mode" style="font-weight:800;font-size:.82rem">قيمة حدث الشراء (Purchase)</label>
+    <select id="px-value-mode"><option value="total">إجمالي الطلب شاملاً رسوم التوصيل (الافتراضي)</option><option value="products">سعر المنتجات فقط بدون رسوم التوصيل</option></select>
+    <div class="hint">هي القيمة التي ترسلها المنصة مع كل شراء إلى البكسل (مع العملة أعلاه) وتعتمد عليها حملتك لقياس العائد (ROAS).</div>
     <div class="section-title">نطاق التفعيل</div>
     <select id="px-scope-mode" onchange="Admin.onPixelScopeModeChange()">
       <option value="all">🌐 كل صفحات الموقع (بما فيها الرئيسية)</option>
@@ -1675,6 +1687,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div id="delivery-modal-fields"></div>
     <div class="hint" style="margin-top:-.4rem">التفعيل والتعطيل من مفتاح الشركة في جدول «شركات التوصيل» — يمكن تفعيل أكثر من شركة، وإحداها «⭐ الافتراضية».</div>
     <div id="dlv-price-box" style="margin:.6rem 0"></div>
+    <div id="dlv-fin-box" class="field" style="margin:.6rem 0"><label class="fl-t" for="dlv-cod">عمولة التحصيل COD (٪ من سعر المنتج) — فارغ = الافتراضي</label><input id="dlv-cod" type="number" step="0.01" min="0" placeholder="0" dir="ltr"><label class="fl-t" for="dlv-ret" style="margin-top:.6rem">رسم الإرجاع (دج لكل طرد مرتجع) — فارغ = الافتراضي</label><input id="dlv-ret" type="number" step="10" min="0" placeholder="0" dir="ltr"><label class="fl-t" for="dlv-late" style="margin-top:.6rem">غرامة تأخر سحب المرتجع (دج لكل يوم بعد 10 أيام) — فارغ أو 0 = بلا غرامة</label><input id="dlv-late" type="number" step="5" min="0" placeholder="0" dir="ltr"><label class="fl-t" for="dlv-dprio" style="margin-top:.6rem">علامات المكاتب المفضّلة للزبون (الأرخص أولاً، افصل بفاصلة) — فارغ = كل المكاتب</label><input id="dlv-dprio" type="text" maxlength="120" placeholder="مثال: Hub, Zimou" dir="ltr"><div class="hint" style="margin-top:.3rem">للشركات التي تجمع مكاتب شركات عدة (مثل WeCan): إن وُجد في بلدية الزبون مكتب اسمه يحوي أول كلمة هنا يُعرض هو (أو هي) فقط، وإلا الكلمة التالية، وإلا تُعرض كل المكاتب. «Hub» = مكاتب ZR.</div><div class="hint" style="margin-top:.3rem">تُحسب بها «تسوية الشركة» في قسم المدفوعات. بعض الشركات لا تأخذ عمولة تحصيل أو رسم إرجاع فاترك الحقل صفراً.</div></div>
     <div id="dlv-adj-box" class="field" style="margin:.6rem 0" hidden><label class="fl-t" for="dlv-adj">المبلغ المنقوص من سعر التوصيل (دج) — اختياري</label><input id="dlv-adj" type="number" step="10" placeholder="0" dir="ltr" oninput="Admin.dlvAdjHint()"><div class="hint" id="dlv-adj-hint" style="margin-top:.3rem"></div><label class="fl-t" for="dlv-adjmode" style="margin-top:.6rem">أين يُطبَّق المبلغ المنقوص؟</label><select id="dlv-adjmode"><option value="">على سعر الولاية وسعر كل بلدية</option><option value="wilaya">على سعر الولاية فقط — وكل البلديات بسعر الولاية الأصلي</option></select></div>
     <details id="dlv-manual" style="margin:.6rem 0" hidden>
       <summary style="cursor:pointer;font-weight:700;color:var(--green)">🏷️ تعريفة هذه الشركة (تُدخل يدوياً لأنها لا تدعم الجلب التلقائي)</summary>
@@ -1724,63 +1737,59 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/config.js"></script>
 <script>const SITE_CFG = Object.assign({ name:"", domain:location.hostname, waNumber:"", repoOwner:"", repoName:"" }, (typeof CONFIG !== "undefined" && CONFIG.SITE) || {});</script>
 <script src="assets/js/data.js"></script>
-<script src="assets/js/image-tools.js"></script>
-<script src="assets/js/text-capture.js"></script>
-<script src="assets/js/social-icons.js?v=1"></script>
-<script src="assets/js/chrome.js?v=11"></script>
-<script src="assets/js/modern-icons.js?v=1.28.3"></script>
+<script src="assets/js/image-tools.js?v=9ecb1d35"></script>
+<script src="assets/js/text-capture.js?v=1ad5fcf4"></script>
+<script src="assets/js/social-icons.js?v=676872f7"></script>
+<script src="assets/js/chrome.js?v=ebd81485"></script>
+<script src="assets/js/modern-icons.js?v=1e0feb2c"></script>
 <script>document.addEventListener("DOMContentLoaded",function(){try{ModernIcons.style();ModernIcons.watch({skip:"#pbx-frame,.pbx-ip .g,[data-keep-emoji]"})}catch(e){}})</script>
 <script src="assets/js/ctl-help.js?v=b2e6b49b"></script>
 <script src="assets/js/chrome-admin.js?v=0d447477"></script>
-<script src="assets/js/admin-assistant.js?v=142fd318"></script>
-<script src="assets/js/img-gen.js?v=b936ef42"></script>
+<script src="assets/js/admin-assistant.js?v=b72f932b"></script>
 <style id="as-css">#nav-res{display:none;margin:-.5rem .1rem .8rem;max-height:56vh;overflow:auto;padding:6px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(9,24,18,.985);box-shadow:0 18px 50px rgba(0,0,0,.5);color:#fff}#nav-res.on{display:block}#nav-res .as-it{grid-template-columns:auto 1fr}#as-box{position:fixed;inset:0;z-index:100000;display:none;align-items:flex-start;justify-content:center;padding:10vh 12px 0;background:rgba(2,8,5,.76);backdrop-filter:blur(6px)}#as-box.on{display:flex}.as-win{width:min(680px,100%);max-height:72vh;display:flex;flex-direction:column;background:rgba(9,24,18,.985);border:1px solid rgba(255,255,255,.16);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;color:#fff}#as-in{width:100%;box-sizing:border-box;padding:16px 18px;font:inherit;font-size:16px;color:#fff;background:transparent;border:0;border-bottom:1px solid rgba(255,255,255,.14);outline:0}#as-in::placeholder{color:rgba(255,255,255,.55)}#as-list{overflow:auto;padding:6px}.as-it{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:pointer}.as-it.on{background:rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}.as-k{grid-row:1/3;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#d9f99d}.as-t{font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-s{font-size:12px;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.as-no{padding:22px;text-align:center;color:rgba(255,255,255,.7)}.as-ft{display:flex;gap:16px;justify-content:center;padding:8px;font-size:12px;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.1)}@media(max-width:560px){.as-ft{display:none}}</style>
 <script src="assets/js/admin-nav.js?v=783fe598"></script>
-<script src="assets/js/admin-coname.js?v=c2f4a813"></script>
+<script src="assets/js/admin-coname.js?v=5474389c"></script>
 <script src="assets/js/admin-tplsite.js?v=780c95b3"></script>
-<script src="assets/js/admin-theme.js?v=092c4f77"></script>
+<script src="assets/js/admin-theme.js?v=698014be"></script>
 <script src="assets/js/saas-client.js?v=fa213708"></script>
 <script src="assets/js/hub.js?v=21126f59"></script>
 <script src="assets/js/ai-proxy.js?v=d5c63b62"></script>
-<script src="assets/js/admin-credits.js?v=09a4fa06"></script>
-<script src="assets/js/admin-stockcheck.js?v=29b40c15"></script>
-<script src="assets/js/admin-orderedit.js?v=7e1815fd"></script>
+<script src="assets/js/admin-aiswitch.js?v=acc97a32"></script>
+<script src="assets/js/admin-credits.js?v=d789a7fe"></script>
+<script src="assets/js/admin-stockcheck.js?v=3a7e454c"></script>
+<script src="assets/js/admin-orderedit.js?v=9bb59870"></script>
 <script src="assets/js/admin-wilkids.js?v=f737668d"></script>
-<script src="assets/js/admin-manualorder.js?v=b6c92083"></script>
-<script src="assets/js/admin-stores.js?v=d62d8df5"></script>
-<script src="assets/js/float-icons.js?v=1"></script>
-<script src="assets/js/admin-float.js?v=6063c915"></script>
+<script src="assets/js/admin-manualorder.js?v=1adc4c3d"></script>
+<script src="assets/js/admin-stores.js?v=7c65d115"></script>
+<script src="assets/js/float-icons.js?v=f4c710ad"></script>
+<script src="assets/js/admin-float.js?v=59884c48"></script>
 <script src="assets/js/admin-protect.js?v=b40d6352"></script>
-<script src="assets/js/admin-update.js?v=65cdb590"></script>
+<script src="assets/js/admin-update.js?v=364bcde7"></script>
 <script src="assets/js/admin-search.js?v=351db5f6"></script>
 <script src="assets/js/admin-hand.js?v=162845f8"></script>
-<script src="assets/js/admin-voice.js?v=ddfbb468"></script>
 <script src="assets/js/admin-inventory.js?v=4610792e"></script>
-<script src="assets/js/admin-social.js?v=0654bf3f"></script>
 <script src="assets/js/admin-zones.js?v=80e5036b"></script>
 <script src="assets/js/admin-zones-io.js?v=baf86994"></script>
 <script src="assets/js/admin-archive.js?v=66814def"></script>
-<script src="assets/js/admin-yalidine.js?v=2b8dd49d"></script>
+<script src="assets/js/admin-yalidine.js?v=0118e941"></script>
+<script src="assets/js/admin-busy.js?v=12b07d95"></script>
 <script src="assets/js/admin-shoppages.js?v=f37d32bc"></script>
-<script src="assets/js/admin-home.js?v=1b393577"></script>
+<script src="assets/js/admin-home.js?v=870ddfe6"></script>
 <script src="assets/js/admin-tablesel.js?v=cf2f4bd9"></script>
 <script src="assets/js/admin-mtables.js?v=61738604"></script>
-<script src="assets/js/admin-coparcels.js?v=5d1543c9"></script>
+<script src="assets/js/admin-coparcels.js?v=7e1d555e"></script>
 <script src="assets/js/admin-orders-plus.js?v=357f9243"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
+<script src="assets/js/admin-delhealth.js?v=f6814396"></script>
 <script src="assets/js/admin-customers.js?v=056673f1"></script>
 <script src="assets/js/admin-bulk-products.js?v=f12fc350"></script>
 <script src="assets/js/admin-reports.js?v=bfe80ebd"></script>
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
 <script src="assets/js/admin-returns.js?v=eb4cea27"></script>
-<!--RUQYA:start--><script>if(typeof CONFIG!=="undefined"&&CONFIG.SELLER)document.write('<script src="assets/js/admin-ruqya.js?v=6f45c92e"><\/script>')</script><!--RUQYA:end-->
+<!--RUQYA:start--><script>if(typeof CONFIG!=="undefined"&&CONFIG.SELLER)document.write('<script src="assets/js/admin-ruqya.js?v=7de23c50"><\/script>')</script><!--RUQYA:end-->
 <script src="assets/js/admin-costats.js?v=f4e73820"></script>
-<script src="assets/js/admin-payments.js?v=9769e50d"></script>
-<script src="assets/js/seo-box.js?v=aa1d6fc2"></script>
-<script src="assets/js/admin-seo.js?v=de4b03e8"></script>
-<script src="assets/js/admin-blog.js?v=98b5bb66"></script>
 <script src="assets/js/admin-upsell.js?v=e26d67bf"></script>
-<script src="assets/js/admin-pack.js?v=f4266190"></script>
+<script src="assets/js/admin-pack.js?v=e9e77d51"></script>
 <script src="assets/js/admin-insights.js?v=4664e019"></script>
 <script src="assets/js/admin-confirm-svc.js?v=665e3b15"></script>
 <script src="assets/js/admin-carts.js?v=a12c2dc6"></script>
@@ -1790,52 +1799,22 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-callcenter.js?v=1abc1d1c"></script>
 <script src="assets/js/admin-callsync.js?v=17265a9a"></script>
 <script src="assets/js/admin-dispatch.js?v=db412635"></script>
-<script src="assets/js/admin-profit.js?v=ca5d90d2"></script>
+<script src="assets/js/admin-profit.js?v=cbe34c28"></script>
 <script src="assets/js/admin-wallet.js?v=5827c8ee"></script>
-<script src="assets/js/admin-studio.js?v=71f00dce"></script>
-<script src="assets/js/admin-toolwin.js?v=520fce13"></script>
-<script src="assets/js/admin-agency.js?v=40636a52"></script>
-<script src="assets/js/speed-core.js?v=408e90a9"></script>
-<script src="assets/js/speed-fix.js?v=b647504f"></script>
-<script src="assets/js/admin-speed.js?v=5a089e1c"></script>
-<script src="assets/js/admin-digital.js?v=abc14d43"></script>
-<script src="assets/js/admin-marketplace.js?v=188b6957"></script>
 <script src="assets/js/admin-edition.js?v=ef57eac5"></script>
 <script src="assets/js/admin-kind.js?v=5dec6f2b"></script>
-<script src="assets/js/admin-appstore.js?v=5d01d70d"></script>
-<script src="assets/js/admin-appdev.js?v=cc7cde0c"></script>
 <script src="assets/js/admin-wh.js?v=34766355"></script>
-<script src="assets/js/admin-experts.js?v=aab1e5a5"></script>
-<script src="assets/js/admin-sources.js?v=dee82801"></script>
 <script src="assets/js/admin-roles.js?v=cd9f2e6d"></script>
-<script src="assets/js/admin-shipagg.js?v=61c463de"></script>
+<script src="assets/js/admin-shipagg.js?v=d94afcc2"></script>
 <script src="assets/js/admin-order-docs.js?v=6718c0cc"></script>
-<script src="assets/js/admin-imgbatch.js?v=40d73f05"></script>
-<script src="assets/js/barcode-tool.js?v=b91050e7"></script>
-<script src="assets/js/magic-layers.js?v=0354fe68"></script>
-<script src="assets/js/admin-magiclayers.js?v=2d559302"></script>
-<script src="assets/js/admin-pagepilot.js?v=a6a9b705"></script>
-<script src="assets/js/admin-pagepilot-hybrid.js?v=d1e5dd56"></script>
-<script src="assets/js/pack3d.js?v=f6f21e35"></script>
-<script src="assets/js/box-designer.js?v=879f0f1b"></script>
-<script src="assets/js/box-profiles.js?v=94500e39"></script>
-<script src="assets/js/box-studio.js?v=8db477c4"></script>
-<script src="assets/js/mockup-studio.js?v=5ecdbde5"></script>
-<script src="assets/js/mockup-models.js?v=6be0a1a8"></script>
-<script src="assets/js/img3d.js?v=a0392495"></script>
-<script src="assets/js/studio3d.js?v=b8f579c5"></script>
-<script src="assets/js/admin-imgqa.js?v=006b5c24"></script>
-<script src="assets/js/admin-pagerater.js?v=e6082095"></script>
-<script src="assets/js/img-upscale.js?v=1cadbea2"></script>
-<script src="assets/js/admin-copyset.js?v=c6ff820e"></script>
-<script src="assets/js/ai-vision.js?v=57"></script>
-<script src="assets/js/ai-capture.js?v=091af25f"></script>
-<script src="assets/js/admin-bgeditor.js?v=89850127"></script>
-<script src="assets/js/avatar-script.js"></script>
+<script src="assets/js/ai-vision.js?v=1b59e844"></script>
+<script src="assets/js/avatar-script.js?v=e3aa35b4"></script>
 <script src="assets/js/wilayas.js"></script>
-<script src="assets/js/api.js"></script>
-<script src="assets/js/agent-brain.js"></script>
-<script>
+<script src="assets/js/api.js?v=15668c80"></script>
+<script src="assets/js/agent-brain.js?v=b3b07b62"></script>
+<script>window.__cm=[Math.round(performance.now())];</script>
+<script>window.__cm&&window.__cm.push(Math.round(performance.now()));
+
 const $f = id => document.getElementById(id);
 const nE = v=>String(v==null?"":v).replace(/[<>&"']/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));   // هروب HTML عام (لجنة الخبراء v1.89.132)
 
@@ -1885,7 +1864,7 @@ const Priv = {
 /* مزامنة إعدادات المتصفح الحسّاسة بين الأجهزة: مفاتيح شركات التوصيل، القائمة السوداء، علامات الأوفياء، صفّ الإشعارات...
    تبقى كما هي في localStorage، وكل كتابة تُدفع أيضاً إلى التخزين الخاص بالمدير (Priv)، وعند فتح اللوحة يُجلب الأحدث من الخادم أولاً. */
 const PrivSync = {
-  KEYS: { alyssum_credits:"s_credits", alyssum_delivery_cfg:"s_delivery_cfg", alyssum_auto_reg2:"s_auto_reg", alyssum_ext_parcels:"s_ext_parcels", alyssum_yd_sent:"s_yd_sent", alyssum_pb_lang:"s_pb_lang", alyssum_pb_mode:"s_pb_mode", alyssum_custom_delivery:"s_delivery_custom", alyssum_delivery_price_source:"s_delivery_src",
+  KEYS: { alyssum_credits:"s_credits", alyssum_ai_master:"s_ai_master", alyssum_delivery_cfg:"s_delivery_cfg", alyssum_auto_reg2:"s_auto_reg", alyssum_ext_parcels:"s_ext_parcels", alyssum_yd_sent:"s_yd_sent", alyssum_pb_lang:"s_pb_lang", alyssum_pb_mode:"s_pb_mode", alyssum_custom_delivery:"s_delivery_custom", alyssum_delivery_price_source:"s_delivery_src",
           alyssum_blacklist:"s_blacklist", alyssum_bl_rule:"s_bl_rule", alyssum_loyalty_flags:"s_loyalty_flags", alyssum_notify_q:"s_notify_q", alyssum_ship_raw:"s_ship_raw", alyssum_repeat_sent:"s_repeat_sent", alyssum_mw_cache:"s_mw_cache", alyssum_order_edits:"s_order_edits", alyssum_brand_kit:"s_brand_kit", alyssum_brand_logo:"s_brand_logo", alyssum_auto_send:"s_auto_send", alyssum_auto_del:"s_auto_del" },
   _raw: localStorage.setItem.bind(localStorage), _t: {}, ready: false,
   hook(){
@@ -1894,13 +1873,18 @@ const PrivSync = {
   },
   /* v1.89.938: المفاتيح تُجلب معاً لا واحداً بعد الآخر (21 طلباً متتالياً كانت تستغرق نحو 13 ثانية قبل ظهور اللوحة على شبكة الهاتف) */
   async pull(){
-    await Promise.all(Object.entries(this.KEYS).map(async ([lk, pk])=>{
+    /* طلب واحد لكل المفاتيح (كانت ~21 طلباً متوازياً + كتابة لكل مفتاح مفقود: تستغرق 20 ثانية على شبكة الهاتف البطيئة)؛ وما لا يُجلب بالدفعة يعود للطلب الفردي كما كان */
+    const ents = Object.entries(this.KEYS); let map = null;
+    if(!PHPAPI.on() && API.sb.enabled() && API.ordersBackend() !== "sheets"){
+      try{ const rows = await API.sb.adminFetch("/rest/v1/admin_kv?key=in.(" + ents.map(e=>e[1]).join(",") + ")&select=key,value"); if(Array.isArray(rows)){ map = {}; rows.forEach(r=>{ map[r.key] = r.value; }); } }catch(e){}
+    }
+    await Promise.all(ents.map(async ([lk, pk])=>{
       try{
-        const r = await Priv.remote(pk);
+        const r = map ? map[pk] : await Priv.remote(pk);
         if(r !== undefined && r !== null){
           this._raw(lk, typeof r === "string" ? r : JSON.stringify(r));
         }
-        else { const l = localStorage.getItem(lk); if(l != null) await Priv.set(pk, l); }          // أول مرة: ارفع ما في هذا المتصفح
+        else { const l = localStorage.getItem(lk); if(l != null) Priv.set(pk, l); }          // أول مرة: ارفع ما في هذا المتصفح (في الخلفية بلا انتظار)
       }catch(e){}
     }));
     this.ready = true;
@@ -2556,41 +2540,104 @@ function parseTarifRows(json){
       });
     } else if(typeof x === "object") Object.values(x).forEach(v=>walk(v, d + 1));
   };
-  walk(json, 0);
+  /* الشكل الرسمي لـ GET /api/v1/get/fees: {livraison:[…], pickup:[…], echnage:[…], recouvrement:[…], retours:[…]} بصفوف {wilaya_id,tarif,tarif_stopdesk}؛ تُقرأ «livraison» وحدها (لا pickup/retours) و tarif_stopdesk = 0 يعني لا مكتب في الولاية */
+  if(json && typeof json === "object" && Array.isArray(json.livraison)) walk(json.livraison, 0); else walk(json, 0);
   return out;
 }
 function ecotrackCompany(name, defaultBase){
   const baseOf = cfg=>String((cfg && cfg.baseUrl) || defaultBase || "").replace(/\/+$/, "");
   const norm = t=>String(t||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
   return {
-    name, confidence: "experimental",
-    note: "⚠️ تجريبي — يعتمد الشكل العام لمنصة Ecotrack ولم يُجرَّب بعد. أدخل رابط المنصة (مثل https://dhd.ecotrack.dz) والتوكن من حسابك، وأرسل طلباً واحداً للاختبار قبل الاعتماد عليه. إن رُفض الطلب فنافذة السبب تعرض ردّ الشركة لنعدّل الحقول.",
+    name, confidence: "experimental", ownTariff: true, orderFields: ["address", "gps", "weight", "fragile"],      /* حقول إضافية يعرضها نموذج الطلب اليدوي لهذه الشركة */      /* تعريفة الشركة كاملة لكل ولاية: لا تُضاف إليها إضافات بلديات ياليدين */
+    note: "يعتمد الشكل العام لمنصة Ecotrack ولم يُجرَّب بعد. أدخل رابط المنصة (مثل https://platform.dhd-dz.com) والتوكن من حسابك، وأرسل طلباً واحداً للاختبار قبل الاعتماد عليه. إن رُفض الطلب فنافذة السبب تعرض ردّ الشركة لنعدّل الحقول.",
     fields: [
       { key:"baseUrl", label:"رابط المنصة (مثال: " + (defaultBase || "https://xxx.ecotrack.dz") + ")", type:"text", required:false },
       { key:"token", label:"API Token (Bearer)", type:"password" },
       { key:"boutique", label:"اسم المتجر عند الشركة (اختياري)", type:"text", required:false },
+      { key:"autoValidate", label:"تصديق الطرد تلقائياً بعد الإنشاء (فارغ = نعم، اكتب 0 ليبقى مسوّدة)", type:"text", required:false },
     ],
     buildRequest(cfg, order){
       const w = Admin.wCo(order.wilaya), stop = order.dtype === "stop";
       const price = Math.max(0, Math.round(Number(order.total) || 0));
       return { url: baseOf(cfg) + "/api/v1/create/order", method: "POST", headers: { "Authorization": "Bearer " + cfg.token, "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify({ reference: String(order.id), nom_client: order.name || "", telephone: String(order.phone||"").replace(/\D/g, ""), adresse: order.address || [order.commune, order.wilaya].filter(Boolean).join("، "),
-          code_postal: "", commune: order.commune || "", code_wilaya: w ? w.id : "", montant: price, remarque: "", produit: String(order.items||"").replace(/\s*=\s*\d+\s*DA/gi, "").replace(/\n/g, "، ").slice(0, 250),
-          boutique: cfg.boutique || "", type: 1, stop_desk: stop ? 1 : 0, quantite: 1 }) };
+        body: JSON.stringify({ reference: String(order.id), nom_client: order.name || "", telephone: String(order.phone||"").replace(/\D/g, ""), adresse: order.address || (order.extra && order.extra["🏠 العنوان"]) || [order.commune, order.wilaya].filter(Boolean).join("، "),
+          code_postal: stop ? String(order.__deskId || "") : "", commune: order.commune || "", code_wilaya: w ? w.id : "", montant: price, remarque: String(order.note || "").split(/\s+/).filter(t=>t && !/^[\p{Extended_Pictographic}\uFE0F\u200d]/u.test(t)).join(" ").slice(0, 250),      /* ملاحظة الزبون فقط: تُحذف وسوم اللوحة الداخلية (👤المدير@… 📦 🚚… 🔢… 🏢… 📍@…) */ ...((()=>{ let p2 = String((order.extra && order.extra["📞 هاتف 2"]) || "").replace(/\D/g, ""); if(!p2) return {}; if(p2.startsWith("213")) p2 = "0" + p2.slice(3); else if(p2.length === 9) p2 = "0" + p2; return p2 === String(order.phone||"").replace(/\D/g, "") ? {} : { telephone_2: p2 }; })()), produit: String(order.items||"").replace(/\s*=\s*\d+\s*DA/gi, "").replace(/\n/g, "، ").slice(0, 250),
+          boutique: cfg.boutique || "", type: 1, stop_desk: stop ? 1 : 0, quantite: 1,
+          /* حقول إضافية في نموذج الشركة: رابط الموقع (Localisation adresse de livraison)، الوزن (Poids)، قابل للكسر (Colis fragile) — أسماؤها gps_link/weight/fragile بحسب واجهة Ecotrack ولم تُتحقَّق بعد من وثيقة الشركة */
+          ...((()=>{ const ex = order.extra || {}, g = String(ex["📍 الموقع"] || "").trim(), wt = Number(String(ex["⚖️ الوزن (كغ)"] || "").replace(",", ".")), o = {}; if(/^https:\/\//i.test(g)) o.gps_link = g.slice(0, 300); o.weight = isFinite(wt) && wt > 0 ? wt : 1;      /* نموذج DHD يملأ Poids = 1 افتراضياً (كان طردنا 0.00 كغ) */ if(ex["📦 قابل للكسر"]) o.fragile = 1; return o; })()) }) };
     },
-    parseSent(json){ const t = json && (json.tracking || json.tracking_number || (json.data && json.data.tracking)); return t ? String(t) : ""; },
+    /* رقم التتبع من ردّ الإنشاء: مفاتيح معروفة (tracking, tracking_number, data.tracking…)، وإلا أول قيمة نصية تشبه رقم تتبع Ecotrack (حروف كبيرة وأرقام مثل DHDNGNS26111422079207) في أي مكان من الردّ؛ ولا يُقرأ ردّ يقول success=false */
+    parseSent(json){
+      if(!json || typeof json !== "object" || json.success === false || json.error) return "";
+      const t = json.tracking || json.tracking_number || (json.data && (json.data.tracking || json.data.tracking_number)); if(t) return String(t);
+      try{ const g = Admin.genericTracking(json); if(g) return g; }catch(e){}
+      let found = ""; const walk = (x, d)=>{ if(found || d > 4 || x == null) return; if(typeof x === "string"){ if(/^[A-Z][A-Z0-9]{9,30}$/.test(x.trim())) found = x.trim(); return; } if(typeof x === "object") Object.values(x).forEach(v=>walk(v, d + 1)); };
+      walk(json, 0); return found;
+    },
     parseError(json){ try{ if(json && json.message) return String(json.message) + (json.errors ? " — " + JSON.stringify(json.errors) : ""); }catch(e){} return ""; },
+    /* الطرد المُنشأ عبر create/order يبقى «مسوّدة» عند Ecotrack ولا يظهر في طلباتهم المسجَّلة ولا يراه المركز حتى يُصدَّق: POST /api/v1/valid/order?tracking=… (كما في بوابة الشحن؛ لم يُتحقَّق من وثيقة DHD) */
+    async postSend(cfg, tracking, order, fetcher){
+      if(String(cfg.autoValidate == null || cfg.autoValidate === "" ? "1" : cfg.autoValidate).trim() === "0") return { ok: true, skipped: true };
+      const r = await fetcher({ url: baseOf(cfg) + "/api/v1/valid/order?tracking=" + encodeURIComponent(tracking), method: "POST", headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" } });
+      let j = null; try{ j = JSON.parse(r.text); }catch(e){}
+      if(r.ok && !(j && j.success === false)) return { ok: true };
+      const m = String((j && (j.message || j.error)) || "").trim();
+      if(/d[ée]j[àa]|already|valid[ée]e?\b/i.test(m) && /d[ée]j[àa]|already/i.test(m)) return { ok: true };          /* مُصدَّق سابقاً */
+      return { ok: false, msg: (m || "رمز " + r.status) + (j && j.errors ? " — " + JSON.stringify(j.errors).slice(0, 120) : "") };
+    },
+    /* لم يُصدَّق بعد: حالتنا المحلية بعد الإرسال («تم الإرسال للشركة») أو حالة مسوّدة من الشركة → يظهر زر «✅ تصديق عند الشركة» */
+    isDraft(raw){ if(String(raw || "").trim() === "تم الإرسال للشركة") return true; const t = String(raw || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); return /attente|brouillon|draft|non valid|upload/.test(t); },
     feesRequest(cfg){ return { url: baseOf(cfg) + "/api/v1/get/fees", method: "GET", headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" } }; },
+    /* مكاتب Stop Desk: لا قائمة مكاتب منفصلة عند Ecotrack؛ تُجلب من بلديات كل ولاية GET /api/v1/get/communes?wilaya_id=N ⟵ {…: {nom, has_stop_desk, code_postal}} والمكتب = البلدية التي فيها مكتب ورمزه code_postal (يُرسَل في code_postal عند إنشاء الطلب). الصفحة = رقم الولاية (1..58) */
+    /* بلديات الشركة الحقيقية (تُطبَّع عليها أسماء بلديات الطلب قبل الإرسال وتُفحص): GET /api/v1/get/communes?wilaya_id=N ⟵ كائن {…: {nom, has_stop_desk, code_postal}} */
+    communesRequest(cfg, wilayaId){ return { url: baseOf(cfg) + "/api/v1/get/communes?wilaya_id=" + encodeURIComponent(wilayaId), method: "GET", headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" } }; },
+    parseCommunes(json){ const rows = json && typeof json === "object" ? Object.values(json).filter(r=>r && typeof r === "object" && r.nom != null) : []; return { names: rows.map(r=>String(r.nom)), nd: [], more: false }; },
+    /* «آخر الطرود عند الشركة»: قائمة طلبات الحساب GET /api/v1/get/orders (المسار من معتاد Ecotrack ولم يُتحقَّق من وثيقة DHD؛ يُعرض الرد الكامل إن لم يُفهم) */
+    recentRequest(cfg, pg){ return { url: baseOf(cfg) + "/api/v1/get/orders?page=" + (pg || 1), method: "GET", headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" } }; },
+    /* قائمة طرود الحساب ← صفوف موحّدة {tracking, reference, client, phone, commune, wilaya, amount, product, status, date}؛ الحقول بأسمائها المعتادة عند Ecotrack ومتسامحة (المصفوفة في أي عمق، والحالة نص أو كائن) */
+    parseOrdersList(json){
+      const find = (x, d)=>{ if(Array.isArray(x)) return x.length && typeof x[0] === "object" ? x : null; if(!x || typeof x !== "object" || d > 3) return null; for(const v of Object.values(x)){ const r = find(v, d + 1); if(r) return r; } return null; };
+      let arr = find(json, 0); if(!arr && json && typeof json === "object"){ const vs = Object.values(json).filter(v=>v && typeof v === "object" && !Array.isArray(v)); if(vs.length && vs.every(v=>Object.keys(v).length > 2)) arr = vs; }
+      return (arr || []).map(r0=>{ const o = r0 && r0.attributes && typeof r0.attributes === "object" ? Object.assign({}, r0.attributes) : (r0 || {});
+        const P = (...ks)=>{ for(const k of ks){ const v = o[k]; if(v != null && v !== "" && typeof v !== "object") return String(v); } return ""; };
+        const s = o.status != null ? o.status : (o.current_status != null ? o.current_status : (o.last_status != null ? o.last_status : (o.etat != null ? o.etat : o.state)));
+        const st = s && typeof s === "object" ? String(s.title || s.code || s.name || s.label || "") : (s == null ? "" : String(s));
+        return { tracking: P("tracking", "tracking_number", "tracking_id"), reference: P("reference", "ref", "order_id"), client: P("nom_client", "client", "destinataire", "name", "customer"), phone: P("telephone", "phone", "tel"), commune: P("commune", "commune_name"), wilaya: P("wilaya", "wilaya_name", "code_wilaya"), amount: Number(P("montant", "price", "amount", "total").replace(/[^\d.]/g, "")) || 0, product: P("produit", "product", "products"), status: st, date: P("created_at", "date", "date_creation", "createdAt").slice(0, 10) }; }).filter(r=>r.tracking);
+    },
+    /* تشخيص الحالة: عدّة نقاط قراءة فقط تُجرَّب معاً ويُعرض ردّ كل منها (لنعرف أيّها يحمل الحالة الحالية مثل Vers Station) */
+    inspectRequests(cfg, tracking){ const H = { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" }, b = baseOf(cfg) + "/api/v1/", t = encodeURIComponent(tracking);
+      return [["get/tracking/info", b + "get/tracking/info?tracking=" + t], ["get/order/info", b + "get/order/info?tracking=" + t], ["get/orders (tracking)", b + "get/orders?tracking=" + t], ["get/orders (الصفحة 1)", b + "get/orders?page=1"], ["get/maj", b + "get/maj?tracking=" + t]].map(([l, u])=>({ label: l, req: { url: u, method: "GET", headers: H } })); },
+    /* أسماء حالات DHD كما في تبويبات لوحتهم (بدل الأكواد مثل prete_a_expedier) */
+    statusLabel(raw){ const M = { prete_a_preparer: "Prêt à préparer", prete_a_expedier: "Prêt à expédier", en_ramassage: "En ramassage", en_preparation_stock: "Stock en préparation", vers_hub: "Vers Station", en_hub: "En Station", vers_wilaya: "Vers Wilaya", en_preparation: "En préparation", en_livraison: "En livraison", suspendu: "Suspendu", livre_non_encaisse: "Livré non encaissé", encaisse_non_paye: "Livré encaissé non payé", paiements_prets: "Paiement prêt", paye_et_archive: "Payé et archivé", retour_chez_livreur: "Retour chez livreur", retour_transit_entrepot: "Retour en transit stock", retour_en_traitement: "Retour en traitement", retour_recu: "Retour reçu", retour_archive: "Retour archivé", annule: "Annulé", order_information_received_by_carrier: "Infos reçues par le transporteur" }; return M[String(raw || "").trim().toLowerCase()] || String(raw || ""); },
+    centersPages: 58,
+    centersRequest(cfg, page){ return { url: baseOf(cfg) + "/api/v1/get/communes?wilaya_id=" + (page || 1), method: "GET", headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" } }; },
+    parseCenters(json, page){
+      const rows = [], w = Number(page) || 0, yes = v=>v === true || v === 1 || v === "1" || v === "true";
+      if(json && typeof json === "object") Object.values(json).forEach(c=>{ if(c && typeof c === "object" && c.nom !== undefined && yes(c.has_stop_desk) && String(c.code_postal == null ? "" : c.code_postal).trim() !== "") rows.push({ id: String(c.code_postal).trim(), name: String(c.nom), address: "", commune: String(c.nom), wilaya_id: w }); });
+      return { rows, more: w < 58 };
+    },
     parseFees(json){ return { prices: parseTarifRows(json), more: false }; },
     trackRequest(cfg, tracking){ return { url: baseOf(cfg) + "/api/v1/get/tracking/info?tracking=" + encodeURIComponent(tracking), method: "GET", headers: { "Authorization": "Bearer " + cfg.token, "Accept": "application/json" } }; },
-    parseStatus(json){ const d = json && (json.activity ? json : (json.data || json)); const a = d && (d.activity || d.history); const last = Array.isArray(a) ? a[a.length - 1] : null; return String((last && (last.status || last.event)) || (d && (d.status || d.last_status)) || ""); },
+    /* الحالة الحالية: سجلّ activity قد يأتي بأي ترتيب (من الأقدم أو الأحدث) فلا نفترض أن الأخير هو الأحدث (كانت كل الطرود تظهر «order_information_received_by_carrier» وهي أول حدث)؛ نختار الحدث الأبعد تقدّماً في مراحل الشحن (استلام المعلومات ← تحضير/ramassage ← Vers Station/En Station ← Vers Wilaya ← En livraison ← Livré، أو Retour/annulé)، ويُتجاهل notification_on_order */
+    parseStatus(json){
+      const d = json && (json.activity ? json : (json.data || json)), a = d && (d.activity || d.history);
+      const rank = c=>{ const t = String(c || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[_]+/g, " ").trim();
+        if(!t || /notification on order/.test(t)) return -1;
+        if(/annul|cancel/.test(t)) return 90; if(/retour|return/.test(t)) return 80; if(/livre|delivered|encaisse|paye|paiement|payed/.test(t) && !/en livraison/.test(t)) return 70;
+        if(/en livraison|out for delivery|attempt delivery|dispatched to driver|suspend/.test(t)) return 60;
+        if(/vers wilaya/.test(t)) return 50; if(/en preparation(?! stock)/.test(t)) return 55; if(/en station|en hub/.test(t)) return 45; if(/vers station|vers hub/.test(t)) return 40;
+        if(/picked|accepted|ramass|expedi/.test(t)) return 30; if(/pret|prete|preparation stock/.test(t)) return 20; if(/order information received/.test(t)) return 10; return 5; };
+      if(Array.isArray(a) && a.length){ let best = "", bs = -2; a.forEach(r=>{ const c = String((r && (r.status || r.event)) || ""); if(!c) return; const sc = rank(c); if(sc >= 0 && sc >= bs){ bs = sc; best = c; } }); if(best) return best; }
+      return String((d && (d.status || d.last_status)) || "");
+    },
+    /* حالات Ecotrack (تبويبات DHD ونص وثيقتهم): Prêt à expédier/En ramassage ← مؤكَّد؛ Vers Station/En Station/Vers Wilaya/En preparation (وصل مركز الوجهة)/Suspendus ← في الطريق؛ En livraison ← في الطريق؛ Livrés (livre_non_encaisse…) ← مُسلَّم؛ Retours/annule ← فشل */
     mapStatus(raw){
-      const t = norm(raw); if(!t) return null;
-      if(/en livraison|livraison en cours|out for delivery/.test(t)) return "expediee";          // «en livraison» لم تُسلَّم بعد (لجنة الخبراء v1.89.132)
-      if(/livr|delivered|encaisse/.test(t)) return "livree";
+      const t = norm(raw).replace(/_+/g, " ").replace(/\s+/g, " "); if(!t) return null;
+      if(/en livraison|livraison en cours|out for delivery|attempt delivery|dispatched to driver/.test(t)) return "expediee";
       if(/retour|return|echec|annul|refus/.test(t)) return "echec";
-      if(/pret a expedier|en preparation|prepar/.test(t)) return "confirmee";
-      if(/expedi|transit|centre|sorti|livraison|ramass|arriv|dispatch|en cours/.test(t)) return "expediee";
+      if(/livre|delivered|encaisse|paye|paiements?/.test(t)) return "livree";
+      if(/pret a expedier|prete a expedier|prete a preparer|pret a preparer|en ramassage|preparation stock|order information received/.test(t)) return "confirmee";
+      if(/vers station|vers hub|en station|en hub|vers wilaya|en preparation|picked|accepted|suspendu|suspend|expedi|transit|centre|sorti|livraison|ramass|arriv|dispatch|en cours/.test(t)) return "expediee";
       return null;
     },
   };
@@ -2734,7 +2781,7 @@ const Admin = {
       '<div><b>' + r.today.toLocaleString("fr-DZ") + '</b><span>زيارات اليوم</span></div>' +
       '<div><b>' + (r.unique||0).toLocaleString("fr-DZ") + '</b><span>زوار جدد</span></div>';
     const ordersByTitle = {};
-    this.orders.filter(o=>!["annulee","echec"].includes(o.status)).forEach(o=>{ new Set(this.parseOrderItems(o.items).map(i=>i.title)).forEach(t=>{ ordersByTitle[t] = (ordersByTitle[t]||0) + 1; }); });
+    this.orders.filter(o=>!["annulee","echec"].includes(o.status)).forEach(o=>{ new Set(this.orderItemsCanon(o).map(i=>i.title)).forEach(t=>{ ordersByTitle[t] = (ordersByTitle[t]||0) + 1; }); });
     const rows = Object.keys(r.pages).map(pg=>{
       const p = this.products.find(x=>x.slug===pg), name = pg === "home" ? "🏠 الصفحة الرئيسية" : (p ? p.title : pg);
       const ords = p ? (ordersByTitle[p.title]||0) : 0, v = r.pages[pg];
@@ -2859,6 +2906,11 @@ const Admin = {
 
   /* ════════ التحليلات (Analytics) ════════
      تُحسب بالكامل محلياً من this.orders/this.products المحمّلة أصلاً — لا حاجة لأي طلب إضافي. */
+  /* بنود الطلب باسم المنتج الحقيقي: الصفحات تسمّي المنتج بعناوين مختلفة (صفحة هبوط، عرض…) فتتفرّق مبيعاته في الإحصاءات؛ نوحّدها بالـ slug المحفوظ مع كل بند (lines) متى وُجد وطابق عنوانه البند المقروء */
+  orderItemsCanon(o){
+    const its = this.parseOrderItems(o && o.items), L = o && Array.isArray(o.lines) ? o.lines : null; if(!L) return its;
+    return its.map((it, i)=>{ const l = L[i], p = l && l.slug && (this.products || []).find(x=>x.slug === l.slug); return p && (!l.title || String(l.title).trim() === it.title) ? Object.assign({}, it, { title: p.title, slug: p.slug }) : it; });
+  },
   parseOrderItems(itemsStr){
     // صيغة حقل "items" كما تُخزَّن في الشيت: "العنوان ×الكمية = السعر DA" على كل سطر
     return String(itemsStr||"").split(/\n/).map(line=>{
@@ -2939,7 +2991,7 @@ const Admin = {
       let ex = o.extra; if(typeof ex === "string"){ try{ ex = JSON.parse(ex); }catch(e){ ex = {}; } }
       const src = ex && ex["📄 الصفحة"]; if(!src) return;
       const seen = new Set();
-      this.parseOrderItems(o.items).forEach(it=>{ const p = byTitle[it.title] || (this.products||[]).find(x=>it.title.indexOf(x.title) === 0); if(!p || seen.has(p.slug)) return; seen.add(p.slug); const r = ((g[p.slug] = g[p.slug] || {})[src] = g[p.slug][src] || { n:0, rev:0 }); r.n++; r.rev += Number(o.total)||0; });
+      this.orderItemsCanon(o).forEach(it=>{ const p = (it.slug && (this.products||[]).find(x=>x.slug === it.slug)) || byTitle[it.title] || (this.products||[]).find(x=>it.title.indexOf(x.title) === 0); if(!p || seen.has(p.slug)) return; seen.add(p.slug); const r = ((g[p.slug] = g[p.slug] || {})[src] = g[p.slug][src] || { n:0, rev:0 }); r.n++; r.rev += Number(o.total)||0; });
     });
     const rows = Object.entries(g).filter(([slug,m])=>Object.keys(m).length > 1 || (this.products||[]).some(p=>p.slug === slug && (p.ab || p.route)));
     if(!rows.length){ box.innerHTML = '<p class="hint" style="margin:.6rem 0 0">لا توجد بعد بيانات كافية — تظهر هنا حين يأتي طلبات لمنتج واحد من أكثر من صفحة (مثل «تركيز 1» و«تركيز 2»).</p>'; return; }
@@ -2963,7 +3015,8 @@ const Admin = {
         else if(f.status && o.status!==f.status) return false;
         if(f.wilaya && o.wilaya!==f.wilaya) return false;
         if(f.company && this.orderCoKey(o) !== f.company) return false;
-        if(q && !(String(o.name||"").toLowerCase().includes(q) || String(o.phone||"").includes(q) || String(o.id||"").toLowerCase().includes(q))) return false;
+        if(f.src && (f.src === "manual") !== this.isManualOrder(o)) return false;
+        if(q &&!(String(o.name||"").toLowerCase().includes(q) || String(o.phone||"").includes(q) || String(o.id||"").toLowerCase().includes(q))) return false;
         if(f.dateFrom){ const d = new Date(o.date); if(d < new Date(f.dateFrom)) return false; }
         if(f.dateTo){ const d = new Date(o.date); const to = new Date(f.dateTo); to.setHours(23,59,59,999); if(d > to) return false; }
         return true;
@@ -2974,13 +3027,16 @@ const Admin = {
   ORDER_RANK: { nouvelle:1, confirmee:2, expediee:3, livree:4, echec:5, annulee:6 },
   /* «جديد» = طلب لم يُتصل به بعد (بلا محاولات ولا نتيجة اتصال) ويظهر في الأعلى؛ تحته «في انتظار التأكيد» (جرى الاتصال ولم يُحسم) */
   isFresh(o){ return !!o && o.status === "nouvelle" && !this.attemptsOf(o) && !this.callMark(o); },
+  /* مصدر الطلب: يدوي (أُضيف من اللوحة: علم المصدر أو وسم «✍️ طلب يدوي» أو معرّف يبدأ بـ M) وإلا من الموقع */
+  isManualOrder(o){ if(!o) return false; if(o.source === "manual") return true; try{ const e = typeof o.extra === "string" ? JSON.parse(o.extra) : o.extra; if(e && e["✍️ طلب يدوي"]) return true; }catch(err){} return /^M\d{6}-/.test(String(o.id || "")); },
+  srcBadge(o){ return this.isManualOrder(o) ? '<span class="o-src man" title="طلب أُضيف يدوياً من اللوحة">يدوي</span>' : '<span class="o-src web" title="طلب جاء من الموقع">الموقع</span>'; },
   orderRank(o){ return this.isFresh(o) ? 0 : (this.ORDER_RANK[o.status] ?? 5); },
   /* إعدادات الأتمتة (مفعّلة افتراضياً): send = إرسال المؤكَّد للشركة، del = حذف الملغى */
   autoOpt(k){ try{ return localStorage.getItem("alyssum_auto_" + k) !== "0"; }catch(e){ return true; } },
   setAutoOpt(k, on){ try{ localStorage.setItem("alyssum_auto_" + k, on ? "1" : "0"); }catch(e){} toast(on ? "✅ فُعِّلت الأتمتة" : "⏸️ أُوقفت الأتمتة"); },
   /* بعد تغيير يدوي للحالة: المؤكَّد يُرسل للشركة فينتقل إلى «الطلبات المسجلة»، والملغى غير المرسَل يُحذف */
   async afterManualStatus(o, status, quiet){
-    if(!o) return;
+    if(!o) return; o = this.orders.find(x=>x.id === o.id) || o;      // الكائن الحالي بالمعرّف (قد تُستبدل النسخ بعد إرسال سابق)
     try{
       if(status === "confirmee" && !this.isDigital(o) && !this.isMarket(o) && this.autoOpt("send") && !this.trackingOf(o) && !this.isBlacklisted(o.phone) && this.orderCompanyKey(o)){
         const i = this.orders.indexOf(o); if(i < 0) return;
@@ -2999,11 +3055,13 @@ const Admin = {
       q: $f("order-filter-q").value,
       status: $f("order-filter-status").value,
       wilaya: $f("order-filter-wilaya").value,
+      src: $f("order-filter-src") ? $f("order-filter-src").value : "",
       dateFrom: $f("order-filter-from").value,
       dateTo: $f("order-filter-to").value,
       showShipped: !!($f("order-show-shipped") && $f("order-show-shipped").checked),
       company: this._ordCo || "",
     };
+    try{ localStorage.setItem("alyssum_show_shipped", this.orderFilters.showShipped ? "1" : "0"); }catch(e){}       // خيار «إظهار المسجلة» يُحفظ فلا يضطر صاحب المتجر لتفعيله كل مرة
     this.orderPage = 1;
     this.renderOrders();
   },
@@ -3012,6 +3070,7 @@ const Admin = {
     $f("order-filter-q").value = "";
     $f("order-filter-status").value = "";
     $f("order-filter-wilaya").value = "";
+    if($f("order-filter-src")) $f("order-filter-src").value = "";
     $f("order-filter-from").value = "";
     $f("order-filter-to").value = "";
     if($f("order-show-shipped")) $f("order-show-shipped").checked = false;
@@ -3019,7 +3078,7 @@ const Admin = {
     this.applyOrderFilters();
   },
   /* أسماء ثابتة للشركات في الشرائح والتبويبات: ياليدين وZR شركتان مستقلتان ولا يُدمج اسماهما */
-  coLabel(k){ const F = { yalidine: "ياليدين", zrexpress_app: "ZR Express", none: "بلا شركة", __other: "شركات غير مفعّلة" }; if(F[k]) return F[k]; const c = this.allDeliveryCompanies()[k]; return (c && c.name) || k; },
+  coLabel(k){ const F = { yalidine: "Yalidine", zrexpress_app: "ZR Express", none: "بلا شركة", __other: "شركات غير مفعّلة" }; if(F[k]) return F[k]; const c = this.allDeliveryCompanies()[k]; return (c && c.name) || k; },
   /* شركة الطلب لأغراض الفرز: المسجَّل ⟵ شركة تتبعه، وغيره ⟵ الشركة المقرَّر إرساله بها (أو "none") */
   orderCoKey(o){ const t = this.trackingOf(o); if(t) return t.company; try{ return this.orderCompanyKey(o) || "none"; }catch(e){ return "none"; } },
   setOrderCo(k){ this._ordCo = k || ""; this.applyOrderFilters(); },
@@ -3100,6 +3159,7 @@ const Admin = {
   },
   renderOrders(){
     this._blMap = null; this.renderTrashBadge();
+    if(!this._shipPrefInit){ this._shipPrefInit = 1; try{ if(localStorage.getItem("alyssum_show_shipped") === "1"){ const c = $f("order-show-shipped"); if(c) c.checked = true; this.orderFilters.showShipped = true; } }catch(e){} }
     setTimeout(()=>this.refreshPreview(), 0);   // إن كانت نافذة المعاينة مفتوحة وتغيّر طلبها (نتيجة اتصال/تأكيد/تعديل) تتحدّث فوراً
     { const ar = $f("auto-reg"); if(ar) ar.checked = !!this.autoRegCfg().on; const as = $f("auto-send"), ad = $f("auto-del"); if(as) as.checked = this.autoOpt("send"); if(ad) ad.checked = this.autoOpt("del"); }
     this.renderDeliveryBanners();
@@ -3144,7 +3204,7 @@ const Admin = {
       pageItems.map(({o,i})=>{
         const items = this.itemsDisplay(o).replace(/\n/g, " • "), at = this.attemptsOf(o), cm = this.callMark(o);
         return '<tr>' +
-        '<td data-l="الزبون" class="cut nm" title="' + nE(o.name) + ' — ' + nE(o.wilaya) + '"><b>' + nE(o.name) + '</b> <small class="o-wil">· ' + nE(o.wilaya) + '</small></td>' +
+        '<td data-l="الزبون" class="cut nm" title="' + nE(o.name) + ' — ' + nE(o.wilaya) + '"><b>' + nE(o.name) + '</b> <small class="o-wil">· ' + nE(o.wilaya) + '</small> ' + this.srcBadge(o) + '</td>' +
         '<td data-l="المنتج" class="cut c-items" title="' + nE(items) + '">' + nE(items) + '</td>' +
         '<td data-l="المبلغ" class="nw"><b>' + (Number(o.total)||0).toLocaleString("fr-DZ") + ' دج</b></td>' +
         '<td class="nw o-act" data-l="الحالة">' + (this.isFresh(o) ? '<span class="pill st-fresh">🆕 جديد</span>' : '<span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>') + (sc ? StockCheck.badge(o, sc) : "") + (at ? ' <small style="color:#B26A00;font-weight:800" title="محاولات الاتصال">📞' + at + '</small>' : "") + (cm === "later" ? ' <small style="color:#B26A00;font-weight:800">⏰</small>' : cm === "wrong" ? ' <small style="color:#c0392b;font-weight:800">📵</small>' : "") + ' ' + this.statusCellHtml(o, i) + '</td>' +
@@ -3157,7 +3217,19 @@ const Admin = {
   printOrderBord(i){
     const o = this.orders[i]; if(!o) return;
     if(this.trackingOf(o)) return this.openLabel(i);
+    if(this.linkTrk(i, true)) return;
     toast("ℹ️ لا بوردرو قبل الإرسال إلى الشركة — أرسل الطلب أولاً ثم اطبع بوردرو الشركة");
+  },
+  /* ربط طلب برقم تتبع طرد مسجَّل فعلاً عند الشركة (حين أُنشئ الطرد ولم يُحفظ رقمه هنا): يحفظ 🚚<شركة>:<رقم> في ملاحظة الطلب فيظهر في «الطلبات المسجلة» ويعمل «تحديث الحالة» والبوردرو. ask=true: سؤال أولاً. يعيد true إن ربط أو عولج الطلب */
+  linkTrk(i, ask){
+    const o = this.orders[i]; if(!o || this.trackingOf(o)) return false;
+    const k = this.activeCompanyKey(), co = k && this.allDeliveryCompanies()[k]; if(!co){ toast("⚠️ فعّل شركة توصيل أولاً"); return ask ? false : true; }
+    const raw = prompt((ask ? "لا طرد مرتبط بهذا الطلب. " : "") + "إن كان الطلب " + o.id + " مسجَّلاً عند " + co.name + " فأدخل رقم تتبعه لربطه (مثل DHDNGNS26111422079207)، أو اتركه فارغاً للإلغاء:");
+    if(raw === null) return !!ask && false; const v = String(raw).replace(/[\u200b-\u200f\s]/g, "");
+    if(!v) return false; if(!/^[A-Za-z0-9._-]{6,40}$/.test(v)){ toast("⚠️ رقم تتبع غير صالح — حروف وأرقام فقط"); return true; }
+    if(this.orders.some(x=>x !== o && (this.trackingOf(x) || {}).tracking === v)){ toast("⚠️ رقم التتبع هذا مرتبط بطلب آخر"); return true; }
+    this.saveTracking(o, k, v); this.setShipRaw(o.id, "رُبط يدوياً"); try{ this.renderOrders(); }catch(e){}
+    toast("✅ رُبط الطلب " + o.id + " برقم التتبع " + v + " — اضغط «🔄 تحديث الحالة» لجلب حالته"); return true;
   },
   /* أزرار أيقونية في عمود Action (v1.89.703): أخضر = معاينة، أزرق = وصل، وردي = تعديل، أحمر = حذف (إلى السلة) */
   ixOf(id, fallback){ const k = this.orders.findIndex(x=>String(x.id) === String(id)); if(k >= 0) return k; try{ toast("⚠️ هذا الطلب لم يعد في القائمة — حدّث الصفحة"); }catch(e){} return fallback; },
@@ -3190,6 +3262,17 @@ const Admin = {
     this.orderAction(i, { value: v });
   },
 
+  /* نسخة من «الطلبات المسجلة» (المعروضة بحسب البحث والفلاتر الحالية): ملف CSV بالتتبع والشركة والحالة وبيانات الزبون */
+  exportShippedCsv(){
+    const rows = (this._shipRows && this._shipRows.length ? this._shipRows : null);
+    if(!rows){ toast("لا توجد طلبات مسجلة لتصديرها — افتح «الطلبات المسجلة» أولاً"); return }
+    const cos = this.allDeliveryCompanies(), head = ["التتبع","الشركة","رقم الطلب","التاريخ","الاسم","الهاتف","الولاية","البلدية","التوصيل","المكتب","المنتجات","الإجمالي","الحالة","حالة الشركة","المصدر"];
+    const data = [head].concat(rows.map(({o,t})=>{ const r = this.shipRaw[o.id] || {}; return [t.tracking, (cos[t.company] || {}).name || t.company, o.id, new Date(o.date).toLocaleString("fr-DZ"), o.name, o.phone, o.wilaya || "", o.commune || "", o.dtype === "stop" ? "مكتب" : "منزل", o.desk || "", String(o.items || "").replace(/\n/g, " • "), Number(o.total) || 0, this.ST_AR[o.status] || o.status, r.raw ? this.coStatusLabel(t.company, r.raw) : "", this.isManualOrder(o) ? "يدوي" : "الموقع"]; }));
+    const csv = "\ufeff" + data.map(r=>r.map(c=>'"' + String(c == null ? "" : c).replace(/"/g, '""') + '"').join(",")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type:"text/csv;charset=utf-8" })); a.download = "registered-orders-" + new Date().toISOString().slice(0,10) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    toast("✅ جارِ تنزيل نسخة من " + rows.length + " طلباً مسجلاً");
+  },
   exportOrdersCsv(){
     const filtered = this.getFilteredOrders();
     if(!filtered.length){ toast("لا توجد طلبات لتصديرها"); return }
@@ -5082,6 +5165,7 @@ const Admin = {
     $f("px-id").value = px ? px.pixelId : "";
     $f("px-conv-label").value = px ? (px.conversionLabel||"") : "";
     $f("px-currency").value = px ? (px.currency||"DZD") : "DZD";
+    { const vm = $f("px-value-mode"); if(vm) vm.value = px && px.valueMode === "products" ? "products" : "total"; }
     $f("px-active").checked = px ? px.active!==false : true;
     const isSpecific = px && Array.isArray(px.scope);
     $f("px-scope-mode").value = isSpecific ? "specific" : "all";
@@ -5108,6 +5192,7 @@ const Admin = {
       pixelId,
       conversionLabel: platform==="google_ads" ? $f("px-conv-label").value.trim() : "",
       currency: $f("px-currency").value.trim() || "DZD",
+      valueMode: ($f("px-value-mode") || {}).value === "products" ? "products" : "total",
       scope,
       active: $f("px-active").checked,
     };
@@ -5254,7 +5339,7 @@ const Admin = {
 
   renderCoupons(){
     if(typeof AdminCoupons2 === "undefined"){
-      if(!this._coupons2Loading){ this._coupons2Loading = true; const s=document.createElement("script"); s.src="assets/js/admin-coupons2.js?v=2"; s.onload=()=>{ this._coupons2Loading=false; if(typeof AdminCoupons2!=="undefined") AdminCoupons2.init(); }; s.onerror=()=>{ this._coupons2Loading=false; toast("تعذّر تحميل أدوات الخصومات المتقدمة"); }; document.head.appendChild(s); }
+      if(!this._coupons2Loading){ this._coupons2Loading = true; const s=document.createElement("script"); s.src="assets/js/admin-coupons2.js?v=23b2db86"; s.onload=()=>{ this._coupons2Loading=false; if(typeof AdminCoupons2!=="undefined") AdminCoupons2.init(); }; s.onerror=()=>{ this._coupons2Loading=false; toast("تعذّر تحميل أدوات الخصومات المتقدمة"); }; document.head.appendChild(s); }
       return;
     }
     return AdminCoupons2.render();
@@ -5624,9 +5709,9 @@ const Admin = {
   /* ════════ المخزون الحي + الأرباح الحقيقية ════════
      المخزون يتحدث تلقائياً مع الطلبات الفعلية: يُخصم عند التأكيد (confirmee/expediee/livree) ويُعاد عند الإلغاء أو فشل التوصيل (المرتجع يعود للمخزون).
      علامة 📦 في ملاحظة الطلب تمنع الخصم المزدوج. تُحتسب الطلبات الواردة بعد تاريخ بدء التتبع فقط (حتى لا تُخصم طلبات قديمة سبق أن حُسبت في رقم المخزون). */
-  finDefaults(){ return { packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }; },
+  finDefaults(){ return { packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"val", retVal:0, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }; },
   wh: { cfg:{ on:false, main:"المستودع الرئيسي", list:[], routing:{}, retPolicy:"received" }, stock:{} },
-  fin: { costs:{}, ads:{}, set:{ packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"pct", retVal:100, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }, cfg:{ since:null }, log:[] },
+  fin: { costs:{}, ads:{}, set:{ packaging:0, ad:{ method:"fixed", a:0, b:0, m:2, n:0 }, delMode:"pct", delVal:100, retMode:"val", retVal:0, insMode:"pct", insVal:0, useReal:true, low:5, profMode:"pct", profVal:30 }, cfg:{ since:null }, log:[] },
   async loadFinance(){
     const [costs, set, cfg, log] = await Promise.all([Priv.get("costs", {}), Priv.get("finset", {}), Priv.get("stockcfg", null), Priv.get("stocklog", [])]);
     this.ydFees = (await Priv.get("ydfees", {})) || {};
@@ -5634,6 +5719,7 @@ const Admin = {
     const old = set || {}, S0 = Object.assign(this.finDefaults(), old);
     if(old.delVal == null && old.carrierPct != null) S0.delVal = old.carrierPct;      // ترحيل الإعدادات القديمة
     if(old.retVal == null && old.returnPct != null) S0.retVal = old.returnPct;
+    if(S0.retMode !== "val"){ S0.retMode = "val"; S0.retVal = 0; }      /* تكلفة الإرجاع: لا نسبة ولا ثابت مفترض — أرقام الشركة نفسها، وإلا ما يكتبه صاحب المتجر (0 افتراضياً) */
     if(!old.ad && old.adVal) S0.ad = { method: old.adMode === "total" ? "spend" : "fixed", a: old.adVal, b:0, m:2, n:0 };   // ترحيل
     try{ if(window.AdminWh && AdminWh.load) this.wh = await AdminWh.load(); }catch(e){}
     this.fin = { costs: costs || {}, oc: (await Priv.get("offercosts", {})) || {}, ads: (await Priv.get("adcfg", {})) || {}, adh: (await Priv.get("adhist", [])) || [], pw: (await Priv.get("profwant", {})) || {}, cc: (await Priv.get("costcalc", {})) || {}, mats: (await Priv.get("costmats", {})) || {}, rcp: (await Priv.get("recipes", {})) || {}, set: S0, cfg: cfg || { since: null }, log: Array.isArray(log) ? log : [] };
@@ -5659,6 +5745,7 @@ const Admin = {
     const php = PHPAPI.on(), base = location.href.replace(/[?#].*$/, "").replace(/[^\/]*$/, ""), sb = CONFIG.SUPABASE_URL ? CONFIG.SUPABASE_URL.replace(/\/$/, "") + "/functions/v1/" : "";
     let url = "", hint = "";
     if(key === "yalidine"){ url = php ? base + "api/index.php?r=webhook&s=" + sec : sb + "yalidine-webhook?s=" + sec; hint = php ? "✅ جاهز: الرابط يعمل فور لصقه في لوحة الشركة (Webhooks ← الأحداث: تغيّر حالة الطرد)." : "⚠️ يلزم تفعيل خدمة التتبع الفوري مرة واحدة — تواصل مع الدعم."; }
+    else if(key === "dhd"){ url = sb + "dhd-webhook?s=" + (String(sec).length > 24 ? String(sec).slice(0, 24) : sec); hint = "في لوحة DHD ← Webhooks par état ← «Nouveau webhook»: الصق هذا الرابط في «URL du webhook»، واترك «Secret» فارغاً (السرّ داخل الرابط)، واختر كل الحالات (أو ما يهمّك منها) ثم احفظ. تتحدّث حالة الطلب هنا لحظياً (في الطريق ← مُسلَّم ← مرتجع)؛ جرّب زر الإرسال التجريبي عندهم ثم راجع سجلاتهم (Logs)."; }
     else if(key === "zrexpress_app"){ url = sb + "zr-webhook?s=" + sec; hint = "الصق الرابط في لوحة " + nm + " ← Webhooks (الأحداث: تحديث حالة الطرد). يعمل الرابط فقط إذا ضُبط سرّ الاستقبال نفسه في خدمة التتبع الفوري؛ إن كان مضبوطاً سابقاً فاضغط «🔐 تعيين السرّ» وأدخله ليُبنى الرابط به."; }
     else { url = sb + "carrier-webhook?c=" + encodeURIComponent(key) + "&s=" + sec; hint = "الصق الرابط في لوحة " + nm + " ← Webhooks. تُسجَّل الإشعارات الواردة من الشركة؛ وتحديث حالة الطلبات يبقى بزر «🔄 تحديث الحالة» إلى أن يُفعَّل التطبيق التلقائي لها. يعمل الرابط فقط إذا ضُبط سرّ الاستقبال نفسه؛ إن كان مضبوطاً سابقاً فاضغط «🔐 تعيين السرّ» وأدخله."; }
     $f("wh-url").value = url; $f("wh-hint").textContent = hint;
@@ -5748,14 +5835,17 @@ const Admin = {
     return e || null;
   },
   retDays(o){ const e = this.retSince(o); return e ? Math.max(0, Math.floor(((e.e || Date.now()) - e.s) / 864e5)) : 0; },
-  retLate(o){ return Math.max(0, this.retDays(o) - 10) * 10; },
+  /* غرامة تأخر سحب المرتجع: دج/يوم بعد 10 أيام، من إعداد شركة الطلب («شركات التوصيل ← إعداد»)؛ افتراضها 0 (بلا غرامة) */
+  retLateRate(o){ const k = (this.retCo ? this.retCo(o) : "") || "yalidine", v = Number(((this.deliveryCfg || {})[k] || {}).lateFee); return isFinite(v) && v > 0 ? v : 0; },
+  retLateAny(){ return Object.values(this.deliveryCfg || {}).some(c=>Number(c && c.lateFee) > 0); },
+  retLate(o){ return Math.max(0, this.retDays(o) - 10) * this.retLateRate(o); },
   retReadyList(){ return (this.orders || []).filter(o=>this.returnPhase(o) === "ready").map(o=>({ o, days: this.retDays(o), late: this.retLate(o) })).sort((a,b)=>b.days - a.days); },
   /* إشعار: عند ظهور طرد راجع جاهز للسحب، ثم تذكير يومي مع اقتراب مهلة الـ10 أيام (من اليوم 7) وبعدها */
   retAlert(){
     const L = this.retReadyList(), m = this._retMap(); if(!L.length) return;
-    if(this._retNew){ this._retNew = 0; toast("📦 طرد راجع جاهز للسحب (Retour à récupérer) — اسحبه خلال 10 أيام وإلا تُحسب 10 دج عن كل يوم تأخير"); }
+    if(this._retNew){ this._retNew = 0; toast("📦 طرد راجع جاهز للسحب (Retour à récupérer) — اسحبه خلال 10 أيام" + (this.retLateAny() ? " وإلا تُحسب غرامة عن كل يوم تأخير" : "")); }
     const key = new Date().toISOString().slice(0, 10), due = L.filter(x=>x.days >= 7 && (m[x.o.id] || {}).rm !== key);
-    if(due.length){ due.forEach(x=>{ m[x.o.id].rm = key; }); this._retSave(); const x = due[0], left = 10 - x.days; toast("⏰ " + due.length + " طرد راجع ينتظر سحبك" + (left > 0 ? " — يتبقى " + left + " يوم قبل غرامة 10 دج/يوم" : " — تجاوز المهلة: غرامة " + x.late + " دج حتى الآن")); }
+    if(due.length){ due.forEach(x=>{ m[x.o.id].rm = key; }); this._retSave(); const x = due[0], left = 10 - x.days; toast("⏰ " + due.length + " طرد راجع ينتظر سحبك" + (left > 0 ? " — يتبقى " + left + " يوم" + (this.retLateRate(x.o) ? " قبل غرامة " + this.retLateRate(x.o) + " دج/يوم" : "") : " — تجاوز المهلة" + (x.late ? ": غرامة " + x.late + " دج حتى الآن" : ""))); }
   },
   returnPhase(o){ const W = this._W(); if(!W) return ""; return W.maxPhase(W.phaseOfNote(o.note), W.returnPhase((this.shipRaw[o.id] || {}).raw || "")); },
   holdReturn(ph){ const W = this._W(); return !!W && W.hold(ph, this.wh && this.wh.cfg && this.wh.cfg.retPolicy); },
@@ -5859,7 +5949,7 @@ const Admin = {
   },
   async saveFinSettings(){
     const n = (id, d)=>{ const v = Number($f(id).value); return isFinite(v) && $f(id).value !== "" ? v : d; };
-    this.fin.set = { packaging: n("fin-pack", 0), ad: this.fin.set.ad || { method:"fixed", a:0 }, delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: $f("fin-ret-mode").value, retVal: n("fin-ret", 100), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: this.fin.set.profMode || "pct", profVal: this.fin.set.profVal == null ? 30 : this.fin.set.profVal };
+    this.fin.set = { packaging: n("fin-pack", 0), ad: this.fin.set.ad || { method:"fixed", a:0 }, delMode: $f("fin-del-mode").value, delVal: n("fin-del", 100), retMode: "val", retVal: n("fin-ret", 0), insMode: $f("fin-ins-mode").value, insVal: n("fin-ins", 0), useReal: $f("fin-real").checked, low: n("fin-low", 5), profMode: this.fin.set.profMode || "pct", profVal: this.fin.set.profVal == null ? 30 : this.fin.set.profVal };
     await Priv.set("finset", this.fin.set); toast("✅ حُفظت إعدادات الحساب"); this.renderFinance();
   },
   /* ════════ استيراد كشف دفع ياليدين: أرقام فعلية لكل طرد (توصيل، إرجاع، COD، تأمين) تحلّ محلّ التقدير ════════ */
@@ -5980,8 +6070,9 @@ const Admin = {
     return Math.round(base * ((Number(S.delVal) || 0) / 100));
   },
   insCost(price){ const S = this.fin.set; return S.insMode === "val" ? (Number(S.insVal) || 0) : Math.round(price * (Number(S.insVal) || 0) / 100); },
-  /* رسم الإرجاع عند ياليدين 250 دج ثابتة (لا يُحسب معه رسم التوصيل)؛ يُحترم رقم يدخله المستخدم في الإعدادات بنمط «مبلغ» فقط */
-  retCost(est){ const S = this.fin.set; return S.retMode === "val" && Number(S.retVal) > 0 ? Number(S.retVal) : 250; },
+  retCo(o){ try{ const k = o ? this.orderCoKey(o) : ""; return k && k !== "none" ? k : ""; }catch(e){ return ""; } },
+  /* رقم «رسم الإرجاع» المضبوط لشركة الطلب في «شركات التوصيل ← إعداد» (مثلاً DHD = 50) ← قيمة الإعدادات ← 0 (لا ثابت مفترض)؛ وغرامة التأخر لياليدين */
+  retCost(est, o){ const S = this.fin.set, k = this.retCo(o); if(k){ const c = ((this.deliveryCfg || {})[k] || {}).retFee, r = Number(c); if(c !== undefined && c !== null && c !== "" && isFinite(r) && r >= 0) return r; } return S.retMode === "val" && Number(S.retVal) > 0 ? Number(S.retVal) : 0; },
   /* حساب الأرباح لكل منتج في فترة: livree = محقق، echec = خسارة (توصيل + إرجاع + تغليف؛ البضاعة تعود للمخزون)، confirmee/expediee = متوقع */
   /* تكلفة بند في الطلب: إن عُرّفت للمنتج «تكلفة عرض» لهذا العدد من القطع (مثلاً عرض 2+1 = علبتان + قارورة) تُستعمل كما هي، وإلا سعر الشراء × الكمية */
   lineCogs(slug, qty){ const oc = (this.fin && this.fin.oc && this.fin.oc[slug]) || null, q = Number(qty) || 0, v = oc ? oc[q] : undefined; if(v != null && v !== "" && isFinite(Number(v)) && Number(v) >= 0) return Number(v); return (Number(this.fin && this.fin.costs && this.fin.costs[slug]) || 0) * q; },
@@ -6023,7 +6114,7 @@ const Admin = {
         fin = ((this.shipRaw[o.id] || {}).fin) || null, useFin = S.useReal !== false && !!fin && fin.fee != null && fin.fee >= 0,      // أرقام الطرد الفعلية من قائمة الشركة (توصيل، نسبة COD، رسم الإرجاع) تسبق التعريفة
         useReal = useFin || (S.useReal !== false && !!(real && real.delivery != null)), useAct = S.useReal !== false && !!act && (/livr/i.test(act.st) ? o.status === "livree" : /retour/i.test(act.st) ? o.status === "echec" : false),
         car = useAct ? act.del + act.cod + act.ins : (useFin ? Number(fin.fee) + Math.round((fin.price > 0 ? Number(fin.price) : price) * (fin.tp > 0 ? Number(fin.tp) : 0.75) / 100) + this.insCost(price) : useReal ? real.delivery + Math.round(price * real.cod / 100) + this.insCost(price) : est + this.insCost(price) + Math.round(price * (((window.AdminPayments && AdminPayments.DEF_COD) || 0.75)) / 100)),      // وضع التقدير يشمل عمولة COD أيضاً كما في التسوية
-        ret = useAct ? act.ret : (fin && fin.tr > 0 ? Number(fin.tr) : this.retCost(est) + this.retLate(o));      // 250 ثابتة + غرامة تأخر السحب (10 دج/يوم بعد 10 أيام)
+        ret = useAct ? act.ret : (fin && fin.tr > 0 ? Number(fin.tr) : this.retCost(est, o) + this.retLate(o));      /* 250 ثابتة (أو رسم الشركة المضبوط) + غرامة تأخر السحب لياليدين فقط (10 دج/يوم بعد 10 أيام) */
       K.actN = (K.actN || 0) + (useAct ? 1 : 0); K.realN = (K.realN || 0) + (!useAct && useReal ? 1 : 0); K.estN = (K.estN || 0) + (!useAct && !useReal ? 1 : 0);
       let od = 0, odPre = 0;      // أثر الطلب على الربح المحقق (od) وقبل الإعلان (odPre)
       lines.forEach(l=>{
@@ -6128,6 +6219,12 @@ const Admin = {
     this.adSync(); const r = (this._adRows || [])[i]; if(!r || !r.slug || !r.saved) return;
     if(r.cfg.off) delete r.cfg.off; else r.cfg.off = true;
     await this.saveAdRow(i, true); toast(r.cfg.off ? "⏸ عُطّلت الحملة — لا تُحتسب تكلفتها (تبقى محفوظة)" : "▶ فُعّلت الحملة");
+  },
+  /* من الرئيسية: تفعيل/تعطيل حملة منتج بلا فتح المالية (نفس منطق toggleAdRow) */
+  async toggleAdSlug(sl){
+    const ads = Object.assign({}, (this.fin && this.fin.ads) || {}), c = ads[sl]; if(!c) return false; const n = Object.assign({}, c); if(n.off) delete n.off; else n.off = true; ads[sl] = n;
+    this.fin.ads = ads; await Priv.set("adcfg", ads); this._adSig = null; this._adCampsC = null; try{ this.renderFinance(true); }catch(e){} try{ this.renderAds(true); }catch(e){}
+    toast(n.off ? "⏸ عُطّلت الحملة — لا تُحتسب تكلفتها (تبقى محفوظة)" : "▶ فُعّلت الحملة"); return true;
   },
   async resumeAdRow(i){ this.adSync(); const r = (this._adRows || [])[i]; if(!r) return; const te = $f("fin-p" + i + "-to"); if(te) te.value = ""; await this.saveAdRow(i, true); toast("▶ استُؤنفت الحملة"); },
   async newAdCampaign(i){
@@ -6711,7 +6808,7 @@ const Admin = {
     if(!noFetch) this.ensureYdFees(Number($f("fin-period").value) || 0);
     if(typeof AdminReturns !== "undefined" && AdminReturns.ensure && !AdminReturns.loaded()){ AdminReturns.ensure().then(()=>{ if(AdminReturns.items().length) this.renderFinance(true); }); }
     const days = Number($f("fin-period").value) || 0, { per, K } = this.computeFinance(days), S = this.fin.set, nf = n=>Math.round(n).toLocaleString("fr-DZ");
-    if(!document.activeElement || !["fin-pack","fin-del","fin-ret","fin-ins","fin-low"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret-mode").value = S.retMode; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; }
+    if(!document.activeElement || !["fin-pack","fin-del","fin-ret","fin-ins","fin-low"].includes(document.activeElement.id)){ $f("fin-pack").value = S.packaging; $f("fin-del-mode").value = S.delMode; $f("fin-del").value = S.delVal; $f("fin-ret").value = S.retVal; $f("fin-ins-mode").value = S.insMode; $f("fin-ins").value = S.insVal; $f("fin-real").checked = S.useReal !== false; $f("fin-low").value = S.low; }
     this.finExample(); this.renderAds();
     const sold14 = {}; const since14 = Date.now() - 14 * 86400000;
     this.orders.forEach(o=>{ if(!["confirmee","expediee","livree"].includes(o.status) || !(new Date(o.date).getTime() >= since14)) return; this.orderLines(o).forEach(l=>{ sold14[l.p.slug] = (sold14[l.p.slug] || 0) + l.qty; }); });
@@ -6740,7 +6837,7 @@ const Admin = {
     $f("fin-table").innerHTML = '<tr class="hd">' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.th("fin") : "") + '<th>المنتج</th><th title="الكمية المتوفرة">المخزون</th><th title="سعر البيع الحالي في المتجر">سعر البيع</th><th title="ربحك الحقيقي في القطعة الواحدة بسعر البيع الحالي">الربح الحقيقي</th><th title="مربح أو خاسر مقارنةً بفائدتك المطلوبة">الحكم</th><th></th></tr>' +
       rows.map(r=>{ const p = r.p, si = this.stockInfo(p), st = si.total, sg = this.suggestPrice(p, r, K), v = this.finVerdict(p, r, sg), rp = v.rp;
         const stCls = st != null && st <= 0 ? "color:var(--red);font-weight:800" : (st != null && st <= low ? "color:#B26A00;font-weight:800" : "");
-        return '<tr>' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.cell("fin", p.slug) : "") + '<td class="t"><a href="#" onclick="Admin.finOpen(\'' + p.slug + '\');return false" style="color:inherit"><b>' + p.title + '</b></a>' + (pend[p.slug] ? '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>' : "") + '</td>' +
+        return '<tr>' + ((typeof AdminCopySet !== "undefined") ? AdminCopySet.cell("fin", p.slug) : "") + '<td class="t"><a href="#" onclick="Admin.finOpen(\'' + p.slug + '\');return false" style="color:inherit"><b>' + p.title + '</b></a>' + (pend[p.slug] ? (()=>{ const si = this.stockInfo(p), have = si.tracked && !si.mixed ? (si.total || 0) : null, over = have !== null && pend[p.slug] > have; return over ? '<br><small style="color:#e5484d;font-weight:700" title="الطلبات الجديدة التي لم تُؤكَّد تحتاج أكثر مما هو متاح؛ المخزون ليس صفراً">' + pend[p.slug] + ' قيد التأكيد — أكثر من المخزون (' + have + ') بـ ' + (pend[p.slug] - have) + '</small>' : '<br><small style="color:#777">' + pend[p.slug] + ' قيد التأكيد</small>'; })() : "") + '</td>' +
           '<td data-l="المخزون">' + (si.vars ? '<small style="color:#999">المجموع: <b style="color:inherit">' + (st == null ? "∞" : st) + '</b> · عام:</small> ' : "") + '<input type="number" min="0" value="' + (p.stock == null ? "" : p.stock) + '" placeholder="∞" style="width:76px;' + stCls + '" onchange="Admin.setStock(\'' + p.slug + '\', this.value)"></td>' +
           '<td data-l="سعر البيع"><input type="number" min="1" value="' + (Number(p.price) || "") + '" style="width:84px;font-weight:800" title="سعر البيع في المتجر — عدّله مباشرة" onchange="Admin.setPrice(\'' + p.slug + '\', this.value)"></td>' +
           '<td data-l="الربح الحقيقي">' + (rp == null ? '<small style="color:#999">أدخل سعر الشراء</small>' : '<b style="color:' + (rp >= 0 ? "var(--ok)" : "var(--red)") + '">' + (rp >= 0 ? "+" : "") + nf(rp) + ' دج</b>') + '</td>' +
@@ -7391,6 +7488,7 @@ const Admin = {
     $f("co-wa-auto").checked = c.waAuto !== false;
     $f("co-show-cart").checked = c.showAddToCart !== false;
     $f("co-show-offers").checked = c.showOffers !== false;
+    $f("co-steps").checked = c.steps === true;
     const gd = c.guard || {}; $f("co-antibot").checked = !!gd.antibot; $f("co-dup").checked = !!gd.dup; $f("co-dup-hours").value = gd.hours || 24; $f("co-phonedz").checked = c.phoneDz !== false;
     $f("co-order-btn-text").value = c.orderBtnText || "";
     $f("co-wa-btn-text").value = c.whatsappBtnText || "";
@@ -7502,6 +7600,7 @@ const Admin = {
       waAuto: $f("co-wa-auto").checked,
       showAddToCart: $f("co-show-cart").checked,
       showOffers: $f("co-show-offers").checked,
+      steps: $f("co-steps").checked,
       phoneDz: $f("co-phonedz").checked,
       guard: { antibot: $f("co-antibot").checked, dup: $f("co-dup").checked, hours: Math.min(720, Math.max(1, Number($f("co-dup-hours").value) || 24)), phoneDz: $f("co-phonedz").checked },
       orderBtnText: $f("co-order-btn-text").value.trim(),
@@ -7552,7 +7651,7 @@ const Admin = {
      لأن صفحات الموقع عامة بدون أي تسجيل دخول ويمكن لأي شخص قراءتها. */
   DELIVERY_COMPANIES: {
     yalidine: {
-      name: "ياليدين Yalidine",
+      name: "Yalidine",
       confidence: "confident",
       base: "https://api.yalidine.app",
       /* بعد الإرسال: رقم التتبع من الاستجابة {order_id: {success, tracking}} */
@@ -7675,7 +7774,7 @@ const Admin = {
     zrexpress_app: {
       name: "ZR Express",
       confidence: "experimental",
-      note: "⚠️ تجريبي — واجهة ZR Express الجديدة (مفتاح X-Api-Key ومعرّف الحساب X-Tenant). الولاية والبلدية تُحلّان تلقائياً من قوائم الشركة، والطرد يُعيَّن «جاهز للإرسال» عند الإنشاء. التوصيل إلى المنزل فقط (Stop Desk غير مدعوم بعد). جرّب طلباً واحداً حقيقياً وراجعه في لوحة الشركة.",
+      note: "واجهة ZR Express الجديدة (مفتاح X-Api-Key ومعرّف الحساب X-Tenant). الولاية والبلدية تُحلّان تلقائياً من قوائم الشركة، والطرد يُعيَّن «جاهز للإرسال» عند الإنشاء. التوصيل إلى المنزل فقط (Stop Desk غير مدعوم بعد). جرّب طلباً واحداً حقيقياً وراجعه في لوحة الشركة.",
       fields: [
         { key:"apiKey", label:"X-Api-Key (قائمة API Rest ← Token API في حساب ZR)", type:"password" },
         { key:"tenant", label:"X-Tenant (معرّف الحساب)", type:"text" },
@@ -7806,7 +7905,7 @@ const Admin = {
     maystro: {
       name: "Maystro Delivery",
       confidence: "experimental",
-      note: "⚠️ تجريبي — يُرجى التحقق من صيغة الطلب الصحيحة مع دعم Maystro Delivery قبل الاعتماد عليه فعلياً.",
+      note: "يُرجى التحقق من صيغة الطلب الصحيحة مع دعم Maystro Delivery قبل الاعتماد عليه فعلياً.",
       fields: [
         { key:"apiKey", label:"API Key", type:"password" },
       ],
@@ -7831,7 +7930,7 @@ const Admin = {
     noest: {
       name: "Noest Express",
       confidence: "experimental",
-      note: "⚠️ تجريبي — واجهة NOEST العامة (api_token وuser_guid من حسابك). تُحلّ بلدية الطلب من قائمتها، ويُصدَّق الطرد تلقائياً بعد إنشائه، وتُتابَع الحالات بالتتبع. التوصيل إلى المنزل فقط حالياً (Stop Desk يحتاج رمز مكتب). جرّب طلباً واحداً وراجعه في لوحة الشركة.",
+      note: "واجهة NOEST العامة (api_token وuser_guid من حسابك). تُحلّ بلدية الطلب من قائمتها، ويُصدَّق الطرد تلقائياً بعد إنشائه، وتُتابَع الحالات بالتتبع. التوصيل إلى المنزل فقط حالياً (Stop Desk يحتاج رمز مكتب). جرّب طلباً واحداً وراجعه في لوحة الشركة.",
       fields: [
         { key:"apiToken", label:"api_token", type:"password" },
         { key:"userGuid", label:"user_guid", type:"text" },
@@ -7912,12 +8011,11 @@ const Admin = {
       },
       mapStatus(raw){ const c = this.code(raw); return c === "l" ? "livree" : c === "f" ? "echec" : c === "a" ? "__alert" : c === "e" ? "expediee" : c === "c" ? "confirmee" : null; },
     },
-    /* تعريفة DHD المدمجة (منزل/مكتب) من جدول الشركة المرسَل بلقطات صاحب المتجر 2026-11-09 — 55 ولاية؛ غير المدرجة (50 و54 و56) لا تخدمها الشركة؛ و52 و57 بلا مكتب عندهم (0) فكُتب سعر المنزل فقط (المكتب = المنزل). تطابق صيغة WeCan: رقم الولاية=منزل/مكتب، وتحلّ دائماً محلّ ما يُجلب من الشركة */
-    dhd: Object.assign(ecotrackCompany("DHD Express (Ecotrack)", "https://dhd.ecotrack.dz"), { tariff: "1=1100/600, 2=700/400, 3=900/500, 4=800/400, 5=800/400, 6=700/400, 7=900/500, 8=1100/600, 9=500/250, 10=650/400, 11=1300/800, 12=800/500, 13=800/400, 14=800/400, 15=650/400, 16=400/200, 17=900/500, 18=700/400, 19=700/400, 20=800/400, 21=700/400, 22=700/400, 23=700/400, 24=800/400, 25=700/400, 26=600/400, 27=700/400, 28=800/500, 29=700/400, 30=1000/500, 31=700/400, 32=1000/500, 33=1300/600, 34=700/400, 35=600/350, 36=800/400, 37=1300/600, 38=800/400, 39=900/500, 40=800/500, 41=800/500, 42=600/350, 43=700/400, 44=600/400, 45=1000/500, 46=700/400, 47=1000/500, 48=700/400, 49=1300/600, 51=900/500, 52=1300, 53=1300/600, 55=900/500, 57=900, 58=1000/500" }),
+    dhd: ecotrackCompany("DHD Express (Ecotrack)", "https://platform.dhd-dz.com"),
     wecan: {
       name: "WeCan Service",
       confidence: "experimental",
-      note: "⚠️ تجريبي — واجهة WeCan (طرود بصيغة ياليدين): تُرسَل بيانات الزبون والمنتجات والمبلغ إلى «Commandes» عندهم لتؤكّدها وتشحنها WeCan. أدخل X-API-Key وX-API-Secret؛ وللتجربة اكتب 1 في «وضع التجربة» (لا ينشئ طرداً حقيقياً). الرسوم تحسبها WeCan.",
+      note: "واجهة WeCan (طرود بصيغة ياليدين): تُرسَل بيانات الزبون والمنتجات والمبلغ إلى «Commandes» عندهم لتؤكّدها وتشحنها WeCan. أدخل X-API-Key وX-API-Secret؛ وللتجربة اكتب 1 في «وضع التجربة» (لا ينشئ طرداً حقيقياً). الرسوم تحسبها WeCan.",
       fields: [
         { key:"apiKey", label:"X-API-Key", type:"password" },
         { key:"apiSecret", label:"X-API-Secret", type:"password" },
@@ -7926,7 +8024,10 @@ const Admin = {
         { key:"carrierUuid", label:"معرّف شركة التوصيل عند WeCan (carrier_uuid — ثابت لكل الولايات، يعطيه دعمهم؛ للقيمة 5)", type:"text", required:false },
         { key:"tariffUuids", label:"معرّفات التعريفة لكل ولاية (tariff_uuid — سطر لكل ولاية بصيغة «اسم الولاية=المعرّف»، مثل باتنة=9a52…؛ للقيمة 5)", type:"text", required:false },
         { key:"fromWilayaName", label:"ولاية الانطلاق (ولاية مستودعك عند WeCan)", type:"select", options:"wilayas", required:false },
-        { key:"priceFix", label:"تعديل أسعار ولايات (اختياري — تعريفة WeCan مدمجة تلقائياً): رقم الولاية=منزل/مكتب، مثال 42=650/550", type:"text", required:false },
+        { key:"priceSrc", label:"مصدر أسعار الولايات: اتركه فارغاً = جدولك المحفوظ (الذي كان مدمجاً سابقاً)، أو اكتب api لاعتماد الأسعار التي يرجعها حسابك عند «جلب الأسعار» (الجدول المحفوظ يملأ الولايات غير المجلوبة فقط)", type:"text", required:false },
+        { key:"optionsFix", label:"خيارات الشحن لكل ولاية بحسب الناقل (إن كانت الشركة تجمع عدة ناقلين): «رقم الولاية=الناقل:منزل/مكتب، الناقل:منزل/مكتب» وتفصل الولايات بـ ؛ — مثال: 30=ZR:900/650، WeCanServices:900/750 ؛ 8=ZR:900/650، WeCanServices:1300/1100 — يُعتمد الأرخص لكل نوع في المتجر، وتظهر كلها في الطلب اليدوي", type:"text", required:false },
+        { key:"optionsToStore", label:"اعتماد الأرخص بين الناقلين سعراً في المتجر لهذه الشركة: اكتب 1 للتفعيل (فارغ = المتجر لا يتأثر بالخيارات وتبقى أسعار المناطق أو أسعار الشركة كما هي؛ الطلب اليدوي يعرض الخيارات في الحالتين)", type:"text", required:false },
+        { key:"priceFix", label:"تعديل أسعار ولايات (اختياري — يُوضع فوق تعريفة WeCan المدمجة ويغيّر ما تكتبه فقط): رقم الولاية=منزل/مكتب، مثال 8=900/650 (يفصل بينها فاصلة)", type:"text", required:false },
       ],
       cl(v){ return String(v||"").replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g, ""); },
       baseOf(cfg){ return "https://wecanservices.com/api/v1" + (String(cfg.sandbox || "").trim() === "1" ? "/sandbox" : ""); },
@@ -8021,9 +8122,7 @@ const Admin = {
       centersRequest(cfg, page){ return { url: this.baseOf(cfg) + "/centers?page_size=100&page=" + (page || 1), method: "GET", headers: this.hdr(cfg) }; },
       parseCenters(json){ const rows = Array.isArray(json && json.data) ? json.data : []; return { rows: rows.filter(r=>r.center_id != null).map(r=>({ id: Number(r.center_id), name: String(r.name||""), address: String(r.address||""), commune: String(r.commune_name||""), wilaya_id: Number(r.wilaya_id) })), more: !!(json && (json.has_more === true || json.has_more === 1)) }; },
       /* تعريفة WeCan (express) من ولاية انطلاق المتجر إلى كل ولاية: GET /fees?from_wilaya_id=&to_wilaya_id= ⟵ {per_commune:{id:{express_home, express_desk,…}}}؛ سعر الولاية = الأكثر شيوعاً بين بلدياتها؛ نداء لكل ولاية (feesPages=58) */
-      ownTariff: true, feesPages: 58,
-      /* تعريفة متجرنا عند WeCan (من ملف أسعارهم الرسمي shipping-prices): تُعتمد افتراضياً للمنصة كلها، ويتجاوزها «تصحيح أسعار ولايات» إن كُتب. رقم الولاية = منزل/مكتب */
-      tariff: "1=1000/800, 2=850/600, 3=900/700, 4=850/600, 5=850/600, 6=850/600, 7=900/700, 8=1000/800, 9=650/550, 10=850/600, 11=1550/1350, 12=900/700, 13=850/600, 14=850/600, 15=850/600, 16=540/400, 17=900/700, 18=850/600, 19=850/600, 20=850/600, 21=850/600, 22=850/600, 23=850/600, 24=850/600, 25=850/600, 26=850/600, 27=850/600, 28=850/600, 29=850/600, 30=900/700, 31=850/600, 32=1000/800, 33=1550/1350, 34=850/600, 35=650/550, 36=850/600, 37=1550/1350, 38=850/600, 39=900/700, 40=850/600, 41=850/600, 42=650/550, 43=850/600, 44=850/600, 45=1000/800, 46=850/600, 47=900/700, 48=850/600, 49=1000/800, 50=1000/800, 51=900/700, 52=1000/800, 53=1550/1350, 54=1550/1350, 55=900/700, 56=1550/1350, 57=900/700, 58=900/700",
+      ownTariff: true, feesPages: 58, finFromParcel: true, feesGeneric: true,      /* feesGeneric: /fees تعريفة عامة من الجزائر تتجاهل ولاية الانطلاق ولا تطابق عقد المتجر (قياس 1.89.1225: سكيكدة 900/650 مقابل 650/450 في نموذج الشركة) فلا يُعتمد أساساً للأسعار ولا تُرفع منه تنبيهات انحراف */
       fromName(cfg){ const y = (Admin.deliveryCfg && Admin.deliveryCfg.yalidine) || {}; return String(cfg.fromWilayaName || y.fromWilayaName || "Alger"); },
       feesRequest(cfg, page){ const nn = x=>Admin.normName(x), fw = (typeof WILAYAS !== "undefined" ? WILAYAS : []).find(w=>!w.par && nn(w.name) === nn(this.fromName(cfg))), from = fw ? fw.id : 16; return { url: this.baseOf(cfg) + "/fees?from_wilaya_id=" + from + "&to_wilaya_id=" + (page || 1), method: "GET", headers: this.hdr(cfg) }; },
       parseFees(json){
@@ -8058,7 +8157,7 @@ const Admin = {
       mapStatus(raw){
         const t = String(raw||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[_\-]+/g," ").replace(/\s+/g," ").trim();
         if(t){
-          if(/^livre/.test(t)) return "livree";
+          if(/^livre/.test(t) || /partially returned|partial return|retour partiel|livre partiellement/.test(t)) return "livree";      /* مرتجع جزئي (partially_returned): سُلِّم جزء من الطلب وحُصِّل ثمنه ⟵ مسلَّم لا مرتجع (WeCan تحسبه محصَّلاً ومفوتراً) */
           if(/tentative.*(echou|echec)|^en alerte|^bloque/.test(t)) return "__alert";
           if(/echec( de)? livraison|^retour|retourne|refuse|annule/.test(t)) return "echec";
           if(/^pre expedie|pret a expedier|en preparation|en cours de traitement|en traitement|^confirmee|^en attente$|a verifier|pas encore/.test(t)) return "confirmee";
@@ -8109,7 +8208,9 @@ const Admin = {
   loadDeliveryCfg(){
     try{ this.deliveryCfg = JSON.parse(localStorage.getItem("alyssum_delivery_cfg") || "{}") || {}; }
     catch(e){ this.deliveryCfg = {}; }
-    try{ let ch = false; Object.keys(this.DELIVERY_COMPANIES || {}).forEach(k=>{ const co = this.DELIVERY_COMPANIES[k], c = this.deliveryCfg[k]; if(!(co && co.tariff && c && (c.enabled || c.apiKey))) return; const np = this.applyPriceFix(c.prices || {}, c, k); if(JSON.stringify(np) !== JSON.stringify(c.prices || {})){ c.prices = np; ch = true; } });       /* تعريفة WeCan المدمجة تحلّ دائماً محلّ ما جُلب سابقاً من /fees العامة (كان يبقى 850 لتيبازة) */
+    /* ترحيل (v1.89.1221): كانت لـWeCan تعريفة مدمجة في الكود المشترك تطغى على أسعار حساب كل متجر. تُجمَّد الآن أسعار كل متجر كان يستعملها كجدول خاص به (priceBase) ولا يتغيّر سعره، ويصير الـAPI هو المصدر لمن يضع مصدر الأسعار api؛ والكود المشترك بلا أي أسعار متجر. */
+    try{ let ch = false; Object.keys(this.deliveryCfg || {}).forEach(k=>{ const c = this.deliveryCfg[k]; if(!c || typeof c !== "object" || c.tariffMigrated || (k !== "wecan" && k !== "dhd") || !(c.enabled || c.apiKey || c.apiToken)) return; c.tariffMigrated = 1; ch = true;
+        if(!c.priceBase && c.prices && Object.keys(c.prices).length){ const t = Object.keys(c.prices).filter(i=>+i >= 1 && +i <= 58 && c.prices[i] && c.prices[i].home > 0).sort((x, y)=>x - y).map(i=>i + "=" + c.prices[i].home + "/" + (c.prices[i].stop || c.prices[i].home)).join(", "); if(t) c.priceBase = t; } });
       if(ch){ localStorage.setItem("alyssum_delivery_cfg", JSON.stringify(this.deliveryCfg)); setTimeout(()=>{ try{ this.publishShipCo(); }catch(e){} }, 12000); } }catch(e){}
     try{ this.customDeliveryCompanies = JSON.parse(localStorage.getItem("alyssum_custom_delivery") || "{}") || {}; }
     catch(e){ this.customDeliveryCompanies = {}; }
@@ -8162,11 +8263,9 @@ const Admin = {
           ? '<span class="pill st-nouvelle">غير مُعدّة بعد</span>'
           : co.custom
             ? '<span class="pill st-nouvelle">✏️ مخصّصة</span>'
-            : co.confidence === "confident"
-              ? '<span class="pill st-livree">✅ موثّقة رسمياً</span>'
-              : co.confidence === "generic"
-                ? '<span class="pill st-nouvelle">ℹ️ عام</span>'
-                : '<span class="pill st-annulee">⚠️ تجريبي</span>';
+            : co.confidence === "generic"
+              ? '<span class="pill st-nouvelle">ℹ️ عام</span>'
+              : "";      /* لا شارة «موثّقة رسمياً» ولا «تجريبي» */
         const star = on && def === k ? '<span class="pill st-livree" title="الشركة الافتراضية للطلبات">⭐ افتراضية</span>' : (on && en.length > 1 ? '<button class="small gray" type="button" onclick="Admin.setDefaultCompany(\'' + k + '\')">⭐ اجعلها افتراضية</button>' : "");
         const pr = !on ? '<small style="color:#999">تُجلب تلقائياً بعد التفعيل</small>' : (co.feesRequest ? (n ? '<small style="color:#d4ff4d">✓ ' + n + ' ولاية (تلقائي)</small>' : '<small style="color:#f5b04a">لم تُجلب بعد</small>') : '<small style="color:#9fb">حسب المناطق</small>');
         return '<tr>' +
@@ -8323,7 +8422,7 @@ const Admin = {
 
   /* زر جلب التعريفة من حساب الشركة (للشركات التي تدعم feesRequest وفيها مفاتيح مُدخلة، ولو لم تكن مفعّلة بعد) */
   fetchPricesButtonHtml(){
-    const all = this.allDeliveryCompanies(), has = x=>all[x].feesRequest && this.deliveryCfg[x] && (this.deliveryCfg[x].apiId || this.deliveryCfg[x].apiToken || this.deliveryCfg[x].apiKey);
+    const all = this.allDeliveryCompanies(), has = x=>all[x].feesRequest && this.deliveryCfg[x] && (this.deliveryCfg[x].apiId || this.deliveryCfg[x].apiToken || this.deliveryCfg[x].apiKey || this.deliveryCfg[x].token);      /* DHD/Ecotrack مفتاحها «token» (لم يكن يُحسب فلا يظهر لها قسم جلب الأسعار ولا مزامنة المكاتب) */
     let ks = Object.keys(all).filter(has); const ak = this.activeCompanyKey(); ks.sort((a, b)=>(b === ak) - (a === ak));          // الشركة الافتراضية أولاً، ثم كل شركة لها مفاتيح (لا ياليدين وحدها)
     if(!ks.length) return Object.keys(all).some(x=>all[x].feesRequest) ? '<div class="hint">لجلب الأسعار تلقائياً: أدخل مفاتيح شركة التوصيل من «⚙️ إعداد» أولاً</div>' : "";
     return ks.map(k=>'<div style="margin-top:.5rem"><div class="hint" style="margin:0">' + all[k].name + (k === ak ? " — الافتراضية" : "") + '</div>' +
@@ -8336,7 +8435,7 @@ const Admin = {
   carrierFee(key, order){
     try{
       if(typeof ShipTable === "undefined" || !order) return 0;
-      const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {}; let pr = cfg.prices; if(co && co.tariff) pr = this.applyPriceFix(pr || {}, cfg, key);
+      const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {}; let pr = cfg.prices; if(co && (co.tariff || cfg.priceBase || cfg.priceFix || cfg.optionsFix || cfg.options)) pr = this.applyPriceFix(pr || {}, cfg, key);
       if(!pr || !Object.keys(pr).length) return 0;
       const wc = this.wCo(order.wilaya), wid = Number(order.__coWid || order.__wid0 || (wc || {}).id); if(!wid) return 0;
       const own = !!(co && co.ownTariff);          // تعريفة الشركة كاملة منها: بلا إضافات بلديات ياليدين
@@ -8350,7 +8449,7 @@ const Admin = {
       const all = this.allDeliveryCompanies();
       for(const k of this.enabledCompanyKeys()){
         const co = all[k], cfg = this.deliveryCfg[k] || {};
-        if(!co || !co.feesRequest || co.tariff || !(cfg.apiId || cfg.apiToken || cfg.apiKey)) continue;
+        if(!co || !co.feesRequest || co.tariff || cfg.priceBase || cfg.priceFix || cfg.optionsFix || cfg.options || !(cfg.apiId || cfg.apiToken || cfg.apiKey)) continue;
         if(Object.keys(cfg.prices || {}).length && cfg.pricesAt && Date.now() - cfg.pricesAt < 3 * 86400000) continue;
         if(cfg.pricesTry && Date.now() - cfg.pricesTry < 6 * 3600000) continue;
         this.deliveryCfg[k] = Object.assign({}, cfg, { pricesTry: Date.now() }); this.saveDeliveryCfgToStorage();
@@ -8360,7 +8459,15 @@ const Admin = {
   },
   /* تصحيحات يدوية لأسعار ولايات بعينها تبقى بعد «جلب الأسعار» (حين تُخطئ الشركة في تعريفتها): نصّ «42=650/500, 35=540/400» = رقم الولاية = منزل/مكتب */
   parsePriceFix(txt){ const m = {}; String(txt || "").split(/[,;\n،]+/).forEach(x=>{ const r = /^\s*(\d{1,2})\s*[=:]\s*(\d{2,5})\s*(?:[\/|-]\s*(\d{2,5}))?\s*$/.exec(x); if(r && +r[1] >= 1 && +r[1] <= 58){ const h = +r[2], d = r[3] ? +r[3] : 0; m[+r[1]] = { home: h, stop: d || h }; } }); return m; },
-  applyPriceFix(prices, cfg, key){ const co = key && this.DELIVERY_COMPANIES[key], fx = this.parsePriceFix((cfg && cfg.priceFix) || (co && co.tariff) || ""); const out = Object.assign({}, prices || {}); Object.keys(fx).forEach(k=>{ out[k] = Object.assign({}, out[k] || {}, fx[k]); }); return out; },
+  /* خيارات الشحن بحسب الناقل داخل شركة واحدة تجمع عدة ناقلين (WeCan: ZR وWeCanServices…): {رقم الولاية:[{b:الناقل,h:منزل,s:مكتب}]} */
+  parseOptions(txt){ const m = {}; String(txt || "").split(/[;\n؛]+/).forEach(seg=>{ const r = /^\s*(\d{1,2})\s*[=:]\s*(.+)$/.exec(seg); if(!r || +r[1] < 1 || +r[1] > 58) return; const L = []; r[2].split(/[,،]+/).forEach(x=>{ const q = /^\s*([^:=\d][^:=]*?)\s*[:=]\s*(\d{2,5})\s*(?:[\/|-]\s*(\d{2,5}))?\s*$/.exec(x); if(q) L.push({ b: q[1].trim().slice(0, 30), h: +q[2], s: q[3] ? +q[3] : 0 }); }); if(L.length) m[+r[1]] = L; }); return m; },
+  optionsOf(cfg){ const out = {}; const auto = (cfg && cfg.options) || {}; Object.keys(auto).forEach(k=>{ if(Array.isArray(auto[k]) && auto[k].length) out[k] = auto[k]; }); const man = this.parseOptions((cfg && cfg.optionsFix) || ""); Object.keys(man).forEach(k=>{ out[k] = man[k]; }); return out; },
+  /* أرخص منزل وأرخص مكتب بين خيارات ولاية */
+  cheapestOf(L){ const h = (L || []).map(x=>Number(x.h)).filter(v=>v > 0), d = (L || []).map(x=>Number(x.s)).filter(v=>v > 0); return { home: h.length ? Math.min.apply(null, h) : 0, stop: d.length ? Math.min.apply(null, d) : 0 }; },
+  applyPriceFix(prices, cfg, key){ const co = key && this.DELIVERY_COMPANIES[key], apiOnly = !!(cfg && String(cfg.priceSrc || "").trim().toLowerCase() === "api"), bt = this.parsePriceFix((co && co.tariff) || (cfg && cfg.priceBase) || ""), out = Object.assign({}, prices || {}); if(apiOnly) Object.keys(bt).forEach(k=>{ if(out[k]) delete bt[k]; });      /* priceSrc=api: أسعار حسابك من API كما جاءت وتبقى المدمجة تملأ الولايات التي لم تُجلب فقط */ const fx = Object.assign({}, bt, this.parsePriceFix((cfg && cfg.priceFix) || "")); Object.keys(fx).forEach(k=>{ out[k] = Object.assign({}, out[k] || {}, fx[k]); }); const ox = (cfg && String(cfg.optionsToStore || "").trim() === "1") ? this.optionsOf(cfg) : {}, fxx = this.parsePriceFix((cfg && cfg.priceFix) || ""); Object.keys(ox).forEach(k=>{ if(fxx[k]) return; const c = this.cheapestOf(ox[k]); if(c.home > 0 || c.stop > 0) out[k] = Object.assign({}, out[k] || {}, { home: c.home || (out[k] && out[k].home) || c.stop, stop: c.stop || (out[k] && out[k].stop) || c.home }); });      /* الأرخص بين خيارات الناقلين يصير سعر الولاية في المتجر فقط إن فعّلتَ optionsToStore=1 (افتراضياً المتجر لا يتأثر)؛ تعديلك اليدوي priceFix يفوز */
+  return out; },      /* تعديلات المستخدم (priceFix) تُوضع فوق التعريفة المدمجة لا بدلاً منها: كتابة «8=900/650» تغيّر بشار وحدها وتبقى بقية الولايات */
+  /* فرق أسعار الحساب الخام عمّا يُطبَّق في المتجر: {n, list:[{id,api:[منزل,مكتب],cur:[منزل,مكتب]}], at} */
+  priceDrift(raw, applied){ const list = []; Object.keys(raw || {}).forEach(id=>{ const r = raw[id] || {}, c = (applied || {})[id] || {}; if(Number(r.home) !== Number(c.home) || (Number(r.stop) || 0) !== (Number(c.stop) || 0)) list.push({ id: Number(id), api: [Number(r.home) || 0, Number(r.stop) || 0], cur: [Number(c.home) || 0, Number(c.stop) || 0] }); }); list.sort((x, y)=>x.id - y.id); return { n: list.length, list: list.slice(0, 12), at: Date.now() }; },
   async fetchCompanyPrices(key, opts){
     const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {};
     if(!co || !co.feesRequest){ toast("هذه الشركة لا تدعم الجلب التلقائي"); return }
@@ -8379,7 +8486,9 @@ const Admin = {
       const n = Object.keys(prices).length;
       if(!n) throw new Error("لم تُرجع الشركة تعريفة مفهومة — عيّنة الردّ: " + sample);
       if(key !== "yalidine" && (n < 30 || Object.values(prices).some(v=>(v.home && (v.home < 100 || v.home > 6000)) || (v.stop && v.stop > 6000)))) throw new Error("ردّ الشركة لا يحوي تعريفة مفهومة (" + n + " ولاية) — لم تُعتمد؛ تبقى أسعار المناطق");
-      this.deliveryCfg[key] = Object.assign({}, cfg, { prices: this.applyPriceFix(prices, cfg, key), pricesAt: Date.now(), pricesSrc:"api", pricesErr:"" });
+      /* تُحفظ أسعار الحساب الخام (apiPrices) بجانب المطبَّقة ويُحسب الفرق بينهما (drift): «صحة التوصيل» تنبّه إن اختلف حسابك عمّا يعرضه متجرك */
+      const applied = this.applyPriceFix(prices, cfg, key), drift = this.priceDrift(prices, applied);
+      this.deliveryCfg[key] = Object.assign({}, cfg, { prices: applied, apiPrices: prices, apiAt: Date.now(), drift, checkedAt: Date.now(), pricesAt: Date.now(), pricesSrc:"api", pricesErr:"" });
       this.saveDeliveryCfgToStorage();
       if(!(opts && opts.auto)) toast("✅ جُلبت تعريفة " + n + " ولاية من " + co.name + " تلقائياً");
       this.publishShipCo();
@@ -8388,7 +8497,7 @@ const Admin = {
       this.renderDeliveryPriceSourceCard();
     }catch(err){
       console.error(err);
-      try{ this.deliveryCfg[key] = Object.assign({}, this.deliveryCfg[key] || cfg, { pricesErr: String(err.message || err).slice(0, 400) }); this.saveDeliveryCfgToStorage(); if(this.editingDeliveryKey === key) this.renderDeliveryPriceBox(key); }catch(e2){}
+      try{ this.deliveryCfg[key] = Object.assign({}, this.deliveryCfg[key] || cfg, { pricesErr: String(err.message || err).slice(0, 400), checkedAt: Date.now() }); this.saveDeliveryCfgToStorage(); if(this.editingDeliveryKey === key) this.renderDeliveryPriceBox(key); }catch(e2){}
       if(err.cors){ if(!(opts && opts.auto)) this.explainCors(co); else toast("⚠️ تعذّر جلب أسعار " + co.name + " تلقائياً (حجب المتصفح) — جرّب «جلب الأسعار» من إعدادها"); return }
       if(!(opts && opts.auto)) toast("❌ " + err.message);
     }
@@ -8504,8 +8613,12 @@ const Admin = {
     return this._ffP[key];
   },
   /* مكاتب Stop Desk الموجودة في بلدية معيّنة (بلا بلدية: كل مكاتب الولاية) — البلدية بلا مكتب يُعطَّل فيها التوصيل للمكتب */
-  desksIn(w, commune){
-    const ds = (w && w.desks) || [], n = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), k = n(commune);
+  /* شركة المكتب: وسمها d.co أو نمط «[Yalidine]/[EasyAndSpeed]» في اسم مراكز ياليدين (وإلا فارغ = قديم غير معروف) */
+  deskCoOf(d){ return (d && d.co) || (/\[(?:Yalidine|EasyAndSpeed)\]\s*$/i.test(String((d && d.name) || "")) ? "yalidine" : ""); },
+  desksIn(w, commune, key){
+    let ds = (w && w.desks) || []; const ck = key || (()=>{ try{ return this.activeCompanyKey(); }catch(e){ return ""; } })();
+    if(ck){ const f = ds.filter(d=>{ const c = this.deskCoOf(d); return !c || c === ck; }); if(f.length) ds = f; }      /* مكاتب الشركة الافتراضية أولاً؛ إن لم يكن لها مكتب في الولاية تُعرض كلها كما كانت */
+    const n = x=>String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""), k = n(commune);
     return k ? ds.filter(d=>n(d.commune) === k) : ds;
   },
   /* تحميل إضافات البلديات المنشورة مرة واحدة (وعد) — كان أول حساب لرسم التوصيل يجري قبل وصولها فلا تُضاف البلدية إلى سعر الولاية */
@@ -8551,16 +8664,16 @@ const Admin = {
   /** ما يراه المتجر من تسعير التوصيل (ship-co.json) — مصدر واحد للنشر ولجدول الرسوم الموثوق على المنصة */
   shipCoData(){
     const companies = {}, all = this.allDeliveryCompanies();
-    this.enabledCompanyKeys().forEach(k=>{ let pr = (this.deliveryCfg[k]||{}).prices; if(all[k].tariff) pr = this.applyPriceFix(pr || {}, this.deliveryCfg[k] || {}, k); if(all[k].feesRequest && pr && Object.keys(pr).length) companies[k] = { name: all[k].name, prices: pr, adj: Number((this.deliveryCfg[k]||{}).adj) || 0 }; if((this.deliveryCfg[k]||{}).adjMode === "wilaya") companies[k].adjMode = "wilaya"; try{ const wl = this.wilListOf(k); if(wl) companies[k].wl = wl; }catch(e){} });
+    this.enabledCompanyKeys().forEach(k=>{ let pr = (this.deliveryCfg[k]||{}).prices; if(all[k].tariff || (this.deliveryCfg[k] || {}).priceBase || (this.deliveryCfg[k] || {}).priceFix || (this.deliveryCfg[k] || {}).optionsFix || (this.deliveryCfg[k] || {}).options) pr = this.applyPriceFix(pr || {}, this.deliveryCfg[k] || {}, k); if(all[k].feesRequest && pr && Object.keys(pr).length) companies[k] = { name: all[k].name, prices: pr, adj: Number((this.deliveryCfg[k]||{}).adj) || 0, ...(all[k].ownTariff ? { own: 1 } : {}) }; if((this.deliveryCfg[k]||{}).adjMode === "wilaya") companies[k].adjMode = "wilaya"; try{ const wl = this.wilListOf(k); if(wl) companies[k].wl = wl; }catch(e){} });
     const st = this.pricingState();
     const dk = (()=>{ try{ return this.activeCompanyKey(); }catch(e){ return ""; } })(), dco = dk && all[dk];
-    return { def: st.key || "", companies, sup: this.communeSup(), cp: this.communeCp(), nd: this.communeNd(), noStop: !!(dco && !dco.centersRequest) };      // شركة افتراضية بلا قائمة مكاتب: لا Stop Desk في المتجر
+    return { def: st.key || "", dk: dk || "", dp: String((dk && this.deliveryCfg[dk] && this.deliveryCfg[dk].deskPrio) || ""), companies, sup: this.communeSup(), cp: this.communeCp(), nd: this.communeNd(), noStop: !!(dco && !dco.centersRequest) };      // شركة افتراضية بلا قائمة مكاتب: لا Stop Desk في المتجر
   },
   async publishShipCo(){
     try{
       const d = this.shipCoData();
       if(typeof PBApp === "undefined" || !PBApp.putJson) return;
-      await PBApp.putJson("assets/data/ship-co.json", { updated: new Date().toISOString(), def: d.def, noStop: d.noStop, companies: d.companies, sup: d.sup, cp: d.cp, nd: d.nd }, "أسعار شركات التوصيل (لمنتجات بشركة غير الافتراضية)");
+      await PBApp.putJson("assets/data/ship-co.json", { updated: new Date().toISOString(), def: d.def, dk: d.dk, dp: d.dp, noStop: d.noStop, companies: d.companies, sup: d.sup, cp: d.cp, nd: d.nd }, "أسعار شركات التوصيل (لمنتجات بشركة غير الافتراضية)");
     }catch(e){ console.warn("ship-co", e); }
   },
   /* خانة «شركة التوصيل لهذا المنتج» في تعديل المنتج */
@@ -8704,6 +8817,7 @@ const Admin = {
     }).join("");
     $f("dlv-price-search").value = "";
     this.renderDeliveryPriceBox(key);
+    { const fc = $f("dlv-cod"), fr = $f("dlv-ret"); if(fc) fc.value = cfg.codPct != null && cfg.codPct !== "" ? String(cfg.codPct) : ""; if(fr) fr.value = cfg.retFee != null && cfg.retFee !== "" ? String(cfg.retFee) : ""; const fl = $f("dlv-late"); if(fl) fl.value = cfg.lateFee != null && cfg.lateFee !== "" ? String(cfg.lateFee) : ""; const fd = $f("dlv-dprio"); if(fd) fd.value = cfg.deskPrio ? String(cfg.deskPrio) : ""; }
     { const ab = $f("dlv-adj-box"), ai = $f("dlv-adj"); if(ab && ai){ ab.hidden = !co.feesRequest; ai.value = Number(cfg.adj) ? String(Number(cfg.adj)) : ""; { const am = $f("dlv-adjmode"); if(am) am.value = cfg.adjMode === "wilaya" ? "wilaya" : ""; } this.dlvAdjHint(); } }
     const delBtn = $f("dlv-delete-btn");
     if(delBtn) delBtn.classList.toggle("hidden", !this.customDeliveryCompanies[key]);
@@ -8716,6 +8830,8 @@ const Admin = {
     if(!co) return;
     const cfg = Object.assign({}, this.deliveryCfg[key]);
     (co.fields||[]).forEach(f=>{ cfg[f.key] = ($f("dlv-f-" + f.key)||{}).value ? $f("dlv-f-" + f.key).value.trim() : ""; if(f.key === "apiId" || f.key === "apiToken") cfg[f.key] = cfg[f.key].replace(/[\u200b-\u200f\u202a-\u202e\ufeff"'“”‘’\s]/g,""); });          // مفاتيح الـAPI: نزع المسافات والأحرف الخفية وعلامات الاقتباس الملتصقة عند النسخ
+    { const fc = $f("dlv-cod"), fr = $f("dlv-ret"), fl = $f("dlv-late"); [[fc, "codPct"], [fr, "retFee"], [fl, "lateFee"]].forEach(([el, k])=>{ if(!el) return; const v = String(el.value).trim().replace(",", "."), n = Number(v); if(v !== "" && isFinite(n) && n >= 0) cfg[k] = n; else delete cfg[k]; }); }
+    { const fd = $f("dlv-dprio"); if(fd){ const v = String(fd.value || "").replace(/[<>"']/g, "").replace(/\s*,\s*/g, ", ").trim().slice(0, 120); if(v) cfg.deskPrio = v; else delete cfg.deskPrio; } }
     { const ai = $f("dlv-adj"), ab = $f("dlv-adj-box"); if(ai && ab && !ab.hidden){ const n = Number(String(ai.value).replace(",", ".")); cfg.adj = isFinite(n) ? Math.round(n) : 0; if(!cfg.adj) delete cfg.adj; const am = $f("dlv-adjmode"); if(am && am.value === "wilaya" && cfg.adj) cfg.adjMode = "wilaya"; else delete cfg.adjMode; } }
     if(this._dlvManual) cfg.prices = this.collectDeliveryPriceGrid();      // يدوي فقط للشركات التي لا تُجلب أسعارها تلقائياً (لئلا تُمحى التعريفة المجلوبة)
     const requiredFields = (co.fields||[]).filter(f=>f.required!==false);
@@ -8724,7 +8840,7 @@ const Admin = {
       toast("⚠️ أكمل الحقول التالية قبل الاستمرار: " + missing.map(f=>f.label).join("، "));
       cfg.enabled = false;
     }
-    if(cfg.priceFix || co.tariff) cfg.prices = this.applyPriceFix(cfg.prices, cfg, key);       // تصحيحات الأسعار تُطبَّق فوراً
+    if(cfg.priceFix || cfg.priceBase || cfg.optionsFix || cfg.options || co.tariff) cfg.prices = this.applyPriceFix(cfg.prices, cfg, key);       // تصحيحات الأسعار تُطبَّق فوراً
     this.deliveryCfg[key] = cfg;
     this.saveDeliveryCfgToStorage();
     document.getElementById("delivery-modal-bg").classList.remove("open");
@@ -8838,10 +8954,11 @@ const Admin = {
     }
     return r;
   },
+  _proxyOk(){ if(this._proxy === true) return true; try{ return localStorage.getItem("alyssum_courier_ok") === "1" && this._proxy !== false; }catch(e){ return false; } },
   async _courierRaw(req){
     if(PHPAPI.on()){
       const r = await PHPAPI.call("courier", { method:"POST", body: JSON.stringify({ url:req.url, method:req.method||"GET", headers:req.headers||{}, body:req.body, binary:req.binary }) });
-      if(!r.ok) throw new Error(r.j && r.j.error ? ("وسيط الاتصال: " + r.j.error) : ("وسيط الاتصال (" + r.status + ")"));
+      if(!r.ok){ let hn = ""; try{ if(r.j && r.j.error === "host_not_allowed") hn = " — " + new URL(req.url).hostname; }catch(e){} throw new Error(r.j && r.j.error ? ("وسيط الاتصال: " + r.j.error + hn) : ("وسيط الاتصال (" + r.status + ")")); }
       return { ok: r.j.status >= 200 && r.j.status < 300, status: r.j.status, text: r.j.body || "", b64: r.j.b64 };
     }
     /* النسخة السحابية (Supabase): عبر دالة Edge باسم courier (تتجاوز CORS وتتحقق أنك مدير)، وإلا اتصال مباشر قد يحجبه المتصفح */
@@ -8849,19 +8966,22 @@ const Admin = {
       try{
         const t = await API.sb.token();
         if(t){
-          const r = await fetch(API.sb.url("/functions/v1/courier"), { method:"POST", headers: API.sb.headers(t), body: JSON.stringify({ url:req.url, method:req.method||"GET", headers:req.headers||{}, body:req.body, binary:req.binary }) });
-          if(r.ok){ const j = await r.json(); this._proxy = true; return { ok: j.status >= 200 && j.status < 300, status: j.status, text: j.body || "", b64: j.b64 }; }
+          const cbody = JSON.stringify({ url:req.url, method:req.method||"GET", headers:req.headers||{}, body:req.body, binary:req.binary });
+          /* انقطاع شبكة لحظي (TypeError) لا يعني أن الوسيط غير منشور: نعيد المحاولة مرة، ولا نُعطّل الوسيط للجلسة إن كان قد عمل من قبل (كان يُظهر إشعار «حجب المتصفح» كاذباً بعد أي انقطاع) */
+          let r; try{ r = await fetch(API.sb.url("/functions/v1/courier"), { method:"POST", headers: API.sb.headers(t), body: cbody }); }
+          catch(e1){ if(!(e1 instanceof TypeError)) throw e1; await new Promise(z=>setTimeout(z, 900)); try{ r = await fetch(API.sb.url("/functions/v1/courier"), { method:"POST", headers: API.sb.headers(t), body: cbody }); }catch(e2){ if(this._proxyOk()) throw new Error("تعذّر الوصول إلى وسيط الاتصال — تحقق من الإنترنت وأعد المحاولة"); throw e2; } }
+          if(r.ok){ const j = await r.json(); this._proxy = true; try{ localStorage.setItem("alyssum_courier_ok", "1"); }catch(e){} return { ok: j.status >= 200 && j.status < 300, status: j.status, text: j.body || "", b64: j.b64 }; }
           if(r.status === 404) this._proxy = false;
-          else { const j = await r.json().catch(()=>({})); throw new Error("وسيط courier: " + (j.error || r.status) + (j.detail ? " — " + j.detail : "")); }
+          else { const j = await r.json().catch(()=>({})); let hn = ""; try{ if(j.error === "host_not_allowed") hn = " — " + new URL(req.url).hostname; }catch(e){} throw new Error("وسيط courier: " + (j.error || r.status) + hn + (j.detail ? " — " + j.detail : "")); }
         }
-      }catch(e){ if(e instanceof TypeError) this._proxy = false; else throw e; }       // TypeError = الدالة غير منشورة (لا CORS للمعاينة)
+      }catch(e){ if(e instanceof TypeError){ if(this._proxyOk()) throw new Error("انقطع الاتصال بالإنترنت لحظياً — أعد المحاولة"); this._proxy = false; } else throw e; }       // TypeError = الدالة غير منشورة (لا CORS للمعاينة)
     }
     try{
       const res = await fetch(req.url, { method: req.method||"GET", headers: req.headers||{}, body: req.body });
       if(req.binary){ const u8 = new Uint8Array(await res.arrayBuffer()); let bin = ""; for(let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return { ok: res.ok, status: res.status, text: "", b64: btoa(bin) }; }
       let text = ""; try{ text = await res.text(); }catch(e){}
       return { ok: res.ok, status: res.status, text };
-    }catch(e){ if(e instanceof TypeError){ const err = new Error("CORS_BLOCKED"); err.cors = true; throw err; } throw e; }
+    }catch(e){ if(e instanceof TypeError){ if(this._proxyOk()) throw new Error("انقطع الاتصال بالإنترنت لحظياً — أعد المحاولة"); const err = new Error("CORS_BLOCKED"); err.cors = true; throw err; } throw e; }
   },
   /* رسالة تبقى على الشاشة (لا تختفي كالتنبيه) حتى تغلقها */
   showNotice(title, html){
@@ -8922,10 +9042,15 @@ const Admin = {
     this._centersMap = this._centersMap || {}; if(this._centersMap[ck]) return this._centersMap[ck];
     try{ const c = JSON.parse(localStorage.getItem(ck) || "null"); if(c && c.length > 20){ this._centersMap[ck] = c; return c; } }catch(e){}
     let rows = [];
-    for(let pg = 1; pg <= 5; pg++){
-      const r = await this.courierFetch(co.centersRequest(cfg, pg));
-      if(!r.ok) throw new Error("تعذّر جلب مراكز الشركة (رمز " + r.status + ")");
-      const got = co.parseCenters(JSON.parse(r.text)); rows = rows.concat(got.rows); if(!got.more) break;
+    const pages = co.centersPages || 5;      /* شركات تُجلب مراكزها ولاية بولاية (Ecotrack): صفحة لكل ولاية، وفشل ولاية واحدة لا يُسقط الباقي */
+    for(let pg = 1; pg <= pages; pg++){
+      let got; try{ if(window.Busy && co.centersPages) Busy.tick("syncDesksFromCompany", "الولاية " + pg + " من " + pages); }catch(e){}
+      try{
+        const r = await this.courierFetch(co.centersRequest(cfg, pg));
+        if(!r.ok) throw new Error("تعذّر جلب مراكز الشركة (رمز " + r.status + ")");
+        got = co.parseCenters(JSON.parse(r.text), pg);
+      }catch(err){ if(co.centersPages && !(err && err.cors) && pg > 1) continue; throw err; }
+      rows = rows.concat(got.rows); if(!got.more) break; if(co.centersPages) await new Promise(res=>setTimeout(res, 120));
     }
     if(rows.length){ this._centersMap[ck] = rows; try{ localStorage.setItem(ck, JSON.stringify(rows)); }catch(e){} }
     return rows;
@@ -8939,7 +9064,7 @@ const Admin = {
       "<button class='small gold' type='button' onclick=\"Admin.pickDesk('" + order.id + "','" + companyKey + "')\">🚚 أرسل لهذا المركز</button>");
   },
   pickDesk(orderId, companyKey){
-    const raw = String(($f("pick-desk")||{}).value || ""); if(!raw) return; const v = /^\d+$/.test(raw) ? Number(raw) : raw;
+    const raw = String(($f("pick-desk")||{}).value || ""); if(!raw) return; const v = /^[1-9]\d*$/.test(raw) ? Number(raw) : raw;      /* رمز بأصفار في أوله (مثل 01001) يبقى نصاً */
     this._deskOverride = this._deskOverride || {}; this._deskOverride[orderId] = v;
     document.getElementById("notice-modal-bg").classList.remove("open");
     const i = this.orders.findIndex(x=>x.id === orderId); if(i > -1) this.sendOrderToDelivery(i, companyKey);
@@ -8952,9 +9077,16 @@ const Admin = {
       try{ Object.keys(localStorage).filter(k=>/^alyssum_centers_v[12]/.test(k)).forEach(k=>localStorage.removeItem(k)); }catch(e){} this._centersMap = {}; this._centersCache = null;
       const centers = await this.companyCenters(co, cfg);
       if(!centers.length) throw new Error("لم تُرجع الشركة أي مركز");
-      this.fees = this.fees.map(w=>Object.assign({}, w, { desks: centers.filter(c=>c.wilaya_id === w.id).map(c=>({ id: c.id, name: c.name, address: c.address, commune: c.commune })) }));
+      /* مراكز هذه الشركة تُستبدَل وتُوسَم co:<الشركة>، ومراكز الشركات الأخرى الموسومة تبقى (المتجر يعرض مكاتب الشركة الافتراضية فقط)؛ المكتب القديم بلا وسم ولا نمط معروف يُستبدل كما كان */
+      this.fees = this.fees.map(w=>Object.assign({}, w, { desks: (w.desks || []).filter(d=>{ const c = this.deskCoOf(d); return c && c !== key; }).concat(centers.filter(c=>c.wilaya_id === w.id).map(c=>({ id: c.id, name: c.name, address: c.address, commune: c.commune, co: key }))) }));
       this.renderFees();
-      toast("✅ استُبدلت المكاتب بـ " + centers.length + " مركز رسمي من " + co.name + " — اضغط «💾 حفظ الكل» في «رسوم التوصيل» لنشرها");
+      /* النشر تلقائياً (كان يحتاج «💾 حفظ الكل» فيبقى المتجر بلا مكاتب الشركة وقد أُعلنت افتراضية): إن كانت في الجدول تعديلات رسوم أخرى غير محفوظة يُسأل أولاً كي لا تُنشر معها دون علم */
+      const strip = a=>JSON.stringify((a || []).map(w=>Object.assign({}, w, { desks: undefined }))); let pub = true;
+      try{ if(this.feesOriginal && strip(this.feesOriginal) !== strip(this.fees)) pub = confirm("حُمِّلت مراكز " + co.name + ". في جدول الرسوم تعديلات أخرى غير محفوظة ستُنشر معها الآن على الموقع الحي. هل تنشر الآن؟ (إلغاء = لا تُنشر المراكز حتى تضغط «💾 حفظ الكل»)"); }catch(e){}
+      let published = false;
+      if(pub){ try{ API.saveFees(this.key, this.fees); this.feesOriginal = JSON.parse(JSON.stringify(this.fees)); if(window.WILAYAS) window.WILAYAS = this.fees; published = !!(await this.publishWilayasJs()); }catch(e){ console.warn("desks publish", e); } }
+      toast("✅ حُمِّلت مكاتب " + co.name + " (" + centers.length + " مركز رسمي) — مكاتب الشركات الأخرى باقية ومفصولة عنها." + (published ? " ونُشرت على الموقع الحي." : " اضغط «💾 حفظ الكل» في «رسوم التوصيل» لنشرها."));
+      try{ this.publishShipCo(); }catch(e){}      /* ينشر شركة التوصيل الافتراضية (dk) ليعرض المتجر مكاتبها فقط */
     }catch(err){ if(err.cors) this.explainCors(co); else this.showNotice("❌ تعذّر جلب المراكز", String(err.message).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))); }
   },
   _wilayasCache: {},
@@ -9366,10 +9498,13 @@ const Admin = {
     if(this._syncing) return;
     if(!opts.bg && this._shipSync && this._shipSync.ts && Date.now() - this._shipSync.ts < 60000){ if(!opts.silent) toast("⏳ تمت المزامنة قبل لحظات — انتظر دقيقة قبل التحديث مجدداً (حفاظاً على حصة شركة التوصيل)"); return; }
     const all = this.allDeliveryCompanies();
-    const cands = this.orders.map((o,i)=>({ o, i, t: this.trackingOf(o) })).filter(x=>x.t && !["livree","echec","annulee"].includes(x.o.status) && !(typeof ShipAgg !== "undefined" && ShipAgg.owns && ShipAgg.owns(x.t.company) && !(this.deliveryCfg[x.t.company] || {}).enabled));      // طرود البوابة تزامنها ShipAgg
+    const cands = this.orders.map((o,i)=>({ o, i, t: this.trackingOf(o) })).filter(x=>x.t && (!["livree","echec","annulee"].includes(x.o.status) || (x.o.status === "echec" && /partially.?returned|retour partiel/i.test((this.shipRaw[x.o.id] || {}).raw || "")) || (x.o.status === "livree" && (all[x.t.company] || {}).finFromParcel && !((this.shipRaw[x.o.id] || {}).fin))) && !(typeof ShipAgg !== "undefined" && ShipAgg.owns && ShipAgg.owns(x.t.company) && !(this.deliveryCfg[x.t.company] || {}).enabled));      // طرود البوابة تزامنها ShipAgg
+    { let bf = 0; for(let q = cands.length - 1; q >= 0; q--){ const c0 = cands[q]; if(c0.o.status === "livree" && !((this.shipRaw[c0.o.id] || {}).fin)){ if(++bf > 60) cands.splice(q, 1); } } }      /* تعبئة أرقام الطرد الفعلية للمسلَّمة القديمة (60 طلباً في كل مزامنة) لتطابق المدفوعات فواتير الشركة */
     if(!cands.length){ this._shipSync = { ts: Date.now(), checked: 0, changed: 0, failed: 0, err: "" }; this.renderShipSyncStatus(); if(!opts.bg) toast("ℹ️ لا توجد طلبات مرسَلة إلى شركة توصيل بانتظار التتبع (أرسل طلباً بزر 🚚 أولاً)"); return }
     const btns = [$f("sync-btn"), $f("ship-sync-btn")].filter(Boolean); this._syncing = true; btns.forEach(b=>b.disabled = true);
     const rows = []; let changed = 0, failed = 0, n = 0, corsHit = null; const deadCo = new Set(); const gone = [];
+    /* شركات تُرجع قائمة طرودها بحالاتها الحالية (DHD/Ecotrack): نجلبها مرة واحدة فتحسم الحالة بدل سجلّ التتبع (الذي لا يحمل مراحل مثل Vers Station)، وتُربط/تُضاف الطرود الناقصة عندنا */
+    const listMap = {}; for(const k of [...new Set(cands.map(x=>x.t.company))]){ const c0 = all[k]; if(!(c0 && c0.parseOrdersList && c0.recentRequest)) continue; try{ const lr = await this.companyListRows(k); if(lr){ listMap[k] = {}; lr.forEach(x=>{ listMap[k][x.tracking] = x; }); const im = this.importCompanyRows(k, lr); if(im.linked || im.ext) toast("📥 من " + c0.name + ": ربط " + im.linked + " وإضافة " + im.ext + " طرد غير مرتبط"); } }catch(e){} }
     for(const { o, i, t } of cands){
       n++; btns.forEach(b=>b.textContent = "⏳ " + n + "/" + cands.length);
       const co = all[t.company], cfg = this.deliveryCfg[t.company] || {};
@@ -9384,8 +9519,11 @@ const Admin = {
         if(!r.ok) throw new Error(this.coHttpErr(co, t.company, r));
         let body = r.text; try{ row.raw = co.parseStatus(JSON.parse(r.text)); }catch(e){ row.raw = ""; }
         if(!row.raw && co.trackListRequest){ try{ const r2 = await this.courierFetch(co.trackListRequest(cfg, t.tracking)); body = "[1] " + String(r.text).slice(0, 160) + " [2] " + String(r2.text).slice(0, 160); row.raw = co.parseStatus(JSON.parse(r2.text)); }catch(e){} }
+        { const lrow = listMap[t.company] && listMap[t.company][t.tracking]; if(lrow && lrow.status) row.raw = lrow.status; }      /* حالة القائمة الحالية تسبق سجلّ التتبع */
         if(!row.raw) row.body = String(body || "").replace(/\s+/g, " ").slice(0, 340);
         if(row.raw) this.setShipRaw(o.id, row.raw);
+        /* أرقام الطرد الفعلية (سعر المنتج المحصَّل ورسم التوصيل الفعلي) من ردّ الشركة لتطابق «المدفوعات» ما تفوتره الشركة فعلاً (مرتجع جزئي، رسم مختلف عن التعريفة) */
+        if(co.finFromParcel){ try{ const j0 = JSON.parse(r.text), d0 = Array.isArray(j0) ? j0[0] : (j0 && j0.data && !Array.isArray(j0.data) ? (j0.data.attributes || j0.data) : (j0 && Array.isArray(j0.data) ? (j0.data[0] && (j0.data[0].attributes || j0.data[0])) : j0)); if(d0 && d0.delivery_fee != null && d0.delivery_fee !== "" && isFinite(Number(d0.delivery_fee))) this.setShipRaw(o.id, row.raw || (this.shipRaw[o.id] || {}).raw || "", undefined, { fee: Number(d0.delivery_fee), price: Number(d0.price) || 0, tp: Number(d0.taxe_percentage) || 0, tr: Number(d0.taxe_retour) || 0, free: d0.freeshipping ? 1 : 0 }); }catch(e){} }
         const m = co.mapStatus(row.raw);
         if(m === "__alert"){ row.result = "⚠️ محاولة توصيل فاشلة (بلا تغيير)"; row.cls = "st-pending"; }
         else if(!m){ row.result = row.raw ? "⚠️ حالة غير مترجمة: " + row.raw : "— لم تُرجع الشركة حالة"; row.unm = row.raw || "(فارغة)"; }
@@ -9599,10 +9737,12 @@ const Admin = {
   /* إزالة ربط عدة طرود محدَّدة من جدول الطرود (للمحذوفة من حساب الشركة أو غير المرغوبة): لا يُلغى شيء عند الشركة؛ تعود الطلبات «غير مرسَلة» */
   detachTrackings(list){
     const L = (list || []).map(x=>({ trk: String(x.tracking || ""), co: String(x.company || "") })).filter(x=>x.trk), pairs = [];
-    L.forEach(x=>{ const o = this.orders.find(y=>{ const t = this.trackingOf(y); return t && t.tracking === x.trk && (!x.co || t.company === x.co); }); if(o) pairs.push({ o, t: this.trackingOf(o) }); });
+    L.forEach(x=>{ let o = this.orders.find(y=>{ const t = this.trackingOf(y); return t && t.tracking === x.trk && (!x.co || t.company === x.co); }); let via = "";
+      if(!o){ try{ o = (typeof AdminYd !== "undefined" && AdminYd.orderOf) ? AdminYd.orderOf(x.trk) : null; via = o ? "reg" : ""; }catch(e){} }      /* طرد مكرّر/مربوط بالسجلّ أو بالمطابقة لا بوسم الملاحظة */
+      if(o && !pairs.some(q=>q.o === o)) pairs.push({ o, t: this.trackingOf(o) || { company: x.co || "", tracking: x.trk }, trk: x.trk, via }); });
     if(!pairs.length){ toast("ℹ️ لا طلبات مرتبطة بهذه الطرود في اللوحة (طرود خارجية لا تُزال هنا)"); return }
     if(!confirm("إزالة ربط " + pairs.length + " طلب من شركة التوصيل؟\n(لا يُغيَّر شيء عند الشركة؛ تعود هذه الطلبات «غير مرسَلة» هنا ويمكنك إرسالها من جديد)")) return;
-    pairs.forEach(({ o, t })=>{ try{ if(typeof AdminYd !== "undefined" && AdminYd.forget) AdminYd.forget(t.tracking); }catch(e){} this.setNoteTag(o, /(?:🚚[a-z0-9_]+:[A-Za-z0-9._-]+|🔢[A-Za-z0-9._-]+)\s*/g, ""); });
+    pairs.forEach(({ o, t, trk })=>{ try{ if(typeof AdminYd !== "undefined" && AdminYd.forget){ AdminYd.forget(trk || t.tracking, o.id); if(t && t.tracking && t.tracking !== trk) AdminYd.forget(t.tracking, o.id); L.filter(x=>x.trk).forEach(x=>{ try{ const z = AdminYd.orderOf(x.trk); if(z && z === o) AdminYd.forget(x.trk, o.id); }catch(e){} }); } }catch(e){} if(this.trackingOf(o)) this.setNoteTag(o, /(?:🚚[a-z0-9_]+:[A-Za-z0-9._-]+|🔢[A-Za-z0-9._-]+)\s*/g, ""); });
     this.renderOrders(); this.renderShipped && this.renderShipped(); this.renderStats && this.renderStats(); try{ const c = $f("cop-card"); if(c) c.style.display = "none"; }catch(e){}
     toast("🧹 أُزيل ربط " + pairs.length + " طلب — عادت «غير مرسَلة»");
   },
@@ -9631,7 +9771,21 @@ const Admin = {
     ok.forEach(o=>{ const i = this.orders.indexOf(o); if(i < 0) return; try{ API.updateOrder(this.key, o.id, "confirmee"); this.onStatusChange(i, "confirmee"); this.setNoteTag(o, /(📞[1-3]|⏰لاحقاً|📵خطأ|📅\d{4}-\d{2}-\d{2}|🔒\S+)\s*/g, ""); }catch(e){ console.warn(e); } });
     this.renderOrders(); try{ this.renderStats(); }catch(e){}
     toast("✅ أُكّد " + ok.length + " طلب" + (auto ? " — يُرسل إلى شركة التوصيل…" : ""));
-    if(auto){ for(const o of ok){ await this.afterManualStatus(o, "confirmee", true); } try{ this.renderOrders(); this.renderShipped && this.renderShipped(); }catch(e){} }
+    if(auto){
+      /* إرسال بالتتابع مع فاصل (حدود طلبات شركات التوصيل) وتجميع النتيجة: كانت أخطاء الإرسال تظهر كتنبيهات عابرة يمحو بعضُها بعضاً فيبدو أن واحداً فقط أُرسل */
+      const fails = []; let sent = 0;
+      for(let n = 0; n < ok.length; n++){
+        const o0 = ok[n]; this._autoFail = ""; this._sendFail = null;
+        try{ await this.afterManualStatus(o0, "confirmee", true); }catch(e){ this._autoFail = String((e && e.message) || e); }
+        const o = this.orders.find(x=>x.id === o0.id) || o0;
+        if(this.trackingOf(o)) sent++;
+        else { const f = this._sendFail && this._sendFail.title; let why = String(this._autoFail || f || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(); if(!why) why = !this.orderCompanyKey(o) ? "لا توجد شركة توصيل لهذا الطلب" : this.isBlacklisted(o.phone) ? "رقم الزبون في القائمة السوداء" : this.isDigital(o) ? "منتج رقمي" : this.isMarket(o) ? "طلب تسويق بالعمولة" : "لم يُرسل (جرّب إرساله يدوياً من 🚚)"; fails.push({ o, why }); }
+        if(n < ok.length - 1) await new Promise(r=>setTimeout(r, 1500));
+      }
+      try{ this.renderOrders(); this.renderShipped && this.renderShipped(); }catch(e){}
+      if(fails.length) this.showNotice("⚠️ أُرسل " + sent + " من " + ok.length + " إلى شركة التوصيل", "<div>الطلبات التالية أُكِّدت لكن لم تُرسل — أرسلها يدوياً بعد معالجة السبب:</div><ul style='margin:.4rem 1rem'>" + fails.map(f=>"<li><b>" + nE(String(f.o.id).slice(-6)) + "</b> " + nE(f.o.name || "") + " — " + nE(f.why) + "</li>").join("") + "</ul>");
+      else toast("🚚 أُرسلت كل الطلبات (" + sent + ") إلى شركة التوصيل");
+    }
     return true;
   },
   confirmOrder(i, stockOk){
@@ -9988,18 +10142,45 @@ const Admin = {
     }catch(err){ this.showNotice("⚠️ تعذّر الاتصال بـ" + nE(co.name), nE(err.message || err)); }
   },
   /* «🔍 آخر الطرود عند الشركة»: كل الحقول البسيطة لآخر الطرود كما تعرضها الشركة — للمقارنة بين طرد أُضيف يدوياً في لوحتها وطرد أرسلناه (لمعرفة أي حقل يجعله يظهر في «En préparation») */
+  /* قائمة طرود حساب الشركة كلها (صفحات متتابعة حتى لا جديد) ← صفوف موحّدة؛ null إن لم تدعمها الشركة */
+  coStatusLabel(key, raw){ try{ const co = this.allDeliveryCompanies()[key]; return co && co.statusLabel ? co.statusLabel(raw) : String(raw || ""); }catch(e){ return String(raw || ""); } },
+  async companyListRows(key){
+    const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {}; if(!co || !co.recentRequest || !co.parseOrdersList) return null;
+    const rows = [], seen = new Set();
+    for(let pg = 1; pg <= 6; pg++){
+      const r = await this.courierFetch(co.recentRequest(cfg, pg)); if(!r.ok){ if(pg === 1) throw new Error(this.coHttpErr(co, key, r)); break; }
+      let j = null; try{ j = JSON.parse(r.text); }catch(e){ break; } const got = co.parseOrdersList(j), fresh = got.filter(x=>!seen.has(x.tracking)); if(!fresh.length) break; fresh.forEach(x=>{ seen.add(x.tracking); rows.push(x); });
+      await new Promise(res=>setTimeout(res, 200));
+    }
+    return rows;
+  },
+  /* طرود الشركة غير المربوطة: تُربط بطلب مطابق (المرجع = رقم الطلب، أو الهاتف والمبلغ) وإلا تُحفظ «طرداً خارجياً» ليظهر في تبويب الشركة. يعيد {linked, ext} */
+  importCompanyRows(key, rows){
+    const ph = v=>{ let d = String(v || "").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
+    const mine = new Set(this.orders.map(o=>(this.trackingOf(o) || {}).tracking).filter(Boolean)), ext = new Set(((this.extAll()[key]) || []).map(x=>x.tracking)); let linked = 0, added = 0;
+    (rows || []).forEach(r=>{
+      if(mine.has(r.tracking)) return; const ref = String(r.reference || "").replace(/^ALY-/, "");
+      const ord = this.orders.find(o=>!this.trackingOf(o) && String(o.id) === ref) || this.orders.find(o=>!this.trackingOf(o) && r.phone && ph(o.phone) === ph(r.phone) && r.amount && Math.round(Number(o.total) || 0) === Math.round(r.amount));
+      if(ord){ this.saveTracking(ord, key, r.tracking); if(r.status) this.setShipRaw(ord.id, r.status); mine.add(r.tracking); linked++; return; }
+      if(!ext.has(r.tracking)){ this.extSave(key, { tracking: r.tracking, client: r.client, phone: r.phone, commune: r.commune, amount: r.amount, product: r.product, raw: r.status, at: Date.now() }); ext.add(r.tracking); added++; }
+    });
+    return { linked, ext: added };
+  },
   async coRecent(){
-    const all = this.allDeliveryCompanies(), keys = Object.keys(all).filter(k=>all[k].recentRequest && (this.deliveryCfg[k] || {}).enabled !== false && ((this.deliveryCfg[k] || {}).apiKey || (this.deliveryCfg[k] || {}).apiId));
+    const all = this.allDeliveryCompanies(), keys = Object.keys(all).filter(k=>all[k].recentRequest && (this.deliveryCfg[k] || {}).enabled !== false && ((this.deliveryCfg[k] || {}).apiKey || (this.deliveryCfg[k] || {}).apiId || (this.deliveryCfg[k] || {}).token));
     if(!keys.length){ toast("ℹ️ لا توجد شركة مفعّلة تدعم هذا العرض"); return }
-    const k = keys[0], co = all[k], cfg = this.deliveryCfg[k] || {};
+    const pref = [this._shipCo, this.activeCompanyKey()].find(x=>x && keys.includes(x)), k = pref || keys[0], co = all[k], cfg = this.deliveryCfg[k] || {};      /* تبويب الشركة المفتوح ثم الافتراضية (كان يأخذ أول شركة فيعرض WeCan دائماً) */
     toast("⏳ جارِ جلب آخر طرود " + co.name + "…");
     try{
       const r = await this.courierFetch(co.recentRequest(cfg)); let j = null; try{ j = JSON.parse(r.text); }catch(e){}
-      const arr = Array.isArray(j) ? j : (j && Array.isArray(j.data) ? j.data : []);
-      if(!arr.length){ this.showNotice("🔍 آخر طرود " + nE(co.name), "رمز الرد " + r.status + " — لا طرود في الرد.<br><small dir=\"ltr\">" + nE(String(r.text || "").replace(/\s+/g, " ").slice(0, 300)) + "</small>"); return }
+      const find = (x, d)=>{ if(Array.isArray(x)) return x.length && typeof x[0] === "object" ? x : null; if(!x || typeof x !== "object" || d > 3) return null; for(const v of Object.values(x)){ const r2 = find(v, d + 1); if(r2) return r2; } return null; };
+      let arr = find(j, 0); if(!arr && j && typeof j === "object"){ const vs = Object.values(j).filter(v=>v && typeof v === "object" && !Array.isArray(v)); if(vs.length >= 1 && vs.every(v=>Object.keys(v).length > 2)) arr = vs; }       /* مصفوفة في أي مكان من الرد (data/orders/data.data) أو كائن طرود مفهرس */
+      arr = arr || [];
+      if(!arr.length){ this.showNotice("🔍 آخر طرود " + nE(co.name), "رمز الرد " + r.status + " — لا طرود مفهومة في الرد.<br><small>الرد الكامل (أرسله لي إن لم تظهر الطرود):</small><pre dir=\"ltr\" style=\"white-space:pre-wrap;font-size:.72rem;max-height:240px;overflow:auto\">" + nE(String(r.text || "").slice(0, 2500)) + "</pre>"); return }
       const skip = /^(label|qr_text|pin|compression|processing|processed|original_label|used_micro|price_freshness)/;
       const one = d=>{ const a = (d && d.attributes && typeof d.attributes === "object") ? Object.assign({ id: d.id }, d.attributes) : (d || {});
         return Object.keys(a).filter(x=>!skip.test(x) && a[x] !== null && a[x] !== "" && a[x] !== undefined).map(x=>x + ": " + (typeof a[x] === "object" ? JSON.stringify(a[x]).slice(0, 120) : String(a[x]).slice(0, 80))).join("\n"); };
+      try{ if(co.parseOrdersList){ const all2 = await this.companyListRows(k), im = all2 ? this.importCompanyRows(k, all2) : null; if(im && (im.linked || im.ext)){ toast("📥 أُضيف " + im.ext + " طرد من " + co.name + " وربط " + im.linked + " بطلبات"); this._shipCo = k; this.renderOrders(); this.renderShipped(); } } }catch(e){}      /* الطرود الناقصة عندنا (أُنشئت في موقع الشركة) تُضاف إلى تبويبها */
       this.showNotice("🔍 آخر " + arr.length + " طرود في " + nE(co.name), arr.slice(0, 6).map((d, n)=>'<div style="margin:.4rem 0"><b>#' + (n + 1) + '</b><pre dir="ltr" style="white-space:pre-wrap;font-size:.72rem;max-height:200px;overflow:auto;margin:.2rem 0">' + nE(one(d)) + '</pre></div>').join(""));
     }catch(err){ this.showNotice("⚠️ تعذّر الاتصال بـ" + nE(co.name), nE(err.message || err)); }
   },
@@ -10008,13 +10189,20 @@ const Admin = {
     const o = this.orders[i], t = o && this.trackingOf(o), co = t && this.allDeliveryCompanies()[t.company], cfg = (t && this.deliveryCfg[t.company]) || {};
     if(!co || !co.trackRequest){ toast("هذه الشركة لا تدعم الفحص"); return }
     toast("⏳ جارِ جلب الطرد " + t.tracking + " من " + co.name + "…");
+    if(co.inspectRequests){      /* تشخيص: كل نقاط القراءة المرشّحة وردّ كل منها كما هو (قراءة فقط) */
+      try{ const parts = []; for(const it of co.inspectRequests(cfg, t.tracking)){ let rr; try{ rr = await this.courierFetch(it.req); }catch(e){ rr = { status: "خطأ", text: String(e.message || e) }; }
+          let txt = String(rr.text || ""); try{ txt = JSON.stringify(JSON.parse(txt), null, 1); }catch(e){} parts.push("=== " + it.label + " ← رمز " + rr.status + " ===\n" + txt.slice(0, 1400)); }
+        const all = parts.join("\n\n");
+        this.showNotice("🔍 ردود " + nE(co.name) + " للطرد " + nE(t.tracking), '<small>انسخ هذا كله وأرسله لي (لا يحوي توكن):</small><br><button class="small gold" type="button" onclick="navigator.clipboard.writeText(this.nextElementSibling.textContent).then(()=>toast(\'📋 نُسخ\'))">📋 نسخ الكل</button><pre dir="ltr" style="white-space:pre-wrap;background:#f6f3ea;color:#222;padding:.6rem;border-radius:10px;font-size:.72rem;max-height:320px;overflow:auto">' + nE(all) + '</pre>');
+      }catch(err){ this.showNotice("⚠️ تعذّر الاتصال بـ" + nE(co.name), nE(err.message || err)); }
+      return; }
     try{
       const r = await this.courierFetch(co.trackRequest(cfg, t.tracking)); let j = null; try{ j = JSON.parse(r.text); }catch(e){}
       let d = Array.isArray(j) ? j[0] : (j && j.data && !Array.isArray(j.data) ? (j.data.attributes || j.data) : (j && Array.isArray(j.data) ? j.data[0] : j));
       if(d && d.attributes && typeof d.attributes === "object") d = d.attributes;
       const L = { tracking:"رقم التتبع", order_id:"رقم الطلب", last_status:"الحالة", status:"الحالة (2)", price:"السعر (بدون التوصيل)", declared_value:"القيمة المصرَّح بها", delivery_fee:"رسم التوصيل", freeshipping:"توصيل مجاني", shipping_type:"نوع التوصيل", is_stopdesk:"مكتب Stop Desk", from_wilaya_name:"من", to_wilaya_name:"إلى", to_commune_name:"البلدية", product_list:"المنتجات", date_creation:"تاريخ الإنشاء", created_at:"تاريخ الإنشاء", label:"البوليصة" };
       const rows = d ? Object.keys(L).filter(k=>d[k] !== undefined && d[k] !== null && typeof d[k] !== "object").map(k=>'<tr><td style="padding:.2rem .5rem;opacity:.75">' + L[k] + '</td><td dir="auto" style="padding:.2rem .5rem;font-weight:700">' + nE(String(d[k]).slice(0, 140)) + '</td></tr>') : [];
-      this.showNotice((r.ok ? "🔍 ما سجّلته " : "⚠️ ردّ ") + nE(co.name) + " للطلب " + nE(o.id), rows.length ? '<table style="width:100%;border-collapse:collapse">' + rows.join("") + '</table><small>رمز الرد ' + r.status + '</small>' : "رمز الرد " + r.status + (r.status === 404 ? " — الطرد غير موجود عند الشركة (حُذف هناك أو لم يصل)." : ".") + "<br><small dir=\"ltr\">" + nE(String(r.text || "").replace(/\s+/g, " ").slice(0, 300)) + "</small>");
+      this.showNotice((r.ok ? "🔍 ما سجّلته " : "⚠️ ردّ ") + nE(co.name) + " للطلب " + nE(o.id), (rows.length ? '<table style="width:100%;border-collapse:collapse">' + rows.join("") + '</table><small>رمز الرد ' + r.status + '</small>' : "رمز الرد " + r.status + (r.status === 404 ? " — الطرد غير موجود عند الشركة (حُذف هناك أو لم يصل)." : ".") + "<br><small dir=\"ltr\">" + nE(String(r.text || "").replace(/\s+/g, " ").slice(0, 300)) + "</small>") + '<details style="margin-top:.5rem"><summary style="cursor:pointer;font-weight:700">الرد الكامل من الشركة (أرسله لي إن لم تتضح الحالة)</summary><pre dir="ltr" style="white-space:pre-wrap;background:#f6f3ea;color:#222;padding:.6rem;border-radius:10px;font-size:.74rem;max-height:240px;overflow:auto">' + nE((()=>{ try{ return JSON.stringify(j, null, 1); }catch(e){ return String(r.text || ""); } })().slice(0, 3000)) + '</pre></details>');
     }catch(err){ this.showNotice("⚠️ تعذّر الاتصال بـ" + nE(co.name), nE(err.message || err)); }
   },
   coValidateBtn(o, i, t){
@@ -10130,12 +10318,26 @@ const Admin = {
         if(cof && cof !== "yalidine"){ this.renderCoCard(cof); const cc = this.allDeliveryCompanies()[cof] || {}; if(cof === "zrexpress_app") this.zrLoadParcels(false); else if(cc.batchTrackRequest) this.nocLoad(cof, false); }
         else { const x = $f("cop-card"); if(x) x.style.display = "none"; } }
       { const ib = $f("ship-imp-btn"), cc = cof && this.allDeliveryCompanies()[cof]; if(ib) ib.style.display = (cc && cc.trackRequest) ? "" : "none"; }
+      /* أزرار خاصة بشركة: «تعريفة WeCan لولاية» تظهر في تبويب WeCan فقط، و«آخر الطرود عند الشركة» للشركات التي تدعمه (WeCan وDHD) */
+      { const cc = cof && this.allDeliveryCompanies()[cof], fb = $f("ship-fees-btn"), rb = $f("ship-recent-btn"); if(fb) fb.style.display = cof === "wecan" ? "" : "none"; if(rb) rb.style.display = (cc && cc.recentRequest) ? "" : "none"; }
       const yOnly = !cof || cof === "yalidine";                                          // أدوات ياليدين وحدها: تجهيز الطلبات والمطابقة وبطاقة طرود حسابها
       ["ship-rec-btn", "yd-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = yOnly ? "" : "none"; });
     }
+    /* حالات التتبع عند الشركة (كما ترسلها: Vers Station، En Station…) كأزرار تصفية بعدّادها — لغير ياليدين (لها بطاقتها وفلاترها) */
+    { const host = el.closest("table") || el; let box = document.getElementById("ship-raw-chips");
+      if(this._shipRawCo !== cof){ this._shipRaw = ""; this._shipRawCo = cof; }
+      const cnt = {}; if(cof && cof !== "yalidine") all.forEach(({o,t})=>{ if(t.company !== cof) return; const rw = String((this.shipRaw[o.id] || {}).raw || "").trim(); if(rw) cnt[rw] = (cnt[rw] || 0) + 1; });
+      const ks = Object.keys(cnt).sort((a, b)=>cnt[b] - cnt[a]);
+      if(ks.length && host.parentNode){
+        if(!box){ box = document.createElement("div"); box.id = "ship-raw-chips"; box.style.cssText = "display:flex;gap:.35rem;flex-wrap:wrap;margin:.4rem 0 .6rem"; host.parentNode.insertBefore(box, host); }
+        const tot = ks.reduce((n, k)=>n + cnt[k], 0), chip = (k, l, n)=>'<button type="button" class="small ' + (this._shipRaw === k ? "gold" : "gray") + '" data-rawf="' + nE(k) + '">' + nE(l) + ' <b>' + n + '</b></button>';
+        box.innerHTML = chip("", "كل الحالات", tot) + ks.map(k=>chip(k, this.coStatusLabel(cof, k), cnt[k])).join(""); box.style.display = "flex";
+        box.querySelectorAll("button").forEach(b=>{ b.onclick = ()=>{ Admin._shipRaw = b.getAttribute("data-rawf") || ""; Admin.renderShipped(); }; });
+      } else if(box){ box.style.display = "none"; box.innerHTML = ""; this._shipRaw = ""; } }
     const rows = all.filter(({o,t})=>{
       if(cof && t.company !== cof) return false;
       if(st && o.status !== st) return false;
+      if(this._shipRaw && String((this.shipRaw[o.id] || {}).raw || "").trim() !== this._shipRaw) return false;
       return !q || FD([t.tracking, o.name, o.phone, o.id, o.wilaya, o.commune].join(" ")).includes(q);
     });
     this._shipRows = rows; { const _bb = $f("ship-bord-btn"); if(_bb) _bb.textContent = "🖨 طباعة البوردرو (" + this.bordTargets().length + ")"; }
@@ -10145,9 +10347,9 @@ const Admin = {
     el.innerHTML = '<tr class="hd"><th>Tracking</th><th>الحالة</th><th>الاسم واللقب</th><th>البلدية</th><th>الولاية</th><th>Stop Desk</th><th>Action</th></tr>' +
       rows.map(({o,i,t})=>{ const r = this.shipRaw[o.id];
         return '<tr data-trk="' + t.tracking + '" data-co="' + t.company + '"><td class="t" dir="ltr"><b>' + t.tracking + '</b>' + (Object.keys(by).length > 1 ? '<br><small style="color:#9fb5a9">' + ((cos[t.company]||{}).name || t.company) + '</small>' : "") + '</td>' +
-        '<td data-l="الحالة"><span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>' + (r && r.raw ? '<br><small style="color:#777">' + r.raw + '</small>' + this.payBadge(o) : "") + this.zrInfo(t) + '</td>' +
-        '<td data-l="الاسم">' + nE(o.name) + '</td><td data-l="البلدية">' + nE(o.commune) + '</td><td data-l="الولاية">' + nE(o.wilaya) + '</td>' +
-        '<td data-l="Stop Desk">' + (o.dtype==="stop" ? (o.desk||"✔") : "") + '</td>' +
+        '<td data-l="الحالة"><span class="pill st-' + o.status + '">' + (this.ST_AR[o.status]||o.status) + '</span>' + (r && r.raw ? '<br><small style="color:#777">' + nE(this.coStatusLabel(t.company, r.raw)) + '</small>' + this.payBadge(o) : "") + this.zrInfo(t) + '</td>' +
+        '<td data-l="الاسم">' + nE(o.name) + ' ' + this.srcBadge(o) + '</td><td data-l="البلدية">' + nE(o.commune) + '</td><td data-l="الولاية">' + nE(o.wilaya) + '</td>' +
+        '<td data-l="Stop Desk">' + (o.dtype==="stop" ? '<b class="o-sd" title="توصيل إلى مكتب (Stop Desk)">SD</b>' + (o.desk ? ' <small>' + nE(o.desk) + '</small>' : "") : "") + '</td>' +
         '<td class="act">' + (this.failedAttempt(o) ? this.callBtnsHtml(o) : "") + this.coValidateBtn(o, i, t) + '<button class="small gray" type="button" onclick="Admin.coInspect(' + i + ')" title="يجلب الطرد من شركة التوصيل ويعرض ما سجّلته (السعر، رسم التوصيل، الحالة)">🔍 عند الشركة</button>' + '<button class="small blue" type="button" onclick="Admin.openOrderPreview(' + i + ')" title="معاينة الطلب: تعديل وحذف وطباعة">👁️ معاينة</button>' + (window.OrderEdit && OrderEdit.canEdit(o) ? ' <button class="small gold" type="button" onclick="OrderEdit.open(' + i + ')" title="تعديل البيانات (يتحدّث الطرد لدى الشركة)">✏️ تعديل</button>' : '') + (o.status === "confirmee" ? ' <button class="small warn" type="button" onclick="Admin.unsendOrder(' + i + ')" title="التراجع عن الإرسال وإعادة الطلب إلى قائمة الطلبات">↩ تراجع</button>' : '') + '</td></tr>'; }).join("");
     if(this._shipFocusUntil && Date.now() < this._shipFocusUntil && window.innerWidth <= 700) setTimeout(()=>this._doShipFocus(), 80);       // الطلبات في أعلى الشاشة
   },
@@ -10301,7 +10503,7 @@ const Admin = {
   /* دمج بوردرو الشركة الأصلي (PDF): 4 في ورقة A4 (2×2)، وإن كانا اثنين فورقة واحدة؛ الجلب عبر وسيط الشركات (الشركة تمنع CORS) والتركيب في المتصفح بـpdf-lib */
   async loadPdfLib(){
     if(window.PDFLib) return window.PDFLib;
-    await new Promise((ok, no)=>{ const s = document.createElement("script"); s.src = "assets/js/vendor/pdf-lib.min.js?v=1.17.1"; s.onload = ok; s.onerror = ()=>no(new Error("تعذّر تحميل مكتبة الـPDF")); document.head.appendChild(s); });
+    await new Promise((ok, no)=>{ const s = document.createElement("script"); s.src = "assets/js/vendor/pdf-lib.min.js?v=0fe9d555"; s.onload = ok; s.onerror = ()=>no(new Error("تعذّر تحميل مكتبة الـPDF")); document.head.appendChild(s); });
     return window.PDFLib;
   },
   async pdfBytes(url){
@@ -10517,9 +10719,53 @@ if(Admin.phpMode()){
       else { API.sb.dbg("boot-login t=" + (t?1:0) + " sess=" + (API.sb.session()?1:0) + " key=" + (Admin.key?1:0)); if(t && !Admin.key && API.sb.session()){ /* جلسة صالحة لكن مفتاح الإدارة المحلي ضاع: لا نطلب كلمة المرور، نفتح اللوحة مباشرة */ Admin.key = "sb"; localStorage.setItem("alyssum_admin_key", "sb"); if(Admin.sbOnly()){ Admin.load(); return; } } Admin.key = ""; localStorage.removeItem("alyssum_admin_key"); document.documentElement.classList.remove("au-boot");
         window.__showWhy && __showWhy(""); } }).catch(()=>document.documentElement.classList.remove("au-boot")); go(); }
 } else if(Admin.key) Admin.load(); else { /* وضع قديم بلا حساب مدير: وحده يطلب مفتاح الإدارة */ $f("login-key").classList.remove("hidden"); $f("login-email").classList.add("hidden"); $f("login-pass").classList.add("hidden"); $f("login-hint").textContent = "أدخل مفتاح الإدارة للمتابعة"; document.documentElement.classList.remove("au-boot"); }
+
+;window.__cm&&window.__cm.push(Math.round(performance.now()));
 </script>
+<!-- مكتبات أقسام تُستعمل عند الطلب (صوت/سوشيال/دفع/سرعة/رقمي/تسويق/خبراء…): بعد بدء الدخول أيضاً -->
+<script src="assets/js/admin-voice.js?v=ddfbb468"></script>
+<script src="assets/js/admin-social.js?v=0654bf3f"></script>
+<script src="assets/js/admin-payments.js?v=de724766"></script>
+<script src="assets/js/seo-box.js?v=aa1d6fc2"></script>
+<script src="assets/js/admin-seo.js?v=de4b03e8"></script>
+<script src="assets/js/admin-blog.js?v=98b5bb66"></script>
+<script src="assets/js/admin-agency.js?v=40636a52"></script>
+<script src="assets/js/speed-core.js?v=408e90a9"></script>
+<script src="assets/js/speed-fix.js?v=b647504f"></script>
+<script src="assets/js/admin-speed.js?v=4ce9d660"></script>
+<script src="assets/js/admin-digital.js?v=abc14d43"></script>
+<script src="assets/js/admin-marketplace.js?v=188b6957"></script>
+<script src="assets/js/admin-appstore.js?v=5d01d70d"></script>
+<script src="assets/js/admin-appdev.js?v=cc7cde0c"></script>
+<script src="assets/js/admin-experts.js?v=aab1e5a5"></script>
+<script src="assets/js/admin-sources.js?v=dee82801"></script>
+<!-- أدوات الصور/3D/الصفحات الثقيلة: تُحمَّل بعد بدء دخول اللوحة (لا قبله) فتفتح الرئيسية أسرع على الاتصال البطيء؛ الترتيب بينها محفوظ -->
+<script src="assets/js/img-gen.js?v=b3395c71"></script>
+<script src="assets/js/admin-studio.js?v=71f00dce"></script>
+<script src="assets/js/admin-toolwin.js?v=564ded12"></script>
+<script src="assets/js/admin-v360.js?v=5f2ece68"></script>
+<script src="assets/js/admin-imgbatch.js?v=40d73f05"></script>
+<script src="assets/js/barcode-tool.js?v=b91050e7"></script>
+<script src="assets/js/magic-layers.js?v=0354fe68"></script>
+<script src="assets/js/admin-magiclayers.js?v=2d559302"></script>
+<script src="assets/js/admin-pagepilot.js?v=a6a9b705"></script>
+<script src="assets/js/admin-pagepilot-hybrid.js?v=d1e5dd56"></script>
+<script src="assets/js/pack3d.js?v=f6f21e35"></script>
+<script src="assets/js/box-designer.js?v=879f0f1b"></script>
+<script src="assets/js/box-profiles.js?v=94500e39"></script>
+<script src="assets/js/box-studio.js?v=8db477c4"></script>
+<script src="assets/js/mockup-studio.js?v=5ecdbde5"></script>
+<script src="assets/js/mockup-models.js?v=6be0a1a8"></script>
+<script src="assets/js/img3d.js?v=a0392495"></script>
+<script src="assets/js/studio3d.js?v=b8f579c5"></script>
+<script src="assets/js/admin-imgqa.js?v=006b5c24"></script>
+<script src="assets/js/admin-pagerater.js?v=e6082095"></script>
+<script src="assets/js/img-upscale.js?v=1cadbea2"></script>
+<script src="assets/js/admin-copyset.js?v=c6ff820e"></script>
+<script src="assets/js/ai-capture.js?v=091af25f"></script>
+<script src="assets/js/admin-bgeditor.js?v=89850127"></script>
 <!--PB:start-->
-<script src="assets/js/admin-pb.js?v=fc225638"></script>
+<script src="assets/js/admin-pb.js?v=50458348"></script>
 <!--PB:end-->
 <script>
 /* مكتبة أيقونات SVG صغيرة لأزرار الجداول: AIC("edit") */

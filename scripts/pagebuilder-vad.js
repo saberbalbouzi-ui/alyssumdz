@@ -8,7 +8,10 @@ const PBVAd = (() => {
   const TYPE_BRIEF = { ugc: "a UGC-style ad that feels like a real customer or creator talking about and using the product, shot on a phone, natural and unpolished, speaking to camera or in an authentic testimonial/unboxing moment", product: "a clean product-showcase ad where the product is the hero, polished lighting, close-ups of details, smooth camera moves", trend: "a short-form TikTok trend-style ad: fast hooks in the first second, quick cuts, satisfying reveals, popular vertical-video pacing", free: "an ad exactly as described by the owner" };
   const ACTORS = [["none", "بلا ممثل (المنتج فقط)", ""], ["woman", "امرأة بخمار ولباس محتشم", "a woman wearing a plain tasteful hijab and modest full-coverage clothing (long sleeves, only face and hands visible)"], ["man", "رجل", "a man in plain modest everyday clothing"]];
   const LANGS = [["dz", "الدارجة الجزائرية", "Algerian Arabic dialect (Darija)"], ["ar", "العربية الفصحى", "clear Modern Standard Arabic"], ["fr", "الفرنسية", "French"], ["en", "الإنجليزية", "English"]];
-  const RATIOS = [["9:16", "9:16 — تيك توك وميتا وريلز وستوري"], ["16:9", "16:9 — يوتيوب والموقع"], ["1:1", "1:1 — منشور مربع"]];
+  const RATIOS = [["9:16", "9:16 — تيك توك وميتا وريلز وستوري"], ["16:9", "16:9 — يوتيوب والموقع"], ["1:1", "1:1 — منشور مربع"]];      // احتياطي؛ القائمة الكاملة لمقاسات التواصل من ImgGen.videoFormats()
+  const ratios = () => (typeof ImgGen !== "undefined" && ImgGen.videoFormats) ? ImgGen.videoFormats().map(f => [f.id, f.label]) : RATIOS;
+  const rword = r => { const m = /^([\d.]+):([\d.]+)$/.exec(String(r || "")), v = m ? (+m[1]) / (+m[2]) : 1; return (v > 1.2 ? "horizontal" : v < .95 ? "vertical" : "square") + " " + r; };
+  const rhint = r => { const f = (typeof ImgGen !== "undefined" && ImgGen.videoFormat) ? ImgGen.videoFormat(r) : null; return f ? "المقاس النهائي " + f.w + "×" + f.h + " بكسل — يُلزَم النموذج به في التعليمات، ويُقصّ الفيديو الناتج عليه بدقة إن اختلف." : ""; };
   const LENGTHS = [5, 8, 10, 12, 15];       // 15 ث حدّ Gemini Omni؛ 10 ث لا تكفي غالباً لجملة ترويجية كاملة + عرض المنتج + دعوة للطلب
   const CATS = { fashion: "أزياء", beauty: "تجميل وعناية", food: "أغذية", home: "منزل وأثاث", tech: "إلكترونيات", jewelry: "مجوهرات وإكسسوار", kids: "أطفال", health: "صحة وأعشاب", other: "عام" };
   /* اقتراح نوع/مدة حسب الفئة (احتياط حين لا يتوفر التعرّف) */
@@ -29,7 +32,7 @@ const PBVAd = (() => {
   function buildPrompt(opt, plan, lang) {
     const L = LANGS.find(x => x[0] === lang) || LANGS[0], act = ACTORS.find(x => x[0] === opt.actor) || ACTORS[0], T = TYPE_BRIEF[opt.type] || TYPE_BRIEF.product;
     const shots = (plan.shots || []).map(x => x.n + ". (" + x.s + "s) " + x.v + (x.c ? " — camera: " + x.c : "")).join(" ");
-    return "Create a " + opt.length + "-second " + (opt.ratio === "16:9" ? "horizontal" : opt.ratio === "1:1" ? "square" : "vertical") + " video ad: " + T + ". "
+    return "Create a " + opt.length + "-second " + rword(opt.ratio) + " video ad: " + T + ". "
       + (act[2] && opt.type !== "product" ? "On-screen person: " + act[2] + " (keep the same person throughout; never show bare skin beyond face and hands). " : "No on-screen person; the product only. ")
       + (shots ? "Shot plan: " + shots + " " : "") + (opt.free ? "Owner's description: " + opt.free + ". " : "")
       + "Voiceover language: " + L[2] + (plan.script && plan.script[lang] ? ". Voiceover script (speak it naturally" + (act[2] && opt.type !== "product" ? " with lip-sync" : "") + "): \"" + plan.script[lang] + "\"" : "") + ". "
@@ -60,7 +63,8 @@ const PBVAd = (() => {
 <div class="ep-n" id="pbvad-th">${esc((TYPES.find(x => x[0] === S.type) || [0, 0, ""])[2])}</div>
 ${S.type === "free" ? `<textarea id="pbvad-free" rows="3" style="width:100%" placeholder="صف الإعلان الذي تريده: المشهد، الحركة، الإحساس…">${esc(S.free)}</textarea>` : ""}
 <div class="pbrt-row"><button type="button" class="pbx-small" data-vad="rec">🔎 تعرَّف على المنتج واقترح</button></div>${rec}
-<div class="rt-g"><label>الممثل <select id="pbvad-a" class="pbx-small">${ACTORS.map(x => `<option value="${x[0]}"${S.actor === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label><label>المدة <select id="pbvad-l" class="pbx-small">${LENGTHS.map(n => `<option value="${n}"${S.length === n ? " selected" : ""}>${n} ثانية${n >= 12 ? " (أنسب لإعلان كامل)" : ""} · ${n * 4} رصيد</option>`).join("")}</select></label><label>التنسيق <select id="pbvad-r" class="pbx-small">${RATIOS.map(x => `<option value="${x[0]}"${S.ratio === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label></div>
+<div class="rt-g"><label>الممثل <select id="pbvad-a" class="pbx-small">${ACTORS.map(x => `<option value="${x[0]}"${S.actor === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label><label>المدة <select id="pbvad-l" class="pbx-small">${LENGTHS.map(n => `<option value="${n}"${S.length === n ? " selected" : ""}>${n} ثانية${n >= 12 ? " (أنسب لإعلان كامل)" : ""} · ${n * 4} رصيد</option>`).join("")}</select></label><label>التنسيق <select id="pbvad-r" class="pbx-small">${ratios().map(x => `<option value="${x[0]}"${S.ratio === x[0] ? " selected" : ""}>${x[1]}</option>`).join("")}</select></label></div>
+<div class="ep-n" id="pbvad-rh">${esc(rhint(S.ratio))}</div>
 <div class="ep-n"><b>③ لغات التعليق الصوتي</b> (نسخة لكل لغة بالممثل نفسه)</div><div class="pbrt-row">${LANGS.map(x => `<label class="pbx-small"><input type="checkbox" data-vad="lang" data-v="${x[0]}"${S.langs.includes(x[0]) ? " checked" : ""}> ${x[1]}</label>`).join("")}</div>
 <div class="pbrt-row"><button type="button" class="pbx-small pz-go" data-vad="plan">📝 اكتب خطة الإعلان</button></div>
 ${planHtml()}
@@ -105,7 +109,7 @@ ${warn.length ? `<div class="ep-n" style="color:#b45309">⚠️ عبارات ت�
     try {
       const blobs = []; for (const u of allPics().slice(0, 2)) blobs.push(await blobOf(u));
       const L = S.langs.map(l => (LANGS.find(x => x[0] === l) || LANGS[0])), act = ACTORS.find(x => x[0] === S.actor) || ACTORS[0];
-      const j = await ImgGen.text({ blobs, json: true, temp: .8, noThink: true, maxTokens: 4096, timeoutMs: 60000, maxModels: 4, prompt: "You are an e-commerce video-ad director for an Algerian online store (cash on delivery, delivery to all wilayas). Plan a " + S.length + "-second " + (S.ratio === "16:9" ? "horizontal" : S.ratio === "1:1" ? "square" : "vertical") + " ad: " + TYPE_BRIEF[S.type] + ". " + (S.rec && S.rec.name ? "Product: " + S.rec.name + ". " : "") + prodCtx() + (S.free ? " Owner's brief: " + S.free + "." : "") + (act[2] && S.type !== "product" ? " On-screen person: " + act[2] + "." : " No on-screen person.")
+      const j = await ImgGen.text({ blobs, json: true, temp: .8, noThink: true, maxTokens: 4096, timeoutMs: 60000, maxModels: 4, prompt: "You are an e-commerce video-ad director for an Algerian online store (cash on delivery, delivery to all wilayas). Plan a " + S.length + "-second " + rword(S.ratio) + " ad: " + TYPE_BRIEF[S.type] + ". " + (S.rec && S.rec.name ? "Product: " + S.rec.name + ". " : "") + prodCtx() + (S.free ? " Owner's brief: " + S.free + "." : "") + (act[2] && S.type !== "product" ? " On-screen person: " + act[2] + "." : " No on-screen person.")
         + " Answer in JSON only: {\"title\": short Arabic title, \"shots\": [{\"seconds\": int, \"visual\": what we see, \"camera\": camera move}] (3 to 5 shots whose seconds add up to " + S.length + "), \"script\": {" + L.map(x => "\"" + x[0] + "\": voiceover text in " + x[2]).join(", ") + "} (each voiceover must be speakable within " + S.length + " seconds, hook in the first sentence, one clear call to action to order now, no fake testimonials or statistics, NO medical claims or guaranteed results)}." });
       S.plan = parsePlan(j, { langs: S.langs }); if (!S.plan.shots.length) throw new Error("لم نتمكن من إنتاج خطة — أعد المحاولة");
       okPlan = true; refresh($("pbvad").parentNode); say("✅ الخطة جاهزة — عدّلها ثم أنشئ الإعلان");
@@ -135,7 +139,7 @@ ${warn.length ? `<div class="ep-n" style="color:#b45309">⚠️ عبارات ت�
     root.addEventListener("input", e => { const t = e.target; if (t.id === "pbvad-free") S.free = t.value; });
     root.addEventListener("change", async e => {
       const t = e.target;
-      if (t.id === "pbvad-a") S.actor = t.value; else if (t.id === "pbvad-l") S.length = +t.value; else if (t.id === "pbvad-r") S.ratio = t.value;
+      if (t.id === "pbvad-a") S.actor = t.value; else if (t.id === "pbvad-l") S.length = +t.value; else if (t.id === "pbvad-r") { S.ratio = t.value; const h = document.getElementById("pbvad-rh"); if (h) h.textContent = rhint(S.ratio); }
       else if (t.dataset.vad === "lang") { const v = t.dataset.v; S.langs = S.langs.filter(x => x !== v); if (t.checked) S.langs.push(v); if (!S.langs.length) { S.langs = [v]; t.checked = true; } if (S.plan) { for (const l of S.langs) if (S.plan.script[l] == null) S.plan.script[l] = ""; refresh(host); } }
       else if (t.id === "pbvad-sp") { const p = storeProds().find(x => x.slug === t.value); if (p) { for (const u of [p.cover].concat(p.images || []).filter(Boolean)) if (allPics().length < 4 && !allPics().includes(u)) S.extra.push(u); refresh(host); } }
       else if (t.id === "pbvad-f") { for (const f of Array.from(t.files || []).filter(f => /^image\//.test(f.type))) if (allPics().length < 4) S.extra.push(URL.createObjectURL(f)); refresh(host); }

@@ -27,7 +27,7 @@ const AdminHome = (() => {
 #ahome .ah-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #ahome .ah-seg{display:inline-flex;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14)}#ahome .ah-seg button{border:0;background:transparent;color:${MUT};padding:7px 14px;border-radius:999px;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer;transition:background .2s,color .2s}#ahome .ah-seg button.on{background:rgba(226,254,23,.2);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
 #ahome .ah-btn{padding:9px 16px;border-radius:12px;font:inherit;font-weight:800;color:#fff;cursor:pointer;background:rgba(226,254,23,.2);border:1px solid rgba(226,254,23,.45);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -6px 10px rgba(0,0,0,.2),0 6px 16px rgba(0,0,0,.25);backdrop-filter:blur(8px);transition:transform .2s,background .2s}#ahome .ah-btn:hover{transform:translateY(-2px);background:rgba(226,254,23,.32)}#ahome .ah-btn.gh{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.22)}
-#ahome .ah-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}#ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{flex:0 1 auto;text-align:center;font-size:.88rem!important;padding:6px 12px!important;min-height:36px!important;height:auto!important;line-height:1.3!important;border-radius:11px!important}#ahome .ah-rqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 12px}#ahome .ah-rqs>div{padding:8px 10px!important;min-height:0!important;height:auto!important;line-height:1.35;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}#ahome .ah-rqs b{display:block;font-size:1.3rem;font-weight:900;color:#fff;line-height:1.3}#ahome .ah-rqs span{font-size:.82rem;color:${MUT}}#ahome .ah-rqb{display:flex;flex-wrap:wrap;gap:8px}
+#ahome .ah-pay{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:10px}#ahome .ah-pc{padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);display:flex;flex-direction:column;gap:3px}#ahome .ah-pc strong{font-size:1.15rem;color:var(--g-mint,#e2fe17)}#ahome .ah-pc span{font-size:.8rem;opacity:.75}#ahome .ah-pc span.w{color:#fde047;opacity:1}#ahome .ah-pc span.r{color:#fdba74;opacity:1}#ahome .ah-ads{display:flex;flex-direction:column;gap:8px}#ahome .ah-ad{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05)}#ahome .ah-ad.off{opacity:.65}#ahome .ah-adt{flex:1;min-width:0;display:flex;flex-direction:column}#ahome .ah-adt b{font-size:1.05rem}#ahome .ah-adt span{font-size:.85rem;opacity:.7}#ahome .ah-adp{font-weight:800;font-size:.9rem;padding:3px 10px;border-radius:999px;background:rgba(226,254,23,.2);white-space:nowrap}#ahome .ah-ad.off .ah-adp{background:rgba(255,255,255,.12)}#ahome .ah-ad .ah-btn{flex:none;min-width:84px}#ahome .ah-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}#ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{flex:0 1 auto;text-align:center;font-size:.88rem!important;padding:6px 12px!important;min-height:36px!important;height:auto!important;line-height:1.3!important;border-radius:11px!important}#ahome .ah-rqs{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 12px}#ahome .ah-rqs>div{padding:8px 10px!important;min-height:0!important;height:auto!important;line-height:1.35;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}#ahome .ah-rqs b{display:block;font-size:1.3rem;font-weight:900;color:#fff;line-height:1.3}#ahome .ah-rqs span{font-size:.82rem;color:${MUT}}#ahome .ah-rqb{display:flex;flex-wrap:wrap;gap:8px}
 #ahome .ah-card{padding:16px;border-radius:20px;background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 14px 34px rgba(0,0,0,.35);color:#fff;min-width:0}
 #ahome .ah-card h3{margin:0 0 10px;font-size:1rem;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px}#ahome .ah-card h3 small{font-weight:600;color:${MUT};font-size:.78rem}
 #ahome .kpi{position:relative;overflow:hidden}#ahome .kpi .lb{display:flex;align-items:center;gap:8px;color:${MUT};font-size:.88rem}#ahome .kpi .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16)}#ahome .kpi .ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -43,7 +43,17 @@ const AdminHome = (() => {
 #ahome .at{display:grid;gap:8px}#ahome .at button{display:flex;align-items:center;gap:10px;text-align:start;padding:11px 13px;border-radius:14px;font:inherit;color:#fff;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);transition:transform .2s,background .2s}#ahome .at button:hover{transform:translateY(-2px);background:rgba(255,255,255,.1)}#ahome .at b{font-size:1.15rem;min-width:30px}#ahome .at span{color:${MUT};font-size:.86rem}#ahome .at .w{border-color:rgba(251,146,60,.5)}#ahome .at .w b{color:#fdba74}#ahome .at .ok b{color:#e2fe17}
 #ahome .em{padding:24px;text-align:center;color:${MUT}}
 @media(max-width:1100px){#ahome .ah-kpis{grid-template-columns:repeat(2,1fr)}#ahome .ah-row,#ahome .ah-row2{grid-template-columns:1fr}}
-@media(max-width:520px){#ahome .ah-kpis{grid-template-columns:1fr 1fr;gap:10px}#ahome .kpi .v{font-size:1.25rem}#ahome .ah-card{padding:12px}}`;
+@media(max-width:520px){#ahome .ah-kpis{grid-template-columns:1fr 1fr;gap:10px}#ahome .kpi .v{font-size:1.25rem}#ahome .ah-card{padding:12px}}
+#ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.25}
+@media(max-width:700px){
+#ahome .ah-hd{flex-direction:column;align-items:stretch;gap:10px}
+#ahome .ah-act{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+#ahome .ah-act .ah-seg{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:3px}#ahome .ah-act .ah-seg button{padding:9px 6px;text-align:center}
+#ahome .ah-act>.ah-btn{width:100%;display:inline-flex;align-items:center;justify-content:center;min-height:46px}
+#ahome .ah-quick{display:grid;grid-template-columns:1fr 1fr;gap:8px}#ahome .ah-quick+.ah-quick{margin-top:-2px}#ahome .ah-quick .ah-btn{width:100%;padding:8px 10px;font-size:.9rem}
+#ahome .ah-rqb{display:grid;grid-template-columns:1fr 1fr;gap:8px}#ahome .ah-rqb .ah-btn{width:100%;padding:8px 10px;font-size:.9rem}
+}
+`;
     document.head.appendChild(st);
   };
   const ICONS = {
@@ -121,8 +131,13 @@ const AdminHome = (() => {
   const hasTab = k => [...document.querySelectorAll(".nav-btn")].some(b => (b.getAttribute("onclick") || "").includes("'" + k + "'")), hasRuqya = () => typeof AdminRuqya !== "undefined" && hasTab("ruqya");   /* مواعيد الرقية خاصة بموقع البائع فقط */
   /* وصول سريع إلى ما يُستعمل كل يوم (يُخفى ما ليس له قسم في هذه النسخة/الصلاحية) */
   function quickBar(waiting) {
-    const Q = [["newp", "+ منتج", 1], ["ruqya-new", "حجز موعد رقية", hasRuqya()], ["ruqya", "مواعيد الرقية", hasRuqya()], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1], ["shipped", "الطلبات المسجلة", hasTab("shipped")], ["finance", "المخزون والأرباح", hasTab("finance")], ["customers", "العملاء", hasTab("customers")]];
-    return '<div class="ah-quick">' + Q.filter(q => q[2]).map(q => '<button type="button" class="ah-btn gh" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>';
+    let toPack = 0; try { if (typeof AdminPack !== "undefined" && AdminPack.count && hasTab("pack")) { toPack = S.packN || 0; AdminPack.count().then(n => { if (n !== null && n !== S.packN) { S.packN = n; refreshSoft(); } }); } } catch (e) { }   /* العدد من قائمة التجهيز نفسها (دالة الخادم) لا من حالة الطلبات */
+    /* ترتيب الاختصارات (طلب صاحب المتجر): الطلبات معاً ثم المنتج والعملاء (الأرباح والمسجلة والرقية تُفتح من القائمة/البطاقة)؛ كل مجموعة في صفها وما لا قسم له في هذه النسخة يُخفى */
+    const G = [
+      [["neword", "+ طلب", hasTab("orders"), 1], ["orders", "كل الطلبات", hasTab("orders"), 0], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1, 0], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack"), 0]],
+      [["newp", "+ منتج", 1, 1], ["customers", "العملاء", hasTab("customers"), 0]]
+    ];      /* أزرار الرقية حُذفت من الاختصارات (طلب صاحب المتجر): تبقى في بطاقة «مواعيد الرقية» أسفلها */
+    return G.map(g => g.filter(q => q[2])).filter(g => g.length).map(g => '<div class="ah-quick">' + g.map(q => '<button type="button" class="ah-btn' + (q[3] ? "" : " gh") + '" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>').join("");
   }
   function ruqyaCard() {
     if (!hasRuqya()) return "";
@@ -133,7 +148,33 @@ const AdminHome = (() => {
     return '<div class="ah-card" style="margin:0 0 14px"><h3>مواعيد الرقية <small>' + nd + '</small></h3><div class="ah-rqs">' +
       '<div><b>' + num(r.pending) + '</b><span>بانتظار التأكيد</span></div><div><b>' + num(r.today) + '</b><span>مواعيد اليوم</span></div>' +
       '<div><b>' + num(r.am) + '/' + r.cap + '</b><span>جلسات صباحاً</span></div><div><b>' + num(r.pm) + '/' + r.cap + '</b><span>جلسات مساءً</span></div></div>' +
-      '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button><button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
+      '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button>' + (r.uv ? '<button type="button" class="ah-btn" data-go="ruqya-uv">واتساب غير مؤكَّد (' + num(r.uv) + ')</button>' : '') + '<button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
+  }
+  /* صافي كل شركة توصيل (ما يخصّك بعد العمولة والتوصيل والإرجاع) كما في «تفاصيل الدفع» */
+  function payCard() {
+    if (typeof AdminPayments === "undefined" || !hasTab("payments")) return "";
+    const P = AdminPayments;
+    if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>جارٍ التحميل…</small></h3></div>'; }
+    let L; try { L = P.coNets(); } catch (e) { return ""; }
+    try { const en = A().enabledCompanyKeys ? A().enabledCompanyKeys() : null; if (Array.isArray(en)) L = L.filter(g => en.indexOf(g.k) >= 0); } catch (e) { }      /* الشركات المفعّلة فقط */
+    L = L.filter(g => g.net !== 0 || g.got !== 0);      /* بلا الشركات التي مدفوعها 0 */
+    if (!L.length) return "";
+    const nm = k => (typeof AdminCoStats !== "undefined" ? AdminCoStats.nameOf(k) : k), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const tot = L.reduce((t, g) => t + g.net, 0);
+    return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>المجموع ' + money(tot) + '</small></h3><div class="ah-pay">' + L.map(g => '<div class="ah-pc" data-noco><b>' + esc(nm(g.k)) + '</b><strong' + (g.net < 0 ? ' style="color:#fca5a5"' : "") + '>' + money(g.net) + '</strong><span>الصافي · ' + num(g.nDone) + ' مسلَّم' + (g.nRet ? ' · ' + num(g.nRet) + ' مرتجع' : "") + '</span><span>المحصَّل ' + money(g.got) + '</span>' + (g.nExp ? '<span class="w">في الطريق ' + num(g.nExp) + ' · متوقع ' + money(g.netExp) + '</span>' : "") + '</div>').join("") + '</div><div class="ah-rqb"><button type="button" class="ah-btn gh" data-go="payments">تفاصيل الدفع</button></div></div>';
+  }
+  /* الحملات الإعلانية الحالية (حملة لكل منتج) مع تفعيل/تعطيل مباشر؛ المنتهية بتاريخ «إلى» لا تظهر */
+  function adsCard() {
+    const a = A(); if (!a || !a.fin || !a.fin.ads || typeof a.adAllCamps !== "function") return "";
+    const today = a.isoDay ? a.isoDay() : new Date().toISOString().slice(0, 10), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    let L; try { L = a.adAllCamps(); } catch (e) { return ""; }
+    L = L.filter(c => c.cur && !(c.cfg.to && c.cfg.to < today) && (a.products || []).some(p => p.slug === c.slug));
+    if (!L.length) return "";
+    const on = L.filter(c => !c.cfg.off).length;
+    return '<div class="ah-card" style="margin:0 0 14px"><h3>الحملات الإعلانية <small>' + num(on) + ' نشطة من ' + num(L.length) + '</small></h3><div class="ah-ads">' + L.map(c => {
+      const p = (a.products || []).find(x => x.slug === c.slug), off = !!c.cfg.off;
+      return '<div class="ah-ad' + (off ? " off" : "") + '"><div class="ah-adt"><b>' + esc(p ? p.title : c.slug) + '</b><span>' + esc(c.cfg.name || "") + (c.cfg.from ? ' · منذ ' + esc(c.cfg.from) : "") + '</span></div><span class="ah-adp">' + (off ? "معطّلة" : "نشطة") + '</span><button type="button" class="ah-btn' + (off ? "" : " gh") + '" data-adt="' + esc(c.slug) + '">' + (off ? "تفعيل" : "تعطيل") + '</button></div>';
+    }).join("") + '</div></div>';
   }
   function render() {
     const root = $("ahome"); if (!root) return;
@@ -144,6 +185,7 @@ const AdminHome = (() => {
     const sales = sum(ok.map(o => Number(o.total) || 0)), salesP = sum(okp.map(o => Number(o.total) || 0));
     const od = a.overdueList ? a.overdueList().length : 0;
     const waiting = all.filter(o => o.status === "nouvelle" || !o.status).length;
+    try { localStorage.setItem("adm_snap", JSON.stringify({ t: Date.now(), name: (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "", per: days === 1 ? "اليوم" : days === 7 ? "7 أيام" : days + " يوماً", sales: money(sales), orders: num(cur.length), wait: num(waiting), pack: S.packN == null ? null : num(S.packN) })); } catch (e) { }   /* لقطة تُعرض فور فتح اللوحة التالي قبل اكتمال التحميل */
     const avg = ok.length ? sales / ok.length : 0, avgP = okp.length ? salesP / okp.length : 0;
     const sb = hourly ? bucket(all, day0(Date.now()) - 6 * DAY, t1, DAY, o => okOrder(o) ? Number(o.total) || 0 : 0) : bucket(all, f1, t1, step, o => okOrder(o) ? Number(o.total) || 0 : 0);
     const ob = hourly ? bucket(all, day0(Date.now()) - 6 * DAY, t1, DAY, () => 1) : bucket(all, f1, t1, step, () => 1);
@@ -153,11 +195,12 @@ const AdminHome = (() => {
     const ch = chartSvg(series, labels, fmt);
     const counts = GROUPS.map((g, i) => cur.filter(o => stOf(o.status).g === i).length);
     const last = all.slice().sort((p, q) => new Date(q.date) - new Date(p.date)).slice(0, 8), lastSt = last.map(realSt);
-    const prodMap = {}; cur.filter(okOrder).forEach(o => (a.parseOrderItems ? a.parseOrderItems(o.items) : []).forEach(it => { prodMap[it.title] = (prodMap[it.title] || 0) + it.qty; }));
+    const prodMap = {}; cur.filter(okOrder).forEach(o => (a.orderItemsCanon ? a.orderItemsCanon(o) : a.parseOrderItems ? a.parseOrderItems(o.items) : []).forEach(it => { prodMap[it.title] = (prodMap[it.title] || 0) + it.qty; }));
     const top = Object.entries(prodMap).sort((p, q) => q[1] - p[1]).slice(0, 5), topMax = top.length ? top[0][1] : 1;
     const prods = (a.products || []).filter(p => p.active !== false), low = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) > 0 && Number(p.stock) <= 5), out = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) <= 0);
     const fail = all.filter(o => o.status === "echec").length;
     const sOver = (typeof StockCheck !== "undefined") ? StockCheck.summary() : { orders: 0, products: [] };
+    let dh = 0; try { dh = typeof AdminDelHealth !== "undefined" ? AdminDelHealth.attention() : 0; } catch (e) { }      /* شركات توصيل تحتاج انتباهاً (أسعار تغيّرت/فحص فشل/مكاتب غير محمَّلة) */
     let mg = []; try { mg = window.AdminUpsell && AdminUpsell.mergeable ? AdminUpsell.mergeable(a.orders || []) : []; } catch (e) { }
     let ag = null; try { if (typeof AdminAgency !== "undefined") { ag = AdminAgency.alerts(); AdminAgency.warm(); } } catch (e) { }
     let dg = null; try { if (typeof AdminDigital !== "undefined") { dg = AdminDigital.alerts(); AdminDigital.warm(); } } catch (e) { }
@@ -171,10 +214,11 @@ const AdminHome = (() => {
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
     root.innerHTML = `
 <div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
-<div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div>
-<button type="button" class="ah-btn" data-go="neword">+ طلب</button><button type="button" class="ah-btn gh" data-go="orders">كل الطلبات</button></div></div>
+<div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div></div></div>
 ${quickBar(waiting)}
 ${ruqyaCard()}
+${payCard()}
+${adsCard()}
 <div class="ah-kpis">
 ${kpi("sales", "المبيعات", money(sales), delta(sales, salesP), sb, MINT)}
 ${kpi("orders", "الطلبات", num(cur.length), delta(cur.length, prev.length), ob, "#3987e5")}
@@ -195,6 +239,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <button type="button" class="${sOver.orders ? "w" : "ok"}" data-go="orders-new" title="${sOver.products.map(x => x.title + ": المطلوب " + x.demand + " والمتاح " + x.stock).join(" | ").replace(/"/g, "")}"><b>${num(sOver.orders)}</b><span>طلب جديد يفوق المخزون</span></button>
 <button type="button" class="${adLow.length ? "w" : "ok"}" data-go="ads" title="${adLow.map(x => x.p.title + ": " + x.stock + " علبة تكفي ≈ " + x.left + " يوم").join(" | ").replace(/"/g, "")}"><b>${num(adLow.length)}</b><span>حملة نشطة مخزونها يكفي 5 أيام أو أقل</span></button>
 <button type="button" class="${mg.length ? "w" : "ok"}" data-go="merge"><b>${num(mg.length)}</b><span>طلب مرتبط (عرض بعد الشراء) ينتظر الدمج</span></button>
+${dh ? `<button type="button" class="w" data-go="delivery"><b>${num(dh)}</b><span>شركة توصيل تحتاج انتباهك (أسعار أو مكاتب)</span></button>` : ""}
 ${ag ? `<button type="button" class="${ag.ready ? "w" : "ok"}" data-go="agency"><b>${num(ag.ready)}</b><span>حساب إعلاني جاهز — استلم رابط الدعوة</span></button>
 <button type="button" class="${ag.late ? "w" : "ok"}" data-go="agency"><b>${num(ag.late)}</b><span>طلب خدمة تسويق تأخر عن مهلة التسليم</span></button>` : ""}
 ${aic ? `<button type="button" class="w" data-go="aicredit"><b>${aic.st === "out" ? "نفد" : "قارب"}</b><span>${aic.st === "out" ? "رصيد Alyssum API نفد — تتوقف أدوات الذكاء حتى تجديده" : "رصيد Alyssum API على وشك النفاد" + (aic.p != null ? " (متبقٍ " + aic.p + "٪)" : "")}</span></button>` : ""}
@@ -219,6 +264,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
     root.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { S.metric = b.dataset.m; render(); });
     root.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { S.table = !S.table; render(); });
     root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
+    root.querySelectorAll("[data-adt]").forEach(b => b.onclick = async () => { b.disabled = true; try { await A().toggleAdSlug(b.dataset.adt); } catch (e) { console.warn("AdminHome", e); } render(); });
     root.querySelectorAll("tr[data-o]").forEach(tr => tr.onclick = () => { const o = tr._o, ix = (A().orders || []).indexOf(o); if (ix >= 0 && A().openOrderPreview) { try { A().openOrderPreview(ix); return; } catch (e) { } } go("orders"); const q = $("order-filter-q"); if (q) { q.value = o.phone || o.id || ""; try { A().applyOrderFilters(); } catch (e) { } } });
     const box = $("ah-ch"), svg = box && box.querySelector("svg"); if (!svg) return;
     const tip = $("ah-tip"), cx = $("ah-cx");
@@ -236,7 +282,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   function go(w) {
     const a = A(), btn = k => [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
     if (w === "neword") { try { if (typeof ManualOrder !== "undefined") ManualOrder.open({ mode: "new" }); } catch (e) { } return; }
-    if (w === "ruqya-new" || w === "ruqya-pending" || w === "ruqya") { try { AdminRuqya.queue(w === "ruqya-new" ? { view: "man" } : w === "ruqya-pending" ? { filter: "pending" } : { filter: "up" }); } catch (e) { } const rb = btn("ruqya"); if (rb) a.tab("ruqya", rb); return; }
+    if (w === "ruqya-new" || w === "ruqya-pending" || w === "ruqya-uv" || w === "ruqya") { try { AdminRuqya.queue(w === "ruqya-new" ? { view: "man" } : w === "ruqya-pending" ? { filter: "pending" } : w === "ruqya-uv" ? { filter: "uv" } : { filter: "up" }); } catch (e) { } const rb = btn("ruqya"); if (rb) a.tab("ruqya", rb); return; }
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }
     if (w === "orders-new") { a.tab("orders", btn("orders")); const s = $("order-filter-status"); if (s) { s.value = "nouvelle"; try { a.applyOrderFilters(); } catch (e) { } } return; }
     if (w === "merge") { a.tab("orders", btn("orders")); try { const g = (AdminUpsell.mergeable(a.orders || []) || [])[0]; if (g) { const ix = (a.orders || []).indexOf(g.keep); const q = $("order-filter-q"); if (q) { q.value = g.keep.phone || g.keep.id || ""; a.applyOrderFilters(); } if (ix >= 0 && a.openOrderPreview) setTimeout(() => { try { a.openOrderPreview(ix); } catch (e) { } }, 150); } } catch (e) { } return; }
@@ -253,12 +299,34 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
     document.addEventListener("pointerdown", mark, { capture: true, once: true }); document.addEventListener("keydown", mark, { capture: true, once: true });
     [1200, 3000].forEach(ms => setTimeout(() => { if (touched || /^#(?!$)/.test(location.hash)) return; const on = document.querySelector(".nav-btn.on"); const land = (typeof AdminEdition !== "undefined" && AdminEdition.edition() === "design") ? "builder" : (typeof AdminKind !== "undefined" && AdminKind.landing() === "digital") ? "digital" : "home"; if (on && !new RegExp("'" + land + "'").test(on.getAttribute("onclick") || "")) open(); }, ms));
   }
+  /* زر/سحب الرجوع (من حافة الشاشة) لا يغلق اللوحة: يغلق النافذة المفتوحة أولاً، ثم يعود للقسم السابق، وعلى الرئيسية يحذّر مرة قبل الخروج.
+     مدخل سجلّ «حارس» يُعاد دفعه بعد كل رجوع (الاستوديو وروابط الأدوات تدفع مداخلها الخاصة فلا يتعارض معها: لا نتصرف إلا عند بلوغ المدخل الأساسي). */
+  const TABS = ["home"];
+  function trackTab(t) { if (S.popping || !t) return; if (t === "home") { TABS.length = 0; TABS.push("home"); return; } if (TABS[TABS.length - 1] !== t) { TABS.push(t); if (TABS.length > 30) TABS.shift(); } }
+  function backGuard() {
+    if (S.bg) return; S.bg = 1;
+    try { history.pushState({ adm: 1 }, "", location.href); } catch (e) { return; }
+    window.addEventListener("popstate", e => {
+      if (e.state && e.state.adm) return;                                   // رجوع من مدخل خاص (استوديو/أداة) إلى الحارس: لا شيء
+      const a = A(); let did = false;
+      const mb = [...document.querySelectorAll(".modal-bg.open")], pb = document.getElementById("pb-app"), spv = document.getElementById("spv");
+      if (mb.length) { mb.forEach(x => x.classList.remove("open")); did = true; }
+      else if (pb && pb.classList.contains("on") && typeof PBApp !== "undefined" && PBApp.close) { try { PBApp.close(); } catch (x) { } did = true; }
+      else if (spv && spv.classList.contains("on") && typeof SitePreview !== "undefined" && SitePreview.close) { try { SitePreview.close(); } catch (x) { } did = true; }
+      else if (TABS.length > 1 && a && a.tab) { TABS.pop(); S.popping = true; try { a.tab(TABS[TABS.length - 1]); } catch (x) { } S.popping = false; did = true; }
+      if (did) { try { history.pushState({ adm: 1 }, "", location.href); } catch (x) { } S.exitT = 0; return; }
+      if (S.exitT && Date.now() - S.exitT < 2500) { S.exitT = 0; history.back(); return; }          // ثاني رجوع خلال ثانيتين: خروج فعلي
+      S.exitT = Date.now(); try { toast("اسحب مرة أخرى للخروج من اللوحة"); } catch (x) { } try { history.pushState({ adm: 1 }, "", location.href); } catch (x) { }
+    });
+  }
   function init() {
     const a = A(); if (!a || a.__homeWrap || typeof a.renderAll !== "function") return setTimeout(init, 400);
     a.__homeWrap = 1; const o = a.renderAll;
-    a.renderAll = function () { const r = o.apply(this, arguments); try { render(); if (!S.shown) { S.shown = true; open(); guard(); } } catch (e) { console.warn("AdminHome", e); } return r; };
-    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); return r; };
-    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); } }
+    /* الرئيسية تُفتح حتى لو تعثّر رسم قسم آخر (finally) وفور إظهار اللوحة دون انتظار أي رسم: كان تعثّر renderAll يترك «الطلبات» ظاهرة طويلاً */
+    a.renderAll = function () { try { return o.apply(this, arguments); } finally { try { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } } catch (e) { console.warn("AdminHome", e); } } };
+    { const app = $("app"); if (app && app.classList.contains("hidden")) { const ob = new MutationObserver(() => { if (app.classList.contains("hidden")) return; ob.disconnect(); if (!S.shown) { S.shown = true; try { open(); guard(); backGuard(); } catch (e) { console.warn("AdminHome", e); } } }); ob.observe(app, { attributes: true, attributeFilter: ["class"] }); } }
+    const ot = a.tab; a.tab = function (t, b) { const r = ot.apply(this, arguments); document.body.classList.toggle("ah-on", t !== "orders"); if (t === "home") render(); try { trackTab(t); } catch (e) { } return r; };
+    if (a.orders && a.orders.length !== undefined && !$("app").classList.contains("hidden")) { render(); if (!S.shown) { S.shown = true; open(); guard(); backGuard(); } }
   }
   window.addEventListener("alyssum:ai-credit", () => refreshSoft());
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();

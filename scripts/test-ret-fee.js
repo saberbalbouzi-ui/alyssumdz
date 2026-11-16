@@ -1,0 +1,30 @@
+/* رسم الإرجاع المضبوط لشركة الطلب يسبق الثابت 250 في حساب الأرباح: python3 -m http.server 8765 & NODE_PATH=/opt/node-tools/node_modules node scripts/test-ret-fee.js */
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage(); let pass = 0, fail = 0; const ok = (n, v, x) => { if (v) pass++; else fail++; console.log((v ? "✓ " : "✗ ") + n + (v ? "" : " " + JSON.stringify(x || ""))); };
+  await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+  const errs = []; p.on("pageerror", e => errs.push(String(e)));
+  await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); } catch (e) { } });
+  await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(6000);
+  const r = await p.evaluate(async () => { let co = "dhd"; const o = { id: "T1" }; Admin.orderCoKey = () => co; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { dhd: { retFee: 50 }, wecan: {}, yalidine: {} });
+    await Admin.loadFinance(); const out = { def: { mode: Admin.fin.set.retMode, val: Admin.fin.set.retVal } };
+    out.dhd = Admin.retCost(0, o); co = "yalidine"; out.yalNone = Admin.retCost(0, o); Admin.deliveryCfg.yalidine.retFee = 250; out.yalSet = Admin.retCost(0, o); Admin.deliveryCfg.yalidine.retFee = "";
+    co = "wecan"; out.wecan = Admin.retCost(0, o); co = "none"; out.none = Admin.retCost(0, o); out.noOrder = Admin.retCost(0);
+    Admin.fin.set.retVal = 120; out.setVal = Admin.retCost(0, o); out.dhdStillCo = (co = "dhd", Admin.retCost(0, o)); Admin.deliveryCfg.dhd.retFee = 0; out.dhdZero = Admin.retCost(0, o);
+    try { Admin.renderFinance(true); out.render = "ok"; out.hasMode = !!document.getElementById("fin-ret-mode"); out.retVal = document.getElementById("fin-ret") && document.getElementById("fin-ret").value; } catch (e) { out.render = String(e); } return out; });
+  ok("الافتراضي في الإعدادات: قيمة ثابتة 0", r.def.mode === "val" && r.def.val === 0, r.def);
+  ok("DHD برسم إرجاع 50 في إعداد الشركة ⇒ 50", r.dhd === 50, r);
+  ok("بلا رسم مضبوط وبلا قيمة في الإعدادات ⇒ 0 (لا 250 مفترضة)", r.yalNone === 0 && r.wecan === 0 && r.none === 0 && r.noOrder === 0, r);
+  ok("رسم مضبوط لياليدين (250) يُحترم", r.yalSet === 250, r);
+  ok("قيمة الإعدادات تُستعمل عند غياب رسم الشركة، ورسم الشركة يسبقها (DHD 50)", r.setVal === 120 && r.dhdStillCo === 50, r);
+  ok("رسم إرجاع 0 مضبوط ⇒ 0", r.dhdZero === 0, r);
+  ok("صفحة الأرباح ترسم بلا أخطاء وحقل الإرجاع قيمة فقط", r.render === "ok" && r.hasMode === false, r);
+  const late = await p.evaluate(() => { const o = { id: "T1" }; let co = "yalidine"; Admin.orderCoKey = () => co; Admin.retDays = () => 14; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { yalidine: {}, dhd: {} });
+    const out = { def: Admin.retLate(o) }; Admin.deliveryCfg.yalidine.lateFee = 10; out.yal10 = Admin.retLate(o); co = "dhd"; out.dhdNone = Admin.retLate(o); Admin.deliveryCfg.dhd.lateFee = 5; out.dhd5 = Admin.retLate(o); Admin.retDays = () => 8; out.within = Admin.retLate(o); out.field = !!document.getElementById("dlv-late"); return out; });
+  ok("غرامة التأخر افتراضها 0 (بلا غرامة)", late.def === 0, late);
+  ok("ضبط 10 دج/يوم لياليدين ⇒ 4 أيام تأخير = 40", late.yal10 === 40, late);
+  ok("غرامة كل شركة مستقلة: DHD بلا إعداد 0 وبـ5 ⇒ 20، وضمن المهلة 0", late.dhdNone === 0 && late.dhd5 === 20 && late.within === 0, late);
+  ok("حقل «غرامة التأخر» موجود في إعداد الشركة", late.field, late);
+  ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
+  console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
+})();

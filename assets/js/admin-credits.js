@@ -85,7 +85,7 @@ const Credits = (() => {
   const BTN = [
     ['[data-ai="bgen"]', b => /خلفيتي/.test(b.textContent) ? 0 : (() => { const n = Math.max(1, Math.min(4, +((q("pbai-bgc") || {}).value) || 2)); return n >= 4 ? 6 : n * 2; })()],
     ['[data-ai="shot"]', () => 2], ['[data-ai="fashion"]', () => 2], ['[data-ai="bgblend"]', () => 2], ['[data-ai="expand"]', () => 6], ['[data-ai="edit"]', () => 2], ['[data-ai="tryon"]', () => 2], ['[data-ai="fx"]', () => 2],
-    ['[data-ai="recolor"]', () => 2 * Math.max(1, (document.querySelectorAll('[data-rck]:checked').length + (((q("pbai-rcu") || {}).checked) ? 1 : 0)) || 1)], ['[data-ai="v360"]', () => 14],
+    ['[data-ai="recolor"]', () => 2 * Math.max(1, (document.querySelectorAll('[data-rck]:checked').length + (((q("pbai-rcu") || {}).checked) ? 1 : 0)) || 1)],
     ['[data-txb="go"]', () => 2], ['[data-mwa="go"]', () => 1], ['[data-lg="ai"]', () => 2], ['[data-bgr="open"]', () => 1], ['[data-q="smart-magic"]', () => 1], ['[data-upx="go"]', () => 2],
     ['[data-pp="go"]', () => { const ab = q("pp-ab"); return ab && ab.checked ? 70 : 40; }]
   ];
@@ -131,6 +131,7 @@ const Credits = (() => {
     const hist = s.log.slice(-8).reverse().map(l => `<tr><td>${esc(l.k)}</td><td style="direction:ltr">${l.n > 0 ? "+" : ""}${fmt(l.n)}</td></tr>`).join("");
     const bg = document.createElement("div"); bg.id = "cr-bg";
     bg.innerHTML = `<div id="cr-box" role="dialog" aria-modal="true"><button type="button" class="cr-x" data-cr="x" aria-label="إغلاق">✕</button><h3>رصيد الأدوات</h3>
+<div data-aisw-card></div>
 <div class="cr-big">${fmt(s.left)} / ${fmt(s.total)}</div><div class="cr-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
 <div style="font-size:.8rem;opacity:.85">1$ = ${PER_USD} رصيد · الرصيد لا ينتهي · أدوات الاستوديو المحلية (حواف، تمويه، بازل، ماسك، كولاج، باركود، استوديو 3D…) مجانية.</div>
 <b style="display:block;margin-top:.8rem">شراء رصيد</b><div class="cr-packs">${PACKS.map(p => `<button type="button" class="cr-btn" data-cr="buy" data-u="${p[0]}" data-c="${p[1]}">${p[0]}$<small>${p[1]} رصيد${p[1] > p[0] * PER_USD ? " <span dir=\"ltr\">(+" + Math.round((p[1] / (p[0] * PER_USD) - 1) * 100) + "%)</span>" : ""}</small></button>`).join("")}</div>

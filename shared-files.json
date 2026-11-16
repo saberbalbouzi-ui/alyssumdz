@@ -392,7 +392,13 @@
     "p/_template/index.html",
     "scripts/gen-blog.py",
     "scripts/gen-order-embeds.py",
-    "scripts/social-publish.js"
+    "scripts/social-publish.js",
+    "manifest-admin.webmanifest",
+    "assets/js/admin-delhealth.js",
+    "assets/js/admin-busy.js",
+    "assets/js/admin-v360.js",
+    "assets/js/lp-pixels.js",
+    "assets/js/admin-aiswitch.js"
   ],
   "owner_only": {
     "_doc": "ما يخصّ متجر البائع (أليسوم) ولا يصل أي عميل: لا يُنسخ إلى حزم التحديث ولا يظهر في مكتبة العميل. make-template يستبعده ويُصفّي index.json (قالب s-alyssum) ويفشل لو ظهر أي أثر لهوية البائع في الحزمة.",
