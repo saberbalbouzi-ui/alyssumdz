@@ -1,0 +1,19 @@
+إعداد الحماية المعلن للاختبار فقط: {"on":true,"rc":true,"img":true,"keys":true,"dev":true,"frame":true,"note":true,"sel":true,"copy":true,"print":true,"bots":false,"updatedAt":"2026-11-07T21:49:55.333Z"}
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.waitForSelector: Timeout 10000ms exceeded.
+Call log:
+[2m  - waiting for locator('#dg-box') to be visible[22m
+[2m    23 × locator resolved to hidden <div id="dg-box" class="os-hide">…</div>[22m
+
+    at /tmp/mn-wt/scripts/test-digital-checkout.js:38:14 {
+  log: [
+    "  - waiting for locator('#dg-box') to be visible",
+    '    23 × locator resolved to hidden <div id="dg-box" class="os-hide">…</div>'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.22.0
