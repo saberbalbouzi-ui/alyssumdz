@@ -1,0 +1,30 @@
+/* ترحيل تعريفة WeCan/DHD المدمجة إلى إعدادات المتجر (priceFix) وإزالتها من الكود المشترك: python3 -m http.server 8765 & NODE_PATH=/opt/node-tools/node_modules node scripts/test-tariff-migration.js */
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch(); let pass = 0, fail = 0; const ok = (n, v, x) => { if (v) pass++; else fail++; console.log((v ? "✓ " : "✗ ") + n + (v ? "" : " " + JSON.stringify(x || ""))); };
+  const errs = [];
+  const mk = async (cfg) => { const ctx = await b.newContext(), p = await ctx.newPage(); p.on("pageerror", e => errs.push(String(e)));
+    await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+    await p.addInitScript((cfg) => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); if (cfg) localStorage.setItem("alyssum_delivery_cfg", JSON.stringify(cfg)); } catch (e) { } }, cfg);
+    await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(6000); return [ctx, p]; };
+  const old = { wecan: { enabled: true, apiKey: "k", prices: { 8: { home: 1000, stop: 800 }, 16: { home: 540, stop: 400 } } }, dhd: { enabled: true, apiToken: "t", prices: { 8: { home: 1100, stop: 600 } } }, yalidine: { enabled: true, prices: { 8: { home: 1200, stop: 700 } } } };
+  let [c1, p1] = await mk(old); await p1.evaluate(o => { window.__old = o; }, old);
+  const r = await p1.evaluate(() => { const A = Admin; localStorage.setItem("alyssum_delivery_cfg", JSON.stringify(window.__old)); A.loadDeliveryCfg(); return { wt: A.DELIVERY_COMPANIES.wecan.tariff, dt: A.DELIVERY_COMPANIES.dhd.tariff, w: A.deliveryCfg.wecan, d: A.deliveryCfg.dhd, y: A.deliveryCfg.yalidine, ls: JSON.parse(localStorage.getItem("alyssum_delivery_cfg")).wecan.priceBase }; });
+  ok("الكود المشترك بلا تعريفة مدمجة لـWeCan وDHD", r.wt === undefined && r.dt === undefined, [r.wt, r.dt]);
+  ok("متجر قائم: أسعاره الحالية تُجمَّد كتعديلات خاصة به (لا يتغيّر سعر بشار)", r.w.priceBase === "8=1000/800, 16=540/400" && r.w.priceFix === undefined && r.w.tariffMigrated === 1 && r.w.prices[8].home === 1000, r.w);
+  ok("DHD كذلك، وياليدين لا تُمسّ", r.d.priceBase === "8=1100/600" && r.y.priceBase === undefined && r.y.tariffMigrated === undefined, [r.d, r.y]);
+  ok("يُحفظ في الجهاز", r.ls === "8=1000/800, 16=540/400", r.ls);
+  await c1.close();
+  let [c2, p2] = await mk(null);
+  const r2 = await p2.evaluate(() => { const A = Admin; const pr = { 8: { home: 900, stop: 650 } }; return { fresh: A.applyPriceFix(pr, {}, "wecan")[8], freshOther: A.applyPriceFix(pr, {}, "wecan")[42], withFix: A.applyPriceFix(pr, { priceFix: "8=700/500" }, "wecan")[8] }; });
+  let [c3, p3] = await mk(null);
+  const r3 = await p3.evaluate(() => { const A = Admin, api = { 8: { home: 900, stop: 650 } }, cfg = { priceBase: "8=1000/800, 16=540/400" }; return { def8: A.applyPriceFix(api, cfg, "wecan")[8], def16: A.applyPriceFix(api, cfg, "wecan")[16], apiMode8: A.applyPriceFix(api, Object.assign({ priceSrc: "api" }, cfg), "wecan")[8], apiMode16: A.applyPriceFix(api, Object.assign({ priceSrc: "api" }, cfg), "wecan")[16], fix: A.applyPriceFix(api, Object.assign({ priceSrc: "api", priceFix: "8=700/500" }, cfg), "wecan")[8] }; });
+  ok("المتجر المرحَّل (بلا priceSrc): جدوله المحفوظ يبقى فوق الـAPI كما كان (بشار 1000/800)", r3.def8.home === 1000 && r3.def16.home === 540, r3);
+  ok("priceSrc=api: الـAPI يفوز (بشار 900/650) وجدوله يملأ غير المجلوبة فقط (16=540)، وتعديله اليدوي يفوز على الكل", r3.apiMode8.home === 900 && r3.apiMode16.home === 540 && r3.fix.home === 700, r3);
+  await c3.close();
+  ok("متجر جديد: أسعار الـAPI كما جاءت ولا جدول مدمج يُضاف", r2.fresh.home === 900 && r2.fresh.stop === 650 && r2.freshOther === undefined, r2);
+  ok("تعديل المتجر يبقى فوق الـAPI", r2.withFix.home === 700, r2);
+  await c2.close();
+  ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
+  console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
+})();
