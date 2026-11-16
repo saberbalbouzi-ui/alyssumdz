@@ -10,6 +10,7 @@ const { chromium } = require("playwright");
     const A = Admin, out = {}, H = AdminDelHealth;
     window.toast = () => { }; A.publishShipCo = () => { }; A.saveDeliveryCfgToStorage = () => { };
     A.fees = [{ id: 8, name: "Béchar", home: 800, stop: 600 }, { id: 16, name: "Alger", home: 400, stop: 300 }];
+    A.DELIVERY_COMPANIES.wecan.feesGeneric = false; /* الاختبار يحاكي شركة أسعارها من الـAPI معتمدة */
     A.deliveryCfg = { wecan: { enabled: true, isDefault: true, apiKey: "k", apiSecret: "s", prices: { 8: { home: 1000, stop: 800 }, 16: { home: 540, stop: 400 } }, priceBase: "8=1000/800, 16=540/400", pricesSrc: "api", pricesErr: "CORS_BLOCKED", checkedAt: Date.now() - 20 * 86400000 } };
     /* 1) صف الصحة قبل الفحص: فشل جلب + قِدَم */
     const r1 = H.rows().find(r => r.key === "wecan"); out.r1 = { level: r1.level, n: r1.issues.length, txt: r1.issues.map(i => i.t).join(" | "), src: r1.src };
@@ -49,6 +50,21 @@ const { chromium } = require("playwright");
   ok("البطاقة تُرسم في قسم شركات التوصيل مع صف الشركة وأداة الشرح", ui.has && ui.rows === 1 && ui.why && /صحة التوصيل/.test(ui.txt), ui);
   const home = await p.evaluate(() => { try { AdminHome.render(); } catch (e) { } const h = document.getElementById("ahome"); return h ? /شركة توصيل تحتاج انتباهك/.test(h.innerText) : null; });
   ok("الرئيسية: بند «شركة توصيل تحتاج انتباهك» يظهر", home === true, home);
+  const G = await p.evaluate(async () => {
+    const A = Admin, H = AdminDelHealth, out = {}; A.DELIVERY_COMPANIES.wecan.feesGeneric = true;
+    A.deliveryCfg.wecan = { enabled: true, isDefault: true, apiKey: "k", apiSecret: "s", prices: { 21: { home: 850, stop: 600 } }, priceBase: "21=850/600", drift: { n: 5, list: [{ id: 8, cur: [1000, 800], api: [900, 650] }] }, checkedAt: 0 };
+    const r = H.rows().find(x => x.key === "wecan"); out.row = { level: r.level, generic: r.generic, canCheck: r.canCheck, acts: r.issues.map(i => i.act), kinds: r.issues.map(i => i.k) };
+    let calls = 0; A.courierFetch = async () => { calls++; return { ok: true, status: 200, text: "{}" }; }; out.auto = await H.autoCheck(); out.autoCalls = calls;
+    out.parse = H.parseGrid("21 650 450\nOuargla 900 650\nBéchar 1300/1100\nxx 5 9");
+    A.publishShipCo = () => { }; A.saveDeliveryCfgToStorage = () => { }; A.renderDelivery = () => { };
+    const im = H.importGrid("wecan", "21 650 450\n30 900 650"); const c = A.deliveryCfg.wecan; out.im = { n: im.n, fix: c.priceFix, p21: c.prices[21], p30: c.prices[30] };
+    A.DELIVERY_COMPANIES.wecan.feesGeneric = true; Admin.tab("delivery"); document.getElementById("dlv-health") && 0; H.render(); out.ta = !!document.getElementById("dh-g-wecan");
+    return out; });
+  ok("WeCan (تعريفة عامة): الصف سليم رغم وجود «فرق» قديم، مع تنبيه معلوماتي وإجراء الاستيراد", G.row.level === "ok" && G.row.generic && !G.row.canCheck && G.row.acts.includes("grid") && G.row.kinds.every(k => k === "info"), G.row);
+  ok("الفحص التلقائي لا يجلب أسعار شركة تعريفتها عامة", G.auto === 0 && G.autoCalls === 0, [G.auto, G.autoCalls]);
+  ok("تحليل الجدول الملصوق: رقم الولاية أو اسمها، وصيغة 1300/1100، ويتجاهل المرفوض", G.parse[21] && G.parse[21].h === 650 && G.parse[21].s === 450 && G.parse[30] && G.parse[30].h === 900 && G.parse[30].s === 650 && G.parse[8] && G.parse[8].h === 1300 && G.parse[8].s === 1100 && !G.parse[0], G.parse);
+  ok("الاستيراد: يحفظ ولايتين في priceFix ويصيران سعر المتجر (21 ⟵ 650/450)", G.im.n === 2 && G.im.p21.home === 650 && G.im.p21.stop === 450 && G.im.p30.stop === 650 && /21=650\/450/.test(G.im.fix), G.im);
+  ok("خانة لصق الجدول تظهر لشركة تعريفتها عامة", G.ta, G.ta);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();

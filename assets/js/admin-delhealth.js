@@ -18,16 +18,17 @@ const AdminDelHealth = (() => {
     const all = a.allDeliveryCompanies(), def = a.activeCompanyKey ? a.activeCompanyKey() : "", out = [];
     a.enabledCompanyKeys().forEach(k => {
       const co = all[k] || {}, cfg = a.deliveryCfg[k] || {}, issues = [], nP = Object.keys(cfg.prices || {}).length, api = !!co.feesRequest && hasCreds(cfg), last = cfg.checkedAt || cfg.pricesAt || 0;
-      const d = cfg.drift && cfg.drift.n ? cfg.drift : null, ign = d && cfg.driftIgnore === sig(d);
+      const generic = !!co.feesGeneric, d = !generic && cfg.drift && cfg.drift.n ? cfg.drift : null, ign = d && cfg.driftIgnore === sig(d);
       if (cfg.pricesErr) issues.push({ k: "bad", t: "آخر جلب لأسعارها فشل: " + String(cfg.pricesErr).replace(/CORS_BLOCKED/g, "الاتصال بالشركة محجوب من المتصفح").slice(0, 140), act: "check" });
       if (d && !ign) { const x = d.list[0]; issues.push({ k: "warn", t: d.n + " ولاية تختلف أسعارها في حسابك عمّا يعرضه متجرك" + (x ? " (مثلاً " + wname(x.id) + ": متجرك " + x.cur[0] + "/" + x.cur[1] + " وحسابك " + x.api[0] + "/" + x.api[1] + ")" : ""), act: "approve" }); }
-      if (api && !cfg.pricesErr && last && Date.now() - last > STALE) issues.push({ k: "warn", t: "لم تُفحص أسعارها " + ageTxt(last), act: "check" });
-      if (api && !last) issues.push({ k: "warn", t: "لم تُفحص أسعارها بعد", act: "check" });
+      if (generic) issues.push({ k: "info", t: "أسعارك التعاقدية لا يعرضها الـAPI (يعرض تعريفة عامة تخالف نموذج الشركة)، فأدخل أسعار ولاياتك من جدول الشركة بالاستيراد أدناه أو «تعديل أسعار ولايات»", act: "grid" });
+      if (api && !generic && !cfg.pricesErr && last && Date.now() - last > STALE) issues.push({ k: "warn", t: "لم تُفحص أسعارها " + ageTxt(last), act: "check" });
+      if (api && !generic && !last) issues.push({ k: "warn", t: "لم تُفحص أسعارها بعد", act: "check" });
       if (co.feesRequest && !nP) issues.push({ k: "warn", t: "لا أسعار محفوظة لها" + (api ? "" : " — أدخل مفاتيح الحساب لجلبها"), act: api ? "check" : "" });
       const dn = co.centersRequest ? desksOf(k) : -1;
       if (k === def && co.centersRequest && dn === 0) issues.push({ k: "warn", t: "مكاتب Stop Desk لم تُحمَّل بعد", act: "desks" });
-      const level = issues.some(i => i.k === "bad") ? "bad" : issues.length ? "warn" : "ok";
-      const nO = optCount(cfg), toStore = String(cfg.optionsToStore || "").trim() === "1"; out.push({ key: k, toStore, name: co.name || k, def: k === def, level, issues, nP, nO, canProbe: !!PROBE[k] && hasCreds(cfg), desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api });
+      const level = issues.some(i => i.k === "bad") ? "bad" : issues.some(i => i.k === "warn") ? "warn" : "ok";
+      const nO = optCount(cfg), toStore = String(cfg.optionsToStore || "").trim() === "1"; out.push({ key: k, toStore, name: co.name || k, def: k === def, level, issues, nP, nO, canProbe: !!PROBE[k] && hasCreds(cfg), desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api && !generic, generic });
     });
     return out;
   }
@@ -81,7 +82,8 @@ const AdminDelHealth = (() => {
   }
 
   /* ── خيارات الناقلين داخل شركة واحدة (WeCan: ZR وWeCanServices…) ── */
-  const PROBE = { wecan: ["/shipping-options", "/shipping_options", "/delivery-options", "/shipping-methods", "/tariffs", "/rates", "/carriers", "/options", "/fees"] };
+  /* لا مسارات خيارات معروفة: اكتشاف 1.89.1223/1225 على WeCan أعاد 404 لكل المسارات المخمَّنة؛ و/fees عامة لا تطابق العقد. يُترك الاكتشاف معطَّلاً (PROBE فارغ) ويُدخل المتجر جدوله يدوياً (خيارات الشحن/تعديل أسعار ولايات أو الاستيراد أدناه) */
+  const PROBE = {};
   const num = v => { const n = Number(String(v == null ? "" : v).replace(/[^0-9.]/g, "")); return isFinite(n) ? n : 0; };
   const NAMEK = ["carrier_name", "carrier", "provider_name", "provider", "company", "name", "label", "title"];
   const brandOf = o => { for (const k of NAMEK) { const v = o[k]; if (typeof v === "string" && v.trim() && v.length < 40) return v.trim(); if (v && typeof v === "object" && typeof v.name === "string") return v.name.trim(); } return ""; };
@@ -146,10 +148,30 @@ const AdminDelHealth = (() => {
   }
   const optCount = cfg => Object.keys(((typeof Admin !== "undefined" && Admin.optionsOf) ? Admin.optionsOf(cfg) : {}) || {}).length;
 
+  /* استيراد جدول أسعار ملصوق: أسطر «رقم الولاية منزل مكتب» (أو اسم الولاية بدل الرقم) بأي فواصل؛ يُدمج في «تعديل أسعار ولايات» فوق ما كان */
+  function parseGrid(txt) {
+    const a = A(), out = {}; const W = (typeof WILAYAS !== "undefined" ? WILAYAS : []).filter(w => !w.par), byName = {}; W.forEach(w => { byName[a.normName(w.name)] = w.id; });
+    String(txt || "").split(/\n+/).forEach(line => {
+      const nums = (line.match(/\d+/g) || []).map(Number); let id = 0, rest = nums.slice();
+      const nm = a.normName(line.replace(/[0-9=:\/|,،;؛\-–—]+/g, " ")), hit = Object.keys(byName).find(k => k && nm.indexOf(k) >= 0);
+      if (nums.length && nums[0] >= 1 && nums[0] <= 58 && (nums.length >= 3 || (nums.length === 2 && nums[1] >= 100))) { id = nums[0]; rest = nums.slice(1); } else if (hit) { id = byName[hit]; rest = nums.filter(n => n >= 100 || n === 0); }
+      const pr = rest.filter(n => n >= 100 && n <= 9999); if (id && pr.length >= 1) out[id] = { h: pr[0], s: pr[1] || pr[0] };
+    });
+    return out;
+  }
+  function importGrid(key, txt) {
+    const a = A(), cfg = a && a.deliveryCfg[key]; if (!cfg) return { n: 0 };
+    const g = parseGrid(txt), ids = Object.keys(g); if (!ids.length) return { n: 0 };
+    const cur = a.parsePriceFix(cfg.priceFix || ""), merged = {}; Object.keys(cur).forEach(k => { merged[k] = cur[k].home + "/" + cur[k].stop; }); ids.forEach(k => { merged[k] = g[k].h + "/" + g[k].s; });
+    const fix = Object.keys(merged).sort((x, y) => x - y).map(k => k + "=" + merged[k]).join(", ");
+    const c2 = Object.assign({}, cfg, { priceFix: fix }); a.deliveryCfg[key] = Object.assign({}, c2, { prices: a.applyPriceFix(c2.prices || {}, c2, key) });
+    a.saveDeliveryCfgToStorage(); try { a.publishShipCo(); } catch (e) { } try { a.renderDelivery(); } catch (e) { }
+    return { n: ids.length, fix };
+  }
   const LV = { ok: ["ok", "سليم"], warn: ["w", "يحتاج انتباهاً"], bad: ["r", "مشكلة"] };
   function css() {
     if (document.getElementById("dh-css")) return; const st = document.createElement("style"); st.id = "dh-css";
-    st.textContent = "#dlv-health .dh-r{display:flex;gap:.6rem;align-items:flex-start;flex-wrap:wrap;padding:.55rem 0;border-top:1px solid var(--line)}#dlv-health .dh-r:first-of-type{border-top:0}#dlv-health .dh-n{min-width:140px;font-weight:800}#dlv-health .dh-m{flex:1;min-width:220px;font-size:.86rem;line-height:1.7}#dlv-health .dh-c{display:inline-block;padding:.05rem .5rem;border-radius:99px;font-size:.72rem;font-weight:800;margin-inline-start:.3rem;border:1px solid transparent}#dlv-health .dh-c.ok{color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent);border-color:color-mix(in srgb,var(--blue) 35%,transparent)}#dlv-health .dh-c.w{color:var(--g-amber,#b45309);background:rgba(var(--g-amber-rgb,180,83,9),.16);border-color:rgba(var(--g-amber-rgb,180,83,9),.4)}#dlv-health .dh-c.r{color:var(--red);background:color-mix(in srgb,var(--red) 14%,transparent);border-color:color-mix(in srgb,var(--red) 38%,transparent)}#dlv-health .dh-i{color:var(--red)}#dlv-health .dh-i.w{color:var(--g-amber,#b45309)}#dlv-health .dh-x{border-top:1px dashed var(--line);margin-top:.5rem;padding-top:.5rem}#dlv-health .dh-x select{max-width:100%;margin:.15rem}#dlv-health .dh-o{margin:.4rem 0;padding:.5rem .7rem;border-radius:12px;background:rgba(127,127,127,.1);font-size:.86rem;line-height:1.8}";
+    st.textContent = "#dlv-health .dh-r{display:flex;gap:.6rem;align-items:flex-start;flex-wrap:wrap;padding:.55rem 0;border-top:1px solid var(--line)}#dlv-health .dh-r:first-of-type{border-top:0}#dlv-health .dh-n{min-width:140px;font-weight:800}#dlv-health .dh-m{flex:1;min-width:220px;font-size:.86rem;line-height:1.7}#dlv-health .dh-c{display:inline-block;padding:.05rem .5rem;border-radius:99px;font-size:.72rem;font-weight:800;margin-inline-start:.3rem;border:1px solid transparent}#dlv-health .dh-c.ok{color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent);border-color:color-mix(in srgb,var(--blue) 35%,transparent)}#dlv-health .dh-c.w{color:var(--g-amber,#b45309);background:rgba(var(--g-amber-rgb,180,83,9),.16);border-color:rgba(var(--g-amber-rgb,180,83,9),.4)}#dlv-health .dh-c.r{color:var(--red);background:color-mix(in srgb,var(--red) 14%,transparent);border-color:color-mix(in srgb,var(--red) 38%,transparent)}#dlv-health .dh-i{color:var(--red)}#dlv-health .dh-i.w{color:var(--g-amber,#b45309)}#dlv-health .dh-i.n{color:inherit;opacity:.85}#dlv-health .dh-x{border-top:1px dashed var(--line);margin-top:.5rem;padding-top:.5rem}#dlv-health .dh-x select{max-width:100%;margin:.15rem}#dlv-health .dh-o{margin:.4rem 0;padding:.5rem .7rem;border-radius:12px;background:rgba(127,127,127,.1);font-size:.86rem;line-height:1.8}";
     document.head.appendChild(st);
   }
   function explainHtml() {
@@ -167,11 +189,11 @@ const AdminDelHealth = (() => {
     box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap"><b style="color:var(--green)">صحة التوصيل</b><span class="hint" style="margin:0">يفحص النظام أسعار شركاتك تلقائياً كل أسبوع عند فتح اللوحة وينبّهك إن اختلف حسابك عمّا يعرضه متجرك</span></div>' +
       (R.length ? R.map(r => '<div class="dh-r" data-k="' + esc(r.key) + '"><div class="dh-n">' + esc(r.name) + (r.def ? ' <small>(الافتراضية)</small>' : "") + '<span class="dh-c ' + LV[r.level][0] + '">' + LV[r.level][1] + '</span></div><div class="dh-m">' +
         "الأسعار: " + r.nP + " ولاية — المصدر: " + esc(r.src) + " — آخر فحص: " + esc(ageTxt(r.last)) + (r.desks >= 0 ? " — مكاتب Stop Desk المحمَّلة: " + r.desks : "") + (r.nO ? " — خيارات الناقلين: " + r.nO + " ولاية (" + (r.toStore ? "يُعتمد الأرخص في المتجر" : "تظهر في الطلب اليدوي فقط، والمتجر لا يتأثر") + ")" : "") +
-        r.issues.map(i => '<br><span class="dh-i ' + (i.k === "warn" ? "w" : "") + '">' + esc(i.t) + "</span>").join("") +
+        r.issues.map(i => '<br><span class="dh-i ' + (i.k === "warn" ? "w" : i.k === "info" ? "n" : "") + '">' + esc(i.t) + "</span>").join("") +
         '</div><div>' + (r.canCheck ? '<button class="small gray" type="button" data-dh="check" data-k="' + esc(r.key) + '">فحص الآن</button> ' : "") +
         (r.canProbe ? '<button class="small gray" type="button" data-dh="opts" data-k="' + esc(r.key) + '">اكتشاف خيارات الناقلين</button> ' : "") +
         (r.issues.some(i => i.act === "approve") ? '<button class="small gold" type="button" data-dh="approve" data-k="' + esc(r.key) + '">اعتمد أسعار حسابك</button> <button class="small gray" type="button" data-dh="ignore" data-k="' + esc(r.key) + '">تجاهل</button> ' : "") +
-        (r.issues.some(i => i.act === "desks") ? '<button class="small gray" type="button" data-dh="desks" data-k="' + esc(r.key) + '">حمّل المكاتب</button>' : "") + "</div></div>").join("") : '<p class="hint">لا شركة توصيل مفعّلة بعد.</p>') + explainHtml();
+        (r.issues.some(i => i.act === "desks") ? '<button class="small gray" type="button" data-dh="desks" data-k="' + esc(r.key) + '">حمّل المكاتب</button>' : "") + "</div>" + (r.generic ? '<div style="flex-basis:100%"><textarea id="dh-g-' + esc(r.key) + '" rows="3" placeholder="ألصق جدول الأسعار: سطر لكل ولاية «رقم الولاية  منزل  مكتب» مثل: 21 650 450" style="width:100%"></textarea><button class="small gold" type="button" data-dh="grid" data-k="' + esc(r.key) + '">استيراد الأسعار</button> <span class="hint" id="dh-gm-' + esc(r.key) + '" style="margin:0"></span></div>' : "") + "</div>").join("") : '<p class="hint">لا شركة توصيل مفعّلة بعد.</p>') + explainHtml();
     if (keepX) { document.getElementById("dh-w").value = keepX.w; document.getElementById("dh-t").value = keepX.t; document.getElementById("dh-o").value = keepX.o; document.getElementById("dh-out").innerHTML = keepX.out; }
     if (!box._bound) {
       box._bound = true;
@@ -180,6 +202,7 @@ const AdminDelHealth = (() => {
         if (act === "check") { b.disabled = true; b.textContent = "جارٍ الفحص…"; await check(k); }
         else if (act === "approve") { if (window.confirm("اعتماد أسعار حسابك لهذه الشركة؟ ستُطبَّق على متجرك فوراً وتنتهي أولويّة جدولك المحفوظ لها.")) { approve(k); render(); } }
         else if (act === "ignore") ignore(k);
+        else if (act === "grid") { const ta = document.getElementById("dh-g-" + k), r = importGrid(k, ta ? ta.value : ""), m = document.getElementById("dh-gm-" + k); if (m) m.textContent = r.n ? "✅ استُوردت أسعار " + r.n + " ولاية" : "لم أجد أسطراً بصيغة «رقم الولاية منزل مكتب»"; if (r.n) { ta.value = ""; if (typeof toast === "function") toast("✅ استُوردت أسعار " + r.n + " ولاية"); } }
         else if (act === "opts") { b.disabled = true; b.textContent = "جارٍ الاكتشاف…"; await discover(k); }
         else if (act === "desks") { try { await a.syncDesksFromCompany(k); } catch (e) { } render(); }
         else if (act === "why") { const r = explain($("dh-w").value, $("dh-t").value, $("dh-o").value), out = $("dh-out"); out.innerHTML = r ? '<div class="dh-o"><b>السعر النهائي: ' + r.final + " دج</b><br>" + r.lines.map(l => esc(l.t) + ": " + esc(l.v)).join("<br>") + "</div>" : ""; }
@@ -193,7 +216,7 @@ const AdminDelHealth = (() => {
     const a = A(); if (!a || !a.enabledCompanyKeys) return 0; let n = 0;
     try {
       const all = a.allDeliveryCompanies();
-      for (const k of a.enabledCompanyKeys()) { const co = all[k], cfg = a.deliveryCfg[k] || {}; if (!co || !co.feesRequest || !hasCreds(cfg)) continue; if (cfg.checkedAt && Date.now() - cfg.checkedAt < EVERY) continue; n++; await check(k, true); }
+      for (const k of a.enabledCompanyKeys()) { const co = all[k], cfg = a.deliveryCfg[k] || {}; if (!co || !co.feesRequest || co.feesGeneric || !hasCreds(cfg)) continue; if (cfg.checkedAt && Date.now() - cfg.checkedAt < EVERY) continue; n++; await check(k, true); }
       for (const k of a.enabledCompanyKeys()) { const cfg = a.deliveryCfg[k] || {}; if (!PROBE[k] || !hasCreds(cfg) || cfg.optionsFix) continue; if (cfg.optProbeV === 2 && cfg.optProbeAt && Date.now() - cfg.optProbeAt < 14 * DAY) continue; n++; await discover(k); }      /* اكتشاف خيارات الناقلين مرة كل 14 يوماً (لا يعمل إن كتبتَ خياراتك يدوياً) */
     } catch (e) { console.warn("delhealth auto", e); }
     notify(); return n;
@@ -208,5 +231,5 @@ const AdminDelHealth = (() => {
     S.timer = setTimeout(autoCheck, 30000);
   }
   const t0 = setInterval(() => { if (typeof Admin !== "undefined" && Admin.renderDelivery) { clearInterval(t0); boot(); } }, 400);
-  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, discover, extractOptions, _S: S };
+  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, discover, extractOptions, parseGrid, importGrid, PROBE, _S: S };
 })();
