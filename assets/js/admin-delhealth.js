@@ -1,0 +1,142 @@
+/* «صحة التوصيل» (v1.89.1222): بطاقة أعلى قسم «شركات التوصيل» تُريك لكل شركة مفعّلة: عمر آخر فحص لأسعارها ومصدرها، فشل الجلب، فرق أسعار حسابك عمّا يعرضه متجرك، ومكاتب Stop Desk المحمَّلة؛
+   مع فحص تلقائي كل 7 أيام عند فتح اللوحة، واعتماد أسعار الحساب بنقرة، وأداة «لماذا هذا السعر؟» تشرح سلسلة المصدر (صفحة/منتج ← شركة ← تعديل يدوي/حسابك/جدولك المحفوظ ← تعديل السعر المعروض).
+   لا يخصّ متجراً بعينه: يقرأ إعدادات المتجر الحالي فقط. */
+const AdminDelHealth = (() => {
+  const A = () => (typeof Admin !== "undefined" ? Admin : null);
+  const DAY = 86400000, STALE = 14 * DAY, EVERY = 7 * DAY;
+  const esc = v => String(v == null ? "" : v).replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c]));
+  const S = { running: {}, told: false, timer: 0 };
+  const ageTxt = t => { if (!t) return "لم يُفحص بعد"; const d = Math.floor((Date.now() - t) / DAY); return d <= 0 ? "اليوم" : d === 1 ? "أمس" : "منذ " + d + " يوماً"; };
+  const wname = id => { const a = A(), w = ((a && a.fees) || []).find(x => Number(x.id) === Number(id)) || (typeof WILAYAS !== "undefined" ? WILAYAS.find(x => Number(x.id) === Number(id)) : null); return w ? w.name : String(id); };
+  const sig = d => { const t = JSON.stringify(((d && d.list) || []).map(x => [x.id, x.api[0], x.api[1]])); let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); };
+  const hasCreds = cfg => !!(cfg && (cfg.apiId || cfg.apiToken || cfg.apiKey));
+  const desksOf = key => { const a = A(); let n = 0; try { (typeof WILAYAS !== "undefined" ? WILAYAS : (a.fees || [])).forEach(w => (w.desks || []).forEach(d => { if (a.deskCoOf && a.deskCoOf(d) === key) n++; })); } catch (e) { } return n; };
+
+  /* صفوف الصحة: {key,name,level:ok|warn|bad,issues:[{t,k}],...} */
+  function rows() {
+    const a = A(); if (!a || !a.enabledCompanyKeys) return [];
+    const all = a.allDeliveryCompanies(), def = a.activeCompanyKey ? a.activeCompanyKey() : "", out = [];
+    a.enabledCompanyKeys().forEach(k => {
+      const co = all[k] || {}, cfg = a.deliveryCfg[k] || {}, issues = [], nP = Object.keys(cfg.prices || {}).length, api = !!co.feesRequest && hasCreds(cfg), last = cfg.checkedAt || cfg.pricesAt || 0;
+      const d = cfg.drift && cfg.drift.n ? cfg.drift : null, ign = d && cfg.driftIgnore === sig(d);
+      if (cfg.pricesErr) issues.push({ k: "bad", t: "آخر جلب لأسعارها فشل: " + String(cfg.pricesErr).replace(/CORS_BLOCKED/g, "الاتصال بالشركة محجوب من المتصفح").slice(0, 140), act: "check" });
+      if (d && !ign) { const x = d.list[0]; issues.push({ k: "warn", t: d.n + " ولاية تختلف أسعارها في حسابك عمّا يعرضه متجرك" + (x ? " (مثلاً " + wname(x.id) + ": متجرك " + x.cur[0] + "/" + x.cur[1] + " وحسابك " + x.api[0] + "/" + x.api[1] + ")" : ""), act: "approve" }); }
+      if (api && !cfg.pricesErr && last && Date.now() - last > STALE) issues.push({ k: "warn", t: "لم تُفحص أسعارها " + ageTxt(last), act: "check" });
+      if (api && !last) issues.push({ k: "warn", t: "لم تُفحص أسعارها بعد", act: "check" });
+      if (co.feesRequest && !nP) issues.push({ k: "warn", t: "لا أسعار محفوظة لها" + (api ? "" : " — أدخل مفاتيح الحساب لجلبها"), act: api ? "check" : "" });
+      const dn = co.centersRequest ? desksOf(k) : -1;
+      if (k === def && co.centersRequest && dn === 0) issues.push({ k: "warn", t: "مكاتب Stop Desk لم تُحمَّل بعد", act: "desks" });
+      const level = issues.some(i => i.k === "bad") ? "bad" : issues.length ? "warn" : "ok";
+      out.push({ key: k, name: co.name || k, def: k === def, level, issues, nP, desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api });
+    });
+    return out;
+  }
+  const attention = () => { try { return rows().filter(r => r.level !== "ok").length; } catch (e) { return 0; } };
+
+  /* فحص: يجلب أسعار الحساب الخام ويحسب الفرق (لا يغيّر ما يُعرض في المتجر ما لم يكن مصدر الأسعار api) */
+  async function check(key, quiet) {
+    const a = A(); if (!a || S.running[key]) return false; S.running[key] = 1;
+    try { await a.fetchCompanyPrices(key, { auto: true, check: true }); } catch (e) { console.warn("delhealth", e); }
+    S.running[key] = 0; render(); return true;
+  }
+  function approve(key) {
+    const a = A(), cfg = a && a.deliveryCfg[key]; if (!cfg || !cfg.apiPrices) return false;
+    const c2 = Object.assign({}, cfg, { priceSrc: "api" }), applied = a.applyPriceFix(cfg.apiPrices, c2, key);
+    a.deliveryCfg[key] = Object.assign({}, c2, { prices: applied, drift: a.priceDrift(cfg.apiPrices, applied), driftIgnore: "" });
+    a.saveDeliveryCfgToStorage(); try { a.publishShipCo(); } catch (e) { } try { a.renderDelivery(); } catch (e) { }
+    if (typeof toast === "function") toast("✅ اعتُمدت أسعار حسابك لدى " + ((a.allDeliveryCompanies()[key] || {}).name || key));
+    return true;
+  }
+  function ignore(key) {
+    const a = A(), cfg = a && a.deliveryCfg[key]; if (!cfg || !cfg.drift) return false;
+    a.deliveryCfg[key] = Object.assign({}, cfg, { driftIgnore: sig(cfg.drift) }); a.saveDeliveryCfgToStorage(); render(); return true;
+  }
+
+  /* لماذا هذا السعر؟ — over: "" (حسب الافتراضي) | zones | def | مفتاح شركة */
+  function explain(wid, type, over) {
+    const a = A(); if (!a) return null; type = type === "stop" ? "stop" : "home";
+    const all = a.allDeliveryCompanies(), W = ((a.fees || []).find(x => Number(x.id) === Number(wid))) || (typeof WILAYAS !== "undefined" ? WILAYAS.find(x => Number(x.id) === Number(wid)) : null);
+    if (!W) return null;
+    const lines = [], zone = Number(W[type]) || 0, st = a.pricingState ? a.pricingState() : { key: "" };
+    let key = "", why = "";
+    if (over === "zones") why = "إعداد الصفحة أو المنتج: أسعار المناطق";
+    else if (over && over !== "def" && over !== "free" && all[over]) { key = over; why = "إعداد الصفحة أو المنتج: شركة " + all[over].name; }
+    else { key = st.key || ""; why = key ? "الشركة الافتراضية (" + (all[key] || {}).name + ")" : "الشركة الافتراضية بلا أسعار محفوظة ⟵ تُعتمد أسعار المناطق"; }
+    lines.push({ t: "مصدر الحساب", v: why });
+    if (!key) { lines.push({ t: "سعر المناطق للولاية", v: zone + " دج" }); return { final: zone, key: "", lines }; }
+    const cfg = a.deliveryCfg[key] || {}, co = all[key] || {}, id = Number(W.id);
+    const fx = a.parsePriceFix(cfg.priceFix || "")[id], bt = a.parsePriceFix(co.tariff || cfg.priceBase || "")[id], ap = (cfg.apiPrices || {})[id], cur = (cfg.prices || {})[id];
+    const apiOnly = String(cfg.priceSrc || "").toLowerCase() === "api";
+    const origin = fx ? "تعديل يدوي منك (تعديل أسعار ولايات)" : apiOnly ? (ap ? "حسابك لدى الشركة (جُلب " + ageTxt(cfg.apiAt) + ")" : bt ? "جدولك المحفوظ (لم يُجلب سعر هذه الولاية من حسابك)" : "الأسعار المخزَّنة") : bt ? "جدولك المحفوظ (مصدر الأسعار ليس api)" : ap ? "حسابك لدى الشركة (جُلب " + ageTxt(cfg.apiAt) + ")" : "الأسعار المخزَّنة";
+    const base = cur ? Number(cur[type]) || 0 : 0;
+    lines.push({ t: "سعر الولاية المعتمد", v: base ? base + " دج — المصدر: " + origin : "لا سعر لهذه الولاية ⟵ تُعتمد أسعار المناطق" });
+    if (ap && Number(ap[type]) !== base) lines.push({ t: "سعر حسابك الخام", v: (Number(ap[type]) || 0) + " دج (يختلف عمّا يعرضه متجرك)" });
+    if (bt && fx === undefined && bt[type] !== undefined && Number(bt[type]) !== base) lines.push({ t: "جدولك المحفوظ", v: bt[type] + " دج" });
+    const adj = Number(cfg.adj) || 0;
+    if (adj) lines.push({ t: "تعديل السعر المعروض", v: "- " + adj + " دج (يُخصم من سعر الشركة؛ يتخطّاه إن كان تعديل البلدية فعّالاً)" });
+    lines.push({ t: "سعر المناطق للمقارنة", v: zone + " دج" });
+    const fin = base ? Math.max(0, base - adj) : zone;
+    return { final: fin, key, lines };
+  }
+
+  const LV = { ok: ["ok", "سليم"], warn: ["w", "يحتاج انتباهاً"], bad: ["r", "مشكلة"] };
+  function css() {
+    if (document.getElementById("dh-css")) return; const st = document.createElement("style"); st.id = "dh-css";
+    st.textContent = "#dlv-health .dh-r{display:flex;gap:.6rem;align-items:flex-start;flex-wrap:wrap;padding:.55rem 0;border-top:1px solid var(--line)}#dlv-health .dh-r:first-of-type{border-top:0}#dlv-health .dh-n{min-width:140px;font-weight:800}#dlv-health .dh-m{flex:1;min-width:220px;font-size:.86rem;line-height:1.7}#dlv-health .dh-c{display:inline-block;padding:.05rem .5rem;border-radius:99px;font-size:.72rem;font-weight:800;margin-inline-start:.3rem;border:1px solid transparent}#dlv-health .dh-c.ok{color:var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent);border-color:color-mix(in srgb,var(--blue) 35%,transparent)}#dlv-health .dh-c.w{color:var(--g-amber,#b45309);background:rgba(var(--g-amber-rgb,180,83,9),.16);border-color:rgba(var(--g-amber-rgb,180,83,9),.4)}#dlv-health .dh-c.r{color:var(--red);background:color-mix(in srgb,var(--red) 14%,transparent);border-color:color-mix(in srgb,var(--red) 38%,transparent)}#dlv-health .dh-i{color:var(--red)}#dlv-health .dh-i.w{color:var(--g-amber,#b45309)}#dlv-health .dh-x{border-top:1px dashed var(--line);margin-top:.5rem;padding-top:.5rem}#dlv-health .dh-x select{max-width:100%;margin:.15rem}#dlv-health .dh-o{margin:.4rem 0;padding:.5rem .7rem;border-radius:12px;background:rgba(127,127,127,.1);font-size:.86rem;line-height:1.8}";
+    document.head.appendChild(st);
+  }
+  function explainHtml() {
+    const a = A(), W = (a.fees || []).slice().sort((x, y) => x.id - y.id), all = a.allDeliveryCompanies(), en = a.enabledCompanyKeys();
+    return '<div class="dh-x"><b>لماذا هذا السعر؟</b> <small class="hint">اختر ولاية ونوع التوصيل ومصدر الحساب فيُريك من أين جاء السعر</small><br>' +
+      '<select id="dh-w">' + W.filter(w => !w.par).map(w => '<option value="' + w.id + '">' + w.id + " — " + esc(w.name) + "</option>").join("") + "</select>" +
+      '<select id="dh-t"><option value="home">توصيل للمنزل</option><option value="stop">مكتب Stop Desk</option></select>' +
+      '<select id="dh-o"><option value="">الشركة الافتراضية للمتجر</option><option value="zones">أسعار المناطق (إعداد صفحة/منتج)</option>' + en.filter(k => all[k] && all[k].feesRequest).map(k => '<option value="' + k + '">شركة ' + esc(all[k].name) + "</option>").join("") + "</select>" +
+      '<button class="small gray" type="button" data-dh="why">اشرح</button><div id="dh-out"></div></div>';
+  }
+  function render() {
+    const a = A(), tab = document.getElementById("tab-delivery"); if (!a || !tab) return; css();
+    let box = document.getElementById("dlv-health"); if (!box) { box = document.createElement("div"); box.id = "dlv-health"; box.className = "card"; const first = tab.querySelector(".card"); if (first && first.nextSibling) tab.insertBefore(box, first.nextSibling); else tab.appendChild(box); }
+    const R = rows(), keepX = document.getElementById("dh-w") ? { w: document.getElementById("dh-w").value, t: document.getElementById("dh-t").value, o: document.getElementById("dh-o").value, out: document.getElementById("dh-out").innerHTML } : null;
+    box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap"><b style="color:var(--green)">صحة التوصيل</b><span class="hint" style="margin:0">يفحص النظام أسعار شركاتك تلقائياً كل أسبوع عند فتح اللوحة وينبّهك إن اختلف حسابك عمّا يعرضه متجرك</span></div>' +
+      (R.length ? R.map(r => '<div class="dh-r" data-k="' + esc(r.key) + '"><div class="dh-n">' + esc(r.name) + (r.def ? ' <small>(الافتراضية)</small>' : "") + '<span class="dh-c ' + LV[r.level][0] + '">' + LV[r.level][1] + '</span></div><div class="dh-m">' +
+        "الأسعار: " + r.nP + " ولاية — المصدر: " + esc(r.src) + " — آخر فحص: " + esc(ageTxt(r.last)) + (r.desks >= 0 ? " — مكاتب Stop Desk المحمَّلة: " + r.desks : "") +
+        r.issues.map(i => '<br><span class="dh-i ' + (i.k === "warn" ? "w" : "") + '">' + esc(i.t) + "</span>").join("") +
+        '</div><div>' + (r.canCheck ? '<button class="small gray" type="button" data-dh="check" data-k="' + esc(r.key) + '">فحص الآن</button> ' : "") +
+        (r.issues.some(i => i.act === "approve") ? '<button class="small gold" type="button" data-dh="approve" data-k="' + esc(r.key) + '">اعتمد أسعار حسابك</button> <button class="small gray" type="button" data-dh="ignore" data-k="' + esc(r.key) + '">تجاهل</button> ' : "") +
+        (r.issues.some(i => i.act === "desks") ? '<button class="small gray" type="button" data-dh="desks" data-k="' + esc(r.key) + '">حمّل المكاتب</button>' : "") + "</div></div>").join("") : '<p class="hint">لا شركة توصيل مفعّلة بعد.</p>') + explainHtml();
+    if (keepX) { document.getElementById("dh-w").value = keepX.w; document.getElementById("dh-t").value = keepX.t; document.getElementById("dh-o").value = keepX.o; document.getElementById("dh-out").innerHTML = keepX.out; }
+    if (!box._bound) {
+      box._bound = true;
+      box.addEventListener("click", async ev => {
+        const b = ev.target.closest("[data-dh]"); if (!b) return; const act = b.getAttribute("data-dh"), k = b.getAttribute("data-k");
+        if (act === "check") { b.disabled = true; b.textContent = "جارٍ الفحص…"; await check(k); }
+        else if (act === "approve") { if (window.confirm("اعتماد أسعار حسابك لهذه الشركة؟ ستُطبَّق على متجرك فوراً وتنتهي أولويّة جدولك المحفوظ لها.")) { approve(k); render(); } }
+        else if (act === "ignore") ignore(k);
+        else if (act === "desks") { try { await a.syncDesksFromCompany(k); } catch (e) { } render(); }
+        else if (act === "why") { const r = explain($("dh-w").value, $("dh-t").value, $("dh-o").value), out = $("dh-out"); out.innerHTML = r ? '<div class="dh-o"><b>السعر النهائي: ' + r.final + " دج</b><br>" + r.lines.map(l => esc(l.t) + ": " + esc(l.v)).join("<br>") + "</div>" : ""; }
+      });
+    }
+    function $(id) { return document.getElementById(id); }
+  }
+
+  /* فحص تلقائي: كل 7 أيام لكل شركة بمفاتيح تجلب أسعارها، متتابعاً وفي الخلفية؛ ثم تنبيه واحد في الجلسة إن وُجدت مشكلة */
+  async function autoCheck() {
+    const a = A(); if (!a || !a.enabledCompanyKeys) return 0; let n = 0;
+    try {
+      const all = a.allDeliveryCompanies();
+      for (const k of a.enabledCompanyKeys()) { const co = all[k], cfg = a.deliveryCfg[k] || {}; if (!co || !co.feesRequest || !hasCreds(cfg)) continue; if (cfg.checkedAt && Date.now() - cfg.checkedAt < EVERY) continue; n++; await check(k, true); }
+    } catch (e) { console.warn("delhealth auto", e); }
+    notify(); return n;
+  }
+  function notify() {
+    if (S.told) return; const bad = rows().filter(r => r.level !== "ok"); if (!bad.length) return; S.told = true;
+    if (typeof toast === "function") toast("⚠️ صحة التوصيل: " + bad.map(r => r.name).join("، ") + " تحتاج انتباهك — افتح «شركات التوصيل»");
+  }
+  function boot() {
+    const a = A(); if (!a || a.__dh) return; a.__dh = 1;
+    const o = a.renderDelivery; if (typeof o === "function") a.renderDelivery = function () { const r = o.apply(this, arguments); try { render(); } catch (e) { console.warn("delhealth", e); } return r; };
+    S.timer = setTimeout(autoCheck, 30000);
+  }
+  const t0 = setInterval(() => { if (typeof Admin !== "undefined" && Admin.renderDelivery) { clearInterval(t0); boot(); } }, 400);
+  return { rows, attention, check, approve, ignore, explain, render, autoCheck, notify, _S: S };
+})();

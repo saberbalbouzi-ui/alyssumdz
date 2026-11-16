@@ -56,3 +56,5 @@ description: منطق المتجر والتشغيل في أليسوم: الطل�
 - `assets/js/admin-costats.js` (`AdminCoStats`): الشركة = شركة وسم `🚚` على الطلب (لا شركة المنتج الافتراضية)؛ الطلبات بلا وسم = «غير مرسلة». يغذّي بطاقة التحليلات و`admin-payments.js` (شرائح الشركات `S.co` + جدول الخلاصة العامة). تسوية ياليدين (`sItems`/`sumSettle`/`settleCells`) لطرود `co==="yalidine"` فقط؛ `inCo` يقبل أي شركة أخرى بمجرد رقم التتبع. الاختبار `scripts/test-costats.js`.
 
 - **(v1.89.1221) لا جداول أسعار متجر في الكود المشترك:** أُزيلت تعريفتا WeCan وDHD المدمجتان؛ كل متجر يحتفظ بجدوله في إعداداته (`priceBase` يُرحَّل تلقائياً من أسعاره الحالية، و`priceFix` تعديلاته اليدوية) والـAPI هو المصدر عند `priceSrc=api`. ترتيب الأولوية: `priceFix` ثم (`api` ثم `priceBase` للناقص) أو (`priceBase` ثم `api`). أي شركة جديدة بجدول أسعار تدخل عبر إعدادات المتجر لا عبر الكود.
+
+- **(v1.89.1222) صحة التوصيل:** `assets/js/admin-delhealth.js` (`AdminDelHealth`): صفوف الصحة وفحص أسبوعي واعتماد أسعار الحساب و«لماذا هذا السعر؟». أي شركة جديدة لها `feesRequest` تدخل تلقائياً؛ `fetchCompanyPrices` يحفظ `apiPrices`/`drift`/`checkedAt`. اختبر بـ`test-delivery-health.js`.

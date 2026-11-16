@@ -200,6 +200,7 @@ const AdminHome = (() => {
     const prods = (a.products || []).filter(p => p.active !== false), low = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) > 0 && Number(p.stock) <= 5), out = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) <= 0);
     const fail = all.filter(o => o.status === "echec").length;
     const sOver = (typeof StockCheck !== "undefined") ? StockCheck.summary() : { orders: 0, products: [] };
+    let dh = 0; try { dh = typeof AdminDelHealth !== "undefined" ? AdminDelHealth.attention() : 0; } catch (e) { }      /* شركات توصيل تحتاج انتباهاً (أسعار تغيّرت/فحص فشل/مكاتب غير محمَّلة) */
     let mg = []; try { mg = window.AdminUpsell && AdminUpsell.mergeable ? AdminUpsell.mergeable(a.orders || []) : []; } catch (e) { }
     let ag = null; try { if (typeof AdminAgency !== "undefined") { ag = AdminAgency.alerts(); AdminAgency.warm(); } } catch (e) { }
     let dg = null; try { if (typeof AdminDigital !== "undefined") { dg = AdminDigital.alerts(); AdminDigital.warm(); } } catch (e) { }
@@ -238,6 +239,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <button type="button" class="${sOver.orders ? "w" : "ok"}" data-go="orders-new" title="${sOver.products.map(x => x.title + ": المطلوب " + x.demand + " والمتاح " + x.stock).join(" | ").replace(/"/g, "")}"><b>${num(sOver.orders)}</b><span>طلب جديد يفوق المخزون</span></button>
 <button type="button" class="${adLow.length ? "w" : "ok"}" data-go="ads" title="${adLow.map(x => x.p.title + ": " + x.stock + " علبة تكفي ≈ " + x.left + " يوم").join(" | ").replace(/"/g, "")}"><b>${num(adLow.length)}</b><span>حملة نشطة مخزونها يكفي 5 أيام أو أقل</span></button>
 <button type="button" class="${mg.length ? "w" : "ok"}" data-go="merge"><b>${num(mg.length)}</b><span>طلب مرتبط (عرض بعد الشراء) ينتظر الدمج</span></button>
+${dh ? `<button type="button" class="w" data-go="delivery"><b>${num(dh)}</b><span>شركة توصيل تحتاج انتباهك (أسعار أو مكاتب)</span></button>` : ""}
 ${ag ? `<button type="button" class="${ag.ready ? "w" : "ok"}" data-go="agency"><b>${num(ag.ready)}</b><span>حساب إعلاني جاهز — استلم رابط الدعوة</span></button>
 <button type="button" class="${ag.late ? "w" : "ok"}" data-go="agency"><b>${num(ag.late)}</b><span>طلب خدمة تسويق تأخر عن مهلة التسليم</span></button>` : ""}
 ${aic ? `<button type="button" class="w" data-go="aicredit"><b>${aic.st === "out" ? "نفد" : "قارب"}</b><span>${aic.st === "out" ? "رصيد Alyssum API نفد — تتوقف أدوات الذكاء حتى تجديده" : "رصيد Alyssum API على وشك النفاد" + (aic.p != null ? " (متبقٍ " + aic.p + "٪)" : "")}</span></button>` : ""}
