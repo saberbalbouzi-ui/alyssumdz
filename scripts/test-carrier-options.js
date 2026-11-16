@@ -13,9 +13,9 @@ const { chromium } = require("playwright");
     const po = A.parseOptions(T); out.po = { k: Object.keys(po).join(","), o30: po[30], o16: po[16] };
     out.min30 = A.cheapestOf(po[30]); out.min8 = A.cheapestOf(po[8]);
     /* 2) الأرخص يصير سعر المتجر؛ تعديلك اليدوي priceFix يفوز */
-    const base = { 30: { home: 1000, stop: 800 }, 8: { home: 1000, stop: 800 }, 5: { home: 700, stop: 500 } }, cfg = { optionsFix: T, priceBase: "5=111/222" };
+    const base = { 30: { home: 1000, stop: 800 }, 8: { home: 1000, stop: 800 }, 5: { home: 700, stop: 500 } }, cfg = { optionsFix: T, optionsToStore: "1", priceBase: "5=111/222" };
     const ap = A.applyPriceFix(base, cfg, "wecan"); out.ap = { p30: ap[30], p8: ap[8], p5: ap[5], p16: ap[16] };
-    const ap2 = A.applyPriceFix(base, Object.assign({ priceFix: "30=777/555" }, cfg), "wecan"); out.apFix = ap2[30];
+    const ap2 = A.applyPriceFix(base, Object.assign({ priceFix: "30=777/555" }, cfg), "wecan"); out.apFix = ap2[30]; const off = A.applyPriceFix(base, { optionsFix: T, priceBase: "5=111/222" }, "wecan"); out.off = { p30: off[30], p8: off[8] };
     /* 3) المستخرِج على بنى مختلفة */
     const ex = H.extractOptions;
     out.exA = ex({ to_wilaya_id: 30, per_commune: { 1: { commune_name: "a", express_home: 1300, express_desk: 1100, zr_home: 900, zr_desk: 650 }, 2: { commune_name: "b", express_home: 1300, express_desk: 1100, zr_home: 900, zr_desk: 650 } } });
@@ -24,7 +24,7 @@ const { chromium } = require("playwright");
     out.exD = ex({ rates: [{ name: "ZR", type: "home", price: 900 }, { name: "ZR", type: "stopdesk", price: 650 }] });
     out.exE = ex({ message: "route not found" });
     /* 4) الاكتشاف بوسيط مُحاكى: أول مسارين 404 ثم /shipping-options يرجع قائمة ناقلين؛ يملأ 58 ولاية ويحفظ تشخيصاً */
-    A.deliveryCfg = { wecan: { enabled: true, isDefault: true, apiKey: "k", apiSecret: "s", prices: { 30: { home: 1000, stop: 800 } }, priceBase: "30=1000/800" } };
+    A.deliveryCfg = { wecan: { enabled: true, isDefault: true, optionsToStore: "1", apiKey: "k", apiSecret: "s", prices: { 30: { home: 1000, stop: 800 } }, priceBase: "30=1000/800" } };
     const wc = A.allDeliveryCompanies().wecan; const calls = []; let saved = null; window.Priv = Object.assign({}, window.Priv || {}); const P0 = typeof Priv !== "undefined" ? Priv.set : null; try { Priv.set = async (k, v) => { saved = { k, v }; }; } catch (e) { }
     A.courierFetch = async (req) => { calls.push(req.url.replace(/^https?:\/\/[^/]+/, "")); const m = /to_wilaya_id=(\d+)/.exec(req.url), id = m ? +m[1] : 1;
       if (/\/shipping-options\?/.test(req.url)) return { ok: true, status: 200, text: JSON.stringify({ data: [{ carrier: "ZR", home: 900, desk: id === 30 ? 650 : 600 }, { carrier: "WeCanServices", home: id === 30 ? 900 : 1100, desk: id === 30 ? 750 : 800 }] }) };
@@ -37,6 +37,7 @@ const { chromium } = require("playwright");
   ok("تحليل نص الخيارات: ولايات 8 و16 و30 فقط (99 مرفوضة)، 30 فيها ناقلان", R.po.k.split(",").sort().join(",") === "16,30,8" && R.po.o30.length === 2 && R.po.o30[0].b === "ZR" && R.po.o30[0].h === 900 && R.po.o30[0].s === 650 && R.po.o16.length === 1, R.po);
   ok("الأرخص: الولاية 30 ⟵ منزل 900 ومكتب 650، وبشار ⟵ 900/650", R.min30.home === 900 && R.min30.stop === 650 && R.min8.home === 900 && R.min8.stop === 650, [R.min30, R.min8]);
   ok("سعر المتجر = الأرخص (30 ⟵ 900/650) ولا يمسّ ولايات بلا خيارات (5 ⟵ جدولك 111/222)", R.ap.p30.home === 900 && R.ap.p30.stop === 650 && R.ap.p8.stop === 650 && R.ap.p5.home === 111, R.ap);
+  ok("افتراضياً (بلا optionsToStore) المتجر لا يتأثر: 30 تبقى 1000/800 وبشار 1000/800", R.off.p30.home === 1000 && R.off.p30.stop === 800 && R.off.p8.stop === 800, R.off);
   ok("تعديلك اليدوي priceFix يفوز على الأرخص (30 ⟵ 777/555)", R.apFix.home === 777 && R.apFix.stop === 555, R.apFix);
   ok("مستخرج: حقول <ناقل>_home/_desk داخل per_commune (express وzr)", R.exA.length === 2 && R.exA.some(o => o.b === "zr" && o.h === 900 && o.s === 650) && R.exA.some(o => o.b === "Express" && o.h === 1300 && o.s === 1100), R.exA);
   ok("مستخرج: مصفوفة ناقلين (carrier كائناً أو نصاً)", R.exB.length === 2 && R.exB.some(o => o.b === "ZR" && o.h === 900 && o.s === 650) && R.exB.some(o => o.b === "WeCanServices" && o.s === 750), R.exB);

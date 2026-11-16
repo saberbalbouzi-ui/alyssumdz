@@ -27,7 +27,7 @@ const AdminDelHealth = (() => {
       const dn = co.centersRequest ? desksOf(k) : -1;
       if (k === def && co.centersRequest && dn === 0) issues.push({ k: "warn", t: "مكاتب Stop Desk لم تُحمَّل بعد", act: "desks" });
       const level = issues.some(i => i.k === "bad") ? "bad" : issues.length ? "warn" : "ok";
-      const nO = optCount(cfg); out.push({ key: k, name: co.name || k, def: k === def, level, issues, nP, nO, canProbe: !!PROBE[k] && hasCreds(cfg), desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api });
+      const nO = optCount(cfg), toStore = String(cfg.optionsToStore || "").trim() === "1"; out.push({ key: k, toStore, name: co.name || k, def: k === def, level, issues, nP, nO, canProbe: !!PROBE[k] && hasCreds(cfg), desks: dn, last, src: cfg.priceSrc === "api" ? "حسابك" : (cfg.priceBase || cfg.priceFix || co.tariff) ? "جدولك المحفوظ" : (nP ? "حسابك" : "—"), canCheck: api });
     });
     return out;
   }
@@ -149,7 +149,7 @@ const AdminDelHealth = (() => {
     const R = rows(), keepX = document.getElementById("dh-w") ? { w: document.getElementById("dh-w").value, t: document.getElementById("dh-t").value, o: document.getElementById("dh-o").value, out: document.getElementById("dh-out").innerHTML } : null;
     box.innerHTML = '<div style="display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap"><b style="color:var(--green)">صحة التوصيل</b><span class="hint" style="margin:0">يفحص النظام أسعار شركاتك تلقائياً كل أسبوع عند فتح اللوحة وينبّهك إن اختلف حسابك عمّا يعرضه متجرك</span></div>' +
       (R.length ? R.map(r => '<div class="dh-r" data-k="' + esc(r.key) + '"><div class="dh-n">' + esc(r.name) + (r.def ? ' <small>(الافتراضية)</small>' : "") + '<span class="dh-c ' + LV[r.level][0] + '">' + LV[r.level][1] + '</span></div><div class="dh-m">' +
-        "الأسعار: " + r.nP + " ولاية — المصدر: " + esc(r.src) + " — آخر فحص: " + esc(ageTxt(r.last)) + (r.desks >= 0 ? " — مكاتب Stop Desk المحمَّلة: " + r.desks : "") + (r.nO ? " — خيارات الناقلين: " + r.nO + " ولاية (يُعتمد الأرخص)" : "") +
+        "الأسعار: " + r.nP + " ولاية — المصدر: " + esc(r.src) + " — آخر فحص: " + esc(ageTxt(r.last)) + (r.desks >= 0 ? " — مكاتب Stop Desk المحمَّلة: " + r.desks : "") + (r.nO ? " — خيارات الناقلين: " + r.nO + " ولاية (" + (r.toStore ? "يُعتمد الأرخص في المتجر" : "تظهر في الطلب اليدوي فقط، والمتجر لا يتأثر") + ")" : "") +
         r.issues.map(i => '<br><span class="dh-i ' + (i.k === "warn" ? "w" : "") + '">' + esc(i.t) + "</span>").join("") +
         '</div><div>' + (r.canCheck ? '<button class="small gray" type="button" data-dh="check" data-k="' + esc(r.key) + '">فحص الآن</button> ' : "") +
         (r.canProbe ? '<button class="small gray" type="button" data-dh="opts" data-k="' + esc(r.key) + '">اكتشاف خيارات الناقلين</button> ' : "") +
