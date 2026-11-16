@@ -29,8 +29,16 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   const TEST_PROTECT = Object.assign({}, JSON.parse(fs.readFileSync(path.join(root, "assets/data/protect.json"), "utf8")), { bots: false });
   console.log("إعداد الحماية المعلن للاختبار فقط:", JSON.stringify(TEST_PROTECT));
   await br.route("**/assets/data/protect.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(TEST_PROTECT) }));
+  /* نموذج الطلب بمرحلتين (main v1.89.1156–1162، checkout.json: steps:true). المنتج الرقمي مُستثنى من تصميمه (OrderSteps.unsupported() يعيد "digital")، لكنّ كشفه يفحص علامات
+     ([data-digital] أو #digital-pay أو .digital-checkout) لا يضعها digital-checkout.js فيدخل الرقمي نموذج المرحلتين ويعلق في المرحلة 1 (انظر الفحص الصريح «خلل منتج» أدناه: يبقى ظاهراً كإخفاق حقيقي).
+     فحوص الدفع الرقمي (بريد/BaridiMob/CCP/بطاقة/إثبات/رجوع الدفع) تُجرى بإعداد معلن للاختبار فقط: إعداد المتجر الحقيقي عدا steps:false. لا يُعطَّل أي تحقق ولا يُغيَّر منطق الطلب؛ ويُلتقط الطلب على الشبكة. */
+  const REAL_CHECKOUT = JSON.parse(fs.readFileSync(path.join(root, "assets/data/checkout.json"), "utf8")), TEST_CHECKOUT = Object.assign({}, REAL_CHECKOUT, { steps: false });
+  console.log("إعداد الدفع المعلن لفحوص الدفع الرقمي فقط: steps=" + TEST_CHECKOUT.steps + " (الحقيقي: " + REAL_CHECKOUT.steps + ")");
+  await br.route("**/assets/data/checkout.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(TEST_CHECKOUT) }));
   /* مسار الطلب حقيقي: Guard.submit ← API.submitOrderChecked ← fetch؛ ويُلتقط الطلب على مستوى الشبكة (rpc/submit_order) لا بتبديل دوال التطبيق */
   const NET = { orders: [] };
+  /* حماية التكرار (guard.dup:true في إعداد main): طلبان لنفس المنتج من المتصفح نفسه خلال 24 ساعة يُرفض الثاني. لا نُعطّلها؛ كل سيناريو جديد يبدأ كزائر جديد (يُمسح سجلّ الطلبات الأخيرة المحلي فقط). */
+  const newVisitor = async () => { await page.evaluate(() => { try { localStorage.removeItem("alyssum_recent_orders"); } catch (e) { } }); await page.reload({ waitUntil: "load" }); };
   const netRoute = r => { const q = r.request(); if (/rpc\/submit_order/.test(q.url()) && q.method() === "POST") { try { NET.orders.push(JSON.parse(q.postData()).p); } catch (e) { } } return r.fulfill({ status: 200, body: "{}" }); };
   await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, netRoute);
   await page.addInitScript(() => { window.open = () => null; });
@@ -67,7 +75,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   /* فشل الإرسال يُظهر الخطأ ويسمح بالمحاولة */
   await page.evaluate(() => document.getElementById("dg-x").click());
   PF.proof = { status: 404, body: { error: { code: "order_not_found", message: "x" } } };
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); NET.orders.length = 0;
+  await newVisitor(); await page.waitForSelector('input[name="dg-method"]'); NET.orders.length = 0;
   await page.fill("#name", "سعيد"); await page.fill("#phone", "0661234567"); await page.check('input[name="dg-method"][value="ccp"]'); await page.click(".btn-order"); await page.waitForSelector("#dg-file");
   ok("تعليمات CCP", /1234567/.test(await page.innerText("#dg-modal")) && /89/.test(await page.innerText("#dg-modal")));
   await page.setInputFiles("#dg-file", { name: "t.png", mimeType: "image/png", buffer: PNG }); await page.click("#dg-send"); await page.waitForFunction(() => /لم يُسجَّل طلبك/.test((document.getElementById("dg-msg") || {}).textContent || ""));
@@ -78,7 +86,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.waitForFunction(() => /استلمنا/.test(document.getElementById("dg-modal").textContent)); ok("إكمال الإرسال من الشريط", true);
   await page.evaluate(() => document.getElementById("dg-x").click());
   /* بطاقة: يوجّه لصفحة الدفع بلا طلب إثبات */
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); NET.orders.length = 0;
+  await newVisitor(); await page.waitForSelector('input[name="dg-method"]'); NET.orders.length = 0;
   PF.calls.length = 0; await page.fill("#name", "كريم"); await page.fill("#phone", "0771234567"); await page.fill("#dg-email", "k@example.com"); await page.check('input[name="dg-method"][value="chargily"]');
   await page.route("https://pay.chargily.dz/**", r => r.fulfill({ status: 200, contentType: "text/html", body: "<title>pay</title>" }));
   await page.click(".btn-order"); await page.waitForURL(/pay\.chargily\.dz/, { timeout: 8000 });
@@ -89,6 +97,16 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   PAY = {}; await page.reload({ waitUntil: "load" }); await page.waitForSelector("#dg-pm"); ok("بلا طرق دفع: رسالة بدل خيارات", /غير مفعّل/.test(await page.innerText("#dg-pm")));
   /* منتج عادي لا يتأثر */
   await page.goto("http://localhost:8794/p/anti-colon/index.html", { waitUntil: "load" }); await page.waitForTimeout(1200); ok("منتج غير رقمي: النموذج كما هو", !(await vis("#dg-box")) && (await vis("#wilaya")));
+  /* ── خلل منتج حقيقي (main): الرقمي في نموذج المرحلتين بإعداد المتجر الحقيقي (steps:true) ── المستخدم لا يستطيع الانتقال من المرحلة 1 لأن الولاية مخفية وإلزامية في validate(1) ── */
+  { const brS = await br0.newContext({ serviceWorkers: "block", viewport: { width: 420, height: 1000 } }), pS = await brS.newPage();
+    await brS.route("**/assets/data/protect.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify(TEST_PROTECT) }));
+    await pS.route("**/assets/js/data.js*", async r => { const t = await (await r.fetch()).text(); r.fulfill({ contentType: "text/javascript", body: t + '\nPRODUCTS.forEach(function(p){ if(p.slug==="anti-acne") p.digital=true; });' }); });
+    await pS.route("**/assets/data/pay-methods.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify({ baridimob: { on: true, rip: "00799999001234567890", name: "علي بن" } }) }));
+    await pS.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
+    await pS.goto("http://localhost:8794/p/anti-acne/index.html", { waitUntil: "load" }); await pS.waitForSelector("#dg-box", { state: "attached", timeout: 10000 }); await pS.waitForTimeout(800);
+    const on = await pS.evaluate(() => !!(OrderSteps.state.on)); let reached = true, why = "";
+    if (on) { try { await pS.click(".os-next", { timeout: 3000 }); await pS.waitForTimeout(800); reached = await pS.evaluate(() => OrderSteps.state.step === 2 && !document.getElementById("dg-box").classList.contains("os-hide")); } catch (e) { reached = false; why = String(e.message).slice(0, 120); } }
+    ok("خلل منتج: المنتج الرقمي لا يعلق في نموذج المرحلتين (إما خارجه أو يُكمَل المرحلة 1 بنقرة «متابعة»)", !on || reached, { stepsOn: on, reachedStage2: reached, why }); await brS.close(); }
   ok("بلا أخطاء جافاسكربت", errs.length === 0, errs);
   await br0.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })();

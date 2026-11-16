@@ -45,9 +45,15 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   await page.waitForSelector(".ups-bump:not([hidden])", { timeout: 10000 });
   const base = await page.evaluate(() => document.getElementById("grand").textContent);
   ok("خانة Order Bump تظهر مع السعر الخاص", /anti|مضاد|التساقط/.test(await page.innerText(".ups-bump")) && /دج/.test(await page.innerText(".ups-bump")));
-  await page.fill("#name", "سارة"); await page.fill("#phone", "0555123456"); await page.selectOption("#wilaya", { index: 16 }); await page.waitForTimeout(300);
+  /* نموذج الطلب بمرحلتين تراكميتين (main v1.89.1156–1162، إعداد المتجر steps:true): المرحلة 1 = الولاية والبلدية والعرض والسعر مع التوصيل (وفيها خانة Order Bump)، ثم «متابعة»، والمرحلة 2 = الاسم والهاتف وتأكيد الطلب.
+     يُقاد بنقرات وملء حقيقيَّين بلا تعطيل تحقق ولا تغيير في منطق الطلب. */
+  ok("نموذج المرحلتين مفعّل (إعداد المتجر الحقيقي) والمرحلة 2 مخفية قبل «متابعة»", await page.evaluate(() => OrderSteps.state.on && OrderSteps.state.step === 1) && !(await page.isVisible("#name")));
+  await page.selectOption("#wilaya", { index: 16 }); await page.waitForTimeout(300);
   const comm = await page.$$eval("#commune option", o => o.length); if (comm > 1) await page.selectOption("#commune", { index: 1 }); else await page.fill("#commune", "الجزائر").catch(() => { });
   await page.waitForTimeout(300);
+  await page.click(".os-next"); await page.waitForSelector("#name", { state: "visible", timeout: 5000 });
+  ok("«متابعة» تنقل إلى المرحلة 2 (الاسم والهاتف) بعد اكتمال المرحلة 1", await page.evaluate(() => OrderSteps.state.step === 2));
+  await page.fill("#name", "سارة"); await page.fill("#phone", "0555123456");
   const t0 = await page.evaluate(() => document.getElementById("grand").textContent);
   await page.check(".ups-bump input"); await page.waitForTimeout(200);
   const t1 = await page.evaluate(() => document.getElementById("grand").textContent), num = s => +String(s).replace(/[^\d]/g, "");
