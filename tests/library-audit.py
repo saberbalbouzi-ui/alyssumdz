@@ -20,10 +20,33 @@ def tid(f):
     b = os.path.basename(f)[:-5] if f.endswith(".json") else None
     return b[5:] if b and b.startswith("prod-") else b
 touched = {tid(f) for f in changed if f.endswith(".json") and not f.endswith("index.json")}
-check("scope", "لا قالب خارج الدفعات الأربع تغيّر ملفه أو جلد منتجه", touched <= BATCH, sorted(touched - BATCH))
+# مرحلة إغلاق القبول: التعطيل الافتراضي للعدّ التنازلي/كود الخصم/نسب الكمية المباعة + مخزون من بيانات حقيقية + علم «محتوى نموذجي» + إزالة عبارات الموعد المرتبطة بالعدّاد
+# يطال كل القوالب (ومنها الستة خارج الدفعات). يُقارَن الملف بالأصل بعد تسوية هذه الحقول فقط: أي فرق آخر خارج الدفعات يبقى إخفاقاً.
+PH5_TEXT = {"عرض الاستوديو — الليلة فقط": "عرض الاستوديو", "استعملي الكود قبل منتصف الليل.": "استعملي كود الخصم عند الطلب."}
+def norm5(o):
+    if isinstance(o, dict):
+        t = o.get("type"); st = o.get("set") if isinstance(o.get("set"), dict) else None
+        if st is not None and t == "countdown": st = {k: v for k, v in st.items() if k not in ("on", "mode", "end")}
+        elif st is not None and t == "coupon": st = {k: v for k, v in st.items() if k not in ("on", "cpcode")}
+        elif st is not None and t == "stock": st = {k: v for k, v in st.items() if k != "smode"}
+        elif st is not None and t == "progress" and "بيع" in str(st.get("pl", "")): st = {k: v for k, v in st.items() if k != "on"}
+        r = {k: norm5(v) for k, v in o.items() if k != "sample"}
+        if st is not None: r["set"] = norm5(st)
+        return r
+    if isinstance(o, list): return [norm5(x) for x in o]
+    if isinstance(o, str):
+        for a_, b_ in PH5_TEXT.items(): o = o.replace(a_, b_)
+        return o
+    return o
+def same5(f):
+    try: return norm5(json.loads(git(f))) == norm5(json.load(open(f, encoding="utf-8")))
+    except Exception: return False
+bad_scope = sorted(t for t in (touched - BATCH) if not all(same5(f) for f in changed if f.endswith(".json") and tid(f) == t))
+check("scope", "لا قالب خارج الدفعات الأربع تغيّر ملفه أو جلد منتجه (عدا تسوية حقول مرحلة القبول: عدّاد/كود/كمية/مخزون/علم نموذجي)", not bad_scope, bad_scope)
 check("scope", "s-alyssum وملفاته (قالب وجلد وصور وCSS) غير ممسوسة (الفهرس فقط يحمل علم owner)", not any("alyssum" in f and not f.endswith("index.json") for f in changed), [f for f in changed if "alyssum" in f])
 thumbs_changed = {os.path.basename(f).replace("-full", "")[:-4] for f in changed if "/thumbs/" in f}
-check("scope", "لا معاينة مصغّرة خارج الدفعات تغيّرت", thumbs_changed <= BATCH, sorted(thumbs_changed - BATCH))
+P5_OK = (touched - BATCH) - set(bad_scope)      # قوالب خارج الدفعات عُدّلت بحقول مرحلة القبول فقط ⟵ أُعيدت معاينتاها
+check("scope", "لا معاينة مصغّرة خارج الدفعات تغيّرت (عدا قوالب مرحلة القبول المسوّاة)", thumbs_changed <= (BATCH | P5_OK), sorted(thumbs_changed - BATCH - P5_OK))
 check("scope", "الفهرس بالمعرّفات والترتيب نفسهما (33)", ids == [x["id"] for x in oidx], len(ids))
 od = {x["id"]: x for x in oidx}
 diff_other = [x["id"] for x in idx if x["id"] not in BATCH and {k: v for k, v in x.items() if k != "owner"} != od[x["id"]]]
