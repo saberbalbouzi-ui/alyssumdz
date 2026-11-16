@@ -3,19 +3,19 @@ const { chromium, devices } = require("playwright");
 (async () => {
   const b = await chromium.launch(); let pass = 0, fail = 0; const ok = (n, v, x) => { if (v) pass++; else fail++; console.log((v ? "✓ " : "✗ ") + n + (v ? "" : " " + JSON.stringify(x || ""))); };
   const errs = [];
-  const run = async (dk, extra, other, ocsc) => {
+  const run = async (dk, extra, other, ocsc, dp, commune) => {
     const c = await b.newContext({ ...devices["iPhone 13"] }), p = await c.newPage(); p.on("pageerror", e => errs.push(String(e)));
     await p.route(/assets\/data\/checkout\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ steps: false, showOffers: true, phoneDz: true, guard: {} }) }));
-    await p.route(/assets\/data\/ship-co\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ def: "", dk, noStop: false, companies: { x: { name: "x", prices: {}, adj: 0 } }, sup: {}, cp: {}, nd: {} }) }));
+    await p.route(/assets\/data\/ship-co\.json/, r => r.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ def: "", dk, dp: dp || "", noStop: false, companies: { x: { name: "x", prices: {}, adj: 0 } }, sup: {}, cp: {}, nd: {} }) }));
     await p.route(/supabase\.co|script\.google\.com|\/functions\/v1\//, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
     await p.goto("http://localhost:8765/p/anti-acne/", { waitUntil: "load" }); await p.waitForTimeout(3000);
     await p.evaluate(() => { document.getElementById("acg-ov")?.remove(); });
-    const r = await p.evaluate(async ([extra, other, ocsc]) => { if (ocsc !== null) __OCSC = ocsc;
+    const r = await p.evaluate(async ([extra, other, ocsc, commune]) => { if (ocsc !== null) __OCSC = ocsc;
       WILAYAS.forEach(x => { x.desks = x.id === 8 ? [{ id: 80101, name: "Agence de Béchar (Centre Ville) [Yalidine]", address: "a", commune: "Béchar" }, { id: 80102, name: "Agence Béchar (Cité Es Salam) [EasyAndSpeed]", address: "b", commune: "Béchar" }] : []; });
       const w = WILAYAS.find(x => x.id === 8); if (extra) w.desks = w.desks.concat(extra); if (other) { const o = WILAYAS.find(x => x.id === 16); o.desks = (o.desks || []).concat([{ id: 7, name: "Wecan Alger", address: "x", commune: o.name, co: "wecan" }]); }
       const sel = document.getElementById("wilaya"); sel.value = "8"; sel.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 400));
-      const st = document.querySelector('input[name="dtype"][value="stop"]'); const dis = st ? st.disabled : null; if (st && !st.disabled) { st.checked = true; st.dispatchEvent(new Event("change", { bubbles: true })); } await new Promise(r => setTimeout(r, 400));
-      const ds = document.getElementById("desk"); return { dis, opts: ds ? [...ds.options].map(o => o.textContent).filter(t => !/اختر/.test(t)) : null }; }, [extra, !!other, ocsc === undefined ? null : ocsc]);
+      const cs = document.getElementById("commune"); if (commune && cs) { cs.value = commune; cs.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 300)); } const st = document.querySelector('input[name="dtype"][value="stop"]'); const dis = st ? st.disabled : null; if (st && !st.disabled) { st.checked = true; st.dispatchEvent(new Event("change", { bubbles: true })); } await new Promise(r => setTimeout(r, 400));
+      const ds = document.getElementById("desk"); return { dis, opts: ds ? [...ds.options].map(o => o.textContent).filter(t => !/اختر/.test(t)) : null }; }, [extra, !!other, ocsc === undefined ? null : ocsc, commune || ""]);
     await c.close(); return r;
   };
   const W = [{ id: 1, name: "Agence Wecan Béchar", address: "x", commune: "Béchar", co: "wecan" }];
@@ -38,9 +38,17 @@ const { chromium, devices } = require("playwright");
       const ds = A.desksIn(A.fees[0], "Béchar", "wecan").map(d => d.name); A.companyCenters = c0; A.renderFees = r0; window.toast = t0; return { d1, d2, ds }; });
     ok("المزامنة: ياليدين الموسوم بالنمط يبقى، والمجهول القديم يُستبدل، ومراكز WeCan موسومة", JSON.stringify(m.d1) === JSON.stringify(["Agence A [Yalidine]|yalidine", "Wecan Béchar|wecan"]), m.d1);
     ok("إعادة مزامنة WeCan تستبدل مراكزها فقط ولا تتكرر", JSON.stringify(m.d2) === JSON.stringify(["Agence A [Yalidine]", "Wecan Béchar 2"]), m.d2);
+    const dpv = await p.evaluate(() => { const A = Admin; A.deliveryCfg.wecan = Object.assign({}, A.deliveryCfg.wecan || {}, { enabled: true, isDefault: true, deskPrio: "Hub, Zimou" }); Object.keys(A.deliveryCfg).forEach(k => { if (A.deliveryCfg[k]) A.deliveryCfg[k].isDefault = k === "wecan"; }); return { dp: A.shipCoData().dp, dk: A.shipCoData().dk, field: !!document.getElementById("dlv-dprio") }; });
+    ok("اللوحة: حقل علامات المكاتب موجود وdp يُنشر مع الشركة الافتراضية", dpv.field && dpv.dk === "wecan" && dpv.dp === "Hub, Zimou", dpv);
     ok("قوائم اللوحة (desksIn) تفضّل مكاتب الشركة المطلوبة", JSON.stringify(m.ds) === JSON.stringify(["Wecan Béchar 2"]), m.ds); await c.close(); }
   ok("الصفحة على «أسعار المناطق» (oc.sc=zones): المكاتب تبقى للشركة الافتراضية لا كلها", z1.opts && z1.opts.length === 1 && /Wecan/.test(z1.opts[0]), z1);
   ok("سعر حر أو «def» للصفحة: المكاتب أيضاً للشركة الافتراضية", z2.opts && z2.opts.length === 1 && z3.opts && z3.opts.length === 1, [z2, z3]);
+  const HB = [{ id: 11, name: "Hub Béchar 08 مكتب بشار", address: "h", commune: "Béchar", co: "wecan" }, { id: 12, name: "Agence Béchar (Jet d'eau) [EasyAndSpeed]", address: "e", commune: "Béchar", co: "wecan" }, { id: 13, name: "Agence Abadla [Yalidine]", address: "a", commune: "Abadla", co: "wecan" }];
+  const p1 = await run("wecan", HB, false, undefined, "Hub", "Béchar"), p2 = await run("wecan", HB, false, undefined, "Hub", "Abadla"), p3 = await run("wecan", HB, false, undefined, "", "Béchar"), p4 = await run("wecan", HB, false, undefined, "zimou, hub", "Béchar");
+  ok("الأرخص أولاً (dp=Hub): في بلدية فيها Hub يظهر Hub وحده", p1.opts && p1.opts.length === 1 && /Hub/.test(p1.opts[0]), p1);
+  ok("بلدية بلا Hub: تُعرض مكاتبها كلها (لا يُترك الزبون بلا مكتب)", p2.opts && p2.opts.length === 1 && /Abadla/.test(p2.opts[0]), p2);
+  ok("بلا تفضيل: كل مكاتب البلدية (Hub + Agence)", p3.opts && p3.opts.length === 2, p3);
+  ok("ترتيب الكلمات: الأولى التي لها مكتب تفوز (zimou غائبة ⇒ hub)", p4.opts && p4.opts.length === 1 && /Hub/.test(p4.opts[0]), p4);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 2));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();

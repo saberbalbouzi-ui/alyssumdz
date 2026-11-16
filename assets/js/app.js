@@ -23,9 +23,12 @@ function shipBlocked(w, commune, type){
 let __OCSC = null, __OCPF = null; const pshipCo = p => __OCSC !== null ? __OCSC : (p && p.shipCo);
 let __SHIPCO = null, __SHIPDEF = "", __SHIPSUP = {}, __SHIPCP = {}; let __SHIPNOSTOP = false;
 /* مكاتب Stop Desk: تُعرض مكاتب شركة التوصيل الافتراضية (أو شركة المنتج) فقط؛ المكتب بلا وسم شركة (قديم) يبقى ظاهراً. وسم الشركة: d.co (يكتبه تحميل المراكز في اللوحة) أو «[Yalidine]/[EasyAndSpeed]» في اسم مراكز ياليدين */
-let __SHIPDK = "";
+let __SHIPDK = "", __SHIPDP = [];
 const deskCo = d => (d && d.co) || (/\[(?:Yalidine|EasyAndSpeed)\]\s*$/i.test(String((d && d.name) || "")) ? "yalidine" : "");
 /* الاحتياط: إن لم تُحمَّل مراكز هذه الشركة في أي ولاية بعد (لا مكتب موسوم بها في كل الولايات) لا نُرشّح فتبقى كل المكاتب كما كانت ولا يتعطّل خيار المكتب؛ وبعد تحميلها يُعرض لكل ولاية مكاتب الشركة فقط */
+/* الأرخص أولاً: شركة تجمع مكاتب شركات عدة (WeCan): أول كلمة مفضّلة (dp من ship-co.json) تطابق مكتباً في هذه البلدية يُعرض ما يطابقها فقط، وإلا الكلمة التالية، وإلا الكل */
+const preferDesks = list => { if(!__SHIPDP.length) return list; const by = {}; list.forEach(d => { (by[(d && d.commune) || ""] = by[(d && d.commune) || ""] || []).push(d); });
+  return [].concat(...Object.keys(by).map(k => { const g = by[k]; for(const t of __SHIPDP){ const m = g.filter(d => String((d && d.name) || "").toLowerCase().includes(t)); if(m.length) return m; } return g; })); };      /* لكل بلدية على حدة */
 const shipDesks = (w, p) => { const all = (w && w.desks) ? w.desks : [], pk = typeof pshipCo === "function" ? pshipCo(p) : "", k = (pk && pk !== "zones" && pk !== "free" && pk !== "def") ? pk : __SHIPDK; if(!k) return all;      /* «zones/free/def» مصدر تسعير للصفحة لا شركة: المكاتب تبقى للشركة الافتراضية (كانت «zones» تُعامَل كشركة فتُعرض كل المكاتب) */
   let synced = false; try{ synced = (typeof WILAYAS !== "undefined" ? WILAYAS : []).some(x => (x.desks || []).some(d => deskCo(d) === k)); }catch(e){}
   return synced ? all.filter(d => { const c = deskCo(d); return !c || c === k; }) : all; };     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
@@ -46,7 +49,7 @@ function applyShipList(cos, def){
 function loadShipCo(){
   if(__SHIPCO !== null) return;
   __SHIPCO = {};
-  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPDK = j.dk || ""; __SHIPNOSTOP = !!j.noStop; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPNOSTOP || __SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
+  fetch((typeof REL!=="undefined"?REL:"") + "assets/data/ship-co.json", {cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{ if(j && j.companies){ __SHIPCO = j.companies; __SHIPDEF = j.def || ""; __SHIPDK = j.dk || ""; __SHIPDP = String(j.dp || "").split(",").map(x => x.trim().toLowerCase()).filter(Boolean); __SHIPNOSTOP = !!j.noStop; __SHIPSUP = j.sup || {}; __SHIPCP = j.cp || {}; try{ applyShipNd(j.nd, j.def); applyShipList(j.companies, j.def); }catch(e){} if(__SHIPNOSTOP || __SHIPDEF || Object.keys(__SHIPCO).length || Object.keys(__SHIPSUP).length || Object.keys(__SHIPCP).length) document.dispatchEvent(new Event("shipco:ready")); } }).catch(()=>{});
 }
 document.addEventListener("DOMContentLoaded", ()=>{ try{ loadShipCo(); }catch(e){} });
 document.addEventListener("shipco:ready", ()=>{ try{ if(typeof Cart !== "undefined" && document.getElementById("cwilaya")) Cart.render(); }catch(e){} });
@@ -1317,7 +1320,7 @@ function initProduct(slug){
     if(!deskSel) return;
     const commune = communeSel ? communeSel.value : "";
     const allDesks = shipDesks(w, typeof p !== "undefined" ? p : null);
-    const desks = commune ? allDesks.filter(d=>d.commune===commune) : allDesks;
+    const desks0 = commune ? allDesks.filter(d=>d.commune===commune) : allDesks, pk0 = typeof pshipCo === "function" ? pshipCo(typeof p !== "undefined" ? p : null) : "", desks = (!pk0 || pk0 === "zones" || pk0 === "free" || pk0 === "def") ? preferDesks(desks0) : desks0;      /* التفضيل للشركة الافتراضية فقط */
     deskSel.innerHTML = '<option value="">— اختر أقرب مكتب —</option>';
     desks.forEach(d=>{
       const o = document.createElement("option");
