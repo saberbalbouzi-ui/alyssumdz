@@ -46,3 +46,11 @@
 - لم أدفع فرع دمج تجريبياً (يتطلب إذنك). هل تريدني دفع `integration/merge-main` منفصلاً لتشغيل CI؟
 - قرار: إصلاح اختباري `digital-checkout`/`upsell` للنموذج الجديد ضمن مرحلة الدمج؟
 - الملفات الحيّة القادمة من main (`honey-focus`، `lp/*`، الرقية) تُنقَل كما هي ولم أراجع محتواها.
+
+## 7) فرع التكامل `integration/merge-main` (بموافقتك الصريحة على دفع هذا الفرع فقط)
+- يُبنى بـ`resolve-merge.py` ثم يُتحقَّق منه بـ`verify-integration.py <FEATURE_SHA>` (12 فحصاً: الملفات الستة و`VERSION` مطابقة لـ`origin/main`؛ `admin-nav.js` وقيمة `V` و`protect.json` و`s-alyssum` بلا تغيير؛ لا تعارضات ولا علامات؛ لا تراجع لأي سطر أضافه `main`؛ المولَّدان متسقان). نتائجه الفعلية في `INTEGRATION-RESULT.md` على فرع التكامل.
+- **الملفات المأخوذة من `main` كما هي:** `VERSION`، `assets/js/{admin-home,admin-pack,admin-theme,data}.js`، `assets/data/ship-co.json`، وكل ما لم يمسّه الفرع (≈118 ملفاً: صفحات حيّة وهبوط ورقية ولوحة).
+- **المحتفَظ به من الفرع:** القوالب ومعاينتها والصور والمولّدات والاختبارات والتوثيق والمهارات، `admin-nav.js` (علم المالك)، `platform/php-edition/api/index.php` (مسارات `_conv` وshop/account)، `make-template.py` (`_leak_scan`)، `pagebuilder*.js` (المحتوى النموذجي، الكود/العدّاد/النسب المعطّلة، أهداف اللمس، `.pb-offw`)، `shared-files.json` (`owner_only`).
+- **المدموج يدوياً بالوصفة:** `shared-files.json` (الفرع + ستة مداخل من main)، `make-template.py` (نمط الرقية)، `pagebuilder.js` (`tick`: `data-nod` وتنسيق الرقم + إخفاء غلاف المعطّل)، `admin-help.json` و`changelog.md` (الاثنان)، و`admin.html`/`admin-pb.js` (يُولَّدان).
+- **اكتُشف عند الدمج:** `assets/data/checkout.json` في main يفعّل `steps:true` وحماية التكرار `guard.dup:true` ومكافحة الروبوت (`antibot`)، بينما نسخة الفرع القديمة بلا ذلك ⟵ فصارت اختبارات الطلب (`test-upsell`، `test-digital-checkout`) تعمل تحت إعداد main الحقيقي: نموذج بمرحلتين وسجلّ تكرار 24 ساعة.
+- **إخفاق حقيقي في `main` (لا يُخفى):** المنتج الرقمي يعلق في المرحلة 1 من نموذج المرحلتين لأن `OrderSteps.unsupported()` يبحث عن علامات (`[data-digital]` `#digital-pay` `.digital-checkout`) لا يضعها `digital-checkout.js` (يضع `#dg-box`)، بينما `validate(1)` يطلب الولاية المخفية. الاختبار يحمل فحصاً صريحاً لذلك. إصلاح من سطر واحد مجرَّب (23/23) ولكنه **لم يُطبَّق** لأنه تغيير في منطق الطلب: `proposed-fix-digital-steps.patch`.
