@@ -13,7 +13,7 @@
 | حراسات أداة التطبيق على Supabase (مرجع Production/اسم مشروع/`--confirm-ref`) | `VERIFIED` بـfetch محاكى | — |
 | هجرات D1 (`platform/api/migrations`) + المُطبِّق + checksum | `VERIFIED` محلياً (16/16) | — |
 | اختبار D1 Beta (ادّعاء ذرّي، فهارس، خطط، تنظيف مقيَّد) | `PARTIALLY VERIFIED` — 15/15 على miniflare المحلي (ليس D1 البعيد) | قاعدة D1 `alyssum-platform-api-beta` + رمز D1:Edit |
-| اختبار Supabase Auth/DB(RLS)/Storage على مشروع حقيقي | `BLOCKED` (حراساته 9/9 محلياً) | مشروع + PAT + كلمة مرور المدير + المفتاح العام |
+| اختبار Supabase Auth/DB(RLS)/Storage على مشروع حقيقي | `BLOCKED` (حراساته 10/10 محلياً) | مشروع + PAT + كلمة مرور المدير + المفتاح العام |
 | اختبار Chargily Sandbox | `PARTIALLY VERIFIED` — `--stub` 11/11 (محاكاة صريحة) | مفتاح `test_sk_…` مخصص لـBeta |
 | الحواجز المالية (لا مسار حيّ من Beta) | `VERIFIED` محلياً (طبقات §7) | — |
 | workflow يدوي للتكامل `beta-integration.yml` | جاهز، **لم يُشغَّل** (لا بيئة `beta` في GitHub) | إنشاء Environment `beta` وإدخال متغيراته/أسراره |
@@ -38,11 +38,11 @@
 - **رمز النشر (خارج GitHub — على جهازك فقط):** Workers Scripts:Edit، D1:Edit، Pages:Edit، Workers Routes:Edit (منطقة Beta فقط)، Account Settings:Read. **بلا DNS** (يُمنح لاحقاً بموافقة مستقلة وبنطاق المنطقة).
 - **رمز الاختبار (`BETA_CF_API_TOKEN` في GitHub):** `Account: D1: Edit` فقط. تحذير: على حساب مشترك لا يمكن حصر رمز D1 بقاعدة واحدة؛ لذا نوصي بحساب Cloudflare مستقل لـBeta (قرار D1).
 
-## 3) موارد Supabase المطلوبة (غير مُنشأة)
+## 3) موارد Supabase المطلوبة (المشروع أُنشئ في حساب مستقل؛ لم يُطبَّق عليه SQL بعد)
 
 | البند | القيمة |
 |---|---|
-| المشروع | اسمه **`alyssum-beta`** حصراً؛ ممنوع الخلط مع `ALYSSUMDZ` (Production) و`imaginia-staging` (منتج آخر) — تتحقق منه الأداة والاختبار |
+| المشروع | اسمه **`alyssum-beta`** حصراً. أُنشئ بحساب Supabase مستقل، مرجعه `xhdnqnxmcmfhrgctlkzy` (غير سرّي، مثبَّت في السجل من لقطة لوحة المشروع: Healthy/Nano، بلا هجرات)؛ **لم يُتحقق منه عبر API بعد** لانتظار PAT؛ ممنوع الخلط مع `ALYSSUMDZ` (Production) و`imaginia-staging` (منتج آخر) — تتحقق منه الأداة والاختبار |
 | Auth | التسجيل العام **OFF** (إلزامي؛ الاختبار `[A1]` يفشل إن بقي مفعّلاً)، مستخدم واحد: مدير Beta ببريد مخصص ≠ بريد المالك، Site URL `https://beta.alyssumdz.com`، Redirect `https://beta.alyssumdz.com/**` |
 | Storage | `tenants` (قراءة عامة، لا سياسة كتابة) و`editor` (رفع للمجهول بمنحة `editor.upload_grants` وأنواع صور فقط) — تُنشأ بـSQL لا يدوياً |
 | SQL | 10 ملفات بترتيب مُجرَّب: `supabase/schema` ← `sql/schema` ← `roles` ← `hub` ← `editor` ← `experts` ← `ruqya` ← `pixabay-cache` ← `hardening-v01` ← `hardening-v01b` + صف `admins` لبريد Beta (مولَّد). مستبعَد: `apply-pending.sql` |
@@ -116,7 +116,7 @@ gh variable set BETA_SUPABASE_REF --env beta --body "<ref>"   # للمتغيرا
 | `d1-beta.integration.mjs --local` (miniflare) | PASS 15/15 |
 | `idem-d1-local.mjs` (N=20000) | 14/14 |
 | `chargily-sandbox.integration.mjs --stub` | 11/11 (محاكاة) |
-| `beta-supabase.integration.mjs --selfcheck` | 9/9 (حراسات) |
+| `beta-supabase.integration.mjs --selfcheck` | 10/10 (حراسات) |
 | الثلاثة بلا اعتماد | `SKIPPED` برمز 0؛ مع `--require` برمز 3 (لا يمرّ كنجاح) |
 | `test-template-pack.js` | 9/9 |
 

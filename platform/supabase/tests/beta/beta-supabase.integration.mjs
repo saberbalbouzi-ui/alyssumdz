@@ -18,6 +18,7 @@ export function guard(env) {
   const bad = [], ref = String(env.BETA_SUPABASE_REF || ""), url = String(env.BETA_SUPABASE_URL || ""), key = String(env.BETA_SUPABASE_ANON_KEY || ""), email = String(env.BETA_ADMIN_EMAIL || "");
   if (!/^[a-z0-9]{20}$/.test(ref)) bad.push("BETA_SUPABASE_REF غير صالح");
   if (PROTECTED_REFS.has(ref)) bad.push("المرجع مشروع Production/محمي — مرفوض");
+  if (REG.environments.beta.supabase_ref && ref !== REG.environments.beta.supabase_ref) bad.push("BETA_SUPABASE_REF لا يطابق المرجع المسجَّل لـBeta في platform/env/environments.json");
   const m = /^https:\/\/([a-z0-9]{20})\.supabase\.co\/?$/.exec(url); if (!m) bad.push("BETA_SUPABASE_URL غير صالح (https://<ref>.supabase.co)"); else if (m[1] !== ref) bad.push("الرابط لا يطابق BETA_SUPABASE_REF");
   if (!key) bad.push("BETA_SUPABASE_ANON_KEY مفقود");
   else if (/^sb_secret_/.test(key)) bad.push("المفتاح سرّي (sb_secret_) — يُسمح بالمفتاح العام فقط");
@@ -34,7 +35,7 @@ const end = (r, code) => { console.log("RESULT: " + r); process.exit(code); };
 async function main() {
   const argv = process.argv.slice(2);
   if (argv.includes("--selfcheck")) {
-    const ref = "abcdefghij0123456789", good = { BETA_SUPABASE_REF: ref, BETA_SUPABASE_URL: `https://${ref}.supabase.co`, BETA_SUPABASE_ANON_KEY: "sb_publishable_FAKE", BETA_SUPABASE_PAT: "x", BETA_ADMIN_EMAIL: "beta-admin@example.test", BETA_ADMIN_PASSWORD: "x" };
+    const ref = REG.environments.beta.supabase_ref || "abcdefghij0123456789", good = { BETA_SUPABASE_REF: ref, BETA_SUPABASE_URL: `https://${ref}.supabase.co`, BETA_SUPABASE_ANON_KEY: "sb_publishable_FAKE", BETA_SUPABASE_PAT: "x", BETA_ADMIN_EMAIL: "beta-admin@example.test", BETA_ADMIN_PASSWORD: "x" };
     const jwt = (o) => "e30." + Buffer.from(JSON.stringify(o)).toString("base64url") + ".sig", has = (e, re) => guard(e).some((x) => re.test(x));
     ok("[G1] إعداد سليم ← بلا مشاكل", guard(good).length === 0, guard(good));
     ok("[G2] مرجع Production مرفوض", has({ ...good, BETA_SUPABASE_REF: REG.environments.production.supabase_ref, BETA_SUPABASE_URL: `https://${REG.environments.production.supabase_ref}.supabase.co` }, /Production/));
@@ -44,6 +45,7 @@ async function main() {
     ok("[G6] مفتاح anon لمشروع آخر مرفوض", has({ ...good, BETA_SUPABASE_ANON_KEY: jwt({ role: "anon", ref: "zzzzzzzzzzzzzzzzzzzz" }) }, /مشروعاً آخر/));
     ok("[G7] مفتاح anon بنفس المشروع مقبول", !guard({ ...good, BETA_SUPABASE_ANON_KEY: jwt({ role: "anon", ref }) }).length);
     ok("[G8] بريد مدير = هوية المالك مرفوض", has({ ...good, BETA_ADMIN_EMAIL: "saber.balbouzi@gmail.com" }, /هوية المالك/));
+    ok("[G10] مرجع آخر غير المسجَّل لـBeta مرفوض", !REG.environments.beta.supabase_ref || has({ ...good, BETA_SUPABASE_REF: "zzzzzzzzzzzzzzzzzzzz", BETA_SUPABASE_URL: "https://zzzzzzzzzzzzzzzzzzzz.supabase.co" }, /المسجَّل/));
     ok("[G9] بلا PAT/كلمة مرور مرفوض", has({ ...good, BETA_SUPABASE_PAT: "" }, /PAT/) && has({ ...good, BETA_ADMIN_PASSWORD: "" }, /PASSWORD/));
     end(`${pass} pass / ${fail} fail (selfcheck — حراسات فقط، بلا شبكة)`, fail ? 1 : 0);
   }

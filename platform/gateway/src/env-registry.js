@@ -32,8 +32,8 @@ export default {
       "gateway_d1": "alyssum-shipping-gateway-beta",
       "gateway_host": "beta-shipping.alyssumhub.fyi",
       "app_host": "beta.alyssumdz.com",
-      "supabase_ref": null,
-      "supabase_ref_note": "مشروع Supabase مستقل للـBeta مطلوب إنشاؤه (BLOCKED حتى يُنشأ ويُحدَّد هنا)",
+      "supabase_ref": "xhdnqnxmcmfhrgctlkzy",
+      "supabase_ref_note": "مشروع alyssum-beta (حساب Supabase مستقل). المرجع مثبَّت من لقطة لوحة المشروع؛ الأداة تعيد التحقق من الاسم عبر API قبل أي تطبيق SQL.",
       "modes": {
         "payments": "sandbox",
         "sms": "sandbox",

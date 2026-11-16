@@ -15,7 +15,7 @@ let pass = 0, fail = 0, skipped = []; const ok = (m, c, x) => { c ? pass++ : fai
   ok("[A5] لا أي علامة هوية إنتاجية في أي ملف من الحزمة (مضيف/مرجع/مفتاح عام/بريد/رقم)", !b.files.some((f) => [...cfg.N.identity_markers, ...cfg.N.hosts, ...cfg.N.supabase_refs, ...cfg.N.public_key_markers].some((m) => f.sql.toLowerCase().includes(m.toLowerCase()))));
   ok("[A6] بريد المالك الإنتاجي مرفوض كبريد مدير Beta؛ بريد غير صالح مرفوض", T.buildBundle({ adminEmail: "saber.balbouzi@gmail.com" }).problems.length > 0 && T.buildBundle({ adminEmail: "x" }).problems.length > 0 && T.buildBundle({ adminEmail: "" }).problems.length > 0);
   /* B: حراسات الأداة */
-  const REF = "abcdefghijklmnopqrst", env = { BETA_SUPABASE_REF: REF, BETA_SUPABASE_PAT: "sbp_FAKE_PAT_VALUE_0123456789", BETA_ADMIN_EMAIL: EMAIL }; const calls = []; let name = "alyssum-beta";
+  const REF = cfg.B.supabase_ref || "abcdefghijklmnopqrst", env = { BETA_SUPABASE_REF: REF, BETA_SUPABASE_PAT: "sbp_FAKE_PAT_VALUE_0123456789", BETA_ADMIN_EMAIL: EMAIL }; const calls = []; let name = "alyssum-beta";
   const fx = async (url, init = {}) => { calls.push({ url, method: init.method || "GET", auth: init.headers?.Authorization }); if (/\/database\/query$/.test(url)) return { status: 201, text: async () => "[]", json: async () => [] }; return { status: 200, json: async () => ({ name }), text: async () => "" }; };
   const go = async (argv, e = env) => { const logs = []; const r = await T.run({ argv, env: e, fetchFn: fx, log: (...a) => logs.push(a.join(" ")) }); return { ...r, logs: logs.join("\n") }; };
   const dry = await go(["--dry-run"]); ok("[B1] dry-run: لا شبكة", dry.code === 0 && calls.length === 0);
@@ -27,6 +27,7 @@ let pass = 0, fail = 0, skipped = []; const ok = (m, c, x) => { c ? pass++ : fai
   calls.length = 0; name = "alyssum-beta"; r = await go(["--apply", "--confirm-ref", REF]); const qs = calls.filter((c) => /database\/query/.test(c.url));
   ok("[B7] مشروع بالاسم الصحيح: تُطبَّق الملفات بالترتيب (7 طلبات POST) بـBearer PAT، ولا يُطبع PAT/كلمة مرور", r.code === 0 && qs.length === b.files.length && qs.every((c) => c.method === "POST" && /^Bearer sbp_/.test(c.auth)) && !r.logs.includes("sbp_FAKE_PAT"), { n: qs.length });
   ok("[B8] كل الطلبات إلى api.supabase.com/v1/projects/<ref> الخاص بـBeta فقط", calls.every((c) => c.url.startsWith("https://api.supabase.com/v1/projects/" + REF)));
+  calls.length = 0; r = await go(["--apply", "--confirm-ref", "zzzzzzzzzzzzzzzzzzzz"], { ...env, BETA_SUPABASE_REF: "zzzzzzzzzzzzzzzzzzzz" }); ok("[B9] مرجع آخر غير المسجَّل لـBeta في السجل ← رفض قبل أي اتصال (لا تطبيق على مشروع غير مُثبَّت)", !cfg.B.supabase_ref || (r.code === 2 && calls.length === 0 && /المسجَّل/.test(r.logs)), r.logs);
   /* C: PostgreSQL محلي */
   const B = process.env.PGBIN || "/usr/lib/postgresql/16/bin"; if (!fs.existsSync(B + "/initdb")) { skipped.push("PostgreSQL محلي غير متوفر (" + B + ")"); }
   else {
