@@ -140,13 +140,22 @@ const AdminDelHealth = (() => {
   }
   async function learn(key) {
     const a = A(); if (!a || S.running["learn" + key]) return null; const co = (a.allDeliveryCompanies() || {})[key], cfg = a.deliveryCfg[key] || {};
-    if (!co || !co.learnRequests || !hasCreds(cfg)) return null; S.running["learn" + key] = 1; const doc = { v: 1, at: Date.now(), key, results: [] };
+    if (!co || !co.learnRequests || !hasCreds(cfg)) return null; S.running["learn" + key] = 1; const doc = { v: 2, at: Date.now(), key, results: [] };
     try {
       for (const q of co.learnRequests(cfg)) {
         let r; try { r = await a.courierFetch(q.req); } catch (e) { doc.results.push({ p: q.p, err: String(e.message || e).slice(0, 80) }); continue; }
         const row = { p: q.p, st: r.status, len: String(r.text || "").length }; let j = null; try { j = JSON.parse(r.text); } catch (e) { }
-        row.sample = j ? scrub(j, "", 0) : String(r.text || "").replace(/\s+/g, " ").slice(0, 100); doc.results.push(row); await new Promise(res => setTimeout(res, 200));
+        row.sample = j ? scrub(j, "", 0) : String(r.text || "").replace(/\s+/g, " ").slice(0, 100); if (q.p === "orders") row.raw = j; doc.results.push(row); await new Promise(res => setTimeout(res, 200));
       }
+      if (co.learnFollow) {
+        let lj = null; try { const o0 = doc.results.find(x => x.p === "orders"); lj = o0 && o0.raw; } catch (e) { }
+        for (const q of co.learnFollow(cfg, lj)) {
+          let r; try { r = await a.courierFetch(q.req); } catch (e) { doc.results.push({ p: q.p, err: String(e.message || e).slice(0, 80) }); continue; }
+          const row = { p: q.p, st: r.status, len: String(r.text || "").length }; let j = null; try { j = JSON.parse(r.text); } catch (e) { }
+          row.sample = j ? scrub(j, "", 0) : String(r.text || "").replace(/\s+/g, " ").slice(0, 100); doc.results.push(row); await new Promise(res => setTimeout(res, 200));
+        }
+      }
+      doc.results.forEach(x => { delete x.raw; });
       a.deliveryCfg[key] = Object.assign({}, a.deliveryCfg[key] || cfg, { soProbeAt: Date.now() }); a.saveDeliveryCfgToStorage();
       try { if (typeof Priv !== "undefined" && Priv.set) await Priv.set("shipoptprobe", doc); } catch (e) { }
     } catch (e) { console.warn("delhealth learn", e); }
