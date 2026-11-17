@@ -476,6 +476,8 @@ html.glass #theme-sw button.on:hover{background:linear-gradient(180deg,rgba(var(
 .yd-cb{display:inline-flex;align-items:center;justify-content:center;gap:.3rem;min-height:38px;padding:.4rem .9rem;border-radius:12px;color:#fff!important;font-weight:800;font-size:.85rem;text-decoration:none!important;border:1px solid rgba(255,255,255,.28);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:transform .2s,background .2s;white-space:nowrap}
 .yd-cb.call{background:linear-gradient(180deg,rgba(var(--g-amber-rgb),.5),rgba(var(--g-amber-rgb),.22));box-shadow:inset 0 2px 3px rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 6px 14px -6px rgba(0,0,0,.6)}
 .yd-cb.wa{background:linear-gradient(180deg,rgba(var(--g-mint-rgb),.5),rgba(var(--g-mint-dd-rgb),.28));box-shadow:inset 0 2px 3px rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 6px 14px -6px rgba(0,0,0,.6)}
+.yd-cb.vb{background:linear-gradient(180deg,rgba(var(--g-rose-rgb),.5),rgba(var(--g-rose-rgb),.22));box-shadow:inset 0 2px 3px rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 6px 14px -6px rgba(0,0,0,.6)}
+.yd-cb.tg{background:linear-gradient(180deg,rgba(var(--g-blue-rgb),.5),rgba(var(--g-blue-rgb),.22));box-shadow:inset 0 2px 3px rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25),0 6px 14px -6px rgba(0,0,0,.6)}
 .yd-cb:hover{transform:translateY(-2px)}
 
 /* v1.89.212: زر «إضافة طلب جديد» كبير وواضح أعلى الطلبات (زجاج أخضر منتفخ بنص أبيض) */
