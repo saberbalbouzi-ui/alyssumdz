@@ -63,7 +63,9 @@ def _nx_bento(P):
     return FX("فسيفساء الفئات غير المتماثلة", "".join(css), h=("ارتفاع الصف px", "num", 150), hm=("ارتفاع الصف على الجوال px", "num", 120), g=("التباعد px", "num", 14), r=("تدوير الزوايا px", "num", P["rad"]))
 
 def nx_bar(P, N):
-    return bar("توصيل لكل الولايات  ·  الدفع عند الاستلام  ·  دعم على واتساب", P["fbg"], P["fon"], P["acc"])
+    b = bar("توصيل لكل الولايات  ·  الدفع عند الاستلام  ·  دعم على واتساب", P["fbg"], P["fon"], P["acc"])
+    b["set"]["mh"] = dm(58, 76, 64); b["free"][0]["set"]["fh"] = dm(58, 76, 64)      # شريط أعلى قليلاً: يسهل تحديده وسحبه في المحرّر على أي تكبير
+    return b
 def nx_hdr(P, N):
     h = hdr(hbg=P["paper"], hbr=P["ink"] + "22", lc=P["ink"], lac=P["acc"], mc=P["ink"], cbg=P["btn"], la=N["brand"], lfs=dm(26))
     return h
@@ -112,7 +114,7 @@ def nx_hero(P, N, k):
             tall(A, aa, 2, 70, 17, 520, 3, .1, 640, 300, 3, 46),
             tall(B, ab, 19.8, 130, 17, 440, 3, .25, 720, 250, 51, 46),
             tall(Cc, ac, 37.6, 90, 14.5, 480, 3, .4, 960, 270, 3, 46),
-            FR("shape", 2, 600, 50, 3, 2, shape="rect", fill=acc, keep=False, hm=True),
+            FR("shape", 2, 600, 50, 10, 2, shape="rect", fill=acc, keep=False, hm=True),
             FR("heading", 2, 625, 50, None, 4, text="مجموعة الموسم", tag="p", fs=V(14, 13), fw="800", ta={"d": "start"}, color=P["mut"], hm=True),
         ]
         mh = dm(720, 1280, 700)
