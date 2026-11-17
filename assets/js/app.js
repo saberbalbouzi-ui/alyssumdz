@@ -248,13 +248,13 @@ const Cart = {
     if(!items.length){ toast("السلة فارغة"); return }
     const oosItem = items.filter(itemOut).map(it=>PRODUCTS.find(p=>p.slug===it.slug))[0];
     if(oosItem){ toast(`⚠️ «${oosItem.title}» نفدت كميته — يرجى إزالته من السلة`); return }
-    const name = document.getElementById("cname")?.value.trim();
-    const phone = document.getElementById("cphone")?.value.trim();
-    const wId = document.getElementById("cwilaya")?.value;
-    const commune = document.getElementById("ccommune")?.value.trim();
-    const dtype = document.querySelector('input[name="cdtype"]:checked')?.value || "home";
+    const name = ((document.getElementById("cname") || {}).value || "").trim();
+    const phone = ((document.getElementById("cphone") || {}).value || "").trim();
+    const wId = (document.getElementById("cwilaya") || {}).value;
+    const commune = ((document.getElementById("ccommune") || {}).value || "").trim();
+    const dtype = (document.querySelector('input[name="cdtype"]:checked') || {}).value || "home";
     if(!name || !phone || !wId){ toast("يرجى ملء الاسم، الهاتف والولاية"); return }
-    if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); document.getElementById("cphone")?.focus(); return }
+    if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); (function(e){ if(e) e.focus(); })(document.getElementById("cphone")); return }
     const wl = WILAYAS.find(x=>x.id==wId);
     const __sq = Cart.quote(); if(__sq.blocked){ toast(__sq.msg); return }
     const sub = Cart.subtotal();
@@ -2115,7 +2115,7 @@ const Gifts = {
       if(!input){ toast("🎁 أضف منتجاً إلى السلة ثم أدخل الكود " + code); return; }
       input.value = code; input.closest(".coupon-box").querySelector("button").click();
       Account.close();
-      if(input.id === "cart-coupon-input") document.querySelector(".cart-btn")?.click();
+      if(input.id === "cart-coupon-input") (function(e){ if(e) e.click(); })(document.querySelector(".cart-btn"));
     });
   },
   /* أول فتح للتطبيق المثبّت (أو حدث التثبيت) ⟵ تُمنح هدية التثبيت */
