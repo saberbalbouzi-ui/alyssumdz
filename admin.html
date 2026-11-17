@@ -1813,6 +1813,13 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/api.js?v=15668c80"></script>
 <script src="assets/js/agent-brain.js?v=b3b07b62"></script>
 <script>window.__cm=[Math.round(performance.now())];</script>
+<script>
+/* مكتبة أيقونات SVG صغيرة لأزرار الجداول: AIC("edit") */
+window.AIC = (function(){ const P = {
+  edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>', copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>', eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>', trash:'<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/>',
+  link:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>', down:'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>', plus:'<path d="M12 5v14M5 12h14"/>', check:'<path d="M20 6L9 17l-5-5"/>', x:'<path d="M18 6L6 18M6 6l12 12"/>' };
+  return n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + (P[n] || "") + '</svg>'; })();
+</script>
 <script>window.__cm&&window.__cm.push(Math.round(performance.now()));
 
 const $f = id => document.getElementById(id);
@@ -10834,13 +10841,6 @@ if(Admin.phpMode()){
 <!--PB:start-->
 <script src="assets/js/admin-pb.js?v=c1b5601e"></script>
 <!--PB:end-->
-<script>
-/* مكتبة أيقونات SVG صغيرة لأزرار الجداول: AIC("edit") */
-window.AIC = (function(){ const P = {
-  edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>', copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>', eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>', trash:'<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6"/>',
-  link:'<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>', down:'<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>', plus:'<path d="M12 5v14M5 12h14"/>', check:'<path d="M20 6L9 17l-5-5"/>', x:'<path d="M18 6L6 18M6 6l12 12"/>' };
-  return n => '<svg viewBox="0 0 24 24" aria-hidden="true">' + (P[n] || "") + '</svg>'; })();
-</script>
 <script>
 /* أيقونات SVG للقائمة الجانبية بدل الإيموجي */
 (function(){
