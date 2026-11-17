@@ -100,7 +100,7 @@ jobs:
         run: node scripts/test-template-no-order-leak.js
   website-ui:
     name: "لوحة الموقع في متصفح حقيقي"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # Playwright 1.56.1 لا يدعم ubuntu-26.04 (ubuntu-latest الحالي)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
