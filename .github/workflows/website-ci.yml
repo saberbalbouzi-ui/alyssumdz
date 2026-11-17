@@ -1,0 +1,124 @@
+# Website CI — اختبارات موقع ALYSSUM (المتجر ولوحته وإصدار PHP وقوالب العملاء). بلا أسرار ولا نشر (contents: read).
+# أوامر الخطوات منقولة حرفياً من tests.yml (الذي لم يُعدَّل)؛ التوزيع والتغطية: docs/CI-SPLIT-MAP.md وscripts/ci-coverage.py.
+# ما لم يُصنَّف بدليل (أدوات التصميم/الذكاء وواجهات ميزات المنصة في لوحة التاجر) يبقى في tests.yml بانتظار القرار.
+name: website-ci
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'admin.html'
+      - 'index.html'
+      - 'shop.html'
+      - 'sw.js'
+      - 'p/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - '!scripts/supabase-beta-*.mjs'
+      - '!scripts/test-beta-*.js'
+      - '!scripts/build-beta.py'
+      - '!scripts/test-workflow-policy.py'
+      - '!scripts/test-saas-*.js'
+      - '!scripts/test-shipagg.js'
+      - 'platform/php-edition/**'
+      - 'platform/supabase/functions/hub/**'
+      - '.github/workflows/website-ci.yml'
+  pull_request:
+    paths:
+      - 'admin.html'
+      - 'index.html'
+      - 'shop.html'
+      - 'sw.js'
+      - 'p/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - '!scripts/supabase-beta-*.mjs'
+      - '!scripts/test-beta-*.js'
+      - '!scripts/build-beta.py'
+      - '!scripts/test-workflow-policy.py'
+      - '!scripts/test-saas-*.js'
+      - '!scripts/test-shipagg.js'
+      - 'platform/php-edition/**'
+      - 'platform/supabase/functions/hub/**'
+      - '.github/workflows/website-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: website-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  website-logic:
+    name: "منطق الموقع وإصدار PHP (بلا متصفح)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: "فحص صياغة ملفات JavaScript"
+        run: |
+          fail=0
+          for f in assets/js/*.js scripts/pagebuilder*.js sw.js; do
+            if grep -q '^import ' "$f"; then cp "$f" /tmp/mod.mjs; node --check /tmp/mod.mjs 2>/tmp/err || { echo "::error file=$f::$(head -c 300 /tmp/err)"; fail=1; }      # وحدة ES (عامل الرؤية)
+            else node -e "new Function(require('fs').readFileSync('$f','utf8'))" 2>/tmp/err || { echo "::error file=$f::$(head -c 300 /tmp/err)"; fail=1; }; fi
+          done
+          exit $fail
+      - name: "admin.html مولَّد ومطابق للمصادر (E-07)"
+        run: |
+          python3 scripts/build-admin-pb.py >/dev/null
+          git diff --stat -- admin.html
+          git diff --quiet -- admin.html || { echo "::error file=admin.html::admin.html غير محدَّث من المصادر — شغّل python3 scripts/build-admin-pb.py وأضفه للإيداع"; exit 1; }
+      - name: "الأوامر الصوتية"
+        run: node scripts/test-voice.js
+      - name: "المخزون"
+        run: node scripts/test-stock.js
+      - name: "المدفوعات"
+        run: node scripts/test-payments.js
+      - name: "جدول رسوم الشحن الموثوق (A-01)"
+        run: node scripts/test-shiptable.js
+      - name: "رسوم البلديات"
+        run: node scripts/test-shipsup.js
+      - name: "النشر التلقائي (hub)"
+        run: node scripts/test-hub.js
+      - name: "الأدوار (نموذج + اتساق الصلاحيات)"
+        run: node scripts/test-roles.js
+      - name: "التوجيه اللوجستي (نقي)"
+        run: node scripts/test-dispatch.js
+      - name: "المستودعات والمرتجعات"
+        run: node scripts/test-wh.js
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', extensions: 'openssl, pdo_sqlite, mbstring, curl' }
+      - name: "وحدة تجميع شركات التوصيل (PHP)"
+        run: |
+          php scripts/test-shipping.php
+          php scripts/test-carriers.php
+          php scripts/test-calibration.php
+          php scripts/test-ship-php.php
+          php scripts/test-gateway.php
+          php scripts/test-roles-php.php
+          php scripts/test-webhook-php.php
+      - name: "انحدار القالب: لا أرقام طلبات حقيقية في قوالب العملاء (جديد، يخص M-1)"
+        run: node scripts/test-template-no-order-leak.js
+  website-ui:
+    name: "لوحة الموقع في متصفح حقيقي"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring' }
+      - name: "poppler-utils (pdfinfo/pdftoppm لاختبارات PDF)"
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-hand.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-speed.js
+      - run: node scripts/test-speed-fix.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-kind.js
+      - run: node scripts/test-edition.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-edition-live.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-edition-real.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-pagerater.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-barcode.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js

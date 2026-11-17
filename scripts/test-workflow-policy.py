@@ -4,7 +4,7 @@
  W1  لا workflow يُشغّل أدوات النشر (platform/*/tools/deploy.mjs) ولا wrangler deploy ولا Cloudflare API ولا أسرار Cloudflare (CF_API_TOKEN/CLOUDFLARE_*): النشر يدوي فقط بموافقة.
  W2  لا workflow يذكر نطاق/موارد Beta (beta.alyssumdz.com، beta-api/beta-shipping.alyssumhub.fyi، *-beta، --env beta) إلا ملف يبدأ بـ beta- (غير موجود حالياً) — فلا يُنشَر Beta من مسار Production.
  W3  أي workflow بصلاحية contents: write لا يُشغَّل على push/pull_request إلا بـ push إلى main فقط (لا فروع Beta/تجارب تدفع تلقائياً للإنتاج).
- W4  tests.yml (الذي يعمل على كل فرع) بلا contents: write ولا أي سرّ (secrets.*) فلا يستطيع نشراً ولا دفعاً.
+ W4  tests.yml وwebsite-ci.yml وplatform-ci.yml (تعمل على الفروع) بلا contents: write ولا أي سرّ (secrets.*) ولا بيئة ولا نشر.
  W6  workflow من ملف beta-*: workflow_dispatch وحده، contents: read فقط، كل job بـenvironment: alyssumdz-beta، لا أسرار إلا secrets.BETA_* (ولا GITHUB_TOKEN)، لا git push، لا نشر. (يُستثنى من W1 اسما BETA_CF_API_TOKEN/BETA_CF_ACCOUNT_ID فقط لاختبار D1 للقراءة)
  W6s workflow من ملف beta-* **بلا بيئة ولا أسرار ولا vars** (صنف «ساكن»: اختبارات بلا شبكة/اعتماد): مشغّلاته ⊆ {push, pull_request, workflow_dispatch} وكل push/pull_request بـpaths محدَّدة، contents: read فقط، لا نشر/دفع/pull_request_target.
  W7  لا workflow غير beta-* يستعمل environment: alyssumdz-beta ولا secrets.BETA_*/vars.BETA_*  (تتحقق بدوال تُختبر سلباً على عيّنات مخالِفة أيضاً)
@@ -103,8 +103,12 @@ bad("beta-static-x.yml", STATIC.replace("node x.js", "git push origin HEAD:main"
 bad("beta-static-x.yml", STATIC.replace("      - run: node x.js\n", "      - run: node x.js\n        env: { T: '${{ secrets.BETA_X }}' }\n"), r"بلا environment|workflow_dispatch فقط")   # أي سرّ يحوّله إلى الصنف اليدوي الصارم
 bad("tests.yml", GOOD, r"W7")
 bad("release.yml", GOOD, r"W7")
-t = open(os.path.join(ROOT, ".github/workflows/tests.yml"), encoding="utf-8").read(); ty = yaml.safe_load(t)
-tperms = [ty.get("permissions")] + [j.get("permissions") for j in ty["jobs"].values()]
-ok("[W4] tests.yml: بلا contents:write", not any(isinstance(p, dict) and p.get("contents") == "write" for p in tperms) and "write-all" not in tperms)
-ok("[W4] tests.yml: لا يستعمل أي سرّ (secrets.*) — لا يستطيع نشراً ولا وصولاً لخدمات حيّة", "secrets." not in t.replace("secrets.GITHUB_TOKEN", ""), re.findall(r"secrets\.[A-Z_]+", t))
+for _wf in ("tests.yml", "website-ci.yml", "platform-ci.yml"):        # مسارات الاختبار التلقائية على كل فرع: بلا كتابة ولا أسرار
+    _p = os.path.join(ROOT, ".github/workflows", _wf)
+    if not os.path.exists(_p): continue
+    t = open(_p, encoding="utf-8").read(); ty = yaml.safe_load(t)
+    tperms = [ty.get("permissions")] + [j.get("permissions") for j in ty["jobs"].values()]
+    ok(f"[W4] {_wf}: بلا contents:write", not any(isinstance(p, dict) and p.get("contents") == "write" for p in tperms) and "write-all" not in tperms)
+    ok(f"[W4] {_wf}: لا يستعمل أي سرّ (secrets.*) — لا يستطيع نشراً ولا وصولاً لخدمات حيّة", "secrets." not in t.replace("secrets.GITHUB_TOKEN", ""), re.findall(r"secrets\.[A-Z_]+", t))
+    ok(f"[W4] {_wf}: بلا environment ولا أدوات نشر", "environment:" not in t and not re.search(DEPLOY_RX, t), re.findall(DEPLOY_RX, t)[:3])
 print(f"\nالنتيجة: {ok_n} ناجح، {fail_n} فاشل"); sys.exit(1 if fail_n else 0)

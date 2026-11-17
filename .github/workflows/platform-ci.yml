@@ -1,0 +1,57 @@
+# Platform CI — منصة SaaS: Worker المنصة (platform/api) وبوابة الشحن (platform/gateway) وواجهات المنصة (saas/). بلا أسرار ولا نشر (contents: read).
+# أوامر الخطوات منقولة حرفياً من tests.yml (الذي لم يُعدَّل)؛ اختبارات عزل Beta في beta-static-tests.yml (لا تتكرر هنا).
+name: platform-ci
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'platform/api/**'
+      - 'platform/gateway/**'
+      - 'saas/**'
+      - 'scripts/test-saas-*.js'
+      - 'scripts/test-shipagg.js'
+      - 'platform/supabase/functions/platform-admin/**'
+      - 'platform/supabase/functions/platform-proxy/**'
+      - '.github/workflows/platform-ci.yml'
+  pull_request:
+    paths:
+      - 'platform/api/**'
+      - 'platform/gateway/**'
+      - 'saas/**'
+      - 'scripts/test-saas-*.js'
+      - 'scripts/test-shipagg.js'
+      - 'platform/supabase/functions/platform-admin/**'
+      - 'platform/supabase/functions/platform-proxy/**'
+      - '.github/workflows/platform-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: platform-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  platform-logic:
+    name: "منصة SaaS: Worker وبوابة الشحن (بلا متصفح)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - name: "Worker المنصة وبوابة الشحن (platform/api وplatform/gateway)"
+        run: |
+          node --no-warnings platform/gateway/test/gateway.test.mjs
+          node --no-warnings platform/gateway/test/carriers.parity.test.mjs
+          node scripts/test-shipagg.js
+          for t in platform core-modules commerce-modules growth-modules carts tryon payments sms commerce commerce-strict commerce-strict-catalog sources ads adsoauth wallet agency appstore logistics digital-vault boundaries hardening reservations isolation isolation-fuzz; do node --no-warnings platform/api/test/$t.test.mjs; done
+  platform-ui:
+    name: "واجهات المنصة في متصفح حقيقي (saas)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
+      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-appstore.js
