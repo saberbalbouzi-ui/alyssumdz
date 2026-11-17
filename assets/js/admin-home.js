@@ -81,6 +81,7 @@ const AdminHome = (() => {
     } catch (e) { }
     if (gone) return { t: "⚠️ الطرد غير موجود عند الشركة (حُذف)", c: "#f87171" };
     if (!raw) { try { raw = ((a.shipRaw || {})[o.id] || {}).raw || ""; } catch (e) { } }
+    try { if (a.coStale && a.coStale(o)) return { t: "⚠️ لا حالة من الشركة بعد", c: "#e08a1a" }; } catch (e) { }
     return { t: raw || (g.t + " (بانتظار الشركة)"), c: g.c };
   }
   let _soft = 0; function refreshSoft() { clearTimeout(_soft); _soft = setTimeout(() => { const r = $("ahome"); if (r && r.offsetParent !== null) { try { render(); } catch (e) { } } }, 600); }
