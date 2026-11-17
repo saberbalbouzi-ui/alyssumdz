@@ -139,6 +139,7 @@ async function main() {
   } catch (e) { ok("[X] استثناء غير متوقع: " + String(e.message).slice(0, 160), false); }
   finally {
     if (probe) { try { await sql(`delete from editor.upload_grants where path='${probe}'`); const d = await sql(`set local storage.allow_delete_query = 'true'; delete from storage.objects where bucket_id='editor' and name='${probe}' returning 1`); console.log("تنظيف Storage: حُذف سجل", d.length, "كائن اختبار (قد يبقى بايت الملف اليتيم 70 بايتاً داخل Beta؛ لا يمكن حذفه دون service_role)"); } catch (e) { console.log("تنظيف Storage فشل:", String(e.message).slice(0, 80)); } }
+    try { await sql("delete from public.order_idem where k like 'betaprobe%'"); } catch (e) { console.log("تنظيف order_idem فشل:", String(e.message).slice(0, 80)); }   // مفاتيح الاختبار الاصطناعية (betaprobe*) لا تُترك في القاعدة
     try { const d = await sql(`delete from public.orders where phone='${PHONE}' returning 1`); console.log("تنظيف: حُذف", d.length, "طلب اصطناعي"); } catch (e) { console.log("تنظيف فشل:", String(e.message).slice(0, 80)); }
   }
   console.log(`  [مجموعات] guard ${CNT.guard.p}/${CNT.guard.p + CNT.guard.f} · core ${CNT.core.p}/${CNT.core.p + CNT.core.f} · store ${CNT.store.p}/${CNT.store.p + CNT.store.f}`);
