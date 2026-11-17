@@ -61,7 +61,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     ck(`${id}: لا أخطاء JS`, o.errs.length === 0, o.errs);
     if (id === "s-marketplace") ck("s-marketplace: أشرطة «تم بيع %» غير ظاهرة بلا إعداد", o.soldVis === 0 && !/تم بيع \d+%/.test(o.text), o);
   }
-  { const h = await render("s-aurora"), t = await view(h, () => ({ stat: document.body.innerText.match(/12\s?000/) ? 1 : 0, testi: document.querySelectorAll(".pb-ts").length, rate: /98/.test(document.body.innerText) ? 1 : 0, ib: document.querySelectorAll(".pb-ib").length }));
+  { const h = await render("s-aurora"), t = await view(h, () => ({ stat: (document.querySelectorAll(".pb-ctn").length >= 3 && /850/.test(document.body.innerText)) ? 1 : 0, testi: document.querySelectorAll(".pb-ts").length, rate: /\b48\s?h|48h/.test(document.body.innerText) ? 1 : 0, ib: document.querySelectorAll(".pb-ib").length }));
     ck("s-aurora: الآراء والإحصائيات والعبارات التسويقية النموذجية باقية في الصفحة", t.testi === 3 && t.stat === 1 && t.rate === 1 && t.ib > 3, t); }
   // التفعيل: عدّاد بتاريخ مستقبلي + كود حقيقي ⟵ يظهران؛ وبلا تاريخ يبقى مخفياً (لا رجوع للتجدد اليومي)
   { const fut = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 16);

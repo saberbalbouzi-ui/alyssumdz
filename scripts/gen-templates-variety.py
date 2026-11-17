@@ -30,7 +30,6 @@ MALE = ["أمين", "كريم", "ياسين", "رضا", "وليد", "سفيان"
 FEM = ["سارة", "ليلى", "مريم", "إيمان", "نادية", "هناء", "آسيا", "سمية", "فاطمة", "خديجة", "ريم", "نسرين", "وفاء", "سلمى", "أميرة", "جيهان", "حنان", "سهام", "لمياء", "شيماء"]
 INI = ["ب.", "ع.", "ر.", "م.", "ح.", "ق.", "ز.", "س.", "ط.", "ك.", "د.", "ن."]
 CITY = ["الجزائر", "وهران", "قسنطينة", "عنابة", "سطيف", "باتنة", "بجاية", "تلمسان", "البليدة", "بسكرة", "غرداية", "ورقلة", "تيزي وزو", "سكيكدة", "مستغانم", "الشلف", "جيجل", "المسيلة", "سعيدة", "الأغواط"]
-AVATARS = ["assets/img/tpl/av_m1.webp", "assets/img/tpl/av_m2.webp", "assets/img/tpl/av_m3.webp", "assets/img/tpl/av_m4.webp"]
 WHO = {"s-cosmetics": "f", "s-skincare": "f", "s-makeup": "f", "s-women": "f", "s-kids": "f", "s-jewelry": "f", "s-accessories": "x", "s-perfume": "x", "s-fresh": "x", "s-herbs": "x", "s-honey": "x"}
 PERMS = [["S", "T", "P", "F"], ["T", "S", "F", "P"], ["S", "P", "T", "F"], ["P", "S", "T", "F"], ["T", "P", "S", "F"], ["S", "T", "F", "P"]]
 STYLE_FX = {"cards": ("بطاقات الأرقام", "selector .pb-colin{background:rgba(127,127,127,.09);border:1px solid rgba(127,127,127,.28);border-radius:18px;padding:22px 10px}"),
@@ -51,6 +50,13 @@ def _build_names():      # توزيع ثابت: ثلاثة أسماء/مدن م�
         out[tid] = L
     return out
 NAMES = _build_names()
+_USED = {n for L in NAMES.values() for n, _, _ in L}
+def _male_alt(seed):      # صورة الرأي الأصلية (رجل) تبقى؛ فيُسمّى صاحبها باسم ذكوري متفرّد بدل اسم أنثوي لا يطابق الصورة
+    k = seed
+    while True:
+        nm = MALE[(k * 7 + 1) % 20] + " " + INI[(k * 5 + 2) % 12]
+        if nm not in _USED: _USED.add(nm); return nm
+        k += 1
 def _vwalk(n, out):
     for k in ("cols", "widgets", "free"):
         for c in n.get(k, []) or []:
@@ -79,13 +85,14 @@ def variety(id, pg):
                 for w in c["widgets"]:
                     if w["type"] == "counter": w["set"].update(n=v[0], pre=v[1], suf=v[2], label=v[3])
             for c in cs[len(vals):]: s["cols"].remove(c)      # قالب بثلاثة أرقام: عمود أقل (العناصر الباقية بحالها)
-    # 2) أسماء الآراء ومدنها (لكل قالب ثلاثة متفرّدة) + صورة للذكور فقط
+    # 2) أسماء الآراء ومدنها (لكل قالب ثلاثة متفرّدة) — الصور الأصلية للآراء لا تُمَسّ
     if iT is not None:
         tw = [w for w in _vwalk(secs[iT], []) if w["type"] == "testimonial"]
         for j, w in enumerate(tw):
             nm, city, g = NAMES[id][j % 3]
+            if g != "m" and w["set"].get("img"): nm = _male_alt(100 + i * 3 + j)
             w["set"]["name"] = nm; w["set"]["role"] = city
-            w["set"]["img"] = AVATARS[(i + j) % 4] if g == "m" else ""
+            # صورة الرأي الأصلية تبقى كما هي (لا حذف ولا استبدال لصورة أصلية)؛ يتغيّر الاسم والمدينة فقط
     # 3) ترتيب كتل النهاية + 4) نمط الأرقام
     if all(role[r] is not None for r in "STF") and iS < n and iF < n:
         found = [r for r in "STPF" if role[r] is not None]; slots = sorted(role[r] for r in found)
