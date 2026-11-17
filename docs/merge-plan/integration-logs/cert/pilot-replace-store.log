@@ -1,0 +1,31 @@
+إعداد الحماية المعلن لهذه الأداة فقط (إعداد المستودع عدا bots:false؛ بلا انتحال UA/webdriver): {"on":true,"rc":true,"img":true,"keys":true,"dev":true,"frame":true,"note":true,"sel":true,"copy":true,"print":true,"bots":false,"updatedAt":"2026-11-07T21:49:55.333Z"}
+
+════════ s-watches ════════
+PASS [s-watches] عُثر على الصورة الرئيسية (men_watch)  — assets/img/tpl/men_watch.webp
+PASS [s-watches] اختيار الصورة الرئيسية بالفأرة
+PASS [s-watches] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [s-watches] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [s-watches] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/men_watch.webp → assets/img/demo/0.svg
+PASS [s-watches] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [s-watches] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":204,"h":305} → {"w":204,"h":305}
+PASS [s-watches] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/men_watch.webp
+PASS [s-watches] قسم بخلفية watch_rock الأصلية  — {"f":true,"s":"cover"}
+PASS [s-watches] خصائص الخلفية الأصلية مرسومة (cover + fixed)  — {"att":"fixed, fixed","size":"cover, cover","h":542}
+PASS [s-watches] اختيار عنصر داخل القسم بالفأرة
+PASS [s-watches] الصعود إلى القسم (Esc)
+PASS [s-watches] اختيار صورة خلفية من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [s-watches] الخلفية تبدّلت وبقيت خصائصها وارتفاع القسم كما هي  — {"att":"fixed, fixed","size":"cover, cover","h":542} → {"att":"fixed, fixed","size":"cover, cover","h":542}
+PASS [s-watches] Ctrl+Z يعيد خلفية القسم الأصلية  — assets/img/tpl/watch_rock.webp
+
+════════ s-tech ════════
+PASS [s-tech] عُثر على الصورة الرئيسية (it_color)  — assets/img/tpl/it_color.webp
+PASS [s-tech] اختيار الصورة الرئيسية بالفأرة
+PASS [s-tech] زر مكتبة الوسائط (📚) ظاهر في المفتّش
+PASS [s-tech] اختيار صورة من المكتبة الحقيقية  — assets/img/demo/0.svg
+PASS [s-tech] مصدر الصورة تبدّل فعلاً إلى المختارة  — assets/img/tpl/it_color.webp → assets/img/demo/0.svg
+PASS [s-tech] الصورة الجديدة تُرسم فعلاً في المحرّر  — assets/img/demo/0.svg
+PASS [s-tech] إطار الصورة لا يتغيّر (العرض والارتفاع على الشاشة)  — {"w":219,"h":274} → {"w":219,"h":274}
+PASS [s-tech] Ctrl+Z يعيد الصورة الأصلية  — assets/img/tpl/it_color.webp
+PASS [all] لا أخطاء JS
+
+24/24 PASS — 0 FAILURES

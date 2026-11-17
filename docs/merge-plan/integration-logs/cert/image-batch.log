@@ -1,0 +1,123 @@
+PASS [s-aurora] كل صورة أصلية ما زالت مُستعملة  — 10 صورة
+PASS [s-aurora] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'it_color': 1, 'gad_earbuds': 2, 'gad_speaker': 1, 'gad_vr': 1, 'gad_watch': 2, 'it_dark': 1, 'acc_sunglasses': 2, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-aurora] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-aurora] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-aurora] لا منتج تجريبي مكرّر
+PASS [s-aurora] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('gad_watch.webp', 'أجهزة ذكية'), ('gad_earbuds.webp', 'صوتيات محمولة'), ('acc_sunglasses.webp', 'نظارات وإكسسوارات')]
+PASS [s-aurora] نسبة الإطار الافتراضية = نسبة it_color الطبيعية (1000/1250)  — 4/5
+PASS [s-aurora] نقطة التركيز الافتراضية 50% 50% (it_color)
+PASS [s-aurora] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-aurora] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-gold] كل صورة أصلية ما زالت مُستعملة  — 10 صورة
+PASS [s-gold] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'jewel_dark': 1, 'jewel_pearl': 2, 'watch_hand': 2, 'jewel_ring': 2, 'jewel_chain': 1, 'jewel_studs': 1, 'watch_pocket': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-gold] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-gold] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-gold] لا منتج تجريبي مكرّر
+PASS [s-gold] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('jewel_pearl.webp', 'مجوهرات وقلائد'), ('watch_hand.webp', 'ساعات راقية'), ('jewel_ring.webp', 'خواتم وأطقم')]
+PASS [s-gold] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-gold] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-fresh] كل صورة أصلية ما زالت مُستعملة  — 11 صورة
+PASS [s-fresh] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'skin_oil': 1, 'herb_tea': 2, 'skin_dropper': 1, 'honey_dipper': 2, 'generic-bottle': 1, 'herb_jars': 1, 'oil_olive': 1, 'herb_rosemary': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-fresh] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-fresh] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-fresh] لا منتج تجريبي مكرّر
+PASS [s-fresh] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('herb_tea.webp', 'أعشاب وشاي'), ('skin_dropper.webp', 'زيوت العناية'), ('honey_dipper.webp', 'عسل طبيعي')]
+PASS [s-fresh] نسبة الإطار الافتراضية = نسبة skin_oil الطبيعية (800/1200)  — 2/3
+PASS [s-fresh] نقطة التركيز الافتراضية 50% 50% (skin_oil)
+PASS [s-fresh] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-fresh] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-pop] كل صورة أصلية ما زالت مُستعملة  — 10 صورة
+PASS [s-pop] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'fashion_sneakers': 1, 'shoe_sneaker': 2, 'acc_pink': 2, 'fashion_shirts': 2, 'shoe_sport': 1, 'shoe_leather': 1, 'fashion_knit': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-pop] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-pop] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-pop] لا منتج تجريبي مكرّر
+PASS [s-pop] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('shoe_sneaker.webp', 'أحذية رياضية'), ('acc_pink.webp', 'إكسسوارات وردية'), ('fashion_shirts.webp', 'ستايل يومي')]
+PASS [s-pop] نسبة الإطار الافتراضية = نسبة fashion_sneakers الطبيعية (800/1000)  — 4/5
+PASS [s-pop] نقطة التركيز الافتراضية 50% 50% (fashion_sneakers)
+PASS [s-pop] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-pop] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-cosmetics] كل صورة أصلية ما زالت مُستعملة  — 9 صورة
+PASS [s-cosmetics] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'cosm_terra': 2, 'skin_gua': 2, 'cosm_pink': 2, 'skin_dropper': 2, 'skin_oil': 1, 'generic-cream': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-cosmetics] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-cosmetics] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-cosmetics] لا منتج تجريبي مكرّر
+PASS [s-cosmetics] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('skin_gua.webp', 'عناية بالبشرة'), ('cosm_pink.webp', 'مستحضرات الوجه'), ('skin_dropper.webp', 'الزيوت والسيرومات')]
+PASS [s-cosmetics] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-cosmetics] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-supplements] كل صورة أصلية ما زالت مُستعملة  — 9 صورة
+PASS [s-supplements] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'supp_green': 2, 'supp_veg': 2, 'supp_caps': 2, 'supp_smoothie': 2, 'supp_powder': 1, 'generic-bottle': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-supplements] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-supplements] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-supplements] لا منتج تجريبي مكرّر
+PASS [s-supplements] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('supp_veg.webp', 'بروتين وعضلات'), ('supp_caps.webp', 'فيتامينات ومعادن'), ('supp_smoothie.webp', 'طاقة ومشروبات')]
+PASS [s-supplements] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-supplements] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-honey] كل صورة أصلية ما زالت مُستعملة  — 9 صورة
+PASS [s-honey] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'honey_amber': 2, 'honey_comb': 2, 'honey_dipper': 2, 'honey_bee': 2, 'honey_jar': 1, 'generic-honey': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-honey] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-honey] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-honey] لا منتج تجريبي مكرّر
+PASS [s-honey] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('honey_comb.webp', 'عسل السدر'), ('honey_dipper.webp', 'عسل الأعشاب'), ('honey_bee.webp', 'منتجات الخلية')]
+PASS [s-honey] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-honey] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-herbs] كل صورة أصلية ما زالت مُستعملة  — 9 صورة
+PASS [s-herbs] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'herb_jars': 2, 'herb_tea': 2, 'oil_olive': 2, 'herb_rosemary': 2, 'herb_sprout': 1, 'skin_dropper': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-herbs] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-herbs] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-herbs] لا منتج تجريبي مكرّر
+PASS [s-herbs] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('herb_tea.webp', 'شاي وأعشاب'), ('oil_olive.webp', 'زيوت طبيعية'), ('herb_rosemary.webp', 'توابل وبذور')]
+PASS [s-herbs] نسبة الإطار الافتراضية = نسبة herb_jars الطبيعية (800/1200)  — 800/1200
+PASS [s-herbs] نقطة التركيز الافتراضية 50% 50% (herb_jars)
+PASS [s-herbs] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-herbs] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-fashion] كل صورة أصلية ما زالت مُستعملة  — 10 صورة
+PASS [s-fashion] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'fashion_man': 2, 'fashion_blue': 2, 'fashion_sneakers': 2, 'fashion_shirts': 3, 'fashion_knit': 1, 'fashion_white': 1, 'fashion_shoe': 2, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-fashion] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-fashion] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-fashion] لا منتج تجريبي مكرّر
+PASS [s-fashion] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('fashion_shirts.webp', 'قمصان وبدلات'), ('fashion_shoe.webp', 'أحذية'), ('fashion_man.webp', 'ستايل رجالي')]
+PASS [s-fashion] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-fashion] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-it] كل صورة أصلية ما زالت مُستعملة  — 9 صورة
+PASS [s-it] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'it_circuit': 3, 'it_pc': 2, 'it_code': 2, 'it_laptop': 1, 'it_dark': 1, 'it_color': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-it] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-it] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-it] لا منتج تجريبي مكرّر
+PASS [s-it] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('it_pc.webp', 'حواسيب وقطع'), ('it_circuit.webp', 'دوائر ولوحات'), ('it_code.webp', 'لوازم المبرمجين')]
+PASS [s-it] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-it] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-digital] كل صورة أصلية ما زالت مُستعملة  — 9 صورة
+PASS [s-digital] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'dig_dash': 3, 'dig_server': 1, 'dig_code': 2, 'dig_earth': 1, 'dig_analytics': 2, 'it_color': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-digital] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-digital] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-digital] لا منتج تجريبي مكرّر
+PASS [s-digital] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('dig_dash.webp', 'قوالب مواقع'), ('dig_analytics.webp', 'لوحات تحكم'), ('dig_code.webp', 'أدوات المطورين')]
+PASS [s-digital] نسبة الإطار الافتراضية = نسبة dig_dash الطبيعية (1400/933)  — 1400/933
+PASS [s-digital] نقطة التركيز الافتراضية 50% 50% (dig_dash)
+PASS [s-digital] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-digital] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-marketplace] كل صورة أصلية ما زالت مُستعملة  — 11 صورة
+PASS [s-marketplace] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'mkt_bags': 3, 'fashion_shirts': 1, 'mkt_open': 3, 'gad_vr2': 1, 'acc_round': 1, 'shoe_boot': 1, 'acc_satchel': 1, 'fashion_rack': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-marketplace] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-marketplace] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-marketplace] لا منتج تجريبي مكرّر
+PASS [s-marketplace] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('mkt_bags.webp', 'حقائب وإكسسوارات'), ('fashion_rack.webp', 'أزياء'), ('mkt_open.webp', 'عروض وتخفيضات')]
+PASS [s-marketplace] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-marketplace] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-jewelry] كل صورة أصلية ما زالت مُستعملة  — 10 صورة
+PASS [s-jewelry] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'jewel_ring': 2, 'jewel_moon': 2, 'jewel_gold': 1, 'jewel_leaf': 2, 'jewel_studs': 2, 'jewel_chain': 2, 'jewel_pearl': 2, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-jewelry] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-jewelry] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-jewelry] لا منتج تجريبي مكرّر
+PASS [s-jewelry] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان) محفوظة  — [('jewel_leaf.webp', 'قلائد وسلاسل'), ('jewel_studs.webp', 'خواتم'), ('jewel_chain.webp', 'أقراط وأطقم')]
+PASS [s-jewelry] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-jewelry] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-accessories] كل صورة أصلية ما زالت مُستعملة  — 10 صورة
+PASS [s-accessories] لا صورة تتكرر أكثر من عدد مراجعها في الأصل  — {'acc_pink': 1, 'acc_sunglasses': 2, 'acc_satchel': 3, 'acc_rings': 2, 'acc_outfit': 2, 'acc_headphones': 2, 'acc_round': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-accessories] لا صور خارج الأصل (الإضافات تحتاج موافقة)
+PASS [s-accessories] المنتجات التجريبية الأصلية (6) محفوظة بالاسم والسعر والصورة
+PASS [s-accessories] لا منتج تجريبي مكرّر
+PASS [s-accessories] بلاطات الفئات الأصلية (صورة + ترتيب + عنوان بعد إصلاح الخطأ المعلن) محفوظة  — [('acc_outfit.webp', 'إطلالات'), ('acc_headphones.webp', 'سماعات'), ('acc_satchel.webp', 'حقائب')]
+PASS [s-accessories] ملفات الصور المستعملة متطابقة بايتاً مع الأصل
+
+121/121 PASS — 0 FAILURES
