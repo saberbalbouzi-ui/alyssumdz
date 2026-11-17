@@ -71,6 +71,8 @@ const check = (tpl, name, cond, extra) => {
     return null;
   };
   const dragFrom = async (x, y, dx, dy) => { await page.mouse.move(x, y); await sleep(70); await page.mouse.down(); await sleep(110); await page.mouse.move(x + dx, y + dy, { steps: 12 }); await sleep(110); await page.mouse.up(); await sleep(420); };
+  /* سحب «بالحمل»: Alt عند الضغط ينسخ العنصر وCtrl/Meta عنده يبدّل التحديد المتعدد، لذا يُضغط المعدِّل بعد الضغط وأثناء الحركة فقط (محرّر main يقيّم carry عند كل حركة) */
+  const dragCarry = async (x, y, dx, dy) => { await page.mouse.move(x, y); await sleep(70); await page.mouse.down(); await sleep(110); await page.keyboard.down("Alt"); await page.mouse.move(x + dx, y + dy, { steps: 12 }); await sleep(110); await page.mouse.up(); await page.keyboard.up("Alt"); await sleep(420); };
   const dragArc = async (btn, cx, cy, deg) => {
     const bb = await btn.boundingBox(); const sx = bb.x + bb.width / 2, sy = bb.y + bb.height / 2, r = Math.hypot(sx - cx, sy - cy), a0 = Math.atan2(sx - cx, -(sy - cy));
     await page.mouse.move(sx, sy); await sleep(70); await page.mouse.down(); await sleep(140);
@@ -115,24 +117,46 @@ const check = (tpl, name, cond, extra) => {
       const unexplained = occl.filter(o => !(o.sel && o.over && o.over !== o.id));   // مغطّى فعلاً بعنصر آخر + يُحدَّد من الطبقات
       check(tpl, `T1b ما لم يُحدَّد بالفأرة (${occl.length}) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات`, unexplained.length === 0, occl.map(o => `${o.type}:${o.id}←${o.over}`).join("; ") + (unexplained.length ? " | غير مفسَّر: " + JSON.stringify(unexplained) : ""));
 
-      // ── 2) سحب كل عنصر حر قابل للتحديد: هو وحده يتحرك ──
-      let okDrag = 0, bad = [], tried = 0, nudged = 0;
+      // ── 1c) فاصل الأقسام (main: .pbx-sdiv): الشريط لا يعترض المؤشر، والمقبض الظاهر وحده يغيّر ارتفاع القسم بالسحب ويعيده التراجع ──
+      { await clearSel();
+        const pe = await page.evaluate(() => { const d = document.querySelector("#pbx-ovl .pbx-sdiv"), g = d && d.querySelector(".pbx-sdiv-g"); return d && g ? { strip: getComputedStyle(d).pointerEvents, grip: getComputedStyle(g).pointerEvents, vis: +getComputedStyle(g).opacity } : null; });
+        const mhs = () => page.evaluate(() => PBApp.E.page.sections.map(sc => JSON.stringify((sc.set || {}).mh === undefined ? null : sc.set.mh) + "|" + JSON.stringify((sc.set || {}).pad || null)));
+        let dragged = null, restored = null;
+        if (pe) { const g = page.locator("#pbx-ovl .pbx-sdiv-g").first(); await g.scrollIntoViewIfNeeded().catch(() => { }); const bb = await g.boundingBox();
+          if (bb) { const b0 = await mhs(); await dragFrom(bb.x + bb.width / 2, bb.y + bb.height / 2, 0, 30); const b1 = await mhs(); dragged = b1.filter((v, i) => v !== b0[i]).length; await page.keyboard.press("Control+z"); await sleep(420); const b2 = await mhs(); restored = b2.every((v, i) => v === b0[i]); } }
+        await clearSel(); await page.mouse.move(5, 5); await sleep(200);      // يُزال تأثير التحويم/القسم النشط (شريط أدوات القسم) قبل بقية الفحوص
+        check(tpl, "T1c فاصل الأقسام: الشريط pointer-events:none والمقبض الظاهر auto، والسحب من المقبض يغيّر ارتفاع قسم واحد ويعيده التراجع", !!pe && pe.strip === "none" && pe.grip === "auto" && pe.vis > .3 && dragged === 1 && restored === true, JSON.stringify({ pe, dragged, restored })); }
+
+      // ── 2) سحب كل عنصر حر قابل للتحديد ──
+      // محرّر main (دفع العناصر عند السحب، pushCtx): السحب العادي يُزيح العناصر التي أمام اتجاه الحركة ويوسّع القسم (تصميم مقصود)؛ و«الحمل» (Alt/Ctrl) يلغي الدفع ويحرّك العنصر وحده.
+      // T2 (حمل Alt): العنصر وحده يتحرك ثم التراجع يعيد كل شيء. T2b (سحب عادي): العنصر المسحوب تحرّك والتراجع يعيد كل العناصر المُزاحة إلى مواضعها بالضبط.
+      let okDrag = 0, bad = [], tried = 0, nudged = 0, okPush = 0, badPush = [], pushed = 0, triedPush = 0, bounded = 0;
+      const dragOnce = async (w, carry) => {      // يسحب العنصر (أو يحرّكه بالأسهم إن كان رفيعاً) ويعيد ما تغيّر ثم يتراجع (Ctrl+Z فقط إن تغيّر شيء، كي لا يتراجع عن خطوة سابقة)
+        const r = await clickWidget(w.id); if (!r) return { lost: true };
+        const before = snap(await model()), thin = r.bb.height < 6 || r.bb.width < 6;
+        if (thin) { for (let q = 0; q < 3; q++) { await page.keyboard.press("Shift+ArrowRight"); await sleep(120); await page.keyboard.press("Shift+ArrowDown"); await sleep(120); } await sleep(300); }
+        else if (carry) await dragCarry(r.x, r.y, 26, 18); else await dragFrom(r.x, r.y, 26, 18);
+        const after = snap(await model()), changed = Object.keys(after).filter(id => after[id] !== before[id]);
+        if (changed.length) { await page.keyboard.press("Control+z"); await sleep(420); }
+        const back = snap(await model()), restored = Object.keys(back).every(id => back[id] === before[id]);
+        return { thin, before, after, changed, restored, only: changed.length === 1 && changed[0] === w.id, self: changed.includes(w.id), multi: await page.evaluate(() => (PBApp.E.multi || []).length) };
+      };
       for (const w of W.filter(x => x.free && picked[x.id])) {
-        tried++;
-        const r = await clickWidget(w.id); if (!r) { bad.push(w.id + ":lost"); continue; }
-        const before = snap(await model());
-        // عنصر أرفع من 6px على الشاشة: مقبض التحجيم يغطي مركزه فيُحرَّك بأسهم لوحة المفاتيح (مسار واجهة حقيقي) بدل السحب
-        if (r.bb.height < 6 || r.bb.width < 6) { for (let q = 0; q < 3; q++) { await page.keyboard.press("Shift+ArrowRight"); await sleep(120); await page.keyboard.press("Shift+ArrowDown"); await sleep(120); } await sleep(300); nudged++; }
-        else await dragFrom(r.x, r.y, 26, 18);
-        const after = snap(await model());
-        const changed = Object.keys(after).filter(id => after[id] !== before[id]);
-        const only = changed.length === 1 && changed[0] === w.id;
-        await page.keyboard.press("Control+z"); await sleep(420);
-        const back = snap(await model()); const restored = Object.keys(back).every(id => back[id] === before[id]);
-        if (only && restored) okDrag++; else bad.push(`${w.type}:${w.id} moved=${changed.length}[${changed.map(c => c + ":" + before[c] + "→" + after[c]).join(" ; ")}] multi=${await page.evaluate(() => (PBApp.E.multi || []).length)} restored=${restored}`);
+        tried++; triedPush++;
+        const a1 = await dragOnce(w, false);      // سحب عادي (دفع main)
+        if (a1.lost) { bad.push(w.id + ":lost"); badPush.push(w.id + ":lost"); continue; }
+        if (a1.thin) nudged++;
+        const fmt = a => `${w.type}:${w.id} moved=${a.changed.length}[${a.changed.map(c => c + ":" + a.before[c] + "→" + a.after[c]).join(" ; ")}] multi=${a.multi} restored=${a.restored}`;
+        if (a1.only && a1.restored) { okDrag++; okPush++; continue; }      // السحب العادي لم يُزح أحداً: العنصر وحده تحرّك والتراجع أعاده
+        if (a1.self && a1.restored) { okPush++; pushed += a1.changed.length - 1; }      // دُفعت عناصر أخرى (مقصود) والتراجع أعادها كلها
+        else if (!a1.changed.length && a1.restored) { bounded++; okPush++; }      // مقيَّد بحدّ قسمه (ترويسة/تذييل/قسم ضيّق في محرّر main): لا يتحرك بالسحب العادي؛ حركته بالحمل تُتحقَّق في T2 أدناه
+        else badPush.push(fmt(a1));
+        const a2 = await dragOnce(w, true);      // بالحمل (Alt بعد الضغط): بلا دفع، العنصر وحده
+        if (!a2.lost && a2.only && a2.restored) okDrag++; else bad.push(a2.lost ? w.id + ":lost" : fmt(a2));
       }
-      if (SEC_MODE && tried === 0) console.log(`N/A  [${tpl}] T2 لا عناصر حرة في هذا القسم بالتصميم (قسم متدفق) — سحب العنصر الحر مغطّى في بطارية free-elements-qa على قوالب المتاجر`); else
-      check(tpl, `T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: ${okDrag}/${tried} (منها ${nudged} رفيعة حُرّكت بالأسهم)`, tried > 0 && okDrag === tried, bad.slice(0, 4).join("; "));
+      if (SEC_MODE && tried === 0) console.log(`N/A  [${tpl}] T2 لا عناصر حرة في هذا القسم بالتصميم (قسم متدفق) — سحب العنصر الحر مغطّى في بطارية free-elements-qa على قوالب المتاجر`); else {
+        check(tpl, `T2 سحب بالحمل (Alt، بلا دفع) يحرّك العنصر وحده ثم يُستعاد بالتراجع: ${okDrag}/${tried} (منها ${nudged} رفيعة حُرّكت بالأسهم)`, tried > 0 && okDrag === tried, bad.slice(0, 4).join("; "));
+        check(tpl, `T2b سحب عادي (دفع main): العنصر يتحرك والتراجع يعيد كل العناصر المُزاحة بالضبط: ${okPush}/${triedPush} (عناصر أُزيحت إجمالاً: ${pushed}؛ مقيَّدة بحدّ قسمها فلا تتحرك بالسحب العادي: ${bounded})`, triedPush > 0 && okPush === triedPush, badPush.slice(0, 4).join("; ")); }
 
       // ── 3) عمليات على عنصر البطل (أكبر صورة حرة) ──
       const hero = W.filter(x => x.free && x.type === "image").sort((a, b) => (Number(val(b.set, "fh")) || 0) - (Number(val(a.set, "fh")) || 0))[0];

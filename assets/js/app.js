@@ -666,7 +666,7 @@ const OrderSteps = (() => {
   }
   function unsupported() {
     if (!$("order-form") || !$("wilaya")) return "no-form"; if (document.querySelector(".oos-warning")) return "oos"; if ($("variants") || $("group-box")) return "variants";
-    if (document.querySelector('[data-digital],#digital-pay,.digital-checkout')) return "digital"; return "";
+    if (document.querySelector('[data-digital],#digital-pay,.digital-checkout,#dg-box')) return "digital"; return "";
   }
   /* n=1: الولاية/البلدية/المكتب + العرض؛ n=2: الاسم والهاتف والحقول الإضافية */
   function validate(n) {

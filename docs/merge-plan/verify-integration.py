@@ -40,11 +40,16 @@ for f in sh("git", "diff", "--name-only", BASE, "origin/main").split():
     except Exception: cur = set()
     gone = [l for l in added if l.strip().rstrip(",") not in cur]      # الإزاحة/الفاصلة الأخيرة لا تُعدّ تراجعاً
     if f == "scripts/make-template.py": gone = [l for l in gone if not l.startswith('bad = [r"ruqya_')]      # القائمة انتقلت داخل _leak_scan بتغيير اسم متغيّر الاستيعاب فقط؛ يُتحقَّق منها أدناه
+    # تعديلات معتمدة على أسطر main في فرع التكامل (بقرار صاحب المتجر): إصلاح الرقمي في OrderSteps.unsupported (#dg-box) وحصر pointer-events لفاصل الأقسام في مقبض ظاهر
+    if f == "assets/js/app.js": gone = [l for l in gone if "[data-digital],#digital-pay,.digital-checkout" not in l]
+    if f == "scripts/pagebuilder-editor.js": gone = [l for l in gone if ".pbx-sdiv" not in l and 'd.className = "pbx-sdiv"' not in l and "d.onmousedown = e =>" not in l and 'h.className = "pbx-sdiv-h"' not in l]
     if f == "scripts/pagebuilder.js": gone = [l for l in gone if not l.startswith("function tick(){")]      # سطر tick يُدمج بتعديل الفرع (hdw) عمداً؛ يُتحقَّق منه أدناه
     if gone: miss[f] = gone
 print("أسطر أضافها main ولا تظهر حرفياً في النتيجة:", {k: len(v) for k, v in miss.items()} or "لا شيء")
 for f, g in miss.items():
     for l in g[:3]: print("   ·", f, "→", l[:140])
+ap = open("assets/js/app.js", encoding="utf-8").read(); ed = open("scripts/pagebuilder-editor.js", encoding="utf-8").read()
+check("الإصلاحان المعتمدان موجودان: #dg-box في OrderSteps.unsupported ومقبض pbx-sdiv-g مع الشريط pointer-events:none", ".digital-checkout,#dg-box" in ap and "pbx-sdiv-g" in ed and ".pbx-sdiv{position:absolute;height:14px;pointer-events:none" in ed)
 tk = open("scripts/pagebuilder.js", encoding="utf-8").read()
 check("لا تراجع لأسطر main", not miss, list(miss))
 mt = open("scripts/make-template.py", encoding="utf-8").read()
