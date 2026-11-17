@@ -95,6 +95,9 @@ def sh(*cmd):
     except Exception: return "unknown"
 schema_hash = hashlib.sha256((ROOT / "platform/api/schema.sql").read_bytes()).hexdigest()[:16]
 info = {"environment": "beta", "sha": os.environ.get("GIT_SHA") or sh("git", "rev-parse", "HEAD"), "version": (ROOT / "VERSION").read_text(encoding="utf-8").strip(), "schema_hash": schema_hash, "api": "https://" + B["api_host"], "app_host": B["app_host"], "supabase_configured": CONFIGURED, "built_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+shutil.copy(ROOT / "platform/env/beta/beta-start.html", OUT / "beta-start.html")   # صفحة بدء التجربة: إنشاء متجر تجريبي بكود دعوة
+shutil.copytree(ROOT / "assets/fonts", OUT / "assets/fonts", dirs_exist_ok=True)   # خط Cairo (OFL): make-template لا ينسخه فتظهر 404 للخط
+(OUT / "VERSION").write_text(info["version"] + "\n", encoding="utf-8")   # لوحة التحكم تفحص /VERSION للتحديث (كما في الإنتاج)
 (OUT / "beta-build.json").write_text(json.dumps(info, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 (OUT / "version.json").write_text(json.dumps({"version": info["version"], "channel": "beta", "sha": info["sha"]}) + "\n", encoding="utf-8")
 

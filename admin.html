@@ -2732,7 +2732,7 @@ const Admin = {
   },
   sbSession(){ return API.sb.enabled() && !!API.sb.session(); },
   async refreshAlerts(){
-    if(!this.key || !(CONFIG.API_URL || PHPAPI.on())) return;
+    if(!this.key || !(CONFIG.API_URL || PHPAPI.on() || API.ordersBackend() === "supabase")) return;
     $f('import-orders-btn').classList.toggle('hidden', !(API.sb.enabled() && API.ordersBackend() !== 'sheets' && !!API.sb.session()));
     const [o, q] = await Promise.all([API.orders(this.key), API.questions(this.key)]);
     if(o && o.ok){
@@ -2798,7 +2798,7 @@ const Admin = {
     const PH = n=>{ try{ (window.__admPh = window.__admPh || []).push([n, Math.round(performance.now())]); }catch(e){} };      // مراحل الفتح (تظهر في قائمة الحساب للتشخيص)
     PH("بدء");
     /* v1.89.944: جلب الطلبات (وآخر نسخة منتجات إن كان رمز النشر محفوظاً) يبدأ فوراً بالتوازي مع الهوية والمزامنة بدل الانتظار خلفها؛ وإن فشل الطلب المبكر (جلسة قديمة تُجدَّد أثناء الهوية) يُعاد بعدها */
-    const earlyOrders = (CONFIG.API_URL || PHPAPI.on()) ? Promise.resolve().then(()=>API.orders(this.key)).catch(()=>null) : null;
+    const earlyOrders = (CONFIG.API_URL || PHPAPI.on() || API.ordersBackend() === "supabase") ? Promise.resolve().then(()=>API.orders(this.key)).catch(()=>null) : null;
     const earlyFresh = (()=>{ try{ const c = GH.cfg(); return (c && c.token) ? this.freshData() : null; }catch(e){ return null; } })();
     if(window.AdminRoles){                                   // هوية صاحب الجلسة (مالك/موظف) وإخفاء ما لا يحق له
       let me = AdminRoles.state.me || await AdminRoles.boot();
@@ -2814,14 +2814,14 @@ const Admin = {
     PH("إعدادات");
     if(window.Hub && Hub.on()) await Hub.sync();             // النشر التلقائي: يُضبط الربط من حسابك بلا رمز
     PH("ربط");
-    if(!CONFIG.API_URL && !PHPAPI.on()){ toast("⚠️ لم يُربط الـ API بعد"); }
+    if(!CONFIG.API_URL && !PHPAPI.on() && API.ordersBackend() !== "supabase"){ toast("⚠️ لم يُربط الـ API بعد"); }   // خلفية Supabase بلا Apps Script (قالب العميل/Beta) خلفية صالحة
     // ملاحظة: المنتجات ورسوم التوصيل تُقرأ محلياً من data.js/wilayas.js فقط (المصدر الوحيد
     // الموثوق — يُعدَّلان مباشرة عبر لوحة التحكم وتُنشر التعديلات فوراً على الموقع)، ولا تُستبدَل
     // بنتيجة Google Sheets القديمة: شيت الاختبار كانت تحتوي أحياناً على منتج واحد فقط، وكانت —
     // إذا ردّت بأي بيانات ولو ناقصة — تُخفي أغلب المنتجات في لوحة التحكم بصفة عشوائية (نفس السبب
     // الذي دفع لتعطيل هذا الاستبدال في bootStore() بملف api.js). الطلبات وحدها تبقى تُقرأ من الشيت.
     /* الطلبات وأحدث نسخة منشورة للمنتجات يُطلبان معاً (كانا متتاليين فيتضاعف الانتظار على شبكة الهاتف) */
-    let [orders, fresh] = await Promise.all([ earlyOrders || ((CONFIG.API_URL || PHPAPI.on()) ? API.orders(this.key) : null), earlyFresh || this.freshData() ]);
+    let [orders, fresh] = await Promise.all([ earlyOrders || ((CONFIG.API_URL || PHPAPI.on() || API.ordersBackend() === "supabase") ? API.orders(this.key) : null), earlyFresh || this.freshData() ]);
     if(earlyOrders && !(orders && orders.ok)){ try{ orders = await API.orders(this.key); }catch(e){} }      // الطلب المبكر فشل (مثلاً رمز منتهٍ جُدِّد أثناء الهوية): أعد المحاولة
     PH("طلبات");
     /* المنتجات والمخزون تُقرأ من النسخة المنشورة الأحدث (لا من ملف الموقع المخزَّن مؤقتاً) كي لا يعود المخزون لرقم قديم عند إعادة تحميل اللوحة بعد النشر بدقائق */

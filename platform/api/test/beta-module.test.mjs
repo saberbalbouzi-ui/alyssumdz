@@ -73,4 +73,11 @@ const invite = async (o = {}) => (await adm("POST", "/admin/beta/invites", o))[1
   { const op = (await call(penv, "GET", "/openapi.json"))[1], ob = (await call(benv, "GET", "/openapi.json"))[1], s = await call(penv, "POST", "/v1/beta/signup", { name: "x" }), nz = await call(penv, "POST", "/v1/zzz-nonexistent", { name: "x" });
   ok("[M10] الإنتاج: وحدة Beta غير محمّلة — لا مسارات /v1/beta في OpenAPI الإنتاج (وهي في Beta)، ومسارها يُعامَل كمسار غير موجود، ولا تسجيل ممكن", !Object.keys(op.paths).some((p) => p.startsWith("/v1/beta")) && Object.keys(ob.paths).some((p) => p === "/v1/beta/signup") && s[0] === nz[0] && P.db.prepare("SELECT COUNT(*) n FROM pf_tenants").get().n === 0, { prod: Object.keys(op.paths).filter((p) => /beta/.test(p)), s: s[0], nz: nz[0] }); }
   ok("[M10] لم يخرج أي اتصال صادر طوال الاختبار (لا بريد/رسائل حقيقية)", OUT.length === 0, OUT); }
-globalThis.fetch = realFetch; done();
+globalThis.fetch = realFetch; /* M11: CORS للمسارات العامة لأصل واجهة Beta نفسها فقط (صفحة بدء التجربة تستدعي /v1/beta/*)؛ أصل غريب ولا أصل ← بلا ترويسة؛ الإنتاج بلا أثر */
+{ const aco = async (env, path, origin) => (await worker.fetch(new Request("https://x.test" + path, { headers: origin ? { origin } : {} }), env)).headers.get("access-control-allow-origin"); const WEB = "https://alyssum-beta-web.saber-balbouzi.workers.dev";
+  ok("[M11] أصل واجهة Beta يُسمح له بمسار عام (/v1/beta/status)", (await aco(benv, "/v1/beta/status", WEB)) === WEB);
+  { const r = await worker.fetch(new Request("https://x.test/v1/beta/signup", { method: "POST", headers: { origin: WEB, "content-type": "application/json", "cf-connecting-ip": "9.9.9.9" }, body: "{}" }), benv); ok("[M11] أخطاء المسار العام (400/403/429) تحمل CORS أيضاً لأصل Beta (وإلا يظهر «تعذّر الاتصال»)", r.status >= 400 && r.headers.get("access-control-allow-origin") === WEB, r.status); }
+  ok("[M11] مسار الإدارة لا يحمل CORS ولو من أصل Beta", (await aco(benv, "/admin/beta", WEB)) === null);
+  ok("[M11] أصل غريب أو بلا أصل ← لا ترويسة CORS", (await aco(benv, "/v1/beta/status", "https://evil.example")) === null && (await aco(benv, "/v1/beta/status", null)) === null);
+  ok("[M11] الإنتاج: مسار عام لا يحمل CORS لأي أصل (سلوك الإنتاج دون تغيير)", (await aco(penv, "/health", WEB)) === null); }
+done();

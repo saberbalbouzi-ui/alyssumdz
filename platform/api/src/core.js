@@ -146,6 +146,8 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       if (e instanceof HttpError) res = { status: e.status, headers: e.headers, body: JSON.stringify({ error: { code: e.code, message: e.message, ...(e.fields ? { fields: e.fields } : {}) } }) };
       else { console.error("platform:", e?.stack || e); res = { status: 500, headers: {}, body: '{"error":{"code":"server_error","message":"خطأ داخلي"}}' }; }
     }
+    /* CORS لمسارات /v1/beta/* العامة (حالة Beta + تسجيل) لأصل واجهة البيئة نفسها فقط — للنجاح والخطأ معاً (وإلا يُخفي المتصفح 4xx/429)؛ الإنتاج: environment=null فلا أثر */
+    { const og = String(headers?.origin ?? ""); if (og && environment?.publicOrigins?.includes(og) && /^\/?v1\/beta\//.test(path) && !res.headers?.["Access-Control-Allow-Origin"]) res = { ...res, headers: { ...res.headers, "Access-Control-Allow-Origin": og, Vary: "Origin" } }; }
     return { status: res.status, headers: { "Content-Type": "application/json; charset=utf-8", "X-Request-Id": rid, "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store", ...res.headers }, body: res.body, ...(res.stream ? { stream: res.stream } : {}) };
   }
   /** OpenAPI تلقائي من سجلّ المسارات (الوصف من opts.summary) */
