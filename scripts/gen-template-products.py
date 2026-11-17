@@ -126,9 +126,11 @@ def _prod_mobile_fit(top):
     for sec in top: walk(sec)
 
 def build_product_skins(out_dir):
-    ns = {}
-    exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen-templates-copy.py"), encoding="utf-8").read(), ns)
+    ns = {"HERE": os.path.dirname(os.path.abspath(__file__))}
+    exec(open(os.path.join(ns["HERE"], "gen-templates-copy.py"), encoding="utf-8").read(), ns)
     PK = ns["PACKS"]
+    for _t, _N in ns.get("NX_NICHES", {}).items():      # NEXUS COMMERCE: لوحة كل مجال من بياناته
+        PPAL[_t] = _pal(False, _N["paper"], _N["ink"], _N["mut"], _N["acc"], _N["acc2"], _N["onacc"], rad=_N["rad"], card="solid", layout={"s-nexus": "mirror", "s-nexus-fashion": "stack", "s-nexus-beauty": "classic", "s-nexus-tech": "wide", "s-nexus-food": "mirror"}[_t], bar="pill", btn="flat", cardbg=_N["card"], line=_N["ink"] + "22", shadow="0 14px 36px " + _N["ink"] + "1a", fld=_N["card"], fldtxt=_N["ink"], opt=_N["card"])
     for tid, P in PPAL.items():
         f = os.path.join(out_dir, tid + ".json")
         if not os.path.exists(f): continue

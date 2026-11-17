@@ -105,7 +105,7 @@ const check = (tpl, name, cond, extra) => {
           const r = el.getBoundingClientRect(); const top = d.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); const tw = top && top.closest('[data-kind="widget"]');
           return { over: tw ? tw.getAttribute("data-pb") : null };
         }, w.id);
-        await uiClick('[data-lt="lay"]'); await sleep(250);
+        if (!(await page.locator(`.pbx-lay [data-sel="${w.id}"]`).count())) { await uiClick('[data-lt="lay"]'); await sleep(250); }      // لوحة الطبقات مفتوحة أصلاً بعد أول عنصر مغطّى: لا نبدّلها (النقر يغلقها فيفشل الثاني)
         const row = page.locator(`.pbx-lay [data-sel="${w.id}"]`).first();
         let viaLayers = false;
         if (await row.count()) { await row.click().catch(() => {}); await sleep(300); viaLayers = await selIs(w.id); }

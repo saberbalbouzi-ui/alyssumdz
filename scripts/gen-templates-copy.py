@@ -353,3 +353,7 @@ def localize_copy(id, pg):
     pg["demo"] = True
     pg["title"] = pg.get("title") or brand
     return pg
+
+# NEXUS COMMERCE: بيانات المجالات الخمسة (تُضاف إلى PACKS هنا ليراها المولّد وبناء صفحات المنتجات معاً)
+import os
+exec(open(os.path.join(HERE, "gen-templates-nexus-data.py"), encoding="utf-8").read())

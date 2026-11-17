@@ -39,7 +39,14 @@ if ALY: tplcss += ALYSHOP
 b0 = t.index("<body>") + len("<body>")
 b1 = t.index("<main")
 top = t[b0:b1]
-top = top.strip() + '<main id="main">'
+# هيدر قالب المطوّر يقع داخل <main> كقسم (الشريط العلوي وحده خارجه): يُنقل مع نمطه إلى الصفحات المولَّدة كي لا تفقد التنقّل (يُتجاوز إن كان الهيدر خارج main أصلاً)
+hdr_html = ""
+if "<header" not in top:
+    hi = t.find("<header", b1)
+    if hi > b1:
+        s0 = t.rfind("<section", 0, hi); st0 = t.rfind("<style", 0, s0); e0 = t.find("</section>", hi)
+        if s0 > b1 and st0 >= b1 and e0 > hi and st0 > t.rfind("</section>", 0, s0): hdr_html = t[st0:e0 + len("</section>")]
+top = top.strip() + hdr_html + '<main id="main">'
 
 # الفوتر + السلة + السكربتات حتى سكربت التهيئة الأخير
 f0 = t.index("</main>") + len("</main>")
@@ -57,6 +64,12 @@ ACCT = '''<section class="shop-page"><div class="container" style="max-width:560
   <div id="acct-box" style="background:#fff;border:1px solid var(--line);border-radius:20px;padding:1.6rem"></div>
 </div></section>
 '''
+CART = '''<section class="shop-page"><div class="container" style="max-width:820px">
+  <div class="sec-title"><span class="kicker">سلتي</span><h1 style="font-size:clamp(1.6rem,4vw,2.3rem);margin:.2rem 0">سلة التسوق</h1><p>راجع منتجاتك وعدّل الكميات ثم أكّد طلبك — الدفع عند الاستلام</p></div>
+  <div id="cart-page" class="cart-page"></div>
+  <p style="text-align:center;margin-top:1.2rem"><a href="shop.html" style="font-weight:800">← متابعة التسوق</a></p>
+</div></section>
+'''
 INIT = '<script>document.addEventListener("DOMContentLoaded",()=>{bootStore().then(()=>{%s;initCartDrawer();fillCartWilayas();initReveal();});});</script></body></html>'
 
 
@@ -69,4 +82,5 @@ def page(title, desc, body, init, noindex=False):
 out.mkdir(parents=True, exist_ok=True)
 (out / "shop.html").write_text(page("المتجر", "تصفّح كل المنتجات والتصنيفات والعروض — الدفع عند الاستلام", SHOP, "initShop()"), encoding="utf-8")
 (out / "account.html").write_text(page("حسابي", "سجّل الدخول أو أنشئ حساباً جديداً لتتبّع طلباتك", ACCT, "initAccountPage()", True), encoding="utf-8")
-print("ok: shop.html, account.html ←", src)
+(out / "cart.html").write_text(page("السلة", "راجع منتجاتك وعدّل الكميات ثم أكّد طلبك — الدفع عند الاستلام", CART, "initCartPage()", True), encoding="utf-8")
+print("ok: shop.html, account.html, cart.html ←", src)

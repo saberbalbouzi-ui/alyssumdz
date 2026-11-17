@@ -228,7 +228,7 @@ if (!$isAdmin && !empty($_SESSION['staff'])) {                       // تحمي
 /* قائمة بيضاء لمسارات الكتابة — لا شيء خارجها */
 function allowedPath(string $p): bool {
     if ($p === '' || strlen($p) > 200 || strpbrk($p, "\0\\") !== false || str_contains($p, '..') || $p[0] === '/') return false;
-    if (in_array($p, ['assets/js/data.js', 'assets/js/wilayas.js', 'index.html', 'shop.html', 'account.html'], true)) return true;      // shop/account تُولَّدان من الرئيسية المحفوظة (admin-shoppages.js) بعد تثبيت قالب
+    if (in_array($p, ['assets/js/data.js', 'assets/js/wilayas.js', 'index.html', 'shop.html', 'account.html', 'cart.html'], true)) return true;      // shop/account تُولَّدان من الرئيسية المحفوظة (admin-shoppages.js) بعد تثبيت قالب
     if (preg_match('#^assets/data/[a-z0-9_-]+\.json$#i', $p)) return true;
     if (preg_match('#^p/[a-z0-9][a-z0-9-]{0,80}/index(\.[a-z0-9]+)?\.html$#', $p)) return true;
     if (preg_match('#^lp/[a-z0-9][a-z0-9-]{0,60}/index\.html$#', $p)) return true;            // صفحات الهبوط (منشئ الصفحات)

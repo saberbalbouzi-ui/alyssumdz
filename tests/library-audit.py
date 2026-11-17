@@ -14,12 +14,13 @@ BATCH = {"s-watches", "s-tech", "s-jewelry", "s-cosmetics", "s-honey", "s-herbs"
          "c-aurora", "c-neon", "c-gold", "c-soft", "c-steps", "o-flash", "o-lux", "o-steps", "o-bundle", "o-proof"}
 idx = json.load(open(f"{T}/index.json", encoding="utf-8")); oidx = json.loads(git(f"{T}/index.json"))
 ids = [x["id"] for x in idx]
+NXSET = {i for i in ids if i.startswith(("s-nexus", "p-nexus"))}      # NEXUS COMMERCE: قوالب جديدة (ليست في الأصل) تُفحص في قسم «nexus» أدناه
 # 1) النطاق
 changed = subprocess.run(["git", "diff", "--name-only", ORIG, "--", T], capture_output=True, text=True).stdout.split()
 def tid(f):
     b = os.path.basename(f)[:-5] if f.endswith(".json") else None
     return b[5:] if b and b.startswith("prod-") else b
-touched = {tid(f) for f in changed if f.endswith(".json") and not f.endswith("index.json")}
+touched = {tid(f) for f in changed if f.endswith(".json") and not f.endswith("index.json")} - NXSET
 # مرحلة إغلاق القبول: التعطيل الافتراضي للعدّ التنازلي/كود الخصم/نسب الكمية المباعة + مخزون من بيانات حقيقية + علم «محتوى نموذجي» + إزالة عبارات الموعد المرتبطة بالعدّاد
 # يطال كل القوالب (ومنها الستة خارج الدفعات). يُقارَن الملف بالأصل بعد تسوية هذه الحقول فقط: أي فرق آخر خارج الدفعات يبقى إخفاقاً.
 PH5_TEXT = {"عرض الاستوديو — الليلة فقط": "عرض الاستوديو", "استعملي الكود قبل منتصف الليل.": "استعملي كود الخصم عند الطلب."}
@@ -85,12 +86,12 @@ check("variety", "مجموعة الأرقام المتطابقة (12000/58/98/24
 check("variety", "ترتيب كتل النهاية يتنوّع بين القوالب (4 أنماط على الأقل)", len(orders) >= 4, sorted(orders))
 check("variety", "لا صورة رجل تُعرض مع اسم أنثوي", not fem_img, fem_img)
 check("scope", "s-alyssum وملفاته (قالب وجلد وصور وCSS) غير ممسوسة (الفهرس فقط يحمل علم owner)", not any("alyssum" in f and not f.endswith("index.json") for f in changed), [f for f in changed if "alyssum" in f])
-thumbs_changed = {os.path.basename(f).replace("-full", "")[:-4] for f in changed if "/thumbs/" in f}
+thumbs_changed = {os.path.basename(f).replace("-full", "")[:-4] for f in changed if "/thumbs/" in f} - NXSET
 P5_OK = (touched - BATCH) - set(bad_scope)      # قوالب خارج الدفعات عُدّلت بحقول مرحلة القبول فقط ⟵ أُعيدت معاينتاها
 check("scope", "لا معاينة مصغّرة خارج الدفعات تغيّرت (عدا قوالب مرحلة القبول المسوّاة)", thumbs_changed <= (BATCH | P5_OK), sorted(thumbs_changed - BATCH - P5_OK))
-check("scope", "الفهرس بالمعرّفات والترتيب نفسهما (33)", ids == [x["id"] for x in oidx], len(ids))
+check("scope", "الفهرس القديم بالمعرّفات والترتيب نفسهما (33) — القوالب الجديدة NEXUS تُضاف في المقدّمة فقط", [i for i in ids if i not in NXSET] == [x["id"] for x in oidx] and ids[:len(NXSET)] == [i for i in ids if i in NXSET], len(ids))
 od = {x["id"]: x for x in oidx}
-diff_other = [x["id"] for x in idx if x["id"] not in BATCH and {k: v for k, v in x.items() if k != "owner"} != od[x["id"]]]
+diff_other = [x["id"] for x in idx if x["id"] not in BATCH and x["id"] not in NXSET and {k: v for k, v in x.items() if k != "owner"} != od[x["id"]]]
 check("scope", "مداخل الفهرس خارج الدفعات متطابقة مع الأصل", not diff_other, diff_other)
 chg_fields = collections.Counter(k for x in idx if x["id"] in BATCH for k in x if x[k] != od[x["id"]].get(k))
 check("scope", "تغيّر في مداخل الدفعات وصف القالب فقط (لا معرّف/تصنيف/ميدان/اسم)", set(chg_fields) <= {"d"}, dict(chg_fields))
@@ -101,7 +102,7 @@ check("index", "معرّفات فريدة", len(set(ids)) == len(ids))
 for x in idx:
     t = x["id"]; ok = need <= set(x) and all(str(x[k]).strip() for k in need)
     check(t, "حقول الفهرس مكتملة", ok, sorted(need - set(x)))
-    check(t, "نوع/تصنيف متسق (store→page وغيره→sec)", (x["cat"] == "store") == (x["kind"] == "page") and x["cat"] in ("store", "contact", "order"), f'{x["cat"]}/{x["kind"]}')
+    check(t, "نوع/تصنيف متسق (store→page وغيره→sec)", (x["cat"] == "store") == (x["kind"] == "page") and x["cat"] in ("store", "contact", "order", "page"), f'{x["cat"]}/{x["kind"]}')
     check(t, "اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول", not FORB.search(x["n"] + " " + x["d"]) and 8 <= len(x["d"]) <= 330, len(x["d"]))
 # 3) و4) الملفات والمحتوى
 SKIP = {"src", "img", "bgImg", "link", "id", "tpl", "fxs", "css", "icon", "micon", "anim", "ff", "bg", "slug", "dest", "url", "phone", "email", "aid", "kind", "type"}
@@ -157,6 +158,7 @@ names = sorted(sigs); mind = []
 for i, a in enumerate(names):
     for b in names[i + 1:]:
         if idx[ids.index(a)]["cat"] != idx[ids.index(b)]["cat"]: continue
+        if {a, b} <= {"p-nexus-privacy", "p-nexus-terms", "p-nexus-returns"}: continue      # صفحات نصية قانونية بتخطيط قراءة واحد مقصود
         mind.append((sum(p != q for p, q in zip(sigs[a], sigs[b])), a, b))
 mind.sort(); print("\nأقرب الأزواج بصرياً (مسافة بصمة 0..256):", mind[:5])
 check("distinct", "لا معاينتان متطابقتان تقريباً (مسافة ≥ 20 لأقرب زوج من النوع نفسه)", not mind or mind[0][0] >= 20, mind[:2])

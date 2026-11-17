@@ -274,6 +274,7 @@ exec(open(os.path.join(HERE, "gen-templates-batch1.py"), encoding="utf-8").read(
 exec(open(os.path.join(HERE, "gen-templates-batch2.py"), encoding="utf-8").read())      # الدفعة 2: s-supplements s-accessories s-it s-digital s-marketplace
 exec(open(os.path.join(HERE, "gen-templates-batch3.py"), encoding="utf-8").read())      # الدفعة 3: s-aurora s-gold s-fresh s-pop
 exec(open(os.path.join(HERE, "gen-templates-batch4.py"), encoding="utf-8").read())      # الدفعة 4: c-aurora c-neon c-gold c-soft c-steps o-flash o-lux o-steps o-bundle o-proof
+exec(open(os.path.join(HERE, "gen-templates-nexus.py"), encoding="utf-8").read())      # NEXUS COMMERCE (القالب الافتراضي الجديد): 5 مجالات، يتصدّر المكتبة
 
 json.dump(TEMPLATES, open(os.path.join(OUT, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 exec(open(os.path.join(HERE, "gen-template-products.py"), encoding="utf-8").read())

@@ -624,6 +624,7 @@ let page;
             edited: bodyTxt.includes("QA-"),
             price: /3[\s.,٬]?900/.test(bodyTxt.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d))),
             prodLink: !!document.querySelector('a[href*="p/prod-a"]'),
+            prodLinks: [...document.querySelectorAll('a[href*="p/"]')].map(a => a.getAttribute("href")).slice(0, 6).join(" | ") + " | cards=" + document.querySelectorAll(".pb-pc").length + " grid=" + document.querySelectorAll("#grid .card").length,
             hscroll: document.documentElement.scrollWidth - window.innerWidth,
             countdown: !!document.querySelector("[class*=cdown], [class*=countdown], .pb-cd"),
             coupon: /كوبون|COUPON|كود/i.test(bodyTxt) || !!document.querySelector("[class*=coupon], .pb-cp")
@@ -634,7 +635,7 @@ let page;
           await check(tpl, "T19-d storefront: entrance animations preserved", sf.anims >= Math.min(10, tplAnims * 0.5), `anims=${sf.anims} tpl≈${tplAnims}`);
           await check(tpl, "T19-d storefront: hover effects css present", sf.hoverCss > 3, "hover rules=" + sf.hoverCss);
           await check(tpl, "T19-d storefront: real product price rendered", sf.price, "");
-          await check(tpl, "T19-d storefront: product links to native page", sf.prodLink, "");
+          await check(tpl, "T19-d storefront: product links to native page", sf.prodLink, sf.prodLinks);
           await check(tpl, "T19-d storefront: countdown+coupon render", sf.countdown && sf.coupon, `cd=${sf.countdown} cp=${sf.coupon}`);
         }
         await check(tpl, `T19-${mode} no horizontal overflow`, sf.hscroll <= 3, "overflow=" + sf.hscroll + "px");
