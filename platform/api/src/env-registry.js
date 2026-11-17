@@ -31,7 +31,7 @@ export default {
       "gateway_worker": "alyssum-shipping-gateway-beta",
       "gateway_d1": "alyssum-shipping-gateway-beta",
       "gateway_host": "alyssum-shipping-gateway-beta.saber-balbouzi.workers.dev",
-      "app_host": "alyssum-beta-web.pages.dev",
+      "app_host": "alyssum-beta-web.saber-balbouzi.workers.dev",
       "supabase_ref": "xhdnqnxmcmfhrgctlkzy",
       "supabase_ref_note": "مشروع alyssum-beta (حساب Supabase مستقل). المرجع مثبَّت من لقطة لوحة المشروع؛ الأداة تعيد التحقق من الاسم عبر API قبل أي تطبيق SQL.",
       "modes": {
@@ -51,7 +51,9 @@ export default {
       "supabase_project_name": "alyssum-beta",
       "github_environment": "alyssumdz-beta",
       "chargily_api": "https://pay.chargily.net/test/api/v2",
-      "hosts_note": "Beta الليلة على workers.dev وpages.dev (بلا أي سجل DNS ولا مسار في مناطق alyssumdz.com/alyssumhub.fyi الإنتاجية)"
+      "hosts_note": "Beta الليلة على workers.dev (الواجهة = Worker ساكن + KV لأن الرفع المباشر لـPages يتعارض مع وكيل الجلسة)، بلا أي سجل DNS ولا مسار في مناطق alyssumdz.com/alyssumhub.fyi الإنتاجية",
+      "static_worker": "alyssum-beta-web",
+      "static_kv": "alyssum-beta-web-files"
     },
     "local": {
       "label": "Local Development",

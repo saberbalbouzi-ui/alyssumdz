@@ -10,7 +10,7 @@
     },
     {
       "id": "D2",
-      "decision": "منطقة DNS لـalyssum-beta-web.pages.dev: هل alyssumdz.com على Cloudflare؟ (لا يُعرف من المستودع)",
+      "decision": "منطقة DNS لـalyssum-beta-web.saber-balbouzi.workers.dev: هل alyssumdz.com على Cloudflare؟ (لا يُعرف من المستودع)",
       "recommendation": "إن لم تكن على Cloudflare فاستعمل نطاقاً فرعياً مفوَّضاً أو pages.dev مؤقتاً"
     },
     {
@@ -138,7 +138,7 @@
       {
         "id": "cf-pages-domain",
         "type": "pages_custom_domain",
-        "name": "alyssum-beta-web.pages.dev",
+        "name": "alyssum-beta-web.saber-balbouzi.workers.dev",
         "purpose": "نطاق الواجهة (+ شهادة Universal SSL)",
         "created_by": "لوحة Cloudflare Pages ← Custom domains",
         "approval": true,
@@ -173,9 +173,9 @@
     "auth": {
       "public_signup": "OFF (إلزامي)",
       "email_confirm": "Auto Confirm لمستخدم المدير فقط",
-      "site_url": "https://alyssum-beta-web.pages.dev",
+      "site_url": "https://alyssum-beta-web.saber-balbouzi.workers.dev",
       "redirect_allow_list": [
-        "https://alyssum-beta-web.pages.dev/**"
+        "https://alyssum-beta-web.saber-balbouzi.workers.dev/**"
       ],
       "users": [
         "مدير Beta واحد (D3)"
