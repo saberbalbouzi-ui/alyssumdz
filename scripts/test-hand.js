@@ -102,7 +102,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 200));
       const r = { has, own, wil: w.value, com: c.value, still: Array.from(c.options).some(o => o.value === "Barika") }; bg.remove(); return r; });
     ok("بلدية بريكة تظهر مع بلديات باتنة وتحوّل الولاية عند اختيارها", wk.has && wk.own > 10 && wk.wil === "Barika" && wk.com === "Barika" && wk.still, wk); }
-  { const sp = await p.context().newPage(); await sp.goto(base + "/index.html"); await sp.waitForTimeout(800);
+  { const sp = await p.context().newPage();
+    /* قاعدة v1.89.649 مشروطة بأن الشركة الافتراضية yalidine (applyShipList)، والإعداد الحيّ assets/data/ship-co.json يتغير من لوحة التحكم (def=wecan منذ 2026-11-06): نثبّت الشرط في الصفحة بدل الاعتماد على بيانات حيّة؛ الاعتراض عبر fetch لأن عامل الخدمة (sw.js) قد يخدم الطلب فلا يصله page.route */
+    await sp.addInitScript(() => { const of = window.fetch.bind(window); window.fetch = (u, o) => /ship-co\.json/.test(String(u && u.url || u)) ? of(u, o).then(async r => { const j = await r.json(); j.def = "yalidine"; return new Response(JSON.stringify(j), { status: 200, headers: { "content-type": "application/json" } }); }) : of(u, o); });
+    await sp.goto(base + "/index.html"); await sp.waitForTimeout(800);
     const sk = await sp.evaluate(() => { const slug = PRODUCTS.find(x => x.active !== false).slug; return slug; }); await sp.goto(base + "/p/" + sk + "/"); await sp.waitForTimeout(1500);
     const st = await sp.evaluate(async () => { const w = document.getElementById("wilaya"), c = document.getElementById("commune"); if (!w || !c) return { none: true };
       w.value = "5"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
@@ -1877,10 +1880,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const lyT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; window.confirm = () => true; PBAdmin.mkPage("تخطيط"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(500); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
     const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = im;
-    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 1) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 4 && pane.querySelectorAll(".pbx-cat").length >= 3;
+    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 1) < .03 && im.width >= 70;   /* عرض اللوحة اليسرى 260→210px عمداً (757b8c98، v1.89.998 «أشرطة جانبية أضيق») ⇒ الأيقونة 77px؛ العتبة القديمة 90 سبقت هذا التضييق */ R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 4 && pane.querySelectorAll(".pbx-cat").length >= 3;
     R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(true); await w(400); return R;
   });
-  ok("تبويب «تعديل الصورة» (تخطيط فعلي): أيقونات ≥90px مربعة والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
+  ok("تبويب «تعديل الصورة» (تخطيط فعلي): أيقونات ≥70px مربعة والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
   const icn = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBAdmin.mkPage("أيقونات"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(900);
     const pane = document.getElementById("pbx-lpane"), tile = pane.querySelector('[data-imgt="bg"]'), row = pane.querySelector('[data-imgx="brand"]');

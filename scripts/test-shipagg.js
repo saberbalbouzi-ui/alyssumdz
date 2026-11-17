@@ -43,14 +43,14 @@ const SA = ctx.ShipAgg; (async () => {
   ok("المزامنة: delivered ← livree", (await SA.syncGw()) === 1 && o.status === "livree");
   ok("owns", SA.owns("yalidine") && !SA.owns("noest"));
   /* التراجع والبوليصة لطرود البوابة */
-  { const o2 = { id: "Z1", status: "confirmee", note: "🚚yalidine:yal-ZZ" }; ctx.Admin.orders = [o2]; ctx.window.open = () => ({ location: {}, close() {} }); ctx.Admin.deliveryCfg = {};
+  { const o2 = { id: "Z1", status: "confirmee", note: "🚚yalidine:yal-ZZ" }; ctx.Admin.orders = [o2]; let __closed = 0; ctx.window.open = () => ({ location: {}, close() { __closed++; } }); ctx.Admin.deliveryCfg = {};
     gwReply = (m, path) => path === "/v1/cancel" ? { status: 409, data: { error: { code: "cancel_refused", message: "رفضت" } } } : { status: 200, data: {} };
     await ctx.Admin.unsendOrder(0); ok("التراجع المرفوض يُبقي التتبع", o2.note.includes("🚚yalidine:yal-ZZ") && notices.length === 1, notices);
     gwReply = (m, path) => path === "/v1/cancel" ? { status: 200, data: { ok: true, status: "cancelled" } } : { status: 200, data: {} };
     await ctx.Admin.unsendOrder(0); ok("التراجع المقبول ينزع التتبع", !o2.note.includes("🚚"), o2.note);
     o2.note = "🚚noest:xx"; ok("طرد شركة غير مفعّلة في البوابة يمرّ للأصل", (await ctx.Admin.unsendOrder(0)) === "orig-unsend");
     o2.note = "🚚yalidine:yal-ZZ"; gwReply = (m, path) => path === "/v1/label" ? { status: 404, data: { error: { code: "label_unavailable", message: "x" } } } : { status: 200, data: {} };
-    await ctx.Admin.openLabel(0); ok("بوليصة غير متاحة ← وصل الطلب", slip.length === 1); }
+    await ctx.Admin.openLabel(0); ok("بوليصة غير متاحة ← لا وصل مخترَع، وتُغلَق النافذة (عقد v1.89.874)", slip.length === 0 && __closed === 1, { slip: slip.length, closed: __closed }); }
   /* دالة غير منشورة */
   ctx.fetch = async () => ({ status: 404, ok: false, json: async () => ({}) }); SA.S.noGw = false;
   ok("404 ← تُخفى البطاقة", (await SA.load()) === false && SA.S.noGw === true && SA.mode() === null);

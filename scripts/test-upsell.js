@@ -34,11 +34,14 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
   await page.addInitScript(() => { window.__orders = []; window.open = () => null; });
   await page.goto("http://localhost:8792/p/anti-acne/index.html", { waitUntil: "load" });
-  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); API.submitOrderChecked = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true }; }; });   // حارس مكافحة البوت يمرّر الطلب عبر submitOrderChecked
   await page.waitForSelector(".ups-bump:not([hidden])", { timeout: 10000 });
   const base = await page.evaluate(() => document.getElementById("grand").textContent);
   ok("خانة Order Bump تظهر مع السعر الخاص", /anti|مضاد|التساقط/.test(await page.innerText(".ups-bump")) && /دج/.test(await page.innerText(".ups-bump")));
-  await page.fill("#name", "سارة"); await page.fill("#phone", "0555123456"); await page.selectOption("#wilaya", { index: 16 }); await page.waitForTimeout(300);
+  await page.evaluate(() => document.getElementById("acg-ov")?.remove());   // حارس الوصول الآلي (anti-copy.js) يحجب النقر في Chromium الآلي: تتجاوزه اختبارات أخرى كذلك (test-order-steps)
+  await page.selectOption("#wilaya", { index: 16 }); await page.waitForTimeout(300); await page.selectOption("#commune", { index: 1 }); await page.waitForTimeout(200);   // مرحلة 1: الولاية والبلدية إجباريتان (v1.89.1160/1162)
+  await page.click(".os-next"); await page.waitForTimeout(300);                                                                                                        // ثم «متابعة» ⇒ تظهر مرحلة البيانات
+  await page.fill("#name", "سارة"); await page.fill("#phone", "0555123456"); await page.waitForTimeout(300);
   const comm = await page.$$eval("#commune option", o => o.length); if (comm > 1) await page.selectOption("#commune", { index: 1 }); else await page.fill("#commune", "الجزائر").catch(() => { });
   await page.waitForTimeout(300);
   const t0 = await page.evaluate(() => document.getElementById("grand").textContent);
