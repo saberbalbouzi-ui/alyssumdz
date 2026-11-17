@@ -27,7 +27,8 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
   await page.addInitScript(() => { window.__orders = []; window.open = () => null; });
   await page.goto("http://localhost:8794/p/anti-acne/index.html", { waitUntil: "load" });
-  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); API.submitOrderChecked = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true }; }; });   // حارس مكافحة البوت يمرّر الطلب عبر submitOrderChecked (كما في test-upsell)
+  await page.evaluate(() => document.getElementById("acg-ov")?.remove());   // حارس الوصول الآلي (anti-copy.js) يحجب النقر في Chromium الآلي: تتجاوزه test-order-steps وtest-upsell كذلك
   await page.waitForSelector("#dg-box", { timeout: 10000 }); await page.waitForSelector('input[name="dg-method"]', { timeout: 5000 });
   const vis = sel => page.evaluate(s => { const e = document.querySelector(s); return !!e && !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length); }, sel);
   ok("حقول الولاية والبلدية والتوصيل والمكتب مخفية", !(await vis("#wilaya")) && !(await vis("#commune")) && !(await vis(".dtype")) && !(await vis("#desk-wrap")));
@@ -60,7 +61,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   /* فشل الإرسال يُظهر الخطأ ويسمح بالمحاولة */
   await page.evaluate(() => document.getElementById("dg-x").click());
   PF.proof = { status: 404, body: { error: { code: "order_not_found", message: "x" } } };
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.reload({ waitUntil: "load" }); await page.evaluate(() => { document.getElementById("acg-ov")?.remove(); localStorage.removeItem("alyssum_recent_orders"); }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); API.submitOrderChecked = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true }; }; });
   await page.fill("#name", "سعيد"); await page.fill("#phone", "0661234567"); await page.check('input[name="dg-method"][value="ccp"]'); await page.click(".btn-order"); await page.waitForSelector("#dg-file");
   ok("تعليمات CCP", /1234567/.test(await page.innerText("#dg-modal")) && /89/.test(await page.innerText("#dg-modal")));
   await page.setInputFiles("#dg-file", { name: "t.png", mimeType: "image/png", buffer: PNG }); await page.click("#dg-send"); await page.waitForFunction(() => /لم يُسجَّل طلبك/.test((document.getElementById("dg-msg") || {}).textContent || ""));
@@ -71,7 +72,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await page.waitForFunction(() => /استلمنا/.test(document.getElementById("dg-modal").textContent)); ok("إكمال الإرسال من الشريط", true);
   await page.evaluate(() => document.getElementById("dg-x").click());
   /* بطاقة: يوجّه لصفحة الدفع بلا طلب إثبات */
-  await page.reload({ waitUntil: "load" }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); });
+  await page.reload({ waitUntil: "load" }); await page.evaluate(() => { document.getElementById("acg-ov")?.remove(); localStorage.removeItem("alyssum_recent_orders"); }); await page.waitForSelector('input[name="dg-method"]'); await page.evaluate(() => { API.submitOrder = o => window.__orders.push(JSON.parse(JSON.stringify(o))); API.submitOrderChecked = async o => { window.__orders.push(JSON.parse(JSON.stringify(o))); return { ok: true }; }; });
   PF.calls.length = 0; await page.fill("#name", "كريم"); await page.fill("#phone", "0771234567"); await page.fill("#dg-email", "k@example.com"); await page.check('input[name="dg-method"][value="chargily"]');
   await page.route("https://pay.chargily.dz/**", r => r.fulfill({ status: 200, contentType: "text/html", body: "<title>pay</title>" }));
   await page.click(".btn-order"); await page.waitForURL(/pay\.chargily\.dz/, { timeout: 8000 });

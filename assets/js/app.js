@@ -1401,6 +1401,7 @@ function initProduct(slug){
     if(bt){ bt.textContent = fmt(total); const pn = bt.previousSibling; if(pn && pn.nodeType === 3 && !/الإجمالي|الاجمالي/.test(pn.textContent)) pn.textContent = pn.textContent.replace(/—\s*$/, "— الإجمالي: "); }
     if(bumpCtl) bumpCtl.refresh();      // تغيّر العرض/الكمية قد يغيّر أهلية الـOrder Bump
   }
+  if(p.digital){ try{ const __f = document.getElementById("order-form"); if(__f) __f.setAttribute("data-digital", "1"); }catch(e){} }   // الطلب بمراحل (OrderSteps.unsupported) يستثني المنتج الرقمي بهذا الوسم؛ بدونه تعلق المرحلة 1 على «ادخل الولاية» والولاية مخفية
   if(p.digital){ const __dm = ()=>{ try{ DigitalCheckout.mount(p); update(); }catch(e){} }; if(window.DigitalCheckout) __dm(); else document.addEventListener("digital:ready", __dm, { once:true }); }   // منتج رقمي: بلا توصيل، بريد + دفع مسبق (assets/js/digital-checkout.js)
   update();
   document.addEventListener("shipco:ready", ()=>{ try{ update(); }catch(e){} });
