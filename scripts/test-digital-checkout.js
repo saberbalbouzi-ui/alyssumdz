@@ -102,8 +102,9 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     await pS.route("**/assets/data/pay-methods.json*", r => r.fulfill({ contentType: "application/json", body: JSON.stringify({ baridimob: { on: true, rip: "00799999001234567890", name: "علي بن" } }) }));
     await pS.route(/script\.google|supabase\.co|alyssumhub|wa\.me|api\.whatsapp/, r => r.fulfill({ status: 200, body: "{}" }));
     await pS.goto("http://localhost:8794/p/anti-acne/index.html", { waitUntil: "load" }); await pS.waitForSelector("#dg-box", { state: "attached", timeout: 10000 }); await pS.waitForTimeout(1200);
+    await pS.waitForFunction(() => OrderSteps.state.on || OrderSteps.state.why, null, { timeout: 15000 });      // ننتظر قرار OrderSteps الفعلي (بناء النموذج المرحلي أو رفضه بسبب) قبل الفحص
     const st = await pS.evaluate(() => ({ cfgSteps: null, on: !!OrderSteps.state.on, why: OrderSteps.state.why, nextBtn: !!document.querySelector(".os-next"), dgHidden: document.getElementById("dg-box").classList.contains("os-hide") }));
-    ok("المنتج الرقمي بإعداد المتجر الحقيقي: خارج نموذج المرحلتين ولا زر «متابعة» ولا إخفاء لصندوق الدفع", !st.on && !st.nextBtn && !st.dgHidden, st); await brS.close(); }
+    ok("المنتج الرقمي بإعداد المتجر الحقيقي: OrderSteps يرفضه بسبب digital فلا نموذج مرحلي ولا زر «متابعة» ولا إخفاء لصندوق الدفع", !st.on && st.why === "digital" && !st.nextBtn && !st.dgHidden, st); await brS.close(); }
   ok("بلا أخطاء جافاسكربت", errs.length === 0, errs);
   await br0.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })();

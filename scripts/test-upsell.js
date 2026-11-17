@@ -47,6 +47,7 @@ const srv = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split
   ok("خانة Order Bump تظهر مع السعر الخاص", /anti|مضاد|التساقط/.test(await page.innerText(".ups-bump")) && /دج/.test(await page.innerText(".ups-bump")));
   /* نموذج الطلب بمرحلتين تراكميتين (main v1.89.1156–1162، إعداد المتجر steps:true): المرحلة 1 = الولاية والبلدية والعرض والسعر مع التوصيل (وفيها خانة Order Bump)، ثم «متابعة»، والمرحلة 2 = الاسم والهاتف وتأكيد الطلب.
      يُقاد بنقرات وملء حقيقيَّين بلا تعطيل تحقق ولا تغيير في منطق الطلب. */
+  await page.waitForFunction(() => OrderSteps.state.on || OrderSteps.state.why, null, { timeout: 15000 });      // OrderSteps يُبنى بعد تحميل الولايات والعروض (إعادة محاولة كل 150ms): ننتظر حالته الفعلية لا مهلة ثابتة
   ok("نموذج المرحلتين مفعّل (إعداد المتجر الحقيقي) والمرحلة 2 مخفية قبل «متابعة»", await page.evaluate(() => OrderSteps.state.on && OrderSteps.state.step === 1) && !(await page.isVisible("#name")));
   await page.selectOption("#wilaya", { index: 16 }); await page.waitForTimeout(300);
   const comm = await page.$$eval("#commune option", o => o.length); if (comm > 1) await page.selectOption("#commune", { index: 1 }); else await page.fill("#commune", "الجزائر").catch(() => { });
