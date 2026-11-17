@@ -54,7 +54,7 @@ async function main() {
   try {
     const bal = await g(TEST + "/balance", { headers: H }); ok("[R1] قراءة الرصيد التجريبي تنجح بالمفتاح (HTTP 200)", bal.status === 200, bal.status);
     const bj = await bal.json().catch(() => ({})); ok("[R2] الحساب في وضع الاختبار (livemode=false)", bj.livemode === false || bj.live_mode === false || bal.url?.includes("/test/"), Object.keys(bj));
-    const co = await g(TEST + "/checkouts", { method: "POST", headers: H, body: JSON.stringify({ amount: 1000, currency: "dzd", payment_method: "edahabia", success_url: "https://beta.alyssumdz.com/ok", metadata: { order_id: "beta-probe", beta: true } }) });
+    const co = await g(TEST + "/checkouts", { method: "POST", headers: H, body: JSON.stringify({ amount: 1000, currency: "dzd", payment_method: "edahabia", success_url: "https://alyssum-beta-web.pages.dev/ok", metadata: { order_id: "beta-probe", beta: true } }) });
     const cj = await co.json().catch(() => ({})); id = cj.id; ok("[R3] إنشاء جلسة دفع اختبارية يُرجع معرّفاً ورابطاً على pay.chargily.net", co.status >= 200 && co.status < 300 && !!id && /^https:\/\/pay\.chargily\.net\//.test(String(cj.checkout_url)), { status: co.status });
     ok("[R4] الجلسة اختبارية (livemode=false) وحالتها pending ولم تُدفع", cj.livemode === false && (cj.status === "pending" || !cj.status), { livemode: cj.livemode, status: cj.status });
     if (id) { const rd = await g(`${TEST}/checkouts/${id}`, { headers: H }); const rj = await rd.json().catch(() => ({})); ok("[R5] قراءة الجلسة تعيد المعرّف نفسه بحالة غير مدفوعة", rd.status === 200 && rj.id === id && rj.status !== "paid", { status: rd.status, st: rj.status }); }

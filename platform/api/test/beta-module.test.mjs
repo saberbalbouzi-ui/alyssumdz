@@ -9,7 +9,7 @@ function mkD1() { const db = new DatabaseSync(":memory:"); db.exec("PRAGMA forei
 const OUT = []; const realFetch = globalThis.fetch; globalThis.fetch = async (u) => { OUT.push(String(u)); return new Response("{}", { status: 200 }); };
 const B = mkD1(), P = mkD1(); B.db.prepare("INSERT INTO pf_meta (k,v,at) VALUES ('environment','beta','t')").run();
 const ADM = "beta-admin-token-fedcba9876543210", KEY = Buffer.from(new Uint8Array(32).fill(9)).toString("base64");
-const benv = { DB: B.d1, PLATFORM_SECRET: "beta-platform-secret-9876543210abc", ADMIN_TOKEN: ADM, APP_ENCRYPTION_KEY: KEY, ENVIRONMENT: "beta", PUBLIC_URL: "https://beta-api.alyssumhub.fyi", GIT_SHA: "sha-beta-1" };
+const benv = { DB: B.d1, PLATFORM_SECRET: "beta-platform-secret-9876543210abc", ADMIN_TOKEN: ADM, APP_ENCRYPTION_KEY: KEY, ENVIRONMENT: "beta", PUBLIC_URL: "https://alyssum-platform-api-beta.saber-balbouzi.workers.dev", GIT_SHA: "sha-beta-1" };
 const penv = { DB: P.d1, PLATFORM_SECRET: "prod-platform-secret-0123456789", ADMIN_TOKEN: "prod-admin-token-0123456789abcdef" };
 const call = async (env, m, path, body, tok, h = {}) => { const r = await worker.fetch(new Request("https://x.test" + path, { method: m, headers: { ...(tok ? { authorization: "Bearer " + tok } : {}), "content-type": "application/json", ...h }, body: body == null ? undefined : JSON.stringify(body) }), env); let j = {}; try { j = await r.json(); } catch { } return [r.status, j]; };
 const adm = (m, p, b) => call(benv, m, p, b, ADM, { "x-actor": "owner@x.dz" });

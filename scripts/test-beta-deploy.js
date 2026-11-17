@@ -18,7 +18,7 @@ for (const kind of ["api", "gateway"]) {
     ok(`[${k}] بيانات الإصدار تُحقن: ENVIRONMENT=beta وGIT_SHA وAPP_VERSION وSCHEMA_HASH`, /"name":"ENVIRONMENT","text":"beta"/.test(r.out) && /GIT_SHA","text":"0123456789abcdef/.test(r.out) && /APP_VERSION/.test(r.out) && /SCHEMA_HASH/.test(r.out));
     ok(`[${k}] هوية القاعدة تُكتب INSERT OR IGNORE بقيمة beta`, /INSERT OR IGNORE INTO pf_meta[^\n]*"params":\["beta"/.test(r.out));
     ok(`[${k}] لا أسرار في المخرجات (القيم محجوبة في dry-run)`, !/[0-9a-f]{64}/.test(r.out.replace(/0123456789abcdef0123456789abcdef01234567/g, "")) && /<dry-run-redacted>/.test(r.out));
-    ok(`[${k}] المسار الشامل مرفوض والمسار = مضيف beta فقط`, /"pattern":"beta-(api|shipping)\.alyssumhub\.fyi\/\*"/.test(r.out)); }
+    ok(`[${k}] المسار الشامل مرفوض والمسار = مضيف beta فقط`, /"pattern":"alyssum-(platform-api|shipping-gateway)-beta\.saber-balbouzi\.workers\.dev\/\*"/.test(r.out)); }
   { const r = run(k, ["--env", "beta", "--production", "--dry-run", "all"], B); ok(`[${k}] beta + --production ← رفض (لا خلط)`, r.code === 2 && /لا تجمع/.test(r.out), r.out); }
   { const r = run(k, ["--env", "beta", "--dry-run", "all"], { ...B, ALLOW_PRODUCTION_DEPLOY: "yes" }); ok(`[${k}] beta + ALLOW_PRODUCTION_DEPLOY=yes ← رفض`, r.code === 2, r.out); }
   { const r = run(k, ["--env", "production", "--dry-run", "all"], B); ok(`[${k}] production بلا تأكيد ← رفض`, r.code === 2 && /production/.test(r.out), r.out); }
@@ -28,6 +28,6 @@ for (const kind of ["api", "gateway"]) {
   { const r = run(k, ["--env", "local", "--dry-run", "all"], B); ok(`[${k}] local لا يُنشر لـCloudflare`, r.code === 2, r.out); }
   { const r = run(k, ["--env", "beta", "--dry-run", "rollback"], B); ok(`[${k}] rollback (beta): يطلب نشرات Worker beta فقط ويُرجع إلى السابقة (الكود فقط)`, r.code === 0 && /DRY GET [^\n]*scripts\/[^/]*-beta\/deployments/.test(r.out) && /DRY POST [^\n]*scripts\/[^/]*-beta\/deployments/.test(r.out) && /v-prev/.test(r.out) && !/d1\/database\/[^/]+\/query/.test(r.out) && !PROD_NAMES.test(r.out), r.out); }
   { const r = run(k, ["--env", "beta", "--dry-run", "status"], B); ok(`[${k}] status يعرض آخر النشرات وpf_meta (sha/schema/environment) والمتوقع من المستودع`, r.code === 0 && /pf_meta/.test(r.out) && /schema_hash/.test(r.out)); } }
-{ const r = run("gateway", ["--env", "beta", "--dry-run", "worker"], B); ok("[gateway] ربط الخدمة PLATFORM يشير إلى منصة beta (alyssum-platform-api-beta) وPLATFORM_URL لمضيف beta", /"type":"service","name":"PLATFORM","service":"alyssum-platform-api-beta"/.test(r.out) && /"name":"PLATFORM_URL","text":"https:\/\/beta-api\.alyssumhub\.fyi"/.test(r.out), r.out.slice(-400)); }
+{ const r = run("gateway", ["--env", "beta", "--dry-run", "worker"], B); ok("[gateway] ربط الخدمة PLATFORM يشير إلى منصة beta (alyssum-platform-api-beta) وPLATFORM_URL لمضيف beta", /"type":"service","name":"PLATFORM","service":"alyssum-platform-api-beta"/.test(r.out) && /"name":"PLATFORM_URL","text":"https:\/\/alyssum-platform-api-beta\.saber-balbouzi\.workers\.dev"/.test(r.out), r.out.slice(-400)); }
 { const r = run("api", ["--env", "beta", "--dry-run", "meta"], B); ok("[api] خطوة meta محظورة في beta (تطبيق Meta له مسارات رجوع إنتاجية)", r.code === 2 && /محظورة/.test(r.out), r.out); }
 console.log(`\nالنتيجة: ${pass} ناجح، ${fail} فاشل`); process.exit(fail ? 1 : 0);
