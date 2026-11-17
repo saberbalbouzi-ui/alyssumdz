@@ -1,0 +1,132 @@
+إعداد الحماية المعلن لهذه الأداة فقط (إعداد المستودع عدا bots:false؛ بلا انتحال UA/webdriver): {"on":true,"rc":true,"img":true,"keys":true,"dev":true,"frame":true,"note":true,"sel":true,"copy":true,"print":true,"bots":false,"updatedAt":"2026-11-07T21:49:55.333Z"}
+PASS [setup] admin login
+PASS [setup] QA products present  — demo:2000:noimg,prod-a:3900:img,prod-b:2400:img
+
+════════ s-women ════════
+PASS [s-women] install opens editor  — {"ok":true}
+PASS [s-women] inventory: 2 free (sbar+shdr)  — {"sbar":"ltbgorn","shdr":"vn2uxyb"}
+PASS [s-women] inventory: commerce widgets present  — {"products":true,"countdown":true,"coupon":true}
+PASS [s-women] T1 select free sbar by mouse
+PASS [s-women] T2 drag free shdr  — fx 0→15.2 fy 0→68
+PASS [s-women] T2b flow drag reorders + Ctrl+Z undo  — heading not first in its column — pattern n/a
+PASS [s-women] T3 resize free sbar (d-se handle)  — fwd 100→111.8 fh 46→51
+PASS [s-women] T4a rotate free shdr (rot handle)  — rot 0→60
+PASS [s-women] T4b rotation reset (quickbar)  — rot=0
+PASS [s-women] T5 select flow heading by mouse
+PASS [s-women] T6 in-canvas text edit (click→type→blur)  — text=عنوان معدّل QA-s-women
+PASS [s-women] T7 typography: font size via inspector  — fs 60→66 model=66
+PASS [s-women] T8 color editing via inspector  — color=#1a5f9e
+PASS [s-women] T9a duplicate (float bar)  — count 41→42→41
+PASS [s-women] T9b delete duplicate (float bar)  — count 41→42→41
+PASS [s-women] T10 hide on desktop + show again  — hd=true canvasHidden=false restored=true
+PASS [s-women] T11 lock → drag blocked → unlock  — lockVia=mouse locked=true dragBlocked=true (fx 0→0) unlocked=true
+PASS [s-women] T12 z-order back/front between 2 free elements  — back: dup0<orig1 front: dup1>orig0 cleaned=true
+PASS [s-women] T13 section→free conversion + drag + undo  — canvas=true dragFree=true undoReverted=true
+PASS [s-women] T14 replace image via library  — img=assets/img/demo/0.svg
+PASS [s-women] T15 section background image set/clear  — set=true (assets/img/demo/0.svg) cleared=true
+PASS [s-women] T16 editor mobile mode renders  — {"dev":"m","w":390,"widgets":41}
+PASS [s-women] T17 publish via UI (حفظ مباشر)  — dirty=false
+PASS [s-women] T17b _conv/home.json carries edits  — tplSkin=s-women
+PASS [s-women] T17c publish switched demo→real data  — demo=false
+PASS [s-women] T17d storefront index.html has edited text
+PASS [s-women] T18a editor closed
+PASS [s-women] T18b reopen: all modifications persist  — 9 props verified
+PASS [s-women] T18c reopened page uses real store data  — demo=false
+PASS [s-women] T19-d storefront: edited text live
+PASS [s-women] T19-d storefront: entrance animations preserved  — anims=32 tpl≈32
+PASS [s-women] T19-d storefront: hover effects css present  — hover rules=53
+PASS [s-women] T19-d storefront: real product price rendered
+PASS [s-women] T19-d storefront: product links to native page
+PASS [s-women] T19-d storefront: countdown+coupon render  — cd=true cp=true
+PASS [s-women] T19-d no horizontal overflow  — overflow=0px
+PASS [s-women] T19-m storefront: edited text live
+PASS [s-women] T19-m no horizontal overflow  — overflow=0px
+
+════════ s-men ════════
+PASS [s-men] install opens editor  — {"ok":true}
+PASS [s-men] inventory: 2 free (sbar+shdr)  — {"sbar":"7278779","shdr":"smjos3k"}
+PASS [s-men] inventory: commerce widgets present  — {"products":true,"countdown":true,"coupon":true}
+PASS [s-men] T1 select free sbar by mouse
+PASS [s-men] T2 drag free shdr  — fx 0→15.2 fy 0→53
+PASS [s-men] T2b flow drag reorders + Ctrl+Z undo  — heading not first in its column — pattern n/a
+PASS [s-men] T3 resize free sbar (d-se handle)  — fwd 100→111.8 fh 46→51
+PASS [s-men] T4a rotate free shdr (rot handle)  — rot 0→60
+PASS [s-men] T4b rotation reset (quickbar)  — rot=0
+PASS [s-men] T5 select flow heading by mouse
+PASS [s-men] T6 in-canvas text edit (click→type→blur)  — text=عنوان معدّل QA-s-men
+PASS [s-men] T7 typography: font size via inspector  — fs 56→62 model=62
+PASS [s-men] T8 color editing via inspector  — color=#1a5f9e
+PASS [s-men] T9a duplicate (float bar)  — count 33→34→33
+PASS [s-men] T9b delete duplicate (float bar)  — count 33→34→33
+PASS [s-men] T10 hide on desktop + show again  — hd=true canvasHidden=false restored=true
+PASS [s-men] T11 lock → drag blocked → unlock  — lockVia=mouse locked=true dragBlocked=true (fx 0→0) unlocked=true
+PASS [s-men] T12 z-order back/front between 2 free elements  — back: dup0<orig1 front: dup1>orig0 cleaned=true
+PASS [s-men] T13 section→free conversion + drag + undo  — canvas=true dragFree=true undoReverted=true
+PASS [s-men] T14 replace image via library  — img=assets/img/demo/0.svg
+PASS [s-men] T15 section background image set/clear  — set=true (assets/img/demo/0.svg) cleared=true
+PASS [s-men] T16 editor mobile mode renders  — {"dev":"m","w":390,"widgets":33}
+PASS [s-men] T17 publish via UI (حفظ مباشر)  — dirty=false
+PASS [s-men] T17b _conv/home.json carries edits  — tplSkin=s-men
+PASS [s-men] T17c publish switched demo→real data  — demo=false
+PASS [s-men] T17d storefront index.html has edited text
+PASS [s-men] T18a editor closed
+PASS [s-men] T18b reopen: all modifications persist  — 9 props verified
+PASS [s-men] T18c reopened page uses real store data  — demo=false
+PASS [s-men] T19-d storefront: edited text live
+PASS [s-men] T19-d storefront: entrance animations preserved  — anims=24 tpl≈24
+PASS [s-men] T19-d storefront: hover effects css present  — hover rules=46
+PASS [s-men] T19-d storefront: real product price rendered
+PASS [s-men] T19-d storefront: product links to native page
+PASS [s-men] T19-d storefront: countdown+coupon render  — cd=true cp=true
+PASS [s-men] T19-d no horizontal overflow  — overflow=0px
+PASS [s-men] T19-m storefront: edited text live
+PASS [s-men] T19-m no horizontal overflow  — overflow=0px
+
+════════ s-kids ════════
+PASS [s-kids] install opens editor  — {"ok":true}
+PASS [s-kids] inventory: 2 free (sbar+shdr)  — {"sbar":"tj8yap2","shdr":"j4v856j"}
+PASS [s-kids] inventory: commerce widgets present  — {"products":true,"countdown":true,"coupon":true}
+PASS [s-kids] T1 select free sbar by mouse
+PASS [s-kids] T2 drag free shdr  — fx 0→14.7 fy 0→70
+PASS [s-kids] T2b flow drag reorders + Ctrl+Z undo  — heading not first in its column — pattern n/a
+PASS [s-kids] T3 resize free sbar (d-se handle)  — fwd 100→111.8 fh 46→51
+PASS [s-kids] T4a rotate free shdr (rot handle)  — rot 0→60
+PASS [s-kids] T4b rotation reset (quickbar)  — rot=0
+PASS [s-kids] T5 select flow heading by mouse
+PASS [s-kids] T6 in-canvas text edit (click→type→blur)  — text=عنوان معدّل QA-s-kids
+PASS [s-kids] T7 typography: font size via inspector  — fs 58→64 model=64
+PASS [s-kids] T8 color editing via inspector  — color=#1a5f9e
+PASS [s-kids] T9a duplicate (float bar)  — count 44→45→44
+PASS [s-kids] T9b delete duplicate (float bar)  — count 44→45→44
+PASS [s-kids] T10 hide on desktop + show again  — hd=true canvasHidden=false restored=true
+PASS [s-kids] T11 lock → drag blocked → unlock  — lockVia=mouse locked=true dragBlocked=true (fx 0→0) unlocked=true
+PASS [s-kids] T12 z-order back/front between 2 free elements  — back: dup0<orig1 front: dup1>orig0 cleaned=true
+PASS [s-kids] T13 section→free conversion + drag + undo  — canvas=true dragFree=true undoReverted=true
+PASS [s-kids] T14 replace image via library  — img=assets/img/demo/0.svg
+PASS [s-kids] T15 section background image set/clear  — set=true (assets/img/demo/0.svg) cleared=true
+PASS [s-kids] T16 editor mobile mode renders  — {"dev":"m","w":390,"widgets":44}
+PASS [s-kids] T17 publish via UI (حفظ مباشر)  — dirty=false
+PASS [s-kids] T17b _conv/home.json carries edits  — tplSkin=s-kids
+PASS [s-kids] T17c publish switched demo→real data  — demo=false
+PASS [s-kids] T17d storefront index.html has edited text
+PASS [s-kids] T18a editor closed
+PASS [s-kids] T18b reopen: all modifications persist  — 9 props verified
+PASS [s-kids] T18c reopened page uses real store data  — demo=false
+PASS [s-kids] T19-d storefront: edited text live
+PASS [s-kids] T19-d storefront: entrance animations preserved  — anims=35 tpl≈35
+PASS [s-kids] T19-d storefront: hover effects css present  — hover rules=53
+PASS [s-kids] T19-d storefront: real product price rendered
+PASS [s-kids] T19-d storefront: product links to native page
+PASS [s-kids] T19-d storefront: countdown+coupon render  — cd=true cp=true
+PASS [s-kids] T19-d no horizontal overflow  — overflow=0px
+PASS [s-kids] T19-m storefront: edited text live
+PASS [s-kids] T19-m no horizontal overflow  — overflow=0px
+PASS [commerce] T20a0 no acg-ov overlay under the declared tool protection config (bots:false; blocking itself is tested in scripts/test-protect-bots.js)  — clean
+PASS [commerce] T20a product page has order form  — name,phone,wilaya,commune
+PASS [commerce] T20b order submission accepted (thanks overlay)  — thanks overlay shown
+PASS [commerce] T20c order visible in admin  — زبون QA|0550398312 ; زبون QA|0550284138 ; زبون QA|0550630103
+
+JS errors: 1
+   PB is not defined
+
+120/120 PASS — 0 FAILURES
