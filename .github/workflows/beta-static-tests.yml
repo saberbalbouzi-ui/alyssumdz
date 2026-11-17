@@ -51,6 +51,7 @@ jobs:
           node --no-warnings platform/api/test/envguard.test.mjs
           node platform/supabase/tests/beta/beta-supabase.integration.mjs --selfcheck
           node platform/supabase/tests/beta/beta-bundle.test.mjs
+          node --no-warnings platform/supabase/tests/beta/beta-ruqya-cleanup.test.mjs
           node --no-warnings platform/supabase/tests/beta/beta-no-fallback.test.mjs
           node platform/api/test/integration/chargily-sandbox.integration.mjs --stub
       - name: سياسة الـworkflows (بلا نشر تلقائي ولا تداخل Beta/Production)
