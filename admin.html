@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest-admin.webmanifest"><meta name="theme-color" content="#0b1210"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="اللوحة">
-<meta name="admin-version" content="1.89.1232">
+<meta name="admin-version" content="1.89.1238">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -268,7 +268,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 @media(max-width:700px){.ca-row,.ca-soc{grid-template-columns:1fr}}
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=d53a4274">
-<link rel="stylesheet" href="assets/css/admin-glass.css?v=3fc3ac64">
+<link rel="stylesheet" href="assets/css/admin-glass.css?v=2a4bd030">
 <link rel="stylesheet" href="assets/css/admin-theme.css?v=bf4fdd7f">
 <link rel="stylesheet" href="assets/css/admin-lime.css?v=b229d577">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#e2fe17",fs:15},white:{accent:"#059669",fs:15}},
@@ -1759,7 +1759,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-stockcheck.js?v=3a7e454c"></script>
 <script src="assets/js/admin-orderedit.js?v=9bb59870"></script>
 <script src="assets/js/admin-wilkids.js?v=f737668d"></script>
-<script src="assets/js/admin-manualorder.js?v=1adc4c3d"></script>
+<script src="assets/js/admin-manualorder.js?v=c200919f"></script>
 <script src="assets/js/admin-stores.js?v=7c65d115"></script>
 <script src="assets/js/float-icons.js?v=f4c710ad"></script>
 <script src="assets/js/admin-float.js?v=59884c48"></script>
@@ -1771,7 +1771,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-zones.js?v=80e5036b"></script>
 <script src="assets/js/admin-zones-io.js?v=baf86994"></script>
 <script src="assets/js/admin-archive.js?v=66814def"></script>
-<script src="assets/js/admin-yalidine.js?v=0118e941"></script>
+<script src="assets/js/admin-yalidine.js?v=559573f3"></script>
 <script src="assets/js/admin-busy.js?v=12b07d95"></script>
 <script src="assets/js/admin-shoppages.js?v=f37d32bc"></script>
 <script src="assets/js/admin-home.js?v=870ddfe6"></script>
@@ -1780,7 +1780,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-coparcels.js?v=7e1d555e"></script>
 <script src="assets/js/admin-orders-plus.js?v=357f9243"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
-<script src="assets/js/admin-delhealth.js?v=f6814396"></script>
+<script src="assets/js/admin-delhealth.js?v=6600d52c"></script>
 <script src="assets/js/admin-customers.js?v=056673f1"></script>
 <script src="assets/js/admin-bulk-products.js?v=f12fc350"></script>
 <script src="assets/js/admin-reports.js?v=bfe80ebd"></script>
@@ -3108,7 +3108,43 @@ const Admin = {
       '<button class="small" type="button" ' + (this.orderPage>=totalPages?"disabled":"") + ' onclick="Admin.changeOrderPage(1)">التالي ›</button>';
   },
 
-  whatsappLinkHtml(phone){
+  /* رسالة واتساب جاهزة للزبون: اسمه وملخص طلبه (المنتجات والتوصيل والمبلغ) وعنوان المكتب إن اختار مكتباً */
+  orderWaText(o){
+    try{
+      const store = (typeof SITE_CFG !== "undefined" && (SITE_CFG.name || SITE_CFG.domain)) || "", n = v=>Number(v || 0).toLocaleString("fr-DZ"), L = [];
+      const items = String(this.itemsDisplay ? this.itemsDisplay(o) : (o.items || "")).split(/\n/).map(x=>x.replace(/\s*=\s*[\d\s.,]+\s*DA\s*$/i, "").trim()).filter(Boolean);
+      L.push("مرحباً " + String(o.name || "").trim() + "،");
+      L.push("بخصوص طلبك رقم " + o.id + (store ? " لدى " + store : "") + ":");
+      if(items.length){ L.push(""); L.push("المنتجات:"); items.forEach(x=>L.push("- " + x)); }
+      L.push("");
+      if(o.dtype === "stop"){ const ad = this.deskAddrOf ? this.deskAddrOf(o) : ""; L.push("التوصيل: إلى مكتب" + (o.desk ? " " + o.desk : "") + " في " + (o.wilaya || "") + (o.commune ? "، " + o.commune : "") + (ad ? "\nعنوان المكتب: " + ad : "")); }
+      else L.push("التوصيل: إلى منزلك في " + (o.wilaya || "") + (o.commune ? "، " + o.commune : ""));
+      L.push("رسم التوصيل: " + (Number(o.fee) > 0 ? n(o.fee) + " دج" : "مجاني"));
+      L.push("المبلغ الإجمالي عند الاستلام: " + n(o.total) + " دج");
+      L.push(""); L.push("شكراً لثقتك بنا.");
+      return L.join("\n");
+    }catch(e){ return ""; }
+  },
+  orderWaUrl(o){
+    const dg = String((o && o.phone) || "").replace(/\D/g, ""); if(!dg) return "";
+    const intl = dg.startsWith("0") ? "213" + dg.slice(1) : (dg.startsWith("213") ? dg : "213" + dg), txt = this.orderWaText(o);
+    return "https://wa.me/" + intl + (txt ? "?text=" + encodeURIComponent(txt) : "");
+  },
+  /* فايبر وتلغرام بالرسالة الجاهزة نفسها: فايبر يقبل مسودة في الرابط؛ تلغرام لا يقبل نصاً مع رقم الهاتف فتُنسخ الرسالة للحافظة (وكذلك مع فايبر احتياطاً) لتلصقها */
+  chatIntl(phone){ const dg = String(phone || "").replace(/\D/g, ""); if(dg.length < 9) return ""; return dg.startsWith("0") ? "213" + dg.slice(1) : (dg.startsWith("213") ? dg : "213" + dg); },
+  chatCopy(id){
+    const o = (this.orders || []).find(x=>String(x.id) === String(id)), txt = o ? this.orderWaText(o) : ""; if(!txt) return;
+    try{ navigator.clipboard.writeText(txt).then(()=>toast("نُسخت الرسالة — إن لم تظهر في المحادثة فالصقها"), ()=>{}); }catch(e){}
+  },
+  chatBtnsHtml(o, cls){
+    const intl = this.chatIntl(o && o.phone); if(!intl) return "";
+    const id = String(o.id).replace(/[^\w-]/g, ""), txt = this.orderWaText(o), E = v=>String(v).replace(/&/g, "&amp;").replace(/"/g, "&quot;"), c = cls || "";
+    const vb = "viber://chat?number=%2B" + intl + (txt ? "&draft=" + encodeURIComponent(txt) : ""), tg = "https://t.me/+" + intl;
+    return '<a class="' + c + ' vb" href="' + E(vb) + '" onclick="Admin.chatCopy(\'' + id + '\')" title="يفتح فايبر برسالة جاهزة (وتُنسخ الرسالة أيضاً)" style="text-decoration:none;text-align:center">فايبر</a>' +
+      '<a class="' + c + ' tg" href="' + E(tg) + '" target="_blank" rel="noopener" onclick="Admin.chatCopy(\'' + id + '\')" title="يفتح تلغرام وتُنسخ الرسالة الجاهزة لتلصقها" style="text-decoration:none;text-align:center">تلغرام</a>';
+  },
+  whatsappLinkHtml(phone, o){
+    if(o){ const u = this.orderWaUrl(o); if(u) return ' <a href="' + String(u).replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '" target="_blank" title="مراسلة عبر واتساب برسالة جاهزة" style="text-decoration:none">💬</a>'; }
     const digits = String(phone||"").replace(/\D/g,"");
     if(!digits) return "";
     const intl = digits.startsWith("0") ? "213"+digits.slice(1) : (digits.startsWith("213")?digits:"213"+digits);
@@ -5587,6 +5623,33 @@ const Admin = {
   },
 
   /* الضغط الثاني على «محظور» يلغي الحظر مباشرة */
+  /* عنوان مكتب التوصيل: المحفوظ في الطلب وقت إنشائه أولاً، وإلا من قائمة مكاتب الولاية الحالية */
+  deskAddrSaved(o){ try{ let ex = o && o.extra; if(typeof ex === "string") ex = JSON.parse(ex); return String((ex && ex["📍 عنوان المكتب"]) || "").trim(); }catch(e){ return ""; } },
+  deskAddrOf(o){
+    if(!o || o.dtype !== "stop" || !o.desk) return "";
+    const s = this.deskAddrSaved(o); if(s) return s;
+    try{ const w = this.wCo(o.wilaya), all = (w && w.desks) || [], a = all.filter(d=>d.name === o.desk), d = a.find(x=>o.commune && x.commune === o.commune) || a[0]; return d ? String(d.address || "").trim() : ""; }catch(e){ return ""; }
+  },
+  /* طلب قديم بلا عنوان محفوظ: يُثبَّت الآن من قائمة المكاتب كي لا يضيع إن تغيّرت القائمة */
+  async ensureDeskAddr(o){
+    try{
+      if(!o || o.dtype !== "stop" || !o.desk || this.deskAddrSaved(o)) return;
+      const a = this.deskAddrOf(o); if(!a) return;
+      let ex = o.extra; if(typeof ex === "string"){ try{ ex = JSON.parse(ex); }catch(e){ ex = {}; } } ex = Object.assign({}, ex || {}, { "📍 عنوان المكتب": a }); o.extra = ex;
+      await API.updateOrderFields(this.key, o.id, { extra: ex });
+    }catch(e){}
+  },
+  deskAddrRow(o, esc, row){
+    if(!o || o.dtype !== "stop" || !o.desk) return "";
+    const a = this.deskAddrOf(o); if(!a) return row("عنوان المكتب", '<small class="hint">غير متوفر لهذا المكتب — حمّل المكاتب من «شركات التوصيل»</small>');
+    const E = esc || (v=>String(v)); setTimeout(()=>{ try{ this.ensureDeskAddr(o); }catch(e){} }, 0);
+    return row("عنوان المكتب", E(a) + ' <button type="button" class="small gray" style="margin:0 .3rem" onclick="Admin.copyDeskAddr(\'' + String(o.id).replace(/[^\w-]/g, "") + '\')">نسخ</button>');
+  },
+  copyDeskAddr(id){
+    const o = (this.orders || []).find(x=>String(x.id) === String(id)), a = o ? this.deskAddrOf(o) : ""; if(!a) return;
+    const txt = (o.desk ? o.desk + " — " : "") + a, done = ()=>toast("✅ نُسخ عنوان المكتب");
+    try{ navigator.clipboard.writeText(txt).then(done, ()=>{ prompt("انسخ العنوان", txt); }); }catch(e){ try{ prompt("انسخ العنوان", txt); }catch(_){} }
+  },
   toggleBlacklist(phone){
     if(!this.isBlacklisted(phone)) return;
     if(!this.blRule) this.loadBlRule(); this.blRule.dismissed[phone] = this.blFailOrders(phone).length; this.saveBlRule();
@@ -9579,7 +9642,7 @@ const Admin = {
   callBtnsHtml(o){
     const d = String(o && o.phone || "").replace(/\D/g, ""); if(d.length < 9) return "";
     const w = d.startsWith("213") ? d : "213" + d.replace(/^0/, "");
-    return '<div class="yd-ct"><a class="yd-cb call" href="tel:+' + w + '">📞 اتصال</a><a class="yd-cb wa" href="https://wa.me/' + w + '" target="_blank" rel="noopener">💬 واتساب</a></div>';
+    return '<div class="yd-ct"><a class="yd-cb call" href="tel:+' + w + '">📞 اتصال</a><a class="yd-cb wa" href="' + String(this.orderWaUrl(o) || ("https://wa.me/" + w)).replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '" target="_blank" rel="noopener">💬 واتساب</a>' + this.chatBtnsHtml(o, "yd-cb") + '</div>';
   },
   followList(){ return (this.orders || []).filter(o=>this.failedAttempt(o)); },
   setFollow(o, res){ this.setNoteTag(o, /📲\S+\s*/g, "📲" + res + (res === "ref" ? "" : "@" + this.isoDay())); },
@@ -10380,6 +10443,7 @@ const Admin = {
       row("الهاتف", '<span dir="ltr">' + esc(o.phone) + '</span> ' + (bl ? '<button type="button" class="pill st-annulee bl-tg" style="cursor:pointer;border:0;font-family:inherit" title="اضغط لإلغاء الحظر" onclick="Admin.toggleBlacklist(\'' + bl.phone + '\');Admin.openOrderPreview(' + i + ')">🚫 محظور ✕</button>' : '<button type="button" class="small gray" style="padding:.15rem .5rem" onclick="Admin.blacklistFromOrder(\'' + esc(o.phone) + '\');Admin.openOrderPreview(' + i + ')">🚫 حظر الرقم</button>')) +
       row("العنوان", esc(o.wilaya) + (o.commune ? " — " + esc(o.commune) : "") + (o.address ? "<br><small>" + esc(o.address) + "</small>" : "")) +
       row("التوصيل", o.dtype==="stop" ? "مكتب Stop Desk" + (o.desk ? " — " + esc(o.desk) : "") : "إلى المنزل") +
+      this.deskAddrRow(o, esc, row) +
       row("المنتجات", esc(this.itemsDisplay(o)).replace(/\n/g,"<br>")) +
       S(()=>window.AdminUpsell ? AdminUpsell.previewRow(o) : "") +
       S(()=>{ const pc = this.priceCheck(o); return pc.ok ? "" : row("⚠️ تدقيق السعر", '<span style="color:#fca5a5">' + pc.msgs.map(esc).join("<br>") + "</span>"); }) +
@@ -10400,7 +10464,7 @@ const Admin = {
       ex.map(([k,v])=>row(esc(k), /^https:\/\/(maps\.google\.com|www\.openstreetmap\.org)\//.test(String(v)) ? '<a href="' + esc(v) + '" target="_blank" rel="noopener">📍 فتح على الخريطة</a>' : esc(typeof v === "object" ? JSON.stringify(v) : v))).join("") + '</table>';
     const a = document.getElementById("ord-prev-a"), close = "document.getElementById('ord-prev-bg').classList.remove('open')";
     const dg = String(o.phone||"").replace(/\D/g,""), intl = dg ? (dg.startsWith("0") ? "213"+dg.slice(1) : (dg.startsWith("213")?dg:"213"+dg)) : "";
-    a.innerHTML = (intl ? '<a class="small green call-lnk" data-oid="' + esc(String(o.id)) + '" href="tel:+' + intl + '" style="text-decoration:none;text-align:center">📞 اتصل</a><a class="small blue" target="_blank" rel="noopener" href="https://wa.me/' + intl + '" style="text-decoration:none;text-align:center">💬 واتساب</a>' : "") + (o.status === "nouvelle" ? '<button class="small green" type="button" onclick="' + close + ';Admin.confirmOrder(' + i + ')">✅ أكّد الطلب</button>' : "") +
+    a.innerHTML = (intl ? '<a class="small green call-lnk" data-oid="' + esc(String(o.id)) + '" href="tel:+' + intl + '" style="text-decoration:none;text-align:center">📞 اتصل</a><a class="small blue" target="_blank" rel="noopener" href="' + esc(this.orderWaUrl(o)) + '" title="يفتح واتساب برسالة جاهزة فيها اسم الزبون وملخص طلبه" style="text-decoration:none;text-align:center">💬 واتساب</a>' + this.chatBtnsHtml(o, "small blue") : "") + (o.status === "nouvelle" ? '<button class="small green" type="button" onclick="' + close + ';Admin.confirmOrder(' + i + ')">✅ أكّد الطلب</button>' : "") +
       S(()=>window.OrderEdit && OrderEdit.canEdit(o) ? '<button class="small gold" type="button" onclick="OrderEdit.open(' + i + ')" title="تعديل الاسم والولاية والبلدية وطريقة التوصيل">✏️ تعديل</button>' : '') +
       (window.ManualOrder && S(()=>this.canFullEdit(o)) ? '<button class="small gold" type="button" onclick="' + close + ';ManualOrder.open({mode:\'edit\',order:Admin.orders[' + i + ']})" title="تعديل كل بيانات الطلب بما فيها المنتجات والهاتف' + (t ? ' — يُحدَّث الطرد عند الشركة والمخزون' : '') + '">✏️ تعديل كامل</button>' : '') +
       (window.ManualOrder ? '<button class="small blue" type="button" onclick="' + close + ';ManualOrder.open({mode:\'copy\',order:Admin.orders[' + i + ']})" title="ينسخ هذا الطلب كطلب جديد غير مسجَّل (تعدّله قبل الحفظ وبعده)">📄 نسخ كطلب جديد</button>' : '') +
@@ -10420,9 +10484,10 @@ const Admin = {
       (t && this.coNoOf(o) ? row("رقم الطلب عند الشركة", '<b dir="ltr">' + nE(this.coNoOf(o)) + '</b>') : "") +
       row("الحالة", (this.ST_AR[o.status]||o.status) + (r && r.raw ? ' — <small>' + r.raw + '</small>' : "")) +
       row("التاريخ", new Date(o.date).toLocaleString("ar-DZ")) +
-      row("الزبون", '<b>' + nE(o.name) + '</b>') + row("الهاتف", '<span dir="ltr">' + nE(o.phone) + '</span>' + this.whatsappLinkHtml(o.phone)) +
+      row("الزبون", '<b>' + nE(o.name) + '</b>') + row("الهاتف", '<span dir="ltr">' + nE(o.phone) + '</span>' + this.whatsappLinkHtml(o.phone, o)) +
       row("العنوان", (o.wilaya||"") + (o.commune ? " — " + o.commune : "")) +
       row("التوصيل", o.dtype==="stop" ? "مكتب Stop Desk" + (o.desk ? " — " + o.desk : "") : "إلى المنزل") +
+      this.deskAddrRow(o, nE, row) +
       row("المنتجات", this.itemsDisplay(o).replace(/\n/g,"<br>")) +
       row("سعر المنتجات", n(o.subtotal)) + row("سعر التوصيل", Number(o.fee) ? n(o.fee) : "مجاني") +
       (Number(o.discount) ? row("الخصم", "-" + n(o.discount) + (o.coupon ? " (" + o.coupon + ")" : "")) : "") +

@@ -29,6 +29,8 @@ const deskCo = d => (d && d.co) || (/\[(?:Yalidine|EasyAndSpeed)\]\s*$/i.test(St
 /* الأرخص أولاً: شركة تجمع مكاتب شركات عدة (WeCan): أول كلمة مفضّلة (dp من ship-co.json) تطابق مكتباً في هذه البلدية يُعرض ما يطابقها فقط، وإلا الكلمة التالية، وإلا الكل */
 const preferDesks = list => { if(!__SHIPDP.length) return list; const by = {}; list.forEach(d => { (by[(d && d.commune) || ""] = by[(d && d.commune) || ""] || []).push(d); });
   return [].concat(...Object.keys(by).map(k => { const g = by[k]; for(const t of __SHIPDP){ const m = g.filter(d => String((d && d.name) || "").toLowerCase().includes(t)); if(m.length) return m; } return g; })); };      /* لكل بلدية على حدة */
+/* عنوان المكتب المختار بالضبط وقت الطلب (يُحفظ في الطلب فلا يضيع بعد إرسال الطرد) */
+const deskAddrOf = (w, name, commune) => { try { const all = (w && w.desks) || [], n = String(name || ""), a = all.filter(d => d.name === n), d = a.find(x => commune && x.commune === commune) || a[0]; return d ? String(d.address || "").trim() : ""; } catch (e) { return ""; } };
 const shipDesks = (w, p) => { const all = (w && w.desks) ? w.desks : [], pk = typeof pshipCo === "function" ? pshipCo(p) : "", k = (pk && pk !== "zones" && pk !== "free" && pk !== "def") ? pk : __SHIPDK; if(!k) return all;      /* «zones/free/def» مصدر تسعير للصفحة لا شركة: المكاتب تبقى للشركة الافتراضية (كانت «zones» تُعامَل كشركة فتُعرض كل المكاتب) */
   let synced = false; try{ synced = (typeof WILAYAS !== "undefined" ? WILAYAS : []).some(x => (x.desks || []).some(d => deskCo(d) === k)); }catch(e){}
   return synced ? all.filter(d => { const c = deskCo(d); return !c || c === k; }) : all; };     /* شركة التوصيل الافتراضية بلا قائمة مكاتب Stop Desk عبر واجهتها: لا يُعرض التوصيل للمكتب للزبون (يُنشره admin في ship-co.json) */
@@ -1468,6 +1470,7 @@ function initProduct(slug){
       coupon: AppliedCoupon.record ? AppliedCoupon.code : "", discount, promo: (AppliedCoupon.record && AppliedCoupon.record.__promo) ? AppliedCoupon.code : undefined,
       extra: Object.assign({}, couponGiftTitle() ? { "🎁 هدية": couponGiftTitle() } : {}, (state.offer.qty > 1 || state.offer.free) ? { "🎁 العرض": "عرض " + state.offer.qty + " قطع" + (state.offer.free ? " (" + (state.offer.qty - state.offer.free) + " + " + state.offer.free + " مجاناً)" : "") + " بسعر " + fmt(state.offer.price) } : {}, extraValues, bumpSel ? { "➕ إضافة سريعة": bumpSel.rule.title || bumpSel.title, "🆔 قاعدة العرض": bumpSel.rule.id } : {}, __grp ? { "🧺 مجموعة": __grp } : {}, { "📄 الصفحة": PageSrc || ("p/" + slug) }, (fee > 0 && __sq.sup > 0 && fee === __sq.fee) ? { "🚚 تفصيل التوصيل": (fee - __sq.sup) + "+" + __sq.sup } : {}, (fee > 0 && __sq.adj && fee === __sq.fee) ? { "🎁 دعم الشحن": String(__sq.adj) } : {}, Attrib),
     };
+    if(desk){ const __da = deskAddrOf(state.wilaya, desk, commune); if(__da) __order.extra["📍 عنوان المكتب"] = __da; }
     const __pfr = window.PFOrder ? PFOrder.prep(__order) : "";
     if(p.mpId){       // منتج التسويق بالعمولة: لا يُقبل الطلب إلا إن حجز المورّد عمولته وكميته (فحص متزامن عند المنصة)
       __order.extra["🛒 سوق التوريد"] = "1";

@@ -47,10 +47,11 @@ const AdminYd = (() => {
   /* الاسم/الهاتف الحقيقيان: من الطلب المرتبط (لوحتك)، وإلا من تفاصيل الطرد الفردي المحفوظة، وإلا المقنَّع كما ترجعه ياليدين */
   function real(r, o) { const d = DET[r.tracking], g = REG[r.tracking]; if (o && (o.name || o.phone)) return { name: o.name || r.name, phone: o.phone || r.phone, src: "o" }; if (g && (g.name || g.phone)) return { name: g.name || r.name, phone: g.phone || r.phone, src: "g" }; if (d && !masked(d.name) && !masked(d.phone)) return { name: d.name, phone: d.phone, src: "d" }; return { name: r.name, phone: r.phone, src: "m" }; }
   /* أزرار اتصال/واتساب للرقم الحقيقي فقط (غير المقنَّع): 0XXXXXXXXX ← 213XXXXXXXXX */
-  function contact(ph) {
+  function contact(ph, o) {
     const d = String(ph || "").replace(/\D/g, ""); if (masked(ph) || d.length < 9) return "";
-    const w = d.startsWith("213") ? d : "213" + d.replace(/^0/, "");
-    return '<div class="yd-ct"><a class="yd-cb call" href="tel:+' + w + '">📞 اتصال</a><a class="yd-cb wa" href="https://wa.me/' + w + '" target="_blank" rel="noopener">💬 واتساب</a></div>';
+    const w = d.startsWith("213") ? d : "213" + d.replace(/^0/, ""), a = A(); let wa = "https://wa.me/" + w, ch = "";
+    try { if (o && a && a.orderWaText) { const oo = Object.assign({}, o, { phone: ph }); wa = a.orderWaUrl(oo) || wa; ch = a.chatBtnsHtml(oo, "yd-cb"); } } catch (e) { }
+    return '<div class="yd-ct"><a class="yd-cb call" href="tel:+' + w + '">📞 اتصال</a><a class="yd-cb wa" href="' + esc(wa) + '" target="_blank" rel="noopener">💬 واتساب</a>' + ch + '</div>';
   }
 
   /* الأرشيف: S.raw القائمة الكاملة (تُحفظ) وS.rows المرئي فقط */
@@ -278,7 +279,7 @@ const AdminYd = (() => {
     const L = (k, v) => '<div style="margin:.15rem 0"><b>' + k + ':</b> ' + v + '</div>', hr = '<hr style="border:0;border-top:1px solid rgba(128,128,128,.35);margin:.7rem 0">';
     const prodTxt = r.product || ptxt(o) || "—", coNo = r.orderId || (o && a && a.coNoOf ? a.coNoOf(o) : "");
     const info = '<div style="line-height:1.7">' + L("التتبع", '<b dir="ltr">' + esc(r.tracking) + '</b> &nbsp; <span class="yd-b ' + tone(r.status) + ' ' + ys(r.status) + ' ' + ys(r.status) + '">' + esc(r.status || "—") + '</span>') + L("تاريخ الإنشاء", '<span dir="ltr">' + esc(String(r.date).replace("T", " ").slice(0, 19)) + '</span>') + hr +
-      L("المستلم", '<span dir="auto">' + esc(rl.name) + '</span>') + L("هاتف المستلم", '<span dir="ltr">' + esc(rl.phone) + '</span>' + contact(rl.phone)) +
+      L("المستلم", '<span dir="auto">' + esc(rl.name) + '</span>') + L("هاتف المستلم", '<span dir="ltr">' + esc(rl.phone) + '</span>' + contact(rl.phone, o)) +
       L("من ← إلى", (r.from ? esc(r.from) + ' <span class="yd-b g">إلى</span> ' : "") + esc(r.wilaya) + (r.commune ? " (" + esc(r.commune) + ")" : "") + (r.stop ? " — مكتب Stop Desk" : "")) + hr +
       L("رقم الطلب عند الشركة", esc(coNo || "—")) + L("المنتج", '<span dir="auto">' + esc(prodTxt) + '</span>') + L("السعر", esc(r.price || "—")) +
       L("رسم التوصيل", r.fee == null ? "—" : esc(r.fee)) + L("توصيل مجاني", r.free ? "نعم" : "لا") + hr +

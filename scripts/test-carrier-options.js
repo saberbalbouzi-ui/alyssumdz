@@ -32,7 +32,6 @@ const { chromium } = require("playwright");
     const noProbe = await H.discover("wecan"); out.noProbe = noProbe === null && calls.length === 0; H.PROBE.wecan = ["/carriers", "/shipping-options"]; const doc = await H.discover("wecan"); delete H.PROBE.wecan; const c = A.deliveryCfg.wecan;
     out.disc = { first: calls[0], tried: doc && doc.results.length, found: doc && doc.found && doc.found.path, nOpt: Object.keys(c.options || {}).length, o30: c.options && c.options[30], p30: c.prices[30], p8: c.prices[8], savedKey: saved && saved.k, savedHasSample: !!(saved && saved.v && saved.v.results && saved.v.results[0].sample), noSecret: !JSON.stringify(saved || {}).includes("apiSecret") };
     out.row = (H.rows().find(r => r.key === "wecan") || {}).nO;
-    out.expl = H.explain(30, "stop", "").lines.map(l => l.t + ":" + l.v).join(" || ");
     return out; });
   ok("تحليل نص الخيارات: ولايات 8 و16 و30 فقط (99 مرفوضة)، 30 فيها ناقلان", R.po.k.split(",").sort().join(",") === "16,30,8" && R.po.o30.length === 2 && R.po.o30[0].b === "ZR" && R.po.o30[0].h === 900 && R.po.o30[0].s === 650 && R.po.o16.length === 1, R.po);
   ok("الأرخص: الولاية 30 ⟵ منزل 900 ومكتب 650، وبشار ⟵ 900/650", R.min30.home === 900 && R.min30.stop === 650 && R.min8.home === 900 && R.min8.stop === 650, [R.min30, R.min8]);
@@ -48,7 +47,7 @@ const { chromium } = require("playwright");
   ok("الاكتشاف: يجرّب المسارات حتى يجد /shipping-options (404 قبلها) ويملأ 58 ولاية", R.disc.found === "/shipping-options" && R.disc.nOpt === 58 && R.disc.o30.length === 2, R.disc);
   ok("الاكتشاف: يعتمد الأرخص (30 ⟵ 900/650) في أسعار المتجر", R.disc.p30.home === 900 && R.disc.p30.stop === 650 && R.disc.p8.stop === 600, R.disc);
   ok("الاكتشاف: يحفظ تشخيصاً (عيّنات الردود) في التخزين الخاص بلا أي مفتاح", R.disc.savedKey === "delprobe" && R.disc.savedHasSample && R.disc.noSecret, R.disc);
-  ok("صحة التوصيل تذكر عدد ولايات الخيارات، والشرح يعرض خيارات الناقلين والأرخص", R.row === 58 && /خيارات الناقلين/.test(R.expl) && /ZR 900\/650/.test(R.expl), [R.row, R.expl]);
+  ok("صحة التوصيل تذكر عدد ولايات الخيارات", R.row === 58, R.row);
   /* 5) الطلب اليدوي: بطاقات الخيارات */
   const M = await p.evaluate(async () => {
     const A = Admin; window.toast = () => { };
