@@ -1,5 +1,5 @@
 # Platform CI — منصة SaaS: Worker المنصة (platform/api) وبوابة الشحن (platform/gateway) وواجهات المنصة (saas/). بلا أسرار ولا نشر (contents: read).
-# أوامر الخطوات منقولة حرفياً من tests.yml (الذي لم يُعدَّل)؛ اختبارات عزل Beta في beta-static-tests.yml (لا تتكرر هنا).
+# أوامر الخطوات منقولة حرفياً من tests.yml (لم يتغير فيه إلا تثبيت ubuntu-24.04 لوظيفة المتصفح)؛ اختبارات عزل Beta في beta-static-tests.yml (لا تتكرر هنا).
 name: platform-ci
 on:
   push:
@@ -10,6 +10,17 @@ on:
       - 'saas/**'
       - 'scripts/test-saas-*.js'
       - 'scripts/test-shipagg.js'
+      - 'scripts/test-toolpages.js'
+      - 'scripts/gen-tool-pages.py'
+      - 'scripts/test-agency-ui.js'
+      - 'scripts/test-appstore-ui.js'
+      - 'scripts/test-appstore-dev-ui.js'
+      - 'scripts/test-digital-ui.js'
+      - 'assets/js/admin-nav.js'
+      - 'assets/js/admin-agency.js'
+      - 'assets/js/admin-appstore.js'
+      - 'assets/js/admin-appdev.js'
+      - 'assets/js/admin-digital.js'
       - 'platform/supabase/functions/platform-admin/**'
       - 'platform/supabase/functions/platform-proxy/**'
       - '.github/workflows/platform-ci.yml'
@@ -20,6 +31,17 @@ on:
       - 'saas/**'
       - 'scripts/test-saas-*.js'
       - 'scripts/test-shipagg.js'
+      - 'scripts/test-toolpages.js'
+      - 'scripts/gen-tool-pages.py'
+      - 'scripts/test-agency-ui.js'
+      - 'scripts/test-appstore-ui.js'
+      - 'scripts/test-appstore-dev-ui.js'
+      - 'scripts/test-digital-ui.js'
+      - 'assets/js/admin-nav.js'
+      - 'assets/js/admin-agency.js'
+      - 'assets/js/admin-appstore.js'
+      - 'assets/js/admin-appdev.js'
+      - 'assets/js/admin-digital.js'
       - 'platform/supabase/functions/platform-admin/**'
       - 'platform/supabase/functions/platform-proxy/**'
       - '.github/workflows/platform-ci.yml'
@@ -39,6 +61,7 @@ jobs:
         with: { node-version: '22' }   # كما في tests.yml لخطوة الشحن: node:sqlite غير موجود في Node 20
       - name: "Worker المنصة وبوابة الشحن (platform/api وplatform/gateway)"
         run: |
+          node scripts/test-toolpages.js
           node --no-warnings platform/gateway/test/gateway.test.mjs
           node --no-warnings platform/gateway/test/carriers.parity.test.mjs
           node scripts/test-shipagg.js
@@ -51,7 +74,19 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '20' }
       - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
-      - run: NODE_PATH=$PWD/node_modules node scripts/test-saas-appstore.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-appstore.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-ui.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-appstore-dev-ui.js
+      - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-digital-ui.js

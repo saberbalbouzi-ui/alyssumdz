@@ -1,19 +1,19 @@
 # خريطة فصل CI: Website وPlatform وBeta Integration
 
-> المستودع واحد، و`.github/workflows/tests.yml` **لم يُعدَّل** (يبقى المرجع القديم). المسارات الجديدة منقولة منه **حرفياً** (أوامر وخطوات إعداد)، وتعمل على push/PR لمساراتها فقط، بلا أسرار ولا نشر (`contents: read`).
-> الأداة `scripts/ci-coverage.py` تفرض ذلك (C1–C4) وتفشل عند أي خرق (جُرِّبت بـ4 طفرات). السياسة `scripts/test-workflow-policy.py` (W4) تمنع الكتابة/الأسرار/النشر في المسارين.
+> المستودع واحد، و`.github/workflows/tests.yml` يبقى المرجع القديم ولم يتغير فيه **إلا** تثبيت `runs-on: ubuntu-24.04` لوظيفة المتصفح `ui` (سطر واحد؛ `ubuntu-latest` صار 26.04 ولا يدعمه Playwright 1.56.1). المسارات الجديدة منقولة منه **حرفياً** (أوامر وخطوات إعداد)، وتعمل على push/PR لمساراتها فقط، بلا أسرار ولا نشر (`contents: read`).
+> الأداة `scripts/ci-coverage.py` تفرض ذلك (C1–C6) وتفشل عند أي خرق (جُرِّبت بطفرات لكل شرط). السياسة `scripts/test-workflow-policy.py` (W4) تمنع الكتابة/الأسرار/النشر في المسارين.
 
 ## المسارات
 | المسار | الملف | يغطي | الحالة |
 |---|---|---|---|
-| **Website CI** | `website-ci.yml` | موقع ALYSSUM: المتجر ولوحته وإصدار PHP وقوالب العملاء | منطق (16 خطوة) + متصفح (12 اختباراً) |
-| **Platform CI** | `platform-ci.yml` | منصة SaaS: Worker `platform/api` وبوابة `platform/gateway` وواجهات `saas/` | منطق (27 أمراً) + متصفح (4) |
+| **Website CI** | `website-ci.yml` | موقع ALYSSUM: المتجر ولوحته وإصدار PHP وقوالب العملاء | منطق (16 خطوة) + متصفح (14 اختباراً) + استوديوهات 3D/ذكاء (10 اختبارات، وظيفة `website-studios`) |
+| **Platform CI** | `platform-ci.yml` | منصة SaaS: Worker `platform/api` وبوابة `platform/gateway` وواجهات `saas/` | منطق (28 أمراً، منها `test-toolpages`) + متصفح (8: 4 `test-saas-*` و4 واجهات عقد المنصة) |
 | **Beta Integration CI** | `beta-integration.yml` (يدوي، تكامل حقيقي، بيئة `alyssumdz-beta`) و`beta-static-tests.yml` (ساكن، بلا أسرار) | عزل Beta والتكاملات الحقيقية | موجودان في فرعَي Beta |
 
 ## قاعدة التصنيف (بدليل نصي من الكود لا من الأسماء)
 - **منصة:** اختبارات `platform/api/test` و`platform/gateway/test`، و`test-shipagg.js` (يستورد `platform/gateway/src`)، و`test-saas-*` (تستورد `platform-admin` وتفتح صفحات `saas/`).
 - **موقع:** سكربتات تحمّل `assets/js/admin-*.js` أو `admin.html` أو `php-edition`، واختبارات إصدار PHP، و`test-hub` (Hub البائع، `hub.sql` مستبعَد من حزمة العميل).
-- **غير مصنَّف — يبقى في `tests.yml` فقط بانتظار قرارك (17):** `test-toolpages` (يحمّل `saas/landing` و`admin-nav` معاً)، وواجهات ميزات المنصة داخل لوحة التاجر (`test-agency-ui` و`test-appstore-ui` و`test-appstore-dev-ui` و`test-digital-ui` و`test-digital-checkout`)، واستوديوهات التصميم والذكاء (`test-assets` و`test-vgen` و`test-vad` و`test-pack3d` و`test-mockup` و`test-boxdesigner` و`test-boxprofiles` و`test-boxprofiles3d` و`test-boxstudio` و`test-fashion` و`test-tryon-shopper`): أدلتها متعارضة أو غير كافية فلم تُنقل.
+- **الاختبارات الـ17 (صُنِّفت واعتُمدت، نُقلت):** منصة (5): `test-toolpages` ← `platform-logic`، و`test-agency-ui` و`test-appstore-ui` و`test-appstore-dev-ui` و`test-digital-ui` ← `platform-ui` (واجهات عقد المنصة). موقع (12): `test-digital-checkout` و`test-tryon-shopper` ← `website-ui` (وعقدهما مع المنصة: مساراتا `platform/api/src/modules/digital.js` و`tryon.js` تشغّلان website-ci)، والعشرة الباقية ← `website-studios`. التفصيل والأدلة: `docs/CI-UNCLASSIFIED-17-REVIEW.md`.
 - **اختبار جديد وحيد** في Website CI: `test-template-no-order-leak.js` (انحدار تسرّب `payments.json`، M-1) — ليس في `tests.yml`، ومُدرَج في قائمة `NEW` الموثَّقة.
 
 ## الأوامر ومكانها بعد الفصل (مولَّد بـ `python3 scripts/ci-coverage.py --markdown`)
@@ -37,7 +37,7 @@
 | `php scripts/test-gateway.php` | website | website-ci.yml |
 | `php scripts/test-roles-php.php` | website | website-ci.yml |
 | `php scripts/test-webhook-php.php` | website | website-ci.yml |
-| `node scripts/test-toolpages.js` | unclassified | يبقى في tests.yml فقط |
+| `node scripts/test-toolpages.js` | platform | platform-ci.yml |
 | `node --no-warnings platform/gateway/test/gateway.test.mjs` | platform | platform-ci.yml |
 | `node --no-warnings platform/gateway/test/carriers.parity.test.mjs` | platform | platform-ci.yml |
 | `node scripts/test-shipagg.js` | platform | platform-ci.yml |
@@ -69,52 +69,51 @@
 | `NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet.js` | platform | platform-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-saas-wallet-e2e.js` | platform | platform-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js` | platform | platform-ci.yml |
-| `NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js` | unclassified | يبقى في tests.yml فقط |
+| `NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js` | platform | platform-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-speed.js` | website | website-ci.yml |
 | `node scripts/test-speed-fix.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-saas-appstore.js` | platform | platform-ci.yml |
-| `NODE_PATH=$PWD/node_modules node scripts/test-appstore-ui.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-appstore-dev-ui.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-digital-ui.js` | unclassified | يبقى في tests.yml فقط |
+| `NODE_PATH=$PWD/node_modules node scripts/test-appstore-ui.js` | platform | platform-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-appstore-dev-ui.js` | platform | platform-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-digital-ui.js` | platform | platform-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-kind.js` | website | website-ci.yml |
-| `NODE_PATH=$PWD/node_modules node scripts/test-assets.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-vgen.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-vad.js` | unclassified | يبقى في tests.yml فقط |
+| `NODE_PATH=$PWD/node_modules node scripts/test-assets.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-vgen.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-vad.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-pagerater.js` | website | website-ci.yml |
 | `node scripts/test-edition.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-edition-live.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-edition-real.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-barcode.js` | website | website-ci.yml |
-| `NODE_PATH=$PWD/node_modules node scripts/test-pack3d.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-mockup.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-boxdesigner.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles3d.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-boxstudio.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-fashion.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js` | unclassified | يبقى في tests.yml فقط |
-| `NODE_PATH=$PWD/node_modules node scripts/test-digital-checkout.js` | unclassified | يبقى في tests.yml فقط |
+| `NODE_PATH=$PWD/node_modules node scripts/test-pack3d.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-mockup.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-boxdesigner.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-boxprofiles3d.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-boxstudio.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-fashion.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-tryon-shopper.js` | website | website-ci.yml |
+| `NODE_PATH=$PWD/node_modules node scripts/test-digital-checkout.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-upsell.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js` | website | website-ci.yml |
 | `NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js` | website | website-ci.yml |
 
-## مقارنة التغطية بنتائج المسار القديم (محلياً، محاكاة runner — **سابقة للتشغيل الحقيقي أدناه**)
-| المقارنة | النتيجة |
+## التغطية (آلية، تُفرض عند كل تشغيل لـ `scripts/ci-coverage.py`)
+| الشرط | المعنى |
 |---|---|
-| ساكنة (C1–C4) | 78 أمراً في `tests.yml` = 30 موقع + 31 منصة + 17 غير مصنَّف؛ لا أمر مكرر بين المسارين؛ كل أمر منقول حرفياً |
-| منطق (وظيفة `domain` القديمة مقابل `website-logic` + `platform-logic`) | **45 من 46 أمراً بنتيجة متطابقة** (رمز الخروج وسطر الخلاصة)، والأمر الباقي `test-toolpages` غير مصنَّف ويبقى في `tests.yml` |
-| متصفح: Platform (4 اختبارات `test-saas-*`) | 4/4 ناجحة |
-| متصفح: Website (12 اختباراً) | 9 ناجحة؛ 3 فاشلة **بالنتيجة نفسها على `main` النظيف**: `test-edition-real` (2 فحصان) و`test-upsell` (`TimeoutError`) و`test-hand` (فحصان: بريكة/باتنة وتبويب تعديل الصورة؛ المجموعة المتطابقة بالضبط) |
-| عطل سابق في الأساس | `test-shipagg.js` يفشل فحصاً واحداً (1 من 37) على `main` النظيف وفي المسار الجديد بالنتيجة نفسها |
+| C1 | كل أمر في المسارين الجديدين موجود حرفياً في `tests.yml` (عدا `test-template-no-order-leak.js` الموثَّق) |
+| C2 | لا أمر مشترك بين المسارين ولا مكرر داخل مسار |
+| C3 | كل أمر «موقع» في website-ci وكل أمر «منصة» في platform-ci، ولا أمر في المسار الخطأ |
+| C5 | **لا أمر غير مصنَّف**: الأوامر الـ78 في `tests.yml` = 42 website + 36 platform، كل واحد في مسار واحد بالضبط |
+| C4 | `tests.yml` لم يتغير إلا بتثبيت `ubuntu-24.04` لوظيفة `ui` (بنية yaml متطابقة عدا ذلك) |
+| C6 | شروط التشغيل (`paths`): تغيّر ملف عقد المنصة (`digital.js` و`tryon.js` ⇒ website-ci؛ `agency`/`appstore`/واجهات `admin-agency|appstore|appdev|digital` و`saas/**` و`test-*` المنصّية ⇒ platform-ci)، واختبارات المنصة لا تشغّل website-ci وحدها |
 
-**الخلاصة:** المسارات الجديدة لا تُغيّر نتيجة أي اختبار منقول. الإخفاقات الأربعة أعلاه **موجودة في الأساس** وليست من الفصل. لا أعرف إن كانت تحدث على GitHub (بيئة هنا: بلا شبكة كاملة وتاريخ مختلف).
-
-## تشغيل GitHub الحقيقي (2026-11-17) وما استُخلص منه
-- أول تشغيل كشف عيبين **في المسارين الجديدين نفسيهما** وأُصلحا: (1) `platform-logic` كان على Node 20 بينما `tests.yml` يشغّل خطوة الشحن على Node 22 (`node:sqlite` غير موجود في 20) ⇒ صار Node 22؛ (2) `ubuntu-latest` صار Ubuntu 26.04 ولا يدعمه Playwright 1.56.1 (آخر نجاح لـ`tests.yml` كان على `ubuntu-24.04`) ⇒ وظيفتا المتصفح `website-ui` و`platform-ui` مثبَّتتان على `ubuntu-24.04`.
-- `tests.yml` لم يُعدَّل ويبقى أحمر على `main` للسبب الثاني (قرار منفصل: تثبيت `ubuntu-24.04` فيه أو ترقية Playwright).
-- تُشغَّل الاختبارات الأربعة الفاشلة سابقاً (`test-shipagg` وedition-real وupsell وhand) بعد تصحيحها كما في `docs/CI-BASELINE-FAILURES.md`.
-- نتائج الـRuns تُسجَّل في تقرير التسليم (روابط وJobs)، لا هنا.
+## تشغيل GitHub الحقيقي وما استُخلص منه
+- أول تشغيل (2026-11-17) كشف عيبين **في المسارين الجديدين**: (1) `platform-logic` على Node 20 بينما `tests.yml` يشغّل خطوة الشحن على Node 22 (`node:sqlite`) ⇒ صار Node 22؛ (2) `ubuntu-latest` صار 26.04 ولا يدعمه Playwright ⇒ وظائف المتصفح مثبَّتة على `ubuntu-24.04` (ومعها `ui` في `tests.yml` بإذنك).
+- وظائف المتصفح في المسارين الجديدين تعمل كل خطوة فيها حتى لو فشلت سابقتها (`if: ${{ !cancelled() }}` كما في `ui` القديم) والوظيفة تفشل إن فشلت أي خطوة؛ كان غيابه يخفي نتائج ما بعد أول فشل.
+- الاختبارات الأربعة القديمة صُحِّحت كما في `docs/CI-BASELINE-FAILURES.md`.
+- نتائج الـRuns وروابطها في تقرير التسليم.
 
 ## قيود
-- الازدواج: ما دام `tests.yml` لم يُقلَّص، يعمل الاختباران معاً عند تغيير ملفات مشتركة. اقتراح (يحتاج موافقتك ولم يُنفَّذ): بعد استقرار المسارين يُقلَّص `tests.yml` إلى الاختبارات غير المصنَّفة.
-- الاختبارات الـ17 غير المصنَّفة لم تُنقل (بانتظار قرار التصنيف، `docs/CI-UNCLASSIFIED-17-REVIEW.md`).
+- الازدواج: ما دام `tests.yml` لم يُقلَّص، يعمل الاختباران معاً عند تغيير ملفات مشتركة. اقتراح لاحق (يحتاج قراراً ولم يُنفَّذ): تقليص `tests.yml` بعد استقرار المسارين.
+- `beta-integration.yml` يدوي ويحتاج بيئة `alyssumdz-beta` وأسرارها (إجراء خارجي).
