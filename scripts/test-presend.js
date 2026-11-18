@@ -30,11 +30,13 @@ const { chromium } = require("playwright");
     /* تبويب «أُرسلت آخر 7 أيام»: قراءة فقط، يضم المرسَل ويُخفي زر الإرسال والتحديد */
     const bg3 = document.getElementById("presend-bg"); bg3.querySelector('[data-scope="sent"]').click(); await wait(80);
     out.sentTab = { ids: [...bg3.querySelectorAll("tbody tr td:nth-child(1)")].map(x => x.innerText.trim()).join(","), cb: bg3.querySelectorAll("tbody input[type=checkbox]").length, btn: !!bg3.querySelector("#ps-send"), auto: !!bg3.querySelector("#ps-auto"), trk: /WS-X/.test(bg3.innerText), n: AdminPreSend.recentSent().length };
-    bg3.querySelector('[data-scope=""]').click(); await wait(60); out.back = !!document.getElementById("presend-bg").querySelector("#ps-auto");
+    bg3.querySelector('[data-scope="prep"]').click(); await wait(60); out.back = !!document.getElementById("presend-bg").querySelector("#ps-auto");
+    bg3.querySelector('[data-scope="all"]').click(); await wait(80); out.allTab = { n: bg3.querySelectorAll("tbody tr").length, tot: AdminPreSend.allOrders().length, st: /جديدة/.test(bg3.innerText) && /مؤكَّدة/.test(bg3.innerText), cb: bg3.querySelectorAll("tbody input[type=checkbox]").length };
+    const qq = bg3.querySelector("#ps-q"); qq.value = "P1"; qq.dispatchEvent(new Event("input")); await wait(80); out.search = document.getElementById("presend-bg").querySelectorAll("tbody tr").length;
     /* لا قائمة فارغة: إن لم يبق شيء بانتظار الإرسال تُفتح النافذة على تبويب «أُرسلت» */
-    A.orders.forEach(o => { if (!A.trackingOf(o)) o.note = "🚚wecan:Z" + o.id; }); AdminPreSend.open(); await wait(80); const bg4 = document.getElementById("presend-bg"); out.noEmpty = bg4.querySelectorAll("tbody tr").length > 0 && /للمراجعة فقط/.test(bg4.innerText);
+    A.orders.forEach(o => { if (!A.trackingOf(o)) o.note = "🚚wecan:Z" + o.id; }); AdminPreSend.open(); await wait(80); const bg4 = document.getElementById("presend-bg"); out.noEmpty = bg4.querySelectorAll("tbody tr").length > 0 && /محفوظ في الأرشيف/.test(bg4.innerText);
     return out; });
-  ok("تبويب «أُرسلت»: يضم المرسَل مع رقم التتبع، بلا تحديد ولا زر إرسال، والعودة تُظهر المفتاح", R.sentTab.n >= 1 && R.sentTab.trk && R.sentTab.cb === 0 && !R.sentTab.btn && !R.sentTab.auto && R.back, R.sentTab);
+  ok("تبويب «المرسلة»: يضم المرسَل مع رقم التتبع، بلا تحديد ولا زر إرسال، والعودة تُظهر المفتاح", R.sentTab.n >= 1 && R.sentTab.trk && R.sentTab.cb === 0 && !R.sentTab.btn && !R.sentTab.auto && R.back, R.sentTab);
   ok("القائمة: المؤكَّد غير المرسَل فقط (P1,P2,P3,P6)", R.pending === "P1,P2,P3,P6", R.pending);
   ok("الزران: في الطلبات وفي الرئيسية", R.btn && R.homeBtn, R);
   ok("النافذة: 4 صفوف، والاسم كما سيصل الشركة (اسم البوردرو)، وعدد الطلبات", R.rows === 4 && R.bord && R.count, R);
@@ -42,7 +44,8 @@ const { chromium } = require("playwright");
   ok("مفتاح الإرسال التلقائي: مفعّل افتراضياً ويُوقف من النافذة ويُحفظ", R.autoDefault === true && R.autoOff, R);
   ok("إرسال المحدَّد: بعد إلغاء P3 يُرسَل P1 وP2 وP6 فقط، ويُحدَّث العدد والقائمة", R.sent === "P1,P2,P6" && /\(3\)/.test(R.btnLabel) && R.after === 1, [R.sent, R.btnLabel, R.after]);
   ok("المصدر: شارات «الموقع/يدوي» ومرشّحات بأعدادها، وتصفية «يدوياً» (1) و«الموقع» (3)", /الكل \(4\)\|دخلت من الموقع \(3\)\|أدخلتُها يدوياً \(1\)/.test(R.chips) && /يدوي/.test(R.badges) && R.man.startsWith("1:") && R.web === 3, [R.chips, R.badges, R.man, R.web]);
-  ok("بلا قائمة فارغة: تُفتح على «أُرسلت» حين لا شيء بانتظار الإرسال", R.noEmpty === true, R.noEmpty);
+  ok("تبويب «الطلبات»: كل الطلبات بحالاتها للقراءة فقط، والبحث يصفّي", R.allTab.n === R.allTab.tot && R.allTab.n >= 5 && R.allTab.st && R.allTab.cb === 0 && R.search === 1, [R.allTab, R.search]);
+  ok("بلا قائمة فارغة: تُفتح على «المرسلة» حين لا شيء بانتظار الإرسال", R.noEmpty === true, R.noEmpty);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();

@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest-admin.webmanifest"><meta name="theme-color" content="#0b1210"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="اللوحة">
-<meta name="admin-version" content="1.89.1254">
+<meta name="admin-version" content="1.89.1255">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -471,7 +471,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
     <div id="orders-banner"></div>
     <div class="card">
       <div id="order-co-chips" data-noco hidden style="display:none;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .7rem"></div>
-      <button class="small gold" type="button" id="presend-btn" onclick="AdminPreSend.open()" title="الطلبات المؤكَّدة التي لم تُرسَل بعد، والشركة التي سيذهب إليها كل طلب، لتراجعها قبل الإرسال" style="margin-bottom:.5rem">قائمة ما قبل الإرسال</button>
+      <button class="small gold" type="button" id="presend-btn" onclick="AdminPreSend.open()" title="أرشيف الطلبات: الطلبات كلها، والتجهيز (المؤكَّدة غير المرسَلة)، والمرسلة — لا يختفي منها طلب" style="margin-bottom:.5rem">أرشيف الطلبات</button>
       <button class="green" type="button" id="mo-btn" onclick="ManualOrder.open({mode:'new'})" title="إضافة طلب يدوياً (هاتف، واتساب…) ليظهر كباقي الطلبات"><span class="mo-plus">＋</span> إضافة طلب جديد</button>
       <div class="search-bar">
         <input id="order-filter-q" placeholder="🔍 بحث بالاسم أو الهاتف أو رقم الطلب..." oninput="Admin.applyOrderFilters()">
@@ -1784,7 +1784,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
 <script src="assets/js/admin-delhealth.js?v=6600d52c"></script>
 <script src="assets/js/admin-sentarchive.js?v=10c2e6c2"></script>
-<script src="assets/js/admin-presend.js?v=3f223036"></script>
+<script src="assets/js/admin-presend.js?v=317e66a7"></script>
 <script src="assets/js/admin-customers.js?v=056673f1"></script>
 <script src="assets/js/admin-bulk-products.js?v=f12fc350"></script>
 <script src="assets/js/admin-reports.js?v=bfe80ebd"></script>
