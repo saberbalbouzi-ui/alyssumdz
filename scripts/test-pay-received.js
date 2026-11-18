@@ -22,6 +22,14 @@ const { chromium } = require("playwright");
   });
   t("المستلم من ياليدين = صافي الكشوف المدفوعة (3300+5200+2500=11000) بلا عدّ مزدوج لـY1", Y.rec === 11000, Y);
   t("الداخل في كشف مدفوع لا يُعدّ «بانتظار القبض»؛ يبقى A3 (في كشف قادم) فقط", Y.due === 1000 && Y.nDue === 1, Y);
+  const TP = await p.evaluate(() => {
+    const P = AdminPayments, mk = (id, tk) => ({ id, date: new Date().toISOString(), name: "n" + id, phone: "0550000000", status: "livree", total: 1000, items: "x", note: "🚚yalidine:" + tk });
+    Admin.orders = [mk("M1", "yal-M1"), mk("M2", "yal-M2")];
+    P.S.byOrder = { M1: { status: "paid", amount: 1000, method: "cod", date: "2026-11-01", manual: true }, M2: { status: "paid", amount: 1000, method: "cod", date: "2026-11-01", manual: true } };
+    Admin.ydActual = { "yal-M2": { price: 1000, net: 700, ts: 1 } };      /* M2 في كشف مدفوع: الكشف يلغي التعليم اليدوي؛ M1 مؤقت */
+    const t = P.totals("all"); return { rec: t.received, temp: t.temp, nTemp: t.nTemp };
+  });
+  t("المعلَّم يدوياً وليس في كشف = مؤقت (1000)، والكشف يحلّ محلّ M2 (700): المستلم 1700", TP.temp === 1000 && TP.nTemp === 1 && TP.rec === 1700, TP);
   const S2 = await p.evaluate(() => {
     Admin.ydActual = { a1: { price: 2000, del: 600, cod: 15, ret: 0, ins: 0, net: 1385, ts: Date.parse("2026-11-18T10:00:00Z") }, a2: { price: 0, del: 0, cod: 0, ret: 250, ins: 0, net: -250, ts: Date.parse("2026-11-18T10:00:00Z") }, a3: { pend: "next", price: 1000, del: 500, cod: 7, ret: 0, ins: 0, net: 493, ts: Date.parse("2026-11-10T10:00:00Z") } };
     const d = document.createElement("div"); d.innerHTML = AdminPayments.stmtCard(); const tx = d.innerText || d.textContent; return { rows: d.querySelectorAll("tbody tr").length, paid: /مدفوع/.test(tx) && /2\s?000/.test(tx), next: /قادم/.test(tx), tot: /1\s?628/.test(tx) };
