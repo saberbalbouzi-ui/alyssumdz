@@ -72,7 +72,7 @@
         "purpose": "قاعدة منصة API لـBeta",
         "created_by": "node platform/api/tools/deploy.mjs --env beta db",
         "approval": true,
-        "status": "NOT CREATED"
+        "status": "CREATED 2026-11-18 (uuid d622d13e-6f66-4fe4-b39f-c5afabab766e؛ WEUR؛ pf_meta.environment=beta فقط — الهجرات لم تُطبَّق بعد)"
       },
       {
         "id": "cf-d1-gateway",
@@ -81,7 +81,7 @@
         "purpose": "قاعدة بوابة الشحن لـBeta",
         "created_by": "node platform/gateway/tools/deploy.mjs --env beta db",
         "approval": true,
-        "status": "NOT CREATED"
+        "status": "CREATED 2026-11-18 (uuid cc560f60-9a77-4b75-8841-76b55e4572da؛ WEUR؛ pf_meta.environment=beta فقط — الهجرات لم تُطبَّق بعد)"
       },
       {
         "id": "cf-worker-api",

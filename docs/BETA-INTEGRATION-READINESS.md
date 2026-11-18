@@ -36,6 +36,8 @@
 
 ## 2) موارد Cloudflare المطلوبة (كلها `NOT CREATED`، كلها تتطلب موافقتك)
 
+> **حالة Cloudflare (2026-11-18):** الموصل المتصل بحساب Beta الجديد أعاد حساباً **فارغاً** (D1/Workers/KV = 0؛ R2 غير مفعّل)، فأُنشئت قاعدتا D1 فقط: `alyssum-platform-api-beta` (`d622d13e-6f66-4fe4-b39f-c5afabab766e`) و`alyssum-shipping-gateway-beta` (`cc560f60-9a77-4b75-8841-76b55e4572da`) في WEUR، وكُتبت فيهما هوية `pf_meta.environment=beta` فقط. **لم تُطبَّق الهجرات** (تُطبَّق بـ`d1-migrate.mjs` الموثَّقة بعد توفر رمز REST)، ولا Workers ولا Pages ولا مسارات ولا DNS. **حدّ التحقق:** الموصل لا يعيد معرّف الحساب، فلم يُثبَت أنه `cca391fb…` بعينه ولا فُحصت مناطق النطاقات (يحتاج `cf-account-check` برمز).
+
 > **حارس هوية الحساب (إلزامي قبل أي إنشاء):** `node platform/env/cf-account-check.mjs` (قراءة GET فقط) يرفض الحساب الذي يحوي Worker/D1 بأسماء Production أو منطقة `alyssumdz.com`/`alyssumhub.fyi` (رمز 2)، ويُبلغ `UNVERIFIED` (رمز 3، ليس نجاحاً) إن نقصت صلاحية الرمز. اختباره 13/13 بـfetch محاكى؛ **لم يُشغَّل على حساب حقيقي**. صلاحيات الرمز اللازمة له قراءةٌ فقط: Account Settings وD1 وWorkers Scripts وPages وZone. لا يثبت أن الحساب «جديد»، يثبت أنه ليس حساب الإنتاج.
 
 | المعرّف | النوع | الاسم | يُنشأ بـ | يعتمد على |
