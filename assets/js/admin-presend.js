@@ -44,7 +44,7 @@ const AdminPreSend = (() => {
     const sb = bg.querySelector("#ps-send"); if (sb) sb.onclick = async () => { const list = L.filter(o => S.sel.has(String(o.id))); if (!list.length) return; sb.disabled = true; try { await a.bulkSend(list); } catch (e) { console.warn("presend", e); } draw(); try { a.renderOrders(); } catch (e) { } };
   }
   function open() {
-    S.sel = null; S.src = ""; S.scope = ""; let bg = document.getElementById("presend-bg"); if (bg) bg.remove();
+    S.sel = null; S.src = ""; S.scope = pending().length || !recentSent().length ? "" : "sent"; let bg = document.getElementById("presend-bg"); if (bg) bg.remove();
     bg = document.createElement("div"); bg.id = "presend-bg"; bg.className = "modal-bg open"; bg.dir = "rtl"; bg.innerHTML = '<div class="modal" style="width:min(1060px,96vw);max-width:min(1060px,96vw);position:relative"></div>';
     bg.addEventListener("click", e => { if (e.target === bg) bg.remove(); }); document.body.appendChild(bg); draw();
   }

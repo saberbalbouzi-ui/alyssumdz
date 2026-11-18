@@ -31,6 +31,8 @@ const { chromium } = require("playwright");
     const bg3 = document.getElementById("presend-bg"); bg3.querySelector('[data-scope="sent"]').click(); await wait(80);
     out.sentTab = { ids: [...bg3.querySelectorAll("tbody tr td:nth-child(1)")].map(x => x.innerText.trim()).join(","), cb: bg3.querySelectorAll("tbody input[type=checkbox]").length, btn: !!bg3.querySelector("#ps-send"), auto: !!bg3.querySelector("#ps-auto"), trk: /WS-X/.test(bg3.innerText), n: AdminPreSend.recentSent().length };
     bg3.querySelector('[data-scope=""]').click(); await wait(60); out.back = !!document.getElementById("presend-bg").querySelector("#ps-auto");
+    /* لا قائمة فارغة: إن لم يبق شيء بانتظار الإرسال تُفتح النافذة على تبويب «أُرسلت» */
+    A.orders.forEach(o => { if (!A.trackingOf(o)) o.note = "🚚wecan:Z" + o.id; }); AdminPreSend.open(); await wait(80); const bg4 = document.getElementById("presend-bg"); out.noEmpty = bg4.querySelectorAll("tbody tr").length > 0 && /للمراجعة فقط/.test(bg4.innerText);
     return out; });
   ok("تبويب «أُرسلت»: يضم المرسَل مع رقم التتبع، بلا تحديد ولا زر إرسال، والعودة تُظهر المفتاح", R.sentTab.n >= 1 && R.sentTab.trk && R.sentTab.cb === 0 && !R.sentTab.btn && !R.sentTab.auto && R.back, R.sentTab);
   ok("القائمة: المؤكَّد غير المرسَل فقط (P1,P2,P3,P6)", R.pending === "P1,P2,P3,P6", R.pending);
@@ -40,6 +42,7 @@ const { chromium } = require("playwright");
   ok("مفتاح الإرسال التلقائي: مفعّل افتراضياً ويُوقف من النافذة ويُحفظ", R.autoDefault === true && R.autoOff, R);
   ok("إرسال المحدَّد: بعد إلغاء P3 يُرسَل P1 وP2 وP6 فقط، ويُحدَّث العدد والقائمة", R.sent === "P1,P2,P6" && /\(3\)/.test(R.btnLabel) && R.after === 1, [R.sent, R.btnLabel, R.after]);
   ok("المصدر: شارات «الموقع/يدوي» ومرشّحات بأعدادها، وتصفية «يدوياً» (1) و«الموقع» (3)", /الكل \(4\)\|دخلت من الموقع \(3\)\|أدخلتُها يدوياً \(1\)/.test(R.chips) && /يدوي/.test(R.badges) && R.man.startsWith("1:") && R.web === 3, [R.chips, R.badges, R.man, R.web]);
+  ok("بلا قائمة فارغة: تُفتح على «أُرسلت» حين لا شيء بانتظار الإرسال", R.noEmpty === true, R.noEmpty);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
