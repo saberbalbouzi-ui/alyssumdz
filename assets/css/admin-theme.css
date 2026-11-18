@@ -450,3 +450,11 @@ html.white :is(.card,.modal,.fp-pane,#tab-home,.ord-prev,#ord-prev-b,#ship-detai
 html.white #ahome .ah-seg{background:#fff;border:1px solid #d5dbe5}
 html.white #ahome .ah-seg button{background:transparent!important;box-shadow:none!important;border:0!important;color:#334155!important;text-shadow:none!important}
 html.white #ahome .ah-seg button.on{background:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important}
+
+/* أزرار التواصل (اتصال/واتساب/فايبر/تلغرام) في المظهر الفاتح: كانت نصاً أبيض بلا خلفية فتظهر أشرطة بيضاء فارغة */
+html.white .yd-cb{background:#fff!important;background-image:none!important;color:#1f2123!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:none!important;border:1.5px solid #cbd5e1!important}
+html.white .yd-cb.call{background:#fef3c7!important;border-color:#d97706!important;color:#92400e!important}
+html.white .yd-cb.wa{background:#dcfce7!important;border-color:#16a34a!important;color:#166534!important}
+html.white .yd-cb.vb{background:#f3e8ff!important;border-color:#7c3aed!important;color:#5b21b6!important}
+html.white .yd-cb.tg{background:#e0f2fe!important;border-color:#0284c7!important;color:#075985!important}
+html.white .yd-cb:hover{filter:brightness(.97)}
