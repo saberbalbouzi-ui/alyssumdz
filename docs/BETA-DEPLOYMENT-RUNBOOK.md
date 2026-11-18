@@ -50,6 +50,7 @@ BETA_SUPABASE_URL=https://<beta-ref>.supabase.co BETA_SUPABASE_ANON_KEY=<beta-pu
 ## 4) 🟡 منصة API لـBeta (Worker + D1) — جرِّب أولاً بلا شبكة
 ```bash
 export CF_ACCOUNT_ID=<id> CF_ZONE_ID=<zone> CF_API_TOKEN=<رمز-Beta>      # من بيئتك لا من الملفات
+BETA_CF_ACCOUNT_ID=$CF_ACCOUNT_ID BETA_CF_API_TOKEN=$CF_API_TOKEN node platform/env/cf-account-check.mjs   # إلزامي أولاً: يجب SEPARATE (رمز 0)؛ 2 = حساب/موارد Production ⇒ توقف؛ 3 = تعذّر التحقق ⇒ لا تتابع
 node platform/api/tools/deploy.mjs --env beta --dry-run all                # يطبع الخطة بلا شبكة: راجع الأسماء
 node platform/api/tools/deploy.mjs --env beta db                           # D1 + المخطط + هوية القاعدة (beta)
 node platform/api/tools/d1-migrate.mjs --env beta --status             # الهجرات (platform/api/migrations): اقرأ الحالة أولاً (يتطلب CF_* أعلاه)

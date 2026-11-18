@@ -74,6 +74,7 @@ jobs:
           python3 scripts/test-workflow-policy.py
           node scripts/test-beta-build.js
           node scripts/test-beta-resources.js
+          node scripts/test-cf-account-check.js
       - name: Supabase Beta — حزمة SQL + حراسات + تدريب PostgreSQL محلي (ليس Supabase الحقيقي)
         run: |
           export PGBIN=$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)

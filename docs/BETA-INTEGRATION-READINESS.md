@@ -36,6 +36,8 @@
 
 ## 2) موارد Cloudflare المطلوبة (كلها `NOT CREATED`، كلها تتطلب موافقتك)
 
+> **حارس هوية الحساب (إلزامي قبل أي إنشاء):** `node platform/env/cf-account-check.mjs` (قراءة GET فقط) يرفض الحساب الذي يحوي Worker/D1 بأسماء Production أو منطقة `alyssumdz.com`/`alyssumhub.fyi` (رمز 2)، ويُبلغ `UNVERIFIED` (رمز 3، ليس نجاحاً) إن نقصت صلاحية الرمز. اختباره 13/13 بـfetch محاكى؛ **لم يُشغَّل على حساب حقيقي**. صلاحيات الرمز اللازمة له قراءةٌ فقط: Account Settings وD1 وWorkers Scripts وPages وZone. لا يثبت أن الحساب «جديد»، يثبت أنه ليس حساب الإنتاج.
+
 | المعرّف | النوع | الاسم | يُنشأ بـ | يعتمد على |
 |---|---|---|---|---|
 | cf-d1-api | D1 | `alyssum-platform-api-beta` | `deploy.mjs --env beta db` | — |
