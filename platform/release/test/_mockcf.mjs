@@ -10,7 +10,7 @@ export class MockCloudflare {
     const B = registry.environments.beta; this.acc = accountId; this.B = B; this.repoRoot = repoRoot; this.dir = mkdtempSync(path.join(tmpdir(), "mockcf-"));
     this.file = path.join(this.dir, "api.db"); this.db = new DatabaseSync(this.file); this.sb = new DatabaseSync(":memory:"); this.sb.exec("CREATE TABLE orders (id TEXT PRIMARY KEY, name TEXT); CREATE TABLE admins (email TEXT PRIMARY KEY)");
     this.kv = new Map(); this.nsId = null; this.workers = {}; this.d1names = [B.cf_d1, B.gateway_d1, ...extraD1]; for (const n of extraWorkers) this.workers[n] = { versions: [], deployments: [] };
-    this.requests = []; this.faults = {}; this.bm = 0; this.kvWrites = []; this.hostsSeen = new Set();
+    this.requests = []; this.faults = {}; this.hooks = {}; this.bm = 0; this.kvWrites = []; this.hostsSeen = new Set();
   }
   close() { try { this.db.close(); } catch { } rmSync(this.dir, { recursive: true, force: true }); }
   worker(n) { return (this.workers[n] ??= { versions: [], deployments: [] }); }
@@ -29,7 +29,7 @@ export class MockCloudflare {
     if (p === "/workers/scripts" && method === "GET") return json(Object.keys(this.workers).map((id) => ({ id })));
     if (p === "/d1/database" && method === "GET") { const nm = q.get("name"); return json(this.d1names.filter((n) => !nm || n === nm).map((n) => ({ name: n, uuid: "uuid-" + n }))); }
     let r;
-    if ((r = /^\/d1\/database\/uuid-([^/]+)\/query$/.exec(p)) && method === "POST") { if (r[1] !== this.B.cf_d1) return json(null, 404); const b = JSON.parse(init.body); try { const st = this.db.prepare(b.sql), pa = b.params ?? []; return json([{ results: /^\s*(select|pragma|with)/i.test(b.sql) ? st.all(...pa) : (st.run(...pa), []) }]); } catch (e) { return new Response(JSON.stringify({ success: false, errors: [{ message: e.message }] }), { status: 400 }); } }
+    if ((r = /^\/d1\/database\/uuid-([^/]+)\/query$/.exec(p)) && method === "POST") { if (r[1] !== this.B.cf_d1) return json(null, 404); const b = JSON.parse(init.body); this.hooks.beforeQuery?.(b.sql, this); try { const st = this.db.prepare(b.sql), pa = b.params ?? []; return json([{ results: /^\s*(select|pragma|with)/i.test(b.sql) ? st.all(...pa) : (st.run(...pa), []) }]); } catch (e) { return new Response(JSON.stringify({ success: false, errors: [{ message: e.message }] }), { status: 400 }); } }
     if ((r = /^\/d1\/database\/uuid-([^/]+)\/time_travel\/bookmark$/.exec(p))) { const f = path.join(this.dir, `bm${++this.bm}.db`); this.db.close(); copyFileSync(this.file, f); this.db = new DatabaseSync(this.file); return json({ bookmark: f }); }
     if ((r = /^\/d1\/database\/uuid-([^/]+)\/time_travel\/restore$/.exec(p)) && method === "POST") { const f = q.get("bookmark"); this.db.close(); copyFileSync(f, this.file); this.db = new DatabaseSync(this.file); return json({ ok: true }); }
     if (p === "/storage/kv/namespaces" && method === "GET") return json(this.nsId ? [{ id: this.nsId, title: this.B.static_kv }] : []);

@@ -1,6 +1,6 @@
 /* اختبار واجهة التشغيل على مستودع git تجريبي بالتزامات حقيقية: البوابات (CI، الاعتماد، شجرة نظيفة، الـSHA)، فحوص العقود/الترحيلات/beta-content، ثم نشر ورجوع كاملان بمحاكي السحابة. */
 import path from "node:path";
-import { readFileSync, writeFileSync, copyFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -18,7 +18,8 @@ const S1 = { version: "3.0.1", api: worker("b.subtotal"), schema: BASELINE, migr
 const commit = (msg, st) => { if (st) writeState(R2, st); g("add", "-A"); g("commit", "-q", "-m", msg); return g("rev-parse", "HEAD"); };
 const R2 = { root: R, w: repo.w }; writeState(R2, S1); const sha1 = commit("v1", null);
 const runsFile = (sha, o = {}) => { const f = path.join(tmpdir(), "relruns-" + process.pid + ".json"); writeFileSync(f, JSON.stringify({ workflow_runs: [{ id: 7, name: "tests", head_sha: sha, status: "completed", conclusion: "success", run_started_at: "2026-11-18T10:00:00Z", ...o }] })); return f; };
-const logs = []; const cli = (argv, adapterFactory = null) => runCli({ argv: [...argv, "--root", R, "--dist-dir", "dist"], env: {}, adapterFactory, log: (...a) => logs.push(a.join(" ")) });
+const logs = []; const cli = (argv, adapterFactory = null, env = {}) => runCli({ argv: [...argv, "--root", R, "--dist-dir", "dist"], env, adapterFactory, log: (...a) => logs.push(a.join(" ")) });
+const AP = ["--approved-by", "saber"];
 const lastLog = () => logs.slice(-4).join(" | ");
 
 ok("[1] بلا مصدر لحالة CI ⇒ مرفوض (لا نشر بلا بوابة)", (await cli(["verify"])) === 2 && /لا مصدر لحالة CI/.test(lastLog()), lastLog());
@@ -31,7 +32,7 @@ g("tag", "-d", "beta-approved/" + sha1.slice(0, 8)); g("update-ref", "refs/remot
 ok("[6] الاعتماد عبر main (الـcommit سلف origin/main) ⇒ ينجح", (await cli(["verify", "--ci-runs-file", runsFile(sha1)])) === 0, lastLog());
 ok("[7] --sha لا يطابق HEAD ⇒ مرفوض (لا نبني من شجرة لا تطابق الإصدار)", (await cli(["verify", "--sha", "0".repeat(40), "--ci-runs-file", runsFile(sha1)])) === 2 && /لا /.test(lastLog()));
 repo.w("platform/api/src/dirty.js", "x"); ok("[8] شجرة غير نظيفة ⇒ مرفوض", (await cli(["verify", "--ci-runs-file", runsFile(sha1)])) === 2 && /غير نظيفة/.test(lastLog())); rmSync(path.join(R, "platform/api/src/dirty.js"));
-ok("[9] --skip-gates مع deploy ⇒ مرفوض صراحةً (للتجريب المحلي مع verify/plan فقط)", (await cli(["deploy", "--skip-gates", "--ci-runs-file", runsFile(sha1)], () => new SimCloud())) === 2);
+ok("[9] --skip-gates مع deploy ⇒ مرفوض صراحةً (للتجريب المحلي مع verify/plan فقط)", (await cli(["deploy", ...AP, "--skip-gates", "--ci-runs-file", runsFile(sha1)], () => new SimCloud())) === 2);
 /* فحوص المحتوى والشيفرة */
 repo.w("beta-content/evil.js", "alert(1)"); g("add", "-A"); g("commit", "-q", "-m", "evil"); const shaE = g("rev-parse", "HEAD"); g("update-ref", "refs/remotes/origin/main", shaE);
 ok("[10] beta-content فيه ملف شيفرة (.js) ⇒ مرفوض (بيانات فقط)", (await cli(["verify", "--ci-runs-file", runsFile(shaE)])) === 2 && /امتداد غير مسموح/.test(logs.join("\n")));
@@ -45,7 +46,7 @@ rmSync(path.join(R, "platform/api/migrations/0002_drop.sql")); g("add", "-A"); g
 /* نشر ورجوع كاملان */
 const sim = new SimCloud({ protectedTables: JSON.parse(readFileSync(path.join(R, "platform/release/contracts.json"), "utf8")).protected_tables.d1_api }), fac = () => sim;
 g("update-ref", "refs/remotes/origin/main", g("rev-parse", "HEAD")); writeState(R2, S1); const shaA = g("rev-parse", "HEAD");
-let code = await cli(["deploy", "--ci-runs-file", runsFile(shaA)], fac);
+let code = await cli(["deploy", ...AP, "--ci-runs-file", runsFile(shaA)], fac);
 ok("[14] نشر الإصدار الأول (بوابات CI والاعتماد ثم بناء مُتخطّى بمجلد جاهز) ينجح ويكتب تقريراً", code === 0 && existsSync(path.join(R, "beta-release/latest.md")), lastLog());
 const rep = readFileSync(path.join(R, "beta-release/latest.md"), "utf8"); ok("[15] التقرير يذكر الـcommit والـVERSION وبوابة CI والاعتماد والترحيل", rep.includes(shaA) && rep.includes("3.0.1") && /بوابة CI:\*\* نجحت/.test(rep) && /main/.test(rep) && rep.includes("0001_baseline.sql"), rep.slice(0, 400));
 ok("[16] result JSON يحوي البيان والنتيجة", (() => { const j = JSON.parse(readFileSync(path.join(R, `beta-release/result-${sim.currentId}.json`), "utf8")); return j.manifest.source.sha === shaA && j.result.status === "deployed"; })());
@@ -53,13 +54,42 @@ sim.db.exec("INSERT INTO pf_tenants VALUES ('t1','متجر')"); const o1 = JSON.
 /* إصلاح */
 const M2 = "ALTER TABLE cm_orders ADD COLUMN note TEXT;\n"; const S2 = { version: "3.0.2", api: worker("b.subtotal + b.fee"), schema: BASELINE + M2, migrations: { "0001_baseline.sql": BASELINE, "0002_note.sql": M2 }, ui: { ...UI1, "assets/app.js": "2" }, templates: TPL1 };
 writeState(R2, S2); g("add", "-A"); g("commit", "-q", "-m", "fix"); const shaB = g("rev-parse", "HEAD");
-logs.length = 0; ok("[18] إصلاح غير معتمَد (ليس على main) ⇒ لا ينشر، وBeta لم يتغيّر", (await cli(["deploy", "--ci-runs-file", runsFile(shaB)], fac)) === 2 && sim.registry.length === 1 && (await sim.health()).api.sha === shaA, lastLog());
-g("update-ref", "refs/remotes/origin/main", shaB); ok("[19] معتمَد لكن CI فاشل ⇒ لا ينشر", (await cli(["deploy", "--ci-runs-file", runsFile(shaB, { conclusion: "failure" })], fac)) === 2 && sim.registry.length === 1);
-code = await cli(["deploy", "--ci-runs-file", runsFile(shaB)], fac); ok("[20] الإصلاح المعتمَد واجتاز CI ينشر", code === 0 && sim.registry.length === 2, lastLog());
+logs.length = 0; ok("[18] إصلاح غير معتمَد (ليس على main) ⇒ لا ينشر، وBeta لم يتغيّر", (await cli(["deploy", ...AP, "--ci-runs-file", runsFile(shaB)], fac)) === 2 && sim.registry.length === 1 && (await sim.health()).api.sha === shaA, lastLog());
+g("update-ref", "refs/remotes/origin/main", shaB); ok("[19] معتمَد لكن CI فاشل ⇒ لا ينشر", (await cli(["deploy", ...AP, "--ci-runs-file", runsFile(shaB, { conclusion: "failure" })], fac)) === 2 && sim.registry.length === 1);
+code = await cli(["deploy", ...AP, "--ci-runs-file", runsFile(shaB)], fac); ok("[20] الإصلاح المعتمَد واجتاز CI ينشر", code === 0 && sim.registry.length === 2, lastLog());
 const o2 = JSON.parse((await sim.callApi("/v1/orders", { method: "POST", body: JSON.stringify({ tenant: "t1", subtotal: 1000, fee: 400 }) })).body);
 ok("[21] الخطأ مُصلَح (1400)، وبيانات المتجر والطلب القديم باقية", o2.total === 1400 && JSON.parse((await sim.callApi("/v1/orders")).body)[0].id === o1.id && sim.db.prepare("SELECT COUNT(*) n FROM pf_tenants").get().n === 1);
-ok("[22] إعادة تشغيل النشر نفسه ⇒ noop", (await cli(["deploy", "--ci-runs-file", runsFile(shaB)], fac)) === 0 && /noop/.test(logs.slice(-3).join(" ")) && sim.registry.length === 2, lastLog());
+ok("[22] إعادة تشغيل النشر نفسه ⇒ noop", (await cli(["deploy", ...AP, "--ci-runs-file", runsFile(shaB)], fac)) === 0 && /noop/.test(logs.slice(-3).join(" ")) && sim.registry.length === 2, lastLog());
 ok("[23] status يعرض الإصدار الحالي والسجل", (await cli(["status"], fac)) === 0 && logs.join("\n").includes(shaB.slice(0, 8)));
-ok("[24] rollback عبر الواجهة إلى الإصدار السابق ينجح والبيانات باقية", (await cli(["rollback"], fac)) === 0 && (await sim.getDeployed()).source.sha === shaA && sim.db.prepare("SELECT COUNT(*) n FROM cm_orders").get().n === 2);
+ok("[24a] rollback بلا معتمِد مُسمّى ⇒ مرفوض", (await cli(["rollback"], fac)) === 2 && /approved-by/.test(lastLog()));
+ok("[24] rollback عبر الواجهة (بمعتمِد مُسمّى) إلى الإصدار السابق ينجح والبيانات باقية", (await cli(["rollback", ...AP], fac)) === 0 && (await sim.getDeployed()).source.sha === shaA && sim.db.prepare("SELECT COUNT(*) n FROM cm_orders").get().n === 2);
+/* الاعتماد المُسمّى والمعتمِدون */
+ok("[25] النشر بلا --approved-by (خارج Actions) ⇒ مرفوض: لا نشر بلا اعتماد صريح مُسمّى", (await cli(["deploy", "--ci-runs-file", runsFile(shaB)], fac)) === 2 && /approved-by/.test(lastLog()), lastLog());
+ok("[26] داخل Actions بلا --actor/--approvers ⇒ مرفوض", (await cli(["deploy", "--ci-runs-file", runsFile(shaB)], fac, { GITHUB_ACTIONS: "true" })) === 2 && /BETA_APPROVERS/.test(lastLog()), lastLog());
+ok("[27] داخل Actions والفاعل خارج المعتمِدين ⇒ مرفوض", (await cli(["deploy", "--actor", "intruder", "--approvers", "saber,ops", "--ci-runs-file", runsFile(shaB)], fac, { GITHUB_ACTIONS: "true" })) === 2 && /ليس ضمن المعتمِدين/.test(lastLog()), lastLog());
+ok("[28] داخل Actions والفاعل معتمِد ⇒ يمرّ (noop لأن الإصدار منشور) ويُسجَّل اسمه", (await cli(["deploy", "--actor", "Saber", "--approvers", "saber,ops", "--ci-runs-file", runsFile(shaB)], fac, { GITHUB_ACTIONS: "true" })) === 0 && /بواسطة Saber/.test(logs.join("\n")));
+{ const rp = readFileSync(path.join(R, "beta-release/report-" + sim.registry[1].id + ".md"), "utf8"); ok("[29] التقرير يسجّل اسم المعتمِد", /المعتمِد: saber/i.test(rp), rp.split("\n").filter((l) => /الاعتماد/.test(l))); }
+/* استعادة جراحية عبر الواجهة بعد فقدان بيانات */
+{ sim.faults.corruptData = true; const keep = (await sim.exec("SELECT id FROM cm_orders ORDER BY rowid"))[0].id;
+  writeState(R2, { ...S2, version: "3.0.3", api: worker("b.subtotal + b.fee + 0") }); g("add", "-A"); g("commit", "-q", "-m", "bad"); const shaC = g("rev-parse", "HEAD"); g("update-ref", "refs/remotes/origin/main", shaC);
+  code = await cli(["deploy", ...AP, "--ci-runs-file", runsFile(shaC)], fac); sim.faults = {};
+  ok("[30] نشر يفقد بيانات ⇒ فشل بحالة failed_data_loss وتنبيه بأمر الاستعادة الجراحية، والقاعدة لا تُستعاد", code === 1 && /failed_data_loss/.test(logs.join("\n")) && /recover-missing --release/.test(logs.join("\n")) && !(await sim.exec("SELECT id FROM cm_orders WHERE id=?", [keep])).length, lastLog());
+  const resFile = readdirSync(path.join(R, "beta-release")).find((f) => /^result-.*\.json$/.test(f) && JSON.parse(readFileSync(path.join(R, "beta-release", f), "utf8")).manifest.source.sha === shaC);
+  const relId = JSON.parse(readFileSync(path.join(R, "beta-release", resFile), "utf8")).manifest.id;
+  ok("[31] recover-missing بلا --apply = معاينة فقط (لا يغيّر شيئاً)", (await cli(["recover-missing", "--release", relId], fac)) === 0 && !(await sim.exec("SELECT id FROM cm_orders WHERE id=?", [keep])).length);
+  ok("[31b] recover-missing --apply بلا معتمِد ⇒ مرفوض", (await cli(["recover-missing", "--release", relId, "--apply"], fac)) === 2);
+  ok("[32] recover-missing --apply (بمعتمِد مُسمّى) يعيد الصف المفقود وحده", (await cli(["recover-missing", "--release", relId, "--apply", ...AP], fac)) === 0 && (await sim.exec("SELECT id FROM cm_orders WHERE id=?", [keep])).length === 1); }
+/* إعدادات خاطئة عمداً: ترفضها الآلية قبل أي اتصال (البند: رفض موارد Production حتى عند خطأ الإعدادات) */
+{ const head = g("rev-parse", "HEAD"); g("update-ref", "refs/remotes/origin/main", head); const REGF = JSON.parse(readFileSync(path.join(R, "platform/env/environments.json"), "utf8")), PRODACC = "1dffae72b40ca6558da19b84eff8c864", realFetch = globalThis.fetch; let netCalls = 0; globalThis.fetch = async (...a) => { netCalls++; throw new Error("لا شبكة في الاختبار"); };
+  const real = (env, extra = []) => runCli({ argv: ["deploy", ...AP, "--ci-runs-file", runsFile(g("rev-parse", "HEAD")), "--root", R, "--dist-dir", "dist", ...extra], env, log: (...a) => logs.push(a.join(" ")) });
+  ok("[33] BETA_CF_ACCOUNT_ID = حساب Production ⇒ مرفوض بلا اتصال", (await real({ BETA_CF_ACCOUNT_ID: PRODACC, BETA_SUPABASE_REF: REGF.environments.beta.supabase_ref })) === 2 && /Production/.test(lastLog()) && netCalls === 0, lastLog());
+  ok("[34] BETA_SUPABASE_REF = مشروع Production ⇒ مرفوض بلا اتصال", (await real({ BETA_CF_ACCOUNT_ID: "0123456789abcdef0123456789abcdef", BETA_SUPABASE_REF: REGF.environments.production.supabase_ref })) === 2 && /Beta المسجَّل/.test(lastLog()) && netCalls === 0, lastLog());
+  ok("[35] BETA_SUPABASE_REF مجهول (ليس مشروع Beta المسجَّل) ⇒ مرفوض", (await real({ BETA_CF_ACCOUNT_ID: "0123456789abcdef0123456789abcdef", BETA_SUPABASE_REF: "zzzzzzzzzzzzzzzzzzzz" })) === 2 && netCalls === 0);
+  ok("[36] بلا BETA_SUPABASE_REF ولا --no-supabase ⇒ مرفوض (حماية بيانات Supabase لا تُعطَّل بالصمت)", (await real({ BETA_CF_ACCOUNT_ID: "0123456789abcdef0123456789abcdef" })) === 2 && /BETA_SUPABASE_REF/.test(lastLog()) && netCalls === 0, lastLog());
+  /* سجل مُفسَد: Worker Beta يحمل اسم Production */
+  const bad = structuredClone(REGF); bad.environments.beta.cf_worker = REGF.environments.production.cf_worker; writeFileSync(path.join(R, "platform/env/environments.json"), JSON.stringify(bad, null, 2)); g("add", "-A"); g("commit", "-q", "-m", "corrupt registry"); const shaR = g("rev-parse", "HEAD"); g("update-ref", "refs/remotes/origin/main", shaR);
+  const outR = await runCli({ argv: ["deploy", ...AP, "--ci-runs-file", runsFile(shaR), "--root", R, "--dist-dir", "dist", "--no-supabase"], env: { BETA_CF_ACCOUNT_ID: "0123456789abcdef0123456789abcdef" }, log: (...a) => logs.push(a.join(" ")) });
+  ok("[37] سجل Beta مُفسَد (اسم Worker = Production) ⇒ مرفوض عند إنشاء المحوّل قبل أي اتصال", outR === 2 && /guard/.test(lastLog()) && netCalls === 0, lastLog());
+  globalThis.fetch = realFetch; }
 sim.close(); repo.rm();
 console.log(bad ? `\n✗ ${bad} فاشل من ${n}` : `✓ ${n} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);

@@ -56,17 +56,36 @@ mock.kvWrites.length = 0; const rb = await runRollback({ adapter: ad, to: m1.id 
 ok("[21] الرجوع إلى الإصدار 1 ينجح (Worker بنشرة نسخة سابقة + مؤشر الواجهة)", rb.ok, rb.steps.filter((s) => !s.ok));
 ok("[22] الرجوع كتب مؤشرات فقط (لا كائنات محتوى جديدة)", !mock.kvWrites.some((k) => k.startsWith("o/")) && mock.kvWrites.includes("__ptr/ui") && mock.kvWrites.includes("__registry/current"), mock.kvWrites);
 const o3 = JSON.parse((await mock.callApi("/v1/orders", { method: "POST", body: JSON.stringify({ tenant: "t2", subtotal: 100, fee: 50 }) })).body); ok("[23] بعد الرجوع: كود الإصدار 1 يعمل والبيانات باقية (3 طلبات)", o3.total === 100 && mock.db.prepare("SELECT COUNT(*) n FROM cm_orders").get().n === 3);
-/* أعطال */
+/* أعطال: لا استعادة قاعدة أبداً */
 mock.faults.failWorkerDeploy = "api"; writeState(repo, { version: "2.0.3", api: worker("b.subtotal + b.fee + 0"), schema: BASELINE + M2, migrations: { "0001_baseline.sql": BASELINE, "0002_note.sql": M2 }, ui: { ...UI1, "assets/app.js": "console.log('v3')" }, templates: TPL1 });
 { const { r } = await go(SHA("3")); ok("[24] فشل نشر Worker ⇒ فشل بلا تغيير للواجهة، والإصدار الحالي لم يتغيّر", !r.ok && (await ad.getDeployed()).id === m1.id && (await mock.fetch(`https://${B.app_host}/`, { method: "HEAD" })).headers.get("x-beta-ui") === m1.id, r.status); }
 mock.faults = {};
-{ writeState(repo, { version: "2.0.4", api: worker("b.subtotal + b.fee"), schema: BASELINE + M2 + "\nCREATE TABLE IF NOT EXISTS z (a INT);", migrations: { "0001_baseline.sql": BASELINE, "0002_note.sql": M2, "0003_bad.sql": "CREATE TABLE IF NOT EXISTS z (a INT);\nINSERT INTO no_such_table VALUES (1);" }, ui: UI1, templates: TPL1 });
-  const rowsBefore = mock.db.prepare("SELECT COUNT(*) n FROM cm_orders").get().n; const { r } = await go(SHA("4"));
-  ok("[25] فشل ترحيل (جملة ثانية خاطئة) ⇒ استعادة Time Travel", r.status === "failed_restored" && r.restored, r);
-  ok("[26] بعد الاستعادة: لا جدول z ولا ترحيل مسجَّل 0003، والطلبات كما كانت", !mock.db.prepare("SELECT name FROM sqlite_master WHERE name='z'").get() && !mock.db.prepare("SELECT name FROM pf_migrations WHERE name='0003_bad.sql'").get() && mock.db.prepare("SELECT COUNT(*) n FROM cm_orders").get().n === rowsBefore); }
-{ rmSync(path.join(repo.root, "platform/api/migrations/0003_bad.sql"), { force: true }); writeState(repo, { version: "2.0.5", api: worker("b.subtotal"), schema: BASELINE + M2, migrations: { "0001_baseline.sql": BASELINE, "0002_note.sql": M2 }, ui: { ...UI1, "assets/app.js": "console.log('v5')" }, templates: TPL1 });
-  const orig = mock.runTool; mock.runTool = async (c, a, e) => { const r = await orig(c, a, e); if (a.some((x) => /api\/tools/.test(x))) mock.sb.exec("DELETE FROM orders WHERE id='S1'"); return r; }; ad.runTool = mock.runTool;
-  const { r } = await go(SHA("5")); ok("[27] فقدان بيانات في Supabase أثناء النشر ⇒ رجوع الكود وتنبيه صريح بعدم الاستعادة التلقائية", !r.ok && r.warnings.some((w) => /Supabase/.test(w)) && !r.restored, r);
-  ok("[28] التقرير يعرض التنبيه الذي يتطلب تدخلاً", renderReport({ ...m2, id: "x" }, r).includes("تنبيهات تتطلب تدخلاً")); }
+{ const bad = "CREATE TABLE IF NOT EXISTS z (a INT);\nINSERT INTO no_such_table VALUES (1);"; writeState(repo, { version: "2.0.4", api: worker("b.subtotal + b.fee"), schema: BASELINE + M2 + "\nCREATE TABLE IF NOT EXISTS z (a INT);", migrations: { "0001_baseline.sql": BASELINE, "0002_note.sql": M2, "0003_more.sql": bad }, ui: UI1, templates: TPL1 });
+  mock.hooks.beforeQuery = (sql, m) => { if (/INSERT INTO no_such_table/.test(sql)) m.db.exec("INSERT INTO cm_orders (id,tenant_id,subtotal,fee,total) VALUES ('ARRIVED-DURING-MIGRATION','t1',700,0,700)"); };
+  mock.requests.length = 0; const { r } = await go(SHA("4"));
+  ok("[25] فشل ترحيل والطلب يصل أثناءه ⇒ رجوع الكود فقط، ولا طلب استعادة Time Travel أُرسل إطلاقاً", r.status === "failed_rolled_back" && !mock.requests.some((q) => /time_travel\/restore/.test(q.url)) && r.warnings.some((w) => /لا استعادة للقاعدة/.test(w)), r.status);
+  ok("[26] الطلب الذي وصل أثناء الترحيل **باقٍ** (D1 الحقيقي لم يُستعَد)", !!mock.db.prepare("SELECT id FROM cm_orders WHERE id='ARRIVED-DURING-MIGRATION'").get());
+  mock.hooks = {}; writeState(repo, { version: "2.0.4", api: worker("b.subtotal + b.fee"), schema: BASELINE + M2 + "\nCREATE TABLE IF NOT EXISTS z (a INT);", migrations: { "0001_baseline.sql": BASELINE, "0002_note.sql": M2, "0003_more.sql": "CREATE TABLE IF NOT EXISTS z (a INT);" }, ui: UI1, templates: TPL1 });
+  const retry = await go(SHA("4")); ok("[27] بعد تصحيح الترحيل تنجح إعادة النشر والطلب باقٍ", retry.r.ok && !!mock.db.prepare("SELECT id FROM cm_orders WHERE id='ARRIVED-DURING-MIGRATION'").get(), retry.r.steps.filter((x) => !x.ok)); }
+{ writeState(repo, { version: "2.0.5", api: worker("b.subtotal"), schema: BASELINE + M2 + "\nCREATE TABLE IF NOT EXISTS z (a INT);", migrations: { "0001_baseline.sql": BASELINE, "0002_note.sql": M2, "0003_more.sql": "CREATE TABLE IF NOT EXISTS z (a INT);" }, ui: { ...UI1, "assets/app.js": "console.log('v5')" }, templates: TPL1 });
+  const orig = mock.runTool; mock.runTool = async (c, a, e) => { const r = await orig(c, a, e); if (a.some((x) => /api\/tools/.test(x))) mock.sb.exec("DELETE FROM orders WHERE id='S1'"); return r; }; ad.runTool = mock.runTool; const d1Before = mock.db.prepare("SELECT COUNT(*) n FROM cm_orders").get().n;
+  const { r } = await go(SHA("5")); ok("[28] فقدان بيانات Supabase ⇒ رجوع الكود وتنبيه يذكر المعرّف المفقود وأن الاستعادة يدوية", r.status === "failed_data_loss" && r.warnings.some((w) => /Supabase/.test(w) && /orders \(1\): S1/.test(w) && /يدوياً/.test(w)), r.warnings);
+  ok("[29] وD1 لم يُمسّ (لا استعادة له بسبب مشكلة في Supabase)", mock.db.prepare("SELECT COUNT(*) n FROM cm_orders").get().n === d1Before && !mock.requests.some((q) => /time_travel\/restore/.test(q.url)));
+  ok("[30] التقرير يعرض التنبيه الذي يتطلب تدخلاً", renderReport({ ...m2, id: "x" }, r).includes("تنبيهات تتطلب تدخلاً")); }
+
+/* حارس النقل وإعدادات خاطئة عمداً */
+{ const R2 = (f) => { const x = structuredClone(REG); f(x.environments.beta); return x; };
+  ok("[31] مضيف API لـBeta = مضيف Production في الإعداد ⇒ مرفوض عند الإنشاء", /Production/.test(threw(() => new CloudflareAdapter({ accountId: ACC, registry: R2((b) => { b.api_host = P.api_host; }), contracts: CON })) ?? ""));
+  ok("[32] مضيف الواجهة تحت alyssumdz.com ⇒ مرفوض", /Production/.test(threw(() => new CloudflareAdapter({ accountId: ACC, registry: R2((b) => { b.app_host = "beta.alyssumdz.com"; }), contracts: CON })) ?? ""));
+  ok("[33] مرجع Supabase الإنتاجي مع إعداد Beta ⇒ مرفوض", /Supabase/.test(threw(() => new CloudflareAdapter({ accountId: ACC, registry: REG, contracts: CON, supabase: { ref: P.supabase_ref } })) ?? ""));
+  ok("[34] سجل Beta نفسه يحمل مرجع Production ⇒ مرفوض", /Supabase/.test(threw(() => new CloudflareAdapter({ accountId: ACC, registry: R2((b) => { b.supabase_ref = P.supabase_ref; }), contracts: CON, supabase: { ref: P.supabase_ref } })) ?? ""));
+  ok("[35] اسم D1 لـBeta = قاعدة Production ⇒ مرفوض", threw(() => new CloudflareAdapter({ accountId: ACC, registry: R2((b) => { b.cf_d1 = P.cf_d1; }), contracts: CON })) !== null); }
+{ let hit = 0; const spy = async () => { hit++; return new Response("{}"); }, g2 = new CloudflareAdapter({ accountId: ACC, token: "t", fetchFn: spy, registry: REG, contracts: CON, supabase: { ref: B.supabase_ref } });
+  const blocked = ["https://api.cloudflare.com/client/v4/accounts/1dffae72b40ca6558da19b84eff8c864/workers/scripts", `https://api.cloudflare.com/client/v4/accounts/fedcba9876543210fedcba9876543210/d1/database`, `https://api.supabase.com/v1/projects/${P.supabase_ref}/database/query`, "https://api.supabase.com/v1/projects/zzzzzzzzzzzzzzzzzzzz/database/query", `https://${P.api_host}/health`, `https://${P.app_host}/`, `https://api.cloudflare.com/client/v4/accounts/${ACC}/workers/scripts/${P.cf_worker}/deployments`, "https://example.com/x", "https://alyssumhub.fyi/"];
+  const res = []; for (const u of blocked) { try { await g2.fetch(u); res.push(false); } catch (e) { res.push(/^guard:/.test(e.message)); } }
+  ok("[36] حارس النقل يحظر 9 وجهات خارج Beta (حساب Production وحساب آخر ومشروع Supabase إنتاجي وآخر ومضيفا Production واسم Worker إنتاجي ومضيف غريب ونطاق alyssumhub) قبل خروج أي طلب", res.every(Boolean) && hit === 0, { res, hit });
+  await g2.fetch(`https://api.cloudflare.com/client/v4/accounts/${ACC}/workers/scripts`); await g2.fetch(`https://api.cloudflare.com/client/v4/accounts/${ACC}/workers/scripts/${B.cf_worker}/deployments`); await g2.fetch(`https://${B.api_host}/health`);
+  ok("[37] طلبات Beta المشروعة (حسابه، Worker باسم -beta، مضيفه) تمرّ", hit === 3, hit); }
+ok("[38] طوال الاختبار لم يُرسَل أي طلب استعادة Time Travel", !mock.requests.some((q) => /time_travel\/restore/.test(q.url)));
 mock.close(); repo.rm();
 console.log(bad ? `\n✗ ${bad} فاشل من ${n}` : `✓ ${n} فحصاً ناجحاً (بروتوكول محاكى؛ ليس Cloudflare الحقيقي)`); process.exit(bad ? 1 : 0);

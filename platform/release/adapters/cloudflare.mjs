@@ -4,7 +4,7 @@
 import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { snapshot, staticPlan, sha256 } from "../release-lib.mjs";
+import { snapshot, staticPlan, sha256, statementAlreadyApplied } from "../release-lib.mjs";
 
 export const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../../..");
 export const KNOWN_PRODUCTION_ACCOUNTS = ["1dffae72b40ca6558da19b84eff8c864"];   // من deploy.mjs (PROD_DEFAULT) — لا يُنشَر Beta عليه أبداً
@@ -18,7 +18,23 @@ export class CloudflareAdapter {
     if (KNOWN_PRODUCTION_ACCOUNTS.includes(accountId)) throw new Error("guard: هذا حساب Production — نشر Beta عليه محظور");
     const prodNames = new Set([P.cf_worker, P.cf_d1, P.gateway_worker, P.gateway_d1, "alyssum-tenant-router"].filter(Boolean)); this.prodNames = prodNames;
     for (const n of [B.cf_worker, B.gateway_worker, B.static_worker, B.static_kv, B.cf_d1, B.gateway_d1]) if (!n || prodNames.has(n) || !/beta/.test(n)) throw new Error("guard: اسم مورد Beta غير صالح/يطابق Production: " + n);
+    for (const [k, v] of [["api_host", B.api_host], ["app_host", B.app_host]]) if (!v || [P.api_host, P.gateway_host, P.app_host].filter(Boolean).includes(v) || /(^|\.)alyssumdz\.com$|(^|\.)alyssumhub\.fyi$/.test(v)) throw new Error(`guard: مضيف Beta '${k}' = ${v} يطابق/يتبع نطاق Production`);
+    if (supabase && (!supabase.ref || supabase.ref === P.supabase_ref || supabase.ref !== B.supabase_ref)) throw new Error("guard: مرجع Supabase لا يطابق مشروع Beta المسجَّل أو هو مشروع Production");
+    this.prodHosts = [P.api_host, P.gateway_host, P.app_host].filter(Boolean); this.prodRefs = [P.supabase_ref, ...(registry.never_outside_production?.supabase_refs ?? [])].filter(Boolean);
+    const raw = fetchFn; this.fetch = (url, init) => this.guardUrl(String(url), raw, init);   // كل طلب صادر يمرّ من هنا: لا شيء خارج موارد Beta
     this.auth = this.token ? { Authorization: "Bearer " + this.token } : {}; this._d1 = {}; this._ns = null; this._verSha = {}; this.protectedTables = contracts.protected_tables.d1_api;
+  }
+  /** حارس النقل: يسمح فقط بـapi.cloudflare.com لهذا الحساب، وapi.supabase.com لمشروع Beta، ومضيفَي Beta؛ وأي أثر لمضيف/مرجع/اسم Production في الرابط ⇒ حظر. يعمل حتى لو أخطأ الإعداد أو الكود في مكان آخر */
+  guardUrl(url, raw, init) {
+    let u; try { u = new URL(url); } catch { throw new Error("guard: رابط غير صالح محظور"); }
+    const B = this.B, block = (why) => { throw new Error(`guard: طلب محظور (${why}): ${u.host}${u.pathname.slice(0, 60)}`); };
+    if (this.prodHosts.includes(u.host) || /(^|\.)alyssumdz\.com$|(^|\.)alyssumhub\.fyi$/.test(u.host)) block("مضيف Production");
+    if (this.prodRefs.some((r) => u.host.includes(r) || u.pathname.includes(r))) block("مرجع Supabase إنتاجي");
+    for (const n of this.prodNames) if (new RegExp("(?<![\\w.-])" + n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?!-beta)(?![\\w])").test(u.pathname)) block("اسم مورد Production");
+    if (u.host === "api.cloudflare.com") { if (!u.pathname.startsWith(`/client/v4/accounts/${this.acc}/`) && u.pathname !== `/client/v4/accounts/${this.acc}`) block("حساب Cloudflare آخر"); }
+    else if (u.host === "api.supabase.com") { if (!this.sb || !u.pathname.startsWith(`/v1/projects/${this.sb.ref}/`)) block("مشروع Supabase آخر"); }
+    else if (u.host !== B.api_host && u.host !== B.app_host) block("مضيف خارج Beta");
+    return raw(url, init);
   }
   /* ── REST ── */
   async cf(method, p, body, headers = {}) {
@@ -56,16 +72,20 @@ export class CloudflareAdapter {
     const applied = new Map(rows.map((r) => [r.name, r.sha])), disk = new Set(migs.map((m) => m.name));
     return { pending: migs.filter((m) => !applied.has(m.name)), mismatched: migs.filter((m) => applied.has(m.name) && applied.get(m.name) !== m.sha).map((m) => m.name), unknown: [...applied.keys()].filter((n) => !disk.has(n)) };
   }
-  async snapshot(tables) {
-    const d1 = await snapshot(this.exec, tables), out = { ...d1 };
+  async snapshot(tables, opts = {}) {
+    const d1 = await snapshot(this.exec, tables, { rows: !!opts.rows }), out = { ...d1 };
     if (this.sb) { const cols = this.contracts.protected_tables.supabase, sb = await snapshot(async (q) => this.sbExec(q), Object.keys(cols), { idCols: cols }); for (const [t, v] of Object.entries(sb)) out["sb:" + t] = v; }
     return out;
   }
+  /** نسخة صفوف D1 الاحتياطية في KV الخاص بـBeta (للاستعادة الجراحية فقط؛ لا تدخل التقارير). تُقتطع إن تجاوزت الحدّ */
+  async saveBackup(id, b) { const d1 = Object.fromEntries(Object.entries(b).filter(([t, v]) => !t.startsWith("sb:") && v)); let txt = JSON.stringify(d1); if (txt.length > 20e6) { for (const v of Object.values(d1)) delete v.rows; txt = JSON.stringify(d1); } await this.kvPut("__registry/backup/" + id, txt); }
+  async loadBackup(id) { const t = await this.kvGet("__registry/backup/" + id); return t ? JSON.parse(t) : null; }
+  async insertRows(t, rows) { if (!/^[a-z_][a-z0-9_]*$/i.test(t)) throw new Error("اسم جدول غير صالح"); for (const r of rows) { const { _rid, ...cols } = r, k = Object.keys(cols); await this.exec(`INSERT OR IGNORE INTO ${t} (${k.join(",")}) VALUES (${k.map(() => "?").join(",")})`, k.map((x) => cols[x])); } }
+  /** علامة زمنية تُسجَّل في التقرير للاستعمال **اليدوي** فقط؛ لا تُستعمل لاستعادة تلقائية أبداً (تمحو كل ما كُتب بعدها) */
   async bookmark() { const id = await this.d1Id(this.B.cf_d1), r = await this.cf("GET", `/d1/database/${id}/time_travel/bookmark`); return r.bookmark; }
-  async restore(bm) { const id = await this.d1Id(this.B.cf_d1); await this.cf("POST", `/d1/database/${id}/time_travel/restore?bookmark=${encodeURIComponent(bm)}`); }
   async applyMigrations(pending, { schemaHash, sha }) {
     const done = [];
-    for (const m of pending) { for (const st of m.statements) await this.exec(st); await this.exec("INSERT INTO pf_migrations (name,sha,applied_at) VALUES (?,?,?)", [m.name, m.sha, new Date().toISOString()]); done.push(m.name); }
+    for (const m of pending) { for (const st of m.statements) { if (await statementAlreadyApplied(this.exec, st)) continue; await this.exec(st); } await this.exec("INSERT INTO pf_migrations (name,sha,applied_at) VALUES (?,?,?)", [m.name, m.sha, new Date().toISOString()]); done.push(m.name); }
     const up = "INSERT INTO pf_meta (k,v,at) VALUES (?,?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, at=excluded.at", at = new Date().toISOString();
     if (schemaHash) await this.exec(up, ["schema_hash", schemaHash, at]); await this.exec(up, ["release_sha", sha, at]); return done;
   }

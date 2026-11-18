@@ -69,27 +69,50 @@ export function classifyMigration(sql) {
 }
 
 /* ───────── حماية البيانات: لقطة وقارن ───────── */
-export const IDS_CAP = 5000;
-/** exec(sql) → rows[]؛ لكل جدول: عدد الصفوف وقائمة المفاتيح (حتى IDS_CAP صفاً؛ وإلا العدد وحده). idCols: عمود المفتاح لكل جدول (الافتراضي rowid لـD1/SQLite). الجدول غير الموجود ⇒ null */
-export async function snapshot(exec, tables, { idCols = {} } = {}) {
+export const IDS_CAP = 5000, ROWS_CAP = 2000;
+const IDENT = /^[a-z_][a-z0-9_]*$/i;
+/** أعمدة المفتاح الأساسي لجدول SQLite/D1 (بترتيبها) — الهوية الصحيحة للصف. rowid وحده غير آمن: يُعاد استعماله بعد الحذف فيُخفي صفاً مفقوداً */
+async function detectPk(exec, t) { try { return (await exec(`PRAGMA table_info(${t})`)).filter((c) => Number(c.pk) > 0).sort((a, b) => a.pk - b.pk).map((c) => String(c.name)); } catch { return []; } }
+/** exec(sql) → rows[]؛ لكل جدول: عدد الصفوف وقائمة المفاتيح (حتى IDS_CAP صفاً) بهوية = المفتاح الأساسي المُعلَن (أو idCols يدوياً لـPostgres؛ rowid فقط إن لم يوجد مفتاح). مع rows:true وحتى ROWS_CAP صفاً تُحفظ الصفوف كاملة (نسخة احتياطية للاستعادة الجراحية؛ لا تُكتب في تقارير ولا artifacts). الجدول غير الموجود ⇒ null */
+export async function snapshot(exec, tables, { idCols = {}, rows = false } = {}) {
   const out = {};
   for (const t of tables) {
-    if (!/^[a-z_][a-z0-9_]*$/i.test(t)) throw new Error("اسم جدول غير صالح: " + t);
-    const col = idCols[t] ?? "rowid"; if (!/^[a-z_][a-z0-9_]*$/i.test(col)) throw new Error("اسم عمود غير صالح: " + col);
-    try { const c = Number((await exec(`SELECT COUNT(*) AS n FROM ${t}`))[0]?.n ?? 0); const ids = c <= IDS_CAP ? (await exec(`SELECT ${col} AS r FROM ${t} ORDER BY ${col}`)).map((x) => String(x.r)) : null; out[t] = { count: c, ids }; }
-    catch { out[t] = null; }
+    if (!IDENT.test(t)) throw new Error("اسم جدول غير صالح: " + t);
+    const pk = idCols[t] ? [idCols[t]] : await detectPk(exec, t); if (!pk.every((c) => IDENT.test(c))) throw new Error("اسم عمود غير صالح في " + t);
+    const expr = pk.length === 0 ? "rowid" : pk.length === 1 ? pk[0] : pk.map((c) => `CAST(${c} AS TEXT)`).join(" || '|' || ");
+    try {
+      const c = Number((await exec(`SELECT COUNT(*) AS n FROM ${t}`))[0]?.n ?? 0), ids = c <= IDS_CAP ? (await exec(`SELECT ${expr} AS r FROM ${t} ORDER BY ${expr}`)).map((x) => String(x.r)) : null;
+      out[t] = { count: c, ids, idCols: pk, ...(rows && c <= ROWS_CAP ? { rows: await exec(`SELECT rowid AS _rid, * FROM ${t} ORDER BY ${expr}`) } : {}) };
+    } catch { out[t] = null; }
   }
   return out;
 }
-/** قبل/بعد: ينقص العدد ⇒ فشل؛ الجدول اختفى ⇒ فشل؛ **اختفاء أي مفتاح كان موجوداً** ⇒ فشل (استبدال/حذف حتى لو بقي العدد). الزيادة (كتابات مستخدمين أثناء النشر) مسموحة ولا تُنذر */
+/** قبل/بعد: ينقص العدد ⇒ فشل؛ الجدول اختفى ⇒ فشل؛ **اختفاء أي مفتاح كان موجوداً** ⇒ فشل. الزيادة (كتابات مستخدمين أثناء النشر) مسموحة ولا تُنذر. يُعيد missing = {جدول: [مفاتيح مفقودة]} */
 export function compareSnapshots(before, after) {
-  const bad = [];
+  const bad = [], missing = {};
   for (const [t, b] of Object.entries(before)) {
     if (!b) continue; const a = after[t]; if (!a) { bad.push(`${t}: الجدول اختفى`); continue; }
-    if (b.ids && a.ids) { const have = new Set(a.ids), miss = b.ids.filter((x) => !have.has(x)); if (miss.length) bad.push(`${t}: اختفت ${miss.length} صفوف (مثلاً ${miss.slice(0, 3).join("،")})`); }
+    if (b.ids && a.ids) { const have = new Set(a.ids), miss = b.ids.filter((x) => !have.has(x)); if (miss.length) { missing[t] = miss; bad.push(`${t}: اختفت ${miss.length} صفوف (مثلاً ${miss.slice(0, 3).join("،")})`); } }
     else if (a.count < b.count) bad.push(`${t}: نقص من ${b.count} إلى ${a.count}`);
   }
-  return { ok: bad.length === 0, violations: bad };
+  return { ok: bad.length === 0, violations: bad, missing };
+}
+/** جملة ترحيل مُطبَّقة سابقاً؟ (ADD COLUMN لعمود موجود) — فيُتخطّى بدل أن يفشل: فشل الترحيل في المنتصف لا يحتاج استعادة، وإعادة المحاولة تكمل من حيث توقفت */
+export async function statementAlreadyApplied(exec, stmt) {
+  const m = /^\s*ALTER\s+TABLE\s+["`]?([a-z_][a-z0-9_]*)["`]?\s+ADD\s+COLUMN\s+["`]?([a-z_][a-z0-9_]*)["`]?/i.exec(stmt.replace(/--[^\n]*/g, " ")); if (!m) return false;
+  try { return (await exec(`PRAGMA table_info(${m[1]})`)).some((c) => String(c.name).toLowerCase() === m[2].toLowerCase()); } catch { return false; }
+}
+const rowKey = (b, r) => (b.idCols?.length ? b.idCols.map((c) => String(r[c])).join("|") : String(r._rid));
+/** خطة الاستعادة الجراحية: صفوف النسخة الاحتياطية التي اختفت من الجدول الآن (لا تمسّ الصفوف الجديدة ولا الموجودة) */
+export function recoveryPlan(backup, currentSnap) {
+  const plan = {}, manual = [];
+  for (const [t, b] of Object.entries(backup ?? {})) {
+    if (!b?.ids) continue; const cur = currentSnap[t]; if (!cur?.ids) { if (b.count > 0) manual.push(`${t}: لا قائمة مفاتيح حالية للمقارنة`); continue; }
+    const have = new Set(cur.ids), miss = b.ids.filter((x) => !have.has(x)); if (!miss.length) continue;
+    if (!b.rows) { manual.push(`${t}: ${miss.length} صفوف مفقودة ولا نسخة صفوف (الجدول أكبر من ${ROWS_CAP})`); continue; }
+    const set = new Set(miss); plan[t] = b.rows.filter((r) => set.has(rowKey(b, r)));
+  }
+  return { plan, manual };
 }
 
 /* ───────── بوابات: CI والاعتماد ───────── */
@@ -102,11 +125,13 @@ export function ciGate({ sha, runs, workflow = "tests" }) {
   if (latest.conclusion !== "success") return { ok: false, reason: `${workflow} انتهى بـ${latest.conclusion}`, run: latest.id };
   return { ok: true, run: latest.id, url: latest.html_url ?? null };
 }
-/** معتمَد = SHA على main، أو موسوم بـ`beta-approved/<sha8>` (وسم يضعه إنسان). لا ينشر كل commit */
-export function approvalGate({ sha, onMain, tags }) {
-  if (onMain) return { ok: true, via: "main" };
-  const t = (tags ?? []).find((x) => x === `beta-approved/${sha.slice(0, 8)}` || x === `beta-approved/${sha}`);
-  return t ? { ok: true, via: "tag:" + t } : { ok: false, reason: "الـcommit ليس على main ولا يحمل وسم beta-approved/<sha8>" };
+/** معتمَد = SHA على main، أو موسوم بـ`beta-approved/<sha8>`، **وفاعل التشغيل ضمن قائمة المعتمِدين** (approvers؛ إلزامية داخل GitHub Actions). لا ينشر كل commit */
+export function approvalGate({ sha, onMain, tags, actor = null, approvers = null }) {
+  let via = null;
+  if (onMain) via = "main"; else { const t = (tags ?? []).find((x) => x === `beta-approved/${sha.slice(0, 8)}` || x === `beta-approved/${sha}`); if (t) via = "tag:" + t; }
+  if (!via) return { ok: false, reason: "الـcommit ليس على main ولا يحمل وسم beta-approved/<sha8>" };
+  if (approvers) { const list = String(approvers).split(",").map((x) => x.trim().toLowerCase()).filter(Boolean); if (!list.length) return { ok: false, reason: "قائمة المعتمِدين فارغة (BETA_APPROVERS)" }; if (!actor || !list.includes(String(actor).toLowerCase())) return { ok: false, reason: `الفاعل '${actor ?? "غير معروف"}' ليس ضمن المعتمِدين` }; return { ok: true, via, by: actor }; }
+  return { ok: true, via, by: actor };
 }
 
 /* ───────── بيان الإصدار والتقرير ───────── */
@@ -117,7 +142,7 @@ export function buildManifest({ sha, version, contracts, fp, migrations, ci, app
 }
 export function renderReport(manifest, result) {
   const m = manifest, L = [];
-  L.push(`# تقرير إصدار Beta — ${m.id}`, "", `- **commit:** \`${m.source.sha}\``, `- **إصدار الشيفرة (VERSION):** ${m.source.version}`, `- **بُني في:** ${m.source.built_at}`, `- **الحالة:** ${result.status}${result.restored ? " (استُعيدت قاعدة البيانات)" : ""}`, `- **الإصدار السابق:** ${m.previous ?? "—"}`, `- **بوابة CI:** ${m.gates.ci?.ok ? "نجحت (تشغيل " + m.gates.ci.run + ")" : "غير مسجّلة"}`, `- **بوابة الاعتماد:** ${m.gates.approval?.via ?? "—"}`, "", "## المكوّنات (منفصلة الإصدار)", "", "| المكوّن | contract | بصمة | ملفات |", "|---|---|---|---|");
+  L.push(`# تقرير إصدار Beta — ${m.id}`, "", `- **commit:** \`${m.source.sha}\``, `- **إصدار الشيفرة (VERSION):** ${m.source.version}`, `- **بُني في:** ${m.source.built_at}`, `- **الحالة:** ${result.status}`, `- **الإصدار السابق:** ${m.previous ?? "—"}`, `- **بوابة CI:** ${m.gates.ci?.ok ? "نجحت (تشغيل " + m.gates.ci.run + ")" : "غير مسجّلة"}`, `- **بوابة الاعتماد:** ${m.gates.approval?.via ?? "—"}${m.gates.approval?.by ? " — المعتمِد: " + m.gates.approval.by : ""}`, "", "## المكوّنات (منفصلة الإصدار)", "", "| المكوّن | contract | بصمة | ملفات |", "|---|---|---|---|");
   for (const k of COMPONENTS) L.push(`| ${k} | ${m.components[k].contract} | \`${(m.components[k].hash ?? "—").slice(0, 12)}\` | ${m.components[k].files} |`);
   L.push("", "## الترحيلات", "", m.migrations.length ? m.migrations.map((x) => `- ${x.name} (\`${x.sha.slice(0, 12)}\`)`).join("\n") : "- لا ترحيلات", "", `- **المُطبَّق في هذا النشر:** ${result.migrationsApplied?.length ? result.migrationsApplied.join("، ") : "لا شيء"}`, "", "## خطوات التنفيذ", "", ...result.steps.map((s) => `- ${s.ok ? "✓" : "✗"} ${s.name}${s.detail ? " — " + s.detail : ""}`));
   if (result.rolledBack?.length) L.push("", "## الرجوع", "", ...result.rolledBack.map((x) => `- ${x}`));

@@ -62,6 +62,23 @@
           "Routes"
         ],
         "note": "اختبارات D1 البعيدة فقط. على حساب مشترك لا يمكن حصره بقاعدة واحدة (D1)"
+      },
+      "beta_release_token": {
+        "where": "GitHub Environment 'alyssumdz-beta' (BETA_CF_DEPLOY_TOKEN) — مقيَّد بحساب Beta وحده",
+        "permissions": [
+          "Account: Workers Scripts: Edit",
+          "Account: D1: Edit",
+          "Account: Workers KV Storage: Edit",
+          "Account: Account Settings: Read"
+        ],
+        "excluded": [
+          "DNS",
+          "Zone (أي صلاحية)",
+          "Workers Routes",
+          "Pages",
+          "أي حساب غير حساب Beta"
+        ],
+        "note": "بلا Time Travel/استعادة تلقائية في الآلية؛ تُنفَّذ الاستعادة اليدوية للقاعدة من لوحة Cloudflare/‏CLI بقرار بشري"
       }
     },
     "resources": [
@@ -257,15 +274,15 @@
     "status": "NOT CONFIGURED"
   },
   "github": {
-    "environment": "beta",
-    "workflow": ".github/workflows/beta-integration.yml (workflow_dispatch فقط، بلا نشر)",
+    "environment": "alyssumdz-beta",
     "variables": [
       {
         "name": "BETA_CF_ACCOUNT_ID",
         "kind": "variable",
         "purpose": "معرّف حساب Cloudflare الخاص بـBeta",
         "required_for": [
-          "d1"
+          "d1",
+          "release"
         ],
         "enter": "GitHub ← Settings ← Environments ← beta ← Variables"
       },
@@ -292,7 +309,8 @@
         "kind": "variable",
         "purpose": "https://<beta-ref>.supabase.co",
         "required_for": [
-          "supabase"
+          "supabase",
+          "release"
         ],
         "enter": "Environments ← beta ← Variables"
       },
@@ -301,7 +319,8 @@
         "kind": "variable",
         "purpose": "مرجع مشروع Beta (يُقارَن بالرابط والسجل)",
         "required_for": [
-          "supabase"
+          "supabase",
+          "release"
         ],
         "enter": "Environments ← beta ← Variables"
       },
@@ -311,7 +330,8 @@
         "purpose": "المفتاح العام (publishable/anon) — يصل المتصفح بطبيعته",
         "required_for": [
           "supabase",
-          "build"
+          "build",
+          "release"
         ],
         "enter": "Environments ← beta ← Variables"
       },
@@ -323,6 +343,15 @@
           "supabase"
         ],
         "enter": "Environments ← beta ← Variables"
+      },
+      {
+        "name": "BETA_APPROVERS",
+        "kind": "variable",
+        "purpose": "معتمِدو نشر Beta: أسماء مستخدمي GitHub مفصولة بفاصلة (مثلاً saberbalbouzi-ui). الفاعل الذي يشغّل النشر/الرجوع يجب أن يكون منهم، وقائمة فارغة = لا نشر",
+        "required_for": [
+          "release"
+        ],
+        "enter": "gh variable set BETA_APPROVERS --env alyssumdz-beta --body \"<login1,login2>\""
       }
     ],
     "secrets": [
@@ -341,7 +370,8 @@
         "kind": "secret",
         "purpose": "Personal Access Token لاستعلامات إدارة قاعدة Beta (فحص RLS/Storage). يُنشأ بحساب/منظمة لا تملك مشروع Production إن أمكن",
         "required_for": [
-          "supabase"
+          "supabase",
+          "release"
         ],
         "enter": "gh secret set BETA_SUPABASE_PAT --env alyssumdz-beta",
         "rotate": "كل 90 يوماً"
@@ -376,7 +406,21 @@
         "enter": "gh secret set BETA_CHARGILY_TEST_SECRET_KEY --env alyssumdz-beta",
         "rotate": "عند التدوير",
         "must_match": "^test_"
+      },
+      {
+        "name": "BETA_CF_DEPLOY_TOKEN",
+        "kind": "secret",
+        "purpose": "رمز نشر Beta على حساب Cloudflare المستقل (Workers Scripts:Edit، D1:Edit، Workers KV Storage:Edit، Account Settings:Read) — منفصل عن BETA_CF_API_TOKEN (D1:Edit فقط للاختبار)",
+        "required_for": [
+          "release"
+        ],
+        "enter": "gh secret set BETA_CF_DEPLOY_TOKEN --env alyssumdz-beta   (يُطلب منك اللصق محلياً؛ لا تكتبه في المحادثة)",
+        "rotate": "كل 90 يوماً وعند أي اشتباه"
       }
+    ],
+    "workflows": [
+      ".github/workflows/beta-integration.yml (workflow_dispatch فقط: اختبارات تكامل للقراءة والتحقق)",
+      ".github/workflows/beta-release.yml (وسم beta-approved/** أو يدوي: نشر الإصدارات المعتمدة على Beta)"
     ]
   },
   "worker_secrets": {

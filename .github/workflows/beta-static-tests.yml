@@ -122,6 +122,7 @@ jobs:
           node --no-warnings platform/release/test/release.test.mjs
           node --no-warnings platform/release/test/cloudflare-adapter.test.mjs
           node --no-warnings platform/release/test/cli.test.mjs
+          node --no-warnings platform/release/test/probe.test.mjs
       - name: الـWorker الساكن (إصدارات/مؤشرات/رجوع) على محرك Workers المحلي — ليس Cloudflare الحقيقي
         run: |
           mkdir -p /tmp/mf2 && cd /tmp/mf2 && npm init -y >/dev/null

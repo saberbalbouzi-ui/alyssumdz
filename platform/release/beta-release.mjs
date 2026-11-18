@@ -2,13 +2,13 @@
 /* واجهة تشغيل مزامنة Beta: verify | plan | deploy | rollback | status.
    لا تنشر إلا إصداراً **معتمداً** (على main أو بوسم beta-approved/<sha8>) **اجتاز CI** على الـSHA نفسه، ومن شجرة نظيفة تطابق الـSHA، بعقود متوافقة وترحيلات إضافية.
    النشر على حساب Cloudflare المستقل ومشروع Supabase alyssum-beta فقط (حواجز في المحوّل). لا تلمس Production ولا تنقل بيانات إليها منه أو إليه.
-   متغيرات: BETA_CF_ACCOUNT_ID (إلزامي للنشر)، BETA_CF_API_TOKEN (أو رمز يحقنه الوكيل)، BETA_SUPABASE_REF (+BETA_SUPABASE_PAT أو الوكيل)، GITHUB_TOKEN/GITHUB_REPOSITORY (بوابة CI) أو --ci-runs-file، BETA_SUPABASE_URL/BETA_SUPABASE_ANON_KEY (للبناء). */
+   متغيرات: BETA_CF_ACCOUNT_ID (إلزامي للنشر)، BETA_CF_DEPLOY_TOKEN (أو رمز يحقنه الوكيل)، BETA_SUPABASE_REF (+BETA_SUPABASE_PAT أو الوكيل)، GITHUB_TOKEN/GITHUB_REPOSITORY (بوابة CI) أو --ci-runs-file، BETA_SUPABASE_URL/BETA_SUPABASE_ANON_KEY (للبناء). */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import * as L from "./release-lib.mjs";
-import { runRelease, runRollback } from "./release-run.mjs";
+import { runRelease, runRollback, recoverMissing } from "./release-run.mjs";
 
 const SELF = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../..");
 export async function runCli({ argv = process.argv.slice(2), env = process.env, adapterFactory = null, log = console.log } = {}) {
@@ -16,17 +16,13 @@ export async function runCli({ argv = process.argv.slice(2), env = process.env, 
   const ROOT = path.resolve(opt("--root", SELF)), out = path.resolve(ROOT, opt("--out", "beta-release")), distDir = path.resolve(ROOT, opt("--dist-dir", "dist/beta"));
   const git = (...a) => execFileSync("git", a, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(), tryGit = (...a) => { try { return git(...a); } catch { return null; } };
   const fail = (m) => { log("✖ " + m); return 2; };
-  if (!["verify", "plan", "deploy", "rollback", "status", "sync-status"].includes(cmd)) { log("الاستعمال: beta-release.mjs <verify|plan|deploy|rollback|status|sync-status> [--sha <sha>] [--root <dir>] [--ci-runs-file f.json] [--dist-dir d] [--allow-breaking] [--no-supabase] [--rehearsal-sim]"); return 1; }
+  if (!["verify", "plan", "deploy", "rollback", "status", "sync-status", "recover-missing"].includes(cmd)) { log("الاستعمال: beta-release.mjs <verify|plan|deploy|rollback|status|sync-status|recover-missing> [--sha <sha>] [--root <dir>] [--ci-runs-file f.json] [--dist-dir d] [--allow-breaking] [--no-supabase] [--rehearsal-sim] [--actor <login> --approvers a,b | --approved-by <اسم>] [--release <id> --apply]"); return 1; }
   const contracts = JSON.parse(readFileSync(path.join(ROOT, "platform/release/contracts.json"), "utf8")), registry = JSON.parse(readFileSync(path.join(ROOT, "platform/env/environments.json"), "utf8"));
   L.configureTemplates(contracts.template_prefixes);
   const mkAdapter = async () => {
     if (adapterFactory) return adapterFactory({ contracts, registry, env });
     if (flag("--rehearsal-sim")) { const { SimCloud } = await import("./adapters/sim.mjs"); return new SimCloud({ protectedTables: contracts.protected_tables.d1_api }); }
-    const acc = env.BETA_CF_ACCOUNT_ID; if (!acc) throw new Error("BETA_CF_ACCOUNT_ID مطلوب");
-    const B = registry.environments.beta; let supabase = null;
-    if (!flag("--no-supabase")) { const ref = env.BETA_SUPABASE_REF; if (!ref) throw new Error("BETA_SUPABASE_REF مطلوب (أو --no-supabase صراحةً لتعطيل حماية بيانات Supabase)"); if (ref !== B.supabase_ref || ref === registry.environments.production.supabase_ref) throw new Error("guard: BETA_SUPABASE_REF لا يطابق مشروع Beta المسجَّل"); supabase = { ref, pat: env.BETA_SUPABASE_PAT || null }; }
-    const { CloudflareAdapter, defaultRunTool } = await import("./adapters/cloudflare.mjs");
-    const a = new CloudflareAdapter({ accountId: acc, token: env.BETA_CF_API_TOKEN || null, registry, contracts, supabase, env: { ...env } }); await a.assertAccountClean(); return a;
+    const { buildRealAdapter } = await import("./adapters/factory.mjs"); return buildRealAdapter({ env, registry, contracts, noSupabase: flag("--no-supabase") });
   };
 
   if (cmd === "sync-status") {                                                    // فجوة خط Beta عن main (قراءة git فقط، بلا شبكة)
@@ -38,7 +34,16 @@ export async function runCli({ argv = process.argv.slice(2), env = process.env, 
     return Number(behind) === 0 ? 0 : 3;                                          // 3 = Beta متأخر عن main (ليس خطأ تشغيل)
   }
   if (cmd === "status") { const ad = await mkAdapter(), cur = await ad.getDeployed(), rel = await ad.listReleases(); log(cur ? `الإصدار الحالي: ${cur.id} (commit ${cur.source.sha.slice(0, 8)}، VERSION ${cur.source.version})` : "لا إصدار مسجَّل"); for (const r of rel) log(`  ${r.id === cur?.id ? "▶" : " "} ${r.id}  ${r.source.sha.slice(0, 8)}  ${r.source.version}  ${r.source.built_at}`); log("الصحة:", JSON.stringify(await ad.health())); return 0; }
-  if (cmd === "rollback") { const ad = await mkAdapter(), r = await runRollback({ adapter: ad, to: opt("--to"), log }); mkdirSync(out, { recursive: true }); writeFileSync(path.join(out, "rollback-result.json"), JSON.stringify(r, null, 2)); return r.ok ? 0 : 1; }
+  /** الرجوع والاستعادة الجراحية يغيّران حالة Beta: يتطلبان معتمِداً مُسمّى (داخل Actions: فاعل ضمن BETA_APPROVERS) */
+  const approverProblem = () => { const actor = opt("--actor"), list = String(opt("--approvers") ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+    if (env.GITHUB_ACTIONS === "true") { if (!actor || !list.length) return "داخل GitHub Actions يلزم --actor وقائمة المعتمِدين --approvers (BETA_APPROVERS)"; return list.includes(actor.toLowerCase()) ? null : `الفاعل '${actor}' ليس ضمن المعتمِدين`; }
+    return opt("--approved-by") ? null : "يتطلب اعتماداً صريحاً مُسمّى: --approved-by <اسم المعتمِد>"; };
+  if (cmd === "recover-missing") {                                              // استعادة جراحية يدوية: معاينة افتراضياً، --apply للتنفيذ
+    if (flag("--apply")) { const pr = approverProblem(); if (pr) return fail(pr); }
+    const ad = await mkAdapter(), id = opt("--release") ?? (await ad.getDeployed())?.id; if (!id) return fail("حدّد --release <id>");
+    const r = await recoverMissing({ adapter: ad, releaseId: id, apply: flag("--apply"), log }); return r.ok ? 0 : 1;
+  }
+  if (cmd === "rollback") { const pr = approverProblem(); if (pr) return fail(pr); const ad = await mkAdapter(), r = await runRollback({ adapter: ad, to: opt("--to"), log }); mkdirSync(out, { recursive: true }); writeFileSync(path.join(out, "rollback-result.json"), JSON.stringify(r, null, 2)); return r.ok ? 0 : 1; }
 
   /* ── verify / plan / deploy ── */
   const head = tryGit("rev-parse", "HEAD"); if (!head) return fail("المجلد ليس مستودع git");
@@ -56,8 +61,11 @@ export async function runCli({ argv = process.argv.slice(2), env = process.env, 
       const per = contracts.ci_required_workflows.map((w) => ({ w, g: L.ciGate({ sha, runs, workflow: w }) })), badCi = per.filter((x) => !x.g.ok);
       if (badCi.length) { for (const x of badCi) log(`✖ بوابة CI (${x.w}): ${x.g.reason}`); return 2; } gates.ci = { ok: true, run: per[0].g.run, url: per[0].g.url, workflows: contracts.ci_required_workflows };
       const onMain = tryGit("merge-base", "--is-ancestor", sha, "origin/main") !== null, tags = (tryGit("tag", "--points-at", sha) ?? "").split("\n").filter(Boolean);
-      gates.approval = L.approvalGate({ sha, onMain, tags }); if (!gates.approval.ok) { log("✖ بوابة الاعتماد: " + gates.approval.reason); return 2; }
-      log(`✓ بوابات: CI نجح (تشغيل ${gates.ci.run}) · اعتماد عبر ${gates.approval.via}`);
+      const actor = opt("--actor") ?? opt("--approved-by"), approvers = opt("--approvers"), inActions = env.GITHUB_ACTIONS === "true";
+      if (cmd === "deploy" && inActions && (!opt("--actor") || !approvers)) return fail("داخل GitHub Actions يلزم --actor وقائمة المعتمِدين --approvers (BETA_APPROVERS)");
+      if (cmd === "deploy" && !inActions && !actor) return fail("النشر يتطلب اعتماداً صريحاً مسمّى: --approved-by <اسم المعتمِد> (يُسجَّل في البيان والتقرير)");
+      gates.approval = L.approvalGate({ sha, onMain, tags, actor, approvers: approvers ?? null }); if (!gates.approval.ok) { log("✖ بوابة الاعتماد: " + gates.approval.reason); return 2; }
+      log(`✓ بوابات: CI نجح (تشغيل ${gates.ci.run}) · اعتماد عبر ${gates.approval.via}${gates.approval.by ? " بواسطة " + gates.approval.by : ""}`);
     } else log("⚠ --skip-gates: البوابات مُتخطّاة (للتجريب المحلي فقط؛ لا يُسمح مع deploy)");
     if (flag("--skip-gates") && cmd === "deploy") return fail("--skip-gates غير مسموح مع deploy");
   }
@@ -85,6 +93,7 @@ export async function runCli({ argv = process.argv.slice(2), env = process.env, 
   for (const [k, f] of [["api", "platform/api/src/index.js"], ["gateway", "platform/gateway/src/index.js"]]) if (existsSync(path.join(ROOT, f))) artifacts[k].code = readFileSync(path.join(ROOT, f), "utf8");   // المحوّل الحقيقي يرفع بأدوات النشر؛ المحاكي يستعمل الكود لاختبار السلوك
   const result = await runRelease({ adapter, manifest, migrations, artifacts, snapshotTables: contracts.protected_tables.d1_api, allowBreaking: flag("--allow-breaking"), log });
   const report = L.renderReport(manifest, result); writeFileSync(path.join(out, `report-${manifest.id}.md`), report); writeFileSync(path.join(out, "latest.md"), report); writeFileSync(path.join(out, `result-${manifest.id}.json`), JSON.stringify({ manifest, result: { ...result, steps: result.steps } }, null, 2));
+  for (const w of result.warnings ?? []) log("⚠ " + w);
   log(`\nالحالة: ${result.status} — التقرير: ${path.relative(process.cwd(), path.join(out, "latest.md"))}`); return result.ok ? 0 : 1;
 }
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exit(await runCli().catch((e) => { console.error("✖ " + e.message); return 2; }));

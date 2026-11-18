@@ -3,7 +3,7 @@ import path from "node:path";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import * as L from "../release-lib.mjs";
-import { runRelease, runRollback } from "../release-run.mjs";
+import { runRelease, runRollback, recoverMissing } from "../release-run.mjs";
 import { SimCloud } from "../adapters/sim.mjs";
 import { makeRepo, writeState, artifacts, manifestOf, worker, BASELINE, SHA } from "./_fixture.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.."), real = JSON.parse(readFileSync(path.join(ROOT, "platform/release/contracts.json"), "utf8"));
@@ -48,6 +48,27 @@ sec("B2) لقطات حماية البيانات");
 
 ok("[B12] فحص عزل beta-content على المستودع الحقيقي: لا شيفرة منصة تقرأ منه (workflows Beta تذكره في paths فقط)", L.checkContentIsolation(ROOT).ok, L.checkContentIsolation(ROOT).hits);
 ok("[B13] beta-content الحقيقي صالح (بيانات فقط)", L.validateBetaContent(path.join(ROOT, "beta-content")).ok, L.validateBetaContent(path.join(ROOT, "beta-content")).problems);
+
+sec("B3) دوال الاستعادة الجراحية والترحيل القابل للاستئناف");
+{ const exec = async (q) => (/table_info\(t\)/.test(q) ? [{ name: "id" }, { name: "note" }] : []);
+  ok("[B3.1] ADD COLUMN لعمود موجود ⇒ يُتخطّى (قابل للاستئناف)", await L.statementAlreadyApplied(exec, "ALTER TABLE t ADD COLUMN note TEXT"));
+  ok("[B3.2] ADD COLUMN لعمود غير موجود ⇒ يُنفَّذ، وغير ALTER ⇒ يُنفَّذ", !(await L.statementAlreadyApplied(exec, "ALTER TABLE t ADD COLUMN other TEXT")) && !(await L.statementAlreadyApplied(exec, "CREATE TABLE IF NOT EXISTS t (a INT)")));
+  const bk = { t: { count: 3, ids: ["1", "2", "3"], idCols: ["id"], rows: [{ _rid: 1, id: "1", v: "a" }, { _rid: 2, id: "2", v: "b" }, { _rid: 3, id: "3", v: "c" }] }, big: { count: 9000, ids: null } };
+  const pl = L.recoveryPlan(bk, { t: { count: 3, ids: ["1", "3", "9"] }, big: { count: 8000, ids: null } });
+  ok("[B3.3] خطة الاستعادة: المفقود وحده (الصف 2) لا الجديد (9) ولا الموجود", pl.plan.t.length === 1 && pl.plan.t[0].id === "2" && !pl.plan.big);
+  ok("[B3.4] جدول بلا نسخة صفوف ⇒ يُطلب تدخل يدوي بدل التخمين", L.recoveryPlan({ t: { count: 3, ids: ["1", "2", "3"], idCols: ["id"] } }, { t: { count: 2, ids: ["1", "3"] } }).manual.length === 1); }
+{ const { DatabaseSync } = await import("node:sqlite"); const db = new DatabaseSync(":memory:"); db.exec("CREATE TABLE o (id TEXT PRIMARY KEY, v TEXT); CREATE TABLE c (a TEXT, b TEXT, PRIMARY KEY (a, b)); CREATE TABLE nopk (x TEXT)");
+  const ex = async (q) => (/^\s*(select|pragma)/i.test(q) ? db.prepare(q).all() : (db.exec(q), []));
+  db.exec("INSERT INTO o VALUES ('A','1'); INSERT INTO c VALUES ('x','1'),('x','2'); INSERT INTO nopk VALUES ('q')"); const b = await L.snapshot(ex, ["o", "c", "nopk"], { rows: true });
+  ok("[B3.5] الهوية = المفتاح الأساسي (بسيط ومركّب)، وrowid فقط لجدول بلا مفتاح", JSON.stringify(b.o.idCols) === '["id"]' && JSON.stringify(b.c.idCols) === '["a","b"]' && b.c.ids.join() === "x|1,x|2" && b.nopk.idCols.length === 0);
+  db.exec("DELETE FROM o; INSERT INTO o VALUES ('NEW','2')"); const a = await L.snapshot(ex, ["o"], {});
+  ok("[B3.6] صف حُذف وجاء بدله صف جديد (rowid مُعاد الاستعمال) ⇒ الفقد **يُكتشف** (لا يُخفيه rowid)", a.o.count === 1 && b.o.ids.join() === "A" && !L.compareSnapshots({ o: b.o }, a).ok); }
+sec("C0) المعتمِدون");
+ok("[C0.1] فاعل ضمن قائمة المعتمِدين ⇒ مقبول", L.approvalGate({ sha: SHA("a"), onMain: true, actor: "Saber", approvers: "saber,other" }).ok);
+ok("[C0.2] فاعل خارج القائمة ⇒ مرفوض حتى لو الـcommit على main", !L.approvalGate({ sha: SHA("a"), onMain: true, actor: "intruder", approvers: "saber" }).ok);
+ok("[C0.3] قائمة معتمِدين فارغة ⇒ مرفوض (لا نشر)", !L.approvalGate({ sha: SHA("a"), onMain: true, actor: "x", approvers: " , " }).ok);
+ok("[C0.4] وسم الاعتماد وحده لا يكفي إن لم يكن الفاعل معتمِداً", !L.approvalGate({ sha: SHA("a"), onMain: false, tags: ["beta-approved/aaaaaaaa"], actor: "intruder", approvers: "saber" }).ok);
+ok("[C0.5] لا Production في أدوات الإصدار: لا --env production ولا ALLOW_PRODUCTION_DEPLOY ولا alyssum-tenant-router كهدف", !(L.walk(path.join(ROOT, "platform/release")).filter((f) => !f.startsWith("test/") && /\.(mjs|json)$/.test(f)).some((f) => /--env\s+production|ALLOW_PRODUCTION_DEPLOY|--production\b/.test(readFileSync(path.join(ROOT, "platform/release", f), "utf8")))));
 
 sec("C) بوابتا CI والاعتماد");
 const run = (o) => ({ id: 1, name: "tests", head_sha: SHA("a"), status: "completed", conclusion: "success", run_started_at: "2026-11-18T10:00:00Z", ...o });
@@ -114,35 +135,63 @@ ok("[E16] بعد الرجوع: كود الإصدار 1 يعمل (الخطأ ال
 ok("[E17] الرجوع لا يعكس الترحيل الإضافي عمداً (العمود موجود ويعمل مع الكود القديم)", (await sim.exec("PRAGMA table_info(cm_orders)")).some((c) => c.name === "note"));
 sim.close();
 
-sec("F) حقن الأعطال: لا أثر جانبي أو رجوع كامل");
+sec("F) حقن الأعطال: لا أثر جانبي أو رجوع للكود فقط (لا استعادة تلقائية للقاعدة)");
 const fresh = async () => { const s = new SimCloud({ protectedTables: PROT }); const r = makeRepo(); writeState(r, S1); const g = async (sha, st, extra = {}, rr = r) => { if (st) writeState(rr, st); const { manifest, migrations } = manifestOf(rr.root, { sha, contracts: real, prev: s.currentId }); return { out: await runRelease({ adapter: s, manifest, migrations, artifacts: artifacts(rr.root), snapshotTables: PROT, ...extra }), manifest }; }; await g(SHA("1")); s.db.exec("INSERT INTO pf_tenants VALUES ('t1','x')"); await s.callApi("/v1/orders", { method: "POST", body: JSON.stringify({ tenant: "t1", subtotal: 1, fee: 1 }) }); return { s, r, g }; };
+const newOrder = (s, id) => s.db.prepare("INSERT INTO cm_orders (id,tenant_id,subtotal,fee,total) VALUES (?,?,?,?,?)").run(id, "t1", 1000, 0, 1000);
+const hasOrder = (s, id) => !!s.db.prepare("SELECT id FROM cm_orders WHERE id=?").get(id);
+ok("[F0] المنسّق والمحوّلان لا يحويان أي استعادة تلقائية للقاعدة (لا دالة restore ولا restoreDb)", !/restoreDb|\.restore\(|async restore\(/.test(["release-run.mjs", "adapters/sim.mjs", "adapters/cloudflare.mjs"].map((f) => readFileSync(path.join(ROOT, "platform/release", f), "utf8")).join("\n")));
 { const { s, r, g } = await fresh(); const before = JSON.stringify(await s.snapshot(PROT)), reg = s.registry.length; s.calls.length = 0;
   const { out } = await g(SHA("4"), { ...S2, migrations: { "0001_baseline.sql": BASELINE, "0002_drop.sql": "DROP TABLE cm_orders;" } });
   ok("[F1] ترحيل مدمّر ⇒ مرفوض قبل أي أثر (لا نشر، لا تعديل بيانات، السجل كما هو)", !out.ok && s.calls.length === 0 && JSON.stringify(await s.snapshot(PROT)) === before && s.registry.length === reg && /DROP/.test(out.steps.at(-1).detail), out.steps.at(-1));
   s.close(); r.rm(); }
 { const { s, r, g } = await fresh(); const before = await s.snapshot(PROT); s.faults.failMigration = "0002_orders_note.sql"; s.calls.length = 0;
   const { out } = await g(SHA("5"), S2);
-  ok("[F2] فشل ترحيل في المنتصف ⇒ استعادة القاعدة من علامة ما قبل الترحيل", out.status === "failed_restored" && out.restored, out);
-  ok("[F3] بعد الاستعادة: لا ترحيل مسجَّل، لا عمود جديد، البيانات كما كانت، ولا نشر حدث", (await s.exec("SELECT COUNT(*) n FROM pf_migrations"))[0].n === 1 && !(await s.exec("PRAGMA table_info(cm_orders)")).some((c) => c.name === "note") && JSON.stringify(await s.snapshot(PROT)) === JSON.stringify(before) && s.calls.length === 0);
-  s.faults = {}; const retry = await g(SHA("5"), null); ok("[F4] إعادة المحاولة بعد زوال العطل تنجح (الترحيل قابل لإعادة التطبيق)", retry.out.ok, retry.out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
+  ok("[F2] فشل ترحيل في المنتصف ⇒ رجوع الكود فقط، والقاعدة لا تُستعاد، مع تحذير صريح", out.status === "failed_rolled_back" && out.warnings.some((w) => /لا استعادة للقاعدة/.test(w)) && out.rolledBack.some((x) => /لم تُمسّ/.test(x)), out);
+  ok("[F3] الحالة بعد الفشل: لا نشر حدث، والترحيل غير مسجَّل، والبيانات كما كانت (الجزء الإضافي المطبَّق يبقى)", s.calls.length === 0 && (await s.exec("SELECT COUNT(*) n FROM pf_migrations"))[0].n === 1 && JSON.stringify((await s.snapshot(PROT)).cm_orders.ids) === JSON.stringify(before.cm_orders.ids) && (await s.exec("PRAGMA table_info(cm_orders)")).some((c) => c.name === "note"));
+  s.faults = {}; const retry = await g(SHA("5"), null); ok("[F4] إعادة المحاولة بعد زوال العطل **تنجح** رغم أن عمود note أُضيف مسبقاً (الترحيل قابل للاستئناف: يتخطّى المطبَّق)", retry.out.ok && retry.out.migrationsApplied.join() === "0002_orders_note.sql", retry.out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
 { const { s, r, g } = await fresh(); const before = await s.snapshot(PROT); s.faults.failDeploy = "ui";
   const { out } = await g(SHA("6"), S2); const h = await s.health();
   ok("[F5] فشل نشر الواجهة بعد api ⇒ رجوع api إلى نسخته السابقة", out.status === "failed_rolled_back" && h.api.sha === SHA("1") && out.rolledBack.some((x) => x.startsWith("api")), out);
-  ok("[F6] الواجهة ما زالت على إصدارها السابق، والبيانات سليمة (الترحيل الإضافي يبقى والكود القديم يعمل عليه)", h.ui.release === s.registry[0].id && (await s.snapshot(PROT)).cm_orders.count === before.cm_orders.count && JSON.parse((await s.callApi("/v1/orders")).body).length === 1);
+  ok("[F6] الواجهة على إصدارها السابق، والبيانات سليمة", h.ui.release === s.registry[0].id && (await s.snapshot(PROT)).cm_orders.count === before.cm_orders.count);
   ok("[F7] الإصدار الفاشل لم يُسجَّل", s.registry.length === 1); s.close(); r.rm(); }
-{ const { s, r, g } = await fresh(); const before = await s.snapshot(PROT); s.faults.corruptData = true;
-  const { out } = await g(SHA("7"), S2);
-  ok("[F8] كود جديد يمسح بيانات ⇒ تكشفه لقطة البيانات فيُرجَع الكود وتُستعاد القاعدة", out.status === "failed_restored" && out.steps.some((x) => /سلامة بيانات/.test(x.name) && !x.ok), out);
-  ok("[F9] البيانات عادت كما قبل النشر، والـapi على نسخته السابقة", JSON.stringify(await s.snapshot(PROT)) === JSON.stringify(before) && (await s.health()).api.sha === SHA("1")); s.close(); r.rm(); }
+{ const { s, r, g } = await fresh(); s.faults.corruptData = true; const before = await s.snapshot(PROT, { rows: true });
+  const { out, manifest } = await g(SHA("7"), S2);
+  ok("[F8] كود جديد يمسح صفاً ⇒ تكشفه اللقطة: رجوع الكود، **بلا** استعادة للقاعدة، وحالة failed_data_loss", out.status === "failed_data_loss" && out.steps.some((x) => /سلامة بيانات/.test(x.name) && !x.ok) && (await s.health()).api.sha === SHA("1"), out);
+  ok("[F9] التحذير يذكر الجدول وعدد الصفوف وأمر الاستعادة الجراحية، والمعاينة افتراضية", out.recovery?.tables.cm_orders === 1 && /recover-missing --release/.test(out.warnings.join(" ")) && /معاينة/.test(out.warnings.join(" ")), out.warnings);
+  const prev = await recoverMissing({ adapter: s, releaseId: manifest.id, apply: false }); ok("[F10] المعاينة لا تغيّر شيئاً", prev.ok && prev.tables.cm_orders === 1 && !hasOrder(s, before.cm_orders.rows[0].id));
+  const ap = await recoverMissing({ adapter: s, releaseId: manifest.id, apply: true }); ok("[F11] الاستعادة الجراحية تعيد الصف المفقود وحده", ap.ok && hasOrder(s, before.cm_orders.rows[0].id) && (await s.snapshot(PROT)).cm_orders.count === 1, ap);
+  s.close(); r.rm(); }
 { const { s, r, g } = await fresh(); const { out } = await g(SHA("8"), { ...S2, migrations: { "0001_baseline.sql": BASELINE + "-- تعديل مُطبَّق\n", "0002_orders_note.sql": M2 } });
-  ok("[F10] تعديل ملف ترحيل مُطبَّق سابقاً ⇒ مرفوض (checksum)", !out.ok && /تغيّر محتوى ترحيل مُطبَّق/.test(out.steps.at(-1).detail), out.steps.at(-1)); s.close(); r.rm(); }
+  ok("[F12] تعديل ملف ترحيل مُطبَّق سابقاً ⇒ مرفوض (checksum)", !out.ok && /تغيّر محتوى ترحيل مُطبَّق/.test(out.steps.at(-1).detail), out.steps.at(-1)); s.close(); r.rm(); }
 { const { s, r, g } = await fresh(); s.faults.failHealth = true; const { out } = await g(SHA("9"), S2);
-  ok("[F11] فحص صحة فاشل بعد نشر مكوّن ⇒ رجوع تلقائي", out.status.startsWith("failed"), out); s.close(); r.rm(); }
+  ok("[F13] فحص صحة فاشل بعد نشر مكوّن ⇒ رجوع تلقائي للكود", out.status.startsWith("failed"), out); s.close(); r.rm(); }
 { const { s, r, g } = await fresh(); const bad = mk(real); bad.components.ui.requires = { api: 9 }; const { manifest, migrations } = manifestOf(r.root, { sha: SHA("a"), contracts: bad, prev: s.currentId }); s.calls.length = 0;
-  const out = await runRelease({ adapter: s, manifest, migrations, artifacts: artifacts(r.root), snapshotTables: PROT }); ok("[F12] عقد غير متوافق ⇒ مرفوض قبل أي أثر", !out.ok && s.calls.length === 0 && /فحص العقود/.test(out.steps.at(-1).name), out.steps.at(-1)); s.close(); r.rm(); }
+  const out = await runRelease({ adapter: s, manifest, migrations, artifacts: artifacts(r.root), snapshotTables: PROT }); ok("[F14] عقد غير متوافق ⇒ مرفوض قبل أي أثر", !out.ok && s.calls.length === 0 && /فحص العقود/.test(out.steps.at(-1).name), out.steps.at(-1)); s.close(); r.rm(); }
 { const { s, r, g } = await fresh(); const M = "-- release:breaking-approved:دمج جدولين\nDELETE FROM pf_tenants WHERE id='zzz';\n"; const S = { ...S2, migrations: { "0001_baseline.sql": BASELINE, "0002_orders_note.sql": M2, "0003_cleanup.sql": M } };
-  const a = await g(SHA("b"), S); ok("[F13] ترحيل كاسر معتمَد بعلامة يتطلب --allow-breaking صراحةً", !a.out.ok && /allow-breaking/.test(a.out.steps.at(-1).detail), a.out.steps.at(-1));
-  const b = await g(SHA("b"), null, { allowBreaking: true }); ok("[F14] ومع --allow-breaking يمرّ بلقطة استعادة (البيانات المحمية ثابتة هنا)", b.out.ok, b.out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
+  const a = await g(SHA("b"), S); ok("[F15] ترحيل كاسر معتمَد بعلامة يتطلب --allow-breaking صراحةً", !a.out.ok && /allow-breaking/.test(a.out.steps.at(-1).detail), a.out.steps.at(-1));
+  const b = await g(SHA("b"), null, { allowBreaking: true }); ok("[F16] ومع --allow-breaking يمرّ", b.out.ok, b.out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
+
+sec("G) بيانات جديدة تصل **أثناء** النشر: لا تُمحى بأي مسار فشل ولا بالرجوع");
+{ /* G1: طلب يصل بعد اللقطة ثم يفشل الترحيل — كان يُمحى باستعادة العلامة الزمنية (خطر مُثبَت قبل الإصلاح) */
+  const { s, r, g } = await fresh(); s.faults.failMigration = "0002_orders_note.sql"; s.hooks.onMigrationFail = async (x) => newOrder(x, "ARRIVED-MID-MIGRATION");
+  const { out } = await g(SHA("c"), S2); ok("[G1] طلب وصل أثناء ترحيل فاشل ⇒ **باقٍ** (لا استعادة قاعدة)", !out.ok && hasOrder(s, "ARRIVED-MID-MIGRATION") && !out.rolledBack.some((x) => /علامة/.test(x)), out.rolledBack);
+  s.faults = {}; s.hooks = {}; const retry = await g(SHA("c"), null); ok("[G2] إعادة المحاولة تنجح والطلب باقٍ", retry.out.ok && hasOrder(s, "ARRIVED-MID-MIGRATION")); s.close(); r.rm(); }
+{ /* G3: طلب يصل أثناء نشر api ثم تفشل الواجهة */
+  const { s, r, g } = await fresh(); s.hooks.afterDeploy = async (comp, x) => { if (comp === "api") newOrder(x, "ARRIVED-MID-API-DEPLOY"); }; s.faults.failDeploy = "ui";
+  const { out } = await g(SHA("d"), S2); ok("[G3] طلب وصل أثناء نشر api ثم فشلت الواجهة ⇒ رجوع الكود والطلب باقٍ", out.status === "failed_rolled_back" && hasOrder(s, "ARRIVED-MID-API-DEPLOY") && (await s.health()).api.sha === SHA("1")); s.close(); r.rm(); }
+{ /* G4: كود جديد يمسح صفاً قديماً + طلب جديد يصل ⇒ الجديد باقٍ والمفقود يُستعاد جراحياً بلا مسّ بالجديد */
+  const { s, r, g } = await fresh(); s.faults.corruptData = true; const old = (await s.exec("SELECT id FROM cm_orders"))[0].id; s.hooks.afterDeploy = async (comp, x) => { if (comp === "api") newOrder(x, "NEW-BETWEEN"); };
+  const { out, manifest } = await g(SHA("e"), S2); ok("[G4] فقدان صف قديم مع وصول طلب جديد ⇒ failed_data_loss، والجديد باقٍ، ولا استعادة قاعدة", out.status === "failed_data_loss" && hasOrder(s, "NEW-BETWEEN") && !hasOrder(s, old), out);
+  const ap = await recoverMissing({ adapter: s, releaseId: manifest.id, apply: true }); ok("[G5] الاستعادة الجراحية تعيد القديم وتُبقي الجديد (لا حذف ولا تكرار)", ap.ok && hasOrder(s, old) && hasOrder(s, "NEW-BETWEEN") && (await s.snapshot(PROT)).cm_orders.count === 2, ap);
+  const ap2 = await recoverMissing({ adapter: s, releaseId: manifest.id, apply: true }); ok("[G6] إعادة تشغيل الاستعادة آمنة (بلا تكرار)", ap2.ok && (await s.snapshot(PROT)).cm_orders.count === 2); s.close(); r.rm(); }
+{ /* G7: رجوع (rollback) بعد نشر ناجح مع بيانات وصلت بين البدء والرجوع */
+  const { s, r, g } = await fresh(); s.hooks.afterDeploy = async (comp, x) => { if (comp === "api") newOrder(x, "DURING-DEPLOY-OK"); };
+  const a = await g(SHA("f"), S2); ok("[G7] نشر ناجح مع طلب وصل أثناءه", a.out.ok && hasOrder(s, "DURING-DEPLOY-OK"));
+  newOrder(s, "AFTER-DEPLOY"); const target = s.registry[0].id; const rb = await runRollback({ adapter: s, to: target });
+  ok("[G8] الرجوع إلى الإصدار السابق يحفظ كل ما وصل أثناء النشر وبعده", rb.ok && hasOrder(s, "DURING-DEPLOY-OK") && hasOrder(s, "AFTER-DEPLOY") && (await s.health()).api.sha === SHA("1"), rb.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
+{ /* G9: نسخة الصفوف الاحتياطية لا تظهر في التقرير */
+  const { s, r, g } = await fresh(); s.faults.corruptData = true; const { out, manifest } = await g(SHA("g"), S2); const rep = L.renderReport(manifest, out), js = JSON.stringify(out);
+  ok("[G9] التقرير ونتيجة التشغيل لا يحويان صفوف العملاء (بيانات شخصية) — أعداد ومفاتيح فقط", !/"subtotal"|"tenant_id"/.test(js) && !/subtotal|tenant_id/.test(rep)); s.close(); r.rm(); }
 repo.rm();
 
 console.log(bad ? `\n✗ ${bad} فاشل من ${n}` : `✓ ${n} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);

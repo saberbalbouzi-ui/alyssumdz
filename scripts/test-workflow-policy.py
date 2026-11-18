@@ -8,6 +8,7 @@
  W6  workflow من ملف beta-*: workflow_dispatch وحده، contents: read فقط، كل job بـenvironment: alyssumdz-beta، لا أسرار إلا secrets.BETA_* (ولا GITHUB_TOKEN)، لا git push، لا نشر. (يُستثنى من W1 اسما BETA_CF_API_TOKEN/BETA_CF_ACCOUNT_ID فقط لاختبار D1 للقراءة)
  W6s workflow من ملف beta-* **بلا بيئة ولا أسرار ولا vars** (صنف «ساكن»: اختبارات بلا شبكة/اعتماد): مشغّلاته ⊆ {push, pull_request, workflow_dispatch} وكل push/pull_request بـpaths محدَّدة، contents: read فقط، لا نشر/دفع/pull_request_target.
  W6r workflow الإصدار `beta-release.yml` (صنف «إصدار»): مشغّلاته ⊆ {workflow_dispatch, push بوسوم beta-approved/** فقط}، permissions = contents:read + actions:read، concurrency مُعرَّف، job النشر `needs` بوابة وبـenvironment: alyssumdz-beta وأسراره BETA_* (و github.token للبوابة فقط)، يستدعي `platform/release/beta-release.mjs` ولا يستدعي أدوات النشر/wrangler/Cloudflare مباشرة، لا git push.
+ W8  لا workflow غير beta-release.yml يستدعي/يتسلسل مع آلية مزامنة Beta، وworkflows الإنتاج لا تذكر Beta: النشر إلى Production قرار مستقل.
  W7  لا workflow غير beta-* يستعمل environment: alyssumdz-beta ولا secrets.BETA_*/vars.BETA_*  (تتحقق بدوال تُختبر سلباً على عيّنات مخالِفة أيضاً)
  W5  لا workflow يدفع إلى فرع غير الافتراضي بصيغة git push origin HEAD:<فرع> غير main/${GITHUB_REF_NAME} (لا دفع لفروع إنتاج بديلة).
 """
@@ -44,6 +45,8 @@ def release_violations(y, on, jobs, text):
     for m in re.findall(r"secrets\.([A-Za-z0-9_]+)", text):
         if not m.startswith("BETA_"): v.append("W6r: سرّ غير BETA_: " + m)
     if not re.search(r"platform/release/beta-release\.mjs", text): v.append("W6r: لا يستدعي platform/release/beta-release.mjs")
+    for m in re.finditer(r"beta-release\.mjs\s+(deploy|rollback)[^\n]*", text):
+        if "--actor" not in m.group(0) or "--approvers" not in m.group(0): v.append(f"W6r: أمر {m.group(1)} بلا --actor/--approvers (الاعتماد المُسمّى إلزامي داخل Actions): {m.group(0)[:80]}")
     if re.search(r"git\s+push|pull_request_target|peter-evans|create-pull-request|gh\s+release|npx\s+wrangler", text): v.append("W6r: دفع/نشر/إصدار مباشر")
     return v
 def beta_violations(name, text):
@@ -139,15 +142,26 @@ if REL:
     relbad("push على فروع", REL.replace("tags: ['beta-approved/**']", "branches: ['**']"), r"push يجب أن يكون بوسوم")
     relbad("وسم تشغيل عام", REL.replace("tags: ['beta-approved/**']", "tags: ['v*']"), r"beta-approved")
     relbad("permissions كتابة", REL.replace("  actions: read\n", "  actions: read\n  contents2: x\n", 1).replace("permissions:\n  contents: read", "permissions:\n  contents: write", 1), r"permissions|كتابة")
-    relbad("job نشر بلا needs: gate", REL.replace("    needs: gate\n    if: ${{ inputs.mode != 'rollback' }}", "    if: ${{ inputs.mode != 'rollback' }}", 1), r"بلا needs: gate")
+    relbad("job نشر بلا needs: gate", REL.replace("    needs: gate\n    if: ${{ inputs.mode != 'rollback' && inputs.mode != 'status' }}", "    if: ${{ inputs.mode != 'rollback' && inputs.mode != 'status' }}", 1), r"بلا needs: gate")
     relbad("نشر بلا بيئة", REL.replace("    environment: alyssumdz-beta\n", "", 1), r"بلا environment")
     relbad("استدعاء deploy.mjs مباشر", REL.replace("node platform/release/beta-release.mjs verify", "node platform/api/tools/deploy.mjs --env beta worker #", 1), r"استدعاء مباشر|W1")
-    relbad("سرّ غير BETA_", REL.replace("secrets.BETA_CF_API_TOKEN", "secrets.PROD_TOKEN", 1), r"سرّ غير BETA_")
+    relbad("سرّ غير BETA_", REL.replace("secrets.BETA_CF_DEPLOY_TOKEN", "secrets.PROD_TOKEN", 1), r"سرّ غير BETA_")
     relbad("غياب concurrency", REL.replace("concurrency:\n  group: beta-release\n  cancel-in-progress: false\n", ""), r"concurrency")
     relbad("git push", REL.replace("node platform/release/beta-release.mjs verify", "git push origin HEAD:main #", 1), r"دفع")
     relbad("مشغّل pull_request", REL.replace("  push:\n    tags: ['beta-approved/**']", "  pull_request:\n    branches: [main]", 1), r"مشغّل غير مسموح")
 else: ok("[W6r] beta-release.yml موجود", False)
-bad("tests.yml", REL, r"W7") if REL else None   # بيئة alyssumdz-beta في workflow غير beta-* تُلتقط
+bad("tests.yml", REL, r"W7") if REL else None
+if REL:
+    relbad("نشر بلا --actor/--approvers", REL.replace('--actor "${{ github.triggering_actor }}" --approvers "${{ vars.BETA_APPROVERS }}" ', "", 1), r"بلا --actor")
+    relbad("workflow_run كمشغّل", REL.replace("  push:\n    tags: ['beta-approved/**']", "  workflow_run:\n    workflows: [tests]", 1), r"مشغّل غير مسموح")
+# W8: Beta ↔ Production: لا workflow آخر يشغّل/يستدعي مزامنة Beta، ولا workflow إنتاج يتبع Beta
+for f in files:
+    nm = os.path.basename(f)
+    if nm == "beta-release.yml": continue
+    txt = open(f, encoding="utf-8").read()
+    ok(f"[W8] {nm}: لا يستدعي/يتسلسل مع آلية مزامنة Beta (beta-release) — الإنتاج بقرار مستقل", not re.search(r"beta-release\.(yml|mjs)|workflows:\s*\[?\s*['\"]?beta-release", txt), re.findall(r"beta-release[^\n]{0,40}", txt)[:2])
+prod = [f for f in files if os.path.basename(f) in ("release.yml", "publish-site.yml")]
+ok("[W8b] workflows الإنتاج (release/publish-site) لا تشير إلى alyssumdz-beta ولا إلى BETA_", all(not re.search(r"alyssumdz-beta|BETA_", open(f, encoding="utf-8").read()) for f in prod))   # بيئة alyssumdz-beta في workflow غير beta-* تُلتقط
 t = open(os.path.join(ROOT, ".github/workflows/tests.yml"), encoding="utf-8").read(); ty = yaml.safe_load(t)
 tperms = [ty.get("permissions")] + [j.get("permissions") for j in ty["jobs"].values()]
 ok("[W4] tests.yml: بلا contents:write", not any(isinstance(p, dict) and p.get("contents") == "write" for p in tperms) and "write-all" not in tperms)
