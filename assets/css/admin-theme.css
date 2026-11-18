@@ -441,8 +441,12 @@ html.white .pf-card .neg,html.white .pf-big.neg{color:#b42318}
 html.white #aa .high,html.white #aa .high b{color:#b45309}
 html.white #aa .medium,html.white #aa .medium b{color:#92400e}
 html.white #aa .low,html.white #aa .low b{color:#475467}
-html.white #ahome .ah-lnk{color:#92400e}
+html.white #ahome .ah-lnk,html.white #ahome .ah-lnk b{color:#92400e!important;background:none!important;box-shadow:none!important}
 html.white #ahome .rt-n[style]{color:#92400e!important}
 html.white #ahome .pf-v{color:var(--green)!important}
 html.white :is(.card,.modal,.fp-pane,#tab-home,.ord-prev,#ord-prev-b,#ship-detail-body,table,details,.hint) :is([style^="color:#e08a1a" i],[style^="color: #e08a1a" i],[style*=";color:#e08a1a" i],[style*="; color:#e08a1a" i],[style*=" color:#e08a1a" i]):not([style*="background"]){color:#b45309!important}
 html.white :is(.card,.modal,.fp-pane,#tab-home,.ord-prev,#ord-prev-b,#ship-detail-body,table,details,.hint) :is([style^="color:#e5484d" i],[style^="color: #e5484d" i],[style*=";color:#e5484d" i],[style*="; color:#e5484d" i],[style*=" color:#e5484d" i]):not([style*="background"]){color:#b42318!important}
+/* v1.89.1246: أزرار فترة الرئيسية في المظهر الفاتح: كانت تأخذ نمط الأزرار الرمادية العام (أبيض على رمادي مزرق، والمختار أبيض على ليموني) ⟵ شرائح مسطّحة بنص داكن والمختارة ليمونية بنص داكن */
+html.white #ahome .ah-seg{background:#fff;border:1px solid #d5dbe5}
+html.white #ahome .ah-seg button{background:transparent!important;box-shadow:none!important;border:0!important;color:#334155!important;text-shadow:none!important}
+html.white #ahome .ah-seg button.on{background:linear-gradient(180deg,#effe17,#e2fe17)!important;color:#1f2123!important}
