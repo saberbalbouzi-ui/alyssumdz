@@ -144,7 +144,7 @@ export function validateBetaContent(dir) {
 }
 /** لا ملف شيفرة في المنصة يقرأ من beta-content أو يستورده (المسموح: أدوات الإصدار والتوثيق والاختبارات وworkflow الإصدار) */
 export function checkContentIsolation(root) {
-  const allow = [/^platform\/release\//, /^docs\//, /^\.github\/workflows\/beta-release\.yml$/, /^\.claude\//, /^beta-content\//, /^platform\/docs\//, /^scripts\/test-workflow-policy\.py$/], hits = [];
+  const allow = [/^platform\/release\//, /^docs\//, /^\.github\/workflows\/beta-[a-z-]+\.yml$/, /^\.claude\//, /^beta-content\//, /^platform\/docs\//, /^scripts\/test-workflow-policy\.py$/], hits = [];
   const scan = (dir) => { if (!existsSync(dir)) return; for (const f of walk(dir)) { const rel = path.relative(root, path.join(dir, f)).split(path.sep).join("/"); if (!/\.(m?js|cjs|py|ts|html|ya?ml|sh)$/.test(rel) || allow.some((a) => a.test(rel))) continue; try { if (/beta-content/.test(readFileSync(path.join(dir, f), "utf8"))) hits.push(rel); } catch { } } };
   for (const d of ["platform", "scripts", "assets/js", ".github/workflows"]) scan(path.join(root, d));
   return { ok: hits.length === 0, hits };

@@ -46,6 +46,9 @@ sec("B2) لقطات حماية البيانات");
   ok("[B2.5] جدول كبير بلا قائمة مفاتيح ⇒ يُقارَن العدد فقط", !cmp(S(9000, null), S(8999, null)).ok && cmp(S(9000, null), S(9005, null)).ok);
   ok("[B2.6] جدول اختفى ⇒ مرفوض، وجدول لم يكن موجوداً قبلاً (null) ⇒ لا يُفحَص", !cmp(S(1, ["1"]), null).ok && cmp(null, S(1, ["1"])).ok); }
 
+ok("[B12] فحص عزل beta-content على المستودع الحقيقي: لا شيفرة منصة تقرأ منه (workflows Beta تذكره في paths فقط)", L.checkContentIsolation(ROOT).ok, L.checkContentIsolation(ROOT).hits);
+ok("[B13] beta-content الحقيقي صالح (بيانات فقط)", L.validateBetaContent(path.join(ROOT, "beta-content")).ok, L.validateBetaContent(path.join(ROOT, "beta-content")).problems);
+
 sec("C) بوابتا CI والاعتماد");
 const run = (o) => ({ id: 1, name: "tests", head_sha: SHA("a"), status: "completed", conclusion: "success", run_started_at: "2026-11-18T10:00:00Z", ...o });
 ok("[C1] نجاح tests على الـSHA نفسه ⇒ يمرّ", L.ciGate({ sha: SHA("a"), runs: [run()] }).ok);
