@@ -59,9 +59,9 @@ function writeStore(name) {
 
 (async () => {
   const browser = await chromium.launch();
-  const mk = async (w = 1360, h = 900, mob = false) => { const c = await browser.newContext(mob ? { viewport: { width: w, height: h }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : { viewport: { width: w, height: h } }); await declareProtect(c); return c; };
+  const mk = async (w = 1360, h = 900, mob = false, sw = "block") => { const c = await browser.newContext(mob ? { serviceWorkers: sw, viewport: { width: w, height: h }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : { serviceWorkers: sw, viewport: { width: w, height: h } }); await declareProtect(c); return c; };   // serviceWorkers:"block" لسياقات واجهة المتجر فقط (لوحة الإدارة تحتاج عامل الخدمة وإلا ظهر خطأ JS): عامل الخدمة يجلب protect.json بنفسه فلا يعترضه route() (Playwright 1.56 في CI) فيُفعَّل حجب الآلي bots:true ويغطّي الصفحة — كما في scripts/test-protect-bots.js؛ لا أثر على أي Assertion
   writeStore("rich");
-  const actx = await mk(); const admin = await actx.newPage(); admin.on("dialog", d => d.accept());
+  const actx = await mk(1360, 900, false, "allow"); const admin = await actx.newPage(); admin.on("dialog", d => d.accept());
   const jsErrs = []; admin.on("pageerror", e => jsErrs.push(e.message.slice(0, 160)));
   const bad404 = new Set(); admin.on("response", r => { if (r.status() >= 400 && r.url().startsWith(BASE) && /\/assets\/(img|pages|css|js|fonts)\//.test(r.url())) bad404.add(r.status() + " " + r.url().replace(BASE, "")); });
   await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000);
