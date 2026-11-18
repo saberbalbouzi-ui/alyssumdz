@@ -164,12 +164,11 @@ const AdminHome = (() => {
     const P = AdminPayments;
     if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>جارٍ التحميل…</small></h3></div>'; }
     let L; try { L = P.coNets(); } catch (e) { return ""; }
-    try { const en = A().enabledCompanyKeys ? A().enabledCompanyKeys() : null; if (Array.isArray(en)) L = L.filter(g => en.indexOf(g.k) >= 0); } catch (e) { }      /* الشركات المفعّلة فقط */
-    L = L.filter(g => g.net !== 0 || g.got !== 0);      /* بلا الشركات التي مدفوعها 0 */
+    try { const en = A().enabledCompanyKeys ? A().enabledCompanyKeys() : null; if (Array.isArray(en)) { L = L.filter(g => en.indexOf(g.k) >= 0); en.forEach(k => { if (!L.some(g => g.k === k)) L.push({ k, net: 0, got: 0, nDone: 0, nRet: 0, nExp: 0, netExp: 0 }); }); } } catch (e) { }      /* كل الشركات المفعّلة تظهر؛ التي لا مستحقات لها تُكتب «لا مستحقات» فلا يُظنّ أنها حُذفت */
     if (!L.length) return "";
     const nm = k => (typeof AdminCoStats !== "undefined" ? AdminCoStats.nameOf(k) : k), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const tot = L.reduce((t, g) => t + g.net, 0);
-    return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>المجموع ' + money(tot) + '</small></h3><div class="ah-pay">' + L.map(g => '<div class="ah-pc" data-noco><b>' + esc(nm(g.k)) + '</b><strong' + (g.net < 0 ? ' style="color:#fca5a5"' : "") + '>' + money(g.net) + '</strong><span>الصافي · ' + num(g.nDone) + ' مسلَّم' + (g.nRet ? ' · ' + num(g.nRet) + ' مرتجع' : "") + '</span><span>المحصَّل ' + money(g.got) + '</span>' + (g.nExp ? '<span class="w">في الطريق ' + num(g.nExp) + ' · متوقع ' + money(g.netExp) + '</span>' : "") + '</div>').join("") + '</div><div class="ah-rqb"><button type="button" class="ah-btn gh" data-go="payments">تفاصيل الدفع</button></div></div>';
+    return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>المجموع ' + money(tot) + '</small></h3><div class="ah-pay">' + L.map(g => '<div class="ah-pc" data-noco><b>' + esc(nm(g.k)) + '</b>' + (!g.net && !g.got && !g.nExp ? '<strong style="opacity:.6;font-size:1rem">لا مستحقات</strong></div>' : '<strong' + (g.net < 0 ? ' style="color:#fca5a5"' : "") + '>' + money(g.net) + '</strong><span>الصافي · ' + num(g.nDone) + ' مسلَّم' + (g.nRet ? ' · ' + num(g.nRet) + ' مرتجع' : "") + '</span><span>المحصَّل ' + money(g.got) + '</span>' + (g.nExp ? '<span class="w">في الطريق ' + num(g.nExp) + ' · متوقع ' + money(g.netExp) + '</span>' : "") + '</div>')).join("") + '</div><div class="ah-rqb"><button type="button" class="ah-btn gh" data-go="payments">تفاصيل الدفع</button></div></div>';
   }
   /* الحملات الإعلانية الحالية (حملة لكل منتج) مع تفعيل/تعطيل مباشر؛ المنتهية بتاريخ «إلى» لا تظهر */
   function adsCard() {

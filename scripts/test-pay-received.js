@@ -18,5 +18,12 @@ const { chromium } = require("playwright");
     const d = document.createElement("div"); d.innerHTML = AdminPayments.stmtCard(); const tx = d.innerText || d.textContent; return { rows: d.querySelectorAll("tbody tr").length, paid: /مدفوع/.test(tx) && /2\s?000/.test(tx), next: /قادم/.test(tx), tot: /1\s?628/.test(tx) };
   });
   t("كشوف ياليدين المستوردة تظهر: صفّان + مجموع، والمدفوع والقادم، والصافي 1628", S2.rows === 3 && S2.paid && S2.next && S2.tot, S2);
+  const H = await p.evaluate(async () => {
+    Admin.enabledCompanyKeys = () => ["yalidine", "wecan"]; Admin.allDeliveryCompanies = () => ({ yalidine: { name: "Yalidine" }, wecan: { name: "WeCan" } });
+    AdminPayments.S.loaded = true; AdminPayments.coNets = () => [{ k: "wecan", net: 1000, got: 1200, nDone: 2, nRet: 0, nExp: 0, netExp: 0 }];
+    document.getElementById("app").classList.remove("hidden"); AdminHome.render(); await new Promise(r => setTimeout(r, 300));
+    const c = [...document.querySelectorAll("#ahome .ah-pc")].map(x => x.innerText.replace(/\s+/g, " ")); return c;
+  });
+  t("صافي الشركات يعرض الشركتين المفعّلتين: WeCan بمبلغ وياليدين «لا مستحقات»", H.length === 2 && H.some(x => /WeCan/.test(x) && /1\s?000/.test(x)) && H.some(x => /Yalidine/.test(x) && /لا مستحقات/.test(x)), H);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
