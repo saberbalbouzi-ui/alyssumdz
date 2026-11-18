@@ -27,6 +27,14 @@ const { chromium } = require("playwright");
     const d = document.createElement("div"); d.innerHTML = AdminPayments.stmtCard(); const tx = d.innerText || d.textContent; return { rows: d.querySelectorAll("tbody tr").length, paid: /مدفوع/.test(tx) && /2\s?000/.test(tx), next: /قادم/.test(tx), tot: /1\s?628/.test(tx) };
   });
   t("كشوف ياليدين المستوردة تظهر: صفّان + مجموع، والمدفوع والقادم، والصافي 1628", S2.rows === 3 && S2.paid && S2.next && S2.tot, S2);
+  const TB = await p.evaluate(async () => {
+    document.querySelectorAll("#payments-content").forEach(e => e.id = "old-pc"); const h = document.createElement("div"); h.id = "payments-content"; document.getElementById("app").appendChild(h);
+    Admin.orders = [{ id: "T1", date: new Date().toISOString(), name: "n", phone: "0550000000", status: "livree", total: 1000, items: "x", note: "🚚yalidine:yal-T1" }]; await AdminPayments.render(); await new Promise(r => setTimeout(r, 300));
+    const vis = () => [...h.querySelectorAll("[data-pmt]")].filter(d => !d.hidden).map(d => d.dataset.pmt).join(",");
+    const o = { labels: [...h.querySelectorAll("[data-pmtab]")].map(b => b.dataset.pmtab).join(","), v0: vis() };
+    h.querySelector('[data-pmtab="im"]').click(); o.v1 = vis(); h.querySelector('[data-pmtab="rec"]').click(); o.v2 = vis(); o.search = !!h.querySelector("#pm-search"); return o;
+  });
+  t("المدفوعات تبويبات: نظرة عامة/تسوية/كشوف/سجلات، تظهر واحدة في كل مرة", TB.labels === "ov,st,im,rec" && TB.v0 === "ov" && TB.v1 === "im" && TB.v2 === "rec" && TB.search, TB);
   const H = await p.evaluate(async () => {
     Admin.enabledCompanyKeys = () => ["yalidine", "wecan"]; Admin.allDeliveryCompanies = () => ({ yalidine: { name: "Yalidine" }, wecan: { name: "WeCan" } });
     AdminPayments.S.loaded = true; AdminPayments.coNets = () => [{ k: "wecan", net: 1000, got: 1200, nDone: 2, nRet: 0, nExp: 0, netExp: 0 }];
