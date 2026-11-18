@@ -5,6 +5,18 @@
 > الحالات: `VERIFIED` أُثبت كما هو موصوف · `PARTIALLY VERIFIED` أُثبت محلياً/بمحاكاة فقط · `BLOCKED` ينتظر اعتماداً أو قراراً · `NOT TESTED` لم يُجرَّب.
 > المصدر الوحيد للأسماء والأسرار: `platform/env/beta-resources.json` (يُولَّد منه `platform/env/beta.env.example` ويتحقق منه `scripts/test-beta-resources.js`).
 
+## 0) القرارات المعتمدة (2026-11-18)
+
+| المكوّن | القرار / الحالة |
+|---|---|
+| GitHub | مستودع واحد. اسم GitHub Environment هو **`alyssumdz-beta`** (مُطبَّق في السجل وworkflow وقواعد W6/W7). الـEnvironment نفسه **لم يُنشأ بعد** (`BLOCKED`) |
+| Supabase | مشروع مستقل **`alyssum-beta`** (المرجع `xhdnqnxmcmfhrgctlkzy`)، بحساب مستقل. **الحزمة طُبِّقت عليه والاختبار الحقيقي 34/34** (§11). لا مشروع ثالث |
+| Cloudflare | **حساب جديد مستقل** لـBeta، وفيه Workers وD1 وPages. لا استعمال لحساب Production. محاولة الإنشاء بتاريخ 2026-11-15 رُفضت بشرط عمر المستخدم 7 أيام، فالإنشاء ينتظر (`BLOCKED`) |
+| Chargily | Sandbox فقط |
+| الأسرار | منفصلة لكل بيئة: بيئة Claude السحابية `alyssumdz-beta` (اعتماد الجلسات) وGitHub Environment `alyssumdz-beta` (workflow اليدوي) |
+
+**سبب رفض العزل داخل مشروع Supabase الإنتاجي:** اختبار محاكاة محلي على PostgreSQL (طبقة SQL فقط) أثبت أن إضافة مدير Beta إلى جدول `public.admins` المشترك تجعله **يقرأ ويعدّل طلبات الإنتاج** (`is_admin()` في 16 موضعاً، والعميل لا يستعمل أي schema غير `public`). أي حل داخل المشروع يتطلب تغيير بنية المنصة. لم تُجرَّب إعدادات Auth وStorage الحقيقية (تُدار على مستوى المشروع).
+
 ## 1) ما يمكن تنفيذه الآن وما ينتظر
 
 | البند | الحالة اليوم | ما يلزم لتشغيله حقيقياً |
