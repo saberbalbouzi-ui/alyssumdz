@@ -37,7 +37,7 @@ ok("جدول الإحصائيات يحوي أسماء الشركات والخل�
 const items = AP.items(), cos = {}; items.forEach(it => { cos[it.co] = (cos[it.co] || 0) + 1; });
 ok("المدفوعات تضم طلبات ياليدين وWeCan وNoest المرسلة (بلا الجديد والملغى)", cos.yalidine === 5 && cos.wecan === 3 && cos.noest === 1 && !cos.none, cos);
 const tY = AP.totals("yalidine"), tW = AP.totals("wecan"), tA = AP.totals("all");
-ok("المستلَم: ياليدين 10000 (3000+2000+5000)، WeCan 4000، الكل = المجموع", tY.received === 10000 && tW.received === 4000 && tA.received === tY.received + tW.received + AP.totals("noest").received, [tY, tW, tA]);
+ok("المحصَّل عند الشركة (لم يُستلم بعد): ياليدين 10000 (3000+2000+5000)، WeCan 4000، الكل = المجموع", tY.due === 10000 && tW.due === 4000 && tA.due === tY.due + tW.due + AP.totals("noest").due, [tY, tW, tA]);
 ok("قيد التوصيل: ياليدين 2500 وWeCan 1800", tY.pending === 2500 && tW.pending === 1800, [tY, tW]);
 AP.S.co = "wecan"; const fw = AP.items().filter(it => true), listW = AP.S && AP.items().filter(it => it.co === "wecan");
 ok("عناصر WeCan 3", listW.length === 3);
