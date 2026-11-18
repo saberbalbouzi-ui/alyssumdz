@@ -1,0 +1,103 @@
+# مزامنة Beta مع المنصة الأساسية: ينشر **إصداراً معتمداً فقط** (على main أو موسوم beta-approved/<sha8>) اجتاز CI على الـSHA نفسه.
+# نشر Beta وحده على حساب Cloudflare المستقل ومشروع Supabase alyssum-beta؛ لا يلمس Production ولا ينقل بيانات. التفاصيل: docs/BETA-SYNC.md.
+# التشغيل: يدوي (workflow_dispatch) أو بدفع وسم beta-approved/<sha8> (الوسم = اعتماد بشري). لا يعمل على كل commit.
+name: beta-release
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'الـcommit المراد نشره (فارغ = رأس الفرع المختار)'
+        default: ''
+      mode:
+        description: 'deploy أو rollback'
+        type: choice
+        options: [deploy, rollback]
+        default: deploy
+      rollback_to:
+        description: 'معرّف الإصدار للرجوع (فارغ = السابق)'
+        default: ''
+      allow_breaking:
+        description: 'اسمح بترحيل كاسر معتمَد بعلامة (استثنائي)'
+        type: boolean
+        default: false
+  push:
+    tags: ['beta-approved/**']
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: beta-release
+  cancel-in-progress: false
+jobs:
+  gate:
+    name: بوابات الإصدار (CI + الاعتماد + العقود + الترحيلات + المحتوى) — بلا أسرار
+    if: ${{ inputs.mode != 'rollback' }}
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.sha.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: بوابات الإصدار
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node platform/release/beta-release.mjs verify --sha "$(git rev-parse HEAD)"
+  deploy:
+    name: نشر Beta (حساب Cloudflare المستقل وalyssum-beta فقط)
+    needs: gate
+    if: ${{ inputs.mode != 'rollback' }}
+    runs-on: ubuntu-latest
+    environment: alyssumdz-beta
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.gate.outputs.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: نشر الإصدار المعتمَد
+        env:
+          BETA_CF_ACCOUNT_ID: ${{ vars.BETA_CF_ACCOUNT_ID }}
+          BETA_CF_API_TOKEN: ${{ secrets.BETA_CF_API_TOKEN }}
+          BETA_SUPABASE_REF: ${{ vars.BETA_SUPABASE_REF }}
+          BETA_SUPABASE_URL: ${{ vars.BETA_SUPABASE_URL }}
+          BETA_SUPABASE_ANON_KEY: ${{ vars.BETA_SUPABASE_ANON_KEY }}
+          BETA_SUPABASE_PAT: ${{ secrets.BETA_SUPABASE_PAT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node platform/release/beta-release.mjs deploy --sha "${{ needs.gate.outputs.sha }}" ${{ inputs.allow_breaking && '--allow-breaking' || '' }}
+      - name: التقرير
+        if: always()
+        run: |
+          [ -f beta-release/latest.md ] && cat beta-release/latest.md >> "$GITHUB_STEP_SUMMARY" || echo "لا تقرير" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: beta-release-report
+          path: beta-release/
+          if-no-files-found: warn
+  rollback:
+    name: رجوع Beta إلى إصدار مسجَّل سابقاً (لا يمرّ ببوابة CI لأن الإصدار الهدف اجتازها يوم نُشر)
+    if: ${{ inputs.mode == 'rollback' }}
+    runs-on: ubuntu-latest
+    environment: alyssumdz-beta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: رجوع
+        env:
+          BETA_CF_ACCOUNT_ID: ${{ vars.BETA_CF_ACCOUNT_ID }}
+          BETA_CF_API_TOKEN: ${{ secrets.BETA_CF_API_TOKEN }}
+          BETA_SUPABASE_REF: ${{ vars.BETA_SUPABASE_REF }}
+          BETA_SUPABASE_PAT: ${{ secrets.BETA_SUPABASE_PAT }}
+        run: node platform/release/beta-release.mjs rollback ${{ inputs.rollback_to && format('--to {0}', inputs.rollback_to) || '' }}

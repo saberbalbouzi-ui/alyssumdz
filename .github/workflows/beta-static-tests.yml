@@ -8,6 +8,8 @@ on:
     branches: ['**']
     paths:
       - 'platform/env/**'
+      - 'platform/release/**'
+      - 'beta-content/**'
       - 'platform/api/src/envguard.js'
       - 'platform/api/src/env-registry.js'
       - 'platform/gateway/src/envguard.js'
@@ -34,6 +36,8 @@ on:
   pull_request:
     paths:
       - 'platform/env/**'
+      - 'platform/release/**'
+      - 'beta-content/**'
       - 'platform/api/src/envguard.js'
       - 'platform/api/src/env-registry.js'
       - 'platform/gateway/src/envguard.js'
@@ -105,3 +109,22 @@ jobs:
           ok=0; for i in 1 2 3; do npm i miniflare@4 >/dev/null 2>&1 && ok=1 && break; echo "retry $i"; sleep 5; done
           [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت miniflare (إخفاق بيئة لا اختبار)"; exit 1; }
           cd "$GITHUB_WORKSPACE" && MF_DIR=/tmp/mf node platform/api/test/integration/d1-beta.integration.mjs --local
+  release-sync:
+    name: مزامنة Beta (نواة الإصدار، المحوّل على بروتوكول محاكى، واجهة التشغيل، الـWorker الساكن على محرك محلي)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: نواة الإصدار والمحوّل وواجهة التشغيل (بلا شبكة ولا أسرار)
+        run: |
+          git config --global user.email ci@example.test && git config --global user.name ci
+          node --no-warnings platform/release/test/release.test.mjs
+          node --no-warnings platform/release/test/cloudflare-adapter.test.mjs
+          node --no-warnings platform/release/test/cli.test.mjs
+      - name: الـWorker الساكن (إصدارات/مؤشرات/رجوع) على محرك Workers المحلي — ليس Cloudflare الحقيقي
+        run: |
+          mkdir -p /tmp/mf2 && cd /tmp/mf2 && npm init -y >/dev/null
+          ok=0; for i in 1 2 3; do npm i miniflare@4 >/dev/null 2>&1 && ok=1 && break; echo "retry $i"; sleep 5; done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت miniflare (إخفاق بيئة لا اختبار)"; exit 1; }
+          cd "$GITHUB_WORKSPACE" && MF_DIR=/tmp/mf2 node --no-warnings platform/release/test/static-worker.test.mjs --require
