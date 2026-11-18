@@ -25,6 +25,7 @@
     "assets/js/admin-keys.js",
     "assets/js/admin-delhealth.js",
     "assets/js/admin-sentarchive.js",
+    "assets/js/admin-presend.js",
     "assets/js/abandoned-cart.js",
     "assets/js/platform-order.js",
     "assets/js/geo-pin.js",
