@@ -70,6 +70,22 @@ const check = (tpl, name, cond, extra) => {
     clickWidget.lastHit = last;
     return null;
   };
+  /* شريط الإجراءات السريعة #pbx-qbar مثبَّت أعلى المنصّة (#pbx-stage) ويظهر بعد التحديد فوق أي عنصر يقع في أول ~50px منها (تصميم مقصود في المحرّر: لا يتبع العنصر ولا يتحرك مع التمرير).
+     الضغط الأول يحدّد العنصر، ثم يظهر الشريط فوق نقطة الضغط نفسها فيستلم السحبَ الشريطُ لا العنصر. فنبدأ السحب من نقطة من العنصر لا يغطيها الشريط (بتمرير المنصّة لأسفل العنصر أو باختيار نقطة منه تحت الشريط)؛
+     الشرط نفسه باقٍ: السحب يجب أن يحرّك العنصر وحده ويعيده التراجع. (التشخيص والدليل: docs/default-template/blocker/) */
+  const uncover = async (id, r) => {
+    const probe = pt => page.evaluate(([x, y, id]) => { const q = document.getElementById("pbx-qbar"), qb = q && q.style.display !== "none" ? q.getBoundingClientRect() : null, fr = document.getElementById("pbx-frame"), fb = fr.getBoundingClientRect(), e = fr.contentDocument.elementFromPoint(x - fb.left, y - fb.top), w = e && e.closest('[data-kind="widget"]'), top = document.elementFromPoint(x, y);
+      return { own: !!w && w.getAttribute("data-pb") === id, covered: !!(qb && qb.width > 0 && x >= qb.left && x <= qb.right && y >= qb.top && y <= qb.bottom), isFrame: !!top && top.id === "pbx-frame", qbBottom: qb ? qb.bottom : 0 }; }, [pt.x, pt.y, id]);
+    let p0 = await probe(r); if (!p0.covered) return r;                 // نقطة الضغط الأصلية سليمة: لا تغيير
+    const fr = page.locator("#pbx-frame").contentFrame(), el = fr.locator(`[data-kind="widget"][data-pb="${id}"]`);
+    await page.evaluate(d => { const st = document.getElementById("pbx-stage"); st.scrollTo({ top: Math.max(0, st.scrollTop - d), behavior: "instant" }); }, Math.max(0, p0.qbBottom + 16 - r.y)); await sleep(350);
+    const bb = await el.boundingBox(); if (!bb) return r;
+    for (const fy of [0.5, 0.35, 0.65, 0.2, 0.8, 0.1, 0.9]) for (const fx of [0.5, 0.25, 0.75, 0.1, 0.9]) {      // أول نقطة تنتمي للعنصر نفسه ولا يغطيها الشريط ويصل إليها المؤشر عبر الإطار
+      const c = { x: bb.x + bb.width * fx, y: bb.y + bb.height * fy }, q = await probe(c);
+      if (q.own && !q.covered && q.isFrame) return { x: c.x, y: c.y, bb };
+    }
+    return r;
+  };
   const dragFrom = async (x, y, dx, dy) => { await page.mouse.move(x, y); await sleep(70); await page.mouse.down(); await sleep(110); await page.mouse.move(x + dx, y + dy, { steps: 12 }); await sleep(110); await page.mouse.up(); await sleep(420); };
   /* سحب «بالحمل»: Alt عند الضغط ينسخ العنصر وCtrl/Meta عنده يبدّل التحديد المتعدد، لذا يُضغط المعدِّل بعد الضغط وأثناء الحركة فقط (محرّر main يقيّم carry عند كل حركة) */
   const dragCarry = async (x, y, dx, dy) => { await page.mouse.move(x, y); await sleep(70); await page.mouse.down(); await sleep(110); await page.keyboard.down("Alt"); await page.mouse.move(x + dx, y + dy, { steps: 12 }); await sleep(110); await page.mouse.up(); await page.keyboard.up("Alt"); await sleep(420); };
@@ -132,7 +148,8 @@ const check = (tpl, name, cond, extra) => {
       // T2 (حمل Alt): العنصر وحده يتحرك ثم التراجع يعيد كل شيء. T2b (سحب عادي): العنصر المسحوب تحرّك والتراجع يعيد كل العناصر المُزاحة إلى مواضعها بالضبط.
       let okDrag = 0, bad = [], tried = 0, nudged = 0, okPush = 0, badPush = [], pushed = 0, triedPush = 0, bounded = 0;
       const dragOnce = async (w, carry) => {      // يسحب العنصر (أو يحرّكه بالأسهم إن كان رفيعاً) ويعيد ما تغيّر ثم يتراجع (Ctrl+Z فقط إن تغيّر شيء، كي لا يتراجع عن خطوة سابقة)
-        const r = await clickWidget(w.id); if (!r) return { lost: true };
+        let r = await clickWidget(w.id); if (!r) return { lost: true };
+        r = await uncover(w.id, r);
         const before = snap(await model()), thin = r.bb.height < 6 || r.bb.width < 6;
         if (thin) { for (let q = 0; q < 3; q++) { await page.keyboard.press("Shift+ArrowRight"); await sleep(120); await page.keyboard.press("Shift+ArrowDown"); await sleep(120); } await sleep(300); }
         else if (carry) await dragCarry(r.x, r.y, 26, 18); else await dragFrom(r.x, r.y, 26, 18);
