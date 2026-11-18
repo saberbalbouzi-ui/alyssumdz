@@ -27,7 +27,12 @@ const { chromium } = require("playwright");
     const bg2 = document.getElementById("presend-bg"), sent = []; A.bulkSend = async list => { list.forEach(o => { sent.push(o.id); o.note = "🚚wecan:T" + o.id; }); return true; };
     bg2.querySelector('input[data-id="P3"]').click(); await wait(60); out.btnLabel = bg2.querySelector("#ps-send").innerText; bg2.querySelector("#ps-send").click(); await wait(150);
     out.sent = sent.join(","); out.after = document.getElementById("presend-bg").querySelectorAll("tbody tr").length;
+    /* تبويب «أُرسلت آخر 7 أيام»: قراءة فقط، يضم المرسَل ويُخفي زر الإرسال والتحديد */
+    const bg3 = document.getElementById("presend-bg"); bg3.querySelector('[data-scope="sent"]').click(); await wait(80);
+    out.sentTab = { ids: [...bg3.querySelectorAll("tbody tr td:nth-child(1)")].map(x => x.innerText.trim()).join(","), cb: bg3.querySelectorAll("tbody input[type=checkbox]").length, btn: !!bg3.querySelector("#ps-send"), auto: !!bg3.querySelector("#ps-auto"), trk: /WS-X/.test(bg3.innerText), n: AdminPreSend.recentSent().length };
+    bg3.querySelector('[data-scope=""]').click(); await wait(60); out.back = !!document.getElementById("presend-bg").querySelector("#ps-auto");
     return out; });
+  ok("تبويب «أُرسلت»: يضم المرسَل مع رقم التتبع، بلا تحديد ولا زر إرسال، والعودة تُظهر المفتاح", R.sentTab.n >= 1 && R.sentTab.trk && R.sentTab.cb === 0 && !R.sentTab.btn && !R.sentTab.auto && R.back, R.sentTab);
   ok("القائمة: المؤكَّد غير المرسَل فقط (P1,P2,P3,P6)", R.pending === "P1,P2,P3,P6", R.pending);
   ok("الزران: في الطلبات وفي الرئيسية", R.btn && R.homeBtn, R);
   ok("النافذة: 4 صفوف، والاسم كما سيصل الشركة (اسم البوردرو)، وعدد الطلبات", R.rows === 4 && R.bord && R.count, R);
