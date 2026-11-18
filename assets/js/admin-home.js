@@ -180,7 +180,7 @@ const AdminHome = (() => {
     const on = L.filter(c => !c.cfg.off).length;
     return '<div class="ah-card" style="margin:0 0 14px"><h3>الحملات الإعلانية <small>' + num(on) + ' نشطة من ' + num(L.length) + '</small></h3><div class="ah-ads">' + L.map(c => {
       const p = (a.products || []).find(x => x.slug === c.slug), off = !!c.cfg.off;
-      return '<div class="ah-ad' + (off ? " off" : "") + '"><div class="ah-adt"><b>' + esc(p ? p.title : c.slug) + '</b><span>' + esc(c.cfg.name || "") + (c.cfg.from ? ' · منذ ' + esc(c.cfg.from) : "") + '</span></div><span class="ah-adp">' + (off ? "معطّلة" : "نشطة") + '</span><button type="button" class="ah-btn' + (off ? "" : " gh") + '" data-adt="' + esc(c.slug) + '">' + (off ? "تفعيل" : "تعطيل") + '</button></div>';
+      return '<div class="ah-ad' + (off ? " off" : "") + '"><div class="ah-adt"><b>' + esc(p ? p.title : c.slug) + '</b><span>' + esc(c.cfg.name || "") + (c.cfg.from ? ' · منذ ' + esc(c.cfg.from) : "") + '</span></div><span class="ah-adp">' + (off ? "معطّلة" : "نشطة") + '</span><button type="button" class="ah-btn' + (off ? "" : " gh") + '" data-adt="' + esc(c.key || c.slug) + '">' + (off ? "تفعيل" : "تعطيل") + '</button></div>';
     }).join("") + '</div></div>';
   }
   /* الفترة: 1 اليوم، 7، 30، -1 هذا الشهر، 0 مخصصة (من/إلى)؛ والفترة السابقة بالطول نفسه للمقارنة */
