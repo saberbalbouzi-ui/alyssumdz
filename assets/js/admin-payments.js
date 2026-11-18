@@ -346,19 +346,20 @@ const AdminPayments = (() => {
   /* ملخص كل شركة: عدد الطلبات، المدفوع (العدد والمبلغ)، قيد التوصيل، المستردّ، المرتجع */
   function coStats() {
     const by={}, seen=[];
-    items().forEach(it=>{ const k=it.co||"none"; if(!by[k]){ by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; seen.push(k); } const g=by[k], r=record(it);
-      g.n++; if(r.status==="paid"&&!r.auto){ g.paidN++; g.received+=amount(it,r); } if(it.ship==="expediee"&&r.status==="unpaid") g.pending+=view(it).total; if(r.status==="refunded") g.refunded+=amount(it,r); if(it.ship==="echec") g.retN++; });
-    const real=seen.filter(k=>k!=="manual"&&k!=="none"), keys=(typeof AdminCoStats!=="undefined"?AdminCoStats.keysFor(real).filter(k=>k!=="none"):real); keys.forEach(k=>{ if(!by[k]) by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; });
+    items().forEach(it=>{ const k=it.co||"none"; if(!by[k]){ by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0,due:0}; seen.push(k); } const g=by[k], r=record(it);
+      g.n++; if(r.status==="paid"&&!r.auto){ g.paidN++; g.received+=amount(it,r); }
+      if(r.status==="paid"&&r.auto){ const k=trkOf(it), a=k&&((A().ydActual)||{})[k]; if(!(a&&!a.pend)) g.due+=amount(it,r); }      /* لم تُستلم بعد: المحصَّل عند الشركة (مسلَّم تلقائياً) وليس في كشف مدفوع */ if(it.ship==="expediee"&&r.status==="unpaid") g.pending+=view(it).total; if(r.status==="refunded") g.refunded+=amount(it,r); if(it.ship==="echec") g.retN++; });
+    const real=seen.filter(k=>k!=="manual"&&k!=="none"), keys=(typeof AdminCoStats!=="undefined"?AdminCoStats.keysFor(real).filter(k=>k!=="none"):real); keys.forEach(k=>{ if(!by[k]) by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0,due:0}; });
     try{ if(by.yalidine){ const R=ydRecv(items().filter(it=>it.co==="yalidine")); by.yalidine.received=R.amt; by.yalidine.paidN=R.n; } }catch(_){ }
     if(by.manual) keys.push("manual"); return { by, keys };
   }
   function coBar() {
-    const C=coStats(), tot={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; C.keys.forEach(k=>{ const g=C.by[k]; Object.keys(tot).forEach(f=>{ tot[f]+=g[f]; }); });
+    const C=coStats(), tot={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0,due:0}; C.keys.forEach(k=>{ const g=C.by[k]; Object.keys(tot).forEach(f=>{ tot[f]+=g[f]; }); });
     const chip=(k,l,n)=>`<button type="button" class="pm-btn pm-cochip${S.co===k?" pm-primary":""}" data-co="${esc(k)}">${esc(l)} <small>(${n})</small></button>`;
-    const tr=(l,g,strong)=>`<tr style="${strong?"font-weight:800;border-top:2px solid rgba(255,255,255,.3)":""}"><td style="text-align:start;white-space:nowrap">${esc(l)}</td><td>${g.n}</td><td>${g.paidN}</td><td style="color:#d4ff4d">${money(g.received)}</td><td style="color:#fde047">${money(g.pending)}</td><td style="color:#fca5a5">${money(g.refunded)}</td><td>${g.retN}</td></tr>`;
+    const tr=(l,g,strong)=>`<tr style="${strong?"font-weight:800;border-top:2px solid rgba(255,255,255,.3)":""}"><td style="text-align:start;white-space:nowrap">${esc(l)}</td><td>${g.n}</td><td>${g.paidN}</td><td style="color:#d4ff4d">${money(g.received)}</td><td style="color:#f59e0b;font-weight:800" title="المحصَّل عند الشركة من زبائن الطلبات المسلَّمة ولم يدخل في كشف مدفوع">${money(g.due)}</td><td style="color:#fde047">${money(g.pending)}</td><td style="color:#fca5a5">${money(g.refunded)}</td><td>${g.retN}</td></tr>`;
     return `<section class="pm-card"><div class="pm-head" style="margin:0 0 8px"><div><b>🚚 المدفوعات حسب شركة التوصيل</b><div class="pm-note">اختر شركة لعرض مدفوعاتها وإحصائياتها وحدها، أو «الكل» للخلاصة العامة. الشركة = التي أُرسل إليها الطلب فعلاً.</div></div></div>
       <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem">${chip("all","الكل",tot.n)}${C.keys.filter(k=>C.by[k].n>0||k===S.co).map(k=>chip(k,coName(k),C.by[k].n)).join("")}</div>
-      <div style="overflow:auto"><table style="border-collapse:collapse;min-width:520px"><thead><tr style="opacity:.75"><th style="text-align:start;padding:.3rem .5rem">الشركة</th><th>الطلبات</th><th>مدفوعة</th><th>المبالغ المستلمة</th><th>قيد التوصيل</th><th>المستردّة</th><th>مرتجعة</th></tr></thead><tbody>${C.keys.filter(k=>C.by[k].n>0).map(k=>tr(coName(k),C.by[k])).join("")}${tr("الخلاصة العامة",tot,true)}</tbody></table></div></section>`;
+      <div style="overflow:auto"><table style="border-collapse:collapse;min-width:520px"><thead><tr style="opacity:.75"><th style="text-align:start;padding:.3rem .5rem">الشركة</th><th>الطلبات</th><th>مدفوعة</th><th>المبالغ المستلمة</th><th>لم تُستلم بعد (عند الشركة)</th><th>قيد التوصيل</th><th>المستردّة</th><th>مرتجعة</th></tr></thead><tbody>${C.keys.filter(k=>C.by[k].n>0).map(k=>tr(coName(k),C.by[k])).join("")}${tr("الخلاصة العامة",tot,true)}</tbody></table></div></section>`;
   }
   /* تسوية ياليدين وبطاقة المقارنة تُعرضان مع «الكل» أو «ياليدين» وعند وجود طرود/كشوف ياليدين */
   function showYd() { if(S.co!=="all"&&S.co!=="yalidine") return false; try{ return items().some(it=>it.co==="yalidine")||(YP.list||[]).length>0||!!ydReal()||Object.keys((A().ydActual)||{}).length>0; }catch(_){ return true; } }

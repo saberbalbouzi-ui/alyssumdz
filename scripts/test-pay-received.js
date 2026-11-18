@@ -30,6 +30,13 @@ const { chromium } = require("playwright");
     const t = P.totals("all"); return { rec: t.received, temp: t.temp, nTemp: t.nTemp };
   });
   t("المعلَّم يدوياً وليس في كشف = مؤقت (1000)، والكشف يحلّ محلّ M2 (700): المستلم 1700", TP.temp === 1000 && TP.nTemp === 1 && TP.rec === 1700, TP);
+  const DU = await p.evaluate(() => {
+    const P = AdminPayments, mk = (id, tk, tot) => ({ id, date: new Date().toISOString(), name: "n" + id, phone: "0550000000", status: "livree", total: tot, items: "x", note: "🚚yalidine:" + tk });
+    Admin.orders = [mk("U1", "yal-U1", 1000), mk("U2", "yal-U2", 2000), mk("U3", "yal-U3", 4000)]; P.S.byOrder = {};
+    Admin.ydActual = { "yal-U3": { price: 4000, net: 3000, ts: 1 }, "yal-U2": { pend: "next", price: 2000, net: 1500, ts: 1 } };      /* U3 في كشف مدفوع؛ U1 وU2 لم تُستلم */
+    const C = P.coStats(); const g = C.by.yalidine, tot = P.totals("all"); return { due: g.due, rec: g.received, totDue: tot.due };
+  });
+  t("عمود «لم تُستلم بعد»: المحصَّل عند ياليدين غير الداخل في كشف مدفوع (1000+2000=3000)، والمستلم 3000", DU.due === 3000 && DU.rec === 3000 && DU.totDue === 3000, DU);
   const S2 = await p.evaluate(() => {
     Admin.ydActual = { a1: { price: 2000, del: 600, cod: 15, ret: 0, ins: 0, net: 1385, ts: Date.parse("2026-11-18T10:00:00Z") }, a2: { price: 0, del: 0, cod: 0, ret: 250, ins: 0, net: -250, ts: Date.parse("2026-11-18T10:00:00Z") }, a3: { pend: "next", price: 1000, del: 500, cod: 7, ret: 0, ins: 0, net: 493, ts: Date.parse("2026-11-10T10:00:00Z") } };
     const d = document.createElement("div"); d.innerHTML = AdminPayments.stmtCard(); const tx = d.innerText || d.textContent; return { rows: d.querySelectorAll("tbody tr").length, paid: /مدفوع/.test(tx) && /2\s?000/.test(tx), next: /قادم/.test(tx), tot: /1\s?628/.test(tx) };
