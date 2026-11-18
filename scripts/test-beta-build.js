@@ -21,7 +21,7 @@ try {
   const O = path.join(ROOT, out), files = fs.existsSync(O) ? walk(O) : [], texts = files.filter((f) => TEXT.test(f));
   ok("[B2] الناتج موجود وفيه صفحات وأصول", files.length > 100 && fs.existsSync(path.join(O, "index.html")) && fs.existsSync(path.join(O, "admin.html")), files.length);
   const cfg = fs.readFileSync(path.join(O, "assets/js/config.js"), "utf8");
-  ok("[B3] config.js: Supabase Beta (لا الإنتاج) والنطاق alyssum-beta-web.saber-balbouzi.workers.dev وAPI Beta وCONFIG.BETA", cfg.includes("https://abcdefghijklmnop.supabase.co") && cfg.includes(okKey) && cfg.includes('"alyssum-beta-web.saber-balbouzi.workers.dev"') && /CONFIG\.BETA = \{"enabled": true, "api": "https:\/\/alyssum-platform-api-beta\.saber-balbouzi\.workers\.dev"/.test(cfg) && !cfg.includes(P.supabase_ref) && !N.public_key_markers.some((k) => cfg.includes(k)));
+  ok("[B3] config.js: Supabase Beta (لا الإنتاج) والنطاق alyssum-beta-web.contact-alyssumbio.workers.dev وAPI Beta وCONFIG.BETA", cfg.includes("https://abcdefghijklmnop.supabase.co") && cfg.includes(okKey) && cfg.includes('"alyssum-beta-web.contact-alyssumbio.workers.dev"') && /CONFIG\.BETA = \{"enabled": true, "api": "https:\/\/alyssum-platform-api-beta\.contact-alyssumbio\.workers\.dev"/.test(cfg) && !cfg.includes(P.supabase_ref) && !N.public_key_markers.some((k) => cfg.includes(k)));
   /* مسح مستقل (لا يعتمد على منطق الباني): كل هوية إنتاجية */
   const hits = []; for (const f of texts) { const t = fs.readFileSync(f, "utf8"), rel = path.relative(O, f);
     for (const h of [P.api_host, P.gateway_host, P.app_host, ...N.hosts]) { const rx = new RegExp("(?<![\\w.-])" + h.replace(/\./g, "\\.") + "(?![\\w-])", "i"); if (rx.test(t)) hits.push(rel + ":" + h); }

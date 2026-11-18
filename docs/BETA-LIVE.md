@@ -5,11 +5,11 @@
 ## الروابط
 | | الرابط |
 |---|---|
-| الواجهة (متجر + لوحة) | https://alyssum-beta-web.saber-balbouzi.workers.dev |
+| الواجهة (متجر + لوحة) | https://alyssum-beta-web.contact-alyssumbio.workers.dev |
 | بدء التجربة (إنشاء متجر تجريبي بكود دعوة) | …/beta-start.html |
 | لوحة التحكم | …/admin.html (حساب مدير Beta في Supabase Beta) |
 | صفحة منتج + طلب | …/p/demo/ |
-| منصة API (Worker) | https://alyssum-platform-api-beta.saber-balbouzi.workers.dev (`/health` ← `environment:"beta"`) |
+| منصة API (Worker) | https://alyssum-platform-api-beta.contact-alyssumbio.workers.dev (`/health` ← `environment:"beta"`) |
 
 ## بنية النشر
 واجهة ساكنة تُبنى بـ`scripts/build-beta.py` (قالب نظيف + طبقة Beta) وتُخدَّم من Worker `alyssum-beta-web` يقرأ KV `alyssum-beta-web-files` (Pages لم يصلح: الرفع المباشر للأصول يحتاج JWT يتعارض مع وكيل الجلسة). الواجهة تتحدث مع Supabase Beta (دخول/طلبات/إعدادات اللوحة) ومع Worker Beta عبر دالة `platform-proxy` المنشورة على Supabase Beta (أسرارها: رابط Worker Beta ومفتاح متجر Beta، لا Production).

@@ -20,7 +20,7 @@ const PROD = mkD1(), BETA = mkD1(), BETA2 = mkD1();
 const ADM_P = "prod-admin-token-0123456789abcdef", ADM_B = "beta-admin-token-fedcba9876543210";
 const KEY_P = Buffer.from(new Uint8Array(32).fill(7)).toString("base64"), KEY_B = Buffer.from(new Uint8Array(32).fill(9)).toString("base64");
 const penv = { DB: PROD.d1, PLATFORM_SECRET: "prod-platform-secret-0123456789", ADMIN_TOKEN: ADM_P, APP_ENCRYPTION_KEY: KEY_P, PUBLIC_URL: "https://api.alyssumhub.fyi" };                      // الإنتاج: بلا ENVIRONMENT (كالنشر القائم)
-const benv = { DB: BETA.d1, PLATFORM_SECRET: "beta-platform-secret-9876543210abc", ADMIN_TOKEN: ADM_B, APP_ENCRYPTION_KEY: KEY_B, ENVIRONMENT: "beta", PUBLIC_URL: "https://alyssum-platform-api-beta.saber-balbouzi.workers.dev", CHARGILY_MODE: "test", GIT_SHA: "abc123def456", APP_VERSION: "1.89.1071", SCHEMA_HASH: "schemahash0001" };
+const benv = { DB: BETA.d1, PLATFORM_SECRET: "beta-platform-secret-9876543210abc", ADMIN_TOKEN: ADM_B, APP_ENCRYPTION_KEY: KEY_B, ENVIRONMENT: "beta", PUBLIC_URL: "https://alyssum-platform-api-beta.contact-alyssumbio.workers.dev", CHARGILY_MODE: "test", GIT_SHA: "abc123def456", APP_VERSION: "1.89.1071", SCHEMA_HASH: "schemahash0001" };
 /* تجهيز هوية القاعدة كما تفعل deploy db */
 BETA.db.prepare("INSERT INTO pf_meta (k,v,at) VALUES ('environment','beta','t'),('schema_hash','schemahash0001','t')").run();
 const adm = (env, tok, m, p, b) => call(env, m, p, b, tok, { "x-actor": "owner@x.dz" });

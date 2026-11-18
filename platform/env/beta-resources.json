@@ -10,7 +10,7 @@
     },
     {
       "id": "D2",
-      "decision": "منطقة DNS لـalyssum-beta-web.saber-balbouzi.workers.dev: هل alyssumdz.com على Cloudflare؟ (لا يُعرف من المستودع)",
+      "decision": "منطقة DNS لـalyssum-beta-web.contact-alyssumbio.workers.dev: هل alyssumdz.com على Cloudflare؟ (لا يُعرف من المستودع)",
       "recommendation": "إن لم تكن على Cloudflare فاستعمل نطاقاً فرعياً مفوَّضاً أو pages.dev مؤقتاً"
     },
     {
@@ -104,7 +104,7 @@
       {
         "id": "cf-route-api",
         "type": "worker_route",
-        "name": "alyssum-platform-api-beta.saber-balbouzi.workers.dev/*",
+        "name": "alyssum-platform-api-beta.contact-alyssumbio.workers.dev/*",
         "purpose": "مسار API Beta",
         "created_by": "deploy.mjs --env beta route",
         "approval": true,
@@ -117,7 +117,7 @@
       {
         "id": "cf-route-gateway",
         "type": "worker_route",
-        "name": "alyssum-shipping-gateway-beta.saber-balbouzi.workers.dev/*",
+        "name": "alyssum-shipping-gateway-beta.contact-alyssumbio.workers.dev/*",
         "purpose": "مسار بوابة الشحن Beta",
         "created_by": "gateway deploy.mjs --env beta route",
         "approval": true,
@@ -138,7 +138,7 @@
       {
         "id": "cf-pages-domain",
         "type": "pages_custom_domain",
-        "name": "alyssum-beta-web.saber-balbouzi.workers.dev",
+        "name": "alyssum-beta-web.contact-alyssumbio.workers.dev",
         "purpose": "نطاق الواجهة (+ شهادة Universal SSL)",
         "created_by": "لوحة Cloudflare Pages ← Custom domains",
         "approval": true,
@@ -173,9 +173,9 @@
     "auth": {
       "public_signup": "OFF (إلزامي)",
       "email_confirm": "Auto Confirm لمستخدم المدير فقط",
-      "site_url": "https://alyssum-beta-web.saber-balbouzi.workers.dev",
+      "site_url": "https://alyssum-beta-web.contact-alyssumbio.workers.dev",
       "redirect_allow_list": [
-        "https://alyssum-beta-web.saber-balbouzi.workers.dev/**"
+        "https://alyssum-beta-web.contact-alyssumbio.workers.dev/**"
       ],
       "users": [
         "مدير Beta واحد (D3)"
@@ -253,7 +253,7 @@
     "mode": "sandbox/test فقط",
     "api_base": "https://pay.chargily.net/test/api/v2",
     "secret_key": "test_sk_… مخصص لـBeta (D5)",
-    "webhook": "https://alyssum-platform-api-beta.saber-balbouzi.workers.dev/v1/payments/hook/<hook_id> يُسجَّل يدوياً في لوحة Chargily التجريبية بعد نشر Beta",
+    "webhook": "https://alyssum-platform-api-beta.contact-alyssumbio.workers.dev/v1/payments/hook/<hook_id> يُسجَّل يدوياً في لوحة Chargily التجريبية بعد نشر Beta",
     "status": "NOT CONFIGURED"
   },
   "github": {
@@ -281,7 +281,7 @@
       {
         "name": "BETA_API_URL",
         "kind": "variable",
-        "purpose": "عنوان منصة Beta بعد النشر (https://alyssum-platform-api-beta.saber-balbouzi.workers.dev)",
+        "purpose": "عنوان منصة Beta بعد النشر (https://alyssum-platform-api-beta.contact-alyssumbio.workers.dev)",
         "required_for": [
           "api-smoke"
         ],

@@ -24,7 +24,7 @@ const version = () => { try { return readFileSync(new URL("../../../VERSION", im
 async function cf(method, path, body, extra = {}) {
   const isForm = body instanceof FormData;
   if (DRY) {                                                                       // لا شبكة: يطبع الطلب (الأجسام النصية بلا أسرار؛ الـFormData يُختصر)
-    console.log(`DRY ${method} ${path}` + (body && !isForm ? " " + JSON.stringify(body).slice(0, 150) : isForm ? " <multipart: metadata=" + JSON.stringify(JSON.parse(body.__meta ?? "{}")).slice(0, 700) + ">" : ""));
+    console.log(`DRY ${method} ${path}` + (body && !isForm ? " " + JSON.stringify(body).slice(0, 150) : isForm ? " <multipart: metadata=" + JSON.stringify(JSON.parse(body.__meta ?? "{}")).slice(0, 1400) + ">" : ""));
     return method === "GET" ? (/\/d1\/database\?name=/.test(path) ? [{ name: DB_NAME, uuid: "dry-run-d1-id" }] : /deployments/.test(path) ? { deployments: [{ id: "dep-new", versions: [{ version_id: "v-new", percentage: 100 }] }, { id: "dep-prev", versions: [{ version_id: "v-prev", percentage: 100 }] }] } : []) : { uuid: "dry-run-d1-id", result: [{ results: [] }] };
   }
   const r = await fetch(API + path, { method, headers: { ...hdr, ...(body && !isForm ? { "Content-Type": "application/json" } : {}), ...extra }, body: body ? (isForm ? body : JSON.stringify(body)) : undefined });
