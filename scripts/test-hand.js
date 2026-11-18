@@ -1657,7 +1657,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const notices = []; Admin.showNotice = (t) => { notices.push(t); };
     const mkO = id => ({ id, date: new Date().toISOString(), status: "confirmee", name: "ف" + id, phone: "0550002222", wilaya: "Alger", commune: "X", dtype: "home", items: "عنصر ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" });
     const run = async (id, behave, cfgFb) => {
-      Admin.orders = [mkO(id)]; AdminDispatch._S.cfg = Object.assign({ on: false }, cfgFb === undefined ? {} : { fallback: cfgFb }); const calls = [];
+      Admin.orders = [mkO(id)]; AdminDispatch._S.cfg = Object.assign({ on: false }, cfgFb === undefined ? { fallback: true } : { fallback: cfgFb }); const calls = [];
       Admin._sendOrderToDelivery = async function (ix, k) { calls.push(k + (this._fbQuiet ? "~" : "")); const b = behave[k]; if (b === "ok") { this.orders[ix].note = "🚚" + k + ":T" + id; return true; } this._sendFail = b ? { kind: b, title: "فشل " + k, html: "x", co: k, key: k } : null; if (!this._fbQuiet && b && b !== "amb") this.showNotice("فشل " + k, "x"); return false; };
       const r = await Admin.sendOrderToDelivery(0, "yalidine"); await wait(30); return { r, calls: calls.join(), note: Admin.orders[0].note };
     };
