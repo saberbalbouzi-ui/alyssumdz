@@ -11,13 +11,16 @@ const { chromium } = require("playwright");
     A.enabledCompanyKeys = () => ["wecan", "yalidine"]; A.activeCompanyKey = () => "wecan"; A.priceCheck = o => o.id === "P3" ? { ok: false, msgs: ["السعر لا يطابق"] } : { ok: true, msgs: [] };
     A.products = [{ slug: "tarkiz", title: "عسل التركيز و تنشيط الذاكرة", bord: "التركيز و الذاكرة ألبسوم", bordNoQty: true, price: 1800 }];
     const mk = (id, o) => Object.assign({ id, date: new Date().toISOString(), name: "ز" + id, phone: "0550000000", wilaya: "Béjaïa", commune: "Béjaïa", dtype: "home", desk: "", items: "عسل التركيز و تنشيط الذاكرة ×3 = 3200 DA", subtotal: 3200, fee: 500, total: 3700, extra: {}, status: "confirmee", note: "" }, o || {});
-    A.orders = [mk("P1"), mk("P2", { dtype: "stop", desk: "Hub Bejaia" }), mk("P3"), mk("P4", { status: "nouvelle" }), mk("P5", { note: "🚚wecan:WS-X" }), mk("P6", { dtype: "stop", desk: "" })];
+    A.orders = [mk("P1"), mk("P2", { dtype: "stop", desk: "Hub Bejaia", extra: { "✍️ طلب يدوي": "نعم" } }), mk("P3"), mk("P4", { status: "nouvelle" }), mk("P5", { note: "🚚wecan:WS-X" }), mk("P6", { dtype: "stop", desk: "" })];
     A.orderCompanyKey = o => o.id === "P2" ? "yalidine" : "wecan"; A.trackingOf = o => { const m = /🚚(\w+):(\S+)/.exec(o.note || ""); return m ? { company: m[1], tracking: m[2] } : null; };
     out.pending = AdminPreSend.pending().map(o => o.id).join(",");
     out.btn = !!document.getElementById("presend-btn"); AdminHome.render(); out.homeBtn = !!document.querySelector('#ahome [data-go="presend"]');
     AdminPreSend.open(); await wait(100); const bg = document.getElementById("presend-bg"), txt = () => bg.innerText.replace(/\s+/g, " ");
     out.rows = bg.querySelectorAll("tbody tr").length; out.bord = /التركيز و الذاكرة ألبسوم/.test(txt()) && !/تنشيط الذاكرة/.test(txt()); out.other = /شركة غير الافتراضية/.test(txt()); out.price = /تدقيق السعر: السعر لا يطابق/.test(txt()); out.nodesk = /لا مكتب Stop Desk محدَّد/.test(txt()); out.count = /4 طلب مؤكَّد لم يُرسَل/.test(txt());
     out.sum = /WeCan|wecan/i.test(txt()) && /Yalidine|yalidine/i.test(txt());
+    out.chips = [...bg.querySelectorAll("[data-src]")].map(x => x.textContent.replace(/\s+/g, " ").trim()).join("|"); out.badges = [...bg.querySelectorAll("tbody .o-src")].map(x => x.textContent).join(",");
+    bg.querySelector('[data-src="man"]').click(); await wait(80); out.man = bg.querySelectorAll("tbody tr").length + ":" + /Hub Bejaia|Béjaïa/.test(bg.innerText);
+    bg.querySelector('[data-src="web"]').click(); await wait(80); out.web = bg.querySelectorAll("tbody tr").length; bg.querySelector('[data-src=""]').click(); await wait(80);
     /* مفتاح الإرسال التلقائي */
     A.setAutoOpt = (k, on) => { localStorage.setItem("alyssum_auto_" + k, on ? "1" : "0"); }; localStorage.removeItem("alyssum_auto_send"); AdminPreSend.open(); await wait(80); const au = document.querySelector("#presend-bg #ps-auto"); out.autoDefault = au.checked; au.checked = false; au.dispatchEvent(new Event("change")); await wait(80); out.autoOff = localStorage.getItem("alyssum_auto_send") === "0" && /متوقف/.test(document.getElementById("presend-bg").innerText);
     /* إلغاء تحديد طلب ثم إرسال المحدَّد */
@@ -31,6 +34,7 @@ const { chromium } = require("playwright");
   ok("التحذيرات: شركة غير الافتراضية، تدقيق السعر، مكتب مفقود، وملخص الشركات", R.other && R.price && R.nodesk && R.sum, R);
   ok("مفتاح الإرسال التلقائي: مفعّل افتراضياً ويُوقف من النافذة ويُحفظ", R.autoDefault === true && R.autoOff, R);
   ok("إرسال المحدَّد: بعد إلغاء P3 يُرسَل P1 وP2 وP6 فقط، ويُحدَّث العدد والقائمة", R.sent === "P1,P2,P6" && /\(3\)/.test(R.btnLabel) && R.after === 1, [R.sent, R.btnLabel, R.after]);
+  ok("المصدر: شارات «الموقع/يدوي» ومرشّحات بأعدادها، وتصفية «يدوياً» (1) و«الموقع» (3)", /الكل \(4\)\|دخلت من الموقع \(3\)\|أدخلتُها يدوياً \(1\)/.test(R.chips) && /يدوي/.test(R.badges) && R.man.startsWith("1:") && R.web === 3, [R.chips, R.badges, R.man, R.web]);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
