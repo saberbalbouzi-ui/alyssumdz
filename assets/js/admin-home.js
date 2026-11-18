@@ -141,7 +141,7 @@ const AdminHome = (() => {
     let toPack = 0; try { if (typeof AdminPack !== "undefined" && AdminPack.count && hasTab("pack")) { toPack = S.packN || 0; AdminPack.count().then(n => { if (n !== null && n !== S.packN) { S.packN = n; refreshSoft(); } }); } } catch (e) { }   /* العدد من قائمة التجهيز نفسها (دالة الخادم) لا من حالة الطلبات */
     /* ترتيب الاختصارات (طلب صاحب المتجر): الطلبات معاً ثم المنتج والعملاء (الأرباح والمسجلة والرقية تُفتح من القائمة/البطاقة)؛ كل مجموعة في صفها وما لا قسم له في هذه النسخة يُخفى */
     const G = [
-      [["neword", "+ طلب", hasTab("orders"), 1], ["orders", "كل الطلبات", hasTab("orders"), 0], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1, 0], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack"), 0]],
+      [["neword", "+ طلب", hasTab("orders"), 1], ["orders", "كل الطلبات", hasTab("orders"), 0], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1, 0], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack"), 0], ["sent", "المرسَلة اليوم", hasTab("shipped") && typeof AdminSent !== "undefined", 0]],
       [["newp", "+ منتج", 1, 1], ["customers", "العملاء", hasTab("customers"), 0]]
     ];      /* أزرار الرقية حُذفت من الاختصارات (طلب صاحب المتجر): تبقى في بطاقة «مواعيد الرقية» أسفلها */
     return G.map(g => g.filter(q => q[2])).filter(g => g.length).map(g => '<div class="ah-quick">' + g.map(q => '<button type="button" class="ah-btn' + (q[3] ? "" : " gh") + '" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>').join("");
@@ -330,6 +330,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   }
   function go(w) {
     const a = A(), btn = k => [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
+    if (w === "sent") { try { AdminSent.open(); } catch (e) { } return; }
     if (w === "neword") { try { if (typeof ManualOrder !== "undefined") ManualOrder.open({ mode: "new" }); } catch (e) { } return; }
     if (w === "ruqya-new" || w === "ruqya-pending" || w === "ruqya-uv" || w === "ruqya") { try { AdminRuqya.queue(w === "ruqya-new" ? { view: "man" } : w === "ruqya-pending" ? { filter: "pending" } : w === "ruqya-uv" ? { filter: "uv" } : { filter: "up" }); } catch (e) { } const rb = btn("ruqya"); if (rb) a.tab("ruqya", rb); return; }
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }

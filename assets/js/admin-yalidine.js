@@ -388,5 +388,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, csv, sheets, setQuery, noteSent, forget, orderOf: tr => trackMap()[tr] || null, prepOpen, prepOpenWith, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
+  return { set, draw, load, S, csv, sheets, setQuery, noteSent, sentLog: () => REG, forget, orderOf: tr => trackMap()[tr] || null, prepOpen, prepOpenWith, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
 })();
