@@ -148,10 +148,19 @@ const AdminPayments = (() => {
     const q=S.query.trim().toLowerCase(), qd=q.replace(/\D/g, "");
     return baseList().filter(it=>{ if(S.co!=="all"&&it.co!==S.co) return false; const r=record(it), v=view(it), m=S.filter==="all"||r.status===S.filter; return m&&(!q||it.id.toLowerCase().includes(q)||trkOf(it).toLowerCase().includes(q)||String(v.name).toLowerCase().includes(q)||String(v.product).toLowerCase().includes(q)||String(v.phone).toLowerCase().includes(q)||(qd&&String(v.phone).replace(/\D/g, "").includes(qd))); });
   }
+  /* المستلم من ياليدين = صافي كشوفها المستوردة «المدفوعة» (ما دفعته فعلاً) + ما علّمتَه مدفوعاً يدوياً لطرد ليس في كشف مدفوع (بلا عدّ مزدوج) */
+  function ydRecv(is) {
+    const act=(A().ydActual)||{}, st={}; Object.keys(act).forEach(k=>{ const a=act[k]; if(a&&!a.pend) st[k]=a; });
+    let amt=0, n=0; Object.keys(st).forEach(k=>{ amt+=Number(st[k].net)||0; n++; });
+    is.forEach(it=>{ const k=trkOf(it); if(k&&st[k]) return; const r=record(it); if(r.status==="paid"&&!r.auto){ amt+=amount(it,r); n++; } });
+    return { amt, n };
+  }
   function totals(co) {
     const is=items().filter(it=>!co||co==="all"||it.co===co);
     const got=it=>{const r=record(it);return r.status==="paid"&&!r.auto;}, due=it=>{const r=record(it);return r.status==="paid"&&!!r.auto;};   /* المستلم = ما سجّلتَه أنت فقط؛ المسلَّم تلقائياً من الشركة «بانتظار القبض» لا «مستلم» */
-    return { received:is.filter(got).reduce((n,it)=>n+amount(it,record(it)),0), due:is.filter(due).reduce((n,it)=>n+amount(it,record(it)),0), nDue:is.filter(due).length, pending:is.filter(it=>it.ship==="expediee"&&record(it).status==="unpaid").reduce((n,it)=>n+view(it).total,0), refunded:is.filter(it=>record(it).status==="refunded").reduce((n,it)=>n+amount(it,record(it)),0) };
+    const pst=(A().ydActual)||{}, dueU=it=>{ if(!due(it)) return false; const k=trkOf(it), a=k&&pst[k]; return !(a&&!a.pend); };      /* المسلَّم الداخل في كشف مدفوع لا يُعدّ «بانتظار القبض» */
+    const yIs=is.filter(it=>it.co==="yalidine"), withYd=!co||co==="all"||co==="yalidine", rIs=withYd?is.filter(it=>it.co!=="yalidine"):is;
+    return { received:rIs.filter(got).reduce((n,it)=>n+amount(it,record(it)),0)+(withYd?ydRecv(yIs).amt:0), due:is.filter(dueU).reduce((n,it)=>n+amount(it,record(it)),0), nDue:is.filter(dueU).length, pending:is.filter(it=>it.ship==="expediee"&&record(it).status==="unpaid").reduce((n,it)=>n+view(it).total,0), refunded:is.filter(it=>record(it).status==="refunded").reduce((n,it)=>n+amount(it,record(it)),0) };
   }
   function draftFor(it) { return S.drafts[it.id] || Object.assign({},record(it),{ name:view(it).name, phone:view(it).phone, product:view(it).product, total:view(it).total }); }
   function csv() {
@@ -332,6 +341,7 @@ const AdminPayments = (() => {
     items().forEach(it=>{ const k=it.co||"none"; if(!by[k]){ by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; seen.push(k); } const g=by[k], r=record(it);
       g.n++; if(r.status==="paid"&&!r.auto){ g.paidN++; g.received+=amount(it,r); } if(it.ship==="expediee"&&r.status==="unpaid") g.pending+=view(it).total; if(r.status==="refunded") g.refunded+=amount(it,r); if(it.ship==="echec") g.retN++; });
     const real=seen.filter(k=>k!=="manual"&&k!=="none"), keys=(typeof AdminCoStats!=="undefined"?AdminCoStats.keysFor(real).filter(k=>k!=="none"):real); keys.forEach(k=>{ if(!by[k]) by[k]={n:0,paidN:0,received:0,pending:0,refunded:0,retN:0}; });
+    try{ if(by.yalidine){ const R=ydRecv(items().filter(it=>it.co==="yalidine")); by.yalidine.received=R.amt; by.yalidine.paidN=R.n; } }catch(_){ }
     if(by.manual) keys.push("manual"); return { by, keys };
   }
   function coBar() {
