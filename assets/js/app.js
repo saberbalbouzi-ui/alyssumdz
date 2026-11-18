@@ -2315,7 +2315,7 @@ const PhoneDZ = {
   + WW+".dtype label:has(input:checked){border-color:var(--o-ac)!important;background:color-mix(in srgb,var(--o-ac) 12%,var(--o-bg))!important}"
   + WW+".coupon-box button{background:var(--o-cb)!important;color:var(--o-tc)!important;border:1px solid var(--o-bd)!important}"
   + WW+".btn-order{background:var(--o-ac)!important;background-image:none!important;color:var(--o-bt)!important;border:0!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important}"
-  + WW+".btn-wa{background:var(--o-wb)!important;background-image:none!important;color:#fff!important;border:0!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important}"
+  + WW+".btn-wa{background:color-mix(in srgb,var(--o-wb) 9%,transparent)!important;background-image:none!important;color:color-mix(in srgb,var(--o-wb) 62%,#000)!important;border:1.5px solid var(--o-wb)!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important;min-height:38px!important;padding:.3rem .8rem!important;font-size:.85rem!important;font-weight:700!important;margin:.45rem auto 0!important;width:86%!important;opacity:.95}"
   + WW+".cod-note{color:var(--o-tc)!important;opacity:.85}"
   + WW+".btn-order *,"+WW+".btn-wa *{color:inherit!important}"
   + WW+".coupon-box button{background-image:none!important;box-shadow:none!important}"
