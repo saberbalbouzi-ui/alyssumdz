@@ -4,7 +4,7 @@
 const AdminHome = (() => {
   const $ = id => document.getElementById(id);
   const A = () => (typeof Admin !== "undefined" ? Admin : {});
-  const S = { days: 7, metric: "sales", table: false, shown: false };
+  const S = { days: 7, from: "", to: "", metric: "sales", table: false, shown: false };
   const MINT = "#e2fe17", INK = "#ffffff", MUT = "rgba(255,255,255,.72)", GRID = "rgba(255,255,255,.1)";
   /* ترتيب ثابت للألوان الفئوية (dark): أزرق، برتقالي، تركوازي، أصفر، وردي — يتبع تدفّق الحالة */
   const ST = [
@@ -42,6 +42,12 @@ const AdminHome = (() => {
 #ahome .tp{display:grid;gap:10px}#ahome .tp .r{display:grid;grid-template-columns:22px 1fr auto;gap:4px 10px;align-items:center}#ahome .tp .n{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:.75rem;font-weight:900;background:rgba(255,255,255,.1);color:#fff}#ahome .tp .t{color:#fff;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#ahome .tp .q{color:${MUT};font-size:.8rem}#ahome .tp .bar{grid-column:2/4;height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}#ahome .tp .bar i{display:block;height:100%;border-radius:6px;background:${MINT}}
 #ahome .at{display:grid;gap:8px}#ahome .at button{display:flex;align-items:center;gap:10px;text-align:start;padding:11px 13px;border-radius:14px;font:inherit;color:#fff;cursor:pointer;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);transition:transform .2s,background .2s}#ahome .at button:hover{transform:translateY(-2px);background:rgba(255,255,255,.1)}#ahome .at b{font-size:1.15rem;min-width:30px}#ahome .at span{color:${MUT};font-size:.86rem}#ahome .at .w{border-color:rgba(251,146,60,.5)}#ahome .at .w b{color:#fdba74}#ahome .at .ok b{color:#e2fe17}
 #ahome .em{padding:24px;text-align:center;color:${MUT}}
+#ahome .ah-lnk{all:unset;display:inline;border:0!important;box-shadow:none!important;background:none!important;padding:0!important;min-height:0!important;cursor:pointer;color:#ffd45e;font-weight:800;text-decoration:underline;text-underline-offset:3px}#ahome .ah-lnk:hover{opacity:.85}#ahome .ah-lnk:focus-visible{outline:2px solid currentColor;outline-offset:2px;border-radius:4px}
+#ahome .ah-dr{display:inline-flex;align-items:center;gap:6px}#ahome .ah-dr input{font:inherit;padding:7px 9px;border-radius:10px;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color-scheme:dark}
+#ahome .rt-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.08);gap:2px;margin:6px 0 14px}#ahome .rt-bar i{display:block;min-width:4px}
+#ahome .rt-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}#ahome .rt-c{display:grid;gap:3px}#ahome .rt-c span{color:${MUT};font-size:.86rem;display:flex;align-items:center;gap:6px}#ahome .rt-c u{width:9px;height:9px;border-radius:3px;display:inline-block}#ahome .rt-c b{font-size:1.6rem;font-weight:900;color:#fff}#ahome .rt-c small{color:${MUT};font-size:.76rem}
+#ahome .rt-m{height:6px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}#ahome .rt-m i{display:block;height:100%;border-radius:999px}#ahome .rt-n{margin:8px 0 0;color:${MUT};font-size:.78rem}
+#ahome .pf-v{font-size:2rem;font-weight:900;margin:4px 0}
 @media(max-width:1100px){#ahome .ah-kpis{grid-template-columns:repeat(2,1fr)}#ahome .ah-row,#ahome .ah-row2{grid-template-columns:1fr}}
 @media(max-width:520px){#ahome .ah-kpis{grid-template-columns:1fr 1fr;gap:10px}#ahome .kpi .v{font-size:1.25rem}#ahome .ah-card{padding:12px}}
 #ahome .ah-quick{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}#ahome .ah-quick .ah-btn,#ahome .ah-rqb .ah-btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1.25}
@@ -75,6 +81,7 @@ const AdminHome = (() => {
     } catch (e) { }
     if (gone) return { t: "⚠️ الطرد غير موجود عند الشركة (حُذف)", c: "#f87171" };
     if (!raw) { try { raw = ((a.shipRaw || {})[o.id] || {}).raw || ""; } catch (e) { } }
+    try { if (a.coStale && a.coStale(o)) return { t: "⚠️ لا حالة من الشركة بعد", c: "#e08a1a" }; } catch (e) { }
     return { t: raw || (g.t + " (بانتظار الشركة)"), c: g.c };
   }
   let _soft = 0; function refreshSoft() { clearTimeout(_soft); _soft = setTimeout(() => { const r = $("ahome"); if (r && r.offsetParent !== null) { try { render(); } catch (e) { } } }, 600); }
@@ -133,8 +140,9 @@ const AdminHome = (() => {
   function quickBar(waiting) {
     let toPack = 0; try { if (typeof AdminPack !== "undefined" && AdminPack.count && hasTab("pack")) { toPack = S.packN || 0; AdminPack.count().then(n => { if (n !== null && n !== S.packN) { S.packN = n; refreshSoft(); } }); } } catch (e) { }   /* العدد من قائمة التجهيز نفسها (دالة الخادم) لا من حالة الطلبات */
     /* ترتيب الاختصارات (طلب صاحب المتجر): الطلبات معاً ثم المنتج والعملاء (الأرباح والمسجلة والرقية تُفتح من القائمة/البطاقة)؛ كل مجموعة في صفها وما لا قسم له في هذه النسخة يُخفى */
+    let nPre = 0; try { nPre = typeof AdminPreSend !== "undefined" ? AdminPreSend.pending().length : 0; } catch (e) { }
     const G = [
-      [["neword", "+ طلب", hasTab("orders"), 1], ["orders", "كل الطلبات", hasTab("orders"), 0], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1, 0], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack"), 0]],
+      [["neword", "+ طلب", hasTab("orders"), 1], ["orders", "كل الطلبات", hasTab("orders"), 0], ["orders-new", "الطلبات الجديدة" + (waiting ? " (" + num(waiting) + ")" : ""), 1, 0], ["pack", "تجهيز الطلبات" + (toPack ? " (" + num(toPack) + ")" : ""), hasTab("pack"), 0], ["presend", "قبل الإرسال" + (nPre ? " (" + num(nPre) + ")" : ""), hasTab("orders") && typeof AdminPreSend !== "undefined", 0], ["sent", "المرسَلة اليوم", hasTab("shipped") && typeof AdminSent !== "undefined", 0]],
       [["newp", "+ منتج", 1, 1], ["customers", "العملاء", hasTab("customers"), 0]]
     ];      /* أزرار الرقية حُذفت من الاختصارات (طلب صاحب المتجر): تبقى في بطاقة «مواعيد الرقية» أسفلها */
     return G.map(g => g.filter(q => q[2])).filter(g => g.length).map(g => '<div class="ah-quick">' + g.map(q => '<button type="button" class="ah-btn' + (q[3] ? "" : " gh") + '" data-go="' + q[0] + '">' + q[1] + '</button>').join("") + '</div>').join("");
@@ -156,12 +164,11 @@ const AdminHome = (() => {
     const P = AdminPayments;
     if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>جارٍ التحميل…</small></h3></div>'; }
     let L; try { L = P.coNets(); } catch (e) { return ""; }
-    try { const en = A().enabledCompanyKeys ? A().enabledCompanyKeys() : null; if (Array.isArray(en)) L = L.filter(g => en.indexOf(g.k) >= 0); } catch (e) { }      /* الشركات المفعّلة فقط */
-    L = L.filter(g => g.net !== 0 || g.got !== 0);      /* بلا الشركات التي مدفوعها 0 */
+    try { const en = A().enabledCompanyKeys ? A().enabledCompanyKeys() : null; if (Array.isArray(en)) { L = L.filter(g => en.indexOf(g.k) >= 0); en.forEach(k => { if (!L.some(g => g.k === k)) L.push({ k, net: 0, got: 0, nDone: 0, nRet: 0, nExp: 0, netExp: 0 }); }); } } catch (e) { }      /* كل الشركات المفعّلة تظهر؛ التي لا مستحقات لها تُكتب «لا مستحقات» فلا يُظنّ أنها حُذفت */
     if (!L.length) return "";
     const nm = k => (typeof AdminCoStats !== "undefined" ? AdminCoStats.nameOf(k) : k), esc = x => String(x == null ? "" : x).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
     const tot = L.reduce((t, g) => t + g.net, 0);
-    return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>المجموع ' + money(tot) + '</small></h3><div class="ah-pay">' + L.map(g => '<div class="ah-pc" data-noco><b>' + esc(nm(g.k)) + '</b><strong' + (g.net < 0 ? ' style="color:#fca5a5"' : "") + '>' + money(g.net) + '</strong><span>الصافي · ' + num(g.nDone) + ' مسلَّم' + (g.nRet ? ' · ' + num(g.nRet) + ' مرتجع' : "") + '</span><span>المحصَّل ' + money(g.got) + '</span>' + (g.nExp ? '<span class="w">في الطريق ' + num(g.nExp) + ' · متوقع ' + money(g.netExp) + '</span>' : "") + '</div>').join("") + '</div><div class="ah-rqb"><button type="button" class="ah-btn gh" data-go="payments">تفاصيل الدفع</button></div></div>';
+    return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>المجموع ' + money(tot) + '</small></h3><div class="ah-pay">' + L.map(g => '<div class="ah-pc" data-noco><b>' + esc(nm(g.k)) + '</b>' + (!g.net && !g.got && !g.nExp ? '<strong style="opacity:.6;font-size:1rem">لا مستحقات</strong></div>' : '<strong' + (g.net < 0 ? ' style="color:#fca5a5"' : "") + '>' + money(g.net) + '</strong><span>الصافي · ' + num(g.nDone) + ' مسلَّم' + (g.nRet ? ' · ' + num(g.nRet) + ' مرتجع' : "") + '</span><span>لم يُستلم بعد (عند الشركة) ' + money(g.got) + '</span>' + (g.nExp ? '<span class="w">في الطريق ' + num(g.nExp) + ' · ' + money(g.gotExp) + ' · الصافي المتوقع ' + money(g.netExp) + '</span>' : "") + '</div>')).join("") + '</div><div class="ah-rqb"><button type="button" class="ah-btn gh" data-go="payments">تفاصيل الدفع</button></div></div>';
   }
   /* الحملات الإعلانية الحالية (حملة لكل منتج) مع تفعيل/تعطيل مباشر؛ المنتهية بتاريخ «إلى» لا تظهر */
   function adsCard() {
@@ -173,13 +180,51 @@ const AdminHome = (() => {
     const on = L.filter(c => !c.cfg.off).length;
     return '<div class="ah-card" style="margin:0 0 14px"><h3>الحملات الإعلانية <small>' + num(on) + ' نشطة من ' + num(L.length) + '</small></h3><div class="ah-ads">' + L.map(c => {
       const p = (a.products || []).find(x => x.slug === c.slug), off = !!c.cfg.off;
-      return '<div class="ah-ad' + (off ? " off" : "") + '"><div class="ah-adt"><b>' + esc(p ? p.title : c.slug) + '</b><span>' + esc(c.cfg.name || "") + (c.cfg.from ? ' · منذ ' + esc(c.cfg.from) : "") + '</span></div><span class="ah-adp">' + (off ? "معطّلة" : "نشطة") + '</span><button type="button" class="ah-btn' + (off ? "" : " gh") + '" data-adt="' + esc(c.slug) + '">' + (off ? "تفعيل" : "تعطيل") + '</button></div>';
+      return '<div class="ah-ad' + (off ? " off" : "") + '"><div class="ah-adt"><b>' + esc(p ? p.title : c.slug) + '</b><span>' + esc(c.cfg.name || "") + (c.cfg.from ? ' · منذ ' + esc(c.cfg.from) : "") + '</span></div><span class="ah-adp">' + (off ? "معطّلة" : "نشطة") + '</span><button type="button" class="ah-btn' + (off ? "" : " gh") + '" data-adt="' + esc(c.key || c.slug) + '">' + (off ? "تفعيل" : "تعطيل") + '</button></div>';
     }).join("") + '</div></div>';
+  }
+  /* الفترة: 1 اليوم، 7، 30، -1 هذا الشهر، 0 مخصصة (من/إلى)؛ والفترة السابقة بالطول نفسه للمقارنة */
+  function span() {
+    let days = S.days, f1, t1;
+    if (days === -1) { const d = new Date(); f1 = new Date(d.getFullYear(), d.getMonth(), 1).getTime(); t1 = day0(Date.now()) + DAY; days = Math.max(1, Math.round((t1 - f1) / DAY)); }
+    else if (days === 0) {
+      const x = new Date(S.from + "T00:00:00").getTime(), y = new Date(S.to + "T00:00:00").getTime();
+      if (isFinite(x) && isFinite(y) && y >= x) { f1 = day0(x); t1 = day0(y) + DAY; days = Math.max(1, Math.min(366, Math.round((t1 - f1) / DAY))); if (days === 366) f1 = t1 - 366 * DAY; }
+      else { S.days = 7; return span(); }
+    } else { [f1, t1] = range(days, 0); }
+    const L = t1 - f1; return { days, f1, t1, f0: f1 - L, t0: f1, hourly: days === 1 };
+  }
+  const perTxt = days => S.days === 1 ? "اليوم" : S.days === -1 ? "هذا الشهر" : S.days === 0 ? "من " + S.from + " إلى " + S.to : "آخر " + days + " يوماً";
+  const iso = d => { const x = new Date(d); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); };
+  const pct = (x, n) => n ? (Math.round(x / n * 1000) / 10).toLocaleString("fr-DZ") + "%" : "—";
+  const isConf = o => ["confirmee", "expediee", "livree", "echec"].indexOf(o.status) >= 0;      /* «مؤكَّدة»: أُكِّدت أو أُرسلت أو سُلّمت أو فشلت/رجعت */
+  const C_OK = "#199e70", C_RET = "#d55181", C_RUN = "#3987e5";
+  /* بطاقة نسب التسليم والإرجاع: شريط مقسَّم + النسب من الطلبات المؤكَّدة في الفترة */
+  function ratesCard(cur, perT) {
+    const c = cur.filter(isConf), n = c.length, d = c.filter(o => o.status === "livree").length, r = c.filter(o => o.status === "echec").length, p = n - d - r;
+    const seg = (v, col) => v ? `<i style="flex:${v};background:${col}"></i>` : "";
+    const col = (lb, v, col, cls) => `<div class="rt-c"><span><u style="background:${col}"></u>${lb}</span><b>${num(v)}</b><div class="rt-m"><i style="width:${n ? Math.max(2, v / n * 100) : 0}%;background:${col}"></i></div><small>${pct(v, n)} من ${num(n)} مؤكَّدة</small></div>`;
+    return `<div class="ah-card"><h3>نسب التسليم والإرجاع <small>${perT} · ${num(cur.length)} طلب أُنشئ</small></h3>${n ? `<div class="rt-bar">${seg(d, C_OK)}${seg(p, C_RUN)}${seg(r, C_RET)}</div><div class="rt-g">${col("تم التسليم", d, C_OK)}${col("مرتجعة / فشل", r, C_RET)}${col("قيد الطريق", p, C_RUN)}</div>` : '<div class="em">لا طلبات مؤكَّدة في هذه الفترة</div>'}</div>`;
+  }
+  /* نسبة التسليم لكل ولاية: أكثر 8 ولايات طلباً (كل التواريخ)، والنسبة من الطلبات المنتهية (سُلّمت أو رجعت)؛ الولاية الصفرية تظهر بالأحمر */
+  function wilayaCard(all) {
+    const a = A(), m = {};
+    all.filter(isConf).forEach(o => { let nm = String(o.wilaya || "").trim(); try { const w = a.wCo && a.wCo(nm); if (w && w.name) nm = w.name; } catch (e) { } nm = nm || "—"; const g = m[nm] || (m[nm] = { n: 0, d: 0, r: 0 }); g.n++; if (o.status === "livree") g.d++; else if (o.status === "echec") g.r++; });
+    const L = Object.keys(m).map(k => Object.assign({ k }, m[k])).sort((x, y) => y.n - x.n || x.k.localeCompare(y.k)).slice(0, 8);
+    const rows = L.map(g => { const fin = g.d + g.r, rate = fin ? g.d / fin : null, c = rate == null ? "rgba(255,255,255,.3)" : rate === 0 ? "#e5484d" : rate < .5 ? "#e08a1a" : rate < .8 ? C_RUN : C_OK; return `<tr><td data-wl></td><td style="width:42%"><div class="rt-m"><i style="width:${rate == null ? 0 : Math.max(rate ? 3 : 0, rate * 100)}%;background:${c}"></i></div></td><td style="color:${c};font-weight:800;white-space:nowrap">${rate == null ? "—" : pct(g.d, fin)}</td><td style="text-align:end">${num(g.n)}</td></tr>`; }).join("");
+    return `<div class="ah-card"><h3>نسبة التسليم حسب الولاية <small>أعلى 8 بالطلبات · كل التواريخ</small></h3>${L.length ? `<table><thead><tr><th>الولاية</th><th>المسلَّمة</th><th></th><th style="text-align:end">الطلبات</th></tr></thead><tbody>${rows}</tbody></table><p class="rt-n">النسبة من الطلبات المنتهية (سُلّمت أو رجعت)؛ «—» لا طلب منتهياً بعد.</p>` : '<div class="em">لا بيانات بعد</div>'}</div>`;
+  }
+  /* الربح الصافي المحقق للفترة (من حساب تبويب الأرباح نفسه): سعر الشراء + التوصيل + المرتجع + التغليف... */
+  function profitCard(P, perT) {
+    const a = A(); if (!hasTab("finance") || !a.computeFinance) return "";
+    let K = null, K0 = null; try { K = a.computeFinance(0, { from: P.f1, to: P.t1 }).K; K0 = a.computeFinance(0, { from: P.f0, to: P.t0 }).K; } catch (e) { return ""; }
+    if (!K) return "";
+    const miss = (a.products || []).filter(p => p && p.active !== false && p.slug !== "test" && a.fin && a.fin.costs && a.fin.costs[p.slug] == null).length, d = delta(K.real, K0 ? K0.real : 0), margin = K.revenue ? Math.round(K.real / K.revenue * 100) : 0;
+    return `<div class="ah-card"><h3>الربح الصافي المحقق <small>${perT}</small><button type="button" class="ah-btn gh" data-go="finance" style="padding:6px 11px;font-size:.78rem">التفاصيل</button></h3><div class="pf-v" style="color:${K.real >= 0 ? C_OK : "#e5484d"}">${money(K.real)}</div><div class="kpi"><span class="d ${d.c}">${d.t}</span> <small style="color:${MUT}">عن الفترة السابقة</small></div><div class="rt-g" style="margin-top:12px"><div class="rt-c"><span>ربح متوقع (قيد التوصيل)</span><b>${money(K.exp || 0)}</b></div><div class="rt-c"><span>الهامش على المبيعات</span><b>${margin}%</b></div></div>${miss ? `<p class="rt-n" style="color:#e08a1a">${num(miss)} منتج بلا سعر شراء: الربح المعروض غير دقيق، أدخل أسعار الشراء من تبويب الأرباح.</p>` : ""}</div>`;
   }
   function render() {
     const root = $("ahome"); if (!root) return;
-    css(); const a = A(), all = orders(), days = S.days, hourly = days === 1;
-    const [f1, t1] = range(days, 0), [f0, t0] = range(days, 1);
+    css(); const a = A(), all = orders(), P = span(), days = P.days, hourly = P.hourly, f1 = P.f1, t1 = P.t1, f0 = P.f0, t0 = P.t0, perT = perTxt(days);
     const cur = all.filter(o => { const t = new Date(o.date).getTime(); return t >= f1 && t < t1; }), prev = all.filter(o => { const t = new Date(o.date).getTime(); return t >= f0 && t < t0; });
     const step = hourly ? 36e5 : DAY, ok = cur.filter(okOrder), okp = prev.filter(okOrder);
     const sales = sum(ok.map(o => Number(o.total) || 0)), salesP = sum(okp.map(o => Number(o.total) || 0));
@@ -213,8 +258,8 @@ const AdminHome = (() => {
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
     root.innerHTML = `
-<div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
-<div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div></div></div>
+<div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>${od ? `<button type="button" class="ah-lnk" data-go="callcenter"><b>${num(od)}</b> طلب ينتظر مكالمة منذ أكثر من يوم</button> · ` : ""}نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
+<div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"], [-1, "هذا الشهر"], [0, "مخصص"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div>${S.days === 0 ? `<span class="ah-dr"><input type="date" id="ah-from" value="${S.from}" max="${S.to || iso(Date.now())}" aria-label="من"><span>←</span><input type="date" id="ah-to" value="${S.to}" min="${S.from}" max="${iso(Date.now())}" aria-label="إلى"></span>` : ""}</div></div>
 ${quickBar(waiting)}
 ${ruqyaCard()}
 ${payCard()}
@@ -225,10 +270,12 @@ ${kpi("orders", "الطلبات", num(cur.length), delta(cur.length, prev.length
 ${kpi("wait", "في انتظار التأكيد", num(waiting), null, [], "#c98500")}
 ${kpi("avg", "متوسط قيمة الطلب", money(avg), delta(avg, avgP), [], "#d55181")}
 </div>
+${ratesCard(cur, perT)}
+<div class="ah-row2">${wilayaCard(all)}${profitCard(P, perT) || ""}</div>
 <div class="ah-row">
 <div class="ah-card"><h3>${S.metric === "sales" ? "مخطط المبيعات" : "مخطط الطلبات"}<span class="ah-act"><span class="ah-seg" role="group"><button type="button" data-m="sales" class="${S.metric === "sales" ? "on" : ""}">المبيعات</button><button type="button" data-m="orders" class="${S.metric === "orders" ? "on" : ""}">الطلبات</button></span><button type="button" class="ah-btn gh" data-tb="1" style="padding:6px 11px;font-size:.78rem">${S.table ? "عرض المخطط" : "عرض كجدول"}</button></span></h3>
 ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>${hourly ? "الساعة" : "اليوم"}</th><th>${S.metric === "sales" ? "المبيعات" : "الطلبات"}</th></tr></thead><tbody>${series.map((v, i) => `<tr><td>${labels[i]}</td><td>${S.metric === "sales" ? money(v) : num(v)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="ch" id="ah-ch">${cur.length || sum(series) ? ch.svg : '<div class="em">لا طلبات في هذه الفترة بعد.</div>'}<div class="tip" id="ah-tip"></div></div>`}</div>
-<div class="ah-card"><h3>الطلبات حسب الحالة <small>${days === 1 ? "اليوم" : "آخر " + days + " يوماً"}</small></h3><div class="dn-w">${donut(counts)}<div class="lg">${GROUPS.map((g, i) => `<div><i style="background:${g.c}"></i>${g.t}<b>${num(counts[i])}</b></div>`).join("")}</div></div></div>
+<div class="ah-card"><h3>الطلبات حسب الحالة <small>${perT}</small></h3><div class="dn-w">${donut(counts)}<div class="lg">${GROUPS.map((g, i) => `<div><i style="background:${g.c}"></i>${g.t}<b>${num(counts[i])}</b></div>`).join("")}</div></div></div>
 </div>
 <div class="ah-row2">
 <div class="ah-card"><h3>آخر الطلبات <button type="button" class="ah-btn gh" data-go="orders" style="padding:6px 11px;font-size:.78rem">عرض الكل</button></h3>${last.length ? `<div style="overflow:auto"><table><thead><tr><th>الزبون</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${last.map((o, i) => { const g = lastSt[i]; return `<tr class="cl" data-o="${i}"><td></td><td></td><td>${money(o.total)}</td><td><span class="bd" data-rs="${i}" style="background:${g.c}33;border-color:${g.c}"></span></td><td>${new Date(o.date).toLocaleDateString("ar-DZ", { day: "numeric", month: "short" })}</td></tr>`; }).join("")}</tbody></table></div>` : '<div class="em">لا توجد طلبات بعد. ستظهر هنا فور وصولها.</div>'}</div>
@@ -255,12 +302,14 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
 </div>`;
     /* نصوص من البيانات بـtextContent (لا innerHTML) */
     root.querySelectorAll("tr[data-o]").forEach(tr => { const o = last[+tr.dataset.o]; tr.cells[0].textContent = o.name || "—"; tr.cells[1].textContent = o.wilaya || "—"; tr._o = o; });
+    { const wl = (() => { const a = A(), m = {}; orders().filter(isConf).forEach(o => { let nm = String(o.wilaya || "").trim(); try { const w = a.wCo && a.wCo(nm); if (w && w.name) nm = w.name; } catch (e) { } nm = nm || "—"; m[nm] = (m[nm] || 0) + 1; }); return Object.keys(m).sort((x, y) => m[y] - m[x] || x.localeCompare(y)).slice(0, 8); })(); root.querySelectorAll("td[data-wl]").forEach((td, i) => { td.textContent = wl[i] || "—"; }); }
     root.querySelectorAll("[data-rs]").forEach(el => { el.textContent = lastSt[+el.dataset.rs].t; });
     root.querySelectorAll(".tp .t").forEach((el, i) => { el.textContent = top[i][0]; el.title = top[i][0]; });
     bind(root, ch, series, labels, hourly);
   }
   function bind(root, ch, series, labels, hourly) {
-    root.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { S.days = +b.dataset.d; render(); });
+    root.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { S.days = +b.dataset.d; if (S.days === 0 && (!S.from || !S.to)) { S.to = iso(Date.now()); S.from = iso(Date.now() - 6 * DAY); } render(); });
+    { const f = $("ah-from"), g = $("ah-to"); if (f) f.onchange = () => { if (f.value) { S.from = f.value; if (S.to && S.to < S.from) S.to = S.from; render(); } }; if (g) g.onchange = () => { if (g.value) { S.to = g.value; if (S.from && S.from > S.to) S.from = S.to; render(); } }; }
     root.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { S.metric = b.dataset.m; render(); });
     root.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { S.table = !S.table; render(); });
     root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
@@ -281,6 +330,8 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   }
   function go(w) {
     const a = A(), btn = k => [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'" + k + "'"));
+    if (w === "presend") { try { AdminPreSend.open(); } catch (e) { } return; }
+    if (w === "sent") { try { AdminSent.open(); } catch (e) { } return; }
     if (w === "neword") { try { if (typeof ManualOrder !== "undefined") ManualOrder.open({ mode: "new" }); } catch (e) { } return; }
     if (w === "ruqya-new" || w === "ruqya-pending" || w === "ruqya-uv" || w === "ruqya") { try { AdminRuqya.queue(w === "ruqya-new" ? { view: "man" } : w === "ruqya-pending" ? { filter: "pending" } : w === "ruqya-uv" ? { filter: "uv" } : { filter: "up" }); } catch (e) { } const rb = btn("ruqya"); if (rb) a.tab("ruqya", rb); return; }
     if (w === "newp") { try { a.editProduct(null); } catch (e) { } return; }

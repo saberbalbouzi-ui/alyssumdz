@@ -18,7 +18,8 @@ const AdminCoStats = (() => {
   }
   const blank = () => ({ n: 0, cancelled: 0, confirmed: 0, transit: 0, delivered: 0, returned: 0, fresh: 0, revenue: 0, transitAmt: 0, returnedAmt: 0, fees: 0 });
   function add(g, o) {
-    const st = String(o.status || "").toLowerCase(), tot = Number(o.total) || 0; g.n++;
+    let st = String(o.status || "").toLowerCase(); const tot = Number(o.total) || 0; g.n++;
+    try { if (typeof AdminPayments !== "undefined" && AdminPayments.effStatus && st !== "annulee") st = AdminPayments.effStatus(o) || st; } catch (_) { }      /* حالة الشركة تسبق المحلية: نفس أرقام المدفوعات والرئيسية */
     if (st === "annulee") g.cancelled++;
     else if (st === "livree") { g.delivered++; g.revenue += tot; g.fees += Number(o.fee) || 0; }
     else if (st === "echec") { g.returned++; g.returnedAmt += tot; }

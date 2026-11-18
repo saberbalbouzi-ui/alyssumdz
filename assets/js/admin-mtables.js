@@ -46,6 +46,8 @@
     (root || document).querySelectorAll("#app table, .modal table").forEach(t => {
       if (t.matches(SKIP) || t.closest("#pb-app,#pbx-frame,.pbx-ep")) return;
       const H = headersOf(t); if (!H || H.length < (t.classList.contains("rt") ? 3 : 4) || !H.some(Boolean)) return;
+      /* جدول داخل حاوية تمرّر أفقياً بنفسها (overflow-x:auto): لا نحوّله إلى m-scroll (كان يتكوّن مُمرِّران متداخلان فيقف الشريط عند حدّ الجدول الداخلي وتُقصّ أعمدته)؛ يُركَّب الشريط العلوي على الحاوية نفسها */
+      const pr = t.parentElement; if (pr && pr !== document.body && /(auto|scroll)/.test(getComputedStyle(pr).overflowX) && getComputedStyle(t).display === "table") { t.classList.remove("m-scroll"); try { tbar(pr); } catch (e) {} return; }
       t.classList.add("m-scroll"); try { tbar(t); } catch (e) {}
     });
   }
