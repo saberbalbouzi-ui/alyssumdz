@@ -125,6 +125,14 @@ def _prod_mobile_fit(top):
             for v in n: walk(v)
     for sec in top: walk(sec)
 
+_NX_LINK = re.compile(r"\]\((index|shop|cart|account)\.html([#?][^)]*)?\)")
+def _nx_up(node, up="../../"):
+    """فوتر NEXUS في جلد صفحة المنتج: الصفحة تُنشر في p/<slug>/ (مستويان تحت جذر المتجر) فتُرفع روابط المتجر النسبية بمستويين. يخصّ قوالب NEXUS وحدها."""
+    if isinstance(node, str): return _NX_LINK.sub(lambda m: "](" + up + m.group(1) + ".html" + (m.group(2) or "") + ")", node)
+    if isinstance(node, list): return [_nx_up(v, up) for v in node]
+    if isinstance(node, dict): return {k: _nx_up(v, up) for k, v in node.items()}
+    return node
+
 def build_product_skins(out_dir):
     ns = {"HERE": os.path.dirname(os.path.abspath(__file__))}
     exec(open(os.path.join(ns["HERE"], "gen-templates-copy.py"), encoding="utf-8").read(), ns)
@@ -139,6 +147,7 @@ def build_product_skins(out_dir):
         top = [s for s in secs if _has(s, "sbar") or _has(s, "shdr")]
         _prod_mobile_fit(top)
         foot = [s for s in secs if _has(s, "sfoot")]
+        if tid.startswith("s-nexus"): foot = [_nx_up(f) for f in foot]      # NEXUS فقط: فوتر الرئيسية نسبي للجذر، وجلد المنتج في p/<slug>/
         if not top or not foot: continue
         pk = PK.get(tid, {})
         items = [(pk.get("f%dt" % i, ""), pk.get("f%dx" % i, "")) for i in range(4)]

@@ -16,9 +16,10 @@ if (!BASE) {
   const b = spawnSync("python3", ["scripts/make-template.py", "--target", "php", "--out", path.relative(root, pkg), "--name", "Mystore", "--wa", "213000000000", "--kind", "physical"], { cwd: root, encoding: "utf8" });
   const code = ((b.stdout || "").match(/[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}/) || [])[0]; if (!code) { console.log("تعذّر بناء الحزمة", (b.stdout || "").slice(-300), (b.stderr || "").slice(-300)); process.exit(2); }
   spawnSync("python3", ["scripts/make-template.py", "--target", "php", "--update", "--out", path.relative(root, upd), "--name", "Mystore", "--wa", "213000000000"], { cwd: root, encoding: "utf8" });
-  STORE = path.join(work, "www"); fs.cpSync(pkg, STORE, { recursive: true }); fs.cpSync(upd, STORE, { recursive: true, force: true }); fs.rmSync(pkg, { recursive: true, force: true }); fs.rmSync(upd, { recursive: true, force: true });
-  const port = 18000 + Math.floor(Math.random() * 1500); BASE = "http://127.0.0.1:" + port;
-  phpProc = spawn("php", ["-S", "127.0.0.1:" + port, "-t", STORE], { stdio: "ignore", detached: false });
+  const SUB = (process.env.NX_SUBPATH || "").replace(/\/+$/, ""), DOCROOT = path.join(work, "www");   // NX_SUBPATH=/store ⇒ تثبيت المتجر في مجلد فرعي (الجذر هو الافتراضي): كل الفحوص نفسها تُشغَّل على المسار الفرعي
+  STORE = path.join(DOCROOT, SUB); fs.mkdirSync(STORE, { recursive: true }); fs.cpSync(pkg, STORE, { recursive: true }); fs.cpSync(upd, STORE, { recursive: true, force: true }); fs.rmSync(pkg, { recursive: true, force: true }); fs.rmSync(upd, { recursive: true, force: true });
+  const port = 18000 + Math.floor(Math.random() * 1500); BASE = "http://127.0.0.1:" + port + SUB;
+  phpProc = spawn("php", ["-S", "127.0.0.1:" + port, "-t", DOCROOT], { stdio: "ignore", detached: false });
   const wait = ms => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); wait(2500);
   const r = spawnSync("curl", ["-s", "-X", "POST", BASE + "/install.php", "-d", `code=${code}&pw=${PW}&pw2=${PW}&name=Mystore&wa=213000000000`], { encoding: "utf8" }); if (!/تم التثبيت/.test(r.stdout || "")) { console.log("فشل تثبيت المتجر التجريبي", (r.stdout || "").slice(0, 200)); phpProc.kill(); process.exit(2); }
   process.on("exit", () => { try { phpProc.kill(); fs.rmSync(work, { recursive: true, force: true }); } catch (e) { } });

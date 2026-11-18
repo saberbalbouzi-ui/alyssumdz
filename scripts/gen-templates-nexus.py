@@ -69,11 +69,11 @@ def nx_bar(P, N):
 def nx_hdr(P, N):
     h = hdr(hbg=P["paper"], hbr=P["ink"] + "22", lc=P["ink"], lac=P["acc"], mc=P["ink"], cbg=P["btn"], la=N["brand"], lfs=dm(26))
     return h
-def nx_foot(P, N):
+def nx_foot(P, N, up=""):
     f = foot(sbg=P["fbg"], tc="#b9b4a8", hc="#ffffff", lc="#b9b4a8", lh=P["acc"])
     st = f["cols"][0]["widgets"][0]["set"]; c = st["cols"]
     c[0] = {"h": N["brand"], "b": "%s: متجر إلكتروني بتوصيل لكل الولايات والدفع عند الاستلام." % N["brand"]}      # لا رقم ولا اسم حقيقي: يأتي من إعدادات المتجر
-    if len(c) >= 2: c[1] = {"h": "روابط سريعة", "b": "[الرئيسية](/index.html)\n[المتجر](/shop.html)\n[السلة](/cart.html)\n[حسابي](/account.html)"}      # روابط المتجر من الجذر: تصلح في الرئيسية وصفحات /lp/
+    if len(c) >= 2: c[1] = {"h": "روابط سريعة", "b": "[الرئيسية](%sindex.html)\n[المتجر](%sshop.html)\n[السلة](%scart.html)\n[حسابي](%saccount.html)" % ((up,) * 4)}      # روابط نسبية لا مطلقة من الجذر (/shop.html كانت تفشل في تثبيت بمجلد فرعي): up="" للرئيسية وshop/cart/account (جذر المتجر)، و"../../" لصفحات /lp/<slug>/
     if len(c) >= 3: c[2] = {"h": "تواصل معنا", "b": "📱 واتساب: أضف رقم متجرك من الإعدادات\n🕐 السبت – الخميس: 9ص – 8م\n📍 الجزائر — التوصيل لكل الولايات"}
     st["copy"] = "© 2026 %s — جميع الحقوق محفوظة" % N["brand"]
     return f
@@ -280,7 +280,7 @@ for _tid in NX_IDS:
 _NP = NX_NICHES["s-nexus"]
 def _np_wrap(k, body, N=None):
     N = N or _NP
-    return [nx_bar(N, N), nx_hdr(N, N)] + body + [nx_foot(N, N)]
+    return [nx_bar(N, N), nx_hdr(N, N)] + body + [nx_foot(N, N, "../../")]      # صفحات الموقع تُنشر في lp/nx-<slug>/ (مستويان تحت جذر المتجر)
 def _np_hero(P, k, kick, h, sub, img=None, alt="", dark=False):
     """ترويسة صفحة: عنوان كبير + وصف، وصورة بإطار غير متماثل اختيارية"""
     ink = P["ink"]
