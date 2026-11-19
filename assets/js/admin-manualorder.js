@@ -170,6 +170,8 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       try {
         if (mode === "edit") {
           const fdb = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, subtotal: c.sub, discount: c.disc, fee: c.fee, total: c.total, items: clean, items_text: txt };
+          /* الناقل المختار بالبطاقة (و«توصيل مجاني») كان لا يُحفظ عند التعديل لأن extra لا تدخل fdb، فيرجع الطلب إلى الناقل القديم */
+          { const ex = Object.assign({}, (src.extra && typeof src.extra === "object") ? src.extra : {}); if (bg._brand) ex["🚚 الناقل"] = bg._brand; if ($("mo-free")) { if ($("mo-free").checked) ex["توصيل مجاني"] = "نعم"; else delete ex["توصيل مجاني"]; } if (JSON.stringify(ex) !== JSON.stringify(src.extra || {})) fdb.extra = ex; }
           const note = $("mo-note").value.trim(); if (note) { src.note = (String(src.note || "") + " " + note).trim(); API.updateOrder(ad.key, src.id, undefined, src.note); }
           /* مخزون: إن كانت علب الطلب مخصومة (وسم 📦) تُعاد بالقديم ثم تُخصم بالجديد حتى يبقى الفرق وحده */
           let restock = null, stockMsg = "";

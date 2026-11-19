@@ -30,6 +30,14 @@ const { chromium } = require("playwright");
     fr.checked = true; fr.dispatchEvent(new Event("change", { bubbles: true })); await wait(300);
     q("#mo-save").click(); await wait(1200);
     out.saved = saved.length ? { fee: saved[0].fee, total: saved[0].total, free: saved[0].extra && saved[0].extra["توصيل مجاني"], brand: saved[0].extra && saved[0].extra["🚚 الناقل"] } : null;
+    /* تعديل طلب: الناقل المختار بالبطاقة يُحفظ في extra */
+    { document.getElementById("mo-bg") && document.getElementById("mo-bg").remove(); let fields = null; API.updateOrderFields = async (k, id, f) => { fields = f; return true; }; A.canFullEdit = () => true; A.renderStats = () => { }; A.renderOrders = () => { }; A.openOrderPreview = () => { };
+      const o2 = { id: "E1", name: "زبون تجريبي", phone: "0550123456", wilaya: "Béchar", commune: "Béchar", dtype: "home", items: "منتج ×1 = 3000 DA", subtotal: 3000, fee: 1300, total: 4300, status: "nouvelle", note: "", extra: { "🚚 الناقل": "WeCanServices", "✍️ طلب يدوي": "نعم" } }; A.orders = [o2];
+      ManualOrder.open({ mode: "edit", order: o2 }); await new Promise(r => setTimeout(r, 700)); const bg2 = document.getElementById("mo-bg"), w2 = bg2 && bg2.querySelector("#mo-wil");
+      if (w2) { w2.value = "Ouargla"; w2.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 500)); w2.value = "Béchar"; w2.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 500)); }
+      const zr = bg2 && bg2.querySelector('#mo-opts [data-ob="ZR"][data-ok="home"]'); if (zr) { zr.click(); await new Promise(r => setTimeout(r, 250)); }
+      bg2 && bg2.querySelector("#mo-save").click(); await new Promise(r => setTimeout(r, 1200));
+      out.edit = { msg: (bg2 && bg2.querySelector("#mo-err") ? bg2.querySelector("#mo-err").textContent : "gone"), had: !!zr, extra: fields && fields.extra, fee: fields && fields.fee, local: o2.extra && o2.extra["🚚 الناقل"] }; }
     return out; });
   ok("اختيار الناقل بالبطاقة يبقى بعد تغيير البلدية (لا يرجع للأرخص وحده)، ويُعاد للأرخص عند تغيير الولاية", R.keep && R.keep.b1 === "WeCanServices" && R.keep.b2 === "WeCanServices" && R.keep.f1 === R.keep.f2 && R.reset === "ZR", [R.keep, R.reset]);
   ok("بشار منزل: الافتراضي أرخص ناقل (ZR 900) تلقائياً", Number(R.def.fee) === 900 && R.def.brand === "ZR" && /الأرخص/.test(R.def.hint), R.def);
@@ -38,6 +46,7 @@ const { chromium } = require("playwright");
   ok("اختيار ناقل أثناء التوصيل المجاني يبقي الرسم 0 ويسجّل الناقل", Number(R.freeCard.fee) === 0 && R.freeCard.brand === "WeCanServices", R.freeCard);
   ok("إلغاء التوصيل المجاني يعيد الرسم الحقيقي ويفك القفل", Number(R.unfree.fee) > 0 && !R.unfree.dis, R.unfree);
   ok("الحفظ: رسم 0 ومجموع 3000 ووسم التوصيل المجاني", R.saved && R.saved.fee === 0 && R.saved.total === 3000 && R.saved.free === "نعم", R.saved);
+  ok("تعديل الطلب: اختيار ZR بالبطاقة يُحفظ في extra (كان لا يُحفظ فيرجع الناقل القديم)", R.edit && R.edit.had && R.edit.extra && R.edit.extra["🚚 الناقل"] === "ZR" && R.edit.local === "ZR", R.edit);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);
 })();
