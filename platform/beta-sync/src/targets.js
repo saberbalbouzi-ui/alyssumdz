@@ -35,7 +35,7 @@ export class KVTarget {
 export class RestKV {
   constructor({ acc, nsId, token = null, fetchFn = fetch, productionAccounts = ["1dffae72b40ca6558da19b84eff8c864"] }) {
     if (!/^[0-9a-f]{32}$/.test(acc) || productionAccounts.includes(acc)) throw new Error("guard: حساب غير صالح/Production"); if (!/^[0-9a-f]{32}$/.test(nsId)) throw new Error("guard: معرّف KV غير صالح");
-    this.b = `https://api.cloudflare.com/client/v4/accounts/${acc}/storage/kv/namespaces/${nsId}`; this.t = token; this.f = fetchFn;
+    this.b = `https://api.cloudflare.com/client/v4/accounts/${acc}/storage/kv/namespaces/${nsId}`; this.t = token; this.f = (...a) => fetchFn(...a);
   }
   get h() { return this.t ? { Authorization: "Bearer " + this.t } : {}; }
   async get(key, type = "text") { const r = await this.f(`${this.b}/values/${encodeURIComponent(key)}`, { headers: this.h }); if (r.status === 404) return null; if (r.status !== 200) throw new Error(`kv get ${key} → ${r.status}`); return type === "arrayBuffer" ? r.arrayBuffer() : r.text(); }

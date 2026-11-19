@@ -19,7 +19,7 @@ export class D1BindingDb {
 }
 /** D1 عبر REST (للـCLI/الاختبارات الحيّة): الحساب مفروض أن يكون حساب Beta (يفحصه المستدعي) */
 export class D1RestDb {
-  constructor({ acc, dbId, token = null, fetchFn = fetch }) { this.u = `https://api.cloudflare.com/client/v4/accounts/${acc}/d1/database/${dbId}/query`; this.t = token; this.f = fetchFn; }
+  constructor({ acc, dbId, token = null, fetchFn = fetch }) { this.u = `https://api.cloudflare.com/client/v4/accounts/${acc}/d1/database/${dbId}/query`; this.t = token; this.f = (...a) => fetchFn(...a); }
   async q(sql, params = []) {
     const r = await this.f(this.u, { method: "POST", headers: { "Content-Type": "application/json", ...(this.t ? { Authorization: "Bearer " + this.t } : {}) }, body: JSON.stringify(params.length ? { sql, params } : { sql }) }); const j = await r.json().catch(() => ({}));
     if (!j.success) throw new Error("d1: " + JSON.stringify(j.errors ?? j).slice(0, 200)); return j.result?.[0] ?? { results: [], meta: {} };

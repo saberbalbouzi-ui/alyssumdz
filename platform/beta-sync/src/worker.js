@@ -17,7 +17,7 @@ function ctxOf(env) {
   if (env.ENVIRONMENT !== "beta") throw new Error("guard: هذا Worker لـBeta فقط (ENVIRONMENT!=beta)");
   const reg = JSON.parse(env.REGISTRY_JSON); const host = env.BETA_APP_HOST; if (!host || /alyssumdz\.com|alyssumhub\.fyi/.test(host)) throw new Error("guard: BETA_APP_HOST غير صالح");
   const san = makeSanitizer({ registry: { never_outside_production: reg }, beta: { appHost: host, supabaseUrl: env.BETA_SUPABASE_URL, anonKey: env.BETA_SUPABASE_ANON_KEY, waPlaceholder: "213000000000" } });
-  return { source: new GitHubSource({ repo: env.SOURCE_REPO, ref: env.SOURCE_REF || "main" }), target: new KVTarget({ kv: env.FILES, web: env.WEB, base: "https://" + host }), db: new D1BindingDb(env.DB), san };
+  return { source: new GitHubSource({ repo: env.SOURCE_REPO, ref: env.SOURCE_REF || "main", token: env.GITHUB_READ_TOKEN || null }), target: new KVTarget({ kv: env.FILES, web: env.WEB, base: "https://" + host }), db: new D1BindingDb(env.DB), san };
 }
 export async function tick(env, kind) {
   const c = ctxOf(env); const n = Number(await meta.get(c.db, "ticks", 0)) + 1; await meta.set(c.db, "ticks", n);

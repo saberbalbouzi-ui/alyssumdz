@@ -12,6 +12,7 @@ const iso = () => new Date().toISOString();
 export async function runSync({ source, target, db, san, kind = "incremental", budget = {}, force = false, log = () => { }, now = Date.now }) {
   const B = { files: budget.files ?? 12, bytes: budget.bytes ?? 6_000_000, verify: budget.verify ?? 10 }, t0 = now();
   await migrate(db);
+  const bo = Number(await meta.get(db, "backoff_until", 0)); if (bo && now() < bo && !force) return { ok: true, skipped: "backoff", until: new Date(bo).toISOString() };   // حدّ معدّل GitHub: لا إلحاح
   const lock = Number(await meta.get(db, "lock", 0)); if (lock && now() - lock < LOCK_TTL_MS && !force) return { ok: true, skipped: "locked" };
   await meta.set(db, "lock", now());
   const R = { ok: false, kind, head: null, prevHead: await meta.get(db, "synced_head"), planned: 0, applied: 0, failed: 0, quarantined: 0, deleted: 0, diffs: 0, pending: 0, verified: 0, notes: [] };
@@ -19,6 +20,12 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
   try {
     const head = await source.head(); R.head = head;
     await meta.set(db, "head_seen", head);                                                                       // آخر رأس رُصد في المصدر (يكشف التأخر حتى لو فشل التطبيق)
+    /* مسار الخمول: الرأس نفسه المطبَّق سابقاً ولا انحراف في البيان ولا عناصر فاشلة ⇒ لا شجرة ولا حصة API (الحالة المستقرة = طلب info/refs واحد في الدقيقة) */
+    if (kind === "incremental" && !force && head === await meta.get(db, "synced_head")) {
+      const its = await db.all("SELECT path, comp, out_sha, state FROM sync_items WHERE state<>'deleted'"), mm = {}; for (const c of COMPONENTS) mm[c] = await target.manifest(c);
+      const stuck = its.some((it) => it.state === "failed" || (it.state === "applied" && mm[it.comp]?.map?.[it.path] !== it.out_sha)) || (await db.get("SELECT 1 x FROM sync_events WHERE status IN ('pending','failed','unverified') LIMIT 1"));
+      if (!stuck) { R.ok = true; R.idle = true; await meta.set(db, "backoff_until", 0); return await finish(R, db, now, t0, kind, null, null); }
+    }
     const last = await meta.get(db, "seen_head"); let commits = null, conflict = null;
     if (last && last !== head) {
       const c = await (source.compare?.(last, head) ?? null);
@@ -96,13 +103,15 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
     else if (R.failed) await meta.set(db, "last_error", `فشل ${R.failed} عملية (ستُعاد المحاولة)`);
     R.ok = R.failed === 0; return await finish(R, db, now, t0, kind, runId, commits);
   } catch (e) {
-    R.error = String(e.message ?? e); await meta.set(db, "last_error", R.error); return await finish(R, db, now, t0, kind, runId, null);
+    R.error = String(e.message ?? e); await meta.set(db, "last_error", R.error);
+    if (e.status === 403 || e.status === 429) { const ms = Math.min(Math.max(e.retryAfterMs ?? 90_000, 60_000), 15 * 60_000); await meta.set(db, "backoff_until", now() + ms); R.rateLimited = true; R.error += " (تراجع " + Math.round(ms / 1000) + "ث)"; await meta.set(db, "last_error", R.error); } return await finish(R, db, now, t0, kind, runId, null);
   }
 }
 async function ev(db, seq, status, error) { await db.run("UPDATE sync_events SET status=?, error=?, ts=? WHERE seq=?", [status, error ?? null, iso(), seq]); }
 async function finish(R, db, now, t0, kind, runId, commits) {
   await meta.set(db, "lock", 0); await meta.set(db, "last_run", iso());
   const row = [kind, R.head, R.prevHead, R.planned, R.applied, R.failed, R.quarantined, R.diffs, now() - t0, R.error ?? null, commits ? JSON.stringify(commits.slice(-20)) : null];
+  if (R.idle) { R.ms = now() - t0; return R; }
   if (runId) await db.run("UPDATE sync_runs SET kind=?, head=?, prev_head=?, planned=?, applied=?, failed=?, quarantined=?, diffs=?, ms=?, error=?, commits=? WHERE id=?", [...row, runId]);
   else if (R.head || R.error) await db.run("INSERT INTO sync_runs (kind,head,prev_head,planned,applied,failed,quarantined,diffs,ms,error,commits,ts) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", [...row, iso()]);
   R.ms = now() - t0; return R;

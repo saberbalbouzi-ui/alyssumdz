@@ -167,6 +167,19 @@ sec("E) سلامة: تراجع الرأس، تفرّع، إصدار واجهة �
 { const w = await world(); const noMan = new MemKV(); const t2 = new KVTarget({ kv: noMan, web: web(noMan), base: "https://x", sleep: async () => { } }); const r = await runSync({ source: w.repo, target: t2, db: new NodeSqliteDb(), san });
   ok("[E7] بلا إصدار واجهة منشور ⇒ يتوقف بخطأ صريح بلا كتابة", !r.ok && /لا إصدار واجهة/.test(r.error ?? "") && noMan.puts === 0, r); w.db.close(); }
 
+sec("E2) خمول بلا حصة API، وتراجع عند حدّ معدّل GitHub");
+{ const w = await world(); await w.run(); const t1 = w.repo.calls.filter((c) => c === "tree").length;
+  for (let i = 0; i < 5; i++) await w.run();
+  ok("[E8] الحالة المستقرة: الرأس نفسه ⇒ لا قراءة شجرة ولا حصة API (طلب الرأس فقط) ولا صفوف تشغيل جديدة", w.repo.calls.filter((c) => c === "tree").length === t1 && (await w.db.get("SELECT COUNT(*) n FROM sync_runs")).n === 1, { trees: w.repo.calls.filter((c) => c === "tree").length });
+  const idle = await w.run(); ok("[E9] تشغيل الخمول يعيد idle=true", idle.ok && idle.idle === true && idle.planned === 0);
+  await seed(w.kv, "ui", "r-9", { "index.html": PAGE("x"), "assets/js/data.js": PRODUCTS([]) }); const dr = await w.run();
+  ok("[E10] انحراف البيان يوقظ المسار الكامل رغم أن الرأس لم يتغيّر", dr.ok && !dr.idle && dr.diffs >= 3 && (await w.get("assets/js/data.js")).t.includes("عسل السدر"), dr);
+  await w.repo.commit("تغيير", { "assets/data/theme.json": JSON.stringify({ a: 1 }) }); const od = w.repo.tree.bind(w.repo); w.repo.tree = async () => { const e = new Error("source: trees → 429"); e.status = 429; e.retryAfterMs = 120000; throw e; };
+  const rl = await w.run(); ok("[E11] 429 من GitHub: فشل واضح مع تراجع، ولا شيء يُفقد", !rl.ok && rl.rateLimited && /تراجع/.test(rl.error), rl);
+  const callsBefore = w.repo.calls.length; const sk = await w.run(); ok("[E12] أثناء التراجع لا طلبات إلى GitHub إطلاقاً (لا إلحاح)", sk.skipped === "backoff" && w.repo.calls.length === callsBefore, sk);
+  w.repo.tree = od; await meta.set(w.db, "backoff_until", 0); const rec = await w.run(); ok("[E13] بعد انتهاء التراجع تصل التغييرات", rec.ok && (await w.get("assets/data/theme.json")).t.includes('"a": 1') || JSON.parse((await w.get("assets/data/theme.json")).t).a === 1, rec);
+  w.db.close(); }
+
 sec("F) حواجز الشيفرة");
 { const src = ["engine.js", "rules.js", "github.js", "targets.js", "worker.js", "db.js"].map((f) => readFileSync(path.join(HERE, "../src", f), "utf8")).join("\n");
   ok("[F1] لا رمز كتابة إلى المصدر: كل طلبات GitHub GET (لا PUT/POST/PATCH/DELETE إلى github)", !/method:\s*"(PUT|POST|PATCH|DELETE)"[^}]*github/i.test(src) && !/api\.github\.com[^`'"]*\/(contents|git\/refs|git\/commits)/.test(src.replace(/git\/trees|compare/g, "")));

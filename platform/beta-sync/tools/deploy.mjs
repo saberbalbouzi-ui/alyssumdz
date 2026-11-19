@@ -48,6 +48,7 @@ const bindings = [
   { type: "plain_text", name: "ENVIRONMENT", text: "beta" }, { type: "plain_text", name: "SOURCE_REPO", text: repo }, { type: "plain_text", name: "SOURCE_REF", text: ref }, { type: "plain_text", name: "BETA_APP_HOST", text: B.app_host },
   { type: "plain_text", name: "BETA_SUPABASE_URL", text: surl }, { type: "plain_text", name: "BETA_SUPABASE_ANON_KEY", text: skey }, { type: "plain_text", name: "REGISTRY_JSON", text: JSON.stringify({ hosts: NP.hosts, supabase_refs: NP.supabase_refs, public_key_markers: NP.public_key_markers, identity_markers: NP.identity_markers }) },
   { type: "secret_text", name: "SYNC_TOKEN", text: token },
+  ...(env.GITHUB_READ_TOKEN ? [{ type: "secret_text", name: "GITHUB_READ_TOKEN", text: env.GITHUB_READ_TOKEN }] : []),   // اختياري: رمز قراءة فقط لمستودع علني ← حدّ أعلى (5000/ساعة)
 ];
 fd.append("metadata", new Blob([JSON.stringify({ main_module: "index.js", compatibility_date: "2026-01-01", bindings, keep_bindings: [] })], { type: "application/json" }));
 for (const [name, file] of Object.entries(mods)) fd.append(name, new Blob([readFileSync(path.join(SRC, file), "utf8")], { type: "application/javascript+module" }), name);

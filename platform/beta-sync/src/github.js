@@ -3,13 +3,15 @@
    والمحتوى من raw.githubusercontent.com مثبّتاً على SHA الالتزام (لا يتغيّر بين قراءتين). كل fetch محقون فيُختبَر بلا شبكة. */
 export class GitHubSource {
   constructor({ repo, ref = "main", fetchFn = fetch, token = null }) {
-    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("source: repo غير صالح"); this.repo = repo; this.ref = ref; this.f = fetchFn; this.token = token;
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("source: repo غير صالح"); this.repo = repo; this.ref = ref; this.f = (...a) => fetchFn(...a);   /* لا تُستدعى fetch الأصلية بـthis مختلف في Workers (Illegal invocation) */ this.token = token;
   }
   get hdr() { return { "User-Agent": "alyssum-beta-sync", Accept: "application/vnd.github+json", ...(this.token ? { Authorization: "Bearer " + this.token } : {}) }; }
-  async json(url) { const r = await this.f(url, { headers: this.hdr }); if (r.status !== 200) throw new Error(`source: ${url.replace(/\?.*/, "")} → ${r.status}`); return r.json(); }
+  /** خطأ مصدر بحالة HTTP (403/429 = حدّ معدّل GitHub لعناوين Cloudflare المشتركة ← تراجع بدل الإلحاح) */
+  err(url, status, r) { const e = new Error(`source: ${url.replace(/\?.*/, "")} → ${status}`); e.status = status; const ra = Number(r?.headers?.get?.("retry-after")), rs = Number(r?.headers?.get?.("x-ratelimit-reset")); e.retryAfterMs = ra > 0 ? ra * 1000 : rs > 0 ? Math.max(0, rs * 1000 - Date.now()) : null; return e; }
+  async json(url) { const r = await this.f(url, { headers: this.hdr }); if (r.status !== 200) throw this.err(url, r.status, r); return r.json(); }
   /** SHA رأس المرجع (فرع) — بلا حصة API */
   async head() {
-    const r = await this.f(`https://github.com/${this.repo}.git/info/refs?service=git-upload-pack`, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw new Error("source: info/refs → " + r.status);
+    const r = await this.f(`https://github.com/${this.repo}.git/info/refs?service=git-upload-pack`, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw this.err("info/refs", r.status, r);
     const t = await r.text(), want = "refs/heads/" + this.ref; for (const line of t.split("\n")) { const i = line.indexOf(" " + want); if (i > 0 && /[0-9a-f]{40}$/.test(line.slice(0, i))) return line.slice(i - 40, i); }
     throw new Error("source: المرجع غير موجود " + this.ref);
   }
@@ -19,7 +21,7 @@ export class GitHubSource {
     const m = new Map(); for (const e of j.tree) if (e.type === "blob") m.set(e.path, { blob: e.sha, size: e.size }); return m;
   }
   async bytes(sha, path) {
-    const r = await this.f(`https://raw.githubusercontent.com/${this.repo}/${sha}/${path.split("/").map(encodeURIComponent).join("/")}`, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw new Error(`source: ${path} → ${r.status}`);
+    const r = await this.f(`https://raw.githubusercontent.com/${this.repo}/${sha}/${path.split("/").map(encodeURIComponent).join("/")}`, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw this.err(path, r.status, r);
     return new Uint8Array(await r.arrayBuffer());
   }
   /** مقارنة نقطتين: { status: ahead|behind|identical|diverged, commits:[{sha,message,author}] } (قديم←جديد). للسجل وكشف التراجع/التفرّع فقط؛ التطبيق نفسه من حالة الشجرة */
