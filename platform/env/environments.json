@@ -53,7 +53,10 @@
       "chargily_api": "https://pay.chargily.net/test/api/v2",
       "hosts_note": "Beta الليلة على workers.dev (الواجهة = Worker ساكن + KV لأن الرفع المباشر لـPages يتعارض مع وكيل الجلسة)، بلا أي سجل DNS ولا مسار في مناطق alyssumdz.com/alyssumhub.fyi الإنتاجية",
       "static_worker": "alyssum-beta-web",
-      "static_kv": "alyssum-beta-web-files"
+      "static_kv": "alyssum-beta-web-files",
+      "sync_worker": "alyssum-beta-sync",
+      "sync_d1": "alyssum-beta-sync",
+      "sync_host": "alyssum-beta-sync.contact-alyssumbio.workers.dev"
     },
     "local": {
       "label": "Local Development",

@@ -9,6 +9,7 @@ on:
     paths:
       - 'platform/env/**'
       - 'platform/release/**'
+      - 'platform/beta-sync/**'
       - 'beta-content/**'
       - 'platform/api/src/envguard.js'
       - 'platform/api/src/env-registry.js'
@@ -37,6 +38,7 @@ on:
     paths:
       - 'platform/env/**'
       - 'platform/release/**'
+      - 'platform/beta-sync/**'
       - 'beta-content/**'
       - 'platform/api/src/envguard.js'
       - 'platform/api/src/env-registry.js'
@@ -123,6 +125,8 @@ jobs:
           node --no-warnings platform/release/test/cloudflare-adapter.test.mjs
           node --no-warnings platform/release/test/cli.test.mjs
           node --no-warnings platform/release/test/probe.test.mjs
+      - name: مزامنة اللوحة التقليدية ← Beta (محرّك + قواعد + وجهة KV مع static-worker الحقيقي؛ بلا شبكة ولا أسرار)
+        run: node --no-warnings platform/beta-sync/test/engine.test.mjs
       - name: الـWorker الساكن (إصدارات/مؤشرات/رجوع) على محرك Workers المحلي — ليس Cloudflare الحقيقي
         run: |
           mkdir -p /tmp/mf2 && cd /tmp/mf2 && npm init -y >/dev/null
