@@ -9,11 +9,19 @@ export class GitHubSource {
   /** خطأ مصدر بحالة HTTP (403/429 = حدّ معدّل GitHub لعناوين Cloudflare المشتركة ← تراجع بدل الإلحاح) */
   err(url, status, r) { const e = new Error(`source: ${url.replace(/\?.*/, "")} → ${status}`); e.status = status; const ra = Number(r?.headers?.get?.("retry-after")), rs = Number(r?.headers?.get?.("x-ratelimit-reset")); e.retryAfterMs = ra > 0 ? ra * 1000 : rs > 0 ? Math.max(0, rs * 1000 - Date.now()) : null; return e; }
   async json(url) { const r = await this.f(url, { headers: this.hdr }); if (r.status !== 200) throw this.err(url, r.status, r); return r.json(); }
-  /** SHA رأس المرجع (فرع) — بلا حصة API */
+  /** SHA رأس المرجع — سلسلة مصادر بدلاء (حصص مستقلة عند حدّ المعدّل): 1) بروتوكول git الذكي info/refs 2) خلاصة Atom للالتزامات 3) API. أول نجاح يكفي؛ إن فشلت كلها يُرفع آخر خطأ (⇒ تراجع). */
   async head() {
-    const r = await this.f(`https://github.com/${this.repo}.git/info/refs?service=git-upload-pack`, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw this.err("info/refs", r.status, r);
-    const t = await r.text(), want = "refs/heads/" + this.ref; for (const line of t.split("\n")) { const i = line.indexOf(" " + want); if (i > 0 && /[0-9a-f]{40}$/.test(line.slice(0, i))) return line.slice(i - 40, i); }
-    throw new Error("source: المرجع غير موجود " + this.ref);
+    const errs = [], want = "refs/heads/" + this.ref, auth = this.token ? { Authorization: "Basic " + btoa("x-access-token:" + this.token) } : {};
+    try {
+      const r = await this.f(`https://github.com/${this.repo}.git/info/refs?service=git-upload-pack`, { headers: { "User-Agent": "alyssum-beta-sync", ...auth } }); if (r.status !== 200) throw this.err("info/refs", r.status, r);
+      const t = await r.text(); for (const line of t.split("\n")) { const i = line.indexOf(" " + want); if (i > 0 && /[0-9a-f]{40}$/.test(line.slice(0, i))) return line.slice(i - 40, i); } throw new Error("source: المرجع غير موجود " + this.ref);
+    } catch (e) { if (!e.status) throw e; errs.push(e); }
+    try {
+      const r = await this.f(`https://github.com/${this.repo}/commits/${this.ref.split("/").map(encodeURIComponent).join("/")}.atom`, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw this.err("commits.atom", r.status, r);
+      const m = (await r.text()).match(/Commit\/([0-9a-f]{40})/); if (m) return m[1]; throw new Error("source: atom بلا التزام");
+    } catch (e) { if (!e.status && !/atom/.test(e.message)) throw e; errs.push(e); }
+    try { const j = await this.json(`https://api.github.com/repos/${this.repo}/git/ref/heads/${this.ref.split("/").map(encodeURIComponent).join("/")}`); if (/^[0-9a-f]{40}$/.test(j?.object?.sha ?? "")) return j.object.sha; throw new Error("source: ref بلا sha"); } catch (e) { if (!e.status && !/ref/.test(e.message)) throw e; errs.push(e); }
+    const lim = errs.find((e) => e.status === 403 || e.status === 429) ?? errs.at(-1); throw lim;
   }
   /** Map(path → { blob, size }) لكل الملفات عند الالتزام */
   async tree(sha) {

@@ -10,6 +10,7 @@ import { KVTarget } from "../src/targets.js";
 import { makeSanitizer, classify, compOf, TPL_PREFIXES, sha256Hex, findSecrets } from "../src/rules.js";
 import { runSync, restoreDeleted, syncStatus, gitBlobSha } from "../src/engine.js";
 import { meta } from "../src/db.js";
+import { GitHubSource } from "../src/github.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, "../../..");
 let n = 0, bad = 0; const ok = (m, c, x) => { n++; if (!c) { bad++; console.log("✗ " + m + (x !== undefined ? "  → " + JSON.stringify(x).slice(0, 400) : "")); } };
@@ -191,6 +192,13 @@ sec("E3) وضع delta (بلا حصة API) مع الرجوع لشجرة git");
   w.repo.noDelta = false; await w.repo.commit("خاص", { "assets/data/payments.json": "{}", "assets/js/app.js": "x" }); const nz = await w.run(); ok("[E18] تغيير خارج النطاق عبر delta لا يُنتج أحداثاً", nz.ok && nz.planned === 0, nz);
   const ids = (await w.db.all("SELECT src_blob FROM sync_items WHERE state='applied'")).map((x) => x.src_blob); ok("[E19] معرّفات المحتوى متّسقة بين الوضعين (blob git حقيقي)", ids.every((x) => /^[0-9a-f]{40}$/.test(x)), ids.slice(0, 2));
   w.db.close(); }
+
+sec("E4) مصادر بديلة لرأس GitHub عند حدّ المعدّل");
+{ const SHA = "a".repeat(40), mk = (limited) => new GitHubSource({ repo: "o/r", ref: "beta/x", fetchFn: async (u) => { if (limited.some((x) => u.includes(x))) return new Response("rl", { status: 429, headers: { "retry-after": "120" } }); if (u.includes("info/refs")) return new Response(`001e# service=git-upload-pack\n0000${SHA} refs/heads/beta/x\n`); if (u.includes(".atom")) return new Response(`<entry><id>tag:github.com,2008:Grit::Commit/${SHA}</id></entry>`); if (u.includes("git/ref/")) return new Response(JSON.stringify({ object: { sha: SHA } })); return new Response("", { status: 404 }); } });
+  ok("[G1] رأس المصدر من info/refs", await mk([]).head() === SHA);
+  ok("[G2] info/refs محدود (429) ⇒ يتحوّل إلى خلاصة Atom", await mk(["info/refs"]).head() === SHA);
+  ok("[G3] info/refs وAtom محدودان ⇒ يتحوّل إلى API", await mk(["info/refs", ".atom"]).head() === SHA);
+  let e; try { await mk(["info/refs", ".atom", "git/ref"]).head(); } catch (x) { e = x; } ok("[G4] كل المصادر محدودة ⇒ خطأ 429 مع retryAfter (يُترجَم إلى تراجع)", e?.status === 429 && e.retryAfterMs === 120000); }
 
 sec("F) حواجز الشيفرة");
 { const src = ["engine.js", "rules.js", "github.js", "targets.js", "worker.js", "db.js"].map((f) => readFileSync(path.join(HERE, "../src", f), "utf8")).join("\n");
