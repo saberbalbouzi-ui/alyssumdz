@@ -12,6 +12,12 @@ const { chromium } = require("playwright");
     const out = { m: tb.classList.contains("m-scroll"), bar: !!(bar && bar.classList.contains("hs-bar") && bar.classList.contains("on")), range: w.scrollWidth - w.clientWidth };
     bar.scrollLeft = -(bar.scrollWidth - bar.clientWidth); await new Promise(r => setTimeout(r, 200)); out.end = Math.abs(w.scrollLeft) >= out.range - 2; return out;
   });
+  const OT = await p.evaluate(async () => {
+    const h = document.createElement("div"); h.innerHTML = '<div class="card rtw" style="overflow:auto"><table id="orders-table-x" style="min-width:600px"><thead><tr><th>أ</th><th>ب</th><th>ج</th><th>د</th><th>هـ</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr></tbody></table></div>'; document.getElementById("app").appendChild(h);
+    const tb = h.querySelector("table"); tb.id = "orders-table"; const prev = document.getElementById("orders-table"); if (prev && prev !== tb) prev.id = "orders-table-old";
+    await new Promise(r => setTimeout(r, 1200)); const w = tb.parentElement, bar = w.previousElementSibling; return { dup: !!(bar && bar.classList.contains("hs-bar")), m: tb.classList.contains("m-scroll") };
+  });
+  t("جدول الطلبات داخل .rtw: لا شريط مكرَّر على الحاوية (يتولاه شريط الطلبات)", OT.dup === false, OT);
   t("الجدول داخل حاوية التمرير لا يصير m-scroll", R.m === false, R);
   t("الشريط العلوي على الحاوية ويبلغ آخر عمود", R.bar && R.range > 0 && R.end, R);
   await b.close(); process.exit(bad ? 1 : 0);
