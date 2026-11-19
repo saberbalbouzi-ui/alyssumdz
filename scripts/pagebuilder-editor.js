@@ -103,7 +103,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-box.column .pbx-h{color:#9b59b6}.pbx-box.widget .pbx-h{color:#e67e22}
 .pbx-h.d-n{top:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-s{bottom:-7px;left:50%;margin-left:-6px;cursor:ns-resize}.pbx-h.d-e{right:-7px;top:50%;margin-top:-6px;cursor:ew-resize}.pbx-h.d-w{left:-7px;top:50%;margin-top:-6px;cursor:ew-resize}
 .pbx-h.d-ne{top:-7px;right:-7px;cursor:nesw-resize}.pbx-h.d-nw{top:-7px;left:-7px;cursor:nwse-resize}.pbx-h.d-se{bottom:-7px;right:-7px;cursor:nwse-resize}.pbx-h.d-sw{bottom:-7px;left:-7px;cursor:nesw-resize}
-.pbx-lay .pbx-sdt{box-shadow:inset 0 3px 0 #8b3dff}.pbx-lay .pbx-sdb{box-shadow:inset 0 -3px 0 #8b3dff}.pbx-sdiv{position:absolute;height:14px;pointer-events:auto;cursor:ns-resize;z-index:5}.pbx-sdiv:before{content:"";position:absolute;left:0;right:0;top:6px;border-top:2px dashed transparent;transition:border-color .12s}.pbx-sdiv:hover:before,.pbx-sdiv.on:before{border-top-color:#8b3dff}.pbx-sdiv-h{position:absolute;left:50%;top:-3px;transform:translateX(-50%);background:#8b3dff;color:#fff;font:800 .68rem Cairo,sans-serif;padding:.12rem .7rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none;opacity:0;transition:opacity .12s;pointer-events:none}.pbx-sdiv:hover .pbx-sdiv-h,.pbx-sdiv.on .pbx-sdiv-h{opacity:1}.pbx-pgend{position:absolute;height:0;border:0!important;border-top:2px solid #8b3dff!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
+.pbx-lay .pbx-sdt{box-shadow:inset 0 3px 0 #8b3dff}.pbx-lay .pbx-sdb{box-shadow:inset 0 -3px 0 #8b3dff}.pbx-sdiv{position:absolute;height:14px;pointer-events:none;z-index:5}.pbx-sdiv:before{content:"";position:absolute;left:0;right:0;top:6px;border-top:2px dashed transparent;transition:border-color .12s}.pbx-sdiv:has(.pbx-sdiv-h:hover):before,.pbx-sdiv.on:before{border-top-color:#8b3dff}.pbx-sdiv-h{position:absolute;left:50%;top:-3px;transform:translateX(-50%);background:#8b3dff;color:#fff;font:800 .68rem Cairo,sans-serif;padding:.12rem .7rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none;opacity:0;transition:opacity .12s;pointer-events:none}.pbx-sdiv .pbx-sdiv-g:hover~.pbx-sdiv-h,.pbx-sdiv.on .pbx-sdiv-h{opacity:1}.pbx-sdiv-g{position:absolute;left:50%;top:1px;transform:translateX(-50%);width:46px;height:12px;border-radius:999px;background:#8b3dff;opacity:.55;cursor:ns-resize;pointer-events:auto;transition:opacity .12s}.pbx-sdiv-g:hover,.pbx-sdiv.on .pbx-sdiv-g{opacity:1}.pbx-pgend{position:absolute;height:0;border:0!important;border-top:2px solid #8b3dff!important;border-radius:0!important;background:none!important;box-shadow:none!important;padding:0!important;pointer-events:none;z-index:6}.pbx-pend-h{position:absolute;left:50%;top:-14px;transform:translateX(-50%);pointer-events:auto;cursor:ns-resize;background:#8b3dff;color:#fff;font:800 .72rem Cairo,sans-serif;padding:.2rem .8rem;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.35);white-space:nowrap;user-select:none}.pbx-pend-h:hover{background:#a463ff}
 .pbx-gapb{background:rgba(233,30,99,.32)!important;border:1px solid #e91e63;box-sizing:border-box;z-index:6!important}.pbx-gapb b{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font:800 11px Cairo,sans-serif;color:#fff;background:#e91e63;padding:1px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .pbx-guide{position:absolute;background:repeating-linear-gradient(var(--gd,180deg),#e91e63 0 6px,transparent 6px 10px);pointer-events:none;z-index:4}
 .pbx-ghost{position:absolute;border:2px dashed #19c37d;background:rgba(25,195,125,.14);border-radius:6px;pointer-events:none;z-index:5}
@@ -142,7 +142,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-small{border:1.5px solid #e0d9c8;background:#fff;border-radius:8px;padding:.3rem .6rem;cursor:pointer;font-weight:800;font-family:inherit;font-size:.78rem}
 .pbx-dgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}.pbx-dfc{display:flex;flex-direction:column;align-items:center;gap:.25rem;border:1.5px solid #e4dfd2;border-radius:12px;background:#fff;padding:.5rem .35rem .45rem;cursor:pointer;font-family:inherit}.pbx-dfc:hover{border-color:#c8a24b;background:#fffaf0}.pbx-dfc span{font-size:.72rem;font-weight:800;color:#173f35;line-height:1.35;text-align:center}.pbx-lay{font-size:.82rem}.pbx-lay div{display:flex;align-items:center;gap:.35rem;padding:.28rem .4rem;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pbx-lay div:hover{background:#f4efe6}.pbx-lm{margin-inline-start:auto;display:flex;gap:2px;flex:none}.pbx-lm b{width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:rgba(200,162,75,.22);font-size:.7rem;cursor:pointer;color:inherit}.pbx-lm b:hover{background:#c8a24b;color:#173f35}.pbx-lm b.off{opacity:.25;pointer-events:none}.pbx-lay div.on{background:#173f35;color:#fff}
 .pbx-upb{background:#c8a24b;color:#173f35;font-weight:800;font-size:.75rem;padding:.2rem .6rem;border-radius:20px}
-.pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}
+.pbx-msg{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#173f35;color:#fff;padding:.6rem 1.2rem;border-radius:10px;font-weight:800;z-index:10002;display:none}.pbx-sample{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:min(760px,92vw);box-sizing:border-box;display:flex;align-items:center;gap:.8rem;background:#173f35;color:#fff;border:1px solid #c8a24b;padding:.6rem .9rem;border-radius:12px;font-size:.82rem;line-height:1.7;z-index:10001;box-shadow:0 8px 28px rgba(0,0,0,.35)}.pbx-sample b{color:#f5d77a}.pbx-sample button{flex:none;background:#c8a24b;color:#173f35;border:0;border-radius:9px;padding:.45rem 1rem;font:inherit;font-weight:800;cursor:pointer;min-height:40px}
 .pbx-tg{display:none!important}.pbx-tga{position:absolute;left:50%;transform:translateX(-50%);z-index:40;width:52px;height:18px;padding:0;border:1px solid rgba(255,255,255,.18);border-top:0;border-radius:0 0 12px 12px;background:#12201a;color:#e2fe17;cursor:pointer;display:flex;align-items:center;justify-content:center}.pbx-tga svg{transition:transform .2s}.pbx-tga.off svg{transform:rotate(180deg)}html.white .pbx-tga{background:#fff;color:#334155;border-color:#d2d9e3}
 .pbx-top button.au-new{background:#c8a24b;color:#173f35}
 .pbx-bcg{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:.35rem}.pbx-bcr{display:flex;align-items:center;gap:.3rem;background:#faf6ec;border:1px solid #eadfc4;border-radius:9px;padding:.2rem .35rem}.pbx-bcr .n{flex:none;width:22px;height:22px;border-radius:50%;background:#173f35;color:#fff;display:grid;place-items:center;font-size:.72rem;font-weight:800}.pbx-bcr input[type=color]{width:34px!important;height:26px;padding:0;border:0;background:none;flex:none}
@@ -272,7 +272,19 @@ body{overflow-x:hidden;margin:0}`;
 
   const toastUndo = m => { const t = $("pbx-msg"); if (!t) return; t.innerHTML = esc(m) + ' <button type="button" id="pbx-tu" style="margin-inline-start:.6rem;background:#c8a24b;color:#173f35;border:0;border-radius:8px;padding:.2rem .7rem;font-weight:800;cursor:pointer;font-family:inherit">↩ إلغاء النسخ</button>'; t.style.display = "block"; $("pbx-tu").onclick = () => { undo(); t.style.display = "none"; toast("↩ أُلغي النسخ"); }; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 9000); };
   const ERASER_ON = true;      // الممحاة بالفرشاة (MI-GAN محلي، وترميم محلي بسيط إن تعذّر النموذج) — تعمل بلا مفتاح
-  const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", 3500); };
+  /* تنبيه «محتوى نموذجي» (غير مانع، يُغلق بزر ويزول وحده): القالب الجديد يحمل آراء/أرقاماً/عبارات ثقة/بيانات تواصل للتوضيح فقط وعلى التاجر مراجعتها قبل النشر */
+  function sampleNotice() {
+    const old = $("pbx-sample"); if (old) old.remove(); clearTimeout(E.sampleT);
+    if (!E.page || !E.page.sample || !$("pb-app")) return;
+    const d = document.createElement("div"); d.id = "pbx-sample"; d.className = "pbx-sample"; d.setAttribute("role", "status");
+    d.innerHTML = '<div><b>محتوى نموذجي للمراجعة</b> — يحوي هذا القالب آراء زبائن وأرقاماً وعبارات ثقة وضمان وبيانات تواصل <b>للتوضيح فقط</b>؛ كلها قابلة للتعديل (النص والصورة والرقم واللون). راجعها وتأكد من صحة ما تدّعيه قبل النشر. العدّ التنازلي وكود الخصم ومؤشرات الكمية معطّلة حتى تفعّلها بإعداد صحيح.</div><button type="button">فهمت</button>';
+    d.querySelector("button").onclick = () => { if (E.page) E.page.sample = 0; d.remove(); clearTimeout(E.sampleT); };
+    $("pb-app").appendChild(d); E.sampleT = setTimeout(() => { try { d.remove(); } catch (e) { } }, 30000);
+  }
+  /* مراجعة ما قبل النشر (غير مانعة): تُلحق بنص نتيجة النشر فلا توقف شيئاً */
+  const PH_RX = /05XX|@your-domain\.com|example\.com|wa\.me\/213555000000/;
+  function pubWarn(P) { const w = []; try { if (PH_RX.test(JSON.stringify(P))) w.push("بيانات تواصل نموذجية (هاتف/بريد) لم تُعدَّل"); } catch (e) { } if (P && P.sample) w.push("محتوى نموذجي (آراء/أرقام/عبارات) لم تراجعه"); return w.length ? " ⚠️ تنبيه: " + w.join(" — ") : ""; }
+  const toast = m => { const t = $("pbx-msg"); if (!t) return; t.textContent = m; t.style.display = "block"; clearTimeout(t._t); t._t = setTimeout(() => t.style.display = "none", /⚠️/.test(m) ? 10000 : 3500); };
 
   /* ───────────────── بنية الواجهة ───────────────── */
   function build() {
@@ -390,6 +402,7 @@ body{overflow-x:hidden;margin:0}`;
     if (!isNew) try { const dr = localStorage.getItem(draftKey()); if (dr) { const dj = PB.migrate(JSON.parse(dr)); if (JSON.stringify(dj) !== JSON.stringify(E.page)) setTimeout(() => pbAsk("وُجدت مسودة تعديلات غير منشورة لهذه الصفحة محفوظة في هذا المتصفح. استرجاعها؟", "استرجاع المسودة", () => { E.page = dj; E.dirty = true; $("pbx-title").value = E.page.title || ""; commitHist(); renderCanvas(); renderInspector(); updateTop(); toast("♻️ استُرجعت المسودة — انشر لحفظها"); }, "تجاهل"), 900); } } catch (e) { }
     const app = $("pb-app"); app.classList.remove("pbx-hl", "pbx-hr"); if (isMob()) app.classList.add("pbx-hl", "pbx-hr"); syncPanels();
     E.zoom = 1; ltab("add"); setDev(isMob() && !E.page.ad ? "m" : "d"); renderInspector(); updateTop();
+    try { sampleNotice(); } catch (x) { }
     if (fdoc) renderCanvas();
     (async () => { try { const r = await fetch("assets/data/chrome.json", { cache: "no-store" }), c = r.ok ? await r.json() : null; PB.setChrome(typeof ChromeAdmin !== "undefined" && ChromeAdmin.state && ChromeAdmin.state.cfg ? ChromeAdmin.state.cfg : c); if (fdoc && E.page) renderCanvas(); } catch (e) { } })();      // هيدر الموقع المحفوظ لمعاينة «الهيدر الافتراضي»
   }
@@ -412,7 +425,7 @@ body{overflow-x:hidden;margin:0}`;
   function close(force, cb) {
     try { if (typeof BgEditor !== "undefined" && BgEditor.inst() && BgEditor.inst().ov.classList.contains("dk")) BgEditor.inst().close(true); } catch (x) { }
     if (E.dirty && force !== true) { pbAsk("هناك تعديلات غير منشورة. إغلاق المحرر وفقدانها؟", "إغلاق وفقدانها", () => close(true, cb)); return; }
-    closeFloating();
+    closeFloating(); try { const sn = $("pbx-sample"); if (sn) sn.remove(); clearTimeout(E.sampleT); } catch (x) { }
     if (E.dirty) { try { localStorage.removeItem(draftKey()); } catch (e) { } }
     E.toolMode = null; $("pb-app").classList.remove("on", "pbx-ad", "pbx-tool"); document.body.style.overflow = "";
     const bt = E.backTab; E.backTab = null; if (bt && bt !== "builder" && bt !== "imggen" && typeof Admin !== "undefined") setTimeout(() => { try { Admin.tab(bt); } catch (e) { } }, 0);      // العودة إلى القسم الذي فُتح منه المحرر (ستوديو ديزاين) بدل منطقة فارغة
@@ -1737,7 +1750,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const sb = mk("pbx-sb", [["rot", FIC.rot, "اسحب لتدوير العنصر (Shift = خطوات 15°، نقر مزدوج = إعادة)", null], ["move", FIC.move, "اسحب لتحريك العنصر", null]]);
     sb.children[0].onmousedown = ev => { if (ev.button) return; startRotate(ev, inf, box); }; sb.children[0].ondblclick = () => { setR(inf.set, "rot", E.dev, undefined); afterEdit(); };
     sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMove(ev, inf, !inf.free, false); };
-    const sw = sb.offsetWidth; let sl = bx.r + 12; if (sl + sw > W - 4) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
+    const sw = sb.offsetWidth, rg = (FREE_ONLY && !isMob()) ? 88 : 0;      // عمود مصغّرات الأقسام (.pbx-thumbs، ‏z-index:20‏) يغطي يمين طبقة الغطاء في وضع العناصر الحرة — يُطرح من الحد الأيمن كي لا تُدفن أزرار التدوير/التحريك تحته
+    let sl = bx.r + 12; if (sl + sw > W - 4 - rg) sl = Math.max(4, bx.l - sw - 12);      // يمين العنصر، وعلى يساره إن لم يتسع
     sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(bx.t, vb - sb.offsetHeight - 4)) + "px";      // داخل مجال الرؤية دائماً (كان يُقصّ عند أسفل المنطقة المرئية)
   }
 
@@ -1771,9 +1785,11 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       const st0 = sec.set || {}; if (sec === last || st0.tight || st0.off || st0.locked || isHF(sec)) return;
       const el = fdoc.querySelector(`[data-pb="${sec.id}"]`); if (!el) return; const r = layoutRect(el); if (r.width < 2) return;
       const canvas = st0.kind === "canvas", dev = E.dev, y = o.oy + (r.top + r.height) * s, d = document.createElement("div");
-      d.className = "pbx-sdiv"; d.style.cssText = `left:${o.ox + r.left * s}px;top:${y - 7}px;width:${r.width * s}px`; d.title = "اسحب بالفأرة لتنقيص ارتفاع القسم أو زيادته";
+      d.className = "pbx-sdiv"; d.style.cssText = `left:${o.ox + r.left * s}px;top:${y - 7}px;width:${r.width * s}px`;
+      /* الشريط نفسه لا يستقبل مؤشراً (كان يعترض نقر العناصر الرفيعة عند حدود الأقسام كشريط الأخبار)؛ المقبض الظاهر الصغير وحده يستقبله */
+      const g = document.createElement("div"); g.className = "pbx-sdiv-g"; g.title = "اسحب بالفأرة لتنقيص ارتفاع القسم أو زيادته"; d.appendChild(g);
       const h = document.createElement("div"); h.className = "pbx-sdiv-h"; h.textContent = "↕ ارتفاع القسم"; d.appendChild(h); ovl.appendChild(d);
-      d.onmousedown = e => {
+      g.onmousedown = e => {
         if (e.button !== 0) return; e.preventDefault(); e.stopPropagation(); d.classList.add("on");
         const tip = document.createElement("div"); tip.className = "pbx-tip"; $("pbx-ovl").appendChild(tip); const top = r.top;
         const mh0 = Number(eff(st0, "mh", dev)) || r.height, k = mh0 / (r.height || 1), pad0 = (eff(st0, "pad", dev) || [0, 0, 0, 0]).map(v => Number(v) || 0), u = uOf(sec, { width: (el.querySelector(".pb-in") || el).getBoundingClientRect().width }) || 1;
@@ -3565,7 +3581,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     if (ids.some(id => { const i = find(id); return i && i.kind === "widget" && !isLocked(i); })) {
       const sb = document.createElement("div"); sb.className = "pbx-sb"; sb.innerHTML = `<button type="button" title="اسحب لتدوير العناصر المحدّدة (Shift = خطوات 15°)" data-k="rot">${FIC.rot}</button><button type="button" title="اسحب لتحريك العناصر المحدّدة معاً" data-k="move">${FIC.move}</button>`; ovl.appendChild(sb);
       sb.children[0].onmousedown = ev => { if (ev.button) return; startRotateMulti(ev); }; sb.children[1].onmousedown = ev => { if (ev.button) return; ev.preventDefault(); ev.stopPropagation(); startMoveMulti(ev); };
-      let sl = R + 12; if (sl + sb.offsetWidth > W - 4) sl = Math.max(4, L - sb.offsetWidth - 12); sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(T, vb - sb.offsetHeight - 4)) + "px";
+      let sl = R + 12; if (sl + sb.offsetWidth > W - 4 - ((FREE_ONLY && !isMob()) ? 88 : 0)) sl = Math.max(4, L - sb.offsetWidth - 12); sb.style.left = sl + "px"; sb.style.top = Math.max(vt + 4, Math.min(T, vb - sb.offsetHeight - 4)) + "px";
     }
   }
   function startRotateMulti(e) {
@@ -4165,13 +4181,13 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
       if (E.upq) await E.upq;
       P = E.page;
       if (P.demo) { P.demo = false; try { renderCanvas(); } catch (e) { } }      // النشر دائماً ببيانات المتجر الحقيقية لا بيانات القالب التجريبية
-      if (mode === "direct") { pb.say("حفظ الصفحة الأصلية…"); await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); pb.end(true, "نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)"); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية"); return; }
+      if (mode === "direct") { pb.say("حفظ الصفحة الأصلية…"); await PBConvert.saveDirect(P, siteCtx()); await PBBind.commit(); E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop(); { const wn = pubWarn(P); pb.end(true, "نُشرت مباشرة بدل الصفحة الأصلية (قد يستغرق ظهورها دقيقة)" + wn); toast("✅ نُشرت مباشرة بدل الصفحة الأصلية" + wn); } return; }
       await writeLp(P, pb.say);
       if (typeof PBBind !== "undefined") { pb.say("تحديث بيانات المنتج…"); await PBBind.commit(); }
       pb.say("ضبط مسار المنتج…"); await syncRoute(P);
       await syncAB(P);
       E.isNew = false; E.dirty = false; markSaved(P); try { localStorage.removeItem(draftKey()); } catch (e) { } updateTop();
-      pb.end(true, "نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)"); toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)");
+      { const wn = pubWarn(P); pb.end(true, "نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)" + wn); toast("✅ نُشرت: /lp/" + slug + "/ (قد يستغرق ظهورها دقيقة)" + wn); }
     } catch (err) { console.error(err); pb.end(false, err.message || "تعذّر الحفظ"); toast("❌ " + err.message); } finally { E.pubBusy = false; }
   }
 

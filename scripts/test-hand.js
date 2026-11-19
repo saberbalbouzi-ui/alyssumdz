@@ -102,14 +102,24 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
       c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 200));
       const r = { has, own, wil: w.value, com: c.value, still: Array.from(c.options).some(o => o.value === "Barika") }; bg.remove(); return r; });
     ok("بلدية بريكة تظهر مع بلديات باتنة وتحوّل الولاية عند اختيارها", wk.has && wk.own > 10 && wk.wil === "Barika" && wk.com === "Barika" && wk.still, wk); }
-  { const sp = await p.context().newPage(); await sp.goto(base + "/index.html"); await sp.waitForTimeout(800);
+  /* تصحيح فرضية الاختبار (راجع docs/ci-fix-notes/README.md): الشركة الافتراضية في assets/data/ship-co.json صارت "wecan" لا "yalidine"،
+     وقاعدة v1.89.649 (إخفاء الولايات الجديدة 59–69) خاصة بياليدين. فيُختبر الوضعان صراحةً: (أ) الافتراضي الفعلي = wecan ← بريكة ولاية قائمة بذاتها،
+     (ب) الافتراضي ياليدين بتعديل الاستجابة فقط داخل الاختبار ← الشرط الأصلي كما كان (بلدية تابعة لباتنة، تبقى الولاية الأم). */
+  for (const def of ["yalidine", null]) {
+    /* سياق جديد بلا service worker: وإلا يخدم العاملُ ship-co.json من كاشه فلا يلتقطه route (ولا علاقة لذلك بحماية الموقع) */
+    const spc = await browser.newContext({ serviceWorkers: "block" }), sp = await spc.newPage();
+    if (def) await sp.route("**/assets/data/ship-co.json*", async r => { const j = await (await r.fetch()).json(); j.def = def; r.fulfill({ contentType: "application/json", body: JSON.stringify(j) }); });
+    await sp.goto(base + "/index.html"); await sp.waitForTimeout(800);
     const sk = await sp.evaluate(() => { const slug = PRODUCTS.find(x => x.active !== false).slug; return slug; }); await sp.goto(base + "/p/" + sk + "/"); await sp.waitForTimeout(1500);
     const st = await sp.evaluate(async () => { const w = document.getElementById("wilaya"), c = document.getElementById("commune"); if (!w || !c) return { none: true };
       w.value = "5"; w.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
       const has = Array.from(c.options).some(o => o.value === "Barika" && o.dataset.w == "60"); c.value = "Barika"; c.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(z => setTimeout(z, 100));
       return { has, wil: w.value, com: c.value, kept: Array.from(c.options).some(o => o.value === "Barika") }; });
-    /* قاعدة v1.89.649: الولاية الجديدة لا تُعرض ولاية ما لم تعدّها قائمة ولايات الشركة؛ بريكة بلدية تابعة لباتنة وتُرسل الولاية الأم (5) */
-    ok("المتجر: بريكة بلدية تابعة لباتنة والولاية الأم تبقى (قاعدة v1.89.649)", !st.has && st.wil === "5" && st.com === "Barika" && st.kept, st); await sp.close(); }
+    if (def === "yalidine") /* قاعدة v1.89.649: الولاية الجديدة لا تُعرض ولاية ما لم تعدّها قائمة ولايات الشركة؛ بريكة بلدية تابعة لباتنة وتُرسل الولاية الأم (5) */
+      ok("المتجر (شركة افتراضية ياليدين): بريكة بلدية تابعة لباتنة والولاية الأم تبقى (قاعدة v1.89.649)", !st.has && st.wil === "5" && st.com === "Barika" && st.kept, st);
+    else /* الافتراضي الفعلي في ship-co.json (wecan) يعدّ الولايات الجديدة: بريكة ولاية قائمة وتنتقل إليها الولاية عند اختيارها */
+      ok("المتجر (الشركة الافتراضية الفعلية في ship-co.json): بريكة ولاية قائمة بذاتها وتنتقل إليها الولاية عند اختيار بلديتها", st.has && st.wil === "60" && st.com === "Barika" && st.kept, st);
+    await sp.close(); await spc.close(); }
   await p.evaluate(() => { window.__ockReal = Admin.orderCompanyKey; window.__sodReal = Admin.sendOrderToDelivery; });
   // أول فتح للميكروفون: تعرّف على الصوت (hi + اسم المتجر مرة واحدة، وتُعاد عند الرداءة فقط) ثم تحية
   await p.evaluate(() => document.getElementById("ah-mic").click()); await p.waitForTimeout(400);
@@ -1877,10 +1887,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   const lyT = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; window.confirm = () => true; PBAdmin.mkPage("تخطيط"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(500); R.tab = PBApp.E.ltab; R.vis = !!document.getElementById("pbx-lpane").offsetParent;
     const pane = document.getElementById("pbx-lpane"), tiles = [...pane.querySelectorAll(".pbx-ttg")[0].querySelectorAll(".pbx-tt")]; const rs = tiles.map(t => t.getBoundingClientRect()), im = tiles[0].querySelector("img").getBoundingClientRect(), sp = im;
-    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.square = Math.abs(im.width / im.height - 1) < .03 && im.width >= 90; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 4 && pane.querySelectorAll(".pbx-cat").length >= 3;
+    R.shown = rs[0].width > 0; R.imgW = Math.round(im.width); R.imgH = Math.round(im.height); R.tileW = Math.round(rs[0].width); R.fill = rs[0].width - im.width <= 18; R.square = Math.abs(im.width / im.height - 1) < .03 && im.width >= 70 && R.fill; R.below = true; R.merged = pane.querySelectorAll(".pbx-ttg [data-imgm]").length === 4 && pane.querySelectorAll(".pbx-cat").length >= 3;
     R.row1 = Math.abs(rs[0].top - rs[1].top) < 2 && Math.abs(rs[0].left - rs[1].left) > 40; R.row2 = rs[2].top > rs[0].bottom - 1 && Math.abs(rs[2].left - rs[0].left) < 3; R.disp = getComputedStyle(pane.querySelector(".pbx-ttg")).display; PBApp.close(true); await w(400); return R;
   });
-  ok("تبويب «تعديل الصورة» (تخطيط فعلي): أيقونات ≥90px مربعة والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
+  ok("تبويب «تعديل الصورة» (تخطيط فعلي): أيقونات مربعة ≥70px وتملأ بطاقتها (الشريط الأيسر 210px منذ v1.89.998 ← ≈77px) والذكية في الشبكة نفسها، اثنان في كل صف ثم صف تحتهما (grid لا صف أفقي)", lyT.shown && lyT.square && lyT.merged && lyT.row1 && lyT.row2 && lyT.disp === "grid", lyT);
   const icn = await p.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); const R = {}; PBAdmin.mkPage("أيقونات"); await w(1500); document.getElementById("pb-app").classList.remove("pbx-hl"); if (PBApp.E.ltab !== "img") PBApp.ltoggle("img"); await w(900);
     const pane = document.getElementById("pbx-lpane"), tile = pane.querySelector('[data-imgt="bg"]'), row = pane.querySelector('[data-imgx="brand"]');

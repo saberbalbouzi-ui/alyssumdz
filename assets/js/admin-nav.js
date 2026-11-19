@@ -80,8 +80,8 @@ const AdminNav = (() => {
     { id: "c-dark", cat: "contact", fld: "عام", n: "نموذج اتصال داكن أنيق", d: "خلفية خضراء داكنة وحقول زجاجية وزر ذهبي.", b: cf({ fbg: "#173f35", fbc: "#2b5b4e", tcol: "#ffffff", lcol: "#e6dfcf", ibg: "#ffffff1a", ibc: "#ffffff40", bbg: "#c8a24b", bcol: "#173f35" }, "راسلنا الآن", "فريقنا جاهز للرد على استفساراتك.") },
     { id: "c-quote", cat: "contact", fld: "خدمات", n: "طلب عرض سعر", d: "الاسم والهاتف والولاية ونوع الخدمة وتفاصيل الطلب.", b: cf({ fields: [{ label: "الاسم الكامل", type: "text", ph: "اكتب اسمك", req: true, w: "half" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "الولاية", type: "text", ph: "مثال: الجزائر", req: false, w: "half" }, { label: "نوع الخدمة", type: "select", ph: "اختر الخدمة", opts: "خدمة أولى، خدمة ثانية، أخرى", req: true, w: "half" }, { label: "تفاصيل الطلب", type: "textarea", ph: "صف طلبك بإيجاز", req: true, w: "full" }], btn: "اطلب عرض السعر", subject: "طلب عرض سعر" }, "اطلب عرض سعر", "أخبرنا بما تحتاجه ونعود إليك بعرض مناسب.") },
     { id: "c-health", cat: "contact", fld: "صحة وعسل", n: "استشارة صحية / تغذية", d: "نموذج مخصص للاستشارة حول المنتج المناسب للحالة.", b: cf({ fields: [{ label: "الاسم", type: "text", ph: "اسمك", req: true, w: "half" }, { label: "رقم الهاتف", type: "tel", ph: "05XXXXXXXX", req: true, w: "half" }, { label: "العمر", type: "number", ph: "العمر", req: false, w: "half" }, { label: "الحاجة", type: "select", ph: "اختر", opts: "تقوية الذاكرة، المناعة، الطاقة، أخرى", req: true, w: "half" }, { label: "ملاحظات", type: "textarea", ph: "أي تفاصيل تفيدنا", req: false, w: "full" }], btn: "أرسل استشارتي", subject: "طلب استشارة" }, "استشارة مجانية", "اكتب حالتك وسنقترح عليك المنتج الأنسب.") },
-    { id: "o-orig", cat: "order", fld: "متجر", n: "نموذج طلب أليسوم", d: "نموذج الطلب الحقيقي كاملاً بكل عروضه وكميّاته ورسوم التوصيل وزر واتساب.", b: dflt(["order"]) },
-    { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey" }
+    { id: "o-orig", cat: "order", fld: "متجر", n: "نموذج الطلب الأصلي (كامل)", d: "نموذج الطلب الحقيقي كاملاً بكل عروضه وكميّاته ورسوم التوصيل وزر واتساب.", b: dflt(["order"]) },
+    { id: "p-focus-honey", cat: "page", fld: "صحة وعسل", n: "هبوط: عسل التركيز", d: "صفحة هبوط كاملة مبنية بعناصر المطوّر على نمط التصميم المرجعي.", file: "focus-honey", owner: true }
   ];
   /* ══ قوالبي: القوالب المحمَّلة (استيراد JSON) أو المنشأة (صفحة محفوظة كقالب) — assets/data/mytpl.json (GitHub/PHP) أو localStorage ══ */
   const MY = { items: null, sha: undefined }, MYF = "assets/data/mytpl.json", MYLS = "alyssum_mytpl";
@@ -106,7 +106,9 @@ const AdminNav = (() => {
   function tplFind(id) { if (String(id).startsWith("my:")) { const it = (MY.items || []).find(q => "my:" + q.id === id); return it ? myAsLib(it) : null; } return libAll().find(q => q.id === id); }
   const LS = { type: "all", cat: "all", fld: "all", q: "", v: "lib" }; let LIBX = null; const V = "1.89.56";
   async function libLoad() { if (LIBX) return; LIBX = []; try { const r = await fetch("assets/pages/templates/index.json?v=" + Date.now(), { cache: "no-store" }); if (r.ok) LIBX = (await r.json()).map(x => Object.assign({ file: x.id, adv: true }, x)); } catch (e) { } }
-  function libAll() { return LIB.concat(LIBX || []); }
+  /* قوالب البائع (owner:true: قالب أليسوم وهبوط عسل التركيز) تظهر في موقع البائع فقط (CONFIG.SELLER) ولا تظهر لأي عميل ولو بقي ملفها/فهرسها على استضافته من تحديث قديم */
+  const isSeller = () => { try { return typeof CONFIG !== "undefined" && CONFIG.SELLER === true; } catch (e) { return false; } };
+  function libAll() { return LIB.concat(LIBX || []).filter(x => !x.owner || isSeller()); }
   async function libOpen(view) { await libLoad(); await myLoad(); LS.type = "all"; LS.cat = "all"; LS.fld = "all"; LS.q = ""; LS.v = view === "mine" || view === "load" ? view : "lib"; let m = $("tl-lib"); if (!m) { m = document.createElement("div"); m.id = "tl-lib"; m.onclick = e => { if (e.target === m) libClose(); }; document.body.appendChild(m); } m.style.display = "flex"; libDraw(); }
   function libClose() { const m = $("tl-lib"); if (m) m.style.display = "none"; }
   function libSet(k, v) { LS[k] = v; if (k === "q") { libDraw(true); return; } libDraw(); }

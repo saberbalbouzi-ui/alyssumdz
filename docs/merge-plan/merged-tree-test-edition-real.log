@@ -1,0 +1,16 @@
+قبل: {"groups":false,"nav":[""],"cls":[],"ed":"pro"}
+✓ البطاقة ظاهرة
+design: {"groups":false,"nav":["Admin.tab('store',this)","Admin.tab('team',this)","Admin.tab('builder',this)","AdminNav.app('builder',this)","Admin.tab('studio',this)","Admin.tab('admtheme',this)",""],"cls":["ed-design"],"ed":"design"}
+✓ design: الصنف ed-design
+✓ design: شريط المجموعات مخفي
+✓ design: أزرار قليلة
+✓ design: الفريق والأمان بلا أشياء المتجر (أمان فقط)
+basic: {"groups":false,"nav":["Admin.tab('store',this)","Admin.tab('blog',this)","Admin.tab('team',this)",""],"cls":["ed-basic"],"ed":"basic"}
+✓ basic: لا studio
+✓ basic: بطاقة اختيار (صفحة ويب/صور إشهارية) مخفية في الصفحات
+✓ basic: المطوّر بلا تعديل الصورة والملصقات والمكتبة والنشر
+✓ basic: فتح تعديل الصورة برمجياً مرفوض
+pro: {"groups":false,"nav":["Admin.tab('store',this)","Admin.tab('blog',this)","Admin.tab('team',this)",""],"cls":[],"ed":"pro"}
+✓ pro: كل شيء
+✓ لا أخطاء JS
+ALL OK

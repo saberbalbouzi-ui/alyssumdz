@@ -668,7 +668,7 @@ const OrderSteps = (() => {
   }
   function unsupported() {
     if (!$("order-form") || !$("wilaya")) return "no-form"; if (document.querySelector(".oos-warning")) return "oos"; if ($("variants") || $("group-box")) return "variants";
-    if (document.querySelector('[data-digital],#digital-pay,.digital-checkout')) return "digital"; return "";
+    if (document.querySelector('[data-digital],#digital-pay,.digital-checkout,#dg-box')) return "digital"; return "";
   }
   /* n=1: الولاية/البلدية/المكتب + العرض؛ n=2: الاسم والهاتف والحقول الإضافية */
   function validate(n) {
@@ -1554,7 +1554,7 @@ function productCardHTML(p, opts){
   const ptype = productType(p), disc = (ptype==="simple" && p.old) ? Math.round((1-p.price/p.old)*100) : 0;
   const oos = isOutOfStock(p);
   return `
-    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}<img loading="lazy" decoding="async" width="500" height="500" src="${REL}${p.cover||p.images[0]}" srcset="${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w480.webp"))} 480w, ${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w720.webp"))} 720w, ${encodeURI(REL+(p.cover||p.images[0]))} 1100w" sizes="(max-width:700px) 92vw, 330px" onerror="if(this.srcset){this.removeAttribute('srcset');this.src=this.src}" alt="${p.title}"></div>
+    <div class="thumb">${oos?`<div class="ribbon-oos">نفدت الكمية 🚫</div>`:""}${(!oos && opts.ribbon)?`<span class="ribbon-best">${opts.ribbon}</span>`:""}${(!oos && disc)?`<span class="badge-off">-${disc}%</span>`:""}${(p.cover||(p.images&&p.images[0]))?`<img loading="lazy" decoding="async" width="500" height="500" src="${REL}${p.cover||p.images[0]}" srcset="${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w480.webp"))} 480w, ${encodeURI(REL+(p.cover||p.images[0]).replace(/\.webp$/,".w720.webp"))} 720w, ${encodeURI(REL+(p.cover||p.images[0]))} 1100w" sizes="(max-width:700px) 92vw, 330px" onerror="if(this.srcset){this.removeAttribute('srcset');this.src=this.src}" alt="${p.title}">`:`<div class="noimg" role="img" aria-label="${p.title}" style="width:100%;aspect-ratio:1/1;background:#ece8df"></div>`}</div>
     <div class="body">
       <h3>${p.title}</h3>
       ${(p.reviews && Number(p.reviews.count) > 0) ? `<div class="stars">★ ${Number(p.reviews.avg||5).toFixed(1)} <small>(${Number(p.reviews.count)} تقييم)</small></div>` : ""}
@@ -1773,6 +1773,14 @@ function initCartDrawer(){
   if(totBox) injectCouponBox("cart", totBox, ()=>Cart.subtotal(), Cart.render, couponCartItems);
 }
 
+
+/* ── صفحة السلة cart.html: تعرض السلة نفسها (#drawer بكل معرّفاتها ومنطق Cart) مضمَّنة في الصفحة بدل الدرج المنزلق — لا منطق سلة مكرَّر ── */
+function initCartPage(){
+  const box = document.getElementById("cart-page"), dr = document.getElementById("drawer"), bg = document.getElementById("drawer-bg"); if(!box || !dr) return;
+  box.appendChild(dr); dr.classList.add("inline", "open"); if(bg){ bg.classList.remove("open"); bg.style.display = "none"; }
+  const h = dr.querySelector("h3"); if(h) h.style.display = "none";
+  Cart.render();
+}
 
 /* ── تتبّع الزيارات + «يشاهدون الآن» الحقيقي (يُقرأ في لوحة الإدارة) ──
    زيارة واحدة لكل جلسة وصفحة، ونبض كل 45 ثانية فقط والصفحة ظاهرة (وبحد أقصى 20 دقيقة) لتوفير حصة Apps Script.

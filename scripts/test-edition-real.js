@@ -59,7 +59,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => Admin.tab("store", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'store'")))); await p.waitForTimeout(1200);
   await p.evaluate(() => document.querySelector('input[name="stp-edition"][value="basic"]').click()); await p.waitForTimeout(1200);
   const bs = await vis(); console.log("basic:", JSON.stringify(bs).slice(0, 300));
-  ok("basic: لا studio", !bs.nav.some(x => x.includes("'studio'") || x.includes("'imggen'")) && bs.groups === true);
+  ok("basic: لا studio", !bs.nav.some(x => x.includes("'studio'") || x.includes("'imggen'")) && bs.groups === false);   /* #nav-groups مخفي عمداً في كل العروض (الشريط الجانبي أكورديون) — راجع docs/ci-fix-notes/README.md */
   await p.evaluate(() => Admin.tab("builder", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'builder'")))); await p.waitForTimeout(1200);
   ok("basic: بطاقة اختيار (صفحة ويب/صور إشهارية) مخفية في الصفحات", await p.evaluate(() => { const m = document.getElementById("pb-modes"); return !m || m.offsetParent === null || getComputedStyle(m.parentElement).display === "none"; }));
   await p.evaluate(() => PBAdmin.newPage({ title: "اختبار" })); await p.waitForSelector("#pbx-frame, .pbx-tabs", { timeout: 15000 }); await p.waitForTimeout(1500);
@@ -70,7 +70,10 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
   await p.evaluate(() => { try { PBApp.close(); } catch (e) { } }); await p.waitForTimeout(800); await p.evaluate(() => { document.querySelectorAll("dialog,.modal-bg").forEach(x => x.remove()); });
   await p.evaluate(() => Admin.tab("store", [...document.querySelectorAll(".nav-btn")].find(b => (b.getAttribute("onclick") || "").includes("'store'")))); await p.waitForTimeout(1000);
   await p.evaluate(() => document.querySelector('input[name="stp-edition"][value="pro"]').click()); await p.waitForTimeout(1200);
-  const r = await vis(); ok("pro: كل شيء", r.cls.length === 0 && r.groups === true);
+  const r = await vis(); console.log("pro:", JSON.stringify(r).slice(0, 300));
+  /* pro: لا صنف نسخة، وشريط المجموعات العلوي يبقى مخفياً (الأكورديون الجانبي)، وأزرار نسخة «أساسية/تصميم» الممنوعة تعود: studio موجود غير مخفي بقاعدة نسخة */
+  const proSt = await p.evaluate(() => { const b = [...document.querySelectorAll(".side-nav .nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'studio'")); return { has: !!b, hidden: !!b && getComputedStyle(b).display === "none" && document.documentElement.className.includes("ed-") }; });
+  ok("pro: كل شيء", r.cls.length === 0 && r.groups === false && proSt.has && !proSt.hidden, { r, proSt });
   ok("لا أخطاء JS", errs.length === 0, errs);
   await browser.close(); console.log(fails ? "FAILED " + fails : "ALL OK"); process.exit(fails ? 1 : 0);
 })();
