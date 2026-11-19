@@ -177,9 +177,9 @@ sec("E2) خمول بلا حصة API، وتراجع عند حدّ معدّل GitH
   await seed(w.kv, "ui", "r-9", { "index.html": PAGE("x"), "assets/js/data.js": PRODUCTS([]) }); const dr = await w.run();
   ok("[E10] انحراف البيان يوقظ المسار الكامل رغم أن الرأس لم يتغيّر", dr.ok && !dr.idle && dr.diffs >= 3 && (await w.get("assets/js/data.js")).t.includes("عسل السدر"), dr);
   await w.repo.commit("تغيير", { "assets/data/theme.json": JSON.stringify({ a: 1 }) }); const od = w.repo.tree.bind(w.repo), odd = w.repo.delta.bind(w.repo), lim = async () => { const e = new Error("source: trees → 429"); e.status = 429; e.retryAfterMs = 120000; throw e; }; w.repo.tree = lim; w.repo.delta = lim;
-  const rl = await w.run(); ok("[E11] 429 من GitHub: فشل واضح مع تراجع، ولا شيء يُفقد", !rl.ok && rl.rateLimited && /تراجع/.test(rl.error), rl);
-  const callsBefore = w.repo.calls.length; const sk = await w.run(); ok("[E12] أثناء التراجع لا طلبات إلى GitHub إطلاقاً (لا إلحاح)", sk.skipped === "backoff" && w.repo.calls.length === callsBefore, sk);
-  w.repo.tree = od; w.repo.delta = odd; await meta.set(w.db, "backoff_until", 0); const rec = await w.run(); ok("[E13] بعد انتهاء التراجع تصل التغييرات", rec.ok && (await w.get("assets/data/theme.json")).t.includes('"a": 1') || JSON.parse((await w.get("assets/data/theme.json")).t).a === 1, rec);
+  const rl = await w.run(); ok("[E11] 429 من GitHub (delta ثم الشجرة): فشل واضح مع تراجع الشجرة، ولا شيء يُفقد", !rl.ok && rl.rateLimited && /تراجع/.test(rl.error), rl);
+  const treesBefore = w.repo.calls.filter((c) => c === "tree").length; const sk = await w.run(); ok("[E12] حدّ الشجرة (API) لا يوقف المزامنة كلها ولا يُلحّ عليها: لا نداء tree أثناء التراجع", !sk.ok && /الشجرة|حدّ API/.test(sk.error ?? "") && w.repo.calls.filter((c) => c === "tree").length === treesBefore, sk);
+  w.repo.tree = od; w.repo.delta = odd; await meta.set(w.db, "api_backoff_until", 0); await meta.set(w.db, "backoff_until", 0); const rec = await w.run(); ok("[E13] بعد انتهاء التراجع تصل التغييرات", rec.ok && (await w.get("assets/data/theme.json")).t.includes('"a": 1') || JSON.parse((await w.get("assets/data/theme.json")).t).a === 1, rec);
   w.db.close(); }
 
 sec("E3) وضع delta (بلا حصة API) مع الرجوع لشجرة git");
@@ -199,6 +199,13 @@ sec("E4) مصادر بديلة لرأس GitHub عند حدّ المعدّل");
   ok("[G2] info/refs محدود (429) ⇒ يتحوّل إلى خلاصة Atom", await mk(["info/refs"]).head() === SHA);
   ok("[G3] info/refs وAtom محدودان ⇒ يتحوّل إلى API", await mk(["info/refs", ".atom"]).head() === SHA);
   let e; try { await mk(["info/refs", ".atom", "git/ref"]).head(); } catch (x) { e = x; } ok("[G4] كل المصادر محدودة ⇒ خطأ 429 مع retryAfter (يُترجَم إلى تراجع)", e?.status === 429 && e.retryAfterMs === 120000); }
+
+sec("E5) التسوية بلا شجرة، وحدّ الرأس يوقف كل شيء");
+{ const w = await world(); await w.run(); const t0 = w.repo.calls.filter((c) => c === "tree").length;
+  const rc = await w.run({ kind: "reconcile" }); ok("[E20] تسوية دورية على الرأس نفسه: فحص حيّ بلا قراءة شجرة (لا حصة API)", rc.ok && rc.verified > 0 && rc.mode === "delta" && w.repo.calls.filter((c) => c === "tree").length === t0, rc);
+  const oh = w.repo.head.bind(w.repo); w.repo.head = async () => { const e = new Error("source: info/refs → 429"); e.status = 429; e.retryAfterMs = 100000; throw e; }; const hl = await w.run(); const c1 = w.repo.calls.length; const hk = await w.run(); w.repo.head = oh;
+  ok("[E21] حدّ كل مصادر الرأس ⇒ تراجع عام (لا نداء لأي شيء حتى ينتهي)", !hl.ok && hl.rateLimited && hk.skipped === "backoff" && w.repo.calls.length === c1, { hl: hl.error, hk });
+  w.db.close(); }
 
 sec("F) حواجز الشيفرة");
 { const src = ["engine.js", "rules.js", "github.js", "targets.js", "worker.js", "db.js"].map((f) => readFileSync(path.join(HERE, "../src", f), "utf8")).join("\n");

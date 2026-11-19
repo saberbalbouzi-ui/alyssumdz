@@ -21,7 +21,7 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
   const R = { ok: false, kind, head: null, prevHead: await meta.get(db, "synced_head"), planned: 0, applied: 0, failed: 0, quarantined: 0, deleted: 0, diffs: 0, pending: 0, verified: 0, notes: [] };
   let runId = null;
   try {
-    const head = await source.head(); R.head = head;
+    R.phase = "head"; const head = await source.head(); R.head = head;
     await meta.set(db, "head_seen", head);                                                                       // آخر رأس رُصد في المصدر (يكشف التأخر حتى لو فشل التطبيق)
     /* مسار الخمول: الرأس نفسه المطبَّق سابقاً ولا انحراف في البيان ولا عناصر فاشلة ⇒ لا شجرة ولا حصة API (الحالة المستقرة = طلب info/refs واحد في الدقيقة) */
     if (kind === "incremental" && !force && head === await meta.get(db, "synced_head")) {
@@ -39,9 +39,9 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
     const items = new Map((await db.all("SELECT * FROM sync_items")).map((r) => [r.path, r])), desired = new Map(); let mode = "tree";
     /* وضع delta: تغييرات الرأس الجديد عن آخر رأس مطبَّق من نقطة ويب (لا حصة API) + مسارات الأحداث المعلّقة؛ وما عداها يبقى كما في sync_items. الفشل/عدم اليقين ⇒ شجرة git. */
     const base0 = await meta.get(db, "synced_head");
-    if (kind !== "full" && !force && base0 && base0 !== head && source.delta) {
+    if (kind !== "full" && !force && base0 && source.delta) {
       try {
-        const d = await source.delta(base0, head); const pend = (await db.all("SELECT DISTINCT path FROM sync_events WHERE status IN ('pending','failed','unverified')")).map((x) => x.path);
+        R.phase = "delta"; const d = base0 === head ? new Map() : await source.delta(base0, head); const pend = (await db.all("SELECT DISTINCT path FROM sync_events WHERE status IN ('pending','failed','unverified')")).map((x) => x.path);
         if (d) {
           for (const [p, it] of items) if (it.state !== "deleted") { const cls = classify(p); if (cls) desired.set(p, { blob: it.src_blob, size: 0, cls }); }
           const chg = new Map(d); for (const p of pend) if (!chg.has(p)) chg.set(p, "M");
@@ -54,7 +54,7 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
         }
       } catch (e) { if (e.status === 403 || e.status === 429) R.notes.push("delta-limited"); desired.clear(); mode = "tree"; }
     }
-    if (mode === "tree") { const tree = await source.tree(head); for (const [p, e] of tree) { const cls = classify(p); if (cls) desired.set(p, { ...e, cls }); } }
+    if (mode === "tree") { R.phase = "tree"; const abo = Number(await meta.get(db, "api_backoff_until", 0)); if (abo && now() < abo && !force) { const e = new Error("شجرة git غير متاحة الآن (حدّ API مؤقت حتى " + new Date(abo).toISOString() + ")"); e.apiBackoff = true; throw e; } const tree = await source.tree(head); for (const [p, e] of tree) { const cls = classify(p); if (cls) desired.set(p, { ...e, cls }); } }
     R.mode = mode;
     const man = {}; for (const c of COMPONENTS) man[c] = await target.manifest(c);
     for (const c of COMPONENTS) if (!man[c].map) { R.error = `لا إصدار واجهة منشور للمكوّن ${c} (لا بيان للتصحيح عليه)`; return await finish(R, db, now, t0, kind, null, commits); }
@@ -124,7 +124,7 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
     R.ok = R.failed === 0; return await finish(R, db, now, t0, kind, runId, commits);
   } catch (e) {
     R.error = String(e.message ?? e); await meta.set(db, "last_error", R.error);
-    if (e.status === 403 || e.status === 429) { const ms = Math.min(Math.max(e.retryAfterMs ?? 90_000, 60_000), 15 * 60_000); await meta.set(db, "backoff_until", now() + ms); R.rateLimited = true; R.error += " (تراجع " + Math.round(ms / 1000) + "ث)"; await meta.set(db, "last_error", R.error); } return await finish(R, db, now, t0, kind, runId, null);
+    if (e.status === 403 || e.status === 429) { const ms = Math.min(Math.max(e.retryAfterMs ?? 90_000, 60_000), 15 * 60_000); const key = R.phase === "tree" ? "api_backoff_until" : "backoff_until"; await meta.set(db, key, now() + ms); R.rateLimited = true; R.error += (key === "api_backoff_until" ? " (الشجرة فقط: تراجع " : " (تراجع ") + Math.round(ms / 1000) + "ث)"; await meta.set(db, "last_error", R.error); } return await finish(R, db, now, t0, kind, runId, null);
   }
 }
 async function ev(db, seq, status, error) { await db.run("UPDATE sync_events SET status=?, error=?, ts=? WHERE seq=?", [status, error ?? null, iso(), seq]); }

@@ -22,7 +22,8 @@ function ctxOf(env) {
 export async function tick(env, kind) {
   const c = ctxOf(env); const n = Number(await meta.get(c.db, "ticks", 0)) + 1; await meta.set(c.db, "ticks", n);
   const k = kind ?? (n % 10 === 0 ? "reconcile" : "incremental");     // كل عاشر تشغيل تسوية دورية بفحص حيّ
-  return runSync({ ...c, kind: k });
+  const files = Math.min(Math.max(Number(env.SYNC_BUDGET_FILES) || 12, 1), 80);                // ميزانية الملفات لكل تشغيل (حدود subrequests/زمن Worker)
+  return runSync({ ...c, kind: k, budget: { files } });
 }
 const PAGE = `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>مزامنة Beta</title><meta name="robots" content="noindex">
 <style>body{font:14px/1.6 system-ui,Tahoma;margin:16px;background:#0b1410;color:#e7efe9}h1{font-size:18px}table{border-collapse:collapse;width:100%;margin:8px 0 18px}td,th{border:1px solid #2a3a31;padding:4px 8px;text-align:right;font-size:12px}th{background:#14221b}.ok{color:#6ee7a0}.bad{color:#ff8a8a}.k{display:inline-block;margin:0 0 6px 12px;padding:4px 10px;background:#14221b;border-radius:8px}button{padding:6px 12px}code{direction:ltr;unicode-bidi:embed}</style>

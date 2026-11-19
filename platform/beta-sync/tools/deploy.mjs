@@ -45,7 +45,7 @@ if (existsSync(secFile)) token = JSON.parse(readFileSync(secFile, "utf8")).SYNC_
 const mods = { "index.js": "worker.js", "github.js": "github.js", "targets.js": "targets.js", "db.js": "db.js", "rules.js": "rules.js", "engine.js": "engine.js" }, fd = new FormData();
 const bindings = [
   { type: "d1", name: "DB", id: d1?.uuid ?? "dry-run" }, { type: "kv_namespace", name: "FILES", namespace_id: ns }, { type: "service", name: "WEB", service: B.static_worker, environment: "production" },
-  { type: "plain_text", name: "ENVIRONMENT", text: "beta" }, { type: "plain_text", name: "SOURCE_REPO", text: repo }, { type: "plain_text", name: "SOURCE_REF", text: ref }, { type: "plain_text", name: "BETA_APP_HOST", text: B.app_host },
+  { type: "plain_text", name: "ENVIRONMENT", text: "beta" }, { type: "plain_text", name: "SOURCE_REPO", text: repo }, { type: "plain_text", name: "SOURCE_REF", text: ref }, { type: "plain_text", name: "SYNC_BUDGET_FILES", text: String(env.SYNC_BUDGET_FILES ?? "12") }, { type: "plain_text", name: "BETA_APP_HOST", text: B.app_host },
   { type: "plain_text", name: "BETA_SUPABASE_URL", text: surl }, { type: "plain_text", name: "BETA_SUPABASE_ANON_KEY", text: skey }, { type: "plain_text", name: "REGISTRY_JSON", text: JSON.stringify({ hosts: NP.hosts, supabase_refs: NP.supabase_refs, public_key_markers: NP.public_key_markers, identity_markers: NP.identity_markers }) },
   { type: "secret_text", name: "SYNC_TOKEN", text: token },
   ...(env.GITHUB_READ_TOKEN ? [{ type: "secret_text", name: "GITHUB_READ_TOKEN", text: env.GITHUB_READ_TOKEN }] : []),   // اختياري: رمز قراءة فقط لمستودع علني ← حدّ أعلى (5000/ساعة)
