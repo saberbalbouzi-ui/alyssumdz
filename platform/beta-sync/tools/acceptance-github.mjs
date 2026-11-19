@@ -16,7 +16,7 @@ import { runSync, restoreDeleted, syncStatus } from "../src/engine.js";
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, "../../.."), FX = process.env.FIXTURE_DIR; if (!FX || !existsSync(path.join(FX, ".git"))) { console.error("FIXTURE_DIR مطلوب"); process.exit(2); }
 const REG = JSON.parse(readFileSync(path.join(ROOT, "platform/env/environments.json"), "utf8")), BETA = REG.environments.beta, enc = new TextEncoder(), dec = new TextDecoder();
 const git = (...a) => execFileSync("git", a, { cwd: FX, encoding: "utf8" }).trim();
-let n = 0, bad = 0; const ok = (m, c, x) => { n++; console.log((c ? "✓ " : "✗ ") + m + (c || x === undefined ? "" : "  → " + JSON.stringify(x).slice(0, 300))); if (!c) bad++; };
+let n = 0, bad = 0; const ok = (m, c, x) => { n++; console.log((c ? "✓ " : "✗ ") + m + (c || x === undefined ? "" : "  → " + JSON.stringify(x).slice(0, 1100))); if (!c) bad++; };
 
 const tmp = mkdtempSync(path.join(tmpdir(), "acc-")); let sw = 0; const swSrc = readFileSync(path.join(ROOT, "platform/env/beta/static-worker.js"), "utf8"); writeFileSync(path.join(tmp, "ov.mjs"), "export default {};");
 const worker = async () => { const f = path.join(tmp, `sw${sw++}.mjs`); writeFileSync(f, swSrc.replace("./overrides.js", "./ov.mjs")); return (await import(pathToFileURL(f).href)).default; };
@@ -55,7 +55,7 @@ ok("[S3] المنتج الجديد: البيانات والصفحة والصور
 edit({ "assets/js/data.js": dataJs([{ ...base[0], title: "منتج الاختبار — الاسم المعدَّل", price: 1800, images: ["assets/img/fx1/0.png"] }]), "assets/img/fx2/0.png": null, "p/fx2/index.html": null }, "حذف المنتج الثاني"); r = await sync();
 ok("[S4] الحذف انعكس: الصفحة والصورة 404، والمنتج غائب من البيانات", r.ok && r.deleted === 2 && (await get("p/fx2/index.html")).s === 404 && (await get("assets/img/fx2/0.png")).s === 404 && !(await get("assets/js/data.js")).t.includes("المنتج الثاني"), r);
 const rs = await restoreDeleted({ target, db, path: "p/fx2/index.html" }); ok("[S4] الحذف آمن وقابل للاستعادة (الكائن محفوظ)", rs.ok && (await get("p/fx2/index.html")).s === 200, rs);
-r = await sync(); ok("[S4b] التسوية التالية تعيد حذف ما استُعيد يدوياً ما دام محذوفاً من المصدر (المصدر هو المرجع)", r.ok && (await get("p/fx2/index.html")).s === 404 || r.planned === 0, r);
+r = await sync({ kind: "reconcile" }); ok("[S4b] التسوية الدورية تعيد حذف ما استُعيد يدوياً ما دام محذوفاً من المصدر (المصدر هو المرجع)", r.ok && r.deleted === 1 && (await get("p/fx2/index.html")).s === 404, r);
 /* 5-7) الشحن/checkout/الدفع */
 edit({ "assets/data/ship-co.json": JSON.stringify({ def: "yalidine", companies: { yalidine: { name: "Yalidine", prices: { 16: { home: 650, stop: 450 } } } }, run: RUNID }), "assets/data/checkout.json": JSON.stringify({ waNumber: "213559237239", steps: false, guard: { antibot: true, dup: false, hours: 12, phoneDz: true }, orderBtnText: "اطلب الآن", run: RUNID }), "assets/data/pay-methods.json": JSON.stringify({ baridimob: { on: false, rip: "00799999009999999999", name: "x" }, ccp: { on: true, account: "7654321", key: "11", name: "y" }, chargily: { on: false }, run: RUNID }) }, "تعديل الشحن وcheckout وطرق الدفع"); r = await sync();
 const sh = JSON.parse((await get("assets/data/ship-co.json")).t), ck2 = JSON.parse((await get("assets/data/checkout.json")).t), pm2 = (await get("assets/data/pay-methods.json")).t;
