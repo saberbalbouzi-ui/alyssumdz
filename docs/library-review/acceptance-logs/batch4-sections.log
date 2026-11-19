@@ -1,0 +1,164 @@
+إعداد الحماية المعلن لهذه الأداة فقط (إعداد المستودع عدا bots:false؛ بلا انتحال UA/webdriver): {"on":true,"rc":true,"img":true,"keys":true,"dev":true,"frame":true,"note":true,"sel":true,"copy":true,"print":true,"bots":false,"updatedAt":"2026-11-07T21:49:55.333Z"}
+منتج الاختبار: demo
+
+════════ c-aurora ════════
+PASS [c-aurora] فتح القالب في المطوّر  — 3 قسم، 15 عنصراً
+PASS [c-aurora] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — text,heading,image,tbadges,contact,iconbox,button,accordion
+PASS [c-aurora] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — contact
+PASS [c-aurora] لا تعدٍّ أفقياً عند 1360px  — over=0 h=1703
+PASS [c-aurora] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":16,"kf":40,"anim":12}
+PASS [c-aurora] نموذج الاتصال موجود في الصفحة المنشورة  — 1
+PASS [c-aurora] إرسال فارغ يُرفض برسالة خطأ ولا يفتح واتساب  — يرجى تعبئة الحقل بشكل صحيح: الاسم الكامل
+PASS [c-aurora] هاتف غير جزائري يُرفض  — يرجى تعبئة الحقل بشكل صحيح: رقم الهاتف
+PASS [c-aurora] حقل Honeypot المملوء لا يُرسل شيئاً  — OK
+PASS [c-aurora] إرسال صحيح يفتح واتساب برسالة تحوي كل القيم المدخلة  —  | الاسم الكامل: زبون اختبار | رقم الهاتف: 0550123456 | البريد الإلكتروني (اختياري): qa@example.com | موضوع الرسالة: استفسار عن 
+PASS [c-aurora] رسالة النجاح تظهر ويُفرَّغ النموذج  — OK
+PASS [c-aurora] مهلة بين إرسالين تمنع التكرار الفوري  — يرجى الانتظار قليلاً قبل إرسال رسالة أخرى.
+PASS [c-aurora] قنوات اتصال مباشرة بروابط حقيقية (هاتف + واتساب + بريد)  — {"tel":1,"wa":1,"mail":1}
+PASS [c-aurora] حقل اختيار موضوع/خدمة داخل النموذج  — INPUT:الاسم الكامل · INPUT:رقم الهاتف · INPUT:البريد الإلكتروني (اختياري) · SELECT:موضوع الرسالة · TEXTAREA:رسالتك · INPUT:أوافق على التواصل معي بخصوص رسالتي
+PASS [c-aurora] لا تعدٍّ أفقياً عند 820px  — over=0 h=1754
+PASS [c-aurora] لا تعدٍّ أفقياً عند 390px  — over=0 h=2634
+
+════════ c-neon ════════
+PASS [c-neon] فتح القالب في المطوّر  — 4 قسم، 18 عنصراً
+PASS [c-neon] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — heading,text,image,button,contact,counter,accordion
+PASS [c-neon] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — contact
+PASS [c-neon] لا تعدٍّ أفقياً عند 1360px  — over=0 h=2387
+PASS [c-neon] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":15,"kf":43,"anim":18}
+PASS [c-neon] نموذج الاتصال موجود في الصفحة المنشورة  — 1
+PASS [c-neon] إرسال فارغ يُرفض برسالة خطأ ولا يفتح واتساب  — يرجى تعبئة الحقل بشكل صحيح: الاسم الكامل
+PASS [c-neon] هاتف غير جزائري يُرفض  — يرجى تعبئة الحقل بشكل صحيح: رقم الهاتف
+PASS [c-neon] حقل Honeypot المملوء لا يُرسل شيئاً  — OK
+PASS [c-neon] إرسال صحيح يفتح واتساب برسالة تحوي كل القيم المدخلة  —  | الاسم الكامل: زبون اختبار | رقم الهاتف: 0550123456 | البريد الإلكتروني (اختياري): qa@example.com | نوع الطلب: دعم فني | رقم الط
+PASS [c-neon] رسالة النجاح تظهر ويُفرَّغ النموذج  — OK
+PASS [c-neon] مهلة بين إرسالين تمنع التكرار الفوري  — يرجى الانتظار قليلاً قبل إرسال رسالة أخرى.
+PASS [c-neon] قنوات اتصال مباشرة بروابط حقيقية (هاتف + واتساب + بريد)  — {"tel":1,"wa":1,"mail":1}
+PASS [c-neon] حقل اختيار موضوع/خدمة داخل النموذج  — INPUT:الاسم الكامل · INPUT:رقم الهاتف · INPUT:البريد الإلكتروني (اختياري) · SELECT:نوع الطلب · INPUT:رقم الطلب (إن وُجد) · TEXTAREA:رسالتك · INPUT:أوافق على معالجة بياناتي للردّ على طلبي
+PASS [c-neon] لا تعدٍّ أفقياً عند 820px  — over=0 h=2228
+PASS [c-neon] لا تعدٍّ أفقياً عند 390px  — over=0 h=2723
+
+════════ c-gold ════════
+PASS [c-gold] فتح القالب في المطوّر  — 3 قسم، 17 عنصراً
+PASS [c-gold] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — image,text,heading,tbadges,contact,button,accordion
+PASS [c-gold] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — contact
+PASS [c-gold] لا تعدٍّ أفقياً عند 1360px  — over=0 h=1795
+PASS [c-gold] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":13,"kf":41,"anim":14}
+PASS [c-gold] نموذج الاتصال موجود في الصفحة المنشورة  — 1
+PASS [c-gold] إرسال فارغ يُرفض برسالة خطأ ولا يفتح واتساب  — يرجى تعبئة الحقل بشكل صحيح: الاسم الكامل
+PASS [c-gold] هاتف غير جزائري يُرفض  — يرجى تعبئة الحقل بشكل صحيح: رقم الهاتف
+PASS [c-gold] حقل Honeypot المملوء لا يُرسل شيئاً  — OK
+PASS [c-gold] إرسال صحيح يفتح واتساب برسالة تحوي كل القيم المدخلة  —  | الاسم الكامل: زبون اختبار | رقم الهاتف: 0550123456 | البريد الإلكتروني (اختياري): qa@example.com | نوع الخدمة: استشارة اختيار
+PASS [c-gold] رسالة النجاح تظهر ويُفرَّغ النموذج  — OK
+PASS [c-gold] مهلة بين إرسالين تمنع التكرار الفوري  — يرجى الانتظار قليلاً قبل إرسال رسالة أخرى.
+PASS [c-gold] قنوات اتصال مباشرة بروابط حقيقية (هاتف + واتساب + بريد)  — {"tel":1,"wa":1,"mail":1}
+PASS [c-gold] حقل اختيار موضوع/خدمة داخل النموذج  — INPUT:الاسم الكامل · INPUT:رقم الهاتف · INPUT:البريد الإلكتروني (اختياري) · SELECT:نوع الخدمة · SELECT:وقت الاتصال المفضّل · TEXTAREA:رسالتك · INPUT:أوافق على أن يتصل بي فريق الخدمة الخاصة
+PASS [c-gold] لا تعدٍّ أفقياً عند 820px  — over=0 h=1820
+PASS [c-gold] لا تعدٍّ أفقياً عند 390px  — over=0 h=2758
+
+════════ c-soft ════════
+PASS [c-soft] فتح القالب في المطوّر  — 4 قسم، 12 عنصراً
+PASS [c-soft] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — image,heading,text,iconbox,button,contact,accordion
+PASS [c-soft] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — contact
+PASS [c-soft] لا تعدٍّ أفقياً عند 1360px  — over=0 h=2175
+PASS [c-soft] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":16,"kf":48,"anim":9}
+PASS [c-soft] نموذج الاتصال موجود في الصفحة المنشورة  — 1
+PASS [c-soft] إرسال فارغ يُرفض برسالة خطأ ولا يفتح واتساب  — يرجى تعبئة الحقل بشكل صحيح: الاسم الكامل
+PASS [c-soft] هاتف غير جزائري يُرفض  — يرجى تعبئة الحقل بشكل صحيح: رقم الهاتف
+PASS [c-soft] حقل Honeypot المملوء لا يُرسل شيئاً  — OK
+PASS [c-soft] إرسال صحيح يفتح واتساب برسالة تحوي كل القيم المدخلة  —  | الاسم الكامل: زبون اختبار | رقم الهاتف: 0550123456 | البريد الإلكتروني (اختياري): qa@example.com | موضوع الرسالة: استفسار عن 
+PASS [c-soft] رسالة النجاح تظهر ويُفرَّغ النموذج  — OK
+PASS [c-soft] مهلة بين إرسالين تمنع التكرار الفوري  — يرجى الانتظار قليلاً قبل إرسال رسالة أخرى.
+PASS [c-soft] قنوات اتصال مباشرة بروابط حقيقية (هاتف + واتساب + بريد)  — {"tel":1,"wa":1,"mail":1}
+PASS [c-soft] حقل اختيار موضوع/خدمة داخل النموذج  — INPUT:الاسم الكامل · INPUT:رقم الهاتف · INPUT:البريد الإلكتروني (اختياري) · SELECT:موضوع الرسالة · TEXTAREA:رسالتك · INPUT:أوافق على التواصل معي بخصوص رسالتي
+PASS [c-soft] لا تعدٍّ أفقياً عند 820px  — over=0 h=2081
+PASS [c-soft] لا تعدٍّ أفقياً عند 390px  — over=0 h=2529
+
+════════ c-steps ════════
+PASS [c-steps] فتح القالب في المطوّر  — 3 قسم، 16 عنصراً
+PASS [c-steps] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — image,heading,text,iconbox,button,tbadges,contact,accordion
+PASS [c-steps] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — contact
+PASS [c-steps] لا تعدٍّ أفقياً عند 1360px  — over=0 h=2312
+PASS [c-steps] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":15,"kf":45,"anim":16}
+PASS [c-steps] نموذج الاتصال موجود في الصفحة المنشورة  — 1
+PASS [c-steps] إرسال فارغ يُرفض برسالة خطأ ولا يفتح واتساب  — يرجى تعبئة الحقل بشكل صحيح: الاسم الكامل
+PASS [c-steps] هاتف غير جزائري يُرفض  — يرجى تعبئة الحقل بشكل صحيح: رقم الهاتف
+PASS [c-steps] حقل Honeypot المملوء لا يُرسل شيئاً  — OK
+PASS [c-steps] إرسال صحيح يفتح واتساب برسالة تحوي كل القيم المدخلة  —  | الاسم الكامل: زبون اختبار | رقم الهاتف: 0550123456 | البريد الإلكتروني (اختياري): qa@example.com | موضوع الرسالة: سؤال عن طلب
+PASS [c-steps] رسالة النجاح تظهر ويُفرَّغ النموذج  — OK
+PASS [c-steps] مهلة بين إرسالين تمنع التكرار الفوري  — يرجى الانتظار قليلاً قبل إرسال رسالة أخرى.
+PASS [c-steps] قنوات اتصال مباشرة بروابط حقيقية (هاتف + واتساب + بريد)  — {"tel":1,"wa":1,"mail":1}
+PASS [c-steps] حقل اختيار موضوع/خدمة داخل النموذج  — INPUT:الاسم الكامل · INPUT:رقم الهاتف · INPUT:البريد الإلكتروني (اختياري) · SELECT:موضوع الرسالة · INPUT:رقم الطلب (إن وُجد) · TEXTAREA:رسالتك · INPUT:أوافق على التواصل معي عبر واتساب
+PASS [c-steps] لا تعدٍّ أفقياً عند 820px  — over=0 h=2213
+PASS [c-steps] لا تعدٍّ أفقياً عند 390px  — over=0 h=2932
+
+════════ o-flash ════════
+PASS [o-flash] فتح القالب في المطوّر  — 3 قسم، 13 عنصراً
+PASS [o-flash] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — image,heading,text,countdown,stock,coupon,orderorig,tbadges,iconbox,accordion
+PASS [o-flash] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — orderorig
+PASS [o-flash] لا تعدٍّ أفقياً عند 1360px  — over=0 h=2129
+PASS [o-flash] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":8,"kf":48,"anim":13}
+PASS [o-flash] زر الطلب الثابت يظهر خارج النموذج ويختفي عند ظهوره  — {"has":true,"shownAtTop":false,"hiddenAtForm":true}
+PASS [o-flash] نموذج الطلب الأصلي مضمَّن بمنتج صحيح  — order-embed.html?p=demo&embed=1&src=lp%2Fb4&oc=%7B%22t%22%3A%22%F0%9F%94%A5%20%D8%A7%D9%85%D9%84%D8%A3%20%D8%A8%D9%8A%D8%A7%D9%86%D8%A7%D8%AA%D9%83%20%E2%80%94%20%D8%A7%D9%84%D8%AF%D9%81%D8%B9%20%D8%B9%D9%86%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3
+PASS [o-flash] نموذج الطلب داخل الإطار يحمل الحقول الأساسية
+PASS [o-flash] طلب حقيقي عبر الإطار يُقبل (شاشة الشكر)  — شاشة الشكر ظهرت
+PASS [o-flash] لا تعدٍّ أفقياً عند 820px  — over=0 h=2607
+PASS [o-flash] لا تعدٍّ أفقياً عند 390px  — over=0 h=3284
+
+════════ o-lux ════════
+PASS [o-lux] فتح القالب في المطوّر  — 3 قسم، 10 عنصراً
+PASS [o-lux] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — orderorig,image,heading,bullets,tbadges,iconbox,accordion
+PASS [o-lux] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — orderorig
+PASS [o-lux] لا تعدٍّ أفقياً عند 1360px  — over=0 h=2090
+PASS [o-lux] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":5,"kf":38,"anim":11}
+PASS [o-lux] نموذج الطلب الأصلي مضمَّن بمنتج صحيح  — order-embed.html?p=demo&embed=1&src=lp%2Fb4&oc=%7B%22t%22%3A%22%D8%B7%D9%84%D8%A8%20%D8%AE%D8%A7%D8%B5%20%E2%80%94%20%D8%A7%D9%84%D8%AF%D9%81%D8%B9%20%D8%B9%D9%86%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%84%D8%A7%D9%85%22%7D
+PASS [o-lux] نموذج الطلب داخل الإطار يحمل الحقول الأساسية
+PASS [o-lux] طلب حقيقي عبر الإطار يُقبل (شاشة الشكر)  — شاشة الشكر ظهرت
+PASS [o-lux] لا تعدٍّ أفقياً عند 820px  — over=0 h=2454
+PASS [o-lux] لا تعدٍّ أفقياً عند 390px  — over=0 h=3339
+
+════════ o-steps ════════
+PASS [o-steps] فتح القالب في المطوّر  — 4 قسم، 13 عنصراً
+PASS [o-steps] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — image,heading,text,iconbox,orderorig,tbadges,accordion
+PASS [o-steps] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — orderorig
+PASS [o-steps] لا تعدٍّ أفقياً عند 1360px  — over=0 h=2739
+PASS [o-steps] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":8,"kf":39,"anim":13}
+PASS [o-steps] نموذج الطلب الأصلي مضمَّن بمنتج صحيح  — order-embed.html?p=demo&embed=1&src=lp%2Fb4&oc=%7B%22t%22%3A%22%D8%A7%D9%84%D8%AE%D8%B7%D9%88%D8%A9%20%D8%A7%D9%84%D8%A3%D8%AE%D9%8A%D8%B1%D8%A9%3A%20%D8%A8%D9%8A%D8%A7%D9%86%D8%A7%D8%AA%D9%83%20%D9%84%D9%84%D8%AA%D9%88%D8%B5%D9%8A%D9%84%22
+PASS [o-steps] نموذج الطلب داخل الإطار يحمل الحقول الأساسية
+PASS [o-steps] طلب حقيقي عبر الإطار يُقبل (شاشة الشكر)  — شاشة الشكر ظهرت
+PASS [o-steps] لا تعدٍّ أفقياً عند 820px  — over=0 h=2645
+PASS [o-steps] لا تعدٍّ أفقياً عند 390px  — over=0 h=3548
+
+════════ o-bundle ════════
+PASS [o-bundle] فتح القالب في المطوّر  — 3 قسم، 9 عنصراً
+PASS [o-bundle] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — heading,text,products,orderorig,bullets,coupon,accordion
+PASS [o-bundle] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — orderorig
+PASS [o-bundle] لا تعدٍّ أفقياً عند 1360px  — over=0 h=2557
+PASS [o-bundle] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":6,"kf":46,"anim":10}
+PASS [o-bundle] زر الطلب الثابت يظهر خارج النموذج ويختفي عند ظهوره  — {"has":true,"shownAtTop":false,"hiddenAtForm":true}
+PASS [o-bundle] نموذج الطلب الأصلي مضمَّن بمنتج صحيح  — order-embed.html?p=demo&embed=1&src=lp%2Fb4&oc=%7B%22t%22%3A%22%D8%A3%D9%83%D9%85%D9%84%20%D8%B7%D9%84%D8%A8%20%D8%A8%D8%A7%D9%82%D8%AA%D9%83%20%E2%80%94%20%D8%A7%D9%84%D8%AF%D9%81%D8%B9%20%D8%B9%D9%86%D8%AF%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA
+PASS [o-bundle] نموذج الطلب داخل الإطار يحمل الحقول الأساسية
+PASS [o-bundle] طلب حقيقي عبر الإطار يُقبل (شاشة الشكر)  — شاشة الشكر ظهرت
+PASS [o-bundle] لا تعدٍّ أفقياً عند 820px  — over=0 h=2939
+PASS [o-bundle] لا تعدٍّ أفقياً عند 390px  — over=0 h=3000
+
+════════ o-proof ════════
+PASS [o-proof] فتح القالب في المطوّر  — 3 قسم، 11 عنصراً
+PASS [o-proof] كل عنصر له نوع ولا عنصر HTML/كود مخصص  — heading,tbadges,counter,addcart,orderorig,testimonial
+PASS [o-proof] يحتوي المكوّن الوظيفي الأصلي (contact أو orderorig)  — orderorig
+PASS [o-proof] لا تعدٍّ أفقياً عند 1360px  — over=0 h=1755
+PASS [o-proof] تأثيرات التحويم والحركة مُصيَّرة (hover/keyframes/أنيميشن دخول)  — {"hover":8,"kf":46,"anim":15}
+PASS [o-proof] زر الطلب الثابت يظهر خارج النموذج ويختفي عند ظهوره  — {"has":true,"shownAtTop":false,"hiddenAtForm":true}
+PASS [o-proof] نموذج الطلب الأصلي مضمَّن بمنتج صحيح  — order-embed.html?p=demo&embed=1&src=lp%2Fb4&oc=%7B%22t%22%3A%22%D8%A7%D9%86%D8%B6%D9%85%D9%91%20%D8%A5%D9%84%D9%89%20%D8%B2%D8%A8%D8%A7%D8%A6%D9%86%D9%86%D8%A7%20%E2%80%94%20%D8%A8%D9%8A%D8%A7%D9%86%D8%A7%D8%AA%D9%83%20%D9%81%D9%82%D8%B7%22
+PASS [o-proof] نموذج الطلب داخل الإطار يحمل الحقول الأساسية
+PASS [o-proof] طلب حقيقي عبر الإطار يُقبل (شاشة الشكر)  — شاشة الشكر ظهرت
+PASS [o-proof] لا تعدٍّ أفقياً عند 820px  — over=0 h=2091
+PASS [o-proof] لا تعدٍّ أفقياً عند 390px  — over=0 h=2788
+PASS [o-flash] الطلب الحقيقي ظاهر في لوحة الإدارة  — 0550793753
+PASS [o-lux] الطلب الحقيقي ظاهر في لوحة الإدارة  — 0550403009
+PASS [o-steps] الطلب الحقيقي ظاهر في لوحة الإدارة  — 0550950983
+PASS [o-bundle] الطلب الحقيقي ظاهر في لوحة الإدارة  — 0550770320
+PASS [o-proof] الطلب الحقيقي ظاهر في لوحة الإدارة  — 0550241147
+
+JS errors (admin): 0
+
+138/138 PASS — 0 FAILURES

@@ -6,12 +6,12 @@ def orderw(**x):
 k = "of"; ICC[0] = "#fde047"
 head = C([
     PIC("mkt_bags", "عرض فلاش", 24, w=dm(60, 100), al={"d": "center"}, fxs=[FX("وهج برتقالي", "selector img{box-shadow:0 30px 80px rgba(249,115,22,.45)}")], **anim("zoomIn", .8)),
-    W("heading", text="عرض فلاش — ينتهي قريباً", tag="h2", fs=dm(46, 30), fw="900", ta={"d": "center"}, color="#ffffff", lh={"d": 1.3}, fxs=[gradtext(k, "#fde047", "#fb923c", "#f43f5e", 4)], **anim("fadeDown", .7)),
+    W("heading", text="عرض فلاش", tag="h2", fs=dm(46, 30), fw="900", ta={"d": "center"}, color="#ffffff", lh={"d": 1.3}, fxs=[gradtext(k, "#fde047", "#fb923c", "#f43f5e", 4)], **anim("fadeDown", .7)),
     T("خصم حصري على الطلبات اليوم فقط — أكمل بياناتك في النموذج أدناه وادفع عند الاستلام.", 19, "#fecaca", **anim("fadeUp", .7, .1)),
-    W("countdown", mode="daily", cbg="#00000055", color="#fde047", fs=dm(42, 30), crad=dm(14), al={"d": "center"}, fxs=[cdglow(k, "#f97316")], **anim("zoomIn", .7, .2)),
-    W("stock", smode="manual", sn=9, smax=40, stx="🔥 بقيت {n} قطع فقط بسعر العرض!", color="#ffffff", sbgc="#ffffff22", fs=dm(18, 15), fxs=[stockbar(k)], **anim("fadeUp", .7, .3)),
+    W("countdown", mode="date", on=False, end="", cbg="#00000055", color="#fde047", fs=dm(42, 30), crad=dm(14), al={"d": "center"}, fxs=[cdglow(k, "#f97316")], **anim("zoomIn", .7, .2)),
+    W("stock", smode="product", sn=9, smax=40, stx="🔥 بقيت {n} قطع فقط بسعر العرض!", color="#ffffff", sbgc="#ffffff22", fs=dm(18, 15), fxs=[stockbar(k)], **anim("fadeUp", .7, .3)),
 ], w=100)
-body = C([W("coupon", cpcode="FLASH20", cpt="كود خصم إضافي 20% لأول طلب", cpbtn="نسخ الكود", cpbg="#ffffff14", cpbc="#fde047", cpc="#ffffff", cpb="#f97316", fxs=[couponfx("#fde047")], **anim("fadeUp", .7)),
+body = C([W("coupon", on=False, cpcode="YOURCODE", cpt="كود خصم إضافي 20% لأول طلب", cpbtn="نسخ الكود", cpbg="#ffffff14", cpbc="#fde047", cpc="#ffffff", cpb="#f97316", fxs=[couponfx("#fde047")], **anim("fadeUp", .7)),
           orderw(fxs=[rotborder(k, "#fde047", "#f43f5e", 4, 3, 28), FX("بطاقة نارية داكنة", "selector{background:linear-gradient(145deg,#7c2d12,#3b0a0a);border-radius:28px;padding:20px;box-shadow:0 30px 80px rgba(249,115,22,.4)}")], **anim("fadeUp", .8, .1))], w=100)
 body["set"]["pad"] = dm([0, 0, 0, 0]); head["set"]["pad"] = dm([0, 0, 24, 0])
 reg("o-flash", "order", "عروض", "طلب بعرض فلاش", "خلفية نارية متحركة، عدّاد تنازلي متوهج، شريط مخزون يلمع، كوبون نابض، ونموذج الطلب بإطار متوهج دوّار.",
@@ -47,7 +47,7 @@ k = "ob"; ICC[0] = "#86efac"
 head = C([H("اختر باقتك ووفّر أكثر", 44, 30, "#ffffff", fxs=[gradtext(k, "#86efac", "#67e8f9", "#fde68a", 6)], **anim("fadeUp")), T("اطّلع على منتجاتنا، ثم أكمل طلبك أدناه — كلما زادت الكمية زاد التوفير.", 18, "#bbf7d0", **anim("fadeUp", .7, .1))], w=100)
 prods = C([W("products", mode="all", limit=3, btn="اطلب الآن", showOld=True, cardw=dm(300, 220), gap=dm(22), rad=dm(22), cbg="#ffffffee", bbg="#16a34a",
              fxs=[lift(".pb-pc", "rgba(0,0,0,.35)", -10, 3), FX("سعر بارز", "selector .pb-pcp{font-weight:900}")], **anim("fadeUp", .8, .1))], w=100)
-body = C([W("coupon", cpcode="PACK15", cpt="وفّر 15% عند اختيار أي باقة", cpbtn="نسخ الكود", cpbg="#ffffff18", cpbc="#86efac", cpc="#ffffff", cpb="#16a34a", fxs=[couponfx("#86efac")], **anim("zoomIn", .7)),
+body = C([W("coupon", on=False, cpcode="YOURCODE", cpt="وفّر 15% عند اختيار أي باقة", cpbtn="نسخ الكود", cpbg="#ffffff18", cpbc="#86efac", cpc="#ffffff", cpb="#16a34a", fxs=[couponfx("#86efac")], **anim("zoomIn", .7)),
           orderw(fxs=[rotborder(k, "#16a34a", "#fde047", 3, 5, 18), FX("بطاقة خضراء عميقة", "selector{background:linear-gradient(160deg,#064e3b,#022c22);border-radius:18px;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.4)}")], **anim("fadeUp", .8, .1))], w=100)
 for c_ in (head, prods): c_["set"]["pad"] = dm([0, 0, 28, 0])
 reg("o-bundle", "order", "متجر", "طلب باقات وكوبون", "قسم أخضر بأورورا يعرض منتجات المتجر ببطاقات ترتفع بالمرور، كوبون متوهج ثم نموذج الطلب بإطار دوّار.",

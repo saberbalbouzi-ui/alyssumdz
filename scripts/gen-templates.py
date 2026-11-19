@@ -171,6 +171,8 @@ def H(text, fs=44, m=None, color="#ffffff", ta="center", fw="900", tag="h2", **x
 def T(text, fs=18, color="#d1d5db", ta="center", lh=1.9, fw="500", **x):
     s = dict(html="<p>%s</p>" % text, fs=dm(fs, max(14, fs - 2)), lh={"d": lh}, ta={"d": ta}, color=color, fw=fw); s.update(x); return W("text", **s)
 def BTN(text, bg="#157a55", color="#fff", al="center", kind="link", link="#pb-order", **x):
+    if link == "https://wa.me/213555000000": kind, link = "whatsapp", "#"      # يُربط برقم واتساب المتجر (إعدادات المتجر) بدل رقم وهمي
+    elif link == "tel:05XXXXXXXX": kind, link = "call", "#"; x = dict(x, phone="05XXXXXXXX")      # حقل «رقم الهاتف» في إعدادات الزر
     s = dict(text=text, kind=kind, link=link, bgc=bg, color=color, hbg=bg, fs=dm(18, 16), fw="800", brad={"d": 14}, bpad={"d": [15, 36, 15, 36]}, al={"d": al}); s.update(x); return W("button", **s)
 ICC = ["#a78bfa"]
 def IB(icon, title, text, tc="#ffffff", xc="#cbd5e1", isz=44, icc=None, **x):
@@ -252,17 +254,27 @@ TEMPLATES = []
 def reg(id, cat, fld, n, d, sections, page_extra=None):
     pg = {"v": 1, "title": n, "slug": "", "desc": "", "bg": "#ffffff", "ff": "", "header": False, "footer": False, "css": "", "sections": sections}
     if page_extra: pg.update(page_extra)
+    if id not in ("s-alyssum", "p-focus-honey"): pg["sample"] = 1      # علامة «محتوى نموذجي»: يعرض المطوّر تنبيهاً غير مانع للتاجر لمراجعته (آراء/أرقام/عبارات/بيانات تواصل) قبل النشر
     if cat == "store" and "localize_copy" in globals(): localize_copy(id, pg)      # نصوص وبيانات تجريبية خاصة بكل ثيم (gen-templates-copy.py)
+    if cat == "store" and "variety" in globals(): variety(id, pg)      # تنويع الأرقام والأسماء وترتيب كتل النهاية بين القوالب (gen-templates-variety.py)
     TEMPLATES.append({"id": id, "cat": cat, "fld": fld, "n": n, "d": d, "kind": "page" if cat == "store" else "sec"})
     os.makedirs(OUT, exist_ok=True)
     json.dump(pg, open(os.path.join(OUT, id + ".json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 
 exec(open(os.path.join(HERE, "gen-templates-copy.py"), encoding="utf-8").read())
+exec(open(os.path.join(HERE, "gen-templates-variety.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-contact.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-order.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-store.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-niche.py"), encoding="utf-8").read())
+exec(open(os.path.join(HERE, "gen-templates-wave2.py"), encoding="utf-8").read())
 exec(open(os.path.join(HERE, "gen-templates-alyssum.py"), encoding="utf-8").read())
+exec(open(os.path.join(HERE, "gen-templates-pilots.py"), encoding="utf-8").read())      # تجربتا التصميم (s-watches وs-tech): تستبدل ناتجهما فقط بمولّد عشوائي معزول
+exec(open(os.path.join(HERE, "gen-templates-batch1.py"), encoding="utf-8").read())      # الدفعة 1: s-jewelry s-cosmetics s-honey s-herbs s-fashion (هوية وتركيب جديدان بالصور الأصلية نفسها)
+exec(open(os.path.join(HERE, "gen-templates-batch2.py"), encoding="utf-8").read())      # الدفعة 2: s-supplements s-accessories s-it s-digital s-marketplace
+exec(open(os.path.join(HERE, "gen-templates-batch3.py"), encoding="utf-8").read())      # الدفعة 3: s-aurora s-gold s-fresh s-pop
+exec(open(os.path.join(HERE, "gen-templates-batch4.py"), encoding="utf-8").read())      # الدفعة 4: c-aurora c-neon c-gold c-soft c-steps o-flash o-lux o-steps o-bundle o-proof
+exec(open(os.path.join(HERE, "gen-templates-nexus.py"), encoding="utf-8").read())      # NEXUS COMMERCE (القالب الافتراضي الجديد): 5 مجالات، يتصدّر المكتبة
 
 json.dump(TEMPLATES, open(os.path.join(OUT, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 exec(open(os.path.join(HERE, "gen-template-products.py"), encoding="utf-8").read())

@@ -5,6 +5,7 @@ const ROOT = path.join(__dirname, ".."), OUT = path.join(ROOT, "assets/pages/tem
 const only = process.argv.slice(2);
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
+  /* لا انتحال User-Agent ولا إخفاء webdriver: الصفحة المفتوحة هي admin.html (حماية الموقع لا تعمل فيها) والقوالب تُعرض داخلها */
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1280, height: 900 } });
   await p.goto(BASE + "admin.html"); await p.waitForTimeout(1500);
   const prods = await p.evaluate(() => (typeof PRODUCTS !== "undefined" ? PRODUCTS : []));
@@ -32,6 +33,7 @@ const only = process.argv.slice(2);
     }
     const tmp = path.join(ROOT, "_th_" + j.id + ".html"); fs.writeFileSync(tmp, H);
     const q = await b.newPage({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 0.6 });
+    await require("../tests/_declared-protect")(q);      // إعداد حماية معلن للأداة فقط (لا انتحال UA/webdriver)
     await q.goto(BASE + "_th_" + j.id + ".html"); await q.waitForTimeout(2200);
     await q.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 350) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 300)); } window.scrollTo(0, 0); });
     await q.waitForTimeout(1500);

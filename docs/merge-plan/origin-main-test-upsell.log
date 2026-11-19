@@ -1,0 +1,59 @@
+✓ خصم نسبة
+✓ سعر ثابت لا يتجاوز السعر العادي
+✓ نسبة 100% = مجاني ولا سالب
+✓ يلتقط القاعدة ويحسب السعر القديم
+✓ النوع الآخر لا يُلتقط
+✓ المنتج موجود في الطلب أصلاً ← لا عرض
+✓ نافد المخزون ← لا عرض
+✓ المتغيّر والمعطَّل ← لا عرض
+✓ المحفّز بالمنتج/الفئة/الحد الأدنى
+✓ نافذة التاريخ
+✓ أول قاعدة صالحة تسبق (ترتيب الأولوية)
+إعداد الحماية المعلن للاختبار فقط: {"on":true,"rc":true,"img":true,"keys":true,"dev":true,"frame":true,"note":true,"sel":true,"copy":true,"print":true,"bots":false,"updatedAt":"2026-11-07T21:49:55.333Z"}
+✓ خانة Order Bump تظهر مع السعر الخاص
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.fill: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#name')[22m
+[2m    - locator resolved to <input id="name" required="" placeholder="مثال: أحمد بن علي"/>[22m
+[2m    - fill("سارة")[22m
+[2m  - attempting fill action[22m
+[2m    2 × waiting for element to be visible, enabled and editable[22m
+[2m      - element is not visible[22m
+[2m    - retrying fill action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and editable[22m
+[2m      - element is not visible[22m
+[2m    - retrying fill action[22m
+[2m      - waiting 100ms[22m
+[2m    59 × waiting for element to be visible, enabled and editable[22m
+[2m       - element is not visible[22m
+[2m     - retrying fill action[22m
+[2m       - waiting 500ms[22m
+
+    at /tmp/mn-wt/scripts/test-upsell.js:48:14 {
+  log: [
+    "  - waiting for locator('#name')",
+    '    - locator resolved to <input id="name" required="" placeholder="مثال: أحمد بن علي"/>',
+    '    - fill("سارة")',
+    '  - attempting fill action',
+    '    2 × waiting for element to be visible, enabled and editable',
+    '      - element is not visible',
+    '    - retrying fill action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and editable',
+    '      - element is not visible',
+    '    - retrying fill action',
+    '      - waiting 100ms',
+    '    59 × waiting for element to be visible, enabled and editable',
+    '       - element is not visible',
+    '     - retrying fill action',
+    '       - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.22.0

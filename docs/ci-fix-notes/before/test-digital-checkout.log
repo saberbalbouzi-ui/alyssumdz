@@ -1,0 +1,76 @@
+✓ حقول الولاية والبلدية والتوصيل والمكتب مخفية
+✓ حقل البريد وطرق الدفع الثلاث ظاهرة
+✓ لا رسوم توصيل ولا زر سلة
+✓ الإجمالي بلا رسوم
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.check: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('input[name="dg-method"][value="chargily"]')[22m
+[2m    - locator resolved to <input type="radio" name="dg-method" value="chargily"/>[22m
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not stable[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is not stable[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is not stable[22m
+[2m  - retrying click action[22m
+[2m    - waiting 500ms[22m
+[2m    - waiting for element to be visible, enabled and stable[22m
+[2m    - element is visible, enabled and stable[22m
+[2m    - scrolling into view if needed[22m
+[2m    - done scrolling[22m
+[2m    - element is outside of the viewport[22m
+[2m  54 × retrying click action[22m
+[2m       - waiting 500ms[22m
+[2m       - waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div id="acg-ov">الوصول الآلي غير مسموح</div> intercepts pointer events[22m
+[2m  - retrying click action[22m
+[2m    - waiting 500ms[22m
+
+    at /home/user/alyssumdz/scripts/test-digital-checkout.js:41:14 {
+  log: [
+    `  - waiting for locator('input[name="dg-method"][value="chargily"]')`,
+    '    - locator resolved to <input type="radio" name="dg-method" value="chargily"/>',
+    '  - attempting click action',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not stable',
+    '    - retrying click action',
+    '    - waiting 20ms',
+    '    2 × waiting for element to be visible, enabled and stable',
+    '      - element is not stable',
+    '    - retrying click action',
+    '      - waiting 100ms',
+    '    - waiting for element to be visible, enabled and stable',
+    '    - element is not stable',
+    '  - retrying click action',
+    '    - waiting 500ms',
+    '    - waiting for element to be visible, enabled and stable',
+    '    - element is visible, enabled and stable',
+    '    - scrolling into view if needed',
+    '    - done scrolling',
+    '    - element is outside of the viewport',
+    '  54 × retrying click action',
+    '       - waiting 500ms',
+    '       - waiting for element to be visible, enabled and stable',
+    '       - element is visible, enabled and stable',
+    '       - scrolling into view if needed',
+    '       - done scrolling',
+    '       - <div id="acg-ov">الوصول الآلي غير مسموح</div> intercepts pointer events',
+    '  - retrying click action',
+    '    - waiting 500ms'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v22.22.0
