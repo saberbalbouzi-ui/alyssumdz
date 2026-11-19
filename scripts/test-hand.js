@@ -843,12 +843,12 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     Admin.addAdRow(); const opts2 = Array.from(document.querySelectorAll("#fin-p1-prod option")).map(o => o.value);
     window.confirm = () => true; await Admin.delAdRow(0); await wait(50);
     Admin.finClose(); const tblOk = /المنتجات/.test(document.getElementById("fin-table").closest(".card").textContent) && Array.from(document.querySelectorAll("#fin-table th")).some(h => h.textContent === "الحكم");
-    return { tblOk, empty, globalGone, opts, live1, live2, live3, live4, fxShown, saved: svd, rowsAfter, stored, dupHidden: !opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
+    return { tblOk, empty, globalGone, opts, live1, live2, live3, live4, fxShown, saved: svd, rowsAfter, stored, dupHidden: opts2.includes(slug), left: Object.keys(Admin.fin.ads).length, hasTitle };
   });
   ok("إعلان لكل منتج: لا إعداد عام، ولا صفوف قبل إضافة حملة", ad.empty && ad.globalGone, ad);
   ok("المخزون والأرباح: قائمة المنتجات بعمود «الحكم»", ad.tblOk, ad);
   ok("إعلان لكل منتج: القائمة تعرض Cost الحقيقي (6000÷10=600) وتتغير فوراً (×2=1200، وبـ20 طلباً 600، وثابت 350)", /Cost الحقيقي/.test(ad.live1) && /600/.test(ad.live1) && /1[\s,.\u202f\u00a0]?200/.test(ad.live2) && /600/.test(ad.live3) && ad.fxShown && /350/.test(ad.live4), ad);
-  ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل لا يتكرر في القائمة، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "spend" && ad.stored.a === 6000 && ad.stored.m === 2 && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
+  ok("إعلان لكل منتج: حفظ لكل صف، والمنتج المستعمل يمكن اختياره لحملة أخرى (حملات متعددة)، والحذف يمسح الحملة", ad.saved === 1 && ad.rowsAfter === 1 && ad.stored && ad.stored.method === "spend" && ad.stored.a === 6000 && ad.stored.m === 2 && ad.dupHidden && ad.left === 0 && ad.hasTitle, ad);
   // ── المخزون والأرباح: قائمة المنتجات + 5 تبويبات لكل منتج ──
   const fpn = await p.evaluate(async () => {
     Admin.refreshAlerts = async () => {}; const wait = ms => new Promise(r => setTimeout(r, ms)); Priv.set = async () => {};
@@ -1667,7 +1667,7 @@ const ok = (name, cond, extra) => { total++; if (!cond) { fails++; console.log("
     const notices = []; Admin.showNotice = (t) => { notices.push(t); };
     const mkO = id => ({ id, date: new Date().toISOString(), status: "confirmee", name: "ف" + id, phone: "0550002222", wilaya: "Alger", commune: "X", dtype: "home", items: "عنصر ×1 = 1000 DA", subtotal: 1000, fee: 0, total: 1000, note: "" });
     const run = async (id, behave, cfgFb) => {
-      Admin.orders = [mkO(id)]; AdminDispatch._S.cfg = Object.assign({ on: false }, cfgFb === undefined ? {} : { fallback: cfgFb }); const calls = [];
+      Admin.orders = [mkO(id)]; AdminDispatch._S.cfg = Object.assign({ on: false }, cfgFb === undefined ? { fallback: true } : { fallback: cfgFb }); const calls = [];
       Admin._sendOrderToDelivery = async function (ix, k) { calls.push(k + (this._fbQuiet ? "~" : "")); const b = behave[k]; if (b === "ok") { this.orders[ix].note = "🚚" + k + ":T" + id; return true; } this._sendFail = b ? { kind: b, title: "فشل " + k, html: "x", co: k, key: k } : null; if (!this._fbQuiet && b && b !== "amb") this.showNotice("فشل " + k, "x"); return false; };
       const r = await Admin.sendOrderToDelivery(0, "yalidine"); await wait(30); return { r, calls: calls.join(), note: Admin.orders[0].note };
     };

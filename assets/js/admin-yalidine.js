@@ -7,6 +7,8 @@ const AdminYd = (() => {
   const KEY = "alyssum_yd_parcels", DKEY = "alyssum_yd_det", PER = 50;
   /* سجلّ ما أرسلناه (تتبع ← الطلب والاسم والهاتف الحقيقيان): يبقى الطرد مرتبطاً بطلبه حتى لو ضاع وسم التتبع من ملاحظة الطلب */
   let REG = {}; try { REG = JSON.parse(localStorage.getItem("alyssum_yd_sent") || "{}") || {}; } catch (e) { }
+  /* سجلّ الإرسال محدَّثاً: عند فتح اللوحة تُجلب نسخة الخادم إلى localStorage بعد تحميل هذا الملف فكان REG في الذاكرة قديماً (أرشيف «المرسَلة اليوم» فارغ على جهاز لم يُرسل منه) ⟵ يُدمج الأحدث من localStorage عند كل قراءة (1.89.1250) */
+  function sentLog() { try { const ls = JSON.parse(localStorage.getItem("alyssum_yd_sent") || "{}") || {}; Object.keys(ls).forEach(k => { if (ls[k] && (!REG[k] || (Number(ls[k].at) || 0) > (Number(REG[k].at) || 0))) REG[k] = ls[k]; }); } catch (e) { } return REG; }
   function noteSent(o, co, tr) { if (!o || !tr) return; if (NOFZ.o[String(o.id)]) { delete NOFZ.o[String(o.id)]; saveNofz(); } delete NOFZ.t[tr]; REG[tr] = { id: o.id, name: o.name || "", phone: o.phone || "", co: co || "", at: Date.now() }; const ks = Object.keys(REG); if (ks.length > 400) ks.sort((a, b) => REG[a].at - REG[b].at).slice(0, ks.length - 400).forEach(k => delete REG[k]); try { localStorage.setItem("alyssum_yd_sent", JSON.stringify(REG)); } catch (e) { } }
   /* ما أزال المستخدم ربطه صراحةً: لا يُعاد ربطه تلقائياً (لا بسجلّ الإرسال ولا بالمطابقة بالاسم والهاتف المقنَّع) */
   let NOFZ = { o: {}, t: {} }; try { NOFZ = Object.assign({ o: {}, t: {} }, JSON.parse(localStorage.getItem("alyssum_yd_nofz") || "{}")); } catch (e) { }
@@ -388,5 +390,5 @@ const AdminYd = (() => {
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0)); else setTimeout(init, 0);
   /* البحث العلوي في «الطلبات المسجلة» يصفّي هذه البطاقة أيضاً (تلقائياً أثناء الكتابة) */
   function setQuery(q) { if (S.q === q) return; S.q = q; S.page = 1; draw(); }
-  return { set, draw, load, S, csv, sheets, setQuery, noteSent, forget, orderOf: tr => trackMap()[tr] || null, prepOpen, prepOpenWith, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
+  return { set, draw, load, S, csv, sheets, setQuery, noteSent, sentLog, forget, orderOf: tr => trackMap()[tr] || null, prepOpen, prepOpenWith, orphans, showOrphans, refilter, _t: { prepRows, prepSum, plines } };
 })();

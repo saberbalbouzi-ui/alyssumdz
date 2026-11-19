@@ -133,6 +133,8 @@
     "assets/img/tpl/wm_hijab.webp",
     "assets/img/tpl/wm_scarf.webp",
     "assets/img/tpl/wm_shoes.webp",
+    "assets/js/admin-sentarchive.js",
+    "assets/js/admin-presend.js",
     "assets/js/abandoned-cart.js",
     "assets/js/admin-agency.js",
     "assets/js/admin-appdev.js",

@@ -248,13 +248,13 @@ const Cart = {
     if(!items.length){ toast("السلة فارغة"); return }
     const oosItem = items.filter(itemOut).map(it=>PRODUCTS.find(p=>p.slug===it.slug))[0];
     if(oosItem){ toast(`⚠️ «${oosItem.title}» نفدت كميته — يرجى إزالته من السلة`); return }
-    const name = document.getElementById("cname")?.value.trim();
-    const phone = document.getElementById("cphone")?.value.trim();
-    const wId = document.getElementById("cwilaya")?.value;
-    const commune = document.getElementById("ccommune")?.value.trim();
-    const dtype = document.querySelector('input[name="cdtype"]:checked')?.value || "home";
+    const name = ((document.getElementById("cname") || {}).value || "").trim();
+    const phone = ((document.getElementById("cphone") || {}).value || "").trim();
+    const wId = (document.getElementById("cwilaya") || {}).value;
+    const commune = ((document.getElementById("ccommune") || {}).value || "").trim();
+    const dtype = (document.querySelector('input[name="cdtype"]:checked') || {}).value || "home";
     if(!name || !phone || !wId){ toast("يرجى ملء الاسم، الهاتف والولاية"); return }
-    if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); document.getElementById("cphone")?.focus(); return }
+    if(PhoneDZ.on && !PhoneDZ.ok(PhoneDZ.norm(phone))){ toast(PhoneDZ.MSG); (function(e){ if(e) e.focus(); })(document.getElementById("cphone")); return }
     const wl = WILAYAS.find(x=>x.id==wId);
     const __sq = Cart.quote(); if(__sq.blocked){ toast(__sq.msg); return }
     const sub = Cart.subtotal();
@@ -2123,7 +2123,7 @@ const Gifts = {
       if(!input){ toast("🎁 أضف منتجاً إلى السلة ثم أدخل الكود " + code); return; }
       input.value = code; input.closest(".coupon-box").querySelector("button").click();
       Account.close();
-      if(input.id === "cart-coupon-input") document.querySelector(".cart-btn")?.click();
+      if(input.id === "cart-coupon-input") (function(e){ if(e) e.click(); })(document.querySelector(".cart-btn"));
     });
   },
   /* أول فتح للتطبيق المثبّت (أو حدث التثبيت) ⟵ تُمنح هدية التثبيت */
@@ -2323,7 +2323,7 @@ const PhoneDZ = {
   + WW+".dtype label:has(input:checked){border-color:var(--o-ac)!important;background:color-mix(in srgb,var(--o-ac) 12%,var(--o-bg))!important}"
   + WW+".coupon-box button{background:var(--o-cb)!important;color:var(--o-tc)!important;border:1px solid var(--o-bd)!important}"
   + WW+".btn-order{background:var(--o-ac)!important;background-image:none!important;color:var(--o-bt)!important;border:0!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important}"
-  + WW+".btn-wa{background:var(--o-wb)!important;background-image:none!important;color:#fff!important;border:0!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important}"
+  + WW+".btn-wa{background:color-mix(in srgb,var(--o-wb) 9%,transparent)!important;background-image:none!important;color:color-mix(in srgb,var(--o-wb) 62%,#000)!important;border:1.5px solid var(--o-wb)!important;box-shadow:none!important;border-radius:calc(var(--o-r) - 2px)!important;min-height:38px!important;padding:.3rem .8rem!important;font-size:.85rem!important;font-weight:700!important;margin:.45rem auto 0!important;width:86%!important;opacity:.95}"
   + WW+".cod-note{color:var(--o-tc)!important;opacity:.85}"
   + WW+".btn-order *,"+WW+".btn-wa *{color:inherit!important}"
   + WW+".coupon-box button{background-image:none!important;box-shadow:none!important}"
