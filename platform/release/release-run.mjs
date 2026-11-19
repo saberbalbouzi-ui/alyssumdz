@@ -64,7 +64,8 @@ export async function runRelease({ adapter, manifest, migrations = [], artifacts
   /* 5) نشر المكوّنات بالترتيب الآمن، مع تحقق صحة بعد كل مكوّن */
   for (const comp of order) {
     try { const r = await adapter.deployComponent(comp, manifest, artifacts[comp]); deployedNow.push({ comp, previous: r.previous }); R.handles[comp] = r.handle; const isOk = (x) => comp === "ui" || comp === "templates" ? x[comp]?.release === manifest.id : x[comp]?.sha === manifest.source.sha; const h = await awaitHealth(adapter, isOk, hw); const exp = isOk(h); if (!exp) throw new Error("فحص الصحة بعد النشر لم يطابق: " + JSON.stringify(h[comp])); step(`نشر ${comp}`, true, r.note ?? ""); }
-    catch (e) { step(`نشر ${comp}`, false, e.message); return rollback(`فشل نشر ${comp}`); }
+    catch (e) { if (e.uploaded && !deployedNow.some((d) => d.comp === comp)) deployedNow.push({ comp, previous: e.previous ?? null });   /* رُفعت نسخة ثم فشل التحقق: تُتتبَّع ليشملها الرجوع */
+      step(`نشر ${comp}`, false, e.message); return rollback(`فشل نشر ${comp}`); }
   }
 
   /* 6) تحقق نهائي: هوية/مخطط، سلامة البيانات، دخان */

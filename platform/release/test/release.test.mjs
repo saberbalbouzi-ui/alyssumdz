@@ -201,6 +201,10 @@ sec("H) تأخّر ظهور النسخة المنشورة في /health (Cloudfla
   { const { s, r, out } = await lagged(3, { healthWaitMs: 60000, healthIntervalMs: 1, sleep: async () => { } }); ok("[H1] النسخة الصحيحة تظهر بعد 3 قراءات متأخرة ⇒ ينتظر وينجح النشر (لا رجوع)", out.ok && out.status !== "failed_rolled_back" && out.rolledBack.length === 0, out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
   { const { s, r, out } = await lagged(3, {}); ok("[H2] بلا انتظار (الأجل 0) السلوك القديم كما هو: فحص واحد فاشل ⇒ رجوع تلقائي للكود", out.status === "failed_rolled_back", out.status); s.close(); r.rm(); }
   { const { s, r, out } = await lagged(Infinity, { healthWaitMs: 40, healthIntervalMs: 5, sleep: (ms) => new Promise((x) => setTimeout(x, ms)) }); ok("[H3] نسخة لا تظهر أبداً ⇒ ينتهي الأجل ويفشل الفحص كالسابق (لا يُخفى فشل حقيقي) ثم رجوع للكود فقط", out.status === "failed_rolled_back" && out.steps.some((x) => !x.ok && /لم يطابق/.test(x.detail ?? "")), out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
+  { /* H4: رُفعت نسخة ثم فشل التحقق داخل المحوّل (uploaded) ⇒ تُتتبَّع ويشملها الرجوع (كانت تبقى حيّة) */
+    const { s, r, g } = await fresh(); const od = s.deployComponent.bind(s); s.deployComponent = async (comp, ...a) => { const x = await od(comp, ...a); if (comp === "api") throw Object.assign(new Error("لم تظهر نسخة Worker جديدة (محاكاة)"), { uploaded: true, previous: x.previous }); return x; };
+    const { out } = await g(SHA("i"), S2); const h = await s.health();
+    ok("[H4] فشل بعد الرفع ⇒ failed_rolled_back والرجوع يشمل api فتعود نسخته السابقة", out.status === "failed_rolled_back" && out.rolledBack.some((x) => x.startsWith("api")) && h.api.sha === SHA("1"), { st: out.status, rb: out.rolledBack, sha: h.api.sha }); s.close(); r.rm(); }
 }
 
 repo.rm();

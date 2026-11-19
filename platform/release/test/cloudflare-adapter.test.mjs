@@ -86,6 +86,13 @@ mock.faults = {};
   ok("[36] حارس النقل يحظر 9 وجهات خارج Beta (حساب Production وحساب آخر ومشروع Supabase إنتاجي وآخر ومضيفا Production واسم Worker إنتاجي ومضيف غريب ونطاق alyssumhub) قبل خروج أي طلب", res.every(Boolean) && hit === 0, { res, hit });
   await g2.fetch(`https://api.cloudflare.com/client/v4/accounts/${ACC}/workers/scripts`); await g2.fetch(`https://api.cloudflare.com/client/v4/accounts/${ACC}/workers/scripts/${B.cf_worker}/deployments`); await g2.fetch(`https://${B.api_host}/health`);
   ok("[37] طلبات Beta المشروعة (حسابه، Worker باسم -beta، مضيفه) تمرّ", hit === 3, hit); }
+/* اتّساق نهائي لقائمة النشرات على Cloudflare الحقيقي (أول نشرين حقيقيين: النسخة الجديدة لم تظهر فوراً؛ والنسخة المرفوعة بقيت حيّة بلا تتبّع) */
+{ const SHA1 = SHA("1"), man = { source: { sha: SHA1 } }; const tool = async () => ""; const noSleep = async () => { };
+  const mk2 = (o) => { const x = mkAdapter({ versionWaitMs: o.wait ?? 0, sleep: noSleep }); x.runTool = tool; const seq = [...o.seq]; x.currentVersion = async () => (seq.length > 1 ? seq.shift() : seq[0]); x.versionGitSha = async () => o.live ?? null; x.previousDistinctVersion = async () => o.before ?? null; return x; };
+  { const x = mk2({ wait: 60000, seq: ["v0", "v0", "v0", "v1"] }); const r = await x.deployComponent("api", man, null); ok("[39] نسخة تظهر متأخرة بعد 3 قراءات ⇒ ينتظر ويقبلها", r.handle.version === "v1" && r.previous.version === "v0", r); }
+  { const x = mk2({ wait: 0, seq: ["v0"], live: null }); const e = await x.deployComponent("api", man, null).then(() => null, (er) => er); ok("[40] لا نسخة جديدة والحيّة لا تحمل الـSHA ⇒ يفشل ويحمل previous والعلامة uploaded ليُرجَع عنه", /لم تظهر نسخة Worker جديدة/.test(e?.message ?? "") && e.uploaded === true && e.previous?.version === "v0", e && { m: e.message, u: e.uploaded, p: e.previous }); }
+  { const x = mk2({ wait: 0, seq: ["v1"], live: SHA1, before: "v0" }); const x0 = mk2({ wait: 0, seq: ["v1", "v1"], live: SHA1, before: "v0" }); x0.currentVersion = async () => "v1"; const r = await x0.deployComponent("api", man, null); ok("[41] الحيّة نفسها وتحمل الـSHA المستهدف ⇒ تُقبل بلا رفع جديد، و«previous» نسخة سابقة مختلفة للرجوع", r.handle.version === "v1" && r.previous.version === "v0" && /منشور بالفعل/.test(r.note), r); void x; }
+}
 ok("[38] طوال الاختبار لم يُرسَل أي طلب استعادة Time Travel", !mock.requests.some((q) => /time_travel\/restore/.test(q.url)));
 mock.close(); repo.rm();
 console.log(bad ? `\n✗ ${bad} فاشل من ${n}` : `✓ ${n} فحصاً ناجحاً (بروتوكول محاكى؛ ليس Cloudflare الحقيقي)`); process.exit(bad ? 1 : 0);

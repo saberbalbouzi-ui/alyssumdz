@@ -12,7 +12,8 @@ export const defaultRunTool = (cmd, args, env) => new Promise((res, rej) => exec
 const API = "https://api.cloudflare.com/client/v4";
 
 export class CloudflareAdapter {
-  constructor({ accountId, token = null, fetchFn = fetch, runTool = defaultRunTool, registry, contracts, supabase = null, env = process.env }) {
+  constructor({ accountId, token = null, fetchFn = fetch, runTool = defaultRunTool, registry, contracts, supabase = null, env = process.env, versionWaitMs = 0, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) }) {
+    this.versionWaitMs = versionWaitMs; this.sleep = sleep;
     const B = registry.environments.beta, P = registry.environments.production; this.B = B; this.P = P; this.acc = accountId; this.token = token && token !== "proxy-injected" ? token : null; this.fetch = fetchFn; this.runTool = runTool; this.env = env; this.contracts = contracts; this.sb = supabase;
     if (!/^[0-9a-f]{32}$/.test(String(accountId || ""))) throw new Error("guard: CF_ACCOUNT_ID غير صالح (32 خانة hex)");
     if (KNOWN_PRODUCTION_ACCOUNTS.includes(accountId)) throw new Error("guard: هذا حساب Production — نشر Beta عليه محظور");
@@ -90,12 +91,26 @@ export class CloudflareAdapter {
     if (schemaHash) await this.exec(up, ["schema_hash", schemaHash, at]); await this.exec(up, ["release_sha", sha, at]); return done;
   }
   /* ── المكوّنات ── */
+  async versionGitSha(name, id) { const r = await this.cf("GET", `/workers/scripts/${name}/versions/${id}`); return (r?.resources?.bindings ?? []).find((b) => b.name === "GIT_SHA")?.text ?? null; }
+  async previousDistinctVersion(name, current) { const d = await this.cf("GET", `/workers/scripts/${name}/deployments`), list = d?.deployments ?? d ?? []; return list.map((x) => x.versions?.[0]?.version_id).find((v) => v && v !== current) ?? null; }
   async currentVersion(name) { const d = await this.cf("GET", `/workers/scripts/${name}/deployments`), list = d?.deployments ?? d ?? []; return list[0]?.versions?.[0]?.version_id ?? null; }
   async deployComponent(comp, manifest, artifact) {
     if (comp === "api" || comp === "gateway") {
       const name = comp === "api" ? this.B.cf_worker : this.B.gateway_worker, tool = comp === "api" ? "platform/api/tools/deploy.mjs" : "platform/gateway/tools/deploy.mjs", prev = await this.currentVersion(name);
       await this.runTool("node", [tool, "--env", "beta", "worker"], { ...this.env, CF_ACCOUNT_ID: this.acc, CF_ZONE_ID: this.env.BETA_CF_ZONE_ID || "workers-dev-no-zone", GIT_SHA: manifest.source.sha, ...(this.token ? { CF_API_TOKEN: this.token } : {}) });
-      const now = await this.currentVersion(name); if (!now || now === prev) throw new Error(`لم تظهر نسخة Worker جديدة لـ${name}`); this._verSha[now] = manifest.source.sha; return { previous: prev ? { version: prev } : null, handle: { version: now }, note: now };
+      /* بعد الرفع قد تتأخر قائمة النشرات (اتّساق نهائي): ننتظر ظهور نسخة جديدة حتى versionWaitMs. وإن بقيت النسخة الحيّة نفسها وكانت تحمل GIT_SHA المستهدف فهي منشورة بالفعل (إعادة نشر لإصدار مرفوع سابقاً) ⇒ تُقبل
+         بلا رفع جديد. أي فشل بعد الرفع يحمل previous ليُرجَع عنه (كانت نسخة مرفوعة تبقى حيّة بلا تتبّع فلا يعمل الرجوع). */
+      const t0 = Date.now(); let now = await this.currentVersion(name);
+      while ((!now || now === prev) && Date.now() - t0 < this.versionWaitMs) { await this.sleep(3000); now = await this.currentVersion(name); }
+      const fail = (msg) => Object.assign(new Error(msg), { uploaded: true, previous: prev ? { version: prev } : null });
+      if (!now) throw fail(`لم تظهر نسخة Worker لـ${name}`);
+      if (now === prev) {
+        const live = await this.versionGitSha(name, now).catch(() => null);
+        if (live !== manifest.source.sha) throw fail(`لم تظهر نسخة Worker جديدة لـ${name}`);
+        const before = await this.previousDistinctVersion(name, now); this._verSha[now] = manifest.source.sha;
+        return { previous: before ? { version: before } : null, handle: { version: now }, note: now + " (الإصدار نفسه منشور بالفعل: لا رفع جديد)" };
+      }
+      this._verSha[now] = manifest.source.sha; return { previous: prev ? { version: prev } : null, handle: { version: now }, note: now };
     }
     const files = [...(artifact?.files ?? [])]; if (comp === "ui") { await this.deployStaticWorker(); const { handles, ...pub } = manifest; files.push({ path: "beta-release.json", buf: Buffer.from(JSON.stringify(pub)) }); }
     const { map, objects } = staticPlan(files), hashes = [...objects.keys()], missing = [];
