@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { NodeSqliteDb } from "../src/db-node.mjs";
 import { KVTarget } from "../src/targets.js";
 import { makeSanitizer, classify, compOf, TPL_PREFIXES, sha256Hex, findSecrets } from "../src/rules.js";
-import { runSync, restoreDeleted, syncStatus } from "../src/engine.js";
+import { runSync, restoreDeleted, syncStatus, gitBlobSha } from "../src/engine.js";
 import { meta } from "../src/db.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url)), ROOT = path.resolve(HERE, "../../..");
@@ -36,7 +36,8 @@ class FakeRepo {
   async commit(msg, changes) { this.commits = this.commits.slice(0, this.hi + 1); const next = new Map(this.files); for (const [p, c] of Object.entries(changes)) { if (c === null) next.delete(p); else next.set(p, typeof c === "string" ? enc.encode(c) : c); } const sha = (await sha256Hex(enc.encode(msg + this.commits.length))).slice(0, 40); this.commits.push({ sha, msg, snap: next }); this.hi = this.commits.length - 1; this.files = next; return sha; }
   at(sha) { return this.commits.find((c) => c.sha === sha); }
   async head() { this.calls.push("head"); if (this.offline) throw new Error("github offline"); return this.commits[this.hi].sha; }
-  async tree(sha) { this.calls.push("tree"); const m = new Map(); for (const [p, b] of this.at(sha).snap) m.set(p, { blob: "b" + (await sha256Hex(b)).slice(0, 38), size: b.length }); return m; }
+  async tree(sha) { this.calls.push("tree"); const m = new Map(); for (const [p, b] of this.at(sha).snap) m.set(p, { blob: await gitBlobSha(b), size: b.length }); return m; }
+  async delta(from, to) { this.calls.push("delta"); if (this.noDelta) throw new Error("delta unavailable"); const a = this.at(from)?.snap, b = this.at(to)?.snap; if (!a || !b) return null; const m = new Map(); for (const [p, x] of b) { if (!a.has(p)) m.set(p, "A"); else if (dec.decode(a.get(p)) !== dec.decode(x) || a.get(p).length !== x.length) m.set(p, "M"); } for (const p of a.keys()) if (!b.has(p)) m.set(p, "D"); return m; }
   async bytes(sha, p) { this.calls.push("raw:" + p); const b = this.at(sha).snap.get(p); if (!b) throw new Error("404"); return b; }
   async compare(from, to) { const i = this.commits.findIndex((c) => c.sha === from), j = this.commits.findIndex((c) => c.sha === to); if (i < 0 || j < 0) return { status: "diverged", commits: [] }; if (i === j) return { status: "identical", commits: [] }; return j > i ? { status: "ahead", commits: this.commits.slice(i + 1, j + 1).map((c) => ({ sha: c.sha, message: c.msg })) } : { status: "behind", commits: [] }; }
   reset(sha) { const i = this.commits.findIndex((c) => c.sha === sha); this.hi = i; this.files = this.commits[i].snap; }
@@ -124,7 +125,7 @@ sec("C) المزامنة الأولى + اختبارات القبول");
   const r9 = await w.run(); const all = JSON.stringify([...w.kv.m.keys()]) + JSON.stringify(JSON.parse(w.kv.m.get("__m/ui/r-1"))) + JSON.stringify(JSON.parse(w.kv.m.get("__m/templates/r-1")));
   ok("[C19] الطلبات/العملاء/المدفوعات/الأسرار لا تصل Beta ولا تظهر في أي بيان", r9.ok && !/payments\.json|customers\.json|returns\.json|pixels\.json|\.env|leak\.json/.test(all) && !JSON.stringify([...w.kv.m.entries()].filter(([k]) => k.startsWith("o/")).map(([, v]) => typeof v === "string" ? v : dec.decode(v))).match(/sk_live_|saber\.balbouzi|0079999/), r9);
   ok("[C20] الملفات التي فيها سرّ/هوية محجورة وتظهر بسببها في اللوحة", r9.quarantined === 2 && (await syncStatus(w.db)).quarantined.length === 2, await syncStatus(w.db).then((s) => s.quarantined));
-  ok("[C21] لا اتصال إلا بالمصدر (git) — لا طلب إلى أي مضيف Production", w.repo.calls.every((c) => /^(head|tree|raw:)/.test(c)));
+  ok("[C21] لا اتصال إلا بالمصدر (git) — لا طلب إلى أي مضيف Production", w.repo.calls.every((c) => /^(head|tree|delta|raw:)/.test(c)));
   const s = await syncStatus(w.db); ok("[C22] لوحة المراقبة: متزامن، آخر تحديث، عدد العناصر، وسائط، revision", s.in_sync && s.synced_at && s.items_total >= 10 && s.media.synced === 2 && s.rev > 10 && s.head_seen === await w.repo.head(), { in_sync: s.in_sync, items: s.items_total, media: s.media, rev: s.rev });
   w.db.close(); }
 
@@ -174,10 +175,21 @@ sec("E2) خمول بلا حصة API، وتراجع عند حدّ معدّل GitH
   const idle = await w.run(); ok("[E9] تشغيل الخمول يعيد idle=true", idle.ok && idle.idle === true && idle.planned === 0);
   await seed(w.kv, "ui", "r-9", { "index.html": PAGE("x"), "assets/js/data.js": PRODUCTS([]) }); const dr = await w.run();
   ok("[E10] انحراف البيان يوقظ المسار الكامل رغم أن الرأس لم يتغيّر", dr.ok && !dr.idle && dr.diffs >= 3 && (await w.get("assets/js/data.js")).t.includes("عسل السدر"), dr);
-  await w.repo.commit("تغيير", { "assets/data/theme.json": JSON.stringify({ a: 1 }) }); const od = w.repo.tree.bind(w.repo); w.repo.tree = async () => { const e = new Error("source: trees → 429"); e.status = 429; e.retryAfterMs = 120000; throw e; };
+  await w.repo.commit("تغيير", { "assets/data/theme.json": JSON.stringify({ a: 1 }) }); const od = w.repo.tree.bind(w.repo), odd = w.repo.delta.bind(w.repo), lim = async () => { const e = new Error("source: trees → 429"); e.status = 429; e.retryAfterMs = 120000; throw e; }; w.repo.tree = lim; w.repo.delta = lim;
   const rl = await w.run(); ok("[E11] 429 من GitHub: فشل واضح مع تراجع، ولا شيء يُفقد", !rl.ok && rl.rateLimited && /تراجع/.test(rl.error), rl);
   const callsBefore = w.repo.calls.length; const sk = await w.run(); ok("[E12] أثناء التراجع لا طلبات إلى GitHub إطلاقاً (لا إلحاح)", sk.skipped === "backoff" && w.repo.calls.length === callsBefore, sk);
-  w.repo.tree = od; await meta.set(w.db, "backoff_until", 0); const rec = await w.run(); ok("[E13] بعد انتهاء التراجع تصل التغييرات", rec.ok && (await w.get("assets/data/theme.json")).t.includes('"a": 1') || JSON.parse((await w.get("assets/data/theme.json")).t).a === 1, rec);
+  w.repo.tree = od; w.repo.delta = odd; await meta.set(w.db, "backoff_until", 0); const rec = await w.run(); ok("[E13] بعد انتهاء التراجع تصل التغييرات", rec.ok && (await w.get("assets/data/theme.json")).t.includes('"a": 1') || JSON.parse((await w.get("assets/data/theme.json")).t).a === 1, rec);
+  w.db.close(); }
+
+sec("E3) وضع delta (بلا حصة API) مع الرجوع لشجرة git");
+{ const w = await world(); await w.run(); const trees0 = w.repo.calls.filter((c) => c === "tree").length;
+  await w.repo.commit("تعديل", { "assets/js/data.js": PRODUCTS([{ ...P1, title: "عبر delta" }]), "assets/img/honey/9.webp": IMG(9) }); const r = await w.run();
+  ok("[E14] تغيير لاحق يُطبَّق عبر delta بلا قراءة شجرة", r.ok && r.mode === "delta" && r.applied === 2 && w.repo.calls.filter((c) => c === "tree").length === trees0 && (await w.get("assets/js/data.js")).t.includes("عبر delta") && (await w.get("assets/img/honey/9.webp")).s === 200, r);
+  await w.repo.commit("حذف", { "assets/img/honey/9.webp": null, "assets/js/data.js": PRODUCTS([P1]) }); const d = await w.run(); ok("[E15] الحذف عبر delta ينعكس", d.ok && d.mode === "delta" && d.deleted === 1 && (await w.get("assets/img/honey/9.webp")).s === 404, d);
+  const idem = await w.run(); ok("[E16] تشغيل ثانٍ بعد delta: خمول بلا تكرار", idem.idle === true && idem.planned === 0);
+  await w.repo.commit("فرق وهمي", { "assets/data/theme.json": JSON.stringify({ k: 1 }) }); w.repo.noDelta = true; const fb = await w.run(); ok("[E17] تعذّر delta ⇒ يعود لشجرة git ويطبّق (لا فقد)", fb.ok && fb.mode === "tree" && JSON.parse((await w.get("assets/data/theme.json")).t).k === 1, fb);
+  w.repo.noDelta = false; await w.repo.commit("خاص", { "assets/data/payments.json": "{}", "assets/js/app.js": "x" }); const nz = await w.run(); ok("[E18] تغيير خارج النطاق عبر delta لا يُنتج أحداثاً", nz.ok && nz.planned === 0, nz);
+  const ids = (await w.db.all("SELECT src_blob FROM sync_items WHERE state='applied'")).map((x) => x.src_blob); ok("[E19] معرّفات المحتوى متّسقة بين الوضعين (blob git حقيقي)", ids.every((x) => /^[0-9a-f]{40}$/.test(x)), ids.slice(0, 2));
   w.db.close(); }
 
 sec("F) حواجز الشيفرة");

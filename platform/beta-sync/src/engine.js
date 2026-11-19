@@ -9,6 +9,9 @@ import { migrate, meta } from "./db.js";
 const LOCK_TTL_MS = 150_000, MAX_ATTEMPTS = 8;
 const iso = () => new Date().toISOString();
 
+/** معرّف blob في git (SHA-1 لـ«blob <len>\0<bytes>») — يطابق ما تعيده شجرة git فيتّسق وضعا delta وtree */
+export async function gitBlobSha(bytes) { const h = new TextEncoder().encode(`blob ${bytes.length}\0`), all = new Uint8Array(h.length + bytes.length); all.set(h); all.set(bytes, h.length); return [...new Uint8Array(await crypto.subtle.digest("SHA-1", all))].map((b) => b.toString(16).padStart(2, "0")).join(""); }
+
 export async function runSync({ source, target, db, san, kind = "incremental", budget = {}, force = false, log = () => { }, now = Date.now }) {
   const B = { files: budget.files ?? 12, bytes: budget.bytes ?? 6_000_000, verify: budget.verify ?? 10 }, t0 = now();
   await migrate(db);
@@ -33,9 +36,26 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
       if (c && c.status === "diverged") { conflict = "الرأس تفرّع عن المرصود سابقاً (force-push أو إعادة كتابة تاريخ): تُطبَّق حالة الرأس الجديد كاملة"; R.notes.push(conflict); }
       commits = c?.commits ?? null;
     }
-    const tree = await source.tree(head), desired = new Map();
-    for (const [p, e] of tree) { const cls = classify(p); if (cls) desired.set(p, { ...e, cls }); }
-    const items = new Map((await db.all("SELECT * FROM sync_items")).map((r) => [r.path, r]));
+    const items = new Map((await db.all("SELECT * FROM sync_items")).map((r) => [r.path, r])), desired = new Map(); let mode = "tree";
+    /* وضع delta: تغييرات الرأس الجديد عن آخر رأس مطبَّق من نقطة ويب (لا حصة API) + مسارات الأحداث المعلّقة؛ وما عداها يبقى كما في sync_items. الفشل/عدم اليقين ⇒ شجرة git. */
+    const base0 = await meta.get(db, "synced_head");
+    if (kind !== "full" && !force && base0 && base0 !== head && source.delta) {
+      try {
+        const d = await source.delta(base0, head); const pend = (await db.all("SELECT DISTINCT path FROM sync_events WHERE status IN ('pending','failed','unverified')")).map((x) => x.path);
+        if (d) {
+          for (const [p, it] of items) if (it.state !== "deleted") { const cls = classify(p); if (cls) desired.set(p, { blob: it.src_blob, size: 0, cls }); }
+          const chg = new Map(d); for (const p of pend) if (!chg.has(p)) chg.set(p, "M");
+          for (const [p, st] of chg) {
+            const cls = classify(p); if (!cls) continue;
+            if (st === "D") { desired.delete(p); continue; }
+            try { const bytes = await source.bytes(head, p); desired.set(p, { blob: await gitBlobSha(bytes), size: bytes.length, cls, bytes }); } catch (e) { if (/→ 404/.test(String(e.message))) desired.delete(p); else throw e; }
+          }
+          mode = "delta"; R.notes.push("delta:" + chg.size);
+        }
+      } catch (e) { if (e.status === 403 || e.status === 429) R.notes.push("delta-limited"); desired.clear(); mode = "tree"; }
+    }
+    if (mode === "tree") { const tree = await source.tree(head); for (const [p, e] of tree) { const cls = classify(p); if (cls) desired.set(p, { ...e, cls }); } }
+    R.mode = mode;
     const man = {}; for (const c of COMPONENTS) man[c] = await target.manifest(c);
     for (const c of COMPONENTS) if (!man[c].map) { R.error = `لا إصدار واجهة منشور للمكوّن ${c} (لا بيان للتصحيح عليه)`; return await finish(R, db, now, t0, kind, null, commits); }
 
@@ -66,7 +86,7 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
       if ((prev?.attempts ?? 0) + 1 > MAX_ATTEMPTS) { await ev(db, seq, "failed", "تجاوز الحدّ الأقصى للمحاولات"); R.failed++; continue; }
       try {
         if (e.op === "delete") { patch[e.comp].del.push(e.path); done.push(e); continue; }
-        const buf = await source.bytes(head, e.path); const r = san.transform(e.path, buf, e.d.cls);
+        const buf = e.d.bytes ?? await source.bytes(head, e.path); const r = san.transform(e.path, buf, e.d.cls);
         if (r.blocked) {                                                                                           // حجر: لا يُنسخ ويظهر بسببه
           await db.run("INSERT INTO sync_items (path,comp,cls,src_blob,out_sha,rev,state,src_commit,notes,reason,updated_at) VALUES (?,?,?,?,NULL,?,'quarantined',?,?,?,?) ON CONFLICT(path) DO UPDATE SET comp=excluded.comp,cls=excluded.cls,src_blob=excluded.src_blob,rev=excluded.rev,state='quarantined',src_commit=excluded.src_commit,notes=excluded.notes,reason=excluded.reason,updated_at=excluded.updated_at, out_sha=NULL", [e.path, e.comp, e.d.cls.id, e.d.blob, rev, head, JSON.stringify(r.notes ?? []), r.blocked, iso()]);
           await ev(db, seq, "quarantined", r.blocked); R.quarantined++; if (items.get(e.path)?.state === "applied") patch[e.comp].del.push(e.path); continue;

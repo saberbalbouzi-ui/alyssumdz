@@ -24,6 +24,19 @@ export class GitHubSource {
     const r = await this.f(`https://raw.githubusercontent.com/${this.repo}/${sha}/${path.split("/").map(encodeURIComponent).join("/")}`, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw this.err(path, r.status, r);
     return new Uint8Array(await r.arrayBuffer());
   }
+  /** تغييرات بين التزامين من نقطة الويب `compare/<from>...<to>.diff` (ليست API: لا حصة REST المشتركة). يعيد Map(مسار → "A"|"M"|"D")، أو null إن تعذّر التحليل بأمان (مسار مقتبَس/غير ASCII، أو diff كبير) ⇒ يعود المحرّك لشجرة git. */
+  async delta(from, to) {
+    const url = `https://github.com/${this.repo}/compare/${from}...${to}.diff`, r = await this.f(url, { headers: { "User-Agent": "alyssum-beta-sync" } }); if (r.status !== 200) throw this.err("compare.diff", r.status, r);
+    const t = await r.text(); if (!t.length) return new Map(); if (/^(diff too large|Sorry, this diff)/i.test(t)) return null;
+    const m = new Map(); const blocks = t.split(/^diff --git /m).slice(1);
+    for (const b of blocks) {
+      const head = b.split("\n@@")[0], lines = head.split("\n"), first = lines[0]; if (first.startsWith('"') || /[^\x20-\x7e]/.test(first)) return null;            // مسارات مقتبسة/غير ASCII: لا نخمّن
+      const ab = first.match(/^a\/(.+) b\/(.+)$/); if (!ab) return null; let a = ab[1], bb = ab[2], st = "M";
+      for (const l of lines.slice(1)) { if (l.startsWith("new file mode")) st = "A"; else if (l.startsWith("deleted file mode")) st = "D"; else if (l.startsWith("rename from ")) { m.set(l.slice(12), "D"); st = "A"; } else if (l.startsWith("rename to ")) bb = l.slice(10); else if (l.startsWith("Binary files") && /\/dev\/null and/.test(l)) st = "A"; else if (l.startsWith("Binary files") && /and \/dev\/null/.test(l)) st = "D"; }
+      if (st === "D") m.set(a, "D"); else m.set(bb, st);
+    }
+    return m;
+  }
   /** مقارنة نقطتين: { status: ahead|behind|identical|diverged, commits:[{sha,message,author}] } (قديم←جديد). للسجل وكشف التراجع/التفرّع فقط؛ التطبيق نفسه من حالة الشجرة */
   async compare(from, to) {
     if (!from || from === to) return { status: "identical", commits: [] };
