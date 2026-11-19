@@ -1,0 +1,11 @@
+{
+  "_note": "إعداد نموذج الطلب الافتراضي لواجهة Beta فقط (يُنسخ بـscripts/build-beta.py). بلا رقم واتساب ولا نصوص ولا ألوان متجر؛ يُستبدل حين يضبط التاجر إعداداته من لوحة التحكم. لا يدخل حزم العملاء (make-template يحذف checkout.json عمداً).",
+  "showWhatsappBtn": false,
+  "waAuto": false,
+  "showAddToCart": true,
+  "showOffers": true,
+  "steps": true,
+  "phoneDz": true,
+  "guard": { "antibot": true, "dup": true, "hours": 24, "phoneDz": true },
+  "extraFields": []
+}

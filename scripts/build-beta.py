@@ -95,6 +95,11 @@ def sh(*cmd):
     except Exception: return "unknown"
 schema_hash = hashlib.sha256((ROOT / "platform/api/schema.sql").read_bytes()).hexdigest()[:16]
 info = {"environment": "beta", "sha": os.environ.get("GIT_SHA") or sh("git", "rev-parse", "HEAD"), "version": (ROOT / "VERSION").read_text(encoding="utf-8").strip(), "schema_hash": schema_hash, "api": "https://" + B["api_host"], "app_host": B["app_host"], "supabase_configured": CONFIGURED, "built_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+# إعدادات المتجر الافتراضية الخاصة بـBeta: make-template يحذف checkout.json عمداً من كل حزمة (يحوي رقم المالك ونصوصه) ولا يوجد pay-methods.json في المستودع أصلاً (يكتبه التاجر من اللوحة)،
+# فكانت الواجهة تعيد 404 وتعمل بالافتراضيات الصامتة (بلا نموذج مراحل). نشحن هنا ملفين Beta بحتين بلا هوية ولا أسرار؛ لا أثر على حزم العملاء ولا القوالب ولا المتاجر القائمة.
+for _f in ("checkout.json", "pay-methods.json"):
+    _t = (ROOT / "platform/env/beta" / _f).read_text(encoding="utf-8"); json.loads(_t)
+    (OUT / "assets/data").mkdir(parents=True, exist_ok=True); (OUT / "assets/data" / _f).write_text(_t, encoding="utf-8")
 shutil.copy(ROOT / "platform/env/beta/beta-start.html", OUT / "beta-start.html")   # صفحة بدء التجربة: إنشاء متجر تجريبي بكود دعوة
 shutil.copytree(ROOT / "assets/fonts", OUT / "assets/fonts", dirs_exist_ok=True)   # خط Cairo (OFL): make-template لا ينسخه فتظهر 404 للخط
 (OUT / "VERSION").write_text(info["version"] + "\n", encoding="utf-8")   # لوحة التحكم تفحص /VERSION للتحديث (كما في الإنتاج)
