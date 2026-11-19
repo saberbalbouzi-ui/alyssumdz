@@ -192,6 +192,17 @@ sec("G) بيانات جديدة تصل **أثناء** النشر: لا تُمح�
 { /* G9: نسخة الصفوف الاحتياطية لا تظهر في التقرير */
   const { s, r, g } = await fresh(); s.faults.corruptData = true; const { out, manifest } = await g(SHA("g"), S2); const rep = L.renderReport(manifest, out), js = JSON.stringify(out);
   ok("[G9] التقرير ونتيجة التشغيل لا يحويان صفوف العملاء (بيانات شخصية) — أعداد ومفاتيح فقط", !/"subtotal"|"tenant_id"/.test(js) && !/subtotal|tenant_id/.test(rep)); s.close(); r.rm(); }
+sec("H) تأخّر ظهور النسخة المنشورة في /health (Cloudflare الحقيقي): انتظار محدود، بلا إخفاء لفشل حقيقي");
+{ /* أول نشر حقيقي قرأ /health بعد ثانيتين فرأى النسخة القديمة (النسخة الصحيحة كانت قد رُفعت) ففشل ورجع تلقائياً */
+  const lagged = async (n, extra) => { const { s, r, g } = await fresh(); const od = s.deployComponent.bind(s), oh = s.health.bind(s); let lag = 0;
+    s.deployComponent = async (...a) => { const x = await od(...a); lag = n; return x; };
+    s.health = async () => { const h = await oh(); if (lag > 0 && lag !== Infinity) lag--; if (lag > 0) return { ...h, api: { ...h.api, sha: "stale-" + String(lag) }, gateway: { ...h.gateway, sha: "stale" }, ui: { ...h.ui, release: "stale" }, templates: { ...h.templates, release: "stale" } }; return h; };
+    return { s, r, out: (await g(SHA("h"), S2, extra)).out }; };
+  { const { s, r, out } = await lagged(3, { healthWaitMs: 60000, healthIntervalMs: 1, sleep: async () => { } }); ok("[H1] النسخة الصحيحة تظهر بعد 3 قراءات متأخرة ⇒ ينتظر وينجح النشر (لا رجوع)", out.ok && out.status !== "failed_rolled_back" && out.rolledBack.length === 0, out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
+  { const { s, r, out } = await lagged(3, {}); ok("[H2] بلا انتظار (الأجل 0) السلوك القديم كما هو: فحص واحد فاشل ⇒ رجوع تلقائي للكود", out.status === "failed_rolled_back", out.status); s.close(); r.rm(); }
+  { const { s, r, out } = await lagged(Infinity, { healthWaitMs: 40, healthIntervalMs: 5, sleep: (ms) => new Promise((x) => setTimeout(x, ms)) }); ok("[H3] نسخة لا تظهر أبداً ⇒ ينتهي الأجل ويفشل الفحص كالسابق (لا يُخفى فشل حقيقي) ثم رجوع للكود فقط", out.status === "failed_rolled_back" && out.steps.some((x) => !x.ok && /لم يطابق/.test(x.detail ?? "")), out.steps.filter((x) => !x.ok)); s.close(); r.rm(); }
+}
+
 repo.rm();
 
 console.log(bad ? `\n✗ ${bad} فاشل من ${n}` : `✓ ${n} فحصاً ناجحاً`); process.exit(bad ? 1 : 0);

@@ -8,7 +8,15 @@ const FIRST_ORDER = ["api", "gateway", "ui", "templates"];
 /** هل الحالة الحيّة تطابق سجل إصدار؟ (كل مكوّن يُقارَن بالإصدار الذي نشره فعلاً، لا بإصدار الـcommit الحالي) */
 export function liveMatches(h, rec) { const di = rec.deployed_in ?? {}, hd = rec.handles ?? {}; return h.api?.sha === di.api && h.gateway?.sha === di.gateway && h.ui?.release === (hd.ui?.release ?? null) && h.templates?.release === (hd.templates?.release ?? null); }
 
-export async function runRelease({ adapter, manifest, migrations = [], artifacts = {}, snapshotTables = [], allowBreaking = false, log = () => { } }) {
+/** انتظار ظهور النسخة المنشورة في فحص الصحة: على Cloudflare الحقيقي قد تتأخر النسخة الجديدة بضع ثوانٍ بعد الرفع (أول نشر حقيقي قرأ /health بعد ثانيتين فرأى النسخة القديمة ففشل ورجع تلقائياً).
+    يعيد قراءة الصحة حتى يتحقق الشرط أو ينتهي الأجل؛ الأجل صفر ⇒ قراءة واحدة (سلوك الاختبارات والمحاكي). لا يُخفي فشلاً حقيقياً: عند انتهاء الأجل يُرجَع آخر قراءة فيفشل الفحص كالسابق. */
+export async function awaitHealth(adapter, ok, { timeoutMs = 0, intervalMs = 5000, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
+  const t0 = Date.now(); let h = await adapter.health();
+  while (!ok(h) && Date.now() - t0 < timeoutMs) { await sleep(intervalMs); h = await adapter.health(); }
+  return h;
+}
+export async function runRelease({ adapter, manifest, migrations = [], artifacts = {}, snapshotTables = [], allowBreaking = false, log = () => { }, healthWaitMs = 0, healthIntervalMs = 5000, sleep }) {
+  const hw = { timeoutMs: healthWaitMs, intervalMs: healthIntervalMs, ...(sleep ? { sleep } : {}) };
   const R = { ok: false, status: "failed", steps: [], rolledBack: [], migrationsApplied: [], handles: {}, warnings: [], bookmark: null, recovery: null };
   const step = (name, ok, detail) => { R.steps.push({ name, ok, ...(detail ? { detail } : {}) }); log((ok ? "✓ " : "✗ ") + name + (detail ? " — " + detail : "")); return ok; };
   const fail = (name, detail, status = "failed") => { step(name, false, detail); R.status = status; return R; };
@@ -55,12 +63,13 @@ export async function runRelease({ adapter, manifest, migrations = [], artifacts
 
   /* 5) نشر المكوّنات بالترتيب الآمن، مع تحقق صحة بعد كل مكوّن */
   for (const comp of order) {
-    try { const r = await adapter.deployComponent(comp, manifest, artifacts[comp]); deployedNow.push({ comp, previous: r.previous }); R.handles[comp] = r.handle; const h = await adapter.health(); const exp = comp === "ui" || comp === "templates" ? h[comp]?.release === manifest.id : h[comp]?.sha === manifest.source.sha; if (!exp) throw new Error("فحص الصحة بعد النشر لم يطابق: " + JSON.stringify(h[comp])); step(`نشر ${comp}`, true, r.note ?? ""); }
+    try { const r = await adapter.deployComponent(comp, manifest, artifacts[comp]); deployedNow.push({ comp, previous: r.previous }); R.handles[comp] = r.handle; const isOk = (x) => comp === "ui" || comp === "templates" ? x[comp]?.release === manifest.id : x[comp]?.sha === manifest.source.sha; const h = await awaitHealth(adapter, isOk, hw); const exp = isOk(h); if (!exp) throw new Error("فحص الصحة بعد النشر لم يطابق: " + JSON.stringify(h[comp])); step(`نشر ${comp}`, true, r.note ?? ""); }
     catch (e) { step(`نشر ${comp}`, false, e.message); return rollback(`فشل نشر ${comp}`); }
   }
 
   /* 6) تحقق نهائي: هوية/مخطط، سلامة البيانات، دخان */
-  const h = await adapter.health();
+  const idChk = (x) => x.api?.environment === "beta" && x.api?.db_environment === "beta" && (!manifest.components.api.schema_hash || x.api?.schema_hash === manifest.components.api.schema_hash);
+  const h = await awaitHealth(adapter, idChk, hw);
   const idOk = h.api?.environment === "beta" && h.api?.db_environment === "beta" && (!manifest.components.api.schema_hash || h.api?.schema_hash === manifest.components.api.schema_hash);
   if (!step("هوية البيئة والمخطط", idOk, idOk ? "" : JSON.stringify(h.api))) return rollback("هوية/مخطط غير مطابقين");
   const after = await adapter.snapshot(snapshotTables, {}), cmp = compareSnapshots(before, after);

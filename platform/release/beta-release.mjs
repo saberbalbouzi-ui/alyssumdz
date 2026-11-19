@@ -91,7 +91,7 @@ export async function runCli({ argv = process.argv.slice(2), env = process.env, 
   const { readdirSync } = await import("node:fs"), distFiles = L.walk(distDir).map((p) => ({ path: p, buf: readFileSync(path.join(distDir, p)) }));
   const artifacts = { api: { code: "" }, gateway: { code: "" }, ui: { files: distFiles.filter((f) => !L.isTpl(f.path)) }, templates: { files: distFiles.filter((f) => L.isTpl(f.path)) } };
   for (const [k, f] of [["api", "platform/api/src/index.js"], ["gateway", "platform/gateway/src/index.js"]]) if (existsSync(path.join(ROOT, f))) artifacts[k].code = readFileSync(path.join(ROOT, f), "utf8");   // المحوّل الحقيقي يرفع بأدوات النشر؛ المحاكي يستعمل الكود لاختبار السلوك
-  const result = await runRelease({ adapter, manifest, migrations, artifacts, snapshotTables: contracts.protected_tables.d1_api, allowBreaking: flag("--allow-breaking"), log });
+  const result = await runRelease({ adapter, manifest, migrations, artifacts, snapshotTables: contracts.protected_tables.d1_api, allowBreaking: flag("--allow-breaking"), log, healthWaitMs: flag("--rehearsal-sim") || adapterFactory ? 0 : 90000 });   // على Cloudflare الحقيقي تنتظر النسخة الجديدة حتى 90ث لتظهر في /health
   const report = L.renderReport(manifest, result); writeFileSync(path.join(out, `report-${manifest.id}.md`), report); writeFileSync(path.join(out, "latest.md"), report); writeFileSync(path.join(out, `result-${manifest.id}.json`), JSON.stringify({ manifest, result: { ...result, steps: result.steps } }, null, 2));
   for (const w of result.warnings ?? []) log("⚠ " + w);
   log(`\nالحالة: ${result.status} — التقرير: ${path.relative(process.cwd(), path.join(out, "latest.md"))}`); return result.ok ? 0 : 1;
