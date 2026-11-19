@@ -331,6 +331,51 @@ function writeStore(name) {
     { const m = await storeCheck("/account.html", 1360, "account-desk", { shot: true }); ck("G8", "حسابي: يفتح بلا أخطاء", m.errs.length === 0 && m.over <= 0, { e: m.errs, over: m.over }); }
   }
 
+  // ═════════ G9 — روابط الفوتر والروابط الداخلية بحسب مسار تثبيت المتجر: جذر الموقع `/` ومجلد فرعي `/store/` (المجالات الخمسة × الرئيسية/المتجر/السلة/حسابي/المنتج/صفحات /lp/) ═════════
+  if (want("G9")) {
+    writeStore("rich"); fs.writeFileSync(path.join(STORE, "assets/data/checkout.json"), JSON.stringify({ steps: false, guard: { dup: false } })); await openAdmin();
+    // المجلد الفرعي: خادم ثانٍ يخدم مجلداً أباً فيه `store` رابط رمزي إلى المتجر نفسه (الملفات المنشورة نفسها تُقرأ من /store/ بدل /)
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "nxsub-")); fs.symlinkSync(path.resolve(STORE), path.join(parent, "store"));
+    const sport = 19600 + Math.floor(Math.random() * 300), sproc = spawn("php", ["-S", "127.0.0.1:" + sport, "-t", parent], { stdio: "ignore" }); process.on("exit", () => { try { sproc.kill(); fs.rmSync(parent, { recursive: true, force: true }); } catch (e) { } });
+    for (let i = 0; i < 40; i++) { try { const r = await fetch("http://127.0.0.1:" + sport + "/store/index.html"); if (r.status < 500) break; } catch (e) { } await sleep(250); }
+    const ROOTS = [["root", BASE], ["sub", "http://127.0.0.1:" + sport + "/store"]];
+    const FL = [["الرئيسية", "index.html"], ["المتجر", "shop.html"], ["السلة", "cart.html"], ["حسابي", "account.html"]];
+    const PG = [["home", "/"], ["shop", "/shop.html"], ["cart", "/cart.html"], ["account", "/account.html"], ["product", "/p/nx-p1/"], ["lp-faq", "/lp/nx-faq/"], ["lp-collection", "/lp/nx-collection/"]];
+    const probe = async (ctx, root, pth) => {
+      const pg = await ctx.newPage(), errs = [], bad = []; pg.on("pageerror", e => errs.push(e.message.slice(0, 120))); const origin = new URL(root).origin, pre = new URL(root).pathname.replace(/\/$/, "");
+      pg.on("response", r => { if (r.status() >= 400 && r.url().startsWith(origin) && !/favicon|\/api\/|manifest|sw\.js|assets\/data\/checkout\.json|\/lib\/|cdn/.test(r.url())) bad.push(r.status() + " " + r.url().replace(origin, "")); });
+      await pg.goto(root + pth, { waitUntil: "load", timeout: 60000 }); await sleep(1800);
+      const info = await pg.evaluate(() => { const foot = document.querySelector("footer.pb-sf"); const fl = foot ? [...foot.querySelectorAll("a")].map(a => ({ t: a.textContent.trim(), raw: a.getAttribute("href"), href: a.href })) : null;
+        const all = [...new Set([...document.querySelectorAll("a[href]")].map(a => a.href).filter(h => /^https?:/.test(h) && h.indexOf(location.origin) === 0 && !/\/api\//.test(h)).map(h => h.split("#")[0]))];
+        const broken = [...document.images].filter(i => i.getBoundingClientRect().width > 4 && i.complete && i.naturalWidth === 0).map(i => i.src); return { fl, all, broken, root: !!document.querySelector("footer.pb-sf") }; });
+      await pg.close(); return Object.assign(info, { errs, bad, pre, origin });
+    };
+    const ctx = await mk(1360, 900), seen = {}; const tag = [];
+    for (const n of NIX) {
+      const inst = await installHome(n); const pub = await publishHome(); await sleep(2500);
+      const prod = await admin.evaluate(async n => { try { return await AdminNav.tplInstallProducts(n, ["nx-p1"]); } catch (e) { return { err: e.message }; } }, n);
+      const l1 = await publishPage("p-nexus-faq", "nx-faq"), l2 = await publishPage("p-nexus-collection", "nx-collection"); await sleep(1500);
+      ck("G9", n + ": تثبيت الرئيسية ونشرها وصفحة المنتج وصفحتا /lp/", inst.ok && !/ERR/.test(pub) && prod && prod.done && prod.done.length === 1 && l1 === "ok" && l2 === "ok", { inst, pub: pub.slice(0, 60), prod, l1, l2 });
+      for (const [rn, root] of ROOTS) for (const [pn, pth] of PG) {
+        const r = await probe(ctx, root, pth), lab = n + " | " + rn + " | " + pn;
+        const rootAbs = (r.fl || []).filter(x => /^\//.test(x.raw || "")).map(x => x.raw);
+        const want_ = FL.map(([t, f]) => [t, r.origin + r.pre + "/" + f]); const got = want_.map(([t, u]) => { const x = (r.fl || []).find(y => y.t === t); return x ? x.href : null; });
+        ck("G9", lab + ": روابط الفوتر الأربعة تُحَلّ إلى صفحات المتجر الصحيحة", r.root && got.every((h, i) => h === want_[i][1]) && !rootAbs.length, { got, rootAbs });
+        // كل رابط داخلي في الصفحة يُفتح (200) والموارد سليمة بلا أخطاء JS
+        const bads = []; for (const h of r.all) { try { const q = await ctx.request.get(h, { timeout: 20000 }); if (q.status() >= 400) bads.push(q.status() + " " + h.replace(r.origin, "")); } catch (e) { bads.push("ERR " + h.replace(r.origin, "")); } }
+        ck("G9", lab + ": كل الروابط الداخلية (" + r.all.length + ") تفتح بلا 4xx، والصور والموارد سليمة بلا أخطاء JS", !bads.length && !r.bad.length && !r.broken.length && !r.errs.length, { bads: bads.slice(0, 4), bad: r.bad.slice(0, 4), broken: r.broken.slice(0, 3), errs: r.errs.slice(0, 2) });
+        // نقرة حقيقية على «المتجر» و«السلة» تصل إلى الصفحة الصحيحة داخل مسار التثبيت نفسه
+        if (n === "s-nexus" || pn === "home") for (const [t, f, mk_] of [["المتجر", "shop.html", "#shop-grid"], ["السلة", "cart.html", "#cart-page"]]) {
+          const pg = await ctx.newPage(); await pg.goto(root + pth, { waitUntil: "load", timeout: 60000 }); await sleep(1200);
+          if (await pg.locator("#acc-bg.open").count()) { await pg.locator("#acc-bg.open .acc-x").first().click(); await sleep(500); }      // حسابي يفتح نافذة الدخول تلقائياً: تُغلق بزرها كما يفعل الزائر
+          await Promise.all([pg.waitForLoadState("load"), pg.locator("footer.pb-sf a", { hasText: t }).first().click()]); await sleep(1800);
+          const ok = pg.url() === r.origin + r.pre + "/" + f && await pg.locator(mk_).count() > 0; ck("G9", lab + ": نقرة «" + t + "» تصل إلى " + f + " داخل المسار نفسه", ok, pg.url()); await pg.close();
+        }
+      }
+    }
+    await ctx.close(); try { sproc.kill(); } catch (e) { }
+  }
+
   console.log(`\n${fail ? fail + " إخفاق: " + failures.join(" | ") : "✓ كل الفحوص نجحت"} (${pass} نجاح)`);
   await browser.close(); process.exit(fail ? 1 : 0);
 })();
