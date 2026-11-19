@@ -18,6 +18,10 @@ const { chromium } = require("playwright");
     out.def = { fee: q("#mo-fee").value, hint: q("#mo-fh").textContent, brand: bg._brand };
     const st = bg.querySelector('input[name="mo-dt"][value="stop"]'); if (st && !st.disabled) { st.checked = true; st.dispatchEvent(new Event("change", { bubbles: true })); await wait(400); }
     out.stop = { fee: q("#mo-fee").value, brand: bg._brand, dis: st && st.disabled, com: q("#mo-com").value, desk: q("#mo-desk").innerText.slice(0, 60), dtp: (bg.querySelector('input[name="mo-dt"]:checked') || {}).value };
+    { const st2 = bg.querySelector('input[name="mo-dt"][value="home"]'); if (st2 && !st2.disabled) { st2.checked = true; st2.dispatchEvent(new Event("change", { bubbles: true })); await wait(300); }
+      const c2 = bg.querySelector('#mo-opts [data-ob="WeCanServices"][data-ok="home"]'); if (c2) { c2.click(); await wait(250); } const b1 = bg._brand, f1 = q("#mo-fee").value;
+      const cm = q("#mo-com"); cm.dispatchEvent(new Event("change", { bubbles: true })); await wait(300); out.keep = { b1, b2: bg._brand, f1, f2: q("#mo-fee").value };
+      const w3 = q("#mo-wil"); w3.value = "Ouargla"; w3.dispatchEvent(new Event("change", { bubbles: true })); await wait(300); w3.value = "Béchar"; w3.dispatchEvent(new Event("change", { bubbles: true })); await wait(300); out.reset = bg._brand; }
     const fr = q("#mo-free"); out.hasFree = !!fr; fr.checked = true; fr.dispatchEvent(new Event("change", { bubbles: true })); await wait(300);
     out.free = { fee: q("#mo-fee").value, dis: q("#mo-fee").disabled, hint: q("#mo-fh").textContent, tot: q("#mo-tot").textContent.replace(/\D/g, "") };
     const c = bg.querySelector('#mo-opts [data-ob="WeCanServices"][data-ok="home"]'); if (c) { c.click(); await wait(300); } out.freeCard = { fee: q("#mo-fee").value, brand: bg._brand };
@@ -27,6 +31,7 @@ const { chromium } = require("playwright");
     q("#mo-save").click(); await wait(1200);
     out.saved = saved.length ? { fee: saved[0].fee, total: saved[0].total, free: saved[0].extra && saved[0].extra["توصيل مجاني"], brand: saved[0].extra && saved[0].extra["🚚 الناقل"] } : null;
     return out; });
+  ok("اختيار الناقل بالبطاقة يبقى بعد تغيير البلدية (لا يرجع للأرخص وحده)، ويُعاد للأرخص عند تغيير الولاية", R.keep && R.keep.b1 === "WeCanServices" && R.keep.b2 === "WeCanServices" && R.keep.f1 === R.keep.f2 && R.reset === "ZR", [R.keep, R.reset]);
   ok("بشار منزل: الافتراضي أرخص ناقل (ZR 900) تلقائياً", Number(R.def.fee) === 900 && R.def.brand === "ZR" && /الأرخص/.test(R.def.hint), R.def);
   ok("مكتب: الأرخص ZR 650", Number(R.stop.fee) === 650 && R.stop.brand === "ZR", R.stop);
   ok("خيار «توصيل مجاني» موجود، ويجعل الرسم 0 ومقفلاً مع توضيح أن المتجر يتحمّل", R.hasFree && Number(R.free.fee) === 0 && R.free.dis && /يتحمّل المتجر/.test(R.free.hint) && Number(R.free.tot) === 3000, R.free);
