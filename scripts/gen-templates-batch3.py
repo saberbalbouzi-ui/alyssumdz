@@ -203,7 +203,7 @@ p_free = [
     FRW(W("stock", smode="product", sn=11, smax=40, stx="⚡ بقيت {n} قطع فقط!", color=INK, sbgc="#ffffff", fs=dm(20, 16), fxs=[stockbar(k), FX("لوحة", "selector{background:#fff;border:3px solid #111;border-radius:18px;box-shadow:6px 6px 0 #111;padding:16px}")], **anim("zoomIn", .8, .3)), V(52, 6, 6), V(430, 760, 970), V(44, 88, 88), None, 6),
     FRW(W("countdown", mode="date", on=False, end="", cbg="#111111", color=YEL, fs=dm(38, 26), crad=dm(12), al={"d": "center"}, fxs=[cdglow(k, PINK)], **anim("zoomIn", .8, .4)), V(52, 6, 6), V(530, 860, 1060), V(44, 88, 88), None, 6),
 ]
-p_hero = canvas3(p_free, dm(660, 1010, 1160), POPBG("h") + [FX("قصّ الدوران", "selector{overflow:hidden}")])
+p_hero = canvas3(p_free, dm(660, 806, 1160), POPBG("h") + [FX("قصّ الدوران", "selector{overflow:hidden}")])
 def p_tape():
     """شريط تحذير مائل: عنصر «شريط متحرك» أصلي بزاوية، يعبر الصفحة بين الهيرو والفئات"""
     return S([C([W("marquee", mqt="جديد   ★   مجنون   ★   حصري   ★   لفترة محدودة   ★   اطلب الآن   ★   الدفع عند الاستلام", mqs=18, mqd="ltr", mqg=dm(40), mqp=True, mqbg=INK, mqc=YEL, fs=dm(26, 20), fw="900",

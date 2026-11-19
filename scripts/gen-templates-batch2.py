@@ -245,7 +245,7 @@ m_flash = S([C([W("heading", text="⚡ عروض فلاش", tag="h2", fs=dm(34, 2
             fxs=[aurora(k + "fl", "#9a3412", "#f9731699", "#ef444488", "#facc1555", 8), FX("حدّ لامع", "selector{box-shadow:0 20px 60px rgba(249,115,22,.35)}")])
 m_prod = S([C([W("anchor", aid="products", aoff=dm(80)), *title("الأكثر مبيعاً", "اختيارات المتسوّقين", k, thm, thm["hfx"]("p"))["widgets"],
                W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, cardw=dm(170, 150), gap=dm(12), rad=dm(14), cbg="#ffffff", bbg=ORG, pdemo="a",
-                 fxs=[lift(".pb-pc", "rgba(249,115,22,.3)", -8, 2), FX("بطاقة سوق مضغوطة", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06)}selector .pb-pc h3{font-size:14px;line-height:1.4}selector .pb-pcp b{font-size:17px;color:#ea580c}selector .pb-pcb{border-radius:8px}"), cardratio("1/1")])], w=100)],
+                 fxs=[lift(".pb-pc", "rgba(249,115,22,.3)", -8, 2), FX("بطاقة سوق مضغوطة", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06)}selector .pb-pc h3{font-size:14px;line-height:1.4}selector .pb-pcp b{font-size:17px;color:#ea580c}selector .pb-pcb{border-radius:8px}selector .pb-pcp b{color:#9a3412!important}"), cardratio("1/1")])], w=100)],
           pad=dm([40, 20, 60, 20], [28, 12, 40, 12]), cw={"d": 1240}, fxs=WHT("p"))
 m_sell = S([C([*title("بائعون مميّزون", "متاجر موثوقة بتقييمات حقيقية من الزبائن.", k, thm, thm["hfx"]("s"))["widgets"]], w=100, pad=dm([0, 0, 20, 0]))]
            + [C([IB("user", n, "★ %s · %s منتج" % (r, c), tc="#0f172a", xc="#64748b", isz=30, al={"d": "start"},

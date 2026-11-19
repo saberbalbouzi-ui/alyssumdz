@@ -37,7 +37,9 @@ PPAL = {
 }
 
 _NOHF = ":not(:has(header.pb-hd,.pb-sf,.pb-tp))"
-def _css(P):
+# القوالب الستة المحمية: لا يُعدَّل جلد صفحة منتجها؛ قواعد أقسام الهبوط الأصلية الجديدة (أسئلة شائعة/صندوق الأيقونة) لا تُضاف إليها دون موافقة مستقلة
+_PROTECTED6 = {"s-perfume", "s-skincare", "s-makeup", "s-women", "s-men", "s-kids"}
+def _css(P, landing=True):
     t, m, a, a2, on, r = P["txt"], P["mut"], P["acc"], P["acc2"], P["onacc"], P["rad"]
     SC = ".pb-sec" + _NOHF
     sel = lambda tags: ",".join("%s %s" % (SC, x) for x in tags)
@@ -60,6 +62,10 @@ def _css(P):
     o.append(".thumb,.gthumbs img{border:2px solid %s!important;border-radius:%spx}.thumb.on,.thumb:hover,.gthumbs img.on,.gthumbs img:hover{border-color:%s!important}" % (P["line"], max(r - 6, 0), a))
     o.append(".price-now,%s .price-now,%s .price{color:%s!important}%s .old,%s s,%s del{color:%s!important}" % (SC, SC, a, SC, SC, SC, m))
     o.append(".save-pill,.best{background:%s22!important;color:%s!important;border:1px solid %s66!important}" % (a, a, a))
+    if landing:
+        # عناصر صفحة الهبوط الأصلية (أسئلة شائعة، صندوق الأيقونة): ألوان القالب لا ألوان العنصر الافتراضية
+        o.append("%s .pb-acc details{background:%s!important;border:1px solid %s!important;border-radius:%spx!important;overflow:hidden;margin:8px 0}%s .pb-acc summary,%s .pb-acc .pb-sum{background:transparent!important;color:%s!important;font-weight:800}%s .pb-acc details>div,%s .pb-acc details>div *{color:%s!important}" % (SC, P["cardbg"], P["line"], max(r - 4, 0), SC, SC, t, SC, SC, m))
+        o.append("%s .pb-ibi{background:%s22!important;color:%s!important;border-radius:%spx}%s .pb-ibi *{color:%s!important}" % (SC, a, a, max(r - 6, 12), SC, a))
     o.append("%s input,%s select,%s textarea{background:%s!important;color:%s!important;border:1px solid %s!important;border-radius:%spx}%s input::placeholder,%s textarea::placeholder{color:%s!important}" % (SC, SC, SC, P["fld"], P["fldtxt"], P["line"], max(r - 6, 0), SC, SC, m))
     o.append("%s input:focus,%s select:focus,%s textarea:focus{border-color:%s!important;box-shadow:0 0 0 3px %s33!important;outline:0}%s option{background:%s;color:%s}" % (SC, SC, SC, a, a, SC, P["opt"], P["fldtxt"]))
     o.append(".btn-cart2,.btn-order,%s .lp-btn,%s .pb-btn{background:%s!important;color:%s!important;border:0!important;border-radius:%spx!important;font-weight:900;%s}.btn-cart2 *,.btn-order *,%s .lp-btn *{color:%s!important}.btn-cart2:hover,.btn-order:hover{transform:translateY(-3px);filter:brightness(1.06)}" % (SC, SC, btn, on, max(r - 4, 0) if r else 0, btnex, SC, on))
@@ -143,7 +149,7 @@ def build_product_skins(out_dir):
         pk = PK.get(tid, {})
         items = [(pk.get("f%dt" % i, ""), pk.get("f%dx" % i, "")) for i in range(4)]
         trust = '<div class="tp-trust">' + "".join('<div><i></i><b>%s</b><small>%s</small></div>' % (t, x) for t, x in items if t) + "</div>"
-        d = dict(id=tid, dark=P["dark"], txt=P["txt"], mut=P["mut"], acc=P["acc"], glass=("rgba(255,255,255,.07)" if P["dark"] else ""), line=P["line"], layout=P["layout"], bar=P["bar"], card=P["card"], bg=P["bg"], ff=tpl.get("ff", ""), top=top, foot=foot[-1], css=_css(P), trust=trust, buybar=_BUY, brand=pk.get("brand", ""))
+        d = dict(id=tid, dark=P["dark"], txt=P["txt"], mut=P["mut"], acc=P["acc"], glass=("rgba(255,255,255,.07)" if P["dark"] else ""), line=P["line"], layout=P["layout"], bar=P["bar"], card=P["card"], bg=P["bg"], ff=tpl.get("ff", ""), top=top, foot=foot[-1], css=_css(P, tid not in _PROTECTED6), trust=trust, buybar=_BUY, brand=pk.get("brand", ""))
         d["shop"] = _shopcss(P)
         json.dump(d, open(os.path.join(out_dir, "prod-" + tid + ".json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print("ok product skins", len(PPAL))

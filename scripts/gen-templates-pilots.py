@@ -103,7 +103,7 @@ hero_free = [
 ]
 hero_free += callout(0, 150, "زجاج سافير", "مضاد للخدش وللانعكاس", 52, 810, 44) + callout(1, 340, "حركة أوتوماتيكية", "احتياطي طاقة 72 ساعة", 4, 810, 44) + callout(2, 530, "مقاومة الماء 100م", "فولاذ 316L وتاج مبرغى", 4, 920, 92)
 hero_free = hero_free[1:] + hero_free[:1]      # كلمة الخلفية الكبيرة (zi=1) آخر القائمة: الترتيب البصري بـzi لا بالموضع، وأول عنوان في القائمة هو عنوان الهيرو الظاهر
-w_hero = canvas(hero_free, dm(780, 1064, 760), BLKW("h") + [spotlight(k, "rgba(201,153,46,.16)")])
+w_hero = canvas(hero_free, dm(780, 830, 760), BLKW("h") + [spotlight(k, "rgba(201,153,46,.16)")])
 
 def _num(num, al="start"):
     return W("heading", text=num, tag="p", fs=dm(120, 80), fw="900", ta={"d": al}, color="transparent", lh={"d": 1}, fxs=[outlinetext(GOLD, 2)], **anim("fadeIn", 1))
@@ -190,7 +190,8 @@ t_hero = S([
        W("tbadges", items="ضمان سنة\nدفع عند الاستلام\nدعم على واتساب", cbg="#ffffff", cc=DARK, cbc="#e2e8f0", crad=dm(999), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .4))], w=50, va="center"),
     C([PIC("it_color", "حاسوب محمول بإضاءة ملوّنة على لوحة المفاتيح", 28, hauto=False, fxs=[ratioframe("1000/1250"), FX("طفو الصورة", "selector{animation:stPf 6s ease-in-out infinite}@keyframes stPf{50%{transform:translateY(-12px)}}"), FX("ظل ناعم", "selector .pb-im{box-shadow:0 40px 60px -20px rgba(37,99,235,.35)}")], **anim("fadeUp", .9, .3))],
       w=50, va="center", pad=dm([26, 26, 26, 26], [14, 14, 14, 14]), fxs=[FX("لوحة تدرّج", "selector{background:linear-gradient(145deg,#e0e7ff,#f5f3ff);border-radius:36px}")]),
-], pad=dm([90, 20, 80, 20], [50, 16, 50, 16]), gap={"d": 44, "m": 26}, fxs=[gridbg(k, "rgba(37,99,235,.08)", 46), spotlight(k, "rgba(37,99,235,.18)")])
+], pad=dm([90, 20, 80, 20], [50, 16, 50, 16]), gap={"d": 44, "m": 26}, fxs=[gridbg(k, "rgba(37,99,235,.08)", 46), spotlight(k, "rgba(37,99,235,.18)"),
+   FX("الصورة أولاً على الجوال", "@media(max-width:767px){selector .pb-in{flex-direction:column-reverse}}")])      # على الهاتف تظهر صورة Hero داخل الشاشة الأولى ثم النص (بدل أن تقع أسفل خط الطيّ)
 
 def usepill(text, link):
     return C([BTN(text, bg="#ffffff", color=DARK, al="center", link=link, brad={"d": 999}, fxs=[FX("حبّة استعمال", "selector .pb-btn{border:1px solid #cbd5e1;box-shadow:0 6px 18px rgba(15,23,42,.06);transition:transform .3s,box-shadow .3s,background .3s,color .3s}selector .pb-btn:hover{transform:translateY(-4px);background:#2563eb;color:#fff;border-color:#2563eb;box-shadow:0 16px 34px rgba(37,99,235,.35)}")])], w=dm(20, 50), pad=dm([0, 0, 0, 0]))

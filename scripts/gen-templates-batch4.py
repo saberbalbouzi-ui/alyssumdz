@@ -114,18 +114,18 @@ k = "cs"; ICC[0] = "#7c3aed"
 CSBG = lambda s: [aurora(k + s, "#faf5ff", "#c4b5fd99", "#fbcfe899", "#fde68a88", 20)]
 cs_head = S([C([PIC("cosm_pink", "عناية", 999, w=dm(26, 52), al={"d": "center"}, fxs=[ratioframe("1/1"), FX("دائرة بظل بنفسجي", "selector img{border-radius:50%;border:8px solid #fff;box-shadow:0 30px 80px rgba(139,92,246,.3)}")], **anim("zoomIn", .8)),
                 H("يسعدنا سماعك", 48, 30, "#4c1d95", fxs=[gradtext(k, "#7c3aed", "#ec4899", "#f59e0b", 8)], **anim("fadeUp")),
-                T("اختر الطريقة المناسبة لك أو اترك رسالتك في النموذج — نقرؤها بنفسنا.", 18, "#6b5b95", **anim("fadeUp", .7, .1))], w=100, pad=dm([0, 0, 10, 0]))],
+                T("اختر الطريقة المناسبة لك أو اترك رسالتك في النموذج — نقرؤها بنفسنا.", 18, "#554681", **anim("fadeUp", .7, .1))], w=100, pad=dm([0, 0, 10, 0]))],
             pad=dm([80, 20, 20, 20], [48, 16, 10, 16]), fxs=CSBG("h") + [blobs(k, "#c4b5fd", "#fbcfe8", 360, .6)])
 def cs_card(i, ic, t, x, btn, link, bg):
-    return C([IB(ic, t, x, tc="#4c1d95", xc="#6b5b95", isz=36, fxs=[softcard("#ffffffcc", "rgba(139,92,246,.18)", 26, 22), lift(".pb-ib", "rgba(139,92,246,.3)", -8, 5), floaty(k + str(i), ".pb-ibi", 8, 4 + i)], **anim("fadeUp", .7, .1 + i * .12)),
+    return C([IB(ic, t, x, tc="#4c1d95", xc="#554681", isz=36, fxs=[softcard("#ffffffcc", "rgba(139,92,246,.18)", 26, 22), lift(".pb-ib", "rgba(139,92,246,.3)", -8, 5), floaty(k + str(i), ".pb-ibi", 8, 4 + i)], **anim("fadeUp", .7, .1 + i * .12)),
               BTN(btn, bg=bg, al="center", link=link, brad={"d": 999}, bpad={"d": [12, 28, 12, 28]}, fs=dm(16, 15), fxs=[btngrad(bg, "#ec4899", "rgba(139,92,246,.4)", -3), shine(k + "b" + str(i), 4)])], w=dm(33, 100), pad=dm([0, 0, 24, 0]))
 cs_cards = S([cs_card(0, "chat", "دردشة سريعة", "نردّ على واتساب خلال دقائق", "افتح واتساب", WA, "#8b5cf6"), cs_card(1, "phone", "اتصال هاتفي", "كل يوم 9 ص — 9 م", "اتصل: 05XX XX XX XX", PHONE, "#a855f7"), cs_card(2, "mail", "بريد إلكتروني", "للاستفسارات التفصيلية", "اكتب لنا بالبريد", MAIL, "#c026d3")],
              pad=dm([20, 20, 30, 20], [14, 16, 20, 16]), gap={"d": 22}, fxs=CSBG("c"))
 cs_form = contact("اكتب لنا", "نقرأ كل رسالة بأنفسنا — تصلنا مباشرة.", fld4([("موضوع الرسالة", "اختر الموضوع", TOPICS)], message="ما الذي تودّ إخبارنا به؟"), btn="أرسل الآن", consent="أوافق على التواصل معي بخصوص رسالتي",
-                  fbg="#ffffff", fbc="#ffffff", tcol="#4c1d95", lcol="#6b5b95", ibg="#f5f3ff", ibc="#ddd6fe", bbg="#8b5cf6", bcol="#ffffff", frad=dm(34), irad=dm(999), brad=dm(999), bfull=True, fpad=dm([38, 34, 38, 34]),
+                  fbg="#ffffff", fbc="#ffffff", tcol="#4c1d95", lcol="#554681", ibg="#f5f3ff", ibc="#ddd6fe", bbg="#8b5cf6", bcol="#ffffff", frad=dm(34), irad=dm(999), brad=dm(999), bfull=True, fpad=dm([38, 34, 38, 34]),
                   fxs=[FX("ظلّ ناعم", "selector .pb-cf{box-shadow:0 40px 90px rgba(139,92,246,.25),0 8px 24px rgba(139,92,246,.12)}selector .pb-cf textarea{border-radius:22px}"), inputs(k, "139,92,246", bg="#f5f3ff", color="#3b0764"), btngrad("#8b5cf6", "#ec4899", "rgba(139,92,246,.45)", -3, sel=".pb-cf-b"), shine(k, 3.6, sel=".pb-cf-b")], **anim("zoomIn", .9))
 cs_s3 = S([C([cs_form], w=100)], cw={"d": 760}, pad=dm([20, 20, 70, 20], [14, 16, 40, 16]), fxs=CSBG("f"))
-cs_s4 = vsec(faq4(CFAQ, "#4c1d95", "#6b5b95", "#ffffff", "#ddd6fe", 22, title="أسئلة تتكرّر كثيراً", tcol="#4c1d95"), k, CSBG("q"), cw=820)
+cs_s4 = vsec(faq4(CFAQ, "#4c1d95", "#554681", "#ffffff", "#ddd6fe", 22, title="أسئلة تتكرّر كثيراً", tcol="#4c1d95"), k, CSBG("q"), cw=820)
 _pilot_reg("c-soft", "contact", "عام", "اتصال باستيل عائم",
            "باستيل ودود: صورة العناية في دائرة بإطار أبيض، ثلاث بطاقات قنوات بأزرار حبّات تعمل (واتساب/هاتف/بريد)، نموذج دائري الحقول بموافقة بلا حركة دائمة تُربك الكتابة، وأسئلة ناعمة.", [cs_head, cs_cards, cs_s3, cs_s4])
 _pilot_end()
@@ -141,7 +141,7 @@ ct_s1 = S([C([PIC("mkt_open", "متجرنا", 22, w=dm(52, 100), al={"d": "cente
            ct_step(0, "chat", "1 · أرسل رسالتك", "املأ النموذج أو راسلنا على واتساب"), ct_step(1, "headset", "2 · نتّصل بك", "يتواصل معك مستشارنا في أقرب وقت"), ct_step(2, "gift", "3 · نسلّمك الطلب", "توصيل لباب بيتك والدفع عند الاستلام")],
           pad=dm([70, 20, 70, 20], [44, 16, 34, 16]), bg="#ecfdf5", gap={"d": 20}, fxs=[blobs(k, "#6ee7b7", "#a7f3d0", 320, .5)])
 ct_form = contact("أو اترك رسالتك هنا", "نرسلها لك على واتساب برقم طلبك إن وُجد.", fld4([("موضوع الرسالة", "اختر الموضوع", "سؤال عن طلب,سؤال عن منتج,توصيل,أخرى")], order_no=True, message="اكتب سؤالك أو ملاحظتك"), btn="أرسل عبر واتساب", consent="أوافق على التواصل معي عبر واتساب",
-                  fbg="#ffffff14", fbc="#ffffff40", tcol="#ffffff", lcol="#d1fae5", ibg="#ffffff22", ibc="#ffffff55", bbg="#22c55e", bcol="#052e16", frad=dm(26), irad=dm(14), brad=dm(14), bfull=True, fpad=dm([30, 28, 30, 28]),
+                  fbg="#ffffff14", fbc="#ffffff40", tcol="#ffffff", lcol="#ffffff", ibg="#ffffff22", ibc="#ffffff55", bbg="#22c55e", bcol="#052e16", frad=dm(26), irad=dm(14), brad=dm(14), bfull=True, fpad=dm([30, 28, 30, 28]),
                   fxs=[glass("rgba(255,255,255,.1)", "rgba(255,255,255,.3)", 16, 26), inputs(k, "187,247,208", bg="rgba(255,255,255,.14)", color="#ffffff", ph="rgba(255,255,255,.7)"), pulse(k, "34,197,94", 2, sel=".pb-cf-b"), shine(k, 3, sel=".pb-cf-b")], **anim("fadeUp", .8, .1))
 ct_wa = C([T("الطريق الأسرع", 14, "#bbf7d0", "start", fw="800", **anim("fadeDown")),
            W("heading", text="راسلنا الآن على واتساب", tag="h2", fs=dm(40, 28), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.25}, **anim("fadeUp")),

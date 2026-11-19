@@ -1,0 +1,3 @@
+A rc=0 secs=502
+B1 rc=0 secs=391 t1c_s-tech=1 nobb=0
+B2 rc=0 secs=369 t1c_s-tech=1 nobb=0

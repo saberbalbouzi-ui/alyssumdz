@@ -611,7 +611,7 @@ const PB = (() => {
         if (!L.length) return '<div class="pb-ph">أضف فئة من إعدادات العنصر</div>';
         return `<div class="pb-sc">${L.map(x => { const nm = x.label || cats[x.cat] || x.cat; return `<button type="button" class="pb-sci" data-cat="${esc(x.cat)}"${ctx.edit ? "" : ` onclick="window.goToCategory?goToCategory(${esc(JSON.stringify(x.cat))}):(location.href=${esc(JSON.stringify((ctx.base || "") + "index.html#products"))})"`}${x.img ? ` style="background-image:url('${esc(u(x.img))}')"` : ""}><span>${esc(nm)}</span></button>`; }).join("")}</div>`; },
       css: (c, sel, s) => { const o = Math.max(0, Math.min(100, num(s.ovo) ?? 75)) / 100, ov = s.ov || "#0a201a";
-        c.d.push(`${sel} .pb-sc{display:grid;gap:18px;grid-template-columns:repeat(6,1fr)}${sel} .pb-sci{position:relative;aspect-ratio:${s.ratio || "1/1"};overflow:hidden;background:#efe8d8 center/cover no-repeat;border:0;padding:0;cursor:pointer;font:inherit;transition:transform .2s,box-shadow .2s;box-shadow:0 10px 30px rgba(23,63,53,.08)}${sel} .pb-sci:hover{transform:translateY(-5px);box-shadow:0 24px 60px rgba(23,63,53,.16)}${sel} .pb-sci:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,${ov} 0%,transparent 70%);opacity:${o}}${sel} .pb-sci span{position:absolute;inset-inline:0;bottom:0;padding:.9rem .5rem;color:${s.tc || "#fff"};font-weight:900;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.55)}`);
+        c.d.push(`${sel} .pb-sc{display:grid;gap:18px;grid-template-columns:repeat(6,1fr)}${sel} .pb-sci{position:relative;aspect-ratio:${s.ratio || "1/1"};overflow:hidden;background:#efe8d8 center/cover no-repeat;border:0;padding:0;cursor:pointer;font:inherit;transition:transform .2s,box-shadow .2s;box-shadow:0 10px 30px rgba(23,63,53,.08)}${sel} .pb-sci:hover{transform:translateY(-5px);box-shadow:0 24px 60px rgba(23,63,53,.16)}${sel} .pb-sci:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,${ov} 0%,transparent 70%);opacity:${o}}${sel} .pb-sci span{position:absolute;inset-inline:0;bottom:0;padding:1.5rem .5rem .9rem;color:${s.tc || "#fff"};font-weight:900;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.55);background:linear-gradient(0deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.55) 58%,rgba(0,0,0,0) 100%)}`);
         emit(c, sel + " .pb-sc", s, [["cols", v => `grid-template-columns:repeat(${num(v) || 6},1fr);`], ["gap", px("gap")]]); emit(c, sel + " .pb-sci", s, [["rad", px("border-radius")]]); emit(c, sel + " .pb-sci span", s, [["fs", px("font-size")]]); },
     },
     herow: {
@@ -1268,7 +1268,7 @@ body.pb-edit .pb-sl-off,body.pb-edit .pb-gx-off{opacity:.28!important;visibility
 .pb-cd{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.pb-cdb{padding:12px 16px;text-align:center;min-width:76px}.pb-cdb b{display:block;font-weight:900;line-height:1.1}.pb-cdb small{font-size:.75rem;opacity:.85}
 .pb-ts{padding:22px;box-shadow:0 6px 24px rgba(0,0,0,.07);height:100%}.pb-tss{color:#e0a800;letter-spacing:2px;margin-bottom:.4rem}.pb-ts p{margin:0 0 .8rem;line-height:1.8}.pb-tsw{display:flex;gap:.7rem;align-items:center}.pb-tsw img{width:46px;height:46px;border-radius:50%;object-fit:cover}.pb-tsw small{display:block;color:#777}
 .pb-gal{display:grid}
-.pb-pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.pb-pc{background:#fff;border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.07);transition:transform .2s}.pb-pc:hover{transform:translateY(-4px)}.pb-pci{position:relative;aspect-ratio:1/1;background:#f4efe6}.pb-pci img{width:100%;height:100%;object-fit:cover}.pb-pcd{position:absolute;top:10px;right:10px;background:#b83232;color:#fff;font-weight:800;font-size:.8rem;border-radius:999px;padding:.2rem .6rem;z-index:1}.pb-pc h3{margin:.8rem .9rem .3rem;font-size:1.02rem;font-weight:800}.pb-pcp{margin:0 .9rem .6rem}.pb-pcp b{color:#157a55;font-size:1.1rem}.pb-pcp s{color:#777;margin-inline-start:.5rem;font-size:.9rem}.pb-pcb{margin:auto .9rem .9rem;background:#157a55;color:#fff;text-align:center;border-radius:10px;padding:.55rem;font-weight:800}
+.pb-pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.pb-pc{background:#fff;border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column;box-shadow:0 6px 20px rgba(0,0,0,.07);transition:transform .2s}.pb-pc:hover{transform:translateY(-4px)}.pb-pci{position:relative;aspect-ratio:1/1;background:#f4efe6}.pb-pci img{width:100%;height:100%;object-fit:cover}.pb-pcd{position:absolute;top:10px;right:10px;background:#b83232;color:#fff;font-weight:800;font-size:.8rem;border-radius:999px;padding:.2rem .6rem;z-index:1}.pb-pc h3{margin:.8rem .9rem .3rem;font-size:1.02rem;font-weight:800}.pb-pcp{margin:0 .9rem .6rem}.pb-pcp b{color:#157a55;font-size:1.1rem}.pb-pcp s{color:#6b6b6b;margin-inline-start:.5rem;font-size:.9rem}.pb-pcb{margin:auto .9rem .9rem;background:#157a55;color:#fff;text-align:center;border-radius:10px;padding:.55rem;font-weight:800}
 @supports not (width:1cqw){.pb-sec.pb-scaled>.pb-in{--u:1px!important}}
 .pb-w{position:relative}.pb-free{overflow:visible}.pb-fz{position:absolute;inset:0;pointer-events:none}.pb-fz>.pb-w{pointer-events:auto}
 .pb-fit.pb-free,.pb-fit.pb-sz{overflow:hidden}.pb-sz.pb-fit>*{max-height:100%}
@@ -1337,6 +1337,22 @@ function rst(){clearInterval(o.t);if(o.ms>0)o.t=setInterval(function(){if(!docum
   const TZ_HEAD = "<script>(function(){try{var d=document,s=d.createElement('span');s.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;left:-9999px;top:0;font:100px Arial,sans-serif';s.textContent='mmmmmmmmmm';d.documentElement.appendChild(s);var w=s.getBoundingClientRect().width;d.documentElement.removeChild(s);var c=d.createElement('canvas').getContext('2d');c.font='100px Arial,sans-serif';var cw=c.measureText('mmmmmmmmmm').width;var f=cw>0?w/cw:1;if(f>1.08&&f<2.6){var h=d.documentElement;h.style.setProperty('--tz',(1/f).toFixed(4));h.className+=' pb-tz'}}catch(e){}})()<\/script>";
   const RUNTIME_JS = `(function(){
 var $=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+/* تباين ذكي (WCAG): نص أقل من 4.5:1 (3:1 للكبير) فوق خلفية مسطّحة أو متدرّجة يُقرَّب من الأسود/الأبيض بأقل تغيير يحقق الحدّ؛ النص فوق الصور لا يُمسّ (يُعالَج بطبقة التعتيم) */
+(function(){if(window.PB_NO_SMART_CONTRAST)return;
+function lum(c){var f=function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2])}
+function rat(a,b){var x=lum(a),y=lum(b),h=Math.max(x,y),l=Math.min(x,y);return (h+.05)/(l+.05)}
+function pc(s){var m=/rgba?[(]([^)]+)[)]/.exec(s);if(!m)return null;var a=m[1].split(',').map(parseFloat);return [a[0],a[1],a[2],a.length>3?a[3]:1]}
+function stops(s){var o=[],re=/rgba?[(][^)]+[)]/g,m,c;while((m=re.exec(s))){c=pc(m[0]);if(c&&c[3]>=.9)o.push(c)}return o}
+function mix(a,b,t){return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)]}
+function bgs(el){var lay=[],n=el,cs,bc,i,base;for(;n&&n.nodeType===1;n=n.parentElement){cs=getComputedStyle(n);if(cs.backgroundImage&&cs.backgroundImage.indexOf('url(')>=0)return null;if(cs.backgroundImage&&cs.backgroundImage.indexOf('gradient')>=0){var st=stops(cs.backgroundImage);if(st.length)return st}bc=pc(cs.backgroundColor);if(bc&&bc[3]>0){if(bc[3]>=.95){base=bc;break}lay.push(bc)}}base=base||[255,255,255,1];for(i=lay.length-1;i>=0;i--){base=[base[0]+(lay[i][0]-base[0])*lay[i][3],base[1]+(lay[i][1]-base[1])*lay[i][3],base[2]+(lay[i][2]-base[2])*lay[i][3],1]}return [base]}
+function fix(el){var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.display==='none')return;var fill=cs.webkitTextFillColor;if(/rgba[(]0, 0, 0, 0[)]|transparent/.test(fill||''))return;if(parseFloat(cs.webkitTextStrokeWidth)>=1)return;var fg=pc(cs.color);if(!fg||fg[3]<.3)return;var B=bgs(el);if(!B)return;var fs=parseFloat(cs.fontSize),fw=parseInt(cs.fontWeight)||400,need=((fs>=24||(fs>=18.66&&fw>=700))?3:4.5)*1.04;
+ var worst=function(c){var m=99,i,bg,ee;for(i=0;i<B.length;i++){bg=B[i];ee=[c[0]*(c[3]===undefined?1:c[3])+bg[0]*(1-(c[3]===undefined?1:c[3])),c[1]*(c[3]===undefined?1:c[3])+bg[1]*(1-(c[3]===undefined?1:c[3])),c[2]*(c[3]===undefined?1:c[3])+bg[2]*(1-(c[3]===undefined?1:c[3]))];m=Math.min(m,rat(ee,bg))}return m};
+ if(worst(fg)>=need)return;
+ var ob=pc(cs.backgroundColor);if(ob&&ob[3]>=.95&&(!cs.backgroundImage||cs.backgroundImage==='none')){var tb=lum(fg)>.5?[0,0,0]:[255,255,255],q,cb;for(q=.04;q<=.55;q+=.04){cb=mix(ob,tb,q);if(rat(fg,cb)>=need){el.style.setProperty('background-color','rgb('+cb[0]+','+cb[1]+','+cb[2]+')','important');el.setAttribute('data-sc','b');return}}}
+ var avg=0,i;for(i=0;i<B.length;i++)avg+=lum(B[i]);avg/=B.length;var tg=avg>.4?[0,0,0]:[255,255,255],t,c,best=null;for(t=.05;t<=1.001;t+=.05){c=mix(fg,tg,t);c[3]=1;if(worst(c)>=need){best=c;break}}if(!best){var w=worst([255,255,255,1]),k=worst([0,0,0,1]);best=w>=k?[255,255,255,1]:[0,0,0,1]}
+ var v='rgb('+best[0]+','+best[1]+','+best[2]+')';el.style.setProperty('color',v,'important');if(fill&&fill!==cs.color)el.style.setProperty('-webkit-text-fill-color',v,'important');el.setAttribute('data-sc','1')}
+function run(){try{var all=document.body.querySelectorAll('*'),i,el,k,own;for(i=0;i<all.length;i++){el=all[i];if(/^(SCRIPT|STYLE|NOSCRIPT|SVG|PATH|IMG|VIDEO|IFRAME|OPTION|SELECT|INPUT|TEXTAREA)$/i.test(el.tagName))continue;own=false;for(k=el.firstChild;k;k=k.nextSibling){if(k.nodeType===3&&k.textContent.trim().length>1){own=true;break}}if(own)fix(el)}}catch(e){}}
+if(document.readyState==='complete')setTimeout(run,60);else window.addEventListener('load',function(){setTimeout(run,60)});setTimeout(run,1500)})();
 $('.pb-tp[data-rot],.pb-tp[data-hide],.pb-tp[data-close]').forEach(function(b){var k=b.getAttribute('data-close'),gone=0;var sc=b.closest('.pb-sec');function hid(a){if(a){b.style.maxHeight=b.offsetHeight+'px';void b.offsetHeight}b.classList.add('pb-tp-h');if(sc){sc.style.transition='min-height .35s,height .35s';sc.style.minHeight='0';sc.style.height='0';sc.style.overflow='hidden'}}try{if(k&&localStorage.getItem(k)){b.style.maxHeight='0px';b.classList.add('pb-tp-h');gone=1}}catch(e){}var x=b.querySelector('.pb-tp-x');if(x)x.onclick=function(e){e.preventDefault();e.stopPropagation();gone=1;try{localStorage.setItem(k,'1')}catch(_){}hid(1)};var r=+b.getAttribute('data-rot')||0;if(r>0){var it=[].slice.call(b.querySelectorAll('.pb-tp-i')),i=0;if(it.length>1)setInterval(function(){it[i].classList.remove('on');i=(i+1)%it.length;it[i].classList.add('on')},r*1000)}if(b.hasAttribute('data-hide')&&!gone){var hs=0;addEventListener('scroll',function(){var y=window.pageYOffset||document.documentElement.scrollTop||0;if(gone)return;if(y>80&&!hs){hs=1;hid(1)}else if(y<20&&hs){hs=0;b.classList.remove('pb-tp-h');b.style.maxHeight='';if(sc){sc.style.minHeight='';sc.style.height='';sc.style.overflow=''}}},{passive:true})}});
 $('.pb-hd[data-tr]').forEach(function(h){var sc=h.closest('.pb-sec');if(sc)sc.style.zIndex=60;var p=+h.getAttribute('data-trp');if(isNaN(p))p=30;function f(){h.classList.toggle('pb-sc',(window.pageYOffset||document.documentElement.scrollTop||0)>p)}f();addEventListener('scroll',f,{passive:true})});
 if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('pb-in-view');io.unobserve(e.target);var c=e.target.querySelector('[data-count]');if(c&&!c.dataset.done){c.dataset.done=1;var to=+c.dataset.count,t0=performance.now();(function f(t){var p=Math.min(1,(t-t0)/1200);c.textContent=Math.round(to*p).toLocaleString('fr-FR');if(p<1)requestAnimationFrame(f)})(t0)}}})},{threshold:.15});$('.pb-ct,.pb-bl[data-ia]').forEach(function(n){io.observe(n)});
@@ -11545,7 +11561,58 @@ const PBConvert = (() => {
       const cols = k.map(c => { const w = [], leaf = /^(IMG|PICTURE|H[1-6]|P|UL|OL|A|BUTTON|DETAILS|FORM|VIDEO|IFRAME)$/.test(c.tagName) || !hasBlock(c); if (leaf) widgetsOf(c, w); else kids(c).forEach(x => widgetsOf(x, w)); return { w, set: leaf ? {} : Object.assign(boxSet(c, "col"), { ta: { d: ta(c) } }) }; }).filter(x => x.w.length);
       return cols.length >= 2 ? cols : null;
     }
+    const secSet = (el, inner, hint) => {
+      const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
+      if (b2) set.bg = b2;
+      const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
+      { const iw = Math.round(inner.getBoundingClientRect().width); if (iw > 300 && iw < 1500 && iw < (doc.documentElement.clientWidth || 1280) - 8) set.cw = { d: iw }; }
+      { const bx = boxSet(el, "section"); ["bw", "bs", "bc", "rad", "shadow", "grad1", "grad2", "gradAng"].forEach(k => { if (bx[k] != null) set[k] = bx[k]; }); }
+      return set;
+    };
+    /* صفحة المنتج الأصلية (p/_template) أقسام هبوط من بطاقات lp-*: تُحوَّل إلى عناصر مطوّر أصلية (عنوان/نص/صورة/صندوق أيقونة/قائمة/زر) بدل كتل HTML مغلقة؛
+       الصور الافتراضية (placeholder) لا تُنشأ كعناصر فلا تظهر مربعات رمادية فارغة، وقسم آراء بلا لقطات حقيقية يُحذف */
+    const PH = u => !u || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(u);
+    const realImg = c => [...c.querySelectorAll("img")].find(i => !PH(i.currentSrc || i.src));
+    const wOf = (el, ws) => { widgetsOf(el, ws); return ws; };
+    const lpCard = card => {
+      const ws = [], im = realImg(card), h = card.querySelector("h3,h2,h4"), p = card.querySelector("p"), ic = card.querySelector(".ic,.lp-stepnum"), fc = ic && fileEl(card), fic = fc && fc.querySelector(".ic,.lp-stepnum"), icon = ic ? (txt(ic) || (fic ? txt(fic) : "") || "ic:check-circle") : "";      // الأيقونة في الصفحة المرسومة SVG بلا نص: الرمز الأصلي من ملف الصفحة
+      if (im) ws.push(mkW("image", { src: rel(im.currentSrc || im.src), alt: im.alt || "", fit: "cover" }));
+      if (icon && h) { const set = { icon, title: txt(h), text: p ? txt(p) : "", al: { d: ta(card) === "start" ? "center" : ta(card) }, isz: { d: 40 } }; const tc = colorOf(h), xc = p && colorOf(p); if (tc) set.tc = tc; if (xc) set.xc = xc; ws.push(mkW("iconbox", set)); }
+      else { if (h) wOf(h, ws); if (p) wOf(p, ws); }
+      if (!ws.length) return null;
+      return mkCol(ws, Object.assign(boxSet(card, "col"), { ta: { d: ta(card) } }));
+    };
+    function lpSecs(el) {
+      const ct = el.querySelector(":scope > .container") || el, base = () => secSet(el, ct), out = [], first = () => !out.length;
+      if (el.querySelector(".reviews-screenshots") && ![...el.querySelectorAll(".reviews-screenshots img")].some(i => !PH(i.currentSrc || i.src))) return [];      // آراء بلا لقطات حقيقية: لا قسم
+      const mk = (cols, top) => { const set = base(); if (!first() && top != null) set.pad = { d: [top, 20, set.pad.d[2], 20], m: [Math.round(top * .6), 16, set.pad.m[2], 16] }; out.push(mkS(cols, set)); };
+      kids(ct).forEach(c => {
+        if (c.matches(".lp-head")) { const ws = wOf(c, []); if (ws.length) mk([mkCol(ws)]); }
+        else if (c.matches(".lp-cards")) {
+          const cards = kids(c).filter(x => x.matches(".lp-card")), n = Math.max(1, Math.min(4, (cs(c).gridTemplateColumns || "").split(" ").filter(Boolean).length || 3));
+          for (let i = 0; i < cards.length; i += n) { const cols = cards.slice(i, i + n).map(lpCard).filter(Boolean); if (cols.length) mk(cols, i ? 10 : 18); }
+        } else if (c.matches(".lp-grid")) {
+          const cols = kids(c).map(x => {
+            if (x.matches(".lp-imgcard")) { const im = realImg(x); return im ? mkCol([mkW("image", { src: rel(im.currentSrc || im.src), alt: im.alt || "", fit: "cover" })], boxSet(x, "col")) : null; }
+            const ws = []; const h = x.querySelector("h2,h3"), p = x.querySelector(":scope > p"), bl = [...x.querySelectorAll(".lp-bullets > div")].map(txt).filter(Boolean);
+            if (h) wOf(h, ws); if (p) wOf(p, ws); if (bl.length) ws.push(mkW("bullets", { items: bl.join("\n"), mk: "check", fs: { d: px(x.querySelector(".lp-bullets > div"), 17) } }));
+            return ws.length ? mkCol(ws, Object.assign(boxSet(x, "col"), { ta: { d: ta(x) } })) : null;
+          }).filter(Boolean);
+          if (cols.length) mk(cols, 18);
+        } else if (c.matches(".reviews-screenshots")) {
+          const ims = [...c.querySelectorAll("img")].filter(i => !PH(i.currentSrc || i.src));
+          for (let i = 0; i < ims.length; i += 3) mk(ims.slice(i, i + 3).map(im => mkCol([mkW("image", { src: rel(im.currentSrc || im.src), alt: im.alt || "", fit: "cover" })])), i ? 10 : 18);
+        } else { const ws = wOf(c, []); if (ws.length) mk([mkCol(ws)]); }
+      });
+      return out;
+    }
     function sectionOf(el, hint) {
+      if (o.kind === "product" && el.matches(".lp-sec")) return lpSecs(el);
+      if (o.kind === "product" && el.querySelector(":scope > .container > .lp-final")) {      // خاتمة «اطلب الآن»: قسم بصندوق متدرّج بعناصر أصلية، وما بعدها (قد يعجبك أيضاً) أقسام منفصلة
+        const ct = el.querySelector(":scope > .container"), ks = kids(ct), gi = ks.findIndex(k => k.matches(".lp-final")), fin = ks[gi], mk = list => { const w = []; list.forEach(c => widgetsOf(c, w)); return w.length ? mkS([mkCol(w)], secSet(el, ct)) : null; };
+        const fw = []; kids(fin).forEach(x => widgetsOf(x, fw));
+        return [mk(ks.slice(0, gi)), mkS([mkCol(fw, Object.assign(boxSet(fin, "col"), { ta: { d: ta(fin) } }))], secSet(el, ct)), mk(ks.slice(gi + 1))].filter(Boolean);
+      }
       let inner = el, safe = 0;
       while (safe++ < 4) { const k = kids(inner); if (k.length === 1 && !/^(IMG|H[1-6]|P|UL|OL|FORM)$/.test(k[0].tagName) && !isOrder(k[0])) inner = k[0]; else break; }
       let cols = columnsOf(inner); let cs_;
@@ -11554,12 +11621,7 @@ const PBConvert = (() => {
         const secsOut = [mk(ks.slice(0, gi)), mkS(found.map(x => mkCol(x.w, x.set)), {}), mk(ks.slice(gi + 1))].filter(Boolean);
         const bg0 = hex(cs(el).backgroundColor); if (bg0) secsOut.forEach(x => { x.set.bg = bg0; }); return secsOut; } }
       if (cols) cs_ = cols.map(x => mkCol(x.w, x.set)); else { const w = []; if (hasBlock(inner)) kids(inner).forEach(x => widgetsOf(x, w)); else widgetsOf(inner, w); if (!w.length) return null; cs_ = [mkCol(w, inner !== el ? boxSet(inner, "col") : {})]; }
-      const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
-      if (b2) set.bg = b2;
-      const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
-      { const iw = Math.round(inner.getBoundingClientRect().width); if (iw > 300 && iw < 1500 && iw < (doc.documentElement.clientWidth || 1280) - 8) set.cw = { d: iw }; }
-      { const bx = boxSet(el, "section"); ["bw", "bs", "bc", "rad", "shadow", "grad1", "grad2", "gradAng"].forEach(k => { if (bx[k] != null) set[k] = bx[k]; }); }
-      return mkS(cs_, set);
+      return mkS(cs_, secSet(el, inner, hint));
     }
     const root = doc.querySelector("main") || doc.body, secs = [];
     const rawSec = (c, idx) => { let el = c.id ? fdoc.getElementById(c.id) : null; if (!el) { const m = fdoc.querySelector("main"); el = m && m.children[idx]; } if (!el) return null; const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = "main"; return sec; };
@@ -11569,11 +11631,24 @@ const PBConvert = (() => {
     top.forEach(c => {
       if (skip(c)) return;
       if (o.kind === "home" && c.matches(".hero")) { const hs = heroSec(c); if (hs) { flush(); secs.push(hs); return; } }
-      if (rawKeep(c) || (o.kind === "home" && c.matches(".hero,[class*=hero]"))) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
+      if ((rawKeep(c) && !(o.kind === "product" && c.querySelector(":scope > .container > .lp-final"))) || (o.kind === "home" && c.matches(".hero,[class*=hero]"))) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
       if (c.matches("section,.container") || hex(cs(c).backgroundColor) || /gradient/.test(cs(c).backgroundImage) || c.matches(".hero,[class*=hero]")) { flush(); const s = sectionOf(c); if (s) secs.push(...[].concat(s)); } else loose.push(c);
     });
     flush();
     if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug, raw: rawOrder })])], {}));
+    /* صفحة منتج بروح صفحة هبوط: زر طلب واضح في الـHero (يقود إلى نموذج الطلب) وقسم «أسئلة شائعة» أصلي (accordion) قبل خاتمة الطلب إن لم يوجد */
+    if (o.kind === "product") {
+      const hasType = (sc, t) => (sc.cols || []).some(c => (c.widgets || []).some(w => w.type === t));
+      const hi = secs.findIndex(sc => hasType(sc, "poffers"));
+      if (hi >= 0) { const col = secs[hi].cols.find(c => (c.widgets || []).some(w => w.type === "poffers")), pi = col.widgets.findIndex(w => w.type === "poffers"); if (!col.widgets.some(w => w.type === "button" && /order-form/.test(w.set.link || ""))) col.widgets.splice(pi + 1, 0, mkW("button", { text: "اطلب الآن — الدفع عند الاستلام", kind: "link", link: "#order-form", fs: { d: 19, m: 17 }, fw: "800", brad: { d: 14 }, w: { d: 100 } })); }
+      if (!secs.some(sc => JSON.stringify(sc).indexOf('"type":"accordion"') >= 0)) {
+        const faq = mkS([mkCol([mkW("heading", { text: "أسئلة شائعة", tag: "h2", fs: { d: 34, m: 26 }, fw: "800", ta: { d: "center" } }), mkW("accordion", { first: true, items: [
+          { q: "هل الدفع عند الاستلام؟", a: "نعم، لا نطلب أي دفع مسبق: تدفع عند استلام طلبك وبعد معاينته." }, { q: "كم تستغرق مدة التوصيل؟", a: "يصلك الطلب عادةً خلال أيام قليلة بحسب ولايتك، وتجد رسوم التوصيل في نموذج الطلب قبل التأكيد." },
+          { q: "كيف أؤكد طلبي؟", a: "املأ نموذج الطلب وسنتصل بك لتأكيده، أو راسلنا مباشرة عبر واتساب." }, { q: "هل يمكن استبدال المنتج أو إرجاعه؟", a: "نعم وفق شروط الاستبدال المعلنة في المتجر، تواصل معنا خلال المدة المحددة." }, { q: "هل المنتج أصلي؟", a: "نعم، نفحص كل طلب قبل الشحن ونضمن جودة ما نبيعه." }] })])], { cw: { d: 900 }, pad: { d: [40, 20, 40, 20], m: [26, 16, 26, 16] } });
+        const fi = secs.findIndex(sc => (sc.cols || []).some(c => (c.widgets || []).some(w => w.type === "button" && /order-form/.test(w.set.link || "") && !(c.widgets || []).some(x => x.type === "poffers"))));
+        secs.splice(fi >= 0 ? fi : secs.length, 0, faq);
+      }
+    }
     secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; delete w._r; })));
     { const ft = doc.querySelector("footer.site"); if (ft) { try { secs._foot = footSec(ft); } catch (e) { } } }
     { const tb = doc.querySelector(".topbar"), hd = doc.querySelector("header.site"); try { if (tb) secs._bar = barSec(tb); } catch (e) { } try { if (hd) secs._head = headSec(hd); } catch (e) { } }
