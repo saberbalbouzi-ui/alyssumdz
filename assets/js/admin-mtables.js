@@ -24,6 +24,8 @@
       bar.addEventListener("scroll", sync(bar, w)); w.addEventListener("scroll", sync(w, bar));
     }
     if (bar.nextElementSibling !== w) w.parentNode.insertBefore(bar, w);
+    /* الشريط يتبع أي تغيّر في مقاسي الجدول والحاوية (إظهار التبويب بعد إخفائه، تحميل الخط، إضافة أعمدة): كان لا يُحسب إلا عند تغيّر العناصر فيبقى بعرض قديم ويتوقف السحب عند حدٍّ مبكر */
+    if (!bar._ro && window.ResizeObserver) { bar._ro = new ResizeObserver(() => { try { hscroll(); } catch (e) { } }); bar._ro.observe(w); bar._ro.observe(t); }
     const need = !!t.querySelector("th") && w.scrollWidth > w.clientWidth + 2;
     bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = w.scrollWidth + "px";
   }
@@ -36,6 +38,7 @@
       bar.addEventListener("scroll", sync(bar, t)); t.addEventListener("scroll", sync(t, bar));
       t.parentNode.insertBefore(bar, t);
     }
+    if (!bar._ro && window.ResizeObserver) { bar._ro = new ResizeObserver(() => { try { tbar(t); } catch (e) { } }); bar._ro.observe(t); }
     const need = MQ.matches && t.scrollWidth > t.clientWidth + 2;
     bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = t.scrollWidth + "px";
   }

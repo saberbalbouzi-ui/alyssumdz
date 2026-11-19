@@ -17,6 +17,11 @@ const { chromium } = require("playwright");
     const tb = h.querySelector("table"); tb.id = "orders-table"; const prev = document.getElementById("orders-table"); if (prev && prev !== tb) prev.id = "orders-table-old";
     await new Promise(r => setTimeout(r, 1200)); const w = tb.parentElement, bar = w.previousElementSibling; return { dup: !!(bar && bar.classList.contains("hs-bar")), m: tb.classList.contains("m-scroll") };
   });
+  const HV = await p.evaluate(async () => {
+    const h = document.createElement("div"); h.innerHTML = '<div style="overflow:auto;display:none"><table style="min-width:600px"><thead><tr><th>أ</th><th>ب</th><th>ج</th><th>د</th><th>هـ</th></tr></thead><tbody><tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr></tbody></table></div>'; document.getElementById("app").appendChild(h);
+    await new Promise(r => setTimeout(r, 900)); const w = h.querySelector("table").parentElement; w.style.display = "block"; await new Promise(r => setTimeout(r, 900)); const bar = w.previousElementSibling; return { bar: !!(bar && bar.classList.contains("hs-bar") && bar.classList.contains("on")), inner: bar && bar.firstChild && bar.firstChild.style.width, sw: w.scrollWidth };
+  });
+  t("الشريط العلوي يتبع إظهار الحاوية بعد إخفائها (كان يبقى بعرض قديم فيتوقف السحب)", HV.bar && parseInt(HV.inner) === HV.sw, HV);
   t("جدول الطلبات داخل .rtw: لا شريط مكرَّر على الحاوية (يتولاه شريط الطلبات)", OT.dup === false, OT);
   t("الجدول داخل حاوية التمرير لا يصير m-scroll", R.m === false, R);
   t("الشريط العلوي على الحاوية ويبلغ آخر عمود", R.bar && R.range > 0 && R.end, R);

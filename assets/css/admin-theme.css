@@ -468,3 +468,6 @@ html.white #pm .pm-btn:not(.pm-primary) small{color:#475569!important;text-shado
 html.white #ord-prev-b .kv td,html.white #ord-prev-b .kv td *:not(.o-src):not(.bl-tg):not(a):not(button){color:#000!important}
 html.white #ord-prev-b .kv td[style*="8a8f8c" i]{color:#000!important}
 html.white #ord-prev-b h3,html.white .modal #ord-prev-t,html.white #ord-prev-b>b{color:#000!important}
+
+/* جدول الطلبات على الهاتف: قوائم الصف (نتيجة الاتصال/تحويل) أضيق فتبقى مساحة فارغة بينها يُسحب منها الجدول يميناً ويساراً بسهولة */
+@media (max-width:700px){#orders-table td select{max-width:112px!important;min-width:0!important;font-size:.82rem!important}}
