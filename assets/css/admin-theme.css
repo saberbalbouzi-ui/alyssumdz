@@ -471,3 +471,7 @@ html.white #ord-prev-b h3,html.white .modal #ord-prev-t,html.white #ord-prev-b>b
 
 /* جدول الطلبات على الهاتف: قوائم الصف (نتيجة الاتصال/تحويل) أضيق فتبقى مساحة فارغة بينها يُسحب منها الجدول يميناً ويساراً بسهولة */
 @media (max-width:700px){#orders-table td select{max-width:112px!important;min-width:0!important;font-size:.82rem!important}}
+
+/* المظهر الفاتح: النص الملوَّن بالنعناعي/الليموني الفاتح (مثل صف «الأرخص» في مقارنة الشركات) يُقرأ بأخضر داكن واضح */
+html.white [style*="color:var(--g-mint" i],html.white [style*="color: var(--g-mint" i]{color:#166534!important}
+html.white [style*="color:var(--g-ok" i],html.white [style*="color: var(--g-ok" i]{color:#166534!important}
