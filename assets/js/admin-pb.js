@@ -11584,7 +11584,6 @@ const PBConvert = (() => {
     };
     function lpSecs(el) {
       const ct = el.querySelector(":scope > .container") || el, base = () => secSet(el, ct), out = [], first = () => !out.length;
-      if (el.querySelector(".reviews-screenshots") && ![...el.querySelectorAll(".reviews-screenshots img")].some(i => !PH(i.currentSrc || i.src))) return [];      // آراء بلا لقطات حقيقية: لا قسم
       const mk = (cols, top) => { const set = base(); if (!first() && top != null) set.pad = { d: [top, 20, set.pad.d[2], 20], m: [Math.round(top * .6), 16, set.pad.m[2], 16] }; out.push(mkS(cols, set)); };
       kids(ct).forEach(c => {
         if (c.matches(".lp-head")) { const ws = wOf(c, []); if (ws.length) mk([mkCol(ws)]); }
@@ -11600,7 +11599,7 @@ const PBConvert = (() => {
           }).filter(Boolean);
           if (cols.length) mk(cols, 18);
         } else if (c.matches(".reviews-screenshots")) {
-          const ims = [...c.querySelectorAll("img")].filter(i => !PH(i.currentSrc || i.src));
+          const all = [...c.querySelectorAll("img")], real = all.filter(i => !PH(i.currentSrc || i.src)), ims = real.length ? real : all.slice(0, 3);      // آراء: اللقطات الحقيقية إن وُجدت، وإلا ثلاث صور افتراضية تدلّ التاجر أين يضع آراء زبائنه (تُستبدل بالرفع أو تُحذف)
           for (let i = 0; i < ims.length; i += 3) mk(ims.slice(i, i + 3).map(im => mkCol([mkW("image", { src: rel(im.currentSrc || im.src), alt: im.alt || "", fit: "cover" })])), i ? 10 : 18);
         } else { const ws = wOf(c, []); if (ws.length) mk([mkCol(ws)]); }
       });
