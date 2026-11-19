@@ -13,7 +13,7 @@ const AdminPreSend = (() => {
     try { const pc = a.priceCheck ? a.priceCheck(o) : { ok: true }; if (!pc.ok) w.push("تدقيق السعر: " + (pc.msgs || []).join("، ")); } catch (e) { }
     try { const af = a.addrFix ? a.addrFix(o) : null; if (af && !af.applied) w.push("عنوان معدَّل لم يُطبَّق"); } catch (e) { }
     if (o.dtype === "stop" && !o.desk) w.push("لا مكتب Stop Desk محدَّد");
-    try { const cf = (a.deliveryCfg && a.deliveryCfg.wecan) || {}; if (k === "wecan" && /wecanservices|guepex/i.test(String((o.extra && o.extra["🚚 الناقل"]) || "")) && !String(cf.carrierUuid || "").trim()) w.push("ناقل WeCanServices: لا يصل عبر اللوحة، أنشئه في لوحة WeCan"); } catch (e) { }
+    try { const cf = (a.deliveryCfg && a.deliveryCfg.wecan) || {}; if (k === "wecan" && /wecanservices|guepex/i.test(String((o.extra && o.extra["🚚 الناقل"]) || "")) && !String(cf.carrierUuid || "").trim()) w.push("ناقل WeCanServices: يصل بلا ناقل، حدّده يدوياً في لوحة WeCan"); } catch (e) { }
     let items = o.items; try { items = a.bordItems ? a.bordItems(o.items) : o.items; } catch (e) { }
     const lines = String(items || "").split(/\n/).map(x => x.replace(/\s*=\s*[\d\s.,]+\s*DA\s*$/i, "").trim()).filter(Boolean);
     return { k, coName: (cos[k] && cos[k].name) || k || "—", other: !!(k && def && k !== def), warn: w, lines, dest: [o.wilaya, o.commune].filter(Boolean).join(" / ") + (o.dtype === "stop" ? " — مكتب" + (o.desk ? ": " + o.desk : "") : " — منزل") };
