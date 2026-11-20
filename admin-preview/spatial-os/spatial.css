@@ -409,3 +409,12 @@ a.hbtn,a.hbtn:visited,a.hbtn:hover{color:#eafcff;text-decoration:none;display:in
 /* لا تظهر «الرئيسية» قبل التبويب المطلوب: غطاء التحميل معتم والإطار مخفي حتى يظهر التبويب فعلاً (data-frame=ready) */
 .fr-load{background:linear-gradient(180deg,rgb(4,14,22),rgb(3,10,17))!important}
 .panel.framed:not([data-frame="ready"]):not(.fr-show) .pn-frame{visibility:hidden}
+
+/* الشريط العلوي تحت الألواح: لا يغطي عناوينها (الألواح z-index 5) */
+.hud{z-index:4}
+
+/* جدران الخلفية: موضع ودوران مضبوطان بقياس فعلي (29 بطاقة كاملة داخل الإطار تحت الشريط العلوي على 1366×768 حتى 1920×1080) */
+html body .wall.l{transform:translate3d(-440px,-50px,-330px) rotateY(46deg)}
+html body .wall.r{transform:translate3d(440px,-50px,-330px) rotateY(-46deg)}
+html body .wall.bl{transform:translate3d(-380px,0,-930px) rotateY(12deg)}
+html body .wall.br{transform:translate3d(380px,0,-930px) rotateY(-12deg)}
