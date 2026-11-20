@@ -46,6 +46,7 @@ def _leak_scan(root_dir, slugs):
                 for m in re.finditer(b, t, re.I):
                     hits.append((str(f.relative_to(root_dir)), b, t[max(0, m.start() - 30):m.end() + 30].replace("\n", " ")))
     return hits
+REMOTE_SKIP = {"manifest-admin.webmanifest"}   # v1.89.1208 أدرجته في shared-files.json دون القائمة البيضاء للمحدِّث ← رفض forbidden_path لأي تحديث عن بُعد
 if a.update:
     if a.target != "php": sys.exit("--update يتطلب --target php")
     import subprocess, tempfile
@@ -59,6 +60,7 @@ if a.update:
         if rel.endswith("/**"): exp += sorted(str(f.relative_to(ROOT)) for f in (ROOT / rel[:-3]).rglob("*") if f.is_file())
         else: exp.append(rel)
     exp = [r for r in exp if not r.startswith("scripts/")]      # سكربتات البناء تخص مستودع GitHub لا استضافة PHP (والمحدِّث يرفضها)
+    if a.remote: exp = [r for r in exp if r not in REMOTE_SKIP]   # ملفات لا يقبلها محدِّث المواقع القائمة (قائمته البيضاء أقدم من الإصدار الذي أضافها): تُشحن بالتثبيت الأول فقط
     is_owner, owner_ids = _owner_only()
     TEXT = {".html", ".js", ".json", ".md", ".css", ".sql", ".sh", ".py", ".webmanifest", ".txt", ".svg"}
     for rel in exp:

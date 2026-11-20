@@ -55,6 +55,7 @@ jobs:
           php scripts/test-ship-php.php
           php scripts/test-gateway.php
           php scripts/test-roles-php.php
+          php scripts/test-update-allow.php
           php scripts/test-webhook-php.php
       - uses: actions/setup-node@v4
         with: { node-version: '22' }
