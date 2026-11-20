@@ -173,6 +173,51 @@
   function resize() { const dpr = Math.min(devicePixelRatio || 1, TIERS[tier] ? TIERS[tier].dpr : 1), want = Math.min(TIERS[tier] ? TIERS[tier].cap : 420, Math.max(220, Math.round(BASE * dpr * Math.min(1.8, presenceScale())))); if (cv.width !== want) { cv.width = cv.height = want; } bufW = want; }
   function setTier(t, why) { if (!TIERS[t] && t !== "static") return; if (t === tier) return; trace("tier", { from: tier, to: t, why }); tier = t; st.tier = t; if (gl && TIERS[t]) { /* إعادة بناء الهندسة بحجم أصغر */ geo = build(TIERS[t]); geo.shells.forEach(s => s.b = vbo(s.data)); geo.radial.b = vbo(geo.radial.data); geo.arcs.b = vbo(geo.arcs.data); geo.nodes.b = vbo(geo.nodes.data); geo.part.b = vbo(geo.part.data); geo.crystal.forEach(c => c.b = vbo(c.data)); geo.rings.b = vbo(geo.rings.data); geo.wave.b = vbo(geo.wave.data, true); geo.quad = vbo(new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1])); } if (t === "static" && gl) { /* التحويل إلى 2D يحتاج لوحة جديدة */ } resize(); }
   const ease = (a, b, k) => a + (b - a) * k;
+  /* ───── أعصاب كهربائية متفرعة تخرج من النواة (طبقة 2D فوق المشهد) ─────
+     تتولّد مع الكلام بحسب مستوى الصوت (حقيقي من محلّل الصوت أو من حدود كلمات النطق)، وحين لا يُطلق صوت المتصفح حدود الكلمات
+     يُستعمل إيقاع زمني خفيف احتياطاً (محاكاة توقيت لا قياس صوت)؛ تهدأ في الاستماع (تتبع الميكروفون)، تزحف في التفكير، وتنفجر عند النجاح/الخطأ. */
+  const bc = document.createElement("canvas"); bc.id = "core-bolts"; bc.setAttribute("aria-hidden", "true"); document.body.appendChild(bc); const bg = bc.getContext("2d");
+  let bolts = [], bDpr = 1, bAcc = 0, bPrevAl = 0, bSynth = 0;
+  const bRnd = (a, b) => a + Math.random() * (b - a);
+  const BCOL = { speaking: [[110, 235, 255], [190, 150, 255]], listening: [[60, 245, 170], [150, 255, 200]], thinking: [[170, 130, 255], [90, 220, 255]], executing: [[90, 220, 255], [200, 255, 90]], success: [[226, 254, 23], [60, 245, 170]], error: [[255, 96, 130], [255, 170, 190]] };
+  function boltsFit() { bDpr = Math.min(devicePixelRatio || 1, 1.5); const w = Math.round(innerWidth * bDpr), h = Math.round(innerHeight * bDpr); if (bc.width !== w) bc.width = w; if (bc.height !== h) bc.height = h; }
+  boltsFit(); addEventListener("resize", boltsFit);
+  function boltPath(x, y, ang, len, depth, out) {
+    const step = Math.max(7, len / 10), n = Math.max(3, Math.round(len / step)), pts = [[x, y]]; let cx = x, cy = y, a = ang;
+    for (let i = 0; i < n; i++) {
+      a += bRnd(-.6, .6); cx += Math.cos(a) * step; cy += Math.sin(a) * step; pts.push([cx, cy]);
+      if (depth < 3 && i > 0 && Math.random() < .36 - depth * .08) boltPath(cx, cy, a + (Math.random() < .5 ? -1 : 1) * bRnd(.45, 1.05), len * (1 - i / n) * bRnd(.5, .85), depth + 1, out);
+    }
+    out.push({ pts, w: Math.max(.7, 2.8 - depth * .8) });
+  }
+  const boltMax = () => (tier === "static" ? 0 : tier === "low" ? 7 : (mobile() || tier === "mid") ? 14 : 30);
+  function boltSpawn(kind, power, n) {
+    if (RM || bolts.length >= boltMax()) return; const r = wrap.getBoundingClientRect(); if (!r.width) return; const cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * .2, cols = BCOL[kind] || BCOL.speaking;
+    for (let i = 0; i < (n || 1) && bolts.length < boltMax(); i++) { const ang = bRnd(0, 6.2832), segs = []; boltPath(cx + Math.cos(ang) * R * .8, cy + Math.sin(ang) * R * .8, ang, R * bRnd(2.2, 4.4) * (.7 + power), 0, segs); bolts.push({ segs, born: performance.now(), life: kind === "thinking" ? bRnd(520, 900) : bRnd(240, 520), col: cols[Math.random() < .86 ? 0 : 1], fl: Math.random() }); }
+  }
+  function boltsBurst(n, kind) { boltSpawn(kind, .9, n); }
+  function boltsUpdate(t, dt) {
+    if (RM || tier === "static") { if (bolts.length) { bolts = []; bg.clearRect(0, 0, bc.width, bc.height); } return; }
+    const vis = st.visual, speaking = V.voice === "speaking", listening = V.voice === "listening"; let al = lvl;
+    if (speaking && al < .06) { bSynth = ease(bSynth, .42 + .26 * Math.sin(t / 95) + .16 * Math.sin(t / 41 + 1.3), .3); al = Math.max(al, Math.max(0, bSynth)); }
+    let rate = 0, kind = "speaking", power = al;
+    if (speaking) { rate = 3 + al * 22; kind = "speaking"; if (al - bPrevAl > .2) boltSpawn("speaking", al, 2 + Math.floor(al * 4)); }
+    else if (listening) { rate = .5 + al * 6; kind = "listening"; power = Math.min(.8, al + .15); }
+    else if (vis === "thinking" || vis === "executing") { rate = 2.4; kind = vis; power = .55; }
+    bPrevAl = al; bAcc += rate * dt / 1000; while (bAcc >= 1) { bAcc -= 1; boltSpawn(kind, power, 1); }
+    bg.clearRect(0, 0, bc.width, bc.height); if (!bolts.length) return;
+    bg.save(); bg.scale(bDpr, bDpr); bg.globalCompositeOperation = "lighter"; bg.lineCap = "round"; bg.lineJoin = "round";
+    const now = performance.now(); bolts = bolts.filter(b => now - b.born < b.life);
+    for (const b of bolts) {
+      const age = now - b.born, g = Math.min(1, age / 110), fade = Math.pow(1 - age / b.life, 1.4) * (.75 + .25 * Math.sin(age * .06 + b.fl * 9)), [r, gC, bl] = b.col;
+      for (const sg of b.segs) {
+        const m = Math.max(2, Math.floor(sg.pts.length * g)); bg.beginPath(); bg.moveTo(sg.pts[0][0], sg.pts[0][1]); for (let i = 1; i < m; i++) bg.lineTo(sg.pts[i][0], sg.pts[i][1]);
+        bg.strokeStyle = "rgba(" + r + "," + gC + "," + bl + "," + (fade * .7).toFixed(3) + ")"; bg.lineWidth = sg.w * 4.2; bg.shadowColor = "rgba(" + r + "," + gC + "," + bl + ",1)"; bg.shadowBlur = 22; bg.stroke();
+        bg.shadowBlur = 0; bg.strokeStyle = "rgba(235,255,255," + (fade * .95).toFixed(3) + ")"; bg.lineWidth = sg.w * .9; bg.stroke();
+      }
+    }
+    bg.restore();
+  }
   function loop(t) {
     requestAnimationFrame(loop); if (!running || document.hidden) return;
     const T = TIERS[tier] || { fps: 24 }, fpsCap = RM ? 8 : T.fps, minDt = 1000 / fpsCap; if (t - lastFrame < minDt - 2) return; const dt = Math.min(100, t - lastFrame || 16); lastFrame = t; frameN++; st.frames++;
@@ -190,6 +235,7 @@
     if (shockT0) { const p = (t - shockT0) / 1700; if (p >= 1) { shockT0 = 0; shockP = -1; boost = 1; } else { shockP = p; boost = 1 + .55 * Math.pow(1 - p, 2); } }
     if (errT0) { const p = (t - errT0) / 1500; if (p >= 1) { errT0 = 0; errP = -1; } else errP = p; }
     if (gl) { if (gl.isContextLost()) return; drawGL(t, dt); } else if (ctx2) draw2D(t);
+    boltsUpdate(t, dt);
     if (sampleReq) doSample();
   }
   let sampleReq = null; const benchPx = new Uint8Array(4);
@@ -197,7 +243,7 @@
 
   function setVisual(name, why) {
     if (!S[name]) return; if (st.visual === name && tgtName === name) return; const prev = st.visual; st.visual = name; tgtName = name; tgt = S[name]; trace("state", { to: name, from: prev, why });
-    if (name === "success" && prev !== "success") { shockT0 = performance.now(); st.shocks++; st.lastShock = Date.now(); }
+    if (name === "success" && prev !== "success") { shockT0 = performance.now(); st.shocks++; st.lastShock = Date.now(); } if (name === "success" && prev !== "success") boltsBurst(14, "success"); if (name === "error" && prev !== "error") boltsBurst(7, "error");
     if (name === "error" && prev !== "error") { errT0 = performance.now(); st.errPulses++; st.lastErr = Date.now(); }
     wrap.dataset.state = name; document.body.dataset.core3d = name; recompute();
   }

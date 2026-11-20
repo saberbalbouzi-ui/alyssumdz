@@ -21,7 +21,6 @@ const IC = {
   store: '<path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/>',
   inv: '<path d="M4 7h16v13H4z"/><path d="M2 3h20v4H2z"/><path d="M10 12h4"/>',
   cus: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M17 14.5c2.4.2 4 1.7 4.5 4.5"/>',
-  mkt: '<path d="M3 11v3l12 5V6L3 11z"/><path d="M15 9.5a3.5 3.5 0 010 5"/><path d="M7 15v4"/>',
   ana: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-8"/><path d="M22 20H2"/>',
   look: '<circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="15.5" cy="10" r="1.3"/><path d="M12 21c-1.5 0-2-1.2-1.4-2.3.7-1.2.3-2.7-1.6-2.7"/>',
   ext: '<path d="M10 3H5a2 2 0 00-2 2v5a2 2 0 002 0 2 2 0 014 0 2 2 0 002 0V5a2 2 0 00-1-2z"/><path d="M14 13h5a2 2 0 012 2v5H9v-5a2 2 0 012-2"/>',
@@ -47,8 +46,24 @@ const AI = {
     return "هذه معاينة تجريبية: أجيب عن الطلبات والمخزون والمبيعات. اسألني عن أحدها.";
   },
 };
+/* بطاقات الجدران: أقسام حقيقية أخرى من المنصة (أسماؤها ووصفها كما في قائمة اللوحة)؛ نصوص ثابتة بلا أرقام مختلقة، والنقر يفتح لوح القسم الحقيقي */
+const wallRows = rows => rows.map(([a, b]) => `<div class="row"><div class="grow"><b>${a}</b><small>${b}</small></div></div>`).join("");
+const WALL_SECS = [
+  ["returns", "المرتجعات", "inv", [["الطرود الراجعة", "من شركة التوصيل"], ["حالة كل طرد", "وما تم استلامه"]]],
+  ["profit", "الربح الحقيقي", "ana", [["صافي ما دخل جيبك", "بعد التوصيل والمرتجعات"], ["والبضاعة", "وإعلانات Meta وتيك توك"]]],
+  ["wallet", "المحفظة", "store", [["رصيدك على المنصة", "الضمان والسحب"], ["رصيد الإعلانات", "ودفتر الحركات"]]],
+  ["delivery", "شركات التوصيل", "ord", [["ربط الحسابات", "لشركات التوصيل"], ["مفاتيح API", "لكل شركة"]]],
+  ["pack", "تجهيز الطلبات", "prod", [["قائمة الجمع", "للطلبات المؤكدة"], ["وصل التجهيز", "لأمين المخزن"]]],
+  ["shipped", "الطلبات المسجلة", "ord", [["الطلبات المرسلة", "لشركة التوصيل"], ["وحالتها الحقيقية", "عند الشركة"]]],
+  ["callcenter", "مركز الاتصال", "cus", [["طلب واحد بالدور", "وأزرار كبيرة"], ["تأكيد · لم يُجب", "لاحقاً · رقم خاطئ · إلغاء"]]],
+  ["categories", "التصنيفات", "prod", [["تصنيفات المتجر", "التي تظهر في الصفحة الرئيسية"]]],
+  ["builder", "الصفحات", "look", [["صفحات الهبوط", "والصفحة الرئيسية"], ["صفحات المنتجات", "إنشاء وتعديل ونشر"]]],
+  ["seo", "SEO", "ana", [["عناوين وأوصاف", "المنتجات"], ["بيانات المشاركة", "وnoindex"]]],
+  ["payments", "المدفوعات", "store", [["حالة الدفع اليدوية", "مدفوع · غير مدفوع · مسترد"], ["المبالغ المعلّقة", "لكل طلب"]]],
+  ["blog", "المدوّنة والسياسات", "look", [["مقالات وصفحات", "للمتجر"], ["الخصوصية والاسترجاع", "والشحن والشروط"]]]
+].map(([id, name, ic, rows]) => ({ id, name, icon: IC[ic], w: 400, h: 300, hidden: true, wall: true, html: () => wallRows(rows) }));
 const SEC = [
-  { id: "dash", name: "لوحة التحكم", icon: IC.dash, w: 460, h: 380,
+  { id: "dash", name: "الرئيسية", icon: IC.dash, w: 460, h: 380,
     html: p => `<div class="kpis">${kpi("الإيراد", dz(revenue()) + " دج")}${kpi("بانتظار التأكيد", pend())}${kpi("التحويل", "2.9%")}${p.big ? kpi("متوسط الطلب", "2 750") : ""}</div>${chart(D.sales7)}<div class="hint">آخر 7 أيام · بيانات تجريبية</div>${p.big ? h4("آخر الطلبات") + D.orders.slice(0, 5).map(o => `<div class="row"><div class="grow"><b>#${o.id} · ${o.n}</b><small>${o.wi} · ${o.pr}</small></div><b>${dz(o.t)} دج</b><span class="st ${ST[o.s][1]}">${ST[o.s][0]}</span></div>`).join("") : ""}` },
   { id: "prod", name: "المنتجات", icon: IC.prod, w: 460, h: 360,
     html: p => p.big ? `<div class="grid3 big">${D.stock.map(s => `<div class="pcard"><img src="img/${s.img}.webp" alt=""><b>${s.n}</b><small>${dz(s.pc)} دج · ${s.q} قطعة</small><div class="bar"><i style="width:${Math.min(100, s.q / s.m * 100)}%"></i></div><small>بيع ${s.w} هذا الأسبوع</small></div>`).join("")}</div>${h4("الأكثر مبيعاً")}${D.stock.slice().sort((a, b) => b.w - a.w).map(s => `<div class="row"><div class="grow"><b>${s.n}</b></div><b>${s.w}</b></div>`).join("")}` : `<div class="grid3">${D.stock.map(s => `<div class="pcard"><img src="img/${s.img}.webp" alt=""><b>${s.n}</b><small>${s.q} قطعة</small></div>`).join("")}</div>` },
@@ -67,8 +82,6 @@ const SEC = [
     bind(r, p, rf) { r.onclick = e => { const b = e.target.closest("[data-re]"); if (b) { const s = D.stock.find(x => x.n === b.dataset.re); s.q += 30; D.moves.unshift(["الآن", "دخول", s.n, 30]); toast("طُلبت 30 قطعة: " + s.n); rf(true); } }; } },
   { id: "cus", name: "العملاء", icon: IC.cus, w: 420, h: 340,
     html: () => D.orders.slice(0, 6).map(o => `<div class="row"><div class="grow"><b>${o.n}</b><small>آخر طلب #${o.id}</small></div><b>${dz(o.t)} دج</b></div>`).join("") },
-  { id: "mkt", name: "التسويق", icon: IC.mkt, w: 420, h: 330,
-    html: () => ["حملة عسل التركيز · 4.8% نقر", "كود SAHA10 · 23 استعمال", "رسائل ما بعد الشراء · نشطة"].map((t, i) => `<div class="row"><div class="grow"><b>${t}</b><div class="bar"><i style="width:${[78, 46, 90][i]}%"></i></div></div></div>`).join("") },
   { id: "ana", name: "التحليلات", icon: IC.ana, w: 480, h: 420,
     html: p => `<div class="chips"><button type="button" class="chip${D.range === 7 ? " on" : ""}" data-r="7">7 أيام</button><button type="button" class="chip${D.range === 30 ? " on" : ""}" data-r="30">30 يوماً</button></div>${chart(D.range === 7 ? D.sales7 : D.sales30)}<div class="kpis" style="margin-top:10px">${kpi("الزيارات", "1 085")}${kpi("التحويل", "2.9%")}${kpi("متوسط الطلب", "2 750")}</div>${p.big ? h4("قمع التحويل") + [["الزيارات", 1085, 100], ["مشاهدة المنتج", 629, 58], ["إضافة للسلة", 174, 16], ["بدء الدفع", 81, 7.5], ["طلبات مؤكَّدة", 32, 2.9]].map(([l, v, w]) => `<div class="row"><div class="grow"><b>${l}</b><div class="bar"><i style="width:${w}%"></i></div></div><b>${dz(v)}</b></div>`).join("") : ""}<div class="heat">${Array.from({ length: p.big ? 84 : 48 }, (_, i) => { const v = (Math.sin(i * 1.7) + Math.cos(i * .9) + 2) / 4; return `<i style="--hc:${v > .7 ? "#dcff1f" : v > .45 ? "#2be4ff" : v > .25 ? "rgba(165,139,255,.8)" : "rgba(255,255,255,.12)"}"></i>`; }).join("")}</div>`,
     bind(r, p, rf) { r.onclick = e => { const b = e.target.closest("[data-r]"); if (b) { D.range = +b.dataset.r; rf(true); } }; } },
@@ -90,5 +103,5 @@ const SEC = [
       r.onkeydown = e => { if (e.key === "Enter" && e.target.id === "ai-in") send(e.target.value); };
     } },
   { id: "help", name: "دليل المساعدة", icon: IC.ai, w: 430, h: 470, hidden: true, html: () => '<div class="empty">دليل المساعدة متاح في الوضع الحقيقي فقط.</div>' },
-];
+].concat(WALL_SECS);
 function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2500); }

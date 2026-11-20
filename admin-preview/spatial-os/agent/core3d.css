@@ -18,3 +18,5 @@ body.core3d-on .core:focus-visible{outline:2px dashed rgba(220,255,31,.85);outli
 @keyframes agLit{50%{box-shadow:0 0 0 2px rgba(43,228,255,.9),0 0 70px rgba(43,228,255,.6),inset 0 0 50px rgba(43,228,255,.18)}}
 @media (prefers-reduced-motion:reduce){.core3d{transition:none}.panel.agent-lit .face{animation:none}}
 @media (max-width:820px){.core3d{width:220px;height:220px;margin:-110px 0 0 -110px}.core3d.p-expanded{--cs3:1.9;--cz:200px}}
+
+#core-bolts{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:3}

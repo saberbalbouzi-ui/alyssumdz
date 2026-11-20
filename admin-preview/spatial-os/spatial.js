@@ -40,9 +40,10 @@
   const hall = document.createElement("div"); hall.className = "hall"; room.appendChild(hall);
   [[-880, -50, -380], [880, -50, -380], [-100, -120, -1100], [100, -120, -1100]].forEach(([x, y, z]) => { const p = document.createElement("i"); p.className = "pillar"; p.style.transform = `translate3d(${x}px,${y}px,${z}px)`; room.appendChild(p); });
   [[0, -345, -840, 1500, 0], [-640, -330, -330, 600, 50], [640, -330, -330, 600, -50]].forEach(([x, y, z, w, ry]) => { const s = document.createElement("i"); s.className = "strip"; s.style.width = w + "px"; s.style.marginLeft = (-w / 2) + "px"; s.style.transform = `translate3d(${x}px,${y}px,${z}px) rotateY(${ry}deg)`; room.appendChild(s); });
-  const WL = ["dash", "ana", "ord", "prod", "inv", "cus", "mkt", "store", "ana2", "ord2", "look", "ext"], WR = ["store2", "mkt2", "ana3", "look2", "ext2", "set", "dash2", "inv2", "cus2", "prod2", "ord3", "set2"], BL = ["ana4", "dash3", "ord4", "inv3", "prod3", "mkt3", "cus3", "store3", "ext3"], BR = ["dash4", "ana5", "ord5", "prod4", "inv4", "set3", "look3", "mkt4", "cus4"];
+  /* بطاقات الجدران: كل قسم مرة واحدة فقط (بلا تكرار)، موزَّعة بالتناوب على الجدران الأربعة */
+  const WALLS = { l: [], r: [], bl: [], br: [] }; SEC.filter(s => !s.hidden || s.wall).forEach((s, i) => WALLS[["l", "r", "bl", "br"][i % 4]].push(s.id));
   function sidewall(cls, ids) { const w = document.createElement("div"); w.className = "wall " + cls; ids.forEach(id => { const real = id.replace(/\d+$/, ""), sec = SEC.find(s => s.id === real), d = document.createElement("div"); d.className = "wcard"; d.dataset.id = real; d.dataset.card = id; d.innerHTML = '<div class="wh">' + svg(sec.icon) + "<b>" + sec.name + '</b></div><div class="wbw"><div class="wb"></div></div>'; d.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(real); }); w.appendChild(d); }); room.appendChild(w); }
-  sidewall("l", WL.slice(0, 9)); sidewall("r", WR.slice(0, 9)); sidewall("bl", BL); sidewall("br", BR);
+  sidewall("l", WALLS.l); sidewall("r", WALLS.r); sidewall("bl", WALLS.bl); sidewall("br", WALLS.br);
   const tabSpec = [["الإيراد", () => dz(revenue()) + " دج"], ["بانتظار التأكيد", () => pend()], ["التحويل", () => "2.9%"], ["الزيارات", () => "1 085"], ["مخزون منخفض", () => D.stock.filter(s => s.q < 10).length], ["متوسط الطلب", () => "2 750"], ["الطلبات", () => D.orders.length], ["مؤكَّدة", () => D.orders.filter(o => o.s === "ok").length], ["في الطريق", () => D.orders.filter(o => o.s === "ship").length], ["مسلَّمة", () => D.orders.filter(o => o.s === "done").length], ["الأصناف", () => D.stock.length]];
   [[-520, 330, -18], [-330, 380, 12], [450, 340, 20], [300, 400, -10], [-60, 430, 4], [600, 160, 40], [-640, 150, -35], [-720, 300, 22], [700, 300, -24], [130, 470, -8], [-190, 470, 10]].forEach(([x, z, r], i) => { const d = document.createElement("i"); d.className = "tab"; d.style.setProperty("--x", x + "px"); d.style.setProperty("--z", z + "px"); d.style.setProperty("--r", r + "deg"); d.dataset.k = i; room.appendChild(d); });
   function fillWalls() {
@@ -70,15 +71,20 @@
      عند التشغيل من متجر حقيقي (نسخة PHP محلية فيها admin.html وapi) تصير ألواح الطلبات/المنتجات/التحليلات/المخزون/المساعد إطاراً (iframe) يحمّل admin.html الحقيقي نفسه
      (نفس الأصل: لا تعديل على ملف إنتاج) فتعمل منطق الأعمال والصلاحيات وواجهة الـAPI كما هي. وإلا (خادم ملفات عادي) تبقى بيانات العرض التجريبية. */
   let REAL = false, APIREAL = false;
+  /* زاوية 0: يلغي ميلان كل الألواح (X/Y/Z) بحركة سلسة لتواجه الشاشة؛ عرض فقط (الزوايا المخزّنة تبقى فتعود عند الإيقاف)، ويُحفظ اختيار المستخدم */
+  let FLAT = false, flatK = 0; try { FLAT = localStorage.getItem("sc_flat") === "1"; flatK = FLAT ? 1 : 0; } catch (_) { }
   const FRAME = { ord: { tab: "orders", w: 660, h: 580 }, prod: { tab: "products", w: 660, h: 560 }, ana: { tab: "analytics", w: 640, h: 540 }, inv: { tab: "inventory", w: 640, h: 540 }, help: { tab: "ask", w: 480, h: 560 },
     /* المظهر الهولوغرافي: بقية أقسام الأسطوانة أيضاً لوحات حقيقية؛ nav = يبقى تنقّل اللوحة ظاهراً داخل الإطار فيصل المستخدم إلى كل الأقسام والإعدادات */
-    dash: { tab: "home", w: 680, h: 580, nav: 1 }, store: { tab: "store", w: 680, h: 580, nav: 1 }, cus: { tab: "customers", w: 660, h: 560, nav: 1 }, mkt: { tab: "coupons", w: 660, h: 560, nav: 1 }, look: { tab: "theme", w: 680, h: 580, nav: 1 }, ext: { tab: "appstore", w: 660, h: 560, nav: 1 }, set: { tab: "setup", w: 680, h: 580, nav: 1 } };
+    dash: { tab: "home", w: 680, h: 580, nav: 1 }, store: { tab: "store", w: 680, h: 580, nav: 1 }, cus: { tab: "customers", w: 660, h: 560, nav: 1 }, look: { tab: "theme", w: 680, h: 580, nav: 1 }, ext: { tab: "appstore", w: 660, h: 560, nav: 1 }, set: { tab: "setup", w: 680, h: 580, nav: 1 },
+    /* أقسام بطاقات الجدران: لوح حقيقي بلا تنقّل داخلي */
+    returns: { tab: "returns", w: 640, h: 540 }, profit: { tab: "profit", w: 640, h: 540 }, wallet: { tab: "wallet", w: 640, h: 540 }, delivery: { tab: "delivery", w: 640, h: 540 }, pack: { tab: "pack", w: 640, h: 540 }, shipped: { tab: "shipped", w: 660, h: 560 }, callcenter: { tab: "callcenter", w: 600, h: 540 }, categories: { tab: "categories", w: 640, h: 540 }, builder: { tab: "builder", w: 680, h: 560 }, seo: { tab: "seo", w: 640, h: 540 }, payments: { tab: "payments", w: 640, h: 540 }, blog: { tab: "blog", w: 640, h: 540 } };
   /* تدوير الاسطوانة لتقديم عقدة قسم إلى مقدمة المشهد (أقصر دوران) */
   function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step - yaw; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
   function frame(t) {
     const rdt = Math.min(250, t - (frame.t || t)), dt = Math.min(50, rdt); frame.t = t; const ek = 1 - Math.exp(-rdt / 150); spinK += (spinT - spinK) * (1 - Math.exp(-rdt / 400)); /* سرعة الدوران التلقائي (يبطئها الوكيل أثناء الصوت) */ /* تسهيل مبني على الزمن الحقيقي (مستقل عن معدل الإطارات) */
     if (tw) { ang += (tw.to - ang) * ek; if (Math.abs(tw.to - ang) < .15) { ang = tw.to; tw = null; } } else if (!drag) { const f = rdt / 16.7; ang += va * f; va *= Math.pow(.94, f); if (!RM && !objSel && Math.abs(va) < .02 && t - lastInput > 2500) ang += rdt * .004 * spinK; }
     const dA = ang - pprev; pprev = ang;
+    { const ft = FLAT ? 1 : 0; if (flatK !== ft) { flatK += (ft - flatK) * Math.min(1, ek * 1.6); if (Math.abs(ft - flatK) < .004) flatK = ft; open.forEach(p => apply(p)); } }
     if (orbitMode) { if (pt) { pa += (pt.to - pa) * ek; if (Math.abs(pt.to - pa) < .15) { pa = pt.to; pt = null; } } else if (!layer.querySelector(".panel:hover") && !draggingPanel) pa += dA + (RM || objSel ? 0 : rdt * .006 * spinK); orbitFrame(t, ek); }
     if (((frame.n = (frame.n || 0) + 1) & 1) === 0) open.forEach(p => { if (p.origin && !p.min && t - p.born < 900) { const r = p.el.getBoundingClientRect(); FX.stream(p.origin.x, p.origin.y, r.left + r.width / 2, r.top + r.height / 2, 3); } });
     const a = ang % 360; cyl.style.transform = `rotateY(${a}deg)`; cylIn.style.transform = `rotateY(${-a * 1.6}deg)`;
@@ -114,7 +120,7 @@
   const step = d => { const i = secs.findIndex(s => s.id === sel), j = i < 0 ? 0 : (i + d + secs.length) % secs.length; select(secs[j].id); };
   document.addEventListener("keydown", e => { const k = String(e.key || ""), tg = e.target || {}, inPanel = tg.closest && tg.closest(".panel");
     if (/INPUT|TEXTAREA/.test(tg.tagName || "")) { if (k === "Escape") tg.blur(); return; }
-    if (!e.ctrlKey && !e.metaKey && !e.altKey) { const kl = k.toLowerCase(); if (kl === "w") { clearSel(); return; } if (kl === "o") { toObject(); return; } if (kl === "c") { toCylinder(); return; } if (kl === "a") { tileAll(); return; } if (kl === "f") { toFocus(); return; } if (objSel && modeOf() === "object" && TOOLS[kl]) { setTool(TOOLS[kl]); return; } }
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) { const kl = k.toLowerCase(); if (kl === "w") { clearSel(); return; } if (kl === "o") { toObject(); return; } if (kl === "c") { toCylinder(); return; } if (kl === "a") { tileAll(); return; } if (kl === "l") { setFlat(!FLAT); return; } if (kl === "f") { toFocus(); return; } if (objSel && modeOf() === "object" && TOOLS[kl]) { setTool(TOOLS[kl]); return; } }
     if (k === "Escape" && (focused || objSel)) { const bp = objSel && open.get(objSel), fp = bp && bp.big ? bp : open.get(focused); if (fp && fp.big) toggleBig(fp); else if (fp) dismiss(fp.id, "close"); return; } if (inPanel) return;
     if (k === "[") setYaw(yaw - 10); else if (k === "]") setYaw(yaw + 10); else if (k === "0") setYaw(0); else if (k === "ArrowRight") { e.preventDefault(); step(1); } else if (k === "ArrowLeft") { e.preventDefault(); step(-1); }
     else if ((k === "Enter" || k === " ") && sel && !/BUTTON/.test(tg.tagName || "")) { e.preventDefault(); openSection(sel); } });
@@ -125,7 +131,7 @@
   function remember(p, pose) { if (p.frame) snapFrame(p); const q = pose || p.st; memo[p.id] = { pos: p.frame ? { x: q.x, y: q.y, z: q.z, rx: q.rx, ry: q.ry, rz: q.rz || 0, s: q.s } : null, content: JSON.parse(JSON.stringify(p.content || {})), size: { w: p.big && p.prev ? p.prev.w : p.st.w, h: p.big && p.prev ? p.prev.h : p.st.h } }; }
   const fz = p => 1 - 0; /* موضع للتوسّع المستقبلي */
   function persp(tz) { return PERSP / (PERSP - tz); }
-  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0) + (p.lift || 0), hx = (p.bk ? p.bk.x : 0) + (p.hold ? p.hold.x : 0), hy = (p.bk ? p.bk.y : 0) + (p.hold ? p.hold.y : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${(s.rx + hx).toFixed(1)}deg) rotateY(${(s.ry + hy).toFixed(1)}deg) rotateZ(${(s.rz || 0).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--gx", ((s.ry + hy) * 1.5).toFixed(1) + "%"); p.el.style.setProperty("--zp", clamp((s.z - ZMIN) / (ZMAX - ZMIN), 0, 1).toFixed(3)); p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
+  function apply(p) { const s = p.st, tz = s.z + (p.id === focused ? 40 : 0) + (p.lift || 0), hx = (p.bk ? p.bk.x : 0) + (p.hold ? p.hold.x : 0), hy = (p.bk ? p.bk.y : 0) + (p.hold ? p.hold.y : 0); p.el.style.transform = `translate3d(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px,${tz}px) rotateX(${((s.rx + hx) * (1 - flatK)).toFixed(1)}deg) rotateY(${((s.ry + hy) * (1 - flatK)).toFixed(1)}deg) rotateZ(${((s.rz || 0) * (1 - flatK)).toFixed(1)}deg) scale(${s.s.toFixed(3)})`; p.el.style.setProperty("--gx", ((s.ry + hy) * (1 - flatK) * 1.5).toFixed(1) + "%"); p.el.style.setProperty("--zp", clamp((s.z - ZMIN) / (ZMAX - ZMIN), 0, 1).toFixed(3)); p.el.style.setProperty("--w", s.w + "px"); p.el.style.setProperty("--h", s.h + "px"); }
   /* تخطيط تلقائي: أماكن لكل عدد من الألواح (كسور من أبعاد الشاشة)؛ [x, y, مقياس, ry, rx, z] */
   const LAY = {
     1: [[.275, -.02, 1, -15, 0, 0]],
@@ -225,6 +231,8 @@
      التركيز: اللوح المحدَّد موسَّع في مركز مساحة العمل، مثبَّت حتى نقرتين/Esc. */
   const TOOLS = { m: "move", r: "rot", z: "depth", t: "roll" }, TOOL_NAME = { move: "تحريك", rot: "تدوير", depth: "عمق", roll: "ميل" }, ACT_NAME = { move: "يتحرك", rot: "يدور", depth: "يتحرك في العمق", roll: "يميل", focus: "مثبّت للتركيز", resize: "يتغيّر حجمه", pinch: "قرص/التواء" };
   function modeOf() { const p = objSel && open.get(objSel); return !p || p.min ? "world" : p.big ? "focus" : "object"; }
+  /* رسالة قصيرة في شريط الوضع (3 ثوانٍ) حين لا يجد الزر ما يعمل عليه، بدل أن يبدو معطّلاً */
+  function hint(msg) { setRead(msg); clearTimeout(hint.t); hint.t = setTimeout(() => setRead(), 3200); }
   function setRead(txt) {
     const r = document.getElementById("mread"); if (!r) return; const m = modeOf(), p = objSel && open.get(objSel), nm = p ? p.sec.name : "";
     r.textContent = txt || (m === "world" ? "العالم — اسحب الخلفية لتدوير البيئة كلها" : m === "object" ? "الكائن · " + nm + " — الأداة: " + TOOL_NAME[tool] : "التركيز · " + nm + " — نقرتان أو Esc للعودة");
@@ -244,8 +252,8 @@
   function clearSel() { if (!objSel) return; objSel = null; syncMode(); }
   function setTool(t) { tool = t; syncMode(); }
   const livePanel = () => { const a = objSel && open.get(objSel); if (a && !a.min) return a; const f = focused && open.get(focused); if (f && !f.min) return f; return [...open.values()].filter(q => !q.min).pop() || null; };
-  function toObject() { const p = livePanel(); if (!p) return; if (p.big) { toggleBig(p); return; } focus(p.id); selectObj(p.id); }
-  function toFocus() { const p = livePanel(); if (!p) return; if (!p.big) { focus(p.id); toggleBig(p); } }
+  function toObject() { const p = livePanel(); if (!p) { hint("لا يوجد لوح مفتوح — اختر قسماً من الأسطوانة أولاً"); return; } if (p.big) { toggleBig(p); return; } focus(p.id); selectObj(p.id); }
+  function toFocus() { const p = livePanel(); if (!p) { hint("لا يوجد لوح مفتوح — اختر قسماً من الأسطوانة أولاً"); return; } if (!p.big) { focus(p.id); toggleBig(p); } }
   /* تغذية بصرية: ما الذي يفعله اللوح الآن (تحريك/تدوير/عمق/ميل/تحجيم) + إمكان الرمي */
   function act(p, a) {
     if (a) p.el.dataset.act = a; else { delete p.el.dataset.act; p.el.classList.remove("can-dismiss"); document.body.classList.remove("throwzone"); }
@@ -297,6 +305,7 @@
   const HOLO_SKIN = "html{--c:59,230,255;--g-mint:#3be6ff!important;--g-mint-rgb:59,230,255!important;--ac:#3be6ff!important;--g-ok:#35f2a5!important;--g-ok-rgb:53,242,165!important;--green:#35f2a5!important;--g-surf:linear-gradient(155deg,rgba(46,120,210,.17),rgba(5,14,32,.62) 72%)!important;--g-smoke:rgba(5,14,32,.7)!important;--lime-hi:rgba(59,230,255,.34)!important;--lime-lo:rgba(138,98,255,.30)!important;--lime-edge:rgba(59,230,255,.7)!important;--lime-ink:#eafcff!important}" +
     "body .card,body .pcard,body .kpi{border:1px solid rgba(59,230,255,.26)!important;box-shadow:inset 0 1px 0 rgba(160,240,255,.14),0 0 0 1px rgba(59,230,255,.05),0 10px 30px rgba(0,0,0,.5),0 0 22px rgba(59,230,255,.06)!important}" +
     "html.glass body .stat div:nth-child(4n+1){--c:59,230,255!important}html.glass body .stat div:nth-child(4n+2){--c:138,98,255!important}html.glass body .stat div:nth-child(4n+3){--c:53,242,165!important}html.glass body .stat div:nth-child(4n+4){--c:255,92,214!important}" +
+    "#upd-btn,#au-btn,#theme-sw,#theme-btn,#cr-top,.cr-pill,#ais-top,button.logout,#app>.top button[onclick*='SitePreview'],#app>.top button[onclick*='Admin.logout']{display:none!important}" +
     "body h1,body h2,body h3{text-shadow:0 0 14px rgba(59,230,255,.18)}body .btn:not(.gray):not(.warn):not(.danger):not(.red),body .small:not(.gray):not(.warn):not(.danger):not(.red){text-shadow:0 0 10px rgba(59,230,255,.45);backdrop-filter:blur(6px)}";
   /* الليموني الحرفي المضمّن (سمات style/stroke/fill التي تولّدها وحدات اللوحة) يُستبدل بالسماوي أولاً بأول داخل الإطار؛ لا يمس ملفات اللوحة ولا بياناتها */
   const LIME_T = /#(?:e2fe17|effe17|dcff1f|cfe60f|91ac10)\b|rgba?\(\s*(?:226\s*,\s*254\s*,\s*23|220\s*,\s*255\s*,\s*31)\b/i;
@@ -306,16 +315,19 @@
   function holoRecolor(d) { if (d.__spRc) return; d.__spRc = 1; const W2 = d.defaultView; if (!W2 || !W2.MutationObserver) return; recolor(d.body); new W2.MutationObserver(ms => { for (const m of ms) { if (m.type === "attributes") recolor(m.target); else for (const x of m.addedNodes) recolor(x); } }).observe(d.body, { subtree: true, childList: true, attributes: true, attributeFilter: RC_ATTR }); }
 
   async function detectReal() { if (/[?&]demo=1/.test(location.search)) return { real: false, api: false }; let api = false; try { const r = await fetch("../../api/index.php?r=me", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }); api = /json/.test(r.headers.get("content-type") || ""); } catch (_) { } return { real: api || /[?&]real=1/.test(location.search), api }; } /* api = واجهة PHP للوكيل التنفيذي متاحة؛ real = ألواح اللوحة الحقيقية (تُفرض بـ?real=1 من إعدادات اللوحة) */
+  /* ◎ للوح الإطار الحقيقي: ألواح الإطار لا تدور في المدار (نقل الإطار يعيد تحميله) فيعيده الزر إلى مكانه وزاويته وحجمه الافتراضية */
+  function homeFrame(p) { if (p.big) toggleBig(p); if (p.home) Object.assign(p.st, p.home); else { if (memo[p.id]) memo[p.id].pos = null; placeFrame(p); } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 700); }
   function placeFrame(p) {
     const m = memo[p.id] && memo[p.id].pos; if (m) { Object.assign(p.st, m); p.st.x = clamp(p.st.x, -(W() / 2 - 80), W() / 2 - 80); p.st.y = clamp(p.st.y, -(H() / 2 - 80), H() / 2 - 80); p.st.s = clamp(p.st.s, .5, 1.9); return; }
     const n = [...open.values()].filter(q => !q.min).length, L = layoutFor(Math.min(6, Math.max(2, n))), c = L.find(x => slotFree(p, x)) || L[(n - 1) % L.length];
     Object.assign(p.st, { x: c.x, y: c.y, z: c.z, rx: c.rx, ry: c.ry, rz: 0, s: Math.min(c.s, 1) });
     if (n === 1 && !isMob()) p.st.x = Math.min(p.st.x, W() / 2 - p.st.w / 2 - 70); /* اللوح الوحيد لا يخرج من حافة الشاشة مع ميلانه */
+    p.home = { x: p.st.x, y: p.st.y, z: p.st.z, rx: p.st.rx, ry: p.st.ry, rz: 0, s: p.st.s }; /* خانته الأصلية لزر ◎ */
   }
   function mountFrame(p) {
     const b = p.body; b.classList.add("fr"); p.el.classList.add("framed");
     b.innerHTML = '<iframe class="pn-frame" title=""></iframe><div class="pn-shield" aria-hidden="true"><span>انقر على اللوح لتفعيله</span></div><div class="fr-load"><i></i><span>جارٍ تحميل لوحة التحكم…</span></div>';
-    const f = b.querySelector("iframe"); f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = true; f.addEventListener("load", () => { if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); f.src = "../../admin.html";
+    const f = b.querySelector("iframe"); f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = true; f.addEventListener("load", () => { if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); f.src = "../../admin.html"; clearTimeout(p._fs); p.el.classList.remove("fr-show"); p._fs = setTimeout(() => p.el.classList.add("fr-show"), 16000); /* كشف احتياطي إن تعذّر ظهور التبويب */
   }
   function hookFrame(p, d) {
     const sc = e => [...e.touches].slice(0, 2).map(t => [t.screenX, t.screenY]);
@@ -391,13 +403,13 @@
         /* اللوحة تنهي تهيئتها بعد ظهورها وقد تعيد التبويب الرئيسي: نثبّت التبويب المطلوب حتى يظهر فعلاً */
         const tgt = d.getElementById("tab-" + p.frame.tab), ahp = d.getElementById("ah-panel"), shown = p.frame.tab === "ask" ? !!(ahp && ahp.classList.contains("on")) : tgt && !tgt.classList.contains("hidden");
         if (!p.frGuard) p.frGuard = Date.now() + 14000; /* اللوحة قد تعود إلى «الرئيسية» عند اكتمال تهيئتها: نُبقي التبويب المطلوب 14ث الأولى ما لم يلمس المستخدم الإطار */
-        if (!shown && !p.frTouched && p.frTry < 40) { p.frTry++; try { if (p.frame.tab === "ask") { const H = w.eval('typeof AdminHelp !== "undefined" ? AdminHelp : null'); if (H && !(ahp && ahp.classList.contains("on"))) H.show(); } else A.tab(p.frame.tab); } catch (_) { } p._fi = setTimeout(tick, 500); return; }
-        if (!p.frDone) { p.frDone = true; setTimeout(() => restoreFrame(p, w, d), 400); if (ld) ld.remove(); p.el.dataset.frame = "ready"; }
-        if (Date.now() < p.frGuard && !p.frTouched) p._fi = setTimeout(tick, 700);
+        if (!shown && !p.frTouched && p.frTry < 220) { p.frTry++; try { if (p.frame.tab === "ask") { const H = w.eval('typeof AdminHelp !== "undefined" ? AdminHelp : null'); if (H && !(ahp && ahp.classList.contains("on"))) H.show(); } else A.tab(p.frame.tab); } catch (_) { } p._fi = setTimeout(tick, 90); return; }
+        if (!p.frDone) { p.frDone = true; setTimeout(() => restoreFrame(p, w, d), 100); if (ld) ld.remove(); p.el.dataset.frame = "ready"; }
+        if (Date.now() < p.frGuard && !p.frTouched) p._fi = setTimeout(tick, 250);
         return;
       }
       if (ld && n > 3) ld.classList.add("login"); /* شاشة الدخول الحقيقية ظاهرة داخل اللوح */
-      if (++n < 900) p._fi = setTimeout(tick, 600);
+      if (++n < 3000) p._fi = setTimeout(tick, 150);
     };
     tick();
   }
@@ -408,12 +420,12 @@
   }
   function toCylinder() { open.forEach(q => { if (q.big) toggleBig(q); }); clearSel(); [...open.values()].filter(q => !q.min).forEach(q => dismiss(q.id, "min")); focused = null; }
   function restoreAll() { [...open.values()].filter(q => q.min).forEach((q, i) => setTimeout(() => openSection(q.id), i * 140)); }
-  document.querySelectorAll("#modebar [data-w]").forEach(b => b.addEventListener("click", () => { const w = b.dataset.w; if (w === "tile") tileAll(); else if (w === "cyl") toCylinder(); else restoreAll(); }));
+  document.querySelectorAll("#modebar [data-w]").forEach(b => b.addEventListener("click", () => { const w = b.dataset.w, nOpen = [...open.values()].filter(q => !q.min).length, nMin = [...open.values()].filter(q => q.min).length; if (w === "tile") { if (!nOpen) hint("لا توجد ألواح مفتوحة لترتيبها"); else tileAll(); } else if (w === "cyl") { if (!nOpen) hint("لا توجد ألواح مفتوحة لتصغيرها"); else toCylinder(); } else { if (!nMin) hint("لا توجد ألواح مصغَّرة لاستعادتها"); else restoreAll(); } }));
   function wire(p) {
     const el = p.el, h = el.querySelector(".pn-h"), rot = el.querySelector(".pn-rot"), rs = el.querySelector(".pn-rs");
     el.addEventListener("pointerdown", () => { if (focused !== p.id) focus(p.id); selectObj(p.id); });
     el.addEventListener("pointerenter", () => { hov++; }); el.addEventListener("pointerleave", () => { hov = Math.max(0, hov - 1); });
-    el.querySelector(".pn-orb").onclick = () => snapOrbit(p, true); el.querySelector(".pn-x").onclick = () => dismiss(p.id, "close"); el.querySelector(".pn-min").onclick = () => dismiss(p.id, "min"); el.querySelector(".pn-max").onclick = () => toggleBig(p);
+    el.querySelector(".pn-orb").onclick = () => { if (snapOrbit(p, true)) return; if (p.frame) homeFrame(p); else arrange(); }; el.querySelector(".pn-x").onclick = () => dismiss(p.id, "close"); el.querySelector(".pn-min").onclick = () => dismiss(p.id, "min"); el.querySelector(".pn-max").onclick = () => toggleBig(p);
     let tapUp = 0, tapX = 0;
     h.addEventListener("pointerdown", e => {
       if (e.target.closest(".pn-min,.pn-max,.pn-x,.pn-orb")) return; e.preventDefault(); const mode = e.target.closest(".pn-rot") ? "rot" : e.target.closest(".pn-dep") ? "depth" : e.shiftKey ? "rot" : e.altKey ? "depth" : (e.ctrlKey || e.metaKey) ? "roll" : tool, now = performance.now();
@@ -449,7 +461,7 @@
     el.addEventListener("keydown", e => { const tg = e.target; if (/INPUT|TEXTAREA/.test(tg.tagName || "") || !(tg === el || (tg.closest && tg.closest(".pn-h")))) return; const k = String(e.key || ""), d = e.shiftKey ? 64 : 26; let used = true;
       if (/^Arrow/.test(k)) { userize(p); cancelGlide(p); if (e.altKey) { p.st.ry = clamp(p.st.ry + (k === "ArrowRight" ? 4 : k === "ArrowLeft" ? -4 : 0), -24, 24); p.st.rx = clamp(p.st.rx + (k === "ArrowUp" ? 3 : k === "ArrowDown" ? -3 : 0), -18, 18); } else { p.st.x += k === "ArrowRight" ? d : k === "ArrowLeft" ? -d : 0; p.st.y += k === "ArrowDown" ? d : k === "ArrowUp" ? -d : 0; } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 300); }
       else if (k === "PageUp" || k === "PageDown") { userize(p); p.st.z = clamp(p.st.z + (k === "PageUp" ? 34 : -34), ZMIN, ZMAX); p.el.classList.add("tr2"); apply(p); badge(p, "عمق " + Math.round(p.st.z)); clearTimeout(p._bt); p._bt = setTimeout(() => { badge(p, ""); p.el.classList.remove("tr2"); }, 700); }
-      else if (k === "Home") { if (!snapOrbit(p, true)) arrange(); }
+      else if (k === "Home") { if (!snapOrbit(p, true)) { if (p.frame) homeFrame(p); else arrange(); } }
       else if (k === "Delete" || k === "Backspace") { p.pre = null; const n = Math.hypot(p.st.x, p.st.y) || 1; throwAway(p, (p.st.x || 1) / n * 1.6, p.st.y / n * 1.6); }
       else used = false; if (used) e.preventDefault(); });
   }
@@ -488,6 +500,8 @@
     if (!moved) { const near = layoutFor(6).find(c => Math.hypot(c.x - p.st.x, c.y - p.st.y) < (isMob() ? 55 : 85) && slotFree(p, c)); if (near) { Object.assign(p.st, { x: near.x, y: near.y }); moved = true; }   /* المغناطيس موضعي فقط: لا يمسّ العمق ولا الإمالة التي ضبطها المستخدم */ }
     p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420);
   }
+  function setFlat(v, keep) { FLAT = !!v; if (!keep) { try { localStorage.setItem("sc_flat", FLAT ? "1" : "0"); } catch (_) { } } const b = $("#hud-flat"); if (b) { b.setAttribute("aria-pressed", String(FLAT)); b.classList.toggle("on", FLAT); b.textContent = FLAT ? "زاوية 0: مفعّلة" : "زاوية 0"; } }
+  { const fb = $("#hud-flat"); if (fb) fb.addEventListener("click", () => setFlat(!FLAT)); setFlat(FLAT, true); }
   core.addEventListener("click", () => openSection("ai")); document.body.classList.toggle("orbit-on", orbitMode);
   function setOrbit(on) { orbitMode = on && !isMob(); document.body.classList.toggle("orbit-on", orbitMode); const bt = $("#hud-orbit"); if (bt) { bt.textContent = orbitMode ? "المدار: يعمل" : "المدار: متوقف"; bt.setAttribute("aria-pressed", orbitMode); }
     if (!orbitMode) { open.forEach(p => { setLayer(p, false); p.el.classList.remove("back"); p.el.style.setProperty("--op", 1); p.el.style.zIndex = ++zc; }); arrange(); } else open.forEach(p => { p.off = null; }); }
@@ -498,6 +512,6 @@
   addEventListener("resize", () => { const kx = W() / vw0, ky = H() / vh0; vw0 = W(); vh0 = H();
     open.forEach(p => { if (p.min) return; if (p.big) { Object.assign(p.st, { w: Math.min(920, W() - 24), h: Math.min(660, H() - 92) }); } else { if (isMob()) { const m = sizeFor(p.sec); p.st.w = m.w; p.st.h = m.h; } if (!orbitMode || p.user) { p.st.x *= kx; p.st.y *= ky; } } apply(p); });
     if (!orbitMode) arrange(); });
-  window.SpatialOS = { setSpin: v => { spinT = clamp(+v || 0, 0, 1); }, get spin() { return spinK; }, get spinTarget() { return spinT; }, stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get real() { return REAL; }, get apiReal() { return APIREAL; }, tileAll, toCylinder, restoreAll, snapFrame, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
-  mbXp = false; syncMode(); detectReal().then(r => { REAL = r.real; APIREAL = r.api; document.body.classList.toggle("real", r.real); setTimeout(() => openSection("ord"), 700); });
+  window.SpatialOS = { setSpin: v => { spinT = clamp(+v || 0, 0, 1); }, get spin() { return spinK; }, get spinTarget() { return spinT; }, stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get real() { return REAL; }, get apiReal() { return APIREAL; }, get flat() { return FLAT; }, get flatK() { return flatK; }, setFlat, tileAll, toCylinder, restoreAll, snapFrame, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
+  mbXp = false; syncMode(); detectReal().then(r => { REAL = r.real; APIREAL = r.api; if (r.real && !r.api) FRAME.ai = { tab: "ask", w: 480, h: 560 }; /* بلا واجهة PHP: النقر على الكرة يفتح «اسألني» الحقيقي (فيه الميكروفون) بدل وكيل لا يعمل */ document.body.classList.toggle("real", r.real); setTimeout(() => openSection("ord"), 700); });
 })();

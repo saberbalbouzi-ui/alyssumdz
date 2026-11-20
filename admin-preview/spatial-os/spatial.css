@@ -397,4 +397,15 @@ body.real .panel[data-real="0"] .pn-h h3::after{content:" · عرض تجريبي
 body.real .note{display:none}
 a.hbtn,a.hbtn:visited,a.hbtn:hover{color:#eafcff;text-decoration:none;display:inline-flex;align-items:center;font-family:inherit}
 .hud-exit-m{display:none}
-@media(max-width:820px){body.real #hud{display:flex!important;position:fixed;top:8px;inset-inline-start:8px;bottom:auto;gap:0;background:none;padding:0}body.real #hud span,body.real #hud #hud-orbit,body.real #hud #hud-reset{display:none}body.real #hud-exit{display:inline-flex;font-size:12px;padding:7px 12px}}
+@media(max-width:820px){body.real #hud{display:flex!important;position:fixed;top:8px;inset-inline-start:8px;bottom:auto;gap:0;background:none;padding:0}body.real #hud span,body.real #hud #hud-orbit,body.real #hud #hud-reset{display:none}body.real #hud-exit,body.real #hud-flat{display:inline-flex;font-size:12px;padding:7px 12px}body.real #hud{gap:6px}}
+
+#hud-flat.on{border-color:rgba(59,230,255,.9);background:rgba(59,230,255,.18);color:#eafcff}
+
+/* الشريط العلوي: المشهد أنزل قليلاً وخلفية زجاجية متلاشية للشريط فلا تتداخل معه بطاقات الخلفية */
+.cam,.room{top:calc(48% + 38px)}
+.hud{top:0;padding:9px 12px 16px;background:linear-gradient(180deg,rgba(2,10,18,.92) 0%,rgba(2,10,18,.78) 62%,rgba(2,10,18,0) 100%);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px)}
+@media(max-width:820px){.cam,.room{top:27%}}
+
+/* لا تظهر «الرئيسية» قبل التبويب المطلوب: غطاء التحميل معتم والإطار مخفي حتى يظهر التبويب فعلاً (data-frame=ready) */
+.fr-load{background:linear-gradient(180deg,rgb(4,14,22),rgb(3,10,17))!important}
+.panel.framed:not([data-frame="ready"]):not(.fr-show) .pn-frame{visibility:hidden}

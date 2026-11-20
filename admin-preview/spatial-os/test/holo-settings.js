@@ -46,7 +46,7 @@ async function php(b) {
     ok("php: داخل لوح اللوحة الحقيقية: داكن وأساسي سماوي ومتغير التدرّج سماوي", sk.glass && sk.mint === "#3be6ff" && sk.c === "59,230,255", sk);
     ok("php: الأزرار الأساسية في اللوح زجاجية سماوية ولا زر ليموني", sk.n > 0 && sk.cyan === sk.n && sk.limeBtns === 0, sk);
     /* كل أقسام الأسطوانة (عدا المساعد) لوحات حقيقية بتبويب اللوحة الحقيقي */
-    const secs = { dash: "home", store: "store", cus: "customers", mkt: "coupons", look: "theme", ext: "appstore", set: "setup", ord: "orders", prod: "products", ana: "analytics", inv: "inventory" };
+    const secs = { dash: "home", store: "store", cus: "customers", look: "theme", ext: "appstore", set: "setup", ord: "orders", prod: "products", ana: "analytics", inv: "inventory" };
     await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 });
     for (const [id, tab] of Object.entries(secs)) {
       if (id !== "ord") await p.evaluate(i => SpatialOS.open(i), id);
@@ -55,6 +55,10 @@ async function php(b) {
       await p.waitForFunction(([i, t]) => { const q = SpatialOS.panels.get(i); try { const e = q.fr.contentWindow.document.getElementById("tab-" + t); return !!e && !e.classList.contains("hidden"); } catch (x) { return false; } }, [id, tab], { timeout: 10000 }).catch(() => { });
       const st = await p.evaluate(([i, t]) => { const q = SpatialOS.panels.get(i); if (!q || !q.fr) return null; try { const d = q.fr.contentWindow.document, e = d.getElementById("tab-" + t); return { done: !!q.frDone, tabShown: !!e && !e.classList.contains("hidden"), nav: (() => { const top = d.querySelector("#app>.top"), sn = d.querySelector(".side-nav"); return !!top && getComputedStyle(top).display !== "none" && !!sn; })() }; } catch (x) { return { err: String(x) }; } }, [id, tab]);
       ok("php: لوح «" + id + "» حقيقي ويعرض تبويب " + tab, !!st && st.done && st.tabShown, st);
+      if (["dash", "store", "set"].includes(id)) {
+        const trad = await p.evaluate(i => { const d = SpatialOS.panels.get(i).fr.contentWindow.document, w = SpatialOS.panels.get(i).fr.contentWindow, sels = ["#upd-btn", "#au-btn", "#theme-sw", "#theme-btn", "#cr-top", ".cr-pill", "#ais-top", "button.logout", "#app>.top button[onclick*='SitePreview']", "#app>.top button[onclick*='Admin.logout']"]; return sels.filter(s => [...d.querySelectorAll(s)].some(e => w.getComputedStyle(e).display !== "none" && e.getBoundingClientRect().width > 0)); }, id);
+        ok("php: لوح «" + id + "» بلا أزرار المنصة التقليدية (تحديث/زيارة الموقع/تبديل المظهر/خروج/رصيد)", trad.length === 0, trad);
+      }
       if (["dash", "store", "set"].includes(id)) ok("php: لوح «" + id + "» يُبقي تنقّل اللوحة ظاهراً (كل الأقسام والإعدادات قابلة للوصول)", !!st && st.nav === true, st);
       else if (["ord", "prod", "ana", "inv"].includes(id)) ok("php: لوح «" + id + "» بلا تنقّل (كما اعتُمد في المرحلة 12)", !!st && st.nav === false, st);
       /* استعمال واقعي: لوح أو لوحان معاً لا أحد عشر؛ نغلق اللوح بعد فحصه (الضغط الكبير على معالج برمجي يؤخّر تثبيت التبويب) */
@@ -62,6 +66,37 @@ async function php(b) {
     }
     await p.evaluate(() => SpatialOS.open("ai")); await wait(1200);
     ok("php: لوح المساعد في الوضع الحقيقي بلا وسم «عرض تجريبي»", await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return !!q && q.el.dataset.real === "1" && !/عرض تجريبي/.test(getComputedStyle(q.el.querySelector(".pn-h h3"), "::after").content); }));
+    ok("php: لا قسم «التسويق» (غير موجود في المنصة) على الأسطوانة ولا في شريط الأقسام", await p.evaluate(() => !/التسويق/.test([...document.querySelectorAll(".node, #dock *")].map(e => e.textContent).join(" ")) && ![...SpatialOS.panels.keys()].includes("mkt")));
+    /* ◎ يعيد لوح الإطار الحقيقي إلى مكانه الافتراضي */
+    await p.evaluate(() => SpatialOS.open("ord")); await wait(600);
+    const hp = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.querySelector(".pn-h").getBoundingClientRect(); return { hx: r.x + r.width * .45, hy: r.y + r.height / 2, x0: q.st.x, y0: q.st.y }; });
+    await p.mouse.move(hp.hx, hp.hy); await p.mouse.down(); for (let i = 1; i <= 12; i++) { await p.mouse.move(hp.hx - 15 * i, hp.hy + 9 * i); await wait(25); } await p.mouse.up(); await wait(900);
+    const mv = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); return { x: q.st.x, y: q.st.y }; });
+    ok("php: سحب رأس اللوح الحقيقي بالفأرة يحرّكه", Math.abs(mv.x - hp.x0) > 60, { before: [hp.x0, hp.y0], after: [mv.x, mv.y] });
+    await p.click('.panel[aria-label="الطلبات"] .pn-orb'); await wait(1200);
+    const bk = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); return { x: q.st.x, y: q.st.y }; });
+    ok("php: زر ◎ (إرجاع إلى المدار) يعيد اللوح الحقيقي إلى مكانه الافتراضي", Math.hypot(bk.x - hp.x0, bk.y - hp.y0) < 40 && Math.hypot(bk.x - mv.x, bk.y - mv.y) > 40, { home: [hp.x0, hp.y0], moved: [mv.x, mv.y], after: [bk.x, bk.y] });
+    /* «كيف أكلّم الكرة»: النقر عليها يفتح لوح المساعد وفيه زر الميكروفون وحقل الكتابة */
+    await p.evaluate(() => document.getElementById("core").click()); await wait(1500);
+    const mic = await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return q ? { mic: !!q.el.querySelector(".ag-mic"), input: !!q.el.querySelector("input,textarea"), framed: !!q.frame } : null; });
+    ok("php: النقر على الكرة يفتح لوح المساعد التنفيذي بزر الميكروفون وحقل الكتابة", !!mic && mic.mic && mic.input && !mic.framed, mic);
+    /* زر «زاوية 0»: يلغي ميلان الألواح بسلاسة ويعيده عند الإيقاف ويحفظ الاختيار */
+    await p.evaluate(() => { SpatialOS.open("prod"); }); await p.waitForFunction(() => { const q = SpatialOS.panels.get("prod"); return q && q.frDone; }, null, { timeout: 60000 }).catch(() => { }); await wait(1200);
+    const tilt = () => p.evaluate(() => { const out = {}; for (const id of ["ord", "prod"]) { const q = SpatialOS.panels.get(id); if (!q) continue; const m = getComputedStyle(q.el).transform.match(/matrix3d\((.+)\)/); if (!m) { out[id] = 0; continue; } /* بلا دوران يعيد المتصفح matrix ثنائية الأبعاد = لا ميلان */ const v = m[1].split(",").map(Number); out[id] = +Math.max(...[1, 2, 4, 6, 8, 9].map(k => Math.abs(v[k]))).toFixed(4); } return out; });
+    const t0 = await tilt();
+    ok("php: الألواح مائلة افتراضياً (قبل الزر)", Object.values(t0).some(v => v > 0.02), t0);
+    ok("php: زر «زاوية 0» موجود في الشريط العلوي ويشير aria-pressed=false", await p.evaluate(() => { const b = document.getElementById("hud-flat"); return !!b && b.getAttribute("aria-pressed") === "false" && getComputedStyle(b).display !== "none"; }));
+    await p.click("#hud-flat"); await wait(2200);
+    const t1 = await tilt();
+    ok("php: بعد «زاوية 0» كل الألواح بلا أي ميلان", Object.values(t1).length > 0 && Object.values(t1).every(v => v !== null && v < 0.004), t1);
+    ok("php: الزر يعلن حالته (مفعّل) والاختيار محفوظ", await p.evaluate(() => { const b = document.getElementById("hud-flat"); return b.getAttribute("aria-pressed") === "true" && SpatialOS.flat === true && localStorage.getItem("sc_flat") === "1"; }));
+    await p.keyboard.press("l"); await wait(2200);
+    const t2 = await tilt();
+    ok("php: مفتاح L يعيد الميلان الأصلي (تبديل)", Object.values(t2).some(v => v > 0.02) && (await p.evaluate(() => SpatialOS.flat === false)), t2);
+    await p.click("#hud-flat"); await wait(1500);
+    await p.reload(); await p.waitForFunction(() => typeof SpatialOS !== "undefined" && SpatialOS.real === true, null, { timeout: 30000 });
+    ok("php: يبقى «زاوية 0» مفعّلاً بعد إعادة فتح الصفحة", await p.evaluate(() => SpatialOS.flat === true && document.getElementById("hud-flat").getAttribute("aria-pressed") === "true"));
+    await p.click("#hud-flat"); await wait(800);
     await shot(p, "02-holo-real-panels");
 
     const ex = await p.evaluate(() => { const a = document.getElementById("hud-exit"); return a ? { href: a.getAttribute("href"), vis: getComputedStyle(a).display !== "none" } : null; });
@@ -118,9 +153,9 @@ async function stat(b) {
     await p.goto(`http://127.0.0.1:${port}/admin-preview/spatial-os/index.html?real=1`); await wait(2500);
     const st = await p.evaluate(() => ({ real: SpatialOS.real, api: SpatialOS.apiReal, note: getComputedStyle(document.querySelector(".note")).display }));
     ok("static: ألواح حقيقية بلا واجهة PHP (وضع المتجر الذي لا يحمل الوكيل التنفيذي)", st.real === true && st.api === false && st.note === "none", st);
-    await p.evaluate(() => SpatialOS.open("ai")); await wait(1200);
-    const msg = await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return q ? q.el.innerText : ""; });
-    ok("static: لوح المساعد يعرض إشعاراً صادقاً لا محاكاة", /غير متاح لهذا النوع من المتاجر/.test(msg) && !/مرحباً، أنا مساعد/.test(msg), msg.slice(0, 120));
+    await p.evaluate(() => document.getElementById("core").click()); await wait(1500);
+    const ai = await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return q ? { framed: !!q.frame, tab: q.frame && q.frame.tab, real: q.el.dataset.real, src: q.fr ? q.fr.src : "" } : null; });
+    ok("static: النقر على الكرة يفتح «اسألني» الحقيقي (إطار) حيث لا واجهة PHP للوكيل التنفيذي", !!ai && ai.framed && ai.tab === "ask" && ai.real === "1" && /admin\.html/.test(ai.src), ai);
     await p.evaluate(() => SpatialOS.open("set")); await wait(2500);
     ok("static: لوح الإعدادات حقيقي (إطار يحمّل admin.html)", await p.evaluate(() => { const q = SpatialOS.panels.get("set"); return !!(q && q.fr && /admin\.html/.test(q.fr.src) && q.el.dataset.real === "1"); }));
     await shot(p, "03-static-real");
