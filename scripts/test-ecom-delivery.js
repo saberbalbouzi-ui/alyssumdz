@@ -54,6 +54,15 @@ const { chromium } = require("playwright");
     return { calls, okMsg, badMsg, noKeys };
   });
   t("تسجيل الـwebhook عند E-com: PUT /webhook بالرابط والسرّ وكل الأحداث ثم POST /webhook/test؛ وأخطاؤه واضحة", WH.calls.length === 2 && /^PUT \/webhook .*"secret":"SEC".*"events":\["\*"\]/.test(WH.calls[0]) && /^POST \/webhook\/test/.test(WH.calls[1]) && /✅/.test(WH.okMsg) && /422/.test(WH.badMsg) && /URL invalide/.test(WH.badMsg) && /أدخل مفتاحَي/.test(WH.noKeys), WH);
+  const CO = await p.evaluate(async () => {
+    const A = Admin, toasts = []; window.toast = m => toasts.push(m); window.confirm = () => true; A.renderStats = () => { }; A.renderOrders = () => { }; A.renderShipped = () => { };
+    A.deliveryCfg = { ecomdelivery: { enabled: true, apiKey: "k", apiToken: "t" } }; A.orders = []; try { localStorage.removeItem("alyssum_ext_parcels"); } catch (e) { }
+    const added = []; API.addOrder = async o => { added.push(o); return { ok: true, id: "M-NEW1" }; }; API.updateOrder = () => Promise.resolve(); A.saveTracking = function (o, co, trk) { o.note = (o.note || "") + " 🚚" + co + ":" + trk; };
+    A.extSave("ecomdelivery", { tracking: "EC777XYZ", client: "كريم", phone: "+213 661 11 22 33", commune: "Bab Ezzouar", amount: 2500, product: "عسل", raw: "Commande Confirmée", at: Date.now() });
+    await A.coCreateOrder("ecomdelivery", "EC777XYZ");
+    return { n: added.length, o: added[0], loc: A.orders[0] && { id: A.orders[0].id, st: A.orders[0].status, note: A.orders[0].note, total: A.orders[0].total }, ext: ((A.extAll().ecomdelivery) || []).length, ok: toasts.some(x => /أُنشئ الطلب/.test(x)) };
+  });
+  t("📥 إنشاء طلب من طرد خارجي: يُنشأ بالبيانات، يُربط بالتتبع بحالة «مؤكَّد»، ويُزال من الخارجية", CO.n === 1 && CO.o.name === "كريم" && CO.o.total === 2500 && CO.o.items[0].title === "عسل" && CO.loc && CO.loc.id === "M-NEW1" && CO.loc.st === "confirmee" && /ecomdelivery:EC777XYZ/.test(CO.loc.note) && CO.ext === 0 && CO.ok, CO);
   t("parseStatus والبوردرو والإلغاء ومدرجة بين الشركات", R.ps === "Au Bureau" && /bordereau\?format=10x13/.test(R.lbl) && R.del === "DELETE" && R.listed, [R.ps, R.lbl, R.del, R.listed]);
   const F = await p.evaluate(async () => {
     const A = Admin, out = {}; window.toast = () => { }; const wait = ms => new Promise(r => setTimeout(r, ms)); const saved = []; API.addOrder = async o => { saved.push(o); return { ok: true, id: "M-EC1" }; };
