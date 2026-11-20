@@ -34,7 +34,7 @@ def norm5(o):
         r = {k: norm5(v) for k, v in o.items() if k != "sample"}
         if st is not None: r["set"] = norm5(st)
         return r
-    if isinstance(o, list): return [norm5(x) for x in o]
+    if isinstance(o, list): return [norm5(x) for x in o if not (isinstance(x, dict) and x.get("id") == "anchprod")]      # مرساة #products المضافة للقوالب الستة بموافقة صاحب المتجر (معرّف ثابت لا يزحزح بقية المعرّفات)
     if isinstance(o, str):
         for a_, b_ in PH5_TEXT.items(): o = o.replace(a_, b_)
         return o
