@@ -499,3 +499,5 @@ html.white #pm .pm-btn:not(.pm-primary) small{color:#0b0f14!important}
 html.white #ahome .ah-seg button:not(.on),html.white #ahome .at button{color:#0b0f14!important}
 html.white body .cr-rem:not(#_){color:#0b0f14}
 html.white input::placeholder,html.white textarea::placeholder{color:#475569}
+/* لافتات داكنة ثابتة (تحديث/تنبيه): نصّها أبيض لا يشمله «كل الخطوط سوداء» في المظهر الفاتح */
+html.white :is(#au-banner,#au-auto,#au-cover,#toast2) :is(small,span,b,div,p,label):not(#_){color:#fff!important}
