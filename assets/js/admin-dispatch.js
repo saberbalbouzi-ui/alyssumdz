@@ -172,7 +172,7 @@
   }
   async function printAll() {
     const a = A(), l = printable().slice(0, 150); if (!l.length) { toast("ℹ️ لا طرود قيد التجهيز"); return; }
-    const w = window.open("", "_blank"); await a.printBordereaux(l, w || undefined);
+    const k = await a.bordAsk(l.length); if (!k) return; await a.printBordereaux(l, k.w || undefined, k.fmt);
   }
 
   /* ───── محطة المسح ───── */

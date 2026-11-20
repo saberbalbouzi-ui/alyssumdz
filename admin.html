@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest-admin.webmanifest"><meta name="theme-color" content="#0b1210"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="اللوحة">
-<meta name="admin-version" content="1.89.1307">
+<meta name="admin-version" content="1.89.1308">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -530,7 +530,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <button class="small gold" type="button" id="ship-sync-btn" onclick="Admin.refreshShipped()" title="يحدّث حالات الطرود ويعيد تحميل طرود الشركة المعروضة">🔄 تحديث الحالة</button>
         <button class="small gray" type="button" id="ship-csv-btn" onclick="Admin.exportShippedCsv()" title="ينزّل نسخة (ملف CSV يفتح في Excel) من الطلبات المسجلة المعروضة حسب البحث والفلاتر الحالية">⬇️ نسخة CSV</button>
         <button class="small green" type="button" id="ship-prep-btn" onclick="Admin.prepOrders()" title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button>
-        <button class="small green" type="button" id="ship-bord-btn" onclick="Admin.printBordereaux()" title="يجلب بوردرو كل الطرود المعروضة (قيد التجهيز افتراضياً) كما تصدره شركة التوصيل ويفتحها في صفحة واحدة للطباعة">🖨 طباعة البوردرو</button>
+        <button class="small green" type="button" id="ship-bord-btn" onclick="Admin.bordPrintShown()" title="يجلب بوردرو كل الطرود المعروضة (قيد التجهيز افتراضياً) كما تصدره شركة التوصيل ويفتحها في صفحة واحدة للطباعة">🖨 طباعة البوردرو</button>
         <button class="small gray" type="button" id="ship-imp-btn" data-noco style="display:none" onclick="Admin.importTracking()" title="أدخل رقم تتبع طرد موجود عند الشركة (مثلاً أنشأته من لوحتها) فتجلب المنصة بياناته وحالته وتربطه بالطلب المطابق">➕ إضافة طرد بالتتبع</button>
         <button class="small gray" type="button" id="ship-fees-btn" data-noco onclick="Admin.coFees()" title="يجلب تعريفة ولاية من WeCan ويعرضها لإرسالها إلى دعمهم">🔍 تعريفة WeCan لولاية</button>
         <button class="small gray" type="button" id="ship-recent-btn" data-noco onclick="Admin.coRecent()" title="يعرض كل حقول آخر طرود حسابك عند شركة التوصيل (للمقارنة بين طلب أُضيف يدوياً عندهم وطلب أرسلناه)">🔍 آخر الطرود عند الشركة</button>
@@ -1776,10 +1776,10 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-zones-io.js?v=baf86994"></script>
 <script src="assets/js/admin-archive.js?v=66814def"></script>
 <script src="assets/js/admin-yalidine.js?v=69130136"></script>
-<script src="assets/js/admin-busy.js?v=12b07d95"></script>
+<script src="assets/js/admin-busy.js?v=9486d0f8"></script>
 <script src="assets/js/admin-shoppages.js?v=d197aa36"></script>
 <script src="assets/js/admin-home.js?v=48d34d7a"></script>
-<script src="assets/js/admin-tablesel.js?v=cf2f4bd9"></script>
+<script src="assets/js/admin-tablesel.js?v=5f12f798"></script>
 <script src="assets/js/admin-mtables.js?v=25e859d2"></script>
 <script src="assets/js/admin-coparcels.js?v=f50b243f"></script>
 <script src="assets/js/admin-orders-plus.js?v=357f9243"></script>
@@ -1804,7 +1804,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-platform-sync.js?v=5c9a50b4"></script>
 <script src="assets/js/admin-callcenter.js?v=1abc1d1c"></script>
 <script src="assets/js/admin-callsync.js?v=17265a9a"></script>
-<script src="assets/js/admin-dispatch.js?v=4ec3043f"></script>
+<script src="assets/js/admin-dispatch.js?v=b2208194"></script>
 <script src="assets/js/admin-profit.js?v=cbe34c28"></script>
 <script src="assets/js/admin-wallet.js?v=5827c8ee"></script>
 <script src="assets/js/admin-edition.js?v=ef57eac5"></script>
@@ -3270,10 +3270,26 @@ const Admin = {
   /* الزر الأزرق في عمود Action: بوردرو الشركة الأصلي (PDF) للطلب المسجَّل؛ بلا طرد عند الشركة يُنبَّه ويُفتح وصل الطلب بدلاً منه (v1.89.707) */
   printOrderBord(i){
     const o = this.orders[i]; if(!o) return;
-    if(this.trackingOf(o)) return this.openLabel(i);
+    const t = this.trackingOf(o);
+    if(t){ const co = this.allDeliveryCompanies()[t.company]; if(!co || !co.labelRequest) return this.openLabel(i); return this.bordPrintList([{ o, t }]); }      // شركة بوابة (بلا تعريف محلي) ← مسارها القديم
     if(this.linkTrk(i, true)) return;
-    toast("ℹ️ لا بوردرو قبل الإرسال إلى الشركة — أرسل الطلب أولاً ثم اطبع بوردرو الشركة");
+    toast("ℹ️ لا بوردرو قبل الإرسال إلى الشركة — أرسل الطلب أولاً ثم اطبع");
   },
+  /* اختيار حجم الطباعة: A4 (أربعة بوردرو في الورقة) أو A6 (بوردرو في كل ورقة) لكل الشركات. تُفتح نافذة الطباعة ضمن نقرة الاختيار نفسها كي لا يحجبها المتصفح. */
+  bordFmt(){ try{ return localStorage.getItem("alyssum_bord_fmt") === "a6" ? "a6" : "a4"; }catch(e){ return "a4"; } },
+  bordAsk(n){
+    return new Promise(res=>{
+      const old = document.getElementById("bord-fmt-bg"); if(old) old.remove();
+      const bg = document.createElement("div"); bg.id = "bord-fmt-bg"; bg.className = "modal-bg open"; const cur = this.bordFmt();
+      bg.innerHTML = '<div class="modal" style="max-width:420px"><h3>🖨 طباعة' + (n > 1 ? " " + n + " بوردرو" : " البوردرو") + '</h3><div style="line-height:1.9;margin-bottom:.8rem">اختر حجم الورقة:</div>'
+        + '<div style="display:grid;gap:.6rem"><button class="small" type="button" data-f="a4">A4 — أربعة بوردرو في الورقة' + (cur === "a4" ? " ✓" : "") + '</button><button class="small" type="button" data-f="a6">A6 — بوردرو واحد في كل ورقة' + (cur === "a6" ? " ✓" : "") + '</button><button class="small gray" type="button" data-f="">إلغاء</button></div></div>';
+      document.body.appendChild(bg);
+      const done = v=>{ let w = null; if(v){ try{ localStorage.setItem("alyssum_bord_fmt", v); }catch(e){} w = window.open("", "_blank"); } bg.remove(); res(v ? { fmt: v, w } : null); };
+      bg.addEventListener("click", e=>{ const b = e.target.closest && e.target.closest("button[data-f]"); if(b) done(b.dataset.f); else if(e.target === bg) done(""); });
+    });
+  },
+  async bordPrintList(list){ if(!list || !list.length) return; const a = await this.bordAsk(list.length); if(!a) return; return this.printBordereaux(list, a.w || undefined, a.fmt); },
+  async bordPrintShown(){ const list = this.bordTargets(); if(!list.length){ toast("ℹ️ لا توجد طرود قيد التجهيز للطباعة — اختر حالة أخرى من التصفية"); return } return this.bordPrintList(list); },
   /* ربط طلب برقم تتبع طرد مسجَّل فعلاً عند الشركة (حين أُنشئ الطرد ولم يُحفظ رقمه هنا): يحفظ 🚚<شركة>:<رقم> في ملاحظة الطلب فيظهر في «الطلبات المسجلة» ويعمل «تحديث الحالة» والبوردرو. ask=true: سؤال أولاً. يعيد true إن ربط أو عولج الطلب */
   linkTrk(i, ask){
     const o = this.orders[i]; if(!o || this.trackingOf(o)) return false;
@@ -3298,7 +3314,7 @@ const Admin = {
     };
     /* الفهرس يُحسب لحظة النقر من رقم الطلب (لا من رقم الصف المحفوظ وقت الرسم): تحديث القائمة التلقائي كل دقيقة قد يغيّر ترتيب المصفوفة فيفتح الزر طلباً آخر أو لا شيء */
     const q = JSON.stringify(String(o.id)).replace(/"/g, "&quot;"), ix = "Admin.ixOf(" + q + "," + i + ")";
-    let h = b("g ord-pv", "معاينة الطلب", "Admin.openOrderPreview(" + ix + ")", I.plus) + b("b", "طباعة بوردرو الشركة", "Admin.printOrderBord(" + ix + ")", I.print);
+    let h = b("g ord-pv", "معاينة الطلب", "Admin.openOrderPreview(" + ix + ")", I.plus) + b("b", "طباعة", "Admin.printOrderBord(" + ix + ")", I.print);
     const full = window.ManualOrder && S(()=>this.canFullEdit(o)), part = window.OrderEdit && S(()=>OrderEdit.canEdit(o));
     if(can("orders.edit") && (full || part)) h += b("e", "تعديل الطلب", full ? "ManualOrder.open({mode:'edit',order:Admin.orders[" + ix + "]})" : "OrderEdit.open(" + ix + ")", I.edit);
     if(can("orders.delete")) h += b("r", "نقل إلى سلة المهملات", "Admin.deleteOrders([Admin.orders[" + ix + "]])", I.trash);
@@ -10238,7 +10254,7 @@ const Admin = {
       L("الزبون", E(r.client || "—")) + L("الهاتف", '<span dir="ltr">' + E(r.phone || "—") + '</span>') + L("الوجهة", E([r.wilaya, r.commune].filter(Boolean).join(" / ") || "—")) + hr +
       L("المنتج", '<span dir="auto">' + E(r.product || "—") + '</span>') + L("المبلغ", r.amount ? n(r.amount) + " دج" : "—") + L("الطلب في لوحتك", r.orderId ? "#" + E(String(r.orderId).slice(-6)) : "غير مرتبط بطلب") + '</div>' +
       '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem">' +
-      btn("blue", "Admin.coOne(" + c + ",'label')", "🏷️ بوردرو الشركة", "بوردرو الشركة الأصلي للطباعة") + btn("gray", "Admin.coOne(" + c + ",'status')", "🔄 قراءة الحالة") +
+      btn("blue", "Admin.coOne(" + c + ",'label')", "🖨 طباعة", "طباعة بوردرو الشركة الأصلي (A4 أو A6)") + btn("gray", "Admin.coOne(" + c + ",'status')", "🔄 قراءة الحالة") +
       (r.draft && co.postSend ? btn("green", "Admin.coValidateTrk(" + c + ")", "✅ تصديق") : "") +
       (r.oi != null ? btn("blue", "Admin.openOrderPreview(" + r.oi + ")", "📋 فتح الطلب") : "") +
       btn("gold", "Admin.coCopyAsOrder(" + c + ")", "📄 نسخ الزبون كطلب جديد", "ينسخ الزبون والمنتج إلى طلب جديد تعدّله وتحفظه") +
@@ -10619,7 +10635,7 @@ const Admin = {
       if(this._shipRaw && String((this.shipRaw[o.id] || {}).raw || "").trim() !== this._shipRaw) return false;
       return !q || FD([t.tracking, o.name, o.phone, o.id, o.wilaya, o.commune].join(" ")).includes(q);
     });
-    this._shipRows = rows; { const _bb = $f("ship-bord-btn"); if(_bb) _bb.textContent = "🖨 طباعة البوردرو (" + this.bordTargets().length + ")"; }
+    this._shipRows = rows; { const _bb = $f("ship-bord-btn"); if(_bb) _bb.textContent = "🖨 طباعة (" + this.bordTargets().length + ")"; }
     { const _sc = $f("ship-count"); if(_sc) _sc.textContent = rows.length + " من أصل " + all.length + " طلب مسجل" + (this._lastShipSync ? " — آخر تحديث " + new Date(this._lastShipSync).toLocaleTimeString("ar-DZ") : "") };
     if(!rows.length){ el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>" + (all.length ? "لا نتائج مطابقة" : "لا توجد طلبات مسجلة بعد — أكّد طلباً جديداً ليُرسل إلى شركة التوصيل تلقائياً") + "</td></tr>"; return }
     el.classList.remove("m-cards");                                                       // جدول أفقي (بطلب صاحب المتجر): يُسحب أفقياً على الهاتف
@@ -10685,7 +10701,7 @@ const Admin = {
       S(()=>window.OrderEdit && OrderEdit.canEdit(o) ? '<button class="small gold" type="button" onclick="OrderEdit.open(' + i + ')" title="تعديل الاسم والولاية والبلدية وطريقة التوصيل">✏️ تعديل</button>' : '') +
       (window.ManualOrder && S(()=>this.canFullEdit(o)) ? '<button class="small gold" type="button" onclick="' + close + ';ManualOrder.open({mode:\'edit\',order:Admin.orders[' + i + ']})" title="تعديل كل بيانات الطلب بما فيها المنتجات والهاتف' + (t ? ' — يُحدَّث الطرد عند الشركة والمخزون' : '') + '">✏️ تعديل كامل</button>' : '') +
       (window.ManualOrder ? '<button class="small blue" type="button" onclick="' + close + ';ManualOrder.open({mode:\'copy\',order:Admin.orders[' + i + ']})" title="ينسخ هذا الطلب كطلب جديد غير مسجَّل (تعدّله قبل الحفظ وبعده)">📄 نسخ كطلب جديد</button>' : '') +
-      (t ? '<button class="small blue" type="button" onclick="Admin.openLabel(' + i + ')" title="بوليصة شركة التوصيل الأصلية">🏷️ بوليصة الشركة</button>' : '') +
+      (t ? '<button class="small blue" type="button" onclick="Admin.printOrderBord(' + i + ')" title="طباعة بوردرو شركة التوصيل الأصلي (A4 أو A6)">🖨 طباعة</button>' : '') +
       ((t && !($f("tab-shipped") || {classList:{contains:()=>true}}).classList.contains("hidden")) ? ((o.status === "confirmee" || o.status === "nouvelle") ? '<button class="small" type="button" style="background:var(--red)" onclick="if(confirm(\'حذف الطرد ' + esc(t.tracking) + ' من الطلبات المسجلة؟\\nيُلغى الطرد لدى الشركة ويعود الطلب إلى قائمة الطلبات (لا يُحذف الطلب).\')){' + close + ';Admin.unsendOrder(' + i + ')}" title="يُلغى الطرد ويعود الطلب إلى قائمة الطلبات">🗑 حذف من المسجلة</button>' : '<span class="hint" style="margin:0">الطرد انطلق فلا يمكن حذفه من المسجلة.</span>') :
       '<button class="small" type="button" style="background:var(--red)" onclick="' + close + ';Admin.deleteOrders([Admin.orders[' + i + ']])" title="ينقل الطلب إلى سلة المهملات' + (t ? ' (ويُحاوَل إلغاء طرده لدى الشركة إن لم يُسلَّم بعد)' : '') + '">🗑 حذف</button>');
     bg.dataset.oid = o.id; bg.dataset.sig = S(()=>this.previewSig(o)); bg.classList.add("open");
@@ -10709,7 +10725,7 @@ const Admin = {
       row("سعر المنتجات", n(o.subtotal)) + row("سعر التوصيل", Number(o.fee) ? n(o.fee) : "مجاني") +
       (Number(o.discount) ? row("الخصم", "-" + n(o.discount) + (o.coupon ? " (" + o.coupon + ")" : "")) : "") +
       row("الإجمالي (عند الاستلام)", '<b style="color:var(--green)">' + n(o.total) + '</b>') + '</table>';
-    $f("ship-label-btn").onclick = ()=>this.openLabel(i);
+    $f("ship-label-btn").onclick = ()=>this.printOrderBord(i);
     $f("ship-detail-bg").classList.add("open");
   },
   /* طباعة بوردرو كل الطرود المعروضة: الطرود المعروضة حسب التصفية (وبلا تصفية حالة = «قيد التجهيز» فقط لأنها التي تحتاج بوردرو للإلصاق) */
@@ -10720,18 +10736,18 @@ const Admin = {
   deepLabel(j, d){ d = d || 0; if(!j || typeof j !== "object" || d > 5) return ""; for(const k of ["label", "labels"]){ const v = j[k]; if(typeof v === "string" && /^https:\/\//.test(v)) return v; } for(const k of Object.keys(j)){ const u = this.deepLabel(j[k], d + 1); if(u) return u; } return ""; },
   bordTargets(){ const st = ($f("ship-status") || {}).value || ""; return (this.shippedOrders() || []).filter(({o})=>st ? o.status === st : (o.status === "confirmee" || o.status === "nouvelle")); },      // كل الشركات معاً (لا يرتبط بتبويب شركة)
   /* بوردرو الطرود المحدَّدة في الجداول (Action ← طباعة البوردرو): طرد واحد يُفتح PDF الشركة مباشرة، والأكثر في صفحة واحدة */
-  async printBordereauxFor(items){
+  printBordereauxFor(items){
     const key = (this.listCompanyKey && this.listCompanyKey()) || this.activeCompanyKey(), list = [];
     (items || []).forEach(it=>{ const o = this.orders.find(x=>{ const t = this.trackingOf(x); return t && t.tracking === it.tracking; }); const t = o ? this.trackingOf(o) : { company: it.company || key, tracking: it.tracking }; list.push({ o: o || { name: "", wilaya: "" }, t }); });
     if(!list.length) return;
-    if(list.length === 1){ const i = this.orders.indexOf(list[0].o); if(i > -1) return this.openLabel(i); }
-    return this.printBordereaux(list);
+    return this.bordPrintList(list);
   },
-  async printBordereaux(listOverride, win){
+  async printBordereaux(listOverride, win, fmt){
     let list = listOverride || this.bordTargets(); if(!list.length){ toast("ℹ️ لا توجد طرود قيد التجهيز لطباعة بوردرو لها — اختر حالة أخرى من التصفية"); return }
     if(list.length > 150){ toast("⚠️ " + list.length + " طرداً كثيرة دفعة واحدة — صفِّ بالشركة أو الحالة (الحدّ 150)"); if(win) try{ win.close(); }catch(e){} return }
     list = list.slice().sort((a, b)=>String((a.t || {}).company).localeCompare(String((b.t || {}).company)) || String(a.o.wilaya || "").localeCompare(String(b.o.wilaya || "")));     // مجمّعة بالشركة ثم الولاية (للفرز المادي)
-    if(!listOverride && !confirm("طباعة بوردرو " + list.length + " طرد كما تصدره شركة التوصيل؟")) return;
+    fmt = fmt === "a6" ? "a6" : (fmt === "a4" ? "a4" : this.bordFmt());       // بلا اختيار صريح (إرسال جماعي/توجيه) ← آخر حجم اخترته
+    const fmtTxt = fmt === "a6" ? "A6 (بوردرو في كل ورقة)" : "A4 (4 في الورقة)";
     const w = win || window.open("", "_blank"); if(!w){ toast("⚠️ المتصفح حجب النافذة — اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة"); return }
     const esc = v=>String(v == null ? "" : v).replace(/[<>&"]/g, c=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;" }[c])), cos = this.allDeliveryCompanies(), got = [], bad = [];
     const msg = t=>{ try{ w.document.open(); w.document.write('<!doctype html><meta charset="utf-8"><body dir="rtl" style="font-family:sans-serif;padding:2rem;text-align:center">' + t + '</body>'); w.document.close(); }catch(e){} };
@@ -10745,18 +10761,20 @@ const Admin = {
         let r = await this.labelUrlFor(o, t, co, cfg);
         if(r.err && /حدّ الطلبات/.test(r.err)){ msg("⏳ بلغت الشركة حدّ الطلبات — انتظار 20 ثانية ثم نكمل… " + k + " / " + list.length); await new Promise(x=>setTimeout(x, 20000)); r = await this.labelUrlFor(o, t, co, cfg); }
         if(!r.url) throw new Error(r.err || "لا رابط بوردرو لهذا الطرد");
-        got.push({ o, t, url: r.url, co: co.name });
+        got.push({ o, t, url: r.url, co: co.name, html: !!co.labelBodyHtml });
       }catch(e){ bad.push({ o, t, why: String((e && e.message) || e) }); }
       if(k < list.length) await new Promise(r=>setTimeout(r, 350));
     }
     if(!got.length){ msg("❌ تعذّر جلب أي بوردرو<br><small>" + bad.slice(0, 5).map(b=>esc(b.t.tracking) + ": " + esc(b.why)).join("<br>") + "</small>"); return }
     /* البوردرو الأصلي للشركة مجمّعاً: 4 في ورقة A4 (2×2)؛ إن نجح لكل الطرود تُفتح ورقة PDF واحدة جاهزة للطباعة، وإلا تُعرض الصفحة مع الرابط وما تعذّر */
     let merged = null, mergeFail = [], mergeErr = "";
-    { const withUrl = got.filter(g=>g.url), bytes = [], crops = []; let q = 0;
-      for(const g of withUrl){ q++; msg("⏳ تحميل ملف البوردرو " + q + " / " + withUrl.length + "…"); const u8 = await this.pdfBytes(g.url); if(u8){ bytes.push(u8); crops.push(!!(g.t && (g.t.company === "yalidine" || g.t.company === "noest"))); } else mergeFail.push(g); }
-      if(bytes.length){ msg("⏳ تجميع " + bytes.length + " بوردرو في أوراق A4 (4 في الورقة)…"); try{ merged = await this.mergePdf4(bytes, crops); merged.url = URL.createObjectURL(new Blob([merged.bytes], { type:"application/pdf" })); merged.n = bytes.length; }catch(e){ merged = null; mergeErr = String((e && e.message) || e); } }
-      if(merged && !mergeFail.length && !bad.length && got.every(g=>g.url)){ try{ w.location.href = merged.url; }catch(e){ window.open(merged.url, "_blank"); } toast("✅ " + merged.n + " بوردرو في " + merged.sheets + " ورقة A4 (4 في الورقة) — اطبع من عارض الـPDF"); return; } }
-    const mergedBox = merged ? '<div class="bad" style="background:#e8f7ee"><b>📄 البوردرو الأصلي مجمّعاً: ' + merged.n + ' في ' + merged.sheets + ' ورقة A4 (4 في الورقة)</b> &nbsp; <a href="' + merged.url + '" target="_blank" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">فتح / طباعة</a> <a href="' + merged.url + '" download="bordereaux.pdf" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">⬇ تنزيل</a>' + (mergeFail.length ? '<br>تعذّر تجميع: ' + mergeFail.map(g=>'<span dir="ltr">' + esc(g.t.tracking) + '</span>').join("، ") + ' — افتحها منفردة من القائمة أدناه' : "") + '</div>'
+    { const withUrl = got.filter(g=>g.url), bytes = [], crops = [], htmlOnes = []; let q = 0;
+      for(const g of withUrl){ q++; if(g.html){ htmlOnes.push(g); continue; } msg("⏳ تحميل ملف البوردرو " + q + " / " + withUrl.length + "…"); const u8 = await this.pdfBytes(g.url); if(u8){ bytes.push(u8); crops.push(!!(g.t && (g.t.company === "yalidine" || g.t.company === "noest"))); } else mergeFail.push(g); }
+      if(!bytes.length && htmlOnes.length && !mergeFail.length && !bad.length){ this.bordHtmlSheet(w, htmlOnes, fmt); toast("🖨 " + htmlOnes.length + " بوردرو — " + fmtTxt); return; }       // بوردرو شركات تردّ صفحة HTML (E-com): تُطبع صفحات داخل ورقة A4/A6
+      htmlOnes.forEach(g=>mergeFail.push(g));
+      if(bytes.length){ msg("⏳ تجميع " + bytes.length + " بوردرو — " + fmtTxt + "…"); try{ merged = fmt === "a6" ? await this.mergePdfA6(bytes, crops) : await this.mergePdf4(bytes, crops); merged.url = URL.createObjectURL(new Blob([merged.bytes], { type:"application/pdf" })); merged.n = bytes.length; }catch(e){ merged = null; mergeErr = String((e && e.message) || e); } }
+      if(merged && !mergeFail.length && !bad.length && got.every(g=>g.url)){ try{ w.location.href = merged.url; }catch(e){ window.open(merged.url, "_blank"); } toast("✅ " + merged.n + " بوردرو في " + merged.sheets + " ورقة " + fmtTxt + " — اطبع من عارض الـPDF"); return; } }
+    const mergedBox = merged ? '<div class="bad" style="background:#e8f7ee"><b>📄 البوردرو الأصلي مجمّعاً: ' + merged.n + ' في ' + merged.sheets + ' ورقة ' + fmtTxt + '</b> &nbsp; <a href="' + merged.url + '" target="_blank" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">فتح / طباعة</a> <a href="' + merged.url + '" download="bordereaux.pdf" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">⬇ تنزيل</a>' + (mergeFail.length ? '<br>تعذّر تجميع: ' + mergeFail.map(g=>'<span dir="ltr">' + esc(g.t.tracking) + '</span>').join("، ") + ' — افتحها منفردة من القائمة أدناه' : "") + '</div>'
       : '<div class="bad">⚠️ تعذّر تجميع البوردرو الأصلي في ورقة واحدة' + (mergeErr ? " (" + esc(mergeErr) + ")" : " — وسيط الاتصال بالشركة لا يمرّر الملفات (يلزم تحديثه)") + '؛ البوردرو الأصلي لكل طرد في القائمة أدناه.</div>';
     const css = 'body{margin:0;font-family:Tahoma,sans-serif;background:#eef1f0}.bar{position:sticky;top:0;background:#0d2a21;color:#fff;padding:.7rem 1rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;z-index:5}.bar button,.bar a{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:10px;padding:.5rem .9rem;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}.sec{background:#fff;margin:.8rem auto;max-width:900px;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)}.sec h4{margin:0;padding:.45rem .8rem;background:#f4f6f5;font-size:.9rem;display:flex;justify-content:space-between;gap:.5rem}.sec iframe{width:100%;height:1000px;border:0;display:block}.bad{max-width:900px;margin:.8rem auto;padding:.7rem 1rem;background:#fff3e0;border-radius:10px;font-size:.9rem}@media print{.bar,.sec h4,.bad{display:none}.sec{margin:0;box-shadow:none;border-radius:0;page-break-after:always}.sec iframe{height:100vh}}.sec.inl{padding:.4rem}';
     const OD = typeof AdminOrderDocs !== "undefined" ? AdminOrderDocs : null, wcss = OD && OD.pageCss ? OD.pageCss("A6").replace(/@page\{[^}]*\}/, "").replace(/body\{[^}]*\}/, "") : "";
@@ -10812,6 +10830,26 @@ const Admin = {
       }
     }
     return { bytes: await out.save(), labels: n, sheets: out.getPageCount() };
+  },
+  /* A6 (105×148مم): بوردرو واحد في كل ورقة (يُكبَّر/يُصغَّر ليلائم الورقة بهامش 6مم) — القصّ إلى ربع A4 لياليدين/Noest كما في mergePdf4 */
+  async mergePdfA6(list, crops){
+    const P = await this.loadPdfLib(), out = await P.PDFDocument.create(), W = 297.64, H = 419.53, M = 17; let n = 0;
+    for(let li = 0; li < list.length; li++){
+      const u8 = list[li], doCrop = crops ? !!crops[li] : true, src = await P.PDFDocument.load(u8, { ignoreEncryption:true });
+      for(const i of src.getPageIndices()){
+        const sp = src.getPage(i), sz = sp.getSize(), mb = sp.getMediaBox(), big = doCrop && sz.width >= 500 && sz.height >= 700;
+        const [emb] = await out.embedPages([sp], big ? [{ left: mb.x, bottom: mb.y + sz.height / 2, right: mb.x + sz.width / 2, top: mb.y + sz.height }] : undefined), sc = Math.min((W - 2 * M) / emb.width, (H - 2 * M) / emb.height), dw = emb.width * sc, dh = emb.height * sc;
+        out.addPage([W, H]).drawPage(emb, { x: (W - dw) / 2, y: (H - dh) / 2, width: dw, height: dh }); n++;
+      }
+    }
+    return { bytes: await out.save(), labels: n, sheets: out.getPageCount() };
+  },
+  /* بوردرو شركة تردّ صفحة HTML (E-com): صفحات داخل iframe بحجم البوردرو (100×130مم) ← A4: أربعة في الورقة، A6: واحد في كل ورقة؛ وتُطبع تلقائياً بعد التحميل */
+  bordHtmlSheet(w, list, fmt){
+    const a6 = fmt === "a6", css = a6 ? '@page{size:A6;margin:0}.cell{width:105mm;height:148mm;display:flex;align-items:center;justify-content:center;page-break-after:always}' : '@page{size:A4;margin:6mm}.sheet{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3mm;width:198mm;height:285mm;page-break-after:always}.cell{display:flex;align-items:center;justify-content:center;border:.3mm solid #bbb;overflow:hidden}';
+    const cells = list.map(g=>'<div class="cell"><iframe src="' + String(g.url).replace(/"/g, "&quot;") + '" style="width:100mm;height:130mm;border:0"></iframe></div>');
+    let body = ""; if(a6) body = cells.join(""); else for(let i = 0; i < cells.length; i += 4) body += '<div class="sheet">' + cells.slice(i, i + 4).join("") + '</div>';
+    try{ w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>طباعة ' + list.length + ' بوردرو</title><style>body{margin:0;background:#fff}.bar{position:sticky;top:0;background:#0d2a21;color:#fff;padding:.6rem 1rem;display:flex;gap:.6rem;align-items:center;font-family:sans-serif}.bar button{background:#effe17;color:#1f2123;border:0;border-radius:12px;padding:.45rem 1rem;font-weight:800;cursor:pointer}@media print{.bar{display:none}}' + css + '</style></head><body><div class="bar"><b>🖨 ' + list.length + ' بوردرو — ' + (a6 ? "A6" : "A4 (4 في الورقة)") + '</b><button type="button" onclick="window.print()">طباعة</button></div>' + body + '<script>setTimeout(function(){try{window.print()}catch(e){}},1500)<\/script></body></html>'); w.document.close(); }catch(e){ toast("❌ تعذّر فتح صفحة الطباعة: " + e.message); }
   },
   async labelUrlFor(o, t, co, cfg){
     const c = o && o.id && this.labelOf(o.id); if(c) return { url: c };
