@@ -475,3 +475,8 @@ html.white #ord-prev-b h3,html.white .modal #ord-prev-t,html.white #ord-prev-b>b
 /* المظهر الفاتح: النص الملوَّن بالنعناعي/الليموني الفاتح (مثل صف «الأرخص» في مقارنة الشركات) يُقرأ بأخضر داكن واضح */
 html.white [style*="color:var(--g-mint" i],html.white [style*="color: var(--g-mint" i]{color:#166534!important}
 html.white [style*="color:var(--g-ok" i],html.white [style*="color: var(--g-ok" i]{color:#166534!important}
+
+/* منشأ طلب الموقع: حملة (برتقالي) / رابط (رمادي مزرقّ) */
+.o-src.camp{background:rgba(234,88,12,.14);color:#c2410c;border-color:rgba(234,88,12,.4)}
+.o-src.link{background:rgba(100,116,139,.14);color:#475569;border-color:rgba(100,116,139,.4)}
+html.glass .o-src.camp{color:#fdba74}html.glass .o-src.link{color:#cbd5e1}
