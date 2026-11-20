@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-20T16:05:33.631Z",
- "def": "wecan",
- "dk": "wecan",
+ "updated": "2026-11-20T16:08:25.649Z",
+ "def": "ecomdelivery",
+ "dk": "ecomdelivery",
  "dp": "",
- "noStop": false,
+ "noStop": true,
  "companies": {
   "yalidine": {
    "name": "Yalidine",
@@ -13200,5 +13200,132 @@
    ]
   }
  },
- "nd": {}
+ "nd": {
+  "1": [
+   "bouda",
+   "tit"
+  ],
+  "2": [
+   "benboutaleb",
+   "elhadjadj"
+  ],
+  "4": [
+   "eldjazia",
+   "rahia"
+  ],
+  "6": [
+   "benimelikeche",
+   "bouhamza",
+   "draakaid",
+   "ighilali",
+   "tamokra",
+   "tamridjet"
+  ],
+  "7": [
+   "ainzaatout",
+   "elfeidh",
+   "elhaouch",
+   "khanguetsidinadji"
+  ],
+  "8": [
+   "tabalbala"
+  ],
+  "11": [
+   "abalessa",
+   "idles",
+   "inamguel",
+   "tazouk"
+  ],
+  "12": [
+   "ferkane",
+   "negrine"
+  ],
+  "17": [
+   "amourah",
+   "guettara",
+   "oumlaadham"
+  ],
+  "18": [
+   "bordjtaher",
+   "boudriabeniyadjis",
+   "bouraouibelhadef",
+   "boussifouledaskeur",
+   "chahna",
+   "erraguene",
+   "ghebala",
+   "ouadjana",
+   "ouledrabah",
+   "ouledyahiakhadrouch",
+   "selmabenziada"
+  ],
+  "20": [
+   "sidiahmed"
+  ],
+  "21": [
+   "ainzouit",
+   "benizid",
+   "kanoua",
+   "khenegmayoum",
+   "ouedzehour",
+   "ouldjaboulbalout",
+   "zitouna"
+  ],
+  "22": [
+   "marhoum",
+   "tafissour"
+  ],
+  "24": [
+   "ainlarbi"
+  ],
+  "28": [
+   "ainfares"
+  ],
+  "29": [
+   "elgaada"
+  ],
+  "30": [
+   "elborma"
+  ],
+  "33": [
+   "bordjomardriss",
+   "debdeb",
+   "inamenas"
+  ],
+  "35": [
+   "ouledaissa"
+  ],
+  "36": [
+   "souarekh"
+  ],
+  "40": [
+   "djellal",
+   "eloueldja",
+   "khirane",
+   "msara",
+   "tamza"
+  ],
+  "43": [
+   "tessalalamatai"
+  ],
+  "47": [
+   "sebseb"
+  ],
+  "49": [
+   "metarfa",
+   "ouledaissa",
+   "ouledsaid",
+   "talmine"
+  ],
+  "50": [
+   "bordjbadjimokhtar",
+   "timiaouine"
+  ],
+  "54": [
+   "ainguezzam",
+   "tinzouatine"
+  ],
+  "56": [
+   "bordjelhaouass"
+  ]
+ }
 }
