@@ -27,6 +27,8 @@ jobs:
           git diff --quiet -- admin.html || { echo "::error file=admin.html::admin.html غير محدَّث من المصادر — شغّل python3 scripts/build-admin-pb.py وأضفه للإيداع"; exit 1; }
       - name: الأوامر الصوتية
         run: node scripts/test-voice.js
+      - name: مكتبة القوالب (صياغة + صور + معاينات + تنوّع الأسئلة)
+        run: node scripts/test-templates.js
       - name: المخزون
         run: node scripts/test-stock.js
       - name: المدفوعات
@@ -146,3 +148,30 @@ jobs:
         run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-admin.js
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-upsell-follow.js
+  nexus:
+    # NEXUS COMMERCE: اختبار سلوكي كامل (tests/nexus-commerce.js بكل Assertions) على حزمة عميل نظيفة تُبنى وتُثبَّت محلياً.
+    # مصفوفة: تثبيت على الجذر وعلى مجلد فرعي (/store) × ثلاث دفعات من المجموعات (لتقصير الزمن دون حذف أي فحص؛ G1,G3,G4,G5,G6,G7,G8 على المسارين)
+    # + G9 (روابط الفوتر والروابط الداخلية والموارد لكل المجالات الخمسة على الجذر و/store/ معاً: الاختبار نفسه يخدم المسارين فلا يُشغَّل على NX_SUBPATH)
+    name: NEXUS COMMERCE (${{ matrix.where }} · ${{ matrix.groups }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { subpath: '', where: root, groups: 'G1,G3,G4' }
+          - { subpath: '', where: root, groups: 'G5' }
+          - { subpath: '', where: root, groups: 'G6,G7,G8' }
+          - { subpath: '/store', where: subfolder, groups: 'G1,G3,G4' }
+          - { subpath: '/store', where: subfolder, groups: 'G5' }
+          - { subpath: '/store', where: subfolder, groups: 'G6,G7,G8' }
+          - { subpath: '', where: 'root+subfolder', groups: 'G9' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.2', extensions: 'sqlite3, pdo_sqlite, mbstring, curl, gd' }
+      - run: npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - name: tests/nexus-commerce.js
+        run: NODE_PATH=$PWD/node_modules NX_SUBPATH='${{ matrix.subpath }}' NX_GROUPS='${{ matrix.groups }}' NX_OUT=dist/nxout node tests/nexus-commerce.js

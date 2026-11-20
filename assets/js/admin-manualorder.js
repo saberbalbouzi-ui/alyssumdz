@@ -88,9 +88,15 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
         else if (!ffFail[key] && ad.ensureFromFees) { ad.ensureFromFees(fw.id, w).then(okk => { if (!okk) ffFail[key] = true; if (document.body.contains(bg)) autoFee(); }); note = " ⏳ جارِ جلب تعريفة الانطلاق من " + fw.name + "…"; }
         else note = " — تعذّر جلب تعريفة الانطلاق من " + fw.name + " فحُسب الرسم من الولاية الافتراضية";
       }
-      const chg = bg._force || !src || $("mo-wil").value !== src.wilaya || $("mo-com").value !== src.commune || dt() !== (src.dtype === "stop" ? "stop" : "home"), cd = chg && !zn ? cheapDef() : null;      /* خيارات الناقلين متوفرة ⟵ الافتراضي أرخص ناقل للنوع المختار (يمكن تغييره بالبطاقات) */
-      if (cd) { base = cd.p; note = " — " + cd.b + " (الأرخص)"; }
+      let chg = bg._force || !src || $("mo-wil").value !== src.wilaya || $("mo-com").value !== src.commune || dt() !== (src.dtype === "stop" ? "stop" : "home"), cd = chg && !zn ? cheapDef() : null, ub = !zn ? brandOpt(bg._ub) : null;      /* خيارات الناقلين متوفرة ⟵ الافتراضي أرخص ناقل للنوع المختار (يمكن تغييره بالبطاقات) */
+      if (ub) cd = ub;      /* ما اختاره المستخدم بالبطاقة يبقى مختاراً ما دام متاحاً للوجهة ونوع التوصيل (كان أي تغيير لاحق، كالبلدية، يعيد الأرخص فيرجع الناقل وحده) */
+      if (cd) { base = cd.p; note = " — " + cd.b + (ub ? "" : " (الأرخص)"); }
       if (chg) { $("mo-fee").value = base; $("mo-fh").textContent = w ? "رسم التوصيل: " + base.toLocaleString("fr-DZ") + " دج" + note : ""; } bg._force = false; bg._brand = cd ? cd.b : ""; try { drawOpts(); } catch (e) { } total();
+    }
+    /* سعر ناقل معيّن لوجهة ونوع التوصيل الحاليين (أو null إن لم يعد متاحاً) */
+    function brandOpt(b) {
+      if (!b) return null;
+      try { const w = wOf($("mo-wil").value), k = ad.activeCompanyKey && ad.activeCompanyKey(), cfg = k && ad.deliveryCfg[k], pw = w && (w.par || w.id), L = cfg && ad.optionsOf && pw ? ad.optionsOf(cfg)[pw] : null; if (!L || !L.length) return null; const kd = dt() === "stop" ? "s" : "h", o = L.find(x => x.b === b), p = o ? Number(o[kd]) || 0 : 0; return p > 0 ? { b, p } : null; } catch (e) { return null; }
     }
     /* أرخص ناقل لوجهة ونوع التوصيل الحاليين من خيارات الشركة الافتراضية (أو null) */
     function cheapDef() {
@@ -105,7 +111,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       L.forEach(o => { [["home", o.h, "منزل"], ["stop", o.s, "مكتب"]].forEach(([kd, pr, lb]) => { if (pr > 0) cards.push({ b: o.b, k: kd, p: pr, lb, cheap: pr === (kd === "home" ? mn.home : mn.stop) }); }); });
       const on = (bg._brand || "") + "|" + dt();
       box.innerHTML = '<div class="hint" style="margin:.1rem 0 .3rem;font-weight:800">خيارات التوصيل حسب الناقل — اختر الأرخص أو غيره</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem">' + cards.map(c => '<button type="button" data-ob="' + esc(c.b) + '" data-ok="' + c.k + '" data-op="' + c.p + '" class="mo-oc' + (on === c.b + "|" + c.k ? " on" : "") + '"><b>' + c.lb + " · " + c.p.toLocaleString("fr-DZ") + ' دج</b><span class="mo-cn">' + esc(c.b) + (c.cheap ? ' <i class="mo-ch">الأرخص</i>' : "") + "</span></button>").join("") + "</div>";
-      box.querySelectorAll("[data-ob]").forEach(btn => btn.onclick = () => { const kd = btn.getAttribute("data-ok"), r = bg.querySelector('input[name="mo-dt"][value="' + kd + '"]'); if (r && !r.disabled) { r.checked = true; fillDesk($("mo-desk").value); } bg._brand = btn.getAttribute("data-ob"); const fr = $("mo-free") && $("mo-free").checked; $("mo-fee").value = fr ? 0 : num(btn.getAttribute("data-op")); $("mo-fh").textContent = fr ? "توصيل مجاني — يتحمّل المتجر رسم الشركة (" + num(btn.getAttribute("data-op")).toLocaleString("fr-DZ") + " دج) — " + bg._brand : "رسم التوصيل: " + num(btn.getAttribute("data-op")).toLocaleString("fr-DZ") + " دج — " + bg._brand; total(); drawOpts(); });
+      box.querySelectorAll("[data-ob]").forEach(btn => btn.onclick = () => { const kd = btn.getAttribute("data-ok"), r = bg.querySelector('input[name="mo-dt"][value="' + kd + '"]'); if (r && !r.disabled) { r.checked = true; fillDesk($("mo-desk").value); } bg._brand = bg._ub = btn.getAttribute("data-ob"); const fr = $("mo-free") && $("mo-free").checked; $("mo-fee").value = fr ? 0 : num(btn.getAttribute("data-op")); $("mo-fh").textContent = fr ? "توصيل مجاني — يتحمّل المتجر رسم الشركة (" + num(btn.getAttribute("data-op")).toLocaleString("fr-DZ") + " دج) — " + bg._brand : "رسم التوصيل: " + num(btn.getAttribute("data-op")).toLocaleString("fr-DZ") + " دج — " + bg._brand; total(); drawOpts(); });
     }
     function drawLines() {
       const th = 'style="text-align:right;padding:.2rem;white-space:nowrap"';
@@ -130,7 +136,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       ph.addEventListener("change", () => { ph.value = fix(ph.value); });
       ph.addEventListener("input", () => { const c = ph.value.replace(/[^0-9+]/g, ""); if (c !== ph.value) ph.value = c; });      // الهاتف أرقام فقط
     } }
-    $("mo-wil").onchange = () => { fillCom(""); fillDesk(""); autoFee(); };
+    $("mo-wil").onchange = () => { bg._ub = ""; fillCom(""); fillDesk(""); autoFee(); };
     if (ad.shipSupLoad) ad.shipSupLoad().then(() => { if (!src && document.body.contains(bg)) autoFee(); });
     bg.querySelectorAll('input[name="mo-dt"]').forEach(r => r.onchange = () => { fillDesk($("mo-desk").value); autoFee(); });
     $("mo-com").onchange = () => { WilKids.pick($("mo-wil"), $("mo-com")); fillDesk(""); autoFee(); }; if ($("mo-from")) $("mo-from").onchange = () => autoFee(); if ($("mo-ps")) $("mo-ps").onchange = () => autoFee(); $("mo-fee").oninput = total; $("mo-disc").oninput = total;
@@ -164,6 +170,8 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
       try {
         if (mode === "edit") {
           const fdb = { name, phone, wilaya: $("mo-wil").value, commune: $("mo-com").value, dtype: dtp, desk, subtotal: c.sub, discount: c.disc, fee: c.fee, total: c.total, items: clean, items_text: txt };
+          /* الناقل المختار بالبطاقة (و«توصيل مجاني») كان لا يُحفظ عند التعديل لأن extra لا تدخل fdb، فيرجع الطلب إلى الناقل القديم */
+          { const ex = Object.assign({}, (src.extra && typeof src.extra === "object") ? src.extra : {}); if (bg._brand) ex["🚚 الناقل"] = bg._brand; if ($("mo-free")) { if ($("mo-free").checked) ex["توصيل مجاني"] = "نعم"; else delete ex["توصيل مجاني"]; } if (JSON.stringify(ex) !== JSON.stringify(src.extra || {})) fdb.extra = ex; }
           const note = $("mo-note").value.trim(); if (note) { src.note = (String(src.note || "") + " " + note).trim(); API.updateOrder(ad.key, src.id, undefined, src.note); }
           /* مخزون: إن كانت علب الطلب مخصومة (وسم 📦) تُعاد بالقديم ثم تُخصم بالجديد حتى يبقى الفرق وحده */
           let restock = null, stockMsg = "";
@@ -176,7 +184,7 @@ ${fld("ملاحظة (اختياري)", `<input id="mo-note" value="" placeholder
           let coMsg = ""; const tr = ad.trackingOf && ad.trackingOf(src);
           if (tr && ad.updateAtCompany) { b.textContent = "تحديث الطرد عند الشركة…"; const r = await (window.OrderEdit && OrderEdit.safeCo ? OrderEdit.safeCo(ad, ad.orders.indexOf(src), { full: true }) : ad.updateAtCompany(ad.orders.indexOf(src), { full: true })); coMsg = r.ok ? (r.partial ? " — " + r.msg : " وتحدّث الطرد عند الشركة") : (r.skipped ? "" : " ⚠️ تعذّر تحديث الطرد عند الشركة: " + r.msg + " — عدّله يدوياً (التتبع " + tr.tracking + ")"); if (!r.ok && !r.skipped) { try { ad.showNotice("تعذّر تحديث الطرد لدى الشركة", esc(r.msg) + "<br><small>حُفظ التعديل في اللوحة؛ عدّل الطرد " + esc(tr.tracking) + " يدوياً من حساب الشركة.</small>"); } catch (e) { } } }
           close(); try { ad.renderStats(); ad.renderOrders(); } catch (e) { } try { ad.openOrderPreview(ad.orders.indexOf(src)); } catch (e) { }
-          toast((saved ? "✅ حُفظ تعديل الطلب" : "✅ حُفظ التعديل في اللوحة") + stockMsg + coMsg); return;
+          toast((saved ? "✅ حُفظ تعديل الطلب" : "⚠️ حُفظ التعديل على هذا الجهاز فقط ولم يصل قاعدة الطلبات (تحقق من صلاحياتك أو الاتصال)") + (fdb.extra && fdb.extra["🚚 الناقل"] ? " — الناقل: " + fdb.extra["🚚 الناقل"] : "") + stockMsg + coMsg); return;
         }
         { const bh = mode === "edit" ? null : ad.blockHit(phone, name); if (bh && !window.confirm("⛔ تحذير: " + (bh.by === "name" ? "هذا الاسم" : "هذا الهاتف") + " في القائمة السوداء" + (bh.entry.reason ? " (" + bh.entry.reason + ")" : "") + ".\nهل تسجّل الطلب رغم ذلك؟")) { b.disabled = false; b.textContent = lab; return; } }
         const xchOn = !!($("mo-xch") && $("mo-xch").checked), xchTxt = xchOn ? $("mo-xcht").value.trim() : ""; if (xchOn && !xchTxt) { b.disabled = false; b.textContent = lab; say("⚠️ اكتب القطعة التي ستُسترجع من الزبون (الاستبدال)"); $("mo-xcht").focus(); return; }

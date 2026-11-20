@@ -463,3 +463,15 @@ html.white .yd-cb:hover{filter:brightness(.97)}
 html.white #pm .pm-btn:not(.pm-primary){background:#fff!important;background-image:none!important;color:#1f2937!important;border:1.5px solid #cbd5e1!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;text-shadow:none!important}
 html.white #pm .pm-btn:not(.pm-primary):hover{background:#f1f5f9!important}
 html.white #pm .pm-btn:not(.pm-primary) small{color:#475569!important;text-shadow:none!important}
+
+/* معاينة الطلب في المظهر الفاتح: الخطوط (العناوين والقيم والعنوان الرئيسي) بالأسود الواضح بدل الرمادي الباهت */
+html.white #ord-prev-b .kv td,html.white #ord-prev-b .kv td *:not(.o-src):not(.bl-tg):not(a):not(button){color:#000!important}
+html.white #ord-prev-b .kv td[style*="8a8f8c" i]{color:#000!important}
+html.white #ord-prev-b h3,html.white .modal #ord-prev-t,html.white #ord-prev-b>b{color:#000!important}
+
+/* جدول الطلبات على الهاتف: قوائم الصف (نتيجة الاتصال/تحويل) أضيق فتبقى مساحة فارغة بينها يُسحب منها الجدول يميناً ويساراً بسهولة */
+@media (max-width:700px){#orders-table td select{max-width:112px!important;min-width:0!important;font-size:.82rem!important}}
+
+/* المظهر الفاتح: النص الملوَّن بالنعناعي/الليموني الفاتح (مثل صف «الأرخص» في مقارنة الشركات) يُقرأ بأخضر داكن واضح */
+html.white [style*="color:var(--g-mint" i],html.white [style*="color: var(--g-mint" i]{color:#166534!important}
+html.white [style*="color:var(--g-ok" i],html.white [style*="color: var(--g-ok" i]{color:#166534!important}

@@ -1,0 +1,35 @@
+PASS [s-watches] منتج أصلي 1 موجود بصورته واسمه وسعره: watch_hand.webp
+PASS [s-watches] منتج أصلي 2 موجود بصورته واسمه وسعره: watch_wrist.webp
+PASS [s-watches] منتج أصلي 3 موجود بصورته واسمه وسعره: watch_pocket.webp
+PASS [s-watches] منتج أصلي 4 موجود بصورته واسمه وسعره: watch_white.webp
+PASS [s-watches] منتج أصلي 5 موجود بصورته واسمه وسعره: watch_rock.webp
+PASS [s-watches] منتج أصلي 6 موجود بصورته واسمه وسعره: gad_watch.webp
+PASS [s-watches] قسم الفئات موجود
+PASS [s-watches] صور بلاطات الفئات الأصلية بترتيبها  — ['watch_hand.webp', 'watch_pocket.webp', 'watch_wrist.webp']
+PASS [s-watches] نسبة البلاطات 1:1 كالأصل
+PASS [s-watches] قوس الهيرو: نسبة الإطار ≈ نسبة men_watch الطبيعية (800/1198)  — 440/660
+PASS [s-watches] قوس الهيرو: تقريب افتراضي 1 ونقطة تركيز 50% 50% (بلا قص)
+PASS [s-watches] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-watches] خلفية اللافتة الأصلية (الصورة/الحجم/الموضع/التدرّج/bgFixed) كما هي  — {'bgImg': 'assets/img/tpl/watch_rock.webp', 'bgSize': 'cover', 'bgPos': 'center', 'grad1': 'rgba(10,10,10,.5)', 'grad2': 'rgba(10,10,10,.82)', 'gradAng': 180, 'bgFixed': True}
+PASS [s-watches] لا صورة أصلية تتكرر أكثر مما في الأصل  — {'men_watch': 1, 'watch_rock': 2, 'watch_hand': 2, 'watch_wrist': 2, 'watch_pocket': 2, 'watch_white': 1, 'gad_watch': 1, 'men_suit': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-watches] الصور المضافة المعتمدة تظهر مرة واحدة
+PASS [s-watches] لا صور خارج الأصل والإضافات المعتمدة
+PASS [s-watches] ملفات كل الصور المستعملة متطابقة بايتاً مع الأصل
+PASS [s-tech] منتج أصلي 1 موجود بصورته واسمه وسعره: it_pc.webp
+PASS [s-tech] منتج أصلي 2 موجود بصورته واسمه وسعره: it_laptop.webp
+PASS [s-tech] منتج أصلي 3 موجود بصورته واسمه وسعره: it_code.webp
+PASS [s-tech] منتج أصلي 4 موجود بصورته واسمه وسعره: it_circuit.webp
+PASS [s-tech] منتج أصلي 5 موجود بصورته واسمه وسعره: gad_earbuds.webp
+PASS [s-tech] منتج أصلي 6 موجود بصورته واسمه وسعره: gad_speaker.webp
+PASS [s-tech] قسم الفئات موجود
+PASS [s-tech] صور بلاطات الفئات الأصلية بترتيبها  — ['it_pc.webp', 'it_laptop.webp', 'it_code.webp']
+PASS [s-tech] نسبة البلاطات 1:1 كالأصل
+PASS [s-tech] نسبة الإطار الافتراضية = نسبة it_color الطبيعية (1000/1250)  — 1000/1250
+PASS [s-tech] نقطة التركيز الافتراضية للإطار 50% 50% (it_color)
+PASS [s-tech] نسبة صور بطاقات المنتجات 1:1 كالأصل
+PASS [s-tech] لا صورة أصلية تتكرر أكثر مما في الأصل  — {'it_color': 1, 'gad_vr2': 1, 'dig_code': 1, 'it_dark': 1, 'it_pc': 2, 'it_laptop': 2, 'it_code': 2, 'it_circuit': 1, 'gad_earbuds': 1, 'gad_speaker': 1, 'gad_vr': 1, 'gad_watch': 1, 'av_m1': 1, 'av_m2': 1, 'av_m3': 1}
+PASS [s-tech] الصور المضافة المعتمدة تظهر مرة واحدة
+PASS [s-tech] لا صور خارج الأصل والإضافات المعتمدة
+PASS [s-tech] ملفات كل الصور المستعملة متطابقة بايتاً مع الأصل
+
+33/33 PASS — 0 FAILURES

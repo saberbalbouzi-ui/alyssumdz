@@ -1,0 +1,20 @@
+--- a/admin.html
++++ b/admin.html
+@@ -7008,7 +7008,7 @@
+     }catch(err){ console.error(err); toast("❌ " + err.message); }
+   },
+ 
+-  renderTagBoxes(){ const g = $f("f-tags-grid"); if(!g) return; g.innerHTML = (this.collections || this.collDefaults()).map(c=>'<label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="' + PB.esc(c.key) + '" style="width:auto"> ' + PB.esc(c.label) + (c.enabled === false ? ' <small style="color:#999">(معطّل)</small>' : "") + '</label>').join(""); },
++  renderTagBoxes(){ const g = $f("f-tags-grid"); if(!g) return; g.innerHTML = (this.collections || this.collDefaults()).map(c=>'<label style="display:flex;gap:.4rem;align-items:center;font-weight:700"><input type="checkbox" data-tag="' + (typeof PB !== "undefined" ? PB.esc(c.key) : String(c.key || "").replace(/[&<>"]/g, "")) + '" style="width:auto"> ' + PB.esc(c.label) + (c.enabled === false ? ' <small style="color:#999">(معطّل)</small>' : "") + '</label>').join(""); },
+   /* ════════ فئات الرئيسية (assets/data/collections.json) ════════ */
+   collDefaults(){ return JSON.parse("[{\"key\":\"best\",\"label\":\"🔥 الأكثر مبيعاً\",\"title\":\"الأكثر مبيعاً\",\"sub\":\"المنتجات المفضّلة لدى عملائنا\",\"ribbon\":\"🔥 الأكثر مبيعاً\",\"bg\":\"#F4EFE6\",\"accent\":\"#8a6a1a\",\"enabled\":true},{\"key\":\"hot\",\"label\":\"⚡ الأكثر طلباً\",\"title\":\"الأكثر طلباً\",\"sub\":\"الأكثر طلباً هذه الأيام\",\"ribbon\":\"⚡ الأكثر طلباً\",\"bg\":\"#FBEBDD\",\"accent\":\"#b4531a\",\"enabled\":true},{\"key\":\"sale\",\"label\":\"🏷️ التخفيضات\",\"title\":\"التخفيضات\",\"sub\":\"أسعار مخفّضة لفترة محدودة\",\"ribbon\":\"🏷️ تخفيض\",\"bg\":\"#FBE4E4\",\"accent\":\"#b83232\",\"enabled\":true},{\"key\":\"new\",\"label\":\"✨ المنتجات الجديدة\",\"title\":\"المنتجات الجديدة\",\"sub\":\"وصل حديثاً إلى المتجر\",\"ribbon\":\"✨ جديد\",\"bg\":\"#E4F1EA\",\"accent\":\"#157a55\",\"enabled\":true}]"); },
+   async loadCollections(){
+@@ -7024,7 +7024,7 @@
+       const q = v=>String(v||"").replace(/"/g,"&quot;"), id = f=>'cl-' + i + '-' + f;
+       return '<div style="border:1.5px dashed var(--line);border-radius:14px;padding:.7rem;margin-bottom:.6rem">' +
+         '<div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap"><label style="display:flex;gap:.3rem;align-items:center;font-weight:800"><input type="checkbox" id="' + id("enabled") + '"' + (c.enabled!==false?" checked":"") + ' style="width:auto;margin:0"> مفعّل</label>' +
+-        '<small dir="ltr" style="color:#999">' + PB.esc(c.key) + '</small><span style="margin-inline-start:auto;display:flex;gap:.3rem">' +
++        '<small dir="ltr" style="color:#999">' + (typeof PB !== "undefined" ? PB.esc(c.key) : String(c.key || "").replace(/[&<>"]/g, "")) + '</small><span style="margin-inline-start:auto;display:flex;gap:.3rem">' +
+         '<button class="small gray" type="button"' + (i===0?" disabled":"") + ' onclick="Admin.collMove(' + i + ',-1)">▲</button><button class="small gray" type="button"' + (i===n-1?" disabled":"") + ' onclick="Admin.collMove(' + i + ',1)">▼</button>' +
+         (/^(best|hot|sale|new)$/.test(c.key) ? "" : '<button class="small" style="background:var(--red);color:#fff" type="button" onclick="Admin.collDel(' + i + ')">🗑️</button>') + '</span></div>' +
+         '<div class="grid2" style="margin-top:.4rem"><input id="' + id("label") + '" placeholder="نص الزر (مع إيموجي)" value="' + q(c.label) + '"><input id="' + id("title") + '" placeholder="عنوان القسم" value="' + q(c.title) + '"></div>' +

@@ -1,0 +1,28 @@
+إعداد الحماية المعلن لهذه الأداة فقط (إعداد المستودع عدا bots:false؛ بلا انتحال UA/webdriver): {"on":true,"rc":true,"img":true,"keys":true,"dev":true,"frame":true,"note":true,"sel":true,"copy":true,"print":true,"bots":false,"updatedAt":"2026-11-07T21:49:55.333Z"}
+
+════════ s-watches ════════
+PASS [s-watches] install opens editor  — true
+PASS [s-watches] inventory: 67 elements (22 free, 45 flow)  — types=sbar,shdr,shape,image,text,heading,button,tbadges,marquee,counter,anchor,products,html,shopcats,iconbox,countdown,coupon,testimonial,accordion,sfoot
+PASS [s-watches] T1 كل العناصر قابلة للتحديد: 66/67 بالفأرة  — بالفأرة=66
+PASS [s-watches] T1b ما لم يُحدَّد بالفأرة (1) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات  — shape:jhkfldq←nwb17ww
+PASS [s-watches] T1c فاصل الأقسام: الشريط pointer-events:none والمقبض الظاهر auto، والسحب من المقبض يغيّر ارتفاع قسم واحد ويعيده التراجع  — {"pe":{"strip":"none","grip":"auto","vis":0.55},"dragged":1,"restored":true}
+PASS [s-watches] T2 سحب بالحمل (Alt، بلا دفع) يحرّك العنصر وحده ثم يُستعاد بالتراجع: 21/21 (منها 6 رفيعة حُرّكت بالأسهم)
+PASS [s-watches] T2b سحب عادي (دفع main): العنصر يتحرك والتراجع يعيد كل العناصر المُزاحة بالضبط: 21/21 (عناصر أُزيحت إجمالاً: 55؛ مقيَّدة بحدّ قسمها فلا تتحرك بالسحب العادي: 0)
+PASS [s-watches] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 40,660→47.9,790
+PASS [s-watches] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-watches] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-watches] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-watches] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-tech ════════
+PASS [s-tech] install opens editor  — true
+PASS [s-tech] inventory: 86 elements (2 free, 84 flow)  — types=sbar,shdr,text,heading,button,tbadges,image,marquee,anchor,spacer,shopcats,progress,products,html,iconbox,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-tech] T1 كل العناصر قابلة للتحديد: 86/86 بالفأرة  — بالفأرة=86
+PASS [s-tech] T1b ما لم يُحدَّد بالفأرة (0) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات
+PASS [s-tech] T1c فاصل الأقسام: الشريط pointer-events:none والمقبض الظاهر auto، والسحب من المقبض يغيّر ارتفاع قسم واحد ويعيده التراجع  — {"pe":{"strip":"none","grip":"auto","vis":0.55},"dragged":1,"restored":true}
+PASS [s-tech] T2 سحب بالحمل (Alt، بلا دفع) يحرّك العنصر وحده ثم يُستعاد بالتراجع: 2/2 (منها 0 رفيعة حُرّكت بالأسهم)
+PASS [s-tech] T2b سحب عادي (دفع main): العنصر يتحرك والتراجع يعيد كل العناصر المُزاحة بالضبط: 2/2 (عناصر أُزيحت إجمالاً: 0؛ مقيَّدة بحدّ قسمها فلا تتحرك بالسحب العادي: 1)
+N/A  [s-tech] T3 لا صورة حرة في هذا القالب (بطله متدفّق بالتصميم) — تحجيم/تدوير العنصر الحر مغطّاة في T2 وبطارية free-elements-qa
+FAIL [all] لا أخطاء JS في الصفحة  — PB is not defined
+
+19/20 PASS — 1 FAILURES

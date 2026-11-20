@@ -21,6 +21,31 @@ ap.add_argument("--kind", choices=["physical", "digital", "ask"], default="ask",
 ap.add_argument("--target", choices=["github", "php"], default="github", help="github: القالب الحالي (Supabase+GitHub) | php: حزمة للاستضافة العادية")
 a = ap.parse_args()
 OUT = (ROOT / a.out).resolve()
+
+def _owner_only():
+    """ما يخصّ متجر البائع ولا يصل أي عميل: قوالب/صور/ملفات مذكورة في shared-files.json تحت owner_only (أنماط glob)"""
+    import fnmatch
+    d = json.loads((ROOT / "shared-files.json").read_text(encoding="utf-8")).get("owner_only", {})
+    pats = list(d.get("files", []))
+    return (lambda rel: any(fnmatch.fnmatch(rel, g) for g in pats)), set(d.get("template_ids", []))
+
+def _scrub_pairs(name, wa):
+    return [("0559 23 72 39", wa), ("alyssum_", "store_"), ("alyssumdz.com", "example.com"), ("saberbalbouzi-ui", "your-account"), ("alyssumdz", "your-repo"),
+            ("213559237239", "213550000000"), ("anti-acne", "demo"), ("ALYSSUM DZ", name), ("ALYSSUM", name), ("أليسوم", name), ("alyssum", "store"), ("qvdaiundlkfbmjlummni", "YOUR_PROJECT_REF")]
+
+def _leak_scan(root_dir, slugs):
+    """يفحص مجلداً (حزمة تثبيت أو تحديث) بحثاً عن أي أثر لهوية البائع: أسماء، أرقام، حسابات، مفاتيح، سلاجات منتجاته"""
+    bad = [r"ruqya_(?:book|lookup|taken)|ruqya_bookings|admin-ruqya|tab-ruqya", r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", r"(?<!\d)0559(?!\d)", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(x) + r"(?=[\"'/])" for x in slugs if x not in ("demo", "test")]
+    _sk = re.search(r'SAAS_KEY:\s*"(sb_publishable_[^"]+)"', (ROOT / "assets/js/config.js").read_text(encoding="utf-8"))
+    allowed = re.compile(r"alyssum\s+(?:api|الذكية|الذكي|3d|box|mockup|studio|pack)|تقنية\s+alyssum|\(alyssum\)|issuer:\s*\"alyssum\"|\"alyssum \"\s*\+" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
+    hits = []
+    for f in root_dir.rglob("*"):
+        if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:
+            t = allowed.sub(lambda m: " " * len(m.group(0)), f.read_text(encoding="utf-8", errors="ignore"))
+            for b in bad:
+                for m in re.finditer(b, t, re.I):
+                    hits.append((str(f.relative_to(root_dir)), b, t[max(0, m.start() - 30):m.end() + 30].replace("\n", " ")))
+    return hits
 if a.update:
     if a.target != "php": sys.exit("--update يتطلب --target php")
     import subprocess, tempfile
@@ -34,10 +59,22 @@ if a.update:
         if rel.endswith("/**"): exp += sorted(str(f.relative_to(ROOT)) for f in (ROOT / rel[:-3]).rglob("*") if f.is_file())
         else: exp.append(rel)
     exp = [r for r in exp if not r.startswith("scripts/")]      # سكربتات البناء تخص مستودع GitHub لا استضافة PHP (والمحدِّث يرفضها)
+    is_owner, owner_ids = _owner_only()
+    TEXT = {".html", ".js", ".json", ".md", ".css", ".sql", ".sh", ".py", ".webmanifest", ".txt", ".svg"}
     for rel in exp:
-        src = tmp / rel if (tmp / rel).exists() else ROOT / rel     # ما لا يدخل الحزمة الأساسية (قوالب، صور) يُنسخ من المصدر
+        if is_owner(rel): continue                                  # ملفات متجر البائع (قالب أليسوم وصوره…) لا تصل أي عميل
+        from_src = not (tmp / rel).exists()
+        src = ROOT / rel if from_src else tmp / rel               # ما لا يدخل الحزمة الأساسية (قوالب، صور) يُنسخ من المصدر
         if not src.exists(): print("تحذير: ملف مشترك مفقود في المصدر:", rel); continue
-        (OUT / rel).parent.mkdir(parents=True, exist_ok=True); shutil.copy2(src, OUT / rel)
+        (OUT / rel).parent.mkdir(parents=True, exist_ok=True)
+        if rel == "assets/pages/templates/index.json":              # فهرس المكتبة للعميل بلا قوالب البائع (alyssum/owner)
+            idx = [x for x in json.loads(src.read_text(encoding="utf-8")) if not (x.get("alyssum") or x.get("owner") or x.get("id") in owner_ids)]
+            (OUT / rel).write_text(json.dumps(idx, ensure_ascii=False, indent=1), encoding="utf-8")
+        elif from_src and src.suffix in TEXT:                       # ملف منسوخ من المصدر لم يمرّ بتنظيف الحزمة الأساسية: يُنظَّف بالقواعد نفسها
+            t = src.read_text(encoding="utf-8")
+            for o, nw in _scrub_pairs(a.name.replace('"', "'").replace("\\", ""), a.wa): t = t.replace(o, nw)
+            (OUT / rel).write_text(t, encoding="utf-8")
+        else: shutil.copy2(src, OUT / rel)
     if not a.remote:
         # تحديث يدوي: يحمل أيضاً ملفات إعداد المحدِّث لتفعيل التحديث عن بُعد في المواقع القديمة (لا تدخل القناة البعيدة)
         (OUT / "api").mkdir(parents=True, exist_ok=True)
@@ -55,7 +92,11 @@ if a.update:
 لا يمسّ هذا التحديث: كلمة المرور، الطلبات، المنتجات، الصور، الإعدادات، رسوم التوصيل.
 احتفظ بنسخة احتياطية من مجلد الموقع قبل التحديث.
 """, encoding="utf-8")
-    print(f"✅ حزمة تحديث الإصدار {ver}:", OUT, "—", sum(1 for x in OUT.rglob("*") if x.is_file()), "ملفاً")
+    _slugs = re.findall(r'"slug":"([^"]+)"', (ROOT / "assets/js/data.js").read_text(encoding="utf-8"))
+    hits = _leak_scan(OUT, _slugs)                               # حزمة التحديث تُفحص كالحزمة الأساسية: لا أثر لهوية البائع (اسم/رقم/حساب/صور) يصل العميل
+    for h in hits[:60]: print("تسرّب:", *h)
+    if hits: sys.exit(f"{len(hits)} أثر لهوية البائع في حزمة التحديث — لم تُعتمد")
+    print(f"✅ حزمة تحديث الإصدار {ver}:", OUT, "—", sum(1 for x in OUT.rglob("*") if x.is_file()), "ملفاً — ✅ لا آثار لهوية البائع")
     sys.exit(0)
 if ROOT not in OUT.parents:
     sys.exit("المسار يجب أن يكون داخل المستودع")
@@ -190,6 +231,25 @@ for f in OUT.rglob("*"):
         if n != t:
             f.write_text(n, encoding="utf-8")
 
+# عناصر المكتبة المدمجة الخاصة بالبائع (owner: true في admin-nav.js، مثل «هبوط: عسل التركيز») تُحذف من كود العميل (وفي الكود حارس وقت التشغيل أيضاً)
+_nav = OUT / "assets/js/admin-nav.js"
+if _nav.exists():
+    _ls = _nav.read_text(encoding="utf-8").split("\n")
+    _keep = [l for l in _ls if not re.match(r'^\s*\{ id: "[^"]+".*\bowner: true \},?\s*$', l)]
+    if len(_keep) != len(_ls):
+        for _i in range(1, len(_keep)):                          # آخر عنصر في المصفوفة: لا فاصلة قبل «];»
+            if _keep[_i].strip() == "];" and _keep[_i - 1].rstrip().endswith("},"): _keep[_i - 1] = _keep[_i - 1].rstrip()[:-1]
+        _nav.write_text("\n".join(_keep), encoding="utf-8")
+
+# نقاط دخول هبوط «عسل التركيز» (صفحة البائع): زرّ شريط المنشئ في admin.html ومصفوفة TPL القديمة في admin-nav.js؛ الملف نفسه لا يُشحن للعميل
+_adm = OUT / "admin.html"
+if _adm.exists():
+    _t = _adm.read_text(encoding="utf-8"); _n = "\n".join(l for l in _t.split("\n") if "PBAdmin.openTemplate('focus-honey')" not in l)
+    if _n != _t: _adm.write_text(_n, encoding="utf-8")
+if _nav.exists():
+    _t = _nav.read_text(encoding="utf-8"); _n = re.sub(r'const TPL = \[\{ id: "focus-honey"[^\n]*\}\];', "const TPL = [];", _t)
+    if _n != _t: _nav.write_text(_n, encoding="utf-8")
+
 (OUT / "LICENSE.md").write_text("""# ترخيص استعمال القالب
 
 > نص مبدئي للتعديل فقط، وليس استشارة قانونية. اعرضه على محامٍ قبل اعتماده.
@@ -241,19 +301,7 @@ if a.target == "php":
 (OUT / "version.json").write_text(json.dumps({"version": (ROOT / "VERSION").read_text(encoding="utf-8").strip()}) + "\n", encoding="utf-8")
 
 # فحص التسرّب
-bad = [r"ruqya_(?:book|lookup|taken)|ruqya_bookings|admin-ruqya|tab-ruqya", r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", r"(?<!\d)0559(?!\d)", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(s) + r"(?=[\"'/])" for s in slugs if s not in ("demo", "test")]
-# مفتاح منصة SaaS العام (anon/publishable) مقصود وجوده في عميل المنصة؛ يُستثنى من الفحص بنصّه الحرفي فقط
-_sk = re.search(r'SAAS_KEY:\s*"(sb_publishable_[^"]+)"', (ROOT / "assets/js/config.js").read_text(encoding="utf-8"))
-# أسماء أدوات المنصة (Alyssum 3D Pack Studio، Box Designer…) و«تقنية Alyssum» وبصمات داخلية في ملفات PDF/المصادقة الثنائية ليست هوية متجرك
-ALLOWED_BRAND = re.compile(r"alyssum\s+(?:api|الذكية|الذكي|3d|box|mockup|studio|pack)|تقنية\s+alyssum|\(alyssum\)|issuer:\s*\"alyssum\"|\"alyssum \"\s*\+" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
-hits = []
-for f in OUT.rglob("*"):
-    if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:
-        t = f.read_text(encoding="utf-8", errors="ignore")
-        t = ALLOWED_BRAND.sub(lambda m: " " * len(m.group(0)), t)   # اسم الخدمة المعتمد (Alyssum API / Alyssum الذكية) ليس تسرّباً
-        for b in bad:
-            for m in re.finditer(b, t, re.I):
-                hits.append((str(f.relative_to(OUT)), b, t[max(0, m.start() - 30):m.end() + 30].replace("\n", " ")))
+hits = _leak_scan(OUT, slugs)
 for h in hits[:60]:
     print("تسرّب:", *h)
 print(f"{len(hits)} أثر" if hits else "✅ لا آثار لهويتك في النسخة", "—", OUT)

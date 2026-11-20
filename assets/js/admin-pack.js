@@ -20,10 +20,15 @@ const AdminPack = (() => {
   function parseItems(text) {
     return String(text || "").split(/\n/).map(l => { const m = l.match(/^(.+?)\s*×\s*(\d+)/); return m ? { title: shortName(m[1].trim()), qty: Math.max(1, +m[2] || 1) } : null; }).filter(Boolean);
   }
+  /* القائمة تتبع الطلب نفسه: أي تعديل على الطلب (الولاية/البلدية/الاسم/المنتجات) يظهر هنا فوراً من بيانات اللوحة بدل أن تبقى نسخة الخادم القديمة (طلب عُدِّل من المسيلة إلى العاصمة وبقي «المسيلة» في التجهيز) */
+  function live(rows) {
+    try { const os = (typeof Admin !== "undefined" && Admin.orders) || []; if (!os.length) return rows; const m = new Map(os.map(o => [String(o.id), o])); (rows || []).forEach(r => { const o = m.get(String(r.id)); if (!o) return; if (o.wilaya) r.wilaya = o.wilaya; if (o.commune) r.commune = o.commune; if (o.name) r.name = o.name; if (o.items) r.items = o.items; }); } catch (e) { }
+    return rows;
+  }
   /** قائمة الجمع: مجموع كميات كل منتج في الطلبات غير المجهَّزة */
   function pickList(rows) {
-    const m = new Map(); (rows || []).filter(r => !r.packed).forEach(r => parseItems(r.items).forEach(i => m.set(i.title, (m.get(i.title) || 0) + i.qty)));
-    return [...m.entries()].map(([title, qty]) => ({ title, qty })).sort((a, b) => b.qty - a.qty || a.title.localeCompare(b.title));
+    const m = new Map(), nm = new Map(); (rows || []).filter(r => !r.packed).forEach(r => parseItems(r.items).forEach(i => { m.set(i.title, (m.get(i.title) || 0) + i.qty); if (r.name) { const a = nm.get(i.title) || []; a.push(String(r.name).trim()); nm.set(i.title, a); } }));
+    return [...m.entries()].map(([title, qty]) => ({ title, qty, names: nm.get(title) || [] })).sort((a, b) => b.qty - a.qty || a.title.localeCompare(b.title));
   }
 
   /* ── ماسح الباركود: رقم التتبع أو رقم الطلب (جهاز ماسح بلوحة مفاتيح أو كاميرا BarcodeDetector) ── */
@@ -42,7 +47,7 @@ const AdminPack = (() => {
     return list.map((r, i) => ({ r, i, t: sigT(r), q: sigQ(r) })).sort((a, b) => (cnt.get(b.t) - cnt.get(a.t)) || a.t.localeCompare(b.t) || a.q.localeCompare(b.q) || a.i - b.i).map(x => x.r);
   }
   function filter(rows, f, q) {
-    q = String(q || "").trim().toLowerCase();
+    q = String(q || "").trim().toLowerCase(); live(rows);
     return groupSimilar((rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q))));
   }
 
@@ -97,14 +102,15 @@ const AdminPack = (() => {
 
   /* جدول التجهيز في صفحة A4 واحدة: يُقاس الارتفاع ويُصغَّر تلقائياً ليتسع (المنطقة المطبوعة ≈ 277mm) */
   function printTable(list) {
+    live(list);
     if (!list.length) { if (typeof toast === "function") toast("لا طلبات للطباعة"); return; }
     const w = window.open("", "_blank"); if (!w) { if (typeof toast === "function") toast("اسمح بالنوافذ المنبثقة للطباعة"); return; }
     const tot = new Map(); list.forEach(r => parseItems(r.items).forEach(i => tot.set(i.title, (tot.get(i.title) || 0) + i.qty)));
-    const rows = list.map((r, n) => '<tr><td class="n">' + (n + 1) + '</td><td>' + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td>' + esc(r.wilaya || "") + '</td><td class="ck"><i></i></td></tr>').join("");
+    const rows = list.map((r, n) => '<tr><td class="n">' + (n + 1) + '</td><td>' + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td>' + esc(r.name || "") + '</td><td>' + esc(r.wilaya || "") + '</td><td class="ck"><i></i></td></tr>').join("");
     const sum = [...tot.entries()].sort((a, b) => b[1] - a[1]).map(([t, q]) => esc(t) + " ×" + q).join(" · ");
     const css = '@page{size:A4;margin:8mm}*{box-sizing:border-box}body{font-family:Arial,"Noto Naskh Arabic",sans-serif;margin:0;color:#111}#pg{width:100%;transform-origin:top right}h1{font-size:15px;margin:0 0 4px;display:flex;justify-content:space-between}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #444;padding:3px 6px;text-align:right;line-height:1.35}th{background:#eee}td.n{width:28px;text-align:center}td.ck{width:34px;text-align:center}td.ck i{display:inline-block;width:13px;height:13px;border:1.5px solid #111}.sum{margin-top:6px;font-size:12px;font-weight:700}';
     const fit = 'var pg=document.getElementById("pg"),mm=document.createElement("div");mm.style.cssText="position:absolute;visibility:hidden;height:277mm;width:1px";document.body.appendChild(mm);var H=mm.offsetHeight,z=1;for(var k=0;k<8&&pg.getBoundingClientRect().height>H-6&&z>.25;k++){z=z*(H-8)/pg.getBoundingClientRect().height*.98;pg.style.zoom=z.toFixed(3)}mm.remove();setTimeout(function(){window.print()},200);';
-    w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>تجهيز الطلبات</title><style>' + css + '</style></head><body><div id="pg"><h1><span>📦 تجهيز الطلبات (' + list.length + ')</span><span>' + new Date().toLocaleDateString("fr-DZ") + '</span></h1><table><thead><tr><th>#</th><th>المنتج</th><th>الولاية</th><th>✓</th></tr></thead><tbody>' + rows + '</tbody></table><div class="sum">المجموع: ' + sum + '</div></div><script>window.onload=function(){' + fit + '}<\/script></body></html>'); w.document.close();
+    w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>تجهيز الطلبات</title><style>' + css + '</style></head><body><div id="pg"><h1><span>📦 تجهيز الطلبات (' + list.length + ')</span><span>' + new Date().toLocaleDateString("fr-DZ") + '</span></h1><table><thead><tr><th>#</th><th>المنتج</th><th>الزبون</th><th>الولاية</th><th>✓</th></tr></thead><tbody>' + rows + '</tbody></table><div class="sum">المجموع: ' + sum + '</div></div><script>window.onload=function(){' + fit + '}<\/script></body></html>'); w.document.close();
   }
 
   function beep(ok) { try { const c = new (window.AudioContext || window.webkitAudioContext)(), o = c.createOscillator(), g = c.createGain(); o.connect(g); g.connect(c.destination); o.frequency.value = ok ? 880 : 220; g.gain.value = .08; o.start(); setTimeout(() => { o.stop(); c.close(); }, ok ? 120 : 380); } catch (e) { } }
@@ -134,24 +140,24 @@ const AdminPack = (() => {
   /* ── الواجهة ── */
   function css() {
     if ($("pk-css")) return; const st = document.createElement("style"); st.id = "pk-css";
-    st.textContent = "#pk .chip{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;font-weight:800;border:1px solid rgba(255,255,255,.25)}#pk .chip.ok{color:#d4ff4d;border-color:rgba(226,254,23,.5)}#pk .chip.td{color:#fcd34d;border-color:rgba(245,158,11,.5)}html.white #pk .chip{border-color:rgba(0,0,0,.22)}html.white #pk .chip.ok{color:#15803d;border-color:#15803d;background:rgba(21,128,61,.09)}html.white #pk .chip.td{color:#b45309;border-color:#b45309;background:rgba(180,83,9,.09)}html.white #pk .pl div{background:rgba(0,0,0,.05)}#pk td,#pk th{padding:.45rem .5rem;vertical-align:top;text-align:right}#pk .pkt{width:100%;border-collapse:collapse;table-layout:fixed}#pk .pkt th:nth-child(1),#pk .pkt td:nth-child(1){width:2.4rem}#pk .pkt th:nth-child(3),#pk .pkt td:nth-child(3){width:26%}#pk .pkt th:nth-child(4),#pk .pkt td:nth-child(4){width:9.5rem}#pk .pkt td{vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pk .pkt td.ac{overflow:visible}#pk .pkt button.small{padding:.3rem .55rem;font-size:.8rem}@media(max-width:640px){#pk td,#pk th{padding:.35rem .25rem}#pk .pkt th:nth-child(4),#pk .pkt td:nth-child(4){width:5.6rem}#pk .pkt td.it{font-size:.88rem}}#pk .tbw{overflow:hidden}#pk .pl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;margin:.5rem 0}#pk .pl div{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem .6rem;border-radius:10px;background:rgba(255,255,255,.07)}#pk .pl b{font-size:1.1rem}";
+    st.textContent = "#pk .chip{display:inline-block;padding:.15rem .6rem;border-radius:999px;font-size:.78rem;font-weight:800;border:1px solid rgba(255,255,255,.25)}#pk .chip.ok{color:#d4ff4d;border-color:rgba(226,254,23,.5)}#pk .chip.td{color:#fcd34d;border-color:rgba(245,158,11,.5)}html.white #pk .chip{border-color:rgba(0,0,0,.22)}html.white #pk .chip.ok{color:#15803d;border-color:#15803d;background:rgba(21,128,61,.09)}html.white #pk .chip.td{color:#b45309;border-color:#b45309;background:rgba(180,83,9,.09)}html.white #pk .pl div{background:rgba(0,0,0,.05)}#pk td,#pk th{padding:.45rem .5rem;vertical-align:top;text-align:right}#pk .pkt{width:100%;border-collapse:collapse;table-layout:fixed}#pk .pkt th:nth-child(1),#pk .pkt td:nth-child(1){width:2.4rem}#pk .pkt th:nth-child(3),#pk .pkt td:nth-child(3){width:20%}#pk .pkt th:nth-child(4),#pk .pkt td:nth-child(4){width:20%}#pk .pkt th:nth-child(5),#pk .pkt td:nth-child(5){width:9.5rem}#pk .pkt td{vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#pk .pkt td.ac{overflow:visible}#pk .pkt button.small{padding:.3rem .55rem;font-size:.8rem}@media(max-width:640px){#pk td,#pk th{padding:.35rem .25rem}#pk .pkt th:nth-child(5),#pk .pkt td:nth-child(5){width:5.6rem}#pk .pkt th:nth-child(3),#pk .pkt td:nth-child(3),#pk .pkt th:nth-child(4),#pk .pkt td:nth-child(4){width:24%}#pk .pkt td.it{font-size:.88rem}}#pk .tbw{overflow:hidden}#pk .pl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.4rem;margin:.5rem 0}#pk .pl div{display:flex;justify-content:space-between;gap:.5rem;padding:.4rem .6rem;border-radius:10px;background:rgba(255,255,255,.07)}#pk .pl b{font-size:1.1rem}#pk .pl .pn{display:block;font-size:.74rem;font-weight:600;opacity:.8;white-space:normal;line-height:1.35}html.white #pk .pl .pn{opacity:.85}";
     document.head.appendChild(st);
   }
   function draw() {
-    const h = S.host; if (!h) return; css();
+    const h = S.host; if (!h) return; css(); live(S.rows);
     if (S.busy && !S.rows.length) { h.innerHTML = '<div id="pk" class="card"><p class="hint">جارٍ التحميل…</p></div>'; return; }
     if (S.err) { h.innerHTML = '<div id="pk" class="card"><b>تجهيز الطلبات</b><p class="hint" style="color:#fca5a5">' + esc(S.err) + '</p><button type="button" data-pk="reload">إعادة المحاولة</button></div>'; bind(); return; }
     const todo = S.rows.filter(r => !r.packed).length, list = filter(S.rows, S.f, S.q), pl = pickList(S.rows), ids = list.map(r => r.id), nSel = ids.filter(i => S.sel[i]).length;
     const tab = (k, l, n) => '<button type="button" class="small ' + (S.f === k ? "" : "gray") + '" data-pk="f" data-f="' + k + '">' + l + ' (' + n + ')</button>';
     h.innerHTML = '<div id="pk">' + scanCard() + '<div class="card"><div style="display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;align-items:center"><h2 style="margin:0">📦 تجهيز الطلبات</h2><button type="button" class="small" data-pk="reload">تحديث</button></div>' +
       '<p class="hint">الطلبات المؤكَّدة والمرسَلة فقط. جهِّز الطرد ثم اضغط «جُهِّز ✓»؛ يظهر ذلك لفريقك فوراً. لا تظهر هنا أرقام الهواتف ولا الأسعار.</p>' +
-      (pl.length ? '<b>قائمة الجمع (ما لم يُجهَّز بعد)</b><div class="pl">' + pl.map(p => '<div><span>' + esc(p.title) + '</span><b>×' + p.qty + '</b></div>').join("") + '</div>' : '<p class="hint">🎉 لا شيء بانتظار التجهيز.</p>') + '</div>' +
+      (pl.length ? '<b>قائمة الجمع (ما لم يُجهَّز بعد)</b><div class="pl">' + pl.map(p => '<div><span>' + esc(p.title) + (p.names && p.names.length ? '<small class="pn">' + esc(p.names.slice(0, 8).join("، ") + (p.names.length > 8 ? " …+" + (p.names.length - 8) : "")) + '</small>' : '') + '</span><b>×' + p.qty + '</b></div>').join("") + '</div>' : '<p class="hint">🎉 لا شيء بانتظار التجهيز.</p>') + '</div>' +
       (S.rows.some(noParcel) ? '<div class="card" style="border:1px solid #f87171"><b style="color:#f87171">⚠️ ' + S.rows.filter(noParcel).length + ' طلب في التجهيز بلا طرد عند الشركة</b><p class="hint" style="margin:.2rem 0 0">مُعلَّمة بالأحمر وعلامة ⚠️: لا تجهّزها قبل إرسالها (أو إعادة إرسالها) إلى الشركة من «الطلبات».</p></div>' : '') + '<div class="card"><div class="action-bar" style="flex-wrap:wrap">' + tab("todo", "بانتظار التجهيز", todo) + tab("done", "جُهِّزت", S.rows.length - todo) + tab("all", "الكل", S.rows.length) +
       '<input type="search" id="pk-q" placeholder="بحث: اسم، رقم الطلب، التتبع…" value="' + esc(S.q) + '" style="flex:1;min-width:160px"></div>' +
       '<div class="action-bar" style="flex-wrap:wrap;margin-top:.4rem"><button type="button" class="small" data-pk="all">' + (nSel === ids.length && ids.length ? "إلغاء التحديد" : "تحديد الكل") + '</button><button type="button" data-pk="markSel"' + (nSel ? "" : " disabled") + '>✓ تعليم المحدد كمجهَّز (' + nSel + ')</button><button type="button" class="small" data-pk="ptable">🖨️ طباعة الجدول (صفحة واحدة)</button><button type="button" class="small" data-pk="print"' + (nSel ? "" : " disabled") + '>🖨️ طباعة وصل التجهيز (' + nSel + ')</button></div>' +
-      '<div class="tbw"><table class="pkt"><thead><tr><th></th><th>المنتج</th><th>الولاية</th><th></th></tr></thead><tbody>' +
-      (list.length ? list.map(r => '<tr data-id="' + esc(r.id) + '" title="' + esc(r.id) + '"' + (noParcel(r) ? ' style="background:rgba(248,113,113,.14)"' : '') + '><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td class="it">' + (noParcel(r) ? '<b style="color:#f87171" title="' + esc(noParcel(r)) + '">⚠️ </b>' : '') + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td class="wl">' + esc(r.wilaya || "") + '</td><td class="ac">' +
-        (r.packed ? '<span class="chip ok">✓</span> <button type="button" class="small gray" data-pk="undo">تراجع</button>' : '<button type="button" class="small" data-pk="one">جُهِّز ✓</button>') + '</td></tr>').join("") : '<tr><td colspan="4" class="hint" style="text-align:center;padding:1.2rem">لا طلبات في هذا العرض</td></tr>') + '</tbody></table></div></div></div>';
+      '<div class="tbw"><table class="pkt"><thead><tr><th></th><th>المنتج</th><th>الزبون</th><th>الولاية</th><th></th></tr></thead><tbody>' +
+      (list.length ? list.map(r => '<tr data-id="' + esc(r.id) + '" title="' + esc(r.id) + '"' + (noParcel(r) ? ' style="background:rgba(248,113,113,.14)"' : '') + '><td><input type="checkbox" data-pk="sel"' + (S.sel[r.id] ? " checked" : "") + '></td><td class="it">' + (noParcel(r) ? '<b style="color:#f87171" title="' + esc(noParcel(r)) + '">⚠️ </b>' : '') + esc(parseItems(r.items).map(i => i.title + " ×" + i.qty).join("، ")) + '</td><td class="nm">' + esc(r.name || "") + '</td><td class="wl">' + esc(r.wilaya || "") + '</td><td class="ac">' +
+        (r.packed ? '<span class="chip ok">✓</span> <button type="button" class="small gray" data-pk="undo">تراجع</button>' : '<button type="button" class="small" data-pk="one">جُهِّز ✓</button>') + '</td></tr>').join("") : '<tr><td colspan="5" class="hint" style="text-align:center;padding:1.2rem">لا طلبات في هذا العرض</td></tr>') + '</tbody></table></div></div></div>';
     bind(); if (S.cam) { const v = $("pk-cam"); if (v && v.srcObject !== S.cam.stream) { v.srcObject = S.cam.stream; v.play && v.play().catch(() => { }); } }
   }
   function bind() {

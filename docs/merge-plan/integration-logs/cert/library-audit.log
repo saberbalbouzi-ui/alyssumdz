@@ -1,0 +1,375 @@
+PASS [scope] لا قالب خارج الدفعات الأربع تغيّر ملفه أو جلد منتجه (عدا تسوية حقول مرحلة القبول: عدّاد/كود/كمية/مخزون/علم نموذجي)
+PASS [variety] العناصر التسويقية والتصميمية لا تنقص عن الأساس المقبول (عدّادات/آراء/أسئلة/بطاقات/عناوين/نصوص/صور/أزرار/منتجات) عدا نص «ينتهي العرض خلال» اليتيم في s-marketplace
+PASS [variety] لا اسم رأي يتكرر بين القوالب
+PASS [variety] مجموعة الأرقام المتطابقة (12000/58/98/24) لم تعد تتكرر
+PASS [variety] ترتيب كتل النهاية يتنوّع بين القوالب (4 أنماط على الأقل)  — ['PSTF', 'SPTF', 'STFP', 'STPF', 'TPF', 'TPSF', 'TSFP']
+PASS [variety] لا صورة رجل تُعرض مع اسم أنثوي
+PASS [scope] s-alyssum وملفاته (قالب وجلد وصور وCSS) غير ممسوسة (الفهرس فقط يحمل علم owner)
+PASS [scope] لا معاينة مصغّرة خارج الدفعات تغيّرت (عدا قوالب مرحلة القبول المسوّاة)
+PASS [scope] الفهرس بالمعرّفات والترتيب نفسهما (33)  — 33
+PASS [scope] مداخل الفهرس خارج الدفعات متطابقة مع الأصل
+PASS [scope] تغيّر في مداخل الدفعات وصف القالب فقط (لا معرّف/تصنيف/ميدان/اسم)  — {'d': 26}
+PASS [index] معرّفات فريدة
+PASS [c-aurora] حقول الفهرس مكتملة
+PASS [c-aurora] نوع/تصنيف متسق (store→page وغيره→sec)  — contact/sec
+PASS [c-aurora] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 168
+PASS [c-neon] حقول الفهرس مكتملة
+PASS [c-neon] نوع/تصنيف متسق (store→page وغيره→sec)  — contact/sec
+PASS [c-neon] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 178
+PASS [c-gold] حقول الفهرس مكتملة
+PASS [c-gold] نوع/تصنيف متسق (store→page وغيره→sec)  — contact/sec
+PASS [c-gold] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 173
+PASS [c-soft] حقول الفهرس مكتملة
+PASS [c-soft] نوع/تصنيف متسق (store→page وغيره→sec)  — contact/sec
+PASS [c-soft] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 173
+PASS [c-steps] حقول الفهرس مكتملة
+PASS [c-steps] نوع/تصنيف متسق (store→page وغيره→sec)  — contact/sec
+PASS [c-steps] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 140
+PASS [o-flash] حقول الفهرس مكتملة
+PASS [o-flash] نوع/تصنيف متسق (store→page وغيره→sec)  — order/sec
+PASS [o-flash] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 143
+PASS [o-lux] حقول الفهرس مكتملة
+PASS [o-lux] نوع/تصنيف متسق (store→page وغيره→sec)  — order/sec
+PASS [o-lux] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 145
+PASS [o-steps] حقول الفهرس مكتملة
+PASS [o-steps] نوع/تصنيف متسق (store→page وغيره→sec)  — order/sec
+PASS [o-steps] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 130
+PASS [o-bundle] حقول الفهرس مكتملة
+PASS [o-bundle] نوع/تصنيف متسق (store→page وغيره→sec)  — order/sec
+PASS [o-bundle] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 129
+PASS [o-proof] حقول الفهرس مكتملة
+PASS [o-proof] نوع/تصنيف متسق (store→page وغيره→sec)  — order/sec
+PASS [o-proof] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 124
+PASS [s-aurora] حقول الفهرس مكتملة
+PASS [s-aurora] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-aurora] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 156
+PASS [s-gold] حقول الفهرس مكتملة
+PASS [s-gold] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-gold] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 170
+PASS [s-fresh] حقول الفهرس مكتملة
+PASS [s-fresh] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-fresh] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 156
+PASS [s-pop] حقول الفهرس مكتملة
+PASS [s-pop] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-pop] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 158
+PASS [s-tech] حقول الفهرس مكتملة
+PASS [s-tech] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-tech] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 160
+PASS [s-cosmetics] حقول الفهرس مكتملة
+PASS [s-cosmetics] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-cosmetics] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 161
+PASS [s-supplements] حقول الفهرس مكتملة
+PASS [s-supplements] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-supplements] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 162
+PASS [s-honey] حقول الفهرس مكتملة
+PASS [s-honey] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-honey] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 123
+PASS [s-herbs] حقول الفهرس مكتملة
+PASS [s-herbs] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-herbs] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 149
+PASS [s-fashion] حقول الفهرس مكتملة
+PASS [s-fashion] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-fashion] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 161
+PASS [s-it] حقول الفهرس مكتملة
+PASS [s-it] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-it] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 168
+PASS [s-digital] حقول الفهرس مكتملة
+PASS [s-digital] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-digital] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 163
+PASS [s-marketplace] حقول الفهرس مكتملة
+PASS [s-marketplace] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-marketplace] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 155
+PASS [s-watches] حقول الفهرس مكتملة
+PASS [s-watches] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-watches] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 139
+PASS [s-jewelry] حقول الفهرس مكتملة
+PASS [s-jewelry] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-jewelry] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 145
+PASS [s-accessories] حقول الفهرس مكتملة
+PASS [s-accessories] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-accessories] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 177
+PASS [s-perfume] حقول الفهرس مكتملة
+PASS [s-perfume] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-perfume] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 118
+PASS [s-skincare] حقول الفهرس مكتملة
+PASS [s-skincare] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-skincare] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 120
+PASS [s-makeup] حقول الفهرس مكتملة
+PASS [s-makeup] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-makeup] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 115
+PASS [s-women] حقول الفهرس مكتملة
+PASS [s-women] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-women] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 106
+PASS [s-men] حقول الفهرس مكتملة
+PASS [s-men] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-men] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 114
+PASS [s-kids] حقول الفهرس مكتملة
+PASS [s-kids] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-kids] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 118
+PASS [s-alyssum] حقول الفهرس مكتملة
+PASS [s-alyssum] نوع/تصنيف متسق (store→page وغيره→sec)  — store/page
+PASS [s-alyssum] اسم/وصف بلا مصطلحات تقنية ممنوعة وبطول معقول  — 154
+PASS [c-aurora] أقسام غير فارغة  — 3
+PASS [c-aurora] معرّفات العناصر فريدة داخل الصفحة
+PASS [c-aurora] كل الصور المشار إليها موجودة (1)
+PASS [c-aurora] لا عنصر HTML/كود مخصص
+PASS [c-aurora] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [c-aurora] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+/tmp/integ/tests/library-audit.py:110: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+  im = Image.open(p).convert("L").resize((16, 16)); px = list(im.getdata()); m = sum(px) / len(px); return [1 if v > m else 0 for v in px]
+PASS [c-neon] أقسام غير فارغة  — 4
+PASS [c-neon] معرّفات العناصر فريدة داخل الصفحة
+PASS [c-neon] كل الصور المشار إليها موجودة (1)
+PASS [c-neon] لا عنصر HTML/كود مخصص
+PASS [c-neon] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [c-neon] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [c-gold] أقسام غير فارغة  — 3
+PASS [c-gold] معرّفات العناصر فريدة داخل الصفحة
+PASS [c-gold] كل الصور المشار إليها موجودة (1)
+PASS [c-gold] لا عنصر HTML/كود مخصص
+PASS [c-gold] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [c-gold] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [c-soft] أقسام غير فارغة  — 4
+PASS [c-soft] معرّفات العناصر فريدة داخل الصفحة
+PASS [c-soft] كل الصور المشار إليها موجودة (1)
+PASS [c-soft] لا عنصر HTML/كود مخصص
+PASS [c-soft] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [c-soft] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [c-steps] أقسام غير فارغة  — 3
+PASS [c-steps] معرّفات العناصر فريدة داخل الصفحة
+PASS [c-steps] كل الصور المشار إليها موجودة (1)
+PASS [c-steps] لا عنصر HTML/كود مخصص
+PASS [c-steps] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [c-steps] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [o-flash] أقسام غير فارغة  — 3
+PASS [o-flash] معرّفات العناصر فريدة داخل الصفحة
+PASS [o-flash] كل الصور المشار إليها موجودة (1)
+PASS [o-flash] لا عنصر HTML/كود مخصص
+PASS [o-flash] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [o-flash] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [o-lux] أقسام غير فارغة  — 3
+PASS [o-lux] معرّفات العناصر فريدة داخل الصفحة
+PASS [o-lux] كل الصور المشار إليها موجودة (1)
+PASS [o-lux] لا عنصر HTML/كود مخصص
+PASS [o-lux] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [o-lux] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [o-steps] أقسام غير فارغة  — 4
+PASS [o-steps] معرّفات العناصر فريدة داخل الصفحة
+PASS [o-steps] كل الصور المشار إليها موجودة (1)
+PASS [o-steps] لا عنصر HTML/كود مخصص
+PASS [o-steps] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [o-steps] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [o-bundle] أقسام غير فارغة  — 3
+PASS [o-bundle] معرّفات العناصر فريدة داخل الصفحة
+PASS [o-bundle] كل الصور المشار إليها موجودة (0)
+PASS [o-bundle] لا عنصر HTML/كود مخصص
+PASS [o-bundle] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [o-bundle] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [o-proof] أقسام غير فارغة  — 3
+PASS [o-proof] معرّفات العناصر فريدة داخل الصفحة
+PASS [o-proof] كل الصور المشار إليها موجودة (3)
+PASS [o-proof] لا عنصر HTML/كود مخصص
+PASS [o-proof] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [o-proof] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-aurora] أقسام غير فارغة  — 12
+PASS [s-aurora] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-aurora] كل الصور المشار إليها موجودة (10)
+PASS [s-aurora] لا عنصر HTML/كود مخصص
+PASS [s-aurora] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-aurora] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-aurora] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-gold] أقسام غير فارغة  — 13
+PASS [s-gold] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-gold] كل الصور المشار إليها موجودة (10)
+PASS [s-gold] لا عنصر HTML/كود مخصص
+PASS [s-gold] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-gold] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-gold] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-fresh] أقسام غير فارغة  — 13
+PASS [s-fresh] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-fresh] كل الصور المشار إليها موجودة (10)
+PASS [s-fresh] لا عنصر HTML/كود مخصص
+PASS [s-fresh] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-fresh] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-fresh] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-pop] أقسام غير فارغة  — 12
+PASS [s-pop] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-pop] كل الصور المشار إليها موجودة (10)
+PASS [s-pop] لا عنصر HTML/كود مخصص
+PASS [s-pop] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-pop] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-pop] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-tech] أقسام غير فارغة  — 15
+PASS [s-tech] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-tech] كل الصور المشار إليها موجودة (15)
+PASS [s-tech] لا عنصر HTML/كود مخصص
+PASS [s-tech] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-tech] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-tech] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-cosmetics] أقسام غير فارغة  — 14
+PASS [s-cosmetics] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-cosmetics] كل الصور المشار إليها موجودة (6)
+PASS [s-cosmetics] لا عنصر HTML/كود مخصص
+PASS [s-cosmetics] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-cosmetics] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-cosmetics] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-supplements] أقسام غير فارغة  — 17
+PASS [s-supplements] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-supplements] كل الصور المشار إليها موجودة (9)
+PASS [s-supplements] لا عنصر HTML/كود مخصص
+PASS [s-supplements] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-supplements] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-supplements] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-honey] أقسام غير فارغة  — 13
+PASS [s-honey] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-honey] كل الصور المشار إليها موجودة (8)
+PASS [s-honey] لا عنصر HTML/كود مخصص
+PASS [s-honey] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-honey] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-honey] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-herbs] أقسام غير فارغة  — 13
+PASS [s-herbs] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-herbs] كل الصور المشار إليها موجودة (8)
+PASS [s-herbs] لا عنصر HTML/كود مخصص
+PASS [s-herbs] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-herbs] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-herbs] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-fashion] أقسام غير فارغة  — 13
+PASS [s-fashion] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-fashion] كل الصور المشار إليها موجودة (10)
+PASS [s-fashion] لا عنصر HTML/كود مخصص
+PASS [s-fashion] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-fashion] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-fashion] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-it] أقسام غير فارغة  — 13
+PASS [s-it] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-it] كل الصور المشار إليها موجودة (9)
+PASS [s-it] لا عنصر HTML/كود مخصص
+PASS [s-it] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-it] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-it] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-digital] أقسام غير فارغة  — 13
+PASS [s-digital] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-digital] كل الصور المشار إليها موجودة (9)
+PASS [s-digital] لا عنصر HTML/كود مخصص
+PASS [s-digital] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-digital] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-digital] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-marketplace] أقسام غير فارغة  — 15
+PASS [s-marketplace] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-marketplace] كل الصور المشار إليها موجودة (11)
+PASS [s-marketplace] لا عنصر HTML/كود مخصص
+PASS [s-marketplace] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-marketplace] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-marketplace] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-watches] أقسام غير فارغة  — 15
+PASS [s-watches] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-watches] كل الصور المشار إليها موجودة (11)
+PASS [s-watches] لا عنصر HTML/كود مخصص
+PASS [s-watches] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-watches] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-watches] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-jewelry] أقسام غير فارغة  — 12
+PASS [s-jewelry] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-jewelry] كل الصور المشار إليها موجودة (7)
+PASS [s-jewelry] لا عنصر HTML/كود مخصص
+PASS [s-jewelry] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-jewelry] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-jewelry] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-accessories] أقسام غير فارغة  — 12
+PASS [s-accessories] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-accessories] كل الصور المشار إليها موجودة (9)
+PASS [s-accessories] لا عنصر HTML/كود مخصص
+PASS [s-accessories] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-accessories] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-accessories] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-perfume] أقسام غير فارغة  — 14
+PASS [s-perfume] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-perfume] كل الصور المشار إليها موجودة (9)
+PASS [s-perfume] لا عنصر HTML/كود مخصص
+PASS [s-perfume] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-perfume] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-perfume] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-skincare] أقسام غير فارغة  — 14
+PASS [s-skincare] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-skincare] كل الصور المشار إليها موجودة (9)
+PASS [s-skincare] لا عنصر HTML/كود مخصص
+PASS [s-skincare] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-skincare] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-skincare] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-makeup] أقسام غير فارغة  — 13
+PASS [s-makeup] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-makeup] كل الصور المشار إليها موجودة (10)
+PASS [s-makeup] لا عنصر HTML/كود مخصص
+PASS [s-makeup] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-makeup] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-makeup] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-women] أقسام غير فارغة  — 14
+PASS [s-women] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-women] كل الصور المشار إليها موجودة (9)
+PASS [s-women] لا عنصر HTML/كود مخصص
+PASS [s-women] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-women] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-women] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-men] أقسام غير فارغة  — 12
+PASS [s-men] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-men] كل الصور المشار إليها موجودة (9)
+PASS [s-men] لا عنصر HTML/كود مخصص
+PASS [s-men] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-men] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-men] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-kids] أقسام غير فارغة  — 14
+PASS [s-kids] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-kids] كل الصور المشار إليها موجودة (9)
+PASS [s-kids] لا عنصر HTML/كود مخصص
+PASS [s-kids] نصوص الصفحة بلا مصطلحات تقنية ممنوعة (GitHub/Supabase/PHP/مسارات/مزوّدو ذكاء)
+PASS [s-kids] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [s-kids] جلد صفحة المنتج prod-<id>.json موجود
+PASS [s-alyssum] أقسام غير فارغة  — 14
+PASS [s-alyssum] معرّفات العناصر فريدة داخل الصفحة
+PASS [s-alyssum] كل الصور المشار إليها موجودة (12)
+NOTE [s-alyssum] قالب المتجر الأصلي خارج النطاق ولم يُمسّ: يحوي ['html'] ورقم واتساب حقيقياً في نصوصه (قائم في الأصل)
+PASS [s-alyssum] المعاينتان (مصغّرة + كاملة) موجودتان وغير فارغتين
+PASS [owner] لا أثر لهوية البائع (اسم/رقم/حساب) في أي ملف قالب يصل العميل
+PASS [owner] قوالب البائع مسجَّلة owner_only وغير مدرجة في القائمة المشتركة
+
+أقرب الأزواج بصرياً (مسافة بصمة 0..256): [(23, 's-honey', 's-jewelry'), (26, 's-honey', 's-women'), (27, 's-honey', 's-kids'), (27, 's-kids', 's-women'), (30, 's-jewelry', 's-kids')]
+PASS [distinct] لا معاينتان متطابقتان تقريباً (مسافة ≥ 20 لأقرب زوج من النوع نفسه)  — [(23, 's-honey', 's-jewelry'), (26, 's-honey', 's-women')]
+
+| القالب | النوع | أقسام | عناصر | صور | ضمن الدفعات |
+|---|---|---|---|---|---|
+| c-aurora | contact | 3 | 20 | 1 | ✓ |
+| c-neon | contact | 4 | 24 | 1 | ✓ |
+| c-gold | contact | 3 | 23 | 1 | ✓ |
+| c-soft | contact | 4 | 17 | 1 | ✓ |
+| c-steps | contact | 3 | 22 | 1 | ✓ |
+| o-flash | order | 3 | 13 | 1 | ✓ |
+| o-lux | order | 3 | 10 | 1 | ✓ |
+| o-steps | order | 4 | 13 | 1 | ✓ |
+| o-bundle | order | 3 | 9 | 0 | ✓ |
+| o-proof | order | 3 | 11 | 3 | ✓ |
+| s-aurora | store | 12 | 41 | 10 | ✓ |
+| s-gold | store | 13 | 39 | 10 | ✓ |
+| s-fresh | store | 13 | 42 | 10 | ✓ |
+| s-pop | store | 12 | 36 | 10 | ✓ |
+| s-tech | store | 15 | 84 | 15 | ✓ |
+| s-cosmetics | store | 14 | 48 | 6 | ✓ |
+| s-supplements | store | 17 | 55 | 9 | ✓ |
+| s-honey | store | 13 | 43 | 8 | ✓ |
+| s-herbs | store | 13 | 40 | 8 | ✓ |
+| s-fashion | store | 13 | 43 | 10 | ✓ |
+| s-it | store | 13 | 45 | 9 | ✓ |
+| s-digital | store | 13 | 53 | 9 | ✓ |
+| s-marketplace | store | 15 | 52 | 11 | ✓ |
+| s-watches | store | 15 | 65 | 11 | ✓ |
+| s-jewelry | store | 12 | 45 | 7 | ✓ |
+| s-accessories | store | 12 | 44 | 9 | ✓ |
+| s-perfume | store | 14 | 43 | 9 | — |
+| s-skincare | store | 14 | 44 | 9 | — |
+| s-makeup | store | 13 | 35 | 10 | — |
+| s-women | store | 14 | 39 | 9 | — |
+| s-men | store | 12 | 31 | 9 | — |
+| s-kids | store | 14 | 42 | 9 | — |
+| s-alyssum | store | 14 | 43 | 12 | — |
+
+332/332 PASS — 0 FAILURES

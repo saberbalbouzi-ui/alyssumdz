@@ -1,0 +1,26 @@
+إعداد الحماية المعلن لهذه الأداة فقط (إعداد المستودع عدا bots:false؛ بلا انتحال UA/webdriver): {"on":true,"rc":true,"img":true,"keys":true,"dev":true,"frame":true,"note":true,"sel":true,"copy":true,"print":true,"bots":false,"updatedAt":"2026-11-07T21:49:55.333Z"}
+
+════════ s-watches ════════
+PASS [s-watches] install opens editor  — true
+PASS [s-watches] inventory: 67 elements (22 free, 45 flow)  — types=sbar,shdr,shape,image,text,heading,button,tbadges,marquee,counter,anchor,products,html,shopcats,iconbox,countdown,coupon,testimonial,accordion,sfoot
+FAIL [s-watches] T1 كل العناصر قابلة للتحديد: 65/67 بالفأرة  — بالفأرة=65
+FAIL [s-watches] T1b ما لم يُحدَّد بالفأرة (2) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات  — shape:jhkfldq←nwb17ww; marquee:0hga7a2←0hga7a2 | غير مفسَّر: [{"id":"0hga7a2","type":"marquee","over":"0hga7a2","sel":false,"hit":"pbx-sdiv"}]
+FAIL [s-watches] T2 سحب كل عنصر حر قابل للتحديد يحرّكه وحده ثم يُستعاد بالتراجع: 15/21 (منها 6 رفيعة حُرّكت بالأسهم)  — image:nwb17ww moved=18[nwb17ww:30|60|40|660|0|3→35|90|40|660|0|3 ; lemiikp:68|116|30||0|6→68|761|30||0|6 ; g9ndi72:66|150|32||0|6→66|795|32||0|6 ; ztgynn3:66|330|32||0|6→66|975|32||0|6 ; d1t74au:66|44
+PASS [s-watches] T3a تحجيم عنصر البطل بالمقبض  — fwd/fh 40,660→47.9,790
+PASS [s-watches] T3b تدوير عنصر البطل بالمقبض  — rot=50
+PASS [s-watches] T3c تكرار عنصر البطل ثم حذف النسخة  — dup=true del=true
+PASS [s-watches] T3d إخفاء عنصر البطل على المكتب ثم إظهاره
+PASS [s-watches] T3e قفل عنصر البطل يمنع السحب ثم فكّه
+
+════════ s-tech ════════
+PASS [s-tech] install opens editor  — true
+PASS [s-tech] inventory: 86 elements (2 free, 84 flow)  — types=sbar,shdr,text,heading,button,tbadges,image,marquee,anchor,spacer,shopcats,progress,products,html,iconbox,testimonial,countdown,coupon,accordion,sfoot
+PASS [s-tech] T1 كل العناصر قابلة للتحديد: 85/86 بالفأرة  — بالفأرة=85
+FAIL [s-tech] T1b ما لم يُحدَّد بالفأرة (1) مغطّى بعنصر آخر بالتصميم وقابل للتحديد من لوحة الطبقات  — marquee:myz8hd9←myz8hd9 | غير مفسَّر: [{"id":"myz8hd9","type":"marquee","over":"myz8hd9","sel":true,"hit":"pbx-sdiv"}]
+FAIL [s-tech] اكتمال التشغيل بلا انهيار  — locator.boundingBox: Timeout 30000ms exceeded.
+Call log:
+[2m  - waiting for locator('#pbx-frame').contentFrame().locator('[data-kind="widget"][data-pb="1m32qb8"]')[22m
+
+FAIL [all] لا أخطاء JS في الصفحة  — PB is not defined
+
+10/16 PASS — 6 FAILURES

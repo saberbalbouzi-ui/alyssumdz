@@ -1,0 +1,10 @@
+s-nexus          stage.scrollTop    0 frameTop 132 pointY 146 topElement@point: pbx-frame => moved: true
+s-nexus          stage.scrollTop   24 frameTop 108 pointY 122 topElement@point: pbx-frame => moved: true
+s-nexus          stage.scrollTop   48 frameTop 84 pointY 98 topElement@point: QBAR => moved: false
+s-nexus          stage.scrollTop   72 frameTop 60 pointY 74 topElement@point: QBAR => moved: false
+s-nexus          stage.scrollTop  120 frameTop 12 pointY 26 topElement@point: BUTTON => moved: false
+s-nexus-fashion  stage.scrollTop    0 frameTop 132 pointY 146 topElement@point: pbx-frame => moved: true
+s-nexus-fashion  stage.scrollTop   24 frameTop 108 pointY 122 topElement@point: pbx-frame => moved: true
+s-nexus-fashion  stage.scrollTop   48 frameTop 84 pointY 98 topElement@point: QBAR => moved: false
+s-nexus-fashion  stage.scrollTop   72 frameTop 60 pointY 74 topElement@point: QBAR => moved: false
+s-nexus-fashion  stage.scrollTop  120 frameTop 12 pointY 26 topElement@point: BUTTON => moved: false

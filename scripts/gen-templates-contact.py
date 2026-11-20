@@ -7,7 +7,7 @@ left = C([
     PIC("dig_code", "مكتب الدعم", 26, fxs=[FX("إطار متوهج", "selector img{box-shadow:0 30px 70px rgba(124,58,237,.35);border:1px solid rgba(255,255,255,.2)}")], **anim("zoomIn", .8)),
     H("لنتحدّث ", 50, 34, ta="start", fxs=[gradtext(k, "#a78bfa", "#22d3ee", "#f472b6", 7)], **anim("fadeUp", .7)),
     T("نحن هنا لنجيب على كل أسئلتك حول المنتجات والطلبات والتوصيل. اختر الطريقة الأنسب لك.", 18, "#cbd5e1", "start", **anim("fadeUp", .7, .1)),
-    IB("phone", "اتصل بنا", "0555 00 00 00 — كل يوم من 9 صباحاً إلى 9 مساءً", isz=34, fxs=[cardgrid(), lift(".pb-ib", "rgba(124,58,237,.35)", -6), floaty(k, ".pb-ibi", 6, 4.5)], **anim("slideStart", .7, .2), al={"d": "start"}),
+    IB("phone", "اتصل بنا", "05XX XX XX XX — كل يوم من 9 صباحاً إلى 9 مساءً", isz=34, fxs=[cardgrid(), lift(".pb-ib", "rgba(124,58,237,.35)", -6), floaty(k, ".pb-ibi", 6, 4.5)], **anim("slideStart", .7, .2), al={"d": "start"}),
     IB("chat", "واتساب مباشر", "ردّ فوري خلال دقائق على رسائلك", isz=34, fxs=[cardgrid(), lift(".pb-ib", "rgba(34,211,238,.3)", -6), floaty(k + "b", ".pb-ibi", 6, 5.2)], **anim("slideStart", .7, .3)),
     IB("pin", "زورونا", "الجزائر العاصمة — التوصيل لكل الولايات", isz=34, fxs=[cardgrid(), lift(".pb-ib", "rgba(244,114,182,.3)", -6), floaty(k + "c", ".pb-ibi", 6, 5.8)], **anim("slideStart", .7, .4)),
 ], w=42, va="center")
@@ -39,7 +39,7 @@ left = C([
     PIC("jewel_pearl", "تغليف فاخر", 8, fxs=[FX("إطار ذهبي", "selector img{border:1px solid #c9992e;box-shadow:0 0 0 6px rgba(201,153,46,.12),0 30px 70px rgba(0,0,0,.5)}")], **anim("fadeUp", .8)),
     W("heading", text="خدمة بمقام الضيوف", tag="h2", fs=dm(46, 30), fw="900", ta={"d": "start"}, color="#f5d77a", lh={"d": 1.3}, fxs=[goldshimmer(k, 5)], **anim("fadeUp", .8)),
     T("لأن ثقتكم أغلى ما نملك، نتولّى كل استفسار بعناية فائقة وخصوصية تامة.", 18, "#cbbf9c", "start", **anim("fadeUp", .8, .1)),
-    T("<b style='color:#f5d77a'>ساعات العمل</b><br>السبت – الخميس: 9:00 صباحاً — 6:00 مساءً<br><b style='color:#f5d77a'>الهاتف</b> 0555 00 00 00 &nbsp;·&nbsp; <b style='color:#f5d77a'>واتساب</b> متاح دائماً", 17, "#e7ddc0", "start", lh=2.1, **anim("fadeUp", .8, .2)),
+    T("<b style='color:#f5d77a'>ساعات العمل</b><br>السبت – الخميس: 9:00 صباحاً — 6:00 مساءً<br><b style='color:#f5d77a'>الهاتف</b> 05XX XX XX XX &nbsp;·&nbsp; <b style='color:#f5d77a'>واتساب</b> متاح دائماً", 17, "#e7ddc0", "start", lh=2.1, **anim("fadeUp", .8, .2)),
     W("tbadges", items="ضمان الجودة\nتوصيل مؤمَّن\nدفع عند الاستلام", live=False, cbg="#00000040", cc="#f5d77a", cbc="#c9992e", crad=dm(8), cfs=dm(14), gap=dm(10), jc="flex-start", **anim("fadeUp", .8, .3)),
 ], w=44, va="center")
 reg("c-gold", "contact", "فخامة", "اتصال فخامة ذهبية", "خلفية سوداء ناعمة، عنوان بلمعان ذهبي، نموذج بحد ذهبي مزدوج وزر ذهبي يلمع.",
