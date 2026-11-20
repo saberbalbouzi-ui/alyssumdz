@@ -30,6 +30,8 @@ const { chromium } = require("playwright");
   t("رسائل الخطأ: الحد الأدنى وحقول التحقق", /400/.test(R.err1) && /id_wilaya/.test(R.err2), [R.err1, R.err2]);
   t("التعريفة والولايات والبلديات", R.fees[16].home === 450 && R.fees[16].stop === 200 && R.fees[1].home === 1100 && R.wil.ok && R.com.names.length === 2 && R.com.nd.join() === "X", [R.fees, R.wil, R.com]);
   t("الحالات: مسلَّم/تعثّر/مُرسَل/مؤكَّد/تنبيه/مرتجع", R.st.join() === "livree,echec,expediee,confirmee,__alert,echec", R.st);
+  const M2 = await p.evaluate(() => { const co = Admin.DELIVERY_COMPANIES.ecomdelivery, W = Admin._W && Admin._W(); const m = ["En Préparation", "Colis prêt à expédier", "Mes Colis · En livraison", "Retour prêt à récupérer", "Mes Retours", "Supprimée", "Colis Supprimés"].map(x => co.mapStatus(x)); return { m, ph: W ? [W.returnPhase("Retour prêt à récupérer"), W.returnPhase("Mes Retours")] : null }; });
+  t("قائمة حالات E-com: En Préparation/prêt à expédier→مؤكَّد، في الطريق→مُرسَل، الرجوع→تعثّر، المحذوف→تنبيه؛ ومرحلة الإرجاع جاهز/في الطريق", M2.m.join() === "confirmee,confirmee,expediee,echec,echec,__alert,__alert" && (!M2.ph || M2.ph.join() === "ready,transit"), M2);
   t("parseStatus والبوردرو والإلغاء ومدرجة بين الشركات", R.ps === "EnCours · Au Bureau" && /bordereau\?format=10x13/.test(R.lbl) && R.del === "DELETE" && R.listed, [R.ps, R.lbl, R.del, R.listed]);
   const F = await p.evaluate(async () => {
     const A = Admin, out = {}; window.toast = () => { }; const wait = ms => new Promise(r => setTimeout(r, ms)); const saved = []; API.addOrder = async o => { saved.push(o); return { ok: true, id: "M-EC1" }; };
