@@ -25,8 +25,8 @@ const swFile = async () => { const f = path.join(tmp, `sw${swN++}.mjs`); writeFi
 class MemKV {
   constructor() { this.m = new Map(); this.fail = false; this.puts = 0; }
   async get(k, t) { if (this.fail) throw new Error("kv offline"); const v = this.m.get(k); if (v == null) return null; if (t === "arrayBuffer" || t?.type === "arrayBuffer") return typeof v === "string" ? enc.encode(v).buffer : v.slice().buffer; return typeof v === "string" ? v : dec.decode(v); }
-  async getWithMetadata(k) { if (this.fail) throw new Error("kv offline"); return { value: this.m.has(k) ? { cancel() { } } : null }; }
-  async put(k, v) { if (this.fail) throw new Error("kv offline"); this.puts++; this.m.set(k, typeof v === "string" ? v : new Uint8Array(v)); }
+  async getWithMetadata(k) { if (this.fail) throw new Error("kv offline"); this.hm = (this.hm ?? 0) + 1; return { value: this.m.has(k) ? { cancel() { } } : null }; }
+  async put(k, v) { if (this.fail) throw new Error("kv offline"); if (this.quotaErr) throw new Error("KV put() limit exceeded for the day."); this.puts++; this.m.set(k, typeof v === "string" ? v : new Uint8Array(v)); }
 }
 const web = (kv) => ({ fetch: async (req) => { const sw = await swFile(); return sw.fetch(req, { FILES: kv }); } });
 const seed = async (kv, comp, rel, files) => { const map = {}; for (const [p, c] of Object.entries(files)) { const b = enc.encode(c), h = await sha256Hex(b); map[p] = h; kv.m.set("o/" + h, b); } kv.m.set("__ptr/" + comp, rel); kv.m.set(`__m/${comp}/${rel}`, JSON.stringify(map)); };
@@ -205,6 +205,32 @@ sec("E5) التسوية بلا شجرة، وحدّ الرأس يوقف كل شي
   const rc = await w.run({ kind: "reconcile" }); ok("[E20] تسوية دورية على الرأس نفسه: فحص حيّ بلا قراءة شجرة (لا حصة API)", rc.ok && rc.verified > 0 && rc.mode === "delta" && w.repo.calls.filter((c) => c === "tree").length === t0, rc);
   const oh = w.repo.head.bind(w.repo); w.repo.head = async () => { const e = new Error("source: info/refs → 429"); e.status = 429; e.retryAfterMs = 100000; throw e; }; const hl = await w.run(); const c1 = w.repo.calls.length; const hk = await w.run(); w.repo.head = oh;
   ok("[E21] حدّ كل مصادر الرأس ⇒ تراجع عام (لا نداء لأي شيء حتى ينتهي)", !hl.ok && hl.rateLimited && hk.skipped === "backoff" && w.repo.calls.length === c1, { hl: hl.error, hk });
+  w.db.close(); }
+
+sec("E6) الخطة المجانية: ميزانية كتابات KV اليومية، التبنّي بلا كتابة، بيان بلا تغيير")
+{ /* تبنّي: البيان الحيّ يشير أصلاً إلى المحتوى نفسه ⇒ لا كتابة كائن ولا بيان */
+  const base = await world(); const rb = await base.run(); const putsBase = base.kv.puts;
+  const w = await world(); const imgSha = await sha256Hex(IMG(1)); w.kv.m.set("o/" + imgSha, IMG(1)); const man = JSON.parse(w.kv.m.get("__m/ui/r-1")); man["assets/img/honey/0.webp"] = imgSha; w.kv.m.set("__m/ui/r-1", JSON.stringify(man));
+  const r = await w.run();
+  ok("[Q1] صورة مطابقة أصلاً على Beta ⇒ تُتبنّى: لا يُرفع كائنها (كتابة أقل بواحدة) وقراءة KV (طلب فرعي) أقل بواحدة بالضبط من العالم الأساسي", r.ok && rb.ok && w.kv.puts === putsBase - 1 && w.kv.hm === base.kv.hm - 1 && r.applied === rb.applied, { puts: [w.kv.puts, putsBase], hm: [w.kv.hm, base.kv.hm] });
+  const it = await w.db.get("SELECT state, out_sha FROM sync_items WHERE path=?", ["assets/img/honey/0.webp"]); ok("[Q2] المتبنّاة مسجَّلة applied بالبصمة نفسها ومخدومة حيّاً", it?.state === "applied" && it.out_sha === imgSha && (await w.get("assets/img/honey/0.webp")).s === 200);
+  const pr = w.kv.puts; const rc = await w.run({ kind: "reconcile" }); ok("[Q3] تسوية بلا تغيير ⇒ صفر كتابات KV (البيان لا يُكتب إن لم يتغير)", rc.ok && w.kv.puts === pr, { delta: w.kv.puts - pr });
+  const st = await syncStatus(w.db); ok("[Q4] الحالة تعرض عدّاد كتابات KV وما بقي بالانتظار", st.kv.writes > 0 && typeof st.pending === "number", st.kv);
+  w.db.close(); base.db.close(); }
+{ /* ميزانية يومية: توقّف قبل الحدّ ثم استئناف تلقائي بعد منتصف الليل UTC دون فقد */
+  const w = await world(), T0 = Date.now(), at = (d) => () => T0 + d * 86_400_000, CAP = 5; let maxDay = 0, days = 0, last;
+  for (let d = 0; d < 8; d++) { days++; last = await w.run({ now: at(d), budget: { kv_daily: CAP } }); const day = Number(await meta.get(w.db, "kv_writes", 0)); maxDay = Math.max(maxDay, day); if (!last.pending && last.ok) break; const again = await w.run({ now: at(d), budget: { kv_daily: CAP } }); ok("[Q5] بعد بلوغ الميزانية: بقية اليوم لا كتابات (تخطٍّ صريح بسبب الحصة)", again.skipped === "kv_quota" && again.until, again); }
+  ok("[Q6] لم يتجاوز أي يوم السقف، وانتهى الاكتمال على أيام متتالية بلا فقد", maxDay <= CAP && days > 1 && last.ok && !last.pending, { maxDay, days, last });
+  const its = await w.db.all("SELECT state FROM sync_items WHERE state<>'deleted'"); ok("[Q7] كل العناصر applied بعد الاستئناف، ولا أحداث فاشلة", its.length > 0 && its.every((x) => x.state === "applied") && !(await w.db.get("SELECT 1 x FROM sync_events WHERE status IN ('failed','pending','unverified')")), its);
+  const ids = await w.db.all("SELECT idem FROM sync_events"); ok("[Q8] لا أحداث مكرَّرة (idempotent عبر الأيام)", new Set(ids.map((x) => x.idem)).size === ids.length);
+  w.db.close(); }
+{ /* خطأ حصة فعلي من KV (429/limit exceeded): يُؤجَّل ولا يُعدّ فشلاً، ويُستأنف بعد التجدد */
+  const w = await world(), T0 = Date.now(); w.kv.quotaErr = true; const r = await w.run({ budget: { kv_daily: 0 } });
+  ok("[Q9] KV يرفض بسبب الحصة ⇒ تُرصد الحصة، لا فشل، والعمل مؤجَّل", r.quota && r.failed === 0 && r.pending > 0, r);
+  ok("[Q10] لا أحداث failed (مؤجَّلة pending) ولا عنصر applied بلا كائن", !(await w.db.get("SELECT 1 x FROM sync_events WHERE status='failed'")) && !(await w.db.get("SELECT 1 x FROM sync_items WHERE state='applied'")));
+  const skip = await w.run({ budget: { kv_daily: 0 } }); ok("[Q11] بعد خطأ الحصة: الدورات التالية تتخطّى بلا طرق على KV حتى التجدد", skip.skipped === "kv_quota" && skip.until);
+  const stq = await syncStatus(w.db); ok("[Q12] الحالة تُظهر الإيقاف المؤقت بسبب الحصة", !!stq.kv.paused_until && /حصة KV/.test(stq.last_error ?? ""), stq.kv);
+  w.kv.quotaErr = false; const r2 = await w.run({ now: () => T0 + 36 * 3_600_000, budget: { kv_daily: 0 } }); ok("[Q13] بعد تجدد الحصة يكتمل كل شيء تلقائياً بلا تدخل", r2.ok && !r2.pending && (await syncStatus(w.db)).in_sync, r2);
   w.db.close(); }
 
 sec("F) حواجز الشيفرة");

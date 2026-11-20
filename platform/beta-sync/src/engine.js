@@ -8,17 +8,24 @@ import { migrate, meta } from "./db.js";
 
 const LOCK_TTL_MS = 150_000, MAX_ATTEMPTS = 8;
 const iso = () => new Date().toISOString();
+const isQuota = (e) => /10048|limit exceeded|free usage limit|usage limit/i.test(String(e?.message ?? e));
 
 /** معرّف blob في git (SHA-1 لـ«blob <len>\0<bytes>») — يطابق ما تعيده شجرة git فيتّسق وضعا delta وtree */
 export async function gitBlobSha(bytes) { const h = new TextEncoder().encode(`blob ${bytes.length}\0`), all = new Uint8Array(h.length + bytes.length); all.set(h); all.set(bytes, h.length); return [...new Uint8Array(await crypto.subtle.digest("SHA-1", all))].map((b) => b.toString(16).padStart(2, "0")).join(""); }
 
 export async function runSync({ source, target, db, san, kind = "incremental", budget = {}, force = false, log = () => { }, now = Date.now }) {
-  const B = { files: budget.files ?? 12, bytes: budget.bytes ?? 6_000_000, verify: budget.verify ?? 10 }, t0 = now();
+  const B = { files: budget.files ?? 12, bytes: budget.bytes ?? 6_000_000, verify: budget.verify ?? 10, kvDaily: budget.kv_daily ?? 0 }, t0 = now();
   await migrate(db);
+  /* ميزانية كتابات KV اليومية (الخطة المجانية: 1000 كتابة/يوم) — تُحسب كتابات الكائنات والبيان فقط (القراءة مجانية)، وتُستأنف تلقائياً بعد منتصف الليل UTC. 0 = بلا حدّ (خطة مدفوعة/اختبارات) */
+  const day = new Date(now()).toISOString().slice(0, 10); if ((await meta.get(db, "kv_day")) !== day) { await meta.set(db, "kv_day", day); await meta.set(db, "kv_writes", 0); }
+  await meta.set(db, "kv_cap", B.kvDaily);
+  const midnight = () => { const d = new Date(now()); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 5); };
+  const kq = Number(await meta.get(db, "kv_quota_until", 0)), used0 = Number(await meta.get(db, "kv_writes", 0));
+  if (!force && ((kq && now() < kq) || (B.kvDaily && used0 + 1 + COMPONENTS.length > B.kvDaily))) { const until = kq && now() < kq ? kq : midnight(); return { ok: true, skipped: "kv_quota", until: new Date(until).toISOString(), kv_writes: used0 }; }
   const bo = Number(await meta.get(db, "backoff_until", 0)); if (bo && now() < bo && !force) return { ok: true, skipped: "backoff", until: new Date(bo).toISOString() };   // حدّ معدّل GitHub: لا إلحاح
   const lock = Number(await meta.get(db, "lock", 0)); if (lock && now() - lock < LOCK_TTL_MS && !force) return { ok: true, skipped: "locked" };
   await meta.set(db, "lock", now());
-  const R = { ok: false, kind, head: null, prevHead: await meta.get(db, "synced_head"), planned: 0, applied: 0, failed: 0, quarantined: 0, deleted: 0, diffs: 0, pending: 0, verified: 0, notes: [] };
+  const R = { ok: false, kind, head: null, prevHead: await meta.get(db, "synced_head"), planned: 0, applied: 0, failed: 0, quarantined: 0, deleted: 0, diffs: 0, pending: 0, verified: 0, notes: [], kvUsed: used0 };
   let runId = null;
   try {
     R.phase = "head"; const head = await source.head(); R.head = head;
@@ -77,7 +84,11 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
     const runRow = await db.run("INSERT INTO sync_runs (ts,kind,head,prev_head,planned) VALUES (?,?,?,?,?)", [iso(), kind, head, last, plan.length]); runId = runRow.id;
     let rev = Number(await meta.get(db, "rev", 0));
     const patch = Object.fromEntries(COMPONENTS.map((c) => [c, { set: {}, del: [] }])), done = [];
+    let quotaStop = false;
+    const hitQuota = async (why) => { quotaStop = true; R.quota = true; await meta.set(db, "kv_quota_until", midnight()); await meta.set(db, "last_error", "حصة KV اليومية: " + why + " — تُستأنف تلقائياً بعد " + new Date(midnight()).toISOString()); };
     for (const e of batch) {
+      if (quotaStop) { R.pending++; continue; }
+      if (B.kvDaily && R.kvUsed + 1 + COMPONENTS.length > B.kvDaily) { await hitQuota("بلغت الميزانية اليومية (" + R.kvUsed + "/" + B.kvDaily + ")"); R.pending++; continue; }
       const prev = await db.get("SELECT seq, attempts FROM sync_events WHERE path=? AND status IN ('pending','failed','unverified') AND op=? AND src_blob IS ? ORDER BY seq DESC LIMIT 1", [e.path, e.op, e.op === "delete" ? null : e.d.blob]);
       rev += 1; e.rev = rev; let seq = prev?.seq;
       if (seq) await db.run("UPDATE sync_events SET attempts=attempts+1, run_id=?, ts=?, rev=? WHERE seq=?", [runId, iso(), rev, seq]);
@@ -91,16 +102,24 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
           await db.run("INSERT INTO sync_items (path,comp,cls,src_blob,out_sha,rev,state,src_commit,notes,reason,updated_at) VALUES (?,?,?,?,NULL,?,'quarantined',?,?,?,?) ON CONFLICT(path) DO UPDATE SET comp=excluded.comp,cls=excluded.cls,src_blob=excluded.src_blob,rev=excluded.rev,state='quarantined',src_commit=excluded.src_commit,notes=excluded.notes,reason=excluded.reason,updated_at=excluded.updated_at, out_sha=NULL", [e.path, e.comp, e.d.cls.id, e.d.blob, rev, head, JSON.stringify(r.notes ?? []), r.blocked, iso()]);
           await ev(db, seq, "quarantined", r.blocked); R.quarantined++; if (items.get(e.path)?.state === "applied") patch[e.comp].del.push(e.path); continue;
         }
-        const out = await sha256Hex(r.bytes); e.out = out; e.notes = r.notes; await target.putObject(out, r.bytes); patch[e.comp].set[e.path] = out; done.push(e);
-      } catch (err) { await ev(db, seq, "failed", String(err.message ?? err).slice(0, 300)); R.failed++; log("✗ " + e.path + " — " + err.message); }
+        const out = await sha256Hex(r.bytes); e.out = out; e.notes = r.notes;
+        if (man[e.comp].map[e.path] === out) e.adopted = true;                                                    // البيان الحيّ يشير أصلاً لهذا المحتوى بعينه ⇒ لا كتابة (يبقى التحقق الحيّ)
+        else if (await target.putObject(out, r.bytes)) R.kvUsed++;
+        patch[e.comp].set[e.path] = out; done.push(e);
+      } catch (err) {
+        if (isQuota(err)) { await db.run("UPDATE sync_events SET status='pending', attempts=MAX(attempts-1,0), error=?, ts=? WHERE seq=?", ["مؤجَّل: حصة KV", iso(), seq]); await hitQuota(String(err.message ?? err).slice(0, 100)); R.pending++; continue; } await ev(db, seq, "failed", String(err.message ?? err).slice(0, 300)); R.failed++; log("✗ " + e.path + " — " + err.message); }
     }
     /* ── تطبيق البيان (كتابة واحدة لكل مكوّن) ── */
     const trash = [];
     for (const c of COMPONENTS) {
       const p = patch[c]; if (!Object.keys(p.set).length && !p.del.length) continue;
       const cur = man[c]; const next = { ...cur.map }; for (const [k, v] of Object.entries(p.set)) next[k] = v;
-      for (const k of p.del) { if (next[k]) trash.push({ path: k, comp: c, out_sha: next[k] }); delete next[k]; }
-      try { await target.setManifest(c, cur.rel, next); } catch (err) { for (const e of done.filter((x) => x.comp === c)) { await ev(db, e.seq, "failed", "تعذّر كتابة البيان: " + err.message); R.failed++; } done.splice(0, done.length, ...done.filter((x) => x.comp !== c)); }
+      const tc = []; for (const k of p.del) { if (next[k]) tc.push({ path: k, comp: c, out_sha: next[k] }); delete next[k]; }
+      if (JSON.stringify(next) === JSON.stringify(cur.map)) continue;                                            // لا تغيير فعلي في البيان ⇒ لا كتابة KV
+      try { await target.setManifest(c, cur.rel, next); R.kvUsed++; trash.push(...tc); } catch (err) {
+        const q = isQuota(err); if (q) await hitQuota("كتابة البيان: " + String(err.message ?? err).slice(0, 80));
+        for (const e of done.filter((x) => x.comp === c)) { if (q) { await db.run("UPDATE sync_events SET status='pending', attempts=MAX(attempts-1,0), error=?, ts=? WHERE seq=?", ["مؤجَّل: حصة KV", iso(), e.seq]); R.pending++; } else { await ev(db, e.seq, "failed", "تعذّر كتابة البيان: " + err.message); R.failed++; } }
+        done.splice(0, done.length, ...done.filter((x) => x.comp !== c)); }
     }
     for (const t of trash) await db.run("INSERT INTO sync_trash (path,comp,out_sha,rev,src_commit,deleted_at) VALUES (?,?,?,?,?,?)", [t.path, t.comp, t.out_sha, rev, head, iso()]);
     /* ── التحقق الفعلي من الوجهة الحيّة ثم تثبيت الحالة ── */
@@ -129,7 +148,7 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
 }
 async function ev(db, seq, status, error) { await db.run("UPDATE sync_events SET status=?, error=?, ts=? WHERE seq=?", [status, error ?? null, iso(), seq]); }
 async function finish(R, db, now, t0, kind, runId, commits) {
-  await meta.set(db, "lock", 0); await meta.set(db, "last_run", iso());
+  await meta.set(db, "lock", 0); await meta.set(db, "last_run", iso()); if (R.kvUsed != null) await meta.set(db, "kv_writes", R.kvUsed); if (!R.idle) await meta.set(db, "pending", R.pending);
   const row = [kind, R.head, R.prevHead, R.planned, R.applied, R.failed, R.quarantined, R.diffs, now() - t0, R.error ?? null, commits ? JSON.stringify(commits.slice(-20)) : null];
   if (R.idle) { R.ms = now() - t0; return R; }
   if (runId) await db.run("UPDATE sync_runs SET kind=?, head=?, prev_head=?, planned=?, applied=?, failed=?, quarantined=?, diffs=?, ms=?, error=?, commits=? WHERE id=?", [...row, runId]);
@@ -164,5 +183,6 @@ export async function syncStatus(db) {
     runs: await db.all("SELECT id, ts, kind, head, planned, applied, failed, quarantined, diffs, ms, error FROM sync_runs ORDER BY id DESC LIMIT 10"),
     recent_events: await db.all("SELECT seq, ts, path, op, status, attempts, rev FROM sync_events ORDER BY seq DESC LIMIT 20"),
     trash: await n("SELECT COUNT(*) n FROM sync_trash"),
+    pending: Number(await m("pending") ?? 0), kv: { day: await m("kv_day"), writes: Number(await m("kv_writes") ?? 0), cap: Number(await m("kv_cap") ?? 0), paused_until: Number(await m("kv_quota_until") ?? 0) > Date.now() ? new Date(Number(await m("kv_quota_until"))).toISOString() : null },
   };
 }
