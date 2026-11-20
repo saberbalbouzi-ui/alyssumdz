@@ -2,6 +2,9 @@
    «كل الصفحات» أو المنتج الذي تبيعه الصفحة (data-prod) أو الصفحة نفسها (lp/<slug>). تُطلق PageView وViewContent، وتستقبل أحداث نموذج الطلب المضمَّن (Lead/InitiateCheckout/Purchase) من الإطار
    عبر postMessage فلا يُحصى الحدث مرتين (نموذج الإطار لا يحمّل البكسل نفسه إذا كانت الصفحة الأم تتولاه). تحتاج صفحات الهبوط القديمة إلى إعادة نشر لتحمل هذا السكربت. */
 (function () {
+  /* مصدر الحملة على صفحة الهبوط: الصفحة الأم لا تحمّل app.js فكانت وسوم الإعلان (utm_* وfbclid/ttclid/gclid) في رابطها تضيع، ونموذج الطلب في الإطار لا يراها؛ فلا يُسجَّل «📣 الحملة» ولا يُفرَّق في الطلبات بين «حملة» و«رابط». نحفظها هنا بالصيغة نفسها التي يقرؤها app.js (alyssum_utm، 14 يوماً) */
+  try { const q = new URLSearchParams(location.search), s = q.get("utm_source"), c = q.get("utm_campaign"), ck = q.get("fbclid") ? "facebook" : q.get("ttclid") ? "tiktok" : q.get("gclid") ? "google" : ""; let old0 = null; try { old0 = JSON.parse(localStorage.getItem("alyssum_utm") || "null"); } catch (e) { }
+    if ((s || c || ck) && !(s === "home" && old0 && old0.s && old0.s !== "home" && Date.now() - old0.t < 14 * 864e5)) localStorage.setItem("alyssum_utm", JSON.stringify({ s: s || ck, m: q.get("utm_medium") || "", c: c || "(بدون حملة)", k: (q.get("fbclid") || q.get("ttclid") || q.get("gclid") || "").slice(0, 120), t: Date.now() })); } catch (e) { }
   const me = document.currentScript, prod = (me && me.getAttribute("data-prod")) || "", page = (me && me.getAttribute("data-page")) || "";
   const base = me && me.src ? me.src.replace(/assets\/js\/lp-pixels\.js.*$/, "") : "";
   let pixels = [], ready = false; const q = [];
