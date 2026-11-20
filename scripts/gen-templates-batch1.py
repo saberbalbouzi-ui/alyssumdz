@@ -6,7 +6,7 @@
 # ═══════════════════ s-jewelry — لؤلؤة: كولاج دوائر + منتج مُبرَز ═══════════════════
 _pilot_begin("s-jewelry")
 k = "nj"; ICC[0] = "#b76e79"
-ROSE, ROSE2, WINE, MJ, PALE = "#b76e79", "#d4a373", "#4a1c2b", "#8a6270", "#f0d9d2"
+ROSE, ROSE2, WINE, MJ, PALE = "#b76e79", "#d4a373", "#4a1c2b", "#78505f", "#f0d9d2"
 CHJ = lambda s: [FX("خلفية شامبانيا", "selector{background:linear-gradient(180deg,#fdf6ee,#f8e9e4)}")]
 CREAM = [FX("خلفية كريمية", "selector{background:#fffaf6}")]
 thj = TH(k, False, WINE, MJ, ROSE, ROSE2, "#ffffff", CHJ, CREAM,
@@ -70,7 +70,7 @@ _pilot_end()
 # ═══════════════════ s-cosmetics — روز كريستال: صورة كاملة بخلفية القسم + بطاقة زجاجية، خط زمني للروتين، شبكة متدرّجة ═══════════════════
 _pilot_begin("s-cosmetics")
 k = "nc"; ICC[0] = "#e11d77"
-PINK, VIOLET, PLUM, MC = "#e11d77", "#a855f7", "#4a1d33", "#8a5a6e"
+PINK, VIOLET, PLUM, MC = "#a8124f", "#a855f7", "#4a1d33", "#633c4e"
 ROSEBG = "selector{background:linear-gradient(180deg,#fff5f7,#ffe9f0)}"
 thc = TH(k, False, PLUM, MC, PINK, VIOLET, "#ffffff", [FX("خلفية وردية", ROSEBG)], [FX("خلفية كريمية", "selector{background:#fffafb}")],
          dict(sbg="#3b1327", tc="#f5c8da", hc="#ffffff", lc="#f5c8da", lh="#f9a8d4"),
@@ -187,7 +187,7 @@ thb = TH(k, False, OLV, MB, OLV2, BRW, "#fffaf0", lambda s: [paper("#f3ead7")], 
          [paper(OLV, "0.9,0.9,0.7", .12), ribbon("طبيعي 100%", "#bef264", "#1f2f0a")],
          dict(hbg="#f3ead7", hbr="#d6c9a2", lc=OLV, lac=BRW, mc=OLV, cbg=OLV2),
          ("🌿 أعشاب وزيوت نقية  ·  بلا إضافات كيميائية  ·  الدفع عند الاستلام", OLV, "#f3ead7", "#bef264"), (OLV2, "#f3ead7"),
-         hfx=lambda s: [gradtext(k + s, "#3f6212", BRW, "#3f6212", 9)], cdc="#bef264", offc="#f3ead7", offm="#e5e7d0")
+         hfx=lambda s: [gradtext(k + s, "#3f6212", BRW, "#3f6212", 9)], cdc="#bef264", offc="#f3ead7", offm="#f1f3e2")
 PLATE = FX("لوحة نباتية بإطار مزدوج", "selector .pb-im{border:2px solid #3f6212;outline:1px solid #3f6212;outline-offset:-12px;border-radius:4px;padding:0;box-shadow:0 30px 60px rgba(60,50,20,.28);background:#fffaf0}selector::after{content:\"لوحة رقم ١ · أعشاب الجبل\";display:block;text-align:center;font-size:14px;letter-spacing:.5px;color:#78350f;padding:10px 0 0;font-weight:700}")
 b_hero = S([
     C([T("— صيدلية الطبيعة —", 15, BRW, "start", fw="800", **anim("fadeDown")),

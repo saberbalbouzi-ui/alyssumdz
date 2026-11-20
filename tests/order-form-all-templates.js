@@ -75,6 +75,7 @@ const IM = n => "assets/img/tpl/" + n + ".webp";
   }
   // التوحيد: الهيكل الوظيفي نفسه في كل القوالب (حاسوب) وألوان الزر تختلف بين القوالب
   const uniqSig = new Set(Object.keys(sig).filter(k => /@1360$/.test(k)).map(k => sig[k])); ck("توحيد", "مكوّنات نموذج الطلب وظيفياً واحدة في كل القوالب", uniqSig.size === 1, [...uniqSig].slice(0, 3));
+  if (process.env.OF_DEBUG) console.log("ألوان الزر:", JSON.stringify(accents, null, 1));
   const colors = new Set(Object.keys(accents).filter(k => /@1360$/.test(k)).map(k => accents[k])); ck("هوية", "ألوان زر الطلب تتنوّع بحسب هوية القوالب (لا لون موحّد)", skins.length < 4 || colors.size >= Math.ceil(skins.length * 0.6), { distinct: colors.size, of: skins.length });
   console.log(`\n${fail ? fail + " إخفاق: " + failures.join(" | ") : "✓ كل الفحوص نجحت"} (${pass} نجاح)`); await br.close(); process.exit(fail ? 1 : 0);
 })();

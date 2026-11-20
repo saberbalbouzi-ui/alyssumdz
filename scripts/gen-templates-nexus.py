@@ -149,7 +149,7 @@ def nx_hero(P, N, k):
             FR("image", V(4, 5), V(60, 620), V(29, 52), V(540, 430), 3, src=IMG(A), alt=aa, fit="cover", hauto=False, fxs=[_nx_imgframe(P, r + 6, ring=False), focus("50% 40%")], **anim("zoomIn", 1, .1)),
             FR("image", V(24, 42), V(330, 880), V(23, 50), V(290, 290), 4, src=IMG(B), alt=ab, fit="cover", hauto=False, fxs=[_nx_imgframe(P, r), focus("50% 50%")], **anim("fadeUp", .9, .3)),
             FR("image", V(36, 66), V(60, 700), V(13, 34), V(150, 130), 5, src=IMG(Cc), alt=ac, fit="cover", hauto=False, fxs=[_nx_round(P), focus("50% 50%")], **anim("zoomIn", .9, .45)),
-            FR("shape", 40, 320, 10.5, 118, 6, shape="ellipse", fill=acc, keep=False, hm=True, fxs=[pulse(k + "b", "255,90,54", 2.8)], **anim("zoomIn", .7, .6)),
+            FR("shape", 40, 320, 10.5, 118, 6, shape="ellipse", fill=_fitbg(acc, P["onacc"]), keep=False, hm=True, fxs=[pulse(k + "b", "255,90,54", 2.8)], **anim("zoomIn", .7, .6)),
             FR("heading", 40.4, 345, 9.7, None, 7, text="جديد\nالآن", tag="p", fs=V(22, 18), fw="900", ta={"d": "center"}, color=P["onacc"], lh={"d": 1.15}, hm=True, **anim("zoomIn", .7, .7)),
         ]
         mh = dm(720, 1230, 700)
@@ -157,9 +157,32 @@ def nx_hero(P, N, k):
     return _nx_cvs(col + text, mh, [_nx_bg(P, k, "paper")], cw=1180)
 
 # ───────── الأقسام ─────────
+def _fitbg(bg, fg, need=4.6):
+    """يقرّب لون الخلفية من الأسود (نص فاتح) أو الأبيض (نص داكن) بأقل تغيير حتى يبلغ تباين النص فوقها الحدّ؛ لا يغيّر اللون إن كان كافياً."""
+    def lm(h):
+        h = h.lstrip("#"); c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]; c = [v / 12.92 if v <= .03928 else ((v + .055) / 1.055) ** 2.4 for v in c]; return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]
+    r = lambda x, y: (max(lm(x), lm(y)) + .05) / (min(lm(x), lm(y)) + .05)
+    if len(bg) != 7 or len(fg) != 7 or r(bg, fg) >= need: return bg
+    tg = 0 if lm(fg) > .4 else 255; c = [int(bg[i:i + 2], 16) for i in (1, 3, 5)]
+    for q in range(1, 41):
+        n = "#%02x%02x%02x" % tuple(round(v + (tg - v) * q / 50) for v in c)
+        if r(n, fg) >= need: return n
+    return bg
+def _acct(P, need=5.2):
+    """لون التمييز كنص صغير (كيكر) فوق ورق/صورة فاتحة: يُعتَّم عند الحاجة حتى يبلغ تبايناً مقروءاً؛ زرّ/خطّ التمييز يبقى بلونه."""
+    def lm(h):
+        h = h.lstrip("#"); c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]; c = [v / 12.92 if v <= .03928 else ((v + .055) / 1.055) ** 2.4 for v in c]; return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]
+    a, bg = P["acc"], "#e0c9c1" if not P.get("dark") else P["paper"]
+    if len(a) != 7 or P.get("dark"): return a
+    r = lambda x, y: (max(lm(x), lm(y)) + .05) / (min(lm(x), lm(y)) + .05)
+    c = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    for q in range(0, 41):
+        n = "#%02x%02x%02x" % tuple(round(v * (1 - q / 50)) for v in c)
+        if r(n, bg) >= need: return n
+    return a
 def nx_title(P, k, kick, text, sub="", ta="start", dark=False):
     c = "#ffffff" if dark else P["ink"]; m = "#d8d2c4" if dark else P["mut"]
-    ws = [T("— %s —" % kick, 14, P["acc"], ta, fw="800", **anim("fadeDown")),
+    ws = [T("— %s —" % kick, 14, P["acc"] if dark else _acct(P), ta, fw="800", **anim("fadeDown")),
           W("heading", text=text, tag="h2", fs=dm(44, 30), fw="800", ta={"d": ta}, color=c, lh={"d": 1.25}, ff=P["hf"], **anim("fadeUp"))]
     if sub: ws.append(T(sub, 17, m, ta, **anim("fadeUp", .7, .1)))
     return ws
@@ -197,15 +220,15 @@ def nx_editorial(P, N, k):
     ink, acc = P["ink"], P["acc"]; a, b = N["ed"]; aa, ab = N["ed_alt"]
     bul = N["ed_b"]
     free = [
-        FR("image", V(4, 4), V(40, 24), V(40, 92), V(520, 340), 2, src=IMG(a), alt=aa, fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"] + 10, ring=False), focus("50% 50%")], **anim("fadeUp", .9)),
-        FR("image", V(30, 40), V(300, 330), V(22, 52), V(300, 260), 3, src=IMG(b), alt=ab, fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"]), focus("50% 50%")], **anim("zoomIn", .9, .2)),
-        FT("— %s —" % N["ed_k"], V(54, 6), V(60, 410), V(42, 88), V(14, 13), acc, "start", 5, "800"),
-        FH(N["ed_h"], V(54, 6), V(94, 440), V(42, 88), V(48, 32), ink, "start", 5, "900", ff=N["hf"], **anim("fadeUp", .8)),
-        FT(N["ed_p"], V(54, 6), V(250, 590), V(40, 88), V(17, 15), P["mut"], "start", 5, "500", **anim("fadeUp", .8, .1)),
-        FR("bullets", V(54, 6), V(396, 760), V(40, 88), None, 5, items="\n".join(bul), micon="ic:check", mc=acc, ms=dm(24), gap=dm(12), fs=dm(17, 15), color=ink, manim="pop", **anim("fadeUp", .8, .2)),
-        FR("button", V(56, 6), V(500, 890), V(20, 60), V(56, 52), 5, text="اعرف أكثر", kind="link", link="#featured", bgc=P["btn"], color=P["onbtn"], hbg=acc, fs=V(17, 15), fw="800", brad={"d": 999}, **anim("zoomIn", .8, .3)),
+        FR("image", V(4, 4), V(40, 24), V(40, 92), V(520, 300), 2, src=IMG(a), alt=aa, fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"] + 10, ring=False), focus("50% 50%")], **anim("fadeUp", .9)),
+        FR("image", V(30, 40), V(300, 250), V(22, 52), V(300, 170), 3, src=IMG(b), alt=ab, fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"]), focus("50% 50%")], **anim("zoomIn", .9, .2)),
+        FT("— %s —" % N["ed_k"], V(54, 6), V(60, 450), V(42, 88), V(14, 13), _acct(P), "start", 5, "800"),
+        FH(N["ed_h"], V(54, 6), V(94, 480), V(42, 88), V(48, 32), ink, "start", 5, "900", ff=N["hf"], **anim("fadeUp", .8)),
+        FT(N["ed_p"], V(54, 6), V(250, 610), V(40, 88), V(17, 15), P["mut"], "start", 5, "500", **anim("fadeUp", .8, .1)),
+        FR("bullets", V(54, 6), V(396, 780), V(40, 88), None, 5, items="\n".join(bul), micon="ic:check", mc=acc, ms=dm(24), gap=dm(12), fs=dm(17, 15), color=ink, manim="pop", **anim("fadeUp", .8, .2)),
+        FR("button", V(56, 6), V(500, 940), V(20, 60), V(56, 52), 5, text="اعرف أكثر", kind="link", link="#featured", bgc=P["btn"], color=P["onbtn"], hbg=acc, fs=V(17, 15), fw="800", brad={"d": 999}, **anim("zoomIn", .8, .3)),
     ]
-    return _nx_cvs(free, dm(640, 960, 640), [_nx_bg(P, k, "paper")], cw=1180)
+    return _nx_cvs(free, dm(640, 1030, 640), [_nx_bg(P, k, "paper")], cw=1180)
 
 def nx_values(P, N, k):
     ic = [("truck", 0), ("cash", 1), ("shield-check", 2), ("headset", 3)]
@@ -301,7 +324,7 @@ def _np_wrap(k, body, N=None):
 def _np_hero(P, k, kick, h, sub, img=None, alt="", dark=False, mirror=False):
     """ترويسة صفحة: عنوان كبير + وصف، وصورة بإطار غير متماثل اختيارية"""
     ink = P["ink"]
-    left = [T("— %s —" % kick, 14, P["acc"], "start", fw="800", **anim("fadeDown")),
+    left = [T("— %s —" % kick, 14, P["acc"] if dark else _acct(P), "start", fw="800", **anim("fadeDown")),
             W("heading", text=h, tag="h1", fs=dm(58, 34), fw="800", ta={"d": "start"}, color=ink, lh={"d": 1.2}, ff=P["hf"], fxs=[_nx_balance()], **anim("fadeUp")),
             T(sub, 18, P["mut"], "start", **anim("fadeUp", .7, .1))]
     cols = [C(left, w=58 if img else 100, va="center", pad=dm([0, 0, 0, 0]))]
@@ -350,7 +373,7 @@ def np_about(P, k):
     story = _nx_cvs([
         FR("image", V(4, 4), V(20, 20), V(40, 92), V(480, 320), 2, src=IMG("fashion_knit"), alt="كنزات مطوية بألوان هادئة", fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"] + 10, ring=False), focus("50% 50%")], **anim("fadeUp", .9)),
         FR("image", V(30, 40), V(270, 300), V(22, 52), V(280, 250), 3, src=IMG("acc_round"), alt="نظارة دائرية", fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"]), focus("50% 50%")], **anim("zoomIn", .9, .2)),
-        FT("— قصتنا —", V(54, 6), V(40, 380), V(42, 88), V(14, 13), P["acc"], "start", 5, "800"),
+        FT("— قصتنا —", V(54, 6), V(40, 380), V(42, 88), V(14, 13), _acct(P), "start", 5, "800"),
         FH("بدأنا بفكرة: أن يكون الشراء عبر الإنترنت بسيطاً وصادقاً", V(54, 6), V(74, 410), V(42, 88), V(40, 28), ink, "start", 5, "800", ff=P["hf"], **anim("fadeUp", .8)),
         FT("اكتب هنا قصة متجرك: كيف بدأت، ولماذا تختار منتجاتك، وما الذي يميّزك. هذا النص نموذجي للمعاينة ويُستبدل بقصتك.", V(54, 6), V(250, 560), V(40, 88), V(17, 15), P["mut"], "start", 5, "500", **anim("fadeUp", .8, .1)),
     ], dm(520, 760, 520), [_nx_bg(P, k, "paper")], cw=1180)

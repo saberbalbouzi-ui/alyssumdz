@@ -39,6 +39,19 @@ PPAL = {
 _NOHF = ":not(:has(header.pb-hd,.pb-sf,.pb-tp))"
 # القوالب الستة المحمية: لا يُعدَّل جلد صفحة منتجها؛ قواعد أقسام الهبوط الأصلية الجديدة (أسئلة شائعة/صندوق الأيقونة) لا تُضاف إليها دون موافقة مستقلة
 _PROTECTED6 = {"s-perfume", "s-skincare", "s-makeup", "s-women", "s-men", "s-kids"}
+def _lum(h):
+    h = h.lstrip("#"); c = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]; c = [v / 12.92 if v <= .03928 else ((v + .055) / 1.055) ** 2.4 for v in c]
+    return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]
+def _rat(x, y):
+    a, b = _lum(x), _lum(y); return (max(a, b) + .05) / (min(a, b) + .05)
+def _fit_bg(bg, fg, need=4.5):
+    """يقرّب خلفية الزر من الأسود (إن كان النص فاتحاً) أو الأبيض (إن كان داكناً) بأقل تغيير حتى يبلغ نص الزر حدّ التباين WCAG."""
+    if not (bg.startswith("#") and len(bg) == 7 and fg.startswith("#") and len(fg) == 7) or _rat(bg, fg) >= need: return bg
+    tg = (0, 0, 0) if _lum(fg) > .4 else (255, 255, 255); c = [int(bg[i:i + 2], 16) for i in (1, 3, 5)]
+    for q in range(1, 41):
+        n = "#%02x%02x%02x" % tuple(round(c[i] + (tg[i] - c[i]) * q / 50) for i in range(3))
+        if _rat(n, fg) >= need: return n
+    return bg
 def _css(P, landing=True):
     t, m, a, a2, on, r = P["txt"], P["mut"], P["acc"], P["acc2"], P["onacc"], P["rad"]
     SC = ".pb-sec" + _NOHF
@@ -48,7 +61,8 @@ def _css(P, landing=True):
     bw = "3px" if cs == "hard" else "1px"
     bl = "backdrop-filter:blur(14px);" if cs == "glass" else ""
     cards = ".pb-colin,.pbox,.offer,.total-box,.cod-note,.dtype,.lp-card,.pb-tbc,.pb-card,.card,.order-form,.pb-order,#pb-order,.form-card,.box"
-    btn = {"grad": "linear-gradient(180deg,%s,%s)" % (a2 if P["dark"] else a, a), "flat": a, "hard": a}[P["btn"]]
+    ba, ba2 = (_fit_bg(a, on), _fit_bg(a2, on)) if landing else (a, a2)       # نص الزر مقروء (WCAG 4.5:1) بتعتيم خلفية الزر عند الحاجة فقط
+    btn = {"grad": "linear-gradient(180deg,%s,%s)" % (ba2 if P["dark"] else ba, ba), "flat": ba, "hard": ba}[P["btn"]]
     btnex = {"grad": "box-shadow:0 12px 28px %s55;" % a, "flat": "box-shadow:none;", "hard": "border:3px solid #111!important;box-shadow:5px 5px 0 #111;"}[P["btn"]]
     o = []
     o.append(".pb-page{background:%s;color:%s}" % (P["bg"], t))
@@ -69,6 +83,7 @@ def _css(P, landing=True):
     o.append("%s input,%s select,%s textarea{background:%s!important;color:%s!important;border:1px solid %s!important;border-radius:%spx}%s input::placeholder,%s textarea::placeholder{color:%s!important}" % (SC, SC, SC, P["fld"], P["fldtxt"], P["line"], max(r - 6, 0), SC, SC, m))
     o.append("%s input:focus,%s select:focus,%s textarea:focus{border-color:%s!important;box-shadow:0 0 0 3px %s33!important;outline:0}%s option{background:%s;color:%s}" % (SC, SC, SC, a, a, SC, P["opt"], P["fldtxt"]))
     o.append(".btn-cart2,.btn-order,%s .lp-btn,%s .pb-btn{background:%s!important;color:%s!important;border:0!important;border-radius:%spx!important;font-weight:900;%s}.btn-cart2 *,.btn-order *,%s .lp-btn *{color:%s!important}.btn-cart2:hover,.btn-order:hover{transform:translateY(-3px);filter:brightness(1.06)}" % (SC, SC, btn, on, max(r - 4, 0) if r else 0, btnex, SC, on))
+    if landing: o.append("%s .pb-ofraw,%s .pb-ofm{--o-ac:%s;--o-bt:%s;--gold:%s}" % (SC, SC, ba, on, ba))      # نموذج الطلب الأصلي (orderorig) يأخذ لون زر القالب ونصه المقروء بدل الأخضر الافتراضي
     o.append("%s .lp-btn-gold{background:transparent!important;color:%s!important;border:1px solid %s!important;box-shadow:none!important}%s .lp-btn-gold *{color:%s!important}" % (SC, t, a, SC, t))
     o.append(".total-box,.total-box *,.q,.p,.u,.deal-bar,.deal-bar *{color:%s!important}" % t)
     o.append("%s .pb-acc,%s .pb-acc-i,%s details{background:%s!important;border:1px solid %s!important;border-radius:%spx}%s hr,%s .pb-div{border-color:%s!important}" % (SC, SC, SC, P["cardbg"], P["line"], max(r - 4, 0), SC, SC, P["line"]))

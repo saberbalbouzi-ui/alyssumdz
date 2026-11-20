@@ -163,7 +163,7 @@ _pilot_end()
 # ═══════════════════ التجربة ب — s-tech: متجر عملي موجَّه بالاستعمال والمقارنة ═══════════════════
 _pilot_begin("s-tech")
 k = "st"; ICC[0] = "#2563eb"
-BLUE, DARK, SLATE = "#2563eb", "#0f172a", "#64748b"
+BLUE, DARK, SLATE = "#1d4ed8", "#0f172a", "#475569"
 tht = dict(h=DARK, m=SLATE, a=BLUE, card="#ffffff",
            bar=("⚡ شحن سريع  ·  ضمان سنة  ·  الدفع عند الاستلام  ·  دعم فني على واتساب", DARK, "#e2e8f0", "#60a5fa"),
            hdr=dict(hbg="#ffffff", hbr="#e2e8f0", lc=DARK, lac=BLUE, mc=DARK, cbg=BLUE),

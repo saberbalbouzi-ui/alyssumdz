@@ -51,7 +51,7 @@ def a_prod_rail():
                  W("heading", text="وصل حديثاً", tag="h2", fs=dm(44, 30), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.2}, fxs=th["hfx"]("p"), **anim("fadeUp")),
                  T("مرّر أفقياً لتتصفّح أحدث ما وصل — بطاقات زجاجية بحدّ نيون يضيء عند المرور.", 17, "#cbd5e1", "start", **anim("fadeUp", .7, .1)),
                  W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, cardw=dm(290, 230), gap=dm(22, 14), rad=dm(24), cbg="#0f1530", bbg="#7c3aed", pdemo="a",
-                   fxs=[FX("رفّ نيون أفقي", "selector .pb-pgrid{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px 4px 26px;scrollbar-width:thin;scrollbar-color:#7c3aed transparent}selector .pb-pc{flex:0 0 min(290px,74vw);scroll-snap-align:start;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03))!important;border:1px solid rgba(167,139,250,.35);color:#fff;backdrop-filter:blur(10px);transition:transform .4s,box-shadow .4s,border-color .4s}selector .pb-pc:hover{transform:translateY(-12px);border-color:#22d3ee;box-shadow:0 0 0 1px #22d3ee,0 26px 60px rgba(124,58,237,.5)}selector .pb-pc h3{color:#fff}selector .pb-pcp b{color:#c4b5fd}selector .pb-pcp s{color:#64748b}"), cardratio("1/1")])], w=100)],
+                   fxs=[FX("رفّ نيون أفقي", "selector .pb-pgrid{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;padding:14px 4px 26px;scrollbar-width:thin;scrollbar-color:#7c3aed transparent}selector .pb-pc{flex:0 0 min(290px,74vw);scroll-snap-align:start;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03))!important;border:1px solid rgba(167,139,250,.35);color:#fff;backdrop-filter:blur(10px);transition:transform .4s,box-shadow .4s,border-color .4s}selector .pb-pc:hover{transform:translateY(-12px);border-color:#22d3ee;box-shadow:0 0 0 1px #22d3ee,0 26px 60px rgba(124,58,237,.5)}selector .pb-pc h3{color:#fff}selector .pb-pcp b{color:#c4b5fd}selector .pb-pcp s{color:#94a3b8}"), cardratio("1/1")])], w=100)],
              pad=dm([70, 20, 40, 20], [44, 16, 24, 16]), fxs=th["bgB"]("p"))
 def bcell(ic, t, x, i, accent):
     return IB(ic, t, x, tc="#ffffff", xc="#cbd5e1", isz=36, al={"d": "start"}, fxs=[FX("خلية بنتو", "selector .pb-ib{text-align:start;padding:26px;border-radius:26px;background:linear-gradient(150deg,%s,rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);height:100%%;box-sizing:border-box;transition:transform .4s,box-shadow .4s}selector .pb-ib:hover{transform:translateY(-6px);box-shadow:0 22px 50px %s}selector h3,selector p{text-align:start}" % (accent[0], accent[1])), floaty(k + "bn%d" % i, ".pb-ibi", 6, 4 + i * .4)], **anim("fadeUp", .7, .1 + i * .1))
@@ -86,7 +86,7 @@ GD, GD2, GT, GM = "#c9992e", "#f5d77a", "#e7ddc0", "#cbbf9c"
 thg = th
 DECO = FX("أشعة آرت ديكو", "selector::before{content:\"\";position:absolute;inset:0;background:repeating-conic-gradient(from 0deg at 50% 118%,rgba(201,153,46,.24) 0 3deg,transparent 3deg 9deg);-webkit-mask:radial-gradient(70% 90% at 50% 100%,#000,transparent 72%);mask:radial-gradient(70% 90% at 50% 100%,#000,transparent 72%);pointer-events:none}")
 def gold_vert(text, x, tx):
-    return FR("heading", V(x, -3, tx), V(300, 0, 300), V(20, 10, 20), None, 4, text=text, tag="div", fs=V(13, 12, 13), fw="800", ta={"d": "center"}, color=GD, lh={"d": 1}, rot=V(-90, 0, -90), hm=True,
+    return FR("heading", V(x, -3, tx), V(300, 0, 300), V(20, 10, 20), None, 4, text=text, tag="div", fs=V(13, 12, 13), fw="800", ta={"d": "center"}, color="#e3bd57", lh={"d": 1}, rot=V(-90, 0, -90), hm=True,
               fxs=[FX("حروف متباعدة", "selector .pb-t{letter-spacing:.5em}")], **anim("fadeIn", 1.2))
 g_free = [
     FR("shape", V(18, 4, 4), V(60, 36, 50), V(64, 92, 92), V(500, 450, 480), 2, shape="rect", fill="rgba(12,10,6,.55)", keep=False,
@@ -134,7 +134,7 @@ _pilot_end()
 # ═══════════════════ s-fresh — نقاء: كتلة عضوية متحوّلة للصورة، بطاقات منتجات باستيل بصور دائرية، فئات حبّات، وصفة بثلاث خطوات ═══════════════════
 _pilot_begin("s-fresh")
 _store_chunk('k = "sf"')
-GRN, GRN2, LIM, DKG, MUT = "#16a34a", "#15803d", "#65a30d", "#14532d", "#4b6358"
+GRN, GRN2, LIM, DKG, MUT = "#16a34a", "#166534", "#65a30d", "#14532d", "#4b6358"
 thf = th
 BLOB = "58% 42% 52% 48% / 46% 56% 44% 54%"
 def benefit(i, ic, t, x, D, M, Tb):

@@ -18,6 +18,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)); fs.mkdirSync(OUT, { rec
       const mob = w < 600, c = await br.newContext({ viewport: { width: w, height: mob ? 844 : 900 }, isMobile: mob, hasTouch: mob, deviceScaleFactor: 1, colorScheme: SCHEME, serviceWorkers: "block" }); await declareProtect(c); const p = await c.newPage(); const route = BASE + "/__ca.html";
       await p.route(route, r => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: html })); try { await p.goto(route, { waitUntil: "load", timeout: 60000 }); } catch (e) { }
       await sleep(1200); await p.evaluate(async () => { for (let y = 0; y < document.body.scrollHeight; y += 350) { window.scrollTo(0, y); await new Promise(r => setTimeout(r, 90)); } window.scrollTo(0, 0); }); await sleep(900);
+      await p.addStyleTag({ content: "*,*::before,*::after{animation:none!important;transition:none!important}[data-anim],[class*=reveal]{opacity:1!important;transform:none!important}" }); await sleep(500);   // تثبيت التخطيط (بلا حركات دخول/شريط متحرك) قبل القياس كي تطابق الصناديق اللقطة
       const boxes = await p.evaluate(() => {
         const out = [], opAcc = el => { let o = 1; for (let n = el; n && n.nodeType === 1; n = n.parentElement) { const v = parseFloat(getComputedStyle(n).opacity); if (!isNaN(v)) o *= v; } return o; };
         const rgba = s => { const m = String(s).match(/rgba?\(([^)]+)\)/); if (!m) return null; const a = m[1].split(",").map(x => parseFloat(x)); return [a[0], a[1], a[2], a.length > 3 ? a[3] : 1]; };
@@ -33,6 +34,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms)); fs.mkdirSync(OUT, { rec
         return { boxes: out, W, H: document.documentElement.scrollHeight };
       });
       await p.addStyleTag({ content: "*,*::before,*::after{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important;-webkit-text-stroke:0!important;caret-color:transparent!important;animation:none!important;transition:none!important}[data-anim],[class*=reveal]{opacity:1!important;transform:none!important}::placeholder{color:transparent!important}" });
+      await p.evaluate(() => { for (const el of document.body.querySelectorAll("*")) { try { el.style.setProperty("color", "transparent", "important"); el.style.setProperty("-webkit-text-fill-color", "transparent", "important"); el.style.setProperty("text-shadow", "none", "important"); } catch (e) { } } });   // أنماط inline!important تغلب ورقة الإخفاء: تُخفى صراحةً كي لا تظهر نصوص في اللقطة
       await sleep(500); const shot = path.join(OUT, `${t.id}__${w}.png`); try { await p.screenshot({ path: shot, fullPage: true, timeout: 90000 }); } catch (e) { console.log("لقطة فشلت", t.id, w, e.message.slice(0, 80)); await c.close(); continue; }
       fs.writeFileSync(path.join(OUT, `${t.id}__${w}.json`), JSON.stringify({ id: t.id, cat: t.cat, w, scheme: SCHEME, W: boxes.W, H: boxes.H, boxes: boxes.boxes })); meta.push({ id: t.id, w, n: boxes.boxes.length }); console.log(`${t.id} @${w}: ${boxes.boxes.length} عنصر نصي، ارتفاع ${boxes.H}`); await c.close();
     }
