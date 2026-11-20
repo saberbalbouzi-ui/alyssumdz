@@ -28,13 +28,16 @@ run() {
 }
 ONLY="${SPATIAL_ONLY:-}"; want() { [ -z "$ONLY" ] || [[ ",$ONLY," == *",$1,"* ]]; }
 want nlu-eval        && run nlu-eval        120 node "$T/nlu-eval.js"
+want holo-settings  && run holo-settings  900 node "$T/holo-settings.js" all   # المظهر الهولوغرافي: من الإعدادات إلى الألواح الحقيقية والعودة (مكتب + هاتف باللمس + ثابت)
 want viewports       && run viewports       600 node "$T/spatial-viewports.js"
 want run             && run run             900 node "$T/run.js" all
 want phase9          && run phase9          900 node "$T/phase9.js" all
 want phase10         && run phase10         900 node "$T/phase10.js" all
-want phase11         && run phase11         900 node "$T/phase11.js"
-want client-12b      && run client-12b      120 node "$T/phase12b-client.js"
-want client-12b1     && run client-12b1     120 node "$T/phase12b1-client.js"
-want client-12b1c    && run client-12b1c    120 node "$T/phase12b1c-client.js"
+skip() { echo "⏭ $1  — NOT TESTED: $2"; printf '%s\tskip\t0\t0\t0\n' "$1" >> "$LOGS/summary.tsv"; }
+# phase11 يحتاج وسيط الخادم server/llm.php (غير مضمَّن في main عمداً) وإلا يفشل بـ404 لا بخلل في الكود؛ وفي بيئة برمجية (بلا PHP/GPU/ميكروفون) يفشل بالمجموعة نفسها حتى على الكود المعتمد الأصلي
+want phase11 && { [ -f "$T/../server/llm.php" ] && run phase11         900 node "$T/phase11.js" || skip phase11 "يحتاج server/llm.php (غير موجود في هذا الفرع)"; }
+want client-12b && { grep -rqs "OrderTruth" assets/js && run client-12b      120 node "$T/phase12b-client.js" || skip client-12b "تختبر إصلاحات الطلبات 12B (OrderTruth) وهي غير موجودة في هذا الفرع"; }
+want client-12b1 && { grep -rqs "OrderTruth" assets/js && run client-12b1     120 node "$T/phase12b1-client.js" || skip client-12b1 "تختبر إصلاحات الطلبات 12B (OrderTruth) وهي غير موجودة في هذا الفرع"; }
+want client-12b1c && { grep -rqs "OrderTruth" assets/js && run client-12b1c    120 node "$T/phase12b1c-client.js" || skip client-12b1c "تختبر إصلاحات الطلبات 12B (OrderTruth) وهي غير موجودة في هذا الفرع"; }
 echo; echo "ملخص (اسم / rc / ناجح / فاشل / ثوانٍ):"; column -t -s $'\t' "$LOGS/summary.tsv" 2>/dev/null || cat "$LOGS/summary.tsv"
 exit "$fail"
