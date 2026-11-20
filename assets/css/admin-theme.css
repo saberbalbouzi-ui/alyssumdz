@@ -493,3 +493,9 @@ html.glass .o-src.app{color:#93c5fd}
 
 .o-src.ext{background:rgba(139,92,246,.14);color:#6d28d9;border-color:rgba(139,92,246,.4)}
 html.glass .o-src.ext{color:#c4b5fd}
+/* المظهر الفاتح: كل الخطوط سوداء بلا رمادي (الملوّنة على خلفيات ملوّنة كالأزرار والحالات تبقى) */
+html.white .nav-btn:not(.on),html.white .nav-btn:not(.on) .nav-txt b,html.white .nav-btn:not(.on) .nav-txt small{color:#0b0f14}
+html.white #pm .pm-btn:not(.pm-primary) small{color:#0b0f14!important}
+html.white #ahome .ah-seg button:not(.on),html.white #ahome .at button{color:#0b0f14!important}
+html.white body .cr-rem:not(#_){color:#0b0f14}
+html.white input::placeholder,html.white textarea::placeholder{color:#475569}
