@@ -6,7 +6,7 @@
 # ═══════════════════ s-jewelry — لؤلؤة: كولاج دوائر + منتج مُبرَز ═══════════════════
 _pilot_begin("s-jewelry")
 k = "nj"; ICC[0] = "#b76e79"
-ROSE, ROSE2, WINE, MJ, PALE = "#b76e79", "#d4a373", "#4a1c2b", "#8a6270", "#f0d9d2"
+ROSE, ROSE2, WINE, MJ, PALE = "#b76e79", "#d4a373", "#4a1c2b", "#78505f", "#f0d9d2"
 CHJ = lambda s: [FX("خلفية شامبانيا", "selector{background:linear-gradient(180deg,#fdf6ee,#f8e9e4)}")]
 CREAM = [FX("خلفية كريمية", "selector{background:#fffaf6}")]
 thj = TH(k, False, WINE, MJ, ROSE, ROSE2, "#ffffff", CHJ, CREAM,
@@ -70,7 +70,7 @@ _pilot_end()
 # ═══════════════════ s-cosmetics — روز كريستال: صورة كاملة بخلفية القسم + بطاقة زجاجية، خط زمني للروتين، شبكة متدرّجة ═══════════════════
 _pilot_begin("s-cosmetics")
 k = "nc"; ICC[0] = "#e11d77"
-PINK, VIOLET, PLUM, MC = "#e11d77", "#a855f7", "#4a1d33", "#8a5a6e"
+PINK, VIOLET, PLUM, MC = "#a8124f", "#a855f7", "#4a1d33", "#633c4e"
 ROSEBG = "selector{background:linear-gradient(180deg,#fff5f7,#ffe9f0)}"
 thc = TH(k, False, PLUM, MC, PINK, VIOLET, "#ffffff", [FX("خلفية وردية", ROSEBG)], [FX("خلفية كريمية", "selector{background:#fffafb}")],
          dict(sbg="#3b1327", tc="#f5c8da", hc="#ffffff", lc="#f5c8da", lh="#f9a8d4"),
@@ -181,13 +181,13 @@ _pilot_end()
 # ═══════════════════ s-herbs — العطّار: لوحة نباتية بإطار مزدوج بين عمودين، قوائم منتجات أفقية مرقّمة ═══════════════════
 _pilot_begin("s-herbs")
 k = "nb"; ICC[0] = "#3f6212"
-OLV, OLV2, BRW, MB = "#2f4a12", "#4d7c0f", "#78350f", "#6b5b3a"
+OLV, OLV2, BRW, MB = "#2f4a12", "#4d7c0f", "#78350f", "#4f4428"
 thb = TH(k, False, OLV, MB, OLV2, BRW, "#fffaf0", lambda s: [paper("#f3ead7")], [paper("#f8f1df")],
          dict(sbg="#1f2f0a", tc="#d9d5b8", hc="#ffffff", lc="#d9d5b8", lh="#bef264"),
          [paper(OLV, "0.9,0.9,0.7", .12), ribbon("طبيعي 100%", "#bef264", "#1f2f0a")],
          dict(hbg="#f3ead7", hbr="#d6c9a2", lc=OLV, lac=BRW, mc=OLV, cbg=OLV2),
          ("🌿 أعشاب وزيوت نقية  ·  بلا إضافات كيميائية  ·  الدفع عند الاستلام", OLV, "#f3ead7", "#bef264"), (OLV2, "#f3ead7"),
-         hfx=lambda s: [gradtext(k + s, "#3f6212", BRW, "#3f6212", 9)], cdc="#bef264", offc="#f3ead7", offm="#e5e7d0")
+         hfx=lambda s: [gradtext(k + s, "#3f6212", BRW, "#3f6212", 9)], cdc="#bef264", offc="#f3ead7", offm="#f1f3e2")
 PLATE = FX("لوحة نباتية بإطار مزدوج", "selector .pb-im{border:2px solid #3f6212;outline:1px solid #3f6212;outline-offset:-12px;border-radius:4px;padding:0;box-shadow:0 30px 60px rgba(60,50,20,.28);background:#fffaf0}selector::after{content:\"لوحة رقم ١ · أعشاب الجبل\";display:block;text-align:center;font-size:14px;letter-spacing:.5px;color:#78350f;padding:10px 0 0;font-weight:700}")
 b_hero = S([
     C([T("— صيدلية الطبيعة —", 15, BRW, "start", fw="800", **anim("fadeDown")),
@@ -210,7 +210,7 @@ b_cats = S([C([*title("اختر ما تحتاجه", "أعشاب وزيوت وت�
                  fxs=[FX("إطار مزدوج", "selector .pb-sci{border:2px solid #3f6212;outline:1px solid #3f6212;outline-offset:-10px;border-radius:4px}"), lift(".pb-sc,.pb-cat,a", "rgba(77,124,15,.35)", -8, 2)])], w=100)],
            pad=dm([40, 20, 40, 20], [24, 16, 24, 16]), fxs=[paper("#efe3c6")])
 b_prod = S([C([W("anchor", aid="products", aoff=dm(80)), *title("من رفوف العطّار", "أعشاب مجففة وزيوت معصورة", k, thb, thb["hfx"]("p"))["widgets"],
-               W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, cardw=dm(500, 150), gap=dm(20, 12), rad=dm(14), cbg="#fffaf0", bbg=OLV2, pdemo="a",
+               W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, cardw=dm(500, 320), gap=dm(20, 12), rad=dm(14), cbg="#fffaf0", bbg=OLV2, pdemo="a",      # بطاقات أفقية: عمود واحد على الجوال (كانت عمودين فتُعصَر الأزرار والأسعار)
                  fxs=[lift(".pb-pc", "rgba(77,124,15,.3)", -6, 2),
                       FX("بطاقة قائمة أفقية مرقّمة", "selector .pb-pgrid{counter-reset:bn}selector .pb-pc{flex-direction:row;align-items:stretch;border:1.5px solid #d6c9a2;box-shadow:0 10px 28px rgba(80,60,20,.12);counter-increment:bn;position:relative}@media(min-width:768px){selector .pb-pci{flex:0 0 40%;width:40%}selector .pb-pc>*:not(.pb-pci){flex:1}}selector .pb-pc::before{content:counter(bn,arabic-indic);position:absolute;top:10px;inset-inline-end:14px;z-index:3;font:900 26px Amiri,serif;color:#78350f;opacity:.8}"),
                       cardratio("1/1")])], w=100)],

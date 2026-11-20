@@ -271,8 +271,8 @@ def tile(t, x, c1, c2, w, h=250, btn="تسوّق الآن", img="mkt_bags", tag=
     return C([W("heading", text=t, tag=tag, fs=dm(30, 24), fw="900", ta={"d": "start"}, color="#ffffff", **anim("fadeUp")), T(x, 16, "#ffffffdd", "start", **anim("fadeUp", .7, .1)),
               BTN(btn, bg="#ffffff", color="#111", al="start", link="#products", fxs=[FX("زر أبيض", "selector .pb-btn{border-radius:999px!important}"), shine(k + t[:2])], **anim("fadeUp", .7, .2))],
              w=w, va="flex-end", pad=dm([h, 24, 24, 24]), rad=dm(18), **PH(img, c1, c2, 150), fxs=[zoomcol("rgba(0,0,0,.3)")])
-hero = S([tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(239,68,68,.88)", 50, 260, "تسوّق الآن", "mkt_bags"),
-          tile("وصل حديثاً", "اكتشف أحدث العروض", "rgba(99,102,241,.5)", "rgba(6,182,212,.88)", 25, 260, "اكتشف", "fashion_shirts"),
+hero = S([tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(185,28,28,.9)", 50, 260, "تسوّق الآن", "mkt_bags"),
+          tile("وصل حديثاً", "اكتشف أحدث العروض", "rgba(99,102,241,.5)", "rgba(7,89,133,.92)", 25, 260, "اكتشف", "fashion_shirts"),
           tile("توصيل مجاني", "فوق 6000 دج", "rgba(16,185,129,.5)", "rgba(21,128,61,.9)", 25, 260, "التفاصيل", "mkt_open")],
          pad=dm([30, 20, 20, 20], [20, 12, 12, 12]), gap={"d": 14}, fxs=LG("h"), cw={"d": 1240})
 chips = S([C([W("tbadges", items="إلكترونيات\nأزياء\nالمنزل والمطبخ\nجمال وعناية\nأطفال\nرياضة\nكتب\nسيارات", live=True, liveText="مستخدم متصل", lmin=120, lmax=480, cbg="#ffffff", cc="#0f172a", cbc="#e2e8f0", crad=dm(999), cfs=dm(15), gap=dm(10), jc="center", **anim("fadeUp"))], w=100)],

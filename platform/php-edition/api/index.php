@@ -252,7 +252,7 @@ const UPD_PLACEHOLDER_NAME = 'اسم متجرك';
 const UPD_PLACEHOLDER_WA = '213000000000';
 function updAllowed(string $p): bool {
     if ($p === '' || strlen($p) > 120 || str_contains($p, '..') || $p[0] === '/' || strpbrk($p, "\\\0") !== false) return false;
-    if (in_array($p, ['admin.html', 'order-embed.html', 'api/index.php', 'p/_template/index.html'], true)) return true;
+    if (in_array($p, ['admin.html', 'order-embed.html', 'api/index.php', 'p/_template/index.html', 'manifest-admin.webmanifest'], true)) return true;
     /* ملفات اللوحة المشتركة فقط (مرآة shared-files.json): أنواع محددة داخل مجلدات الأصول؛ ما سواها (بيانات الموقع، الإعدادات، api/_data، .github) مرفوض */
     if (preg_match('#^assets/js/(vendor/[A-Za-z0-9._-]+\.(js|txt)|[A-Za-z0-9._-]+\.js)$#', $p)) return true;
     if (preg_match('#^assets/css/[A-Za-z0-9._-]+\.css$#', $p)) return true;
