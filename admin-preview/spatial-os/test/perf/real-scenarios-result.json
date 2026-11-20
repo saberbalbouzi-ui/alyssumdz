@@ -1,0 +1,186 @@
+{
+ "date": "2026-11-13",
+ "renderer": "SwiftShader (software) — diagnostic only",
+ "results": [
+  {
+   "scenario": "R1-one-real-panel",
+   "mode": "q3",
+   "reps": 1,
+   "fps_runs": [
+    4.5
+   ],
+   "avg_fps": 4.5,
+   "low1_fps": 2.7,
+   "p50_ms": 216.7,
+   "p95_ms": 250,
+   "cpu_pct": 11,
+   "script_pct": 1,
+   "heap_mb": 13.4,
+   "nodes": 18469,
+   "panels": 1,
+   "quality_tier": "3"
+  },
+  {
+   "scenario": "R1-one-real-panel",
+   "mode": "auto",
+   "reps": 1,
+   "fps_runs": [
+    6.6
+   ],
+   "avg_fps": 6.6,
+   "low1_fps": 3.2,
+   "p50_ms": 150,
+   "p95_ms": 183.4,
+   "cpu_pct": 11,
+   "script_pct": 1,
+   "heap_mb": 12.6,
+   "nodes": 17976,
+   "panels": 1,
+   "quality_tier": "0"
+  },
+  {
+   "scenario": "R2-two-real-panels",
+   "mode": "q3",
+   "reps": 1,
+   "fps_runs": [
+    3.7
+   ],
+   "avg_fps": 3.7,
+   "low1_fps": 3,
+   "p50_ms": 266.6,
+   "p95_ms": 333.4,
+   "cpu_pct": 10,
+   "script_pct": 2,
+   "heap_mb": 31.7,
+   "nodes": 50046,
+   "panels": 2,
+   "quality_tier": "3"
+  },
+  {
+   "scenario": "R2-two-real-panels",
+   "mode": "auto",
+   "reps": 1,
+   "fps_runs": [
+    4.6
+   ],
+   "avg_fps": 4.6,
+   "low1_fps": 3.5,
+   "p50_ms": 200.1,
+   "p95_ms": 266.6,
+   "cpu_pct": 8,
+   "script_pct": 1,
+   "heap_mb": 20.7,
+   "nodes": 33505,
+   "panels": 2,
+   "quality_tier": "0"
+  },
+  {
+   "scenario": "R4-four-real-panels",
+   "mode": "q3",
+   "reps": 1,
+   "fps_runs": [
+    3.5
+   ],
+   "avg_fps": 3.5,
+   "low1_fps": 2.9,
+   "p50_ms": 283.3,
+   "p95_ms": 350,
+   "cpu_pct": 13,
+   "script_pct": 3,
+   "heap_mb": 39.9,
+   "nodes": 101410,
+   "panels": 4,
+   "quality_tier": "3"
+  },
+  {
+   "scenario": "R4-four-real-panels",
+   "mode": "auto",
+   "reps": 1,
+   "fps_runs": [
+    4.2
+   ],
+   "avg_fps": 4.2,
+   "low1_fps": 3.5,
+   "p50_ms": 233.3,
+   "p95_ms": 283.3,
+   "cpu_pct": 11,
+   "script_pct": 1,
+   "heap_mb": 42.3,
+   "nodes": 96617,
+   "panels": 4,
+   "quality_tier": "0"
+  },
+  {
+   "scenario": "R5-four-panels+hub-updates",
+   "mode": "q3",
+   "reps": 1,
+   "fps_runs": [
+    3.4
+   ],
+   "avg_fps": 3.4,
+   "low1_fps": 2.6,
+   "p50_ms": 283.4,
+   "p95_ms": 383.3,
+   "cpu_pct": 16,
+   "script_pct": 5,
+   "heap_mb": 58,
+   "nodes": 107047,
+   "panels": 4,
+   "quality_tier": "3"
+  },
+  {
+   "scenario": "R5-four-panels+hub-updates",
+   "mode": "auto",
+   "reps": 1,
+   "fps_runs": [
+    3.9
+   ],
+   "avg_fps": 3.9,
+   "low1_fps": 3.3,
+   "p50_ms": 266.6,
+   "p95_ms": 299.9,
+   "cpu_pct": 14,
+   "script_pct": 3,
+   "heap_mb": 42.7,
+   "nodes": 67849,
+   "panels": 4,
+   "quality_tier": "0"
+  },
+  {
+   "scenario": "R6-agent-expanded-conversation",
+   "mode": "q3",
+   "reps": 1,
+   "fps_runs": [
+    3.9
+   ],
+   "avg_fps": 3.9,
+   "low1_fps": 2.2,
+   "p50_ms": 216.7,
+   "p95_ms": 450,
+   "cpu_pct": 11,
+   "script_pct": 1,
+   "heap_mb": 25.3,
+   "nodes": 19706,
+   "panels": 2,
+   "quality_tier": "3"
+  },
+  {
+   "scenario": "R6-agent-expanded-conversation",
+   "mode": "auto",
+   "reps": 1,
+   "fps_runs": [
+    4.3
+   ],
+   "avg_fps": 4.3,
+   "low1_fps": 2.4,
+   "p50_ms": 200,
+   "p95_ms": 399.9,
+   "cpu_pct": 8,
+   "script_pct": 0,
+   "heap_mb": 24.6,
+   "nodes": 29037,
+   "panels": 2,
+   "quality_tier": "0"
+  }
+ ]
+}

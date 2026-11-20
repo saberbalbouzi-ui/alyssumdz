@@ -1,0 +1,205 @@
+{
+ "phase": "12C-D",
+ "suite": "cross-backend client matrix (vm, fetch محاكى)",
+ "note": "Worker خارج المصفوفة العميلية (ليس سجلّ طلبات المتجر)",
+ "pass": 22,
+ "fail": 0,
+ "matrix": [
+  {
+   "scenario": "نجاح مؤكَّد (معرّف خادم صالح)",
+   "backend": "php",
+   "expected": "CONFIRMED",
+   "got": "CONFIRMED",
+   "error": "",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "نجاح مؤكَّد (معرّف خادم صالح)",
+   "backend": "supabase",
+   "expected": "CONFIRMED",
+   "got": "CONFIRMED",
+   "error": "",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 + معرّف غير صالح",
+   "backend": "php",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "invalid_id",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 + معرّف غير صالح",
+   "backend": "supabase",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "invalid_id",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 بلا معرّف/بنية صحيحة",
+   "backend": "php",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "missing_id",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 بلا معرّف/بنية صحيحة",
+   "backend": "supabase",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "unexpected_shape",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 + جسم فارغ",
+   "backend": "php",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "bad_body",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 + جسم فارغ",
+   "backend": "supabase",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "bad_body",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 + JSON تالف",
+   "backend": "php",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "bad_body",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 200 + JSON تالف",
+   "backend": "supabase",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "bad_body",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "إعادة توجيه غير متوقعة",
+   "backend": "php",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "unexpected_origin",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "إعادة توجيه غير متوقعة",
+   "backend": "supabase",
+   "expected": "INVALID_RESPONSE",
+   "got": "INVALID_RESPONSE",
+   "error": "unexpected_origin",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 422",
+   "backend": "php",
+   "expected": "REJECTED",
+   "got": "REJECTED",
+   "error": "invalid_name",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 422",
+   "backend": "supabase",
+   "expected": "REJECTED",
+   "got": "REJECTED",
+   "error": "invalid_name",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 500",
+   "backend": "php",
+   "expected": "SERVER_ERROR",
+   "got": "SERVER_ERROR",
+   "error": "server_error",
+   "attempts": 3,
+   "pass": true
+  },
+  {
+   "scenario": "HTTP 500",
+   "backend": "supabase",
+   "expected": "SERVER_ERROR",
+   "got": "SERVER_ERROR",
+   "error": "server_error",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "انقطاع شبكة قبل الحفظ",
+   "backend": "php",
+   "expected": "UNKNOWN",
+   "got": "UNKNOWN",
+   "error": "network",
+   "attempts": 3,
+   "pass": true
+  },
+  {
+   "scenario": "انقطاع شبكة قبل الحفظ",
+   "backend": "supabase",
+   "expected": "UNKNOWN",
+   "got": "UNKNOWN",
+   "error": "network",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "نفس المفتاح بمحتوى مختلف",
+   "backend": "php",
+   "expected": "REJECTED",
+   "got": "REJECTED",
+   "error": "idempotency_key_reuse",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "نفس المفتاح بمحتوى مختلف",
+   "backend": "supabase",
+   "expected": "REJECTED",
+   "got": "REJECTED",
+   "error": "idempotency_key_reuse",
+   "attempts": 1,
+   "pass": true
+  },
+  {
+   "scenario": "فقد الردّ بعد قبول الطلب ثم إعادة",
+   "backend": "php",
+   "expected": "DUPLICATE_CONFIRMED",
+   "got": "DUPLICATE_CONFIRMED",
+   "pass": true,
+   "serverOrders": 1
+  },
+  {
+   "scenario": "فقد الردّ بعد قبول الطلب ثم إعادة",
+   "backend": "supabase",
+   "expected": "UNKNOWN → CONFIRMED",
+   "got": "UNKNOWN → CONFIRMED",
+   "pass": true,
+   "serverOrders": 1
+  }
+ ]
+}

@@ -4,9 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>ALYSSUM — نظام فضائي (معاينة تفاعلية)</title>
+<title>ALYSSUM — المظهر الهولوغرافي</title>
 <link rel="preload" href="../../assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="spatial.css">
+<link rel="stylesheet" href="agent/agent.css">
+<link rel="stylesheet" href="agent/core3d.css">
+<link rel="stylesheet" href="quality.css">
 </head>
 <body>
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -29,13 +32,30 @@
 <div id="panels" aria-live="polite"></div>
 <nav class="dock" id="dock" aria-label="الأقسام (تنقل بديل)"></nav>
 <div class="hud" id="hud">
-  <span><b>اسحب</b> الخلفية لتدوير الاسطوانة</span><span>اختر قسماً ← تخرج لوحته</span><span><b>ارمِ</b> اللوحة نحو الحافة لإغلاقها</span>
-  <button type="button" id="hud-orbit" class="hbtn" aria-pressed="true">المدار: يعمل</button><button type="button" id="hud-reset" class="hbtn">إعادة ترتيب</button>
+  <span><b>اسحب</b> الخلفية لتدوير الاسطوانة</span><span>اختر قسماً ← تخرج لوحته</span><span><b>ارمِ</b> اللوحة نحو الحافة لإغلاقها</span><span><b>Shift+اسحب</b> لتدوير القاعة كلها</span>
+  <button type="button" id="hud-orbit" class="hbtn" aria-pressed="true">المدار: يعمل</button><button type="button" id="hud-reset" class="hbtn">إعادة ترتيب</button><a id="hud-exit" class="hbtn" href="../../admin.html">العودة للمظهر العادي</a>
 </div>
+<div class="modebar" id="modebar" role="toolbar" aria-label="أوضاع التعامل">
+  <div class="mgrp" role="group" aria-label="الوضع"><button type="button" data-m="world" aria-pressed="true" title="العالم (W): دوّر البيئة كلها"><kbd>W</kbd>العالم</button><button type="button" data-m="object" aria-pressed="false" title="الكائن (O): تحكّم بلوح واحد"><kbd>O</kbd>الكائن</button><button type="button" data-m="focus" aria-pressed="false" title="التركيز (F): وسّع اللوح المحدَّد"><kbd>F</kbd>التركيز</button></div>
+  <div class="mtools" role="group" aria-label="أداة الكائن"><button type="button" data-t="move" aria-pressed="true" title="تحريك (M)"><kbd>M</kbd>تحريك</button><button type="button" data-t="rot" aria-pressed="false" title="تدوير أفقي/رأسي (R)"><kbd>R</kbd>تدوير</button><button type="button" data-t="depth" aria-pressed="false" title="أقرب/أبعد (Z)"><kbd>Z</kbd>عمق</button><button type="button" data-t="roll" aria-pressed="false" title="ميل (T)"><kbd>T</kbd>ميل</button></div>
+  <div class="mws" role="group" aria-label="إدارة مساحة العمل"><button type="button" data-w="tile" title="ترتيب الألواح المفتوحة (A)">ترتيب</button><button type="button" data-w="cyl" title="العودة إلى الاسطوانة: تصغير كل الألواح مع حفظ حالتها (C)">إلى الاسطوانة</button><button type="button" data-w="all" title="استعادة كل الألواح المصغَّرة">استعادة الكل</button></div>
+  <span class="mread" id="mread" aria-live="polite"></span>
+</div>
+<div class="edgeglow" id="edgeglow" aria-hidden="true"></div>
 <div class="active" id="active" aria-live="polite"></div>
+<button type="button" class="yawchip" id="yawchip"></button>
 <div class="note" role="note">معاينة تفاعلية — بيانات تجريبية، معزولة عن لوحة التحكم الحقيقية</div>
 <script src="fx.js"></script>
+<script src="quality.js"></script>
 <script src="panels.js"></script>
+<script src="hub.js"></script>
 <script src="spatial.js"></script>
+<script src="agent/nlu.js"></script>
+<script src="agent/tools.js"></script>
+<script src="agent/core.js"></script>
+<script src="agent/core3d.js"></script>
+<script src="agent/voice.js"></script>
+<script src="agent/llm.js"></script>
+<script src="agent/ui.js"></script>
 </body>
 </html>
