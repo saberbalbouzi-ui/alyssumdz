@@ -2394,6 +2394,8 @@ const PhoneDZ = {
     send(); setTimeout(send, 600); setTimeout(send, 2000);
     let lastT = null; const sendT = ()=>{ const b = document.querySelector("#order-form #btn-total, .order-wide #btn-total") || document.getElementById("btn-total"), t = b ? b.textContent.trim() : ""; if(t === lastT) return; lastT = t; try{ parent.postMessage({ pbTotal: t }, location.origin); }catch(e){} };
     setInterval(sendT, 500); sendT();
+    /* لا يُكشف الإطار إلا بعد بناء النموذج وتطبيق ألوانه (كان يظهر النموذج الأسود القديم ثم الطويل ثم الجديد)؛ order-embed.html يُخفيه مبكراً ويكشفه هنا */
+    try{ setTimeout(()=>{ try{ window.__pbReveal && window.__pbReveal(); }catch(e){} }, 320); }catch(e){}
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 }catch(e){} })();

@@ -1,0 +1,71 @@
+# اختبارات تكامل Beta الحقيقية — يدوية فقط (workflow_dispatch)، للقراءة والتحقق: لا نشر ولا DNS ولا تغيير إنتاجي ولا تطبيق هجرات.
+# تعمل داخل GitHub Environment «alyssumdz-beta» (أسرارها BETA_* فقط؛ راجع platform/env/beta-resources.json و docs/BETA-INTEGRATION-READINESS.md).
+# الفحوص الساكنة (بلا أسرار) في beta-static-tests.yml؛ هنا الاختبارات الحقيقية فقط، وحراسات الهوية تعمل داخل كل اختبار قبل أي اتصال.
+# أي سرّ ناقص ← الاختبار يخرج SKIPPED (وبـrequire=true يفشل بالرمز 3 فلا يمرّ كنجاح). لا مفاتيح Production هنا ولا service_role.
+name: beta-integration
+on:
+  workflow_dispatch:
+    inputs:
+      suites:
+        description: 'الحزم: supabase-core,supabase-store,chargily (مفصولة بفاصلة). المتجر غير شرطي.'
+        default: 'supabase-core,supabase-store,chargily'
+      require:
+        description: 'اعتبر التخطي لنقص بيانات الاعتماد فشلاً'
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: beta-integration
+  cancel-in-progress: false
+jobs:
+  supabase-core:
+    name: Supabase Beta — Platform Core (هوية، Auth، RLS، saas، Storage)
+    if: contains(inputs.suites, 'supabase-core')
+    runs-on: ubuntu-latest
+    environment: alyssumdz-beta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: اختبار Platform Core
+        env:
+          BETA_SUPABASE_URL: ${{ vars.BETA_SUPABASE_URL }}
+          BETA_SUPABASE_REF: ${{ vars.BETA_SUPABASE_REF }}
+          BETA_SUPABASE_ANON_KEY: ${{ vars.BETA_SUPABASE_ANON_KEY }}
+          BETA_ADMIN_EMAIL: ${{ vars.BETA_ADMIN_EMAIL }}
+          BETA_SUPABASE_PAT: ${{ secrets.BETA_SUPABASE_PAT }}
+          BETA_ADMIN_PASSWORD: ${{ secrets.BETA_ADMIN_PASSWORD }}
+        run: node platform/supabase/tests/beta/beta-supabase.integration.mjs --group core ${{ inputs.require && '--require' || '' }}
+  supabase-store:
+    name: Supabase Beta — Store / Commerce (الطلبات والموظفون وadmins) — غير شرطي لنجاح Core
+    if: contains(inputs.suites, 'supabase-store')
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    environment: alyssumdz-beta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: اختبار Store / Commerce
+        env:
+          BETA_SUPABASE_URL: ${{ vars.BETA_SUPABASE_URL }}
+          BETA_SUPABASE_REF: ${{ vars.BETA_SUPABASE_REF }}
+          BETA_SUPABASE_ANON_KEY: ${{ vars.BETA_SUPABASE_ANON_KEY }}
+          BETA_ADMIN_EMAIL: ${{ vars.BETA_ADMIN_EMAIL }}
+          BETA_SUPABASE_PAT: ${{ secrets.BETA_SUPABASE_PAT }}
+          BETA_ADMIN_PASSWORD: ${{ secrets.BETA_ADMIN_PASSWORD }}
+        run: node platform/supabase/tests/beta/beta-supabase.integration.mjs --group store ${{ inputs.require && '--require' || '' }}
+  chargily:
+    name: Chargily Sandbox
+    if: contains(inputs.suites, 'chargily')
+    runs-on: ubuntu-latest
+    environment: alyssumdz-beta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: اختبار Chargily التجريبي
+        env:
+          BETA_CHARGILY_TEST_SECRET_KEY: ${{ secrets.BETA_CHARGILY_TEST_SECRET_KEY }}
+        run: node platform/api/test/integration/chargily-sandbox.integration.mjs ${{ inputs.require && '--require' || '' }}

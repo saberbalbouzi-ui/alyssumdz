@@ -1,0 +1,135 @@
+# اختبارات Beta الساكنة — منفصلة عن tests.yml (اختبارات الموقع والمنصة العامة). بلا أسرار ولا شبكة حقيقية ولا بيئة GitHub ولا نشر.
+# تعمل تلقائياً فقط عند تغيير ملفات Beta/العزل (paths) وعلى الفروع كلها؛ والاختبارات الحقيقية على Supabase تبقى في beta-integration.yml (يدوي، بيئة alyssumdz-beta).
+# المهمة worker-isolation: عزل Worker المنصة (إقلاع محروس، حارس الخروج، هجرات D1 المحلية). غير مسجَّلة في tests.yml.
+# السياسة: scripts/test-workflow-policy.py (W6s) تفرض: بلا أسرار/بيئة، contents: read، paths محدَّدة، لا نشر.
+name: beta-static-tests
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'platform/env/**'
+      - 'platform/release/**'
+      - 'platform/beta-sync/**'
+      - 'beta-content/**'
+      - 'platform/api/src/envguard.js'
+      - 'platform/api/src/env-registry.js'
+      - 'platform/gateway/src/envguard.js'
+      - 'platform/gateway/src/env-registry.js'
+      - 'platform/api/test/envguard.test.mjs'
+      - 'platform/api/test/integration/chargily-sandbox.integration.mjs'
+      - 'platform/supabase/tests/beta/**'
+      - 'scripts/supabase-beta-*.mjs'
+      - 'platform/api/src/**'
+      - 'platform/gateway/src/**'
+      - 'platform/api/schema.sql'
+      - 'platform/gateway/schema.sql'
+      - 'platform/api/migrations/**'
+      - 'platform/api/tools/**'
+      - 'platform/gateway/tools/**'
+      - 'platform/api/test/beta-*.test.mjs'
+      - 'platform/api/test/migrations.test.mjs'
+      - 'platform/api/test/integration/**'
+      - 'platform/gateway/test/beta-boot.test.mjs'
+      - 'scripts/test-beta-deploy.js'
+      - 'scripts/test-beta-resources.js'
+      - 'scripts/test-workflow-policy.py'
+      - '.github/workflows/**'
+  pull_request:
+    paths:
+      - 'platform/env/**'
+      - 'platform/release/**'
+      - 'platform/beta-sync/**'
+      - 'beta-content/**'
+      - 'platform/api/src/envguard.js'
+      - 'platform/api/src/env-registry.js'
+      - 'platform/gateway/src/envguard.js'
+      - 'platform/gateway/src/env-registry.js'
+      - 'platform/api/test/envguard.test.mjs'
+      - 'platform/api/test/integration/chargily-sandbox.integration.mjs'
+      - 'platform/supabase/tests/beta/**'
+      - 'scripts/supabase-beta-*.mjs'
+      - 'platform/api/src/**'
+      - 'platform/gateway/src/**'
+      - 'platform/api/schema.sql'
+      - 'platform/gateway/schema.sql'
+      - 'platform/api/migrations/**'
+      - 'platform/api/tools/**'
+      - 'platform/gateway/tools/**'
+      - 'platform/api/test/beta-*.test.mjs'
+      - 'platform/api/test/migrations.test.mjs'
+      - 'platform/api/test/integration/**'
+      - 'platform/gateway/test/beta-boot.test.mjs'
+      - 'scripts/test-beta-deploy.js'
+      - 'scripts/test-beta-resources.js'
+      - 'scripts/test-workflow-policy.py'
+      - '.github/workflows/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: beta-static-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  isolation:
+    name: عزل Beta (سجل البيئات، الحراسات، عدم الرجوع إلى Production، سياسة الـworkflows)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: سجل البيئات متزامن مع الملفات المولَّدة
+        run: node platform/env/sync.mjs --check
+      - name: حراسات Beta (بلا شبكة)
+        run: |
+          node --no-warnings platform/api/test/envguard.test.mjs
+          node platform/supabase/tests/beta/beta-supabase.integration.mjs --selfcheck
+          node platform/supabase/tests/beta/beta-bundle.test.mjs
+          node --no-warnings platform/supabase/tests/beta/beta-no-fallback.test.mjs
+          node platform/api/test/integration/chargily-sandbox.integration.mjs --stub
+      - name: سياسة الـworkflows (بلا نشر تلقائي ولا تداخل Beta/Production)
+        run: |
+          python3 -c "import yaml" 2>/dev/null || pip install --user pyyaml
+          python3 scripts/test-workflow-policy.py
+  worker-isolation:
+    name: عزل Worker المنصة (إقلاع محروس، حارس الخروج، هجرات ومحرك D1 محلي)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: عزل Beta على كود Worker الفعلي
+        run: |
+          node --no-warnings platform/api/test/beta-isolation.test.mjs
+          node --no-warnings platform/api/test/beta-module.test.mjs
+          node --no-warnings platform/api/test/migrations.test.mjs
+          node --no-warnings platform/gateway/test/beta-boot.test.mjs
+          node scripts/test-beta-deploy.js
+          node scripts/test-beta-resources.js
+      - name: D1 على محرك محلي (workerd/miniflare — ليس D1 البعيد)
+        run: |
+          mkdir -p /tmp/mf && cd /tmp/mf && npm init -y >/dev/null
+          ok=0; for i in 1 2 3; do npm i miniflare@4 >/dev/null 2>&1 && ok=1 && break; echo "retry $i"; sleep 5; done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت miniflare (إخفاق بيئة لا اختبار)"; exit 1; }
+          cd "$GITHUB_WORKSPACE" && MF_DIR=/tmp/mf node platform/api/test/integration/d1-beta.integration.mjs --local
+  release-sync:
+    name: مزامنة Beta (نواة الإصدار، المحوّل على بروتوكول محاكى، واجهة التشغيل، الـWorker الساكن على محرك محلي)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+      - name: نواة الإصدار والمحوّل وواجهة التشغيل (بلا شبكة ولا أسرار)
+        run: |
+          git config --global user.email ci@example.test && git config --global user.name ci
+          node --no-warnings platform/release/test/release.test.mjs
+          node --no-warnings platform/release/test/cloudflare-adapter.test.mjs
+          node --no-warnings platform/release/test/cli.test.mjs
+          node --no-warnings platform/release/test/probe.test.mjs
+      - name: مزامنة اللوحة التقليدية ← Beta (محرّك + قواعد + وجهة KV مع static-worker الحقيقي؛ بلا شبكة ولا أسرار)
+        run: node --no-warnings platform/beta-sync/test/engine.test.mjs
+      - name: الـWorker الساكن (إصدارات/مؤشرات/رجوع) على محرك Workers المحلي — ليس Cloudflare الحقيقي
+        run: |
+          mkdir -p /tmp/mf2 && cd /tmp/mf2 && npm init -y >/dev/null
+          ok=0; for i in 1 2 3; do npm i miniflare@4 >/dev/null 2>&1 && ok=1 && break; echo "retry $i"; sleep 5; done
+          [ "$ok" = 1 ] || { echo "::error::تعذّر تثبيت miniflare (إخفاق بيئة لا اختبار)"; exit 1; }
+          cd "$GITHUB_WORKSPACE" && MF_DIR=/tmp/mf2 node --no-warnings platform/release/test/static-worker.test.mjs --require

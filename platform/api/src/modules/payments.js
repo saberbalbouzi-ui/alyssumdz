@@ -15,6 +15,8 @@ async function createCheckout(ctx, tenant, a) {
   const { orderId, amount, method, locale } = a, { db } = ctx;
   const integ = await ctx.integration(tenant.id, "chargily"); if (!integ?.secrets.secret_key) throw new HttpError(409, "integration_missing", "فعّل تكامل chargily (secrets.secret_key) أولاً");
   const mode = integ.config.mode === "live" ? "live" : "test";
+  /* دفاع بالعمق: صف تكامل حيّ دخل قاعدة غير الإنتاج بغير مسار الـAPI (استعادة نسخة إنتاج مثلاً) لا يُستعمل أبداً */
+  { const E = ctx.environment; if (E && E.name !== "production" && (mode !== "test" || !/^test_/i.test(String(integ.secrets.secret_key)))) throw new HttpError(409, "live_payments_forbidden", `الدفع الحيّ ممنوع في ${E.name}: تكامل Chargily يجب أن يكون test بمفتاح test_`); }
   const ex = await db.one("SELECT ext_id,url,status,amount FROM pay_checkouts WHERE tenant_id=? AND order_id=? AND provider='chargily' ORDER BY id DESC", tenant.id, orderId);
   if (ex?.status === "paid") throw new HttpError(409, "already_paid", "الطلب مدفوع سابقاً");
   if (ex && ex.status === "pending" && ex.amount === amount && ex.url) return ok({ id: ex.ext_id, status: "pending", checkout_url: ex.url, reused: true });

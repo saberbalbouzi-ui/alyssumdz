@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "_note": "عقود التوافق بين مكوّنات المنصة المنفصلة (api/gateway/ui/templates). كل مكوّن له رقم contract يُرفع يدوياً عند كسر التوافق. requires = أدنى contract مطلوب من مكوّن آخر. min_ui/min_gateway للـapi = أقدم ui/gateway ما زال يخدمهما. تُفحص عند البناء وعند النشر ضد الإصدار المنشور فعلاً؛ كسر متزامن لمكوّنين (دورة) مرفوض ويُقسَّم إلى إصدارين (توسيع ثم تقليص).",
+  "components": {
+    "api": {
+      "contract": 1,
+      "min_ui": 1,
+      "min_gateway": 1
+    },
+    "gateway": {
+      "contract": 1,
+      "requires": {
+        "api": 1
+      }
+    },
+    "ui": {
+      "contract": 1,
+      "requires": {
+        "api": 1
+      }
+    },
+    "templates": {
+      "contract": 1,
+      "requires": {
+        "ui": 1
+      }
+    }
+  },
+  "protected_tables": {
+    "_note": "جداول بيانات المتاجر والطلبات: لا يجوز أن ينقص عدد صفوفها بعد أي نشر، ولا أن يختفي أي معرّف (بصمة المفاتيح تُقارَن)",
+    "d1_api": [
+      "pf_tenants",
+      "pf_keys",
+      "pf_integrations",
+      "pf_events",
+      "cm_products",
+      "cm_orders",
+      "src_orders",
+      "dg_orders",
+      "mk_orders",
+      "wl_accounts",
+      "wl_tx",
+      "apps",
+      "app_installations",
+      "beta_invites",
+      "beta_feedback"
+    ],
+    "supabase": {
+      "orders": "id",
+      "customers": "id",
+      "admins": "email",
+      "saas_admins": "email",
+      "saas_customers": "id",
+      "saas_sites": "id"
+    }
+  },
+  "ci_required_workflows": [
+    "tests"
+  ],
+  "_ci_note": "وظائف CI المطلوب نجاحها على الـSHA نفسه قبل أي نشر (بلا تجاوز). أضِف هنا أي workflow جديد يُعدّ بوابة إصدار.",
+  "template_prefixes": [
+    "assets/pages/",
+    "assets/img/tpl/",
+    "p/_template/",
+    "lp/"
+  ],
+  "_template_note": "مسارات (داخل مجلد الواجهة المبنية) تُعدّ «قوالب» وتُنشر بمؤشر وإصدار منفصلين عن بقية الواجهة. يجب أن تطابق قائمة TPL في platform/env/beta/static-worker.js (يفحصه الاختبار)."
+}

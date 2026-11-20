@@ -33,6 +33,7 @@ const OWN = {
   "ab.js": ["ab_"], "ads.js": ["ad_"], "adsoauth.js": ["ad_oauth", "ad_accounts"], "ai.js": ["ai_"], "antifraud.js": ["fr_"], "capi.js": ["cp_"],
   "carts.js": ["cr_"], "tryon.js": ["tr_"], "commerce.js": ["cm_"], "digital.js": ["dg_"], "hooks.js": ["hk_"], "payments.js": ["pay_"], "platform.js": ["pf_events", "pf_integrations"],
   "sheets.js": [], "sms.js": ["sms_"], "sources.js": ["src_"], "wallet.js": ["wl_"], "whatsapp.js": ["wa_"], "agency.js": ["marketing_services", "agency_"], "appstore.js": ["apps", "app_", "oauth_", "platform_revenues"], "marketplace.js": ["mk_"],
+  "beta.js": ["beta_"],                                   // وحدة Beta (لا تُحمَّل في الإنتاج): دعوات/ملاحظات/استهلاك؛ وإعداداتها عبر ctx.meta وprovision.mergeSettings لا كتابة مباشرة في pf_*
 };
 /* قراءة جداول الآخرين المسموحة صراحةً (SELECT فقط) — أي إضافة هنا قرار معماري موثّق في ARCHITECTURE.md */
 const READ_OK = {

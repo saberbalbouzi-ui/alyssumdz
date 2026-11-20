@@ -89,7 +89,8 @@ def shared(h, ref):
     # لا تحويل مسار ولا قراءة متزامنة لـdata.js ولا canonical (الصفحة مستقلة عن أي منتج)
     out = re.sub(r'<script>[^<]*XMLHttpRequest[^<]*</script>', '', out)
     out = re.sub(r'<script>[^<]*link\[rel=canonical\][^<]*</script>', '', out)
-    out = out.replace('<head>', '<head><script>var __S=(new URLSearchParams(location.search).get("p")||"").replace(/[^a-z0-9-]/gi,"")</script>', 1)
+    EARLY = '<script>(function(){if(!/[?&]embed=1/.test(location.search))return;var d=document.documentElement;d.classList.add("pb-embed","pb-embed-pre");var s=document.createElement("style");s.id="pb-pre";s.textContent="html.pb-embed-pre,html.pb-embed-pre body{background:transparent!important}html.pb-embed-pre body{opacity:0!important}html.pb-embed body{transition:opacity .15s}";document.head.appendChild(s);window.__pbReveal=function(){d.classList.remove("pb-embed-pre")};setTimeout(window.__pbReveal,3500)})()</script>'
+    out = out.replace('<head>', '<head>' + EARLY + '<script>var __S=(new URLSearchParams(location.search).get("p")||"").replace(/[^a-z0-9-]/gi,"")</script>', 1)
     out = out.replace('initProduct("%s")' % ref, 'initProduct(__S)')
     out = out.replace('x.slug==="%s"' % ref, 'x.slug===__S').replace('x.slug!=="%s"' % ref, 'x.slug!==__S')
     out = out.replace('../../', '')

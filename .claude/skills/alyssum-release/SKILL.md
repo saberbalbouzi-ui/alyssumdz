@@ -26,4 +26,9 @@ description: خطوات إصدار ونشر تعديلات منصة أليسوم
 ## ملاحظة تشغيل
 - جمّع التعديلات المتقاربة في إصدار واحد وتأكد من وصول النسخة السابقة قبل دفع التالية؛ وأفرغ كاش Cloudflare مرة واحدة بعد آخر نسخة (حدّ Cloudflare 300 طلب/10ث لكل IP).
 - «باعد بين التحديث» عند المالك = **المباعدة بين طلبات ياليدين** (v1.89.808–810): فاصل ≥260ms بين الطلبات، مزامنة خلفية كل 15 دقيقة، وفترات تبريد للتحديث اليدوي (60–120ث). لا تُرجع الفواصل أقصر.
+
+## مزامنة Beta (مفصولة عن إصدار Production)
+Beta **لا يُنشَر من هذه المهارة ولا من `release.yml`**: له آلية خاصة `platform/release/` (انظر `docs/BETA-SYNC.md`): `node platform/release/beta-release.mjs sync-status|verify|plan|deploy|rollback|status`، أو workflow `beta-release.yml` (وسم `beta-approved/<sha8>` أو تشغيل يدوي؛ بيئة `alyssumdz-beta`). لا ينشر إلا commit معتمداً (على main أو موسوماً) اجتاز `tests` على الـSHA نفسه، من شجرة نظيفة، بترحيلات إضافية فقط وعقود متوافقة. لا تضع في ملفات `platform/release/` ما يخصّ متجر أليسوم (قاعدة المطوّر العامة)، ولا تقرأ شيفرة المنصة من `beta-content/`. أي تعديل على بنية المنصة يمسّ العقود (`platform/release/contracts.json`) يرفع `contract` المكوّن المعني. بعد إصدار حاسم على main: `beta-release.mjs sync-status` لمعرفة فجوة Beta.
+لا استعادة تلقائية لقاعدة D1 في مزامنة Beta (تمحو بيانات وصلت أثناء النشر): الرجوع للكود فقط، والاستعادة الجراحية يدوية `recover-missing`؛ الاعتماد بمعتمِد مُسمّى `BETA_APPROVERS`.
+
 - **قبل أي إصدار يصل العملاء:** `python3 tests/package-audit.py` (يبني حزمة التثبيت والتحديث اليدوي والبعيد ويفحص تسرّب هوية البائع، والقوالب المملوكة `owner_only`، واكتمال الفهرس والصور داخل الحزمة) ثم `python3 tests/library-audit.py` و`node tests/library-review.js` على متجر مبنيّ من هذه الحزم. ارفع ثابت `V` في `assets/js/admin-nav.js` مع `VERSION` (كاش معاينات المكتبة وجلود المنتجات).

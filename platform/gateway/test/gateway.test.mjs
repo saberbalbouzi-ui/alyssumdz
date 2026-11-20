@@ -57,6 +57,10 @@ ok("جغرافيا: اسم غريب = unknown", g.matchCommune(16, "Zzzzzz").sta
 /* عامّة */
 let c2; let [c, b, h] = await call("GET", "/health"); ok("health", c === 200 && b.ok === true);
 [c, b, h] = await call("GET", "/v1/couriers"); ok("couriers: sandbox + ياليدين + كاش", c === 200 && b.couriers[0].courier === "sandbox" && b.couriers.some((x) => x.courier === "yalidine") && /max-age/.test(h["Cache-Control"]));
+/* /v1/couriers عام عمداً (بيانات مرجعية كـ/openapi.json و/v1/wilayas ووثائق /): بلا مصادقة، لكنه مخطط ثابت فقط. هذا الفحص يمنع تسرّب أي حقل خاص بمستأجر أو سرّ إليه مستقبلاً */
+{ const [c2, b2] = await call("GET", "/v1/couriers"); const ALLOWED = new Set(["courier", "label", "maturity", "credentials", "capabilities", "needsBaseUrl", "baseUrlHint", "notes", "hint", "docs"]), CRED = new Set(["key", "label", "required", "secret", "type", "hint", "placeholder", "options"]);
+  const extra = []; for (const x of b2.couriers) { for (const k of Object.keys(x)) if (!ALLOWED.has(k)) extra.push(x.courier + "." + k); for (const f of x.credentials ?? []) for (const k of Object.keys(f)) if (!CRED.has(k)) extra.push(x.courier + ".credentials." + k); }
+  const js = JSON.stringify(b2); ok("couriers العام: مخطط مرجعي فقط (أسماء حقول الاعتماد بلا قيم، ولا مستأجر/مفتاح/رمز)", c2 === 200 && extra.length === 0 && !/tenant_id|api_key|Bearer |sk_|secret_value|"value"\s*:/.test(js), extra); }
 [c, b] = await call("GET", "/v1/wilayas", null, null, { q: "oran" }); ok("wilayas: بحث", c === 200 && b[0].code === 31);
 [c, b] = await call("GET", "/v1/wilayas", null, null, { all: "1" }); { const w60 = b.find((w) => w.code === 60); ok("wilayas: 60 تُشحن كأمها (5)", w60 && w60.shipAs === 5 && w60.courierSupported === false, w60); }
 [c, b] = await call("GET", "/v1/communes", null, null, { wilaya: "16" }); ok("communes: ولاية", c === 200 && b.communes.length > 40);
