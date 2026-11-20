@@ -4,7 +4,7 @@
 // (إطفاء Verify JWT آمن هنا: الدالة تتحقق بنفسها أنك مدير عبر is_admin بتوكن جلستك، وإطفاؤه يمنع حجب طلب الفحص المسبق CORS من بوابة Supabase.)
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
-const DEF_HOSTS = "api.yalidine.app,yalidine.app,ecotrack.dz,dhd-dz.com,procolis.com,api.zrexpress.app,noest-dz.com,noest-dz.s3.eu-west-3.amazonaws.com,wecanservices.com,maystro-delivery.com";
+const DEF_HOSTS = "api.yalidine.app,yalidine.app,ecotrack.dz,dhd-dz.com,procolis.com,api.zrexpress.app,noest-dz.com,noest-dz.s3.eu-west-3.amazonaws.com,wecanservices.com,maystro-delivery.com,ecom-dz.com";
 const HOSTS = (DEF_HOSTS + "," + (Deno.env.get("COURIER_HOSTS") ?? "")).split(",").map((s) => s.trim()).filter(Boolean);      // الافتراضي دائماً + ما يضيفه المتغيّر COURIER_HOSTS (لا يحلّ محلّه فيُحجب مضيف معروف)
 const CORS = {
   "Access-Control-Allow-Origin": "*",
