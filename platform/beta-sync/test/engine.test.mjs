@@ -26,7 +26,7 @@ class MemKV {
   constructor() { this.m = new Map(); this.fail = false; this.puts = 0; }
   async get(k, t) { if (this.fail) throw new Error("kv offline"); const v = this.m.get(k); if (v == null) return null; if (t === "arrayBuffer" || t?.type === "arrayBuffer") return typeof v === "string" ? enc.encode(v).buffer : v.slice().buffer; return typeof v === "string" ? v : dec.decode(v); }
   async getWithMetadata(k) { if (this.fail) throw new Error("kv offline"); this.hm = (this.hm ?? 0) + 1; return { value: this.m.has(k) ? { cancel() { } } : null }; }
-  async put(k, v) { if (this.fail) throw new Error("kv offline"); if (this.quotaErr) throw new Error("KV put() limit exceeded for the day."); this.puts++; this.m.set(k, typeof v === "string" ? v : new Uint8Array(v)); }
+  async put(k, v) { if (this.fail) throw new Error("kv offline"); if (this.quotaErr) throw new Error("KV put() limit exceeded for the day."); if (this.putErr) throw new Error("boom: put refused"); this.puts++; this.m.set(k, typeof v === "string" ? v : new Uint8Array(v)); }
 }
 const web = (kv) => ({ fetch: async (req) => { const sw = await swFile(); return sw.fetch(req, { FILES: kv }); } });
 const seed = async (kv, comp, rel, files) => { const map = {}; for (const [p, c] of Object.entries(files)) { const b = enc.encode(c), h = await sha256Hex(b); map[p] = h; kv.m.set("o/" + h, b); } kv.m.set("__ptr/" + comp, rel); kv.m.set(`__m/${comp}/${rel}`, JSON.stringify(map)); };
@@ -231,6 +231,17 @@ sec("E6) الخطة المجانية: ميزانية كتابات KV اليوم�
   const skip = await w.run({ budget: { kv_daily: 0 } }); ok("[Q11] بعد خطأ الحصة: الدورات التالية تتخطّى بلا طرق على KV حتى التجدد", skip.skipped === "kv_quota" && skip.until);
   const stq = await syncStatus(w.db); ok("[Q12] الحالة تُظهر الإيقاف المؤقت بسبب الحصة", !!stq.kv.paused_until && /حصة KV/.test(stq.last_error ?? ""), stq.kv);
   w.kv.quotaErr = false; const r2 = await w.run({ now: () => T0 + 36 * 3_600_000, budget: { kv_daily: 0 } }); ok("[Q13] بعد تجدد الحصة يكتمل كل شيء تلقائياً بلا تدخل", r2.ok && !r2.pending && (await syncStatus(w.db)).in_sync, r2);
+  w.db.close(); }
+
+sec("E7) أحداث استنفدت محاولاتها: لا تُجوِّع غيرها، ولا تُترك للأبد")
+{ const w = await world(); w.kv.putErr = true; for (let i = 0; i < 9; i++) await w.run();
+  const mx = Number((await w.db.get("SELECT MAX(attempts) a FROM sync_events WHERE status='failed'")).a), nf = Number((await w.db.get("SELECT COUNT(*) n FROM sync_events WHERE status='failed'")).n);
+  ok("[R1] فشل متكرر ⇒ تتوقف المحاولات عند الحدّ (8) ولا تتجاوزه بالإلحاح", nf > 0 && mx === 8, { mx, nf });
+  w.kv.putErr = false; await w.repo.commit("c1 جديد", { "p/new/index.html": PAGE("جديد") }); const r = await w.run({ budget: { files: 2 } });
+  ok("[R2] الأحداث المستنفدة تُستثنى من الدفعة (لا تجوِّع): التغيير الجديد يصل بميزانية ملفين رغم وجود أحداث ميتة كثيرة", r.cooling >= nf && r.applied >= 1 && (await w.get("p/new/index.html")).s === 200, { cooling: r.cooling, applied: r.applied, nf });
+  ok("[R3] بقاؤها فاشلة ظاهر في الحالة (ليس «متزامناً» زيفاً)", !(await syncStatus(w.db)).in_sync && (await syncStatus(w.db)).failed_events.length > 0);
+  let r2; for (let i = 0; i < 4; i++) r2 = await w.run({ now: () => Date.now() + 7 * 3_600_000 });
+  const st = await syncStatus(w.db); ok("[R4] بعد ست ساعات تُعاد المحاولة تلقائياً وتكتمل المزامنة بلا تدخل", r2.ok && st.in_sync && st.failed_events.length === 0, { r2, f: st.failed_events.length });
   w.db.close(); }
 
 sec("F) حواجز الشيفرة");

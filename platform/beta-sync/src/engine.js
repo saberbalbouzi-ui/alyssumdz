@@ -6,7 +6,7 @@
 import { classify, compOf, sha256Hex, COMPONENTS } from "./rules.js";
 import { migrate, meta } from "./db.js";
 
-const LOCK_TTL_MS = 150_000, MAX_ATTEMPTS = 8;
+const LOCK_TTL_MS = 150_000, MAX_ATTEMPTS = 8, DEAD_RETRY_MS = 6 * 3_600_000;   // حدث استنفد محاولاته: يُستثنى من الدفعات ويُعاد مرة كل 6 ساعات (لا يُجوِّع غيره ولا يُترك للأبد)
 const iso = () => new Date().toISOString();
 const isQuota = (e) => /10048|limit exceeded|free usage limit|usage limit/i.test(String(e?.message ?? e));
 
@@ -67,7 +67,7 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
     for (const c of COMPONENTS) if (!man[c].map) { R.error = `لا إصدار واجهة منشور للمكوّن ${c} (لا بيان للتصحيح عليه)`; return await finish(R, db, now, t0, kind, null, commits); }
 
     /* ── التخطيط: فروق حقيقية فقط ── */
-    const plan = [];
+    let plan = [];
     for (const [path, d] of desired) {
       const it = items.get(path), comp = compOf(path), live = man[comp].map[path];
       if (it && it.src_blob === d.blob && it.state === "quarantined") continue;                                   // محجور لنفس المحتوى: لا إعادة محاولة بلا تغيير
@@ -76,7 +76,9 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
     }
     for (const [path, it] of items) if (!desired.has(path) && (it.state === "applied" || it.state === "quarantined" || it.state === "failed")) plan.push({ op: "delete", path, it, comp: it.comp, d: { cls: { prio: -1 } }, why: "removed" });
     plan.sort((a, b) => (a.op === "delete") - (b.op === "delete") || a.d.cls.prio - b.d.cls.prio || (a.path < b.path ? -1 : 1));   // الحذف آخراً (لا مرجع معلّق)
-    R.planned = plan.length;
+    const cool = new Set((await db.all("SELECT path FROM sync_events WHERE status='failed' AND attempts>=? AND ts>?", [MAX_ATTEMPTS, new Date(now() - DEAD_RETRY_MS).toISOString()])).map((r) => r.path));
+    const cooling = plan.filter((e) => cool.has(e.path)); plan = plan.filter((e) => !cool.has(e.path)); R.failed += cooling.length; R.cooling = cooling.length;
+    R.planned = plan.length + cooling.length;
 
     /* ── الدفعة (ميزانية) ── */
     const batch = []; let bytes = 0; for (const e of plan) { if (batch.length >= B.files) break; const sz = e.d.size ?? 0; if (batch.length && bytes + sz > B.bytes) break; batch.push(e); bytes += sz; }
@@ -94,7 +96,6 @@ export async function runSync({ source, target, db, san, kind = "incremental", b
       if (seq) await db.run("UPDATE sync_events SET attempts=attempts+1, run_id=?, ts=?, rev=? WHERE seq=?", [runId, iso(), rev, seq]);
       else seq = (await db.run("INSERT INTO sync_events (run_id,ts,path,op,src_blob,rev,status,attempts,src_commit,idem) VALUES (?,?,?,?,?,?,'pending',1,?,?)", [runId, iso(), e.path, e.op, e.op === "delete" ? null : e.d.blob, rev, head, `${e.path}|${e.op === "delete" ? "deleted" : e.d.blob}|${rev}`])).id;
       e.seq = seq;
-      if ((prev?.attempts ?? 0) + 1 > MAX_ATTEMPTS) { await ev(db, seq, "failed", "تجاوز الحدّ الأقصى للمحاولات"); R.failed++; continue; }
       try {
         if (e.op === "delete") { patch[e.comp].del.push(e.path); done.push(e); continue; }
         const buf = e.d.bytes ?? await source.bytes(head, e.path); const r = san.transform(e.path, buf, e.d.cls);
