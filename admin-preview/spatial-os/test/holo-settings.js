@@ -26,15 +26,17 @@ async function php(b) {
 
     await p.evaluate(() => Admin.tab("admtheme")); await p.waitForSelector("#atm-holo-go:not([disabled])", { timeout: 15000 });
     const card = await p.evaluate(() => { const c = document.querySelector(".atm-holo"); return c ? { txt: c.innerText, vis: getComputedStyle(c).display !== "none" } : null; });
-    ok("php: بطاقة المظهر الهولوغرافي ظاهرة في إعدادات المظهر وزرها مفعّل", !!card && card.vis && /المظهر الهولوغرافي/.test(card.txt) && /Beta/.test(card.txt));
+    ok("php: بطاقة المظهر الهولوغرافي ظاهرة في إعدادات المظهر وزرها مفعّل", !!card && card.vis && /Spatial Core/.test(card.txt) && /Beta/.test(card.txt));
     ok("php: نص البطاقة بلا مصطلحات تقنية/أسماء مزوّدين", !!card && !/GitHub|Supabase|PHP|Gemini|OpenAI|Claude|Anthropic|\.js|\.php/i.test(card.txt), card && card.txt.length);
+    const bd = await p.evaluate(() => { const b = document.querySelector(".atm-holo .atm-beta"), on = document.querySelector(".atm-card.on:not(.atm-holo) .atm-badge"); if (!b) return null; const cs = getComputedStyle(b), co = on ? getComputedStyle(on) : null; return { txt: b.textContent.trim(), color: cs.color, onColor: co && co.color, size: parseFloat(cs.fontSize), onSize: co && parseFloat(co.fontSize), title: document.querySelector(".atm-holo .atm-h b").textContent.trim() }; });
+    ok("php: العنوان Spatial Core وشارة Beta أصغر ولونها يختلف عن شارة «مفعّل»", !!bd && bd.title === "Spatial Core" && bd.txt === "Beta" && bd.color !== bd.onColor && bd.size < bd.onSize, bd);
     await shot(p, "01-settings-card");
 
     await p.click("#atm-holo-go"); await p.waitForURL(/admin-preview\/spatial-os\/index\.html\?real=1/);
     await p.waitForFunction(() => typeof SpatialOS !== "undefined" && SpatialOS.real === true, null, { timeout: 20000 });
     ok("php: المظهر الهولوغرافي يفتح بوضع الألواح الحقيقية والوكيل التنفيذي متاح", await p.evaluate(() => SpatialOS.real === true && SpatialOS.apiReal === true && document.body.classList.contains("real")));
     ok("php: عبارة «بيانات تجريبية» مخفية في الوضع الحقيقي", await p.evaluate(() => getComputedStyle(document.querySelector(".note")).display === "none"));
-    ok("php: العنوان «المظهر الهولوغرافي»", /المظهر الهولوغرافي/.test(await p.title()));
+    ok("php: عنوان الصفحة Spatial Core", /Spatial Core/.test(await p.title()));
     ok("php: النواة الثلاثية الأبعاد ومشهد الأسطوانة موجودان", await p.evaluate(() => !!document.getElementById("core") && !!document.getElementById("cyl") && !!document.querySelector("canvas.core3d, #core canvas, .core3d")));
 
     /* كل أقسام الأسطوانة (عدا المساعد) لوحات حقيقية بتبويب اللوحة الحقيقي */

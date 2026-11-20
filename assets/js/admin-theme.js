@@ -22,10 +22,10 @@
   };
   /* المظهر الهولوغرافي (Beta): مظهر ثانٍ للوحة نفسها — الأقسام والبيانات والإعدادات كما هي، والمختلف هو الشكل فقط؛ يُفتح بصفحة مستقلة ويعود بزر */
   function holoCard(){
-    return '<div class="atm-card atm-holo"><div class="atm-h"><b>المظهر الهولوغرافي</b><span class="atm-badge">Beta</span></div>' +
+    return '<div class="atm-card atm-holo"><div class="atm-h"><b dir="ltr">Spatial Core</b><span class="atm-badge atm-beta">Beta</span></div>' +
       '<div class="atm-pv h" aria-hidden="true"><i class="cy"></i><i class="co"></i></div>' +
       '<div class="hint">نفس لوحتك وإعداداتك وبياناتك، بشكل ثلاثي الأبعاد: أسطوانة أقسام ونواة مركزية وألواح زجاجية عائمة. لا يتغيّر شيء من إعداداتك؛ المختلف هو المظهر فقط، وتعود إلى المظهر العادي بزر واحد.</div>' +
-      '<div class="atm-act"><button type="button" class="small" id="atm-holo-go" disabled onclick="location.href=\'admin-preview/spatial-os/index.html?real=1\'">فتح المظهر الهولوغرافي</button><span class="hint" id="atm-holo-st">جارٍ التحقق من توفّره…</span></div></div>';
+      '<div class="atm-act"><button type="button" class="small" id="atm-holo-go" disabled onclick="location.href=\'admin-preview/spatial-os/index.html?real=1\'">فتح Spatial Core</button><span class="hint" id="atm-holo-st">جارٍ التحقق من توفّره…</span></div></div>';
   }
   T.render = function(){
     var box = document.getElementById("adm-theme"); if(!box) return;
