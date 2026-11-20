@@ -201,7 +201,7 @@ def d_plan(i, name, price, sub, items, hot=False):
     ws = [W("heading", text=name, tag="h3", fs=dm(24, 20), fw="900", ta={"d": "center"}, color="#ffffff"),
           W("heading", text=price, tag="div", fs=dm(46, 34), fw="900", ta={"d": "center"}, color="#ffffff", fxs=[gradtext(k + "p%d" % i, PUR1, PNK1, SKY1, 6)]),
           T(sub, 15, "#c4b5fd"), bullets(items, "check", PUR1, "#ede9fe", fs=17),
-          BTN("اختر الباقة", bg="#9333ea", fxs=[btngrad("#9333ea", "#ec4899", "rgba(168,85,247,.45)")] if hot else [FX("زر شفاف", "selector .pb-btn{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.3)}")])]
+          BTN("اختر الباقة", bg="#9333ea", link="#products", fxs=[btngrad("#9333ea", "#ec4899", "rgba(168,85,247,.45)")] if hot else [FX("زر شفاف", "selector .pb-btn{background:rgba(255,255,255,.12)!important;border:1px solid rgba(255,255,255,.3)}")])]
     fx = [FX("عمود باقة", "@media(min-width:768px){selector{border-inline-start:1px solid rgba(255,255,255,.12)}}")]
     if hot: fx = [FX("الباقة الأنسب", "selector{background:linear-gradient(180deg,rgba(168,85,247,.28),rgba(236,72,153,.1));box-shadow:inset 0 3px 0 #f472b6}"), ribbon("الأكثر طلباً", "#f472b6", "#fff")]
     return C(ws, w=dm(33, 100), pad=dm([40, 28, 40, 28], [30, 20, 30, 20]), fxs=fx)

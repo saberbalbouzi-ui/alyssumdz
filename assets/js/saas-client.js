@@ -5,7 +5,7 @@ window.SaasClient = (() => {
   /* المنصة الافتراضية (مفتاح عام آمن للنشر) — يمكن تجاوزها بـ CONFIG.SAAS_URL / SAAS_KEY */
   const DEF = { url: "https://qvdaiundlkfbmjlummni.supabase.co", key: "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h" };
   const cfg = () => { const c = (typeof CONFIG !== "undefined" && CONFIG) || {}; return { url: String(c.SAAS_URL || DEF.url).replace(/\/+$/, ""), key: c.SAAS_KEY || DEF.key }; };
-  const on = () => { const c = cfg(); return !!(c.url && c.key); };
+  const on = () => { const c = cfg(); return !!(c.url && c.key) && !/your_project_ref/i.test(c.url); };      // نسخة تاجر بلا إعداد: لا طلبات إلى مضيف وهمي
   const mine = () => { try { const a = JSON.parse(localStorage.getItem(KEY) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
   const save = a => { try { localStorage.setItem(KEY, JSON.stringify(a.slice(0, 40))); } catch (e) { } };
   async function rpc(fn, body) {

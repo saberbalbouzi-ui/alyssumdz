@@ -774,6 +774,7 @@ async function siteGate(){
   if(/\/admin(\.html)?\/?$/.test(location.pathname) || localStorage.getItem("alyssum_admin_on") === "1") return;
   const C = (typeof CONFIG !== "undefined" && CONFIG) || {}; if(C.SAAS_GATE === false) return;
   const url = String(C.SAAS_URL || "https://qvdaiundlkfbmjlummni.supabase.co").replace(/\/+$/, ""), key = C.SAAS_KEY || "sb_publishable_1ZtNDbkZ0uLFEdJeGkX0mw_zwXVI59h";
+  if(/your_project_ref/i.test(url)) return;      // نسخة تاجر بلا إعداد خدمة الاشتراكات: لا طلب إلى مضيف وهمي (يظهر كخطأ في WebKit)
   let st = null; try{ const c = JSON.parse(localStorage.getItem("alyssum_gate") || "null"); if(c && Date.now() - c.t < 18e5) st = c.s; }catch(e){}
   if(!st){
     try{
