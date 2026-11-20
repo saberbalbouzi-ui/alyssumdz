@@ -77,7 +77,7 @@
     /* المظهر الهولوغرافي: بقية أقسام الأسطوانة أيضاً لوحات حقيقية؛ nav = يبقى تنقّل اللوحة ظاهراً داخل الإطار فيصل المستخدم إلى كل الأقسام والإعدادات */
     dash: { tab: "home", w: 680, h: 580, nav: 1 }, store: { tab: "store", w: 680, h: 580, nav: 1 }, cus: { tab: "customers", w: 660, h: 560, nav: 1 }, look: { tab: "theme", w: 680, h: 580, nav: 1 }, ext: { tab: "appstore", w: 660, h: 560, nav: 1 }, set: { tab: "setup", w: 680, h: 580, nav: 1 },
     /* أقسام بطاقات الجدران: لوح حقيقي بلا تنقّل داخلي */
-    returns: { tab: "returns", w: 640, h: 540 }, profit: { tab: "profit", w: 640, h: 540 }, wallet: { tab: "wallet", w: 640, h: 540 }, delivery: { tab: "delivery", w: 640, h: 540 }, pack: { tab: "pack", w: 640, h: 540 }, shipped: { tab: "shipped", w: 660, h: 560 }, callcenter: { tab: "callcenter", w: 600, h: 540 }, categories: { tab: "categories", w: 640, h: 540 }, builder: { tab: "builder", w: 680, h: 560 }, seo: { tab: "seo", w: 640, h: 540 }, payments: { tab: "payments", w: 640, h: 540 }, blog: { tab: "blog", w: 640, h: 540 } };
+    returns: { tab: "returns", w: 640, h: 540 }, profit: { tab: "profit", w: 640, h: 540 }, wallet: { tab: "wallet", w: 640, h: 540 }, delivery: { tab: "delivery", w: 640, h: 540 }, pack: { tab: "pack", w: 640, h: 540 }, shipped: { tab: "shipped", w: 660, h: 560 }, callcenter: { tab: "callcenter", w: 600, h: 540 }, categories: { tab: "categories", w: 640, h: 540 }, builder: { tab: "builder", w: 680, h: 560 }, seo: { tab: "seo", w: 640, h: 540 }, payments: { tab: "payments", w: 640, h: 540 }, blog: { tab: "blog", w: 640, h: 540 }, bulkp: { tab: "bulkp", w: 660, h: 540 }, audit: { tab: "audit", w: 640, h: 540 }, attributes: { tab: "attributes", w: 640, h: 540 }, dispatch: { tab: "dispatch", w: 680, h: 560 }, costs: { tab: "costs", w: 640, h: 540 }, finance: { tab: "finance", w: 660, h: 540 }, team: { tab: "team", w: 640, h: 540 } };
   /* تدوير الاسطوانة لتقديم عقدة قسم إلى مقدمة المشهد (أقصر دوران) */
   function spinTo(id) { const i = secs.findIndex(s => s.id === id); if (i < 0) return; const step = 360 / secs.length; let t = -i * step - yaw; t += Math.round((ang - t) / 360) * 360; tw = { to: t }; va = 0; lastInput = performance.now() + 4000; /* يبقى مُحاذياً ~6 ثوانٍ قبل أن يستأنف الدوران الهادئ */ }
   function frame(t) {
@@ -215,7 +215,7 @@
   function glide(p, vx, vy) {
     cancelGlide(p); let last = performance.now(); p.el.classList.add("gliding");
     const step = t => { const dt = Math.min(100, t - last); last = t; const f = persp(p.st.z + (focused === p.id ? 40 : 0)); p.st.x += vx * dt / f; p.st.y += vy * dt / f; const k = Math.exp(-dt / 240); vx *= k; vy *= k;
-      p.bk = { y: clamp(vx * 5, -9, 9), x: clamp(-vy * 4, -7, 7) }; const mx = W() / 2 - p.st.w * p.st.s / 3, my = H() / 2 - p.st.h * p.st.s / 3; if (Math.abs(p.st.x) > mx) { p.st.x = clamp(p.st.x, -mx, mx); vx *= -.35; } if (Math.abs(p.st.y) > my) { p.st.y = clamp(p.st.y, -my, my); vy *= -.35; } apply(p);
+      p.bk = { y: clamp(vx * 5, -9, 9), x: clamp(-vy * 4, -7, 7) }; const mx = W() / 2 - p.st.w * p.st.s / 3, my = H() / 2 - p.st.h * p.st.s / 3; if (Math.abs(p.st.x) > mx) { p.st.x = clamp(p.st.x, -mx, mx); vx *= -.35; } { const yt = yTop(p.st.h * p.st.s); if (p.st.y > my || p.st.y < yt) { p.st.y = clamp(p.st.y, yt, my); vy *= -.35; } } apply(p);
       if (Math.hypot(vx, vy) > .02) p.glide = requestAnimationFrame(step); else { p.glide = 0; p.bk = null; p.el.classList.remove("gliding"); p.el.classList.add("tr2"); setTimeout(() => p.el.classList.remove("tr2"), 400); if (!snapOrbit(p)) resolve(p); } };
     p.glide = requestAnimationFrame(step);
   }
@@ -302,11 +302,16 @@
   const EMBED_NAV_CSS = EMBED_CSS.replace("#app>.top,#nav-groups,", "").replace(".side-nav,", "").replace(".admin-body{display:block!important}", "");
   /* غلاف Spatial Core اللوني: يُحقن داخل لوحة التحكم الحقيقية في الألواح فقط (ألوان وأسطح؛ لا بنية ولا إعدادات ولا تخزين). اللون الأساسي سماوي كهربائي بدل الليموني، النجاح زمردي، التنبيه بنفسجي، والأسطح زرقاء داكنة بحواف مضيئة.
      !important لأن اللوحة تضع --g-mint و--ac نمطاً مضمّناً على <html>. */
-  const HOLO_SKIN = "html{--c:59,230,255;--g-mint:#3be6ff!important;--g-mint-rgb:59,230,255!important;--ac:#3be6ff!important;--g-ok:#35f2a5!important;--g-ok-rgb:53,242,165!important;--green:#35f2a5!important;--g-surf:linear-gradient(155deg,rgba(46,120,210,.17),rgba(5,14,32,.62) 72%)!important;--g-smoke:rgba(5,14,32,.7)!important;--lime-hi:rgba(59,230,255,.34)!important;--lime-lo:rgba(138,98,255,.30)!important;--lime-edge:rgba(59,230,255,.7)!important;--lime-ink:#eafcff!important}" +
-    "body .card,body .pcard,body .kpi{border:1px solid rgba(59,230,255,.26)!important;box-shadow:inset 0 1px 0 rgba(160,240,255,.14),0 0 0 1px rgba(59,230,255,.05),0 10px 30px rgba(0,0,0,.5),0 0 22px rgba(59,230,255,.06)!important}" +
+  const HOLO_SKIN = "html{--c:59,230,255;--g-mint:#3be6ff!important;--g-mint-rgb:59,230,255!important;--ac:#3be6ff!important;--g-ok:#35f2a5!important;--g-ok-rgb:53,242,165!important;--green:#35f2a5!important;--g-surf:linear-gradient(155deg,rgba(46,130,225,.26),rgba(5,16,36,.66) 72%)!important;--g-smoke:rgba(5,14,32,.7)!important;--lime-hi:rgba(70,228,255,.68)!important;--lime-lo:rgba(150,104,255,.64)!important;--lime-edge:rgba(160,246,255,.95)!important;--lime-ink:#ffffff!important}" +
+    "body .card,body .pcard,body .kpi{border:1px solid rgba(59,230,255,.5)!important;box-shadow:inset 0 1px 0 rgba(160,240,255,.14),0 0 0 1px rgba(59,230,255,.05),0 10px 30px rgba(0,0,0,.5),0 0 22px rgba(59,230,255,.06)!important}" +
     "html.glass body .stat div:nth-child(4n+1){--c:59,230,255!important}html.glass body .stat div:nth-child(4n+2){--c:138,98,255!important}html.glass body .stat div:nth-child(4n+3){--c:53,242,165!important}html.glass body .stat div:nth-child(4n+4){--c:255,92,214!important}" +
     "#upd-btn,#au-btn,#theme-sw,#theme-btn,#cr-top,.cr-pill,#ais-top,button.logout,#app>.top button[onclick*='SitePreview'],#app>.top button[onclick*='Admin.logout']{display:none!important}" +
-    "body h1,body h2,body h3{text-shadow:0 0 14px rgba(59,230,255,.18)}body .btn:not(.gray):not(.warn):not(.danger):not(.red),body .small:not(.gray):not(.warn):not(.danger):not(.red){text-shadow:0 0 10px rgba(59,230,255,.45);backdrop-filter:blur(6px)}";
+    "html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}" +
+    "html.glass body :is(.btn,.small):not(.gray):not(.warn):not(.danger):not(.red):not(.ico):not(#_){text-shadow:0 1px 1px rgba(0,18,40,.55)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 0 18px rgba(59,230,255,.34)!important;font-weight:900!important}" +
+    "html.glass body :is(.small.gray,.btn.gray):not(#_){background:rgba(8,28,52,.92)!important;border:1px solid rgba(59,230,255,.5)!important;color:#f0fcff!important}" +
+    "html.glass body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea):not(#_){background:rgba(6,24,46,.92)!important;border:1px solid rgba(59,230,255,.5)!important;color:#f4fdff!important}" +
+    "html.glass body :is(input,textarea)::placeholder{color:rgba(196,232,246,.72)!important}" +
+    "html.glass body :is(input,select,textarea):focus:not(#_){border-color:#3be6ff!important;box-shadow:0 0 0 2px rgba(59,230,255,.3)!important;outline:0!important}";
   /* الليموني الحرفي المضمّن (سمات style/stroke/fill التي تولّدها وحدات اللوحة) يُستبدل بالسماوي أولاً بأول داخل الإطار؛ لا يمس ملفات اللوحة ولا بياناتها */
   const LIME_T = /#(?:e2fe17|effe17|dcff1f|cfe60f|91ac10)\b|rgba?\(\s*(?:226\s*,\s*254\s*,\s*23|220\s*,\s*255\s*,\s*31)\b/i;
   const toHolo = t => t.replace(/#(?:e2fe17|effe17|dcff1f)\b/gi, "#3be6ff").replace(/#(?:cfe60f|91ac10)\b/gi, "#0a8aa6").replace(/(rgba?\()\s*(?:226\s*,\s*254\s*,\s*23|220\s*,\s*255\s*,\s*31)\b/gi, "$1 59,230,255");
@@ -314,11 +319,17 @@
   function recolor(n) { if (!n || n.nodeType !== 1) return; const els = [n].concat([...n.querySelectorAll("[style],[stroke],[fill],[stop-color]")]); for (const e of els) for (const a of RC_ATTR) { const v = e.getAttribute(a); if (v && LIME_T.test(v)) e.setAttribute(a, toHolo(v)); } }
   function holoRecolor(d) { if (d.__spRc) return; d.__spRc = 1; const W2 = d.defaultView; if (!W2 || !W2.MutationObserver) return; recolor(d.body); new W2.MutationObserver(ms => { for (const m of ms) { if (m.type === "attributes") recolor(m.target); else for (const x of m.addedNodes) recolor(x); } }).observe(d.body, { subtree: true, childList: true, attributes: true, attributeFilter: RC_ATTR }); }
 
+  /* مقياس الكاميرا يتكيّف مع حجم النافذة فتبقى الجدران كاملة داخل الإطار (عند 1440×900 يبقى المقاس الأصلي كما اعتُمد) */
+  const camEl = document.getElementById("cam"), roomEl = document.getElementById("room"), BASE_CS = {};
+  function fitCam() { [camEl, roomEl].forEach((el, i) => { if (!el) return; if (BASE_CS[i] === undefined) { el.style.removeProperty("--cs"); BASE_CS[i] = parseFloat(getComputedStyle(el).getPropertyValue("--cs")) || 0; } if (innerWidth <= 820 || !BASE_CS[i]) { el.style.removeProperty("--cs"); return; } const k = Math.max(.66, Math.min(1.12, Math.min(innerWidth / 1440, innerHeight / 900))); el.style.setProperty("--cs", (BASE_CS[i] * k).toFixed(3)); }); }
+  fitCam(); addEventListener("resize", fitCam);
   async function detectReal() { if (/[?&]demo=1/.test(location.search)) return { real: false, api: false }; let api = false; try { const r = await fetch("../../api/index.php?r=me", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }); api = /json/.test(r.headers.get("content-type") || ""); } catch (_) { } return { real: api || /[?&]real=1/.test(location.search), api }; } /* api = واجهة PHP للوكيل التنفيذي متاحة؛ real = ألواح اللوحة الحقيقية (تُفرض بـ?real=1 من إعدادات اللوحة) */
   /* ◎ للوح الإطار الحقيقي: ألواح الإطار لا تدور في المدار (نقل الإطار يعيد تحميله) فيعيده الزر إلى مكانه وزاويته وحجمه الافتراضية */
+  /* أعلى موضع رأسي مسموح للوح ارتفاعه hh: يبقى شريط عنوانه ظاهراً تحت الشريط العلوي (لا يصعد فوق الشاشة ولا يختبئ) */
+  const yTop = hh => Math.min(-H() / 2 + 66 + hh * 1.1 / 2, 0); /* 1.1: الميلان والمنظور يكبّران الحافة القريبة فيصير الارتفاع المرسوم أكبر من المخزَّن */
   function homeFrame(p) { if (p.big) toggleBig(p); if (p.home) Object.assign(p.st, p.home); else { if (memo[p.id]) memo[p.id].pos = null; placeFrame(p); } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 700); }
   function placeFrame(p) {
-    const m = memo[p.id] && memo[p.id].pos; if (m) { Object.assign(p.st, m); p.st.x = clamp(p.st.x, -(W() / 2 - 80), W() / 2 - 80); p.st.y = clamp(p.st.y, -(H() / 2 - 80), H() / 2 - 80); p.st.s = clamp(p.st.s, .5, 1.9); return; }
+    const m = memo[p.id] && memo[p.id].pos; if (m) { Object.assign(p.st, m); p.st.x = clamp(p.st.x, -(W() / 2 - 80), W() / 2 - 80); p.st.y = clamp(p.st.y, yTop(p.st.h * p.st.s), H() / 2 - 80); p.st.s = clamp(p.st.s, .5, 1.9); return; }
     const n = [...open.values()].filter(q => !q.min).length, L = layoutFor(Math.min(6, Math.max(2, n))), c = L.find(x => slotFree(p, x)) || L[(n - 1) % L.length];
     Object.assign(p.st, { x: c.x, y: c.y, z: c.z, rx: c.rx, ry: c.ry, rz: 0, s: Math.min(c.s, 1) });
     if (n === 1 && !isMob()) p.st.x = Math.min(p.st.x, W() / 2 - p.st.w / 2 - 70); /* اللوح الوحيد لا يخرج من حافة الشاشة مع ميلانه */
@@ -488,7 +499,7 @@
   }
   function toggleBig(p) {
     p.el.classList.remove("tr"); p.el.classList.add("tr2"); focus(p.id);
-    if (!p.big) { p.prev = Object.assign({}, p.st); const w = Math.min(920, W() - 24), h = Math.min(660, H() - 92); Object.assign(p.st, { x: 0, y: isMob() ? -6 : -10, z: 110, rx: 0, ry: 0, s: 1, w, h }); p.big = true; setState(p, "expanded"); setLayer(p, false); p.el.style.setProperty("--op", 1); p.el.style.zIndex = ++zc; }
+    if (!p.big) { p.prev = Object.assign({}, p.st); /* لوح اللوحة الحقيقية على المكتب: يُفتح بحجم المكتب (يملأ الشاشة تحت الشريط العلوي بعمق 0 بلا تضخيم منظور) فتظهر الواجهة الكاملة */ const full = !!p.frame && !isMob(), fk = .973 /* اللوح المُركَّز يرتفع 40px نحو الكاميرا فيتضخّم 2.7%: نصغّره بالمقدار نفسه ليلائم الشاشة تماماً */, w = full ? Math.floor(Math.min(W() - 24, 1900) * fk) : Math.min(920, W() - 24), h = full ? Math.floor((H() - 84) * fk) : Math.min(660, H() - 92); Object.assign(p.st, { x: 0, y: isMob() ? -6 : (full ? 20 : -10), z: full ? 0 : 110, rx: 0, ry: 0, rz: 0, s: 1, w, h }); p.big = true; setState(p, "expanded"); setLayer(p, false); p.el.style.setProperty("--op", 1); p.el.style.zIndex = ++zc; }
     else { Object.assign(p.st, p.prev); p.big = false; setState(p, focused === p.id ? "focused" : "floating"); }
     p.el.classList.toggle("is-big", p.big); const top = p.body.scrollTop; render(p); p.body.scrollTop = top; apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420); objSel = p.id; va = 0; syncMode();
   }
@@ -496,7 +507,7 @@
   function resolve(p) {
     if (p.big) return; const me = rectOf(p); let moved = false;
     open.forEach(o => { if (o === p || o.min || o.big) return; const r = overlap(me, rectOf(o)); if (r && r.a > .35 * Math.min(me.w * me.h, rectOf(o).w * rectOf(o).h)) { if (r.ox < r.oy) p.st.x += (me.x >= o.st.x ? 1 : -1) * (r.ox + 14); else p.st.y += (me.y >= o.st.y ? 1 : -1) * (r.oy + 14); moved = true; me.x = p.st.x; me.y = p.st.y; } });
-    const mx = W() / 2 - me.w / 3, my = H() / 2 - me.h / 3; p.st.x = clamp(p.st.x, -mx, mx); p.st.y = clamp(p.st.y, -my, my);
+    const mx = W() / 2 - me.w / 3, my = H() / 2 - me.h / 3; p.st.x = clamp(p.st.x, -mx, mx); p.st.y = clamp(p.st.y, yTop(me.h * (p.st.s || 1)), my);
     if (!moved) { const near = layoutFor(6).find(c => Math.hypot(c.x - p.st.x, c.y - p.st.y) < (isMob() ? 55 : 85) && slotFree(p, c)); if (near) { Object.assign(p.st, { x: near.x, y: near.y }); moved = true; }   /* المغناطيس موضعي فقط: لا يمسّ العمق ولا الإمالة التي ضبطها المستخدم */ }
     p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 420);
   }

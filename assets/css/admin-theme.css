@@ -476,6 +476,10 @@ html.white #ord-prev-b h3,html.white .modal #ord-prev-t,html.white #ord-prev-b>b
 html.white [style*="color:var(--g-mint" i],html.white [style*="color: var(--g-mint" i]{color:#166534!important}
 html.white [style*="color:var(--g-ok" i],html.white [style*="color: var(--g-ok" i]{color:#166534!important}
 
+/* منشأ طلب الموقع: حملة (برتقالي) / رابط (رمادي مزرقّ) */
+.o-src.camp{background:rgba(234,88,12,.14);color:#c2410c;border-color:rgba(234,88,12,.4)}
+.o-src.link{background:rgba(100,116,139,.14);color:#475569;border-color:rgba(100,116,139,.4)}
+html.glass .o-src.camp{color:#fdba74}html.glass .o-src.link{color:#cbd5e1}
 /* بطاقة المظهر الهولوغرافي: معاينة مصغّرة (أسطوانة + نواة) بتدرجات ثابتة بلا ألوان نص حرفية */
 .atm-pv.h{background:radial-gradient(120% 90% at 50% 100%,rgba(59,230,255,.22),transparent 60%),#050b14;position:relative;display:block;overflow:hidden}
 .atm-pv.h .cy{position:absolute;inset-inline:30%;top:10px;bottom:8px;border-radius:14px/10px;border:1.5px solid rgba(59,230,255,.55);background:linear-gradient(90deg,rgba(59,230,255,.10),rgba(226,254,23,.14),rgba(59,230,255,.10));box-shadow:0 0 14px rgba(59,230,255,.25)}

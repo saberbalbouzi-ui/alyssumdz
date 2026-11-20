@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-20T18:07:45.568Z",
+ "updated": "2026-11-20T19:29:56.514Z",
  "def": "ecomdelivery",
  "dk": "ecomdelivery",
  "dp": "",
@@ -974,7 +974,241 @@
     }
    },
    "adj": 0,
-   "own": 1
+   "own": 1,
+   "wl": {
+    "1": [
+     "adrar",
+     1
+    ],
+    "2": [
+     "chlef",
+     1
+    ],
+    "3": [
+     "laghouat",
+     1
+    ],
+    "4": [
+     "oumelbouaghi",
+     1
+    ],
+    "5": [
+     "batna",
+     1
+    ],
+    "6": [
+     "bejaia",
+     1
+    ],
+    "7": [
+     "biskra",
+     1
+    ],
+    "8": [
+     "bechar",
+     1
+    ],
+    "9": [
+     "blida",
+     1
+    ],
+    "10": [
+     "bouira",
+     1
+    ],
+    "11": [
+     "tamanrasset",
+     1
+    ],
+    "12": [
+     "tebessa",
+     1
+    ],
+    "13": [
+     "tlemcen",
+     1
+    ],
+    "14": [
+     "tiaret",
+     1
+    ],
+    "15": [
+     "tiziouzou",
+     1
+    ],
+    "16": [
+     "alger",
+     1
+    ],
+    "17": [
+     "djelfa",
+     1
+    ],
+    "18": [
+     "jijel",
+     1
+    ],
+    "19": [
+     "setif",
+     1
+    ],
+    "20": [
+     "saida",
+     1
+    ],
+    "21": [
+     "skikda",
+     1
+    ],
+    "22": [
+     "sidibelabbes",
+     1
+    ],
+    "23": [
+     "annaba",
+     1
+    ],
+    "24": [
+     "guelma",
+     1
+    ],
+    "25": [
+     "constantine",
+     1
+    ],
+    "26": [
+     "medea",
+     1
+    ],
+    "27": [
+     "mostaganem",
+     1
+    ],
+    "28": [
+     "msila",
+     1
+    ],
+    "29": [
+     "mascara",
+     1
+    ],
+    "30": [
+     "ouargla",
+     1
+    ],
+    "31": [
+     "oran",
+     1
+    ],
+    "32": [
+     "elbayadh",
+     1
+    ],
+    "33": [
+     "illizi",
+     1
+    ],
+    "34": [
+     "bordjbouarreridj",
+     1
+    ],
+    "35": [
+     "boumerdes",
+     1
+    ],
+    "36": [
+     "eltarf",
+     1
+    ],
+    "37": [
+     "tindouf",
+     1
+    ],
+    "38": [
+     "tissemsilt",
+     1
+    ],
+    "39": [
+     "eloued",
+     1
+    ],
+    "40": [
+     "khenchela",
+     1
+    ],
+    "41": [
+     "soukahras",
+     1
+    ],
+    "42": [
+     "tipaza",
+     1
+    ],
+    "43": [
+     "mila",
+     1
+    ],
+    "44": [
+     "aindefla",
+     1
+    ],
+    "45": [
+     "naama",
+     1
+    ],
+    "46": [
+     "aintemouchent",
+     1
+    ],
+    "47": [
+     "ghardaia",
+     1
+    ],
+    "48": [
+     "relizane",
+     1
+    ],
+    "49": [
+     "timimoun",
+     1
+    ],
+    "50": [
+     "bordjbadjimokhtar",
+     0
+    ],
+    "51": [
+     "ouleddjellal",
+     1
+    ],
+    "52": [
+     "beniabbes",
+     1
+    ],
+    "53": [
+     "insalah",
+     1
+    ],
+    "54": [
+     "inguezzam",
+     0
+    ],
+    "55": [
+     "touggourt",
+     1
+    ],
+    "56": [
+     "djanet",
+     1
+    ],
+    "57": [
+     "elmghair",
+     1
+    ],
+    "58": [
+     "elmeniaa",
+     1
+    ]
+   }
   },
   "dhd": {
    "name": "DHD Express (Ecotrack)",
@@ -1440,7 +1674,241 @@
     }
    },
    "adj": 0,
-   "own": 1
+   "own": 1,
+   "wl": {
+    "1": [
+     "adrar",
+     1
+    ],
+    "2": [
+     "chlef",
+     1
+    ],
+    "3": [
+     "laghouat",
+     1
+    ],
+    "4": [
+     "oumelbouaghi",
+     1
+    ],
+    "5": [
+     "batna",
+     1
+    ],
+    "6": [
+     "bejaia",
+     1
+    ],
+    "7": [
+     "biskra",
+     1
+    ],
+    "8": [
+     "bechar",
+     1
+    ],
+    "9": [
+     "blida",
+     1
+    ],
+    "10": [
+     "bouira",
+     1
+    ],
+    "11": [
+     "tamanrasset",
+     1
+    ],
+    "12": [
+     "tebessa",
+     1
+    ],
+    "13": [
+     "tlemcen",
+     1
+    ],
+    "14": [
+     "tiaret",
+     1
+    ],
+    "15": [
+     "tiziouzou",
+     1
+    ],
+    "16": [
+     "alger",
+     1
+    ],
+    "17": [
+     "djelfa",
+     1
+    ],
+    "18": [
+     "jijel",
+     1
+    ],
+    "19": [
+     "setif",
+     1
+    ],
+    "20": [
+     "saida",
+     1
+    ],
+    "21": [
+     "skikda",
+     1
+    ],
+    "22": [
+     "sidibelabbes",
+     1
+    ],
+    "23": [
+     "annaba",
+     1
+    ],
+    "24": [
+     "guelma",
+     1
+    ],
+    "25": [
+     "constantine",
+     1
+    ],
+    "26": [
+     "medea",
+     1
+    ],
+    "27": [
+     "mostaganem",
+     1
+    ],
+    "28": [
+     "msila",
+     1
+    ],
+    "29": [
+     "mascara",
+     1
+    ],
+    "30": [
+     "ouargla",
+     1
+    ],
+    "31": [
+     "oran",
+     1
+    ],
+    "32": [
+     "elbayadh",
+     1
+    ],
+    "33": [
+     "illizi",
+     1
+    ],
+    "34": [
+     "bordjbouarreridj",
+     1
+    ],
+    "35": [
+     "boumerdes",
+     1
+    ],
+    "36": [
+     "eltarf",
+     1
+    ],
+    "37": [
+     "tindouf",
+     1
+    ],
+    "38": [
+     "tissemsilt",
+     1
+    ],
+    "39": [
+     "eloued",
+     1
+    ],
+    "40": [
+     "khenchela",
+     1
+    ],
+    "41": [
+     "soukahras",
+     1
+    ],
+    "42": [
+     "tipaza",
+     1
+    ],
+    "43": [
+     "mila",
+     1
+    ],
+    "44": [
+     "aindefla",
+     1
+    ],
+    "45": [
+     "naama",
+     1
+    ],
+    "46": [
+     "aintemouchent",
+     1
+    ],
+    "47": [
+     "ghardaia",
+     1
+    ],
+    "48": [
+     "relizane",
+     1
+    ],
+    "49": [
+     "timimoun",
+     1
+    ],
+    "50": [
+     "bordjbadjimokhtar",
+     1
+    ],
+    "51": [
+     "ouleddjellal",
+     1
+    ],
+    "52": [
+     "beniabbes",
+     1
+    ],
+    "53": [
+     "insalah",
+     1
+    ],
+    "54": [
+     "inguezzam",
+     1
+    ],
+    "55": [
+     "touggourt",
+     1
+    ],
+    "56": [
+     "djanet",
+     1
+    ],
+    "57": [
+     "elmghair",
+     1
+    ],
+    "58": [
+     "elmenia",
+     1
+    ]
+   }
   },
   "ecomdelivery": {
    "name": "E-com Delivery",
@@ -1671,241 +2139,7 @@
     }
    },
    "adj": 0,
-   "own": 1,
-   "wl": {
-    "1": [
-     "adrar",
-     1
-    ],
-    "2": [
-     "chlef",
-     1
-    ],
-    "3": [
-     "laghouat",
-     1
-    ],
-    "4": [
-     "oumelbouaghi",
-     1
-    ],
-    "5": [
-     "batna",
-     1
-    ],
-    "6": [
-     "bejaia",
-     1
-    ],
-    "7": [
-     "biskra",
-     1
-    ],
-    "8": [
-     "bechar",
-     1
-    ],
-    "9": [
-     "blida",
-     1
-    ],
-    "10": [
-     "bouira",
-     1
-    ],
-    "11": [
-     "tamanrasset",
-     1
-    ],
-    "12": [
-     "tebessa",
-     1
-    ],
-    "13": [
-     "tlemcen",
-     1
-    ],
-    "14": [
-     "tiaret",
-     1
-    ],
-    "15": [
-     "tiziouzou",
-     1
-    ],
-    "16": [
-     "alger",
-     1
-    ],
-    "17": [
-     "djelfa",
-     1
-    ],
-    "18": [
-     "jijel",
-     1
-    ],
-    "19": [
-     "setif",
-     1
-    ],
-    "20": [
-     "saida",
-     1
-    ],
-    "21": [
-     "skikda",
-     1
-    ],
-    "22": [
-     "sidibelabbes",
-     1
-    ],
-    "23": [
-     "annaba",
-     1
-    ],
-    "24": [
-     "guelma",
-     1
-    ],
-    "25": [
-     "constantine",
-     1
-    ],
-    "26": [
-     "medea",
-     1
-    ],
-    "27": [
-     "mostaganem",
-     1
-    ],
-    "28": [
-     "msila",
-     1
-    ],
-    "29": [
-     "mascara",
-     1
-    ],
-    "30": [
-     "ouargla",
-     1
-    ],
-    "31": [
-     "oran",
-     1
-    ],
-    "32": [
-     "elbayadh",
-     1
-    ],
-    "33": [
-     "illizi",
-     1
-    ],
-    "34": [
-     "bordjbouarreridj",
-     1
-    ],
-    "35": [
-     "boumerdes",
-     1
-    ],
-    "36": [
-     "eltarf",
-     1
-    ],
-    "37": [
-     "tindouf",
-     1
-    ],
-    "38": [
-     "tissemsilt",
-     1
-    ],
-    "39": [
-     "eloued",
-     1
-    ],
-    "40": [
-     "khenchela",
-     1
-    ],
-    "41": [
-     "soukahras",
-     1
-    ],
-    "42": [
-     "tipaza",
-     1
-    ],
-    "43": [
-     "mila",
-     1
-    ],
-    "44": [
-     "aindefla",
-     1
-    ],
-    "45": [
-     "naama",
-     1
-    ],
-    "46": [
-     "aintemouchent",
-     1
-    ],
-    "47": [
-     "ghardaia",
-     1
-    ],
-    "48": [
-     "relizane",
-     1
-    ],
-    "49": [
-     "timimoun",
-     1
-    ],
-    "50": [
-     "bordjbadjimokhtar",
-     0
-    ],
-    "51": [
-     "ouleddjellal",
-     1
-    ],
-    "52": [
-     "beniabbes",
-     1
-    ],
-    "53": [
-     "insalah",
-     1
-    ],
-    "54": [
-     "inguezzam",
-     0
-    ],
-    "55": [
-     "touggourt",
-     1
-    ],
-    "56": [
-     "djanet",
-     1
-    ],
-    "57": [
-     "mghair",
-     1
-    ],
-    "58": [
-     "meniaa",
-     1
-    ]
-   }
+   "own": 1
   }
  },
  "sup": {
@@ -13200,132 +13434,5 @@
    ]
   }
  },
- "nd": {
-  "1": [
-   "bouda",
-   "tit"
-  ],
-  "2": [
-   "benboutaleb",
-   "elhadjadj"
-  ],
-  "4": [
-   "eldjazia",
-   "rahia"
-  ],
-  "6": [
-   "benimelikeche",
-   "bouhamza",
-   "draakaid",
-   "ighilali",
-   "tamokra",
-   "tamridjet"
-  ],
-  "7": [
-   "ainzaatout",
-   "elfeidh",
-   "elhaouch",
-   "khanguetsidinadji"
-  ],
-  "8": [
-   "tabalbala"
-  ],
-  "11": [
-   "abalessa",
-   "idles",
-   "inamguel",
-   "tazouk"
-  ],
-  "12": [
-   "ferkane",
-   "negrine"
-  ],
-  "17": [
-   "amourah",
-   "guettara",
-   "oumlaadham"
-  ],
-  "18": [
-   "bordjtaher",
-   "boudriabeniyadjis",
-   "bouraouibelhadef",
-   "boussifouledaskeur",
-   "chahna",
-   "erraguene",
-   "ghebala",
-   "ouadjana",
-   "ouledrabah",
-   "ouledyahiakhadrouch",
-   "selmabenziada"
-  ],
-  "20": [
-   "sidiahmed"
-  ],
-  "21": [
-   "ainzouit",
-   "benizid",
-   "kanoua",
-   "khenegmayoum",
-   "ouedzehour",
-   "ouldjaboulbalout",
-   "zitouna"
-  ],
-  "22": [
-   "marhoum",
-   "tafissour"
-  ],
-  "24": [
-   "ainlarbi"
-  ],
-  "28": [
-   "ainfares"
-  ],
-  "29": [
-   "elgaada"
-  ],
-  "30": [
-   "elborma"
-  ],
-  "33": [
-   "bordjomardriss",
-   "debdeb",
-   "inamenas"
-  ],
-  "35": [
-   "ouledaissa"
-  ],
-  "36": [
-   "souarekh"
-  ],
-  "40": [
-   "djellal",
-   "eloueldja",
-   "khirane",
-   "msara",
-   "tamza"
-  ],
-  "43": [
-   "tessalalamatai"
-  ],
-  "47": [
-   "sebseb"
-  ],
-  "49": [
-   "metarfa",
-   "ouledaissa",
-   "ouledsaid",
-   "talmine"
-  ],
-  "50": [
-   "bordjbadjimokhtar",
-   "timiaouine"
-  ],
-  "54": [
-   "ainguezzam",
-   "tinzouatine"
-  ],
-  "56": [
-   "bordjelhaouass"
-  ]
- }
+ "nd": {}
 }
