@@ -7,8 +7,8 @@ const R = []; let fails = 0;
 const ok = (n, c, x) => { if (!c) fails++; R.push((c ? "PASS " : "FAIL ") + n + (x !== undefined ? "  " + JSON.stringify(x).slice(0, 200) : "")); };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
-async function ctx(b, vp) {
-  const c = await b.newContext({ viewport: vp || { width: 1440, height: 900 } }), p = await c.newPage(), errs = [];
+async function ctx(b, vp, mobile) {
+  const c = await b.newContext({ viewport: vp || { width: 1440, height: 900 }, ...(mobile ? { deviceScaleFactor: 2, isMobile: true, hasTouch: true } : {}) }), p = await c.newPage(), errs = [];
   p.setDefaultTimeout(15000); p.on("pageerror", e => errs.push(String(e.stack || e).split("\n").slice(0, 2).join(" <- ").slice(0, 220))); p.on("dialog", d => d.accept().catch(() => { }));
   return { c, p, errs };
 }
@@ -75,6 +75,42 @@ async function php(b) {
   } finally { await store.stop(); }
 }
 
+
+async function phone(b) {
+  const store = await startStore(); const { p, errs } = await ctx(b, { width: 390, height: 844 }, true);
+  const appReady = () => p.waitForFunction(() => { try { return typeof Admin !== "undefined" && !document.getElementById("app").classList.contains("hidden"); } catch (e) { return false; } }, null, { timeout: 30000 });
+  const noOverflow = () => p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1);
+  try {
+    await p.goto(store.base + "/admin.html"); await wait(800);
+    await p.evaluate(async () => (await fetch("api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ password: "TestPass12345" }) })).json());
+    await p.goto(store.base + "/admin.html"); await appReady(); await wait(3000);
+    await p.evaluate(() => Admin.tab("admtheme"));
+    await p.waitForFunction(() => { const b = document.getElementById("atm-holo-go"), t = document.getElementById("tab-admtheme"); return b && !b.disabled && t && !t.classList.contains("hidden") && b.getBoundingClientRect().width > 0; }, null, { timeout: 20000 });
+    const cd = await p.evaluate(() => { const b = document.getElementById("atm-holo-go"), r = b.getBoundingClientRect(), c = b.closest(".atm-holo").getBoundingClientRect(); return { btnW: Math.round(r.width), cardInside: c.left >= -1 && c.right <= innerWidth + 1, vw: innerWidth }; });
+    ok("phone: بطاقة Spatial Core ظاهرة داخل الشاشة وزرها قابل للنقر", cd.btnW > 100 && cd.cardInside, cd);
+    ok("phone: لا فيض أفقي في صفحة الإعدادات", await noOverflow());
+    await p.evaluate(() => document.querySelector(".atm-holo").scrollIntoView({ block: "center" })); await wait(400);
+    await shot(p, "04-phone-card");
+    await p.tap("#atm-holo-go"); await p.waitForURL(/admin-preview\/spatial-os\/index\.html\?real=1/);
+    await p.waitForFunction(() => { const q = typeof SpatialOS !== "undefined" && SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(2500);
+    const L = await p.evaluate(() => { const ex = document.getElementById("hud-exit"), r = ex.getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2), q = SpatialOS.panels.get("ord").el.getBoundingClientRect(); return { exitVis: r.width > 0 && getComputedStyle(ex).display !== "none", exitOnScreen: r.left >= 0 && r.right <= innerWidth && r.top >= 0, exitHit: !!e && e.id === "hud-exit", exitH: Math.round(r.height), panelFits: q.width <= innerWidth + 24, panelInView: q.right > 0 && q.left < innerWidth, real: SpatialOS.real, orbit: SpatialOS.orbit }; });
+    ok("phone: زر «العودة للمظهر العادي» ظاهر داخل الشاشة وقابل للنقر (لا يغطيه عنصر)", L.exitVis && L.exitOnScreen && L.exitHit && L.exitH >= 28, L);
+    ok("phone: لوح الطلبات الحقيقي يلائم عرض الهاتف وظاهر", L.panelFits && L.panelInView && L.real === true, L);
+    ok("phone: لا فيض أفقي في المظهر الهولوغرافي", await noOverflow());
+    for (const id of ["set", "dash"]) {
+      await p.evaluate(i => SpatialOS.open(i), id);
+      await p.waitForFunction(i => { const q = SpatialOS.panels.get(i); return q && q.frDone; }, id, { timeout: 60000 }).catch(() => { }); await wait(1500);
+      const f = await p.evaluate(i => { const q = SpatialOS.panels.get(i), r = q.el.getBoundingClientRect(); return { done: !!q.frDone, fits: r.width <= innerWidth + 24, inView: r.right > 0 && r.left < innerWidth }; }, id);
+      ok("phone: لوح «" + id + "» حقيقي ويلائم الشاشة", f.done && f.fits && f.inView, f);
+      await p.evaluate(i => { try { SpatialOS.dismiss(i, "close"); } catch (e) { } }, id);
+    }
+    await shot(p, "05-phone-holo");
+    await p.tap("#hud-exit"); await p.waitForURL(/\/admin(\.html)?$/); await appReady();
+    ok("phone: العودة بلمسة تفتح اللوحة العادية مسجَّلاً الدخول", true);
+    ok("phone: لا أخطاء JS غير معالجة", errs.length === 0, errs);
+  } finally { await store.stop(); }
+}
+
 async function stat(b) {
   const port = 8771, root = path.join(__dirname, "..", "..", ".."), srv = spawn("python3", ["-m", "http.server", String(port), "--bind", "127.0.0.1"], { cwd: root, stdio: "ignore" });
   try {
@@ -96,6 +132,6 @@ async function stat(b) {
 }
 
 (async () => {
-  const b = await chromium.launch(); try { if (only === "all" || only === "php") await php(b); if (only === "all" || only === "static") await stat(b); } catch (e) { fails++; R.push("FAIL [crash] " + String(e).split("\n").slice(0, 6).join(" | ").slice(0, 600)); } finally { await b.close(); }
+  const b = await chromium.launch(); try { if (only === "all" || only === "php") await php(b); if (only === "all" || only === "phone") await phone(b); if (only === "all" || only === "static") await stat(b); } catch (e) { fails++; R.push("FAIL [crash] " + String(e).split("\n").slice(0, 6).join(" | ").slice(0, 600)); } finally { await b.close(); }
   console.log(R.join("\n")); console.log("\n" + (fails ? "FAILED: " + fails : "ALL PASS") + "  (" + R.filter(x => x.startsWith("PASS")).length + " ناجح)"); process.exit(fails ? 1 : 0);
 })();

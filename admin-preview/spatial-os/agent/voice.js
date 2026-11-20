@@ -10,6 +10,8 @@
   const SRV = "server/llm.php", XH = { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" };
   const AC = window.AudioContext || window.webkitAudioContext, SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   const listeners = new Set(), emit = e => listeners.forEach(f => { try { f(e); } catch (_) { } });
+  /* المظهر الهولوغرافي يُفتح من إعدادات اللوحة بـ?real=1 ولا يشحن وسيط الخادم؛ فلا طلب شبكة للفحص (يبقى فحص صلاحية الميكروفون) */
+  const NO_RELAY = /[?&]real=1/.test(location.search);
   const S = { mode: "idle", engine: null, lang: "ar-DZ", server: { configured: false, probed: false }, perm: "unknown", bargeIn: true, lastError: null, level: 0, speakKind: null, rec: null };
   const MSG = { denied: "رُفض إذن الميكروفون — اسمح به من إعدادات الموقع في المتصفح ثم أعد المحاولة (يمكنك الكتابة بدلاً من ذلك)", "no-device": "لم أجد ميكروفوناً متصلاً بهذا الجهاز", busy: "الميكروفون مستعمل من تطبيق آخر أو غير متاح الآن", insecure: "الميكروفون يتطلب اتصالاً آمناً (HTTPS أو localhost)", unsupported: "هذا المتصفح لا يدعم تسجيل الصوت", "no-stt": "تحويل الصوت إلى نص غير متاح (لا خدمة خادم ولا دعم في المتصفح) — اكتب طلبك", "no-speech": "لم أسمع كلاماً واضحاً — حاول مجدداً", "stt-failed": "تعذّر تحويل الصوت إلى نص — أعد المحاولة أو اكتب طلبك", network: "تعذّر الاتصال بخدمة الصوت", aborted: "أُلغي التسجيل" };
   const err = (code, extra) => { const e = Object.assign(new Error(MSG[code] || code), { code }); if (extra) e.extra = extra; return e; };
@@ -25,7 +27,7 @@
   const pickEngine = () => (S.server.configured ? "server" : SR ? "webspeech" : null), pickTts = () => (S.server.configured && AC ? "server" : window.speechSynthesis ? "browser" : null);
   async function probe() {
     try { if (navigator.permissions && navigator.permissions.query) { const p = await navigator.permissions.query({ name: "microphone" }); S.perm = p.state; p.onchange = () => { S.perm = p.state; emit({ type: "perm", perm: S.perm }); }; } } catch (_) { }
-    try { const r = await fetch(SRV, { method: "POST", credentials: "same-origin", headers: XH, body: JSON.stringify({ action: "caps" }) }); const j = await r.json().catch(() => null); S.server = { configured: !!(j && j.ok && j.configured && j.stt), probed: true, status: r.status }; } catch (_) { S.server = { configured: false, probed: true, status: 0 }; }
+    try { if (NO_RELAY) throw new Error("no_relay"); const r = await fetch(SRV, { method: "POST", credentials: "same-origin", headers: XH, body: JSON.stringify({ action: "caps" }) }); const j = await r.json().catch(() => null); S.server = { configured: !!(j && j.ok && j.configured && j.stt), probed: true, status: r.status }; } catch (_) { S.server = { configured: false, probed: true, status: 0 }; }
     emit({ type: "caps", caps: caps() }); return caps();
   }
 
