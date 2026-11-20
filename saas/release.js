@@ -94,13 +94,17 @@ window.SaasRelease = (() => {
     if (!confirm("سيُنشر الإصدار " + ver + " لجميع المواقع المثبَّتة. متابعة؟")) return;
     btn.disabled = true; $("rel-log").textContent = "";
     try {
+      let man = null;
+      try { const pre = fromB64((await getFile("releases/" + ver + "/manifest.json")).content); if (JSON.parse(pre).version === ver) man = pre; } catch (e) { }      // إصدار غير موقَّع مبنيّ مسبقاً (مثلاً من build-release): يُوقَّع كما هو بلا إعادة بناء، فلا يتغيّر ملف التحديث بين البناء والتوقيع
+      if (man) log("1) الإصدار " + ver + " مبنيّ مسبقاً على الموقع (غير موقَّع): يُوقَّع كما هو بلا إعادة بناء.");
+      else {
       log("1) بناء الإصدار على الموقع...");
       const d = await fetch("https://api.github.com/repos/" + c.owner + "/" + c.repo + "/actions/workflows/release.yml/dispatches", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, hdr(c)), body: JSON.stringify({ ref: c.branch || "main", inputs: { version: ver, notes } }) });
       if (d.status === 404) throw new Error("ملف release.yml غير موجود على الفرع (ادمج التعديلات أولاً)");
       if (d.status === 403 || d.status === 401) throw new Error("رمز النشر بلا صلاحية التشغيل — عدّل صلاحياته من مزوّد موقعك");
       if (d.status !== 204) throw new Error("تعذّر بدء البناء (" + d.status + ")");
-      let man = null;
       for (let i = 0; i < 60 && !man; i++) { await new Promise(r => setTimeout(r, 6000)); try { man = fromB64((await getFile("releases/" + ver + "/manifest.json")).content); } catch (e) { if (i % 3 === 2) log("   ...بانتظار انتهاء البناء"); } }
+      }
       if (!man) throw new Error("انتهت المهلة قبل ظهور الإصدار — راجع سجلّ التشغيل");
       log("2) التوقيع بمفتاحك الخاص (يبقى في متصفحك)...");
       const j = JSON.parse(localStorage.getItem(KEY)), priv = await crypto.subtle.importKey("pkcs8", unb64(j.pkcs8), { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);

@@ -69,7 +69,7 @@ _pilot_begin("s-accessories")
 # تصحيح خطأ بيانات في الأصل: عناوين بلاطات الفئات الثلاث كانت مقلوبة (acc_outfit «سماعات»، acc_headphones «نظارات»)؛ الصور وترتيبها كما هي
 PACKS["s-accessories"] = dict(PACKS["s-accessories"], dc=["إطلالات", "سماعات", "حقائب"])
 _theme_chunk('k = "na"', 'hero = S(')
-INKA, VIO, PNK, YEL = "#1f1147", "#8b5cf6", "#ec4899", "#fcd34d"
+INKA, VIO, PNK, YEL = "#1f1147", "#6d3de0", "#ec4899", "#fcd34d"
 tha = th
 def stk(i, img, alt, x, y, w, h, tx, ty, tw, mx, my, mw, mh, rot, label, lx, ly, bg):
     """ملصق: صورة أصلية بإطار أسود سميك وظل صلب ودوران، عنصر حر مستقل"""
@@ -131,7 +131,7 @@ def chip(i, cmd, line, y, ty, my):
     wd = W("text", html="<p><span style='color:#22c55e'>$</span> <b style='color:#38bdf8'>%s</b><br><span style='color:#e2e8f0;font-size:1.25em'>%s</span></p>" % (cmd, line), fs=dm(17, 15), lh={"d": 1.7}, ta={"d": "start"}, color="#94a3b8", fxs=[HUDC, floaty(k + "c%d" % i, "", 5, 5 + i * .6)], **anim("fadeUp", .8, .3 + i * .15))
     return FRW(wd, V(4 + (i % 2) * 8, 6, 6), V(y, my, ty), V(34, 88, 88), V(96, 80, 84), 6)
 i_free = [
-    FRW(W("text", html="<p><span style='color:#22c55e'>$</span> specs --best <span style='color:#38bdf8'>▍</span></p>", fs=dm(18, 15), color="#64748b", fxs=[FX("نصّ طرفية", "selector p{%s;margin:0}" % MONO)], **anim("fadeIn", 1)), V(4, 6, 6), V(70, 640, 640), V(40, 88, 88), None, 6),
+    FRW(W("text", html="<p><span style='color:#22c55e'>$</span> specs --best <span style='color:#38bdf8'>▍</span></p>", fs=dm(18, 15), color="#94a3b8", fxs=[FX("نصّ طرفية", "selector p{%s;margin:0}" % MONO)], **anim("fadeIn", 1)), V(4, 6, 6), V(70, 640, 640), V(40, 88, 88), None, 6),
     chip(0, "CPU", "Core i7 · 14 cores", 130, 690, 690), chip(1, "RAM", "32 GB DDR5", 260, 790, 790), chip(2, "SSD", "1 TB NVMe", 390, 890, 890),
     FT("▍ تقنية بلا حدود", V(52, 6, 6), V(90, 24, 40), V(46, 88, 88), V(15, 14, 15), SKY, "start", 6, "800", **anim("fadeDown", .7)),
     FR("heading", V(52, 6, 6), V(124, 54, 72), V(46, 88, 88), None, 6, text="جهّز مكتبك وعالم ألعابك بأقوى العتاد", tag="h1", fs=V(54, 32, 46), fw="900", ta={"d": "start"}, color="#ffffff", lh={"d": 1.2}, fxs=[gradtext(k, SKY, IND, SKY, 6)], **anim("fadeUp", .8)),
@@ -231,8 +231,8 @@ m_rail = C([T("الأقسام", 18, "#0f172a", "start", fw="900", **anim("fadeUp
            w=dm(18, 100), pad=dm([20, 18, 20, 18], [16, 14, 16, 14]), hm=False,
            fxs=[FX("قائمة الأقسام", "selector{background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 6px 20px rgba(15,23,42,.06)}@media(max-width:1023px){selector{display:none}}")])
 m_hero = S([m_rail,
-            tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(239,68,68,.88)", dm(44, 100, 100), 300, "تسوّق الآن", "mkt_bags", tag="h1"),
-            tile("وصل حديثاً", "اكتشف أحدث العروض", "rgba(99,102,241,.5)", "rgba(6,182,212,.88)", dm(19, 100, 50), 300, "اكتشف", "fashion_shirts"),
+            tile("خصومات تصل إلى 60%", "على آلاف المنتجات من بائعين موثوقين", "rgba(249,115,22,.55)", "rgba(185,28,28,.9)", dm(44, 100, 100), 300, "تسوّق الآن", "mkt_bags", tag="h1"),
+            tile("وصل حديثاً", "اكتشف أحدث العروض", "rgba(99,102,241,.5)", "rgba(7,89,133,.92)", dm(19, 100, 50), 300, "اكتشف", "fashion_shirts"),
             tile("توصيل مجاني", "فوق 6000 دج", "rgba(16,185,129,.5)", "rgba(21,128,61,.9)", dm(19, 100, 50), 300, "التفاصيل", "mkt_open")],
            pad=dm([24, 20, 16, 20], [16, 12, 12, 12]), gap={"d": 12, "m": 10}, fxs=LG("h"), cw={"d": 1240})
 m_chips = S([C([W("tbadges", items="إلكترونيات\nأزياء\nالمنزل والمطبخ\nجمال وعناية\nأطفال\nرياضة\nكتب\nسيارات", live=True, liveText="مستخدم متصل", lmin=120, lmax=480, cbg="#ffffff", cc="#0f172a", cbc="#e2e8f0", crad=dm(999), cfs=dm(15), gap=dm(10), jc="center", hd=True, **anim("fadeUp"))], w=100)],
@@ -245,7 +245,7 @@ m_flash = S([C([W("heading", text="⚡ عروض فلاش", tag="h2", fs=dm(34, 2
             fxs=[aurora(k + "fl", "#9a3412", "#f9731699", "#ef444488", "#facc1555", 8), FX("حدّ لامع", "selector{box-shadow:0 20px 60px rgba(249,115,22,.35)}")])
 m_prod = S([C([W("anchor", aid="products", aoff=dm(80)), *title("الأكثر مبيعاً", "اختيارات المتسوّقين", k, thm, thm["hfx"]("p"))["widgets"],
                W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, cardw=dm(170, 150), gap=dm(12), rad=dm(14), cbg="#ffffff", bbg=ORG, pdemo="a",
-                 fxs=[lift(".pb-pc", "rgba(249,115,22,.3)", -8, 2), FX("بطاقة سوق مضغوطة", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06)}selector .pb-pc h3{font-size:14px;line-height:1.4}selector .pb-pcp b{font-size:17px;color:#ea580c}selector .pb-pcb{border-radius:8px}"), cardratio("1/1")])], w=100)],
+                 fxs=[lift(".pb-pc", "rgba(249,115,22,.3)", -8, 2), FX("بطاقة سوق مضغوطة", "selector .pb-pc{border:1px solid #e2e8f0;box-shadow:0 4px 14px rgba(15,23,42,.06)}selector .pb-pc h3{font-size:14px;line-height:1.4}selector .pb-pcp b{font-size:17px;color:#ea580c}selector .pb-pcb{border-radius:8px}selector .pb-pcp b{color:#9a3412!important}"), cardratio("1/1")])], w=100)],
           pad=dm([40, 20, 60, 20], [28, 12, 40, 12]), cw={"d": 1240}, fxs=WHT("p"))
 m_sell = S([C([*title("بائعون مميّزون", "متاجر موثوقة بتقييمات حقيقية من الزبائن.", k, thm, thm["hfx"]("s"))["widgets"]], w=100, pad=dm([0, 0, 20, 0]))]
            + [C([IB("user", n, "★ %s · %s منتج" % (r, c), tc="#0f172a", xc="#64748b", isz=30, al={"d": "start"},

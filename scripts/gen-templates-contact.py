@@ -47,11 +47,11 @@ reg("c-gold", "contact", "فخامة", "اتصال فخامة ذهبية", "خل
 
 # 4) عائم ناعم (باستيل)
 k = "cs"; ICC[0] = "#7c3aed"
-form = contact("اكتب لنا", "نحب أن نسمع منك — رسالتك تصلنا مباشرة.", FLD_STD, btn="أرسل الآن", fbg="#ffffff", fbc="#ffffff", tcol="#4c1d95", lcol="#6b5b95", ibg="#f5f3ff", ibc="#ddd6fe", bbg="#8b5cf6", bcol="#ffffff", frad=dm(34), irad=dm(999), brad=dm(999), fpad=dm([38, 34, 38, 34]),
+form = contact("اكتب لنا", "نحب أن نسمع منك — رسالتك تصلنا مباشرة.", FLD_STD, btn="أرسل الآن", fbg="#ffffff", fbc="#ffffff", tcol="#4c1d95", lcol="#554681", ibg="#f5f3ff", ibc="#ddd6fe", bbg="#8b5cf6", bcol="#ffffff", frad=dm(34), irad=dm(999), brad=dm(999), fpad=dm([38, 34, 38, 34]),
                fxs=[FX("ظلّ ناعم عائم", "selector .pb-cf{box-shadow:0 40px 90px rgba(139,92,246,.25),0 8px 24px rgba(139,92,246,.12);animation:csFl 7s ease-in-out infinite}@keyframes csFl{50%{transform:translateY(-10px)}}"), inputs(k, "139,92,246", bg="#f5f3ff", color="#3b0764"), btngrad("#8b5cf6", "#ec4899", "rgba(139,92,246,.45)", -3, sel=".pb-cf-b"), shine(k, 3.6, sel=".pb-cf-b")], **anim("zoomIn", .9))
-cards = [C([IB(ic, t, x, tc="#4c1d95", xc="#6b5b95", isz=36, fxs=[softcard("#ffffffcc", "rgba(139,92,246,.18)", 26, 22), lift(".pb-ib", "rgba(139,92,246,.3)", -8, 5), floaty(k + str(i), ".pb-ibi", 8, 4 + i)], **anim("fadeUp", .7, .1 + i * .12))], w=33)
+cards = [C([IB(ic, t, x, tc="#4c1d95", xc="#554681", isz=36, fxs=[softcard("#ffffffcc", "rgba(139,92,246,.18)", 26, 22), lift(".pb-ib", "rgba(139,92,246,.3)", -8, 5), floaty(k + str(i), ".pb-ibi", 8, 4 + i)], **anim("fadeUp", .7, .1 + i * .12))], w=33)
          for i, (ic, t, x) in enumerate([("chat", "دردشة سريعة", "نردّ على واتساب خلال دقائق"), ("mail", "بريد إلكتروني", "للاستفسارات التفصيلية"), ("clock", "ساعات العمل", "كل يوم 9 ص — 9 م")])]
-heading = [C([PIC("cosm_pink", "عناية", 40, w=dm(40, 70), al={"d": "center"}, fxs=[FX("ظل بنفسجي", "selector img{box-shadow:0 30px 80px rgba(139,92,246,.3)}")], **anim("zoomIn", .8)), H("يسعدنا سماعك", 46, 30, "#4c1d95", fxs=[gradtext(k, "#7c3aed", "#ec4899", "#f59e0b", 8)], **anim("fadeUp")), T("اختر الطريقة المناسبة أو اترك رسالتك في النموذج أدناه.", 18, "#6b5b95", **anim("fadeUp", .7, .1))], w=100)]
+heading = [C([PIC("cosm_pink", "عناية", 40, w=dm(40, 70), al={"d": "center"}, fxs=[FX("ظل بنفسجي", "selector img{box-shadow:0 30px 80px rgba(139,92,246,.3)}")], **anim("zoomIn", .8)), H("يسعدنا سماعك", 46, 30, "#4c1d95", fxs=[gradtext(k, "#7c3aed", "#ec4899", "#f59e0b", 8)], **anim("fadeUp")), T("اختر الطريقة المناسبة أو اترك رسالتك في النموذج أدناه.", 18, "#554681", **anim("fadeUp", .7, .1))], w=100)]
 heading[0]["set"]["pad"] = dm([0, 0, 20, 0]); form["set"]["w"] = dm(64, 100); form["set"]["al"] = {"d": "center"}
 for c_ in cards: c_["set"]["pad"] = dm([0, 0, 30, 0])
 reg("c-soft", "contact", "عام", "اتصال باستيل عائم", "خلفية باستيل متحركة وكرات ضوئية، بطاقات ناعمة تميل بالمرور، ونموذج دائري الحقول يطفو برفق.",

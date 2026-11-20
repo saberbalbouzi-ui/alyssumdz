@@ -164,7 +164,57 @@ const PBConvert = (() => {
       const cols = k.map(c => { const w = [], leaf = /^(IMG|PICTURE|H[1-6]|P|UL|OL|A|BUTTON|DETAILS|FORM|VIDEO|IFRAME)$/.test(c.tagName) || !hasBlock(c); if (leaf) widgetsOf(c, w); else kids(c).forEach(x => widgetsOf(x, w)); return { w, set: leaf ? {} : Object.assign(boxSet(c, "col"), { ta: { d: ta(c) } }) }; }).filter(x => x.w.length);
       return cols.length >= 2 ? cols : null;
     }
+    const secSet = (el, inner, hint) => {
+      const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
+      if (b2) set.bg = b2;
+      const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
+      { const iw = Math.round(inner.getBoundingClientRect().width); if (iw > 300 && iw < 1500 && iw < (doc.documentElement.clientWidth || 1280) - 8) set.cw = { d: iw }; }
+      { const bx = boxSet(el, "section"); ["bw", "bs", "bc", "rad", "shadow", "grad1", "grad2", "gradAng"].forEach(k => { if (bx[k] != null) set[k] = bx[k]; }); }
+      return set;
+    };
+    /* صفحة المنتج الأصلية (p/_template) أقسام هبوط من بطاقات lp-*: تُحوَّل إلى عناصر مطوّر أصلية (عنوان/نص/صورة/صندوق أيقونة/قائمة/زر) بدل كتل HTML مغلقة؛
+       الصور الافتراضية (placeholder) لا تُنشأ كعناصر فلا تظهر مربعات رمادية فارغة، وقسم آراء بلا لقطات حقيقية يُحذف */
+    const PH = u => !u || /placeholder|\.svg(\?|$)|data:image\/svg/i.test(u);
+    const realImg = c => [...c.querySelectorAll("img")].find(i => !PH(i.currentSrc || i.src));
+    const wOf = (el, ws) => { widgetsOf(el, ws); return ws; };
+    const lpCard = card => {
+      const ws = [], im = realImg(card), h = card.querySelector("h3,h2,h4"), p = card.querySelector("p"), ic = card.querySelector(".ic,.lp-stepnum"), fc = ic && fileEl(card), fic = fc && fc.querySelector(".ic,.lp-stepnum"), icon = ic ? (txt(ic) || (fic ? txt(fic) : "") || "ic:check-circle") : "";      // الأيقونة في الصفحة المرسومة SVG بلا نص: الرمز الأصلي من ملف الصفحة
+      if (im) ws.push(mkW("image", { src: rel(im.currentSrc || im.src), alt: im.alt || "", fit: "cover" }));
+      if (icon && h) { const set = { icon, title: txt(h), text: p ? txt(p) : "", al: { d: ta(card) === "start" ? "center" : ta(card) }, isz: { d: 40 } }; const tc = colorOf(h), xc = p && colorOf(p); if (tc) set.tc = tc; if (xc) set.xc = xc; ws.push(mkW("iconbox", set)); }
+      else { if (h) wOf(h, ws); if (p) wOf(p, ws); }
+      if (!ws.length) return null;
+      return mkCol(ws, Object.assign(boxSet(card, "col"), { ta: { d: ta(card) } }));
+    };
+    function lpSecs(el) {
+      const ct = el.querySelector(":scope > .container") || el, base = () => secSet(el, ct), out = [], first = () => !out.length;
+      const mk = (cols, top) => { const set = base(); if (!first() && top != null) set.pad = { d: [top, 20, set.pad.d[2], 20], m: [Math.round(top * .6), 16, set.pad.m[2], 16] }; out.push(mkS(cols, set)); };
+      kids(ct).forEach(c => {
+        if (c.matches(".lp-head")) { const ws = wOf(c, []); if (ws.length) mk([mkCol(ws)]); }
+        else if (c.matches(".lp-cards")) {
+          const cards = kids(c).filter(x => x.matches(".lp-card")), n = Math.max(1, Math.min(4, (cs(c).gridTemplateColumns || "").split(" ").filter(Boolean).length || 3));
+          for (let i = 0; i < cards.length; i += n) { const cols = cards.slice(i, i + n).map(lpCard).filter(Boolean); if (cols.length) mk(cols, i ? 10 : 18); }
+        } else if (c.matches(".lp-grid")) {
+          const cols = kids(c).map(x => {
+            if (x.matches(".lp-imgcard")) { const im = realImg(x); return im ? mkCol([mkW("image", { src: rel(im.currentSrc || im.src), alt: im.alt || "", fit: "cover" })], boxSet(x, "col")) : null; }
+            const ws = []; const h = x.querySelector("h2,h3"), p = x.querySelector(":scope > p"), bl = [...x.querySelectorAll(".lp-bullets > div")].map(txt).filter(Boolean);
+            if (h) wOf(h, ws); if (p) wOf(p, ws); if (bl.length) ws.push(mkW("bullets", { items: bl.join("\n"), mk: "check", fs: { d: px(x.querySelector(".lp-bullets > div"), 17) } }));
+            return ws.length ? mkCol(ws, Object.assign(boxSet(x, "col"), { ta: { d: ta(x) } })) : null;
+          }).filter(Boolean);
+          if (cols.length) mk(cols, 18);
+        } else if (c.matches(".reviews-screenshots")) {
+          const all = [...c.querySelectorAll("img")], real = all.filter(i => !PH(i.currentSrc || i.src)), ims = real.length ? real : all.slice(0, 3);      // آراء: اللقطات الحقيقية إن وُجدت، وإلا ثلاث صور افتراضية تدلّ التاجر أين يضع آراء زبائنه (تُستبدل بالرفع أو تُحذف)
+          for (let i = 0; i < ims.length; i += 3) mk(ims.slice(i, i + 3).map(im => mkCol([mkW("image", { src: rel(im.currentSrc || im.src), alt: im.alt || "", fit: "cover" })])), i ? 10 : 18);
+        } else { const ws = wOf(c, []); if (ws.length) mk([mkCol(ws)]); }
+      });
+      return out;
+    }
     function sectionOf(el, hint) {
+      if (o.kind === "product" && el.matches(".lp-sec")) return lpSecs(el);
+      if (o.kind === "product" && el.querySelector(":scope > .container > .lp-final")) {      // خاتمة «اطلب الآن»: قسم بصندوق متدرّج بعناصر أصلية، وما بعدها (قد يعجبك أيضاً) أقسام منفصلة
+        const ct = el.querySelector(":scope > .container"), ks = kids(ct), gi = ks.findIndex(k => k.matches(".lp-final")), fin = ks[gi], mk = list => { const w = []; list.forEach(c => widgetsOf(c, w)); return w.length ? mkS([mkCol(w)], secSet(el, ct)) : null; };
+        const fw = []; kids(fin).forEach(x => widgetsOf(x, fw));
+        return [mk(ks.slice(0, gi)), mkS([mkCol(fw, Object.assign(boxSet(fin, "col"), { ta: { d: ta(fin) } }))], secSet(el, ct)), mk(ks.slice(gi + 1))].filter(Boolean);
+      }
       let inner = el, safe = 0;
       while (safe++ < 4) { const k = kids(inner); if (k.length === 1 && !/^(IMG|H[1-6]|P|UL|OL|FORM)$/.test(k[0].tagName) && !isOrder(k[0])) inner = k[0]; else break; }
       let cols = columnsOf(inner); let cs_;
@@ -173,12 +223,7 @@ const PBConvert = (() => {
         const secsOut = [mk(ks.slice(0, gi)), mkS(found.map(x => mkCol(x.w, x.set)), {}), mk(ks.slice(gi + 1))].filter(Boolean);
         const bg0 = hex(cs(el).backgroundColor); if (bg0) secsOut.forEach(x => { x.set.bg = bg0; }); return secsOut; } }
       if (cols) cs_ = cols.map(x => mkCol(x.w, x.set)); else { const w = []; if (hasBlock(inner)) kids(inner).forEach(x => widgetsOf(x, w)); else widgetsOf(inner, w); if (!w.length) return null; cs_ = [mkCol(w, inner !== el ? boxSet(inner, "col") : {})]; }
-      const s = cs(el), set = {}, bg = hex(s.backgroundColor) || (hint && hint.bg) || ""; const gi = /gradient\(/.test(s.backgroundImage) ? ([...s.backgroundImage.matchAll(/rgba?\([^)]+\)/g)].map(m => m[0]).filter(c => hex(c)).pop() || "") : ""; const b2 = bg || hex(gi);
-      if (b2) set.bg = b2;
-      const pt = Math.round(parseFloat(s.paddingTop) || 0), pb = Math.round(parseFloat(s.paddingBottom) || 0); set.pad = { d: [Math.max(16, pt), 20, Math.max(16, pb), 20], m: [Math.max(14, Math.round(pt * .6)), 16, Math.max(14, Math.round(pb * .6)), 16] };
-      { const iw = Math.round(inner.getBoundingClientRect().width); if (iw > 300 && iw < 1500 && iw < (doc.documentElement.clientWidth || 1280) - 8) set.cw = { d: iw }; }
-      { const bx = boxSet(el, "section"); ["bw", "bs", "bc", "rad", "shadow", "grad1", "grad2", "gradAng"].forEach(k => { if (bx[k] != null) set[k] = bx[k]; }); }
-      return mkS(cs_, set);
+      return mkS(cs_, secSet(el, inner, hint));
     }
     const root = doc.querySelector("main") || doc.body, secs = [];
     const rawSec = (c, idx) => { let el = c.id ? fdoc.getElementById(c.id) : null; if (!el) { const m = fdoc.querySelector("main"); el = m && m.children[idx]; } if (!el) return null; const sec = mkS([mkC([mkW("html", { code: el.outerHTML, src: "orig" })])], { layout: "full", pad: { d: [0, 0, 0, 0], m: [0, 0, 0, 0] }, gap: { d: 0 } }); sec.grp = "main"; return sec; };
@@ -188,11 +233,24 @@ const PBConvert = (() => {
     top.forEach(c => {
       if (skip(c)) return;
       if (o.kind === "home" && c.matches(".hero")) { const hs = heroSec(c); if (hs) { flush(); secs.push(hs); return; } }
-      if (rawKeep(c) || (o.kind === "home" && c.matches(".hero,[class*=hero]"))) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
+      if ((rawKeep(c) && !(o.kind === "product" && c.querySelector(":scope > .container > .lp-final"))) || (o.kind === "home" && c.matches(".hero,[class*=hero]"))) { flush(); const r = rawSec(c, all.indexOf(c)); if (r) secs.push(r); return; }
       if (c.matches("section,.container") || hex(cs(c).backgroundColor) || /gradient/.test(cs(c).backgroundImage) || c.matches(".hero,[class*=hero]")) { flush(); const s = sectionOf(c); if (s) secs.push(...[].concat(s)); } else loose.push(c);
     });
     flush();
     if (o.kind === "product" && !sawOrder) secs.push(mkS([mkC([mkW("orderorig", { prod: o.slug, raw: rawOrder })])], {}));
+    /* صفحة منتج بروح صفحة هبوط: زر طلب واضح في الـHero (يقود إلى نموذج الطلب) وقسم «أسئلة شائعة» أصلي (accordion) قبل خاتمة الطلب إن لم يوجد */
+    if (o.kind === "product") {
+      const hasType = (sc, t) => (sc.cols || []).some(c => (c.widgets || []).some(w => w.type === t));
+      const hi = secs.findIndex(sc => hasType(sc, "poffers"));
+      if (hi >= 0) { const col = secs[hi].cols.find(c => (c.widgets || []).some(w => w.type === "poffers")), pi = col.widgets.findIndex(w => w.type === "poffers"); if (!col.widgets.some(w => w.type === "button" && /order-form/.test(w.set.link || ""))) col.widgets.splice(pi + 1, 0, mkW("button", { text: "اطلب الآن — الدفع عند الاستلام", kind: "link", link: "#order-form", fs: { d: 19, m: 17 }, fw: "800", brad: { d: 14 }, w: { d: 100 } })); }
+      if (!secs.some(sc => JSON.stringify(sc).indexOf('"type":"accordion"') >= 0)) {
+        const faq = mkS([mkCol([mkW("heading", { text: "أسئلة شائعة", tag: "h2", fs: { d: 34, m: 26 }, fw: "800", ta: { d: "center" } }), mkW("accordion", { first: true, items: [
+          { q: "هل الدفع عند الاستلام؟", a: "نعم، لا نطلب أي دفع مسبق: تدفع عند استلام طلبك وبعد معاينته." }, { q: "كم تستغرق مدة التوصيل؟", a: "يصلك الطلب عادةً خلال أيام قليلة بحسب ولايتك، وتجد رسوم التوصيل في نموذج الطلب قبل التأكيد." },
+          { q: "كيف أؤكد طلبي؟", a: "املأ نموذج الطلب وسنتصل بك لتأكيده، أو راسلنا مباشرة عبر واتساب." }, { q: "هل يمكن استبدال المنتج أو إرجاعه؟", a: "نعم وفق شروط الاستبدال المعلنة في المتجر، تواصل معنا خلال المدة المحددة." }, { q: "هل المنتج أصلي؟", a: "نعم، نفحص كل طلب قبل الشحن ونضمن جودة ما نبيعه." }] })])], { cw: { d: 900 }, pad: { d: [40, 20, 40, 20], m: [26, 16, 26, 16] } });
+        const fi = secs.findIndex(sc => (sc.cols || []).some(c => (c.widgets || []).some(w => w.type === "button" && /order-form/.test(w.set.link || "") && !(c.widgets || []).some(x => x.type === "poffers"))));
+        secs.splice(fi >= 0 ? fi : secs.length, 0, faq);
+      }
+    }
     secs.forEach(s => (s.cols || []).forEach(c => (c.widgets || []).forEach(w => { delete w._auto; delete w._r; })));
     { const ft = doc.querySelector("footer.site"); if (ft) { try { secs._foot = footSec(ft); } catch (e) { } } }
     { const tb = doc.querySelector(".topbar"), hd = doc.querySelector("header.site"); try { if (tb) secs._bar = barSec(tb); } catch (e) { } try { if (hd) secs._head = headSec(hd); } catch (e) { } }

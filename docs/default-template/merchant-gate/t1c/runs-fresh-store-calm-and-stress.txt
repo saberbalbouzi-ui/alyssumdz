@@ -1,0 +1,7 @@
+calm-1 rc=0 secs=152 t1c=1 nobb=0
+calm-2 rc=0 secs=152 t1c=1 nobb=0
+calm-3 rc=0 secs=151 t1c=1 nobb=0
+stress-1 rc=0 secs=172 t1c=1 nobb=0
+stress-2 rc=0 secs=173 t1c=1 nobb=0
+stress-3 rc=0 secs=170 t1c=1 nobb=0
+stress-4 rc=0 secs=171 t1c=1 nobb=0

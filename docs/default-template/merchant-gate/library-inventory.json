@@ -1,0 +1,1383 @@
+{
+ "general": {
+  "live_version": "1.89.1281",
+  "repo_version": "1.89.1281",
+  "templates_live": 47,
+  "templates_repo": 47,
+  "order_same": true
+ },
+ "checks": [
+  {
+   "name": "لا معرّفات مكررة في الفهرس الحي",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "name": "لا أسماء مكررة",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "name": "لا ملفان بمحتوى واحد",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "name": "لا ملفات قوالب يتيمة (بلا مدخل فهرس)",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "name": "لا معاينات يتيمة",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "name": "الفهرس الحي = فهرس المستودع (نفس المعرّفات والترتيب)",
+   "ok": true,
+   "detail": {
+    "missing_live": [],
+    "extra_live": []
+   }
+  },
+  {
+   "name": "القوالب المدمجة في اللوحة (admin-nav.js): ملفاتها ومعاينتاها موجودة",
+   "ok": true,
+   "detail": []
+  },
+  {
+   "name": "نسخة الموقع الحي = نسخة المستودع",
+   "ok": true,
+   "detail": [
+    "1.89.1281",
+    "1.89.1281"
+   ]
+  },
+  {
+   "name": "كل القوالب: حي=مستودع=حزمة والمعاينتان مطابقتان والصور موجودة",
+   "ok": true,
+   "detail": []
+  }
+ ],
+ "built_in": [
+  {
+   "id": "c-wa",
+   "cat": "contact",
+   "file": null,
+   "file_ok": null,
+   "thumb_ok": true,
+   "owner_only": false
+  },
+  {
+   "id": "c-dark",
+   "cat": "contact",
+   "file": null,
+   "file_ok": null,
+   "thumb_ok": true,
+   "owner_only": false
+  },
+  {
+   "id": "c-quote",
+   "cat": "contact",
+   "file": null,
+   "file_ok": null,
+   "thumb_ok": true,
+   "owner_only": false
+  },
+  {
+   "id": "c-health",
+   "cat": "contact",
+   "file": null,
+   "file_ok": null,
+   "thumb_ok": true,
+   "owner_only": false
+  },
+  {
+   "id": "o-orig",
+   "cat": "order",
+   "file": null,
+   "file_ok": null,
+   "thumb_ok": true,
+   "owner_only": false
+  },
+  {
+   "id": "p-focus-honey",
+   "cat": "page",
+   "file": "focus-honey",
+   "file_ok": true,
+   "thumb_ok": true,
+   "owner_only": true
+  }
+ ],
+ "templates": [
+  {
+   "id": "s-nexus",
+   "name": "NEXUS COMMERCE — متجر عام",
+   "cat": "store",
+   "field": "عام",
+   "file": "assets/pages/templates/s-nexus.json",
+   "sections": 14,
+   "sha_live": "816e245f8ee4",
+   "sha_repo": "816e245f8ee4",
+   "sha_package": "816e245f8ee4",
+   "thumb": [
+    "c4b5e256216f",
+    "c4b5e256216f"
+   ],
+   "thumb_full": [
+    "cfe38e58fe1f",
+    "cfe38e58fe1f"
+   ],
+   "product_skin": "2d8efbefbeed",
+   "images": 14,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-nexus-fashion",
+   "name": "NEXUS COMMERCE — أزياء",
+   "cat": "store",
+   "field": "أزياء",
+   "file": "assets/pages/templates/s-nexus-fashion.json",
+   "sections": 14,
+   "sha_live": "3fc25f742d16",
+   "sha_repo": "3fc25f742d16",
+   "sha_package": "3fc25f742d16",
+   "thumb": [
+    "740e3ddd54bc",
+    "740e3ddd54bc"
+   ],
+   "thumb_full": [
+    "2c59fcadc482",
+    "2c59fcadc482"
+   ],
+   "product_skin": "85194fec1469",
+   "images": 14,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-nexus-beauty",
+   "name": "NEXUS COMMERCE — تجميل وعناية",
+   "cat": "store",
+   "field": "تجميل وعناية",
+   "file": "assets/pages/templates/s-nexus-beauty.json",
+   "sections": 13,
+   "sha_live": "6f5d1ea90f29",
+   "sha_repo": "6f5d1ea90f29",
+   "sha_package": "6f5d1ea90f29",
+   "thumb": [
+    "07b590a7168d",
+    "07b590a7168d"
+   ],
+   "thumb_full": [
+    "5c7dd4486409",
+    "5c7dd4486409"
+   ],
+   "product_skin": "7b8afc681fb5",
+   "images": 16,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-nexus-tech",
+   "name": "NEXUS COMMERCE — إلكترونيات",
+   "cat": "store",
+   "field": "إلكترونيات",
+   "file": "assets/pages/templates/s-nexus-tech.json",
+   "sections": 14,
+   "sha_live": "ca30a93dfa76",
+   "sha_repo": "ca30a93dfa76",
+   "sha_package": "ca30a93dfa76",
+   "thumb": [
+    "7d9cb0d7ed5d",
+    "7d9cb0d7ed5d"
+   ],
+   "thumb_full": [
+    "d05aaa62fa4a",
+    "d05aaa62fa4a"
+   ],
+   "product_skin": "fc14202fa889",
+   "images": 16,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-nexus-food",
+   "name": "NEXUS COMMERCE — غذاء ومنتجات طبيعية",
+   "cat": "store",
+   "field": "غذاء ومنتجات طبيعية",
+   "file": "assets/pages/templates/s-nexus-food.json",
+   "sections": 13,
+   "sha_live": "33bdfdc29f51",
+   "sha_repo": "33bdfdc29f51",
+   "sha_package": "33bdfdc29f51",
+   "thumb": [
+    "cf7aab5373df",
+    "cf7aab5373df"
+   ],
+   "thumb_full": [
+    "347010d319c5",
+    "347010d319c5"
+   ],
+   "product_skin": "e2e269d279c0",
+   "images": 15,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-collection",
+   "name": "NEXUS — صفحة مجموعة المنتجات",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-collection.json",
+   "sections": 6,
+   "sha_live": "a3eea7a457e8",
+   "sha_repo": "a3eea7a457e8",
+   "sha_package": "a3eea7a457e8",
+   "thumb": [
+    "cc0a60111c77",
+    "cc0a60111c77"
+   ],
+   "thumb_full": [
+    "2c18a1d80a52",
+    "2c18a1d80a52"
+   ],
+   "product_skin": null,
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-categories",
+   "name": "NEXUS — صفحة الفئات",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-categories.json",
+   "sections": 6,
+   "sha_live": "720f414becca",
+   "sha_repo": "720f414becca",
+   "sha_package": "720f414becca",
+   "thumb": [
+    "75aab3d4654a",
+    "75aab3d4654a"
+   ],
+   "thumb_full": [
+    "1aa8e6746015",
+    "1aa8e6746015"
+   ],
+   "product_skin": null,
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-about",
+   "name": "NEXUS — من نحن",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-about.json",
+   "sections": 7,
+   "sha_live": "dce86b0771c6",
+   "sha_repo": "dce86b0771c6",
+   "sha_package": "dce86b0771c6",
+   "thumb": [
+    "b9f087a03c56",
+    "b9f087a03c56"
+   ],
+   "thumb_full": [
+    "ab427cae14af",
+    "ab427cae14af"
+   ],
+   "product_skin": null,
+   "images": 3,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-contact",
+   "name": "NEXUS — اتصل بنا",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-contact.json",
+   "sections": 5,
+   "sha_live": "c6a1403cecf7",
+   "sha_repo": "c6a1403cecf7",
+   "sha_package": "c6a1403cecf7",
+   "thumb": [
+    "deb23dc5dd13",
+    "deb23dc5dd13"
+   ],
+   "thumb_full": [
+    "c6cbeccb826c",
+    "c6cbeccb826c"
+   ],
+   "product_skin": null,
+   "images": 0,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-faq",
+   "name": "NEXUS — الأسئلة الشائعة",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-faq.json",
+   "sections": 8,
+   "sha_live": "3e260e580f75",
+   "sha_repo": "3e260e580f75",
+   "sha_package": "3e260e580f75",
+   "thumb": [
+    "83e4c7489b47",
+    "83e4c7489b47"
+   ],
+   "thumb_full": [
+    "779c759860b4",
+    "779c759860b4"
+   ],
+   "product_skin": null,
+   "images": 0,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-privacy",
+   "name": "NEXUS — سياسة الخصوصية",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-privacy.json",
+   "sections": 5,
+   "sha_live": "c4c4a9eb7e90",
+   "sha_repo": "c4c4a9eb7e90",
+   "sha_package": "c4c4a9eb7e90",
+   "thumb": [
+    "210ff607266d",
+    "210ff607266d"
+   ],
+   "thumb_full": [
+    "d7ca76e336cc",
+    "d7ca76e336cc"
+   ],
+   "product_skin": null,
+   "images": 0,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-terms",
+   "name": "NEXUS — الشروط والأحكام",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-terms.json",
+   "sections": 5,
+   "sha_live": "85b1a7ecce70",
+   "sha_repo": "85b1a7ecce70",
+   "sha_package": "85b1a7ecce70",
+   "thumb": [
+    "9a211e9b68a2",
+    "9a211e9b68a2"
+   ],
+   "thumb_full": [
+    "02562cd48584",
+    "02562cd48584"
+   ],
+   "product_skin": null,
+   "images": 0,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-returns",
+   "name": "NEXUS — الاستبدال والإرجاع",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-returns.json",
+   "sections": 5,
+   "sha_live": "f42f3138d6e5",
+   "sha_repo": "f42f3138d6e5",
+   "sha_package": "f42f3138d6e5",
+   "thumb": [
+    "fd62777cc01a",
+    "fd62777cc01a"
+   ],
+   "thumb_full": [
+    "28c0ea62eaba",
+    "28c0ea62eaba"
+   ],
+   "product_skin": null,
+   "images": 0,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "p-nexus-track",
+   "name": "NEXUS — تتبّع الطلب",
+   "cat": "page",
+   "field": "عام",
+   "file": "assets/pages/templates/p-nexus-track.json",
+   "sections": 6,
+   "sha_live": "5cf3ff0f18e9",
+   "sha_repo": "5cf3ff0f18e9",
+   "sha_package": "5cf3ff0f18e9",
+   "thumb": [
+    "e18c3118d10e",
+    "e18c3118d10e"
+   ],
+   "thumb_full": [
+    "432d994cb074",
+    "432d994cb074"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "c-aurora",
+   "name": "اتصال أورورا زجاجي",
+   "cat": "contact",
+   "field": "عام",
+   "file": "assets/pages/templates/c-aurora.json",
+   "sections": 3,
+   "sha_live": "c16d1f5a03e6",
+   "sha_repo": "c16d1f5a03e6",
+   "sha_package": "c16d1f5a03e6",
+   "thumb": [
+    "5d5e63dff658",
+    "5d5e63dff658"
+   ],
+   "thumb_full": [
+    "8f04b853c6ad",
+    "8f04b853c6ad"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "c-neon",
+   "name": "اتصال نيون سايبر",
+   "cat": "contact",
+   "field": "عام",
+   "file": "assets/pages/templates/c-neon.json",
+   "sections": 4,
+   "sha_live": "accb49a3cb49",
+   "sha_repo": "accb49a3cb49",
+   "sha_package": "accb49a3cb49",
+   "thumb": [
+    "a7aec4eeac42",
+    "a7aec4eeac42"
+   ],
+   "thumb_full": [
+    "0fb844716cc0",
+    "0fb844716cc0"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "c-gold",
+   "name": "اتصال فخامة ذهبية",
+   "cat": "contact",
+   "field": "فخامة",
+   "file": "assets/pages/templates/c-gold.json",
+   "sections": 3,
+   "sha_live": "3a528325f307",
+   "sha_repo": "3a528325f307",
+   "sha_package": "3a528325f307",
+   "thumb": [
+    "2d41dc317c18",
+    "2d41dc317c18"
+   ],
+   "thumb_full": [
+    "43965950563e",
+    "43965950563e"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "c-soft",
+   "name": "اتصال باستيل عائم",
+   "cat": "contact",
+   "field": "عام",
+   "file": "assets/pages/templates/c-soft.json",
+   "sections": 4,
+   "sha_live": "c219dcdee992",
+   "sha_repo": "c219dcdee992",
+   "sha_package": "c219dcdee992",
+   "thumb": [
+    "6dc17cfce1d5",
+    "6dc17cfce1d5"
+   ],
+   "thumb_full": [
+    "3f38c2a885f7",
+    "3f38c2a885f7"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "c-steps",
+   "name": "اتصال بخطوات ومحادثة سريعة",
+   "cat": "contact",
+   "field": "عام",
+   "file": "assets/pages/templates/c-steps.json",
+   "sections": 3,
+   "sha_live": "51a148965ea8",
+   "sha_repo": "51a148965ea8",
+   "sha_package": "51a148965ea8",
+   "thumb": [
+    "bf469b09aee3",
+    "bf469b09aee3"
+   ],
+   "thumb_full": [
+    "c679214f8d79",
+    "c679214f8d79"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "o-flash",
+   "name": "طلب بعرض فلاش",
+   "cat": "order",
+   "field": "عروض",
+   "file": "assets/pages/templates/o-flash.json",
+   "sections": 3,
+   "sha_live": "78356f09b455",
+   "sha_repo": "78356f09b455",
+   "sha_package": "78356f09b455",
+   "thumb": [
+    "7122a8001ed6",
+    "7122a8001ed6"
+   ],
+   "thumb_full": [
+    "ceac7889b376",
+    "ceac7889b376"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "o-lux",
+   "name": "طلب فاخر داكن ذهبي",
+   "cat": "order",
+   "field": "فخامة",
+   "file": "assets/pages/templates/o-lux.json",
+   "sections": 3,
+   "sha_live": "9e4dc9eddbbb",
+   "sha_repo": "9e4dc9eddbbb",
+   "sha_package": "9e4dc9eddbbb",
+   "thumb": [
+    "fdbff8486813",
+    "fdbff8486813"
+   ],
+   "thumb_full": [
+    "5a855612d927",
+    "5a855612d927"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "o-steps",
+   "name": "طلب بثلاث خطوات",
+   "cat": "order",
+   "field": "عام",
+   "file": "assets/pages/templates/o-steps.json",
+   "sections": 4,
+   "sha_live": "9a326512dc4f",
+   "sha_repo": "9a326512dc4f",
+   "sha_package": "9a326512dc4f",
+   "thumb": [
+    "6725bf56507d",
+    "6725bf56507d"
+   ],
+   "thumb_full": [
+    "84e4c1d51969",
+    "84e4c1d51969"
+   ],
+   "product_skin": null,
+   "images": 1,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "o-bundle",
+   "name": "طلب باقات وكوبون",
+   "cat": "order",
+   "field": "متجر",
+   "file": "assets/pages/templates/o-bundle.json",
+   "sections": 3,
+   "sha_live": "ca3a6015c93b",
+   "sha_repo": "ca3a6015c93b",
+   "sha_package": "ca3a6015c93b",
+   "thumb": [
+    "3ddb8ae953a9",
+    "3ddb8ae953a9"
+   ],
+   "thumb_full": [
+    "49b5e1167ae8",
+    "49b5e1167ae8"
+   ],
+   "product_skin": null,
+   "images": 0,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "o-proof",
+   "name": "طلب بإثبات اجتماعي",
+   "cat": "order",
+   "field": "عام",
+   "file": "assets/pages/templates/o-proof.json",
+   "sections": 3,
+   "sha_live": "144cfe4eee28",
+   "sha_repo": "144cfe4eee28",
+   "sha_package": "144cfe4eee28",
+   "thumb": [
+    "d72d92157541",
+    "d72d92157541"
+   ],
+   "thumb_full": [
+    "9d95f73626c9",
+    "9d95f73626c9"
+   ],
+   "product_skin": null,
+   "images": 3,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-aurora",
+   "name": "متجر أورورا داكن",
+   "cat": "store",
+   "field": "عام",
+   "file": "assets/pages/templates/s-aurora.json",
+   "sections": 12,
+   "sha_live": "d267734d236f",
+   "sha_repo": "d267734d236f",
+   "sha_package": "d267734d236f",
+   "thumb": [
+    "baadb71f4193",
+    "baadb71f4193"
+   ],
+   "thumb_full": [
+    "737f0282e863",
+    "737f0282e863"
+   ],
+   "product_skin": "c01c1cbc76b1",
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-gold",
+   "name": "متجر فخامة ذهبية",
+   "cat": "store",
+   "field": "فخامة",
+   "file": "assets/pages/templates/s-gold.json",
+   "sections": 13,
+   "sha_live": "874150189258",
+   "sha_repo": "874150189258",
+   "sha_package": "874150189258",
+   "thumb": [
+    "a7c33bf8db05",
+    "a7c33bf8db05"
+   ],
+   "thumb_full": [
+    "0b344a4dd6a5",
+    "0b344a4dd6a5"
+   ],
+   "product_skin": "8e8ce07028c5",
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-fresh",
+   "name": "متجر طبيعي منعش",
+   "cat": "store",
+   "field": "صحة وعسل",
+   "file": "assets/pages/templates/s-fresh.json",
+   "sections": 13,
+   "sha_live": "a912c7c73252",
+   "sha_repo": "a912c7c73252",
+   "sha_package": "a912c7c73252",
+   "thumb": [
+    "96ea78a44f55",
+    "96ea78a44f55"
+   ],
+   "thumb_full": [
+    "8bd4b5067692",
+    "8bd4b5067692"
+   ],
+   "product_skin": "c78e683d4928",
+   "images": 11,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-pop",
+   "name": "متجر بوب جريء",
+   "cat": "store",
+   "field": "أزياء وترفيه",
+   "file": "assets/pages/templates/s-pop.json",
+   "sections": 12,
+   "sha_live": "c0a32db1a59f",
+   "sha_repo": "c0a32db1a59f",
+   "sha_package": "c0a32db1a59f",
+   "thumb": [
+    "bc9f6898d806",
+    "bc9f6898d806"
+   ],
+   "thumb_full": [
+    "a0e1c7bb8892",
+    "a0e1c7bb8892"
+   ],
+   "product_skin": "afc1a816f2e8",
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-tech",
+   "name": "متجر تقني بسيط",
+   "cat": "store",
+   "field": "إلكترونيات",
+   "file": "assets/pages/templates/s-tech.json",
+   "sections": 15,
+   "sha_live": "166e1c583fb1",
+   "sha_repo": "166e1c583fb1",
+   "sha_package": "166e1c583fb1",
+   "thumb": [
+    "bf4ed3365c71",
+    "bf4ed3365c71"
+   ],
+   "thumb_full": [
+    "f567e1b04ee0",
+    "f567e1b04ee0"
+   ],
+   "product_skin": "70baccaa991c",
+   "images": 15,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-cosmetics",
+   "name": "متجر تجميل — روز كريستال",
+   "cat": "store",
+   "field": "تجميل وعناية",
+   "file": "assets/pages/templates/s-cosmetics.json",
+   "sections": 14,
+   "sha_live": "64f8637766ae",
+   "sha_repo": "64f8637766ae",
+   "sha_package": "64f8637766ae",
+   "thumb": [
+    "2d0bf7def747",
+    "2d0bf7def747"
+   ],
+   "thumb_full": [
+    "e593362fdf40",
+    "e593362fdf40"
+   ],
+   "product_skin": "980054db4062",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-supplements",
+   "name": "متجر مكملات غذائية — فيتال أكتيف",
+   "cat": "store",
+   "field": "مكملات غذائية",
+   "file": "assets/pages/templates/s-supplements.json",
+   "sections": 17,
+   "sha_live": "ea03b49e15a9",
+   "sha_repo": "ea03b49e15a9",
+   "sha_package": "ea03b49e15a9",
+   "thumb": [
+    "9fd050aff3ee",
+    "9fd050aff3ee"
+   ],
+   "thumb_full": [
+    "a33119eb2988",
+    "a33119eb2988"
+   ],
+   "product_skin": "6021a935bdd2",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-honey",
+   "name": "متجر عسل — ذهب الخلية",
+   "cat": "store",
+   "field": "عسل",
+   "file": "assets/pages/templates/s-honey.json",
+   "sections": 13,
+   "sha_live": "edaeb34ccba8",
+   "sha_repo": "edaeb34ccba8",
+   "sha_package": "edaeb34ccba8",
+   "thumb": [
+    "427a4c0cdd0a",
+    "427a4c0cdd0a"
+   ],
+   "thumb_full": [
+    "6d87a21e43a0",
+    "6d87a21e43a0"
+   ],
+   "product_skin": "74e58f9c9dca",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-herbs",
+   "name": "متجر أعشاب وزيوت — العطّار",
+   "cat": "store",
+   "field": "أعشاب وزيوت",
+   "file": "assets/pages/templates/s-herbs.json",
+   "sections": 13,
+   "sha_live": "0600c979228a",
+   "sha_repo": "0600c979228a",
+   "sha_package": "0600c979228a",
+   "thumb": [
+    "8b9294df7827",
+    "8b9294df7827"
+   ],
+   "thumb_full": [
+    "2e839ec08de9",
+    "2e839ec08de9"
+   ],
+   "product_skin": "b8faedc21ebb",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-fashion",
+   "name": "متجر أزياء — إديتوريال",
+   "cat": "store",
+   "field": "أزياء",
+   "file": "assets/pages/templates/s-fashion.json",
+   "sections": 13,
+   "sha_live": "362112496fe0",
+   "sha_repo": "362112496fe0",
+   "sha_package": "362112496fe0",
+   "thumb": [
+    "651db4d5a589",
+    "651db4d5a589"
+   ],
+   "thumb_full": [
+    "1d695a65c19f",
+    "1d695a65c19f"
+   ],
+   "product_skin": "b677bf536046",
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-it",
+   "name": "متجر معلوماتية — تيك هب",
+   "cat": "store",
+   "field": "معلوماتية",
+   "file": "assets/pages/templates/s-it.json",
+   "sections": 13,
+   "sha_live": "829ff9f063e7",
+   "sha_repo": "829ff9f063e7",
+   "sha_package": "829ff9f063e7",
+   "thumb": [
+    "a5dc905677dc",
+    "a5dc905677dc"
+   ],
+   "thumb_full": [
+    "678e9a14c1b6",
+    "678e9a14c1b6"
+   ],
+   "product_skin": "8620b4ab3d50",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-digital",
+   "name": "متجر منتجات رقمية — ديجيتال هب",
+   "cat": "store",
+   "field": "منتجات رقمية",
+   "file": "assets/pages/templates/s-digital.json",
+   "sections": 13,
+   "sha_live": "0ba50d25fa6c",
+   "sha_repo": "0ba50d25fa6c",
+   "sha_package": "0ba50d25fa6c",
+   "thumb": [
+    "7c13ecac873b",
+    "7c13ecac873b"
+   ],
+   "thumb_full": [
+    "9577c2786573",
+    "9577c2786573"
+   ],
+   "product_skin": "24813ec5546f",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-marketplace",
+   "name": "ماركت بليس — سوق مفتوح",
+   "cat": "store",
+   "field": "ماركت بليس",
+   "file": "assets/pages/templates/s-marketplace.json",
+   "sections": 15,
+   "sha_live": "2024b87eef66",
+   "sha_repo": "2024b87eef66",
+   "sha_package": "2024b87eef66",
+   "thumb": [
+    "4ce3dadb5b5e",
+    "4ce3dadb5b5e"
+   ],
+   "thumb_full": [
+    "1654fb9a3490",
+    "1654fb9a3490"
+   ],
+   "product_skin": "6b2de84e0683",
+   "images": 11,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-watches",
+   "name": "متجر ساعات — كرونوس",
+   "cat": "store",
+   "field": "ساعات",
+   "file": "assets/pages/templates/s-watches.json",
+   "sections": 15,
+   "sha_live": "9a23b0bda41d",
+   "sha_repo": "9a23b0bda41d",
+   "sha_package": "9a23b0bda41d",
+   "thumb": [
+    "32d16fd0dc72",
+    "32d16fd0dc72"
+   ],
+   "thumb_full": [
+    "44badbe58b58",
+    "44badbe58b58"
+   ],
+   "product_skin": "88304e0bd757",
+   "images": 11,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-jewelry",
+   "name": "متجر مجوهرات — لؤلؤة",
+   "cat": "store",
+   "field": "مجوهرات",
+   "file": "assets/pages/templates/s-jewelry.json",
+   "sections": 12,
+   "sha_live": "5624ab812120",
+   "sha_repo": "5624ab812120",
+   "sha_package": "5624ab812120",
+   "thumb": [
+    "ce4a01638ae0",
+    "ce4a01638ae0"
+   ],
+   "thumb_full": [
+    "3a9dead2b4fb",
+    "3a9dead2b4fb"
+   ],
+   "product_skin": "634b6c8f8899",
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-accessories",
+   "name": "متجر إكسسوارات — ميكس",
+   "cat": "store",
+   "field": "إكسسوارات",
+   "file": "assets/pages/templates/s-accessories.json",
+   "sections": 12,
+   "sha_live": "4bd31b2210fb",
+   "sha_repo": "4bd31b2210fb",
+   "sha_package": "4bd31b2210fb",
+   "thumb": [
+    "27834a62f0ae",
+    "27834a62f0ae"
+   ],
+   "thumb_full": [
+    "89f36362cb5c",
+    "89f36362cb5c"
+   ],
+   "product_skin": "0edb6fea5615",
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-perfume",
+   "name": "متجر عطور — عبق",
+   "cat": "store",
+   "field": "عطور",
+   "file": "assets/pages/templates/s-perfume.json",
+   "sections": 14,
+   "sha_live": "4d5d5b3192ef",
+   "sha_repo": "4d5d5b3192ef",
+   "sha_package": "4d5d5b3192ef",
+   "thumb": [
+    "77cbfeb424a6",
+    "77cbfeb424a6"
+   ],
+   "thumb_full": [
+    "8efe12c19935",
+    "8efe12c19935"
+   ],
+   "product_skin": "ccfefa954068",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-skincare",
+   "name": "متجر عناية بالبشرة — لوميير",
+   "cat": "store",
+   "field": "عناية بالبشرة",
+   "file": "assets/pages/templates/s-skincare.json",
+   "sections": 14,
+   "sha_live": "7500771cc7b4",
+   "sha_repo": "7500771cc7b4",
+   "sha_package": "7500771cc7b4",
+   "thumb": [
+    "ecc8c0512f55",
+    "ecc8c0512f55"
+   ],
+   "thumb_full": [
+    "6f8892c06c84",
+    "6f8892c06c84"
+   ],
+   "product_skin": "4b259e40d95e",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-makeup",
+   "name": "متجر مكياج — روج ستوديو",
+   "cat": "store",
+   "field": "مكياج",
+   "file": "assets/pages/templates/s-makeup.json",
+   "sections": 13,
+   "sha_live": "645146234125",
+   "sha_repo": "645146234125",
+   "sha_package": "645146234125",
+   "thumb": [
+    "f73b756b281d",
+    "f73b756b281d"
+   ],
+   "thumb_full": [
+    "4deeb389858c",
+    "4deeb389858c"
+   ],
+   "product_skin": "e8fc9bcff32b",
+   "images": 10,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-women",
+   "name": "متجر أزياء نسائية — أتيليه نوا",
+   "cat": "store",
+   "field": "أزياء نسائية",
+   "file": "assets/pages/templates/s-women.json",
+   "sections": 14,
+   "sha_live": "b87747a24e86",
+   "sha_repo": "b87747a24e86",
+   "sha_package": "b87747a24e86",
+   "thumb": [
+    "e51444953679",
+    "e51444953679"
+   ],
+   "thumb_full": [
+    "aee6d92c6719",
+    "aee6d92c6719"
+   ],
+   "product_skin": "6d918b568f03",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-men",
+   "name": "متجر أزياء رجالية — غرين",
+   "cat": "store",
+   "field": "أزياء رجالية",
+   "file": "assets/pages/templates/s-men.json",
+   "sections": 12,
+   "sha_live": "eab911fdb4a8",
+   "sha_repo": "eab911fdb4a8",
+   "sha_package": "eab911fdb4a8",
+   "thumb": [
+    "02a8a69ddd71",
+    "02a8a69ddd71"
+   ],
+   "thumb_full": [
+    "bade408d00a0",
+    "bade408d00a0"
+   ],
+   "product_skin": "5e12b11e810c",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-kids",
+   "name": "متجر أطفال وألعاب — بوبون",
+   "cat": "store",
+   "field": "أطفال وألعاب",
+   "file": "assets/pages/templates/s-kids.json",
+   "sections": 14,
+   "sha_live": "a6f36ffa93ec",
+   "sha_repo": "a6f36ffa93ec",
+   "sha_package": "a6f36ffa93ec",
+   "thumb": [
+    "1e1b430ef191",
+    "1e1b430ef191"
+   ],
+   "thumb_full": [
+    "0b0c40ffbf2c",
+    "0b0c40ffbf2c"
+   ],
+   "product_skin": "1b221376e5b5",
+   "images": 9,
+   "images_missing": [],
+   "owner_only": false,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  },
+  {
+   "id": "s-alyssum",
+   "name": "أليسوم — زجاج أخضر داكن",
+   "cat": "store",
+   "field": "أليسوم",
+   "file": "assets/pages/templates/s-alyssum.json",
+   "sections": 14,
+   "sha_live": "a507297cf3f6",
+   "sha_repo": "a507297cf3f6",
+   "sha_package": "owner_only",
+   "thumb": [
+    "3fab7aff6d56",
+    "3fab7aff6d56"
+   ],
+   "thumb_full": [
+    "db083fcaed5b",
+    "db083fcaed5b"
+   ],
+   "product_skin": null,
+   "images": 35,
+   "images_missing": [],
+   "owner_only": true,
+   "live_eq_repo": true,
+   "package_eq_repo": true,
+   "thumbs_ok": true,
+   "ok": true
+  }
+ ]
+}
