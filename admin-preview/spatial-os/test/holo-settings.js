@@ -42,7 +42,7 @@ async function php(b) {
 
     /* غلاف Spatial Core اللوني داخل لوحة التحكم الحقيقية: ألوان جديدة (سماوي/بنفسجي/زمردي) بدل الليموني، داكن دائماً، بلا أي كتابة في تخزين المستخدم */
     await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(1500);
-    const sk = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), d = q.fr.contentWindow.document, w = q.fr.contentWindow, h = d.documentElement, cs = w.getComputedStyle(h); const lime = /226,\s*254,\s*23\b/; const btns = [...d.querySelectorAll("#tab-orders .small:not(.gray):not(.warn):not(.danger):not(.red), #tab-orders .btn:not(.gray):not(.warn):not(.danger):not(.red)")].filter(b => b.offsetParent); const bi = btns.map(b => w.getComputedStyle(b).backgroundImage); return { glass: h.classList.contains("glass") && !h.classList.contains("white"), mint: cs.getPropertyValue("--g-mint").trim(), c: cs.getPropertyValue("--c").trim(), n: btns.length, cyan: bi.filter(v => /59,\s*230,\s*255/.test(v)).length, limeBtns: bi.filter(v => lime.test(v)).length }; });
+    const sk = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), d = q.fr.contentWindow.document, w = q.fr.contentWindow, h = d.documentElement, cs = w.getComputedStyle(h); const lime = /226,\s*254,\s*23\b/; const btns = [...d.querySelectorAll("#tab-orders .small:not(.gray):not(.warn):not(.danger):not(.red), #tab-orders .btn:not(.gray):not(.warn):not(.danger):not(.red)")].filter(b => b.offsetParent); const bi = btns.map(b => w.getComputedStyle(b).backgroundImage); return { glass: h.classList.contains("glass") && !h.classList.contains("white"), mint: cs.getPropertyValue("--g-mint").trim(), c: cs.getPropertyValue("--c").trim(), n: btns.length, cyan: bi.filter(v => /(59|70),\s*2(30|28),\s*255/.test(v)).length, limeBtns: bi.filter(v => lime.test(v)).length }; });
     ok("php: داخل لوح اللوحة الحقيقية: داكن وأساسي سماوي ومتغير التدرّج سماوي", sk.glass && sk.mint === "#3be6ff" && sk.c === "59,230,255", sk);
     ok("php: الأزرار الأساسية في اللوح زجاجية سماوية ولا زر ليموني", sk.n > 0 && sk.cyan === sk.n && sk.limeBtns === 0, sk);
     /* كل أقسام الأسطوانة (عدا المساعد) لوحات حقيقية بتبويب اللوحة الحقيقي */
@@ -76,6 +76,19 @@ async function php(b) {
     await p.click('.panel[aria-label="الطلبات"] .pn-orb'); await wait(1200);
     const bk = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); return { x: q.st.x, y: q.st.y }; });
     ok("php: زر ◎ (إرجاع إلى المدار) يعيد اللوح الحقيقي إلى مكانه الافتراضي", Math.hypot(bk.x - hp.x0, bk.y - hp.y0) < 40 && Math.hypot(bk.x - mv.x, bk.y - mv.y) > 40, { home: [hp.x0, hp.y0], moved: [mv.x, mv.y], after: [bk.x, bk.y] });
+    /* زر □ في شريط عنوان البطاقة يفتحها بحجم المكتب (يملأ الشاشة تحت الشريط العلوي) ويعيدها عند الضغط ثانية */
+    await p.evaluate(() => SpatialOS.open("ord")); await wait(500);
+    await p.click('.panel[aria-label="الطلبات"] .pn-max'); await wait(1500);
+    const big = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.getBoundingClientRect(), f = q.fr.getBoundingClientRect(); return { big: q.big, w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), left: Math.round(r.left), vw: innerWidth, vh: innerHeight, frameW: Math.round(f.width), frameInnerW: q.fr.contentWindow.innerWidth }; });
+    ok("php: □ يفتح البطاقة بحجم المكتب (يملأ العرض والارتفاع تحت الشريط العلوي، وإطارها بعرض مكتب ≥ 1000)", big.big && big.w >= big.vw - 60 && big.h >= big.vh - 110 && big.top >= 56 && big.top <= 80 && big.frameInnerW >= 1000, big);
+    await p.click('.panel[aria-label="الطلبات"] .pn-max'); await wait(1200);
+    ok("php: □ ثانية تعيد البطاقة إلى حجمها", await p.evaluate(() => !SpatialOS.panels.get("ord").big));
+    /* عنوان اللوح لا يصعد فوق الشريط العلوي ولا يختفي تحته */
+    const hh = await p.evaluate(() => { const r = SpatialOS.panels.get("ord").el.querySelector(".pn-h").getBoundingClientRect(); return { x: r.x + r.width * .45, y: r.y + r.height / 2 }; });
+    await p.mouse.move(hh.x, hh.y); await p.mouse.down(); for (let i = 1; i <= 16; i++) { await p.mouse.move(hh.x, Math.max(2, hh.y - 60 * i)); await wait(20); } await p.mouse.up(); await wait(900);
+    const topH = await p.evaluate(() => Math.round(SpatialOS.panels.get("ord").el.querySelector(".pn-h").getBoundingClientRect().top));
+    ok("php: لا يصعد عنوان اللوح فوق الشاشة ولا يُدفن (يبقى شريطه ظاهراً وقابلاً للإمساك: top ≥ 58)", topH >= 58, { topH });
+    ok("php: كل بطاقات الجدران ظاهرة كاملة داخل الشاشة تحت الشريط العلوي", await p.evaluate(() => { const c = [...document.querySelectorAll(".wcard")]; return c.length >= 20 && c.every(e => { const q = e.getBoundingClientRect(); return q.x >= 4 && q.right <= innerWidth - 4 && q.y >= 56 && q.bottom <= innerHeight - 4; }); }));
     /* «كيف أكلّم الكرة»: النقر عليها يفتح لوح المساعد وفيه زر الميكروفون وحقل الكتابة */
     await p.evaluate(() => document.getElementById("core").click()); await wait(1500);
     const mic = await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return q ? { mic: !!q.el.querySelector(".ag-mic"), input: !!q.el.querySelector("input,textarea"), framed: !!q.frame } : null; });
