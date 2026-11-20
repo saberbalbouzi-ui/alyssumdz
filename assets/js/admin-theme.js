@@ -20,6 +20,13 @@
     document.querySelectorAll("#theme-sw button").forEach(function(b){ b.classList.toggle("on", b.dataset.m === m); });
     this.render();
   };
+  /* المظهر الهولوغرافي (Beta): مظهر ثانٍ للوحة نفسها — الأقسام والبيانات والإعدادات كما هي، والمختلف هو الشكل فقط؛ يُفتح بصفحة مستقلة ويعود بزر */
+  function holoCard(){
+    return '<div class="atm-card atm-holo"><div class="atm-h"><b dir="ltr">Spatial Core</b><span class="atm-badge atm-beta">Beta</span></div>' +
+      '<div class="atm-pv h" aria-hidden="true"><i class="cy"></i><i class="co"></i></div>' +
+      '<div class="hint">نفس لوحتك وإعداداتك وبياناتك، بشكل ثلاثي الأبعاد: أسطوانة أقسام ونواة مركزية وألواح زجاجية عائمة. لا يتغيّر شيء من إعداداتك؛ المختلف هو المظهر فقط، وتعود إلى المظهر العادي بزر واحد.</div>' +
+      '<div class="atm-act"><button type="button" class="small" id="atm-holo-go" disabled onclick="location.href=\'admin-preview/spatial-os/index.html?real=1\'">فتح Spatial Core</button><span class="hint" id="atm-holo-st">جارٍ التحقق من توفّره…</span></div></div>';
+  }
   T.render = function(){
     var box = document.getElementById("adm-theme"); if(!box) return;
     var cur = this.mode(), cfg = this.cfg();
@@ -32,7 +39,12 @@
             '<input type="color" value="' + esc(c.accent) + '" title="لون مخصص" onchange="AdminTheme.setCfg(\'' + m + '\',\'accent\',this.value)"></div>' +
           '<div class="atm-row"><label>حجم الخط</label><select onchange="AdminTheme.setCfg(\'' + m + '\',\'fs\',Number(this.value))">' + SIZES.map(function(s){ return '<option value="' + s[0] + '"' + (Number(c.fs) === s[0] ? " selected" : "") + '>' + s[1] + '</option>'; }).join("") + '</select></div>' +
           '<div class="atm-act">' + (on ? "" : '<button type="button" class="small" onclick="AdminTheme.set(\'' + m + '\')">تفعيل هذا المظهر</button>') + '<button type="button" class="small gray" onclick="AdminTheme.resetCfg(\'' + m + '\')">استرجاع الإعدادات الافتراضية</button></div></div>';
-      }).join("") + '</div></div>';
+      }).join("") + holoCard() + '</div></div>';
+    /* المظهر الهولوغرافي لا يتوفر إلا في المواقع التي وصلتها ملفاته: نتحقق من وجود الصفحة قبل تفعيل الزر */
+    fetch("admin-preview/spatial-os/index.html", { method: "HEAD", cache: "no-store" }).then(function(r){ return r.ok; }, function(){ return false; }).then(function(ok){
+      var b = document.getElementById("atm-holo-go"), t = document.getElementById("atm-holo-st"); if(!b) return;
+      if(ok){ b.disabled = false; if(t) t.remove(); } else { var c = b.closest(".atm-holo"); if(c) c.style.display = "none"; }
+    });
   };
   /* الشريط العلوي على الهاتف (CSS فقط يُظهر هذه العناصر ≤760px): ☰ يفتح الدرج الجانبي، 🔍 يفتحه ويركّز البحث، وصورة الحساب تفتح/تغلق الإعدادات القديمة داخل الشريط */
   function acctName(){ try{ return (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || ""; }catch(e){ return ""; } }
