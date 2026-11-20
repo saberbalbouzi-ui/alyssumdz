@@ -45,6 +45,15 @@ const { chromium } = require("playwright");
     return { im, ext, again, calls, warn: toasts.some(x => /تعذّر جلب طرود/.test(x)), added: toasts.some(x => /وإضافة 1/.test(x)) };
   });
   t("طرد أُنشئ في لوحة E-com مباشرة: يُجلب ويُضاف خارجياً بحالته، ولا يتكرر الجلب خلال 5 دقائق، والخطأ (401) يظهر بتنبيه", IM.im && IM.im.ext === 1 && /EC777XYZ:Commande Confirmée/.test(IM.ext) && IM.again === null && IM.warn && IM.added, IM);
+  const WH = await p.evaluate(async () => {
+    const A = Admin, calls = []; A.deliveryCfg = { ecomdelivery: { enabled: true, apiKey: "k", apiToken: "t" } };
+    A.courierFetch = async req => { calls.push(req.method + " " + req.url.replace(/^.*api_v2/, "") + (req.body ? " " + req.body : "")); return /webhook\/test/.test(req.url) ? { ok: true, status: 200, text: JSON.stringify({ ok: true, detail: "HTTP 200" }) } : { ok: true, status: 200, text: JSON.stringify({ actif: true }) }; };
+    const okMsg = await A.ecomRegisterWebhook("https://x.supabase.co/functions/v1/ecom-webhook?s=SEC", "SEC");
+    A.courierFetch = async () => ({ ok: false, status: 422, text: JSON.stringify({ error: { code: "validation", message: "URL invalide" } }) }); const badMsg = await A.ecomRegisterWebhook("u", "s");
+    A.deliveryCfg = { ecomdelivery: { enabled: true } }; const noKeys = await A.ecomRegisterWebhook("u", "s");
+    return { calls, okMsg, badMsg, noKeys };
+  });
+  t("تسجيل الـwebhook عند E-com: PUT /webhook بالرابط والسرّ وكل الأحداث ثم POST /webhook/test؛ وأخطاؤه واضحة", WH.calls.length === 2 && /^PUT \/webhook .*"secret":"SEC".*"events":\["\*"\]/.test(WH.calls[0]) && /^POST \/webhook\/test/.test(WH.calls[1]) && /✅/.test(WH.okMsg) && /422/.test(WH.badMsg) && /URL invalide/.test(WH.badMsg) && /أدخل مفتاحَي/.test(WH.noKeys), WH);
   t("parseStatus والبوردرو والإلغاء ومدرجة بين الشركات", R.ps === "Au Bureau" && /bordereau\?format=10x13/.test(R.lbl) && R.del === "DELETE" && R.listed, [R.ps, R.lbl, R.del, R.listed]);
   const F = await p.evaluate(async () => {
     const A = Admin, out = {}; window.toast = () => { }; const wait = ms => new Promise(r => setTimeout(r, ms)); const saved = []; API.addOrder = async o => { saved.push(o); return { ok: true, id: "M-EC1" }; };
