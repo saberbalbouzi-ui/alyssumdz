@@ -1,0 +1,45 @@
+{
+ "phase": "12C-G",
+ "suite": "static secrets/boundaries",
+ "scannedFiles": 379,
+ "pass": 8,
+ "fail": 0,
+ "results": [
+  {
+   "n": "[S1] لا JWT بدور غير anon (مثل service_role) في ملفات تصل المتصفح",
+   "pass": true,
+   "x": []
+  },
+  {
+   "n": "[S2] لا مفاتيح مزوّد سرّية (sk_live/test_sk_…) في ملفات المتصفح",
+   "pass": true,
+   "x": []
+  },
+  {
+   "n": "[S3] لا ذكر service_role في شيفرة المتصفح (حدوده الخادم/المرجع فقط)",
+   "pass": true,
+   "x": []
+  },
+  {
+   "n": "[S4] لا مفتاح خاص PEM",
+   "pass": true,
+   "x": []
+  },
+  {
+   "n": "[S5] مفتاح Supabase في config.js من دور anon فقط",
+   "pass": true
+  },
+  {
+   "n": "[S6] مفتاح منصة الطلبات في config.js عام النطاق (pk_pub_) لا سرّي",
+   "pass": true
+  },
+  {
+   "n": "[S7] order_idem مغلق: RLS مفعّل بلا سياسات ومسحوب من anon/authenticated",
+   "pass": true
+  },
+  {
+   "n": "[S8] submit_order: صلاحية التنفيذ لـanon/authenticated فقط وبلا public",
+   "pass": true
+  }
+ ]
+}
