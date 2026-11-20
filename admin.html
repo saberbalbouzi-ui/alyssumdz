@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest-admin.webmanifest"><meta name="theme-color" content="#0b1210"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="اللوحة">
-<meta name="admin-version" content="1.89.1301">
+<meta name="admin-version" content="1.89.1302">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -10489,20 +10489,28 @@ const Admin = {
     this._shipCo = key; this.renderOrders(); this.renderShipped();
     toast("✅ رُبط الطرد " + trk + " بالطلب " + ord.id + (raw ? " — " + raw : "") + " (اضغط «تحديث الحالة» لتطبيقها على الطلب)");
   },
+  /* مطابقة اسم منتج الطرد الخارجي بمنتجات المتجر (العنوان أو اسم البوردرو): تطابق تام ثم احتواء بلا حركات ولا رموز، وبشرط أن يكون المرشّح واحداً فقط */
+  matchProductByName(name){
+    const nz = v=>String(v || "").toLowerCase().replace(/[\u064B-\u0652\u0640]/g, "").replace(/\s*(?:×|\bx)\s*\d{1,3}\s*$/i, "").replace(/[^a-z0-9\u0600-\u06ff]/g, ""), n = nz(name), P = this.products || []; if(!n) return null;
+    const keys = p=>[p.title, p.bord].map(nz).filter(Boolean);
+    let hit = P.filter(p=>keys(p).includes(n)); if(hit.length === 1) return hit[0];
+    hit = P.filter(p=>keys(p).some(k=>k.length >= 4 && (n.includes(k) || (n.length >= 4 && k.includes(n))))); return hit.length === 1 ? hit[0] : null;
+  },
   /* «📥 إنشاء طلب» من طرد خارجي (أُنشئ في لوحة الشركة مباشرة): يُنشئ طلباً في اللوحة ببيانات الطرد ويربطه به بحالته المقابلة (بلا إرسال ولا مخزون: الطرد موجود عند الشركة أصلاً) ويُزال من «الطرود الخارجية» */
   async coCreateOrder(cof, trk, silent){
     const co = this.allDeliveryCompanies()[cof]; if(!co) return false;
     const row = (this.coRows(cof) || []).find(x=>x.tracking === trk); if(!row){ if(!silent) toast("⚠️ لم أجد الطرد " + trk); return false }
     if(this.orders.find(o=>{ const t = this.trackingOf(o); return t && t.tracking === trk; })){ if(!silent) toast("ℹ️ الطرد مرتبط بطلب بالفعل"); return false }
     if(!silent && !confirm("إنشاء طلب في لوحتك من الطرد " + trk + "؟\n" + [row.client, row.phone, [row.wilaya, row.commune].filter(Boolean).join(" / "), row.amount ? row.amount.toLocaleString("fr-DZ") + " دج" : ""].filter(Boolean).join(" — ") + "\nيُربط به بحالته الحالية عند الشركة " + (row.status ? "(" + row.status + ")" : "") + "، ولا يُرسَل إلى أي شركة ولا يخصم المخزون.")) return;
-    const amount = Math.max(0, Math.round(Number(row.amount) || 0)), title = String(row.product || "").trim() || ("طرد من " + co.name), phone = String(row.phone || "").replace(/\D/g, "");
-    const order = { name: row.client || "طرد خارجي", phone: phone.startsWith("213") ? "0" + phone.slice(3) : phone, wilaya: row.wilaya || "", commune: row.commune || "", dtype: row.stop ? "stop" : "home", desk: "", items: [{ slug: "", title: title.slice(0, 160), qty: 1, price: amount }], subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: { "✍️ طلب يدوي": "نعم", "📥 مستورد من الشركة": co.name }, note: "" };
+    const amount = Math.max(0, Math.round(Number(row.amount) || 0)), rawT = String(row.product || "").trim(), mp = this.matchProductByName(rawT), qm = rawT.match(/(?:×|\bx)\s*(\d{1,3})\s*$/i), qty = mp && qm ? Math.max(1, Number(qm[1])) : 1, title = mp ? mp.title : (rawT || ("طرد من " + co.name)), unit = Math.max(0, Math.round(amount / qty)), phone = String(row.phone || "").replace(/\D/g, "");
+    const order = { name: row.client || "طرد خارجي", phone: phone.startsWith("213") ? "0" + phone.slice(3) : phone, wilaya: row.wilaya || "", commune: row.commune || "", dtype: row.stop ? "stop" : "home", desk: "", items: [{ slug: mp ? mp.slug : "", title: title.slice(0, 160), qty, price: unit }], subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: { "✍️ طلب يدوي": "نعم", "📥 مستورد من الشركة": co.name }, note: "" };
     const r = await API.addOrder(order); if(!r || !r.ok){ if(!silent) toast("❌ تعذّر إنشاء الطلب — تحقق من الاتصال والصلاحية"); return false }
     let st = "confirmee"; try{ const m = co.mapStatus ? co.mapStatus(row.status) : null; if(m && m !== "__alert") st = m; }catch(e){}
-    const o = { id: r.id || ("M" + Date.now().toString(36).toUpperCase()), date: row.date ? new Date(String(row.date).replace(" ", "T")).toISOString() : new Date().toISOString(), name: order.name, phone: order.phone, wilaya: order.wilaya, commune: order.commune, dtype: order.dtype, desk: "", items: title + " ×1 = " + amount + " DA", subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: order.extra, status: st, note: "" };
+    const o = { id: r.id || ("M" + Date.now().toString(36).toUpperCase()), date: row.date ? new Date(String(row.date).replace(" ", "T")).toISOString() : new Date().toISOString(), name: order.name, phone: order.phone, wilaya: order.wilaya, commune: order.commune, dtype: order.dtype, desk: "", items: title + " ×" + qty + " = " + amount + " DA", subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: order.extra, status: st, note: "" };
     if(isNaN(new Date(o.date).getTime())) o.date = new Date().toISOString();
     this.orders.unshift(o);
     try{ API.updateOrder(this.key, o.id, st); }catch(e){}
+    try{ this.syncStockForOrder(o, st); }catch(e){}      /* يدخل المخزون والأرباح والإحصائيات كأي طلب: خصم المخزون للمؤكَّد فما بعده إن طابق منتجاً */
     this.saveTracking(o, cof, trk); if(row.status){ try{ this.setShipRaw(o.id, row.status); }catch(e){} }
     try{ const a = this.extAll(); if(a[cof]){ a[cof] = a[cof].filter(x=>x.tracking !== trk); localStorage.setItem("alyssum_ext_parcels", JSON.stringify(a)); } }catch(e){}
     try{ this.renderStats(); this.renderOrders(); this.renderShipped(); }catch(e){}
