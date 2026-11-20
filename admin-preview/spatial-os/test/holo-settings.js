@@ -23,6 +23,7 @@ async function php(b) {
     await p.goto(store.base + "/admin.html"); await p.waitForFunction(() => { try { return typeof Admin !== "undefined" && !document.getElementById("app").classList.contains("hidden"); } catch (e) { return false; } }, null, { timeout: 30000 });
     const snap = async () => p.evaluate(async () => { const o = await (await fetch("api/index.php?r=orders", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } })).json(); return JSON.stringify((o.orders || []).map(x => [x.id, x.status, x.total]).sort()); });
     const before = await snap(), themeBefore = await p.evaluate(() => AdminTheme.mode());
+    const stoBefore = await p.evaluate(() => JSON.stringify([localStorage.getItem("admin_theme"), localStorage.getItem("admin_theme_cfg")]));
 
     await p.evaluate(() => Admin.tab("admtheme")); await p.waitForSelector("#atm-holo-go:not([disabled])", { timeout: 15000 });
     const card = await p.evaluate(() => { const c = document.querySelector(".atm-holo"); return c ? { txt: c.innerText, vis: getComputedStyle(c).display !== "none" } : null; });
@@ -39,6 +40,11 @@ async function php(b) {
     ok("php: عنوان الصفحة Spatial Core", /Spatial Core/.test(await p.title()));
     ok("php: النواة الثلاثية الأبعاد ومشهد الأسطوانة موجودان", await p.evaluate(() => !!document.getElementById("core") && !!document.getElementById("cyl") && !!document.querySelector("canvas.core3d, #core canvas, .core3d")));
 
+    /* غلاف Spatial Core اللوني داخل لوحة التحكم الحقيقية: ألوان جديدة (سماوي/بنفسجي/زمردي) بدل الليموني، داكن دائماً، بلا أي كتابة في تخزين المستخدم */
+    await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(1500);
+    const sk = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), d = q.fr.contentWindow.document, w = q.fr.contentWindow, h = d.documentElement, cs = w.getComputedStyle(h); const lime = /226,\s*254,\s*23\b/; const btns = [...d.querySelectorAll("#tab-orders .small:not(.gray):not(.warn):not(.danger):not(.red), #tab-orders .btn:not(.gray):not(.warn):not(.danger):not(.red)")].filter(b => b.offsetParent); const bi = btns.map(b => w.getComputedStyle(b).backgroundImage); return { glass: h.classList.contains("glass") && !h.classList.contains("white"), mint: cs.getPropertyValue("--g-mint").trim(), c: cs.getPropertyValue("--c").trim(), n: btns.length, cyan: bi.filter(v => /59,\s*230,\s*255/.test(v)).length, limeBtns: bi.filter(v => lime.test(v)).length }; });
+    ok("php: داخل لوح اللوحة الحقيقية: داكن وأساسي سماوي ومتغير التدرّج سماوي", sk.glass && sk.mint === "#3be6ff" && sk.c === "59,230,255", sk);
+    ok("php: الأزرار الأساسية في اللوح زجاجية سماوية ولا زر ليموني", sk.n > 0 && sk.cyan === sk.n && sk.limeBtns === 0, sk);
     /* كل أقسام الأسطوانة (عدا المساعد) لوحات حقيقية بتبويب اللوحة الحقيقي */
     const secs = { dash: "home", store: "store", cus: "customers", mkt: "coupons", look: "theme", ext: "appstore", set: "setup", ord: "orders", prod: "products", ana: "analytics", inv: "inventory" };
     await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 });
@@ -63,6 +69,7 @@ async function php(b) {
     await p.click("#hud-exit"); await p.waitForURL(/\/admin(\.html)?$/); /* لوحة main تستبدل العنوان بـ/admin */ await p.waitForFunction(() => { try { return typeof Admin !== "undefined" && !document.getElementById("app").classList.contains("hidden"); } catch (e) { return false; } }, null, { timeout: 30000 });
     ok("php: العودة تفتح اللوحة العادية مسجَّلاً الدخول", true);
     ok("php: لم يتغيّر مظهر اللوحة المختار", (await p.evaluate(() => AdminTheme.mode())) === themeBefore);
+    ok("php: لم يُكتب أي شيء في تخزين مظهر المستخدم (الوضع ولا الإعدادات)", (await p.evaluate(() => JSON.stringify([localStorage.getItem("admin_theme"), localStorage.getItem("admin_theme_cfg")]))) === stoBefore);
     ok("php: لا تغيير في الطلبات بعد الدخول إلى المظهر والخروج منه", (await snap()) === before);
     ok("php: لا أخطاء JS غير معالجة في الصفحات", errs.length === 0, errs);
   } finally { await store.stop(); }
