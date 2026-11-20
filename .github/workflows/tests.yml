@@ -86,6 +86,8 @@ jobs:
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-saas-agency.js
       - if: ${{ !cancelled() }}
+        run: NODE_PATH=$PWD/node_modules node scripts/test-saas-beta.js
+      - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-agency-ui.js
       - if: ${{ !cancelled() }}
         run: NODE_PATH=$PWD/node_modules node scripts/test-speed.js
