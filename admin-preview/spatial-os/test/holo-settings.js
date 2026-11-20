@@ -49,7 +49,11 @@ async function php(b) {
       ok("php: لوح «" + id + "» حقيقي ويعرض تبويب " + tab, !!st && st.done && st.tabShown, st);
       if (["dash", "store", "set"].includes(id)) ok("php: لوح «" + id + "» يُبقي تنقّل اللوحة ظاهراً (كل الأقسام والإعدادات قابلة للوصول)", !!st && st.nav === true, st);
       else if (["ord", "prod", "ana", "inv"].includes(id)) ok("php: لوح «" + id + "» بلا تنقّل (كما اعتُمد في المرحلة 12)", !!st && st.nav === false, st);
+      /* استعمال واقعي: لوح أو لوحان معاً لا أحد عشر؛ نغلق اللوح بعد فحصه (الضغط الكبير على معالج برمجي يؤخّر تثبيت التبويب) */
+      if (id !== "ord") await p.evaluate(i => { try { SpatialOS.dismiss(i, "close"); } catch (e) { } }, id);
     }
+    await p.evaluate(() => SpatialOS.open("ai")); await wait(1200);
+    ok("php: لوح المساعد في الوضع الحقيقي بلا وسم «عرض تجريبي»", await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return !!q && q.el.dataset.real === "1" && !/عرض تجريبي/.test(getComputedStyle(q.el.querySelector(".pn-h h3"), "::after").content); }));
     await shot(p, "02-holo-real-panels");
 
     const ex = await p.evaluate(() => { const a = document.getElementById("hud-exit"); return a ? { href: a.getAttribute("href"), vis: getComputedStyle(a).display !== "none" } : null; });
