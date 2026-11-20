@@ -490,3 +490,6 @@ html.glass .o-src.camp{color:#fdba74}html.glass .o-src.link{color:#cbd5e1}
 /* التطبيق الذي فُتحت منه الصفحة (ماسنجر/فيسبوك/إنستغرام/تيك توك) */
 .o-src.app{background:rgba(37,99,235,.12);color:#1d4ed8;border-color:rgba(37,99,235,.35)}
 html.glass .o-src.app{color:#93c5fd}
+
+.o-src.ext{background:rgba(139,92,246,.14);color:#6d28d9;border-color:rgba(139,92,246,.4)}
+html.glass .o-src.ext{color:#c4b5fd}

@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest-admin.webmanifest"><meta name="theme-color" content="#0b1210"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="اللوحة">
-<meta name="admin-version" content="1.89.1300">
+<meta name="admin-version" content="1.89.1301">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -271,7 +271,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=d53a4274">
 <link rel="stylesheet" href="assets/css/admin-glass.css?v=2a4bd030">
-<link rel="stylesheet" href="assets/css/admin-theme.css?v=ef646ee4">
+<link rel="stylesheet" href="assets/css/admin-theme.css?v=3f519b79">
 <link rel="stylesheet" href="assets/css/admin-lime.css?v=ebd620cb">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#e2fe17",fs:15},white:{accent:"#059669",fs:15}},
 mode:function(){var m=null;try{m=localStorage.getItem(this.K)}catch(e){}return(m==="white"||m==="classic")?"white":"dark"},
@@ -1781,7 +1781,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-home.js?v=48d34d7a"></script>
 <script src="assets/js/admin-tablesel.js?v=cf2f4bd9"></script>
 <script src="assets/js/admin-mtables.js?v=9bc355d0"></script>
-<script src="assets/js/admin-coparcels.js?v=9b3db83b"></script>
+<script src="assets/js/admin-coparcels.js?v=f50b243f"></script>
 <script src="assets/js/admin-orders-plus.js?v=357f9243"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
 <script src="assets/js/admin-delhealth.js?v=6600d52c"></script>
@@ -3043,10 +3043,11 @@ const Admin = {
   /* «جديد» = طلب لم يُتصل به بعد (بلا محاولات ولا نتيجة اتصال) ويظهر في الأعلى؛ تحته «في انتظار التأكيد» (جرى الاتصال ولم يُحسم) */
   isFresh(o){ return !!o && o.status === "nouvelle" && !this.attemptsOf(o) && !this.callMark(o); },
   /* مصدر الطلب: يدوي (أُضيف من اللوحة: علم المصدر أو وسم «✍️ طلب يدوي» أو معرّف يبدأ بـ M) وإلا من الموقع */
+  isExtOrder(o){ if(!o) return false; try{ const e = typeof o.extra === "string" ? JSON.parse(o.extra) : o.extra; return !!(e && e["📥 مستورد من الشركة"]); }catch(err){ return false; } },
   isManualOrder(o){ if(!o) return false; if(o.source === "manual") return true; try{ const e = typeof o.extra === "string" ? JSON.parse(o.extra) : o.extra; if(e && e["✍️ طلب يدوي"]) return true; }catch(err){} return /^M\d{6}-/.test(String(o.id || "")); },
   /* منشأ طلب الموقع: «حملة» إن سُجِّلت له «📣 الحملة» (جاء من إعلان: utm أو fbclid/ttclid/gclid) وإلا «رابط» (زيارة مباشرة/منشور/واتساب بلا إعلان) */
   orderOrigin(o){ if(!o || this.isManualOrder(o)) return null; let e = o.extra; try{ if(typeof e === "string") e = JSON.parse(e); }catch(er){ e = null; } const c = e && (e["📣 الحملة"] || e["📣 campaign"]), ap = e && e["📲 التطبيق"] ? String(e["📲 التطبيق"]) : ""; return c ? { k: "campaign", t: String(c), app: ap } : { k: "link", t: "", app: ap }; },
-  srcBadge(o){ const og = this.orderOrigin(o), x = og ? (og.k === "campaign" ? ' <span class="o-src camp" title="جاء من إعلان/حملة: ' + String(og.t).replace(/[<>&"]/g, "") + '">حملة</span>' : ' <span class="o-src link" title="جاء من رابط مباشر بلا حملة">رابط</span>') + (og.app ? ' <span class="o-src app" title="فُتحت الصفحة من متصفح تطبيق ' + String(og.app).replace(/[<>&"]/g, "") + '">' + String(og.app).replace(/[<>&"]/g, "") + '</span>' : "") : ""; return (this.isManualOrder(o) ? '<span class="o-src man" title="طلب أُضيف يدوياً من اللوحة">يدوي</span>' : '<span class="o-src web" title="طلب جاء من الموقع">الموقع</span>') + x; },
+  srcBadge(o){ const og = this.orderOrigin(o), x = og ? (og.k === "campaign" ? ' <span class="o-src camp" title="جاء من إعلان/حملة: ' + String(og.t).replace(/[<>&"]/g, "") + '">حملة</span>' : ' <span class="o-src link" title="جاء من رابط مباشر بلا حملة">رابط</span>') + (og.app ? ' <span class="o-src app" title="فُتحت الصفحة من متصفح تطبيق ' + String(og.app).replace(/[<>&"]/g, "") + '">' + String(og.app).replace(/[<>&"]/g, "") + '</span>' : "") : ""; return (this.isExtOrder(o) ? '<span class="o-src ext" title="سُجّل مباشرة عند شركة التوصيل (لا من الموقع ولا من اللوحة)">خارجي</span>' : this.isManualOrder(o) ? '<span class="o-src man" title="طلب أُضيف يدوياً من اللوحة">يدوي</span>' : '<span class="o-src web" title="طلب جاء من الموقع">الموقع</span>') + x; },
   orderRank(o){ return this.isFresh(o) ? 0 : (this.ORDER_RANK[o.status] ?? 5); },
   /* إعدادات الأتمتة (مفعّلة افتراضياً): send = إرسال المؤكَّد للشركة، del = حذف الملغى */
   autoOpt(k){ try{ return localStorage.getItem("alyssum_auto_" + k) !== "0"; }catch(e){ return true; } },
@@ -9693,7 +9694,7 @@ const Admin = {
     const btns = [$f("sync-btn"), $f("ship-sync-btn")].filter(Boolean); this._syncing = true; btns.forEach(b=>b.disabled = true);
     const rows = []; let changed = 0, failed = 0, n = 0, corsHit = null; const deadCo = new Set(); const gone = [];
     /* شركات تُرجع قائمة طرودها بحالاتها الحالية (DHD/Ecotrack): نجلبها مرة واحدة فتحسم الحالة بدل سجلّ التتبع (الذي لا يحمل مراحل مثل Vers Station)، وتُربط/تُضاف الطرود الناقصة عندنا */
-    const listMap = {}; for(const k of [...new Set(cands.map(x=>x.t.company))]){ const c0 = all[k]; if(!(c0 && c0.parseOrdersList && c0.recentRequest)) continue; try{ const lr = await this.companyListRows(k); if(lr){ listMap[k] = {}; lr.forEach(x=>{ listMap[k][x.tracking] = x; }); const im = this.importCompanyRows(k, lr); if(im.linked || im.ext) toast("📥 من " + c0.name + ": ربط " + im.linked + " وإضافة " + im.ext + " طرد غير مرتبط"); } }catch(e){ try{ toast("⚠️ تعذّر جلب قائمة طرود " + c0.name + ": " + String(e.message || e).slice(0, 120)); }catch(e2){} } }
+    const listMap = {}; for(const k of [...new Set(cands.map(x=>x.t.company))]){ const c0 = all[k]; if(!(c0 && c0.parseOrdersList && c0.recentRequest)) continue; try{ const lr = await this.companyListRows(k); if(lr){ listMap[k] = {}; lr.forEach(x=>{ listMap[k][x.tracking] = x; }); const im = this.importCompanyRows(k, lr, { create: true }); if(im.linked || im.ext) toast("📥 من " + c0.name + ": ربط " + im.linked + " وإضافة " + im.ext + " طرد غير مرتبط"); } }catch(e){ try{ toast("⚠️ تعذّر جلب قائمة طرود " + c0.name + ": " + String(e.message || e).slice(0, 120)); }catch(e2){} } }
     for(const { o, i, t } of cands){
       n++; btns.forEach(b=>b.textContent = "⏳ " + n + "/" + cands.length);
       const co = all[t.company], cfg = this.deliveryCfg[t.company] || {};
@@ -10219,7 +10220,7 @@ const Admin = {
       this.nocList(cof).forEach(x=>{ const r = P.rows[x.trk], inf = (r && r.info) || {}, ex = x.ext || {};
         const o = x.o ? { o: x.o, i: x.i } : null; push({ tracking: x.trk, status: r ? (r.label || r.raw || "") : "", client: inf.client || ex.client, phone: inf.phone || ex.phone, wilaya: inf.wilayaName || "", commune: inf.commune || ex.commune, amount: inf.amount || ex.amount, date: inf.at || (ex.at ? new Date(ex.at).toISOString() : ""), note: r && !r.validated ? "مسوّدة غير مصدَّقة" : "", draft: !!(r && !r.validated), src: x.o ? "plat" : "ext" }, o); }); }
     else { this.orders.forEach((o, i)=>{ const t = this.trackingOf(o); if(t && t.company === cof) push({ tracking: t.tracking, src: "plat" }, { o, i }); });
-      (this.extAll()[cof] || []).forEach(x=>push({ tracking: x.tracking, status: x.raw || "", client: x.client, phone: x.phone, commune: x.commune, amount: x.amount, product: x.product || "", date: x.at ? new Date(x.at).toISOString() : "", src: "ext" })); }
+      (this.extAll()[cof] || []).forEach(x=>push({ tracking: x.tracking, status: x.raw || "", client: x.client, phone: x.phone, commune: x.commune, amount: x.amount, product: x.product || "", wilaya: x.wilaya || "", date: x.date || (x.at ? new Date(x.at).toISOString() : ""), src: "ext" })); }
     return rows;
   },
   /* عمود Action: زر «معاينة» وحده (كياليدين)؛ الحذف والطباعة والنسخ داخل نافذة المعاينة */
@@ -10359,7 +10360,7 @@ const Admin = {
     const A = this._impAt || (this._impAt = {}); if(A[key] && A[key].busy) return null; if(!force && A[key] && Date.now() - A[key].t < 300000) return null;
     A[key] = { t: Date.now(), busy: true };
     try{
-      const lr = await this.companyListRows(key), im = lr ? this.importCompanyRows(key, lr) : { linked: 0, ext: 0 };
+      const lr = await this.companyListRows(key), im = lr ? this.importCompanyRows(key, lr, { create: true }) : { linked: 0, ext: 0 };
       A[key] = { t: Date.now(), busy: false, n: (lr || []).length };
       if(im.linked || im.ext){ toast("📥 من " + co.name + ": ربط " + im.linked + " وإضافة " + im.ext + " طرد"); try{ this.renderShipped(); }catch(e){} }
       else if(force) toast("ℹ️ قُرئ " + (lr || []).length + " طرد من " + co.name + " — لا جديد لإضافته");
@@ -10381,18 +10382,16 @@ const Admin = {
     return rows;
   },
   /* طرود الشركة غير المربوطة: تُربط بطلب مطابق (المرجع = رقم الطلب، أو الهاتف والمبلغ) وإلا تُحفظ «طرداً خارجياً» ليظهر في تبويب الشركة. يعيد {linked, ext} */
-  importCompanyRows(key, rows){
+  importCompanyRows(key, rows, opts){
     const ph = v=>{ let d = String(v || "").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
-    const nm = v=>String(v || "").toLowerCase().replace(/[\u064B-\u0652\u0640]/g, "").replace(/[^a-z0-9\u0600-\u06ff]/g, "");
     const mine = new Set(this.orders.map(o=>(this.trackingOf(o) || {}).tracking).filter(Boolean)), ext = new Set(((this.extAll()[key]) || []).map(x=>x.tracking)); let linked = 0, added = 0;
     const open = ()=>this.orders.filter(o=>!this.trackingOf(o) && !/^(annulee|livree|echec)$/.test(String(o.status || "")));
-    /* ربط تلقائي بدرجات: المرجع ALY-رقم ← الهاتف والمبلغ ← الهاتف والبلدية ← الهاتف وحده إن كان طلباً واحداً مفتوحاً بلا تتبع (غير الملغى والمسلَّم والفاشل) */
+    /* ربط تلقائي لطرد أُرسل من اللوحة ولم يُحفظ تتبعه فقط: المرجع ALY-رقم ثم الهاتف والمبلغ؛ وما عداه طرد خارجي (يُنشأ له طلب) */
     const find = r=>{
       const ref = String(r.reference || "").replace(/^ALY-/, ""), un = open(), same = r.phone ? un.filter(o=>ph(o.phone) && ph(o.phone) === ph(r.phone)) : [];
       let o = ref && un.find(x=>String(x.id) === ref); if(o) return o;
       o = r.amount && same.find(x=>Math.round(Number(x.total) || 0) === Math.round(r.amount)); if(o) return o;
-      const byCom = r.commune ? same.filter(x=>nm(x.commune) && nm(x.commune) === nm(r.commune)) : []; if(byCom.length === 1) return byCom[0];
-      return same.length === 1 ? same[0] : null;
+      return null;      /* الطرد المسجَّل عند الشركة مباشرة لا طلب له في اللوحة أصلاً: لا مطابقة تقريبية (تربط طلباً خاطئاً) */
     };
     const tryLink = r=>{ const ord = find(r); if(!ord) return false; this.saveTracking(ord, key, r.tracking); if(r.status || r.raw) this.setShipRaw(ord.id, r.status || r.raw); mine.add(r.tracking); return true; };
     const a0 = this.extAll(), keep = [];
@@ -10401,9 +10400,20 @@ const Admin = {
     (rows || []).forEach(r=>{
       if(mine.has(r.tracking)) return;
       if(tryLink(r)){ linked++; return; }
-      if(!ext.has(r.tracking)){ this.extSave(key, { tracking: r.tracking, client: r.client, phone: r.phone, commune: r.commune, amount: r.amount, product: r.product, raw: r.status, at: Date.now() }); ext.add(r.tracking); added++; }
+      if(!ext.has(r.tracking)){ this.extSave(key, { tracking: r.tracking, client: r.client, phone: r.phone, commune: r.commune, amount: r.amount, product: r.product, wilaya: r.wilaya, date: r.date || "", raw: r.status, at: Date.now() }); ext.add(r.tracking); added++; }
     });
-    return { linked, ext: added };
+    const res = { linked, ext: added }; if(opts && opts.create) res.created = this.coAutoCreate(key);
+    return res;
+  },
+  /* الطرود الخارجية (سُجّلت عند الشركة مباشرة) تصير طلبات تلقائياً بعد الجلب، بوسم «خارجي»؛ الأحدث من 30 يوماً فقط حتى لا يُغرق السجلُّ القديم القائمة، والأقدم يبقى بزر «📥 إنشاء طلب» */
+  async coAutoCreate(key){
+    this._coAC = this._coAC || new Set(); const days = 30 * 864e5, now = Date.now(); let n = 0;
+    for(const x of ((this.extAll()[key]) || []).slice()){
+      const d = x.date ? new Date(String(x.date).replace(" ", "T")).getTime() : NaN; if(isNaN(d) || now - d > days || this._coAC.has(key + ":" + x.tracking)) continue;
+      this._coAC.add(key + ":" + x.tracking); try{ if(await this.coCreateOrder(key, x.tracking, true)) n++; }finally{ this._coAC.delete(key + ":" + x.tracking); }
+    }
+    if(n) toast("📥 أُنشئ " + n + " طلب من طرود سُجّلت مباشرة عند " + this.coLabel(key) + " (بوسم «خارجي»)");
+    return n;
   },
   async coRecent(){
     const all = this.allDeliveryCompanies(), keys = Object.keys(all).filter(k=>all[k].recentRequest && (this.deliveryCfg[k] || {}).enabled !== false && ((this.deliveryCfg[k] || {}).apiKey || (this.deliveryCfg[k] || {}).apiId || (this.deliveryCfg[k] || {}).token));
@@ -10419,7 +10429,7 @@ const Admin = {
       const skip = /^(label|qr_text|pin|compression|processing|processed|original_label|used_micro|price_freshness)/;
       const one = d=>{ const a = (d && d.attributes && typeof d.attributes === "object") ? Object.assign({ id: d.id }, d.attributes) : (d || {});
         return Object.keys(a).filter(x=>!skip.test(x) && a[x] !== null && a[x] !== "" && a[x] !== undefined).map(x=>x + ": " + (typeof a[x] === "object" ? JSON.stringify(a[x]).slice(0, 120) : String(a[x]).slice(0, 80))).join("\n"); };
-      try{ if(co.parseOrdersList){ const all2 = await this.companyListRows(k), im = all2 ? this.importCompanyRows(k, all2) : null; if(im && (im.linked || im.ext)){ toast("📥 أُضيف " + im.ext + " طرد من " + co.name + " وربط " + im.linked + " بطلبات"); this._shipCo = k; this.renderOrders(); this.renderShipped(); } } }catch(e){}      /* الطرود الناقصة عندنا (أُنشئت في موقع الشركة) تُضاف إلى تبويبها */
+      try{ if(co.parseOrdersList){ const all2 = await this.companyListRows(k), im = all2 ? this.importCompanyRows(k, all2, { create: true }) : null; if(im && (im.linked || im.ext)){ toast("📥 أُضيف " + im.ext + " طرد من " + co.name + " وربط " + im.linked + " بطلبات"); this._shipCo = k; this.renderOrders(); this.renderShipped(); } } }catch(e){}      /* الطرود الناقصة عندنا (أُنشئت في موقع الشركة) تُضاف إلى تبويبها */
       this.showNotice("🔍 آخر " + arr.length + " طرود في " + nE(co.name), arr.slice(0, 6).map((d, n)=>'<div style="margin:.4rem 0"><b>#' + (n + 1) + '</b><pre dir="ltr" style="white-space:pre-wrap;font-size:.72rem;max-height:200px;overflow:auto;margin:.2rem 0">' + nE(one(d)) + '</pre></div>').join(""));
     }catch(err){ this.showNotice("⚠️ تعذّر الاتصال بـ" + nE(co.name), nE(err.message || err)); }
   },
@@ -10480,14 +10490,14 @@ const Admin = {
     toast("✅ رُبط الطرد " + trk + " بالطلب " + ord.id + (raw ? " — " + raw : "") + " (اضغط «تحديث الحالة» لتطبيقها على الطلب)");
   },
   /* «📥 إنشاء طلب» من طرد خارجي (أُنشئ في لوحة الشركة مباشرة): يُنشئ طلباً في اللوحة ببيانات الطرد ويربطه به بحالته المقابلة (بلا إرسال ولا مخزون: الطرد موجود عند الشركة أصلاً) ويُزال من «الطرود الخارجية» */
-  async coCreateOrder(cof, trk){
-    const co = this.allDeliveryCompanies()[cof]; if(!co) return;
-    const row = (this.coRows(cof) || []).find(x=>x.tracking === trk); if(!row){ toast("⚠️ لم أجد الطرد " + trk); return }
-    if(this.orders.find(o=>{ const t = this.trackingOf(o); return t && t.tracking === trk; })){ toast("ℹ️ الطرد مرتبط بطلب بالفعل"); return }
-    if(!confirm("إنشاء طلب في لوحتك من الطرد " + trk + "؟\n" + [row.client, row.phone, [row.wilaya, row.commune].filter(Boolean).join(" / "), row.amount ? row.amount.toLocaleString("fr-DZ") + " دج" : ""].filter(Boolean).join(" — ") + "\nيُربط به بحالته الحالية عند الشركة " + (row.status ? "(" + row.status + ")" : "") + "، ولا يُرسَل إلى أي شركة ولا يخصم المخزون.")) return;
+  async coCreateOrder(cof, trk, silent){
+    const co = this.allDeliveryCompanies()[cof]; if(!co) return false;
+    const row = (this.coRows(cof) || []).find(x=>x.tracking === trk); if(!row){ if(!silent) toast("⚠️ لم أجد الطرد " + trk); return false }
+    if(this.orders.find(o=>{ const t = this.trackingOf(o); return t && t.tracking === trk; })){ if(!silent) toast("ℹ️ الطرد مرتبط بطلب بالفعل"); return false }
+    if(!silent && !confirm("إنشاء طلب في لوحتك من الطرد " + trk + "؟\n" + [row.client, row.phone, [row.wilaya, row.commune].filter(Boolean).join(" / "), row.amount ? row.amount.toLocaleString("fr-DZ") + " دج" : ""].filter(Boolean).join(" — ") + "\nيُربط به بحالته الحالية عند الشركة " + (row.status ? "(" + row.status + ")" : "") + "، ولا يُرسَل إلى أي شركة ولا يخصم المخزون.")) return;
     const amount = Math.max(0, Math.round(Number(row.amount) || 0)), title = String(row.product || "").trim() || ("طرد من " + co.name), phone = String(row.phone || "").replace(/\D/g, "");
     const order = { name: row.client || "طرد خارجي", phone: phone.startsWith("213") ? "0" + phone.slice(3) : phone, wilaya: row.wilaya || "", commune: row.commune || "", dtype: row.stop ? "stop" : "home", desk: "", items: [{ slug: "", title: title.slice(0, 160), qty: 1, price: amount }], subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: { "✍️ طلب يدوي": "نعم", "📥 مستورد من الشركة": co.name }, note: "" };
-    const r = await API.addOrder(order); if(!r || !r.ok){ toast("❌ تعذّر إنشاء الطلب — تحقق من الاتصال والصلاحية"); return }
+    const r = await API.addOrder(order); if(!r || !r.ok){ if(!silent) toast("❌ تعذّر إنشاء الطلب — تحقق من الاتصال والصلاحية"); return false }
     let st = "confirmee"; try{ const m = co.mapStatus ? co.mapStatus(row.status) : null; if(m && m !== "__alert") st = m; }catch(e){}
     const o = { id: r.id || ("M" + Date.now().toString(36).toUpperCase()), date: row.date ? new Date(String(row.date).replace(" ", "T")).toISOString() : new Date().toISOString(), name: order.name, phone: order.phone, wilaya: order.wilaya, commune: order.commune, dtype: order.dtype, desk: "", items: title + " ×1 = " + amount + " DA", subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: order.extra, status: st, note: "" };
     if(isNaN(new Date(o.date).getTime())) o.date = new Date().toISOString();
@@ -10496,7 +10506,8 @@ const Admin = {
     this.saveTracking(o, cof, trk); if(row.status){ try{ this.setShipRaw(o.id, row.status); }catch(e){} }
     try{ const a = this.extAll(); if(a[cof]){ a[cof] = a[cof].filter(x=>x.tracking !== trk); localStorage.setItem("alyssum_ext_parcels", JSON.stringify(a)); } }catch(e){}
     try{ this.renderStats(); this.renderOrders(); this.renderShipped(); }catch(e){}
-    toast("✅ أُنشئ الطلب " + String(o.id).slice(-6) + " من الطرد " + trk);
+    if(!silent) toast("✅ أُنشئ الطلب " + String(o.id).slice(-6) + " من الطرد " + trk);
+    return true;
   },
   /* طرود مضافة بالتتبع بلا طلب (أُنشئت خارج المنصة): تُحفظ محلياً وتظهر في تبويب شركتها وتُحدَّث حالتها بزر */
   extAll(){ try{ return JSON.parse(localStorage.getItem("alyssum_ext_parcels") || "{}") || {}; }catch(e){ return {}; } },
