@@ -8,7 +8,7 @@ const NAME = { ord: "الطلبات", prod: "المنتجات", ana: "التحل
 async function session(store, name, mobile, fn) {
   const b = await chromium.launch(), vp = mobile ? { width: 448, height: 900 } : { width: 1280, height: 800 };
   const c = await b.newContext({ viewport: vp, deviceScaleFactor: 1, isMobile: mobile, hasTouch: mobile, recordVideo: { dir: OUT + "/tmp-" + name, size: vp } }), p = await c.newPage(); p.on("dialog", d => d.accept().catch(() => { }));
-  await p.goto(store.spatial); await p.waitForTimeout(1000);
+  await p.goto(store.spatial + "?autoopen=1&nozoom=1"); await p.waitForTimeout(1000);
   await p.evaluate(async () => (await fetch("../../api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ password: "TestPass12345" }) })).status);
   await p.reload(); await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 90000 }); await p.waitForTimeout(1500);
   const cdp = mobile ? await c.newCDPSession(p) : null, T = mobile ? (type, pts) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: pts.map(([x, y], i) => ({ x, y, id: i })) }) : null;

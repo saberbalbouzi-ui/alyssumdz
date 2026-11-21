@@ -10,7 +10,7 @@ const near = (a, b, e = .5) => Math.abs((a || 0) - (b || 0)) <= e, NAME = { ord:
 async function mk(b, store, vp, touch) {
   const c = await b.newContext({ viewport: vp, deviceScaleFactor: touch ? 2 : 1, isMobile: !!touch, hasTouch: !!touch }), p = await c.newPage(), errs = []; p.setDefaultTimeout(9000);
   p.on("pageerror", e => errs.push(String(e.stack || e).split("\n").slice(0, 3).join(" <- ").slice(0, 260))); p.on("dialog", d => d.accept().catch(() => { }));
-  await p.goto(store.spatial); await p.waitForTimeout(1200);
+  await p.goto(store.spatial + "?autoopen=1&nozoom=1"); await p.waitForTimeout(1200);
   await p.evaluate(async () => (await fetch("../../api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ password: "TestPass12345" }) })).status);
   await p.reload(); await p.waitForTimeout(1500);
   return { c, p, errs, cdp: touch ? await c.newCDPSession(p) : null };

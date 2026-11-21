@@ -5,7 +5,7 @@ const { chromium } = require("playwright"); const { startStore } = require("./ha
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const store = await startStore(), b = await chromium.launch(), c = await b.newContext({ viewport: { width: 1440, height: 900 } }), p = await c.newPage(), cdp = await c.newCDPSession(p), out = { env: {}, runs: [] };
-  await p.goto(store.spatial); await p.waitForTimeout(1000);
+  await p.goto(store.spatial + "?autoopen=1&nozoom=1"); await p.waitForTimeout(1000);
   await p.evaluate(async () => (await fetch("../../api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ password: "TestPass12345" }) })).status);
   const t0 = Date.now(); await p.reload(); await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 90000 }); out.env.firstRealPanelReadyMs = Date.now() - t0;
   out.env.cores = await p.evaluate(() => navigator.hardwareConcurrency); out.env.ua = await p.evaluate(() => navigator.userAgent);
