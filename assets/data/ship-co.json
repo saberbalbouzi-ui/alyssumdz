@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-20T20:29:26.707Z",
- "def": "ecomdelivery",
- "dk": "ecomdelivery",
+ "updated": "2026-11-21T21:27:01.376Z",
+ "def": "wecan",
+ "dk": "wecan",
  "dp": "",
- "noStop": true,
+ "noStop": false,
  "companies": {
   "yalidine": {
    "name": "Yalidine",
@@ -13669,9 +13669,140 @@
   }
  },
  "nd": {
-  "1": [
-   "bouda",
-   "tit"
+  "3": [
+   "ainsidiali",
+   "beidha",
+   "brida",
+   "hadjmechri",
+   "ouedmorra",
+   "sebgag",
+   "sidibouzid",
+   "tadjrouna",
+   "taouiala"
+  ],
+  "5": [
+   "gosbat",
+   "larbaa",
+   "ouledammar"
+  ],
+  "6": [
+   "tamokra",
+   "tizinberber"
+  ],
+  "10": [
+   "bordjokhriss",
+   "boukram",
+   "dechmia",
+   "dirrah",
+   "elhakimia",
+   "guerrouma",
+   "hadjerazerga",
+   "maala",
+   "maamora",
+   "mezdour",
+   "ridane",
+   "taguedit",
+   "zbarbar"
+  ],
+  "11": [
+   "abalessa",
+   "idles",
+   "inamguel",
+   "tazrouk"
+  ],
+  "12": [
+   "birelater"
+  ],
+  "14": [
+   "madna",
+   "nadorah",
+   "sidibakhti"
+  ],
+  "15": [
+   "zekri"
+  ],
+  "17": [
+   "ainchouhada",
+   "amourah",
+   "faidhelbotma",
+   "guernini",
+   "guettara",
+   "mliliha",
+   "oumlaadham",
+   "sedrahal",
+   "selmana",
+   "sidibaizid",
+   "tadmit",
+   "zaafrane"
+  ],
+  "18": [
+   "boucifouledaskeur",
+   "selmabenziada"
+  ],
+  "20": [
+   "ainsekhouna",
+   "hounet"
+  ],
+  "26": [
+   "ainouksir",
+   "cheniguel"
+  ],
+  "27": [
+   "ouledmaallah",
+   "sidibelattar"
+  ],
+  "32": [
+   "cheguig",
+   "elbnoud",
+   "kraakda",
+   "sidiameur",
+   "sidislimane",
+   "tousmouline"
+  ],
+  "33": [
+   "bordjomardriss",
+   "debdeb"
+  ],
+  "37": [
+   "oumelassel"
+  ],
+  "41": [
+   "ainsoltane",
+   "ouedkeberit",
+   "ouledmoumene",
+   "oumeladhaim",
+   "safelelouiden",
+   "terraguelt"
+  ],
+  "43": [
+   "chigara",
+   "derradjibousselah",
+   "elayadibarbes",
+   "minarzarza",
+   "tassadanehaddada",
+   "terraibainen",
+   "tessalalemtai",
+   "tiberguent"
+  ],
+  "44": [
+   "bathia",
+   "belaas",
+   "djemaaouledcheikh",
+   "elhassania",
+   "elmaine"
+  ],
+  "51": [
+   "besbes",
+   "raselmiaad"
+  ],
+  "53": [
+   "foggaretezzaouia",
+   "inghar"
+  ],
+  "55": [
+   "elallia",
+   "elborma",
+   "elhadjira"
   ]
  }
 }

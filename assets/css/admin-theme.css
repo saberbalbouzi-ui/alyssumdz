@@ -490,3 +490,37 @@ html.glass .o-src.camp{color:#fdba74}html.glass .o-src.link{color:#cbd5e1}
 /* التطبيق الذي فُتحت منه الصفحة (ماسنجر/فيسبوك/إنستغرام/تيك توك) */
 .o-src.app{background:rgba(37,99,235,.12);color:#1d4ed8;border-color:rgba(37,99,235,.35)}
 html.glass .o-src.app{color:#93c5fd}
+
+.o-src.ext{background:rgba(139,92,246,.14);color:#6d28d9;border-color:rgba(139,92,246,.4)}
+html.glass .o-src.ext{color:#c4b5fd}
+/* المظهر الفاتح: كل الخطوط سوداء بلا رمادي (الملوّنة على خلفيات ملوّنة كالأزرار والحالات تبقى) */
+html.white .nav-btn:not(.on),html.white .nav-btn:not(.on) .nav-txt b,html.white .nav-btn:not(.on) .nav-txt small{color:#0b0f14}
+html.white #pm .pm-btn:not(.pm-primary) small{color:#0b0f14!important}
+html.white #ahome .ah-seg button:not(.on),html.white #ahome .at button{color:#0b0f14!important}
+html.white body .cr-rem:not(#_){color:#0b0f14}
+html.white input::placeholder,html.white textarea::placeholder{color:#475569}
+/* لافتات داكنة ثابتة (تحديث/تنبيه): نصّها أبيض لا يشمله «كل الخطوط سوداء» في المظهر الفاتح */
+html.white :is(#au-banner,#au-auto,#au-cover,#toast2) :is(small,span,b,div,p,label):not(#_){color:#fff!important}
+/* الطلبات: خانة الحالة (الحالة + محاولات الاتصال + قائمة النتيجة) كانت تأخذ عرض أعرض صف فيظهر فراغ كبير في بقية الصفوف؛ تلتفّ الآن (الحالة فوق، القائمة تحتها) فتتساوى الصفوف */
+#tab-orders td.o-act{white-space:normal;width:1%;min-width:150px}
+#tab-orders td.o-act .act-sel{display:block;margin-top:.3rem;max-width:100%}
+/* تعديل المنتجات جماعياً في المظهر الفاتح: كان مكتوباً لمظهر داكن (حقول شفافة ونص فاتح وبطاقة المعاينة داكنة) */
+html.white #bulk-products-app{color:#0b0f14}
+html.white #bulk-products-app input:not([type=checkbox]),html.white #bulk-products-app select{background:#fff;color:#0b0f14;border:1px solid #cfd6e0}
+html.white #bulk-products-app input::placeholder{color:#475569}
+html.white #bulk-products-app th{color:#0b0f14;background:#eef1f6}
+html.white #bulk-products-app th,html.white #bulk-products-app td{border-bottom-color:#dbe1ea}
+html.white #bulk-products-app .bp-count{color:#0b0f14}
+html.white #bulk-products-app .bp-warning{color:#8a4b00}
+html.white #bulk-products-app .bp-changed{background:rgba(226,254,23,.38)}
+html.white #bulk-products-app .bp-modal{background:#fff;color:#0b0f14;border-color:#dbe1ea;box-shadow:0 30px 80px rgba(15,23,42,.35)}
+html.white #bulk-products-app .bp-btn:not(.primary){background:linear-gradient(180deg,#94a3b8,#64748b);color:#fff;border:1px solid rgba(255,255,255,.35)}
+html.white #bulk-products-app .bp-btn:not(.primary):hover{background:linear-gradient(180deg,#a3b1c4,#718096)}
+/* شارة موثوقية الزبون: أخضر سليم · برتقالي مرتجع · برتقالي غامق مرتجعان · أحمر 3+ أو محظور */
+.cb{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;height:1.35rem;padding:0 .3rem;border-radius:999px;font-size:.72rem;font-weight:900;line-height:1;vertical-align:middle;border:1.5px solid transparent;color:#fff}
+.cb-g{background:#16a34a;border-color:#15803d}
+.cb-o1{background:#f59e0b;border-color:#d97706;color:#1f2123}
+.cb-o2{background:#ea580c;border-color:#c2410c}
+.cb-r{background:#dc2626;border-color:#b91c1c}
+/* شريط الجوال العلوي: اسم المنصة يُقصّ بنقاط بدل قصّ حرفه الأخير تحت زر البحث، وأزرار أضيق قليلاً لتبقى مساحة للاسم */
+@media (max-width:520px){#app .top{gap:3px}#app .top>h1{text-overflow:ellipsis}#app .top>h1::before{font-size:.95rem}#app .top>#top-menu,#app .top>#top-search,#app .top>#top-more{flex-basis:38px;width:38px;height:38px;min-height:38px}#app .top>#ah-btn{flex-basis:38px;width:38px}}

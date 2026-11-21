@@ -6,6 +6,7 @@ const AdminSearch = (() => {
   const norm = s => String(s || "").toLowerCase().replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").trim();
   const A = () => (typeof Admin !== "undefined" ? Admin : {});
   const ACTIONS = [
+    ["تحقق من زبون", "ابحث بالهاتف أو الاسم أو الولاية أو البلدية في كل الطلبات الحديثة والقديمة وكل الشركات مع التاريخ والمنتج والحالة", () => { if (typeof AdminVerify !== "undefined") AdminVerify.open(); }, "تحقق زبون بحث هاتف اسم عميل موثوق مرتجع فشل سجل قديم"],
     ["فتح المخزون", "فتح تبويب إدارة المخزون", () => { const b = document.querySelector('.nav-btn[onclick*="inventory"]'); if (b) b.click(); }, "المخزون الكمية تنبيه نافد منخفض"],
     ["السوشيال والإعلانات", "جدولة منشورات فيسبوك وإنستغرام وإدارة الحملات", () => { const b = document.querySelector('.nav-btn[onclick*="social"]'); if (b) b.click(); }, "فيسبوك انستغرام منشور حملة اعلان ميتا جدولة"],
     ["التوجيه والبوردرو", "توجيه الطلبات لشركات التوصيل بالمنطقة والأداء، إرسال وطباعة البوردرو بنقرة، ومحطة مسح الباركود", () => { const b = document.querySelector('.nav-btn[onclick*="dispatch"]'); if (b) b.click(); }, "توجيه تلقائي auto routing شركة توصيل ياليدين زد ار بوردرو طباعة جماعية باركود مسح سكانر كشف تسليم ليفريزون dispatch"],
