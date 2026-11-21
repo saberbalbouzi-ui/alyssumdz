@@ -82,6 +82,10 @@ for it in idx:
         elif "coupon" in ty: seq += "P"
         elif "accordion" in ty and "sfoot" not in ty: seq += "F"
     orders.add(seq[-4:])
+for _t in ("s-jewelry", "s-accessories"):      # الهيرو بصورة واحدة (طلب صاحب المتجر): تُحذف صور الهيرو الإضافية وتسمياتها/أزرارها/عناوينها المرافقة
+    if _t in lost:
+        lost[_t] = {k: v for k, v in lost[_t].items() if k not in ("image", "button", "heading")}
+        if not lost[_t]: lost.pop(_t)
 lost.pop("s-marketplace", None) if lost.get("s-marketplace") == {"text": (10, 9)} else None      # مقصود: حُذف نص «ينتهي العرض خلال» اليتيم بعد تعطيل العدّاد (مرحلة القبول)
 check("variety", "العناصر التسويقية والتصميمية لا تنقص عن الأساس المقبول (عدّادات/آراء/أسئلة/بطاقات/عناوين/نصوص/صور/أزرار/منتجات) عدا نص «ينتهي العرض خلال» اليتيم في s-marketplace", not lost, lost)
 check("variety", "لا اسم رأي يتكرر بين القوالب", not [n for n, c in names.items() if c > 1], [n for n, c in names.items() if c > 1])
