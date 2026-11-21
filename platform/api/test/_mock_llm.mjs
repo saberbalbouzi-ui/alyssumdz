@@ -15,11 +15,26 @@ const T = {
   dz: { none: "Ma ndirch hadchi: ma 3andich l'outil wla s-salahiya.", noref: "9olli ref ta3 la commande.", orders: (r) => `3andek ${r.orders} commande b ${num(r.total_value_dzd)} DA (${r.flagged} mchbouha).`, sales: (r) => `Lmabi3at (${r.period}): ${r.orders} commande, l'income ${num(r.revenue_dzd)} DA, moyenne ${num(r.avg_order_dzd)} DA.`, list: (r) => `Akher les commandes: ${r.orders.map((o) => `${o.ref} ${o.status} ${num(o.total)} DA`).join(", ") || "walo"}.`,
     stock: (r) => (r.products.length ? `Stock qlil: ${r.products.map((p) => `${p.title} (${p.stock})`).join(", ")}.` : "Ma kayen ta nuqs f stock."), cust: (r) => `Ahsen zebayen: ${r.customers.map((c) => `${c.name} (${c.orders})`).join(", ") || "walo"}.`, carts: (r) => `Paniers metrouka: ${r.total}.`, set: (r) => `Modules mfa3lin: ${r.modules.filter((m) => m.enabled).length}.`, pend: (s) => `Talabt mouafa9tek: ${s}. Walo ma yetna3ed 9bel ma twafe9.`, err: (e) => `Ma tnejemch: ${e}.` },
 };
+
+const mets = (r) => r.snapshots.flatMap((sn) => sn.sections.flatMap((x) => x.metrics.map((m) => ({ ...m, sec: x.title, per: sn.period }))));
+const fmtStats = (r, L, q) => { const t = fmtStats0(r, L, q); return r.stale ? t + ` (${r.stale})` : t; };
+const fmtStats0 = (r, L, q) => {
+  if (r.found === false) return { ar: "لا أجد هذا الرقم في إحصائيات الرئيسية.", fr: "Je ne trouve pas ce chiffre dans les statistiques.", dz: "Ma l9itch had r9m f statistiques." }[L];
+  const all = mets(r), sent = all.find((m) => /الطلبات المرسَلة/.test(m.label) && /إحصائيات اليوم/.test(m.sec)), tot = all.find((m) => /السعر الإجمالي/.test(m.label)), net = all.find((m) => /^الصافي/.test(m.label));
+  if (/أرسلت|المرسل|مرسل|envoy|expédi|expedi|b3at|bi3t/i.test(q) && sent) return { ar: `أُرسل اليوم ${sent.value} طلب إلى شركات التوصيل (السعر الإجمالي ${tot?.value}، الصافي ${net?.value}) — من إحصائيات اليوم في الرئيسية.`, fr: `Aujourd'hui ${sent.value} commande(s) envoyée(s) aux transporteurs (total ${tot?.value}, net ${net?.value}).`, dz: `Lyoum b3atna ${sent.value} commande l les sociétés (total ${tot?.value}, net ${net?.value}).` }[L];
+  const first = all.slice(0, 4).map((m) => `${m.label}: ${m.value}${r.snapshots.length > 1 ? " (" + m.per + ")" : ""}`).join("، ");
+  return { ar: `${first}. (${r.stale ? "تنبيه: " + r.stale : "من لوحة التحكم"})`, fr: `${first}.`, dz: `${first}.` }[L];
+};
 function intent(t, L) {
   const x = t.toLowerCase(), m = /TEST_CALL:([a-z_]+):(\{.*\})/.exec(t); if (m) { try { return { name: m[1], args: JSON.parse(m[2]) }; } catch { return { name: m[1], args: {} }; } }
   const ref = refOf(t);
   if (has(x, "إلغاء", "الغاء", "الغي", "ألغ", /\bannul/, "annuler", /\b(hbes|annuli|annule)\b/)) return ref ? { name: "order_cancel", args: { ref } } : { name: "_noref" };
   if (has(x, "تأكيد", "أكد", "اكد", /\bconfirm/, /\b(confirmi|confirme)\b/) && !has(x, "مؤكد")) return ref ? { name: "order_confirm", args: { ref } } : { name: "_noref" };
+  if (has(x, "أرسلت", "المرسل", "مرسل", "envoy", "expédi", "expedi", "b3at", "bi3t")) return { name: "platform_stats", args: { section: "إحصائيات اليوم" } };
+  if (has(x, "الربح", "ربح", "bénéfice", "benefice", "profit", "rebh")) return { name: "platform_stats", args: { section: "الربح" } };
+  if (has(x, "نسب التسليم", "نسبة التسليم", "taux de livraison", "taux livraison")) return { name: "platform_stats", args: { section: "نسب التسليم" } };
+  if (mockFlags.prefer && has(x, "مبيعات", "ventes", "mabi3at", "bi3")) return { name: "platform_stats", args: { section: "مؤشرات", period: has(x, "اليوم", "aujourd", "lyoum") ? "اليوم" : has(x, "شهر", "mois", "30") ? "30" : "7" } };
+  if (mockFlags.prefer && has(x, "كم", "combien", "chhal") && has(x, "طلب", "commande")) return { name: "platform_stats", args: { section: "مؤشرات", period: has(x, "اليوم", "aujourd", "lyoum") ? "اليوم" : "7" } };
   if (has(x, "مخزون", "نقص", "stock", "rupture", /\bstok\b/)) return { name: "products_list", args: { max_stock: 5 } };
   if (has(x, "زبائن", "عملاء", "clients", "client", "zebayen", "zbayen", "clian")) return { name: "customers_top", args: { limit: 3 } };
   if (has(x, "مبيعات", "ventes", "vente", "mabi3at", "mabi3", "bi3", "chiffre")) return { name: "sales_summary", args: { period: has(x, "اليوم", "aujourd", "lyoum", "lyum", "today") ? "today" : has(x, "شهر", "mois", "chhar", "30") ? "30d" : "7d" } };
@@ -29,7 +44,8 @@ function intent(t, L) {
   if (has(x, "كم", "طلب", "combien", "commande", "chhal", "commandes", "orders")) return { name: "orders_stats", args: {} };
   return null;
 }
-const REPLY = { orders_stats: "orders", sales_summary: "sales", orders_list: "list", products_list: "stock", customers_top: "cust", carts_summary: "carts", settings_overview: "set" };
+export const mockFlags = { prefer: false };
+const REPLY = { orders_stats: "orders", sales_summary: "sales", orders_list: "list", products_list: "stock", customers_top: "cust", carts_summary: "carts", settings_overview: "set", platform_stats: "stats" };
 export function createMock() {
   const mock = { calls: [], fail: null, lastBody: null, tokens: 0 };
   const parts = (cs) => ({ candidates: [{ content: { role: "model", parts: cs }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 120, candidatesTokenCount: 40 } });
@@ -45,7 +61,7 @@ export function createMock() {
     const userTexts = cs.filter((c) => c.role === "user").flatMap((c) => c.parts.filter((p) => p.text).map((p) => p.text)), q = userTexts[userTexts.length - 1] ?? "", L = lang(q);
     if (last.parts.some((p) => p.functionResponse)) {                                                       // جولة ما بعد الأداة: صياغة من النتيجة الحقيقية
       const fr = last.parts.find((p) => p.functionResponse).functionResponse, res = fr.response.result ?? fr.response; let text;
-      if (res?.error) text = T[L].err(res.message || res.error); else if (res?.status === "awaiting_user_approval") text = T[L].pend(res.summary); else if (REPLY[fr.name]) text = T[L][REPLY[fr.name]](res); else text = JSON.stringify(res).slice(0, 200);
+      if (res?.error) text = T[L].err(res.message || res.error); else if (res?.status === "awaiting_user_approval") text = T[L].pend(res.summary); else if (fr.name === "platform_stats") text = fmtStats(res, L, q); else if (REPLY[fr.name]) text = T[L][REPLY[fr.name]](res); else text = JSON.stringify(res).slice(0, 200);
       return [200, parts([{ text }])];
     }
     const it = intent(q, L); if (!it) return [200, parts([{ text: T[L].none }])]; if (it.name === "_noref") return [200, parts([{ text: T[L].noref }])];

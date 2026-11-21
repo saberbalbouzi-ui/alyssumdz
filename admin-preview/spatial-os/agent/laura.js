@@ -5,7 +5,7 @@
 (() => {
   "use strict";
   if (window.Laura) return;
-  const LABEL = { orders_list: "جلب الطلبات", orders_stats: "إحصاءات الطلبات", sales_summary: "ملخص المبيعات", customers_top: "أفضل الزبائن", products_list: "المنتجات والمخزون", carts_summary: "السلال المتروكة", settings_overview: "إعدادات المنصة", order_confirm: "تأكيد طلب", order_cancel: "إلغاء طلب" };
+  const LABEL = { platform_stats: "إحصائيات لوحة التحكم", orders_list: "جلب الطلبات", orders_stats: "إحصاءات الطلبات", sales_summary: "ملخص المبيعات", customers_top: "أفضل الزبائن", products_list: "المنتجات والمخزون", carts_summary: "السلال المتروكة", settings_overview: "إعدادات المنصة", order_confirm: "تأكيد طلب", order_cancel: "إلغاء طلب" };
   const ERR = { llm_unconfigured: "نموذج LAURA غير مُهيّأ على الخادم بعد.", llm_timeout: "تأخّر النموذج في الرد؛ حاول مجدداً.", llm_rate_limited: "النموذج مشغول؛ حاول بعد لحظات.", llm_unavailable: "تعذّر الوصول للنموذج حالياً.", llm_auth: "تعذّر اعتماد النموذج على الخادم.", llm_bad_response: "ردّ غير صالح من النموذج.", llm_blocked: "لم يُنتج النموذج ردّاً.", actor_required: "جلسة المستخدم مطلوبة.", invalid_actor: "انتهت الجلسة؛ أعد المحاولة.", rate_limited: "طلبات كثيرة؛ انتظر قليلاً.", forbidden: "ليست لديك صلاحية لهذه العملية.", unauthorized: "سجّل الدخول أولاً.", module_disabled: "LAURA معطّلة لهذا المتجر.", laura_not_configured: "LAURA غير مفعّلة على الوسيط بعد.", no_session: "لا توجد جلسة جاهزة بعد؛ انتظر لحظة.", unavailable: "خدمة LAURA غير متاحة حالياً.", network: "تعذّر الاتصال." };
   const S = { open: false, busy: false, ready: null, hist: [], pend: new Map(), speak: true, transport: null, lastErr: null, calls: 0, rec: null }, $ = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
   const core = m => { try { if (window.Core3D && Core3D.setAgent) Core3D.setAgent(m); } catch (_) { } }, voice = m => { try { if (window.Core3D) Core3D.setVoice(m); } catch (_) { } };
@@ -44,10 +44,25 @@
       u.onstart = () => { voice("speaking"); tm = setInterval(tick, 60); }; u.onboundary = () => { lv = Math.min(1, lv + .5); }; const end = () => { clearInterval(tm); voice("none"); try { Core3D.setAudio(0); } catch (_) { } }; u.onend = end; u.onerror = end; speechSynthesis.speak(u);
     } catch (_) { }
   }
+  /* ── إحصائيات الرئيسية: لقطة من إطار خفي (اللوح الاحتياطي) أو من لوح الرئيسية الظاهر؛ تُخزَّن 20ث ── */
+  async function homeSource() {
+    try {
+      const S_ = window.SpatialOS, sp = S_ && S_.spare && S_.spare.ready && S_.spare.frame;
+      if (sp) { const d = sp.contentDocument, w = sp.contentWindow; if (d && !(d.getElementById("ahome") && d.getElementById("ahome").children.length)) { try { w.eval("Admin.tab('home')"); } catch (_) { } for (let i = 0; i < 30 && !(d.getElementById("ahome") && d.getElementById("ahome").children.length); i++) await new Promise(r => setTimeout(r, 100)); } if (d && d.getElementById("ahome") && d.getElementById("ahome").children.length) return { doc: d, hidden: true }; }
+      if (S_) for (const p of S_.panels.values()) { if (p.fr && p.frame && p.frame.tab === "home" && p.frDone) { const d = p.fr.contentDocument; if (d && d.getElementById("ahome") && d.getElementById("ahome").children.length) return { doc: d, hidden: false }; } }
+    } catch (_) { }
+    return null;
+  }
+  async function collectStats() {
+    if (S.statsProvider) { try { return await S.statsProvider(); } catch (_) { return null; } }
+    if (!window.LauraStats) return null; if (S.stats && Date.now() - S.statsAt < 20000) return S.stats;
+    const src = await homeSource(); if (!src) return null; let st = null; try { st = await Promise.race([LauraStats.collect(src.doc, src.hidden), new Promise(r => setTimeout(() => r(null), 6000))]); } catch (_) { st = null; }
+    if (st && JSON.stringify(st).length > 40000) st.snapshots = st.snapshots.slice(0, 1); if (st) { S.stats = st; S.statsAt = Date.now(); } return st;
+  }
   async function send(text) {
     text = String(text || "").trim(); if (!text || S.busy) return; S.busy = true; input.value = ""; say("u", text); core("thinking"); status("LAURA تفكّر…", "think");
     try {
-      const d = await call("POST", "/v1/laura/chat", { message: text.slice(0, 2000), history: S.hist.slice(-10) });
+      const stats = await collectStats(), d = await call("POST", "/v1/laura/chat", { message: text.slice(0, 2000), history: S.hist.slice(-10), ...(stats ? { stats } : {}) });
       S.hist.push({ role: "user", text: text.slice(0, 2000) }, { role: "assistant", text: String(d.reply || "").slice(0, 2000) }); say("a", d.reply, d.tools);
       (d.pending || []).forEach(p => S.pend.set(p.id, p)); renderPending();
       const bad = (d.tools || []).some(s => !s.ok); core(d.state === "awaiting_approval" ? "idle" : bad ? "error" : "success"); status(d.state === "awaiting_approval" ? "بانتظار موافقتك" : "", d.state === "awaiting_approval" ? "wait" : "ok"); speakText(d.reply, d.lang);
@@ -84,7 +99,7 @@
   }
   const api = {
     get ready() { return S.ready === true; }, get open() { return S.open; }, state: () => ({ ready: S.ready, open: S.open, busy: S.busy, pending: [...S.pend.values()], err: S.lastErr, calls: S.calls, speak: S.speak }),
-    probe, send, setTransport(fn) { S.transport = fn || null; S.ready = null; },
+    probe, send, collectStats, setStatsProvider(fn) { S.statsProvider = fn || null; S.stats = null; }, setTransport(fn) { S.transport = fn || null; S.ready = null; },
     show() { if (!root) build(); root.hidden = false; S.open = true; document.body.classList.add("laura-on"); setTimeout(() => { try { input.focus(); } catch (_) { } }, 50); if (S.ready === null) probe().then(r => { if (r === false) say("e", ERR[S.lastErr] || ERR.unavailable); }); },
     close() { if (root) root.hidden = true; S.open = false; document.body.classList.remove("laura-on"); try { speechSynthesis.cancel(); } catch (_) { } },
     toggle() { S.open ? api.close() : api.show(); },
