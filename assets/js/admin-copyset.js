@@ -70,7 +70,7 @@ const AdminCopySet = (() => {
     toast("✅ " + (mode === "copy" ? "نُسخت" : "مُسحت") + " الحقول لـ" + t2.length + " منتج" + (skipped ? " — تُخطّي " + skipped + " حقل غير مناسب لنوع المنتج" : ""));
   }
   const css = document.createElement("style");
-  css.textContent = ".cs-box{margin:.5rem 0;border:1px solid var(--line,rgba(255,255,255,.15));border-radius:14px;padding:.55rem .8rem;background:rgba(255,255,255,.04)}.cs-box summary{cursor:pointer}.cs-row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.5rem 0}.cs-f{gap:.9rem}.cs-ck{display:inline-flex;gap:.3rem;align-items:center;cursor:pointer}.cs-box select{min-height:36px}";
+  css.textContent = ".cs-box{margin:.5rem 0;border:1px solid var(--line,rgba(255,255,255,.15));border-radius:14px;padding:.55rem .8rem;background:rgba(255,255,255,.04)}.cs-box summary{cursor:pointer}.cs-row{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.5rem 0}.cs-f{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem}.cs-ck{display:inline-flex;gap:.45rem;align-items:center;cursor:pointer;min-height:42px;padding:.35rem .65rem;border:1px solid var(--line,rgba(255,255,255,.18));border-radius:12px;background:rgba(255,255,255,.04);font-size:.9rem;line-height:1.25}.cs-f .cs-ck{white-space:normal}.cs-ck:has(input:checked){border-color:var(--ac,#69be77);background:color-mix(in srgb,var(--ac,#69be77) 14%,transparent);font-weight:700}.cs-ck input[type=checkbox]{flex:none;width:18px;height:18px;min-width:0;min-height:0;margin:0;padding:0;box-shadow:none}.cs-box select{min-height:36px}.cs-row>.small{flex:1 1 200px}";
   document.head.appendChild(css);
   return { th, cell, tog, all, mount, run, S };
 })();
