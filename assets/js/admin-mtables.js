@@ -13,6 +13,14 @@
     const out = []; [...hr.cells].forEach(c => { const n = c.colSpan || 1; for (let i = 0; i < n; i++) out.push(txt(c)); });
     return out;
   }
+  /* ربط تمرير شريطين (علوي + الجدول) بلا ارتداد: من بدأ التمرير يملكه حتى يسكن 140ms، وصدى الآخر يُتجاهل (كان كل منهما يعيد الآخر إلى موضعه السابق أثناء الزخم فيتأرجح الجدول) */
+  function linkScroll(a, b) {
+    let owner = null, tm = 0;
+    const mk = (x, y) => () => { if (owner && owner !== x) return; owner = x; clearTimeout(tm); tm = setTimeout(() => { owner = null; }, 140); if (Math.abs(y.scrollLeft - x.scrollLeft) >= 1) y.scrollLeft = x.scrollLeft; };
+    a.addEventListener("scroll", mk(a, b), { passive: true }); b.addEventListener("scroll", mk(b, a), { passive: true });
+  }
+  /* عرض محتوى الشريط بحيث يتساوى أقصى تمرير له مع أقصى تمرير الحاوية (فرق العرض بينهما كان يوقف أحدهما قبل الآخر بنقطتين) */
+  const barW = (bar, w) => Math.max(1, w.scrollWidth - w.clientWidth + bar.clientWidth) + "px";
   /* شريط سحب أفقي علوي (≈6مم) لجدول الطلبات يتزامن مع تمرير الجدول (v1.89.703) */
   function hscroll() {
     const t = document.getElementById("orders-table"); if (!t) return;
@@ -20,27 +28,25 @@
     let bar = document.getElementById("ord-hs");
     if (!bar) {
       bar = document.createElement("div"); bar.id = "ord-hs"; bar.setAttribute("aria-hidden", "true"); bar.innerHTML = "<div></div>";
-      const sync = (a, b) => () => { if (Math.abs(b.scrollLeft - a.scrollLeft) < 1) return; try { b.scrollTo({ left: a.scrollLeft, behavior: "instant" }); } catch (e) { b.scrollLeft = a.scrollLeft; } };
-      bar.addEventListener("scroll", sync(bar, w)); w.addEventListener("scroll", sync(w, bar));
+      linkScroll(bar, w);
     }
     if (bar.nextElementSibling !== w) w.parentNode.insertBefore(bar, w);
     /* الشريط يتبع أي تغيّر في مقاسي الجدول والحاوية (إظهار التبويب بعد إخفائه، تحميل الخط، إضافة أعمدة): كان لا يُحسب إلا عند تغيّر العناصر فيبقى بعرض قديم ويتوقف السحب عند حدٍّ مبكر */
     if (!bar._ro && window.ResizeObserver) { bar._ro = new ResizeObserver(() => { try { hscroll(); } catch (e) { } }); bar._ro.observe(w); bar._ro.observe(t); }
     const need = !!t.querySelector("th") && w.scrollWidth > w.clientWidth + 2;
-    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = w.scrollWidth + "px";
+    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = barW(bar, w);
   }
   /* شريط سحب علوي (≈6مم) لجدول يمرّر نفسه أفقياً (display:block;overflow-x:auto) ويتزامن معه */
   function tbar(t) {
-    let bar = t.previousElementSibling;
+    let bar = t.previousElementSibling; while (bar && !bar.classList.contains("hs-bar") && (bar.classList.contains("ts-bar") || bar.classList.contains("hs-nav"))) bar = bar.previousElementSibling;      // شريط التحديد/الأسهم قد يفصلان بين الجدول وشريطه
     if (!bar || !bar.classList.contains("hs-bar")) {
       bar = document.createElement("div"); bar.className = "hs-bar"; bar.setAttribute("aria-hidden", "true"); bar.innerHTML = "<div></div>";
-      const sync = (a, b) => () => { if (Math.abs(b.scrollLeft - a.scrollLeft) < 1) return; try { b.scrollTo({ left: a.scrollLeft, behavior: "instant" }); } catch (e) { b.scrollLeft = a.scrollLeft; } };
-      bar.addEventListener("scroll", sync(bar, t)); t.addEventListener("scroll", sync(t, bar));
+      linkScroll(bar, t);
       t.parentNode.insertBefore(bar, t);
     }
     if (!bar._ro && window.ResizeObserver) { bar._ro = new ResizeObserver(() => { try { tbar(t); } catch (e) { } }); bar._ro.observe(t); }
     const need = MQ.matches && t.scrollWidth > t.clientWidth + 2;
-    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = t.scrollWidth + "px";
+    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = barW(bar, t);
   }
   /* على الهاتف (≤700px) كل جدول بعناوين وأربعة أعمدة فأكثر يبقى جدولاً بصف واحد لكل سجلّ ويُسحب أفقياً بشريط علوي (v1.89.706؛ كانت بطاقات عمودية طويلة) */
   function pass(root) {

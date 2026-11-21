@@ -60,11 +60,17 @@ window.TableSel = (() => {
       if (!tr.querySelector("td")) return;
       const k = rowKey(tr), td = document.createElement("td"); td.className = "ts-c"; td.innerHTML = '<input type="checkbox" class="ts-ck" data-k="' + esc(k) + '"' + (S.has(k) ? " checked" : "") + ">"; tr.dataset.tsKey = k; tr.insertBefore(td, tr.firstChild); if (S.has(k)) tr.classList.add("ts-sel"); n++;
     });
-    syncAll(t); const has = t.querySelector("input.ts-ck[data-k]"), host = t.closest(".rtw") || t.parentNode, pb = host.previousElementSibling;
+    syncAll(t); const has = t.querySelector("input.ts-ck[data-k]"), host = t.closest(".rtw") || t.parentNode, pb = findBar(host, sk);
     if (has && (n || !pb || pb.dataset.tsFor !== sk)) drawBar(t, sk, title);
   }
   function syncAll(t) { const all = t.querySelector("input.ts-ck[data-all]"); if (!all) return; const b = [...t.querySelectorAll("input.ts-ck[data-k]")]; all.checked = !!b.length && b.every(c => c.checked); all.indeterminate = !all.checked && b.some(c => c.checked); }
-  function barOf(t, sk) { const host = t.closest(".rtw") || t.parentNode; let b = host.previousElementSibling; if (!b || b.dataset.tsFor !== sk) { b = document.createElement("div"); b.className = "ts-bar"; b.dataset.tsFor = sk; host.parentNode.insertBefore(b, host); } return b; }
+  /* شريط التحديد قد لا يكون الأخ السابق مباشرة (شريط السحب العلوي hs-bar وأسهم hs-nav يُدرجان بين الاثنين): يُبحث عنه فوقهما، وتُزال النسخ المكرّرة منه (كان يتضاعف عند كل مسح) */
+  function findBar(host, sk) {
+    let b = host.previousElementSibling, found = null;
+    while (b && (b.classList.contains("hs-bar") || b.classList.contains("hs-nav") || (b.classList.contains("ts-bar") && b.dataset.tsFor === sk))) { if (b.classList.contains("ts-bar")) { if (found) b.remove(); else found = b; } b = b.previousElementSibling; }
+    return found;
+  }
+  function barOf(t, sk) { const host = t.closest(".rtw") || t.parentNode; let b = findBar(host, sk); if (!b) { b = document.createElement("div"); b.className = "ts-bar"; b.dataset.tsFor = sk; host.parentNode.insertBefore(b, host); } return b; }
   function drawBar(t, sk, title) {
     const b = barOf(t, sk), S = sel[sk]; b.dataset.tsTitle = title; const n = S.size, ks = [...t.querySelectorAll("input.ts-ck[data-k]")], allOn = !!ks.length && ks.every(c => c.checked);
     b.classList.toggle("on", n > 0);
