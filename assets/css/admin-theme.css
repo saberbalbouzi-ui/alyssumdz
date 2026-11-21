@@ -501,3 +501,6 @@ html.white body .cr-rem:not(#_){color:#0b0f14}
 html.white input::placeholder,html.white textarea::placeholder{color:#475569}
 /* لافتات داكنة ثابتة (تحديث/تنبيه): نصّها أبيض لا يشمله «كل الخطوط سوداء» في المظهر الفاتح */
 html.white :is(#au-banner,#au-auto,#au-cover,#toast2) :is(small,span,b,div,p,label):not(#_){color:#fff!important}
+/* الطلبات: خانة الحالة (الحالة + محاولات الاتصال + قائمة النتيجة) كانت تأخذ عرض أعرض صف فيظهر فراغ كبير في بقية الصفوف؛ تلتفّ الآن (الحالة فوق، القائمة تحتها) فتتساوى الصفوف */
+#tab-orders td.o-act{white-space:normal;width:1%;min-width:150px}
+#tab-orders td.o-act .act-sel{display:block;margin-top:.3rem;max-width:100%}
