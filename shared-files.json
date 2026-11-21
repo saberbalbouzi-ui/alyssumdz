@@ -17,6 +17,8 @@
     "assets/fonts/**",
     "assets/img/stickers/**",
     "assets/img/tools/**",
+    "assets/img/placeholder/photo.svg",
+    "assets/img/placeholder/review.svg",
     "assets/img/tpl/CREDITS.md",
     "assets/img/tpl/acc_headphones.webp",
     "assets/img/tpl/acc_outfit.webp",
