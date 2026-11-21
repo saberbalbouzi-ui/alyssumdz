@@ -1,0 +1,45 @@
+/* «تحقق من زبون»: بحث بالهاتف/الاسم/الولاية/البلدية في كل الطلبات (حديثة ومؤرشفة) وكل الشركات وطرود ياليدين المقنَّعة، مع تصفية بالتاريخ والمنتج والحالة. NODE_PATH=/opt/node-tools/node_modules node scripts/test-verify.js */
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1200, height: 900 } }); let bad = 0; const t = (n, c, x) => { console.log((c ? "✓ " : "✗ ") + n + (c ? "" : " " + JSON.stringify(x))); if (!c) bad++; };
+  const errs = []; p.on("pageerror", e => errs.push(String(e).slice(0, 140)));
+  await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, r => r.abort());
+  await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+  await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); } catch (e) { } });
+  await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(6500);
+  const R = await p.evaluate(async () => {
+    const A = Admin, V = AdminVerify, out = {}; window.toast = () => { }; document.getElementById("app").classList.remove("hidden");
+    const mk = (id, date, name, phone, wil, com, items, st, note) => ({ id, date, name, phone, wilaya: wil, commune: com, dtype: "home", items, subtotal: 2000, fee: 0, total: 2000, status: st, note: note || "", extra: {} });
+    A.orders = [mk("O1", "2026-11-01T10:00:00Z", "كريم بن علي", "0550 11 22 33", "Alger", "Bab Ezzouar", "عسل السدر ×1 = 2000 DA", "livree", " 🚚wecan:WS-1"), mk("O2", "2026-10-01T10:00:00Z", "كريم بن علي", "+213550112233", "Alger", "Bab Ezzouar", "زيت ×2 = 2000 DA", "echec", " 🚚yalidine:yal-9"), mk("O3", "2026-11-05T10:00:00Z", "سمير", "0661000000", "Oran", "Es Senia", "عسل ×1 = 2000 DA", "nouvelle")];
+    AdminArchive.allOrders = () => A.orders.concat([mk("OLD1", "2025-01-02T10:00:00Z", "كريم بن علي", "0550112233", "Alger", "Bab Ezzouar", "شاي ×1 = 2000 DA", "livree", " 🚚noest:NO-5")]);
+    AdminYd.S.raw = [{ tracking: "yal-77", status: "Livré", name: "ك*** ب* ع**", phone: "05******33", wilaya: "Alger", commune: "Bab Ezzouar", date: "2026-09-10 12:00:00", product: "عسل", price: 2000 }, { tracking: "yal-78", status: "Livré", name: "م**** س**", phone: "06******99", wilaya: "Alger", commune: "Bab Ezzouar", date: "2026-09-11 12:00:00", product: "زيت", price: 1500 }, { tracking: "yal-79", status: "Livré", name: "م*** س**", phone: "05******33", wilaya: "Alger", commune: "Bab Ezzouar", date: "2026-09-12 12:00:00", product: "شاي", price: 900 }, { tracking: "yal-80", status: "Livré", name: "ك*** ب* ع**", phone: "0*******33", wilaya: "Alger", commune: "Bab Ezzouar", date: "2026-09-13 12:00:00", product: "شاي", price: 900 }, { tracking: "yal-9", status: "Retourné", name: "x", phone: "05******33", wilaya: "Alger", commune: "Bab Ezzouar", date: "2026-10-01 12:00:00", product: "زيت", price: 2000 }];
+    const set = (ph, nm, wil, com) => { V.open(); document.getElementById("cv-phone").value = ph || ""; document.getElementById("cv-name").value = nm || ""; document.getElementById("cv-wil").value = wil || ""; document.getElementById("cv-com").value = com || ""; };
+    const go = async () => { document.querySelector('#cv-bg [data-cv="go"]').click(); await new Promise(r => setTimeout(r, 200)); return [...document.querySelectorAll("#cv-bg tbody tr")].length; };
+    set("0550112233"); out.byPhone = await go(); out.v1 = document.querySelector("#cv-bg .cv-v").textContent; out.srcTags = [...document.querySelectorAll("#cv-bg .cv-tag")].map(x => x.textContent).join("|");
+    set("", "كريم علي"); out.byName = await go();
+    set("", "", "Oran"); out.byWil = await go();
+    set("", "", "", "bab ezzouar"); out.byCom = await go();
+    set("0550112233"); document.getElementById("cv-loose").checked = true; out.loose = await go(); AdminVerify.S.loose = false;
+    set("0550112233", "", "Alger"); out.both = await go();
+    set("0550112233"); await go(); document.getElementById("cv-from").value = "2026-10-15"; document.getElementById("cv-from").dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 100)); out.fromDate = document.querySelectorAll("#cv-bg tbody tr").length;
+    document.getElementById("cv-from").value = ""; document.getElementById("cv-from").dispatchEvent(new Event("change", { bubbles: true })); const ps = document.getElementById("cv-st"); ps.value = "echec"; ps.dispatchEvent(new Event("change", { bubbles: true })); await new Promise(r => setTimeout(r, 100)); out.echecOnly = document.querySelectorAll("#cv-bg tbody tr").length;
+    const pr = document.getElementById("cv-prod"); out.prodOpts = [...pr.options].map(o => o.value).filter(Boolean).length;
+    set(); await go(); out.empty = document.querySelector("#cv-bg .hint") && /أدخل/.test(document.getElementById("cv-bg").textContent);
+    set("0770000000"); out.none = await go(); out.v2 = document.querySelector("#cv-bg .cv-v").textContent;
+    return out;
+  });
+  t("بالهاتف (بأي صيغة: 0550 11… و+213…): 2 حديثان + 1 قديم مؤرشف + طرد ياليدين مقنَّع غير مربوط (yal-77)", R.byPhone === 4, R);
+  t("طرد ياليدين المقنَّع يُوسَم «احتمالي»، والمربوط بطلب لا يتكرر (yal-9)", /احتمالي/.test(R.srcTags) && R.byPhone === 4, R.srcTags);
+  t("حكم الزبون: فشل واحد + تسليمات ⟵ ليس «موثوقاً بلا فشل»", !/موثوق/.test(R.v1), R.v1);
+  t("بالاسم (كريم علي): طلباته الثلاثة (2 حديثان + 1 مؤرشف)", R.byName === 3, R.byName);
+  t("الهاتف المقنَّع لا يُعرض بالهاتف وحده: yal-79 (اسم مقنَّع آخر) وyal-80 (3 أرقام ظاهرة فقط) مستبعدان، ويظهر yal-79 فقط عند «توسيع»", R.byPhone === 4 && R.loose === 5, [R.byPhone, R.loose]);
+  t("بالولاية وحدها (Oran): طلب سمير فقط", R.byWil === 1, R.byWil);
+  t("بالبلدية وحدها: 3 طلبات + 4 طرود ياليدين غير مربوطة (yal-77..80)، بلا تكرار yal-9", R.byCom === 7, R.byCom);
+  t("هاتف + ولاية معاً ⟵ AND", R.both === 4, R.both);
+  t("تصفية التاريخ (من 15/10): تبقى طلبات نوفمبر فقط", R.fromDate === 1, R.fromDate);
+  t("تصفية الحالة (فشل): طلب واحد وطرد ياليدين المرتجع (مربوط)", R.echecOnly === 1, R.echecOnly);
+  t("قائمة المنتجات تُبنى من النتائج", R.prodOpts >= 3, R.prodOpts);
+  t("بحث فارغ ⟵ رسالة «أدخل…»، وبلا نتائج ⟵ «لا سجلّ»", R.empty && R.none === 0 && /لا سجلّ/.test(R.v2), R);
+  t("بلا أخطاء JS", errs.length === 0, errs);
+  await b.close(); process.exit(bad ? 1 : 0);
+})();

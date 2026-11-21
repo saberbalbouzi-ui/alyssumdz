@@ -159,6 +159,26 @@ const AdminHome = (() => {
       '<div class="ah-rqb"><button type="button" class="ah-btn" data-go="ruqya-new">حجز موعد يدوي</button><button type="button" class="ah-btn gh" data-go="ruqya-pending">بانتظار التأكيد</button>' + (r.uv ? '<button type="button" class="ah-btn" data-go="ruqya-uv">واتساب غير مؤكَّد (' + num(r.uv) + ')</button>' : '') + '<button type="button" class="ah-btn gh" data-go="ruqya">كل المواعيد</button></div></div>';
   }
   /* صافي كل شركة توصيل (ما يخصّك بعد العمولة والتوصيل والإرجاع) كما في «تفاصيل الدفع» */
+  /* إحصائيات اليوم: الطلبات التي أُرسلت اليوم إلى شركات التوصيل (من سجلّ الإرسال نفسه الذي يقرأه «المرسَلة اليوم») — العدد، السعر الإجمالي (مجموع ما يدفعه الزبائن)، سعر التوصيل (تعريفة الشركة إن عُرفت وإلا رسم الطلب)، والصافي = الإجمالي − التوصيل (قبل كلفة البضاعة) */
+  function todayStats() {
+    const a = A(); if (!a || typeof AdminYd === "undefined" || !AdminYd.sentLog) return null;
+    const f = new Date(); f.setHours(0, 0, 0, 0); const from = f.getTime(), to = from + 864e5, reg = AdminYd.sentLog() || {}, seen = new Set(), by = {}; let n = 0, total = 0, del = 0, miss = 0, est = 0;
+    Object.keys(reg).forEach(tr => {
+      const x = reg[tr]; if (!x || !(x.at >= from && x.at < to) || seen.has(String(x.id))) return; seen.add(String(x.id)); n++;
+      const o = (a.orders || []).find(q => String(q.id) === String(x.id)); if (!o) { miss++; return; }
+      const t = Number(o.total) || 0; let fee = 0; try { fee = a.carrierFee ? (a.carrierFee(x.co, o) || 0) : 0; } catch (e) { } if (!fee) { fee = Number(o.fee) || 0; est++; }
+      total += t; del += fee; by[x.co || ""] = (by[x.co || ""] || 0) + 1;
+    });
+    return { n, total, del, net: total - del, miss, est, by };
+  }
+  function todayCard() {
+    const T = todayStats(); if (!T) return "";
+    const tile = (lb, v, sub, red) => '<div class="ah-pc" data-noco><b>' + lb + '</b><strong' + (red ? ' style="color:#fca5a5"' : "") + '>' + v + '</strong><span>' + sub + '</span></div>';
+    const hint = (T.miss ? " · " + num(T.miss) + " طلب محذوف لا يُحسب مبلغه" : "") + (T.est ? " · تعريفة الشركة غير معروفة لـ" + num(T.est) + " فاستُعمل رسم الطلب" : "");
+    return '<div class="ah-card" style="margin:0 0 14px"><h3>إحصائيات اليوم <small>الطلبات المرسَلة اليوم إلى شركات التوصيل</small></h3><div class="ah-pay">'
+      + tile("عدد الطلبات المرسَلة", num(T.n), "اليوم") + tile("السعر الإجمالي", money(T.total), "مجموع ما يدفعه الزبائن") + tile("سعر التوصيل", money(T.del), "تعريفة الشركات") + tile("الصافي", money(T.net), "الإجمالي − التوصيل", T.net < 0) + "</div>"
+      + (hint ? '<div class="hint" style="margin:.5rem 0 0">' + hint.slice(3) + "</div>" : "") + "</div>";
+  }
   function payCard() {
     if (typeof AdminPayments === "undefined" || !hasTab("payments")) return "";
     const P = AdminPayments;
@@ -261,6 +281,7 @@ const AdminHome = (() => {
 <div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>${od ? `<button type="button" class="ah-lnk" data-go="callcenter"><b>${num(od)}</b> طلب ينتظر مكالمة منذ أكثر من يوم</button> · ` : ""}نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
 <div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"], [-1, "هذا الشهر"], [0, "مخصص"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div>${S.days === 0 ? `<span class="ah-dr"><input type="date" id="ah-from" value="${S.from}" max="${S.to || iso(Date.now())}" aria-label="من"><span>←</span><input type="date" id="ah-to" value="${S.to}" min="${S.from}" max="${iso(Date.now())}" aria-label="إلى"></span>` : ""}</div></div>
 ${quickBar(waiting)}
+${todayCard()}
 ${ruqyaCard()}
 ${payCard()}
 ${adsCard()}
@@ -381,5 +402,5 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
   }
   window.addEventListener("alyssum:ai-credit", () => refreshSoft());
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { render, open, S, refreshSoft, realSt };
+  return { render, open, S, refreshSoft, realSt, todayStats };
 })();
