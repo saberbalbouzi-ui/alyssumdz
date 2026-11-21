@@ -504,3 +504,15 @@ html.white :is(#au-banner,#au-auto,#au-cover,#toast2) :is(small,span,b,div,p,lab
 /* الطلبات: خانة الحالة (الحالة + محاولات الاتصال + قائمة النتيجة) كانت تأخذ عرض أعرض صف فيظهر فراغ كبير في بقية الصفوف؛ تلتفّ الآن (الحالة فوق، القائمة تحتها) فتتساوى الصفوف */
 #tab-orders td.o-act{white-space:normal;width:1%;min-width:150px}
 #tab-orders td.o-act .act-sel{display:block;margin-top:.3rem;max-width:100%}
+/* تعديل المنتجات جماعياً في المظهر الفاتح: كان مكتوباً لمظهر داكن (حقول شفافة ونص فاتح وبطاقة المعاينة داكنة) */
+html.white #bulk-products-app{color:#0b0f14}
+html.white #bulk-products-app input:not([type=checkbox]),html.white #bulk-products-app select{background:#fff;color:#0b0f14;border:1px solid #cfd6e0}
+html.white #bulk-products-app input::placeholder{color:#475569}
+html.white #bulk-products-app th{color:#0b0f14;background:#eef1f6}
+html.white #bulk-products-app th,html.white #bulk-products-app td{border-bottom-color:#dbe1ea}
+html.white #bulk-products-app .bp-count{color:#0b0f14}
+html.white #bulk-products-app .bp-warning{color:#8a4b00}
+html.white #bulk-products-app .bp-changed{background:rgba(226,254,23,.38)}
+html.white #bulk-products-app .bp-modal{background:#fff;color:#0b0f14;border-color:#dbe1ea;box-shadow:0 30px 80px rgba(15,23,42,.35)}
+html.white #bulk-products-app .bp-btn:not(.primary){background:linear-gradient(180deg,#94a3b8,#64748b);color:#fff;border:1px solid rgba(255,255,255,.35)}
+html.white #bulk-products-app .bp-btn:not(.primary):hover{background:linear-gradient(180deg,#a3b1c4,#718096)}
