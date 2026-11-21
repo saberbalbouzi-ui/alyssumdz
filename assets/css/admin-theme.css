@@ -524,3 +524,11 @@ html.white #bulk-products-app .bp-btn:not(.primary):hover{background:linear-grad
 .cb-r{background:#dc2626;border-color:#b91c1c}
 /* شريط الجوال العلوي: اسم المنصة يُقصّ بنقاط بدل قصّ حرفه الأخير تحت زر البحث، وأزرار أضيق قليلاً لتبقى مساحة للاسم */
 @media (max-width:520px){#app .top{gap:3px}#app .top>h1{text-overflow:ellipsis}#app .top>h1::before{font-size:.95rem}#app .top>#top-menu,#app .top>#top-search,#app .top>#top-more{flex-basis:38px;width:38px;height:38px;min-height:38px}#app .top>#ah-btn{flex-basis:38px;width:38px}}
+/* زرّ اللغة (FR / ع) في الشريط العلوي */
+#app .top>#top-lang{font-weight:900;min-width:42px;padding-inline:.6rem}
+@media (max-width:760px){#app .top>#top-lang{display:inline-flex!important;align-items:center;justify-content:center;order:3;flex:0 0 38px;width:38px;height:38px;min-height:38px;padding:0;border-radius:13px;font-size:.78rem}}
+/* الفرنسية: اتجاه يسار←يمين (body في admin.html مضبوط rtl) */
+html.lang-fr body,html.lang-fr #app,html.lang-fr .modal,html.lang-fr .modal-bg{direction:ltr}
+html.lang-fr .top,html.lang-fr .card,html.lang-fr table th,html.lang-fr table td{text-align:left}
+html.lang-fr #ahome .ah-seg button,html.lang-fr .nav-btn,html.lang-fr .nav-txt{text-align:left}
+html.lang-fr #app .top>h1::before{font-size:.85rem}
