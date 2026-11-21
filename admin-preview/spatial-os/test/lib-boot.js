@@ -11,7 +11,7 @@ async function boot(b, store, o = {}) {
   p.setDefaultTimeout(15000); p.on("pageerror", e => errs.push(String(e.stack || e).split("\n").slice(0, 2).join(" <- ").slice(0, 220))); p.on("dialog", d => d.accept().catch(() => { }));
   p.on("request", r => { if (/\/api\/index\.php|server\/llm\.php/.test(r.url())) reqs.push({ t: Date.now(), m: r.method(), u: r.url(), b: r.postData() || "" }); });
   await p.addInitScript(() => { document.addEventListener("DOMContentLoaded", () => { if (window !== window.top) { const s = document.createElement("style"); s.textContent = "#toast,#toast2,.toast{pointer-events:none!important}"; document.head.appendChild(s); } }); if (window === window.top) { window.__lt = []; try { new PerformanceObserver(l => l.getEntries().forEach(e => window.__lt.push(Math.round(e.duration)))).observe({ entryTypes: ["longtask"] }); } catch (_) { } } });
-  const q = (o.query || "") + (o.tier ? "&tier=" + o.tier : "") + (o.gl0 ? "&gl=0" : ""), url = store.spatial + (q ? "?" + q.replace(/^&/, "") : "");
+  const q = (o.query || "") + (o.tier ? "&tier=" + o.tier : "") + (o.gl0 ? "&gl=0" : ""), url = store.spatial + "?autoopen=1&nozoom=1" + (q ? "&" + q.replace(/^&/, "") : "");
   if (o.init) await p.addInitScript(o.init);
   await p.goto(url); await p.waitForTimeout(500);
   if (!o.noLogin) { const body = o.user ? { user: o.user, password: o.pw } : { password: store.pw }; const st = await p.evaluate(async b2 => (await fetch("../../api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify(b2) })).status, body); if (st !== 200) throw new Error("login " + st); }

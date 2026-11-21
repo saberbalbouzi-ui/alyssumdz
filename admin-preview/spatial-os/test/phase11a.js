@@ -18,7 +18,7 @@ const fault = f => fetch(LOCAL + "/__fault", { method: "POST", headers: { "Conte
 async function boot(b, store) {
   const c = await b.newContext({ viewport: { width: 1440, height: 900 } }), p = await c.newPage(), errs = [], reqs = [];
   p.setDefaultTimeout(20000); p.on("pageerror", e => errs.push(String(e).slice(0, 200))); p.on("request", r => { if (/server\/llm\.php|api\/index\.php/.test(r.url())) reqs.push({ m: r.method(), u: r.url(), b: r.postData() || "" }); });
-  await p.goto(store.spatial + "?tier=low"); await p.waitForTimeout(500);
+  await p.goto(store.spatial + "?autoopen=1&nozoom=1&tier=low"); await p.waitForTimeout(500);
   await p.evaluate(async pw => (await fetch("../../api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ password: pw }) })).status, store.pw);
   await p.reload(); await p.waitForFunction(() => window.AlyssumAgent && window.AgentLLM && AgentLLM.state().probed, null, { timeout: 40000 }); await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 90000 }).catch(() => { });
   const X = {
