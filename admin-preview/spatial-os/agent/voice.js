@@ -109,7 +109,7 @@
         if (!cur || cur.text !== text) return { ok: false, reason: "interrupted" };
         if (!r.ok || !j || !j.ok) throw new Error("tts-" + (j && j.error || r.status));
         const bin = atob(j.pcm), n = bin.length >> 1, ab = c.createBuffer(1, n, j.rate || 24000), ch = ab.getChannelData(0); for (let i = 0; i < n; i++) { let v = bin.charCodeAt(i * 2) | (bin.charCodeAt(i * 2 + 1) << 8); if (v > 32767) v -= 65536; ch[i] = v / 32768; }
-        const s = c.createBufferSource(); s.buffer = ab; outAn = c.createAnalyser(); outAn.fftSize = 1024; s.connect(outAn); outAn.connect(c.destination); const me = cur; me.stop = () => { try { s.onended = null; s.stop(); } catch (_) { } }; s.onended = () => { if (cur === me) endSpeak("ended"); };
+        const s = c.createBufferSource(); s.buffer = ab; outAn = c.createAnalyser(); outAn.fftSize = 1024; s.connect(outAn); if (window.SphereAudio) SphereAudio.voiceOut(c, outAn); else outAn.connect(c.destination); const me = cur; me.stop = () => { try { s.onended = null; s.stop(); } catch (_) { } }; s.onended = () => { if (cur === me) endSpeak("ended"); };
         if (S.bargeIn && S.perm === "granted" && !stream) { try { await openMic(); } catch (_) { } }
         setMode("speaking", { tts: "server" }); startLoop(); s.start(); emit({ type: "tts-start", kind, sec: +(ab.duration).toFixed(2) });
       } catch (e) { const me = cur; cur = null; S.speakKind = null; outAn = null; emit({ type: "error", code: "tts-failed", message: "تعذّر تشغيل الصوت: " + String(e.message || e) }); if (window.speechSynthesis && !(e.message || "").startsWith("tts-aborted")) { cur = me; return speakBrowser(text, lang, me, resolve, done); } resolve({ ok: false, reason: "tts-failed" }); return done; }

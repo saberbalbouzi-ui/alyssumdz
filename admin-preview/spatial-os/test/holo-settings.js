@@ -89,7 +89,8 @@ async function php(b) {
     ok("php: النافذة الكبيرة تتحرك بالسحب من شريط عنوانها وتبقى كبيرة وعنوانها ظاهر", bm.big && Math.abs(bm.x - bh.x0) > 60 && Math.abs(bm.y - bh.y0) > 35 && bm.hdrTop >= 40 && bm.hdrRight > 200, { from: [bh.x0, bh.y0], to: [bm.x, bm.y], hdr: [bm.hdrLeft, bm.hdrTop, bm.hdrRight] });
     await wait(1500); await p.click('.panel[aria-label="الطلبات"] .pn-max'); await wait(1200);
     ok("php: □ ثانية تعيد البطاقة إلى حجمها", await p.evaluate(() => !SpatialOS.panels.get("ord").big));
-    ok("php: بعد الاستعادة يعود المحتوى لحجمه (بلا zoom)", await p.evaluate(() => { const d = SpatialOS.panels.get("ord").fr.contentDocument; return (d.documentElement.style.zoom || "") === ""; }));
+    const rz = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), d = q.fr.contentDocument, z = parseFloat(d.documentElement.style.zoom || "1"), want = Math.max(.55, Math.min(1.6, q.st.w / 1100)); return { big: q.big, z, want, w: q.st.w, iw: q.fr.contentWindow.innerWidth }; });
+    ok("php: بعد الاستعادة يعود المحتوى لحجم البطاقة الطبيعي: واجهة المكتب مصغّرة (zoom = العرض/1100 ≤ 1) لا مكبّرة", !rz.big && Math.abs(rz.z - rz.want) < .02 && rz.z <= 1, rz);
     /* عنوان اللوح لا يصعد فوق الشريط العلوي ولا يختفي تحته */
     const hh = await p.evaluate(() => { const r = SpatialOS.panels.get("ord").el.querySelector(".pn-h").getBoundingClientRect(); return { x: r.x + r.width * .45, y: r.y + r.height / 2 }; });
     await p.mouse.move(hh.x, hh.y); await p.mouse.down(); for (let i = 1; i <= 16; i++) { await p.mouse.move(hh.x, Math.max(2, hh.y - 60 * i)); await wait(20); } await p.mouse.up(); await wait(900);

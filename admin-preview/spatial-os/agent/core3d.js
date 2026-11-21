@@ -193,9 +193,12 @@
   const boltMax = () => (tier === "static" ? 0 : tier === "low" ? 7 : (mobile() || tier === "mid") ? 14 : 30);
   function boltSpawn(kind, power, n) {
     if (RM || bolts.length >= boltMax()) return; const r = wrap.getBoundingClientRect(); if (!r.width) return; const cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * .2, cols = BCOL[kind] || BCOL.speaking;
-    for (let i = 0; i < (n || 1) && bolts.length < boltMax(); i++) { const ang = bRnd(0, 6.2832), segs = []; boltPath(cx + Math.cos(ang) * R * .8, cy + Math.sin(ang) * R * .8, ang, R * bRnd(3, 5.8) * (.8 + power), 0, segs); bolts.push({ idle: kind === "idle", segs, born: performance.now(), life: kind === "idle" ? bRnd(900, 1500) : kind === "thinking" ? bRnd(520, 900) : bRnd(240, 520), col: cols[Math.random() < .86 ? 0 : 1], fl: Math.random() }); }
+    for (let i = 0; i < (n || 1) && bolts.length < boltMax(); i++) { const ang = bRnd(0, 6.2832), segs = []; { const cb = cylRect(), cap = cb ? (cb.x1 - cb.x0) * .46 : 1e9; boltPath(cx + Math.cos(ang) * R * .8, cy + Math.sin(ang) * R * .8, ang, Math.min(cap, R * bRnd(3, 5.8) * (.8 + power)), 0, segs); } if (window.SphereAudio) SphereAudio.crackle(ang, kind === "idle" ? .35 : Math.min(1, .45 + power * .6)); bolts.push({ idle: kind === "idle", segs, born: performance.now(), life: kind === "idle" ? bRnd(900, 1500) : kind === "thinking" ? bRnd(520, 900) : bRnd(240, 520), col: cols[Math.random() < .86 ? 0 : 1], fl: Math.random() }); }
   }
   function boltsBurst(n, kind) { boltSpawn(kind, .9, n); }
+  /* الأعصاب داخل الاسطوانة فقط: صندوق الاسطوانة على الشاشة من حلقاتها (يُحدَّث كل 8 إطارات) */
+  let cylBox = null, cylN = 0;
+  function cylRect() { if (cylBox && (cylN++ % 8)) return cylBox; const rs = document.querySelectorAll(".cyl-wrap .ring"); if (!rs.length) return (cylBox = null); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; rs.forEach(e => { const q = e.getBoundingClientRect(); if (!q.width) return; x0 = Math.min(x0, q.left); x1 = Math.max(x1, q.right); y0 = Math.min(y0, q.top); y1 = Math.max(y1, q.bottom); }); cylBox = x1 > x0 ? { x0: x0 + 6, x1: x1 - 6, y0, y1 } : null; return cylBox; }
   function boltsUpdate(t, dt) {
     if (RM || tier === "static") { if (bolts.length) { bolts = []; bg.clearRect(0, 0, bc.width, bc.height); } return; }
     const vis = st.visual, speaking = V.voice === "speaking", listening = V.voice === "listening"; let al = lvl;
@@ -204,16 +207,17 @@
     if (speaking) { rate = 3 + al * 22; kind = "speaking"; if (al - bPrevAl > .2) boltSpawn("speaking", al, 2 + Math.floor(al * 4)); }
     else if (listening) { rate = .5 + al * 6; kind = "listening"; power = Math.min(.8, al + .15); }
     else if (vis === "thinking" || vis === "executing") { rate = 2.4; kind = vis; power = .55; } else { rate = 3.4 + 1.2 * Math.sin(t / 1700); kind = "idle"; power = .55; if (bolts.length >= Math.min(8, boltMax())) rate = 0; } /* السكون: أعصاب خفيفة دائمة تتفرع من الكرة (حياة محيطية) */
+    if (window.SphereAudio) SphereAudio.level(speaking ? al : 0);
     bPrevAl = al; bAcc += rate * dt / 1000; while (bAcc >= 1) { bAcc -= 1; boltSpawn(kind, power, 1); }
     bg.clearRect(0, 0, bc.width, bc.height); if (!bolts.length) return;
-    bg.save(); bg.scale(bDpr, bDpr); bg.globalCompositeOperation = "lighter"; bg.lineCap = "round"; bg.lineJoin = "round";
+    bg.save(); bg.scale(bDpr, bDpr); { const cb = cylRect(); if (cb) { bg.beginPath(); bg.rect(cb.x0, cb.y0, cb.x1 - cb.x0, cb.y1 - cb.y0); bg.clip(); } } bg.globalCompositeOperation = "lighter"; bg.lineCap = "round"; bg.lineJoin = "round";
     const now = performance.now(); bolts = bolts.filter(b => now - b.born < b.life);
     for (const b of bolts) {
       const age = now - b.born, g = Math.min(1, age / 110), fade = Math.pow(1 - age / b.life, 1.4) * (.75 + .25 * Math.sin(age * .06 + b.fl * 9)), [r, gC, bl] = b.col;
       for (const sg of b.segs) {
         const m = Math.max(2, Math.floor(sg.pts.length * g)); bg.beginPath(); bg.moveTo(sg.pts[0][0], sg.pts[0][1]); for (let i = 1; i < m; i++) bg.lineTo(sg.pts[i][0], sg.pts[i][1]);
-        bg.strokeStyle = "rgba(" + r + "," + gC + "," + bl + "," + (fade * (b.idle ? .32 : .7)).toFixed(3) + ")"; bg.lineWidth = sg.w * (b.idle ? 5.4 : 4.2); if (b.idle) bg.shadowBlur = 0; else { bg.shadowColor = "rgba(" + r + "," + gC + "," + bl + ",1)"; bg.shadowBlur = 22; } bg.stroke();
-        bg.shadowBlur = 0; bg.strokeStyle = "rgba(240,255,255," + Math.min(1, fade * 1.1).toFixed(3) + ")"; bg.lineWidth = sg.w * 1.35; bg.stroke();
+        bg.strokeStyle = "rgba(" + r + "," + gC + "," + bl + "," + (fade * (b.idle ? .32 : .7)).toFixed(3) + ")"; bg.lineWidth = sg.w * (b.idle ? 2.4 : 2.1); if (b.idle) bg.shadowBlur = 0; else { bg.shadowColor = "rgba(" + r + "," + gC + "," + bl + ",1)"; bg.shadowBlur = 9; } bg.stroke();
+        bg.shadowBlur = 0; bg.strokeStyle = "rgba(240,255,255," + Math.min(1, fade * 1.1).toFixed(3) + ")"; bg.lineWidth = Math.max(.7, sg.w * .55); bg.stroke();
       }
     }
     bg.restore();
