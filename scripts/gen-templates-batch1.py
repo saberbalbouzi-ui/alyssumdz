@@ -27,11 +27,8 @@ hero_j = [
     FR("button", V(76, 30, 72), V(430, 214, 262), V(22, 64, 22), V(58, 50, 54), 6, text="اكتشفي المجموعة", kind="link", link="#products", bgc=ROSE, color="#ffffff", hbg=ROSE, fs=V(18, 16, 17), fw="800", brad={"d": 999},
        fxs=[btngrad(ROSE, ROSE2, "rgba(183,110,121,.45)"), shine(k, 3)], **anim("zoomIn", .9, .2)),
     FR("shape", 88, 512, 10, 2, 5, shape="rect", fill=ROSE2, keep=False, hm=True, ht=True, **anim("fadeIn", .9, .4)),
-    # عنقود الدوائر: الصور الأصلية الثلاث (القلائد/الخواتم/الأساور) صارت هنا بدل شريط الأعمدة
-    FR("image", V(12, 26, 26), V(150, 336, 380), V(30, 50, 40), V(330, 207, 328), 3, src=IMG("jewel_ring"), alt="خاتم بحجر على سطح لامع", fit="cover", hauto=False, fxs=[CIRCLE()], **anim("zoomIn", 1, .1)),
-    FR("image", V(2, 4, 12), V(70, 300, 330), V(15, 28, 20), V(165, 109, 164), 4, src=IMG("jewel_moon"), alt="قلادة هلال ذهبية", fit="cover", hauto=False, fxs=[CIRCLE(), floaty(k + "m", ".pb-im", 8, 6)], **anim("zoomIn", 1, .3)),
-    FR("image", V(35, 58, 58), V(350, 440, 520), V(15, 34, 20), V(165, 133, 164), 4, src=IMG("jewel_gold"), alt="سوار ذهبي مرصّع", fit="cover", hauto=False, fxs=[CIRCLE(), floaty(k + "g", ".pb-im", 8, 7)], **anim("zoomIn", 1, .5)),
-    jlabel(0, 21, 500, 12, "الخواتم"), jlabel(1, 1, 250, 11, "القلائد"), jlabel(2, 34, 530, 14, "الأساور"),
+    # صورة هيرو واحدة (دائرة كبيرة)
+    FR("image", V(10, 26, 26), V(110, 336, 380), V(36, 50, 40), V(420, 207, 328), 3, src=IMG("jewel_ring"), alt="خاتم بحجر على سطح لامع", fit="cover", hauto=False, fxs=[CIRCLE()], **anim("zoomIn", 1, .1)),
     FR("shape", 5, 430, 1.2, 14, 2, shape="ellipse", fill=ROSE2, keep=False, hm=True, ht=True, fxs=[pulse(k + "d1", "212,163,115", 3)]),
     FR("shape", 46, 120, 1, 12, 2, shape="ellipse", fill=ROSE, keep=False, hm=True, ht=True, fxs=[pulse(k + "d2", "183,110,121", 3.4)]),
 ]
