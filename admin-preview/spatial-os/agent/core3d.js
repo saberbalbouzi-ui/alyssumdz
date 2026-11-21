@@ -179,21 +179,21 @@
   const bc = document.createElement("canvas"); bc.id = "core-bolts"; bc.setAttribute("aria-hidden", "true"); document.body.appendChild(bc); const bg = bc.getContext("2d");
   let bolts = [], bDpr = 1, bAcc = 0, bPrevAl = 0, bSynth = 0;
   const bRnd = (a, b) => a + Math.random() * (b - a);
-  const BCOL = { speaking: [[110, 235, 255], [190, 150, 255]], listening: [[60, 245, 170], [150, 255, 200]], thinking: [[170, 130, 255], [90, 220, 255]], executing: [[90, 220, 255], [200, 255, 90]], success: [[226, 254, 23], [60, 245, 170]], error: [[255, 96, 130], [255, 170, 190]] };
+  const BCOL = { idle: [[110, 235, 255], [190, 150, 255]], speaking: [[110, 235, 255], [190, 150, 255]], listening: [[60, 245, 170], [150, 255, 200]], thinking: [[170, 130, 255], [90, 220, 255]], executing: [[90, 220, 255], [200, 255, 90]], success: [[226, 254, 23], [60, 245, 170]], error: [[255, 96, 130], [255, 170, 190]] };
   function boltsFit() { bDpr = Math.min(devicePixelRatio || 1, 1.5); const w = Math.round(innerWidth * bDpr), h = Math.round(innerHeight * bDpr); if (bc.width !== w) bc.width = w; if (bc.height !== h) bc.height = h; }
   boltsFit(); addEventListener("resize", boltsFit);
   function boltPath(x, y, ang, len, depth, out) {
     const step = Math.max(7, len / 10), n = Math.max(3, Math.round(len / step)), pts = [[x, y]]; let cx = x, cy = y, a = ang;
     for (let i = 0; i < n; i++) {
       a += bRnd(-.6, .6); cx += Math.cos(a) * step; cy += Math.sin(a) * step; pts.push([cx, cy]);
-      if (depth < 3 && i > 0 && Math.random() < .36 - depth * .08) boltPath(cx, cy, a + (Math.random() < .5 ? -1 : 1) * bRnd(.45, 1.05), len * (1 - i / n) * bRnd(.5, .85), depth + 1, out);
+      if (depth < 4 && i > 0 && Math.random() < .52 - depth * .09) boltPath(cx, cy, a + (Math.random() < .5 ? -1 : 1) * bRnd(.4, 1.1), len * (1 - i / n) * bRnd(.55, .9), depth + 1, out);
     }
     out.push({ pts, w: Math.max(.7, 2.8 - depth * .8) });
   }
   const boltMax = () => (tier === "static" ? 0 : tier === "low" ? 7 : (mobile() || tier === "mid") ? 14 : 30);
   function boltSpawn(kind, power, n) {
     if (RM || bolts.length >= boltMax()) return; const r = wrap.getBoundingClientRect(); if (!r.width) return; const cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * .2, cols = BCOL[kind] || BCOL.speaking;
-    for (let i = 0; i < (n || 1) && bolts.length < boltMax(); i++) { const ang = bRnd(0, 6.2832), segs = []; boltPath(cx + Math.cos(ang) * R * .8, cy + Math.sin(ang) * R * .8, ang, R * bRnd(2.2, 4.4) * (.7 + power), 0, segs); bolts.push({ segs, born: performance.now(), life: kind === "thinking" ? bRnd(520, 900) : bRnd(240, 520), col: cols[Math.random() < .86 ? 0 : 1], fl: Math.random() }); }
+    for (let i = 0; i < (n || 1) && bolts.length < boltMax(); i++) { const ang = bRnd(0, 6.2832), segs = []; boltPath(cx + Math.cos(ang) * R * .8, cy + Math.sin(ang) * R * .8, ang, R * bRnd(3, 5.8) * (.8 + power), 0, segs); bolts.push({ idle: kind === "idle", segs, born: performance.now(), life: kind === "idle" ? bRnd(900, 1500) : kind === "thinking" ? bRnd(520, 900) : bRnd(240, 520), col: cols[Math.random() < .86 ? 0 : 1], fl: Math.random() }); }
   }
   function boltsBurst(n, kind) { boltSpawn(kind, .9, n); }
   function boltsUpdate(t, dt) {
@@ -203,7 +203,7 @@
     let rate = 0, kind = "speaking", power = al;
     if (speaking) { rate = 3 + al * 22; kind = "speaking"; if (al - bPrevAl > .2) boltSpawn("speaking", al, 2 + Math.floor(al * 4)); }
     else if (listening) { rate = .5 + al * 6; kind = "listening"; power = Math.min(.8, al + .15); }
-    else if (vis === "thinking" || vis === "executing") { rate = 2.4; kind = vis; power = .55; }
+    else if (vis === "thinking" || vis === "executing") { rate = 2.4; kind = vis; power = .55; } else { rate = 3.4 + 1.2 * Math.sin(t / 1700); kind = "idle"; power = .55; if (bolts.length >= Math.min(8, boltMax())) rate = 0; } /* السكون: أعصاب خفيفة دائمة تتفرع من الكرة (حياة محيطية) */
     bPrevAl = al; bAcc += rate * dt / 1000; while (bAcc >= 1) { bAcc -= 1; boltSpawn(kind, power, 1); }
     bg.clearRect(0, 0, bc.width, bc.height); if (!bolts.length) return;
     bg.save(); bg.scale(bDpr, bDpr); bg.globalCompositeOperation = "lighter"; bg.lineCap = "round"; bg.lineJoin = "round";
@@ -212,8 +212,8 @@
       const age = now - b.born, g = Math.min(1, age / 110), fade = Math.pow(1 - age / b.life, 1.4) * (.75 + .25 * Math.sin(age * .06 + b.fl * 9)), [r, gC, bl] = b.col;
       for (const sg of b.segs) {
         const m = Math.max(2, Math.floor(sg.pts.length * g)); bg.beginPath(); bg.moveTo(sg.pts[0][0], sg.pts[0][1]); for (let i = 1; i < m; i++) bg.lineTo(sg.pts[i][0], sg.pts[i][1]);
-        bg.strokeStyle = "rgba(" + r + "," + gC + "," + bl + "," + (fade * .7).toFixed(3) + ")"; bg.lineWidth = sg.w * 4.2; bg.shadowColor = "rgba(" + r + "," + gC + "," + bl + ",1)"; bg.shadowBlur = 22; bg.stroke();
-        bg.shadowBlur = 0; bg.strokeStyle = "rgba(235,255,255," + (fade * .95).toFixed(3) + ")"; bg.lineWidth = sg.w * .9; bg.stroke();
+        bg.strokeStyle = "rgba(" + r + "," + gC + "," + bl + "," + (fade * (b.idle ? .32 : .7)).toFixed(3) + ")"; bg.lineWidth = sg.w * (b.idle ? 5.4 : 4.2); if (b.idle) bg.shadowBlur = 0; else { bg.shadowColor = "rgba(" + r + "," + gC + "," + bl + ",1)"; bg.shadowBlur = 22; } bg.stroke();
+        bg.shadowBlur = 0; bg.strokeStyle = "rgba(240,255,255," + Math.min(1, fade * 1.1).toFixed(3) + ")"; bg.lineWidth = sg.w * 1.35; bg.stroke();
       }
     }
     bg.restore();

@@ -127,7 +127,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 .node.sel{border-color:var(--cy);box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 0 34px rgba(43,228,255,.9),0 0 70px rgba(43,228,255,.45)}.node.sel span{color:#fff;text-shadow:0 0 10px var(--cy)}.node.sel svg{stroke:#fff}
 .dock button.sel{border-color:var(--cy);box-shadow:0 0 16px rgba(43,228,255,.6)}
-.pn-orb{display:none!important}body.orbit-on .panel.free .pn-orb{display:grid!important}.pn-orb{color:var(--li)}
+
 
 /* بطاقات الجدران الحقيقية الشفافة */
 .wall.l,.wall.r{height:auto;width:430px;margin:-217px 0 0 -215px;opacity:1;background:transparent;border:0;box-shadow:none;padding:0;gap:10px;grid-template-columns:1fr 1fr;pointer-events:none}
@@ -418,3 +418,20 @@ html body .wall.l{transform:translate3d(-440px,-50px,-330px) rotateY(46deg)}
 html body .wall.r{transform:translate3d(440px,-50px,-330px) rotateY(-46deg)}
 html body .wall.bl{transform:translate3d(-380px,0,-930px) rotateY(12deg)}
 html body .wall.br{transform:translate3d(380px,0,-930px) rotateY(-12deg)}
+
+/* ألوان اللوح الحقيقي كاملة: ستارة الحماية شفافة (تلتقط النقرة الأولى فقط بلا تعتيم؛ كانت تعتّم كل لوح غير مُركَّز 22%)، وتخفيت وجه اللوح غير المُركَّز أخف */
+.pn-shield{background:transparent!important}
+.pn-shield:hover{box-shadow:inset 0 0 0 1px rgba(59,230,255,.45)}
+body.many .panel:not(.focus) .face{filter:brightness(.95)}
+
+/* ───── الجدار المقوّس: --wR نصف القطر، --wA نصف الزاوية الكلية، --wy0/--wdy مواضع الصفوف، --cw/--ch حجم البطاقة ───── */
+.room{--wR:740px;--wA:56;--wy0:-235px;--wdy:146px;--cw:176px;--ch:118px}
+html body #room .wall{position:absolute;left:0;top:0;width:0;height:0;margin:0;padding:0;border:0;background:none;box-shadow:none;display:block;opacity:1;filter:none;transform:none;transform-style:preserve-3d;pointer-events:none}
+html body #room .wall .wcard{position:absolute;left:calc(var(--cw) / -2);top:calc(var(--ch) / -2);width:var(--cw);height:var(--ch);pointer-events:auto;
+  --th:calc((var(--ci) / (var(--cn) - 1) * 2 - 1) * var(--wA) * 1deg);--wy:calc(var(--wy0) + var(--ri) * var(--wdy));
+  transform:rotateY(var(--th)) translate3d(0,var(--wy),calc(var(--wR) * -1))}
+html body #room .wall .wbw{height:calc(var(--ch) - 30px)}
+html body #room .wall .wb{transform:scale(.4)}
+@media(max-width:820px){html body #room .wall{display:none!important}}
+@media(max-height:820px){.room{--wy0:-190px;--wdy:128px;--ch:108px;--cw:164px;--wR:700px}}
+html body #room .wall .wcard{backdrop-filter:none;-webkit-backdrop-filter:none}

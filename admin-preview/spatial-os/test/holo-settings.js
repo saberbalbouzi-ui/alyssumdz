@@ -67,28 +67,41 @@ async function php(b) {
     await p.evaluate(() => SpatialOS.open("ai")); await wait(1200);
     ok("php: لوح المساعد في الوضع الحقيقي بلا وسم «عرض تجريبي»", await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return !!q && q.el.dataset.real === "1" && !/عرض تجريبي/.test(getComputedStyle(q.el.querySelector(".pn-h h3"), "::after").content); }));
     ok("php: لا قسم «التسويق» (غير موجود في المنصة) على الأسطوانة ولا في شريط الأقسام", await p.evaluate(() => !/التسويق/.test([...document.querySelectorAll(".node, #dock *")].map(e => e.textContent).join(" ")) && ![...SpatialOS.panels.keys()].includes("mkt")));
-    /* ◎ يعيد لوح الإطار الحقيقي إلى مكانه الافتراضي */
+    /* سحب رأس اللوح الحقيقي بالفأرة */
     await p.evaluate(() => SpatialOS.open("ord")); await wait(600);
     const hp = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.querySelector(".pn-h").getBoundingClientRect(); return { hx: r.x + r.width * .45, hy: r.y + r.height / 2, x0: q.st.x, y0: q.st.y }; });
     await p.mouse.move(hp.hx, hp.hy); await p.mouse.down(); for (let i = 1; i <= 12; i++) { await p.mouse.move(hp.hx - 15 * i, hp.hy + 9 * i); await wait(25); } await p.mouse.up(); await wait(900);
     const mv = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); return { x: q.st.x, y: q.st.y }; });
     ok("php: سحب رأس اللوح الحقيقي بالفأرة يحرّكه", Math.abs(mv.x - hp.x0) > 60, { before: [hp.x0, hp.y0], after: [mv.x, mv.y] });
-    await p.click('.panel[aria-label="الطلبات"] .pn-orb'); await wait(1200);
-    const bk = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); return { x: q.st.x, y: q.st.y }; });
-    ok("php: زر ◎ (إرجاع إلى المدار) يعيد اللوح الحقيقي إلى مكانه الافتراضي", Math.hypot(bk.x - hp.x0, bk.y - hp.y0) < 40 && Math.hypot(bk.x - mv.x, bk.y - mv.y) > 40, { home: [hp.x0, hp.y0], moved: [mv.x, mv.y], after: [bk.x, bk.y] });
+    ok("php: لا زر ◎ (إرجاع إلى المدار) في شريط عنوان اللوح (حُذف بطلب صاحب المتجر)", await p.evaluate(() => !document.querySelector(".pn-orb")));
     /* زر □ في شريط عنوان البطاقة يفتحها بحجم المكتب (يملأ الشاشة تحت الشريط العلوي) ويعيدها عند الضغط ثانية */
     await p.evaluate(() => SpatialOS.open("ord")); await wait(500);
     await p.click('.panel[aria-label="الطلبات"] .pn-max'); await wait(1500);
     const big = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.getBoundingClientRect(), f = q.fr.getBoundingClientRect(); return { big: q.big, w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), left: Math.round(r.left), vw: innerWidth, vh: innerHeight, frameW: Math.round(f.width), frameInnerW: q.fr.contentWindow.innerWidth }; });
     ok("php: □ يفتح البطاقة بحجم المكتب (يملأ العرض والارتفاع تحت الشريط العلوي، وإطارها بعرض مكتب ≥ 1000)", big.big && big.w >= big.vw - 60 && big.h >= big.vh - 110 && big.top >= 56 && big.top <= 80 && big.frameInnerW >= 1000, big);
-    await p.click('.panel[aria-label="الطلبات"] .pn-max'); await wait(1200);
+    /* المحتوى يكبر مع تكبير النافذة (zoom ∝ عرض النافذة) */
+    const zm = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), d = q.fr.contentDocument, b = d.querySelector("#tab-orders .small"); return { zoom: parseFloat(d.documentElement.style.zoom || "1"), k: q.zoomK, btnH: b ? Math.round(b.getBoundingClientRect().height) : 0 }; });
+    ok("php: عند تكبير النافذة يكبر المحتوى (zoom > 1.15) ويبقى تخطيط المكتب", zm.zoom > 1.15 && Math.abs(zm.k - zm.zoom) < .01 && zm.btnH > 0, zm);
+    /* السحب بالفأرة من شريط عنوان النافذة الكبيرة يعمل ويُبقي العنوان ظاهراً */
+    const bh = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.querySelector(".pn-h").getBoundingClientRect(); return { hx: r.x + r.width * .5, hy: r.y + r.height / 2, x0: q.st.x, y0: q.st.y }; });
+    await p.mouse.move(bh.hx, bh.hy); await p.mouse.down(); for (let i = 1; i <= 12; i++) { await p.mouse.move(bh.hx + 11 * i, bh.hy + 7 * i); await wait(20); } await p.mouse.up(); await wait(700);
+    const bm = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.querySelector(".pn-h").getBoundingClientRect(); return { big: q.big, x: q.st.x, y: q.st.y, hdrTop: Math.round(r.top), hdrLeft: Math.round(r.left), hdrRight: Math.round(r.right) }; });
+    ok("php: النافذة الكبيرة تتحرك بالسحب من شريط عنوانها وتبقى كبيرة وعنوانها ظاهر", bm.big && Math.abs(bm.x - bh.x0) > 60 && Math.abs(bm.y - bh.y0) > 35 && bm.hdrTop >= 40 && bm.hdrRight > 200, { from: [bh.x0, bh.y0], to: [bm.x, bm.y], hdr: [bm.hdrLeft, bm.hdrTop, bm.hdrRight] });
+    await wait(1500); await p.click('.panel[aria-label="الطلبات"] .pn-max'); await wait(1200);
     ok("php: □ ثانية تعيد البطاقة إلى حجمها", await p.evaluate(() => !SpatialOS.panels.get("ord").big));
+    ok("php: بعد الاستعادة يعود المحتوى لحجمه (بلا zoom)", await p.evaluate(() => { const d = SpatialOS.panels.get("ord").fr.contentDocument; return (d.documentElement.style.zoom || "") === ""; }));
     /* عنوان اللوح لا يصعد فوق الشريط العلوي ولا يختفي تحته */
     const hh = await p.evaluate(() => { const r = SpatialOS.panels.get("ord").el.querySelector(".pn-h").getBoundingClientRect(); return { x: r.x + r.width * .45, y: r.y + r.height / 2 }; });
     await p.mouse.move(hh.x, hh.y); await p.mouse.down(); for (let i = 1; i <= 16; i++) { await p.mouse.move(hh.x, Math.max(2, hh.y - 60 * i)); await wait(20); } await p.mouse.up(); await wait(900);
     const topH = await p.evaluate(() => Math.round(SpatialOS.panels.get("ord").el.querySelector(".pn-h").getBoundingClientRect().top));
     ok("php: لا يصعد عنوان اللوح فوق الشاشة ولا يُدفن (يبقى شريطه ظاهراً وقابلاً للإمساك: top ≥ 58)", topH >= 58, { topH });
     ok("php: كل بطاقات الجدران ظاهرة كاملة داخل الشاشة تحت الشريط العلوي", await p.evaluate(() => { const c = [...document.querySelectorAll(".wcard")]; return c.length >= 20 && c.every(e => { const q = e.getBoundingClientRect(); return q.x >= 4 && q.right <= innerWidth - 4 && q.y >= 56 && q.bottom <= innerHeight - 4; }); }));
+    /* اللوح غير المُركَّز بكامل ألوانه: لا ستارة تعتّمه (كانت 22%) */
+    await p.evaluate(() => SpatialOS.open("prod")); await p.waitForFunction(() => { const q = SpatialOS.panels.get("prod"); return q && q.frDone; }, null, { timeout: 60000 }).catch(() => { }); await wait(800);
+    await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); q.el.querySelector(".pn-h").dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10, pointerId: 91 })); }).catch(() => { });
+    const veil = await p.evaluate(() => { const q = SpatialOS.panels.get("prod"), sh = q.el.querySelector(".pn-shield"), cs = sh ? getComputedStyle(sh) : null; const m = cs && /rgba?\(([^)]*)\)/.exec(cs.backgroundColor); const parts = m ? m[1].split(",").map(Number) : []; return { focused: q.el.classList.contains("focus"), alpha: parts.length === 4 ? parts[3] : (parts.length === 3 ? 1 : 0), bg: cs && cs.backgroundColor }; });
+    ok("php: ستارة حماية اللوح غير المُركَّز شفافة تماماً (لا تعتيم يُبهت الألوان)", veil.alpha === 0, veil);
+    await p.evaluate(() => { try { SpatialOS.dismiss("prod", "close"); } catch (e) { } });
     /* «كيف أكلّم الكرة»: النقر عليها يفتح لوح المساعد وفيه زر الميكروفون وحقل الكتابة */
     await p.evaluate(() => document.getElementById("core").click()); await wait(1500);
     const mic = await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return q ? { mic: !!q.el.querySelector(".ag-mic"), input: !!q.el.querySelector("input,textarea"), framed: !!q.frame } : null; });

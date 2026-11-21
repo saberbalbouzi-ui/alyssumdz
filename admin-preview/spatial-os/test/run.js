@@ -53,7 +53,7 @@ async function desktop(b) {
     const hit = await p.evaluate(([x, y]) => { const e = document.elementFromPoint(x, y); return e && e.closest(".wcard") && e.closest(".wcard").dataset.id; }, bb); ok("بطاقة الجدار قابلة للنقر في الفضاء ثلاثي الأبعاد", !!hit, "api", hit);
     await p.mouse.click(bb[0], bb[1]); await p.waitForTimeout(1600); const sid = hit && (await S()).o[hit]; ok("النقر على بطاقة جانبية يفتح لوح القسم الكامل", !!sid, "mouse", hit);
     if (hit) { await p.evaluate(i => SpatialOS.dismiss(i, "close"), hit); await p.waitForTimeout(700); }
-    const g0 = await p.evaluate(() => SpatialOS.angle); const wc = await p.evaluate(() => { const c = [...document.querySelectorAll('.wall.r .wcard')].map(e => e.getBoundingClientRect()).find(r => r.left + r.width / 2 > 1000 && r.left + r.width / 2 < 1380 && r.top > 40); return [c.left + c.width / 2, c.top + c.height / 2]; });
+    const g0 = await p.evaluate(() => SpatialOS.angle); const wc = await p.evaluate(() => { const c = [...document.querySelectorAll('.wall.r .wcard')].map(e => e.getBoundingClientRect()).find(r => { const x = r.left + r.width / 2, y = r.top + r.height / 2, t = document.elementFromPoint(x, y); return x > innerWidth * .66 && x < innerWidth - 60 && y > 70 && t && t.closest && t.closest(".wcard"); }); return [c.left + c.width / 2, c.top + c.height / 2]; });
     await p.mouse.move(wc[0], wc[1]); await p.mouse.down(); for (let i = 1; i <= 10; i++) { await p.mouse.move(wc[0] - i * 20, wc[1]); await p.waitForTimeout(30); } await p.mouse.up(); await p.waitForTimeout(500);
     ok("السحب فوق بطاقة جانبية يدوّر الاسطوانة ولا يفتحها", Math.abs((await p.evaluate(() => SpatialOS.angle)) - g0) > 15 && Object.keys((await S()).o).length === 0, "mouse", [g0, await p.evaluate(() => SpatialOS.angle), Object.keys((await S()).o), wc]);
     const p0 = await p.evaluate(() => document.querySelector('.wcard[data-id="dash"] .wb').textContent.match(/بانتظار التأكيد\s*(\d+)/)); await p.evaluate(() => { SpatialOS.setOrbit(false); SpatialOS.open("ord"); }); await p.waitForTimeout(1500);
@@ -128,7 +128,6 @@ async function desktop(b) {
     await p.mouse.move(720, 880); await p.waitForTimeout(400);
     const hb2 = await (await p.$(`.panel[aria-label="${nm}"] .pn-h h3`)).boundingBox(); await drag(hb2.x + hb2.width / 2, hb2.y + 8, hb2.x + hb2.width / 2 + 40, hb2.y + 160, 8, 40); await p.waitForTimeout(500);
     let s = await S(); ok("سحب لوح بعيداً عن المدار يحرّره ويبقى حيث وُضع", s.o[fr] && s.o[fr].user, "mouse"); const fx = s.o[fr].st.x; await p.mouse.move(720, 880); await p.waitForTimeout(1800); ok("اللوح الحرّ لا يتحرك مع المدار", Math.abs((await S()).o[fr].st.x - fx) < 3, "api");
-    await p.hover(`.panel[aria-label="${nm}"] .pn-h`); await p.waitForTimeout(300); await p.click(`.panel[aria-label="${nm}"] .pn-orb`); await p.waitForTimeout(1500); ok("زر ◎ يعيد اللوح إلى المدار", !(await S()).o[fr].user, "mouse");
     await p.evaluate(() => SpatialOS.dismiss("inv", "close")); await p.waitForTimeout(1200); const left = Object.keys((await S()).o).length; ok("إغلاق لوح يعيد توزيع البقية على المدار", left === 3, "api", left);
     await p.evaluate(() => ["ord", "ana", "prod"].forEach(i => SpatialOS.dismiss(i, "close"))); await p.waitForTimeout(800);
   });
