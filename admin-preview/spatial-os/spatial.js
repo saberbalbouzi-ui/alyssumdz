@@ -334,13 +334,15 @@
   function holoRecolor(d) { if (d.__spRc) return; d.__spRc = 1; const W2 = d.defaultView; if (!W2 || !W2.MutationObserver) return; recolor(d.body); new W2.MutationObserver(ms => { for (const m of ms) { if (m.type === "attributes") recolor(m.target); else for (const x of m.addedNodes) recolor(x); } }).observe(d.body, { subtree: true, childList: true, attributes: true, attributeFilter: RC_ATTR }); }
 
   /* مقياس الكاميرا يتكيّف مع حجم النافذة فتبقى الجدران كاملة داخل الإطار (عند 1440×900 يبقى المقاس الأصلي كما اعتُمد) */
+  /* لا تكبير للصفحة بإصبعين (iOS يرسل gesture*): كان يكبّر الصفحة فيتبدّل التخطيط وتتعطل اللمسات؛ تدوير القاعة بالإصبعين يعمل بأحداث اللمس لا بها */
+  ["gesturestart", "gesturechange", "gestureend"].forEach(ev => document.addEventListener(ev, e => e.preventDefault(), { passive: false }));
   const camEl = document.getElementById("cam"), roomEl = document.getElementById("room"), BASE_CS = {};
   function fitCam() { [camEl, roomEl].forEach((el, i) => { if (!el) return; if (BASE_CS[i] === undefined) { el.style.removeProperty("--cs"); BASE_CS[i] = parseFloat(getComputedStyle(el).getPropertyValue("--cs")) || 0; } if (innerWidth <= 820 || !BASE_CS[i]) { el.style.removeProperty("--cs"); return; } const k = Math.max(.66, Math.min(1.12, Math.min(innerWidth / 1440, innerHeight / 900))); el.style.setProperty("--cs", (BASE_CS[i] * k).toFixed(3)); }); }
   fitCam(); addEventListener("resize", fitCam);
   async function detectReal() { if (/[?&]demo=1/.test(location.search)) return { real: false, api: false }; let api = false; try { const r = await fetch("../../api/index.php?r=me", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }); api = /json/.test(r.headers.get("content-type") || ""); } catch (_) { } return { real: api || /[?&]real=1/.test(location.search), api }; } /* api = واجهة PHP للوكيل التنفيذي متاحة؛ real = ألواح اللوحة الحقيقية (تُفرض بـ?real=1 من إعدادات اللوحة) */
   /* ◎ للوح الإطار الحقيقي: ألواح الإطار لا تدور في المدار (نقل الإطار يعيد تحميله) فيعيده الزر إلى مكانه وزاويته وحجمه الافتراضية */
   /* أعلى موضع رأسي مسموح للوح ارتفاعه hh: يبقى شريط عنوانه ظاهراً تحت الشريط العلوي (لا يصعد فوق الشاشة ولا يختبئ) */
-  const yTop = hh => Math.min(-H() / 2 + 66 + hh * 1.1 / 2, 0); /* 1.1: الميلان والمنظور يكبّران الحافة القريبة فيصير الارتفاع المرسوم أكبر من المخزَّن */
+  const yTop = hh => Math.min(-H() / 2 + (isMob() ? 46 : 66) + hh * (isMob() ? 1.04 : 1.1) / 2, 0); /* 1.1: الميلان والمنظور يكبّران الحافة القريبة فيصير الارتفاع المرسوم أكبر من المخزَّن */
   function homeFrame(p) { if (p.big) toggleBig(p); if (p.home) Object.assign(p.st, p.home); else { if (memo[p.id]) memo[p.id].pos = null; placeFrame(p); } p.el.classList.add("tr2"); apply(p); setTimeout(() => p.el.classList.remove("tr2"), 700); }
   function placeFrame(p) {
     const m = memo[p.id] && memo[p.id].pos; if (m) { Object.assign(p.st, m); p.st.x = clamp(p.st.x, -(W() / 2 - 80), W() / 2 - 80); p.st.y = clamp(p.st.y, yTop(p.st.h * p.st.s), H() / 2 - 80); p.st.s = clamp(p.st.s, .5, 1.9); return; }
