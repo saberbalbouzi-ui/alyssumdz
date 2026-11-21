@@ -85,16 +85,11 @@ a_free = [
     FT("حقائب، نظارات، أحزمة، قبعات وأكثر — ألوان مرحة وجودة تدوم. اطلب واختر هديتك المجانية.", V(20, 6, 8), V(196, 176, 160), V(60, 88, 84), V(19, 15, 17), "#6b5fa0", "center", 6, "500", **anim("fadeUp", .8, .1)),
     FR("button", V(40, 25, 36), V(268, 262, 238), V(20, 50, 28), V(56, 50, 54), 6, text="تسوّقي الآن", kind="link", link="#products", bgc=VIO, color="#ffffff", hbg=VIO, fs=V(18, 16, 17), fw="900", brad={"d": 999},
        fxs=[btngrad(VIO, PNK, "rgba(139,92,246,.45)"), shine(k), pulse(k, "139,92,246", 2.4), FX("حد وظل صلب", "selector .pb-btn{border:3px solid #1f1147;box-shadow:5px 5px 0 #1f1147}")], **anim("zoomIn", .8, .2)),
-    stk(0, "acc_pink", "حقيبة وردية بخطوط على قاعدة بيضاء", 8, 350, 20, 250, 5, 330, 21, 5, 340, 42, 190, -6, "", 0, 0, ""),
-    stk(1, "acc_sunglasses", "نظارة شمسية على خلفية ملوّنة", 29, 320, 20, 240, 27, 330, 21, 53, 360, 42, 190, 4, "", 0, 0, ""),
-    stk(2, "acc_satchel", "حقيبة جلدية صغيرة بحزامين", 50, 360, 20, 240, 49, 330, 21, 5, 570, 42, 190, -3, "", 0, 0, ""),
-    stk(3, "acc_rings", "حلقات أنيقة على سطح لامع", 71, 330, 20, 250, 71, 330, 21, 53, 590, 42, 190, 5, "", 0, 0, ""),
-    tagp(0, "حقائب", 10, 556, 16, 6, 550, 10, 520, 34, -6, "#fcd34d"), tagp(1, "نظارات", 31, 526, 16, 28, 550, 56, 540, 34, 4, "#f9a8d4"),
-    tagp(2, "حقائب جلدية", 52, 566, 16, 50, 550, 10, 750, 34, -3, "#a5f3fc"), tagp(3, "خواتم", 73, 546, 16, 72, 550, 56, 770, 34, 5, "#c4b5fd"),
+    stk(0, "acc_pink", "حقيبة وردية بخطوط على قاعدة بيضاء", 38, 290, 24, 340, 36, 300, 28, 31, 340, 38, 250, -3, "", 0, 0, ""),
     FR("heading", V(3, 76, 4), V(30, 250, 20), V(12, 22, 16), V(120, 86, 100), 9, text="اشترِ 2 والثالث هدية", tag="div", fs=V(15, 12, 14), fw="900", ta={"d": "center"}, color=INKA, lh={"d": 1.2}, hm=False, rot=V(-12, 10, -10),
        fxs=[FX("ملصق دوّار", "selector .pb-t{display:flex;align-items:center;justify-content:center;width:100%;height:100%;border-radius:50%;background:#fcd34d;border:3px solid #1f1147;box-shadow:4px 4px 0 #1f1147;padding:10px;box-sizing:border-box;animation:naSp 14s linear infinite}@keyframes naSp{to{transform:rotate(360deg)}}")]),
 ]
-a_hero = canvas(a_free, dm(660, 880, 640), [aurora(k, "#fff8f0", "#ddd6fe99", "#fbcfe899", "#fde68a88", 16), blobs(k, "#c4b5fd", "#fcd34d", 320, .5)])
+a_hero = canvas(a_free, dm(700, 660, 640), [aurora(k, "#fff8f0", "#ddd6fe99", "#fbcfe899", "#fde68a88", 16), blobs(k, "#c4b5fd", "#fcd34d", 320, .5)])
 def a_op(txt, sz=64):
     return C([W("heading", text=txt, tag="div", fs=dm(sz, 44), fw="900", ta={"d": "center"}, color="#ffffff", lh={"d": 1}, fxs=[FX("دائرة مشغّل", "selector .pb-t{display:block;width:84px;height:84px;line-height:80px;margin:0 auto;border-radius:50%;background:#ec4899;border:3px solid #1f1147;box-shadow:4px 4px 0 #1f1147}")], **anim("zoomIn", .7, .3))],
              w=dm(8, 100), va="center", pad=dm([0, 0, 0, 0]))
@@ -111,7 +106,7 @@ a_cats = S([C([*title("اختر إكسسواراتك", "نظارات وحقائ�
            pad=dm([40, 20, 70, 20], [24, 16, 40, 16]), fxs=[FX("خلفية كريمية", "selector{background:#fff8f0}")])
 a_prod = S([C([W("anchor", aid="products", aoff=dm(80)), *title("الأكثر لفتاً للنظر", "قطع تكمل إطلالتك", k, tha, tha["hfx"]("p"))["widgets"],
                W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, cardw=dm(330, 150), gap=dm(22, 12), rad=dm(26), cbg="#ffffff", bbg=VIO, pdemo="a",
-                 fxs=[FX("شبكة متراصّة بنسب الصور الطبيعية (بحدّ أدنى وأقصى للارتفاع)", "selector .pb-pgrid{display:block;column-count:3;column-gap:22px}@media(max-width:767px){selector .pb-pgrid{column-count:2;column-gap:12px}}selector .pb-pc{break-inside:avoid;margin-bottom:22px;border:3px solid #1f1147;box-shadow:6px 6px 0 #1f1147;transition:transform .3s,box-shadow .3s}selector .pb-pc:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 #1f1147}selector .pb-pci{aspect-ratio:auto;min-height:170px;max-height:440px;overflow:hidden}selector .pb-pci img{position:static;width:100%;height:auto;min-height:170px;max-height:440px;object-fit:cover;display:block}")])], w=100)],
+                 fxs=[FX("بطاقات موحَّدة بحدود سميكة وظل صلب", "selector .pb-pc{border:3px solid #1f1147;box-shadow:6px 6px 0 #1f1147;transition:transform .3s,box-shadow .3s}selector .pb-pc:hover{transform:translate(-3px,-3px);box-shadow:9px 9px 0 #1f1147}")])], w=100)],
           pad=dm([50, 20, 70, 20], [34, 16, 44, 16]), fxs=[FX("خلفية بيضاء", "selector{background:#ffffff}")])
 _pilot_reg("s-accessories", "store", "إكسسوارات", "متجر إكسسوارات — ميكس",
            "ملصقات مائلة بحدود سوداء سميكة وظلال صلبة تنتشر كمجموعة حول العنوان، ملصق عرض دوّار، معادلة Mix & Match بدوائر المشغّلين، بولارويد مائل للفئات وشبكة متراصّة بنسب الصور الطبيعية.",

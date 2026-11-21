@@ -98,10 +98,10 @@ def _nx_round(P, ring=None):
 # ───────── تخطيط الهيرو على الجوال (390): الصورة الرئيسية أولاً داخل الشاشة الأولى ثم النص؛ لا تُخفى الصور ولا يُترك فراغ مكانها ─────────
 # لكل نمط: مواضع الصور الثلاث (x%، y، w%، h بالبكسل) على الجوال، وبداية كتلة النص y0، وارتفاع القسم mh
 _NX_MOB = {
-    "collage": dict(y0=486, mh=1060, im=[(6, 14, 88, 300), (6, 330, 42, 124), (52, 330, 42, 124)]),
-    "arch":    dict(y0=420, mh=1000, im=[(13, 14, 74, 330), (68, 262, 27, 105), (4, 288, 22, 86)]),
-    "wide":    dict(y0=440, mh=1000, im=[(3, 14, 94, 220), (3, 250, 46, 150), (51, 250, 46, 150)]),
-    "circle":  dict(y0=330, mh=900,  im=[(17, 16, 66, 258), (66, 214, 24, 94), (10, 226, 22, 86)]),
+    "collage": dict(y0=346, mh=920,  im=[(6, 14, 88, 300)]),
+    "arch":    dict(y0=380, mh=960,  im=[(13, 14, 74, 330)]),
+    "wide":    dict(y0=270, mh=830,  im=[(3, 14, 94, 230)]),
+    "circle":  dict(y0=300, mh=870,  im=[(17, 16, 66, 258)]),
 }
 def _nx_mobile_hero(col, st):
     cfg = _NX_MOB[st]; imgs = [e for e in col if e["type"] == "image"]
@@ -118,39 +118,27 @@ def nx_hero(P, N, k):
         col = [
             FR("shape", 2, 120, 38, 560, 1, shape="ellipse", fill=soft, keep=False, op=.9, hm=True, fxs=[FX("هالة ناعمة", "selector{filter:blur(50px)}")]),
             FR("image", V(6, 6), V(60, 620), V(30, 52), V(600, 470), 3, src=IMG(A), alt=aa, fit="cover", hauto=False, fxs=[FX("قوس وإطار", "selector{overflow:hidden;border-radius:[[r]];box-shadow:0 0 0 8px [[ring]],0 36px 70px rgba(0,0,0,.16)}selector .pb-im{width:100%;height:100%;object-fit:cover;object-position:[[p]]}", r=("التدوير", "text", ARCH), p=("نقطة التركيز", "text", "50% 40%"), ring=("لون الحلقة", "text", P["card"]))], **anim("zoomIn", 1, .1)),
-            FR("image", V(30, 44), V(380, 940), V(18, 40), V(220, 160), 4, src=IMG(B), alt=ab, fit="cover", hauto=False, fxs=[_nx_round(P), focus("50% 50%")], **anim("zoomIn", .9, .3)),
-            FR("image", V(2.5, 60), V(80, 700), V(14, 32), V(150, 125), 5, src=IMG(Cc), alt=ac, fit="cover", hauto=False, fxs=[_nx_round(P, acc), focus("50% 50%")], **anim("zoomIn", .9, .45)),
-            FR("heading", 33, 520, 11, None, 7, text="جديد", tag="p", fs=V(22, 18), fw="900", ta={"d": "center"}, color=P["onacc"], lh={"d": 1.1}, hm=True, fxs=[FX("ملصق", "selector .pb-t{background:[[c]];border-radius:999px;padding:.55em 1.1em;display:inline-block;transform:rotate(-8deg)}", c=("اللون", "text", acc))], **anim("zoomIn", .7, .7)),
         ]
         mh = dm(720, 1260, 700)
     elif st == "wide":
         def tall(img, alt, x, y, w, h, z, d, my, mh_, mx, mw):
             return FR("image", V(x, mx), V(y, my), V(w, mw), V(h, mh_), z, src=IMG(img), alt=alt, fit="cover", hauto=False, fxs=[_nx_imgframe(P, r + 4, ring=False), focus("50% 40%")], **anim("fadeUp", .9, d))
         col = [
-            tall(A, aa, 2, 70, 17, 520, 3, .1, 640, 300, 3, 46),
-            tall(B, ab, 19.8, 130, 17, 440, 3, .25, 720, 250, 51, 46),
-            tall(Cc, ac, 37.6, 90, 14.5, 480, 3, .4, 960, 270, 3, 46),
-            FR("shape", 2, 600, 50, 10, 2, shape="rect", fill=acc, keep=False, hm=True),
-            FR("heading", 2, 625, 50, None, 4, text="مجموعة الموسم", tag="p", fs=V(14, 13), fw="800", ta={"d": "start"}, color=P["mut"], hm=True),
+            tall(A, aa, 3, 70, 44, 520, 3, .1, 14, 230, 3, 94),
+            FR("shape", 3, 610, 44, 10, 2, shape="rect", fill=acc, keep=False, hm=True),
         ]
         mh = dm(720, 1280, 700)
     elif st == "circle":
         col = [
             FR("shape", 3, 70, 42, 560, 1, shape="ellipse", fill=soft, keep=False, op=.8, hm=True),
             FR("image", V(6, 8), V(80, 640), V(33, 62), V(470, 280), 3, src=IMG(A), alt=aa, fit="cover", hauto=False, fxs=[FX("دائرة كبيرة بحلقة", "selector{overflow:hidden;border-radius:999px;box-shadow:0 0 0 10px [[c]],0 40px 80px rgba(0,0,0,.2)}selector .pb-im{width:100%;height:100%;object-fit:cover}", c=("لون الحلقة", "text", P["card"])), focus("50% 40%")], **anim("zoomIn", 1, .1)),
-            FR("image", V(33, 56), V(60, 940), V(15, 34), V(190, 130), 4, src=IMG(B), alt=ab, fit="cover", hauto=False, fxs=[_nx_round(P, acc), focus("50% 50%")], **anim("zoomIn", .9, .3)),
-            FR("image", V(30, 4), V(400, 940), V(16, 34), V(200, 130), 5, src=IMG(Cc), alt=ac, fit="cover", hauto=False, fxs=[_nx_round(P), focus("50% 50%")], **anim("zoomIn", .9, .45)),
         ]
         mh = dm(720, 1260, 700)
     else:       # collage (الافتراضي)
         col = [
             FR("shape", 2, 140, 46, 520, 1, shape="ellipse", fill=soft, keep=False, op=.7, hm=True, fxs=[FX("هالة ناعمة", "selector{filter:blur(60px)}")]),
-            FR("shape", V(8.5, 12), V(100, 660), V(29, 52), V(540, 430), 2, shape="rect", fill=acc, keep=False, op=.16, rad=dm(r + 8), fxs=[FX("كتلة الإزاحة", "selector{border-radius:[[r]]px}", r=("التدوير px", "num", r + 8))]),
-            FR("image", V(4, 5), V(60, 620), V(29, 52), V(540, 430), 3, src=IMG(A), alt=aa, fit="cover", hauto=False, fxs=[_nx_imgframe(P, r + 6, ring=False), focus("50% 40%")], **anim("zoomIn", 1, .1)),
-            FR("image", V(24, 42), V(330, 880), V(23, 50), V(290, 290), 4, src=IMG(B), alt=ab, fit="cover", hauto=False, fxs=[_nx_imgframe(P, r), focus("50% 50%")], **anim("fadeUp", .9, .3)),
-            FR("image", V(36, 66), V(60, 700), V(13, 34), V(150, 130), 5, src=IMG(Cc), alt=ac, fit="cover", hauto=False, fxs=[_nx_round(P), focus("50% 50%")], **anim("zoomIn", .9, .45)),
-            FR("shape", 40, 320, 10.5, 118, 6, shape="ellipse", fill=_fitbg(acc, P["onacc"]), keep=False, hm=True, fxs=[pulse(k + "b", "255,90,54", 2.8)], **anim("zoomIn", .7, .6)),
-            FR("heading", 40.4, 345, 9.7, None, 7, text="جديد\nالآن", tag="p", fs=V(22, 18), fw="900", ta={"d": "center"}, color=P["onacc"], lh={"d": 1.15}, hm=True, **anim("zoomIn", .7, .7)),
+            FR("shape", V(9, 12), V(100, 660), V(42, 52), V(540, 430), 2, shape="rect", fill=acc, keep=False, op=.16, rad=dm(r + 8), fxs=[FX("كتلة الإزاحة", "selector{border-radius:[[r]]px}", r=("التدوير px", "num", r + 8))]),
+            FR("image", V(5, 5), V(60, 620), V(42, 52), V(540, 430), 3, src=IMG(A), alt=aa, fit="cover", hauto=False, fxs=[_nx_imgframe(P, r + 6, ring=False), focus("50% 40%")], **anim("zoomIn", 1, .1)),
         ]
         mh = dm(720, 1230, 700)
     cfg = _nx_mobile_hero(col, st); text = _nx_hero_text(P, N, k, 54, 44, mob_y0=cfg["y0"]); mh["m"] = cfg["mh"]

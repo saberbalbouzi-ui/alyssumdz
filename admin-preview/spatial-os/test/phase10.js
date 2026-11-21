@@ -22,7 +22,7 @@ async function boot(b, store, o = {}) {
   p.on("request", r => { if (/\/api\/index\.php/.test(r.url())) reqs.push({ t: Date.now(), m: r.method(), u: r.url(), fr: r.frame() !== p.mainFrame(), b: r.postData() || "" }); });
   await p.addInitScript(() => { if (window === window.top) { window.__lt = []; try { new PerformanceObserver(l => l.getEntries().forEach(e => window.__lt.push(Math.round(e.duration)))).observe({ entryTypes: ["longtask"] }); } catch (_) { } } });
   await p.addInitScript(() => { document.addEventListener("DOMContentLoaded", () => { if (window !== window.top) { const s = document.createElement("style"); s.textContent = "#toast,#toast2,.toast{pointer-events:none!important}"; document.head.appendChild(s); } }); });
-  const url = o.host ? store.spatial.replace("127.0.0.1", o.host) : store.spatial;
+  const url = (o.host ? store.spatial.replace("127.0.0.1", o.host) : store.spatial) + "?autoopen=1&nozoom=1";
   await p.goto(url); await p.waitForTimeout(600);
   const body = o.user ? { user: o.user, password: o.pw } : { password: store.pw };
   const st = o.noLogin ? 200 : await p.evaluate(async b2 => (await fetch("../../api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify(b2) })).status, body);
