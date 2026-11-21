@@ -24,7 +24,7 @@ ok("[M1] مجلد الهجرات يحوي 0001_baseline وأسماؤها مرت�
   ok("[M3] أول تشغيل يطبّق، والثاني idempotent (لا جديد، لا تغيير)", r1.applied.length === real.length && r2.applied.length === 0 && r2.skipped.length === real.length && objs(db).join("\n") === before);
   ok("[M3] هوية القاعدة تُكتب (beta) والتتبع يحوي الاسم وsha256", db.prepare("SELECT v FROM pf_meta WHERE k='environment'").get().v === "beta" && db.prepare("SELECT sha FROM pf_migrations WHERE name='0001_baseline.sql'").get().sha === real[0].sha); }
 /* M4: checksum وغير المعروفة */
-{ const { db, exec } = fresh(); await migrate({ exec, env: "beta", migrations: real }); const tampered = [{ ...real[0], sha: sha("tampered") }];
+{ const { db, exec } = fresh(); await migrate({ exec, env: "beta", migrations: real }); const tampered = real.map((m, i) => (i === 0 ? { ...m, sha: sha("tampered") } : m));
   ok("[M4] تعديل ملف هجرة مُطبَّقة ← migration_checksum_mismatch", /migration_checksum_mismatch:0001_baseline/.test(await tr(() => migrate({ exec, env: "beta", migrations: tampered }))));
   db.prepare("INSERT INTO pf_migrations (name,sha,applied_at) VALUES ('0099_ghost.sql','x','t')").run(); ok("[M4] هجرة مُطبَّقة غير موجودة على القرص ← unknown_applied_migration", /unknown_applied_migration:0099_ghost/.test(await tr(() => migrate({ exec, env: "beta", migrations: real })))); }
 /* M5: الهوية والبيئة */
@@ -49,5 +49,5 @@ ok("[M8] splitStatements: تعليقات -- تُزال والفصل عند ;+س�
 { const run = (a, env = {}) => spawnSync(process.execPath, ["--no-warnings", "platform/api/tools/d1-migrate.mjs", ...a], { cwd: new URL("../../../", import.meta.url).pathname, encoding: "utf8", env: { PATH: process.env.PATH, ...env } });
   const p = run(["--env", "production"]), b = run(["--env", "beta"]), n = run([]); const f = join(tmpdir(), "mig-cli-" + process.pid + ".db"); const l1 = run(["--env", "local", "--local-db", f]), l2 = run(["--env", "local", "--local-db", f]); rmSync(f, { force: true });
   ok("[M9] CLI: production ← rc=2؛ بلا --env ← rc=2؛ beta بلا CF_ACCOUNT_ID/CF_ZONE_ID ← رفض", p.status === 2 && n.status === 2 && b.status === 2 && /CF_ACCOUNT_ID/.test(b.stdout + b.stderr), b.stderr);
-  ok("[M9] CLI local: يطبّق ثم يعيد (idempotent)", l1.status === 0 && /جديدة: 1/.test(l1.stdout) && l2.status === 0 && /جديدة: 0/.test(l2.stdout), l1.stderr + l2.stderr); }
+  ok("[M9] CLI local: يطبّق ثم يعيد (idempotent)", l1.status === 0 && new RegExp("جديدة: " + real.length).test(l1.stdout) && l2.status === 0 && /جديدة: 0/.test(l2.stdout), l1.stderr + l2.stderr); }
 done();

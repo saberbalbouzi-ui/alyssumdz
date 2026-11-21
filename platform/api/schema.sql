@@ -319,3 +319,10 @@ CREATE TABLE IF NOT EXISTS beta_feedback (
   id INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, message TEXT NOT NULL, page TEXT NULL, contact TEXT NULL, tenant_id INTEGER NULL, version TEXT NULL, created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS beta_usage (tenant_id INTEGER NOT NULL, day TEXT NOT NULL, requests INTEGER NOT NULL DEFAULT 0, orders INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (tenant_id, day));
+-- LAURA (الوكيل التنفيذي): إجراءات بانتظار موافقة المستخدم الصريحة قبل أي تعديل. تُنفَّذ مرة واحدة (claim ذرّي) وتُحذف بعد يوم.
+CREATE TABLE IF NOT EXISTS lr_pending (
+  id TEXT PRIMARY KEY, tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, key_id INTEGER NOT NULL, actor_sub TEXT NOT NULL DEFAULT '',
+  tool TEXT NOT NULL, args TEXT NOT NULL, args_hash TEXT NOT NULL, summary TEXT NOT NULL, lang TEXT NOT NULL DEFAULT 'ar',
+  state TEXT NOT NULL DEFAULT 'pending', result TEXT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, decided_at INTEGER NULL
+);
+CREATE INDEX IF NOT EXISTS ix_lr_pending ON lr_pending (tenant_id, state, expires_at);

@@ -2,10 +2,14 @@
 // آمن: لا يعمل إلا لمدير مسجّل الدخول (is_admin بتوكن جلسته)، ومسارات مسموحة فقط، والمفتاح سرّ في الخادم.
 // الأسرار: PLATFORM_URL (https://api.alyssumhub.fyi) و PLATFORM_KEY (pk_live_… لهذا الموقع).
 // النشر: functions/deploy?slug=platform-proxy مع إطفاء Verify JWT (الدالة تتحقق بنفسها).
+import { claimsFromStaffMe, isLauraPath, signActor } from "./laura-actor.ts";
 const URL_ = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const PF = (Deno.env.get("PLATFORM_URL") ?? "").replace(/\/+$/, "");
 const KEY = Deno.env.get("PLATFORM_KEY") ?? "";
+// LAURA: سرّ توقيع الهوية المشترك مع الـWorker (LAURA_ACTOR_SECRET في الطرفين) + رقم مستأجر هذا الموقع في المنصة.
+const ASECRET = Deno.env.get("LAURA_ACTOR_SECRET") ?? "";
+const TID = Number(Deno.env.get("PLATFORM_TENANT_ID") ?? "0");
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -86,15 +90,28 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "method" }, 405);
   if (!PF || !KEY) return json({ error: "not_configured" }, 503);
-  const adm = await fetch(`${URL_}/rest/v1/rpc/is_admin`, { method: "POST", headers: { apikey: ANON, Authorization: req.headers.get("Authorization") ?? "", "Content-Type": "application/json" }, body: "{}" });
-  if (!adm.ok || (await adm.json()) !== true) return json({ error: "unauthorized" }, 401);
   let b: any; try { b = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
   const method = String(b.method ?? "GET").toUpperCase(), path = String(b.path ?? "");
   const q = b.query && typeof b.query === "object" ? new URLSearchParams(Object.entries(b.query).map(([k, v]) => [k, String(v)])).toString() : "";
-  if (!ALLOW.some(([m, re]) => m === method && re.test(path))) return json({ error: "path_not_allowed" }, 400);
+  const lauraReq = isLauraPath(method, path);
+  let actorHdr = "";
+  if (lauraReq) {
+    // LAURA: المالك أو موظف نشط بدور؛ الصلاحيات من staff_me على الخادم (لا من المتصفح) وتُوقَّع للـWorker
+    if (!ASECRET || !(TID > 0)) return json({ error: "laura_not_configured" }, 503);
+    const me = await fetch(`${URL_}/rest/v1/rpc/staff_me`, { method: "POST", headers: { apikey: ANON, Authorization: req.headers.get("Authorization") ?? "", "Content-Type": "application/json" }, body: "{}" });
+    if (!me.ok) return json({ error: "unauthorized" }, 401);
+    const claims = claimsFromStaffMe(await me.json().catch(() => null), TID, Math.floor(Date.now() / 1000));
+    if (!claims) return json({ error: "unauthorized" }, 401);
+    actorHdr = await signActor(ASECRET, claims);
+  } else {
+    const adm = await fetch(`${URL_}/rest/v1/rpc/is_admin`, { method: "POST", headers: { apikey: ANON, Authorization: req.headers.get("Authorization") ?? "", "Content-Type": "application/json" }, body: "{}" });
+    if (!adm.ok || (await adm.json()) !== true) return json({ error: "unauthorized" }, 401);
+    if (!ALLOW.some(([m, re]) => m === method && re.test(path))) return json({ error: "path_not_allowed" }, 400);
+  }
   try {
     const h: Record<string, string> = { Authorization: "Bearer " + KEY, "Content-Type": "application/json" };
     if (b.idempotencyKey) h["Idempotency-Key"] = String(b.idempotencyKey).slice(0, 120);
+    if (actorHdr) h["X-Laura-Actor"] = actorHdr;
     const r = await fetch(PF + path + (q ? "?" + q : ""), { method, headers: h, body: method === "GET" || method === "DELETE" || b.body == null ? undefined : JSON.stringify(b.body), redirect: "manual", signal: AbortSignal.timeout(30000) });
     let data: unknown = null; const t = (await r.text()).slice(0, 500000); try { data = JSON.parse(t); } catch { data = t; }
     return json({ ok: true, status: r.status, data });

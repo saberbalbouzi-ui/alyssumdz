@@ -118,7 +118,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       if (!r) { const w = await ctx.window("bad:" + ip, 30, 60); if (w !== null) throw new HttpError(429, "rate_limited", "محاولات مصادقة فاشلة كثيرة", null, { "Retry-After": String(w) }); throw new HttpError(401, "invalid_token", "رمز الوصول غير صالح أو منتهٍ أو ملغى", null, { "WWW-Authenticate": 'Bearer error="invalid_token"' }); }
       if (!scope || !r.scopes.includes(scope)) throw new HttpError(403, "insufficient_scope", `رمز التطبيق لا يملك النطاق ${scope || "(مسار غير متاح للتطبيقات)"}`, null, { "WWW-Authenticate": 'Bearer error="insufficient_scope"' });
       const wl = await ctx.window(`app:${r.app.installation_id}`, r.rate ?? 300, 60); if (wl !== null) throw new HttpError(429, "rate_limited", "تجاوز التطبيق حدّ الطلبات", null, { "Retry-After": String(wl) });
-      return { tenant: r.tenant, key: { id: 0 }, pub: false, origin: null, mode: "live", app: r.app };
+      return { tenant: r.tenant, key: { id: 0 }, pub: false, origin: null, mode: "live", app: r.app, scopes: r.scopes };
     }
     const k = /^pk_(live|test|pub)_[0-9a-f]{40}$/.test(tok) ? await db.one("SELECT * FROM pf_keys WHERE key_hash=? AND revoked_at IS NULL", await sha256Hex(tok)) : null;
     const t = k ? await db.one("SELECT * FROM pf_tenants WHERE id=?", k.tenant_id) : null;
@@ -176,7 +176,7 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
       const req = { method: m, path: p, params: mm.groups ?? {}, query: q, headers: hd, ip, raw, json() { try { const j = JSON.parse(raw); if (j && typeof j === "object" && !Array.isArray(j)) return j; } catch { /* يسقط إلى الخطأ */ } throw new HttpError(400, "validation_error", "جسم الطلب يجب أن يكون JSON"); } };
       if (rt.opts.auth === "admin") req.actor = await authAdmin(hd);
       else if (rt.opts.auth === "tenant") {
-        const a = await authTenant(hd, rt.opts.scope, ip); if (moduleOff(a.tenant.settings, rt.mod)) throw new HttpError(403, "module_disabled", `وحدة ${rt.mod} معطّلة لهذا المستأجر`); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin; req.app = a.app ?? null;
+        const a = await authTenant(hd, rt.opts.scope, ip); if (moduleOff(a.tenant.settings, rt.mod)) throw new HttpError(403, "module_disabled", `وحدة ${rt.mod} معطّلة لهذا المستأجر`); req.tenant = a.tenant; req.mode = a.mode; req.pub = a.pub; req.origin = a.origin; req.app = a.app ?? null; req.keyId = a.key?.id ?? 0; req.scopes = Array.isArray(a.scopes) ? a.scopes : String(a.key?.scopes ?? "").split(",").filter(Boolean);
         const lim = rt.opts.limit; if (lim) { const wt = await ctx.window(`t${a.tenant.id}:${lim.key}`, lim.max, lim.win); if (wt !== null) throw new HttpError(429, "rate_limited", "تجاوزت الحدّ المسموح", null, { "Retry-After": String(wt) }); }
         if (ctx.requestGate) await ctx.requestGate(req, rt);
       }
@@ -195,6 +195,14 @@ export function createPlatform({ d1, modules = [], secret, adminToken = "", vaul
     await authTenant(hd, null, ip); throw new HttpError(404, "not_found", `مسار غير موجود: ${m} ${p}`);
   }
 
+  /** استدعاء داخلي لمسار حقيقي بنفس بيانات اعتماد الطلب الأصلي (الترويسة Authorization نفسها) فتُطبَّق كل فحوص النطاقات والحدود والوحدات المعطّلة كما لو استدعاه العميل مباشرة؛
+   *  لا يرفع صلاحية أبداً. يرفض مسارات /v1/laura (منع التداخل الذاتي) والإدارة /admin. يُرجع { status, json } ولا يرمي لأخطاء HTTP. (تستعمله وحدة LAURA لأدواتها) */
+  ctx.invoke = async (req, method, path, { query = {}, body = null } = {}) => {
+    const p = "/" + String(path).replace(/^\/+|\/+$/g, ""); if (/^\/(admin|v1\/laura)(\/|$)/.test(p)) return { status: 403, json: { error: { code: "forbidden", message: "مسار غير متاح للاستدعاء الداخلي" } } };
+    const hd = { authorization: req.headers?.authorization ?? "", ...(req.headers?.origin ? { origin: req.headers.origin } : {}) };
+    try { const r = await dispatch(method.toUpperCase(), p, query, hd, body == null ? "" : JSON.stringify(body), req.ip ?? "0"); let j = {}; try { j = JSON.parse(r.body ?? "{}") ?? {}; } catch { /* غير JSON */ } return { status: r.status, json: j }; }
+    catch (e) { if (e instanceof HttpError) return { status: e.status, json: { error: { code: e.code, message: e.message } } }; throw e; }
+  };
   /** للـcron: ينفّذ cron كل وحدة ويوزّع الأحداث المستحقة على معالجات الوحدات (مع إعادة محاولة بتباعد) */
   const handlersMap = () => { const h = {}; for (const m of modules) for (const [t, f] of Object.entries(m.on ?? {})) (h[t] ??= []).push({ mod: m.id, fn: f }); return h; };
   /** معالجة حدث واحد: كل معالج مستقل (ما نجح لا يُعاد، وفشل وحدة لا يعطّل غيرها)؛ الفشل يُجدول بتباعد */
