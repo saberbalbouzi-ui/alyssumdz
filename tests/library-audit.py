@@ -26,6 +26,7 @@ touched = {tid(f) for f in changed if f.endswith(".json") and not f.endswith("in
 PH5_TEXT = {"عرض الاستوديو — الليلة فقط": "عرض الاستوديو", "استعملي الكود قبل منتصف الليل.": "استعملي كود الخصم عند الطلب."}
 def norm5(o):
     if isinstance(o, dict):
+        if o.get("type") == "testimonial" or (o.get("type") == "image" and "placeholder/review.svg" in str((o.get("set") or {}).get("src", ""))): return {"type": "review"}      # الآراء صور لقطات (طلب صاحب المتجر): لا فرق في النطاق
         t = o.get("type"); st = o.get("set") if isinstance(o.get("set"), dict) else None
         if st is not None and t == "countdown": st = {k: v for k, v in st.items() if k not in ("on", "mode", "end")}
         elif st is not None and t == "coupon": st = {k: v for k, v in st.items() if k not in ("on", "cpcode")}
@@ -52,8 +53,10 @@ def _vw(n, out):
             if k == "cols": _vw(c, out)
             else: out.append(c)
     return out
+def _wt(w):      # الآراء صور لقطات يضعها الزبون (placeholder/review.svg): تُعدّ آراءً كما كانت قبل التحويل
+    return "testimonial" if w["type"] == "image" and "placeholder/review.svg" in str((w.get("set") or {}).get("src", "")) else w["type"]
 def _wcount(pg):
-    ws = [w for sc in pg.get("sections", []) for w in _vw(sc, [])]; return collections.Counter(w["type"] for w in ws)
+    ws = [w for sc in pg.get("sections", []) for w in _vw(sc, [])]; return collections.Counter(_wt(w) for w in ws)
 lost = {}; names = collections.Counter(); gen_stats = []; orders = set(); fem_img = []
 for it in idx:
     if it.get("kind") != "page" or it["id"] not in BATCH: continue      # الستة خارج الدفعات استثناء محدود لا يُنوَّع
@@ -65,7 +68,7 @@ for it in idx:
         if d_: lost[it["id"]] = d_
     seq = ""
     for sc in pg["sections"]:
-        ws = _vw(sc, []); ty = [w["type"] for w in ws]
+        ws = _vw(sc, []); ty = [_wt(w) for w in ws]
         if ty.count("counter") >= 3 and len(sc.get("cols", [])) >= 3 and not ty.count("testimonial"):
             vals = [(w["set"].get("n"), w["set"].get("pre", ""), w["set"].get("suf", "")) for w in ws if w["type"] == "counter"]
             if vals == [(12000, "+", ""), (58, "", ""), (98, "", "%"), (24, "", "h")]: gen_stats.append(it["id"])
@@ -73,7 +76,7 @@ for it in idx:
         elif ty.count("testimonial") >= 3:
             seq += "T"
             for w in ws:
-                if w["type"] == "testimonial":
+                if w["type"] == "testimonial":      # (قبل التحويل إلى صور فقط)
                     names[w["set"].get("name")] += 1
                     if re.match(r"^(سارة|ليلى|مريم|إيمان|نادية|هناء|آسيا|سمية|فاطمة|خديجة|ريم|نسرين|وفاء|سلمى|أميرة|جيهان|حنان|سهام|لمياء|شيماء)\b", w["set"].get("name", "")) and w["set"].get("img"): fem_img.append(it["id"])
         elif "coupon" in ty: seq += "P"

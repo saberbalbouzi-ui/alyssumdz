@@ -264,7 +264,7 @@ f_big = S([C([W("marquee", mqt="NEW COLLECTION   ✦   FREE DELIVERY   ✦   COD
 f_prod = S([C([W("anchor", aid="products", aoff=dm(80)), *title("وصل حديثاً", "اختياراتنا لهذا الموسم", k, thf, thf["hfx"]("p"))["widgets"],
                W("products", mode="all", limit=8, btn="اطلب الآن", showOld=True, cardw=dm(330, 150), gap=dm(24, 12), rad=dm(0), cbg="#ffffff", bbg=INK, pdemo="a",
                  fxs=[FX("بطاقة تحريرية", "selector .pb-pc{border:0;border-radius:0;box-shadow:none;transition:transform .5s cubic-bezier(.2,.8,.2,1)}selector .pb-pc:hover{transform:translateY(-8px)}selector .pb-pc:hover img{transform:scale(1.06)}selector .pb-pc img{transition:transform .8s}selector .pb-pc .pb-pcb{border-radius:0}"),
-                      FX("فسيفساء: منتج مُبرَز 2×2", "@media(min-width:768px){selector .pb-pgrid{grid-auto-flow:dense}selector .pb-pc:first-child{grid-column:span 2;grid-row:span 2}selector .pb-pc:first-child .pb-pci{aspect-ratio:1/1}}"), cardratio("1/1")])], w=100)],
+                      cardratio("4/5")])], w=100)],
           pad=dm([60, 20, 70, 20], [44, 16, 48, 16]), fxs=WH)
 f_size = S([C([W("heading", text="دليل المقاسات", tag="h2", fs=dm(36, 26), fw="900", ta={"d": "center"}, color=INK, **anim("fadeUp")),
                W("table", tbl="المقاس | الصدر | الخصر | الطول\nS | 90 | 74 | 66\nM | 96 | 80 | 68\nL | 102 | 86 | 70\nXL | 108 | 92 | 72", thead=True, tzb=True, thbg=INK, thc="#ffffff", tbd=INK, tbfs=dm(17), tbal="center", **anim("fadeUp", .8, .1))], w=100)],

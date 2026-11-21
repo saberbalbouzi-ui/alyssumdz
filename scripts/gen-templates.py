@@ -3,7 +3,7 @@
 تشغيل: python3 scripts/gen-templates.py
 القوالب = أقسام مطوّر الصفحات (عناصر حقيقية) + تأثيرات CSS قابلة للتعديل في `set.fxs`.
 """
-import json, os, random, string, copy
+import re, json, os, random, string, copy
 R = random.Random(20261008)
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "assets", "pages", "templates")
@@ -251,12 +251,38 @@ def PH(n, top="rgba(0,0,0,.05)", bot="rgba(0,0,0,.6)", ang=180, pos="center", **
     s.update(x); return s
 
 TEMPLATES = []
+_CARD_SKIP = {"s-perfume", "s-skincare", "s-makeup", "s-women", "s-men", "s-kids", "s-alyssum", "p-focus-honey"}      # محمية/خاصة بالبائع: لا تُمسّ
+def _unify_cards(n):
+    """يوحّد بطاقات المنتجات في كل القوالب: العرض 260 (مكتب) / 160 (جوال) ونسبة صورة 4/5؛ الباقي (ارتفاع متساوٍ، عنوان بسطرين) من CSS المطوّر."""
+    if isinstance(n, dict):
+        if n.get("type") == "products" and isinstance(n.get("set"), dict):
+            st = n["set"]; st["cardw"] = {"d": 260, "m": 160}
+            for f in st.get("fxs", []) or []:
+                if f.get("n") == "نسبة صورة البطاقة" and isinstance(f.get("p", {}).get("r"), dict): f["p"]["r"]["v"] = "4/5"
+                elif isinstance(f.get("tpl"), str) and ".pb-pci{" in f["tpl"]: f["tpl"] = re.sub(r"(\.pb-pci\{[^}]*?aspect-ratio:)(?!\[\[)[^;}]+", r"\g<1>4/5", f["tpl"])
+        for v in n.values(): _unify_cards(v)
+    elif isinstance(n, list):
+        for v in n: _unify_cards(v)
+REVIEW_PH = "assets/img/placeholder/review.svg"
+def _reviews_to_images(n, cnt=None):
+    """آراء الزبائن في القوالب = صور لقطات حقيقية يضعها الزبون (يستبدلها أو يرفعها أو يحذفها) بدل نصوص وأفاتارات مختلقة: كل عنصر testimonial يصير عنصر صورة بالمعرّف نفسه."""
+    cnt = cnt if cnt is not None else [0]
+    if isinstance(n, dict):
+        if n.get("type") == "testimonial":
+            cnt[0] += 1; n["type"] = "image"; n["set"] = {"src": REVIEW_PH, "alt": "لقطة رأي زبون %d" % cnt[0], "fit": "cover", "rad": {"d": 18}}
+        elif n.get("type") == "text" and isinstance(n.get("set"), dict) and "نصوص نموذجية للمعاينة" in str(n["set"].get("html", "")):
+            n["set"]["html"] = "<p>ضع هنا لقطات آراء عملائك الحقيقية — اضغط أي صورة لتغييرها أو احذفها</p>"
+        for v in n.values(): _reviews_to_images(v, cnt)
+    elif isinstance(n, list):
+        for v in n: _reviews_to_images(v, cnt)
 def reg(id, cat, fld, n, d, sections, page_extra=None):
     pg = {"v": 1, "title": n, "slug": "", "desc": "", "bg": "#ffffff", "ff": "", "header": False, "footer": False, "css": "", "sections": sections}
     if page_extra: pg.update(page_extra)
     if id not in ("s-alyssum", "p-focus-honey"): pg["sample"] = 1      # علامة «محتوى نموذجي»: يعرض المطوّر تنبيهاً غير مانع للتاجر لمراجعته (آراء/أرقام/عبارات/بيانات تواصل) قبل النشر
+    if id not in _CARD_SKIP: _unify_cards(pg["sections"])
     if cat == "store" and "localize_copy" in globals(): localize_copy(id, pg)      # نصوص وبيانات تجريبية خاصة بكل ثيم (gen-templates-copy.py)
     if cat == "store" and "variety" in globals(): variety(id, pg)      # تنويع الأرقام والأسماء وترتيب كتل النهاية بين القوالب (gen-templates-variety.py)
+    _reviews_to_images(pg["sections"])      # بعد variety (يعتمد على عناصر testimonial لترتيب كتل النهاية)
     TEMPLATES.append({"id": id, "cat": cat, "fld": fld, "n": n, "d": d, "kind": "page" if cat == "store" else "sec"})
     os.makedirs(OUT, exist_ok=True)
     json.dump(pg, open(os.path.join(OUT, id + ".json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
