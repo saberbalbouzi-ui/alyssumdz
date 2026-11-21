@@ -6,7 +6,7 @@ const AdminVerify = (() => {
   const A = () => (typeof Admin !== "undefined" ? Admin : null), $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const nz = x => String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[ً-ْـ]/g, "").toLowerCase().replace(/[^a-z0-9؀-ۿ]/g, "");
-  const S = { rows: [], q: {}, f: { from: "", to: "", prod: "", st: "" }, live: false, busy: false, note: "", did: false };
+  const S = { rows: [], q: {}, f: { from: "", to: "", prod: "", st: "" }, live: false, loose: false, busy: false, note: "", did: false };
   const ST = { nouvelle: "في انتظار التأكيد", confirmee: "مؤكَّد", expediee: "في الطريق", livree: "تم التسليم", annulee: "ملغاة", echec: "فشل/مرتجع" };
   const mm = (mask, plain) => { mask = String(mask || ""); plain = String(plain || ""); if (mask.length !== plain.length) return false; for (let k = 0; k < mask.length; k++) { if (mask[k] !== "*" && mask[k].toLowerCase() !== plain[k].toLowerCase()) return false; } return true; };
   const phoneOf = v => { const a = A(); return a && a.normalizePhone ? a.normalizePhone(v) : String(v || "").replace(/\D/g, ""); };
@@ -23,10 +23,20 @@ const AdminVerify = (() => {
     return true;
   }
   /* ── مطابقة سجلّ ياليدين المقنَّع (أول/آخر حرف فقط): الهاتف والاسم نمطياً (احتمالي)، والولاية والبلدية صريحة ── */
-  function maskMatch(r, q) {
+  const nameMask = (mask, names) => { const words = String(mask || "").split(/[\s.]+/).filter(w => /[^*]/.test(w)); if (!words.length) return false; return names.some(n => { const toks = String(n || "").split(/\s+/).filter(Boolean); return toks.length && words.every(w => toks.some(t => /\*/.test(w) ? mm(w, t) : nz(w) === nz(t))); }); };
+  /* الهاتف المقنَّع (05******33) يطابق آلاف الأرقام، فلا يُعرض طرد ياليدين مقنَّع بالهاتف وحده: يلزم أن يوافق اسمه المقنَّع اسماً معروفاً لهذا الرقم (من طلباته في اللوحة أو ما كتبتَه)
+     وأن توافق ولايته ولايات طلباته إن وُجدت؛ ويُظهر خيار «توسيع» الاحتمالات الأوسع (4 أرقام ظاهرة على الأقل). */
+  function maskMatch(r, q, ctx) {
     if (q.wil && nz(r.wilaya) !== q.wil) return false;
     if (q.com && !nz(r.commune).includes(q.com)) return false;
-    if (q.phone) { const m = String(r.phone || "").replace(/\s/g, ""); if (!m) return false; if (/\*/.test(m) ? !mm(m, q.phone) : phoneOf(m) !== q.phone) return false; }
+    if (q.phone) {
+      const m = String(r.phone || "").replace(/\s/g, ""); if (!m) return false;
+      if (!/\*/.test(m)) { if (phoneOf(m) !== q.phone) return false; }
+      else {
+        if (!mm(m, q.phone) || (m.match(/\d/g) || []).length < 4) return false;
+        if (!ctx.loose) { if (!ctx.names.length || !nameMask(r.name, ctx.names)) return false; if (ctx.wils.size && !ctx.wils.has(nz(r.wilaya))) return false; }
+      }
+    }
     if (q.name) { const words = String(r.name || "").split(/[\s.]+/).filter(w => /[^*]/.test(w)); if (!words.length) return false; if (!words.every(w => /\*/.test(w) ? q.nameWords.some(t => mm(w, t)) : q.nameTok.some(t => nz(w).includes(t) || t.includes(nz(w))))) return false; }
     return !!(q.phone || q.name || q.wil || q.com);
   }
@@ -42,7 +52,8 @@ const AdminVerify = (() => {
     /* طرود ياليدين المحمَّلة غير المربوطة بطلب هنا */
     try {
       const yd = (typeof AdminYd !== "undefined" && AdminYd.S && AdminYd.S.raw) || [];
-      yd.forEach(r => { if (!r || seen.has(r.tracking)) return; if (!maskMatch(r, q)) return; seen.add(r.tracking); let st = ""; try { st = a.allDeliveryCompanies().yalidine.mapStatus(r.status) || ""; } catch (e) { } rows.push({ src: "yd", date: r.date, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, product: String(r.product || ""), st: st === "__alert" ? "" : st, raw: r.status, co: coName("yalidine"), tracking: r.tracking, amount: Number(r.price) || 0, masked: /\*/.test(String(r.name || "") + String(r.phone || "")) }); });
+      const ctx = { loose: !!S.loose, names: [...new Set([q.rawName].concat(rows.filter(x => x.src === "order").map(x => x.name)).map(x => String(x || "").trim()).filter(Boolean))], wils: new Set(rows.filter(x => x.src === "order").map(x => nz(x.wilaya)).filter(Boolean)) };
+      yd.forEach(r => { if (!r || seen.has(r.tracking)) return; if (!maskMatch(r, q, ctx)) return; seen.add(r.tracking); let st = ""; try { st = a.allDeliveryCompanies().yalidine.mapStatus(r.status) || ""; } catch (e) { } rows.push({ src: "yd", date: r.date, name: r.name, phone: r.phone, wilaya: r.wilaya, commune: r.commune, product: String(r.product || ""), st: st === "__alert" ? "" : st, raw: r.status, co: coName("yalidine"), tracking: r.tracking, amount: Number(r.price) || 0, masked: /\*/.test(String(r.name || "") + String(r.phone || "")) }); });
     } catch (e) { }
     /* الطرود الخارجية المحفوظة (سُجّلت عند الشركة مباشرة) */
     try {
@@ -75,7 +86,7 @@ const AdminVerify = (() => {
     q.name = q.rawName; q.nameTok = q.rawName.split(/\s+/).map(nz).filter(Boolean); q.nameWords = q.rawName.split(/\s+/).filter(Boolean);
     if (q.phone && q.phone.replace(/\D/g, "").length < 6) { S.note = "الهاتف قصير جداً"; draw(); return; }
     if (!q.phone && !q.name && !q.wil && !q.com) { S.note = "أدخل هاتفاً أو اسماً أو ولاية أو بلدية"; draw(); return; }
-    S.q = q; S.live = !!($("cv-live") || {}).checked; S.did = true; S.busy = true; S.note = ""; S.f = { from: "", to: "", prod: "", st: "" }; draw();
+    S.q = q; S.live = !!($("cv-live") || {}).checked; S.loose = !!($("cv-loose") || {}).checked; S.did = true; S.busy = true; S.note = ""; S.f = { from: "", to: "", prod: "", st: "" }; draw();
     const rows = collect(q);
     if (S.live) S.note = await liveWecan(q, rows);
     S.rows = rows.sort((x, y) => tms(y.date) - tms(x.date)); S.busy = false; draw();
@@ -116,7 +127,7 @@ const AdminVerify = (() => {
     const body = rows.map(r => '<tr><td dir="ltr">' + esc(String(r.date || "").slice(0, 10)) + "</td><td>" + esc(r.name || "—") + tag(r) + '</td><td dir="ltr">' + esc(r.phone || "—") + "</td><td>" + esc([r.wilaya, r.commune].filter(Boolean).join(" / ") || "—") + '</td><td class="cv-p">' + esc(r.product || "—") + '</td><td><span class="pill st-' + esc(r.st || "nouvelle") + '">' + esc(ST[r.st] || r.raw || "—") + "</span>" + (r.raw && ST[r.st] && r.src !== "order" ? "<br><small>" + esc(r.raw) + "</small>" : "") + "</td><td>" + esc(r.co || "—") + (r.tracking ? '<br><small dir="ltr">' + esc(r.tracking) + "</small>" : "") + "</td><td>" + (r.amount ? esc(r.amount.toLocaleString("fr-DZ")) + " دج" : "—") + "</td></tr>").join("");
     bg.innerHTML = '<div class="modal"><h3>🔎 تحقق من زبون</h3><div class="hint">ابحث بأيٍّ من الأربعة (أو أكثر معاً). يشمل كل طلبات اللوحة (الحديثة والمؤرشفة) لكل الشركات، وطرود ياليدين المحمَّلة والطرود الخارجية.</div>'
       + '<div class="cv-f"><label>الهاتف<input id="cv-phone" type="tel" inputmode="tel" dir="ltr" data-phone="1" placeholder="05XX XX XX XX أو الصق نصاً فيه الرقم"></label><label>الاسم<input id="cv-name" placeholder="الاسم الكامل أو جزء منه"></label><label>الولاية<select id="cv-wil">' + opts() + '</select></label><label>البلدية<input id="cv-com" placeholder="البلدية"></label></div>'
-      + '<div class="cv-row"><button class="small" type="button" data-cv="go"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ جارِ البحث…" : "🔎 تحقق") + '</button><label style="display:inline-flex;gap:.3rem;align-items:center;font-weight:700"><input type="checkbox" id="cv-live"' + (S.live ? " checked" : "") + '> بحث مباشر في WeCan أيضاً</label><button class="small gray" type="button" data-cv="close">إغلاق</button></div>'
+      + '<div class="cv-row"><button class="small" type="button" data-cv="go"' + (S.busy ? " disabled" : "") + '>' + (S.busy ? "⏳ جارِ البحث…" : "🔎 تحقق") + '</button><label style="display:inline-flex;gap:.3rem;align-items:center;font-weight:700"><input type="checkbox" id="cv-live"' + (S.live ? " checked" : "") + '> بحث مباشر في WeCan أيضاً</label><label style="display:inline-flex;gap:.3rem;align-items:center;font-weight:700" title="الهاتف عند ياليدين مقنَّع (أول رقمين وآخر رقمين فقط) فقد يطابق أرقاماً أخرى"><input type="checkbox" id="cv-loose"' + (S.loose ? " checked" : "") + '> توسيع: طرود ياليدين المقنَّعة المحتملة</label><button class="small gray" type="button" data-cv="close">إغلاق</button></div>'
       + (S.note ? '<div class="hint" style="color:var(--g-amber,#b45309);font-weight:700">' + esc(S.note) + "</div>" : "")
       + (S.did ? '<div class="cv-v ' + sm.cls + '">' + esc(sm.verdict) + '</div><div class="cv-sum"><span class="cv-chip">النتائج ' + sm.c.n + '</span><span class="cv-chip">تم التسليم ' + sm.c.livree + '</span><span class="cv-chip">فشل/مرتجع ' + sm.c.echec + '</span><span class="cv-chip">ملغاة ' + sm.c.annulee + '</span><span class="cv-chip">قيد المعالجة ' + sm.c.wait + "</span></div>"
         + '<div class="cv-f"><label>من تاريخ<input id="cv-from" type="date" value="' + esc(S.f.from) + '"></label><label>إلى تاريخ<input id="cv-to" type="date" value="' + esc(S.f.to) + '"></label><label>المنتج<select id="cv-prod"><option value="">كل المنتجات</option>' + prods.map(p => "<option" + (S.f.prod === p ? " selected" : "") + ">" + esc(p) + "</option>").join("") + '</select></label><label>حالة الطلب<select id="cv-st"><option value="">كل الحالات</option>' + sts.map(s => '<option value="' + esc(s) + '"' + (S.f.st === s ? " selected" : "") + ">" + esc(ST[s] || s) + "</option>").join("") + "</select></label></div>"
