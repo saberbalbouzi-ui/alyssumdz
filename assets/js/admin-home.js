@@ -161,8 +161,9 @@ const AdminHome = (() => {
   /* صافي كل شركة توصيل (ما يخصّك بعد العمولة والتوصيل والإرجاع) كما في «تفاصيل الدفع» */
   /* إحصائيات اليوم: الطلبات التي أُرسلت اليوم إلى شركات التوصيل (من سجلّ الإرسال نفسه الذي يقرأه «المرسَلة اليوم») — العدد، السعر الإجمالي (مجموع ما يدفعه الزبائن)، سعر التوصيل (تعريفة الشركة إن عُرفت وإلا رسم الطلب)، والصافي = الإجمالي − التوصيل (قبل كلفة البضاعة) */
   function todayStats() {
-    const a = A(); if (!a || typeof AdminYd === "undefined" || !AdminYd.sentLog) return null;
-    const f = new Date(); f.setHours(0, 0, 0, 0); const from = f.getTime(), to = from + 864e5, reg = AdminYd.sentLog() || {}, seen = new Set(), by = {}; let n = 0, total = 0, del = 0, miss = 0, est = 0;
+    const a = A(); if (!a) return null;
+    let reg = {}; try { reg = (typeof AdminYd !== "undefined" && AdminYd.sentLog) ? (AdminYd.sentLog() || {}) : (JSON.parse(localStorage.getItem("alyssum_yd_sent") || "{}") || {}); } catch (e) { reg = {}; }      /* على الهاتف قد لا يكون AdminYd جاهزاً عند أول رسم: يُقرأ السجلّ المحفوظ مباشرة */
+    const f = new Date(); f.setHours(0, 0, 0, 0); const from = f.getTime(), to = from + 864e5, seen = new Set(), by = {}; let n = 0, total = 0, del = 0, miss = 0, est = 0;
     Object.keys(reg).forEach(tr => {
       const x = reg[tr]; if (!x || !(x.at >= from && x.at < to) || seen.has(String(x.id))) return; seen.add(String(x.id)); n++;
       const o = (a.orders || []).find(q => String(q.id) === String(x.id)); if (!o) { miss++; return; }
@@ -173,6 +174,8 @@ const AdminHome = (() => {
   }
   function todayCard() {
     const T = todayStats(); if (!T) return "";
+    /* سجلّ الإرسال يصل من الخادم بعد الإقلاع (خصوصاً على الهاتف): إعادة رسم هادئة حتى 3 مرات إن كان العدّ صفراً */
+    if (!T.n && (S._tr = (S._tr || 0) + 1) <= 3) setTimeout(() => { try { refreshSoft(); } catch (e) { } }, 3500 * S._tr);
     const tile = (lb, v, sub, red) => '<div class="ah-pc" data-noco><b>' + lb + '</b><strong' + (red ? ' style="color:#fca5a5"' : "") + '>' + v + '</strong><span>' + sub + '</span></div>';
     const hint = (T.miss ? " · " + num(T.miss) + " طلب محذوف لا يُحسب مبلغه" : "") + (T.est ? " · تعريفة الشركة غير معروفة لـ" + num(T.est) + " فاستُعمل رسم الطلب" : "");
     return '<div class="ah-card" style="margin:0 0 14px"><h3>إحصائيات اليوم <small>الطلبات المرسَلة اليوم إلى شركات التوصيل</small></h3><div class="ah-pay">'
