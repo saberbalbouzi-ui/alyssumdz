@@ -278,7 +278,7 @@ const AdminHome = (() => {
     let rr = []; try { rr = a.retReadyList ? a.retReadyList() : []; } catch (e) { }
     let orph = []; try { orph = (typeof AdminYd !== "undefined" && AdminYd.orphans) ? AdminYd.orphans() : []; } catch (e) { }
     let dgHint = 0; try { if (typeof AdminKind !== "undefined" && AdminKind.kind() === "physical" && typeof AdminStores !== "undefined" && AdminStores.kind() !== "digital") dgHint = (a.products || []).filter(p => p && p.digital && p.active !== false).length; } catch (e) { }
-    const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) ? (window.AdminShortName ? window.AdminShortName(SITE_CFG.name) : SITE_CFG.name) : "متجرك";
+    const name = (window.AdminPanelName && window.AdminPanelName()) || ((typeof SITE_CFG !== "undefined" && SITE_CFG.name) ? SITE_CFG.name : "متجرك");
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
     const __html = `
 <div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>${od ? `<button type="button" class="ah-lnk" data-go="callcenter"><b>${num(od)}</b> طلب ينتظر مكالمة منذ أكثر من يوم</button> · ` : ""}نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>

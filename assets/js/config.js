@@ -4,6 +4,7 @@ const CONFIG = {
   /* هوية الموقع — الملف الوحيد الذي يُعدَّل عند نقل الموقع إلى مالك جديد (انظر HANDOVER.md) */
   SITE: {
     name: "ALYSSUM",
+    panelName: "أليسوم",                // الاسم العربي في لوحة التحكم فقط (المتجر يبقى «ALYSSUM»)؛ اختياري
     domain: "alyssumdz.com",
     waNumber: "213559237239",           // رقم واتساب بالصيغة الدولية بلا + (يمكن تغييره أيضاً من اللوحة ← الدفع)
     instagram: "alyssumdzofficiel",

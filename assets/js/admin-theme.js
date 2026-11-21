@@ -50,7 +50,8 @@
   /* اسم العرض في اللوحة */
   function shortName(n){ n = String(n || ""); if(!/[\u0600-\u06ff]/.test(n)) return n; var lat = n.match(/[A-Za-z][A-Za-z0-9&'.-]*/g) || []; if(lat.length !== 1) return n; var t = n.replace(lat[0], " ").replace(/\s+/g, " ").trim(); return /[\u0600-\u06ff]/.test(t) ? t : n; }      /* كلمة لاتينية واحدة فقط تُحذف («آليسوم ALYSSUM» ← «آليسوم»)؛ أكثر من كلمة (Dz Shop) يبقى كما هو */
   window.AdminShortName = shortName;
-  function acctName(){ try{ return (typeof SITE_CFG !== "undefined" && SITE_CFG.name) ? shortName(SITE_CFG.name) : ""; }catch(e){ return ""; } }
+  function acctName(){ try{ if(typeof SITE_CFG === "undefined") return ""; return SITE_CFG.panelName ? String(SITE_CFG.panelName) : (SITE_CFG.name ? shortName(SITE_CFG.name) : ""); }catch(e){ return ""; } }      /* اسم اللوحة: panelName (اختياري في config.js) وإلا الاسم بلا كلمته اللاتينية الواحدة */
+  window.AdminPanelName = acctName;
   function mk(tag, id, cls, html, label){ var e = document.createElement(tag); e.id = id; if(cls) e.className = cls; if(tag === "button") e.type = "button"; if(html) e.innerHTML = html; if(label){ e.setAttribute("aria-label", label); e.title = label; } return e; }
   function navOpen(on){
     /* عند الفتح: إن كانت «الرئيسية» هي الصفحة الحالية تبقى كل المجموعات مطويّة، وإلا تُفتح مجموعة القسم الحالي */
