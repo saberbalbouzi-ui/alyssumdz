@@ -29,6 +29,9 @@ run() {
 ONLY="${SPATIAL_ONLY:-}"; want() { [ -z "$ONLY" ] || [[ ",$ONLY," == *",$1,"* ]]; }
 want nlu-eval        && run nlu-eval        120 node "$T/nlu-eval.js"
 want holo-settings  && run holo-settings  900 node "$T/holo-settings.js" all   # المظهر الهولوغرافي: من الإعدادات إلى الألواح الحقيقية والعودة (مكتب + هاتف باللمس + ثابت)
+want world-fast    && run world-fast    600 node "$T/world-fast.js"   # العالم الحقيقي: سرعة الفتح، المداران، بطاقات الرئيسية، اللوح الاحتياطي، جسر صوت الكرة
+want drag-inside && run drag-inside  300 node "$T/drag-inside.js"   # السحب داخل البطاقات
+want sphere-audio&& run sphere-audio 300 node "$T/sphere-audio.js"   # صوت الكرة ستيريو
 want viewports       && run viewports       600 node "$T/spatial-viewports.js"
 want run             && run run             900 node "$T/run.js" all
 want phase9          && run phase9          900 node "$T/phase9.js" all

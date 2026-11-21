@@ -61,9 +61,18 @@
   const secs = SEC.filter(s => !s.hidden), nodes = new Map(), RO = 310;
   secs.forEach((s, i) => {
     const b = document.createElement("button"); b.type = "button"; b.className = "node"; b.dataset.id = s.id; b.setAttribute("aria-label", "فتح " + s.name); b.innerHTML = svg(s.icon) + "<span>" + s.name + "</span>";
-    b.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(s.id); }); b.addEventListener("focus", () => select(s.id)); orbit.appendChild(b); nodes.set(s.id, b);
+    b.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; if (TWO) selectTab(s.id); else openSection(s.id); }); b.addEventListener("focus", () => { if (!TWO) select(s.id); }); orbit.appendChild(b); nodes.set(s.id, b);
     const d = document.createElement("button"); d.type = "button"; d.dataset.id = s.id; d.innerHTML = svg(s.icon) + "<span>" + s.name + "</span>"; d.addEventListener("click", () => openSection(s.id)); dock.appendChild(d);
   });
+  /* المداران (الوضع الحقيقي): العلوي تبويبات رئيسية لا تفتح شيئاً بل تبدّل بطاقات السفلي؛ السفلي بطاقات إعدادات التبويب المحدَّد وتفتح لوحها (الافتراضي: المتجر) */
+  let TWO = false, curTab = "store"; const subs = new Map(), RS = 236; let subIds = [];
+  function buildSubs(tab) {
+    const ids = (typeof GROUPS !== "undefined" && GROUPS[tab] || [tab]).filter(id => SEC.some(s => s.id === id)); const old = [...subs.values()]; old.forEach(b => { b.classList.add("out"); setTimeout(() => b.remove(), 260); }); subs.clear(); subIds = ids;
+    ids.forEach(id => { const sc = SEC.find(s => s.id === id), b = document.createElement("button"); b.type = "button"; b.className = "node sub in"; b.dataset.id = id; b.setAttribute("aria-label", "فتح " + sc.name); b.innerHTML = svg(sc.icon) + "<span>" + sc.name + "</span>"; b.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(id); }); orbit.appendChild(b); subs.set(id, b); setTimeout(() => b.classList.remove("in"), 30); });
+    markNodes();
+  }
+  function selectTab(id) { if (!TWO || !secs.some(s => s.id === id)) return; curTab = id; nodes.forEach((n, k) => { n.classList.toggle("tab", k === id); n.setAttribute("aria-current", k === id ? "true" : "false"); }); { const a = document.getElementById("active"), sc = SEC.find(s => s.id === id); if (a && sc) { a.textContent = "بطاقات: " + sc.name; a.classList.add("on"); } } buildSubs(id); spinTo(id); }
+  function enableTwo() { if (TWO) return; TWO = true; document.body.classList.add("two"); selectTab(curTab); }
   let spinK = 1, spinT = 1, ang = 20, va = 0, drag = null, lastInput = 0, tw = null, yaw = 0;
   /* تدوير القاعة كلها حول الاسطوانة (الكاميرا المدارية): Shift+سحب أو التواء بإصبعين على الخلفية أو المفتاحان [ ] */
   function setYaw(v) { yaw = clamp(v, -50, 50); stage.style.setProperty("--yaw", yaw.toFixed(1) + "deg"); const c = document.getElementById("yawchip"); if (c) { c.classList.toggle("on", Math.abs(yaw) > 1); c.textContent = "القاعة ↻ " + Math.round(yaw) + "° — انقر للتصفير"; } }
@@ -94,9 +103,10 @@
     const a = ang % 360; cyl.style.transform = `rotateY(${a}deg)`; cylIn.style.transform = `rotateY(${-a * 1.6}deg)`;
     gl.forEach((g, i) => { const th = (-a * 1.3 + i * 360 / gl.length) * Math.PI / 180, y = -110 + (i % 4) * 62 + Math.sin(t / 900 + i) * 6; g.style.transform = `translate3d(${(Math.sin(th) * 92).toFixed(1)}px,${y.toFixed(1)}px,${(Math.cos(th) * 92).toFixed(1)}px)`; });
     secs.forEach((s, i) => {
-      const th = (a + i * 360 / secs.length) * Math.PI / 180, x = Math.sin(th) * RO, z = Math.cos(th) * RO, y = Math.sin(i * 1.9) * 72, n = nodes.get(s.id), f = (z + RO) / (2 * RO);
+      const th = (a + i * 360 / secs.length) * Math.PI / 180, x = Math.sin(th) * RO, z = Math.cos(th) * RO, y = TWO ? -112 : Math.sin(i * 1.9) * 72, n = nodes.get(s.id), f = (z + RO) / (2 * RO);
       n.style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px)`; { const zy = Math.cos(th + yaw * Math.PI / 180) * RO, fy = (zy + RO) / (2 * RO); n.style.opacity = (.42 + .58 * fy).toFixed(2); n.style.zIndex = Math.round(zy + RO); }
     });
+    if (TWO) subIds.forEach((id, j) => { const n = subs.get(id); if (!n) return; const th = (-a * .55 + j * 360 / subIds.length) * Math.PI / 180, x = Math.sin(th) * RS, z = Math.cos(th) * RS, zy = Math.cos(th + yaw * Math.PI / 180) * RS, fy = (zy + RS) / (2 * RS); n.style.transform = `translate3d(${x.toFixed(1)}px,102px,${z.toFixed(1)}px)`; n.style.opacity = (.5 + .5 * fy).toFixed(2); n.style.zIndex = Math.round(zy + RS); });
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -120,7 +130,7 @@
   stage.addEventListener("pointerup", endDrag); stage.addEventListener("pointercancel", endDrag);
   /* تحديد قسم: تظليل العقدة + تدوير سلس لتقديمها نحو المستخدم */
   let sel = null;
-  function select(id, rotate) { sel = id; { const a = document.getElementById("active"), sc = SEC.find(s => s.id === id); if (a && sc) { a.textContent = sc.name; a.classList.add("on"); } } nodes.forEach((n, k) => { n.classList.toggle("sel", k === id); n.setAttribute("aria-current", k === id ? "true" : "false"); }); dock.querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.id === id)); if (rotate !== false && nodes.has(id)) spinTo(id); }
+  function select(id, rotate) { sel = id; { const a = document.getElementById("active"), sc = SEC.find(s => s.id === id); if (a && sc) { a.textContent = sc.name; a.classList.add("on"); } } if (!TWO) nodes.forEach((n, k) => { n.classList.toggle("sel", k === id); n.setAttribute("aria-current", k === id ? "true" : "false"); }); subs.forEach((n, k) => n.classList.toggle("sel", k === id)); dock.querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.id === id)); if (rotate !== false && nodes.has(id) && !TWO) spinTo(id); }
   const step = d => { const i = secs.findIndex(s => s.id === sel), j = i < 0 ? 0 : (i + d + secs.length) % secs.length; select(secs[j].id); };
   document.addEventListener("keydown", e => { const k = String(e.key || ""), tg = e.target || {}, inPanel = tg.closest && tg.closest(".panel");
     if (/INPUT|TEXTAREA/.test(tg.tagName || "")) { if (k === "Escape") tg.blur(); return; }
@@ -182,11 +192,11 @@
   const rectOf = p => ({ x: p.st.x, y: p.st.y, w: p.st.w * p.st.s, h: p.st.h * p.st.s });
   function overlap(a, b) { const ox = (a.w + b.w) / 2 - Math.abs(a.x - b.x), oy = (a.h + b.h) / 2 - Math.abs(a.y - b.y); return ox > 0 && oy > 0 ? { ox, oy, a: ox * oy } : null; }
   function sizeFor(sec) { const mw = W(), mh = H(); return isMob() ? { w: Math.min(sec.w, mw - 24), h: Math.min(sec.h, Math.round(mh * .42)) } : { w: Math.min(sec.w, mw - 60), h: Math.min(sec.h, mh - 120) }; }
-  function nodePos(id) { const n = id === "ai" ? core : nodes.get(id); if (!n) return { x: 0, y: 0 }; const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2 - W() / 2, y: r.top + r.height / 2 - H() / 2 }; }
+  function nodePos(id) { const n = id === "ai" ? core : (TWO && subs.get(id)) || nodes.get(id); if (!n) return { x: 0, y: 0 }; const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2 - W() / 2, y: r.top + r.height / 2 - H() / 2 }; }
   function render(p, keep) { if (p.frame) return; const b = p.body, top = b.scrollTop; b.innerHTML = p.sec.html(p); if (keep !== false) b.scrollTop = top; }
   const refreshAll = () => { open.forEach(p => { if (!p.min) render(p); }); fillWalls(); };
-  function markNodes() { document.body.classList.toggle("many", open.size > 3); nodes.forEach((n, id) => { const p = open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); dock.querySelectorAll("button").forEach(b => { const p = open.get(b.dataset.id); b.classList.toggle("open", !!p && !p.min); }); }
-  function pulse(id) { const n = nodes.get(id); if (n) { n.classList.remove("hot"); void n.offsetWidth; n.classList.add("hot"); } core.classList.remove("pulse"); void core.offsetWidth; core.classList.add("pulse"); }
+  function markNodes() { document.body.classList.toggle("many", open.size > 3); nodes.forEach((n, id) => { const p = TWO ? null : open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); subs.forEach((n, id) => { const p = open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); dock.querySelectorAll("button").forEach(b => { const p = open.get(b.dataset.id); b.classList.toggle("open", !!p && !p.min); }); }
+  function pulse(id) { const n = (TWO && subs.get(id)) || nodes.get(id); if (n) { n.classList.remove("hot"); void n.offsetWidth; n.classList.add("hot"); } core.classList.remove("pulse"); void core.offsetWidth; core.classList.add("pulse"); }
 
   function openSection(id) {
     const sec = SEC.find(s => s.id === id); if (!sec) return;
@@ -336,15 +346,37 @@
     const m = memo[p.id] && memo[p.id].pos; if (m) { Object.assign(p.st, m); p.st.x = clamp(p.st.x, -(W() / 2 - 80), W() / 2 - 80); p.st.y = clamp(p.st.y, yTop(p.st.h * p.st.s), H() / 2 - 80); p.st.s = clamp(p.st.s, .5, 1.9); return; }
     const n = [...open.values()].filter(q => !q.min).length, L = layoutFor(Math.min(6, Math.max(2, n))), c = L.find(x => slotFree(p, x)) || L[(n - 1) % L.length];
     Object.assign(p.st, { x: c.x, y: c.y, z: c.z, rx: c.rx, ry: c.ry, rz: 0, s: Math.min(c.s, 1) });
-    if (n === 1 && !isMob()) p.st.x = Math.min(p.st.x, W() / 2 - p.st.w / 2 - 70); /* اللوح الوحيد لا يخرج من حافة الشاشة مع ميلانه */
+    if (n === 1 && !isMob()) p.st.x = (window.SCParts && SCParts.visible) ? 0 : Math.min(p.st.x, W() / 2 - p.st.w / 2 - 70); /* بين جناحي بطاقات الرئيسية */ /* اللوح الوحيد لا يخرج من حافة الشاشة مع ميلانه */
     p.home = { x: p.st.x, y: p.st.y, z: p.st.z, rx: p.st.rx, ry: p.st.ry, rz: 0, s: p.st.s }; /* خانته الأصلية لزر ◎ */
+  }
+  /* لوح احتياطي مُسخَّن (السرعة): إطار لوحة حقيقي يُحمَّل خفيةً في الخلفية؛ عند فتح أي لوح يُنقَل إليه بـ moveBefore (يحفظ حالته فلا يُعاد تحميله) فيظهر اللوح فوراً، ثم يُحمَّل بديل. بلا moveBefore يعمل التحميل العادي */
+  const SP = { f: null, ready: false, off: typeof Element === "undefined" || !Element.prototype.moveBefore, n: 0 };
+  function spareMake() {
+    if (!REAL || SP.f || document.hidden) return; let park = document.getElementById("spare-park"); if (!park) { park = document.createElement("div"); park.id = "spare-park"; park.setAttribute("aria-hidden", "true"); document.body.appendChild(park); }
+    const f = document.createElement("iframe"); f.className = "pn-frame"; f.title = ""; f.tabIndex = -1; SP.f = f; SP.ready = false; f.addEventListener("load", () => spareWait(f, 0)); f.src = "../../admin.html"; park.appendChild(f);
+  }
+  function spareWait(f, n) {
+    if (SP.f !== f) return;
+    try { const w = f.contentWindow, d = w.document, A = w.eval('typeof Admin !== "undefined" ? Admin : null'), app = d.getElementById("app"); if (A && app && !app.classList.contains("hidden") && typeof A.tab === "function") { SP.ready = true; SP.n++; try { A.tab("home"); } catch (_) { } document.dispatchEvent(new CustomEvent("sc-spare", { detail: { f } })); return; } } catch (_) { }
+    if (n < 120) setTimeout(() => spareWait(f, n + 1), 250);
   }
   function mountFrame(p) {
     const b = p.body; b.classList.add("fr"); p.el.classList.add("framed");
     b.innerHTML = '<iframe class="pn-frame" title=""></iframe><div class="pn-shield" aria-hidden="true"><span>انقر على اللوح لتفعيله</span></div><div class="fr-load"><i></i><span>جارٍ تحميل لوحة التحكم…</span></div>';
     /* السحب على ستارة لوح غير مُركَّز يحرّك اللوح كأنه من شريط عنوانه (النقرة وحدها تفعّله) */
     b.querySelector(".pn-shield").addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && e.button !== 0) return; const h = p.el.querySelector(".pn-h"); if (!h) return; e.preventDefault(); h.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, pointerId: e.pointerId, pointerType: e.pointerType, clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY, button: e.button, buttons: e.buttons, isPrimary: e.isPrimary })); });
-    const f = b.querySelector("iframe"); f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = true; f.addEventListener("load", () => { if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); f.src = "../../admin.html"; clearTimeout(p._fs); p.el.classList.remove("fr-show"); p._fs = setTimeout(() => p.el.classList.add("fr-show"), 16000); /* كشف احتياطي إن تعذّر ظهور التبويب */
+    let f = b.querySelector("iframe"), adopted = false; if (SP.ready && SP.f && SP.f.isConnected && !SP.off) { const sf = SP.f; try { b.moveBefore(sf, f); f.remove(); f = sf; SP.f = null; SP.ready = false; adopted = true; setTimeout(spareMake, 1600); } catch (_) { adopted = false; } } p.adopted = adopted; f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = !adopted; f.addEventListener("load", () => { if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); if (adopted) { p.frDone = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); } else f.src = "../../admin.html"; clearTimeout(p._fs); p.el.classList.remove("fr-show"); p._fs = setTimeout(() => p.el.classList.add("fr-show"), 16000); /* كشف احتياطي إن تعذّر ظهور التبويب */
+  }
+  /* جسر الصوت: كلام المساعد (speechSynthesis) والميكروفون داخل لوح «اسألني» يحرّكان الكرة (أعصاب + صوت ستيريو) كأنها تتكلم وتستمع */
+  function bridgeVoice(p, w, d) {
+    try {
+      if (w.__scVoice) return; w.__scVoice = true; const ss = w.speechSynthesis; let lvl = 0, spk = 0, tm = 0; if (!ss) return;
+      const set = m => { try { if (window.Core3D) Core3D.setVoice(m); } catch (_) { } }, tick = () => { lvl *= .82; try { if (window.Core3D) Core3D.setAudio(spk ? Math.max(lvl, .18) : lvl); if (window.SphereAudio) SphereAudio.level(lvl); } catch (_) { } if (!spk && lvl < .02) { clearInterval(tm); tm = 0; } };
+      const pulse = () => { lvl = Math.min(1, lvl + .5); if (!tm) tm = setInterval(tick, 60); };
+      const sp = ss.speak.bind(ss); ss.speak = function (u) { try { u.addEventListener("start", () => { spk++; set("speaking"); pulse(); }); u.addEventListener("boundary", pulse); const end = () => { spk = Math.max(0, spk - 1); if (!spk) set(listening() ? "listening" : "none"); }; u.addEventListener("end", end); u.addEventListener("error", end); } catch (_) { } return sp(u); };
+      const listening = () => { try { const m = d.getElementById("ah-mic"); return !!(m && m.classList.contains("on")); } catch (_) { return false; } };
+      let last = ""; p._vb = setInterval(() => { if (!p.fr || !p.fr.isConnected) { clearInterval(p._vb); return; } if (spk) return; const m = listening() ? "listening" : "none"; if (m !== last) { last = m; set(m); } }, 300);
+    } catch (_) { }
   }
   function hookFrame(p, d) {
     const sc = e => [...e.touches].slice(0, 2).map(t => [t.screenX, t.screenY]);
@@ -412,7 +444,7 @@
     const f = p.fr; if (!f || !f.isConnected) return; clearTimeout(p._fi); let n = 0;
     const tick = () => {
       if (!f.isConnected || p.fr !== f) return; let w, d; try { w = f.contentWindow; d = w.document; } catch (_) { return; }
-      if (d.head && !d.getElementById("__spEmbed")) { const st = d.createElement("style"); st.id = "__spEmbed"; st.textContent = (p.frame && p.frame.nav ? EMBED_NAV_CSS : EMBED_CSS) + HOLO_SKIN; d.documentElement.classList.add("glass"); d.documentElement.classList.remove("white"); holoRecolor(d); /* داكن داخل الإطار فقط؛ لا يُكتب شيء في تخزين المستخدم */ d.head.appendChild(st); hookFrame(p, d); }
+      if (d.head && !d.getElementById("__spEmbed")) { const st = d.createElement("style"); st.id = "__spEmbed"; st.textContent = (p.frame && p.frame.nav ? EMBED_NAV_CSS : EMBED_CSS) + HOLO_SKIN; d.documentElement.classList.add("glass"); d.documentElement.classList.remove("white"); holoRecolor(d); /* داكن داخل الإطار فقط؛ لا يُكتب شيء في تخزين المستخدم */ d.head.appendChild(st); hookFrame(p, d); bridgeVoice(p, w, d); }
       const app = d.getElementById("app"), ld = p.body.querySelector(".fr-load");
       let A = null; try { A = w.eval('typeof Admin !== "undefined" ? Admin : null'); } catch (_) { } /* Admin وAdminHelp ثوابت عامة وليست على window */
       if (A && app && !app.classList.contains("hidden") && typeof A.tab === "function") {
@@ -421,7 +453,7 @@
         const tgt = d.getElementById("tab-" + p.frame.tab), ahp = d.getElementById("ah-panel"), shown = p.frame.tab === "ask" ? !!(ahp && ahp.classList.contains("on")) : tgt && !tgt.classList.contains("hidden");
         if (!p.frGuard) p.frGuard = Date.now() + 14000; /* اللوحة قد تعود إلى «الرئيسية» عند اكتمال تهيئتها: نُبقي التبويب المطلوب 14ث الأولى ما لم يلمس المستخدم الإطار */
         if (!shown && !p.frTouched && p.frTry < 220) { p.frTry++; try { if (p.frame.tab === "ask") { const H = w.eval('typeof AdminHelp !== "undefined" ? AdminHelp : null'); if (H && !(ahp && ahp.classList.contains("on"))) H.show(); } else A.tab(p.frame.tab); } catch (_) { } p._fi = setTimeout(tick, 90); return; }
-        if (!p.frDone) { frameZoom(p); p.frDone = true; setTimeout(() => restoreFrame(p, w, d), 100); if (ld) ld.remove(); p.el.dataset.frame = "ready"; }
+        if (!p.frDone) { frameZoom(p); p.frDone = true; if (p.autoMic) { p.autoMic = false; setTimeout(() => { try { const m = d.getElementById("ah-mic"); if (m && !m.classList.contains("on")) m.click(); } catch (_) { } }, 900); } if (isMob() && !SP.f && !SP.ready) setTimeout(spareMake, 1200); setTimeout(() => restoreFrame(p, w, d), 100); if (ld) ld.remove(); p.el.dataset.frame = "ready"; }
         if (Date.now() < p.frGuard && !p.frTouched) p._fi = setTimeout(tick, 250);
         return;
       }
@@ -523,7 +555,7 @@
   }
   function setFlat(v, keep) { FLAT = !!v; if (!keep) { try { localStorage.setItem("sc_flat", FLAT ? "1" : "0"); } catch (_) { } } const b = $("#hud-flat"); if (b) { b.setAttribute("aria-pressed", String(FLAT)); b.classList.toggle("on", FLAT); b.textContent = FLAT ? "زاوية 0: مفعّلة" : "زاوية 0"; } }
   { const fb = $("#hud-flat"); if (fb) fb.addEventListener("click", () => setFlat(!FLAT)); setFlat(FLAT, true); }
-  core.addEventListener("click", () => openSection("ai")); document.body.classList.toggle("orbit-on", orbitMode);
+  core.addEventListener("click", () => { openSection("ai"); const q = open.get("ai"); if (REAL && q && q.frame && q.frame.tab === "ask") { hint("تكلّم بعد أن يضيء الميكروفون، أو اكتب سؤالك"); if (q.frDone) { try { const m = q.fr.contentDocument.getElementById("ah-mic"); if (m && !m.classList.contains("on")) m.click(); } catch (_) { } } else q.autoMic = true; } }); document.body.classList.toggle("orbit-on", orbitMode);
   function setOrbit(on) { orbitMode = on && !isMob(); document.body.classList.toggle("orbit-on", orbitMode); const bt = $("#hud-orbit"); if (bt) { bt.textContent = orbitMode ? "المدار: يعمل" : "المدار: متوقف"; bt.setAttribute("aria-pressed", orbitMode); }
     if (!orbitMode) { open.forEach(p => { setLayer(p, false); p.el.classList.remove("back"); p.el.style.setProperty("--op", 1); p.el.style.zIndex = ++zc; }); arrange(); } else open.forEach(p => { p.off = null; }); }
   $("#hud-orbit").addEventListener("click", () => setOrbit(!orbitMode));
@@ -533,6 +565,8 @@
   addEventListener("resize", () => { const kx = W() / vw0, ky = H() / vh0; vw0 = W(); vh0 = H();
     open.forEach(p => { if (p.min) return; if (p.big) { const bb = bigBox(p); Object.assign(p.st, { w: bb.w, h: bb.h, y: bb.y }); frameZoom(p); } else { if (isMob()) { const m = sizeFor(p.sec); p.st.w = m.w; p.st.h = m.h; } if (!orbitMode || p.user) { p.st.x *= kx; p.st.y *= ky; } } apply(p); });
     if (!orbitMode) arrange(); });
-  window.SpatialOS = { setSpin: v => { spinT = clamp(+v || 0, 0, 1); }, get spin() { return spinK; }, get spinTarget() { return spinT; }, stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get real() { return REAL; }, get apiReal() { return APIREAL; }, get flat() { return FLAT; }, get flatK() { return flatK; }, setFlat, tileAll, toCylinder, restoreAll, snapFrame, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
-  mbXp = false; syncMode(); detectReal().then(r => { REAL = r.real; APIREAL = r.api; if (r.real && !r.api) FRAME.ai = { tab: "ask", w: 480, h: 560 }; /* بلا واجهة PHP: النقر على الكرة يفتح «اسألني» الحقيقي (فيه الميكروفون) بدل وكيل لا يعمل */ document.body.classList.toggle("real", r.real); setTimeout(() => openSection("ord"), 700); });
+  window.SpatialOS = { spare: { get ready() { return SP.ready; }, get frame() { return SP.f; }, get count() { return SP.n; }, get supported() { return !SP.off; }, make: spareMake }, get tab() { return curTab; }, selectTab, get two() { return TWO; }, subIds: () => subIds.slice(), setSpin: v => { spinT = clamp(+v || 0, 0, 1); }, get spin() { return spinK; }, get spinTarget() { return spinT; }, stateLog: () => stLog.slice(), stateOf: id => { const p = open.get(id); return p ? p.state : null; }, setYaw, get yaw() { return yaw; }, open: openSection, spinTo, select, snapOrbit, memo, get selected() { return sel; }, setOrbit, get orbit() { return orbitMode; }, get pa() { return pa; }, get tweening() { return !!pt; }, panels: open, dismiss, get angle() { return ang; }, set angle(v) { ang = v; }, get focused() { return focused; }, refreshAll, get mode() { return modeOf(); }, get real() { return REAL; }, get apiReal() { return APIREAL; }, get flat() { return FLAT; }, get flatK() { return flatK; }, setFlat, tileAll, toCylinder, restoreAll, snapFrame, slots: () => layoutFor(6).map(c => ({ x: c.x, y: c.y })), get objSel() { return objSel; }, get tool() { return tool; }, setTool, clearSel, selectObj, toObject, toFocus, world: () => ({ angle: ang, yaw, pa, va, tw: !!tw, pt: !!pt }) };
+  /* وضع خفيف تلقائي: إن هبط معدل الإطارات تحت 22 لثلاث قياسات متتالية تُعطَّل الزخارف الثقيلة (محتوى بطاقات الجدار، طبقات سُمك الألواح، الأرضية الكبيرة) فتخفّ النوافذ */
+  { let c = 0, t0 = performance.now(), bad = 0; const tickL = () => { c++; requestAnimationFrame(tickL); }; requestAnimationFrame(tickL); setInterval(() => { if (document.hidden) { c = 0; t0 = performance.now(); return; } const now = performance.now(), fps = c * 1000 / (now - t0); c = 0; t0 = now; if (document.body.classList.contains("lite") || (navigator.webdriver && !/[?&]lite=1/.test(location.search))) return; bad = fps < 22 ? bad + 1 : 0; if (bad >= 3) { document.body.classList.add("lite"); window.__lite = Math.round(fps); } }, 2000); }
+  mbXp = false; syncMode(); detectReal().then(r => { REAL = r.real; APIREAL = r.api; if (r.real && !r.api) FRAME.ai = { tab: "ask", w: 480, h: 560 }; /* بلا واجهة PHP: النقر على الكرة يفتح «اسألني» الحقيقي (فيه الميكروفون) بدل وكيل لا يعمل */ document.body.classList.toggle("real", r.real); if (r.real) { enableTwo(); document.dispatchEvent(new Event("sc-real")); setTimeout(spareMake, 500); } /* الوضع الحقيقي على المكتب: بلا لوح تلقائي — بطاقات الرئيسية تظهر فوراً ولوح الطلبات يُفتح بنقرة (فوري من اللوح الاحتياطي) */ if (!(r.real && !isMob() && innerWidth >= 1100)) setTimeout(() => openSection("ord"), 700); });
 })();

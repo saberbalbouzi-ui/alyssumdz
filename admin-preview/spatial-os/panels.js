@@ -112,3 +112,17 @@ const SEC = [
   { id: "help", name: "دليل المساعدة", icon: IC.ai, w: 430, h: 470, hidden: true, html: () => '<div class="empty">دليل المساعدة متاح في الوضع الحقيقي فقط.</div>' },
 ].concat(WALL_SECS);
 function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2500); }
+
+/* مدار الأسطوانة السفلي (الوضع الحقيقي): بطاقات كل تبويب رئيسي في المدار العلوي — الأول لوح التبويب نفسه ثم إعداداته وأدواته؛ الافتراضي «المتجر» */
+const GROUPS = {
+  dash: ["dash", "ana", "profit", "finance", "wallet"],
+  prod: ["prod", "categories", "attributes", "bulkp", "audit", "costs"],
+  ord: ["ord", "shipped", "returns", "pack", "callcenter", "dispatch"],
+  store: ["store", "delivery", "payments", "seo", "blog", "builder", "team"],
+  inv: ["inv", "costs", "finance", "wallet"],
+  cus: ["cus", "callcenter", "returns"],
+  ana: ["ana", "profit", "finance", "wallet"],
+  look: ["look", "builder", "blog", "seo"],
+  ext: ["ext", "bulkp", "audit"],
+  set: ["set", "team", "payments", "delivery", "audit"]
+};

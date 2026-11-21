@@ -41,6 +41,9 @@ async function php(b) {
     ok("php: النواة الثلاثية الأبعاد ومشهد الأسطوانة موجودان", await p.evaluate(() => !!document.getElementById("core") && !!document.getElementById("cyl") && !!document.querySelector("canvas.core3d, #core canvas, .core3d")));
 
     /* غلاف Spatial Core اللوني داخل لوحة التحكم الحقيقية: ألوان جديدة (سماوي/بنفسجي/زمردي) بدل الليموني، داكن دائماً، بلا أي كتابة في تخزين المستخدم */
+    /* الوضع الحقيقي على المكتب: لا لوح يُفتح تلقائياً (العالم يظهر فوراً)؛ بطاقات الرئيسية والمداران موجودة؛ اللوح يُفتح بنقرة */
+    ok("php: لا لوح يُفتح تلقائياً على المكتب (العالم فوري)", await p.evaluate(() => SpatialOS.panels.size === 0 && SpatialOS.two === true));
+    await p.evaluate(() => SpatialOS.open("ord"));
     await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(1500);
     const sk = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), d = q.fr.contentWindow.document, w = q.fr.contentWindow, h = d.documentElement, cs = w.getComputedStyle(h); const lime = /226,\s*254,\s*23\b/; const btns = [...d.querySelectorAll("#tab-orders .small:not(.gray):not(.warn):not(.danger):not(.red), #tab-orders .btn:not(.gray):not(.warn):not(.danger):not(.red)")].filter(b => b.offsetParent); const bi = btns.map(b => w.getComputedStyle(b).backgroundImage); return { glass: h.classList.contains("glass") && !h.classList.contains("white"), mint: cs.getPropertyValue("--g-mint").trim(), c: cs.getPropertyValue("--c").trim(), n: btns.length, cyan: bi.filter(v => /(59|70),\s*2(30|28),\s*255/.test(v)).length, limeBtns: bi.filter(v => lime.test(v)).length }; });
     ok("php: داخل لوح اللوحة الحقيقية: داكن وأساسي سماوي ومتغير التدرّج سماوي", sk.glass && sk.mint === "#3be6ff" && sk.c === "59,230,255", sk);

@@ -448,3 +448,47 @@ html body .panel .pn-b,html body .panel .pn-h{text-shadow:none!important}
 html body #room.arc .wall .wcard{box-shadow:none!important}
 
 #hud-snd.on{border-color:rgba(59,230,255,.9);background:rgba(59,230,255,.18);color:#eafcff}
+
+/* لوح احتياطي مُسخَّن (خفي خارج الشاشة) */
+#spare-park{position:fixed;left:-12000px;top:0;width:1100px;height:700px;visibility:hidden;pointer-events:none;overflow:hidden}
+/* مداران: العلوي تبويبات رئيسية (نمط مميّز بلا فتح)، السفلي بطاقات الإعدادات */
+body.two .node:not(.sub){cursor:pointer}
+body.two .node.tab{border-color:#3be6ff;box-shadow:0 0 0 2px rgba(59,230,255,.5),0 0 16px rgba(59,230,255,.65)}
+body.two .node.tab span{color:#fff}
+.node.sub{width:84px;border-color:rgba(190,150,255,.6);background:linear-gradient(150deg,rgba(54,40,100,.86),rgba(14,24,52,.8))}
+.node.sub svg{stroke:#cfb6ff}
+.node.sub:hover,.node.sub:focus-visible{border-color:#e2fe17;box-shadow:0 0 14px rgba(226,254,23,.55)}
+.node.sub.in svg,.node.sub.in span{opacity:0;transform:scale(.6)}
+.node.sub svg,.node.sub span{transition:opacity .28s,transform .28s}
+.node.sub.out{pointer-events:none;opacity:0!important;transition:opacity .22s}
+.node.sub.sel,.node.sub.open{border-color:#e2fe17}
+
+/* بطاقات الرئيسية: جناحان على جانبي الاسطوانة (خلف الألواح، أمام الجدار) */
+.hparts{position:fixed;inset:0;z-index:4;pointer-events:none;--g-mint:#3be6ff;--ac:#3be6ff;--g-line:rgba(160,255,240,.22);--g-text:#e8fbff}
+.hparts[hidden]{display:none}
+.hp-c{position:absolute;top:82px;width:268px;display:flex;flex-direction:column;gap:10px;perspective:1200px}
+.hp-c.l{left:20px}.hp-c.r{right:20px}
+.hp-c.l>*{transform:rotateY(14deg);transform-origin:0 50%}.hp-c.r>*{transform:rotateY(-14deg);transform-origin:100% 50%}
+.hp{display:block;width:100%;text-align:right;font:inherit;color:#e8fbff;border:1px solid rgba(160,255,240,.4);border-radius:14px;background:rgba(5,20,30,.95);padding:10px 12px;cursor:pointer;pointer-events:auto;opacity:0;animation:hpin .5s ease forwards;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 14px 28px rgba(0,0,0,.45)}
+.hp:hover,.hp:focus-visible{border-color:#e2fe17;outline:0}
+@keyframes hpin{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
+.hp-k{display:grid;grid-template-columns:1fr 1fr;gap:8px;pointer-events:none}
+.hp-k .hp{pointer-events:auto;padding:8px 10px}
+.hp-l{display:block;font-size:11px;color:#9fdcea;font-weight:700}
+.hp-v{display:block;font-size:19px;font-weight:900;margin-top:2px;color:#fff}
+.hp-d{display:block;font-size:10.5px;color:#9fb;opacity:.85;font-style:normal;margin-top:1px}.hp-d.up{color:#7dffc4}.hp-d.dn{color:#ff9aa9}
+.hp-h{display:block;font-size:12.5px;font-weight:800;color:#bff6ff;margin-bottom:6px}
+.hp-r{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0;border-bottom:1px solid rgba(160,255,240,.12)}.hp-r:last-child{border:0}
+.hp-r b{color:#fff;font-weight:800}.hp-t span{flex:1;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hp-t .n{flex:1.5;color:#fff}
+.hp-ch{height:84px}.hp-ch svg{width:100%;height:100%;display:block}
+@media(max-width:1099px){.hparts{display:none}}
+
+/* الشريط العلوي أكثر إحكاماً مع أزرار الوضع الحقيقي */
+@media(min-width:821px){body.real #hud span{display:none}}
+
+/* وضع خفيف (تلقائي عند بطء الجهاز) */
+body.lite .wall .wb,body.lite .wcard .wbw{display:none}
+body.lite .panel .slab,body.lite .panel .vol,body.lite .panel .eg{display:none}
+body.lite #floorcv,body.lite .hall,body.lite .pillar,body.lite .strip{display:none}
+body.lite .hp{animation:none;opacity:1}
+body.lite .panel{transition:none}
