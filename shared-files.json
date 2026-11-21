@@ -135,6 +135,7 @@
     "assets/img/tpl/wm_shoes.webp",
     "assets/js/admin-sentarchive.js",
     "assets/js/admin-presend.js",
+    "assets/js/admin-verify.js",
     "assets/js/abandoned-cart.js",
     "assets/js/admin-agency.js",
     "assets/js/admin-appdev.js",
