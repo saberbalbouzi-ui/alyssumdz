@@ -311,6 +311,7 @@
     trace: () => st.trace.slice(),
     setVoice(mode) { V.voice = mode === "listening" || mode === "speaking" || mode === "processing" ? mode : "none"; sync(); },
     setExpanded(on) { V.expanded = !!on; sync(); },
+    setAgent(a) { V.agent = ["idle", "thinking", "executing", "success", "error"].includes(a) ? a : "idle"; sync(); },
     setAudio(level, wave) { audio.level = Math.max(0, Math.min(1, level || 0)); audio.wave = wave || null; },
     setTier: t => { tierLock = true; setTier(t, "manual"); },
     sample: () => new Promise(res => { sampleReq = { resolve: res }; }),

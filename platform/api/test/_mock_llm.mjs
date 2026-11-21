@@ -40,6 +40,7 @@ export function createMock() {
     if (mock.fail && mock.fail.times > 0) { mock.fail.times--; const m = mock.fail.mode;
       if (m === "500") return [500, "upstream error with secret-ish detail sk-LEAK-123"]; if (m === "429") return [429, { error: { message: "quota" } }]; if (m === "401") return [401, { error: { message: "bad key" } }]; if (m === "badjson") return [200, "<html>not json</html>"]; if (m === "blocked") return [200, { candidates: [{ finishReason: "SAFETY" }] }];
       if (m === "hang") return new Promise((_, rej) => init.signal?.addEventListener("abort", () => rej(new Error("aborted")))); }
+    if (mock.delay) await new Promise((r) => setTimeout(r, mock.delay));
     const b = JSON.parse(init.body); mock.lastBody = b; if (mock.loop) return [200, parts([{ functionCall: { name: "orders_stats", args: {} } }])]; const declared = new Set((b.tools?.[0]?.functionDeclarations ?? []).map((d) => d.name)), cs = b.contents, last = cs[cs.length - 1];
     const userTexts = cs.filter((c) => c.role === "user").flatMap((c) => c.parts.filter((p) => p.text).map((p) => p.text)), q = userTexts[userTexts.length - 1] ?? "", L = lang(q);
     if (last.parts.some((p) => p.functionResponse)) {                                                       // جولة ما بعد الأداة: صياغة من النتيجة الحقيقية

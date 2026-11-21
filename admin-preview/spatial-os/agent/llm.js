@@ -5,9 +5,7 @@
   if (window.AgentLLM) return;
   const SRV = "server/llm.php", XH = { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" };
   const S = { local: false, configured: false, probed: false, status: null, calls: 0, lastError: null, lastMs: 0, limits: { messages: 24, tools: 16, rounds: 4 } };
-  const NO_RELAY = /[?&]real=1/.test(location.search); /* بلا وسيط خادم في المظهر المفتوح من الإعدادات */
   async function post(body, ms) {
-    if (NO_RELAY) { S.lastError = "no_relay"; return { ok: false, error: "no_relay" }; }
     const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms || 36000); let r;
     try { r = await fetch(SRV, { method: "POST", credentials: "same-origin", headers: XH, body: JSON.stringify(body), signal: ac.signal }); }
     catch (e) { const code = ac.signal.aborted ? "timeout" : "network"; S.lastError = code; return { ok: false, error: code }; } finally { clearTimeout(t); }
