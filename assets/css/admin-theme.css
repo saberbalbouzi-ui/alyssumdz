@@ -516,3 +516,9 @@ html.white #bulk-products-app .bp-changed{background:rgba(226,254,23,.38)}
 html.white #bulk-products-app .bp-modal{background:#fff;color:#0b0f14;border-color:#dbe1ea;box-shadow:0 30px 80px rgba(15,23,42,.35)}
 html.white #bulk-products-app .bp-btn:not(.primary){background:linear-gradient(180deg,#94a3b8,#64748b);color:#fff;border:1px solid rgba(255,255,255,.35)}
 html.white #bulk-products-app .bp-btn:not(.primary):hover{background:linear-gradient(180deg,#a3b1c4,#718096)}
+/* شارة موثوقية الزبون: أخضر سليم · برتقالي مرتجع · برتقالي غامق مرتجعان · أحمر 3+ أو محظور */
+.cb{display:inline-flex;align-items:center;justify-content:center;min-width:1.35rem;height:1.35rem;padding:0 .3rem;border-radius:999px;font-size:.72rem;font-weight:900;line-height:1;vertical-align:middle;border:1.5px solid transparent;color:#fff}
+.cb-g{background:#16a34a;border-color:#15803d}
+.cb-o1{background:#f59e0b;border-color:#d97706;color:#1f2123}
+.cb-o2{background:#ea580c;border-color:#c2410c}
+.cb-r{background:#dc2626;border-color:#b91c1c}
