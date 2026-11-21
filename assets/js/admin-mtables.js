@@ -13,6 +13,14 @@
     const out = []; [...hr.cells].forEach(c => { const n = c.colSpan || 1; for (let i = 0; i < n; i++) out.push(txt(c)); });
     return out;
   }
+  /* ربط تمرير شريطين (علوي + الجدول) بلا ارتداد: من بدأ التمرير يملكه حتى يسكن 140ms، وصدى الآخر يُتجاهل (كان كل منهما يعيد الآخر إلى موضعه السابق أثناء الزخم فيتأرجح الجدول) */
+  function linkScroll(a, b) {
+    let owner = null, tm = 0;
+    const mk = (x, y) => () => { if (owner && owner !== x) return; owner = x; clearTimeout(tm); tm = setTimeout(() => { owner = null; }, 140); if (Math.abs(y.scrollLeft - x.scrollLeft) >= 1) y.scrollLeft = x.scrollLeft; };
+    a.addEventListener("scroll", mk(a, b), { passive: true }); b.addEventListener("scroll", mk(b, a), { passive: true });
+  }
+  /* عرض محتوى الشريط بحيث يتساوى أقصى تمرير له مع أقصى تمرير الحاوية (فرق العرض بينهما كان يوقف أحدهما قبل الآخر بنقطتين) */
+  const barW = (bar, w) => Math.max(1, w.scrollWidth - w.clientWidth + bar.clientWidth) + "px";
   /* شريط سحب أفقي علوي (≈6مم) لجدول الطلبات يتزامن مع تمرير الجدول (v1.89.703) */
   function hscroll() {
     const t = document.getElementById("orders-table"); if (!t) return;
@@ -20,27 +28,25 @@
     let bar = document.getElementById("ord-hs");
     if (!bar) {
       bar = document.createElement("div"); bar.id = "ord-hs"; bar.setAttribute("aria-hidden", "true"); bar.innerHTML = "<div></div>";
-      const sync = (a, b) => () => { if (Math.abs(b.scrollLeft - a.scrollLeft) < 1) return; try { b.scrollTo({ left: a.scrollLeft, behavior: "instant" }); } catch (e) { b.scrollLeft = a.scrollLeft; } };
-      bar.addEventListener("scroll", sync(bar, w)); w.addEventListener("scroll", sync(w, bar));
+      linkScroll(bar, w);
     }
     if (bar.nextElementSibling !== w) w.parentNode.insertBefore(bar, w);
     /* الشريط يتبع أي تغيّر في مقاسي الجدول والحاوية (إظهار التبويب بعد إخفائه، تحميل الخط، إضافة أعمدة): كان لا يُحسب إلا عند تغيّر العناصر فيبقى بعرض قديم ويتوقف السحب عند حدٍّ مبكر */
     if (!bar._ro && window.ResizeObserver) { bar._ro = new ResizeObserver(() => { try { hscroll(); } catch (e) { } }); bar._ro.observe(w); bar._ro.observe(t); }
     const need = !!t.querySelector("th") && w.scrollWidth > w.clientWidth + 2;
-    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = w.scrollWidth + "px";
+    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = barW(bar, w);
   }
   /* شريط سحب علوي (≈6مم) لجدول يمرّر نفسه أفقياً (display:block;overflow-x:auto) ويتزامن معه */
   function tbar(t) {
-    let bar = t.previousElementSibling;
+    let bar = t.previousElementSibling; while (bar && !bar.classList.contains("hs-bar") && (bar.classList.contains("ts-bar") || bar.classList.contains("hs-nav"))) bar = bar.previousElementSibling;      // شريط التحديد/الأسهم قد يفصلان بين الجدول وشريطه
     if (!bar || !bar.classList.contains("hs-bar")) {
       bar = document.createElement("div"); bar.className = "hs-bar"; bar.setAttribute("aria-hidden", "true"); bar.innerHTML = "<div></div>";
-      const sync = (a, b) => () => { if (Math.abs(b.scrollLeft - a.scrollLeft) < 1) return; try { b.scrollTo({ left: a.scrollLeft, behavior: "instant" }); } catch (e) { b.scrollLeft = a.scrollLeft; } };
-      bar.addEventListener("scroll", sync(bar, t)); t.addEventListener("scroll", sync(t, bar));
+      linkScroll(bar, t);
       t.parentNode.insertBefore(bar, t);
     }
     if (!bar._ro && window.ResizeObserver) { bar._ro = new ResizeObserver(() => { try { tbar(t); } catch (e) { } }); bar._ro.observe(t); }
     const need = MQ.matches && t.scrollWidth > t.clientWidth + 2;
-    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = t.scrollWidth + "px";
+    bar.classList.toggle("on", need); if (need) bar.firstChild.style.width = barW(bar, t);
   }
   /* على الهاتف (≤700px) كل جدول بعناوين وأربعة أعمدة فأكثر يبقى جدولاً بصف واحد لكل سجلّ ويُسحب أفقياً بشريط علوي (v1.89.706؛ كانت بطاقات عمودية طويلة) */
   function pass(root) {
@@ -108,20 +114,20 @@ html.m-menu [id^="tab-"],html.m-menu #stats{display:none!important}
 
   /* ───── المظهر الفاتح: أقسام لها CSS داكن مضمَّن (نصوص بيضاء/ليمونية/رمادية فاتحة) تصير مقروءة (v1.89.761) ─────
      يُفحص نصّ كل عنصر فيها فإن تساوى لونه مع خلفيته الفعلية (تباين ضعيف) يُعطى لوناً داكناً؛ والأزرار الملوّنة (نصّ أبيض على خلفية داكنة) لا تُمسّ. */
-  const LT_ROOTS = "[id^=\"tab-\"],#ahome,#aa,#pf-app,#pm,#rt,#ar,#sm,#customers-app,#hs-app,#ad-app,#wl-app,#mk-app,#ag-app,#dg-app,#sd-list,#studio-content,#bulk-products-app,#stores-app,#dp,#pk,#adm-theme,#sp-app,#sm-body,#ca-body-header,#ca-body-footer,#rp-toks";
+  const LT_ROOTS = "[id^=\"tab-\"],#ahome,#aa,#pf-app,#pm,#rt,#ar,#sm,#customers-app,#hs-app,#ad-app,#wl-app,#mk-app,#ag-app,#dg-app,#sd-list,#studio-content,#bulk-products-app,#stores-app,#dp,#pk,#adm-theme,#sp-app,#sm-body,#ca-body-header,#ca-body-footer,#rp-toks,.modal,.side-nav,.top,.login";
   const rgbOf = c => { const str = String(c), v = (str.match(/[\d.]+/g) || [0, 0, 0, 1]).map(Number); return /^color\(srgb/.test(str) ? [v[0] * 255, v[1] * 255, v[2] * 255, v.length > 3 ? v[3] : 1] : v; }, lumOf = a => (0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]) / 255;
   function effBg(n, dark) { let p = n; const layers = []; while (p && p.nodeType === 1) { const cs = getComputedStyle(p); let c = rgbOf(cs.backgroundColor), al = c.length > 3 ? c[3] : 1; const gi = cs.backgroundImage.match(/(?:rgba?|color)\([^)]+\)/); if (gi) { c = rgbOf(gi[0]); al = c.length > 3 ? c[3] : 1; } if (al > 0) layers.push([c, al]); if (al >= 0.99) break; p = p.parentElement; } let col = dark ? [10, 14, 12] : [255, 255, 255]; for (let i = layers.length - 1; i >= 0; i--) { const [c, al] = layers[i]; col = [0, 1, 2].map(k => c[k] * al + col[k] * (1 - al)); } return col; }
   let ltT = 0, ltBusy = false;
   function ltPass() {
-    if (ltBusy) return; const LIGHT = document.documentElement.classList.contains("white"); ltBusy = true; document.querySelectorAll(LIGHT ? ".lt-dk" : ".lt-fg,.lt-mut,.lt-lime,.lt-red").forEach(x => x.classList.remove("lt-dk", "lt-fg", "lt-mut", "lt-lime", "lt-red"));
+    if (ltBusy) return; const LIGHT = document.documentElement.classList.contains("white"); ltBusy = true; document.querySelectorAll(LIGHT ? ".lt-dk" : ".lt-fg,.lt-mut,.lt-lime,.lt-red,.lt-blk").forEach(x => x.classList.remove("lt-dk", "lt-fg", "lt-mut", "lt-lime", "lt-red", "lt-blk"));
     try { document.querySelectorAll(LT_ROOTS).forEach(root => { if (!root.getClientRects().length) return; let n = 0; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let t;
-        while ((t = w.nextNode()) && n++ < 2500) { if (!t.textContent.trim()) continue; const p = t.parentElement; if (!p || p.classList.contains("lt-dk") || p.classList.contains("lt-fg") || p.classList.contains("lt-mut") || p.classList.contains("lt-lime") || p.classList.contains("lt-red") || p.closest("script,style,svg,option")) continue; if (/background/.test(p.getAttribute("style") || "")) continue;
-          const cs = getComputedStyle(p); if (cs.display === "none") continue; const fg = rgbOf(cs.color), bg = effBg(p, !LIGHT); if (Math.abs(lumOf(fg) - lumOf(bg)) >= 0.3) continue; if (!LIGHT) { if (lumOf(bg) > 0.55) p.classList.add("lt-dk"); continue; }
+        while ((t = w.nextNode()) && n++ < 2500) { if (!t.textContent.trim()) continue; const p = t.parentElement; if (!p || p.classList.contains("lt-dk") || p.classList.contains("lt-fg") || p.classList.contains("lt-mut") || p.classList.contains("lt-lime") || p.classList.contains("lt-red") || p.classList.contains("lt-blk") || p.closest("script,style,svg,option")) continue; if (/background/.test(p.getAttribute("style") || "")) continue;
+          const cs = getComputedStyle(p); if (cs.display === "none") continue; const fg = rgbOf(cs.color), bg = effBg(p, !LIGHT); if (Math.abs(lumOf(fg) - lumOf(bg)) >= 0.3) { if (LIGHT && (fg[3] == null || fg[3] > 0.5) && Math.max(fg[0], fg[1], fg[2]) - Math.min(fg[0], fg[1], fg[2]) < 64 && lumOf(fg) > 0.1 && lumOf(fg) < 0.85 && lumOf(bg) > 0.6) p.classList.add("lt-blk"); continue; } if (!LIGHT) { if (lumOf(bg) > 0.55) p.classList.add("lt-dk"); continue; }
           const lime = fg[1] > 180 && fg[2] < 130 && fg[0] > 130 && fg[1] > fg[0]; const red = fg[0] > 200 && fg[1] < 190 && fg[2] < 190 && fg[0] - fg[1] > 40; p.classList.add(lime ? "lt-lime" : red ? "lt-red" : (lumOf(fg) > 0.9 ? "lt-fg" : "lt-mut")); } }); } catch (e) { }
     ltBusy = false;
   }
   function ltInit() {
-    if (!document.getElementById("lt-css")) { const st = document.createElement("style"); st.id = "lt-css"; st.textContent = "html.white body #app .lt-fg:not(#_){color:#0f172a!important;-webkit-text-fill-color:#0f172a!important}html.white body #app .lt-mut:not(#_){color:#475569!important}html.white body #app .lt-lime:not(#_){color:#3f6212!important}html.white body #app .lt-red:not(#_){color:#b91c1c!important}html.glass body #app .lt-dk:not(#_){color:#1f2123!important;-webkit-text-fill-color:#1f2123!important}"; document.head.appendChild(st); }
+    if (!document.getElementById("lt-css")) { const st = document.createElement("style"); st.id = "lt-css"; st.textContent = "html.white body #app .lt-fg:not(#_){color:#0f172a!important;-webkit-text-fill-color:#0f172a!important}html.white body #app .lt-mut:not(#_),html.white body .lt-blk:not(#_){color:#0b0f14!important}html.white body #app .lt-lime:not(#_){color:#3f6212!important}html.white body #app .lt-red:not(#_){color:#b91c1c!important}html.glass body #app .lt-dk:not(#_){color:#1f2123!important;-webkit-text-fill-color:#1f2123!important}"; document.head.appendChild(st); }
     const go = () => { clearTimeout(ltT); ltT = setTimeout(ltPass, 350); };
     new MutationObserver(go).observe(document.body, { childList: true, subtree: true, characterData: true });
     new MutationObserver(go).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] }); go();

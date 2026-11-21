@@ -371,12 +371,12 @@ def np_about(P, k):
     ink = P["ink"]
     hero = _np_hero(P, k, "من نحن", "متجر صغير بتفاصيل كبيرة", "نبيع ما نثق به فقط، ونكتب لك عنه بصدق، ونوصّله لك بعناية.", "acc_pink", "حقيبة وردية على سطح فاتح")
     story = _nx_cvs([
-        FR("image", V(4, 4), V(20, 20), V(40, 92), V(480, 320), 2, src=IMG("fashion_knit"), alt="كنزات مطوية بألوان هادئة", fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"] + 10, ring=False), focus("50% 50%")], **anim("fadeUp", .9)),
-        FR("image", V(30, 40), V(270, 300), V(22, 52), V(280, 250), 3, src=IMG("acc_round"), alt="نظارة دائرية", fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"]), focus("50% 50%")], **anim("zoomIn", .9, .2)),
-        FT("— قصتنا —", V(54, 6), V(40, 380), V(42, 88), V(14, 13), _acct(P), "start", 5, "800"),
-        FH("بدأنا بفكرة: أن يكون الشراء عبر الإنترنت بسيطاً وصادقاً", V(54, 6), V(74, 410), V(42, 88), V(40, 28), ink, "start", 5, "800", ff=P["hf"], **anim("fadeUp", .8)),
-        FT("اكتب هنا قصة متجرك: كيف بدأت، ولماذا تختار منتجاتك، وما الذي يميّزك. هذا النص نموذجي للمعاينة ويُستبدل بقصتك.", V(54, 6), V(250, 560), V(40, 88), V(17, 15), P["mut"], "start", 5, "500", **anim("fadeUp", .8, .1)),
-    ], dm(520, 760, 520), [_nx_bg(P, k, "paper")], cw=1180)
+        FR("image", V(4, 4), V(20, 20), V(40, 92), V(480, 280), 2, src=IMG("fashion_knit"), alt="كنزات مطوية بألوان هادئة", fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"] + 10, ring=False), focus("50% 50%")], **anim("fadeUp", .9)),
+        FR("image", V(30, 40), V(270, 250), V(22, 52), V(280, 150), 3, src=IMG("acc_round"), alt="نظارة دائرية", fit="cover", hauto=False, fxs=[_nx_imgframe(P, P["rad"]), focus("50% 50%")], **anim("zoomIn", .9, .2)),
+        FT("— قصتنا —", V(54, 6), V(40, 430), V(42, 88), V(14, 13), _acct(P), "start", 5, "800"),
+        FH("بدأنا بفكرة: أن يكون الشراء عبر الإنترنت بسيطاً وصادقاً", V(54, 6), V(74, 460), V(42, 88), V(40, 28), ink, "start", 5, "800", ff=P["hf"], **anim("fadeUp", .8)),
+        FT("اكتب هنا قصة متجرك: كيف بدأت، ولماذا تختار منتجاتك، وما الذي يميّزك. هذا النص نموذجي للمعاينة ويُستبدل بقصتك.", V(54, 6), V(250, 590), V(40, 88), V(17, 15), P["mut"], "start", 5, "500", **anim("fadeUp", .8, .1)),
+    ], dm(520, 800, 520), [_nx_bg(P, k, "paper")], cw=1180)
     vals = S([C([IB(ic, t, x, tc=ink, xc=P["mut"], isz=36, icc=P["acc"], al={"d": "start"}, fxs=[FX("بطاقة", "selector .pb-ib{background:[[bg]];border:1px solid [[bd]];border-radius:[[r]]px;padding:26px 22px}", bg=("الخلفية", "text", P["card"]), bd=("الإطار", "text", ink + "1a"), r=("التدوير", "num", P["rad"]))])], w=33)
                 for ic, t, x in [("shield-check", "وضوح", "وصف دقيق وأسعار مكتوبة بلا مفاجآت."), ("truck", "عناية بالتوصيل", "تغليف محكم ومتابعة للطلب حتى باب بيتك."), ("headset", "قرب منك", "نردّ على أسئلتك على واتساب قبل الطلب وبعده.")]],
              cw={"d": 1180}, pad=dm([40, 20, 80, 20], [24, 14, 50, 14]), gap={"d": 18, "m": 12}, fxs=[_nx_bg(P, k, "paper")])

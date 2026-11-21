@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest-admin.webmanifest"><meta name="theme-color" content="#0b1210"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="اللوحة">
-<meta name="admin-version" content="1.89.1292">
+<meta name="admin-version" content="1.89.1314">
 <!-- v1.89.894: أُزيلت إعادة التحميل التلقائية عند اكتشاف نسخة أحدث (كانت تحمّل اللوحة مرتين عند كل تحديث للمتصفح على الهاتف)؛ التحديث الآن بزر «تحديث» أو بإشعار النسخة الجديدة فقط -->
 <style id="au-boot-css">html.au-boot #login-box{display:none!important}#au-boot{display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:#0b1f17}#sa-card{display:none!important}#yd-card [data-yd=load]:not([disabled]){display:none!important}/* زر التحديث الواحد في أعلى «الطلبات المسجلة»؛ يبقى مؤشر التقدم أثناء التحميل *//* قائمة «تجميع شركات التوصيل» المكرّرة محذوفة من الواجهة بطلب صاحب المتجر */html.au-boot #au-boot{display:none}html.au-boot.au-snap #au-boot{display:flex;flex-direction:column;gap:18px;padding:24px;text-align:center;color:#eef4ee}#au-snap{display:none}html.au-snap #au-snap{display:block;width:100%;max-width:420px}#au-snap h2{margin:0 0 4px;font-size:1.3rem}#au-snap p{margin:0 0 14px;opacity:.7;font-size:.9rem}#au-snap .k{display:grid;grid-template-columns:1fr 1fr;gap:10px}#au-snap .k div{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px 8px}#au-snap .k b{display:block;font-size:1.4rem}#au-snap .k span{font-size:.85rem;opacity:.75}#au-boot.s i{opacity:.8}/* لا شاشة دوّامة كاملة: تظهر اللوحة فوراً (معطَّلة اللمس) مع شريط تحميل رفيع إلى أن تصل البيانات */html.au-boot #app.hidden{display:block!important}html.au-boot #app [id^="tab-"]{display:none!important}/* أثناء التحميل لا تُعرض صفحة «الطلبات» الافتراضية الفارغة؛ الهيكل العلوي فقط حتى تُفتح الرئيسية */html.au-boot #app{pointer-events:none;opacity:.55;transition:opacity .25s}html.au-boot body::before{content:"";position:fixed;top:0;left:0;right:0;height:3px;z-index:99999;background:linear-gradient(90deg,transparent,#e2fe17,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:aubar 1.1s ease-in-out infinite}@keyframes aubar{0%{background-position:-40% 0}100%{background-position:140% 0}}#au-boot i{width:38px;height:38px;border-radius:50%;border:4px solid rgba(255,255,255,.18);border-top-color:#e2fe17;animation:aub .8s linear infinite}@keyframes aub{to{transform:rotate(360deg)}}
 /* الطلبات: على الهاتف تُطوى الفلاتر الثانوية والأدوات خلف زر كي تظهر قائمة الطلبات في الأعلى */
@@ -17,6 +17,8 @@
 <script>/* عامل الخدمة للوحة أيضاً: سكربتاتها المختومة (?v=هاش) تُخدم من الذاكرة المحفوظة بلا شبكة بعد أول زيارة (كان لا يُسجَّل إلا من صفحات المتجر فتُحمَّل 5MB من الشبكة في كل مرة) */try{if("serviceWorker" in navigator&&location.protocol!=="file:")navigator.serviceWorker.register(new URL("sw.js",location.href).href).catch(function(){})}catch(e){}</script>
 <script>(function(){try{if(!/\/admin\.html$/.test(location.pathname)||!/^https?:$/.test(location.protocol))return;var c=location.pathname.replace(/admin\.html$/,"admin");fetch(c,{method:"HEAD",cache:"no-store"}).then(function(r){if(r.ok)history.replaceState(null,"",c+location.search+location.hash)}).catch(function(){})}catch(e){}})();</script>
 <title>لوحة التحكم — أليسوم</title>
+<!-- خط Cairo محلي (لا يعتمد على خادم خطوط خارجي: كان يتحوّل الخط إلى الافتراضي حين يتعذّر تحميله من الشبكة/WebView) -->
+<link rel="preload" href="assets/fonts/cairo-arabic.woff2" as="font" type="font/woff2" crossorigin><style id="cairo-local">@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(assets/fonts/cairo-arabic.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}@font-face{font-family:Cairo;font-style:normal;font-weight:200 1000;font-display:swap;src:url(assets/fonts/cairo-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'"><noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet"></noscript>
 <style>
@@ -269,7 +271,7 @@ button.small:hover{filter:brightness(1.06)}button.small:active{transform:transla
 </style>
 <link rel="stylesheet" href="assets/css/admin-glass-auto.css?v=d53a4274">
 <link rel="stylesheet" href="assets/css/admin-glass.css?v=2a4bd030">
-<link rel="stylesheet" href="assets/css/admin-theme.css?v=ddac28a8">
+<link rel="stylesheet" href="assets/css/admin-theme.css?v=8c7ecfbf">
 <link rel="stylesheet" href="assets/css/admin-lime.css?v=ebd620cb">
 <script>window.AdminTheme={K:"admin_theme",C:"admin_theme_cfg",D:{dark:{accent:"#e2fe17",fs:15},white:{accent:"#059669",fs:15}},
 mode:function(){var m=null;try{m=localStorage.getItem(this.K)}catch(e){}return(m==="white"||m==="classic")?"white":"dark"},
@@ -490,7 +492,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <div class="of-more" id="of-more">
         <button class="small gray hidden" id="import-orders-btn" onclick="Admin.importOrders()" title="ينسخ طلباتك القديمة إلى متجرك مرة واحدة (بدون تكرار)">⬆️ استيراد الطلبات القديمة</button>
         <select id="order-filter-wilaya" onchange="Admin.applyOrderFilters()"><option value="">كل الولايات</option></select>
-        <select id="order-filter-src" onchange="Admin.applyOrderFilters()" title="مصدر الطلب"><option value="">كل المصادر</option><option value="site">من الموقع</option><option value="campaign">من الحملة</option><option value="link">من الرابط (بلا حملة)</option><option value="manual">يدوية</option></select>
+        <select id="order-filter-src" onchange="Admin.applyOrderFilters()" title="مصدر الطلب"><option value="">كل المصادر</option><option value="site">من الموقع</option><option value="campaign">من الحملة</option><option value="link">من الرابط (بلا حملة)</option><option value="messenger">من ماسنجر</option><option value="manual">يدوية</option></select>
         <label class="date-field">من<input id="order-filter-from" type="date" onchange="Admin.applyOrderFilters()" title="من تاريخ"></label>
         <label class="date-field">إلى<input id="order-filter-to" type="date" onchange="Admin.applyOrderFilters()" title="إلى تاريخ"></label>
         <label class="date-field" style="white-space:nowrap"><input id="order-show-shipped" type="checkbox" onchange="Admin.applyOrderFilters()" style="width:auto"> إظهار المسجلة</label>
@@ -528,7 +530,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
         <button class="small gold" type="button" id="ship-sync-btn" onclick="Admin.refreshShipped()" title="يحدّث حالات الطرود ويعيد تحميل طرود الشركة المعروضة">🔄 تحديث الحالة</button>
         <button class="small gray" type="button" id="ship-csv-btn" onclick="Admin.exportShippedCsv()" title="ينزّل نسخة (ملف CSV يفتح في Excel) من الطلبات المسجلة المعروضة حسب البحث والفلاتر الحالية">⬇️ نسخة CSV</button>
         <button class="small green" type="button" id="ship-prep-btn" onclick="Admin.prepOrders()" title="قائمة بالمنتج والكمية والولاية والتتبع مع طباعة PDF">📦 تجهيز الطلبات</button>
-        <button class="small green" type="button" id="ship-bord-btn" onclick="Admin.printBordereaux()" title="يجلب بوردرو كل الطرود المعروضة (قيد التجهيز افتراضياً) كما تصدره شركة التوصيل ويفتحها في صفحة واحدة للطباعة">🖨 طباعة البوردرو</button>
+        <button class="small green" type="button" id="ship-bord-btn" onclick="Admin.bordPrintShown()" title="يجلب بوردرو كل الطرود المعروضة (قيد التجهيز افتراضياً) كما تصدره شركة التوصيل ويفتحها في صفحة واحدة للطباعة">🖨 طباعة البوردرو</button>
         <button class="small gray" type="button" id="ship-imp-btn" data-noco style="display:none" onclick="Admin.importTracking()" title="أدخل رقم تتبع طرد موجود عند الشركة (مثلاً أنشأته من لوحتها) فتجلب المنصة بياناته وحالته وتربطه بالطلب المطابق">➕ إضافة طرد بالتتبع</button>
         <button class="small gray" type="button" id="ship-fees-btn" data-noco onclick="Admin.coFees()" title="يجلب تعريفة ولاية من WeCan ويعرضها لإرسالها إلى دعمهم">🔍 تعريفة WeCan لولاية</button>
         <button class="small gray" type="button" id="ship-recent-btn" data-noco onclick="Admin.coRecent()" title="يعرض كل حقول آخر طرود حسابك عند شركة التوصيل (للمقارنة بين طلب أُضيف يدوياً عندهم وطلب أرسلناه)">🔍 آخر الطرود عند الشركة</button>
@@ -1753,7 +1755,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-coname.js?v=5474389c"></script>
 <script src="assets/js/admin-tplsite.js?v=780c95b3"></script>
 <script src="assets/js/admin-theme.js?v=d480a321"></script>
-<script src="assets/js/saas-client.js?v=fa213708"></script>
+<script src="assets/js/saas-client.js?v=545523dd"></script>
 <script src="assets/js/hub.js?v=21126f59"></script>
 <script src="assets/js/ai-proxy.js?v=d5c63b62"></script>
 <script src="assets/js/admin-aiswitch.js?v=acc97a32"></script>
@@ -1774,19 +1776,19 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-zones-io.js?v=baf86994"></script>
 <script src="assets/js/admin-archive.js?v=66814def"></script>
 <script src="assets/js/admin-yalidine.js?v=69130136"></script>
-<script src="assets/js/admin-busy.js?v=12b07d95"></script>
+<script src="assets/js/admin-busy.js?v=9486d0f8"></script>
 <script src="assets/js/admin-shoppages.js?v=d197aa36"></script>
 <script src="assets/js/admin-home.js?v=48d34d7a"></script>
-<script src="assets/js/admin-tablesel.js?v=cf2f4bd9"></script>
-<script src="assets/js/admin-mtables.js?v=9bc355d0"></script>
-<script src="assets/js/admin-coparcels.js?v=7e1d555e"></script>
+<script src="assets/js/admin-tablesel.js?v=766477a2"></script>
+<script src="assets/js/admin-mtables.js?v=de8a93bd"></script>
+<script src="assets/js/admin-coparcels.js?v=f50b243f"></script>
 <script src="assets/js/admin-orders-plus.js?v=357f9243"></script>
 <script src="assets/js/admin-keys.js?v=9424e8a1"></script>
 <script src="assets/js/admin-delhealth.js?v=6600d52c"></script>
 <script src="assets/js/admin-sentarchive.js?v=10c2e6c2"></script>
 <script src="assets/js/admin-presend.js?v=8bcea09f"></script>
 <script src="assets/js/admin-customers.js?v=056673f1"></script>
-<script src="assets/js/admin-bulk-products.js?v=f12fc350"></script>
+<script src="assets/js/admin-bulk-products.js?v=ef1193a5"></script>
 <script src="assets/js/admin-reports.js?v=bfe80ebd"></script>
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
 <script src="assets/js/admin-returns.js?v=eb4cea27"></script>
@@ -1802,7 +1804,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-platform-sync.js?v=5c9a50b4"></script>
 <script src="assets/js/admin-callcenter.js?v=1abc1d1c"></script>
 <script src="assets/js/admin-callsync.js?v=17265a9a"></script>
-<script src="assets/js/admin-dispatch.js?v=4ec3043f"></script>
+<script src="assets/js/admin-dispatch.js?v=b2208194"></script>
 <script src="assets/js/admin-profit.js?v=cbe34c28"></script>
 <script src="assets/js/admin-wallet.js?v=5827c8ee"></script>
 <script src="assets/js/admin-edition.js?v=ef57eac5"></script>
@@ -3017,7 +3019,7 @@ const Admin = {
   orderFilters: { q:"", status:"", wilaya:"", dateFrom:"", dateTo:"" },
   orderPage: 1,
 
-  getFilteredOrders(){
+  getFilteredOrders(skipCo){
     const f = this.orderFilters;
     const q = (f.q||"").trim().toLowerCase();
     return this.orders
@@ -3027,8 +3029,8 @@ const Admin = {
         if(f.status === "fresh"){ if(!this.isFresh(o)) return false; }
         else if(f.status && o.status!==f.status) return false;
         if(f.wilaya && o.wilaya!==f.wilaya) return false;
-        if(f.company && this.orderCoKey(o) !== f.company) return false;
-        if(f.src){ const man = this.isManualOrder(o); if(f.src === "manual"){ if(!man) return false; } else if(man) return false; else if(f.src === "campaign" || f.src === "link"){ const og = this.orderOrigin(o); if(!og || og.k !== f.src) return false; } }
+        if(!skipCo && f.company && this.orderCoKey(o) !== f.company) return false;
+        if(f.src){ const man = this.isManualOrder(o); if(f.src === "manual"){ if(!man) return false; } else if(man) return false; else if(f.src === "campaign" || f.src === "link"){ const og = this.orderOrigin(o); if(!og || og.k !== f.src) return false; } else if(f.src === "messenger"){ const og = this.orderOrigin(o); if(!og || og.app !== "ماسنجر") return false; } }
         if(q &&!(String(o.name||"").toLowerCase().includes(q) || String(o.phone||"").includes(q) || String(o.id||"").toLowerCase().includes(q))) return false;
         if(f.dateFrom){ const d = new Date(o.date); if(d < new Date(f.dateFrom)) return false; }
         if(f.dateTo){ const d = new Date(o.date); const to = new Date(f.dateTo); to.setHours(23,59,59,999); if(d > to) return false; }
@@ -3041,10 +3043,11 @@ const Admin = {
   /* «جديد» = طلب لم يُتصل به بعد (بلا محاولات ولا نتيجة اتصال) ويظهر في الأعلى؛ تحته «في انتظار التأكيد» (جرى الاتصال ولم يُحسم) */
   isFresh(o){ return !!o && o.status === "nouvelle" && !this.attemptsOf(o) && !this.callMark(o); },
   /* مصدر الطلب: يدوي (أُضيف من اللوحة: علم المصدر أو وسم «✍️ طلب يدوي» أو معرّف يبدأ بـ M) وإلا من الموقع */
+  isExtOrder(o){ if(!o) return false; try{ const e = typeof o.extra === "string" ? JSON.parse(o.extra) : o.extra; return !!(e && e["📥 مستورد من الشركة"]); }catch(err){ return false; } },
   isManualOrder(o){ if(!o) return false; if(o.source === "manual") return true; try{ const e = typeof o.extra === "string" ? JSON.parse(o.extra) : o.extra; if(e && e["✍️ طلب يدوي"]) return true; }catch(err){} return /^M\d{6}-/.test(String(o.id || "")); },
   /* منشأ طلب الموقع: «حملة» إن سُجِّلت له «📣 الحملة» (جاء من إعلان: utm أو fbclid/ttclid/gclid) وإلا «رابط» (زيارة مباشرة/منشور/واتساب بلا إعلان) */
-  orderOrigin(o){ if(!o || this.isManualOrder(o)) return null; let e = o.extra; try{ if(typeof e === "string") e = JSON.parse(e); }catch(er){ e = null; } const c = e && (e["📣 الحملة"] || e["📣 campaign"]); return c ? { k: "campaign", t: String(c) } : { k: "link", t: "" }; },
-  srcBadge(o){ const og = this.orderOrigin(o), x = og ? (og.k === "campaign" ? ' <span class="o-src camp" title="جاء من إعلان/حملة: ' + String(og.t).replace(/[<>&"]/g, "") + '">حملة</span>' : ' <span class="o-src link" title="جاء من رابط مباشر بلا حملة">رابط</span>') : ""; return (this.isManualOrder(o) ? '<span class="o-src man" title="طلب أُضيف يدوياً من اللوحة">يدوي</span>' : '<span class="o-src web" title="طلب جاء من الموقع">الموقع</span>') + x; },
+  orderOrigin(o){ if(!o || this.isManualOrder(o)) return null; let e = o.extra; try{ if(typeof e === "string") e = JSON.parse(e); }catch(er){ e = null; } const c = e && (e["📣 الحملة"] || e["📣 campaign"]), ap = e && e["📲 التطبيق"] ? String(e["📲 التطبيق"]) : ""; return c ? { k: "campaign", t: String(c), app: ap } : { k: "link", t: "", app: ap }; },
+  srcBadge(o){ const og = this.orderOrigin(o), x = og ? (og.k === "campaign" ? ' <span class="o-src camp" title="جاء من إعلان/حملة: ' + String(og.t).replace(/[<>&"]/g, "") + '">حملة</span>' : ' <span class="o-src link" title="جاء من رابط مباشر بلا حملة">رابط</span>') + (og.app ? ' <span class="o-src app" title="فُتحت الصفحة من متصفح تطبيق ' + String(og.app).replace(/[<>&"]/g, "") + '">' + String(og.app).replace(/[<>&"]/g, "") + '</span>' : "") : ""; return (this.isExtOrder(o) ? '<span class="o-src ext" title="سُجّل مباشرة عند شركة التوصيل (لا من الموقع ولا من اللوحة)">خارجي</span>' : this.isManualOrder(o) ? '<span class="o-src man" title="طلب أُضيف يدوياً من اللوحة">يدوي</span>' : '<span class="o-src web" title="طلب جاء من الموقع">الموقع</span>') + x; },
   orderRank(o){ return this.isFresh(o) ? 0 : (this.ORDER_RANK[o.status] ?? 5); },
   /* إعدادات الأتمتة (مفعّلة افتراضياً): send = إرسال المؤكَّد للشركة، del = حذف الملغى */
   autoOpt(k){ try{ return localStorage.getItem("alyssum_auto_" + k) !== "0"; }catch(e){ return true; } },
@@ -3100,8 +3103,8 @@ const Admin = {
   /* شرائح الشركات فوق قائمة الطلبات: تظهر حين تتعدد الشركات المفعّلة (أو يوجد طلب بغير الافتراضية) */
   renderOrderCoChips(){
     const box = $f("order-co-chips"); if(!box) return;
-    const all = this.allDeliveryCompanies(), en = this.enabledCompanyKeys(), f = this.orderFilters || {};
-    const vis = this.orders.filter(o=>f.showShipped || !(this.trackingOf(o) && o.status !== "nouvelle")), cnt = {};
+    const all = this.allDeliveryCompanies(), en = this.enabledCompanyKeys();
+    const vis = this.getFilteredOrders(true).map(x=>x.o), cnt = {};      /* الأعداد تتبع كل المرشّحات الأخرى (الحالة/الولاية/البحث/التاريخ…) فتطابق ما تعرضه القائمة عند اختيار الشركة */
     vis.forEach(o=>{ const k = this.orderCoKey(o); cnt[k] = (cnt[k] || 0) + 1; });
     const keys = en.concat(Object.keys(cnt).filter(k=>k !== "none" && !en.includes(k)));
     if(keys.length < 2 && !(cnt.none && keys.length)){ box.style.display = "none"; box.innerHTML = ""; if(this._ordCo) this._ordCo = ""; return; }
@@ -3267,10 +3270,26 @@ const Admin = {
   /* الزر الأزرق في عمود Action: بوردرو الشركة الأصلي (PDF) للطلب المسجَّل؛ بلا طرد عند الشركة يُنبَّه ويُفتح وصل الطلب بدلاً منه (v1.89.707) */
   printOrderBord(i){
     const o = this.orders[i]; if(!o) return;
-    if(this.trackingOf(o)) return this.openLabel(i);
+    const t = this.trackingOf(o);
+    if(t){ const co = this.allDeliveryCompanies()[t.company]; if(!co || !co.labelRequest) return this.openLabel(i); return this.bordPrintList([{ o, t }]); }      // شركة بوابة (بلا تعريف محلي) ← مسارها القديم
     if(this.linkTrk(i, true)) return;
-    toast("ℹ️ لا بوردرو قبل الإرسال إلى الشركة — أرسل الطلب أولاً ثم اطبع بوردرو الشركة");
+    toast("ℹ️ لا بوردرو قبل الإرسال إلى الشركة — أرسل الطلب أولاً ثم اطبع");
   },
+  /* اختيار حجم الطباعة: A4 (أربعة بوردرو في الورقة) أو A6 (بوردرو في كل ورقة) لكل الشركات. تُفتح نافذة الطباعة ضمن نقرة الاختيار نفسها كي لا يحجبها المتصفح. */
+  bordFmt(){ try{ return localStorage.getItem("alyssum_bord_fmt") === "a6" ? "a6" : "a4"; }catch(e){ return "a4"; } },
+  bordAsk(n){
+    return new Promise(res=>{
+      const old = document.getElementById("bord-fmt-bg"); if(old) old.remove();
+      const bg = document.createElement("div"); bg.id = "bord-fmt-bg"; bg.className = "modal-bg open"; const cur = this.bordFmt();
+      bg.innerHTML = '<div class="modal" style="max-width:420px"><h3>🖨 طباعة' + (n > 1 ? " " + n + " بوردرو" : " البوردرو") + '</h3><div style="line-height:1.9;margin-bottom:.8rem">اختر حجم الورقة:</div>'
+        + '<div style="display:grid;gap:.6rem"><button class="small" type="button" data-f="a4">A4 — أربعة بوردرو في الورقة' + (cur === "a4" ? " ✓" : "") + '</button><button class="small" type="button" data-f="a6">A6 — بوردرو واحد في كل ورقة' + (cur === "a6" ? " ✓" : "") + '</button><button class="small gray" type="button" data-f="">إلغاء</button></div></div>';
+      document.body.appendChild(bg);
+      const done = v=>{ let w = null; if(v){ try{ localStorage.setItem("alyssum_bord_fmt", v); }catch(e){} w = window.open("", "_blank"); } bg.remove(); res(v ? { fmt: v, w } : null); };
+      bg.addEventListener("click", e=>{ const b = e.target.closest && e.target.closest("button[data-f]"); if(b) done(b.dataset.f); else if(e.target === bg) done(""); });
+    });
+  },
+  async bordPrintList(list){ if(!list || !list.length) return; const a = await this.bordAsk(list.length); if(!a) return; return this.printBordereaux(list, a.w || undefined, a.fmt); },
+  async bordPrintShown(){ const list = this.bordTargets(); if(!list.length){ toast("ℹ️ لا توجد طرود قيد التجهيز للطباعة — اختر حالة أخرى من التصفية"); return } return this.bordPrintList(list); },
   /* ربط طلب برقم تتبع طرد مسجَّل فعلاً عند الشركة (حين أُنشئ الطرد ولم يُحفظ رقمه هنا): يحفظ 🚚<شركة>:<رقم> في ملاحظة الطلب فيظهر في «الطلبات المسجلة» ويعمل «تحديث الحالة» والبوردرو. ask=true: سؤال أولاً. يعيد true إن ربط أو عولج الطلب */
   linkTrk(i, ask){
     const o = this.orders[i]; if(!o || this.trackingOf(o)) return false;
@@ -3295,7 +3314,7 @@ const Admin = {
     };
     /* الفهرس يُحسب لحظة النقر من رقم الطلب (لا من رقم الصف المحفوظ وقت الرسم): تحديث القائمة التلقائي كل دقيقة قد يغيّر ترتيب المصفوفة فيفتح الزر طلباً آخر أو لا شيء */
     const q = JSON.stringify(String(o.id)).replace(/"/g, "&quot;"), ix = "Admin.ixOf(" + q + "," + i + ")";
-    let h = b("g ord-pv", "معاينة الطلب", "Admin.openOrderPreview(" + ix + ")", I.plus) + b("b", "طباعة بوردرو الشركة", "Admin.printOrderBord(" + ix + ")", I.print);
+    let h = b("g ord-pv", "معاينة الطلب", "Admin.openOrderPreview(" + ix + ")", I.plus) + b("b", "طباعة", "Admin.printOrderBord(" + ix + ")", I.print);
     const full = window.ManualOrder && S(()=>this.canFullEdit(o)), part = window.OrderEdit && S(()=>OrderEdit.canEdit(o));
     if(can("orders.edit") && (full || part)) h += b("e", "تعديل الطلب", full ? "ManualOrder.open({mode:'edit',order:Admin.orders[" + ix + "]})" : "OrderEdit.open(" + ix + ")", I.edit);
     if(can("orders.delete")) h += b("r", "نقل إلى سلة المهملات", "Admin.deleteOrders([Admin.orders[" + ix + "]])", I.trash);
@@ -5824,9 +5843,20 @@ const Admin = {
     let url = "", hint = "";
     if(key === "yalidine"){ url = php ? base + "api/index.php?r=webhook&s=" + sec : sb + "yalidine-webhook?s=" + sec; hint = php ? "✅ جاهز: الرابط يعمل فور لصقه في لوحة الشركة (Webhooks ← الأحداث: تغيّر حالة الطرد)." : "⚠️ يلزم تفعيل خدمة التتبع الفوري مرة واحدة — تواصل مع الدعم."; }
     else if(key === "dhd"){ url = sb + "dhd-webhook?s=" + (String(sec).length > 24 ? String(sec).slice(0, 24) : sec); hint = "في لوحة DHD ← Webhooks par état ← «Nouveau webhook»: الصق هذا الرابط في «URL du webhook»، واترك «Secret» فارغاً (السرّ داخل الرابط)، واختر كل الحالات (أو ما يهمّك منها) ثم احفظ. تتحدّث حالة الطلب هنا لحظياً (في الطريق ← مُسلَّم ← مرتجع)؛ جرّب زر الإرسال التجريبي عندهم ثم راجع سجلاتهم (Logs)."; }
+    else if(key === "ecomdelivery"){ url = sb + "ecom-webhook?s=" + sec; hint = "⏳ جارٍ تسجيل الرابط عند E-com Delivery تلقائياً (يلزم أن تكون مفاتيحها مُدخلة)…"; }
     else if(key === "zrexpress_app"){ url = sb + "zr-webhook?s=" + sec; hint = "الصق الرابط في لوحة " + nm + " ← Webhooks (الأحداث: تحديث حالة الطرد). يعمل الرابط فقط إذا ضُبط سرّ الاستقبال نفسه في خدمة التتبع الفوري؛ إن كان مضبوطاً سابقاً فاضغط «🔐 تعيين السرّ» وأدخله ليُبنى الرابط به."; }
     else { url = sb + "carrier-webhook?c=" + encodeURIComponent(key) + "&s=" + sec; hint = "الصق الرابط في لوحة " + nm + " ← Webhooks. تُسجَّل الإشعارات الواردة من الشركة؛ وتحديث حالة الطلبات يبقى بزر «🔄 تحديث الحالة» إلى أن يُفعَّل التطبيق التلقائي لها. يعمل الرابط فقط إذا ضُبط سرّ الاستقبال نفسه؛ إن كان مضبوطاً سابقاً فاضغط «🔐 تعيين السرّ» وأدخله."; }
     $f("wh-url").value = url; $f("wh-hint").textContent = hint;
+    if(key === "ecomdelivery"){ this.ecomRegisterWebhook(url, sec).then(m=>{ const h = $f("wh-hint"); if(h) h.textContent = m; }).catch(e=>{ const h = $f("wh-hint"); if(h) h.textContent = "❌ تعذّر التسجيل عند E-com Delivery: " + String(e.message || e).slice(0, 140); }); }
+  },
+  /* E-com Delivery تسجّل رابط الإشعارات عبر API نفسها (PUT /webhook بالرابط والسرّ والأحداث) لا من لوحتها؛ ثم نرسل «إشعار تجربة» (POST /webhook/test) للتأكد أن دالتنا تستقبله وتتحقق من التوقيع */
+  async ecomRegisterWebhook(url, sec){
+    const co = this.DELIVERY_COMPANIES.ecomdelivery, cfg = this.deliveryCfg.ecomdelivery || {}; if(!(cfg.apiKey && cfg.apiToken)) return "⚠️ أدخل مفتاحَي E-com Delivery (KEY وToken) في إعدادات الشركة ثم أعد «إنشاء الرابط».";
+    const J = t=>{ try{ return JSON.parse(t); }catch(e){ return null; } };
+    const r = await this.courierFetch({ url: co.base + "/webhook", method: "PUT", headers: co.hdr(cfg), body: JSON.stringify({ url, secret: sec, events: ["*"], active: true }) }), j = J(r.text);
+    if(!r.ok) return "❌ رفضت E-com Delivery تسجيل الرابط (رمز " + r.status + "): " + String((j && ((j.error && (j.error.message || j.error.code)) || j.detail || j.message)) || r.text || "").slice(0, 160);
+    const t = await this.courierFetch({ url: co.base + "/webhook/test", method: "POST", headers: co.hdr(cfg), body: JSON.stringify({ event: "Livrée" }) }), tj = J(t.text);
+    return t.ok && tj && tj.ok !== false ? "✅ سُجّل الرابط عند E-com Delivery تلقائياً (كل الأحداث) وجرّبنا إشعاراً فوصل (" + String(tj.detail || "ok").slice(0, 60) + "). تتحدّث حالة الطلبات هنا لحظياً." : "⚠️ سُجّل الرابط لكن إشعار التجربة لم ينجح (" + String((tj && (tj.detail || (tj.error && tj.error.message))) || t.status).slice(0, 100) + ") — تأكد من الرابط ثم أعد المحاولة.";
   },
   copyWebhook(){ const v = $f("wh-url").value; if(!v){ toast("اضغط «إنشاء الرابط» أولاً"); return } navigator.clipboard.writeText(v).then(()=>toast("📋 نُسخ الرابط")).catch(()=>{ $f("wh-url").select(); }); },
 
@@ -8257,6 +8287,9 @@ const Admin = {
       trackRequest(cfg, tracking){ const uu = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(String(tracking)); return { url: this.baseOf(cfg) + (uu ? "/orders/" : "/parcels/") + encodeURIComponent(tracking), method: "GET", headers: this.hdr(cfg) }; },       // الطلبات القديمة (UUID) من /orders
       /* حالات WeCan ثلاث: fulfillment_status وstatus وconfirmation_status ← نص واحد */
       parseStatus(json){ const d = Array.isArray(json) ? json[0] : json; if(d && typeof d.last_status === "string" && d.last_status.trim()) return d.last_status; const x = json && json.data, a = x && (Array.isArray(x) ? (x[0] && x[0].attributes) : x.attributes); if(a) return [a.fulfillment_status, a.status, a.confirmation_status].filter(Boolean).join(" · "); const y = Array.isArray(x) ? x[0] : x; return y && typeof y.last_status === "string" ? y.last_status : ""; },
+      /* حالات لوحتهم («Commandes») تأتي من واجهة /orders لا من /parcels (التي قد تبقى «Expédié» بعد تسليم الطرد): قائمة الطلبات بحالاتها ← {tracking: النص} للمزامنة */
+      statusListRequest(cfg, pg){ return { url: this.baseOf(cfg) + "/orders?page%5Bsize%5D=100&page%5Bnumber%5D=" + (pg || 1), method: "GET", headers: this.hdr(cfg) }; },
+      parseStatusList(json){ const arr = json && Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []); const out = []; arr.forEach(x=>{ const a = (x && x.attributes) || x || {}, trk = String(a.tracking_number || a.tracking || ""); if(!trk) return; out.push({ tracking: trk, status: [a.fulfillment_status, a.status, a.confirmation_status].filter(Boolean).join(" · ") }); }); return out; },
       parseInfo(json){ const d = Array.isArray(json) ? json[0] : json; if(!d || !d.tracking) return null; return { reference: String(d.order_id || d.tracking), client: [d.firstname, d.familyname].filter(Boolean).join(" ").trim(), phone: String(d.contact_phone || ""), wilaya: d.to_wilaya_id, commune: String(d.to_commune_name || ""), amount: Number(d.price) || 0, product: String(d.product_list || ""), at: String(d.date_creation || "") }; },
       /* حالات WeCan كما في صفحة «Expéditions» عندهم: En préparation · Prêt à expédier · Pré-expédié (لم تُسلَّم للناقل بعد = مؤكَّدة) · Expédié · Transfert · Centre · Vers Wilaya · Reçu à la Wilaya · En attente du client · Sorti en livraison · En localisation (= مُرسَلة) · En alerte (تنبيه بلا تغيير) · Tentative échouée (تنبيه) · Livré · Échec de livraison · Retourné au centre · Retour au centre · Retourné au vendeur (= فشل/مرتجع) · Bloqué · Débloqué */
       mapStatus(raw){
@@ -8341,11 +8374,18 @@ const Admin = {
           const e = json && json.error; if(e) return String(e.message || e.code || "") + (Array.isArray(e.details) ? " — " + e.details.map(d=>(d.champ || "") + ": " + (d.raison || "")).slice(0, 4).join("، ") : "");
           return String((json && (json.message || json.detail)) || ""); }catch(e){ return ""; }
       },
+      /* قائمة طرود الحساب: GET /colis?page=&limit=100 ⟵ {items:[{tracking,id_externe,nom_complet,mobile,commune,id_wilaya,article,total,situation,etat_logistique,date_creation}]}؛ تُربط بطلباتنا بالمرجع (id_externe = رقم الطلب) وتُضاف الطرود المنشأة في لوحتهم مباشرة كطرود خارجية */
+      recentRequest(cfg, pg){ return { url: this.base + "/colis?page=" + (pg || 1) + "&limit=100", method: "GET", headers: this.hdr(cfg) }; },
+      parseOrdersList(json){
+        const arr = json && Array.isArray(json.items) ? json.items : (Array.isArray(json) ? json : []);
+        return arr.filter(x=>x && x.tracking).map(x=>{ const w = (typeof WILAYAS !== "undefined" ? WILAYAS : []).find(y=>y.id === Number(x.id_wilaya)); return { tracking: String(x.tracking), reference: String(x.id_externe || ""), client: String(x.nom_complet || ""), phone: String(x.mobile || ""), commune: String(x.commune || ""), wilaya: w ? w.name : "", amount: Number(x.total) || 0, product: String(x.article || ""), status: this.parseStatus(x), date: String(x.date_creation || "").replace("T", " ").slice(0, 19) }; });
+      },
       /* التتبع: GET /colis/{tracking} ⟵ {situation, etat_logistique, …}؛ الحالة المعروضة = الوضعية · الحالة اللوجستية */
       trackRequest(cfg, tracking){ return { url: this.base + "/colis/" + encodeURIComponent(tracking), method: "GET", headers: this.hdr(cfg) }; },
       /* الحالة المعروضة = «الوضعية» (Situation) كما في مرشّح لوحتهم: Attend Confirmation / Commande Confirmée / Commande Annuler / Commande Reporté / Commande a Relancé…؛ وإن كانت عامة (EnCours) أو فارغة فالحالة اللوجستية (Au Bureau / En livraison…) */
       parseStatus(json){ const d = json && (Array.isArray(json) ? json[0] : json); if(!d || typeof d !== "object") return ""; const a = String(d.situation || "").trim(), b = String(d.etat_logistique || "").trim(); return (!a || /^en ?cours$/i.test(a)) ? (b || a) : a; },
       /* ملصق الشركة: GET /colis/{tracking}/bordereau?format=10x13 ⟵ صفحة HTML جاهزة للطباعة */
+      labelHtml: true, labelBodyHtml: true,
       labelRequest(cfg, tracking){ return { url: this.base + "/colis/" + encodeURIComponent(tracking) + "/bordereau?format=10x13", method: "GET", headers: this.hdr(cfg) }; },
       cancelRequest(cfg, tracking){ return { url: this.base + "/colis/" + encodeURIComponent(tracking), method: "DELETE", headers: this.hdr(cfg) }; },
       /* وضعيات النظام (GET /situations): Livrée → مُسلَّم؛ Annuler/Annuler x3/Commande Annuler/Retour* → تعثّر؛ Ne Réponde pas/Reporté/En attente → تنبيه؛ في الطريق (Sortir en livraison/Dispatcher/Au Bureau/En livraison…) → مُرسَل؛ En Préparation/En Traitement/EnCours الأولى → مؤكَّد */
@@ -9674,7 +9714,10 @@ const Admin = {
     const btns = [$f("sync-btn"), $f("ship-sync-btn")].filter(Boolean); this._syncing = true; btns.forEach(b=>b.disabled = true);
     const rows = []; let changed = 0, failed = 0, n = 0, corsHit = null; const deadCo = new Set(); const gone = [];
     /* شركات تُرجع قائمة طرودها بحالاتها الحالية (DHD/Ecotrack): نجلبها مرة واحدة فتحسم الحالة بدل سجلّ التتبع (الذي لا يحمل مراحل مثل Vers Station)، وتُربط/تُضاف الطرود الناقصة عندنا */
-    const listMap = {}; for(const k of [...new Set(cands.map(x=>x.t.company))]){ const c0 = all[k]; if(!(c0 && c0.parseOrdersList && c0.recentRequest)) continue; try{ const lr = await this.companyListRows(k); if(lr){ listMap[k] = {}; lr.forEach(x=>{ listMap[k][x.tracking] = x; }); const im = this.importCompanyRows(k, lr); if(im.linked || im.ext) toast("📥 من " + c0.name + ": ربط " + im.linked + " وإضافة " + im.ext + " طرد غير مرتبط"); } }catch(e){} }
+    const listMap = {}; for(const k of [...new Set(cands.map(x=>x.t.company))]){ const c0 = all[k]; if(!(c0 && c0.parseOrdersList && c0.recentRequest)) continue; try{ const lr = await this.companyListRows(k); if(lr){ listMap[k] = {}; lr.forEach(x=>{ listMap[k][x.tracking] = x; }); const im = this.importCompanyRows(k, lr, { create: true }); if(im.linked || im.ext) toast("📥 من " + c0.name + ": ربط " + im.linked + " وإضافة " + im.ext + " طرد غير مرتبط"); } }catch(e){ try{ toast("⚠️ تعذّر جلب قائمة طرود " + c0.name + ": " + String(e.message || e).slice(0, 120)); }catch(e2){} } }
+    /* شركات لها قائمة حالات أحدث من سجلّ الطرد (WeCan): تُجلب مرة واحدة (حتى 3 صفحات) ويؤخذ منها الأقدم ترتيباً: مسلَّم > فشل > مُرسَل > مؤكَّد */
+    const stMap = {}; for(const k of [...new Set(cands.map(x=>x.t.company))]){ const c0 = all[k]; if(!(c0 && c0.statusListRequest && c0.parseStatusList)) continue; const cf0 = this.deliveryCfg[k] || {}; stMap[k] = {};
+      try{ for(let pg = 1; pg <= 3; pg++){ const r0 = await this.courierFetch(c0.statusListRequest(cf0, pg)); if(!r0.ok) break; let j0 = null; try{ j0 = JSON.parse(r0.text); }catch(e){ break; } const got = c0.parseStatusList(j0); got.forEach(x=>{ stMap[k][x.tracking] = x.status; }); if(got.length < 100) break; await new Promise(res=>setTimeout(res, 250)); } }catch(e){} }
     for(const { o, i, t } of cands){
       n++; btns.forEach(b=>b.textContent = "⏳ " + n + "/" + cands.length);
       const co = all[t.company], cfg = this.deliveryCfg[t.company] || {};
@@ -9690,6 +9733,7 @@ const Admin = {
         let body = r.text; try{ row.raw = co.parseStatus(JSON.parse(r.text)); }catch(e){ row.raw = ""; }
         if(!row.raw && co.trackListRequest){ try{ const r2 = await this.courierFetch(co.trackListRequest(cfg, t.tracking)); body = "[1] " + String(r.text).slice(0, 160) + " [2] " + String(r2.text).slice(0, 160); row.raw = co.parseStatus(JSON.parse(r2.text)); }catch(e){} }
         { const lrow = listMap[t.company] && listMap[t.company][t.tracking]; if(lrow && lrow.status) row.raw = lrow.status; }      /* حالة القائمة الحالية تسبق سجلّ التتبع */
+        { const so = stMap[t.company] && stMap[t.company][t.tracking]; if(so){ const RK = { livree: 4, echec: 3, expediee: 2, confirmee: 1 }, m1 = co.mapStatus(row.raw), m2 = co.mapStatus(so); if((RK[m2] || 0) > (RK[m1] || 0)){ row.raw = so; row.fromList = true; } } }      /* قائمة طلبات الشركة تسبق سجلّ الطرد إن كانت أبعد مرحلة */
         if(!row.raw) row.body = String(body || "").replace(/\s+/g, " ").slice(0, 340);
         this.noStatusMark(o.id, !row.raw);
         if(row.raw) this.setShipRaw(o.id, row.raw);
@@ -10200,7 +10244,7 @@ const Admin = {
       this.nocList(cof).forEach(x=>{ const r = P.rows[x.trk], inf = (r && r.info) || {}, ex = x.ext || {};
         const o = x.o ? { o: x.o, i: x.i } : null; push({ tracking: x.trk, status: r ? (r.label || r.raw || "") : "", client: inf.client || ex.client, phone: inf.phone || ex.phone, wilaya: inf.wilayaName || "", commune: inf.commune || ex.commune, amount: inf.amount || ex.amount, date: inf.at || (ex.at ? new Date(ex.at).toISOString() : ""), note: r && !r.validated ? "مسوّدة غير مصدَّقة" : "", draft: !!(r && !r.validated), src: x.o ? "plat" : "ext" }, o); }); }
     else { this.orders.forEach((o, i)=>{ const t = this.trackingOf(o); if(t && t.company === cof) push({ tracking: t.tracking, src: "plat" }, { o, i }); });
-      (this.extAll()[cof] || []).forEach(x=>push({ tracking: x.tracking, status: x.raw || "", client: x.client, phone: x.phone, commune: x.commune, amount: x.amount, date: x.at ? new Date(x.at).toISOString() : "", src: "ext" })); }
+      (this.extAll()[cof] || []).forEach(x=>push({ tracking: x.tracking, status: x.raw || "", client: x.client, phone: x.phone, commune: x.commune, amount: x.amount, product: x.product || "", wilaya: x.wilaya || "", date: x.date || (x.at ? new Date(x.at).toISOString() : ""), src: "ext" })); }
     return rows;
   },
   /* عمود Action: زر «معاينة» وحده (كياليدين)؛ الحذف والطباعة والنسخ داخل نافذة المعاينة */
@@ -10217,7 +10261,7 @@ const Admin = {
       L("الزبون", E(r.client || "—")) + L("الهاتف", '<span dir="ltr">' + E(r.phone || "—") + '</span>') + L("الوجهة", E([r.wilaya, r.commune].filter(Boolean).join(" / ") || "—")) + hr +
       L("المنتج", '<span dir="auto">' + E(r.product || "—") + '</span>') + L("المبلغ", r.amount ? n(r.amount) + " دج" : "—") + L("الطلب في لوحتك", r.orderId ? "#" + E(String(r.orderId).slice(-6)) : "غير مرتبط بطلب") + '</div>' +
       '<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem">' +
-      btn("blue", "Admin.coOne(" + c + ",'label')", "🏷️ بوردرو الشركة", "بوردرو الشركة الأصلي للطباعة") + btn("gray", "Admin.coOne(" + c + ",'status')", "🔄 قراءة الحالة") +
+      btn("blue", "Admin.coOne(" + c + ",'label')", "🖨 طباعة", "طباعة بوردرو الشركة الأصلي (A4 أو A6)") + btn("gray", "Admin.coOne(" + c + ",'status')", "🔄 قراءة الحالة") +
       (r.draft && co.postSend ? btn("green", "Admin.coValidateTrk(" + c + ")", "✅ تصديق") : "") +
       (r.oi != null ? btn("blue", "Admin.openOrderPreview(" + r.oi + ")", "📋 فتح الطلب") : "") +
       btn("gold", "Admin.coCopyAsOrder(" + c + ")", "📄 نسخ الزبون كطلب جديد", "ينسخ الزبون والمنتج إلى طلب جديد تعدّله وتحفظه") +
@@ -10276,7 +10320,7 @@ const Admin = {
     try{
       const cof = this._shipCo || "";
       try{ await this.syncShipping({ silent:true }); }catch(e){}
-      try{ if(cof && cof !== "yalidine"){ const co = this.allDeliveryCompanies()[cof] || {}; if(cof === "zrexpress_app") await this.zrLoadParcels(true); else if(co.batchTrackRequest) await this.nocLoad(cof, true); else await this.extRefresh(cof); }
+      try{ if(cof && cof !== "yalidine"){ const co = this.allDeliveryCompanies()[cof] || {}; if(cof === "zrexpress_app") await this.zrLoadParcels(true); else if(co.batchTrackRequest) await this.nocLoad(cof, true); else { if(co.recentRequest && co.parseOrdersList) await this.coImport(cof, true); await this.extRefresh(cof); } }
         else if(typeof AdminYd !== "undefined" && AdminYd.load) await AdminYd.load(); }catch(e){}
     }finally{ this._refreshingShip = false; }
   },
@@ -10287,7 +10331,7 @@ const Admin = {
     if(!rows.length && cof !== "zrexpress_app"){ if(c) c.style.display = "none"; return }
     if(!c){ c = document.createElement("div"); c.id = "cop-card"; c.className = "card"; c.setAttribute("data-noco", ""); const anchor = tbl.closest(".card"); anchor.parentNode.insertBefore(c, anchor); }
     c.style.display = "";
-    AdminCoP.draw(c, { key: cof, title: "📦 طرود " + this.coLabel(cof), rows, actions: r=>this.coAct(cof, r), reload: ()=>this.coReload(cof), onAct: (a, r)=>{ if(a === "link") this.importTracking(r.tracking, cof); },
+    AdminCoP.draw(c, { key: cof, title: "📦 طرود " + this.coLabel(cof), rows, actions: r=>this.coAct(cof, r), reload: ()=>this.coReload(cof), onAct: (a, r)=>{ if(a === "link") this.importTracking(r.tracking, cof); else if(a === "create") this.coCreateOrder(cof, r.tracking); },
       note: cof === "zrexpress_app" ? "كل طرود حسابك عند ZR Express." : (co.batchTrackRequest ? "ما سجّلته الشركة فعلاً لطرودنا (بالتتبع)؛ أضف طرداً خارجياً بزر «➕ إضافة طرد بالتتبع»." : "") });
   },
   renderZrCard(){ this.renderCoCard("zrexpress_app"); },
@@ -10334,6 +10378,23 @@ const Admin = {
   /* «🔍 آخر الطرود عند الشركة»: كل الحقول البسيطة لآخر الطرود كما تعرضها الشركة — للمقارنة بين طرد أُضيف يدوياً في لوحتها وطرد أرسلناه (لمعرفة أي حقل يجعله يظهر في «En préparation») */
   /* قائمة طرود حساب الشركة كلها (صفحات متتابعة حتى لا جديد) ← صفوف موحّدة؛ null إن لم تدعمها الشركة */
   coStatusLabel(key, raw){ try{ const co = this.allDeliveryCompanies()[key]; return co && co.statusLabel ? co.statusLabel(raw) : String(raw || ""); }catch(e){ return String(raw || ""); } },
+  /* جلب طرود حساب الشركة وربط/إضافة غير المرتبط منها (طرد أُنشئ في لوحتها مباشرة): عند فتح تبويب الشركة (مرة كل 5 دقائق) وبزر «تحديث»؛ وتظهر النتيجة والخطأ بوضوح بدل أن يُبتلع */
+  async coImport(key, force){
+    const co = this.allDeliveryCompanies()[key]; if(!co || !co.recentRequest || !co.parseOrdersList) return null;
+    const A = this._impAt || (this._impAt = {}); if(A[key] && A[key].busy) return null; if(!force && A[key] && Date.now() - A[key].t < 300000) return null;
+    A[key] = { t: Date.now(), busy: true };
+    try{
+      const lr = await this.companyListRows(key), im = lr ? this.importCompanyRows(key, lr, { create: true }) : { linked: 0, ext: 0 };
+      A[key] = { t: Date.now(), busy: false, n: (lr || []).length };
+      if(im.linked || im.ext){ toast("📥 من " + co.name + ": ربط " + im.linked + " وإضافة " + im.ext + " طرد"); try{ this.renderShipped(); }catch(e){} }
+      else if(force) toast("ℹ️ قُرئ " + (lr || []).length + " طرد من " + co.name + " — لا جديد لإضافته");
+      return im;
+    }catch(e){
+      A[key] = { t: Date.now(), busy: false, err: String(e.message || e) };
+      if(force || !A[key].shown){ A[key].shown = true; toast("⚠️ تعذّر جلب طرود " + co.name + ": " + String(e.message || e).slice(0, 140)); }
+      return null;
+    }
+  },
   async companyListRows(key){
     const co = this.allDeliveryCompanies()[key], cfg = this.deliveryCfg[key] || {}; if(!co || !co.recentRequest || !co.parseOrdersList) return null;
     const rows = [], seen = new Set();
@@ -10345,16 +10406,39 @@ const Admin = {
     return rows;
   },
   /* طرود الشركة غير المربوطة: تُربط بطلب مطابق (المرجع = رقم الطلب، أو الهاتف والمبلغ) وإلا تُحفظ «طرداً خارجياً» ليظهر في تبويب الشركة. يعيد {linked, ext} */
-  importCompanyRows(key, rows){
+  importCompanyRows(key, rows, opts){
     const ph = v=>{ let d = String(v || "").replace(/\D/g, ""); if(d.startsWith("213")) d = "0" + d.slice(3); else if(d.length === 9) d = "0" + d; return d; };
     const mine = new Set(this.orders.map(o=>(this.trackingOf(o) || {}).tracking).filter(Boolean)), ext = new Set(((this.extAll()[key]) || []).map(x=>x.tracking)); let linked = 0, added = 0;
+    const open = ()=>this.orders.filter(o=>!this.trackingOf(o) && !/^(annulee|livree|echec)$/.test(String(o.status || "")));
+    /* ربط تلقائي لطرد أُرسل من اللوحة ولم يُحفظ تتبعه فقط: المرجع ALY-رقم ثم الهاتف والمبلغ؛ وما عداه طرد خارجي (يُنشأ له طلب) */
+    const find = r=>{
+      const ref = String(r.reference || "").replace(/^ALY-/, ""), un = open(), same = r.phone ? un.filter(o=>ph(o.phone) && ph(o.phone) === ph(r.phone)) : [];
+      let o = ref && un.find(x=>String(x.id) === ref); if(o) return o;
+      o = r.amount && same.find(x=>Math.round(Number(x.total) || 0) === Math.round(r.amount)); if(o) return o;
+      return null;      /* الطرد المسجَّل عند الشركة مباشرة لا طلب له في اللوحة أصلاً: لا مطابقة تقريبية (تربط طلباً خاطئاً) */
+    };
+    const tryLink = r=>{ const ord = find(r); if(!ord) return false; this.saveTracking(ord, key, r.tracking); if(r.status || r.raw) this.setShipRaw(ord.id, r.status || r.raw); mine.add(r.tracking); return true; };
+    const a0 = this.extAll(), keep = [];
+    (a0[key] || []).forEach(x=>{ if(mine.has(x.tracking) || tryLink({ tracking: x.tracking, phone: x.phone, commune: x.commune, amount: x.amount, status: x.raw })){ linked++; ext.delete(x.tracking); } else keep.push(x); });      /* طرود خارجية محفوظة سابقاً صار لها طلب مطابق */
+    if(keep.length !== (a0[key] || []).length){ a0[key] = keep; try{ localStorage.setItem("alyssum_ext_parcels", JSON.stringify(a0)); }catch(e){} }
     (rows || []).forEach(r=>{
-      if(mine.has(r.tracking)) return; const ref = String(r.reference || "").replace(/^ALY-/, "");
-      const ord = this.orders.find(o=>!this.trackingOf(o) && String(o.id) === ref) || this.orders.find(o=>!this.trackingOf(o) && r.phone && ph(o.phone) === ph(r.phone) && r.amount && Math.round(Number(o.total) || 0) === Math.round(r.amount));
-      if(ord){ this.saveTracking(ord, key, r.tracking); if(r.status) this.setShipRaw(ord.id, r.status); mine.add(r.tracking); linked++; return; }
-      if(!ext.has(r.tracking)){ this.extSave(key, { tracking: r.tracking, client: r.client, phone: r.phone, commune: r.commune, amount: r.amount, product: r.product, raw: r.status, at: Date.now() }); ext.add(r.tracking); added++; }
+      if(mine.has(r.tracking)) return;
+      if(tryLink(r)){ linked++; return; }
+      if(ext.has(r.tracking)){ const a1 = this.extAll(), x1 = (a1[key] || []).find(z=>z.tracking === r.tracking); if(x1){ let ch = false; [["date", r.date], ["wilaya", r.wilaya], ["product", r.product], ["commune", r.commune], ["client", r.client], ["phone", r.phone]].forEach(([k, v])=>{ if(v && !x1[k]){ x1[k] = v; ch = true; } }); if(r.status && x1.raw !== r.status){ x1.raw = r.status; ch = true; } if(ch){ try{ localStorage.setItem("alyssum_ext_parcels", JSON.stringify(a1)); }catch(e){} } } return; }      /* طرد خارجي محفوظ قبل إضافة التاريخ (لا يُنشأ له طلب تلقائياً دونه): يُستكمل من القائمة */
+      if(!ext.has(r.tracking)){ this.extSave(key, { tracking: r.tracking, client: r.client, phone: r.phone, commune: r.commune, amount: r.amount, product: r.product, wilaya: r.wilaya, date: r.date || "", raw: r.status, at: Date.now() }); ext.add(r.tracking); added++; }
     });
-    return { linked, ext: added };
+    const res = { linked, ext: added }; if(opts && opts.create) res.created = this.coAutoCreate(key);
+    return res;
+  },
+  /* الطرود الخارجية (سُجّلت عند الشركة مباشرة) تصير طلبات تلقائياً بعد الجلب، بوسم «خارجي»؛ الأحدث من 30 يوماً فقط حتى لا يُغرق السجلُّ القديم القائمة، والأقدم يبقى بزر «📥 إنشاء طلب» */
+  async coAutoCreate(key){
+    this._coAC = this._coAC || new Set(); const days = 30 * 864e5, now = Date.now(); let n = 0;
+    for(const x of ((this.extAll()[key]) || []).slice()){
+      const d = x.date ? new Date(String(x.date).replace(" ", "T")).getTime() : NaN; if(isNaN(d) || now - d > days || this._coAC.has(key + ":" + x.tracking)) continue;
+      this._coAC.add(key + ":" + x.tracking); try{ if(await this.coCreateOrder(key, x.tracking, true)) n++; }finally{ this._coAC.delete(key + ":" + x.tracking); }
+    }
+    if(n) toast("📥 أُنشئ " + n + " طلب من طرود سُجّلت مباشرة عند " + this.coLabel(key) + " (بوسم «خارجي»)");
+    return n;
   },
   async coRecent(){
     const all = this.allDeliveryCompanies(), keys = Object.keys(all).filter(k=>all[k].recentRequest && (this.deliveryCfg[k] || {}).enabled !== false && ((this.deliveryCfg[k] || {}).apiKey || (this.deliveryCfg[k] || {}).apiId || (this.deliveryCfg[k] || {}).token));
@@ -10370,7 +10454,7 @@ const Admin = {
       const skip = /^(label|qr_text|pin|compression|processing|processed|original_label|used_micro|price_freshness)/;
       const one = d=>{ const a = (d && d.attributes && typeof d.attributes === "object") ? Object.assign({ id: d.id }, d.attributes) : (d || {});
         return Object.keys(a).filter(x=>!skip.test(x) && a[x] !== null && a[x] !== "" && a[x] !== undefined).map(x=>x + ": " + (typeof a[x] === "object" ? JSON.stringify(a[x]).slice(0, 120) : String(a[x]).slice(0, 80))).join("\n"); };
-      try{ if(co.parseOrdersList){ const all2 = await this.companyListRows(k), im = all2 ? this.importCompanyRows(k, all2) : null; if(im && (im.linked || im.ext)){ toast("📥 أُضيف " + im.ext + " طرد من " + co.name + " وربط " + im.linked + " بطلبات"); this._shipCo = k; this.renderOrders(); this.renderShipped(); } } }catch(e){}      /* الطرود الناقصة عندنا (أُنشئت في موقع الشركة) تُضاف إلى تبويبها */
+      try{ if(co.parseOrdersList){ const all2 = await this.companyListRows(k), im = all2 ? this.importCompanyRows(k, all2, { create: true }) : null; if(im && (im.linked || im.ext)){ toast("📥 أُضيف " + im.ext + " طرد من " + co.name + " وربط " + im.linked + " بطلبات"); this._shipCo = k; this.renderOrders(); this.renderShipped(); } } }catch(e){}      /* الطرود الناقصة عندنا (أُنشئت في موقع الشركة) تُضاف إلى تبويبها */
       this.showNotice("🔍 آخر " + arr.length + " طرود في " + nE(co.name), arr.slice(0, 6).map((d, n)=>'<div style="margin:.4rem 0"><b>#' + (n + 1) + '</b><pre dir="ltr" style="white-space:pre-wrap;font-size:.72rem;max-height:200px;overflow:auto;margin:.2rem 0">' + nE(one(d)) + '</pre></div>').join(""));
     }catch(err){ this.showNotice("⚠️ تعذّر الاتصال بـ" + nE(co.name), nE(err.message || err)); }
   },
@@ -10429,6 +10513,34 @@ const Admin = {
     this.saveTracking(ord, key, trk); if(raw){ try{ this.setShipRaw(ord.id, raw); }catch(e){} }
     this._shipCo = key; this.renderOrders(); this.renderShipped();
     toast("✅ رُبط الطرد " + trk + " بالطلب " + ord.id + (raw ? " — " + raw : "") + " (اضغط «تحديث الحالة» لتطبيقها على الطلب)");
+  },
+  /* مطابقة اسم منتج الطرد الخارجي بمنتجات المتجر (العنوان أو اسم البوردرو): تطابق تام ثم احتواء بلا حركات ولا رموز، وبشرط أن يكون المرشّح واحداً فقط */
+  matchProductByName(name){
+    const nz = v=>String(v || "").toLowerCase().replace(/[\u064B-\u0652\u0640]/g, "").replace(/\s*(?:×|\bx)\s*\d{1,3}\s*$/i, "").replace(/[^a-z0-9\u0600-\u06ff]/g, ""), n = nz(name), P = this.products || []; if(!n) return null;
+    const keys = p=>[p.title, p.bord].map(nz).filter(Boolean);
+    let hit = P.filter(p=>keys(p).includes(n)); if(hit.length === 1) return hit[0];
+    hit = P.filter(p=>keys(p).some(k=>k.length >= 4 && (n.includes(k) || (n.length >= 4 && k.includes(n))))); return hit.length === 1 ? hit[0] : null;
+  },
+  /* «📥 إنشاء طلب» من طرد خارجي (أُنشئ في لوحة الشركة مباشرة): يُنشئ طلباً في اللوحة ببيانات الطرد ويربطه به بحالته المقابلة (بلا إرسال ولا مخزون: الطرد موجود عند الشركة أصلاً) ويُزال من «الطرود الخارجية» */
+  async coCreateOrder(cof, trk, silent){
+    const co = this.allDeliveryCompanies()[cof]; if(!co) return false;
+    const row = (this.coRows(cof) || []).find(x=>x.tracking === trk); if(!row){ if(!silent) toast("⚠️ لم أجد الطرد " + trk); return false }
+    if(this.orders.find(o=>{ const t = this.trackingOf(o); return t && t.tracking === trk; })){ if(!silent) toast("ℹ️ الطرد مرتبط بطلب بالفعل"); return false }
+    if(!silent && !confirm("إنشاء طلب في لوحتك من الطرد " + trk + "؟\n" + [row.client, row.phone, [row.wilaya, row.commune].filter(Boolean).join(" / "), row.amount ? row.amount.toLocaleString("fr-DZ") + " دج" : ""].filter(Boolean).join(" — ") + "\nيُربط به بحالته الحالية عند الشركة " + (row.status ? "(" + row.status + ")" : "") + "، ولا يُرسَل إلى أي شركة ولا يخصم المخزون.")) return;
+    const amount = Math.max(0, Math.round(Number(row.amount) || 0)), rawT = String(row.product || "").trim(), mp = this.matchProductByName(rawT), qm = rawT.match(/(?:×|\bx)\s*(\d{1,3})\s*$/i), qty = mp && qm ? Math.max(1, Number(qm[1])) : 1, title = mp ? mp.title : (rawT || ("طرد من " + co.name)), unit = Math.max(0, Math.round(amount / qty)), phone = String(row.phone || "").replace(/\D/g, "");
+    const order = { name: row.client || "طرد خارجي", phone: phone.startsWith("213") ? "0" + phone.slice(3) : phone, wilaya: row.wilaya || "", commune: row.commune || "", dtype: row.stop ? "stop" : "home", desk: "", items: [{ slug: mp ? mp.slug : "", title: title.slice(0, 160), qty, price: unit }], subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: { "✍️ طلب يدوي": "نعم", "📥 مستورد من الشركة": co.name }, note: "" };
+    const r = await API.addOrder(order); if(!r || !r.ok){ if(!silent) toast("❌ تعذّر إنشاء الطلب — تحقق من الاتصال والصلاحية"); return false }
+    let st = "confirmee"; try{ const m = co.mapStatus ? co.mapStatus(row.status) : null; if(m && m !== "__alert") st = m; }catch(e){}
+    const o = { id: r.id || ("M" + Date.now().toString(36).toUpperCase()), date: row.date ? new Date(String(row.date).replace(" ", "T")).toISOString() : new Date().toISOString(), name: order.name, phone: order.phone, wilaya: order.wilaya, commune: order.commune, dtype: order.dtype, desk: "", items: title + " ×" + qty + " = " + amount + " DA", subtotal: amount, fee: 0, total: amount, coupon: "", discount: 0, extra: order.extra, status: st, note: "" };
+    if(isNaN(new Date(o.date).getTime())) o.date = new Date().toISOString();
+    this.orders.unshift(o);
+    try{ API.updateOrder(this.key, o.id, st); }catch(e){}
+    try{ this.syncStockForOrder(o, st); }catch(e){}      /* يدخل المخزون والأرباح والإحصائيات كأي طلب: خصم المخزون للمؤكَّد فما بعده إن طابق منتجاً */
+    this.saveTracking(o, cof, trk); if(row.status){ try{ this.setShipRaw(o.id, row.status); }catch(e){} }
+    try{ const a = this.extAll(); if(a[cof]){ a[cof] = a[cof].filter(x=>x.tracking !== trk); localStorage.setItem("alyssum_ext_parcels", JSON.stringify(a)); } }catch(e){}
+    try{ this.renderStats(); this.renderOrders(); this.renderShipped(); }catch(e){}
+    if(!silent) toast("✅ أُنشئ الطلب " + String(o.id).slice(-6) + " من الطرد " + trk);
+    return true;
   },
   /* طرود مضافة بالتتبع بلا طلب (أُنشئت خارج المنصة): تُحفظ محلياً وتظهر في تبويب شركتها وتُحدَّث حالتها بزر */
   extAll(){ try{ return JSON.parse(localStorage.getItem("alyssum_ext_parcels") || "{}") || {}; }catch(e){ return {}; } },
@@ -10499,13 +10611,13 @@ const Admin = {
       if(tabs){
         if(keys.length < 2){ tabs.style.display = "none"; tabs.innerHTML = ""; if(this._shipCo){ this._shipCo = ""; return this.renderShipped(); } }
         else {
-          if(!cof || !keys.includes(cof)){ const ak = (()=>{ try{ return this.activeCompanyKey(); }catch(e){ return ""; } })(); this._shipCo = keys.includes(ak) ? ak : keys[0]; return this.renderShipped(); }   // لا «الكل»: كل شركة في تبويبها منفصلة
+          if(!cof || !keys.includes(cof)){ const ak = (()=>{ try{ return this.activeCompanyKey(); }catch(e){ return ""; } })(); const top = keys.slice().sort((x, y)=>((by[y] || {}).n || 0) - ((by[x] || {}).n || 0))[0]; this._shipCo = keys.includes(ak) && ((by[ak] || {}).n || !(by[top] || {}).n) ? ak : top; return this.renderShipped(); }      /* تفتح على الافتراضية إن كان فيها طلبات، وإلا على الشركة التي فيها طلبات (كان طلب E-com يختفي في تبويب غير المفتوح) */   // لا «الكل»: كل شركة في تبويبها منفصلة
           const b = (k, l, n)=>'<button type="button" class="small ' + (cof === k ? "gold" : "gray") + '" onclick="Admin._shipCo=\'' + k + '\';Admin.shipFocus();Admin.renderShipped()">' + eT(l) + ' <b>' + n + '</b></button>';
           tabs.innerHTML = keys.map(k=>b(k, this.coLabel(k), (by[k]||{}).n || 0)).join(""); tabs.style.display = "flex"; }
       }
       if(line){ const g = cof && by[cof]; if(g){ const d = g.ok + g.bad; line.hidden = false; line.textContent = g.n + " طلب · ✅ " + g.ok + " · ⏳ " + g.way + " · ⛔ " + g.bad + (d ? " · نجاح " + Math.round(g.ok / d * 100) + "%" : "") + " · " + Math.round(g.sum).toLocaleString("fr-DZ") + " دج"; } else { line.hidden = true; line.textContent = ""; } }
       { ["zr-card", "noc-card", "ext-card"].forEach(id=>{ const x = $f(id); if(x) x.style.display = "none"; });             // بطاقات قديمة حلّت محلها البطاقة الموحّدة
-        if(cof && cof !== "yalidine"){ this.renderCoCard(cof); const cc = this.allDeliveryCompanies()[cof] || {}; if(cof === "zrexpress_app") this.zrLoadParcels(false); else if(cc.batchTrackRequest) this.nocLoad(cof, false); }
+        if(cof && cof !== "yalidine"){ this.renderCoCard(cof); const cc = this.allDeliveryCompanies()[cof] || {}; if(cof === "zrexpress_app") this.zrLoadParcels(false); else if(cc.batchTrackRequest) this.nocLoad(cof, false); else if(cc.recentRequest && cc.parseOrdersList) this.coImport(cof, false); }
         else { const x = $f("cop-card"); if(x) x.style.display = "none"; } }
       { const ib = $f("ship-imp-btn"), cc = cof && this.allDeliveryCompanies()[cof]; if(ib) ib.style.display = (cc && cc.trackRequest) ? "" : "none"; }
       /* أزرار خاصة بشركة: «تعريفة WeCan لولاية» تظهر في تبويب WeCan فقط، و«آخر الطرود عند الشركة» للشركات التي تدعمه (WeCan وDHD) */
@@ -10530,7 +10642,7 @@ const Admin = {
       if(this._shipRaw && String((this.shipRaw[o.id] || {}).raw || "").trim() !== this._shipRaw) return false;
       return !q || FD([t.tracking, o.name, o.phone, o.id, o.wilaya, o.commune].join(" ")).includes(q);
     });
-    this._shipRows = rows; { const _bb = $f("ship-bord-btn"); if(_bb) _bb.textContent = "🖨 طباعة البوردرو (" + this.bordTargets().length + ")"; }
+    this._shipRows = rows; { const _bb = $f("ship-bord-btn"); if(_bb) _bb.textContent = "🖨 طباعة (" + this.bordTargets().length + ")"; }
     { const _sc = $f("ship-count"); if(_sc) _sc.textContent = rows.length + " من أصل " + all.length + " طلب مسجل" + (this._lastShipSync ? " — آخر تحديث " + new Date(this._lastShipSync).toLocaleTimeString("ar-DZ") : "") };
     if(!rows.length){ el.innerHTML = "<tr><td style='text-align:center;padding:2rem;color:#999'>" + (all.length ? "لا نتائج مطابقة" : "لا توجد طلبات مسجلة بعد — أكّد طلباً جديداً ليُرسل إلى شركة التوصيل تلقائياً") + "</td></tr>"; return }
     el.classList.remove("m-cards");                                                       // جدول أفقي (بطلب صاحب المتجر): يُسحب أفقياً على الهاتف
@@ -10596,7 +10708,7 @@ const Admin = {
       S(()=>window.OrderEdit && OrderEdit.canEdit(o) ? '<button class="small gold" type="button" onclick="OrderEdit.open(' + i + ')" title="تعديل الاسم والولاية والبلدية وطريقة التوصيل">✏️ تعديل</button>' : '') +
       (window.ManualOrder && S(()=>this.canFullEdit(o)) ? '<button class="small gold" type="button" onclick="' + close + ';ManualOrder.open({mode:\'edit\',order:Admin.orders[' + i + ']})" title="تعديل كل بيانات الطلب بما فيها المنتجات والهاتف' + (t ? ' — يُحدَّث الطرد عند الشركة والمخزون' : '') + '">✏️ تعديل كامل</button>' : '') +
       (window.ManualOrder ? '<button class="small blue" type="button" onclick="' + close + ';ManualOrder.open({mode:\'copy\',order:Admin.orders[' + i + ']})" title="ينسخ هذا الطلب كطلب جديد غير مسجَّل (تعدّله قبل الحفظ وبعده)">📄 نسخ كطلب جديد</button>' : '') +
-      (t ? '<button class="small blue" type="button" onclick="Admin.openLabel(' + i + ')" title="بوليصة شركة التوصيل الأصلية">🏷️ بوليصة الشركة</button>' : '') +
+      (t ? '<button class="small blue" type="button" onclick="Admin.printOrderBord(' + i + ')" title="طباعة بوردرو شركة التوصيل الأصلي (A4 أو A6)">🖨 طباعة</button>' : '') +
       ((t && !($f("tab-shipped") || {classList:{contains:()=>true}}).classList.contains("hidden")) ? ((o.status === "confirmee" || o.status === "nouvelle") ? '<button class="small" type="button" style="background:var(--red)" onclick="if(confirm(\'حذف الطرد ' + esc(t.tracking) + ' من الطلبات المسجلة؟\\nيُلغى الطرد لدى الشركة ويعود الطلب إلى قائمة الطلبات (لا يُحذف الطلب).\')){' + close + ';Admin.unsendOrder(' + i + ')}" title="يُلغى الطرد ويعود الطلب إلى قائمة الطلبات">🗑 حذف من المسجلة</button>' : '<span class="hint" style="margin:0">الطرد انطلق فلا يمكن حذفه من المسجلة.</span>') :
       '<button class="small" type="button" style="background:var(--red)" onclick="' + close + ';Admin.deleteOrders([Admin.orders[' + i + ']])" title="ينقل الطلب إلى سلة المهملات' + (t ? ' (ويُحاوَل إلغاء طرده لدى الشركة إن لم يُسلَّم بعد)' : '') + '">🗑 حذف</button>');
     bg.dataset.oid = o.id; bg.dataset.sig = S(()=>this.previewSig(o)); bg.classList.add("open");
@@ -10620,7 +10732,7 @@ const Admin = {
       row("سعر المنتجات", n(o.subtotal)) + row("سعر التوصيل", Number(o.fee) ? n(o.fee) : "مجاني") +
       (Number(o.discount) ? row("الخصم", "-" + n(o.discount) + (o.coupon ? " (" + o.coupon + ")" : "")) : "") +
       row("الإجمالي (عند الاستلام)", '<b style="color:var(--green)">' + n(o.total) + '</b>') + '</table>';
-    $f("ship-label-btn").onclick = ()=>this.openLabel(i);
+    $f("ship-label-btn").onclick = ()=>this.printOrderBord(i);
     $f("ship-detail-bg").classList.add("open");
   },
   /* طباعة بوردرو كل الطرود المعروضة: الطرود المعروضة حسب التصفية (وبلا تصفية حالة = «قيد التجهيز» فقط لأنها التي تحتاج بوردرو للإلصاق) */
@@ -10631,18 +10743,18 @@ const Admin = {
   deepLabel(j, d){ d = d || 0; if(!j || typeof j !== "object" || d > 5) return ""; for(const k of ["label", "labels"]){ const v = j[k]; if(typeof v === "string" && /^https:\/\//.test(v)) return v; } for(const k of Object.keys(j)){ const u = this.deepLabel(j[k], d + 1); if(u) return u; } return ""; },
   bordTargets(){ const st = ($f("ship-status") || {}).value || ""; return (this.shippedOrders() || []).filter(({o})=>st ? o.status === st : (o.status === "confirmee" || o.status === "nouvelle")); },      // كل الشركات معاً (لا يرتبط بتبويب شركة)
   /* بوردرو الطرود المحدَّدة في الجداول (Action ← طباعة البوردرو): طرد واحد يُفتح PDF الشركة مباشرة، والأكثر في صفحة واحدة */
-  async printBordereauxFor(items){
+  printBordereauxFor(items){
     const key = (this.listCompanyKey && this.listCompanyKey()) || this.activeCompanyKey(), list = [];
     (items || []).forEach(it=>{ const o = this.orders.find(x=>{ const t = this.trackingOf(x); return t && t.tracking === it.tracking; }); const t = o ? this.trackingOf(o) : { company: it.company || key, tracking: it.tracking }; list.push({ o: o || { name: "", wilaya: "" }, t }); });
     if(!list.length) return;
-    if(list.length === 1){ const i = this.orders.indexOf(list[0].o); if(i > -1) return this.openLabel(i); }
-    return this.printBordereaux(list);
+    return this.bordPrintList(list);
   },
-  async printBordereaux(listOverride, win){
+  async printBordereaux(listOverride, win, fmt){
     let list = listOverride || this.bordTargets(); if(!list.length){ toast("ℹ️ لا توجد طرود قيد التجهيز لطباعة بوردرو لها — اختر حالة أخرى من التصفية"); return }
     if(list.length > 150){ toast("⚠️ " + list.length + " طرداً كثيرة دفعة واحدة — صفِّ بالشركة أو الحالة (الحدّ 150)"); if(win) try{ win.close(); }catch(e){} return }
     list = list.slice().sort((a, b)=>String((a.t || {}).company).localeCompare(String((b.t || {}).company)) || String(a.o.wilaya || "").localeCompare(String(b.o.wilaya || "")));     // مجمّعة بالشركة ثم الولاية (للفرز المادي)
-    if(!listOverride && !confirm("طباعة بوردرو " + list.length + " طرد كما تصدره شركة التوصيل؟")) return;
+    fmt = fmt === "a6" ? "a6" : (fmt === "a4" ? "a4" : this.bordFmt());       // بلا اختيار صريح (إرسال جماعي/توجيه) ← آخر حجم اخترته
+    const fmtTxt = fmt === "a6" ? "A6 (بوردرو في كل ورقة)" : "A4 (4 في الورقة)";
     const w = win || window.open("", "_blank"); if(!w){ toast("⚠️ المتصفح حجب النافذة — اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة"); return }
     const esc = v=>String(v == null ? "" : v).replace(/[<>&"]/g, c=>({ "<":"&lt;", ">":"&gt;", "&":"&amp;", '"':"&quot;" }[c])), cos = this.allDeliveryCompanies(), got = [], bad = [];
     const msg = t=>{ try{ w.document.open(); w.document.write('<!doctype html><meta charset="utf-8"><body dir="rtl" style="font-family:sans-serif;padding:2rem;text-align:center">' + t + '</body>'); w.document.close(); }catch(e){} };
@@ -10656,18 +10768,20 @@ const Admin = {
         let r = await this.labelUrlFor(o, t, co, cfg);
         if(r.err && /حدّ الطلبات/.test(r.err)){ msg("⏳ بلغت الشركة حدّ الطلبات — انتظار 20 ثانية ثم نكمل… " + k + " / " + list.length); await new Promise(x=>setTimeout(x, 20000)); r = await this.labelUrlFor(o, t, co, cfg); }
         if(!r.url) throw new Error(r.err || "لا رابط بوردرو لهذا الطرد");
-        got.push({ o, t, url: r.url, co: co.name });
+        got.push({ o, t, url: r.url, co: co.name, html: !!co.labelBodyHtml });
       }catch(e){ bad.push({ o, t, why: String((e && e.message) || e) }); }
       if(k < list.length) await new Promise(r=>setTimeout(r, 350));
     }
     if(!got.length){ msg("❌ تعذّر جلب أي بوردرو<br><small>" + bad.slice(0, 5).map(b=>esc(b.t.tracking) + ": " + esc(b.why)).join("<br>") + "</small>"); return }
     /* البوردرو الأصلي للشركة مجمّعاً: 4 في ورقة A4 (2×2)؛ إن نجح لكل الطرود تُفتح ورقة PDF واحدة جاهزة للطباعة، وإلا تُعرض الصفحة مع الرابط وما تعذّر */
     let merged = null, mergeFail = [], mergeErr = "";
-    { const withUrl = got.filter(g=>g.url), bytes = [], crops = []; let q = 0;
-      for(const g of withUrl){ q++; msg("⏳ تحميل ملف البوردرو " + q + " / " + withUrl.length + "…"); const u8 = await this.pdfBytes(g.url); if(u8){ bytes.push(u8); crops.push(!!(g.t && (g.t.company === "yalidine" || g.t.company === "noest"))); } else mergeFail.push(g); }
-      if(bytes.length){ msg("⏳ تجميع " + bytes.length + " بوردرو في أوراق A4 (4 في الورقة)…"); try{ merged = await this.mergePdf4(bytes, crops); merged.url = URL.createObjectURL(new Blob([merged.bytes], { type:"application/pdf" })); merged.n = bytes.length; }catch(e){ merged = null; mergeErr = String((e && e.message) || e); } }
-      if(merged && !mergeFail.length && !bad.length && got.every(g=>g.url)){ try{ w.location.href = merged.url; }catch(e){ window.open(merged.url, "_blank"); } toast("✅ " + merged.n + " بوردرو في " + merged.sheets + " ورقة A4 (4 في الورقة) — اطبع من عارض الـPDF"); return; } }
-    const mergedBox = merged ? '<div class="bad" style="background:#e8f7ee"><b>📄 البوردرو الأصلي مجمّعاً: ' + merged.n + ' في ' + merged.sheets + ' ورقة A4 (4 في الورقة)</b> &nbsp; <a href="' + merged.url + '" target="_blank" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">فتح / طباعة</a> <a href="' + merged.url + '" download="bordereaux.pdf" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">⬇ تنزيل</a>' + (mergeFail.length ? '<br>تعذّر تجميع: ' + mergeFail.map(g=>'<span dir="ltr">' + esc(g.t.tracking) + '</span>').join("، ") + ' — افتحها منفردة من القائمة أدناه' : "") + '</div>'
+    { const withUrl = got.filter(g=>g.url), bytes = [], crops = [], htmlOnes = []; let q = 0;
+      for(const g of withUrl){ q++; if(g.html){ htmlOnes.push(g); continue; } msg("⏳ تحميل ملف البوردرو " + q + " / " + withUrl.length + "…"); const u8 = await this.pdfBytes(g.url); if(u8){ bytes.push(u8); crops.push(!!(g.t && (g.t.company === "yalidine" || g.t.company === "noest"))); } else mergeFail.push(g); }
+      if(!bytes.length && htmlOnes.length && !mergeFail.length && !bad.length){ this.bordHtmlSheet(w, htmlOnes, fmt); toast("🖨 " + htmlOnes.length + " بوردرو — " + fmtTxt); return; }       // بوردرو شركات تردّ صفحة HTML (E-com): تُطبع صفحات داخل ورقة A4/A6
+      htmlOnes.forEach(g=>mergeFail.push(g));
+      if(bytes.length){ msg("⏳ تجميع " + bytes.length + " بوردرو — " + fmtTxt + "…"); try{ merged = fmt === "a6" ? await this.mergePdfA6(bytes, crops) : await this.mergePdf4(bytes, crops); merged.url = URL.createObjectURL(new Blob([merged.bytes], { type:"application/pdf" })); merged.n = bytes.length; }catch(e){ merged = null; mergeErr = String((e && e.message) || e); } }
+      if(merged && !mergeFail.length && !bad.length && got.every(g=>g.url)){ try{ w.location.href = merged.url; }catch(e){ window.open(merged.url, "_blank"); } toast("✅ " + merged.n + " بوردرو في " + merged.sheets + " ورقة " + fmtTxt + " — اطبع من عارض الـPDF"); return; } }
+    const mergedBox = merged ? '<div class="bad" style="background:#e8f7ee"><b>📄 البوردرو الأصلي مجمّعاً: ' + merged.n + ' في ' + merged.sheets + ' ورقة ' + fmtTxt + '</b> &nbsp; <a href="' + merged.url + '" target="_blank" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">فتح / طباعة</a> <a href="' + merged.url + '" download="bordereaux.pdf" style="background:#0d2a21;color:#fff;border-radius:8px;padding:.35rem .8rem;text-decoration:none">⬇ تنزيل</a>' + (mergeFail.length ? '<br>تعذّر تجميع: ' + mergeFail.map(g=>'<span dir="ltr">' + esc(g.t.tracking) + '</span>').join("، ") + ' — افتحها منفردة من القائمة أدناه' : "") + '</div>'
       : '<div class="bad">⚠️ تعذّر تجميع البوردرو الأصلي في ورقة واحدة' + (mergeErr ? " (" + esc(mergeErr) + ")" : " — وسيط الاتصال بالشركة لا يمرّر الملفات (يلزم تحديثه)") + '؛ البوردرو الأصلي لكل طرد في القائمة أدناه.</div>';
     const css = 'body{margin:0;font-family:Tahoma,sans-serif;background:#eef1f0}.bar{position:sticky;top:0;background:#0d2a21;color:#fff;padding:.7rem 1rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;z-index:5}.bar button,.bar a{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:10px;padding:.5rem .9rem;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}.sec{background:#fff;margin:.8rem auto;max-width:900px;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)}.sec h4{margin:0;padding:.45rem .8rem;background:#f4f6f5;font-size:.9rem;display:flex;justify-content:space-between;gap:.5rem}.sec iframe{width:100%;height:1000px;border:0;display:block}.bad{max-width:900px;margin:.8rem auto;padding:.7rem 1rem;background:#fff3e0;border-radius:10px;font-size:.9rem}@media print{.bar,.sec h4,.bad{display:none}.sec{margin:0;box-shadow:none;border-radius:0;page-break-after:always}.sec iframe{height:100vh}}.sec.inl{padding:.4rem}';
     const OD = typeof AdminOrderDocs !== "undefined" ? AdminOrderDocs : null, wcss = OD && OD.pageCss ? OD.pageCss("A6").replace(/@page\{[^}]*\}/, "").replace(/body\{[^}]*\}/, "") : "";
@@ -10724,6 +10838,26 @@ const Admin = {
     }
     return { bytes: await out.save(), labels: n, sheets: out.getPageCount() };
   },
+  /* A6 (105×148مم): بوردرو واحد في كل ورقة (يُكبَّر/يُصغَّر ليلائم الورقة بهامش 6مم) — القصّ إلى ربع A4 لياليدين/Noest كما في mergePdf4 */
+  async mergePdfA6(list, crops){
+    const P = await this.loadPdfLib(), out = await P.PDFDocument.create(), W = 297.64, H = 419.53, M = 17; let n = 0;
+    for(let li = 0; li < list.length; li++){
+      const u8 = list[li], doCrop = crops ? !!crops[li] : true, src = await P.PDFDocument.load(u8, { ignoreEncryption:true });
+      for(const i of src.getPageIndices()){
+        const sp = src.getPage(i), sz = sp.getSize(), mb = sp.getMediaBox(), big = doCrop && sz.width >= 500 && sz.height >= 700;
+        const [emb] = await out.embedPages([sp], big ? [{ left: mb.x, bottom: mb.y + sz.height / 2, right: mb.x + sz.width / 2, top: mb.y + sz.height }] : undefined), sc = Math.min((W - 2 * M) / emb.width, (H - 2 * M) / emb.height), dw = emb.width * sc, dh = emb.height * sc;
+        out.addPage([W, H]).drawPage(emb, { x: (W - dw) / 2, y: (H - dh) / 2, width: dw, height: dh }); n++;
+      }
+    }
+    return { bytes: await out.save(), labels: n, sheets: out.getPageCount() };
+  },
+  /* بوردرو شركة تردّ صفحة HTML (E-com): صفحات داخل iframe بحجم البوردرو (100×130مم) ← A4: أربعة في الورقة، A6: واحد في كل ورقة؛ وتُطبع تلقائياً بعد التحميل */
+  bordHtmlSheet(w, list, fmt){
+    const a6 = fmt === "a6", css = a6 ? '@page{size:A6;margin:0}.cell{width:105mm;height:148mm;display:flex;align-items:center;justify-content:center;page-break-after:always}' : '@page{size:A4;margin:6mm}.sheet{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3mm;width:198mm;height:285mm;page-break-after:always}.cell{display:flex;align-items:center;justify-content:center;border:.3mm solid #bbb;overflow:hidden}';
+    const cells = list.map(g=>'<div class="cell"><iframe src="' + String(g.url).replace(/"/g, "&quot;") + '" style="width:100mm;height:130mm;border:0"></iframe></div>');
+    let body = ""; if(a6) body = cells.join(""); else for(let i = 0; i < cells.length; i += 4) body += '<div class="sheet">' + cells.slice(i, i + 4).join("") + '</div>';
+    try{ w.document.open(); w.document.write('<!doctype html><html dir="rtl"><head><meta charset="utf-8"><title>طباعة ' + list.length + ' بوردرو</title><style>body{margin:0;background:#fff}.bar{position:sticky;top:0;background:#0d2a21;color:#fff;padding:.6rem 1rem;display:flex;gap:.6rem;align-items:center;font-family:sans-serif}.bar button{background:#effe17;color:#1f2123;border:0;border-radius:12px;padding:.45rem 1rem;font-weight:800;cursor:pointer}@media print{.bar{display:none}}' + css + '</style></head><body><div class="bar"><b>🖨 ' + list.length + ' بوردرو — ' + (a6 ? "A6" : "A4 (4 في الورقة)") + '</b><button type="button" onclick="window.print()">طباعة</button></div>' + body + '<script>setTimeout(function(){try{window.print()}catch(e){}},1500)<\/script></body></html>'); w.document.close(); }catch(e){ toast("❌ تعذّر فتح صفحة الطباعة: " + e.message); }
+  },
   async labelUrlFor(o, t, co, cfg){
     const c = o && o.id && this.labelOf(o.id); if(c) return { url: c };
     const r = await this.courierFetch(co.labelRequest(cfg, t.tracking));
@@ -10742,6 +10876,11 @@ const Admin = {
       let u8 = null; try{ const bin = atob(r.b64 || ""), a = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); u8 = a; }catch(e){}
       if(!u8 || u8.length < 100 || u8[0] !== 0x25 || u8[1] !== 0x50) return { err: "لم تُعد الشركة ملف بوردرو لهذا الطرد — تأكّد أن الطرد مُصدَّق عندها" };
       const u = URL.createObjectURL(new Blob([u8], { type: "application/pdf" })); (this._memPdf = this._memPdf || {})[u] = u8; return { url: u };
+    }
+    if(co.labelBodyHtml){                                  // E-com: الردّ صفحة HTML للبوردرو نفسها (بترويسات المفاتيح، فلا يُفتح رابطها مباشرة): تُحفظ في blob وتُفتح للطباعة
+      const h = String(r.text || ""); if(!/<(html|body|div|table|svg)[\s>]/i.test(h)) return { err: "لم تُعد " + (co.name || "الشركة") + " صفحة بوردرو لهذا الطرد — تأكّد أن الطرد موجود عندها بحسابك", diag: h.slice(0, 160) };
+      let org = ""; try{ org = new URL(co.base).origin; }catch(e){} const doc = /<base\s/i.test(h) || !org ? h : (/<head[^>]*>/i.test(h) ? h.replace(/<head[^>]*>/i, m=>m + '<base href="' + org + '/">') : '<base href="' + org + '/">' + h);
+      return { url: URL.createObjectURL(new Blob([doc], { type: "text/html;charset=utf-8" })) };
     }
     let j = null; try{ j = JSON.parse(r.text); }catch(e){}
     const url = (j && (co.parseLabel(j) || this.deepLabel(j))) || "";
@@ -10765,7 +10904,7 @@ const Admin = {
         if(await this.dlPdf(r.url, "bordereau-" + t.tracking, w)){ if(w) try{ w.close(); }catch(e){} toast("⬇ نُزِّل البوردرو: bordereau-" + t.tracking + ".pdf"); }
         return;       // عند تعذّر التنزيل المباشر فتحه dlPdf في النافذة نفسها
       }
-      if(w) w.close(); if(r.diag){ try{ console.info("bordereau diag", r.diag); }catch(e){} this.showNotice("بوردرو الشركة غير متاح لهذا الطرد", "لم تُصدر الشركة ملف بوردرو لهذا الطرد بعد. يحدث هذا عادة قبل أن تستلمه الشركة أو للطرود التي أُنشئت عندها بطريقة مختلفة.<br><br><b>ما تفعله:</b> أعد المحاولة بعد قليل، أو اطبعه من لوحة الشركة مباشرة."); } else toast("⚠️ " + r.err);
+      if(w) w.close(); if(r.diag){ try{ console.info("bordereau diag", r.diag); }catch(e){} this.showNotice("بوردرو " + esc2(co.name || "الشركة") + " غير متاح لهذا الطرد", "لم تُصدر الشركة ملف بوردرو لهذا الطرد بعد. يحدث هذا عادة قبل أن تستلمه الشركة أو للطرود التي أُنشئت عندها بطريقة مختلفة.<br><br><b>ما تفعله:</b> أعد المحاولة بعد قليل، أو اطبعه من لوحة الشركة مباشرة (التتبع " + esc2(t.tracking) + ").<br><br><small>ما ردّت به الشركة (أرسله لي إن تكرّر):</small><pre dir=\"ltr\" style=\"white-space:pre-wrap;font-size:.72rem;max-height:160px;overflow:auto\">" + esc2(String(r.diag).slice(0, 400)) + "</pre>"); } else toast("⚠️ " + r.err);
     }catch(err){ if(w) try{ w.close(); }catch(e){} if(err.cors){ this.explainCors(co); return } toast("❌ " + err.message + " (البوردرو الأصلي من حساب الشركة برقم التتبع " + t.tracking + ")"); }
   },
 
@@ -10958,7 +11097,7 @@ if(Admin.phpMode()){
 <script src="assets/js/ai-capture.js?v=091af25f"></script>
 <script src="assets/js/admin-bgeditor.js?v=89850127"></script>
 <!--PB:start-->
-<script src="assets/js/admin-pb.js?v=9311b8ad"></script>
+<script src="assets/js/admin-pb.js?v=eb12f502"></script>
 <!--PB:end-->
 <script>
 /* أيقونات SVG للقائمة الجانبية بدل الإيموجي */

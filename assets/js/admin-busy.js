@@ -7,7 +7,7 @@
     syncShipping: ["جارٍ تحديث حالات الطرود من الشركة", 1], reconcileShipping: ["جارٍ مطابقة الطرود مع الطلبات", 1], ydFetchParcels: ["جارٍ جلب طرود الشركة", 1], zrLoadParcels: ["جارٍ جلب طرود الشركة", 1], nocLoad: ["جارٍ جلب طرود الشركة", 1], extRefresh: ["جارٍ تحديث حالة الطرود", 1],
     bulkSend: ["جارٍ إرسال الطلبات إلى شركة التوصيل", 1], sendConfirmed: ["جارٍ إرسال الطلبات المؤكَّدة", 1], sendOrderToDelivery: ["جارٍ إرسال الطلب إلى شركة التوصيل"], unsendOrder: ["جارٍ التراجع عن الإرسال"], cancelOrder: ["جارٍ إلغاء الطلب"],
     coValidate: ["جارٍ تصديق الطرد عند الشركة"], coValidateTrk: ["جارٍ تصديق الطرد عند الشركة"], coInspect: ["جارٍ جلب الطرد من الشركة"], coFees: ["جارٍ جلب التعريفة من الشركة"], coRecent: ["جارٍ جلب آخر الطرود من الشركة"], coDelete: ["جارٍ حذف الطرد عند الشركة"], updateAtCompany: ["جارٍ تحديث الطرد عند الشركة"],
-    printBordereaux: ["جارٍ تجهيز البوردرو"], printBordereauxFor: ["جارٍ تجهيز البوردرو"], dlPdf: ["جارٍ تنزيل الملف"],
+    printBordereaux: ["جارٍ تجهيز البوردرو"], dlPdf: ["جارٍ تنزيل الملف"],
     publishProduct: ["جارٍ نشر المنتج"], publishCategory: ["جارٍ نشر التصنيف"], publishTheme: ["جارٍ نشر المظهر"], publishCheckout: ["جارٍ نشر إعدادات الطلب"], publishPixels: ["جارٍ نشر البيكسلات"], publishQA: ["جارٍ نشر الأسئلة"], publishCoupons: ["جارٍ نشر الأكواد"], publishStockNow: ["جارٍ نشر المخزون"], publishWilayasJs: ["جارٍ نشر الولايات"], publishDataJs: ["جارٍ نشر بيانات المتجر"],
     importOrders: ["جارٍ استيراد الطلبات", 1], exportOrdersToSheets: ["جارٍ تصدير الطلبات", 1], returnsSweep: ["جارٍ فحص المرتجعات", 1], importYdPayment: ["جارٍ استيراد المدفوعات", 1], ensureYdFees: ["جارٍ جلب أسعار الشركة", 1]
   };

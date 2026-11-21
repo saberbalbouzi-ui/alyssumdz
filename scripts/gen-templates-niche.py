@@ -14,7 +14,7 @@ def TH(k, dark, h, m, a, a2, card, bgA, bgB, foot, offfx, hdrc, barc, mqc, **o):
     th["offc"] = o.get("offc", "#ffffff"); th["offm"] = o.get("offm", "#e2e8f0"); th["cpbg"] = o.get("cpbg", "#ffffff18")
     return th
 def prodsec(k, th, ttl="منتجاتنا المميّزة", sub="الأكثر طلباً هذا الأسبوع", fxs=None):
-    return S([title(ttl, sub, k, th, th["hfx"]("p")), C([prodsw(**th["prods"])], w=100)], pad=dm([50, 20, 60, 20], [34, 16, 40, 16]), fxs=fxs or th["bgB"]("p"))
+    return S([title(ttl, sub, k, th, th["hfx"]("p")), C([{"id": "anchprod", "type": "anchor", "set": {"aid": "products", "aoff": dm(80)}}, prodsw(**th["prods"])], w=100)], pad=dm([50, 20, 60, 20], [34, 16, 40, 16]), fxs=fxs or th["bgB"]("p"))      # مرساة #products لرابط «المنتجات» في القائمة (كان ميتاً)
 def catsec(k, th, ttl="تسوّق حسب الفئة", sub="اختر ما يناسبك"):
     return S([title(ttl, sub, k, th, th["hfx"]("c")), C([cats(**th["cats"])], w=100)], pad=dm([60, 20, 20, 20], [40, 16, 16, 16]), fxs=th["bgA"]("c"))
 def tail(k, th, vals=None, skipstats=False):
