@@ -37,7 +37,7 @@ def _leak_scan(root_dir, slugs):
     """يفحص مجلداً (حزمة تثبيت أو تحديث) بحثاً عن أي أثر لهوية البائع: أسماء، أرقام، حسابات، مفاتيح، سلاجات منتجاته"""
     bad = [r"ruqya_(?:book|lookup|taken)|ruqya_bookings|admin-ruqya|tab-ruqya", r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", r"(?<!\d)0559(?!\d)", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(x) + r"(?=[\"'/])" for x in slugs if x not in ("demo", "test")]
     _sk = re.search(r'SAAS_KEY:\s*"(sb_publishable_[^"]+)"', (ROOT / "assets/js/config.js").read_text(encoding="utf-8"))
-    allowed = re.compile(r"alyssum\s+(?:api|الذكية|الذكي|3d|box|mockup|studio|pack)|تقنية\s+alyssum|\(alyssum\)|issuer:\s*\"alyssum\"|\"alyssum \"\s*\+" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
+    allowed = re.compile(r"alyssum\s+(?:api|الذكية|الذكي|3d|box|mockup|studio|pack)|تقنية\s+alyssum|technologie\s+(?:ia\s+)?alyssum|\(alyssum\)|issuer:\s*\"alyssum\"|\"alyssum \"\s*\+" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
     hits = []
     for f in root_dir.rglob("*"):
         if f.is_file() and f.suffix in {".html", ".js", ".json", ".md", ".sql", ".sh", ".py", ".svg", ".css", ".txt"}:

@@ -202,6 +202,15 @@ for _a, _f in MONTHS.items():
     PATTERNS += [[r'^(\d+) ' + _a + r': ([\d\s.,]+) دج$', r'\1 ' + _f + r' : \2 DA'], [r'^(\d+) ' + _a + r'$', r'\1 ' + _f]]
 MISS = os.path.join(ROOT, 'scripts', 'i18n-fr-miss.json')      # نصوص التقطتها أداة الفحص (miss) وتُرجمت
 
+PAIRS.update({
+ 'نص الرسالة': 'Texte du message', 'موثّقون فقط': 'Vérifiés uniquement', 'مفضلتي': 'Mes favoris', 'اشرح ما تحتاجه': 'Décrivez ce dont vous avez besoin',
+ 'Produits physiques (توصيل)': 'Produits physiques (livraison)', 'تفصيل Transporteur': 'Détail par transporteur', 'جديد vs période précédente': 'Nouveaux vs période précédente',
+ 'Page de destination ذكية': 'Page de destination intelligente', 'Taux de livraison لكل شركة Par zone': 'Taux de livraison par transporteur · par zone', 'Mots-clés للصفحة': 'Mots-clés de la page',
+ 'مثال: عسل حر، زبيب، جنكة، ريحان، لوز…': 'Exemple : miel pur, raisins secs, ginkgo, basilic, amandes…', 'الصق وصف منتجك ومميزاته: لمن هو، ما يميّزه، العروض…': 'Collez la description de votre produit et ses atouts : à qui il s\'adresse, ce qui le distingue, les offres…',
+ 'وصف SEO مخصص للصفحة الرئيسية — اتركه فارغاً لاستخدام الوصف الحالي': 'Description SEO personnalisée de la page d\'accueil — laissez vide pour garder la description actuelle',
+ 'جمل قصيرة مقنعة، يقرأها الأفاتار بالترتيب، وآخر جملة تدعو للطلب': 'Phrases courtes et convaincantes lues dans l\'ordre par l\'avatar ; la dernière invite à commander',
+})
+
 # شروح الأقسام من admin.html (النص العربي بالضبط) ← الفرنسي
 navs = re.findall(r'<button class="nav-btn"[^>]*onclick="Admin\.tab\(\'([^\']+)\'[^>]*>.*?<b>(.*?)</b>(?:<span[^>]*>.*?</span>)?<small>(.*?)</small>', html, flags=re.S)
 strip = lambda x: re.sub(r'<[^>]+>', '', x).strip()
@@ -213,6 +222,8 @@ FR = os.path.join(ROOT, 'scripts', 'i18n-fr-frags.json')       # شظايا مو
 frags = json.load(open(FR, encoding='utf-8')) if os.path.exists(FR) else {}
 frags.update(json.load(open(MISS, encoding='utf-8')) if os.path.exists(MISS) else {})
 exact = dict(frags); exact.update({k.strip(): v for k, v in PAIRS.items()})
+_RX = re.compile(r'(?<!technologie )(?<!technologie IA )\bAlyssum\b(?! (?:API|3D|Box|Mockup|Studio|Pack))')
+exact = {k: _RX.sub('أليسوم', v) for k, v in exact.items()}      # اسم المتجر/القالب بالعربية: يحوّله المحرّك إلى اسم المتجر ويستبدله مولّد الحزمة باسم العميل
 out = {'exact': exact, 'patterns': PATTERNS}
 dst = os.path.join(ROOT, 'assets', 'data', 'i18n-fr.json')
 json.dump(out, open(dst, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
