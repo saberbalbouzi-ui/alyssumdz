@@ -184,8 +184,8 @@ async function stat(b) {
     const st = await p.evaluate(() => ({ real: SpatialOS.real, api: SpatialOS.apiReal, note: getComputedStyle(document.querySelector(".note")).display }));
     ok("static: ألواح حقيقية بلا واجهة PHP (وضع المتجر الذي لا يحمل الوكيل التنفيذي)", st.real === true && st.api === false && st.note === "none", st);
     await p.evaluate(() => document.getElementById("core").click()); await wait(1500);
-    const ai = await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return q ? { framed: !!q.frame, tab: q.frame && q.frame.tab, real: q.el.dataset.real, src: q.fr ? q.fr.src : "" } : null; });
-    ok("static: النقر على الكرة يفتح «اسألني» الحقيقي (إطار) حيث لا واجهة PHP للوكيل التنفيذي", !!ai && ai.framed && ai.tab === "ask" && ai.real === "1" && /admin\.html/.test(ai.src), ai);
+    const ai = await p.evaluate(() => ({ ai: SpatialOS.panels.has("ai"), help: SpatialOS.panels.has("help") }));
+    ok("static: النقر على الكرة لا يفتح «اسألني» (الكرة هي LAURA فقط؛ تنبيه صادق أنها غير مفعّلة بعد)", !ai.ai && !ai.help, ai);
     await p.evaluate(() => SpatialOS.open("set")); await wait(2500);
     ok("static: لوح الإعدادات حقيقي (إطار يحمّل admin.html)", await p.evaluate(() => { const q = SpatialOS.panels.get("set"); return !!(q && q.fr && /admin\.html/.test(q.fr.src) && q.el.dataset.real === "1"); }));
     await shot(p, "03-static-real");

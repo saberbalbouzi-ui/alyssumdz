@@ -498,3 +498,6 @@ body.lite .panel{transition:none}
 
 /* القاعة على الهاتف: الجدار الخلفي مرئي (كان يُخفى فلا تظهر القاعة) بحجم مناسب وبلا عمود/شرائط ثقيلة */
 @media(max-width:820px){.hall{display:block!important;width:2200px;height:620px;margin:-330px 0 0 -1100px;transform:translate3d(0,-30px,-900px) scale(1.1);opacity:.9}}
+
+/* الهاتف: بطاقات الجدار زجاج هادئ بلا نصوص — كانت عناوينها تظهر داخل مدار الأسطوانة فتبدو تبويبات إضافية؛ المدار العلوي = التبويبات الرئيسية فقط */
+@media(max-width:820px){html body #room.arc .wall .wcard .wh,html body #room.arc .wall .wcard .wbw{display:none}html body #room.arc .wall{opacity:.4}}
