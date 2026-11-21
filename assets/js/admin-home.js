@@ -150,7 +150,7 @@ const AdminHome = (() => {
   function ruqyaCard() {
     if (!hasRuqya()) return "";
     const r = AdminRuqya.summary();
-    if (!r.loaded) { AdminRuqya.warm(refreshSoft); return '<div class="ah-card" style="margin:0 0 14px"><h3>مواعيد الرقية <small>جارٍ التحميل…</small></h3></div>'; }
+    if (!r.loaded) { AdminRuqya.warm(refreshSoft); return '<div class="ah-card" style="margin:0 0 14px;min-height:118px"><h3>مواعيد الرقية <small>جارٍ التحميل…</small></h3></div>'; }
     if (r.err) return "";
     const nd = r.nextDay ? new Date(r.nextDay + "T12:00:00").toLocaleDateString("ar-DZ", { weekday: "long", day: "numeric", month: "long" }) : "لا مواعيد قادمة";
     return '<div class="ah-card" style="margin:0 0 14px"><h3>مواعيد الرقية <small>' + nd + '</small></h3><div class="ah-rqs">' +
@@ -185,7 +185,7 @@ const AdminHome = (() => {
   function payCard() {
     if (typeof AdminPayments === "undefined" || !hasTab("payments")) return "";
     const P = AdminPayments;
-    if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px"><h3>صافي الشركات <small>جارٍ التحميل…</small></h3></div>'; }
+    if (!P.S.loaded) { if (!P.S.loading) { try { P.load().then(refreshSoft).catch(() => { }); } catch (e) { } } return '<div class="ah-card" style="margin:0 0 14px;min-height:150px"><h3>صافي الشركات <small>جارٍ التحميل…</small></h3></div>'; }
     let L; try { L = P.coNets(); } catch (e) { return ""; }
     try { const en = A().enabledCompanyKeys ? A().enabledCompanyKeys() : null; if (Array.isArray(en)) { L = L.filter(g => en.indexOf(g.k) >= 0); en.forEach(k => { if (!L.some(g => g.k === k)) L.push({ k, net: 0, got: 0, nDone: 0, nRet: 0, nExp: 0, netExp: 0 }); }); } } catch (e) { }      /* كل الشركات المفعّلة تظهر؛ التي لا مستحقات لها تُكتب «لا مستحقات» فلا يُظنّ أنها حُذفت */
     if (!L.length) return "";
@@ -280,7 +280,7 @@ const AdminHome = (() => {
     let dgHint = 0; try { if (typeof AdminKind !== "undefined" && AdminKind.kind() === "physical" && typeof AdminStores !== "undefined" && AdminStores.kind() !== "digital") dgHint = (a.products || []).filter(p => p && p.digital && p.active !== false).length; } catch (e) { }
     const name = (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "متجرك";
     const hour = new Date().getHours(), greet = hour < 12 ? "صباح الخير" : hour < 18 ? "مرحباً" : "مساء الخير";
-    root.innerHTML = `
+    const __html = `
 <div class="ah-hd"><div><h2>${greet}، لوحة ${name.replace(/[<>&]/g, "")}</h2><p>${od ? `<button type="button" class="ah-lnk" data-go="callcenter"><b>${num(od)}</b> طلب ينتظر مكالمة منذ أكثر من يوم</button> · ` : ""}نظرة عامة على متجرك ومبيعاتك — تُحسب من طلباتك الحالية.</p></div>
 <div class="ah-act"><div class="ah-seg" role="group" aria-label="الفترة">${[[1, "اليوم"], [7, "7 أيام"], [30, "30 يوماً"], [-1, "هذا الشهر"], [0, "مخصص"]].map(([d, t]) => `<button type="button" data-d="${d}" class="${S.days === d ? "on" : ""}">${t}</button>`).join("")}</div>${S.days === 0 ? `<span class="ah-dr"><input type="date" id="ah-from" value="${S.from}" max="${S.to || iso(Date.now())}" aria-label="من"><span>←</span><input type="date" id="ah-to" value="${S.to}" min="${S.from}" max="${iso(Date.now())}" aria-label="إلى"></span>` : ""}</div></div>
 ${quickBar(waiting)}
@@ -324,13 +324,19 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
 <h3 style="margin-top:16px">أفضل المنتجات مبيعاً</h3>${top.length ? `<div class="tp">${top.map(([t, q], i) => `<div class="r"><span class="n">${i + 1}</span><span class="t"></span><span class="q">${num(q)} قطعة</span><span class="bar"><i style="width:${Math.max(6, q / topMax * 100)}%"></i></span></div>`).join("")}</div>` : '<div class="em" style="padding:10px">لا مبيعات في هذه الفترة.</div>'}</div>
 </div>`;
+    /* بلا إعادة رسم إن لم يتغيّر شيء (تُستدعى الصفحة من مؤقّتات وأحداث كثيرة فكانت البطاقات «تتحرك» وتقفز عند كل إعادة بناء)، ومع إعادة الرسم يُحفظ موضع التمرير */
+    const __sig = JSON.stringify([last.map(o => [o.name, o.wilaya]), lastSt.map(x => x.t), top.map(t => t[0]), wlTop()]);
+    if (root.childElementCount && root._ahHtml === __html && root._ahSig === __sig) return;
+    const __y = window.scrollY; root.innerHTML = __html; root._ahHtml = __html; root._ahSig = __sig;
     /* نصوص من البيانات بـtextContent (لا innerHTML) */
     root.querySelectorAll("tr[data-o]").forEach(tr => { const o = last[+tr.dataset.o]; tr.cells[0].textContent = o.name || "—"; tr.cells[1].textContent = o.wilaya || "—"; tr._o = o; });
-    { const wl = (() => { const a = A(), m = {}; orders().filter(isConf).forEach(o => { let nm = String(o.wilaya || "").trim(); try { const w = a.wCo && a.wCo(nm); if (w && w.name) nm = w.name; } catch (e) { } nm = nm || "—"; m[nm] = (m[nm] || 0) + 1; }); return Object.keys(m).sort((x, y) => m[y] - m[x] || x.localeCompare(y)).slice(0, 8); })(); root.querySelectorAll("td[data-wl]").forEach((td, i) => { td.textContent = wl[i] || "—"; }); }
+    { const wl = wlTop(); root.querySelectorAll("td[data-wl]").forEach((td, i) => { td.textContent = wl[i] || "—"; }); }
     root.querySelectorAll("[data-rs]").forEach(el => { el.textContent = lastSt[+el.dataset.rs].t; });
     root.querySelectorAll(".tp .t").forEach((el, i) => { el.textContent = top[i][0]; el.title = top[i][0]; });
     bind(root, ch, series, labels, hourly);
+    try { if (Math.abs(window.scrollY - __y) > 2) window.scrollTo(0, __y); } catch (e) { }
   }
+  function wlTop() { const a = A(), m = {}; orders().filter(isConf).forEach(o => { let nm = String(o.wilaya || "").trim(); try { const w = a.wCo && a.wCo(nm); if (w && w.name) nm = w.name; } catch (e) { } nm = nm || "—"; m[nm] = (m[nm] || 0) + 1; }); return Object.keys(m).sort((x, y) => m[y] - m[x] || x.localeCompare(y)).slice(0, 8); }
   function bind(root, ch, series, labels, hourly) {
     root.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { S.days = +b.dataset.d; if (S.days === 0 && (!S.from || !S.to)) { S.to = iso(Date.now()); S.from = iso(Date.now() - 6 * DAY); } render(); });
     { const f = $("ah-from"), g = $("ah-to"); if (f) f.onchange = () => { if (f.value) { S.from = f.value; if (S.to && S.to < S.from) S.to = S.from; render(); } }; if (g) g.onchange = () => { if (g.value) { S.to = g.value; if (S.from && S.from > S.to) S.from = S.to; render(); } }; }
