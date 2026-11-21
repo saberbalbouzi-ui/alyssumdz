@@ -231,6 +231,7 @@
     NUM.forEach(n => { cur[n] = ease(cur[n], tgt[n], k); }); ["c1", "c2", "c3"].forEach(c => { const g = PAL[tgt[c]]; for (let i = 0; i < 3; i++) tc[c][i] = ease(tc[c][i], g[i], k * 1.4); });
     const al = audio.level; lvl = ease(lvl, st.mode === "none" ? 0 : al, .35); st.audio = +lvl.toFixed(3);
     brt = 1 + .028 * Math.sin(t * .0014 * (1 + cur.flow * .15)) + lvl * .06; if (RM) brt = 1;
+    { const sp = RM ? 1 : 1 + Math.min(1, lvl) * .3; if (Math.abs(sp - (st._sp || 1)) > .008) { st._sp = sp; wrap.style.setProperty("--sp", sp.toFixed(3)); } } /* الحجم يزيد مع شدة الكلام */
     rotY += dt * .001 * cur.rot * (RM ? 0 : 1); head += dt * .001 * .12 * cur.ring * (RM ? 0 : 1);
     /* جبهة التفعيل التدريجي: تتقدّم 0→1.3 بدورة sweep ثانية (التفكير: الاتصالات تُضاء تدريجياً) */
     actPh = cur.act < .05 ? 0 : (((t / 1000) / Math.max(.5, cur.sweep)) % 1) * 1.35 * Math.min(1, cur.act + .0); if (st.visual === "idle") actPh = .35 + .25 * Math.sin(t / 1000 / cur.sweep * 6.28);

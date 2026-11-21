@@ -1,5 +1,6 @@
 /* نواة أليسوم ثلاثية الأبعاد داخل الاسطوانة (المرحلة 11) */
 .core3d{position:absolute;left:0;top:0;width:260px;height:260px;margin:-130px 0 0 -130px;pointer-events:none;--cz:0px;--cs3:1;transform:rotateY(calc(var(--yaw,0deg) * -1)) rotateX(13deg) translateZ(var(--cz)) scale(var(--cs3));transition:transform 1s cubic-bezier(.2,.8,.2,1),opacity .6s}
+.core3d{scale:var(--sp,1);transition:none}
 .core3d canvas{width:100%;height:100%;display:block;filter:drop-shadow(0 0 22px rgba(43,228,255,.25))}
 .core3d.p-voice{--cz:70px;--cs3:1.45}
 .core3d.p-expanded{--cz:310px;--cs3:2.4}
