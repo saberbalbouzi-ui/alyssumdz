@@ -115,6 +115,12 @@ PAIRS = {
  'تحديث الموقع': 'Mettre à jour le site', 'تحديث الآن': 'Actualiser maintenant', '↩ تراجع عن آخر تحديث': '↩ Annuler la dernière mise à jour',
 }
 
+PAIRS.update({
+ 'يؤكّد الطلبات الجديدة من المحدَّد دفعة واحدة، ويرسلها لشركة التوصيل إن كان الإرسال التلقائي مفعّلاً': 'Confirme d\'un coup les nouvelles commandes de la sélection et les envoie au transporteur si l\'envoi automatique est activé',
+ 'يرسل الطلبات المؤكَّدة غير المرسَلة من المحدَّد إلى شركة التوصيل بالتتابع': 'Envoie à la suite, au transporteur, les commandes confirmées non encore expédiées de la sélection',
+ 'يحدّد كل الطلبات المطابقة للبحث والفلاتر وليس صفحة واحدة فقط': 'Sélectionne toutes les commandes correspondant à la recherche et aux filtres, pas seulement la page affichée',
+})
+
 PATTERNS = [
  [r'^([\d\s.,]+)\s*دج$', r'\1 DA'],
  [r'^الطلبات الجديدة \((\d+)\)$', r'Nouvelles commandes (\1)'],
@@ -181,6 +187,21 @@ PATTERNS += [
  [r'^(\d+)ك$', r'\1 k'],
 ]
 
+PAIRS.update({
+ 'اضغط «': 'Cliquez sur «',
+ 'تحديث الحالة» أعلاه لعرض إحصاءات حسابك في ياليدين حسب الحالة.': 'Actualiser le statut» ci-dessus pour afficher les statistiques de votre compte Yalidine par statut.',
+ 'أخضر ثم برتقالي ثم أحمر = حظر. الحظر التلقائي: مطفأ': 'Vert puis orange puis rouge = blocage. Blocage automatique : désactivé',
+})
+PATTERNS += [
+ [r'^أخضر ثم برتقالي ثم أحمر = حظر\. الحظر التلقائي: مفعّل عند (\d+) إرجاعات \(حظر مباشر\)$', r'Vert puis orange puis rouge = blocage. Blocage automatique : activé dès \1 retours (blocage direct)'],
+ [r'^أخضر ثم برتقالي ثم أحمر = حظر\. الحظر التلقائي: مفعّل عند (\d+) إرجاعات \(بانتظار مراجعتك\)$', r'Vert puis orange puis rouge = blocage. Blocage automatique : activé dès \1 retours (en attente de votre examen)'],
+]
+
+MONTHS = {'يناير': 'janv.', 'جانفي': 'janv.', 'فبراير': 'févr.', 'فيفري': 'févr.', 'مارس': 'mars', 'أبريل': 'avr.', 'أفريل': 'avr.', 'مايو': 'mai', 'ماي': 'mai', 'يونيو': 'juin', 'جوان': 'juin', 'يوليو': 'juil.', 'جويلية': 'juil.', 'أغسطس': 'août', 'أوت': 'août', 'سبتمبر': 'sept.', 'أكتوبر': 'oct.', 'نوفمبر': 'nov.', 'ديسمبر': 'déc.'}
+for _a, _f in MONTHS.items():
+    PATTERNS += [[r'^(\d+) ' + _a + r': ([\d\s.,]+) دج$', r'\1 ' + _f + r' : \2 DA'], [r'^(\d+) ' + _a + r'$', r'\1 ' + _f]]
+MISS = os.path.join(ROOT, 'scripts', 'i18n-fr-miss.json')      # نصوص التقطتها أداة الفحص (miss) وتُرجمت
+
 # شروح الأقسام من admin.html (النص العربي بالضبط) ← الفرنسي
 navs = re.findall(r'<button class="nav-btn"[^>]*onclick="Admin\.tab\(\'([^\']+)\'[^>]*>.*?<b>(.*?)</b>(?:<span[^>]*>.*?</span>)?<small>(.*?)</small>', html, flags=re.S)
 strip = lambda x: re.sub(r'<[^>]+>', '', x).strip()
@@ -188,7 +209,11 @@ for k, b, sm in navs:
     if k in NAV_FR:
         PAIRS.setdefault(strip(b), NAV_FR[k][0]); PAIRS.setdefault(strip(sm), NAV_FR[k][1])
 
-out = {'exact': {k.strip(): v for k, v in PAIRS.items()}, 'patterns': PATTERNS}
+FR = os.path.join(ROOT, 'scripts', 'i18n-fr-frags.json')       # شظايا مولَّدة (scripts/i18n-extract.py ← ترجمة) تحت الأزواج اليدوية
+frags = json.load(open(FR, encoding='utf-8')) if os.path.exists(FR) else {}
+frags.update(json.load(open(MISS, encoding='utf-8')) if os.path.exists(MISS) else {})
+exact = dict(frags); exact.update({k.strip(): v for k, v in PAIRS.items()})
+out = {'exact': exact, 'patterns': PATTERNS}
 dst = os.path.join(ROOT, 'assets', 'data', 'i18n-fr.json')
-json.dump(out, open(dst, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+json.dump(out, open(dst, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
 print('exact:', len(out['exact']), 'patterns:', len(PATTERNS), '->', dst)

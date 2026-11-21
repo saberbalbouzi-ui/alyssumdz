@@ -14,6 +14,28 @@ const AdminI18n = (() => {
   const siteName = () => { try { return (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || ""; } catch (e) { return ""; } }, panelName = () => { try { return (typeof SITE_CFG !== "undefined" && SITE_CFG.panelName) || ""; } catch (e) { return ""; } };
   const post = x => { const pn = panelName(), sn = siteName(); return x != null && pn && sn && x.indexOf(pn) >= 0 ? x.split(pn).join(sn) : x; };      /* الاسم العربي للوحة ← اسم المتجر اللاتيني بالفرنسية */
   function tr(text) { return post(tr0(text)); }
+  /* ترجمة العبارات داخل النص (نصوص تُركَّب من أجزاء ومتغيّرات): أطول عبارة معروفة تبدأ عند كل كلمة عربية؛ الكلمة المفردة لا تُستبدَل داخل نص أطول إلا بجوار رقم (لئلا تُشوَّه بيانات الزبائن) */
+  const AW = /[\u0600-\u06ff]+/g;
+  function buildIdx() {
+    if (dict.idx) return dict.idx; const idx = new Map();
+    for (const k in dict.exact) { const m = /[\u0600-\u06ff]+/.exec(k); if (!m || k.length < 2) continue; let a = idx.get(m[0]); if (!a) idx.set(m[0], a = []); a.push({ k, off: m.index, multi: (k.match(/[\u0600-\u06ff]+/g) || []).length > 1 }); }
+    idx.forEach(a => a.sort((x, y) => y.k.length - x.k.length)); return (dict.idx = idx);
+  }
+  function phrase(text) {
+    const idx = buildIdx(); let out = "", last = 0, hit = false, m; AW.lastIndex = 0;
+    while ((m = AW.exec(text))) {
+      const c = idx.get(m[0]); if (!c) continue;
+      for (const e of c) {
+        const st = m.index - e.off; if (st < last || !text.startsWith(e.k, st)) continue;
+        const en = st + e.k.length, nx = text.charAt(en); if (nx && /[\u0600-\u06ff]/.test(nx) && /[\u0600-\u06ff]$/.test(e.k)) continue;
+        if (!e.multi) { const bef = text.slice(0, st).trim().slice(-1), aft = text.slice(en).trim().charAt(0); if (!(/\d/.test(bef) || /\d/.test(aft))) continue; }
+        out += text.slice(last, st) + dict.exact[e.k]; last = en; hit = true; AW.lastIndex = en; break;
+      }
+    }
+    if (!hit) return null;
+    const res = out + text.slice(last), left = (res.match(/[\u0600-\u06ff]/g) || []).length, tot = (text.match(/[\u0600-\u06ff]/g) || []).length;
+    return left > tot * 0.35 ? null : res;      /* ترجمة جزئية مشوَّهة: تبقى العربية كاملة أفضل من خليط */
+  }
   function tr0(text) {
     if (!dict || !text || !AR.test(text)) return null;
     const m = /^([^؀-ۿA-Za-z0-9]*)([\s\S]*?)([^؀-ۿA-Za-z0-9]*)$/.exec(text.replace(/\s+/g, " ")); if (!m) return null;
@@ -21,7 +43,7 @@ const AdminI18n = (() => {
     const whole0 = text.replace(/\s+/g, " ").trim(); if (dict.exact[whole0] != null) return dict.exact[whole0];
     let out = dict.exact[core];
     if (out == null) { for (const [re, t] of rx()) { if (re.test(core)) { out = core.replace(re, t); break; } } }
-    if (out == null) { const full = text.replace(/\s+/g, " ").trim(); for (const [re, t] of rx()) { if (re.test(full)) return full.replace(re, t); } return null; }
+    if (out == null) { const full = text.replace(/\s+/g, " ").trim(); for (const [re, t] of rx()) { if (re.test(full)) return full.replace(re, t); } const ph = phrase(text.replace(/\s+/g, " ")); return ph; }
     return pre + out + suf;
   }
   function doText(n) {
@@ -93,6 +115,6 @@ const AdminI18n = (() => {
     if (lang === "fr") set("fr");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { set, get lang() { return lang; }, t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
+  return { set, get lang() { return lang; }, helpUrl: () => lang === "fr" ? "assets/data/admin-help.fr.json" : "assets/data/admin-help.json", t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
 })();
 window.AdminI18n = AdminI18n;

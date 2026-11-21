@@ -5,9 +5,9 @@ const AdminHelp = (() => {
   let KB = null, open = false, last = null;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   /* تطبيع عربي: إزالة التشكيل والتطويل، توحيد الألف والتاء المربوطة والياء، حذف «ال» والسوابق الشائعة */
-  const norm = s => String(s || "").toLowerCase().replace(/[ً-ٟـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي");
-  const STOP = new Set("ما هو هي هل كيف اين متى لماذا عن في من الى على مع هذا هذه ذلك التي الذي ان او و يا لي لك انا اريد اود ممكن يمكن استطيع كم اي شرح اشرح لي علي يعني بس وش ايش شو ماهو ماهي ماذا شنو كيفاش علاش هاد هاذا هادي".split(" "));
-  const stem = w => { w = w.replace(/^(وال|بال|كال|فال|لل|ال)/, ""); w = w.replace(/(ات|ون|ين|ان|ه|ها|هم|ي)$/, m => w.length > 4 ? "" : m); return w; };
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[ً-ٟـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي");
+  const STOP = new Set("ما هو هي هل كيف اين متى لماذا عن في من الى على مع هذا هذه ذلك التي الذي ان او و يا لي لك انا اريد اود ممكن يمكن استطيع كم اي شرح اشرح لي علي يعني بس وش ايش شو ماهو ماهي ماذا شنو كيفاش علاش هاد هاذا هادي le la les de du des un une et ou comment que qui quoi est ce cet cette pour dans sur avec je tu il mon ma mes ton ta se sa son ses au aux en par pas ne ou ai puis peux peut faire fait dois veux voudrais expliquer explique".split(" "));
+  const stem = w => { if (/^[a-z0-9]+$/.test(w)) return w.length > 4 ? w.replace(/(s|x)$/, "") : w; w = w.replace(/^(وال|بال|كال|فال|لل|ال)/, ""); w = w.replace(/(ات|ون|ين|ان|ه|ها|هم|ي)$/, m => w.length > 4 ? "" : m); return w; };
   const wordGroups = s => norm(s).split(/[^a-z0-9\u0600-\u06FF]+/).filter(w => w && w.length > 1 && !STOP.has(w)).map(stem).filter(w => w.length > 1).map(w => (/^[انيت]/.test(w) && w.length > 3) ? [w, w.slice(1)] : [w]);      // صيغة الفعل المضارع (انقل/اضيف/احرك) تُطابق المصدر (نقل/اضافه/تحريك)
   const toks = s => wordGroups(s).flat();
   let IDX = null;
@@ -92,7 +92,10 @@ const AdminHelp = (() => {
     const d = bubble("a", "مرحباً 👋 أنا مساعدك لشرح أدوات الموقع وإعداداته. اسألني عن أي قسم في اللوحة أو أي عنصر في مطوّر الصفحات."); const t = curTab();
     chips([["اشرح لي هذا القسم", () => ask("اشرح هذا القسم")]].concat(SUGG.map(s => [s, () => ask(s)])), d);
   }
-  async function load() { if (KB) return; try { const r = await fetch("assets/data/admin-help.json", { cache: "no-cache" }); KB = await r.json(); try { if (window.CtlHelp) { await CtlHelp.load(); KB = KB.concat(CtlHelp.entries()); } } catch (e) { } index(); } catch (e) { KB = null; } }
+  let KBL = "";
+  const helpUrl = () => (typeof AdminI18n !== "undefined" && AdminI18n.helpUrl) ? AdminI18n.helpUrl() : "assets/data/admin-help.json";
+  document.addEventListener("alyssum:lang", () => { if (KB && KBL !== helpUrl()) { KB = null; if (open) load(); } });
+  async function load() { if (KB && KBL === helpUrl()) return; try { KBL = helpUrl(); const r = await fetch(KBL, { cache: "no-cache" }); KB = await r.json(); try { if (window.CtlHelp) { await CtlHelp.load(); KB = KB.concat(CtlHelp.entries()); } } catch (e) { } index(); } catch (e) { KB = null; } }
   function toggle() { open ? close() : show(); }
   async function show() { build(); await load(); open = true; $("ah-panel").classList.add("on"); setTimeout(() => { const i = $("ah-in"); if (i) i.focus(); }, 50); }
   function close() { open = false; const p = $("ah-panel"); if (p) p.classList.remove("on"); }

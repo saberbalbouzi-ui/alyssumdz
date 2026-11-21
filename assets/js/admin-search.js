@@ -3,7 +3,7 @@
 const AdminSearch = (() => {
   let box = null, inp = null, list = null, items = [], sel = 0, open = false, help = null, pages = null;
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const norm = s => String(s || "").toLowerCase().replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").trim();
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").trim();
   const A = () => (typeof Admin !== "undefined" ? Admin : {});
   const ACTIONS = [
     ["تحقق من زبون", "ابحث بالهاتف أو الاسم أو الولاية أو البلدية في كل الطلبات الحديثة والقديمة وكل الشركات مع التاريخ والمنتج والحالة", () => { if (typeof AdminVerify !== "undefined") AdminVerify.open(); }, "تحقق زبون بحث هاتف اسم عميل موثوق مرتجع فشل سجل قديم"],
@@ -59,8 +59,9 @@ const AdminSearch = (() => {
     }).filter(Boolean);
   }
   async function loadExtra() {
-    if (help === null) { help = []; try { const r = await fetch("assets/data/admin-help.json", { cache: "no-cache" }); if (r.ok) help = await r.json(); } catch (e) { } }
-    if (!help._ctl) { try { const ce = typeof CtlHelp !== "undefined" && CtlHelp.entries ? CtlHelp.entries() : []; if (ce.length) { const have = new Set(help.map(h => h.id)); help = help.concat(ce.filter(c => !have.has(c.id))); } if (ce.length) help._ctl = 1; } catch (e) { } }
+    const hu = (typeof AdminI18n !== "undefined" && AdminI18n.helpUrl) ? AdminI18n.helpUrl() : "assets/data/admin-help.json";
+    if (help === null || help._u !== hu) { help = []; try { const r = await fetch(hu, { cache: "no-cache" }); if (r.ok) help = await r.json(); } catch (e) { } help._u = hu; }
+    if (!help._ctl) { try { const ce = typeof CtlHelp !== "undefined" && CtlHelp.entries ? CtlHelp.entries() : []; if (ce.length) { const have = new Set(help.map(h => h.id)); help = help.concat(ce.filter(c => !have.has(c.id))); } if (ce.length) help._ctl = 1; help._u = hu; } catch (e) { } }
     if (pages === null) { pages = []; try { const r = await fetch("assets/pages/index.json", { cache: "no-cache" }); if (r.ok) pages = await r.json(); } catch (e) { } }
   }
   function all() {

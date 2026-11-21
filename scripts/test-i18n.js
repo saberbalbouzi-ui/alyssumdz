@@ -28,6 +28,18 @@ const { chromium } = require("playwright");
   t("ما يُرسم لاحقاً يُترجم (إعادة رسم الطلبات)، وplaceholder تُترجم", R.reRender && R.ph >= 1, [R.reRender, R.ph]);
   t("العودة للعربية تستعيد النصوص الأصلية والاتجاه RTL والزرّ «FR»", R.back && R.dir2 === "rtl" && R.btn2 === "FR", R);
   t("واجهة البرمجة: t() تترجم عند الفرنسية فقط", R.api[0] === "حفظ" && R.api2 === "Enregistrer", R);
+  const H = await p.evaluate(async () => {
+    const o = {}; await AdminI18n.set("fr"); await new Promise(r => setTimeout(r, 500));
+    await AdminHelp.show(); await new Promise(r => setTimeout(r, 1500)); const kb = AdminHelp.kb || [];
+    o.kbFr = kb.length > 200 && kb.filter(e => !/[\u0600-\u06ff]/.test(e.t)).length > 200; o.url = AdminI18n.helpUrl();
+    o.frQ = AdminHelp.search("comment ajouter une nouvelle section").length > 0; o.arQ = AdminHelp.search("كيف أضيف قسماً جديداً؟").length > 0;
+    AdminHelp.ask("comment connecter un transporteur"); await new Promise(r => setTimeout(r, 600)); const last = [...document.querySelectorAll("#ah-m .ah-b.a")].pop(); o.ans = last ? last.textContent.slice(0, 160) : "";
+    o.ansFr = !!o.ans && !/[\u0600-\u06ff]{4}/.test(o.ans);
+    await AdminI18n.set("ar"); await new Promise(r => setTimeout(r, 1500)); o.kbAr = (AdminHelp.kb || []).some(e => /[\u0600-\u06ff]/.test(e.t)); o.url2 = AdminI18n.helpUrl(); return o; });
+  t("«اسألني» بالفرنسية: قاعدة المعرفة فرنسية، السؤال الفرنسي والعربي يجدان جواباً، والجواب فرنسي", H.kbFr && H.frQ && H.arQ && H.ansFr && /fr\.json/.test(H.url), H);
+  t("العودة للعربية تعيد قاعدة المعرفة العربية", H.kbAr && /admin-help\.json$/.test(H.url2), H);
+  const C = await p.evaluate(async () => { await AdminI18n.set("fr"); const out = {}; for (const tab of ["store", "finance", "payments", "reports", "dispatch", "delivery", "inventory", "customers", "settings"]) { try { Admin.tab(tab); } catch (e) { } await new Promise(r => setTimeout(r, 900)); const root = document.getElementById("tab-" + tab); if (!root) continue; let n = 0; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let x; while ((x = w.nextNode())) { const s = x.textContent.trim(); if (s && /[\u0600-\u06ff]/.test(s) && x.parentElement && !/SCRIPT|STYLE/.test(x.parentElement.tagName) && !x.parentElement.closest("#pb-app,[data-i18n-skip],textarea,code,pre")) n++; } out[tab] = n; } return out; });
+  t("تغطية الترجمة: أقسام الإعدادات والمالية والإحصائيات بلا نصوص عربية متبقية (≤ 3 لكل قسم)", Object.values(C).every(n => n <= 3), C);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
