@@ -45,7 +45,10 @@ export function sanitizeStats(raw, nowS) {
     metrics: (Array.isArray(x?.metrics) ? x.metrics : []).slice(0, 40).map((mm) => ({ label: clean(mm?.label, 80), value: clean(mm?.value, 60), note: clean(mm?.note, 100) })),
     tables: (Array.isArray(x?.tables) ? x.tables : []).slice(0, 3).map((tb) => ({ cols: (Array.isArray(tb?.cols) ? tb.cols : []).slice(0, 8).map((c) => clean(c, 40)), rows: (Array.isArray(tb?.rows) ? tb.rows : []).slice(0, 15).map((r) => (Array.isArray(r) ? r : []).slice(0, 8).map((c) => clean(c, 60))) })) })).filter((x) => x.title) })).filter((sn) => sn.sections.length) };
 }
-const decl = (t) => ({ name: t.name, description: t.description, parameters: t.parameters });
+/* مخطط الوسائط للنموذج: مجموعة محافظة يقبلها كل إصدارات واجهة Gemini (type/description/enum/properties/required/items/minimum/maximum)؛ القيود الأخرى (طول/نمط) يفرضها الخادم في validate.js لا النموذج */
+const SCHEMA_KEYS = new Set(["type", "description", "enum", "properties", "required", "items", "minimum", "maximum"]);
+const cleanSchema = (x) => { if (Array.isArray(x)) return x.map(cleanSchema); if (!x || typeof x !== "object") return x; const o = {}; for (const [k, v] of Object.entries(x)) { if (!SCHEMA_KEYS.has(k)) continue; o[k] = k === "properties" ? Object.fromEntries(Object.entries(v).map(([n, d]) => [n, cleanSchema(d)])) : cleanSchema(v); } return o; };
+const decl = (t) => { const p = cleanSchema(t.parameters); return { name: t.name, description: t.description, ...(p && Object.keys(p.properties ?? {}).length ? { parameters: p } : {}) }; };
 
 export const laura = {
   id: "laura",

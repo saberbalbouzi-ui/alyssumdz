@@ -94,6 +94,9 @@ const R4 = refs[3]; [, b] = await chat("أكد الطلب " + R4, await OWNER())
 [, b] = await chat('TEST_CALL:orders_list:{"limit":3,"tenant_id":' + B.id + '}', await OWNER()); ok("وسيط زائد (محاولة عبور مستأجر): مرفوض", stepNames(b).join() === "orders_list!invalid_args", b);
 [, b] = await chat('TEST_CALL:order_confirm:{"ref":"../../admin/tenants"}', await OWNER()); ok("مرجع بنمط حقن مسار: مرفوض بالمخطط", stepNames(b).join() === "order_confirm!invalid_args", b);
 [, b] = await chat('TEST_CALL:order_confirm:{"ref":"' + refs[3] + '"}', await OWNER()); ok("نموذج يطلب كتابة مباشرة: لا تنفيذ، فقط إجراء معلّق", b.pending.length === 1 && sql("SELECT status FROM cm_orders WHERE ref=?", refs[3]).status === "nouvelle", b);
+{ const walk = (o, f) => { if (Array.isArray(o)) o.forEach((x) => walk(x, f)); else if (o && typeof o === "object") for (const [k, v] of Object.entries(o)) { f(k, v); walk(v, f); } };
+    const bad = new Set(); walk(mock.lastBody.tools, (k) => { if (["maxLength", "minLength", "pattern", "additionalProperties", "default", "format", "$schema"].includes(k)) bad.add(k); });
+    ok("مخطط الأدوات المرسل للنموذج بمجموعة محافظة (بلا maxLength/pattern/additionalProperties…) وقيود الخادم باقية", bad.size === 0 && mock.lastBody.tools[0].functionDeclarations.every((d) => d.name && d.description && (!d.parameters || d.parameters.type === "object")), [...bad]); }
 { const names = mock.lastBody.tools[0].functionDeclarations.map((d) => d.name); ok("لا أداة تمنح النموذج مسار موافقة: /confirm نداء عميل بالمفتاح فقط", names.every((n) => !/^(laura_)?(confirm|approve)/.test(n)) && !JSON.stringify(mock.lastBody.tools).includes("/v1/laura") && !JSON.stringify(mock.lastBody.tools).includes("/confirm"), names); }
 { const nm = sqlAll("SELECT * FROM cm_orders WHERE tenant_id=? AND name LIKE 'IGNORE%'", A.id); [, b] = await chat("من أكثر الزبائن طلباً؟", await OWNER()); ok("اسم زبون خبيث (حقن) لا يؤثر: لا إجراء معلّق ولا كتابة", nm.length === 1 && b.pending.length === 0 && sql("SELECT status FROM cm_orders WHERE name LIKE 'IGNORE%'").status === "nouvelle", b.reply); }
 mock.loop = true; [, b] = await chat("كم طلب", await OWNER()); mock.loop = false; ok("نموذج عالق في حلقة أدوات: يتوقف عند حدّ الجولات ويُبلَّغ incomplete", b.state === "incomplete" && b.rounds === 4 && b.tools.length <= 8, [b.state, b.rounds, b.tools.length]);
@@ -228,6 +231,14 @@ ok("الكتابة لا تعتمد على اللقطة: طلب تأكيد يتح
   /* عزل المتاجر: حساب إعلاني/سحب لمتجر آخر لا يُرى ولا يُعدَّل */
   const [, bb] = await call("PUT", "/v1/ads/accounts", { provider: "meta", name: "B", account_id: "act_888000222", config: { currency: "USD", fx: 245 }, secrets: { token: "tok_bbbbbbbbbbbbbbbb" } }, B.key);
   [, b] = await chat('TEST_CALL:ads_sync_toggle:{"id":' + bb.id + ',"paused":true}', OW); ok("عزل: حساب إعلاني لمتجر آخر ← not_found ولا إجراء", stepNames(b).join() === "ads_sync_toggle!not_found" && b.pending.length === 0, b); }
+/* ── 5د) التصفّح: بلا سقف 400/500 ── */
+{ const OW = await OWNER(), now0 = nowS(); const ins = db.prepare("INSERT INTO cm_orders (tenant_id,ref,status,name,phone_h,phone_enc,wilaya,commune,dtype,desk,items,subtotal,discount,fee,total,coupon,flags,mode,reserved,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+  const dtx = db.prepare("BEGIN"); db.exec("BEGIN"); for (let i = 0; i < 620; i++) ins.run(A.id, "BULK-" + i, "livree", "عميل " + i, "h" + i, "", "Alger", "x", "home", "", "[]", 100, 0, 0, 100, "", "[]", "observe", 0, now0 - 86400 * 20 + i, now0);
+  db.exec("COMMIT");
+  [, b] = await chat('TEST_CALL:sales_summary:{"period":"30d"}', OW); const sj = { r: b.reply }; ok("تحليل المبيعات يتجاوز 400 طلب: يعدّ ≥ 620 طلباً من 30 يوماً (بلا اقتطاع)", +(/(\d+) commande/.exec(sj.r)?.[1] ?? 0) >= 620 && !JSON.stringify(b.tools).includes("truncated"), sj);
+  [, b] = await chat('TEST_CALL:order_confirm:{"ref":"BULK-0"}', OW); ok("بحث مرجع قديم جداً (أقدم من 500 طلب) يُعثر عليه بالمطابقة على الخادم", /already|مؤكَّد|livree|مسلَّمة|لا يمكن|already_done/i.test(JSON.stringify(b)) || stepNames(b).join().includes("order_confirm"), b);
+  const [, ol] = await call("GET", "/v1/orders", null, A.key, { ref: "BULK-5", limit: "1" }); ok("API: ref= يعيد الطلب المطلوب فقط", ol.orders.length === 1 && ol.orders[0].ref === "BULK-5", ol.orders.map((x) => x.ref));
+  const [, os] = await call("GET", "/v1/orders", null, A.key, { since: String(now0 - 86400 * 20 + 600), limit: "100" }); ok("API: since= يقيّد بالزمن", os.orders.every((x) => x.created_at >= now0 - 86400 * 20 + 600), os.orders.length); }
 /* حدّ المعدّل (آخر الاختبارات: يستهلك النافذة) */
 { bump = false; let last = 200; for (let i = 0; i < 25; i++) { [last] = await chat("كم طلب لدي؟", await OWNER(), { key: await mkKey(A, ["*"]).then(() => A.key) }); if (last === 429) break; } ok("حدّ المعدّل: 429 بعد ~20 رسالة/دقيقة", last === 429, last); }
 done();

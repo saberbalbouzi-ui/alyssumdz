@@ -2547,3 +2547,4 @@
 - **v1.89.1347:** Spatial بالفرنسية — الإصغاء والإطلاق لاسمَي حدث اللغة (`alyssum:lang` و`store:lang` لحزم العملاء) فيصل التبديل من أي لوح في الحزم المبدَّلة الأسماء، وحذف ذكر LAURA من مقال المساعدة (غير منشورة بعد).
 
 - **LAURA (فرع `laura-dev`): توسيع الأدوات إلى 27** — قراءة: `marketplace_stats` `wallet_withdrawals` `ads_accounts` `agency_orders`؛ كتابة بموافقة وتحقق: `withdrawal_cancel` (حساسة، مالك) و`ads_sync_toggle`. بلا بيانات الوجهة/الرموز/بريد العميل. `laura.test` 165، `laura-proxy.test` 18، workerd 32، والمجموعات المجاورة (wallet/ads/isolation/boundaries/migrations/hardening) ناجحة.
+- **LAURA (فرع `laura-dev`): التصفّح والمخطط** — مرشّحا `ref`/`since` الاختياريان في `GET /v1/orders`؛ بحث الطلب بالمرجع على الخادم (بلا سقف 500) وتحليل حتى 2000 طلب بإعلان الاقتطاع؛ مخطط أدوات محافظ للنموذج. `laura.test` 170، `commerce` 34، `commerce-strict` 102، workerd 32. **لم يُجرَّب:** نموذج حقيقي (`laura-live-check.mjs` يعلن NOT TESTED).

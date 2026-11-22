@@ -12,10 +12,11 @@ async function must(r, what) {
   if (r.status === 429) throw new ToolError("rate_limited", "حدّ الطلبات مؤقتاً"); if (r.status >= 500) throw new ToolError("platform_error", "تعذّر الوصول للمنصة"); if (r.status < 200 || r.status >= 300) throw new ToolError("http_" + r.status, "رفضت المنصة الطلب");
   return r.json;
 }
-async function allOrders(h, { max = 400, status } = {}) {                                            // حتى 400 طلب (4 صفحات) — يُصرَّح بالاقتطاع
+const MAX_PAGES = 20;                                                                                 // حتى 2000 طلب (20 صفحة × 100) — يُصرَّح بالاقتطاع بدل الصمت
+async function allOrders(h, { status, since } = {}) {
   const out = []; let after = 0, truncated = false;
-  for (let i = 0; i < 4; i++) { const j = await must(await h.get("/v1/orders", { limit: 100, ...(after ? { after } : {}), ...(status ? { status } : {}) }), "orders"); out.push(...(j.orders || [])); if (!j.next) break; after = j.next; if (out.length >= max) { truncated = true; break; } if (i === 3) truncated = true; }
-  return { orders: out, truncated };
+  for (let i = 0; i < MAX_PAGES; i++) { const j = await must(await h.get("/v1/orders", { limit: 100, ...(after ? { after } : {}), ...(status ? { status } : {}), ...(since > 0 ? { since } : {}) }), "orders"); out.push(...(j.orders || [])); if (!j.next) break; after = j.next; if (i === MAX_PAGES - 1) truncated = true; }
+  return { orders: out, truncated, scanned: out.length };
 }
 const sinceFor = (p, now) => ({ today: now - (now % 86400), "7d": now - 7 * 86400, "30d": now - 30 * 86400, all: 0 }[p] ?? 0);
 const STATUS_AR = { nouvelle: "جديدة", confirmee: "مؤكَّدة", livree: "مسلَّمة", echec: "فاشلة", annulee: "ملغاة" };
@@ -29,14 +30,14 @@ export const TOOLS = [
     async run(a, h) { const j = await must(await h.get("/v1/orders/stats"), "orders"); return { orders: j.orders, flagged: j.flagged, total_value_dzd: j.value, mode: j.mode, holds: j.holds }; } },
   { name: "sales_summary", tier: "read", perm: "analytics", scope: "orders:read", description: "ملخص المبيعات لفترة (today|7d|30d|all): عدد الطلبات حسب الحالة والإيراد (دون الملغاة/الفاشلة) ومتوسط الطلب.",
     parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "7d", "30d", "all"] } } },
-    async run(a, h) { const per = a.period ?? "7d", now = h.now(), since = sinceFor(per, now), { orders, truncated } = await allOrders(h), by = {}; let rev = 0, n = 0;
+    async run(a, h) { const per = a.period ?? "7d", now = h.now(), since = sinceFor(per, now), { orders, truncated, scanned } = await allOrders(h, { since }), by = {}; let rev = 0, n = 0;
       for (const o of orders) { if (tsOf(o.created_at) < since) continue; by[o.status] = (by[o.status] ?? 0) + 1; if (LIVE(o.status)) { rev += +o.total || 0; n++; } }
-      const total = Object.values(by).reduce((x, y) => x + y, 0); return { period: per, orders: total, by_status: by, revenue_dzd: rev, avg_order_dzd: n ? Math.round(rev / n) : 0, truncated, note: truncated ? "اقتُطع التحليل لآخر 400 طلب" : undefined }; } },
+      const total = Object.values(by).reduce((x, y) => x + y, 0); return { period: per, orders: total, by_status: by, revenue_dzd: rev, avg_order_dzd: n ? Math.round(rev / n) : 0, truncated, scanned, note: truncated ? `اقتُطع التحليل لآخر ${scanned} طلباً ضمن الفترة؛ الأرقام ناقصة` : undefined }; } },
   { name: "customers_top", tier: "read", perm: "customers", scope: "orders:read", description: "أكثر الزبائن طلباً (الاسم المختصر والولاية وعدد الطلبات والإجمالي) من الطلبات — بلا أرقام هواتف.",
     parameters: { type: "object", properties: { limit: { type: "integer", minimum: 1, maximum: 10 } } },
-    async run(a, h) { const { orders, truncated } = await allOrders(h), m = new Map();
+    async run(a, h) { const { orders, truncated, scanned } = await allOrders(h), m = new Map();
       for (const o of orders) { if (!LIVE(o.status)) continue; const k = String(o.phone || o.name); const e = m.get(k) ?? { name: short(o.name), wilaya: clip(o.wilaya, 30), orders: 0, total_dzd: 0 }; e.orders++; e.total_dzd += +o.total || 0; m.set(k, e); }
-      return { customers: [...m.values()].sort((x, y) => y.orders - x.orders || y.total_dzd - x.total_dzd).slice(0, a.limit ?? 5), distinct: m.size, truncated }; } },
+      return { customers: [...m.values()].sort((x, y) => y.orders - x.orders || y.total_dzd - x.total_dzd).slice(0, a.limit ?? 5), distinct: m.size, truncated, scanned, note: truncated ? `التحليل لآخر ${scanned} طلباً فقط؛ الترتيب قد لا يشمل الأقدم` : undefined }; } },
   { name: "products_list", tier: "read", perm: "products", scope: "catalog:read", description: "المنتجات (العنوان، الحالة، أقل سعر، مجموع المخزون). q للبحث بالعنوان، max_stock لإظهار ما مخزونه أقل أو يساوي القيمة (نقص المخزون).",
     parameters: { type: "object", properties: { q: { type: "string", maxLength: 60 }, max_stock: { type: "integer", minimum: 0, maximum: 100000 }, limit: { type: "integer", minimum: 1, maximum: 40 } } },
     async run(a, h) { const j = await must(await h.get("/v1/catalog/products", { limit: 100 }), "catalog"); let L = (j.products || []).map((p) => { const sk = (p.skus || []).filter((s) => s.active); const tracked = sk.filter((s) => s.stock != null); return { slug: p.slug, title: clip(p.title, 60), active: p.active, min_price_dzd: sk.length ? Math.min(...sk.map((s) => s.price)) : null, stock: tracked.length ? tracked.reduce((x, s) => x + (+s.stock || 0), 0) : null, variants: sk.length }; });
@@ -134,7 +135,7 @@ export const TOOLS = [
 /* نصوص تُعرض للمستخدم بلغته: [عربي، فرنسي، إنجليزي] */
 export const pickL = (lang, ar, fr, en) => (lang === "fr" ? fr : lang === "en" ? en : ar);
 const capObj = (o) => { const t = JSON.stringify(o); return t.length > 5000 ? { truncated: true, preview: t.slice(0, 4900) } : o; };
-async function findOrder(h, ref) { let after = 0; for (let i = 0; i < 5; i++) { const j = await must(await h.get("/v1/orders", { limit: 100, ...(after ? { after } : {}) }), "orders"); const o = (j.orders || []).find((x) => x.ref === ref); if (o) return o; if (!j.next) return null; after = j.next; } return null; }
+async function findOrder(h, ref) { const j = await must(await h.get("/v1/orders", { ref, limit: 1 }), "orders"); return (j.orders || []).find((x) => x.ref === ref) ?? null; }      // بحث مرجع دقيق على الخادم: بلا سقف مسح
 export const toolByName = (n) => TOOLS.find((t) => t.name === n) ?? null;
 /** الأدوات المتاحة لهذا الطالب: نطاق المفتاح AND صلاحية لوحة المستخدم */
 export function visibleTools(scopes, actor, hasPerm) { return TOOLS.filter((t) => (scopes.includes("*") || scopes.includes(t.scope)) && hasPerm(actor, t.perm)); }
