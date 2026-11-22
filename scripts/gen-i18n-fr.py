@@ -214,6 +214,9 @@ PAIRS.update({
 PAIRS.update({'🔎 فلتر مفعّل': '🔎 Filtre actif', 'عرض كل الطلبات': 'Afficher toutes les commandes', 'بحث': 'Recherche', 'الحالة: في انتظار التأكيد': 'Statut : en attente de confirmation', 'الحالة: جديد (لم يُتصل به بعد)': 'Statut : nouvelle (pas encore contactée)', 'الحالة: مؤكَّد': 'Statut : confirmée', 'الحالة: في الطريق': 'Statut : en route', 'الحالة: تم التسليم': 'Statut : livrée', 'الحالة: ملغاة': 'Statut : annulée', 'الحالة: فشل التوصيل': 'Statut : échec de livraison', 'المصدر': 'Source', 'التاريخ': 'Date', 'الشركة': 'Transporteur'})
 PATTERNS += [[r'^يُعرض (\d+) من (\d+) طلباً$', r'\1 sur \2 commandes affichées'], [r'^⚠ (\d+) طلب مؤكَّد غير مُرسَل مخفي بهذا الفلتر$', r'⚠ \1 commande(s) confirmée(s) non envoyée(s) masquée(s) par ce filtre'], [r'^الولاية: (.+)$', r'Wilaya : \1']]
 
+PAIRS.update({'بحث في القوالب': 'Rechercher dans les modèles', 'القوالب': 'Modèles', 'المكتبة': 'Bibliothèque', 'تحميل قالب': 'Charger un modèle', 'قوالبي (0)': 'Mes modèles (0)'})
+PATTERNS += [[r'^قوالبي \((\d+)\)$', r'Mes modèles (\1)']]
+
 # شروح الأقسام من admin.html (النص العربي بالضبط) ← الفرنسي
 navs = re.findall(r'<button class="nav-btn"[^>]*onclick="Admin\.tab\(\'([^\']+)\'[^>]*>.*?<b>(.*?)</b>(?:<span[^>]*>.*?</span>)?<small>(.*?)</small>', html, flags=re.S)
 strip = lambda x: re.sub(r'<[^>]+>', '', x).strip()
