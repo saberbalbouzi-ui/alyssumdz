@@ -191,10 +191,21 @@ ok("الكتابة لا تعتمد على اللقطة: طلب تأكيد يتح
   const CID = sql("SELECT id FROM cr_carts WHERE tenant_id=? ORDER BY id LIMIT 1", A.id).id, AG = await AGENT();
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"contacted"}', AG); const PC = b.pending?.[0]; ok("موظف اتصال: تغيير حالة سلة يحتاج موافقة", b.state === "awaiting_approval" && !!PC && !PC.sensitive && sql("SELECT status FROM cr_carts WHERE id=?", CID).status === "open", b);
   [s, b] = await confirm(PC.id, true, AG); ok("موافقة: السلة «تم الاتصال» ومتحقَّق منها", s === 200 && b.verified === true && sql("SELECT status FROM cr_carts WHERE id=?", CID).status === "contacted", b);
-  { const [, h] = await call("GET", "/v1/laura/history", null, A.key, {}, AG), last = h.messages[h.messages.length - 1]; ok("نتيجة الموافقة تدخل الذاكرة المشتركة (يراها المستخدم في الواجهة الأخرى)", last.role === "assistant" && /سلة|السلة|تم الاتصال/.test(last.text), last);
+  { const [, h] = await call("GET", "/v1/laura/history", null, A.key, {}, AG), last = h.messages[h.messages.length - 1]; ok("نتيجة الموافقة تدخل الذاكرة المشتركة (يراها المستخدم في الواجهة الأخرى)", last.role === "assistant" && /cart|contacted|سلة|السلة|تم الاتصال/i.test(last.text), last);
     [s, b] = await chat("كم طلب لدي؟", AG); ok("محادثة بعد نتيجة موافقة (دورا مساعد متتاليان): تُدمج ولا يفشل السياق", s === 200 && /لديك/.test(b.reply), b);
     const roles = mock.lastBody.contents.map((c) => c.role); ok("سياق النموذج يبدأ بالمستخدم بلا أدوار متتالية متشابهة", roles[0] === "user" && roles.every((r, i) => i === 0 || r !== roles[i - 1]), roles); }
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"contacted"}', AG); ok("نفس الحالة: already_done بلا إجراء", stepNames(b).join() === "cart_set_status!already_done" && b.pending.length === 0, b);
+  /* الفرنسية: ملخص الإجراء المعلّق، نتيجة التنفيذ، وتعليمة لغة الواجهة للنموذج */
+  { const CID2 = sql("SELECT id FROM cr_carts WHERE tenant_id=? AND id<>? ORDER BY id LIMIT 1", A.id, CID).id, PA3 = pm(A, "W-5003", 900, "Yacine");
+    [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID2 + ',"status":"recovered"}', AG, { lang: "fr" }); const PF = b.pending?.[0];
+    ok("فرنسية: ملخص الإجراء المعلّق بالفرنسية (حالة السلة)", !!PF && /Changer l’état du panier/.test(PF.summary) && /récupéré/.test(PF.summary), PF);
+    ok("تعليمة لغة الواجهة تُلحَق بتعليمات النموذج (الفرنسية) بلا تغيير في الأدوات", /الفرنسية/.test(JSON.stringify(mock.lastBody.systemInstruction ?? mock.lastBody)), Object.keys(mock.lastBody));
+    [s, b] = await confirm(PF.id, true, AG); ok("فرنسية: نتيجة التنفيذ بالفرنسية وحالة «récupéré» (لا عربية)", s === 200 && b.verified === true && /^Fait : /.test(b.reply) && /récupéré/.test(b.reply) && !/[؀-ۿ]/.test(b.reply), b);
+    [, b] = await chat('TEST_CALL:payment_approve:{"id":' + PA3 + '}', OW, { lang: "fr" }); const PF2 = b.pending?.[0]; ok("فرنسية: اعتماد دفعة — ملخص بالفرنسية وحساس", !!PF2 && /Approuver la preuve de paiement/.test(PF2.summary) && PF2.sensitive === true, PF2);
+    [s, b] = await confirm(PF2.id, true, OW); ok("فرنسية: «approuvé» بعد التحقق", s === 200 && b.verified === true && /approuvé/.test(b.reply) && !/[؀-ۿ]/.test(b.reply), b);
+    [, b] = await chat('TEST_CALL:payment_approve:{"id":' + PA3 + '}', OW, { lang: "fr" }); ok("فرنسية: رفض مبكر (مُعتمدة أصلاً) بدون إجراء معلّق", b.pending.length === 0 && stepNames(b).join() === "payment_approve!not_found", b);
+    [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID2 + ',"status":"open"}', AG, { lang: "ar" }); ok("عربية صريحة: الملخص بالعربية رغم أن النص لاتيني", /تغيير حالة السلة/.test(b.pending?.[0]?.summary ?? ""), b.pending);
+  }
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"deleted"}', AG); ok("حالة خارج القائمة: invalid_args", /invalid/.test(stepNames(b).join()), b);
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"recovered"}', await ACCT()); ok("محاسب: تغيير حالة سلة ← forbidden", stepNames(b).join() === "cart_set_status!forbidden", b); }
 /* حدّ المعدّل (آخر الاختبارات: يستهلك النافذة) */

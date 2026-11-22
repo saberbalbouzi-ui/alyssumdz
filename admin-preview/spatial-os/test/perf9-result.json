@@ -15,7 +15,7 @@
     "median": 0,
     "max": 0
    },
-   "wallMs": 7654,
+   "wallMs": 8946,
    "requests": {
     "orders": 0,
     "data": 1,
@@ -24,9 +24,9 @@
     "writes": 4,
     "other": 2
    },
-   "msgBytes": 942,
-   "longTasks": 0,
-   "longTaskMs": 0,
+   "msgBytes": 938,
+   "longTasks": 16,
+   "longTaskMs": 1889,
    "perPanel": {
     "ord": 0
    }
@@ -45,7 +45,7 @@
     "median": 0,
     "max": 0
    },
-   "wallMs": 7717,
+   "wallMs": 7732,
    "requests": {
     "orders": 0,
     "data": 1,
@@ -54,9 +54,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 942,
-   "longTasks": 2,
-   "longTaskMs": 135,
+   "msgBytes": 938,
+   "longTasks": 21,
+   "longTaskMs": 1994,
    "perPanel": {
     "ord": 0
    }
@@ -64,7 +64,7 @@
   {
    "naive": {
     "panels": 1,
-    "reloadAllMs": 1191,
+    "reloadAllMs": 2823,
     "requests": {
      "orders": 2,
      "data": 1,
@@ -82,15 +82,15 @@
    "acceptedEvents": 4,
    "refreshes": 2,
    "noop": 0,
-   "refreshMsTotal": 24,
-   "bridgeMsTotal": 20,
-   "refreshMsMax": 14,
-   "eventToLastRefreshMs": 5249,
+   "refreshMsTotal": 63,
+   "bridgeMsTotal": 53,
+   "refreshMsMax": 42,
+   "eventToLastRefreshMs": 5338,
    "syncLatencyMs": {
-    "median": 264,
-    "max": 264
+    "median": 292,
+    "max": 292
    },
-   "wallMs": 7881,
+   "wallMs": 8592,
    "requests": {
     "orders": 1,
     "data": 2,
@@ -99,9 +99,9 @@
     "writes": 4,
     "other": 3
    },
-   "msgBytes": 1315,
-   "longTasks": 0,
-   "longTaskMs": 0,
+   "msgBytes": 1311,
+   "longTasks": 20,
+   "longTaskMs": 1908,
    "perPanel": {
     "ord": 0,
     "ana": 2
@@ -113,15 +113,15 @@
    "acceptedEvents": 4,
    "refreshes": 2,
    "noop": 0,
-   "refreshMsTotal": 24,
-   "bridgeMsTotal": 22,
-   "refreshMsMax": 14,
-   "eventToLastRefreshMs": 5261,
+   "refreshMsTotal": 70,
+   "bridgeMsTotal": 61,
+   "refreshMsMax": 46,
+   "eventToLastRefreshMs": 5093,
    "syncLatencyMs": {
-    "median": 264,
-    "max": 264
+    "median": 296,
+    "max": 296
    },
-   "wallMs": 7848,
+   "wallMs": 8428,
    "requests": {
     "orders": 1,
     "data": 2,
@@ -130,9 +130,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 1315,
-   "longTasks": 3,
-   "longTaskMs": 162,
+   "msgBytes": 1311,
+   "longTasks": 17,
+   "longTaskMs": 1720,
    "perPanel": {
     "ord": 0,
     "ana": 2
@@ -141,16 +141,16 @@
   {
    "naive": {
     "panels": 2,
-    "reloadAllMs": 2094,
+    "reloadAllMs": 5919,
     "requests": {
      "orders": 4,
      "data": 2,
      "put": 0,
      "admin": 2,
      "writes": 2,
-     "other": 127
+     "other": 129
     },
-    "allRequests": 137
+    "allRequests": 139
    }
   },
   {
@@ -159,26 +159,26 @@
    "acceptedEvents": 4,
    "refreshes": 4,
    "noop": 0,
-   "refreshMsTotal": 80,
-   "bridgeMsTotal": 68,
-   "refreshMsMax": 26,
-   "eventToLastRefreshMs": 5268,
+   "refreshMsTotal": 445,
+   "bridgeMsTotal": 261,
+   "refreshMsMax": 153,
+   "eventToLastRefreshMs": 5462,
    "syncLatencyMs": {
-    "median": 272,
-    "max": 276
+    "median": 407,
+    "max": 514
    },
-   "wallMs": 7949,
+   "wallMs": 9441,
    "requests": {
     "orders": 2,
     "data": 3,
     "put": 1,
     "admin": 0,
     "writes": 4,
-    "other": 4
+    "other": 3
    },
-   "msgBytes": 1619,
-   "longTasks": 1,
-   "longTaskMs": 58,
+   "msgBytes": 1614,
+   "longTasks": 17,
+   "longTaskMs": 2270,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -191,15 +191,15 @@
    "acceptedEvents": 4,
    "refreshes": 4,
    "noop": 0,
-   "refreshMsTotal": 87,
-   "bridgeMsTotal": 75,
-   "refreshMsMax": 37,
-   "eventToLastRefreshMs": 5213,
+   "refreshMsTotal": 322,
+   "bridgeMsTotal": 179,
+   "refreshMsMax": 116,
+   "eventToLastRefreshMs": 5477,
    "syncLatencyMs": {
-    "median": 291,
-    "max": 303
+    "median": 397,
+    "max": 422
    },
-   "wallMs": 8020,
+   "wallMs": 8258,
    "requests": {
     "orders": 2,
     "data": 3,
@@ -208,9 +208,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 1618,
-   "longTasks": 3,
-   "longTaskMs": 211,
+   "msgBytes": 1612,
+   "longTasks": 15,
+   "longTaskMs": 1633,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -220,16 +220,16 @@
   {
    "naive": {
     "panels": 3,
-    "reloadAllMs": 2725,
+    "reloadAllMs": 13232,
     "requests": {
      "orders": 6,
      "data": 3,
      "put": 0,
      "admin": 3,
      "writes": 3,
-     "other": 191
+     "other": 199
     },
-    "allRequests": 206
+    "allRequests": 214
    }
   },
   {
@@ -238,26 +238,26 @@
    "acceptedEvents": 4,
    "refreshes": 5,
    "noop": 0,
-   "refreshMsTotal": 101,
-   "bridgeMsTotal": 79,
-   "refreshMsMax": 27,
-   "eventToLastRefreshMs": 5266,
+   "refreshMsTotal": 217,
+   "bridgeMsTotal": 156,
+   "refreshMsMax": 57,
+   "eventToLastRefreshMs": 5195,
    "syncLatencyMs": {
-    "median": 271,
-    "max": 293
+    "median": 306,
+    "max": 307
    },
-   "wallMs": 7816,
+   "wallMs": 7929,
    "requests": {
     "orders": 2,
     "data": 4,
     "put": 1,
     "admin": 0,
     "writes": 4,
-    "other": 5
+    "other": 3
    },
-   "msgBytes": 1771,
+   "msgBytes": 1763,
    "longTasks": 3,
-   "longTaskMs": 189,
+   "longTaskMs": 338,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -271,15 +271,15 @@
    "acceptedEvents": 4,
    "refreshes": 5,
    "noop": 0,
-   "refreshMsTotal": 187,
-   "bridgeMsTotal": 153,
-   "refreshMsMax": 56,
-   "eventToLastRefreshMs": 5292,
+   "refreshMsTotal": 336,
+   "bridgeMsTotal": 227,
+   "refreshMsMax": 117,
+   "eventToLastRefreshMs": 5391,
    "syncLatencyMs": {
-    "median": 282,
-    "max": 307
+    "median": 328,
+    "max": 418
    },
-   "wallMs": 7972,
+   "wallMs": 8105,
    "requests": {
     "orders": 2,
     "data": 4,
@@ -288,9 +288,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 1772,
+   "msgBytes": 1765,
    "longTasks": 4,
-   "longTaskMs": 285,
+   "longTaskMs": 326,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -301,7 +301,7 @@
   {
    "naive": {
     "panels": 4,
-    "reloadAllMs": 3615,
+    "reloadAllMs": 6402,
     "requests": {
      "orders": 8,
      "data": 4,
