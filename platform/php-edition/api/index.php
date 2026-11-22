@@ -259,7 +259,7 @@ function updAllowed(string $p): bool {
     if (preg_match('#^assets/(img|fonts)/[A-Za-z0-9._/-]+\.(webp|jpe?g|png|svg|woff2?|txt|md)$#', $p)) return true;
     if (preg_match('#^assets/pages/templates/[A-Za-z0-9._/-]+\.(json|css|jpe?g|webp)$#', $p)) return true;
     if (preg_match('#^assets/tools/[A-Za-z0-9._-]+\.html$#', $p)) return true;
-    return in_array($p, ['assets/data/ctl-help.json', 'assets/data/speed-recipes.json', 'assets/data/admin-help.json', 'assets/data/voice-lexicon.json', 'assets/data/stickers.json', 'assets/data/tool-titles.json', 'assets/data/tools-catalog.json'], true);
+    return in_array($p, ['assets/data/ctl-help.json', 'assets/data/speed-recipes.json', 'assets/data/admin-help.json', 'assets/data/admin-help.fr.json', 'assets/data/i18n-fr.json', 'assets/data/site-i18n-fr.json', 'assets/data/voice-lexicon.json', 'assets/data/stickers.json', 'assets/data/tool-titles.json', 'assets/data/tools-catalog.json'], true);
 }
 function updConfig(): ?array {
     $f = __DIR__ . '/update-config.php'; $k = __DIR__ . '/update-key.pem';
