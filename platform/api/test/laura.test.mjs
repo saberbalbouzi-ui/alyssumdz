@@ -270,6 +270,37 @@ ok("الكتابة لا تعتمد على اللقطة: طلب تأكيد يتح
   [, b] = await chat('TEST_CALL:product_set_price:{"slug":"honey","price":2600}', OW, CX); const PP2 = b.pending?.[0]; ok("تغيير السعر: معلّق وحساس", !!PP2 && PP2.sensitive === true && /2600/.test(PP2.summary), b);
   await confirm(PP2.id, true, OW); [, b] = await report(PP2.id, { ok: true, observed: { slug: "honey", price: 2600, source: "store_file" } }); ok("السعر: مطابقة الملف المنشور ← done", b.state === "done" && b.verified === true, b);
   [s, b] = await call("POST", "/v1/laura/report", { id: "lp_" + "0".repeat(24), ok: true }, A.key, {}, OW); ok("تقرير لمعرّف مجهول: 404", s === 404); }
+/* ── 5و) إعدادات المتجر: وضع الصيانة والشريط الإعلاني (قراءة من لقطة اللوحة + كتابة تنفّذها اللوحة) ── */
+{ const OW = await OWNER(), report = (id, body, h = OW) => call("POST", "/v1/laura/report", { id, ...body }, A.key, {}, h), SN = { maintenance: { on: false, msg: "" }, announcement: { show: true, text: "توصيل **سريع**", bg: "#112233", color: "#ffffff" } };
+  const CXS = (o = {}) => ({ caps: ["client_exec"], lang: "ar", settings: SN, ...o });
+  [, b] = await call("GET", "/v1/laura/tools", null, A.key, {}, OW); ok("بلا caps: أدوات الإعدادات مخفية", !b.tools.some((t) => ["store_settings", "maintenance_set", "announcement_set"].includes(t.name)));
+  [, b] = await call("GET", "/v1/laura/tools", null, A.key, { caps: "client_exec" }, OW); ok("مع caps (مالك): الثلاث ظاهرة", ["store_settings", "maintenance_set", "announcement_set"].every((n) => b.tools.some((t) => t.name === n)));
+  [, b] = await call("GET", "/v1/laura/tools", null, A.key, { caps: "client_exec" }, await AGENT()); ok("موظف اتصال: لا أدوات إعدادات (للمالك فقط)", !b.tools.some((t) => ["store_settings", "maintenance_set", "announcement_set"].includes(t.name)));
+  [, b] = await chat('TEST_CALL:store_settings:{}', OW, CXS()); ok("store_settings: القيم الحالية من لقطة اللوحة", stepNames(b).join() === "store_settings" && /توصيل/.test(b.reply) && /112233/.test(b.reply), b);
+  [, b] = await chat('TEST_CALL:store_settings:{}', OW, { caps: ["client_exec"], lang: "ar" }); ok("بلا لقطة: no_snapshot صريح بلا اختلاق", stepNames(b).join() === "store_settings!no_snapshot", b);
+  [, b] = await chat('TEST_CALL:store_settings:{}', OW, CXS({ settings: { maintenance: { on: true, msg: "<img src=x onerror=1>سأعود" }, announcement: { show: false, text: "x\u0000y", bg: "javascript:alert(1)", color: "red" } } })); ok("اللقطة تُنقّى: بلا أقواس زاوية ولا أحرف تحكم ولا ألوان غير صالحة", !/[<>]/.test(b.reply) && !/\\u0000/.test(b.reply) && !/javascript/.test(b.reply) && /"bg":""/.test(b.reply.replace(/\\/g, "")), b.reply);
+  /* الصيانة */
+  [, b] = await chat('TEST_CALL:maintenance_set:{"on":true,"message":"نعود قريباً"}', OW, CXS()); const PM = b.pending?.[0]; ok("تفعيل الصيانة: ملخص يعرض الحالة الحالية ← الجديدة، حساس، بلا تنفيذ", !!PM && PM.sensitive === true && /متوقفة ← مفعّلة/.test(PM.summary) && /نعود قريباً/.test(PM.summary) && /لوحة الإدارة تبقى متاحة/.test(PM.summary), b);
+  [, b] = await chat('TEST_CALL:maintenance_set:{"on":false}', OW, CXS()); ok("الصيانة متوقفة أصلاً: already_done بلا إجراء", stepNames(b).join() === "maintenance_set!already_done" && b.pending.length === 0, b);
+  [, b] = await chat('TEST_CALL:maintenance_set:{"on":true,"message":"<script>x</script>"}', OW, CXS()); ok("رسالة بأقواس زاوية: invalid_args", /invalid/.test(stepNames(b).join()) && b.pending.length === 0, b);
+  [, b] = await chat('TEST_CALL:maintenance_set:{"on":true}', await AGENT(), CXS()); ok("موظف اتصال: صيانة محجوبة", /maintenance_set!(forbidden|unknown)/.test(stepNames(b).join()) && b.pending.length === 0, b);
+  [, b] = await chat('TEST_CALL:maintenance_set:{"on":true}', await ACCT(), CXS()); ok("محاسب: صيانة محجوبة", /maintenance_set!(forbidden|unknown)/.test(stepNames(b).join()) && b.pending.length === 0, b);
+  let [s2, d] = await confirm(PM.id, true, OW); ok("الموافقة: أمر للّوحة لا تنفيذ على الخادم", s2 === 200 && d.state === "client_exec" && d.action.tool === "maintenance_set" && d.action.args.on === true, d);
+  [, d] = await report(PM.id, { ok: true, observed: { maintenance: true, maintMsg: "نعود قريباً", source: "store_file" } }); ok("مطابقة الملف المنشور: done + verified", d.state === "done" && d.verified === true, d);
+  [, b] = await chat('TEST_CALL:maintenance_set:{"on":true,"message":"x"}', OW, CXS({ settings: { ...SN, maintenance: { on: false, msg: "" } } })); const PM2 = b.pending[0]; await confirm(PM2.id, true, OW);
+  [, d] = await report(PM2.id, { ok: true, observed: { maintenance: false, maintMsg: "", source: "store_file" } }); ok("الملف المنشور لا يزال false: unverified (لا نجاح مزيّف)", d.state === "unverified" && d.verified === false, d);
+  [, b] = await chat('TEST_CALL:maintenance_set:{"on":true}', OW, CXS({ lang: "fr" })); const PM3 = b.pending[0]; ok("فرنسية: ملخص الصيانة بالفرنسية", /Mode maintenance : désactivée → activée/.test(PM3.summary), PM3);
+  await confirm(PM3.id, true, OW); [, d] = await report(PM3.id, { ok: false, code: "editor_open" }); ok("محرر الإعدادات مفتوح بتعديل غير محفوظ: failed برسالة فرنسية واضحة", d.state === "failed" && /éditeur|ouvert/i.test(d.reply) && !/[؀-ۿ]/.test(d.reply), d);
+  /* الشريط الإعلاني */
+  [, b] = await chat('TEST_CALL:announcement_set:{}', OW, CXS()); ok("بلا حقول: invalid_args", /invalid/.test(stepNames(b).join()), b);
+  [, b] = await chat('TEST_CALL:announcement_set:{"bg":"red"}', OW, CXS()); ok("لون بصيغة غير #RRGGBB: invalid_args", /invalid/.test(stepNames(b).join()), b);
+  [, b] = await chat('TEST_CALL:announcement_set:{"text":"<b>x</b>"}', OW, CXS()); ok("نص بأقواس زاوية: invalid_args", /invalid/.test(stepNames(b).join()), b);
+  [, b] = await chat('TEST_CALL:announcement_set:{"show":true,"text":"توصيل **سريع**"}', OW, CXS()); ok("القيم نفسها أصلاً: already_done", stepNames(b).join() === "announcement_set!already_done", b);
+  [, b] = await chat('TEST_CALL:announcement_set:{"show":true,"text":"خصم 20% اليوم","bg":"#cc0000"}', OW, CXS()); const PN = b.pending?.[0]; ok("تعديل الشريط: ملخص يعرض القيم الحالية ← الجديدة", !!PN && /النص: «توصيل \*\*سريع\*\*» ← «خصم 20% اليوم»/.test(PN.summary) && /لون الخلفية: «#112233» ← «#cc0000»/.test(PN.summary) && PN.sensitive === false, PN);
+  await confirm(PN.id, true, OW); [, d] = await report(PN.id, { ok: true, observed: { show: true, text: "خصم 20% اليوم", bg: "#cc0000", color: "#ffffff", source: "store_file" } }); ok("الشريط: مطابقة الملف المنشور ← done", d.state === "done" && d.verified === true, d);
+  [, b] = await chat('TEST_CALL:announcement_set:{"text":"عرض"}', OW, CXS()); const PN2 = b.pending[0]; await confirm(PN2.id, true, OW);
+  [, d] = await report(PN2.id, { ok: true, observed: { show: true, text: "نص قديم", bg: "#112233", color: "#ffffff", source: "store_file" } }); ok("نص الملف يخالف المطلوب: unverified", d.state === "unverified", d);
+  [, b] = await chat('TEST_CALL:announcement_set:{"show":false}', OW, CXS({ lang: "fr" })); ok("فرنسية: ملخص إخفاء الشريط", /Barre d’annonce — Affichage de la barre : « visible » → « masqué »/.test(b.pending?.[0]?.summary ?? ""), b.pending); }
 /* حدّ المعدّل (آخر الاختبارات: يستهلك النافذة) */
 { bump = false; let last = 200; for (let i = 0; i < 25; i++) { [last] = await chat("كم طلب لدي؟", await OWNER(), { key: await mkKey(A, ["*"]).then(() => A.key) }); if (last === 429) break; } ok("حدّ المعدّل: 429 بعد ~20 رسالة/دقيقة", last === 429, last); }
 done();
