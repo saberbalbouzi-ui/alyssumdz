@@ -1,0 +1,71 @@
+PASS php: بطاقة المظهر الهولوغرافي ظاهرة في إعدادات المظهر وزرها مفعّل
+PASS php: نص البطاقة بلا مصطلحات تقنية/أسماء مزوّدين  216
+PASS php: العنوان Spatial Core وشارة Beta أصغر ولونها يختلف عن شارة «مفعّل»  {"txt":"Beta","color":"rgb(59, 230, 255)","onColor":"rgb(226, 254, 23)","size":9,"onSize":10.8,"title":"Spatial Core"}
+PASS php: المظهر الهولوغرافي يفتح بوضع الألواح الحقيقية والوكيل التنفيذي متاح
+PASS php: عبارة «بيانات تجريبية» مخفية في الوضع الحقيقي
+PASS php: عنوان الصفحة Spatial Core
+PASS php: النواة الثلاثية الأبعاد ومشهد الأسطوانة موجودان
+PASS php: لا لوح يُفتح تلقائياً على المكتب (العالم فوري)
+PASS php: داخل لوح اللوحة الحقيقية: داكن وأساسي سماوي ومتغير التدرّج سماوي  {"glass":true,"mint":"#3be6ff","c":"59,230,255","n":6,"cyan":6,"limeBtns":0}
+PASS php: الأزرار الأساسية في اللوح زجاجية سماوية ولا زر ليموني  {"glass":true,"mint":"#3be6ff","c":"59,230,255","n":6,"cyan":6,"limeBtns":0}
+PASS php: لوح «dash» حقيقي ويعرض تبويب home  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «dash» بلا أزرار المنصة التقليدية (تحديث/زيارة الموقع/تبديل المظهر/خروج/رصيد)  []
+PASS php: لوح «dash» يُبقي تنقّل اللوحة ظاهراً (كل الأقسام والإعدادات قابلة للوصول)  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «store» حقيقي ويعرض تبويب store  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «store» بلا أزرار المنصة التقليدية (تحديث/زيارة الموقع/تبديل المظهر/خروج/رصيد)  []
+PASS php: لوح «store» يُبقي تنقّل اللوحة ظاهراً (كل الأقسام والإعدادات قابلة للوصول)  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «cus» حقيقي ويعرض تبويب customers  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «look» حقيقي ويعرض تبويب theme  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «ext» حقيقي ويعرض تبويب appstore  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «set» حقيقي ويعرض تبويب setup  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «set» بلا أزرار المنصة التقليدية (تحديث/زيارة الموقع/تبديل المظهر/خروج/رصيد)  []
+PASS php: لوح «set» يُبقي تنقّل اللوحة ظاهراً (كل الأقسام والإعدادات قابلة للوصول)  {"done":true,"tabShown":true,"nav":true}
+PASS php: لوح «ord» حقيقي ويعرض تبويب orders  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح «ord» بلا تنقّل (كما اعتُمد في المرحلة 12)  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح «prod» حقيقي ويعرض تبويب products  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح «prod» بلا تنقّل (كما اعتُمد في المرحلة 12)  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح «ana» حقيقي ويعرض تبويب analytics  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح «ana» بلا تنقّل (كما اعتُمد في المرحلة 12)  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح «inv» حقيقي ويعرض تبويب inventory  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح «inv» بلا تنقّل (كما اعتُمد في المرحلة 12)  {"done":true,"tabShown":true,"nav":false}
+PASS php: لوح المساعد في الوضع الحقيقي بلا وسم «عرض تجريبي»
+PASS php: لا قسم «التسويق» (غير موجود في المنصة) على الأسطوانة ولا في شريط الأقسام
+PASS php: سحب رأس اللوح الحقيقي بالفأرة يحرّكه  {"before":[0,-18],"after":[-395.44875627377604,94.05596898175591]}
+PASS php: لا زر ◎ (إرجاع إلى المدار) في شريط عنوان اللوح (حُذف بطلب صاحب المتجر)
+PASS php: □ يفتح البطاقة بحجم المكتب (يملأ العرض والارتفاع تحت الشريط العلوي، وإطارها بعرض مكتب ≥ 1000)  {"big":true,"w":1415,"h":815,"top":65,"left":13,"vw":1440,"vh":900,"frameW":1417,"frameInnerW":1377}
+PASS php: عند تكبير النافذة يكبر المحتوى (zoom > 1.15) ويبقى تخطيط المكتب  {"zoom":1.252,"k":1.252,"btnH":42}
+PASS php: النافذة الكبيرة تتحرك بالسحب من شريط عنوانها وتبقى كبيرة وعنوانها ظاهر  {"from":[0,20],"to":[128.48,101.75999999999999],"hdr":[143,149,1561]}
+PASS php: □ ثانية تعيد البطاقة إلى حجمها
+PASS php: بعد الاستعادة يعود المحتوى لحجم البطاقة الطبيعي: واجهة المكتب مصغّرة (zoom = العرض/1100 ≤ 1) لا مكبّرة  {"big":false,"z":0.576,"want":0.5760000000000001,"w":633.6,"iw":634}
+PASS php: لا يصعد عنوان اللوح فوق الشاشة ولا يُدفن (يبقى شريطه ظاهراً وقابلاً للإمساك: top ≥ 58)  {"topH":69}
+PASS php: كل بطاقات الجدران ظاهرة كاملة داخل الشاشة تحت الشريط العلوي
+PASS php: ستارة حماية اللوح غير المُركَّز شفافة تماماً (لا تعتيم يُبهت الألوان)  {"focused":false,"alpha":0,"bg":"rgba(0, 0, 0, 0)"}
+PASS php: النقر على الكرة يفتح لوح المساعد التنفيذي بزر الميكروفون وحقل الكتابة  {"mic":true,"input":true,"framed":false}
+PASS php: الألواح مائلة افتراضياً (قبل الزر)  {"ord":0.2588,"prod":0.2588}
+PASS php: زر «زاوية 0» موجود في الشريط العلوي ويشير aria-pressed=false
+PASS php: بعد «زاوية 0» كل الألواح بلا أي ميلان  {"ord":0,"prod":0}
+PASS php: الزر يعلن حالته (مفعّل) والاختيار محفوظ
+PASS php: مفتاح L يعيد الميلان الأصلي (تبديل)  {"ord":0.2588,"prod":0.2588}
+PASS php: يبقى «زاوية 0» مفعّلاً بعد إعادة فتح الصفحة
+PASS php: زر «العودة للمظهر العادي» موجود ويشير إلى اللوحة  {"href":"../../admin.html","vis":true}
+PASS php: العودة تفتح اللوحة العادية مسجَّلاً الدخول
+PASS php: لم يتغيّر مظهر اللوحة المختار
+PASS php: لم يُكتب أي شيء في تخزين مظهر المستخدم (الوضع ولا الإعدادات)
+PASS php: لا تغيير في الطلبات بعد الدخول إلى المظهر والخروج منه
+PASS php: لا أخطاء JS غير معالجة في الصفحات  []
+PASS phone: بطاقة Spatial Core ظاهرة داخل الشاشة وزرها قابل للنقر  {"btnW":112,"cardInside":true,"vw":390}
+PASS phone: لا فيض أفقي في صفحة الإعدادات
+PASS phone: زر «العودة للمظهر العادي» ظاهر داخل الشاشة وقابل للنقر (لا يغطيه عنصر)  {"exitVis":true,"exitOnScreen":true,"exitHit":true,"exitH":31,"panelFits":true,"panelInView":true,"real":true,"orbit":false}
+PASS phone: لوح الطلبات الحقيقي يلائم عرض الهاتف وظاهر  {"exitVis":true,"exitOnScreen":true,"exitHit":true,"exitH":31,"panelFits":true,"panelInView":true,"real":true,"orbit":false}
+PASS phone: لا فيض أفقي في المظهر الهولوغرافي
+PASS phone: لوح «set» حقيقي ويلائم الشاشة  {"done":true,"fits":true,"inView":true}
+PASS phone: لوح «dash» حقيقي ويلائم الشاشة  {"done":true,"fits":true,"inView":true}
+PASS phone: العودة بلمسة تفتح اللوحة العادية مسجَّلاً الدخول
+PASS phone: لا أخطاء JS غير معالجة  []
+PASS static: ألواح حقيقية بلا واجهة PHP (وضع المتجر الذي لا يحمل الوكيل التنفيذي)  {"real":true,"api":false,"note":"none"}
+PASS static: النقر على الكرة يفتح «اسألني» الحقيقي (إطار) حيث لا واجهة PHP للوكيل التنفيذي  {"framed":true,"tab":"ask","real":"1","src":"http://127.0.0.1:8771/admin.html"}
+PASS static: لوح الإعدادات حقيقي (إطار يحمّل admin.html)
+PASS static: لا أخطاء JS غير معالجة  []
+PASS static: ?demo=1 يبقي العرض التجريبي ويُظهر عبارته
+
+ALL PASS  (69 ناجح)

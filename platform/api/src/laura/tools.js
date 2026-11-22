@@ -56,6 +56,45 @@ export const TOOLS = [
       try { const r = await h.get("/v1/catalog/shipping"); if (r.status === 200) ship = { rates: r.json.rates, wilayas: r.json.wilayas }; } catch { /* اختياري */ }
       return { modules: (m.modules || []).map((x) => ({ id: x.id, enabled: x.enabled })), integrations: ints, shipping_table: ship }; } },
   /* ───── كتابة: موافقة صريحة قبل التنفيذ + تحقق بعده ───── */
+  /* ───── وحدات المنصة (قراءة) ───── */
+  { name: "carts_list", tier: "read", perm: "orders", scope: "carts:read", description: "السلال المتروكة الحالية (الرقم، الاسم المختصر، المجموع، عدد البنود، آخر تحديث) بلا هواتف. status: open|contacted|recovered|dismissed.",
+    parameters: { type: "object", properties: { status: { type: "string", enum: ["open", "contacted", "recovered", "dismissed"] }, limit: { type: "integer", minimum: 1, maximum: 25 } } },
+    async run(a, h) { const j = await must(await h.get("/v1/carts", { status: a.status ?? "open", minAge: 0, limit: a.limit ?? 10 }), "carts"); return { count: (j.carts || j.items || []).length, carts: (j.carts || j.items || []).map((c) => ({ id: c.id, name: short(c.name), total: c.total, items: (c.items || []).length, updated_at: c.updated_at, status: c.status })) }; } },
+  { name: "payments_pending", tier: "read", perm: "finance", scope: "payments:read", description: "إثباتات الدفع اليدوي (BaridiMob/CCP) المعلّقة بانتظار اعتماد التاجر: الرقم، الطلب، الطريقة، المبلغ. state اختياري: pending|approved|rejected.",
+    parameters: { type: "object", properties: { state: { type: "string", enum: ["pending", "approved", "rejected"] }, limit: { type: "integer", minimum: 1, maximum: 25 } } },
+    async run(a, h) { const j = await must(await h.get("/v1/payments/manual", { state: a.state ?? "pending", limit: a.limit ?? 10 }), "payments"); return { count: (j.proofs || []).length, proofs: (j.proofs || []).map((x) => ({ id: x.id, order: x.order_id, method: x.method, amount_dzd: x.amount, payer: clip(String(x.payer ?? "").replace(/\d{5,}/g, "•••"), 24), state: x.state, has_proof: x.has_proof, at: x.created_at })) }; } },
+  { name: "wallet_summary", tier: "read", perm: "finance", scope: "wallet:read", description: "أرصدة محفظة المتجر (المتاح، الضمان، المحجوز للسحب، رصيد الإعلانات) لكل عملة.", parameters: { type: "object", properties: {} },
+    async run(a, h) { const j = await must(await h.get("/v1/wallet"), "wallet"); return { balances: j.balances }; } },
+  { name: "sms_balance", tier: "read", perm: "analytics", scope: "sms:read", description: "رصيد رسائل SMS (شرائح) وآخر الحركات.", parameters: { type: "object", properties: {} },
+    async run(a, h) { const j = await must(await h.get("/v1/sms/balance"), "sms"); return { balance: j.balance, recent: (j.ledger || []).slice(0, 5).map((x) => ({ delta: x.delta, reason: clip(x.reason, 30), at: x.at })) }; } },
+  { name: "ads_spend", tier: "read", perm: "analytics", scope: "ads:read", description: "إنفاق الإعلانات (Meta/TikTok) بالدينار لآخر days يوماً (افتراضي 7) إجمالاً وحسب الحملة.",
+    parameters: { type: "object", properties: { days: { type: "integer", minimum: 1, maximum: 30 } } },
+    async run(a, h) { const days = a.days ?? 7, dt = (t) => new Date(t * 1000).toISOString().slice(0, 10), now = h.now(); const j = await must(await h.get("/v1/ads/spend", { since: dt(now - (days - 1) * 86400), until: dt(now) }), "ads"), by = {};
+      for (const x of j.spend || []) { const k = clip(x.campaign_name || x.campaign_id, 50); by[k] = (by[k] || 0) + (+x.spend_dzd || 0); }
+      return { days, total_dzd: j.total_dzd, campaigns: Object.entries(by).sort((x, y) => y[1] - x[1]).slice(0, 8).map(([name, spend_dzd]) => ({ name, spend_dzd: Math.round(spend_dzd) })) }; } },
+  { name: "sources_stats", tier: "read", perm: "orders", scope: "sources:read", description: "طلبات المصادر الخارجية المربوطة (Shopify/WooCommerce/Sheets): أعداد اليوم و7 و30 يوماً لكل مصدر.", parameters: { type: "object", properties: {} },
+    async run(a, h) { const j = await must(await h.get("/v1/sources/stats"), "sources"); return capObj(j); } },
+  { name: "digital_orders", tier: "read", perm: "orders", scope: "digital:read", description: "طلبات المنتجات الرقمية وحالتها (awaiting|short|ready|delivered) بلا أسرار.",
+    parameters: { type: "object", properties: { state: { type: "string", enum: ["awaiting", "short", "ready", "delivered"] }, limit: { type: "integer", minimum: 1, maximum: 25 } } },
+    async run(a, h) { const j = await must(await h.get("/v1/digital/orders", { limit: a.limit ?? 10, ...(a.state ? { state: a.state } : {}) }), "digital"); return { count: (j.orders || []).length, orders: (j.orders || []).map((o) => ({ ref: o.order_ref, name: short(o.name), paid: o.paid, state: o.state, detail: clip(o.detail, 60) })) }; } },
+  { name: "apps_installed", tier: "read", perm: "*", scope: "appstore:read", description: "تطبيقات متجر التطبيقات المثبّتة على المتجر وحالتها وسعرها (للمالك فقط).", parameters: { type: "object", properties: {} },
+    async run(a, h) { const j = await must(await h.get("/v1/appstore/installations"), "appstore"); return { count: (j.installations || []).length, apps: (j.installations || []).map((i) => ({ name: clip(i.name, 40), status: i.status, price: i.price, billing: i.billing })) }; } },
+  /* ───── وحدات المنصة (كتابة بموافقة وتحقق) ───── */
+  { name: "payment_approve", tier: "write", perm: "*", scope: "payments:write", sensitive: true, description: "اعتماد إثبات دفع يدوي معلّق بمعرّفه (يؤكد الدفع ويسلّم المنتج الرقمي فوراً). عملية مالية حساسة تتطلب موافقة المالك.",
+    parameters: { type: "object", properties: { id: { type: "integer", minimum: 1, maximum: 999999999 } }, required: ["id"] }, describe: (a) => `اعتماد إثبات الدفع رقم ${a.id} (يؤكد الدفع ويسلّم المنتج)`,
+    async precheck(a, h) { const j = await must(await h.get("/v1/payments/manual", { state: "pending", limit: 100 }), "payments"), x = (j.proofs || []).find((p) => p.id === a.id); if (!x) throw new ToolError("not_found", "لا يوجد إثبات معلّق بهذا الرقم"); return { amount: x.amount }; },
+    async run(a, h) { const r = await h.post(`/v1/payments/manual/${a.id}/approve`, {}); await must(r, "payments"); return { approved: true }; },
+    async verify(a, h) { const j = await must(await h.get("/v1/payments/manual", { state: "approved", limit: 100 }), "payments"); const x = (j.proofs || []).find((p) => p.id === a.id); return { ok: !!x, now: x ? "approved" : null }; }, stateLabel: { approved: "معتمد" } },
+  { name: "payment_reject", tier: "write", perm: "*", scope: "payments:write", sensitive: true, description: "رفض إثبات دفع يدوي معلّق بمعرّفه مع سبب اختياري. يتطلب موافقة المالك.",
+    parameters: { type: "object", properties: { id: { type: "integer", minimum: 1, maximum: 999999999 }, note: { type: "string", maxLength: 120 } }, required: ["id"] }, describe: (a) => `رفض إثبات الدفع رقم ${a.id}${a.note ? " (" + a.note + ")" : ""}`,
+    async precheck(a, h) { const j = await must(await h.get("/v1/payments/manual", { state: "pending", limit: 100 }), "payments"); if (!(j.proofs || []).some((p) => p.id === a.id)) throw new ToolError("not_found", "لا يوجد إثبات معلّق بهذا الرقم"); return {}; },
+    async run(a, h) { const r = await h.post(`/v1/payments/manual/${a.id}/reject`, { note: a.note ?? "" }); await must(r, "payments"); return { rejected: true }; },
+    async verify(a, h) { const j = await must(await h.get("/v1/payments/manual", { state: "rejected", limit: 100 }), "payments"); const x = (j.proofs || []).find((p) => p.id === a.id); return { ok: !!x, now: x ? "rejected" : null }; }, stateLabel: { rejected: "مرفوض" } },
+  { name: "cart_set_status", tier: "write", perm: "orders.write", scope: "carts:write", description: "تغيير حالة سلة متروكة: contacted (تم الاتصال) | recovered (استُردّت) | dismissed (تجاهل) | open. يتطلب موافقة المستخدم.",
+    parameters: { type: "object", properties: { id: { type: "integer", minimum: 1, maximum: 999999999 }, status: { type: "string", enum: ["open", "contacted", "recovered", "dismissed"] } }, required: ["id", "status"] }, describe: (a) => `تغيير حالة السلة ${a.id} إلى «${{ open: "مفتوحة", contacted: "تم الاتصال", recovered: "مستردّة", dismissed: "متجاهلة" }[a.status]}»`,
+    async precheck(a, h) { for (const st of ["open", "contacted", "recovered", "dismissed"]) { const j = await must(await h.get("/v1/carts", { status: st, minAge: 0, limit: 100 }), "carts"); const c = (j.carts || j.items || []).find((x) => x.id === a.id); if (c) { if (c.status === a.status || st === a.status) throw new ToolError("already_done", "السلة بهذه الحالة أصلاً"); return { before: st }; } } throw new ToolError("not_found", "لا توجد سلة بهذا الرقم"); },
+    async run(a, h) { const r = await h.patch(`/v1/carts/${a.id}`, { status: a.status }); await must(r, "carts"); return { set: a.status }; },
+    async verify(a, h) { const j = await must(await h.get("/v1/carts", { status: a.status, minAge: 0, limit: 100 }), "carts"); const c = (j.carts || j.items || []).find((x) => x.id === a.id); return { ok: !!c, now: c ? a.status : null }; }, stateLabel: { open: "مفتوحة", contacted: "تم الاتصال", recovered: "مستردّة", dismissed: "متجاهلة" } },
   { name: "order_confirm", tier: "write", perm: "orders.write", scope: "events:write", description: "تأكيد طلب جديد بمرجعه (تغيير حالته إلى مؤكَّدة). يتطلب موافقة المستخدم.",
     parameters: { type: "object", properties: { ref: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,80}$", maxLength: 80 } }, required: ["ref"] },
     describe: (a) => `تأكيد الطلب ${a.ref}`,
@@ -69,6 +108,7 @@ export const TOOLS = [
     async run(a, h, x) { const r = await h.post("/v1/events", { type: "order.cancelled", id: x.idem, data: { order_id: a.ref } }); await must(r, "events"); await h.flush(`order.cancelled:${x.idem}`); return { event: "order.cancelled", accepted: r.json.accepted !== false }; },
     async verify(a, h) { const o = await findOrder(h, a.ref); return { ok: !!o && o.status === "annulee", now: o?.status ?? null }; } },
 ];
+const capObj = (o) => { const t = JSON.stringify(o); return t.length > 5000 ? { truncated: true, preview: t.slice(0, 4900) } : o; };
 async function findOrder(h, ref) { let after = 0; for (let i = 0; i < 5; i++) { const j = await must(await h.get("/v1/orders", { limit: 100, ...(after ? { after } : {}) }), "orders"); const o = (j.orders || []).find((x) => x.ref === ref); if (o) return o; if (!j.next) return null; after = j.next; } return null; }
 export const toolByName = (n) => TOOLS.find((t) => t.name === n) ?? null;
 /** الأدوات المتاحة لهذا الطالب: نطاق المفتاح AND صلاحية لوحة المستخدم */

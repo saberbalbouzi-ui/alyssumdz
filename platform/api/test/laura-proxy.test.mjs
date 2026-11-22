@@ -38,7 +38,7 @@ let [s, b] = await proxy("owner-jwt", "POST", "/v1/laura/chat", { message: "كم
 ok("مالك عبر الوسيط ← Worker: ردّ LAURA من بيانات حقيقية", s === 200 && b.ok && b.status === 200 && /لديك 1 طلباً/.test(b.data.reply) && b.data.actor.role === "owner" && b.data.actor.signed === true, b);
 ok("الوسيط أرسل مفتاح الموقع + ترويسة الهوية الموقَّعة (لا شيء من المتصفح)", upstream.at(-1).hd.authorization === "Bearer " + T.key && /^v1\./.test(upstream.at(-1).hd["x-laura-actor"]));
 [s, b] = await proxy("agent-jwt", "POST", "/v1/laura/chat", { message: 'TEST_CALL:products_list:{}' }); ok("موظف: صلاحياته الفعلية تُفرض (أداة المنتجات محجوبة)", b.data.tools[0].code === "forbidden" && b.data.actor.role === "agent", b.data);
-[s, b] = await proxy("agent-jwt", "GET", "/v1/laura/tools"); ok("موظف: قائمة أدواته محصورة", b.data.tools.map((t) => t.name).sort().join() === "carts_summary,order_cancel,order_confirm,orders_list,orders_stats", b.data);
+[s, b] = await proxy("agent-jwt", "GET", "/v1/laura/tools"); ok("موظف: قائمة أدواته محصورة", b.data.tools.map((t) => t.name).sort().join() === "cart_set_status,carts_list,carts_summary,digital_orders,order_cancel,order_confirm,orders_list,orders_stats,sources_stats", b.data);
 [s, b] = await proxy("fired-jwt", "POST", "/v1/laura/chat", { message: "كم طلب" }); ok("موظف بلا دور/معطَّل: 401 قبل الوصول للـWorker", s === 401 && upstream.at(-1).path !== "/v1/laura/chat" || s === 401, [s, b]);
 const nUp = upstream.length; [s] = await proxy("nobody-jwt", "POST", "/v1/laura/chat", { message: "x" }); ok("جلسة مجهولة: 401 ولا طلب للـWorker", s === 401 && upstream.length === nUp);
 /* الكتابة عبر السلسلة: موافقة صريحة بنفس هوية الجلسة */

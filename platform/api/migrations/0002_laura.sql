@@ -5,3 +5,9 @@ CREATE TABLE IF NOT EXISTS lr_pending (
   state TEXT NOT NULL DEFAULT 'pending', result TEXT NULL, created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL, decided_at INTEGER NULL
 );
 CREATE INDEX IF NOT EXISTS ix_lr_pending ON lr_pending (tenant_id, state, expires_at);
+
+-- ذاكرة محادثة LAURA (مشتركة بين لوحة التحكم وSpatial Core): لكل (متجر، مستخدم) آخر ≤40 رسالة نصية فقط (user/assistant)، تُحذف بعد 30 يوماً أو بطلب المستخدم.
+CREATE TABLE IF NOT EXISTS lr_conv (
+  tenant_id INTEGER NOT NULL REFERENCES pf_tenants(id) ON DELETE CASCADE, actor TEXT NOT NULL, msgs TEXT NOT NULL DEFAULT '[]', updated_at INTEGER NOT NULL,
+  PRIMARY KEY (tenant_id, actor)
+);

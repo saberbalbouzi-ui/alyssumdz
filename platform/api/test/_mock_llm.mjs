@@ -38,6 +38,9 @@ function intent(t, L) {
   if (has(x, "مخزون", "نقص", "stock", "rupture", /\bstok\b/)) return { name: "products_list", args: { max_stock: 5 } };
   if (has(x, "زبائن", "عملاء", "clients", "client", "zebayen", "zbayen", "clian")) return { name: "customers_top", args: { limit: 3 } };
   if (has(x, "مبيعات", "ventes", "vente", "mabi3at", "mabi3", "bi3", "chiffre")) return { name: "sales_summary", args: { period: has(x, "اليوم", "aujourd", "lyoum", "lyum", "today") ? "today" : has(x, "شهر", "mois", "chhar", "30") ? "30d" : "7d" } };
+  if (has(x, "إثبات", "اثبات", "الدفع", "دفعات", "paiement", "preuve", "virement")) return { name: "payments_pending", args: {} };
+  if (has(x, "محفظة", "المحفظة", "portefeuille", "wallet", "solde")) return { name: "wallet_summary", args: {} };
+  if (has(x, "إعلان", "اعلان", "إعلانات", "publicit", " ads", "sponsoris")) return { name: "ads_spend", args: { days: 7 } };
   if (has(x, "سلال", "سلة", "panier", "paniers", "carts")) return { name: "carts_summary", args: {} };
   if (has(x, "إعدادات", "اعدادات", "paramètres", "parametres", "modules", "settings")) return { name: "settings_overview", args: {} };
   if (has(x, "آخر الطلبات", "اخر الطلبات", "dernières", "dernieres", "akher", "list")) return { name: "orders_list", args: { limit: 5 } };

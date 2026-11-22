@@ -10,7 +10,7 @@ import { TOOLS, toolByName, visibleTools, ToolError } from "../laura/tools.js";
 import { validateArgs } from "../laura/validate.js";
 import { generate, LlmError, llmConfigured } from "../laura/provider.js";
 
-const MAX_ROUNDS = 4, MAX_CALLS = 8, PENDING_TTL = 600, MAX_PENDING = 20, MAX_HIST = 12, MAX_TEXT = 2000, RESULT_CAP = 6000, MAX_STATS = 45000;
+const MAX_ROUNDS = 4, MAX_CALLS = 8, PENDING_TTL = 600, MAX_PENDING = 20, MAX_HIST = 12, MAX_TEXT = 2000, RESULT_CAP = 6000, MAX_STATS = 45000, MAX_MEM = 40;
 const SYSTEM = `أنت LAURA، المساعدة التنفيذية لمتجر على منصة ALYSSUM (دفع عند الاستلام في الجزائر). العملة: الدينار الجزائري (دج).
 القواعد:
 1) أجيبي بلغة المستخدم نفسها: العربية الفصحى أو الدارجة الجزائرية (بالحروف العربية أو اللاتينية) أو الفرنسية، بإيجاز ووضوح ودون مبالغة.
@@ -53,11 +53,21 @@ export const laura = {
       if (secret) { await aud({ role: "unknown", sub: "?" }, "laura.denied", req.tenant.id, { why: "actor_required", ip: req.ip }); throw new HttpError(401, "actor_required", "جلسة المستخدم مطلوبة عبر الوسيط الموثوق"); }
       return { sub: `key${req.keyId}`, role: "key", perms: ["*"], name: "", signed: false };
     }
-    const helpers = (req) => ({ stats: () => null, get: (path, query) => ctx.invoke(req, "GET", path, { query }), post: (path, body) => ctx.invoke(req, "POST", path, { body }), flush: (extId) => ctx.flush(req.tenant.id, extId), now: () => ctx.nowS() });
+    const helpers = (req) => ({ stats: () => null, get: (path, query) => ctx.invoke(req, "GET", path, { query }), post: (path, body) => ctx.invoke(req, "POST", path, { body }), patch: (path, body) => ctx.invoke(req, "PATCH", path, { body }), flush: (extId) => ctx.flush(req.tenant.id, extId), now: () => ctx.nowS() });
+    const convLoad = async (tid, sub) => { const r = await db.one("SELECT msgs FROM lr_conv WHERE tenant_id=? AND actor=?", tid, sub); try { const a = JSON.parse(r?.msgs ?? "[]"); return Array.isArray(a) ? a.filter((x) => x && (x.r === "u" || x.r === "a") && typeof x.t === "string") : []; } catch { return []; } };
+    const convSave = (tid, sub, arr) => db.run("INSERT INTO lr_conv (tenant_id,actor,msgs,updated_at) VALUES (?,?,?,?) ON CONFLICT(tenant_id,actor) DO UPDATE SET msgs=excluded.msgs, updated_at=excluded.updated_at", tid, sub, JSON.stringify(arr.slice(-MAX_MEM)), ctx.nowS());
+    const pendingOf = async (tid, sub) => (await db.all("SELECT id,tool,summary,tool,expires_at FROM lr_pending WHERE tenant_id=? AND actor_sub=? AND state='pending' AND expires_at>? ORDER BY created_at LIMIT 10", tid, sub, ctx.nowS())).map((p) => ({ id: p.id, tool: p.tool, summary: p.summary, sensitive: !!toolByName(p.tool)?.sensitive, expires_in: p.expires_at - ctx.nowS() }));
     const visible = (req, actor) => visibleTools(req.scopes, actor, hasPerm);
 
     r.get("/v1/laura/health", { scope: "laura:chat", summary: "حالة LAURA: هل النموذج مُهيّأ على الخادم وهل الهوية الموقَّعة مطلوبة (بلا أسرار)" }, async (req) => {
-      return ok({ ok: true, llm_configured: llmConfigured(ctx.config), actor_required: !!secretOf(), tools_total: TOOLS.length });
+      return ok({ ok: true, llm_configured: llmConfigured(ctx.config), actor_required: !!secretOf(), tools_total: TOOLS.length, store: { name: String(req.tenant.name ?? "").slice(0, 80) } });
+    });
+    r.get("/v1/laura/history", { scope: "laura:chat", summary: "ذاكرة محادثة المستخدم في هذا المتجر (مشتركة بين لوحة التحكم وSpatial Core) + الإجراءات المعلّقة بانتظار موافقته + المتجر الحالي" }, async (req) => {
+      const actor = await resolveActor(req), mem = await convLoad(req.tenant.id, actor.sub);
+      return ok({ ok: true, store: { name: String(req.tenant.name ?? "").slice(0, 80) }, role: actor.role, messages: mem.map((x) => ({ role: x.r === "u" ? "user" : "assistant", text: x.t, at: x.at ?? null, client: x.c ?? "" })), pending: await pendingOf(req.tenant.id, actor.sub) });
+    });
+    r.post("/v1/laura/reset", { scope: "laura:chat", limit: { key: "laura_r", max: 10, win: 60 }, summary: "مسح ذاكرة محادثة هذا المستخدم في هذا المتجر" }, async (req) => {
+      const actor = await resolveActor(req); await db.run("DELETE FROM lr_conv WHERE tenant_id=? AND actor=?", req.tenant.id, actor.sub); await aud(actor, "laura.reset", req.tenant.id, {}); return ok({ ok: true });
     });
     r.get("/v1/laura/tools", { scope: "laura:chat", summary: "الأدوات المتاحة لهذا المستخدم (نطاق المفتاح ∧ صلاحيات الجلسة)" }, async (req) => {
       const actor = await resolveActor(req); return ok({ role: actor.role, tools: visible(req, actor).map((t) => ({ name: t.name, tier: t.tier, description: t.description })) });
@@ -66,11 +76,10 @@ export const laura = {
     r.post("/v1/laura/chat", { scope: "laura:chat", limit: { key: "laura", max: 20, win: 60 }, summary: "محادثة LAURA: { message, history?: [{role:user|assistant,text}], lang? } ← { reply, state, tools[], pending[] }" }, async (req) => {
       if (req.raw.length > 90000) throw new HttpError(413, "payload_too_large", "الطلب كبير");
       const b = req.json(), msg = typeof b.message === "string" ? b.message.trim() : ""; if (!msg || msg.length > MAX_TEXT) throw new HttpError(400, "validation_error", "message نص من 1 إلى 2000 حرف");
-      const hist = b.history === undefined ? [] : b.history; if (!Array.isArray(hist) || hist.length > MAX_HIST) throw new HttpError(400, "validation_error", `history حتى ${MAX_HIST} رسالة`);
-      for (const m of hist) if (!m || typeof m !== "object" || !["user", "assistant"].includes(m.role) || typeof m.text !== "string" || m.text.length > MAX_TEXT) throw new HttpError(400, "validation_error", "history: عناصر {role:user|assistant, text≤2000}");
+      const client = ["admin", "spatial"].includes(b.client) ? b.client : "api";                       // الواجهة المستدعية (لا تؤثر على الصلاحيات)
       const actor = await resolveActor(req), tools = visible(req, actor), lang = ["ar", "fr", "en"].includes(b.lang) ? b.lang : lc(msg), snap = sanitizeStats(b.stats, ctx.nowS()), h = { ...helpers(req), stats: () => snap };
       if (!llmConfigured(ctx.config)) throw new HttpError(503, "llm_unconfigured", "نموذج LAURA غير مُهيّأ على الخادم");
-      const contents = [...hist.map((m) => ({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] })), { role: "user", parts: [{ text: msg }] }], steps = [], pending = [], usage = { in: 0, out: 0 };
+      const mem = await convLoad(req.tenant.id, actor.sub), contents = [...mem.slice(-MAX_HIST).map((x) => ({ role: x.r === "u" ? "user" : "model", parts: [{ text: x.t }] })), { role: "user", parts: [{ text: msg }] }], steps = [], pending = [], usage = { in: 0, out: 0 };
       let calls = 0, reply = "", rounds = 0, state = "done";
       try {
         for (; rounds < MAX_ROUNDS; rounds++) {
@@ -104,6 +113,7 @@ export const laura = {
       if (!reply && !pending.length) { state = "incomplete"; reply = lang === "fr" ? "Je n'ai pas pu terminer cette demande ; reformulez-la plus simplement." : lang === "en" ? "I couldn't finish this request; please rephrase it." : "لم أتمكن من إكمال هذا الطلب؛ جرّب صياغة أبسط."; }
       else if (pending.length) state = "awaiting_approval";
       if (!reply && pending.length) { state = "awaiting_approval"; reply = lang === "fr" ? "J'ai demandé votre approbation avant d'exécuter." : lang === "en" ? "I've asked for your approval before doing it." : "طلبتُ موافقتك قبل التنفيذ."; }
+      await convSave(req.tenant.id, actor.sub, [...mem, { r: "u", t: msg, at: ctx.nowS(), c: client }, { r: "a", t: reply.slice(0, MAX_TEXT), at: ctx.nowS(), c: client }]);   // الذاكرة تُحفظ بعد نجاح الردّ فقط
       return ok({ ok: true, reply, state, lang, rounds: rounds >= MAX_ROUNDS ? MAX_ROUNDS : rounds + 1, tools: steps, pending, usage, actor: { role: actor.role, signed: actor.signed } });
     });
 
@@ -131,12 +141,12 @@ export const laura = {
       const h = helpers(req); let state = "failed", reply, verified = null, detail = null;
       try {
         await t.precheck?.(args, h); await t.run(args, h, { idem: "laura-" + row.id.slice(3) }); const v = await t.verify(args, h); verified = !!v.ok; detail = v;
-        if (v.ok) { state = "done"; reply = M.done(row.summary, ST[v.now] ?? v.now); } else { state = "unverified"; reply = M.unverified(row.summary); }
+        if (v.ok) { state = "done"; reply = M.done(row.summary, ST[v.now] ?? t.stateLabel?.[v.now] ?? v.now); } else { state = "unverified"; reply = M.unverified(row.summary); }
       } catch (e) { const code = e instanceof ToolError ? e.code : "internal"; detail = { error: code }; reply = M.failed(row.summary, e instanceof ToolError ? e.message : "خطأ غير متوقع"); if (!(e instanceof ToolError)) console.error("laura exec:", e?.message); }
       await db.run("UPDATE lr_pending SET state=?, result=? WHERE id=?", state, JSON.stringify(detail).slice(0, 2000), row.id);
       await aud(actor, "laura.exec", row.id, { tool: t.name, args, state, verified, detail });
       return ok({ ok: state === "done", state, verified, reply, tool: t.name });
     });
   },
-  async cron(ctx) { const x = await ctx.db.run("DELETE FROM lr_pending WHERE created_at<?", ctx.nowS() - 86400); return { purged: x.changes }; },
+  async cron(ctx) { const x = await ctx.db.run("DELETE FROM lr_pending WHERE created_at<?", ctx.nowS() - 86400), y = await ctx.db.run("DELETE FROM lr_conv WHERE updated_at<?", ctx.nowS() - 30 * 86400); return { purged: x.changes, conv_purged: y.changes }; },
 };
