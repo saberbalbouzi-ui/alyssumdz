@@ -118,6 +118,6 @@ const AdminI18n = (() => {
     else if (!chosen()) fetch("assets/data/store.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.lang === "fr" && !chosen() && lang !== "fr") set("fr", true); }).catch(() => { });      /* لم يختر المستخدم لغة: تتبع اللوحة «لغة الموقع» (store.json) */
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { set, get lang() { return lang; }, helpUrl: () => lang === "fr" ? "assets/data/admin-help.fr.json" : "assets/data/admin-help.json", t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
+  return { set, key: KEY, get lang() { return lang; }, helpUrl: () => lang === "fr" ? "assets/data/admin-help.fr.json" : "assets/data/admin-help.json", t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
 })();
 window.AdminI18n = AdminI18n;
