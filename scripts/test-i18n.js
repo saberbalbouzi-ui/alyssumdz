@@ -40,6 +40,8 @@ const { chromium } = require("playwright");
   t("العودة للعربية تعيد قاعدة المعرفة العربية", H.kbAr && /admin-help\.json$/.test(H.url2), H);
   const C = await p.evaluate(async () => { await AdminI18n.set("fr"); const out = {}; for (const tab of ["store", "finance", "payments", "reports", "dispatch", "delivery", "inventory", "customers", "settings"]) { try { Admin.tab(tab); } catch (e) { } await new Promise(r => setTimeout(r, 900)); const root = document.getElementById("tab-" + tab); if (!root) continue; let n = 0; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let x; while ((x = w.nextNode())) { const s = x.textContent.trim(); if (s && /[\u0600-\u06ff]/.test(s) && x.parentElement && !/SCRIPT|STYLE/.test(x.parentElement.tagName) && !x.parentElement.closest("#pb-app,[data-i18n-skip],textarea,code,pre")) n++; } out[tab] = n; } return out; });
   t("تغطية الترجمة: أقسام الإعدادات والمالية والإحصائيات بلا نصوص عربية متبقية (≤ 3 لكل قسم)", Object.values(C).every(n => n <= 3), C);
+  const T = await p.evaluate(async () => { await AdminI18n.set("fr"); await AdminNav.libOpen("lib"); await new Promise(r => setTimeout(r, 2500)); const root = document.getElementById("tl-lib"); let n = 0, tot = 0; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let x; while ((x = w.nextNode())) { const s = x.textContent.trim(); if (!s) continue; tot++; if (/[\u0600-\u06ff]/.test(s)) n++; } return { n, tot, sample: (root.querySelector(".tl-c") || {}).innerText }; });
+  t("مكتبة القوالب بالفرنسية: أسماء القوالب وأوصافها وفئاتها (≤ 3 نصوص عربية، قالب البائع وحده)", T.n <= 3 && T.tot > 50, T);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
