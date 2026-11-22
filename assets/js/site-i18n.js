@@ -29,7 +29,9 @@
       var parts = k.split(SEP), hit = 0, res = parts.map(function (p) { if (!AR.test(p)) return p; var e = dict.exact[p.trim()]; if (e == null) { var pk = p.trim(), ri, rr = rx(); for (ri = 0; ri < rr.length; ri++) { if (rr[ri][0].test(pk)) { e = pk.replace(rr[ri][0], rr[ri][1]); break; } } } if (e != null) { hit++; return e; } return p; });
       if (hit) { var out2 = res.join(""); if (!AR.test(out2) || hit >= parts.filter(function (p) { return AR.test(p); }).length * .6) out = out2; }
     }
-    if (out == null) { var cur = k.replace(/(\d[\d\s.,]*)\s*دج\b/g, "$1 DA").replace(/\bدج\b/g, "DA"); if (cur !== k) out = cur; }
+    if (out == null) { var qm = /^(.*?)(\s*[×x]\s*\d+)$/.exec(k); if (qm && AR.test(qm[1])) { var qr = tr0(qm[1]); if (qr !== qm[1]) out = qr + qm[2]; } }   /* «… ×3» */
+    if (out != null && out.indexOf("‹") >= 0) out = out.replace(/‹([^›]*)›/g, function (m0, g1) { var e1 = dict.exact[g1.trim()]; return e1 != null ? e1 : g1; });   /* ‹…›: يُترجَم إن وُجد في القاموس (اسم منتج نموذجي) */
+    if (out == null) { var cur = k.replace(/(\d[\d\s.,]*)\s*دج\b/g, "$1\u00a0DA").replace(/\bدج\b/g, "DA"); if (cur !== k) out = cur; }
     return out == null ? t : lead + out + tail;
   }
   function trNode(n) {
@@ -50,13 +52,47 @@
     var tw = document.createTreeWalker(root, 5, { acceptNode: function (n) { if (n.nodeType === 1) { if (n.matches && n.matches(SKIP)) return 2; return 3; } return 1; } }), n;
     trAttrs(root); while ((n = tw.nextNode())) { if (n.nodeType === 3) trNode(n); else trAttrs(n); }
   }
+
+  /* ملاءمة الفرنسية للتخطيط الحر: المواضع ثابتة والفرنسية أطول، فإن تداخل نص (عنوان/فقرة) مع نص تحته يُصغَّر هو وحده بالقدر اللازم (zoom ≥ .60) */
+  var fitT = 0, baseP = null, uid = 0;
+  function decor(w) { var t = w.querySelector(".pb-hd,.pb-tx") || w, cs = getComputedStyle(t), am = /rgba\([^)]*,\s*([\d.]+)\)/.exec(cs.color || "");   /* نص زخرفي ضخم أو شفاف اللون خلف المحتوى: لا يُقاس ولا يُصغَّر */
+    return parseFloat(cs.fontSize) > 140 || (am && +am[1] < .35); }
+  function hasTxt(w) { return /\S/.test(w.textContent || "") && getComputedStyle(w).display !== "none" && !decor(w); }
+  function fit(base) {
+    var fzs = document.querySelectorAll(".pb-fz"); if (!fzs.length) return; busy = true; if (base) baseP = {};
+    try { fzs.forEach(function (fz) {
+      var ws = [].slice.call(fz.children).filter(function (c) { return c.classList && c.classList.contains("pb-w"); }), sv = [];
+      ws.forEach(function (w) { var mm = /matrix\(([^)]*)\)/.exec(getComputedStyle(w).transform || ""); w.__rot = !!(mm && Math.abs(parseFloat(mm[1].split(",")[1])) > .01); sv.push([w, w.style.getPropertyValue("transform"), w.style.getPropertyValue("translate")]); w.style.setProperty("transform", "none", "important"); w.style.setProperty("translate", "none", "important");
+        var t = w.querySelector(".pb-hd,.pb-tx"); if (t) t.style.zoom = ""; });
+      var ts = ws.filter(function (w) { return /^(heading|text)$/.test(w.getAttribute("data-type") || "") && w.querySelector(".pb-hd,.pb-tx") && hasTxt(w); })
+        .sort(function (a, b) { return a.getBoundingClientRect().top - b.getBoundingClientRect().top; });
+      var blockers = ws.filter(hasTxt);
+      function tb(el) { var rg = document.createRange(); rg.selectNodeContents(el); return rg.getBoundingClientRect(); }
+      function lead(o) { var e = o.querySelector(".pb-hd,.pb-tx,.pb-btn,a,button") || o; return tb(e); }
+      ts.forEach(function (w) { w.__id = w.__id || ++uid; }); blockers.forEach(function (o) { o.__id = o.__id || ++uid; });
+      ts.forEach(function (w) {
+        var t = w.querySelector(".pb-hd,.pb-tx"), z = 1;
+        function area() { var r = tb(t), x = w.__rot && !base ? 18 : 0, s = 0; for (var i = 0; i < blockers.length; i++) { var o = blockers[i]; if (o === w) continue; var q = lead(o), m = x + (o.__rot && !base ? 18 : 0);
+          if (q.width && q.left < r.right - 8 && q.right > r.left + 8 && r.bottom + m > q.top - 4 && r.top - m < q.bottom - 4) { var k = w.__id + "|" + o.__id, ar = Math.max(1, (Math.min(r.right, q.right) - Math.max(r.left, q.left)) * (Math.min(r.bottom + m, q.bottom) - Math.max(r.top - m, q.top))); if (base) { baseP[k] = ar; continue; } var ex = ar - (baseP && baseP[k] ? baseP[k] * 1.25 + 150 : 0); if (ex > 0) s += ex; } } return s; }
+        if (base) { area(); return; }
+        var a0 = area(), a = a0; while (a > 0 && z > .6) { z -= .04; t.style.zoom = z.toFixed(2); a = area(); }
+        if (window.__siDebug) (window.__siLog = window.__siLog || []).push([w.className.match(/x-[a-z0-9]+/)[0], Math.round(a0), Math.round(a), +z.toFixed(2), Math.round(Date.now() % 100000)]);
+        if (a > 0 && a > a0 * .7) t.style.zoom = "";      /* لا يحلّه التصغير (التداخل سببه العنصر الآخر): يُترك ويُعالَج هو */
+      });
+      sv.forEach(function (s) { if (s[1]) s[0].style.setProperty("transform", s[1]); else s[0].style.removeProperty("transform"); if (s[2]) s[0].style.setProperty("translate", s[2]); else s[0].style.removeProperty("translate"); });
+    }); } catch (e) { }
+    busy = false;
+  }
+  function fitSoon() { clearTimeout(fitT); fitT = setTimeout(function () { if (on) fit(); }, 120); }
+  addEventListener("resize", fitSoon); addEventListener("load", function () { setTimeout(fitSoon, 300); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitSoon);
   function apply() {
-    if (!dict) return; on = true; busy = true;
+    if (!dict) return; if (!baseP) { try { fit(true); } catch (e) { } } on = true; busy = true;
     H.setAttribute("lang", "fr"); H.setAttribute("dir", "ltr"); H.classList.add("site-fr");
     if (!document.getElementById("site-i18n-css")) { var cs = document.createElement("style"); cs.id = "site-i18n-css"; cs.textContent = "html.site-fr{overflow-x:clip}"; (document.head || H).appendChild(cs); }   /* ما كان يفيض يساراً بلا شريط في RTL يصير يميناً في LTR */
     try { walk(document.body || H); if (AR.test(document.title)) { var r = tr0(document.title); if (r !== document.title) document.title = r; }
       var md = document.querySelector('meta[name="description"]'); if (md && AR.test(md.content)) md.content = tr0(md.content); } catch (e) { }
-    busy = false; show();
+    busy = false; fit(); show(); fitSoon();
   }
   function watch() {
     if (obs || !document.body) return;
@@ -72,7 +108,9 @@
   }
   function start(lang) {
     if (lang !== "fr") { show(); return; }
-    load().then(function (d) { if (!d) { show(); return; } var go = function () { apply(); watch(); }; if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go(); setTimeout(apply, 600); setTimeout(apply, 2000); });
+    load().then(function (d) { if (!d) { show(); return; } var go = function () { var done = 0, run = function () { if (done) return; done = 1; apply(); watch(); };   /* انتظر الخطوط (حدّ 1.2ث) ليُقاس التخطيط العربي الأصلي بدقّة قبل الترجمة */
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(run); setTimeout(run, 1200); } else run(); };
+      if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go(); setTimeout(apply, 600); setTimeout(apply, 2000); });
   }
   function init() {
     if (q) { start(q[1]); return; }
