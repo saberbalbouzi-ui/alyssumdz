@@ -23,12 +23,15 @@ const { chromium } = require("playwright");
     bg.querySelector('[data-src="web"]').click(); await wait(80); out.web = bg.querySelectorAll("tbody tr").length; bg.querySelector('[data-src=""]').click(); await wait(80);
     /* مفتاح الإرسال التلقائي */
     A.setAutoOpt = (k, on) => { localStorage.setItem("alyssum_auto_" + k, on ? "1" : "0"); }; localStorage.removeItem("alyssum_auto_send"); AdminPreSend.open(); await wait(80); const au = document.querySelector("#presend-bg #ps-auto"); out.autoDefault = au.checked; au.checked = false; au.dispatchEvent(new Event("change")); await wait(80); out.autoOff = localStorage.getItem("alyssum_auto_send") === "0" && /متوقف/.test(document.getElementById("presend-bg").innerText);
+    /* الأرشيف يفتح على «المرسلة اليوم» وفيها ما أُرسل اليوم فقط، والمؤكَّدة غير المرسَلة تبقى في «قبل الإرسال» مع تنبيه أنها في «الطلبات» */
+    { const keepLog = AdminYd.sentLog, now = Date.now(); const trk = A.orders.filter(o => A.trackingOf(o)); const reg = {}; if (trk[0]) reg.x1 = { id: trk[0].id, at: now - 1000, co: "wecan" }; AdminYd.sentLog = () => reg; AdminPreSend.open(); await wait(80); const m = document.getElementById("presend-bg");
+      out.todayOpen = { scope: AdminPreSend._S.scope, day: AdminPreSend._S.day, n: m.querySelectorAll("tbody tr").length, expect: trk[0] ? 1 : 0 }; m.querySelector('[data-scope="prep"]').click(); await wait(60); out.prepHint = /تبقى في «الطلبات» أيضاً/.test(document.getElementById("presend-bg").innerText); AdminYd.sentLog = keepLog; document.getElementById("presend-bg").remove(); AdminPreSend.open(); await wait(60); }
     /* إلغاء تحديد طلب ثم إرسال المحدَّد */
     const bg2 = document.getElementById("presend-bg"), sent = []; A.bulkSend = async list => { list.forEach(o => { sent.push(o.id); o.note = "🚚wecan:T" + o.id; }); return true; };
     bg2.querySelector('input[data-id="P3"]').click(); await wait(60); out.btnLabel = bg2.querySelector("#ps-send").innerText; bg2.querySelector("#ps-send").click(); await wait(150);
     out.sent = sent.join(","); out.after = document.getElementById("presend-bg").querySelectorAll("tbody tr").length;
     /* تبويب «أُرسلت آخر 7 أيام»: قراءة فقط، يضم المرسَل ويُخفي زر الإرسال والتحديد */
-    const bg3 = document.getElementById("presend-bg"); bg3.querySelector('[data-scope="sent"]').click(); await wait(80);
+    const bg3 = document.getElementById("presend-bg"); bg3.querySelector('[data-scope="sent"]').click(); await wait(80); { const d = document.getElementById("presend-bg").querySelector('[data-day="all"]'); if (d) { d.click(); await wait(80); } }
     out.sentTab = { ids: [...bg3.querySelectorAll("tbody tr td:nth-child(1)")].map(x => x.innerText.trim()).join(","), cb: bg3.querySelectorAll("tbody input[type=checkbox]").length, btn: !!bg3.querySelector("#ps-send"), auto: !!bg3.querySelector("#ps-auto"), trk: /WS-X/.test(bg3.innerText), n: AdminPreSend.recentSent().length };
     bg3.querySelector('[data-scope="prep"]').click(); await wait(60); out.back = !!document.getElementById("presend-bg").querySelector("#ps-auto");
     bg3.querySelector('[data-scope="all"]').click(); await wait(80); out.allTab = { n: bg3.querySelectorAll("tbody tr").length, tot: AdminPreSend.allOrders().length, st: /جديدة/.test(bg3.innerText) && /مؤكَّدة/.test(bg3.innerText), cb: bg3.querySelectorAll("tbody input[type=checkbox]").length };
@@ -45,6 +48,7 @@ const { chromium } = require("playwright");
   ok("إرسال المحدَّد: بعد إلغاء P3 يُرسَل P1 وP2 وP6 فقط، ويُحدَّث العدد والقائمة", R.sent === "P1,P2,P6" && /\(3\)/.test(R.btnLabel) && R.after === 1, [R.sent, R.btnLabel, R.after]);
   ok("المصدر: شارات «الموقع/يدوي» ومرشّحات بأعدادها، وتصفية «يدوياً» (1) و«الموقع» (3)", /الكل \(4\)\|دخلت من الموقع \(3\)\|أدخلتُها يدوياً \(1\)/.test(R.chips) && /يدوي/.test(R.badges) && R.man.startsWith("1:") && R.web === 3, [R.chips, R.badges, R.man, R.web]);
   ok("تبويب «الطلبات»: كل الطلبات بحالاتها للقراءة فقط، والبحث يصفّي", R.allTab.n === R.allTab.tot && R.allTab.n >= 5 && R.allTab.st && R.allTab.cb === 0 && R.search === 1, [R.allTab, R.search]);
+  ok("الأرشيف يفتح على «المرسلة» لليوم فقط، وتبويب «قبل الإرسال» يوضح أن المؤكَّدة غير المرسَلة تبقى في «الطلبات»", R.todayOpen.scope === "sent" && R.todayOpen.day === "today" && R.todayOpen.n === R.todayOpen.expect && R.prepHint === true, [R.todayOpen, R.prepHint]);
   ok("بلا قائمة فارغة: تُفتح على «المرسلة» حين لا شيء بانتظار الإرسال", R.noEmpty === true, R.noEmpty);
   ok("بلا أخطاء JS", errs.length === 0, errs.slice(0, 3));
   console.log(fail ? "فشل " + fail : "نجح " + pass + " من " + pass); await b.close(); process.exit(fail ? 1 : 0);

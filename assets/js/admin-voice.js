@@ -968,7 +968,7 @@ const AdminVoice = (() => {
   const tabBtn = id => { const m = navBtns().filter(b => (b.getAttribute("onclick") || "").includes("'" + id + "'")); return m.find(b => !b.classList.contains("nav-work")) || m[0]; };
   let KB = null, LEXLOADED = false;
   async function loadLex() { if (LEXLOADED) return; LEXLOADED = true; try { const r = await fetch("assets/data/voice-lexicon.json", { cache: "no-cache" }); if (r.ok) useLexicon(await r.json()); } catch (e) { } }
-  async function loadKB() { if (KB !== null) return; KB = []; try { const r = await fetch("assets/data/admin-help.json", { cache: "no-cache" }); if (r.ok) KB = await r.json(); } catch (e) { } }
+  async function loadKB() { const hu = (typeof AdminI18n !== "undefined" && AdminI18n.helpUrl) ? AdminI18n.helpUrl() : "assets/data/admin-help.json"; if (KB !== null && KB._u === hu) return; KB = []; try { const r = await fetch(hu, { cache: "no-cache" }); if (r.ok) KB = await r.json(); } catch (e) { } KB._u = hu; }
   /* بطاقات القائمة الظاهرة ← {id,label,desc} (الأقسام والتطبيقات) */
   const navNow = () => navBtns().filter(b => !b.classList.contains("nav-work")).map(b => {
     const m = /(?:Admin\.tab|AdminNav\.app)\('([a-z]+)'/.exec(b.getAttribute("onclick") || ""); if (!m) return null;

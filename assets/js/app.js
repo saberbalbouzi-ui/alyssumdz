@@ -5,7 +5,7 @@ let WA_NUMBER = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waN
 /* الشحن المجاني: خاصية المنتج freeShip، ويمكن حصره في عروض بعينها (offer.ship)؛ بلا عروض محددة يشمل كل العروض */
 function offerFreeShip(p, o){ if(!p || !p.freeShip) return false; if(productType(p)==="grouped") return true; const flagged = (p.offers||[]).some(x=>x.ship); return flagged ? !!(o && o.ship) : true; }
 function cartItemFreeShip(it){ const p = (typeof PRODUCTS !== "undefined") ? PRODUCTS.find(x=>x.slug===it.slug) : null; if(!p || !p.freeShip) return false; const fl = (p.offers||[]).filter(x=>x.ship); return fl.length ? it.qty >= Math.min(...fl.map(x=>x.qty)) : true; }
-const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "أليسوم ALYSSUM";
+const SITE_NAME = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.name) || "ALYSSUM";
 const fmt = n => n.toLocaleString("fr-DZ") + " " + (window.__STORE_CUR || "دج");
 /* مناطق التوصيل (Zones): الأسعار والشحن المجاني والاستثناءات مشتقة في WILAYAS من لوحة التحكم ⟵ رسوم التوصيل:
    w.fh/w.fs = توصيل مجاني للمنزل/المكتب، w.fo = مجاني عند بلوغ مجموع الطلب هذا المبلغ، w.xw = الولاية مستثناة كلياً،

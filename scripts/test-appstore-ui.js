@@ -31,12 +31,12 @@ function handle(b) {
   await ctx.route("**/sb/functions/v1/platform-proxy", async (route) => { const b = JSON.parse(route.request().postData() || "{}"), r = handle(b); if (r === null) return route.fulfill({ status: 404, body: "{}" }); if (r.__err) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, status: r.__err.status, data: { error: r.__err.error } }) }); route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, status: 200, data: r }) }); });
   const p = await ctx.newPage(), errs = []; p.on("pageerror", (e) => errs.push(e.message)); p.on("dialog", (d) => d.accept(d.defaultValue())); await p.goto(base + "/__blank");
   await p.evaluate(async () => {
-    document.body.innerHTML = '<div id="tab-appstore" class="hidden"><div id="appstore-content"></div></div>'; window.__toasts = [];
+    document.body.innerHTML = '<div id="tab-appstore" class="hidden"><div id="appstore-content"></div></div><div id="mine-host"></div>'; window.__toasts = [];
     window.API = { sb: { token: async () => "tok", url: (q) => "/sb" + q, headers: () => ({ "Content-Type": "application/json" }) } }; window.Admin = { tab() { }, toast: (t) => window.__toasts.push(t) };
-    await new Promise((r) => { const e = document.createElement("script"); e.src = "/assets/js/admin-appstore.js"; e.onload = r; document.body.appendChild(e); }); Admin.tab("appstore");
+    await new Promise((r) => { const e = document.createElement("script"); e.src = "/assets/js/admin-appstore.js"; e.onload = r; document.body.appendChild(e); }); Admin.tab("appstore"); await new Promise((r) => setTimeout(r, 300)); await AdminAppStore.mountMine(document.getElementById("mine-host"));
   });
   await p.waitForSelector(".as-app", { timeout: 8000 });
-  const txt = () => p.evaluate(() => document.getElementById("as-app").textContent.replace(/[\u00a0\u202f]/g, " ")), toasts = () => p.evaluate(() => window.__toasts);
+  const txt = () => p.evaluate(() => (document.getElementById("as-app").textContent + " " + document.getElementById("ao-mine").textContent).replace(/[\u00a0\u202f]/g, " ")), toasts = () => p.evaluate(() => window.__toasts);
   let t = await txt();
   ok("التطبيقات بأسعارها وصلاحياتها بالعربية", /2 000 دج/.test(t) && /مجاني/.test(t) && /9 000 دج \/ شهر/.test(t) && /قراءة الطلبات/.test(t) && /5 000 دج/.test(t), t.slice(0, 300));
   ok("الصلاحية الحسّاسة بعلامة تحذير مميزة", await p.evaluate(() => document.querySelectorAll(".as-sc li.sens").length === 1));
@@ -56,11 +56,11 @@ function handle(b) {
   /* مدفوع */
   await p.click("[data-as=dismiss]"); await p.click('[data-as=pick][data-id="1"]'); await p.waitForSelector("#as-form"); ok("تفصيل العمولة قبل الدفع", /عمولة 20%/.test(await txt()));
   await p.click("[data-as=install]"); await p.waitForFunction(() => !document.getElementById("as-form")); t = await txt();
-  ok("بعد التثبيت: مثبّت ورصيد نزل وصف في تطبيقاتي", /✓ مثبّت/.test(t) && /3 000 دج/.test(t) && /إلغاء التثبيت/.test(t));
+  ok("بعد التثبيت: مثبّت ورصيد نزل وصف في إضافاتي المثبَّتة", /✓ مثبّت/.test(t) && /3 000 دج/.test(t) && /إلغاء التثبيت/.test(t));
   ok("لا يعاد عرض زر التثبيت لمثبّت", await p.evaluate(() => !document.querySelector('[data-as=pick][data-id="1"]')));
   /* تقييم واسترداد */
   ok("شارات: مميّز ونطاق موثّق وتقييم", /مميّز/.test(await txt()) && /نطاق موثّق/.test(await txt()) && /★ 4.5 \(6\)/.test(await txt()));
-  await p.click('[data-as=rate][data-app="1"]'); await p.waitForFunction(() => /تعديل تقييمي/.test(document.getElementById("as-app").textContent)); ok("التقييم يُرسل ويتحوّل الزر", DB.calls.some((c) => c.method === "POST" && /apps\/1\/review$/.test(c.path) && c.body.stars === 5));
+  await p.click('[data-as=rate][data-app="1"]'); await p.waitForFunction(() => /تعديل تقييمي/.test(document.getElementById("ao-mine").textContent)); ok("التقييم يُرسل ويتحوّل الزر", DB.calls.some((c) => c.method === "POST" && /apps\/1\/review$/.test(c.path) && c.body.stars === 5));
   ok("زر الاسترداد ظاهر للمدفوع داخل المهلة", await p.evaluate(() => !!document.querySelector('[data-as=refund][data-id="11"]')));
   await p.click('[data-as=refund][data-id="11"]'); await p.waitForFunction(() => !document.querySelector('[data-as=refund][data-id="11"]')); ok("الاسترداد يعيد الرصيد", DB.calls.some((c) => /installations\/11\/refund$/.test(c.path)) && /5 000 دج/.test(await txt()));
   DB.inst.unshift({ id: 11, app_id: 1, name: "x", status: "active", scopes: [], price: 2000, billing: "once", refundable: false, installed_at: 1790000000 }); DB.inst.splice(1, DB.inst.filter(i => i.id === 11).length - 1); DB.inst.find((i) => i.id === 11).status = "active";
@@ -68,7 +68,7 @@ function handle(b) {
   /* إعادة ربط وإلغاء */
   await p.click('[data-as=relink][data-id="11"]'); await p.waitForFunction(() => { const a = document.querySelector(".as-box a.as-btn"); return a && /code=ac_2/.test(a.href); }, null, { timeout: 8000 }).catch(() => { }); ok("إعادة الربط تعرض رابطاً جديداً", await p.evaluate(() => /code=ac_2/.test(document.querySelector(".as-box a.as-btn").href)));
   await p.click('[data-as=remove][data-id="11"]'); await p.waitForFunction(() => !document.querySelector('[data-as=remove][data-id="11"]')); ok("إلغاء التثبيت", DB.calls.some((c) => c.method === "DELETE") && (await toasts()).some((x) => /إلغاء التثبيت/.test(x)));
-  DB.off = true; await p.evaluate(() => AdminAppStore.refresh()); ok("وحدة غير مفعّلة ← رسالة تواصل مع الدعم", /غير مفعّل بعد/.test(await txt()));
+  DB.off = true; await p.evaluate(() => AdminAppStore.refresh()); ok("وحدة غير مفعّلة ← رسالة تواصل مع الدعم", /غير مفعّلة بعد/.test(await txt()));
   ok("بلا أخطاء جافاسكربت", errs.length === 0, errs);
   await browser.close(); srv.close(); console.log(fails ? "فشل " + fails : "كل الفحوص نجحت"); process.exit(fails ? 1 : 0);
 })();

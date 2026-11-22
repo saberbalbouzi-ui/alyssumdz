@@ -103,7 +103,7 @@ window.Chrome = (function () {
       footer: {
         show: true, bg: "", color: "", headColor: "",
         order: FOOT_IDS.slice(),
-        about: { show: true, title: site.name || "أليسوم ALYSSUM", text: "متجرك الجزائري للمنتجات الطبيعية الأصلية: زيوت، أعشاب، عسل فاخر ومنتجات الرقية الشرعية. جودة مضمونة والدفع عند الاستلام." },
+        about: { show: true, title: site.name || "ALYSSUM", text: "متجرك الجزائري للمنتجات الطبيعية الأصلية: زيوت، أعشاب، عسل فاخر ومنتجات الرقية الشرعية. جودة مضمونة والدفع عند الاستلام." },
         links: { show: true, title: "روابط سريعة", tracking: true, items: [{ label: "الفئات", url: "index.html#categories" }, { label: "المنتجات", url: "index.html#products" }, { label: "المميزات", url: "index.html#features" }, { label: "الأسئلة", url: "index.html#faq" }] },
         contact: { show: true, title: "تواصل معنا", wa: true, phone: "", email: "", hours: "السبت – الخميس: 9ص – 6م", address: "الجزائر" },
         social: { show: true, title: "تابعنا", style: "brand", shape: "round", size: 18 },

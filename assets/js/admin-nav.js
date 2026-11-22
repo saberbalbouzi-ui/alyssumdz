@@ -494,29 +494,36 @@ const AdminNav = (() => {
     box.innerHTML = hd + body;
   }
   function tpl(btn) { try { Admin.tab("tpl", btn); } catch (e) { } renderTpl(); }
-  const OFF = new Set(); let appSha;
+  const OFF = new Set(), RM = new Set(); let appSha;      /* OFF = معطَّلة، RM = غير مثبَّتة (تُعدّ معطَّلة أيضاً)؛ تُحفظ كلاهما في apps.json */
   const off = id => OFF.has(id);
   function applyOff() {
     const h = document.documentElement; Object.keys(APPS).forEach(k => h.classList.toggle("app-off-" + k, off(k)));
     document.querySelectorAll("[data-appst]").forEach(e => e.classList.toggle("hidden", !off(e.dataset.appst)));
+    try { document.dispatchEvent(new CustomEvent("alyssum:addons")); } catch (e) { }
   }
   async function loadOff() {
     try { JSON.parse(localStorage.getItem("admin_apps_off") || "[]").forEach(x => OFF.add(x)); } catch (e) { }
+    try { JSON.parse(localStorage.getItem("admin_apps_rm") || "[]").forEach(x => RM.add(x)); } catch (e) { }
     try {
       const g = typeof GH !== "undefined" && GH.cfg && GH.cfg(); let j = null;
       if (g && g.token) { try { const f = await GH.getFile("assets/data/apps.json"); appSha = f.sha; j = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); } catch (e) { appSha = undefined; } }
       else { const r = await fetch("assets/data/apps.json", { cache: "no-store" }); if (r.ok) j = await r.json(); }
       if (j && Array.isArray(j.off)) { OFF.clear(); j.off.forEach(x => OFF.add(x)); }
+      if (j && Array.isArray(j.rm)) { RM.clear(); j.rm.forEach(x => RM.add(x)); }
     } catch (e) { }
     applyOff();
   }
   async function saveOff() {
-    try { localStorage.setItem("admin_apps_off", JSON.stringify([...OFF])); } catch (e) { }
+    try { localStorage.setItem("admin_apps_off", JSON.stringify([...OFF])); localStorage.setItem("admin_apps_rm", JSON.stringify([...RM])); } catch (e) { }
     const g = typeof GH !== "undefined" && GH.cfg && GH.cfg(); if (!g || !g.token) return toast("حُفظ في هذا المتصفح (اربط النشر لينعكس على موقعك)");
-    try { const b64 = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, off: [...OFF] }, null, 2)))), res = await GH.putFile("assets/data/apps.json", b64, appSha, "تفعيل/تعطيل الإضافات من لوحة التحكم"); appSha = res && res.content ? res.content.sha : appSha; toast("تم الحفظ — ينعكس على الموقع خلال دقيقة تقريباً"); }
+    try { const b64 = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 1, off: [...OFF], rm: [...RM] }, null, 2)))), res = await GH.putFile("assets/data/apps.json", b64, appSha, "تفعيل/تعطيل الإضافات من لوحة التحكم"); appSha = res && res.content ? res.content.sha : appSha; toast("تم الحفظ — ينعكس على الموقع خلال دقيقة تقريباً"); }
     catch (e) { toast("تعذّر حفظ إعداد الإضافات: " + e.message); }
   }
-  function toggle(id, on) { on ? OFF.delete(id) : OFF.add(id); applyOff(); saveOff(); renderApp(id); }
+  function toggle(id, on) { if (on) { OFF.delete(id); RM.delete(id); } else OFF.add(id); applyOff(); saveOff(); renderApp(id); }
+  /* التثبيت (متجر الإضافات): تثبيت مع تفعيل اختياري، وإلغاء التثبيت يعطّل الإضافة ويخفيها من «الإضافات المنصَّبة» */
+  function setInstalled(id, yes, activate) { if (yes) { RM.delete(id); if (activate !== false) OFF.delete(id); } else { RM.add(id); OFF.add(id); } applyOff(); saveOff(); }
+  /* إضافة منصَّبة وفعّالة (تُستعمل أيضاً لإخفاء أدوات «ستوديو ديزاين» المعطَّلة): لمعرّفات مجهولة تُعدّ منصَّبة */
+  const usable = id => !OFF.has(id) && !RM.has(id);
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   function toolGo(id) { try { deepTool(id).then(ok => { if (ok === false) toast("تعذّر فتح هذه الأداة من هنا — افتح مطوّر الصفحات ثم تبويب «تعديل الصورة»"); }); } catch (e) { toast("تعذّر فتح الأداة"); } }
   function renderApp(id) { renderApp0(id); const A = APPS[id], box = $("app-cfg-body"); if (A && A.custom && box && (id === "protect" ? typeof AdminProtect !== "undefined" : typeof AdminFloat !== "undefined")) { const h = document.createElement("div"); h.className = "ap-sec"; h.style.cssText = "padding:0;border:0;background:none"; const hd = box.querySelector(".ap-h"); if (hd) hd.after(h); else box.prepend(h); (id === "protect" ? AdminProtect : AdminFloat).mount(h); } }
@@ -598,5 +605,5 @@ const AdminNav = (() => {
   window.addEventListener("hashchange", () => { if (/[#&]tool=/.test(location.hash)) deepTool(); });
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", deepBoot) : deepBoot();
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", init) : init();
-  return { deepTool, toolGo, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, apply, off };
+  return { deepTool, toolGo, goto, subs, tplFind, tplProdLoad, tplPageOf, tplSkinProduct, tplProductPreview, tplInstallProducts, tplInstallProductsUi, alyDeal, alyPreview, alyEdit, alyInstall, alySkinProduct, alyInstallProducts, alyInstallProductsUi, alyLocalize, alyLoad, libOpen, libClose, libSet, libUse, libView, libPreview, tplPreview, tplCatPreview, tplEdit, tplInstall, tplInstallHome, tplAdd, myImport, mySavePage, myDel, myDl, libItems: () => LIB, group, app, work, toggle, update, setAppTab, cfg: cfgSet, cfgReset, tpl, tplTab, ask, clone, openBuilder, apply, off, setInstalled, usable, installed: id => !RM.has(id), isOff: id => OFF.has(id), apps: () => APPS };
 })();

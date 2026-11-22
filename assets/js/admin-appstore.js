@@ -1,6 +1,6 @@
-/* «متجر الإضافات»: تطبيقات إضافية من مطوّرين مستقلين تُثبَّت على متجرك بموافقتك الصريحة على كل صلاحية تطلبها.
-   لا يصل أي تطبيق إلى المحفظة أو المفاتيح أو إعداداتك أبداً؛ وبيانات الزبائن (الأسماء والهواتف) مخفية عنه ما لم توافق عليها صراحةً.
-   المدفوع يُخصم من متاحك في المحفظة؛ وإلغاء التثبيت يقطع وصول التطبيق فوراً. كل شيء يمرّ عبر وسيط مدير مسجَّل الدخول. */
+/* «متجر الإضافات»: إضافات إضافية من مطوّرين مستقلين تُثبَّت على متجرك بموافقتك الصريحة على كل صلاحية تطلبها.
+   لا تصل أي إضافة إلى المحفظة أو المفاتيح أو إعداداتك أبداً؛ وبيانات الزبائن (الأسماء والهواتف) مخفية عنه ما لم توافق عليها صراحةً.
+   المدفوع يُخصم من متاحك في المحفظة؛ وإلغاء التثبيت يقطع وصول الإضافة فوراً. كل شيء يمرّ عبر وسيط مدير مسجَّل الدخول. */
 const AdminAppStore = (() => {
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -8,7 +8,7 @@ const AdminAppStore = (() => {
   const nf = n => Math.round(+n || 0).toLocaleString("fr-DZ");
   const toast = t => { if (typeof Admin !== "undefined" && Admin.toast) Admin.toast(t); else alert(t); };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
-  const ERR = { not_refundable: "الاسترداد متاح خلال 7 أيام من الدفع ولمرة واحدة", refund_unavailable: "تعذّر الاسترداد الآلي — تواصل مع الدعم", not_installed: "قيّم تطبيقاً ثبّتَّه فقط", insufficient_funds: "رصيدك المتاح غير كافٍ — اشحن محفظتك أولاً", consent_mismatch: "يجب الموافقة على كل الصلاحيات المطلوبة", already_installed: "التطبيق مثبّت بالفعل", wallet_unavailable: "المحفظة غير مفعّلة على حسابك — تواصل مع الدعم", not_found: "التطبيق لم يعد متاحاً", rate_limited: "طلبات كثيرة، حاول بعد قليل", module_disabled: "المتجر غير مفعّل على حسابك — تواصل مع الدعم" };
+  const ERR = { not_refundable: "الاسترداد متاح خلال 7 أيام من الدفع ولمرة واحدة", refund_unavailable: "تعذّر الاسترداد الآلي — تواصل مع الدعم", not_installed: "قيّم إضافة ثبّتَّها فقط", insufficient_funds: "رصيدك المتاح غير كافٍ — اشحن محفظتك أولاً", consent_mismatch: "يجب الموافقة على كل الصلاحيات المطلوبة", already_installed: "الإضافة مثبّتة بالفعل", wallet_unavailable: "المحفظة غير مفعّلة على حسابك — تواصل مع الدعم", not_found: "الإضافة لم تعد متاحة", rate_limited: "طلبات كثيرة، حاول بعد قليل", module_disabled: "المتجر غير مفعّل على حسابك — تواصل مع الدعم" };
   const ST = { active: ["مفعّل", "var(--g-mint-rgb)"], past_due: ["متأخر السداد", "var(--g-amber-rgb)"], suspended: ["موقوف", "var(--g-rose-rgb)"], uninstalled: ["أُلغي", "var(--g-blue-rgb)"] };
   const BL = { once: "دفعة واحدة", monthly: "شهرياً" };
   const dt = s => { const n = +s; return n ? new Date(n * 1000).toISOString().slice(0, 10) : ""; };
@@ -42,10 +42,10 @@ const AdminAppStore = (() => {
   }
   const scopeList = (sc) => `<ul class="as-sc">${(sc || []).map(s => `<li class="${s.sensitive ? "sens" : ""}">${s.sensitive ? "⚠️ " : "• "}${esc(s.label)}</li>`).join("")}</ul>`;
   const priceOf = a => a.price > 0 ? `${nf(a.price)} دج${a.billing === "monthly" ? " / شهر" : ""}` : "مجاني";
-  function draw() {
-    const host = $("as-app"); if (!host) return;
-    if (S.off) { host.innerHTML = '<div class="as-box as-off">متجر الإضافات غير مفعّل بعد على حسابك — تواصل مع الدعم لتفعيله.</div>'; return; }
-    if (S.err) { host.innerHTML = `<div class="as-box as-off">${esc(S.err)} <button class="as-btn" data-as="reload">إعادة المحاولة</button></div>`; return; }
+  /* العرضان: «store» (إضافات المطوّرين المتاحة) في متجر الإضافات، و«mine» (ما ثبّتّه منها) في «الإضافات المنصَّبة»؛ يبنيهما build() من الحالة نفسها */
+  function build() {
+    if (S.off) return { store: '<div class="as-box as-off">إضافات المطوّرين غير مفعّلة بعد على حسابك — تواصل مع الدعم لتفعيلها.</div>', mine: "" };
+    if (S.err) { const m = `<div class="as-box as-off">${esc(S.err)} <button class="as-btn" data-as="reload">إعادة المحاولة</button></div>`; return { store: m, mine: m }; }
     const mine = new Map(S.inst.filter(i => i.status !== "uninstalled").map(i => [i.app_id, i]));
     const cards = S.apps.map(a => { const m = mine.get(a.id);
       const badges = (a.featured ? '<span class="as-chip" style="color:rgb(var(--g-amber-rgb))">⭐ مميّز</span> ' : "") + (a.domain_verified ? '<span class="as-chip" style="color:rgb(var(--g-mint-rgb))">✔ نطاق موثّق</span> ' : "") + (a.rating ? `<span class="as-chip" style="color:rgb(var(--g-amber-rgb))">★ ${esc(a.rating)} (${esc(a.rating_count)})</span>` : '<small>بلا تقييم بعد</small>');
@@ -53,16 +53,18 @@ const AdminAppStore = (() => {
  ${m ? `<span class="as-chip" style="color:rgb(var(--g-mint-rgb))">✓ مثبّت</span>` : `<button class="as-btn" data-as="pick" data-id="${a.id}" ${S.busy ? "disabled" : ""}>تثبيت</button>`}</div>`; }).join("");
     const f = S.form, ap = f && S.apps.find(x => x.id === f.id);
     const sens = ap ? ap.scopes.filter(s => s.sensitive) : [];
-    const form = ap ? `<div class="as-box" id="as-form"><h3>تثبيت «${esc(ap.name)}»</h3><p class="as-hint" style="margin:0 0 .4rem">سيحصل التطبيق على الصلاحيات التالية فقط، ولن يصل أبداً إلى محفظتك أو مفاتيحك أو إعداداتك:</p>${scopeList(ap.scopes)}
- ${sens.length ? `<div class="as-warn" style="margin-top:.6rem">⚠️ هذا التطبيق يطلب الاطلاع على <b>أسماء زبائنك وأرقام هواتفهم</b>. وافق فقط إن كنت تثق بمطوّره.</div><label class="as-ck"><input type="checkbox" id="as-sens"> أفهم وأوافق على مشاركة بيانات الزبائن مع هذا التطبيق</label>` : ""}
- <p class="as-hint">${ap.price > 0 ? `سيُخصم <b>${nf(ap.price)} دج</b>${ap.billing === "monthly" ? " الآن ثم كل شهر" : " مرة واحدة"} من متاحك${S.avail != null ? ` (متاحك الآن ${nf(S.avail)} دج)` : ""}. تحتفظ المنصة بعمولة ${S.pct}% ويصل الباقي لمطوّر التطبيق.` : "التطبيق مجاني."}</p>
+    const form = ap ? `<div class="as-box" id="as-form"><h3>تثبيت «${esc(ap.name)}»</h3><p class="as-hint" style="margin:0 0 .4rem">ستحصل الإضافة على الصلاحيات التالية فقط، ولن يصل أبداً إلى محفظتك أو مفاتيحك أو إعداداتك:</p>${scopeList(ap.scopes)}
+ ${sens.length ? `<div class="as-warn" style="margin-top:.6rem">⚠️ هذه الإضافة تطلب الاطلاع على <b>أسماء زبائنك وأرقام هواتفهم</b>. وافق فقط إن كنت تثق بمطوّره.</div><label class="as-ck"><input type="checkbox" id="as-sens"> أفهم وأوافق على مشاركة بيانات الزبائن مع هذه الإضافة</label>` : ""}
+ <p class="as-hint">${ap.price > 0 ? `سيُخصم <b>${nf(ap.price)} دج</b>${ap.billing === "monthly" ? " الآن ثم كل شهر" : " مرة واحدة"} من متاحك${S.avail != null ? ` (متاحك الآن ${nf(S.avail)} دج)` : ""}. تحتفظ المنصة بعمولة ${S.pct}% ويصل الباقي لمطوّر الإضافة.` : "الإضافة مجانية."}</p>
  <div><button class="as-btn" data-as="install" ${S.busy ? "disabled" : ""}>وافق وثبّت</button> <button class="as-btn g" data-as="cancel">إلغاء</button></div></div>` : "";
-    const link = S.link ? `<div class="as-box" style="border-color:rgba(var(--g-mint-rgb),.6)"><h3>✅ ثُبّت «${esc(S.link.name)}»</h3><p class="as-hint" style="margin:0 0 .6rem">أكمل ربط التطبيق بمتجرك من صفحته (الرابط صالح 10 دقائق):</p><a class="as-btn" href="${esc(S.link.url)}" target="_blank" rel="noopener noreferrer">فتح التطبيق وإكمال الربط</a> <button class="as-btn g" data-as="dismiss">إغلاق</button></div>` : "";
+    const link = S.link ? `<div class="as-box" style="border-color:rgba(var(--g-mint-rgb),.6)"><h3>✅ ثُبّت «${esc(S.link.name)}»</h3><p class="as-hint" style="margin:0 0 .6rem">أكمل ربط الإضافة بمتجرك من صفحته (الرابط صالح 10 دقائق):</p><a class="as-btn" href="${esc(S.link.url)}" target="_blank" rel="noopener noreferrer">فتح الإضافة وإكمال الربط</a> <button class="as-btn g" data-as="dismiss">إغلاق</button></div>` : "";
     const rows = S.inst.map(i => { const st = ST[i.status] || [i.status, "inherit"];
-      return `<tr><td><b>${esc(i.name)}</b><div class="as-hint">${i.price > 0 ? esc(nf(i.price) + " دج — " + (BL[i.billing] || "")) : "مجاني"}</div></td><td><span class="as-chip" style="color:rgb(${st[1]})">${esc(st[0])}</span>${i.next_charge_at && i.status !== "uninstalled" ? `<div class="as-hint">التجديد: ${esc(dt(i.next_charge_at))}</div>` : ""}</td><td>${esc((i.scopes || []).join("، "))}</td><td>${i.installed_at && i.status !== "pending" ? `<button class="as-btn g" data-as="rate" data-app="${i.app_id}" data-n="${esc(i.name)}">${i.reviewed ? "تعديل تقييمي" : "قيّم التطبيق"}</button> ` : ""}${i.refundable ? `<button class="as-btn r" data-as="refund" data-id="${i.id}" data-n="${esc(i.name)}">استرداد المبلغ</button> ` : ""}${["active", "past_due"].includes(i.status) ? `<button class="as-btn g" data-as="relink" data-id="${i.id}" data-n="${esc(i.name)}">إعادة الربط</button> <button class="as-btn r" data-as="remove" data-id="${i.id}" data-n="${esc(i.name)}">إلغاء التثبيت</button>` : ""}</td></tr>`; }).join("");
-    host.innerHTML = `${link}<div class="as-box"><h3>التطبيقات المتاحة</h3>${S.avail != null ? `<p class="as-hint" style="margin:0 0 .6rem">متاحك في المحفظة: <b>${nf(S.avail)} دج</b></p>` : ""}${cards ? `<div class="as-grid">${cards}</div>` : '<p class="as-hint">لا توجد تطبيقات متاحة حالياً.</p>'}</div>${form}
-<div class="as-box"><h3>تطبيقاتي</h3>${rows ? `<div class="as-wrap"><table class="as-tbl"><thead><tr><th>التطبيق</th><th>الحالة</th><th>الصلاحيات</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="as-hint">لم تثبّت أي تطبيق بعد.</p>'}<p class="as-hint">إلغاء التثبيت يقطع وصول التطبيق إلى متجرك فوراً، ويمكنك استرداد ثمن التطبيق خلال ${S.refundDays} أيام من الدفع. تتحقق الإدارة من كل تطبيق قبل ظهوره هنا.</p></div>`;
+      return `<tr><td><b>${esc(i.name)}</b><div class="as-hint">${i.price > 0 ? esc(nf(i.price) + " دج — " + (BL[i.billing] || "")) : "مجاني"}</div></td><td><span class="as-chip" style="color:rgb(${st[1]})">${esc(st[0])}</span>${i.next_charge_at && i.status !== "uninstalled" ? `<div class="as-hint">التجديد: ${esc(dt(i.next_charge_at))}</div>` : ""}</td><td>${esc((i.scopes || []).join("، "))}</td><td>${i.installed_at && i.status !== "pending" ? `<button class="as-btn g" data-as="rate" data-app="${i.app_id}" data-n="${esc(i.name)}">${i.reviewed ? "تعديل تقييمي" : "قيّم الإضافة"}</button> ` : ""}${i.refundable ? `<button class="as-btn r" data-as="refund" data-id="${i.id}" data-n="${esc(i.name)}">استرداد المبلغ</button> ` : ""}${["active", "past_due"].includes(i.status) ? `<button class="as-btn g" data-as="relink" data-id="${i.id}" data-n="${esc(i.name)}">إعادة الربط</button> <button class="as-btn r" data-as="remove" data-id="${i.id}" data-n="${esc(i.name)}">إلغاء التثبيت</button>` : ""}</td></tr>`; }).join("");
+    const avail = `<div class="as-box"><h3>إضافات المطوّرين المتاحة</h3>${S.avail != null ? `<p class="as-hint" style="margin:0 0 .6rem">متاحك في المحفظة: <b>${nf(S.avail)} دج</b></p>` : ""}${cards ? `<div class="as-grid">${cards}</div>` : '<p class="as-hint">لا توجد إضافات من المطوّرين حالياً.</p>'}</div>`;
+    const mine2 = `<div class="as-box"><h3>إضافات المطوّرين المثبَّتة</h3>${rows ? `<div class="as-wrap"><table class="as-tbl"><thead><tr><th>الإضافة</th><th>الحالة</th><th>الصلاحيات</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="as-hint">لم تثبّت أي إضافة من المطوّرين بعد.</p>'}<p class="as-hint">إلغاء التثبيت يقطع وصول الإضافة إلى متجرك فوراً، ويمكنك استرداد ثمنها خلال ${S.refundDays} أيام من الدفع. تتحقق الإدارة من كل إضافة قبل ظهورها في المتجر.</p></div>`;
+    return { store: link + avail + form, mine: link + mine2 };
   }
+  function draw() { const host = $("as-app"); if (host) host.innerHTML = build().store; const m = $("ao-mine"); if (m) m.innerHTML = build().mine; }
   async function install() {
     const f = S.form, ap = f && S.apps.find(x => x.id === f.id); if (!ap) return;
     if (ap.scopes.some(s => s.sensitive) && !($("as-sens") || {}).checked) return toast("وافق على مشاركة بيانات الزبائن أولاً");
@@ -82,12 +84,12 @@ const AdminAppStore = (() => {
     else if (a === "relink") { S.busy = true; const r = await call("POST", `/v1/appstore/installations/${+el.dataset.id}/authorize`, {}); S.busy = false; if (r.ok && r.j.redirect_to) { S.link = { name: el.dataset.n, url: r.j.redirect_to }; draw(); } else toast(errOf(r)); }
     else if (a === "rate") { const v = prompt(`قيّم «${el.dataset.n}» من 1 إلى 5:`, "5"); if (v === null) return; const st = Math.round(+v); if (!(st >= 1 && st <= 5)) return toast("اكتب رقماً من 1 إلى 5"); const cm = prompt("تعليق (اختياري):", "") || ""; const r = await call("POST", `/v1/appstore/apps/${+el.dataset.app}/review`, { stars: st, comment: cm }); toast(r.ok ? "✓ شكراً لتقييمك" : errOf(r)); await refresh(); }
     else if (a === "refund") { if (!confirm(`استرداد ثمن «${el.dataset.n}» كاملاً وإلغاء تثبيته؟ (متاح خلال ${S.refundDays} أيام من الدفع ولمرة واحدة)`)) return; const r = await call("POST", `/v1/appstore/installations/${+el.dataset.id}/refund`, {}, uid()); toast(r.ok ? "✓ رُدّ المبلغ إلى متاحك" : errOf(r)); await refresh(); }
-    else if (a === "remove") { if (!confirm(`إلغاء تثبيت «${el.dataset.n}»؟ سيفقد التطبيق وصوله إلى متجرك فوراً.`)) return; const r = await call("DELETE", `/v1/appstore/installations/${+el.dataset.id}`); toast(r.ok ? "تم إلغاء التثبيت" : errOf(r)); await refresh(); }
+    else if (a === "remove") { if (!confirm(`إلغاء تثبيت «${el.dataset.n}»؟ ستفقد الإضافة وصولها إلى متجرك فوراً.`)) return; const r = await call("DELETE", `/v1/appstore/installations/${+el.dataset.id}`); toast(r.ok ? "تم إلغاء التثبيت" : errOf(r)); await refresh(); }
   }
-  async function refresh() { await load(); draw(); }
+  async function refresh() { await load(); draw(); try { document.dispatchEvent(new CustomEvent("alyssum:devapps")); } catch (e) { } }
   function bind() { const root = $("as-app"); if (!root || root._b) return; root._b = 1; root.addEventListener("click", onClick); }
   async function render() {
-    css(); const host = $("appstore-content"); if (!host) return; if (!$("as-app")) host.innerHTML = '<div id="as-app"></div>'; bind(); draw();
+    css(); const host = $("appstore-content"); if (!host) return; if (!$("as-app")) host.innerHTML = '<div id="ao-store"></div><div id="as-app"></div>'; bind(); try { window.AdminAddons && AdminAddons.drawStore($("ao-store")); } catch (e) { } draw();
     clearInterval(S.timer); S.timer = setInterval(() => { const t = $("tab-appstore"); if (t && !t.classList.contains("hidden") && !document.hidden && !S.busy && !S.form) refresh(); }, 90000);
     await refresh();
   }
@@ -98,5 +100,7 @@ const AdminAppStore = (() => {
     w(); setTimeout(w, 500);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { render, refresh, S };
+  /* «الإضافات المنصَّبة»: يعرض ما ثبّتّه من إضافات المطوّرين في حاوية خارجية ويعالج نقراتها بالمعالج نفسه */
+  async function mountMine(host) { css(); if (!host) return; host.innerHTML = '<div id="ao-mine"></div>'; const m = $("ao-mine"); if (!m._b) { m._b = 1; m.addEventListener("click", onClick); } if (!S.at) await refresh(); else draw(); }
+  return { render, refresh, S, mountMine };
 })();

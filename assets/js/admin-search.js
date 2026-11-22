@@ -3,7 +3,7 @@
 const AdminSearch = (() => {
   let box = null, inp = null, list = null, items = [], sel = 0, open = false, help = null, pages = null;
   const $ = id => document.getElementById(id), esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const norm = s => String(s || "").toLowerCase().replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").trim();
+  const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").trim();
   const A = () => (typeof Admin !== "undefined" ? Admin : {});
   const ACTIONS = [
     ["تحقق من زبون", "ابحث بالهاتف أو الاسم أو الولاية أو البلدية في كل الطلبات الحديثة والقديمة وكل الشركات مع التاريخ والمنتج والحالة", () => { if (typeof AdminVerify !== "undefined") AdminVerify.open(); }, "تحقق زبون بحث هاتف اسم عميل موثوق مرتجع فشل سجل قديم"],
@@ -13,8 +13,9 @@ const AdminSearch = (() => {
     ["الربح الحقيقي", "صافي ما دخل جيبك بعد التوصيل والمرتجعات وكلفة البضاعة وإعلانات Meta وتيك توك", () => { const b = document.querySelector('.nav-btn[onclick*="profit"]'); if (b) b.click(); }, "ربح حقيقي صافي مرتجعات رتور roas cpa إعلانات فيسبوك تيك توك ميتا انفاق مصاريف bénéfice net réel cod rvp codflow"],
     ["سرعة الموقع", "حلّل سرعة موقعك للجوال والحاسوب، واعرف الأخطاء وطريقة إصلاحها حتى تصل إلى 100", () => { const b = document.querySelector('.nav-btn[onclick*="speed"]'); if (b) b.click(); }, "سرعة الموقع بيج سبيد pagespeed lighthouse اداء lcp fcp تحليل درجة 100 بطيء"],
     ["خدمات التسويق", "اشترِ حساب TikTok Ads أو Meta Ads جاهزاً بالدينار من محفظتك واستلم رابط دعوة الحساب", () => { const b = document.querySelector('.nav-btn[onclick*="agency"]'); if (b) b.click(); }, "خدمات التسويق حساب اعلاني tiktok meta فيسبوك تيك توك وكالة شراء حساب ads agency compte publicitaire"],
-    ["متجر الإضافات", "ثبّت تطبيقات إضافية من مطوّرين مستقلين بصلاحيات محدودة وتحكّم كامل في الإلغاء", () => { const b = document.querySelector('.nav-btn[onclick*="appstore"]'); if (b) b.click(); }, "متجر الإضافات تطبيقات اضافات plugins app store مطور تثبيت صلاحيات oauth webhook تكامل marketplace"],
-    ["للمطوّرين", "أنشئ تطبيقك وأرسله للمراجعة، دوّر أسراره، وثّق نطاقه وتابع سجلّ التسليمات والإيرادات", () => { const b = document.querySelector('.nav-btn[onclick*="appdev"]'); if (b) b.click(); }, "للمطوّرين بوابة المطور تطبيقات developer portal app oauth client secret webhook تسليمات deliveries ايرادات توثيق نطاق دومين"],
+    ["الإضافات المنصَّبة", "الإضافات المثبَّتة في موقعك: المفعّلة والمعطّلة، وتفعيلها وتعطيلها وإعداداتها وإلغاء تثبيتها", () => { const b = document.querySelector('.nav-btn[onclick*="addons"]'); if (b) b.click(); }, "الإضافات المنصبة المثبتة المفعلة المعطلة اضافات plugins installed تفعيل تعطيل الغاء تثبيت"],
+    ["متجر الإضافات", "إضافات المنصّة وأدوات ستوديو ديزاين وإضافات المطوّرين: الإصدار ونبذة قصيرة والتثبيت والتفعيل وبحث سريع بالاسم", () => { const b = document.querySelector('.nav-btn[onclick*="appstore"]'); if (b) b.click(); }, "متجر الإضافات اضافات plugins app store مطور تثبيت تفعيل ستوديو ديزاين صلاحيات oauth webhook تكامل marketplace"],
+    ["تطوير الإضافات", "أنشئ إضافتك وأرسلها للمراجعة، دوّر أسرارها، وثّق نطاقها وتابع سجلّ التسليمات والإيرادات", () => { const b = document.querySelector('.nav-btn[onclick*="appdev"]'); if (b) b.click(); }, "تطوير الإضافات للمطوّرين بوابة المطور اضافات developer portal app oauth client secret webhook تسليمات deliveries ايرادات توثيق نطاق دومين"],
     ["التسويق بالعمولة", "دروبشيبينغ محلي: استورد منتجات موردين بنقرة وبِع بعمولة، أو أدرج منتجاتك ليبيعها غيرك، مع ضمان العمولة من رصيد المورّد", () => { const b = document.querySelector('.nav-btn[onclick*="\'market\'"]'); if (b) b.click(); }, "التسويق بالعمولة دروبشيبينغ dropshipping افيليت affiliate مورد عمولة استيراد منتج كتالوج مشترك marketplace revendeur"],
     ["المنتجات الرقمية", "مفاتيح وحسابات واشتراكات وملفات تُسلَّم تلقائياً بعد الدفع، مع موافقة تحويلات BaridiMob وCCP", () => { const b = document.querySelector('.nav-btn[onclick*="\'digital\'"]'); if (b) b.click(); }, "منتجات رقمية digital مفتاح ترخيص license iptv اشتراك حساب ألعاب كورس تكوين ملف pdf تنزيل baridimob بريدي موب ccp اثبات دفع موافقة تسليم تلقائي"],
     ["ستوديو ديزاين", "كل أدوات الصور والتصميم في مكان واحد، لكل أداة صفحتها: ما تفعله وخطوات استعمالها وفتحها في المحرّر", () => { const b = document.querySelector('.nav-btn[onclick*="studio"]'); if (b) b.click(); }, "ستوديو ديزاين تصميم ادوات صور studio design outils images كل الادوات"],
@@ -59,8 +60,9 @@ const AdminSearch = (() => {
     }).filter(Boolean);
   }
   async function loadExtra() {
-    if (help === null) { help = []; try { const r = await fetch("assets/data/admin-help.json", { cache: "no-cache" }); if (r.ok) help = await r.json(); } catch (e) { } }
-    if (!help._ctl) { try { const ce = typeof CtlHelp !== "undefined" && CtlHelp.entries ? CtlHelp.entries() : []; if (ce.length) { const have = new Set(help.map(h => h.id)); help = help.concat(ce.filter(c => !have.has(c.id))); } if (ce.length) help._ctl = 1; } catch (e) { } }
+    const hu = (typeof AdminI18n !== "undefined" && AdminI18n.helpUrl) ? AdminI18n.helpUrl() : "assets/data/admin-help.json";
+    if (help === null || help._u !== hu) { help = []; try { const r = await fetch(hu, { cache: "no-cache" }); if (r.ok) help = await r.json(); } catch (e) { } help._u = hu; }
+    if (!help._ctl) { try { const ce = typeof CtlHelp !== "undefined" && CtlHelp.entries ? CtlHelp.entries() : []; if (ce.length) { const have = new Set(help.map(h => h.id)); help = help.concat(ce.filter(c => !have.has(c.id))); } if (ce.length) help._ctl = 1; help._u = hu; } catch (e) { } }
     if (pages === null) { pages = []; try { const r = await fetch("assets/pages/index.json", { cache: "no-cache" }); if (r.ok) pages = await r.json(); } catch (e) { } }
   }
   function all() {

@@ -1,7 +1,7 @@
 {
-  "name": "أليسوم ALYSSUM",
-  "short_name": "أليسوم",
-  "description": "متجر أليسوم — منتجات طبيعية أصلية، توصيل لـ 58 ولاية والدفع عند الاستلام",
+  "name": "ALYSSUM",
+  "short_name": "ALYSSUM",
+  "description": "متجر ALYSSUM — منتجات طبيعية أصلية، توصيل لـ 58 ولاية والدفع عند الاستلام",
   "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
