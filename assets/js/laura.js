@@ -111,9 +111,10 @@
   function applyLang() {
     const fr = LANG() === "fr"; if (fab) { fab.setAttribute("aria-label", t("فتح LAURA")); }
     if (!root) return; root.dir = fr ? "ltr" : "rtl"; xB.setAttribute("aria-label", t("إغلاق LAURA")); rsB.textContent = t("مسح"); rsB.title = t("مسح المحادثة"); spB.title = t("صوت الردود"); spB.textContent = t("صوت"); micBtn.setAttribute("aria-label", t("تحدّث")); input.placeholder = t("اسأل أو أمُر LAURA…"); input.setAttribute("aria-label", t("رسالة إلى LAURA")); goB.textContent = t("إرسال"); status("");
-    renderPending(); if (S.open && !S.busy) hydrate(); else { msgs.textContent = ""; welcome(); }
+    renderPending(); if (msgs.children.length <= 1) { msgs.textContent = ""; welcome(); }      /* لا محادثة بعد: الترحيب بالفرنسية فوراً دون انتظار الخادم */
+    if (S.open && !S.busy) hydrate();
   }
-  document.addEventListener("alyssum:lang", applyLang);
+  document.addEventListener("alyssum:lang", applyLang); document.addEventListener("store:lang", applyLang);      /* الاسم الثاني لحزم العملاء (alyssum ← store) */
   const welcome = () => say("a", t("أنا LAURA. اسألني عن الطلبات والمبيعات والمخزون والزبائن والدفعات والسلال، أو اطلب تنفيذ إجراء (أطلب موافقتك قبل أي تعديل)."));
   /* الذاكرة من الخادم: نفس المحادثة في لوحة التحكم وSpatial Core (والإجراءات المعلّقة تظهر في الاثنين) */
   async function hydrate() {

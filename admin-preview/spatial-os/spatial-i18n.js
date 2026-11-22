@@ -8,6 +8,8 @@
   "use strict";
   if (window.SpatialI18n) return;
   const KEYS = ["alyssum_lang", "store_lang"], AR = /[؀-ۿ]/, AW = /[؀-ۿ]+/g;
+  /* اسم الحدث: تبدّل حزمة العميل «alyssum» ← «store» في ملفات اللوحة فنصغي ونُطلق الاسمين */
+  const EVS = ["alyssum:lang", "store:lang"];
   const SKIP = "script,style,textarea,iframe,code,pre,[data-i18n-skip],.notranslate,#laura,.pn-frame";
   const ATTRS = ["placeholder", "title", "aria-label"];
   const BASE = (() => { try { const s = document.currentScript && document.currentScript.src; return s ? s.replace(/[^/]*$/, "") : ""; } catch (_) { return ""; } })();
@@ -100,7 +102,7 @@
   function hook(f) {
     try {
       const d = f.contentDocument; if (!d || d.__spI18n) return; d.__spI18n = 1; try { syncKey(f.contentWindow.AdminI18n); } catch (_) { }
-      d.addEventListener("alyssum:lang", e => { const l = e && e.detail === "fr" ? "fr" : "ar"; if (l !== lang) set(l, { fromFrame: true }); });
+      EVS.forEach(n => d.addEventListener(n, e => { const l = e && e.detail === "fr" ? "fr" : "ar"; if (l !== lang) set(l, { fromFrame: true }); }));
       pushTo(f);
     } catch (_) { }
   }
@@ -118,7 +120,7 @@
     if (lang === "fr") { await load(); if (lang !== "fr") return; paint(); observe(); walk(document.body); }
     else { restore(); paint(); }
     frames().forEach(pushTo);
-    try { document.dispatchEvent(new CustomEvent("alyssum:lang", { detail: lang })); } catch (_) { }
+    EVS.forEach(n => { try { document.dispatchEvent(new CustomEvent(n, { detail: lang })); } catch (_) { } });
     subs.forEach(fn => { try { fn(lang); } catch (_) { } });
   }
   function init() {
