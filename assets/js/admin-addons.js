@@ -74,8 +74,8 @@ const AdminAddons = (() => {
   function storeCard(a) {
     const i = inst(a.id), on = act(a.id), N = NAV();
     const st = !i ? "" : on ? chip("✓ مثبَّتة ومفعّلة", "--g-mint-rgb") : chip("مثبَّتة · معطّلة", "--g-amber-rgb");
-    const btn = !i ? `<button type="button" class="small" data-ao="install" data-id="${esc(a.id)}">تثبيت وتفعيل</button>` : on ? `<button type="button" class="small" data-ao="open" data-id="${esc(a.id)}">فتح</button>` : `<button type="button" class="small" data-ao="on" data-id="${esc(a.id)}">تفعيل</button>`;
-    return `<div class="ao-card" data-aid="${esc(a.id)}"><div class="ao-h"><b>${esc(a.n)}</b>${st}</div><div class="ao-meta"><span class="ao-v">v${esc(a.v)}</span>${a.pro ? chip("PRO", "--g-amber-rgb") : chip("مجانية", "--g-blue-rgb")}${a.g ? `<span>${esc(a.g)}</span>` : ""}</div><p class="ao-d" title="${esc(a.d)}">${esc(a.d)}</p><div class="ao-act">${btn}</div></div>`;
+    const btn = !i ? `<button type="button" class="small" data-ao="install" data-id="${esc(a.id)}">تثبيت وتفعيل</button>` : on ? "" : `<button type="button" class="small" data-ao="on" data-id="${esc(a.id)}">تفعيل</button>`;      /* المتجر للتعريف والتثبيت والتفعيل فقط: لا زر «فتح» (يُفتح من «الإضافات المنصَّبة») */
+    return `<div class="ao-card" data-aid="${esc(a.id)}"><div class="ao-h"><b>${esc(a.n)}</b>${st}</div><div class="ao-meta"><span class="ao-v">v${esc(a.v)}</span>${a.pro ? chip("PRO", "--g-amber-rgb") : chip("مجانية", "--g-blue-rgb")}${a.g ? `<span>${esc(a.g)}</span>` : ""}</div><p class="ao-d" title="${esc(a.d)}">${esc(a.d)}</p>${btn ? `<div class="ao-act">${btn}</div>` : ""}</div>`;
   }
   function drawStoreList() {
     const host = $("ao-store"); if (!host) return; const box = host.querySelector(".ao-lst"); if (!box) return;

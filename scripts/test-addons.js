@@ -34,6 +34,7 @@ const { chromium } = require("playwright");
     const c2 = document.querySelector('#ao-store .ao-card[data-aid="cloner"]'); o.clonerStoreOn = !!(c2 && /تفعيل/.test(c2.textContent) && !/مثبَّتة ومفعّلة/.test(c2.textContent)); c2.querySelector('[data-ao="on"]').click(); await W(300); o.clonerOn = !AdminNav.isOff("cloner");
     // زرّ «الإعدادات» يفتح صفحة إعدادات الإضافة
     Admin.tab("addons", btn); await W(800); document.querySelector('#ai-body [data-ao="cfg"][data-id="protect"]').click(); await W(800); o.cfg = !document.getElementById("tab-appcfg").classList.contains("hidden") && /Protection|حماية/.test(document.getElementById("app-cfg-body").textContent);
+    o.storeNoOpen = !document.querySelector('#ao-store [data-ao="open"]');
     // تبويب تطوير الإضافات
     const db = [...document.querySelectorAll(".nav-btn")].find(x => /'appdev'/.test(x.getAttribute("onclick") || "")); Admin.tab("appdev", db); await W(1200); o.dev = document.getElementById("tab-appdev") && !document.getElementById("tab-appdev").classList.contains("hidden");
     // الفرنسية
@@ -46,6 +47,7 @@ const { chromium } = require("playwright");
   t("إلغاء تثبيت أداة ستوديو: تختفي من المنصَّبة ومن الستوديو وتُحفظ في rm", R.sdGone && R.stAfter === R.stBefore - 1 && R.rmSaved, R);
   t("متجر الإضافات: كل الإضافات بالإصدار، والأداة المُلغاة بزر «تثبيت وتفعيل»، والبحث بالاسم يصفّي", R.storeCards >= 38 && R.storeVer && R.storeInstallBtn && R.sq.length >= 1 && R.sq.length < 6 && R.sq.some(x => /نزع/.test(x)), R);
   t("التثبيت يعيد الأداة للستوديو، وتفعيل إضافة معطّلة من المتجر", R.reinstalled && R.clonerStoreOn && R.clonerOn, R);
+  t("متجر الإضافات بلا أي زر «فتح»", R.storeNoOpen, R);
   t("تبويب «تطوير الإضافات» يفتح وزرّ «الإعدادات» يفتح إعدادات الإضافة", R.dev && R.cfg, R);
   t("الفرنسية: نص التبويب بلا عربية غالبة", !/[؀-ۿ]{5}.*[؀-ۿ]{5}.*[؀-ۿ]{5}.*[؀-ۿ]{5}.*[؀-ۿ]{5}/s.test(R.fr || ""), R.fr);
   t("بلا أخطاء JS", errs.length === 0, errs);
