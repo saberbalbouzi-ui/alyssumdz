@@ -119,6 +119,18 @@ export const TOOLS = [
     async precheck(a, h) { const j = await must(await h.get("/v1/ads/accounts"), "ads"), x = (j.accounts || []).find((c) => c.id === a.id); if (!x) throw new ToolError("not_found", "لا يوجد حساب إعلاني بهذا الرقم"); if ((x.status === "paused") === a.paused) throw new ToolError("already_done", "الحساب بهذه الحالة أصلاً"); return {}; },
     async run(a, h) { const r = await h.post(`/v1/ads/accounts/${a.id}/pause`, { paused: a.paused }); await must(r, "ads"); return { paused: a.paused }; },
     async verify(a, h) { const j = await must(await h.get("/v1/ads/accounts"), "ads"), x = (j.accounts || []).find((c) => c.id === a.id); return { ok: !!x && (x.status === "paused") === a.paused, now: x?.status ?? null }; }, stateLabel: { paused: ["موقوفة", "suspendue", "paused"], active: ["نشطة", "active", "active"] } },
+  /* ───── كتابة تنفّذها لوحة التحكم في متصفح المستخدم (exec:"client") ─────
+     مصدر حقيقة المنتجات ملفات المتجر (لا قاعدة الـWorker)؛ فالخادم يتحقق من الوسائط ويطلب الموافقة ويُصدر الأمر الموقَّع، ثم تنفّذه اللوحة بجلسة المستخدم وصلاحياتها وتعيد ما قرأته من الملف المنشور؛ الخادم يطابقه مع المطلوب.
+     لا تُعرَض هذه الأدوات للنموذج إلا إن أعلنت الواجهة قدرتها (caps:["client_exec"]). */
+  { name: "product_set_stock", tier: "write", exec: "client", perm: "products", scope: "catalog:read", description: "تغيير مخزون منتج بسيط (بلا تنويعات) إلى كمية محدّدة أو غير محدود (unlimited:true)، بمعرّفه slug. تنفّذه لوحة التحكم بعد موافقة المستخدم ثم تتحقق من الملف المنشور.",
+    parameters: { type: "object", properties: { slug: { type: "string", maxLength: 80, pattern: "^[a-z0-9][a-z0-9-]{0,79}$" }, stock: { type: "integer", minimum: 0, maximum: 1000000 }, unlimited: { type: "boolean" } }, required: ["slug"] },
+    describe: (a, L) => a.unlimited ? pickL(L, `جعل مخزون المنتج «${a.slug}» غير محدود`, `Rendre le stock du produit « ${a.slug} » illimité`, `Make the stock of "${a.slug}" unlimited`) : pickL(L, `تغيير مخزون المنتج «${a.slug}» إلى ${a.stock}`, `Changer le stock du produit « ${a.slug} » à ${a.stock}`, `Set the stock of "${a.slug}" to ${a.stock}`),
+    check(a) { if (!a.unlimited && !Number.isInteger(a.stock)) throw new ToolError("invalid_args", "حدّد stock أو unlimited"); },
+    expect: (a, o) => ({ ok: o?.slug === a.slug && (a.unlimited ? o.stock === null : o.stock === a.stock), now: o?.stock ?? null }) },
+  { name: "product_set_price", tier: "write", exec: "client", sensitive: true, perm: "products", scope: "catalog:read", description: "تغيير السعر الأساسي لمنتج بسيط (بلا تنويعات) بالدينار الجزائري، بمعرّفه slug. تنفّذه لوحة التحكم بعد موافقة المستخدم ثم تتحقق من الملف المنشور. لا يغيّر عروض الكميات.",
+    parameters: { type: "object", properties: { slug: { type: "string", maxLength: 80, pattern: "^[a-z0-9][a-z0-9-]{0,79}$" }, price: { type: "integer", minimum: 1, maximum: 10000000 } }, required: ["slug", "price"] },
+    describe: (a, L) => pickL(L, `تغيير سعر المنتج «${a.slug}» إلى ${a.price} دج`, `Changer le prix du produit « ${a.slug} » à ${a.price} DA`, `Set the price of "${a.slug}" to ${a.price} DZD`),
+    expect: (a, o) => ({ ok: o?.slug === a.slug && o.price === a.price, now: o?.price ?? null }) },
   { name: "order_confirm", tier: "write", perm: "orders.write", scope: "events:write", description: "تأكيد طلب جديد بمرجعه (تغيير حالته إلى مؤكَّدة). يتطلب موافقة المستخدم.",
     parameters: { type: "object", properties: { ref: { type: "string", pattern: "^[A-Za-z0-9._:-]{1,80}$", maxLength: 80 } }, required: ["ref"] },
     describe: (a, L) => pickL(L, `تأكيد الطلب ${a.ref}`, `Confirmer la commande ${a.ref}`, `Confirm order ${a.ref}`),
@@ -138,4 +150,4 @@ const capObj = (o) => { const t = JSON.stringify(o); return t.length > 5000 ? { 
 async function findOrder(h, ref) { const j = await must(await h.get("/v1/orders", { ref, limit: 1 }), "orders"); return (j.orders || []).find((x) => x.ref === ref) ?? null; }      // بحث مرجع دقيق على الخادم: بلا سقف مسح
 export const toolByName = (n) => TOOLS.find((t) => t.name === n) ?? null;
 /** الأدوات المتاحة لهذا الطالب: نطاق المفتاح AND صلاحية لوحة المستخدم */
-export function visibleTools(scopes, actor, hasPerm) { return TOOLS.filter((t) => (scopes.includes("*") || scopes.includes(t.scope)) && hasPerm(actor, t.perm)); }
+export function visibleTools(scopes, actor, hasPerm, caps = []) { return TOOLS.filter((t) => (scopes.includes("*") || scopes.includes(t.scope)) && hasPerm(actor, t.perm) && (t.exec !== "client" || caps.includes("client_exec"))); }

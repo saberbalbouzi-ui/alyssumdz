@@ -2,7 +2,7 @@
 // الصيغة مطابقة لـplatform/api/src/laura/actor.js: v1.<base64url(JSON)>.<hex(HMAC("laura.v1."+body))> — يحرسها اختبار التوافق laura-proxy.test.mjs.
 // الصلاحيات تأتي من الخادم فقط: المالك = ["*"]؛ الموظف = perms من جدول staff؛ بلا دور = لا هوية (لا وصول).
 export const LAURA_ALLOW: [string, RegExp][] = [
-  ["POST", /^\/v1\/laura\/(chat|confirm|reset)$/],
+  ["POST", /^\/v1\/laura\/(chat|confirm|reset|report)$/],
   ["GET", /^\/v1\/laura\/(tools|health|history)$/],
 ];
 export const isLauraPath = (method: string, path: string) => LAURA_ALLOW.some(([m, re]) => m === method && re.test(path));

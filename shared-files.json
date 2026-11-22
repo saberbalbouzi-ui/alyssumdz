@@ -175,6 +175,7 @@
     "assets/js/admin-float.js",
     "assets/js/laura.js",
     "assets/js/laura-stats.js",
+    "assets/js/laura-actions.js",
     "assets/js/admin-hand.js",
     "assets/js/admin-home.js",
     "assets/js/admin-imgbatch.js",
