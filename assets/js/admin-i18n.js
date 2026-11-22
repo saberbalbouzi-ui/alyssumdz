@@ -1,7 +1,8 @@
 /* لغتا اللوحة: العربية (الأصل) والفرنسية — زرّ «FR / ع» في الشريط العلوي للتنقّل بينهما، ويُحفظ الاختيار.
    الآلية: قاموس assets/data/i18n-fr.json (نص عربي بالضبط ← فرنسي + أنماط للأرقام) يُطبَّق على نصوص الواجهة وplaceholder/title/aria-label،
    وMutationObserver يترجم ما يُرسم لاحقاً؛ وما ليس في القاموس يبقى بالعربية. العودة للعربية تستعيد الأصل بلا إعادة تحميل.
-   التوسعة: scripts/gen-i18n-fr.py (أضف أزواجاً ثم شغّله). لا شيء خاص بمتجر. */
+   التوسعة: scripts/gen-i18n-fr.py (أضف أزواجاً ثم شغّله). لا شيء خاص بمتجر.
+   اللغة الافتراضية = «لغة الموقع» (store.json lang) ما لم يضغط المستخدم زرّ FR/ع؛ واختياره يُحفظ ويتقدّم على لغة الموقع. */
 const AdminI18n = (() => {
   const KEY = "alyssum_lang", AR = /[؀-ۿ]/;
   let lang = "ar", dict = null, loading = null, busy = false, obs = null, tm = 0;
@@ -9,6 +10,7 @@ const AdminI18n = (() => {
   const ATTRS = ["placeholder", "title", "aria-label"];
   const SKIP = "script,style,textarea,code,pre,[data-i18n-skip],.notranslate,#pb-app,#pbx-frame,.pbx-ep";
   const get = () => { try { return localStorage.getItem(KEY) === "fr" ? "fr" : "ar"; } catch (e) { return "ar"; } };
+  const chosen = () => { try { return localStorage.getItem(KEY) !== null; } catch (e) { return false; } };      /* اختيار المستخدم الصريح (زرّ FR/ع) */
   const rx = () => (dict.rx || (dict.rx = (dict.patterns || []).map(p => [new RegExp(p[0]), String(p[1]).replace(/\\(\d)/g, "$$$1")])));
 
   const siteName = () => { try { return (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || ""; } catch (e) { return ""; } }, panelName = () => { try { return (typeof SITE_CFG !== "undefined" && SITE_CFG.panelName) || ""; } catch (e) { return ""; } };
@@ -95,8 +97,8 @@ const AdminI18n = (() => {
     try { const h1 = document.querySelector("#app .top>h1"); if (h1) h1.setAttribute("data-brand", lang === "fr" ? (siteName() || h1.getAttribute("data-brand") || "") : (window.AdminPanelName ? window.AdminPanelName() : (h1.getAttribute("data-brand") || ""))); } catch (e) { }
     const b = document.getElementById("top-lang"); if (b) { b.textContent = lang === "fr" ? "ع" : "FR"; b.title = lang === "fr" ? "العربية" : "Français"; b.setAttribute("aria-label", b.title); b.dataset.i18nSkip = "1"; }
   }
-  async function set(l) {
-    lang = l === "fr" ? "fr" : "ar"; try { localStorage.setItem(KEY, lang); } catch (e) { }
+  async function set(l, auto) {
+    lang = l === "fr" ? "fr" : "ar"; if (!auto) { try { localStorage.setItem(KEY, lang); } catch (e) { } }      /* auto = لغة الموقع الافتراضية: لا تُحفظ كاختيار فيبقى للمستخدم أن يختار */
     if (lang === "fr") { await load(); paint(); observe(); walk(document.body); }
     else { restore(); paint(); }
     try { document.dispatchEvent(new CustomEvent("alyssum:lang", { detail: lang })); } catch (e) { }
@@ -113,8 +115,9 @@ const AdminI18n = (() => {
     let k = 0; const t = setInterval(() => { if (mount() || ++k > 60) clearInterval(t); }, 500);
     new MutationObserver(() => { if (!document.getElementById("top-lang")) mount(); }).observe(document.body, { childList: true, subtree: true });
     if (lang === "fr") set("fr");
+    else if (!chosen()) fetch("assets/data/store.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.lang === "fr" && !chosen() && lang !== "fr") set("fr", true); }).catch(() => { });      /* لم يختر المستخدم لغة: تتبع اللوحة «لغة الموقع» (store.json) */
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { set, get lang() { return lang; }, helpUrl: () => lang === "fr" ? "assets/data/admin-help.fr.json" : "assets/data/admin-help.json", t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
+  return { set, key: KEY, get lang() { return lang; }, helpUrl: () => lang === "fr" ? "assets/data/admin-help.fr.json" : "assets/data/admin-help.json", t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
 })();
 window.AdminI18n = AdminI18n;

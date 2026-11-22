@@ -2,7 +2,7 @@
    المصدر: نسخة اللوحة الاحتياطية المُسخَّنة (SpatialOS.spare) — تُقرأ منها أجزاء #ahome (قراءة فقط، بلا طلبات إضافية)، وتُرسم بنمط الهولوغرافي الصافي.
    السرعة: آخر لقطة تُحفظ في localStorage وتُرسم فوراً عند الفتح (قبل تحميل أي شيء) ثم تُحدَّث بالبيانات الحيّة. النقر على بطاقة يفتح قسمها. */
 (function () {
-  "use strict"; const KEY = "sc_parts_v1", OFFK = "sc_parts_off"; let host = null, live = false, timer = 0, off = false, snap = null;
+  "use strict"; const KEY0 = "sc_parts_v1", OFFK = "sc_parts_off"; const LFR = () => { if (window.SpatialI18n) return SpatialI18n.lang === "fr"; try { return localStorage.getItem("alyssum_lang") === "fr" || localStorage.getItem("store_lang") === "fr"; } catch (_) { return false; } }, KEYF = () => KEY0 + (LFR() ? "_fr" : ""); let host = null, live = false, timer = 0, off = false, snap = null;
   try { off = localStorage.getItem(OFFK) === "1"; } catch (_) { }
   const T = e => (e && e.textContent || "").replace(/\s+/g, " ").trim(), isNum = s => /^[\d\s.,٠-٩%—\-+]+(\s?(دج|DA|ك|م))?$/.test(s) || /^\d[\d\s.,]*\s?دج$/.test(s);
   const wide = () => innerWidth >= 1100 && !(matchMedia && matchMedia("(pointer:coarse) and (max-width:900px)").matches);
@@ -11,19 +11,19 @@
     n.forEach((e, k) => { const src = o[k]; if (!src) return; if (e.tagName === "text" || e.tagName === "title" || e.tagName === "script" || e.tagName === "foreignObject") { e.remove(); return; } try { const cs = W.getComputedStyle(src); ["fill", "stroke", "stroke-width", "stroke-dasharray", "stroke-linecap", "stroke-linejoin", "opacity", "fill-opacity", "stroke-opacity"].forEach(a => { const v = cs.getPropertyValue(a); if (v) e.style.setProperty(a, v); }); } catch (_) { } [...e.attributes].forEach(a => { if (/^on/i.test(a.name)) e.removeAttribute(a.name); }); });
     c.removeAttribute("width"); c.removeAttribute("height"); c.removeAttribute("style"); c.setAttribute("preserveAspectRatio", "none"); return c.outerHTML;
   }
-  function goFor(t) { return /الحالة|آخر الطلبات|الطلبات|انتباهك/.test(t) ? "ord" : /الربح/.test(t) ? "profit" : /مبيعات|مخطط|التسليم|الولاية/.test(t) ? "ana" : "dash"; }
+  function goFor(t) { return /الحالة|آخر الطلبات|الطلبات|انتباهك|statut|dernières|commandes|attention/i.test(t) ? "ord" : /الربح|bénéfice|profit/i.test(t) ? "profit" : /مبيعات|مخطط|التسليم|الولاية|ventes|courbe|livraison|wilaya/i.test(t) ? "ana" : "dash"; }
   const h3t = c => { const h = c.querySelector("h3"); if (!h) return ""; let s = ""; h.childNodes.forEach(n => { if (n.nodeType === 3) s += n.textContent; }); return s.replace(/\s+/g, " ").trim() || T(h.firstElementChild); };
   function extract(d) {
     const h = d.getElementById("ahome"); if (!h) return null; const kp = [...h.querySelectorAll(".ah-card.kpi")].slice(0, 4); if (!kp.length) return null;
     const cards = kp.map((c, i) => ({ k: "kpi", t: T(c.querySelector(".lb")) || T(c), v: T(c.querySelector(".v")), d: T(c.querySelector(".d")), up: c.querySelector(".d.up") ? 1 : c.querySelector(".d.down") ? -1 : 0, go: ["ana", "ord", "ord", "ana"][i] }));
     h.querySelectorAll(".ah-card:not(.kpi)").forEach(c => {
       if (c.querySelector(".ah-card")) return; const title = h3t(c); if (!title) return; const ch = c.querySelector(".ch svg");
-      if (ch && /مخطط|المبيعات/.test(title)) { cards.push({ k: "chart", t: title, svg: clean(ch), go: "ana" }); return; }
+      if (ch) { cards.push({ k: "chart", t: title, svg: clean(ch), go: "ana" }); return; }
       const at = [...c.querySelectorAll(".at button")]; if (at.length) { cards.push({ k: "list", t: title, rows: at.slice(0, 5).map(b => [T(b.querySelector("span")), T(b.querySelector("b"))]), go: "ord", id: "attn" }); return; }
       const dn = [...c.querySelectorAll(".dn-w path > title")]; if (dn.length) { cards.push({ k: "list", t: title, rows: dn.slice(0, 6).map(t => { const m = T(t).split(":"); return [(m[0] || "").trim(), (m[1] || "").trim()]; }), go: "ord", id: "status" }); return; }
-      const rc = [...c.querySelectorAll(".rt-c")]; if (rc.length && /نسب التسليم/.test(title)) { cards.push({ k: "list", t: title, rows: rc.slice(0, 4).map(r => [T(r.querySelector("span")), T(r.querySelector("b")) + " (" + T(r.querySelector("small")).split(" ")[0] + ")"]), go: "ana", id: "rates" }); return; }
+      const rc = [...c.querySelectorAll(".rt-c")]; if (rc.length && !c.querySelector(".pf-v")) { cards.push({ k: "list", t: title, rows: rc.slice(0, 4).map(r => [T(r.querySelector("span")), T(r.querySelector("b")) + " (" + T(r.querySelector("small")).split(" ")[0] + ")"]), go: "ana", id: "rates" }); return; }
       const pv = c.querySelector(".pf-v"); if (pv) { cards.push({ k: "list", t: title, rows: [["صافي الربح", T(pv)]].concat(rc.slice(0, 2).map(r => [T(r.querySelector("span")), T(r.querySelector("b"))])), go: "profit", id: "profit" }); return; }
-      const tr = [...c.querySelectorAll("tbody tr")].slice(0, 4); if (tr.length && /آخر الطلبات/.test(title)) { cards.push({ k: "table", t: title, rows: tr.map(r => [...r.children].slice(0, 4).map(T)), go: "ord", id: "last" }); }
+      const tr = [...c.querySelectorAll("tbody tr")].slice(0, 4); if (tr.length && !cards.some(x => x.id === "last")) { cards.push({ k: "table", t: title, rows: tr.map(r => [...r.children].slice(0, 4).map(T)), go: "ord", id: "last" }); }
     });
     return { t: Date.now(), cards };
   }
@@ -43,7 +43,7 @@
     const g = el("div", "hp-k"); kpis.forEach(k => g.append(card(k))); L.append(g); if (chart) L.append(card(chart)); if (attn) L.append(card(attn)); if (profit) L.append(card(profit));
     if (status) R.append(card(status)); if (last) R.append(card(last)); if (rates) R.append(card(rates));
     host.classList.add("on"); [...host.querySelectorAll(".hp")].forEach((b, i) => { b.style.animationDelay = (i * 55) + "ms"; });
-    try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (_) { }
+    try { localStorage.setItem(KEYF(), JSON.stringify(s)); } catch (_) { }
   }
   function poll() {
     clearTimeout(timer); const S = window.SpatialOS; if (!S || !S.spare) return; const f = S.spare.frame;
@@ -54,9 +54,11 @@
   function init() {
     if (host || !document.body.classList.contains("real") || window.SpatialOS && window.SpatialOS.two === false) return; host = el("div", "hparts"); host.id = "hparts"; host.setAttribute("aria-label", "بطاقات الصفحة الرئيسية"); host.append(el("div", "hp-c l"), el("div", "hp-c r")); document.body.appendChild(host);
     host.addEventListener("click", e => { const b = e.target.closest(".hp"); if (b && window.SpatialOS) window.SpatialOS.open(b.dataset.go); });
-    try { const c = JSON.parse(localStorage.getItem(KEY) || "null"); if (c && c.cards) render(c); } catch (_) { } /* لقطة فورية قبل أي تحميل */
+    try { const c = JSON.parse(localStorage.getItem(KEYF()) || "null"); if (c && c.cards) render(c); } catch (_) { } /* لقطة فورية قبل أي تحميل */
     const bt = document.getElementById("hud-parts"); if (bt) bt.addEventListener("click", () => { off = !off; try { localStorage.setItem(OFFK, off ? "1" : "0"); } catch (_) { } show(); }); show(); addEventListener("resize", show); document.addEventListener("sc-spare", () => { clearTimeout(timer); timer = setTimeout(poll, 700); }); poll();
   }
-  window.SCParts = { extract, get snapshot() { return snap; }, get live() { return live; }, get visible() { return !!host && !host.hidden; }, init, toggle() { off = !off; try { localStorage.setItem(OFFK, off ? "1" : "0"); } catch (_) { } show(); } };
+  function relang() { try { const c = JSON.parse(localStorage.getItem(KEYF()) || "null"); if (c && c.cards) render(c); } catch (_) { } live = false; clearTimeout(timer); timer = setTimeout(poll, 900); show(); }
+  if (window.SpatialI18n) SpatialI18n.onChange(() => { if (host) relang(); }); else document.addEventListener("alyssum:lang", () => { if (host) relang(); });
+  window.SCParts = { relang, extract, get snapshot() { return snap; }, get live() { return live; }, get visible() { return !!host && !host.hidden; }, init, toggle() { off = !off; try { localStorage.setItem(OFFK, off ? "1" : "0"); } catch (_) { } show(); } };
   document.addEventListener("sc-real", init); if (document.body && document.body.classList.contains("real")) init();
 })();

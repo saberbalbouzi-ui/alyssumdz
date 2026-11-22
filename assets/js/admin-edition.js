@@ -13,7 +13,7 @@ const AdminEdition = (() => {
     ["design", "إنفوغراف ديزاين", "مطوّر الصفحات و«ستوديو ديزاين» فقط للمصممين: بلا متجر ولا طلبات ولا شحن ولا إضافاته."]
   ];
   /* الأقسام المسموحة في نسخة المصمّم (Admin.tab) — الباقي محجوب. أقسام العمل الخفية لأدوات الصور تبقى لأن المطوّر يفتحها (دفعات/كتالوج) */
-  const KEEP_DESIGN = ["builder", "studio", "store", "admtheme", "team", "imgtools", "imggen", "appcfg", "agent", "pbgen"];
+  const KEEP_DESIGN = ["builder", "studio", "store", "admtheme", "team", "imgtools", "imggen", "appcfg", "addons", "agent", "pbgen"];
   const BASIC_HIDE = ["studio", "imggen"];      // مولّد الصور جزء من «ستوديو ديزاين»
   /* أقسام التوصيل والمادي المحجوبة في نسخة الديجيتال (مطابقة لـAdminKind.PHYS) */
   const PHYS = ["shipped", "callcenter", "pack", "dispatch", "delivery", "fees", "returns", "inventory", "sources", "blacklist", "market"];

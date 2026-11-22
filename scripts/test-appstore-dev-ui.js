@@ -7,14 +7,14 @@ const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".
 const srv = http.createServer((q, r) => { const u = q.url.split("?")[0]; if (u === "/__blank") { r.writeHead(200, { "Content-Type": "text/html" }); return r.end("<!doctype html><meta charset=utf-8><body></body>"); } const f = path.join(root, decodeURIComponent(u)); if (!f.startsWith(root) || !fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { "Content-Type": MIME[path.extname(f)] || "application/octet-stream" }); r.end(fs.readFileSync(f)); });
 
 const DB = { off: false, notDev: false, calls: [], n: 1,
-  apps: [{ id: 1, slug: "sms", name: "تطبيق <b>x</b>", status: "rejected", review_note: "اشرح الصلاحيات", price: 1000, billing: "once", webhook_url: "https://dev.example/hook", domain_verified: false, rating: null, rating_count: 0, scopes: [{ id: "read_orders" }], events: ["order.created"], redirect_uris: ["https://dev.example/cb"] }],
-  dels: [{ id: 5, app: "تطبيق", app_id: 1, type: "order.created", state: "failed", attempts: 5, error: "HTTP 500 <i>", created_at: 1790000000 }, { id: 6, app: "تطبيق", app_id: 1, type: "order.shipped", state: "sent", attempts: 1, error: null, created_at: 1790000100 }] };
+  apps: [{ id: 1, slug: "sms", name: "إضافة <b>x</b>", status: "rejected", review_note: "اشرح الصلاحيات", price: 1000, billing: "once", webhook_url: "https://dev.example/hook", domain_verified: false, rating: null, rating_count: 0, scopes: [{ id: "read_orders" }], events: ["order.created"], redirect_uris: ["https://dev.example/cb"] }],
+  dels: [{ id: 5, app: "إضافة", app_id: 1, type: "order.created", state: "failed", attempts: 5, error: "HTTP 500 <i>", created_at: 1790000000 }, { id: 6, app: "إضافة", app_id: 1, type: "order.shipped", state: "sent", attempts: 1, error: null, created_at: 1790000100 }] };
 function handle(b) {
   DB.calls.push(b); if (DB.off) return null; const m = b.method, p = b.path;
   if (DB.notDev) return { __err: { status: 403, error: { code: "not_a_developer", message: "x" } } };
   if (m === "GET" && p === "/v1/appstore/dev/apps") return { apps: DB.apps };
   if (m === "GET" && p === "/v1/appstore/dev/deliveries") return { deliveries: b.query && b.query.state ? DB.dels.filter((d) => d.state === b.query.state) : DB.dels };
-  if (m === "GET" && p === "/v1/appstore/dev/earnings") return { totals: { gross: 3000, fee: 600, net: 2400 }, revenues: [{ id: 1, app: "تطبيق", period: "once", gross: 3000, fee: 600, net: 2400, state: "settled" }] };
+  if (m === "GET" && p === "/v1/appstore/dev/earnings") return { totals: { gross: 3000, fee: 600, net: 2400 }, revenues: [{ id: 1, app: "إضافة", period: "once", gross: 3000, fee: 600, net: 2400, state: "settled" }] };
   if (m === "POST" && p === "/v1/appstore/dev/apps") { if (!/^[a-z0-9-]{3,}$/.test(b.body.slug || "")) return { __err: { status: 400, error: { code: "validation_error", message: "x", fields: { slug: "المعرّف غير صالح" } } } }; DB.apps.unshift({ id: 2, slug: b.body.slug, name: b.body.name, status: "draft", price: b.body.price, billing: b.body.billing, scopes: b.body.scopes.map((id) => ({ id })), events: b.body.events, redirect_uris: b.body.redirect_uris }); return { id: 2, status: "draft", client_id: "ci_abc", client_secret: "cs_SECRET1", webhook_secret: "whsec_app_SECRET2" }; }
   let x = /^\/v1\/appstore\/dev\/apps\/(\d+)\/(submit|rotate-secrets|verify-domain)$/.exec(p);
   if (m === "POST" && x) { if (x[2] === "submit") { DB.apps.find((a) => a.id === +x[1]).status = "pending"; return { ok: true }; } if (x[2] === "rotate-secrets") return { client_secret: "cs_NEW", webhook_secret: "whsec_app_NEW" }; return { __err: { status: 422, error: { code: "verification_failed", message: "x" } } }; }
@@ -38,7 +38,7 @@ function handle(b) {
   const txt = () => p.evaluate(() => document.getElementById("ad-app").textContent.replace(/[\u00a0\u202f]/g, " ")), toasts = () => p.evaluate(() => window.__toasts);
   let t = await txt();
   ok("قائمة التطبيقات بالحالة وسبب الرفض", /مرفوض/.test(t) && /اشرح الصلاحيات/.test(t) && /1 000 دج/.test(t));
-  ok("لا XSS من اسم التطبيق", !(await p.$("#ad-app b b")) && /تطبيق <b>x<\/b>/.test(t));
+  ok("لا XSS من اسم التطبيق", !(await p.$("#ad-app b b")) && /إضافة <b>x<\/b>/.test(t));
   ok("الجوال: لا فيض أفقي", await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   /* إنشاء تطبيق: خطأ تحقق ثم نجاح مع أسرار مرة واحدة */
   await p.click("[data-ad=new]"); await p.waitForSelector("#ad-form"); await p.fill("#adf-name", "تطبيقي"); await p.fill("#adf-slug", "X"); await p.check('[data-adsc="read_orders"]'); await p.fill("#adf-redir", "https://dev.example/cb");
@@ -56,7 +56,7 @@ function handle(b) {
   /* توثيق النطاق يفشل برسالة */
   await p.click('[data-ad=verify][data-id="1"]'); await p.waitForFunction(() => window.__toasts.some((x) => /لم نجد الملف/.test(x))); ok("فشل التوثيق برسالة واضحة", true);
   /* تعديل تطبيق */
-  await p.click('[data-ad=edit][data-id="1"]'); await p.waitForSelector("#ad-form"); await p.fill("#adf-price", "1500"); await p.click("[data-ad=save]"); await p.waitForFunction(() => window.__toasts.some((x) => /عاد التطبيق إلى المراجعة/.test(x))); ok("تعديل حقل حسّاس يُنبَّه للمراجعة", DB.calls.some((c) => c.method === "PUT" && c.body.price === 1500));
+  await p.click('[data-ad=edit][data-id="1"]'); await p.waitForSelector("#ad-form"); await p.fill("#adf-price", "1500"); await p.click("[data-ad=save]"); await p.waitForFunction(() => window.__toasts.some((x) => /عادت الإضافة إلى المراجعة/.test(x))); ok("تعديل حقل حسّاس يُنبَّه للمراجعة", DB.calls.some((c) => c.method === "PUT" && c.body.price === 1500));
   /* التسليمات */
   await p.click("[data-ad=tab][data-k=dels]"); await p.waitForSelector("[data-ad=retry]"); t = await txt(); ok("سجلّ التسليمات بحالاتها", /فشل/.test(t) && /تم/.test(t) && /HTTP 500 <i>/.test(t) && !(await p.$("#ad-app i")));
   await p.click('[data-ad=dstate][data-k="sent"]'); await p.waitForFunction(() => !document.querySelector("[data-ad=retry]")); ok("تصفية بالحالة", DB.calls.some((c) => c.path === "/v1/appstore/dev/deliveries" && c.query && c.query.state === "sent"));
