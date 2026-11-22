@@ -239,6 +239,8 @@ PAIRS.update({
 for _a, _f in [('المفعّلة', 'Activées'), ('المعطّلة', 'Désactivées'), ('إضافات المنصّة', 'Extensions de la plateforme'), ('ستوديو ديزاين', 'Studio Design'), ('إضافات المطوّرين', 'Extensions de développeurs')]:
     PATTERNS += [[r'^' + _a + r' \((\d+)\)$', _f + r' (\1)']]
 
+PAIRS.update({'عند اختيار الفرنسية يتحوّل الموقع وقوالبه إلى الفرنسية (النصوص واتجاه الصفحة من اليسار)؛ ما كتبتَه بنفسك كأسماء المنتجات ووصفها يبقى كما هو. وتتبع لغةُ لوحة التحكم وإضافاتها هذا الاختيار فوراً، ويمكنك تبديل اللوحة وحدها بزرّ «FR / ع» في الشريط العلوي.': 'Lorsque vous choisissez le français, le site et ses modèles passent en français (textes et sens de la page de gauche à droite) ; ce que vous avez écrit vous-même, comme les noms et descriptions des produits, reste tel quel. La langue du tableau de bord et de ses extensions suit ce choix immédiatement, et vous pouvez changer le tableau de bord seul avec le bouton « FR / ع » de la barre supérieure.'})
+
 # شروح الأقسام من admin.html (النص العربي بالضبط) ← الفرنسي
 navs = re.findall(r'<button class="nav-btn"[^>]*onclick="Admin\.tab\(\'([^\']+)\'[^>]*>.*?<b>(.*?)</b>(?:<span[^>]*>.*?</span>)?<small>(.*?)</small>', html, flags=re.S)
 strip = lambda x: re.sub(r'<[^>]+>', '', x).strip()

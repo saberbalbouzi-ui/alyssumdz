@@ -8,7 +8,7 @@ const AdminAddons = (() => {
   const S = { iq: "", inf: "all", sq: "", sf: "all", tools: null, busy: false };
   const NAV = () => (typeof AdminNav !== "undefined" ? AdminNav : null);
   const toast = t => { try { if (typeof Admin !== "undefined" && Admin.toast) return Admin.toast(t); } catch (e) { } try { window.toast && window.toast(t); } catch (e) { } };
-  const fold = s => String(s || "").toLowerCase().replace(/[ً-ٰٟ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
+  const fold = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[ً-ٰٟ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
   const ver = () => { const u = typeof AdminUpdate !== "undefined" && AdminUpdate.current; if (u) return String(u); const h = document.querySelector(".top h1"); const m = h && /(\d+\.\d+\.\d+)/.exec(h.title || ""); return m ? m[1] : "1.0"; };
   const first = d => String(d || "").replace(/\s+/g, " ").trim();      /* النص كاملاً (يقصّه CSS بثلاثة أسطر ويظهر كاملاً في التلميح) فيبقى مطابقاً لترجمته الفرنسية */
   const OPEN = { builder: () => go("builder"), smart: () => go("pbgen"), imggen: () => go("imggen"), agent: () => go("agent"), voice: () => go("agent"), ask: () => { try { AdminHelp.show(); } catch (e) { } }, cloner: () => { try { NAV().clone(); } catch (e) { } }, protect: () => NAV().app("protect"), floaters: () => NAV().app("floaters") };
@@ -27,7 +27,8 @@ const AdminAddons = (() => {
   const inst = id => { const N = NAV(); return !N || N.installed(id); };
   const act = id => { const N = NAV(); return !N || N.usable(id); };
   async function loadTools() { if (S.tools) return; S.tools = []; try { const r = await fetch("assets/data/tools-catalog.json", { cache: "no-cache" }); if (r.ok) { const j = await r.json(); S.tools = (j && j.tools) || []; } } catch (e) { } }
-  const match = (a, q) => { q = fold(q); return !q || q.split(/\s+/).every(w => fold([a.n, a.d, a.g].join(" ")).includes(w)); };
+  const tx = x => { try { return typeof AdminI18n !== "undefined" && AdminI18n.lang === "fr" ? (AdminI18n.t(x) || x) : x; } catch (e) { return x; } };      /* البحث يطابق النص المعروض (الفرنسي عند الفرنسية) والأصل العربي معاً */
+  const match = (a, q) => { q = fold(q); if (!q) return true; const h = fold([a.n, a.d, a.g, tx(a.n), tx(a.d), tx(a.g)].join(" ")); return q.split(/\s+/).every(w => h.includes(w)); };
 
   /* ── التنسيق ── */
   function css() {
@@ -118,6 +119,7 @@ const AdminAddons = (() => {
   function refresh() { drawInstalled(); drawStoreList(); }
   document.addEventListener("alyssum:addons", () => { try { if ($("ai-body")) drawInstalled(); if ($("ao-store")) drawStoreList(); } catch (e) { } });
   document.addEventListener("alyssum:devapps", () => { filterDev(); });
+  document.addEventListener("alyssum:lang", () => { setTimeout(() => { try { if ($("ai-body")) drawInstalled(); if ($("ao-store")) drawStoreList(); } catch (e) { } }, 150); });
 
   function init() {
     const w = () => { if (typeof Admin === "undefined" || !Admin.tab || Admin._aoWrapped) return; const orig = Admin.tab;
