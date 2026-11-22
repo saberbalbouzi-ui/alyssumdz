@@ -1,4 +1,4 @@
-/* «للمطوّرين» (بوابة المطوّر): لمن فُعِّل حسابه كمطوّر تطبيقات — أنشئ تطبيقك وأرسله للمراجعة، دوّر أسراره، وثّق نطاقه، تابع سجلّ تسليمات الأحداث وإيراداتك.
+/* «للمطوّرين» (بوابة المطوّر): لمن فُعِّل حسابه كمطوّر إضافات — أنشئ إضافتك وأرسله للمراجعة، دوّر أسراره، وثّق نطاقه، تابع سجلّ تسليمات الأحداث وإيراداتك.
    الأسرار (client_secret وwebhook_secret) تظهر مرة واحدة فقط عند الإنشاء/التدوير ولا تُخزَّن في المتصفح. كل شيء يمرّ عبر وسيط مدير مسجَّل الدخول. */
 const AdminAppDev = (() => {
   const $ = id => document.getElementById(id);
@@ -10,7 +10,7 @@ const AdminAppDev = (() => {
   const EVENTS = ["order.created", "order.confirmed", "order.shipped", "order.delivered", "order.cancelled", "order.returned", "payment.confirmed"];
   const ST = { draft: ["مسودة", "var(--g-blue-rgb)"], pending: ["قيد المراجعة", "var(--g-amber-rgb)"], approved: ["معتمد", "var(--g-mint-rgb)"], rejected: ["مرفوض", "var(--g-rose-rgb)"], suspended: ["موقوف", "var(--g-rose-rgb)"] };
   const DS = { pending: ["بانتظار الإرسال", "var(--g-amber-rgb)"], sent: ["تم", "var(--g-mint-rgb)"], failed: ["فشل", "var(--g-rose-rgb)"] };
-  const ERR = { not_a_developer: "حسابك غير مفعّل كمطوّر — تواصل مع الدعم لتفعيله", slug_taken: "المعرّف مستعمل، اختر غيره", plan_limit: "بلغت حدّ 20 تطبيقاً", verification_failed: "لم نجد الملف المطلوب في نطاقك بعد", rate_limited: "طلبات كثيرة، حاول بعد قليل", bad_transition: "الحالة الحالية لا تسمح بهذا الإجراء", module_disabled: "الخدمة غير مفعّلة على حسابك — تواصل مع الدعم" };
+  const ERR = { not_a_developer: "حسابك غير مفعّل كمطوّر — تواصل مع الدعم لتفعيله", slug_taken: "المعرّف مستعمل، اختر غيره", plan_limit: "بلغت حدّ 20 إضافة", verification_failed: "لم نجد الملف المطلوب في نطاقك بعد", rate_limited: "طلبات كثيرة، حاول بعد قليل", bad_transition: "الحالة الحالية لا تسمح بهذا الإجراء", module_disabled: "الخدمة غير مفعّلة على حسابك — تواصل مع الدعم" };
   const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
   const dt = s => { const n = +s; return n ? new Date(n * 1000).toISOString().slice(0, 16).replace("T", " ") : ""; };
   async function call(method, path, body, query) {
@@ -63,27 +63,27 @@ const AdminAppDev = (() => {
 <label class="fl">الوصف<textarea id="adf-desc" rows="3" maxlength="600">${esc(a.description || "")}</textarea></label></div>
 <div class="ad-hint" style="margin-top:.6rem"><b>الصلاحيات المطلوبة</b> (اطلب الأقل الممكن؛ التاجر يوافق على كل واحدة):</div><div class="ad-fm">${SCOPES.map(([k, l]) => `<label class="ad-ck"><input type="checkbox" data-adsc="${k}" ${sc.has(k) ? "checked" : ""}> ${esc(l)}</label>`).join("")}</div>
 <div class="ad-hint" style="margin-top:.6rem"><b>الأحداث المطلوب استقبالها</b> (تتطلب «قراءة الطلبات» ورابط webhook):</div><div class="ad-fm">${EVENTS.map(k => `<label class="ad-ck"><input type="checkbox" data-adev="${k}" ${ev.has(k) ? "checked" : ""}> ${k}</label>`).join("")}</div>
-${a.id && a.status === "approved" ? '<p class="ad-hint">⚠️ تعديل السعر أو الصلاحيات أو الأحداث أو الروابط على تطبيق معتمد يعيده إلى المراجعة.</p>' : ""}
-<div style="margin-top:.7rem"><button class="ad-btn" data-ad="save" ${S.busy ? "disabled" : ""}>${a.id ? "حفظ التعديلات" : "إنشاء التطبيق"}</button> <button class="ad-btn g" data-ad="cancel">إلغاء</button></div></div>`;
+${a.id && a.status === "approved" ? '<p class="ad-hint">⚠️ تعديل السعر أو الصلاحيات أو الأحداث أو الروابط على إضافة معتمدة يعيدها إلى المراجعة.</p>' : ""}
+<div style="margin-top:.7rem"><button class="ad-btn" data-ad="save" ${S.busy ? "disabled" : ""}>${a.id ? "حفظ التعديلات" : "إنشاء الإضافة"}</button> <button class="ad-btn g" data-ad="cancel">إلغاء</button></div></div>`;
   }
   function appsHtml() {
     const rows = S.apps.map(a => `<tr><td><b>${esc(a.name)}</b><div class="ad-hint">${esc(a.slug)}${a.domain_verified ? ' · <span style="color:rgb(var(--g-mint-rgb))">✔ نطاق موثّق</span>' : ""}</div>${a.status === "rejected" || a.status === "suspended" ? `<div class="ad-hint" style="color:rgb(var(--g-rose-rgb))">${esc(a.review_note || "")}</div>` : ""}</td>
 <td>${chip(ST, a.status)}<div class="ad-hint">${a.price > 0 ? nf(a.price) + " دج" + (a.billing === "monthly" ? " / شهر" : "") : "مجاني"}</div></td>
 <td><div class="ad-hint">${a.rating ? "★ " + esc(a.rating) + " (" + esc(a.rating_count) + ")" : "بلا تقييم"}</div></td>
 <td><button class="ad-btn g sm" data-ad="edit" data-id="${a.id}">تعديل</button> ${["draft", "rejected"].includes(a.status) ? `<button class="ad-btn sm" data-ad="submit" data-id="${a.id}" data-n="${esc(a.name)}">إرسال للمراجعة</button> ` : ""}${a.webhook_url && !a.domain_verified ? `<button class="ad-btn o sm" data-ad="verify" data-id="${a.id}">توثيق النطاق</button> ` : ""}<button class="ad-btn o sm" data-ad="rotate" data-id="${a.id}" data-n="${esc(a.name)}">تدوير الأسرار</button></td></tr>`).join("");
-    return `${sec()}${S.form ? formHtml() : ""}<div class="ad-box"><h3>إضافاتي</h3>${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>التطبيق</th><th>الحالة والسعر</th><th>التقييم</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="ad-hint">لا تطبيقات بعد.</p>'}<div style="margin-top:.7rem"><button class="ad-btn" data-ad="new">＋ تطبيق جديد</button></div>
+    return `${sec()}${S.form ? formHtml() : ""}<div class="ad-box"><h3>إضافاتي</h3>${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>الإضافة</th><th>الحالة والسعر</th><th>التقييم</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="ad-hint">لا إضافات بعد.</p>'}<div style="margin-top:.7rem"><button class="ad-btn" data-ad="new">＋ إضافة جديدة</button></div>
 <p class="ad-hint">لتوثيق النطاق: انشر الملف <code style="direction:ltr">https://نطاق-webhook/.well-known/alyssum-app.json</code> بمحتوى <code style="direction:ltr;display:inline">{"client_id":"ci_…"}</code> ثم اضغط «توثيق النطاق».</p></div>`;
   }
   function delsHtml() {
     const rows = S.dels.map(d => `<tr><td>${esc(d.app)}</td><td dir="ltr">${esc(d.type)}</td><td>${chip(DS, d.state)}</td><td>${esc(d.attempts)}</td><td>${esc(d.error || "")}</td><td>${esc(dt(d.created_at))}</td><td>${d.state === "failed" ? `<button class="ad-btn o sm" data-ad="retry" data-id="${d.id}">إعادة إرسال</button>` : ""}</td></tr>`).join("");
     return `<div class="ad-box"><h3>سجلّ تسليمات الأحداث</h3><div class="ad-tabs" style="margin-bottom:.6rem">${[["", "الكل"], ["failed", "الفاشلة"], ["pending", "المعلّقة"], ["sent", "الناجحة"]].map(([k, l]) => `<button class="ad-btn g sm ${S.dstate === k ? "on" : ""}" data-ad="dstate" data-k="${k}">${l}</button>`).join("")}</div>
-${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>التطبيق</th><th>الحدث</th><th>الحالة</th><th>المحاولات</th><th>الخطأ</th><th>التاريخ</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="ad-hint">لا تسليمات.</p>'}</div>`;
+${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>الإضافة</th><th>الحدث</th><th>الحالة</th><th>المحاولات</th><th>الخطأ</th><th>التاريخ</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="ad-hint">لا تسليمات.</p>'}</div>`;
   }
   function earnHtml() {
     const e = S.earn; if (!e) return '<div class="ad-box ad-off">لا بيانات.</div>';
     const t = e.totals || {}, rows = (e.revenues || []).map(x => `<tr><td>${esc(x.app)}</td><td>${esc(x.period)}</td><td>${nf(x.gross)}</td><td>${nf(x.fee)}</td><td><b>${nf(x.net)}</b></td><td>${esc(x.state)}</td></tr>`).join("");
     return `<div class="ad-box"><h3>إيراداتي</h3><div class="ad-kpi"><div>الإجمالي<b>${nf(t.gross)} دج</b></div><div>عمولة المنصة<b>${nf(t.fee)} دج</b></div><div>صافيك<b>${nf(t.net)} دج</b></div></div><p class="ad-hint">الصافي يُقيَّد في متاح محفظتك.</p>
-${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>التطبيق</th><th>الفترة</th><th>الإجمالي</th><th>العمولة</th><th>الصافي</th><th>الحالة</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}</div>`;
+${rows ? `<div class="ad-wrap"><table class="ad-tbl"><thead><tr><th>الإضافة</th><th>الفترة</th><th>الإجمالي</th><th>العمولة</th><th>الصافي</th><th>الحالة</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}</div>`;
   }
   /* دليل المطوّر: المراحل والطريقة الصحيحة لإضافة إضافة جديدة (يظهر لكل الحسابات، حتى غير المفعّلة كمطوّر) */
   function guideHtml() {
@@ -174,7 +174,7 @@ const ok = fresh && crypto.timingSafeEqual(Buffer.from(v1,'hex'), sig);`)}
     const f = S.form, b = readForm(); if (f.app && f.app.id && b.scopes.some(s => s === "read_customers") && !(f.app.scopes || []).some(s => (s.id || s) === "read_customers") && !confirm("طلب بيانات الزبائن (أسماء وهواتف) يجعل المراجعة أشدّ ويطلب موافقة صريحة من كل تاجر. متابعة؟")) return;
     f.draft = b; S.busy = true; draw(); const r = f.app && f.app.id ? await call("PUT", `/v1/appstore/dev/apps/${f.app.id}`, b) : await call("POST", "/v1/appstore/dev/apps", b); S.busy = false;
     if (!r.ok) { draw(); return toast(errOf(r)); }
-    S.form = null; if (r.j.client_secret) S.secrets = { client_id: r.j.client_id, client_secret: r.j.client_secret, webhook_secret: r.j.webhook_secret }; else if (r.j.resubmitted) toast("عاد التطبيق إلى المراجعة بسبب تعديل حقل حسّاس"); else toast("✅ تم الحفظ");
+    S.form = null; if (r.j.client_secret) S.secrets = { client_id: r.j.client_id, client_secret: r.j.client_secret, webhook_secret: r.j.webhook_secret }; else if (r.j.resubmitted) toast("عادت الإضافة إلى المراجعة بسبب تعديل حقل حسّاس"); else toast("✅ تم الحفظ");
     await refresh();
   }
   async function onClick(e) {

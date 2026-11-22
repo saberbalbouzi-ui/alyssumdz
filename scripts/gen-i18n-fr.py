@@ -217,6 +217,28 @@ PATTERNS += [[r'^يُعرض (\d+) من (\d+) طلباً$', r'\1 sur \2 commandes
 PAIRS.update({'بحث في القوالب': 'Rechercher dans les modèles', 'القوالب': 'Modèles', 'المكتبة': 'Bibliothèque', 'تحميل قالب': 'Charger un modèle', 'قوالبي (0)': 'Mes modèles (0)'})
 PATTERNS += [[r'^قوالبي \((\d+)\)$', r'Mes modèles (\1)']]
 
+PAIRS.update({
+ 'المثبَّتة:': 'Installées :', 'المفعّلة:': 'Activées :', 'المعطّلة:': 'Désactivées :', 'المفعّلة': 'Activées', 'المعطّلة': 'Désactivées', 'الكل': 'Tous',
+ 'الإضافات المنصَّبة': 'Extensions installées', 'الإضافات المثبَّتة في موقعك: المفعّلة والمعطّلة، وتفعيلها وإعداداتها وإلغاء تثبيتها': 'Les extensions installées sur votre site : activées et désactivées, avec activation, réglages et désinstallation',
+ 'متجر الإضافات': 'Boutique d\'extensions', 'إضافات المنصّة وأدوات ستوديو ديزاين وإضافات المطوّرين: الإصدار ونبذة قصيرة والتثبيت والتفعيل وبحث سريع بالاسم': 'Extensions de la plateforme, outils Studio Design et extensions de développeurs : version, courte description, installation, activation et recherche rapide par nom',
+ 'تطوير الإضافات': 'Développement d\'extensions', 'أنشئ إضافتك وأرسلها للمراجعة، وتابع التسليمات والإيرادات وتوثيق النطاق': 'Créez votre extension, soumettez-la à la validation, suivez les livraisons, les revenus et la vérification du domaine',
+ 'ابحث في إضافاتك بالاسم…': 'Rechercher dans vos extensions par nom…', 'ابحث عن إضافة بالاسم…': 'Rechercher une extension par nom…',
+ 'تعطيل الإضافة': 'Désactiver l\'extension', 'تفعيل الإضافة': 'Activer l\'extension', 'إلغاء التثبيت': 'Désinstaller', 'تثبيت وتفعيل': 'Installer et activer',
+ 'إضافات المنصّة': 'Extensions de la plateforme', 'إضافات المطوّرين': 'Extensions de développeurs', 'ستوديو ديزاين': 'Studio Design',
+ 'مثبَّتة ومفعّلة': 'Installée et activée', '✓ مثبَّتة ومفعّلة': '✓ Installée et activée', 'مثبَّتة · معطّلة': 'Installée · désactivée', 'مفعّلة': 'Activée', 'معطّلة': 'Désactivée',
+ 'لا توجد إضافة بهذا الاسم أو الحالة — جرّب «متجر الإضافات» لتثبيت المزيد.': 'Aucune extension avec ce nom ou cet état — essayez la « Boutique d\'extensions » pour en installer d\'autres.', 'لا توجد إضافة بهذا الاسم.': 'Aucune extension avec ce nom.',
+ 'إضافات المطوّرين المتاحة': 'Extensions de développeurs disponibles', 'إضافات المطوّرين المثبَّتة': 'Extensions de développeurs installées',
+ 'لم تثبّت أي إضافة من المطوّرين بعد.': 'Vous n\'avez encore installé aucune extension de développeur.', 'لا توجد إضافات من المطوّرين حالياً.': 'Aucune extension de développeur pour le moment.',
+ 'أفتح مطوّر الصفحات': 'Ouvrir l\'éditeur de pages', 'أفتح المطوّر الذكي': 'Ouvrir l\'éditeur intelligent', 'أفتح مولّد الصور': 'Ouvrir le générateur d\'images', 'أفتح الوكيل الذكي': 'Ouvrir l\'agent intelligent', 'أفتح الوكيل الناطق': 'Ouvrir l\'agent vocal', 'أفتح اسألني': 'Ouvrir Demandez-moi', 'أفتح ناسخ القوالب': 'Ouvrir le copieur de modèles', 'أفتح الأيقونات العائمة': 'Ouvrir les icônes flottantes', 'أفتح حماية الموقع': 'Ouvrir la protection du site', 'حفظ الأيقونات العائمة': 'Enregistrer les icônes flottantes',
+ 'فحص التحديثات': 'Vérifier les mises à jour', 'محدّث': 'À jour', 'اتصال هاتفي': 'Appel téléphonique', 'تفعيل/تعطيل': 'Activer/désactiver', 'تشغيل/إيقاف الحماية كلها': 'Activer/désactiver toute la protection',
+ 'mypage أو facebook.com/mypage': 'mypage ou facebook.com/mypage',
+ 'لا يستطيع الزائر تحديد النصوص بالفأرة.': 'Le visiteur ne peut pas sélectionner le texte à la souris.', 'يزعج الزائرين ويضعف إمكانية الوصول (خانات الكتابة غير متأثرة).': 'Gêne les visiteurs et nuit à l\'accessibilité (les champs de saisie ne sont pas concernés).',
+ 'يعطّل Ctrl+C والقص خارج خانات الكتابة.': 'Désactive Ctrl+C et le couper en dehors des champs de saisie.', 'لا يستطيع الزائر نسخ رقم هاتفك أو عنوانك.': 'Le visiteur ne peut pas copier votre numéro de téléphone ni votre adresse.',
+ 'يمنع برامج النسخ التي تتحكم بالمتصفح آلياً. لا يُحجب جوجل وبينج ومعاينة واتساب وفيسبوك وأدوات قياس السرعة.': 'Bloque les logiciels de copie qui pilotent le navigateur automatiquement. Google, Bing, l\'aperçu WhatsApp et Facebook et les outils de mesure de vitesse ne sont pas bloqués.', 'قد يعطّل أدوات الاختبار الآلي.': 'Peut désactiver les outils de test automatique.',
+})
+for _a, _f in [('المفعّلة', 'Activées'), ('المعطّلة', 'Désactivées'), ('إضافات المنصّة', 'Extensions de la plateforme'), ('ستوديو ديزاين', 'Studio Design'), ('إضافات المطوّرين', 'Extensions de développeurs')]:
+    PATTERNS += [[r'^' + _a + r' \((\d+)\)$', _f + r' (\1)']]
+
 # شروح الأقسام من admin.html (النص العربي بالضبط) ← الفرنسي
 navs = re.findall(r'<button class="nav-btn"[^>]*onclick="Admin\.tab\(\'([^\']+)\'[^>]*>.*?<b>(.*?)</b>(?:<span[^>]*>.*?</span>)?<small>(.*?)</small>', html, flags=re.S)
 strip = lambda x: re.sub(r'<[^>]+>', '', x).strip()
@@ -228,6 +250,14 @@ FR = os.path.join(ROOT, 'scripts', 'i18n-fr-frags.json')       # شظايا مو
 frags = json.load(open(FR, encoding='utf-8')) if os.path.exists(FR) else {}
 frags.update(json.load(open(MISS, encoding='utf-8')) if os.path.exists(MISS) else {})
 exact = dict(frags); exact.update({k.strip(): v for k, v in PAIRS.items()})
+_AL = [('التطبيقات', 'الإضافات'), ('تطبيقات', 'إضافات'), ('تطبيقاً', 'إضافة'), ('التطبيق', 'الإضافة'), ('تطبيقك', 'إضافتك'), ('تطبيقاتي', 'إضافاتي'), ('تطبيق', 'إضافة')]
+_GR = [('على إضافة معتمد يعيده', 'على إضافة معتمدة يعيدها'), ('＋ إضافة جديد', '＋ إضافة جديدة'), ('عاد الإضافة إلى المراجعة', 'عادت الإضافة إلى المراجعة'), ('قيّم إضافة ثبّتَّه فقط', 'قيّم إضافة ثبّتَّها فقط'), ('الإضافة مثبّت بالفعل', 'الإضافة مثبّتة بالفعل'), ('الإضافة لم يعد متاحاً', 'الإضافة لم تعد متاحة'), ('سيحصل الإضافة على', 'ستحصل الإضافة على'), ('هذا الإضافة يطلب', 'هذه الإضافة تطلب'), ('مع هذا الإضافة', 'مع هذه الإضافة'), ('الإضافة مجاني.', 'الإضافة مجانية.'), ('سيفقد الإضافة وصوله', 'ستفقد الإضافة وصولها'), ('لا يصل أي إضافة', 'لا تصل أي إضافة')]
+def _alias(k):
+    for a, b in _AL: k = k.replace(a, b)
+    for a, b in _GR: k = k.replace(a, b)
+    return k
+for _k, _v in list(exact.items()):
+    if 'تطبيق' in _k and _alias(_k) not in exact: exact[_alias(_k)] = _v
 _RX = re.compile(r'(?<!technologie )(?<!technologie IA )\bAlyssum\b(?! (?:API|3D|Box|Mockup|Studio|Pack))')
 exact = {k: _RX.sub('أليسوم', v) for k, v in exact.items()}      # اسم المتجر/القالب بالعربية: يحوّله المحرّك إلى اسم المتجر ويستبدله مولّد الحزمة باسم العميل
 out = {'exact': exact, 'patterns': PATTERNS}
