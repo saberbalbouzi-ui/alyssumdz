@@ -43,7 +43,7 @@ const ROOT = path.resolve(__dirname, "../../.."); const R = []; let fails = 0; c
     ok("بطاقة الشريط: النص الحالي ← الجديد ولون الخلفية ← الجديد، غير حساسة", /النص: «.+» ← «خصم \*\*20%\*\* اليوم فقط»/.test(c2) && /لون الخلفية: «.*» ← «#0a7d3b»/.test(c2) && (await p.evaluate(() => !document.querySelector("#laura .lm-pend.sens"))), c2);
     r = await approve(p); const ch = await jf("assets/data/chrome.json"), tb = ch.header && ch.header.topbar;
     ok("chrome.json: النص واللونان والإظهار كما طُلب، والردّ done", tb && tb.show === true && tb.text === "خصم **20%** اليوم فقط" && tb.bg === "#0a7d3b" && tb.color === "#ffffff" && /^تم: /.test(r), [tb, r]);
-    await vis.goto(store.base + "/index.html"); await vis.waitForSelector(".topbar", { timeout: 20000 }); const tbv = await vis.evaluate(() => { const e = document.querySelector(".topbar"); return { t: e.innerText, bg: getComputedStyle(e).backgroundColor }; });
+    await vis.goto(store.base + "/index.html"); await vis.waitForSelector(".topbar", { timeout: 20000 }); await vis.waitForFunction(() => /خصم/.test((document.querySelector(".topbar") || {}).innerText || ""), null, { timeout: 15000 }).catch(() => { }); const tbv = await vis.evaluate(() => { const e = document.querySelector(".topbar"); return { t: e.innerText, bg: getComputedStyle(e).backgroundColor }; });
     ok("أثر فعلي: واجهة المتجر تعرض الشريط بالنص واللون الجديدين", /خصم/.test(tbv.t) && /20%/.test(tbv.t) && tbv.bg === "rgb(10, 125, 59)", tbv);
     await askOn(p, 'نفّذ TEST_CALL:announcement_set:{"show":false}'); r = await approve(p); ok("تعطيل الشريط: show=false في الملف والردّ done", (await jf("assets/data/chrome.json")).header.topbar.show === false && /^تم: /.test(r), r);
     /* 4) رفض المستخدم: لا تنفيذ */
