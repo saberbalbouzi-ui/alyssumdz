@@ -241,6 +241,17 @@ for _a, _f in [('المفعّلة', 'Activées'), ('المعطّلة', 'Désacti
 
 PAIRS.update({'عند اختيار الفرنسية يتحوّل الموقع وقوالبه إلى الفرنسية (النصوص واتجاه الصفحة من اليسار)؛ ما كتبتَه بنفسك كأسماء المنتجات ووصفها يبقى كما هو. وتتبع لغةُ لوحة التحكم وإضافاتها هذا الاختيار فوراً، ويمكنك تبديل اللوحة وحدها بزرّ «FR / ع» في الشريط العلوي.': 'Lorsque vous choisissez le français, le site et ses modèles passent en français (textes et sens de la page de gauche à droite) ; ce que vous avez écrit vous-même, comme les noms et descriptions des produits, reste tel quel. La langue du tableau de bord et de ses extensions suit ce choix immédiatement, et vous pouvez changer le tableau de bord seul avec le bouton « FR / ع » de la barre supérieure.'})
 
+PAIRS.update({
+ '🔔 تنبيهات التسليم': '🔔 Alertes de livraison', 'تنبيهات التسليم': 'Alertes de livraison', 'اتّخذ إجراءً قبل فشل التوصيل': 'Agissez avant l\'échec de livraison',
+ 'لا تنبيهات حالياً: لا طرد ينتظر الزبون في مكتب ولا زبون لم يردّ على الموزّع': 'Aucune alerte : aucun colis n\'attend le client dans un bureau et aucun client n\'est resté sans réponse au livreur',
+ 'مطفأة': 'Désactivées', '⚙ الإعدادات ▼': '⚙ Réglages ▼', '📍 وصل إلى المكتب': '📍 Arrivé au bureau', '📵 لم يردّ على الموزّع': '📵 N\'a pas répondu au livreur',
+ 'الحالة:': 'Statut :', 'رُصدت': 'Détectée', 'جرى الاتصال': 'Appel effectué', 'أُرسلت رسالة': 'Message envoyé', '📞 اتصال': '📞 Appeler', '💬 واتساب': '💬 WhatsApp', '⏰ لاحقاً (3 س)': '⏰ Plus tard (3 h)', '✓ تمّت المعالجة': '✓ Traité',
+ 'تفعيل تنبيهات التسليم': 'Activer les alertes de livraison', 'صوت عند ظهور تنبيه جديد': 'Son à chaque nouvelle alerte', 'إشعار المتصفح عندما تكون اللوحة في الخلفية': 'Notification du navigateur lorsque le tableau de bord est en arrière-plan',
+ 'اعتبر التأخّر في المكتب متجاوزاً بعد': 'Considérer le retard au bureau comme dépassé après', 'يوم': 'jour(s)', 'رسالة «وصل إلى المكتب»': 'Message « arrivé au bureau »', 'رسالة «لم يردّ على الموزّع»': 'Message « n\'a pas répondu au livreur »',
+ 'اترك الرسالة فارغة لاستعمال النص الافتراضي. الحالات تتحدّث مع مزامنة الشركات (كل 15 دقيقة) وبزرّ «تحديث الحالة».': 'Laissez le message vide pour utiliser le texte par défaut. Les statuts se mettent à jour avec la synchronisation des transporteurs (toutes les 15 minutes) et avec le bouton « Actualiser le statut ».',
+})
+PATTERNS += [[r'^⚠ تجاوز (\d+) يوم$', r'⚠ Dépassé de \1 jour(s)']]
+
 # شروح الأقسام من admin.html (النص العربي بالضبط) ← الفرنسي
 navs = re.findall(r'<button class="nav-btn"[^>]*onclick="Admin\.tab\(\'([^\']+)\'[^>]*>.*?<b>(.*?)</b>(?:<span[^>]*>.*?</span>)?<small>(.*?)</small>', html, flags=re.S)
 strip = lambda x: re.sub(r'<[^>]+>', '', x).strip()
@@ -252,6 +263,12 @@ FR = os.path.join(ROOT, 'scripts', 'i18n-fr-frags.json')       # شظايا مو
 frags = json.load(open(FR, encoding='utf-8')) if os.path.exists(FR) else {}
 frags.update(json.load(open(MISS, encoding='utf-8')) if os.path.exists(MISS) else {})
 exact = dict(frags); exact.update({k.strip(): v for k, v in PAIRS.items()})
+_EM = re.compile(r'^[^\w\u0600-\u06ff]+|[^\w\u0600-\u06ff]+$')      # اللوحة تستبدل الإيموجي بأيقونات فيصل النص إلى المحرّك بلا الرمز: مفتاح بلا رموز طرفية لكل زوج يدوي
+for _k, _v in list(PAIRS.items()):
+    _k2, _v2 = _EM.sub('', _k.strip()), _EM.sub('', _v.strip())
+    if _k2 and _v2 and _k2 != _k.strip() and _k2 not in exact and re.search(r'[\u0600-\u06ff]', _k2) and len(_k2) > 2: exact[_k2] = _v2
+REV = os.path.join(ROOT, 'scripts', 'i18n-fr-review.json')      # تصحيحات مراجعة الخبراء اللغويين (تتقدّم على كل ما سبق)
+if os.path.exists(REV): exact.update({k.strip(): v for k, v in json.load(open(REV, encoding='utf-8')).items()})
 _AL = [('التطبيقات', 'الإضافات'), ('تطبيقات', 'إضافات'), ('تطبيقاً', 'إضافة'), ('التطبيق', 'الإضافة'), ('تطبيقك', 'إضافتك'), ('تطبيقاتي', 'إضافاتي'), ('تطبيق', 'إضافة')]
 _GR = [('على إضافة معتمد يعيده', 'على إضافة معتمدة يعيدها'), ('＋ إضافة جديد', '＋ إضافة جديدة'), ('عاد الإضافة إلى المراجعة', 'عادت الإضافة إلى المراجعة'), ('قيّم إضافة ثبّتَّه فقط', 'قيّم إضافة ثبّتَّها فقط'), ('الإضافة مثبّت بالفعل', 'الإضافة مثبّتة بالفعل'), ('الإضافة لم يعد متاحاً', 'الإضافة لم تعد متاحة'), ('سيحصل الإضافة على', 'ستحصل الإضافة على'), ('هذا الإضافة يطلب', 'هذه الإضافة تطلب'), ('مع هذا الإضافة', 'مع هذه الإضافة'), ('الإضافة مجاني.', 'الإضافة مجانية.'), ('سيفقد الإضافة وصوله', 'ستفقد الإضافة وصولها'), ('لا يصل أي إضافة', 'لا تصل أي إضافة')]
 def _alias(k):
