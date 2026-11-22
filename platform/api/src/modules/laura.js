@@ -55,6 +55,10 @@ export const laura = {
     }
     const helpers = (req) => ({ stats: () => null, get: (path, query) => ctx.invoke(req, "GET", path, { query }), post: (path, body) => ctx.invoke(req, "POST", path, { body }), patch: (path, body) => ctx.invoke(req, "PATCH", path, { body }), flush: (extId) => ctx.flush(req.tenant.id, extId), now: () => ctx.nowS() });
     const convLoad = async (tid, sub) => { const r = await db.one("SELECT msgs FROM lr_conv WHERE tenant_id=? AND actor=?", tid, sub); try { const a = JSON.parse(r?.msgs ?? "[]"); return Array.isArray(a) ? a.filter((x) => x && (x.r === "u" || x.r === "a") && typeof x.t === "string") : []; } catch { return []; } };
+    /* نتيجة قرار الموافقة تدخل الذاكرة المشتركة كي تراها الواجهة الأخرى (admin/spatial) بلا فقدان سياق */
+    const note = async (tid, sub, text, client) => { try { const mem = await convLoad(tid, sub); await convSave(tid, sub, [...mem, { r: "a", t: String(text ?? "").slice(0, MAX_TEXT), at: ctx.nowS(), c: ["admin", "spatial"].includes(client) ? client : "api" }]); } catch { /* الذاكرة لا تُفشل القرار */ } };
+    /* سياق النموذج من الذاكرة: يبدأ بدور المستخدم وتُدمج الأدوار المتتالية المتشابهة (نتائج الموافقات) كي لا يرفض المزوّد التسلسل */
+    const ctxOf = (mem, msg) => { const out = []; for (const x of mem.slice(-MAX_HIST)) { const role = x.r === "u" ? "user" : "model"; if (!out.length && role !== "user") continue; if (out.length && out[out.length - 1].role === role) out[out.length - 1].parts[0].text += "\n" + x.t; else out.push({ role, parts: [{ text: x.t }] }); } if (out.length && out[out.length - 1].role === "user") out[out.length - 1].parts[0].text += "\n" + msg; else out.push({ role: "user", parts: [{ text: msg }] }); return out; };
     const convSave = (tid, sub, arr) => db.run("INSERT INTO lr_conv (tenant_id,actor,msgs,updated_at) VALUES (?,?,?,?) ON CONFLICT(tenant_id,actor) DO UPDATE SET msgs=excluded.msgs, updated_at=excluded.updated_at", tid, sub, JSON.stringify(arr.slice(-MAX_MEM)), ctx.nowS());
     const pendingOf = async (tid, sub) => (await db.all("SELECT id,tool,summary,tool,expires_at FROM lr_pending WHERE tenant_id=? AND actor_sub=? AND state='pending' AND expires_at>? ORDER BY created_at LIMIT 10", tid, sub, ctx.nowS())).map((p) => ({ id: p.id, tool: p.tool, summary: p.summary, sensitive: !!toolByName(p.tool)?.sensitive, expires_in: p.expires_at - ctx.nowS() }));
     const visible = (req, actor) => visibleTools(req.scopes, actor, hasPerm);
@@ -79,7 +83,7 @@ export const laura = {
       const client = ["admin", "spatial"].includes(b.client) ? b.client : "api";                       // الواجهة المستدعية (لا تؤثر على الصلاحيات)
       const actor = await resolveActor(req), tools = visible(req, actor), lang = ["ar", "fr", "en"].includes(b.lang) ? b.lang : lc(msg), snap = sanitizeStats(b.stats, ctx.nowS()), h = { ...helpers(req), stats: () => snap };
       if (!llmConfigured(ctx.config)) throw new HttpError(503, "llm_unconfigured", "نموذج LAURA غير مُهيّأ على الخادم");
-      const mem = await convLoad(req.tenant.id, actor.sub), contents = [...mem.slice(-MAX_HIST).map((x) => ({ role: x.r === "u" ? "user" : "model", parts: [{ text: x.t }] })), { role: "user", parts: [{ text: msg }] }], steps = [], pending = [], usage = { in: 0, out: 0 };
+      const mem = await convLoad(req.tenant.id, actor.sub), contents = ctxOf(mem, msg), steps = [], pending = [], usage = { in: 0, out: 0 };
       let calls = 0, reply = "", rounds = 0, state = "done";
       try {
         for (; rounds < MAX_ROUNDS; rounds++) {
@@ -135,7 +139,7 @@ export const laura = {
       const now = ctx.nowS(); if (row.expires_at <= now) { await db.run("UPDATE lr_pending SET state='expired' WHERE id=? AND state='pending'", row.id); throw new HttpError(410, "expired", "انتهت صلاحية طلب الموافقة"); }
       const t = toolByName(row.tool), M = MSG[row.lang] ?? MSG.ar, args = JSON.parse(row.args);
       if (!t || (await sha256Hex(row.tool + row.args)) !== row.args_hash) throw new HttpError(409, "integrity", "تعذّر التحقق من الإجراء");
-      if (!b.approve) { await db.run("UPDATE lr_pending SET state='rejected', decided_at=? WHERE id=? AND state='pending'", now, row.id); await aud(actor, "laura.rejected", row.id, { tool: row.tool }); return ok({ ok: true, state: "rejected", reply: M.rejected(row.summary) }); }
+      if (!b.approve) { await db.run("UPDATE lr_pending SET state='rejected', decided_at=? WHERE id=? AND state='pending'", now, row.id); await aud(actor, "laura.rejected", row.id, { tool: row.tool }); const rr = M.rejected(row.summary); await note(req.tenant.id, actor.sub, rr, b.client); return ok({ ok: true, state: "rejected", reply: rr }); }
       if (!(req.scopes.includes("*") || req.scopes.includes(t.scope)) || !hasPerm(actor, t.perm)) { await aud(actor, "laura.denied", row.id, { why: "no_permission_at_confirm", tool: t.name }); throw new HttpError(403, "forbidden", "لم تعد تملك صلاحية هذه العملية"); }
       const claim = await db.run("UPDATE lr_pending SET state='running', decided_at=? WHERE id=? AND state='pending' AND expires_at>?", now, row.id, now); if (claim.changes !== 1) throw new HttpError(409, "already_decided", "الإجراء قيد التنفيذ أو مُنتهٍ");
       const h = helpers(req); let state = "failed", reply, verified = null, detail = null;
@@ -145,7 +149,7 @@ export const laura = {
       } catch (e) { const code = e instanceof ToolError ? e.code : "internal"; detail = { error: code }; reply = M.failed(row.summary, e instanceof ToolError ? e.message : "خطأ غير متوقع"); if (!(e instanceof ToolError)) console.error("laura exec:", e?.message); }
       await db.run("UPDATE lr_pending SET state=?, result=? WHERE id=?", state, JSON.stringify(detail).slice(0, 2000), row.id);
       await aud(actor, "laura.exec", row.id, { tool: t.name, args, state, verified, detail });
-      return ok({ ok: state === "done", state, verified, reply, tool: t.name });
+      await note(req.tenant.id, actor.sub, reply, b.client); return ok({ ok: state === "done", state, verified, reply, tool: t.name });
     });
   },
   async cron(ctx) { const x = await ctx.db.run("DELETE FROM lr_pending WHERE created_at<?", ctx.nowS() - 86400), y = await ctx.db.run("DELETE FROM lr_conv WHERE updated_at<?", ctx.nowS() - 30 * 86400); return { purged: x.changes, conv_purged: y.changes }; },

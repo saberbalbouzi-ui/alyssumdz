@@ -191,6 +191,9 @@ ok("الكتابة لا تعتمد على اللقطة: طلب تأكيد يتح
   const CID = sql("SELECT id FROM cr_carts WHERE tenant_id=? ORDER BY id LIMIT 1", A.id).id, AG = await AGENT();
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"contacted"}', AG); const PC = b.pending?.[0]; ok("موظف اتصال: تغيير حالة سلة يحتاج موافقة", b.state === "awaiting_approval" && !!PC && !PC.sensitive && sql("SELECT status FROM cr_carts WHERE id=?", CID).status === "open", b);
   [s, b] = await confirm(PC.id, true, AG); ok("موافقة: السلة «تم الاتصال» ومتحقَّق منها", s === 200 && b.verified === true && sql("SELECT status FROM cr_carts WHERE id=?", CID).status === "contacted", b);
+  { const [, h] = await call("GET", "/v1/laura/history", null, A.key, {}, AG), last = h.messages[h.messages.length - 1]; ok("نتيجة الموافقة تدخل الذاكرة المشتركة (يراها المستخدم في الواجهة الأخرى)", last.role === "assistant" && /سلة|السلة|تم الاتصال/.test(last.text), last);
+    [s, b] = await chat("كم طلب لدي؟", AG); ok("محادثة بعد نتيجة موافقة (دورا مساعد متتاليان): تُدمج ولا يفشل السياق", s === 200 && /لديك/.test(b.reply), b);
+    const roles = mock.lastBody.contents.map((c) => c.role); ok("سياق النموذج يبدأ بالمستخدم بلا أدوار متتالية متشابهة", roles[0] === "user" && roles.every((r, i) => i === 0 || r !== roles[i - 1]), roles); }
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"contacted"}', AG); ok("نفس الحالة: already_done بلا إجراء", stepNames(b).join() === "cart_set_status!already_done" && b.pending.length === 0, b);
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"deleted"}', AG); ok("حالة خارج القائمة: invalid_args", /invalid/.test(stepNames(b).join()), b);
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"recovered"}', await ACCT()); ok("محاسب: تغيير حالة سلة ← forbidden", stepNames(b).join() === "cart_set_status!forbidden", b); }

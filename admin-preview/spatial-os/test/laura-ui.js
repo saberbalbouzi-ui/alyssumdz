@@ -61,7 +61,7 @@ const R = []; let fails = 0; const ok = (n, c, x) => { if (!c) fails++; R.push((
     /* رجوع للمسار القديم عند عدم توفر LAURA */
     const p2 = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage(); await p2.goto(URL_); await p2.waitForFunction(() => typeof SpatialOS !== "undefined" && SpatialOS.two && typeof Laura !== "undefined", null, { timeout: 30000 });
     await p2.evaluate(() => Laura.setTransport(async () => { throw { code: "unavailable" }; })); await wait(500); await p2.click("#core"); await wait(2500);
-    ok("بلا LAURA (الخدمة غير متاحة): نقرة الكرة تفتح المسار القديم «اسألني» ولا تُظهر لوحة LAURA", await p2.evaluate(() => (SpatialOS.panels.has("ai") || SpatialOS.panels.has("help")) && (!document.getElementById("laura") || document.getElementById("laura").hidden)));
+    ok("بلا LAURA (الخدمة غير متاحة): نقرة الكرة تُظهر «قيد الإعداد» ولا تفتح لوحة LAURA ولا تعرض إجابات مختلقة", await p2.evaluate(() => /قيد الإعداد/.test((document.getElementById("mread") || {}).textContent || "") && (!document.getElementById("laura") || document.getElementById("laura").hidden)));
   } catch (e) { fails++; console.log("FAIL [crash]", String(e && e.stack || e).slice(0, 700)); }
   finally { try { await b?.close(); } catch { } try { static_?.kill(); } catch { } try { proxySrv?.close(); } catch { } stack.stop(); }
   console.log(fails ? "\nFAILED: " + fails : "\nALL PASS (" + R.filter(x => x.startsWith("PASS")).length + ")"); process.exit(fails ? 1 : 0);
