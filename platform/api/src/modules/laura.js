@@ -60,7 +60,7 @@ export const laura = {
       if (secret) { await aud({ role: "unknown", sub: "?" }, "laura.denied", req.tenant.id, { why: "actor_required", ip: req.ip }); throw new HttpError(401, "actor_required", "جلسة المستخدم مطلوبة عبر الوسيط الموثوق"); }
       return { sub: `key${req.keyId}`, role: "key", perms: ["*"], name: "", signed: false };
     }
-    const helpers = (req) => ({ stats: () => null, get: (path, query) => ctx.invoke(req, "GET", path, { query }), post: (path, body) => ctx.invoke(req, "POST", path, { body }), patch: (path, body) => ctx.invoke(req, "PATCH", path, { body }), flush: (extId) => ctx.flush(req.tenant.id, extId), now: () => ctx.nowS() });
+    const helpers = (req) => ({ stats: () => null, get: (path, query) => ctx.invoke(req, "GET", path, { query }), post: (path, body) => ctx.invoke(req, "POST", path, { body }), patch: (path, body) => ctx.invoke(req, "PATCH", path, { body }), del: (path) => ctx.invoke(req, "DELETE", path, {}), flush: (extId) => ctx.flush(req.tenant.id, extId), now: () => ctx.nowS() });
     const convLoad = async (tid, sub) => { const r = await db.one("SELECT msgs FROM lr_conv WHERE tenant_id=? AND actor=?", tid, sub); try { const a = JSON.parse(r?.msgs ?? "[]"); return Array.isArray(a) ? a.filter((x) => x && (x.r === "u" || x.r === "a") && typeof x.t === "string") : []; } catch { return []; } };
     /* نتيجة قرار الموافقة تدخل الذاكرة المشتركة كي تراها الواجهة الأخرى (admin/spatial) بلا فقدان سياق */
     const note = async (tid, sub, text, client) => { try { const mem = await convLoad(tid, sub); await convSave(tid, sub, [...mem, { r: "a", t: String(text ?? "").slice(0, MAX_TEXT), at: ctx.nowS(), c: ["admin", "spatial"].includes(client) ? client : "api" }]); } catch { /* الذاكرة لا تُفشل القرار */ } };

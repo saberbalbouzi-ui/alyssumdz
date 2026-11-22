@@ -1,12 +1,12 @@
 /* LAURA عبر مسار الـWorker نفسه (createPlatform + وحدات حقيقية + D1 محلية): محادثة، أدوات، صلاحيات، موافقات، لغات، أعطال، محاولات تجاوز.
    النموذج: محاكاة محلية بروتوكولية (_mock_llm.mjs) — ليست نموذجاً حقيقياً؛ الاختبار الحي ضد النموذج الحقيقي منفصل (tools/laura-live-check.mjs) ويحتاج مفتاحاً. */
 import { makeEnv, Tally } from "./_harness.mjs";
-import { payments } from "../src/modules/payments.js"; import { commerce } from "../src/modules/commerce.js"; import { carts } from "../src/modules/carts.js"; import { laura } from "../src/modules/laura.js";
+import { payments } from "../src/modules/payments.js"; import { wallet } from "../src/modules/wallet.js"; import { ads } from "../src/modules/ads.js"; import { commerce } from "../src/modules/commerce.js"; import { carts } from "../src/modules/carts.js"; import { laura } from "../src/modules/laura.js";
 import { signActor } from "../src/laura/actor.js"; import { createMock, KEY, mockFlags } from "./_mock_llm.mjs";
 const { ok, done } = Tally();
 const SECRET = "actor-secret-0123456789abcdef";
 const mock = createMock();
-const E = makeEnv([commerce, carts, payments, laura], { config: { LAURA_LLM_KEY: KEY, LAURA_ACTOR_SECRET: SECRET, LAURA_TIMEOUT_MS: "400" } }); E.fake.handler = mock.handler;
+const E = makeEnv([commerce, carts, payments, wallet, ads, laura], { config: { LAURA_LLM_KEY: KEY, LAURA_ACTOR_SECRET: SECRET, LAURA_TIMEOUT_MS: "400" } }); E.fake.handler = mock.handler;
 const { call, adm, tenant, sql, sqlAll, clock, db } = E;
 const A = await tenant("A"), B = await tenant("B"), nowS = () => Math.floor(clock.t / 1000);
 const mkKey = async (t, scopes) => (await adm("POST", `/admin/tenants/${t.id}/keys`, { scopes }))[1].key;
@@ -24,7 +24,7 @@ const refs = []; for (const o of [order(), order({ customer: { name: "ليلى �
 await adm("PATCH", `/admin/tenants/${B.id}`, { settings: { origins: ["https://shop.example"] } }); await call("PUT", "/v1/catalog/products", { products: [{ slug: "x", title: "منتج ب", price: 100, stock: 1, offers: [] }] }, B.key); await pub(B, order({ items: [{ slug: "x", qty: 1, price: 100 }], subtotal: 100, total: 700 }));
 /* ── 1) الحالة والاكتشاف ── */
 let [s, b] = await call("GET", "/v1/laura/health", null, A.key, {}, await OWNER()); ok("health: النموذج مُهيّأ والهوية الموقَّعة مطلوبة، بلا أسرار", s === 200 && b.llm_configured === true && b.actor_required === true && !JSON.stringify(b).includes(KEY) && !JSON.stringify(b).includes(SECRET), b);
-[, b] = await call("GET", "/v1/laura/tools", null, A.key, {}, await OWNER()); ok("المالك يرى 21 أداة (16 قراءة + 5 كتابة)", b.tools.length === 21 && b.tools.filter((t) => t.tier === "write").length === 5 && b.tools.some((t) => t.name === "order_cancel" && t.tier === "write"), b.tools.map((t) => t.name));
+[, b] = await call("GET", "/v1/laura/tools", null, A.key, {}, await OWNER()); ok("المالك يرى 27 أداة (20 قراءة + 7 كتابة)", b.tools.length === 27 && b.tools.filter((t) => t.tier === "write").length === 7 && b.tools.some((t) => t.name === "order_cancel" && t.tier === "write"), b.tools.map((t) => t.name));
 [, b] = await call("GET", "/v1/laura/tools", null, A.key, {}, await AGENT()); ok("موظف الاتصال: أدوات الطلبات فقط (لا منتجات/زبائن/إعدادات)", b.tools.map((t) => t.name).sort().join() === "cart_set_status,carts_list,carts_summary,digital_orders,order_cancel,order_confirm,orders_list,orders_stats,sources_stats", b.tools.map((t) => t.name));
 const narrow = await mkKey(A, ["laura:chat", "orders:read"]); [, b] = await call("GET", "/v1/laura/tools", null, narrow, {}, await OWNER()); ok("مفتاح ضيّق النطاق: حتى المالك لا يتجاوز نطاق المفتاح", b.tools.map((t) => t.name).sort().join() === "customers_top,orders_list,orders_stats,platform_stats,sales_summary", b.tools.map((t) => t.name));
 /* ── 2) محادثة حقيقية عبر المسار + أدوات حقيقية: عربية/دارجة/فرنسية ── */
@@ -179,7 +179,7 @@ ok("الكتابة لا تعتمد على اللقطة: طلب تأكيد يتح
   [, b] = await chat('TEST_CALL:payments_pending:{}', await AGENT()); ok("موظف اتصال: payments_pending محجوبة (forbidden)", stepNames(b).join() === "payments_pending!forbidden", b);
   [, b] = await chat('TEST_CALL:payments_pending:{}', await ACCT()); ok("محاسب (finance): يقرأ الدفعات المعلّقة", stepNames(b).join() === "payments_pending", b);
   [, b] = await chat('TEST_CALL:payment_approve:{"id":' + PA1 + '}', await ACCT()); ok("محاسب: اعتماد دفعة (للمالك فقط) ← forbidden ولا إجراء معلّق", stepNames(b).join() === "payment_approve!forbidden" && b.pending.length === 0 && sql("SELECT state FROM pay_manual WHERE id=?", PA1).state === "pending", b);
-  [, b] = await chat('TEST_CALL:wallet_summary:{}', OW); ok("وحدة غير مُحمَّلة (المحفظة): خطأ صريح لا انهيار", stepNames(b).length === 1 && /^wallet_summary!/.test(stepNames(b)[0]) && s !== 500, b);
+  [, b] = await chat('TEST_CALL:wallet_summary:{}', OW); ok("wallet_summary: أرصدة المتجر من المحفظة الحقيقية", stepNames(b).join() === "wallet_summary" && /balances/.test(b.reply), b);
   [, b] = await chat('TEST_CALL:payment_approve:{"id":' + PB1 + '}', OW); ok("عزل: اعتماد إثبات متجر آخر ← not_found ولا إجراء", stepNames(b).join() === "payment_approve!not_found" && b.pending.length === 0 && sql("SELECT state FROM pay_manual WHERE id=?", PB1).state === "pending", b);
   const narrow2 = await mkKey(A, ["laura:chat", "payments:read"]); [, b] = await chat('TEST_CALL:payment_approve:{"id":' + PA1 + '}', OW, { key: narrow2 }); ok("مفتاح بلا payments:write: اعتماد محجوب رغم المالك", stepNames(b).join() === "payment_approve!forbidden", b);
   [, b] = await chat('TEST_CALL:payment_approve:{"id":' + PA1 + '}', OW); const PP = b.pending?.[0]; ok("اعتماد دفعة (مالك): معلّق وحساس، والحالة لم تتغيّر", b.state === "awaiting_approval" && !!PP && PP.tool === "payment_approve" && PP.sensitive === true && sql("SELECT state FROM pay_manual WHERE id=?", PA1).state === "pending", b);
@@ -208,6 +208,26 @@ ok("الكتابة لا تعتمد على اللقطة: طلب تأكيد يتح
   }
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"deleted"}', AG); ok("حالة خارج القائمة: invalid_args", /invalid/.test(stepNames(b).join()), b);
   [, b] = await chat('TEST_CALL:cart_set_status:{"id":' + CID + ',"status":"recovered"}', await ACCT()); ok("محاسب: تغيير حالة سلة ← forbidden", stepNames(b).join() === "cart_set_status!forbidden", b); }
+/* ── 5ج) السحب والإعلانات والسوق والوكالة ── */
+{ await adm("POST", `/admin/wallet/${A.id}/deposit`, { amount: 90000, ref: "BANK-L1", memo: "t" });
+  const OW = await OWNER(); let st, ro;
+  [, b] = await call("POST", "/v1/wallet/withdrawals", { amount: 20000, method: "ccp", destination: "0012345678 clé 12" }, A.key); const WID = b.id;
+  [, b] = await call("PUT", "/v1/ads/accounts", { provider: "meta", name: "Meta DZ", account_id: "act_777000111", config: { currency: "USD", fx: 245 }, secrets: { token: "tok_abcdefghijklmnop" } }, A.key); const AID = b.id;
+  [, b] = await chat('TEST_CALL:wallet_withdrawals:{}', OW); ok("wallet_withdrawals: يعرض السحب بلا الوجهة", stepNames(b).join() === "wallet_withdrawals" && !JSON.stringify(b).includes("0012345678"), b);
+  [, b] = await chat('TEST_CALL:ads_accounts:{}', OW); ok("ads_accounts: بلا رمز الوصول", stepNames(b).join() === "ads_accounts" && !JSON.stringify(b).includes("tok_abcdefgh"), b);
+  [, b] = await chat('TEST_CALL:marketplace_stats:{}', OW); ok("وحدة السوق غير مُحمَّلة: خطأ صريح لا انهيار", /^marketplace_stats!/.test(stepNames(b)[0] ?? ""), b);
+  [, b] = await chat('TEST_CALL:wallet_withdrawals:{}', await AGENT()); ok("موظف اتصال: السحب محجوب", stepNames(b).join() === "wallet_withdrawals!forbidden", b);
+  [, b] = await chat('TEST_CALL:withdrawal_cancel:{"id":' + WID + '}', await ACCT()); ok("محاسب: إلغاء سحب (للمالك فقط) ← forbidden", stepNames(b).join() === "withdrawal_cancel!forbidden" && b.pending.length === 0, b);
+  [, b] = await chat('TEST_CALL:withdrawal_cancel:{"id":' + WID + '}', OW); const PW = b.pending?.[0]; ok("إلغاء سحب: معلّق وحساس والحالة لم تتغيّر", !!PW && PW.sensitive === true && sql("SELECT status FROM wl_withdrawals WHERE id=?", WID).status === "requested", b);
+  [s, b] = await confirm(PW.id, true, OW); ok("موافقة: أُلغي السحب وتحقّق (cancelled) والدفتر متوازن", s === 200 && b.verified === true && sql("SELECT status FROM wl_withdrawals WHERE id=?", WID).status === "cancelled" && sqlAll("SELECT currency, SUM(balance) s FROM wl_accounts GROUP BY currency").every((x) => x.s === 0), b);
+  [, b] = await chat('TEST_CALL:withdrawal_cancel:{"id":' + WID + '}', OW); ok("سحب ملغى أصلاً: يُرفض مبكراً", stepNames(b).join() === "withdrawal_cancel!already_done" && b.pending.length === 0, b);
+  [, b] = await chat('TEST_CALL:withdrawal_cancel:{"id":999}', OW); ok("سحب غير موجود: not_found", stepNames(b).join() === "withdrawal_cancel!not_found", b);
+  [, b] = await chat('TEST_CALL:ads_sync_toggle:{"id":' + AID + ',"paused":true}', OW, { lang: "fr" }); const PA = b.pending?.[0]; ok("إيقاف مزامنة إعلانات: ملخص فرنسي معلّق", !!PA && /Suspendre la synchronisation/.test(PA.summary) && sql("SELECT status FROM ad_accounts WHERE id=?", AID).status !== "paused", PA);
+  [s, b] = await confirm(PA.id, true, OW); ok("موافقة: أُوقفت المزامنة وتحقّق، والردّ فرنسي بلا عربية", s === 200 && b.verified === true && sql("SELECT status FROM ad_accounts WHERE id=?", AID).status === "paused" && /suspendue/.test(b.reply) && !/[؀-ۿ]/.test(b.reply), b);
+  [, b] = await chat('TEST_CALL:ads_sync_toggle:{"id":' + AID + ',"paused":true}', OW); ok("موقوف أصلاً: already_done بلا إجراء", stepNames(b).join() === "ads_sync_toggle!already_done" && b.pending.length === 0, b);
+  /* عزل المتاجر: حساب إعلاني/سحب لمتجر آخر لا يُرى ولا يُعدَّل */
+  const [, bb] = await call("PUT", "/v1/ads/accounts", { provider: "meta", name: "B", account_id: "act_888000222", config: { currency: "USD", fx: 245 }, secrets: { token: "tok_bbbbbbbbbbbbbbbb" } }, B.key);
+  [, b] = await chat('TEST_CALL:ads_sync_toggle:{"id":' + bb.id + ',"paused":true}', OW); ok("عزل: حساب إعلاني لمتجر آخر ← not_found ولا إجراء", stepNames(b).join() === "ads_sync_toggle!not_found" && b.pending.length === 0, b); }
 /* حدّ المعدّل (آخر الاختبارات: يستهلك النافذة) */
 { bump = false; let last = 200; for (let i = 0; i < 25; i++) { [last] = await chat("كم طلب لدي؟", await OWNER(), { key: await mkKey(A, ["*"]).then(() => A.key) }); if (last === 429) break; } ok("حدّ المعدّل: 429 بعد ~20 رسالة/دقيقة", last === 429, last); }
 done();
