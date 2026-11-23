@@ -262,6 +262,8 @@ for k, b, sm in navs:
 FR = os.path.join(ROOT, 'scripts', 'i18n-fr-frags.json')       # شظايا مولَّدة (scripts/i18n-extract.py ← ترجمة) تحت الأزواج اليدوية
 frags = json.load(open(FR, encoding='utf-8')) if os.path.exists(FR) else {}
 frags.update(json.load(open(MISS, encoding='utf-8')) if os.path.exists(MISS) else {})
+PAIRS.update({'إظهار زر «ع | FR» للزائر ليختار لغته بنفسه': 'Afficher le bouton « ع | FR » pour que le visiteur choisisse sa langue'})
+
 exact = dict(frags); exact.update({k.strip(): v for k, v in PAIRS.items()})
 _EM = re.compile(r'^[^\w\u0600-\u06ff]+|[^\w\u0600-\u06ff]+$')      # اللوحة تستبدل الإيموجي بأيقونات فيصل النص إلى المحرّك بلا الرمز: مفتاح بلا رموز طرفية لكل زوج يدوي
 for _k, _v in list(PAIRS.items()):

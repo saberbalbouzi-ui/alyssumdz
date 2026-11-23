@@ -804,7 +804,7 @@ function applyStore(c){
       if(!c.instagram && c.social && c.social.instagram){ try{ CONFIG.SITE.instagram = decodeURIComponent(new URL(c.social.instagram).pathname.split("/").filter(Boolean).pop()||"").replace(/^@/,""); }catch(e){} }
     }
     if(c.currency) window.__STORE_CUR = c.currency;
-    if(c.lang && /^(ar|fr|en|es|de|tr)$/.test(c.lang)) document.documentElement.lang = c.lang;
+    { let lg = c.lang; try{ const u = window.SiteI18n && window.SiteI18n.user && window.SiteI18n.user(); if(u === "fr" || u === "ar") lg = u; }catch(e){} if(lg && /^(ar|fr|en|es|de|tr)$/.test(lg)) document.documentElement.lang = lg; }   /* اختيار الزائر (زر اللغة) يتقدّم على الإعداد */
     const wa = String(c.wa || "").replace(/[^\d]/g,"");
     if(wa){
       WA_NUMBER = wa;
