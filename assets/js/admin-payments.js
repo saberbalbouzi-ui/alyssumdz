@@ -400,7 +400,8 @@ const AdminPayments = (() => {
         body=`<div style="overflow:auto;max-height:480px;margin-top:.6rem"><table style="border-collapse:collapse;font-size:.78rem;min-width:600px"><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>${(x.rows||[]).length>cap.length?`<div class="pm-note">المعروض أول ${cap.length} من ${(x.rows||[]).length} صف.</div>`:""}`; }
       return `<section class="pm-card" data-noco>${head}${body}</section>`; }).join("");
   }
-  function draw() {
+  function draw() { const h = document.getElementById("payments-content"); return window.AdminKeep && h ? window.AdminKeep.run(h, draw0) : draw0(); }      /* لا تقفز الشاشة بعد ضغط زر (إعادة الرسم تحفظ موضع التمرير) */
+  function draw0() {
     const host=$("payments-content"); if(!host)return;
     const t=totals(S.co), list=filtered();
     if(!S.tab||S.tab==="im") S.tab="ov"; const vis=k=>S.tab===k?"":" hidden", TB=[["ov","نظرة عامة"],["st","تسوية الشركات"],["rec","السجلات ("+list.length+")"]], tabBar='<div class="pm-tabs" style="display:flex;gap:.4rem;flex-wrap:wrap">'+TB.map(x=>'<button type="button" class="pm-btn'+(S.tab===x[0]?' pm-primary':'')+'" data-pmtab="'+x[0]+'">'+esc(x[1])+'</button>').join("")+'</div>';

@@ -1,6 +1,26 @@
 /* نوافذ اللوحة تبقى ثابتة: النافذة المتوسِّطة (overlay ثابت بـ flex وalign-items:center) كانت تعيد توسّطها كلما تغيّر ارتفاع محتواها
    (ضغط زر يضيف/يحذف سطراً، أو تحديث القائمة داخلها) فتقفز للأعلى والأسفل. هنا يُثبَّت موضعها العلوي كما ظهرت أول مرة
    فيتمدّد المحتوى للأسفل فقط، ولا تتحرك إلا إن لم تعد تتسع في الشاشة (تُرفع بالقدر اللازم فقط). عامّة لكل نوافذ اللوحة بلا تعديل كل نافذة. */
+/* AdminKeep.run(host, fn): ينفّذ إعادة رسم الواجهة (innerHTML) مع حفظ موضع تمرير الصفحة وكل حاويات التمرير داخل host والعنصر المركَّز، فلا «تقفز» الشاشة بعد ضغط زر داخل قائمة */
+window.AdminKeep = {
+  run(host, fn) {
+    if (!host) return fn();
+    const y = window.scrollY, x = window.scrollX, all = [...host.querySelectorAll("*")], saved = [];
+    all.forEach((e, i) => { if (e.scrollTop || e.scrollLeft) saved.push({ i, id: e.id || "", cls: e.className || "", t: e.scrollTop, l: e.scrollLeft }); });
+    const anc = []; for (let e = host.parentElement; e && e !== document.documentElement; e = e.parentElement) if (e.scrollTop || e.scrollLeft) anc.push({ e, t: e.scrollTop, l: e.scrollLeft });      /* حاويات التمرير الأعلى (محتوى اللوحة نفسه) */
+    const a = document.activeElement, ak = a && host.contains(a) ? { id: a.id || "", pk: a.getAttribute && a.getAttribute("data-pk"), i: all.indexOf(a) } : null;
+    const r = fn();
+    const restore = () => {
+      const now = [...host.querySelectorAll("*")];
+      saved.forEach(o => { const e = (o.id && document.getElementById(o.id)) || (now[o.i] && now[o.i].className === o.cls ? now[o.i] : null); if (e) { e.scrollTop = o.t; e.scrollLeft = o.l; } });
+      anc.forEach(o => { if (o.e.isConnected && (Math.abs(o.e.scrollTop - o.t) > 2 || Math.abs(o.e.scrollLeft - o.l) > 2)) { o.e.scrollTop = o.t; o.e.scrollLeft = o.l; } });
+      if (Math.abs(window.scrollY - y) > 2 || Math.abs(window.scrollX - x) > 2) window.scrollTo(x, y);
+      if (ak && (!document.activeElement || document.activeElement === document.body)) { const e = (ak.id && document.getElementById(ak.id)) || (ak.pk && ak.i >= 0 && now[ak.i] && now[ak.i].getAttribute("data-pk") === ak.pk ? now[ak.i] : null); if (e && e.focus) { try { e.focus({ preventScroll: true }); } catch (_) { } } }
+    };
+    restore(); requestAnimationFrame(restore);
+    return r;
+  }
+};
 (() => {
   if (window.__modalStable) return; window.__modalStable = 1;
   const SKIP = /^(au-boot)$/;

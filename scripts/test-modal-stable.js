@@ -24,6 +24,21 @@ const { chromium } = require("playwright");
   await p.evaluate(() => document.getElementById("notice-modal-bg").classList.remove("open")); await p.waitForTimeout(600);
   const un = await p.evaluate(() => { const bg = document.getElementById("notice-modal-bg"); return { ai: bg.style.alignItems, mt: bg.querySelector(".modal").style.marginTop }; });
   t("عند الإغلاق تُرفع التثبيتات (تعود الإعدادات الأصلية)", un.ai === "" && un.mt === "", un);
+  /* تبويب التجهيز: «جُهِّز ✓» يعيد رسم القائمة كلها ولا يجوز أن يقفز التمرير */
+  const K = await p.evaluate(async () => {
+    const host = document.createElement("div"); host.id = "keep-host"; host.style.cssText = "height:300px;overflow:auto"; document.body.appendChild(host);
+    const render = () => { host.innerHTML = "<div class='w' style='height:200px;overflow:auto'>" + Array.from({ length: 60 }, (_, i) => "<div style='height:30px'>r" + i + "</div>").join("") + "</div><div style='height:900px'></div>"; };
+    render(); document.documentElement.style.minHeight = "3000px"; host.scrollTop = 120; host.firstChild.scrollTop = 300; window.scrollTo(0, 400);
+    AdminKeep.run(host, render); await new Promise(r => setTimeout(r, 120));
+    return { win: Math.round(window.scrollY), box: Math.round(host.scrollTop), inner: Math.round(host.firstChild.scrollTop) }; });
+  t("AdminKeep: إعادة الرسم تحفظ تمرير الصفحة وحاوية التمرير الداخلية", K.win === 400 && K.box === 120 && K.inner === 300, K);
+  const PK = await p.evaluate(async () => {
+    const tab = document.getElementById("tab-pack"); tab.classList.remove("hidden"); document.getElementById("app").classList.remove("hidden"); AdminPack._S.host = tab; tab._pk = 0;
+    AdminPack._S.rows = Array.from({ length: 90 }, (_, i) => ({ id: "P" + i, name: "ز" + i, wilaya: "Alger", items: "عسل ×1 = 2000 DA", tracking: "TT" + i, packed: false, status: "confirmee" })); AdminPack._S.f = "all"; AdminPack._S.busy = false;
+    AdminPack.draw(); document.documentElement.style.minHeight = "6000px"; await new Promise(r => setTimeout(r, 200));
+    const sc = tab.parentElement; sc.style.cssText += ";height:500px;overflow:auto"; const btn = [...tab.querySelectorAll('[data-pk="one"]')][40]; btn.scrollIntoView({ block: "center" }); const y0 = Math.round(sc.scrollTop);
+    btn.click(); await new Promise(r => setTimeout(r, 900)); return { y0, y1: Math.round(sc.scrollTop), rows: tab.querySelectorAll("tr[data-id]").length }; });
+  t("«جُهِّز ✓» في تبويب التجهيز: لا تقفز الشاشة بعد إعادة رسم القائمة", PK.y0 > 500 && Math.abs(PK.y1 - PK.y0) <= 3 && PK.rows > 40, PK);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();

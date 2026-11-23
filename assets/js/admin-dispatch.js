@@ -225,7 +225,8 @@
     document.head.appendChild(st);
   }
   function coOptions(sel, extra) { return (extra || []).concat(en().map(k => [k, coName(k)])).map(([v, l]) => `<option value="${esc(v)}"${v === sel ? " selected" : ""}>${esc(l)}</option>`).join(""); }
-  function draw() {
+  function draw() { const h = document.getElementById("dispatch-content"); return window.AdminKeep && h ? window.AdminKeep.run(h, draw0) : draw0(); }      /* لا تقفز الشاشة بعد ضغط زر (إعادة الرسم تحفظ موضع التمرير) */
+  function draw0() {
     const host = $("dispatch-content"); if (!host || !A()) return; css(); const a = A(), pend = pending(), prt = printable(), st = stats(), ens = en();
     const split = {}; pend.forEach(o => { const k = a.orderCompanyKey(o) || a.activeCompanyKey(); split[coName(k)] = (split[coName(k)] || 0) + 1; });
     const exp = prt, sc = scannedList(), scSet = new Set(sc.map(x => x.k)), left = exp.filter(x => !scSet.has(normScan(x.t.tracking)));
