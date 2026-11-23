@@ -41,3 +41,6 @@ description: اتفاقيات واجهة لوحة تحكم أليسوم: الم�
 - ثلاثة عناصر في مقدّمة المجموعة: «الإضافات المنصَّبة» (تبويب `addons`، `assets/js/admin-addons.js`) ثم «متجر الإضافات» (`appstore`) ثم «تطوير الإضافات» (`appdev`). أزرار إعدادات الإضافات التسع صارت `nav-hid` وتُفتح من «المنصَّبة» (`AdminNav.app(id)`).
 - الحالة في `assets/data/apps.json`: `off` معطَّلة، `rm` غير مثبَّتة (تُعدّ معطَّلة أيضاً)؛ API: `AdminNav.setInstalled/usable/installed/isOff/apps`. أدوات ستوديو ديزاين بمعرّف `sd:<أداة>` وتُخفى من الستوديو عند تعطيلها (`AdminStudio` يرشّح بـ`AdminNav.usable`).
 - المتجر: `AdminAddons.drawStore` فوق `#as-app` (إضافات المطوّرين من `admin-appstore.js`، عرضا `store`/`mine`)؛ بحث سريع بالاسم وفئات. إضافة جديدة للمنصّة تظهر تلقائياً إن سُجّلت في `APPS` بـ`admin-nav.js`؛ أداة ستوديو جديدة من `tools-catalog.json`. الكلمة «إضافة» لا «تطبيق»؛ والاختبار `scripts/test-addons.js`.
+
+## الترجمة الفرنسية (إلزامية لكل جديد)
+كل نص/زر/رسالة/مقال مساعدة جديد في اللوحة يُترجَم للفرنسية قبل الإصدار: أزواج في `scripts/i18n-fr-miss.json` ثم `python3 scripts/gen-i18n-fr.py`؛ مقال المساعدة في `assets/data/admin-help.fr.json`؛ `confirm`/`alert` عبر `AdminI18n.t`؛ ثم `node scripts/check-i18n-new.js` يطبع ما بقي عربياً (إيجابيات كاذبة ممكنة: تعليقات/مفاتيح).
