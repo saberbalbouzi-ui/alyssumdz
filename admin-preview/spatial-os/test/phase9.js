@@ -26,7 +26,7 @@ async function boot(b, store, o = {}) {
   /* الإشعارات العائمة في لوحة الأعمال تعترض نقر الأزرار تحتها أثناء الأتمتة؛ نجعلها لا تلتقط المؤشر في الاختبار فقط */
   await p.addInitScript(() => { document.addEventListener("DOMContentLoaded", () => { if (window !== window.top) { const s = document.createElement("style"); s.textContent = "#toast,#toast2,.toast{pointer-events:none!important}"; document.head.appendChild(s); } }); });
   await p.addInitScript(() => { try { const top = window.top; top.__spy = top.__spy || []; addEventListener("message", e => { try { top.__spy.push({ where: window === top ? "parent" : "frame", origin: e.origin, d: JSON.stringify(e.data).slice(0, 1500) }); } catch (_) { } }, true); } catch (_) { } });
-  const url = (o.host ? store.spatial.replace("127.0.0.1", o.host) : store.spatial) + "?autoopen=1&nozoom=1" + (process.env.NOSPARE ? "&nospare=1" : "") + (process.env.NOZOOM ? "&nozoom=1" : "");
+  const url = (o.host ? store.spatial.replace("127.0.0.1", o.host) : store.spatial) + "?autoopen=1&nozoom=1&noextra=1" + (process.env.NOSPARE ? "&nospare=1" : "") + (process.env.NOZOOM ? "&nozoom=1" : "");
   await p.goto(url); await p.waitForTimeout(800);
   await p.evaluate(async pw => (await fetch("../../api/index.php?r=login", { method: "POST", headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" }, body: JSON.stringify({ password: pw }) })).status, store.pw);
   await p.reload(); await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 90000 });

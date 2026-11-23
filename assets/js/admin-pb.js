@@ -5604,7 +5604,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
         const ref = await j("/git/ref/heads/" + c.branch + "?t=" + Date.now()), cm = await j("/git/commits/" + ref.object.sha);
         const t = await j("/git/trees", { method: "POST", body: JSON.stringify({ base_tree: cm.tree.sha, tree }) });
         const nc = await j("/git/commits", { method: "POST", body: JSON.stringify({ message: msg, tree: t.sha, parents: [ref.object.sha] }) });
-        try { await j("/git/refs/heads/" + c.branch, { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) }); return true; } catch (e) { if (e.status !== 422 && e.status !== 409) throw e; }      // الفرع تحرّك أثناء الحفظ: أعد المحاولة على آخر إيداع
+        try { await j("/git/refs/heads/" + c.branch, { method: "PATCH", body: JSON.stringify({ sha: nc.sha }) }); try { if (window.SiteTrans) files.forEach(f => SiteTrans.onText(f.path, f.text)); } catch (e2) { } return true; } catch (e) { if (e.status !== 422 && e.status !== 409) throw e; }      // الفرع تحرّك أثناء الحفظ: أعد المحاولة على آخر إيداع
       }
       return false;
     } catch (e) { console.warn("commitMany", e); return false; }
