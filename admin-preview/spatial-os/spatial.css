@@ -509,3 +509,9 @@ body.lite .panel{transition:none}
 html.lang-fr .active::before{content:"Section active : "}
 html.lang-fr body.real .panel[data-real="0"] .pn-h h3::after{content:" · démonstration"}
 #hud-lang{min-width:42px;font-weight:800}
+
+/* المدار الثالث: أقسام داخل إعداد المرتبة الثانية (عناوين من لوحة التحكم الحقيقية) */
+.node.sub3{width:98px;height:auto;min-height:38px;padding:5px 8px;border-radius:12px;border-color:rgba(110,230,255,.55);background:linear-gradient(150deg,rgba(12,56,76,.88),rgba(8,24,46,.82))}
+.node.sub3 span{font-size:10.5px;line-height:1.25;white-space:normal;text-align:center;color:#dffbff;font-weight:700}
+.node.sub3:hover,.node.sub3:focus-visible{border-color:#e2fe17;box-shadow:0 0 12px rgba(226,254,23,.5)}
+@media(max-width:820px){.node.sub3{width:84px;min-height:34px;padding:4px 6px}.node.sub3 span{font-size:9.5px}}

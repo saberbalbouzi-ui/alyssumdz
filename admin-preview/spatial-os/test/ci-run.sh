@@ -32,6 +32,7 @@ want holo-settings  && run holo-settings  900 node "$T/holo-settings.js" all   #
 want world-fast    && run world-fast    600 node "$T/world-fast.js"   # العالم الحقيقي: سرعة الفتح، المداران، بطاقات الرئيسية، اللوح الاحتياطي، جسر صوت الكرة
 want lang-fr       && run lang-fr       600 node "$T/lang-fr.js"      # الفرنسية: زر FR/ع في Spatial + تزامن كل الألواح واللوحة + بطاقات الرئيسية + الاستمرار (متجر PHP محلي حقيقي)
 want phone-scroll  && run phone-scroll  300 node "$T/phone-scroll.js"   # الهاتف: القاعدة ظاهرة، لوح 2D (عادي ومكبَّر)، سحب الإصبع يمرّر المحتوى
+want orbits3      && run orbits3      600 node "$T/orbits3.js"       # ثلاثة مدارات (تبويبات ← إعدادات أولى ← إعدادات ثالثة) + فتح آني بألواح مسخَّنة مسبقاً
 want drag-inside && run drag-inside  300 node "$T/drag-inside.js"   # السحب داخل البطاقات
 want sphere-audio&& run sphere-audio 300 node "$T/sphere-audio.js"   # صوت الكرة ستيريو
 want viewports       && run viewports       600 node "$T/spatial-viewports.js"
