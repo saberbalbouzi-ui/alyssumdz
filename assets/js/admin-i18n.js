@@ -89,9 +89,19 @@ const AdminI18n = (() => {
   }
   async function load() {
     if (dict) return dict; if (loading) return loading;
-    loading = fetch("assets/data/i18n-fr.json", { cache: "no-cache" }).then(r => r.json()).then(j => { dict = j; return j; }).catch(() => { dict = { exact: {}, patterns: [] }; return dict; });
+    loading = fetch("assets/data/i18n-fr.json", { cache: "no-cache" }).then(r => r.json()).then(j => { dict = j; return j; }).catch(() => { dict = { exact: {}, patterns: [] }; return dict; })
+      .then(d => fetch("assets/data/names-fr.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(m => { storeNames = m || {}; mergeNames(d); return d; }));
     return loading;
   }
+  /* أسماء المنتجات والحملات: بيانات المتجر نفسه (لا تُترجَم بقاموس عام)؛ تأتي من ملف أسماء المتجر ومن حقل «الاسم بالفرنسية» في المنتج */
+  let storeNames = {};
+  function mergeNames(d) {
+    d = d || dict; if (!d) return false; let add = false; const put = (k, v) => { k = String(k || "").trim(); v = String(v || "").trim(); if (k && v && d.exact[k] !== v) { d.exact[k] = v; add = true; } };
+    Object.keys(storeNames).forEach(k => put(k, storeNames[k]));
+    try { (typeof Admin !== "undefined" && Admin.products || []).forEach(p => { if (p && p.titleFr) put(p.title, p.titleFr); }); } catch (_) { }
+    if (add) delete d.idx; return add;
+  }
+  function syncNames() { if (!dict) return; if (mergeNames(dict) && lang === "fr") { try { walk(document.body); } catch (_) { } } }
   function paint() {
     const h = document.documentElement; h.setAttribute("lang", lang); h.setAttribute("dir", lang === "fr" ? "ltr" : "rtl"); h.classList.toggle("lang-fr", lang === "fr");
     try { const h1 = document.querySelector("#app .top>h1"); if (h1) h1.setAttribute("data-brand", lang === "fr" ? (siteName() || h1.getAttribute("data-brand") || "") : (window.AdminPanelName ? window.AdminPanelName() : (h1.getAttribute("data-brand") || ""))); } catch (e) { }
@@ -118,6 +128,6 @@ const AdminI18n = (() => {
     else if (!chosen()) fetch("assets/data/store.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.lang === "fr" && !chosen() && lang !== "fr") set("fr", true); }).catch(() => { });      /* لم يختر المستخدم لغة: تتبع اللوحة «لغة الموقع» (store.json) */
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
-  return { set, key: KEY, get lang() { return lang; }, helpUrl: () => lang === "fr" ? "assets/data/admin-help.fr.json" : "assets/data/admin-help.json", t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
+  return { set, syncNames, key: KEY, get lang() { return lang; }, helpUrl: () => lang === "fr" ? "assets/data/admin-help.fr.json" : "assets/data/admin-help.json", t: s => { const x = tr(String(s || "")); return lang === "fr" && x != null ? x : s; }, walk };
 })();
 window.AdminI18n = AdminI18n;
