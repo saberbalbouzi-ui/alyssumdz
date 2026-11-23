@@ -5,9 +5,10 @@
    مشترك لكل المواقع؛ لا شيء خاص بمتجر. التوسعة: scripts/gen-site-i18n-fr.py */
 (function () {
   if (window.__siteI18n) return; window.__siteI18n = true;
-  var KEY = "alyssum_site_lang", AR = /[؀-ۿ]/, H = document.documentElement;
+  var KEY = "site_lang", AR = /[؀-ۿ]/, H = document.documentElement;
   var me = document.currentScript, SRC = (me && me.src) || "", BASE = SRC ? SRC.replace(/assets\/js\/site-i18n\.js[^]*$/, "") : "";
   var cached = ""; try { cached = localStorage.getItem(KEY) || ""; } catch (e) { }
+  var UKEY = "site_lang_user", user = ""; try { user = localStorage.getItem(UKEY) || ""; } catch (e) { } if (user !== "fr" && user !== "ar") user = ""; if (user) cached = user;   /* اختيار الزائر بزر اللغة يتقدّم على إعداد الموقع */
   var q = /[?&]lang=(fr|ar)\b/.exec(location.search); if (q) cached = q[1];
   var dict = null, obs = null, busy = false, on = false, orig = new WeakMap(), origAttr = new WeakMap(), tm = 0;
   var SKIP = "script,style,textarea,code,pre,noscript,[data-i18n-skip],.notranslate,.pb-edit,#pb-app,#pbx-frame";
@@ -112,15 +113,56 @@
         if (document.fonts && document.fonts.ready) { document.fonts.ready.then(run); setTimeout(run, 1200); } else run(); };
       if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", go); else go(); setTimeout(apply, 600); setTimeout(apply, 2000); });
   }
+  /* زر تبديل اللغة للزائر (عربي ⇄ Français): مقبض ثابت على حافة نهاية السطر (يسار في العربية، يمين في الفرنسية)؛ الاختيار يُحفظ في المتصفح ويتقدّم على إعداد الموقع.
+     يُخفى داخل الإطارات (معاينة اللوحة/التضمين) وفي المطوّر والطباعة، ويُعطَّل من الإعدادات (store.json langSwitch:false). */
+  function langBtn(cur) {
+    if (document.getElementById("site-lang-btn")) return;
+    if (window.top !== window || /[?&](embed|preview)=1/.test(location.search)) return;
+    var mk = function () {
+      if (document.getElementById("site-lang-btn") || !document.body || document.body.classList.contains("pb-edit") || document.getElementById("pb-app")) return;
+      var st = document.createElement("style"); st.id = "site-lang-css";
+      st.textContent = "#site-lang-btn{position:fixed;left:0;top:42%;z-index:900;display:flex;flex-direction:column;overflow:hidden;border-radius:0 12px 12px 0;background:rgba(24,24,27,.92);box-shadow:0 4px 16px rgba(0,0,0,.28);font:700 13px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;direction:ltr}" +
+        "#site-lang-btn[data-side=r]{left:auto;right:0;border-radius:12px 0 0 12px}#site-lang-btn button{all:unset;box-sizing:border-box;cursor:pointer;padding:11px 9px;min-width:34px;text-align:center;color:rgba(255,255,255,.78);letter-spacing:.02em}" +
+        "#site-lang-btn button[aria-pressed=true]{background:#fff;color:#111;cursor:default}#site-lang-btn button:focus-visible{outline:2px solid #fff;outline-offset:-3px}" +
+        "@media(max-width:600px){#site-lang-btn{top:38%}#site-lang-btn button{padding:8px 5px;min-width:26px;font-size:11.5px}}@media print{#site-lang-btn{display:none!important}}";
+      (document.head || H).appendChild(st);
+      var b = document.createElement("div"); b.id = "site-lang-btn"; b.className = "notranslate"; b.setAttribute("data-i18n-skip", ""); b.setAttribute("translate", "no"); b.setAttribute("role", "group"); b.setAttribute("data-side", cur === "fr" ? "r" : "l");   /* على حافة نهاية السطر: يسار في العربية (RTL) ويمين في الفرنسية فلا يغطّي بداية النص */ b.setAttribute("aria-label", "Langue / اللغة");
+      [["ar", "ع", "العربية"], ["fr", "FR", "Français"]].forEach(function (l) {
+        var x = document.createElement("button"); x.type = "button"; x.textContent = l[1]; x.setAttribute("aria-label", l[2]); x.setAttribute("aria-pressed", l[0] === cur ? "true" : "false");
+        x.addEventListener("click", function () {
+          if (l[0] === cur) return; try { localStorage.setItem(UKEY, l[0]); localStorage.setItem(KEY, l[0]); } catch (e) { }
+          var u = location.href.replace(/([?&])lang=(fr|ar)(&|$)/, function (m0, a, b0, c0) { return c0 ? a : ""; }).replace(/[?&]$/, ""); if (u !== location.href) location.replace(u); else location.reload();
+        });
+        b.appendChild(x);
+      });
+      document.body.appendChild(b);
+      /* لا يغطّي نصاً: يختار الموضع الرأسي الأقلّ تقاطعاً مع النصوص الظاهرة عند حافته ويعيد الاختيار بعد التمرير/تغيير الحجم */
+      var at = 0, place = function () {
+        try {
+          var side = b.getAttribute("data-side") === "r", bw = b.offsetWidth || 30, bh = b.offsetHeight || 64, vw = innerWidth, vh = innerHeight, bx0 = side ? vw - bw : 0, bx1 = side ? vw : bw, rects = [], tw = document.createTreeWalker(document.body, 4, null), n, rg = document.createRange();
+          while ((n = tw.nextNode())) { if (!/\S/.test(n.nodeValue)) continue; var pe = n.parentElement; if (!pe || b.contains(pe) || /^(SCRIPT|STYLE|NOSCRIPT|TEXTAREA)$/.test(pe.tagName)) continue;
+            rg.selectNodeContents(n); var cl = rg.getClientRects(); for (var i = 0; i < cl.length; i++) { var q = cl[i]; if (q.width < 2 || q.bottom < 0 || q.top > vh || q.right < bx0 || q.left > bx1) continue; var cs = getComputedStyle(pe); if (cs.visibility === "hidden" || +cs.opacity < .05) continue; rects.push(q); } }
+          var best = -1, bs = 1e12, cands = [.38, .5, .62, .26, .74, .14, .86, .08, .92];
+          for (var k = 0; k < cands.length; k++) { var t0 = Math.round(vh * cands[k] - bh / 2), t1 = t0 + bh, s = 0; if (t0 < 4 || t1 > vh - 4) continue;
+            for (var m = 0; m < rects.length; m++) { var r = rects[m], ox = Math.min(r.right, bx1) - Math.max(r.left, bx0), oy = Math.min(r.bottom, t1) - Math.max(r.top, t0); if (ox > 1 && oy > 1) s += ox * oy; }
+            if (s < bs) { bs = s; best = t0; if (s === 0) break; } }
+          if (best >= 0) { b.style.transition = "top .25s"; b.style.top = best + "px"; }
+        } catch (e) { }
+      }, again = function () { clearTimeout(at); at = setTimeout(place, 220); };
+      setTimeout(place, 900); setTimeout(place, 2600); addEventListener("scroll", again, { passive: true }); addEventListener("resize", again); addEventListener("load", again);
+    };
+    if (document.body) mk(); else document.addEventListener("DOMContentLoaded", mk);
+  }
   function init() {
     if (q) { start(q[1]); return; }
     fetch(BASE + "assets/data/store.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (c) {
-      var lang = (c && c.lang) || (cached || "ar"); try { localStorage.setItem(KEY, lang === "fr" ? "fr" : "ar"); } catch (e) { }
+      var lang = user || (c && c.lang) || (cached || "ar"); lang = lang === "fr" ? "fr" : "ar"; try { localStorage.setItem(KEY, lang); } catch (e) { }
       if (lang === "fr" && cached !== "fr") { cached = "fr"; hideUntil(); }
       start(lang);
+      if (!(c && c.langSwitch === false)) langBtn(lang);
     });
   }
-  window.SiteI18n = { apply: apply, tr: function (t) { return dict ? tr0(t) : t; }, ready: function () { return !!dict; } };
+  window.SiteI18n = { user: function () { return user; }, lang: function () { return on ? "fr" : "ar"; }, apply: apply, tr: function (t) { return dict ? tr0(t) : t; }, ready: function () { return !!dict; } };
   if (cached === "fr") load();      /* ابدأ تحميل القاموس مبكراً */
   init();
 })();
