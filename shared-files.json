@@ -150,6 +150,7 @@
     "assets/js/admin-appstore.js",
     "assets/js/admin-addons.js",
     "assets/js/admin-delivery-alerts.js",
+    "assets/js/admin-stmt.js",
     "assets/js/admin-archive.js",
     "assets/js/admin-assistant.js",
     "assets/js/admin-audit.js",

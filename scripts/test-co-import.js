@@ -21,8 +21,23 @@ const { chromium } = require("playwright"); const fs = require("fs");
   t("المرتجع: الصافي سالب كما في الكشف", a2 && a2.net === -250, a2);
   const ar = await run(dir + "/ar.csv"), a3 = ar.a.WC333333;
   t("كشف عربي بلا عمود صافٍ: الصافي = المحصَّل − (التوصيل + العمولة)", a3 && a3.price === 1800 && a3.del === 550 && Math.abs(a3.net - (1800 - 550 - 13.5)) < 0.01, ar.a);
-  fs.writeFileSync(dir + "/bad.csv", "A,B\n1,2\n"); await p.evaluate(() => { Admin.ydActual = {}; document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/bad.csv"); await p.waitForTimeout(700);
-  t("ملف بلا عمود تتبع: لا يُخزَّن شيء", await p.evaluate(() => Object.keys(Admin.ydActual).length === 0), 0);
+  /* xlsx بورقتين وصفوف عنوان تقرير قبل رأس الجدول (تقرير تحصيل حقيقي الشكل) */
+  await p.evaluate(() => { Admin.ydActual = {}; document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/wecan.xlsx"); await p.waitForTimeout(1000);
+  const XL = await p.evaluate(() => Admin.ydActual); t("xlsx بورقتين وعنوان تقرير قبل الرأس: يُقرأ جدول التفاصيل ورأس «Parcel Tracking Code»", XL.WC555555 && XL.WC555555.net === 1385 && XL.WC666666 && XL.WC666666.net === -250, XL);
+  /* صيغة مجهولة تماماً: التتبع يُكتشف من محتوى الكشف (يطابق أرقام طلباتك) ويُسأل المستخدم عن المبلغ مرة واحدة ثم تُتذكّر الصيغة */
+  fs.writeFileSync(dir + "/odd.csv", "RAPPORT ENCAISSEMENT\n\nN°;Identifiant;Somme;Reste\n1;ZZ900001;2 400;1 750\n2;ZZ900002;1 200;-250\n");
+  await p.evaluate(async () => { Admin.ydActual = {}; Admin.stmts = []; await Priv.set("stmts", []); await Priv.set("ydactual", {}); await Priv.set("stmtmap", {}); document.getElementById("fin-import-co").dataset.co = "wecan";
+    const mk = (id, trk) => ({ id, date: new Date().toISOString(), name: "ز" + id, phone: "0550000000", wilaya: "Alger", commune: "x", dtype: "home", items: "x", subtotal: 2000, fee: 400, total: 2400, status: "livree", note: "🚚wecan:" + trk }); Admin.orders = [mk("Z1", "ZZ900001"), mk("Z2", "ZZ900002")]; });
+  await p.setInputFiles("#fin-import-co", dir + "/odd.csv"); await p.waitForTimeout(800);
+  const M = await p.evaluate(() => { const m = document.getElementById("stm-ok"); if (!m) return null; const sel = k => document.querySelector('[data-stf="' + k + '"]'); return { trkTxt: sel("trk").selectedOptions[0].textContent, hi: document.getElementById("stm-hi").value }; });
+  t("صيغة مجهولة: تظهر نافذة المطابقة وعمود التتبع مُكتشف من محتوى الكشف (Identifiant)", M && /Identifiant/.test(M.trkTxt) && M.hi === "2", M);
+  await p.evaluate(() => { const sel = k => document.querySelector('[data-stf="' + k + '"]'); const opts = [...sel("net").options]; sel("net").value = opts.find(o => /Reste/.test(o.textContent)).value; document.getElementById("stm-ok").click(); }); await p.waitForTimeout(1000);
+  const O1 = await p.evaluate(() => Admin.ydActual); t("بعد الاعتماد: يُستورد الكشف بالأعمدة المختارة", O1.ZZ900001 && O1.ZZ900001.net === 1750 && O1.ZZ900002 && O1.ZZ900002.net === -250, O1);
+  await p.evaluate(async () => { Admin.ydActual = {}; await Priv.set("ydactual", {}); document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/odd.csv"); await p.waitForTimeout(1000);
+  const O2 = await p.evaluate(() => ({ modal: !!document.getElementById("stm-ok"), a: Admin.ydActual })); t("الصيغة تُتذكَّر: الاستيراد الثاني لنفس الصيغة بلا نافذة", !O2.modal && O2.a.ZZ900001 && O2.a.ZZ900001.net === 1750, O2);
+  fs.writeFileSync(dir + "/bad.csv", "A,B\n1,2\n"); await p.evaluate(async () => { Admin.ydActual = {}; await Priv.set("stmtmap", {}); document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/bad.csv"); await p.waitForTimeout(700);
+  const B1 = await p.evaluate(() => { const m = document.getElementById("stm-ok"); if (m) { document.getElementById("stm-ok").click(); } const e = (document.getElementById("stm-err") || {}).textContent || ""; const no = document.getElementById("stm-no"); if (no) no.click(); return { err: e, n: Object.keys(Admin.ydActual).length }; });
+  t("ملف بلا تتبع ولا مبلغ: النافذة ترفض الاعتماد وبالإلغاء لا يُخزَّن شيء", /رقم التتبع/.test(B1.err) && B1.n === 0, B1);
   await p.evaluate(async () => { Admin.tab("payments"); await new Promise(r => setTimeout(r, 1500)); AdminPayments.S.tab = "st"; AdminPayments.render(); });
   await p.waitForTimeout(600);
   const pb = await p.evaluate(() => [...document.querySelectorAll('[data-pmt="st"] [data-pmimp]')].map(x => x.dataset.pmimp));
