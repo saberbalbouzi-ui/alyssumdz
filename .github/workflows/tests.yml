@@ -29,6 +29,12 @@ jobs:
         run: node scripts/test-voice.js
       - name: مكتبة القوالب (صياغة + صور + معاينات + تنوّع الأسئلة)
         run: node scripts/test-templates.js
+      - name: الفرنسية — كل نص عربي في قوالب المكتبة له ترجمة، والقاموس المولَّد مطابق للمصدر
+        run: |
+          python3 scripts/site-i18n-extract.py >/dev/null
+          python3 scripts/gen-site-i18n-fr.py --check
+          python3 scripts/gen-site-i18n-fr.py >/dev/null
+          git diff --exit-code assets/data/site-i18n-fr.json || { echo "assets/data/site-i18n-fr.json غير مطابق: شغّل python3 scripts/gen-site-i18n-fr.py وأضِفه"; exit 1; }
       - name: المخزون
         run: node scripts/test-stock.js
       - name: المدفوعات

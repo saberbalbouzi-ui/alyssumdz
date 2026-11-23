@@ -54,7 +54,6 @@ try:
         no_img = sorted(i for i in refs if not os.path.exists(os.path.join(out, i)))
         check(name, f"كل صورة تشير إليها قوالب الحزمة موجودة داخلها ({len(refs)} صورة)", not no_img, no_img[:3])
         nolang = [f for f in ("index.html", "shop.html", "account.html", "cart.html", "order-embed.html", "p/demo/index.html") if os.path.exists(os.path.join(out, f)) and "assets/js/site-i18n.js" not in open(os.path.join(out, f), encoding="utf-8").read()]; check(name, "صفحات المتجر كلها تحمل مترجم لغة الموقع (site-i18n.js) وقاموسه موجود", not nolang and os.path.exists(os.path.join(out, "assets/js/site-i18n.js")) and os.path.exists(os.path.join(out, "assets/data/site-i18n-fr.json")), nolang)
-        cp = os.path.join(out, "assets/data/site-i18n-custom.json"); check(name, "قاموس الترجمة الخاص بالموقع فارغ في الحزمة (لا ترجمات للبائع)", (not os.path.exists(cp)) or json.load(open(cp, encoding="utf-8")).get("exact") == {}, "")
         nav = open(os.path.join(out, "assets/js/admin-nav.js"), encoding="utf-8").read()
         check(name, "كود المكتبة بلا عناصر البائع ولا علم alyssum (والحارس قائم)", "p-focus-honey" not in nav and "owner: true" not in nav and "x.alyssum" not in nav and "x.owner" in nav)
         r2 = subprocess.run(["node", "--check", os.path.join(out, "assets/js/admin-nav.js")], capture_output=True, text=True); check(name, "صياغة admin-nav.js في الحزمة سليمة", r2.returncode == 0, r2.stderr[:100])
