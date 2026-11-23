@@ -515,3 +515,8 @@ html.lang-fr body.real .panel[data-real="0"] .pn-h h3::after{content:" · démon
 .node.sub3 span{font-size:10.5px;line-height:1.25;white-space:normal;text-align:center;color:#dffbff;font-weight:700}
 .node.sub3:hover,.node.sub3:focus-visible{border-color:#e2fe17;box-shadow:0 0 12px rgba(226,254,23,.5)}
 @media(max-width:820px){.node.sub3{width:84px;min-height:34px;padding:4px 6px}.node.sub3 span{font-size:9.5px}}
+
+/* مدار ثانٍ كثيف (مجموعة «المتجر» ≈ 29 عنصراً كقائمة لوحة التحكم): عقد أصغر بنصّ من سطرين وقطر أكبر */
+#orbit.dense .node.sub:not(.sub3){width:64px;min-height:44px;margin:-26px 0 0 -32px;padding:5px 3px;border-radius:14px}
+#orbit.dense .node.sub:not(.sub3) svg{width:15px;height:15px}
+#orbit.dense .node.sub:not(.sub3) span{font-size:9px;line-height:1.15;white-space:normal;text-align:center}

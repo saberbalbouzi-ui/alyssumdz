@@ -69,7 +69,7 @@ async function php(b) {
     }
     await p.evaluate(() => SpatialOS.open("ai")); await wait(1200);
     ok("php: لوح المساعد في الوضع الحقيقي بلا وسم «عرض تجريبي»", await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return !!q && q.el.dataset.real === "1" && !/عرض تجريبي/.test(getComputedStyle(q.el.querySelector(".pn-h h3"), "::after").content); }));
-    ok("php: لا قسم «التسويق» (غير موجود في المنصة) على الأسطوانة ولا في شريط الأقسام", await p.evaluate(() => !/التسويق/.test([...document.querySelectorAll(".node, #dock *")].map(e => e.textContent).join(" ")) && ![...SpatialOS.panels.keys()].includes("mkt")));
+    ok("php: لا قسم باسم «التسويق» وحده (القديم) على الأسطوانة ولا في شريط الأقسام ولا لوح mkt (عنصرا «التسويق بالعمولة»/«خدمات التسويق» من قائمة اللوحة الحقيقية مسموحان في المدار الثاني)", await p.evaluate(() => ![...document.querySelectorAll(".node, #dock *")].some(e => e.textContent.trim() === "التسويق") && ![...SpatialOS.panels.keys()].includes("mkt")));
     /* سحب رأس اللوح الحقيقي بالفأرة */
     await p.evaluate(() => SpatialOS.open("ord")); await wait(600);
     const hp = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.querySelector(".pn-h").getBoundingClientRect(); return { hx: r.x + r.width * .45, hy: r.y + r.height / 2, x0: q.st.x, y0: q.st.y }; });

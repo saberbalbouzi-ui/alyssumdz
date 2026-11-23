@@ -10,9 +10,10 @@ const R = []; let fails = 0; const ok = (n, c, x) => { if (!c) fails++; R.push((
     await p.goto(store.base + "/admin-preview/spatial-os/index.html?real=1&nozoom=1"); await p.waitForFunction(() => typeof SpatialOS !== "undefined" && SpatialOS.two && SpatialOS.spare.ready, null, { timeout: 90000 }); await wait(1500);
     const keys = await p.evaluate(() => Object.keys(GROUPS));
     const top = await p.evaluate(() => [...document.querySelectorAll("#orbit .node:not(.sub)")].map(n => n.dataset.id));
-    ok("المدار العلوي: تبويبات رئيسية فقط (كلها من مفاتيح GROUPS ولا إعدادات فرعية)", top.length >= 8 && top.every(id => keys.includes(id)), { top, keys });
+    const names = await p.evaluate(() => [...document.querySelectorAll("#orbit .node:not(.sub)")].map(n => n.innerText.trim()));
+    ok("المدار العلوي = مجموعات قائمة لوحة التحكم الست بأسمائها (الرئيسية، المنتجات، المتجر، المظهر، إضافات، الإعدادات العامة) لا غير", top.length === 6 && top.every(id => keys.includes(id)) && JSON.stringify(names.slice().sort()) === JSON.stringify(["الرئيسية", "المنتجات", "المتجر", "المظهر", "إضافات", "الإعدادات العامة"].sort()), { top, names });
     await p.evaluate(() => document.querySelector('#orbit .node[data-id="store"]:not(.sub)').click()); await wait(700);
-    const subs = await p.evaluate(() => [...document.querySelectorAll("#orbit .node.sub:not(.sub3)")].filter(n => !n.classList.contains("out")).map(n => n.dataset.id)), want = await p.evaluate(() => GROUPS.store.filter(id => SEC.some(s => s.id === id)));
+    const subs = await p.evaluate(() => [...document.querySelectorAll("#orbit .node.sub:not(.sub3)")].filter(n => !n.classList.contains("out")).map(n => n.dataset.id)), want = await p.evaluate(() => GROUPS.store.map(e => e.split("|")[0]).filter(id => SEC.some(s => s.id === id)));
     ok("المدار الثاني: إعدادات المرتبة الأولى للتبويب «المتجر» (من GROUPS)", subs.length === want.length && want.every(id => subs.includes(id)), { subs, want });
     ok("لا مدار ثالث قبل اختيار إعداد", (await p.evaluate(() => document.querySelectorAll("#orbit .node.sub3").length)) === 0);
     /* المدار الثالث */
@@ -37,6 +38,10 @@ const R = []; let fails = 0; const ok = (n, c, x) => { if (!c) fails++; R.push((
     await p.waitForFunction(() => SpatialOS.spare.extra.filter(e => e.ready).length === 2, null, { timeout: 150000 }); ok("إعادة التعبئة: يعود لوحا الطلبات والمنتجات جاهزين بعد التبنّي", true);
     const t1 = Date.now(); await p.evaluate(() => SpatialOS.open("prod")); await p.waitForFunction(() => { const q = SpatialOS.panels.get("prod"); return q && q.frDone; }, null, { timeout: 20000 }); const ms2 = Date.now() - t1;
     ok("فتح لوح المنتجات آنياً أيضاً (< 900ms)", ms2 < 900 && (await p.evaluate(() => SpatialOS.panels.get("prod").wasAdopted)), ms2);
+    /* المدار الثاني يتبع قائمة اللوحة الحقيقية: إخفاء عنصر (كما تفعل النسخة/الصلاحيات) يزيله من المدار، وإظهاره يعيده */
+    await p.evaluate(() => document.querySelector('#orbit .node[data-id="store"]:not(.sub)').click()); await wait(600);
+    const hideNav = async (on) => p.evaluate((on) => { const d = SpatialOS.spare.frame ? SpatialOS.spare.frame.contentDocument : [...SpatialOS.panels.values()].map(q => q.fr.contentDocument)[0], b = [...d.querySelectorAll('.side-nav .nav-btn')].find(x => /Admin\.tab\('coupons'/.test(x.getAttribute('onclick') || '')); b.classList.toggle('rl-hid', on); SpatialOS.navSync(d); return new Promise(r => setTimeout(() => r(SpatialOS.subIds().includes('coupons')), 500)); }, on);
+    ok("عنصر مخفي في قائمة اللوحة (rl-hid) يختفي من المدار الثاني ويعود عند إظهاره", (await hideNav(true)) === false && (await hideNav(false)) === true);
     ok("لا أخطاء صفحة", errs.length === 0, errs);
   } catch (e) { fails++; console.log("FAIL [crash]", String(e && e.stack || e).slice(0, 700)); }
   finally { try { await b.close(); } catch { } try { store.stop(); } catch { } }

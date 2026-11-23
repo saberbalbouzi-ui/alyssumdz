@@ -20,7 +20,15 @@ const R = []; let fails = 0; const ok = (n, c, x) => { if (!c) fails++; R.push((
     ok("اللوح المكبَّر على الهاتف: تحويل ثنائي الأبعاد فقط (لا translateZ)", i.big === true && !i.threeD, i);
     s = await swipe(); ok("سحب الإصبع يمرّر محتوى اللوح المكبَّر", s[1] > s[0] + 50, s);
     await p.evaluate(() => [...SpatialOS.panels.values()][0].el.querySelector(".pn-max").click()); await wait(900); i = await info(); ok("العودة من التكبير: لا يزال ثنائي الأبعاد", i.big === false && !i.threeD, i);
-    ok("لا أخطاء صفحة", errs.length === 0, errs);
+    /* أندرويد/كروم: لو منع المتصفح التمرير الأصلي (touch-action موروث) يمرّره جسر اللمس يدوياً — صفحة اللوح ونافذة «طلب يدوي» المنبثقة */
+    await p.evaluate(() => { const d = [...SpatialOS.panels.values()][0].fr.contentDocument, st = d.createElement("style"); st.id = "__noNative"; st.textContent = "*{touch-action:none!important}"; d.head.appendChild(st); [...SpatialOS.panels.values()][0].fr.contentDocument.scrollingElement.scrollTop = 0; }); await wait(300);
+    s = await swipe(); ok("لو عُطّل التمرير الأصلي (touch-action:none) يمرّر جسر اللمس صفحة اللوح", s[1] > s[0] + 50, s);
+    await p.evaluate(() => { const q = [...SpatialOS.panels.values()][0]; q.fr.contentWindow.ManualOrder.open({ mode: "new" }); }); await wait(800);
+    const mo = () => p.evaluate(() => { const q = [...SpatialOS.panels.values()][0], m = q.fr.contentDocument.querySelector("#mo-bg .modal"), r = q.fr.getBoundingClientRect(); return { st: m ? m.scrollTop : -1, mx: m ? m.scrollHeight - m.clientHeight : 0, fr: [r.left, r.top, r.width, r.height] }; });
+    let m0 = await mo(); const cdp2 = await ctx.newCDPSession(p), T2 = (type, pts) => cdp2.send("Input.dispatchTouchEvent", { type, touchPoints: pts.map(([x, y], k) => ({ x, y, id: k })) });
+    await T2("touchStart", [[m0.fr[0] + m0.fr[2] / 2, m0.fr[1] + m0.fr[3] * .8]]); for (let k = 1; k <= 12; k++) { await T2("touchMove", [[m0.fr[0] + m0.fr[2] / 2, m0.fr[1] + m0.fr[3] * (.8 - .5 * k / 12)]]); await wait(16); } await T2("touchEnd", []); await wait(500); const m1 = await mo();
+    ok("نافذة «طلب يدوي» المنبثقة تتمرّر بالإصبع (التمرير الأصلي معطّل هنا: الجسر)", m0.mx > 100 && m1.st > m0.st + 50, [m0, m1]);
+        ok("لا أخطاء صفحة", errs.length === 0, errs);
   } catch (e) { fails++; console.log("FAIL [crash]", String(e && e.stack || e).slice(0, 700)); }
   finally { try { await b.close(); } catch { } try { store.stop(); } catch { } }
   console.log(fails ? "\nFAILED: " + fails : "\nALL PASS (" + R.filter(x => x.startsWith("PASS")).length + ")"); process.exit(fails ? 1 : 0);
