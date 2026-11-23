@@ -5,13 +5,16 @@ const pw = require("playwright"), chromium = pw[process.env.SI_BROWSER || "chrom
 const BASE = process.env.EQA_BASE, PW = process.env.EQA_PASS || "TestPass12345"; const sleep = ms => new Promise(r => setTimeout(r, ms));
 let pass = 0, fail = 0; const ck = (n, ok, d) => { if (ok) pass++; else fail++; console.log(`${ok ? "PASS" : "FAIL"} ${n}${!ok && d !== undefined ? "  — " + JSON.stringify(d).slice(0, 400) : ""}`); };
 (async () => {
-  const br = await chromium.launch(), c = await br.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" }); await declareProtect(c); const a = await c.newPage(), errs = []; a.on("pageerror", e => errs.push(String(e).slice(0, 120)));
+  const br = await chromium.launch(), c = await br.newContext({ viewport: { width: 1280, height: 900 }, serviceWorkers: "block" }); await declareProtect(c); await c.addInitScript(() => { try { localStorage.setItem("site_trans_scan", String(Date.now())); } catch (e) { } });      // لا استدراك تلقائي أثناء الاختبار (يُختبر صراحةً أدناه)
+  const a = await c.newPage(), errs = []; a.on("pageerror", e => errs.push(String(e).slice(0, 120)));
   await a.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await a.waitForFunction(() => typeof Admin !== "undefined" && document.getElementById("login-pass"), null, { timeout: 120000 }); await a.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
   await a.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await a.waitForFunction(() => typeof Admin !== "undefined" && typeof SiteTrans !== "undefined" && typeof GH !== "undefined" && Admin.products && Admin.products.length, null, { timeout: 60000 }); await sleep(2500);
   const setup = () => a.evaluate(() => { localStorage.setItem("store_gp_gkey", "test-key"); localStorage.setItem("alyssum_gp_gkey", "test-key"); localStorage.removeItem("site_trans_pending"); window.__tr = []; SiteTrans.translate = async list => { window.__tr.push(list.slice()); return Object.fromEntries(list.map(x => [x, "FR(" + x.length + ")"])); }; return SiteTrans.enabled(); });
   const custom = () => a.evaluate(async () => { const r = await fetch("assets/data/site-i18n-custom.json?t=" + Date.now(), { cache: "no-store" }); return r.ok ? (await r.json()).exact || {} : null; });
   const putPage = (slug, page) => a.evaluate(async ([slug, page]) => { let sha; try { sha = (await GH.getFile("assets/pages/" + slug + ".json")).sha; } catch (e) { } await GH.putFile("assets/pages/" + slug + ".json", btoa(unescape(encodeURIComponent(JSON.stringify(page)))), sha, "اختبار"); return true; }, [slug, page]);
-  ck("الميزة مفعّلة افتراضياً (زر اللغة ظاهر)", await setup() === true);
+  const enabled0 = await setup();
+  await a.evaluate(async () => { let sha; try { sha = (await GH.getFile("assets/data/site-i18n-custom.json")).sha; } catch (e) { } await GH.putFile("assets/data/site-i18n-custom.json", btoa('{"exact":{}}'), sha, "اختبار: تصفير القاموس الخاص"); localStorage.removeItem("site_trans_pending"); });      // عزل التشغيلات (متجر مشترك بين المتصفحات)
+  ck("الميزة مفعّلة افتراضياً (زر اللغة ظاهر)", enabled0 === true);
   const NEW = "عرض خاص جديد لم يُترجَم من قبل: خصم كبير على كل القطع", EDIT = "جملة أضافها التاجر إلى فقرة موجودة في القالب بنفسه";
   const base = await a.evaluate(async () => (await (await fetch("assets/pages/templates/s-fashion.json?t=" + Date.now())).json()));
   const find = (pg, f) => { let r = null; const w = n => { if (r) return; if (n && typeof n === "object") { if (f(n)) { r = n; return; } Object.values(n).forEach(w); } }; w(pg.sections); return r; };
@@ -42,6 +45,9 @@ let pass = 0, fail = 0; const ck = (n, ok, d) => { if (ok) pass++; else fail++; 
   const FAILT = "نص جديد سيفشل ترجمته أول مرة ثم ينجح لاحقاً"; const page3 = JSON.parse(JSON.stringify(page)); find(page3, n => n.type === "heading" && n.set && n.set.text === NEW).set.text = FAILT; await putPage("zz-trans", page3); await sleep(9000);
   const pend = await a.evaluate(() => JSON.parse(localStorage.getItem("site_trans_pending") || "[]")); cs = await custom(); ck("فشل الخدمة: لا خطأ، والنص يبقى في الانتظار", pend.includes(FAILT) && !(cs && cs[FAILT]), { pend, has: cs && cs[FAILT] });
   await a.evaluate(() => { SiteTrans.translate = async list => Object.fromEntries(list.map(x => [x, "OK:" + x.length])); }); const rr = await a.evaluate(() => SiteTrans.run()); cs = await custom(); ck("الاستدراك لاحقاً يترجم ما بقي", cs && cs[FAILT] === "OK:" + FAILT.length && rr.translated >= 1, rr);
+  // الاستدراك: نصوص منتج محفوظة قبل تفعيل الميزة (لم تُترجَم) تُلتقط بالفحص الدوري
+  await a.evaluate(() => { window.__tr = []; SiteTrans.translate = async list => { window.__tr.push(list.slice()); return Object.fromEntries(list.map(x => [x, "SC(" + x.length + ")"])); }; Admin.products[Admin.products.length - 1].title = "عنوان منتج قديم لم يُترجَم قبل تفعيل الاستدراك"; });
+  await a.evaluate(() => SiteTrans.scan(true)); await sleep(9000); cs = await custom(); ck("الاستدراك اليومي يلتقط نصوص المنتجات غير المترجمة", cs && cs["عنوان منتج قديم لم يُترجَم قبل تفعيل الاستدراك"] === "SC(" + "عنوان منتج قديم لم يُترجَم قبل تفعيل الاستدراك".length + ")", Object.keys(cs || {}).slice(-3));
   // التعطيل: اللغة عربية وزر اللغة معطّل
   await a.evaluate(() => { const d = AdminStores.data(); d.langSwitch = false; d.lang = "ar"; window.__tr = []; });
   const OFF = "نص جديد أثناء تعطيل الميزة تماماً"; const page4 = JSON.parse(JSON.stringify(page)); find(page4, n => n.type === "heading" && n.set && n.set.text === NEW).set.text = OFF; await putPage("zz-trans", page4); await sleep(8000);
@@ -50,6 +56,6 @@ let pass = 0, fail = 0; const ck = (n, ok, d) => { if (ok) pass++; else fail++; 
   await a.evaluate(() => { const d = AdminStores.data(); d.langSwitch = true; });
   cs = await custom(); ck("كل قيم القاموس الخاص فرنسية بلا حروف عربية", Object.values(cs).every(x => typeof x === "string" && x && !/[؀-ۿ]/.test(x)));
   await v.goto(BASE + "/__tr.html?lang=ar", { waitUntil: "load" }).catch(() => { }); await sleep(2500); ck("العربية بلا تغيير مع وجود القاموس الخاص", (await v.evaluate(() => document.body.innerText)).includes(NEW));
-  const realErrs = errs.filter(e => !/serviceWorker/.test(e)); ck("بلا أخطاء JS", realErrs.length === 0, realErrs);
+  const realErrs = errs.filter(e => !/service ?worker/i.test(e)); ck("بلا أخطاء JS", realErrs.length === 0, realErrs);
   console.log(`\n${fail ? fail + " إخفاق" : "✓ كل الفحوص نجحت"} (${pass} نجاح)`); await br.close(); process.exit(fail ? 1 : 0);
 })();
