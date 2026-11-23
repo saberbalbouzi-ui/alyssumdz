@@ -264,6 +264,9 @@ frags = json.load(open(FR, encoding='utf-8')) if os.path.exists(FR) else {}
 frags.update(json.load(open(MISS, encoding='utf-8')) if os.path.exists(MISS) else {})
 PAIRS.update({'إظهار زر «ع | FR» للزائر ليختار لغته بنفسه': 'Afficher le bouton « ع | FR » pour que le visiteur choisisse sa langue'})
 
+PAIRS.update({'عند التفعيل (أو عند اختيار الفرنسية) تُترجَم نصوصك التي تضيفها أو تعدّلها في الصفحات والمنتجات إلى الفرنسية تلقائياً في الخلفية بعد كل حفظ، ويستهلك ذلك قدراً يسيراً من رصيد الخدمة الذكية.': 'Lorsque cette option est activée (ou que le français est choisi), les textes que vous ajoutez ou modifiez dans vos pages et produits sont traduits automatiquement en français en arrière-plan après chaque enregistrement, ce qui consomme un peu de votre solde du service intelligent.'})
+PATTERNS += [[r'^🌐 تُرجمت (\d+) عبارة إلى الفرنسية تلقائياً$', r'🌐 \1 phrases traduites automatiquement en français']]
+
 exact = dict(frags); exact.update({k.strip(): v for k, v in PAIRS.items()})
 _EM = re.compile(r'^[^\w\u0600-\u06ff]+|[^\w\u0600-\u06ff]+$')      # اللوحة تستبدل الإيموجي بأيقونات فيصل النص إلى المحرّك بلا الرمز: مفتاح بلا رموز طرفية لكل زوج يدوي
 for _k, _v in list(PAIRS.items()):
