@@ -25,7 +25,7 @@ const MEASURE = () => {
 const inter = (a, b) => { const x = Math.min(a.R, b.R) - Math.max(a.L, b.L), y = Math.min(a.B, b.B) - Math.max(a.T, b.T); return x > 3 && y > 10 ? x * y : 0;   /* Firefox يُرجع مستطيلات أسطر أعلى من الحروف: تسرّب ≤10px ليس تداخلاً */ };
 (async () => {
   const br = await chromium.launch(), actx = await br.newContext({ viewport: { width: 1360, height: 900 } }); await declareProtect(actx); const admin = await actx.newPage();
-  await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000); await admin.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
+  await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await admin.waitForFunction(() => typeof Admin !== "undefined" && document.getElementById("login-pass"), null, { timeout: 120000 }); await admin.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
   await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await admin.waitForFunction(() => typeof Admin !== "undefined" && typeof PB !== "undefined" && Admin.products && Admin.products.length, null, { timeout: 60000 }); await sleep(2500);
   const idx = (await admin.evaluate(async () => (await (await fetch("assets/pages/templates/index.json", { cache: "no-store" })).json()).map(x => ({ id: x.id, file: x.file || x.id })))).filter(x => !IDS || IDS.includes(x.id));
   for (const t of idx) {

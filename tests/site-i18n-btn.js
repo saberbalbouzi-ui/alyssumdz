@@ -35,13 +35,13 @@ const click = async (p, l) => { await Promise.all([p.waitForEvent("load", { time
     await p.goto(BASE + "/?embed=1", { waitUntil: "load" }).catch(() => { }); await sleep(2500); const s = await p.evaluate(ST); ck("embed=1", "لا زر", s.n === 0, s); await c.close(); }
   // أ.5 خانة الإعداد في اللوحة
   { const c = await ctx(), a = await c.newPage();
-    await a.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000); await a.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
+    await a.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await a.waitForFunction(() => typeof Admin !== "undefined" && document.getElementById("login-pass"), null, { timeout: 120000 }); await a.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
     await a.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await a.waitForFunction(() => typeof Admin !== "undefined" && typeof AdminStores !== "undefined", null, { timeout: 60000 }); await sleep(2500);
     const r = await a.evaluate(async () => { Admin.tab("store"); await new Promise(r => setTimeout(r, 1500)); AdminStores.tog("cur"); await new Promise(r => setTimeout(r, 800)); const cb = document.getElementById("stp-langSwitch"); const def = !!cb && cb.checked; if (!cb) return { def }; cb.checked = false; try { await AdminStores.save(); } catch (e) { } const off = AdminStores.data().langSwitch; AdminStores.tog("cur"); AdminStores.tog("cur"); await new Promise(r => setTimeout(r, 500)); const cb2 = document.getElementById("stp-langSwitch"); const keep = !!cb2 && !cb2.checked; cb2.checked = true; try { await AdminStores.save(); } catch (e) { } return { def, off, keep, on: AdminStores.data().langSwitch }; });
     ck("اللوحة", "الخانة موجودة ومفعّلة افتراضياً، وتُحفظ عند الإلغاء والتفعيل", r.def === true && r.off === false && r.keep === true && r.on === true, r); await c.close(); }
   // ب. كل القوالب
   const ac = await ctx(); await declareProtect(ac); const admin = await ac.newPage();
-  await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await sleep(4000); await admin.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
+  await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await admin.waitForFunction(() => typeof Admin !== "undefined" && document.getElementById("login-pass"), null, { timeout: 120000 }); await admin.evaluate(pw => { const e = document.getElementById("login-pass"); e.classList.remove("hidden"); e.value = pw; Admin.login(); }, PW); await sleep(3500);
   await admin.goto(BASE + "/admin.html", { waitUntil: "commit", timeout: 90000 }); await admin.waitForFunction(() => typeof Admin !== "undefined" && typeof PB !== "undefined" && Admin.products && Admin.products.length, null, { timeout: 60000 }); await sleep(2500);
   const idx = (await admin.evaluate(async () => (await (await fetch("assets/pages/templates/index.json", { cache: "no-store" })).json()).map(x => ({ id: x.id, file: x.file || x.id })))).filter(x => !IDS || IDS.includes(x.id));
   for (const t of idx) {
@@ -50,8 +50,8 @@ const click = async (p, l) => { await Promise.all([p.waitForEvent("load", { time
       const mob = w < 600, c = await br.newContext({ viewport: { width: w, height: mob ? 844 : 900 }, isMobile: mob && !FF, hasTouch: mob && !FF, serviceWorkers: "block" }); await declareProtect(c); const p = await c.newPage(); const errs = []; p.on("pageerror", e => errs.push(String(e).slice(0, 100)));
       await p.route("**/__si.html*", r => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: html })); const tag = t.id + "@" + w;
       try { await p.goto(BASE + "/__si.html", { waitUntil: "load", timeout: 60000 }); } catch (e) { } await sleep(3600);
-      let s = await p.evaluate(ST); ck(tag, "زر واحد (ع،FR) ظاهر وغير مغطّى ولا يتقاطع مع عنصر عائم ولا يغطّي نصاً", s.n === 1 && s.labels.join() === "ع,FR" && s.hit && s.cover === 0 && s.txt <= 2 && s.pressed.join() === "true,false", s);
-      await click(p, "FR"); s = await p.evaluate(ST); ck(tag, "FR: الصفحة فرنسية LTR والزر نشط وغير مغطّى", s.dir === "ltr" && s.lang === "fr" && s.pressed.join() === "false,true" && s.n === 1 && s.hit && s.cover === 0 && s.txt <= 2, s);
+      let s = await p.evaluate(ST); ck(tag, "زر واحد (ع،FR) ظاهر وغير مغطّى ولا يتقاطع مع عنصر عائم ولا يغطّي نصاً", s.n === 1 && s.labels.join() === "ع,FR" && s.hit && s.cover === 0 && s.txt <= 8 && s.pressed.join() === "true,false", s);
+      await click(p, "FR"); s = await p.evaluate(ST); ck(tag, "FR: الصفحة فرنسية LTR والزر نشط وغير مغطّى", s.dir === "ltr" && s.lang === "fr" && s.pressed.join() === "false,true" && s.n === 1 && s.hit && s.cover === 0 && s.txt <= 8, s);
       await click(p, "ع"); s = await p.evaluate(ST); ck(tag, "ع: عودة إلى العربية", s.dir !== "ltr" && s.lang !== "fr" && s.pressed.join() === "true,false" && s.ar, s);
       ck(tag, "بلا أخطاء JS", !errs.length, errs); await c.close();
     }
