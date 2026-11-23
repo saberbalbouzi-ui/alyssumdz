@@ -37,7 +37,7 @@ const AdminStmt = (() => {
   function analyze(rows, forcedHi) {
     const K = knownTrk(), why = [];
     const hi = forcedHi != null && forcedHi >= 0 ? forcedHi : pickHeader(rows, K);
-    if (hi < 0) return { hi: -1, hdr: [], idx: {}, conf: "ask", why: ["لم أتعرّف على صفّ العناوين"], rows: [], K };
+    if (hi < 0) return { hi: -1, hdr: [], idx: {}, conf: "ask", why: ["تعذّر تحديد صفّ العناوين"], rows: [], K };
     const hdrRow = rows[hi] || [], W = Math.max(hdrRow.length, ...rows.slice(hi + 1, hi + 30).map(r => (r || []).length)), hdr = []; for (let j = 0; j < W; j++) hdr.push(txt(hdrRow[j]));
     const data = rows.slice(hi + 1).filter(r => filled(r) >= 2).slice(0, 3000), hn = hdr.map(nrm);
     const col = j => data.map(r => (r || [])[j]);
@@ -56,11 +56,11 @@ const AdminStmt = (() => {
     { let j = -1; for (const a of alN.st) { j = hn.findIndex((h, i) => !used.has(i) && h === a); if (j >= 0) break; } if (j >= 0) { idx.st = j; used.add(j); } }
     if (idx.net == null && idx.price == null) {
       const c = hn.map((h, j) => ({ j, h })).filter(x => !used.has(x.j) && isNum(x.j) && /montant|amount|total|مبلغ|collect/.test(x.h));
-      if (c.length) { idx.price = c[0].j; used.add(c[0].j); why.push("المبلغ: خُمّن العمود «" + hdr[c[0].j] + "»"); via = via === "known" || via === "alias" ? via : "guess"; } else via = "guess";
+      if (c.length) { idx.price = c[0].j; used.add(c[0].j); why.push("المبلغ: العمود المرجَّح «" + hdr[c[0].j] + "»"); via = via === "known" || via === "alias" ? via : "guess"; } else via = "guess";
     }
     const ok = idx.trk != null && (idx.net != null || idx.price != null) && (via === "known" || via === "alias");
-    if (idx.trk == null) why.push("لم أجد عمود رقم التتبع");
-    if (idx.net == null && idx.price == null) why.push("لم أجد عمود المبلغ");
+    if (idx.trk == null) why.push("لا عمود لرقم التتبع");
+    if (idx.net == null && idx.price == null) why.push("لا عمود للمبلغ");
     return { hi, hdr, idx, conf: ok ? "ok" : "ask", why, rows: data, K };
   }
   const sig = (hdr, co) => String(co) + "|" + hdr.map(nrm).filter(Boolean).join(",");
@@ -73,7 +73,7 @@ const AdminStmt = (() => {
       const paint = () => {
         const hdr = cur.hdr, opt = (sel) => '<option value="">—</option>' + hdr.map((h, j) => '<option value="' + j + '"' + (sel === j ? " selected" : "") + ">" + esc((h || "عمود " + (j + 1)) + "  ·  " + txt(((cur.rows[0] || [])[j]))).slice(0, 70) + "</option>").join("");
         const prev = '<div style="overflow:auto;max-height:190px;margin:.6rem 0"><table style="border-collapse:collapse;font-size:.76rem"><thead><tr>' + hdr.map(h => '<th style="white-space:nowrap;padding:2px 6px">' + esc(h) + "</th>").join("") + "</tr></thead><tbody>" + cur.rows.slice(0, 4).map(r => "<tr>" + hdr.map((_, j) => '<td style="white-space:nowrap;padding:2px 6px">' + esc(txt((r || [])[j])) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>";
-        bg.innerHTML = '<div class="modal" style="max-width:760px;width:96vw"><h3>مطابقة أعمدة كشف ' + esc(name) + '</h3><div style="line-height:1.8;font-size:.88rem">لم أتأكد من أعمدة هذا الكشف. اختر العمود الصحيح لكل حقل، وسأتذكّر الصيغة لهذه الشركة فلا أسألك ثانية.' + (cur.why.length ? '<br><small style="opacity:.8">' + cur.why.map(esc).join(" · ") + "</small>" : "") + '</div><label style="display:block;margin:.6rem 0 .2rem">صفّ العناوين</label><select id="stm-hi" style="width:100%">' + cand.map(x => '<option value="' + x.i + '"' + (x.i === cur.hi ? " selected" : "") + ">الصف " + (x.i + 1) + ": " + esc(x.t).slice(0, 90) + "</option>").join("") + "</select>" + prev + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem">' + FIELDS.map(f => '<label style="display:block;font-size:.82rem">' + f[1] + (f[0] === "trk" ? " *" : "") + '<select data-stf="' + f[0] + '" style="width:100%;margin-top:.15rem">' + opt(cur.idx[f[0]]) + "</select></label>").join("") + '</div><div id="stm-err" style="color:#f87171;min-height:1.3rem;margin-top:.4rem"></div><div class="action-bar"><button class="small gold" id="stm-ok" type="button">اعتماد واستيراد</button><button class="small" id="stm-no" type="button">إلغاء</button></div></div>';
+        bg.innerHTML = '<div class="modal" style="max-width:760px;width:96vw"><h3>مطابقة أعمدة كشف ' + esc(name) + '</h3><div style="line-height:1.8;font-size:.88rem">تعذّر التأكد من أعمدة هذا الكشف. اختر العمود الصحيح لكل حقل، وستُحفظ الصيغة لهذه الشركة فلا تُسأل عنها ثانية.' + (cur.why.length ? '<br><small style="opacity:.8">' + cur.why.map(esc).join(" · ") + "</small>" : "") + '</div><label style="display:block;margin:.6rem 0 .2rem">صفّ العناوين</label><select id="stm-hi" style="width:100%">' + cand.map(x => '<option value="' + x.i + '"' + (x.i === cur.hi ? " selected" : "") + ">الصف " + (x.i + 1) + ": " + esc(x.t).slice(0, 90) + "</option>").join("") + "</select>" + prev + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem">' + FIELDS.map(f => '<label style="display:block;font-size:.82rem">' + f[1] + (f[0] === "trk" ? " *" : "") + '<select data-stf="' + f[0] + '" style="width:100%;margin-top:.15rem">' + opt(cur.idx[f[0]]) + "</select></label>").join("") + '</div><div id="stm-err" style="color:#f87171;min-height:1.3rem;margin-top:.4rem"></div><div class="action-bar"><button class="small gold" id="stm-ok" type="button">اعتماد واستيراد</button><button class="small" id="stm-no" type="button">إلغاء</button></div></div>';
         bg.querySelector("#stm-hi").onchange = e => { cur = analyze(rows, Number(e.target.value)); paint(); };
         bg.querySelector("#stm-no").onclick = () => { bg.remove(); res(null); };
         bg.querySelector("#stm-ok").onclick = () => {

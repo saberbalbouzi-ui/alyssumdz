@@ -70,6 +70,9 @@ const { chromium } = require("playwright"); const fs = require("fs");
   await p.evaluate(() => { document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/tot.csv"); await p.waitForTimeout(900);
   const TT = await p.evaluate(() => ({ keys: Object.keys(Admin.ydActual), st: Admin.stmts.length, n: (Admin.stmts[0] || {}).n, net: (Admin.stmts[0] || {}).net }));
   t("صفّ TOTAL مستبعد (طردان لا ثلاثة، الصافي 750 لا 1500) وإعادة الاستيراد تستبدل الكشف القديم", TT.keys.length === 2 && !TT.keys.includes("TOTAL") && TT.st === 1 && TT.n === 2 && TT.net === 750, TT);
+  /* رسالة النتيجة موجَّهة لمستخدم المنصة: زر «تعديل الأعمدة» بدل «أرسل لي» وهو ينسى صيغة الشركة */
+  const NT = await p.evaluate(async () => { const body = (document.getElementById("notice-body") || {}).innerHTML || ""; await Priv.set("stmtmap", { "wecan|x": { idx: {} }, "other|y": { idx: {} } }); await Admin.resetCoMap("wecan"); const left = Object.keys((await Priv.get("stmtmap", {})) || {}); return { btn: /تعديل الأعمدة/.test(body), send: /أرسل لي/.test(body), left }; });
+  t("رسالة الاستيراد بلا «أرسل لي» وفيها «تعديل الأعمدة» الذي يمسح صيغة الشركة وحدها", NT.btn && !NT.send && NT.left.length === 1 && NT.left[0] === "other|y", NT);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
