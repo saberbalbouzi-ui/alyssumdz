@@ -34,11 +34,26 @@ const { chromium } = require("playwright");
   t("AdminKeep: إعادة الرسم تحفظ تمرير الصفحة وحاوية التمرير الداخلية", K.win === 400 && K.box === 120 && K.inner === 300, K);
   const PK = await p.evaluate(async () => {
     const tab = document.getElementById("tab-pack"); tab.classList.remove("hidden"); document.getElementById("app").classList.remove("hidden"); AdminPack._S.host = tab; tab._pk = 0;
-    AdminPack._S.rows = Array.from({ length: 90 }, (_, i) => ({ id: "P" + i, name: "ز" + i, wilaya: "Alger", items: "عسل ×1 = 2000 DA", tracking: "TT" + i, packed: false, status: "confirmee" })); AdminPack._S.f = "all"; AdminPack._S.busy = false;
+    AdminPack._S.rows = Array.from({ length: 90 }, (_, i) => ({ id: "P" + i, name: "ز" + i, wilaya: "Alger", items: "منتج" + i + " ×1 = 2000 DA", tracking: "TT" + i, packed: false, status: "confirmee" })); AdminPack._S.f = "all"; AdminPack._S.busy = false;
     AdminPack.draw(); document.documentElement.style.minHeight = "6000px"; await new Promise(r => setTimeout(r, 200));
     const sc = tab.parentElement; sc.style.cssText += ";height:500px;overflow:auto"; const btn = [...tab.querySelectorAll('[data-pk="one"]')][40]; btn.scrollIntoView({ block: "center" }); const y0 = Math.round(sc.scrollTop);
     btn.click(); await new Promise(r => setTimeout(r, 900)); return { y0, y1: Math.round(sc.scrollTop), rows: tab.querySelectorAll("tr[data-id]").length }; });
   t("«جُهِّز ✓» في تبويب التجهيز: لا تقفز الشاشة بعد إعادة رسم القائمة", PK.y0 > 500 && Math.abs(PK.y1 - PK.y0) <= 3 && PK.rows > 40, PK);
+  /* القائمة لا «تتحرك» تحت إصبعك: بعد «جُهِّز ✓» يختفي الصف وتنقص قائمة الجمع فوقه، والصف التالي يبقى في مكانه على الشاشة */
+  const AN = await p.evaluate(async () => {
+    const tab = document.getElementById("tab-pack"); AdminPack._S.f = "todo"; AdminPack._S.rows.forEach(r => { r.packed = false; }); AdminPack.draw(); await new Promise(r => setTimeout(r, 200));
+    const rowTop = id => { const e = tab.querySelector('tr[data-id="' + id + '"]'); return e ? e.getBoundingClientRect().top : null; };
+    const sc = tab.parentElement; const ids = [...tab.querySelectorAll("tr[data-id]")].map(e => e.dataset.id); const mid = ids[40]; tab.querySelector('tr[data-id="' + mid + '"]').scrollIntoView({ block: "center" }); await new Promise(r => setTimeout(r, 100));
+    const nxt = ids[41], before = rowTop(mid); tab.querySelector('tr[data-id="' + mid + '"] button').dispatchEvent(new MouseEvent("mousedown", { bubbles: true })); AdminPack._S.rows.find(r => r.id === mid).packed = true; AdminPack.draw(); await new Promise(r => setTimeout(r, 200));
+    return { before: Math.round(before), after: Math.round(rowTop(nxt)), gone: !tab.querySelector('tr[data-id="' + mid + '"]') }; });
+  t("بعد تجهيز صف: الصف التالي يحلّ مكان الصف المضغوط تماماً (لا تقفز القائمة)", AN.gone && Math.abs(AN.before - AN.after) <= 3, AN);
+  /* ترتيب القائمة لا يتغيّر بتجهيز طلب (كان يُعاد ترتيب المجموعات حسب الأعداد فتقفز الصفوف) */
+  const OR = await p.evaluate(() => {
+    const mk = (id, it) => ({ id, name: "n" + id, wilaya: "Alger", items: it + " ×1 = 1 DA", tracking: "T" + id, packed: false });
+    const rows = [mk("1", "ب"), mk("2", "أ"), mk("3", "أ"), mk("4", "أ"), mk("5", "ج"), mk("6", "ب"), mk("7", "ج"), mk("8", "ب")];
+    const before = AdminPack.filter(rows, "todo", "").map(r => r.id).join(","); rows.find(r => r.id === "2").packed = true;
+    const after = AdminPack.filter(rows, "todo", "").map(r => r.id).join(","); return { before, after }; });
+  t("تجهيز طلب لا يعيد ترتيب بقية القائمة (فقط يختفي الصف)", OR.after === OR.before.split(",").filter(x => x !== "2").join(","), OR);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();

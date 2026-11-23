@@ -9,7 +9,18 @@ window.AdminKeep = {
     all.forEach((e, i) => { if (e.scrollTop || e.scrollLeft) saved.push({ i, id: e.id || "", cls: e.className || "", t: e.scrollTop, l: e.scrollLeft }); });
     const anc = []; for (let e = host.parentElement; e && e !== document.documentElement; e = e.parentElement) if (e.scrollTop || e.scrollLeft) anc.push({ e, t: e.scrollTop, l: e.scrollLeft });      /* حاويات التمرير الأعلى (محتوى اللوحة نفسه) */
     const a = document.activeElement, ak = a && host.contains(a) ? { id: a.id || "", pk: a.getAttribute && a.getAttribute("data-pk"), i: all.indexOf(a) } : null;
+    /* مرساة: الصف الذي ضغطتَ زرّه يبقى في مكانه على الشاشة؛ وإن اختفى بعد الرسم (فلتر «غير مجهَّز») يحلّ مكانه الصف التالي، فلا تتحرك القائمة تحت إصبعك. وإلا أول صفوف ظاهرة. */
+    const rowsOf = () => [...host.querySelectorAll("[data-id]")], topOf = e => e.getBoundingClientRect().top;
+    const lc = window.AdminKeep._last, clicked = lc && Date.now() - lc.at < 8000 && host.contains(lc.el) ? lc.el.closest("[data-id]") : null;
+    const anchors = [];
+    if (clicked) { const all = rowsOf(), k = all.indexOf(clicked), t0 = topOf(clicked), nx = all.slice(k + 1).find(e => e.tagName === clicked.tagName), pv = k > 0 ? all[k - 1] : null;
+      anchors.push({ id: clicked.getAttribute("data-id"), top: t0 }); if (nx) anchors.push({ id: nx.getAttribute("data-id"), top: t0 }); if (pv) anchors.push({ id: pv.getAttribute("data-id"), top: topOf(pv) }); }
+    for (const e of rowsOf()) { const b = e.getBoundingClientRect(); if (b.bottom > 0 && b.top < innerHeight) { anchors.push({ id: e.getAttribute("data-id"), top: b.top }); if (anchors.length >= 8) break; } }
+    const scroller = () => { for (let e = host; e && e !== document.documentElement; e = e.parentElement) { const o = getComputedStyle(e).overflowY; if ((o === "auto" || o === "scroll") && e.scrollHeight > e.clientHeight + 2) return e; } return null; };
     const r = fn();
+    const reanchor = () => {
+      for (const an of anchors) { const el = host.querySelector('[data-id="' + (window.CSS && CSS.escape ? CSS.escape(an.id) : an.id) + '"]'); if (!el) continue; const d = el.getBoundingClientRect().top - an.top; if (Math.abs(d) > 1) { const sc = scroller(); if (sc) sc.scrollTop += d; else window.scrollBy(0, d); } return; }
+    };
     const restore = () => {
       const now = [...host.querySelectorAll("*")];
       saved.forEach(o => { const e = (o.id && document.getElementById(o.id)) || (now[o.i] && now[o.i].className === o.cls ? now[o.i] : null); if (e) { e.scrollTop = o.t; e.scrollLeft = o.l; } });
@@ -17,10 +28,11 @@ window.AdminKeep = {
       if (Math.abs(window.scrollY - y) > 2 || Math.abs(window.scrollX - x) > 2) window.scrollTo(x, y);
       if (ak && (!document.activeElement || document.activeElement === document.body)) { const e = (ak.id && document.getElementById(ak.id)) || (ak.pk && ak.i >= 0 && now[ak.i] && now[ak.i].getAttribute("data-pk") === ak.pk ? now[ak.i] : null); if (e && e.focus) { try { e.focus({ preventScroll: true }); } catch (_) { } } }
     };
-    restore(); requestAnimationFrame(restore);
+    restore(); reanchor(); requestAnimationFrame(() => { restore(); reanchor(); });
     return r;
   }
 };
+["pointerdown", "mousedown", "touchstart", "click"].forEach(ev => document.addEventListener(ev, e => { window.AdminKeep._last = { el: e.target, at: Date.now() }; }, true));
 (() => {
   if (window.__modalStable) return; window.__modalStable = 1;
   const SKIP = /^(au-boot)$/;

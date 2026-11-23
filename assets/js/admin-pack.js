@@ -48,7 +48,9 @@ const AdminPack = (() => {
   }
   function filter(rows, f, q) {
     q = String(q || "").trim().toLowerCase(); live(rows);
-    return groupSimilar((rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q))));
+    /* ترتيب المجموعات يُحسب من كل الطلبات لا من المعروض فقط: كان تجهيز طلب (أو بحث) يغيّر أعداد المجموعات فيُعاد ترتيب القائمة كلها وتقفز الصفوف تحت إصبعك */
+    const rank = new Map(groupSimilar(rows || []).map((r, i) => [r.id, i]));
+    return (rows || []).filter(r => (f === "all" || (f === "todo" ? !r.packed : r.packed)) && (!q || [r.id, r.name, r.tracking, r.wilaya, r.commune, r.items].join(" ").toLowerCase().includes(q))).sort((a, b) => rank.get(a.id) - rank.get(b.id));
   }
 
   /* ── الخادم ── */
