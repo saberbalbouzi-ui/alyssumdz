@@ -44,8 +44,9 @@
       const st = await readJson(c.GH, "assets/data/store.json").catch(() => null); let ch = null; try { ch = await readJson(c.GH, "assets/data/chrome.json"); } catch (_) { ch = null; }
       let tb = null; try { const C = c.win.Chrome, cfg = C && C.norm ? C.norm(ch && !ch.off ? ch : null, (typeof c.win.CONFIG !== "undefined" && c.win.CONFIG.SITE) || {}) : null; tb = cfg && cfg.header && cfg.header.topbar; } catch (_) { tb = null; }
       let shipping; try { const A = c.A, ps = A.pricingState ? A.pricingState() : { company: false }; if (Array.isArray(A.fees) && A.fees.length) shipping = { source: ps.company ? "company" : "zones", company: String(ps.name || ""), fees: A.fees.map(w => ({ id: w.id, name: String(w.name || ""), home: Number(w.home) || 0, desk: Number(w.stop) || 0, zone: String(w.zn || "") })), zones: ((c.AZ && c.AZ.S && c.AZ.S.zones) || []).map(z => ({ id: String(z.id || ""), name: String(z.name || ""), home: Number(z.home) || 0, desk: Number(z.stop) || 0, free_home: !!z.freeHome, free_desk: !!z.freeStop, free_over: Number(z.freeOver) || 0, wilayas: (z.wilayas || []).slice() })) }; } catch (_) { shipping = undefined; }
+      let payments; try { const pj = await readJson(c.GH, PAYP).catch(() => null), ad = c.win.eval('typeof AdminDigital !== "undefined" && AdminDigital._t ? AdminDigital : null'); if (ad) { const n = ad._t.normPay(pj); payments = { baridimob: { on: n.baridimob.on, rip: n.baridimob.rip, name: n.baridimob.name }, ccp: { on: n.ccp.on, account: n.ccp.account, key: n.ccp.key, name: n.ccp.name }, chargily: { on: n.chargily.on } }; } } catch (_) { payments = undefined; }
       if (!st && !tb) return null;
-      snapV = { shipping, taken_at: Math.floor(Date.now() / 1000), maintenance: { on: !!(st && st.maintenance), msg: String(st && st.maintMsg || "") }, announcement: { show: !!(tb && tb.show), text: String(tb && tb.text || ""), bg: String(tb && tb.bg || ""), color: String(tb && tb.color || "") } };
+      snapV = { shipping, payments, taken_at: Math.floor(Date.now() / 1000), maintenance: { on: !!(st && st.maintenance), msg: String(st && st.maintMsg || "") }, announcement: { show: !!(tb && tb.show), text: String(tb && tb.text || ""), bg: String(tb && tb.bg || ""), color: String(tb && tb.color || "") } };
     } catch (_) { snapV = null; }
     return snapV;
   }
@@ -76,6 +77,7 @@
     const num = v => (v === null || v === undefined || v === "") ? null : Number(v);
     return { ok: true, observed: kind === "stock" ? { slug: a.slug, stock: num(np.stock), source } : { slug: a.slug, price: num(np.price), source } };
   }
+  const PAYP = "assets/data/pay-methods.json", PAYL = "alyssum_pay_methods";
   const BAD = /[<>\u0000-\u001f]/, HEX = /^(#[0-9a-fA-F]{6})?$/;
   async function maintenance(c, a) {
     const { GH, AS, doc } = c; if (!AS || typeof AS.patch !== "function") return { ok: false, code: "unsupported" };
@@ -144,6 +146,26 @@
       return { ok: true, observed: { zone: a.zone, home: Number(nz.home), desk: Number(nz.stop), free_home: !!nz.freeHome, free_desk: !!nz.freeStop, free_over: Number(nz.freeOver) || 0, derived_ok: derived, source: "store_file" } };
     } catch (_) { return { ok: true, observed: { zone: a.zone, home: Number(z.home), desk: Number(z.stop), free_home: !!z.freeHome, free_desk: !!z.freeStop, free_over: Number(z.freeOver) || 0, derived_ok: false, source: "memory" } }; }
   }
+  /* طرق الدفع: ملف assets/data/pay-methods.json (يقرؤه المتجر عند الدفع). الملف يُقرأ من جديد ثم يُدمج الحقل المطلوب ويُنشر بالدالة نفسها التي تستعملها نافذة «المنتجات الرقمية» */
+  async function paymentMethod(c, a) {
+    const { GH, win } = c, M = a && a.method, RIP = /^[0-9]+( [0-9]+)*$/, F = { baridimob: ["on", "rip", "name"], ccp: ["on", "account", "key", "name"], chargily: ["on"] }[M];
+    if (!F) return { ok: false, code: "invalid" }; const given = ["on", "rip", "account", "key", "name"].filter(k => a[k] !== undefined);
+    if (!given.length || given.some(k => F.indexOf(k) < 0) || (a.on !== undefined && typeof a.on !== "boolean") || (a.rip !== undefined && !(typeof a.rip === "string" && a.rip.length <= 30 && RIP.test(a.rip))) || (a.account !== undefined && !(typeof a.account === "string" && a.account.length <= 20 && RIP.test(a.account))) || (a.key !== undefined && !/^[0-9]{2}$/.test(String(a.key))) || (a.name !== undefined && (typeof a.name !== "string" || a.name.length > 60 || a.name !== a.name.trim() || BAD.test(a.name)))) return { ok: false, code: "invalid" };
+    const AD = win.eval('typeof AdminDigital !== "undefined" && AdminDigital._t && AdminDigital.S ? AdminDigital : null'); if (!AD) return { ok: false, code: "unsupported" };
+    try { const cfg = GH.cfg(); if (!cfg || !cfg.token) return { ok: false, code: "no_publish" }; } catch (_) { return { ok: false, code: "no_publish" }; }
+    if (editorOpen(c, ["tab-digital"])) return { ok: false, code: "editor_open" };                       /* نافذة المنتجات الرقمية تحمل نموذج الدفع وتحفظه كاملاً: لا ننافسها */
+    let sha, cur = null; try { const f = await GH.getFile(PAYP); sha = f.sha; cur = JSON.parse(decodeURIComponent(escape(atob(String(f.content || "").replace(/\s/g, ""))))); } catch (_) { sha = undefined; cur = null; }
+    const n = AD._t.normPay(cur), m = n[M]; given.forEach(k => { m[k] = a[k]; });
+    const fin = AD._t.normPay(n); if ((M === "baridimob" && fin.baridimob.on && !fin.baridimob.rip)) return { ok: false, code: "missing_rip" }; if (M === "ccp" && fin.ccp.on && !fin.ccp.account) return { ok: false, code: "missing_account" };
+    fin.updatedAt = new Date().toISOString(); let res = null;
+    try { res = await GH.putFile(PAYP, btoa(unescape(encodeURIComponent(JSON.stringify(fin, null, 2)))), sha, "طرق الدفع الرقمي"); } catch (_) { return { ok: false, code: "publish_failed" }; }
+    try { AD.S.pay = fin; AD.S.sha = (res && res.content && res.content.sha) || AD.S.sha; win.localStorage.setItem(PAYL, JSON.stringify(fin)); } catch (_) { }
+    try {
+      const f = await readJson(GH, PAYP), o = AD._t.normPay(f)[M], obs = { method: M, on: !!o.on, source: "store_file" };
+      if (M === "baridimob") { obs.rip = o.rip; obs.name = o.name; } else if (M === "ccp") { obs.account = o.account; obs.key = o.key; obs.name = o.name; }
+      return { ok: true, observed: obs };
+    } catch (_) { const o = fin[M], obs = { method: M, on: !!o.on, source: "memory" }; if (M === "baridimob") { obs.rip = o.rip; obs.name = o.name; } else if (M === "ccp") { obs.account = o.account; obs.key = o.key; obs.name = o.name; } return { ok: true, observed: obs }; }
+  }
   async function freeShip(c, a) {
     const { A, GH } = c; if (!a || !SLUG.test(String(a.slug || "")) || typeof a.free !== "boolean") return { ok: false, code: "invalid" };
     const p = A.products.find(x => x.slug === a.slug); if (!p) return { ok: false, code: "not_found" };
@@ -160,6 +182,7 @@
       if (action.tool === "product_set_stock") return await apply("stock", action.args);
       if (action.tool === "product_set_price") return await apply("price", action.args);
       if (action.tool === "shipping_fee_set" || action.tool === "shipping_zone_set" || action.tool === "product_set_free_shipping") { const c = ctx(); if (!c) return { ok: false, code: "no_session" }; return action.tool === "shipping_fee_set" ? await shippingFee(c, action.args) : action.tool === "shipping_zone_set" ? await shippingZone(c, action.args) : await freeShip(c, action.args); }
+      if (action.tool === "payment_method_set") { const c = ctx(); if (!c) return { ok: false, code: "no_session" }; return await paymentMethod(c, action.args); }
       if (action.tool === "maintenance_set" || action.tool === "announcement_set") { const c = ctx(); if (!c) return { ok: false, code: "no_session" }; return action.tool === "maintenance_set" ? await maintenance(c, action.args) : await announcement(c, action.args); }
       return { ok: false, code: "unsupported" };
     } catch (_) { return { ok: false, code: "exception" }; }

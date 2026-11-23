@@ -85,4 +85,11 @@ Cloudflare Worker  /v1/laura/{chat,confirm,tools,health}   (platform/api/src/mod
 | `shipping_zone_set {zone, home?, desk?, free_home?, free_desk?, free_over?}` (مالك، حساسة) | تعديل منطقة؛ كل ولاياتها تتبع | `AdminZones.apply` + `Admin.publishWilayasJs` | `wilayas.js`: المنطقة **وحقول كل ولاياتها المشتقة** (`derived_ok`) |
 | `shipping_fee_set {wilaya, home?, desk?}` (مالك، حساسة) | رسوم ولاية **خارج المناطق** فقط (تُرفض `zone_managed` إن كانت تحت منطقة) | `Admin.fees` + `publishWilayasJs` | `wilayas.js` للولاية |
 | `product_set_free_shipping {slug, free}` | التوصيل المجاني لمنتج | النشر الحالي للمنتجات | `data.js` |
+
+### الدفع
+| الأداة | ما تفعله | دالة اللوحة | التحقق |
+|---|---|---|---|
+| `payment_overview` (مالك) | طرق الدفع المسبق الحالية (BaridiMob: on/rip/name، CCP: on/account/key/name، Chargily: on) | لقطة من اللوحة (`AdminDigital._t.normPay` على الملف المنشور) | — |
+| `payment_method_set {method, on?, rip?, account?, key?, name?}` (مالك، حساسة) | تفعيل/إيقاف طريقة وضبط بياناتها؛ يُدمج الحقل المطلوب دون مسّ الطرق الأخرى | قراءة `assets/data/pay-methods.json` ثم `GH.putFile` (كما تفعل نافذة «المنتجات الرقمية») | قراءة الملف المنشور: الحقول المطلوبة (`store_file`) |
+**حمايات:** الأرقام تُقبل أرقاماً تفصلها مسافة مفردة فقط ومفتاح CCP رقمان؛ لا تفعيل BaridiMob بلا RIP ولا CCP بلا حساب (`missing_rip`/`missing_account` على الخادم وفي اللوحة)؛ بطاقة الموافقة تعرض الرقم القديم والجديد كاملين مع تنبيه أن الزبائن سيحوّلون المال إلى الحساب الجديد؛ `editor_open` إن كانت نافذة «المنتجات الرقمية» مفتوحة (تحفظ نموذجها كاملاً فلا ننافسها). بعد النجاح تُحدَّث ذاكرة تلك النافذة من الملف. **حدود:** لا تغيّر الاشتراك ببوابة Chargily نفسها (مفاتيحها لدى المنصة) بل مجرد إظهارها للزبون؛ لم تُجرَّب مع بوابة دفع حقيقية.
 **حمايات:** يُرفض التعديل بـ`company_pricing` إن كان التسعير من شركة توصيل مفعّلة (تعديل المناطق لا يغيّر ما يدفعه الزبون)، و`editor_open` إن كانت في اللوحة رسوم غير محفوظة، و`unsupported` إن لم تكن وحدة المناطق قد غلّفت النشر (نشر `wilayas.js` الأصلي كان سيُسقط `SHIPPING`). اختبار: `laura-shipping-ui.js` (22 فحصاً على متجر PHP حقيقي).
