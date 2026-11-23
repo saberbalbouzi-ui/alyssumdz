@@ -489,7 +489,7 @@ body.two .node.tab span{color:#fff}
 /* وضع خفيف (تلقائي عند بطء الجهاز) */
 body.lite .wall .wb,body.lite .wcard .wbw{display:none}
 body.lite .panel .slab,body.lite .panel .vol,body.lite .panel .eg{display:none}
-body.lite #floorcv,body.lite .hall,body.lite .pillar,body.lite .strip{display:none}
+body.lite:not(.phone) #floorcv,body.lite .hall,body.lite .pillar,body.lite .strip{display:none}      /* الهاتف: القاعدة (الأرضية) تبقى ظاهرة بلوحة أصغر (1024²) ما لم ينهَر معدل الإطارات */
 body.lite .hp{animation:none;opacity:1}
 body.lite .panel{transition:none}
 
