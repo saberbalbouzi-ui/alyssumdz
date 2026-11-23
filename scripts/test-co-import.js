@@ -63,6 +63,16 @@ const { chromium } = require("playwright"); const fs = require("fs");
   await p.evaluate(() => { window.confirm = () => true; document.querySelector("[data-stmtdel]").click(); }); await p.waitForTimeout(900);
   const S2 = await p.evaluate(() => ({ n: Admin.stmts.length, a: Object.keys(Admin.ydActual).length, eff: Admin.orders.map(o => AdminPayments.effStatus(o)) }));
   t("حذف الكشف: يزول بأرقامه وتعود الحالة المحلية", S2.n === 0 && S2.a === 0 && S2.eff[1] === "livree", S2);
+  /* صفّ TOTAL لا يُعدّ طرداً، وإعادة استيراد الكشف تستبدل القديم */
+  fs.writeFileSync(dir + "/tot.csv", "Order #;Net Amount;Shipping Fee;COD Fee\nWC700001;1000;600;15\nWC700002;-250;0;0\nTOTAL;750;600;15\n");
+  await p.evaluate(async () => { Admin.ydActual = {}; Admin.stmts = []; await Priv.set("stmts", []); await Priv.set("ydactual", {}); await Priv.set("stmtmap", {}); document.getElementById("fin-import-co").dataset.co = "wecan"; });
+  await p.setInputFiles("#fin-import-co", dir + "/tot.csv"); await p.waitForTimeout(900);
+  await p.evaluate(() => { document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/tot.csv"); await p.waitForTimeout(900);
+  const TT = await p.evaluate(() => ({ keys: Object.keys(Admin.ydActual), st: Admin.stmts.length, n: (Admin.stmts[0] || {}).n, net: (Admin.stmts[0] || {}).net }));
+  t("صفّ TOTAL مستبعد (طردان لا ثلاثة، الصافي 750 لا 1500) وإعادة الاستيراد تستبدل الكشف القديم", TT.keys.length === 2 && !TT.keys.includes("TOTAL") && TT.st === 1 && TT.n === 2 && TT.net === 750, TT);
+  /* رسالة النتيجة موجَّهة لمستخدم المنصة: زر «تعديل الأعمدة» بدل «أرسل لي» وهو ينسى صيغة الشركة */
+  const NT = await p.evaluate(async () => { const body = (document.getElementById("notice-body") || {}).innerHTML || ""; await Priv.set("stmtmap", { "wecan|x": { idx: {} }, "other|y": { idx: {} } }); await Admin.resetCoMap("wecan"); const left = Object.keys((await Priv.get("stmtmap", {})) || {}); return { btn: /تعديل الأعمدة/.test(body), send: /أرسل لي/.test(body), left }; });
+  t("رسالة الاستيراد بلا «أرسل لي» وفيها «تعديل الأعمدة» الذي يمسح صيغة الشركة وحدها", NT.btn && !NT.send && NT.left.length === 1 && NT.left[0] === "other|y", NT);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
