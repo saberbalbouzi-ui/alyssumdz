@@ -830,5 +830,22 @@
 "لا طلبات هنا": "Aucune commande ici",
 "يوجد طرد آخر مطابق له": "Il existe un autre colis identique",
 "احذف الزائد من المعاينة": "supprimez le surplus depuis l'aperçu",
-"اضغط لعرض سبب الحالة وهاتف الموزّع": "Cliquez pour voir la raison du statut et le téléphone du livreur"
+"اضغط لعرض سبب الحالة وهاتف الموزّع": "Cliquez pour voir la raison du statut et le téléphone du livreur",
+"مسودة": "Brouillon",
+"مسودة: لم تُنشر بعد": "Brouillon : pas encore publiée",
+"جارِ إنشاء النسخة…": "Création de la copie…",
+"ظهرت النسخة في القائمة كمسودة (غير منشورة) — افتحها للتعديل ثم «حفظ ونشر»": "La copie apparaît dans la liste comme brouillon (non publiée) — ouvrez-la pour la modifier puis « Enregistrer et publier »",
+"أُنشئت النسخة وظهرت في قائمة الصفحات كمسودة: عدّل ثم «حفظ ونشر»": "La copie a été créée et apparaît dans la liste des pages comme brouillon : modifiez-la puis « Enregistrer et publier »",
+"هذا الرابط مستعمل أو محجوز، اختر اسماً آخر": "Ce lien est déjà utilisé ou réservé, choisissez un autre nom",
+"اسم الرابط غير صالح": "Nom de lien invalide",
+"في الطريق": "En route",
+"الصافي المتوقع": "Net attendu",
+"جارِ إنشاء النسخة": "Création de la copie",
+"الصفحة الرسمية للمنتج": "Page officielle du produit",
+"تُفتح من الرئيسية للمنتج": "S'ouvre depuis l'accueil pour le produit",
+"اسم الصفحة وصورتها وربطها بمنتج و": "Nom de la page, son image, liaison à un produit et",
+"لا توجد صفحات بعد. اضغط": "Aucune page pour l'instant. Cliquez sur",
+"صفحة جديدة» أو افتح المولّد": "Nouvelle page » ou ouvrez le générateur",
+"ظهرت النسخة في القائمة كمسودة (غير منشورة)": "La copie apparaît dans la liste comme brouillon (non publiée)",
+"افتحها للتعديل ثم «حفظ ونشر»": "ouvrez-la pour la modifier puis « Enregistrer et publier »"
 }
