@@ -43,6 +43,13 @@ const { chromium } = require("playwright");
   });
   t("اقتراح ربط للطرد الجديد بالطلب العالق (الهاتف والمبلغ) بلا طلب مكرَّر", RL.cand.length === 1 && RL.noDup, RL);
   t("يُعرض الاقتراح مرة واحدة بزرّ ربط، والربط بنقرة يستبدل التتبع القديم ويُزيل الطرد الخارجي", RL.n1 === 1 && RL.n2 === 1 && RL.hasBtn && /WS-ALY-pKUvMUc3/.test(RL.note) && !/jHIsDYJ6/.test(RL.note) && RL.ext === 0, RL);
+  /* استمرار المطابقة: عند العودة للتبويب بعد أكثر من 5 دقائق تُجرى مزامنة فورية، وقبلها لا */
+  const CU = await p.evaluate(async () => {
+    const A = Admin; let n = 0; A.key = A.key || "k"; A.activeCompanyKey = () => "wecan"; A.syncShipping = async () => { n++; }; A.reconcileShipping = async () => { }; A.checkCompanyKeys = () => { }; A.returnsSweep = () => { };
+    clearInterval(A._shipTimer); A._shipTimer = null; A.startShipAutoSync();
+    A._lastShipSync = Date.now() - 10 * 60000; document.dispatchEvent(new Event("visibilitychange")); await new Promise(r => setTimeout(r, 2200)); const old = n;
+    A._lastShipSync = Date.now() - 60000; document.dispatchEvent(new Event("visibilitychange")); await new Promise(r => setTimeout(r, 2200)); clearInterval(A._shipTimer); return { old, fresh: n - old }; });
+  t("عودة التبويب بعد أكثر من 5 دقائق تُشغّل مزامنة فورية، وقبلها لا", CU.old >= 1 && CU.fresh === 0, CU);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
