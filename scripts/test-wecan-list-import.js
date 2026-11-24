@@ -50,7 +50,7 @@ const { chromium } = require("playwright");
     A._lastShipSync = Date.now() - 10 * 60000; document.dispatchEvent(new Event("visibilitychange")); await new Promise(r => setTimeout(r, 2200)); const old = n;
     A._lastShipSync = Date.now() - 60000; document.dispatchEvent(new Event("visibilitychange")); await new Promise(r => setTimeout(r, 2200)); clearInterval(A._shipTimer); return { old, fresh: n - old }; });
   t("عودة التبويب بعد أكثر من 5 دقائق تُشغّل مزامنة فورية، وقبلها لا", CU.old >= 1 && CU.fresh === 0, CU);
-  t("التصحيح التلقائي محصور بـWeCan: طلب ياليدين مسلَّم وحالته المحفوظة مرتجع لا يُراجَع ولا يُقلب", R.yal === "livree" && !R.yalAsked, R);
+  t("المراجعة تشمل ياليدين أيضاً: مسلَّم محفوظ له حالة «مرتجع» قديمة يُراجَع ويبقى مسلَّماً (الشركة تقول Livré)", R.yal === "livree" && R.yalAsked, R);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
