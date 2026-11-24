@@ -302,7 +302,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <div class="ah-card"><h3>الطلبات حسب الحالة <small>${perT}</small></h3><div class="dn-w">${donut(counts)}<div class="lg">${GROUPS.map((g, i) => `<div><i style="background:${g.c}"></i>${g.t}<b>${num(counts[i])}</b></div>`).join("")}</div></div></div>
 </div>
 <div class="ah-row2">
-<div class="ah-card"><h3>آخر الطلبات <button type="button" class="ah-btn gh" data-go="orders" style="padding:6px 11px;font-size:.78rem">عرض الكل</button></h3>${last.length ? `<div style="overflow:auto"><table><thead><tr><th>الزبون</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${last.map((o, i) => { const g = lastSt[i]; return `<tr class="cl" data-o="${i}"><td></td><td></td><td>${money(o.total)}</td><td><span class="bd" data-rs="${i}" style="background:${g.c}33;border-color:${g.c}"></span></td><td>${new Date(o.date).toLocaleDateString("ar-DZ", { day: "numeric", month: "short" })}</td></tr>`; }).join("")}</tbody></table></div>` : '<div class="em">لا توجد طلبات بعد. ستظهر هنا فور وصولها.</div>'}</div>
+<div class="ah-card"><h3>آخر الطلبات <button type="button" class="ah-btn gh" data-go="orders" data-all="1" style="padding:6px 11px;font-size:.78rem">عرض الكل</button></h3>${last.length ? `<div style="overflow:auto"><table><thead><tr><th>الزبون</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${last.map((o, i) => { const g = lastSt[i]; return `<tr class="cl" data-o="${i}"><td></td><td></td><td>${money(o.total)}</td><td><span class="bd" data-rs="${i}" style="background:${g.c}33;border-color:${g.c}"></span></td><td>${new Date(o.date).toLocaleDateString("ar-DZ", { day: "numeric", month: "short" })}</td></tr>`; }).join("")}</tbody></table></div>` : '<div class="em">لا توجد طلبات بعد. ستظهر هنا فور وصولها.</div>'}</div>
 <div class="ah-card"><h3>يحتاج انتباهك</h3><div class="at">
 <button type="button" class="${waiting ? "w" : "ok"}" data-go="orders-new"><b>${num(waiting)}</b><span>طلب في انتظار التأكيد</span></button>
 <button type="button" class="${low.length ? "w" : "ok"}" data-go="products"><b>${num(low.length)}</b><span>منتج مخزونه منخفض (5 أو أقل)</span></button>
@@ -342,7 +342,11 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
     { const f = $("ah-from"), g = $("ah-to"); if (f) f.onchange = () => { if (f.value) { S.from = f.value; if (S.to && S.to < S.from) S.to = S.from; render(); } }; if (g) g.onchange = () => { if (g.value) { S.to = g.value; if (S.from && S.from > S.to) S.from = S.to; render(); } }; }
     root.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { S.metric = b.dataset.m; render(); });
     root.querySelectorAll("[data-tb]").forEach(b => b.onclick = () => { S.table = !S.table; render(); });
-    root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
+    root.querySelectorAll("[data-go]").forEach(b => b.onclick = () => {
+      /* «عرض الكل»: الطلبات المرسَلة للشركة تُخفى افتراضياً من جدول الطلبات (تنتقل لصفحة الشحن)، فكان الزر لا يعرض ما في البطاقة؛ يفتح الجدول بلا فلاتر وبإظهار المسجَّلة وتظهر حالة الشركة تحت كل طلب */
+      go(b.dataset.go);
+      if (b.dataset.all) { try { const a = A(), c = document.getElementById("order-show-shipped"); if (a.resetOrderFilters) a.resetOrderFilters(); if (c) c.checked = true; if (a.applyOrderFilters) a.applyOrderFilters(); } catch (e) { console.warn("AdminHome", e); } }
+    });
     root.querySelectorAll("[data-adt]").forEach(b => b.onclick = async () => { b.disabled = true; try { await A().toggleAdSlug(b.dataset.adt); } catch (e) { console.warn("AdminHome", e); } render(); });
     root.querySelectorAll("tr[data-o]").forEach(tr => tr.onclick = () => { const o = tr._o, ix = (A().orders || []).indexOf(o); if (ix >= 0 && A().openOrderPreview) { try { A().openOrderPreview(ix); return; } catch (e) { } } go("orders"); const q = $("order-filter-q"); if (q) { q.value = o.phone || o.id || ""; try { A().applyOrderFilters(); } catch (e) { } } });
     const box = $("ah-ch"), svg = box && box.querySelector("svg"); if (!svg) return;

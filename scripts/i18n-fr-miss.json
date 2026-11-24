@@ -799,5 +799,8 @@
 "السجلات": "Enregistrements",
 "العمولة": "commission",
 "الإرجاع": "retour",
-"المحصَّل": "encaissé"
+"المحصَّل": "encaissé",
+"حالة الطرد عند": "Statut du colis chez",
+"بانتظار حالة الشركة": "En attente du statut de la société",
+"لا توجد طلبات بعد. ستظهر هنا فور وصولها": "Aucune commande pour l'instant. Elles apparaîtront ici dès leur arrivée."
 }
