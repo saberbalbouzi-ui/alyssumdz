@@ -33,6 +33,14 @@ window.AdminKeep = {
   }
 };
 ["pointerdown", "mousedown", "touchstart", "click"].forEach(ev => document.addEventListener(ev, e => { window.AdminKeep._last = { el: e.target, at: Date.now() }; }, true));
+/* زرّ «نسخ» بجانب رقم التتبع: AdminCopyBtn(نص) يُرجع HTML الزرّ (أيقونة SVG)، والنقر مفوَّض عالمياً (data-copy) فيعمل في كل الجداول */
+window.AdminCopyBtn = txt => '<button type="button" class="cp-btn" data-copy="' + String(txt == null ? "" : txt).replace(/[<>&"]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c])) + '" title="نسخ رقم التتبع" aria-label="نسخ رقم التتبع" style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;min-height:26px;padding:0;margin:0 .3rem;border-radius:8px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;cursor:pointer;vertical-align:middle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>';
+document.addEventListener("click", e => {
+  const b = e.target && e.target.closest && e.target.closest("[data-copy]"); if (!b) return; e.preventDefault(); e.stopPropagation();
+  const txt = b.getAttribute("data-copy") || "", ok = () => { try { if (typeof toast === "function") toast("✅ " + (typeof AdminI18n !== "undefined" ? AdminI18n.t("تم نسخ رقم التتبع") : "تم نسخ رقم التتبع") + ": " + txt); } catch (_) { } b.style.opacity = ".5"; setTimeout(() => { b.style.opacity = ""; }, 700); };
+  const fb = () => { const t = document.createElement("textarea"); t.value = txt; t.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(t); t.select(); try { document.execCommand("copy"); ok(); } catch (_) { } t.remove(); };
+  try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, fb); else fb(); } catch (_) { fb(); }
+}, true);
 (() => {
   if (window.__modalStable) return; window.__modalStable = 1;
   const SKIP = /^(au-boot)$/;
