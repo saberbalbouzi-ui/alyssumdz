@@ -258,10 +258,10 @@
     const cand = [...open.values()].filter(x => x.fr && x.frame && x.fr.isConnected && !x.discarded && !x.blank && !x.min), p = cand.find(x => x.id === focused) || cand[cand.length - 1]; if (!p) return false;
     try { const w = p.fr.contentWindow, A = w.eval('typeof Admin !== "undefined" ? Admin : null'); if (!A || typeof A.tab !== "function") return false; A.tab(fr.tab); } catch (_) { return false; }
     const old = p.id, content = p.content; try { remember(p); } catch (_) { }
-    if (window.SpatialHub) SpatialHub.detach(old); open.delete(old); p.id = id; p.frame = fr; p.sec = Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }); open.set(id, p); if (focused === old) focused = id;
+    const hubRenamed = !!(window.SpatialHub && SpatialHub.rename && SpatialHub.rename(old, id)); if (!hubRenamed && window.SpatialHub) SpatialHub.detach(old); open.delete(old); const wasNav = !!(p.frame && p.frame.nav); p.id = id; p.frame = fr; p.sec = Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }); open.set(id, p); if (focused === old) focused = id;
     p.el.setAttribute("aria-label", sec.name); const h3 = p.el.querySelector("h3"); if (h3) h3.textContent = sec.name; p.fr.title = sec.name;
-    try { const d = p.fr.contentDocument, st = d && d.getElementById("__spEmbed"); if (st) st.textContent = (fr.nav ? EMBED_NAV_CSS : EMBED_CSS) + HOLO_SKIN; } catch (_) { }
-    if (window.SpatialHub) { try { SpatialHub.attach(id, p.fr.contentWindow, p.el); } catch (_) { } }
+    if (wasNav !== !!fr.nav) { try { const d = p.fr.contentDocument, st = d && d.getElementById("__spEmbed"); if (st) st.textContent = (fr.nav ? EMBED_NAV_CSS : EMBED_CSS) + HOLO_SKIN; } catch (_) { } }   /* إعادة كتابة الأنماط تُعيد حساب أنماط الصفحة كلها: فقط إن تغيّر نمط التنقل */
+    if (!hubRenamed && window.SpatialHub) { try { SpatialHub.attach(id, p.fr.contentWindow, p.el); } catch (_) { } }
     /* الانتقال (A.tab + إعادة التسجيل) متزامن ويُرسَم أولاً؛ تمييز العقدة/التركيز/التحديث بعد الإطار (pulse كانت تُجبر تخطيطاً متزامناً للعالم كله) */
     requestAnimationFrame(() => { select(id); focus(id); markNodes(); }); return true;
   }
@@ -436,6 +436,21 @@
     p.home = { x: p.st.x, y: p.st.y, z: p.st.z, rx: p.st.rx, ry: p.st.ry, rz: 0, s: p.st.s }; /* خانته الأصلية لزر ◎ */
   }
   /* لوح احتياطي مُسخَّن (السرعة): إطار لوحة حقيقي يُحمَّل خفيةً في الخلفية؛ عند فتح أي لوح يُنقَل إليه بـ moveBefore (يحفظ حالته فلا يُعاد تحميله) فيظهر اللوح فوراً، ثم يُحمَّل بديل. بلا moveBefore يعمل التحميل العادي */
+  /* ───── طابور تحميل الإطارات (V3) ─────
+     الإطارات المتزامنة تتقاسم خيطاً رئيسياً واحداً (نفس الأصل)، فتحميلها معاً يؤخّر الكل ويؤخّر النشطة آخراً؛ لذا تُحمَّل واحدة واحدة: المركَّزة أولاً ثم الأحدث، والتالية تبدأ بعد اكتمال السابقة وهدوء الإدخال (حتى 3ث)
+     أو مهلة 14ث. المنتظرة تُظهر «بانتظار دورها» وتتقدّم فوراً إن فُعِّلت؛ المصغَّرة قبل تحميلها لا تُحمَّل حتى تُستعاد. */
+  const LQ = { q: [], cur: null, t0: 0, tm: 0 };
+  const lqSet = (p, txt) => { try { const s = p.body && p.body.querySelector(".fr-load span"); if (s) s.textContent = txt; } catch (_) { } };
+  function lqStart(p) { LQ.cur = p; LQ.t0 = performance.now(); p._lq = "loading"; if (p.el.dataset.frame === "queued") p.el.dataset.frame = "loading"; lqSet(p, "جارٍ تحميل لوحة التحكم…"); p.fr.src = "../../admin.html"; clearTimeout(LQ.tm); LQ.tm = setTimeout(() => { if (LQ.cur === p) { LQ.cur = null; lqPump(99); } }, 14000); }
+  function lqAsk(p) { p._lq = "queued"; p.el.dataset.frame = "queued"; lqSet(p, "بانتظار دورها…"); if (LQ.q.indexOf(p) < 0) LQ.q.push(p); setTimeout(() => lqPump(0), 0); }
+  function lqPump(n) {
+    if (LQ.cur && !LQ.cur._lqGone && LQ.cur._lq === "loading") return; LQ.q = LQ.q.filter(x => !x._lqGone && x.fr && x.fr.isConnected && x._lq === "queued"); if (!LQ.q.length) return;
+    const best = LQ.q.slice().sort((a, b) => ((b.id === focused) - (a.id === focused)) || ((b.born || 0) - (a.born || 0)))[0];
+    if (best.id !== focused && (n || 0) < 12 && performance.now() - lastIn < 700) return setTimeout(() => lqPump((n || 0) + 1), 250);   /* لا نبدأ تحميل نافذة خلفية والمستخدم يتفاعل */
+    LQ.q.splice(LQ.q.indexOf(best), 1); lqStart(best);
+  }
+  const lqDone = p => { if (p._lq === "loading") p._lq = "done"; if (LQ.cur === p) { const d = performance.now() - LQ.t0; LQ.cur = null; clearTimeout(LQ.tm); setTimeout(() => lqPump(0), Math.max(150, Math.min(900, d * .2))); } };   /* فاصل يتناسب مع ثقل التحميل السابق (الجهاز البطيء يُمنح متنفَّساً أطول) ليمرّ إدخال المستخدم والتبديل بين الحمولات */
+  const lqDrop = p => { p._lqGone = true; LQ.q = LQ.q.filter(x => x !== p); if (LQ.cur === p) { LQ.cur = null; clearTimeout(LQ.tm); setTimeout(() => lqPump(0), 60); } };
   const SP = { f: null, ready: false, off: typeof Element === "undefined" || !Element.prototype.moveBefore, n: 0 };
   function spareMake() {
     if (!REAL || SP.f || (isMob() && !(navigator.deviceMemory >= 4)) || document.hidden || /[?&]nospare=1/.test(location.search)) return; /* الهاتف: لوح احتياطي واحد فقط إن أعلن الجهاز ذاكرة ≥ 4GB (iOS لا يعلنها فلا لوح) */ let park = document.getElementById("spare-park"); if (!park) { park = document.createElement("div"); park.id = "spare-park"; park.setAttribute("aria-hidden", "true"); document.body.appendChild(park); }
@@ -468,7 +483,7 @@
     b.querySelector(".pn-shield").addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && e.button !== 0) return; const h = p.el.querySelector(".pn-h"); if (!h) return; e.preventDefault(); h.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, pointerId: e.pointerId, pointerType: e.pointerType, clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY, button: e.button, buttons: e.buttons, isPrimary: e.isPrimary })); });
     let f = b.querySelector("iframe"), adopted = false; const ex = !SP.off ? EXT.find(e => e.ready && e.f.isConnected && e.tab === p.frame.tab) : null;
     if (ex) { try { b.moveBefore(ex.f, f); f.remove(); f = ex.f; EXT.splice(EXT.indexOf(ex), 1); adopted = true; extraSoon(1600); } catch (_) { adopted = false; } }   /* لوح مُجهَّز مسبقاً على التبويب نفسه: يظهر آنياً */
-    else if (SP.ready && SP.f && SP.f.isConnected && !SP.off) { const sf = SP.f; try { b.moveBefore(sf, f); f.remove(); f = sf; SP.f = null; SP.ready = false; adopted = true; spareSoon(1600); } catch (_) { adopted = false; } } p.adopted = adopted; p.wasAdopted = adopted; f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = !adopted; f.addEventListener("load", () => { if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); if (adopted) { p.frDone = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); } else if (LAZY.has(p.id)) { LAZY.delete(p.id); p.blank = true; p.discarded = true; p.el.dataset.frame = "discarded"; /* لوح مُستعاد من الحفظ: لا يُحمَّل إطاره حتى يُفعَّل */ } else f.src = "../../admin.html"; clearTimeout(p._fs); p.el.classList.remove("fr-show"); p._fs = setTimeout(() => p.el.classList.add("fr-show"), 16000); /* كشف احتياطي إن تعذّر ظهور التبويب */
+    else if (SP.ready && SP.f && SP.f.isConnected && !SP.off) { const sf = SP.f; try { b.moveBefore(sf, f); f.remove(); f = sf; SP.f = null; SP.ready = false; adopted = true; spareSoon(1600); } catch (_) { adopted = false; } } p.adopted = adopted; p.wasAdopted = adopted; f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = !adopted; f.addEventListener("load", () => { if (!f.getAttribute("src")) return; /* load الصفحة الفارغة الأولية قبل أن يمنح الطابور الإطار عنوانه: يُتجاهَل (وإلا عدّه SpatialHub إعادة تحميل وأسقط جاهزية اللوح بعد hello) */ if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); if (adopted) { p.frDone = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); } else if (LAZY.has(p.id)) { LAZY.delete(p.id); p.blank = true; p.discarded = true; p.el.dataset.frame = "discarded"; /* لوح مُستعاد من الحفظ: لا يُحمَّل إطاره حتى يُفعَّل */ } else lqAsk(p); clearTimeout(p._fs); p.el.classList.remove("fr-show"); p._fs = setTimeout(() => p.el.classList.add("fr-show"), 16000); /* كشف احتياطي إن تعذّر ظهور التبويب */
   }
   /* جسر الصوت: كلام المساعد (speechSynthesis) والميكروفون داخل لوح «اسألني» يحرّكان الكرة (أعصاب + صوت ستيريو) كأنها تتكلم وتستمع */
   function bridgeVoice(p, w, d) {
@@ -535,8 +550,8 @@
   }
   function suspendPanel(p) { if (!p.fr) return; snapFrame(p); softSuspend(p, true); clearTimeout(p._dis); if (DISCARD_MS > 0) p._dis = setTimeout(() => discardFrame(p), DISCARD_MS); }
   function resumePanel(p) {
-    if (!p.fr) return; clearTimeout(p._dis);
-    if (p.discarded || p.blank) { p.discarded = false; p.blank = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; p.suspended = false; p._hid = false; p.el.dataset.frame = "restoring"; if (!p.body.querySelector(".fr-load")) p.body.insertAdjacentHTML("beforeend", '<div class="fr-load"><i></i><span>جارٍ استعادة اللوح…</span></div>'); p.fr.src = "../../admin.html"; }
+    if (!p.fr) return; clearTimeout(p._dis); if (p._lq === "held") { lqAsk(p); return; }
+    if (p.discarded || p.blank) { p.discarded = false; p.blank = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; p.suspended = false; p._hid = false; p.el.dataset.frame = "restoring"; if (!p.body.querySelector(".fr-load")) p.body.insertAdjacentHTML("beforeend", '<div class="fr-load"><i></i><span>جارٍ استعادة اللوح…</span></div>'); lqAsk(p); }
     else { softSuspend(p, false); setTimeout(() => { try { if (!p.min && p.frDone) restoreFrame(p, p.fr.contentWindow, p.fr.contentWindow.document); } catch (_) { } }, 280); }   /* التمرير/المرشحات تضيع عند إخفاء الإطار: نعيدها */
   }
   function restoreFrame(p, w, d) {
@@ -556,7 +571,7 @@
         const tgt = d.getElementById("tab-" + p.frame.tab), ahp = d.getElementById("ah-panel"), shown = p.frame.tab === "ask" ? !!(ahp && ahp.classList.contains("on")) : tgt && !tgt.classList.contains("hidden");
         if (!p.frGuard) p.frGuard = Date.now() + 14000; /* اللوحة قد تعود إلى «الرئيسية» عند اكتمال تهيئتها: نُبقي التبويب المطلوب 14ث الأولى ما لم يلمس المستخدم الإطار */
         if (!shown && !p.frTouched && p.frTry < 220) { p.frTry++; try { if (p.frame.tab === "ask") { const H = w.eval('typeof AdminHelp !== "undefined" ? AdminHelp : null'); if (H && !(ahp && ahp.classList.contains("on"))) H.show(); } else A.tab(p.frame.tab); } catch (_) { } p._fi = setTimeout(tick, 90); return; }
-        if (!p.frDone) { frameZoom(p); p.frDone = true; setTimeout(() => { try { navSync(p.fr.contentDocument); } catch (_) { } }, 700); if (p.adopted) { p.adopted = false; /* لوح احتياطي حُمِّل قبل لحظات: بياناته قد تكون أقدم من الخادم ← تحديث فوري عبر الهَب (يُعاد المحاولة حتى يجهز الجسر) */ let tries = 0; const rf = () => { try { if (window.SpatialHub) SpatialHub.refreshNow(p.id).then(r => { if (!(r && r.ok) && ++tries < 8 && open.get(p.id) === p) setTimeout(rf, 600); }).catch(() => { }); } catch (_) { } }; setTimeout(rf, 500); } if (p.autoMic) { p.autoMic = false; setTimeout(() => { try { const m = d.getElementById("ah-mic"); if (m && !m.classList.contains("on")) m.click(); } catch (_) { } }, 900); } if (isMob() && !SP.f && !SP.ready) spareSoon(1200); setTimeout(() => restoreFrame(p, w, d), 100); if (ld) ld.remove(); p.el.dataset.frame = "ready"; }
+        if (!p.frDone) { frameZoom(p); p.frDone = true; lqDone(p); setTimeout(() => { try { navSync(p.fr.contentDocument); } catch (_) { } }, 700); if (p.adopted) { p.adopted = false; /* لوح احتياطي حُمِّل قبل لحظات: بياناته قد تكون أقدم من الخادم ← تحديث فوري عبر الهَب (يُعاد المحاولة حتى يجهز الجسر) */ let tries = 0; const rf = () => { try { if (window.SpatialHub) SpatialHub.refreshNow(p.id).then(r => { if (!(r && r.ok) && ++tries < 8 && open.get(p.id) === p) setTimeout(rf, 600); }).catch(() => { }); } catch (_) { } }; setTimeout(rf, 500); } if (p.autoMic) { p.autoMic = false; setTimeout(() => { try { const m = d.getElementById("ah-mic"); if (m && !m.classList.contains("on")) m.click(); } catch (_) { } }, 900); } if (isMob() && !SP.f && !SP.ready) spareSoon(1200); setTimeout(() => restoreFrame(p, w, d), 100); if (ld) ld.remove(); p.el.dataset.frame = "ready"; }
         if (Date.now() < p.frGuard && !p.frTouched) p._fi = setTimeout(tick, 250);
         return;
       }
@@ -644,7 +659,7 @@
   function dismiss(id, how) {
     const p = open.get(id); if (!p) return; hov = 0; act(p, ""); if (objSel === id) objSel = bigSel(id); const to = nodePos(id); p.el.classList.remove("tr"); p.el.classList.add("tr2"); p.keep = Object.assign({}, p.st);
     if (focused === id) focused = null; Object.assign(p.st, { x: to.x * .35, y: to.y * .35, z: -380, s: .1 }); apply(p); p.el.style.setProperty("--op", 0);
-    const r = p.el.getBoundingClientRect(); if (how === "close") { setState(p, "dismissing"); remember(p, p.keep); open.delete(id); if (window.SpatialHub) SpatialHub.detach(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; if (window.SpatialHub) SpatialHub.setVisible(id, false); suspendPanel(p); setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
+    const r = p.el.getBoundingClientRect(); if (how === "close") { lqDrop(p); setState(p, "dismissing"); remember(p, p.keep); open.delete(id); if (window.SpatialHub) SpatialHub.detach(id); FX.dissolve(r, "43,228,255"); setTimeout(() => p.el.remove(), 420); } else { p.min = true; if (p._lq === "queued") { LQ.q = LQ.q.filter(x => x !== p); p._lq = "held"; } if (window.SpatialHub) SpatialHub.setVisible(id, false); suspendPanel(p); setState(p, "minimized"); p.scroll = p.body.scrollTop; setTimeout(() => { if (p.min) p.el.style.display = "none"; }, 420); }
     markNodes(); select(id); setTimeout(() => arrange(), 60); syncMode();
   }
   /* النافذة الكبيرة: لوح اللوحة الحقيقية على المكتب يملأ الشاشة تحت الشريط العلوي (عمق 0، وعامل 0.973 لارتفاع المُركَّز)؛ غير ذلك كما اعتُمد */

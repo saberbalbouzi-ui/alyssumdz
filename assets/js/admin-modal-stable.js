@@ -57,14 +57,18 @@ document.addEventListener("click", e => {
   /* جوال: حين تتّسع «نافذة التخطيط» عن الشاشة المرئية (صفحة فيها تمرير أفقي فيصغّرها المتصفح تلقائياً، أو تكبير بالأصابع) تتحرّك الطبقات الثابتة (inset:0) خارج المنظور فيُقصّ نصّها وتظهر دوّارة التحديث عند الحافة.
      نثبّت الطبقات الثابتة المفتوحة على المنظور المرئي (visualViewport) وتعود لوضعها حين يتطابقان. */
   const OV = ".modal-bg.open,#au-cover,#au-bar,.acr-bg,.hs-bg,.sa-mbg,.cs-mbg,.bp-overlay,.cc-overlay,.stp-modbg,#tl-inst,#tl-lib,#tl-view,.acc-bg";
+  let nFit = 0;
   function fitVV() {
     const vv = window.visualViewport; if (!vv) return; const cw = document.documentElement.clientWidth, mism = Math.abs(cw - vv.width) > 2 || vv.offsetLeft > 2 || vv.offsetTop > 2;
-    document.querySelectorAll(OV).forEach(el => {
+    if (!mism && !nFit) return;   /* لا انحراف ولا طبقة مثبَّتة: لا مسح DOM ولا getComputedStyle (كان يعمل كل 250ms في كل إطار) */
+    const els = document.querySelectorAll(OV);
+    els.forEach(el => {
       const cs = getComputedStyle(el); if (cs.position !== "fixed" || cs.display === "none") { if (el.__vv) { unfit(el); } return; }
       if (!mism) { if (el.__vv) unfit(el); return; }
       if (!el.__vv) { const o = el.style; el.__vv = { inset: o.inset, left: o.left, top: o.top, width: o.width, height: o.height, right: o.right, bottom: o.bottom }; }
       el.style.inset = "auto"; el.style.left = vv.offsetLeft + "px"; el.style.top = vv.offsetTop + "px"; el.style.width = vv.width + "px"; el.style.height = vv.height + "px";
     });
+    nFit = 0; els.forEach(el => { if (el.__vv) nFit++; });
   }
   function unfit(el) { const o = el.__vv; if (!o) return; el.style.inset = o.inset; el.style.left = o.left; el.style.top = o.top; el.style.width = o.width; el.style.height = o.height; el.style.right = o.right; el.style.bottom = o.bottom; el.__vv = null; }
   const locked = new Set();

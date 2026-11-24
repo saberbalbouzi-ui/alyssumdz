@@ -57,6 +57,8 @@
   }
   /* إعادة تحميل الإطار (تحديث/استرداد): يُعلَّم غير جاهز حتى يعود «hello»، وما فاته أثناء التحميل يُعلَّم قديماً فيُفحص مرة واحدة */
   function reload(id) { const p = get(id); if (!p) return; clearTimeout(p.ackT); p.ready = false; p.refreshing = false; p.req = null; p.mountVer = Object.assign({}, p.synced); log("reload", { id }); paint(p); }
+  /* إعادة تسمية لوح مفتوح دون إعادة تحميل إطاره (تنقّل داخل اللوح نفسه): يبقى جاهزاً ومعرّفاً بنافذته ونسخ مزامنته، ويتبع اشتراكات القسم الجديد؛ ما فاته من تحديثات يُكتشف بـstale() عند العودة */
+  function rename(oldId, newId) { const p = panels.get(oldId); if (!p || oldId === newId) return false; if (panels.has(newId)) return false; panels.delete(oldId); p.id = newId; panels.set(newId, p); log("rename", { from: oldId, to: newId }); paint(p); return true; }
   function detach(id) { const p = panels.get(id); if (!p) return; clearTimeout(p.timer); clearTimeout(p.followTimer); panels.delete(id); log("detach", { id }); }
   function setVisible(id, v) { const p = get(id); if (!p) return; p.vis = !!v; paint(p); if (v) activate(id); }
   const stale = p => (SUBS[p.id] || []).filter(r => ver[r] > p.synced[r]);
@@ -198,7 +200,7 @@
   const pseudo = { rate: [] };
   const api = {
     expect, onAccepted, refreshNow, settle, registerAgent,
-    attach, detach, reload, setVisible, activate, version: V,
+    attach, detach, rename, reload, setVisible, activate, version: V,
     stats: () => JSON.parse(JSON.stringify(stats)), versions: () => Object.assign({}, ver), trace: () => trace.slice(),
     state: id => { const p = get(id); return p ? { ready: p.ready, vis: p.vis, refreshing: p.refreshing, stale: stale(p), synced: Object.assign({}, p.synced), degraded: p.degraded, events: p.events, lastSync: p.lastSync, sync: p.el && p.el.dataset.sync } : null; },
     tenant: () => tenant, ids: () => [...panels.keys()], SUBS,
