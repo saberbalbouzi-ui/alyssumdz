@@ -516,7 +516,8 @@
       "assets/pages/templates/thumbs/p-focus-honey.jpg",
       "assets/pages/templates/thumbs/s-alyssum-full.jpg",
       "assets/pages/templates/thumbs/s-alyssum.jpg",
-      "assets/data/names-fr.json"
+      "assets/data/names-fr.json",
+      "assets/js/admin-waqs.js"
     ]
   },
   "local": {

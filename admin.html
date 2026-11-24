@@ -379,6 +379,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <!--RUQYA:start-->
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('ruqya',this)"><span class="nav-ic">📅</span><span class="nav-txt"><b>مواعيد الرقية</b><small>حجوزات يوم السبت: تأكيد وإلغاء وتواصل</small></span></button>
 <!--RUQYA:end-->
+<!--WAQS:start-->
+      <button class="nav-btn" data-grp="shop" onclick="Admin.tab('waqs',this)" data-owner="1"><span class="nav-ic">💬</span><span class="nav-txt"><b>WhatsApp Quick Sender</b><small>مراسلة يدوية عبر WhatsApp وتسجيل نتيجة كل تواصل</small></span></button>
+<!--WAQS:end-->
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('returns',this)"><span class="nav-ic">↩</span><span class="nav-txt"><b>المرتجعات</b><small>الطرود الراجعة من شركة التوصيل وحالتها</small></span></button>
       <div class="nav-sec" data-grp="shop">المال والربح</div>
       <button class="nav-btn" data-grp="shop" onclick="Admin.tab('finance',this)"><span class="nav-ic">💼</span><span class="nav-txt"><b>المخزون والأرباح<span class="nb hidden" id="nb-finance"></span></b><small>مخزون يتحدث مع الطلبات، وربح حقيقي لكل منتج</small></span></button>
@@ -879,6 +882,9 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <!--RUQYA:start-->
   <div id="tab-ruqya" class="hidden admin-extra-tab"><div id="ruqya-content"></div></div>
 <!--RUQYA:end-->
+<!--WAQS:start-->
+  <div id="tab-waqs" class="hidden admin-extra-tab"><div id="waqs-content"></div></div>
+<!--WAQS:end-->
   <div id="tab-payments" class="hidden admin-extra-tab"><div id="payments-content"></div></div>
   <div id="tab-callcenter" class="hidden admin-extra-tab"><div id="callcenter-content"></div></div>
   <div id="tab-experts" class="hidden admin-extra-tab"><div id="experts-content"></div></div>
@@ -1811,6 +1817,7 @@ document.addEventListener("keydown", e=>{ if(e.key === "Escape") SitePreview.clo
 <script src="assets/js/admin-audit.js?v=a146d289"></script>
 <script src="assets/js/admin-returns.js?v=cad21493"></script>
 <!--RUQYA:start--><script>if(typeof CONFIG!=="undefined"&&CONFIG.SELLER)document.write('<script src="assets/js/admin-ruqya.js?v=7de23c50"><\/script>')</script><!--RUQYA:end-->
+<!--WAQS:start--><script>if(typeof CONFIG!=="undefined"&&CONFIG.SELLER)document.write('<script src="assets/js/admin-waqs.js?v=1"><\/script>')</script><!--WAQS:end-->
 <script src="assets/js/admin-costats.js?v=565007cd"></script>
 <script src="assets/js/admin-upsell.js?v=e26d67bf"></script>
 <script src="assets/js/admin-pack.js?v=f8aae113"></script>
@@ -11389,6 +11396,7 @@ if(Admin.phpMode()){
     costs:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
     upsell:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 010-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 010 5"/>',
     ruqya:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+    waqs:'<path d="M21 12a8 8 0 0 1-11.7 7L4 20l1.1-4.5A8 8 0 1 1 21 12z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-.8.8c-.9-.4-1.6-1.1-2-2l.8-.8-1-2z"/>',
     returns:'<path d="M3 7v6h6"/><path d="M3 13a9 9 0 109-9 9 9 0 00-6.7 3"/>',
     inventory:'<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 002 2h12a2 2 0 002-2V8M10 12h4"/>',
     reports:'<path d="M18 20V10M12 20V4M6 20v-6"/>',
