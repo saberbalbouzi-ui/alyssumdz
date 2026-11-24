@@ -6,7 +6,7 @@ html[data-q="2"] .wcard,html[data-q="1"] .wcard,html[data-q="0"] .wcard{backdrop
 html[data-q="2"] .scr::after,html[data-q="2"] .wcard::after,html[data-q="1"] .scr::after,html[data-q="1"] .wcard::after,html[data-q="0"] .scr::after,html[data-q="0"] .wcard::after{animation:none}
 html[data-q="2"] .pillar,html[data-q="2"] .strip,html[data-q="2"] .beam,html[data-q="1"] .pillar,html[data-q="1"] .strip,html[data-q="1"] .beam{box-shadow:none;filter:none}
 /* 1: + بلا لوحة الأرضية الكبيرة (زخرفية؛ تبقى المنصة تحت الاسطوانة) */
-@media(min-width:821px){html[data-q="1"] #floorcv,html[data-q="0"] #floorcv{display:none}}      /* الهاتف: القاعدة (لوحة 1024² واحدة) تبقى ظاهرة في كل مستويات الجودة */
+/* القاعدة (الأرضية) ثابتة في كل مستويات الجودة ولا تُخفى أبداً (قاعدة المشهد المركزية) */
 html[data-q="1"] .scr,html[data-q="0"] .scr{box-shadow:none}
 /* 0: + بلا القاعة الخلفية الزخرفية (hall) والأعمدة والعوارض */
 html[data-q="0"] .hall,html[data-q="0"] .pillar,html[data-q="0"] .strip,html[data-q="0"] .beam{display:none}

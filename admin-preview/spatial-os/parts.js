@@ -37,12 +37,15 @@
     else { b.append(el("span", "hp-h", c.t)); c.rows.forEach(r => { const row = el("div", "hp-r"); row.append(el("span", "", r[0]), el("b", "", r[1])); b.append(row); }); }
     return b;
   }
+  /* لا بطاقة مقطوعة: ما لا يتسع عمودياً (فوق شريط الأدوات السفلي) يُخفى كاملاً بدل أن يُقصّ */
+  function fit() { if (!host) return; const lim = innerHeight - 82 - 150; host.querySelectorAll(".hp-c").forEach(c => { const k = [...c.children]; k.forEach(x => { x.hidden = false; }); for (let i = k.length - 1; i > 0 && c.getBoundingClientRect().height > lim; i--) k[i].hidden = true; }); }
+  addEventListener("resize", () => { try { fit(); } catch (_) { } });
   function render(s) {
     if (!host || !s || !s.cards || !s.cards.length) return; snap = s; const C = s.cards, L = host.querySelector(".hp-c.l"), R = host.querySelector(".hp-c.r"); L.textContent = ""; R.textContent = "";
     const kpis = C.filter(c => c.k === "kpi"), chart = pick(C, /./, "chart"), attn = C.find(c => c.id === "attn"), status = C.find(c => c.id === "status"), last = C.find(c => c.id === "last"), rates = C.find(c => c.id === "rates"), profit = C.find(c => c.id === "profit");
-    const g = el("div", "hp-k"); kpis.forEach(k => g.append(card(k))); L.append(g); if (chart) L.append(card(chart)); if (attn) L.append(card(attn)); if (profit) L.append(card(profit));
-    if (status) R.append(card(status)); if (last) R.append(card(last)); if (rates) R.append(card(rates));
-    host.classList.add("on"); [...host.querySelectorAll(".hp")].forEach((b, i) => { b.style.animationDelay = (i * 55) + "ms"; });
+    const g = el("div", "hp-k"); kpis.forEach(k => g.append(card(k))); L.append(g); if (chart) L.append(card(chart)); if (attn) L.append(card(attn));
+    if (status) R.append(card(status)); if (last) R.append(card(last)); if (rates) R.append(card(rates)); if (profit) R.append(card(profit));  /* توازن العمودين */
+    fit(); host.classList.add("on"); [...host.querySelectorAll(".hp")].forEach((b, i) => { b.style.animationDelay = (i * 55) + "ms"; });
     try { localStorage.setItem(KEYF(), JSON.stringify(s)); } catch (_) { }
   }
   function poll() {
