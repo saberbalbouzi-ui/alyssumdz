@@ -54,6 +54,14 @@ const { chromium } = require("playwright");
     const before = AdminPack.filter(rows, "todo", "").map(r => r.id).join(","); rows.find(r => r.id === "2").packed = true;
     const after = AdminPack.filter(rows, "todo", "").map(r => r.id).join(","); return { before, after }; });
   t("تجهيز طلب لا يعيد ترتيب بقية القائمة (فقط يختفي الصف)", OR.after === OR.before.split(",").filter(x => x !== "2").join(","), OR);
+  /* جوال: المنظور المرئي أضيق من نافذة التخطيط ← الطبقة الثابتة (دوّارة التحديث) تُثبَّت على المرئي لا خارجه، وتعود عند التطابق */
+  const VV = await p.evaluate(async () => {
+    const fake = { width: 300, height: 500, offsetLeft: 20, offsetTop: 10, addEventListener() { } }; Object.defineProperty(window, "visualViewport", { value: fake, configurable: true });
+    const d = document.createElement("div"); d.id = "au-cover"; d.style.cssText = "position:fixed;inset:0;z-index:99;background:#000"; document.body.appendChild(d);
+    await new Promise(r => setTimeout(r, 500)); const r1 = d.getBoundingClientRect(), s1 = { l: Math.round(r1.left), t: Math.round(r1.top), w: Math.round(r1.width), h: Math.round(r1.height) };
+    fake.width = document.documentElement.clientWidth; fake.offsetLeft = 0; fake.offsetTop = 0; await new Promise(r => setTimeout(r, 500)); const r2 = d.getBoundingClientRect(); const s2 = { w: Math.round(r2.width), inset: d.style.inset }; d.remove(); return { s1, s2, cw: document.documentElement.clientWidth }; });
+  t("الطبقة الثابتة تُثبَّت على المنظور المرئي عند اختلافه عن نافذة التخطيط", VV.s1.l === 20 && VV.s1.t === 10 && VV.s1.w === 300 && VV.s1.h === 500, VV);
+  t("وتعود لوضعها (inset:0 بعرض الشاشة) حين يتطابقان", VV.s2.w === VV.cw && /0/.test(VV.s2.inset), VV);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();

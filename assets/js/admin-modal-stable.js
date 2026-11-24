@@ -46,6 +46,19 @@ window.AdminKeep = {
     el.__stbl.ro = new ResizeObserver(fit); el.__stbl.ro.observe(kid); fit();
   }
   function unlock(el) { const s = el.__stbl; if (!s) return; try { s.ro.disconnect(); } catch (_) { } el.style.alignItems = s.st.ai; s.kid.style.marginTop = s.st.mt; el.__stbl = null; }
+  /* جوال: حين تتّسع «نافذة التخطيط» عن الشاشة المرئية (صفحة فيها تمرير أفقي فيصغّرها المتصفح تلقائياً، أو تكبير بالأصابع) تتحرّك الطبقات الثابتة (inset:0) خارج المنظور فيُقصّ نصّها وتظهر دوّارة التحديث عند الحافة.
+     نثبّت الطبقات الثابتة المفتوحة على المنظور المرئي (visualViewport) وتعود لوضعها حين يتطابقان. */
+  const OV = ".modal-bg.open,#au-cover,#au-bar,.acr-bg,.hs-bg,.sa-mbg,.cs-mbg,.bp-overlay,.cc-overlay,.stp-modbg,#tl-inst,#tl-lib,#tl-view,.acc-bg";
+  function fitVV() {
+    const vv = window.visualViewport; if (!vv) return; const cw = document.documentElement.clientWidth, mism = Math.abs(cw - vv.width) > 2 || vv.offsetLeft > 2 || vv.offsetTop > 2;
+    document.querySelectorAll(OV).forEach(el => {
+      const cs = getComputedStyle(el); if (cs.position !== "fixed" || cs.display === "none") { if (el.__vv) { unfit(el); } return; }
+      if (!mism) { if (el.__vv) unfit(el); return; }
+      if (!el.__vv) { const o = el.style; el.__vv = { inset: o.inset, left: o.left, top: o.top, width: o.width, height: o.height, right: o.right, bottom: o.bottom }; }
+      el.style.inset = "auto"; el.style.left = vv.offsetLeft + "px"; el.style.top = vv.offsetTop + "px"; el.style.width = vv.width + "px"; el.style.height = vv.height + "px";
+    });
+  }
+  function unfit(el) { const o = el.__vv; if (!o) return; el.style.inset = o.inset; el.style.left = o.left; el.style.top = o.top; el.style.width = o.width; el.style.height = o.height; el.style.right = o.right; el.style.bottom = o.bottom; el.__vv = null; }
   const locked = new Set();
   /* النافذة المفتوحة = أعلى عنصر عند زاوية الشاشة يكون overlay ثابتاً يغطّيها؛ فحص خفيف كل 250ms وعند كل نقرة (لا مراقبة لكل التغييرات) */
   function tick() {
@@ -53,9 +66,10 @@ window.AdminKeep = {
       let e = document.elementFromPoint(innerWidth - 3, 3), found = null;
       while (e && e !== document.body && e !== document.documentElement) { if (isOpen(e)) { found = e; break; } e = e.parentElement; }
       if (found && !found.__stbl) { lock(found); if (found.__stbl) locked.add(found); }
+      fitVV();
       locked.forEach(el => { if (!el.isConnected || !isOpen(el) || !el.contains(el.__stbl && el.__stbl.kid)) { unlock(el); locked.delete(el); } });
     } catch (_) { }
   }
-  const start = () => { setInterval(tick, 250); document.addEventListener("click", () => requestAnimationFrame(tick), true); tick(); };
+  const start = () => { try { if (window.visualViewport) { visualViewport.addEventListener("resize", fitVV); visualViewport.addEventListener("scroll", fitVV); } } catch (_) { } setInterval(tick, 250); document.addEventListener("click", () => requestAnimationFrame(tick), true); tick(); };
   if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 })();
