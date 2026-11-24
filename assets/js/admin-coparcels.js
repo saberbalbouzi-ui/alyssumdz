@@ -44,7 +44,7 @@
   function draw(host, opts) {
     if (!host) return; const key = opts.key, s = st(key), rows = opts.rows || []; host._cop = opts; LAST[key] = opts;
     const cn = {}; rows.forEach(r => { const k = r.status || "—"; cn[k] = (cn[k] || 0) + 1; });
-    const keys = Object.keys(cn).sort((a, b) => cn[b] - cn[a]), list = filtered(key, rows), pages = Math.max(1, Math.ceil(list.length / PER));
+    const ord = opts.order || null, oi = k => { const i = ord ? ord.indexOf(k) : -1; return i < 0 ? 999 : i; }, keys = Object.keys(cn).sort((a, b) => ord ? (oi(a) - oi(b)) || (cn[b] - cn[a]) : (cn[b] - cn[a])), list = filtered(key, rows), pages = Math.max(1, Math.ceil(list.length / PER));
     if (s.page > pages) s.page = pages;
     const wils = [...new Set(rows.map(r => r.wilaya).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ar")), slice = list.slice((s.page - 1) * PER, s.page * PER);
     const chips = keys.map(k => '<span class="cop-chip ' + TN[tone(k)] + (s.st === k ? " on" : "") + '" data-cop-st="' + e(k) + '">' + e(k) + ' <b>' + cn[k] + '</b></span>').join("");

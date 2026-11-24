@@ -11,20 +11,24 @@ const { chromium } = require("playwright");
     document.getElementById("app").classList.remove("hidden"); window.toast = () => { }; const A = Admin;
     A.deliveryCfg = Object.assign({}, A.deliveryCfg, { wecan: { enabled: true, apiKey: "k", apiSecret: "s" } });
     const mk = (id, trk) => ({ id, date: new Date().toISOString(), name: "ز" + id, phone: "0550000" + id.slice(-3), wilaya: "Alger", commune: "x", dtype: "home", items: "x ×1 = 1 DA", total: 1000, status: "expediee", note: "🚚wecan:" + trk });
-    A.orders = [mk("O1", "WCNEW1"), mk("O2", "WCOLD1"), mk("O3", "WCSTM1"), Object.assign(mk("O4", "WCGHOST"), { date: new Date(Date.now() - 3 * 864e5).toISOString() })]; A.shipRaw = {}; A._stDeep = {};
+    A.orders = [mk("O1", "WCNEW1"), mk("O2", "WCOLD1"), mk("O3", "WCSTM1"), mk("O5", "WCFINE"), Object.assign(mk("O4", "WCGHOST"), { date: new Date(Date.now() - 3 * 864e5).toISOString() })]; A.shipRaw = {}; A._stDeep = {};
     const pages = []; A.courierFetch = async req => {
       const u = String(req.url);
       if (/\/orders\?/.test(u)) { const pg = Number((u.match(/number%5D=(\d+)/) || [])[1] || 1); pages.push(pg); const arr = Array.from({ length: pg >= 6 ? 40 : 100 }, (_, i) => ({ attributes: { tracking_number: "FILL" + pg + "_" + i, status: "Livré" } }));
         if (pg === 1) arr[0] = { attributes: { tracking_number: "WCNEW1", status: "Sorti en livraison" } }; if (pg === 5) arr[3] = { attributes: { tracking_number: "WCOLD1", status: "Livré" } }; return { ok: true, status: 200, text: JSON.stringify({ data: arr }) }; }
-      return { ok: true, status: 200, text: JSON.stringify([{ tracking: (u.match(/parcels\/([^/?]+)/) || [])[1] || "", last_status: "En préparation", status: "En préparation" }]) }; };
+      const trk = (u.match(/parcels\/([^/?]+)/) || [])[1] || ""; if (trk === "WCFINE") return { ok: true, status: 200, text: JSON.stringify([{ tracking: trk, last_status: "Expédié", history: [{ status: "Expédié", date: "2026-11-20 10:00" }, { status: "Sorti en livraison", date: "2026-11-22 09:00" }, { status: "Centre", date: "2026-11-21 08:00" }] }]) };
+      return { ok: true, status: 200, text: JSON.stringify([{ tracking: trk, last_status: "En préparation", status: "En préparation" }]) }; };
     A.ydActual = { WCSTM1: { st: "Livré", price: 1000, net: 800, co: "wecan", sid: "x" } };
     await A.syncShipping({ silent: true }); await new Promise(r => setTimeout(r, 500));
-    return { gone: (A._shipSync && A._shipSync.gone) || [], pages: [...new Set(pages)].sort((a, b) => a - b), raw: { O1: (A.shipRaw.O1 || {}).raw, O2: (A.shipRaw.O2 || {}).raw, O3: (A.shipRaw.O3 || {}).raw } }; });
+    return { gone: (A._shipSync && A._shipSync.gone) || [], pages: [...new Set(pages)].sort((a, b) => a - b), raw: { O5: (A.shipRaw.O5 || {}).raw, O1: (A.shipRaw.O1 || {}).raw, O2: (A.shipRaw.O2 || {}).raw, O3: (A.shipRaw.O3 || {}).raw } }; });
   t("الصفحات تُكمَّل بعد الثالثة حتى يوجد الطرد القديم (5 صفحات)", R.pages.length >= 5 && R.pages[R.pages.length - 1] <= 6, R);
   t("الطرد الأقدم من 300 طلب يأخذ حالة القائمة «Livré» لا «En préparation»", /Livr/i.test(R.raw.O2 || ""), R);
   t("الطرد الحديث «Sorti en livraison» من قائمة الشركة", /Sorti/i.test(R.raw.O1 || ""), R);
   t("طرد غير موجود في القائمة لكنه في الكشف المستورد (Livré) يأخذ حالة الكشف", /Livr/i.test(R.raw.O3 || ""), R);
   t("طرد قديم «En préparation» غير موجود في قائمة WeCan كاملة ولا في كشف: يُعلَّم «غير موجود عند الشركة» (O4 فقط)", R.gone.includes("O4") && !R.gone.includes("O1") && !R.gone.includes("O2") && !R.gone.includes("O3"), R);
+  t("الحالة التفصيلية كما عند الشركة: آخر حدث في سجلّ الطرد (Sorti en livraison) لا «Expédié» العامة", /Sorti en livraison/.test(R.raw.O5 || ""), R);
+  const CH = await p.evaluate(() => { const h = document.createElement("div"); document.body.appendChild(h); const co = Admin.allDeliveryCompanies().wecan; AdminCoP.draw(h, { key: "wecan_test", title: "x", rows: ["Livré", "Livré", "Sorti en livraison", "Centre", "Retourné au vendeur", "Centre"].map((s, i) => ({ tracking: "T" + i, status: s })), order: co.FINE }); return [...h.querySelectorAll(".cop-chips .cop-chip")].map(x => x.innerText.replace(/\s+/g, " ").trim()); });
+  t("شرائح الحالات بترتيب WeCan (Centre قبل Sorti en livraison قبل Livré قبل Retourné au vendeur) وبعدّها", JSON.stringify(CH.slice(1)) === JSON.stringify(["Centre 2", "Sorti en livraison 1", "Livré 2", "Retourné au vendeur 1"]), CH);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
