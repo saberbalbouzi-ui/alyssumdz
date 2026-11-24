@@ -122,7 +122,7 @@ for rel in ["admin.html", "assets/css", "assets/js", "assets/data", ("platform/s
 # مواعيد الرقية والحجز خاصة بموقع البائع فقط: لا تدخل أي حزمة عميل (لوحة/إعدادات/مساعدة/قاعدة بيانات/بيانات صفحات)
 _adm = OUT / "admin.html"; _t = _adm.read_text(encoding="utf-8")
 _t = re.sub(r"<!--RUQYA:start-->.*?<!--RUQYA:end-->\n?", "", _t, flags=re.S); _t = re.sub(r"^[ \t]*ruqya:'[^\n]*\n", "", _t, flags=re.M); _t = re.sub(r"<!--WAQS:start-->.*?<!--WAQS:end-->\n?", "", _t, flags=re.S); _t = re.sub(r"^[ \t]*waqs:'[^\n]*\n", "", _t, flags=re.M); _adm.write_text(_t, encoding="utf-8")
-for _f in ("assets/js/admin-waqs.js", "assets/js/admin-ruqya.js", "assets/data/ruqya-avis.json", "assets/data/names-fr.json", "supabase/ruqya.sql"): (OUT / _f).unlink(missing_ok=True)
+for _f in ("assets/js/admin-waqs.js", "assets/js/admin-waqs-lib.js", "assets/js/admin-ruqya.js", "assets/data/ruqya-avis.json", "assets/data/names-fr.json", "supabase/ruqya.sql"): (OUT / _f).unlink(missing_ok=True)
 # ملفات قاعدة البيانات الخاصة بمزوّد المنصة/صاحب الموقع لا تدخل حزمة العميل (apply-pending يحوي بريد المالك، وhub.sql لمشروع المزوّد)
 for _f in ("supabase/apply-pending.sql", "supabase/hub.sql"): (OUT / _f).unlink(missing_ok=True)
 # دالتا ruqya_lookup وruqya_book في hardening-v01b.sql وسطر ruqya في اختبار RLS: تُحذفان من حزمة العميل (الرقية للبائع فقط)

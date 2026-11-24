@@ -1,4 +1,4 @@
-/* WhatsApp Quick Sender (للمالك فقط): تطبيع الهاتف الدولي، بناء رابط wa.me وترميز عربي/إنجليزي، المتغيرات، CSV، حارس التكرار، تسجيل الحالة يدوياً فقط (فتح الرابط لا يغيّر الحالة)، الفرنسية، وغياب القسم عند غير المالك. NODE_PATH=/opt/node-tools/node_modules */
+/* WhatsApp Quick Sender (للمالك فقط): قائمة رسائل جاهزة تُستورد (JSON/CSV) أو تُضاف يدوياً وتُربط بالجهة والحملة والرسالة الأم، رابط wa.me بالنص النهائي وترميزه، فتح الرابط لا يسجّل إرسالاً، التسجيل اليدوي يحفظ نسخة المُرسَل، حارس التكرار، القوالب المساعدة الاختيارية، الفرنسية، وغياب القسم عند غير المالك. NODE_PATH=/opt/node-tools/node_modules */
 const { chromium } = require("playwright");
 (async () => {
   const b = await chromium.launch(); let bad = 0; const t = (n, c, x) => { console.log((c ? "✓ " : "✗ ") + n + (c ? "" : " " + JSON.stringify(x))); if (!c) bad++; };
@@ -13,86 +13,110 @@ const { chromium } = require("playwright");
     await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(6500); return p;
   }
   const p = await page(true);
+  const SHOW = async () => { await p.evaluate(async () => { document.getElementById("app").classList.remove("hidden"); window.toast = () => { }; for (let i = 0; i < 3 && document.getElementById("tab-waqs").classList.contains("hidden"); i++) { Admin.tab("waqs", document.querySelector("[onclick*=\"'waqs'\"]")); await new Promise(r => setTimeout(r, 500)); } }); };
   const U = await p.evaluate(() => {
     const W = AdminWaqs, o = {}; o.off = !!W.off;
     o.p1 = W.normPhone("+213 550-12-34-56").num; o.p2 = W.normPhone("0550123456", "الجزائر").num; o.p3 = W.normPhone("00213550123456").num; o.p4 = W.normPhone("٠٥٥٠١٢٣٤٥٦", "dz").num; o.p5 = W.normPhone("0550123456").ok; o.p6 = W.normPhone("abc").ok; o.p7 = W.normPhone("+33 6 12 34 56 78").num; o.p8 = W.normPhone("12345").ok;
-    const c = { name: "سمير بن علي", company: "Delta Corp", phone: "+213550123456", country: "الجزائر" };
-    o.r = W.render("مرحباً {name} ({first}) من {{company}} {phone} {country} {x}", c);
-    const msg = "مرحبا سمير 👋\nHello & welcome? 100% #1 +ok = «test»‏";
-    const u = W.waUrl("213550123456", msg); o.u = u; o.rt = decodeURIComponent(u.split("?text=")[1]) === msg; o.noRaw = !/[ \n#]/.test(u);
-    o.csv = W.mapRows(W.parseCsv("﻿الاسم;الشركة;الهاتف;الدولة;ملاحظات\n\"علي; محمد\";شركة أ;0551112233;الجزائر;\"ملاحظة\nسطرين\"\nJohn;;+33612345678;France;\n")); return o; });
+    const msg = "مرحبا سمير 👋\nHello & welcome? 100% #1 +ok = «test»‏"; const u = W.waUrl("213550123456", msg); o.u = u; o.rt = decodeURIComponent(u.split("?text=")[1]) === msg; o.noRaw = !/[ \n#]/.test(u);
+    const c = { name: "Karim Benali", company: "Atlas Trading", phone: "+213550123456", country: "الجزائر" };
+    o.r1 = W.render("Hello {first},\n{company} {in_country}", c, "en"); o.r2 = W.render("Bonjour {first}, {company} {in_country}", { name: "", company: "", country: "" }, "fr"); o.r3 = W.render("مرحباً {first}، {in_country}", c, "ar"); o.r4 = W.render("{sender} {my_company} {offer}", c, "en", { name: "", company: "", offer: {} }); o.r5 = W.render("{sender}/{offer}", c, "fr", { name: "Sam", company: "X", offer: { fr: "miel" } }); o.r6 = W.render("Bonjour {first}, {in_country}", { name: "Lea", country: "France" }, "fr");
+    o.csv = W.mapRows(W.parseCsv("﻿الاسم;الشركة;الهاتف;الدولة;ملاحظات\n\"علي; محمد\";شركة أ;0551112233;الجزائر;\"ملاحظة\nسطرين\"\nJohn;;+33612345678;France;\n"));
+    /* رسائل جاهزة: JSON وCSV بنص متعدد الأسطر وفواصل داخل الاقتباس */
+    const j = W.rowsFromText(JSON.stringify([{ company: "Delta", contact: "Sam", phone: "+213550000001", language: "English", type: "First Contact", campaign: "C1", message: "Hello Sam,\nOne, two." }])); o.j = j.rows[0];
+    const cs = W.rowsFromText('company,contact,phone,language,message_type,campaign,message\nGamma,Lea,+33612345678,Français,Relance,C2,"Bonjour Lea,\nsuite à mon message."\n'); o.cs = cs.rows[0]; o.badJson = W.rowsFromText("[{bad").err !== "";
+    return o; });
   t("الوحدة تعمل للمالك", U.off === false, U);
   t("تطبيع الهاتف: دولي، محلي+دولة، 00، أرقام عربية، رفض غير الصالح", U.p1 === "213550123456" && U.p2 === "213550123456" && U.p3 === "213550123456" && U.p4 === "213550123456" && U.p5 === false && U.p6 === false && U.p7 === "33612345678" && U.p8 === false, U);
-  t("المتغيرات تُستبدل (وغير المعروف يبقى)", U.r === "مرحباً سمير بن علي (سمير) من Delta Corp +213550123456 الجزائر {x}", U.r);
   t("رابط wa.me: ترميز عربي/إنجليزي/إيموجي/أسطر/رموز خاصة ويرجع للنص نفسه", /^https:\/\/wa\.me\/213550123456\?text=/.test(U.u) && U.rt && U.noRaw, U);
-  t("CSV: فاصلة منقوطة وحقول بين علامات اقتباس وعناوين عربية وإنجليزية", U.csv.length === 2 && U.csv[0].name === "علي; محمد" && U.csv[0].company === "شركة أ" && /سطرين/.test(U.csv[0].notes) && U.csv[1].name === "John" && U.csv[1].phone === "+33612345678", U.csv);
+  t("القوالب المساعدة: الدولة باللغة المناسبة وصياغة محايدة عند الغياب وتنظيف الفاصلة", U.r1 === "Hello Karim,\nAtlas Trading in Algeria" && U.r2 === "Bonjour, votre société dans votre région" && U.r3 === "مرحباً Karim، في الجزائر" && U.r6 === "Bonjour Lea, en France", U);
+  t("هوية المرسل الناقصة تبقى متغيراً ظاهراً (لا تُملأ بفراغ)، والمكتملة تُستبدل بلغتها", U.r4 === "{sender} {my_company} {offer}" && U.r5 === "Sam/miel", U);
+  t("CSV جهات: فاصلة منقوطة وحقول بين علامات اقتباس وعناوين عربية", U.csv.length === 2 && U.csv[0].name === "علي; محمد" && /سطرين/.test(U.csv[0].notes) && U.csv[1].name === "John", U.csv);
+  t("استيراد الرسائل: JSON وCSV (عناوين مرنة، نص متعدد الأسطر وفاصلة داخل الاقتباس) وJSON تالف يُرفض", U.j.company === "Delta" && U.j.message === "Hello Sam,\nOne, two." && U.j.lang === "English" && U.cs.type === "Relance" && U.cs.message === "Bonjour Lea,\nsuite à mon message." && U.badJson, U);
 
-  /* الواجهة */
-  await p.evaluate(async () => { document.getElementById("app").classList.remove("hidden"); window.toast = () => { }; window.__conf = []; window.confirm = m => { window.__conf.push(m); return window.__ans !== false; }; Admin.tab("waqs", document.querySelector("[onclick*=\"'waqs'\"]")); await new Promise(r => setTimeout(r, 500)); });
-  await p.waitForTimeout(1500); await p.evaluate(async () => { for (let i = 0; i < 3 && document.getElementById("tab-waqs").classList.contains("hidden"); i++) { Admin.tab("waqs", document.querySelector("[onclick*=\"'waqs'\"]")); await new Promise(r => setTimeout(r, 500)); } });
-  const nav = await p.evaluate(() => ({ cls: document.getElementById("tab-waqs").className, cur: [...document.querySelectorAll(".admin-extra-tab:not(.hidden)")].map(x => x.id).join(), btn: !!document.querySelector("[onclick*=\"'waqs'\"]"), pane: !document.getElementById("tab-waqs").classList.contains("hidden"), icon: !!document.querySelector("[onclick*=\"'waqs'\"] .nav-ic") }));
-  t("زر القسم ولوحته ظاهران للمالك", nav.btn && nav.pane, nav);
-  /* إضافة جهة عبر النافذة */
-  await p.click("[data-wq=add]"); await p.fill("#wf-n", "سمير بن علي"); await p.fill("#wf-c", "Delta Corp"); await p.fill("#wf-p", "0550123456"); await p.fill("#wf-k", "الجزائر"); await p.fill("#wf-t", "عميل محتمل");
-  await p.click("#wf-ok"); await p.waitForTimeout(400);
-  const d1 = await p.evaluate(() => ({ n: AdminWaqs.S.doc.contacts.length, sel: !!AdminWaqs.S.sel, go: document.getElementById("wq-go").getAttribute("href"), txt: document.getElementById("wq-go").textContent.trim(), tgt: document.getElementById("wq-go").target, rel: document.getElementById("wq-go").rel }));
-  t("إضافة جهة: تُحفظ وتفتح صفحتها وزر «فتح WhatsApp» يستهدف تبويباً جديداً بـnoopener", d1.n === 1 && d1.sel && d1.txt === "فتح WhatsApp" && d1.tgt === "_blank" && /noopener/.test(d1.rel), d1);
-  /* رقم مكرَّر ورقم غير صالح */
-  await p.click("[data-wq=back]"); await p.click("[data-wq=add]"); await p.fill("#wf-n", "آخر"); await p.fill("#wf-p", "+213 550 12 34 56"); await p.click("#wf-ok");
-  const e1 = await p.evaluate(() => document.getElementById("wf-e").textContent); await p.fill("#wf-p", "12"); await p.click("#wf-ok"); const e2 = await p.evaluate(() => document.getElementById("wf-e").textContent); await p.click("#wf-no");
-  t("رفض الرقم المكرَّر والرقم غير الصالح", /مسجَّل لـ/.test(e1) && /غير صالح/.test(e2), { e1, e2 });
-  /* كتابة الرسالة ← الرابط يتبعها */
-  await p.click("[data-id]"); await p.waitForTimeout(200);
-  await p.fill("#wq-msg", "السلام عليكم {first}، عن {company} & الأسعار؟"); await p.waitForTimeout(200);
-  const h = await p.evaluate(() => ({ href: document.getElementById("wq-go").getAttribute("href"), prev: document.getElementById("wq-prev").textContent }));
-  t("المعاينة والرابط يتبعان نص الرسالة بالمتغيرات", h.prev === "السلام عليكم سمير، عن Delta Corp & الأسعار؟" && decodeURIComponent(h.href.split("?text=")[1]) === h.prev && h.href.startsWith("https://wa.me/213550123456?text="), h);
-  /* الضغط على الزر: يُعلَّم «فُتحت» ولا يُسجَّل إرسال ولا تتغير الحالة */
-  await p.evaluate(() => { document.getElementById("wq-go").addEventListener("click", e => e.preventDefault(), true); }); await p.click("#wq-go"); await p.waitForTimeout(700);
-  const o1 = await p.evaluate(() => { const c = AdminWaqs.S.doc.contacts[0]; return { opened: !!c.opened, log: (c.log || []).length, pill: document.querySelector("#waqs .wq-pill").textContent.trim(), warn: /لم تُسجَّل نتيجتها/.test(document.getElementById("waqs").innerText) }; });
-  t("فتح WhatsApp لا يسجّل «تم الإرسال» ولا يغيّر الحالة (يظهر تنبيه «لم تُسجَّل نتيجتها»)", o1.opened && o1.log === 0 && o1.pill === "بلا تواصل" && o1.warn, o1);
-  /* تسجيل الحالة يدوياً */
-  await p.click("[data-wq=log]", { force: true }).catch(() => { }); const dis = await p.evaluate(() => document.querySelector("[data-wq=log]").disabled);
-  await p.click("[data-k=sent]"); await p.fill("#wq-note", "أُرسلت عبر Business"); await p.click("[data-wq=log]"); await p.waitForTimeout(400);
-  const s1 = await p.evaluate(() => { const c = AdminWaqs.S.doc.contacts[0], l = c.log[0]; return { n: c.log.length, st: l.st, note: l.note, msg: l.msg, pill: document.querySelector("#waqs .wq-pill").textContent.trim() }; });
-  t("التسجيل اليدوي: الزر معطَّل قبل اختيار حالة، ثم يُحفظ بالحالة والملاحظة ونص الرسالة المفتوحة", dis === true && s1.n === 1 && s1.st === "sent" && s1.note === "أُرسلت عبر Business" && /السلام عليكم سمير/.test(s1.msg) && s1.pill === "تم الإرسال", { dis, s1 });
-  /* حارس التكرار: confirm عند فتح جهة تواصلنا معها حديثاً */
+  /* الواجهة: لا بيانات وهمية */
+  await p.waitForTimeout(4000); await SHOW();
+  const E = await p.evaluate(() => ({ c: AdminWaqs.S.doc.contacts.length, m: AdminWaqs.S.doc.msgs.length, txt: document.getElementById("waqs").innerText, pane: !document.getElementById("tab-waqs").classList.contains("hidden") }));
+  t("زر القسم ظاهر للمالك، والقائمة فارغة بلا جهات أو رسائل وهمية", E.pane && E.c === 0 && E.m === 0 && /لا رسائل جاهزة للإرسال/.test(E.txt), E);
+  /* استيراد رسائل جاهزة (من ChatGPT) عبر النافذة */
+  const rows = [
+    { company: "Delta Corp", contact: "Sam Rivers", phone: "+213550123456", language: "EN", type: "First Contact", campaign: "Spring EU", ref: "d1", message: "Hello Sam,\n\nThis is a prepared first message for Delta Corp & partners? 100% #1." },
+    { company: "Delta Corp", contact: "Sam Rivers", phone: "+213550123456", language: "EN", type: "Follow-up", campaign: "Spring EU", ref: "d2", parent: "d1", message: "Hello Sam, a short follow-up on my previous message." },
+    { company: "Gamma SARL", contact: "Léa Martin", phone: "+33612345678", language: "FR", type: "First Contact", campaign: "Spring EU", ref: "g1", message: "Bonjour Léa,\n\nMessage préparé pour Gamma." },
+    { company: "Gamma SARL", contact: "Léa Martin", phone: "+33612345678", language: "FR", type: "First Contact", campaign: "Spring EU", message: "Bonjour   Léa,\n\nMessage préparé pour Gamma." },
+    { company: "Bad", contact: "X", phone: "12", language: "EN", type: "First Contact", message: "no phone" }
+  ];
+  await p.click("[data-wq=impm]"); await p.fill("#wm-t", JSON.stringify(rows)); await p.waitForTimeout(300);
+  const im = await p.evaluate(() => document.getElementById("wm-r").textContent); await p.click("#wm-ok"); await p.waitForTimeout(500);
+  const Q = await p.evaluate(() => ({ m: AdminWaqs.S.doc.msgs.length, c: AdminWaqs.S.doc.contacts.length, fu: AdminWaqs.S.doc.msgs.find(x => x.type === "followup"), first: AdminWaqs.S.doc.msgs.find(x => x.ref === "d1"), rows: [...document.querySelectorAll("#waqs .wq-q:not(.wq-qh)")].map(r => r.innerText.replace(/\s+/g, " ").trim()), head: (document.querySelector("#waqs .wq-qh") || {}).innerText }));
+  t("استيراد الرسائل: ملخص صحيح (3 جديدة، جهتان، مكرَّر واحد، غير صالح واحد)", /رسائل جديدة: 3/.test(im) && /جهات جديدة: 2/.test(im) && /مكرَّرة \(متخطّاة\): 1/.test(im) && /غير صالحة[^\n]*: 1/.test(im), im);
+  t("الرسائل مربوطة بجهاتها وحملتها، والمتابعة مربوطة بالرسالة الأولى عبر ref", Q.m === 3 && Q.c === 2 && Q.fu.parent === Q.first.id && Q.first.campaign === "Spring EU" && Q.first.lang === "EN", Q);
+  t("قائمة الإرسال: شركة | جهة اتصال | لغة | نوع الرسالة | الحالة (Ready to Send)", Q.rows.length === 3 && /Delta Corp Sam Rivers EN First Contact/.test(Q.rows.join("|")) && /Gamma SARL Léa Martin FR First Contact/.test(Q.rows.join("|")) && Q.rows.every(r => /Ready to Send/.test(r)) && /الشركة/.test(Q.head), Q);
+  /* فتح جهة: النص النهائي والرابط */
+  await p.click("[data-wq=open][data-mid]:has-text('Delta Corp') >> nth=0"); await p.waitForTimeout(300);
+  const D = await p.evaluate(() => ({ head: document.querySelector("#waqs h2").textContent, prev: document.getElementById("wq-prev").textContent, href: document.getElementById("wq-go").getAttribute("href"), phone: document.getElementById("waqs").innerText.includes("+213550123456"), tgt: document.getElementById("wq-go").target, rel: document.getElementById("wq-go").rel, first: AdminWaqs.S.doc.msgs.find(x => x.ref === "d1").text }));
+  t("فتح الجهة: الاسم والشركة والهاتف والنص النهائي كما أُعدّ، والرابط يحمله مشفَّراً (_blank/noopener)", /Sam Rivers/.test(D.head) && /Delta Corp/.test(D.head) && D.phone && D.prev === D.first && D.href.startsWith("https://wa.me/213550123456?text=") && decodeURIComponent(D.href.split("?text=")[1]) === D.first && D.tgt === "_blank" && /noopener/.test(D.rel), D);
+  /* الضغط على الزر: لا إرسال مسجَّل ولا تغيّر حالة الرسالة */
+  await p.evaluate(() => { window.__conf = []; window.__ans = true; window.confirm = m => { window.__conf.push(m); return window.__ans !== false; }; document.getElementById("wq-go").addEventListener("click", e => e.preventDefault(), true); });
+  await p.click("#wq-go"); await p.waitForTimeout(700);
+  const O = await p.evaluate(() => { const c = AdminWaqs.S.doc.contacts[0], m = AdminWaqs.S.doc.msgs.find(x => x.ref === "d1"); return { opened: !!c.opened, log: (c.log || []).length, status: m.status, sentText: m.sentText || "", warn: /لم تُسجَّل نتيجتها/.test(document.getElementById("waqs").innerText), conf: window.__conf.length }; });
+  t("فتح WhatsApp لا يسجّل إرسالاً ولا يغيّر حالة الرسالة (تبقى Ready) ويظهر تنبيه «لم تُسجَّل نتيجتها»", O.opened && O.log === 0 && O.status === "ready" && !O.sentText && O.warn && O.conf === 0, O);
+  /* تخصيص اختياري قبل الفتح ثم تسجيل «تم الإرسال»: تُحفظ نسخة النص المُرسَل فعلاً */
+  await p.click("[data-wq=custom]"); await p.fill("#wq-msg", "Hello Sam, edited just before sending."); await p.waitForTimeout(200);
+  const cu = await p.evaluate(() => ({ prev: document.getElementById("wq-prev").textContent, href: decodeURIComponent(document.getElementById("wq-go").getAttribute("href").split("?text=")[1]) }));
+  await p.evaluate(() => { document.getElementById("wq-go").addEventListener("click", e => e.preventDefault(), true); }); await p.click("#wq-go"); await p.waitForTimeout(500);
+  await p.click("[data-k=sent]"); await p.fill("#wq-note", "sent from Business"); await p.click("[data-wq=log]"); await p.waitForTimeout(400);
+  const SN = await p.evaluate(() => { const c = AdminWaqs.S.doc.contacts[0], m = AdminWaqs.S.doc.msgs.find(x => x.ref === "d1"), l = c.log[0]; return { status: m.status, sentText: m.sentText, sentAt: !!m.sentAt, st: l.st, msg: l.msg, type: l.type, lang: l.lang, camp: l.campaign, custom: l.custom, note: l.note, orig: m.text, txt: document.getElementById("waqs").innerText }; });
+  t("التخصيص الاختياري يغيّر المعاينة والرابط، وتسجيل «تم الإرسال» يدوياً يحفظ نسخة المُرسَل فعلاً ويُحوّل الرسالة إلى Sent بلا مسّ بنصها الأصلي", cu.prev === "Hello Sam, edited just before sending." && cu.href === cu.prev && SN.status === "sent" && SN.sentText === "Hello Sam, edited just before sending." && SN.msg === SN.sentText && SN.type === "first" && SN.lang === "EN" && SN.camp === "Spring EU" && SN.custom === true && /^This is|Hello Sam,\n\nThis is/.test(SN.orig) && /Copie|نسخة الرسالة المُرسَلة/.test(SN.txt), { cu, SN });
+  /* بانتظار المتابعة + المتابعة مرتبطة بالأولى */
+  await p.click("[data-wq=back]"); await p.click("[data-wq=tab][data-k=wait]"); await p.waitForTimeout(200);
+  const Wt = await p.evaluate(() => ({ rows: [...document.querySelectorAll("#waqs .wq-row")].map(r => r.innerText.replace(/\s+/g, " ")), cnt: [...document.querySelectorAll("#waqs [data-wq=tab] b")].map(x => x.textContent).join(",") }));
+  t("تبويب «بانتظار المتابعة» يعرض الجهة المُرسَل لها مع «متابعة جاهزة»، والعدّادات صحيحة (جاهزة 2)", Wt.rows.length === 1 && /Delta Corp/.test(Wt.rows[0]) && /متابعة جاهزة/.test(Wt.rows[0]) && Wt.cnt === "2,1,2", Wt);
+  await p.click("[data-wq=open]"); await p.waitForTimeout(300);
+  const F = await p.evaluate(() => ({ sel: document.querySelector("#waqs .wq-row.sel").innerText.replace(/\s+/g, " "), prev: document.getElementById("wq-prev").textContent, conf: window.__conf.length }));
+  t("فتح الجهة يحدّد تلقائياً رسالة المتابعة الجاهزة ويُظهر ارتباطها بالرسالة الأولى", /Follow-up/.test(F.sel) && /Relance|متابعة للرسالة/.test(F.sel) && /Follow-up|follow-up/.test(F.prev), F);
+  /* حارس التكرار: تواصل حديث ← تأكيد؛ الرفض لا يحدّث «فُتحت»؛ وأول تواصل أُرسل سابقاً */
   await p.evaluate(() => { window.__conf = []; window.__ans = false; });
-  const href0 = await p.evaluate(() => document.getElementById("wq-go").getAttribute("href"));
   await p.evaluate(() => { document.getElementById("wq-go").click(); }); await p.waitForTimeout(300);
-  const g1 = await p.evaluate(() => ({ conf: window.__conf.slice(), opened: AdminWaqs.S.doc.contacts[0].opened })); const before = g1.opened && g1.opened.at;
-  t("حارس التكرار: يعرض آخر رسالة وحالتها السابقة ويطلب التأكيد، والرفض لا يُحدّث «فُتحت»", g1.conf.length === 1 && /تم الإرسال/.test(g1.conf[0]) && /آخر رسالة/.test(g1.conf[0]) && /السلام عليكم/.test(g1.conf[0]), g1);
+  const G1 = await p.evaluate(() => ({ conf: window.__conf.slice(), op: AdminWaqs.S.doc.contacts[0].opened })); 
+  t("حارس التكرار: آخر رسالة وحالتها السابقة تُعرضان ويُطلب التأكيد، والرفض لا يفتح", G1.conf.length === 1 && /تم الإرسال/.test(G1.conf[0]) && /edited just before sending/.test(G1.conf[0]), G1);
+  await p.evaluate(() => { const c = AdminWaqs.S.doc.contacts[0], m = AdminWaqs.S.doc.msgs.find(x => x.ref === "d1"); AdminWaqs.S.mid = m.id; return AdminWaqs.msgGuard(c, m); }).then(w => t("حارس الرسالة: الرسالة المُرسَلة سابقاً تُنبَّه عند إعادة فتحها", w.length === 1 && /مُرسَلة بتاريخ/.test(w[0]), w));
   /* إلغاء التواصل يحجب الزر */
-  await p.click("[data-k=out]"); await p.click("[data-wq=log]"); await p.waitForTimeout(300);
+  await p.evaluate(() => { window.__ans = true; }); await p.click("[data-k=out]"); await p.click("[data-wq=log]"); await p.waitForTimeout(300);
   const out = await p.evaluate(() => { const a = document.getElementById("wq-go"); return { off: a.classList.contains("off"), href: a.getAttribute("href"), reopen: !!document.querySelector("[data-wq=reopen]") }; });
   t("«إلغاء التواصل» يعطّل زر فتح WhatsApp ويعرض رفع الإلغاء", out.off && out.href === "#" && out.reopen, out);
   await p.click("[data-wq=reopen]"); await p.waitForTimeout(300);
-  const ro = await p.evaluate(() => { const a = document.getElementById("wq-go"); return { off: a.classList.contains("off"), href: a.getAttribute("href").slice(0, 30), n: AdminWaqs.S.doc.contacts[0].log.length }; });
-  t("رفع الإلغاء يعيد التفعيل ويُسجَّل في التاريخ", !ro.off && /wa\.me/.test(ro.href) && ro.n === 3, ro);
-  /* حذف سجلّ واحد ثم الاستيراد والبحث والتصفية */
-  await p.evaluate(() => { window.__ans = true; });
-  await p.click("[data-wq=back]"); await p.click("[data-wq=imp]");
-  await p.setInputFiles("#wi-f", { name: "c.csv", mimeType: "text/csv", buffer: Buffer.from("name,company,phone,country,notes\nAli,Beta,0661000001,الجزائر,\nSara,Gamma,+33612345678,France,\nBad,X,12,,\nDup,Y,+213550123456,,\n", "utf8") }); await p.waitForTimeout(400);
-  const im = await p.evaluate(() => document.getElementById("wi-r").textContent); await p.click("#wi-ok"); await p.waitForTimeout(400);
-  const n2 = await p.evaluate(() => AdminWaqs.S.doc.contacts.map(c => c.name + ":" + c.phone).join("|"));
-  t("استيراد CSV: يقبل الصالح الجديد فقط ويتجاوز المكرَّر وغير الصالح ويعرض الملخص", /جديدة صالحة: 2/.test(im) && /مكرَّرة \(موجودة\): 1/.test(im) && /غير صالح: 1/.test(im) && /Ali:0661000001/.test(n2) && /Sara:\+33612345678/.test(n2) && !/Bad|Dup/.test(n2), { im, n2 });
-  await p.fill("#wq-q", "gamma"); await p.waitForTimeout(200); const f1 = await p.evaluate(() => document.querySelectorAll("#waqs .wq-row").length);
-  await p.fill("#wq-q", "0661"); await p.waitForTimeout(200); const f2 = await p.evaluate(() => document.querySelectorAll("#waqs .wq-row").length);
-  await p.fill("#wq-q", ""); await p.selectOption("#wq-f", "none"); await p.waitForTimeout(200); const f3 = await p.evaluate(() => document.querySelectorAll("#waqs .wq-row").length);
-  await p.selectOption("#wq-f", "sent"); await p.waitForTimeout(200); const f4 = await p.evaluate(() => document.querySelectorAll("#waqs .wq-row").length);
-  t("البحث (اسم/شركة/رقم) وتصفية الحالة: بلا تواصل بعد وتم الإرسال", f1 === 1 && f2 === 1 && f3 === 2 && f4 === 0, { f1, f2, f3, f4 });
-  /* الاستمرارية: الحفظ في Priv وإعادة التحميل */
-  const pr = await p.evaluate(async () => { await new Promise(r => setTimeout(r, 900)); const d = await Priv.get("waqs", null); return d && d.contacts && d.contacts.length; });
-  t("البيانات تُحفظ في الإعدادات الخاصة (Priv) لا في صفحة عامة", pr === 3, pr);
+  /* إضافة رسالة يدوياً + قالب مساعد اختياري + منع التكرار */
+  await p.click("[data-wq=addm]"); await p.waitForTimeout(300);
+  await p.selectOption("#mf-tp", "first"); await p.selectOption("#mf-l", "EN"); await p.click("#mf-fill"); await p.waitForTimeout(200);
+  const T1 = await p.evaluate(() => ({ txt: document.getElementById("mf-x").value, err: document.getElementById("mf-e").textContent }));
+  await p.evaluate(() => { AdminWaqs.S.doc.me = { name: "Saber", company: "ACME Co", offer: { en: "natural products", fr: "", ar: "" } }; });
+  await p.click("#mf-fill"); await p.waitForTimeout(200);
+  const T2 = await p.evaluate(() => ({ txt: document.getElementById("mf-x").value, err: document.getElementById("mf-e").textContent }));
+  await p.selectOption("#mf-t", "other"); await p.fill("#mf-cp", "Autumn"); await p.click("#mf-ok"); await p.waitForTimeout(400);
+  const NM = await p.evaluate(() => { const m = AdminWaqs.S.doc.msgs.slice(-1)[0]; return { n: AdminWaqs.S.doc.msgs.length, camp: m.campaign, type: m.type, lang: m.lang, st: m.status, hasVar: /\{/.test(m.text), first: /Hello Sam/.test(m.text) }; });
+  t("القالب المساعد اختياري: بلا هوية يُنبَّه ولا يُحفظ بمتغيرات ناقصة، وبعدها يُملأ بالجهة والهوية ويُحفظ رسالة Ready عادية", /\{sender\}/.test(T1.txt) && T1.err.length > 0 && !/\{/.test(T2.txt) && /Hello Sam/.test(T2.txt) && /ACME Co/.test(T2.txt) && NM.n === 4 && NM.camp === "Autumn" && NM.lang === "EN" && NM.st === "ready" && !NM.hasVar, { T1, T2, NM });
+  await p.click("[data-wq=addm]"); await p.fill("#mf-x", "Hello Sam, edited just before sending."); await p.click("#mf-ok"); await p.waitForTimeout(200);
+  const dupE = await p.evaluate(() => { const e = document.getElementById("mf-e").textContent; document.querySelector("#mf-no").click(); return e; });
+  t("منع رسالة مكرَّرة لنفس الجهة عند الإضافة اليدوية", /موجودة مسبقاً/.test(dupE), dupE);
+  /* تخطّي وحذف رسالة */
+  const SK = await p.evaluate(async () => { const S = AdminWaqs.S, m = S.doc.msgs.slice(-1)[0]; S.mid = m.id; document.querySelector("[data-wq=mskip]").click(); await new Promise(r => setTimeout(r, 300)); return { st: m.status, q: S.doc.msgs.filter(x => x.status === "ready").length }; });
+  t("تخطّي رسالة يخرجها من قائمة الإرسال", SK.st === "skipped" && SK.q === 2, SK);
+  /* الاستمرارية */
+  const pr = await p.evaluate(async () => { await new Promise(r => setTimeout(r, 900)); const d = await Priv.get("waqs", null); return d && { c: d.contacts.length, m: d.msgs.length, sent: d.msgs.filter(x => x.status === "sent").length }; });
+  t("البيانات تُحفظ في الإعدادات الخاصة (Priv) لا في صفحة عامة", pr && pr.c === 2 && pr.m === 4 && pr.sent === 1, pr);
   /* الفرنسية */
-  await p.evaluate(async () => { AdminWaqs.S.f = ""; AdminWaqs.S.sel = null; await AdminI18n.set("fr"); }); await p.waitForTimeout(1500);
-  const fr = await p.evaluate(() => { document.querySelector("#waqs .wq-row").click(); return new Promise(r => setTimeout(() => r(document.getElementById("waqs").innerText), 400)); });
-  t("الواجهة بالفرنسية بلا بقايا عربية في النصوص الثابتة", /Ouvrir WhatsApp/.test(fr) && /Historique des contacts/.test(fr) && !/[؀-ۿ]/.test(fr.replace(/Delta Corp|الجزائر|[؀-ۿ]+(?=[^\n]*$)/g, "").split("\n").filter(l => !/(Ali|Sara|Beta|Gamma|سمير|Delta)/.test(l)).join("\n")), fr.slice(0, 700));
+  await p.evaluate(async () => { AdminWaqs.S.sel = null; AdminWaqs.S.selFor = null; AdminWaqs.S.tab = "queue"; await AdminI18n.set("fr"); }); await p.waitForTimeout(1500);
+  const fq = await p.evaluate(() => document.getElementById("waqs").innerText + "\n" + document.querySelector("#waqs .wq-qh").textContent);
+  await p.evaluate(() => { document.querySelector("#waqs [data-wq=open]").click(); }); await p.waitForTimeout(400);
+  const fd = await p.evaluate(() => document.getElementById("waqs").innerText);
+  const arLeft = x => x.split("\n").filter(l => /[؀-ۿ]/.test(l) && !/(Delta|Gamma|Sam|Léa|Spring|Autumn|الجزائر)/.test(l)).join("|");
+  t("الواجهة بالفرنسية (القائمة وصفحة الجهة) بلا بقايا عربية في النصوص الثابتة", /Prêts à envoyer/.test(fq) && /Prêt à envoyer/.test(fq) && /Société/.test(fq) && /Type de message/.test(fq) && /Ouvrir WhatsApp/.test(fd) && /Historique des contacts/.test(fd) && arLeft(fq) === "" && arLeft(fd) === "", { q: arLeft(fq), d: arLeft(fd) });
   await p.evaluate(() => AdminI18n.set("ar")); await p.waitForTimeout(800);
 
-  /* غير المالك: لا وحدة ولا زر ولا لوحة وبيانات غير مقروءة */
+  /* غير المالك: لا وحدة ولا زر ولا لوحة */
   const q = await page(false);
-  const G = await q.evaluate(() => ({ off: typeof AdminWaqs === "undefined" || !!AdminWaqs.off, loaded: !![...document.scripts].some(s => /admin-waqs/.test(s.src)), tabs: (typeof TAB_PERM !== "undefined") }));
-  t("غير المالك (SELLER=false): لا يُحمَّل ملف الوحدة ولا تعمل", G.off && !G.loaded, G);
+  const G = await q.evaluate(() => ({ off: typeof AdminWaqs === "undefined" || !!AdminWaqs.off, loaded: !![...document.scripts].some(s => /admin-waqs/.test(s.src)) }));
+  t("غير المالك (SELLER=false): لا يُحمَّل ملفا الوحدة ولا تعمل", G.off && !G.loaded, G);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
