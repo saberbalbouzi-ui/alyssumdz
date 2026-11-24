@@ -15,7 +15,7 @@
     "median": 0,
     "max": 0
    },
-   "wallMs": 7776,
+   "wallMs": 7697,
    "requests": {
     "orders": 0,
     "data": 1,
@@ -24,7 +24,7 @@
     "writes": 4,
     "other": 2
    },
-   "msgBytes": 942,
+   "msgBytes": 938,
    "longTasks": 0,
    "longTaskMs": 0,
    "perPanel": {
@@ -45,7 +45,7 @@
     "median": 0,
     "max": 0
    },
-   "wallMs": 7789,
+   "wallMs": 7627,
    "requests": {
     "orders": 0,
     "data": 1,
@@ -54,9 +54,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 942,
+   "msgBytes": 938,
    "longTasks": 2,
-   "longTaskMs": 160,
+   "longTaskMs": 177,
    "perPanel": {
     "ord": 0
    }
@@ -64,7 +64,7 @@
   {
    "naive": {
     "panels": 1,
-    "reloadAllMs": 1102,
+    "reloadAllMs": 1300,
     "requests": {
      "orders": 2,
      "data": 1,
@@ -82,15 +82,15 @@
    "acceptedEvents": 4,
    "refreshes": 2,
    "noop": 0,
-   "refreshMsTotal": 24,
-   "bridgeMsTotal": 19,
-   "refreshMsMax": 13,
-   "eventToLastRefreshMs": 5245,
+   "refreshMsTotal": 45,
+   "bridgeMsTotal": 24,
+   "refreshMsMax": 35,
+   "eventToLastRefreshMs": 5227,
    "syncLatencyMs": {
-    "median": 263,
-    "max": 263
+    "median": 286,
+    "max": 286
    },
-   "wallMs": 8099,
+   "wallMs": 7918,
    "requests": {
     "orders": 1,
     "data": 2,
@@ -99,9 +99,9 @@
     "writes": 4,
     "other": 3
    },
-   "msgBytes": 1315,
-   "longTasks": 0,
-   "longTaskMs": 0,
+   "msgBytes": 1309,
+   "longTasks": 1,
+   "longTaskMs": 80,
    "perPanel": {
     "ord": 0,
     "ana": 2
@@ -113,15 +113,15 @@
    "acceptedEvents": 4,
    "refreshes": 2,
    "noop": 0,
-   "refreshMsTotal": 18,
-   "bridgeMsTotal": 16,
-   "refreshMsMax": 11,
-   "eventToLastRefreshMs": 5253,
+   "refreshMsTotal": 29,
+   "bridgeMsTotal": 27,
+   "refreshMsMax": 17,
+   "eventToLastRefreshMs": 5222,
    "syncLatencyMs": {
-    "median": 262,
-    "max": 262
+    "median": 267,
+    "max": 267
    },
-   "wallMs": 7808,
+   "wallMs": 8053,
    "requests": {
     "orders": 1,
     "data": 2,
@@ -130,9 +130,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 1315,
-   "longTasks": 3,
-   "longTaskMs": 186,
+   "msgBytes": 1310,
+   "longTasks": 2,
+   "longTaskMs": 137,
    "perPanel": {
     "ord": 0,
     "ana": 2
@@ -141,7 +141,7 @@
   {
    "naive": {
     "panels": 2,
-    "reloadAllMs": 1489,
+    "reloadAllMs": 1923,
     "requests": {
      "orders": 4,
      "data": 2,
@@ -159,15 +159,15 @@
    "acceptedEvents": 4,
    "refreshes": 4,
    "noop": 0,
-   "refreshMsTotal": 64,
-   "bridgeMsTotal": 56,
-   "refreshMsMax": 26,
-   "eventToLastRefreshMs": 5250,
+   "refreshMsTotal": 148,
+   "bridgeMsTotal": 104,
+   "refreshMsMax": 74,
+   "eventToLastRefreshMs": 5247,
    "syncLatencyMs": {
-    "median": 265,
-    "max": 276
+    "median": 306,
+    "max": 346
    },
-   "wallMs": 8112,
+   "wallMs": 7733,
    "requests": {
     "orders": 2,
     "data": 3,
@@ -176,9 +176,9 @@
     "writes": 4,
     "other": 4
    },
-   "msgBytes": 1618,
+   "msgBytes": 1612,
    "longTasks": 1,
-   "longTaskMs": 67,
+   "longTaskMs": 71,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -191,15 +191,15 @@
    "acceptedEvents": 4,
    "refreshes": 4,
    "noop": 0,
-   "refreshMsTotal": 62,
-   "bridgeMsTotal": 53,
-   "refreshMsMax": 21,
-   "eventToLastRefreshMs": 5265,
+   "refreshMsTotal": 133,
+   "bridgeMsTotal": 99,
+   "refreshMsMax": 56,
+   "eventToLastRefreshMs": 5228,
    "syncLatencyMs": {
-    "median": 267,
-    "max": 271
+    "median": 281,
+    "max": 307
    },
-   "wallMs": 7663,
+   "wallMs": 7876,
    "requests": {
     "orders": 2,
     "data": 3,
@@ -208,9 +208,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 1618,
+   "msgBytes": 1612,
    "longTasks": 3,
-   "longTaskMs": 229,
+   "longTaskMs": 293,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -220,7 +220,7 @@
   {
    "naive": {
     "panels": 3,
-    "reloadAllMs": 1980,
+    "reloadAllMs": 3185,
     "requests": {
      "orders": 6,
      "data": 3,
@@ -238,26 +238,26 @@
    "acceptedEvents": 4,
    "refreshes": 5,
    "noop": 0,
-   "refreshMsTotal": 145,
-   "bridgeMsTotal": 113,
-   "refreshMsMax": 34,
-   "eventToLastRefreshMs": 5297,
+   "refreshMsTotal": 282,
+   "bridgeMsTotal": 162,
+   "refreshMsMax": 95,
+   "eventToLastRefreshMs": 5320,
    "syncLatencyMs": {
-    "median": 285,
-    "max": 285
+    "median": 312,
+    "max": 346
    },
-   "wallMs": 7818,
+   "wallMs": 7886,
    "requests": {
     "orders": 2,
     "data": 4,
     "put": 1,
     "admin": 0,
     "writes": 4,
-    "other": 5
+    "other": 4
    },
-   "msgBytes": 1772,
-   "longTasks": 1,
-   "longTaskMs": 110,
+   "msgBytes": 1763,
+   "longTasks": 3,
+   "longTaskMs": 221,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -271,15 +271,15 @@
    "acceptedEvents": 4,
    "refreshes": 5,
    "noop": 0,
-   "refreshMsTotal": 113,
-   "bridgeMsTotal": 88,
-   "refreshMsMax": 30,
-   "eventToLastRefreshMs": 5276,
+   "refreshMsTotal": 320,
+   "bridgeMsTotal": 137,
+   "refreshMsMax": 98,
+   "eventToLastRefreshMs": 5291,
    "syncLatencyMs": {
-    "median": 271,
-    "max": 280
+    "median": 319,
+    "max": 348
    },
-   "wallMs": 7858,
+   "wallMs": 8018,
    "requests": {
     "orders": 2,
     "data": 4,
@@ -288,9 +288,9 @@
     "writes": 4,
     "other": 0
    },
-   "msgBytes": 1772,
-   "longTasks": 4,
-   "longTaskMs": 252,
+   "msgBytes": 1763,
+   "longTasks": 3,
+   "longTaskMs": 215,
    "perPanel": {
     "ord": 0,
     "ana": 2,
@@ -301,16 +301,16 @@
   {
    "naive": {
     "panels": 4,
-    "reloadAllMs": 2611,
+    "reloadAllMs": 4620,
     "requests": {
      "orders": 8,
      "data": 4,
      "put": 0,
      "admin": 4,
      "writes": 4,
-     "other": 264
+     "other": 266
     },
-    "allRequests": 284
+    "allRequests": 286
    }
   }
  ]

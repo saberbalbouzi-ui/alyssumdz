@@ -552,3 +552,38 @@ html body .core3d canvas{filter:none!important}
 /* بطاقات الرئيسية الحقيقية تملأ الجانبين: عرض العمود يتّسع مع الشاشة (268–400px) ويبقى بعيداً عن حلقة المدارات */
 .hp-c{width:clamp(268px,calc((100vw - 940px) / 2 - 24px),400px)}
 .hp-c>[hidden]{display:none!important}
+
+/* ═════ واجهة الهاتف المخصصة (phone.js): شريط علوي + صفّا تنقّل + ورقة كاملة العرض + شريط سفلي ═════
+   كل الأهداف ≥ 44px، الخطوط ≥ 12px، الهوامش 6–10px ثابتة، ومناطق آمنة (notch/home-indicator). العالم ثلاثي الأبعاد خلف الورقة ويظهر كاملاً في وضع «العالم». */
+#ps{display:none}
+@media(max-width:820px){
+  body.ps #ps{display:block}
+  body.ps #dock,body.ps .modebar,body.ps #modebar,body.ps .active,body.ps #orbit,body.ps #hud,body.ps .hparts,body.ps .yawchip{display:none!important}
+  #ps-top{position:fixed;top:0;left:0;right:0;z-index:13;background:#06141c;border-bottom:1px solid rgba(110,225,255,.28);padding-top:env(safe-area-inset-top)}
+  .ps-bar{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;height:48px;padding:0 6px}
+  .ps-title{text-align:center;font-size:16px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ps-ib{width:44px;height:44px;border-radius:12px;border:1px solid rgba(110,225,255,.35);background:#0b2330;color:#e8f6fa;font:800 15px Cairo,system-ui,sans-serif;display:grid;place-items:center;padding:0}
+  .ps-row{display:flex;gap:8px;overflow-x:auto;padding:6px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;direction:rtl}
+  .ps-row::-webkit-scrollbar{display:none}
+  .ps-chip{flex:0 0 auto;min-height:44px;padding:0 16px;border-radius:22px;border:1px solid rgba(110,225,255,.4);background:#0b2330;color:#e8f6fa;font:800 14px/1 Cairo,system-ui,sans-serif;white-space:nowrap}
+  .ps-subs .ps-chip{min-height:40px;font-size:13px;border-radius:14px;background:#08202c}
+  .ps-chip.on{background:#effe17;border-color:#e2fe17;color:#1f2123}
+  #ps-bot{position:fixed;left:0;right:0;bottom:0;z-index:13;display:grid;grid-template-columns:repeat(5,1fr);height:calc(64px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:#06141c;border-top:1px solid rgba(110,225,255,.28)}
+  .ps-nb{display:grid;place-items:center;align-content:center;gap:2px;min-height:56px;color:#bfe4ee;font:800 12px/1.1 Cairo,system-ui,sans-serif;background:none;border:0;padding:4px 0}
+  .ps-nb svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .ps-nb.on{color:#effe17}
+  .ps-laura{color:#1f2123}.ps-laura svg{width:28px;height:28px;padding:9px;box-sizing:content-box;border-radius:50%;background:#effe17;margin-top:-20px;border:3px solid #06141c}.ps-laura span{color:#effe17}
+  body.ps .panel,body.ps .panel .face{border-radius:0!important}
+  body.ps .panel .face{border-left:0!important;border-right:0!important;box-shadow:none!important}
+  body.ps .pn-rot,body.ps .pn-dep,body.ps .pn-max,body.ps .pn-rs,body.ps .pn-shield{display:none!important}
+  body.ps .pn-h{padding:4px 10px;cursor:default;border-radius:0}
+  body.ps .pn-h button{width:44px;height:44px}
+  body.ps .pn-h h3{font-size:16px}
+  body.ps .cam,body.ps .room,body.ps .core{top:calc(176px + (100vh - 248px) * .42)}
+  body.ps #laura{bottom:calc(72px + env(safe-area-inset-bottom));max-height:62vh;z-index:16}
+  /* LAURA على الهاتف: أهداف لمس ≥ 44px وخط الإدخال 16px (يمنع تكبير iOS عند التركيز) */
+  body.ps #laura input,body.ps #laura textarea{min-height:44px;font-size:16px}
+  body.ps #laura button{min-height:44px;min-width:44px}
+  body.ps #laura .lm-ok,body.ps #laura .lm-no{min-height:44px;padding:0 16px;font-size:14px}
+  body.ps .toast{bottom:calc(78px + env(safe-area-inset-bottom))}
+}

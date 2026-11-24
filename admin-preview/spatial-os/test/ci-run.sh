@@ -41,6 +41,9 @@ want lang-fr       && run lang-fr       600 node "$T/lang-fr.js"      # الفر
 want phone-scroll  && run phone-scroll  300 node "$T/phone-scroll.js"   # الهاتف: القاعدة ظاهرة، لوح 2D (عادي ومكبَّر)، سحب الإصبع يمرّر المحتوى
 want touch-drag    && run touch-drag    600 node "$T/touch-drag.js"     # سحب النوافذ باللمس (أندرويد/آيفون/لوحي): الرأس والمكبَّر والغلاف وpointercancel والعبور فوق الإطار
 want nav-instant   && run nav-instant   600 node "$T/nav-instant.js"    # فتح آني: النقر في المدار الثاني ينقل اللوح المفتوح إلى التبويب بلا تحميل (سطح مكتب + هاتف)
+want tab-switch    && run tab-switch    600 node "$T/tab-switch.js"     # V2: تنقل آني (≤120ms) داخل اللوح بلا إعادة تحميل وبحالته، واستقرار الإطار، مسار WebGL حقيقي
+want world-stable  && run world-stable  900 node "$T/world-stable.js"   # عالم ثابت: القاعدة/الاسطوانة/الكرة، 24 دورة فتح/إغلاق، حفظ/استعادة الترتيب (مكتب+هاتف)
+want phone-ui      && run phone-ui      900 node "$T/phone-ui.js"       # واجهة الهاتف المخصصة: شرائط، أهداف لمس، ورقة، تنقل، عالم، فرنسية (360/390/412/768)
 want orbits3      && run orbits3      600 node "$T/orbits3.js"       # ثلاثة مدارات (تبويبات ← إعدادات أولى ← إعدادات ثالثة) + فتح آني بألواح مسخَّنة مسبقاً
 want drag-inside && run drag-inside  300 node "$T/drag-inside.js"   # السحب داخل البطاقات
 want sphere-audio&& run sphere-audio 300 node "$T/sphere-audio.js"   # صوت الكرة ستيريو
