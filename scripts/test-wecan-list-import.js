@@ -30,6 +30,19 @@ const { chromium } = require("playwright");
   t("الطرد الخارجي في الطريق يأخذ حالته الفعلية من السجلّ الزمني «En attente du client»", R.ext1 === "En attente du client", R);
   t("شرائح بطاقة الشركة تضمّ الطرود الخارجية بحالاتها", /WS-ALY-ext1:En attente du client/.test(R.coRows) && /WS-ALY-ext2:Livré/.test(R.coRows), R);
   t("الأولوية: المسلَّم المخالف (returned) يُراجَع ويصير فشل/مرتجع رغم 60 طلباً متّسقاً حديثاً", R.mis === "echec", R);
+  /* طرد سُجّل مباشرة عندهم بنفس الزبون والمبلغ لطلب تتبعه مسودة ميتة: اقتراح ربط بلا ربط تلقائي ولا طلب مكرَّر */
+  const RL = await p.evaluate(async () => {
+    const A = Admin; window.toast = () => { }; const shown = []; const sn = A.showNotice; A.showNotice = (ti, h) => { shown.push(ti + "|" + h); }; localStorage.removeItem("alyssum_relink_seen"); localStorage.removeItem("alyssum_ext_parcels"); A._relinkCand = {};
+    A.deliveryCfg = Object.assign({}, A.deliveryCfg, { wecan: { enabled: true, apiKey: "k", apiSecret: "s" } });
+    A.orders = [{ id: "S261116-0BADD", date: new Date(Date.now() - 3 * 864e5).toISOString(), name: "حموني امحمد", phone: "0660013162", wilaya: "Tindouf", commune: "Tindouf", dtype: "home", items: "x ×1 = 1 DA", total: 4600, status: "confirmee", note: "🚚wecan:WS-ALY-jHIsDYJ6" }]; A.shipRaw = { "S261116-0BADD": { raw: "En préparation" } };
+    const rows = [{ tracking: "WS-ALY-pKUvMUc3", reference: "WS-ALY-pKUvMUc3", client: "حموني امحمد", phone: "0660013162", amount: 4600, status: "En attente du client", date: "2026-11-17 17:40:56", wilaya: "Tindouf", commune: "Tindouf", product: "x" }]; rows.complete = true;
+    A.importCompanyRows("wecan", rows, {}); const cand = Object.assign({}, A._relinkCand); const before = A.orders.length; await A.coAutoCreate("wecan"); const after = A.orders.length;
+    A.notifyRelink(); const n1 = shown.length, html = shown[0] || ""; A.notifyRelink(); const n2 = shown.length;
+    const k = Object.keys(cand)[0]; A.relinkDraft("S261116-0BADD", k); A.showNotice = sn;
+    return { cand: Object.keys(cand), noDup: before === after, n1, n2, hasBtn: /relinkDraft/.test(html), note: A.orders[0].note, ext: (A.extAll().wecan || []).length };
+  });
+  t("اقتراح ربط للطرد الجديد بالطلب العالق (الهاتف والمبلغ) بلا طلب مكرَّر", RL.cand.length === 1 && RL.noDup, RL);
+  t("يُعرض الاقتراح مرة واحدة بزرّ ربط، والربط بنقرة يستبدل التتبع القديم ويُزيل الطرد الخارجي", RL.n1 === 1 && RL.n2 === 1 && RL.hasBtn && /WS-ALY-pKUvMUc3/.test(RL.note) && !/jHIsDYJ6/.test(RL.note) && RL.ext === 0, RL);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();

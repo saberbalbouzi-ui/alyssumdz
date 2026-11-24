@@ -850,5 +850,14 @@
 "افتحها للتعديل ثم «حفظ ونشر»": "ouvrez-la pour la modifier puis « Enregistrer et publier »",
 "حُدّثت حالة الشركة فقط": "Seul le statut de la société a été mis à jour",
 "محاولة توصيل فاشلة (بلا تغيير)": "Tentative de livraison échouée (sans changement)",
-"تصحيح حسب حالة الشركة": "correction selon le statut de la société"
+"تصحيح حسب حالة الشركة": "correction selon le statut de la société",
+"تعذّر جلب قائمة طرود": "Impossible de récupérer la liste des colis de",
+"طرد عند الشركة يطابق طلباً عالقاً": "Un colis chez la société correspond à une commande bloquée",
+"دج) يطابق الطلب": "DA) correspond à la commande",
+"الذي تتبعه القديم": "dont l'ancien suivi",
+"غير مشحون عند الشركة (مسودة)": "n'a pas été expédié chez la société (brouillon)",
+"ربط الطلب بهذا الطرد": "Lier la commande à ce colis",
+"تعذّر الربط": "Impossible de lier",
+"رُبط الطلب بالطرد": "Commande liée au colis",
+"الطرد": "Le colis"
 }
