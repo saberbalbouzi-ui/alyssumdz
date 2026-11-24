@@ -1,0 +1,78 @@
+/* استيراد كشف الدفع لشركة غير ياليدين: زر لكل شركة مفعّلة، واكتشاف الأعمدة (فرنسي/عربي)، وحساب الصافي حين يغيب عموده. NODE_PATH=/opt/node-tools/node_modules */
+const { chromium } = require("playwright"); const fs = require("fs");
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1300, height: 900 } }); let bad = 0; const t = (n, c, x) => { console.log((c ? "✓ " : "✗ ") + n + (c ? "" : " " + JSON.stringify(x))); if (!c) bad++; };
+  const errs = []; p.on("pageerror", e => errs.push(String(e).slice(0, 140)));
+  await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, r => r.abort());
+  await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+  await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); localStorage.removeItem("alyssum_lang"); } catch (e) { } });
+  await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(6500);
+  await p.evaluate(() => { document.getElementById("app").classList.remove("hidden"); window.toast = () => { }; Admin.deliveryCfg = Object.assign({}, Admin.deliveryCfg, { wecan: { enabled: true }, yalidine: { enabled: true } }); Admin.tab("finance"); Admin.renderFinance(true); });
+  await p.waitForTimeout(500);
+  const btns = await p.evaluate(() => [...document.querySelectorAll("#fin-co-imp button")].map(x => x.textContent.trim()));
+  t("زر لكل شركة مفعّلة غير ياليدين (WeCan) وبلا زر ياليدين مكرَّر", btns.length >= 1 && btns.some(x => /WeCan/i.test(x)) && !btns.some(x => /Yalidine/i.test(x)), btns);
+  const dir = "/tmp/coimp"; fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(dir + "/fr.csv", "Tracking;Statut;Montant COD;Frais livraison;Taxe COD;Net client\nWC111111;Livré;2 000,00;600;15;1385\nWC222222;Retourné;0;0;0;-250\n");
+  fs.writeFileSync(dir + "/ar.csv", "رقم التتبع,الحالة,المبلغ,رسم التوصيل,عمولة COD\nWC333333,مسلّم,1800,550,13.5\n");
+  const run = async (file) => { await p.evaluate(() => { Admin.ydActual = {}; const i = document.getElementById("fin-import-co"); i.dataset.co = "wecan"; });
+    await p.setInputFiles("#fin-import-co", file); await p.waitForTimeout(900); return p.evaluate(() => ({ a: Admin.ydActual, notice: (document.querySelector(".notice-card,.modal,#notice,.an-notice") || document.body).innerText.slice(-600) })); };
+  const fr = await run(dir + "/fr.csv"), a1 = fr.a.WC111111, a2 = fr.a.WC222222;
+  t("كشف فرنسي: التقاط التتبع والأعمدة وفاصل الأرقام الفرنسي", a1 && a1.price === 2000 && a1.del === 600 && a1.cod === 15 && a1.net === 1385 && a1.co === "wecan", fr.a);
+  t("المرتجع: الصافي سالب كما في الكشف", a2 && a2.net === -250, a2);
+  const ar = await run(dir + "/ar.csv"), a3 = ar.a.WC333333;
+  t("كشف عربي بلا عمود صافٍ: الصافي = المحصَّل − (التوصيل + العمولة)", a3 && a3.price === 1800 && a3.del === 550 && Math.abs(a3.net - (1800 - 550 - 13.5)) < 0.01, ar.a);
+  /* xlsx بورقتين وصفوف عنوان تقرير قبل رأس الجدول (تقرير تحصيل حقيقي الشكل) */
+  await p.evaluate(() => { Admin.ydActual = {}; document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/wecan.xlsx"); await p.waitForTimeout(1000);
+  const XL = await p.evaluate(() => Admin.ydActual); t("xlsx بورقتين وعنوان تقرير قبل الرأس: يُقرأ جدول التفاصيل ورأس «Parcel Tracking Code»", XL.WC555555 && XL.WC555555.net === 1385 && XL.WC666666 && XL.WC666666.net === -250, XL);
+  /* صيغة مجهولة تماماً: التتبع يُكتشف من محتوى الكشف (يطابق أرقام طلباتك) ويُسأل المستخدم عن المبلغ مرة واحدة ثم تُتذكّر الصيغة */
+  fs.writeFileSync(dir + "/odd.csv", "RAPPORT ENCAISSEMENT\n\nN°;Identifiant;Somme;Reste\n1;ZZ900001;2 400;1 750\n2;ZZ900002;1 200;-250\n");
+  await p.evaluate(async () => { Admin.ydActual = {}; Admin.stmts = []; await Priv.set("stmts", []); await Priv.set("ydactual", {}); await Priv.set("stmtmap", {}); document.getElementById("fin-import-co").dataset.co = "wecan";
+    const mk = (id, trk) => ({ id, date: new Date().toISOString(), name: "ز" + id, phone: "0550000000", wilaya: "Alger", commune: "x", dtype: "home", items: "x", subtotal: 2000, fee: 400, total: 2400, status: "livree", note: "🚚wecan:" + trk }); Admin.orders = [mk("Z1", "ZZ900001"), mk("Z2", "ZZ900002")]; });
+  await p.setInputFiles("#fin-import-co", dir + "/odd.csv"); await p.waitForTimeout(800);
+  const M = await p.evaluate(() => { const m = document.getElementById("stm-ok"); if (!m) return null; const sel = k => document.querySelector('[data-stf="' + k + '"]'); return { trkTxt: sel("trk").selectedOptions[0].textContent, hi: document.getElementById("stm-hi").value }; });
+  t("صيغة مجهولة: تظهر نافذة المطابقة وعمود التتبع مُكتشف من محتوى الكشف (Identifiant)", M && /Identifiant/.test(M.trkTxt) && M.hi === "2", M);
+  await p.evaluate(() => { const sel = k => document.querySelector('[data-stf="' + k + '"]'); const opts = [...sel("net").options]; sel("net").value = opts.find(o => /Reste/.test(o.textContent)).value; document.getElementById("stm-ok").click(); }); await p.waitForTimeout(1000);
+  const O1 = await p.evaluate(() => Admin.ydActual); t("بعد الاعتماد: يُستورد الكشف بالأعمدة المختارة", O1.ZZ900001 && O1.ZZ900001.net === 1750 && O1.ZZ900002 && O1.ZZ900002.net === -250, O1);
+  await p.evaluate(async () => { Admin.ydActual = {}; await Priv.set("ydactual", {}); document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/odd.csv"); await p.waitForTimeout(1000);
+  const O2 = await p.evaluate(() => ({ modal: !!document.getElementById("stm-ok"), a: Admin.ydActual })); t("الصيغة تُتذكَّر: الاستيراد الثاني لنفس الصيغة بلا نافذة", !O2.modal && O2.a.ZZ900001 && O2.a.ZZ900001.net === 1750, O2);
+  fs.writeFileSync(dir + "/bad.csv", "A,B\n1,2\n"); await p.evaluate(async () => { Admin.ydActual = {}; await Priv.set("stmtmap", {}); document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/bad.csv"); await p.waitForTimeout(700);
+  const B1 = await p.evaluate(() => { const m = document.getElementById("stm-ok"); if (m) { document.getElementById("stm-ok").click(); } const e = (document.getElementById("stm-err") || {}).textContent || ""; const no = document.getElementById("stm-no"); if (no) no.click(); return { err: e, n: Object.keys(Admin.ydActual).length }; });
+  t("ملف بلا تتبع ولا مبلغ: النافذة ترفض الاعتماد وبالإلغاء لا يُخزَّن شيء", /رقم التتبع/.test(B1.err) && B1.n === 0, B1);
+  await p.evaluate(async () => { Admin.tab("payments"); await new Promise(r => setTimeout(r, 1500)); AdminPayments.S.tab = "st"; AdminPayments.render(); });
+  await p.waitForTimeout(600);
+  const pb = await p.evaluate(() => [...document.querySelectorAll('[data-pmt="st"] [data-pmimp]')].map(x => x.dataset.pmimp));
+  const hasTab = await p.evaluate(() => !!document.querySelector('[data-pmtab="im"]'));
+  t("«تسوية الشركات»: زر استيراد عند WeCan، ولا تبويب كشوف منفصل", pb.includes("wecan") && !hasTab, [pb, hasTab]);
+  await p.evaluate(() => { Admin.ydActual = {}; document.querySelector('[data-pmt="st"] [data-pmimp="wecan"]').click(); });
+  t("زر WeCan يعيّن الشركة على حقل الاستيراد", await p.evaluate(() => document.getElementById("fin-import-co").dataset.co === "wecan"), 0);
+  /* كشف كامل: يُحفظ بكل أعمدته، ويحدّد حالة الطلب في الإحصائيات، ويُعرض ويُحذف */
+  const mk = (id, trk, st) => ({ id, date: new Date().toISOString(), name: "زبون" + id, phone: "05500000" + id.slice(-2), wilaya: "Alger", commune: "x", dtype: "home", items: "عسل ×1 = 2000 DA", subtotal: 2000, fee: 600, total: 2600, status: st, note: "🚚wecan:" + trk });
+  await p.evaluate(async () => { Admin.orders = []; Admin.ydActual = {}; Admin.stmts = []; await Priv.set("stmts", []); await Priv.set("ydactual", {}); });
+  await p.evaluate(([a, b]) => { Admin.orders = [a, b]; }, [mk("W1", "WC111111", "livree"), mk("W2", "WC222222", "livree")]);
+  await p.evaluate(() => { document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/fr.csv"); await p.waitForTimeout(1000);
+  const S1 = await p.evaluate(() => ({ st: Admin.stmts, eff: Admin.orders.map(o => AdminPayments.effStatus(o)), cs: AdminCoStats.build ? 1 : 0 }));
+  t("الكشف محفوظ كاملاً: كل الأعمدة والصفوف ومعرّف يربط أرقام طرده", S1.st.length === 1 && S1.st[0].hdr.length === 6 && S1.st[0].rows.length === 2 && S1.st[0].co === "wecan", S1.st);
+  t("الإحصائيات حسب الكشف: طلب «مسلَّم» محلياً وفي الكشف «Retourné» يصير مرتجعاً", S1.eff[0] === "livree" && S1.eff[1] === "echec", S1.eff);
+  await p.evaluate(async () => { Admin.tab("payments"); await new Promise(r => setTimeout(r, 800)); AdminPayments.S.tab = "st"; AdminPayments.render(); });
+  await p.waitForTimeout(500);
+  await p.evaluate(() => document.querySelector("[data-stmtopen]").click()); await p.waitForTimeout(300);
+  const V = await p.evaluate(() => document.querySelector('[data-pmt="st"]').innerText);
+  t("عرض الكشف: أعمدته كلها والطلب المطابق والحالة حسب الكشف", /Frais livraison/.test(V) && /Taxe COD/.test(V) && /زبونW1|W1/.test(V) && /حسب الكشف/.test(V), V.slice(0, 500));
+  const SM = await p.evaluate(() => document.getElementById("pm-stmts") ? document.getElementById("pm-stmts").innerText : "");
+  t("ملخّص الكشوف: عمود الشركة (WeCan) والنص عام لكل الشركات بلا ذكر «تسوية ياليدين»", /الشركة/.test(SM) && /WeCan/i.test(SM) && !/تسوية ياليدين/.test(SM) && /تسوية الشركات/.test(SM), SM.slice(0, 300));
+  await p.evaluate(() => { window.confirm = () => true; document.querySelector("[data-stmtdel]").click(); }); await p.waitForTimeout(900);
+  const S2 = await p.evaluate(() => ({ n: Admin.stmts.length, a: Object.keys(Admin.ydActual).length, eff: Admin.orders.map(o => AdminPayments.effStatus(o)) }));
+  t("حذف الكشف: يزول بأرقامه وتعود الحالة المحلية", S2.n === 0 && S2.a === 0 && S2.eff[1] === "livree", S2);
+  /* صفّ TOTAL لا يُعدّ طرداً، وإعادة استيراد الكشف تستبدل القديم */
+  fs.writeFileSync(dir + "/tot.csv", "Order #;Net Amount;Shipping Fee;COD Fee\nWC700001;1000;600;15\nWC700002;-250;0;0\nTOTAL;750;600;15\n");
+  await p.evaluate(async () => { Admin.ydActual = {}; Admin.stmts = []; await Priv.set("stmts", []); await Priv.set("ydactual", {}); await Priv.set("stmtmap", {}); document.getElementById("fin-import-co").dataset.co = "wecan"; });
+  await p.setInputFiles("#fin-import-co", dir + "/tot.csv"); await p.waitForTimeout(900);
+  await p.evaluate(() => { document.getElementById("fin-import-co").dataset.co = "wecan"; }); await p.setInputFiles("#fin-import-co", dir + "/tot.csv"); await p.waitForTimeout(900);
+  const TT = await p.evaluate(() => ({ keys: Object.keys(Admin.ydActual), st: Admin.stmts.length, n: (Admin.stmts[0] || {}).n, net: (Admin.stmts[0] || {}).net }));
+  t("صفّ TOTAL مستبعد (طردان لا ثلاثة، الصافي 750 لا 1500) وإعادة الاستيراد تستبدل الكشف القديم", TT.keys.length === 2 && !TT.keys.includes("TOTAL") && TT.st === 1 && TT.n === 2 && TT.net === 750, TT);
+  /* رسالة النتيجة موجَّهة لمستخدم المنصة: زر «تعديل الأعمدة» بدل «أرسل لي» وهو ينسى صيغة الشركة */
+  const NT = await p.evaluate(async () => { const body = (document.getElementById("notice-body") || {}).innerHTML || ""; await Priv.set("stmtmap", { "wecan|x": { idx: {} }, "other|y": { idx: {} } }); await Admin.resetCoMap("wecan"); const left = Object.keys((await Priv.get("stmtmap", {})) || {}); return { btn: /تعديل الأعمدة/.test(body), send: /أرسل لي/.test(body), left }; });
+  t("رسالة الاستيراد بلا «أرسل لي» وفيها «تعديل الأعمدة» الذي يمسح صيغة الشركة وحدها", NT.btn && !NT.send && NT.left.length === 1 && NT.left[0] === "other|y", NT);
+  t("بلا أخطاء JS", errs.length === 0, errs);
+  await b.close(); process.exit(bad ? 1 : 0);
+})();

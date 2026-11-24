@@ -151,6 +151,9 @@
     "assets/js/admin-appstore.js",
     "assets/js/admin-addons.js",
     "assets/js/admin-delivery-alerts.js",
+    "assets/js/admin-stmt.js",
+    "assets/js/admin-dupalert.js",
+    "assets/js/admin-modal-stable.js",
     "assets/js/admin-archive.js",
     "assets/js/admin-assistant.js",
     "assets/js/admin-audit.js",
@@ -516,7 +519,8 @@
       "assets/pages/templates/thumbs/p-focus-honey-full.jpg",
       "assets/pages/templates/thumbs/p-focus-honey.jpg",
       "assets/pages/templates/thumbs/s-alyssum-full.jpg",
-      "assets/pages/templates/thumbs/s-alyssum.jpg"
+      "assets/pages/templates/thumbs/s-alyssum.jpg",
+      "assets/data/names-fr.json"
     ]
   },
   "local": {

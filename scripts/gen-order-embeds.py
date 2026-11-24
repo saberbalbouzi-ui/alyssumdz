@@ -103,6 +103,10 @@ def main():
     ref = 'p/%s/index.html' % REF
     out = shared(open(ref, encoding='utf-8').read(), REF)
     if not out: sys.exit('تعذّر بناء order-embed.html')
+    # لغة الموقع: وسم الترجمة الفرنسية قبل app.js (صفحة المنتج المرجعية قد تكون قديمة بلا الوسم، فيُحقَن هنا ولا يضيع عند كل إعادة توليد)
+    if 'site-i18n.js' not in out:
+        out = re.sub(r'(<script defer(?:="")? src=")([^"]*)(assets/js/app\.js">)', lambda m: m.group(1) + m.group(2) + 'assets/js/site-i18n.js"></script>' + m.group(1) + m.group(2) + m.group(3), out, count=1)
+    if 'site-i18n.js' not in out: sys.exit('تعذّر حقن site-i18n.js في order-embed.html')
     open('order-embed.html', 'w', encoding='utf-8').write(out)
     print('order-embed.html:', len(out))
 main()

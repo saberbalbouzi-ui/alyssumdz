@@ -55,9 +55,9 @@ const { chromium } = require("playwright");
     Admin.orders = [{ id: "T1", date: new Date().toISOString(), name: "n", phone: "0550000000", status: "livree", total: 1000, items: "x", note: "🚚yalidine:yal-T1" }]; await AdminPayments.render(); await new Promise(r => setTimeout(r, 300));
     const vis = () => [...h.querySelectorAll("[data-pmt]")].filter(d => !d.hidden).map(d => d.dataset.pmt).join(",");
     const o = { labels: [...h.querySelectorAll("[data-pmtab]")].map(b => b.dataset.pmtab).join(","), v0: vis() };
-    h.querySelector('[data-pmtab="im"]').click(); o.v1 = vis(); h.querySelector('[data-pmtab="rec"]').click(); o.v2 = vis(); o.search = !!h.querySelector("#pm-search"); return o;
+    h.querySelector('[data-pmtab="st"]').click(); o.v1 = vis(); h.querySelector('[data-pmtab="rec"]').click(); o.v2 = vis(); o.search = !!h.querySelector("#pm-search"); return o;
   });
-  t("المدفوعات تبويبات: نظرة عامة/تسوية/كشوف/سجلات، تظهر واحدة في كل مرة", TB.labels === "ov,st,im,rec" && TB.v0 === "ov" && TB.v1 === "im" && TB.v2 === "rec" && TB.search, TB);
+  t("المدفوعات تبويبات: نظرة عامة/تسوية الشركات/سجلات (بلا تبويب كشوف منفصل)، تظهر واحدة في كل مرة", TB.labels === "ov,st,rec" && TB.v0 === "ov" && TB.v1 === "st" && TB.v2 === "rec" && TB.search, TB);
   const H = await p.evaluate(async () => {
     Admin.enabledCompanyKeys = () => ["yalidine", "wecan"]; Admin.allDeliveryCompanies = () => ({ yalidine: { name: "Yalidine" }, wecan: { name: "WeCan" } });
     AdminPayments.S.loaded = true; AdminPayments.coNets = () => [{ k: "wecan", net: 1000, got: 1200, nDone: 2, nRet: 0, nExp: 0, netExp: 0 }];

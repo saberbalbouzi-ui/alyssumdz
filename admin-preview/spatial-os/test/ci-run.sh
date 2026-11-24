@@ -38,6 +38,10 @@ want laura-exec-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/d
 want laura-settings-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-settings-ui 600 node "$T/laura-settings-ui.js"; else skip laura-settings-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
 want laura-shipping-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-shipping-ui 600 node "$T/laura-shipping-ui.js"; else skip laura-shipping-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
 want lang-fr       && run lang-fr       600 node "$T/lang-fr.js"      # الفرنسية: زر FR/ع في Spatial + تزامن كل الألواح واللوحة + بطاقات الرئيسية + الاستمرار (متجر PHP محلي حقيقي)
+want phone-scroll  && run phone-scroll  300 node "$T/phone-scroll.js"   # الهاتف: القاعدة ظاهرة، لوح 2D (عادي ومكبَّر)، سحب الإصبع يمرّر المحتوى
+want touch-drag    && run touch-drag    600 node "$T/touch-drag.js"     # سحب النوافذ باللمس (أندرويد/آيفون/لوحي): الرأس والمكبَّر والغلاف وpointercancel والعبور فوق الإطار
+want nav-instant   && run nav-instant   600 node "$T/nav-instant.js"    # فتح آني: النقر في المدار الثاني ينقل اللوح المفتوح إلى التبويب بلا تحميل (سطح مكتب + هاتف)
+want orbits3      && run orbits3      600 node "$T/orbits3.js"       # ثلاثة مدارات (تبويبات ← إعدادات أولى ← إعدادات ثالثة) + فتح آني بألواح مسخَّنة مسبقاً
 want drag-inside && run drag-inside  300 node "$T/drag-inside.js"   # السحب داخل البطاقات
 want sphere-audio&& run sphere-audio 300 node "$T/sphere-audio.js"   # صوت الكرة ستيريو
 want viewports       && run viewports       600 node "$T/spatial-viewports.js"
