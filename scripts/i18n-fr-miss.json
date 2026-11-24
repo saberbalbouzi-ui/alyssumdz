@@ -822,5 +822,13 @@
 "طلب مكرّر لنفس الزبون خلال 3 أيام": "commande en double du même client sous 3 jours",
 "راجعه قبل الإرسال": "à vérifier avant l'envoi",
 "نسخ رقم التتبع": "Copier le numéro de suivi",
-"تم نسخ رقم التتبع": "Numéro de suivi copié"
+"تم نسخ رقم التتبع": "Numéro de suivi copié",
+"توصيل إلى مكتب": "Livraison au bureau",
+"الطرد موجود عند الشركة، لكن لا طلب يقابله في لوحتك": "Le colis existe chez la société, mais aucune commande ne lui correspond dans votre tableau de bord",
+"ينشئ في لوحتك طلباً من بيانات هذا الطرد (الزبون والهاتف والولاية والمنتج والمبلغ وحالته) ويربطه به، فيظهر بين طلباتك كغيره": "Crée dans votre tableau de bord une commande à partir des données de ce colis (client, téléphone, wilaya, produit, montant et statut) et la lie à lui ; elle apparaît parmi vos commandes comme les autres",
+"لا طلبات بانتظار التجهيز. كل المؤكَّد أُرسل؛ تجدها في «المرسلة»": "Aucune commande en attente de préparation. Tout ce qui est confirmé a été envoyé ; retrouvez-les dans « Envoyées »",
+"لا طلبات هنا": "Aucune commande ici",
+"يوجد طرد آخر مطابق له": "Il existe un autre colis identique",
+"احذف الزائد من المعاينة": "supprimez le surplus depuis l'aperçu",
+"اضغط لعرض سبب الحالة وهاتف الموزّع": "Cliquez pour voir la raison du statut et le téléphone du livreur"
 }
