@@ -252,6 +252,7 @@ const AdminHome = (() => {
     const step = hourly ? 36e5 : DAY, ok = cur.filter(okOrder), okp = prev.filter(okOrder);
     const sales = sum(ok.map(o => Number(o.total) || 0)), salesP = sum(okp.map(o => Number(o.total) || 0));
     const od = a.overdueList ? a.overdueList().length : 0;
+    let dupN = 0; try { dupN = typeof AdminDup !== "undefined" ? AdminDup.groups().length : 0; } catch (e) { }
     const waiting = all.filter(o => o.status === "nouvelle" || !o.status).length;
     try { localStorage.setItem("adm_snap", JSON.stringify({ t: Date.now(), name: (typeof SITE_CFG !== "undefined" && SITE_CFG.name) || "", per: days === 1 ? "اليوم" : days === 7 ? "7 أيام" : days + " يوماً", sales: money(sales), orders: num(cur.length), wait: num(waiting), pack: S.packN == null ? null : num(S.packN) })); } catch (e) { }   /* لقطة تُعرض فور فتح اللوحة التالي قبل اكتمال التحميل */
     const avg = ok.length ? sales / ok.length : 0, avgP = okp.length ? salesP / okp.length : 0;
@@ -262,7 +263,9 @@ const AdminHome = (() => {
     const fmt = S.metric === "sales" ? v => v >= 1000 ? Math.round(v / 1000) + "ك" : Math.round(v) : v => Math.round(v);
     const ch = chartSvg(series, labels, fmt);
     const counts = GROUPS.map((g, i) => cur.filter(o => stOf(o.status).g === i).length);
-    const last = all.slice().sort((p, q) => new Date(q.date) - new Date(p.date)).slice(0, 8), lastSt = last.map(realSt);
+    /* «آخر الطلبات»: الأخيرة التي لم تُسلَّم بعد (لا مسلَّمة ولا ملغاة ولا مرتجعة) بحالتها الحقيقية عند الشركة */
+    const undelivered = o => { let st = o.status; try { if (typeof AdminPayments !== "undefined" && AdminPayments.effStatus && st !== "annulee") st = AdminPayments.effStatus(o) || st; } catch (e) { } return !["livree", "annulee", "echec"].includes(st); };
+    const last = all.filter(undelivered).sort((p, q) => new Date(q.date) - new Date(p.date)).slice(0, 8), lastSt = last.map(realSt);
     const prodMap = {}; cur.filter(okOrder).forEach(o => (a.orderItemsCanon ? a.orderItemsCanon(o) : a.parseOrderItems ? a.parseOrderItems(o.items) : []).forEach(it => { prodMap[it.title] = (prodMap[it.title] || 0) + it.qty; }));
     const top = Object.entries(prodMap).sort((p, q) => q[1] - p[1]).slice(0, 5), topMax = top.length ? top[0][1] : 1;
     const prods = (a.products || []).filter(p => p.active !== false), low = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) > 0 && Number(p.stock) <= 5), out = prods.filter(p => p.stock !== undefined && p.stock !== null && p.stock !== "" && Number(p.stock) <= 0);
@@ -302,7 +305,7 @@ ${S.table ? `<div style="max-height:260px;overflow:auto"><table><thead><tr><th>$
 <div class="ah-card"><h3>الطلبات حسب الحالة <small>${perT}</small></h3><div class="dn-w">${donut(counts)}<div class="lg">${GROUPS.map((g, i) => `<div><i style="background:${g.c}"></i>${g.t}<b>${num(counts[i])}</b></div>`).join("")}</div></div></div>
 </div>
 <div class="ah-row2">
-<div class="ah-card"><h3>آخر الطلبات <button type="button" class="ah-btn gh" data-go="orders" data-all="1" style="padding:6px 11px;font-size:.78rem">عرض الكل</button></h3>${last.length ? `<div style="overflow:auto"><table><thead><tr><th>الزبون</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${last.map((o, i) => { const g = lastSt[i]; return `<tr class="cl" data-o="${i}"><td></td><td></td><td>${money(o.total)}</td><td><span class="bd" data-rs="${i}" style="background:${g.c}33;border-color:${g.c}"></span></td><td>${new Date(o.date).toLocaleDateString("ar-DZ", { day: "numeric", month: "short" })}</td></tr>`; }).join("")}</tbody></table></div>` : '<div class="em">لا توجد طلبات بعد. ستظهر هنا فور وصولها.</div>'}</div>
+<div class="ah-card"><h3>آخر الطلبات غير المسلَّمة <button type="button" class="ah-btn gh" data-go="orders" data-all="1" style="padding:6px 11px;font-size:.78rem">عرض الكل</button></h3>${last.length ? `<div style="overflow:auto"><table><thead><tr><th>الزبون</th><th>الولاية</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${last.map((o, i) => { const g = lastSt[i]; return `<tr class="cl" data-o="${i}"><td></td><td></td><td>${money(o.total)}</td><td><span class="bd" data-rs="${i}" style="background:${g.c}33;border-color:${g.c}"></span></td><td>${new Date(o.date).toLocaleDateString("ar-DZ", { day: "numeric", month: "short" })}</td></tr>`; }).join("")}</tbody></table></div>` : '<div class="em">لا طلبات غير مسلَّمة الآن.</div>'}</div>
 <div class="ah-card"><h3>يحتاج انتباهك</h3><div class="at">
 <button type="button" class="${waiting ? "w" : "ok"}" data-go="orders-new"><b>${num(waiting)}</b><span>طلب في انتظار التأكيد</span></button>
 <button type="button" class="${low.length ? "w" : "ok"}" data-go="products"><b>${num(low.length)}</b><span>منتج مخزونه منخفض (5 أو أقل)</span></button>
@@ -319,6 +322,7 @@ ${dg ? `<button type="button" class="${dg.proofs ? "w" : "ok"}" data-go="digital
 <button type="button" class="${dg.low + dg.out + dg.short ? "w" : "ok"}" data-go="digital" title="${(dg.lowSkus || []).join(" | ").replace(/"/g, "")}"><b>${num(dg.low + dg.out + dg.short)}</b><span>منتج رقمي مخزون مفاتيحه ${dg.out ? "نفد" : "منخفض"}${dg.short ? " (وطلبات تنتظر مفاتيح)" : ""}</span></button>` : ""}
 ${mk && (mk.to_ship || mk.rej) ? `<button type="button" class="w" data-go="market"><b>${num(mk.to_ship + mk.rej)}</b><span>${mk.to_ship ? "طلب التسويق بالعمولة ينتظر شحنك" : ""}${mk.to_ship && mk.rej ? " · " : ""}${mk.rej ? "طلب رُفض لنقص رصيدك كمورّد" : ""}</span></button>` : ""}
 <button type="button" class="${od ? "w" : "ok"}" data-go="callcenter"><b>${num(od)}</b><span>طلب بلا استجابة منذ مدة</span></button>
+${dupN ? `<button type="button" class="w" data-dup="1"><b>${num(dupN)}</b><span>طلب مكرّر لنفس الزبون خلال 3 أيام — راجعه قبل الإرسال</span></button>` : ""}
 ${rr.length ? `<button type="button" class="w" data-go="returns" title="${rr.slice(0, 8).map(x => x.o.id + ": " + x.days + " يوم").join(" | ").replace(/\"/g, "")}"><b>${num(rr.length)}</b><span>طرد راجع جاهز للسحب (Retour à récupérer) — المهلة 10 أيام ثم 10 دج/يوم${rr.some(x => x.late) ? " · غرامة جارية " + num(rr.reduce((t, x) => t + x.late, 0)) + " دج" : rr.some(x => x.days >= 7) ? " · بعضها يقترب من المهلة" : ""}</span></button>` : ""}
 ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph.slice(0, 8).map(r => r.tracking).join(" | ")}"><b>${num(orph.length)}</b><span>طرد عند الشركة بلا طلب في اللوحة — اربطه كي لا يضيع من الحساب</span></button>` : ""}
 <button type="button" class="${fail ? "w" : "ok"}" data-go="shipped"><b>${num(fail)}</b><span>فشل توصيل / مرتجع</span></button></div>
@@ -347,6 +351,7 @@ ${orph.length ? `<button type="button" class="w" data-go="orphans" title="${orph
       go(b.dataset.go);
       if (b.dataset.all) { try { const a = A(), c = document.getElementById("order-show-shipped"); if (a.resetOrderFilters) a.resetOrderFilters(); if (c) c.checked = true; if (a.applyOrderFilters) a.applyOrderFilters(); } catch (e) { console.warn("AdminHome", e); } }
     });
+    root.querySelectorAll("[data-dup]").forEach(b => b.onclick = () => { try { AdminDup.open(); } catch (e) { console.warn("AdminHome", e); } });
     root.querySelectorAll("[data-adt]").forEach(b => b.onclick = async () => { b.disabled = true; try { await A().toggleAdSlug(b.dataset.adt); } catch (e) { console.warn("AdminHome", e); } render(); });
     root.querySelectorAll("tr[data-o]").forEach(tr => tr.onclick = () => { const o = tr._o, ix = (A().orders || []).indexOf(o); if (ix >= 0 && A().openOrderPreview) { try { A().openOrderPreview(ix); return; } catch (e) { } } go("orders"); const q = $("order-filter-q"); if (q) { q.value = o.phone || o.id || ""; try { A().applyOrderFilters(); } catch (e) { } } });
     const box = $("ah-ch"), svg = box && box.querySelector("svg"); if (!svg) return;

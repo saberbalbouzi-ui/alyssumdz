@@ -151,6 +151,7 @@
     "assets/js/admin-addons.js",
     "assets/js/admin-delivery-alerts.js",
     "assets/js/admin-stmt.js",
+    "assets/js/admin-dupalert.js",
     "assets/js/admin-modal-stable.js",
     "assets/js/admin-archive.js",
     "assets/js/admin-assistant.js",

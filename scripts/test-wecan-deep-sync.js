@@ -11,19 +11,20 @@ const { chromium } = require("playwright");
     document.getElementById("app").classList.remove("hidden"); window.toast = () => { }; const A = Admin;
     A.deliveryCfg = Object.assign({}, A.deliveryCfg, { wecan: { enabled: true, apiKey: "k", apiSecret: "s" } });
     const mk = (id, trk) => ({ id, date: new Date().toISOString(), name: "ز" + id, phone: "0550000" + id.slice(-3), wilaya: "Alger", commune: "x", dtype: "home", items: "x ×1 = 1 DA", total: 1000, status: "expediee", note: "🚚wecan:" + trk });
-    A.orders = [mk("O1", "WCNEW1"), mk("O2", "WCOLD1"), mk("O3", "WCSTM1")]; A.shipRaw = {}; A._stDeep = {};
+    A.orders = [mk("O1", "WCNEW1"), mk("O2", "WCOLD1"), mk("O3", "WCSTM1"), Object.assign(mk("O4", "WCGHOST"), { date: new Date(Date.now() - 3 * 864e5).toISOString() })]; A.shipRaw = {}; A._stDeep = {};
     const pages = []; A.courierFetch = async req => {
       const u = String(req.url);
-      if (/\/orders\?/.test(u)) { const pg = Number((u.match(/number%5D=(\d+)/) || [])[1] || 1); pages.push(pg); const arr = Array.from({ length: 100 }, (_, i) => ({ attributes: { tracking_number: "FILL" + pg + "_" + i, status: "Livré" } }));
+      if (/\/orders\?/.test(u)) { const pg = Number((u.match(/number%5D=(\d+)/) || [])[1] || 1); pages.push(pg); const arr = Array.from({ length: pg >= 6 ? 40 : 100 }, (_, i) => ({ attributes: { tracking_number: "FILL" + pg + "_" + i, status: "Livré" } }));
         if (pg === 1) arr[0] = { attributes: { tracking_number: "WCNEW1", status: "Sorti en livraison" } }; if (pg === 5) arr[3] = { attributes: { tracking_number: "WCOLD1", status: "Livré" } }; return { ok: true, status: 200, text: JSON.stringify({ data: arr }) }; }
       return { ok: true, status: 200, text: JSON.stringify([{ tracking: (u.match(/parcels\/([^/?]+)/) || [])[1] || "", last_status: "En préparation", status: "En préparation" }]) }; };
     A.ydActual = { WCSTM1: { st: "Livré", price: 1000, net: 800, co: "wecan", sid: "x" } };
     await A.syncShipping({ silent: true }); await new Promise(r => setTimeout(r, 500));
-    return { pages: [...new Set(pages)].sort((a, b) => a - b), raw: { O1: (A.shipRaw.O1 || {}).raw, O2: (A.shipRaw.O2 || {}).raw, O3: (A.shipRaw.O3 || {}).raw } }; });
+    return { gone: (A._shipSync && A._shipSync.gone) || [], pages: [...new Set(pages)].sort((a, b) => a - b), raw: { O1: (A.shipRaw.O1 || {}).raw, O2: (A.shipRaw.O2 || {}).raw, O3: (A.shipRaw.O3 || {}).raw } }; });
   t("الصفحات تُكمَّل بعد الثالثة حتى يوجد الطرد القديم (5 صفحات)", R.pages.length >= 5 && R.pages[R.pages.length - 1] <= 6, R);
   t("الطرد الأقدم من 300 طلب يأخذ حالة القائمة «Livré» لا «En préparation»", /Livr/i.test(R.raw.O2 || ""), R);
   t("الطرد الحديث «Sorti en livraison» من قائمة الشركة", /Sorti/i.test(R.raw.O1 || ""), R);
   t("طرد غير موجود في القائمة لكنه في الكشف المستورد (Livré) يأخذ حالة الكشف", /Livr/i.test(R.raw.O3 || ""), R);
+  t("طرد قديم «En préparation» غير موجود في قائمة WeCan كاملة ولا في كشف: يُعلَّم «غير موجود عند الشركة» (O4 فقط)", R.gone.includes("O4") && !R.gone.includes("O1") && !R.gone.includes("O2") && !R.gone.includes("O3"), R);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
