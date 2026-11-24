@@ -33,6 +33,7 @@ want world-fast    && run world-fast    600 node "$T/world-fast.js"   # العا
 want lang-fr       && run lang-fr       600 node "$T/lang-fr.js"      # الفرنسية: زر FR/ع في Spatial + تزامن كل الألواح واللوحة + بطاقات الرئيسية + الاستمرار (متجر PHP محلي حقيقي)
 want phone-scroll  && run phone-scroll  300 node "$T/phone-scroll.js"   # الهاتف: القاعدة ظاهرة، لوح 2D (عادي ومكبَّر)، سحب الإصبع يمرّر المحتوى
 want touch-drag    && run touch-drag    600 node "$T/touch-drag.js"     # سحب النوافذ باللمس (أندرويد/آيفون/لوحي): الرأس والمكبَّر والغلاف وpointercancel والعبور فوق الإطار
+want nav-instant   && run nav-instant   600 node "$T/nav-instant.js"    # فتح آني: النقر في المدار الثاني ينقل اللوح المفتوح إلى التبويب بلا تحميل (سطح مكتب + هاتف)
 want orbits3      && run orbits3      600 node "$T/orbits3.js"       # ثلاثة مدارات (تبويبات ← إعدادات أولى ← إعدادات ثالثة) + فتح آني بألواح مسخَّنة مسبقاً
 want drag-inside && run drag-inside  300 node "$T/drag-inside.js"   # السحب داخل البطاقات
 want sphere-audio&& run sphere-audio 300 node "$T/sphere-audio.js"   # صوت الكرة ستيريو

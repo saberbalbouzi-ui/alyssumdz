@@ -96,7 +96,7 @@
   }
   function buildSubs(tab) {
     const ent = (typeof GROUPS !== "undefined" && GROUPS[tab] || [tab]).map(e => String(e).split("|")), lab = {}; ent.forEach(e => { if (e[1]) lab[e[0]] = e[1]; }); const ids = ent.map(e => e[0]).filter(id => SEC.some(s => s.id === id)); RS = ids.length > 14 ? Math.min(340, 236 + (ids.length - 14) * 6) : 236; orbit.classList.toggle("dense", ids.length > 14); const old = [...subs.values()]; old.forEach(b => { b.classList.add("out"); setTimeout(() => b.remove(), 260); }); subs.clear(); subIds = ids;
-    ids.forEach(id => { const sc = SEC.find(s => s.id === id), b = document.createElement("button"); b.type = "button"; b.className = "node sub in"; b.dataset.id = id; b.setAttribute("aria-label", "فتح " + (lab[id] || sc.name)); b.innerHTML = svg(sc.icon) + "<span>" + (lab[id] || sc.name) + "</span>"; b.addEventListener("click", () => { if (performance.now() - lastPanelDrag < 300) return; openSection(id); showSub3(id); }); orbit.appendChild(b); subs.set(id, b); setTimeout(() => b.classList.remove("in"), 30); });
+    ids.forEach(id => { const sc = SEC.find(s => s.id === id), b = document.createElement("button"); b.type = "button"; b.className = "node sub in"; b.dataset.id = id; b.setAttribute("aria-label", "فتح " + (lab[id] || sc.name)); b.innerHTML = svg(sc.icon) + "<span>" + (lab[id] || sc.name) + "</span>"; b.addEventListener("click", ev => { if (performance.now() - lastPanelDrag < 300) return; if (!(ev && (ev.shiftKey || ev.ctrlKey || ev.metaKey || ev.altKey)) && navInPlace(id)) { showSub3(id); return; } openSection(id); showSub3(id); }); orbit.appendChild(b); subs.set(id, b); setTimeout(() => b.classList.remove("in"), 30); });
     markNodes();
   }
   function selectTab(id) { if (!TWO || !ring.some(s => s.id === id)) return; curTab = id; nodes.forEach((n, k) => { n.classList.toggle("tab", k === id); n.setAttribute("aria-current", k === id ? "true" : "false"); }); { const a = document.getElementById("active"), sc = SEC.find(s => s.id === id); if (a && sc) { a.textContent = "بطاقات: " + sc.name; a.classList.add("on"); } } buildSubs(id); curSub = ""; buildSubs3("", []); spinTo(id); }
@@ -242,6 +242,18 @@
   function markNodes() { document.body.classList.toggle("many", open.size > 3); nodes.forEach((n, id) => { const p = TWO ? null : open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); subs.forEach((n, id) => { const p = open.get(id); n.classList.toggle("open", !!p && !p.min); n.classList.toggle("min", !!p && p.min); }); dock.querySelectorAll("button").forEach(b => { const p = open.get(b.dataset.id); b.classList.toggle("open", !!p && !p.min); }); }
   function pulse(id) { const n = (TWO && subs.get(id)) || nodes.get(id); if (n) { n.classList.remove("hot"); void n.offsetWidth; n.classList.add("hot"); } core.classList.remove("pulse"); void core.offsetWidth; core.classList.add("pulse"); }
 
+  /* فتح آني كالمنصة التقليدية: النقر على عنصر في المدار الثاني ينقل اللوح الحقيقي المفتوح (إطار محمَّل أصلاً) إلى تبويب العنصر بـAdmin.tab بلا تحميل إطار جديد؛ يُفتح لوح جديد فقط إن لم يوجد لوح جاهز أو بـShift/Ctrl/Alt. يُعاد تسجيل اللوح باسم القسم الجديد (open/Hub/العنوان) فتبقى كل الأنظمة متسقة */
+  function navInPlace(id) {
+    if (!REAL || !TWO) return false; const sec = SEC.find(s => s.id === id), fr = FRAME[id]; if (!sec || !fr || open.has(id)) return false;
+    const cand = [...open.values()].filter(x => x.fr && x.frDone && x.frame && x.fr.isConnected && !x.discarded && !x.min), p = cand.find(x => x.id === focused) || cand[cand.length - 1]; if (!p) return false;
+    try { const w = p.fr.contentWindow, A = w.eval('typeof Admin !== "undefined" ? Admin : null'); if (!A || typeof A.tab !== "function") return false; A.tab(fr.tab); } catch (_) { return false; }
+    const old = p.id, content = p.content; try { remember(p); } catch (_) { }
+    if (window.SpatialHub) SpatialHub.detach(old); open.delete(old); p.id = id; p.frame = fr; p.sec = Object.assign({}, sec, { html: q => sec.html({ st: content, big: p.big }) }); open.set(id, p); if (focused === old) focused = id;
+    p.el.setAttribute("aria-label", sec.name); const h3 = p.el.querySelector("h3"); if (h3) h3.textContent = sec.name; p.fr.title = sec.name;
+    try { const d = p.fr.contentDocument, st = d && d.getElementById("__spEmbed"); if (st) st.textContent = (fr.nav ? EMBED_NAV_CSS : EMBED_CSS) + HOLO_SKIN; } catch (_) { }
+    if (window.SpatialHub) { try { SpatialHub.attach(id, p.fr.contentWindow, p.el); } catch (_) { } }
+    select(id); focus(id); pulse(id); markNodes(); return true;
+  }
   function openSection(id) {
     const sec = SEC.find(s => s.id === id); if (!sec) return;
     const ex = open.get(id), from = nodePos(id); select(id);
@@ -413,7 +425,7 @@
   /* لوح احتياطي مُسخَّن (السرعة): إطار لوحة حقيقي يُحمَّل خفيةً في الخلفية؛ عند فتح أي لوح يُنقَل إليه بـ moveBefore (يحفظ حالته فلا يُعاد تحميله) فيظهر اللوح فوراً، ثم يُحمَّل بديل. بلا moveBefore يعمل التحميل العادي */
   const SP = { f: null, ready: false, off: typeof Element === "undefined" || !Element.prototype.moveBefore, n: 0 };
   function spareMake() {
-    if (!REAL || SP.f || isMob() || document.hidden || /[?&]nospare=1/.test(location.search)) return; /* الهاتف: لا لوح احتياطي (ذاكرة)، لوح واحد فقط */ let park = document.getElementById("spare-park"); if (!park) { park = document.createElement("div"); park.id = "spare-park"; park.setAttribute("aria-hidden", "true"); document.body.appendChild(park); }
+    if (!REAL || SP.f || (isMob() && !(navigator.deviceMemory >= 4)) || document.hidden || /[?&]nospare=1/.test(location.search)) return; /* الهاتف: لوح احتياطي واحد فقط إن أعلن الجهاز ذاكرة ≥ 4GB (iOS لا يعلنها فلا لوح) */ let park = document.getElementById("spare-park"); if (!park) { park = document.createElement("div"); park.id = "spare-park"; park.setAttribute("aria-hidden", "true"); document.body.appendChild(park); }
     const f = document.createElement("iframe"); f.className = "pn-frame"; f.title = ""; f.tabIndex = -1; SP.f = f; SP.ready = false; f.addEventListener("load", () => spareWait(f, 0)); f.src = "../../admin.html"; park.appendChild(f);
   }
   /* التسخين يُبنى في صمت: يُؤجَّل حتى يهدأ المستخدم (لا إدخال 2.5ث) كي لا يقطع إقلاع اللوح الاحتياطي (مهمة طويلة على الخيط الرئيسي نفسه) تفاعلاً جارياً */
