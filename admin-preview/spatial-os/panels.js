@@ -95,10 +95,10 @@ const SEC = [
   { id: "look", name: "المظهر", icon: IC.look, w: 380, h: 300,
     html: () => `<div class="chips">${[["dark", "داكن"], ["glass", "زجاجي"], ["light", "فاتح"]].map(([k, v]) => `<button type="button" class="chip${D.theme === k ? " on" : ""}" data-th="${k}">${v}</button>`).join("")}</div><div class="hint">معاينة فقط: لا يغيّر مظهر المتجر.</div>`,
     bind(r, p, rf) { r.onclick = e => { const b = e.target.closest("[data-th]"); if (b) { D.theme = b.dataset.th; rf(true); } }; } },
-  { id: "ext", name: "الإضافات", icon: IC.ext, w: 400, h: 340,
+  { id: "ext", name: "إضافات", icon: IC.ext, w: 400, h: 340,
     html: () => [["chat", "محادثة الزائر"], ["pixel", "بكسل التتبع"], ["sms", "رسائل SMS"], ["reviews", "التقييمات"]].map(([k, v]) => `<div class="row"><div class="grow"><b>${v}</b></div><button type="button" class="tg${D.ext[k] ? " on" : ""}" data-ex="${k}" aria-label="${v}"></button></div>`).join(""),
     bind(r, p, rf) { r.onclick = e => { const b = e.target.closest("[data-ex]"); if (b) { D.ext[b.dataset.ex] = !D.ext[b.dataset.ex]; rf(true); } }; } },
-  { id: "set", name: "الإعدادات", icon: IC.set, w: 400, h: 320,
+  { id: "set", name: "الإعدادات العامة", icon: IC.set, w: 400, h: 320,
     html: () => [["sound", "صوت الإشعارات"], ["notif", "الإشعارات"], ["auto", "إرسال تلقائي للشركة"]].map(([k, v]) => `<div class="row"><div class="grow"><b>${v}</b></div><button type="button" class="tg${D.set[k] ? " on" : ""}" data-st="${k}" aria-label="${v}"></button></div>`).join(""),
     bind(r, p, rf) { r.onclick = e => { const b = e.target.closest("[data-st]"); if (b) { D.set[b.dataset.st] = !D.set[b.dataset.st]; rf(true); } }; } },
   { id: "ai", name: "مساعد ALYSSUM", icon: IC.ai, w: 430, h: 470, hidden: true, st: { m: [{ a: 1, t: "مرحباً، أنا مساعد ALYSSUM. ما الذي تريد معرفته؟" }] },
@@ -114,15 +114,16 @@ const SEC = [
 function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2500); }
 
 /* مدار الأسطوانة السفلي (الوضع الحقيقي): بطاقات كل تبويب رئيسي في المدار العلوي — الأول لوح التبويب نفسه ثم إعداداته وأدواته؛ الافتراضي «المتجر» */
+/* أقسام قائمة لوحة التحكم الحقيقية التي لا بطاقة لها في المقصورة: تُضاف أوراقاً مخفية (لا عقدة على الأسطوانة ولا زرّ في الشريط السفلي) فتظهر في المدار الثاني فقط. [المعرّف = اسم التبويب في admin.html، الاسم، أيقونة] */
+const NAVX = [["ruqya", "مواعيد الرقية", "store"], ["fees", "رسوم التوصيل", "store"], ["coupons", "أكواد الخصم", "store"], ["upsell", "العروض الإضافية", "store"], ["pixels", "البكسلات", "store"], ["social", "السوشيال والإعلانات", "store"], ["repeat", "إعادة الشراء", "store"], ["loyalty", "الزبائن الأوفياء", "store"], ["blacklist", "القائمة السوداء", "store"], ["reports", "التقارير", "store"], ["sources", "مركز المتاجر", "store"], ["market", "التسويق بالعمولة", "store"], ["agency", "خدمات التسويق", "store"], ["digital", "المنتجات الرقمية", "store"], ["experts", "شبكة الخبراء", "store"], ["pbgen", "المطوّر الذكي", "ext"], ["imgtools", "معالجة الصور والكتالوج", "ext"], ["imggen", "مولّد الصور", "ext"], ["agent", "الوكيل الذكي", "ext"], ["addons", "الإضافات المنصَّبة", "ext"], ["appdev", "تطوير الإضافات", "ext"], ["studio", "ستوديو ديزاين", "ext"], ["checkout", "نموذج الطلب", "ext"], ["speed", "سرعة الموقع", "ext"], ["admtheme", "مظهر لوحة التحكم", "look"], ["chromeh", "الهيدر", "look"], ["chromef", "الفوتر", "look"]];
+NAVX.forEach(([id, name, ic]) => SEC.push({ id, name, icon: IC[ic], w: 400, h: 300, hidden: true, html: () => '<div class="empty">هذا القسم متاح في الوضع الحقيقي فقط.</div>' }));
+/* المدار العلوي = مجموعات قائمة لوحة التحكم (الرئيسية، المنتجات، المتجر، المظهر، إضافات، الإعدادات العامة)؛ والمدار الثاني = عناصر المجموعة كما في القائمة بالترتيب نفسه ("المعرّف|الاسم" يفرض اسم القائمة). يتحقق test/nav-sync.js من مطابقتها لـadmin.html */
+const RING = ["dash", "prod", "store", "look", "ext", "set"];
 const GROUPS = {
-  dash: ["dash", "ana", "profit", "finance", "wallet"],
-  prod: ["prod", "categories", "attributes", "bulkp", "audit", "costs"],
-  ord: ["ord", "shipped", "returns", "pack", "callcenter", "dispatch"],
-  store: ["store", "delivery", "payments", "seo", "blog", "builder", "team"],
-  inv: ["inv", "costs", "finance", "wallet"],
-  cus: ["cus", "callcenter", "returns"],
-  ana: ["ana", "profit", "finance", "wallet"],
-  look: ["look", "builder", "blog", "seo"],
-  ext: ["ext", "bulkp", "audit"],
-  set: ["set", "team", "payments", "delivery", "audit"]
+  dash: ["dash|لوحة التحكم"],
+  prod: ["prod|المنتجات", "builder|الصفحات", "categories|التصنيفات", "attributes|السمات", "ana|التحليلات", "bulkp|تعديل جماعي", "audit|فحص المنتجات", "seo|SEO"],
+  store: ["ord|الطلبات", "callcenter|مركز الاتصال", "pack|تجهيز الطلبات", "shipped|الطلبات المسجلة", "dispatch|التوجيه والبوردرو", "ruqya|مواعيد الرقية", "returns|المرتجعات", "finance|المخزون والأرباح", "profit|الربح الحقيقي", "payments|المدفوعات", "costs|تكلفة المنتجات", "wallet|المحفظة", "delivery|شركات التوصيل", "fees|رسوم التوصيل", "inv|المخزون", "coupons|أكواد الخصم", "upsell|العروض الإضافية", "pixels|البكسلات", "social|السوشيال والإعلانات", "repeat|إعادة الشراء", "loyalty|الزبائن الأوفياء", "cus|العملاء", "blacklist|القائمة السوداء", "reports|التقارير", "sources|مركز المتاجر", "market|التسويق بالعمولة", "agency|خدمات التسويق", "digital|المنتجات الرقمية", "experts|شبكة الخبراء"],
+  look: ["admtheme|مظهر لوحة التحكم", "look|مظهر الموقع", "chromeh|الهيدر", "chromef|الفوتر"],
+  ext: ["builder|مطوّر الصفحات", "pbgen|المطوّر الذكي", "imgtools|معالجة الصور والكتالوج", "imggen|مولّد الصور", "agent|الوكيل الذكي", "addons|الإضافات المنصَّبة", "ext|متجر الإضافات", "appdev|تطوير الإضافات", "studio|ستوديو ديزاين", "checkout|نموذج الطلب", "speed|سرعة الموقع"],
+  set: ["store|إعدادات الموقع", "blog|المدوّنة والسياسات"]
 };

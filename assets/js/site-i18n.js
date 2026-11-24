@@ -105,10 +105,7 @@
   }
   function load() {
     if (dict) return Promise.resolve(dict);
-    var get = function (u) { return fetch(BASE + u, { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); };
-    /* قاموس القوالب + قاموس موقعك الخاص (assets/data/site-i18n-custom.json: نصوصك التي ترجمتها اللوحة تلقائياً أو عدّلتَها بيدك) — الخاص يتقدّم */
-    return Promise.all([get("assets/data/site-i18n-fr.json"), get("assets/data/site-i18n-custom.json")]).then(function (a) {
-      var d = a[0]; if (!d) return null; if (a[1] && a[1].exact) { for (var k in a[1].exact) d.exact[k] = a[1].exact[k]; } dict = d; return d; });
+    return fetch(BASE + "assets/data/site-i18n-fr.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) { dict = d; return d; }).catch(function () { return null; });
   }
   function start(lang) {
     if (lang !== "fr") { show(); return; }
