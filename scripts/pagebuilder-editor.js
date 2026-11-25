@@ -1155,8 +1155,16 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       for (let pass = 0; pass < 4; pass++) { let ch = 0; els.forEach(e => { const cx = v(e, "fx") + v(e, "fwd") / 2, cy = v(e, "fy") + (v(e, "fh") || 20) / 2; sh.forEach(q => { if (q.set.grp !== e.set.grp || q.set.fgr || Number(q.set.fillOp) < 1) return; if (cx >= v(q, "fx") && cx <= v(q, "fx") + v(q, "fwd") && cy >= v(q, "fy") && cy <= v(q, "fy") + v(q, "fh") && (Number(q.set.zi) || 0) >= (Number(e.set.zi) || 0)) { e.set.zi = (Number(q.set.zi) || 0) + 1; ch++; n++; } }); }); if (!ch) break; } });
     return n;
   }
+  /* أحجام خط شاذة (> 300 في التصميم): نتجت من خلل خطوة +/− القديم (كانت تتضاعف 46 ← 83 ← 148 ← 263…) فتتضخم النصوص وتنتفخ الصفحة وتنزاح الإطارات عن عناصرها ويتخرّبط التحريك. تُستبدل بقيمة جهاز آخر سليمة في العنصر نفسه (المكتب ثم التابلت ثم الهاتف) أو 24 */
+  function healFs(P) {
+    let n = 0; const bad = v => typeof v === "number" && v > 300;
+    const fix = w => { const f = w && w.set && w.set.fs; if (f === undefined || f === null) return; if (typeof f === "number") { if (bad(f)) { w.set.fs = 24; n++; } return; } if (typeof f !== "object") return;
+      const ok = ["d", "t", "m"].map(k => f[k]).filter(v => typeof v === "number" && v > 0 && v <= 300), rep = ok.length ? ok[0] : 24; ["d", "t", "m"].forEach(k => { if (bad(f[k])) { f[k] = rep; n++; } }); };
+    (P.sections || []).forEach(sec => { (sec.free || []).forEach(fix); (sec.cols || []).forEach(c => (c.widgets || []).forEach(fix)); });
+    return n;
+  }
   function cleanStrayAll(P) {
-    let n = fixGroupZ(P); (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
+    let n = fixGroupZ(P) + healFs(P); (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
       ["t", "m"].forEach(d2 => { if ((d2 === "m" && sec.set.scaledM) || (d2 === "t" && sec.set.scaledT)) return; const has = w => ks.some(k => w.set[k] && typeof w.set[k] === "object" && w.set[k][d2] !== undefined), c = ws.filter(has).length; if (c > 0 && c < ws.length) { ws.filter(has).forEach(w => ks.forEach(k => { if (w.set[k] && typeof w.set[k] === "object") delete w.set[k][d2]; })); n += c; } }); });
     return n;
   }
