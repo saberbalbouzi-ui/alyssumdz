@@ -158,8 +158,9 @@ async function phone(b) {
     await shot(p, "04-phone-card");
     await p.tap("#atm-holo-go"); await p.waitForURL(/admin-preview\/spatial-os\/index\.html\?real=1/);
     await p.waitForFunction(() => { const q = typeof SpatialOS !== "undefined" && SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(2500);
-    const L = await p.evaluate(() => { const ex = document.querySelector("#ps-top .ps-ib") || document.getElementById("hud-exit"), r = ex.getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2), q = SpatialOS.panels.get("ord").el.getBoundingClientRect(); return { exitVis: r.width > 0 && getComputedStyle(ex).display !== "none", exitOnScreen: r.left >= 0 && r.right <= innerWidth && r.top >= 0, exitHit: !!e && (e === ex || ex.contains(e)), exitH: Math.round(r.height), panelFits: q.width <= innerWidth + 24, panelInView: q.right > 0 && q.left < innerWidth, real: SpatialOS.real, orbit: SpatialOS.orbit }; });
-    ok("phone: زر «العودة للمظهر العادي» (← في الشريط العلوي للواجهة الهاتفية) ظاهر داخل الشاشة وقابل للنقر بهدف ≥ 44px", L.exitVis && L.exitOnScreen && L.exitHit && L.exitH >= 44, L);
+    const L = await p.evaluate(() => { document.getElementById("ps-menu-btn").click(); /* V5: زر العودة داخل القائمة الهاتفية */ const ex = document.getElementById("ps-exit") || document.getElementById("hud-exit"), r = ex.getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2), q = SpatialOS.panels.get("ord").el.getBoundingClientRect(); return { exitVis: r.width > 0 && getComputedStyle(ex).display !== "none", exitOnScreen: r.left >= 0 && r.right <= innerWidth && r.top >= 0, exitHit: !!e && (e === ex || ex.contains(e)), exitH: Math.round(r.height), panelFits: q.width <= innerWidth + 24, panelInView: q.right > 0 && q.left < innerWidth, real: SpatialOS.real, orbit: SpatialOS.orbit }; });
+    ok("phone: زر «العودة للمظهر العادي» (في قائمة الواجهة الهاتفية V5) ظاهر داخل الشاشة وقابل للنقر بهدف ≥ 44px", L.exitVis && L.exitOnScreen && L.exitHit && L.exitH >= 44, L);
+    await p.evaluate(() => SpatialPhone.closeMenu());
     ok("phone: لوح الطلبات الحقيقي يلائم عرض الهاتف وظاهر", L.panelFits && L.panelInView && L.real === true, L);
     ok("phone: لا فيض أفقي في المظهر الهولوغرافي", await noOverflow());
     for (const id of ["set", "dash"]) {
@@ -170,7 +171,7 @@ async function phone(b) {
       await p.evaluate(i => { try { SpatialOS.dismiss(i, "close"); } catch (e) { } }, id);
     }
     await shot(p, "05-phone-holo");
-    await p.tap("#ps-top .ps-ib"); await p.waitForURL(/\/admin(\.html)?$/); await appReady();
+    await p.evaluate(() => SpatialPhone.openMenu()); await p.tap("#ps-exit"); await p.waitForURL(/\/admin(\.html)?$/); await appReady();
     ok("phone: العودة بلمسة تفتح اللوحة العادية مسجَّلاً الدخول", true);
     ok("phone: لا أخطاء JS غير معالجة", errs.length === 0, errs);
   } finally { await store.stop(); }

@@ -560,10 +560,12 @@ html body .core3d canvas{filter:none!important}
   body.ps #ps{display:block}
   body.ps #dock,body.ps .modebar,body.ps #modebar,body.ps .active,body.ps #orbit,body.ps #hud,body.ps .hparts,body.ps .yawchip{display:none!important}
   #ps-top{position:fixed;top:0;left:0;right:0;z-index:13;background:#06141c;border-bottom:1px solid rgba(110,225,255,.28);padding-top:env(safe-area-inset-top)}
-  .ps-bar{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;height:48px;padding:0 6px}
-  .ps-title{text-align:center;font-size:16px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ps-ib{width:44px;height:44px;border-radius:12px;border:1px solid rgba(110,225,255,.35);background:#0b2330;color:#e8f6fa;font:800 15px Cairo,system-ui,sans-serif;display:grid;place-items:center;padding:0}
-  .ps-row{display:flex;gap:8px;overflow-x:auto;padding:6px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;direction:rtl}
+  .ps-bar{display:grid;grid-template-columns:48px minmax(0,1fr) 48px;align-items:center;gap:6px;height:56px;padding:6px}
+  .ps-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}   /* عنوان للقارئات والاختبارات فقط: رأس الورقة يعرض العنوان */
+  .ps-ib{position:relative;width:44px;height:44px;border-radius:12px;border:1px solid rgba(110,225,255,.35);background:#0b2330;color:#e8f6fa;font:800 15px Cairo,system-ui,sans-serif;display:grid;place-items:center;padding:0}
+  .ps-ib svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  .ps-badge{position:absolute;top:-4px;inset-inline-end:-4px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#effe17;color:#1f2123;font:900 11px/18px Cairo,system-ui,sans-serif;text-align:center;font-style:normal}
+  .ps-row{display:flex;gap:8px;overflow-x:auto;padding:0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;direction:rtl}
   .ps-row::-webkit-scrollbar{display:none}
   .ps-chip{flex:0 0 auto;min-height:44px;padding:0 16px;border-radius:22px;border:1px solid rgba(110,225,255,.4);background:#0b2330;color:#e8f6fa;font:800 14px/1 Cairo,system-ui,sans-serif;white-space:nowrap}
   .ps-subs .ps-chip{min-height:40px;font-size:13px;border-radius:14px;background:#08202c}
@@ -579,11 +581,33 @@ html body .core3d canvas{filter:none!important}
   body.ps .pn-h{padding:4px 10px;cursor:default;border-radius:0}
   body.ps .pn-h button{width:44px;height:44px}
   body.ps .pn-h h3{font-size:16px}
-  body.ps .cam,body.ps .room,body.ps .core{top:calc(176px + (100vh - 248px) * .42)}
-  body.ps #laura{bottom:calc(72px + env(safe-area-inset-bottom));max-height:62vh;z-index:16}
+  body.ps .cam,body.ps .room,body.ps .core{top:calc(56px + env(safe-area-inset-top) + (100vh - 130px) * .42)}
+  body.ps #laura{bottom:calc(72px + env(safe-area-inset-bottom));max-height:62vh;z-index:16;background:#071a22!important;border:1px solid rgba(110,225,255,.35)}   /* معتمة: لا يظهر محتوى الورقة خلفها */
   /* LAURA على الهاتف: أهداف لمس ≥ 44px وخط الإدخال 16px (يمنع تكبير iOS عند التركيز) */
   body.ps #laura input,body.ps #laura textarea{min-height:44px;font-size:16px}
   body.ps #laura button{min-height:44px;min-width:44px}
   body.ps #laura .lm-ok,body.ps #laura .lm-no{min-height:44px;padding:0 16px;font-size:14px}
   body.ps .toast{bottom:calc(78px + env(safe-area-inset-bottom))}
+  /* القائمة والنوافذ المفتوحة: ورقتان كاملتان بين الشريطين */
+  #ps-menu,#ps-tray{position:fixed;left:0;right:0;top:calc(56px + env(safe-area-inset-top));bottom:calc(64px + env(safe-area-inset-bottom));z-index:15;background:#06141c;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 12px 16px;direction:rtl;border-bottom:1px solid rgba(110,225,255,.28)}
+  #ps-menu[hidden],#ps-tray[hidden]{display:none}
+  .ps-sh{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:56px;position:sticky;top:0;background:#06141c;z-index:1}
+  .ps-sh b{font-size:17px;font-weight:900;color:#fff}
+  .ps-groups{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:4px 0 12px}
+  .ps-groups .ps-chip{min-height:48px;padding:0 8px;border-radius:14px;font-size:14px;white-space:normal;line-height:1.15}
+  .ps-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding-bottom:12px}
+  .ps-tile{min-height:56px;padding:8px 10px;border-radius:14px;border:1px solid rgba(110,225,255,.35);background:#0b2330;color:#e8f6fa;font:800 14px/1.2 Cairo,system-ui,sans-serif;text-align:center}
+  .ps-tile.on{background:#effe17;border-color:#e2fe17;color:#1f2123}
+  .ps-foot{display:grid;grid-template-columns:1fr 2fr;gap:8px;padding:8px 0 6px;border-top:1px solid rgba(110,225,255,.2);position:sticky;bottom:0;background:#06141c;z-index:1}   /* اللغة والعودة دائماً ظاهرتان أسفل القائمة مهما طالت العناصر */
+  .ps-foot .ps-wide{width:auto;height:48px;font-size:14px}
+  .ps-empty{color:#9fc4cf;font:700 14px Cairo,system-ui,sans-serif;padding:16px 4px;text-align:center;grid-column:1/-1}
+  .ps-tlist{display:grid;gap:8px;padding-top:4px}
+  .ps-trow{display:grid;grid-template-columns:minmax(0,1fr) 48px;gap:8px;align-items:center}
+  .ps-tcard{min-height:56px;padding:0 14px;border-radius:14px;border:1px solid rgba(110,225,255,.35);background:#0b2330;color:#e8f6fa;font:800 15px Cairo,system-ui,sans-serif;text-align:start}
+  .ps-trow.on .ps-tcard{background:#effe17;border-color:#e2fe17;color:#1f2123}
+  .ps-tx{width:48px;height:48px;border-radius:14px;border:1px solid rgba(255,120,120,.45);background:#2a1216;color:#ffb4b4;font:900 22px/1 system-ui,sans-serif}
+  /* لوحة المفاتيح ظاهرة (visualViewport): يختفي الشريط السفلي وتجلس LAURA فوق اللوحة */
+  body.ps-kb #ps-bot{display:none}
+  body.ps-kb #ps-menu,body.ps-kb #ps-tray{bottom:var(--ps-kb,0px)}
+  body.ps-kb #laura{bottom:calc(var(--ps-kb,0px) + 6px);max-height:calc(100vh - var(--ps-kb,0px) - 70px)}
 }

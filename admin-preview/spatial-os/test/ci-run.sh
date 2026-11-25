@@ -49,6 +49,7 @@ want preempt     && run preempt     600 node "$T/preempt.js"       # V4: اخت�
 want assistant-index && run assistant-index 300 node "$T/assistant-index.js"   # V4: فهرسة مساعد اللوحة مقسَّمة (يعمل مبكراً ومتأخراً، لا مهمة >200ms تحت 4×)
 want world-stable  && run world-stable  900 node "$T/world-stable.js"   # عالم ثابت: القاعدة/الاسطوانة/الكرة، 24 دورة فتح/إغلاق، حفظ/استعادة الترتيب (مكتب+هاتف)
 want phone-ui      && run phone-ui      900 node "$T/phone-ui.js"       # واجهة الهاتف المخصصة: شرائط، أهداف لمس، ورقة، تنقل، عالم، فرنسية (360/390/412/768)
+want phone-nav   && run phone-nav   300 node "$T/phone-nav.js"      # V5: صينية النوافذ/القائمة/لوحة المفاتيح (محاكاة)/LAURA معتمة/مساعد احتياطي/فقاعة الإشعار على الهاتف
 want orbits3      && run orbits3      600 node "$T/orbits3.js"       # ثلاثة مدارات (تبويبات ← إعدادات أولى ← إعدادات ثالثة) + فتح آني بألواح مسخَّنة مسبقاً
 want drag-inside && run drag-inside  300 node "$T/drag-inside.js"   # السحب داخل البطاقات
 want sphere-audio&& run sphere-audio 300 node "$T/sphere-audio.js"   # صوت الكرة ستيريو
