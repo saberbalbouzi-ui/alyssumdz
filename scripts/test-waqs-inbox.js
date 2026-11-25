@@ -24,6 +24,10 @@ const { chromium } = require("playwright");
           db.rows.push({ id: "id" + (++db.n), created_at: new Date().toISOString(), prepared_at: x.prepared_at || new Date().toISOString(), batch: body && JSON.parse(body).p_batch, campaign: x.campaign || "", ref: x.ref || "", parent_id: par ? par.id : null, company: x.company || "", contact_name: x.contact || "", phone: ph, country: x.country || "", language: lg, kind: (x.kind || "first_contact").replace("-", "_"), subject: x.subject || "", body: x.body, priority: Number(x.priority || 0), status: "ready", opened_at: null, sent_at: null, sent_body: null, notes: "" }); rep.inserted++; });
         return ok(r, rep);
       }
+      db.tokens = db.tokens || [];
+      if (u.pathname.endsWith("/owner_inbox_tokens")) return ok(r, db.tokens);
+      if (u.pathname.endsWith("/rpc/owner_inbox_token_create")) { const lb = JSON.parse(body).p_label; if (db.tokens.some(x => x.label.toLowerCase() === lb.toLowerCase() && !x.revoked_at)) return ok(r, { code: "23505", message: 'duplicate key value violates unique constraint "owner_inbox_tokens_label_u"' }, 409); const tk = { id: "tk" + (db.tokens.length + 1), label: lb, created_at: new Date().toISOString(), last_used_at: null, revoked_at: null }; db.tokens.unshift(tk); return ok(r, { id: tk.id, label: lb, token: "oi_" + "ab12".repeat(16) }); }
+      if (u.pathname.endsWith("/rpc/owner_inbox_token_revoke")) { const tk = db.tokens.find(x => x.id === JSON.parse(body).p_id); if (tk) tk.revoked_at = new Date().toISOString(); return ok(r, !!tk); }
       if (u.pathname.endsWith("/owner_inbox_log")) return ok(r, db.logs);
       const id = (u.search.match(/id=eq\.([^&]+)/) || [])[1];
       if (m === "GET") return ok(r, db.rows);
@@ -39,7 +43,7 @@ const { chromium } = require("playwright");
     const p = await b.newPage({ viewport: { width: 420, height: 900 } }); p.on("pageerror", e => errs.push(String(e).slice(0, 160)));
     await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, r => r.abort());
     await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
-    const srv = mkServer(mode || "ok"); await p.route(/\/rest\/v1\/(owner_inbox|rpc\/owner_inbox_import)/, srv.handler); await p.route(/wa\.me/, r => r.abort());
+    const srv = mkServer(mode || "ok"); await p.route(/\/rest\/v1\/(owner_inbox|rpc\/owner_inbox_)/, srv.handler); await p.route(/wa\.me/, r => r.abort());
     await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); } catch (e) { } });
     if (!seller) await p.route(/\/admin\.html(\?.*)?$/, async r => { const res = await r.fetch(); let body = await res.text(); const cfg = require("fs").readFileSync("assets/js/config.js", "utf8").replace(/SELLER:\s*true/, "SELLER: false"); body = body.replace('<script src="assets/js/config.js"></script>', () => "<script>" + cfg + "</script>"); r.fulfill({ response: res, body }); });
     await p.goto("http://localhost:8765/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(10500);
@@ -121,6 +125,25 @@ const { chromium } = require("playwright");
   /* 9) لا تخزين للرسائل في المتصفح */
   const ls = await p.evaluate(() => { const o = {}; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); o[k] = String(localStorage.getItem(k)); } return Object.keys(o).filter(k => /Hello Sam|Bonjour Léa|213550123456/.test(o[k])); });
   t("الرسائل وأرقام الهواتف لا تُخزَّن في localStorage", ls.length === 0, ls);
+  /* 9b) الاستيراد المباشر برمز (API) */
+  await p.click("[data-wi=api]"); await p.waitForTimeout(500);
+  const A0 = await p.evaluate(() => ({ url: document.getElementById("ap-u").value, list: document.getElementById("ap-l").innerText }));
+  t("نافذة الاستيراد المباشر تعرض عنوان الدالة وقائمة رموز فارغة", /\/rest\/v1\/rpc\/owner_inbox_ingest$/.test(A0.url) && /لا رموز بعد/.test(A0.list), A0);
+  await p.fill("#ap-n", "chatgpt"); await p.click("#ap-c"); await p.waitForTimeout(500);
+  const A1 = await p.evaluate(() => ({ tok: (document.getElementById("ap-tk") || {}).value, list: document.getElementById("ap-l").innerText }));
+  t("إنشاء رمز: يُعرض مرة واحدة (oi_ + 64 خانة) ويظهر في القائمة نشطاً", /^oi_[0-9a-f]{64}$/.test(A1.tok || "") && /chatgpt/.test(A1.list) && /نشط/.test(A1.list), A1);
+  await p.fill("#ap-n", "ChatGPT"); await p.click("#ap-c"); await p.waitForTimeout(400);
+  t("اسم رمز مكرَّر نشط يُرفض برسالة واضحة", /مستعمل لرمز نشط/.test(await p.evaluate(() => document.getElementById("ap-e").textContent)));
+  const OA = await p.evaluate(() => { const o = AdminWaqsInbox.openapi(), op = o.paths["/rest/v1/rpc/owner_inbox_ingest"].post; return { server: o.servers[0].url, hdr: o.components.securitySchemes.IngestToken, key: op.parameters[0].schema.enum[0], cfgKey: CONFIG.SUPABASE_ANON_KEY, cfgUrl: CONFIG.SUPABASE_URL, req: op.requestBody.content["application/json"].schema.properties.p_rows.items.required, max: op.requestBody.content["application/json"].schema.properties.p_rows.maxItems }; });
+  t("مخطط OpenAPI: خادم المشروع، ترويسة x-ingest-token، المفتاح العام، الحقول المطلوبة، حدّ 500", OA.server === OA.cfgUrl.replace(/\/$/, "") && OA.hdr.name === "x-ingest-token" && OA.hdr.in === "header" && OA.key === OA.cfgKey && OA.req.join() === "phone,language,body" && OA.max === 500, OA);
+  const lsT = await p.evaluate(() => { const bad = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/oi_ab12/.test(String(localStorage.getItem(k)))) bad.push(k); } return bad; });
+  await p.click("#ap-x"); await p.click("[data-wi=api]"); await p.waitForTimeout(500);
+  const A2 = await p.evaluate(() => ({ shown: !!document.getElementById("ap-tk"), list: document.getElementById("ap-l").innerText }));
+  t("الرمز لا يبقى بعد إغلاق النافذة ولا يُخزَّن في المتصفح، والقائمة لا تعرضه", !A2.shown && !/oi_/.test(A2.list) && lsT.length === 0, { A2, lsT });
+  const n3 = srv.db.reqs.length; await p.click("[data-rv]"); await p.waitForTimeout(500);
+  const rv = srv.db.reqs.slice(n3).filter(r => /token_revoke/.test(r.path)); const A3 = await p.evaluate(() => document.getElementById("ap-l").innerText);
+  t("إلغاء الرمز بتأكيد: طلب واحد بمعرّفه، ويظهر ملغى", rv.length === 1 && rv[0].body.p_id === "tk1" && /ملغى/.test(A3), { rv: rv.map(r => r.body), A3 });
+  await p.click("#ap-x");
   /* 10) الفرنسية */
   await p.evaluate(async () => { AdminWaqsInbox.S.st = "ready"; AdminWaqsInbox.S.sel = null; await AdminI18n.set("fr"); }); await p.waitForTimeout(1500);
   const fx = await p.evaluate(() => document.getElementById("waqsin").innerText + "\n" + document.querySelector("#waqsin .wi-qh").textContent);

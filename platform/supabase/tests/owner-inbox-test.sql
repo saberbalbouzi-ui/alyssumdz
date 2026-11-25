@@ -100,5 +100,70 @@ begin
   perform t.ok('إعادة تطبيق الهجرة (idempotent) لا تغيّر الصلاحيات', true);
 end $T$;
 
+-- ───── الاستيراد المباشر برمز (owner-inbox-ingest.sql) ─────
+create function t.qh(p_role text, p_claims text, p_headers text, p_sql text) returns text language plpgsql as $$
+declare res text;
+begin
+  perform set_config('request.jwt.claims', p_claims, true); perform set_config('request.headers', p_headers, true);
+  execute 'set local role ' || quote_ident(p_role);
+  begin execute p_sql into res; exception when others then res := 'ERR:' || sqlerrm; end;
+  execute 'reset role'; perform set_config('request.headers', '', true);
+  return res;
+end $$;
+
+do $T$
+declare
+  owner_c text := json_build_object('sub', gen_random_uuid(), 'email', 'owner@test.local', 'role', 'authenticated', 'aal', 'aal2')::text;
+  owner1 text := json_build_object('sub', '11111111-1111-1111-1111-111111111111', 'email', 'owner@test.local', 'role', 'authenticated', 'aal', 'aal1')::text;
+  staff_c text := json_build_object('sub', gen_random_uuid(), 'email', 'staff@test.local', 'role', 'authenticated', 'aal', 'aal2')::text;
+  anon_c text := '{"role":"anon"}';
+  tk jsonb; tok text; tid text; rep jsonb; hdr text; rows text; x text; n int;
+begin
+  delete from public.owner_inbox;
+  -- إنشاء الرمز: للمالك فقط
+  perform t.ok('anon لا ينشئ رمزاً', t.q('anon', anon_c, $q$select public.owner_inbox_token_create('x')::text$q$) like 'ERR:%permission denied%');
+  perform t.ok('موظف مسجَّل لا ينشئ رمزاً', t.q('authenticated', staff_c, $q$select public.owner_inbox_token_create('x')::text$q$) like 'ERR:unauthorized%');
+  perform t.ok('مالك بلا مصادقة ثنائية لا ينشئ رمزاً', t.q('authenticated', owner1, $q$select public.owner_inbox_token_create('x')::text$q$) like 'ERR:unauthorized%');
+  perform t.ok('تسمية الرمز مطلوبة', t.q('authenticated', owner_c, $q$select public.owner_inbox_token_create('  ')::text$q$) like 'ERR:invalid_label%');
+  tk := t.q('authenticated', owner_c, $q$select public.owner_inbox_token_create('chatgpt')::text$q$)::jsonb; tok := tk ->> 'token'; tid := tk ->> 'id';
+  perform t.ok('المالك ينشئ رمزاً (oi_ + 64 خانة)', tok ~ '^oi_[0-9a-f]{64}$', tk::text);
+  perform t.ok('لا يُحفظ نص الرمز: تُخزَّن تجزئة SHA-256 فقط', (select count(*) from public.owner_inbox_tokens where token_hash = tok) = 0 and (select token_hash from public.owner_inbox_tokens where id = tid::uuid) = encode(sha256(convert_to(tok, 'utf8')), 'hex'));
+  perform t.ok('اسم الرمز المكرَّر النشط مرفوض', t.q('authenticated', owner_c, $q$select public.owner_inbox_token_create('ChatGPT')::text$q$) like 'ERR:%owner_inbox_tokens_label_u%');
+  perform t.ok('جدول الرموز: المالك يقرأ، والموظف/anon لا', t.q('authenticated', owner_c, 'select count(*)::text from public.owner_inbox_tokens') = '1' and t.q('authenticated', staff_c, 'select count(*)::text from public.owner_inbox_tokens') = '0' and t.q('anon', anon_c, 'select count(*)::text from public.owner_inbox_tokens') like 'ERR:%permission denied%');
+  perform t.ok('نواة الاستيراد الداخلية غير قابلة للاستدعاء من أدوار API', t.q('anon', anon_c, $q$select public._owner_inbox_import_core('x', '[]'::jsonb, 'x')::text$q$) like 'ERR:%permission denied%' and t.q('authenticated', owner_c, $q$select public._owner_inbox_import_core('x', '[]'::jsonb, 'x')::text$q$) like 'ERR:%permission denied%');
+
+  -- الاستيراد بالرمز (يعمل بدور anon: لا جلسة دخول)
+  rows := '[{"ref":"api1","company":"Delta Corp","contact":"Sam Rivers","phone":"+213550123456","country":"Algeria","language":"en","kind":"first_contact","subject":"Intro","body":"Hello Sam, from the API.","campaign":"API Spring","priority":4},
+           {"ref":"api2","parent_ref":"api1","company":"Delta Corp","contact":"Sam Rivers","phone":"+213550123456","language":"en","kind":"follow_up","body":"Hello Sam, API follow-up."},
+           {"company":"Bad","phone":"12","language":"en","body":"bad phone"}]';
+  hdr := json_build_object('x-ingest-token', tok)::text;
+  rep := t.qh('anon', anon_c, hdr, format('select public.owner_inbox_ingest(%L, %L)::text', 'api-batch', rows))::jsonb;
+  perform t.ok('الاستيراد بالرمز: 2 جديدة و1 مرفوضة وجهة جديدة', (rep ->> 'inserted') = '2' and (rep ->> 'invalid') = '1' and (rep ->> 'new_contacts') = '1' and (rep ->> 'total') = '3', rep::text);
+  perform t.ok('الرسائل المستوردة بحالة ready ومصدرها api:chatgpt ومتابعتها مربوطة بأمّها', (select bool_and(status = 'ready' and source = 'api:chatgpt') from public.owner_inbox) and (select count(*) from public.owner_inbox) = 2 and (select p.ref from public.owner_inbox o join public.owner_inbox p on p.id = o.parent_id where o.ref = 'api2') = 'api1');
+  perform t.ok('آخر استعمال للرمز يُسجَّل', (select last_used_at is not null from public.owner_inbox_tokens where id = tid::uuid));
+  rep := t.qh('anon', anon_c, hdr, format('select public.owner_inbox_ingest(%L, %L)::text', 'api-batch', rows))::jsonb;
+  perform t.ok('إعادة الاستيراد بالرمز نفسه: كله مكرَّر ولا إدخال', (rep ->> 'inserted') = '0' and (rep ->> 'duplicates') = '2', rep::text);
+  perform t.ok('الرمز «للكتابة فقط»: لا يقرأ الجدول ولا يعدّل ولا يحذف ولا يُدرج مباشرة', t.qh('anon', anon_c, hdr, 'select count(*)::text from public.owner_inbox') like 'ERR:%permission denied%' and t.qh('anon', anon_c, hdr, $q$update public.owner_inbox set notes = 'x'$q$) like 'ERR:%permission denied%' and t.qh('anon', anon_c, hdr, 'delete from public.owner_inbox') like 'ERR:%permission denied%' and t.qh('anon', anon_c, hdr, $q$insert into public.owner_inbox (company, phone, language, body) values ('x','213550000003','en','y')$q$) like 'ERR:%permission denied%');
+  perform t.ok('الاستيراد بالرمز لا يغيّر حالة رسالة موجودة (الإدخال دائماً ready)', (select count(*) from public.owner_inbox where status <> 'ready') = 0);
+  -- رموز غير صالحة
+  perform t.ok('بلا ترويسة الرمز مرفوض', t.qh('anon', anon_c, '{}', format('select public.owner_inbox_ingest(%L, %L)::text', 'x', rows)) like 'ERR:invalid_token%');
+  perform t.ok('رمز خاطئ أو قصير مرفوض (رسالة واحدة لكل الحالات)', t.qh('anon', anon_c, json_build_object('x-ingest-token', 'oi_' || repeat('0', 64))::text, format('select public.owner_inbox_ingest(%L, %L)::text', 'x', rows)) like 'ERR:invalid_token%' and t.qh('anon', anon_c, '{"x-ingest-token":"short"}', format('select public.owner_inbox_ingest(%L, %L)::text', 'x', rows)) like 'ERR:invalid_token%');
+  perform t.ok('تجزئة الرمز لا تُقبل كرمز', t.qh('anon', anon_c, json_build_object('x-ingest-token', encode(sha256(convert_to(tok, 'utf8')), 'hex'))::text, format('select public.owner_inbox_ingest(%L, %L)::text', 'x', rows)) like 'ERR:invalid_token%');
+  perform t.ok('غير المالك لا يلغي رمزاً', t.q('authenticated', staff_c, format($q$select public.owner_inbox_token_revoke(%L)::text$q$, tid)) like 'ERR:unauthorized%' and t.q('anon', anon_c, format($q$select public.owner_inbox_token_revoke(%L)::text$q$, tid)) like 'ERR:%permission denied%');
+  -- سقف 24 ساعة
+  perform t.ok('سقف 5000 رسالة/24 ساعة لكل رمز', (select count(*) from public.owner_inbox) = 2);
+  insert into public.owner_inbox (company, phone, language, body, source) select 'Cap', '2135500' || lpad(g::text, 5, '0'), 'en', 'cap ' || g, 'api:chatgpt' from generate_series(1, 4998) g;
+  x := t.qh('anon', anon_c, hdr, format('select public.owner_inbox_ingest(%L, %L)::text', 'x', '[{"company":"Z","phone":"+213550999001","language":"en","body":"over the cap"}]'));
+  perform t.ok('بعد بلوغ السقف يُرفض الاستيراد (daily_cap_reached)', x like 'ERR:daily_cap_reached%', x);
+  delete from public.owner_inbox where company = 'Cap';
+  -- الإلغاء
+  perform t.ok('المالك يلغي الرمز فيُرفض فوراً', t.q('authenticated', owner_c, format($q$select public.owner_inbox_token_revoke(%L)::text$q$, tid)) = 'true' and t.qh('anon', anon_c, hdr, format('select public.owner_inbox_ingest(%L, %L)::text', 'x', rows)) like 'ERR:invalid_token%');
+  perform t.ok('إلغاء رمز ملغى يُرجع false', t.q('authenticated', owner_c, format($q$select public.owner_inbox_token_revoke(%L)::text$q$, tid)) = 'false');
+  perform t.ok('يمكن إعادة استعمال الاسم بعد الإلغاء برمز جديد مختلف', (t.q('authenticated', owner_c, $q$select public.owner_inbox_token_create('chatgpt')::text$q$)::jsonb ->> 'token') <> tok);
+  -- حدّ عدد الرموز النشطة
+  for n in 1..9 loop perform t.q('authenticated', owner_c, format($q$select public.owner_inbox_token_create('t%s')::text$q$, n)); end loop;
+  perform t.ok('حدّ 10 رموز نشطة', t.q('authenticated', owner_c, $q$select public.owner_inbox_token_create('eleven')::text$q$) like 'ERR:too_many_tokens%');
+end $T$;
+
 select case when ok then 'PASS' else 'FAIL' end || ' ' || name || coalesce('   -> ' || left(got, 300), '') from t.res order by n;
 select 'SUMMARY ' || count(*) filter (where ok) || '/' || count(*) from t.res;

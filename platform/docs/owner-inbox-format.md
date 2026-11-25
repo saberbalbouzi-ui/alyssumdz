@@ -63,3 +63,19 @@
 
 ## الحالات
 `ready` (Ready to Send) ← `opened` (Opened in WhatsApp) ← `sent` (Sent، بتأكيد المالك فقط مع نسخة النص المُرسَل) ← `waiting` (Waiting for Reply) / `positive` / `negative` / `followup` (Follow-up Required) / `cancelled`. فتح WhatsApp لا يعني الإرسال، و`sent` لا يعود إلى `ready/opened` ولا يُعدَّل نصه بعد الإرسال (يرفضه الخادم).
+
+## الاستيراد المباشر (بلا نسخ ولصق)
+
+من الصندوق: **الاستيراد المباشر (API) ← إنشاء رمز** (اسم مثل `chatgpt`). يظهر الرمز `oi_…` **مرة واحدة** (يُخزَّن منه SHA-256 فقط) وتستطيع إلغاءه فوراً. الرمز **للكتابة فقط**: يضيف رسائل بحالة `ready` ولا يقرأ ولا يعدّل ولا يحذف ولا يرسل شيئاً. سقف 5000 رسالة/24 ساعة لكل رمز، و500 صف للطلب، و10 رموز نشطة كحد أقصى.
+
+```bash
+curl -X POST "https://<project>.supabase.co/rest/v1/rpc/owner_inbox_ingest" \
+  -H "apikey: <المفتاح العام للموقع>" -H "x-ingest-token: oi_…" -H "Content-Type: application/json" \
+  -d '{"p_batch":"2026-11-25-spring-eu","p_rows":[ {…رسالة كما في الصيغة أعلاه…} ]}'
+```
+الرد تقرير: `{total, inserted, duplicates, invalid, new_contacts, existing_contacts, errors:[{row,reason}], batch}`. أخطاء الرمز: `invalid_token` (مفقود/خاطئ/ملغى)، `daily_cap_reached`، `too_many_rows`، `rows_must_be_array`.
+
+### ربطه بإجراء Custom GPT (Actions)
+1. في نافذة «الاستيراد المباشر» اضغط **نسخ مخطط OpenAPI** والصقه في Actions.
+2. المصادقة: **API Key** ← **Custom** ← اسم الترويسة `x-ingest-token` ← الصق الرمز.
+3. في تعليمات الـGPT: «أعدّ الرسائل بصيغة `owner-inbox/v1` (كل رسالة نصها النهائي المخصَّص كاملاً، language en/fr/ar، kind، campaign، ref فريد، parent_ref للمتابعات، phone دولي) ثم استدعِ `addInboxMessages` بدفعات ≤ 500 وأخبرني بتقرير الاستيراد. لا تُرسل شيئاً؛ الإرسال يدوي.»

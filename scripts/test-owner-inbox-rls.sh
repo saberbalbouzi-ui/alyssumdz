@@ -22,10 +22,12 @@ create table public.admins (email text primary key);
 grant usage on schema public to anon, authenticated;
 EOS
 sed -n '10,24p' "$ROOT/platform/supabase/roles.sql"; } > "$SETUP"
-chmod a+r "$SETUP" "$ROOT/platform/supabase/owner-inbox.sql" "$ROOT/platform/supabase/tests/owner-inbox-test.sql"
+chmod a+r "$SETUP" "$ROOT/platform/supabase/owner-inbox.sql" "$ROOT/platform/supabase/owner-inbox-ingest.sql" "$ROOT/platform/supabase/tests/owner-inbox-test.sql"
 run "$PSQL -f $SETUP" || exit 2
 run "$PSQL -f $ROOT/platform/supabase/owner-inbox.sql" || { echo "فشل تطبيق الهجرة"; exit 1; }
 run "$PSQL -f $ROOT/platform/supabase/owner-inbox.sql" || { echo "فشلت إعادة التطبيق (الهجرة ليست idempotent)"; exit 1; }
+run "$PSQL -f $ROOT/platform/supabase/owner-inbox-ingest.sql" || { echo "فشل تطبيق هجرة الاستيراد المباشر"; exit 1; }
+run "$PSQL -f $ROOT/platform/supabase/owner-inbox-ingest.sql" || { echo "فشلت إعادة تطبيق هجرة الاستيراد المباشر (ليست idempotent)"; exit 1; }
 OUT="$(run "$PSQL -f $ROOT/platform/supabase/tests/owner-inbox-test.sql" 2>&1)"; echo "$OUT"
 echo "$OUT" | grep -q '^FAIL' && exit 1
 echo "$OUT" | grep -q '^SUMMARY' || exit 1
