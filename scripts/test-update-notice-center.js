@@ -12,8 +12,9 @@ const { chromium } = require("playwright");
       document.getElementById("app").classList.remove("hidden"); const f0 = window.fetch; window.fetch = async (u, o) => /VERSION/.test(String(u)) ? { ok: true, text: async () => "99.0.0" } : { ok: true, text: async () => "", json: async () => ({}) };
       const old = document.getElementById("au-banner"); if (old) old.remove(); await AdminUpdate.check(false); await new Promise(r => setTimeout(r, 100));
       const c = el => { const r = el.getBoundingClientRect(); return { x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }; };
-      const bn = document.getElementById("au-banner"); return { vw: innerWidth, vh: innerHeight, banner: bn ? c(bn) : null };
+      const bn = document.getElementById("au-banner"); const r = bn.getBoundingClientRect(); return { vw: innerWidth, vh: innerHeight, banner: bn ? c(bn) : null, w: Math.round(r.width), h: Math.round(r.height) };
     });
+    t("إشعار «يتوفر تحديث» عريض بسطور طبيعية لا عمود ضيّق (عرض ≥ 280 وارتفاع ≤ 200) عند عرض " + w, R.w >= 280 && R.h <= 200, R);
     t("إشعار «يتوفر تحديث» في الوسط عند عرض " + w, R.banner && Math.abs(R.banner.x - R.vw / 2) <= 3 && Math.abs(R.banner.y - R.vh / 2) <= 3, R);
     await p.close();
   }
