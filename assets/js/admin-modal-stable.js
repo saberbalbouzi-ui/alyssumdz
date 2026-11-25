@@ -58,15 +58,18 @@ document.addEventListener("click", e => {
      نثبّت الطبقات الثابتة المفتوحة على المنظور المرئي (visualViewport) وتعود لوضعها حين يتطابقان. */
   const OV = ".modal-bg.open,#au-cover,#au-bar,.acr-bg,.hs-bg,.sa-mbg,.cs-mbg,.bp-overlay,.cc-overlay,.stp-modbg,#tl-inst,#tl-lib,#tl-view,.acc-bg";
   function fitVV() {
-    const vv = window.visualViewport; if (!vv) return; const cw = document.documentElement.clientWidth, mism = Math.abs(cw - vv.width) > 2 || vv.offsetLeft > 2 || vv.offsetTop > 2;
+    const vv = window.visualViewport; if (!vv) return; const cw = document.documentElement.clientWidth, kb = window.innerHeight - vv.height - vv.offsetTop > 120, mism = Math.abs(cw - vv.width) > 2 || vv.offsetLeft > 2 || vv.offsetTop > 2 || kb;
     document.querySelectorAll(OV).forEach(el => {
       const cs = getComputedStyle(el); if (cs.position !== "fixed" || cs.display === "none") { if (el.__vv) { unfit(el); } return; }
       if (!mism) { if (el.__vv) unfit(el); return; }
       if (!el.__vv) { const o = el.style; el.__vv = { inset: o.inset, left: o.left, top: o.top, width: o.width, height: o.height, right: o.right, bottom: o.bottom }; }
       el.style.inset = "auto"; el.style.left = vv.offsetLeft + "px"; el.style.top = vv.offsetTop + "px"; el.style.width = vv.width + "px"; el.style.height = vv.height + "px";
+      /* لوحة المفاتيح مفتوحة: تُقصَّر النافذة على المساحة المرئية فوقها ويتمرّر داخلها، فلا تغطّي الكلافيي الحقل الذي تكتب فيه (خانة السعر وغيرها) */
+      const kid = el.__stbl ? el.__stbl.kid : el.firstElementChild;
+      if (kid) { if (el.__vv.mh === undefined) { el.__vv.kid = kid; el.__vv.mh = kid.style.maxHeight; el.__vv.oy = kid.style.overflowY; } if (kb) { kid.style.maxHeight = Math.max(160, vv.height - 12) + "px"; kid.style.overflowY = "auto"; } else { kid.style.maxHeight = el.__vv.mh; kid.style.overflowY = el.__vv.oy; } }
     });
   }
-  function unfit(el) { const o = el.__vv; if (!o) return; el.style.inset = o.inset; el.style.left = o.left; el.style.top = o.top; el.style.width = o.width; el.style.height = o.height; el.style.right = o.right; el.style.bottom = o.bottom; el.__vv = null; }
+  function unfit(el) { const o = el.__vv; if (!o) return; if (o.kid) { o.kid.style.maxHeight = o.mh; o.kid.style.overflowY = o.oy; } el.style.inset = o.inset; el.style.left = o.left; el.style.top = o.top; el.style.width = o.width; el.style.height = o.height; el.style.right = o.right; el.style.bottom = o.bottom; el.__vv = null; }
   const locked = new Set();
   /* النافذة المفتوحة = أعلى عنصر عند زاوية الشاشة يكون overlay ثابتاً يغطّيها؛ فحص خفيف كل 250ms وعند كل نقرة (لا مراقبة لكل التغييرات) */
   function tick() {
@@ -78,6 +81,8 @@ document.addEventListener("click", e => {
       locked.forEach(el => { if (!el.isConnected || !isOpen(el) || !el.contains(el.__stbl && el.__stbl.kid)) { unlock(el); locked.delete(el); } });
     } catch (_) { }
   }
+  /* حقل يأخذ التركيز داخل نافذة مفتوحة: بعد ظهور الكلافيي يُمرَّر إلى وسط المساحة المرئية */
+  document.addEventListener("focusin", e => { const t = e.target; if (!t || !/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || !t.closest || !t.closest(OV)) return; [250, 700].forEach(ms => setTimeout(() => { try { if (document.activeElement === t) t.scrollIntoView({ block: "center", inline: "nearest" }); } catch (_) { } }, ms)); });
   const start = () => { try { if (window.visualViewport) { visualViewport.addEventListener("resize", fitVV); visualViewport.addEventListener("scroll", fitVV); } } catch (_) { } setInterval(tick, 250); document.addEventListener("click", () => requestAnimationFrame(tick), true); tick(); };
   if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 })();
