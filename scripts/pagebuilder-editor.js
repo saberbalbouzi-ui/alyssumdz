@@ -2702,8 +2702,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     return E.dev;
   };
   /* «السحب فوق العناصر دون إزاحتها» دائماً (خيار دائم بلا الضغط على Alt/Ctrl): افتراضياً يزيح السحبُ العناصرَ التي أمام المسحوب ويوسّع القسم فلا يمكن وضع عنصر فوق صورة بالماوس (الأسهم وحدها تفعل) */
-  const carryAlways = () => { if (E.carry === undefined) { try { E.carry = localStorage.getItem("pbx_carry") === "1"; } catch (x) { E.carry = false; } } return !!E.carry; };
-  const toggleCarry = () => { E.carry = !carryAlways(); try { localStorage.setItem("pbx_carry", E.carry ? "1" : ""); } catch (x) { } toast(E.carry ? "✅ السحب الآن فوق العناصر: لا تُزاح الصور والعناصر التي تمرّ تحتها" : "↩ السحب يزيح العناصر التي أمامه ويوسّع القسم (كما كان)"); };
+  const carryAlways = () => { if (E.carry === undefined) { try { E.carry = localStorage.getItem("pbx_carry") !== "0"; } catch (x) { E.carry = true; } } return !!E.carry; };      /* مفعَّل افتراضياً؛ يُعطَّل من قائمة العنصر فيُحفظ "0" */
+  const toggleCarry = () => { E.carry = !carryAlways(); try { localStorage.setItem("pbx_carry", E.carry ? "1" : "0"); } catch (x) { } toast(E.carry ? "✅ السحب الآن فوق العناصر: لا تُزاح الصور والعناصر التي تمرّ تحتها" : "↩ السحب يزيح العناصر التي أمامه ويوسّع القسم (كما كان)"); };
   function startMove(e, inf, lazy, copy) {
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
@@ -2747,7 +2747,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } clearDrop(); dropCol = null; xfer = ghostMove({ tsec, U, pt, grab: { x: U.l - px0, y: U.t - py0 }, ev, ex: exSet() }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       let X = X0 + dx, Y = Y0 + dy, guides = [];
-      try { if (!carry && !localStorage.getItem("pbx_carry_tip")) { localStorage.setItem("pbx_carry_tip", "1"); toast("💡 العنصر يزيح ما أمامه ويتّسع القسم. اضغط Alt أو Ctrl أثناء السحب لحمله فوق عنصر آخر أو إلى قسم آخر، أو فعّل «السحب فوق العناصر دون إزاحتها» من قائمة العنصر (النقر الأيمن) لتصير الحالة الدائمة"); } } catch (e) { }
+      try { if (!carry && !localStorage.getItem("pbx_carry_tip")) { localStorage.setItem("pbx_carry_tip", "1"); toast("💡 العنصر يزيح ما أمامه ويتّسع القسم. اضغط Alt أو Ctrl أثناء السحب لحمله فوق عنصر آخر أو إلى قسم آخر، أو السحب فوق العناصر مفعَّل دائماً؛ يمكن تعطيله من «السحب فوق العناصر دون إزاحتها» في قائمة العنصر (النقر الأيمن)"); } } catch (e) { }
       const PCc = carry ? null : (PC || (PC = mkPush()));
       if (carry || !PCc || PCc.off) Y = Math.max(Y, 0);      // الحمل: لا يخرج العنصر فوق حدّ قسمه فيختفي جزؤه (للنقل لقسم آخر أفلته فوقه)؛ بدونه يتّسع القسم للأعلى
       let lnkId = null; if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; lnkId = sn.below; }

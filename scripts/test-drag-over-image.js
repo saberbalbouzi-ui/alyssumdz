@@ -1,4 +1,4 @@
-/* السحب بالماوس يزيح العناصر التي أمام المسحوب افتراضياً (فلا يمكن وضع عنصر فوق صورة)، وخيار «السحب فوق العناصر دون إزاحتها (دائماً)» في قائمة العنصر يتيح ذلك بلا Alt/Ctrl ويُحفظ. NODE_PATH=/opt/node-tools/node_modules */
+/* السحب فوق العناصر دون إزاحتها مفعَّل افتراضياً (بلا Alt/Ctrl)، ويمكن تعطيله من قائمة العنصر فيعود الإزاحة ويُحفظ الاختيار. NODE_PATH=/opt/node-tools/node_modules */
 const { chromium } = require("playwright");
 (async () => {
   const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1280, height: 900 } }); let bad = 0; const t = (n, ok, x) => { console.log((ok ? "✓ " : "✗ ") + n + (ok ? "" : " " + JSON.stringify(x))); if (!ok) bad++; };
@@ -15,18 +15,18 @@ const { chromium } = require("playwright");
   const drag = () => p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)), fr = document.getElementById("pbx-frame"), el = fr.contentDocument.querySelector('[data-pb="txt"]'); const r = el.getBoundingClientRect(), f = fr.getBoundingClientRect(); const k = PBApp.E.scale || 1; return { x: f.left + (r.left + r.width / 2) * k, y: f.top + (r.top + r.height / 2) * k }; });
   const fys = () => p.evaluate(() => { const g = id => PBApp.E.page.sections[0].free.find(w => w.id === id).set; const n = x => Number(x && typeof x === "object" ? x.d : x); return { img: n(g("img").fy), imgH: n(g("img").fh), txt: n(g("txt").fy) }; });
   const doDrag = async () => { const c = await drag(); await p.mouse.click(c.x, c.y); await p.waitForTimeout(250); await p.mouse.move(c.x, c.y); await p.mouse.down(); await p.mouse.move(c.x, c.y - 120, { steps: 8 }); await p.mouse.move(c.x, c.y - 230, { steps: 8 }); await p.mouse.up(); await p.waitForTimeout(500); };
-  await open(); const a0 = await fys(); await doDrag(); const a1 = await fys();
-  t("افتراضياً: السحب فوق الصورة يزيحها (لا تبقى في مكانها)", a1.img !== a0.img || a1.txt >= a0.img + a0.imgH - 5, { a0, a1 });
-  /* خيار السحب فوق العناصر من قائمة العنصر */
+  /* افتراضياً مفعَّل: السحب يحمل العنصر فوق الصورة وتبقى الصورة في مكانها */
+  await open(); await p.evaluate(() => { try { localStorage.removeItem("pbx_carry"); } catch (e) { } PBApp.E.carry = undefined; }); const a0 = await fys(); await doDrag(); const a1 = await fys();
+  t("افتراضياً (بلا أي إعداد): السحب فوق الصورة لا يزيحها ويستقر النص فوقها", a1.img === a0.img && a1.txt < a0.img + a0.imgH - 20, { a0, a1 });
+  /* التعطيل من قائمة العنصر يعيد الإزاحة ويُحفظ */
   await open(); await p.evaluate(() => { try { localStorage.removeItem("pbx_carry"); } catch (e) { } PBApp.E.carry = undefined; });
   const c0 = await drag(); await p.mouse.click(c0.x, c0.y); await p.waitForTimeout(250); await p.mouse.click(c0.x, c0.y, { button: "right" }); await p.waitForTimeout(400);
   const has = await p.evaluate(() => { const m = document.getElementById("pbx-ctx"); return !!m && /السحب فوق العناصر دون إزاحتها/.test(m.textContent); });
-  t("الخيار ظاهر في قائمة العنصر", has, has);
+  t("الخيار ظاهر في قائمة العنصر", has, await p.evaluate(() => { const m = document.getElementById("pbx-ctx"); return m ? m.textContent.slice(0, 260) : null; }));
   await p.evaluate(() => { const b = [...document.querySelectorAll("#pbx-ctx button")].find(x => /السحب فوق العناصر دون إزاحتها/.test(x.textContent)); b && b.click(); }); await p.waitForTimeout(300);
   const stored = await p.evaluate(() => localStorage.getItem("pbx_carry"));
   await doDrag(); const b1 = await fys();
-  t("مع الخيار: الصورة تبقى في مكانها والنص صار فوقها", b1.img === a0.img && b1.txt < a0.img + a0.imgH - 20, { a0, b1 });
-  t("الخيار يُحفظ في المتصفح", stored === "1", stored);
+  t("بعد تعطيله: يزيح الصورة كما في السابق، والتعطيل يُحفظ", stored === "0" && (b1.img !== a0.img || b1.txt >= a0.img + a0.imgH - 5), { stored, a0, b1 });
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
