@@ -2639,8 +2639,12 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     (P.sections || []).forEach(sec => { (sec.free || []).forEach(fix); (sec.cols || []).forEach(c => (c.widgets || []).forEach(fix)); });
     return n;
   }
+  /* إطار النص/العنوان الحر يتبع نصّه دائماً (ارتفاع تلقائي): hauto=false بلا hfix (ارتفاع ثابت قادم من تحويل أو ملصوق) يجعل النص يفيض خارج الإطار البنفسجي أو يبقى الإطار أكبر منه؛ أما من ضبط الارتفاع بسحب المقبض يدوياً (hfix) فيُحترم اختياره */
+  function autoTextH(P) {
+    let n = 0; (P.sections || []).forEach(sec => (sec.free || []).forEach(w => { if (w && ["text", "heading"].includes(w.type) && w.set && w.set.hauto === false && !w.set.hfix) { delete w.set.hauto; n++; } })); return n;
+  }
   function cleanStrayAll(P) {
-    let n = fixGroupZ(P) + healFs(P); (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
+    let n = fixGroupZ(P) + healFs(P) + autoTextH(P); (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
       ["t", "m"].forEach(d2 => { if ((d2 === "m" && sec.set.scaledM) || (d2 === "t" && sec.set.scaledT)) return; const has = w => ks.some(k => w.set[k] && typeof w.set[k] === "object" && w.set[k][d2] !== undefined), c = ws.filter(has).length; if (c > 0 && c < ws.length) { ws.filter(has).forEach(w => ks.forEach(k => { if (w.set[k] && typeof w.set[k] === "object") delete w.set[k][d2]; })); n += c; } }); });
     return n;
   }
@@ -2772,6 +2776,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     if (!el.isConnected) { const e2 = fdoc.querySelector('[data-pb="' + wEl0.dataset.pb + '"] [data-edit="' + fld0 + '"]' + (idx0 != null ? '[data-idx="' + idx0 + '"]' : "")); if (!e2) return; el = e2; }      // التحديد قد يعيد رسم الصفحة فيُستبدل عنصر النص: نعمل على الحيّ
     const wEl = el.closest('[data-kind="widget"]'); if (!wEl) return;
     const field = el.dataset.edit, rich = field === "html"; editing = { el, id: wEl.dataset.pb, field, rich, idx: el.dataset.idx }; if ($("pb-app")) $("pb-app").classList.add("pbx-ed");
+    { const i0 = find(wEl.dataset.pb); if (i0 && i0.free && ["text", "heading"].includes(i0.node.type) && i0.set.hauto === false) { delete i0.set.hauto; delete i0.set.hfix; wEl.style.setProperty("height", "auto", "important"); } }      /* أثناء الكتابة يتبع الإطار النص: سطر جديد يوسّع الإطار */
+    el.addEventListener("input", () => { positionOverlaySoon(); });
     el.setAttribute("contenteditable", "true"); { const st0 = $("pbx-stage"), t0 = st0 ? st0.scrollTop : 0; try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); } if (st0 && Math.abs(st0.scrollTop - t0) > 1) st0.scrollTop = t0; }
     const r = rng || fdoc.createRange(); if (!rng) r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
@@ -4065,7 +4071,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
   function startResize(e, dir, inf) {
-    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading", "countdown", "counter"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) inf.set.hauto = false;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
+    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading", "countdown", "counter"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) { inf.set.hauto = false; inf.set.hfix = true; }      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
     const dev = devOfFree(inf), el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, r0 = layoutRect(el), set = inf.set;
     const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), free = inf.kind === "widget" && inf.free;
@@ -5063,7 +5069,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         setR(st, "fx", dev, Math.round(X / cr.width * 1000) / 10); setR(st, "fwd", dev, Math.round(W / cr.width * 1000) / 10); setR(st, "fy", dev, Math.max(0, Math.round(Y / u))); setR(st, "fh", dev, Math.max(4, Math.round(H / u)));
         if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(st, k, "d") === undefined) setR(st, k, "d", eff(st, k, dev)); });
         if (uni && !["image", "shape"].includes(q.i.node.type)) { setR(st, "wsc", dev, Math.max(20, Math.min(500, Math.round(q.ws * kx)))); if (dev !== "d" && own(st, "wsc", "d") === undefined) setR(st, "wsc", "d", q.ws); }
-        else if (hasH && !corner && ["text", "heading"].includes(q.i.node.type)) st.hauto = false;
+        else if (hasH && !corner && ["text", "heading"].includes(q.i.node.type)) { st.hauto = false; st.hfix = true; }
       });
       tip.textContent = Math.round(W0 * kx) + "×" + Math.round(H0 * ky); const st0 = $("pbx-ovl").getBoundingClientRect(); tip.style.left = (ev.clientX - st0.left + 14) + "px"; tip.style.top = (ev.clientY - st0.top + 14) + "px";
       renderCanvas(); positionOverlay(); $("pbx-ovl").appendChild(tip); growCanvas(sec);
