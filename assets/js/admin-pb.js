@@ -2526,6 +2526,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const A = [["⇤", "يسار", () => alignPage("left")], ["↔", "وسط أفقياً", () => alignPage("center")], ["⇥", "يمين", () => alignPage("right")], "-", ["⤒", "أعلى", () => alignPage("top")], ["↕", "وسط عمودياً", () => alignPage("middle")], ["⤓", "أسفل", () => alignPage("bottom")]];
     const items = [["⧉", "نسخ", copyEl, "Ctrl+C"], ["🖌️", "نسخ النمط", copyStyle, "Ctrl+Alt+C"], E.styleClip ? ["🎨", "لصق النمط", pasteStyle, "Ctrl+Alt+V"] : null, ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", () => dup(), "Ctrl+D"], ["🗑", "حذف", () => del(), "Del", 1], "-",
       ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
+      ["⤓", "نقل إلى القسم الأسفل", () => moveToSec(1), ""], ["⤒", "نقل إلى القسم الأعلى", () => moveToSec(-1), ""], "-",
       [carryAlways() ? "☑" : "☐", "السحب فوق العناصر دون إزاحتها (دائماً)", toggleCarry, ""], "-",
       ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
@@ -3045,6 +3046,18 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* نقل/لصق عنصر بين قسمين وحدتهما مختلفة (عرض تصميم أو حاوية مختلفة): قيم الخط بوحدات التصميم تُضرب بنسبة الوحدتين فيبقى حجمه الظاهر كما كان */
   function scaleFs(set, k) { if (!set || set.fs === undefined || !k || Math.abs(k - 1) < 0.02) return; const f = set.fs; if (f && typeof f === "object") Object.keys(f).forEach(d => { if (typeof f[d] === "number") f[d] = Math.max(4, Math.round(f[d] * k)); }); else if (typeof f === "number") set.fs = Math.max(4, Math.round(f * k)); }
   const secUnit = sec => { const c = sec && fdoc && fdoc.querySelector(`[data-pb="${sec.id}"] .pb-in`); if (!c) return null; const r = c.getBoundingClientRect(); return { u: uOf(sec, r) || 1, w: r.width || 1 }; };
+  /* نقل العنصر/العناصر المحدَّدة إلى القسم الحر التالي (أسفل) أو السابق (أعلى) بأمر من القائمة بلا سحب: يُوضع في أعلى القسم الهدف (للأسفل) أو أسفله (للأعلى) وتهبط عناصر الهدف لتتّسع له فلا تتراكب، وتُحفظ مواضعها الأفقية وحجمها الظاهر */
+  function moveToSec(d) {
+    const ids = selIds(), infs = ids.map(find).filter(i => i && i.kind === "widget" && i.free); if (!infs.length) return toast("حدّد عنصراً أولاً");
+    const src = infs[0].sec; if (infs.some(i => i.sec !== src)) return toast("حدّد عناصر من قسم واحد");
+    const L = E.page.sections; let j = L.indexOf(src) + d; while (L[j] && (isHF(L[j]) || L[j].set.kind !== "canvas")) j += d; const ts = L[j]; if (!ts) return toast(d > 0 ? "لا يوجد قسم حرّ تحت هذا القسم" : "لا يوجد قسم حرّ فوق هذا القسم");
+    const tcont = fdoc.querySelector(`[data-pb="${ts.id}"] .pb-in`), scont = fdoc.querySelector(`[data-pb="${src.id}"] .pb-in`); if (!tcont || !scont) return;
+    const tcr = tcont.getBoundingClientRect(), scr = scont.getBoundingClientRect(), ut = uOf(ts, tcr) || 1, rs = infs.map(i => layoutRect(fdoc.querySelector(`[data-pb="${i.node.id}"]`)));
+    const Lx = Math.min(...rs.map(r => r.left)), Tp = Math.min(...rs.map(r => r.top)), Bt = Math.max(...rs.map(r => r.top + r.height)), gx = (Lx - scr.left) / Math.max(1, scr.width) * tcr.width, hDes = (Bt - Tp) / ut;
+    let gy; if (d > 0) { gy = 20 * ut; const shift = Math.round(hDes + 20 + 20); (ts.free || []).forEach(w => { const f = w.set.fy; if (f && typeof f === "object") ["d", "t", "m"].forEach(k => { if (typeof f[k] === "number") f[k] += shift; }); else if (typeof f === "number") w.set.fy = f + shift; }); const mh = ts.set.mh; if (mh && typeof mh === "object") ["d", "t", "m"].forEach(k => { if (typeof mh[k] === "number") mh[k] += shift; }); }
+    else gy = Math.max(0, tcr.height - (Bt - Tp) - 20 * ut);
+    const first = ids[0]; if (xferFree(ids, ts, gx, gy, null)) { E.sel = first; try { const el = fdoc.querySelector(`[data-pb="${first}"]`); if (el) el.scrollIntoView({ block: "center" }); } catch (x) { } }
+  }
   function xferFree(ids, ts, gx, gy, mhMap) {
     const infs = ids.map(find).filter(i => i && i.free && i.sec !== ts); if (!infs.length) return false;
     const tcont = fdoc.querySelector(`[data-pb="${ts.id}"] .pb-in`); if (!tcont) return false; const tcr = tcont.getBoundingClientRect(), ut = uOf(ts, tcr);
