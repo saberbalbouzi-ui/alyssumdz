@@ -1,0 +1,28 @@
+/* فرشاة النمط: لا إشعار «نُسخ النمط»، ومؤشر الفأرة أيقونة نسخ داخل إطار الصفحة طوال الفرشاة ويعود بعدها. NODE_PATH=/opt/node-tools/node_modules */
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1280, height: 900 } }); let bad = 0; const t = (n, ok, x) => { console.log((ok ? "✓ " : "✗ ") + n + (ok ? "" : " " + JSON.stringify(x))); if (!ok) bad++; };
+  const errs = []; p.on("pageerror", e => errs.push(String(e).slice(0, 140)));
+  await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, r => r.abort());
+  await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+  await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); } catch (e) { } });
+  await p.goto("http://localhost:" + (process.env.PORT || 8765) + "/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(8000);
+  await p.evaluate(async () => { document.getElementById("app").classList.remove("hidden"); window.__toasts = []; window.toast = m => { window.__toasts.push(String(m)); };
+    const w = (id, html, y, col) => ({ id, type: "text", set: { html, fs: { d: 20 }, color: col, fx: { d: 10 }, fy: { d: y }, fwd: { d: 40 }, fh: { d: 40 }, zi: 2 } });
+    PBApp.open({ v: 1, title: "t", slug: "t-pc", ff: "Cairo", css: "", sections: [{ id: "s1", set: { kind: "canvas", mh: { d: 500, t: 500, m: 500 }, pad: { d: [0, 0, 0, 0] } }, free: [w("a", "<p>أول</p>", 40, "#ff0000"), w("b", "<p>ثانٍ</p>", 200, "#0000ff")], cols: [{ id: "c1", widgets: [] }] }] }, "", true); await new Promise(r => setTimeout(r, 2200)); });
+  const pt = id => p.evaluate(id => { const fr = document.getElementById("pbx-frame"), el = fr.contentDocument.querySelector('[data-pb="' + id + '"]'), r = el.getBoundingClientRect(), f = fr.getBoundingClientRect(), k = PBApp.E.scale || 1; return { x: f.left + (r.left + r.width / 2) * k, y: f.top + (r.top + r.height / 2) * k }; }, id);
+  const cur = () => p.evaluate(() => { const fr = document.getElementById("pbx-frame"), d = fr.contentDocument, e = d.querySelector('[data-pb="b"]'); return { st: !!d.getElementById("pbx-paintcur"), c: fr.contentWindow.getComputedStyle(e).cursor.slice(0, 40) }; });
+  const a = await pt("a"); await p.mouse.click(a.x, a.y); await p.waitForTimeout(500);
+  await p.evaluate(() => { window.__toasts = []; });
+  const clicked = await p.evaluate(() => { const bt = document.querySelector('#pbx-qbar [data-qb="style"]'); if (bt) { bt.click(); return true; } return false; }); await p.waitForTimeout(500);
+  t("زر الفرشاة موجود وينفَّذ", clicked, clicked);
+  const during = await cur(), toasts = await p.evaluate(() => window.__toasts);
+  t("مؤشر النسخ داخل إطار الصفحة أثناء الفرشاة", during.st && /data:image\/svg/.test(during.c), during);
+  t("لا إشعار «نُسخ النمط»", !toasts.some(x => /نُسخ|نسخ/.test(x)), toasts);
+  const bpt = await pt("b"); await p.mouse.click(bpt.x, bpt.y); await p.waitForTimeout(700);
+  const after = await cur(), col = await p.evaluate(() => PBApp.E.page.sections[0].free[1].set.color);
+  t("اللصق تمّ بنقرة واحدة (اللون صار أحمر)", col === "#ff0000", col);
+  t("المؤشر يعود طبيعياً بعد اللصق", !after.st && !/data:image/.test(after.c), after);
+  t("بلا أخطاء JS", errs.length === 0, errs);
+  await b.close(); process.exit(bad ? 1 : 0);
+})();

@@ -1510,6 +1510,7 @@ html,body{overflow-anchor:none}
 .pb-edit .pb-cf :is(input,textarea,select,button){pointer-events:none}.pb-edit .pb-cf-b span,.pb-edit [data-edit],.pb-edit [data-icon]{pointer-events:auto}.pb-edit [data-edit]:hover{outline:1.5px dashed #0d9488;outline-offset:2px;cursor:text}.pb-edit [data-icon]:hover{outline:1.5px dashed #0d9488;outline-offset:3px;cursor:pointer}
 body{overflow-x:hidden;margin:0}`;
 
+  const PAINT_CUR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Crect x='8' y='8' width='13' height='13' rx='2.5' fill='white' stroke='%231f2123' stroke-width='1.8'/%3E%3Cpath d='M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8' fill='none' stroke='%231f2123' stroke-width='1.8'/%3E%3C/svg%3E") 6 6,copy`;      // مؤشر الفأرة أثناء فرشاة النمط: أيقونة نسخ (داخل المحرر وداخل إطار الصفحة)
   const css = `
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
@@ -1712,7 +1713,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-pop select{padding:0 .5rem!important;font-size:.82rem;color:#0e1318;background:#fff}.pbx-pop select,.pbx-pop input[type=color]{width:100%;height:34px;border:1px solid #d9dbe3;border-radius:8px;font-family:inherit;margin-bottom:.5rem}.pbx-pop p{margin:.2rem 0 0;font-size:.72rem;color:#888;line-height:1.6}
 .pbx-cov{position:absolute;border:2px dashed #e5484d;background:rgba(229,72,77,.12);pointer-events:none;box-sizing:border-box}.pbx-lcv{display:flex;flex-wrap:wrap;gap:.3rem;padding:.2rem .3rem .5rem}.pbx-lcv>div{flex:1 1 100%}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
-.pbx-painting #pbx-stage,.pbx-painting #pbx-stage *{cursor:copy!important}
+.pbx-painting #pbx-stage,.pbx-painting #pbx-stage *{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Crect x='8' y='8' width='13' height='13' rx='2.5' fill='white' stroke='%231f2123' stroke-width='1.8'/%3E%3Cpath d='M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8' fill='none' stroke='%231f2123' stroke-width='1.8'/%3E%3C/svg%3E") 6 6,copy!important}
 .pbx-painting .pbx-ft,.pbx-painting .pbx-sb,.pbx-painting .pbx-mwbar,.pbx-painting .pbx-slnav,.pbx-painting .pbx-h,.pbx-painting .pbx-rz{display:none!important}      /* أثناء فرشاة النمط: لا شيء عائم يغطي العناصر المجاورة فيستقبل النقر بدلها */
 .pbx-ed .pbx-ft,.pbx-ed .pbx-sb,.pbx-ed .pbx-mwbar,.pbx-ed .pbx-slnav{display:none!important}      /* أثناء تحرير النص: تُخفى أشرطة العنصر العائمة فلا تغطي النص */
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
@@ -2138,6 +2139,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0, stg = $("pbx-stage"), stTop = stg ? stg.scrollTop : 0;      // الصفحة لا تتحرك أبداً بسبب إعادة الرسم: يُثبَّت موضع التمرير قبلها وبعدها (الصور المحمَّلة تغيّر الارتفاع لحظياً)
     if (!fdoc.getElementById("pbcairo") && PB.cairoFace) { const s = fdoc.createElement("style"); s.id = "pbcairo"; s.textContent = PB.cairoFace(new URL("./", location.href).href); fdoc.head.appendChild(s); }      // نفس ملف خط Cairo المحلي الذي تستعمله الصفحة المنشورة: نفس المقاسات وبالتالي نفس التفاف الأسطر
+    if ((E.painter || E.painterR) && !fdoc.getElementById("pbx-paintcur")) paintMode(true);      // إعادة رسم الإطار أثناء الفرشاة تُبقي مؤشر النسخ
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
     styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
@@ -2947,7 +2949,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
      positionOverlay(); liveBars(); if (E.ltab === "lay" || E.ltab === "img") renderLeft();
-    if (paintNow) { E.painter = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); pasteStyle(); }
+    if (paintNow) { E.painter = null; paintMode(false); pasteStyle(); }
     { const q = id && find(id); if (q && q.node && q.node.type === "shdr" && E.page.sections.indexOf(q.sec) <= 1 && !editing && !E.busy) setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 40); }      // الهيدر في أعلى الصفحة: تنتقل الشاشة إلى مكانه
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
@@ -4030,9 +4032,10 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     } catch (x) { } }
     if (!keys.includes("wsc")) keys.push("wsc"); if (inf.set.wsc !== undefined) st.wsc = clone(inf.set.wsc);      // «حجم محتوى العنصر %» (يكبّر النص بسحب الزوايا) جزء من النمط: يُنسخ، ومن لا يملكه يُزال عن الهدف فتتساوى أحجام الخطوط
     if (sizeToo(inf)) SIZE_KEYS.forEach(k => { if (inf.set[k] !== undefined) { if (!keys.includes(k)) keys.push(k); st[k] = clone(inf.set[k]); } });
-    E.styleClip = { keys, st, size: sizeToo(inf) }; toast("🎨 نُسخ نمط العنصر" + (E.styleClip.size ? " وحجمه" : "") + " — حدّد عنصراً آخر وانقر «لصق النمط»"); }
+    E.styleClip = { keys, st, size: sizeToo(inf) }; }
   /* فرشاة النمط: انقر الأيقونة وعنصر محدَّد ← يُنسخ نمطه فوراً، ثم انقر أي عنصر آخر ← يُلصق عليه مباشرة (Esc أو الأيقونة ثانيةً للإلغاء) */
-  function cancelPainter() { E.painter = null; E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
+  function paintMode(on) { const pa = $("pb-app"); if (pa) pa.classList.toggle("pbx-painting", !!on); try { let st = fdoc.getElementById("pbx-paintcur"); if (on && !st) { st = fdoc.createElement("style"); st.id = "pbx-paintcur"; st.textContent = "html,html *{cursor:" + PAINT_CUR + " !important}"; fdoc.head.appendChild(st); } else if (!on && st) st.remove(); } catch (e) { } }
+  function cancelPainter() { E.painter = null; E.painterR = null; paintMode(false); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
   function startPainter() {
     if (E.painter || E.painterR) { cancelPainter(); return; }
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
@@ -4040,10 +4043,10 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     if (sl0 && sl0.rangeCount && editing.el.contains(sl0.anchorNode)) {      /* نمط نصّ داخل نص: يُنسخ نمط موضع المؤشر/المحدَّد ثم يُلصق على ما تحدّده بعده في النص نفسه */
       const n = sl0.anchorNode.nodeType === 1 ? sl0.anchorNode : sl0.anchorNode.parentElement, cs = fdoc.defaultView.getComputedStyle(n);
       E.painterR = { id: inf.node.id, st: { fs: cs.fontSize, color: cs.color, fw: cs.fontWeight, fst: cs.fontStyle, td: cs.textDecorationLine, ff: cs.fontFamily } };
-      const pa = $("pb-app"); if (pa) pa.classList.add("pbx-painting"); toast("🖌️ نُسخ نمط النص — حدّد النص الذي تريده أن يأخذه (Esc للإلغاء)"); return;
+      paintMode(true); return;
     }
     copyStyle(); if (!E.styleClip) return;
-    E.painter = inf.node.id; const pa = $("pb-app"); if (pa) pa.classList.add("pbx-painting"); toast("🖌️ نُسخ النمط — انقر عنصراً آخر ليأخذه مباشرة (Esc للإلغاء)");
+    E.painter = inf.node.id; paintMode(true);
   }
   /* لصق نمط نصّ على تحديد داخل النص المُحرَّر: يُستبدل المحدَّد بنص خام في span بنمط المصدر (يلغي التنسيق الملصوق عليه) */
   function applyRangePaint(el) {
@@ -4051,7 +4054,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const t = sl.toString(); if (!t) return; const q = P.st, css = `font-size:${q.fs};color:${q.color};font-weight:${q.fw};font-style:${q.fst};${q.td && q.td !== "none" ? "text-decoration:" + q.td + ";" : ""}font-family:${String(q.ff).replace(/"/g, "'")};`;
     const esc2 = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
     fdoc.execCommand("insertHTML", false, `<span style="${css}">${esc2(t)}</span>`);
-    E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); toast("🎨 طُبِّق نمط النص");
+    E.painterR = null; paintMode(false); toast("🎨 طُبِّق نمط النص");
   }
   function pasteStyle() {
     const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf)); have.add("wsc");
