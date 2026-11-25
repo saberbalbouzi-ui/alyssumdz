@@ -3588,7 +3588,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.title = tt; if (dis) b.disabled = true; if (dng) b.className = "dng";
       b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else if (k === "phone") { const sc = phoneSec(ids); if (sc) phoneAuto(sc); } else ma(k); }; bar.appendChild(b); });
     ovl.appendChild(bar); const st = $("pbx-stage"), W = ovl.clientWidth, fw = bar.offsetWidth, fh = bar.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight;
-    let top = T - fh - 14; if (top < vt + 4) { top = B + 18; if (top + fh > vb - 4) top = Math.max(vt + 4, T + 8); } bar.style.top = top + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4, (L + R) / 2 - fw / 2)) + "px";
+    /* شريط التحديد المتعدد ثابت دائماً أعلى المنصة (كشريط التنسيق المفرد): لا يتبع العناصر المحدَّدة ولا يقفز فوقها أو تحتها فيحجب الصفحة */
+    bar.style.top = (st.scrollTop + 8) + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4 - (FREE_ONLY ? 56 : 0), 8)) + "px";
     /* زرّا التدوير والتحريك للتحديد المتعدد (كانا يظهران لعنصر واحد فقط): التحريك يحرّك المجموعة كلها، والتدوير يدوّر كل عنصر حول مركزه بالزاوية نفسها */
     if (ids.some(id => { const i = find(id); return i && i.kind === "widget" && !isLocked(i); })) {
       const sb = document.createElement("div"); sb.className = "pbx-sb"; sb.innerHTML = `<button type="button" title="اسحب لتدوير العناصر المحدّدة (Shift = خطوات 15°)" data-k="rot">${FIC.rot}</button><button type="button" title="اسحب لتحريك العناصر المحدّدة معاً" data-k="move">${FIC.move}</button>`; ovl.appendChild(sb);
