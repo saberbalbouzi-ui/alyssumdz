@@ -154,6 +154,7 @@
     "assets/js/admin-stmt.js",
     "assets/js/admin-dupalert.js",
     "assets/js/admin-modal-stable.js",
+    "assets/js/admin-embed-boot.js",
     "assets/js/admin-archive.js",
     "assets/js/admin-assistant.js",
     "assets/js/admin-audit.js",

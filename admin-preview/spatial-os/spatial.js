@@ -284,7 +284,7 @@
     setTimeout(() => { el.classList.remove("tr"); if (p.state === "opening") setState(p, focused === id ? "focused" : "floating"); }, 950); pulse(id); FX.burst(from.x + W() / 2, from.y + H() / 2, "43,228,255", 40, 4.5); markNodes(); setTimeout(() => { try { el.focus({ preventScroll: true }); } catch (e) { } }, 60);
   }
   function setPos(p, s, from) { if (from) { Object.assign(p.st, { x: from.x * .35, y: from.y * .35, z: -380, s: .1 }); apply(p); p.el.style.setProperty("--op", 0); void p.el.offsetWidth; } Object.assign(p.st, s); apply(p); p.el.style.setProperty("--op", 1); }
-  function focus(id) { if (focused !== id && window.SpatialHub) setTimeout(() => SpatialHub.activate(id), 0); focused = id; open.forEach(p => { p.el.classList.toggle("focus", p.id === id); if (!p.min && p.state !== "opening" && p.state !== "expanded" && p.state !== "dismissing") setState(p, p.id === id ? "focused" : "floating"); if (p.id === id) { p.el.style.zIndex = ++zc; } apply(p); }); }
+  function focus(id) { lqFocus(id); if (focused !== id && window.SpatialHub) setTimeout(() => SpatialHub.activate(id), 0); focused = id; open.forEach(p => { p.el.classList.toggle("focus", p.id === id); if (!p.min && p.state !== "opening" && p.state !== "expanded" && p.state !== "dismissing") setState(p, p.id === id ? "focused" : "floating"); if (p.id === id) { p.el.style.zIndex = ++zc; } apply(p); }); }
   /* ───── مرحلة 3: قصور ذاتي، تثبيت التدوير، تغذية بصرية، عمق، مفاتيح ───── */
   const ZMIN = -260, ZMAX = 300, stLog = []; let lastPanelDrag = 0;
   /* آلة حالات اللوح: opening → floating ⇄ focused ⇄ expanded، minimized، dismissing (ثم يُزال)؛ كل انتقال يُسجَّل ويظهر في data-state */
@@ -439,25 +439,45 @@
   /* ───── طابور تحميل الإطارات (V3) ─────
      الإطارات المتزامنة تتقاسم خيطاً رئيسياً واحداً (نفس الأصل)، فتحميلها معاً يؤخّر الكل ويؤخّر النشطة آخراً؛ لذا تُحمَّل واحدة واحدة: المركَّزة أولاً ثم الأحدث، والتالية تبدأ بعد اكتمال السابقة وهدوء الإدخال (حتى 3ث)
      أو مهلة 14ث. المنتظرة تُظهر «بانتظار دورها» وتتقدّم فوراً إن فُعِّلت؛ المصغَّرة قبل تحميلها لا تُحمَّل حتى تُستعاد. */
-  const LQ = { q: [], cur: null, t0: 0, tm: 0 };
+  const LQ = { q: [], cur: null, t0: 0, tm: 0, avg: 0, gaps: [], raf: 0, bt: 0 };
   const lqSet = (p, txt) => { try { const s = p.body && p.body.querySelector(".fr-load span"); if (s) s.textContent = txt; } catch (_) { } };
-  function lqStart(p) { LQ.cur = p; LQ.t0 = performance.now(); p._lq = "loading"; if (p.el.dataset.frame === "queued") p.el.dataset.frame = "loading"; lqSet(p, "جارٍ تحميل لوحة التحكم…"); p.fr.src = "../../admin.html"; clearTimeout(LQ.tm); LQ.tm = setTimeout(() => { if (LQ.cur === p) { LQ.cur = null; lqPump(99); } }, 14000); }
-  function lqAsk(p) { p._lq = "queued"; p.el.dataset.frame = "queued"; lqSet(p, "بانتظار دورها…"); if (LQ.q.indexOf(p) < 0) LQ.q.push(p); setTimeout(() => lqPump(0), 0); }
+  /* دفعة التحميل تُعلِم SpatialShare (مشاركة القراءات): أثناءها تعيش القراءات المشتركة أطول، وتنتهي بعدها بثوانٍ */
+  function lqBurst() { try { if (!window.SpatialShare) return; clearTimeout(LQ.bt); if (LQ.cur || LQ.q.length) SpatialShare.burst(true); else LQ.bt = setTimeout(() => { if (!LQ.cur && !LQ.q.length) SpatialShare.burst(false); }, 1200); } catch (_) { } }
+  /* عيّنة هدوء الإطارات (V4): تعمل فقط ما دام في الطابور عمل؛ لا نبدأ حمولة خلفية والإطارات متقطعة (فجوة ≥70ms) */
+  function lqSample() { if (LQ.raf) return; let last = 0; const f = t => { if (last) { LQ.gaps.push(t - last); if (LQ.gaps.length > 8) LQ.gaps.shift(); } last = t; LQ.raf = (LQ.q.length || LQ.cur) ? requestAnimationFrame(f) : 0; }; LQ.raf = requestAnimationFrame(f); }
+  const lqCalm = () => LQ.gaps.length >= 5 && LQ.gaps.slice(-5).every(g => g < 70);
+  function lqStart(p) { LQ.cur = p; LQ.t0 = performance.now(); p._lq = "loading"; if (p.el.dataset.frame === "queued") p.el.dataset.frame = "loading"; lqSet(p, "جارٍ تحميل لوحة التحكم…"); p.fr.src = "../../admin.html"; clearTimeout(LQ.tm); LQ.tm = setTimeout(() => { if (LQ.cur === p) { LQ.cur = null; lqPump(99); } }, 14000); lqBurst(); }
+  function lqAsk(p) {
+    p._lq = "queued"; p.el.dataset.frame = "queued"; lqSet(p, "بانتظار دورها…"); if (LQ.q.indexOf(p) < 0) LQ.q.push(p);
+    if (!p._hv) { p._hv = 1; p.el.addEventListener("pointerenter", () => { clearTimeout(p._hvt); p._hvt = setTimeout(() => { if (p._lq === "queued") p.hot = performance.now(); }, 350); }); p.el.addEventListener("pointerleave", () => clearTimeout(p._hvt)); }   /* تحويم متعمَّد (350ms) يرفع الأولوية */
+    lqBurst(); lqSample(); setTimeout(() => lqPump(0), 0);
+  }
   function lqPump(n) {
-    if (LQ.cur && !LQ.cur._lqGone && LQ.cur._lq === "loading") return; LQ.q = LQ.q.filter(x => !x._lqGone && x.fr && x.fr.isConnected && x._lq === "queued"); if (!LQ.q.length) return;
-    const best = LQ.q.slice().sort((a, b) => ((b.id === focused) - (a.id === focused)) || ((b.born || 0) - (a.born || 0)))[0];
-    if (best.id !== focused && (n || 0) < 12 && performance.now() - lastIn < 700) return setTimeout(() => lqPump((n || 0) + 1), 250);   /* لا نبدأ تحميل نافذة خلفية والمستخدم يتفاعل */
+    if (LQ.cur && !LQ.cur._lqGone && LQ.cur._lq === "loading") return; LQ.q = LQ.q.filter(x => !x._lqGone && x.fr && x.fr.isConnected && x._lq === "queued"); if (!LQ.q.length) { lqBurst(); return; }
+    const t = performance.now(), hot = x => (x.hot && t - x.hot < 8000) ? 1 : 0;
+    const best = LQ.q.slice().sort((a, b) => ((b.id === focused) - (a.id === focused)) || (hot(b) - hot(a)) || ((b.born || 0) - (a.born || 0)))[0];
+    /* الأولوية للنافذة التي يتفاعل معها المستخدم: لا تبدأ حمولة خلفية إلا بعد هدوء إدخال (مؤشر/لمس/مفتاح) وإطارات هادئة. الشرط تكيّفي بثقل الحمولة المقيس على الجهاز نفسه:
+       جهاز سريع (حمولة ~1.5ث) ← هدوء 0.4ث وسقف انتظار ~3.8ث؛ جهاز بطيء (~5ث) ← هدوء 1.2ث وسقف ~12.5ث؛ بعد السقف تبدأ الحمولة ولو استمر التفاعل (لا تجويع دائم). */
+    const avg = LQ.avg || 3000, quiet = Math.max(250, Math.min(1200, avg * .25)), cap = Math.ceil(Math.max(2500, Math.min(15000, avg * 2.5)) / 250);
+    if (best.id !== focused && (n || 0) < cap && !(t - lastIn >= quiet && (document.hidden || lqCalm()))) { lqSample(); return setTimeout(() => lqPump((n || 0) + 1), 250); }
     LQ.q.splice(LQ.q.indexOf(best), 1); lqStart(best);
   }
-  const lqDone = p => { if (p._lq === "loading") p._lq = "done"; if (LQ.cur === p) { const d = performance.now() - LQ.t0; LQ.cur = null; clearTimeout(LQ.tm); setTimeout(() => lqPump(0), Math.max(150, Math.min(900, d * .2))); } };   /* فاصل يتناسب مع ثقل التحميل السابق (الجهاز البطيء يُمنح متنفَّساً أطول) ليمرّ إدخال المستخدم والتبديل بين الحمولات */
-  const lqDrop = p => { p._lqGone = true; LQ.q = LQ.q.filter(x => x !== p); if (LQ.cur === p) { LQ.cur = null; clearTimeout(LQ.tm); setTimeout(() => lqPump(0), 60); } };
+  /* اختيار نافذة منتظرة: تتقدّم فوراً، وتُلغى الحمولة الخلفية الجارية إن كانت في بدايتها (تعود لدورها) فلا تنتظر المُختارة إتمام ما لا يخصّها */
+  function lqAbort(c) { c._lqAborts = (c._lqAborts || 0) + 1; c._lqAbort = true; clearTimeout(c._fi); clearTimeout(LQ.tm); LQ.cur = null; c.frDone = false; c.frReady = false; try { c.fr.src = "about:blank"; } catch (_) { } lqAsk(c); }
+  function lqFocus(id) {
+    const p = open.get(id); if (!p || p._lq !== "queued") return; p.hot = performance.now(); const c = LQ.cur;
+    if (c && c !== p && c._lq === "loading" && (c._lqAborts || 0) < 2 && (!LQ.avg || performance.now() - LQ.t0 < LQ.avg * .6)) lqAbort(c);
+    setTimeout(() => lqPump(0), 0);
+  }
+  const lqDone = p => { if (p._lq === "loading") p._lq = "done"; if (LQ.cur === p) { const d = performance.now() - LQ.t0; LQ.avg = LQ.avg ? LQ.avg * .6 + d * .4 : d; LQ.cur = null; clearTimeout(LQ.tm); setTimeout(() => lqPump(0), Math.max(150, Math.min(900, d * .2))); lqBurst(); } };   /* فاصل يتناسب مع ثقل التحميل السابق (الجهاز البطيء يُمنح متنفَّساً أطول) ليمرّ إدخال المستخدم والتبديل بين الحمولات */
+  const lqDrop = p => { p._lqGone = true; LQ.q = LQ.q.filter(x => x !== p); if (LQ.cur === p) { LQ.cur = null; clearTimeout(LQ.tm); setTimeout(() => lqPump(0), 60); } lqBurst(); };
   const SP = { f: null, ready: false, off: typeof Element === "undefined" || !Element.prototype.moveBefore, n: 0 };
   function spareMake() {
     if (!REAL || SP.f || (isMob() && !(navigator.deviceMemory >= 4)) || document.hidden || /[?&]nospare=1/.test(location.search)) return; /* الهاتف: لوح احتياطي واحد فقط إن أعلن الجهاز ذاكرة ≥ 4GB (iOS لا يعلنها فلا لوح) */ let park = document.getElementById("spare-park"); if (!park) { park = document.createElement("div"); park.id = "spare-park"; park.setAttribute("aria-hidden", "true"); document.body.appendChild(park); }
     const f = document.createElement("iframe"); f.className = "pn-frame"; f.title = ""; f.tabIndex = -1; SP.f = f; SP.ready = false; f.addEventListener("load", () => spareWait(f, 0)); f.src = "../../admin.html"; park.appendChild(f);
   }
   /* التسخين يُبنى في صمت: يُؤجَّل حتى يهدأ المستخدم (لا إدخال 2.5ث) كي لا يقطع إقلاع اللوح الاحتياطي (مهمة طويلة على الخيط الرئيسي نفسه) تفاعلاً جارياً */
-  let lastIn = 0; ["pointerdown", "keydown", "wheel", "touchstart"].forEach(ev => addEventListener(ev, () => { lastIn = performance.now(); }, { capture: true, passive: true }));
+  let lastIn = 0; ["pointerdown", "pointermove", "keydown", "wheel", "touchstart"].forEach(ev => addEventListener(ev, () => { lastIn = performance.now(); }, { capture: true, passive: true }));
   function spareSoon(ms, n) { setTimeout(() => { if (performance.now() - lastIn < 2500 && (n || 0) < 40) return spareSoon(1000, (n || 0) + 1); spareMake(); }, ms); }
   /* ألواح احتياطية إضافية (سطح المكتب فقط): تُحمَّل بعد جاهزية الأول وتُجهَّز على تبويبي الطلبات والمنتجات فيُفتح لوحاهما **آنياً** بمحتوى مرسوم؛ يُعاد تعبئتها بعد كل تبنٍّ وفي هدوء المستخدم */
   const EXT = [], EX_TABS = ["orders", "products"];
@@ -483,7 +503,7 @@
     b.querySelector(".pn-shield").addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && e.button !== 0) return; const h = p.el.querySelector(".pn-h"); if (!h) return; e.preventDefault(); h.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, pointerId: e.pointerId, pointerType: e.pointerType, clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY, button: e.button, buttons: e.buttons, isPrimary: e.isPrimary })); });
     let f = b.querySelector("iframe"), adopted = false; const ex = !SP.off ? EXT.find(e => e.ready && e.f.isConnected && e.tab === p.frame.tab) : null;
     if (ex) { try { b.moveBefore(ex.f, f); f.remove(); f = ex.f; EXT.splice(EXT.indexOf(ex), 1); adopted = true; extraSoon(1600); } catch (_) { adopted = false; } }   /* لوح مُجهَّز مسبقاً على التبويب نفسه: يظهر آنياً */
-    else if (SP.ready && SP.f && SP.f.isConnected && !SP.off) { const sf = SP.f; try { b.moveBefore(sf, f); f.remove(); f = sf; SP.f = null; SP.ready = false; adopted = true; spareSoon(1600); } catch (_) { adopted = false; } } p.adopted = adopted; p.wasAdopted = adopted; f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = !adopted; f.addEventListener("load", () => { if (!f.getAttribute("src")) return; /* load الصفحة الفارغة الأولية قبل أن يمنح الطابور الإطار عنوانه: يُتجاهَل (وإلا عدّه SpatialHub إعادة تحميل وأسقط جاهزية اللوح بعد hello) */ if (p.blank) { p.blank = false; p.discarded = true; return; } p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); if (adopted) { p.frDone = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); } else if (LAZY.has(p.id)) { LAZY.delete(p.id); p.blank = true; p.discarded = true; p.el.dataset.frame = "discarded"; /* لوح مُستعاد من الحفظ: لا يُحمَّل إطاره حتى يُفعَّل */ } else lqAsk(p); clearTimeout(p._fs); p.el.classList.remove("fr-show"); p._fs = setTimeout(() => p.el.classList.add("fr-show"), 16000); /* كشف احتياطي إن تعذّر ظهور التبويب */
+    else if (SP.ready && SP.f && SP.f.isConnected && !SP.off) { const sf = SP.f; try { b.moveBefore(sf, f); f.remove(); f = sf; SP.f = null; SP.ready = false; adopted = true; spareSoon(1600); } catch (_) { adopted = false; } } p.adopted = adopted; p.wasAdopted = adopted; f.title = p.sec.name; p.fr = f; p.frReady = false; if (window.SpatialHub) SpatialHub.attach(p.id, f.contentWindow, p.el); let first = !adopted; f.addEventListener("load", () => { if (!f.getAttribute("src")) return; if (p._lqAbort) { p._lqAbort = false; return; } /* load صفحة about:blank التي نقلنا إليها الإطار عند إلغاء حمولة خلفية */ /* load الصفحة الفارغة الأولية قبل أن يمنح الطابور الإطار عنوانه: يُتجاهَل (وإلا عدّه SpatialHub إعادة تحميل وأسقط جاهزية اللوح بعد hello) */ if (p.blank) { p.blank = false; p.discarded = true; return; } p._bt0 = 0; p.frUser = false; /* تفريغ مقصود (المرحلة 12B): لا تهيئة لصفحة فارغة */ if (!first && window.SpatialHub) SpatialHub.reload(p.id); first = false; p.frDone = false; p.frReady = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); }); if (adopted) { p.frDone = false; p.frTry = 0; p.frGuard = 0; p.frTouched = false; initFrame(p); } else if (LAZY.has(p.id)) { LAZY.delete(p.id); p.blank = true; p.discarded = true; p.el.dataset.frame = "discarded"; /* لوح مُستعاد من الحفظ: لا يُحمَّل إطاره حتى يُفعَّل */ } else lqAsk(p); clearTimeout(p._fs); p.el.classList.remove("fr-show"); p._fs = setTimeout(() => p.el.classList.add("fr-show"), 16000); /* كشف احتياطي إن تعذّر ظهور التبويب */
   }
   /* جسر الصوت: كلام المساعد (speechSynthesis) والميكروفون داخل لوح «اسألني» يحرّكان الكرة (أعصاب + صوت ستيريو) كأنها تتكلم وتستمع */
   function bridgeVoice(p, w, d) {
@@ -565,7 +585,8 @@
       touchBridge(w); if (d.head && !d.getElementById("__spEmbed")) { const st = d.createElement("style"); st.id = "__spEmbed"; st.textContent = (p.frame && p.frame.nav ? EMBED_NAV_CSS : EMBED_CSS) + HOLO_SKIN; d.documentElement.classList.add("glass"); d.documentElement.classList.remove("white"); holoRecolor(d); /* داكن داخل الإطار فقط؛ لا يُكتب شيء في تخزين المستخدم */ d.head.appendChild(st); hookFrame(p, d); bridgeVoice(p, w, d); }
       const app = d.getElementById("app"), ld = p.body.querySelector(".fr-load");
       let A = null; try { A = w.eval('typeof Admin !== "undefined" ? Admin : null'); } catch (_) { } /* Admin وAdminHelp ثوابت عامة وليست على window */
-      if (A && app && !app.classList.contains("hidden") && typeof A.tab === "function") {
+      const bootOk = !w.__spBoot || w.__spBoot.done || (p._bt0 = p._bt0 || Date.now(), Date.now() - p._bt0 > 15000);   /* شريحة إقلاع اللوحة (V4): لا نعلن الجاهزية قبل انتهاء مستمعاتها المُجدولة (سقف 15ث) فلا يظهر المحتوى ناقصاً */
+      if (A && app && !app.classList.contains("hidden") && typeof A.tab === "function" && bootOk) {
         if (!p.frReady) { p.frReady = true; p.frA = A; p.frTry = 0; if (window.SpatialHub && !d.getElementById("__spBridge")) { const sc = d.createElement("script"); sc.id = "__spBridge"; sc.src = new URL("bridge.js", location.href).href; d.head.appendChild(sc); } }
         /* اللوحة تنهي تهيئتها بعد ظهورها وقد تعيد التبويب الرئيسي: نثبّت التبويب المطلوب حتى يظهر فعلاً */
         const tgt = d.getElementById("tab-" + p.frame.tab), ahp = d.getElementById("ah-panel"), shown = p.frame.tab === "ask" ? !!(ahp && ahp.classList.contains("on")) : tgt && !tgt.classList.contains("hidden");

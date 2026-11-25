@@ -114,6 +114,7 @@
 
   /* ── سياسة المزامنة ── */
   function apply(src, d) {
+    try { if (window.SpatialShare) SpatialShare.clear("event"); } catch (_) { }   /* حدث مقبول: القراءات المشتركة لم تعد صالحة */
     const res = TYPE_RES[d.type]; ver[res]++; /* كل نوع يرفع نسخة موردِه فقط؛ التحليلات تتبع الطلبات والمنتجات باشتراك لا بإعادة جلب إضافية */
     if (src && res !== "analytics") { /* اللوح المصدر نفّذ الكتابة فبياناته الأساسية حديثة */ src.synced[res] = ver[res]; src.lastSync = now(); }
     log("accept", { type: d.type, res: d.resource.id, src: src ? src.id : "agent", ver: Object.assign({}, ver) });
@@ -136,6 +137,7 @@
     /* ترجمة الموارد إلى أوامر الجسر: ana تعرض التحليلات المبنية على الطلبات/المنتجات */
     let res = [...p.pending]; p.pending.clear();
     if (p.id === "ana") { const need = res.slice(); res = []; if (need.indexOf("orders") >= 0 || need.indexOf("analytics") >= 0) res.push("orders"); /* «analytics» الصريح (إبطال) = فحص بصمة الطلبات ثم إعادة العرض */ if (need.indexOf("products") >= 0) res.push("products"); res.push("analytics"); }
+    try { if (window.SpatialShare) SpatialShare.clearData(); } catch (_) { }   /* التحديث يقرأ بيانات الطلبات/المنتجات من الخادم لا من الذاكرة المشتركة (الإعدادات kv تبقى) */
     const at = Object.assign({}, ver), reqId = "rq_" + hex(8); p.refreshing = true; p.req = { reqId, at, res, why, t0: performance.now(), t: now() }; stats.refreshes++; paint(p);
     log("refresh.start", { id: p.id, res, why }); p.win.postMessage({ spatialHub: V, kind: "cmd", cmd: "refresh", reqId, resources: res, tenant, reason: why }, ORIGIN);
     p.ackT = setTimeout(() => ackFail(p, reqId, "timeout"), ACK_TIMEOUT);

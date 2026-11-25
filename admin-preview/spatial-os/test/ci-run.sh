@@ -43,6 +43,10 @@ want touch-drag    && run touch-drag    600 node "$T/touch-drag.js"     # سحب
 want nav-instant   && run nav-instant   600 node "$T/nav-instant.js"    # فتح آني: النقر في المدار الثاني ينقل اللوح المفتوح إلى التبويب بلا تحميل (سطح مكتب + هاتف)
 want tab-switch    && run tab-switch    600 node "$T/tab-switch.js"     # V2: تنقل آني (≤120ms) داخل اللوح بلا إعادة تحميل وبحالته، واستقرار الإطار، مسار WebGL حقيقي
 want multi-load   && run multi-load   600 node "$T/multi-load.js"    # V3: تحميل متدرج لعدة نوافذ (إطار واحد في اللحظة، المُركَّز أولاً، المصغَّرة/المغلقة، بلا تسرّب)
+want share-unit   && run share-unit   120 node "$T/share-unit.js"    # V4: SpatialShare (عزل/TTL/إبطال الكتابة/المستأجر) بلا متصفح
+want share-e2e    && run share-e2e    600 node "$T/share-e2e.js"     # V4: مشاركة القراءات بين 3 نوافذ حقيقية (تقليل الطلبات، إبطال الكتابة، شريحة الإقلاع)
+want preempt     && run preempt     600 node "$T/preempt.js"       # V4: اختيار نافذة منتظرة يُلغي الحمولة الخلفية الجارية ويقدّمها (4×)
+want assistant-index && run assistant-index 300 node "$T/assistant-index.js"   # V4: فهرسة مساعد اللوحة مقسَّمة (يعمل مبكراً ومتأخراً، لا مهمة >200ms تحت 4×)
 want world-stable  && run world-stable  900 node "$T/world-stable.js"   # عالم ثابت: القاعدة/الاسطوانة/الكرة، 24 دورة فتح/إغلاق، حفظ/استعادة الترتيب (مكتب+هاتف)
 want phone-ui      && run phone-ui      900 node "$T/phone-ui.js"       # واجهة الهاتف المخصصة: شرائط، أهداف لمس، ورقة، تنقل، عالم، فرنسية (360/390/412/768)
 want orbits3      && run orbits3      600 node "$T/orbits3.js"       # ثلاثة مدارات (تبويبات ← إعدادات أولى ← إعدادات ثالثة) + فتح آني بألواح مسخَّنة مسبقاً
