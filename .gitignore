@@ -13,3 +13,6 @@ dist/
 # ناتج أدوات مزامنة Beta (بيانات تشغيل لا تُلتزَم)
 beta-release/
 dist/
+
+# رابط محلي للاختبارات (لا يُرفع: يكسر بناء GitHub Pages)
+/node_modules
