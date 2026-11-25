@@ -79,7 +79,7 @@ const { chromium } = require("playwright");
   await p.selectOption("#wi-lg", "fr"); await p.waitForTimeout(200); const f1 = await p.evaluate(() => document.querySelectorAll("#waqsin .wi-row:not(.wi-qh)").length);
   await p.selectOption("#wi-lg", ""); await p.selectOption("#wi-co", "Delta Corp"); await p.waitForTimeout(200); const f2 = await p.evaluate(() => document.querySelectorAll("#waqsin .wi-row:not(.wi-qh)").length);
   await p.selectOption("#wi-co", ""); await p.selectOption("#wi-cp", "Printemps FR"); await p.waitForTimeout(200); const f3 = await p.evaluate(() => document.querySelectorAll("#waqsin .wi-row:not(.wi-qh)").length);
-  await p.selectOption("#wi-cp", ""); await p.fill("#wi-q", "0612"); await p.waitForTimeout(200); const f4 = await p.evaluate(() => document.querySelectorAll("#waqsin .wi-row:not(.wi-qh)").length); await p.fill("#wi-q", "");
+  await p.selectOption("#wi-cp", ""); await p.fill("#wi-q", "6123"); await p.waitForTimeout(200); const f4 = await p.evaluate(() => document.querySelectorAll("#waqsin .wi-row:not(.wi-qh)").length); await p.fill("#wi-q", "");
   t("التصفية: باللغة والشركة والحملة وبالبحث في الرقم", f1 === 1 && f2 === 2 && f3 === 1 && f4 === 1, { f1, f2, f3, f4 });
 
   /* 4) فتح رسالة: المعاينة والرابط؛ Open WhatsApp = Opened فقط ولا Sent */
