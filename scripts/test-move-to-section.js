@@ -23,6 +23,17 @@ const { chromium } = require("playwright");
   t("وبالأمر المعاكس يعود إلى القسم الأعلى", s2.A.includes("pills") && !s2.B.some(x => x.startsWith("pills:")), s2);
   await ctx("نقل إلى القسم الأعلى"); await p.waitForTimeout(400); const s3 = await st();
   t("لا قسم فوق الأول: لا تغيير ولا خطأ", JSON.stringify(s3) === JSON.stringify(s2), { s2, s3 });
+  /* مجموعة عناصر (تحديد متعدد) من قائمة التحديد المتعدد: تنتقل كلها وتبقى مواضعها النسبية */
+  await p.evaluate(async () => { const S = PBApp.E.page.sections, mk = (id, x, y) => ({ id, type: "text", set: { html: "<p>كبسولة " + id + "</p>", fs: { d: 16 }, color: "#123", fx: { d: x }, fy: { d: y }, fwd: { d: 12 }, fh: { d: 40 }, zi: 2, hauto: false } }); S[0].free.push(mk("g1", 10, 200), mk("g2", 25, 200), mk("g3", 40, 200)); PBApp.renderCanvas(); await new Promise(r => setTimeout(r, 800)); });
+  const before = await p.evaluate(() => { const n = x => Number(x && typeof x === "object" ? x.d : x), f = PBApp.E.page.sections[0].free.filter(w => /^g\d$/.test(w.id)); return f.map(w => n(w.set.fx)).join(); });
+  const mc = await p.evaluate(async () => { PBApp.E.sel = "g1"; PBApp.E.multi = ["g1", "g2", "g3"]; PBApp.renderCanvas(); await new Promise(r => setTimeout(r, 700)); const fr = document.getElementById("pbx-frame"), el = fr.contentDocument.querySelector('[data-pb="g2"]'), r = el.getBoundingClientRect(), f = fr.getBoundingClientRect(), k = PBApp.E.scale || 1; return { x: f.left + (r.left + r.width / 2) * k, y: f.top + (r.top + r.height / 2) * k }; });
+  await p.mouse.click(mc.x, mc.y, { button: "right" }); await p.waitForTimeout(400);
+  const mi = await p.evaluate(() => { const b = [...document.querySelectorAll("#pbx-ctx button")].find(x => x.textContent.includes("نقل إلى القسم الأسفل")); const txt = (document.getElementById("pbx-ctx") || {}).textContent || ""; if (b) b.click(); return { has: !!b, n: /نسخ \(3\)/.test(txt) }; });
+  await p.waitForTimeout(900);
+  const gm = await p.evaluate(() => { const S = PBApp.E.page.sections, n = x => Number(x && typeof x === "object" ? x.d : x), inB = S[1].free.filter(w => /^g\d$/.test(w.id)); return { inA: S[0].free.filter(w => /^g\d$/.test(w.id)).length, inB: inB.length, fx: inB.sort((a, b) => a.id.localeCompare(b.id)).map(w => n(w.set.fx)).join(), fy: inB.map(w => n(w.set.fy)).join() }; });
+  t("قائمة التحديد المتعدد فيها «نقل إلى القسم الأسفل»", mi.has && mi.n, mi);
+  const dxB = before.split(",").map(Number).map((v, i, a) => v - a[0]).join(), dxA = (gm.fx || "").split(",").map(Number).map((v, i, a) => Math.round((v - a[0]) * 10) / 10).join();
+  t("المجموعة كلها (3) انتقلت إلى القسم الأسفل وبقيت المسافات الأفقية بينها وفي صف واحد", gm.inA === 0 && gm.inB === 3 && dxB === dxA && new Set(gm.fy.split(",")).size === 1, { before, gm, dxA });
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();

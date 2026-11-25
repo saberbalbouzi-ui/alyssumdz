@@ -3536,7 +3536,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const n = selIds().length, g = grpState();
     showMenu([["⧉", "نسخ (" + n + ")", copyMulti, "Ctrl+C"], ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", dupMulti, "Ctrl+D"], "-",
       ["🔗", "ربط العناصر ببعضها", groupSel, "Ctrl+G", 0, 0, g.all], ["⛓", "تفكيك الربط", ungroupSel, "Ctrl+Shift+G", 0, 0, !g.any], "-",
-      ["⊞", "محاذاة", null, "", 0, alignItems()], "-", ["🗑", "حذف (" + n + ")", delMulti, "Del", 1]], x, y);
+      ["⊞", "محاذاة", null, "", 0, alignItems()], "-", ["⤓", "نقل إلى القسم الأسفل", () => moveToSec(1), ""], ["⤒", "نقل إلى القسم الأعلى", () => moveToSec(-1), ""], "-", ["🗑", "حذف (" + n + ")", delMulti, "Del", 1]], x, y);
   }
   const MA = { copy: () => copyMulti(), dup: () => dupMulti(), group: () => groupSel(), ungroup: () => ungroupSel(), del: () => delMulti(), done: () => { E.mm = false; updateMbar(); positionOverlay(); }, cancel: () => { E.mm = false; select(null); } };
   function ma(a) { if (MA[a]) MA[a](); }
@@ -3606,9 +3606,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         mb.style.pointerEvents = "none"; ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(d => { const h = document.createElement("div"); h.className = "pbx-h pbx-mh d-" + d; h.title = d.length === 2 ? "اسحب لتكبير/تصغير المجموعة كلها بنسبة ثابتة (Shift = حر)" : "اسحب لتمديد المجموعة"; h.onmousedown = ev => { if (ev.button === 0) startMultiResize(ev, d, mi.map(i => i.node.id)); }; mb.appendChild(h); }); } }
     if (E.busy || isMob()) return;      // الهاتف: شريط الأسفل بدل الشريط العائم
     const g = grpState(), bar = document.createElement("div"); bar.className = "pbx-mt";
-    bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"]].concat(phoneSec(ids) ? [["phone", "📲 ترتيب الهاتف", "يرتّب عناصر هذا القسم على الهاتف تلقائياً بالتتابع ويفصل الهاتف عن المكتب (لا يتغيّر المكتب ولا التابلت)"]] : [], [["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]]).forEach(([k, t, tt, dis, dng]) => {
+    bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"], ["tosec", "⤓ لقسم آخر", "نقل المحدّد إلى القسم الأسفل (Shift+نقر على الزر: الأعلى)"]].concat(phoneSec(ids) ? [["phone", "📲 ترتيب الهاتف", "يرتّب عناصر هذا القسم على الهاتف تلقائياً بالتتابع ويفصل الهاتف عن المكتب (لا يتغيّر المكتب ولا التابلت)"]] : [], [["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]]).forEach(([k, t, tt, dis, dng]) => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.title = tt; if (dis) b.disabled = true; if (dng) b.className = "dng";
-      b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else if (k === "phone") { const sc = phoneSec(ids); if (sc) phoneAuto(sc); } else ma(k); }; bar.appendChild(b); });
+      b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else if (k === "tosec") { moveToSec(ev.shiftKey ? -1 : 1); } else if (k === "phone") { const sc = phoneSec(ids); if (sc) phoneAuto(sc); } else ma(k); }; bar.appendChild(b); });
     ovl.appendChild(bar); const st = $("pbx-stage"), W = ovl.clientWidth, fw = bar.offsetWidth, fh = bar.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight;
     /* شريط التحديد المتعدد ثابت دائماً أعلى المنصة (كشريط التنسيق المفرد): لا يتبع العناصر المحدَّدة ولا يقفز فوقها أو تحتها فيحجب الصفحة */
     bar.style.top = (st.scrollTop + 8) + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4 - (FREE_ONLY ? 56 : 0), 8)) + "px";
