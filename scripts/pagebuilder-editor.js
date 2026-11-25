@@ -1893,10 +1893,20 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     return fdoc.defaultView.getComputedStyle(el);
   };
   /* حجم الخط الظاهر فعلاً (px على الشاشة): في قسم حرّ متناسب (scaled) على الهاتف يُصغَّر الخط بنسبة القسم u (≈0.3–0.5)، فالخانة تعرض الحجم الحقيقي المرسوم وتكتب في التصميم القيمة ÷ u كي يتطابق الرقم مع ما تراه وتتحرك الخطوة بنفس الحجم الظاهر */
-  function qU(inf) { const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"); return pin ? (uOf(inf.sec, pin.getBoundingClientRect()) || 1) : 1; }
+  function qU(inf) {
+    const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"), u = pin ? (uOf(inf.sec, pin.getBoundingClientRect()) || 1) : 1;
+    /* «حجم محتوى العنصر %» (wsc) يطبّق zoom على محتوى العنصر فيُضاعف حجم الخط المرسوم (مثلاً 26 × 1.76 = 46)؛ الخانة والخطوة تعملان على قيمة التصميم، فيجب قسمة المرسوم على الوحدة وعلى هذا الـzoom معاً وإلا قفزت القيمة بعد كل ضغطة (46 ← 83 ← 148) */
+    /* المُصيِّر يدمج wsc في الخط نفسه (fs×wsc ويلغي zoom) للنص والعنوان والزر والقوائم حين يكون fs معرَّفاً لكل الأجهزة؛ وإلا يبقى zoom حقيقياً على المحتوى */
+    const set = inf.set, wo = (k, dv) => { const v = set[k]; return v && typeof v === "object" ? v[dv] : (dv === "d" ? v : undefined); }, zOf = dv => dv === "d" ? (Number(wo("wsc", "d")) || 100) / 100 : (wo("wsc", dv) !== undefined ? (Number(wo("wsc", dv)) || 100) / 100 : 1);
+    const baked = ["text", "heading", "button", "bullets"].includes(inf.node.type) && ["d", "t", "m"].some(dv => Math.abs(zOf(dv) - 1) > .01) && ["d", "t", "m"].every(dv => Number(eff(set, "fs", dv)) > 0);
+    let z = 1;
+    if (baked) z = zOf(E.dev) || 1;
+    else try { const t = el && el.querySelector(".pb-t"), stop = pin || (fdoc && fdoc.body); for (let n = t; n && n !== stop; n = n.parentElement) { const q = parseFloat(fdoc.defaultView.getComputedStyle(n).zoom); if (q && isFinite(q) && q > 0) z *= q; } } catch (e) { }
+    return u * z;
+  }
   function qFsNow(inf) { const cs = qFont(inf); return cs ? Math.round(parseFloat(cs.fontSize)) : 0; }
   /* القيمة المعروضة في الشريط = حجم الخط المعتمد في التصميم (لا المرسوم على الشاشة): في الأقسام المتناسبة يُصغَّر المرسوم مع العرض فكان يظهر 8 لنص حجمه 24 */
-  function qFsDisp(inf) { const r = qFsNow(inf); return r ? Math.max(1, Math.round(r / qU(inf))) : 0; }
+  function qFsDisp(inf) { const cs = qFont(inf), r = cs ? parseFloat(cs.fontSize) : 0; return r ? Math.max(1, Math.round(r / qU(inf))) : 0; }      /* بلا تقريب مسبق للبكسل: في الأقسام المتناسبة الصغيرة خطوة التصميم أقل من بكسل فكان التقريب يضخّم الخطوة */
   const qDesignFs = (inf, real) => Math.max(4, Math.min(400, Math.round(real / qU(inf))));
   function qbarHtml(inf) {
     const t = inf.node.type, set = inf.set, dev = E.dev, isTx = t === "heading" || t === "text", isImg = t === "image", btn = (k, ic, tt, on, dis) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}${dis ? " disabled" : ""}>${ic}</button>`, tb = (k, label, tt, on) => `<button type="button" data-qb="${k}" title="${tt}"${on ? ' class="on"' : ""}><span class="ic">${QI[k] || QI.flip}</span><span class="tx">${label}</span></button>`, sep = '<span class="qsep"></span>';
@@ -2432,7 +2442,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
-    if (k === "fs-" || k === "fs+") { const cur = qFsDisp(inf) || Math.round(Number(eff(set, "fs", dev)) || 17); return qSize(inf, Math.max(4, cur + (k === "fs+" ? 1 : -1)), true); }
+    if (k === "fs-" || k === "fs+") { const cur = qFsDisp(inf) || Math.round(Number(eff(set, "fs", dev)) || 17); return qSize(inf, Math.max(4, Math.min(400, cur + (k === "fs+" ? 1 : -1))), true); }
     if (k === "txedit") { if (editing) { try { editing.el.blur(); } catch (x) { } E.pickHold = 0; try { endEdit(); } catch (x) { } return; } const el = fdoc.querySelector('[data-pb="' + inf.node.id + '"] [data-edit]'); if (el) startEdit(el); else toast("هذا العنصر لا يُحرَّر نصه مباشرة — عدّل نصه من الإعدادات"); return; }
     if (k === "clearfmt") { if (editing) { clearFmt(); return; } if (typeof set.html === "string") { set.html = plainFmtHtml(set.html); E.nextLabel = "مسح التنسيق"; afterEdit(); toast("تم مسح التنسيق المنسوخ"); } return; }
     if (["bold", "italic", "under", "strike"].includes(k) && qSel(k)) return;

@@ -35,7 +35,7 @@ def _scrub_pairs(name, wa):
 
 def _leak_scan(root_dir, slugs):
     """يفحص مجلداً (حزمة تثبيت أو تحديث) بحثاً عن أي أثر لهوية البائع: أسماء، أرقام، حسابات، مفاتيح، سلاجات منتجاته"""
-    bad = [r"ruqya_(?:book|lookup|taken)|ruqya_bookings|admin-ruqya|tab-ruqya", r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", r"(?<!\d)0559(?!\d)", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(x) + r"(?=[\"'/])" for x in slugs if x not in ("demo", "test")]
+    bad = [r"ruqya_(?:book|lookup|taken)|ruqya_bookings|admin-ruqya|tab-ruqya|admin-waqs|tab-waqs|WhatsApp Quick Sender|owner_inbox|tab-waqsin", r"SELLER:\s*true", r"alyssum", "أليسوم", "ألي<span", "213559237239", r"(?<!\d)0559(?!\d)", "saberbalbouzi", "balbouzi", "qvdaiundlkfbmjlummni", "AKfycb", "sb_publishable", "ADMIN-2026"] + [r"(?<=[\"'/])" + re.escape(x) + r"(?=[\"'/])" for x in slugs if x not in ("demo", "test")]
     _sk = re.search(r'SAAS_KEY:\s*"(sb_publishable_[^"]+)"', (ROOT / "assets/js/config.js").read_text(encoding="utf-8"))
     allowed = re.compile(r"alyssum\s+(?:api|الذكية|الذكي|3d|box|mockup|studio|pack)|تقنية\s+alyssum|technologie\s+(?:ia\s+)?alyssum|\(alyssum\)|issuer:\s*\"alyssum\"|\"alyssum \"\s*\+" + (r"|" + re.escape(_sk.group(1)) if _sk else ""), re.I)
     hits = []
@@ -121,8 +121,8 @@ for rel in ["admin.html", "assets/css", "assets/js", "assets/data", ("platform/s
 
 # مواعيد الرقية والحجز خاصة بموقع البائع فقط: لا تدخل أي حزمة عميل (لوحة/إعدادات/مساعدة/قاعدة بيانات/بيانات صفحات)
 _adm = OUT / "admin.html"; _t = _adm.read_text(encoding="utf-8")
-_t = re.sub(r"<!--RUQYA:start-->.*?<!--RUQYA:end-->\n?", "", _t, flags=re.S); _t = re.sub(r"^[ \t]*ruqya:'[^\n]*\n", "", _t, flags=re.M); _adm.write_text(_t, encoding="utf-8")
-for _f in ("assets/js/admin-ruqya.js", "assets/data/ruqya-avis.json", "assets/data/names-fr.json", "supabase/ruqya.sql"): (OUT / _f).unlink(missing_ok=True)
+_t = re.sub(r"<!--RUQYA:start-->.*?<!--RUQYA:end-->\n?", "", _t, flags=re.S); _t = re.sub(r"^[ \t]*ruqya:'[^\n]*\n", "", _t, flags=re.M); _t = re.sub(r"<!--WAQS:start-->.*?<!--WAQS:end-->\n?", "", _t, flags=re.S); _t = re.sub(r"^[ \t]*waqs(?:in)?:'[^\n]*\n", "", _t, flags=re.M); _adm.write_text(_t, encoding="utf-8")
+for _f in ("assets/js/admin-waqs.js", "assets/js/admin-waqs-lib.js", "assets/js/admin-waqs-inbox.js", "supabase/owner-inbox.sql", "supabase/owner-inbox-ingest.sql", "supabase/tests/owner-inbox-test.sql", "assets/js/admin-ruqya.js", "assets/data/ruqya-avis.json", "assets/data/names-fr.json", "supabase/ruqya.sql"): (OUT / _f).unlink(missing_ok=True)
 # ملفات قاعدة البيانات الخاصة بمزوّد المنصة/صاحب الموقع لا تدخل حزمة العميل (apply-pending يحوي بريد المالك، وhub.sql لمشروع المزوّد)
 for _f in ("supabase/apply-pending.sql", "supabase/hub.sql"): (OUT / _f).unlink(missing_ok=True)
 # دالتا ruqya_lookup وruqya_book في hardening-v01b.sql وسطر ruqya في اختبار RLS: تُحذفان من حزمة العميل (الرقية للبائع فقط)
@@ -132,8 +132,11 @@ if _hs.exists():
 _ts = OUT / "supabase/tests/v01-rls-test.sql"
 if _ts.exists():
     _t = _ts.read_text(encoding="utf-8"); _t = re.sub(r"'ruqya_bookings',", "", _t); _t = re.sub(r"'public\.ruqya_taken\(''[0-9-]+''\)',", "", _t); _ts.write_text(_t, encoding="utf-8")
-_hp = OUT / "assets/data/admin-help.json"; _h = json.loads(_hp.read_text(encoding="utf-8"))
-_hp.write_text(json.dumps([x for x in _h if "ruqya" not in json.dumps(x, ensure_ascii=False).lower()], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+for _hn in ("admin-help.json", "admin-help.fr.json"):      # مقالات الرقية وWhatsApp Quick Sender (للبائع فقط) تُحذف من المساعدة بالعربية والفرنسية
+    _hp = OUT / "assets/data" / _hn
+    if not _hp.exists(): continue
+    _h = json.loads(_hp.read_text(encoding="utf-8"))
+    _hp.write_text(json.dumps([x for x in _h if "ruqya" not in json.dumps(x, ensure_ascii=False).lower() and "waqs" not in json.dumps(x, ensure_ascii=False).lower()], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 vals = {"SITE_NAME": a.name, "SITE_EN": a.name, "WA": a.wa, "YEAR": str(datetime.date.today().year)}
 fill = lambda t: re.sub(r"\{\{([A-Z_]+)\}\}", lambda m: vals.get(m.group(1), m.group(0)), t)
