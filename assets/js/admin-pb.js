@@ -2526,6 +2526,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const A = [["⇤", "يسار", () => alignPage("left")], ["↔", "وسط أفقياً", () => alignPage("center")], ["⇥", "يمين", () => alignPage("right")], "-", ["⤒", "أعلى", () => alignPage("top")], ["↕", "وسط عمودياً", () => alignPage("middle")], ["⤓", "أسفل", () => alignPage("bottom")]];
     const items = [["⧉", "نسخ", copyEl, "Ctrl+C"], ["🖌️", "نسخ النمط", copyStyle, "Ctrl+Alt+C"], E.styleClip ? ["🎨", "لصق النمط", pasteStyle, "Ctrl+Alt+V"] : null, ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", () => dup(), "Ctrl+D"], ["🗑", "حذف", () => del(), "Del", 1], "-",
       ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
+      [carryAlways() ? "☑" : "☐", "السحب فوق العناصر دون إزاحتها (دائماً)", toggleCarry, ""], "-",
       ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
       !canvas ? ["⤢", "تحويل القسم إلى عناصر حرة", () => flowToFree(inf.sec)] : null,
@@ -4164,6 +4165,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     }
     return E.dev;
   };
+  /* «السحب فوق العناصر دون إزاحتها» دائماً (خيار دائم بلا الضغط على Alt/Ctrl): افتراضياً يزيح السحبُ العناصرَ التي أمام المسحوب ويوسّع القسم فلا يمكن وضع عنصر فوق صورة بالماوس (الأسهم وحدها تفعل) */
+  const carryAlways = () => { if (E.carry === undefined) { try { E.carry = localStorage.getItem("pbx_carry") === "1"; } catch (x) { E.carry = false; } } return !!E.carry; };
+  const toggleCarry = () => { E.carry = !carryAlways(); try { localStorage.setItem("pbx_carry", E.carry ? "1" : ""); } catch (x) { } toast(E.carry ? "✅ السحب الآن فوق العناصر: لا تُزاح الصور والعناصر التي تمرّ تحتها" : "↩ السحب يزيح العناصر التي أمامه ويوسّع القسم (كما كان)"); };
   function startMove(e, inf, lazy, copy) {
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
@@ -4203,11 +4207,11 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       }
       if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }                       // Shift = حركة في محور واحد
       if (!U) U = unionRect([id].concat(peers.map(q => q.w.id)).map(i => fdoc.querySelector(`[data-pb="${i}"]`)).filter(Boolean).map(layoutRect));
-      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch"), pt = ptrFrame(ev), tsec = inf.free && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل (Alt/Ctrl أو اللمس) ⟵ فوق عنصر آخر أو قسم آخر؛ بدونه يزيح العنصرَ الذي أمامه ويتّسع القسم      // المؤشر فوق قسم حر آخر: شبح الإفلات بدل تحريك العنصر
+      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch" || carryAlways()), pt = ptrFrame(ev), tsec = inf.free && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل (Alt/Ctrl أو اللمس) ⟵ فوق عنصر آخر أو قسم آخر؛ بدونه يزيح العنصرَ الذي أمامه ويتّسع القسم      // المؤشر فوق قسم حر آخر: شبح الإفلات بدل تحريك العنصر
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } clearDrop(); dropCol = null; xfer = ghostMove({ tsec, U, pt, grab: { x: U.l - px0, y: U.t - py0 }, ev, ex: exSet() }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       let X = X0 + dx, Y = Y0 + dy, guides = [];
-      try { if (!carry && !localStorage.getItem("pbx_carry_tip")) { localStorage.setItem("pbx_carry_tip", "1"); toast("💡 العنصر يزيح ما أمامه ويتّسع القسم. اضغط Alt أو Ctrl أثناء السحب لحمله فوق عنصر آخر أو إلى قسم آخر"); } } catch (e) { }
+      try { if (!carry && !localStorage.getItem("pbx_carry_tip")) { localStorage.setItem("pbx_carry_tip", "1"); toast("💡 العنصر يزيح ما أمامه ويتّسع القسم. اضغط Alt أو Ctrl أثناء السحب لحمله فوق عنصر آخر أو إلى قسم آخر، أو فعّل «السحب فوق العناصر دون إزاحتها» من قائمة العنصر (النقر الأيمن) لتصير الحالة الدائمة"); } } catch (e) { }
       const PCc = carry ? null : (PC || (PC = mkPush()));
       if (carry || !PCc || PCc.off) Y = Math.max(Y, 0);      // الحمل: لا يخرج العنصر فوق حدّ قسمه فيختفي جزؤه (للنقل لقسم آخر أفلته فوقه)؛ بدونه يتّسع القسم للأعلى
       let lnkId = null; if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; lnkId = sn.below; }
@@ -4936,7 +4940,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     let moved = false, xfer = null, PCm = null; E._ghp = null;
     dragTrack(e, "move", (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return; if (!moved) st.forEach(q => { delete q.i.set.stk; }); moved = true; if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
-      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch"), pt = ptrFrame(ev), tsec = oneSec && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل ⟵ نقل لقسم آخر/تراكب؛ بدونه إزاحة وتوسعة
+      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch" || carryAlways()), pt = ptrFrame(ev), tsec = oneSec && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل ⟵ نقل لقسم آخر/تراكب؛ بدونه إزاحة وتوسعة
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } xfer = ghostMove({ tsec, U: U0, pt, grab: { x: U0.l - px0, y: U0.t - py0 }, ev, ex: ids }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       if (!carry && oneSec && !PCm) PCm = pushCtx(srcSec, st.map(q => q.i.node.id), dev); const push = !carry && PCm && !PCm.off; if (!push) dy = clampGroupDy(st, dy); let guides = [];
