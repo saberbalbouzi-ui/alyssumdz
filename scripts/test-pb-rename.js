@@ -41,6 +41,11 @@ const { chromium } = require("playwright");
   await p.click('#pbx-ask [data-k="ok"]'); await p.waitForTimeout(1500);
   const put2 = await p.evaluate(() => window.__put.slice());
   t("Enter ثم تأكيد يغيّر الرابط فعلاً ويظهر في البطاقة", put2.includes("lp/cc-final/index.html") && await p.evaluate(() => /cc-final/.test(document.getElementById("pb-list").innerHTML)), put2);
+  /* رابط معروض هو رابط المنتج (مسار): الحقل يحمل رابط الصفحة الحقيقي مع تنبيه لا اسم المنتج */
+  await p.evaluate(async () => { Admin.products = [{ slug: "prodx", title: "م", route: "cc-final" }]; await PBAdmin.refresh(true); });
+  await p.click('#pb-list .pbx-url button[title="تعديل الرابط"]'); await p.waitForTimeout(200);
+  t("الرابط المعروض رابط المنتج: الحقل برابط الصفحة الحقيقي مع تنبيه", await p.evaluate(() => { const b = document.querySelector("#pb-list .pbx-url"); return b.querySelector("input").value === "cc-final" && !/prodx\/$/.test(b.firstElementChild.firstElementChild.textContent) && /رابط المنتج/.test(b.textContent); }), await p.evaluate(() => document.querySelector("#pb-list .pbx-url").textContent));
+  await p.keyboard.press("Escape");
   /* التعديل السريع: تفعيل «الرسمية» يفعّل «المسار» معها (قابل للإلغاء) */
   await p.evaluate(async () => { Admin.products = [{ slug: "prod", title: "منتج" }]; await PBAdmin.quick("bb-new"); await new Promise(r => setTimeout(r, 400)); document.getElementById("pq-prod").value = "prod"; });
   await p.click("#pq-off"); await p.waitForTimeout(150);

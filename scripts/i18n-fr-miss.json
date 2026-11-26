@@ -871,5 +871,7 @@
  "إلى الجديد (الروابط المنسوخة عن الرابط النظيف القديم قد تتوقف). متابعة؟": "redirigera vers le nouveau (les liens copiés depuis l'ancien lien propre risquent de ne plus fonctionner). Continuer ?",
  "تغيّر الرابط إلى": "Le lien est devenu",
  "تعديل الرابط": "Modifier le lien",
- "محاولة فاشلة لا فشل توصيل": "tentative échouée et non un échec de livraison"
+ "محاولة فاشلة لا فشل توصيل": "tentative échouée et non un échec de livraison",
+ "الرابط المعروض": "Le lien affiché",
+ "رابط المنتج ويعرض هذه الصفحة؛ هذا الحقل يغيّر رابط الصفحة نفسها لا رابط المنتج": "c'est le lien du produit et il affiche cette page ; ce champ modifie le lien de la page elle-même, pas celui du produit"
 }
