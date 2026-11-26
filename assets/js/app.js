@@ -1551,7 +1551,7 @@ function productHref(p){
     if(g === "B") page = p.ab.b;
     v = g;
   }
-  const src = page ? "lp/" + page : "p/" + p.slug, to = page ? src : p.slug;      // المنتج بلا مسار ⟵ الرابط النظيف في الجذر (النسخ الجذرية جاهزة)
+  const src = page ? "lp/" + page : "p/" + p.slug, to = page ? src : (((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) ? CONFIG.SITE.productPrefix + "/" : "") + p.slug);      // المنتج بلا مسار ⟵ الرابط النظيف في الجذر (النسخ الجذرية جاهزة)
   return REL + to + "/?utm_source=home&utm_medium=product-card&utm_campaign=" + encodeURIComponent(p.slug) + "&utm_content=" + encodeURIComponent(src) + (v ? "&ab=" + v : "");
 }
 function productCardHTML(p, opts){
