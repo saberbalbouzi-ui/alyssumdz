@@ -18,10 +18,13 @@ const { chromium, devices } = require("playwright");
     for (const k of ["fs+", "fs+", "fs+", "fs-", "fs-"]) { document.querySelector('#pbx-qbar [data-qb="' + k + '"]').click(); await w(400); out.push(Number(val())); } return out; }, id);
   const A = await step("wz"), B = await step("wp");
   const d1 = a => a.slice(1).map((v, i) => v - a[i]);
-  t("عنصر بحجم محتوى 176%: الخطوة ±1 على قيمة التصميم (لا قفزة)", d1(A).join() === "1,1,1,-1,-1" && A[0] === 26, A);
+  t("عنصر بحجم محتوى 176%: الرقم المعروض هو الحجم الفعلي (26×1.76≈46) والخطوة ±1 عليه بلا قفزة", d1(A).join() === "1,1,1,-1,-1" && A[0] === 46, A);
   t("عنصر بلا حجم محتوى: الخطوة ±1 أيضاً (لا تراجع)", d1(B).join() === "1,1,1,-1,-1" && B[0] === 28, B);
   const fsSet = await p.evaluate(() => { const f = s => JSON.stringify(s.set.fs); const sec = (PBApp.E.page || PBApp.E.pg).sections[0]; return sec.free.map(x => x.id + ":" + JSON.stringify(x.set.fs)); });
-  t("القيمة المخزَّنة للهاتف تتحرك بخطوة واحدة فقط (26→27 مثلاً) لا ضعفاً", fsSet.every(x => /"m":(2[5-9]|3[0-1])/.test(x)), fsSet);
+  t("القيمة المخزَّنة (التصميم) تتحرك بخطوة صغيرة لا ضعفاً: بعد صافي +1 فعلي: 26 ← ≈26.7 (مع الزوم) و28 ← 29 (بلا زوم)", /"m":(26|27)(\.\d)?\b/.test(fsSet[0]) && /"m":29\b/.test(fsSet[1]), fsSet);
+  /* تكبير الإطار (حجم محتوى العنصر %) يغيّر الرقم المعروض فوراً */
+  const E1 = await p.evaluate(async () => { const w = ms => new Promise(r => setTimeout(r, ms)), val = () => Number(document.querySelector('#pbx-qbar [data-qi="fs"]').value), ws = (PBApp.E.page || PBApp.E.pg).sections[0].free, a = ws.find(x => x.id === "wz"); PBApp.E.sel = "wz"; PBApp.renderInspectorNow && PBApp.renderInspectorNow(); await w(300); const v0 = val(); a.set.wsc = { d: 464, m: 264 }; PBApp.renderCanvas(); await w(600); PBApp.E.sel = "wz"; PBApp.renderInspectorNow && PBApp.renderInspectorNow(); await w(400); return { v0, v1: val() }; });
+  t("تكبير الإطار (wsc 176% ← 264%) يرفع الرقم في الشريط ≈1.5× (لا يبقى ثابتاً)", E1.v1 > E1.v0 * 1.35 && E1.v1 < E1.v0 * 1.65, E1);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();

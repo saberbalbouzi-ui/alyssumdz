@@ -1173,7 +1173,9 @@ const PB = (() => {
       if (w.type === "text" || w.type === "heading" || w.type === "button" || w.type === "bullets") {
         const zOf = dv => dv === "d" ? (num(own(s2, "wsc", "d")) || 100) / 100 : (own(s2, "wsc", dv) !== undefined ? (num(own(s2, "wsc", dv)) || 100) / 100 : 1), zs = DEVS.map(zOf), fs = DEVS.map(dv => num(eff(s2, "fs", dv))), r2 = v => Math.round(v * 100) / 100;
         if (zs.some(z => Math.abs(z - 1) > .01) && fs.every(f => f != null && f > 0)) {
-          if (w.type === "bullets") DEVS.forEach((dv, i) => { const z = zs[i], g = num(eff(s2, "gap", dv)) || 0, m = num(eff(s2, "ms", dv)) || 18; css[dv].push(`${wsx}>*{zoom:1}${wsx} .pb-bl{font-size:${FSZ(r2(fs[i] * z))};}${wsx} .pb-bl li{margin-bottom:${U(r2(g * z))};padding-inline-start:calc(${U(r2(m * z))}*1.9);}${wsx} .pb-bl li .pb-bi{font-size:${FSZ(r2(m * z))};}`); });      // القائمة: كل أطوالها em/U فيُدمج المعامل في الخط والفجوة وحجم العلامة بدقة
+          if (w.type === "bullets") DEVS.forEach((dv, i) => { const z = zs[i], g = num(eff(s2, "gap", dv)), m = num(eff(s2, "ms", dv)), B = `${wsx} .pb-bl.pb-bl`, mk = s2.micon ? "custom" : BMARKS.some(q => q[0] === s2.mk) ? s2.mk : "disc", badge = ["bdc", "bdn", "bsq", "bst", "bdd"].includes(mk) && !isIconTok(s2.micon);
+            /* مضاعَفة المحدِّد (.pb-bl.pb-bl) لتغلب قواعد القائمة نفسها الصادرة لاحقاً (كانت تتساوى معها فيضيع التكبير ويبقى الخط 21 مهما كبّرتَ الإطار)؛ وتُكبَّر أطوال القائمة المثبَّتة فقط (الفجوة وحجم العلامة والإزاحة) أما بالـem فتتبع الخط وحدها */
+            css[dv].push(`${wsx}>*{zoom:1}${B}{font-size:${FSZ(r2(fs[i] * z))};}` + (g != null ? `${B} li{margin-bottom:${U(r2(g * z))};}` : "") + (m != null ? `${B} li{padding-inline-start:calc(${U(r2(m * z))}*1.9);}` : "") + (m != null ? (isIconTok(s2.micon) ? `${B} li .pb-bi{font-size:${FSZ(r2(m * z))};}` : badge ? `${B} li:before{font-size:calc(${U(r2(m * z))}*.78);}` : `${B} li:before{font-size:${FSZ(r2(m * z))};}`) : "")); });      // القائمة: كل أطوالها em/U فيُدمج المعامل في الخط والفجوة وحجم العلامة بدقة
           else DEVS.forEach((dv, i) => css[dv].push(`${wsx}>*{zoom:1}${wsx} .pb-t.pb-t,${wsx} .pb-btn.pb-btn{font-size:${FSZ(r2(fs[i] * zs[i]))};}`));
         }
       }
@@ -1508,6 +1510,7 @@ html,body{overflow-anchor:none}
 .pb-edit .pb-cf :is(input,textarea,select,button){pointer-events:none}.pb-edit .pb-cf-b span,.pb-edit [data-edit],.pb-edit [data-icon]{pointer-events:auto}.pb-edit [data-edit]:hover{outline:1.5px dashed #0d9488;outline-offset:2px;cursor:text}.pb-edit [data-icon]:hover{outline:1.5px dashed #0d9488;outline-offset:3px;cursor:pointer}
 body{overflow-x:hidden;margin:0}`;
 
+  const PAINT_CUR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Crect x='8' y='8' width='13' height='13' rx='2.5' fill='white' stroke='%231f2123' stroke-width='1.8'/%3E%3Cpath d='M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8' fill='none' stroke='%231f2123' stroke-width='1.8'/%3E%3C/svg%3E") 6 6,copy`;      // مؤشر الفأرة أثناء فرشاة النمط: أيقونة نسخ (داخل المحرر وداخل إطار الصفحة)
   const css = `
 #pb-app{position:fixed;inset:0;z-index:10000;background:#e9e6df;display:none;flex-direction:column;font-family:inherit;direction:rtl}
 #pb-app.on{display:flex}
@@ -1710,7 +1713,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-pop select{padding:0 .5rem!important;font-size:.82rem;color:#0e1318;background:#fff}.pbx-pop select,.pbx-pop input[type=color]{width:100%;height:34px;border:1px solid #d9dbe3;border-radius:8px;font-family:inherit;margin-bottom:.5rem}.pbx-pop p{margin:.2rem 0 0;font-size:.72rem;color:#888;line-height:1.6}
 .pbx-cov{position:absolute;border:2px dashed #e5484d;background:rgba(229,72,77,.12);pointer-events:none;box-sizing:border-box}.pbx-lcv{display:flex;flex-wrap:wrap;gap:.3rem;padding:.2rem .3rem .5rem}.pbx-lcv>div{flex:1 1 100%}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
-.pbx-painting #pbx-stage,.pbx-painting #pbx-stage *{cursor:copy!important}
+.pbx-painting #pbx-stage,.pbx-painting #pbx-stage *{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Crect x='8' y='8' width='13' height='13' rx='2.5' fill='white' stroke='%231f2123' stroke-width='1.8'/%3E%3Cpath d='M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8' fill='none' stroke='%231f2123' stroke-width='1.8'/%3E%3C/svg%3E") 6 6,copy!important}
 .pbx-painting .pbx-ft,.pbx-painting .pbx-sb,.pbx-painting .pbx-mwbar,.pbx-painting .pbx-slnav,.pbx-painting .pbx-h,.pbx-painting .pbx-rz{display:none!important}      /* أثناء فرشاة النمط: لا شيء عائم يغطي العناصر المجاورة فيستقبل النقر بدلها */
 .pbx-ed .pbx-ft,.pbx-ed .pbx-sb,.pbx-ed .pbx-mwbar,.pbx-ed .pbx-slnav{display:none!important}      /* أثناء تحرير النص: تُخفى أشرطة العنصر العائمة فلا تغطي النص */
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
@@ -2136,6 +2139,7 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const r = PB.renderSections(E.page, ctx());
     const sc = fdoc.scrollingElement ? fdoc.scrollingElement.scrollTop : 0, stg = $("pbx-stage"), stTop = stg ? stg.scrollTop : 0;      // الصفحة لا تتحرك أبداً بسبب إعادة الرسم: يُثبَّت موضع التمرير قبلها وبعدها (الصور المحمَّلة تغيّر الارتفاع لحظياً)
     if (!fdoc.getElementById("pbcairo") && PB.cairoFace) { const s = fdoc.createElement("style"); s.id = "pbcairo"; s.textContent = PB.cairoFace(new URL("./", location.href).href); fdoc.head.appendChild(s); }      // نفس ملف خط Cairo المحلي الذي تستعمله الصفحة المنشورة: نفس المقاسات وبالتالي نفس التفاف الأسطر
+    if ((E.painter || E.painterR) && !fdoc.getElementById("pbx-paintcur")) paintMode(true);      // إعادة رسم الإطار أثناء الفرشاة تُبقي مؤشر النسخ
     if (!fdoc.getElementById("pbfonts")) { const l = fdoc.createElement("link"); l.id = "pbfonts"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); fdoc.head.appendChild(l); }      // معاينة كل الخطوط داخل القماش
     styleEl.textContent = localize(PB.BASE_CSS + EDIT_CSS + `\n.pb-page{background:${E.page.bg || "#fff"}${E.page.ff ? ";font-family:" + E.page.ff : ""}}\n` + r.css + "\n" + (E.page.css || "") + "\n" + (E.page.tplCss || ""));
     root.innerHTML = localize(r.html);
@@ -2526,6 +2530,8 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
     const A = [["⇤", "يسار", () => alignPage("left")], ["↔", "وسط أفقياً", () => alignPage("center")], ["⇥", "يمين", () => alignPage("right")], "-", ["⤒", "أعلى", () => alignPage("top")], ["↕", "وسط عمودياً", () => alignPage("middle")], ["⤓", "أسفل", () => alignPage("bottom")]];
     const items = [["⧉", "نسخ", copyEl, "Ctrl+C"], ["🖌️", "نسخ النمط", copyStyle, "Ctrl+Alt+C"], E.styleClip ? ["🎨", "لصق النمط", pasteStyle, "Ctrl+Alt+V"] : null, ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", () => dup(), "Ctrl+D"], ["🗑", "حذف", () => del(), "Del", 1], "-",
       ["⊞", "محاذاة على الصفحة", null, "", 0, A], "-",
+      ["⤓", "نقل إلى القسم الأسفل", () => moveToSec(1), ""], ["⤒", "نقل إلى القسم الأعلى", () => moveToSec(-1), ""], "-",
+      [carryAlways() ? "☑" : "☐", "السحب فوق العناصر دون إزاحتها (دائماً)", toggleCarry, ""], "-",
       ["⬆", "إلى أول الواجهة (أمام الكل)", () => zMove("front"), "Ctrl+]"], ["↥", "تقديم درجة", () => zMove("up"), "]"], ["↧", "تأخير درجة", () => zMove("down"), "["], ["⬇", "إلى آخر الواجهة (خلف الكل)", () => zMove("back"), "Ctrl+["], "-",
       [lk ? "🔓" : "🔒", lk ? "فتح القفل" : "قفل", toggleLock], ctl("link") ? ["🔗", "رابط", () => setProp("link", "الرابط (https://… أو #قسم):")] : null, ctl("alt") ? ["♿", "نص بديل", () => setProp("alt", "النص البديل للصورة (يفيد SEO وذوي الإعاقة):")] : null, "-",
       !canvas ? ["⤢", "تحويل القسم إلى عناصر حرة", () => flowToFree(inf.sec)] : null,
@@ -2629,8 +2635,20 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
       for (let pass = 0; pass < 4; pass++) { let ch = 0; els.forEach(e => { const cx = v(e, "fx") + v(e, "fwd") / 2, cy = v(e, "fy") + (v(e, "fh") || 20) / 2; sh.forEach(q => { if (q.set.grp !== e.set.grp || q.set.fgr || Number(q.set.fillOp) < 1) return; if (cx >= v(q, "fx") && cx <= v(q, "fx") + v(q, "fwd") && cy >= v(q, "fy") && cy <= v(q, "fy") + v(q, "fh") && (Number(q.set.zi) || 0) >= (Number(e.set.zi) || 0)) { e.set.zi = (Number(q.set.zi) || 0) + 1; ch++; n++; } }); }); if (!ch) break; } });
     return n;
   }
+  /* أحجام خط شاذة (> 300 في التصميم): نتجت من خلل خطوة +/− القديم (كانت تتضاعف 46 ← 83 ← 148 ← 263…) فتتضخم النصوص وتنتفخ الصفحة وتنزاح الإطارات عن عناصرها ويتخرّبط التحريك. تُستبدل بقيمة جهاز آخر سليمة في العنصر نفسه (المكتب ثم التابلت ثم الهاتف) أو 24 */
+  function healFs(P) {
+    let n = 0; const bad = v => typeof v === "number" && v > 300;
+    const fix = w => { const f = w && w.set && w.set.fs; if (f === undefined || f === null) return; if (typeof f === "number") { if (bad(f)) { w.set.fs = 24; n++; } return; } if (typeof f !== "object") return;
+      const ok = ["d", "t", "m"].map(k => f[k]).filter(v => typeof v === "number" && v > 0 && v <= 300), rep = ok.length ? ok[0] : 24; ["d", "t", "m"].forEach(k => { if (bad(f[k])) { f[k] = rep; n++; } }); };
+    (P.sections || []).forEach(sec => { (sec.free || []).forEach(fix); (sec.cols || []).forEach(c => (c.widgets || []).forEach(fix)); });
+    return n;
+  }
+  /* إطار النص/العنوان الحر يتبع نصّه دائماً (ارتفاع تلقائي): hauto=false بلا hfix (ارتفاع ثابت قادم من تحويل أو ملصوق) يجعل النص يفيض خارج الإطار البنفسجي أو يبقى الإطار أكبر منه؛ أما من ضبط الارتفاع بسحب المقبض يدوياً (hfix) فيُحترم اختياره */
+  function autoTextH(P) {
+    let n = 0; (P.sections || []).forEach(sec => (sec.free || []).forEach(w => { if (w && ["text", "heading"].includes(w.type) && w.set && w.set.hauto === false && !w.set.hfix) { delete w.set.hauto; n++; } })); return n;
+  }
   function cleanStrayAll(P) {
-    let n = fixGroupZ(P); (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
+    let n = fixGroupZ(P) + healFs(P) + autoTextH(P); (P.sections || []).forEach(sec => { if (sec.set.kind !== "canvas" || !sec.set.scaled) return; const ws = sec.free || [], ks = ["fx", "fy", "fwd", "fh"];
       ["t", "m"].forEach(d2 => { if ((d2 === "m" && sec.set.scaledM) || (d2 === "t" && sec.set.scaledT)) return; const has = w => ks.some(k => w.set[k] && typeof w.set[k] === "object" && w.set[k][d2] !== undefined), c = ws.filter(has).length; if (c > 0 && c < ws.length) { ws.filter(has).forEach(w => ks.forEach(k => { if (w.set[k] && typeof w.set[k] === "object") delete w.set[k][d2]; })); n += c; } }); });
     return n;
   }
@@ -2762,6 +2780,8 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     if (!el.isConnected) { const e2 = fdoc.querySelector('[data-pb="' + wEl0.dataset.pb + '"] [data-edit="' + fld0 + '"]' + (idx0 != null ? '[data-idx="' + idx0 + '"]' : "")); if (!e2) return; el = e2; }      // التحديد قد يعيد رسم الصفحة فيُستبدل عنصر النص: نعمل على الحيّ
     const wEl = el.closest('[data-kind="widget"]'); if (!wEl) return;
     const field = el.dataset.edit, rich = field === "html"; editing = { el, id: wEl.dataset.pb, field, rich, idx: el.dataset.idx }; if ($("pb-app")) $("pb-app").classList.add("pbx-ed");
+    { const i0 = find(wEl.dataset.pb); if (i0 && i0.free && ["text", "heading"].includes(i0.node.type) && i0.set.hauto === false) { delete i0.set.hauto; delete i0.set.hfix; wEl.style.setProperty("height", "auto", "important"); } }      /* أثناء الكتابة يتبع الإطار النص: سطر جديد يوسّع الإطار */
+    el.addEventListener("input", () => { positionOverlaySoon(); });
     el.setAttribute("contenteditable", "true"); { const st0 = $("pbx-stage"), t0 = st0 ? st0.scrollTop : 0; try { el.focus({ preventScroll: true }); } catch (x) { el.focus(); } if (st0 && Math.abs(st0.scrollTop - t0) > 1) st0.scrollTop = t0; }
     const r = rng || fdoc.createRange(); if (!rng) r.selectNodeContents(el); const sl = fdoc.defaultView.getSelection(); sl.removeAllRanges(); sl.addRange(r);
     if (rich) showRt(true);
@@ -2929,7 +2949,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     E.sel = id; if (id) E.last = id; E.multi = []; { const g = id ? grpOf(id) : null; if (g && g.length > 1) E.multi = g; }      // عنصر مربوط بمجموعة: تُحدَّد المجموعة كلها
     { const q = id && find(id); if (q && q.sec) E.hs = q.sec.id; if (q && q.node && q.node.type === "image" && typeof PBSmart !== "undefined") setTimeout(() => PBSmart.warm(q), 1500); } renderInspector();      // تحضير نماذج الالتقاط في الخلفية عند تحديد صورة (تُنزَّل مرة واحدة)
      positionOverlay(); liveBars(); if (E.ltab === "lay" || E.ltab === "img") renderLeft();
-    if (paintNow) { E.painter = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); pasteStyle(); }
+    if (paintNow) { E.painter = null; paintMode(false); pasteStyle(); }
     { const q = id && find(id); if (q && q.node && q.node.type === "shdr" && E.page.sections.indexOf(q.sec) <= 1 && !editing && !E.busy) setTimeout(() => { const st = $("pbx-stage"); if (st) st.scrollTo({ top: 0, behavior: "smooth" }); }, 40); }      // الهيدر في أعلى الصفحة: تنتقل الشاشة إلى مكانه
   }
   const mkShield = cur => { const d = document.createElement("div"); d.style.cssText = "position:fixed;inset:0;z-index:10001;cursor:" + cur; document.body.appendChild(d); return d; };   // يلتقط الحركة فوق الـ iframe
@@ -3036,6 +3056,18 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   /* نقل/لصق عنصر بين قسمين وحدتهما مختلفة (عرض تصميم أو حاوية مختلفة): قيم الخط بوحدات التصميم تُضرب بنسبة الوحدتين فيبقى حجمه الظاهر كما كان */
   function scaleFs(set, k) { if (!set || set.fs === undefined || !k || Math.abs(k - 1) < 0.02) return; const f = set.fs; if (f && typeof f === "object") Object.keys(f).forEach(d => { if (typeof f[d] === "number") f[d] = Math.max(4, Math.round(f[d] * k)); }); else if (typeof f === "number") set.fs = Math.max(4, Math.round(f * k)); }
   const secUnit = sec => { const c = sec && fdoc && fdoc.querySelector(`[data-pb="${sec.id}"] .pb-in`); if (!c) return null; const r = c.getBoundingClientRect(); return { u: uOf(sec, r) || 1, w: r.width || 1 }; };
+  /* نقل العنصر/العناصر المحدَّدة إلى القسم الحر التالي (أسفل) أو السابق (أعلى) بأمر من القائمة بلا سحب: يُوضع في أعلى القسم الهدف (للأسفل) أو أسفله (للأعلى) وتهبط عناصر الهدف لتتّسع له فلا تتراكب، وتُحفظ مواضعها الأفقية وحجمها الظاهر */
+  function moveToSec(d) {
+    const ids = selIds(), infs = ids.map(find).filter(i => i && i.kind === "widget" && i.free); if (!infs.length) return toast("حدّد عنصراً أولاً");
+    const src = infs[0].sec; if (infs.some(i => i.sec !== src)) return toast("حدّد عناصر من قسم واحد");
+    const L = E.page.sections; let j = L.indexOf(src) + d; while (L[j] && (isHF(L[j]) || L[j].set.kind !== "canvas")) j += d; const ts = L[j]; if (!ts) return toast(d > 0 ? "لا يوجد قسم حرّ تحت هذا القسم" : "لا يوجد قسم حرّ فوق هذا القسم");
+    const tcont = fdoc.querySelector(`[data-pb="${ts.id}"] .pb-in`), scont = fdoc.querySelector(`[data-pb="${src.id}"] .pb-in`); if (!tcont || !scont) return;
+    const tcr = tcont.getBoundingClientRect(), scr = scont.getBoundingClientRect(), ut = uOf(ts, tcr) || 1, rs = infs.map(i => layoutRect(fdoc.querySelector(`[data-pb="${i.node.id}"]`)));
+    const Lx = Math.min(...rs.map(r => r.left)), Tp = Math.min(...rs.map(r => r.top)), Bt = Math.max(...rs.map(r => r.top + r.height)), gx = (Lx - scr.left) / Math.max(1, scr.width) * tcr.width, hDes = (Bt - Tp) / ut;
+    let gy; if (d > 0) { gy = 20 * ut; const shift = Math.round(hDes + 20 + 20); (ts.free || []).forEach(w => { const f = w.set.fy; if (f && typeof f === "object") ["d", "t", "m"].forEach(k => { if (typeof f[k] === "number") f[k] += shift; }); else if (typeof f === "number") w.set.fy = f + shift; }); const mh = ts.set.mh; if (mh && typeof mh === "object") ["d", "t", "m"].forEach(k => { if (typeof mh[k] === "number") mh[k] += shift; }); }
+    else gy = Math.max(0, tcr.height - (Bt - Tp) - 20 * ut);
+    const first = ids[0]; if (xferFree(ids, ts, gx, gy, null)) { E.sel = first; try { const el = fdoc.querySelector(`[data-pb="${first}"]`); if (el) el.scrollIntoView({ block: "center" }); } catch (x) { } }
+  }
   function xferFree(ids, ts, gx, gy, mhMap) {
     const infs = ids.map(find).filter(i => i && i.free && i.sec !== ts); if (!infs.length) return false;
     const tcont = fdoc.querySelector(`[data-pb="${ts.id}"] .pb-in`); if (!tcont) return false; const tcr = tcont.getBoundingClientRect(), ut = uOf(ts, tcr);
@@ -3367,17 +3399,14 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     return fdoc.defaultView.getComputedStyle(el);
   };
   /* حجم الخط الظاهر فعلاً (px على الشاشة): في قسم حرّ متناسب (scaled) على الهاتف يُصغَّر الخط بنسبة القسم u (≈0.3–0.5)، فالخانة تعرض الحجم الحقيقي المرسوم وتكتب في التصميم القيمة ÷ u كي يتطابق الرقم مع ما تراه وتتحرك الخطوة بنفس الحجم الظاهر */
-  function qU(inf) {
-    const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"), u = pin ? (uOf(inf.sec, pin.getBoundingClientRect()) || 1) : 1;
-    /* «حجم محتوى العنصر %» (wsc) يطبّق zoom على محتوى العنصر فيُضاعف حجم الخط المرسوم (مثلاً 26 × 1.76 = 46)؛ الخانة والخطوة تعملان على قيمة التصميم، فيجب قسمة المرسوم على الوحدة وعلى هذا الـzoom معاً وإلا قفزت القيمة بعد كل ضغطة (46 ← 83 ← 148) */
-    /* المُصيِّر يدمج wsc في الخط نفسه (fs×wsc ويلغي zoom) للنص والعنوان والزر والقوائم حين يكون fs معرَّفاً لكل الأجهزة؛ وإلا يبقى zoom حقيقياً على المحتوى */
+  function qU(inf) { const el = fdoc && fdoc.querySelector(`[data-pb="${inf.node.id}"]`), pin = el && el.closest(".pb-in"); return pin ? (uOf(inf.sec, pin.getBoundingClientRect()) || 1) : 1; }
+  /* «حجم محتوى العنصر %» (wsc) يدمجه المُصيِّر في الخط نفسه (fs×wsc ويلغي zoom) للنص والعنوان والزر والقوائم حين يكون fs معرَّفاً لكل الأجهزة. الرقم المعروض هو الحجم الفعلي الظاهر (يتغيّر حين يكبَّر الإطار بالسحب)، فالكتابة فيه والخطوة +/− تحوّله إلى قيمة التصميم بقسمته على هذا المعامل وإلا تضاعف (46 ← 83 ← 148…) */
+  function qZ(inf) {
     const set = inf.set, wo = (k, dv) => { const v = set[k]; return v && typeof v === "object" ? v[dv] : (dv === "d" ? v : undefined); }, zOf = dv => dv === "d" ? (Number(wo("wsc", "d")) || 100) / 100 : (wo("wsc", dv) !== undefined ? (Number(wo("wsc", dv)) || 100) / 100 : 1);
     const baked = ["text", "heading", "button", "bullets"].includes(inf.node.type) && ["d", "t", "m"].some(dv => Math.abs(zOf(dv) - 1) > .01) && ["d", "t", "m"].every(dv => Number(eff(set, "fs", dv)) > 0);
-    let z = 1;
-    if (baked) z = zOf(E.dev) || 1;
-    else try { const t = el && el.querySelector(".pb-t"), stop = pin || (fdoc && fdoc.body); for (let n = t; n && n !== stop; n = n.parentElement) { const q = parseFloat(fdoc.defaultView.getComputedStyle(n).zoom); if (q && isFinite(q) && q > 0) z *= q; } } catch (e) { }
-    return u * z;
+    return baked ? (zOf(E.dev) || 1) : 1;
   }
+  const qToDesign = (inf, shown) => Math.max(4, Math.min(400, Math.round(shown / (qZ(inf) || 1) * 10) / 10));
   function qFsNow(inf) { const cs = qFont(inf); return cs ? Math.round(parseFloat(cs.fontSize)) : 0; }
   /* القيمة المعروضة في الشريط = حجم الخط المعتمد في التصميم (لا المرسوم على الشاشة): في الأقسام المتناسبة يُصغَّر المرسوم مع العرض فكان يظهر 8 لنص حجمه 24 */
   function qFsDisp(inf) { const cs = qFont(inf), r = cs ? parseFloat(cs.fontSize) : 0; return r ? Math.max(1, Math.round(r / qU(inf))) : 0; }      /* بلا تقريب مسبق للبكسل: في الأقسام المتناسبة الصغيرة خطوة التصميم أقل من بكسل فكان التقريب يضخّم الخطوة */
@@ -3732,7 +3761,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       /* الهاتف: منتقي النظام الأصلي محدود (8 ألوان) ويسحب التركيز من النص؛ نستبدله بلوحة ألوان داخل الصفحة تُطبَّق على الكلمة المحدَّدة أو على العنصر */
       bar.addEventListener("click", e => { const l = e.target.closest && e.target.closest("label.qa"); if (!l || !l.querySelector('input[data-qi="color"]')) return; if (!(isMob() || (window.matchMedia && matchMedia("(pointer:coarse)").matches))) return; const inf0 = selInfo(); if (!inf0) return; e.preventDefault(); e.stopPropagation(); E.pickHold = 0; colorSheet(l, inf0); }, true);
       bar.addEventListener("input", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; if (t.dataset.qi === "color") { if (wordColor(t.value)) { const i0 = t.parentNode.querySelector("i"); if (i0) i0.style.background = t.value; return; } qLive(inf, "color", t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } else if (t.type === "color") { qLive(inf, t.dataset.qi, t.value); const i = t.parentNode.querySelector("i"); if (i) i.style.background = t.value; } });
-      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "color" && editing && editing.rich && E.lastRange && !E.lastRange.collapsed) { commitHist(); return; }      /* تلوين كلمة محدَّدة: لا يُكتب لون العنصر كله عند تثبيت اللون */ if (k === "fs") qSize(inf, Math.max(4, Math.min(400, Math.round(Number(t.value) || 17))), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
+      bar.addEventListener("change", e => { const t = e.target, inf = selInfo(); if (!inf || !t.dataset.qi) return; const k = t.dataset.qi; if (k === "color" && editing && editing.rich && E.lastRange && !E.lastRange.collapsed) { commitHist(); return; }      /* تلوين كلمة محدَّدة: لا يُكتب لون العنصر كله عند تثبيت اللون */ if (k === "fs") qSize(inf, qToDesign(inf, Math.round(Number(t.value) || 17)), true); else if (k === "ff") qDone(inf, "ff", t.value); else qDone(inf, k, t.value); }); }
     if (!document.getElementById("pbfonts-a")) { const l = document.createElement("link"); l.id = "pbfonts-a"; l.rel = "stylesheet"; l.href = PB.fontsHref(PB.FONT_FAMS.map(x => x[0])); document.head.appendChild(l); }
     const inf = selInfo(), show = FREE_ONLY && inf && inf.kind === "widget" && !multiOn(); if (!show || E.qsel !== inf.node.id) closePop(); E.qsel = show ? inf.node.id : null; bar.style.display = show ? "flex" : "none"; try { epSync(); } catch (x) { console.warn(x); } if (!show) return;      // النافذة المنسدلة تبقى مفتوحة أثناء تعديل العنصر نفسه
     bar.innerHTML = qbarHtml(inf); placeQbar();
@@ -3916,7 +3945,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   function qAct(k, btn, re) {
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const set = inf.set, dev = E.dev;
-    if (k === "fs-" || k === "fs+") { const cur = qFsDisp(inf) || Math.round(Number(eff(set, "fs", dev)) || 17); return qSize(inf, Math.max(4, Math.min(400, cur + (k === "fs+" ? 1 : -1))), true); }
+    if (k === "fs-" || k === "fs+") { const cur = qFsDisp(inf) || Math.round(Number(eff(set, "fs", dev)) || 17); return qSize(inf, qToDesign(inf, cur + (k === "fs+" ? 1 : -1)), true); }
     if (k === "txedit") { if (editing) { try { editing.el.blur(); } catch (x) { } E.pickHold = 0; try { endEdit(); } catch (x) { } return; } const el = fdoc.querySelector('[data-pb="' + inf.node.id + '"] [data-edit]'); if (el) startEdit(el); else toast("هذا العنصر لا يُحرَّر نصه مباشرة — عدّل نصه من الإعدادات"); return; }
     if (k === "clearfmt") { if (editing) { clearFmt(); return; } if (typeof set.html === "string") { set.html = plainFmtHtml(set.html); E.nextLabel = "مسح التنسيق"; afterEdit(); toast("تم مسح التنسيق المنسوخ"); } return; }
     if (["bold", "italic", "under", "strike"].includes(k) && qSel(k)) return;
@@ -4003,9 +4032,10 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     } catch (x) { } }
     if (!keys.includes("wsc")) keys.push("wsc"); if (inf.set.wsc !== undefined) st.wsc = clone(inf.set.wsc);      // «حجم محتوى العنصر %» (يكبّر النص بسحب الزوايا) جزء من النمط: يُنسخ، ومن لا يملكه يُزال عن الهدف فتتساوى أحجام الخطوط
     if (sizeToo(inf)) SIZE_KEYS.forEach(k => { if (inf.set[k] !== undefined) { if (!keys.includes(k)) keys.push(k); st[k] = clone(inf.set[k]); } });
-    E.styleClip = { keys, st, size: sizeToo(inf) }; toast("🎨 نُسخ نمط العنصر" + (E.styleClip.size ? " وحجمه" : "") + " — حدّد عنصراً آخر وانقر «لصق النمط»"); }
+    E.styleClip = { keys, st, size: sizeToo(inf) }; }
   /* فرشاة النمط: انقر الأيقونة وعنصر محدَّد ← يُنسخ نمطه فوراً، ثم انقر أي عنصر آخر ← يُلصق عليه مباشرة (Esc أو الأيقونة ثانيةً للإلغاء) */
-  function cancelPainter() { E.painter = null; E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
+  function paintMode(on) { const pa = $("pb-app"); if (pa) pa.classList.toggle("pbx-painting", !!on); try { let st = fdoc.getElementById("pbx-paintcur"); if (on && !st) { st = fdoc.createElement("style"); st.id = "pbx-paintcur"; st.textContent = "html,html *{cursor:" + PAINT_CUR + " !important}"; fdoc.head.appendChild(st); } else if (!on && st) st.remove(); } catch (e) { } }
+  function cancelPainter() { E.painter = null; E.painterR = null; paintMode(false); try { toast("أُلغيت فرشاة النمط"); } catch (x) { } }
   function startPainter() {
     if (E.painter || E.painterR) { cancelPainter(); return; }
     const inf = selInfo(); if (!inf || inf.kind !== "widget") return;
@@ -4013,10 +4043,10 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     if (sl0 && sl0.rangeCount && editing.el.contains(sl0.anchorNode)) {      /* نمط نصّ داخل نص: يُنسخ نمط موضع المؤشر/المحدَّد ثم يُلصق على ما تحدّده بعده في النص نفسه */
       const n = sl0.anchorNode.nodeType === 1 ? sl0.anchorNode : sl0.anchorNode.parentElement, cs = fdoc.defaultView.getComputedStyle(n);
       E.painterR = { id: inf.node.id, st: { fs: cs.fontSize, color: cs.color, fw: cs.fontWeight, fst: cs.fontStyle, td: cs.textDecorationLine, ff: cs.fontFamily } };
-      const pa = $("pb-app"); if (pa) pa.classList.add("pbx-painting"); toast("🖌️ نُسخ نمط النص — حدّد النص الذي تريده أن يأخذه (Esc للإلغاء)"); return;
+      paintMode(true); return;
     }
     copyStyle(); if (!E.styleClip) return;
-    E.painter = inf.node.id; const pa = $("pb-app"); if (pa) pa.classList.add("pbx-painting"); toast("🖌️ نُسخ النمط — انقر عنصراً آخر ليأخذه مباشرة (Esc للإلغاء)");
+    E.painter = inf.node.id; paintMode(true);
   }
   /* لصق نمط نصّ على تحديد داخل النص المُحرَّر: يُستبدل المحدَّد بنص خام في span بنمط المصدر (يلغي التنسيق الملصوق عليه) */
   function applyRangePaint(el) {
@@ -4024,7 +4054,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const t = sl.toString(); if (!t) return; const q = P.st, css = `font-size:${q.fs};color:${q.color};font-weight:${q.fw};font-style:${q.fst};${q.td && q.td !== "none" ? "text-decoration:" + q.td + ";" : ""}font-family:${String(q.ff).replace(/"/g, "'")};`;
     const esc2 = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>");
     fdoc.execCommand("insertHTML", false, `<span style="${css}">${esc2(t)}</span>`);
-    E.painterR = null; const pa = $("pb-app"); if (pa) pa.classList.remove("pbx-painting"); toast("🎨 طُبِّق نمط النص");
+    E.painterR = null; paintMode(false); toast("🎨 طُبِّق نمط النص");
   }
   function pasteStyle() {
     const inf = selInfo(); if (!inf || inf.kind !== "widget" || !E.styleClip) return; const have = new Set(styleKeys(inf)); have.add("wsc");
@@ -4046,7 +4076,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
   function startResize(e, dir, inf) {
-    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading", "countdown", "counter"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) inf.set.hauto = false;      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
+    if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading", "countdown", "counter"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) { inf.set.hauto = false; inf.set.hfix = true; }      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
     const dev = devOfFree(inf), el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, r0 = layoutRect(el), set = inf.set;
     const hasW = dir.includes("e") || dir.includes("w"), hasH = dir.includes("n") || dir.includes("s"), free = inf.kind === "widget" && inf.free;
@@ -4156,6 +4186,9 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     }
     return E.dev;
   };
+  /* «السحب فوق العناصر دون إزاحتها» دائماً (خيار دائم بلا الضغط على Alt/Ctrl): افتراضياً يزيح السحبُ العناصرَ التي أمام المسحوب ويوسّع القسم فلا يمكن وضع عنصر فوق صورة بالماوس (الأسهم وحدها تفعل) */
+  const carryAlways = () => { if (E.carry === undefined) { try { E.carry = localStorage.getItem("pbx_carry") !== "0"; } catch (x) { E.carry = true; } } return !!E.carry; };      /* مفعَّل افتراضياً؛ يُعطَّل من قائمة العنصر فيُحفظ "0" */
+  const toggleCarry = () => { E.carry = !carryAlways(); try { localStorage.setItem("pbx_carry", E.carry ? "1" : "0"); } catch (x) { } toast(E.carry ? "✅ السحب الآن فوق العناصر: لا تُزاح الصور والعناصر التي تمرّ تحتها" : "↩ السحب يزيح العناصر التي أمامه ويوسّع القسم (كما كان)"); };
   function startMove(e, inf, lazy, copy) {
     const id = inf.node.id, dev = devOfFree(inf); if (!lazy) ensureMobile(inf.sec);
     const el = fdoc.querySelector(`[data-pb="${id}"]`), cont = el.closest(".pb-in"), r0 = layoutRect(el);
@@ -4195,11 +4228,11 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
       }
       if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }                       // Shift = حركة في محور واحد
       if (!U) U = unionRect([id].concat(peers.map(q => q.w.id)).map(i => fdoc.querySelector(`[data-pb="${i}"]`)).filter(Boolean).map(layoutRect));
-      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch"), pt = ptrFrame(ev), tsec = inf.free && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل (Alt/Ctrl أو اللمس) ⟵ فوق عنصر آخر أو قسم آخر؛ بدونه يزيح العنصرَ الذي أمامه ويتّسع القسم      // المؤشر فوق قسم حر آخر: شبح الإفلات بدل تحريك العنصر
+      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch" || carryAlways()), pt = ptrFrame(ev), tsec = inf.free && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل (Alt/Ctrl أو اللمس) ⟵ فوق عنصر آخر أو قسم آخر؛ بدونه يزيح العنصرَ الذي أمامه ويتّسع القسم      // المؤشر فوق قسم حر آخر: شبح الإفلات بدل تحريك العنصر
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } clearDrop(); dropCol = null; xfer = ghostMove({ tsec, U, pt, grab: { x: U.l - px0, y: U.t - py0 }, ev, ex: exSet() }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       let X = X0 + dx, Y = Y0 + dy, guides = [];
-      try { if (!carry && !localStorage.getItem("pbx_carry_tip")) { localStorage.setItem("pbx_carry_tip", "1"); toast("💡 العنصر يزيح ما أمامه ويتّسع القسم. اضغط Alt أو Ctrl أثناء السحب لحمله فوق عنصر آخر أو إلى قسم آخر"); } } catch (e) { }
+      try { if (!carry && !localStorage.getItem("pbx_carry_tip")) { localStorage.setItem("pbx_carry_tip", "1"); toast("💡 العنصر يزيح ما أمامه ويتّسع القسم. اضغط Alt أو Ctrl أثناء السحب لحمله فوق عنصر آخر أو إلى قسم آخر، أو السحب فوق العناصر مفعَّل دائماً؛ يمكن تعطيله من «السحب فوق العناصر دون إزاحتها» في قائمة العنصر (النقر الأيمن)"); } } catch (e) { }
       const PCc = carry ? null : (PC || (PC = mkPush()));
       if (carry || !PCc || PCc.off) Y = Math.max(Y, 0);      // الحمل: لا يخرج العنصر فوق حدّ قسمه فيختفي جزؤه (للنقل لقسم آخر أفلته فوقه)؛ بدونه يتّسع القسم للأعلى
       let lnkId = null; if (E.snap && (copy || !ev.altKey)) { const sn = magnetBox(X, Y, r0.width, r0.height, pts, GAP_D * u); X = sn.x; Y = sn.y; guides = sn.guides; lnkId = sn.below; }
@@ -4928,7 +4961,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     let moved = false, xfer = null, PCm = null; E._ghp = null;
     dragTrack(e, "move", (dx, dy, ev) => {
       if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return; if (!moved) st.forEach(q => { delete q.i.set.stk; }); moved = true; if (ev.shiftKey) { if (Math.abs(dx) > Math.abs(dy)) dy = 0; else dx = 0; }
-      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch"), pt = ptrFrame(ev), tsec = oneSec && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل ⟵ نقل لقسم آخر/تراكب؛ بدونه إزاحة وتوسعة
+      const carry = !!(ev.altKey || ev.ctrlKey || ev.metaKey || ev.pointerType === "touch" || carryAlways()), pt = ptrFrame(ev), tsec = oneSec && carry ? secUnder(pt.x, pt.y + fdoc.defaultView.scrollY, boxes, srcSec) : null;      // الحمل ⟵ نقل لقسم آخر/تراكب؛ بدونه إزاحة وتوسعة
       if (tsec) { if (!xfer && mh0) { setR(srcSec.set, "mh", "d", mh0); renderCanvas(); } xfer = ghostMove({ tsec, U: U0, pt, grab: { x: U0.l - px0, y: U0.t - py0 }, ev, ex: ids }); if (xfer) return; }
       if (xfer) { xfer = null; clearGhost(); }
       if (!carry && oneSec && !PCm) PCm = pushCtx(srcSec, st.map(q => q.i.node.id), dev); const push = !carry && PCm && !PCm.off; if (!push) dy = clampGroupDy(st, dy); let guides = [];
@@ -4988,7 +5021,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
     const n = selIds().length, g = grpState();
     showMenu([["⧉", "نسخ (" + n + ")", copyMulti, "Ctrl+C"], ["📋", "لصق", pasteEl, "Ctrl+V", 0, 0, !E.clip], ["➕", "تكرار", dupMulti, "Ctrl+D"], "-",
       ["🔗", "ربط العناصر ببعضها", groupSel, "Ctrl+G", 0, 0, g.all], ["⛓", "تفكيك الربط", ungroupSel, "Ctrl+Shift+G", 0, 0, !g.any], "-",
-      ["⊞", "محاذاة", null, "", 0, alignItems()], "-", ["🗑", "حذف (" + n + ")", delMulti, "Del", 1]], x, y);
+      ["⊞", "محاذاة", null, "", 0, alignItems()], "-", ["⤓", "نقل إلى القسم الأسفل", () => moveToSec(1), ""], ["⤒", "نقل إلى القسم الأعلى", () => moveToSec(-1), ""], "-", ["🗑", "حذف (" + n + ")", delMulti, "Del", 1]], x, y);
   }
   const MA = { copy: () => copyMulti(), dup: () => dupMulti(), group: () => groupSel(), ungroup: () => ungroupSel(), del: () => delMulti(), done: () => { E.mm = false; updateMbar(); positionOverlay(); }, cancel: () => { E.mm = false; select(null); } };
   function ma(a) { if (MA[a]) MA[a](); }
@@ -5041,7 +5074,7 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         setR(st, "fx", dev, Math.round(X / cr.width * 1000) / 10); setR(st, "fwd", dev, Math.round(W / cr.width * 1000) / 10); setR(st, "fy", dev, Math.max(0, Math.round(Y / u))); setR(st, "fh", dev, Math.max(4, Math.round(H / u)));
         if (dev !== "d") ["fx", "fwd", "fy", "fh"].forEach(k => { if (own(st, k, "d") === undefined) setR(st, k, "d", eff(st, k, dev)); });
         if (uni && !["image", "shape"].includes(q.i.node.type)) { setR(st, "wsc", dev, Math.max(20, Math.min(500, Math.round(q.ws * kx)))); if (dev !== "d" && own(st, "wsc", "d") === undefined) setR(st, "wsc", "d", q.ws); }
-        else if (hasH && !corner && ["text", "heading"].includes(q.i.node.type)) st.hauto = false;
+        else if (hasH && !corner && ["text", "heading"].includes(q.i.node.type)) { st.hauto = false; st.hfix = true; }
       });
       tip.textContent = Math.round(W0 * kx) + "×" + Math.round(H0 * ky); const st0 = $("pbx-ovl").getBoundingClientRect(); tip.style.left = (ev.clientX - st0.left + 14) + "px"; tip.style.top = (ev.clientY - st0.top + 14) + "px";
       renderCanvas(); positionOverlay(); $("pbx-ovl").appendChild(tip); growCanvas(sec);
@@ -5058,11 +5091,12 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
         mb.style.pointerEvents = "none"; ["n", "s", "e", "w", "ne", "nw", "se", "sw"].forEach(d => { const h = document.createElement("div"); h.className = "pbx-h pbx-mh d-" + d; h.title = d.length === 2 ? "اسحب لتكبير/تصغير المجموعة كلها بنسبة ثابتة (Shift = حر)" : "اسحب لتمديد المجموعة"; h.onmousedown = ev => { if (ev.button === 0) startMultiResize(ev, d, mi.map(i => i.node.id)); }; mb.appendChild(h); }); } }
     if (E.busy || isMob()) return;      // الهاتف: شريط الأسفل بدل الشريط العائم
     const g = grpState(), bar = document.createElement("div"); bar.className = "pbx-mt";
-    bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"]].concat(phoneSec(ids) ? [["phone", "📲 ترتيب الهاتف", "يرتّب عناصر هذا القسم على الهاتف تلقائياً بالتتابع ويفصل الهاتف عن المكتب (لا يتغيّر المكتب ولا التابلت)"]] : [], [["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]]).forEach(([k, t, tt, dis, dng]) => {
+    bar.innerHTML = `<b>☑ ${ids.length}</b>`; [["copy", "⧉ نسخ", "نسخ المحدّد (Ctrl+C)"], ["dup", "➕ تكرار", "تكرار المحدّد (Ctrl+D)"], ["group", "🔗 ربط", "ربط العناصر ببعضها (Ctrl+G)", g.all], ["ungroup", "⛓ تفكيك", "تفكيك الربط (Ctrl+Shift+G)", !g.any], ["align", "⊞ محاذاة", "محاذاة العناصر"], ["tosec", "⤓ لقسم آخر", "نقل المحدّد إلى القسم الأسفل (Shift+نقر على الزر: الأعلى)"]].concat(phoneSec(ids) ? [["phone", "📲 ترتيب الهاتف", "يرتّب عناصر هذا القسم على الهاتف تلقائياً بالتتابع ويفصل الهاتف عن المكتب (لا يتغيّر المكتب ولا التابلت)"]] : [], [["del", "🗑 حذف", "حذف المحدّد (Delete)", 0, 1]]).forEach(([k, t, tt, dis, dng]) => {
       const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.title = tt; if (dis) b.disabled = true; if (dng) b.className = "dng";
-      b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else if (k === "phone") { const sc = phoneSec(ids); if (sc) phoneAuto(sc); } else ma(k); }; bar.appendChild(b); });
+      b.onclick = ev => { ev.stopPropagation(); if (k === "align") { const r = b.getBoundingClientRect(); showMenu(alignItems(), r.left, r.bottom + 4, r); } else if (k === "tosec") { moveToSec(ev.shiftKey ? -1 : 1); } else if (k === "phone") { const sc = phoneSec(ids); if (sc) phoneAuto(sc); } else ma(k); }; bar.appendChild(b); });
     ovl.appendChild(bar); const st = $("pbx-stage"), W = ovl.clientWidth, fw = bar.offsetWidth, fh = bar.offsetHeight, vt = st.scrollTop + (FREE_ONLY ? 58 : 0), vb = st.scrollTop + st.clientHeight;
-    let top = T - fh - 14; if (top < vt + 4) { top = B + 18; if (top + fh > vb - 4) top = Math.max(vt + 4, T + 8); } bar.style.top = top + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4, (L + R) / 2 - fw / 2)) + "px";
+    /* شريط التحديد المتعدد ثابت دائماً أعلى المنصة (كشريط التنسيق المفرد): لا يتبع العناصر المحدَّدة ولا يقفز فوقها أو تحتها فيحجب الصفحة */
+    bar.style.top = (st.scrollTop + 8) + "px"; bar.style.left = Math.max(4, Math.min(W - fw - 4 - (FREE_ONLY ? 56 : 0), 8)) + "px";
     /* زرّا التدوير والتحريك للتحديد المتعدد (كانا يظهران لعنصر واحد فقط): التحريك يحرّك المجموعة كلها، والتدوير يدوّر كل عنصر حول مركزه بالزاوية نفسها */
     if (ids.some(id => { const i = find(id); return i && i.kind === "widget" && !isLocked(i); })) {
       const sb = document.createElement("div"); sb.className = "pbx-sb"; sb.innerHTML = `<button type="button" title="اسحب لتدوير العناصر المحدّدة (Shift = خطوات 15°)" data-k="rot">${FIC.rot}</button><button type="button" title="اسحب لتحريك العناصر المحدّدة معاً" data-k="move">${FIC.move}</button>`; ovl.appendChild(sb);
