@@ -60,15 +60,14 @@ let fails = 0; const ok = (n, c, x) => { if (!c) fails++; console.log((c ? "PASS
     await wait(700);   /* #toast2 فيه transition:.3s */
     const T = await p.evaluate(() => { const w = SpatialOS.panels.get("ord").fr.contentWindow; const e = w.document.getElementById("toast2"), q = e.getBoundingClientRect(), cs = w.getComputedStyle(e); return { radius: parseFloat(cs.borderTopLeftRadius), w: Math.round(q.width), h: Math.round(q.height), vw: w.innerWidth }; });
     ok("فقاعة الإشعار مستطيل مدوَّر (لا إهليلج) وبعرض معقول داخل الشاشة", T.radius <= 20 && T.w > 150 && T.w <= T.vw - 20 && T.h < 120, T);
-    /* الحالة الفارغة: بطاقة بأزرار كبيرة، والنقر يفتح نافذة */
+    /* بلا نوافذ: العالم والمدارات تظهر (لا بطاقة) والنقر على شريحة الطلبات يفتح نافذة */
     await p.evaluate(() => { for (const k of [...SpatialOS.panels.keys()]) SpatialOS.dismiss(k, "close"); }); await wait(1200);
-    const E = await p.evaluate(() => { const e = document.getElementById("ps-empty"), cs = getComputedStyle(e), bs = [...e.querySelectorAll(".ps-tile")].map(b => { const q = b.getBoundingClientRect(); return [Math.round(q.width), Math.round(q.height)]; }), r = e.getBoundingClientRect(), bot = document.getElementById("ps-bot").getBoundingClientRect(); return { shown: cs.display !== "none", hero: document.body.classList.contains("ps-hero"), n: bs.length, small: bs.filter(x => x[1] < 44 || x[0] < 40).length, bottom: Math.round(r.bottom), botTop: Math.round(bot.top), panels: SpatialOS.panels.size }; });
-    ok("لا نافذة: تظهر بطاقة «لا توجد نوافذ مفتوحة» بأربعة أزرار ≥44px فوق الشريط السفلي", E.shown && E.hero && E.n === 4 && E.small === 0 && E.bottom <= E.botTop && E.panels === 0, E);
-    await p.tap('#ps-empty .ps-tile:nth-child(1)'); await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(600);
-    ok("النقر على «الطلبات» في البطاقة يفتح نافذة الطلبات وتختفي البطاقة", await p.evaluate(() => SpatialOS.panels.size === 1 && getComputedStyle(document.getElementById("ps-empty")).display === "none"));
+    ok("لا نافذة: حالة العالم (ps-hero) بلا بطاقة «لا توجد نوافذ مفتوحة»", await p.evaluate(() => document.body.classList.contains("ps-hero") && !document.getElementById("ps-empty") && SpatialOS.panels.size === 0));
+    await p.tap('.ps-subs .ps-chip[data-id="ord"]'); await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(600);
+    ok("النقر على شريحة «الطلبات» يفتح نافذة الطلبات", await p.evaluate(() => SpatialOS.panels.size === 1));
     /* فشل الفتح: رسالة ظاهرة بدل الصمت */
     await p.evaluate(() => { for (const k of [...SpatialOS.panels.keys()]) SpatialOS.dismiss(k, "close"); window.__nt = SpatialOS.navTo; SpatialOS.navTo = () => { throw new Error("boom"); }; }); await wait(800);
-    await p.tap('#ps-empty .ps-tile:nth-child(2)'); await wait(500);
+    await p.tap('.ps-subs .ps-chip:nth-child(2)'); await wait(500);
     ok("فشل فتح النافذة يُظهر رسالة «تعذّر فتح النافذة» (لا صمت)", await p.evaluate(() => { const m = document.getElementById("ps-msg"); return !m.hidden && /تعذّر/.test(m.textContent); }));
     await p.evaluate(() => { SpatialOS.navTo = window.__nt; });
     /* إعادة فتح تلقائية: لا نافذة بعد الإقلاع ولم يلمس المستخدم شيئاً ← تُفتح الطلبات */

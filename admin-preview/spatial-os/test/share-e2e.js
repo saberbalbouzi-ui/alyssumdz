@@ -35,6 +35,12 @@ async function run(b, store, extra) {
     ok("لا أخطاء صفحة (المشاركة وتقطيع الإقلاع)", on.errs.length === 0, on.errs);
     const boot = await p.evaluate(() => ["ord", "prod", "inv"].map(i => { const w = SpatialOS.panels.get(i).fr.contentWindow; return w.__spBoot ? [w.__spBoot.n, Math.round(w.__spBoot.maxMs), w.__spBoot.done] : null; }));
     ok("شريحة الإقلاع عملت في كل لوح (n>0، اكتملت)", boot.every(x => x && x[0] > 3 && x[2] === true), boot);
+    /* إغلاق نافذة أثناء تحميلها ثم فتح غيرها: طلب الإطار المغلق قد لا يُحلّ أبداً؛ يجب ألا يعلّق التالية (كان يعلّقها للأبد) */
+    await p.evaluate(() => { for (const k of [...SpatialOS.panels.keys()]) SpatialOS.dismiss(k, "close"); }); await wait(1000);
+    await p.evaluate(() => SpatialOS.open("returns")); await wait(500); await p.evaluate(() => SpatialOS.dismiss("returns", "close")); await wait(300);
+    await p.evaluate(() => SpatialOS.open("ana"));
+    const done = await p.waitForFunction(() => { const q = SpatialOS.panels.get("ana"); return q && q.frDone; }, null, { timeout: 60000 }).then(() => true).catch(() => false);
+    ok("إغلاق نافذة أثناء تحميلها ثم فتح أخرى: الثانية تكتمل (لا تعلق على طلب لا يُحلّ)", done);
     await on.ctx.close();
   } catch (e) { fails++; console.log("FAIL [crash]", String(e && e.stack || e).slice(0, 700)); }
   finally { try { await b.close(); } catch { } try { store.stop(); } catch { } }

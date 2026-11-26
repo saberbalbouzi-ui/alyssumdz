@@ -10,7 +10,7 @@
 (() => {
   "use strict";
   const mq = () => innerWidth <= 820, SO = () => window.SpatialOS;
-  let startAt = Date.now(), userTouched = false, recovered = false, lastErr = "", msgEl = null, emptyEl = null, host = null, top = null, bot = null, subsEl = null, grpEl = null, titleEl = null, menu = null, tray = null, itemsEl = null, winsBtn = null, badge = null, on = false, grp = "dash", lastSig = "", kb = 0, R = { w: 0, h: 0, cy: 0 };
+  let startAt = Date.now(), userTouched = false, recovered = false, lastErr = "", msgEl = null, host = null, top = null, bot = null, subsEl = null, grpEl = null, titleEl = null, menu = null, tray = null, itemsEl = null, winsBtn = null, badge = null, on = false, grp = "dash", lastSig = "", kb = 0, R = { w: 0, h: 0, cy: 0 };
   const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const ico = p => '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + "</svg>";
   const IC_WORLD = '<ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v11c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/>', IC_LAURA = '<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>';
@@ -101,12 +101,7 @@
     const th = el("div", "ps-sh"); th.append(el("b", null, "النوافذ المفتوحة")); const tx = el("button", "ps-ib", "×"); tx.type = "button"; tx.setAttribute("aria-label", "إغلاق"); tx.addEventListener("click", closeTray); th.append(tx);
     tray.append(th, el("div", "ps-tlist"));
     msgEl = el("div"); msgEl.id = "ps-msg"; msgEl.hidden = true; msgEl.setAttribute("role", "alert");
-    /* الحالة الفارغة (لا نافذة): بطاقة بأزرار كبيرة فوق العالم ثلاثي الأبعاد */
-    emptyEl = el("section"); emptyEl.id = "ps-empty"; emptyEl.setAttribute("aria-label", "ابدأ");
-    emptyEl.append(el("b", null, "لا توجد نوافذ مفتوحة"), el("small", null, "اختر ما تريد فتحه"));
-    const ea = el("div", "ps-ea"), eb = (label, fn) => { const b = el("button", "ps-tile", label); b.type = "button"; b.addEventListener("click", fn); return b; };
-    ea.append(eb("الطلبات", () => { grp = "store"; SO().selectTab("store"); renderGroups(); renderSubs(); go("ord"); }), eb("المنتجات", () => { grp = "prod"; SO().selectTab("prod"); renderGroups(); renderSubs(); const f = entries("prod")[0]; if (f) go(f.id); }), eb("الرئيسية", () => { grp = "dash"; SO().selectTab("dash"); renderGroups(); renderSubs(); const f = entries("dash")[0]; if (f) go(f.id); }), eb("كل الأقسام", openMenu));
-    emptyEl.append(ea); host.append(top, bot, menu, tray, msgEl, emptyEl); document.body.appendChild(host);
+    host.append(top, bot, menu, tray, msgEl); document.body.appendChild(host);
     document.addEventListener("pointerdown", () => { userTouched = true; }, true);   /* أي لمسة = المستخدم اختار حالته (العالم مثلاً): لا إعادة فتح تلقائية */
     document.addEventListener("keydown", e => { if (String(e.key || "") === "Escape") { closeMenu(); closeTray(); } });
   }

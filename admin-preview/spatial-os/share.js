@@ -17,6 +17,7 @@
   var ALLOW = { kv: 1, orders: 1, ship_carriers: 1, ship_unknown: 1, file: 1 };
   var VOLATILE = { orders: 1, ship_unknown: 1 };        /* أقصر عمراً حتى أثناء الدفعة */
   var SENSITIVE_KV = /(token|secret|pass|session|auth|apikey|api_key|otp|csrf|cookie)/i;
+  var JOIN_MAX = +window.__spShareJoinMax || 8000;   /* أقصى عمر لطلب جارٍ يُنضمّ إليه: طلب إطار أُغلق أثناء التحميل قد لا يُحلّ ولا يُرفض أبداً (يعلّق المنضمّين إليه) */
   var TTL_IDLE = 3000, TTL_BURST = 45000, TTL_BURST_VOL = 8000, MAX_BYTES = 1500000, MAX_ENTRIES = 200;
   var cache = new Map(), epoch = 0, epochs = {}, burst = false, st = { hit: 0, join: 0, miss: 0, bypass: 0, clears: 0, stored: 0 };
 
@@ -81,10 +82,16 @@
     if (c.write) { clearFor(c.route, c.sub); return null; }            /* الكتابة تمرّ كما هي لكن بعد إفراغ الذاكرة */
     var e = cache.get(c.key), t = now();
     if (e && e.exp && e.exp < t && !e.pending) { cache.delete(c.key); e = null; }
-    if (e && e.pending) { dbg("join", c.key); st.join++; return e.pending.then(function (rec) { return make(Resp, rec); }, function () { return orig(input, init); }); }
+    if (e && e.pending && t - e.t0 > JOIN_MAX) { dbg("stale-pending", c.key); cache.delete(c.key); e = null; }   /* طلب جارٍ قديم: لا ننضمّ إليه (قد يكون صاحبه أُغلق) */
+    if (e && e.pending) {
+      dbg("join", c.key); st.join++;
+      var left = Math.max(50, JOIN_MAX - (t - e.t0));   /* المنضمّ لا ينتظر أكثر من العمر المتبقي ثم يجلب بنفسه */
+      return new Promise(function (res, rej) { var tm = setTimeout(function () { rej(new Error("share-join-timeout")); }, left); e.pending.then(function (v) { clearTimeout(tm); res(v); }, function (er) { clearTimeout(tm); rej(er); }); })
+        .then(function (rec) { return make(Resp, rec); }, function () { return orig(input, init); });
+    }
     if (e && e.rec) { dbg("hit", c.key); st.hit++; return Promise.resolve(make(Resp, e.rec)); }
     st.miss++; dbg("miss", c.key + (e ? " (exp)" : ""));
-    var myEpoch = epoch, myNE = epochs[c.name] || 0, mySE = c.sub ? (epochs[c.name + "|" + c.sub] || 0) : 0, entry = { name: c.name, sub: c.sub, exp: 0, pending: null, rec: null }, key = c.key, vol = !!VOLATILE[c.name];
+    var myEpoch = epoch, myNE = epochs[c.name] || 0, mySE = c.sub ? (epochs[c.name + "|" + c.sub] || 0) : 0, entry = { t0: t, name: c.name, sub: c.sub, exp: 0, pending: null, rec: null }, key = c.key, vol = !!VOLATILE[c.name];
     entry.pending = orig(input, init).then(function (res) {
       return res.arrayBuffer().then(function (buf) {
         var rec = { status: res.status, statusText: res.statusText, headers: Array.from(res.headers.entries()), buf: buf };

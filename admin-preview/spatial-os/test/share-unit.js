@@ -11,6 +11,7 @@ function load(search, tenant) {
   vm.createContext(ctx); vm.runInContext(SRC, ctx); return ctx;
 }
 const JSONRES = (o, status) => () => new Response(JSON.stringify(o), { status: status || 200, headers: { "content-type": "application/json" } });
+function load2(prev) { const ctx = { Map, Promise, URL, Headers, Response, Date: { now: () => ctx.__t }, performance: { now: () => 0 }, setTimeout, clearTimeout, console, Array, Object, JSON, String, Math, __t: 1000000, __spShareJoinMax: prev.__spShareJoinMax }; ctx.window = ctx; ctx.location = { origin: "https://shop.example", search: "", href: "https://shop.example/x" }; ctx.SpatialHub = { tenant: () => null }; vm.createContext(ctx); vm.runInContext(SRC, ctx); return ctx; }
 function mkOrig(handler) { const calls = []; const f = (u, n) => { calls.push(String(u)); return Promise.resolve(handler(String(u), n)); }; f.calls = calls; return f; }
 const U = q => "/api/index.php?r=" + q, tick = () => new Promise(r => setTimeout(r, 5));
 (async () => {
@@ -68,6 +69,13 @@ const U = q => "/api/index.php?r=" + q, tick = () => new Promise(r => setTimeout
   { const c = load(), S = c.SpatialShare; let n = 0; const o = mkOrig(() => (n++ === 0 ? Promise.reject(new TypeError("closed")) : new Response("{\"ok\":1}", { status: 200 })));
     const p1 = S.fetch(o, U("kv&k=s_j"), {}, Response).catch(() => "err"), p2 = S.fetch(o, U("kv&k=s_j"), {}, Response);
     const [r1, r2] = await Promise.all([p1, p2]); ok("إغلاق إطار صاحب الطلب الجاري لا يكسر المنتظرين (يعيدون الجلب بأنفسهم)", r1 === "err" && r2.status === 200, [r1, r2 && r2.status]); }
+  /* 8b) طلب جارٍ لا يُحلّ أبداً (إطار أُغلق أثناء التحميل): لا يعلّق من بعده */
+  { const c = load(); c.__spShareJoinMax = 120; const SS = (() => { const c2 = load2(c); return c2.SpatialShare; })(); const hang = mkOrig(() => new Promise(() => { })); const ok2 = mkOrig(JSONRES({ fresh: 1 }));
+    SS.fetch(hang, U("kv&k=s_dead"), {}, Response);   /* لا يُحلّ أبداً */
+    const joiner = SS.fetch(ok2, U("kv&k=s_dead"), {}, Response); const r = await Promise.race([joiner, new Promise(res => setTimeout(() => res("HUNG"), 1500))]);
+    ok("منضمّ إلى طلب لا يُحلّ أبداً لا يعلق: بعد المهلة يجلب بنفسه", r !== "HUNG" && r.status === 200 && ok2.calls.length === 1, r === "HUNG" ? "HUNG" : [r.status, ok2.calls.length]);
+    const late = mkOrig(JSONRES({ fresh: 2 })); c.__t += 1000; const r2 = await SS.fetch(late, U("kv&k=s_dead"), {}, Response);
+    ok("طلب لاحق بعد انتهاء عمر الجاري القديم لا ينضمّ إليه (يجلب من جديد)", r2.status === 200 && late.calls.length <= 1); }
   /* 9) تطبيع معامل t + المستأجر */
   { const c = load(), S = c.SpatialShare, o = mkOrig(JSONRES({ ok: 1 }));
     await S.fetch(o, U("file&path=a.json&t=111"), {}, Response); await S.fetch(o, U("file&path=a.json&t=222"), {}, Response); ok("معامل كسر الكاش t لا يُفرّق الطلبات", o.calls.length === 1);
