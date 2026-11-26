@@ -35,7 +35,10 @@
     if (!L.length) itemsEl.appendChild(el("p", "ps-empty", "—"));
   }
   /* فشل فتح نافذة: رسالة ظاهرة بدل الصمت (الشاشة الفارغة بلا تفسير كانت أسوأ ما يراه المستخدم)؛ التفصيل التقني فقط مع ‎?debug=1‎ */
-  function fail(e) { lastErr = String((e && e.message) || e || "").slice(0, 160); if (!msgEl) return; msgEl.textContent = "تعذّر فتح النافذة — حاول مرة أخرى" + (/[?&]debug=1/.test(location.search) && lastErr ? " [" + lastErr + "]" : ""); msgEl.hidden = false; clearTimeout(fail._t); fail._t = setTimeout(() => { msgEl.hidden = true; }, 6000); }
+  function showMsg(text, kind, ms) { if (!msgEl) return; msgEl.textContent = text; msgEl.className = kind || ""; msgEl.hidden = false; clearTimeout(showMsg._t); showMsg._t = setTimeout(() => { msgEl.hidden = true; }, ms || 6000); }
+  /* إشعار معلوماتي ظاهر على الهاتف (شريط HUD الذي تكتب فيه hint() مخفيّ هنا: كانت رسائل مثل «LAURA غير مفعّلة» لا تُرى فيبدو الضغط بلا أثر) */
+  function notify(text, ms) { showMsg(text, "info", ms || 4000); }
+  function fail(e) { lastErr = String((e && e.message) || e || "").slice(0, 160); showMsg("تعذّر فتح النافذة — حاول مرة أخرى" + (/[?&]debug=1/.test(location.search) && lastErr ? " [" + lastErr + "]" : ""), "err", 6000); }
   function go(id) {
     const s = SO(); if (!s) return; try { if (!s.navTo(id)) s.open(id); } catch (e) { fail(e); return; } closeTray(); setTimeout(sync, 80);
     setTimeout(() => { const t = SO(); if (on && t && !t.panels.has(id) && !t.activeId()) fail("no-panel:" + id); }, 3000);
@@ -113,7 +116,7 @@
   function disable() { if (!on) return; on = false; closeMenu(); closeTray(); document.body.classList.remove("ps", "ps-hero", "ps-kb"); if (host) host.hidden = true; if (SO() && SO().relayout) SO().relayout(); }
   function onResize() { if (mq()) { if (!on) enable(); else { measure(); if (SO().relayout) SO().relayout(); onVV(); } } else disable(); }
   /* ‎_kb(px)‎ للاختبار: يحاكي ظهور لوحة المفاتيح بهذا الارتفاع (Chromium بلا لوحة حقيقية) */
-  window.SpatialPhone = { get on() { return on; }, get kb() { return kb; }, rect: () => R, refresh: onResize, enable, disable, openMenu, closeMenu, openTray, closeTray, _kb: px => { kb = px > 120 ? px : 0; document.body.classList.toggle("ps-kb", kb > 0); document.documentElement.style.setProperty("--ps-kb", kb + "px"); measure(); if (SO() && SO().relayout) SO().relayout(); } };
+  window.SpatialPhone = { notify, get on() { return on; }, get kb() { return kb; }, rect: () => R, refresh: onResize, enable, disable, openMenu, closeMenu, openTray, closeTray, _kb: px => { kb = px > 120 ? px : 0; document.body.classList.toggle("ps-kb", kb > 0); document.documentElement.style.setProperty("--ps-kb", kb + "px"); measure(); if (SO() && SO().relayout) SO().relayout(); } };
   addEventListener("error", e => { try { lastErr = String(e.message || "").slice(0, 160); } catch (_) { } });
   addEventListener("resize", onResize); addEventListener("orientationchange", () => setTimeout(onResize, 250));
   try { if (window.visualViewport) { visualViewport.addEventListener("resize", onVV); visualViewport.addEventListener("scroll", onVV); } } catch (_) { }
