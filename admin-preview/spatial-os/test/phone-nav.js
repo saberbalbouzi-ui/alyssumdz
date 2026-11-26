@@ -52,6 +52,29 @@ let fails = 0; const ok = (n, c, x) => { if (!c) fails++; console.log((c ? "PASS
     await wait(700);   /* #toast2 فيه transition:.3s */
     const T = await p.evaluate(() => { const w = SpatialOS.panels.get("ord").fr.contentWindow; const e = w.document.getElementById("toast2"), q = e.getBoundingClientRect(), cs = w.getComputedStyle(e); return { radius: parseFloat(cs.borderTopLeftRadius), w: Math.round(q.width), h: Math.round(q.height), vw: w.innerWidth }; });
     ok("فقاعة الإشعار مستطيل مدوَّر (لا إهليلج) وبعرض معقول داخل الشاشة", T.radius <= 20 && T.w > 150 && T.w <= T.vw - 20 && T.h < 120, T);
+    /* الحالة الفارغة: بطاقة بأزرار كبيرة، والنقر يفتح نافذة */
+    await p.evaluate(() => { for (const k of [...SpatialOS.panels.keys()]) SpatialOS.dismiss(k, "close"); }); await wait(1200);
+    const E = await p.evaluate(() => { const e = document.getElementById("ps-empty"), cs = getComputedStyle(e), bs = [...e.querySelectorAll(".ps-tile")].map(b => { const q = b.getBoundingClientRect(); return [Math.round(q.width), Math.round(q.height)]; }), r = e.getBoundingClientRect(), bot = document.getElementById("ps-bot").getBoundingClientRect(); return { shown: cs.display !== "none", hero: document.body.classList.contains("ps-hero"), n: bs.length, small: bs.filter(x => x[1] < 44 || x[0] < 40).length, bottom: Math.round(r.bottom), botTop: Math.round(bot.top), panels: SpatialOS.panels.size }; });
+    ok("لا نافذة: تظهر بطاقة «لا توجد نوافذ مفتوحة» بأربعة أزرار ≥44px فوق الشريط السفلي", E.shown && E.hero && E.n === 4 && E.small === 0 && E.bottom <= E.botTop && E.panels === 0, E);
+    await p.tap('#ps-empty .ps-tile:nth-child(1)'); await p.waitForFunction(() => { const q = SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(600);
+    ok("النقر على «الطلبات» في البطاقة يفتح نافذة الطلبات وتختفي البطاقة", await p.evaluate(() => SpatialOS.panels.size === 1 && getComputedStyle(document.getElementById("ps-empty")).display === "none"));
+    /* فشل الفتح: رسالة ظاهرة بدل الصمت */
+    await p.evaluate(() => { for (const k of [...SpatialOS.panels.keys()]) SpatialOS.dismiss(k, "close"); window.__nt = SpatialOS.navTo; SpatialOS.navTo = () => { throw new Error("boom"); }; }); await wait(800);
+    await p.tap('#ps-empty .ps-tile:nth-child(2)'); await wait(500);
+    ok("فشل فتح النافذة يُظهر رسالة «تعذّر فتح النافذة» (لا صمت)", await p.evaluate(() => { const m = document.getElementById("ps-msg"); return !m.hidden && /تعذّر/.test(m.textContent); }));
+    await p.evaluate(() => { SpatialOS.navTo = window.__nt; });
+    /* إعادة فتح تلقائية: لا نافذة بعد الإقلاع ولم يلمس المستخدم شيئاً ← تُفتح الطلبات */
+    const p2 = await ctx.newPage(); p2.setDefaultTimeout(40000);
+    await p2.goto(store.base + "/admin-preview/spatial-os/index.html?real=1&nozoom=1&norestore=1&nospare=1&noextra=1"); await p2.waitForFunction(() => typeof SpatialOS !== "undefined" && SpatialOS.two && document.body.classList.contains("ps"), null, { timeout: 90000 });
+    await p2.evaluate(() => new Promise(r => setTimeout(r, 1500))); await p2.evaluate(() => { for (const k of [...SpatialOS.panels.keys()]) SpatialOS.dismiss(k, "close"); });   /* يحاكي فشل/إغلاق الفتح التلقائي دون لمس */
+    await p2.waitForFunction(() => SpatialOS.panels.size >= 1, null, { timeout: 15000 }).catch(() => { });
+    ok("إعادة فتح تلقائية: بعد إقلاع بلا نافذة وبلا لمس تُفتح الطلبات تلقائياً", await p2.evaluate(() => SpatialOS.panels.has("ord")), await p2.evaluate(() => [...SpatialOS.panels.keys()]));
+    await p2.close();
+    const p3 = await ctx.newPage(); p3.setDefaultTimeout(40000);
+    await p3.goto(store.base + "/admin-preview/spatial-os/index.html?real=1&nozoom=1&norestore=1&nospare=1&noextra=1"); await p3.waitForFunction(() => typeof SpatialOS !== "undefined" && SpatialOS.two && document.body.classList.contains("ps"), null, { timeout: 90000 });
+    await p3.evaluate(() => new Promise(r => setTimeout(r, 1200))); await p3.tap("#ps-menu-btn"); await p3.evaluate(() => { SpatialPhone.closeMenu(); for (const k of [...SpatialOS.panels.keys()]) SpatialOS.dismiss(k, "close"); }); await wait(6000);
+    ok("بعد لمسة المستخدم لا تُعاد الفتح تلقائياً (احترام اختياره، مثل «العالم»)", await p3.evaluate(() => SpatialOS.panels.size === 0 && document.body.classList.contains("ps-hero")), await p3.evaluate(() => SpatialOS.panels.size));
+    await p3.close();
     ok("لا أخطاء صفحة", errs.length === 0, errs);
   } catch (e) { fails++; console.log("FAIL [crash]", String(e && e.stack || e).slice(0, 700)); }
   finally { try { await b.close(); } catch { } try { store.stop(); } catch { } }

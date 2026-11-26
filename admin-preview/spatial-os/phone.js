@@ -10,7 +10,7 @@
 (() => {
   "use strict";
   const mq = () => innerWidth <= 820, SO = () => window.SpatialOS;
-  let host = null, top = null, bot = null, subsEl = null, grpEl = null, titleEl = null, menu = null, tray = null, itemsEl = null, winsBtn = null, badge = null, on = false, grp = "dash", lastSig = "", kb = 0, R = { w: 0, h: 0, cy: 0 };
+  let startAt = Date.now(), userTouched = false, recovered = false, lastErr = "", msgEl = null, emptyEl = null, host = null, top = null, bot = null, subsEl = null, grpEl = null, titleEl = null, menu = null, tray = null, itemsEl = null, winsBtn = null, badge = null, on = false, grp = "dash", lastSig = "", kb = 0, R = { w: 0, h: 0, cy: 0 };
   const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const ico = p => '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + "</svg>";
   const IC_WORLD = '<ellipse cx="12" cy="6" rx="7" ry="2.5"/><path d="M5 6v11c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5V6"/>', IC_LAURA = '<circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>';
@@ -34,7 +34,12 @@
     L.forEach(e => { const b = el("button", "ps-tile" + (e.id === act ? " on" : ""), e.label); b.type = "button"; b.dataset.id = e.id; b.addEventListener("click", () => { go(e.id); closeMenu(); }); itemsEl.appendChild(b); });
     if (!L.length) itemsEl.appendChild(el("p", "ps-empty", "—"));
   }
-  function go(id) { const s = SO(); if (!s) return; if (!s.navTo(id)) s.open(id); closeTray(); setTimeout(sync, 80); }
+  /* فشل فتح نافذة: رسالة ظاهرة بدل الصمت (الشاشة الفارغة بلا تفسير كانت أسوأ ما يراه المستخدم)؛ التفصيل التقني فقط مع ‎?debug=1‎ */
+  function fail(e) { lastErr = String((e && e.message) || e || "").slice(0, 160); if (!msgEl) return; msgEl.textContent = "تعذّر فتح النافذة — حاول مرة أخرى" + (/[?&]debug=1/.test(location.search) && lastErr ? " [" + lastErr + "]" : ""); msgEl.hidden = false; clearTimeout(fail._t); fail._t = setTimeout(() => { msgEl.hidden = true; }, 6000); }
+  function go(id) {
+    const s = SO(); if (!s) return; try { if (!s.navTo(id)) s.open(id); } catch (e) { fail(e); return; } closeTray(); setTimeout(sync, 80);
+    setTimeout(() => { const t = SO(); if (on && t && !t.panels.has(id) && !t.activeId()) fail("no-panel:" + id); }, 3000);
+  }
   function pickGroup(g) {
     grp = g; renderGroups(); renderSubs(); renderItems();   /* المجموعة تُظهر عناصرها فقط؛ الانتقال إلى عنصر بنقرة عليه (القائمة) أو من شرائح الشريط */
     const gb = grpEl.querySelector(".on"); if (gb) gb.scrollIntoView({ inline: "center", block: "nearest" });
@@ -57,6 +62,8 @@
   function closeTray() { if (tray) tray.hidden = true; document.body.classList.remove("ps-tray-on"); }
   function sync() {
     if (!on || document.hidden) return; const s = SO(); if (!s) return; const act = s.activeId(), tab = s.tab || grp, n = openList().length, sig = act + "|" + tab + "|" + s.lang + "|" + n;
+    /* لا نافذة بعد الإقلاع ولم يلمس المستخدم شيئاً (الفتح التلقائي فشل أو تأخّر): نفتح الطلبات مرة واحدة بدل شاشة فارغة (يُفحص قبل حارس «لا تغيّر» لأنه معتمد على الزمن) */
+    if (!act && !n && !userTouched && !recovered && Date.now() - startAt > 3500) { recovered = true; go("ord"); }
     if (sig === lastSig) return; lastSig = sig;
     if (tab && tab !== grp && s.ring().indexOf(tab) >= 0) { grp = tab; if (!menu.hidden) { renderGroups(); renderItems(); } }
     renderSubs(); titleEl.textContent = act ? s.secName(act) : "ALYSSUM"; updBadge(); if (!tray.hidden) renderTray();
@@ -92,7 +99,15 @@
     /* الصينية: النوافذ المفتوحة */
     tray = el("section"); tray.id = "ps-tray"; tray.hidden = true; tray.setAttribute("role", "dialog"); tray.setAttribute("aria-label", "النوافذ المفتوحة");
     const th = el("div", "ps-sh"); th.append(el("b", null, "النوافذ المفتوحة")); const tx = el("button", "ps-ib", "×"); tx.type = "button"; tx.setAttribute("aria-label", "إغلاق"); tx.addEventListener("click", closeTray); th.append(tx);
-    tray.append(th, el("div", "ps-tlist")); host.append(top, bot, menu, tray); document.body.appendChild(host);
+    tray.append(th, el("div", "ps-tlist"));
+    msgEl = el("div"); msgEl.id = "ps-msg"; msgEl.hidden = true; msgEl.setAttribute("role", "alert");
+    /* الحالة الفارغة (لا نافذة): بطاقة بأزرار كبيرة فوق العالم ثلاثي الأبعاد */
+    emptyEl = el("section"); emptyEl.id = "ps-empty"; emptyEl.setAttribute("aria-label", "ابدأ");
+    emptyEl.append(el("b", null, "لا توجد نوافذ مفتوحة"), el("small", null, "اختر ما تريد فتحه"));
+    const ea = el("div", "ps-ea"), eb = (label, fn) => { const b = el("button", "ps-tile", label); b.type = "button"; b.addEventListener("click", fn); return b; };
+    ea.append(eb("الطلبات", () => { grp = "store"; SO().selectTab("store"); renderGroups(); renderSubs(); go("ord"); }), eb("المنتجات", () => { grp = "prod"; SO().selectTab("prod"); renderGroups(); renderSubs(); const f = entries("prod")[0]; if (f) go(f.id); }), eb("الرئيسية", () => { grp = "dash"; SO().selectTab("dash"); renderGroups(); renderSubs(); const f = entries("dash")[0]; if (f) go(f.id); }), eb("كل الأقسام", openMenu));
+    emptyEl.append(ea); host.append(top, bot, menu, tray, msgEl, emptyEl); document.body.appendChild(host);
+    document.addEventListener("pointerdown", () => { userTouched = true; }, true);   /* أي لمسة = المستخدم اختار حالته (العالم مثلاً): لا إعادة فتح تلقائية */
     document.addEventListener("keydown", e => { if (String(e.key || "") === "Escape") { closeMenu(); closeTray(); } });
   }
   function enable() {
@@ -104,6 +119,7 @@
   function onResize() { if (mq()) { if (!on) enable(); else { measure(); if (SO().relayout) SO().relayout(); onVV(); } } else disable(); }
   /* ‎_kb(px)‎ للاختبار: يحاكي ظهور لوحة المفاتيح بهذا الارتفاع (Chromium بلا لوحة حقيقية) */
   window.SpatialPhone = { get on() { return on; }, get kb() { return kb; }, rect: () => R, refresh: onResize, enable, disable, openMenu, closeMenu, openTray, closeTray, _kb: px => { kb = px > 120 ? px : 0; document.body.classList.toggle("ps-kb", kb > 0); document.documentElement.style.setProperty("--ps-kb", kb + "px"); measure(); if (SO() && SO().relayout) SO().relayout(); } };
+  addEventListener("error", e => { try { lastErr = String(e.message || "").slice(0, 160); } catch (_) { } });
   addEventListener("resize", onResize); addEventListener("orientationchange", () => setTimeout(onResize, 250));
   try { if (window.visualViewport) { visualViewport.addEventListener("resize", onVV); visualViewport.addEventListener("scroll", onVV); } } catch (_) { }
   document.addEventListener("sc-real", () => setTimeout(enable, 60)); setInterval(sync, 400);
