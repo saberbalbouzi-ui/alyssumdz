@@ -99,7 +99,7 @@
     setTimeout(go, 150);
   }
   function buildSubs(tab) { bumpWorld();
-    const ent = (typeof GROUPS !== "undefined" && GROUPS[tab] || [tab]).map(e => String(e).split("|")), lab = {}; ent.forEach(e => { if (e[1]) lab[e[0]] = e[1]; }); const ids = ent.map(e => e[0]).filter(id => SEC.some(s => s.id === id)); RS = PHn() ? 178 : ids.length > 14 ? Math.min(340, 236 + (ids.length - 14) * 6) : 236; orbit.classList.toggle("dense", ids.length > 14); const old = [...subs.values()]; old.forEach(b => { b.classList.add("out"); setTimeout(() => b.remove(), 260); }); subs.clear(); subIds = ids;
+    const ent = (typeof GROUPS !== "undefined" && GROUPS[tab] || [tab]).map(e => String(e).split("|")), lab = {}; ent.forEach(e => { if (e[1]) lab[e[0]] = e[1]; }); const ids = ent.map(e => e[0]).filter(id => SEC.some(s => s.id === id)); RS = ids.length > 14 ? Math.min(340, 236 + (ids.length - 14) * 6) : 236; orbit.classList.toggle("dense", ids.length > 14); const old = [...subs.values()]; old.forEach(b => { b.classList.add("out"); setTimeout(() => b.remove(), 260); }); subs.clear(); subIds = ids;
     ids.forEach(id => { const sc = SEC.find(s => s.id === id), b = document.createElement("button"); b.type = "button"; b.className = "node sub in"; b.dataset.id = id; b.setAttribute("aria-label", "فتح " + (lab[id] || sc.name)); b.innerHTML = svg(sc.icon) + "<span>" + (lab[id] || sc.name) + "</span>"; b.addEventListener("click", ev => { if (performance.now() - lastPanelDrag < 300) return; if (!(ev && (ev.shiftKey || ev.ctrlKey || ev.metaKey || ev.altKey)) && navInPlace(id)) { setTimeout(() => showSub3(id), 60); return; } openSection(id); showSub3(id); }); orbit.appendChild(b); subs.set(id, b); setTimeout(() => b.classList.remove("in"), 30); });
     markNodes();
   }
