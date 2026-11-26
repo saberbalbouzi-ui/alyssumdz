@@ -8,7 +8,8 @@ m = re.search(r'domain:\s*"([^"]+)"', cfg)
 DOMAIN = m.group(1) if m else "example.com"
 BASE = f"https://{DOMAIN}"
 SITE = (re.search(r'name:\s*"([^"]+)"', cfg) or [0, DOMAIN])[1]
-# بادئة روابط المنتجات النظيفة (CONFIG.SITE.productPrefix): "produit" ⟵ alyssumdz.com/produit/<slug>/ ويبقى الرابط القديم /<slug>/ يحوّل إليه؛ فارغة (الافتراضي) ⟵ الجذر كما كان
+# بادئة روابط المنتجات النظيفة (CONFIG.SITE.productPrefix): "produit" ⟵ alyssumdz.com/produit/<slug>/ ويبقى الرابط القديم /<slug>/ يحوّل إليه؛ فارغة (الافتراضي) ⟵ الجذر كما كان.
+# منتج حُوِّل مساره إلى صفحة هبوط (route) يُعامَل كصفحة: رابطه في الجذر alyssumdz.com/<slug>/ (للتفريق بين الصفحات والمنتجات)
 PFX = (re.search(r'productPrefix:\s*"([a-z0-9-]*)"', cfg) or [0, ""])[1]
 src = (ROOT / "assets/js/data.js").read_text(encoding="utf-8")
 products = json.loads(re.search(r"var PRODUCTS\s*=\s*(\[.*?\]);\s*\n", src, re.S).group(1))
@@ -39,7 +40,7 @@ def excluded(slug, path):
 
 def url_path(slug):
     """الرابط النظيف الأساسي للمنتج (جذر الموقع)؛ يبقى /p/<slug>/ يعمل كنسخة قديمة."""
-    return (f"{BASE}/{PFX}/{slug}/" if PFX else f"{BASE}/{slug}/") if slug in MIRROR_SLUGS else f"{BASE}/p/{slug}/"
+    return (f"{BASE}/{PFX}/{slug}/" if (PFX and slug not in ROUTED) else f"{BASE}/{slug}/") if slug in MIRROR_SLUGS else f"{BASE}/p/{slug}/"
 
 def abs_img(value):
     value = str(value or "")
@@ -92,7 +93,7 @@ def page_url(slug):
     """رابط صفحة الهبوط: مساراً لمنتج ← رابط المنتج؛ وإلا جذرها النظيف أو /lp/ القديم."""
     for ps, r in ROUTED.items():
         if r == slug and ps in MIRROR_SLUGS:
-            return f"{BASE}/{PFX}/{ps}/" if PFX else f"{BASE}/{ps}/"
+            return f"{BASE}/{ps}/"      # مسار منتج ⟵ جذر المنتج (كصفحة هبوط)
     return f"{BASE}/{slug}/" if slug in PAGE_MIRRORS else f"{BASE}/lp/{slug}/"
 # سكربت صغير: يجعل شريط العنوان نظيفاً إن فتح الزائر الرابط القديم (العنوان المعتمد canonical في الجذر)
 CLEAN_JS = ("<script>try{var c=document.querySelector('link[rel=canonical]');if(c&&self===top&&!/[?&](noroute|embed|preview)=/.test(location.search)){var u=new URL(c.href);"
@@ -266,11 +267,11 @@ made = 0
 for slug in sorted(MIRROR_SLUGS):
     route = ROUTED.get(slug)
     src_f = ROOT / "lp" / route / "index.html" if route else ROOT / "p" / slug / "index.html"
-    if PFX:
+    if PFX and not route:
         write_mirror(slug, src_f, deep=True)
         write_redirect(slug, f"/{PFX}/{slug}/", url_path(slug), by_slug[slug]["title"])      # الرابط القديم /<slug>/ يبقى يعمل (روابط الإعلانات المنشورة)
     else:
-        write_mirror(slug, src_f)
+        write_mirror(slug, src_f)      # منتج بمسار صفحة هبوط (أو بلا بادئة): النسخة في الجذر
     made += 1
 for slug in sorted(PAGE_MIRRORS):
     write_mirror(slug, ROOT / "lp" / slug / "index.html")
@@ -288,7 +289,7 @@ for old, new in aliases.items():
     if directory.exists() and not (target.exists() and REDIRECT_MARK in target.read_text(encoding="utf-8")):
         continue
     directory.mkdir(exist_ok=True)
-    href = ((f"/{PFX}/{new}/" if PFX else f"/{new}/") if new in MIRROR_SLUGS else f"/p/{new}/")
+    href = ((f"/{PFX}/{new}/" if (PFX and new not in ROUTED) else f"/{new}/") if new in MIRROR_SLUGS else f"/p/{new}/")
     abs_target = url_path(new)
     title = by_slug[new]["title"]
     target.write_text(f'<!DOCTYPE html>\n<html lang="ar" dir="rtl"><head>{REDIRECT_MARK}<meta charset="utf-8"><title>{esc(title)} — {esc(SITE)}</title>'
@@ -309,7 +310,7 @@ for directory in ROOT.iterdir():
 if PFX and (ROOT / PFX).is_dir():      # نسخ تحت البادئة لم يعد لها منتج (مُعطَّل/محذوف) تُحذف
     for directory in (ROOT / PFX).iterdir():
         target = directory / "index.html"
-        if directory.is_dir() and directory.name not in MIRROR_SLUGS and target.exists() and MIRROR_MARK in target.read_text(encoding="utf-8"):
+        if directory.is_dir() and (directory.name not in MIRROR_SLUGS or directory.name in ROUTED) and target.exists() and MIRROR_MARK in target.read_text(encoding="utf-8"):
             target.unlink(); directory.rmdir()
 # صفحة حساب الزبون لا تُفهرَس
 _acc = ROOT / "account.html"
