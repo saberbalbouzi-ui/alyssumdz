@@ -870,5 +870,6 @@
  "ويحوّل الرابط القديم": "et l'ancien lien",
  "إلى الجديد (الروابط المنسوخة عن الرابط النظيف القديم قد تتوقف). متابعة؟": "redirigera vers le nouveau (les liens copiés depuis l'ancien lien propre risquent de ne plus fonctionner). Continuer ?",
  "تغيّر الرابط إلى": "Le lien est devenu",
- "تعديل الرابط": "Modifier le lien"
+ "تعديل الرابط": "Modifier le lien",
+ "محاولة فاشلة لا فشل توصيل": "tentative échouée et non un échec de livraison"
 }
