@@ -1,0 +1,31 @@
+/* النافذة لا تُغلق بالنقر خارجها ولا بـEsc، بل بزرّ × أو «إلغاء»؛ ومعاينة بلا زر إغلاق ما زالت تُغلق بالنقر. NODE_PATH=/opt/node-tools/node_modules */
+const { chromium } = require("playwright");
+(async () => {
+  const b = await chromium.launch(), p = await b.newPage({ viewport: { width: 1280, height: 900 } }); let bad = 0; const t = (n, ok, x) => { console.log((ok ? "✓ " : "✗ ") + n + (ok ? "" : " " + JSON.stringify(x))); if (!ok) bad++; };
+  const errs = []; p.on("pageerror", e => errs.push(String(e).slice(0, 140)));
+  await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, r => r.abort());
+  await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
+  await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); } catch (e) { } });
+  await p.goto("http://localhost:" + (process.env.PORT || 8765) + "/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(7000);
+  const mk = (kind) => p.evaluate(kind => { document.querySelectorAll(".tm").forEach(e => e.remove()); const bg = document.createElement("div"); bg.className = "tm"; bg.id = "tm-" + kind;
+    bg.style.cssText = "position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;" + (kind === "catcher" ? "background:transparent" : "background:rgba(0,0,0,.6);backdrop-filter:blur(4px)");
+    const inner = kind === "nox" ? "<div style='background:#fff;padding:40px'>معاينة</div>" : "<div style='background:#fff;padding:40px;min-width:300px'>نافذة<button data-x='1' aria-label='إغلاق'>×</button><button data-c='1'>إلغاء</button></div>";
+    bg.innerHTML = inner; bg.addEventListener("click", e => { if (e.target === bg) bg.remove(); }); bg.addEventListener("keydown", e => { if (e.key === "Escape") bg.remove(); }); document.addEventListener("keydown", window.__esc = e => { if (e.key === "Escape") { const x = document.getElementById("tm-" + kind); if (x) x.remove(); } });
+    bg.addEventListener("click", e => { if (e.target.closest("[data-x],[data-c]")) bg.remove(); }); document.body.appendChild(bg); }, kind);
+  const open = id => p.evaluate(id => !!document.getElementById(id), id);
+  await mk("modal"); await p.waitForTimeout(300);
+  await p.mouse.click(8, 8); await p.waitForTimeout(200);
+  t("النقر خارج النافذة لا يغلقها", await open("tm-modal"));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(200);
+  t("Esc لا يغلقها", await open("tm-modal"));
+  await p.click("#tm-modal [data-x]"); await p.waitForTimeout(200);
+  t("زرّ × يغلقها", !(await open("tm-modal")));
+  await mk("modal"); await p.click("#tm-modal [data-c]"); await p.waitForTimeout(200);
+  t("زرّ إلغاء يغلقها", !(await open("tm-modal")));
+  await mk("nox"); await p.mouse.click(8, 8); await p.waitForTimeout(200);
+  t("طبقة بلا زر إغلاق (معاينة) تُغلق بالنقر خارجها كي لا تعلق", !(await open("tm-nox")));
+  await mk("catcher"); await p.mouse.click(8, 8); await p.waitForTimeout(200);
+  t("شفّافة النقر الخارجي (قوائم) لا تتأثر", !(await open("tm-catcher")));
+  t("بلا أخطاء JS", errs.length === 0, errs);
+  await b.close(); process.exit(bad ? 1 : 0);
+})();
