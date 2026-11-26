@@ -2599,7 +2599,16 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
+  /* «حجم المحتوى %» (wsc) محصور بين 20 و500: عنصر نصّه صغير (خط 11.6 مثلاً) وصل إلى 500 فلا يكبر محتواه بعد ذلك — يتوقف عند السقف بينما يصغر فوراً عند التصغير فيبدو أن الإطار «يصغر ولا يكبر». عند بدء السحب نُحوّل المعامل الكبير/الصغير جداً إلى الخط نفسه (fs×wsc) ونعيد wsc إلى 100 فيبقى الشكل كما هو ويتسع المجال للتكبير والتصغير؛ الأجهزة التي ترث خط هذا الجهاز تُثبَّت قيمتها أولاً فلا يتغيّر مظهرها. */
+  function rebaseWsc(inf, dev) {
+    if (!inf || inf.kind !== "widget" || !["text", "heading", "button", "bullets"].includes(inf.node.type)) return; const set = inf.set, ch = ["d", "t", "m"];
+    const ws = dev === "d" ? (Number(own(set, "wsc", "d")) || 100) : (own(set, "wsc", dev) !== undefined ? (Number(own(set, "wsc", dev)) || 100) : 100); if (ws <= 250 && ws >= 40) return;
+    const fsv = ch.map(dv => Number(eff(set, "fs", dv))); if (!fsv.every(v => v > 0)) return;      // الدمج في الخط يعمل فقط حين يكون الخط معرَّفاً لكل الأجهزة
+    const pos = ch.indexOf(dev); ch.slice(pos + 1).forEach((dv, i) => { if (own(set, "fs", dv) === undefined) setR(set, "fs", dv, fsv[pos + 1 + i]); });
+    setR(set, "fs", dev, Math.round(fsv[pos] * ws) / 100); setR(set, "wsc", dev, 100);
+  }
   function startResize(e, dir, inf) {
+    if (inf.free || (inf.sec && inf.node && (inf.sec.free || []).includes(inf.node))) rebaseWsc(inf, E.dev);
     if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading", "countdown", "counter"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) { inf.set.hauto = false; inf.set.hfix = true; }      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
     const dev = devOfFree(inf), el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, r0 = layoutRect(el), set = inf.set;

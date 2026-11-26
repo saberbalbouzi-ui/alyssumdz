@@ -24,6 +24,22 @@ const { chromium } = require("playwright");
     if (extra.gap) t(name + ": الفجوة تكبر معه", c.gap > a.gap * k * .85, { a: a.gap, c: c.gap, k });
     t(name + ": القائمة داخل الإطار (لا فيض)", c.ulh <= c.h + 3, c);
   }
+  /* على الهاتف: «حجم المحتوى» عند سقفه (500) لا يتوقف التكبير ويتماثل مع التصغير، ومظهر المكتب والتابلت لا يتغيّر */
+  await p.evaluate(async () => { const set = { fs: { d: 21, t: 11.6 }, fx: { d: 25, t: 8, m: 3.5 }, fy: { d: 100, t: 100, m: 100 }, fwd: { d: 25.3, t: 42.6, m: 48.9 }, fh: { d: 143, t: 116, m: 258 }, zi: 6, color: "#000", wsc: { d: 112, t: 139, m: 480 }, micon: "ic:check-circle", ms: { d: 18 }, gap: { d: 8 }, items: "يساعد على دعم التركيز\nيرفع القدرة على الحفظ\nيقوي الذاكرة" };
+    PBApp.open({ v: 1, title: "t", slug: "t-cap", ff: "Cairo", css: "", sections: [{ id: "s1", set: { kind: "canvas", scaled: true, dw: 1274, scaledT: true, scaledM: true, layout: "full", mh: { d: 700, t: 700, m: 700 }, pad: { d: [0, 0, 0, 0] } }, free: [{ id: "bl", type: "bullets", set }], cols: [{ id: "c1", widgets: [] }] }] }, "", true); await new Promise(r => setTimeout(r, 2000)); });
+  const rend = dv => p.evaluate(async dv => { const old = PBApp.E.dev; PBApp.setDev(dv); await new Promise(r => setTimeout(r, 1300)); const li = document.getElementById("pbx-frame").contentDocument.querySelector('[data-pb="bl"] li'), v = parseFloat(getComputedStyle(li).fontSize); PBApp.setDev(old); await new Promise(r => setTimeout(r, 900)); return v; }, dv);
+  const R0 = [await rend("d"), await rend("t"), await rend("m")];
+  await p.evaluate(() => PBApp.setDev("m")); await p.waitForTimeout(1300);
+  const pt2 = await p.evaluate(() => { const fr = document.getElementById("pbx-frame"), el = fr.contentDocument.querySelector('[data-pb="bl"]'), r = el.getBoundingClientRect(), f = fr.getBoundingClientRect(), k = PBApp.E.scale || 1; return { x: f.left + (r.left + r.width / 2) * k, y: f.top + (r.top + r.height / 2) * k }; });
+  await p.mouse.click(pt2.x, pt2.y); await p.waitForTimeout(500);
+  const dragNW = async (dx, dy) => { const h = await p.evaluate(() => { const e = document.querySelector("#pbx-ovl .pbx-box .pbx-h.d-nw"), r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }); await p.mouse.move(h.x, h.y); await p.mouse.down(); await p.mouse.move(h.x + dx / 2, h.y + dy / 2, { steps: 4 }); await p.mouse.move(h.x + dx, h.y + dy, { steps: 6 }); await p.mouse.up(); await p.waitForTimeout(600); };
+  const m0 = await rend("m"); await dragNW(-30, -20); const m1 = await rend("m"); await dragNW(-30, -20); const m2 = await rend("m"); await dragNW(25, 17); const m3 = await rend("m");
+  const wscM = await p.evaluate(() => PBApp.E.page.sections[0].free[0].set.wsc.m);
+  t("الهاتف عند سقف حجم المحتوى: التكبير المتتالي يزيد الخط", m1 > m0 * 1.05 && m2 > m1 * 1.05, { m0, m1, m2 });
+  t("والتصغير يُنقصه (بلا عدم تماثل)", m3 < m2 * .97, { m2, m3 });
+  t("المعامل المخزَّن عاد إلى نطاق عملي (لا يلتصق بـ500)", wscM <= 250, wscM);
+  const R1 = [await rend("d"), await rend("t")];
+  t("مظهر المكتب والتابلت لم يتغيّر بتعديل الهاتف", Math.abs(R1[0] - R0[0]) < .05 && Math.abs(R1[1] - R0[1]) < .05, { R0, R1 });
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
