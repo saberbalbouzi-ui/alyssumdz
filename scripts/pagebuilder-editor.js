@@ -238,7 +238,7 @@ body{overflow-x:hidden;margin:0}`;
 .pbx-cov{position:absolute;border:2px dashed #e5484d;background:rgba(229,72,77,.12);pointer-events:none;box-sizing:border-box}.pbx-lcv{display:flex;flex-wrap:wrap;gap:.3rem;padding:.2rem .3rem .5rem}.pbx-lcv>div{flex:1 1 100%}
 .pbx-edge{position:absolute;pointer-events:auto;z-index:2}.pbx-edge.e-n{top:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-s{bottom:-5px;left:0;right:0;height:11px;cursor:ns-resize}.pbx-edge.e-e{right:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}.pbx-edge.e-w{left:-5px;top:0;bottom:0;width:11px;cursor:ew-resize}
 .pbx-painting #pbx-stage,.pbx-painting #pbx-stage *{cursor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24'%3E%3Crect x='8' y='8' width='13' height='13' rx='2.5' fill='white' stroke='%231f2123' stroke-width='1.8'/%3E%3Cpath d='M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8' fill='none' stroke='%231f2123' stroke-width='1.8'/%3E%3C/svg%3E") 6 6,copy!important}
-.pbx-painting .pbx-ft,.pbx-painting .pbx-sb,.pbx-painting .pbx-mwbar,.pbx-painting .pbx-slnav,.pbx-painting .pbx-h,.pbx-painting .pbx-rz{display:none!important}      /* أثناء فرشاة النمط: لا شيء عائم يغطي العناصر المجاورة فيستقبل النقر بدلها */
+.pbx-painting .pbx-ft,.pbx-painting .pbx-sb,.pbx-painting .pbx-mwbar,.pbx-painting .pbx-slnav,.pbx-painting .pbx-h{display:none!important}.pbx-painting .pbx-rz{visibility:hidden!important}      /* أثناء فرشاة النمط: لا شيء عائم يغطي العناصر المجاورة فيستقبل النقر بدلها */
 .pbx-ed .pbx-ft,.pbx-ed .pbx-sb,.pbx-ed .pbx-mwbar,.pbx-ed .pbx-slnav{display:none!important}      /* أثناء تحرير النص: تُخفى أشرطة العنصر العائمة فلا تغطي النص */
 .pbx-ft{position:absolute;display:flex;gap:2px;align-items:center;background:#fff;border-radius:12px;padding:5px 6px;box-shadow:0 3px 14px rgba(14,19,24,.28),0 0 0 1px rgba(64,87,109,.08);pointer-events:auto;z-index:7;direction:ltr}
 .pbx-ft button,.pbx-sb button{width:34px;height:34px;border:0;background:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#0e1318;padding:0;font-family:inherit}
@@ -414,6 +414,16 @@ body{overflow-x:hidden;margin:0}`;
     ["pbx-orgp", "pbx-epf", "pbx-bgp", "pbx-ctx", "pbx-ctx2", "pbx-lib", "pbar-bg", "pbnp-bg", "pbx-tx", "pbx-logo", "pbx-spec", "pbx-ip", "pbs-modal", "pbs-bl", "pbs-af", "pbs-er", "pbdrop", "pbbg-chip"].forEach(id => { const e = document.getElementById(id); if (e) e.remove(); });
   }
   /* حوار تأكيد داخل الصفحة بدل نافذة المتصفح الأصلية (لا يعطّل الأتمتة ويطابق مظهر اللوحة) */
+  /* حوار إدخال نص داخل الصفحة بدل prompt() الأصلي (قد يُحجب في التطبيق المثبَّت/بعد «منع مزيد من الحوارات» فيعود null دون أي رسالة وتبدو العملية «لا تعمل») */
+  function pbPrompt(msg, def, onOk, okText) {
+    const old = document.getElementById("pbx-pr"); if (old) old.remove();
+    const bg = document.createElement("div"); bg.id = "pbx-pr"; bg.setAttribute("style", "position:fixed;inset:0;z-index:100060;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:14px;direction:rtl");
+    bg.innerHTML = '<div role="dialog" aria-modal="true" style="position:relative;max-width:440px;width:100%;background:rgba(9,24,18,.99);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:1.2rem 1.3rem;box-shadow:0 20px 60px rgba(0,0,0,.6);font-family:inherit"><button type="button" data-k="no" aria-label="إغلاق" style="position:absolute;top:.5rem;inset-inline-start:.6rem;background:transparent;border:0;color:#fff;font-size:1.3rem;cursor:pointer">×</button><div style="font-weight:800;line-height:1.7;margin:.4rem 0 .6rem;padding-inline-start:1.6rem">' + PB.esc(msg) + '</div><input id="pbx-pr-in" dir="ltr" style="width:100%;box-sizing:border-box;padding:.6rem .7rem;border-radius:12px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;font:inherit" value="' + PB.esc(def || "") + '"><div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.9rem"><button type="button" data-k="no" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:.5rem 1rem;font:inherit;cursor:pointer">إلغاء</button><button type="button" data-k="ok" style="background:#e2fe17;color:#1f2123;border:0;border-radius:14px;padding:.5rem 1.2rem;font:inherit;font-weight:800;cursor:pointer">' + PB.esc(okText || "موافق") + '</button></div></div>';
+    const inp = () => bg.querySelector("#pbx-pr-in"), end = ok => { const v = inp().value; document.removeEventListener("keydown", kd, true); bg.remove(); if (ok) { try { onOk(v); } catch (x) { console.warn(x); } } };
+    const kd = ev => { if (ev.key === "Enter" && bg.contains(document.activeElement) && document.activeElement.id === "pbx-pr-in") { ev.stopPropagation(); ev.preventDefault(); end(true); } };
+    bg.addEventListener("click", ev => { const b = ev.target.closest("[data-k]"); if (b) end(b.dataset.k === "ok"); });
+    document.addEventListener("keydown", kd, true); document.body.appendChild(bg); const i = inp(); i.focus(); i.select();
+  }
   function pbAsk(msg, okText, onOk, noText) {
     const old = document.getElementById("pbx-ask"); if (old) old.remove();
     const bg = document.createElement("div"); bg.id = "pbx-ask"; bg.setAttribute("style", "position:fixed;inset:0;z-index:100050;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:14px;direction:rtl");
@@ -648,10 +658,12 @@ ${P.origin ? "" : `<div class="pbx-f"><label style="font-weight:800"><input type
   /* نسخ الصفحة الحالية كصفحة جديدة (تُفتح للتعديل ثم تُنشر) */
   function dupCurrent(ok) {
     if (E.dirty && ok !== true) { pbAsk("هناك تعديلات غير منشورة في هذه الصفحة. ستُنسخ كما هي في صفحة جديدة، أما الأصل فيبقى كما نُشر آخر مرة. متابعة؟", "متابعة", () => dupCurrent(true)); return; }
-    const ns = prompt("رابط الصفحة الجديدة (حروف لاتينية صغيرة وأرقام وشرطات):", (E.page.slug || "page") + "-copy"); if (!ns) return;
-    const p = clone(E.page); p.slug = ns.toLowerCase().replace(/[^a-z0-9-]/g, ""); p.title = (p.title || "") + " (نسخة)"; E.dirty = false;
-    toast("⏳ جارِ إنشاء النسخة…");
-    PBAdmin.saveCopy(p).then(() => { open(p, p.slug, false); try { PBAdmin.refresh(); } catch (x) { } toast("⧉ أُنشئت النسخة وظهرت في قائمة الصفحات كمسودة: عدّل ثم «حفظ ونشر»"); }).catch(e => { toast("❌ " + e.message); });
+    pbPrompt("رابط الصفحة الجديدة (حروف لاتينية صغيرة وأرقام وشرطات):", (E.page.slug || "page") + "-copy", ns => {
+      ns = String(ns || "").toLowerCase().replace(/[^a-z0-9-]/g, ""); if (!ns) { toast("⚠️ اسم الرابط غير صالح: استعمل حروفاً لاتينية صغيرة وأرقاماً وشرطات"); return; }
+      const p = clone(E.page); p.slug = ns; p.title = (p.title || "") + " (نسخة)"; E.dirty = false;
+      toast("⏳ جارِ إنشاء النسخة…");
+      PBAdmin.saveCopy(p).then(() => { open(p, p.slug, false); try { PBAdmin.refresh(); } catch (x) { } toast("⧉ أُنشئت النسخة وظهرت في قائمة الصفحات كمسودة: عدّل ثم «حفظ ونشر»"); }).catch(e => { toast("❌ " + e.message); });
+    }, "إنشاء النسخة");
   }
   function slugEdit(v) { E.slugTouched = true; E.page.slug = String(v).toLowerCase().replace(/[^a-z0-9-]/g, ""); E.dirty = true; updateTop(); }
 
@@ -2599,7 +2611,16 @@ ${ck("clamp", "إعادة العناصر الخارجة عن حدود قسمها
   }
   function setProp(key, label) { const inf = selInfo(); if (!inf || inf.kind !== "widget") return; const v = prompt(label, inf.set[key] || ""); if (v === null) return; inf.set[key] = v.trim(); afterEdit(); }
   /* ───────────────── تغيير الحجم من كل الاتجاهات ───────────────── */
+  /* «حجم المحتوى %» (wsc) محصور بين 20 و500: عنصر نصّه صغير (خط 11.6 مثلاً) وصل إلى 500 فلا يكبر محتواه بعد ذلك — يتوقف عند السقف بينما يصغر فوراً عند التصغير فيبدو أن الإطار «يصغر ولا يكبر». عند بدء السحب نُحوّل المعامل الكبير/الصغير جداً إلى الخط نفسه (fs×wsc) ونعيد wsc إلى 100 فيبقى الشكل كما هو ويتسع المجال للتكبير والتصغير؛ الأجهزة التي ترث خط هذا الجهاز تُثبَّت قيمتها أولاً فلا يتغيّر مظهرها. */
+  function rebaseWsc(inf, dev) {
+    if (!inf || inf.kind !== "widget" || !["text", "heading", "button", "bullets"].includes(inf.node.type)) return; const set = inf.set, ch = ["d", "t", "m"];
+    const ws = dev === "d" ? (Number(own(set, "wsc", "d")) || 100) : (own(set, "wsc", dev) !== undefined ? (Number(own(set, "wsc", dev)) || 100) : 100); if (ws <= 250 && ws >= 40) return;
+    const fsv = ch.map(dv => Number(eff(set, "fs", dv))); if (!fsv.every(v => v > 0)) return;      // الدمج في الخط يعمل فقط حين يكون الخط معرَّفاً لكل الأجهزة
+    const pos = ch.indexOf(dev); ch.slice(pos + 1).forEach((dv, i) => { if (own(set, "fs", dv) === undefined) setR(set, "fs", dv, fsv[pos + 1 + i]); });
+    setR(set, "fs", dev, Math.round(fsv[pos] * ws) / 100); setR(set, "wsc", dev, 100);
+  }
   function startResize(e, dir, inf) {
+    if (inf.free || (inf.sec && inf.node && (inf.sec.free || []).includes(inf.node))) rebaseWsc(inf, E.dev);
     if (inf.node.type === "image" && inf.set.hauto && (dir.includes("n") || dir.includes("s"))) delete inf.set.hauto; else if (["text", "heading", "countdown", "counter"].includes(inf.node.type) && inf.set.hauto !== false && (dir.includes("n") || dir.includes("s"))) { inf.set.hauto = false; inf.set.hfix = true; }      // تغيير الارتفاع يدوياً يعطّل الارتفاع التلقائي
     e.preventDefault(); e.stopPropagation(); if (inf.kind === "widget" && inf.free) ensureMobile(inf.sec);
     const dev = devOfFree(inf), el = fdoc.querySelector(`[data-pb="${inf.node.id}"]`), s = E.scale, r0 = layoutRect(el), set = inf.set;
@@ -4235,7 +4256,7 @@ ${t !== "linear" ? `<label class="pbx-gl">المركز X / Y %</label><div class
     } catch (err) { console.error(err); pb.end(false, err.message || "تعذّر الحفظ"); toast("❌ " + err.message); } finally { E.pubBusy = false; }
   }
 
-  return { view360Session, convertAllFree: () => convertAllFree(), togglePanels, mm, organizePage, ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
+  return { ask: pbAsk, askText: pbPrompt, view360Session, convertAllFree: () => convertAllFree(), togglePanels, mm, organizePage, ungroupAll, render: () => renderCanvas(), afterEdit: l => { E.nextLabel = l; afterEdit(); }, toast: m => toast(m), htmlToFree: id => htmlToFree(id), fitSection: id => { const i = find(id); if (i) fitSection(i.kind === "section" ? i.node : i.sec); }, drawGuides, growCanvas, setStk, landingMode, stripHF, convertAllFree, magnetBox, pushDown, flowToFree: id => { const i = find(id); i && flowToFree(i.node); }, imgRect: id => { const L = layoutOf(id), fw = $("pbx-fw"); if (!L || !fw) return null; const r = fw.getBoundingClientRect(), sc = E.scale || 1; return { left: r.left + L.left * sc, top: r.top + L.top * sc, width: L.width * sc, height: L.height * sc }; }, capDone: v => { E.capDone = !!v; if ($("pbx-ep")) epDraw(); }, openPimg: openPageImages, toolSession, toolFresh, scanOver, toolAct, toolModeOn, toolModeOff, toolMode: () => E.toolMode, hasHybrid: () => !!(E.page && E.page.specMeta && E.page.specMeta.hybrid), mutatePage: (fn, label) => { if (!E.page) return false; E.nextLabel = label || "تعديل الصفحة"; const r = fn(E.page); E.dirty = true; commitHist(); afterHist(); return r; }, addPageImage, liveShow, liveCanvas, liveClear, liveCancel, liveOn, closeFloating, toggleGrid, xpGet, xpSet, xpGeom, xpApply, openCtx, stPreview, stRestore, epFloatNow: () => epFloat(), adResize, adResizeUi, addSticker, addVideoFile, uploadSvg, uploadVideo: prepVideo, toast, setMainRoute, setAB, insertSections, rename, toggleLive, toggleFx, playAnims, animTarget, pageJson: () => JSON.stringify(E.page), setAbPage: (page, pct) => { E.ab = page ? { page, pct: pct || 50, on: true } : null; },  renderInspectorNow: () => renderInspector(), compressVideo, FREE_ONLY, saveDraftNow, open, close, meta, setDev, undo, redo, hist, histGo, preview, publish, ltab, ltoggle, addBlank, panel, mact, ma, toggleMM, setZoom, slugEdit, renderCanvas, toggleSnap, slim, mediaAdd, uploadBlob, siteCtx, putJson, openLibrary, E, find, localize, linkProduct, dupCurrent, commitAfter: id => afterEdit(id), prepMobile, layoutOf };
 })();
 
 /* ───────── قائمة الصفحات في تبويب لوحة الإدارة ───────── */
@@ -4259,8 +4280,9 @@ const PBAdmin = {
 ${this.quickImg(pg.cover)}
 <label>المنتج المرتبط (نموذج الطلب والصفحة تخصّه)</label><select id="pq-prod"><option value="">— بدون —</option>${prods.map(x => `<option value="${PB.esc(x.slug)}"${pg.product === x.slug ? " selected" : ""}>${PB.esc(x.title)}</option>`).join("")}</select>
 ${(() => { const cur = prods.find(x => x.slug === pg.product); return `<div id="pq-flags" style="background:#faf6ec;border:1px solid #eadfc4;border-radius:10px;padding:.5rem .7rem;margin:.4rem 0"><label style="display:flex;gap:.5rem;align-items:center;font-weight:700"><input type="checkbox" id="pq-off" style="width:auto"${cur && cur.officialPage === slug ? " checked" : ""}> 📄 هذه الصفحة هي الصفحة الرسمية للمنتج (تعديلاتها تغيّر المنتج والعكس)</label><label style="display:flex;gap:.5rem;align-items:center;font-weight:700"><input type="checkbox" id="pq-route" style="width:auto"${cur && cur.route === slug ? " checked" : ""}> 🧭 تُفتح عند الضغط على المنتج في الصفحة الرئيسية</label><small class="hint">تُطبَّق على المنتج المختار أعلاه.</small></div>`; })()}
-<div id="pq-seo-host"></div><small class="hint">الرابط: <span dir="ltr">${PB.esc((() => { const li = (this.list || []).find(x => x.slug === slug); return this._cleanOf ? this._cleanOf(slug, li && li.live) : "/lp/" + slug; })())}/</span> </small> <button class="small gray" type="button" onclick="PBAdmin.quickClose();PBAdmin.rename('${PB.esc(slug)}')">تغيير الرابط</button>`);
+<div id="pq-seo-host"></div><small class="hint">الرابط: <span dir="ltr">${PB.esc((() => { const li = (this.list || []).find(x => x.slug === slug); return this._cleanOf ? this._cleanOf(slug, li && li.live) : "/lp/" + slug; })())}/</span> </small>`);
       this.quickSeo({ title: pg.seoTitle || "", focus: pg.seoFocus || "", kw: pg.kw || "", desc: pg.desc || "", noindex: !!pg.noindex }, { kind: "page", nameFn: () => (document.getElementById("pq-name") || {}).value || pg.title || "", path: "lp/" + slug + "/", noImage: true });
+      { const off = document.getElementById("pq-off"), rt = document.getElementById("pq-route"); if (off && rt) off.addEventListener("change", () => { if (!off.checked || rt.checked) return; const cur = prods.find(x => x.slug === (document.getElementById("pq-prod") || {}).value); if (cur && (!cur.route || cur.route === slug)) rt.checked = true; });      /* الصفحة الرسمية للمنتج تُفتح عادةً من الرئيسية أيضاً: يُفعَّل «المسار» معها تلقائياً (قابل للإلغاء) ما لم يكن للمنتج مسار آخر */ }
       document.getElementById("pq-bg").classList.add("open");
     } catch (err) { toast("❌ " + err.message); }
   },
@@ -4286,7 +4308,7 @@ ${(() => { const cur = prods.find(x => x.slug === pg.product); return `<div id="
         pg.sections.forEach(walk);
         const html = PB.fullHtml(pg, Object.assign({ base: "../../" }, PBApp.siteCtx()));
         await PBApp.putJson("lp/" + q.slug + "/index.html", html, "تعديل سريع لصفحة هبوط: " + q.slug); await PBApp.putJson("assets/pages/" + q.slug + ".json", pg, "مصدر صفحة هبوط: " + q.slug);
-        const idx = this.list.slice(), i = idx.findIndex(x => x.slug === q.slug); if (i >= 0) { idx[i] = Object.assign({}, idx[i], { title: pg.title, thumb: pg.cover || idx[i].thumb, product: pg.product || "", updated: new Date().toISOString().slice(0, 16).replace("T", " ") }); await PBApp.putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط"); }
+        const idx = this.list.slice(), i = idx.findIndex(x => x.slug === q.slug); if (i >= 0) { idx[i] = Object.assign({}, idx[i], { title: pg.title, thumb: pg.cover || idx[i].thumb, product: pg.product || "", updated: new Date().toISOString().slice(0, 16).replace("T", " ") }); await PBApp.putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط"); this.list = idx; }
         /* الصفحة الرسمية / مسار المنتج */
         const A = Admin.products || [], chg = [];
         if (prev && prev !== pg.product) { const old = A.find(x => x.slug === prev); if (old) { if (old.officialPage === q.slug) { delete old.officialPage; chg.push(1); } if (old.route === q.slug) { delete old.route; chg.push(1); } } }
@@ -4295,7 +4317,7 @@ ${(() => { const cur = prods.find(x => x.slug === pg.product); return `<div id="
           if (off && cur.officialPage !== q.slug) { cur.officialPage = q.slug; chg.push(1); } else if (!off && cur.officialPage === q.slug) { delete cur.officialPage; chg.push(1); }
           if (rt && cur.route !== q.slug) { cur.route = q.slug; chg.push(1); } else if (!rt && cur.route === q.slug) { delete cur.route; chg.push(1); } }
         if (chg.length) { await Admin.publishDataJs(); try { Admin.renderProducts(); } catch (e) { } }
-        toast("✅ حُفظت الصفحة"); this.quickClose(); this.refresh();
+        toast("✅ حُفظت الصفحة"); this.quickClose(); this.refresh(true);
       } else {
         const pr = Admin.products.find(x => x.slug === q.slug); if (!pr) throw new Error("المنتج غير موجود");
         pr.title = v("pq-name").trim() || pr.title; if (q.cover) pr.cover = q.cover; { const r = SeoBox.read("pqs"); pr.seoTitle = r.title; pr.seoDesc = r.desc; pr.seoKw = r.kw; pr.seoFocus = r.focus; if (r.noindex) pr.noindex = true; else delete pr.noindex; }
@@ -4322,13 +4344,15 @@ ${this.quickImg(this.q.cover)}
   },
   initGen() { const h = document.getElementById("pb-gen-host"); if (h && !h.dataset.m && typeof PBGen !== "undefined") { h.dataset.m = "1"; PBGen.mount(h); } },
   async init() { await this.refresh(); },
-  async refresh() {
+  async refresh(keep) {
     const box = document.getElementById("pb-list"); if (!box) return;
-    try { const f = await GH.getFile("assets/pages/index.json"); this.list = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); this.listErr = ""; }
+    try { if (keep && Array.isArray(this.list) && this.list.length) throw new Error("__keep"); const f = await GH.getFile("assets/pages/index.json"); this.list = JSON.parse(decodeURIComponent(escape(atob((f.content || "").replace(/\n/g, ""))))); this.listErr = ""; }
     catch (e) {      /* تعذّرت القراءة من المستودع (توكن/شبكة/حدّ طلبات): نعرض فهرس الصفحات المنشور علناً بدل «لا توجد صفحات» الخادعة، مع تنبيه */
+      if (e && e.message === "__keep") { /* بعد كتابة محلية نعرض القائمة المحدَّثة كما كتبناها (قراءة المستودع فور الكتابة قد تعيد النسخة القديمة لثوانٍ) */ } else {
       this.listErr = String((e && e.message) || e); this.list = [];
       try { const r = await fetch("assets/pages/index.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); if (Array.isArray(j)) this.list = j; } } catch (e2) { }
       if (this.list.length) { try { toast("⚠️ تعذّر قراءة قائمة الصفحات من المستودع (" + this.listErr.slice(0, 70) + ") — عُرضت الصفحات المنشورة؛ إن تكرر راجع «ربط النشر» قبل أن تنشر"); } catch (e3) { } }
+      }
     }
     const cta = document.getElementById("pb-cta"); if (cta) cta.innerHTML = this.list.length ? "" : `<div style="background:linear-gradient(135deg,#173f35,#2a6b58);color:#fff;border-radius:14px;padding:1.2rem;margin:.8rem 0;display:flex;gap:1rem;align-items:center;flex-wrap:wrap"><div style="flex:1;min-width:240px"><b style="font-size:1.05rem">🪄 ابدأ بالمولّد</b><p style="margin:.3rem 0 0;opacity:.9;line-height:1.8">لا توجد صفحات بعد. أسرع طريقة: ولّد تصميماً بصورة واحدة ثم حوّله إلى صفحة قابلة للتعديل في ثلاث خطوات.</p></div><button class="small gold" onclick="PBAdmin.openGen()">فتح المولّد ←</button></div>`;
     const dom = (typeof SITE_CFG !== "undefined" && SITE_CFG.domain) || location.host;
@@ -4338,7 +4362,7 @@ ${this.quickImg(this.q.cover)}
     PBAdmin._cleanOf = cleanOf;
     const svg = (d, w) => `<svg width="${w || 15}" height="${w || 15}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px">${d}</svg>`;
     const I = { edit: svg('<path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>'), eye: svg('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>'), copy: svg('<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>'), trash: svg('<path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>'), link: svg('<path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-1 1"/><path d="M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l1-1"/>'), dl: svg('<path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>') };
-    const lpHtml = this.list.length ? `<div class="pbx-pl">${this.list.map(p => `<div class="pbx-pc"><div class="pbx-pth" ${p.thumb ? `style="background-image:url('${PB.esc(p.thumb)}')"` : ""}>${p.thumb ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)}${p.live === false ? ' <span class="pill st-nouvelle" title="مسودة: لم تُنشر بعد">مسودة</span>' : ""}${((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x.officialPage === p.slug || x.route === p.slug).map(x => (x.officialPage === p.slug ? ' <span class="pill st-livree" title="الصفحة الرسمية للمنتج ' + PB.esc(x.title) + '">📄 رسمية</span>' : "") + (x.route === p.slug ? ' <span class="pill st-confirmee" title="تُفتح من الرئيسية للمنتج ' + PB.esc(x.title) + '">🧭 مسار</span>' : "")).join("")}</b><span class="pbx-url" dir="ltr"><a href="https://${PB.esc(cleanOf(p.slug, p.live))}/" target="_blank">${PB.esc(cleanOf(p.slug, p.live))}</a><button class="small gray pbx-cp" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}',${p.live ? 1 : 0})" title="نسخ الرابط">${I.copy} نسخ</button></span><small>${PB.esc(p.updated || "")}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBAdmin.edit('${PB.esc(p.slug)}')" title="فتح الصفحة مباشرة في المطوّر">${I.edit} تعديل</button><button class="small" onclick="PBAdmin.preview('${PB.esc(p.slug)}')" title="معاينة الصفحة (ومنها زر التعديل)">${I.eye} معاينة</button><button class="small gray" onclick="PBAdmin.quick('${PB.esc(p.slug)}')" title="اسم الصفحة وصورتها وربطها بمنتج وSEO">${I.edit} تعديل سريع</button><button class="small gray" onclick="PBAdmin.rename('${PB.esc(p.slug)}')" title="تغيير اسم رابط الصفحة">${svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>', 15)} اسم الرابط</button><button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')" title="نسخ الصفحة">${I.copy} نسخ</button><button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')" title="تصدير الصفحة">${I.dl}</button><button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')" title="حذف الصفحة (إلغاء النشر)">${I.trash}</button></div></div>`).join("")}</div>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» أو افتح المولّد.</p>';
+    const lpHtml = this.list.length ? `<div class="pbx-pl">${this.list.map(p => `<div class="pbx-pc"><div class="pbx-pth" ${p.thumb ? `style="background-image:url('${PB.esc(p.thumb)}')"` : ""}>${p.thumb ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)}${p.live === false ? ' <span class="pill st-nouvelle" title="مسودة: لم تُنشر بعد">مسودة</span>' : ""}${((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x.officialPage === p.slug || x.route === p.slug).map(x => (x.officialPage === p.slug ? ' <span class="pill st-livree" title="الصفحة الرسمية للمنتج ' + PB.esc(x.title) + '">📄 رسمية</span>' : "") + (x.route === p.slug ? ' <span class="pill st-confirmee" title="تُفتح من الرئيسية للمنتج ' + PB.esc(x.title) + '">🧭 مسار</span>' : "")).join("")}</b><span class="pbx-url" dir="ltr"><a href="https://${PB.esc(cleanOf(p.slug, p.live))}/" target="_blank">${PB.esc(cleanOf(p.slug, p.live))}</a><button class="small gray pbx-cp" onclick="PBAdmin.editSlug('${PB.esc(p.slug)}',this)" title="تعديل الرابط" aria-label="تعديل الرابط">${I.edit}</button><button class="small gray pbx-cp" onclick="PBAdmin.copyLink('${PB.esc(p.slug)}','${PB.esc(dom)}',${p.live ? 1 : 0})" title="نسخ الرابط">${I.copy} نسخ</button></span><small>${PB.esc(p.updated || "")}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBAdmin.edit('${PB.esc(p.slug)}')" title="فتح الصفحة مباشرة في المطوّر">${I.edit} تعديل</button><button class="small" onclick="PBAdmin.preview('${PB.esc(p.slug)}')" title="معاينة الصفحة (ومنها زر التعديل)">${I.eye} معاينة</button><button class="small gray" onclick="PBAdmin.quick('${PB.esc(p.slug)}')" title="اسم الصفحة وصورتها وربطها بمنتج وSEO">${I.edit} تعديل سريع</button><button class="small gray" onclick="PBAdmin.duplicate('${PB.esc(p.slug)}')" title="نسخ الصفحة">${I.copy} نسخ</button><button class="small gray" onclick="PBAdmin.exportPage('${PB.esc(p.slug)}')" title="تصدير الصفحة">${I.dl}</button><button class="small" style="background:var(--red);color:#fff" onclick="PBAdmin.unpublish('${PB.esc(p.slug)}')" title="حذف الصفحة (إلغاء النشر)">${I.trash}</button></div></div>`).join("")}</div>` : '<p class="hint">لا توجد صفحات بعد. اضغط «＋ صفحة جديدة» أو افتح المولّد.</p>';
     const A = (typeof Admin !== "undefined") ? Admin : {}, prods = A.products || [], stat = p => p.active !== false ? '<span class="pill st-livree">نشط</span>' : '<span class="pill st-annulee">موقوف</span>', ic = n => (typeof AIC === "function" ? AIC(n) : "");
     const prHtml = prods.length ? `<div class="pbx-pl">${prods.map(p => { const img = p.cover || (p.images && p.images[0]) || ""; const sl = PB.esc(p.slug); return `<div class="pbx-pc"><div class="pbx-pth" ${img ? `style="background-image:url('${PB.esc(img)}')"` : ""}>${img ? "" : "🖼️"}</div><div class="pbx-pin"><b>${PB.esc(p.title)} ${stat(p)}</b><span class="pbx-url" dir="ltr"><a href="https://${dom}/${sl}/" target="_blank">${dom}/${sl}</a><button class="small gray pbx-cp" onclick="PBAdmin.copyLink('${sl}','${dom}',2)" title="نسخ الرابط">${ic("copy")} نسخ</button></span><small>${Number(p.price || 0).toLocaleString("fr-DZ")} دج · ${PB.esc((A.categories && A.categories[p.cat]) || p.cat || "")}${p.pageMode === "generated" ? " · صفحة مولّدة" : ""}</small></div><div class="pbx-pact"><button class="small gold" onclick="PBConvert.edit('product','${sl}')" title="فتح صفحة المنتج مباشرة في مطوّر الصفحات">${ic("edit")} تعديل</button><button class="small" onclick="PBAdmin.previewProduct('${sl}')" title="معاينة صفحة المنتج (ومنها زر التعديل)">${ic("eye")} معاينة</button><button class="small gray" onclick="PBAdmin.quickProduct('${sl}')" title="الاسم والصورة وSEO">${ic("edit")} تعديل سريع</button><button class="small gray" onclick="Admin.duplicateProduct('${sl}')" title="نسخ المنتج وصفحته">${ic("copy")} نسخ</button><button class="small" style="background:var(--red);color:#fff" onclick="Admin.delProduct('${sl}')" title="حذف المنتج">${ic("trash")}</button></div></div>`; }).join("")}</div>` : '<p class="hint">لا توجد منتجات.</p>';
     box.innerHTML = `<h3 class="pbx-sh">صفحات الهبوط <span>${this.list.length}</span></h3>${lpHtml}<h3 class="pbx-sh">صفحات المنتجات <span>${prods.length}</span></h3>${prHtml}`;
@@ -4364,21 +4388,37 @@ ${this.quickImg(this.q.cover)}
     idx = idx.filter(x => x.slug !== p.slug); idx.unshift(row); await PBApp.putJson("assets/pages/index.json", idx, "فهرس صفحات الهبوط"); this.list = idx;
   },
   async duplicate(slug) {
-    const ns = prompt("رابط الصفحة الجديدة (حروف لاتينية صغيرة وأرقام وشرطات):", slug + "-copy"); if (!ns) return;
-    try {
-      toast("⏳ جارِ إنشاء النسخة…");
-      const p = this.fresh(await this.load(slug)); p.slug = ns.toLowerCase().replace(/[^a-z0-9-]/g, ""); p.title += " (نسخة)";
-      await this.saveCopy(p); await this.refresh(); toast("✅ ظهرت النسخة في القائمة كمسودة (غير منشورة) — افتحها للتعديل ثم «حفظ ونشر»");
-    } catch (e) { toast("❌ " + e.message); }
+    PBApp.askText("رابط الصفحة الجديدة (حروف لاتينية صغيرة وأرقام وشرطات):", slug + "-copy", async ns => {
+      ns = String(ns || "").toLowerCase().replace(/[^a-z0-9-]/g, ""); if (!ns) { toast("⚠️ اسم الرابط غير صالح: استعمل حروفاً لاتينية صغيرة وأرقاماً وشرطات"); return; }
+      try {
+        toast("⏳ جارِ إنشاء النسخة…");
+        const p = this.fresh(await this.load(slug)); p.slug = ns; p.title += " (نسخة)";
+        await this.saveCopy(p); await this.refresh(true); toast("✅ ظهرت النسخة في القائمة كمسودة (غير منشورة) — افتحها للتعديل ثم «حفظ ونشر»");
+      } catch (e) { toast("❌ " + e.message); }
+    }, "إنشاء النسخة");
   },
+
   /* تغيير رابط صفحة هبوط (slug): تُنشر نسخة بالرابط الجديد ويبقى الرابط القديم يحوّل إلى الجديد */
+  /* تعديل الرابط مباشرةً في بطاقة الصفحة (قلم بجانب الرابط): يتحوّل الجزء الأخير من الرابط إلى حقل، Enter أو «حفظ» يُنفّذ التغيير بعد تأكيد، وEsc أو «إلغاء» يعيد الرابط */
+  editSlug(slug, btn) {
+    const box = btn && btn.closest(".pbx-url"); if (!box || box.dataset.ed) return; box.dataset.ed = "1"; const old = box.innerHTML, li = (this.list || []).find(x => x.slug === slug);
+    const full = this._cleanOf ? this._cleanOf(slug, li && li.live) : "/lp/" + slug, pre = full.endsWith(slug) ? full.slice(0, full.length - slug.length) : full + "/";
+    box.innerHTML = `<span dir="ltr" style="display:inline-flex;align-items:center;gap:.3rem;flex-wrap:wrap"><span>${PB.esc(pre)}</span><input class="pbx-slugin" value="${PB.esc(slug)}" maxlength="60" spellcheck="false" autocapitalize="off" style="width:min(220px,46vw);padding:.3rem .5rem;border-radius:8px;font:inherit"><button type="button" class="small gold" data-ok="1">حفظ</button><button type="button" class="small gray" data-no="1">إلغاء</button></span>`;
+    const inp = box.querySelector("input"), back = () => { delete box.dataset.ed; box.innerHTML = old; }, go = () => { this.doRename(slug, inp.value, back); };
+    box.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; if (b.dataset.ok) go(); else if (b.dataset.no) back(); });
+    inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); go(); } else if (e.key === "Escape") { e.preventDefault(); back(); } });
+    inp.focus(); inp.select();
+  },
   async rename(slug) {
+    PBApp.askText("اسم الرابط الجديد (حروف لاتينية صغيرة وأرقام وشرطات):", slug, raw => this.doRename(slug, raw), "تغيير الرابط");
+  },
+  async doRename(slug, raw, back) {
     const RES = ["p", "lp", "assets", "admin", "api", "supabase", "scripts", "releases", "platform", "php-edition", "sales", "dist", "apps-script", "blog", "policy", "editor", "extension", "docs", "saas", "node_modules", "cart", "shop", "account", "index"];
-    const raw = prompt("اسم الرابط الجديد (حروف لاتينية صغيرة وأرقام وشرطات):", slug); if (raw == null) return;
-    const ns = String(raw).trim().toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "").slice(0, 60);
-    if (!ns || ns === slug) { if (ns !== slug) toast("⚠️ اسم الرابط غير صالح"); return; }
+    const ns = String(raw == null ? "" : raw).trim().toLowerCase().replace(/[^a-z0-9-]/g, "").replace(/^-+|-+$/g, "").slice(0, 60);
+    if (!ns) { toast("⚠️ اسم الرابط غير صالح: استعمل حروفاً لاتينية صغيرة وأرقاماً وشرطات"); return; }
+    if (ns === slug) { if (back) back(); else toast("ℹ️ الرابط لم يتغيّر (هو نفسه الحالي)"); return; }
     if (RES.indexOf(ns) >= 0 || (this.list || []).some(x => x.slug === ns) || ((typeof Admin !== "undefined" && Admin.products) || []).some(x => x.slug === ns)) { toast("⚠️ هذا الرابط مستعمل أو محجوز، اختر اسماً آخر"); return; }
-    if (!confirm("سيصبح رابط الصفحة «" + ns + "» ويحوّل الرابط القديم «" + slug + "» إلى الجديد (الروابط المنسوخة عن الرابط النظيف القديم قد تتوقف). متابعة؟")) return;
+    PBApp.ask("سيصبح رابط الصفحة «" + ns + "» ويحوّل الرابط القديم «" + slug + "» إلى الجديد (الروابط المنسوخة عن الرابط النظيف القديم قد تتوقف). متابعة؟", "تغيير الرابط", async () => {
     try {
       toast("⏳ جارِ تغيير الرابط…");
       const P = await this.load(slug); P.slug = ns;
@@ -4393,8 +4433,9 @@ ${this.quickImg(this.q.cover)}
       const stub = '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="robots" content="noindex"><link rel="canonical" href="../' + ns + '/"><meta http-equiv="refresh" content="0;url=../' + ns + '/"><script>location.replace("../' + ns + '/"+location.search+location.hash)<\/script><title>…</title></head><body></body></html>';
       let sha; try { sha = (await GH.getFile("lp/" + slug + "/index.html")).sha; } catch (e) { }
       await GH.putFile("lp/" + slug + "/index.html", btoa(unescape(encodeURIComponent(stub))), sha, "تحويل الرابط القديم " + slug + " ← " + ns);
-      toast("✅ تغيّر الرابط إلى: " + ns); this.refresh();
+      toast("✅ تغيّر الرابط إلى: " + ns); this.refresh(true);
     } catch (e) { toast("❌ تعذّر تغيير الرابط: " + e.message); }
+    });
   },
   async exportPage(slug) {
     try { const p = await this.load(slug), a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(p, null, 1)], { type: "application/json" })); a.download = "page-" + slug + ".json"; a.click(); } catch (e) { toast("❌ " + e.message); }

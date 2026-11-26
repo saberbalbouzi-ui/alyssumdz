@@ -30,5 +30,6 @@
     "requests": []
   },
   "updatedAt": "2026-10-18T21:43:39.180Z",
-  "edition": "pro"
+  "edition": "pro",
+  "langSwitch": false
 }

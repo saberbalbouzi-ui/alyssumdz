@@ -90,3 +90,26 @@ document.addEventListener("click", e => {
   const start = () => { try { if (window.visualViewport) { visualViewport.addEventListener("resize", fitVV); visualViewport.addEventListener("scroll", fitVV); } } catch (_) { } setInterval(tick, 250); document.addEventListener("click", () => requestAnimationFrame(tick), true); tick(); };
   if (document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 })();
+/* النوافذ لا تُغلق بالنقر خارجها ولا بـEsc: بزرّ الإغلاق (×) أو «إلغاء» فقط (طلب صاحب المتجر: لا تضيع بيانات نافذة مفتوحة بنقرة عرَضية).
+   عامّ لكل النوافذ بلا تعديل كل نافذة: نعترض نقر الخلفية (الطبقة الثابتة المعتمة التي تغطي الشاشة) في طور الالتقاط فلا تصل لمعالج إغلاقها.
+   الاستثناء: طبقة بلا أي زر إغلاق/إلغاء (معاينة صورة مثلاً) تبقى تُغلق بالنقر خارجها كي لا تعلق الشاشة، والقوائم المنسدلة وشفّافات النقر الخارجي لا تتأثر. */
+(() => {
+  if (window.__modalNoOutside) return; window.__modalNoOutside = 1;
+  const SKIP = /^(au-boot|au-cover|au-bar|app|wrap|pb-app|pbx-ovl)$/, CLOSE = /^\s*[×✕✖xX]\s*$|إغلاق|إلغاء|إلغـاء|fermer|annuler|^\s*(close|cancel)\s*$/i;
+  const dim = cs => { const m = /rgba?\(([^)]+)\)/.exec(cs.backgroundColor || ""), a = m ? (m[1].split(",")[3] === undefined ? 1 : parseFloat(m[1].split(",")[3])) : 0; return a > 0.02 || (cs.backdropFilter && cs.backdropFilter !== "none") || (cs.webkitBackdropFilter && cs.webkitBackdropFilter !== "none"); };
+  const hasClose = el => { try { return [...el.querySelectorAll("button,[role=button],a,[data-x],[data-close],.x,.close")].some(b => b.offsetParent !== null && CLOSE.test(((b.getAttribute("aria-label") || "") + " " + (b.getAttribute("title") || "") + " " + (b.textContent || "")).trim())); } catch (_) { return false; } };
+  const overlayOf = el => {
+    if (!el || el.nodeType !== 1 || SKIP.test(el.id || "") || el === document.body || el === document.documentElement) return null;
+    const cs = getComputedStyle(el); if (cs.position !== "fixed" || cs.display === "none" || cs.visibility === "hidden") return null;
+    if (el.offsetWidth < innerWidth - 2 || el.offsetHeight < innerHeight - 2 || !dim(cs)) return null;
+    if (el.querySelector("#pbx-stage,#pbx-frame")) return null;      /* محرر الصفحات نفسه ليس نافذة */
+    return hasClose(el) ? el : null;
+  };
+  const block = e => { if (overlayOf(e.target)) { e.stopImmediatePropagation(); e.preventDefault(); } };
+  ["pointerdown", "mousedown", "mouseup", "touchstart", "touchend", "click"].forEach(ev => document.addEventListener(ev, block, true));
+  document.addEventListener("keydown", e => {
+    if (String(e.key || "") !== "Escape") return;
+    const top = [...document.body.children].reverse().find(el => overlayOf(el));
+    if (top) { e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+})();
