@@ -1,0 +1,60 @@
+/* مظهر ناعم للوحة (الفاتح): الشريط العلوي وصفحة الطلبات — بطاقات بيضاء وظلال خفيفة وزوايا كبيرة. يُحمَّل بعد admin-lime.css */
+/* ── رأس صفحة الطلبات وبطاقات الإحصاء (كل المظاهر؛ التلوين الباستيل للفاتح) ── */
+.ord-head{display:flex;align-items:center;gap:.8rem;margin:.2rem 0 .9rem}
+.ord-head .ord-ic{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:rgba(226,254,23,.28);flex:none}
+.ord-head .ord-ic svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ord-head h2{margin:0;font-size:1.45rem;line-height:1.2}
+.ord-head p{margin:.15rem 0 0;font-size:.82rem;opacity:.7}
+#tab-orders .ord-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin:0 0 .9rem}
+#tab-orders .ord-stats .os{border-radius:20px;padding:.8rem .5rem;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;gap:.3rem}
+#tab-orders .ord-stats .os svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+#tab-orders .ord-stats .os span{font-size:.78rem;font-weight:700;opacity:.85;min-height:2.4em;display:flex;align-items:center;justify-content:center;line-height:1.2}
+#tab-orders .ord-stats .os b{font-size:1.7rem;line-height:1.1}
+@media(max-width:520px){#tab-orders .ord-stats{gap:.45rem}#tab-orders .ord-stats .os{padding:.65rem .25rem;border-radius:18px}#tab-orders .ord-stats .os span{font-size:.7rem}#tab-orders .ord-stats .os b{font-size:1.45rem}}
+/* ── المظهر الفاتح ── */
+html.white body{background:#f5f7fb}
+html.white .card{border-radius:22px;border:1px solid rgba(16,24,40,.05);box-shadow:0 10px 30px rgba(16,24,40,.06)}
+html.white .ord-head h2{color:#0f172a}
+html.white .ord-head .ord-ic{background:#eef9c9;color:#0f172a}
+html.white .ord-head .ord-ic svg,html.white #tab-orders .ord-stats .os svg{stroke:#0f172a!important}
+html.white #tab-orders .ord-stats .os{background:#fff;border:1px solid rgba(16,24,40,.06);box-shadow:0 6px 20px rgba(16,24,40,.06);color:#0f172a}
+html.white #tab-orders .ord-stats .os-g{background:#eaf7ee}
+html.white #tab-orders .ord-stats .os-o{background:#fff4e2}
+
+/* ترتيب أزرار الطلبات: «إضافة طلب جديد» كبير ليموني، وتحته زرّان ناعمان متجاوران، ثم الشرائح والبحث */
+#tab-orders .card:has(#mo-btn){display:grid;grid-template-columns:1fr 1fr;gap:.6rem;align-items:stretch}
+#tab-orders .card:has(#mo-btn)>*{grid-column:1/-1}
+#tab-orders #mo-btn{order:-4;min-height:58px;font-size:1.15rem;border-radius:18px!important;width:100%;justify-content:center}
+#tab-orders .card:has(#mo-btn)>#verify-btn,#tab-orders .card:has(#mo-btn)>#presend-btn{grid-column:auto;order:-3;min-height:50px;border-radius:16px!important;font-weight:800;width:100%;justify-content:center}
+html.white body #tab-orders #verify-btn:not(#_),html.white body #tab-orders #presend-btn:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 6px 18px rgba(16,24,40,.07)!important}
+
+/* ── الشريط العلوي الناعم (الفاتح) ── */
+html.white #app .top{background:#fff;border:1px solid rgba(16,24,40,.04);border-radius:24px;box-shadow:0 10px 30px rgba(16,24,40,.07);padding:.6rem .7rem}
+html.white body #app .top>button.small.gray:not(#_),html.white body #app .top>#top-search:not(#_),html.white body #app .top>#top-lang:not(#_),html.white body #app .top>#top-more:not(#_),html.white body #app .top>#theme-btn:not(#_){background:#fff!important;color:#111827!important;border:1px solid rgba(16,24,40,.05)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(16,24,40,.10)!important;text-shadow:none!important}
+html.white body #app .top>button.small.gray:not(#_) svg,html.white body #app .top>#top-search:not(#_) svg{stroke:#111827!important;color:#111827!important}
+html.white body #app .top>button.small.gray:not(#_):active{transform:scale(.96)}
+
+/* شرائح العروض السريعة (كل الطلبات/اليوم/…): حبوب بيضاء ناعمة وبالليموني للفعّال */
+html.white body #op-bar .opv:not(#_),html.white body #op-bar .opb:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 4px 14px rgba(16,24,40,.06)!important;text-shadow:none!important}
+html.white body #op-bar .opv.on:not(#_){background:#e2fe17!important;color:#1f2123!important;border-color:#e2fe17!important}
+
+/* أزرار الصفحة الثانوية في «الطلبات» ناعمة بيضاء بدل الرمادي الأزرق المنتفخ */
+html.white body #tab-orders .small.gray:not(#_),html.white body #tab-orders .of-more .small:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 4px 14px rgba(16,24,40,.06)!important;text-shadow:none!important}
+
+/* ── تجهيز الطلبات (#pk) ── */
+#pk .ord-head{margin:.2rem 0 .8rem}
+#pk #pk-scan-card{border:1.5px dashed rgba(34,197,94,.55);border-radius:22px;background:rgba(34,197,94,.05)}
+#pk #pk-scan-card>b{display:none}
+#pk #pk-scan{border-radius:16px;min-height:48px}
+#pk #pk-scan-card .action-bar{margin-top:0!important}
+html.white #pk #pk-scan-card{background:#f4fbf6}
+html.white #pk .card{background:#fff}
+html.white body #pk .small:not([data-pk=all]):not([data-pk=cam]):not([data-pk=one]):not(#_){background:#f5fbd8!important;color:#1f2123!important;border:1px solid rgba(16,24,40,.06)!important;box-shadow:none!important;text-shadow:none!important}
+html.white body #pk .small.gray:not(#_){background:#fff!important;border:1px solid rgba(16,24,40,.08)!important}
+html.white body #pk button[data-pk=markSel]:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.1)!important;border-radius:14px!important;box-shadow:none!important}
+html.white body #pk button[data-pk=markSel][disabled]:not(#_){opacity:.55}
+#pk .tbw{border-radius:18px;overflow:auto}
+#pk table.pkt th{font-weight:800;font-size:.82rem;opacity:.8}
+#pk .action-bar{border:0!important;background:transparent!important;padding:0!important;box-shadow:none!important}
+#pk .card h2{font-size:1.15rem}
+#pk .ord-head h2{font-size:1.45rem}

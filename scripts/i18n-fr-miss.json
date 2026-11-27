@@ -933,5 +933,16 @@
  "تحميل الصورة / تصدير فائق": "Télécharger l'image / Export haute qualité",
  "تحميل الصورة وتصدير فائق": "Télécharger l'image et export haute qualité",
  "تحميل الصورة · تصدير فائق": "Télécharger l'image · Export haute qualité",
- "صورة": "Image"
+ "صورة": "Image",
+ "إدارة الطلبات": "Gestion des commandes",
+ "متابعة وتأكيد ومعالجة طلبات المتجر": "Suivi, confirmation et traitement des commandes de la boutique",
+ "إجمالي الطلبات": "Total des commandes",
+ "طلبات اليوم": "Commandes du jour",
+ "في انتظار التأكيد": "En attente de confirmation",
+ "اختيار الطلبات وتجهيزها للطباعة والإرسال": "Sélectionnez les commandes et préparez-les pour l'impression et l'envoi",
+ "قائمة الجمع والتجهيز": "Liste de collecte et de préparation",
+ "ماسح التجهيز": "Scanner de préparation",
+ "امسح الباركود أو اكتب الرقم ثم": "Scannez le code-barres ou saisissez le numéro puis",
+ "امسح الباركود أو اكتب الرقم ثم Enter": "Scannez le code-barres ou saisissez le numéro puis Entrée",
+ "إيقاف الكاميرا": "Arrêter la caméra"
 }
