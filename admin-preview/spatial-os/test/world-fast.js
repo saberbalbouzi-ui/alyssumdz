@@ -12,10 +12,10 @@ const R = []; let fails = 0; const ok = (n, c, x) => { if (!c) fails++; R.push((
     ok("العالم الحقيقي جاهز بسرعة بلا تحميل أي لوح (< 4 ث على معالج برمجي)", tw < 4000 && await p.evaluate(() => SpatialOS.panels.size === 0), { ms: tw });
     /* المداران */
     const o1 = await p.evaluate(() => ({ tab: SpatialOS.tab, subs: SpatialOS.subIds(), top: document.querySelectorAll(".node:not(.sub)").length, sub: document.querySelectorAll(".node.sub").length }));
-    ok("المدار العلوي 10 تبويبات والسفلي بطاقات إعدادات المتجر افتراضياً", o1.tab === "store" && o1.top === 10 && o1.sub === o1.subs.length && o1.subs[0] === "store" && o1.subs.includes("payments") && o1.subs.includes("delivery"), o1);
-    await p.evaluate(() => document.querySelector('.node:not(.sub)[data-id="ord"]').click()); await wait(700);
+    ok("المدار العلوي 6 مجموعات (قائمة لوحة التحكم) والثاني عناصر «المتجر» افتراضياً", o1.tab === "store" && o1.top === 6 && o1.sub === o1.subs.length && o1.subs[0] === "ord" && o1.subs.includes("payments") && o1.subs.includes("delivery"), o1);
+    await p.evaluate(() => document.querySelector('.node:not(.sub)[data-id="prod"]').click()); await wait(700);
     const o2 = await p.evaluate(() => ({ tab: SpatialOS.tab, subs: SpatialOS.subIds(), panels: SpatialOS.panels.size, live: document.querySelectorAll(".node.sub:not(.out)").length }));
-    ok("نقر تبويب في المدار العلوي لا يفتح لوحاً بل يبدّل بطاقات السفلي", o2.tab === "ord" && o2.panels === 0 && o2.subs[0] === "ord" && o2.subs.includes("returns") && !o2.subs.includes("payments") && o2.live === o2.subs.length, o2);
+    ok("نقر تبويب في المدار العلوي لا يفتح لوحاً بل يبدّل بطاقات السفلي", o2.tab === "prod" && o2.panels === 0 && o2.subs[0] === "prod" && o2.subs.includes("categories") && !o2.subs.includes("payments") && o2.live === o2.subs.length, o2);
     /* بطاقات الرئيسية */
     await p.waitForFunction(() => SCParts.live, null, { timeout: 60000 }); const ps = await p.evaluate(() => ({ vis: SCParts.visible, n: document.querySelectorAll("#hparts .hp").length, kpi: document.querySelectorAll("#hparts .hp-kpi").length, txt: document.getElementById("hparts").innerText.slice(0, 80), cached: !!localStorage.getItem("sc_parts_v1") }));
     ok("بطاقات الصفحة الرئيسية الحقيقية ظاهرة (4 مؤشرات + مخطط + حالات + آخر الطلبات...) ومحفوظة للفتح الفوري", ps.vis && ps.kpi === 4 && ps.n >= 7 && ps.cached, ps);
@@ -28,6 +28,7 @@ const R = []; let fails = 0; const ok = (n, c, x) => { if (!c) fails++; R.push((
     ok("اللوح المفرد يتوسط بين جناحي البطاقات", await p.evaluate(() => { const r = SpatialOS.panels.get("ord").el.getBoundingClientRect(); return r.left > innerWidth * .24 && r.right < innerWidth * .76; }));
     await p.waitForFunction(() => SpatialOS.spare.ready, null, { timeout: 60000 }); ok("يُسخَّن لوح احتياطي جديد بعد الاستهلاك", await p.evaluate(() => SpatialOS.spare.count >= 2));
     /* بطاقة سفلية تفتح لوحها */
+    await p.evaluate(() => document.querySelector('.node:not(.sub)[data-id="store"]').click()); await wait(700);
     await p.evaluate(() => document.querySelector('.node.sub[data-id="returns"]').click()); await p.waitForFunction(() => { const q = SpatialOS.panels.get("returns"); return q && q.frDone; }, null, { timeout: 30000 });
     ok("النقر على بطاقة المدار السفلي يفتح لوحها الحقيقي", await p.evaluate(() => { const q = SpatialOS.panels.get("returns"), d = q.fr.contentDocument, t = d.getElementById("tab-returns"); return !!t && !t.classList.contains("hidden"); }));
     /* جسر صوت الكرة */

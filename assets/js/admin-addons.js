@@ -11,7 +11,7 @@ const AdminAddons = (() => {
   const fold = s => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[ً-ٰٟ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي").trim();
   const ver = () => { const u = typeof AdminUpdate !== "undefined" && AdminUpdate.current; if (u) return String(u); const h = document.querySelector(".top h1"); const m = h && /(\d+\.\d+\.\d+)/.exec(h.title || ""); return m ? m[1] : "1.0"; };
   const first = d => String(d || "").replace(/\s+/g, " ").trim();      /* النص كاملاً (يقصّه CSS بثلاثة أسطر ويظهر كاملاً في التلميح) فيبقى مطابقاً لترجمته الفرنسية */
-  const OPEN = { builder: () => go("builder"), smart: () => go("pbgen"), imggen: () => go("imggen"), agent: () => go("agent"), voice: () => go("agent"), ask: () => { try { AdminHelp.show(); } catch (e) { } }, cloner: () => { try { NAV().clone(); } catch (e) { } }, protect: () => NAV().app("protect"), floaters: () => NAV().app("floaters") };
+  const OPEN = { builder: () => go("builder"), smart: () => go("pbgen"), imggen: () => go("imggen"), checkout: () => go("checkout"), speed: () => go("speed"), agent: () => go("agent"), voice: () => go("agent"), ask: () => { try { AdminHelp.show(); } catch (e) { } }, cloner: () => { try { NAV().clone(); } catch (e) { } }, protect: () => NAV().app("protect"), floaters: () => NAV().app("floaters") };
   function go(tab) { try { const b = [...document.querySelectorAll(".side-nav .nav-btn")].find(x => (x.getAttribute("onclick") || "").includes("'" + tab + "'")); Admin.tab(tab, b); } catch (e) { } }
 
   /* ── الكتالوج: إضافات المنصّة + أدوات ستوديو ديزاين ── */
@@ -40,12 +40,12 @@ const AdminAddons = (() => {
 .ao-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(270px,100%),1fr));gap:.8rem}
 .ao-card{padding:.9rem;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));display:grid;gap:.4rem;align-content:start}.ao-card.off{opacity:.78}
 .ao-h{display:flex;gap:.5rem;align-items:center;justify-content:space-between}.ao-h b{font-size:.98rem}.ao-d{font-size:.84rem;opacity:.85;line-height:1.7;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.ao-meta{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;font-size:.76rem}.ao-chip{display:inline-block;padding:.08rem .6rem;border-radius:99px;font-weight:800;border:1px solid currentColor}.ao-v{direction:ltr;opacity:.8}
+.ao-meta{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;font-size:.76rem}.ao-chip{display:inline-block;padding:.08rem .6rem;border-radius:99px;font-weight:800;border:1px solid currentColor}.ao-pro{color:#ff9a3d;background:rgba(255,154,61,.14)}html.white .ao-pro{color:#c2560a;background:rgba(194,86,10,.1)}.ao-v{direction:ltr;opacity:.8}
 .ao-act{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;margin-top:.2rem}.ao-empty{padding:1rem;text-align:center;opacity:.8}.ao-sum{display:flex;flex-wrap:wrap;gap:.6rem;font-size:.86rem}.ao-sum b{font-size:1.05rem}
 .ao-sub{margin:.2rem 0 .1rem;font-size:.92rem;font-weight:800;opacity:.9}`;
     document.head.appendChild(st);
   }
-  const chip = (t, c) => `<span class="ao-chip" style="color:rgb(var(${c}))">${esc(t)}</span>`;
+  const chip = (t, c) => t === "PRO" ? `<span class="ao-chip ao-pro">PRO</span>` : `<span class="ao-chip" style="color:rgb(var(${c}))">${esc(t)}</span>`;      /* شارة PRO برتقالية */
 
   /* ── الإضافات المنصَّبة ── */
   function instCard(a) {

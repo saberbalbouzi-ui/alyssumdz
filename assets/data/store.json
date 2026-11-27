@@ -1,16 +1,17 @@
 {
   "name": "ALYSSUM",
   "tagline": "",
-  "email": "",
+  "email": "contact.alyssumbio@gmail.com",
   "phone": "",
-  "wa": "213559237239",
+  "wa": "213541138189",
   "instagram": "alyssumdzofficiel",
   "social": {
     "instagram": "https://instagram.com/alyssumdzofficiel"
   },
-  "address": "",
+  "address": "الجزائر العاصمة",
   "country": "DZ",
   "lang": "ar",
+  "langSwitch": false,
   "tz": "Africa/Algiers",
   "dateFmt": "DD/MM/YYYY",
   "timeFmt": "24",
@@ -19,7 +20,7 @@
   "currencyCode": "DZD",
   "maintenance": false,
   "maintMsg": "",
-  "kind": "",
+  "kind": "physical",
   "kindAsk": false,
   "deletion": null,
   "domain": {
@@ -29,6 +30,6 @@
     "at": "2026-10-10T00:10:57.026Z",
     "requests": []
   },
-  "updatedAt": "2026-10-18T21:43:39.180Z",
+  "updatedAt": "2026-11-27T18:55:25.006Z",
   "edition": "pro"
 }

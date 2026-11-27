@@ -6,6 +6,7 @@
     "assets/css/admin-glass.css",
     "assets/css/admin-lime.css",
     "assets/css/admin-theme.css",
+    "assets/css/laura.css",
     "assets/css/style.css",
     "assets/data/admin-help.json",
     "assets/data/admin-help.fr.json",
@@ -151,7 +152,9 @@
     "assets/js/admin-addons.js",
     "assets/js/admin-delivery-alerts.js",
     "assets/js/admin-stmt.js",
+    "assets/js/admin-dupalert.js",
     "assets/js/admin-modal-stable.js",
+    "assets/js/admin-embed-boot.js",
     "assets/js/admin-archive.js",
     "assets/js/admin-assistant.js",
     "assets/js/admin-audit.js",
@@ -174,6 +177,9 @@
     "assets/js/admin-edition.js",
     "assets/js/admin-experts.js",
     "assets/js/admin-float.js",
+    "assets/js/laura.js",
+    "assets/js/laura-stats.js",
+    "assets/js/laura-actions.js",
     "assets/js/admin-hand.js",
     "assets/js/admin-home.js",
     "assets/js/admin-imgbatch.js",
@@ -515,7 +521,10 @@
       "assets/pages/templates/thumbs/p-focus-honey.jpg",
       "assets/pages/templates/thumbs/s-alyssum-full.jpg",
       "assets/pages/templates/thumbs/s-alyssum.jpg",
-      "assets/data/names-fr.json"
+      "assets/data/names-fr.json",
+      "assets/js/admin-waqs.js",
+      "assets/js/admin-waqs-lib.js",
+      "assets/js/admin-waqs-inbox.js"
     ]
   },
   "local": {

@@ -260,9 +260,10 @@ export const commerce = {
       return ok({ ok: true, ref, verified: v.flags.length === 0, mode }, 201);
       } catch (e) { for (const u of undos.reverse()) { try { await u(); } catch { } } throw e; }
     });
-    r.get("/v1/orders", { scope: "orders:read", summary: "الطلبات (flagged=1 للمخالفة فقط)" }, async (req) => {
+    r.get("/v1/orders", { scope: "orders:read", summary: "الطلبات (flagged=1 للمخالفة فقط؛ ref= مرجع دقيق؛ since= طوابع Unix ثوانٍ لما أُنشئ منذها)" }, async (req) => {
       const lim = clampLimit(req.query.limit), after = +req.query.after || 0, a = [req.tenant.id]; let q = "SELECT * FROM cm_orders WHERE tenant_id=?";
       if (req.query.status) { q += " AND status=?"; a.push(String(req.query.status)); } if (req.query.flagged === "1") q += " AND flags<>'[]'"; if (after) { q += " AND id<?"; a.push(after); }
+      if (req.query.ref) { q += " AND ref=?"; a.push(String(req.query.ref).slice(0, 80)); } if (+req.query.since > 0) { q += " AND created_at>=?"; a.push(Math.floor(+req.query.since)); }      // مرشّحان اختياريان (بحث مرجع دقيق/منذ وقت) — إضافيان لا يغيّران السلوك الحالي
       const pg = paginate(await db.all(q + " ORDER BY id DESC LIMIT ?", ...a, lim + 1), lim), out = [];
       const phoneOf = async (o) => { try { return await ctx.vault.decrypt(o.phone_enc, `ord:${req.tenant.id}`); } catch { return ""; } };   // صف تالف/منقول من مستأجر آخر: يُعرض بلا هاتف بدل إسقاط القائمة كلها (V-01)
       for (const o of pg.items) out.push({ ref: o.ref, status: o.status, name: seesPii(req) ? o.name : maskName(o.name), phone: seesPii(req) ? await phoneOf(o) : maskPhone(await phoneOf(o)), wilaya: o.wilaya, items: JSON.parse(o.items), subtotal: o.subtotal, discount: o.discount, fee: o.fee, total: o.total, coupon: o.coupon, flags: JSON.parse(o.flags), mode: o.mode, reserved: !!o.reserved, created_at: o.created_at });

@@ -69,7 +69,7 @@ async function php(b) {
     }
     await p.evaluate(() => SpatialOS.open("ai")); await wait(1200);
     ok("php: لوح المساعد في الوضع الحقيقي بلا وسم «عرض تجريبي»", await p.evaluate(() => { const q = SpatialOS.panels.get("ai"); return !!q && q.el.dataset.real === "1" && !/عرض تجريبي/.test(getComputedStyle(q.el.querySelector(".pn-h h3"), "::after").content); }));
-    ok("php: لا قسم «التسويق» (غير موجود في المنصة) على الأسطوانة ولا في شريط الأقسام", await p.evaluate(() => !/التسويق/.test([...document.querySelectorAll(".node, #dock *")].map(e => e.textContent).join(" ")) && ![...SpatialOS.panels.keys()].includes("mkt")));
+    ok("php: لا قسم باسم «التسويق» وحده (القديم) على الأسطوانة ولا في شريط الأقسام ولا لوح mkt (عنصرا «التسويق بالعمولة»/«خدمات التسويق» من قائمة اللوحة الحقيقية مسموحان في المدار الثاني)", await p.evaluate(() => ![...document.querySelectorAll(".node, #dock *")].some(e => e.textContent.trim() === "التسويق") && ![...SpatialOS.panels.keys()].includes("mkt")));
     /* سحب رأس اللوح الحقيقي بالفأرة */
     await p.evaluate(() => SpatialOS.open("ord")); await wait(600);
     const hp = await p.evaluate(() => { const q = SpatialOS.panels.get("ord"), r = q.el.querySelector(".pn-h").getBoundingClientRect(); return { hx: r.x + r.width * .45, hy: r.y + r.height / 2, x0: q.st.x, y0: q.st.y }; });
@@ -99,7 +99,7 @@ async function php(b) {
     await p.mouse.move(hh.x, hh.y); await p.mouse.down(); for (let i = 1; i <= 16; i++) { await p.mouse.move(hh.x, Math.max(2, hh.y - 60 * i)); await wait(20); } await p.mouse.up(); await wait(900);
     const topH = await p.evaluate(() => Math.round(SpatialOS.panels.get("ord").el.querySelector(".pn-h").getBoundingClientRect().top));
     ok("php: لا يصعد عنوان اللوح فوق الشاشة ولا يُدفن (يبقى شريطه ظاهراً وقابلاً للإمساك: top ≥ 58)", topH >= 58, { topH });
-    ok("php: كل بطاقات الجدران ظاهرة كاملة داخل الشاشة تحت الشريط العلوي", await p.evaluate(() => { const c = [...document.querySelectorAll(".wcard")]; return c.length >= 20 && c.every(e => { const q = e.getBoundingClientRect(); return q.x >= 4 && q.right <= innerWidth - 4 && q.y >= 56 && q.bottom <= innerHeight - 4; }); }));
+    ok("php: الوضع الحقيقي بلا بطاقات جدارية ولا لوحيّات أرضية تجريبية (لا أرقام مختلقة خلف الاسطوانة)، وبطاقات الرئيسية الظاهرة كاملة داخل الشاشة", await p.evaluate(() => document.querySelectorAll(".wcard").length === 0 && document.querySelectorAll("#room .tab").length === 0 && [...document.querySelectorAll(".hp")].filter(e => !e.closest("[hidden]") && e.offsetParent).every(e => { const q = e.getBoundingClientRect(); return q.x >= 4 && q.right <= innerWidth - 4 && q.y >= 56 && q.bottom <= innerHeight - 4; })));
     /* اللوح غير المُركَّز بكامل ألوانه: لا ستارة تعتّمه (كانت 22%) */
     await p.evaluate(() => SpatialOS.open("prod")); await p.waitForFunction(() => { const q = SpatialOS.panels.get("prod"); return q && q.frDone; }, null, { timeout: 60000 }).catch(() => { }); await wait(800);
     await p.evaluate(() => { const q = SpatialOS.panels.get("ord"); q.el.querySelector(".pn-h").dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX: 10, clientY: 10, pointerId: 91 })); }).catch(() => { });
@@ -158,8 +158,9 @@ async function phone(b) {
     await shot(p, "04-phone-card");
     await p.tap("#atm-holo-go"); await p.waitForURL(/admin-preview\/spatial-os\/index\.html\?real=1/);
     await p.waitForFunction(() => { const q = typeof SpatialOS !== "undefined" && SpatialOS.panels.get("ord"); return q && q.frDone; }, null, { timeout: 60000 }); await wait(2500);
-    const L = await p.evaluate(() => { const ex = document.getElementById("hud-exit"), r = ex.getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2), q = SpatialOS.panels.get("ord").el.getBoundingClientRect(); return { exitVis: r.width > 0 && getComputedStyle(ex).display !== "none", exitOnScreen: r.left >= 0 && r.right <= innerWidth && r.top >= 0, exitHit: !!e && e.id === "hud-exit", exitH: Math.round(r.height), panelFits: q.width <= innerWidth + 24, panelInView: q.right > 0 && q.left < innerWidth, real: SpatialOS.real, orbit: SpatialOS.orbit }; });
-    ok("phone: زر «العودة للمظهر العادي» ظاهر داخل الشاشة وقابل للنقر (لا يغطيه عنصر)", L.exitVis && L.exitOnScreen && L.exitHit && L.exitH >= 28, L);
+    const L = await p.evaluate(() => { document.getElementById("ps-menu-btn").click(); /* V5: زر العودة داخل القائمة الهاتفية */ const ex = document.getElementById("ps-exit") || document.getElementById("hud-exit"), r = ex.getBoundingClientRect(), e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2), q = SpatialOS.panels.get("ord").el.getBoundingClientRect(); return { exitVis: r.width > 0 && getComputedStyle(ex).display !== "none", exitOnScreen: r.left >= 0 && r.right <= innerWidth && r.top >= 0, exitHit: !!e && (e === ex || ex.contains(e)), exitH: Math.round(r.height), panelFits: q.width <= innerWidth + 24, panelInView: q.right > 0 && q.left < innerWidth, real: SpatialOS.real, orbit: SpatialOS.orbit }; });
+    ok("phone: زر «العودة للمظهر العادي» (في قائمة الواجهة الهاتفية V5) ظاهر داخل الشاشة وقابل للنقر بهدف ≥ 44px", L.exitVis && L.exitOnScreen && L.exitHit && L.exitH >= 44, L);
+    await p.evaluate(() => SpatialPhone.closeMenu());
     ok("phone: لوح الطلبات الحقيقي يلائم عرض الهاتف وظاهر", L.panelFits && L.panelInView && L.real === true, L);
     ok("phone: لا فيض أفقي في المظهر الهولوغرافي", await noOverflow());
     for (const id of ["set", "dash"]) {
@@ -170,7 +171,7 @@ async function phone(b) {
       await p.evaluate(i => { try { SpatialOS.dismiss(i, "close"); } catch (e) { } }, id);
     }
     await shot(p, "05-phone-holo");
-    await p.tap("#hud-exit"); await p.waitForURL(/\/admin(\.html)?$/); await appReady();
+    await p.evaluate(() => SpatialPhone.openMenu()); await p.tap("#ps-exit"); await p.waitForURL(/\/admin(\.html)?$/); await appReady();
     ok("phone: العودة بلمسة تفتح اللوحة العادية مسجَّلاً الدخول", true);
     ok("phone: لا أخطاء JS غير معالجة", errs.length === 0, errs);
   } finally { await store.stop(); }
@@ -180,7 +181,7 @@ async function stat(b) {
   const port = 8771, root = path.join(__dirname, "..", "..", ".."), srv = spawn("python3", ["-m", "http.server", String(port), "--bind", "127.0.0.1"], { cwd: root, stdio: "ignore" });
   try {
     await wait(1200); const { p, errs } = await ctx(b);
-    await p.goto(`http://127.0.0.1:${port}/admin-preview/spatial-os/index.html?real=1`); await wait(2500);
+    await p.goto(`http://127.0.0.1:${port}/admin-preview/spatial-os/index.html?real=1&noshell=1`); await wait(2500);
     const st = await p.evaluate(() => ({ real: SpatialOS.real, api: SpatialOS.apiReal, note: getComputedStyle(document.querySelector(".note")).display }));
     ok("static: ألواح حقيقية بلا واجهة PHP (وضع المتجر الذي لا يحمل الوكيل التنفيذي)", st.real === true && st.api === false && st.note === "none", st);
     await p.evaluate(() => document.getElementById("core").click()); await wait(1500);

@@ -11,11 +11,26 @@ const AdminHelp = (() => {
   const wordGroups = s => norm(s).split(/[^a-z0-9\u0600-\u06FF]+/).filter(w => w && w.length > 1 && !STOP.has(w)).map(stem).filter(w => w.length > 1).map(w => (/^[انيت]/.test(w) && w.length > 3) ? [w, w.slice(1)] : [w]);      // صيغة الفعل المضارع (انقل/اضيف/احرك) تُطابق المصدر (نقل/اضافه/تحريك)
   const toks = s => wordGroups(s).flat();
   let IDX = null;
-  function index() {
-    const df = {}; IDX = KB.map(e => { const t = toks(e.t), k = toks(e.k), a = toks(e.a), all = new Set([...t, ...k, ...a]); all.forEach(w => { df[w] = (df[w] || 0) + 1; }); return { e, t: new Set(t), k: new Set(k), a: new Set(a) }; });
+  let IDXJ = 0;
+  const entry = (e, df) => { const t = toks(e.t), k = toks(e.k), a = toks(e.a), all = new Set([...t, ...k, ...a]); all.forEach(w => { df[w] = (df[w] || 0) + 1; }); return { e, t: new Set(t), k: new Set(k), a: new Set(a) }; };
+  function index() {   /* فهرسة متزامنة (فتح المساعد/البحث المباشر) */
+    IDXJ++; const df = {}; IDX = KB.map(e => entry(e, df));
     IDX.df = df; IDX.n = KB.length;
   }
+  /* فهرسة مقسَّمة بشرائح ~10ms (V4): كانت مهمة واحدة 300–840ms تحت تخنيق 4× تجمّد الواجهة بعد 15ث من فتح اللوحة (وفي Spatial تتكرر في كل نافذة)؛ تُلغى إن بُنيت متزامنةً أو تغيّرت القاعدة */
+  function indexSliced() {
+    const kb = KB, tok = ++IDXJ, df = {}, out = []; let i = 0;
+    return new Promise(res => {
+      const step = () => {
+        if (tok !== IDXJ || kb !== KB) return res(false);
+        const t0 = performance.now(); while (i < kb.length && performance.now() - t0 < 10) out.push(entry(kb[i++], df));
+        if (i < kb.length) return setTimeout(step, 0);
+        out.df = df; out.n = kb.length; IDX = out; res(true);
+      }; step();
+    });
+  }
   function search(q, n) {
+    if (!IDX && KB) index();   /* استدعاء مباشر قبل اكتمال الفهرسة المؤجَّلة */
     const qs = [...new Set(toks(q))]; if (!qs.length) return []; const groups = wordGroups(q);
     const nq = norm(q);
     return IDX.map(it => { let sc = 0; qs.forEach(w => { const idf = Math.log(1 + IDX.n / (1 + (IDX.df[w] || 0))); const pre = s => { for (const x of s) if (x.startsWith(w) || w.startsWith(x)) return true; return false; };
@@ -95,12 +110,12 @@ const AdminHelp = (() => {
   let KBL = "";
   const helpUrl = () => (typeof AdminI18n !== "undefined" && AdminI18n.helpUrl) ? AdminI18n.helpUrl() : "assets/data/admin-help.json";
   document.addEventListener("alyssum:lang", () => { if (KB && KBL !== helpUrl()) { KB = null; if (open) load(); } });
-  async function load() { if (KB && KBL === helpUrl()) return; try { KBL = helpUrl(); const r = await fetch(KBL, { cache: "no-cache" }); KB = await r.json(); try { if (window.CtlHelp) { await CtlHelp.load(); KB = KB.concat(CtlHelp.entries()); } } catch (e) { } index(); } catch (e) { KB = null; } }
+  async function load(bg) { if (KB && KBL === helpUrl()) return; try { KBL = helpUrl(); const r = await fetch(KBL, { cache: "no-cache" }); KB = await r.json(); try { if (window.CtlHelp) { await CtlHelp.load(); KB = KB.concat(CtlHelp.entries()); } } catch (e) { } if (bg) await indexSliced(); else index(); } catch (e) { KB = null; } }
   function toggle() { open ? close() : show(); }
-  async function show() { build(); await load(); open = true; $("ah-panel").classList.add("on"); setTimeout(() => { const i = $("ah-in"); if (i) i.focus(); }, 50); }
+  async function show() { build(); await load(); if (KB && (!IDX || IDX.n !== KB.length)) index(); open = true; $("ah-panel").classList.add("on"); setTimeout(() => { const i = $("ah-in"); if (i) i.focus(); }, 50); }
   function close() { open = false; const p = $("ah-panel"); if (p) p.classList.remove("on"); }
   function send(ev) { ev.preventDefault(); const i = $("ah-in"), v = i.value; i.value = ""; ask(v); }
-  const init = () => { const tryB = () => { if (document.querySelector("#app .top")) { build(); setTimeout(load, 15000); } else setTimeout(tryB, 400);   /* فهرسة قاعدة المساعدة (299 مقالاً) تكلّف معالج الهاتف عند فتح اللوحة: تُؤجَّل لما بعد الجاهزية، وتُحمَّل فوراً عند أول فتح للمساعد (show) */ }; tryB(); };
+  const init = () => { const tryB = () => { if (document.querySelector("#app .top")) { build(); setTimeout(() => load(true), 15000); } else setTimeout(tryB, 400);   /* فهرسة قاعدة المساعدة (299 مقالاً) تكلّف معالج الهاتف عند فتح اللوحة: تُؤجَّل لما بعد الجاهزية، وتُحمَّل فوراً عند أول فتح للمساعد (show) */ }; tryB(); };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
   function post(cls, text, list, err) { build(); const d = bubble(cls === "u" ? "u" : "a", esc(text).replace(/\n/g, "<br>")); if (err) d.style.color = "#b42318"; if (list && list.length) chips(list, d); }
   return { post, ask, send, close, toggle, show, decide: q => { const r = KB ? search(q, 4) : []; if (!r.length || r[0].sc < 6 || r[0].cov < .6) return 'REPHRASE'; const c = r.slice(1).filter(x => x.sc > r[0].sc * .88 && x.cov >= r[0].cov - .01); return c.length ? 'AMBIG:' + [r[0]].concat(c).map(x => x.e.id).join('+') : 'OK:' + r[0].e.id; }, search: q => (KB ? search(q, 3) : []), get kb() { return KB; } };

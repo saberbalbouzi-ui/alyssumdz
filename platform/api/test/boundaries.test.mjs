@@ -24,6 +24,7 @@ import { wallet } from "../src/modules/wallet.js";
 import { agency } from "../src/modules/agency.js";
 import { appstore } from "../src/modules/appstore.js";
 import { marketplace } from "../src/modules/marketplace.js";
+import { laura } from "../src/modules/laura.js";
 import { platformModule } from "../src/modules/platform.js";
 
 const t = Tally();
@@ -33,7 +34,7 @@ const OWN = {
   "ab.js": ["ab_"], "ads.js": ["ad_"], "adsoauth.js": ["ad_oauth", "ad_accounts"], "ai.js": ["ai_"], "antifraud.js": ["fr_"], "capi.js": ["cp_"],
   "carts.js": ["cr_"], "tryon.js": ["tr_"], "commerce.js": ["cm_"], "digital.js": ["dg_"], "hooks.js": ["hk_"], "payments.js": ["pay_"], "platform.js": ["pf_events", "pf_integrations"],
   "sheets.js": [], "sms.js": ["sms_"], "sources.js": ["src_"], "wallet.js": ["wl_"], "whatsapp.js": ["wa_"], "agency.js": ["marketing_services", "agency_"], "appstore.js": ["apps", "app_", "oauth_", "platform_revenues"], "marketplace.js": ["mk_"],
-  "beta.js": ["beta_"],                                   // وحدة Beta (لا تُحمَّل في الإنتاج): دعوات/ملاحظات/استهلاك؛ وإعداداتها عبر ctx.meta وprovision.mergeSettings لا كتابة مباشرة في pf_*
+  "beta.js": ["beta_"], "laura.js": ["lr_"],                                   // وحدة Beta (لا تُحمَّل في الإنتاج): دعوات/ملاحظات/استهلاك؛ وإعداداتها عبر ctx.meta وprovision.mergeSettings لا كتابة مباشرة في pf_*
 };
 /* قراءة جداول الآخرين المسموحة صراحةً (SELECT فقط) — أي إضافة هنا قرار معماري موثّق في ARCHITECTURE.md */
 const READ_OK = {
@@ -72,7 +73,7 @@ for (const f of readdirSync(dir).filter((x) => x.endsWith(".js"))) {
 }
 
 /* كتالوج الأحداث: كل حدث تستمع إليه وحدة يجب أن يكون له مُصدِر معروف (وحدة أو مصدر خارجي موثّق) */
-const MODS = { admin: adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, tryon, payments, sms, commerce, sources, ads, adsOauth, wallet, agency, appstore, marketplace, platform: platformModule([]) };
+const MODS = { admin: adminModule, antifraud, capi, hooks, digital, whatsapp, sheets, ab, ai, carts, tryon, payments, sms, commerce, sources, ads, adsOauth, wallet, agency, appstore, marketplace, laura, platform: platformModule([]) };
 const EXTERNAL = new Set(["order.status_changed", "order.created", "order.confirmed", "order.shipped", "order.out_for_delivery", "order.delivered", "order.cancelled", "order.failed", "order.returned", "payment.confirmed", "payment.failed", "payment.cancelled"]); // تدفعها لوحة التاجر/البوابة عبر POST /v1/events
 const emitted = new Set(); // أحداث تُصدرها الوحدات حرفياً
 for (const f of readdirSync(dir).filter((x) => x.endsWith(".js"))) {

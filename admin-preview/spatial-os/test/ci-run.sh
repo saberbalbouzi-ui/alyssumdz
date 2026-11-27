@@ -30,8 +30,27 @@ ONLY="${SPATIAL_ONLY:-}"; want() { [ -z "$ONLY" ] || [[ ",$ONLY," == *",$1,"* ]]
 want nlu-eval        && run nlu-eval        120 node "$T/nlu-eval.js"
 want holo-settings  && run holo-settings  900 node "$T/holo-settings.js" all   # المظهر الهولوغرافي: من الإعدادات إلى الألواح الحقيقية والعودة (مكتب + هاتف باللمس + ثابت)
 want world-fast    && run world-fast    600 node "$T/world-fast.js"   # العالم الحقيقي: سرعة الفتح، المداران، بطاقات الرئيسية، اللوح الاحتياطي، جسر صوت الكرة
+want laura-ui     && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-ui 600 node "$T/laura-ui.js"; else skip laura-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA من المتصفح عبر الوسيط إلى Worker حقيقي في workerd
+want laura-stats-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-stats-ui 600 node "$T/laura-stats-ui.js"; else skip laura-stats-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
+want laura-admin-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-admin-ui 600 node "$T/laura-admin-ui.js"; else skip laura-admin-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
+want laura-lang-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-lang-ui 600 node "$T/laura-lang-ui.js"; else skip laura-lang-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
+want laura-exec-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-exec-ui 600 node "$T/laura-exec-ui.js"; else skip laura-exec-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
+want laura-settings-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-settings-ui 600 node "$T/laura-settings-ui.js"; else skip laura-settings-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
+want laura-shipping-ui && { if [ -n "${WRANGLER_BIN:-}" ] || command -v wrangler >/dev/null 2>&1; then run laura-shipping-ui 600 node "$T/laura-shipping-ui.js"; else skip laura-shipping-ui "يحتاج wrangler (workerd) محلياً: WRANGLER_BIN"; fi; }   # LAURA تقرأ إحصائيات الرئيسية الحقيقية
 want lang-fr       && run lang-fr       600 node "$T/lang-fr.js"      # الفرنسية: زر FR/ع في Spatial + تزامن كل الألواح واللوحة + بطاقات الرئيسية + الاستمرار (متجر PHP محلي حقيقي)
 want phone-scroll  && run phone-scroll  300 node "$T/phone-scroll.js"   # الهاتف: القاعدة ظاهرة، لوح 2D (عادي ومكبَّر)، سحب الإصبع يمرّر المحتوى
+want touch-drag    && run touch-drag    600 node "$T/touch-drag.js"     # سحب النوافذ باللمس (أندرويد/آيفون/لوحي): الرأس والمكبَّر والغلاف وpointercancel والعبور فوق الإطار
+want nav-instant   && run nav-instant   600 node "$T/nav-instant.js"    # فتح آني: النقر في المدار الثاني ينقل اللوح المفتوح إلى التبويب بلا تحميل (سطح مكتب + هاتف)
+want tab-switch    && run tab-switch    600 node "$T/tab-switch.js"     # V2: تنقل آني (≤120ms) داخل اللوح بلا إعادة تحميل وبحالته، واستقرار الإطار، مسار WebGL حقيقي
+want multi-load   && run multi-load   600 node "$T/multi-load.js"    # V3: تحميل متدرج لعدة نوافذ (إطار واحد في اللحظة، المُركَّز أولاً، المصغَّرة/المغلقة، بلا تسرّب)
+want share-unit   && run share-unit   120 node "$T/share-unit.js"    # V4: SpatialShare (عزل/TTL/إبطال الكتابة/المستأجر) بلا متصفح
+want share-e2e    && run share-e2e    600 node "$T/share-e2e.js"     # V4: مشاركة القراءات بين 3 نوافذ حقيقية (تقليل الطلبات، إبطال الكتابة، شريحة الإقلاع)
+want preempt     && run preempt     600 node "$T/preempt.js"       # V4: اختيار نافذة منتظرة يُلغي الحمولة الخلفية الجارية ويقدّمها (4×)
+want assistant-index && run assistant-index 300 node "$T/assistant-index.js"   # V4: فهرسة مساعد اللوحة مقسَّمة (يعمل مبكراً ومتأخراً، لا مهمة >200ms تحت 4×)
+want world-stable  && run world-stable  900 node "$T/world-stable.js"   # عالم ثابت: القاعدة/الاسطوانة/الكرة، 24 دورة فتح/إغلاق، حفظ/استعادة الترتيب (مكتب+هاتف)
+want phone-ui      && run phone-ui      900 node "$T/phone-ui.js"       # واجهة الهاتف المخصصة: شرائط، أهداف لمس، ورقة، تنقل، عالم، فرنسية (360/390/412/768)
+want phone-nav   && run phone-nav   300 node "$T/phone-nav.js"      # V5: صينية النوافذ/القائمة/لوحة المفاتيح (محاكاة)/LAURA معتمة/مساعد احتياطي/فقاعة الإشعار على الهاتف
+want phone-laura-off && run phone-laura-off 200 node "$T/phone-laura-off.js"   # V5: LAURA غير مفعَّلة على الخادم (إنتاج ساكن): رسالة ظاهرة + فتح «اسألني» بدل الصمت
 want orbits3      && run orbits3      600 node "$T/orbits3.js"       # ثلاثة مدارات (تبويبات ← إعدادات أولى ← إعدادات ثالثة) + فتح آني بألواح مسخَّنة مسبقاً
 want drag-inside && run drag-inside  300 node "$T/drag-inside.js"   # السحب داخل البطاقات
 want sphere-audio&& run sphere-audio 300 node "$T/sphere-audio.js"   # صوت الكرة ستيريو

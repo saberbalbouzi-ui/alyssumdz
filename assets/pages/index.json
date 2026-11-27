@@ -1,10 +1,11 @@
 [
  {
-  "slug": "01",
-  "thumb": "assets/img/tarkiz/lp/hero.webp",
-  "title": "عسل التركيز وتنشيط الذاكرة",
-  "updated": "2026-11-04 15:16",
-  "live": true
+  "slug": "tarkiz",
+  "thumb": "assets/img/tarkiz/lp/mf-family-jar.webp",
+  "title": "ALYSSUM MEMORY",
+  "updated": "2026-11-27 19:29",
+  "live": true,
+  "product": "tarkiz"
  },
  {
   "slug": "ruqya-avis",
@@ -18,27 +19,6 @@
   "thumb": "assets/img/ruqya/avis/r01.webp",
   "title": "حجز موعد الرقية الشرعية",
   "updated": "2026-11-13 18:03",
-  "live": true
- },
- {
-  "slug": "honey-focus",
-  "thumb": "assets/img/tarkiz/presentation/03.webp",
-  "title": "ALYSSUM MEMORY 1",
-  "updated": "2026-11-15 23:52",
-  "live": true
- },
- {
-  "slug": "honey-focus-copy",
-  "thumb": "assets/img/tarkiz/presentation/03.webp",
-  "title": "ALYSSUM MEMORY",
-  "updated": "2026-11-15 23:44",
-  "live": true
- },
- {
-  "slug": "honey-focus-big",
-  "thumb": "assets/img/tarkiz/presentation/03.webp",
-  "title": "ALYSSUM MEMORY — نص كبير للهاتف",
-  "updated": "2026-11-22 12:00",
   "live": true
  }
 ]

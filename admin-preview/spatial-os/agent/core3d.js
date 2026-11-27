@@ -10,7 +10,10 @@
   const RM = matchMedia("(prefers-reduced-motion:reduce)").matches, mobile = () => innerWidth <= 820;
   const wrap = document.createElement("div"); wrap.className = "core3d p-rest"; wrap.setAttribute("aria-hidden", "true");
   const cv = document.createElement("canvas"); cv.id = "core3d-cv"; wrap.appendChild(cv); cam.appendChild(wrap);
-  const forced = /[?&]tier=(high|mid|low|static)\b/.exec(location.search), noGL = /[?&]gl=0\b/.test(location.search);
+  const forced = /[?&]tier=(high|mid|low|static)\b/.exec(location.search);
+  /* WebGL برمجي (بلا GPU: SwiftShader/llvmpipe/Basic Render) يرسم الكرة على المعالج فيحجز الخيط ويُبطئ كل النوافذ (قياس: 130ms/إطار)؛ نستعمل مسار Canvas2D الخفيف تلقائياً. ?gl=1 يفرض WebGL و?gl=0 يمنعه */
+  const softGL = () => { try { const c = document.createElement("canvas"), g = c.getContext("webgl") || c.getContext("experimental-webgl"); if (!g) return false; const e = g.getExtension("WEBGL_debug_renderer_info"), r = e ? String(g.getParameter(e.UNMASKED_RENDERER_WEBGL) || "") : ""; try { const l = g.getExtension("WEBGL_lose_context"); if (l) l.loseContext(); } catch (_) { } return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(r); } catch (_) { return false; } };
+  const noGL = /[?&]gl=0\b/.test(location.search) || (!/[?&]gl=1\b/.test(location.search) && softGL());
   const BASE = 260; /* بكسل CSS للوح عند الراحة */
   const PAL = { emerald: [.10, .90, .55], cyan: [.17, .89, 1], lime: [.86, 1, .12], rose: [1, .38, .52], amber: [1, .70, .25], ice: [.62, .97, 1] };
   /* معاملات كل حالة؛ تُسهَّل (easing) نحو الهدف كل إطار */
@@ -224,7 +227,10 @@
   }
   function loop(t) {
     requestAnimationFrame(loop); if (!running || document.hidden) return;
-    const T = TIERS[tier] || { fps: 24 }, fpsCap = RM ? 8 : T.fps, minDt = 1000 / fpsCap; if (t - lastFrame < minDt - 2) return; const dt = Math.min(100, t - lastFrame || 16); lastFrame = t; frameN++; st.frames++;
+    const T = TIERS[tier] || { fps: 24 }, np = (window.SpatialOS && SpatialOS.panels) ? SpatialOS.panels.size : 0,
+      calm = st.visual === "idle" && V.voice !== "speaking" && V.voice !== "listening" && !shockT0 && !errT0 && lvl < .02,
+      /* الكرة هادئة (لا كلام/تفكير/نتيجة): 20 إطاراً/ث، و4 حين تكون هناك نوافذ مفتوحة (العمل أهم من الزينة)؛ النشطة بسقف الطبقة كما كانت */
+      fpsCap = RM ? 8 : calm ? (np ? 4 : 20) : T.fps, minDt = 1000 / fpsCap; if (t - lastFrame < minDt - 2) return; const dt = Math.min(100, t - lastFrame || 16); lastFrame = t; frameN++; st.frames++;
     /* قياس الأداء وخفض الجودة تلقائياً */
     slow = ease(slow, dt, .08); st.fps = Math.round(1000 / Math.max(1, slow)); if (!tierLock && frameN > 24 && frameN % 12 === 0) { if (slow > 55 && tier === "high") setTier("mid", "slow"); else if (slow > 62 && tier === "mid") setTier("low", "slow"); }
     const k = 1 - Math.exp(-dt / 260);
@@ -240,7 +246,7 @@
     if (shockT0) { const p = (t - shockT0) / 1700; if (p >= 1) { shockT0 = 0; shockP = -1; boost = 1; } else { shockP = p; boost = 1 + .55 * Math.pow(1 - p, 2); } }
     if (errT0) { const p = (t - errT0) / 1500; if (p >= 1) { errT0 = 0; errP = -1; } else errP = p; }
     if (gl) { if (gl.isContextLost()) return; drawGL(t, dt); } else if (ctx2) draw2D(t);
-    boltsUpdate(t, dt);
+    if (calm && np) { if (bolts.length) { bolts = []; bg.clearRect(0, 0, bc.width, bc.height); } } else boltsUpdate(t, dt);   /* لا أعصاب محيطية فوق نوافذ مفتوحة */
     if (sampleReq) doSample();
   }
   let sampleReq = null; const benchPx = new Uint8Array(4);
@@ -311,6 +317,7 @@
     trace: () => st.trace.slice(),
     setVoice(mode) { V.voice = mode === "listening" || mode === "speaking" || mode === "processing" ? mode : "none"; sync(); },
     setExpanded(on) { V.expanded = !!on; sync(); },
+    setAgent(a) { V.agent = ["idle", "thinking", "executing", "success", "error"].includes(a) ? a : "idle"; sync(); },
     setAudio(level, wave) { audio.level = Math.max(0, Math.min(1, level || 0)); audio.wave = wave || null; },
     setTier: t => { tierLock = true; setTier(t, "manual"); },
     sample: () => new Promise(res => { sampleReq = { resolve: res }; }),

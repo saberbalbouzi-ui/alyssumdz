@@ -1,0 +1,13 @@
+node:internal/process/promises:394
+    triggerUncaughtException(err, true /* fromPromise */);
+    ^
+
+page.waitForFunction: Timeout 90000ms exceeded.
+    at boot (/tmp/claude-0/-home-user-alyssumdz/8087ee08-7f95-5484-91d3-377edfd36d27/scratchpad/wt-laura/admin-preview/spatial-os/test/phase9.js:32:29)
+    at async tests (/tmp/claude-0/-home-user-alyssumdz/8087ee08-7f95-5484-91d3-377edfd36d27/scratchpad/wt-laura/admin-preview/spatial-os/test/phase9.js:69:15)
+    at async /tmp/claude-0/-home-user-alyssumdz/8087ee08-7f95-5484-91d3-377edfd36d27/scratchpad/wt-laura/admin-preview/spatial-os/test/phase9.js:348:49 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.4

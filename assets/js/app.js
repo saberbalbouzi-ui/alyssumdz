@@ -325,7 +325,7 @@ function currentProductSlugFromUrl(){
   const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
   if(m) return m[1];
   /* الرابط النظيف: alyssumdz.com/<slug>/ */
-  const f = location.pathname.split("/").filter(Boolean)[0];
+  const sg = location.pathname.split("/").filter(Boolean), pf = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) || "", f = pf && sg[0] === pf ? sg[1] : sg[0];      /* alyssumdz.com/produit/<slug>/ مع بادئة المنتجات */
   return f && typeof PRODUCTS !== "undefined" && PRODUCTS.some(p=>p.slug===f) ? f : null;
 }
 function pixelApplies(px, slug){
@@ -1551,7 +1551,7 @@ function productHref(p){
     if(g === "B") page = p.ab.b;
     v = g;
   }
-  const src = page ? "lp/" + page : "p/" + p.slug, to = page ? src : p.slug;      // المنتج بلا مسار ⟵ الرابط النظيف في الجذر (النسخ الجذرية جاهزة)
+  const src = page ? "lp/" + page : "p/" + p.slug, PFXP = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) || "", to = PFXP ? PFXP + "/" + p.slug : (page ? src : p.slug);      // مع البادئة: بطاقة المنتج تفتح رابطه /produit/<slug> دائماً (نسخة صفحة مساره إن وُجدت)      // المنتج بلا مسار ⟵ الرابط النظيف في الجذر (النسخ الجذرية جاهزة)
   return REL + to + "/?utm_source=home&utm_medium=product-card&utm_campaign=" + encodeURIComponent(p.slug) + "&utm_content=" + encodeURIComponent(src) + (v ? "&ab=" + v : "");
 }
 function productCardHTML(p, opts){
