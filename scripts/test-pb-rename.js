@@ -44,7 +44,7 @@ const { chromium } = require("playwright");
   /* رابط معروض هو رابط المنتج (مسار): الحقل يحمل رابط الصفحة الحقيقي مع تنبيه لا اسم المنتج */
   await p.evaluate(async () => { Admin.products = [{ slug: "prodx", title: "م", route: "cc-final" }]; await PBAdmin.refresh(true); });
   await p.click('#pb-list .pbx-url button[title="تعديل الرابط"]'); await p.waitForTimeout(200);
-  t("الرابط المعروض رابط المنتج: الحقل برابط الصفحة الحقيقي مع تنبيه", await p.evaluate(() => { const b = document.querySelector("#pb-list .pbx-url"); return b.querySelector("input").value === "cc-final" && !/prodx\/$/.test(b.firstElementChild.firstElementChild.textContent) && /رابط المنتج/.test(b.textContent); }), await p.evaluate(() => document.querySelector("#pb-list .pbx-url").textContent));
+  t("مع بادئة المنتجات: رابط الصفحة في جذرها (لا رابط المنتج) والحقل باسم الصفحة دون تنبيه", await p.evaluate(() => { const b = document.querySelector("#pb-list .pbx-url"); return b.querySelector("input").value === "cc-final" && !/رابط المنتج/.test(b.textContent) && b.firstElementChild.firstElementChild.textContent === "alyssumdz.com/"; }), await p.evaluate(() => document.querySelector("#pb-list .pbx-url").textContent));
   await p.keyboard.press("Escape");
   /* التعديل السريع: تفعيل «الرسمية» يفعّل «المسار» معها (قابل للإلغاء) */
   await p.evaluate(async () => { Admin.products = [{ slug: "prod", title: "منتج" }]; await PBAdmin.quick("bb-new"); await new Promise(r => setTimeout(r, 400)); document.getElementById("pq-prod").value = "prod"; });
