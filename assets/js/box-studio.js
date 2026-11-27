@@ -1705,7 +1705,14 @@ function buildDims(){
 }
 
 /* — render, overlays, export — */
-let pulse = null;
+let pulse = null, hold = null; const holdOrig = new Map();
+/* الوجه المحدَّد لرفع صورة يُظلَّل بغشاء أحمر شفاف ما دامت قائمة النقر مفتوحة (ضرب اللون لا الإشعاع: الوجه الأبيض لا يتأثر بالإضافة) */
+function holdMats(k){ const f = FC[k]; return f ? (f.rmats && f.rmats.length ? f.rmats : [f.mat]) : []; }
+function holdOff(){ holdOrig.forEach((c,mt)=>{ mt.color.copy(c); }); holdOrig.clear(); }
+function holdFace(key){
+  if(hold===(key||null)) return; holdOff(); hold = key || null;
+  holdMats(hold).forEach(mt=>{ if(mt && mt.color){ holdOrig.set(mt, mt.color.clone()); mt.color.setRGB(Math.min(1,mt.color.r*1.0), mt.color.g*.42, mt.color.b*.42); } }); dirty = true;
+}
 function render(){
   if(pulse){
     const a = Math.max(0, 1-(performance.now()-pulse.t0)/700), f = FC[pulse.key];
@@ -1909,7 +1916,7 @@ function loop(now){
 function renderNow(){ dirty = false; render(); updateOverlay(); }
 return {is2D,renderNow,drawLayer,BLENDS,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
   drawFace,redrawAll,ensureFaces,applyMaterialProps,applyLights,rebuild,fitCamera,applyOpen,animateOpen,applyBg,bgCss,drawBG,renderComposite,
-  CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,setDimHi,
+  CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,setDimHi,holdFace,
   get tool(){return tool}, set tool(v){tool = v; hooks.tool(v);},
   get dirty(){return dirty}, set dirty(v){dirty = v},
   get recording(){return recording}, set recording(v){recording = v},
@@ -2226,14 +2233,15 @@ function buildRealMat(b){
 }
 /* — click-on-model menu: upload images / custom size (Pacdora-style) — */
 let ctxEl = null;
-function closeCtx(){ if(ctxEl){ ctxEl.remove(); ctxEl = null; } X.setDimHi(null); }
+function closeCtx(){ if(ctxEl){ ctxEl.remove(); ctxEl = null; } X.setDimHi(null); X.holdFace(null); }
 const sizable = () => { const d = MODELS[state.model]; return !(d.custom || d.prof); };
 function ctxPlace(cx, cy){
   const r = X.stage.getBoundingClientRect(), w = ctxEl.offsetWidth || 220, h = ctxEl.offsetHeight || 100;
   ctxEl.style.left = clamp(cx-r.left-w/2, 8, Math.max(8, r.width-w-8))+'px'; ctxEl.style.top = clamp(cy-r.top+12, 8, Math.max(8, r.height-h-8))+'px';
 }
-function showCtx(e){
+function showCtx(e, p){
   closeCtx(); if(!e || X.is2D() || e.__noctx) return;
+  X.holdFace((p && p.key) || state.sel.face);   /* الصورة تُرفع على الوجه المحدَّد: هو الذي يُظلَّل */
   ctxEl = el('<div class="ctxm" role="menu"><button type="button" class="it" data-a="up">'+ico('upload')+'<span>رفع صورك</span></button>'+(sizable() ? '<button type="button" class="it" data-a="size">'+ico('edit')+'<span>حجم مخصص</span></button>' : '')+'</div>');
   $('#overlay').appendChild(ctxEl); const px = e.clientX, py = e.clientY; ctxPlace(px,py);
   ctxEl.addEventListener('pointerdown', ev=>ev.stopPropagation());
@@ -2264,7 +2272,7 @@ function showSizePop(px,py){
   };
   hi('L'); setTimeout(()=>ins[0].focus(),30);
 }
-hooks.menu = e=>{ if(!e) closeCtx(); else showCtx(e); };
+hooks.menu = (e,p)=>{ if(!e) closeCtx(); else showCtx(e,p); };
 { const cl = ev=>{ if(ctxEl && !ctxEl.contains(ev.target)) closeCtx(); }; document.addEventListener('pointerdown', cl, true); offs.push(()=>document.removeEventListener('pointerdown', cl, true)); }
 function buildCustomDims(b){
   const d = state.dims;
