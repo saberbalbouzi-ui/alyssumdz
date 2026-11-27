@@ -28,8 +28,9 @@ const BoxStudio = (() => {
 #bs .app{height:100%;display:flex;flex-direction:column}
 #bs svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 #bs.d2 .tab[data-tab="layout"],#bs.d2 .tab[data-tab="video"],#bs.d2 .tab[data-tab="presets"],#bs.d2 .bar .open,#bs.d2 #bOrtho,#bs.d2 #bDims,#bs.d2 .bar .vsep{display:none!important}
-#bs #menuBtn,#bs #menu{display:none!important}      /* زر «قائمة المشروع» (☰) لا يعمل (تظهر القائمة شريطاً مقصوصاً تحت الشريط العلوي) على الحاسوب والهاتف: محذوف، والحفظ بزر 💾 */
-#bs .top{color:var(--ink);position:relative;height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+@media(min-width:821px){#bs #menuBtn,#bs #menu{display:none!important}}      /* الحاسوب: قائمة المشروع محذوفة (الحفظ بـ 💾)؛ الهاتف: تبقى وتعمل */
+html body #bs #app .top{overflow:visible!important}      /* قاعدة #app .top في اللوحة (overflow:auto) تقصّ قائمة ☰ لأن جذر الاستوديو يحمل المعرّف نفسه */
+#bs .top{color:var(--ink);position:relative;z-index:30;height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
 #bs .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:21px;letter-spacing:.01em;white-space:nowrap}
 #bs .brand .mark{width:34px;height:34px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
 #bs .brand .mark svg{width:20px;height:20px}
@@ -191,9 +192,9 @@ const BoxStudio = (() => {
 @media (max-width:900px){#bs .top{padding:0 10px;gap:4px}
 #bs .top .btn.adv span,#bs .top .brand .name{display:none}
 #bs .main{flex-direction:column;padding:8px;gap:8px}
-#bs .stage{order:1;min-height:50vh}
-#bs .panel{order:2;width:auto;max-height:34vh;flex:none}
-#bs .rail{order:3;width:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px}
+#bs .stage{order:1;flex:1 1 0;min-height:30vh}
+#bs .panel{order:2;width:auto;max-height:28vh;flex:none}
+#bs .rail{order:0;width:auto;flex:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px}      /* شريط التبويبات (النماذج…) أعلى المحرّر: كان آخر العمود فيخرج خارج الشاشة */
 #bs .rail hr{display:none}
 #bs .rail .grow{display:none}
 #bs .tab{flex:none;min-width:66px;padding:6px 4px}

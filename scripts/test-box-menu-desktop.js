@@ -1,8 +1,8 @@
-/* (يشمل الهاتف أيضاً)  استوديو 3D (المحرّر): زر ☰ «قائمة المشروع» محذوف على الحاسوب (كان يفتح شريطاً مقصوصاً) ويبقى زر الحفظ؛ وعلى الجوال يبقى. NODE_PATH=/opt/node-tools/node_modules */
+/*  استوديو 3D (المحرّر): زر ☰ «قائمة المشروع» محذوف على الحاسوب (كان يفتح شريطاً مقصوصاً) ويبقى زر الحفظ؛ وعلى الجوال يبقى. NODE_PATH=/opt/node-tools/node_modules */
 const { chromium, devices } = require("playwright");
 (async () => {
   const b = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-webgl", "--ignore-gpu-blocklist"] }); let bad = 0; const t = (n, ok, x) => { console.log((ok ? "✓ " : "✗ ") + n + (ok ? "" : " " + JSON.stringify(x))); if (!ok) bad++; };
-  for (const [name, ctxo, want] of [["مكتب", { viewport: { width: 1280, height: 800 } }, false], ["هاتف", { ...devices["Pixel 7"] }, false]]) {
+  for (const [name, ctxo, want] of [["مكتب", { viewport: { width: 1280, height: 800 } }, false], ["هاتف", { ...devices["Pixel 7"] }, true]]) {
     const c = await b.newContext(ctxo), p = await c.newPage(); const errs = []; p.on("pageerror", e => errs.push(String(e).slice(0, 140)));
     await p.route(/fonts\.googleapis\.com|fonts\.gstatic\.com/, r => r.abort());
     await p.route(/supabase\.co|generativelanguage/, r => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" }));
