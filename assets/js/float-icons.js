@@ -11,12 +11,12 @@ window.FloatIcons = (function () {
   const KEYS = ["wa", "tel", "msgr"];
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function defaults() {
-    const base = k => ({ on: false, side: "left", bottom: META[k].bottom, edge: 20, size: 56, shape: "circle", color: META[k].color, iconColor: "#ffffff", anim: k === "wa" ? "pulse" : "none", label: META[k].label, showLabel: "no", delay: 0, scroll: 0, device: "all", pages: { home: true, product: true, shop: true, other: true }, shadow: true });
+    const base = k => ({ on: false, side: "left", bottom: META[k].bottom, edge: 20, size: 56, shape: "circle", color: META[k].color, iconColor: "#ffffff", anim: k === "wa" ? "pulse" : "none", label: META[k].label, showLabel: "no", delay: 0, scroll: 0, device: "all", pages: { home: true, product: true, shop: true, other: true }, only: [], shadow: true });
     return { v: 1, wa: Object.assign(base("wa"), { number: "", msg: "مرحباً، أريد الاستفسار عن منتجاتكم" }), tel: Object.assign(base("tel"), { number: "" }), msgr: Object.assign(base("msgr"), { page: "" }) };
   }
   function norm(c) {
     const d = defaults(), o = c && typeof c === "object" ? c : {};
-    KEYS.forEach(k => { d[k] = Object.assign(d[k], o[k] || {}); d[k].pages = Object.assign(defaults()[k].pages, (o[k] || {}).pages || {}); });
+    KEYS.forEach(k => { d[k] = Object.assign(d[k], o[k] || {}); d[k].pages = Object.assign(defaults()[k].pages, (o[k] || {}).pages || {}); d[k].only = Array.isArray((o[k] || {}).only) ? o[k].only.map(String).filter(Boolean) : []; });
     return d;
   }
   function telHref(n) { const d = String(n || "").replace(/[^\d+]/g, ""); if (!d) return ""; if (d.startsWith("+")) return "tel:" + d; if (d.startsWith("213")) return "tel:+" + d; if (d.startsWith("0") && d.length >= 9) return "tel:+213" + d.slice(1); return "tel:" + d; }
@@ -51,6 +51,9 @@ window.FloatIcons = (function () {
     return a;
   }
   function pageType() { const p = location.pathname.replace(/index\.html$/, ""), parts = p.split("/").filter(Boolean); if (!parts.length) return "home"; if (parts.indexOf("p") >= 0 || (parts.length === 1 && (window.PRODUCTS || []).some(x => x.slug === parts[0]))) return "product"; if (/shop\.html|account\.html|cart/.test(p)) return "shop"; return "other"; }
+  /* هوية الصفحة الحالية لاختيار «صفحات/منتجات محدّدة»: آخر مقطع من المسار (/produit/<slug> و/p/<slug> و/lp/<slug> و/<slug>) مع ربط المنتج بصفحة هبوط مساره والعكس */
+  function hereIds() { const parts = location.pathname.replace(/index\.html$/, "").split("/").filter(Boolean), last = parts[parts.length - 1] || "", ids = last ? [last] : [], P = window.PRODUCTS || []; P.forEach(x => { if (x.slug === last && x.route) ids.push(x.route); if (x.route && x.route === last) ids.push(x.slug); }); return ids; }
+  function onlyOk(c) { const L = (c && c.only) || []; if (!L.length) return null; const h = hereIds(); return L.some(x => h.indexOf(x) >= 0); }
   function deviceOk(d) { const m = window.matchMedia && window.matchMedia("(max-width:767px)").matches; return d === "all" || (d === "mobile" && m) || (d === "desktop" && !m); }
   async function init(rel) {
     try {
@@ -61,7 +64,7 @@ window.FloatIcons = (function () {
       let cfg = null; try { const r = await fetch(rel + "assets/data/float-icons.json", { cache: "no-store" }); if (r.ok) cfg = await r.json(); } catch (e) { }
       if (!cfg) return; cfg = norm(cfg); css(); const pt = pageType(), els = [];
       KEYS.forEach(k => {
-        const c = cfg[k]; if (!c.on || !c.pages[pt] || !deviceOk(c.device)) return;
+        const c = cfg[k], ob = onlyOk(c); if (!c.on || !deviceOk(c.device) || (ob === null ? !c.pages[pt] : !ob)) return;      /* قائمة «صفحات/منتجات محدّدة» غير فارغة ⟵ تظهر فيها وحدها بغضّ النظر عن أنواع الصفحات */
         const a = el(k, c, false); if (!a) return; document.body.appendChild(a); els.push([a, c]);
         const show = () => { setTimeout(() => a.classList.add("in"), Math.max(0, (+c.delay || 0) * 1000)); };
         if (+c.scroll > 0) { const on = () => { if (window.scrollY >= +c.scroll) { removeEventListener("scroll", on); show(); } }; addEventListener("scroll", on, { passive: true }); on(); } else show();
@@ -69,5 +72,5 @@ window.FloatIcons = (function () {
       addEventListener("resize", () => els.forEach(([a, c]) => { a.style.display = deviceOk(c.device) ? "" : "none"; }));
     } catch (e) { }
   }
-  return { META, KEYS, defaults, norm, el, css, href, init, esc };
+  return { META, KEYS, defaults, norm, el, css, href, init, esc, hereIds, onlyOk };
 })();

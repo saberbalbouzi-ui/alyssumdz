@@ -878,5 +878,12 @@
  "طلبات سابقة أُلغيت": "commandes précédentes annulées",
  "بعد محاولات اتصال دون رد (حتى": "après des tentatives d'appel sans réponse (jusqu'à",
  "محاولات)": "tentatives)",
- "قد لا يردّ على هاتفه": "il ne répond peut-être pas au téléphone"
+ "قد لا يردّ على هاتفه": "il ne répond peut-être pas au téléphone",
+ "صفحات أو منتجات محدّدة": "Pages ou produits précis",
+ "إن اخترتَ فلا تظهر الأيقونة إلا فيها، وإلا فحسب الأنواع أعلاه)": "si vous en choisissez, l'icône n'apparaît que sur eux ; sinon selon les types ci-dessus)",
+ "لا صفحات ولا منتجات لاختيارها بعد": "Aucune page ni aucun produit à choisir pour l'instant",
+ "ستظهر في": "Elle apparaîtra sur",
+ "غير محدَّدة": "Non définie",
+ "تظهر حسب الأنواع": "apparaît selon les types",
+ "فقط": "uniquement"
 }
