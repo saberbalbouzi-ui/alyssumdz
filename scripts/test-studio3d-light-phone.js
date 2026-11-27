@@ -9,7 +9,7 @@ const { chromium, devices } = require("playwright");
     await p.addInitScript(() => { try { localStorage.setItem("alyssum_admin_on", "1"); localStorage.setItem("au_dismiss", "99"); } catch (e) { } });
     await p.goto("http://localhost:" + (process.env.PORT || 8765) + "/admin.html", { waitUntil: "commit" }); await p.waitForTimeout(8000);
     const r = await p.evaluate(async tab => { document.getElementById("app").classList.remove("hidden"); document.documentElement.classList.add("white"); await new Promise(r => setTimeout(r, 600)); Studio3D.open({ tab }); await new Promise(r => setTimeout(r, 6500));
-      const bar = document.getElementById("s3d-bar"), o = { bar: bar && { h: Math.round(bar.getBoundingClientRect().height), sh: bar.scrollHeight } };
+      const bar = document.getElementById("s3d-bar"), o = { bar: bar && { h: Math.round(bar.getBoundingClientRect().height), sh: bar.scrollHeight, out: [...bar.children].filter(e => e.getBoundingClientRect().width > 0 && (e.getBoundingClientRect().left < -1 || e.getBoundingClientRect().right > innerWidth + 1)).length } };
       if (tab === "cut") { const l = [...document.querySelectorAll("#bp-bg label")].find(e => e.offsetParent && /الطول/.test(e.textContent)); o.label = l && getComputedStyle(l).color; }
       else { const s = document.getElementById("saveBtn"); o.save = s && getComputedStyle(s).color; o.bg = s && getComputedStyle(document.querySelector("#bs .top")).backgroundColor; } return o; }, tab);
     await c.close(); return { r, errs }; };
@@ -17,6 +17,7 @@ const { chromium, devices } = require("playwright");
   t("قوالب القص: تسمية «الطول» فاتحة على اللوح الداكن", cut.r.label && lum(cut.r.label) > 0.6, cut.r);
   t("استوديو العلب: رأس داكن بأيقونات فاتحة (لا فاتحة على أبيض)", box.r.save && lum(box.r.bg) < 0.25 && lum(box.r.save) > 0.6, box.r);
   t("شريط التبويبات العلوي لا يتقطع (ارتفاع المحتوى ≤ ارتفاع الشريط)", cut.r.bar.sh <= cut.r.bar.h + 2 && box.r.bar.sh <= box.r.bar.h + 2, { c: cut.r.bar, b: box.r.bar });
+  t("كل أزرار الشريط العلوي داخل عرض الشاشة (لا شيء يخرج منها)", cut.r.bar.out === 0 && box.r.bar.out === 0, { c: cut.r.bar, b: box.r.bar });
   t("بلا أخطاء JS", cut.errs.length === 0 && box.errs.length === 0, [cut.errs, box.errs]);
   await b.close(); process.exit(bad ? 1 : 0);
 })();
