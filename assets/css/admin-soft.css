@@ -105,3 +105,8 @@ html.white #tab-orders #co-fold{background:#fff;border:1px solid rgba(16,24,40,.
 
 /* شريط الإحصاءات العلوي القديم (إجمالي/اليوم/المبيعات/منتج نشط/تصنيف): مكرر مع الرئيسية وبطاقات الطلبات فيُخفى في كل الصفحات */
 #stats{display:none!important}
+
+/* صف الشرائح بعرض كامل متساوٍ كما في التصميم */
+#tab-orders #ord-chiprow{flex-wrap:nowrap!important;gap:.5rem}
+#tab-orders #ord-chiprow .opv,#tab-orders #ord-chiprow #of-tg{flex:1 1 0!important;min-width:0!important;justify-content:center;text-align:center;display:inline-flex!important;align-items:center;gap:.4rem;padding:.7rem .4rem!important;font-size:.88rem!important}
+#tab-orders #ord-chiprow #of-tg{margin-inline-start:0!important;width:auto!important}

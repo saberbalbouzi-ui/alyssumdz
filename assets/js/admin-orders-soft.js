@@ -37,7 +37,8 @@
     if (!row) { row = document.createElement("div"); row.id = "ord-chiprow"; sb.after(row); }
     const ob = $("op-bar"); if (ob && ob.parentNode !== row) row.prepend(ob);
     const tg = $("of-tg"); if (tg && tg.parentNode !== row) { row.append(tg); }
-    if (tg) { const want = T("فلاتر"); if (tg.textContent !== want) tg.textContent = want; }
+    if (tg) { const want = T("فلاتر"); if (tg.dataset.lbl !== want || !tg.querySelector("svg")) { tg.dataset.lbl = want; tg.innerHTML = "<span>" + want + '</span><svg viewBox="0 0 24 24" aria-hidden="true" style="width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>'; } else if (tg.querySelector("span") && tg.querySelector("span").textContent !== want) tg.querySelector("span").textContent = want; }
+    const all = row.querySelector('.opv[data-v="all"]'); if (all) { const want = T("الكل") + " (" + list().length + ")"; if (all.textContent !== want) all.textContent = want; }
   }
   const go = () => { stats(); try { layout(); } catch (e) { } };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
