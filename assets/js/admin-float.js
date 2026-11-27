@@ -3,7 +3,9 @@
 const AdminFloat = (() => {
   const PATH = "assets/data/float-icons.json", LOCAL = "alyssum_float_cfg", $ = id => document.getElementById(id);
   const FI = () => window.FloatIcons, esc = s => (FI() ? FI().esc(s) : String(s == null ? "" : s));
-  const S = { c: null, sha: null, loaded: false, localOnly: false, err: "" };
+  const S = { c: null, sha: null, loaded: false, localOnly: false, err: "", pages: [] };
+  /* رقم واتساب المتجر (الافتراضي حين يُترك رقم الأيقونة فارغاً): من إعدادات المتجر المحمَّلة، وإلا من store.json المنشور، وإلا من config */
+  const storeWa = () => String((window.STORE_ADMIN && window.STORE_ADMIN.wa) || S.storeWa || (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.waNumber) || "").replace(/\D/g, "");
   const dec = raw => JSON.parse(decodeURIComponent(escape(atob(String(raw || "").replace(/\s/g, "")))));
   const enc = v => btoa(unescape(encodeURIComponent(JSON.stringify(v, null, 2))));
   const canRemote = () => (typeof PHPAPI !== "undefined" && PHPAPI.on && PHPAPI.on()) || (typeof GH !== "undefined" && GH.cfg && GH.cfg() && GH.cfg().token);
@@ -18,6 +20,7 @@ const AdminFloat = (() => {
   }
   async function save() {
     const c = S.c; c.updatedAt = new Date().toISOString();
+    if (c.wa && storeWa() && String(c.wa.number || "").replace(/\D/g, "") === storeWa()) c.wa.number = "";      /* الرقم المساوي لرقم المتجر يُحفظ فارغاً فيتبع المتجر إن تغيّر رقمه */
     try { localStorage.setItem(LOCAL, JSON.stringify(c)); } catch (e) { }
     if (!canRemote()) { S.localOnly = true; toast("💾 حُفظت محلياً — اربط النشر لتظهر على موقعك"); return draw(); }
     try {
@@ -39,7 +42,7 @@ const AdminFloat = (() => {
 
   function card(k) {
     const c = S.c[k], M = FI().META[k];
-    const spec = k === "wa" ? F("رقم واتساب (فارغ = رقم المتجر)", inp(k, "number", c, 'dir="ltr" placeholder="213550000000"')) + F("الرسالة الجاهزة", inp(k, "msg", c))
+    const spec = k === "wa" ? F("رقم واتساب (الافتراضي رقم المتجر، ويمكنك تغييره)", '<input dir="ltr" placeholder="213550000000" value="' + esc(c.number || storeWa()) + '" oninput="AdminFloat.set(\'wa\',\'number\',this.value)">' + (storeWa() ? '<button type="button" class="small gray" style="margin-top:.3rem" onclick="AdminFloat.useStoreWa()">↺ رقم المتجر +' + storeWa() + '</button>' : "")) + F("الرسالة الجاهزة", inp(k, "msg", c))
       : k === "tel" ? F("رقم الهاتف", inp(k, "number", c, 'dir="ltr" placeholder="0550000000"'))
         : F("صفحة فيسبوك (اسم المستخدم أو الرابط)", inp(k, "page", c, 'dir="ltr" placeholder="mypage أو facebook.com/mypage"'));
     return '<div class="fl-card"><div class="fl-h"><b>' + M.n + '</b><span class="fl-st ' + (c.on ? "on" : "off") + '" id="fl-st-' + k + '">' + (c.on ? "مفعّلة" : "معطّلة") + '</span><label class="sw" title="تفعيل/تعطيل"><input type="checkbox"' + (c.on ? " checked" : "") + ' onchange="AdminFloat.setOn(\'' + k + '\',this.checked)"><i></i></label></div>' +
@@ -48,8 +51,21 @@ const AdminFloat = (() => {
       '<div class="fl-g"><b>مكان الظهور</b><div class="fl-r">' + F("الجهة", sel(k, "side", c, [["right", "يمين"], ["left", "يسار"]])) + F("المسافة من الأسفل (px)", num(k, "bottom", c, 0, 600)) + F("المسافة من الحافة (px)", num(k, "edge", c, 0, 200)) + '</div></div>' +
       '<div class="fl-g"><b>الشكل</b><div class="fl-r">' + F("الحجم (px)", num(k, "size", c, 36, 96)) + F("الشكل", sel(k, "shape", c, [["circle", "دائرة"], ["rounded", "مربع مدوّر"], ["square", "مربع"]])) + F("لون الخلفية", col(k, "color", c)) + F("لون الرمز", col(k, "iconColor", c)) + F("النص بجانب الأيقونة", inp(k, "label", c)) + F("إظهار النص", sel(k, "showLabel", c, [["no", "بلا نص"], ["hover", "عند المرور"], ["always", "دائماً"]])) + '</div>' + chk(k, "shadow", c, "ظل منتفخ للأيقونة") + '</div>' +
       '<div class="fl-g"><b>طريقة الظهور</b><div class="fl-r">' + F("الحركة", sel(k, "anim", c, [["pulse", "نبض"], ["bounce", "قفز"], ["shake", "اهتزاز"], ["glow", "توهّج"], ["none", "بلا حركة"]])) + F("تأخير الظهور (ثوانٍ)", num(k, "delay", c, 0, 60, 0.5)) + F("تظهر بعد تمرير (px، 0 = فوراً)", num(k, "scroll", c, 0, 5000, 50)) + '</div></div>' +
-      '<div class="fl-g"><b>أين تظهر</b><div class="fl-r">' + F("الأجهزة", sel(k, "device", c, [["all", "كل الأجهزة"], ["mobile", "الجوال فقط"], ["desktop", "الحاسوب فقط"]])) + '</div><div class="fl-r">' + chk(k, "pages.home", c, "الصفحة الرئيسية") + chk(k, "pages.product", c, "صفحات المنتجات") + chk(k, "pages.shop", c, "المتجر والحساب") + chk(k, "pages.other", c, "بقية الصفحات") + '</div></div></div></div>';
+      '<div class="fl-g"><b>أين تظهر</b><div class="fl-r">' + F("الأجهزة", sel(k, "device", c, [["all", "كل الأجهزة"], ["mobile", "الجوال فقط"], ["desktop", "الحاسوب فقط"]])) + '</div><div class="fl-r">' + chk(k, "pages.home", c, "الصفحة الرئيسية") + chk(k, "pages.product", c, "صفحات المنتجات") + chk(k, "pages.shop", c, "صفحة المتجر (كل المنتجات) وحساب الزبون والسلة") + chk(k, "pages.other", c, "بقية الصفحات") + '</div>' + pickHtml(k, c) + '</div></div></div>';
   }
+  /* «صفحات أو منتجات محدّدة»: إن اخترتَ شيئاً لا تظهر الأيقونة إلا فيه (بغضّ النظر عن أنواع الصفحات أعلاه)؛ فارغة = حسب الأنواع */
+  const items = () => { const P = ((typeof Admin !== "undefined" && Admin.products) || []).filter(x => x && x.slug).map(x => ({ s: x.slug, t: x.title || x.slug, k: "منتج" })), seen = new Set(P.map(x => x.s)); return S.pages.filter(x => x && x.slug && !seen.has(x.slug)).map(x => ({ s: x.slug, t: x.title || x.slug, k: "صفحة" })).concat(P); };
+  function pickHtml(k, c) {
+    const on = new Set(c.only || []), L = items();
+    return '<div class="fl-pk"><label style="font-weight:800;font-size:.82rem">صفحات أو منتجات محدّدة <span class="hint" style="margin:0">(اختياري — إن اخترتَ فلا تظهر الأيقونة إلا فيها، وإلا فحسب الأنواع أعلاه)</span></label>' +
+      (L.length ? '<input type="search" placeholder="🔎 بحث" oninput="AdminFloat.pickFilter(\'' + k + '\',this.value)" style="margin:.3rem 0"><div class="fl-pkl" id="fl-pk-' + k + '" style="max-height:170px;overflow:auto;display:grid;gap:.15rem;border:1px solid rgba(128,140,150,.3);border-radius:10px;padding:.35rem .5rem">' +
+        L.map(x => '<label class="fl-ck" data-t="' + esc((x.t + " " + x.s).toLowerCase()) + '"><input type="checkbox"' + (on.has(x.s) ? " checked" : "") + ' onchange="AdminFloat.pick(\'' + k + '\',\'' + esc(x.s) + '\',this.checked)"> ' + esc(x.t) + ' <small style="opacity:.6">' + x.k + '</small></label>').join("") + '</div>'
+        : '<div class="hint">لا صفحات ولا منتجات لاختيارها بعد</div>') + '<div class="fl-r" style="margin-top:.5rem">' + F("وضع الظهور", sel(k, "scopeMode", c, [["only", "تظهر في المحدَّد فقط"], ["all", "تظهر في كل الصفحات (حسب الأنواع) وتُخصَّص على المحدَّد"]])) +
+      (k === "wa" ? F("رسالة مخصصة على المحدَّد (فارغ = الرسالة الجاهزة العامة)", inp(k, "cmsg", c, 'placeholder="مرحباً، أريد الاستفسار عن هذا المنتج"')) : "") +
+      (k === "wa" || k === "tel" ? F("رقم بديل على المحدَّد (فارغ = الرقم الافتراضي)", inp(k, "cnum", c, 'dir="ltr" placeholder="' + esc((k === "wa" ? (c.number || storeWa()) : c.number) || "الرقم الافتراضي") + '"')) : "") + '</div>' + '<div class="hint" id="fl-pkn-' + k + '" style="margin:.2rem 0 0">' + (on.size ? "ستظهر في " + on.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع") + '</div></div>';
+  }
+  function pick(k, slug, on) { const a = new Set(S.c[k].only || []); on ? a.add(slug) : a.delete(slug); S.c[k].only = [...a]; const n = $("fl-pkn-" + k); if (n) n.textContent = a.size ? "ستظهر في " + a.size + " فقط" : "غير محدَّدة — تظهر حسب الأنواع"; }
+  function pickFilter(k, q) { q = String(q || "").trim().toLowerCase(); const h = $("fl-pk-" + k); if (h) h.querySelectorAll("label").forEach(l => { l.style.display = !q || (l.dataset.t || "").includes(q) ? "" : "none"; }); }
   /* معاينة مصغّرة للأيقونة بحسب جهتها وبُعدها (تقريبية) */
   function prev(k) {
     const st = $("fl-pv-" + k); if (!st || !FI()) return; const c = Object.assign({}, S.c[k]);
@@ -65,10 +81,14 @@ const AdminFloat = (() => {
   }
   async function mount(host) {
     if (!host) return; host.id = "fl-host"; host.innerHTML = '<div class="hint">جارٍ التحميل…</div>';
-    const need = () => !window.FloatIcons ? new Promise(r => { const s = document.createElement("script"); s.src = "assets/js/float-icons.js?v=f4c710ad"; s.onload = r; s.onerror = r; document.head.appendChild(s); }) : null;
+    const need = () => !window.FloatIcons ? new Promise(r => { const s = document.createElement("script"); s.src = "assets/js/float-icons.js?v=f66d40dc"; s.onload = r; s.onerror = r; document.head.appendChild(s); }) : null;
     await need(); if (!window.FloatIcons) { host.innerHTML = '<div class="hint">تعذّر تحميل الأيقونات</div>'; return; }
-    if (!S.loaded) await load(); draw();
+    if (!S.loaded) await load();
+    try { const r = await fetch("assets/data/store.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); S.storeWa = (j && j.wa) || ""; } } catch (e) { }
+    try { const r = await fetch("assets/pages/index.json?t=" + Date.now(), { cache: "no-store" }); if (r.ok) { const j = await r.json(); if (Array.isArray(j)) S.pages = j; } } catch (e) { }
+    draw();
   }
+  function useStoreWa() { if (S.c && S.c.wa) { S.c.wa.number = ""; draw(); } }
   function reset() { if (!confirm("استرجاع الإعدادات الافتراضية للأيقونات الثلاث؟")) return; S.c = FI().defaults(); draw(); }
-  return { mount, save, set, setOn, reset, data: () => S.c };
+  return { mount, save, set, setOn, reset, useStoreWa, pick, pickFilter, data: () => S.c };
 })();

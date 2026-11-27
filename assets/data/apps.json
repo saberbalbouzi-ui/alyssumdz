@@ -1,8 +1,9 @@
 {
   "v": 1,
   "off": [
-    "floaters",
     "voice",
-    "agent"
-  ]
+    "agent",
+    "ask"
+  ],
+  "rm": []
 }

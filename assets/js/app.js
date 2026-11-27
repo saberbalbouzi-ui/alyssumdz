@@ -325,7 +325,7 @@ function currentProductSlugFromUrl(){
   const m = location.pathname.match(/\/p\/([a-z0-9-]+)\/?/i);
   if(m) return m[1];
   /* الرابط النظيف: alyssumdz.com/<slug>/ */
-  const f = location.pathname.split("/").filter(Boolean)[0];
+  const sg = location.pathname.split("/").filter(Boolean), pf = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) || "", f = pf && sg[0] === pf ? sg[1] : sg[0];      /* alyssumdz.com/produit/<slug>/ مع بادئة المنتجات */
   return f && typeof PRODUCTS !== "undefined" && PRODUCTS.some(p=>p.slug===f) ? f : null;
 }
 function pixelApplies(px, slug){
@@ -1551,7 +1551,7 @@ function productHref(p){
     if(g === "B") page = p.ab.b;
     v = g;
   }
-  const src = page ? "lp/" + page : "p/" + p.slug, to = page ? src : (((typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) ? CONFIG.SITE.productPrefix + "/" : "") + p.slug);      // المنتج بلا مسار ⟵ الرابط النظيف في الجذر (النسخ الجذرية جاهزة)
+  const src = page ? "lp/" + page : "p/" + p.slug, PFXP = (typeof CONFIG !== "undefined" && CONFIG.SITE && CONFIG.SITE.productPrefix) || "", to = PFXP ? PFXP + "/" + p.slug : (page ? src : p.slug);      // مع البادئة: بطاقة المنتج تفتح رابطه /produit/<slug> دائماً (نسخة صفحة مساره إن وُجدت)      // المنتج بلا مسار ⟵ الرابط النظيف في الجذر (النسخ الجذرية جاهزة)
   return REL + to + "/?utm_source=home&utm_medium=product-card&utm_campaign=" + encodeURIComponent(p.slug) + "&utm_content=" + encodeURIComponent(src) + (v ? "&ab=" + v : "");
 }
 function productCardHTML(p, opts){
@@ -2398,7 +2398,9 @@ const PhoneDZ = {
     let lastT = null; const sendT = ()=>{ const b = document.querySelector("#order-form #btn-total, .order-wide #btn-total") || document.getElementById("btn-total"), t = b ? b.textContent.trim() : ""; if(t === lastT) return; lastT = t; try{ parent.postMessage({ pbTotal: t }, location.origin); }catch(e){} };
     setInterval(sendT, 500); sendT();
     /* لا يُكشف الإطار إلا بعد بناء النموذج وتطبيق ألوانه (كان يظهر النموذج الأسود القديم ثم الطويل ثم الجديد)؛ order-embed.html يُخفيه مبكراً ويكشفه هنا */
-    try{ setTimeout(()=>{ try{ window.__pbReveal && window.__pbReveal(); }catch(e){} }, 320); }catch(e){}
+    try{ const t0 = Date.now(), ready = ()=>{ const f = document.getElementById("order-form") || form; return !!f && f.querySelectorAll("input,select,textarea").length >= 3; };
+      const tick = ()=>{ if(ready() || Date.now()-t0 > 9000){ try{ window.__pbReveal && window.__pbReveal(); }catch(e){} } else setTimeout(tick, 60); };
+      setTimeout(tick, 120); }catch(e){}      /* لا يُكشف الإطار إلا حين تُبنى حقول النموذج فعلاً (كان يُكشف بعد 320ms فيظهر العروض فوق خلفية فارغة) */
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 }catch(e){} })();

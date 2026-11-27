@@ -533,3 +533,12 @@ html.lang-fr body,html.lang-fr #app,html.lang-fr .modal,html.lang-fr .modal-bg{d
 html.lang-fr .top,html.lang-fr .card,html.lang-fr table th,html.lang-fr table td{text-align:left}
 html.lang-fr #ahome .ah-seg button,html.lang-fr .nav-btn,html.lang-fr .nav-txt{text-align:left}
 html.lang-fr #app .top>h1::before{font-size:.85rem}
+/* أدوات 3D ذات الخلفية الداكنة تبقى كتابتها فاتحة في المظهر الفاتح (قاعدة «كل الخطوط سوداء» كانت تُسوّد التسميات فوق لوح داكن فلا تُقرأ) */
+html.white :is(#bp-bg,#p3-bg,#i3-bg) :is(.hint,small,th,label,.field label,.stat span){color:rgba(244,249,252,.9)}
+/* استوديو العلب داخل الثيم الفاتح: سطح داكن فالنص فاتح دائماً */
+html.white body.s3d-on #bs :is(.hint,small,th,label,.field label,.stat span,.muted){color:var(--ink)}
+html.white body.s3d-on #bs :is(input,select,textarea){background:var(--panel2);color:var(--ink);border-color:var(--line)}
+/* «ابدأ الآن» في صفحات الأدوات (الإضافات): زر أسود بنص أبيض بارز */
+html body #tab-studio .sd-act button:not(#_){background:#0b0f14!important;color:#fff!important;border:1px solid #0b0f14;border-radius:14px;box-shadow:none!important;font-weight:700;padding:.65rem 1.5rem}
+html body #tab-studio .sd-act button:not(#_):hover{background:#1c2430!important;transform:translateY(-1px)}
+html:not(.white) body #tab-studio .sd-act button:not(#_){border-color:rgba(255,255,255,.35)}

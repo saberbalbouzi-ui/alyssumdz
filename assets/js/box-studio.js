@@ -28,7 +28,9 @@ const BoxStudio = (() => {
 #bs .app{height:100%;display:flex;flex-direction:column}
 #bs svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 #bs.d2 .tab[data-tab="layout"],#bs.d2 .tab[data-tab="video"],#bs.d2 .tab[data-tab="presets"],#bs.d2 .bar .open,#bs.d2 #bOrtho,#bs.d2 #bDims,#bs.d2 .bar .vsep{display:none!important}
-#bs .top{position:relative;height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+@media(min-width:821px){#bs #menuBtn,#bs #menu{display:none!important}}      /* الحاسوب: قائمة المشروع محذوفة (الحفظ بـ 💾)؛ الهاتف: تبقى وتعمل */
+html body #bs #app .top{overflow:visible!important}      /* قاعدة #app .top في اللوحة (overflow:auto) تقصّ قائمة ☰ لأن جذر الاستوديو يحمل المعرّف نفسه */
+#bs .top{color:var(--ink);position:relative;z-index:30;height:58px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--panel);border-bottom:1px solid var(--line)}
 #bs .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:21px;letter-spacing:.01em;white-space:nowrap}
 #bs .brand .mark{width:34px;height:34px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
 #bs .brand .mark svg{width:20px;height:20px}
@@ -167,7 +169,7 @@ const BoxStudio = (() => {
 #bs .tools .ib:disabled{opacity:.35;cursor:default}
 #bs .bar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:10px;max-width:calc(100% - 20px)}
 #bs .bar>div{background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:6px 8px;display:flex;align-items:center;gap:6px}
-#bs .bar .open{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);padding:0 6px}
+#bs .bar .open{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--muted);padding:0 6px}#bs .bar #openR{direction:rtl}
 #bs .bar .open input{width:150px}
 #bs .bar .vsep{width:1px;height:24px;background:var(--line)}
 #bs .tip{position:absolute;inset-inline-start:14px;top:14px;background:var(--panel);border-radius:10px;box-shadow:var(--shadow);padding:6px 12px;font-size:12.5px;color:var(--muted);max-width:60%}
@@ -190,20 +192,23 @@ const BoxStudio = (() => {
 @media (max-width:900px){#bs .top{padding:0 10px;gap:4px}
 #bs .top .btn.adv span,#bs .top .brand .name{display:none}
 #bs .main{flex-direction:column;padding:8px;gap:8px}
-#bs .stage{order:1;min-height:260px}
-#bs .panel{order:2;width:auto;max-height:42vh;flex:none}
-#bs .rail{order:3;width:auto;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px}
+#bs .stage{order:1;flex:1 1 0;min-height:30vh}
+#bs .panel{order:2;width:auto;max-height:28vh;flex:none}
+#bs .rail{order:0;width:auto;flex:none;flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:6px}      /* شريط التبويبات (النماذج…) أعلى المحرّر: كان آخر العمود فيخرج خارج الشاشة */
 #bs .rail hr{display:none}
 #bs .rail .grow{display:none}
 #bs .tab{flex:none;min-width:66px;padding:6px 4px}
 #bs .tab svg{width:22px;height:22px}
 #bs .bar{bottom:8px;left:8px;right:8px;transform:none;max-width:none;justify-content:center}
-#bs .bar>div{flex-wrap:wrap;justify-content:center;row-gap:2px}
-#bs .bar .open input{width:96px}
-#bs .bar .vsep{display:none}
+#bs .bar>div{flex-wrap:nowrap;justify-content:center;gap:2px;padding:3px 6px}
+#bs .bar .ib{width:34px;height:34px;flex:none}
+#bs .bar .open{flex:1;min-width:0;gap:4px;padding:0 2px}
+#bs .bar .open span{display:none}
+#bs .bar .open input{flex:1;width:100%;min-width:56px}
+#bs .bar .vsep{display:none}      /* الجوال: شريط التحكم صف واحد مضغوط (كان صفين بأزرار 40px يغطيان 40% من الاستوديو) */
 #bs .tools{flex-direction:row;align-items:center}
 #bs .tools hr{width:0;height:24px;border:0;border-inline-start:1px solid var(--line);margin:0 4px}
-#bs .tools .ib{width:36px;height:36px}
+#bs .tools .ib{width:32px;height:32px}
 #bs .tip{display:none}
 #bs .tools{top:8px;inset-inline-end:8px}
 #bs .menu{inset-inline-start:10px}
@@ -760,6 +765,24 @@ function profFaces(def){
 function buildProfile(d, def){
   const n = profNet(def); return n.mode==='net' ? buildProfileNet(def, n) : buildProfileSolid(def, n);
 }
+/* الوجوه العلوية للقالب المطويّ (ناظمها رأسي في أعلى العلبة وأمّها جدار): كل واحد منها وما يتفرّع عنه يدور حول مفصّله عند الفتح */
+function findLids(n){
+  if(!n || n.rule==='pyr' || n.rule==='flat') return null;
+  const Mf = BP().fold3d(n, 1).map(a=>new THREE.Matrix4().fromArray(a)), F = n.faces, V3 = THREE.Vector3, U = n.stand ? new V3(0,0,-1) : new V3(0,1,0);   /* القالب القائم على قاعدته مدوَّر 90° فالأعلى = −z */
+  const info = F.map((f,i)=>{ const c = f.poly.reduce((a,q)=>[a[0]+q[0]/f.poly.length, a[1]+q[1]/f.poly.length],[0,0]); const cw = new V3(c[0],c[1],0).applyMatrix4(Mf[i]); return {cw, h:cw.dot(U), ny:new V3(0,0,1).transformDirection(Mf[i]).dot(U)}; });
+  let y0 = 1e9, y1 = -1e9; F.forEach((f,i)=>f.poly.forEach(q=>{ const y = new V3(q[0],q[1],0).applyMatrix4(Mf[i]).dot(U); y0 = Math.min(y0,y); y1 = Math.max(y1,y); }));
+  const H = y1-y0; if(!(H > 1e-6)) return null;
+  let cand = F.map((f,i)=>i).filter(i=>F[i].parent>=0 && Math.abs(info[i].ny)>.9 && info[i].h > y1-.08*H && Math.abs(info[F[i].parent].ny)<.5);
+  if(cand.some(i=>F[i].main !== false)) cand = cand.filter(i=>F[i].main !== false);
+  if(!cand.length) return null;
+  return cand.map(c=>{
+    const f = F[c], P = new V3(f.p[0],f.p[1],0).applyMatrix4(Mf[f.parent]), Q = new V3(f.q[0],f.q[1],0).applyMatrix4(Mf[f.parent]), axis = Q.clone().sub(P).normalize();
+    const probe = sg=>info[c].cw.clone().sub(P).applyAxisAngle(axis, sg*Math.PI/2).dot(U);
+    const sign = probe(1) >= probe(-1) ? 1 : -1, ids = new Set();
+    F.forEach((g,i)=>{ let k = i; while(k >= 0){ if(k === c){ ids.add(i); break; } k = F[k].parent; } });
+    return {ids, axis, sign, P};
+  });
+}
 function buildProfileNet(def, n){
   const g = new THREE.Group(), ng = new THREE.Group(); g.add(ng); ng.scale.setScalar(S); if(n.stand) ng.rotation.x = Math.PI/2;
   const th = Math.min(1.2, Math.max(.3, state.t*.45)), eps = .06, fgs = [];
@@ -772,13 +795,16 @@ function buildProfileNet(def, n){
     const isMain = f.main !== false, pm = new THREE.Mesh(pg, isMain ? FC['f'+i].mat : FC.inside.mat); pm.position.z = eps; if(isMain) pm.userData.keys = {0:'f'+i}; pm.receiveShadow = true;
     const fg = new THREE.Group(); fg.add(em, pm); fg.matrixAutoUpdate = false; ng.add(fg); fgs.push(fg);
   });
-  /* الألسنة والأجنحة (غير الرئيسية) تُطوى تحت الوجوه الرئيسية: تُزاح للداخل عكس ناظمها الخارجي بسماكة الورق × عمق تداخلها */
+  /* غطاء العلبة: الفتح = دوران الوجه العلوي (أو الأجنحة العلوية) حول مفصّله إلى الأعلى والقاعدة ثابتة في الأسفل (لا فتح القالب مسطّحاً)؛ بلا غطاء مكتشف (هرم/صينية) يبقى الفتح فكَّ القالب */
+  const lids = findLids(n);
   const upd = o=>{
-    const t = 1-clamp(o,0,1), mats = BP().fold3d(n, t), k = t*t*(3-2*t);
+    o = clamp(o,0,1); const t = lids ? 1 : 1-o, mats = BP().fold3d(n, t), k = t*t*(3-2*t);
     fgs.forEach((fg,i)=>{
       const m = mats[i].slice(), f = n.faces[i];
       if(f.main === false && k > 0){ const d = (th*1.08 + eps)*Math.max(1,f.rank||1)*k; m[12] -= m[8]*d; m[13] -= m[9]*d; m[14] -= m[10]*d; }
-      fg.matrix.fromArray(m); fg.matrixWorldNeedsUpdate = true;
+      const M = new THREE.Matrix4().fromArray(m);
+      if(lids && o > 0) lids.forEach(L=>{ if(L.ids.has(i)) M.premultiply(new THREE.Matrix4().makeTranslation(L.P.x,L.P.y,L.P.z).multiply(new THREE.Matrix4().makeRotationAxis(L.axis, L.sign*o*(state.openMax||115)*Math.PI/180)).multiply(new THREE.Matrix4().makeTranslation(-L.P.x,-L.P.y,-L.P.z))); });
+      fg.matrix.copy(M); fg.matrixWorldNeedsUpdate = true;
     });
   };
   upd(0); g.updateMatrixWorld(true);
@@ -1680,7 +1706,14 @@ function buildDims(){
 }
 
 /* — render, overlays, export — */
-let pulse = null;
+let pulse = null, hold = null; const holdOrig = new Map();
+/* الوجه المحدَّد لرفع صورة يُظلَّل بغشاء أحمر شفاف ما دامت قائمة النقر مفتوحة (ضرب اللون لا الإشعاع: الوجه الأبيض لا يتأثر بالإضافة) */
+function holdMats(k){ const f = FC[k]; return f ? (f.rmats && f.rmats.length ? f.rmats : [f.mat]) : []; }
+function holdOff(){ holdOrig.forEach((c,mt)=>{ mt.color.copy(c); }); holdOrig.clear(); }
+function holdFace(key){
+  if(hold===(key||null)) return; holdOff(); hold = key || null;
+  holdMats(hold).forEach(mt=>{ if(mt && mt.color){ holdOrig.set(mt, mt.color.clone()); mt.color.setRGB(Math.min(1,mt.color.r*1.0), mt.color.g*.42, mt.color.b*.42); } }); dirty = true;
+}
 function render(){
   if(pulse){
     const a = Math.max(0, 1-(performance.now()-pulse.t0)/700), f = FC[pulse.key];
@@ -1884,7 +1917,7 @@ function loop(now){
 function renderNow(){ dirty = false; render(); updateOverlay(); }
 return {is2D,renderNow,drawLayer,BLENDS,S,$,$$,clamp,rad,nid,AR,ico,MODELS,MATS,FINISH,LAYOUTS,BG_PRESETS,FONTS,state,IMG,hooks,mkText,mkPattern,mkImage,FC,
   drawFace,redrawAll,ensureFaces,applyMaterialProps,applyLights,rebuild,fitCamera,applyOpen,animateOpen,applyBg,bgCss,drawBG,renderComposite,
-  CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,setDimHi,
+  CATS,BOXMATS,MK,isReal,isEng,setCustom,realModel,ensureReal,setAccent,accDefs,openable:()=>anims.some(a=>!a.noOpen),initThree,loop,selectFace,setView,zoomBy,tween,cm,stage,canvasEl,setDimHi,holdFace,
   get tool(){return tool}, set tool(v){tool = v; hooks.tool(v);},
   get dirty(){return dirty}, set dirty(v){dirty = v},
   get recording(){return recording}, set recording(v){recording = v},
@@ -2201,14 +2234,15 @@ function buildRealMat(b){
 }
 /* — click-on-model menu: upload images / custom size (Pacdora-style) — */
 let ctxEl = null;
-function closeCtx(){ if(ctxEl){ ctxEl.remove(); ctxEl = null; } X.setDimHi(null); }
+function closeCtx(){ if(ctxEl){ ctxEl.remove(); ctxEl = null; } X.setDimHi(null); X.holdFace(null); }
 const sizable = () => { const d = MODELS[state.model]; return !(d.custom || d.prof); };
 function ctxPlace(cx, cy){
   const r = X.stage.getBoundingClientRect(), w = ctxEl.offsetWidth || 220, h = ctxEl.offsetHeight || 100;
   ctxEl.style.left = clamp(cx-r.left-w/2, 8, Math.max(8, r.width-w-8))+'px'; ctxEl.style.top = clamp(cy-r.top+12, 8, Math.max(8, r.height-h-8))+'px';
 }
-function showCtx(e){
+function showCtx(e, p){
   closeCtx(); if(!e || X.is2D() || e.__noctx) return;
+  X.holdFace((p && p.key) || state.sel.face);   /* الصورة تُرفع على الوجه المحدَّد: هو الذي يُظلَّل */
   ctxEl = el('<div class="ctxm" role="menu"><button type="button" class="it" data-a="up">'+ico('upload')+'<span>رفع صورك</span></button>'+(sizable() ? '<button type="button" class="it" data-a="size">'+ico('edit')+'<span>حجم مخصص</span></button>' : '')+'</div>');
   $('#overlay').appendChild(ctxEl); const px = e.clientX, py = e.clientY; ctxPlace(px,py);
   ctxEl.addEventListener('pointerdown', ev=>ev.stopPropagation());
@@ -2239,7 +2273,7 @@ function showSizePop(px,py){
   };
   hi('L'); setTimeout(()=>ins[0].focus(),30);
 }
-hooks.menu = e=>{ if(!e) closeCtx(); else showCtx(e); };
+hooks.menu = (e,p)=>{ if(!e) closeCtx(); else showCtx(e,p); };
 { const cl = ev=>{ if(ctxEl && !ctxEl.contains(ev.target)) closeCtx(); }; document.addEventListener('pointerdown', cl, true); offs.push(()=>document.removeEventListener('pointerdown', cl, true)); }
 function buildCustomDims(b){
   const d = state.dims;
@@ -2759,7 +2793,7 @@ else if(host.opts && host.opts.model && MODELS[host.opts.model]){ selectModel(ho
 const po = host.opts && host.opts.profile;
 if(!co && !po && X.MK && MODELS.mailer && MODELS.mailer.hidden && !(host.opts && host.opts.model && MODELS[host.opts.model]) && MODELS.mk_r_box_ship){ _quietSel = true; selectModel('mk_r_box_ship'); _quietSel = false; X.fitCamera(); showTab('edit'); }
 if(po && MODELS['pf_'+po.key]){
-  const k = 'pf_'+po.key, m = MODELS[k]; state.model = k; state.dims = {...m.dims}; state.flap = m.flap; state.open = 1; state.openMax = 115; state.t = m.t || 1; state.accents = {}; state.material = 'kraft'; state.faces = {};
+  const k = 'pf_'+po.key, m = MODELS[k]; state.model = k; state.dims = {...m.dims}; state.flap = m.flap; state.open = 0; state.openMax = 115; state.t = m.t || 1; state.accents = {}; state.material = 'kraft'; state.faces = {};
   state.pf[po.key] = Object.assign({}, po.vals || {}); if(po.color && /^#[0-9a-f]{6}$/i.test(po.color) && po.color.toLowerCase() !== '#f1ece0'){ state.material = 'custom'; state.matColor = po.color; }
   X.rebuild(true); X.selectFace(Object.keys(FC)[0]); syncBar(); showTab('edit'); setTimeout(()=>{ if(R.isConnected) X.animateOpen(0); }, 600);
 }

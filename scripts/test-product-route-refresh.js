@@ -16,9 +16,11 @@ const { chromium } = require("playwright");
     if (!document.getElementById("pb-list")) { const d = document.createElement("div"); d.id = "pb-list"; document.body.appendChild(d); }
     await PBAdmin.refresh(true); const before = document.getElementById("pb-list").innerHTML;
     await Admin.publishProduct(Object.assign({}, Admin.products[0], { officialPage: "pg1", route: "pg1" }), undefined); await new Promise(r => setTimeout(r, 600));
-    const html = document.getElementById("pb-list").innerHTML; return { beforePill: /مسار/.test(before), pill: /مسار/.test(html), url: (html.match(/class="pbx-url"[^>]*><a[^>]*>([^<]*)</) || [])[1], prod: JSON.stringify(Admin.products) }; });
+    const html = document.getElementById("pb-list").innerHTML; return { beforePill: /مسار/.test(before), pill: /مسار/.test(html), url: (html.match(/class="pbx-url"[^>]*><a[^>]*>([^<]*)</) || [])[1], prod: JSON.stringify(Admin.products), prodLinks: [...document.querySelectorAll('#pb-list .pbx-url a')].map(a => a.textContent), cp: (() => { const b = document.querySelector('#pb-list .pbx-url .pbx-cp'), v = b && b.querySelector('svg'); return b && v ? { c: getComputedStyle(b).color, st: getComputedStyle(v).stroke, fill: getComputedStyle(v).fill } : null; })() }; });
   t("قبل الحفظ: لا شارة مسار", r.beforePill === false, r);
-  t("بعد حفظ المنتج بمسار الصفحة: شارة «مسار» والرابط (رابط المنتج) تظهر فوراً", r.pill && r.url === "alyssumdz.com/prodx", r);
+  t("بعد حفظ المنتج بمسار الصفحة: شارة «مسار» تظهر فوراً والصفحة تبقى في جذرها", r.pill && r.url === "alyssumdz.com/pg1", r);
+  t("قائمة صفحات المنتجات: روابطها تحت /produit/", r.prodLinks.includes("alyssumdz.com/produit/prodx"), r.prodLinks);
+  t("زر «نسخ» أبيض (النص والأيقونة)", r.cp && r.cp.c === "rgb(255, 255, 255)" && r.cp.st === "rgb(255, 255, 255)" && r.cp.fill === "none", r.cp);
   t("بلا أخطاء JS", errs.length === 0, errs);
   await b.close(); process.exit(bad ? 1 : 0);
 })();

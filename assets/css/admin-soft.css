@@ -1,0 +1,154 @@
+/* مظهر ناعم للوحة (الفاتح): الشريط العلوي وصفحة الطلبات — بطاقات بيضاء وظلال خفيفة وزوايا كبيرة. يُحمَّل بعد admin-lime.css */
+/* ── رأس صفحة الطلبات وبطاقات الإحصاء (كل المظاهر؛ التلوين الباستيل للفاتح) ── */
+.ord-head{display:flex;align-items:center;gap:.8rem;margin:.2rem 0 .9rem}
+.ord-head .ord-ic{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:rgba(226,254,23,.28);flex:none}
+.ord-head .ord-ic svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ord-head h2{margin:0;font-size:1.45rem;line-height:1.2}
+.ord-head p{margin:.15rem 0 0;font-size:.82rem;opacity:.7}
+.ord-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin:0 0 .9rem}
+.ord-stats .os{border-radius:20px;padding:.8rem .5rem;text-align:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;align-items:center;gap:.3rem}
+.ord-stats .os svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
+.ord-stats .os span{font-size:.78rem;font-weight:700;opacity:.85;min-height:2.4em;display:flex;align-items:center;justify-content:center;line-height:1.2}
+.ord-stats .os b{font-size:1.7rem;line-height:1.1}
+@media(max-width:520px){.ord-stats{gap:.45rem}.ord-stats .os{padding:.65rem .25rem;border-radius:18px}.ord-stats .os span{font-size:.7rem}.ord-stats .os b{font-size:1.45rem}}
+/* ── المظهر الفاتح ── */
+html.white body{background:#f5f7fb}
+html.white .card{border-radius:22px;border:1px solid rgba(16,24,40,.05);box-shadow:0 10px 30px rgba(16,24,40,.06)}
+html.white .ord-head h2{color:#0f172a}
+html.white .ord-head .ord-ic{background:#eef9c9;color:#0f172a}
+html.white .ord-head .ord-ic svg,html.white .ord-stats .os svg{stroke:#0f172a!important}
+html.white .ord-stats .os{background:#fff;border:1px solid rgba(16,24,40,.06);box-shadow:0 6px 20px rgba(16,24,40,.06);color:#0f172a}
+html.white .ord-stats .os-g{background:#eaf7ee}
+html.white .ord-stats .os-o{background:#fff4e2}
+
+/* ترتيب أزرار الطلبات: «إضافة طلب جديد» كبير ليموني، وتحته زرّان ناعمان متجاوران، ثم الشرائح والبحث */
+#tab-orders .card:has(#mo-btn){display:grid;grid-template-columns:1fr 1fr;gap:.6rem;align-items:stretch}
+#tab-orders .card:has(#mo-btn)>*{grid-column:1/-1}
+#tab-orders #mo-btn{order:-4;min-height:58px;font-size:1.15rem;border-radius:18px!important;width:100%;justify-content:center}
+#tab-orders .card:has(#mo-btn)>#verify-btn,#tab-orders .card:has(#mo-btn)>#presend-btn{grid-column:auto;order:-3;min-height:50px;border-radius:16px!important;font-weight:800;width:100%;justify-content:center}
+html.white body #tab-orders #verify-btn:not(#_),html.white body #tab-orders #presend-btn:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 6px 18px rgba(16,24,40,.07)!important}
+
+/* ── الشريط العلوي الناعم (الفاتح) ── */
+html.white #app .top{background:#fff;border:1px solid rgba(16,24,40,.04);border-radius:24px;box-shadow:0 10px 30px rgba(16,24,40,.07);padding:.6rem .7rem}
+html.white body #app .top>button.small.gray:not(#_),html.white body #app .top>#top-search:not(#_),html.white body #app .top>#top-lang:not(#_),html.white body #app .top>#top-more:not(#_),html.white body #app .top>#theme-btn:not(#_){background:#fff!important;color:#111827!important;border:1px solid rgba(16,24,40,.05)!important;border-radius:16px!important;box-shadow:0 4px 14px rgba(16,24,40,.10)!important;text-shadow:none!important}
+html.white body #app .top>button.small.gray:not(#_) svg,html.white body #app .top>#top-search:not(#_) svg{stroke:#111827!important;color:#111827!important}
+html.white body #app .top>button.small.gray:not(#_):active{transform:scale(.96)}
+
+/* شرائح العروض السريعة (كل الطلبات/اليوم/…): حبوب بيضاء ناعمة وبالليموني للفعّال */
+html.white body #op-bar .opv:not(#_),html.white body #op-bar .opb:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 4px 14px rgba(16,24,40,.06)!important;text-shadow:none!important}
+html.white body #op-bar .opv.on:not(#_){background:#e2fe17!important;color:#1f2123!important;border-color:#e2fe17!important}
+
+/* أزرار الصفحة الثانوية في «الطلبات» ناعمة بيضاء بدل الرمادي الأزرق المنتفخ */
+html.white body #tab-orders .small.gray:not(#_),html.white body #tab-orders .of-more .small:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 4px 14px rgba(16,24,40,.06)!important;text-shadow:none!important}
+
+/* ── تجهيز الطلبات (#pk) ── */
+#pk .ord-head{margin:.2rem 0 .8rem}
+#pk #pk-scan-card{border:1.5px dashed rgba(34,197,94,.55);border-radius:22px;background:rgba(34,197,94,.05)}
+#pk #pk-scan-card>b{display:none}
+#pk #pk-scan{border-radius:16px;min-height:48px}
+#pk #pk-scan-card .action-bar{margin-top:0!important}
+html.white #pk #pk-scan-card{background:#f4fbf6}
+html.white #pk .card{background:#fff}
+html.white body #pk .small:not([data-pk=all]):not([data-pk=cam]):not([data-pk=one]):not(#_){background:#f5fbd8!important;color:#1f2123!important;border:1px solid rgba(16,24,40,.06)!important;box-shadow:none!important;text-shadow:none!important}
+html.white body #pk .small.gray:not(#_){background:#fff!important;border:1px solid rgba(16,24,40,.08)!important}
+html.white body #pk button[data-pk=markSel]:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.1)!important;border-radius:14px!important;box-shadow:none!important}
+html.white body #pk button[data-pk=markSel][disabled]:not(#_){opacity:.55}
+#pk .tbw{border-radius:18px;overflow:auto}
+#pk table.pkt th{font-weight:800;font-size:.82rem;opacity:.8}
+#pk .action-bar{border:0!important;background:transparent!important;padding:0!important;box-shadow:none!important}
+#pk .card h2{font-size:1.15rem}
+#pk .ord-head h2{font-size:1.45rem}
+
+/* ── تأكيد الطلبات (مركز الاتصال #ccm) ── */
+#ccm .ccm-bar{gap:.4rem}
+html.white #ccm .ccm-chip{background:#fff;border:1px solid rgba(16,24,40,.07);box-shadow:0 3px 10px rgba(16,24,40,.05);color:#0f172a}
+html.white #ccm .ccm-card{background:#fff;border:1px solid rgba(16,24,40,.05);border-radius:24px;box-shadow:0 12px 32px rgba(16,24,40,.08)}
+#ccm .ccm-act{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:.55rem!important}
+#ccm .ccm-act>button{grid-column:span 6;border-radius:16px!important;min-height:52px;font-weight:800;justify-content:center}
+#ccm .ccm-act>button[data-d=noans],#ccm .ccm-act>button[data-d=wrong]{grid-column:span 3}
+#ccm .ccm-act>button[data-d=later],#ccm .ccm-act>button[data-d=tomorrow],#ccm .ccm-act>button[data-d=cancel]{grid-column:span 2!important;font-size:.88rem;padding-inline:.3rem}
+html.white body #ccm .ccm-act>button:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.1)!important;box-shadow:0 4px 12px rgba(16,24,40,.06)!important;text-shadow:none!important}
+html.white body #ccm .ccm-act>button[data-d=confirm]:not(#_){background:#e2fe17!important;color:#1f2123!important;border-color:#e2fe17!important;min-height:58px;font-size:1.15rem}
+html.white body #ccm .ccm-act>button[data-d=later]:not(#_),html.white body #ccm .ccm-act>button[data-d=tomorrow]:not(#_){background:#fff1dc!important;color:#b45309!important;border-color:#f6d9ad!important}
+html.white body #ccm .ccm-act>button[data-d=cancel]:not(#_){background:#fee2e2!important;color:#b91c1c!important;border-color:#fbc5c5!important}
+html.white body #ccm .ccm-act>button[data-d=skip]:not(#_){box-shadow:none!important;border-color:transparent!important;background:transparent!important}
+html.white #ccm .ccm-ph{color:#0f172a}
+html.white #ccm .ccm-quick a{background:#fff;border:1px solid rgba(16,24,40,.08);color:#0f172a;border-radius:14px}
+html.white #ccm .ccm-quick a.t{background:#e2fe17;border-color:#e2fe17;color:#1f2123}
+html.white #ccm .ccm-it{background:#f4f7fb;border-radius:16px}
+#ccm .ccm-act>button[data-d=confirm]{order:0}#ccm .ccm-act>button[data-d=addr]{order:1}#ccm .ccm-act>button[data-d=noans]{order:2}#ccm .ccm-act>button[data-d=wrong]{order:3}#ccm .ccm-act>button[data-d=later]{order:4}#ccm .ccm-act>button[data-d=tomorrow]{order:5}#ccm .ccm-act>button[data-d=cancel]{order:6}#ccm .ccm-act>button[data-d=skip]{order:7}
+@media(max-width:600px){#ccm .ccm-act .ccm-k{display:none}#ccm .ccm-act>button{font-size:.92rem}}
+
+/* ترتيب بطاقة الطلبات (حسب التصميم) */
+#tab-orders .card:has(#mo-btn)>#mo-btn{order:-6}
+#tab-orders .card:has(#mo-btn)>#cc-btn,#tab-orders .card:has(#mo-btn)>#verify-btn{grid-column:auto;order:-5;min-height:50px;border-radius:16px!important;font-weight:800;width:100%;justify-content:center;gap:.4rem}
+html.white body #tab-orders #cc-btn:not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 6px 18px rgba(16,24,40,.07)!important}
+#tab-orders .card:has(#mo-btn)>#co-fold{order:-4;display:flex;align-items:center;justify-content:space-between;width:100%;padding:.8rem 1rem;border-radius:16px;font-weight:800;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:inherit;box-shadow:none}
+html.white #tab-orders #co-fold{background:#fff;border:1px solid rgba(16,24,40,.08);box-shadow:0 6px 18px rgba(16,24,40,.06);color:#0f172a}
+#tab-orders #co-fold #cf-n{font-style:normal;background:#eef9c9;border-radius:99px;padding:.1rem .6rem;font-weight:800;margin-inline-start:.4rem}
+#tab-orders #co-fold.open .cf-c{transform:rotate(180deg)}
+#tab-orders .card:has(#mo-btn)>#order-co-chips{order:-3;display:none!important}
+#tab-orders .card:has(#mo-btn)>#order-co-chips.co-open{display:flex!important}
+#tab-orders .card:has(#mo-btn)>.search-bar{order:-2}
+#tab-orders .card:has(#mo-btn)>#ord-chiprow{order:-1;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+#tab-orders #ord-chiprow #op-bar{display:contents;margin:0}
+#tab-orders #ord-chiprow #op-views{display:contents}
+#tab-orders #ord-chiprow #op-bulk{display:none}
+#tab-orders #ord-chiprow #of-tg{margin-inline-start:auto;border-radius:99px!important;padding:.5rem 1.1rem!important;font-weight:800}
+#tab-orders .search-bar{display:flex;flex-wrap:wrap;gap:.5rem}
+#tab-orders .search-bar #order-filter-q{flex:1 1 100%;padding-inline-start:46px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23111827' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat right 14px center/22px}
+#tab-orders .search-bar #of-more{flex:1 1 100%}
+#tab-orders #ord-chiprow .opv:nth-child(n+4),#tab-orders #ord-chiprow .opb{display:none!important}      /* التصميم: الكل/اليوم/آخر 7 أيام + «فلاتر»؛ بقية العروض تُنال من الحالة داخل «فلاتر» */
+#tab-orders #ord-chiprow #of-tg{width:auto!important;flex:0 0 auto!important;min-width:0!important}
+@media(max-width:600px){#tab-orders #ord-chiprow{gap:.35rem;flex-wrap:nowrap}#tab-orders #ord-chiprow .opv,#tab-orders #ord-chiprow #of-tg{padding:.45rem .7rem!important;font-size:.8rem!important;white-space:nowrap}}
+
+/* شريط الإحصاءات العلوي القديم (إجمالي/اليوم/المبيعات/منتج نشط/تصنيف): مكرر مع الرئيسية وبطاقات الطلبات فيُخفى في كل الصفحات */
+#stats{display:none!important}
+
+/* صف الشرائح بعرض كامل متساوٍ كما في التصميم */
+#tab-orders #ord-chiprow{flex-wrap:nowrap!important;gap:.5rem}
+#tab-orders #ord-chiprow .opv,#tab-orders #ord-chiprow #of-tg{flex:1 1 0!important;min-width:0!important;justify-content:center;text-align:center;display:inline-flex!important;align-items:center;gap:.4rem;padding:.7rem .4rem!important;font-size:.88rem!important}
+#tab-orders #ord-chiprow #of-tg{margin-inline-start:0!important;width:auto!important}
+/* شرائح الطلبات: مستطيلة بتدوير خفيف لا بيضاوية */
+#tab-orders #ord-chiprow .opv,#tab-orders #ord-chiprow #of-tg{border-radius:14px!important;padding:.6rem .4rem!important}
+
+/* ── لوحة «فلاتر الطلبات» داخل الصفحة ── */
+#tab-orders .of-more{display:none!important}
+#tab-orders .of-more.open{display:grid!important;grid-template-columns:1fr 1fr;gap:.7rem;width:100%;margin-top:.4rem}
+#tab-orders .of-more>*{grid-column:1/-1}
+#tab-orders .of-more>.fl-sec:not(.fl-wide){grid-column:auto}
+#tab-orders .of-more .fl-head{display:flex;align-items:center;gap:.7rem}
+#tab-orders .of-more .fl-head h3{margin:0;font-size:1.25rem}
+#tab-orders .of-more .fl-head p{margin:.1rem 0 0;font-size:.8rem;opacity:.7}
+#tab-orders .of-more .fl-head .ord-ic{width:50px;height:50px}
+#tab-orders .of-more .fl-head .fl-x{margin-inline-start:auto;width:44px;height:44px;border-radius:14px;padding:0;font-size:1.4rem;line-height:1;background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.08);box-shadow:0 4px 12px rgba(16,24,40,.06);order:9}
+#tab-orders .of-more .fl-head>div{order:1}#tab-orders .of-more .fl-head .ord-ic{order:0}
+#tab-orders .of-more .fl-sec{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:.7rem .8rem;display:flex;flex-direction:column;gap:.5rem}
+html.white #tab-orders .of-more .fl-sec{background:#f6f8fc;border-color:rgba(16,24,40,.05)}
+#tab-orders .of-more .fl-l{display:flex;align-items:center;gap:.45rem;font-weight:800;font-size:.95rem}
+#tab-orders .of-more .fl-l svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#tab-orders .of-more select,#tab-orders .of-more input[type=date]{width:100%;border-radius:14px;min-height:46px;background:#fff;color:#0f172a;border:1px solid rgba(16,24,40,.1)}
+#tab-orders .of-more .fl-dates{flex-direction:row;flex-wrap:wrap;align-items:center}
+#tab-orders .of-more .fl-dates .fl-l{flex:1 1 100%}
+#tab-orders .of-more .fl-dates .date-field{flex:1 1 40%;display:flex;align-items:center;gap:.4rem;margin:0}
+#tab-orders .of-more .fl-tools{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+#tab-orders .of-more .fl-tools .fl-c{background:#f6f8fc;border-radius:18px;padding:.5rem}
+#tab-orders .of-more .fl-tools .fl-c button{width:100%;min-height:46px;font-size:.82rem;padding:.3rem .2rem}
+#tab-orders .of-more .fl-acts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+#tab-orders .of-more .fl-acts button{width:100%;min-height:50px;border-radius:14px!important;font-weight:800;font-size:.85rem}
+html.white body #tab-orders .of-more button:not(.fl-apply):not(.fl-imp):not(.fl-reset):not(.fl-x):not(#_){background:#fff!important;color:#0f172a!important;border:1px solid rgba(16,24,40,.08)!important;box-shadow:0 4px 12px rgba(16,24,40,.06)!important;border-radius:14px!important}
+html.white body #tab-orders .of-more .fl-reset:not(#_){background:#fee2e2!important;color:#b91c1c!important;border:1px solid #fbc5c5!important;box-shadow:none!important}
+html.white body #tab-orders .of-more .fl-imp:not(#_){background:#f3fbc9!important;color:#1f2123!important;border:1px solid #e2f08f!important;min-height:50px;border-radius:14px!important}
+#tab-orders .of-more .fl-foot{display:flex;gap:.6rem;border-top:1px solid rgba(16,24,40,.08);padding-top:.8rem}
+#tab-orders .of-more .fl-foot .fl-apply{flex:2;min-height:52px;border-radius:14px!important;background:#e2fe17!important;color:#1f2123!important;border:0!important;font-weight:800;display:inline-flex;align-items:center;justify-content:center;gap:.4rem}
+#tab-orders .of-more .fl-foot .fl-apply svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+#tab-orders .of-more .fl-foot .fl-cancel{flex:1;min-height:52px;border-radius:14px!important;font-weight:800}
+#tab-orders .of-more,#tab-orders .of-more>*,#tab-orders .of-more .fl-sec{min-width:0;max-width:100%;box-sizing:border-box}
+#tab-orders .of-more .fl-head .ord-ic{display:grid;place-items:center;border-radius:16px;background:#eef9c9;flex:none;color:#0f172a}
+#tab-orders .of-more .fl-head .ord-ic svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#tab-orders .of-more .fl-dates .date-field{flex:1 1 42%;min-width:0;font-size:.8rem}
+#tab-orders .of-more .fl-dates .date-field input{flex:1 1 auto;min-width:0;width:100%;padding-inline:.4rem;font-size:.8rem}
+#tab-orders .of-more .fl-acts button,#tab-orders .of-more .fl-tools button{min-width:0}
+#tab-orders .search-bar>#of-more{grid-column:1/-1!important;width:100%!important}
+#tab-orders .of-more .fl-sec select,#tab-orders .of-more .fl-sec button{margin:0!important;max-width:100%!important;width:100%!important;box-sizing:border-box}
+#tab-orders .of-more select{min-width:0!important;height:auto!important;min-height:46px;line-height:1.3;padding-block:.5rem}
