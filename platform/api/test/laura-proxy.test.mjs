@@ -17,7 +17,7 @@ ok("سرّ مختلف/تعديل الحمولة/مستأجر آخر ← مرفو
 const allowed = [["POST", "/v1/laura/chat"], ["POST", "/v1/laura/confirm"], ["GET", "/v1/laura/tools"], ["GET", "/v1/laura/health"], ["GET", "/v1/laura/history"], ["POST", "/v1/laura/reset"], ["POST", "/v1/laura/report"]], denied = [["GET", "/v1/laura/report"], ["POST", "/v1/laura/history"], ["GET", "/v1/laura/reset"], ["DELETE", "/v1/laura/history"], ["GET", "/v1/laura/chat"], ["POST", "/v1/laura/chat/x"], ["POST", "/v1/laura/../admin/tenants"], ["DELETE", "/v1/laura/chat"], ["POST", "/v1/laura/tools"], ["POST", "/admin/tenants"]];
 ok("بوابة مسارات LAURA في الوسيط: المسموح فقط", allowed.every(([m, p]) => isLauraPath(m, p)) && denied.every(([m, p]) => !isLauraPath(m, p)));
 /* 2) الوسيط الحقيقي (index.ts) ← Worker حقيقي */
-const mock = createMock(), E = makeEnv([commerce, carts, laura], { config: { LAURA_LLM_KEY: KEY, LAURA_ACTOR_SECRET: SECRET } }); E.fake.handler = mock.handler;
+const mock = createMock(), E = makeEnv([commerce, carts, laura], { config: { LAURA_LLM_KEY: KEY, LAURA_ACTOR_SECRET: SECRET, LAURA_WRITES: "on" } }); E.fake.handler = mock.handler;
 E.clock.t = Date.now(); const T = await E.tenant("Site"), nowFix = () => Math.floor(E.clock.t / 1000);
 await E.adm("PATCH", `/admin/tenants/${T.id}`, { settings: { origins: ["https://shop.example"] } });
 await E.call("PUT", "/v1/catalog/products", { products: [{ slug: "cream", title: "كريم", price: 1500, stock: 20, offers: [] }] }, T.key);
@@ -32,7 +32,7 @@ const realFetch = globalThis.fetch; globalThis.fetch = async (url, init = {}) =>
   if (url.startsWith("https://pf.example")) { const u = new URL(url), hd = Object.fromEntries(Object.entries(init.headers ?? {}).map(([k, v]) => [k.toLowerCase(), v])); upstream.push({ path: u.pathname, hd }); const r = await E.app.handle(init.method ?? "GET", u.pathname, Object.fromEntries(u.searchParams), hd, init.body ?? "", "2.2.2.2"); return new Response(r.body, { status: r.status, headers: r.headers }); }
   return realFetch(url, init);
 };
-await import("../../supabase/functions/platform-proxy/index.ts?x=1");
+await import(process.env.PROXY_DIR ? new URL("file://" + process.env.PROXY_DIR.replace(/\/$/, "") + "/index.ts?x=1").href : "../../supabase/functions/platform-proxy/index.ts?x=1");   /* PROXY_DIR: يختبر نسخة «LAURA فقط» (platform/docs/laura-only/platform-proxy) بالاختبارات نفسها */
 const proxy = async (jwt, method, path, body, query) => { E.clock.t += 4000; const r = await globalThis.__proxy(new Request("https://fn.example/platform-proxy", { method: "POST", headers: { Authorization: "Bearer " + jwt, "Content-Type": "application/json" }, body: JSON.stringify({ method, path, body, query }) })); return [r.status, await r.json()]; };
 let [s, b] = await proxy("owner-jwt", "POST", "/v1/laura/chat", { message: "كم طلب لدي؟" });
 ok("مالك عبر الوسيط ← Worker: ردّ LAURA من بيانات حقيقية", s === 200 && b.ok && b.status === 200 && /لديك 1 طلباً/.test(b.data.reply) && b.data.actor.role === "owner" && b.data.actor.signed === true, b);

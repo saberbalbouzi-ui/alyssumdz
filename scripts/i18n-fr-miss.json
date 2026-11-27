@@ -963,5 +963,11 @@
  "الولايات": "Wilayas",
  "الفترة الزمنية": "Période",
  "خيارات إضافية": "Options supplémentaires",
- "تطبيق الفلاتر": "Appliquer les filtres"
+ "تطبيق الفلاتر": "Appliquer les filtres",
+ "المسجلة لدى شركة التوصيل": "Enregistrées chez le transporteur",
+ "كل المسجلة": "Toutes les enregistrées",
+ "مسجلة · قيد التجهيز": "Enregistrée · en préparation",
+ "مسجلة · في الطريق": "Enregistrée · en route",
+ "مسجلة · تم التسليم": "Enregistrée · livrée",
+ "مسجلة · فشل / مرتجع": "Enregistrée · échec / retour"
 }

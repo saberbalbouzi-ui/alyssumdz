@@ -1,0 +1,92 @@
+{
+  "v": 1,
+  "wa": {
+    "on": true,
+    "side": "left",
+    "bottom": 20,
+    "edge": 20,
+    "size": 56,
+    "shape": "circle",
+    "color": "#25D366",
+    "iconColor": "#ffffff",
+    "anim": "pulse",
+    "label": "تواصل معنا",
+    "showLabel": "no",
+    "delay": 0,
+    "scroll": 0,
+    "device": "all",
+    "pages": {
+      "home": true,
+      "product": true,
+      "shop": true,
+      "other": true
+    },
+    "only": [
+      "rdv",
+      "tarkiz"
+    ],
+    "scopeMode": "only",
+    "cmsg": "",
+    "cnum": "",
+    "shadow": true,
+    "number": "",
+    "msg": "مرحباً، أريد الاستفسار عن منتجاتكم"
+  },
+  "tel": {
+    "on": false,
+    "side": "left",
+    "bottom": 88,
+    "edge": 20,
+    "size": 56,
+    "shape": "circle",
+    "color": "#2563eb",
+    "iconColor": "#ffffff",
+    "anim": "none",
+    "label": "اتصل بنا",
+    "showLabel": "no",
+    "delay": 0,
+    "scroll": 0,
+    "device": "all",
+    "pages": {
+      "home": true,
+      "product": true,
+      "shop": true,
+      "other": true
+    },
+    "only": [],
+    "scopeMode": "only",
+    "cmsg": "",
+    "cnum": "",
+    "shadow": true,
+    "number": ""
+  },
+  "msgr": {
+    "on": false,
+    "side": "left",
+    "bottom": 156,
+    "edge": 20,
+    "size": 56,
+    "shape": "circle",
+    "color": "#0084ff",
+    "iconColor": "#ffffff",
+    "anim": "none",
+    "label": "راسلنا",
+    "showLabel": "no",
+    "delay": 0,
+    "scroll": 0,
+    "device": "all",
+    "pages": {
+      "home": true,
+      "product": true,
+      "shop": true,
+      "other": true
+    },
+    "only": [],
+    "scopeMode": "only",
+    "cmsg": "",
+    "cnum": "",
+    "shadow": true,
+    "page": ""
+  },
+  "updatedAt": "2026-11-27T23:29:34.043Z"
+}

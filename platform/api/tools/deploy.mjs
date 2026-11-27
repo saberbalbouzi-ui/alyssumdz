@@ -1,5 +1,5 @@
 // نشر منصة API على Cloudflare بلا wrangler:  node tools/deploy.mjs --env <production|beta> [--dry-run] <خطوة> ...
-// الخطوات: db (إنشاء D1 + المخطط + هوية البيئة) | worker (رفع الكود + الربط + cron + بيانات الإصدار) | secrets | route | meta | status | rollback | all (= db worker secrets route)
+// الخطوات: diff (قراءة فقط: يقارن المنشور بالمحلي) | db (إنشاء D1 + المخطط + هوية البيئة) | worker (رفع الكود + الربط + cron + بيانات الإصدار) | secrets | route | meta | status | rollback | all (= db worker secrets route)
 // --env إلزامي (لا افتراضي): أسماء الموارد والمضيف من platform/env/environments.json؛ Beta لا يُنشَر فوق Production ولا العكس (src/envguard.js:deployPlan).
 // production يتطلب --production و ALLOW_PRODUCTION_DEPLOY=yes معاً (موافقة صريحة منفصلة). غير الإنتاج يتطلب CF_ACCOUNT_ID وCF_ZONE_ID صريحين (لا افتراضات إنتاجية).
 // --dry-run: لا اتصال بالشبكة إطلاقاً؛ يطبع الطلبات المخطَّطة (بلا أسرار) — وهكذا تُختبر الأداة في CI.
@@ -8,6 +8,7 @@ import { readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { randomBytes, createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { deployPlan } from "../src/envguard.js";
+import { compare, mergeMeta, parseMultipart } from "./deploy-diff.mjs";
 const REG = JSON.parse(readFileSync(new URL("../../env/environments.json", import.meta.url), "utf8"));
 const args = process.argv.slice(2), flag = (n) => args.includes(n), opt = (n) => (flag(n) ? args[args.indexOf(n) + 1] : null), DRY = flag("--dry-run");
 let plan; try { plan = deployPlan(REG, { kind: "api", env: opt("--env"), flags: { production: flag("--production") }, vars: process.env }); } catch (e) { console.error("✖ " + e.message); process.exit(2); }
@@ -44,14 +45,36 @@ async function stepDb() {
   console.log("هوية القاعدة =", plan.env, "· schema_hash =", SCHEMA_HASH); return id;
 }
 function files(dir, base = "") { return readdirSync(new URL(dir, here("")), { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(dir + e.name + "/", base + e.name + "/") : [base + e.name]); }
+
+/** يقرأ الحالة المنشورة (قراءة فقط): الربط، تاريخ التوافق، الجدولة، ملفات الكود. يعيد null إن لم يوجد Worker. لم يُجرَّب مع واجهة Cloudflare الحقيقية (شكل الردود من التوثيق). */
+async function readRemote() {
+  if (DRY) { console.log("DRY (قراءة) settings/schedules/content لـ" + NAME + " — لا شبكة"); return null; }
+  let st; try { st = await cf("GET", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/settings`); } catch (e) { if (/ 404 /.test(e.message)) return null; throw e; }
+  const sc = await cf("GET", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/schedules`).catch(() => ({ schedules: [] }));
+  let files = null;
+  try { const r = await fetch(API + `/accounts/${ACCOUNT}/workers/scripts/${NAME}`, { headers: { ...hdr, Accept: "multipart/form-data" } }); const ct = r.headers.get("content-type") || "", b = /boundary=([^;]+)/.exec(ct)?.[1]; if (r.ok && b) files = parseMultipart(await r.text(), b.replace(/^"|"$/g, "")); } catch { /* يبقى null */ }
+  return { bindings: st.bindings || [], compatibility_date: st.compatibility_date, compatibility_flags: st.compatibility_flags || [], schedules: sc.schedules || [], files };
+}
+function localState() {
+  const fs = {}; for (const f of files("src/")) fs[f] = readFileSync(here("src/" + f), "utf8");
+  return { ...workerMeta("LOCAL-ID"), schedules: ["* * * * *"], files: fs };
+}
+async function stepDiff() {
+  const r = await readRemote(); if (!r) { console.log("لا Worker منشور بهذا الاسم (أو وضع dry-run) — لا شيء للمقارنة"); return; }
+  const c = compare(localState(), r); console.log("— مقارنة " + NAME + " (المنشور ← المحلي) —"); for (const l of c.lines) console.log(" ·", l);
+  console.log(c.risks.length ? "\nمخاطر:\n" + c.risks.map((x) => " ⚠ " + x).join("\n") : "\nلا مخاطر مرصودة"); console.log(c.same ? "النتيجة: مطابق" : "النتيجة: توجد فروق — راجعها قبل worker");
+}
+function workerMeta(id) { const S = sha(), V = version(); return { main_module: "index.js", compatibility_date: "2026-01-01", bindings: [{ type: "d1", name: "DB", id }, { type: "plain_text", name: "PUBLIC_URL", text: plan.publicUrl }, { type: "plain_text", name: "ENVIRONMENT", text: plan.env }, { type: "plain_text", name: "GIT_SHA", text: S }, { type: "plain_text", name: "APP_VERSION", text: V }, { type: "plain_text", name: "SCHEMA_HASH", text: SCHEMA_HASH }], keep_bindings: ["secret_text"] }; }
 async function stepWorker() {
   const id = await dbId(); if (!id) throw new Error("نفّذ خطوة db أولاً");
   const fd = new FormData(), S = sha(), V = version();
-  const meta = { main_module: "index.js", compatibility_date: "2026-01-01", bindings: [{ type: "d1", name: "DB", id }, { type: "plain_text", name: "PUBLIC_URL", text: plan.publicUrl }, { type: "plain_text", name: "ENVIRONMENT", text: plan.env }, { type: "plain_text", name: "GIT_SHA", text: S }, { type: "plain_text", name: "APP_VERSION", text: V }, { type: "plain_text", name: "SCHEMA_HASH", text: SCHEMA_HASH }], keep_bindings: ["secret_text"] };
+  const KEEP = flag("--keep-existing"), REPLACE = flag("--replace-bindings");
+  if (plan.env === "production" && !KEEP && !REPLACE) { console.error("✖ في الإنتاج: شغّل `diff` أولاً ثم مرّر --keep-existing (يُبقي الربط/التوافق/الجدولة المنشورة) أو --replace-bindings صراحةً"); process.exit(2); }
+  let meta = workerMeta(id); if (KEEP) { const r = await readRemote(); meta = mergeMeta(meta, r); console.log(r ? "دمج آمن: أُبقي ربط/توافق المنشور" : "لا Worker منشور — رفع أول"); }
   fd.__meta = JSON.stringify(meta); fd.append("metadata", new Blob([JSON.stringify(meta)], { type: "application/json" }));
   for (const f of files("src/")) fd.append(f, new Blob([readFileSync(here("src/" + f))], { type: "application/javascript+module" }), f);
   await cf("PUT", `/accounts/${ACCOUNT}/workers/scripts/${NAME}`, fd); console.log("Worker رُفع:", NAME, "· sha", S.slice(0, 12), "· version", V);
-  await cf("PUT", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/schedules`, [{ cron: "* * * * *" }]); console.log("cron كل دقيقة مضبوط (لهذا الـWorker وحده)");
+  if (KEEP) console.log("cron: لم يُمسّ (--keep-existing)"); else { await cf("PUT", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/schedules`, [{ cron: "* * * * *" }]); console.log("cron كل دقيقة مضبوط (لهذا الـWorker وحده)"); }
   await q(id, "INSERT INTO pf_meta (k,v,at) VALUES ('release_sha',?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v, at=excluded.at", [S, new Date().toISOString()]);
 }
 async function stepSecrets(save) {
@@ -89,8 +112,8 @@ async function stepRollback() {
   await cf("POST", `/accounts/${ACCOUNT}/workers/scripts/${NAME}/deployments`, { strategy: "percentage", versions: prev.versions.map((v) => ({ version_id: v.version_id, percentage: 100 })), annotations: { "workers/message": "rollback by deploy.mjs" } });
   console.log("تم التراجع إلى النشرة", prev.id, "للـWorker", NAME, "(الكود فقط؛ قاعدة البيانات لم تُمسّ)");
 }
-const save = opt("--save-secrets"), STEPS = ["db", "worker", "secrets", "route", "meta", "status", "rollback", "all"], steps = args.filter((a) => STEPS.includes(a));
+const save = opt("--save-secrets"), STEPS = ["diff", "db", "worker", "secrets", "route", "meta", "status", "rollback", "all"], steps = args.filter((a) => STEPS.includes(a));
 const run = steps.includes("all") ? ["db", "worker", "secrets", "route"] : steps;
 console.log(`[${plan.label}] worker=${NAME} d1=${DB_NAME} host=${HOST}${DRY ? "  (DRY-RUN: بلا شبكة)" : ""}`);
-for (const s of run) { if (s === "db") await stepDb(); else if (s === "worker") await stepWorker(); else if (s === "secrets") await stepSecrets(save); else if (s === "route") await stepRoute(); else if (s === "meta") await stepMeta(); else if (s === "status") await stepStatus(); else if (s === "rollback") await stepRollback(); }
-if (!run.length) console.log("الخطوات: db | worker | secrets [--save-secrets مسار] | route | meta | status | rollback | all   (مع --env <production|beta> [--dry-run])");
+for (const s of run) { if (s === "diff") await stepDiff(); else if (s === "db") await stepDb(); else if (s === "worker") await stepWorker(); else if (s === "secrets") await stepSecrets(save); else if (s === "route") await stepRoute(); else if (s === "meta") await stepMeta(); else if (s === "status") await stepStatus(); else if (s === "rollback") await stepRollback(); }
+if (!run.length) console.log("الخطوات: diff | db | worker [--keep-existing] | secrets [--save-secrets مسار] | route | meta | status | rollback | all   (مع --env <production|beta> [--dry-run])");
